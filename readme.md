@@ -2,3 +2,7 @@ This repository is a clone made from the official Vicidial SVN trunk (revision 3
 
 This version will (mostly) stick to the official source code. However, I might include modifications to some key files which have not been accepted by Matt Florell, but which we find useful for our case uses.
 
+The original source code can be grabbed from svn://svn.eflo.net:3690/agc_2-X/trunk
+
+
+
