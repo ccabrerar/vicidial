@@ -1,0 +1,969 @@
+vdc_LB_active.gif|vdc_LB_active_se.gif||
+vdc_LB_paused.gif|vdc_LB_paused_se.gif||
+vdc_LB_blank_OFF.gif|vdc_LB_blank_OFF.gif||
+Name:|Namn:||
+Language has not been changed, please try again|Språk har inte ändrats, försök igen||
+Calls in Queue|Samtal i kö||
+Manual Queue is On|Manuell kö är på||
+LOGOUT PROCESSING...|logout bearbetning ...||
+LOGOUT PROCESS COMPLETE, YOU MAY NOW CLOSE YOUR BROWSER OR LOG BACK IN|logout process klar kan du nu stänger webbläsaren eller logga in igen||
+PLEASE SELECT A LANGUAGE|Välj språk||
+to campaign|till kampanjen||
+YES|ja||
+Conf Extension Check|Kolla konfanknytningen||
+Conf Exten %1s is not valid|conf EXTEN %1s är inte giltigt||
+Conf Exten %1s is not valid or Exten %2s is not valid|conf EXTEN %1s inte giltiga eller EXTEN %2s är inte giltigt||
+Conference %1s has been registered to %2s|konferens %1s har registrerats %2s||
+START CHAT|starta chatten||
+INVITE|bjuda||
+END CHAT|end chat||
+Enter email address of guest:|ange e-postadress för gästerna:||
+SEND|skicka||
+Custom Fields Disabled:|anpassade fält inaktive:||
+Custom Form Output:|anpassade formulär utgång:||
+Agent Form Display Script|Agent Form Visnings skrivar||
+OFF|off||
+VERSION|VERSION||
+BUILD|BUILD||
+USER|Användare ||
+Avatar Soundboard Display Script|avatar soundboard visningsskript||
+Max rank count|max rang count||
+stop audio|stoppa ljud||
+Available Chats:|tillgängliga chatt:||
+SEND MESSAGE|skicka meddelande||
+Privacy ON|integritet på||
+CLEAR|klar||
+error: API user not valid|error: api användaren inte giltigt||
+SEND TO MY VOICEMAIL|SKICKA TILL MIN RÖSTBREVLÅDA||
+Agent Redirect|agent omdirigering||
+click here to continue|Klicka här för att fortsätta||
+Live Extension Check|Kolla aktiv anknytning||
+Agent Screen Opener|agent skärm öppnare||
+Avatars disabled on your system|avatarer inaktiverad på ditt system||
+error: avatar not valid|error: avatar inte giltigt||
+DONE: no duplicates found within|gjort: inga dubbletter inom||
+DONE: no lists in campaign_check|gjort: inga listor i campaign_check||
+DONE: dispo is not a sale status:|gjort: DISPO är inte en försäljning status:||
+Invalid server_ip:|ogiltig server_ip:||
+LIVE INBOUND CALL|AKTIVT INGÅENDE SAMTAL||
+CallerID|SAMTALSID||
+Number Dialed:|slagna numret:||
+Conferences List|Konferenslista||
+Click on a conference room number on the left for info on that conference|Klicka på konferensnumret till vänster för mer info om konferensen||
+DONE: %1s duplicates found,|gjort: %1s dubbletter hittas,||
+Call selected vmail box|Ring röstbrevlåda||
+PARKED CALLS:|parkerade samtal:||
+VOICEMAIL|RÖSTBREVLÅDA||
+NEW:|nytt:||
+OLD:|gamla:||
+PARKED CALLS|PARKERADE SAMTAL||
+LOCAL DIAL EXTENSIONS|LOKALA ANKNYTNINGAR||
+OUTBOUND CALLS:|utgående samtal:||
+INBOUND CALLS:|inkommande samtal:||
+astGUIclient web-client VERSION: %1s BUILD: %2s|astguiclient webb-klientversion: %1s bygga: %2s||
+edit|redigera||
+SUBMIT FAVORITES CHANGES - requires logout|Skicka favoritändringar - detta kräver att du loggar ut||
+BACK TO MAIN WINDOW - ignore changes made|TILLBAKA TILL HUVUDFÖNSTRET - ignorera gjorda ändringar||
+STOP|stanna||
+START|start||
+Refresh rate:|uppdateringsfrekvens:||
+Faster|Snabbare||
+Slower|Långsammare||
+Initializing..|initialisering ..||
+Active Extensions|Aktiva anknytningar||
+Data Goes Here|Skriv in data här||
+Trunk Action|Trunk action||
+Local Action|Lokal action||
+Listen Local|Lyssna lokalt||
+LIVE CALL TRANSFER|LIVESAMTAL KOPPLAR||
+Channel to be transferred:|kanal som skall överföras:||
+Extensions:|tillägg:||
+Extensions Menu|Anknytningsmeny||
+Send to selected extension|Koppla vidare till vald anknytning||
+Send to selected vmail box|Koppla till röstbrevlåda||
+Send to this number|Koppla till detta nummer||
+Conferences:|konferenser:||
+(click on a number below to send to a conference)|(klicka på en rad nedan för att skicka till en konferens)||
+Send my channel too|Skicka min kanal också||
+Conferences Menu|Konferensmeny||
+LOCAL Extensions Dial|LOKALA Anknytningar||
+Phone calling from:|Telefonen ringer från:||
+Call selected extension|Ring anknytning||
+agc_tab_conferences.gif|agc_tab_conferences_se.gif||
+TRUNK HANGUP|trunk hangup||
+Active Trunks Menu|aktiva trunkar meny||
+Hangup Trunk|Lägg på trunk||
+Hijack Trunk|Kapa trunk||
+Listen Trunk|Lyssna på trunk||
+Back to Main Window|Tillbaka till startsidan||
+LOCAL HANGUP|SAMTAL AVSLUTATS LOKALT||
+Active Local Menu|Aktiv lokal meny||
+Hangup Local|Lägg på lokalt||
+Hijack Local|Kapa lokalt||
+XFER|xfer||
+PARK|park||
+CALL DATE/TIME|SAMTALSDATUM/TID||
+IN-NUMBER|IN-NUMMER||
+CALLER ID|nummerpresentatör||
+CALL ID|samtals id||
+PARKED BY|PARKERAD AV||
+PARKED TIME|PARKERAD TID||
+PICKUP|SVARA||
+NO ONE|ingen||
+CONFERENCE|KONFERENS||
+Registered to|Registrerat till||
+Enter Conference|Börja konferens||
+Send DTMF|Skicka Tonval||
+Dial From Conf|Ring från konf||
+LIVE CALLS IN THIS CONFERENCE|LIVESAMTAL I DENNA KONFERENS||
+AVAILABLE EXTENSIONS|TILLGÄNGLIGA ANKNYTNINGAR||
+FAVORITES|favoriter||
+up.gif|up.gif||
+down.gif|down.gif||
+remove.gif|remove.gif||
+  - ACTIVE DISPLAY PAUSED -|   - Aktiv display pausad -||
+Welcome %1s, you are logged into this phone: %2s - %3s/%4s on %5s|Välkommen %1s, är du inloggad på den här telefonen: %2s - %3s/%4s på %5s||
+agc_tab_main.gif|agc_tab_main_se.gif||
+agc_tab_active_lines.gif|agc_tab_active_lines_se.gif||
+agc_check_voicemail_BLINK.gif|agc_check_voicemail_BLINK_se.gif||
+You can only monitor Zap channels|Du kan enbart övervaka Zapkanaler||
+LIVE CALLS ON THIS PHONE|LIVESAMTAL PÅ DENNA TELEFON||
+CLIENT CHANNEL|KLIENTKANAL||
+RECORD|SPELA IN ||
+agc_tab_astguiclient.gif|agc_tab_astguiclient.gif||
+astGUIclient web client: Phone Login|astguiclient webbklient: telefon inloggning||
+VERSION: %1s BUILD: %2s|version: %1s bygga: %2s||
+astGUIclient web client| astGUI webklient||
+agc_check_voicemail_OFF.gif|agc_check_voicemail_OFF_se.gif||
+agc_check_voicemail_ON.gif|agc_check_voicemail_ON_se.gif||
+No DST Method Found|Ej DST metod fann||
+Parked Calls Display|visa parkerade samtal||
+Exten %1s is not valid or protocol %2s is not valid|EXTEN %1s är ogiltig eller protokoll %2s är inte giltigt||
+ViciDial Notes|vicidial anteckningar||
+Order ID:|För id:||
+Appointment Date/Time:|utnämning datum/tid:||
+Appointment Notes:|utnämnings anteckningar:||
+Please click SUBMIT to commit the changes|klicka förelägga begå ändringarna||
+astGUIclient web client: Login|astguiclient webbklient: inloggning||
+ERROR: no custom list fields table|error: ingen anpassad lista fält bord||
+NONE|none||
+NOTES|anteckningar||
+Second Sunday March to First Sunday November|andra söndag marsch till första Söndag November||
+First Sunday April to Last Sunday October|första söndagen April till i söndags oktober||
+Last Sunday March to Last Sunday October|förra söndag marsch till i söndags oktober||
+Last Sunday October to Last Sunday March|förra söndag oktober till sista söndag mars||
+First Sunday October to Last Sunday March|första söndag oktober till sista söndag mars||
+Sunday in October to First Sunday in April|söndagen i oktober till första söndagen i april||
+First Sunday October to Third Sunday March|första söndag oktober till tredje söndag marsch||
+Last Sunday in September to First Sunday in April|sista söndag i september till första söndagen i april||
+Third Sunday October to Last Sunday February|tredje söndag oktober till sista söndag februari||
+Local Extensions|Lokala anknytningar||
+Conferences|Konferenser||
+HELP|hjälpa||
+ERROR: no custom data for this lead: |error: inga anpassade data för denna ledning:||
+There are no custom fields for this list|det finns inga egna fält för denna lista||
+Note: a dial prefix of %1s will be added to the beginning of this number|Notera: en uppringningsprefix %1s kommer att läggas till i början av detta nummer||
+ERROR: no custom list fields|error: inga anpassade listfält||
+RedirectXtra command sent for Channel %1s and|redirectxtra kommando skickas för kanal %1s och||
+ExtraChannel %1s|extrachannel %1s||
+ to %1s on %2s|  till %1s på %2s||
+RedirectXtra command sent for Channel %1s on %2s and|redirectxtra kommando skickas för kanal %1s på %2s och||
+Redirect command sent for Channel %1s on %2s|omdirigera kommando skickas för kanal %1s på %2s||
+Channel %1s is not valid or queryCID %2s is not valid or filename: %3s is not valid, %4s command not inserted|Kanal %1s är ogiltig eller querycid %2s är ogiltig eller filnamn: %3s är inte giltigt, kommandot %4s inte isatt||
+Channel %1s is not live on %2s, %3s command not inserted|Kanal %1s inte leva på %2s, kommandot %3s inte isatt||
+%1s command sent for Channel %2s on %3s| %1s kommandot skickas för kanal %2s på %3s||
+Channel %1s is not valid or exten %2s is not valid or filename: %3s is not valid, %4s command not inserted|Kanal %1s inte giltiga eller EXTEN %2s är ogiltig eller filnamn: %3s är inte giltigt, kommandot %4s inte isatt||
+Conference %1s, Stage %2s is not valid or queryCID %3s is not valid, Originate command not inserted|konferens %1s, etapp %2s inte giltiga eller querycid %3s inte är giltig, ursprung kommandot inte isatt||
+Volume command sent for Conference %1s, Stage %2s Channel %3s on %4s|kommandovolym skickas för konferens %1s, etapp %2s Kanal %3s på %4s||
+Invalid server_ip|ogiltig server_ip||
+Invalid session_name|ogiltig session_name||
+Live Extensions|Aktiva anknytningar||
+Busy Extensions|Upptagna anknytningar||
+Outside Lines|Externa linjer||
+Channel %1s is not live on %2s, Hangup command not inserted|Kanal %1s inte leva på %2s, hängning kommandot inte isatt||
+Channel %1s in use by another agent on %2s, Hangup command not inserted|Kanal %1s används av en annan agent på %2s, hängning kommandot inte isatt||
+Hangup command sent for Channel %1s on %2s|hängning kommando skickas för kanal %1s på %2s||
+auto_dial_level %1s must be set|auto_dial_level %1s måste ställas in||
+campaign %1s must be set|kampanj %1s måste ställas in||
+uniqueid %1s must be set|uniqueid %1s måste ställas in||
+lead_id %1s must be set|lead_id %1s måste ställas in||
+RedirectVD Action not sent|redirectvd åtgärden inte skickats||
+parkedby %1s must be set|parkedby %1s måste ställas in||
+RedirectToPark Action not sent|redirecttopark åtgärden inte skickats||
+RedirectFromPark Action not sent|redirectfrompark åtgärden inte skickats||
+RedirectName Action not sent|redirectname åtgärden inte skickats||
+RedirectNameVmail Action not sent|redirectnamevmail åtgärden inte skickats||
+ExtraChannel %1s must be greater than 2 characters|extrachannel %1s måste vara större än 2 tecken||
+Redirect Action not sent|omdirigera åtgärden inte skickats||
+Cannot find empty vicidial_conference on %1s, Redirect command not inserted|kan inte hitta tomma vicidial_conference på %1s, omdirigera kommandot inte isatt||
+Channel %1s is not live on %2s, Redirect command not inserted|Kanal %1s inte leva på %2s, omdirigera kommandot inte isatt||
+No Local agent to send call to, Redirect command not inserted|ingen lokal agent för att skicka samtal till, omdirigera kommandot inte isatt||
+RedirectXtraCX command sent for Channel %1s on %2s and|redirectxtracx kommando skickas för kanal %1s på %2s och||
+Hungup %1s on %2s|hungup %1s på %2s||
+session_id %1s must be set|session_id %1s måste ställas in||
+OriginateNameVmail Action not sent|originatenamevmail åtgärden inte skickats||
+ Exten %1s is not valid or queryCID %2s is not valid, Originate command not inserted|  EXTEN %1s inte giltiga eller querycid %2s är ogiltig, ursprung kommandot inte isatt||
+ You are not allowed to dial into other agent sessions|  du får inte ringa till andra agentsessioner||
+conference %1s is not valid or ext_context %2s or queryCID %3s is not valid, Hangup command not inserted|konferens %1s är ogiltig eller ext_context %2s eller querycid %3s är inte giltigt, hängning kommandot inte isatt||
+Channel %1s is not valid or queryCID %2s is not valid, Hangup command not inserted|Kanal %1s är ogiltig eller querycid %2s är inte giltigt, hängning kommandot inte insatta||
+Call %1s %2s is not live on %3s, Checking Live Channel|ring %1s %2s inte leva på %3s, kontroll levande kanal||
+Originate command sent for Exten %1s Channel %2s on %3s|ursprung kommando skickas för EXTEN %1s Kanal %2s på %3s||
+One of these variables is not valid:|en av dessa variabler är inte giltigt:||
+Channel %1s must be greater than 2 characters|Kanal %1s måste vara större än 2 tecken||
+queryCID %1s must be greater than 14 characters|querycid %1s måste vara större än 14 tecken||
+extenName %1s must be set|extenname %1s måste ställas in||
+ext_context %1s must be set|ext_context %1s måste ställas in||
+ext_priority %1s must be set|ext_priority %1s måste ställas in||
+OriginateName Action not sent|originatename åtgärden inte skickats||
+exten %1s must be set|EXTEN %1s måste ställas in||
+Exten %1s is not valid or queryCID %2s is not valid, Originate command not inserted|EXTEN %1s inte giltiga eller querycid %2s är ogiltig, ursprung kommandot inte isatt||
+Phone-Only Login|telefon enbart inloggning||
+Phone web client: Phone Login|Telefonen webbklient: telefon inloggning||
+Phone web client|Telefonen webbklient||
+ Phone: |  telefon:||
+Your system does not have the email setting enabled|ditt system inte har e-inställning aktiverad||
+ERROR: Invalid File Name:|error: ogiltigt filnamn:||
+mail could not be sent!|post kunde inte skickas!||
+Date received:|datum för mottagande:||
+From:|från:||
+Subject:|ämne:||
+Attachments:|bilagor:||
+Response:|svar:||
+Reply:|svara:||
+COPY MESSAGE|kopieringsmeddelande||
+REPLY|svara||
+AGENT email frame|agent e ram||
+ERROR - ID variable missing|error - id variabel saknas||
+Manager Send: |manager skicka:||
+Agent Alert!|agent alert!||
+alert.gif|alert.gif||
+Alert Box|varningsruta||
+Phone web client: Login|Telefonen webbklient: inloggning||
+Another live agent session was open using your user ID. It has been disabled. Click OK to continue to the agent screen.|annan levande agent session var öppen med ditt användarnamn. det har inaktiverats. Klicka på OK för att fortsätta till agenten skärmen||
+OK|OK||
+This agent screen was not opened properly.|Denna agent skärmen öppnades inte korrekt||
+SELECT A DIAL IN-GROUP :|Välj en urtavla i-grupp:||
+Dial In-Group Selection|ring in-grupp urval||
+ALERT :|varna:||
+Presets Selection|förinställningar urval||
+SELECT A GROUP ALIAS :|Välj en grupp alias:||
+Group Alias Selection|Gruppalias val||
+SELECT A PAUSE CODE :|Välj en paus kod:||
+Pause Code Selection|pauskoden urval||
+SELECT A PRESET :|välja en förinställd:||
+CALL NOTES LOG:|samtalsanteckningarna log:||
+Call Notes List|Lista för samtalsanteckningar||
+Close Info Box|Stäng Info Box||
+Lead Info|bly info||
+Phone Number Fields:|telefonnummer fält:||
+Main Phone Number|Huvud telefonnummer||
+Alternate Phone Number|Alternativt telefonnummer||
+Address3 Phone Number|Address3 telefonnummer||
+Lead ID:|bly id:||
+SEARCH RESULTS:|sökresultat:||
+Using the other fields may be slower. Lead searching does not allow for wildcard or partial search terms.|Använda de övriga fälten kan vara långsammare. Lead sökande tillåter inte ersättnigstecken eller ufullständiga sökord||
+Lead search requests are all logged in the system.|Lead sökförfrågningar är alla loggade i systemet||
+Search Results|SÖKRESULTAT||
+SEARCH FOR A LEAD:|söka efter en lead:||
+Notes: when doing a search for a lead, the phone number, lead ID or %1s are the best fields to use.|anteckningar: när du gör en sökning efter en bly, telefonnumret, bly id eller %1s är de bästa områdena att använda.||
+Group Name:|gruppnamn:||
+Job Title:|jobbtitel:||
+SUBMIT SEARCH|inkomma sökning||
+CONTACTS SEARCH RESULTS:|kontakter sökresultat:||
+First Name:|förnamn:||
+Last Name:|efternamn:||
+BU Name:|BU namn:||
+Department:|avdelning:||
+Notes: when doing a search for a contact, wildcard or partial search terms are not allowed. <br />Contact search requests are all logged in the system.|noterar: när du gör en sökning efter en kontakt, wildcard eller partiell söktermer är inte tillåtna. <br /> är kontakt sökfrågor alla inloggade i systemet.||
+Office Number:|kontorsnummer:||
+BLENDED CALLING|MIXAD RINGNING||
+AGENT CALL LOG:|agent samtalslogg:||
+Call log List|samtalsloggen||
+SEARCH FOR A CONTACT:|söka efter en kontakt:||
+BLENDED CALLING(outbound activated)|blandade ringer (utgående aktiverad)||
+RESET|återställ||
+TERRITORY SELECTION|VAL AV OMRÅDEN||
+Channel|kanal||
+MY CALLBACK ONLY|PERSONLIG ÅTERUPPRINGNING||
+Dial Override:|ringa omställning:||
+(digits only please)|(siffror endast tack)||
+Dial Now|Ring nu||
+Preview Call|Förhandsgranska samtal||
+CLOSER INBOUND GROUP SELECTION|INGÅENDE CLOSER GRUPPVAL||
+Search Existing Leads:|sök befintliga ledningar:||
+(This option if checked will attempt to find the phone number in the system before inserting it as a new lead)|(det här alternativet om markerat kommer att försöka hitta telefonnumret i systemet innan du sätter in den som en ny ledning)||
+If you want to dial a number and have it NOT be added as a new lead, enter in the exact dialstring that you want to call in the Dial Override field below. To hangup this call you will have to open the CALLS IN THIS SESSION link at the bottom of the screen and hang it up by clicking on its channel link there.|Om du vill ringa ett nummer och INTE lägga till det som en ny lead, skriv in det exakta numret i "Dial override" nedan.För att avsluta detta samtal måste du öppna SAMTAL I DENNA SESSION i botten av fönstret och klicka på kanallänken där.||
+Phone Number:|telefonnummer:||
+(digits only)|(endast siffror)||
+Dial Lead ID:|slå bly id:||
+Enter information below for the new lead you wish to call.|Skriv in informationen för det nya leadet du vill ringa||
+Note: all new manual dial leads will go into list %1s|Notera: alla nya manuella uppringnings leads kommer att gå in i listan %1s||
+Dial Code:|Landskod||
+(This is usually a 1 in the USA-Canada)|(detta är vanligtvis en 1 i USA och Canada)||
+View Comment History:|view kommentar historia:||
+Previous Callback Information:|tidigare återuppringning information:||
+CALLBACKS FOR AGENT %1s:<br />To see information on one of the callbacks below, click on the INFO link. To call the customer back now, click on the DIAL link. If you click on a record below to dial it, it will be removed from the list.|callbacks för agent %1s: <br /> för att se information om någon av callbacks nedan, klicka på info länken. att ringa kunden tillbaka nu, klicka på ratten länken. Om du klickar på en post nedan för att slå det, kommer det att tas bort från listan.||
+NEW MANUAL DIAL LEAD FOR %1s in campaign %2s:|nya manuella ratten ledningen %1s i kampanj %2s:||
+CB Comments:|cb kommentarer:||
+DISPOSITION CALL :|disposition samtal:||
+End-of-call Disposition Selection|Val för utfallet av samtal||
+CLEAR FORM|RENSA FORMULÄR||
+WEB FORM SUBMIT|webbsida formen fram||
+Select a CallBack Date :|Välj en callback datum:||
+Hour:|timme:||
+Minutes:|minuter:||
+Any changes made to the customer information below at this time will not be comitted, You must change customer information before you Hangup the call.|Inga ändringar som gjorts nedan kommer inte att sparas. Du måste ändra kundinformationen innan du lägger på samtalet||
+There is a time synchronization problem with your system, please tell your system administrator|Det är problem med tidssynkroniseringen, kontakta din systemadministratör||
+No one is in your session:|ingen är i sessionen:||
+Call Agent Again|Ring agent igen||
+Customer has hung up:|Kunden har hängt upp:||
+Finish and Disposition Call|Avsluta och välj utfall av samtalet||
+Close Message|Avslutningsmeddelande||
+Your session has been disabled|Din session har avbrutits||
+Alt Phone Info|alt telefon Info||
+Extended Alt Phone Information:|Utökad information om alternativt telefonnummer: ||
+Available Agents Transfer:|tillgängliga medel överföra:||
+vdc_XB_presetsbutton.gif|vdc_XB_presetsbutton.gif||
+vdc_XB_contactsbutton.gif|vdc_XB_contactsbutton.gif||
+AGENTS|medel||
+DIAL OVERRIDE|DIAL OVERRIDE||
+CONSULTATIVE|KONSULTERANDE||
+vdc_XB_number.gif|vdc_XB_number_se.gif||
+vdc_XB_channel.gif|vdc_XB_channel_se.gif||
+vdc_XB_header.gif|vdc_XB_header_se.gif||
+SELECT A GROUP TO SEND YOUR CALL TO|Välj en grupp för att skicka ditt samtal till||
+vdc_XB_seconds.gif|vdc_XB_seconds_se.gif||
+refresh|Uppdatera||
+reset form|reset formulär||
+Lead Dispositioned As:|bly dispositioned som:||
+Disposition Hot Keys:|disposition snabbtangenter:||
+When active, simply press the keyboard key for the desired disposition for this call. The call will then be hungup and dispositioned automatically:|när den är aktiv, trycker du helt enkelt på tangenten för önskad disposition för detta samtal. samtalet blir då hungup och dispositioned automatiskt:||
+X ACTIVE CALLBACKS|x aktiva callbacks||
+Other Agents Status:|andra agenter status:||
+Agents View +|agenter visa +||
+WebPhone View -|Webphone view -||
+AGENT SCRIPT|agent skript||
+D1 - DIAL|d1 - ring||
+D2 - DIAL|d2 - ring||
+Calls In Queue:|Samtal i kö:||
+Alert is OFF|varning är avstängd||
+seconds:|sekunder:||
+Your Status:|din status:||
+Calls Dialing:|samtal uppringning:||
+FAST DIAL|SNABBUPPRINGNING||
+VIEW CALL LOG|VISA SAMTALSLOGG||
+Server:|server:||
+Alert is ON|varning är på||
+Customer Information:|kundinformation:||
+LEAD SEARCH|LEAD SÖK||
+view notes|visa anteckningar||
+MANUAL DIAL|MANUELL UPPRINGNING||
+vdc_tab_email.gif|vdc_tab_email.gif||
+LIVE|lever||
+session ID:|session id:||
+Agent Screen|agent skärm||
+pixel.gif|pixel.gif||
+ ALT PHONE DIAL|  alt telefon ratten||
+RECORDING FILE:|inspelning fil:||
+RECORD ID:|rekord id:||
+Customer Time:|kund tid:||
+Channel:|kanal:||
+YOU DO NOT HAVE PERMISSIONS TO TRANSFER CALLS|DU HAR EJ BEHÖRIGHET ATT VIDAREKOPPLA SAMTAL||
+Logged in as User|Inloggad som användare||
+: %1s on Phone: %2s|: %1s på telefon: %2s||
+ring|ring||
+TERRITORIES|områden||
+GROUPS|grupper||
+LOGOUT|utloggning||
+vdc_tab_script.gif|vdc_tab_script_se.gif||
+vdc_tab_form.gif|vdc_tab_form.gif||
+Time On Park:|tid på parken:||
+Customer Hung-up, 3-way Call Ended Automatically|Kund La på, avslutade 3-vägs samtal automatiskt||
+CUSTOMER 3WAY HANGUP|kund 3way hangup||
+JAN|januari||
+FEB|februari||
+MAR|mar||
+APR|april||
+MAY|Maj||
+JUN|juni||
+JLY|jly||
+AUG|Augusti||
+SEP|september||
+OCT|oktober||
+NOV|november||
+DEC|december||
+ACTIVE DISPLAY PAUSED|AKTIV SKÄRM PAUSAD||
+ORDER|beställa||
+LEAD PREVIEW|FÖRHANDSGRANSKA LEAD||
+ALT PHONE DIAL|RING ALTERNATIVT NUMMER||
+Hide conference call channel information|Göm konferenskanalsinformation||
+Show conference call channel information|Visa konferenskanalsinformation||
+vdc_XB_hotkeysactive.gif|vdc_XB_hotkeysactive_se.gif||
+vdc_XB_hotkeysactive_OFF.gif|vdc_XB_hotkeysactive_OFF_se.gif||
+hide comment history|dölj kommentarhistorik||
+HIDE|dölja||
+show comment history|show kommentar historia||
+ENTER A PAUSE CODE|SKRIV PAUSKOD||
+Call Agent Webphone|samtals agent Webphone||
+Dial Next Call|ringa nästa samtal||
+Dial Countdown:|ringa nedräkning:||
+has selected your in-group choices|har valt dina ingruppsval||
+YOU MUST BE PAUSED TO CHANGE TERRITORIES|du måste vila för att byta territorier||
+You must choose a date|Du måste välja ett datum||
+Select a Date Below|Välj datum||
+DIAL ALERT:|slå larm:||
+TIMER NOTIFICATION:|timer anmälan:||
+Invalid Day, Month, or Year range detected. Please correct and submit again.|ogiltig dag, månad eller år intervall upptäckts. Korrigera och skicka igen.||
+Searching...|söker ...||
+maximize|maximera||
+Next Call Pause Set|nästa samtal paus set||
+YOU MUST BE PAUSED TO CHANGE GROUPS|DU MÅSTE VARA PAUSAD FÖR ATT BYTA GRUPP||
+Manager|Manager ||
+Hide Calls In Queue|Dölj samtalskö||
+Show Calls In Queue|Visa samtalskö||
+Agents View|Agent-översikt||
+WebPhone View|Webphone vy||
+YOU MUST BE PAUSED TO VIEW YOUR CALL LOG|DU MÅSTE VARA I PAUSE-LÄGE FÖRA ATT VISA DIN SAMTALSLOGG||
+Invalid Date Format. Please correct and submit again.|ogiltigt datumformat. Korrigera och skicka igen.||
+The system has received a command to log you out, you have been logged out of your session|Systemet har fått ett kommando för att logga dig ut, har du loggats ut från sessionen||
+You have been paused for too long, you have been logged out of your session|Du har pausats för länge, du har loggat ut från sessionen||
+CLICK HERE TO LOG IN AGAIN|KLICKA HÄR FÖR ATT LOGGA IN||
+Call Wrapup:|Call Wrapup:||
+seconds remaining in wrapup|kvarvarande sekunder till avslut||
+Close Window|stäng fönstret||
+YOU MUST BE PAUSED TO GRAB CALLS IN QUEUE|DU MÅSTE VARA I PAUSLÄGE FÖR ATT TA SAMTAL FRÅN KÖN||
+STILL A LIVE CALL! Hang it up then you can log out.|FORTFARANDE I AKTIVT SAMTAL! Lägg på innan du kan logga ut||
+You are in ALT dial mode, you must finish the lead before logging out.|Du är i ALT uppringningsläge måste du avsluta leadet innan du loggar ut||
+Your Shift is over or has changed, you have been logged out of your session|Ditt skift är slut eller har ändrats, du är nu utloggad från din session||
+PLEASE CLICK THE LOGOUT LINK TO LOG OUT NEXT TIME.|klicka på länken Logga ut för att logga ut nästa gång.||
+You cannot log out during a Dial attempt. Wait 50 seconds for the dial to fail out if it is not answered|Du kan inte logga ut under en uppringningsförsök. vänta 50 sekunder på att ratten för att misslyckas på om det inte besvaras||
+TERRITORIES NOT SELECTED|EJ VALDA OMRÅDEN||
+SELECTED TERRITORIES|VALDA OMRÅDEN||
+Manager has selected territories for you|chef har valt territorier för dig||
+Manual Queue is Off|Manuell Kö är av||
+U - Undefined|u - undefined||
+M - Male|m - hane||
+F - Female|f - hona||
+minimize|minimera||
+Hangup Again|Lägg på igen||
+Next Call Pause|nästa samtal paus||
+Finish Wrapup and Move On|Avsluta och gå vidare||
+GROUPS NOT SELECTED|EJ VALDA GRUPPER||
+SELECTED GROUPS|VALDA GRUPPER||
+ADD ALL|lägga alla||
+Manager has selected groups for you|chef har valt grupper för dig||
+DELETE ALL|ta bort alla||
+DIAL IN-GROUP|RING IN-GRUPP||
+You Must Select a Disposition|Du måste välja utfall||
+You can only disposition a call once|du kan bara disposition ett samtal en gång||
+CUSTOMER|kund||
+AGENT_PHONE|agent_phone||
+YOU MUST BE ON AN ACTIVE INBOUND CALL TO SEARCH FOR A LEAD|Du måste vara på en aktiv inkommande samtal för att söka efter en bly||
+GROUP ALIAS|Gruppalias||
+YOU MUST BE PAUSED TO SEARCH FOR A LEAD|DU MÅSTE VARA I PAUSE-LÄGE FÖR ATT SÖKA EFTER ETT LEAD||
+YOU MUST BE PAUSED TO ENTER A PAUSE CODE IN AUTO-DIAL MODE|DU MÅSTE VARA I PAUSLÄGE FÖR ATT SKRIVA IN EN PAUSKOD NÄR DIALERN STÅR I AUTODIAL||
+PAUSE CODE|paus kod||
+CALL DISPOSITION|SAMTALS DISPOSITION||
+Disposition Status List Hidden|Disposition Status List Dold||
+vdc_XB_localcloser_OFF.gif|vdc_XB_localcloser_OFF_se.gif||
+vdc_XB_blindtransfer_OFF.gif|vdc_XB_blindtransfer_OFF_se.gif||
+vdc_XB_ammessage_OFF.gif|vdc_XB_ammessage_OFF.gif||
+vdc_volume_up_off.gif|vdc_volume_up_off.gif||
+vdc_volume_down_off.gif|vdc_volume_down_off.gif||
+vdc_LB_quickxfer_OFF.gif|vdc_LB_quickxfer_OFF.gif||
+vdc_LB_customxfer_OFF.gif|vdc_LB_customxfer_OFF.gif||
+vdc_XB_leave3waycall_OFF.gif|vdc_XB_leave3waycall_OFF_se.gif||
+vdc_XB_hangupxferline_OFF.gif|vdc_XB_hangupxferline_OFF_se.gif||
+Manual Dial Queue Calls Waiting:|manuell urtavla kö samtal väntar:||
+Call Notes:|Samtalsanteckningar:||
+History|historia||
+Fronter:|Fronter:||
+Incoming:|inkommande:||
+vdc_LB_webform_two_OFF.gif|vdc_LB_webform_two_OFF_se.gif||
+vdc_LB_ivrparkcall_OFF.gif|vdc_LB_ivrparkcall_OFF.gif||
+Unspecified error:|ospecificerat fel:||
+YOU CANNOT SKIP A CALLBACK OR MANUAL DIAL, YOU MUST DIAL THE LEAD|DU KAN INTE SKIPPA EN CALLBACK ELLER MANUELL UPPRINGNING, DU MÅSTE RINGA LEADET||
+Lead was not reverted, there was an error:|bly var inte återgått, det uppstod ett fel:||
+Lead skipped, go on to next lead|bly hoppade, gå vidare till nästa bly||
+ALT DIAL NUMBER: ALT|alt nummer: alt||
+ALT DIAL NUMBER: ADDRESS3|alt nummer: Adress 3||
+ALT DIAL NUMBER:|ALT RING NUMMER:||
+Phone Code and Number:|Prefix och telefonnummer:||
+Active:|Aktiv: ||
+Alt Count:|Alt Antal: ||
+call was not placed, there was an error:|samtal placerades inte, det uppstod ett fel:||
+Change this phone number to INACTIVE|Ändra detta nummer till INAKTIVT||
+Change this phone number to ACTIVE|Ändra detta nummer till AKTIVT||
+This phone number is in the DNC list:|detta telefonnummer är i DNC listan:||
+This phone number is not in the campaign lists:|detta telefonnummer inte är i kampanjlistorna:||
+This phone number is outside of the local call time:|detta telefonnummer är utanför den lokala samtalstiden:||
+vdc_LB_requeue_call.gif|vdc_LB_requeue_call.gif||
+vdc_LB_requeue_call_OFF.gif|vdc_LB_requeue_call_OFF.gif||
+vdc_XB_dialwithcustomer.gif|vdc_XB_dialwithcustomer_se.gif||
+vdc_XB_parkcustomerdial.gif|vdc_XB_parkcustomerdial_se.gif||
+DIAL LEAD|RING LEAD||
+SKIP LEAD|SKIPPA LEAD||
+Preview the Lead then|Förhandsgranska leadet innan||
+No more leads in the hopper for campaign:|inga fler leads i tratten för kampanjen:||
+vdc_LB_customxfer.gif|vdc_LB_customxfer.gif||
+Agent:|Agent: ||
+vdc_LB_quickxfer.gif|vdc_LB_quickxfer.gif||
+vdc_LB_webform_two.gif|vdc_LB_webform_two_se.gif||
+code:|kod:||
+YOU MUST ENTER A PHONE NUMBER AND DIAL CODE TO USE FAST DIAL|DU MÅSTE KNAPPA IN TELEFONNUMMER OCH PREFIX FÖR ATT ANVÄNDA SNABBUPPRINGNING||
+Click Here to Deactivate|Klicka Här för att Avaktivera||
+UID:|uid:||
+Calling:|uppringande:||
+Waiting for Ring...|väntar på ringen ...||
+seconds|sekunder||
+Call Rejected:|ring avvisas:||
+Called 3rd party:|kallade 3: e part:||
+vdc_XB_leave3waycall.gif|vdc_XB_leave3waycall_se.gif||
+vdc_XB_hangupxferline.gif|vdc_XB_hangupxferline_se.gif||
+vdc_XB_hangupbothlines.gif|vdc_XB_hangupbothlines_se.gif||
+Called:|heter:||
+vdc_XB_localcloser.gif|vdc_XB_localcloser_se.gif||
+vdc_XB_blindtransfer.gif|vdc_XB_blindtransfer_se.gif||
+vdc_XB_ammessage.gif|vdc_XB_ammessage.gif||
+Dial In-Group:|ring in-grupp:||
+Click Here to Choose a Dial In-Group|Klicka Här för att Välja en Ring In-Grupp||
+No-Call Dial:|no-ring ring:||
+Click Here to Activate|Klicka Här för att Aktivera||
+PREVIOUS CALLBACK|föregående återuppringning||
+Last Call:|Senaste samtal: ||
+CallBack:|Återuppringning: ||
+YOU MUST BE PAUSED TO MANUAL DIAL A NEW LEAD IN AUTO-DIAL MODE|DU MÅSTE VARA I PAUSLÄGE FÖR ATT RINGA ETT NUMMER MANUELLT NÄR DIALERN ÄR I AUTODIAL||
+Group Alias:|grupp alias:||
+Click Here to Choose a Group Alias|Klicka här för att välja ett gruppalias||
+CALLBACK DATE/TIME|callback datum/tid||
+NUMBER|NUMMER||
+LAST CALL DATE/TIME|senaste samtalet datum/tid||
+NON-DIALABLE|icke-dialable||
+System Delay, Please try again|Fördröjning i systemet, försök igen||
+MAIN PHONE|HUVUDNUMMER||
+or|eller||
+ALT PHONE|ALTERNATIVT NUMMER||
+FINISH LEAD|AVSLUTA LEAD||
+Dialable Leads:|dialable ledningar:||
+ACTIVE CALLBACKS|AKTIVA ÅTERUPPNINGNINGAR||
+YOU MUST BE PAUSED TO CHECK CALLBACKS IN AUTO-DIAL MODE|DU MÅSTE VARA I PAUSLÄGE FÖR ATT KOLLA ÅTERUPPRINGNINGAR NÄR DIALERN ÄR I AUTODIAL||
+Leave 3Way Call Again|Lämna 3way samtal igen||
+vdc_LB_grabivrparkcall_OFF.gif|vdc_LB_grabivrparkcall_OFF.gif||
+Dial Next Number|Ring nästa nummer||
+Lead:|bly:||
+List:|lista:||
+Dial Alt Phone Number:|ringa alt telefonnummer:||
+Manual Queue:|manuell kö:||
+Placing call to next number|placering samtal till nästa nummer||
+LIVE CALLS IN YOUR SESSION:|levande samtal i din session:||
+REMOTE CHANNEL|FJÄRRKANAL||
+VOLUME|VOLYM||
+recording|inspelning||
+vdc_volume_up.gif|vdc_volume_up.gif||
+vdc_volume_down.gif|vdc_volume_down.gif||
+YOU MUST SELECT AN AGENT TO TRANSFER TO WHEN USING AGENTDIRECT|Du måste välja en agent för att överföra till när man använder agentdirect||
+Transfer number must have at least 1 digit:|överföringsnummer måste ha minst 1 siffra:||
+vdc_LB_webform_OFF.gif|vdc_LB_webform_OFF_se.gif||
+vdc_LB_stoprecording_OFF.gif|vdc_LB_stoprecording_OFF.gif||
+vdc_LB_startrecording_OFF.gif|vdc_LB_startrecording_OFF_se.gif||
+vdc_LB_senddtmf_OFF.gif|vdc_LB_senddtmf_OFF_se.gif||
+vdc_LB_grabivrparkcall.gif|vdc_LB_grabivrparkcall.gif||
+vdc_LB_ivrparkcall.gif|vdc_LB_ivrparkcall.gif||
+vdc_volume_UNMUTE.gif|vdc_volume_UNMUTE_se.gif||
+vdc_volume_MUTE.gif|vdc_volume_MUTE_se.gif||
+vdc_XB_dialwithcustomer_OFF.gif|vdc_XB_dialwithcustomer_OFF_se.gif||
+vdc_XB_parkcustomerdial_OFF.gif|vdc_XB_parkcustomerdial_OFF_se.gif||
+Your session has been paused|din session har pausats||
+vdc_LB_hangupcustomer_OFF.gif|vdc_LB_hangupcustomer_OFF_se.gif||
+vdc_LB_transferconf_OFF.gif|vdc_LB_transferconf_OFF_se.gif||
+vdc_LB_grabparkedcall_OFF.gif|vdc_LB_grabparkedcall_OFF.gif||
+vdc_LB_parkcall_OFF.gif|vdc_LB_parkcall_OFF_se.gif||
+vdc_LB_senddtmf.gif|vdc_LB_senddtmf_se.gif||
+vdc_LB_dialnextnumber_OFF.gif|vdc_LB_dialnextnumber_OFF_se.gif||
+vdc_LB_webform.gif|vdc_LB_webform_se.gif||
+vdc_LB_stoprecording.gif|vdc_LB_stoprecording_se.gif||
+vdc_LB_startrecording.gif|vdc_LB_startrecording_se.gif||
+vdc_LB_transferconf.gif|vdc_LB_transferconf_se.gif||
+vdc_LB_grabparkedcall.gif|vdc_LB_grabparkedcall_se.gif||
+vdc_LB_parkcall.gif|vdc_LB_parkcall_se.gif||
+agc_live_call_ON.gif|agc_live_call_ON_se.gif||
+agc_live_call_DEAD.gif|agc_live_call_DEAD_se.gif||
+vdc_LB_hangupcustomer.gif|vdc_LB_hangupcustomer_se.gif||
+loading.gif|loading.gif||
+blank.gif|blank.gif||
+agc_live_call_OFF.gif|agc_live_call_OFF_se.gif||
+vdc_LB_pause.gif|vdc_LB_pause_se.gif||
+vdc_LB_resume_OFF.gif|vdc_LB_resume_OFF_se.gif||
+vdc_LB_dialnextnumber.gif|vdc_LB_dialnextnumber_se.gif||
+Sorry, there are no available sessions|sorry, det finns inga tillgängliga sessioner||
+vdc_LB_pause_OFF.gif|vdc_LB_pause_OFF_se.gif||
+vdc_LB_resume.gif|vdc_LB_resume_se.gif||
+Login:|Logga in:||
+Password:|lösenord:||
+Too many agents logged in, please contact your administrator|Alltför många agenter inloggad, kontakta administratören||
+Agent web client: Phone Login Error|agent webbklient: telefon inloggnings error||
+Login Error|inloggning fel||
+Sorry, your phone login and password are not active in this system, please try again:|ledsen, din telefon och lösenord är inte aktiva i detta system, försök igen:||
+Sorry, there are no leads in the hopper for this campaign|Tyvärr finns det inga leads i hoppern för denna kampanj||
+Too many network errors, please contact your administrator|Alltför många nätverk fel, kontakta administratören||
+No available servers, please contact your administrator|Inga tillgängliga servrar, kontakta administratören||
+No available phones, please contact your administrator|Inga tillgängliga telefoner, kontakta administratören||
+You are already logged in, please log out of your other session first|Du är redan inloggad, logga ut från ditt andra session först||
+Sorry, you are not allowed to login to this campaign:|ledsen, är det inte tillåtet att logga in på den här kampanjen:||
+Campaign not active, please try again|Kampanjen är ej aktiv, vänligen försök igen||
+Login incorrect, please try again|Inloggningsuppgifterna är felaktiga, vänligen försök igen||
+Too many login attempts, try again in 15 minutes|för många inloggningsförsök, försök igen om 15 minuter||
+phone login|telefon inloggning||
+ERROR: There are no Shifts enabled for your user group|ERROR: Det finns inga skift definierade för din användargrupp||
+ERROR: You are not allowed to log in outside of your shift|ERROR: Du har inte behörighet att logga in utanför ditt skift||
+Agent web client:  Login|agent webbklient: inloggning||
+Login|inloggning||
+Agent web client:  Phone Login|agent webbklient: telefon inloggning||
+Campaign:|kampanj:||
+Refresh Campaign List|Uppdatera kampanjlistan||
+Agent web client: Campaign Login|agent webbklient: kampanj inloggning||
+Campaign Login|Kampanjinloggning||
+Phone Login:|telefon login:||
+Phone Password:|Telefonen lösenord:||
+User Login|Användare||
+Agent web client: Re-Login|agent webbklient: re-inloggning||
+vdc_tab_vicidial.gif|vdc_tab_vicidial.gif||
+Re-Login|Logga in på nytt||
+You have now logged out. Thank you|Du är nu utloggad ur systemet, välkommen åter!||
+ERROR: System Settings missing|error: systeminställningar saknas||
+pause_code not valid|pause_code inte giltigt||
+pause_code function sent|pause_code funktion sänds||
+pause_code error - agent is not paused|pause_code error - agenten inte pausas||
+transfer_conference function set|transfer_conference funktion set||
+agent_user does not have a live call|agent_user har inte en levande samtal||
+park_call function set|park_call funktionsuppsättning||
+transfer_conference not valid|transfer_conference inte giltigt||
+value is not valid|Värdet är inte giltigt||
+st_login_log user found|st_login_log användare hittades||
+st_get_agent_active_lead not valid|st_get_agent_active_lead inte giltigt||
+st_get_agent_active_lead lead found|st_get_agent_active_lead bly hittades||
+no active lead found|ingen aktiv bly hittades||
+user not logged in|användaren inte inloggad||
+ra_call_control not valid|ra_call_control inte giltigt||
+ra_call_control hungup|ra_call_control hungup||
+phone_number is not valid|PHONE_NUMBER är inte giltigt||
+ra_call_control transfer|ra_call_control överföring||
+ingroup is not valid|ingroup är inte giltig||
+stage is not valid|skede är inte giltigt||
+no active call found|ingen aktiv samtal hittade||
+send_dtmf not valid|send_dtmf inte giltigt||
+park_call not valid|park_call inte giltigt||
+phone_code set to|phone_code inställd på||
+address1 set to|address1 inställd på||
+address2 set to|adress2 inställd på||
+address3 set to|Adress 3 inställd på||
+alt_phone set to|alt_phone inställd på||
+city set to|stad satt till||
+comments set to|kommentarer inställd på||
+country_code set to|country_code inställd på||
+date_of_birth set to|date_of_birth set till||
+email set to|e inställd på||
+first_name set to|FIRST_NAME inställd på||
+gender set to|kön satt till||
+gmt_offset_now set to|gmt_offset_now satt till||
+last_name set to|last_name inställd på||
+middle_initial set to|middle_initial set till||
+phone_number set to|PHONE_NUMBER inställd på||
+postal_code set to|postal_code inställd på||
+province set to|provinsen satt till||
+security_phrase set to|security_phrase inställd på||
+source_id set to|source_id inställd på||
+state set to|staten satt till||
+title set to|titel satt till||
+vendor_lead_code set to|vendor_lead_code inställd på||
+rank set to|rang inställd på||
+owner set to|Ägaren satt till||
+update_fields lead updated|update_fields bly uppdateras||
+no fields have been defined|inga fält har definierats||
+agent_user does not have a lead on their screen|agent_user har ingen ledning på deras skärm||
+user is not allowed to modify lead information|Användaren är inte tillåtet att ändra bly uppgifter||
+set_timer_action not valid|set_timer_action inte giltigt||
+set_timer_action lead updated|set_timer_action bly uppdateras||
+user is not allowed to modify campaign settings|Användaren är inte tillåtet att ändra kampanjinställningar||
+ingroup does not exist|ingroup existerar inte||
+ingroup_choices are required for ADD and REMOVE values|ingroup_choices krävs för lägga till och ta bort värden||
+User settings set as default|användarinställningar som standard||
+change_ingroups function set|change_ingroups funktionsuppsättning||
+user is not allowed to change agent in-groups|Användaren är inte tillåtet att ändra agent i-grupper||
+campaign does not allow inbound calls|Kampanjen tillåter inte inkommande samtal||
+st_login_log not valid|st_login_log inte giltigt||
+preview_dial_action function set|preview_dial_action funktion set||
+external_add_lead not valid|external_add_lead inte giltigt||
+lead added|bly tillsatt||
+lead insertion failed|bly införing misslyckades||
+add_lead PHONE NUMBER IN DNC|add_lead telefonnummer i dnc||
+add_lead PHONE NUMBER IN CAMPAIGN DNC|add_lead telefonnummer i kampanj dnc||
+campaign manual dial list undefined|Kampanjen manuell uppringningslista odefinierat||
+change_ingroups not valid|change_ingroups inte giltiga||
+campaign dial_method does not allow outbound autodial|kampanj dial_method tillåter inte utgående snabbnummer||
+phone_number is already in this agents manual dial queue|PHONE_NUMBER finns redan i detta agenter manuell ratten kö||
+external_dial function set|external_dial funktionsuppsättning||
+agent_user is not allowed to place manual dial calls|agent_user är inte tillåtet att placera manuella uppringningssamtal||
+agent_user is not paused|agent_user inte pausas||
+preview_dial_action not valid|preview_dial_action inte giltigt||
+preview dialing not allowed on this campaign|förhandsgranskning uppringning inte tillåtet på den här kampanjen||
+preview dial skipping not allowed on this campaign|förhandsgranskning ratten hoppa inte tillåtet på den här kampanjen||
+alt number dialing not allowed on this campaign|alt nummer uppringningen inte tillåtet på den här kampanjen||
+vtiger callback activity does not exist in vtiger system|vtiger callback-aktivitet finns inte i vtiger systemet||
+phone number lead_id search not found|telefonnummer lead_id sökningen hittades inte||
+phone number is not valid|telefonnummer är ogiltigt||
+lead_id is not valid|lead_id är inte giltigt||
+audio_playback error - no audio playing in agent session|audio_playback fel - ingen ljud spelar i agent session||
+audio_playback function sent|audio_playback funktion sänds||
+audio_playback error - entry is empty|audio_playback fel - posten är tom||
+audio_playback error - no session data|audio_playback fel - ingen sessionsdata||
+external_dial not valid|external_dial inte giltigt||
+caller_id_number from group_alias is not valid|caller_id_number från group_alias är inte giltigt||
+group_alias is not valid|group_alias är inte giltigt||
+Could not connect: |kunde inte ansluta:||
+call_agent not valid|call_agent inte giltigt||
+call_agent function sent|call_agent funktion sänds||
+call_agent error - entry is empty|call_agent error - posten är tom||
+call_agent error - no session data|call_agent fel - ingen sessionsdata||
+audio_playback not valid|audio_playback inte giltigt||
+audio_playback previous playback stopped|audio_playback föregående uppspelningen stoppas||
+audio_playback error - audio already playing in agent session|audio_playback fel - ljud som redan spelar i agent session||
+recording function sent|inspelningsfunktion skickas||
+webphone_url not valid|webphone_url inte giltigt||
+webphone_url active and displayed|webphone_url aktivt och visas||
+webphone_url active and launched|webphone_url aktiva och lanserat||
+click here to continue. . .|Klicka här för att fortsätta. . .||
+webphone_url error - webphone url is empty|webphone_url fel - Webphone url är tom||
+webphone_url error - no session data|webphone_url fel - ingen sessionsdata||
+recording not valid|inspelning inte giltigt||
+NOTICE|tillkännagivande||
+recording active|inspelning aktiv||
+not recording|inte spelar in||
+stop recording error|stoppa inspelningen fel||
+external_hangup function set|external_hangup funktionsuppsättning||
+agent_user is not logged in|agent_user är inte inloggad||
+external_status not valid|external_status inte giltigt||
+external_status function set|external_status funktionsuppsättning||
+external_pause not valid|external_pause inte giltigt||
+external_pause agent is not paused|external_pause medlet inte pausas||
+external_pause function set|external_pause funktionsuppsättning||
+logout not valid|utloggning inte giltigt||
+logout function set|logout funktionsuppsättning||
+upload maximum filesize: |ladda maximal filstorlek:||
+default socket timeout: |standarduttag timeout:||
+ini_get not allowed: |ini_get inte tillåtna:||
+external_hangup not valid|external_hangup inte giltigt||
+no user found|ingen användare hittade||
+You have now logged-in|Du har nu loggat in||
+You logged in at|Du loggade in||
+You have now logged-out|Du har nu loggats ut||
+You logged out at|Du loggade ut kl ||
+Amount of time you were logged-in:|Inloggad tid: ||
+ERROR: timeclock log entry already made:|ERROR: stämpelklockan har redan använts: ||
+BACK to Agent Login Screen|TILLBAKA till inloggningssidan||
+BACK to Administration|TILLBAKA till administration||
+BACK to Welcome Screen|TILLBAKA till välkomstssidan||
+Time since you were last logged-in:|Tid sen du senast loggade in: ||
+You last logged-out at:|Du loggade senast ut kl: ||
+Click LOGIN below to log-in|Klicka på LOGIN nedan för att logga in||
+Amount of time you have been logged-in:|Hur lång tid du varit inloggad: ||
+You logged-in at:|Du loggade in kl:||
+Click LOGOUT below to log-out|Klicka på LOGOUT nedan för att logga ut||
+Voicemail Check|Lyssna av röstbrevlåda||
+voicemail box %1s is not valid|röstbrevlåda %1s är inte giltigt||
+DATE:|datum:||
+EPOCH:|epok:||
+SUCCESS|framgång||
+ERROR|FEL||
+Invalid Source|ogiltig källa||
+Invalid Username/Password|ogiltigt användarnamn/lösenord||
+System API NOT ACTIVE|Systemet api inte aktiv||
+VICIDiaL Agent API|vicidial agent api||
+host name: |värdnamn:||
+server name: |servernamn:||
+php version: |php-version:||
+apache version: |apache-version:||
+apache processes: |apache processer:||
+system load average: |systembelastningen genomsnitt:||
+disk free space: |ledigt utrymme:||
+maximum execution time: |maximal genomförandetid:||
+maximum input time: |maximal tid ingång:||
+memory limit: |minnesgränsen:||
+post maximum size: |posta maximal storlek:||
+Province:|provinsen:||
+Alt. Phone:|alt. telefon:||
+Email:|e-post:||
+Show:|show:||
+Comments:|Kommentarer: ||
+Question:|fråga:||
+Answer:|svara:||
+Disposition:|disposition:||
+Processing...|bearbetning ...||
+PAUSE AGENT DIALING|PAUSA AGENTUPPRINGNING||
+Please click SUBMIT to hangup and disposition the call|klicka kasta sig lägga på och disposition samtalet||
+denotes required fields|betecknar obligatoriska fält||
+The user and password you entered are not active in the system<BR>Please try again:|användaren och lösenord du angett är inte aktiv i systemet <br> försök igen:||
+Agent Timeclock|agent timeclock||
+vtc_tab_vicidial.gif|vtc_tab_vicidial.gif||
+Timeclock|timeclock||
+User Login:|användarinloggning:||
+User Password:|användarlösenord:||
+VERSION:|version:||
+BUILD:|bygga:||
+You cannot log in or out within 30 seconds of your last login or logout|Du kan inte logga in eller ut på 30 sekunder efter ditt senaste försök||
+Called Count:|kallas Antal:||
+Last Local Call Time:|förra lokal jourtid:||
+CALL LOG FOR THIS LEAD:|samtalslogg för denna ledning:||
+NOTES:|Noteringar: ||
+No calls found|Inga samtal hittades||
+EMAIL LOG FOR THIS LEAD:|e Loggen för bly:||
+EMAIL TO|e-post till||
+ATTACHMENTS|bilagor||
+MESSAGE:|meddelande:||
+Call %1s grabbed for %2s|call %1s gripit för %2s||
+Call %1s could not be grabbed for %2s|samtals %1s kunde inte gripas för %2s||
+DONE:|gjort:||
+Unidentified Hangup Cause Code.|Oidentifierad Orsak-kod För Samtalets Avslut||
+Unidentified SIP Hangup Cause Code.|oidentifierad klunk hängning orsak koden.||
+VICIDiaL Script Display Script|vicidial skript display skript||
+Title|titel||
+Gender|kön||
+Email|e||
+Comments|kommentarer||
+ViciDial Script|vicidial skript||
+Data Updated, Hanging up call, please wait|uppgifter uppdaterade, hänga upp samtal, var god vänta||
+Vendor ID:|leverantörs id:||
+Title:|titel:||
+Middle Initial:|mellan initial:||
+Status:|status:||
+List ID:|lista id:||
+Timezone:|Tidszon:||
+Called Since Last Reset:|kallas sedan senaste nollställning:||
+ DIAL | RING||
+Dial Link:|slå länk:||
+SELECT THIS LEAD|väljer denna ledning||
+OFFICE|kontor||
+MOBILE|mobil||
+OTHER 1|övriga 1||
+OTHER 2|övriga 2||
+BU NAME|firma||
+Dept:|dept:||
+Group|grupp||
+Job:|jobb:||
+Location:|plats:||
+no Lead ID|inget bly id||
+Callback Status:|återuppringnings status:||
+Callback Lead Status:|återuppringnings bly Status:||
+Callback Entry Time:|återuppringnings posten tid:||
+Callback Trigger Time:|återuppringnings trigger tid:||
+Callback Comments:|återuppringnings kommentarer:||
+ Title| Titel||
+First|Förnamn||
+MI|mi||
+Last |Efternamn ||
+Address1|address1||
+Address2|adress2||
+Address3|PERSONNUMMER||
+ State| tillstånd ||
+Province|Provins||
+PostCode|Postnummer||
+Vendor ID|Leverantör ID||
+ Gender|  kön||
+DialCode|Landskod||
+Alt. Phone|Alternativ telefon||
+Show|Visa||
+ Email| Email||
+ Comments| Kommentarer||
+There was a problem with your search terms|det fanns ett problem med dina söktermer||
+Campaign not found|kampanj inte funnit||
+You must enter in search terms, one of these must be populated: office number, last name, first name|måste du ange i söktermer, en av dessa måste befolkas: kontorsnummer, efternamn, förnamn||
+FIRST NAME|förnamn||
+LAST NAME|efternamn||
+INFO|info||
+DIAL|ringa||
+No calls on this day|Inga samtal denna dag||
+Close Call Log|Stäng Samtalslogg||
+You must enter in search terms, one of these must be populated: lead ID, vendor ID, phone number, last name|måste du ange i söktermer, måste en av dessa befolkas: bly id, försäljare id, telefonnummer, efternamn||
+Go Back|Tillbaka||
+Results Found:|Hittade:||
+LAST CALL|senaste samtalet||
+CITY|Stad||
+STATE|tillstånd||
+ZIP|zip||
+No results found|Inga resultat hittades||
+SELECT|välj||
+PHONE|Telefon||
+FULL NAME|fullständigt namn||
+WAIT|vänta||
+AGENT|medel||
+CALL GROUP|samtalsgrupp||
+TYPE|typ||
+TAKE CALL|ta samtal||
+GO|gå||
+close|nära ||
+DATE/TIME|datum/tid||
+LENGTH|längd||
+STATUS|status||
+CAMPAIGN|Kampanj||
+IN/OUT|in/ut||
+ALT|alt||
+HANGUP|hangup||
+Dispo Choice %1s or lead_id %2s is not valid|DISPO val %1s eller lead_id %2s är inte giltigt||
+Lead %1s has been changed to %2s Status|bly %1s har ändrats till %2s Status||
+phone_number %1s or lead_id %2s is not valid|PHONE_NUMBER %1s eller lead_id %2s är inte giltigt||
+Lead %1s information has%2s been updated|leda %1s information har %2s uppdaterats||
+stage %1s is not valid|skede %1s är inte giltigt||
+Agent %1s is now in status %2s|agent %1s är nu i status %2s||
+favorites list %1s is not valid|favoritlistan %1s är inte giltigt||
+Favorites list has been updated to %1s for %2s|favoritlista har uppdaterats till %1s för %2s||
+agent_log_id %1s or pause_code %2s is not valid|agent_log_id %1s eller pause_code %2s är inte giltigt||
+ Pause Code %1s has been recorded|  pause kod %1s har registrerats||
+READY|färdig||
+INCALL|incall||
+PAUSED|pausas||
+-LOGGED-OUT|-logged-out||
+Calls in Queue View Disabled for this campaign|Vy över samtalskö är inaktiverat för denna kampanj||
+ALT PHONE NUMBER STATUS NOT CHANGED|alt telefonnummer status inte förändrats||
+%1s %2s %3s or %4s is not valid| %1s %2s %3s eller %4s är inte giltigt||
+ALT PHONE NUMBER STATUS CHANGED|alt telefonnummer status ändrats||
+AGENT ALERT SETTING NOT CHANGED|agent alert inställning inte förändrats||
+%1s is not valid| %1s är inte giltigt||
+AGENT ALERT SETTING CHANGED %1s|medel alert inställning ändras %1s||
+uniqueid %1s or lead_id: %2s or list_id: %3s or phone_number: %4s or campaign: %5s is not valid|uniqueid %1s eller lead_id: %2s eller list_id: %3s eller PHONE_NUMBER: %4s eller kampanj: %5s är inte giltigt||
+VICIDiaL_LOG Inserted:|vicidial_log införas:||
+uniqueid %1s or lead_id: %2s is not valid|uniqueid %1s eller lead_id: %2s är inte giltigt||
+Campaign %1s is not valid|Kampanjen %1s är inte giltigt||
+lead_id %1s is not valid|lead_id %1s är inte giltigt||
+Campaign %1s is not valid or lead_id %2s is not valid|Kampanjen %1s är ogiltig eller lead_id %2s är inte giltigt||
+campaign %1s or conf_exten %2s is not valid|kampanj %1s eller conf_exten %2s är inte giltigt||
+Manager Login:|manager login:||
+Manager Password:|manager lösenord:||
+SUBMIT|SKICKA||
+PLEASE SELECT A CAMPAIGN|VÄNLIGEN VÄLJ EN KAMPANJ||
+YOU MUST LOG IN TO THE TIMECLOCK FIRST|DU MÅSTE STÄMPLA IN FÖRST||
+Group Choice is not valid|grupp valet är ogiltigt||
+Closer In Group Choice %1s has been registered to user %2s|närmare i gruppvals %1s har registrerats användar %2s||
+Territory Choice is not valid|territorium valet är ogiltigt||
+Territory Choice %1s has been registered to user %2s|territorium val %1s har registrerats användar %2s||
+no lead info in system:|inget bly info i systemet:||
+no lead active for this agent|inget bly aktivt för detta medel||
+no agent session|ingen agentsession||
+Conf Exten %1s or campaign %2s or ext_context %3s is not valid|conf EXTEN %1s eller kampanj %2s eller ext_context %3s är inte giltigt||
+Phone and Post Code Time Zone Mismatch! |telefon och postnummer tidszon obalans!||
+ Phone Area Code Outside Dialable Zone|  telefon riktnummer utanför dialable zon||
+ Postal Code Outside Dialable Zone|  postnummer utanför dialable zon||
+Invalid session_name:|ogiltig session_name:||
+VICIDiaL Database Query Script|vicidial databasfrågan script||
+USER LOGIN ERROR|användarinloggnings fel||
+There are no Shifts enabled for your user group|det finns inga skift aktiverade för din användargrupp||
+You are not allowed to log in outside of your shift|du får inte logga in utanför ditt skift||
+MANAGER OVERRIDE:|manager omställning:||
+MULTI_MATCH CHECK:|multi_match check:||
+MULTI_MATCH:|multi_match:||
+Invalid Username/Password:|ogiltigt användarnamn/lösenord:||
+DONE: %1s match found, %2s updated to %3s with %4s status|gjort: %1s TRÄFF, %2s uppdaterats till %3s med %4s status||
+DONE: no match found within %1s     %2s|gjort: ingen match inom %1s %2s||
+DONE: %1s is empty for lead %2s|gjort: %1s är tom för bly %2s||
+DONE: dispo is not a sale status: %1s|gjort: DISPO är inte en försäljning status: %1s||
+UserID: $FCS%1s - %2s$FCE,  Date: %3s|Användar-ID: $FCS%1s - %2s$FCE, Födelse: %3s||
+Invalid server_ip: %1s or Invalid session_name: %2s|ogiltig server_ip: %1s eller ogiltiga session_name: %2s||

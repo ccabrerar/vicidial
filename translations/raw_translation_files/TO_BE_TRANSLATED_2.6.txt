@@ -1,0 +1,351 @@
+############################################################  ADMIN
+In-Group Manual Dial||
+In-Group Manual Dial Select||
+This feature allows you to enable the ability for agents to place manual dial outbound calls that are logged as in-group calls assigned to a specific in-group. The MANUAL_DIAL option allows the placing of phone calls out through an In-Group to the agent placing the call. The NO_DIAL option allows the agent to log time on a call that does not exist, as if it were a real call, this is often used for logging email or faxing time. The BOTH option will allow both call and no-call in-group dialing. The default is DISABLED||
+This option is only active if the above In-Group Manual Dial feature is not DISABLED. This option restricts the selectable In-Groups that the agent can place In-Group Manual Dial calls through. CAMPAIGN_SELECTED will show only the in-groups that the campaign has set as allowable in-groups. ALL_USER_GROUP will show all of the in-groups that are viewable to the members of the user group that the agent belongs to||
+Dial In-Group CID||
+If the agent campaign allows for Manual In-Group Dialing, this caller ID number will be sent as the outgoing CID of the phone call if it is populated, overriding the campaign settings and list CID override setting. Default is empty||
+You can also use LTMG or XFTAMM as statuses to trigger an automatic transfer to the Leave-Voicemail option||
+Send to Answering Machine Message||
+Safe Harbor Audio Field||
+This optional setting allows you to define a field in the list that the system will use as the audio filename for each lead in place of the Safe Harbor Audio file. If this is set to DISABLED the Safe Harbor Audio file will always be used. The system will do no validation to make sure that the audio file exists other than to make sure the value of the field is at least one character, so if you want a lead to use the default Safe harbor Audio then you just set the field value in the lead to empty. You can use the pipe character to link multiple audio files together in the field value for each lead. Default is DISABLED. Here is the list of fields that can be used for this setting||
+Call Menu Qualify Enabled||
+This setting enables the option in Call Menus to put a SQL qualification on the people that hear that call menu. For more information on how that feature works, view the help for Call Menus. Default is 0 for disabled||
+Qualify SQL||
+This field allows you to input SQL - Structured Query Language - database fragments, like with Filters, to determine whether this call menu should play for the caller or not. This feature only works if the call has the callerIDname set prior to being sent to this call menu, either as an outbound survey transfer, or through the use of a drop call menu for an In-Group call. If there is a match, the call will proceed as normal. If there is no match, the call will go to the D option or the invalid option if no D option is set. You cannot use single-quotes in this field, only double-quotes if they are needed. Default is empty for disabled||
+Admin List Counts||
+This setting allows you to disable the list counts that appear on the Lists listing and the Campaign modify screens. Default is 1 for enabled||
+The Y_API_LAUNCH option can be used with the agent API to launch the webphone in a separate Iframe or window||
+If the option has BLANK at the end, then users are allowed to dial leads with no owner defined in addition to owner defined leads||
+Voicemail Greeting||
+This optional setting allows you to define a voicemail greeting audio file from the audio store. Default is blank||
+Allow Voicemail Greeting Chooser||
+If this setting is enabled it will allow you to choose an audio file from the audio store to be played as the voicemail greeting to a specific voicemail box. Default is 0 for disabled||
+File to Delete||
+Agent Pause After Next Call Link||
+This option if enabled will display a link on the agent screen that will let the agent go on pause automatically after they hang up their next call. Default is DISABLED||
+Owner Populate||
+If this is enabled and the owner field of the lead is blank, the owner field for the lead will populate with the user ID of the agent that handles the call first. Default is DISABLED||
+This field allows you to customize the name of the recording when Campaign recording is ONDEMAND or ALLCALLS. The allowed variables are||
+The default is FULLDATE_AGENT and would look like this 20051020-103108_6666. Another example is CAMPAIGN_TINYDATE_CUSTPHONE which would look like this TESTCAMP_51020103108_3125551212. Te resulting filename must be less than 90 characters in length||
+This field will override the Campaign Recording Filenaming Scheme unless it is set to NONE. The allowed variables are||
+Audit Comments||
+This option allows comments to be moved to an audit table. No longer editable, but viewable along with the date-time-creator of each comment. Default is N. This is a part of the Quality Control Add-On||
+QueueMetrics Socket Send||
+This option, if enabled, will send QM data to a web page that will send it through a socket for logging. The CONNECT_COMPLETE option will send CONNECT, COMPLETEAGENT and COMPLETECALLER events to the url defined below. Default is NONE for disabled||
+QueueMetrics Socket Send URL||
+If Socket Send is enabled above, this is the URL that is used to send the data to. Default is EMPTY for disabled||
+Add Holiday||
+Modify Holiday||
+Delete Holiday||
+New Holiday Addition||
+Holidays||
+Holiday ID||
+This is the short name of a Holiday Definition. This needs to be a unique identifier. Do not use any spaces or punctuation for this field. max 30 characters, minimum of 2 characters||
+Holiday Name||
+This is a more descriptive name of the Holiday Definition. This is a short summary of the Holiday definition. max 100 characters, minimum of 2 characters||
+Holiday Comments||
+This is where you can place comments for a Holiday Definition such as -10am to 4pm boxing day restrictions-.  max 255 characters||
+Holiday Date||
+This is the date of the holiday||
+Holiday Status||
+This is the status of the holiday entry. ACTIVE status means that the holiday will be enabled on the holiday date. INACTIVE status means that the holiday will be ignored even on the holiday date. EXPIRED means that the holiday has passed it's holiday date. Default is INACTIVE||
+short description of the holiday||
+Day and time options will appear once you have created the Holiday Definition||
+HOLIDAY DEFINITION NOT ADDED||
+there is already a holiday entry with this ID||
+Holiday ID, name and date must be populated||
+HOLIDAY ADDED||
+HOLIDAY NOT MODIFIED||
+HOLIDAY MODIFIED||
+HOLIDAY NOT DELETED||
+Holiday ID must be at least 2 characters in length||
+HOLIDAY DELETION CONFIRMATION||
+Click here to delete holiday||
+HOLIDAY DELETION COMPLETED||
+Holiday Rule Removed||
+MODIFY A HOLIDAY||
+CALL TIMES USING THIS HOLIDAY||
+DELETE THIS HOLIDAY DEFINITION||
+Active Inbound Holiday Definitions for this Record||
+Add inbound holiday rule||
+Holiday Rule Added||
+Holiday Rule Removed||
+Click here to see Admin changes to this holiday||
+Expiration Date||
+This option allows you to set the date after which leads in this list will not be allowed to be auto-dialed or manual-list-dialed by the system. Default is 2099-12-31||
+Other Campaign DNC||
+If the option Use Campaign DNC List is enabled, this option can allow you to use a different campaign DNC list, just put the Campaign ID of the other campaign in this field. If you use this option, the original campaign DNC list will no longer be checked, only the OTHER campaign DNC list will be used. This does not affect use of the Internal System DNC list. Default is EMPTY||
+LIST EXPIRED AND SET TO ACTIVE||
+Enhanced Disconnect Logging||
+This setting enables logging of calls that get a CONGESTION signal with a cause code of 1, 19, 21, 34 or 38. We usually do not recommend enabling this in the USA. Default is 0 for disabled||
+LIVE_CALL_INBOUND will allow search for a lead while on an inbound call only. LIVE_CALL_INBOUND_AND_MANUAL will allow search for a lead while on an inbound call or while paused. When Lead Search is used on a live inbound call, the lead of the call when it went to the agent will be changed to a status of LSMERG, and the logs for the call will be modified to link to the agent selected lead instead||
+If this is a call that will go to a Call Menu and then back to an in-group, we suggest you use CUSTOMERCLOSER in this field, and also you need to set the In-Group Search Method in the Call Menu to CLOSER||
+Add New EMAIL In-Group||
+Copy EMAIL In-Group||
+New Email Group Addition||
+New Copied Email Group Addition||
+Modify EMAIL In-Group||
+Email In-Groups||
+Modify Email Accounts||
+This option if set to 1 allows the user to modify email accounts in the email account management page||
+Allow Emails||
+This is where you can set whether the users of this campaign will be able to receive inbound emails in addition to phone calls||
+This is where you can set whether this system will be able to receive inbound emails in addition to phone calls||
+VICIDIAL EMAIL ACCOUNTS||
+The Vicidial Email Accounts management section allows you to create, copy, and delete email account settings that will allow you to have email messages come into your Vicidial system and be treated as regular calls.  EMAIL ACCOUNTS MUST BE SET UP BY YOU AND AN EMAIL SERVICE PROVIDER - THAT IS NOT COVERED BY THIS MODULE||
+Email Account ID||
+This is the short name of the email account, it is not editable after initial submission, must not contain any spaces and must be between 2 and 20 characters in length||
+Email Account Name||
+This is the full name of the email account, it must be between 2 and 30 characters in length||
+This determines whether this account will be checked for new email messages to be loaded into the dialer||
+Email Account Description||
+This allows for a lengthy description, if needed, of the email account.  255 characters max||
+Email Account Type||
+Specifies whether the account is used for inbound or outbound email messages.  Should be set to INBOUND||
+Admin User Group||
+This is the administrative user group for this inbound group, this allows admin viewing of this in-group restricted by user group. Default is --ALL-- which allows any admin user to view this in-group||
+Email Account Protocol||
+This is the email protocol used by the account you are setting up access to.  Currently only IMAP and POP3 accounts are supported||
+Email Reply-to Address||
+The email address of the account you are setting up access to.  Replies to email messages from the agent interface will read as coming from this address||
+Email Account Server||
+The email server that the account is housed on||
+Email Account User||
+The login used to access this account.  Usually it's the portion of the reply-to address before the -at- symbol||
+Email Account Password||
+The password used to access this account.  This is usually set at the time the email account is created||
+Email Frequency Check Rate (mins)||
+How often this email account should be checked.  The highest rate of frequency at the moment is five minutes; some email providers will not allow more than three login attempts in fifteen minutes before locking the account for an indeterminate amount of time||
+In-Group ID||
+The In-Group that email messages will be sent to||
+Default List ID||
+The List ID that leads will be inserted into if necessary||
+In-Group Call Handle Method||
+This is the action that will be taken when a new email is found in the account.  EMAIL means all email messages will be inserted into vicidial_list as a new lead.  EMAILLOOKUP will search the entire vicidial_list table for the email address in the email column - if the lead is found, that lead's list ID will be used in the record that goes into the vicidial_email_list table.  EMAILLOOKUPRC does the same, but it will only search lists belonging to the campaign selected in the "In-Group Campaign ID" box below.  EMAILLOOKUPRL will only search one particular list, which is the one entered into the "In-Group List ID" box below||
+In-Group Agent Search Method||
+The agent search method to be used by the inbound group, LO is Load-Balanced-Overflow and will try to send the call to an agent on the local server before trying to send it to an agent on another server, LB is Load-Balanced and will try to send the call to the next agent no matter what server they are on, SO is Server-Only and will only try to send the calls to agents on the server that the call came in on. Default is LB.||
+In-Group List ID||
+This is the List ID that will be used to search for a match within||
+In-Group Campaign ID||
+This is the Campaign ID that will be used to search for a match within||
+Group Handling||
+COPY EMAIL GROUP||
+Email Group ID||
+Email Group Name||
+Source Email Group ID||
+Email Accounts||
+Next Agent Email||
+Start Email URL||
+Dispo Email URL||
+No Agent Email URL||
+EMAIL ACCOUNTS USING THIS IN-GROUP||
+EMAIL GROUP NOT ADDED||
+Email group ID must be between 2 and 20 characters in length and contain no||
+Email group name and group color must be at least 2 characters in length||
+EMAIL GROUP ADDED||
+Show Email Accounts||
+Add A New Account||
+Copy An Account||
+Dialer Email Account fields||
+NEW ACCOUNT||
+SUCCESSFULLY CREATED||
+All Admin User Groups||
+ERROR: Inbound emails are not active on this system||
+invalid or null||
+SUCCESSFULLY MODIFIED||
+There was an unknown error when attempting to copy the new account||
+SUCCESSFULLY COPIED FROM||
+source email does not exist||
+ACCOUNT NOT COPIED||
+Copy New Account from Existing Account||
+Account ID to Copy From||
+New Account ID||
+New Account Name||
+There are no existing accounts to copy from||
+The data you submitted has the following errors||
+ACCOUNT NOT INSERTED||
+ADD NEW INBOUND EMAIL ACCOUNT||
+CONFIRM DELETION OF INBOUND EMAIL ACCOUNT||
+Click to delete account||
+ACCOUNT NOT UPDATED||
+UPDATE AN EXISTING INBOUND EMAIL ACCOUNT||
+INBOUND EMAIL ACCOUNT LISTINGS||
+UNREAD EMAILS||
+Un-handled Emails||
+Setting this to INGROUP will send an answering machine to an inbound group. Setting this to CALLMENU will send an answering machine to a Call Menu in the system||
+AMD send to Action||
+This option allows you to define whether a call is sent to the AMD Action when an answering machine is detected. If this is set to N, then the call will be hung up as soon as it is determined to be an answering machine. Default is N||
+AMD Inbound Group||
+If CPD AMD Action is set to INGROUP, then this is the Inbound Group that the call will be sent to if an answering machine is detected||
+AMD Call Menu||
+If CPD AMD Action is set to CALLMENU, then this is the Call Menu that the call will be sent to if an answering machine is detected||
+Level 8 Disable Add||
+This setting if enabled will prevent any level 8 user from adding or copying any record in the system, no matter what their user settings are. Excluded from these restrictions are the ability to add DNC and Filter Phone Groups numbers and the Add a New Lead page. Default is 0 for disabled||
+You do not have permission to add records on this system||
+These options allows you to limit the viewable callbacks in the agent callback alert section on the agent screen, to only LIVE callbacks.  LIVE callbacks are user-only scheduled callbacks that have hit their trigger date and time. ACTIVE call backs are user-only callbacks that are active in the system but have not yet triggered.  You can view both ACTIVE and LIVE callbacks by selecting ALL_ACTIVE.  Default is ALL_ACTIVE||
+VICIDIAL ADMIN REPORT LOG||
+VICIDIAL USER ADMIN REPORT LOG||
+VICIDIAL DETAIL ADMIN REPORT LOG||
+ADMIN REPORT LOG||
+Admin Report Log Viewer||
+Survey Wait Seconds||
+This is the number of seconds when in Survey mode the system will wait for input from the person called until the survey or drop action is triggered. Is not applied if the Survey Method is HANGUP. Default is 10 seconds||
+You can add NOINT directly in front of an audio file name to make it so the playback cannot be interrupted with a key press by the caller, the NOINT should not be a part of the filename, it is a special flag for the system. You may also use special purpose .agi scripts in this field as well like the cm_date.agi script, discuss with your administrator for more details||
+DROP will drop the call using the campaign drop method but still log the call as a PM played message status||
+Quality Control||
+Source User||
+>Admin<||
+Campaign Call Date||
+Lead Recycling||
+Day outbound call count for this campaign||
+State rules defined for this call time||
+in seconds||
+Agent Display Dialable Leads||
+Agent Display Queue Count||
+Manual Dial Filter||
+Agent Call Re-Queue Button||
+LEADS COUNT||
+number:||
+server:||
+audio chooser||
+voicemail chooser||
+FILTER ID||
+FILTER NAME||
+Show Email Groups||
+Email Accounts||
+CallCard Admin||
+ Contacts ||
+We STRONGLY recommend uploading only 16bit Mono 8k PCM WAV audio files||
+All spaces will be stripped from uploaded audio file names||
+ERROR: Default value cannot be longer than maximum field length||
+
+
+########################## CHANGES TO EXISTING PHRASES IN ADMIN TRANSLATION
+
+removed		We STRONGLY recommend uploading only 16bit 8k PCM WAV audio files
+
+changed to 0	vicidial|audio_store.php|0
+
+
+vicidial|callbacks_bulk_change.php|0
+vicidial|lead_tools.php|0
+vicidial|admin_email_accounts.php|0
+vicidial|AST_email_log_report.php|0
+vicidial|AST_email_log_display.php|0
+vicidial/qc|qc_modify_lead.php|0
+vicidial/qc|QC_admin_variables.php|0
+vicidial/qc|QC_admin_variables01.php|0
+vicidial/qc|QC_call_client_iframe.php|0
+vicidial/qc|QC_call_client_include.php|0
+vicidial/qc|QC_header_include.php|0
+vicidial/qc|QC_header_include01.php|0
+vicidial/qc|QC_header_include02.php|0
+vicidial/qc|audit_comments.php|0
+vicidial/qc|qc_api.php|0
+vicidial/qc|QC_admin_include01.php|0
+vicidial/qc|QC_admin_include02.php|0
+vicidial/qc|QC_admin_modify_lead_include.php|0
+vicidial/qc|QC_status_codes_include.php|0
+
+
+############################################################ CLIENT
+Click Here to Choose a Dial In-Group||
+SELECT A DIAL IN-GROUP||
+DIAL IN-GROUP||
+Dial In-Group||
+Click Here to Activate||
+Click Here to Deactivate||
+ERROR: You must enter in search terms, one of these must be populated: lead ID, vendor ID, phone number, last name||
+ERROR: You must enter in search terms, one of these must be populated: office number, last name, first name||
+ERROR: There was a problem with your search terms||
+Phone and Post Code Time Zone Mismatch||
+Last Local Call Time||
+Called Count||
+Unidentified Hangup Cause Code||
+YOU MUST SELECT AN AGENT TO TRANSFER TO WHEN USING AGENTDIRECT||
+Another live agent session was open using your user ID. It has been disabled. Click OK to continue to the agent screen||
+View Comment History||
+reset form||
+SELECT THIS LEAD||
+YOU MUST BE ON AN ACTIVE INBOUND CALL TO SEARCH FOR A LEAD||
+Attachments||
+Next Call Pause||
+-History-||
+SUBMIT SEARCH||
+close ||
+AGENT CALL LOG||
+ LENGTH ||
+ PHONE ||
+ FULL NAME ||
+ CAMPAIGN ||
+ ALT ||
+ HANGUP ||
+ INFO ||
+phone login||
+LAST CALL||
+ CALLBACK ||
+ CITY ||
+ STATE ||
+ ZIP ||
+Phone Number||
+Phone Number Fields||
+Lead ID||
+ WAIT ||
+ AGENT ||
+ CALL GROUP ||
+ TYPE ||
+digits only||
+DIAL ALERT||
+WEB FORM SUBMIT||
+in campaign||
+ DATE\/TIME ||
+ IN\/OUT ||
+>GROUPS<||
+>GO<||
+>recording<||
+>SELECT<||
+Alert is ON||
+Alert is OFF||
+EMAIL LOG FOR THIS LEAD||
+EMAIL TO||
+ ATTACHMENTS ||
+Called Since Last Reset||
+Timezone:||
+Dial Link||
+ LAST ||
+SEARCH FOR A CONTACT||
+Notes: when doing a search for a contact, wildcard or partial search terms are not allowed||
+Contact search requests are all logged in the system||
+Office Number||
+First Name||
+Last Name||
+BU Name||
+Department:||
+Group Name||
+Job Title||
+Location:||
+
+
+########################## CHANGES TO EXISTING PHRASES IN AGENT TRANSLATION
+Status		>Status
+ORDER		>ORDER
+Notes		Notes:
+Welcome		<added space after word>
+Last		<added space after word>
+Recording	<added space before word>
+State		<added space before word>
+Title		<added space before word>
+Email		<added space before word>
+Comments	<added space before word>
+Record		<removed>
+HELP		<removed>
+PARK		<removed>
+
+
+############################################################  MANAGER Manual
+
+
+
+############################################################  AGENT Manual
+

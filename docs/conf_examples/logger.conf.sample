@@ -1,0 +1,3 @@
+[logfiles]
+console => notice,warning,error,dtmf
+messages => notice,warning,error,debug,verbose,dtmf

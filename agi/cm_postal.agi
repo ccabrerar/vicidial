@@ -1,0 +1,332 @@
+#!/usr/bin/perl
+#
+# cm_postal.agi version 2.12
+# 
+# Designed to work with Cell Menus to allow searching of the number entered by 
+# the customer to be searched within the vicidial_postal_codes table to gather 
+# the state, then search the vicidial_inbound_dids table for that state in the 
+# did_carrier_description field and send the call on to the did that matches.
+#
+# If postal code is not found call will go to the 'D' option in the call menu
+# If state DID is not found call will go to the 'C' option in the call menu
+#
+# Flag Options:
+# 1- minimum number of digits allowed in postal code, default 5
+# 2- DID prefix to filter by in searching for DIDs, default 999
+#
+# example of what to put in the Custom Dialplan entry for a Call Menu:
+#exten => _XXXXX,1,AGI(cm_postal.agi,5---999)
+#
+# Copyright (C) 2016  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+#
+# changes:
+# 160517-0236 - First build
+#
+
+$script = 'cm_postal.agi';
+
+($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+$year = ($year + 1900);
+$mon++;
+if ($mon < 10) {$mon = "0$mon";}
+if ($mday < 10) {$mday = "0$mday";}
+if ($hour < 10) {$hour = "0$hour";}
+if ($min < 10) {$min = "0$min";}
+if ($sec < 10) {$sec = "0$sec";}
+
+$now_date_epoch = time();
+$now_date = "$year-$mon-$mday $hour:$min:$sec";
+$start_time=$now_date;
+$CIDdate = "$mon$mday$hour$min$sec";
+$tsSQLdate = "$year$mon$mday$hour$min$sec";
+$SQLdate = "$year-$mon-$mday $hour:$min:$sec";
+$SQLdateBEGIN = $SQLdate;
+
+# default path to astguiclient configuration file:
+$PATHconf =		'/etc/astguiclient.conf';
+
+open(conf, "$PATHconf") || die "can't open $PATHconf: $!\n";
+@conf = <conf>;
+close(conf);
+$i=0;
+foreach(@conf)
+	{
+	$line = $conf[$i];
+	$line =~ s/ |>|\n|\r|\t|\#.*|;.*//gi;
+	if ( ($line =~ /^PATHhome/) && ($CLIhome < 1) )
+		{$PATHhome = $line;   $PATHhome =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHlogs/) && ($CLIlogs < 1) )
+		{$PATHlogs = $line;   $PATHlogs =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHagi/) && ($CLIagi < 1) )
+		{$PATHagi = $line;   $PATHagi =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHweb/) && ($CLIweb < 1) )
+		{$PATHweb = $line;   $PATHweb =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHsounds/) && ($CLIsounds < 1) )
+		{$PATHsounds = $line;   $PATHsounds =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHmonitor/) && ($CLImonitor < 1) )
+		{$PATHmonitor = $line;   $PATHmonitor =~ s/.*=//gi;}
+	if ( ($line =~ /^VARserver_ip/) && ($CLIserver_ip < 1) )
+		{$VARserver_ip = $line;   $VARserver_ip =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_server/) && ($CLIDB_server < 1) )
+		{$VARDB_server = $line;   $VARDB_server =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_database/) && ($CLIDB_database < 1) )
+		{$VARDB_database = $line;   $VARDB_database =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_user/) && ($CLIDB_user < 1) )
+		{$VARDB_user = $line;   $VARDB_user =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_pass/) && ($CLIDB_pass < 1) )
+		{$VARDB_pass = $line;   $VARDB_pass =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_port/) && ($CLIDB_port < 1) )
+		{$VARDB_port = $line;   $VARDB_port =~ s/.*=//gi;}
+	$i++;
+	}
+
+if (!$VARDB_port) {$VARDB_port='3306';}
+if (!$AGILOGfile) {$AGILOGfile = "$PATHlogs/agiout.$year-$mon-$mday";}
+
+use DBI;
+use Asterisk::AGI;
+$AGI = new Asterisk::AGI;
+
+$dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
+    or die "Couldn't connect to database: " . DBI->errstr;
+
+### Grab Server values from the database
+$stmtA = "SELECT agi_output FROM servers where server_ip = '$VARserver_ip';";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+$rec_count=0;
+while ($sthArows > $rec_count)
+	{
+	$AGILOG = '0';
+	@aryA = $sthA->fetchrow_array;
+	$DBagi_output =	$aryA[0];
+	if ($DBagi_output =~ /STDERR/)	{$AGILOG = '1';}
+	if ($DBagi_output =~ /FILE/)	{$AGILOG = '2';}
+	if ($DBagi_output =~ /BOTH/)	{$AGILOG = '3';}
+	$rec_count++;
+	}
+$sthA->finish();
+
+
+### begin parsing run-time options ###
+if (length($ARGV[0])>1)
+	{
+	if ($AGILOG) {$agi_string = "Perl Environment Dump:";   &agi_output;}
+	$i=0;
+	while ($#ARGV >= $i)
+		{
+		$args = "$args $ARGV[$i]";
+		if ($AGILOG) {$agi_string = "$i|$ARGV[$i]";   &agi_output;}
+		$i++;
+		}
+	
+	### list of command-line array arguments:
+	@ARGV_vars = split(/---/, $ARGV[0]);
+
+	$postal_length = 	$ARGV_vars[0];
+	$did_prefix = 		$ARGV_vars[1];
+	}
+
+if (length($postal_length) < 1)
+	{$postal_length = 5;}
+if (length($did_prefix) < 1)
+	{$did_prefix = '999';}
+
+$|=1;
+while(<STDIN>) 
+	{
+	chomp;
+	last unless length($_);
+	if ($AGILOG)
+		{
+		if (/^agi_(\w+)\:\s+(.*)$/)
+			{
+			$AGI{$1} = $2;
+			}
+		}
+
+	if (/^agi_context\:\s+(.*)$/)		{$context = $1;}
+	if (/^agi_uniqueid\:\s+(.*)$/)		{$unique_id = $1; $uniqueid = $unique_id;}
+	if (/^agi_channel\:\s+(.*)$/)		{$channel = $1;}
+	if (/^agi_extension\:\s+(.*)$/)		{$extension = $1;}
+	if (/^agi_type\:\s+(.*)$/)			{$type = $1;}
+	if (/^agi_callerid\:\s+(.*)$/)		{$callerid = $1;}
+	if (/^agi_calleridname\:\s+(.*)$/)	{$calleridname = $1;}
+	$callerid =~ s/\'|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
+	$calleridname =~ s/\'|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
+	$extension =~ s/\'|\"|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
+
+	if ( ($callerid =~ /\".*\"/) && ( (!$calleridname) or ($calleridname =~ /unknown/) ) )
+		{
+		$calleridname = $callerid;
+		$calleridname =~ s/\<\d\d\d\d\d\d\d\d\d\d\>//gi;
+		$calleridname =~ s/\"|\" //gi;
+		}
+
+	$callerid =~ s/\D//gi;
+	$calleridname =~ s/unknown//gi;
+	if ( (!$callerid) or ($callerid =~ /unknown/) )
+		{$callerid = $calleridname;}
+
+	if (length($callerid)>0) {$phone_number = $callerid;}
+	   else {$phone_number = '';}
+	if (length($calleridname)>0) {$VLcomments = $calleridname;}
+	   else {$VLcomments = '';}
+	if (length($callerid)<10) {$callerid = $parked_by;}
+	if (length($pin)>0) {$callerid = $pin;}
+	}
+
+foreach $i (sort keys %AGI) 
+	{
+	if ($AGILOG) {$agi_string = " -- $i = $AGI{$i}";   &agi_output;}
+	}
+
+if ($AGILOG) {$agi_string = "AGI Variables: |$unique_id|$channel|$extension|$type|$callerid|";   &agi_output;}
+
+$AGI->stream_file('sip-silence');
+$AGI->stream_file('sip-silence');
+$AGI->stream_file('sip-silence');
+
+
+$g=0;
+$state='';
+### only perform search if minimum digits entered is valid ###
+if (length($extension) >= $postal_length) 
+	{
+	### search for state using entered postal code ###
+	$stmtA= "SELECT state from vicidial_postal_codes where postal_code='$extension';";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($AGILOG) {$agi_string = "$sthArows|$stmtA|";   &agi_output;}
+	while ($sthArows > $g)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$state	= $aryA[0];
+		$g++;
+		}
+	$sthA->finish();
+	}
+
+# State not found, send call to 'D' option in call menu
+if ($g < 1) 
+	{
+	if ($AGILOG) {$agi_string = "entry not found($extension), exiting the cm_postal.agi app, transferring call to D @ $context";   &agi_output;}
+	print "SET CONTEXT $context\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET EXTENSION D\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET PRIORITY 1\n";
+		$result = <STDIN>;
+		checkresult($result);
+
+	exit;
+	}
+
+
+### search for DID using found state and optional DID prefix ###
+$DID_prefixSQL='';
+$new_did='';
+if (length($did_prefix)>0) {$DID_prefixSQL = "and did_pattern LIKE \"$did_prefix%\"";}
+$stmtA= "SELECT did_pattern from vicidial_inbound_dids where did_carrier_description LIKE \"$state%\" $DID_prefixSQL;";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+	if ($AGILOG) {$agi_string = "$sthArows|$stmtA|";   &agi_output;}
+$g=0;
+while ($sthArows > $g)
+	{
+	@aryA = $sthA->fetchrow_array;
+	$new_did	= $aryA[0];
+	$g++;
+	}
+$sthA->finish();
+
+$dbhA->disconnect();
+
+# DID not found, send call to 'C' option in call menu
+if ($g < 1) 
+	{
+	if ($AGILOG) {$agi_string = "entry not found($state|$extension), exiting the cm_postal.agi app, transferring call to C @ $context";   &agi_output;}
+	print "SET CONTEXT $context\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET EXTENSION C\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET PRIORITY 1\n";
+		$result = <STDIN>;
+		checkresult($result);
+
+	exit;
+	}
+else
+	{
+	$AGI->exec("EXEC Set(_state=$state)");
+	$AGI->exec("EXEC Set(_postal_code=$extension)");
+
+	if ($AGILOG) {$agi_string = "entry found($state|$extension), exiting the cm_postal.agi app, transferring call to $new_did @ trunkinbound";   &agi_output;}
+	print "SET CONTEXT trunkinbound\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET EXTENSION $new_did\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET PRIORITY 1\n";
+		$result = <STDIN>;
+		checkresult($result);
+
+	exit;
+	}
+
+
+
+
+##### SUBROUTINES #####
+
+sub agi_output
+{
+if ($AGILOG >=2)
+	{
+	### open the log file for writing ###
+	open(Lout, ">>$AGILOGfile")
+			|| die "Can't open $AGILOGfile: $!\n";
+	print Lout "$now_date|$script|$agi_string\n";
+	close(Lout);
+	}
+	### send to STDERR writing ###
+if ( ($AGILOG == '1') || ($AGILOG == '3') )
+	{print STDERR "$now_date|$script|$agi_string\n";}
+$agi_string='';
+}
+
+
+sub checkresult 
+	{
+	my ($res) = @_;
+	my $retval;
+	$tests++;
+	chomp $res;
+	if ($res =~ /^200/) 
+		{
+		$res =~ /result=(-?\d+)/;
+		if (!length($1)) 
+			{
+		#	print STDERR "FAIL ($res)\n";
+			$fail++;
+			} 
+		else 
+			{
+		#	print STDERR "PASS ($1)\n";
+			$pass++;
+			}
+		} 
+	else 
+		{
+	#	print STDERR "FAIL (unexpected result '$res')\n";
+		$fail++;
+		}
+	}

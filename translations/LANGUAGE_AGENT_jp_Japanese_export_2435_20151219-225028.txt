@@ -1,0 +1,1472 @@
+vdc_LB_active.gif|vdc_LB_active_jp.gif||
+vdc_LB_paused.gif|vdc_LB_paused_jp.gif||
+Calls In Queue|列になっている電話||
+LOGOUT PROCESS COMPLETE, YOU MAY NOW CLOSE YOUR BROWSER OR LOG BACK IN|ログアウトプロセスの完全な、あなたは今、ブラウザを閉じるか、再度ログイン可能||
+PLEASE SELECT A LANGUAGE|言語を選択してください||
+to campaign| キャンペーンへ||
+LOGOUT PROCESSING...|ログアウト処理...||
+Conf Exten %1s is not valid or Exten %2s is not valid|confにカスタムアプリケーション用のの %1s が有効かカスタムアプリケーション用 %2s が有効ではないではありません||
+Conference %1s has been registered to %2s|会議の %1s が %2s とに登録されている||
+OFF|オフ||
+YES|はい||
+Conf Extension Check|会議内線チェック||
+Conf Exten %1s is not valid|confにカスタムアプリケーション用の %1s が有効ではありません||
+Custom Form Output:|カスタムフォーム出力：||
+Agent Form Display Script|エージェントフォームの表示スクリプト||
+SEND|送信する||
+Custom Fields Disabled:|カスタムフィールドは無効：||
+INVITE|招待||
+END CHAT|エンドチャット||
+Enter email address of guest:|ゲストの電子メールアドレスを入力します。||
+Privacy ON|上のプライバシー||
+CLEAR|クリア||
+START CHAT|チャットを開始||
+Max rank count|最大ランク数||
+stop audio|オーディオ停止||
+Available Chats:|利用可能なチャット：||
+SEND MESSAGE|メッセージを送る||
+Avatar Soundboard Display Script|アバター響表示スクリプト||
+VERSION|バージョン||
+BUILD|ビルド||
+USER|ユーザ||
+Avatars disabled on your system|アバターはあなたのシステム上で無効に||
+error: avatar not valid|エラー：有効ではありませんアバター||
+error: API user not valid|エラー：有効でないAPIユーザー||
+click here to continue|続けるにはこちらをクリック||
+Live Extension Check|ライブ内線チェック||
+Agent Screen Opener|エージェントの画面オープナー||
+Agent Redirect|エージェントのリダイレクト||
+LIVE INBOUND CALL|ライブ内部向け電話||
+CallerID|呼び出し者ID||
+Number Dialed:|ダイアルした番号:||
+SEND TO MY VOICEMAIL|マイボイスメールに送信する||
+DONE: no lists in campaign_check|行わ：campaign_checkでメーリングリストはありません||
+DONE: dispo is not a sale status:|行わ：ディスポ販売状況ではありません。||
+Invalid server_ip:|無効SERVER_IP：||
+DONE: %1s duplicates found,|行われます。 %1s の重複が見つかった、||
+DONE: no duplicates found within|行わ：全く重複が内見つからない||
+Trunk Action|トランクアクション||
+Local Action|ローカルアクション||
+Conferences List|会議リスト||
+Click on a conference room number on the left for info on that conference|その会議での情報については、左側の会議ルーム番号をクリックしてください。||
+Slower|より遅く||
+Initializing..|初期化中..||
+Active Extensions|有効な内線||
+Data Goes Here|データはここを通ります。||
+STOP|停止||
+START|スタート||
+Refresh rate:|リスレッシュレート:||
+Faster|より速く||
+BACK TO MAIN WINDOW - ignore changes made|メインウィンドウに戻る-変更を無視する||
+edit| 編集||
+SUBMIT FAVORITES CHANGES - requires logout|お気に入りの変更を送信する-要ログアウト||
+OUTBOUND CALLS:|外部への電話:||
+INBOUND CALLS:|内部への電話:||
+astGUIclient web-client VERSION: %1s BUILD: %2s|astGUIclient web-クライアントバージョン: %1s 骨組み: %2s||
+OLD:| 旧:||
+PARKED CALLS|保留電話||
+LOCAL DIAL EXTENSIONS|ローカルダイアル内線||
+NEW:| 新:||
+Call selected vmail box|選択ボイスメールボックスに電話する||
+PARKED CALLS:|保留電話:||
+VOICEMAIL|ボイスメール||
+LOCAL Extensions Dial|ローカル内線ダイアル||
+Phone calling from:|電話呼び出し:||
+Call selected extension|選択内線に電話する||
+Send my channel too|私のチャンネルも送信する。||
+Conferences Menu|会議メニュー||
+Send to this number|この番号に送信||
+Conferences:|会議:||
+(click on a number below to send to a conference)|（会議に送信するには、以下の番号をクリックしてください）||
+Send to selected extension|選択内線へ送信||
+Send to selected vmail box|選択ボイスメールボックスへ送信||
+Extensions Menu|内線メニュー||
+Listen Local|リッスンローカル||
+LIVE CALL TRANSFER|ライブの電話転送||
+Channel to be transferred:|転送されるチャンネル:||
+Extensions:|内線:||
+Active Local Menu|アクティブローカルメニュー||
+Hangup Local|ハングアップローカル||
+Hijack Local|ハイジャックローカル||
+Hijack Trunk|ハイジャックトランク||
+Listen Trunk|リッスントランク||
+Back to Main Window|メインウィンドウに戻る||
+LOCAL HANGUP|ローカルハングアップ||
+TRUNK HANGUP|トランクハングアップ||
+Active Trunks Menu|アクティブトランクメニュー||
+Hangup Trunk|ハングアップトランク||
+agc_tab_main.gif|agc_tab_main.gif||
+agc_tab_active_lines.gif|agc_tab_active_lines.gif||
+agc_tab_conferences.gif|agc_tab_conferences.gif||
+Welcome %1s, you are logged into this phone: %2s - %3s/%4s on %5s|ようこそ %1s, この電話にログインしています。 %2s - %3s/%4s 上の %5s||
+  - ACTIVE DISPLAY PAUSED -|   - アクティブな表示を一時停止 - ||
+FAVORITES| お気に入り||
+up.gif|up.gif||
+down.gif|down.gif||
+remove.gif|remove.gif||
+Dial From Conf|会議からダイヤルする||
+LIVE CALLS IN THIS CONFERENCE|この会議でライブで呼び出す。||
+AVAILABLE EXTENSIONS|提供されている内線||
+CONFERENCE|会議||
+Registered to|へ登録された||
+Enter Conference|会議に入る||
+Send DTMF|DTMFを送信||
+PICKUP|電話を取る||
+NO ONE|誰も||
+CALLER ID|呼び出し者ID||
+CALL ID|コールID||
+PARKED BY|保留者||
+PARKED TIME|保留時間||
+XFER|>XFER||
+PARK|公園||
+CALL DATE/TIME|日付/時刻に電話する||
+IN-NUMBER|インナンバー||
+LIVE CALLS ON THIS PHONE|この電話でライブで呼び出す。||
+CLIENT CHANNEL|クライアントチャンネル||
+RECORD|記録||
+You can only monitor Zap channels|Zapチャンネルのみ監視できます。||
+agc_check_voicemail_ON.gif|agc_check_voicemail_ON.gif||
+agc_check_voicemail_BLINK.gif|agc_check_voicemail_BLINK.gif||
+VERSION: %1s BUILD: %2s|バージョン: %1s 骨組み: %2s||
+astGUIclient web client|astGUIclient webクライアント||
+agc_check_voicemail_OFF.gif|agc_check_voicemail_OFF.gif||
+astGUIclient web client: Login|astGUIclient webクライアント: ログイン||
+agc_tab_astguiclient.gif|agc_tab_astguiclient.gif||
+astGUIclient web client: Phone Login|astGUIclient webクライアント: 電話ログイン||
+Appointment Date/Time:|予定の日付/時間：||
+Appointment Notes:|任命のメモ：||
+Please click SUBMIT to commit the changes|変更をコミットするために提出をクリックしてください。||
+Exten %1s is not valid or protocol %2s is not valid|カスタムアプリケーション用 %1s が有効でないか、プロトコル %2s が有効ではありません||
+ViciDial Notes|VICIDIALノート||
+Order ID:|注文ID：||
+No DST Method Found|全くDST方式が見つかりませんでした||
+Parked Calls Display|保留中の電話表示||
+Third Sunday October to Last Sunday February|最後の日曜日の2月に第三日曜日の10月||
+First Sunday October to Third Sunday March|第三日曜日の行進への最初の日曜日の10月||
+Last Sunday in September to First Sunday in April|4月の第1日曜日に9月の最終日曜日||
+Sunday in October to First Sunday in April|4月の第1日曜日に10月で日曜日||
+Last Sunday October to Last Sunday March|最後の日曜日の行進への最後の日曜日の10月||
+First Sunday October to Last Sunday March|最後の日曜日の行進への最初の日曜日の10月||
+First Sunday April to Last Sunday October|最後の日曜日の10月に最初の日曜日の4月||
+Last Sunday March to Last Sunday October|最後の日曜日の月の最後の日曜日の行進||
+NOTES|注釈||
+Second Sunday March to First Sunday November|最初の日曜日の11月に第二日曜日の行進||
+ERROR: no custom list fields|エラー：なしカスタムリストフィールド||
+ERROR: no custom list fields table|エラー：カスタムリストがテーブルをフィールドしない||
+NONE|なし||
+There are no custom fields for this list|このリストにはカスタムフィールドはありません||
+Note: a dial prefix of %1s will be added to the beginning of this number|注：ダイアル局番 %1s この番号の最初に追加されます。||
+ERROR: no custom data for this lead: |エラー：この鉛なしのカスタム·データ：||
+Conferences|会議||
+HELP|助けて||
+Busy Extensions|話し中の内線||
+Outside Lines|外線||
+Local Extensions|ローカル内線||
+Invalid server_ip|無効SERVER_IP||
+Invalid session_name|無効なセッション名||
+Live Extensions|ライブ内線||
+Conference %1s, Stage %2s is not valid or queryCID %3s is not valid, Originate command not inserted|会議の %1s、ステージの %2s が有効かquerycid %3s が有効ではないではないが、コマンドを発信挿入されていない||
+Volume command sent for Conference %1s, Stage %2s Channel %3s on %4s|volumeコマンドは、会議 %1s 、 %4s 上のステージ %2s チャンネル %3s のために送ら||
+%1s command sent for Channel %2s on %3s| %1s が %3s の上のチャネル %2s のために送られるコマンド||
+Channel %1s is not valid or exten %2s is not valid or filename: %3s is not valid, %4s command not inserted|チャンネル %1s が有効かカスタムアプリケーション用 %2s が有効か、ファイル名ではないではありません： %3s のが有効でない、 %4s が挿入されていないコマンド||
+Channel %1s is not live on %2s, %3s command not inserted| %1s は %2s で生活されていないチャンネルは、 %3s は挿入されていないコマンド||
+Channel %1s is not valid or queryCID %2s is not valid or filename: %3s is not valid, %4s command not inserted|チャンネル %1s が有効かquerycid %2s が有効か、ファイル名ではないされていません： %3s のが有効でない、 %4s が挿入されていないコマンド||
+ to %1s on %2s|  %2s 上の %1s へ||
+RedirectXtra command sent for Channel %1s on %2s and| %2s とでチャネル %1s のために送らredirectxtraコマンドと||
+Redirect command sent for Channel %1s on %2s| %2s 上のチャンネル %1s のために送られたコマンドをリダイレクト||
+session_id %1s must be set|SESSION_ID %1s を設定する必要があります||
+RedirectXtra command sent for Channel %1s and|チャンネル %1s のために送らredirectxtraコマンドと||
+ExtraChannel %1s|extrachannel %1s ||
+Hungup %1s on %2s|hungup %1s  %2s 上||
+No Local agent to send call to, Redirect command not inserted|ローカルエージェントはコマンドをリダイレクト、への呼び出しを送信しない挿入されていないために||
+RedirectXtraCX command sent for Channel %1s on %2s and| %2s とでチャネル %1s のために送らredirectxtracxコマンドと||
+Channel %1s is not live on %2s, Redirect command not inserted|チャンネル %1s が、 %2s に住んで挿入されていないコマンドをリダイレクトされていません||
+Cannot find empty vicidial_conference on %1s, Redirect command not inserted|、 %1s 上に空のvicidial_conferenceを見つけるコマンドをリダイレクトすることはできません挿入されていない||
+RedirectNameVmail Action not sent|redirectnamevmailアクションは送信されません||
+ExtraChannel %1s must be greater than 2 characters|extrachannelの %1s がより大きく2文字でなければなりません||
+Redirect Action not sent|アクションをリダイレクト送信されません||
+RedirectFromPark Action not sent|redirectfromparkアクションは送信されません||
+RedirectName Action not sent|redirectnameアクションは送信されません||
+RedirectToPark Action not sent|redirecttoparkアクションは送信されません||
+lead_id %1s must be set|lead_id %1s を設定する必要があります||
+RedirectVD Action not sent|redirectvdアクションは送信されません||
+parkedby %1s must be set|parkedbyの %1s を設定する必要があります||
+auto_dial_level %1s must be set|auto_dial_levelの %1s を設定する必要があります||
+campaign %1s must be set|キャンペーン %1s を設定する必要があります||
+uniqueid %1s must be set|一意のID %1s を設定する必要があります||
+Channel %1s is not live on %2s, Hangup command not inserted| %1s は %2s で生活されていないチャンネルは、ハングアップコマンドが挿入されていない||
+Channel %1s in use by another agent on %2s, Hangup command not inserted| %2s 上の別のエージェントによって使用中のチャンネル %1s が、ハングアップコマンドが挿入されていない||
+Hangup command sent for Channel %1s on %2s| %2s とでチャネル %1s のために送らハングアップコマンド||
+Channel %1s is not valid or queryCID %2s is not valid, Hangup command not inserted|チャンネル %1s が有効なが、ハングアップコマンドが挿入されていないされていないではない有効かquerycid %2s です||
+Call %1s %2s is not live on %3s, Checking Live Channel|呼び出し %1s  %2s ライブチャネルをチェックし、 %3s で生活されていません||
+ You are not allowed to dial into other agent sessions| あなたは、他のエージェントセッションにダイヤルすることはできません||
+conference %1s is not valid or ext_context %2s or queryCID %3s is not valid, Hangup command not inserted|会議 %1s が有効なが、ハングアップコマンドが挿入されていないされていない %2s またはquerycidの %3s に有効かext_contextではありません||
+exten %1s must be set|カスタムアプリケーション用 %1s を設定する必要があります||
+OriginateNameVmail Action not sent|originatenamevmailアクションは送信されません||
+ Exten %1s is not valid or queryCID %2s is not valid, Originate command not inserted| カスタムアプリケーション用 %1s が有効かquerycid %2s が有効ではないではない、発信コマンドが挿入されていない||
+ext_priority %1s must be set|ext_priorityの %1s を設定する必要があります||
+OriginateName Action not sent|originatenameアクションは送信されません||
+ext_context %1s must be set|ext_contextの %1s を設定する必要があります||
+Channel %1s must be greater than 2 characters|チャンネル %1s がより大きく2文字でなければなりません||
+queryCID %1s must be greater than 14 characters|querycid %1s がより大きく14文字でなければなりません||
+extenName %1s must be set|extennameの %1s を設定する必要があります||
+Originate command sent for Exten %1s Channel %2s on %3s|コマンドは、 %3s にカスタムアプリケーション用 %1s チャンネル %2s のために送ら発信||
+One of these variables is not valid:|これらの変数の1つ有効ではない:||
+Exten %1s is not valid or queryCID %2s is not valid, Originate command not inserted|カスタムアプリケーション用 %1s が有効かquerycid %2s が有効ではないではない、発信コマンドが挿入されていない||
+ERROR - ID variable missing|エラー - ID変数欠落している||
+Manager Send: |マネージャーが送信する:||
+AGENT email frame|エージェントのメールフレーム||
+Response:|応答：||
+Reply:|返信：||
+COPY MESSAGE|コピーメッセージ||
+REPLY|返信||
+From:|から：||
+Subject:|件名：||
+Attachments:|添付ファイル:||
+ERROR: Invalid File Name:|エラー：無効なファイル名：||
+mail could not be sent!|メールは送信できませんでした！||
+Date received:|日付は、受け取った：||
+Your system does not have the email setting enabled|お使いのシステムは、電子メールの設定が有効になっていない||
+ Phone: | 電話：||
+Phone web client: Phone Login|電話機のWebクライアント：電話機へのログイン||
+Phone web client|電話機のWebクライアント||
+Phone-Only Login|電話専用ログイン||
+Phone web client: Login|電話機のWebクライアント：ログイン||
+Agent Alert!|エージェントの警告！||
+alert.gif|alert.gif||
+Alert Box|警告ボックス||
+OK|ok||
+This agent screen was not opened properly.|このエージェントの画面が正常に開かれていない||
+Dial In-Group Selection|ダイヤルイン·グループの選択||
+ALERT :|警告：||
+Another live agent session was open using your user ID. It has been disabled. Click OK to continue to the agent screen.|別のライブエージェントセッションが開いているユーザーIDを使用していました。それが無効になっています。エージェントの画面に進みます[OK]をクリックして||
+SELECT A DIAL IN-GROUP :|·グループダイヤルインを選択:||
+SELECT A GROUP ALIAS :|グループエイリアスを選んでください。:||
+Group Alias Selection|グループエイリアス選択||
+SELECT A PRESET :|プリセットを選ぶ :||
+Presets Selection|プリセットの選択||
+Lead Info|リード情報||
+SELECT A PAUSE CODE :|一時停止コードを選んでください：||
+Pause Code Selection|ポーズコード選択||
+CALL NOTES LOG:|電話メモログ:||
+Call Notes List|電話メモリスト||
+Close Info Box|クローズ情報ボックス||
+Address3 Phone Number|住所3電話番号||
+Lead ID:|レコード番号:||
+SEARCH RESULTS:|検索結果:||
+Main Phone Number|主電話番号||
+Alternate Phone Number|代替電話番号||
+Phone Number Fields:|電話番号フィールド:||
+Using the other fields may be slower. Lead searching does not allow for wildcard or partial search terms.|他の欄を使用すると遅くなる場合があります。見込み客検索はワイルドカードや部分的な検索条件は居されていません。||
+Lead search requests are all logged in the system.|見込み客検索依頼はシステム内で全て記録されています。||
+SEARCH FOR A LEAD:|見込み客を検索:||
+Notes: when doing a search for a lead, the phone number, lead ID or %1s are the best fields to use.|注：見込み客を検索する時、電話番号、見込み客IDまたは %1s 使用するのに最適なフィールドです。||
+CONTACTS SEARCH RESULTS:|連絡先検索結果:||
+Search Results|検索結果||
+Department:|部門：||
+Group Name:|グループ名:||
+Job Title:|職名:||
+SUBMIT SEARCH|検索を送信||
+Last Name:|姓:||
+BU Name:|BU名:||
+Office Number:|局番号:||
+First Name:|姓:||
+SEARCH FOR A CONTACT:|連絡先の検索:||
+Notes: when doing a search for a contact, wildcard or partial search terms are not allowed. <br />Contact search requests are all logged in the system.|注：連絡先の検索を行うとき、ワイルドカードまたは部分的な検索用語は許可されていません <br />連絡先の検索要求は、すべてのシステムに記録されます||
+BLENDED CALLING|混合コーリング||
+AGENT CALL LOG:|エージェントコールログ:||
+Call log List|コールログリスト||
+Channel| チャンネル||
+MY CALLBACK ONLY|マイ・コールバックのみ||
+BLENDED CALLING(outbound activated)|混合コーリング(アウトバウンドアクティブ化)||
+RESET| リセット||
+TERRITORY SELECTION|領域選択||
+CLOSER INBOUND GROUP SELECTION|クローザー内部向けグループ選択||
+Dial Override:|ダイアル優先:||
+(digits only please)|（数字のみでお願いします）||
+Dial Now|今、ダイアルしてください||
+Preview Call|プレビューコール||
+If you want to dial a number and have it NOT be added as a new lead, enter in the exact dialstring that you want to call in the Dial Override field below. To hangup this call you will have to open the CALLS IN THIS SESSION link at the bottom of the screen and hang it up by clicking on its channel link there.|番号をダイアルしたいが、新たな見込み客として追加したくない場合、以下のダイアル優先欄に電話したいと思う正確なダイアル文字を入力してください。この電話を切るには、画面下のこのセッションリンク内の電話を開き、そこのチャンネルリンクをクリックし、電話を切らなければなりません。||
+(This option if checked will attempt to find the phone number in the system before inserting it as a new lead)|（あればがチェックこのオプションは、新しいリードとして挿入する前に、システム内の電話番号を見つけるしようとします）||
+Search Existing Leads:|既存の見込み客を検索:||
+(digits only)|（数字のみ）||
+Dial Lead ID:|鉛のIDをダイヤル:||
+Dial Code:|ダイアルコード：||
+(This is usually a 1 in the USA-Canada)|（これは、通常、米国とカナダでは1）||
+Phone Number:|電話番号:||
+Enter information below for the new lead you wish to call.|電話したいと思う新たな見込み客に対しては以下の情報を入力してください。||
+Note: all new manual dial leads will go into list %1s|注：全ての新たなマニュアルダイアルの見込み客はリストに入ります。 %1s||
+NEW MANUAL DIAL LEAD FOR %1s in campaign %2s:|のための新たなマニュアルダイアルの見込み客 %1s キャンペーンの %2s:||
+Previous Callback Information:|前のコールバック情報:||
+CALLBACKS FOR AGENT %1s:<br />To see information on one of the callbacks below, click on the INFO link. To call the customer back now, click on the DIAL link. If you click on a record below to dial it, it will be removed from the list.|エージェント %1s のコールバック：<br/>は、以下のコールバックの1についての情報を参照してください情報のリンクをクリックします。バック今顧客を呼び出すために、ダイヤルのリンクをクリックしてください。あなたがそれをダイヤルするには、以下のレコードをクリックすると、それがリストから削除されます。||
+View Comment History:|コメント履歴の表示:||
+Select a CallBack Date :|電話のかけ直しの日付を選ぶ :||
+Hour:|時間：||
+Minutes:|分：||
+CB Comments:|CBコメント:||
+WEB FORM SUBMIT|ウェブページは、提出||
+DISPOSITION CALL :|コールを配置する:||
+End-of-call Disposition Selection|End-of-call配置の選択||
+CLEAR FORM|クリアフォーム||
+There is a time synchronization problem with your system, please tell your system administrator|あなたのシステムとは時間の同期化の問題があります。システム管理者に連絡してください。||
+Any changes made to the customer information below at this time will not be comitted, You must change customer information before you Hangup the call.|今回以下の顧客情報の変更は行われません。電話を切る前に顧客情報を変更しなければなりません。||
+Your session has been disabled|あなたのセッションは無効になりました。||
+Close Message|メッセージを閉じる||
+Call Agent Again|再度エージェントに電話する||
+Customer has hung up:|顧客が電話を切りました。:||
+Finish and Disposition Call|電話を終え、配置する||
+Extended Alt Phone Information:|拡張された代替電話情報：||
+Alt Phone Info|ALTの電話情報||
+No one is in your session:|誰もあなたのセッションにいません:||
+vdc_XB_presetsbutton.gif|vdc_XB_presetsbutton_jp.gif||
+vdc_XB_contactsbutton.gif|vdc_XB_contactsbutton_jp.gif||
+Available Agents Transfer:|提供されているエージェントの転送:||
+vdc_XB_number.gif|vdc_XB_number_jp.gif||
+AGENTS|エージェント||
+DIAL OVERRIDE|ダイアル優先||
+vdc_XB_seconds.gif|vdc_XB_seconds_jp.gif||
+vdc_XB_channel.gif|vdc_XB_channel_jp.gif||
+CONSULTATIVE|助言に関する||
+SELECT A GROUP TO SEND YOUR CALL TO|にあなたのコールを送信するために、グループを選択||
+vdc_XB_header.gif|vdc_XB_header_jp.gif||
+Disposition Hot Keys:|ホットキーを配置する:||
+When active, simply press the keyboard key for the desired disposition for this call. The call will then be hungup and dispositioned automatically:|アクティブな時は、この電話に対して希望する配置のキーボードのキーを単に押してください。電話はその時切れ、自動的に配置されます。:||
+AGENT SCRIPT|エージェントスクリプト||
+refresh|再読み込み||
+reset form|フォームをリセット||
+Lead Dispositioned As:|として配置された見込み客:||
+WebPhone View -|webphoneビュー - ||
+X ACTIVE CALLBACKS|Xアクティブコールバック||
+Other Agents Status:|他のエージェントのステータス:||
+Agents View +|エージェントビュー +||
+Calls Dialing:|ダイヤルが呼び出します。||
+D1 - DIAL|D1 - ダイヤル||
+D2 - DIAL|D2 - ダイヤル||
+Calls In Queue:|列になっている電話：||
+seconds:|秒:||
+Your Status:|あなたのステータス:||
+VIEW CALL LOG|コールログを見る||
+Server:|サーバ:||
+Alert is ON|アラートがオンになっている||
+Alert is OFF|アラートはオフです||
+LEAD SEARCH|見込み客検索||
+view notes|メモを見る||
+MANUAL DIAL|マニュアルダイアル||
+FAST DIAL|高速ダイヤル||
+Customer Information:|顧客情報:||
+RECORDING FILE:|ファイルを記録する:||
+RECORD ID:|IDを記録する:||
+Customer Time:|顧客の時間:||
+Channel:| チャンネル:||
+session ID:|セッションID:||
+Agent Screen|エージェントの画面||
+pixel.gif|pixel.gif||
+ ALT PHONE DIAL| ALT電話ダイヤル||
+LIVE|生きる||
+LOGOUT|>ログアウト||
+vdc_tab_script.gif|vdc_tab_script_jp.gif||
+vdc_tab_form.gif|vdc_tab_form_jp.gif||
+vdc_tab_email.gif|vdc_tab_email_jp.gif||
+ring|リング||
+TERRITORIES|地域||
+GROUPS|グループ||
+: %1s on Phone: %2s|：電話上の %1s ： %2s ||
+show comment history|ショーのコメント履歴||
+YOU DO NOT HAVE PERMISSIONS TO TRANSFER CALLS|電話を転送するための許可がありません。||
+Logged in as User|ユーザとしてログインしました||
+HIDE|隠す||
+vdc_XB_hotkeysactive_OFF.gif|vdc_XB_hotkeysactive_OFF_jp.gif||
+hide comment history|非表示のコメント履歴||
+vdc_XB_hotkeysactive.gif|vdc_XB_hotkeysactive_jp.gif||
+ALT PHONE DIAL|代替電話ダイヤル||
+Hide conference call channel information|会議コールチャンネル情報を隠す||
+Show conference call channel information|会議コールチャンネル情報を表示する||
+ORDER|>オーダー||
+LEAD PREVIEW|見込み客プレビュー||
+OCT|10月||
+NOV|11月||
+DEC|12月||
+ACTIVE DISPLAY PAUSED|アクティブディスプレイを一時停止する。||
+AUG|8月||
+SEP|9月||
+APR|4月||
+MAY|5月||
+JUN|6月||
+JLY|JLY||
+MAR|3月||
+CUSTOMER 3WAY HANGUP|顧客の3WAYのハングアップ||
+JAN|ヤン||
+FEB|2月||
+Customer Hung-up, 3-way Call Ended Automatically|顧客が電話を切りました。自動的に3方向電話が終了しました。||
+Call Agent Webphone|コールエージェントwebphone||
+Dial Next Call|次の呼び出しをダイヤル||
+Dial Countdown:|カウントダウンをダイヤル:||
+Time On Park:|公園での時間：||
+DIAL ALERT:|警告をダイヤル:||
+TIMER NOTIFICATION:|タイマー通知:||
+ENTER A PAUSE CODE|一時停止コードを選んでください||
+YOU MUST BE PAUSED TO CHANGE TERRITORIES|あなたは地域を変更するには一時停止されなければならない||
+You must choose a date|日付を選ばなければなりません。||
+Select a Date Below|以下の日付を選ぶ||
+YOU MUST BE PAUSED TO CHANGE GROUPS|グループを変更するには一時停止しなければなりません。||
+Manager|マネージャー||
+has selected your in-group choices|あなたのグループ内選択を選びました。||
+maximize| 最大化||
+Next Call Pause Set|次にコールを一時停止接ぐ||
+Invalid Day, Month, or Year range detected. Please correct and submit again.|無効な日、月、または年の範囲が検出されました。修正し、もう一度提出してください。||
+Searching...|検索...||
+Invalid Date Format. Please correct and submit again.|無効な日付形式。修正し、もう一度提出してください。||
+Agents View|エージェントビュー||
+WebPhone View|webphoneビュー||
+YOU MUST BE PAUSED TO VIEW YOUR CALL LOG|あなたのコールログを見るために一時停止しなければなりません。||
+Hide Calls In Queue|列になっている電話を隠す||
+Show Calls In Queue|列になっている電話を示す||
+YOU MUST BE PAUSED TO GRAB CALLS IN QUEUE|列になっている電話を捉えるためには一時停止しなければなりません。||
+CLICK HERE TO LOG IN AGAIN|ここをクリックして再度ログインする。||
+Call Wrapup:|まとめを呼び出す：||
+seconds remaining in wrapup|秒がまとめに残っています。||
+Close Window|ウィンドウを閉じる||
+You have been paused for too long, you have been logged out of your session|あなたが長すぎるために一時停止されてきた、あなたのセッションからログアウトされました||
+Your Shift is over or has changed, you have been logged out of your session|あなたのシフトは終わっているか、変更しています。自分のセッションからログアウト済みです。||
+The system has received a command to log you out, you have been logged out of your session|システムがあなたをログアウトさせるためのコマンドを受け取りました。自分のセッションからログアウトしました。||
+You are in ALT dial mode, you must finish the lead before logging out.|あなたは代替ダイヤルモードです。ログアウトする前に見込み客を終えなければなりません。||
+STILL A LIVE CALL! Hang it up then you can log out.|未だにライブコール！ログアウトできる時に電話を切る||
+You cannot log out during a Dial attempt. Wait 50 seconds for the dial to fail out if it is not answered|ダイアル中にログアウトすることはできません。それは答えられませんされているかどうかを失敗するダイヤルを50秒待ち||
+Manual Queue is Off|マニュアル列はオフです。||
+Manual Queue is On|マニュアル列はオンです。||
+PLEASE CLICK THE LOGOUT LINK TO LOG OUT NEXT TIME.|次回ログアウトするログアウトリンクをクリックしてください。||
+DELETE ALL|すべて削除||
+TERRITORIES NOT SELECTED|領域が選択されていません。||
+SELECTED TERRITORIES|選択された領域||
+Manager has selected territories for you|マネージャーはあなたのために地域を選択している||
+Manager has selected groups for you|マネージャーはあなたのためのグループを選択している||
+GROUPS NOT SELECTED|グループが選択されていません。||
+SELECTED GROUPS|選択されたグループ||
+ADD ALL|すべての追加||
+Finish Wrapup and Move On|まとめを終え、続けてください。||
+F - Female|F - 女性||
+minimize| 最小化||
+Hangup Again|再度、電話を切る||
+Next Call Pause|次にコールを一時停止||
+U - Undefined|uは - 不定||
+M - Male|M - 男性||
+DIAL IN-GROUP|グループ内をダイヤル||
+You Must Select a Disposition|配置を選ばなければなりません。||
+You can only disposition a call once|あなたは一度だけ電話を処分することができます||
+AGENT_PHONE|agent_phone||
+YOU MUST BE ON AN ACTIVE INBOUND CALL TO SEARCH FOR A LEAD|あなたがリードを検索するアクティブインバウンドコール上にある必要があります||
+GROUP ALIAS|グループエイリアス||
+CUSTOMER|顧客||
+PAUSE CODE|一時停止コード||
+YOU MUST BE PAUSED TO SEARCH FOR A LEAD|見込み客を検索するには一時停止しなければなりません。||
+YOU MUST BE PAUSED TO ENTER A PAUSE CODE IN AUTO-DIAL MODE|自動ダイアルモードで一時停止コードを入力するには一時停止しなければなりません。||
+Call Notes:|電話メモ：||
+History|歴史||
+CALL DISPOSITION|電話配置||
+Disposition Status List Hidden|隠れた配置ステータスリスト||
+vdc_XB_hangupxferline_OFF.gif|vdc_XB_hangupxferline_OFF_jp.gif||
+Manual Dial Queue Calls Waiting:|マニュアルダイヤル列の電話が待機中:||
+vdc_LB_customxfer_OFF.gif|vdc_LB_customxfer_OFF_jp.gif||
+vdc_XB_leave3waycall_OFF.gif|vdc_XB_leave3waycall_OFF_jp.gif||
+vdc_LB_quickxfer_OFF.gif|vdc_LB_quickxfer_OFF_jp.gif||
+vdc_volume_up_off.gif|vdc_volume_up_off.gif||
+vdc_volume_down_off.gif|vdc_volume_down_off.gif||
+vdc_XB_blindtransfer_OFF.gif|vdc_XB_blindtransfer_OFF_jp.gif||
+vdc_XB_ammessage_OFF.gif|vdc_XB_ammessage_OFF.gif||
+vdc_LB_ivrparkcall_OFF.gif|vdc_LB_ivrparkcall_OFF_jp.gif||
+vdc_XB_localcloser_OFF.gif|vdc_XB_localcloser_OFF_jp.gif||
+Incoming:|入ってくる:||
+vdc_LB_webform_two_OFF.gif|vdc_LB_webform_two_OFF_jp.gif||
+Change this phone number to INACTIVE|この電話番号を無効に変更する||
+Change this phone number to ACTIVE|この電話番号を有効に変更する||
+Fronter:|fronter：||
+Active:|有効：||
+Alt Count:|代替カウント：||
+call was not placed, there was an error:|電話がかかっていません。エラーがありました。:||
+Phone Code and Number:|電話コードと番号：||
+ALT DIAL NUMBER: ALT|ALTダイヤル番号：ALT||
+ALT DIAL NUMBER: ADDRESS3|ALTダイヤル番号：アドレス3||
+ALT DIAL NUMBER:|代替ダイヤル番号：||
+Lead was not reverted, there was an error:|見込み客は戻されませんでした。エラーがありました。:||
+Lead skipped, go on to next lead|リードは次のリードに進み、スキップ||
+YOU CANNOT SKIP A CALLBACK OR MANUAL DIAL, YOU MUST DIAL THE LEAD|かけ直しやマニュアルダイアルをスキップすることができません。見込み客にダイアルしなければなりません。||
+Unspecified error:|特定されないエラー:||
+This phone number is outside of the local call time:|この電話番号はローカル電話時間外です。:||
+No more leads in the hopper for campaign:|キャンペーン用のホッパーにおける見込み客はありません。:||
+This phone number is in the DNC list:|この電話番号は、DNCリストに含まれている：||
+This phone number is not in the campaign lists:|この電話番号はキャンペーンリストにありません。:||
+DIAL LEAD|見込み客にダイアルする||
+SKIP LEAD|見込み客をスキップする||
+Preview the Lead then|その時の見込み客をプレビューする||
+vdc_XB_dialwithcustomer.gif|vdc_XB_dialwithcustomer_jp.gif||
+vdc_XB_parkcustomerdial.gif|vdc_XB_parkcustomerdial_jp.gif||
+vdc_LB_requeue_call_OFF.gif|vdc_LB_requeue_call_OFF_jp.gif||
+vdc_XB_ammessage.gif|vdc_XB_ammessage.gif||
+vdc_LB_customxfer.gif|vdc_LB_customxfer_jp.gif||
+vdc_LB_requeue_call.gif|vdc_LB_requeue_call_jp.gif||
+Called:|呼ばれた:||
+vdc_XB_localcloser.gif|vdc_XB_localcloser_jp.gif||
+vdc_XB_blindtransfer.gif|vdc_XB_blindtransfer_jp.gif||
+vdc_XB_hangupbothlines.gif|vdc_XB_hangupbothlines_jp.gif||
+Called 3rd party:|呼び出されたサードパーティ:||
+vdc_XB_leave3waycall.gif|vdc_XB_leave3waycall_jp.gif||
+vdc_XB_hangupxferline.gif|vdc_XB_hangupxferline_jp.gif||
+seconds| 秒||
+Call Rejected:|拒否されたが呼び出します。||
+Calling:|呼び出し:||
+Waiting for Ring...|電話が鳴るのを待つ...||
+UID:|UID：||
+code:|コード：||
+YOU MUST ENTER A PHONE NUMBER AND DIAL CODE TO USE FAST DIAL|高速ダイヤルを使用するには電話番号とダイヤルコードを入力しなければなりません。||
+Click Here to Deactivate|無効にするには、ここをクリック||
+vdc_LB_quickxfer.gif|vdc_LB_quickxfer_jp.gif||
+vdc_LB_webform_two.gif|vdc_LB_webform_two_jp.gif||
+CallBack:|コールバック：||
+Agent:|エージェント：||
+PREVIOUS CALLBACK|前のコールバック||
+Last Call:|最後の電話ll:||
+Click Here to Choose a Dial In-Group|·グループダイヤルを選択するには、ここをクリック||
+No-Call Dial:|ダイヤルノー呼び出します。||
+Click Here to Activate|アクティブにするには、ここをクリック||
+Dial In-Group:|グループ内をダイヤル:||
+Group Alias:|グループエイリアス:||
+Click Here to Choose a Group Alias|グループエイリアスを選ぶためにここをクリックしてください。||
+NON-DIALABLE|非ダイヤル可能||
+System Delay, Please try again|システム遅延です。再度試してください。||
+YOU MUST BE PAUSED TO MANUAL DIAL A NEW LEAD IN AUTO-DIAL MODE|自動ダイアルモードで新たな見込み客にマニュアルダイアルするには一時停止しなければなりません。||
+LAST CALL DATE/TIME|最後のコールの日付/時間||
+CALLBACK DATE/TIME|コールバック日付/時刻||
+NUMBER|番号||
+Dialable Leads:|ダイヤルできる見込み客:||
+ACTIVE CALLBACKS|有効なコールバック||
+YOU MUST BE PAUSED TO CHECK CALLBACKS IN AUTO-DIAL MODE|自動ダイアルモードでの電話のかけ直しを確認するには一時停止しなければなりません。||
+ALT PHONE|代替電話||
+FINISH LEAD|見込み客を終える||
+or|または||
+List:|リスト：||
+Dial Alt Phone Number:|代替電話番号をダイアルする:||
+MAIN PHONE|主電話||
+vdc_LB_grabivrparkcall_OFF.gif|vdc_LB_grabivrparkcall_OFF_jp.gif||
+Dial Next Number|次の番号をダイアルする||
+Lead:|つながる：||
+Transfer number must have at least 1 digit:|転送回数は、少なくとも1の数字を持っている必要があります。||
+Leave 3Way Call Again|再び3WAYコールを残す||
+YOU MUST SELECT AN AGENT TO TRANSFER TO WHEN USING AGENTDIRECT|あなたはAGENTDIRECTを使用しているときに転送するエージェントを選択しなければならない（必要があり）||
+vdc_volume_up.gif|vdc_volume_up.gif||
+vdc_volume_down.gif|vdc_volume_down.gif||
+REMOTE CHANNEL|遠隔チャンネル||
+VOLUME|量||
+recording|記録||
+Placing call to next number|次の番号への載コール||
+LIVE CALLS IN YOUR SESSION:|あなたのセッションでライブコール:||
+Your session has been paused|あなたのセッションが一時停止されてい||
+Manual Queue:|マニュアルの列:||
+vdc_XB_dialwithcustomer_OFF.gif|vdc_XB_dialwithcustomer_OFF_jp.gif||
+vdc_XB_parkcustomerdial_OFF.gif|vdc_XB_parkcustomerdial_OFF_jp.gif||
+vdc_volume_MUTE.gif|vdc_volume_MUTE_jp.gif||
+vdc_LB_ivrparkcall.gif|vdc_LB_ivrparkcall_jp.gif||
+vdc_volume_UNMUTE.gif|vdc_volume_UNMUTE_jp.gif||
+vdc_LB_grabivrparkcall.gif|vdc_LB_grabivrparkcall_jp.gif||
+vdc_LB_stoprecording_OFF.gif|vdc_LB_stoprecording_OFF_jp.gif||
+vdc_LB_startrecording_OFF.gif|vdc_LB_startrecording_OFF_jp.gif||
+vdc_LB_senddtmf_OFF.gif|vdc_LB_senddtmf_OFF_jp.gif||
+vdc_LB_webform_OFF.gif|vdc_LB_webform_OFF_jp.gif||
+vdc_LB_grabparkedcall_OFF.gif|vdc_LB_grabparkedcall_OFF_jp.gif||
+vdc_LB_parkcall_OFF.gif|vdc_LB_parkcall_OFF_jp.gif||
+vdc_LB_dialnextnumber_OFF.gif|vdc_LB_dialnextnumber_OFF_jp.gif||
+vdc_LB_hangupcustomer_OFF.gif|vdc_LB_hangupcustomer_OFF_jp.gif||
+vdc_LB_transferconf_OFF.gif|vdc_LB_transferconf_OFF_jp.gif||
+vdc_LB_startrecording.gif|vdc_LB_startrecording_jp.gif||
+vdc_LB_senddtmf.gif|vdc_LB_senddtmf_jp.gif||
+vdc_LB_webform.gif|vdc_LB_webform_jp.gif||
+vdc_LB_stoprecording.gif|vdc_LB_stoprecording_jp.gif||
+vdc_LB_transferconf.gif|vdc_LB_transferconf_jp.gif||
+vdc_LB_grabparkedcall.gif|vdc_LB_grabparkedcall_jp.gif||
+vdc_LB_parkcall.gif|vdc_LB_parkcall_jp.gif||
+agc_live_call_DEAD.gif|agc_live_call_DEAD_jp.gif||
+vdc_LB_hangupcustomer.gif|vdc_LB_hangupcustomer_jp.gif||
+agc_live_call_OFF.gif|agc_live_call_OFF_jp.gif||
+agc_live_call_ON.gif|agc_live_call_ON_jp.gif||
+vdc_LB_resume_OFF.gif|vdc_LB_resume_OFF_jp.gif||
+vdc_LB_dialnextnumber.gif|vdc_LB_dialnextnumber_jp.gif||
+loading.gif|loading.gif||
+blank.gif|blank.gif||
+vdc_LB_resume.gif|vdc_LB_resume_jp.gif||
+vdc_LB_pause.gif|vdc_LB_pause_jp.gif||
+vdc_LB_pause_OFF.gif|vdc_LB_pause_OFF_jp.gif||
+Login:|ログイン：||
+Password:|パスワード:||
+Sorry, there are no available sessions|申し訳ありませんが可能なセッションはありません||
+Sorry, there are no leads in the hopper for this campaign|すみませんが、このキャンペーンへのホッパーにおける見込み客がありません。||
+Login Error|ログインエラー||
+Sorry, your phone login and password are not active in this system, please try again:|すみません。あなたの電話ログインとパスワードはこのシステムでアクティブではありません。再度試してください。:||
+Too many agents logged in, please contact your administrator|あまりにも多くのエージェントがログインし、管理者に連絡してください||
+Agent web client: Phone Login Error|エージェントのWebクライアント：携帯電話のログインエラー||
+You are already logged in, please log out of your other session first|あなたはすでにログインしている、あなたの他のセッションからログアウトしてください最初に||
+No available phones, please contact your administrator|使用可能な携帯電話は、管理者に連絡していないしてください||
+Too many network errors, please contact your administrator|あまりにも多くのネットワークエラーは、管理者に連絡してください||
+No available servers, please contact your administrator|使用可能なサーバは、管理者に連絡していないしてください||
+Login incorrect, please try again|ログインが間違っています。再度試してください。||
+Too many login attempts, try again in 15 minutes|あまりにも多くのログイン試行は、15分後にもう一度試して||
+Campaign not active, please try again|キャンペーンがアクティブではありません。再度試してください。||
+Sorry, you are not allowed to login to this campaign:|申し訳ありませんが、このキャンペーンへのログインが許可されていません。||
+ERROR: There are no Shifts enabled for your user group|エラー：あなたのユーザグループに有効化されたシフトはありません。||
+ERROR: You are not allowed to log in outside of your shift|エラー：あなたのシフトの外部にログインすることは許可されていません。||
+Agent web client:  Phone Login|エージェントのWebクライアント：電話機へのログイン||
+phone login|電話機へのログイン||
+Agent web client:  Login|エージェントのWebクライアント：ログイン||
+Login| ログイン||
+Agent web client: Campaign Login|エージェントのWebクライアント：キャンペーンログイン||
+Campaign Login|キャンペーンログイン||
+Phone Password:|電話パスワード:||
+User Login|ユーザログイン||
+Campaign:|キャンペーン:||
+Refresh Campaign List|キャンペーンリストを再読み込みする||
+Re-Login|再ログイン||
+Phone Login:|電話ログイン:||
+Agent web client: Re-Login|エージェントのWebクライアント：再ログイン||
+vdc_tab_vicidial.gif|vdc_tab_vicidial.gif||
+You have now logged out. Thank you|今、ログアウトしています。ありがとうございました。||
+ERROR: System Settings missing|エラー：不足しているシステム設定||
+pause_code function sent|pause_code関数は、送信||
+pause_code error - agent is not paused|pause_codeエラー - エージェントが一時停止されていません||
+pause_code not valid|有効ではありませんpause_code||
+transfer_conference function set|transfer_conference関数セット||
+agent_user does not have a live call|AGENT_USERは、ライブコールを持っていない||
+park_call function set|park_call関数セット||
+transfer_conference not valid|有効ではありませんtransfer_conference||
+value is not valid|値が有効ではありません||
+send_dtmf not valid|send_dtmf有効ではありません||
+park_call not valid|有効ではありませんpark_call||
+no active call found|見つかったアクティブなコールない||
+ingroup is not valid|内集団は有効ではありません||
+stage is not valid|ステージは有効ではありません||
+ra_call_control hungup|ra_call_control hungup||
+phone_number is not valid|PHONE_NUMBERは有効ではありません||
+ra_call_control transfer|ra_call_control転送||
+user not logged in|ユーザーログインしていません||
+ra_call_control not valid|ra_call_control有効ではありません||
+no active lead found|アクティブな鉛が見つかりませんでした||
+st_get_agent_active_lead not valid|有効ではありませんst_get_agent_active_lead||
+st_get_agent_active_lead lead found|st_get_agent_active_leadリード発見||
+st_login_log user found|st_login_logユーザーが見つかりました。||
+set_timer_action not valid|有効ではありませんset_timer_action||
+set_timer_action lead updated|set_timer_actionリードが更新||
+user is not allowed to modify campaign settings|ユーザーは、キャンペーン設定を変更することが許可されていません||
+user is not allowed to modify lead information|ユーザーは、リード情報を変更することはできません||
+no fields have been defined|どのフィールドが定義されていません||
+agent_user does not have a lead on their screen|AGENT_USERは彼らの画面上でのリードを持っていない||
+owner set to|所有者に設定||
+update_fields lead updated|update_fieldsが更新鉛||
+title set to|タイトルに設定||
+vendor_lead_code set to|vendor_lead_codeに設定||
+rank set to|順位に設定||
+security_phrase set to|に設定security_phrase||
+source_id set to|に設定SOURCE_ID||
+state set to|状態に設定||
+postal_code set to|POSTAL_CODEに設定||
+province set to|州は、に設定||
+middle_initial set to|へmiddle_initialセット||
+phone_number set to|PHONE_NUMBERに設定||
+gender set to|性別に設定||
+gmt_offset_now set to|に設定gmt_offset_now||
+last_name set to|に設定LAST_NAME||
+email set to|電子メールに設定||
+first_name set to|に設定FIRST_NAME||
+country_code set to|はcountry_codeに設定||
+date_of_birth set to|へdate_of_birthセット||
+alt_phone set to|alt_phoneに設定||
+city set to|都市に設定する||
+comments set to|コメントに設定||
+address2 set to|アドレス2に設定||
+address3 set to|アドレス3に設定||
+phone_code set to|phone_codeに設定||
+address1 set to|アドレス1に設定||
+st_login_log not valid|有効ではありませんst_login_log||
+change_ingroups function set|change_ingroups関数セット||
+user is not allowed to change agent in-groups|そのユーザはグループエージェントを変更することが許可されていません||
+campaign does not allow inbound calls|キャンペーンでは、着信コールを許可していません||
+User settings set as default|ユーザ設定は、デフォルトとして設定され||
+ingroup does not exist|内集団が存在しません||
+ingroup_choices are required for ADD and REMOVE values|ingroup_choicesは追加および削除の値のために必要とされる||
+campaign dial_method does not allow outbound autodial|キャンペーンdial_methodは、アウトバウンド自動ダイヤルを許可していません||
+campaign manual dial list undefined|キャンペーン手動ダイヤルリストの未定義の||
+change_ingroups not valid|有効ではありませんchange_ingroups||
+add_lead PHONE NUMBER IN DNC|DNCでadd_lead電話番号||
+add_lead PHONE NUMBER IN CAMPAIGN DNC|キャンペーンDNCでadd_lead電話番号||
+lead added|リード追加||
+lead insertion failed|リード挿入に失敗しました||
+external_add_lead not valid|有効ではありませんexternal_add_lead||
+preview dial skipping not allowed on this campaign|プレビューダイヤルはこのキャンペーンで許可されていない飛び||
+alt number dialing not allowed on this campaign|ALT番号は、このキャンペーンで許可されていないダイヤリング||
+preview_dial_action function set|preview_dial_action関数セット||
+preview dialing not allowed on this campaign|プレビューダイヤリングがこのキャンペーンには許可されていません||
+agent_user is not paused|AGENT_USERが一時停止されていません||
+preview_dial_action not valid|preview_dial_action有効ではありません||
+agent_user is not allowed to place manual dial calls|AGENT_USERは手動ダイヤル電話をかけることは許されない||
+lead_id is not valid|lead_idは有効ではありません||
+phone_number is already in this agents manual dial queue|PHONE_NUMBERはこのエージェントの手動ダイヤルキューに既にある||
+external_dial function set|external_dial関数セット||
+phone number lead_id search not found|電話番号が未発見検索lead_id||
+phone number is not valid|電話番号が有効ではありません||
+vtiger callback activity does not exist in vtiger system|のvtigerコール活動はのvtigerのシステムに存在しない||
+group_alias is not valid|group_aliasは有効ではありません||
+Could not connect: |接続できませんでした：||
+external_dial not valid|有効ではありませんexternal_dial||
+caller_id_number from group_alias is not valid|group_aliasからcaller_id_numberは有効ではありません||
+audio_playback error - entry is empty|エラーaudio_playback - エントリは空です||
+audio_playback error - no session data|audio_playbackエラー - なしセッションデータ||
+audio_playback function sent|送信されたaudio_playback機能||
+audio_playback error - no audio playing in agent session|audio_playbackエラー - エージェント·セッションでのオーディオなしの演奏||
+audio_playback not valid|audio_playback有効ではありません||
+audio_playback previous playback stopped|前回再生を停止audio_playback||
+audio_playback error - audio already playing in agent session|audio_playbackエラー - オーディオすでにエージェントセッションで遊ぶ||
+call_agent error - no session data|call_agentエラー - なしセッションデータ||
+call_agent function sent|call_agent関数は、送信||
+call_agent error - entry is empty|call_agentエラー - エントリは空です||
+call_agent not valid|有効ではありませんcall_agent||
+click here to continue. . .|継続するにはここをクリックしてください。 。 。||
+webphone_url error - webphone url is empty|webphone_urlエラー - webphoneのURLが空である||
+webphone_url error - no session data|webphone_urlエラー - なしセッションデータ||
+webphone_url active and displayed|webphone_urlアクティブと表示された||
+webphone_url active and launched|webphone_urlアクティブと立ち上げ||
+webphone_url not valid|webphone_url有効ではありません||
+recording active|アクティブ記録||
+not recording|記録しない||
+stop recording error|エラーの記録を停止||
+recording function sent|記録機能は、送信された||
+recording not valid|有効ではありませ記録||
+NOTICE|予告||
+logout not valid|有効ではありませログアウト||
+logout function set|ログアウト機能セット||
+external_pause function set|external_pause関数セット||
+external_pause agent is not paused|external_pauseエージェントが一時停止されていません||
+external_pause not valid|external_pause有効ではありません||
+external_status not valid|有効ではありませんexternal_status||
+external_status function set|external_status関数セット||
+no user found|は、ユーザーが見つかりませんでした||
+external_hangup function set|external_hangup関数セット||
+agent_user is not logged in|AGENT_USERはログインできません||
+ini_get not allowed: |許可されていませんがは、ini_get：||
+external_hangup not valid|external_hangup有効ではありません||
+default socket timeout: |デフォルトのソケットのタイムアウト：||
+maximum input time: |最大入力時間：||
+memory limit: |メモリ制限：||
+post maximum size: |最大サイズを投稿：||
+upload maximum filesize: |最大ファイルサイズをアップロードする：||
+system load average: |システム負荷の平均：||
+disk free space: |ディスク空き容量：||
+maximum execution time: |最大実行時間：||
+apache version: |Apacheのバージョン：||
+apache processes: |Apacheのプロセス：||
+host name: |ホスト名：||
+server name: |サーバー名：||
+php version: |PHPバージョン：||
+System API NOT ACTIVE|システムAPIアクティブではないの||
+VICIDiaL Agent API|VICIDIALエージェントAPI||
+SUCCESS|成功||
+ERROR|エラー||
+Invalid Source|無効なソース||
+Invalid Username/Password|無効なユーザー名/パスワード||
+Voicemail Check|ボイスメールチェック||
+voicemail box %1s is not valid|ボイスメールボックス %1s 有効ではない||
+DATE:|日付：||
+EPOCH:|エポック：||
+Amount of time you have been logged-in:|ログインしていた時間：||
+You logged-in at:|以下の時間にログインしました：||
+Click LOGOUT below to log-out|ログアウトするために以下のログアウトをクリックする||
+Click LOGIN below to log-in|ログインするために以下のログインをクリックする||
+You last logged-out at:|以下の時間に最後にログアウトしました：||
+Time since you were last logged-in:|最後にログインしてからの時間：||
+BACK to Administration|管理に戻る||
+BACK to Welcome Screen|ようこそ画面に戻る||
+BACK to Agent Login Screen|エージェントログイン画面に戻る||
+ERROR: timeclock log entry already made:|エラー：タイムクロックログ入力がすでに行われました：||
+Amount of time you were logged-in:|ログインしていた時間：||
+You have now logged-out|今、ログアウトしました。||
+You logged out at|でログアウトしました。||
+You have now logged-in|今、ログインしました。||
+You logged in at|でログインしました。||
+You cannot log in or out within 30 seconds of your last login or logout|最後にログインまたはログアウトの30秒以内にログインまたはログアウトすることができません。||
+VERSION:|バージョン:||
+BUILD:|ビルド:||
+User Login:|ユーザログイン:||
+User Password:|ユーザパスワード:||
+Timeclock| タイムクロック||
+Agent Timeclock|エージェントのタイムクロック||
+vtc_tab_vicidial.gif|vtc_tab_vicidial.gif||
+denotes required fields|必要なフィールドを示し、||
+The user and password you entered are not active in the system<BR>Please try again:|あなたが入力したユーザーとパスワードは、もう一度試してくださいオリジナルシステムではアクティブではありません。||
+Please click SUBMIT to hangup and disposition the call|ハングアップするために提出クリックして、コールを処分してください||
+PAUSE AGENT DIALING|エージェントダイアルを一時停止||
+Answer:|答え：||
+Disposition:|処分：||
+Processing...|処理...||
+Show:|示す:||
+Comments:|コメント：||
+Question:|質問：||
+Alt. Phone:|代替電話:||
+Email:| メール:||
+Middle Initial:|ミドルネームのイニシャル：||
+Province:|都道府県:||
+Vendor ID:|ベンダーID:||
+Title:| タイトル:||
+ViciDial Script|VICIDIALスクリプト||
+Data Updated, Hanging up call, please wait|データは、コールをハングアップしています。しばらくお待ちください更新さ||
+Email| メール||
+Comments| コメント||
+VICIDiaL Script Display Script|VICIDIALスクリプト表示スクリプト||
+Title| タイトル||
+Gender|性別||
+Unidentified Hangup Cause Code.|正体不明のハングアップの原因コード||
+Unidentified SIP Hangup Cause Code.|正体不明のSIPハングアップ原因コード。||
+DONE:|行わ：||
+MESSAGE:|メッセージ：||
+Call %1s grabbed for %2s| %1s は %2s 用つかんで呼び出す||
+Call %1s could not be grabbed for %2s|コール %1s が %2s 用グラブことができませんでした||
+EMAIL TO|への電子メール||
+ATTACHMENTS| 添付ファイル||
+NOTES:|注:||
+No calls found|電話がありません。||
+EMAIL LOG FOR THIS LEAD:|この端子の電子メールログ:||
+CALL LOG FOR THIS LEAD:|この見込み客に対する電話ログ:||
+Called Count:|カウントと呼ばれる:||
+Last Local Call Time:|最後のローカル通話時間:||
+Dial Link:|リンクをダイヤル:||
+SELECT THIS LEAD|このリードを選択する||
+Called Since Last Reset:|最後のリセット以降に呼び出さ:||
+ DIAL | ダイアル||
+List ID:|リストのID：||
+Timezone:|タイムゾーン:||
+ Comments| コメント||
+Status:|ステータス:||
+Alt. Phone|代替電話||
+Show|示す||
+ Email| メール||
+ Gender| 性別||
+DialCode|ダイアルコード||
+PostCode|郵便番号||
+Vendor ID|ベンダーID||
+ State| 状態 ||
+Province|都道府県||
+Address2|アドレス2||
+Address3|住所3||
+MI|MI||
+Last | 最後||
+Address1|アドレス1||
+ Title| タイトル||
+First|最初||
+Callback Entry Time:|コールバックエントリー時間:||
+Callback Trigger Time:|コールバックトリガー時間:||
+Callback Comments:|コールバックコメント:||
+Callback Lead Status:|コールバック見込み客ステータス:||
+Callback Status:|コールバックステータス:||
+no Lead ID|鉛IDません||
+Location:|場所：||
+Group|グループ||
+Job:|仕事：||
+Dept:|DEPT：||
+OTHER 2|その他2||
+BU NAME|BU名||
+MOBILE|モバイル||
+OTHER 1|その他1||
+OFFICE|オフィス||
+FIRST NAME|姓||
+LAST NAME|姓||
+You must enter in search terms, one of these must be populated: office number, last name, first name|オフィス番号、姓、名を：あなたはこれらのいずれかが移入する必要があり、検索語に入力する必要があります||
+Campaign not found|キャンペーン見つかりません。||
+SELECT|選択する||
+There was a problem with your search terms|検索用語に問題があった||
+ZIP| 郵便番号||
+No results found|結果が見つかりません。||
+CITY| 都市||
+STATE| 状態||
+LAST CALL|ラストコール||
+Results Found:|結果が見つかりました。||
+Go Back|戻る||
+Close Call Log|コールログを閉じる||
+You must enter in search terms, one of these must be populated: lead ID, vendor ID, phone number, last name|あなたが検索語に入力する必要があり、これらのいずれかが移入されなければならない：リードID、ベンダーID、電話番号、姓||
+No calls on this day|この日には電話がありません。||
+DIAL| ダイアル||
+HANGUP| ハングアップ||
+INFO| 情報||
+IN/OUT| イン/アウト||
+ALT| 代替の||
+STATUS|>ステータス||
+CAMPAIGN| キャンペーン||
+LENGTH| 長さ||
+DATE/TIME| 日付/時刻||
+GO|行く||
+close|閉じる||
+TYPE| タイプを呼び出す||
+TAKE CALL|電話を取る||
+CALL GROUP| グループを呼び出す||
+AGENT| エージェント||
+WAIT| 待ち時間||
+PHONE| 電話||
+FULL NAME| フルネーム||
+Calls in Queue View Disabled for this campaign|このキャンペーンに対し無効になっている列になっている電話ビュー||
+PAUSED|一時停止||
+-LOGGED-OUT|-loggedアウト||
+INCALL|incallの||
+READY|レディー||
+ Pause Code %1s has been recorded| ポーズコード %1s が記録されている||
+agent_log_id %1s or pause_code %2s is not valid|agent_log_id %1s またはpause_codeの %2s が有効ではありません||
+Favorites list has been updated to %1s for %2s|お気に入りリストは、 %2s の %1s に更新されました||
+favorites list %1s is not valid|お気に入りは、 %1s を有効ではありませんリスト||
+Agent %1s is now in status %2s|エージェント %1s がステータス %2s に今ある||
+stage %1s is not valid|ステージ %1s が有効ではありません||
+Lead %1s information has%2s been updated| %1s 情報をリードする %2s が更新されました||
+phone_number %1s or lead_id %2s is not valid|PHONE_NUMBERの %1s またはlead_id %2s が有効ではありません||
+Lead %1s has been changed to %2s Status|鉛 %1s が %2s 状態に変更されました||
+Dispo Choice %1s or lead_id %2s is not valid|ディスポの選択肢 %1s またはlead_id %2s が有効ではありません||
+campaign %1s or conf_exten %2s is not valid|キャンペーン %1s またはconf_exten %2s が有効ではありません||
+Campaign %1s is not valid or lead_id %2s is not valid|キャンペーン %1s が有効か %2s をlead_idが有効でないではありません||
+lead_id %1s is not valid|lead_id %1s が有効ではありません||
+Campaign %1s is not valid|キャンペーン %1s が有効ではありません||
+uniqueid %1s or lead_id: %2s is not valid|一意のID %1s またはlead_id： %2s が有効ではありません||
+VICIDiaL_LOG Inserted:|挿入はvicidial_log：||
+uniqueid %1s or lead_id: %2s or list_id: %3s or phone_number: %4s or campaign: %5s is not valid| %2s またはLIST_ID：： %3s またはPHONE_NUMBER： %4s やキャンペーン： %1s またはlead_id一意のID %5s は有効ではありません||
+%1s is not valid| %1s が有効ではありません||
+AGENT ALERT SETTING CHANGED %1s|エージェントのアラート設定は %1s を変更||
+AGENT ALERT SETTING NOT CHANGED|エージェントの警告は変更されませた設定||
+ALT PHONE NUMBER STATUS CHANGED|代替電話番号のステータスを変更||
+%1s %2s %3s or %4s is not valid| %1s  %2s  %3s または %4s は有効ではありません||
+ALT PHONE NUMBER STATUS NOT CHANGED|代替電話番号のステータスが変更されていない||
+ Postal Code Outside Dialable Zone| ダイヤル可能なゾーン外の郵便番号||
+ Phone Area Code Outside Dialable Zone| ダイヤル可能なゾーン外の電話の市外局番||
+Phone and Post Code Time Zone Mismatch! |電話や郵便番号のタイムゾーンの不一致||
+Conf Exten %1s or campaign %2s or ext_context %3s is not valid|confにカスタムアプリケーション用の %1s またはキャンペーンの %2s またはext_context %3s は有効ではありません||
+no agent session|全くエージェントセッションん||
+no lead active for this agent|このエージェントには、鉛のアクティブん||
+no lead info in system:|システムに鉛インフォん。||
+Territory Choice %1s has been registered to user %2s|領土チョイスの %1s がユーザー %2s に登録されている||
+Territory Choice is not valid|領土の選択は有効ではありません||
+Closer In Group Choice %1s has been registered to user %2s|グループ選択の %1s で近いユーザー %2s に登録されている||
+Group Choice is not valid|グループ選択有効ではない||
+YOU MUST LOG IN TO THE TIMECLOCK FIRST|最初にタイムクロックにログインしなければなりません。||
+PLEASE SELECT A CAMPAIGN|キャンペーンを選択してください。||
+SUBMIT|送信||
+Manager Password:|マネージャのパスワード：||
+Manager Login:|Managerのログイン：||
+MANAGER OVERRIDE:|マネージャー優先:||
+You are not allowed to log in outside of your shift|あなたは、あなたのシフトの外側にログインすることは許可されていません||
+There are no Shifts enabled for your user group|あなたのユーザーグループに対して有効になってないのシフトはありません||
+USER LOGIN ERROR|ユーザーログインエラー||
+VICIDiaL Database Query Script|VICIDIALデータベースクエリスクリプト||
+Invalid session_name:|無効なセッション名：||
+Invalid server_ip: %1s or Invalid session_name: %2s|無効なSERVER_IP：の %1s または無効なセッション名： %2s ||
+UserID: $FCS%1s - %2s$FCE,  Date: %3s|ユーザーID：の$FCS%1s - %2s$FCE、日付：の %3s||
+DONE: dispo is not a sale status: %1s|行わ：ディスポ販売状況ではありません：の %1s||
+DONE: %1s is empty for lead %2s|行われます。 %1s がされている空のリードの %2s 用||
+DONE: no match found within %1s     %2s|行わ： %1s  %2s 内にある一致しない||
+DONE: %1s match found, %2s updated to %3s with %4s status|行われます。 %1s が見つかったマッチ、 %2s が %4s ステータス %3s に更新した||
+Invalid Username/Password:|無効なユーザー名/パスワード：||
+MULTI_MATCH:|multi_match：||
+MULTI_MATCH CHECK:|multi_matchチェック：||
+Language has not been changed, please try again|言語が変更されていない、再度お試しください||
+Name:|名前：||
+vdc_LB_blank_OFF.gif|vdc_LB_blank_OFF.gif||
+Login incorrect, user names are case sensitive|不正なログイン、ユーザー名は大文字と小文字が区別されます||
+User Names are case sensitive|ユーザー名は大文字と小文字が区別されます||
+vdc_LB_webform_three.gif|vdc_LB_webform_three_jp.gif||
+vdc_LB_webform_three_OFF.gif|vdc_LB_webform_three_OFF_jp.gif||
+(comma-separated)|（カンマ区切り）||
+(Answered/Total chats taken in to this In-Group)|（回答/総チャットは、このグループ内に取り込ま）||
+ NO LIVE CHATS WAITING |待っているライブチャットありません||
+10 minutes|10分||
+10 seconds|10秒||
+2 hours|2時間||
+2 minutes|2分||
+2 years|2年||
+20 minutes|20分||
+20 seconds|20秒||
+30 seconds|30秒||
+4 seconds|4秒||
+40 minutes|40分||
+40 seconds|40秒||
+5 minutes|5分||
+5PM-MIDNIGHT|5 PM-MIDNIGHT||
+60 minutes|60分||
+60 seconds|60秒||
+9AM-5PM|9：00-17：00||
+ADD A NEW CUSTOM REPORT|新しいカスタムレポートを追加||
+ADD NEW SETTINGS CONTAINER|新しい設定コンテナーを追加||
+ADD NEW STATUSES GROUP|NEW STATUSESグループを追加||
+ADD REPORT|レポートの追加||
+ADD SETTINGS CONTAINER|設定コンテナを追加||
+ADD STATUS GROUP|ステータスグループを追加||
+ADDING NEW SETTINGS CONTAINER|新しい設定のコンテナーの追加||
+ADDING NEW STATUS GROUP|新しいステータスグループを追加||
+ADMINISTRATION: AM Message Multi Entry|管理：AMメッセージマルチエントリ||
+ADMINISTRATION: URL Multi Entry|管理：URLマルチエントリ||
+AGENT SCREEN DEBUG LOG RECORDS FOR|エージェント画面のデバッグログRECORDS||
+ALL INBOUND GROUPS|すべての着信グループ||
+ALLOWED IN-GROUPS USING A STATUS GROUP OVERRIDE|ステータスグループのオーバーライドを使用して、グループ許可されます||
+AM  (03:45 - 15:15)|AM（3時45分 - 夜3時15）||
+AM MESSAGE|AMメッセージ||
+AM Message Wildcards|AMメッセージワイルドカード||
+AM Message Wildcards Defined|定義されたAMメッセージワイルドカード||
+AM Message Wildcards Form|AMメッセージワイルドカードフォーム||
+AM Message Wildcards is not set to active|AMメッセージワイルドカードはアクティブに設定されていません||
+AM Messages for %1s|％1sとのメッセージAM||
+API Allowed Functions|API関数可||
+API List Restrict|APIリストの制限||
+ATTEMPT TO CREATE CHAT SESSION FAILED.|チャットセッションの作成に失敗しました。||
+Add A Settings Container|設定コンテナを追加||
+Add A Status Group|ステータスグループを追加||
+Add a new %1s AM Message|新しい％1SのAMのメッセージを追加||
+Add a new %1s URL|新しい％1S URLを追加します||
+Admin Custom Fields Show Hidden|管理カスタムフィールドの表示非表示||
+After Hours Lead Reset|営業時間リードリセット後の||
+Agent Chat Interface|エージェントチャットインターフェイス||
+Agent Debug Log Report|エージェントのデバッグログレポート||
+Agent Display Fields|エージェントの表示フィールド||
+Agent Screen Debug Logging|エージェント画面のデバッグログ||
+Agent chatting|チャットエージェント||
+Agent in email|電子メールでのエージェント||
+Agent-Manager Chat Log|エージェントマネージャのチャットログ||
+Agent/Manager Chat Log Report|エージェント/マネージャーチャットログレポート||
+Alias Logins List (comma separated)|エイリアスログインリスト（カンマ区切り）||
+Allowed Custom Reports|許可カスタムレポート||
+Alternate %1s URLs for %2s|％の2Sの代替％1SのURLを||
+Alternate Dispo URLs Defined|代替ディスポのURLが定義され||
+Alternate Multi URLs|代替マルチのURL||
+Alternate URL Form|代替URLフォーム||
+Answered Chats|回答チャット||
+Auth Mode for POP3 protocol only|POP3プロトコルのみの認証モード||
+Available Chats|利用可能なチャット||
+Available agents|利用可能なエージェント||
+Average Chat Length for all Chats|すべてのチャットの平均チャット長||
+Average QUEUE Length across all chats|すべてのチャット全体の平均キュー長||
+Average QUEUE Length across all chats:|すべてのチャット全体の平均キュー長：||
+Average QUEUE Length for queue chats|キューチャットのための平均キュー長||
+Average QUEUE Length for queue chats:|キューチャットのための平均キュー長：||
+Average hold time for DROP Chats:|DROPチャットの平均保留時間：||
+Average queue time for Answered Chats|回答チャットの平均キュー時間||
+BACK TO CHAT SCREEN|バックスクリーンのチャット||
+CALL MENU NOT FOUND|CALLメニューが見つかりません||
+CALL MENUS USING THIS DID|これはDID使用してコールメニュー||
+CAMPAIGN AC-CIDs USING THIS DID|これをした利用したキャンペーンのAC-CIDS||
+CAMPAIGN LISTS USING A STATUS GROUP OVERRIDE|ステータスグループのオーバーライドを使用CAMPAIGNリスト||
+CAMPAIGN NOT ADDED - there is already a status group in the system with this ID|キャンペーン追加されていません - このIDを使用してシステム内のステータス・グループがすでに存在します||
+CAMPAIGN PAUSE CODE NOT FOUND|キャンペーンの一時停止コードが見つかりません||
+CAMPAIGN PRESET NOT FOUND|キャンペーンプリセットが見つかりません||
+CAMPAIGNS USING THIS CALL MENU|このCALLメニューを使用しているキャンペーン||
+CAMPAIGNS USING THIS DID|これを使用しているキャンペーンは、DID||
+CAMPAIGNS USING THIS FILTER|このフィルタを使用しているキャンペーン||
+CAMPLISTS_ALL_WITH_ALT|CAMPLISTS_ALL_WITH_ALT||
+CAMPLISTS_ALL_WITH_ALT_ADDR3|CAMPLISTS_ALL_WITH_ALT_ADDR3||
+CAMPLISTS_ONLY_WITH_ALT|CAMPLISTS_ONLY_WITH_ALT||
+CAMPLISTS_ONLY_WITH_ALT_ADDR3|CAMPLISTS_ONLY_WITH_ALT_ADDR3||
+CANNOT ADD REPORT, REPORT NAME ALREADY IN USE FOR STANDARD VICIDIAL REPORT|標準VICIDIALレポートの既に使用中のレポート、レポート名を追加することはできません。||
+CANNOT ADD REPORT, SOME FIELDS ARE MISSING|レポートを追加することはできません、いくつかのフィールドが含まれていません||
+CANNOT UPDATE REPORT, NEW CUSTOM REPORT NAME ALREADY IN USE FOR STANDARD VICIDIAL REPORT|標準VICIDIALレポートの既に使用中のレポート、新しいカスタムレポート名を更新することはできません||
+CANNOT UPDATE REPORT, SOME FIELDS ARE MISSING|レポートを更新することができない、いくつかのフィールドが含まれていません||
+CARRIER NOT FOUND|CARRIERが見つかりません||
+CASCADE|カスケード||
+CF Encrypt not enabled on your system|CF暗号化は、ご使用のシステムで有効になっていません||
+CHAT ENDED|チャットを終了||
+CHAT MEMBER NAME|チャットメンバー名||
+CHAT SESSION CREATED. INVITE CUSTOMER VIA EMAIL TO BEGIN.|チャットセッションが作成。 BEGINに電子メールを介して顧客を招待して下さい。||
+CHAT START DATE|チャット開始日||
+CHAT SUB-ID|CHAT SUB-ID||
+CHAT WITH LIVE AGENT|ライブエージェントとチャット||
+CHATS|CHATS||
+CLICK CHAT TO JOIN|JOINするには、チャットをクリックします||
+CLICK HERE TO RESET YOUR SESSION|セッションをリセットするにはこちらをクリック||
+CONVERSION OF STATE NAMES TO ABBREVIATIONS ENABLED|略語の状態名の変換許可||
+CURRENT STATUS|現在のステータス||
+Cached Realtime Carrier Stats|キャッシュされたリアルタイムキャリア統計||
+Call Not Found:|呼び出しが見つかりません：||
+Call status|コー​​ルステータス||
+Chat ID|チャットID||
+Chat Timeout|タイムアウトチャット||
+Chat Timeout in seconds|数秒でタイムアウトチャット||
+Chat does not exist or has been closed|チャットは存在しないか、閉じられています||
+Chat has been closed|チャットは閉鎖されました||
+Chat is waiting for an agent|チャットは、エージェントを待っています||
+Chat not started|チャット開始されていません||
+Chat started|チャットを開始||
+Chat started, failure to join|チャットは、参加する失敗を開始しました||
+Chat text|チャットテキスト||
+Chat type|チャットタイプ||
+Chat was not joined.|チャットは参加しませんでした。||
+Chats taken into the IVR for this In-Group|チャットは、このイングループのIVRに入れ||
+Chatting with|とのチャット||
+Click here to delete settings container|設定のコンテナを削除するには、ここをクリックしてください||
+Click here to delete status group|ステータスグループを削除するには、ここをクリックしてください||
+Click here to see Admin changes to this settings container|この設定はコンテナに管理者の変更を見るにはここをクリック||
+Click here to see Admin changes to this status group|このステータスグループの管理の変更を見るにはここをクリック||
+Click on a live chat at right to join it.|それに参加する権利でライブチャットをクリックします。||
+Clicking this link will allow you to download the files that make up the customer chat interface.  You can then unzip, and place the unzipped vdchat_customer folder in the htdocs folder on you web server, or a server or location of your choosing.  Said location MUST be on a server with Vicidial installed specific to your system. Enter the URL of the final location in the Chat URL setting under the System Settings.|このリンクをクリックすると、顧客のチャット・インタフェースを構成するファイルをダウンロードすることができます。その後、解凍して、あなたのWeb​​サーバ、またはお好みのサーバーまたは場所にはhtdocsフォルダに解凍したvdchat_customerフォルダを配置することができます。 VICIDIALは、お使いのシステムに固有のインストールされている場所は、サーバー上になければならないと述べました。システム設定]で設定チャットのURLの最後の場所のURLを入力します。||
+Conf Exten %1s or campaign %2s or ext_context %3s or phone_number %4s or lead_id %5s is not valid|カンファレンスExtenの％の1またはキャンペーン％の2Sまたはext_context％3SまたはPHONE_NUMBERの％の4Sまたはlead_id％の5Sが有効ではありません||
+Container Entry|コンテナエントリ||
+Container ID|コンテナID||
+Container ID be at least 2 characters in length|コンテナIDは、長さが少なくとも2文字にします||
+Container ID must be at least 2 characters in length|コンテナIDは、長さが少なくとも2文字でなければなりません||
+Container Notes|コンテナノート||
+Container Type|コンテナタイプ||
+Could not find or create dialer entry|検索またはダイヤラエントリを作成できませんでした||
+Current chat|現在のチャット||
+Custom Agent Leave 3way Sound|カスタムエージェント休暇3WAYサウンド||
+Custom Agent Login Sound|カスタムエージェントログインサウンド||
+Custom Fields are not available with this feature.|カスタムフィールドは、この機能は利用できません。||
+Custom Reports|カスタムレポート||
+Custom Reports Admin Page|カスタムは、管理ページのレポート||
+Custom Reports to use Slave DB|カスタムスレーブDBを使用するレポート||
+Customer Chat Frame|カスタマーチャットフレーム||
+Customer Gone Warning Seconds|カスタマーゴーン警告秒||
+DB DATE|DBのDATE||
+DELETE FAILED|削除に失敗しました||
+DELETE SETTINGS CONTAINER|SETTINGSコンテナを削除||
+DELETE STATUS GROUP|ステータスグループを削除||
+DELETE THIS SETTINGS CONTAINER|このSETTINGSのコンテナを削除||
+DELETE THIS STATUS GROUP|このステータスグループを削除||
+DID Carrier Description|DIDキャリアの説明||
+DID NOT FOUND|見つかりませんでした||
+DNC LOG SEARCH|DNCログ検索||
+DNC_AND_CAMPLISTS_ALL_WITH_ALT|DNC_AND_CAMPLISTS_ALL_WITH_ALT||
+DNC_AND_CAMPLISTS_ALL_WITH_ALT_ADDR3|DNC_AND_CAMPLISTS_ALL_WITH_ALT_ADDR3||
+DNC_AND_CAMPLISTS_WITH_ALT|DNC_AND_CAMPLISTS_WITH_ALT||
+DNC_AND_CAMPLISTS_WITH_ALT_ADDR3|DNC_AND_CAMPLISTS_WITH_ALT_ADDR3||
+DNC_ONLY_WITH_ALT|DNC_ONLY_WITH_ALT||
+DNC_ONLY_WITH_ALT_ADDR3|DNC_ONLY_WITH_ALT_ADDR3||
+DONE: %1s found, %2s CF record %3s|DONE：％1sと見られる、CFレコード％の3S 2S％||
+DONE: %1s match found, %2s email sent using %3s with %4s status|DONE：％の1sが％4S状態で％の3Sを使用して送信された発見、％2S電子メールを一致します||
+DONE: %1s match found, %2s inserted into %3s with %4s status|DONE：％1秒マッチは％の2Sは％4S状態で％の3Sに挿入、発見||
+DONE: %1s or %2s are invalid|DONE：％の1または％2sが無効です||
+DONE: %1s, %2s or %3s are invalid|DONE：％1sと、％の2Sまたは％3Sが無効です||
+DONE: no custom field found %1s|DONE：なしカスタムフィールドは、％1sとは認められませんでした||
+DONE: no filter phone group found %1s|DONE：フィルタなしの電話グループは、％1秒を認めませんでした||
+DONE: no settings container found %1s|DONE：何も設定コンテナは、％1sとは認められませんでした||
+DONE: problem with settings %1s, not all required fields filled in|DONE：設定％の1S、ないに充填すべての必須フィールドに問題||
+DOWNLOAD CHAT LOG|ダウンロードチャットログ||
+DOWNLOAD FULL LOG|ダウンロード完全なログ||
+Default Language|デフォルト言語||
+Display style:|表示スタイル：||
+Disposition set twice: |処分は二回に設定します。||
+Domain|ドメイン||
+Download customer chat files|ダウンロード顧客チャットファイル||
+Drop Lead Reset|リードリセットをドロップ||
+EMAIL_TEMPLATE|EMAIL_TEMPLATE||
+ENC|ENC||
+ENCRYPTED|ENCRYPTED||
+END|終わり||
+END ALL CHATS|終了するすべてのCHATS||
+ERROR: AM MESSAGE entry does not exist|ERROR：AMメッセージエントリが存在しません。||
+ERROR: AM MESSAGE entry must be set to not active before you delete it|ERROR：あなたはそれを削除する前に、AMメッセージのエントリがアクティブでないに設定する必要があります||
+ERROR: ID not defined:|エラー：IDが定義されていません。||
+ERROR: Problem adding AM Message|ERROR：AMメッセージを追加する問題||
+ERROR: Problem adding URL|ERROR：問題の追加のURL||
+ERROR: Problem deleting AM MESSAGE|ERROR：AMメッセージを削除する問題||
+ERROR: Problem deleting URL|ERROR：問題の削除URL||
+ERROR: Problem modifying AM MESSAGE|ERROR：AMメッセージを修正する問題||
+ERROR: Problem modifying URL|ERROR：問題修正のURL||
+ERROR: URL entry does not exist|エラー：URLエントリが存在しません||
+ERROR: URL entry must be set to not active before you delete it|ERROR：あなたはそれを削除する前に、URLエントリがアクティブでないに設定する必要があります||
+ERROR: You must fill in all fields|ERROR：あなたはすべてのフィールドに記入しなければなりません||
+ERROR: no entry type defined:|エラー：定義されていないエントリの種類：||
+ERROR: no valid url type defined:|エラー：定義されていない有効なURLのタイプ：||
+Emails in Queue|キュー内の電子メール||
+Enable Agent Whisper Monitoring|エージェントウィスパーの監視を有効にします||
+Enable DID Entry List ID|有効エントリーリストIDがDID||
+Enable Third Webform|第三にWebフォームを有効にします||
+Enable User Hide RealTime|ユーザー隠すリアルタイムを有効にします||
+Encrypted Field|暗号化されたフィールド||
+Enter email address of guest|ゲストの電子メールアドレスを入力してください||
+Error sending message.|メッセージを送信エラーが発生しました。||
+Error, chat disabled on this system|エラーは、このシステムで無効にチャット||
+Error:  You already have an open chat with this agent|エラー：あなたはすでにこのエージェントとのオープンチャットを持っています||
+FIELD|フィールド||
+FILTER PHONE GROUP NOT FOUND|フィルターPHONEグループが見つかりません||
+FULL STATE NAME TO ABBREVIATION|略語への完全な状態名||
+Field Encrypt|フィールドを暗号化します||
+Field Show Hide|フィールドを表示する隠します||
+Filter In-Group Entry List ID|フィルター内のグループエントリーリストID||
+For the Max Queue In-Group Calls feature above to work properly, an Extension must be set in this field. Default is 9998811112. Directly above, in the No-Agent In-Group Extension description, you will see some examples of default extensions that you can use in the system to terminate calls to.|最大キューグループ内のコールが正常に動作するために、上記の機能のために、拡張子がこのフィールドに設定する必要があります。デフォルトは真上9998811112.で、無エージェントグループ内の拡張の説明では、あなたがに通話を終了するには、システムで使用可能なデフォルトの拡張子のいくつかの例が表示されます。||
+For the Max Queue In-Group Calls feature above to work properly, an in-Group must be selected from this menu. Default is blank.|最大キューグループ内のコールは、グループで、このメニューから選択する必要があり、上記の特徴と適切に動作します。デフォルトは空白です。||
+GO BACK TO CHAT FORM|フォームをチャットに戻ります||
+GROUP ALIAS NOT FOUND|グループエイリアスが見つかりません||
+Group by:|グループによって：||
+HOLIDAY NOT FOUND|HOLIDAYが見つかりません||
+Hold Time Option Lead Reset|時間オプションリードリセットを保持||
+IN-GROUP NOT FOUND|IN-GROUP見つかりません||
+IN-GROUPS USING THIS CALL MENU|IN-グループこのCALLメニューを使用して||
+IN-GROUPS USING THIS DID|IN-グループこれはDID USING||
+IN-GROUPS USING THIS STATUS GROUP|IN-グループは、このステータスグループを使用||
+INSERT FAILED|INSERTが失敗しました||
+INTERNAL|内部||
+If IN_GROUP is selected as the DID Route, then this is the Entry List ID that a new lead will be populated with if a new lead is added. Default is 0 for disabled.|ルートDIDとしてIN_GROUPが選択されている場合、これは、新しいリードが新たなリードが追加される場合が移入されることをエントリリストIDです。デフォルトでは無効の場合は0です。||
+If a user in this group is set to user level 7 or higher, then this feature can be used to restrict the custom reports that the users can view. Access is determined as reports are added from the custom reports admin page, for example, ALL is not the default.  If you want to select more than one report then press the Ctrl key on your keyboard as you select the reports.|このグループ内のユーザは、ユーザレベル7以上に設定されている場合、この機能は、ユーザーが見ることができるカスタムレポートを制限するために使用することができます。レポートはカスタムレポートの管理ページから追加されたアクセスが決定され、例えば、ALLはデフォルトではありません。複数のレポートを選択する場合は、レポートを選択すると、次にキーボードの[Ctrl]キーを押してください。||
+If the System Setting for Areacode CIDs is enabled and the Campaign setting for Use Custom CallerID is set to AREACODE then you have the ability to define Areacode CIDs that will be used when outbound calling to leads in this specific campaign. You can add multiple callerIDs per areacode and you can activate and deactivate them each in real time. If more than one callerID is active for a specific areacode then the system will use the callerid that has been used the least number of times today. If no callerIDs are active for the areacode then the campaign CallerID or list override CallerID will be used. An areacode in this section can be from 2 to 5 digits in length, and if a shorter defined areacode overlaps with a longer areacode then the longer areacode will be used. For example, if the areacodes 31 and 312 are both defined and active for a campaign, then areacode 312 would be used for phone number 3125551212.|Areacode のCIDのためのシステム設定が有効になっていると、[カスタム発信者番号の設定キャンペーンは、その後AREACODEに設定されている場合は、アウト バウンド、この特定のキャンペーンにリード線に呼び出すときに使用されることAreacode CIDを定義する能力を持っています。あなたはareacodeごとに複数のcallerIDsを追加することができますし、リアルタイムでそれぞれをアクティブにし、無効にすることができます。複数の発信者が特定のareacodeためにアクティブである場合、システムは、今日回の最小数を使用されてきた発信者番号を使用します。何callerIDsがareacodeためにアクティブでない場合は、キャンペーンの発信者またはリストオーバーライド発信者が使用されます。このセクションのareacodeの長さは2〜5桁の数字からすることができ、短い定義されareacodeが長いareacodeと重複するならば、より長いareacodeが使用されます。 areacodes 31と312の両方が定義され、キャンペーンのための積極的なされている場合たとえば、その後、312電話番号3125551212ために使用されるであろうareacode。||
+If this field is populated, any calls sent to this phone that go unanswered will be sent to a dialplan extension instead of going to the phone voicemail box. If context is left blank then the call will go to the extension at the default context. Default is blank for disabled.|このフィールドが設定されている場合は、未回答行くこの電話に送信されたすべての呼び出しではなく、携帯電話のボイスメールボックスに行くのダイヤルプラン拡張に送信されます。コンテキストは空白のままにした場合、コールはデフォルトのコンテキストでの伸長に行きます。デフォルトでは無効の場合は空白です。||
+If this field is set, this Status Group will be used instead of the campaign statuses for calls handled by agents from this inbound group. This does not affect System Statuses which will always be shown. Statuses defined within this status group will not be available with Campaign HotKeys unless they are defined in Campaign Statuses. Default is not set.|このフィールドが設定されている場合、このステータスグループは、この着信グループからのエージェントによって処理されたコールのためにキャンペーンのステータスの代わりに使用されます。これは、常に表示されますシステムステータスには影響しません。彼らはキャンペーンのステータスで定義されていない限り、このステータスグループ内で定義されたステータスは、キャンペーンのホットキーで使用することはできません。デフォルトが設定されていません。||
+If this field is set, this Status Group will be used instead of the campaign statuses for calls handled by agents from this list. This does not affect System Statuses which will always be shown. Statuses defined within this status group will not be available with Campaign HotKeys unless they are defined in Campaign Statuses. Default is not set.|このフィールドが設定されている場合、このステータスグループは、このリストからエージェントが処理したコールのためにキャンペーンのステータスの代わりに使用されます。これは、常に表示されますシステムステータスには影響しません。彼らはキャンペーンのステータスで定義されていない限り、このステータスグループ内で定義されたステータスは、キャンペーンのホットキーで使用することはできません。デフォルトが設定されていません。||
+If this option is ENABLED, then when a new lead is created when going into an In-Group, the security_phrase or Show field will be populated with the Group ID of the In-Group. Default is ENABLED.|このオプションを有効にすると、新しいリードが作成されるときには、グループに入るときに、その後、security_phraseまたは表示フィールドは、グループ内のグループIDが設定されます。デフォルトは有効です。||
+If this phone dials through the NVA agi script in a Call Menu, and the NVA agi option is set to use the phone NVA Seach Method, this is where that is defined.|NVAを通じてこの電話ダイヤル通話メニューのAGIスクリプト、およびNVAのAGIオプションは電話NVAさがすメソッドを使用するように設定されている場合はそれが定義されている場所、これがあります。||
+If this phone dials through the NVA agi script in a Call Menu, this is the error file that is played for the user of this phone if an error occurs.|コー​​ルメニューのNVA AGIスクリプトを使用してこの携帯電話は、ダイヤルした場合、このエラーが発生した場合に、この携帯電話のユーザーのために再生されるエラーファイルです。||
+If you put ALT into this field and submit this form, you will be able to go to a separate page where you can define multiple URLs for this action as well as specific statuses that will trigger them.|あなたは、このフィールドにALTを入れて、このフォームを送信すると、あなたはあなたがそれらをトリガーするこのアクションの複数のURLだけでなく、特定のステータスを定義することができます別のページに移動することができるようになります。||
+If your lead file has state names spelled out and you would like to load them into the state field as their two-character abbreviations, this feature will look up the abbreviation from the internal database. Default is DISABLED.|あなたの鉛ファイルは状態名が綴られており、あなたはその2文字の略語として状態フィールドにロードしたい場合、この機能は、内部データベースから省略形を検索します。デフォルトでは無効になっています。||
+In-Group Entry List ID|グループ内エントリーリストID||
+Inbound Chat Groups|インバウンドチャットグループ||
+Inbound Chat Report|インバウンドチャットレポート||
+Inbound Chat Stats|インバウンドチャット統計||
+Inbound and Outbound Calling Reports|インバウンドおよびアウトバウンドのコールレポート||
+Inbound:|インバウンド：||
+Invalid Call ID:|無効なコールID：||
+JOIN CHAT|チャットに参加||
+LAST LOGIN|前回のログイン||
+LEAD FILTER NOT FOUND|リードフィルタが見つかりません||
+LEAVE CHAT|LEAVEチャット||
+LIST NOT FOUND|LIST見つかりません||
+LISTS USING THIS DID|これを用いたリストは、DID||
+LISTS USING THIS STATUS GROUP|このステータスグループを使用してLISTS||
+LOGINS|LOGINS||
+Last Login Browser|最終ログインブラウザ||
+Last Login Campaign iD|最終ログインキャンペーンID||
+Last Login Computer IP|最終ログインコンピュータのIP||
+Last Login Phone Extension|最終ログインの内線番号||
+Last Login Server iP|最終ログインサーバーのIP||
+Last Login Session iD|最終ログインセッションID||
+MAX SEC|MAX SEC||
+MESSAGE DATE|MESSAGE日付||
+MESSAGE POSTED BY|BY投稿されたメッセージ||
+MESSAGE TIME|メッセージのタイム||
+MIN SEC|MIN SEC||
+MODIFY SETTINGS CONTAINER|設定コンテナを変更します||
+MODIFY STATUS GROUP|ステータスグループを変更します||
+MULTI AM MESSAGE ADDED|MULTI AMのメッセージを追加||
+MULTI AM MESSAGE DELETED|MULTI AMのメッセージは削除||
+MULTI AM MESSAGE MODIFIED|MULTI AMメッセージを修正||
+MULTI URL ADDED|MULTI URLを追加||
+MULTI URL DELETED|MULTI URLを削除||
+MULTI URL MODIFIED|MULTI URLが変更||
+MUSIC ON HOLD NOT FOUND|保留音が見つかりません||
+Manual Dial Override Field|手動ダイヤルオーバーライドフィールド||
+Max Queue In-Group Calls|最大キューグループ内のコール||
+Max Queue In-Group Extension|最大キューでは、グループの拡張||
+Max Queue In-Group ID|最大キューでは、グループID||
+Monitor:|モニター：||
+Mute alert sound|警告音をミュート||
+NO OPEN CHATS|NO OPEN CHATSありません||
+NVA Call URL|NVAコールURL||
+NVA Error Filename|NVAエラーファイル名||
+NVA Search Method|NVA検索方法||
+No Agent No Queue Lead Reset|いいえエージェントなしキューリードリセットしません||
+No user ID - no chat access. Sorry|ユーザーIDません - いいえチャットアクセス。ごめんなさい||
+Not enabled. Default is N.|有効化されていません。デフォルトはNです。||
+Oldest Logs Date|最も古いログ日||
+On the ViciHost.com platform a built-in, high-level NIST-approved encryption option is available for custom fields. Default is N.|ViciHost.comプラットフォームでは内蔵の、高レベルのNIST認定の暗号化オプションは、カスタムフィールドのために利用可能です。デフォルトはNです。||
+On the ViciHost.com platform this option allows an administrator to view or export custom fields that are partially or fully hidden using the Show Hide field options. Default is 0 for disabled.|ViciHost.comプラットフォームでは、このオプションは、管理者が部分的または完全に表示非表示フィールドオプションを使用して隠されているカスタムフィールドを表示したり、エクスポートすることができます。デフォルトでは無効の場合は0です。||
+On the ViciHost.com platform, this option allows you to display only set characters from a READONLY or TEXT field. If a TEXT field, the value and a blank field with be displayed, if the blenk field is populated by the agent, then the previous value will be overwritten when the agent completes their call. Default is N.|ViciHost.comプラットフォームでは、このオプションでは、READONLYまたはテキストフ​​ィールドのセットのみの文字を表示することができます。テキストフ​​ィールド、値と空白のフィールドが表示されるとした場合blenkフィールドは、エージェントによって移入されている場合は、エージェントが自分のコールが完了すると、その後、以前の値は上書きされます。デフォルトはNです。||
+Only the chat creator can end the chat|のみのチャットの作成者は、チャットを終了することができます||
+Overwrite|上書き||
+PERL_CLI|PERL_CLI||
+PHONE ALIAS LOGINS LIST|PHONE ALIASログインリスト||
+PHONE ALIAS NOT FOUND|PHONEの別名が見つかりません||
+PHONE NOT FOUND|PHONE見つかりません||
+PLEASE SELECT A CHAT GROUP BEFORE STARTING A CHAT.|チャットを開始する前に、チャットグループを選択してください。||
+PLEASE SELECT A CHAT IN-GROUP AND DATE RANGE ABOVE AND CLICK SUBMIT|IN-グループチャットおよび上記日付の範囲を選択して、[送信]をクリックしてください||
+PM  (15:15 - 23:15)|PM（午後03時15分 - 23時15分）||
+Path Name|パス名||
+Phone number (optional)|電話番号（任意）||
+Phone:|電話：||
+Please enter a chat message|チャットメッセージを入力してください||
+Please enter a name to chat as.|チャットに名前を入力してください。||
+Please enter your first and last name|あなたの姓名を入力してください||
+Please enter your name|あなたの名前を入力してください||
+Please enter your name before joining a chat.|チャットに参加する前に自分の名前を入力してください。||
+Please select an agent to chat with|とチャットするエージェントを選択してください||
+Please send an invite to the customer to begin...|開始するには、顧客に招待送ってください...||
+Populate Lead In-Group|グループ内リードの移入||
+REPLIES|返信||
+Report Name|レポート名||
+Report Run By User|ユーザーが実行するレポート||
+Report Run Date|レポートの実行日||
+Request chat with agent|エージェントとのリクエストチャット||
+SCREEN DATE|スクリーンDATE||
+SCREEN LABEL NOT FOUND|SCREENラベルが見つかりません||
+SCRIPT NOT FOUND|スクリプトが見つかりません||
+SEARCHING FOR PHONE NUMBER IN DNC LIST LOGS|DNCリストログの電話番号の検索||
+SELECT A CHAT GROUP|チャットグループを選択||
+SELECTED_LOCK|SELECTED_LOCK||
+SEND REQUEST|リクエストを送信||
+SERVER NOT FOUND|サーバーが見つからない||
+SERVER TRUNK NOT FOUND|サーバーTRUNKが見つかりません||
+SESSION ID|セッションID||
+SETTINGS CONTAINER ADDED|設定コンテナADDED||
+SETTINGS CONTAINER DELETION COMPLETED|SETTINGSコンテナの削除が完了||
+SETTINGS CONTAINER DELETION CONFIRMATION|設定コンテナの削除の確認||
+SETTINGS CONTAINER MODIFIED|SETTINGSコンテナMODIFIED||
+SETTINGS CONTAINER NOT ADDED - Please go back and look at the data you entered|コンテナが追加されていない設定 - 戻って、あなたが入力したデータを見てください||
+SETTINGS CONTAINER NOT ADDED - there is already a container in the system with this ID|SETTINGSコンテナ追加されていない - このIDを使用してシステム内のコンテナが既にあります||
+SETTINGS CONTAINER NOT DELETED - Please go back and look at the data you entered|コンテナが削除されていない設定 - 戻って、あなたが入力したデータを見てください||
+SETTINGS CONTAINER NOT FOUND|SETTINGSコンテナが見つかりません||
+SETTINGS CONTAINER NOT MODIFIED - Please go back and look at the data you entered|設定コンテナが変更されていない - 戻って、あなたが入力したデータを見てください||
+SETTINGS CONTAINTER LIST|SETTINGSのCONTAINTERリスト||
+SHIFT NOT FOUND|SHIFTが見つかりません||
+SHOW CHAT|SHOWチャット||
+SHOW INDIVIDUAL CHATS|SHOW個人CHATS||
+SLAVE|SLAVE||
+STAGE|ステージ||
+STATUS GROUP ADDED|ステータスグループを追加||
+STATUS GROUP DELETION COMPLETED|COMPLETEDステータスグループの削除||
+STATUS GROUP DELETION CONFIRMATION|ステータスグループの削除の確認||
+STATUS GROUP LIST|ステータスグループリスト||
+STATUS GROUP LISTINGS|ステータスグループのリスティング||
+STATUS GROUP MODIFIED|ステータスグループは変更され||
+STATUS GROUP NOT ADDED - Please go back and look at the data you entered|ステータスグループが追加されていない - 戻って、あなたが入力したデータを見てください||
+STATUS GROUP NOT ADDED - there is already a campaign in the system with this ID|ステータスグループは追加されません - このIDのシステムでキャンペーンがすでに存在します||
+STATUS GROUP NOT ADDED - there is already a group in the system with this ID|ステータスグループは追加されません - このIDを使用してシステム内のグループがすでに存在します||
+STATUS GROUP NOT DELETED - Please go back and look at the data you entered|ステータスグループは削除されません - 戻って、あなたが入力したデータを見てください||
+STATUS GROUP NOT FOUND|ステータスグループが見つかりません||
+STATUS GROUP NOT MODIFIED - Please go back and look at the data you entered|ステータスグループ変更されていない - 戻って、あなたが入力したデータを見てください||
+STATUS GROUP OVERRIDES USED, see list at bottom|使用されるステータス・グループの上書き、下部のリストを参照してください||
+STATUS GROUP STATUS ADDED|ステータスグループのステータスが追加||
+STATUS GROUP STATUS DELETED|DELETEDステータスグループのステータス||
+STATUS GROUP STATUS MODIFIED|MODIFIEDステータスグループのステータス||
+STATUS GROUP STATUS NOT ADDED - Please go back and look at the data you entered|ステータスグループのステータスが追加されていない - 戻って、あなたが入力したデータを見てください||
+STATUS GROUP STATUS NOT ADDED - there is already a global-status in the system with this name|ステータスグループのステータスが追加されていません - システムのグローバルステータスがこの名前ですでに存在します||
+STATUS GROUP STATUS NOT ADDED - there is already a status in the status group with this name|ステータスグループのステータスが追加されていない - ステータスグループ内の状態は、この名前ですでに存在します||
+STATUS TIME|STATUS時間||
+SYSTEM ERROR|システムエラー||
+Screen Refresh Rate:|画面のリフレッシュレート：||
+Script Color|スクリプト色||
+Search Lead Ignore Group Restrictions|検索鉛はグループ制限を無視||
+Search archived data|検索アーカイブされたデータ||
+Select Campaigns:|キャンペーンを選択します。||
+Select User Groups:|ユーザーグループを選択します。||
+Select User Status:|ユーザステータスを選択します。||
+Select a live agent|ライブエージェントを選択||
+Select the department you wish to chat with|あなたとチャットしたい部門を選択||
+Settings Containers|設定コンテナ||
+Settings Containers allow for an easy way to add, modify and delete large configurations of settings, or for elements like email templates to be used by PHP and Perl scripts within the codebase.|設定コンテナは設定、またはコードベース内のPHPやPerlのスクリプトで使用する電子メールテンプレートのような要素のための大規模な構成を追加、変更および削除するための簡単​​な方法を可能にします。||
+Shift/Call time|シフト/通話時間||
+Show defunct users|故人となったユーザーを表示||
+Show only users with same phone extension|同じ内線番号を持つユーザーだけを表示します||
+Sort by:|並び替え：||
+State Abbreviation Lookup|状態の略検索||
+Status Display In-Group|ステータス表示では、グループ||
+Status Group ID|ステータスグループID||
+Status Group ID be at least 2 characters in length|ステータスグループIDは、長さが少なくとも2文字にします||
+Status Group ID must be at least 2 characters in length|ステータスグループIDは、長さが少なくとも2文字でなければなりません||
+Status Group Notes|ステータスグループの注意事項||
+Status Group Override|ステータスグループの上書き||
+Status Groups|ステータスグループ||
+TEMPLATE NOT FOUND|テンプレートが見つかりません||
+TTS NOT FOUND|TTSが見つかりません||
+That status is not available at this time: |その状況は、現時点では使用できません。||
+The authorization mode to use when POP3 is the mail protocol on the email account. BEST is the default.  It will use APOP if the server appears to support it and it can be used to successfully log on, then try similarly with CRAM-MD5, and finally PASS. APOP and CRAM-MD5 imply that an MD5 checksum will be used instead of sending your password in cleartext. However, if the server does not claim to support APOP or CRAM-MD5, the cleartext method will be used. Be careful. There are a few servers that will send a timestamp in the banner greeting, but APOP will not work with them, for instance if the server does not know your password in cleartext. If you think your authentication information is correct, you may have to use PASS for that server. The same applies to CRAM-MD5.|POP3電子メールアカウントのメールプロトコルであるときに使用する認証モード。ベストがデフォルトです。これは、サーバーがそれをサポートするために表示され、それが正常にログオンするために使用することができた場合にCRAM-MD5で、同様にしてみてくださいその後、APOPを使用し、最終的に渡します。 APOPとCRAM-MD5は、MD5チェックサムの代わりに平文でパスワードを送信するのに使用されることを示唆しています。サーバがAPOPまたはCRAM-MD5をサポートするように主張しない場合には、平文の方法が使用されます。注意してください。そこバナー挨拶にタイムスタンプを送信するいくつかのサーバがありますが、サーバーが平文でパスワードを認識していない場合はAPOPは、例えば、それらでは動作しません。あなたは、認証情報が正しいと思われる場合は、そのサーバー用のパスを使用する必要があります。同じことは、CRAM-MD5に適用されます。||
+The domain that the report is located at.  This will be combined with the path name to make a complete URL to use as a link from the reports page.  You may leave this blank when the report is located on the same server as the web admin and just use the path name field to make a local URL.|レポートはに配置されているドメイン。これは、レポートのページからのリンクとして使用する完全なURLを作成するパス名と組み合わされます。レポートはWeb管理と同じサーバー上に置かれたときに、この空白のままにし、ちょうど地元のURLを作成するパス名のフィールドを使用することができます。||
+The path on the domain where the report is located.  When the domain is blank it is assumed that the report is housed on the local web server.|レポートが配置されているドメイン上のパス。ドメインが空白の場合には、報告書は、ローカルWebサーバ上に収容されているものとします。||
+The report name that the report will be referred to as in the system for purposes of user group access and slave server use in the system settings.  The report name may not be the same as any other custom report, nor may it be the same name as one of the standard system reports.|レポートは、システム設定のユーザグループのアクセスとスレーブ・サーバの使用のためのシステムと呼ばれるレポート名。レポート名は、他のカスタムレポートと同じではないかもしれないが、またそれは、標準システムレポートのものと同じ名前であってもよいです。||
+The setting if set to ENABLED will show the Manual Dial Override field in the agent screen. Default is ENABLED.|ENABLEDに設定すると、設定は、エージェントの画面で手動ダイヤルオーバーライドフィールドが表示されます。デフォルトは有効です。||
+The user groups that will be allowed to view this report.  When a user goes to the reports page, if they belong to a user group that has access to any of the custom reports, they can see a Custom Reports section on this page with links to every custom report they can view.|このレポートを表示するために許可されるユーザーグループ。ユーザーがレポートのページに移動すると、彼らはカスタムレポートのいずれかへのアクセス権を持つユーザーグループに属している場合、彼らは見ることができ、すべてのカスタムレポートへのリンクをこのページのカスタムレポートを参照してくださいすることができます。||
+There was a problem sending the email invite - please re-check your information and try again.|あなたの情報を再確認し、再試行してください - 電子メール招待を送信して問題が発生しました。||
+This URL is not set ALT|このURLはALTに設定されていません||
+This allows the agent to search only within lists belonging to this campaign when the agent has the Manual Dial Search Checkbox selected in the manual dial screen. The options are, CAMPLISTS_ONLY - will check for the number within the active lists for the campaign, CAMPLISTS_ALL - will also include inactive lists in the search for the number, NONE - no filter on manual dial searching. Default is NONE. If a lead is not found, then a new lead will be added. WITH_ALT will also search the Alt Phone field for the phone number. WITH_ALT_ADDR3 will also search the Alt Phone field and the Address 3 field for the phone number.|これは、エージェントが唯一のエージェントは手動ダイヤル画面で選択されたマニュアルダイヤル検索チェックボックスを持っている場合、このキャンペーンに属するリスト内を検索することができます。オプションがあり、CAMPLISTS_ONLYは - キャンペーン、CAMPLISTS_ALLのアクティブリスト内の数をチェックします - 手動ダイヤル検索のフィルタなし - また数、NONEの検索で非アクティブなリストが含まれます。デフォルトはNONEです。鉛が検出されない場合は、新たなリードが追加されます。 WITH_ALTまた、電話番号のalt電話番号]フィールドを検索します。 WITH_ALT_ADDR3もゴスロリPhoneフィールドと電話番号のアドレス3のフィールドを検索します。||
+This allows you to filter the calls that agents make in manual dial mode for this campaign by any combination of the following: DNC - to kick out, CAMPAIGNLISTS - the number must be within the lists for the campaign, NONE - no filter on manual dial or fast dial lists. CAMPLISTS_ALL - will include inactive lists in the search for the number. WITH_ALT will also search the Alt Phone field for the phone number. WITH_ALT_ADDR3 will also search the Alt Phone field and the Address 3 field for the phone number.|こ れは、次のいずれかの組み合わせによって、このキャンペーンのために手動ダイヤルモードでエージェントが作成することを呼び出しをフィルタリングすること ができます：DNC - 追い出すために、CAMPAIGNLISTS - 手動ダイヤルのフィルタなし - 数は、キャンペーン、NONEのためのリスト内になければなりませんまたは高速ダイヤルリスト。 CAMPLISTS_ALLは - 番号の検索で非アクティブなリストが含まれます。 WITH_ALTまた、電話番号のalt電話番号]フィールドを検索します。 WITH_ALT_ADDR3もゴスロリPhoneフィールドと電話番号のアドレス3のフィールドを検索します。||
+This determines the background color of the script as displayed in the agent screen. default is white.|エージェントの画面に表示されるように、これは、スクリプトの背景色を決定します。デフォルトは白です。||
+This field allows you to customize the name of the recording when Campaign recording is ONDEMAND or ALLCALLS. The allowed variables are CAMPAIGN INGROUP CUSTPHONE FULLDATE TINYDATE EPOCH AGENT VENDORLEADCODE LEADID CALLID RECID. The default is FULLDATE_AGENT and would look like this 20051020-103108_6666. Another example is CAMPAIGN_TINYDATE_CUSTPHONE which would look like this TESTCAMP_51020103108_3125551212. Te resulting filename must be less than 90 characters in length.|このフィールドは、キャンペーンの記録がONDEMANDまたはALLCALLSがあるときは、録音の名前をカスタマイズすることができます。許可された変数は、キャンペーン内集団CUSTPHONE FULLDATE TINYDATE EPOCHエージェントVENDORLEADCODE LEADID巧妙なRECIDです。デフォルトはFULLDATE_AGENTであり、この20051020-103108_6666ようになります。別の例は、このTESTCAMP_51020103108_3125551212ようになりCAMPAIGN_TINYDATE_CUSTPHONEです。テ結果のファイル名は、長さが90未満の文字である必要があります。||
+This field is for entering the prompt to play when the agent gets an answering machine and clicks on the Answering Machine Message button in the transfer conference frame. You must set this to either an audio file in the audio store or a TTS prompt if TTS is enabled on your system. You can also use lead fields to generate audio filenames using the DYN flag, for instance using DYN--A--user--B-- for agent 1234 would look for a file named 1234.wav in your audio store to play.|このフィールドは、エージェントが留守番電話を取得し、転送、会議のフレームで留守番メッセージ]ボタンをクリックしたときに再生するプロンプトを入力するためのものです。 TTSがシステムで有効になっている場合は、オーディオストア内のオーディオファイルまたはTTSプロンプトのいずれかに設定する必要があります。また、DYNを使用して、インスタンスのために、DYNフラグを使用してオーディオファイル名を生成するために、リードフィールドを使用することがで きます - - ユーザー - エージェント1234 B--が再生するオーディオ店で1234.wavという名前のファイルを探します。||
+This field needs to be at least 2 characters in length and no more than 40 characters in length, no spaces or special characters. This is the ID that will be used to identify the Settings Container throughout the system.|このフィールドは、長さが少なくとも2文字で、長さを超えない40文字以内、スペースや特殊文字である必要があります。これは、システム全体に設定コンテナを識別するために使用されるIDです。||
+This field will override the Campaign Recording Filenaming Scheme unless it is set to NONE. The allowed variables are CAMPAIGN INGROUP CUSTPHONE FULLDATE TINYDATE EPOCH AGENT VENDORLEADCODE LEADID CALLID RECID. The default is FULLDATE_AGENT and would look like this 20051020-103108_6666. Another example is CAMPAIGN_TINYDATE_CUSTPHONE which would look like this TESTCAMP_51020103108_3125551212. Te resulting filename must be less than 90 characters in length. Default is NONE.|それがNONEに設定されていない限り、このフィールドは、キャンペーン録音ファイル命名スキームを上書きします。許可された変数は、キャンペーン内集団CUSTPHONE FULLDATE TINYDATE EPOCHエージェントVENDORLEADCODE LEADID巧妙なRECIDです。デフォルトはFULLDATE_AGENTであり、この20051020-103108_6666ようになります。別の例は、このTESTCAMP_51020103108_3125551212ようになりCAMPAIGN_TINYDATE_CUSTPHONEです。テ結果のファイル名は、長さが90未満の文字である必要があります。デフォルトはNONEです。||
+This is a systemwide feature that only works on Asterisk 1.8 servers or higher. This allows you to set an audio file for your agents to hear after their phone has connected to the server after they have logged in to the agent screen. If you want to have this audio prompt be the only prompt that the agent hears, then you will need to copy the sip-silence audio files over the only-person audio files. If you want the agent to hear no prompt when they login then also set this field to sip-silence.  Default is EMPTY.|これは、アスタリスク1.8サーバー以降で動作するシステム全体の機能です。これは、あなたは彼らがエージェントの画面にログインした後に自分の携帯電話がサーバに接続した後に聞くことがあなたの薬のためのオーディオファイルを設定することができます。あなたはこのオーディオプロンプトは、エージェントが聞くだけプロンプトも持つようにしたい場合は、あなただけの人のオーディオファイル上でSIP-沈黙オーディオファイルをコピーする必要があります。あなたは彼らがログインしたときに、エージェントが何のプロンプトが聞こえないようにしたい場合は、また、SIP-沈黙をするには、このフィールドを設定します。デフォルトは空です。||
+This is a systemwide feature that only works on Asterisk 1.8 servers or higher. This allows you to set an audio file for your agents to hear after they have left a 3way conferencce in the agent screen. If you want to have this audio prompt be the only prompt that the agent hears, then you will need to copy the sip-silence audio files over the only-person audio files. If you want the agent to hear no prompt after they leave a 3way call then also set this field to sip-silence. Default is EMPTY.|これは、アスタリスク1.8サーバー以降で動作するシステム全体の機能です。これは、あなたは彼らがエージェントの画面で3WAYのconferencceを離れた後に聞くことがあなたの薬のためのオーディオファイルを設定することができます。あなたはこのオーディオプロンプトは、エージェントが聞くだけプロンプトも持つようにしたい場合は、あなただけの人のオーディオファイル上でSIP-沈黙オーディオファイルをコピーする必要があります。あなたは彼らが3WAYコールを残した後、エージェントが何のプロンプトが聞こえないようにしたい場合は、また、SIP-沈黙をするには、このフィールドを設定します。デフォルトは空です。||
+This is another description field for the DID, to be used to describe the carrier of this DID. It is not used for any other purpose in the system.|DID、これはDIDのキャリアを説明するために使用されるために、これは、他の記述フィールドです。これは、システム内の他の目的に使用されていません。||
+This is the descriptive name of the Settings Container entry.|これは、設定コンテナエントリの記述名です。||
+This is the language that the agent and administrative interface will default to before the agent logs in. Default is -default English-.|これは、エージェントと管理インターフェースは、エージェントがログインする前にをデフォルトにします言語です。デフォルトは-default英語 - です。||
+This is the location where you have placed the chat web pages for customer use.|これは、顧客用のチャットのWebページを置いている場所です。||
+This is the optional web URL that can be used together with the NVA agi script in a Call Menu to log phone calls made outside of the agent screen. Variables that can be used with this feature are- phone_number, uniqueid, lead_id, extension, server_ip, entry_date, modify_date, status, user, vendor_lead_code, source_id, list_id, phone_number, title, first_name, middle_initial, last_name, address1, address2, address3, city, state, province, postal_code, country_code, gender, date_of_birth, alt_phone, email, security_phrase, comments, called_count, last_local_call_time, rank, owner, campaign_id, list_description, recording_id, recording_filename.|これは、エージェントの画面の外に作られた電話をログに記録するコールメニューでNVAのAGIスクリプトと一緒に使用することができる任意のウェブURLです。 PHONE_NUMBER、 一意のID、lead_id、拡張子、SERVER_IP、entry_date、MODIFY_DATE、ステータス、ユーザー、 vendor_lead_code、SOURCE_ID、LIST_ID、PHONE_NUMBER are-この機能で使用できる変数、タイトル、FIRST_NAME、middle_initial、姓、アドレス1、アドレス2、アドレス3、市、州、県、POSTAL_CODE、COUNTRY_CODE、性別、date_of_birth、alt_phone、電子メール、 security_phrase、コメント、called_count、last_local_call_time、ランク、所有者、 campaign_id、list_description、recording_id、recording_filename。||
+This is the type of Container entry. This is only used for categorization.|これは、コンテナエントリのタイプです。これは、分類のために使用されます。||
+This is where you can set how long a customer chat can stay alive after the customer has navigated away from or closed their chat window. When the timeout is reached the chat is closed.|あなたは、顧客が離れてからナビゲートまたはそのチャットウィンドウを閉じた後、顧客のチャットは生き続けることができますどのくらいの時間を設定できる場所です。タイムアウトに達するとチャットが閉じられています。||
+This is where you can set whether the users of this campaign will be able to conduct chats in addition to receive phone calls.|あなたはこのキャンペーンのユーザーが電話を受信するために加えて、チャットを行うことができるようになりますかどうかを設定することができます。||
+This is where you can set whether this system will be able to receive incoming chats in addition to phone calls, as well as allow agent-to-agent and agent-to-manager chatting.|あなたはこのシステムが電話に加えて、着信チャットを受けるだけでなく、エージェント間およびエージェントとマネージャがチャットできるようにすることができるようになりますかどうかを設定することができます。||
+This is where you put the contents of the settings that you want in this container.|あなたは、このコンテナに必要な設定の内容を置く場所です。||
+This menu allows you to choose what type of inbound activity this group should handle. PHONE means this in-group is for handling phone calls and will show under the In-Group section. EMAIL is for handling incoming emails and will cause the group to be listed under the Email Group section. CHAT is for handling customer chats and will cause the group to be listed under the Email Group section|このメニューでは、このグループが処理するインバウンド活動の種類を選択することができます。フォンは、これはグループ内の通話を処理するためのものであり、グループ内のセクションの下に表示されますことを意味します。メール受信メールを処理するためのものであり、グループメールグループ]セクションの下にリストされます。チャットは、顧客のチャットを処理するためのものであり、グループメールグループ]セクションの下にリストされます||
+This menu allows you to choose whether you want to auto-launch the web-form page in a separate window, auto-switch to the SCRIPT, EMAIL, or CHAT tab ,emails and chats must be allowed to have those options available, or do nothing when a call is sent to the agent for this campaign. If custom list fields are enabled on your system, FORM will open the FORM tab upon connection of a call to an agent.|こ のメニューでは、あなたがそれらのオプションを用意して、または行うことを許可されなければならない別のウィンドウでスクリプト、電子メール、または チャットタブ、電子メールやチャットに、自動スイッチをウェブフォームページを自動起動するかどうかを選択することができます呼び出しがこのキャンペーンのためにエージェントに送信され、何もありません。カスタムリストのフィールドは、システムで有効になっている場合は、フォームは、エージェントへの呼の接続時に[フォーム]タブを開きます。||
+This option allows you to display hidden fields as read-only in the agent screen. Available fields are entry_date, source_id, date_of_birth, rank, owner. Default is blank.|このオプションは、読み取り専用のエージェントの画面のように隠しフィールドを表示することができます。利用可能なフィールドはentry_date、SOURCE_ID、date_of_birth、ランク、所有者です。デフォルトは空白です。||
+This option allows you to select the custom reports that you want to have use the MySQL slave database as defined in the option above instead of the master database that your live system is running on. You must set up the MySQL slave replication before you can enable this option. Default is empty for disabled.|このオプションでは、カスタムを選択することができますではなく、ライブシステムが実行されているマスター・データベースの上にオプションで定義されているMySQLのスレーブデータベースを使用したいと報告しています。このオプションを有効にする前に、MySQLのスレーブのレプリケーションを設定する必要があります。デフォルトでは無効の場合は空です。||
+This option allows you to set a Lead Filter for an individual user. To use this option, the user must be logged in to a campaign that has No Hopper Dialing enabled. Default is EMPTY for disabled.|このオプションは、個々のユーザーのためのリードフィルタを設定することができます。このオプションを使用するには、ユーザーが何ホッパーダイヤルが有効になっていないキャンペーンにログインする必要があります。デフォルトでは無効の場合は空です。||
+This option if set to 1 will trigger a process that will run at the Timeclock End of Day and will check all phone numbers to populate the dial code, or phone code, field with a 1 if it is missing as well as remove a leading 1 from the phone number field if it is present. Default is 0 for inactive.|それが欠けているだけでなく、主要な1を削除された場合は1に設定されている場合、このオプションは1で一日のタイムクロック最後に実行されますプロセスをトリガすると、ダイヤルコード、または電話コードを設定するためにすべての電話番号を確認し、フィールド電話番号フィールドから、それが存在する場合。デフォルトでは非アクティブの場合は0です。||
+This option if set to ENABLED will display the In-Group name in the agent screen when an inbound call is sent to the agent. Default is ENABLED.|着信コールがエージェントに送信された場合に有効に設定されている場合、このオプションは、エージェントの画面にあるグループの名前が表示されます。デフォルトは有効です。||
+This option if set to Y, will set the lead called-since-last-reset field to N when No agent no queue is triggered and the call is sent to an action like Message, Voicemail or Hangup. Default is N for disabled.|Yに設定した場合、何のキューがトリガされていないんエージェント、コールは、メッセージ、ボイスメールやハングアップなどのアクションに送信されない場合、このオプションは、と呼ばれる、以来、最後のリセットリードNにフィールドを設定します。デフォルトでは無効のため、Nです。||
+This option if set to Y, will set the lead called-since-last-reset field to N when the Hold Time Option is triggered and the call is sent to an action like Message, Voicemail or Hangup. Default is N for disabled.|ホールド時間オプションがトリガされると、コールは、メッセージ、ボイスメールやハングアップなどのアクションに送信されたときにYに設定する場合は、このオプションは、Nに以来、最後のリセットと呼ばれるフィールドのリードを設定します。デフォルトでは無効のため、Nです。||
+This option if set to Y, will set the lead called-since-last-reset field to N when the Wait Time Option is triggered and the call is sent to an action like Message, Voicemail or Hangup. Default is N for disabled.|Yに設定した場合、待機時間オプションがトリガされると、コールは、メッセージ、ボイスメールやハングアップなどのアクションに送信された場合、このオプションは、Nに呼ば-ので、最後リセットリードフィールドを設定します。デフォルトでは無効のため、Nです。||
+This option if set to Y, will set the lead called-since-last-reset field to N when the call is after hours and sent to an action like Message, Voicemail or Hangup. Default is N for disabled.|Yに設定されている場合、コールが時間後で、メッセージ、ボイスメールやハングアップなどのアクションに送信された場合、このオプションは、と呼ばれる - - 最後のリセット以降Nにフィールドリードを設定します。デフォルトでは無効のため、Nです。||
+This option if set to Y, will set the lead called-since-last-reset field to N when the call is dropped and sent to an action like Message, Voicemail or Hangup. Default is N for disabled.|Yに設定されている場合、コールがドロップされ、メッセージ、ボイスメールやハングアップなどのアクションに送信された場合、このオプションは、と呼ばれる、以来、最後のリセットリードNにフィールドを設定します。デフォルトでは無効のため、Nです。||
+This option will allow you to restrict the API functions that are allowed to be used by this user. Default is ALL_FUNCTIONS.|このオプションは、このユーザが使用することを許可されているAPI関数を制限することができます。デフォルトはALL_FUNCTIONSです。||
+This option will restrict any API actions used by this user to be restricted only within the lists included within the user group allowable campaigns for this user. Default is 0 for disabled.|このオプションは、このユーザのユーザグループ許容キャンペーン内に含まリストに制限されるように、このユーザが使用する任意のAPIのアクションを制限します。デフォルトでは無効の場合は0です。||
+This option, if enabled, allows you to go to the AM Message Wildcard administration page where you can define wildcards that can match data in a default lead field and can play a different message based upon the data in a specific lead. Default is N for disabled.|こ のオプションは、有効にした場合、あなたは、デフォルトのリードフィールドのデータと一致することができますし、特定のリードのデータに基づいて、別の メッセージを再生することができ、ワイルドカードを定義することができ、AMメッセージワイルドカードの管理ページに移動することができます。デフォルトでは無効のため、Nです。||
+This page allows you to define Alternate URLs with conditions in place of the simple URL option for Dispo, Start, Add Lead or No Agent URLs. The RANK field will define the order in which the URLs are requested, this is important because if you have a URL that may take a few seconds to run ranked as 1, that will mean that any URLs ranked after it will have to wait to be run until that first URL request receives a response. The ACTIVE field will determine whether the specific URL is run. The STATUSES field only works for the Dispo URLs and will determine which disposition statuses will trigger the URL being run, if you want to run the entry for all statuses just fill in ---ALL--- in this field. The URL field works the same as it would in the URL option in campaigns, in-groups and lists, and it is also limited to 2000 characters in length. If you want to delete a URL, it must first be set to not active, then you can click on the DELETE link below the SUBMIT button for that URL entry.|このページでは、ディスポ、スタートのための簡単​​なURLのオプションの代わりに条件に代替URLを定義リードまたはNoエージェントのURLを追加することができます。 RANKフィールドは、URLが要求される順序を定義します、あなたが1位にランク実行するのに数秒かかる場合がありますURLを持っている場合ので、これは重要であり、それがために待機する必要があります後に任意のURLがランク付けされていることを意味しますそのその最初のURL要求は応答を受信するまで実行します。アクティブなフィールドは、特定のURLが実行されているかどうかを決定します。 STATUSESのフィールドはディスポのURLのために働くと、このフィールドに---だけで---全て埋めるすべてのステータスの項目を実行する場合のステータスは、実行中のURLをトリガする処分を決定します。 URLフィールドには、およびリスト・グループで、それがキャンペーン内のURLオプションの場合と同じに動作し、それはまた、長さは2000文字に制限されています。 URLを削除したい場合は、最初にアクティブでないに設定する必要があり、あなたがそのURLエントリのSUBMITボタン下の[削除]リンクをクリックすることができます。||
+This page allows you to define Am Message Wildcards that will check lead data from the defined lead fields for matches in the defined order specified on this page. For example, if you add a wildcard with the word -vacation- tied to the vendor_lead_code field, and the lead being played a message has -vacation- in that field, then it will hear the message defined in that AM Message Wildcard record. If you want to delete a wildcard, it must first be set to not active, then you can click on the DELETE link below the SUBMIT button for that wildcard entry.|このページでは、このページで指定した定義された順序で一致するために定義されたリードフィールドからリードデータをチェックしますアムメッセージワイルドカードを定義することができます。あ なたは言葉でワイルドカードを追加した場合たとえば、-vacation- vendor_lead_codeのフィールドに結びつけられて、リードは、メッセージがそのフィールドに-vacation-再生している、それはその AMメッセージワイルドカードレコードで定義されたメッセージを聞くことができます。ワイルドカードを削除したい場合は、最初にアクティブでないに設定する必要があり、その後、あなたはそのワイルドカードエントリのSUBMITボタン下の[削除]リンクをクリックすることができます。||
+This setting allows a User Modify setting to be changed to allow a user to be hidden from all managers in the Real-Time Report. Default is 0 for disabled.|この設定は、ユーザがリアルタイムレポート内のすべての管理者から隠すことができるようにするために変更する設定変更ができます。デフォルトでは無効の場合は0です。||
+This setting allows a manager to be able to speak to a logged in agent without the customer being able to hear them. WARNING, this feature is considered experimental and may not function properly in some cases. Older versions of Asterisk have shown to have serious issues at times with this feature and can cause Asterisk to freeze or crash. Default is 0 for disabled.|この設定は、管理者は、顧客がそれらを聞くことができずにエージェントに記録に話せるようにすることができます。警告、この機能は実験的とみなされ、場合によっては正常に機能しない場合があります。アスタリスクの古いバージョンではこの機能は時間に深刻な問題を抱えていることが示されているとアスタリスクがフリーズまたはクラッシュする可能性があります。デフォルトでは無効の場合は0です。||
+This setting allows you to have a third web form for campaigns and in-groups in the agent interface. Default is 0 for disabled.|この設定は、キャンペーンのために、イングループのエージェントインタフェースの第3ウェブフォームを持つことができます。デフォルトでは無効の場合は0です。||
+This setting allows you to hide this user from the Real-Time Report display. Default is 0 for disabled.|この設定では、リアルタイムレポート表示からこのユーザーを非表示にすることができます。デフォルトでは無効の場合は0です。||
+This setting allows you to redirect calls on this DID if the number of calls waiting in queue in a specific In-Group is above a set number. If this field is set to 0 this feature is disabled. Default is 0. See the Max Queue In-Group Extension setting below for more information.|この設定では、あなたは、グループ内の特定のキュー内で待機している呼の数が設定数を超えている場合は、この上のコールはDIDリダイレクトすることができます。このフィールドを0に設定するとこの機能は無効になっています。デフォルトでは詳細については、以下の設定では、グループ拡張最大キューを参照してください0です。||
+This setting controls the number of seconds after a customer hangs up before a warning that the customer has hung up will appear on the agent screen. Default is 30.|顧客が電話を切ったことを示す警告がエージェントの画面に表示されます前に、顧客が電話を切った後、この設定は、秒数を制御します。デフォルトは30です。||
+This setting if enabled will allow a manager to define an entry list id to use on the DID modify screen. Default is 0 for disabled.|有効になっている場合、この設定は管理者が画面を変更DIDで使用するエントリのリストIDを定義することができます。デフォルトでは無効の場合は0です。||
+This setting if enabled will change the real-time report from gathering the carrier log stats every time it is refreshed on every screen it is running on, to a cached set of carrier log stats that are refreshed once per minute. Default is 0 for disabled.|有効になっている場合、この設定は1分ごとにリフレッシュされるキャリアログの統計のキャッシュされたセットに、それが実行されているすべての画面上で更新されるたびに、キャリアログの統計の収集からリアルタイムレポートを変更します。デフォルトでは無効の場合は0です。||
+This setting if enabled will log almost all agent screen mouse clicks and AJAX processes triggered by the agent screen. To enable for all agents, set this option to 1. To enable only for one agent on the system, set this option to the user that you want to log. Warning, this feature can log hundreds of entries per phone call, so use with caution. These agent debug records are deleted after 7 days. Default is 0 for disabled.|有効になっている場合、この設定は、エージェントの画面によってトリガほぼすべてのエージェント画面のマウスクリックやAJAXのプロセスを記録します。すべてのエージェントの有効にするには、このオプションは、唯一のシステム上の1つのエージェントのために有効にするには、このオプションは、ログインするユーザーに設定するには1に設定。警告は、この機能は、通話につき数百のエントリをログに記録するので、注意して使用することができます。これらのエージェントのデバッグの記録は7日後に削除されます。デフォルトでは無効の場合は0です。||
+Through the use of custom campaign statuses, you can have statuses that only exist for a specific campaign. The Status must be 1-8 characters in length, the description must be 2-30 characters in length and Selectable defines whether it shows up in the system as a disposition. The human_answered field is used when calculating the drop percentage, or abandon rate. Setting human_answered to Y will use this status when counting the human-answered calls. The Category option allows you to group several statuses into a catagory that can be used for statistical analysis. There are also 7 additional settings that will define the kind of status: sale, dnc, customer contact, not interested, unworkable, scheduled callback, completed. The MIN SEC and MAX SEC fields for each status will determine whether an agent can select that status at the end of their call based upon the length of the call. If the call is 10 seconds and the MIN SEC for a status is set to 20 seconds, then the agent will not be able to select that status. Also, if a call is 40 seconds and the MAX SEC for a status is set to 30 seconds, then the agent will not be able to select that status.|カスタムキャンペーンのステータスを使用することで、あなただけの特定のキャンペーンのために存在する状態を持つことができます。ステータスの長さは1〜8文字にする必要があり、説明の長さは2〜30文字でなければならず、選択は、それが処分としてシステムに表示するかどうかを定義します。 human_answeredフィールドはドロップ率を計算するときに使用される、またはレートを放棄されています。人間が応答されたコールを数えるときYにhuman_answered設定すると、このステータスを使用します。カテゴリオプションは、統計分析のために使用することができるcatagoryにグループのいくつかの状態にあなたを可能にします。販売、DNC、顧客の連絡先、完了していない興味が、うまくいかない、スケジュールされたコールバック、：ステータスの種類を定義する7追加設定もあります。各ステータスのMIN、SECおよびMAX SECフィールドエージェントがコールの長さに基づいて、コールの終了時にその状態を選択することができるかどうかを決定します。コー​​ルは10秒であり、ステータスのMIN SECは、20秒に設定されている場合、エージェントは、そのステータスを選択することができません。コー​​ルは40秒で、ステータスのMAX SECは30秒に設定されている場合も、エージェントはそのステータスを選択することができません。||
+Through the use of status groups, you can have statuses that exist for lists or in-groups specifically. The Status must be 1-6 characters in length, the description must be 2-30 characters in length and Selectable defines whether it shows up in the system as an agent disposition. The human_answered field is used when calculating the drop percentage, or abandon rate. Setting human_answered to Y will use this status when counting the human-answered calls. The Category option allows you to group several statuses into a category that can be used for statistical analysis. There are also 7 additional settings that will define the kind of status: sale, dnc, customer contact, not interested, unworkable, scheduled callback, completed. The MIN SEC and MAX SEC fields for each status will determine whether an agent can select that status at the end of their call based upon the length of the call. If the call is 10 seconds and the MIN SEC for a status is set to 20 seconds, then the agent will not be able to select that status. Also, if a call is 40 seconds and the MAX SEC for a status is set to 30 seconds, then the agent will not be able to select that status. The Status Group ID field must be between 2 and 20 characters in length, must not match a current campaign ID, and cannot contain spaces or other special characters.|ステータスグループを使用することにより、あなたがリストまたはグループに特異的に存在する状態を持つことができます。ステータスの長さは1〜6文字にする必要があり、説明の長さは2〜30文字でなければならず、選択は、エージェントの配置などのシステムに表示するかどうかを定義します。 human_answeredフィールドはドロップ率を計算するときに使用される、またはレートを放棄されています。人間が応答されたコールを数えるときYにhuman_answered設定すると、このステータスを使用します。カテゴリオプションは、統計分析のために使用することができ、カテゴリにグループのいくつかの状態にあなたを可能にします。販売、DNC、顧客の連絡先、完了していない興味が、うまくいかない、スケジュールされたコールバック、：ステータスの種類を定義する7追加設定もあります。各ステータスのMIN、SECおよびMAX SECフィールドエージェントがコールの長さに基づいて、コールの終了時にその状態を選択することができるかどうかを決定します。コー​​ルは10秒であり、ステータスのMIN SECは、20秒に設定されている場合、エージェントは、そのステータスを選択することができません。コー​​ルは40秒で、ステータスのMAX SECは30秒に設定されている場合も、エージェントはそのステータスを選択することができません。ステータスグループIDフィールドには、現在のキャンペーンのIDと一致してはならない、長さが2〜20文字でなければならず、スペースやその他の特殊文字を含めることはできません。||
+Through the use of system statuses, you can have statuses that exist for all campaigns and in-groups. The Status must be 1-6 characters in length, the description must be 2-30 characters in length and Selectable defines whether it shows up in the system as an agent disposition. The human_answered field is used when calculating the drop percentage, or abandon rate. Setting human_answered to Y will use this status when counting the human-answered calls. The Category option allows you to group several statuses into a category that can be used for statistical analysis. There are also 7 additional settings that will define the kind of status: sale, dnc, customer contact, not interested, unworkable, scheduled callback, completed. The MIN SEC and MAX SEC fields for each status will determine whether an agent can select that status at the end of their call based upon the length of the call. If the call is 10 seconds and the MIN SEC for a status is set to 20 seconds, then the agent will not be able to select that status. Also, if a call is 40 seconds and the MAX SEC for a status is set to 30 seconds, then the agent will not be able to select that status.|システムのステータスを使用することにより、あなたは、すべてのキャンペーンのためにとにグループが存在する状態を持つことができます。ステータスの長さは1〜6文字にする必要があり、説明の長さは2〜30文字でなければならず、選択は、エージェントの配置などのシステムに表示するかどうかを定義します。 human_answeredフィールドはドロップ率を計算するときに使用される、またはレートを放棄されています。人間が応答されたコールを数えるときYにhuman_answered設定すると、このステータスを使用します。カテゴリオプションは、統計分析のために使用することができ、カテゴリにグループのいくつかの状態にあなたを可能にします。販売、DNC、顧客の連絡先、完了していない興味が、うまくいかない、スケジュールされたコールバック、：ステータスの種類を定義する7追加設定もあります。各ステータスのMIN、SECおよびMAX SECフィールドエージェントがコールの長さに基づいて、コールの終了時にその状態を選択することができるかどうかを決定します。コー​​ルは10秒であり、ステータスのMIN SECは、20秒に設定されている場合、エージェントは、そのステータスを選択することができません。コー​​ルは40秒で、ステータスのMAX SECは30秒に設定されている場合も、エージェントはそのステータスを選択することができません。||
+Total Chats That entered Queue|キューに入った合計チャット||
+Total Chats That entered Queue:|キューに入った合計チャット：||
+Total Chats taken in to this In-Group|グループ内これに取り込ま合計チャット||
+Total DROP Chats:|合計のDROPチャット：||
+Total Logins|合計ログイン||
+Transcript|転写産物||
+UNABLE TO CHANGE LIVE AGENT STATUS|ライブエージェントのステータスを変更することができません||
+UNSELECTED_LOCK|UNSELECTED_LOCK||
+UPDATE EXISTING CUSTOM REPORTS|UPDATE既存のカスタムレポート||
+UPDATE FAILED|アップデートに失敗しました||
+URL IDs are is not valid|あるURLにIDが有効ではありません||
+USA-Canada Phone Number Dialcode Fix|米国とカナダの電話番号Dialcode修正||
+USER GROUP NOT FOUND|ユーザグループが見つかりません||
+USER LAST|USER LAST||
+USER LAST LOGIN|ユーザーの最後のログイン||
+USER NOT FOUND|ユーザーが見つかりません||
+USER PHONE LOGIN REPORT|USER PHONEログインレポート||
+USERS USING THIS FILTER|このフィルタを使用しているユーザー||
+Unavailable Dialplan Forward|利用不可ダイヤルプランフォワード||
+Use slave|スレーブを使用||
+User Hide in RealTime|リアルタイムでユーザーを隠します||
+VENDOR_ASCEND|VENDOR_ASCEND||
+VENDOR_DESCEND|VENDOR_DESCEND||
+VOICEMAIL BOX NOT FOUND|ボイスメールボックスが見つかりません||
+Vicidial Custom Reports|VICIDIALカスタムレポート||
+WARNING: Code expects different schema|警告：コードが異なるスキーマを期待||
+WEBFORMTHREE|WEBFORMTHREE||
+WHISPER|WHISPER||
+WILDCARD|WILDCARD||
+Wait Time Option Lead Reset|時間オプションリードリセット待ち||
+Waiting for next available agent...|次の利用可能なエージェントを待っています...||
+Warning: chat ID not found. Deleting any remaining participants...|警告：チャットIDが見つかりませんでした。残りの参加者を削除しています...||
+Web Form Three|Webフォームスリー||
+YOU MUST BE PAUSED TO INITIATE A CUSTOMER CHAT.|得意チャットを開始するために一時停止する必要があります。||
+You are not allowed to view this report:|あなたは、このレポートを表示することはできません。||
+You cannot end this chat unless you are the one who started it.|あなたはそれを開始した1でない限り、あなたはこのチャットを終了することはできません。||
+You have joined a non-existent chat.  Trippy.|あなたは存在しないチャットに参加しています。サイケデリック。||
+You have left chat|あなたはチャットを残しています||
+You have not joined a chat yet.|あなたはまだチャットに参加していません。||
+Your active chats|あなたのアクティブなチャット||
+auth USER DOES NOT HAVE PERMISSION TO USE THIS FUNCTION|認証ユーザーは、この機能を使用する権限がありません||
+chats waiting for agents|エージェントを待っているチャット||
+leads to be dialed in those lists|これらのリストにダイヤルすることにつながります||
+only enabled with no-hopper manual dialing|唯一の無ホッパーマニュアルダイヤルで有効||
+removed from chat.|チャットから削除。||
+show only active campaigns|唯一のアクティブなキャンペーンを表示||
+user_group DOES NOT EXIST|USER_GROUPは存在しません||
+you do not have permission to add this lead|あなたはこのリードを追加する権限がありません||
+you do not have permission to modify this lead|あなたはこのリードを変更する権限がありません ||
+v1|v1||
+v2|v2||
+vdc_tab_chat_customer.gif|vdc_tab_chat_customer_jp.gif||
+vdc_tab_chat_customer_blink.gif|vdc_tab_chat_customer_blink_jp.gif||
+vdc_tab_chat_customer_red.gif|vdc_tab_chat_customer_red_jp.gif||
+vdc_tab_chat_internal.gif|vdc_tab_chat_internal_jp.gif||
+vdc_tab_chat_internal_blink.gif|vdc_tab_chat_internal_blink_jp.gif||
+vdc_tab_chat_internal_red.gif|vdc_tab_chat_internal_red_jp.gif||

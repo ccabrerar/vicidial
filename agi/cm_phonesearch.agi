@@ -1,0 +1,400 @@
+#!/usr/bin/perl
+#
+# cm_phonesearch.agi version 2.14
+# 
+# Designed to work with Call Menus to allow searching of the caller ID phone 
+# number the customer called in with against the vicidial_list table, and 
+# finding the list of the most recent match, the campaign tied to that list and 
+# the default transfer in-group of that campaign, then transferring the call to 
+# that in-group
+#
+# If phone number is not found, call will go to the 'D' option in the call menu
+# If default in-group is not found, call will go to the 'C' option in the call menu
+# If default in-group is found, call will go to the 'B' option in the call menu
+#    (NOTE: you MUST set the In-Group to DYNAMIC_INGROUP_VAR for 'B' option)
+#
+# Flag Options:
+# 1- Country code to search the areacode within, default 1
+# 2- Match lead order, default: "entry_newest"
+#	   entry_newest, entry_oldest, modify_newest, modify_oldest, call_newest, call_oldest, rank_highest, rank_lowest
+# example of what to set in the Call Menu:
+# Set the prompt to "sip-silence"
+# Set the Timeout to 1 second
+# Option: "Timeout" Route: "AGI" AGI: "cm_phonesearch.agi,1---entry_newest"
+#    OR JUST
+# Set the prompt to "sip-silence|cm_phonesearch.agi,1---entry_oldest"
+#
+#
+# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+#
+# changes:
+# 170113-0817 - First build
+#
+
+$script = 'cm_phonesearch.agi';
+
+($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+$year = ($year + 1900);
+$mon++;
+if ($mon < 10) {$mon = "0$mon";}
+if ($mday < 10) {$mday = "0$mday";}
+if ($hour < 10) {$hour = "0$hour";}
+if ($min < 10) {$min = "0$min";}
+if ($sec < 10) {$sec = "0$sec";}
+
+$now_date_epoch = time();
+$now_date = "$year-$mon-$mday $hour:$min:$sec";
+$start_time=$now_date;
+$CIDdate = "$mon$mday$hour$min$sec";
+$tsSQLdate = "$year$mon$mday$hour$min$sec";
+$SQLdate = "$year-$mon-$mday $hour:$min:$sec";
+$SQLdateBEGIN = $SQLdate;
+$state='';
+$CIDlead_id='';
+	while (length($CIDdate) > 9) {$CIDdate =~ s/^.//gi;} # 0902235959 changed to 902235959
+
+# default path to astguiclient configuration file:
+$PATHconf =		'/etc/astguiclient.conf';
+
+open(conf, "$PATHconf") || die "can't open $PATHconf: $!\n";
+@conf = <conf>;
+close(conf);
+$i=0;
+foreach(@conf)
+	{
+	$line = $conf[$i];
+	$line =~ s/ |>|\n|\r|\t|\#.*|;.*//gi;
+	if ( ($line =~ /^PATHhome/) && ($CLIhome < 1) )
+		{$PATHhome = $line;   $PATHhome =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHlogs/) && ($CLIlogs < 1) )
+		{$PATHlogs = $line;   $PATHlogs =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHagi/) && ($CLIagi < 1) )
+		{$PATHagi = $line;   $PATHagi =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHweb/) && ($CLIweb < 1) )
+		{$PATHweb = $line;   $PATHweb =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHsounds/) && ($CLIsounds < 1) )
+		{$PATHsounds = $line;   $PATHsounds =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHmonitor/) && ($CLImonitor < 1) )
+		{$PATHmonitor = $line;   $PATHmonitor =~ s/.*=//gi;}
+	if ( ($line =~ /^VARserver_ip/) && ($CLIserver_ip < 1) )
+		{$VARserver_ip = $line;   $VARserver_ip =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_server/) && ($CLIDB_server < 1) )
+		{$VARDB_server = $line;   $VARDB_server =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_database/) && ($CLIDB_database < 1) )
+		{$VARDB_database = $line;   $VARDB_database =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_user/) && ($CLIDB_user < 1) )
+		{$VARDB_user = $line;   $VARDB_user =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_pass/) && ($CLIDB_pass < 1) )
+		{$VARDB_pass = $line;   $VARDB_pass =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_port/) && ($CLIDB_port < 1) )
+		{$VARDB_port = $line;   $VARDB_port =~ s/.*=//gi;}
+	$i++;
+	}
+
+if (!$VARDB_port) {$VARDB_port='3306';}
+if (!$AGILOGfile) {$AGILOGfile = "$PATHlogs/agiout.$year-$mon-$mday";}
+
+use DBI;
+use Asterisk::AGI;
+$AGI = new Asterisk::AGI;
+
+$dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
+    or die "Couldn't connect to database: " . DBI->errstr;
+
+### Grab Server values from the database
+$stmtA = "SELECT agi_output FROM servers where server_ip = '$VARserver_ip';";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+$rec_count=0;
+while ($sthArows > $rec_count)
+	{
+	$AGILOG = '0';
+	@aryA = $sthA->fetchrow_array;
+	$DBagi_output =	$aryA[0];
+	if ($DBagi_output =~ /STDERR/)	{$AGILOG = '1';}
+	if ($DBagi_output =~ /FILE/)	{$AGILOG = '2';}
+	if ($DBagi_output =~ /BOTH/)	{$AGILOG = '3';}
+	$rec_count++;
+	}
+$sthA->finish();
+
+
+### begin parsing run-time options ###
+if (length($ARGV[0])>1)
+	{
+	if ($AGILOG) {$agi_string = "Perl Environment Dump:";   &agi_output;}
+	$i=0;
+	while ($#ARGV >= $i)
+		{
+		$args = "$args $ARGV[$i]";
+		if ($AGILOG) {$agi_string = "$i|$ARGV[$i]";   &agi_output;}
+		$i++;
+		}
+	
+	### list of command-line array arguments:
+	@ARGV_vars = split(/---/, $ARGV[0]);
+
+	$country_code = 	$ARGV_vars[0];
+	$age =				$ARGV_vars[1];
+	}
+
+if (length($country_code) < 1)
+	{$country_code = '1';}
+if (length($age) < 1)
+	{$age = 'entry_newest';}
+
+
+$|=1;
+while(<STDIN>) 
+	{
+	chomp;
+	last unless length($_);
+	if ($AGILOG)
+		{
+		if (/^agi_(\w+)\:\s+(.*)$/)
+			{
+			$AGI{$1} = $2;
+			}
+		}
+
+	if (/^agi_context\:\s+(.*)$/)		{$context = $1;}
+	if (/^agi_uniqueid\:\s+(.*)$/)		{$unique_id = $1; $uniqueid = $unique_id;}
+	if (/^agi_channel\:\s+(.*)$/)		{$channel = $1;}
+	if (/^agi_extension\:\s+(.*)$/)		{$extension = $1;}
+	if (/^agi_type\:\s+(.*)$/)			{$type = $1;}
+	if (/^agi_callerid\:\s+(.*)$/)		{$callerid = $1;}
+	if (/^agi_calleridname\:\s+(.*)$/)	{$calleridname = $1;}
+	}
+foreach $i (sort keys %AGI)
+	{
+	if ($AGILOG) {$agi_string = " -- $i = $AGI{$i}";   &agi_output;}
+	}
+
+$callerid =~ s/\'|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
+$calleridname =~ s/\'|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
+$extension =~ s/\'|\"|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
+
+if ($calleridname =~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^Y\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^M\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/)
+	{
+	$callerid = $calleridname;
+	$callerid =~ s/\"//gi;
+	$callerid =~ s/ .*//gi;
+	$CIDlead_id = $callerid;
+	$CIDlead_id = substr($CIDlead_id, 10, 10);
+	$CIDlead_id = ($CIDlead_id + 0);
+
+	### gather state and phone_number from lead record ###
+	$stmtA= "SELECT state,phone_number from vicidial_list where lead_id='$CIDlead_id';";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($AGILOG) {$agi_string = "$sthArows|$stmtA|";   &agi_output;}
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$state =			$aryA[0];
+		$phone_number =		$aryA[1];
+		}
+	$sthA->finish();
+	}
+
+if ( ($callerid =~ /\".*\"/) && ( (!$calleridname) or ($calleridname =~ /unknown/) ) )
+	{
+	$calleridname = $callerid;
+	$calleridname =~ s/\<\d\d\d\d\d\d\d\d\d\d\>//gi;
+	$calleridname =~ s/\"|\" //gi;
+	}
+
+if ($callerid !~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^Y\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^M\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/)
+	{
+	$callerid =~ s/\D|\'//gi;
+	$calleridname =~ s/unknown|\'//gi;
+	if ( (!$callerid) or ($callerid =~ /unknown/) )
+		{$callerid = $calleridname;}
+	if (length($callerid)>0) {$phone_number = $callerid;}
+	   else {$phone_number = '';}
+	if (length($calleridname)>0) {$VLcomments = $calleridname;}
+	   else {$VLcomments = '';}
+	if (length($callerid)<10) {$callerid = $parked_by;}
+	if (length($pin)>0) {$callerid = $pin;}
+	}
+
+if ($AGILOG) {$agi_string = "AGI Variables: |$unique_id|$channel|$extension|$type|$callerid|     |$country_code|$phone_number|$age|";   &agi_output;}
+
+$AGI->stream_file('sip-silence');
+$AGI->stream_file('sip-silence');
+$AGI->stream_file('sip-silence');
+
+
+$g=0;
+$list_id='';
+$lead_id='';
+### only perform search if minimum digits entered is valid and state is not already set ###
+if (length($phone_number) >= 6)
+	{
+	$ageSQL = 'order by entry_date desc';
+	if ($age =~ /entry_oldest/) {$ageSQL = 'order by entry_date asc';}
+	if ($age =~ /modify_newest/) {$ageSQL = 'order by modify_date desc';}
+	if ($age =~ /modify_oldest/) {$ageSQL = 'order by modify_date asc';}
+	if ($age =~ /call_newest/) {$ageSQL = 'order by last_local_call_time desc';}
+	if ($age =~ /call_oldest/) {$ageSQL = 'order by last_local_call_time asc';}
+	if ($age =~ /rank_highest/) {$ageSQL = 'order by rank desc';}
+	if ($age =~ /rank_lowest/) {$ageSQL = 'order by rank asc';}
+
+	### search for state using areacode of caller id number ###
+	$stmtA= "SELECT list_id,lead_id from vicidial_list where phone_code='$country_code' and phone_number='$phone_number' $ageSQL;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$list_id	= $aryA[0];
+		$lead_id	= $aryA[1];
+		$g++;
+		}
+	$sthA->finish();
+	if ($AGILOG) {$agi_string = "$sthArows($lead_id|$list_id)|$stmtA|";   &agi_output;}
+	}
+
+# Lead not found, send call to 'D' option in call menu
+if ($g < 1)
+	{
+	if ($AGILOG) {$agi_string = "entry not found($phone_number), exiting the cm_phonesearch.agi app, transferring call to D @ $context";   &agi_output;}
+	print "SET CONTEXT $context\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET EXTENSION D\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET PRIORITY 1\n";
+		$result = <STDIN>;
+		checkresult($result);
+
+	exit;
+	}
+else
+	{
+	$campaign_id='';
+	$default_xfer_group='';
+	### search for campaign using list_id of found lead ###
+	$stmtA= "SELECT campaign_id from vicidial_lists where list_id='$list_id';";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$campaign_id	= $aryA[0];
+		}
+	$sthA->finish();
+	if ($AGILOG) {$agi_string = "$sthArows($campaign_id)|$stmtA|";   &agi_output;}
+
+	if (length($campaign_id) > 0) 
+		{
+		### search for default_xfer_group using campaign_id of found lead ###
+		$stmtA= "SELECT default_xfer_group from vicidial_campaigns where campaign_id='$campaign_id';";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$default_xfer_group	= $aryA[0];
+			}
+		$sthA->finish();
+		if ($AGILOG) {$agi_string = "$sthArows($default_xfer_group)|$stmtA|";   &agi_output;}
+		}
+	}
+
+$PADlead_id = sprintf("%010s", $lead_id);	while (length($PADlead_id) > 10) {chop($PADlead_id);}
+$YqueryCID = "Y$CIDdate$PADlead_id";
+$newcallerid = "\"$YqueryCID <$phone_number>\"";
+$AGI->set_callerid($newcallerid);
+print STDERR "cm_phonesearch.agi Setting CID \"$newcallerid\"\n";
+checkresult($result);
+if ($AGILOG) {$agi_string = "callerID changed: $newcallerid";   &agi_output;}
+
+# transfer in-group not found, send call to 'C' option in call menu
+if ( (length($default_xfer_group) < 1) || ($default_xfer_group =~ /---NONE---/) )
+	{
+	if ($AGILOG) {$agi_string = "in-group not found($phone_number), exiting the cm_phonesearch.agi app, transferring call to C @ $context";   &agi_output;}
+	print "SET CONTEXT $context\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET EXTENSION C\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET PRIORITY 1\n";
+		$result = <STDIN>;
+		checkresult($result);
+
+	exit;
+	}
+else
+	{
+	$AGI->exec("EXEC Set(_ingroupvar=$default_xfer_group)");
+
+	if ($AGILOG) {$agi_string = "in-group found($phone_number|$default_xfer_group), exiting the cm_phonesearch.agi app, transferring call to B @ $context";   &agi_output;}
+	print "SET CONTEXT $context\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET EXTENSION B\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET PRIORITY 1\n";
+		$result = <STDIN>;
+		checkresult($result);
+
+	exit;
+	}
+
+
+
+
+##### SUBROUTINES #####
+
+sub agi_output
+{
+if ($AGILOG >=2)
+	{
+	### open the log file for writing ###
+	open(Lout, ">>$AGILOGfile")
+			|| die "Can't open $AGILOGfile: $!\n";
+	print Lout "$now_date|$script|$agi_string\n";
+	close(Lout);
+	}
+	### send to STDERR writing ###
+if ( ($AGILOG == '1') || ($AGILOG == '3') )
+	{print STDERR "$now_date|$script|$agi_string\n";}
+$agi_string='';
+}
+
+
+sub checkresult 
+	{
+	my ($res) = @_;
+	my $retval;
+	$tests++;
+	chomp $res;
+	if ($res =~ /^200/) 
+		{
+		$res =~ /result=(-?\d+)/;
+		if (!length($1)) 
+			{
+		#	print STDERR "FAIL ($res)\n";
+			$fail++;
+			} 
+		else 
+			{
+		#	print STDERR "PASS ($1)\n";
+			$pass++;
+			}
+		} 
+	else 
+		{
+	#	print STDERR "FAIL (unexpected result '$res')\n";
+		$fail++;
+		}
+	}

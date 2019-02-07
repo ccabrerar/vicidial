@@ -1,0 +1,96 @@
+CHAT MESSAGING			Started 2014-05-01	Updated 2016-12-17
+
+
+After over 18 months of development, the Chat Messaging system for Vicidial was added to svn/trunk on December 13th, 2015(svn revision 2428). Our Chat messaging allows for customers to chat with agents from websites, as well as allowing managers to chat with agents and agents to chat with other agents all within their existing agent screen.
+
+The Chat Messaging built into Vicidial is entirely web-based and uses it's own protocol. Also, all messages are logged and searchable though the Agent-Manager Chat Log accessible through the Admin Utilities webpage.
+
+
+UPDATE 2015-12-19: We added several security enhancements related to the chat functionality. We strongly recommend that you update your system to svn/trunk revision 2435 or higher if you are running revision between 2428 and 2434. We also added dynamic language capability throughout the chat screens.
+
+UPDATE 2016-03-05: We added the ability to transfer a customer chat to another chat group or agent.
+
+UPDATE 2016-12-17: We added the ability for agents to add more agents to their internal chat sessions, so multiple agents can be chatting together in the same session at one time.
+
+
+
+AGENT CHAT INTERFACE INSTRUCTIONS:
+
+If your system administrator has enabled the chat feature, when you log in to the Vicidial agent interface, you will see two tabs at the top of your interface labeled "CHAT INTERNAL" and "CHAT CUSTOMER".
+
+If you have any internal chats open, the words "CHAT INTERNAL" will appear in red. If you are involved in a chat where there are unread messages, the chat tab will be blinking red. To view the agent customer chat interface, simply click on the "CHAT CUSTOMER" tabs. The chat interface window will appear in place of the customer's information. If you have a chat with an unread message, that chat will automatically load in the agent screen by default, along with the name of the person you are chatting with and the date and time the chat started. If you have no unread messages, but have any open chats, the chat where the last message was posted will load by default. Otherwise, the screen will simply inform you that you have no active chats. 
+
+In the chat window, messages posted by you are displayed in blue text, while messages posted by the person you are chatting with are displayed in red.
+
+Beneath the chat window is the text box you use to type in messages and send them. You can send them either by clicking the blue "SEND MESSAGE" button or by simply pressing the Enter key on your keyboard while you are typing something into the text box.
+
+
+On the right side of the "CHAT INTERNAL" screen is a box labeled "Your active chats". For every open chat that you have, this box will display the name of the user you are chatting with. Chats with unread messages will be printed in boldface and highlighted in blue. To toggle between chats, simply click on the name of the person you are chatting with.
+
+As you receive messages via the chat interface, you will occasionally hear an audio cue indicating you have a new message. If you would like to prevent this cue from being played, there is a checkbox beneath the "Your active chats" labeled "Mute alert sound" that you can mark to prevent this cue from being played.
+
+If at any point you would like to initiate a chat with another user, you may click on the green "CHAT WITH LIVE AGENT" button to bring up a simple form to begin chatting with an agent. On the left side of the screen you may select a live agent to chat with. The only agents that will be available for you to talk to will be agents who meet two criteria:
+
+1. They must currently be logged into the Vicidial agent interface.
+2. They must belong to a user group that your user group has the ability to transfer to - these are the "Agent Status Viewable Groups" which are defined in the admin User Group page by authorized administrators.
+
+On the right side of the screen is a text box in which you type the initial message you'd like to send to the selected live agent. Once you have filled this out you may click the green "START CHAT" button. You must have selected an agent and also have entered a message.
+
+You can return to the chat screen at any time by clicking the red "BACK TO CHAT SCREEN" button. This will also clear anything you entered into the agent form.
+
+
+
+
+MANAGER CHAT INTERFACE INSTRUCTIONS:
+
+In the Administration web screen, there is a new link at the top of the screen next to the HOME link and the Timeclock link called "Chat". If you click on this link, you will be taken to the new manager chat screen. This screen will allow you to start chats with logged-in agents, as well as give you the ability to send broadcast chats to all agents that are logged in, or just specific agents.
+
+
+
+
+CUSTOMER CHAT INSTRUCTIONS:
+
+There is a new folder in the web directory called "chat_customer". You will find a file in this folder called "customer_chat_code.php" that you can use to write your own web page for a customer to chat from, or you can just use that page as your Chat URL. The Chat URL is a field in the System Settings that you need to populate in order for  the customer chat to work. To use the default for this, just add "chat_customer/customer_chat_code.php" to your current Vicidial webserver URL. For example, if your current webserver url is "http://192.168.1.2/" then you can use this as your Chat URL: 
+    "http://192.168.1.2/chat_customer/customer_chat_code.php"
+       or 
+    "http://192.168.1.2/chat_customer/vicidial_chat_customer_side.php"
+
+
+There are several variables you can use to assemble a link to a customer chat window on your website:
+   group_id - the Inbound Chat Group that you want to use
+   language - if different than default English, the language the customer chat screen should use
+   available_agents - only allow chats to start if there are LOGGED_IN agents or WAITING_ONLY agents available
+   status_link - set to Y if you want to use as a button only on your website showing if chat agents are available or not(150 x 37 pixels)
+   show_email - set to ONLY if you want to only show the email field, Y_WITH_PHONE if you want both email and phone fields
+
+
+If you want to link to chat with a specific in-group, you can use a link like this,
+http://192.168.1.2/chat_customer/customer_chat_code.php?group_id=TESTCHAT
+
+If you want to put a chat page within your own IFRAME and use a specific in-group, you can use a URL like this,
+http://192.168.1.2/chat_customer/vicidial_chat_customer_side.php?group_id=TESTCHAT
+
+
+If you want to link to chat with a specific in-group and language ID in the system, you can use a link like this,
+http://192.168.1.2/chat_customer/customer_chat_code.php?group_id=TESTCHAT&language=new_spanish
+
+If you want to put a chat page within your own IFRAME and use a specific in-group and language ID in the system, you can use a URL like this,
+http://192.168.1.2/chat_customer/vicidial_chat_customer_side.php?group_id=TESTCHAT&language=new_spanish
+
+
+If you want to link to a chat status button with a specific in-group and langauge and only if agents are ready and waiting, you can use a link like this,
+http://192.168.1.2/chat_customer/vicidial_chat_customer_side.php?status_link=Y&user=&lead_id=&group_id=MIKECHAT&language=new_spanish&available_agents=WAITING_ONLY
+
+
+
+
+Chat settings in System Settings:
+
+Allow Chats -This is where you can set whether this system will be able to receive incoming chats in addition to phone calls, as well as allow agent-to-agent and agent-to-manager chatting. 
+
+Chat Timeout -This is where you can set how long a customer chat can stay alive after the customer has navigated away from or closed their chat window. When the timeout is reached the chat is closed. 
+
+Chat URL -This is the location where you have placed the chat web pages for customer use. 
+
+
+NOTE: You will need to Allow Chat on the campaign that you want agents to handle Chat InGroups from

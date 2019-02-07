@@ -1,0 +1,390 @@
+#!/usr/bin/perl
+#
+# cm_speak_var.agi version 2.10
+#
+# runs after a call has lead_id assigned to it, speaks letters/numbers
+#
+# You need to put lines similar to those below in your Custom Dialplan:
+# 
+# exten => 8412,1,Answer
+# exten => 8412,n,AGI(cm_speak_var.agi,say_digits---security_phrase)
+# exten => 8412,n,Hangup
+#
+# CLI FLAG OPTIONS:
+# 1. function: (say_digits, say_number, say_alpha, say_datetime, say_phonetic, stream_file)
+# 2. field: (any vicidial_list field)
+# 
+# Copyright (C) 2014  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+#
+# changes:
+# 140619-2005 - first build
+#
+
+$script = 'cm_speak_var.agi';
+
+$CM_LOG = 1;	# set to 1 for logfile
+
+($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+$year = ($year + 1900);
+$mon++;
+if ($mon < 10) {$mon = "0$mon";}
+if ($mday < 10) {$mday = "0$mday";}
+if ($hour < 10) {$hour = "0$hour";}
+if ($min < 10) {$min = "0$min";}
+if ($sec < 10) {$sec = "0$sec";}
+
+$now_date_epoch = time();
+$now_date = "$year-$mon-$mday $hour:$min:$sec";
+
+# default path to astguiclient configuration file:
+$PATHconf =		'/etc/astguiclient.conf';
+
+open(conf, "$PATHconf") || die "can't open $PATHconf: $!\n";
+@conf = <conf>;
+close(conf);
+$i=0;
+foreach(@conf)
+	{
+	$line = $conf[$i];
+	$line =~ s/ |>|\n|\r|\t|\#.*|;.*//gi;
+	if ( ($line =~ /^PATHhome/) && ($CLIhome < 1) )
+		{$PATHhome = $line;   $PATHhome =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHlogs/) && ($CLIlogs < 1) )
+		{$PATHlogs = $line;   $PATHlogs =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHagi/) && ($CLIagi < 1) )
+		{$PATHagi = $line;   $PATHagi =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHweb/) && ($CLIweb < 1) )
+		{$PATHweb = $line;   $PATHweb =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHsounds/) && ($CLIsounds < 1) )
+		{$PATHsounds = $line;   $PATHsounds =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHmonitor/) && ($CLImonitor < 1) )
+		{$PATHmonitor = $line;   $PATHmonitor =~ s/.*=//gi;}
+	if ( ($line =~ /^VARserver_ip/) && ($CLIserver_ip < 1) )
+		{$VARserver_ip = $line;   $VARserver_ip =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_server/) && ($CLIDB_server < 1) )
+		{$VARDB_server = $line;   $VARDB_server =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_database/) && ($CLIDB_database < 1) )
+		{$VARDB_database = $line;   $VARDB_database =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_user/) && ($CLIDB_user < 1) )
+		{$VARDB_user = $line;   $VARDB_user =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_pass/) && ($CLIDB_pass < 1) )
+		{$VARDB_pass = $line;   $VARDB_pass =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_port/) && ($CLIDB_port < 1) )
+		{$VARDB_port = $line;   $VARDB_port =~ s/.*=//gi;}
+	$i++;
+	}
+
+if (!$VARDB_port)	{$VARDB_port='3306';}
+if (!$CMLOGfile)	{$CMLOGfile = "$PATHlogs/cmout.$year-$mon-$mday";}
+if (!$AGILOGfile)	{$AGILOGfile = "$PATHlogs/agiout.$year-$mon-$mday";}
+
+use DBI;
+use Asterisk::AGI;
+$AGI = new Asterisk::AGI;
+
+  
+$dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
+    or die "Couldn't connect to database: " . DBI->errstr;
+
+### Grab Server values from the database
+$stmtA = "SELECT agi_output,asterisk_version,ext_context FROM servers where server_ip = '$VARserver_ip';";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+if ($sthArows > 0)
+	{
+	$AGILOG = '0';
+	@aryA = $sthA->fetchrow_array;
+	$DBagi_output =			$aryA[0];
+	$asterisk_version =		$aryA[1];
+	$DBext_context =		$aryA[2];
+	if ($DBext_context)		{$ext_context = $DBext_context;}
+	if ($DBagi_output =~ /STDERR/)	{$AGILOG = '1';}
+	if ($DBagi_output =~ /FILE/)	{$AGILOG = '2';}
+	if ($DBagi_output =~ /BOTH/)	{$AGILOG = '3';}
+	}
+$sthA->finish();
+
+### begin parsing run-time options ###
+if (length($ARGV[0])>1)
+	{
+	if ($AGILOG) 
+		{$agi_string = "Perl Environment Dump:";   &agi_output;}
+	$i=0;
+	while ($#ARGV >= $i)
+		{
+		$args = "$args $ARGV[$i]";
+		if ($AGILOG) {$agi_string = "$i|$ARGV[$i]";   &agi_output;}
+		$i++;
+		}
+	
+	### list of command-line array arguments:
+	@ARGV_vars = split(/---/, $ARGV[0]);
+	$CLI_function =	$ARGV_vars[0];
+	$CLI_field = 	$ARGV_vars[1];
+	}
+
+$|=1;
+while(<STDIN>) 
+	{
+	chomp;
+	last unless length($_);
+	if ($AGILOG)
+		{
+		if (/^agi_(\w+)\:\s+(.*)$/)
+			{
+			$AGI{$1} = $2;
+			}
+		}
+
+	if (/^agi_uniqueid\:\s+(.*)$/)		{$unique_id = $1; $uniqueid = $unique_id;}
+	if (/^agi_priority\:\s+(.*)$/)		{$priority = $1;}
+	if (/^agi_channel\:\s+(.*)$/)		{$channel = $1;}
+	if (/^agi_extension\:\s+(.*)$/)		{$extension = $1;}
+	if (/^agi_type\:\s+(.*)$/)		{$type = $1;}
+	if (/^agi_callerid\:\s+(.*)$/)		{$callerid = $1;   $calleridnum = $callerid;}
+	if (/^agi_calleridname\:\s+(.*)$/)	{$calleridname = $1;}
+	}
+
+if ( (length($callerid)>20) && ($callerid =~ /\"\S\S\S\S\S\S\S\S\S\S\S\S\S\S\S\S\S\S/) )
+	{
+	$callerid =~ s/^\"//gi;
+	$callerid =~ s/\".*$//gi;
+	}
+if ( (
+(length($calleridname)>5) && ( (!$callerid) or ($callerid =~ /unknown|private|00000000/i) or ($callerid =~ /5551212/) )
+) or ( (length($calleridname)>17) && ($calleridname =~ /\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/) ) )
+	{
+	$callerid = $calleridname;
+	}
+
+
+if ($AGILOG) {$agi_string = "AGI Environment Dump:";   &agi_output;}
+
+foreach $i (sort keys %AGI) 
+	{
+	if ($AGILOG) {$agi_string = " -- $i = $AGI{$i}";   &agi_output;}
+	}
+
+if ($AGILOG) {$agi_string = "AGI Variables: |$unique_id|$channel|$extension|$type|$callerid|";   &agi_output;}
+
+
+$callerid =~ s/\"//gi;
+$callerid =~ s/ .*//gi;
+$CIDlead_id = $callerid;
+if ( ($calleridname =~ /^DC/) && ($calleridname =~ /\d\d\d\d\d\d\d\d\d\dW$/) ) #DC234728W0001010141W 
+	{$CIDlead_id = substr($calleridname, 9, 10);}
+else
+	{$CIDlead_id = substr($CIDlead_id, 10, 10);}
+$CIDlead_id = ($CIDlead_id + 0);
+if ( ($CLIlead_id > 0) && ($CIDlead_id < 1) ) {$CIDlead_id = $CLIlead_id;}
+$VD_lead_id = $CIDlead_id;
+
+if ($AGILOG) {$agi_string = "+++++ cm_speak_var START : |$CLI_function|$CLI_field|$CIDlead_id|$now_date|$AST_ver|$priority|$calleridname|";   &agi_output;}
+
+if ($CM_LOG) 
+	{
+	open(Lout, ">>$CMLOGfile")
+			|| die "Can't open $CMLOGfile: $!\n";
+	print Lout "$now_date|$VD_lead_id|      |$CLI_function|$CLI_field|$calleridnum|$callerid|\n";
+	close(Lout);
+	}
+
+$AGI->stream_file('sip-silence');
+$AGI->stream_file('sip-silence');
+
+
+$stmtA = "SELECT lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner FROM vicidial_list where lead_id='$VD_lead_id';";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+if ($sthArows > 0)
+	{
+	@aryA = $sthA->fetchrow_array;
+	$CM_lead_id =			$aryA[0];
+	$CM_entry_date =		$aryA[1];
+	$CM_modify_date =		$aryA[2];
+	$CM_status =			$aryA[3];
+	$CM_user =				$aryA[4];
+	$CM_vendor_lead_code =	$aryA[5];
+	$CM_source_id =			$aryA[6];
+	$CM_list_id =			$aryA[7];
+	$CM_phone_number =		$aryA[8];
+	$CM_title =				$aryA[9];
+	$CM_first_name =		$aryA[10];
+	$CM_middle_initial =	$aryA[11];
+	$CM_last_name =			$aryA[12];
+	$CM_address1 =			$aryA[13];
+	$CM_address2 =			$aryA[14];
+	$CM_address3 =			$aryA[15];
+	$CM_city =				$aryA[16];
+	$CM_state =				$aryA[17];
+	$CM_province =			$aryA[18];
+	$CM_postal_code =		$aryA[19];
+	$CM_country_code =		$aryA[20];
+	$CM_gender =			$aryA[21];
+	$CM_date_of_birth =		$aryA[22];
+	$CM_alt_phone =			$aryA[23];
+	$CM_email =				$aryA[24];
+	$CM_security_phrase =	$aryA[25];
+	$CM_comments =			$aryA[26];
+	$CM_called_count =		$aryA[27];
+	$CM_last_local_call_time = $aryA[28];
+	$CM_rank =				$aryA[29];
+	$CM_owner =				$aryA[30];
+	}
+$sthA->finish();
+
+if ($CLI_field =~ /lead_id/)			{$field_value = $CM_lead_id;}
+if ($CLI_field =~ /entry_date/)			{$field_value = $CM_entry_date;}
+if ($CLI_field =~ /modify_date/)		{$field_value = $CM_modify_date;}
+if ($CLI_field =~ /status/)				{$field_value = $CM_status;}
+if ($CLI_field =~ /user/)				{$field_value = $CM_user;}
+if ($CLI_field =~ /vendor_lead_code/)	{$field_value = $CM_vendor_lead_code;}
+if ($CLI_field =~ /source_id/)			{$field_value = $CM_source_id;}
+if ($CLI_field =~ /list_id/)			{$field_value = $CM_list_id;}
+if ($CLI_field =~ /phone_number/)		{$field_value = $CM_phone_number;}
+if ($CLI_field =~ /title/)				{$field_value = $CM_title;}
+if ($CLI_field =~ /first_name/)			{$field_value = $CM_first_name;}
+if ($CLI_field =~ /middle_initial/)		{$field_value = $CM_middle_initial;}
+if ($CLI_field =~ /last_name/)			{$field_value = $CM_last_name;}
+if ($CLI_field =~ /address1/)			{$field_value = $CM_address1;}
+if ($CLI_field =~ /address2/)			{$field_value = $CM_address2;}
+if ($CLI_field =~ /address3/)			{$field_value = $CM_address3;}
+if ($CLI_field =~ /city/)				{$field_value = $CM_city;}
+if ($CLI_field =~ /state/)				{$field_value = $CM_state;}
+if ($CLI_field =~ /province/)			{$field_value = $CM_province;}
+if ($CLI_field =~ /postal_code/)		{$field_value = $CM_postal_code;}
+if ($CLI_field =~ /country_code/)		{$field_value = $CM_country_code;}
+if ($CLI_field =~ /gender/)				{$field_value = $CM_gender;}
+if ($CLI_field =~ /date_of_birth/)		{$field_value = $CM_date_of_birth;}
+if ($CLI_field =~ /alt_phone/)			{$field_value = $CM_alt_phone;}
+if ($CLI_field =~ /email/)				{$field_value = $CM_email;}
+if ($CLI_field =~ /security_phrase/)	{$field_value = $CM_security_phrase;}
+if ($CLI_field =~ /comments/)			{$field_value = $CM_comments;}
+if ($CLI_field =~ /called_count/)		{$field_value = $CM_called_count;}
+if ($CLI_field =~ /last_local_call_time/) {$field_value = $CM_last_local_call_time;}
+if ($CLI_field =~ /rank/)				{$field_value = $CM_rank;}
+if ($CLI_field =~ /owner/)				{$field_value = $CM_owner;}
+
+
+if ($CLI_function =~ /say_digits/) 
+	{
+	$AGI->say_digits("$field_value");
+	}
+if ($CLI_function =~ /say_number/) 
+	{
+	$AGI->say_number("$field_value");
+	}
+if ($CLI_function =~ /say_alpha/) 
+	{
+	$AGI->say_alpha("$field_value");
+	}
+if ($CLI_function =~ /say_datetime/) 
+	{
+	$AGI->say_datetime("$field_value");
+	}
+if ($CLI_function =~ /say_phonetic/) 
+	{
+	$AGI->say_phonetic("$field_value");
+	}
+if ($CLI_function =~ /stream_file/) 
+	{
+	$AGI->stream_file("$field_value");
+	}
+
+$dbhA->disconnect();
+
+#$AGI->hangup($channel);
+
+
+
+
+exit;
+
+sub checkresult 
+	{
+	my ($res) = @_;
+	my $retval;
+	$tests++;
+	chomp $res;
+	if ($res =~ /^200/) 
+		{
+		$res =~ /result=(-?\d+)/;
+		if (!length($1)) 
+			{
+		#	print STDERR "FAIL ($res)\n";
+			$fail++;
+			} 
+		else 
+			{
+		#	print STDERR "PASS ($1)\n";
+			$pass++;
+			}
+		}
+	else
+		{
+	#	print STDERR "FAIL (unexpected result '$res')\n";
+		$fail++;
+		}
+	}
+
+
+sub agi_output
+	{
+	if ($AGILOG >=2)
+		{
+		### open the log file for writing ###
+		open(Lout, ">>$AGILOGfile")
+				|| die "Can't open $AGILOGfile: $!\n";
+		print Lout "$now_date|$script|$agi_string\n";
+		close(Lout);
+		}
+		### send to STDERR writing ###
+	if ( ($AGILOG == '1') || ($AGILOG == '3') )
+		{print STDERR "$now_date|$script|$agi_string\n";}
+	$agi_string='';
+	}
+
+# subroutine to parse the asterisk version
+# and return a hash with the various part
+sub parse_asterisk_version
+	{
+	# grab the arguments
+	my $ast_ver_str = $_[0];
+
+	# get everything after the - and put it in $ast_ver_postfix
+	my @hyphen_parts = split( /-/ , $ast_ver_str );
+
+	my $ast_ver_postfix = $hyphen_parts[1];
+
+	# now split everything before the - up by the .
+	my @dot_parts = split( /\./ , $hyphen_parts[0] );
+
+	my %ast_ver_hash;
+
+	if ( $dot_parts[0] <= 1 )
+		{
+			%ast_ver_hash = (
+				"major" => $dot_parts[0],
+				"minor" => $dot_parts[1],
+				"build" => $dot_parts[2],
+				"revision" => $dot_parts[3],
+				"postfix" => $ast_ver_postfix
+			);
+		}
+
+	# digium dropped the 1 from asterisk 10 but we still need it
+	if ( $dot_parts[0] > 1 )
+		{
+			%ast_ver_hash = (
+				"major" => 1,
+				"minor" => $dot_parts[0],
+				"build" => $dot_parts[1],
+				"revision" => $dot_parts[2],
+				"postfix" => $ast_ver_postfix
+			);
+		}
+
+	return ( %ast_ver_hash );
+	}

@@ -1,0 +1,62 @@
+INBOUND CALLBACK QUEUE		Started: 2018-01-15	Updated: 2018-02-06
+
+
+The purpose of this feature is to allow for callers to leave the queue and be called back when their place in line is reached. Included in this new set of features are the new Closed Time features to In-Groups that allow all callers in queue to be presented with a press-1 option when the in-group closing time for the day has been reached. Also, an in-group feature was added to manually force the end of all queueing of calls for an in-group for the rest of the day.
+
+
+REQUIREMENTS:
+- svn/trunk revision 2905 or higher
+- VICIdial servers should be restarted after performing upgrade
+- Campaign must be set to "In-Group Manual Dial" = 'MANUAL_DIAL' or 'BOTH'
+- One of the following In-Group options should be set to "PRESS_CALLBACK_QUEUE": 'Wait Time Option(s)','Estimated Hold Time Option(s)','Closing Time Action'
+- Read about all of the new settings below so you understand how this complex feature works!
+
+
+The AST_VDadapt.pl script already runs on one server in a cluster, and it has had three new processes added to it to facilitate the monitoring of the callback queued entries, as well as initiating the triggering of the outbound calls once the callers' places in line have been reached. This process also will set the inbound callback queue records that are past the Callback Queue Expire Hours old to EXPIRED status, as well as verifying that the inbound callback queue records are within the set Callbacks Queue Call Time and are not within the Internal and/or Campaign DNC lists, as defined in the In-Group settings.
+
+The agi-VDAD_ALL_inbound.agi inbound call routing process has also been modified to allow for the insertion of inbound callback queue entries as well as the preservation of the place in line of the callers that choose to enter the callback queue.
+
+The ADMIN_keepalive_ALL.pl now has an added process to take care of archiving once per day the old inbound callback queue records that are of SENT, EXPIRED and ORPHAN status. This process will also reset the Closing-Time-Now-Trigger if it has been used during the previous day.
+
+The Real-Time report also has a new "Callback Queue Calls" top header in HTML view mode, so you can see how many LIVE entries there are in the inbound callback queue. If you want to see what in-groups those LIVE records are in, you can click on the "SHOW IN-GROUP STATS" link at the top of the Real-Time report.
+
+
+
+
+Admin Web page changes:
+
+Added the following Inbound Group "Hold Time" and "Wait Time" options:
+
+The PRESS_CALLBACK_QUEUE option will preserve the caller place in line and will call the customer back when their place is the next one to go to an agent, this inbound callback queue entry will last until the call is placed back to the customer or as long as the Callback Queue Expire Hours setting below.
+
+
+
+Added the following new Inbound Group Settings:
+
+Callback Queue Expire Hours - If a Hold Time or Wait Time Option is set to PRESS_CALLBACK_QUEUE, this is the maximum number of hours that an entry can stay in the inbound callback queue before it is removed without dialing it. Default is 96 hours.
+
+Callback Queue Call Time - For any inbound callback queue outbound calls to be placed, this is the local call time used to determine if the number can be dialed right now or not.
+
+Callback Queue Dial Filter - This option allows you to remove DNC numbers from your Callback Queue. You can use any combination of: Internal DNC List, Campaign DNC List tied to campaign of the list where the lead is, and Areacode DNC wildcard
+
+Closing Time Action - This allows you to specify the routing of the call if the closing time of the in-group is reached while the call is still waiting for an agent, Closing time is the end of the Call Time that is defined for this in-group. Default is DISABLED. If one of the PRESS_ options is selected, it will play the Press Filename defined below and give the customer the option to press 1 on their phone to leave the queue and run the selected option. The PRESS_CALLBACK_QUEUE option will preserve the caller place in line and will call the customer back when their place is the next one to go to an agent, this inbound callback queue entry will last until the call is placed back to the customer or as long as the Callback Queue Expire Hours setting above.
+
+Closing Time Now Trigger - If Closing Time Action is enabled, this flag allows you to send all customers waiting in the queue to the Closing Time Action as defined above, before the actual closing time is reached for the day.
+
+Closing Time Press Filename - If Closing Time Option is set to one of the PRESS_ options, this is the filename prompt that is played if the in-group has reached the closing time for the day. It is very important that this audio file is 10 seconds or less or there will be problems.
+
+Closing Time End Filename - If Closing Time Option is set to one of the PRESS_ options or PRESS_CID_CALLBACK or PRESS_CALLBACK_QUEUE, this is the filename prompt that is played after the customer has pressed 1 or the call has been added to the callback list or queue.
+
+Closing Time Option Lead Reset - This option if set to Y, will set the lead called-since-last-reset field to N when the Closing Time Option is triggered and the call is sent to an action like Message, Voicemail or Hangup. Default is N for disabled.
+
+Closing Time Option Extension - If Closing Time Option is set to EXTENSION, this is the dialplan extension that the call will be sent to if the Closing Time is reached. For AGENTDIRECT in-groups, you can put AGENTEXT in this field and the system will look up the user custom five field and send the call to that dialplan number.
+
+Closing Time Option Callmenu - If Closing Time Option is set to CALL_MENU, this is the Call Menu that the call will be sent to if the Closing Time is reached.
+
+Closing Time Option Voicemail - If Closing Time Option is set to VOICEMAIL, this is the voicemail box that the call will be sent to if the Closing Time is reached. In an AGENTDIRECT in-group, setting this to AGENTVMAIL will select the User voicemail ID to use.
+
+Closing Time Option Transfer In-Group - If Closing Time Option is set to IN_GROUP, this is the inbound group that the call will be sent to if the Closing Time is reached.
+
+Closing Time Option Callback List ID - If Closing Time Option is set to CALLERID_CALLBACK, this is the List ID the call is added to as a new lead if the Closing Time is reached.
+
+

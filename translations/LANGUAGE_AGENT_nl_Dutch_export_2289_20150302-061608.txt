@@ -1,0 +1,971 @@
+  - ACTIVE DISPLAY PAUSED -|  - ACTIVE DISPLAY GEPAUZEERD -||
+ ALT PHONE DIAL|  ALT telefoonlijn||
+ Comments| Opmerkingen||
+ DIAL | DIAL||
+ Email| Email||
+ Exten %1s is not valid or queryCID %2s is not valid, Originate command not inserted|  Exten%1s niet geldig is of queryCID%2s is niet geldig, Originate commando niet geplaatst||
+ Gender|  geslacht||
+ Pause Code %1s has been recorded| Pauze Code%1s is opgeslagen||
+ Phone Area Code Outside Dialable Zone|Telefoon landcode valt buiten de toegestane Tijdzone||
+ Phone: |  telefoon:||
+ Postal Code Outside Dialable Zone|Postcode valt buiten de toegestande Tijdzone||
+ State| Staat||
+ Title| Titel||
+ You are not allowed to dial into other agent sessions|  Het is niet toegestaan om te bellen naar andere middel sessies||
+ to %1s on %2s|  naar%1s onder%2s||
+%1s %2s %3s or %4s is not valid|%1s%2s%3s of%4s is niet geldig||
+%1s command sent for Channel %2s on %3s|%1s commando gestuurd voor Channel%2s op%3s||
+%1s is not valid|%1s is ongeldig||
+(This is usually a 1 in the USA-Canada)|(Dit is meestal een 1 in de VS en Canada)||
+(This option if checked will attempt to find the phone number in the system before inserting it as a new lead)|(Deze optie indien aangevinkt zal proberen om het telefoonnummer op in het systeem voordat u het als een nieuwe lead)||
+(click on a number below to send to a conference)|(klik op een aantal hieronder te sturen naar een conferentie)||
+(digits only please)|(gelieve alleen cijfers)||
+(digits only)|(alleen cijfers)||
+-LOGGED-OUT|-LOGGED-OUT||
+: %1s on Phone: %2s|:%1s op Telefoon:%2s||
+ACTIVE CALLBACKS|Actieve Terugbelafspraken||
+ACTIVE DISPLAY PAUSED|AKTIEF SCHERM GEPAUZEERD||
+ADD ALL|ADD ALL||
+AGENT ALERT SETTING CHANGED %1s|AGENT ALERT veranderde instelling%1s||
+AGENT ALERT SETTING NOT CHANGED|AGENT ALERT INSTELLING niet veranderd||
+AGENT CALL LOG:|AGENT CALL LOG:||
+AGENT SCRIPT|AGENT SCRIPT||
+AGENT email frame|AGENT email kader||
+AGENTS|AGENTEN||
+AGENT_PHONE|AGENT_PHONE||
+AGENT|agent ||
+ALERT :|ALERT:||
+ALT DIAL NUMBER: ADDRESS3|ALT DIAL NUMBER: Adres 3||
+ALT DIAL NUMBER: ALT|ALT DIAL NUMBER: ALT||
+ALT DIAL NUMBER:|Bel Telefoon2 nummer:||
+ALT PHONE DIAL|Bel ander Nummer||
+ALT PHONE NUMBER STATUS CHANGED|ALT TELEFOONNUMMER STATUS VERANDERD||
+ALT PHONE NUMBER STATUS NOT CHANGED|ALT TELEFOONNUMMER STATUS niet veranderd||
+ALT PHONE|TELEFOON2||
+ALT|afwisselend ||
+APR|april||
+ATTACHMENTS|toebehoren ||
+AUG|augustus||
+AVAILABLE EXTENSIONS|BESCHIKBARE EXTENTIES||
+Active Extensions|Aktieve Extenties||
+Active Local Menu|Aktief Lokaal Menu||
+Active Trunks Menu|Actieve Trunks Menu||
+Active:|Aktief: ||
+Address1|Adres 1||
+Address2|adres2||
+Address3 Phone Number|Telefoon3||
+Address3|Toevoeging||
+Agent %1s is now in status %2s|Agent%1s is nu in de status%2s||
+Agent Alert!|Agent Alert!||
+Agent Form Display Script|Agent Form Beeldscherm Script||
+Agent Redirect|Agent Redirect||
+Agent Screen Opener|Agent Screen Opener||
+Agent Screen|Agent Screen||
+Agent Timeclock|Agent Timeclock||
+Agent web client:  Login|Agent webclient: Inloggen||
+Agent web client:  Phone Login|Agent webclient: Telefoon Inloggen||
+Agent web client: Campaign Login|Agent webclient: Campagne Inloggen||
+Agent web client: Phone Login Error|Agent webclient: Telefoon Inloggen Error||
+Agent web client: Re-Login|Agent webclient: Re-login||
+Agent:|Agent:||
+Agents View +|Agenten bekijken +||
+Agents View|Online Collega's Tonen||
+Alert Box|alert Box||
+Alert is OFF|alarm is uitgeschakeld||
+Alert is ON|alert is op||
+Alt Count:|Alt. Aantal:||
+Alt Phone Info|Alt Bellen Info||
+Alt. Phone:|Alt. telefoon:||
+Alt. Phone|Telefoon2||
+Alternate Phone Number|Telefoon2||
+Amount of time you have been logged-in:|Tijdperiode die je ingelogd bent geweest:||
+Amount of time you were logged-in:|Tijdperiode die je ingelogd bent geweest:||
+Another live agent session was open using your user ID. It has been disabled. Click OK to continue to the agent screen.|Een andere agent-sessie wat nog open met jouw naam. Deze is uitgeschakeld. Druk op OK om verder te gaan.||
+Answer:|antwoord:||
+Any changes made to the customer information below at this time will not be comitted, You must change customer information before you Hangup the call.|Alle aanpassingen aan onderstaande klantgegevens wordt niet opgeslagen. Je moet de klantgegevens aanpassen VOORDAT de volgende klant kiest||
+Appointment Date/Time:|Afspraak Datum / tijd:||
+Appointment Notes:|Afspraak Opmerkingen:||
+Attachments:|bijlagen:||
+Available Agents Transfer:|Beschikbare Agenten Transfer:||
+Available Chats:|Beschikbaar Chats:||
+Avatar Soundboard Display Script|Avatar Soundboard Weergave Script||
+Avatars disabled on your system|Avatars uitgeschakeld op uw systeem||
+BACK TO MAIN WINDOW - ignore changes made|TERUG NAAR HOOFDSCHERM - negeer gemaakte aanpassingen||
+BACK to Administration|TERUG naar Administratie||
+BACK to Agent Login Screen|TERUG naar Inlog scherm||
+BACK to Welcome Screen|TERUG naar Startpagina||
+BLENDED CALLING(outbound activated)|BLENDED Calling (outbound geactiveerd)||
+BLENDED CALLING|Blended Bellen||
+BU NAME|bedrijfsnaam||
+BU Name:|BU Naam:||
+BUILD:|BUILD:||
+BUILD|BUILD||
+Back to Main Window|Terug naar het Hoofdmenu||
+Busy Extensions|Bezette Extenties||
+CALL DATE/TIME|Terugbel Datum/Tijd||
+CALL DISPOSITION|AFSLUITCODE||
+CALL GROUP|bel groep ||
+CALL ID|CALL ID||
+CALL LOG FOR THIS LEAD:|Oproeplog LEAD:||
+CALL NOTES LOG:|CALL OPMERKINGEN LOG:||
+CALLBACK DATE/TIME|CALLBACK DATUM / TIJD||
+CALLBACKS FOR AGENT %1s:<br />To see information on one of the callbacks below, click on the INFO link. To call the customer back now, click on the DIAL link. If you click on a record below to dial it, it will be removed from the list.|Callbacks voor Agent%1s: <br /> Om informatie over een van de onderstaande callbacks zien, klik op de info link. Om de klant nu terug te bellen, klikt u op de wijzerplaat link. Als u klikt op een record hieronder om het te bellen, wordt deze verwijderd uit de lijst.||
+CALLER ID|NUMMERHERKENNING||
+CAMPAIGN|Campagne||
+CB Comments:|CB Reacties:||
+CITY|Stad||
+CLEAR FORM|Reset Formulier||
+CLEAR|CLEAR||
+CLICK HERE TO LOG IN AGAIN|KLIK HIER OM OPNIEUW IN TE LOGGEN||
+CLIENT CHANNEL|CLIENT KANAAL||
+CLOSER INBOUND GROUP SELECTION|Inbound groep Selectie||
+CONFERENCE|CONFERENTIE||
+CONSULTATIVE|ADVIESGROEP||
+CONTACTS SEARCH RESULTS:|CONTACT Zoekresultaten:||
+COPY MESSAGE|COPY BERICHT||
+CUSTOMER 3WAY HANGUP|KLANT 3WAY OPHANGEN||
+CUSTOMER|KLANT||
+Call %1s %2s is not live on %3s, Checking Live Channel|Bel%1s%2s wordt niet live op%3s, controleren Levende Channel||
+Call %1s could not be grabbed for %2s|Call%1s niet kon worden gegrepen voor%2s||
+Call %1s grabbed for %2s|Call%1s greep naar%2s||
+Call Agent Again|Herstel de verbinding||
+Call Agent Webphone|Bel Agent Webphone||
+Call Notes List|Gespreksnotities Lijst||
+Call Notes:|Gespreksnotities:||
+Call Rejected:|Bel Afgewezen:||
+Call Wrapup:|Gesprek Afronden:||
+Call log List|Bellijst||
+Call selected extension|Bel geselecteerde extentie||
+Call selected vmail box|Bel geselcteerde voicemail||
+CallBack:|Terugbelafspraak:||
+Callback Comments:|Terugbellen Reacties:||
+Callback Entry Time:|Terugbellen Entry Tijd:||
+Callback Lead Status:|Terugbellen Lead Status:||
+Callback Status:|Terugbellen Status:||
+Callback Trigger Time:|Terugbellen Trigger Time:||
+Called 3rd party:|Riep 3rd party:||
+Called Count:|Genaamd Count:||
+Called Since Last Reset:|Genoemd sinds de laatste reset:||
+Called:|riep:||
+CallerID|CALLERID||
+Calling:|Calling:||
+Calls Dialing:|Gesprekken Bellen:||
+Calls In Queue:|Gesprekken in wachtrij:||
+Calls in Queue View Disabled for this campaign|Bellers in de Wachtrij bekijken is uitgeschakeld voor deze Campagne||
+Calls in Queue|Gesprekken in de wachtrij||
+Campaign %1s is not valid or lead_id %2s is not valid|Campagne%1s niet geldig is of lead_id%2s is niet geldig||
+Campaign %1s is not valid|Campagne%1s is niet geldig||
+Campaign Login|Campagne Inlogpagina||
+Campaign not active, please try again|Campagne is niet actief, neem contact op met de Supervisor||
+Campaign not found|Campagne niet gevonden||
+Campaign:|campagne:||
+Cannot find empty vicidial_conference on %1s, Redirect command not inserted|Vindt u niet leeg vicidial_conference op%1s, Redirect commando niet geplaatst||
+Change this phone number to ACTIVE|Wijzig dit telefoonnummer naar ACTIEF||
+Change this phone number to INACTIVE|Wijzig dit telefoonnummer naar INACTIEF||
+Channel %1s in use by another agent on %2s, Hangup command not inserted|Kanaal%1s in gebruik door een andere agent op%2s, Ophangen commando niet geplaatst||
+Channel %1s is not live on %2s, %3s command not inserted|Kanaal%1s wordt niet live op%2s, commando%3s niet geplaatst||
+Channel %1s is not live on %2s, Hangup command not inserted|Kanaal%1s wordt niet live op%2s, Ophangen commando niet geplaatst||
+Channel %1s is not live on %2s, Redirect command not inserted|Kanaal%1s wordt niet live op%2s, Redirect commando niet geplaatst||
+Channel %1s is not valid or exten %2s is not valid or filename: %3s is not valid, %4s command not inserted|Kanaal%1s niet geldig is of uitge%2s is niet geldig of bestandsnaam:%3s is niet geldig, commando%4s niet geplaatst||
+Channel %1s is not valid or queryCID %2s is not valid or filename: %3s is not valid, %4s command not inserted|Kanaal%1s is niet geldig of queryCID%2s is niet geldig of bestandsnaam:%3s is niet geldig, commando%4s niet geplaatst||
+Channel %1s is not valid or queryCID %2s is not valid, Hangup command not inserted|Kanaal%1s niet geldig is of queryCID%2s is niet geldig, Ophangen commando niet geplaatst||
+Channel %1s must be greater than 2 characters|Kanaal%1s moet groter zijn dan 2 karakters||
+Channel to be transferred:|Kanaal over te dragen:||
+Channel:|kanaal:||
+Channel|Kanaal||
+Click Here to Activate|Klik hier om te Activeren||
+Click Here to Choose a Dial In-Group|Klik hier om een inbound groep te kiezen||
+Click Here to Choose a Group Alias|Klik hier om te kiezen voor een Groep Alias||
+Click Here to Deactivate|Klik hier om te De-activeren||
+Click LOGIN below to log-in|Klik hieronder op LOGIN om in te loggen||
+Click LOGOUT below to log-out|Klik op UITLOGGEN hieronder om uit te loggen||
+Click on a conference room number on the left for info on that conference|Klik op een Conferentienummer aan de linkerkant voor informatie over die Conferentie||
+Close Call Log|Sluit Logboek||
+Close Info Box|Sluit Informatiescherm||
+Close Message|Sluit Bericht||
+Close Window|Venster sluiten||
+Closer In Group Choice %1s has been registered to user %2s|Dichter In Groep Keuze%1s is geregistreerd naar gebruiker%2s||
+Comments:|Opmerkingen:||
+Comments|Opmerkingen||
+Conf Exten %1s is not valid or Exten %2s is not valid|Conf Exten%1s niet geldig is of Exten%2s is niet geldig||
+Conf Exten %1s is not valid|Conf Exten%1s is niet geldig||
+Conf Exten %1s or campaign %2s or ext_context %3s is not valid|Conf Exten%1s of campagne%2s of ext_context%3s is niet geldig||
+Conf Extension Check|Conferentie Extentie Controle||
+Conference %1s has been registered to %2s|Conferentie%1s is geregistreerd om%2s||
+Conference %1s, Stage %2s is not valid or queryCID %3s is not valid, Originate command not inserted|Conferentie%1s, Stage%2s niet geldig is of queryCID%3s is niet geldig, Originate commando niet geplaatst||
+Conferences List|Conferentielijst||
+Conferences Menu|Conferentie Menu||
+Conferences:|conferenties:||
+Conferences|Conferenties||
+Could not connect: |Kon niet verbinden:||
+Custom Fields Disabled:|Aangepaste velden met een handicap:||
+Custom Form Output:|Aangepaste Vorm Output:||
+Customer Hung-up, 3-way Call Ended Automatically|De Klant heeft opgehangen, conference call is beindigd||
+Customer Information:|Klanten informatie:||
+Customer Time:|Klant Tijd:||
+Customer has hung up:|Klant heeft opgehangen:||
+D1 - DIAL|D1 - DIAL||
+D2 - DIAL|D2 - DIAL||
+DATE/TIME|datum/tijd ||
+DATE:|DATUM:||
+DEC|december||
+DELETE ALL|VERWIJDER ALLES||
+DIAL ALERT:|DIAL ALERT:||
+DIAL IN-GROUP|Inbel Groep||
+DIAL LEAD|Bel Klant||
+DIAL OVERRIDE|Aangepast Bellen||
+DIAL|DIAL||
+DISPOSITION CALL :|GEAARDHEID CALL:||
+DONE: %1s duplicates found,|DONE:%1s duplicaten gevonden,||
+DONE: %1s is empty for lead %2s|DONE:%1s is leeg voor lood%2s||
+DONE: %1s match found, %2s updated to %3s with %4s status|DONE:%1s overeenkomst gevonden,%2s bijgewerkt naar%3s met%4s-status||
+DONE: dispo is not a sale status: %1s|DONE: dispo is geen verkoop status:%1s||
+DONE: dispo is not a sale status:|DONE: dispo is geen verkoop status:||
+DONE: no duplicates found within|DONE: geen duplicaten binnen gevonden||
+DONE: no lists in campaign_check|DONE: geen lijsten in campaign_check||
+DONE: no match found within %1s     %2s|DONE: geen match gevonden binnen %1s %2s||
+DONE:|GEDAAN:||
+Data Goes Here|Gegevens Hier Invullen||
+Data Updated, Hanging up call, please wait|Bijgewerkte gegevens, Opknoping up call, even geduld aub||
+Date received:|Datum ontvangen:||
+Department:|departement:||
+Dept:|dept:||
+Dial Alt Phone Number:|Dial Alt Telefoonnummer:||
+Dial Code:|Landcode:||
+Dial Countdown:|Dial Countdown:||
+Dial From Conf|Bel via Conferentie||
+Dial In-Group Selection|Dial In-groep selectie||
+Dial In-Group:|Dial In-Groep:||
+Dial Lead ID:|Dial Lead ID:||
+Dial Link:|Dial Link:||
+Dial Next Call|Dial Volgende Call||
+Dial Next Number|Bel Volgend Nummer||
+Dial Now|Nu Bellen||
+Dial Override:|Dial Override:||
+DialCode|BelCode||
+Dialable Leads:|Kiesbaar Leads:||
+Dispo Choice %1s or lead_id %2s is not valid|Dispo Keuze%1s of lead_id%2s is niet geldig||
+Disposition Hot Keys:|Disposition Hot Keys:||
+Disposition Status List Hidden|Afsluitcodelijst Verborgen||
+Disposition:|disposition:||
+EMAIL LOG FOR THIS LEAD:|EMAIL LOG VOOR DEZE LEAD:||
+EMAIL TO|e-mail naar||
+END CHAT|END CHAT||
+ENTER A PAUSE CODE|VOER EEN PAUZE CODE IN||
+EPOCH:|EPOCH:||
+ERROR - ID variable missing|FOUT - ID variabele ontbrekende||
+ERROR: Invalid File Name:|FOUT: Invalid File Name:||
+ERROR: System Settings missing|FOUT: Systeeminstellingen ontbrekende||
+ERROR: There are no Shifts enabled for your user group|FOUT: Er zijn geen shifts ingeschakeld voor je gebruikersgroep||
+ERROR: You are not allowed to log in outside of your shift|FOUT: Het is niet toegestaan om in te loggen buiten je dienst||
+ERROR: no custom data for this lead: |FOUT: geen aangepaste gegevens voor deze lood:||
+ERROR: no custom list fields table|FOUT: geen aangepaste lijst velden tafel||
+ERROR: no custom list fields|FOUT: geen aangepaste lijst velden||
+ERROR: timeclock log entry already made:|FOUT: tijdklok logboekvermelding al gedaan:||
+ERROR|FOUT||
+Email:|e-mail:||
+Email|Email||
+End-of-call Disposition Selection|Afsluitcode Selectie||
+Enter Conference|Start conferentie||
+Enter email address of guest:|Voer het e-mailadres van de gasten:||
+Enter information below for the new lead you wish to call.|Voer de informatie voor het nieuw te bellen nummer hieronder in||
+Exten %1s is not valid or protocol %2s is not valid|Exten%1s niet geldig is of protocol%2s is niet geldig||
+Exten %1s is not valid or queryCID %2s is not valid, Originate command not inserted|Exten%1s niet geldig is of queryCID%2s is niet geldig, Originate commando niet geplaatst||
+Extended Alt Phone Information:|Uitgebreide Telefoon2 Informatie:||
+Extensions Menu|Extentie Menu||
+Extensions:|extensies:||
+ExtraChannel %1s must be greater than 2 characters|ExtraChannel%1s moet groter zijn dan 2 karakters||
+ExtraChannel %1s|ExtraChannel%1s||
+F - Female|F - Vrouwelijke||
+FAST DIAL|Bel Direct||
+FAVORITES|FAVORIETEN||
+FEB|februari||
+FINISH LEAD|GESPREK AFRONDEN||
+FIRST NAME|voornaam||
+FULL NAME|volledige naam ||
+Faster|Sneller||
+Favorites list has been updated to %1s for %2s|Favorieten lijst is bijgewerkt naar%1s voor%2s||
+Finish Wrapup and Move On|Afronden gesprek en doorgaan||
+Finish and Disposition Call|Afronden en Afboeken gesprek||
+First Name:|Voornaam:||
+First Sunday April to Last Sunday October|Eerste zondag van april tot laatste zondag oktober||
+First Sunday October to Last Sunday March|Eerste zondag oktober tot laatste zondag maart||
+First Sunday October to Third Sunday March|Eerste zondag oktober tot Derde zondag maart||
+First|Eerste||
+From:|van:||
+Fronter:|Fronter:||
+GO|GO||
+GROUP ALIAS|Groep Alias||
+GROUPS NOT SELECTED|Niet Geselecteerde Groepen||
+GROUPS|GROEPEN||
+Gender|geslacht||
+Go Back|Ga Terug||
+Group Alias Selection|Groep Alias Selectie||
+Group Alias:|Groep Alias:||
+Group Choice is not valid|Groepskeuze is niet geldig||
+Group Name:|Groep Naam:||
+Group|groep||
+HANGUP|hangup ||
+HELP|HELP||
+HIDE|Verberg||
+Hangup Again|Opnieuw Ophangen||
+Hangup Local|Lokaal Ophangen||
+Hangup Trunk|Trunk Ophangen||
+Hangup command sent for Channel %1s on %2s|Ophangen commando gestuurd voor Channel%1s op%2s||
+Hide Calls In Queue|Verberg mensen in de Wachtrij||
+Hide conference call channel information|Verberg kanaalinformatie van conference call||
+Hijack Local|Lokaal Kapen||
+Hijack Trunk|Trunk Kapen||
+History|geschiedenis||
+Hour:|uur:||
+Hungup %1s on %2s|Hungup%1s op%2s||
+IN-NUMBER|INKOMEND-NUMMER||
+IN/OUT|in en uit ||
+INBOUND CALLS:|Inkomende gesprekken:||
+INCALL|INCALL||
+INFO|info ||
+INVITE|INVITE||
+If you want to dial a number and have it NOT be added as a new lead, enter in the exact dialstring that you want to call in the Dial Override field below. To hangup this call you will have to open the CALLS IN THIS SESSION link at the bottom of the screen and hang it up by clicking on its channel link there.|Als je een nummer belt en NIET wilt dat deze als nieuwe klant in de database wordt toegevoegd, vul dan het exacte nummer in, in het Aangepast Bellen veld. Om op te hangen, dien je GESPREKKEN IN DEZE SESSIE te open, onderaan het scherm, en daar op te hangen door te klikken op de gespreks link||
+Incoming:|inkomende:||
+Initializing..|Initialiseren ..||
+Invalid Date Format. Please correct and submit again.|Ongeldige datumnotatie. Corrigeer en legt opnieuw.||
+Invalid Day, Month, or Year range detected. Please correct and submit again.|Ongeldige dag, maand of jaar bereik gedetecteerd. Corrigeer en legt opnieuw.||
+Invalid Source|ongeldige Bron||
+Invalid Username/Password:|Ongeldige gebruikersnaam / wachtwoord:||
+Invalid Username/Password|Ongeldig Gebruikersnaam/Wachtwoord||
+Invalid server_ip: %1s or Invalid session_name: %2s|Ongeldige adres_server:%1s of ongeldig session_name:%2s||
+Invalid server_ip:|Ongeldige adres_server:||
+Invalid server_ip|ongeldige adres_server||
+Invalid session_name:|Ongeldige session_name:||
+Invalid session_name|ongeldige session_name||
+JAN|JAN||
+JLY|JLY||
+JUN|juni||
+Job Title:|Functietitel:||
+Job:|job:||
+LAST CALL DATE/TIME|LAST CALL DATUM / TIJD||
+LAST CALL|laatste gesprek||
+LAST NAME|achternaam||
+LEAD PREVIEW|Preview Modus||
+LEAD SEARCH|Klant Opzoeken||
+LENGTH|lengte ||
+LIVE CALL TRANSFER|LIVE GESPREK DOORSCHAKELEN||
+LIVE CALLS IN THIS CONFERENCE|LIVE GESPREKKEN IN DEZE CONFERENTIE||
+LIVE CALLS IN YOUR SESSION:|LIVE-oproepen in uw sessie:||
+LIVE CALLS ON THIS PHONE|LIVE GESPREKKEN OP DEZE TELEFOON||
+LIVE INBOUND CALL|LIVE BINNENKOMEND GESPREK||
+LIVE|LIVE-||
+LOCAL DIAL EXTENSIONS|LOKALE TELEFOON EXTENTIES||
+LOCAL Extensions Dial|Bel Lokale Extenties||
+LOCAL HANGUP|Lokaal Ophangen||
+LOGOUT PROCESS COMPLETE, YOU MAY NOW CLOSE YOUR BROWSER OR LOG BACK IN|LOGOUT proces te voltooien, kunt u dit nu uw browser afsluit of meld TERUG IN||
+LOGOUT PROCESSING...|LOGOUT VERWERKING ...||
+LOGOUT|UITLOGGEN||
+Language has not been changed, please try again|Taal is niet veranderd, probeer het opnieuw||
+Last Call:|Laatste Gesprek:||
+Last Local Call Time:|Laatste Lokale Call Tijd:||
+Last Name:|Achternaam:||
+Last Sunday March to Last Sunday October|Afgelopen zondag maart tot laatste zondag oktober||
+Last Sunday October to Last Sunday March|Afgelopen zondag oktober tot laatste zondag maart||
+Last Sunday in September to First Sunday in April|Laatste zondag van september tot de eerste zondag in april||
+Last |Laatste ||
+Lead %1s has been changed to %2s Status|Lead%1s is gewijzigd in%2s Status||
+Lead %1s information has%2s been updated|Leiden%1s informatie is%2s is bijgewerkt||
+Lead Dispositioned As:|Leiden Dispositioned Zoals:||
+Lead ID:|Lead ID:||
+Lead Info|lead Info||
+Lead search requests are all logged in the system.|Alle zoekopdrachten worden geregistreerd in het systeem||
+Lead skipped, go on to next lead|Lead overgeslagen, ga naar volgende lood||
+Lead was not reverted, there was an error:|Voorsprong werd niet teruggedraaid, er is een fout opgetreden:||
+Lead:|leiden:||
+Leave 3Way Call Again|Verlaat 3Way Call Again||
+List ID:|Lijst ID:||
+List:|lijst:||
+Listen Local|Lokaal Beluisteren||
+Listen Trunk|Trunk Beluisteren||
+Live Extension Check|Live Extentie Controle||
+Live Extensions|Live Extenties||
+Local Action|Lokale Actie||
+Local Extensions|Lokale Extenties||
+Location:|locatie:||
+Logged in as User|Ingelogd als gebruiker||
+Login Error|Inloggen Error||
+Login incorrect, please try again|Ongeldige gegevens, probeer het nogmaals||
+Login incorrect, user names are case sensitive|Login incorrect, gebruikersnamen zijn hoofdlettergevoelig||
+Login:|Inloggen:||
+Login|Inloggen ||
+M - Male|M - Male||
+MAIN PHONE|TELEFOON1||
+MANAGER OVERRIDE:|MANAGER AANGEPAST:||
+MANUAL DIAL|Bel Handmatig||
+MAR|MAR||
+MAY|Mei||
+MESSAGE:|BERICHT:||
+MI|MI||
+MOBILE|MOBILE||
+MULTI_MATCH CHECK:|MULTI_MATCH BEKIJK:||
+MULTI_MATCH:|MULTI_MATCH:||
+MY CALLBACK ONLY|Terugbelafspraak Alleen voor Mij||
+Main Phone Number|Telefoon1||
+Manager Login:|Manager Inloggen:||
+Manager Password:|Manager Wachtwoord:||
+Manager Send: |Manager Send:||
+Manager has selected groups for you|Manager heeft groepen voor u geselecteerd||
+Manager has selected territories for you|Manager heeft gekozen gebieden voor u||
+Manager|Manager||
+Manual Dial Queue Calls Waiting:|Handmatig kiezen Queue Wachtend op oproep:||
+Manual Queue is Off|Handmatige wachtrij is uitgeschakeld||
+Manual Queue is On|Handmatige Queue is On||
+Manual Queue:|Handmatige Queue:||
+Max rank count|Max telling rang||
+Middle Initial:|Tussenvoegsel:||
+Minutes:|minuten:||
+NEW MANUAL DIAL LEAD FOR %1s in campaign %2s:|NIEUW Handmatig kiezen voorsprong van%1s in campagne%2s:||
+NEW:|NIEUW:||
+NO ONE|NIEMAND||
+NON-DIALABLE|NIET-kiesbaar||
+NONE|NONE||
+NOTES:|Opmerkingen:||
+NOTES|OPMERKINGEN||
+NOTICE|BERICHT||
+NOV|november||
+NUMBER|NUMMER||
+Name:|Naam:||
+Next Call Pause Set|Volgende Call Pauze Set||
+Next Call Pause|volgende oproep pauzeren||
+No DST Method Found|Geen zomertijd Methode Gevonden||
+No Local agent to send call to, Redirect command not inserted|Geen lokale agent om oproep te sturen, Redirect commando niet geplaatst||
+No available phones, please contact your administrator|Geen beschikbare telefoons, neem dan contact op met de beheerder||
+No available servers, please contact your administrator|Geen beschikbare servers, neem dan contact op met de beheerder||
+No calls found|Geen gesprekken gevonden||
+No calls on this day|Geen gesprekken op deze dag||
+No more leads in the hopper for campaign:|Nooit meer kabels in de trechter voor de campagne:||
+No one is in your session:|Niemand is in uw sessie:||
+No results found|Er zijn geen zoekresultaten||
+No-Call Dial:|No-nummer kiezen:||
+Note: a dial prefix of %1s will be added to the beginning of this number|Opmerking: een wijzerplaat voorvoegsel %1s wordt toegevoegd aan het begin van dit nummer||
+Note: all new manual dial leads will go into list %1s|Let op: alle nieuwe handleiding leads wijzerplaat zal in lijst%1s gaan||
+Notes: when doing a search for a contact, wildcard or partial search terms are not allowed. <br />Contact search requests are all logged in the system.|Merkt op: tijdens het zoeken naar een contact, wildcard of gedeeltelijke zoektermen zijn niet toegestaan. <br /> Contact zoeken verzoeken zijn allemaal geregistreerd in het systeem.||
+Notes: when doing a search for a lead, the phone number, lead ID or %1s are the best fields to use.|Opmerkingen: bij het doen van een zoektocht naar een lead, het telefoonnummer, lood-ID of%1s zijn de beste velden te gebruiken.||
+Number Dialed:|Gekozen nummer:||
+OCT|oktober||
+OFFICE|OFFICE||
+OFF|OFF||
+OK|oK||
+OLD:|OUD:||
+ORDER|BESTEL||
+OTHER 1|ANDERE 1||
+OTHER 2|ANDERE 2||
+OUTBOUND CALLS:|Uitgaande gesprekken:||
+Office Number:|Office-nummer:||
+One of these variables is not valid:|Een van deze variabelen is niet geldig:||
+Order ID:|Bestel ID:||
+Originate command sent for Exten %1s Channel %2s on %3s|Afkomstig commando gestuurd voor Exten%1s Channel%2s op%3s||
+OriginateName Action not sent|OriginateName Actie niet verzonden||
+OriginateNameVmail Action not sent|OriginateNameVmail Actie niet verzonden||
+Other Agents Status:|Andere agenten Status:||
+Outside Lines|Buitenlijnen||
+PARKED BY|Geparkeerd door||
+PARKED CALLS:|Geparkeerde gesprekken:||
+PARKED CALLS|Geparkeerde Gesprekken||
+PARKED TIME|Parkeertijd||
+PARK|PARK||
+PAUSE AGENT DIALING|PAUZEER BELLEN||
+PAUSE CODE|PAUZE CODE||
+PAUSED|PAUSED||
+PHONE|telefoon ||
+PICKUP|OPPAKKEN||
+PLEASE CLICK THE LOGOUT LINK TO LOG OUT NEXT TIME.|Klik op de koppeling Afmelden om uit te loggen volgende keer.||
+PLEASE SELECT A CAMPAIGN|Selecteer een Campagne||
+PLEASE SELECT A LANGUAGE|Kies een taal||
+PREVIOUS CALLBACK|VORIGE CALLBACK||
+Parked Calls Display|Geparkeerde Gesprekken Tonen||
+Password:|wachtwoord:||
+Pause Code Selection|Pauze Code Selectie||
+Phone Code and Number:|Net- en Abonneenummer:||
+Phone Login:|Telefoon Inloggen:||
+Phone Number Fields:|Telefoonnummer Velden:||
+Phone Number:|Telefoonnummer:||
+Phone Password:|Telefoon Wachtwoord:||
+Phone and Post Code Time Zone Mismatch! |Telefoon en Postcode Tijdzone Mismatch!||
+Phone calling from:|Telefoon belt vanuit:||
+Phone web client: Login|Telefoon webclient: Inloggen||
+Phone web client: Phone Login|Telefoon webclient: Telefoon Inloggen||
+Phone web client|Telefoon web client||
+Phone-Only Login|Telefoon-Only Inloggen||
+Placing call to next number|Het plaatsen van oproepen naar het volgende nummer||
+Please click SUBMIT to commit the changes|Klik op Verzenden om de wijzigingen door te voeren||
+Please click SUBMIT to hangup and disposition the call|Klik op Verzenden om ophangen en de ordening van het gesprek||
+PostCode|Postcode||
+Presets Selection|presets Selection||
+Preview Call|Bekijk Klantgegevens||
+Preview the Lead then|Bekijk de Klant||
+Previous Callback Information:|Vorige Terugbellen Informatie:||
+Privacy ON|Privacy op||
+Processing...|Verwerking ...||
+Province:|provincie:||
+Province|Provincie||
+Question:|vraag:||
+READY|KLAAR||
+RECORD ID:|RECORD ID:||
+RECORDING FILE:|Opnamebestand:||
+RECORD|OPENEMEN ||
+REMOTE CHANNEL|REMOTE KANAAL||
+REPLY|ANTWOORD||
+RESET|RESET||
+Re-Login|Opnieuw inloggen||
+Redirect Action not sent|Redirect Actie niet verzonden||
+Redirect command sent for Channel %1s on %2s|Redirect commando gestuurd voor Channel%1s op%2s||
+RedirectFromPark Action not sent|RedirectFromPark Actie niet verzonden||
+RedirectName Action not sent|RedirectName Actie niet verzonden||
+RedirectNameVmail Action not sent|RedirectNameVmail Actie niet verzonden||
+RedirectToPark Action not sent|RedirectToPark Actie niet verzonden||
+RedirectVD Action not sent|RedirectVD Actie niet verzonden||
+RedirectXtra command sent for Channel %1s and|RedirectXtra commando gestuurd voor Channel%1s en||
+RedirectXtra command sent for Channel %1s on %2s and|RedirectXtra commando gestuurd voor Channel%1s op%2s en||
+RedirectXtraCX command sent for Channel %1s on %2s and|RedirectXtraCX commando gestuurd voor Channel%1s op%2s en||
+Refresh Campaign List|Vernieuw Campagne Lijst||
+Refresh rate:|Refresh rate:||
+Registered to|Geregistreerd op naam van||
+Reply:|Reageer:||
+Response:|reactie:||
+Results Found:|Zoekresultaten:||
+SEARCH FOR A CONTACT:|Zoeken naar een contact:||
+SEARCH FOR A LEAD:|Zoeken naar een LEAD:||
+SEARCH RESULTS:|Zoekresultaten:||
+SELECT A DIAL IN-GROUP :|KIES EEN inbellen-GROUP:||
+SELECT A GROUP ALIAS :|Selecteer een groep ALIAS:||
+SELECT A GROUP TO SEND YOUR CALL TO|Selecteer een groep om uw oproep STUUR NAAR||
+SELECT A PAUSE CODE :|SELECTEER EEN PAUZE CODE :||
+SELECT A PRESET :|Kies een voorgeprogrammeerd:||
+SELECT THIS LEAD|Selecteer deze klant||
+SELECTED GROUPS|Geselecteerde Groepen||
+SELECTED TERRITORIES|Geselecteerde Klantgroepen||
+SELECT|SELECT||
+SEND MESSAGE|Stuur bericht||
+SEND TO MY VOICEMAIL|STUUR NAAR MIJN VOICEMAIL||
+SEND|STUUR||
+SEP|september||
+SKIP LEAD|Klant Overslaan||
+START CHAT|START CHAT||
+START|START||
+STATE|Staat||
+STATUS|STATUS||
+STILL A LIVE CALL! Hang it up then you can log out.|JE BENT IN EEN LIVE GESPREK! Hang op, dan kun je uitloggen||
+STOP|STOP||
+SUBMIT FAVORITES CHANGES - requires logout|OPSLAAN AANPASSINGEN FAVORIETEN - uitloggen verplicht||
+SUBMIT SEARCH|submit search||
+SUBMIT|OPSLAAN||
+SUCCESS|SUCCES||
+Search Existing Leads:|Zoeken Bestaande Leads:||
+Search Results|Zoekresultaten||
+Searching...|Zoeken ...||
+Second Sunday March to First Sunday November|Tweede zondag van maart tot de eerste zondag november||
+Select a CallBack Date :|Selecteer een CallBack Datum:||
+Select a Date Below|Selecteer een datum||
+Send DTMF|Stuur DTMF||
+Send my channel too|Verstuur mijn kanaal ook||
+Send to selected extension|Stuur naar geselecteerde Extentie||
+Send to selected vmail box|Stuur naar geselecteerde Voicemailbox||
+Send to this number|Stuur naar dit nummer||
+Server:|server:||
+Show Calls In Queue|Toon mensen in de Wachtrij||
+Show conference call channel information|Toon kanaalinformatie van conference call||
+Show:|Toon:||
+Show|Toon||
+Slower|Langzamer||
+Sorry, there are no available sessions|Sorry, er zijn geen beschikbare sessies||
+Sorry, there are no leads in the hopper for this campaign|Sorry, er zijn geen adressen in de Belvoorraad voor deze Campagne||
+Sorry, you are not allowed to login to this campaign:|Sorry, het is niet toegestaan om in te loggen om deze campagne:||
+Sorry, your phone login and password are not active in this system, please try again:|Sorry, uw telefoon en het wachtwoord zijn niet actief in dit systeem, probeer het opnieuw:||
+Status:|Status:||
+Subject:|onderwerp:||
+Sunday in October to First Sunday in April|Zondag in oktober tot de eerste zondag in april||
+System API NOT ACTIVE|Systeem API NIET ACTIEF||
+System Delay, Please try again|Systemvertraging, Probeer het opnieuw||
+TAKE CALL|TAKE CALL||
+TERRITORIES NOT SELECTED|Klantgroepen niet Geselecteerd||
+TERRITORIES|GEBIEDEN||
+TERRITORY SELECTION|Klantgroep Selectie||
+TIMER NOTIFICATION:|TIMER KENNISGEVING:||
+TRUNK HANGUP|TRUNK OPHANGEN||
+TYPE|type ||
+Territory Choice %1s has been registered to user %2s|Grondgebied Keuze%1s is geregistreerd naar gebruiker%2s||
+Territory Choice is not valid|Klantgroep is niet geldig||
+The system has received a command to log you out, you have been logged out of your session|Het systeem heeft een opdracht om je uit te loggen ontvangen, je bent nu uitgelogd.||
+The user and password you entered are not active in the system<BR>Please try again:|De gebruiker en het wachtwoord dat u hebt ingevoerd zijn niet actief in het systeem <BR> Probeer het nog eens:||
+There are no Shifts enabled for your user group|Er zijn geen shifts ingeschakeld voor je gebruikersgroep||
+There are no custom fields for this list|Er zijn geen aangepaste velden voor deze lijst||
+There is a time synchronization problem with your system, please tell your system administrator|Er is een tijd synchronisatieprobleem met het systeem, neem contact op met de systeem beheerder||
+There was a problem with your search terms|Er was een probleem met uw zoektermen||
+Third Sunday October to Last Sunday February|Derde zondag oktober tot Afgelopen zondag februari||
+This agent screen was not opened properly.|Dit scherm middel werd niet goed geopend||
+This phone number is in the DNC list:|Dit telefoonnummer is in de lijst DNC:||
+This phone number is not in the campaign lists:|Dit telefoonnummer is niet in de campagne lijsten:||
+This phone number is outside of the local call time:|Dit telefoonnummer is buiten het lokale gesprek:||
+Time On Park:|Time On Park:||
+Time since you were last logged-in:|Tijd sinds je voor het laatst was ingelogd:||
+Timeclock|Tijdklok||
+Timezone:|tijdzone:||
+Title:|Titel:||
+Title|Titel||
+Too many agents logged in, please contact your administrator|Te veel agenten aangemeld, kunt u contact opnemen met uw beheerder||
+Too many login attempts, try again in 15 minutes|Te veel inlogpogingen, probeer het opnieuw in 15 minuten||
+Too many network errors, please contact your administrator|Te veel fouten in het netwerk, neem dan contact op met de beheerder||
+Transfer number must have at least 1 digit:|Transfer nummer moet minstens 1 cijfer hebben:||
+Trunk Action|Trunk Actie||
+U - Undefined|U - Undefined||
+UID:|BTW:||
+USER LOGIN ERROR|KLANTEN LOGIN FOUT||
+USER|Gebruiker ||
+Unidentified Hangup Cause Code.|Oorzaak ophangen onbekend||
+Unidentified SIP Hangup Cause Code.|Unidentified SIP Hangup Oorzaak Code.||
+Unspecified error:|Onbekende fout:||
+User Login:|User Login:||
+User Login|Gebruikersnaam||
+User Names are case sensitive|Gebruikersnamen zijn hoofdlettergevoelig||
+User Password:|Gebruiker Wachtwoord:||
+User settings set as default|Gebruikersinstellingen ingesteld als standaard||
+UserID: $FCS%1s - %2s$FCE,  Date: %3s|UserID: $FCS%1s -%2s$FCE, Datum:%3s||
+Using the other fields may be slower. Lead searching does not allow for wildcard or partial search terms.|De andere velden kunnen de zoekopdracht vertragen. Het zoeken van een klant houdt geen rekening met wildcards of gedeeltelijke zoektermen||
+VERSION: %1s BUILD: %2s|VERSION:%1s BUILD:%2s||
+VERSION:|VERSION:||
+VERSION|VERSIE||
+VICIDiaL Agent API|VICIDiaL Agent API||
+VICIDiaL Database Query Script|VICIDiaL Database Query Script||
+VICIDiaL Script Display Script|VICIDiaL Script Weergave Script||
+VICIDiaL_LOG Inserted:|VICIDiaL_LOG ingevoegd:||
+VIEW CALL LOG|Bekijk Logboek||
+VOICEMAIL|VOICEMAIL||
+VOLUME|VOLUME||
+Vendor ID:|Vendor ID:||
+Vendor ID|Leverancier ID||
+ViciDial Notes|ViciDial Notes||
+ViciDial Script|ViciDial Script||
+View Comment History:|Bekijk Reactie Geschiedenis:||
+Voicemail Check|Voicemail Check||
+Volume command sent for Conference %1s, Stage %2s Channel %3s on %4s|Volume commando gestuurd voor Conference%1s, Stage%2s Channel%3s op%4s||
+WAIT|wachten ||
+WEB FORM SUBMIT|webpagina formulier||
+Waiting for Ring...|Wachten op de Ring ...||
+WebPhone View -|WebPhone View -||
+WebPhone View|WebPhone View||
+Welcome %1s, you are logged into this phone: %2s - %3s/%4s on %5s|Welkom%1s, wordt u aangemeld bij deze telefoon:%2s -%3s / 4s% op%5s||
+When active, simply press the keyboard key for the desired disposition for this call. The call will then be hungup and dispositioned automatically:|Indien actief, drukt u gewoon op het toetsenbord toets voor de gewenste dispositie voor deze oproep. Het gesprek zal dan hungup en automatisch dispositioned:||
+X ACTIVE CALLBACKS|X ACTIVE Callbacks||
+XFER|XFER||
+YES|JA||
+YOU CANNOT SKIP A CALLBACK OR MANUAL DIAL, YOU MUST DIAL THE LEAD|Je kunt een terugbelafspraak of handmatige belactie niet overslaan, je moet deze belpoging afronden||
+YOU DO NOT HAVE PERMISSIONS TO TRANSFER CALLS|Je hebt geen rechten om gesprekken door te verbinden||
+YOU MUST BE ON AN ACTIVE INBOUND CALL TO SEARCH FOR A LEAD|Je dient in een actief Inbound gesprek te zijn om te zoeken naar een klant||
+YOU MUST BE PAUSED TO CHANGE GROUPS|JE MOET GEPAUZEERD ZIJN OM GROEPEN TE WIJZIGEN||
+YOU MUST BE PAUSED TO CHANGE TERRITORIES|U dient te blijven staan tot de gebieden VERANDEREN||
+YOU MUST BE PAUSED TO CHECK CALLBACKS IN AUTO-DIAL MODE|JE MOET GEPAUZEERD ZIJN OM TERUGBELAFSPRAKEN TE BEKIJKEN||
+YOU MUST BE PAUSED TO ENTER A PAUSE CODE IN AUTO-DIAL MODE|JE MOET GEPAUZEERD ZIJN OM EEN PAUZE CODE IN TE VOEREN TIJDENS AUTOMATISCH BELLEN||
+YOU MUST BE PAUSED TO GRAB CALLS IN QUEUE|Je moet op PAUZE staan om gesprekken uit de wachtrij te kunnen halen||
+YOU MUST BE PAUSED TO MANUAL DIAL A NEW LEAD IN AUTO-DIAL MODE|Je moet op de Pauze knop drukken om handmatig een nummer te kunnen bellen||
+YOU MUST BE PAUSED TO SEARCH FOR A LEAD|Je moet op PAUZE staan als je een klant wilt zoeken||
+YOU MUST BE PAUSED TO VIEW YOUR CALL LOG|Je moet op PAUZE staan om het Logboek te bekijken||
+YOU MUST ENTER A PHONE NUMBER AND DIAL CODE TO USE FAST DIAL|JE MOET EEN NUMMER EN BELCODE INVOEREN ALS JE SNEL WILT BELLEN||
+YOU MUST LOG IN TO THE TIMECLOCK FIRST|U DIENT ZICH EERST AAN TE MELDEN BIJ DE TIJDKLOK||
+YOU MUST SELECT AN AGENT TO TRANSFER TO WHEN USING AGENTDIRECT|Je moet een collega kiezen om naar door te verbinden||
+You Must Select a Disposition|Je moet eerst een afsluitcode Kiezen||
+You are already logged in, please log out of your other session first|Je bent al ingelogd, dan kunt u uit uw andere sessie eerst inloggen||
+You are in ALT dial mode, you must finish the lead before logging out.|Je bent in de ALT knop modus, moet je moet dit gesprek eerst afronden voordat je uitlogd||
+You are not allowed to log in outside of your shift|Het is niet toegestaan om in te loggen buiten je dienst||
+You can only disposition a call once|U kunt alleen een oproep dispositie keer||
+You can only monitor Zap channels|Je kunt alleen Zap kanalen monitoren||
+You cannot log in or out within 30 seconds of your last login or logout|Je kunt niet inloggen binnen 30 seconden na je laatste login of loguit poging||
+You cannot log out during a Dial attempt. Wait 50 seconds for the dial to fail out if it is not answered|Je kan niet uitloggen tijdens een Dial poging. Wacht 50 seconden voor de wijzerplaat te mislukken uit als het niet wordt beantwoord||
+You have been paused for too long, you have been logged out of your session|Je hebt onderbroken te lang, je bent uitgelogd van uw sessie||
+You have now logged out. Thank you|Je bent nu uitgelogd.||
+You have now logged-in|Je bent ingelogd||
+You have now logged-out|Je bent nu uitgelogd||
+You last logged-out at:|Je logde voor het laatst uit op:||
+You logged in at|Je ingelogd op||
+You logged out at|Je logde uit op ||
+You logged-in at:|Je logde in op:||
+You must choose a date|Je moet een datum kiezen||
+You must enter in search terms, one of these must be populated: lead ID, vendor ID, phone number, last name|Je moet zoektermen invoert, moet één van deze worden bevolkt: lood-ID, vendor ID, telefoonnummer, achternaam||
+You must enter in search terms, one of these must be populated: office number, last name, first name|U dient in zoektermen, een van deze moet worden bevolkt: kantoor nummer, achternaam, voornaam||
+Your Shift is over or has changed, you have been logged out of your session|Je shift is afgelopen of gewijzigd, je bent uitgelogd||
+Your Status:|Uw Status:||
+Your session has been disabled|Je sessie is geblokkeerd||
+Your session has been paused|Je sessie is onderbroken||
+Your system does not have the email setting enabled|Uw systeem beschikt niet over de e-mail-instelling ingeschakeld||
+ZIP|ritssluiting ||
+add_lead PHONE NUMBER IN CAMPAIGN DNC|add_lead TELEFOONNUMMER IN DE CAMPAGNE DNC||
+add_lead PHONE NUMBER IN DNC|add_lead TELEFOONNUMMER IN DNC||
+address1 set to|address1 ingesteld op||
+address2 set to|adres2 ingesteld op||
+address3 set to|Adres 3 ingesteld op||
+agc_check_voicemail_BLINK.gif|agc_check_voicemail_BLINK_nl.gif||
+agc_check_voicemail_OFF.gif|agc_check_voicemail_OFF_nl.gif||
+agc_check_voicemail_ON.gif|agc_check_voicemail_ON_nl.gif||
+agc_live_call_DEAD.gif|agc_live_call_DEAD_nl.gif||
+agc_live_call_OFF.gif|agc_live_call_OFF_nl.gif||
+agc_live_call_ON.gif|agc_live_call_ON_nl.gif||
+agc_tab_active_lines.gif|agc_tab_active_lines_nl.gif||
+agc_tab_astguiclient.gif|agc_tab_astguiclient.gif||
+agc_tab_conferences.gif|agc_tab_conferences_nl.gif||
+agc_tab_main.gif|agc_tab_main_nl.gif||
+agent_log_id %1s or pause_code %2s is not valid|agent_log_id%1s of pause_code%2s is niet geldig||
+agent_user does not have a lead on their screen|agent_user heeft een loden op hun scherm niet||
+agent_user does not have a live call|agent_user doet een live gesprek niet hebben||
+agent_user is not allowed to place manual dial calls|agent_user is niet toegestaan om gesprekken handleiding wijzerplaat plaatsen||
+agent_user is not logged in|agent_user is niet ingelogd||
+agent_user is not paused|agent_user wordt niet onderbroken||
+alert.gif|alert.gif||
+alt number dialing not allowed on this campaign|alt nummer kiezen van een nummer niet toegestaan op deze campagne||
+alt_phone set to|alt_phone ingesteld op||
+apache processes: |apache processen:||
+apache version: |apache versie:||
+astGUIclient web client: Login|astGUIclient webclient: Inloggen||
+astGUIclient web client: Phone Login|astGUIclient webclient: Telefoon Inloggen||
+astGUIclient web client|astGUIclient web client||
+astGUIclient web-client VERSION: %1s BUILD: %2s|astGUIclient web-client-versie:%1s BUILD:%2s||
+audio_playback error - audio already playing in agent session|audio_playback fout - audio al spelen in middel sessie||
+audio_playback error - entry is empty|audio_playback fout - bericht is leeg||
+audio_playback error - no audio playing in agent session|audio_playback fout - geen audio afspelen in-agent sessie||
+audio_playback error - no session data|audio_playback fout - geen data van de sessie||
+audio_playback function sent|audio_playback functie verzonden||
+audio_playback not valid|audio_playback niet geldig||
+audio_playback previous playback stopped|audio_playback vorige afspelen gestopt||
+auto_dial_level %1s must be set|auto_dial_level%1s moet worden ingesteld||
+blank.gif|blank.gif||
+call was not placed, there was an error:|oproep niet geplaatst, er is een fout opgetreden:||
+call_agent error - entry is empty|call_agent fout - bericht is leeg||
+call_agent error - no session data|call_agent fout - geen data van de sessie||
+call_agent function sent|call_agent functie verzonden||
+call_agent not valid|call_agent niet geldig||
+caller_id_number from group_alias is not valid|caller_id_number uit group_alias is niet geldig||
+campaign %1s must be set|campagne%1s moet worden ingesteld||
+campaign %1s or conf_exten %2s is not valid|campagne%1s of conf_exten%2s is niet geldig||
+campaign dial_method does not allow outbound autodial|campagne dial_method niet outbound autodial toestaan||
+campaign does not allow inbound calls|campagne niet inbound gesprekken toestaan||
+campaign manual dial list undefined|campagne lijst handleiding wijzerplaat undefined||
+change_ingroups function set|change_ingroups functie set||
+change_ingroups not valid|change_ingroups niet geldig||
+city set to|stad ingesteld op||
+click here to continue. . .|klik hier om verder te gaan. . .||
+click here to continue|Klik hier om door te gaan||
+close|sluiten ||
+code:|code:||
+comments set to|reacties op||
+conference %1s is not valid or ext_context %2s or queryCID %3s is not valid, Hangup command not inserted|conferentie%1s niet geldig is of ext_context%2s of queryCID%3s is niet geldig, Ophangen commando niet geplaatst||
+country_code set to|country_code ingesteld op||
+date_of_birth set to|date_of_birth set aan||
+default socket timeout: |standaard socket timeout:||
+denotes required fields|gemarkeerde velden is verplicht||
+disk free space: |vrije schijfruimte:||
+down.gif|down.gif||
+edit|bewerk||
+email set to|email op||
+error: API user not valid|error: API gebruiker niet geldig||
+error: avatar not valid|error: avatar niet geldig||
+ext_context %1s must be set|ext_context%1s moet worden ingesteld||
+ext_priority %1s must be set|ext_priority%1s moet worden ingesteld||
+exten %1s must be set|uitge%1s moet worden ingesteld||
+extenName %1s must be set|extenName%1s moet worden ingesteld||
+external_add_lead not valid|external_add_lead niet geldig||
+external_dial function set|external_dial functie set||
+external_dial not valid|external_dial niet geldig||
+external_hangup function set|external_hangup functie set||
+external_hangup not valid|external_hangup niet geldig||
+external_pause agent is not paused|external_pause-agent wordt niet onderbroken||
+external_pause function set|external_pause functie set||
+external_pause not valid|external_pause niet geldig||
+external_status function set|external_status functie set||
+external_status not valid|external_status niet geldig||
+favorites list %1s is not valid|favorietenlijst%1s is niet geldig||
+first_name set to|First_Name ingesteld op||
+gender set to|geslacht ingesteld op||
+gmt_offset_now set to|gmt_offset_now ingesteld op||
+group_alias is not valid|group_alias is niet geldig||
+has selected your in-group choices|heeft jouw inbound groepen ingesteld||
+hide comment history|Verberg commentaar geschiedenis||
+host name: |hostnaam:||
+ingroup does not exist|ingroup bestaat niet||
+ingroup is not valid|ingroup is niet geldig||
+ingroup_choices are required for ADD and REMOVE values|ingroup_choices zijn nodig voor toevoegen en verwijderen van waarden||
+ini_get not allowed: |ini_get niet toegestaan:||
+last_name set to|last_name ingesteld op||
+lead added|leiden toegevoegd||
+lead insertion failed|inbrengen van de lead is mislukt||
+lead_id %1s is not valid|lead_id%1s is niet geldig||
+lead_id %1s must be set|lead_id%1s moet worden ingesteld||
+lead_id is not valid|lead_id is niet geldig||
+loading.gif|loading.gif||
+logout function set|logout functie set||
+logout not valid|uitloggen niet geldig||
+mail could not be sent!|mail kon niet worden verzonden!||
+maximize|maximaliseer ||
+maximum execution time: |maximale uitvoeringstermijn:||
+maximum input time: |maximale inbreng tijd:||
+memory limit: |geheugen limiet:||
+middle_initial set to|middle_initial set aan||
+minimize|minimaliseer ||
+no Lead ID|geen Lead ID||
+no active call found|geen actieve oproep gevonden||
+no active lead found|geen actieve lood gevonden||
+no agent session|geen agent sessie||
+no fields have been defined|geen velden gedefinieerd||
+no lead active for this agent|geen lood actief voor deze agent||
+no lead info in system:|geen lood info in het systeem:||
+no user found|geen gebruiker gevonden||
+not recording|niet opnemen||
+or|of||
+owner set to|eigenaar op||
+park_call function set|park_call functie set||
+park_call not valid|park_call niet geldig||
+parkedby %1s must be set|parkedby%1s moet worden ingesteld||
+pause_code error - agent is not paused|pause_code fout - middel wordt niet onderbroken||
+pause_code function sent|pause_code functie verzonden||
+pause_code not valid|pause_code niet geldig||
+phone login|telefoon login||
+phone number is not valid|telefoonnummer is niet geldig||
+phone number lead_id search not found|telefoonnummer lead_id zoeken niet gevonden||
+phone_code set to|phone_code ingesteld op||
+phone_number %1s or lead_id %2s is not valid|phone_number%1s of lead_id%2s is niet geldig||
+phone_number is already in this agents manual dial queue|phone_number is al in deze agenten handleiding wachtrij wijzerplaat||
+phone_number is not valid|phone_number is niet geldig||
+phone_number set to|phone_number ingesteld op||
+php version: |php-versie:||
+pixel.gif|pixel.gif||
+post maximum size: |posten maximale grootte:||
+postal_code set to|postal_code ingesteld op||
+preview dial skipping not allowed on this campaign|voorvertoning wijzerplaat overslaan van niet toegestaan op deze campagne||
+preview dialing not allowed on this campaign|preview-dialing niet toegestaan op deze campagne||
+preview_dial_action function set|preview_dial_action functie set||
+preview_dial_action not valid|preview_dial_action niet geldig||
+province set to|provincie ingesteld op||
+queryCID %1s must be greater than 14 characters|queryCID%1s moet groter zijn dan 14 tekens||
+ra_call_control hungup|ra_call_control hungup||
+ra_call_control not valid|ra_call_control niet geldig||
+ra_call_control transfer|ra_call_control overdracht||
+rank set to|rang ingesteld op||
+recording active|het opnemen van actieve||
+recording function sent|opnamefunctie verzonden||
+recording not valid|opname niet geldig||
+recording|Opnemen||
+refresh|Ververs||
+remove.gif|remove.gif||
+reset form|reset formulier||
+ring|ring||
+seconds remaining in wrapup|seconden resterend om af te ronden||
+seconds:|seconden:||
+seconds|seconden||
+security_phrase set to|security_phrase ingesteld op||
+send_dtmf not valid|send_dtmf niet geldig||
+server name: |servernaam:||
+session ID:|sessie-ID:||
+session_id %1s must be set|session_id%1s moet worden ingesteld||
+set_timer_action lead updated|set_timer_action lood bijgewerkt||
+set_timer_action not valid|set_timer_action niet geldig||
+show comment history|Toon reactie geschiedenis||
+source_id set to|source_id ingesteld op||
+st_get_agent_active_lead lead found|st_get_agent_active_lead lood gevonden||
+st_get_agent_active_lead not valid|st_get_agent_active_lead niet geldig||
+st_login_log not valid|st_login_log niet geldig||
+st_login_log user found|st_login_log gebruiker gevonden||
+stage %1s is not valid|stadium%1s is niet geldig||
+stage is not valid|stadium niet geldig||
+state set to|staat ingesteld op||
+stop audio|stoppen met audio||
+stop recording error|stoppen met opnemen fout||
+system load average: |systeembelasting gemiddelde:||
+title set to|titel ingesteld op||
+to campaign|naar campagne||
+transfer_conference function set|transfer_conference functie set||
+transfer_conference not valid|transfer_conference niet geldig||
+uniqueid %1s must be set|uniqueid%1s moet worden ingesteld||
+uniqueid %1s or lead_id: %2s is not valid|uniqueid%1s of lead_id:%2s is niet geldig||
+uniqueid %1s or lead_id: %2s or list_id: %3s or phone_number: %4s or campaign: %5s is not valid|uniqueid%1s of lead_id:%2s of list_ID:%3s of phone_number:%4s of campagne:%5s is niet geldig||
+up.gif|up.gif||
+update_fields lead updated|update_fields lood bijgewerkt||
+upload maximum filesize: |uploaden maximale bestandsgrootte:||
+user is not allowed to change agent in-groups|is de gebruiker niet toegestaan om stof te veranderen in-groepen||
+user is not allowed to modify campaign settings|is de gebruiker niet toegestaan om campagne-instellingen wijzigen||
+user is not allowed to modify lead information|is de gebruiker niet toegestaan om lood informatie te wijzigen||
+user not logged in|gebruiker niet ingelogd||
+value is not valid|waarde is niet geldig||
+vdc_LB_active.gif|vdc_LB_active_nl.gif||
+vdc_LB_blank_OFF.gif|vdc_LB_blank_OFF.gif||
+vdc_LB_customxfer.gif|vdc_LB_customxfer.gif||
+vdc_LB_customxfer_OFF.gif|vdc_LB_customxfer_OFF.gif||
+vdc_LB_dialnextnumber.gif|vdc_LB_dialnextnumber_nl.gif||
+vdc_LB_dialnextnumber_OFF.gif|vdc_LB_dialnextnumber_OFF_nl.gif||
+vdc_LB_grabivrparkcall.gif|vdc_LB_grabivrparkcall.gif||
+vdc_LB_grabivrparkcall_OFF.gif|vdc_LB_grabivrparkcall_OFF.gif||
+vdc_LB_grabparkedcall.gif|vdc_LB_grabparkedcall_nl.gif||
+vdc_LB_grabparkedcall_OFF.gif|vdc_LB_grabparkedcall_OFF.gif||
+vdc_LB_hangupcustomer.gif|vdc_LB_hangupcustomer_nl.gif||
+vdc_LB_hangupcustomer_OFF.gif|vdc_LB_hangupcustomer_OFF_nl.gif||
+vdc_LB_ivrparkcall.gif|vdc_LB_ivrparkcall.gif||
+vdc_LB_ivrparkcall_OFF.gif|vdc_LB_ivrparkcall_OFF.gif||
+vdc_LB_parkcall.gif|vdc_LB_parkcall_nl.gif||
+vdc_LB_parkcall_OFF.gif|vdc_LB_parkcall_OFF_nl.gif||
+vdc_LB_pause.gif|vdc_LB_pause_nl.gif||
+vdc_LB_pause_OFF.gif|vdc_LB_pause_OFF_nl.gif||
+vdc_LB_paused.gif|vdc_LB_paused_nl.gif||
+vdc_LB_quickxfer.gif|vdc_LB_quickxfer_nl.gif||
+vdc_LB_quickxfer_OFF.gif|vdc_LB_quickxfer_OFF_nl.gif||
+vdc_LB_requeue_call.gif|vdc_LB_requeue_call_nl.gif||
+vdc_LB_requeue_call_OFF.gif|vdc_LB_requeue_call_OFF_nl.gif||
+vdc_LB_resume.gif|vdc_LB_resume_nl.gif||
+vdc_LB_resume_OFF.gif|vdc_LB_resume_OFF_nl.gif||
+vdc_LB_senddtmf.gif|vdc_LB_senddtmf_nl.gif||
+vdc_LB_senddtmf_OFF.gif|vdc_LB_senddtmf_OFF_nl.gif||
+vdc_LB_startrecording.gif|vdc_LB_startrecording_nl.gif||
+vdc_LB_startrecording_OFF.gif|vdc_LB_startrecording_OFF_nl.gif||
+vdc_LB_stoprecording.gif|vdc_LB_stoprecording_nl.gif||
+vdc_LB_stoprecording_OFF.gif|vdc_LB_stoprecording_OFF.gif||
+vdc_LB_transferconf.gif|vdc_LB_transferconf_nl.gif||
+vdc_LB_transferconf_OFF.gif|vdc_LB_transferconf_OFF_nl.gif||
+vdc_LB_webform.gif|vdc_LB_webform_nl.gif||
+vdc_LB_webform_OFF.gif|vdc_LB_webform_OFF_nl.gif||
+vdc_LB_webform_two.gif|vdc_LB_webform_two_nl.gif||
+vdc_LB_webform_two_OFF.gif|vdc_LB_webform_two_OFF_nl.gif||
+vdc_XB_ammessage.gif|vdc_XB_ammessage.gif||
+vdc_XB_ammessage_OFF.gif|vdc_XB_ammessage_OFF.gif||
+vdc_XB_blindtransfer.gif|vdc_XB_blindtransfer_nl.gif||
+vdc_XB_blindtransfer_OFF.gif|vdc_XB_blindtransfer_OFF_nl.gif||
+vdc_XB_channel.gif|vdc_XB_channel_nl.gif||
+vdc_XB_contactsbutton.gif|vdc_XB_contactsbutton.gif||
+vdc_XB_dialwithcustomer.gif|vdc_XB_dialwithcustomer_nl.gif||
+vdc_XB_dialwithcustomer_OFF.gif|vdc_XB_dialwithcustomer_OFF_nl.gif||
+vdc_XB_hangupbothlines.gif|vdc_XB_hangupbothlines_nl.gif||
+vdc_XB_hangupxferline.gif|vdc_XB_hangupxferline_nl.gif||
+vdc_XB_hangupxferline_OFF.gif|vdc_XB_hangupxferline_OFF_nl.gif||
+vdc_XB_header.gif|vdc_XB_header_nl.gif||
+vdc_XB_hotkeysactive.gif|vdc_XB_hotkeysactive_nl.gif||
+vdc_XB_hotkeysactive_OFF.gif|vdc_XB_hotkeysactive_OFF_nl.gif||
+vdc_XB_leave3waycall.gif|vdc_XB_leave3waycall_nl.gif||
+vdc_XB_leave3waycall_OFF.gif|vdc_XB_leave3waycall_OFF_nl.gif||
+vdc_XB_localcloser.gif|vdc_XB_localcloser_nl.gif||
+vdc_XB_localcloser_OFF.gif|vdc_XB_localcloser_OFF_nl.gif||
+vdc_XB_number.gif|vdc_XB_number_nl.gif||
+vdc_XB_parkcustomerdial.gif|vdc_XB_parkcustomerdial_nl.gif||
+vdc_XB_parkcustomerdial_OFF.gif|vdc_XB_parkcustomerdial_OFF_nl.gif||
+vdc_XB_presetsbutton.gif|vdc_XB_presetsbutton.gif||
+vdc_XB_seconds.gif|vdc_XB_seconds_nl.gif||
+vdc_tab_email.gif|vdc_tab_email_nl.gif||
+vdc_tab_form.gif|vdc_tab_form_nl.gif||
+vdc_tab_script.gif|vdc_tab_script_nl.gif||
+vdc_tab_vicidial.gif|vdc_tab_vicidial.gif||
+vdc_volume_MUTE.gif|vdc_volume_MUTE.gif||
+vdc_volume_UNMUTE.gif|vdc_volume_UNMUTE.gif||
+vdc_volume_down.gif|vdc_volume_down.gif||
+vdc_volume_down_off.gif|vdc_volume_down_off.gif||
+vdc_volume_up.gif|vdc_volume_up.gif||
+vdc_volume_up_off.gif|vdc_volume_up_off.gif||
+vendor_lead_code set to|vendor_lead_code ingesteld op||
+view notes|Notities bekijken||
+voicemail box %1s is not valid|voicemailbox%1s is niet geldig||
+vtc_tab_vicidial.gif|vtc_tab_vicidial.gif||
+vtiger callback activity does not exist in vtiger system|vtiger callback activiteit niet bestaat in vtiger systeem||
+webphone_url active and displayed|webphone_url actieve en weergegeven||
+webphone_url active and launched|webphone_url actieve en lanceerde||
+webphone_url error - no session data|webphone_url fout - geen data van de sessie||
+webphone_url error - webphone url is empty|webphone_url fout - webphone url is leeg||
+webphone_url not valid|webphone_url niet geldig||

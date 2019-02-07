@@ -1,0 +1,124 @@
+td.value {
+	background-image: url(images/gridline58.gif);
+	background-repeat: repeat-x;
+	background-position: left top;
+	border-left: 1px solid #e5e5e5;
+	border-right: 1px solid #e5e5e5;
+	padding:0;
+	border-bottom: none;
+	background-color:transparent;
+}
+td.graph {
+	padding: 4px 6px;
+	border-bottom:1px solid #e5e5e5;
+	border-left:1px solid #e5e5e5;
+	background-color:#fff;
+}
+td.value img {
+	vertical-align: middle;
+	margin: 2px 2px 2px 0;
+	height: 10px;
+}
+th.thgraph {
+	text-align: left;
+	vertical-align:top;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 60%;
+}
+.grey_graph_cell {
+	background-color:#ddd;
+}
+.selected_grey_graph_cell {
+	background-color:#999;
+}
+.white_graph_cell {
+	background-color:#FFF;
+}
+
+.graph_span_cell {
+	background-color:#eee;
+	text-align: center;
+}
+
+th.column_header {
+	text-align: left;
+	vertical-align:top;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 70%;
+}
+td.chart_td {
+	font-family: Verdana, Arial, Helvetica, sans-serif; 
+	font-size: 60%;
+	white-space:nowrap;
+	padding-right: 10px; 
+}
+td.last {
+	border-bottom:1px solid #e5e5e5;
+}
+td.first {
+	border-top:1px solid #e5e5e5;
+}
+.auraltext
+{
+	position: absolute;
+	font-size: 0;
+	left: -1000px;
+}
+.wordwrap { 
+   white-space: pre-wrap;      /* CSS3 */   
+   white-space: -moz-pre-wrap; /* Firefox */    
+   white-space: -pre-wrap;     /* Opera <7 */   
+   white-space: -o-pre-wrap;   /* Opera 7 */    
+   word-wrap: break-word;      /* IE */
+}
+table.horizontalgraph {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	background-image:url(images/bg_fade2.png);
+	background-position:left top;
+	width: 33em;
+}
+caption {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size:90%;
+	font-style:italic;
+}
+
+.overlap_barGraph {
+	font-family: Verdana, Arial, Helvetica, sans-serif; 
+	text-align: left;
+	margin: 1em 0;
+	padding: 0;
+	position: relative;
+	}
+	
+.overlap_barGraph li {
+	background: #666 url(images/bar_50_percent_highlight.png) repeat-y top right;
+	border: 1px solid #555;
+	border-bottom: none;
+	bottom: 0.01em; 
+	color: #FFF;
+	margin: 0; 
+	padding: 0 0 0 0;
+	position: absolute;
+	list-style: none;
+	text-align: right;
+	}
+	
+.overlap_barGraph li.p1{ 
+	background: #999 url(images/bar.png) repeat-x top right;
+	color: #FFF;
+	white-space:nowrap;
+	font-weight: bold;
+}
+.overlap_barGraph li.p2{ 
+	background: #666 url(images/bar_blue.png) repeat-x top right;
+	color: #FFF; 
+	white-space:nowrap;
+	font-weight: bold;
+}
+.overlap_barGraph li.p3{
+	background: #666 url(images/bar_green.png) repeat-x top right;
+	color: #FFF;
+	white-space:nowrap;
+	font-weight: bold;
+}

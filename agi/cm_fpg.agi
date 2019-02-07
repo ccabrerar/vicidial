@@ -1,0 +1,295 @@
+#!/usr/bin/perl
+#
+# cm_fpg.agi version 2.14
+# 
+# Designed to work with Cell Menus to allow the entry of a CID number into a 
+# Filter Phone Group. It is designed to work easily in the Call Menu framework, 
+# it plays no audio itself, and it has more options.
+#
+# Flag Options:
+# 1- Filter Phone Group ID to insert into
+# 2- call menu option to send the call to after executing (Default=B)
+# 3- (optional) number to enter instead of CIDnumber
+#
+# example of what to put in the AGI entry for a Call Menu AGI route(CID method):
+# cm_fpg.agi,TEST_FPG---B
+#
+# example of what to put in the Custom Dialplan Entry of a Call Menu (caller entry of number method):
+# exten => _XXXXXXXXXX,1,cm_fpg.agi,99test---C---${EXTEN}
+#
+# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+#
+# changes:
+# 170428-0921 - First draft
+#
+
+$script = 'cm_fpg.agi';
+
+($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+$year = ($year + 1900);
+$mon++;
+if ($mon < 10) {$mon = "0$mon";}
+if ($mday < 10) {$mday = "0$mday";}
+if ($hour < 10) {$hour = "0$hour";}
+if ($min < 10) {$min = "0$min";}
+if ($sec < 10) {$sec = "0$sec";}
+
+$now_date_epoch = time();
+$now_date = "$year-$mon-$mday $hour:$min:$sec";
+$start_time=$now_date;
+$CIDdate = "$mon$mday$hour$min$sec";
+$tsSQLdate = "$year$mon$mday$hour$min$sec";
+$SQLdate = "$year-$mon-$mday $hour:$min:$sec";
+$SQLdateBEGIN = $SQLdate;
+
+# default path to astguiclient configuration file:
+$PATHconf =		'/etc/astguiclient.conf';
+
+open(conf, "$PATHconf") || die "can't open $PATHconf: $!\n";
+@conf = <conf>;
+close(conf);
+$i=0;
+foreach(@conf)
+	{
+	$line = $conf[$i];
+	$line =~ s/ |>|\n|\r|\t|\#.*|;.*//gi;
+	if ( ($line =~ /^PATHhome/) && ($CLIhome < 1) )
+		{$PATHhome = $line;   $PATHhome =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHlogs/) && ($CLIlogs < 1) )
+		{$PATHlogs = $line;   $PATHlogs =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHagi/) && ($CLIagi < 1) )
+		{$PATHagi = $line;   $PATHagi =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHweb/) && ($CLIweb < 1) )
+		{$PATHweb = $line;   $PATHweb =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHsounds/) && ($CLIsounds < 1) )
+		{$PATHsounds = $line;   $PATHsounds =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHmonitor/) && ($CLImonitor < 1) )
+		{$PATHmonitor = $line;   $PATHmonitor =~ s/.*=//gi;}
+	if ( ($line =~ /^VARserver_ip/) && ($CLIserver_ip < 1) )
+		{$VARserver_ip = $line;   $VARserver_ip =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_server/) && ($CLIDB_server < 1) )
+		{$VARDB_server = $line;   $VARDB_server =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_database/) && ($CLIDB_database < 1) )
+		{$VARDB_database = $line;   $VARDB_database =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_user/) && ($CLIDB_user < 1) )
+		{$VARDB_user = $line;   $VARDB_user =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_pass/) && ($CLIDB_pass < 1) )
+		{$VARDB_pass = $line;   $VARDB_pass =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_port/) && ($CLIDB_port < 1) )
+		{$VARDB_port = $line;   $VARDB_port =~ s/.*=//gi;}
+	$i++;
+	}
+
+if (!$VARDB_port) {$VARDB_port='3306';}
+if (!$AGILOGfile) {$AGILOGfile = "$PATHlogs/agiout.$year-$mon-$mday";}
+if (!$FPGLOGfile) {$FPGLOGfile = "$PATHlogs/fpgout.$year-$mon-$mday";}
+
+use DBI;
+use Asterisk::AGI;
+$AGI = new Asterisk::AGI;
+
+$dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
+    or die "Couldn't connect to database: " . DBI->errstr;
+
+### Grab Server values from the database
+$stmtA = "SELECT agi_output FROM servers where server_ip = '$VARserver_ip';";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+$rec_count=0;
+while ($sthArows > $rec_count)
+	{
+	$AGILOG = '0';
+	@aryA = $sthA->fetchrow_array;
+	$DBagi_output =	$aryA[0];
+	if ($DBagi_output =~ /STDERR/)	{$AGILOG = '1';}
+	if ($DBagi_output =~ /FILE/)	{$AGILOG = '2';}
+	if ($DBagi_output =~ /BOTH/)	{$AGILOG = '3';}
+	$rec_count++;
+	}
+$sthA->finish();
+
+
+### begin parsing run-time options ###
+if (length($ARGV[0])>1)
+	{
+	if ($AGILOG) {$agi_string = "Perl Environment Dump:";   &agi_output;}
+	$i=0;
+	while ($#ARGV >= $i)
+		{
+		$args = "$args $ARGV[$i]";
+		if ($AGILOG) {$agi_string = "$i|$ARGV[$i]";   &agi_output;}
+		$i++;
+		}
+	
+	### list of command-line array arguments:
+	@ARGV_vars = split(/---/, $ARGV[0]);
+
+	$fpg_id = 			$ARGV_vars[0];
+	$next_step = 		$ARGV_vars[1];
+	$cid_override = 	$ARGV_vars[2];
+	}
+
+if (length($next_step) < 1)
+	{$next_step = 'B';}
+
+$|=1;
+while(<STDIN>) 
+	{
+	chomp;
+	last unless length($_);
+	if ($AGILOG)
+		{
+		if (/^agi_(\w+)\:\s+(.*)$/)
+			{
+			$AGI{$1} = $2;
+			}
+		}
+
+	if (/^agi_context\:\s+(.*)$/)		{$context = $1;}
+	if (/^agi_uniqueid\:\s+(.*)$/)		{$unique_id = $1; $uniqueid = $unique_id;}
+	if (/^agi_channel\:\s+(.*)$/)		{$channel = $1;}
+	if (/^agi_extension\:\s+(.*)$/)		{$extension = $1;}
+	if (/^agi_type\:\s+(.*)$/)			{$type = $1;}
+	if (/^agi_callerid\:\s+(.*)$/)		{$callerid = $1;}
+	if (/^agi_calleridname\:\s+(.*)$/)	{$calleridname = $1;}
+	$callerid =~ s/\'|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
+	$calleridname =~ s/\'|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
+	$extension =~ s/\'|\"|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
+
+	if ( ($callerid =~ /\".*\"/) && ( (!$calleridname) or ($calleridname =~ /unknown/) ) )
+		{
+		$calleridname = $callerid;
+		$calleridname =~ s/\<\d\d\d\d\d\d\d\d\d\d\>//gi;
+		$calleridname =~ s/\"|\" //gi;
+		}
+
+	$callerid =~ s/\D//gi;
+	$calleridname =~ s/unknown//gi;
+	if ( (!$callerid) or ($callerid =~ /unknown/) )
+		{$callerid = $calleridname;}
+
+	if (length($callerid)>0) {$phone_number = $callerid;}
+	   else {$phone_number = '';}
+	if (length($calleridname)>0) {$VLcomments = $calleridname;}
+	   else {$VLcomments = '';}
+	if (length($callerid)<10) {$callerid = $parked_by;}
+	if (length($pin)>0) {$callerid = $pin;}
+	}
+
+foreach $i (sort keys %AGI) 
+	{
+	if ($AGILOG) {$agi_string = " -- $i = $AGI{$i}";   &agi_output;}
+	}
+
+if ($AGILOG) {$agi_string = "AGI Variables: |$unique_id|$channel|$extension|$type|$callerid|";   &agi_output;}
+
+if (length($cid_override) > 4) 
+	{$phone_number = $cid_override;}
+$phone_number =~ s/\'|\"|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
+
+
+# if campaign is used and selected for search, find the lists in the campaign
+$stmtA = "SELECT filter_phone_group_name FROM vicidial_filter_phone_groups where filter_phone_group_id='$fpg_id' limit 1;";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+if ($AGILOG) {$agi_string = "$sthArows|$stmtA|";   &agi_output;}
+if ($sthArows > 0)
+	{
+	@aryA = $sthA->fetchrow_array;	
+	$filter_phone_group_name = $aryA[0];
+	}
+else
+	{
+	if ($AGILOG) {$agi_string = "ERROR: Filter Phone Group not found! $sthArows|$stmtA|";   &agi_output;}
+	$fpg_string = "BAD|0|$phone_number|$fpg_id|";   &fpg_output;
+	exit;
+	}
+$sthA->finish();
+	
+if (length($phone_number) > 4) 
+	{
+	### add the number to the vicidial_filter_phone_numbers table
+	$stmtA = "INSERT IGNORE INTO vicidial_filter_phone_numbers SET phone_number='$phone_number',filter_phone_group_id='$fpg_id';";
+	$affected_rows = $dbhA->do($stmtA);
+		if ($AGILOG) {$agi_string = "$affected_rows|$stmtA|";   &agi_output;}
+		$fpg_string = "GOOD|$affected_rows|$phone_number|$fpg_id|";   &fpg_output;
+	}
+else
+	{
+	if ($AGILOG) {$agi_string = "ERROR: Invalid Phone Number! |$phone_number|";   &agi_output;}
+	$fpg_string = "BAD|0|$phone_number|$fpg_id|";   &fpg_output;
+	exit;
+	}
+$dbhA->disconnect();
+
+if ($AGILOG) {$agi_string = "exiting the cm_fpg app, transferring call to $next_step:$context   |$phone_number|";   &agi_output;}
+print "SET CONTEXT $context\n";
+	$result = <STDIN>;
+	checkresult($result);
+print "SET EXTENSION $next_step\n";
+	$result = <STDIN>;
+	checkresult($result);
+print "SET PRIORITY 1\n";
+	$result = <STDIN>;
+	checkresult($result);
+
+exit;
+
+
+
+sub agi_output
+{
+if ($AGILOG >=2)
+	{
+	### open the log file for writing ###
+	open(Lout, ">>$AGILOGfile")
+			|| die "Can't open $AGILOGfile: $!\n";
+	print Lout "$now_date|$script|$agi_string\n";
+	close(Lout);
+	}
+	### send to STDERR writing ###
+if ( ($AGILOG == '1') || ($AGILOG == '3') )
+	{print STDERR "$now_date|$script|$agi_string\n";}
+$agi_string='';
+}
+
+
+sub fpg_output
+{
+### open the fpg log file for writing ###
+open(Lout, ">>$FPGLOGfile")
+		|| die "Can't open $FPGLOGfile: $!\n";
+print Lout "$now_date|$fpg_string\n";
+close(Lout);
+$fpg_string='';
+}
+
+
+sub checkresult 
+	{
+	my ($res) = @_;
+	my $retval;
+	$tests++;
+	chomp $res;
+	if ($res =~ /^200/) 
+		{
+		$res =~ /result=(-?\d+)/;
+		if (!length($1)) 
+			{
+		#	print STDERR "FAIL ($res)\n";
+			$fail++;
+			} 
+		else 
+			{
+		#	print STDERR "PASS ($1)\n";
+			$pass++;
+			}
+		} 
+	else 
+		{
+	#	print STDERR "FAIL (unexpected result '$res')\n";
+		$fail++;
+		}
+	}

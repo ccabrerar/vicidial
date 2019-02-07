@@ -1,0 +1,225 @@
+DNC.COM INTEGRATION	  Started: 2015-12-02	Updated: 2017-09-25
+
+NOTE: for DNC.COM integration of batch cellphone filtering, see this document:
+	CELLPHONE_USA_TCPA_FCC_COMPLIANCE.txt
+
+
+We have added a utility to allow for direct filtering of lists on your Vicidial system with a DNC.COM account, to allow for state, federal(FTC) and internal DNC lists as well as TCPA and Litigator Scrub direct through DNC.COM. We have also added a new inbound scrubbing option for calls coming in through DIDs on your system.
+
+DNC.COM is also offering a Free 15 day trial to VICIdial users of their Real-time Integrated TCPA and DNC Safe Harbor lead scrubbing. For more information on this free offer, contact us (http://www.vicidial.com/?page_id=7). 
+
+
+########## OUTBOUND LIST FILTERING ############################################
+
+The script that allows for this must be run from the Linux command-line(CLI):
+	AST_DNCcom_filter.pl
+
+In order for this script to work, you must have a Settings Container set up within Vicidial with the ID of "DNCDOTCOM". This settings container should be customized for your specific DNC.COM account, and how you want it to function.
+
+
+Below is an example Settings Container for DNC.COM:
+
+###############################################################################
+
+# DNC_DOT_COM_URL is the URL to connect to DNC.com. You will probably
+# never have to change this unless DNC.com completely redoes their API
+DNC_DOT_COM_URL => http://www.dncscrub.com/app/main/rpc/scrub
+
+# LOGIN_ID is your DNC.com API ID
+LOGIN_ID => 1234567890QWERTYUIOP1234567890QWERTYUIOP
+
+# PROJ_ID denotes the project whose settings you wish to use for
+# scrubbing; if both projId and campaignId are omitted we use 
+# the Master Project
+PROJ_ID =>
+
+# CAMPAIGN_ID denotes the campaignId you wish to scrub-in - if you 
+# specify this you may omit projId; if omitted we assume Default 
+# Campaign of projId, or if both are omitted, the Default Campaign of 
+# your Master Project
+CAMPAIGN_ID => 
+
+# VERSION a value of 2 or higher will enable the new Version 2.0 
+# features; a value of 3 or higher will enable the new Version 3.0 
+# features which introduce a new result code of Y for VoIP. VoIP 
+# numbers, if VoIP scrubbing is enabled, prior to Version 3 will be 
+# returned as W
+VERSION => 3
+
+# VICI_STATUS_SKIP are the statuses within lists you do not want 
+# scrubbed. Multiple statuses should be separated by a hyphen '-'
+VICI_STATUS_SKIP => SALE-DNC
+
+# STATUS_X is what the status field in the vicidial_list will be 
+# updated to when DNC.com returns a Result Code of X. X is and 
+# Industry eXemption applied to an otherwise Do Not Call number – 
+# number can be called
+STATUS_X => XDNCCM
+
+# STATUS_C  is what the status field in the vicidial_list will be 
+# updated to when DNC.com returns a Result Code of C. C means it is a
+# Clean number and can be called
+STATUS_C => CDNCCM
+
+# STATUS_O is what the status field in the vicidial_list will be 
+# updated to when DNC.com returns a Result Code of O. O means ebr
+# Override was applied to an otherwise Do Not Call number (including
+# an explicit EBR overriding a number in Project DNC) – number can
+# be called
+STATUS_O => ODNCCM
+
+# STATUS_E is what the status field in the vicidial_list will be 
+# updated to when DNC.com returns a Result Code of E. E means Ebr –
+# currently valid, not on a Do Not Call list – number can be called
+STATUS_E => EDNCCM
+
+# STATUS_R is what the status field in the vicidial_list will be 
+# updated to when DNC.com returns a Result Code of R. R means expiRed
+# ebr - number used to be a valid EBR, not on a Do Not Call list –
+# number can be called (this ResultCode will be available in the near
+# future)
+STATUS_R => RDNCCM
+
+# STATUS_W is what the status field in the vicidial_list will be 
+# updated to when DNC.com returns a Result Code of W. W means US 
+# Wireless number – number is not in any DNC database (or it is but 
+# has been overridden by an industry exemption) but it cannot be called
+# from a predictive dialer. (Note: in version 1, WY, NJ, TX, LA and AZ
+# wireless numbers are always reported as D as long as you choose to
+# scrub against Wireless as these states don’t allow any wireless
+# telemarketing calls regardless of Aggressive vs. Conservative
+# settings in Scrub Options.)
+STATUS_W => WDNCCM
+
+# STATUS_G is what the status field in the vicidial_list will be 
+# updated to when DNC.com returns a Result Code of G. G means Valid 
+# EBR and US Wireless Number or VoIP Number, not on any DNC database
+# (version 2+) – still cannot be called from a predictive dialer as
+# EBRs do not constitute an exemption to those rules.
+STATUS_G => GDNCCM
+
+# STATUS_H is what the status field in the vicidial_list will be 
+# updated to when DNC.com returns a Result Code of H. H means US
+# Wireless Number or VoIP Number that is also a Valid EBR overriding
+# an otherwise DNC number (version 2+) – still cannot be called from
+# a predictive dialer as EBRs do not constitute an exemption to those
+# rules.
+STATUS_H => HDNCCM
+
+# STATUS_L is what the status field in the vicidial_list will be 
+# updated to when DNC.com returns a Result Code of L. L means 
+# Wireless number in a US state that does not allow telemarketing 
+# to wireless numbers even if manually dialed (see W for more details)
+# not on any DNC list not an EBR. (version 2+)
+STATUS_L => LDNCCM
+
+# STATUS_F is what the status field in the vicidial_list will be 
+# updated to when DNC.com returns a Result Code of F. F means valid 
+# EBR and Wireless number in a US state that does not allow
+# telemarketing to wireless numbers even if manually dialed (see W for
+# more details) not on any DNC list. (version 2+)
+STATUS_F => FDNCCM
+
+# STATUS_V is what the status field in the vicidial_list will be 
+# updated to when DNC.com returns a Result Code of V. V mean Valid 
+# EBR overriding otherwise DNC number that is also a Wireless number 
+# in a US state that does not allow telemarketing to wireless numbers
+# even if manually dialed (These states are WY, NJ, TX, LA, and AZ.)
+# (version 2+)
+STATUS_V => VDNCCM
+
+# STATUS_I is what the status field in the vicidial_list will be 
+# updated to when DNC.com returns a Result Code of I. I means Invalid
+# area code not active or reserved/special use phone number pattern 
+# (i.e. 555-5555)) 
+STATUS_I => IDNCCM
+
+# STATUS_M is what the status field in the vicidial_list will be 
+# updated to when DNC.com returns a Result Code of M. M means 
+# Malformed (number is not 10 digits, etc.) – this actually never 
+# shows up in scrub results from the DNC Compliance Network 
+# Enterprise Edition – instead an error response will be returned
+STATUS_M => MDNCCM
+
+# STATUS_B is what the status field in the vicidial_list will be 
+# updated to when DNC.com returns a Result Code of B. B means 
+# Blocked (number is in an area code not covered by the National
+# Subscription on this project or is in a configured no-call area code
+# or no exemption was available in a pre-recorded call campaign)
+STATUS_B => BDNCCM
+
+# STATUS_P is what the status field in the vicidial_list will be 
+# updated to when DNC.com returns a Result Code of P. P means 
+# Project DNC or DNF database match (No further checks are performed.
+# The choice to scrub against DNC vs. DNF (Do Not Fax) needs to be
+# made previously at the Campaign level.)
+STATUS_P => PDNCCM
+
+# STATUS_D is what the status field in the vicidial_list will be 
+# updated to when DNC.com returns a Result Code of D. D means Do not
+# call database match; Reason field provides additional details.
+STATUS_D => DDNCCM
+
+# STATUS_S is what the status field in the vicidial_list will be 
+# updated to when DNC.com returns a Result Code of S. S is a
+# diSconnected – number matched a disconnected numbers database 
+# (DNC.com future service)
+STATUS_S => SDNCCM
+
+# STATUS_T is what the status field in the vicidial_list will be 
+# updated to when DNC.com returns a Result Code of T. T is a Tier C
+# phone company (i.e. call may be more expensive) (future service)
+STATUS_T => TDNCCM
+
+# STATUS_Y is what the status field in the vicidial_list will be 
+# updated to when DNC.com returns a Result Code of Y. Y is a VoIP
+# number not in any DNC databases (or it has been overridden by an
+# industry exemption). Note: This result code will only be returned if
+# version=3 and the project has VoIP scrubbing enabled. If VoIP
+# scrubbing is enabled and the version is less than 3, the phone number
+# will be returned a W.
+STATUS_Y => YDNCCM
+
+# ADD_INFO_TO_COMMENTS - Whether to overwrite the vicidial_list 
+# comments field with the additional information provided by DNC.com
+# such as DateField, Reason, RegionAbbrev, etc. For more information
+# about what what these fields mean refer to your DNC.com 
+# documentation. The additional fields will be comma separated.
+# Values are YES or NO.
+ADD_INFO_TO_COMMENTS => NO
+
+
+
+
+
+########## INBOUND CALL DID FILTERING ############################################
+
+There is also a script that will work with the Inbound DID configuration to filter calls coming in through DIDs:
+	DNCcom_inbound_filter.php
+
+
+For this script to work, you must have the same DNCDOTCOM settings container created in the system as shown above, but you will need to add another option to specify if you want to filter out USADNC numbers and/or LITIGATOR numbers:
+
+# For inbound filtering, 
+# USADNC will block federal DNC numbers
+# PROJDNC will block internal project DNC numbers
+# LITIGATOR will block the litigator list, if subscribed
+# INVALID will block invalid numbers
+INBOUND_FILTER => USADNC,PROJDNC,LITIGATOR,INVALID
+
+# to reduce load for redundant requests, you can enable
+# searching of the recent query cache to DNC.com. Set this 
+# to the number of days' results you want to search through.
+# Default is 0 for disabled.
+INBOUND_CACHE => 0
+
+Here is an example of what to put in the "Filter URL" field of the DID entry that you will be using this for. 
+NOTES:
+ - Make sure you set the "Filter Inbound Number" option to "URL"
+ - If you want this to be a system-wide filter, use the "did_system_filter" DID entry that you get to by clicking on the link in the Admin -> System Settings page.
+ - The below example assumes the local connection to your webserver from your dialers is "192.168.1.3"
+
+http://192.168.1.3/vicidial/DNCcom_inbound_filter.php?phone=--A--phone_number--B--
+
+
+IMPORTANT! We strongly recommend that if you are receiving calls from North America that you set the DID option "Clean CID Number" to "R10" so that you will always be looking up 10 digit numbers properly.

@@ -1,0 +1,969 @@
+vdc_LB_active.gif|vdc_LB_active_tw.gif||
+vdc_LB_paused.gif|vdc_LB_paused_tw.gif||
+Calls in Queue|呼叫隊列||
+Manual Queue is On|在人工排隊||
+Note: a dial prefix of %1s will be added to the beginning of this number|注：%1s 秒的撥號前綴將被添加到這個號碼的開頭||
+LOGOUT PROCESSING...|註銷處理...||
+LOGOUT PROCESS COMPLETE, YOU MAY NOW CLOSE YOUR BROWSER OR LOG BACK IN|註銷過程完成後，你現在可以關閉瀏覽器或重新登錄||
+PLEASE SELECT A LANGUAGE|請選擇一種語言||
+to campaign|競選||
+Conference %1s has been registered to %2s|會議 %1s 秒已註冊到 %2s||
+Conf Extension Check|確認會議中分機||
+Conf Exten %1s is not valid|CONF分配延長1秒％是無效||
+Conf Exten %1s is not valid or Exten %2s is not valid|CONF分配延長 %1s 秒是無效或分配延長 %2s 秒是無效||
+Custom Fields Disabled:|禁用自定義字段：||
+Custom Form Output:|自定義表單的輸出：||
+Agent Form Display Script|代理形式顯示腳本||
+OFF|離||
+YES|是的||
+INVITE|邀請||
+END CHAT|聊天結束||
+Enter email address of guest:|進入酒店的電子郵件地址：||
+SEND|發送||
+Available Chats:|可聊天：||
+SEND MESSAGE|發送短信||
+Privacy ON|隱私||
+CLEAR|明確||
+START CHAT|開始聊天||
+Avatar Soundboard Display Script|頭像音板顯示腳本||
+Max rank count|最大列數||
+stop audio|停止音頻||
+error: API user not valid|錯誤：API用戶無效||
+VERSION|版本||
+BUILD|版次||
+USER|使用者 ||
+Live Extension Check|使用中分機確認||
+Agent Screen Opener|代理屏幕開門紅||
+Avatars disabled on your system|禁用系統上的頭像||
+error: avatar not valid|錯誤：分身無效||
+SEND TO MY VOICEMAIL|傳送至我的語音信箱||
+Agent Redirect|代理重定向||
+click here to continue|點擊此處繼續||
+Click on a conference room number on the left for info on that conference|點選會議室左方可瀏覽相關資訊||
+DONE: %1s duplicates found,|完成：找到 %1s 秒重複，||
+DONE: no duplicates found within|完成：在沒有發現重複||
+DONE: no lists in campaign_check|完成：在campaign_check沒有名單||
+DONE: dispo is not a sale status:|完成：DISPO不是銷售情況：||
+Invalid server_ip:|無效SERVER_IP：||
+LIVE INBOUND CALL|進線通話||
+CallerID|CALLERID||
+Number Dialed:|撥打的號碼：||
+Initializing..|初始化..||
+Active Extensions|使用中分機||
+Data Goes Here|資料至此||
+Trunk Action|Trunk 活動||
+Local Action|Local 活動||
+Conferences List|電話會議列表||
+VOICEMAIL|語音信箱||
+NEW:|新：||
+OLD:|老：||
+PARKED CALLS|駐留呼叫||
+LOCAL DIAL EXTENSIONS|LOCAL撥打分機||
+OUTBOUND CALLS:|呼出電話：||
+INBOUND CALLS:|呼入電話：||
+astGUIclient web-client VERSION: %1s BUILD: %2s|astguiclient網絡客戶端版本： %1s 秒建： %2s 秒||
+edit|編輯||
+SUBMIT FAVORITES CHANGES - requires logout|確認送出我的最愛變更 - 需要登出||
+BACK TO MAIN WINDOW - ignore changes made|回到主視窗 - 忽略變更||
+STOP|停止||
+START|開始||
+Refresh rate:|刷新率：||
+Faster|較快速||
+Slower|較慢速||
+Send to this number|傳送至該號碼||
+Conferences:|會議：||
+(click on a number below to send to a conference)|（點擊一些下面要發送到會議）||
+Send my channel too|傳送我的CHANNEL||
+Conferences Menu|電話會議功能||
+LOCAL Extensions Dial|撥給LOCAL分機||
+Phone calling from:|手機從打電話：||
+Call selected extension|撥打所選分機||
+Call selected vmail box|撥打所選語音信箱||
+PARKED CALLS:|駐留呼叫：||
+Dial From Conf|由電話會議中撥號||
+LIVE CALLS IN THIS CONFERENCE|多方通話中的參與號碼||
+AVAILABLE EXTENSIONS|有空閒的分機||
+FAVORITES|最愛||
+up.gif|up.gif||
+down.gif|down.gif||
+remove.gif|remove.gif||
+  - ACTIVE DISPLAY PAUSED -|   - 活動顯示暫停 - ||
+Welcome %1s, you are logged into this phone: %2s - %3s/%4s on %5s|歡迎 %1s 秒，你登錄到這個電話：2S％ -  %3s/%4s 的 %5s||
+agc_tab_main.gif|agc_tab_main.gif||
+agc_tab_active_lines.gif|agc_tab_active_lines.gif||
+agc_tab_conferences.gif|agc_tab_conferences.gif||
+TRUNK HANGUP|樹幹掛斷||
+Active Trunks Menu|活躍的樹幹菜單||
+Hangup Trunk|掛斷 Trunk||
+Hijack Trunk|介入 Trunk||
+Listen Trunk|監聽 Trunk||
+Back to Main Window|回主畫面||
+LOCAL HANGUP|LOCAL 掛斷||
+Active Local Menu|啟用Local畫面||
+Hangup Local|掛斷 Local||
+Hijack Local|介入 Local||
+Listen Local|監聽 Local||
+LIVE CALL TRANSFER|來電轉接||
+Channel to be transferred:|通道被轉移：||
+Extensions:|擴展：||
+Extensions Menu|分機表||
+Send to selected extension|傳送給所選分機||
+Send to selected vmail box|傳送給所選語音信箱||
+LIVE CALLS ON THIS PHONE|通話號碼清單||
+CLIENT CHANNEL|進端通道||
+RECORD|錄音 ||
+XFER|XFER||
+PARK|公園||
+CALL DATE/TIME|通話日期/時間||
+IN-NUMBER|IN-NUMMER||
+CALLER ID|來電顯示||
+CALL ID|呼叫ID||
+PARKED BY|經停||
+PARKED TIME|停放時間||
+PICKUP|接起||
+NO ONE|沒有人||
+CONFERENCE|會議||
+Registered to|註冊至||
+Enter Conference|進入電話會議||
+Send DTMF|傳送 DTMF||
+You can only monitor Zap channels|您只能監控Zap channels||
+No DST Method Found|沒有DST方法發現||
+Parked Calls Display|顯示Parked Call||
+Exten %1s is not valid or protocol %2s is not valid|分配延長1秒％是無效或協議 %2s 無效||
+ViciDial Notes|vicidial筆記||
+Order ID:|訂單ID：||
+Appointment Date/Time:|預約日期/時間：||
+Appointment Notes:|預約注意事項：||
+Please click SUBMIT to commit the changes|請點擊提交提交更改||
+astGUIclient web client: Login|astguiclient Web客戶端：登錄||
+agc_tab_astguiclient.gif|agc_tab_astguiclient.gif||
+astGUIclient web client: Phone Login|astguiclient Web客戶端：手機登錄||
+VERSION: %1s BUILD: %2s|版本： %1s 秒建： %2s 秒||
+astGUIclient web client|astGUIclient web client||
+agc_check_voicemail_OFF.gif|agc_check_voicemail_OFF.gif||
+agc_check_voicemail_ON.gif|agc_check_voicemail_ON.gif||
+agc_check_voicemail_BLINK.gif|agc_check_voicemail_BLINK.gif||
+ERROR: no custom list fields|錯誤：沒有自定義列表字段||
+ERROR: no custom list fields table|錯誤：沒有自定義列表字段的表||
+NONE|沒有||
+NOTES|筆記||
+Second Sunday March to First Sunday November|第二個星期日三月第一個星期日十一月||
+First Sunday April to Last Sunday October|第一個星期日四月的最後一個星期日十月||
+Last Sunday March to Last Sunday October|上週日三月的最後一個星期日十月||
+Last Sunday October to Last Sunday March|最後一個星期日十月的最後一個星期日三月||
+First Sunday October to Last Sunday March|第一個星期日十月的最後一個星期日三月||
+Sunday in October to First Sunday in April|星期天到10月在四月份第一個星期日||
+First Sunday October to Third Sunday March|第一個星期日十月第三個星期日遊行||
+Last Sunday in September to First Sunday in April|上週日在九月四月份第一個星期日||
+Third Sunday October to Last Sunday February|第三個星期日十月的最後一個星期日二月||
+Conference %1s, Stage %2s is not valid or queryCID %3s is not valid, Originate command not inserted|發布會 %1s 秒，舞台 %2s 無效或querycid％三分球無效，originate命令未插入||
+Volume command sent for Conference %1s, Stage %2s Channel %3s on %4s|卷命令發送的會議 %1s 秒，在 %4s 舞台 %2s 通道 %3s||
+Invalid server_ip|無效SERVER_IP||
+Invalid session_name|無效的會話名稱||
+Live Extensions|進線分機||
+Busy Extensions|忙線分機||
+Outside Lines|外線||
+Local Extensions|區域分機||
+Conferences|會議||
+HELP|救命||
+ERROR: no custom data for this lead: |錯誤：沒有自定義數據，該鉛：||
+There are no custom fields for this list|有這個列表中沒有的自定義字段||
+Channel %1s is not live on %2s, %3s command not inserted|通道 %1s 秒沒有住在2秒％，三分％命令未插入||
+%1s command sent for Channel %2s on %3s| %1s 秒命令發送通道 %2s 秒的三分％||
+Channel %1s is not valid or exten %2s is not valid or filename: %3s is not valid, %4s command not inserted|通道 %1s 秒無效或分配延長2秒％是無效或文件名： %3s 秒是無效的，4S％命令未插入||
+RedirectXtraCX command sent for Channel %1s on %2s and|送通道 %1s 秒的2S％redirectxtracx指揮||
+Hungup %1s on %2s|hungup％在1秒2秒％||
+session_id %1s must be set|SESSION_ID %1s 必須設置||
+RedirectXtra command sent for Channel %1s and|送通道 %1s 秒redirectxtra指揮||
+ExtraChannel %1s|extrachannel %1s||
+ to %1s on %2s| 對 %2s  %1s 秒||
+RedirectXtra command sent for Channel %1s on %2s and|送通道 %1s 秒的2S％redirectxtra指揮||
+Redirect command sent for Channel %1s on %2s|重定向命令發送通道％在1秒2秒％||
+Channel %1s is not valid or queryCID %2s is not valid or filename: %3s is not valid, %4s command not inserted|通道 %1s 秒是無效或querycid %2s 無效或文件名： %3s 秒是無效的，4S％命令未插入||
+Cannot find empty vicidial_conference on %1s, Redirect command not inserted|找不到 %1s 秒空vicidial_conference，重定向命令未插入||
+Channel %1s is not live on %2s, Redirect command not inserted|通道 %1s 秒沒有住在2秒％，重定向命令未插入||
+No Local agent to send call to, Redirect command not inserted|沒有本地代理發送呼叫重定向命令未插入||
+parkedby %1s must be set|parkedby %1s 必須設置||
+RedirectToPark Action not sent|redirecttopark行動未發送||
+RedirectFromPark Action not sent|redirectfrompark行動未發送||
+RedirectName Action not sent|redirectname行動未發送||
+RedirectNameVmail Action not sent|redirectnamevmail行動未發送||
+ExtraChannel %1s must be greater than 2 characters|extrachannel %1s 必須大於2個字符||
+Redirect Action not sent|重定向動作不發送||
+Channel %1s in use by another agent on %2s, Hangup command not inserted|在使用通道 %1s 秒通過 %2s 另一個代理，未插入掛斷命令||
+Hangup command sent for Channel %1s on %2s|送通道 %1s 秒的2S％掛斷命令||
+auto_dial_level %1s must be set|auto_dial_level %1s 必須設置||
+campaign %1s must be set|競選 %1s 必須設置||
+uniqueid %1s must be set|UNIQUEID %1s 必須設置||
+lead_id %1s must be set|lead_id %1s 必須設置||
+RedirectVD Action not sent|redirectvd行動未發送||
+OriginateNameVmail Action not sent|originatenamevmail行動未發送||
+ Exten %1s is not valid or queryCID %2s is not valid, Originate command not inserted| 分配延長 %1s 秒是無效或querycid %2s 是無效的，不插入originate命令||
+ You are not allowed to dial into other agent sessions| 你不能撥打到其他代理會話||
+conference %1s is not valid or ext_context %2s or queryCID %3s is not valid, Hangup command not inserted|會議 %1s 秒是無效或ext_context %2s 或querycid %3s 是無效的，不插入掛起命令||
+Channel %1s is not valid or queryCID %2s is not valid, Hangup command not inserted|通道 %1s 秒是無效或querycid %2s 是無效的，不插入掛起命令||
+Call %1s %2s is not live on %3s, Checking Live Channel|調用 %1s 秒2秒％沒有住在3S％，檢查直播頻道||
+Channel %1s is not live on %2s, Hangup command not inserted|通道 %1s 秒沒有住在2秒％，未插入掛斷命令||
+extenName %1s must be set|extenname %1s 必須設置||
+ext_context %1s must be set|ext_context %1s 必須設置||
+ext_priority %1s must be set|ext_priority %1s 必須設置||
+OriginateName Action not sent|originatename行動未發送||
+exten %1s must be set|分配延長1秒％必須設置||
+Phone web client|手機Web客戶端||
+ Phone: | 手機：||
+Your system does not have the email setting enabled|您的系統沒有的電子郵件設置啟用||
+ERROR: Invalid File Name:|錯誤：無效的文件名：||
+mail could not be sent!|郵件無法發送！||
+Date received:|收到日期：||
+From:|來自：||
+Subject:|主題：||
+Attachments:|附件：||
+Response:|回應：||
+Reply:|回复：||
+COPY MESSAGE|副本消息||
+REPLY|回复||
+AGENT email frame|發送電子郵件架||
+ERROR - ID variable missing|錯誤 - id變量缺失||
+Manager Send: |經理發送：||
+Exten %1s is not valid or queryCID %2s is not valid, Originate command not inserted|分配延長 %1s 秒是無效或querycid %2s 是無效的，不插入originate命令||
+Originate command sent for Exten %1s Channel %2s on %3s|originate命令發送的分配延長1秒％頻道 %2s 秒的三分％||
+One of these variables is not valid:|這些變量中的一個是無效的：||
+Channel %1s must be greater than 2 characters|通道 %1s 必須大於2個字符||
+queryCID %1s must be greater than 14 characters|querycid %1s 必須大於14個字符||
+SEARCH RESULTS:|搜索結果：||
+CALL NOTES LOG:|呼叫備註日誌：||
+Call Notes List|呼叫債券清單||
+Close Info Box|關閉信息框||
+Lead Info|鉛信息||
+SELECT A PAUSE CODE :|選擇一個暫停的代碼：||
+Pause Code Selection|暫停代碼選擇||
+SELECT A PRESET :|選擇一個預設：||
+Presets Selection|預設選擇||
+SELECT A GROUP ALIAS :|選擇一組的別名：||
+Group Alias Selection|群組代名選擇||
+SELECT A DIAL IN-GROUP :|選擇組撥號：||
+Dial In-Group Selection|撥號組選擇||
+ALERT :|提醒：||
+Another live agent session was open using your user ID. It has been disabled. Click OK to continue to the agent screen.|另一個現場代理會話開放使用您的用戶ID。它已被禁用。點擊“確定”繼續代理屏幕||
+OK|行||
+This agent screen was not opened properly.|這個代理的屏幕沒有被正確打開||
+Agent Alert!|代理警惕！||
+alert.gif|alert.gif||
+Alert Box|提示框||
+Phone web client: Login|手機Web客戶端：登錄||
+Phone-Only Login|電話只登錄||
+Phone web client: Phone Login|手機Web客戶端：手機登錄||
+Lead ID:|鉛ID：||
+Lead search requests are all logged in the system.|鉛的搜索請求都記錄在系統||
+Phone Number Fields:|電話號碼字段：||
+Main Phone Number|主要電話號碼||
+Alternate Phone Number|備用電話號碼||
+Address3 Phone Number|地址3電話號碼||
+Notes: when doing a search for a lead, the phone number, lead ID or %1s are the best fields to use.|注意事項：做搜索的領先時，電話號碼，身份證鉛或 %1s 秒都用最好的領域。||
+Using the other fields may be slower. Lead searching does not allow for wildcard or partial search terms.|使用的其他領域可能會比較慢。鉛搜索不允許通配符或部分搜索字詞||
+Office Number:|辦公電話：||
+First Name:|名字：||
+Last Name:|姓：||
+BU Name:|BU名稱：||
+Department:|部門：||
+Group Name:|組名：||
+Job Title:|職稱：||
+SUBMIT SEARCH|提交搜索||
+CONTACTS SEARCH RESULTS:|聯繫人搜索結果：||
+Search Results|搜尋結果||
+SEARCH FOR A LEAD:|搜索引：||
+(This is usually a 1 in the USA-Canada)|（這通常是一個1在美國，加拿大）||
+Phone Number:|電話號碼：||
+(digits only)|（僅限數字）||
+Dial Lead ID:|撥打鉛ID：||
+Search Existing Leads:|搜索現有線索：||
+(This option if checked will attempt to find the phone number in the system before inserting it as a new lead)|（如果選中此選項將嘗試查找系統中的電話號碼插入它作為一個新的領導前）||
+If you want to dial a number and have it NOT be added as a new lead, enter in the exact dialstring that you want to call in the Dial Override field below. To hangup this call you will have to open the CALLS IN THIS SESSION link at the bottom of the screen and hang it up by clicking on its channel link there.|如果你想撥一個號碼，並把它不會被添加為新的鉛，輸入您希望在下面的撥號覆蓋領域調用的確切撥號串。掛斷此調用，你將不得不打開在這屆鏈接的呼聲在屏幕的底部，並通過單擊通道鏈接有掛起來||
+Dial Override:|撥打覆蓋：||
+(digits only please)|（數字只請）||
+Dial Now|立即撥號||
+Preview Call|預覽電話||
+CLOSER INBOUND GROUP SELECTION|CLOSER INBOUND GROUP SELECTION||
+BLENDED CALLING(outbound activated)|混合呼叫（出站激活）||
+RESET|重置||
+TERRITORY SELECTION|領地的選擇||
+Channel|通道||
+MY CALLBACK ONLY|只有個人回撥||
+BLENDED CALLING|INBOUND/OUTBOUND BLENDING||
+AGENT CALL LOG:|代理通話記錄：||
+Call log List|通話記錄清單||
+SEARCH FOR A CONTACT:|搜索聯繫人：||
+Notes: when doing a search for a contact, wildcard or partial search terms are not allowed. <br />Contact search requests are all logged in the system.|指出：做一個搜索聯繫人，通配符或部分搜索詞時，是不允許的。 <br/>聯繫人搜索請求都記錄在系統中。||
+End-of-call Disposition Selection|結束碼選擇||
+CLEAR FORM|清除表單||
+WEB FORM SUBMIT|網頁的形式提交||
+Select a CallBack Date :|選擇一個回調日期：||
+Hour:|時間：||
+Minutes:|分鐘：||
+CB Comments:|CB評論：||
+View Comment History:|查看評論歷史：||
+Previous Callback Information:|以前的回調信息：||
+CALLBACKS FOR AGENT %1s:<br />To see information on one of the callbacks below, click on the INFO link. To call the customer back now, click on the DIAL link. If you click on a record below to dial it, it will be removed from the list.|回調代理 %1s 秒：<br/>看到下面的回調之一的信息，請點擊信息鏈接。打電話給客戶返現，點擊撥號鏈接。如果你點擊記錄下面撥打它，它會從列表中刪除。||
+NEW MANUAL DIAL LEAD FOR %1s in campaign %2s:|新手動撥號率先在競選 %2s  %1s ：||
+Enter information below for the new lead you wish to call.|請輸入下面的資訊給您想要外撥的新紀錄||
+Note: all new manual dial leads will go into list %1s|注意：所有新手動撥號線索將進入列表 %1s 秒||
+Dial Code:|撥號代碼:||
+vdc_XB_number.gif|vdc_XB_number.gif||
+AGENTS|代理商||
+DIAL OVERRIDE|Dial Override||
+vdc_XB_presetsbutton.gif|vdc_XB_presetsbutton.gif||
+vdc_XB_contactsbutton.gif|vdc_XB_contactsbutton.gif||
+Available Agents Transfer:|可用代理轉讓：||
+Extended Alt Phone Information:|擴充的其他電話資訊: ||
+Alt Phone Info|ALT手機信息||
+No one is in your session:|沒有人是你的會話：||
+Call Agent Again|再次呼叫值機員||
+Customer has hung up:|客戶已經掛了：||
+Finish and Disposition Call|結束通話並註記結束碼||
+Close Message|關閉消息||
+Your session has been disabled|您的會話已被禁用||
+There is a time synchronization problem with your system, please tell your system administrator|系統中有時間同步問題，請洽系統管理者||
+Any changes made to the customer information below at this time will not be comitted, You must change customer information before you Hangup the call.|你必須先更改客戶資料，再掛斷電話。否則所做變更將不會生效！||
+DISPOSITION CALL :|配置電話：||
+vdc_XB_header.gif|vdc_XB_header.gif||
+SELECT A GROUP TO SEND YOUR CALL TO|選擇一組您的來電發送到||
+vdc_XB_seconds.gif|vdc_XB_seconds.gif||
+vdc_XB_channel.gif|vdc_XB_channel.gif||
+CONSULTATIVE|協商||
+Calls In Queue:|佇列中等待電話:||
+X ACTIVE CALLBACKS|X主動回調||
+Other Agents Status:|其他代理的狀態：||
+Agents View +|代理商查看+||
+WebPhone View -|網絡話機觀點 - ||
+AGENT SCRIPT|代理腳本||
+refresh|更新||
+reset form|復位形式||
+Lead Dispositioned As:|鉛編碼為:||
+Disposition Hot Keys:|地佈署熱鍵：||
+When active, simply press the keyboard key for the desired disposition for this call. The call will then be hungup and dispositioned automatically:|活躍的時候，只需按下鍵盤鍵此調用所需的配置。那麼調用將hungup並自動dispositioned：||
+Your Status:|您的狀態：||
+Calls Dialing:|電話撥號：||
+D1 - DIAL|D1 - 撥號||
+D2 - DIAL|D2 - 撥號||
+RECORDING FILE:|錄音文件：||
+RECORD ID:|記錄ID：||
+Customer Time:|客戶的時間：||
+Channel:|通道：||
+Customer Information:|客戶信息：||
+LEAD SEARCH|引領搜索||
+view notes|查看筆記||
+MANUAL DIAL|人工撥號||
+FAST DIAL|快速撥號||
+VIEW CALL LOG|查看通話記錄||
+Server:|服務器：||
+Alert is ON|警報是在||
+Alert is OFF|警報關閉||
+seconds:|秒：||
+vdc_tab_form.gif|vdc_tab_form.gif||
+vdc_tab_email.gif|vdc_tab_email.gif||
+LIVE|住||
+session ID:|會話ID：||
+Agent Screen|代理屏幕||
+pixel.gif|pixel.gif||
+ ALT PHONE DIAL| ALT電話撥號||
+JUN|六月||
+JLY|JLY||
+AUG|八月||
+SEP|九月||
+OCT|十月||
+NOV|十一月||
+DEC|十二月||
+ACTIVE DISPLAY PAUSED|暫停啟用顯示||
+ORDER|秩序||
+LEAD PREVIEW|鉛預覽||
+ALT PHONE DIAL|撥打其他電話||
+Hide conference call channel information|隱藏電話會議中的來電通道資訊||
+Show conference call channel information|顯示電話會議中的來電通道資訊||
+vdc_XB_hotkeysactive.gif|vdc_XB_hotkeysactive.gif||
+vdc_XB_hotkeysactive_OFF.gif|vdc_XB_hotkeysactive_OFF.gif||
+hide comment history|隱藏評論歷史||
+HIDE|隱藏||
+show comment history|展會評論歷史||
+YOU DO NOT HAVE PERMISSIONS TO TRANSFER CALLS|您沒有轉接電話的權限||
+Logged in as User|以使用者身份登入||
+: %1s on Phone: %2s|數： %1s 手機上： %2s 秒||
+ring|環||
+TERRITORIES|地區||
+GROUPS|群體||
+LOGOUT|註銷||
+vdc_tab_script.gif|vdc_tab_script.gif||
+FEB|二月||
+MAR|損傷||
+APR|四月||
+MAY|五月||
+Dial Countdown:|撥打倒計時：||
+Time On Park:|時間公園：||
+Customer Hung-up, 3-way Call Ended Automatically|顧客洪，三路電話自動結束||
+CUSTOMER 3WAY HANGUP|客戶3WAY掛斷||
+JAN|一月||
+Select a Date Below|選擇日期小於||
+DIAL ALERT:|撥號提醒：||
+TIMER NOTIFICATION:|計時器通知：||
+ENTER A PAUSE CODE|輸入暫停原因代碼||
+Call Agent Webphone|呼叫代理網絡話機||
+Dial Next Call|撥打下一個電話||
+Manager|經理||
+has selected your in-group choices|您的選擇組的選擇||
+YOU MUST BE PAUSED TO CHANGE TERRITORIES|你必須停下來改變地區||
+You must choose a date|您必須選擇日期||
+Show Calls In Queue|查看呼籲在隊列||
+Agents View|代理商查看||
+WebPhone View|網絡話機觀點||
+YOU MUST BE PAUSED TO VIEW YOUR CALL LOG|你必須停下來查看呼叫記錄||
+Invalid Date Format. Please correct and submit again.|無效的日期格式。請更正並再次提交。||
+Invalid Day, Month, or Year range detected. Please correct and submit again.|無效的日，月或年範圍內檢測到。請更正並再次提交。||
+Searching...|搜索...||
+maximize|最大化||
+Next Call Pause Set|下一個電話暫停集||
+YOU MUST BE PAUSED TO CHANGE GROUPS|您必須暫停才能變更群組||
+You are in ALT dial mode, you must finish the lead before logging out.|你是在ALT撥號模式，你必須完成註銷前率先||
+Your Shift is over or has changed, you have been logged out of your session|你的轉變是在或已更改，您已經登出你的會話||
+The system has received a command to log you out, you have been logged out of your session|該系統已收到您註銷命令，你已註銷會話||
+You have been paused for too long, you have been logged out of your session|你已經暫停的時間太長，你已經登出你的會話||
+CLICK HERE TO LOG IN AGAIN|按此重新登入||
+Call Wrapup:|電話文書:||
+seconds remaining in wrapup|文書狀態尚餘秒數||
+Close Window|關閉窗口||
+YOU MUST BE PAUSED TO GRAB CALLS IN QUEUE|您必須暫停籲請搶占隊列||
+Hide Calls In Queue|隱藏呼籲在隊列||
+SELECTED TERRITORIES|選定地區。||
+Manager has selected territories for you|經理選擇地區為你||
+Manual Queue is Off|手動隊列是關||
+PLEASE CLICK THE LOGOUT LINK TO LOG OUT NEXT TIME.|下次登出時請點擊登出連結||
+You cannot log out during a Dial attempt. Wait 50 seconds for the dial to fail out if it is not answered|您在撥號嘗試不能註銷。等待50秒為撥號失敗了，如果它沒有回答||
+STILL A LIVE CALL! Hang it up then you can log out.|電話仍在通話中，請先掛斷再登出系統||
+GROUPS NOT SELECTED|未選擇群組||
+SELECTED GROUPS|已選群組||
+ADD ALL|添加所有||
+Manager has selected groups for you|經理選擇的組為你||
+DELETE ALL|刪除所有||
+TERRITORIES NOT SELECTED|新界未選擇||
+M - Male|米 - 男||
+F - Female|的F - 女||
+minimize|最小化||
+Hangup Again|再次掛斷||
+Next Call Pause|下一次調用暫停||
+Finish Wrapup and Move On|結束文書並繼續||
+YOU MUST BE ON AN ACTIVE INBOUND CALL TO SEARCH FOR A LEAD|你必須主動呼入搜索率先||
+GROUP ALIAS|群組代名||
+CUSTOMER|顧客||
+AGENT_PHONE|agent_phone||
+DIAL IN-GROUP|撥號組||
+You Must Select a Disposition|請選擇結束碼||
+You can only disposition a call once|你只能安排的一次通話||
+U - Undefined|ü - 未定義||
+CALL DISPOSITION|認購證的處置||
+Disposition Status List Hidden|處置狀態列表隱藏||
+YOU MUST BE PAUSED TO ENTER A PAUSE CODE IN AUTO-DIAL MODE|在自動撥號模式下您必須入暫停原因代碼才能暫停||
+PAUSE CODE|暫停代碼||
+YOU MUST BE PAUSED TO SEARCH FOR A LEAD|你必須停下來尋找率先||
+vdc_XB_leave3waycall_OFF.gif|vdc_XB_leave3waycall_OFF.gif||
+vdc_XB_hangupxferline_OFF.gif|vdc_XB_hangupxferline_OFF.gif||
+Manual Dial Queue Calls Waiting:|手動撥號呼叫排隊等待：||
+Call Notes:|呼叫備註：||
+History|歷史||
+vdc_XB_localcloser_OFF.gif|vdc_XB_localcloser_OFF.gif||
+vdc_XB_blindtransfer_OFF.gif|vdc_XB_blindtransfer_OFF.gif||
+vdc_XB_ammessage_OFF.gif|vdc_XB_ammessage_OFF.gif||
+vdc_volume_up_off.gif|vdc_volume_up_off.gif||
+vdc_volume_down_off.gif|vdc_volume_down_off.gif||
+vdc_LB_quickxfer_OFF.gif|vdc_LB_quickxfer_OFF.gif||
+vdc_LB_customxfer_OFF.gif|vdc_LB_customxfer_OFF.gif||
+ALT DIAL NUMBER: ADDRESS3|ALT撥號號碼：地址3||
+ALT DIAL NUMBER:|其他撥打號碼:||
+Phone Code and Number:|電話代碼和號碼:||
+Active:|啟動: ||
+Alt Count:|備用計數: ||
+call was not placed, there was an error:|呼叫未放置，有一個錯誤：||
+Change this phone number to INACTIVE|變更此電話號碼為未啟動||
+Change this phone number to ACTIVE|變更此電話號碼為啟動||
+Fronter:|前置代理：||
+Incoming:|來電：||
+vdc_LB_webform_two_OFF.gif|vdc_LB_webform_two_OFF.gif||
+vdc_LB_ivrparkcall_OFF.gif|vdc_LB_ivrparkcall_OFF.gif||
+This phone number is in the DNC list:|這個電話號碼是在DNC列表：||
+This phone number is not in the campaign lists:|這個電話號碼是不是在競選名單：||
+This phone number is outside of the local call time:|這個電話號碼是本地通話時間之外：||
+Unspecified error:|未指定的錯誤：||
+YOU CANNOT SKIP A CALLBACK OR MANUAL DIAL, YOU MUST DIAL THE LEAD|您不能跳過回撥或是人工撥號，您必須撥打該筆紀錄||
+Lead was not reverted, there was an error:|鉛沒有恢復，出現了錯誤：||
+Lead skipped, go on to next lead|鉛跳過，進入下一個引||
+ALT DIAL NUMBER: ALT|ALT撥號號碼：ALT||
+vdc_XB_parkcustomerdial.gif|vdc_XB_parkcustomerdial.gif||
+DIAL LEAD|撥打鉛||
+SKIP LEAD|跳過鉛||
+Preview the Lead then|預覽資料後||
+No more leads in the hopper for campaign:|沒有更多的線索，在料斗活動：||
+vdc_XB_blindtransfer.gif|vdc_XB_blindtransfer.gif||
+vdc_XB_ammessage.gif|vdc_XB_ammessage.gif||
+vdc_LB_customxfer.gif|vdc_LB_customxfer.gif||
+vdc_LB_requeue_call.gif|vdc_LB_requeue_call.gif||
+vdc_LB_requeue_call_OFF.gif|vdc_LB_requeue_call_OFF.gif||
+vdc_XB_dialwithcustomer.gif|vdc_XB_dialwithcustomer.gif||
+code:|代碼：||
+YOU MUST ENTER A PHONE NUMBER AND DIAL CODE TO USE FAST DIAL|您必須輸入電話號碼和 撥碼 以使用快速撥號||
+Click Here to Deactivate|點擊這裡取消||
+UID:|UID：||
+Calling:|電話：||
+Waiting for Ring...|等待環...||
+seconds|秒||
+Call Rejected:|呼叫拒絕：||
+Called 3rd party:|所謂的第三方：||
+vdc_XB_leave3waycall.gif|vdc_XB_leave3waycall.gif||
+vdc_XB_hangupxferline.gif|vdc_XB_hangupxferline.gif||
+vdc_XB_hangupbothlines.gif|vdc_XB_hangupbothlines.gif||
+Called:|所謂：||
+vdc_XB_localcloser.gif|vdc_XB_localcloser.gif||
+Click Here to Activate|點擊這裡激活||
+PREVIOUS CALLBACK|以前的回調||
+Last Call:|上一通電話:||
+CallBack:|回撥電話:||
+Agent:|值機員:||
+vdc_LB_quickxfer.gif|vdc_LB_quickxfer.gif||
+vdc_LB_webform_two.gif|vdc_LB_webform_two.gif||
+System Delay, Please try again|系統延遲，請再試一次||
+YOU MUST BE PAUSED TO MANUAL DIAL A NEW LEAD IN AUTO-DIAL MODE|在自動外撥模式下您必須暫停才可以人工外撥一個新的紀錄||
+Group Alias:|組別名：||
+Click Here to Choose a Group Alias|點及此處選擇群組代名||
+Dial In-Group:|撥號組：||
+Click Here to Choose a Dial In-Group|點擊這裡選擇一個撥號組||
+No-Call Dial:|無來電撥打：||
+ACTIVE CALLBACKS|生效的回撥電話||
+YOU MUST BE PAUSED TO CHECK CALLBACKS IN AUTO-DIAL MODE|在自動外撥模式下您必須暫停才可以檢查回撥||
+CALLBACK DATE/TIME|回調日期/時間||
+NUMBER|號碼||
+LAST CALL DATE/TIME|最後一次通話的日期/時間||
+NON-DIALABLE|非可撥打||
+List:|列表：||
+Dial Alt Phone Number:|ALT撥打的電話號碼：||
+MAIN PHONE|主要電話||
+or|或||
+ALT PHONE|其他電話||
+FINISH LEAD|結束紀錄||
+Dialable Leads:|可撥打線索：||
+Transfer number must have at least 1 digit:|轉讓數量必須至少有1位：||
+Leave 3Way Call Again|再次離開3WAY電話||
+vdc_LB_grabivrparkcall_OFF.gif|vdc_LB_grabivrparkcall_OFF.gif||
+Dial Next Number|撥下一個號碼||
+Lead:|鉛：||
+LIVE CALLS IN YOUR SESSION:|在會話直播電話：||
+REMOTE CHANNEL|遠端通道||
+VOLUME|音量||
+recording|記錄||
+vdc_volume_up.gif|vdc_volume_up.gif||
+vdc_volume_down.gif|vdc_volume_down.gif||
+YOU MUST SELECT AN AGENT TO TRANSFER TO WHEN USING AGENTDIRECT|你必須選擇一個代理轉移到使用agentdirect時||
+vdc_XB_parkcustomerdial_OFF.gif|vdc_XB_parkcustomerdial_OFF.gif||
+Your session has been paused|您的會話已暫停||
+Manual Queue:|手動隊列：||
+Placing call to next number|配售呼叫一個號碼||
+vdc_LB_startrecording_OFF.gif|vdc_LB_startrecording_OFF.gif||
+vdc_LB_senddtmf_OFF.gif|vdc_LB_senddtmf_OFF.gif||
+vdc_LB_grabivrparkcall.gif|vdc_LB_grabivrparkcall.gif||
+vdc_LB_ivrparkcall.gif|vdc_LB_ivrparkcall.gif||
+vdc_volume_UNMUTE.gif|vdc_volume_UNMUTE.gif||
+vdc_volume_MUTE.gif|vdc_volume_MUTE.gif||
+vdc_XB_dialwithcustomer_OFF.gif|vdc_XB_dialwithcustomer_OFF.gif||
+agc_live_call_DEAD.gif|agc_live_call_DEAD.gif||
+vdc_LB_hangupcustomer.gif|vdc_LB_hangupcustomer.gif||
+vdc_LB_transferconf.gif|vdc_LB_transferconf.gif||
+vdc_LB_grabparkedcall.gif|vdc_LB_grabparkedcall.gif||
+vdc_LB_parkcall.gif|vdc_LB_parkcall.gif||
+vdc_LB_webform.gif|vdc_LB_webform.gif||
+vdc_LB_stoprecording.gif|vdc_LB_stoprecording.gif||
+vdc_LB_startrecording.gif|vdc_LB_startrecording.gif||
+vdc_LB_senddtmf.gif|vdc_LB_senddtmf.gif||
+vdc_LB_dialnextnumber_OFF.gif|vdc_LB_dialnextnumber_OFF.gif||
+vdc_LB_hangupcustomer_OFF.gif|vdc_LB_hangupcustomer_OFF.gif||
+vdc_LB_transferconf_OFF.gif|vdc_LB_transferconf_OFF.gif||
+vdc_LB_grabparkedcall_OFF.gif|vdc_LB_grabparkedcall_OFF.gif||
+vdc_LB_parkcall_OFF.gif|vdc_LB_parkcall_OFF.gif||
+vdc_LB_webform_OFF.gif|vdc_LB_webform_OFF.gif||
+vdc_LB_stoprecording_OFF.gif|vdc_LB_stoprecording_OFF.gif||
+Agent web client: Phone Login Error|代理Web客戶端：手機登錄錯誤||
+Login Error|登錄錯誤||
+Sorry, your phone login and password are not active in this system, please try again:|對不起，您的手機登錄名和密碼都沒有活躍在這個系統中，請稍後重試：||
+Sorry, there are no leads in the hopper for this campaign|抱歉，本專案活動已無名單||
+Login:|登入:||
+Password:|密碼：||
+Sorry, there are no available sessions|很抱歉，沒有可用的會話||
+vdc_LB_pause_OFF.gif|vdc_LB_pause_OFF.gif||
+vdc_LB_resume.gif|vdc_LB_resume.gif||
+vdc_LB_pause.gif|vdc_LB_pause.gif||
+vdc_LB_resume_OFF.gif|vdc_LB_resume_OFF.gif||
+vdc_LB_dialnextnumber.gif|vdc_LB_dialnextnumber.gif||
+loading.gif|loading.gif||
+blank.gif|blank.gif||
+agc_live_call_OFF.gif|agc_live_call_OFF.gif||
+agc_live_call_ON.gif|agc_live_call_ON.gif||
+Campaign not active, please try again|專案活動未啟用，請再試一次||
+Login incorrect, please try again|登入失敗，請重試||
+Too many login attempts, try again in 15 minutes|太多的登錄嘗試，再試一次在15分鐘內||
+Too many network errors, please contact your administrator|太多的網絡錯誤，請與您的系統管理員||
+No available servers, please contact your administrator|沒有可用的服務器，請與您的系統管理員||
+No available phones, please contact your administrator|沒有可用的電話，請聯繫您的系統管理員||
+You are already logged in, please log out of your other session first|您已登錄，請登錄你的其他會議的第一||
+Too many agents logged in, please contact your administrator|太多的代理商登錄，請聯繫您的系統管理員||
+Re-Login|重新登入||
+Phone Login:|手機登錄：||
+Phone Password:|手機密碼：||
+User Login|使用者登入||
+Campaign:|活動：||
+Refresh Campaign List|刷新活動列表||
+Agent web client: Campaign Login|代理Web客戶端：登錄活動||
+Campaign Login|專案活動登入||
+Agent web client:  Login|代理Web客戶端：登錄||
+Login|登錄||
+Agent web client:  Phone Login|代理Web客戶端：手機登錄||
+phone login|手機登錄||
+ERROR: There are no Shifts enabled for your user group|錯誤：有啟用了您的用戶組沒有變化||
+ERROR: You are not allowed to log in outside of your shift|錯誤：你不能登錄你的轉變之外||
+Sorry, you are not allowed to login to this campaign:|對不起，你不能登錄到這項運動：||
+transfer_conference function set|transfer_conference功能設置||
+agent_user does not have a live call|agent_user沒有一個現場電話||
+pause_code not valid|pause_code無效||
+pause_code function sent|pause_code函數發送||
+pause_code error - agent is not paused|pause_code錯誤 - 代理未暫停||
+You have now logged out. Thank you|您已成功登出系統||
+ERROR: System Settings missing|錯誤：系統設置缺失||
+Agent web client: Re-Login|代理Web客戶端：重新登錄||
+vdc_tab_vicidial.gif|vdc_tab_vicidial.gif||
+phone_number is not valid|PHONE_NUMBER無效||
+ra_call_control transfer|ra_call_control轉移||
+ingroup is not valid|內群是無效||
+stage is not valid|階段是無效||
+no active call found|發現沒有有效呼叫||
+send_dtmf not valid|send_dtmf無效||
+park_call not valid|park_call無效||
+park_call function set|park_call功能設置||
+transfer_conference not valid|transfer_conference無效||
+value is not valid|值無效||
+set_timer_action lead updated|set_timer_action鉛更新||
+user is not allowed to modify campaign settings|不允許用戶修改廣告系列設置||
+st_login_log user found|st_login_log用戶發現||
+st_get_agent_active_lead not valid|st_get_agent_active_lead無效||
+st_get_agent_active_lead lead found|st_get_agent_active_lead發現鉛||
+no active lead found|沒有主動發現鉛||
+user not logged in|沒有登錄的用戶||
+ra_call_control not valid|ra_call_control無效||
+ra_call_control hungup|ra_call_control hungup||
+update_fields lead updated|update_fields鉛更新||
+no fields have been defined|沒有字段已經確定||
+agent_user does not have a lead on their screen|agent_user不具有其屏幕上的引線||
+user is not allowed to modify lead information|不允許用戶修改鉛信息||
+set_timer_action not valid|set_timer_action無效||
+state set to|狀態設置成||
+title set to|標題設為||
+vendor_lead_code set to|vendor_lead_code設置||
+rank set to|等級設置為||
+owner set to|主人設置為||
+last_name set to|姓氏設置||
+middle_initial set to|MIDDLE_INITIAL設置為||
+phone_number set to|PHONE_NUMBER設置||
+postal_code set to|postal_code設置||
+province set to|全省設置||
+security_phrase set to|security_phrase設置||
+source_id set to|SOURCE_ID設置||
+country_code set to|COUNTRY_CODE設置||
+date_of_birth set to|DATE_OF_BIRTH設置為||
+email set to|電子郵件設置||
+first_name set to|FIRST_NAME設置||
+gender set to|性別設為||
+gmt_offset_now set to|gmt_offset_now設置||
+change_ingroups function set|change_ingroups功能設置||
+user is not allowed to change agent in-groups|不允許用戶更改代理，團體||
+campaign does not allow inbound calls|活動不允許呼入電話||
+st_login_log not valid|st_login_log無效||
+phone_code set to|phone_code設置||
+address1 set to|地址1設置為||
+address2 set to|地址2設定為||
+address3 set to|地址3設為||
+alt_phone set to|alt_phone設置||
+city set to|城市設置為||
+comments set to|註釋設置||
+change_ingroups not valid|change_ingroups無效||
+campaign dial_method does not allow outbound autodial|活動dial_method不允許出站自動撥號||
+ingroup does not exist|內部團體不存在||
+ingroup_choices are required for ADD and REMOVE values|ingroup_choices都需要添加和刪除值||
+User settings set as default|用戶設置設置為默認||
+preview dial skipping not allowed on this campaign|預覽撥號對這項運動跳繩不允許||
+alt number dialing not allowed on this campaign|ALT數量上這項運動為撥號不允許||
+preview_dial_action function set|preview_dial_action功能設置||
+external_add_lead not valid|external_add_lead無效||
+lead added|導致加||
+lead insertion failed|引線插入失敗||
+add_lead PHONE NUMBER IN DNC|在DNC add_lead電話號碼||
+add_lead PHONE NUMBER IN CAMPAIGN DNC|在競選DNC add_lead電話號碼||
+campaign manual dial list undefined|活動手動撥號列表未定義||
+external_dial function set|external_dial功能設置||
+agent_user is not allowed to place manual dial calls|agent_user不允許放置手動撥號呼叫||
+agent_user is not paused|agent_user未暫停||
+preview_dial_action not valid|preview_dial_action無效||
+preview dialing not allowed on this campaign|預覽撥號，不會在這個活動允許||
+group_alias is not valid|group_alias無效||
+Could not connect: |無法連接：||
+vtiger callback activity does not exist in vtiger system|vtigerCRM的回調活動並不在vtigerCRM的系統中存在||
+phone number lead_id search not found|電話號碼lead_id搜查未發現||
+phone number is not valid|電話號碼是無效||
+lead_id is not valid|lead_id無效||
+phone_number is already in this agents manual dial queue|PHONE_NUMBER已在此代理手動撥號隊列||
+audio_playback error - entry is empty|audio_playback錯誤 - 條目為空||
+audio_playback error - no session data|audio_playback錯誤 - 沒有會話數據||
+external_dial not valid|external_dial無效||
+caller_id_number from group_alias is not valid|從group_alias caller_id_number無效||
+external_pause not valid|external_pause無效||
+external_pause agent is not paused|external_pause代理未暫停||
+external_pause function set|external_pause功能設置||
+logout not valid|註銷無效||
+logout function set|註銷功能設置||
+recording not valid|錄音無效||
+NOTICE|通知||
+recording active|錄音活躍||
+not recording|沒有記錄||
+stop recording error|停止記錄錯誤||
+recording function sent|錄音功能發送||
+webphone_url not valid|webphone_url無效||
+webphone_url active and displayed|webphone_url活躍，顯示||
+webphone_url active and launched|webphone_url積極推出||
+click here to continue. . .|點擊此處繼續。 。 。||
+webphone_url error - webphone url is empty|webphone_url錯誤 - 網絡話機網址是空的||
+webphone_url error - no session data|webphone_url錯誤 - 沒有會話數據||
+call_agent not valid|call_agent無效||
+call_agent function sent|call_agent函數發送||
+call_agent error - entry is empty|call_agent錯誤 - 條目為空||
+call_agent error - no session data|call_agent錯誤 - 沒有會話數據||
+audio_playback not valid|audio_playback無效||
+audio_playback previous playback stopped|audio_playback以前停止播放||
+audio_playback error - audio already playing in agent session|audio_playback錯誤 - 音頻已經在代理會話打||
+audio_playback error - no audio playing in agent session|audio_playback錯誤 - 在代理會話沒有音頻播放||
+audio_playback function sent|發送audio_playback功能||
+external_hangup not valid|external_hangup無效||
+no user found|沒有用戶發現||
+external_hangup function set|external_hangup功能設置||
+agent_user is not logged in|未登錄agent_user||
+external_status not valid|external_status無效||
+external_status function set|external_status功能設置||
+system load average: |系統平均負載：||
+disk free space: |磁盤可用空間：||
+maximum execution time: |最長執行時間：||
+maximum input time: |最大輸入時間：||
+memory limit: |內存限制：||
+post maximum size: |後最大尺寸：||
+upload maximum filesize: |上傳文件的最大尺寸：||
+default socket timeout: |默認套接字超時：||
+ini_get not allowed: |ini_get不允許的：||
+You logged in at|您在登錄||
+You have now logged-out|您目前已登出||
+You logged out at|您登出在||
+Amount of time you were logged-in:|您登入的時間(多久時間): ||
+ERROR: timeclock log entry already made:|ERROR: timeclock log entry already made: ||
+BACK to Agent Login Screen|回到值機員登入畫面||
+BACK to Administration|回到系統管理||
+BACK to Welcome Screen|回到歡迎畫面||
+Time since you were last logged-in:|自從您上次登入已經有(多久時間): ||
+You last logged-out at:|您上次登出在: ||
+Click LOGIN below to log-in|點選下方登入進行登入||
+Amount of time you have been logged-in:|您已經登入的時間(多久時間): ||
+You logged-in at:|您登入在:||
+Click LOGOUT below to log-out|點選下方登出進行登出||
+Voicemail Check|檢視語音信箱||
+voicemail box %1s is not valid|語音信箱 %1s 秒是無效的||
+DATE:|日期：||
+EPOCH:|時代：||
+SUCCESS|成功||
+ERROR|錯誤||
+Invalid Source|無效的源||
+Invalid Username/Password|無效的用戶名/密碼||
+System API NOT ACTIVE|系統API不活躍||
+VICIDiaL Agent API|vicidial代理API||
+host name: |主機名：||
+server name: |服務器名稱：||
+php version: |PHP版本：||
+apache version: |Apache的版本：||
+apache processes: |Apache進程：||
+Question:|問題：||
+Answer:|回答：||
+Disposition:|配置：||
+Processing...|處理...||
+PAUSE AGENT DIALING|暫停值機員撥號||
+Please click SUBMIT to hangup and disposition the call|請點擊提交掛斷和處置通話||
+denotes required fields|表示必填字段||
+The user and password you entered are not active in the system<BR>Please try again:|您輸入的用戶名和密碼都沒有激活系統英請重試：||
+Agent Timeclock|代理時鐘進度||
+vtc_tab_vicidial.gif|vtc_tab_vicidial.gif||
+Timeclock|時鐘進度||
+User Login:|用戶登錄：||
+User Password:|用戶密碼：||
+VERSION:|版本：||
+BUILD:|打造：||
+You cannot log in or out within 30 seconds of your last login or logout|您不能在前次登出或登入後30秒內再次登出或登入||
+You have now logged-in|你現在登錄||
+VICIDiaL Script Display Script|vicidial腳本顯示腳本||
+Title|稱號||
+Gender|性別||
+Email|電子郵件||
+Comments|意見||
+ViciDial Script|vicidial腳本||
+Data Updated, Hanging up call, please wait|數據更新時，掛了電話，請稍候||
+Vendor ID:|供應商ID：||
+Title:|標題：||
+Middle Initial:|中間初始：||
+Province:|省：||
+Alt. Phone:|中高音。手機：||
+Email:|電子郵件：||
+Show:|顯示：||
+Comments:|備註:||
+No calls found|沒有調用發現||
+EMAIL LOG FOR THIS LEAD:|電子郵件日誌此鉛：||
+EMAIL TO|電郵至||
+ATTACHMENTS|附件||
+MESSAGE:|消息：||
+Call %1s grabbed for %2s|調用 %1s 秒搶下了2秒％||
+Call %1s could not be grabbed for %2s|通話1秒％無法搶下了2秒％||
+DONE:|完成：||
+Unidentified Hangup Cause Code.|不明掛斷原因代碼||
+Unidentified SIP Hangup Cause Code.|不明身份的SIP掛斷原因代碼。||
+Vendor ID|Vendor ID||
+ Gender| 性別||
+DialCode|DialCode||
+Alt. Phone|其他電話||
+Show|展現||
+ Email| 電郵||
+ Comments| 備註||
+Status:|狀態：||
+List ID:|列表ID：||
+Timezone:|時區：||
+Called Since Last Reset:|自去年復位叫：||
+ DIAL | WÄHLEN||
+Dial Link:|撥號鏈接：||
+SELECT THIS LEAD|選擇此鉛||
+Called Count:|所謂計數：||
+Last Local Call Time:|最後一個本地通話時間：||
+CALL LOG FOR THIS LEAD:|通話記錄這個鉛：||
+NOTES:|注意:||
+Last |姓 ||
+Address1|地址1||
+Address2|地址2||
+Address3|地址3||
+ State| 州||
+Province|省||
+PostCode|郵遞區號||
+Callback Status:|回調狀態：||
+Callback Lead Status:|回調領先地位：||
+Callback Entry Time:|回調進入時間：||
+Callback Trigger Time:|回調觸發時間：||
+Callback Comments:|回調評論：||
+ Title| 職銜||
+First|名||
+MI|MI||
+MOBILE|移動||
+OTHER 1|其他1||
+OTHER 2|其他2||
+BU NAME|企業名稱||
+Dept:|部門：||
+Group|組||
+Job:|工作：||
+Location:|位置：||
+no Lead ID|不含鉛ID||
+There was a problem with your search terms|有一個與你的搜索詞的一個問題||
+Campaign not found|征戰找不到||
+You must enter in search terms, one of these must be populated: office number, last name, first name|您必須在搜索詞輸入，其中之一必須填充：辦公室號碼，姓氏，名字||
+FIRST NAME|名字||
+LAST NAME|姓||
+OFFICE|辦公室||
+ZIP|拉鍊||
+No results found|沒有找到結果||
+SELECT|選擇||
+Go Back|回上一頁||
+Results Found:|結果發現：||
+LAST CALL|最後一次通話||
+CITY|市||
+STATE|狀態||
+DIAL|撥號||
+No calls on this day|在這一天沒有電話||
+Close Call Log|關閉通話記錄||
+You must enter in search terms, one of these must be populated: lead ID, vendor ID, phone number, last name|則必須在搜索詞輸入，其中之一必須填充：鉛ID，供應商ID，電話號碼，姓||
+STATUS|狀態||
+CAMPAIGN|活動||
+IN/OUT|輸入/輸出||
+ALT|ALT||
+HANGUP|掛斷||
+INFO|信息||
+TAKE CALL|採取電話||
+GO|去||
+close|關閉||
+DATE/TIME|日期/時間||
+LENGTH|長度||
+TYPE|類型||
+PHONE|電話||
+FULL NAME|全名||
+WAIT|等待||
+AGENT|經紀人||
+CALL GROUP|呼叫組||
+INCALL|incall||
+PAUSED|暫停||
+-LOGGED-OUT|-logged出||
+Calls in Queue View Disabled for this campaign|呼籲隊列查看停用此活動||
+ALT PHONE NUMBER STATUS CHANGED|中高音的電話號碼更改的狀態||
+AGENT ALERT SETTING NOT CHANGED|代理警報設置沒有改變||
+%1s is not valid| %1s 秒是無效||
+AGENT ALERT SETTING CHANGED %1s|代理警報設置更改 %1s 秒||
+uniqueid %1s or lead_id: %2s or list_id: %3s or phone_number: %4s or campaign: %5s is not valid|UNIQUEID %1s 或lead_id： %2s 或list_id： %3s 或PHONE_NUMBER： %4s 或活動： %5s 無效||
+VICIDiaL_LOG Inserted:|vicidial_log插入：||
+uniqueid %1s or lead_id: %2s is not valid|UNIQUEID %1s 或lead_id： %2s 無效||
+Campaign %1s is not valid|競選 %1s 無效||
+lead_id %1s is not valid|lead_id %1s 秒是無效||
+Campaign %1s is not valid or lead_id %2s is not valid|競選 %1s 無效或lead_id %2s 無效||
+campaign %1s or conf_exten %2s is not valid|競選 %1s 或conf_exten %2s 無效||
+Dispo Choice %1s or lead_id %2s is not valid|DISPO％選擇1或lead_id %2s 無效||
+Lead %1s has been changed to %2s Status|鉛 %1s 已改為 %2s 狀態||
+phone_number %1s or lead_id %2s is not valid|PHONE_NUMBER %1s 或lead_id %2s 無效||
+Lead %1s information has%2s been updated|帶領 %1s 資料 %2s 更新||
+stage %1s is not valid|現階段 %1s 無效||
+Agent %1s is now in status %2s|代理 %1s 秒，現在是狀態 %2s ||
+favorites list %1s is not valid|收藏夾列表 %1s 秒是無效||
+Favorites list has been updated to %1s for %2s|收藏夾已更新為1秒％為2秒％||
+agent_log_id %1s or pause_code %2s is not valid|agent_log_id %1s 或pause_code %2s 無效||
+ Pause Code %1s has been recorded| 暫停代碼 %1s 秒已記錄||
+READY|準備||
+Group Choice is not valid|組選無效||
+Closer In Group Choice %1s has been registered to user %2s|在組選擇 %1s 秒更接近已註冊到用戶 %2s ||
+Territory Choice is not valid|境內的選擇是無效的||
+Territory Choice %1s has been registered to user %2s|選擇境內 %1s 已註冊用戶2S％||
+no lead info in system:|在系統中不含鉛信息：||
+no lead active for this agent|不含鉛激活此代理||
+no agent session|沒有代理會議||
+Conf Exten %1s or campaign %2s or ext_context %3s is not valid|CONF分配延長 %1s 或競選 %2s 或ext_context％三分球無效||
+Phone and Post Code Time Zone Mismatch! |電話及郵政編碼時區不匹配！||
+ Phone Area Code Outside Dialable Zone| 可撥打區外的電話區號||
+ Postal Code Outside Dialable Zone| 可撥打區外郵編||
+ALT PHONE NUMBER STATUS NOT CHANGED|中高音的電話號碼的狀態沒有改變||
+%1s %2s %3s or %4s is not valid| %1s 秒2秒％三分％或 %4s 無效||
+VICIDiaL Database Query Script|vicidial數據庫查詢腳本||
+USER LOGIN ERROR|用戶登錄錯誤||
+There are no Shifts enabled for your user group|還有啟用了您的用戶組沒有變化||
+You are not allowed to log in outside of your shift|你不能登錄你的轉變之外||
+MANAGER OVERRIDE:|經理覆蓋：||
+Manager Login:|經理登錄：||
+Manager Password:|管理員密碼：||
+SUBMIT|確認送出||
+PLEASE SELECT A CAMPAIGN|請選擇一個廣告系列||
+YOU MUST LOG IN TO THE TIMECLOCK FIRST|您必須先登入TIMECLOCK||
+DONE: %1s match found, %2s updated to %3s with %4s status|做到：1秒％匹配發現，2秒％更新 %3s 與 %4s 狀態||
+DONE: no match found within %1s     %2s|完成：沒有匹配％以內1秒2秒％發現||
+DONE: %1s is empty for lead %2s|做到： %1s秒％為空鉛 %2s ||
+DONE: dispo is not a sale status: %1s|完成：DISPO不是銷售情況： %1s||
+UserID: $FCS%1s - %2s$FCE,  Date: %3s|用戶ID： $FCS%1s - %2s $FCE，時間： %3s||
+Invalid server_ip: %1s or Invalid session_name: %2s|無效SERVER_IP： %1s 秒或無效會話名稱： %2s||
+Invalid session_name:|無效的會話名稱：||
+MULTI_MATCH CHECK:|multi_match檢查：||
+MULTI_MATCH:|multi_match：||
+Invalid Username/Password:|無效的用戶名/密碼：||
+Language has not been changed, please try again|語言方面沒有改變，請重試||
+Name:|姓名：||
+vdc_LB_blank_OFF.gif|vdc_LB_blank_OFF.gif||

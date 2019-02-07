@@ -1,0 +1,32 @@
+CALLER ID NAME CODES DOC	Started: 2013-07-15	Updated: 2018-09-25
+
+
+This document is meant for reference only, and it does not contain all CID name codes possible, but more will be added over time.
+
+
+M - Manual Dial Call (M7152249180000855319)
+V - Auto-Dial Call (V7152252280000844707)
+Y - Inbound Call (Y7152252510000822239)
+J - Inbound CLOSER Transfer (J7152252510000822239)
+DC - 3-Way Call (DC943083W0000855319W)
+DV - Dial Override, Send DTMF, Dead Trigger, Blind Monitor Warning (DV191652W1010101010W)
+S - Agent Login Call (S1307152248588600051)
+LP - Park Call (LPvdcW13739432176666)
+FP - Back to agent From Park (FPvdcW14529553216666)
+LX - Park Xfer Call (LXvdcW13739432176666)
+FX - Xfer Back to session From Park (FXvdcW14529553216666)
+VH - Inbound Agent Alert (VH7152252518600051)
+RH - Recording Hangup (RH1234514529553690)
+CX - Consultative Transfer (CXAR2420160116094751)
+XLvdc - Agent Local Closer or ReQueue Call (XLvdcW13739431946666) [epoch + user...]
+XBvdc - Agent blind transfer (XBvdcW14528875091001100110011001) [epoch + user...]
+AGMON - Remote Agent Monitor (AGMON715224918000001)
+HLvdcW - Hangup of customer call from agent screen (HLvdcW1475524272tluc)
+CH123456 - Hangup of all non-agent channels in meetme session(CH1234614755246080)
+ULGC - Hangup of lone channel in left 3way session (ULGC0010420221616133)
+ULGH - Clearing of left 3way session after server rec limit (ULGH0010420221618178)
+BM - Real-time screen blind monitor (BM149425456200006666)
+BB - Real-time screen blind barge (BB149425456200006666)
+BW - Real-time screen blind whisper (BW149425456200006666)
+E - Inbound Email, tracking only (E0001797980001237995)
+ACagcW - Noone in session call agent phone (ACagcW15167259066666)

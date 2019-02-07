@@ -1,0 +1,174 @@
+#!/usr/bin/perl
+
+# getAGENTchannel.agi by Omar Rodriguez  www.ItContinental.com
+# Copyright (C) 2016  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# This script is able to return the name of the channel that belongs to the agent, 
+# to allow administrators to whisper to the agents
+# Has been made using Vicidial code as Base
+
+# CHANGELOG:
+# 150728-1315 - First build
+# 150804-0944 - Rewritten to work on multi-server systems and with different dialplan
+# 160523-2352 - Fixed issue with local channels in session
+#
+
+$script = 'getAGENTchannel.agi';
+
+($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+$year = ($year + 1900);
+$mon++;
+if ($mon < 10) {$mon = "0$mon";}
+if ($mday < 10) {$mday = "0$mday";}
+if ($hour < 10) {$hour = "0$hour";}
+if ($min < 10) {$min = "0$min";}
+if ($sec < 10) {$sec = "0$sec";}
+
+# default path to astguiclient configuration file:
+$PATHconf =		'/etc/astguiclient.conf';
+
+open(conf, "$PATHconf") || die "can't open $PATHconf: $!\n";
+@conf = <conf>;
+close(conf);
+$i=0;
+foreach(@conf)
+	{
+	$line = $conf[$i];
+	$line =~ s/ |>|\n|\r|\t|\#.*|;.*//gi;
+	if ( ($line =~ /^PATHhome/) && ($CLIhome < 1) )
+		{$PATHhome = $line;   $PATHhome =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHlogs/) && ($CLIlogs < 1) )
+		{$PATHlogs = $line;   $PATHlogs =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHagi/) && ($CLIagi < 1) )
+		{$PATHagi = $line;   $PATHagi =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHweb/) && ($CLIweb < 1) )
+		{$PATHweb = $line;   $PATHweb =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHsounds/) && ($CLIsounds < 1) )
+		{$PATHsounds = $line;   $PATHsounds =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHmonitor/) && ($CLImonitor < 1) )
+		{$PATHmonitor = $line;   $PATHmonitor =~ s/.*=//gi;}
+	if ( ($line =~ /^VARserver_ip/) && ($CLIserver_ip < 1) )
+		{$VARserver_ip = $line;   $VARserver_ip =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_server/) && ($CLIDB_server < 1) )
+		{$VARDB_server = $line;   $VARDB_server =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_database/) && ($CLIDB_database < 1) )
+		{$VARDB_database = $line;   $VARDB_database =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_user/) && ($CLIDB_user < 1) )
+		{$VARDB_user = $line;   $VARDB_user =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_pass/) && ($CLIDB_pass < 1) )
+		{$VARDB_pass = $line;   $VARDB_pass =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_port/) && ($CLIDB_port < 1) )
+		{$VARDB_port = $line;   $VARDB_port =~ s/.*=//gi;}
+	$i++;
+	}
+
+if (!$VARDB_port)	{$VARDB_port='3306';}
+if (!$AGILOGfile)	{$AGILOGfile = "$PATHlogs/agiout.$year-$mon-$mday";}
+
+use DBI;
+use Time::HiRes ('gettimeofday','usleep','sleep');  # necessary to have perl sleep command of less than one second
+use Asterisk::AGI;
+$AGI = new Asterisk::AGI;
+
+$dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
+    or die "Couldn't connect to database: " . DBI->errstr;
+
+### Grab Server values from the database
+$stmtA = "SELECT agi_output,local_gmt FROM servers where server_ip = '$VARserver_ip';";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+if ($sthArows > 0)
+	{
+	$AGILOG = '0';
+	@aryA = $sthA->fetchrow_array;
+	$DBagi_output =		$aryA[0];
+	$local_gmt =		$aryA[1];
+	if ($DBagi_output =~ /STDERR/)	{$AGILOG = '1';}
+	if ($DBagi_output =~ /FILE/)	{$AGILOG = '2';}
+	if ($DBagi_output =~ /BOTH/)	{$AGILOG = '3';}
+	}
+$sthA->finish();
+
+$agent_zap_channel =		"101";
+########## FIND playfilename  ##########
+
+$|=1;
+while(<STDIN>) 
+	{
+	chomp;
+	last unless length($_);
+	if ($AGILOG)
+		{
+		if (/^agi_(\w+)\:\s+(.*)$/)
+			{
+			$AGI{$1} = $2;
+			}
+		}
+
+	if (/^agi_uniqueid\:\s+(.*)$/)		{$unique_id = $1; $uniqueid = $unique_id;}
+	if (/^agi_channel\:\s+(.*)$/)		{$channel = $1;}
+	if (/^agi_extension\:\s+(.*)$/)		{$extension = $1;}
+	if (/^agi_type\:\s+(.*)$/)			{$type = $1;}
+	if (/^agi_callerid\:\s+(.*)$/)		{$callerid = $1;}
+	if (/^agi_calleridname\:\s+(.*)$/)	{$calleridname = $1;}
+	}
+
+if (length($extension) > 7) 
+	{$extension = substr($extension, -7);}
+if ($AGILOG) {$agi_string = "Agent session: $extension| Channel: $channel| CID: $calleridname <$callerid>|";   &agi_output;}
+
+
+#$stmtA = "SELECT channel   FROM vicidial_live_agents  WHERE conf_exten = '$canal' AND ifnull(trim(channel), '') <> ''      and (channel in (select channel from live_channels) or comments='MANUAL')  LIMIT 1";
+
+$stmtA = "SELECT channel FROM live_sip_channels WHERE server_ip='$VARserver_ip' AND extension=right('$extension',7) AND ifnull(trim(channel), '') <> '' limit 10;";
+
+#$AGI->verbose($stmtA); 
+
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+$s=0;
+while ($sthArows > $s)
+	{
+	@aryA = $sthA->fetchrow_array;
+	# channel priority(highest to lowest): SIP, IAX, Local
+	if ($aryA[0] =~ /^SIP/i) 
+		{$agent_zap_channel =		$aryA[0];}
+	if ( ($aryA[0] =~ /^IAX/i) && ( (length($agent_zap_channel) < 4) || ($agent_zap_channel =~ /^Local/i) ) )
+		{$agent_zap_channel =		$aryA[0];}
+	if ( ($aryA[0] =~ /^Local/i) && (length($agent_zap_channel) < 4) ) 
+		{$agent_zap_channel =		$aryA[0];}
+	$s++;
+	}
+$sthA->finish();
+if ($AGILOG) {$agi_string = "$sthArows|$agent_zap_channel|$stmtA|";   &agi_output;}
+
+#$AGI->verbose("agent_zap_channel: $agent_zap_channel"); 
+
+$AGI->set_variable('agent_zap_channel', $agent_zap_channel);
+
+exit;
+
+
+
+sub agi_output
+	{
+	($Lsec,$Lmin,$Lhour,$Lmday,$Lmon,$Lyear,$Lwday,$Lyday,$Lisdst) = localtime(time);
+	if ($Lhour < 10) {$Lhour = "0$Lhour";}
+	if ($Lmin < 10) {$Lmin = "0$Lmin";}
+	if ($Lsec < 10) {$Lsec = "0$Lsec";}
+	$LOGtime = "$Lhour:$Lmin:$Lsec";
+
+	if ($AGILOG >=2)
+		{
+		### open the log file for writing ###
+		open(Lout, ">>$AGILOGfile")
+				|| die "Can't open $AGILOGfile: $!\n";
+		print Lout "$LOGtime|$LOGtime|$script|$agi_string\n";
+		close(Lout);
+		}
+		### send to STDERR writing ###
+	if ( ($AGILOG == '1') || ($AGILOG == '3') )
+		{print STDERR "$LOGtime|$LOGtime|$script|$agi_string\n";}
+	$agi_string='';
+	}

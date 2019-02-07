@@ -1,0 +1,132 @@
+ul.treeview, ul.treeview ul{ /*CSS for Simple Tree Menu*/
+list-style-type: none;
+/* background: url(images/vline.png) repeat-y; */
+font-weight: bold;
+margin: 0;
+padding: 0;
+}
+
+ul.treeview li{ /*Style for LI elements in general (excludes an LI that contains sub lists)*/
+background: white url(../images/messenger-blue-icon.png) no-repeat;
+list-style-type: none;
+padding-left: 15px;
+margin-bottom: 2px;
+cursor: hand !important;
+}
+
+.treeview li.submenu{ /* Style for LI that contains sub lists (other ULs). */
+background: white url(../images/messenger-blue-icon.png) no-repeat;
+color: #369;
+font-weight: bold;
+cursor: hand !important;
+margin-bottom: 2px;
+padding: 0 15px;
+line-height: 15px;
+}
+
+
+ul.chatview, ul.chatview ul{ /*CSS for Simple Tree Menu*/
+list-style-type: none;
+margin: 0;
+padding: 0;
+}
+
+.chatview li.viewedchat{ /* Style for LI that contains sub lists (other ULs). */
+background: white url(../images/messenger-blue-icon.png) no-repeat;
+color: #369;
+cursor: hand !important;
+margin-bottom: 2px;
+padding: 0 15px;
+line-height: 15px;
+font-family: Arial, Helvetica, sans-serif; 
+font-size: 10pt;
+}
+
+.chatview li.unreadchat{ /* Style for LI that contains sub lists (other ULs). */
+background: white url(../images/messenger-blue-icon.png) no-repeat;
+background-color: #CCCCFF;
+color: #369;
+cursor: hand !important;
+margin-bottom: 2px;
+padding: 0 15px;
+line-height: 15px;
+font-family: Arial, Helvetica, sans-serif; 
+font-size: 10pt;
+font-weight: bold;
+}
+
+/* .treeview li.submenu ul{ /*Style for ULs that are children of LIs (submenu) */
+/*display: none; /*Hide them by default. Don't delete. */
+/* } */
+
+.treeview .submenu ul li{ /*Style for LIs of ULs that are children of LIs (submenu) */
+cursor: hand;
+}
+
+ul.treeview li:last-child {
+/* background: #fff url(images/lastnode.png) no-repeat; */
+margin-bottom: 20px;
+}
+
+.chat_title {  font-family: Arial, Helvetica, sans-serif; font-size: 11pt}
+.chat_message {  font-family: Arial, Helvetica, sans-serif; font-size: 10pt}
+.chat_timestamp {  font-family: Arial, Helvetica, sans-serif; font-size: 8pt}
+.vd_agent { color:#009900; }
+.absent_agent { color:#FF0000; }
+.bold {font-weight: bold;}
+.italics {font-style: italic;}
+.alert {
+	font-weight: bold; 
+	color:#FFFFFF;
+	background-color:#FF0000;
+}
+
+input.red_btn{
+   font-family: Arial, Sans-Serif;
+   font-size: 10px;
+   color:#FFFFFF;
+   font-weight:bold;
+   background-color:#990000;
+   border:2px solid;
+   border-top-color:#FFCCCC;
+   border-left-color:#FFCCCC;
+   border-right-color:#330000;
+   border-bottom-color:#330000;
+}
+input.green_btn{
+   font-family: Arial, Sans-Serif;
+   font-size: 10px;
+   color:#FFFFFF;
+   font-weight:bold;
+   background-color:#009900;
+   border:2px solid;
+   border-top-color:#CCFFCC;
+   border-left-color:#CCFFCC;
+   border-right-color:#003300;
+   border-bottom-color:#003300;
+}
+input.blue_btn{
+   font-family: Arial, Sans-Serif;
+   font-size: 10px;
+   color:#FFFFFF;
+   font-weight:bold;
+   background-color:#000099;
+   border:2px solid;
+   border-top-color:#CCCCFF;
+   border-left-color:#CCCCFF;
+   border-right-color:#000033;
+   border-bottom-color:#000033;
+}
+textarea.chat_window {
+    font-family: Arial, Sans-Serif;
+    font-size: 11px;
+    margin-bottom: 3px;
+    padding: 2px;
+    border: solid 1px #000066;
+}
+td.chat_window {
+    border:2px solid #000000;
+	padding: 5px;
+	vertical-align: top;
+	background: -webkit-linear-gradient(top, rgba(255,255,255,1) 0%, rgba(222,222,222,0) 50%, rgba(222,222,222,0) 50%, rgba(222,222,222,1) 100%);
+}

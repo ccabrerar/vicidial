@@ -1,0 +1,58 @@
+CRM EXAMPLE SKIN DOCUMENT	Started: 2015-12-27	Updated: 2017-06-01
+
+This document describes one method of integrating with the agent screen using 
+a basic skin. This method could be used as a guide to integrate a CRM web system
+with Vicidial, or it could be used to create your own simple custom agent screen
+for Vicidial while keeping the full agent screen hidden. This example is not 
+designed as a robust solution, it is merely an example of how one can work.
+
+
+
+Files included:
+
+(located in the "extras/crm_iframe" directory)
+- front.php - the initial page the agent goes to, loads IFRAMEs for the Vicidial agent screen and the CRM(or basic agent screen)
+- crm_example.php - a basic agent screen, interacts with the Vicidial Agent API to control the agent screen
+- crm_settings.php - settings for the basic screen you need to customize for your system
+
+
+
+Summary:
+
+We have several clients that already use Vicidial with their own custom CRM systems. They will load the agent screen in a hidden IFRAME within their own agent screen, and control it entirely with API calls from their CRM to the Vicidial Agent API(see docs/AGENT_API.txt). This method allows for the agent to only use the custom CRM interface as they operate normally handling calls.
+
+This example includes a very basic agent screen skin that will allow an agent to:
+- Log in to vicidial
+- Go active(or READY) so they can take incoming or auto-dialed calls
+- Have basic customer information show up on their screen and allow editing of this information
+- Hang up the customer phone call and set a disposition for the phone call
+- Log out of the agent screen
+
+
+
+Settings:
+
+In the "crm_settings.php" file, you will see several variables that you will need to populate for this example to operate:
+- The full URL to the Agent Screen (usually something like "http://server/agc/vicidial.php")
+- The full URL to the Agent API (usually something like "http://server/agc/api.php")
+- The user and pass of a level 8 user that has API and modify lead permissions
+- The name of the CRM IFRAME that will be used for the CRM portion(default is 'crmagent')
+
+
+
+Installation:
+
+- Copy the "extras/crm_iframe" directory to your active web directory(we would suggest changing the name though)
+- Create a new User with a "User Level" of 8, "Agent API Access" enabled, and "Modify Leads" enabled
+- Update the settings to your system settings as outlined above
+- Change your Campaign settings for:
+	- "Web Form" - full URL to point to the "crm_example.php" page (usually something like "http://server/crm_iframe/crm_example.php")
+	- "Web Form Target" - same as the CRM IFRAME in your crm_settings.php
+	- "Get Call Launch" - set to WEBFORM
+
+
+Notes:
+
+- The example code shown assumes a campaign with only outbound auto-dial and inbound call handling in a RATIO or ADAPT dial method.
+- The example code assumes Campaign Pause Codes is not enabled
+- For more tight integration with your CRM, take a look at the AGENT_EVENTS_PUSH.txt document for information on how to get agent events pushed to your system

@@ -1,0 +1,279 @@
+EMAIL HANDLING DOC		Started: 2012-12-23	Updated: 2017-04-05
+
+(example of how to set up an email account with Gmail is at the bottom)
+
+
+INSTALL:
+
+   Perl CPAN modules required for email to function:
+cpan
+install LWP::UserAgent
+install HTML::Entities
+install HTML::Strip
+install HTML::FormatText
+install HTML::TreeBuilder
+install Switch
+install Time::Local
+install MIME::Decoder
+install Mail::POP3Client
+install Mail::IMAPClient
+install Mail::Message
+install Mail::Box
+install IO::Socket::SSL
+install MIME::Base64
+quit
+
+
+
+DESCRIPTION:
+
+In order to use this feature, the very first thing you need is an email account 
+to handle your incoming emails.  This account must operate under either the IMAP 
+or POP3 mail protocols, as these are currenty the only two that Vicidial 
+supports.  You can sign up for a free Gmail account, which uses the IMAP 
+protocol, or a Yahoo! account, which uses POP3.  People using this feature may 
+find it more feasible to use an email that operates under the IMAP protocol.  
+The reason for this is that if you use a POP3 account, messages sent to it will 
+be erased upon discovery by your Vicidial installation.  This is because the 
+programming involved does not allow POP3 accounts to have their email messages 
+marked to prevent repeat pullings from the mailbox, and therefore the email 
+message must be erased once imported, whereas IMAP accounts are supported such 
+that they can be marked as read.
+
+Once you have created your new email account, you must set it up in the dialer 
+so that the dialer will be able to connect to it and collect any emails in it 
+and import those into the dialer.  First, the dialer must have the "Emails 
+Enabled" setting turned on under the "System Settings" page in the "Admin" 
+section.  Ensure that this value is set to "1" and if not, switch it to that and 
+submit the changed system settings.  Now, you must also turn on the modification 
+privileges for the users who will be able to modify email accounts.  This can be 
+found under the "Admin Interface Options" section on the user's account page and 
+is called "Modify Email Accounts".    
+
+With the email settings enabled and having users who can update email 
+account-related information, you must now create an email group that Vicidial 
+will "file" incoming emails under so that they can be routed to the appropriate 
+agents in the appropriate campaigns.  This is done by clicking on the "Inbound" 
+link at left.  From the list of links that appear beneath the "Inbound" link, 
+click on the "Add New Email Group".  This will take you to a form that you must 
+fill out.  All new email groups must be given a group ID and a group name.  
+Click the "SUBMIT" button and if the form was filled out correctly, you will 
+have created an inbound group that will handle email messages, as opposed to the 
+"regular" in-groups which handle phone calls.  Remember to set the "Active" 
+setting to "Y" once you're ready to have email messages collected and stored.
+
+When the email setting is enabled and the email in-group is created, you can 
+create the email account settings that will tell the dialer where and how to 
+connect to your email account and the in-group to file them under.  Under the 
+"Admin" section, click on the "Email Accounts" setting.  Click on the "Add a New 
+Account" link at the top of the page and you will be taken to the form you must 
+fill out with all the necessary information for Vicidial to connect to your 
+email account.  You must set an email account ID and an email account 
+description, both of which are relatively arbitrary.  More importantly, make 
+sure the proper protocol (IMAP or POP3) is selected, and that the email reply-to 
+address (which is just the actual email address on the account) and the email 
+account server is entered properly (ex: gmail is imap.gmail.com).  You also need 
+to enter the username and password that is used to access the account, and also 
+the frequency that Vicidial should check your account for new emails.  Some 
+email accounts do not allow more than a few logins over a set amount of time, so 
+at the moment the highest rate of frequency that Vicidial will allow is one 
+login attempt every five minutes.  Fill out the remaining fields (click the "?" 
+button by any field that needs explaining - if you are familiar with inbound 
+groups, most of these fields work in the same way) and submit the new email 
+account.  When you are ready to have Vicidial start checking it for emails, be 
+sure the "Active" setting is set to "Y".
+
+Also make sure that any campaigns that you want to have email handling active on
+should have the "Allow Emails" setting set to Y.
+
+The checking of email accounts is handled by a cron job that should only be 
+active on ONLY ONE server on your Vicidial installation:
+
+* * * * * /usr/share/astguiclient/AST_inbound_email_parser.pl
+
+other allowed run time options for this script:
+  [--debug] = verbose debug messages
+  [--debugX] = extra verbose debug messages
+  [--force-check] = forces check of email
+  [--ssl-no-cert] = ignores ssl cert verification
+
+This script will check to see if any active email account is due to be checked 
+for new messages, per the "Email Frequency Check Rate" setting on the active 
+accounts.  If new emails are found in an active account, one of two things will 
+happen, depending on the account protocol.  As stated earlier, IMAP accounts 
+will have the message marked as read, so it will not be pulled into your 
+Vicidial database again, but in POP3 accounts the message will be erased.  When 
+this script finds an email to insert into the Vicidial dialer, it will parse out 
+the pertininent information from the header and body of the email, and then 
+based on the "In-Group Call Handle Method" setting for the associated email 
+account, it will insert the data as a new lead in the vicidial_list table or 
+check the vicidial_list table for the email address and use the lead_id from the 
+found record to create a new lead in the vicidial_email_list table.  Both tables 
+can be tied together by the lead_id column.  Also, if the email message has any 
+attachments, those will be inserted into the inbound_email_attachments table, 
+with the email_row_id column in that table tying back to the column of the same 
+name in vicidial_email_list.
+
+You also need to make sure that the "E" keepalive is present in the 
+/etc/astguiclient.conf file of ONLY ONE of the servers on your cluster. Without 
+this enabled, the calls will not get to agents properly. This runs the 
+/usr/share/astguiclient/VD_email_inbound.pl script and keeps it running at all 
+times. The determination of the order in which emails are distributed out to 
+agents and the determination of the order of which agents are to receive emails 
+are both handled by this script.
+
+This is a perpetually-running script that is constantly checking the 
+vicidial_email_list and vicidial_xfer_log tables for any email messages that 
+need to be queued and handled by an agent.  Emails from transfer in-groups 
+always take precedence over regular incoming emails, regardless of the queue 
+priority setting.  However, the queue priority is taken into consideration if 
+multiple transfer in-groups have emails that need handling.  This script first 
+checks the vicidial_xfer_log table for email messages that have been transferred 
+by an agent, and then checks the vicidial_email_list table for any new email 
+messages that have not yet been handled by any agent.  Once a list of emails to 
+queue has been generated, this script go through each email one at a time, and 
+will take the in-group the email belongs to and check the system for any agents 
+in a READY or CLOSER status who are currently taking emails that in-group.  If 
+more than one agent is available, the agents selected to receive the messages is 
+determined by the "Next agent call" setting for the group the message belongs 
+to.  The script will proceed in this fashion until all email messages have been 
+assigned or all active agents have been given a message.  The script will then 
+sleep for a brief period and then repeat the process.  
+
+With the email messages being imported into your Vicidial system, you can now 
+set up campaigns to distribute the messages out to agents who log in to the 
+appropriate campaigns.  This is identical to the procedure for setting up 
+inbound calls.  All you do is view the "Detail View" for the campaign(s) that 
+is/are to receive these emails, and under the "Allowed Inbound Groups" section, 
+check the box next to each email in-group that the campaign will take.  
+Campaigns must be set as RATIO, INBOUND_MAN, or any of the ADAPT dial 
+methods(?).  Emails can even be transferred to other agents, similar to 
+transferring phone calls.  This is done in the same way; set up an email 
+in-group, and then under the "Detail View" setting for a campaign, check the box 
+for that group under the "Allowed Transfer Group" to allow emails to be 
+transferred to that ingroup, and in turn another campaign can be set up to 
+accept these transfers by making that in-group an "Allowed Inbound Group".
+
+Once this is all set up, emails will start to come in to your system.  In the 
+agent interface, there is now a new tab called "EMAIL" at the top of the screen. 
+ This is the default call launch for email messages, and is the screen that will 
+automatically be displayed for the agents.  From here, agents can see the sent 
+message and the address of the person who sent it (and sometimes the sender 
+name), and can even view any attachments the sender included.  Agents can type a 
+plain text response to the incoming message, and can also send back attachments 
+of their own.  The system will notify the agent if an email attempt is 
+successful, and these message "calls" can be terminated in the same way as a 
+regular phone call, by clicking the "HANGUP CUSTOMER" button or using HotKeys.
+
+The order in which incoming emails will be distributed to the agents is 
+determined by the queue_priority setting on each in-group, and then by the date 
+in which the email was sent.  In other words, unless one email-group has a 
+higher priority over another, agents will always receive the oldest emails 
+first.  In addition, email in-groups will also prioritize agents based on the 
+"Next agent call" setting for each ingroup.  Agents can be prioritized based on 
+the number of calls/emails they have received, or by rank or by one of the time 
+values stored in the vicidial_live_agent table.
+
+
+
+PROBLEMS:
+
+If you are having issues with emails going out properly from an agent, you 
+should test an email from your webserver using the 'pine' CLI email application. 
+If you need to install pine just run the following in OpenSuSE(the Linux distro 
+that vicibox uses):
+
+zypper install alpine
+
+If you are still having issues, make sure that postfix email system on your 
+webserver is started up.
+
+/etc/init.d/postfix start
+
+If that worked, then it probably isn't starting up on boot, so you need to run 
+this command:
+
+chkconfig postfix on
+
+
+
+EXAMPLES:
+
+Example configuration instructions with Gmail:
+
+If you'd like to use Vicidial's inbound email feature but do not have an email 
+account to collect email messages, you will need to create an email account 
+first.  Gmail offers free email accounts that can be accessed under either the 
+IMAP or POP3 protocols.
+
+To create a new Gmail account, open your web browser and go to: 
+
+www.gmail.com
+
+Assuming that you aren't currently logged into an existing Gmail account, in the 
+upper-right corner, there will be a button labeled "CREATE A NEW ACCOUNT", which 
+you should click.
+
+On the next page, fill out the form to create your new email account.  The page 
+will prompt you on all the necessary fields to fill out, and you should click 
+the "Next Step" button at the bottom of the screen when finished.  If you've 
+filled out the form properly, Gmail will show a welcome message, and you have 
+successfully created your email account.  Remember the user name and password 
+for when you set up the email account in Vicidial.
+
+With Gmail, the recommended email account protocol is IMAP and the email account 
+server for this is "imap.gmail.com" – this information will also be used during 
+the account setup in Vicidial.
+
+You can also use POP3 protocol with Gmail.  For that, the email account server 
+is pop.gmail.com.  However, when the POP3 protocol is being used on an account, 
+when unread emails are detected, once their information has been imported into 
+the database, then the email message is erased.  This is a limitation of the 
+software that "sweeps" the email account, which is why IMAP is the preferred 
+protocol.
+
+
+NOTES:
+
+- You may need to install gcc, make and associated libraries in order for some perl modules to install properly. To do this on Vicibox or OpenSuSE you can use the software management utility in "yast".
+- If you see the following error:
+
+*******************************************************************
+Using the default of SSL_verify_mode of SSL_VERIFY_NONE for client
+is depreciated! Please set SSL_verify_mode to SSL_VERIFY_PEER
+together with SSL_ca_file|SSL_ca_path for verification.
+If you really don't want to verify the certificate and keep the
+connection open to Man-In-The-Middle attacks please set
+SSL_verify_mode explicitly to SSL_VERIFY_NONE in your application.
+*******************************************************************
+at /usr/lib/perl5/site_perl/5.12.1/Mail/IMAPClient.pm line 338
+
+go into the IMAPClient.pm file at the path above and added the following line 
+below 338 and the message should go away:
+
+SSL_verify_mode => 'SSL_VERIFY_NONE',
+
+
+
+
+- If you see the following error:
+
+SSL_verify_mode must be a number and not a string at /usr/lib/perl5/site_perl/5.12.1/IO/Socket/SSL.pm line 2251.
+
+
+Edit the "SSL.pm" file that is shown in the error you received:
+
+Line 2251, change:
+
+die "SSL_verify_mode must be a number and not a string";
+
+To:
+
+$verify_mode = '0';
+
+
+Save it(since the file is most likely read-only, you might have to force save[in 'vi' that's ':w!'])
+
+Then try running the email script again:
+
+ /usr/share/astguiclient/AST_inbound_email_parser.pl --ssl-no-cert --debugX --force-check

@@ -1,0 +1,283 @@
+#!/usr/bin/perl
+#
+# timer_rebeep.agi
+#
+# This script is designed to be launched from the in-group/campaign timer
+# setting to set another trigger event for the next X seconds. Often used for
+# calls that need to have a periodic beep signifying that the call is being
+# recorded
+#
+# Just add the following to the System Settings Custom Dialplan Entry
+# and set rebuild conf=Y
+# exten => 8399,1,Answer
+# exten => 8399,n,Wait(1)
+# exten => 8399,n,Playback(beep)
+# exten => 8399,n,AGI(timer_rebeep.agi,20---D1_DIAL_QUIET)
+# exten => 8399,n,Hangup
+#
+# ; Below are the parameters needed for the script to be run properly
+# ; 1. seconds delay before next trigger goes
+# ; 2. timer action to launch
+#
+# Then set the in-groups/campaigns that you want to have this enabled
+#   "Timer Action" = D1_DIAL_QUIET
+#   "Timer Action Seconds" = 20
+#   "Transfer Conf Number 1" = 8399
+#
+# Copyright (C) 2014  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+#
+# CHANGELOG
+# 111227-1418 - First build
+# 141124-2309 - Fixed Fhour variable bug
+#
+
+$US='_';
+
+&get_time_now;
+  $start_epoch = $now_date_epoch;
+
+$script = 'timer_rebeep.agi';
+
+$now_date_epoch = time();
+$now_date = "$year-$mon-$mday $hour:$min:$sec";
+$now_day = "$year-$mon-$mday";
+
+($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+$year = ($year + 1900);
+$mon++;
+if ($mon < 10) {$mon = "0$mon";}
+if ($mday < 10) {$mday = "0$mday";}
+if ($hour < 10) {$hour = "0$hour";}
+if ($min < 10) {$min = "0$min";}
+if ($sec < 10) {$sec = "0$sec";}
+
+$US='_';
+
+
+# default path to astguiclient configuration file:
+$PATHconf =		'/etc/astguiclient.conf';
+
+open(conf, "$PATHconf") || die "can't open $PATHconf: $!\n";
+@conf = <conf>;
+close(conf);
+$i=0;
+foreach(@conf)
+	{
+	$line = $conf[$i];
+	$line =~ s/ |>|\n|\r|\t|\#.*|;.*//gi;
+	if ( ($line =~ /^PATHlogs/) && ($CLIlogs < 1) )
+		{$PATHlogs = $line;   $PATHlogs =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHagi/) && ($CLIagi < 1) )
+		{$PATHagi = $line;   $PATHagi =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHsounds/) && ($CLIsounds < 1) )
+		{$PATHsounds = $line;   $PATHsounds =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHmonitor/) && ($CLImonitor < 1) )
+		{$PATHmonitor = $line;   $PATHmonitor =~ s/.*=//gi;}
+	if ( ($line =~ /^VARserver_ip/) && ($CLIserver_ip < 1) )
+		{$VARserver_ip = $line;   $VARserver_ip =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_server/) && ($CLIDB_server < 1) )
+		{$VARDB_server = $line;   $VARDB_server =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_database/) && ($CLIDB_database < 1) )
+		{$VARDB_database = $line;   $VARDB_database =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_user/) && ($CLIDB_user < 1) )
+		{$VARDB_user = $line;   $VARDB_user =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_pass/) && ($CLIDB_pass < 1) )
+		{$VARDB_pass = $line;   $VARDB_pass =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_port/) && ($CLIDB_port < 1) )
+		{$VARDB_port = $line;   $VARDB_port =~ s/.*=//gi;}
+	$i++;
+	}
+
+if (!$VARDB_port) {$VARDB_port='3306';}
+if (!$AGILOGfile) {$AGILOGfile = "$PATHlogs/rebeep.$year-$mon-$mday";}
+
+use DBI;
+use Asterisk::AGI;
+$AGI = new Asterisk::AGI;
+
+$dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
+    or die "Couldn't connect to database: " . DBI->errstr;
+
+# defaults:
+$AGILOG =			2;
+$seconds_delay =	'20';
+$timer_action =		'D1_DIAL_QUIET';
+
+### begin parsing run-time options ###
+if (length($ARGV[0])>1)
+	{
+	if ($AGILOG) {$agi_string = "Perl Environment Dump:";   &agi_output;}
+	$i=0;
+	while ($#ARGV >= $i)
+		{
+		$args = "$args $ARGV[$i]";
+		if ($AGILOG) {$agi_string = "$i|$ARGV[$i]";   &agi_output;}
+		$i++;
+		}
+	
+	### list of command-line array arguments:
+	@ARGV_vars = split(/---/, $ARGV[0]);
+
+	if (length($ARGV_vars[0]) > 0) {$seconds_delay = 		$ARGV_vars[0];}
+	if (length($ARGV_vars[1]) > 0) {$timer_action = 		$ARGV_vars[1];}
+	}
+
+$|=1;
+while(<STDIN>) 
+	{
+	chomp;
+	last unless length($_);
+	if ($V)
+		{
+		if (/^agi_(\w+)\:\s+(.*)$/)
+			{
+			$AGI{$1} = $2;
+			}
+		}
+
+	if (/^agi_context\:\s+(.*)$/)		{$context = $1;}
+	if (/^agi_priority\:\s+(.*)$/)		{$priority = $1;}
+	if (/^agi_uniqueid\:\s+(.*)$/)		{$unique_id = $1;   $uniqueid = $1;}
+	if (/^agi_channel\:\s+(.*)$/)		{$channel = $1;}
+	if (/^agi_callerid\:\s+(.*)$/)		{$callerid = $1;}
+	if (/^agi_calleridname\:\s+(.*)$/)	{$calleridname = $1;}
+	if (/^agi_extension\:\s+(.*)$/)		{$extension = $1;}
+	}
+
+if ( ($callerid =~ /\".*\"/) && ( (!$calleridname) or ($calleridname =~ /unknown/) ) )
+	{
+	$calleridname = $callerid;
+	$calleridname =~ s/\<\d\d\d\d\d\d\d\d\d\d\>//gi;
+	$calleridname =~ s/\"|\" //gi;
+	}
+
+	$callerid =~ s/\D//gi;
+	$calleridname =~ s/unknown//gi;
+if ( (!$callerid) or ($callerid =~ /unknown/) )
+	{$callerid = $calleridname;}
+$phone_number=$callerid;
+
+
+### Grab vicidial_manager record
+$man_id='';
+$stmtA = "SELECT man_id,entry_date,cmd_line_d,server_ip FROM vicidial_manager where callerid='$calleridname' order by man_id desc limit 1;";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+if ($sthArows > 0)
+	{
+	@aryA = $sthA->fetchrow_array;
+	$man_id =		$aryA[0];
+	$entry_date	=	$aryA[1];
+	$EXTsession =	$aryA[2];
+		$EXTsession =~ s/Exten: //gi;
+		while (length($EXTsession) > 7) {$EXTsession =~ s/^.//gi;}
+	$EXTserver_ip =	$aryA[3];
+	}
+$sthA->finish();
+
+$AGI->stream_file('sip-silence');
+$AGI->stream_file('sip-silence');
+$AGI->stream_file('sip-silence');
+
+
+if (length($man_id) > 0)
+	{
+	$stmtA = "SELECT user,UNIX_TIMESTAMP(last_call_time) FROM vicidial_live_agents where server_ip='$EXTserver_ip' and conf_exten='$EXTsession' order by last_update_time desc limit 1;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$user =				$aryA[0];
+		$last_call_time	=	$aryA[1];
+		$call_length = ($now_date_epoch - $last_call_time);
+		$next_length = ($call_length + $seconds_delay - 4);
+		$sthA->finish();
+
+		### update the agent live record for the next timer trigger
+		$stmtA="UPDATE vicidial_live_agents set external_timer_action='$timer_action',external_timer_action_message='',external_timer_action_seconds='$next_length' where user='$user' and conf_exten='$EXTsession' and server_ip='$EXTserver_ip';";
+		$affected_rows = $dbhA->do($stmtA);
+		print STDERR "|$affected_rows|$man_id|$entry_date|$timer_action|$next_length|$EXTserver_ip|$EXTsession|$stmtA|\n";
+		}
+	else
+		{
+		$sthA->finish();
+		print STDERR "|ERROR|$man_id|$entry_date|$timer_action|$seconds_delay|$EXTserver_ip|$EXTsession|\n";
+		}
+	}
+else
+	{
+	print STDERR "|ERROR|$man_id|$entry_date|$timer_action|$seconds_delay|$EXTserver_ip|$EXTsession|\n";
+	}
+
+$dbhA->disconnect();
+exit;
+
+
+
+
+#######################
+##### Subroutines #####
+
+sub get_time_now	#get the current date and time and epoch for logging call lengths and datetimes
+	{
+	($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+	$year = ($year + 1900);
+	$mon++;
+	if ($mon < 10) {$mon = "0$mon";}
+	if ($mday < 10) {$mday = "0$mday";}
+	if ($hour < 10) {$Fhour = "0$hour";}
+	if ($min < 10) {$min = "0$min";}
+	if ($sec < 10) {$sec = "0$sec";}
+
+	$now_date_epoch = time();
+	$now_date = "$year-$mon-$mday $hour:$min:$sec";
+	$filedate = "$year$mon$mday$hour$min$sec";
+	}
+
+sub checkresult {
+	my ($res) = @_;
+	my $retval;
+	$tests++;
+	chomp $res;
+	if ($res =~ /^200/) {
+		$res =~ /result=(-?\d+)/;
+		if (!length($1)) {
+			print STDERR "FAIL ($res)\n";
+			$fail++;
+		} else {
+			print STDERR "PASS ($1)\n";
+			$pass++;
+		}
+	} else {
+		print STDERR "FAIL (unexpected result '$res')\n";
+		$fail++;
+	}
+}
+
+sub agi_output
+{
+if ($AGILOG >=2)
+	{
+	### open the log file for writing ###
+	open(Lout, ">>$AGILOGfile")
+			|| die "Can't open $AGILOGfile: $!\n";
+	print Lout "$now_date|$script|$agi_string\n";
+	close(Lout);
+	}
+	### send to STDERR writing ###
+if ( ($AGILOG == '1') || ($AGILOG == '3') )
+	{print STDERR "$now_date|$script|$agi_string\n";}
+$agi_string='';
+}
+
+sub leading_zero($) 
+{
+    $_ = $_[0];
+    s/^(\d)$/0$1/;
+    s/^(\d\d)$/0$1/;
+    return $_;
+} # End of the leading_zero() routine.
+

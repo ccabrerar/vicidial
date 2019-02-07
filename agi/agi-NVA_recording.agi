@@ -1,0 +1,675 @@
+#!/usr/bin/perl
+#
+# agi-NVA_recording.agi version 2.12
+#
+# This script is designed to give recording ability to agents not the using 
+# ViciDial agent screen
+#
+# ; 1. logging output (NONE|STDERR|FILE|BOTH)
+# ; 2. the ViciDial user ID, if empty it defaults to accountcode(usually phone extension) or vicidial_live_agents user who launched the call
+# ; 3. log this call in user_call_log (Y|N) default N
+# ; 4. log this call in call_log (Y|N) default N, ONLY NEEDED FOR INBOUND AND INTERSYSTEM CALLS!!!
+# ; 5. audio record this call (Y|N) default N
+# ; 6. double-log this call in call_log (Y|N) default N, ONLY NEEDED FOR INBOUND CALLMENU FORWARDED CALLS!!!
+# ; 7. play the recording ID of this call before recording starts
+# ; 8. include the recording ID in the filename
+# ; 9. search vicidial_list for phone number dialed (Y|N) default N, assumes 10 digit phone numbers
+# ; 10. if 9 is Y, this is search method (ALLLISTS|PHONE) default ALLLISTS, search all lists, use phone setting, CURRENTLY DOES NOTHING
+# ; 11. error out and end call if phone number is not found (Y|N) default N
+# ; 12. run the phone entry's NVA Call URL (Y|N) default N
+# ; 13. if 9 is Y, and phone number is not found, insert into phone's NVA List ID (Y|N) default N
+# ; 14. if 13 is Y, override phone's NVA List ID with this list ID when lead is inserted
+# ; 15. if 13 is Y, override phone's NVA Phone Code with this phone code when lead is inserted
+# ; 16. if 13 is Y, override phone's NVA Status with this status when lead is inserted
+#
+#
+# ;custom dialplan entry example: (similar to the defaultlog Call Menu)
+#exten => _X.,1,AGI(agi-NVA_recording.agi,BOTH------Y---N---Y---N---N---N)
+#exten => _X.,n,Goto(default,${EXTEN},1)
+#exten => _X.,n,Hangup
+#
+# ;inbound to agent example:
+#exten => 5678,1,AGI(agi-NVA_recording.agi,BOTH------Y---Y---Y---N---N---N)
+#exten => 5678,n,Goto(vicidial-auto,5678,1)
+#exten => 5678,n,Hangup
+#
+# ; example of dial prefix of 94 in System Settings Custom Dialplan to default log
+#exten => _941NXXNXXXXXX,1,Goto(defaultlog,9${EXTEN:2},1)
+#
+# ; example of using as Call Menu prompt to record with playing of recording id
+#agi-NVA_recording.agi,BOTH------Y---N---Y---N---Y---Y
+#
+# ; example of using as Call Menu prompt to record, search for phone number, run NVA call URL and error if not found
+#agi-NVA_recording.agi,BOTH------Y---N---Y---N---N---N---Y---ALLLISTS---Y---Y
+#
+# ;custom dialplan entry example: (similar to the defaultlog Call Menu) with NVA options
+#exten => _X.,1,AGI(agi-NVA_recording.agi,BOTH------Y---N---Y---N---N---N---Y---ALLLISTS---N---Y---Y)
+#exten => _X.,n,Goto(default,${EXTEN},1)
+#exten => _X.,n,Hangup
+#
+# Copyright (C) 2015  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+#
+# CHANGELOG
+# 91105-1402 - First build
+# 100123-1434 - Added double-log option for CallMenu forwarded calls
+# 120430-2214 - Converted call to Monitor app to be asterisk 1.8 compatible
+# 130108-1811 - Changes for Asterisk 1.8 compatibility
+# 130326-1510 - Added lead_id and user logging from vicidial values
+# 141124-2309 - Fixed Fhour variable bug
+# 150915-1824 - Added recording ID play and filename options
+# 151211-0932 - Added phone search and phone NVA URL features
+# 151214-2148 - Added more variables to be used by nva url feature
+# 151220-1521 - Added phone NVA List ID option for not found phone numbers
+#
+
+&get_time_now;
+
+$script = 'agi-NVA_recording.agi';
+
+$now_date_epoch = time();
+$start_epoch = $now_date_epoch;
+
+($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+$year = ($year + 1900);
+$mon++;
+if ($mon < 10) {$mon = "0$mon";}
+if ($mday < 10) {$mday = "0$mday";}
+if ($hour < 10) {$hour = "0$hour";}
+if ($min < 10) {$min = "0$min";}
+if ($sec < 10) {$sec = "0$sec";}
+$now_date = "$year-$mon-$mday $hour:$min:$sec";
+$filedate = "$year$mon$mday$hour$min$sec";
+
+$US='_';
+
+
+# default path to astguiclient configuration file:
+$PATHconf =		'/etc/astguiclient.conf';
+
+open(conf, "$PATHconf") || die "can't open $PATHconf: $!\n";
+@conf = <conf>;
+close(conf);
+$i=0;
+foreach(@conf)
+	{
+	$line = $conf[$i];
+	$line =~ s/ |>|\n|\r|\t|\#.*|;.*//gi;
+	if ( ($line =~ /^PATHlogs/) && ($CLIlogs < 1) )
+		{$PATHlogs = $line;   $PATHlogs =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHsounds/) && ($CLIsounds < 1) )
+		{$PATHsounds = $line;   $PATHsounds =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHmonitor/) && ($CLImonitor < 1) )
+		{$PATHmonitor = $line;   $PATHmonitor =~ s/.*=//gi;}
+	if ( ($line =~ /^VARserver_ip/) && ($CLIserver_ip < 1) )
+		{$VARserver_ip = $line;   $VARserver_ip =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_server/) && ($CLIDB_server < 1) )
+		{$VARDB_server = $line;   $VARDB_server =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_database/) && ($CLIDB_database < 1) )
+		{$VARDB_database = $line;   $VARDB_database =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_user/) && ($CLIDB_user < 1) )
+		{$VARDB_user = $line;   $VARDB_user =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_pass/) && ($CLIDB_pass < 1) )
+		{$VARDB_pass = $line;   $VARDB_pass =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_port/) && ($CLIDB_port < 1) )
+		{$VARDB_port = $line;   $VARDB_port =~ s/.*=//gi;}
+	$i++;
+	}
+
+if (!$VARDB_port) {$VARDB_port='3306';}
+if (!$AGILOGfile) {$AGILOGfile = "$PATHlogs/nvaout.$year-$mon-$mday";}
+
+use DBI;
+use Asterisk::AGI;
+$AGI = new Asterisk::AGI;
+
+$dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
+    or die "Couldn't connect to database: " . DBI->errstr;
+
+### Grab Server values from the database
+$stmtA = "SELECT agi_output,ext_context,asterisk_version FROM servers where server_ip = '$VARserver_ip';";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+$rec_count=0;
+while ($sthArows > $rec_count)
+	{
+	$AGILOG = '0';
+	@aryA = $sthA->fetchrow_array;
+	$DBagi_output =			$aryA[0];
+	$ext_context =			$aryA[1];
+	$asterisk_version =		$aryA[2];
+	if ($DBagi_output =~ /STDERR/)	{$AGILOG = '1';}
+	if ($DBagi_output =~ /FILE/)	{$AGILOG = '2';}
+	if ($DBagi_output =~ /BOTH/)	{$AGILOG = '3';}
+	$rec_count++;
+	}
+$sthA->finish();
+
+
+### begin parsing run-time options ###
+if (length($ARGV[0])>1)
+	{
+	if ($ARGV[0] =~ /---/)
+		{
+		### list of command-line array arguments:
+		@ARGV_vars = split(/---/, $ARGV[0]);
+
+		$AGI_output =		$ARGV_vars[0];
+		if (length($ARGV_vars[1]) > 0)
+			{$user =		$ARGV_vars[1];}
+		$log_user_call =	$ARGV_vars[2];
+		$log_call =			$ARGV_vars[3];
+		$record_call =		$ARGV_vars[4];
+		$double_log =		$ARGV_vars[5];
+		$play_recid =		$ARGV_vars[6];
+		$file_recid =		$ARGV_vars[7];
+		$search_phone =		$ARGV_vars[8];
+		$search_method =	$ARGV_vars[9];
+		$search_error =		$ARGV_vars[10];
+		$phone_url =		$ARGV_vars[11];
+		$insert_list =		$ARGV_vars[12];
+		$override_list =	$ARGV_vars[13];
+		$override_code =	$ARGV_vars[14];
+		$override_status =	$ARGV_vars[15];
+
+		if ($AGI_output =~ /STDERR/)	{$AGILOG = '1';}
+		if ($AGI_output =~ /FILE/)	{$AGILOG = '2';}
+		if ($AGI_output =~ /BOTH/)	{$AGILOG = '3';}
+
+		if ($AGILOG) {$agi_string = "Perl Environment Dump:";   &agi_output;}
+		if ($AGILOG) {$agi_string = "$AGI_output|$user|$log_call|$record_call|$uniqueid_log|$double_log";   &agi_output;}
+		}
+	}
+
+
+$|=1;
+while(<STDIN>) 
+	{
+	chomp;
+	last unless length($_);
+	if ($AGILOG)
+		{
+		if (/^agi_(\w+)\:\s+(.*)$/)
+			{
+			$AGI{$1} = $2;
+			$agi_string = "$1|$2";   &agi_output;
+			}
+		}
+	if (/^agi_uniqueid\:\s+(.*)$/)		{$unique_id = $1;}
+	if (/^agi_extension\:\s+(.*)$/)		{$extension = $1;}
+	if (/^agi_accountcode\:\s+(.*)$/)	{$accountcode = $1;}
+	if (/^agi_type\:\s+(.*)$/)			{$type = $1;}
+	if (/^agi_channel\:\s+(.*)$/)		{$channel = $1;}
+	if (/^agi_callerid\:\s+(.*)$/)		{$callerid = $1;}
+	if (/^agi_calleridname\:\s+(.*)$/)	{$calleridname = $1;}
+	}
+
+if ( ($callerid =~ /\".*\"/) && ( (!$calleridname) or ($calleridname =~ /unknown/) ) )
+	{
+	$calleridname = $callerid;
+	$calleridname =~ s/\<\d\d\d\d\d\d\d\d\d\d\>//gi;
+	$calleridname =~ s/\"|\" //gi;
+	}
+
+$callerid =~ s/\D|\'//gi;
+$calleridname =~ s/unknown|\'//gi;
+if ( (!$callerid) or ($callerid =~ /unknown/) )
+	{$callerid = $calleridname;}
+
+if ($calleridname =~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^Y\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^M\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^D\S\d\d\d\d\d\dW\d\d\d\d\d\d\d\d\d\dW/)
+	{
+	$vla_string='';
+	$call_type='';
+	$lead_id='0';
+	if ($calleridname =~ /^V/)
+		{
+		$lead_id = substr($calleridname, 10, 10);
+		$call_type = 'auto-dial';
+		}
+	if ($calleridname =~ /^Y/)
+		{
+		$lead_id = substr($calleridname, 10, 10);
+		$call_type = 'inbound';
+		}
+	if ($calleridname =~ /^M/)
+		{
+		$lead_id = substr($calleridname, 10, 10);
+		$call_type = 'manual-dial';
+		}
+	if ($calleridname =~ /^D/)
+		{
+		$lead_id = substr($calleridname, 9, 10);
+		$call_type = '3-way';
+		}
+	if (length($call_type) > 0)
+		{
+		$lead_id = ($lead_id + 0);
+
+		$stmtA = "SELECT user,campaign_id FROM vicidial_live_agents where lead_id='$lead_id' order by last_update_time desc limit 1;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$VLAuser =		$aryA[0];
+			$VLAcampaign =	$aryA[1];
+			if (length($user) < 1)
+				{$user = $VLAuser;}
+			$vla_string = "Live agent record found: |$VLAuser|$user|$VLAcampaign|";
+			}
+
+		if ($AGILOG) {$agi_string = "Vicidial $call_type call: |$calleridname|$lead_id|     $vla_string";   &agi_output;}
+		}
+	else
+		{
+		if ($AGILOG) {$agi_string = "Not a Vicidial call: $calleridname";   &agi_output;}
+		}
+	}
+else
+	{
+	if ($AGILOG) {$agi_string = "Not a Vicidial call: $calleridname";   &agi_output;}
+	}
+
+
+if (length($user) > 0)
+	{$accountcode = $user;}
+
+
+if ( ($search_phone =~ /Y/) || ($phone_url =~ /Y/) )
+	{
+	### Grab phone NVA values from the database phones table
+	$stmtA = "SELECT nva_call_url,nva_search_method,nva_error_filename,nva_new_list_id,nva_new_phone_code,nva_new_status FROM phones where extension='$accountcode' and server_ip = '$VARserver_ip';";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$nva_call_url =			$aryA[0];
+		$nva_search_method =	$aryA[1];
+		$nva_error_filename =	$aryA[2];
+		$nva_new_list_id =		$aryA[3];
+		$nva_new_phone_code =	$aryA[4];
+		$nva_new_status =		$aryA[5];
+		}
+	$sthA->finish();
+	}
+
+$temp_phone = $extension;
+$search_lead_id = 'NOTFOUND';
+if ($search_phone =~ /Y/)
+	{
+	while (length($temp_phone) > 10)
+		{$temp_phone =~ s/^.//gi;}
+	$stmtA = "SELECT lead_id FROM vicidial_list where phone_number='$temp_phone' order by entry_date desc limit 1;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$search_lead_id = $aryA[0];
+		if ($AGILOG) {$agi_string = "NVA Search, lead found: $search_lead_id|$temp_phone($extension)";   &agi_output;}
+		}
+	else
+		{
+		if ($AGILOG) {$agi_string = "NVA Search, lead not found: $temp_phone($extension)";   &agi_output;}
+		if ($search_error =~ /Y/)
+			{
+			if ($AGILOG) {$agi_string = "NVA playing error file then exiting...";   &agi_output;}
+			$temp_error_filename = 'invalid';
+			if (length($nva_error_filename) > 0 )
+				{$temp_error_filename = $nva_error_filename;}
+			$AGI->stream_file('sip-silence');
+			$AGI->stream_file('sip-silence');
+			$AGI->stream_file('silence');
+			$AGI->stream_file("$temp_error_filename");
+
+			sleep(3);
+			$AGI->hangup();
+
+			exit;
+			}
+		else
+			{
+			if ($insert_list =~ /Y/) 
+				{
+				if (length($override_list) > 1) {$nva_new_list_id = $override_list;}
+				if (length($override_code) > 0) {$nva_new_phone_code = $override_code;}
+				if (length($override_status) > 0) {$nva_new_status = $override_status;}
+
+
+				### insert a record into the vicidial_list table if phone number not found
+				$stmtA = "INSERT INTO vicidial_list (entry_date,status,user,vendor_lead_code,source_id,list_id,called_since_last_reset,phone_code,phone_number,security_phrase,called_count,gmt_offset_now,comments) values('$now_date','$nva_new_status','$accountcode','','PHONE','$nva_new_list_id','Y','$nva_new_phone_code','$temp_phone','$accountcode','1','0','NVA PHONE INSERT');";
+				$affected_rows = $dbhA->do($stmtA);
+				$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
+				$sthA = $dbhA->prepare($stmtB) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArows=$sthA->rows;
+				if ($sthArows > 0)
+					{
+					@aryA = $sthA->fetchrow_array;
+					$search_lead_id = $aryA[0];
+					}
+				$sthA->finish();
+				if ($AGILOG) {$agi_string = "NVA Inserted New Lead: |$affected_rows|$search_lead_id|$nva_new_list_id|$nva_new_phone_code|$nva_new_status|";   &agi_output;}
+				}
+			}
+		}
+	$sthA->finish();
+	}
+
+if ( ( (length($lead_id)<1) || ($lead_id < 1) ) && ($search_lead_id !~ /NOTFOUND/) )
+	{$lead_id = $search_lead_id;}
+
+
+### if set to record this call, start recording ###
+if ($record_call =~ /Y/)
+	{
+	$filename = "$filedate$US$accountcode$US$extension";
+	$filename =~ s/\"|\'//gi;
+	### code to record call goes here ###
+
+	### insert record into recording_log table ###
+	$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,length_in_sec,filename,lead_id,user,location,vicidial_id) values('$channel','$VARserver_ip','$extension','$now_date','$start_epoch','0','$filename','$lead_id','$accountcode','$filename','$unique_id');";
+	$affected_rows = $dbhA->do($stmtA);
+	$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
+	$sthA = $dbhA->prepare($stmtB) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtB ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$recording_id = $aryA[0];
+		}
+
+	if ($file_recid =~ /Y/)
+		{
+		$filename .= "$US$recording_id";
+
+		$stmtA = "UPDATE recording_log SET filename='$filename',location='$filename' where recording_id='$recording_id';";
+		$affected_rows = $dbhA->do($stmtA);
+		}
+	if ($play_recid =~ /Y/)
+		{
+		$AGI->stream_file('id_number');   
+		$AGI->say_digits("$recording_id");
+		}
+
+	%ast_ver_str = parse_asterisk_version($asterisk_version);
+	if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6))
+		{
+		$AGI->exec("Monitor wav|/var/spool/asterisk/monitor/MIX/$filename");
+		}
+	else
+		{
+		$AGI->exec("Monitor","wav,/var/spool/asterisk/monitor/MIX/$filename"); 
+		}
+	}
+
+if ( ($phone_url =~ /Y/) && (length($nva_call_url) > 8) )
+	{
+	### first, find curl binary
+	$curlbin = '';
+	if ( -e ('/bin/curl')) {$curlbin = '/bin/curl';}
+	else 
+		{
+		if ( -e ('/usr/bin/curl')) {$curlbin = '/usr/bin/curl';}
+		else 
+			{
+			if ( -e ('/usr/local/bin/curl')) {$curlbin = '/usr/local/bin/curl';}
+			else
+				{
+				if ($AGILOG) {$agi_string = "ERROR: cannot do nva URL, curl binary not found";   &agi_output;}
+				}
+			}
+		}
+	if ( (length($curlbin) > 4) && ($nva_call_url =~ /http/i) )
+		{
+		if ( (length($lead_id)> 0) && ($lead_id !~ /NOTFOUND/) )
+			{
+			$stmtA = "SELECT lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner FROM vicidial_list where lead_id='$lead_id';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$entry_date =		$aryA[1];
+				$modify_date =		$aryA[2];
+				$status =			$aryA[3];
+				$user =				$aryA[4];
+				$vendor_lead_code =	$aryA[5];
+				$source_id =		$aryA[6];
+				$list_id =			$aryA[7];
+				$phone_number =		$aryA[8];
+				$title =			$aryA[9];
+				$first_name =		$aryA[10];
+				$middle_initial =	$aryA[11];
+				$last_name =		$aryA[12];
+				$address1 =			$aryA[13];
+				$address2 =			$aryA[14];
+				$address3 =			$aryA[15];
+				$city =				$aryA[16];
+				$state =			$aryA[17];
+				$province =			$aryA[18];
+				$postal_code =		$aryA[19];
+				$country_code =		$aryA[20];
+				$gender =			$aryA[21];
+				$date_of_birth =	$aryA[22];
+				$alt_phone =		$aryA[23];
+				$email =			$aryA[24];
+				$security_phrase =	$aryA[25];
+				$comments =			$aryA[26];
+				$called_count =		$aryA[27];
+				$last_local_call_time = $aryA[28];
+				$rank =				$aryA[29];
+				$owner =			$aryA[30];
+				}
+			$sthA->finish();
+
+			$stmtA = "SELECT list_description,campaign_id FROM vicidial_lists where list_id='$list_id';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$list_description =		$aryA[0];
+				$campaign_id =			$aryA[1];
+				}
+			$sthA->finish();
+			}
+
+		$nva_call_url =~ s/^VAR|^ //gi;
+		$nva_call_url =~ s/--A--phone_number--B--/$temp_phone/gi;
+		$nva_call_url =~ s/--A--uniqueid--B--/$unique_id/gi;
+		$nva_call_url =~ s/--A--lead_id--B--/$search_lead_id/gi;
+		$nva_call_url =~ s/--A--extension--B--/$accountcode/gi;
+		$nva_call_url =~ s/--A--channel--B--/$channel/gi;
+		$nva_call_url =~ s/--A--server_ip--B--/$VARserver_ip/gi;
+
+		$nva_call_url =~ s/--A--lead_id--B--/$lead_id/gi;
+		$nva_call_url =~ s/--A--entry_date--B--/$entry_date/gi;
+		$nva_call_url =~ s/--A--modify_date--B--/$modify_date/gi;
+		$nva_call_url =~ s/--A--status--B--/$status/gi;
+		$nva_call_url =~ s/--A--user--B--/$user/gi;
+		$nva_call_url =~ s/--A--vendor_lead_code--B--/$vendor_lead_code/gi;
+		$nva_call_url =~ s/--A--source_id--B--/$source_id/gi;
+		$nva_call_url =~ s/--A--list_id--B--/$list_id/gi;
+		$nva_call_url =~ s/--A--phone_number--B--/$phone_number/gi;
+		$nva_call_url =~ s/--A--title--B--/$title/gi;
+		$nva_call_url =~ s/--A--first_name--B--/$first_name/gi;
+		$nva_call_url =~ s/--A--middle_initial--B--/$middle_initial/gi;
+		$nva_call_url =~ s/--A--last_name--B--/$last_name/gi;
+		$nva_call_url =~ s/--A--address1--B--/$address1/gi;
+		$nva_call_url =~ s/--A--address2--B--/$address2/gi;
+		$nva_call_url =~ s/--A--address3--B--/$address3/gi;
+		$nva_call_url =~ s/--A--city--B--/$city/gi;
+		$nva_call_url =~ s/--A--state--B--/$state/gi;
+		$nva_call_url =~ s/--A--province--B--/$province/gi;
+		$nva_call_url =~ s/--A--postal_code--B--/$postal_code/gi;
+		$nva_call_url =~ s/--A--country_code--B--/$country_code/gi;
+		$nva_call_url =~ s/--A--gender--B--/$gender/gi;
+		$nva_call_url =~ s/--A--date_of_birth--B--/$date_of_birth/gi;
+		$nva_call_url =~ s/--A--alt_phone--B--/$alt_phone/gi;
+		$nva_call_url =~ s/--A--email--B--/$email/gi;
+		$nva_call_url =~ s/--A--security_phrase--B--/$security_phrase/gi;
+		$nva_call_url =~ s/--A--comments--B--/$comments/gi;
+		$nva_call_url =~ s/--A--called_count--B--/$called_count/gi;
+		$nva_call_url =~ s/--A--last_local_call_time--B--/$last_local_call_time/gi;
+		$nva_call_url =~ s/--A--rank--B--/$rank/gi;
+		$nva_call_url =~ s/--A--owner--B--/$owner/gi;
+		$nva_call_url =~ s/--A--campaign_id--B--/$campaign_id/gi;
+		$nva_call_url =~ s/--A--list_description--B--/$list_description/gi;
+		$nva_call_url =~ s/--A--recording_id--B--/$recording_id/gi;
+		$nva_call_url =~ s/--A--recording_filename--B--/$filename/gi;
+
+		$nva_call_url =~ s/&/\\&/gi;
+		$nva_call_url =~ s/ /+/gi;
+
+		### insert a new url log entry
+		$SQL_log = "$nva_call_url";
+		$SQL_log =~ s/;|\||\\//gi;
+		$stmtA = "INSERT INTO vicidial_url_log SET uniqueid='$unique_id',url_date=NOW(),url_type='nva_phone',url='$SQL_log',url_response='';";
+		$affected_rows = $dbhA->do($stmtA);
+		$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
+		$sthA = $dbhA->prepare($stmtB) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$url_id = $aryA[0];
+			}
+		$sthA->finish();
+		my $secW = time();
+
+		@curl_output = `$curlbin $nva_call_url`;
+
+		my $secY = time();
+		my $response_sec = ($secY - $secW);
+
+		$k=0;
+		$full_output='';
+		foreach (@curl_output)
+			{
+			$full_output_raw .= $curl_output[$k];
+			$k++;
+			}
+		$full_output = $full_output_raw;
+		$full_output =~ s/\D//gi;
+		### update url log entry
+		$full_output_raw =~ s/;|\||\\//gi;
+		$stmtA = "UPDATE vicidial_url_log SET url_response='$full_output_raw|$full_output',response_sec='$response_sec' where url_log_id='$url_id';";
+		$affected_rows = $dbhA->do($stmtA);
+
+		if ($AGILOG) {$agi_string = "phone NVA URL response: |$search_lead_id|$full_output|$nva_call_url|$affected_rows|";   &agi_output;}
+		}
+	}
+
+### if set to user log this call, insert user_call_log entry ###
+if ($log_user_call =~ /Y/)
+	{
+	### insert record into user_call_log table ###
+	$stmtA = "INSERT INTO user_call_log SET user='$accountcode', call_date='$now_date', call_type='PHONE_DIAL', server_ip='$VARserver_ip', phone_number='$extension', number_dialed='$extension', callerid='$callerid', group_alias_id='$unique_id', lead_id='$lead_id';";
+	$affected_rows = $dbhA->do($stmtA);
+	}
+
+### if set to log this call, insert call_log entry ###
+if ($log_call =~ /Y/)
+	{
+	### insert record into call_log table ###
+	$stmtA = "INSERT INTO call_log SET uniqueid='$unique_id', channel='$channel', channel_group='PHONE_DIAL', server_ip='$VARserver_ip', type='$type', extension='$accountcode', number_dialed='$extension', caller_code='$callerid', start_time='$now_date', start_epoch='$start_epoch';";
+	$affected_rows = $dbhA->do($stmtA);
+	}
+
+### if set to double-log this call, insert call_log entry with uniqueid appended with a 99 ###
+if ($double_log =~ /Y/)
+	{
+	### insert record into call_log table ###
+	$stmtA = "INSERT INTO call_log SET uniqueid='" . $unique_id . "99', channel='$channel', channel_group='DOUBLE_LOG', server_ip='$VARserver_ip', type='$type', extension='$accountcode', number_dialed='$extension', caller_code='$callerid', start_time='$now_date', start_epoch='$start_epoch';";
+	$affected_rows = $dbhA->do($stmtA);
+	}
+
+
+exit;
+
+
+
+sub get_time_now	#get the current date and time and epoch for logging call lengths and datetimes
+	{
+	($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+	$year = ($year + 1900);
+	$mon++;
+	if ($mon < 10) {$mon = "0$mon";}
+	if ($mday < 10) {$mday = "0$mday";}
+	if ($hour < 10) {$hour = "0$hour";}
+	if ($min < 10) {$min = "0$min";}
+	if ($sec < 10) {$sec = "0$sec";}
+
+	$now_date_epoch = time();
+	$now_date = "$year-$mon-$mday $hour:$min:$sec";
+	$filedate = "$year$mon$mday$hour$min$sec";
+	}
+
+
+sub agi_output
+	{
+	if ($AGILOG >=2)
+		{
+		### open the log file for writing ###
+		open(Lout, ">>$AGILOGfile")
+				|| die "Can't open $AGILOGfile: $!\n";
+		print Lout "$now_date|$script|$agi_string\n";
+		close(Lout);
+		}
+		### send to STDERR writing ###
+	if ( ($AGILOG == '1') || ($AGILOG == '3') )
+		{print STDERR "$now_date|$script|$agi_string\n";}
+	$agi_string='';
+	}
+
+# subroutine to parse the asterisk version
+# and return a hash with the various part
+sub parse_asterisk_version
+	{
+	# grab the arguments
+	my $ast_ver_str = $_[0];
+
+	# get everything after the - and put it in $ast_ver_postfix
+	my @hyphen_parts = split( /-/ , $ast_ver_str );
+
+	my $ast_ver_postfix = $hyphen_parts[1];
+
+	# now split everything before the - up by the .
+	my @dot_parts = split( /\./ , $hyphen_parts[0] );
+
+	my %ast_ver_hash;
+
+	if ( $dot_parts[0] <= 1 )
+		{
+			%ast_ver_hash = (
+				"major" => $dot_parts[0],
+				"minor" => $dot_parts[1],
+				"build" => $dot_parts[2],
+				"revision" => $dot_parts[3],
+				"postfix" => $ast_ver_postfix
+			);
+		}
+
+	# digium dropped the 1 from asterisk 10 but we still need it
+	if ( $dot_parts[0] > 1 )
+		{
+			%ast_ver_hash = (
+				"major" => 1,
+				"minor" => $dot_parts[0],
+				"build" => $dot_parts[1],
+				"revision" => $dot_parts[2],
+				"postfix" => $ast_ver_postfix
+			);
+		}
+
+	return ( %ast_ver_hash );
+	}

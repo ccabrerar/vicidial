@@ -1,0 +1,50 @@
+LOG TABLE DESCRIPTIONS DOC	Started: 2016-11-14	Updated: 2016-11-14
+
+
+This document is meant for reference only, and it may not contain all log tables.
+
+
+call_log - log of Asterisk inbound and outbound calls. Not necessarily accurate for call totals within VICIdial
+callcard_log - Details involving the optional calling card module.
+live_inbound_log - Logs of calls as they enter Call Menus.
+park_log - Logs calls parked by agents.
+recording_log - log for all recordings made within VICIdial or Asterisk.
+user_call_log - manual dial calls placed in agent screen, includes 3way calls
+vicidial_admin_log - Changes made through the admin interface.
+vicidial_agent_log - Agent activity through the agent interface.
+vicidial_agent_skip_log - Logs leads agent skipped in manual preview dial mode.
+vicidial_ajax_log - Special debugging log for agent screen AJAX which must be enabled in System Settings.
+vicidial_api_log - Log of all Agent and Non-Agent API calls to the system.
+vicidial_carrier_log - Details about outbound calls, used in the carrier response log report.
+vicidial_chat_log - Log of converstaions via optional chat module.
+vicidial_closer_log - Contains logs for all ViciDial inbound calls that entered an In-Group(queue).
+vicidial_cpd_log - Logs CPD responses if using Sangoma CPD(Lyra).
+vicidial_dial_log - Logs outbound call information, similar to vicidial_log but contains more info for troubleshooting, including outgoing CID.
+vicidial_did_agent_log - Only populated if "DID Agent Log" is enabled in system settings, will log the user that received a call from a DID
+vicidial_did_log - Logs of all inbound calls as they came into the system
+vicidial_dnc_log - Logs adding/deleting from the DNC lists.
+vicidial_dnccom_filter_log - Log for the optional DNC.com integration.
+vicidial_dtmf_log - Logs DTMF received within Asterisk.
+vicidial_email_log - Log of inbound/reply emails.
+vicidial_grab_call_log - Logs the agent grabs of calls waiting in queue
+vicidial_lead_search_log - Logs of agent lead search events.
+vicidial_list_update_log - Logs the optional list update process(which has to be manually set up on server)
+vicidial_log - Contains logs for all ViciDial-initiated outbound calls, much more information than call_log, and more accurate.
+vicidial_log_extended - Full caller_code and URL trigger information for inbound and outbound calls.
+vicidial_log_noanswer - Only populated if "No-Answer Log" is enabled in system settings, will log no-answer calls
+vicidial_manager_chat_log - Log of manager to agent chats.
+vicidial_monitor_log - Will log agent monitoring sessions that use the monitoring AGI script
+vicidial_nanpa_filter_log - Logs filtering processes of the optionaly NANPA cellphone filtering, if enabled on your system
+vicidial_outbound_ivr_log - Will log call menu entries from outbound auto-dial survey calls
+vicidial_process_trigger_log - There is a process triggering feature on the back end, this logs those actions
+vicidial_qc_agent_log - Log for quality control module
+vicidial_recording_access_log - Logs who accessed or attempted to access recordings, if that System Setting feature is enabled.
+vicidial_remote_agent_log - logs calls taken by remote agents.
+vicidial_report_log - Logs who ran a report, how long it took, etc.
+vicidial_timeclock_audit_log - This is separate from the timeclock and logs all clock punches, is not altered if a manager alters a timeclock entry
+vicidial_timeclock_log - Log for the timeclock, i.e. punching in/out.
+vicidial_url_log - Used by the URL report, logs URL responses and other details from URL calls initiated by VICIdial (i.e. dispo call url)
+vicidial_user_closer_log - logs the closer(in-group) selections by the agents in the agent screen.
+vicidial_user_log - Logs agent screen login and logout activity.
+vicidial_user_territory_log - Logs the Territory selections by the agents in the agent screen.
+vicidial_xfer_log - logs of transfers of calls from ViciDial agents to other in-groups(queues)

@@ -1,0 +1,20 @@
+--- channels/chan_sip-orig.c	2013-04-12 11:00:22.000000000 -0400
++++ channels/chan_sip.c	2013-04-12 17:18:33.000000000 -0400
+@@ -13879,8 +13879,16 @@
+ 	sipmethod = find_sip_method(msg);
+ 
+ 	owner = p->owner;
+-	if (owner) 
++	if (owner) {
++		/* Send manager event for sip hangup cause code */
++		if ((resp >= 400) && (resp <= 900))
++			manager_event(EVENT_FLAG_SYSTEM, "SIP-Hangup-Cause", "ChannelDriver: SIP\r\nChannel: %s\r\nCallerIDName: %s\r\nUniqueid: %s\r\nResult: %i|%s\r\n", p->owner->name, p->owner->cid.cid_name, p->owner->uniqueid, resp, rest);
++
+ 		owner->hangupcause = hangup_sip2cause(resp);
++	} else {
++	if ((resp >= 400) && (resp <= 900))
++		manager_event(EVENT_FLAG_SYSTEM, "SIP-Response", "ChannelDriver: SIP\r\nMethod: %s\r\nResult: %i|%s\r\n", sip_methods[sipmethod].text, resp, rest);
++	}
+ 
+ 	/* Acknowledge whatever it is destined for */
+ 	if ((resp >= 100) && (resp <= 199)) {

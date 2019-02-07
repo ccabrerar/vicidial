@@ -1,0 +1,969 @@
+Language has not been changed, please try again|Jazyk nebol zmenený, skúste to prosím znova||
+vdc_LB_blank_OFF.gif|vdc_LB_blank_OFF.gif||
+Name:|Názov:||
+vdc_LB_active.gif|vdc_LB_active_sk.gif||
+vdc_LB_paused.gif|vdc_LB_paused_sk.gif||
+Calls in Queue|Požaduje, aby vo fronte||
+Note: a dial prefix of %1s will be added to the beginning of this number|Poznámka: dial predpona% 1s bude pridaná na začiatok tohto čísla||
+Manual Queue is On|Ručné fronty je On||
+SEND TO MY VOICEMAIL|POSLAŤ DO MOJEJ HLASOVEJ SCHRÁNKY||
+Agent Redirect|Zástupca Presmerovanie||
+click here to continue|kliknite tu pre pokračovanie||
+Live Extension Check|Overiť aktívnu pobočku||
+Agent Screen Opener|Zástupca Screen otvárač||
+Avatars disabled on your system|Avatary zakázaná v systéme||
+error: avatar not valid|Chyba: avatar neplatný||
+error: API user not valid|Chyba: užívateľskú API nie je platný||
+VERSION|VERZIA||
+BUILD|POSTAVENÉ||
+USER|Užívateľ ||
+Avatar Soundboard Display Script|Avatar Soundboard Display Script||
+Max rank count|Max pozície Počet||
+stop audio|zastaviť audio||
+Available Chats:|K dispozícii Chatovanie:||
+SEND MESSAGE|Poslať správu||
+Privacy ON|Ochrana osobných údajov ON||
+CLEAR|CLEAR||
+START CHAT|START CHAT||
+INVITE|INVITE||
+END CHAT|END CHAT||
+Enter email address of guest:|Zadajte e-mailovú adresu hosťa:||
+SEND|SEND||
+Custom Fields Disabled:|Vlastné polia Disabled:||
+Custom Form Output:|Vlastné Form Výstup:||
+Agent Form Display Script|Agenta formulár Displej Script||
+OFF|OFF||
+YES|ÁNO||
+Conf Extension Check|Overiť konferenčnú pobočku||
+Conf Exten %1s is not valid|Conf roz %1s nie je platný||
+Conf Exten %1s is not valid or Exten %2s is not valid|Conf roz %1s nie je platný alebo roz %2s nie je platný||
+Conference %1s has been registered to %2s|Konferenčné %1s bol zaregistrovaný %2s||
+LOGOUT PROCESSING...|ODHLÁSENIE SPRACOVANIE ...||
+LOGOUT PROCESS COMPLETE, YOU MAY NOW CLOSE YOUR BROWSER OR LOG BACK IN|ODHLÁSENIE proces za ukončený, teraz môžete zavrieť prehliadač alebo sa prihlásiť BACK IN||
+PLEASE SELECT A LANGUAGE|Zvoľte jazyk||
+to campaign|na kampaň||
+DONE: no lists in campaign_check|Done: žiadne zoznamy v campaign_check||
+DONE: dispo is not a sale status:|Dané: dispo nie status predaj:||
+Invalid server_ip:|Neplatný server_ip:||
+LIVE INBOUND CALL|ŽIVÝ PRÍCHODZÍ HOVOR||
+CallerID|IDVOLAJÚCEHO||
+Number Dialed:|Volané číslo:||
+DONE: %1s duplicates found,|Dané: nájdené %1s duplikáty,||
+DONE: no duplicates found within|Dané: duplicity nachádzajú v||
+Initializing..|Inicializácia ..||
+Active Extensions|Aktívne pobočky||
+Data Goes Here|Tu sú dáta||
+Trunk Action|Trunk akcia||
+Local Action|Lokálna akcia||
+Conferences List|Zoznam konferencií||
+Click on a conference room number on the left for info on that conference|Kliknite ľavým tlačidlom na konferenciu pre získanie informácie||
+STOP|STOP||
+START|START||
+Refresh rate:|Obnovovacia frekvencia:||
+Faster|Rýchlejšie||
+Slower|Pomalšie||
+INBOUND CALLS:|Prichádzajúcich hovoroch:||
+astGUIclient web-client VERSION: %1s BUILD: %2s|astGUIclient web-client verzia: %1s BUILD: %2s||
+edit|editovať||
+SUBMIT FAVORITES CHANGES - requires logout|POTVRDIT FAVORIZOVANÉ ZMENY – vyžaduje sa odhlásenie||
+BACK TO MAIN WINDOW - ignore changes made|BACK TO MAIN OKNÁ - ignorovať zmeny||
+Phone calling from:|Telefón volanie z:||
+Call selected extension|Volať vybrané pobočky||
+Call selected vmail box|Volať vybrané hlasové schránky||
+PARKED CALLS:|Zaparkoval VOLANIE:||
+VOICEMAIL|HLASOVÁ SCHRÁNKA||
+NEW:|NOVINKA:||
+OLD:|OLD:||
+PARKED CALLS|ZAPARKOVANIE HOVOROV||
+LOCAL DIAL EXTENSIONS|VOLANIE LOKÁLNYCH POBOČIEK||
+OUTBOUND CALLS:|Odchádzajúcich volaní:||
+Send to this number|Poslať na toto číslo||
+Conferences:|konferencie:||
+(click on a number below to send to a conference)|(Kliknite na číslo pod poslať do konferencie)||
+Send my channel too|Poslať môj kanál tiež||
+Conferences Menu|Menu konferencií||
+LOCAL Extensions Dial|Volanie LOKÁLNYCH pobočiek||
+LIVE CALL TRANSFER|PRESMEROVANIE ŽIVÉHO HOVORU||
+Channel to be transferred:|Kanál majú byť prevedené:||
+Extensions:|rozšírenie:||
+Extensions Menu|Menu pobočiek||
+Send to selected extension|Poslať do vybranej pobočky||
+Send to selected vmail box|Poslať do vybranej odkazovej schránky||
+Listen Trunk|Počúvať trunk||
+Back to Main Window|Säť do zakladného okna||
+LOCAL HANGUP|Zloženie lokálne||
+Active Local Menu|Aktívne lokálne menu||
+Hangup Local|Zložiť lokálne||
+Hijack Local|Capturar Local||
+Listen Local|Počúvať lokálne||
+Hijack Trunk|Capturar Trunk||
+IN-NUMBER|V-ČÍSLE||
+CALLER ID|CALLER ID||
+CALL ID|CALL ID||
+PARKED BY|ZAPARKOVANIE PRE||
+PARKED TIME|ČAS ZAPARKOVANIA||
+PICKUP|PREVZIAŤ||
+NO ONE|NO ONE||
+CONFERENCE|KONFERENCIA||
+Registered to|Pprihlásenie do||
+Enter Conference|Vložiť konferenciu||
+Send DTMF|Poslať DTMF||
+Dial From Conf|Volanie z konferencie||
+LIVE CALLS IN THIS CONFERENCE|ŽIVÉ HOVORY V TEJTO KONFERENCII||
+AVAILABLE EXTENSIONS|DOSTUPNÉ POBOČKY||
+FAVORITES|Obľúbené||
+up.gif|up.gif||
+down.gif|down.gif||
+remove.gif|remove.gif||
+  - ACTIVE DISPLAY PAUSED -|   - ACTIVE DISPLAY pozastavené -||
+Welcome %1s, you are logged into this phone: %2s - %3s/%4s on %5s|Vitajte %1s, že ste prihlásení do tohto telefónu: %2s - %3s/4s% na %5s||
+agc_tab_main.gif|agc_tab_main.gif||
+agc_tab_active_lines.gif|agc_tab_active_lines.gif||
+agc_tab_conferences.gif|agc_tab_conferences.gif||
+TRUNK HANGUP|TRUNK hangup||
+Active Trunks Menu|Aktívne Prípojky Menu||
+Hangup Trunk|Zložiť trunk||
+PARK|PARK||
+CALL DATE/TIME|DÁTUM HOVORU/ČAS||
+You can only monitor Zap channels|Možete monitorovať len ZAP kanály||
+LIVE CALLS ON THIS PHONE|ŽIVÉ HOVORY NA TOMTO TELEFÓNE||
+CLIENT CHANNEL|KLIENTSKÝ KANÁL||
+RECORD|ZÁZNAM ||
+XFER|xfer||
+agc_check_voicemail_ON.gif|agc_check_voicemail_ON.gif||
+agc_check_voicemail_BLINK.gif|agc_check_voicemail_BLINK.gif||
+astGUIclient web client: Phone Login|astGUIclient web klient: Telefón Prihlásenie||
+VERSION: %1s BUILD: %2s|VERZIA: %1s BUILD: %2s||
+astGUIclient web client|web klient astGUIclient||
+agc_check_voicemail_OFF.gif|agc_check_voicemail_OFF.gif||
+astGUIclient web client: Login|web klient astGUIclient: Login||
+agc_tab_astguiclient.gif|agc_tab_astguiclient.gif||
+Appointment Date/Time:|Vymenovanie Date/Time:||
+Appointment Notes:|Vymenovanie Poznámky:||
+Please click SUBMIT to commit the changes|Prosím, kliknite na tlačidlo Odoslať potvrdenie zmeny||
+Sunday in October to First Sunday in April|Nedeľa v októbri na prvú nedeľu v apríli||
+First Sunday October to Third Sunday March|Prvá nedeľa október až tretiu nedeľu marca||
+Last Sunday in September to First Sunday in April|Posledná nedeľa v septembri na prvú nedeľu v apríli||
+Third Sunday October to Last Sunday February|Tretiu nedeľu október až minulú nedeľu februára||
+No DST Method Found|No DST Method nájdený||
+Parked Calls Display|Zobraziť zaparkované hovory||
+Exten %1s is not valid or protocol %2s is not valid|Roz %1s nie je platný alebo protokol %2s nie je platný||
+ViciDial Notes|Vicidial Notes||
+Order ID:|ID zákazky:||
+Second Sunday March to First Sunday November|Druhá nedeľa od marca do prvej nedeľu november||
+First Sunday April to Last Sunday October|Prvá nedeľa od apríla do poslednej nedele október||
+Last Sunday March to Last Sunday October|Minulú nedeľu od marca do poslednej nedele október||
+Last Sunday October to Last Sunday March|Minulú nedeľu októbra do poslednej nedele marca||
+First Sunday October to Last Sunday March|Prvá nedeľa októbra do poslednej nedele marca||
+ERROR: no custom list fields|ERROR: bez vlastného zoznamu poľa||
+ERROR: no custom list fields table|ERROR: nie vlastnou zoznam polí tabuľky||
+NONE|NONE||
+NOTES|POZNÁMKY||
+There are no custom fields for this list|Nie sú žiadne vlastné pole pre tento zoznam||
+HELP|HELP||
+ERROR: no custom data for this lead: |ERROR: žiadna vlastné dáta pre túto olovo:||
+Conference %1s, Stage %2s is not valid or queryCID %3s is not valid, Originate command not inserted|Konferenčné %1s, Pódium %2s nie je platný alebo queryCID %3s nie je platné pochádzajú príkaz nie je vložená||
+Volume command sent for Conference %1s, Stage %2s Channel %3s on %4s|Príkaz Volume poslal pre konferencie %1s, Stage %2s Kanál %3s na %4s||
+Invalid server_ip|neplatný server_ip||
+Invalid session_name|neplatný session_name||
+Live Extensions|Aktívne pobočky||
+Busy Extensions|Obsadené pobočky||
+Outside Lines|Vonkajšie linky||
+Local Extensions|Lokálne pobočky||
+Conferences|Konferencie||
+Channel %1s is not live on %2s, %3s command not inserted|Kanál %1s nie žiť %2s, 3s% príkaz nie je vložená||
+%1s command sent for Channel %2s on %3s| %1s odoslaný príkaz na Kanál %2s na %3s||
+Channel %1s is not valid or exten %2s is not valid or filename: %3s is not valid, %4s command not inserted|Kanál %1s nie je platné alebo roz %2s nie je platná alebo názov súboru: %3s nie je platný, %4s príkaz nie je vložená||
+ExtraChannel %1s|ExtraChannel %1s||
+ to %1s on %2s|  k %1s na %2s||
+RedirectXtra command sent for Channel %1s on %2s and|Príkaz RedirectXtra poslal pre Kanál% 1 s na %2s a||
+Redirect command sent for Channel %1s on %2s|Príkaz odoslaný na Kanál% 1 s na %2s presmerovanie||
+Channel %1s is not valid or queryCID %2s is not valid or filename: %3s is not valid, %4s command not inserted|Kanál %1s nie je platná ani queryCID %2s nie je platná alebo názov súboru: %3s nie je platný, %4s príkaz nie je vložená||
+Hungup %1s on %2s|Hungup %1s na %2s||
+session_id %1s must be set|session_id %1s musí byť nastavený||
+RedirectXtra command sent for Channel %1s and|Príkaz RedirectXtra poslal pre Kanál %1s a||
+Channel %1s is not live on %2s, Redirect command not inserted|Kanál %1s nie žiť %2s, Presmerovanie príkaz nie je vložená||
+No Local agent to send call to, Redirect command not inserted|No Miestny zástupca poslať hovor, príkaz presmerovanie nie je vložená||
+RedirectXtraCX command sent for Channel %1s on %2s and|RedirectXtraCX odoslaný príkaz na Kanál% 1 s na %2s a||
+Redirect Action not sent|Presmerovanie akcia nebola odoslaná||
+Cannot find empty vicidial_conference on %1s, Redirect command not inserted|Nemožno nájsť prázdne vicidial_conference na %1s, príkaz presmerovanie nie je vložená||
+RedirectFromPark Action not sent|RedirectFromPark Akcia nebola odoslaná||
+RedirectName Action not sent|RedirectName Akcia nebola odoslaná||
+RedirectNameVmail Action not sent|RedirectNameVmail Akcia nebola odoslaná||
+ExtraChannel %1s must be greater than 2 characters|ExtraChannel %1s musí byť väčší ako 2 znaky||
+RedirectVD Action not sent|RedirectVD Akcia nebola odoslaná||
+parkedby %1s must be set|parkedby %1s musí byť nastavený||
+RedirectToPark Action not sent|RedirectToPark Akcia nebola odoslaná||
+Channel %1s is not valid or queryCID %2s is not valid, Hangup command not inserted|Kanál %1s nie je platný alebo queryCID %2s nie je platné, Zavesiť príkaz nie je vložená||
+Call %1s %2s is not live on %3s, Checking Live Channel|Zavolajte %1s %2s nie žiť %3s, kontrola sledovaný kanál||
+Channel %1s is not live on %2s, Hangup command not inserted|Kanál %1s nie žiť %2s, Zavesiť príkaz nie je vložená||
+Channel %1s in use by another agent on %2s, Hangup command not inserted|Kanál %1s používaný iným zástupcom na %2s, Zavesiť príkaz nie je vložená||
+Hangup command sent for Channel %1s on %2s|Zavesiť odoslaný príkaz na Kanál% 1 s na %2s||
+auto_dial_level %1s must be set|auto_dial_level %1s musí byť nastavený||
+campaign %1s must be set|Kampaň %1s musí byť nastavený||
+uniqueid %1s must be set|uniqueid %1s musí byť nastavený||
+lead_id %1s must be set|lead_id musí byť nastavený %1s||
+OriginateNameVmail Action not sent|OriginateNameVmail Akcia nebola odoslaná||
+ Exten %1s is not valid or queryCID %2s is not valid, Originate command not inserted|  Roz %1s nie je platný alebo queryCID %2s nie je platný, príkaz Vymyslieť nie je vložená||
+ You are not allowed to dial into other agent sessions|  Tie sa nesmie volať do iných agentov zasadnutia||
+conference %1s is not valid or ext_context %2s or queryCID %3s is not valid, Hangup command not inserted|konferenčné %1s nie je platný alebo ext_context %2s alebo queryCID %3s nie je platné, Zavesiť príkaz nie je vložená||
+queryCID %1s must be greater than 14 characters|queryCID %1s musí byť väčšia ako 14 znakov||
+extenName %1s must be set|extenName %1s musí byť nastavený||
+ext_context %1s must be set|ext_context %1s musí byť nastavený||
+ext_priority %1s must be set|ext_priority %1s musí byť nastavený||
+OriginateName Action not sent|OriginateName Akcia nebola odoslaná||
+exten %1s must be set|roz %1s musí byť nastavený||
+Originate command sent for Exten %1s Channel %2s on %3s|Príkaz odoslaný k roz %1s Kanál %2s na %3s pochádzajú||
+One of these variables is not valid:|Jedna z týchto premenných nie je platný:||
+Channel %1s must be greater than 2 characters|Kanál %1s musí byť väčší ako 2 znaky||
+COPY MESSAGE|COPY MESSAGE||
+REPLY|ODPOVEĎ||
+AGENT email frame|AGENT email frame||
+ERROR - ID variable missing|ERROR - ID premenná chýba||
+Manager Send: |Manažér Odoslať:||
+Exten %1s is not valid or queryCID %2s is not valid, Originate command not inserted|Roz %1s nie je platný alebo queryCID %2s nie je platný, príkaz Vymyslieť nie je vložená||
+Phone-Only Login|Phone-Only Login||
+Phone web client: Phone Login|Telefón web klient: Telefón Prihlásenie||
+Phone web client|Telefón webového klienta||
+ Phone: |  telefón:||
+Your system does not have the email setting enabled|Systém nemá nastavenie e-mailu povolené||
+ERROR: Invalid File Name:|Chyba: Neplatný názov súboru:||
+mail could not be sent!|pošta sa nepodarilo odoslať!||
+Date received:|Dátum prijatia vzorky:||
+From:|od:||
+Subject:|Predmet:||
+Attachments:|prílohy:||
+Response:|odpoveď:||
+Reply:|odpoveď:||
+OK|OK||
+This agent screen was not opened properly.|Táto obrazovka agent bol riadne otvorený||
+Agent Alert!|Zástupca Poplach!||
+alert.gif|alert.gif||
+Alert Box|Poplach Krabica||
+Phone web client: Login|Telefón webového klienta: Login||
+Group Alias Selection|Skupina Alias Výber||
+SELECT A DIAL IN-GROUP :|VYBERTE vytočiť-GROUP:||
+Dial In-Group Selection|Vytočiť In-Group výber||
+ALERT :|Poplach:||
+Another live agent session was open using your user ID. It has been disabled. Click OK to continue to the agent screen.|ďalšie živé agenta relácia bola otvorená pod svojím užívateľským menom. bola zakázaná. kliknite na tlačidlo OK a pokračujte na obrazovke agenta||
+SELECT A PRESET :|Vyberte predvolenú:||
+Presets Selection|Presets Selection||
+SELECT A GROUP ALIAS :|Vyberte skupinu Alias:||
+Close Info Box|Zavrieť Info Box||
+Lead Info|Olovo Info||
+SELECT A PAUSE CODE :|VYBERTE pauzu KÓD:||
+Pause Code Selection|Pauza Kód Výber||
+Phone Number Fields:|Telefónne číslo Pole:||
+Main Phone Number|Hlavné telefónne číslo||
+Alternate Phone Number|Alternatívne telefónne číslo||
+Address3 Phone Number|Address3 telefónne číslo||
+Lead ID:|Vedúci ID:||
+SEARCH RESULTS:|Výsledky hľadania:||
+CALL NOTES LOG:|CALL poznámok protokolu:||
+Call Notes List|Výzva Poznámky Zoznam||
+Dial Override:|Vytočiť Prepísať:||
+(digits only please)|(Len prosím, číslice)||
+Dial Now|Volať znova||
+Preview Call|Náhľad Výzva||
+CLOSER INBOUND GROUP SELECTION|Užší výber prichádzajúce skupiny||
+BLENDED CALLING(outbound activated)|Blended CALLING (odchádzajúce aktívny)||
+RESET|RESET||
+TERRITORY SELECTION|VÝBER ÚZEMIA||
+Channel|kanál||
+MY CALLBACK ONLY|LEN MOJE PREPLÁNOVANÉ HOVORY||
+BLENDED CALLING|ZMIESANE VOLANIE||
+AGENT CALL LOG:|AGENTI CALL LOG:||
+Call log List|Zoznamu hovorov||
+SEARCH FOR A CONTACT:|Vyhľadať kontakt:||
+Notes: when doing a search for a contact, wildcard or partial search terms are not allowed. <br />Contact search requests are all logged in the system.|Poznámky: Pri hľadaní pre kontakt, zástupný znak alebo čiastočné hľadané výrazy nie sú povolené. <br /> žiadosti Kontakt vyhľadávania sú zaznamenané v systéme.||
+Office Number:|Kancelária||
+First Name:|Meno:||
+Last Name:|Priezvisko:||
+BU Name:|BU Meno:||
+Department:|oddelenie:||
+Group Name:|Názov skupiny:||
+Job Title:|Názov pozície:||
+SUBMIT SEARCH|Odoslať hľadanie||
+CONTACTS SEARCH RESULTS:|KONTAKT VYHĽADÁVANIE:||
+Search Results|VÝSLEDKY HĽADANIE||
+SEARCH FOR A LEAD:|Hľadať LEAD:||
+Notes: when doing a search for a lead, the phone number, lead ID or %1s are the best fields to use.|Poznámky: Pri hľadaní pre vedenie, telefónne číslo, olovo ID alebo %1s sú najlepšie polia používať.||
+Using the other fields may be slower. Lead searching does not allow for wildcard or partial search terms.|Použitie iných oblastiach môže byť pomalší. Vedúci vyhľadávania neumožňuje zástupných alebo čiastočnú vyhľadávacie termíny||
+Lead search requests are all logged in the system.|Olovo hľadanie požiadavky sú zaznamenané v systéme||
+Dial Lead ID:|Vytočiť Lead ID:||
+Search Existing Leads:|Hľadať Existujúce Vedie:||
+(This option if checked will attempt to find the phone number in the system before inserting it as a new lead)|(Táto voľba pokiaľ zaškrtnuté sa pokúsi nájsť telefónne číslo v systéme, pred vložením ho ako nový olova)||
+If you want to dial a number and have it NOT be added as a new lead, enter in the exact dialstring that you want to call in the Dial Override field below. To hangup this call you will have to open the CALLS IN THIS SESSION link at the bottom of the screen and hang it up by clicking on its channel link there.| Ak chcete vytočiť číslo, a nemáte ho v novom zozname kontaktov, vložte volané číslo , ktoré chcete volať do poľa Prepísať volanie. Pre ukončenie hovoru, budete musieť otvoriť odkaz HOVORY V TEJTO RELÁCII v spodnej časti obrazovky, a ukončiť požadovaný kanál||
+Dial Code:|Volať kód:||
+(This is usually a 1 in the USA-Canada)|(Toto je zvyčajne 1 v USA-Kanada)||
+Phone Number:|Telefónne číslo:||
+(digits only)|(len číslice)||
+NEW MANUAL DIAL LEAD FOR %1s in campaign %2s:|Nová príručka DIAL LEAD FOR %1s v kampani %2s:||
+Enter information below for the new lead you wish to call.|Zadajte nižšie uvedené informácie pre nový zoznam kontaktov, ktorý chcete volať||
+Note: all new manual dial leads will go into list %1s|Poznámka: všetky nové ručné voľby vedie pôjde do zoznamu %1s||
+View Comment History:|Zobraziť komentár History:||
+Previous Callback Information:|Predchádzajúci zavolať späť informácie:||
+CALLBACKS FOR AGENT %1s:<br />To see information on one of the callbacks below, click on the INFO link. To call the customer back now, click on the DIAL link. If you click on a record below to dial it, it will be removed from the list.|Spätné volanie PRE Zástupca %1s: <br /> Ak chcete zobraziť informácie o jednej z nižšie uvedených spätné volania, kliknite na odkaz INFO. Ak chcete volať zákazníkovi späť, kliknite na odkaz číselníku. Pokiaľ kliknete na záznam nižšie ho vytočiť, bude odstránený zo zoznamu.||
+DISPOSITION CALL :|DISPOZÍCIE CALL:||
+End-of-call Disposition Selection|Ukončenie hovoru vybranej dispozície||
+CLEAR FORM|VYMAZAŤ FORMULÁR||
+WEB FORM SUBMIT|webové stránky odoslaní formulára||
+Select a CallBack Date :|Vyberte zavolať späť Dátum:||
+Hour:|hour:||
+Minutes:|zápis:||
+CB Comments:|CB Komentáre:||
+There is a time synchronization problem with your system, please tell your system administrator|Je synchronizácia času problém s vašim systémom, povedzte to, prosím, správcu systému||
+Any changes made to the customer information below at this time will not be comitted, You must change customer information before you Hangup the call.|Všetky zmeny vykonané v informáciách o zákazníkovi teraz , budú vykonané, musíte zmeniť informácie o zákazníkovi pred ukončením hovoru||
+Call Agent Again|Volať agenta znova||
+Customer has hung up:|Zákazník zavesil:||
+Finish and Disposition Call|Ukončenie a umiestnenie hovoru||
+Close Message|Zavrieť správu||
+Your session has been disabled|Vaša relácia bola ukončená||
+vdc_XB_presetsbutton.gif|vdc_XB_presetsbutton.gif||
+vdc_XB_contactsbutton.gif|vdc_XB_contactsbutton.gif||
+Available Agents Transfer:|Dostupné zástupcovia Prenos:||
+Extended Alt Phone Information:|Rozšírená Alt Telefón Informácie:||
+Alt Phone Info|Alt Phone Info||
+No one is in your session:|Nikto nie je v relácii:||
+vdc_XB_seconds.gif|vdc_XB_seconds.gif||
+vdc_XB_channel.gif|vdc_XB_channel.gif||
+CONSULTATIVE|PORADNÝ||
+vdc_XB_number.gif|vdc_XB_number.gif||
+AGENTS|PRÍPRAVKY||
+DIAL OVERRIDE|Prepísanie volania||
+FAST DIAL|RÝCHLE VOLANIE||
+VIEW CALL LOG|POHĽAD Denník hovorov||
+Server:|server:||
+Alert is ON|záznam je na||
+Alert is OFF|upozornenie je vypnuté||
+seconds:|sekúnd:||
+Your Status:|Váš stav:||
+Calls Dialing:|Volanie Vytáčanie:||
+D1 - DIAL|D1 - DIAL||
+D2 - DIAL|D2 - DIAL||
+Calls In Queue:|Hovory v Queue:||
+X ACTIVE CALLBACKS|X AKTÍVNE spätné volania||
+Other Agents Status:|Ďalšie zástupcovia Status:||
+Agents View +|Zástupcai Zobraziť +||
+WebPhone View -|WebPhone View -||
+AGENT SCRIPT|AGENT SCRIPT||
+refresh|Osviežiť||
+reset form|vymazať formulár||
+Lead Dispositioned As:|Olovo Dispositioned ako:||
+Disposition Hot Keys:|Dispozícia klávesové skratky:||
+When active, simply press the keyboard key for the desired disposition for this call. The call will then be hungup and dispositioned automatically:|Ak je aktívny, stačí stlačiť klávesovú tlačidlo pre požadované dispozície pre túto výzvu. Hovor potom bude hungup a dispositioned automaticky:||
+vdc_XB_header.gif|vdc_XB_header.gif||
+SELECT A GROUP TO SEND YOUR CALL TO|Vyberte skupinu poslať svoje výzva na||
+LEAD SEARCH|HĽADANIE LEAD||
+view notes|zobraziť poznámky||
+MANUAL DIAL|RUČNÉ VOLANIE||
+Customer Time:|Zákazník Čas:||
+Channel:|kanál:||
+Customer Information:|Informácie pre zákazníkov:||
+ ALT PHONE DIAL|  ALT telefónom s priamou voľbou||
+RECORDING FILE:|Nahraný súbor:||
+RECORD ID:|RECORD ID:||
+LIVE|LIVE||
+session ID:|relácie ID:||
+Agent Screen|agent Screen||
+pixel.gif|pixel.gif||
+vdc_tab_script.gif|vdc_tab_script.gif||
+vdc_tab_form.gif|vdc_tab_form.gif||
+vdc_tab_email.gif|vdc_tab_email.gif||
+TERRITORIES|ÚZEMIA||
+GROUPS|SKUPINY||
+LOGOUT|ODHLÁSENIE||
+ring|krúžok||
+: %1s on Phone: %2s|: %1s na telefóne: %2s||
+Logged in as User|Ste prihlásený ako užívateľ||
+YOU DO NOT HAVE PERMISSIONS TO TRANSFER CALLS|Nemáte oprávnenie k prepojeniu hovorov||
+HIDE|HIDE||
+show comment history|výstava komentár história||
+hide comment history|skryť komentár história||
+vdc_XB_hotkeysactive_OFF.gif|vdc_XB_hotkeysactive_OFF.gif||
+Dial Next Call|Vytočiť ďalšie volania||
+Dial Countdown:|Vytočiť odpočítavanie:||
+Time On Park:|Time On Park:||
+Customer Hung-up, 3-way Call Ended Automatically|Zákazník Hung-up, 3-way volanie končiace automaticky||
+CUSTOMER 3WAY HANGUP|ZÁKAZNÍK 3WAY hangup||
+JAN|JAN||
+FEB|február||
+MAR|MAR||
+APR|apríla||
+MAY|Máj||
+JUN|JUN||
+JLY|JLY||
+AUG|augusta||
+SEP|septembra||
+OCT|október||
+NOV|novembra||
+DEC|decembra||
+ACTIVE DISPLAY PAUSED|ZOBRAZIT AKTÍVNU PAUZU||
+ORDER|ORDER||
+LEAD PREVIEW|PREZRIET ZOZNAM KONTAKTOV||
+ALT PHONE DIAL|ALTER. ČÍSLO TELEFÓNU||
+Hide conference call channel information|Skryť informáciu o konferenčný kanále||
+Show conference call channel information|Ukázať informáciu o konferenčnom kanále||
+vdc_XB_hotkeysactive.gif|vdc_XB_hotkeysactive.gif||
+Call Agent Webphone|Telefonovať Zástupca WebPhone||
+Searching...|Vyhľadávanie ...||
+maximize|maximalizovať||
+Next Call Pause Set|Ďalšie Telefonovať Pause Set||
+YOU MUST BE PAUSED TO CHANGE GROUPS|Musíte byť pozastavené NA ZMENU ZOSKUPENIA||
+Manager|Manažér||
+has selected your in-group choices|vybrala si v skupine-voľby||
+YOU MUST BE PAUSED TO CHANGE TERRITORIES|MUSÍTE pozastavený ZMENIŤ ÚZEMIA||
+You must choose a date|Musíte zmeniť dátum||
+Select a Date Below|Vyberte dátum nižšie||
+DIAL ALERT:|DIAL POZOR:||
+TIMER NOTIFICATION:|TIMER OZNÁMENIE:||
+ENTER A PAUSE CODE|VLOŽIŤ KÓD PAUZY||
+Invalid Day, Month, or Year range detected. Please correct and submit again.|Zistený neplatný deň, mesiac, alebo rok rozsah. Opravte a predložiť znova.||
+You have been paused for too long, you have been logged out of your session|Tie boli pozastavené príliš dlho, už ste boli odhlásený zo svojho zasadania||
+CLICK HERE TO LOG IN AGAIN|KLIKNITE TU NA ZNOVU PRIHLÁSENIE||
+Call Wrapup:|Volanie Wrapup:||
+seconds remaining in wrapup|sekúnd zostávajúcich na wrapup||
+Close Window|zavrieť okno||
+YOU MUST BE PAUSED TO GRAB CALLS IN QUEUE|Musíte byť sa odmlčal, aby GRAB VOLANIA do fronty||
+Hide Calls In Queue|Skryť žiada, aby vo fronte||
+Show Calls In Queue|Zobraziť žiada, aby vo fronte||
+Agents View|agenti Zobraziť||
+WebPhone View|WebPhone View||
+YOU MUST BE PAUSED TO VIEW YOUR CALL LOG|MUSÍTE byť pozastavená Ak chcete zobraziť CALL LOG||
+Invalid Date Format. Please correct and submit again.|Neplatný Formát dátumu. Opravte a predložiť znova.||
+STILL A LIVE CALL! Hang it up then you can log out.|UŽ PREBIEHA ŽIVÝ HOVOR! Položte telefón a potom sa odhláste||
+You are in ALT dial mode, you must finish the lead before logging out.|Nachádzate sa v móde voľby ALT, je nutné dokončiť náskok pred odhlásením||
+Your Shift is over or has changed, you have been logged out of your session|Vaša Shift je nad alebo sa zmenilo, ste boli odhlásený vašej relácie||
+The system has received a command to log you out, you have been logged out of your session|Systém dostal príkaz na prihlásenie vás, ste boli odhlásený zo svojho zasadnutia||
+U - Undefined|U - Undefined||
+M - Male|M - Male||
+F - Female|F - Žena||
+minimize|minimalizovať||
+Hangup Again|Položte znova||
+Next Call Pause|Ďalšia výzva pauza||
+Finish Wrapup and Move On|Dokončiť Wrapup a presunúť na||
+GROUPS NOT SELECTED|SKUPINY NIE SÚ VYBRANÉ||
+SELECTED GROUPS|VYBRANÉ SKUPINY||
+ADD ALL|Pridať všetky||
+Manager has selected groups for you|Manažér vybrané skupiny pre vás||
+DELETE ALL|DELETE ALL||
+TERRITORIES NOT SELECTED|ÚZEMÍ NEZARADENÉ||
+SELECTED TERRITORIES|vybraných teritórií||
+Manager has selected territories for you|Manažér vybrala územia pre vás||
+Manual Queue is Off|Ručné Fronta je vypnuté||
+PLEASE CLICK THE LOGOUT LINK TO LOG OUT NEXT TIME.|KLIKNITE NA odkaz na odhlásenie sa odhlásite nabudúce.||
+You cannot log out during a Dial attempt. Wait 50 seconds for the dial to fail out if it is not answered|Nemôžete sa prihlásiť v priebehu pokusu o voľby. Počkajte 50 sekúnd na číselníku na krach, či to nie je odpoveď||
+CUSTOMER|ZÁKAZNÍK||
+AGENT_PHONE|AGENT_PHONE||
+DIAL IN-GROUP|dial in-skupiny||
+You Must Select a Disposition|Musíte vybrať dipsozíciu||
+You can only disposition a call once|Môžete raz dispozíciou len volania||
+CALL DISPOSITION|VÝZVA Disposition||
+Disposition Status List Hidden|Dispozície Stav Hidden Zoznam||
+YOU MUST BE PAUSED TO ENTER A PAUSE CODE IN AUTO-DIAL MODE|MUSÍTE BYŤ V PAUZE NA VLOŽENIE KÓDU PAUZY V MÓDE AUTO-DIAL||
+PAUSE CODE|PAUSE CODE||
+YOU MUST BE PAUSED TO SEARCH FOR A LEAD|MUSÍTE byť pozastavená na vyhľadávanie vodítku||
+YOU MUST BE ON AN ACTIVE INBOUND CALL TO SEARCH FOR A LEAD|musíte byť na aktívnom prichádzajúce volania hľadať vedenie||
+GROUP ALIAS|Skupina Alias||
+vdc_LB_customxfer_OFF.gif|vdc_LB_customxfer_OFF.gif||
+vdc_XB_leave3waycall_OFF.gif|vdc_XB_leave3waycall_OFF.gif||
+vdc_XB_hangupxferline_OFF.gif|vdc_XB_hangupxferline_OFF.gif||
+Manual Dial Queue Calls Waiting:|Ručné vytáčanie fronty čakajúcich volaní:||
+Call Notes:|Výzva Poznámky:||
+History|História||
+vdc_XB_ammessage_OFF.gif|vdc_XB_ammessage_OFF.gif||
+vdc_volume_up_off.gif|vdc_volume_up_off.gif||
+vdc_volume_down_off.gif|vdc_volume_down_off.gif||
+vdc_LB_quickxfer_OFF.gif|vdc_LB_quickxfer_OFF.gif||
+vdc_LB_ivrparkcall_OFF.gif|vdc_LB_ivrparkcall_OFF.gif||
+vdc_XB_localcloser_OFF.gif|vdc_XB_localcloser_OFF.gif||
+vdc_XB_blindtransfer_OFF.gif|vdc_XB_blindtransfer_OFF.gif||
+Fronter:|Fronter:||
+Incoming:|prichádzajúce:||
+vdc_LB_webform_two_OFF.gif|vdc_LB_webform_two_OFF.gif||
+Alt Count:|Alt Count:||
+call was not placed, there was an error:|hovor sa neumiestnil, došlo k chybe:||
+Change this phone number to INACTIVE|Zmeniť toto telefónne číslo k NEAKTÍVNYCH||
+Change this phone number to ACTIVE|Zmeniť toto telefónne číslo k aktívnemu||
+This phone number is outside of the local call time:|Toto telefónne číslo je mimo miestny čas hovoru:||
+Unspecified error:|Nešpecifikovaná chyba:||
+YOU CANNOT SKIP A CALLBACK OR MANUAL DIAL, YOU MUST DIAL THE LEAD|Nemôžete preskočiť na preplánovanie hovoru alebo manuálne vytáčanie, musíte vytočiť kontakt||
+Lead was not reverted, there was an error:|Olovo sa nezmenil, došlo k chybe:||
+Lead skipped, go on to next lead|Olovo preskočí, prejdite k ďalšiemu vedeniu||
+ALT DIAL NUMBER: ALT|ALT Vytáčané číslo: ALT||
+ALT DIAL NUMBER: ADDRESS3|ALT Vytáčané číslo: ADDRESS3||
+ALT DIAL NUMBER:|ALT DIAL číslo:||
+Phone Code and Number:|Telefón Kód a číslo:||
+Active:|Aktívne:||
+vdc_XB_ammessage.gif|vdc_XB_ammessage.gif||
+vdc_LB_customxfer.gif|vdc_LB_customxfer.gif||
+vdc_LB_requeue_call.gif|vdc_LB_requeue_call.gif||
+vdc_LB_requeue_call_OFF.gif|vdc_LB_requeue_call_OFF.gif||
+vdc_XB_dialwithcustomer.gif|vdc_XB_dialwithcustomer.gif||
+vdc_XB_parkcustomerdial.gif|vdc_XB_parkcustomerdial.gif||
+DIAL LEAD|VOLAT ZOZNAM KONTAKTOV||
+SKIP LEAD|PRESKOCIT ZOZNAM KONTAKTOV||
+Preview the Lead then|Prehľad kontaktov pre||
+No more leads in the hopper for campaign:|Už žiadne káble v zásobníku za kampaň:||
+This phone number is in the DNC list:|Toto telefónne číslo je v zozname DNC:||
+This phone number is not in the campaign lists:|Toto telefónne číslo nie je v zoznamoch kampane:||
+seconds|sekundy||
+Call Rejected:|Volajte Zamietnuté:||
+Called 3rd party:|Volal 3rd Party:||
+vdc_XB_leave3waycall.gif|vdc_XB_leave3waycall.gif||
+vdc_XB_hangupxferline.gif|vdc_XB_hangupxferline.gif||
+vdc_XB_hangupbothlines.gif|vdc_XB_hangupbothlines.gif||
+Called:|volal:||
+vdc_XB_localcloser.gif|vdc_XB_localcloser.gif||
+vdc_XB_blindtransfer.gif|vdc_XB_blindtransfer.gif||
+Click Here to Choose a Dial In-Group|kliknite sem a vyberte voľby v skupine||
+No-Call Dial:|No-Telefonovať Vytočiť:||
+Click Here to Activate|kliknite tu pre aktiváciu||
+PREVIOUS CALLBACK|PREDCHÁDZAJÚCE CALLBACK||
+Last Call:|Posledný hovor:||
+CallBack:|Preplánovanie hovoru:||
+Agent:|Agent:||
+vdc_LB_quickxfer.gif|vdc_LB_quickxfer.gif||
+vdc_LB_webform_two.gif|vdc_LB_webform_two.gif||
+code:|kód:||
+YOU MUST ENTER A PHONE NUMBER AND DIAL CODE TO USE FAST DIAL|MUSÍTE VLOŽIŤ ČÍSLO TELEFÓNU A VOLACÍ KÓD NA POUŽITIE RÝCHLEHO VOLANIA||
+Click Here to Deactivate|kliknite tu pre deaktiváciu||
+UID:|DIČ:||
+Calling:|volanie:||
+Waiting for Ring...|Čakanie na Ring ...||
+NON-DIALABLE|NON-voliteľnom||
+System Delay, Please try again|Systém Delay, prosím skúste to znova||
+YOU MUST BE PAUSED TO MANUAL DIAL A NEW LEAD IN AUTO-DIAL MODE|Musíte byť pozastavený do manuálneho vytáčania v novom zozname kontaktov v móde AUTOMATICKÉHO vytáčania||
+Group Alias:|Skupina Alias:||
+Click Here to Choose a Group Alias|Kliknite tu pre Zvoliť skupinu Alias||
+Dial In-Group:|Vytočiť In-Skupina:||
+Dialable Leads:|Voliteľnom vodiče:||
+ACTIVE CALLBACKS|AKTÍVNE PREPLÁNOVANÉ HOVORY||
+YOU MUST BE PAUSED TO CHECK CALLBACKS IN AUTO-DIAL MODE|Musíte byť pozastavený na kontrolu preplánovaných hovorov v móde AUTOMATICKÉHO volania||
+CALLBACK DATE/TIME|CALLBACK DATE/TIME||
+NUMBER|ČÍSLO||
+LAST CALL DATE/TIME|LAST CALL DATE/TIME||
+Dial Next Number|Volať ďalšie číslo||
+Lead:|vedenie:||
+List:|list:||
+Dial Alt Phone Number:|Vytočiť Alt telefónne číslo:||
+MAIN PHONE|ZÁKLADNÉ TEL. ČÍSLO||
+or|alebo||
+ALT PHONE|ALTERN. TELEFÓN||
+FINISH LEAD|UKONCIT ZOZNAM KONTAKTOV||
+Transfer number must have at least 1 digit:|Číslo prevod musí mať aspoň 1 číslica:||
+Leave 3Way Call Again|Nechajte 3WAY znovu zavolať||
+vdc_LB_grabivrparkcall_OFF.gif|vdc_LB_grabivrparkcall_OFF.gif||
+YOU MUST SELECT AN AGENT TO TRANSFER TO WHEN USING AGENTDIRECT|musíte zvoliť zástupcu, ktorý bude prenášať potrebné pri používaní agentdirect||
+recording|záznam||
+vdc_volume_up.gif|vdc_volume_up.gif||
+vdc_volume_down.gif|vdc_volume_down.gif||
+VOLUME|HLASITOSŤ||
+Manual Queue:|Manual fronty:||
+Placing call to next number|Umiestnenie volania na ďalšie číslo||
+LIVE CALLS IN YOUR SESSION:|LIVE VOLANIE DO VAŠEJ reláciu:||
+REMOTE CHANNEL|VZDIALENÝ KANÁL||
+vdc_LB_grabivrparkcall.gif|vdc_LB_grabivrparkcall.gif||
+vdc_LB_ivrparkcall.gif|vdc_LB_ivrparkcall.gif||
+vdc_volume_UNMUTE.gif|vdc_volume_UNMUTE.gif||
+vdc_volume_MUTE.gif|vdc_volume_MUTE.gif||
+vdc_XB_dialwithcustomer_OFF.gif|vdc_XB_dialwithcustomer_OFF.gif||
+vdc_XB_parkcustomerdial_OFF.gif|vdc_XB_parkcustomerdial_OFF.gif||
+Your session has been paused|Vaša relácia bola pozastavená||
+vdc_LB_senddtmf_OFF.gif|vdc_LB_senddtmf_OFF.gif||
+vdc_LB_webform_OFF.gif|vdc_LB_webform_OFF.gif||
+vdc_LB_stoprecording_OFF.gif|vdc_LB_stoprecording_OFF.gif||
+vdc_LB_startrecording_OFF.gif|vdc_LB_startrecording_OFF.gif||
+vdc_LB_transferconf_OFF.gif|vdc_LB_transferconf_OFF.gif||
+vdc_LB_grabparkedcall_OFF.gif|vdc_LB_grabparkedcall_OFF.gif||
+vdc_LB_parkcall_OFF.gif|vdc_LB_parkcall_OFF.gif||
+vdc_LB_parkcall.gif|vdc_LB_parkcall.gif||
+vdc_LB_webform.gif|vdc_LB_webform.gif||
+vdc_LB_stoprecording.gif|vdc_LB_stoprecording.gif||
+vdc_LB_startrecording.gif|vdc_LB_startrecording.gif||
+vdc_LB_senddtmf.gif|vdc_LB_senddtmf.gif||
+vdc_LB_dialnextnumber_OFF.gif|vdc_LB_dialnextnumber_OFF.gif||
+vdc_LB_hangupcustomer_OFF.gif|vdc_LB_hangupcustomer_OFF.gif||
+vdc_LB_dialnextnumber.gif|vdc_LB_dialnextnumber.gif||
+loading.gif|loading.gif||
+blank.gif|blank.gif||
+agc_live_call_OFF.gif|agc_live_call_OFF.gif||
+agc_live_call_ON.gif|agc_live_call_ON.gif||
+agc_live_call_DEAD.gif|agc_live_call_DEAD.gif||
+vdc_LB_hangupcustomer.gif|vdc_LB_hangupcustomer.gif||
+vdc_LB_transferconf.gif|vdc_LB_transferconf.gif||
+vdc_LB_grabparkedcall.gif|vdc_LB_grabparkedcall.gif||
+Password:|heslo:||
+Sorry, there are no available sessions|Ospravedlňujeme sa, ale nie sú k dispozícii relácie||
+vdc_LB_pause_OFF.gif|vdc_LB_pause_OFF.gif||
+vdc_LB_resume.gif|vdc_LB_resume.gif||
+vdc_LB_pause.gif|vdc_LB_pause.gif||
+vdc_LB_resume_OFF.gif|vdc_LB_resume_OFF.gif||
+Login:|Prihlásiť:||
+You are already logged in, please log out of your other session first|Ste už prihlásení, prihláste sa prosím z druhého zasadnutia prvý||
+Too many agents logged in, please contact your administrator|Príliš veľa agentov prihlásený, obráťte sa na správcu||
+Agent web client: Phone Login Error|Web klient Zástupca: Telefón Login Error||
+Login Error|chyba prihlásenie||
+Sorry, your phone login and password are not active in this system, please try again:|Je nám ľúto, telefón prihlasovacie meno a heslo nie sú aktívne v tomto systéme, skúste to prosím znova:||
+Sorry, there are no leads in the hopper for this campaign|Prepáčte, ale nie sú záznamy v zásobníku pre túto kamaň||
+Too many network errors, please contact your administrator|Príliš veľa chýb v sieti, obráťte sa na správcu||
+No available servers, please contact your administrator|Nie sú dostupné žiadne servery, obráťte sa na správcu||
+No available phones, please contact your administrator|Nie sú dostupné žiadne telefóny, obráťte sa na správcu||
+Campaign not active, please try again|Kampaň nie je aktívna, prosím skúste znova||
+Login incorrect, please try again|Prihlasovacie meno je nesprávne, prosím skúste znova||
+Too many login attempts, try again in 15 minutes|Príliš veľa pokusov o prihlásenie, skúste to znova za 15 minút||
+Sorry, you are not allowed to login to this campaign:|Je nám ľúto, nie je dovolené sa prihlásiť k tejto kampani:||
+Login|prihlásenie||
+Agent web client:  Phone Login|Web klient Zástupca: Telefón Prihlásenie||
+phone login|telefón login||
+ERROR: There are no Shifts enabled for your user group|ERROR: Nie sú k dispozícii žiadne Posuvy povolený pre užívateľské skupiny||
+ERROR: You are not allowed to log in outside of your shift|ERROR: Nemáte možnosť prihlásiť sa mimo vašej smeny||
+User Login|Meno užívateľa||
+Campaign:|kampaň:||
+Refresh Campaign List|Obnoviť kampaň Zoznam||
+Agent web client: Campaign Login|Web klient Zástupca: Kampaň Prihlásenie||
+Campaign Login|Prihlásenie kampane||
+Agent web client:  Login|Web klient Zástupca: Login||
+ERROR: System Settings missing|ERROR: Chýbajú nastavenia systému||
+Agent web client: Re-Login|Web klient Zástupca: Re-Prihlásenie||
+vdc_tab_vicidial.gif|vdc_tab_vicidial.gif||
+Re-Login|Znova prihlásiť||
+Phone Login:|Telefón Login:||
+Phone Password:|Telefón: Heslo:||
+pause_code function sent|funkcie pause_code poslal||
+pause_code error - agent is not paused|Chyba pause_code - pôvodca nie je pozastavená||
+You have now logged out. Thank you|Práve ste sa odhlásili, Ďakujeme||
+transfer_conference not valid|transfer_conference neplatí||
+value is not valid|hodnota nie je platná||
+transfer_conference function set|transfer_conference funkcie set||
+agent_user does not have a live call|agent_user nemá živý hovor||
+pause_code not valid|pause_code neplatí||
+stage is not valid|etapa nie je platný||
+no active call found|nie je aktívny hovor nájdených||
+send_dtmf not valid|send_dtmf neplatí||
+park_call not valid|park_call neplatí||
+park_call function set|park_call funkcie set||
+user not logged in|používateľ nie je prihlásený||
+ra_call_control not valid|ra_call_control neplatí||
+ra_call_control hungup|ra_call_control hungup||
+phone_number is not valid|PHONE_NUMBER nie je platný||
+ra_call_control transfer|prenos ra_call_control||
+ingroup is not valid|ingroup nie je platný||
+set_timer_action lead updated|set_timer_action vedenie aktualizované||
+user is not allowed to modify campaign settings|Používateľ nesmie meniť nastavenie kampane||
+st_login_log user found|st_login_log užívateľ našiel||
+st_get_agent_active_lead not valid|st_get_agent_active_lead neplatí||
+st_get_agent_active_lead lead found|st_get_agent_active_lead olovo nájdených||
+no active lead found|nie je aktívny olovo nájdených||
+rank set to|poradie nastavený na||
+owner set to|vlastníka nastavené||
+update_fields lead updated|update_fields olovo aktualizované||
+no fields have been defined|Boli definované žiadne polia||
+agent_user does not have a lead on their screen|agent_user nemá náskok na svojej obrazovke||
+user is not allowed to modify lead information|Používateľ nesmie meniť hlavné informácie||
+set_timer_action not valid|set_timer_action neplatí||
+vendor_lead_code set to|vendor_lead_code nastavená||
+province set to|provincia nastavený na||
+security_phrase set to|security_phrase nastavená||
+source_id set to|source_id nastavená||
+state set to|stav nastavený na||
+title set to|názov nastavený na||
+first_name set to|FIRST_NAME nastavený na||
+gender set to|pohlavia nastavený na||
+gmt_offset_now set to|gmt_offset_now nastavená||
+last_name set to|Last_Name nastavený na||
+middle_initial set to|middle_initial set na||
+phone_number set to|PHONE_NUMBER nastavený na||
+postal_code set to|postal_code nastavený na||
+address3 set to|address3 nastavená||
+alt_phone set to|alt_phone nastavená||
+city set to|mesto nastavený na||
+comments set to|komentáre nastavený na||
+country_code set to|country_code nastavená||
+date_of_birth set to|date_of_birth set na||
+email set to|e-mail nastavená||
+ingroup does not exist|ingroup neexistuje||
+ingroup_choices are required for ADD and REMOVE values|ingroup_choices sú potrebné pre pridanie a odobratie hodnôt||
+User settings set as default|Užívateľské nastavenia nastaviť ako predvolený||
+change_ingroups function set|change_ingroups funkcie set||
+user is not allowed to change agent in-groups|Používateľ nesmie meniť prostriedok in-skupinách||
+campaign does not allow inbound calls|Kampaň neumožňuje prichádzajúce hovory||
+st_login_log not valid|st_login_log neplatí||
+phone_code set to|phone_code nastavená||
+address1 set to|adresa 1 nastavený na||
+address2 set to|adresa 2 nastavený na||
+alt number dialing not allowed on this campaign|číslo alt vytáčanie nie je povolená na tejto kampani||
+preview_dial_action function set|preview_dial_action funkcie set||
+external_add_lead not valid|external_add_lead neplatí||
+lead added|viesť pridaný||
+lead insertion failed|olovo vloženie zlyhalo||
+add_lead PHONE NUMBER IN DNC|add_lead telefónne číslo v DNC||
+add_lead PHONE NUMBER IN CAMPAIGN DNC|add_lead telefónne číslo v KAMPAŇ DNC||
+campaign manual dial list undefined|Kampaň zoznam manuálnou voľbou nedefinovaný||
+change_ingroups not valid|change_ingroups nie sú platné||
+campaign dial_method does not allow outbound autodial|Kampaň dial_method neumožňuje odchádzajúce automatické vytáčanie||
+Could not connect: |Nedá sa pripojiť:||
+vtiger callback activity does not exist in vtiger system|vtiger callback činnosť neexistuje vtiger systému||
+phone number lead_id search not found|telefónne číslo lead_id hľadanie nebol nájdený||
+phone number is not valid|telefónne číslo nie je platné||
+lead_id is not valid|lead_id nie je platný||
+phone_number is already in this agents manual dial queue|PHONE_NUMBER je už v tejto príručke agentov fronty voľbou||
+external_dial function set|external_dial funkcie set||
+agent_user is not allowed to place manual dial calls|agent_user nie je dovolené umiestniť manuálna volajúcich||
+agent_user is not paused|agent_user nie je pozastavená||
+preview_dial_action not valid|preview_dial_action neplatí||
+preview dialing not allowed on this campaign|preview voľba nie je povolená na tejto kampani||
+preview dial skipping not allowed on this campaign|preview dial preskakujem nie je povolená na tejto kampani||
+audio_playback error - no session data|audio_playback chyba - žiadne dáta zasadnutie||
+external_dial not valid|external_dial neplatí||
+caller_id_number from group_alias is not valid|caller_id_number z group_alias nie je platný||
+group_alias is not valid|group_alias nie je platný||
+audio_playback error - entry is empty|audio_playback chyba - vstup je prázdny||
+audio_playback previous playback stopped|audio_playback predchádzajúce zastavenie prehrávania||
+audio_playback error - audio already playing in agent session|audio_playback chyba - zvuk už hrá v agenta zasadnutí||
+audio_playback error - no audio playing in agent session|audio_playback chyba - žiadny zvuk hrá v agenta zasadnutí||
+audio_playback function sent|audio_playback funkcie poslal||
+not recording|nenahráva||
+stop recording error|zastaviť nahrávanie chybu||
+recording function sent|funkcie nahrávania poslal||
+webphone_url not valid|webphone_url neplatí||
+webphone_url active and displayed|webphone_url aktívny a zobrazí||
+webphone_url active and launched|webphone_url aktívny a začala||
+click here to continue. . .|kliknite tu pre pokračovanie. , ,||
+webphone_url error - webphone url is empty|webphone_url chyba - WebPhone url je prázdny||
+webphone_url error - no session data|webphone_url chyba - žiadne dáta zasadnutie||
+call_agent not valid|call_agent neplatí||
+call_agent function sent|funkcie call_agent poslal||
+call_agent error - entry is empty|Chyba call_agent - vstup je prázdny||
+call_agent error - no session data|call_agent chyba - žiadne dáta zasadnutie||
+audio_playback not valid|audio_playback neplatí||
+recording active|nahrávanie aktívny||
+external_pause agent is not paused|external_pause zástupca nie je pozastavená||
+external_pause function set|external_pause funkcie set||
+logout not valid|logout neplatí||
+logout function set|logout funkcie set||
+recording not valid|záznamu nie je platná||
+NOTICE|UPOZORNENIE||
+external_pause not valid|external_pause neplatí||
+external_status function set|external_status funkcie set||
+ini_get not allowed: |ini_get nie je dovolené:||
+external_hangup not valid|external_hangup neplatí||
+no user found|žiadny užívateľ našiel||
+external_hangup function set|external_hangup funkcie set||
+agent_user is not logged in|agent_user nie je prihlásený||
+external_status not valid|external_status neplatí||
+maximum input time: |Maximálna doba pre zadanie:||
+memory limit: |Pamäť limit:||
+post maximum size: |Pre pridanie maximálna veľkosť:||
+upload maximum filesize: |nahrať maximálna veľkosť súboru:||
+default socket timeout: |default socket timeout:||
+System API NOT ACTIVE|System API NOT ACTIVE||
+VICIDiaL Agent API|VICIDiaL Zástupca API||
+host name: |názov hostiteľa:||
+server name: |Názov servera:||
+php version: |php verzia:||
+apache version: |apache verzia:||
+apache processes: |apache procesy:||
+system load average: |Priemerné zaťaženie systému:||
+disk free space: |voľného miesta na disku:||
+maximum execution time: |maximálny čas realizácie:||
+DATE:|DATE:||
+EPOCH:|EPOCH:||
+SUCCESS|ÚSPECH||
+ERROR|ERROR||
+Invalid Source|neplatný Source||
+Invalid Username/Password|Neplatné užívateľské meno/heslo||
+You logged-in at:|Ste prihlásený-in na adrese:||
+Click LOGOUT below to log-out|Kliknite na Logout nižšie log-out||
+Voicemail Check|Overiť hlasovú schránku||
+voicemail box %1s is not valid|hlasová schránka %1s nie je platný||
+BACK to Welcome Screen|SPÄŤ na úvodnú obrazovku||
+Time since you were last logged-in:|Čas od Vášho posledného prihlásenia-in:||
+You last logged-out at:|Ty posledný prihlásený-out na:||
+Click LOGIN below to log-in|Kliknite nižšie k LOGIN LOG-IN||
+Amount of time you have been logged-in:|Množstvo času, ktoré ste vykáceli-in:||
+You logged in at|Ste prihlásení na||
+You have now logged-out|Teraz ste prihlásený-out||
+You logged out at|Ste odhlásený na||
+Amount of time you were logged-in:|Množstvo času, ste prihlásený-in:||
+ERROR: timeclock log entry already made:|ERROR: timeclock log vstupe už bolo dosiahnuté:||
+BACK to Agent Login Screen|SPÄŤ na Agent Prihlásiť obrazovky||
+BACK to Administration|SPÄŤ na administratívne||
+Agent Timeclock|agent timeclock||
+vtc_tab_vicidial.gif|vtc_tab_vicidial.gif||
+Timeclock|timeclock||
+User Login:|Prihlásenie užívateľa:||
+User Password:|Užívateľ: Heslo:||
+VERSION:|VERZIA:||
+BUILD:|BUILD:||
+You cannot log in or out within 30 seconds of your last login or logout|Nemôžete sa prihlásiť alebo sa do 30 sekúnd od vášho posledného prihlásenia alebo odhlásenie||
+You have now logged-in|Máte teraz prihlásených||
+Question:|Otázka:||
+Answer:|odpoveď:||
+Disposition:|dispozícia:||
+Processing...|Spracováva sa ...||
+PAUSE AGENT DIALING|PAUZA VOLAJUCEHO AGENTA||
+Please click SUBMIT to hangup and disposition the call|Prosím, kliknite na tlačidlo Odoslať zavesiť a rozostavenie hovor||
+denotes required fields|označuje povinné polia||
+The user and password you entered are not active in the system<BR>Please try again:|Zadané užívateľské meno a heslo nie sú aktívne v systéme <BR> Prosím skúste to znova:||
+Middle Initial:|Middle Počiatočná:||
+Province:|Province:||
+Alt. Phone:|Alt. telefón:||
+Email:|E-mail:||
+Show:|show:||
+Comments:|Poznámky:||
+ViciDial Script|Vicidial Script||
+Data Updated, Hanging up call, please wait|Aktualizácia dát, zavesenie up call, prosím počkajte||
+Vendor ID:|Vendor ID:||
+Title:|Názov:||
+Unidentified SIP Hangup Cause Code.|Neznámy SIP Zavesiť Príčina Code.||
+VICIDiaL Script Display Script|VICIDiaL Script Display Script||
+Title|Názov||
+Gender|rod||
+Email|E-mail||
+Comments|Komentáre||
+MESSAGE:|SPRÁVA:||
+Call %1s grabbed for %2s|Telefonovať %1s schmatol %2s||
+Call %1s could not be grabbed for %2s|Telefonovať %1s nemôže byť schmatol %2s||
+DONE:|HOTOVO:||
+Unidentified Hangup Cause Code.|Neznáma príčina hangup kód||
+No calls found|Žiadne volanie nájdené||
+EMAIL LOG FOR THIS LEAD:|EMAIL protokolu pre to viesť:||
+EMAIL TO|e-mail||
+ATTACHMENTS|Príslušenstvo||
+Called Since Last Reset:|Volal od posledného resetu:||
+ DIAL | VOLAŤ||
+Dial Link:|Vytočiť Link:||
+SELECT THIS LEAD|vyberte túto vedenie||
+Called Count:|Volal Počet:||
+Last Local Call Time:|Posledná Miestny čas hovoru:||
+CALL LOG FOR THIS LEAD:|VÝZVA protokolu pre to viesť:||
+NOTES:|Poznámky:||
+Alt. Phone|Alter. číslo||
+Show|Prezrieť||
+ Email| Email||
+ Comments| Komentár||
+Status:|status:||
+List ID:|Zoznam ID:||
+Timezone:|časové pásmo:||
+Last |Posledný ||
+Address1|Address1||
+Address2|Address2||
+Address3|Adresa 3||
+ State| stav ||
+Province|Kraj||
+PostCode|PSČ||
+Vendor ID|zákaznícke||
+ Gender|  rod||
+DialCode|Volací kód||
+Callback Status:|Spätné volanie Status:||
+Callback Lead Status:|Spätné volanie Lead Status:||
+Callback Entry Time:|Spätné volanie Entry Čas:||
+Callback Trigger Time:|Spätné volanie Trigger Time:||
+Callback Comments:|Spätného volania Komentáre:||
+ Title| Titul||
+First|Prvý||
+MI|MI||
+OFFICE|OFFICE||
+MOBILE|MOBILE||
+OTHER 1|ostatné 1||
+OTHER 2|ostatné 2||
+BU NAME|obchodné meno||
+Dept:|oddelenie:||
+Group|skupina||
+Job:|job:||
+Location:|umiestnenie:||
+no Lead ID|no Lead ID||
+STATE|STATE||
+ZIP|ZIP||
+No results found|Neboli nájdené žiadne výsledky||
+SELECT|SELECT||
+There was a problem with your search terms|Tam bol problém s vami hľadané výrazy||
+Campaign not found|Kampane nebol nájdený||
+You must enter in search terms, one of these must be populated: office number, last name, first name|Musíte zadať hľadané výrazy, jeden z nich musí byť naplnená: číslo kancelárie, priezvisko, krstné meno||
+FIRST NAME|krstné meno||
+LAST NAME|priezvisko||
+Results Found:|Nájdené:||
+LAST CALL|Posledná výzva||
+CITY|Mesto||
+You must enter in search terms, one of these must be populated: lead ID, vendor ID, phone number, last name|Musíte zadať hľadané výrazy, jeden z nich musí byť naplnená: olovo ID, ID dodávateľa, telefónne číslo, priezvisko||
+Go Back|Vrátiť späť||
+HANGUP|zavesiť||
+INFO|INFO||
+DIAL|DIAL||
+No calls on this day|Žiadne vyzýva tento deň||
+Close Call Log|Zavrieť Call Log||
+LENGTH|dĺžka||
+STATUS|STATUS||
+CAMPAIGN|Kampaň||
+IN/OUT|IN/OUT||
+ALT|ALT||
+TYPE|TYPE||
+TAKE CALL|TAKE CALL||
+GO|GO||
+close|zavrieť ||
+DATE/TIME|DATE/TIME||
+PHONE|Telefón||
+FULL NAME|FULL NAME||
+WAIT|pROSÍM||
+AGENT|AGENT||
+CALL GROUP|CALL GROUP||
+READY|READY||
+INCALL|Incall||
+PAUSED|PAUSED||
+-LOGGED-OUT|-LOGGED-OUT||
+Calls in Queue View Disabled for this campaign|Hovorov v zobrazení frontu Zakázané pre túto kampaň||
+favorites list %1s is not valid|zoznam obľúbených %1s nie je platné||
+Favorites list has been updated to %1s for %2s|Zoznam obľúbených bol aktualizovaný na verziu %1s pre %2s||
+agent_log_id %1s or pause_code %2s is not valid|agent_log_id %1s alebo pause_code %2s nie je platný||
+ Pause Code %1s has been recorded|  Bola zaznamenaná Pozastaviť Kód %1s||
+phone_number %1s or lead_id %2s is not valid|PHONE_NUMBER %1s alebo lead_id %2s nie je platný||
+Lead %1s information has%2s been updated|Olovo %1s informácie podal %2s bol aktualizovaný||
+stage %1s is not valid|etapa %1s nie je platný||
+Agent %1s is now in status %2s|Zástupca %1s je teraz v stave %2s||
+Campaign %1s is not valid or lead_id %2s is not valid|Kampaň %1s nie je platný alebo lead_id %2s nie je platný||
+campaign %1s or conf_exten %2s is not valid|Kampaň %1s alebo conf_exten %2s nie je platný||
+Dispo Choice %1s or lead_id %2s is not valid|Dispo Choice %1s alebo lead_id %2s nie je platný||
+Lead %1s has been changed to %2s Status|Olovo %1s bol zmenený na %2s Stav||
+VICIDiaL_LOG Inserted:|VICIDiaL_LOG vložená:||
+uniqueid %1s or lead_id: %2s is not valid|uniqueid %1s alebo lead_id: %2s nie je platný||
+Campaign %1s is not valid|Kampaň %1s nie je platný||
+lead_id %1s is not valid|lead_id %1s nie je platný||
+AGENT ALERT SETTING NOT CHANGED|AGENT ALERT nastavenie zmenené||
+%1s is not valid| %1s nie je platný||
+AGENT ALERT SETTING CHANGED %1s|AGENT ALERT zmene nastavenia %1s||
+uniqueid %1s or lead_id: %2s or list_id: %3s or phone_number: %4s or campaign: %5s is not valid|uniqueid %1s alebo lead_id: %2s alebo list_id: %3s alebo PHONE_NUMBER: %4s alebo kampaň: %5s nie je platný||
+no agent session|žiadny agent zasadnutie||
+Conf Exten %1s or campaign %2s or ext_context %3s is not valid|Conf roz %1s alebo kampaň %2s alebo ext_context %3s nie je platný||
+Phone and Post Code Time Zone Mismatch! |Telefón a Nezhoda PSČ Time Zone!||
+ Phone Area Code Outside Dialable Zone|  Telefón Area Code Outside voliteľnom Zone||
+ Postal Code Outside Dialable Zone|  PSČ Mimo voliteľnom Zone||
+ALT PHONE NUMBER STATUS NOT CHANGED|ALT PHONE číslo Stav sa nezmenil||
+%1s %2s %3s or %4s is not valid| %1s %2s %3s alebo %4s nie je platný||
+ALT PHONE NUMBER STATUS CHANGED|ALT PHONE ČÍSLO zmenený stav||
+Territory Choice is not valid|Územie Choice nie je platný||
+Territory Choice %1s has been registered to user %2s|Územie Choice %1s bola zaregistrovaná na užívateľa %2s||
+no lead info in system:|žiadne olovo info v systéme:||
+no lead active for this agent|žiadne olovo aktívny pre tohto agenta||
+Closer In Group Choice %1s has been registered to user %2s|Closer V skupine Choice %1s bola zaregistrovaná na užívateľa %2s||
+USER LOGIN ERROR|Prihlásenie užívateľa ERROR||
+There are no Shifts enabled for your user group|K dispozícii sú povolené pre vašu skupinu užívateľov neradí||
+You are not allowed to log in outside of your shift|Nie je dovolené sa prihlásiť mimo vašu smeny||
+MANAGER OVERRIDE:|MANAGER OVLÁDANIE:||
+Manager Login:|Manažér Login:||
+Manager Password:|Password Manager:||
+SUBMIT|POTVRDIŤ||
+PLEASE SELECT A CAMPAIGN|Vyberte KAMPAŇ||
+YOU MUST LOG IN TO THE TIMECLOCK FIRST|Musíte sa prihlásiť do TIMECLOCK PRVEJ||
+Group Choice is not valid|Group Choice nie je platný||
+DONE: %1s is empty for lead %2s|Dané: %1s je prázdny olovených %2s||
+DONE: dispo is not a sale status: %1s|Dané: dispo nie status predaj: %1s||
+UserID: $FCS%1s - %2s$FCE,  Date: %3s|UserId: $FCS %1s - %2s $FCE, Dátum: %3s||
+Invalid server_ip: %1s or Invalid session_name: %2s|Neplatný server_ip: %1s alebo neplatné session_name: %2s||
+Invalid session_name:|Neplatný session_name:||
+VICIDiaL Database Query Script|VICIDiaL Database Query Script||
+Invalid Username/Password:|Neplatné užívateľské meno/heslo:||
+DONE: %1s match found, %2s updated to %3s with %4s status|Dané: %1s nájdená zhoda, %2s aktualizované tak, aby %3s sa %4s stavom||
+DONE: no match found within %1s     %2s|Dané: nájdené v %1s %2s no zápas||
+MULTI_MATCH CHECK:|MULTI_MATCH KONTROLA:||
+MULTI_MATCH:|MULTI_MATCH:||

@@ -1,0 +1,177 @@
+Agent Events Push		Started: 2017-05-31	Updated: 2017-09-13
+
+
+This feature allows for selected events in the VICIdial agent screen to push out event triggers through HTTP requests sent to a URL as defined in the System Settings.
+
+
+
+There are two System Settings configurations that need to be set for Agent Events Push to work:
+
+
+Agent Push Events - This setting will enable the sending of events from agent screens to the URL defined below. Default is 0 for disabled. 
+
+Agent Push URL - If Agent Push Events are enabled above, this is the URL that the events will be sent to. The variables that you can use within the URL are --A--user--B--, --A--event--B--, --A--message--B--, --A--lead_id--B--, --A--counter--B--. Since this function uses AJAX, it must reference a local script on the web server. If you want to reference an external web address then you should use the get2post.php script that can be found in the extras directory.
+
+
+
+The "agent_events" function operates through AJAX in the agent screen, and as such it can only access web scripts that are local on the web server. So, if you want to send these HTTP Push events to an external server, you will have to use a script like the get2post.php script that is included in the "extras" directory in the source code and copy it to the "agc" web directory on your webserver. Below is an example of how to populate the System Settings "Agent Push URL" field to use the get2post.php script:
+
+get2post.php?uniqueid=--A--epoch--B--.--A--agent_log_id--B--&type=event&HTTPURLTOPOST=192.168.1.3/agc/vdc_call_url_test.php?user=--A--user--B--&lead_id=--A--lead_id--B--&event=--A--event--B--&message=--A--message--B--&counter=--A--counter--B--
+
+
+The above URL is passing the following fields to the external web script: user, lead_id, event, message
+
+
+
+
+
+Here is a list of the supported events that will be pushed out if you have configured Agent Events Push on your system:
+
+
+logged_in - After the agent screen has finished loading, this event will be triggered. The session ID, server_ip, version, build and script will be attached to this event
+
+logged_out - There are a few different types of logouts, this is the starting of the logout process, the reason for the logout will be attached to this event
+
+logged_out_complete - triggered when logout process is complete, this event may not trigger reliably due to agent closing browser
+
+state_ready - When the agent state changes to READY or CLOSER, this event will trigger, the state will be attached to the event
+
+state_paused - When the agent status changes to PAUSED, this event will trigger, the state will be attached to the event
+
+call_dialed - For manual dial calls this will trigger when the call is dialed, the number dialed and number type are attached to this event
+
+call_answered - For auto-dial and inbound calls this is the first trigger event. For manual dial it triggers when Answer signal is received. call_id is attached to event
+
+call_dead - This indicates that the customer line has hung up before the agent clicked to hang up the call
+
+call_script - Triggered when the script tab has loaded
+
+other_answered - Triggers if EMAIL or CHAT is received by the agent, type will be attached to event
+
+agent_hangup - This is when the agent hangs up the call
+
+dispo_screen_open - The dispo screen has been opened and is awaiting the agent action to set a disposition
+
+dispo_set - This is when the agent submits a disposition for the call they jsut finished, a message containing the selected disposition will be attached to this event
+
+3way_start - This indicates that the agent has started a 3way call, where the call is going will be attached to this event
+
+3way_answered - This indicates that the 3way party has answered the call. call_id of customer call is attached to event
+
+3way_agent_hangup - This indicates that the agent has clicked to hangup the 3way call
+
+3way_agent_leave - This indicates that the agent has clicked to leave the 3way call and move to a new session
+
+transfer_local_closer - The agent has transferred a call to an In-Group using Local Closer, the in-group transferred to will be attached to the event
+
+transfer_blind - The agent has blind transferred a call, the destination transferred to will be attached to the event
+
+park_started - This indicates that the agent has sent the customer to a park
+
+park_retrieved - This indicates that the agent has received the customer back from park
+
+park_ivr_started - This indicates that the agent has sent the customer to a park IVR
+
+park_ivr_retrieved - This indicates that the agent has received the customer back from a park IVR
+
+agent_alert - These are the small box agent alerts that appear to the agent, the message will be attached to this event. Example is "Dial timed out..."
+
+login_invalid - This agent screen was not opened properly
+
+session_disabled - Another live agent session was open using your user ID. It has been disabled. Click OK to continue to the agent screen
+
+blind_monitor_alert - Blind monitor alerts are enabled in the campaign, and someone is monitoring this agent
+
+manual_dial_open - The Manual Dial screen has been opened
+
+callback_select_open - The Scheduled Callbacks date selection screen has been opened
+
+time_sync - There is a Time Synchronization issue on the system
+
+session_disabled - This agent's session has been disabled
+
+customer_gone - The customer has gone screen has been opened
+
+none_in_session - There is noone in the agent session
+
+transfer_panel_open - The transfer conference panel has been opened
+
+transfer_panel_closed - The transfer conference panel has been closed
+
+ingroup_screen_open - The In-Group selection screen has been opened
+
+ingroup_screen_closed - The In-Group selection screen has been closed
+
+territory_screen_open - The Territory selection screen has been opened
+
+territory_screen_closed - The Territory selection screen has been closed
+
+contact_search_open - The Contact search screen has been opened
+
+lead_search_open - The lead search screen has been opened
+
+pause_code_open - The pause code selection screen has been opened
+
+update_fields - API trigger to update customer information fields, will attach fields updated and new values
+
+session_empty - This event triggers when the agent session has no channels in it
+
+session_channels - This event triggers when the agent session goes from having no channels to having at least one channel in it
+
+
+
+
+Due to the nature of AJAX to be "Asynchronous", and also some VICIdial campaign settings, the above events may not always be sent or received in the same order. To help in building your application around these event order fluctuations, here is a list of events that are triggered only after an AJAX transaction has completed, and those that are based only on Javascript/PHP events, like an agent click, javascript timer or other non-AJAX transaction:
+
+
+EVENTS THAT TRIGGER AFTER AJAX PROCESS HAS COMPLETED:
+logged_out_complete
+call_answered
+call_dead
+call_script
+other_answered
+agent_hangup
+dispo_set
+3way_answered
+3way_agent_hangup
+blind_monitor_alert
+time_sync
+customer_gone
+update_fields
+session_empty
+session_channels
+
+
+EVENTS THAT TRIGGER BY JAVASCRIPT/PHP ACTIONS(NON-AJAX) ALONE:
+logged_in
+logged_out
+state_ready
+state_paused
+call_dialed
+dispo_screen_open
+3way_start
+3way_agent_leave
+transfer_local_closer
+transfer_blind
+park_started
+park_retrieved
+park_ivr_started
+park_ivr_retrieved
+login_invalid
+manual_dial_open
+callback_select_open
+transfer_panel_open
+transfer_panel_closed
+ingroup_screen_open
+ingroup_screen_closed
+territory_screen_open
+territory_screen_closed
+contact_search_open
+lead_search_open
+pause_code_open
+
+
+MULTI-PURPOSE EVENTS THAT HAVE VARIOUS TRIGGERS:
+agent_alert
+session_disabled
+none_in_session

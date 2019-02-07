@@ -1,0 +1,113 @@
+ASTERISK 13 COMPATIBILITY	   START: 2017-09-16	    UPDATE: 2018-05-19
+
+
+
+Adding support for Asterisk 13 was much more involved and complex than adding support for previous versions, mostly because several core asterisk functions were removed or made unstable since Asterisk 11. This caused us to have to find other ways of performing the same tasks, which lead to some new processes having to be written. Although, there were also some new features that helped VICIdial to run more efficiently, so hopefully all of the changes taken together will yield the same or better overall running efficiency.
+
+VERY IMPORTANT: Make sure you set the "Asterisk Version" properly in the Modify Server page, then force a rebuild of the conf files on that server if you have upgraded from a previous version.
+
+These changes in Asterisk have necessitated some changes in the default Asterisk configurations for VICIdial:
+NOTE: These are installed by the install.pl script if you select Asterisk version 13 and choose to copy sample conf files
+NOTE: Asterisk 13.20 and higher has a functioning version of the AMD app, unlike earlier Asterisk 13 versions
+
+In extensions.conf (from extensions.conf.sample-13):
+
+The 'h' extension now needs to looks like this(changed in several places):
+
+
+exten => h,1,AGI(agi://127.0.0.1:4577/call_log--HVcauses--PRI-----NODEBUG-----${HANGUPCAUSE}-----${DIALSTATUS}-----${DIALEDTIME}-----${ANSWEREDTIME}-----${HANGUPCAUSE(${HANGUPCAUSE_KEYS()},tech)}))
+
+
+The following is needed in the default context:
+
+
+; Local channel resolution fix for Asterisk 13
+exten => _1383XX,1,AGI(agi-VDAD_local_optimize.agi,${CONNECTEDLINE(name)})
+exten => _1383XX,n,Wait(2)
+exten => _1383XX,n,Hangup()
+
+exten => _138331*.,1,AGI(agi-VDAD_local_optimize.agi,${CONNECTEDLINE(name)})
+exten => _138331*.,n,Wait(2)
+exten => _138331*.,n,Hangup()
+
+
+In manager.conf (from manager.conf.sample-13):
+
+The updatecron user needs new permissions added:
+
+
+[updatecron]
+secret = 1234
+read = command,call,system
+write = command,call,system
+
+
+
+
+
+For Asterisk 13 support, a stock asterisk build with meetme enabled should work with VICIdial, but we do recommend using the vicidial enter/leave sounds for a more optimized call handling process. See the example compilation instructions below.
+
+
+
+
+#### Compiling Asterisk 13 (pre-patched and tested VICIdial build)
+# NOTE: The below instructions assume that you already have all prerequisite compilation tools and libraries installed on your system
+
+wget http://download.vicidial.com/beta-apps/dahdi-linux-complete-2.11.1.tar.gz
+tar xvfz dahdi-linux-complete-2.11.1.tar.gz
+cd dahdi-linux-complete-2.11.1+2.11.1/
+make
+make install
+cd tools
+./configure
+make
+make install
+cd ../../
+
+wget http://download.vicidial.com/beta-apps/asterisk-13.21.0-vici.tar.gz
+tar xvfz asterisk-13.21.0-vici.tar.gz
+cd asterisk-13.21.0-vici/
+./configure --with-dahdi=/usr/src/asterisk/dahdi-linux-complete-2.11.1+2.11.1/ --with-gsm=internal --with-opus=/usr/lib64/ --with-speex=/usr/lib64/ --with-srtp=/usr/lib64/ --with-ogg=/usr/lib64/ --with-ssl --enable-asteriskssl --with-pjproject-bundled --with-sqlite3=/usr/lib64/
+make menuselect   <MAKE SURE APP_MEETME IS SELECTED IN APPLICATIONS!!!!!!!!!!!!!!!!!!!!!!!!!!>
+make
+make install
+asterisk -vvvvvvvvvvvvvvvvvvgc
+
+
+
+
+
+
+
+
+
+
+
+### Stock Asterisk from Digium example install
+
+#### Asterisk 13
+# NOTE: The below instructions assume that you already have all prerequisite compilation tools and libraries installed on your system
+
+wget http://downloads.asterisk.org/pub/telephony/dahdi-linux-complete/dahdi-linux-complete-current.tar.gz
+tar xvfz dahdi-linux-complete-current.tar.gz
+cd dahdi-linux-complete-2.11.1+2.11.1/
+make
+make install
+cd tools
+./configure
+make
+make install
+cd ../../
+
+wget http://downloads.asterisk.org/pub/telephony/asterisk/asterisk-13.21.0.tar.gz
+tar xvfz asterisk-13.21.0.tar.gz
+cd asterisk-13.21.0/
+wget http://download.vicidial.com/asterisk-patches/leave.h
+wget http://download.vicidial.com/asterisk-patches/enter.h
+mv -f enter.h apps/enter.h
+mv -f leave.h apps/leave.h
+./configure --with-dahdi=/usr/src/asterisk/dahdi-linux-complete-2.11.1+2.11.1/ --with-gsm=internal --with-opus=/usr/lib64/ --with-speex=/usr/lib64/ --with-srtp=/usr/lib64/ --with-ogg=/usr/lib64/ --with-ssl --enable-asteriskssl --with-pjproject-bundled
+make menuselect   <MAKE SURE APP_MEETME IS SELECTED IN APPLICATIONS!!!!!!!!!!!!!!!!!!!!!!!!!!>
+make
+make install
+asterisk -vvvvvvvvvvvvvvvvvvgc

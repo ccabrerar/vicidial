@@ -1,0 +1,52 @@
+############################################################  ADMIN
+Wrap Seconds Override||
+If this setting is set to a number 0 or greater, then it will override the Campaign setting for Wrapup Seconds. This is a setting that is only refreshed in the agent interface at agent login time. Default is -1 for disabled||
+This setting also limits the amount of time a 3-way call that has been left by an agent will stay up before it is terminated||
+No-Agent In-Group Redirect||
+This setting allows you to redirect calls on this DID if there are no logged-in agents set to take calls from a specific In-Group. If this field is set to Y or NO_PAUSED and there are no agents logged in to take calls from the specific In-Group the calls will go to the No Agent In-Group Extension set below. The NO_PAUSED option will only send the call to the defined Extension if there are only paused agents in the in-group. The READY_ONLY option will send the call to the defined Extension if there are no agents waiting for calls right now in the in-group. Default is DISABLED. See the No Agent In-Group Extension setting below for more information||
+No-Agent In-Group ID||
+For the No-Agent In-Group Redirect feature above to work properly, an in-Group must be selected from this menu. Default is blank||
+No-Agent In-Group Extension||
+For the No-Agent In-Group Redirect feature above to work properly, an Extension must be set in this field. Default is 9998811112. Below you will see some examples of default extensions that you can use in the system to terminate calls to,||
+ANSWERED, This number is not in service||
+UNANSWERED, signal 1, unallocated number, immediate hangup||
+UNANSWERED, signal 17, busy signal, immediate hangup||
+UNANSWERED, signal 27, out of order, immediate hangup||
+UNANSWERED, ring for 120 seconds then hangup||
+Pre-Filter Phone Group ID||
+This option allows you to filter calls through a Filter Phone Group before going through the standard filtering process below. If a match is found then the call is redirected to the Pre-Filter Phone Group DID as defined below. Default is blank for disabled||
+Pre-Filter Phone Group DID||
+For the Pre-Filter Phone Group ID feature above to work properly, a DID Pattern must be set in this field. Default is blank for disabled. It is recommended that you confirm the DID you enter here is properly set in the system before assigning it||
+If set to ENABLED then the agent will be able to click a link to stop the Wrap Up timer before the time is completed. Default is ENABLED||
+You can use a Script in the system if you use the script id with WUSCRIPT in front of it, so if you wanted to use a script called agent_script, then you would put WUSCRIPTagent_script in this field||
+Wrap Up After Hotkey||
+If set to ENABLED and the campaign has hotkeys configured and the agent terminates a call with a hotkey, then the wrap up settings will be used after that call. Default is DISABLED||
+FIELD NOT ADDED||
+FIELD NOT MODIFIED||
+FIELD NOT DELETED||
+PLEASE GO BACK AND TRY AGAIN||
+For RADIO and SELECT field types, the default must be one of the options defined for the field or NULL||
+Callback Time 24 Hours||
+This option defines whether the agent sees 12 hour time with AM PM options or 24 hour time on the Callback setting screen in the agent interface. Default is 0 for disabled||
+Scheduled Callbacks Active Limit||
+This option if enabled will limit an agent to this number of active or live user-only callbacks. If the limit is reached, the agent will not be able to select the My Callback checkbox when setting a callback for a lead. Default is 0 for disabled||
+Scheduled Callbacks Active Limit Override||
+Enabling this option will allow the Custom User 3 field to override the Scheduled Callbacks Active Limit. Default is N for disabled||
+
+
+########################## CHANGES TO EXISTING PHRASES IN ADMIN TRANSLATION
+
+
+
+############################################################ CLIENT
+
+
+########################## CHANGES TO EXISTING PHRASES IN AGENT TRANSLATION
+
+
+############################################################  MANAGER Manual
+
+
+
+############################################################  AGENT Manual
+

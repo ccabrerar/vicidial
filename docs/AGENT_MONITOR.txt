@@ -1,0 +1,96 @@
+AGENT MONITOR DOC		Started: 2013-07-16	Updated: 2017-09-15
+
+
+Requirements:
+
+This feature requires SVN/trunk revision 2001 or higher, as well as DB Schema 
+Version 1354 or higher.
+
+
+Description:
+
+This feature allows you to set up a remote monitoring feature that can work from
+an external DID through a Call Menu and require an access code(through Call Menu)
+as well as restrict the agents that can be listened to by campaign.
+
+This will also work across a multiple server cluster.
+
+The CLI option flags below can be used for the agent_monitor.agi script in the 
+up_monitor context below:
+
+ 1. USER, PHONE, PLOGIN or REDIRECT, lookup by user id, phone extension or phone login (default is USER)
+ 2. Y or N, log in api log (default is N)
+ 3. BARGE or LISTEN, (default is LISTEN)
+ 4. Prepopulated ID, for use in context by itself
+ 5. Campaign limits, double-dash-delimited, i.e. "TEST--TEST2", (default is disabled)
+ 6. Y or N, play user IDs to listen to (default is N)
+
+It is also possible to have different settings by duplicating the up_monitor and
+up_monitor_exit contexts for multiple sets of monitoring.
+
+
+
+The new agent_monitor.agi script replaces the old agi-phone_monitor.agi script
+and the dialplan entries below should replace the older dialplan entries used.
+
+
+
+
+#########################################################################
+### ADD THE LINES BELOW TO THE SYSTEM SETTINGS CUSTOM DIALPLAN
+#########################################################################
+
+NOTE: For Asteirsk 13 only, you should use the following 'h' line instead of the ones included in the below example:
+exten => h,1,AGI(agi://127.0.0.1:4577/call_log--HVcauses--PRI-----NODEBUG-----${HANGUPCAUSE}-----${DIALSTATUS}-----${DIALEDTIME}-----${ANSWEREDTIME}-----${HANGUPCAUSE(${HANGUPCAUSE_KEYS()},tech)}))
+
+
+
+; quiet entry, listen-only, exit-on-dtmf conferences for VICIDIAL (listen)
+exten => _568600XXX,1,Set(MEETME_EXIT_CONTEXT=up_monitor_exit)
+exten => _568600XXX,n,Meetme(${EXTEN:2},mqX)
+exten => _568600XXX,n,Hangup()
+
+; barge, exit-on-dtmf conferences for VICIDIAL (barge)
+exten => _578600XXX,1,Set(MEETME_EXIT_CONTEXT=up_monitor_exit)
+exten => _578600XXX,n,Meetme(${EXTEN:2},X)
+exten => _578600XXX,n,Hangup()
+
+; quiet entry, listen-only, exit-on-dtmf conferences for VICIDIAL (listen)
+exten => _588600XXX,1,Dial(${TRUNKblind}/56${EXTEN:2},55,o)
+exten => _588600XXX,n,Hangup()
+
+; barge, exit-on-dtmf conferences for VICIDIAL (barge)
+exten => _598600XXX,1,Dial(${TRUNKblind}/57${EXTEN:2},55,o)
+exten => _598600XXX,n,Hangup()
+
+[up_monitor]
+exten => h,1,AGI(agi://127.0.0.1:4577/call_log--HVcauses--PRI-----NODEBUG-----${HANGUPCAUSE}-----${DIALSTATUS}-----${DIALEDTIME}-----${ANSWEREDTIME})
+
+exten => _X.,1,Set(MEETME_EXIT_CONTEXT=up_monitor_exit)
+exten => _X.,n,AGI(agent_monitor.agi,USER---N---LISTEN---${EXTEN}------N)
+exten => _X.,n,Hangup()
+
+exten => s,1,Set(MEETME_EXIT_CONTEXT=up_monitor_exit)
+exten => s,n,AGI(agent_monitor.agi,USER---N---LISTEN---------N)
+exten => s,n,Hangup()
+
+exten => i,1,Goto(up_monitor,s,1)
+exten => i,n,Hangup()
+exten => #,1,Goto(up_monitor,s,1)
+exten => #,n,Hangup()
+exten => t,1,Goto(up_monitor,s,1)
+exten => t,n,Hangup()
+
+[up_monitor_exit]
+exten => h,1,AGI(agi://127.0.0.1:4577/call_log--HVcauses--PRI-----NODEBUG-----${HANGUPCAUSE}-----${DIALSTATUS}-----${DIALEDTIME}-----${ANSWEREDTIME})
+
+exten => _X,1,AGI(agent_monitor.agi,REDIRECT)
+exten => _X,n,Hangup()
+
+exten => i,1,AGI(agent_monitor.agi,REDIRECT)
+exten => i,n,Hangup()
+exten => #,1,AGI(agent_monitor.agi,REDIRECT)
+exten => #,n,Hangup()
+exten => t,1,AGI(agent_monitor.agi,REDIRECT)
+exten => t,n,Hangup()
+

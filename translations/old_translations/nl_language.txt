@@ -1,0 +1,700 @@
+# nl_language.txt - this file is for the internationalization of the astGUIclient
+# client web pages. The associated install.pl file will take the language as an
+# argument and alter the php scripts to the language typed in the command line:
+# example: ./install.pl --language=nl
+# current languages in the file:
+# - English - (en) no alterations
+# - Dutch - (nl) first column
+***LANGUAGES***
+en-English|nl-Dutch|
+***FILES***
+agc|astguiclient.php|0
+agc|vicidial.php|0
+agc|vdc_db_query.php|0
+agc|manager_send.php|0
+agc|conf_exten_check.php|0
+agc|inbound_popup.php|0
+agc|active_list_refresh.php|0
+agc|park_calls_display.php|0
+agc|live_exten_check.php|0
+agc|call_log_display.php|0
+agc|voicemail_check.php|0
+agc|dbconnect.php|1
+agc|timeclock.php|0
+agc|vdc_script_display.php|1
+agc|vdc_script_notes.php|0
+agc|functions.php|0
+agc|vdc_form_display.php|1
+agc|calendar.css|1
+agc|calendar_db.js|0
+agc|phone_only.php|0
+agc|vdc_email_display.php|0
+agc|audit_comments.php|0
+agc|dbconnect_mysqli.php|1
+***TRANSLATIONS***
+### special translations that should stay at the top of the file ###
+"JAN"|"JAN"|
+"FEB"|"FEB"|
+"MAR"|"MAR"|
+"APR"|"APR"|
+"MAY"|"MEI"|
+"JUN"|"JUN"|
+"JLY"|"JUL"|
+"AUG"|"AUG"|
+"SEP"|"SEP"|
+"OCT"|"OKT"|
+"NOV"|"NOV"|
+"DEC"|"DEC"|
+\./bp.pl|../agc/bp.pl|
+\./images/|../agc/images/|
+css/|../agc/css/|
+BORDER|Border|
+VALUE=SUBMIT|VALUE=SUBMIT|
+TYPE=SUBMIT|TYPE=Submit|
+MAXLENGTH|maxlength|
+### BEGIN translation phrases through 1.1.11 release ###
+English|Inglés|
+Spanish|Español|
+French|Francés|
+German|Alemán|
+Italian|Italiano|
+agc_check_voicemail_BLINK.gif|agc_check_voicemail_BLINK_nl.gif|
+agc_check_voicemail_OFF.gif|agc_check_voicemail_OFF_nl.gif|
+agc_check_voicemail_ON.gif|agc_check_voicemail_ON_nl.gif|
+agc_live_call_OFF.gif|agc_live_call_OFF_nl.gif|
+agc_live_call_ON.gif|agc_live_call_ON_nl.gif|
+agc_tab_active_lines.gif|agc_tab_active_lines_nl.gif|
+agc_tab_conferences.gif|agc_tab_conferences_nl.gif|
+agc_tab_main.gif|agc_tab_main_nl.gif|
+vdc_LB_dialnextnumber.gif|vdc_LB_dialnextnumber_nl.gif|
+vdc_LB_dialnextnumber_OFF.gif|vdc_LB_dialnextnumber_OFF_nl.gif|
+vdc_LB_grabparkedcall.gif|vdc_LB_grabparkedcall_nl.gif|
+vdc_LB_hangupcustomer.gif|vdc_LB_hangupcustomer_nl.gif|
+vdc_LB_hangupcustomer_OFF.gif|vdc_LB_hangupcustomer_OFF_nl.gif|
+vdc_LB_parkcall.gif|vdc_LB_parkcall_nl.gif|
+vdc_LB_parkcall_OFF.gif|vdc_LB_parkcall_OFF_nl.gif|
+vdc_LB_pause.gif|vdc_LB_pause_nl.gif|
+vdc_LB_pause_OFF.gif|vdc_LB_pause_OFF_nl.gif|
+vdc_LB_quickxfer.gif|vdc_LB_quickxfer_nl.gif|
+vdc_LB_quickxfer_OFF.gif|vdc_LB_quickxfer_OFF_nl.gif|
+vdc_LB_resume.gif|vdc_LB_resume_nl.gif|
+vdc_LB_resume_OFF.gif|vdc_LB_resume_OFF_nl.gif|
+vdc_LB_startrecording.gif|vdc_LB_startrecording_nl.gif|
+vdc_LB_stoprecording.gif|vdc_LB_stoprecording_nl.gif|
+vdc_LB_transferconf.gif|vdc_LB_transferconf_nl.gif|
+vdc_LB_transferconf_OFF.gif|vdc_LB_transferconf_OFF_nl.gif|
+vdc_LB_webform.gif|vdc_LB_webform_nl.gif|
+vdc_LB_webform_OFF.gif|vdc_LB_webform_OFF_nl.gif|
+vdc_XB_blindtransfer.gif|vdc_XB_blindtransfer_nl.gif|
+vdc_XB_blindtransfer_OFF.gif|vdc_XB_blindtransfer_OFF_nl.gif|
+vdc_XB_dialwithcustomer.gif|vdc_XB_dialwithcustomer_nl.gif|
+vdc_XB_dialwithcustomer_OFF.gif|vdc_XB_dialwithcustomer_OFF_nl.gif|
+vdc_XB_hangupbothlines.gif|vdc_XB_hangupbothlines_nl.gif|
+vdc_XB_hangupbothlines_OFF.gif|vdc_XB_hangupbothlines_OFF_nl.gif|
+vdc_XB_hangupxferline.gif|vdc_XB_hangupxferline_nl.gif|
+vdc_XB_hangupxferline_OFF.gif|vdc_XB_hangupxferline_OFF_nl.gif|
+vdc_XB_internalcloser.gif|vdc_XB_internalcloser_nl.gif|
+vdc_XB_internalcloser_OFF.gif|vdc_XB_internalcloser_OFF_nl.gif|
+vdc_XB_leave3waycall.gif|vdc_XB_leave3waycall_nl.gif|
+vdc_XB_leave3waycall_OFF.gif|vdc_XB_leave3waycall_OFF_nl.gif|
+vdc_XB_localcloser.gif|vdc_XB_localcloser_nl.gif|
+vdc_XB_localcloser_OFF.gif|vdc_XB_localcloser_OFF_nl.gif|
+vdc_XB_parkcustomerdial.gif|vdc_XB_parkcustomerdial_nl.gif|
+vdc_XB_parkcustomerdial_OFF.gif|vdc_XB_parkcustomerdial_OFF_nl.gif|
+vdc_XB_hotkeysactive.gif|vdc_XB_hotkeysactive_nl.gif|
+vdc_XB_hotkeysactive_OFF.gif|vdc_XB_hotkeysactive_OFF_nl.gif|
+vdc_LB_senddtmf.gif|vdc_LB_senddtmf_nl.gif|
+vdc_LB_senddtmf_OFF.gif|vdc_LB_senddtmf_OFF_nl.gif|
+vdc_XB_header.gif|vdc_XB_header_nl.gif|
+vdc_XB_number.gif|vdc_XB_number_nl.gif|
+vdc_XB_channel.gif|vdc_XB_channel_nl.gif|
+vdc_XB_seconds.gif|vdc_XB_seconds_nl.gif|
+vdc_tab_script.gif|vdc_tab_script_nl.gif|
+vdc_tab_form.gif|vdc_tab_form_nl.gif|
+vdc_tab_email.gif|vdc_tab_email_nl.gif|
+vdc_LB_requeue_call.gif|vdc_LB_requeue_call_nl.gif|
+vdc_LB_requeue_call_OFF.gif|vdc_LB_requeue_call_OFF_nl.gif|
+agc_live_call_DEAD.gif|agc_live_call_DEAD_nl.gif|
+vdc_LB_startrecording_OFF.gif|vdc_LB_startrecording_OFF_nl.gif|
+vdc_LB_webform_two.gif|vdc_LB_webform_two_nl.gif|
+vdc_LB_webform_two_OFF.gif|vdc_LB_webform_two_OFF_nl.gif|
+vdc_volume_MUTE.gif|vdc_volume_MUTE.gif|
+vdc_volume_UNMUTE.gif|vdc_volume_UNMUTE.gif|
+You have now logged out. Thank you|Je bent nu uitgelogd.|
+astGUIclient web-client VERSION|astGUIclient Versie|
+astGUIclient web client|astGUIclient web client|
+VICIDIAL web client|ViCiDial web client|
+VICIDIAL web-client version|ViCiDial web-client versie|
+You can only monitor Zap channels|Je kunt alleen Zap kanalen monitoren|
+Stop Record|Stop Opname|
+you are logged into this phone|Je ben ingelogd met deze telefoon Extentie|
+Back to Main Window|Terug naar het Hoofdmenu|
+LIVE CALLS ON THIS PHONE|LIVE GESPREKKEN OP DEZE TELEFOON|
+LIVE CALLS IN THIS CONFERENCE|LIVE GESPREKKEN IN DEZE CONFERENTIE|
+LIVE CALL TRANSFER|LIVE GESPREK DOORSCHAKELEN|
+CLIENT CHANNEL|CLIENT KANAAL|
+REMOTE CHANNEL|REMOTE KANAAL|
+CLICK HERE TO LOG IN AGAIN|KLIK HIER OM OPNIEUW IN TE LOGGEN|
+ACTIVE DISPLAY PAUSED|AKTIEF SCHERM GEPAUZEERD|
+Main Panel|Hoofdmenu|
+Active Lines Panel|Actieve Lijnen Menu|
+Conferences Panel|Conferentie Menu|
+Check Voicemail|Controleer voicemail|
+Live Call|Live Gesprek|
+Hangup Trunk|Trunk Ophangen|
+Hijack Trunk|Trunk Kapen|
+Listen Trunk|Trunk Beluisteren|
+Active Local Menu|Aktief Lokaal Menu|
+Hangup Local|Lokaal Ophangen|
+Hijack Local|Lokaal Kapen|
+Listen Local|Lokaal Beluisteren|
+Channel to be transferred|Doorschakelkanaal|
+Extensions Menu|Extentie Menu|
+Send to selected extension|Stuur naar geselecteerde Extentie|
+Send to selected vmail box|Stuur naar geselecteerde Voicemailbox|
+Send to this number|Stuur naar dit nummer|
+click on a number below to send to a conference|klik op een onderstaand nummer om naar een conferentie door te schakelen|
+Send my channel too|Verstuur mijn kanaal ook|
+Conferences Menu|Conferentie Menu|
+LOCAL Extensions Dial|Bel Lokale Extenties|
+Phone calling from|Telefoon belt vanuit|
+Call selected extension|Bel geselecteerde extentie|
+Call selected vmail box|Bel geselcteerde voicemail|
+LOCAL DIAL EXTENSIONS|LOKALE TELEFOON EXTENTIES|
+OUTBOUND CALLS|OUTBOUND GESPREKKEN|
+INBOUND CALLS|INBOUND GESPREKKEN|
+Refresh rate|Refresh Snelheid|
+MANUAL DIAL|Bel Handmatig|
+CALL DATE\/TIME|Terugbel Datum\/Tijd|
+LOCAL HANGUP|Lokaal Ophangen|
+PARKED CALLS|Geparkeerde Gesprekken|
+PARKED BY|Geparkeerd door|
+PARKED TIME|Parkeertijd|
+Registered to|Geregistreerd op naam van|
+Enter Conference|Start conferentie|
+Dial From Conf|Bel via Conferentie|
+Active Extensions|Aktieve Extenties|
+Outside Lines|Buitenlijnen|
+Local Extensions|Lokale Extenties|
+Data Goes Here|Gegevens Hier Invullen|
+Trunk Action|Trunk Actie|
+Local Action|Lokale Actie|
+Conferences List|Conferentielijst|
+Click on a conference room number on the left for info on that conference|Klik op een Conferentienummer aan de linkerkant voor informatie over die Conferentie|
+List Display|Toon Lijst|
+Live Extensions|Live Extenties|
+Busy Extensions|Bezette Extenties|
+Outside Lines|Buitenlijnen|
+script runtime|Script Looptijd|
+Call Log Display|Logboek Bekijken|
+is not valid|is niet geldig|
+or protocol|of protocol|
+Conf Extension Check|Conferentie Extentie Controle|
+has been registered to|is geregistreerd op|
+LIVE INBOUND CALL|LIVE BINNENKOMEND GESPREK|
+Number Dialed|Nummer Gekozen|
+SEND TO MY VOICEMAIL|STUUR NAAR MIJN VOICEMAIL|
+Live Extension Check|Live Extentie Controle|
+Manager Send|Manager Verzenden|
+command not inserted|commando niet uitgevoerd|
+command sent for|commando verstuurd voor|
+One of these variables|Een van deze variabelen|
+must be greater than 2 characters|moet groter zijn dan 2 karakters|
+must be greater than 14 characters|moet groter zijn dan 14 karakters|
+must be set|moet ingevuld zijn|
+not sent|niet verstuurd|
+Cannot find empty conference|Kan geen lege conferentie vinden|
+is not live|is niet live|
+To see information on one of the callbacks below, click on the INFO link. To call the customer back now, click on the DIAL link. If you click on a record below to dial it, it will be removed from the list|Als je informatie over een van de terugbelafspraken hieronder wilt inzien, klik op de INFO link. Om de klant nu terug te bellen, klik op de DIAL link. Als je hieronder klikt op een adres om te bellen, wordt deze verwijderd uit de lijst|
+RECORDING WILL LAST UP TO 60 MINUTES|De Opname loopt maximaal 60 minuten|
+Parked Calls Display|Geparkeerde Gesprekken Tonen|
+Database Query Script|Database Query Script|
+Group Choice|Groepskeuze|
+has been registered to user|is geregistreerd voor gebruiker|
+HOPPER EMPTY|HOPPER LEEG|
+LOG NOT ENTERED|LOG NIET INGEVOERD|
+has been changed to|is veranderd naar|
+is now in status|heeft nu de status|
+Voicemail Check|Voicemail Check|
+voicemail box|Voicemail Box|
+Re-Login|Opnieuw inloggen|
+User Password|Gebruikers Wachtwoord|
+User Login|Gebruikersnaam|
+Phone Login|Werkplek Code|
+Phone Password|Werkplek Wachtwoord|
+Campaign not active, please try again|Campagne is niet actief, neem contact op met de Supervisor|
+Login incorrect, please try again|Ongeldige gegevens, probeer het nogmaals|
+Campaign Login|Campagne Inlogpagina|
+Sorry, your phone login and password are not active in this system, please try again|Sorry, de opgegeven Werkplek Code en/of Wachtwoord zijn niet herkend, probeer het nogmaals|
+leads left to call in hopper|Belbare Adressen in de Belvoorraad|
+CAMPAIGN CUSTOM PARKING|Campagne Speciaal Parkeren|
+CAMPAIGN DEFAULT PARKING|Campagne Standaard Parkeren|
+CAMPAIGN CUSTOM WEB FORM|Campagne Speciaal Webformulier|
+CAMPAIGN DEFAULT WEB FORM|Campagne Standaard Webformulier|
+CAMPAIGN ALLOWS CLOSERS|Campagne heeft Doorverbindgroepen|
+CAMPAIGN ALLOWS NO CLOSERS|Campagne heeft geen Doorverbindgroepen|
+USING PREVIOUS MEETME ROOM|Vorige Conferentieruimte in gebruik|
+USING NEW MEETME ROOM|Gebgruik Nieuwe Conferentieruimte|
+old QUEUE and INCALL reverted list|oude wachtrij en Ingesprek omgekeerde Lijst|
+old QUEUE and INCALL reverted hopper|oude wachtrij en Ingesprek omgekeerde Hopper|
+old vicidial_live_agents records cleared|oude ViCiDial_live_agents bestanden opgeschoond|
+campaign is set to auto_dial_level|campagne staat op auto_dial_level|
+new vicidial_live_agents record inserted|nieuw vicidial_live_agents bestand toegevoegd|
+campaign is set to manual dial|campagne staat op handmatig bellen|
+Sorry, there are no leads in the hopper for this campaign|Sorry, er zijn geen adressen in de Belvoorraad voor deze Campagne|
+Dial Next Number|Bel Volgend Nummer|
+LIVE CALLS IN YOUR SESSION|Live gesprekken in jouw Sessie|
+Stop Recording|Stop Opname|
+Start Recording|Start Opname|
+Transfer number must have more than 1 digit|Doorschakelnummer moet meer dan 1 cijfer bevatten|
+Grab Parked Call|Terugnemen Geparkeerd Gesprek|
+Park Call|Parkeer Gesprek|
+Waiting for Ring|Wachten op Kiestoon|
+Called 3rd party|3e Partij Gebeld|
+LEAVE 3-WAY CALL|Verlaat Conference Call|
+Dial With Customer|Bel Met Klant|
+Park Customer Dial|Parkeer Gesprek en bel|
+Hangup Xfer Line|Hang doorverbonden lijn Op|
+Hangup Both Lines|Hang Beide Lijnen Op|
+Hangup Customer|Hang Klantlijn Op|
+Transfer - Conference|Doorverbinden|
+LOCAL CLOSER|Lokale Doorverbindgroep|
+INTERNAL CLOSER|Interne Doorverbindgroep|
+Dial Blind Transfer|Rechtstreeks Doorschakelen|
+Dial timed out, contact your system administrator|Het opzetten van het gesprek duurt te lang, neem contact op met je Supervisor|
+No more leads in the hopper for campaign|Geen adressen meer in de Belvoorraad voor deze Campagne|
+Web Form|Web Formulier|
+You Must Select a Disposition|Je moet eerst een afsluitcode Kiezen|
+GROUPS NOT SELECTED|Niet Geselecteerde Groepen|
+SELECTED GROUPS|Geselecteerde Groepen|
+You cannot log out during a Dial attempt|Je kunt niet uitloggen tijdens een belpoging|
+Wait 50 seconds for the dial to fail out if it is not answered|Wacht 50 seconden tot het gesprek faalt of niet beantwoord wordt|
+STILL A LIVE CALL! Hang it up then you can log out|JE BENT IN EEN LIVE GESPREK! Hang op, dan kun je uitloggen|
+Hide conference call channel information|Verberg kanaalinformatie van conference call|
+Show conference call channel information|Toon kanaalinformatie van conference call|
+Logged in as User|Ingelogd als gebruiker|
+No one is in your session|Je bent niet verbonden met de Dialer|
+Customer has hung up|De Klant heeft opgehangen|
+End-of-call Disposition Selection|Afsluitcode Selectie|
+CLOSER INBOUND GROUP SELECTION|Inbound groep Selectie|
+Closer Inbound Group Selection|Inbound groep Selectie|
+BLENDED CALLING|Blended Bellen|
+outbound activated|Outbound Geactiveerd|
+Preview the Lead then|Bekijk de Klant|
+Lead was not reverted, there was an error|De klantgegevens zijn niet teruggedraaid, er is een fout opgetreden|
+call was not placed, there was an error|Het Gesprek is niet tot stand gebracht, er is een fout opgetreden|
+Number to call|Nummer om te bellen|
+Customer Information|Klant Gegevens|
+Lead Dispositioned As|Klant afgeboekt als|
+Any changes made to the customer information below at this time will not be comitted, You must change customer information before you Hangup the call|Alle aanpassingen aan onderstaande klantgegevens wordt niet opgeslagen. Je moet de klantgegevens aanpassen VOORDAT de volgende klant kiest|
+When active, simply press the keyboard key for the desired disposition for this call. The call will then be hungup and dispositioned automatically|Wanneer aktief, kies de corresponderende toets op het toetsenbord, om dit geprek af te boeken. Het gesprek wordt opgehangen en automatisch afgeboekt met die code|
+Disposition Hot Keys|Sneltoetsen Afsluitcodes|
+Cust Time|Klant Tijd|
+RECORD ID|Opname ID|
+RECORDING FILE|Recording|
+HOT KEYS ACTIVE|SNELTOETSEN AKTIEF|
+HOT KEYS INACTIVE|SNELTOETSEN NIET AKTIEF|
+DIAL OVERRIDE|Aangepast Bellen|
+SKIP LEAD|Klant Overslaan|
+DIAL LEAD|Bel Klant|
+LEAD PREVIEW|Preview Modus|
+PAUSE AGENT DIALING|PAUZEER BELLEN|
+DISPOSITION CALL|Boek het gesprek af|
+ session ID| sessie code|
+ to campaign| naar campagne|
+Select a CallBack Date|Selecteer een Terugbel Datum|
+ maximize | maximaliseer |
+ minimize | minimaliseer |
+You must choose a date|Je moet een datum kiezen|
+Select a Date Below|Selecteer een datum|
+Click on a callback below to call the customer back now. If you click on a record below to call it, it will be removed from the list|Klik op een terugbelafspraak om de klant nu terug te bellen. Als je hierop klikt, wordt deze verwijderd uit de lijst|
+If you want to dial a number and have it NOT be added as a new lead, enter in the exact dialstring that you want to call in the Dial Override field below. To hangup this call you will have to open the CALLS IN THIS SESSION link at the bottom of the screen and hang it up by clicking on its channel link there|Als je een nummer belt en NIET wilt dat deze als nieuwe klant in de database wordt toegevoegd, vul dan het exacte nummer in, in het Aangepast Bellen veld. Om op te hangen, dien je GESPREKKEN IN DEZE SESSIE te open, onderaan het scherm, en daar op te hangen door te klikken op de gespreks link|
+YOU CANNOT SKIP A CALLBACK OR MANUAL DIAL, YOU MUST DIAL THE LEAD|Je kunt een terugbelafspraak of handmatige belactie niet overslaan, je moet deze belpoging afronden|
+YOU MUST BE PAUSED TO MANUAL DIAL A NEW LEAD IN AUTO-DIAL MODE|Je moet op de Pauze knop drukken om handmatig een nummer te kunnen bellen|
+Enter information below for the new lead you wish to call|Voer de informatie voor het nieuw te bellen nummer hieronder in|
+YOU MUST BE PAUSED TO CHECK CALLBACKS IN AUTO-DIAL MODE|JE MOET GEPAUZEERD ZIJN OM TERUGBELAFSPRAKEN TE BEKIJKEN|
+Note: all new manual dial leads will go into list|Let op: alle nieuwe handmatig te bellen nummers gaan in een aparte bellijst|
+YOU DO NOT HAVE PERMISSIONS TO TRANSFER CALLS|Je hebt geen rechten om gesprekken door te verbinden|
+will be added to the beginning of this number|wordt toegevoegd aan het begin van dit nummer|
+This is usually a 1 in the USA-Canada|Dit is altijd 31 in Nederland|
+NEW MANUAL DIAL LEAD FOR|Nieuwe handmatig aangemaakte klant voor|
+Finish and Disposition Call|Afronden en Afboeken gesprek|
+10 digits max - digits only|10 cijfers maximaal - alleen cijfers|
+Note: a dial prefix of|Let op: een voorkiesnummer van|
+Hangup Again|Opnieuw Ophangen|
+Go Back|Ga Terug|
+Call Agent Again|Herstel de verbinding|
+MY CALLBACK ONLY|Terugbelafspraak Alleen voor Mij|
+NO ACTIVE CALLBACKS|Geen Atieve Terugbelafspraken|
+ACTIVE CALLBACKS|Actieve Terugbelafspraken|
+CALLBACKS FOR AGENT|Terugbelafspraken voor Agent|
+Dial Code:|Landcode:|
+Dial Override|Aangepast Bellen|
+digits only please|alleen cijfers invullen|
+Dial Now|Nu Bellen|
+CB Comments|Opmerkingen Terugbelafspraak|
+ Title| Titel|
+Your Status|Jouw Status|
+ STATUS| STATUS|
+ RESET| RESET|
+CLEAR FORM|Reset Formulier|
+Send DTMF|Stuur Toetscombinatie|
+SUBMIT|OPSLAAN|
+Incoming|Inkomend|
+Calling|Bellen|
+Called|Gebeld|
+Campaign|Campagne|
+>Status|>Status|
+Inserted|Ingevoerd|
+ seconds| seconden|
+ Login | Inloggen |
+Login:|Inloggen:|
+User |Gebruiker |
+Password|Wachtwoord|
+VERSION|VERSIE|
+BUILD|BUILD|
+Server|Server|
+RECORD |OPENEMEN |
+>HANGUP|>OPHANGEN|
+>XFER|>XFER|
+IN-NUMBER|INKOMEND-NUMMER|
+NUMBER|NUMMER|
+CALLERID|CALLERID|
+ CALL| BEL|
+PICKUP|OPPAKKEN|
+CONFERENCE|CONFERENTIE|
+Refresh|Ververs|
+Send DTMF|Stuur DTMF|
+>ORDER|>SORTEER|
+ on | op |
+>LOGOUT|>UITLOGGEN|
+ Channel| Kanaal|
+Extensions|Extenties|
+Conferences|Conferenties|
+Conference|Conferentie|
+ Recording| Opnemen|
+Welcome |Welkom |
+VOICEMAIL|VOICEMAIL|
+ NEW| NIEUW|
+ OLD| OUD|
+ Pause | Pauze |
+Resume|Doorgaan|
+Faster|Sneller|
+Slower|Langzamer|
+Initializing|Initialiseren|
+Invalid|Ongeldig|
+Username|Gebruikersnaam|
+Notes:|Opmerkingen:|
+First|Eerste|
+MI: |MI: |
+Last |Laatste |
+Address|Adres|
+City|Stad|
+ State| Staat|
+PostCode|Postcode|
+Province|Provincie|
+Vendor ID|Leverancier ID|
+DialCode|BelCode|
+Alt. Phone|Telefoon2|
+Show|Toon|
+ Email| Email|
+ Comments| Opmerkingen|
+REFRESH|VERVERS|
+ALT PHONE DIAL|Bel ander Nummer|
+MAIN PHONE|TELEFOON1|
+ALT PHONE|TELEFOON2|
+ADDRESS3|Toevoeging|
+FINISH LEAD|GESPREK AFRONDEN|
+Dial Alt Phone Number|Bel Telefoon2|
+Phone|Telefoon1|
+ DIAL| DIAL|
+SUBMIT FAVORITES CHANGES - requires logout|OPSLAAN AANPASSINGEN FAVORIETEN - uitloggen verplicht|
+BACK TO MAIN WINDOW - ignore changes made|TERUG NAAR HOOFDSCHERM - negeer gemaakte aanpassingen|
+AVAILABLE EXTENSIONS|BESCHIKBARE EXTENTIES|
+ edit| bewerk|
+ FAVORITES| FAVORIETEN|
+### END translation phrases through 1.1.11 release ###
+Search Existing Leads|Zoek Bestaande Klanten|
+This option if checked will attempt to find the phone number in the system before inserting it as a new lead|Deze optie, indien geselecteerd, probeert een bestaande klant te vinden voordat het nieuw te bellen nummer als nieuwe klant wordt toegevoegd aan de database|
+Finish Wrapup and Move On|Afronden gesprek en doorgaan|
+seconds remaining in wrapup|seconden resterend om af te ronden|
+Call Wrapup:|Gesprek Afronden:|
+### months of the year for CallBack date select screen ###
+January|Januari|
+Frebruary|Februari|
+March|Maart|
+April|April|
+May|Mei|
+June|Juni|
+July|Juli|
+August|Augustus|
+September|September|
+October|Oktober|
+November|November|
+December|December|
+### BEGIN translation phrases for 2.0.1 release ###
+Previous Callback Information|Gegevens vorige Terugbelafspraak|
+Last Call: |Laatste Gesprek:|
+CallBack: |Terugbelafspraak:|
+Agent: |Agent:|
+Comments: |Opmerkingen:|
+### BEGIN translation phrases for 2.0.2 release ###
+VOLUME|VOLUME|
+### BEGIN translation phrases for 2.0.3 release ###
+FAST DIAL|Bel Direct|
+YOU MUST ENTER A PHONE NUMBER AND DIAL CODE TO USE FAST DIAL|JE MOET EEN NUMMER EN BELCODE INVOEREN ALS JE SNEL WILT BELLEN|
+ SELECT A PAUSE CODE :| SELECTEER EEN PAUZE CODE :|
+ENTER A PAUSE CODE|VOER EEN PAUZE CODE IN|
+YOU MUST BE PAUSED TO ENTER A PAUSE CODE IN AUTO-DIAL MODE|JE MOET GEPAUZEERD ZIJN OM EEN PAUZE CODE IN TE VOEREN TIJDENS AUTOMATISCH BELLEN|
+Your session has been disabled|Je sessie is geblokkeerd|
+Gender: |Geslacht: |
+Date of Birth: |Geboortedatum: |
+YOU MUST BE PAUSED TO CHANGE GROUPS|JE MOET GEPAUZEERD ZIJN OM VAN GROEP TE WISSELEN|
+Calls in Queue:|Klanten in de Wachtrij:|
+ Timeclock| Tijdklok|
+The user and password you entered are not active in the system|De gebruikersnaam en/of wachtwoord die je hebt ingevoerd zijn niet herkend|
+Please try again|Probeer het aub nogmaals|
+You cannot log in or out within 30 seconds of your last login or logout|Je kunt niet inloggen binnen 30 seconden na je laatste in- of uitlogpoging|
+You have now logged-out|Je ben nu uitgelogd|
+You logged out at |Je bent ingelogd op |
+Amount of time you were logged-in: |Tijd die je ingelogd bent geweest: |
+ERROR: timeclock log entry already made: |FOUT: tijdklok registratie is reeds aangemaakt: |
+BACK to Agent Login Screen|TERUG naar Inlog scherm|
+BACK to Administration|TERUG naar Administratie|
+BACK to Welcome Screen|TERUG naar Startpagina|
+Time since you were last logged-in: |Tijd sinds je laatste login: |
+You last logged-out at: |Je laatste log-uit was op: |
+Click LOGIN below to log-in|Klik op INLOGGEN om in te loggen|
+Amount of time you have been logged-in: |Tijd dat je bent ingelogd|
+You logged-in at:|Je bent ingelogd om:|
+Click LOGOUT below to log-out|Klik op UITLOGGEN om uit te loggen|
+Undefined|Ongedefinieerd|
+This phone number is not in the campaign lists|Dit telefoon nummer komt niet voor in de campagnelijst|
+Unspecified error|Ongespecificeerde fout|
+Extended Alt Phone Information: |Uitgebreide Telefoon2 Informatie|
+ALT DIAL NUMBER:|TELEFOON2 NUMMER:|
+Phone Code and Number:|Net- en Abonneenummer:|
+Notes: |Opmerkingen: |
+Active: |Aktief: |
+Alt Count: |Alt Aantal|
+Change this phone number to INACTIVE|Wijzig nummer naar INACTIEF|
+Change this phone number to ACTIVE|Wijzig nummer naar ACTIEF|
+YOU MUST LOG IN TO THE TIMECLOCK FIRST|JE MOET EERS INLOGGEN BIJ DE TIJDKLOK|
+### BEGIN translation phrases for 2.0.5 release ###
+Gender: |Geslacht:|
+Date of Birth: |Geboortedatum:|
+YOU MUST BE PAUSED TO CHANGE GROUPS|JE MOET GEPAUZEERD ZIJN OM GROEPEN TE WIJZIGEN|
+Calls in Queue:|Gesprekken in wachtrij:|
+ Timeclock|Tijdklok|
+The user and password you entered are not active in the system|De gebruikersnaam en-of het wachtwoord die je hebt ingevoerd, zijn niet bekend|
+Please try again|Probeer het opnieuw|
+You cannot log in or out within 30 seconds of your last login or logout|Je kunt niet inloggen binnen 30 seconden na je laatste login of loguit poging|
+You have now logged-out|Je bent nu uitgelogd|
+You logged out at |Je logde uit op |
+Amount of time you were logged-in: |Tijdperiode die je ingelogd bent geweest:|
+ERROR: timeclock log entry already made: |FOUT: tijdklok logboekvermelding al gedaan:|
+BACK to Agent Login Screen|TERUG naar Inlog Scherm|
+BACK to Administration|TERUG naar Administratie|
+BACK to Welcome Screen|TERUG naar Startpagina|
+Time since you were last logged-in: |Tijd sinds je voor het laatst was ingelogd:|
+You last logged-out at: |Je logde voor het laatst uit op:|
+Click LOGIN below to log-in|Klik hieronder op LOGIN om in te loggen|
+Amount of time you have been logged-in: |Tijdperiode die je ingelogd bent geweest:|
+You logged-in at:|Je logde in op:|
+Click LOGOUT below to log-out|Klik op UITLOGGEN hieronder om uit te loggen|
+Undefined|Ongedefinieerd|
+This phone number is not in the campaign lists|Dit telefoonnummer staat niet in de campagnelijsten|
+Unspecified error|Onbekende fout|
+Extended Alt Phone Information: |Uitgebreide Telefoon2 Informatie:|
+ALT DIAL NUMBER:|Bel Telefoon2 nummer:|
+Phone Code and Number:|Net- en Abonneenummer:|
+Notes: |Opmerkingen:|
+Active: |Aktief:|
+Alt Count: |Alt. Aantal:|
+Change this phone number to INACTIVE|Wijzig dit telefoonnummer naar INACTIEF|
+Change this phone number to ACTIVE|Wijzig dit telefoonnummer naar ACTIEF|
+YOU MUST LOG IN TO THE TIMECLOCK FIRST|U DIENT ZICH EERST AAN TE MELDEN BIJ DE TIJDKLOK|
+There is a time synchronization problem with your system, please tell your system administrator|Er is een tijd synchronisatieprobleem met het systeem, neem contact op met de systeem beheerder|
+Preview Call|Bekijk Klantgegevens|
+SELECT A GROUP ALIAS|KIES EEN GROEP ALIAS|
+Group Alias Selection|Groep Alias Selectie|
+Click Here to Choose a Group Alias|Klik hier om te kiezen voor een Groep Alias|
+Group Alias|Groep Alias|
+ERROR: There are no Shifts enabled for your user group|FOUT: Er zijn geen shifts ingeschakeld voor je gebruikersgroep|
+ERROR: You are not allowed to log in outside of your shift|FOUT: Het is niet toegestaan om in te loggen buiten je dienst|
+MANAGER OVERRIDE|MANAGER AANGEPAST|
+Your Shift is over or has changed, you have been logged out of your session|Je shift is afgelopen of gewijzigd, je bent uitgelogd|
+### START translations for 2.2.0 release ###
+You are not allowed to dial into other agent sessions|Je hebt geen rechten om te bellen naar andere agent sessies|
+QUICK TRANSFER|Snel Doorverbinden|
+Other Agents Status|Status Collega's|
+Available Agents Transfer|Beschikbare Collega's|
+Show Calls In Queue|Toon mensen in de Wachtrij|
+Calls In Queue|Mensen in de Wachtrij|
+Hide Calls In Queue|Verberg mensen in de Wachtrij|
+Calls in Queue View Disabled for this campaign|Bellers in de Wachtrij bekijken is uitgeschakeld voor deze Campagne|
+YOU MUST BE PAUSED TO GRAB CALLS IN QUEUE|Je moet op PAUZE staan om gesprekken uit de wachtrij te kunnen halen|
+has selected your in-group choices|heeft jouw inbound groepen ingesteld|
+Close Message|Sluit Bericht|
+TIMER NOTIFICATION|TIMER MELDING|
+>AGENTS<|>agenten<|
+Manager |Manager|
+CONSULTATIVE|ADVIESGROEP|
+### START translations for 2.4 release ###
+VIEW CALL LOG|Bekijk Logboek|
+click to dial|klik om te bellen|
+Close Call Log|Sluit Logboek|
+YOU MUST BE PAUSED TO VIEW YOUR CALL LOG|Je moet op PAUZE staan om het Logboek te bekijken|
+Close Info Box|Sluit Informatiescherm|
+No calls on this day|Geen gesprekken op deze dag|
+You are in ALT dial mode, you must finish the lead before logging out|Je bent in de ALT knop modus, moet je moet dit gesprek eerst afronden voordat je uitlogd|
+Presets Button|Voorkeuren Knop|
+SELECT A PRESET|Selecteer een Intelling|
+Customer Hung-up, 3-way Call Ended Automatically|De Klant heeft opgehangen, conference call is beindigd|
+Manual Dial Queue Calls Waiting|Handmatig gebelde nummers in de Wachtrij|
+Manual Queue|Handmatige Wachtrij|
+This phone number is outside of the local call time|Het nummer dat je wilt bellen valt buiten de toegestane beltijd voor deze zone|
+Manual Queue is Off|Handmatige wachtrij is uitgeschakeld|
+Manual Queue is On|Handmatige wachtrij staat Aan|
+Call Notes:|Gespreksnotities:|
+Call Notes List|Gespreksnotities Lijst|
+view notes|Notities bekijken|
+CALL NOTES LOG|Gespreksnotities LOG|
+Close Call Notes|Sluit Gespreksnotities|
+CALL LOG FOR THIS LEAD|Gesprekslog voor deze klant|
+SEARCH FOR A LEAD|Zoek een Klant|
+SEARCH RESULTS|Zoekresultaten|
+YOU MUST BE PAUSED TO SEARCH FOR A LEAD|Je moet op PAUZE staan als je een klant wilt zoeken|
+Notes: when doing a search for a lead, the phone number, lead ID or|Opmerkingen: bij het zoeken van een klant zijn het telefoonnummer, Lead ID of|
+are the best fields to use|zijn de velden waarop gezocht kan worden|
+Using the other fields may be slower. Lead searching does not allow for wildcard or partial search terms|De andere velden kunnen de zoekopdracht vertragen. Het zoeken van een klant houdt geen rekening met wildcards of gedeeltelijke zoektermen|
+Lead search requests are all logged in the system|Alle zoekopdrachten worden geregistreerd in het systeem|
+Main Phone Number|Telefoon1|
+Alternate Phone Number|Telefoon2|
+Address3 Phone Number|Telefoon3|
+No results found|Er zijn geen zoekresultaten|
+Results Found:|Zoekresultaten:|
+No calls found|Geen gesprekken gevonden|
+reset form|Velden Leegmaken|
+Callback Status|Terugbel Status|
+Callback Lead Status|Status Terugbelafspraak|
+Callback Entry Time|Tijdstip Terugbelafspraak Gemaakt|
+Callback Trigger Time|Terugbel Deadline|
+Callback Comments|Notities|
+To see information on one of the callbacks below, click on the INFO link. To call the customer back now, click on the DIAL link. If you click on a record below to dial it, it will be removed from the list|Als u informatie over een van de callbacks zie hieronder, klik op de INFO link. Om de klant nu terug te bellen, klik op de DIAL link. Als u hieronder klikt op een record om te bellen, wordt deze verwijderd uit de lijst|
+rings all available agents until one picks up the phone|laat toestellen van alle beschikbare agenten rinkelen totdat iemand opneemt|
+No calls for this lead|Geen gesprekken voor deze klant|
+Time Zone Warning|Tijdzone Waarschuwing|
+Phone Area Code Outside Dialable Zone|Telefoon landcode valt buiten de toegestane Tijdzone|
+Postal Code Outside Dialable Zone|Postcode valt buiten de toegestande Tijdzone|
+Custom Transfer|Aangepast Doorverbinden|
+System Delay, Please try again|Systemvertraging, Probeer het opnieuw|
+Disposition Status List Hidden|Afsluitcodelijst Verborgen|
+The system has received a command to log you out, you have been logged out of your session|Het systeem heeft een opdracht om je uit te loggen ontvangen, je bent nu uitgelogd.|
+Notes: when doing a search for a contact, wildcard or partial search terms are not allowed|Opmerkingen: bij het uitvoeren van een zoekopdracht naar een contactpersoon, worden wildcards of gedeeltelijke zoektermen niet toegestaan|
+Contact search requests are all logged in the system|Alle zoekopdrachten worden opgeslagen in het systeem|
+SEARCH FOR A CONTACT|Zoek naar een Contactpersoon|
+CONTACTS SEARCH RESULTS|Zoekresultaten Contactpersonen|
+LEAD SEARCH|Klant Opzoeken|
+Customer Time|Klant Tijd|
+TERRITORY SELECTION|Klantgroep Selectie|
+TERRITORIES NOT SELECTED|Klantgroepen niet Geselecteerd|
+SELECTED TERRITORIES|Geselecteerde Klantgroepen|
+Dialable Leads|Belbare Adressen|
+You have now logged-in|Je bent ingelogd|
+You logged in at|Je ingelogd op|
+Refresh Campaign List|Vernieuw Campagne Lijst|
+PLEASE SELECT A CAMPAIGN|Selecteer een Campagne|
+Agents View|Online Collega's Tonen|
+-READY|-KLAAR|
+-INCALL|-INCALL|
+-PAUSED|-PAUSED|
+CALL DISPOSITION|AFSLUITCODE|
+### START translations for 2.6 release ###
+Click Here to Choose a Dial In-Group|Klik hier om een inbound groep te kiezen|
+SELECT A DIAL IN-GROUP|Kies een inbound groep|
+DIAL IN-GROUP|Inbel Groep|
+Dial In-Group|Inbel Groep|
+Click Here to Activate|Klik hier om te Activeren|
+Click Here to Deactivate|Klik hier om te De-activeren|
+ERROR: You must enter in search terms, one of these must be populated: lead ID, vendor ID, phone number, last name|Foutmelding: Een van deze zoekvelden moet gebruikt worden: Ares ID, Leverancier ID, Telefoon1, Achternaam|
+ERROR: You must enter in search terms, one of these must be populated: office number, last name, first name|Foutmelding: Een van deze zoekvelden moet gebruikt worden: Telefoon2, Achternaam, Voornaam|
+ERROR: There was a problem with your search terms|Foutmelding: Er is een probleem met de opgegeven zoekwoorden|
+Phone and Post Code Time Zone Mismatch|Telefoon en postcode tijdzone komen niet overeen|
+Last Local Call Time|Laatst gebelde tijd|
+Called Count|Aantal keren gebeld|
+Unidentified Hangup Cause Code|Oorzaak ophangen onbekend|
+YOU MUST SELECT AN AGENT TO TRANSFER TO WHEN USING AGENTDIRECT|Je moet een collega kiezen om naar door te verbinden|
+Another live agent session was open using your user ID. It has been disabled. Click OK to continue to the agent screen|Een andere agent-sessie wat nog open met jouw naam. Deze is uitgeschakeld. Druk op OK om verder te gaan.|
+View Comment History|Zie opmerkingen historie|
+reset form|reset formulier|
+SELECT THIS LEAD|Selecteer deze klant|
+YOU MUST BE ON AN ACTIVE INBOUND CALL TO SEARCH FOR A LEAD|Je dient in een actief Inbound gesprek te zijn om te zoeken naar een klant|
+Attachments|Bijlagen|
+Next Call Pause|volgende oproep pauzeren|
+-History-|-geschiedenis-|
+SUBMIT SEARCH|submit search|
+close |sluiten |
+AGENT CALL LOG|middel bellijst|
+ LENGTH | lengte |
+ PHONE | telefoon |
+ FULL NAME | volledige naam |
+ CAMPAIGN | campagne |
+ ALT | afwisselend |
+ HANGUP | hangup |
+ INFO | info |
+phone login|telefoon login|
+LAST CALL|laatste gesprek|
+ CALLBACK | callback |
+ CITY | stad |
+ STATE | staat |
+ ZIP | ritssluiting |
+Phone Number|telefoonnummer|
+Phone Number Fields|telefoonnummervelden|
+Lead ID|leiden id|
+ WAIT | wachten |
+ AGENT | agent |
+ CALL GROUP | bel groep |
+ TYPE | type |
+digits only|alleen cijfers|
+DIAL ALERT|dial alert|
+WEB FORM SUBMIT|webpagina formulier|
+in campaign|in campagne|
+ DATE\/TIME | datum\/tijd |
+ IN\/OUT | in en uit |
+>GROUPS<|>GROEPEN<|
+>GO<|>ga<|
+>recording<|>opnemen<|
+>SELECT<|>Selecteer<|
+Alert is ON|alert is op|
+Alert is OFF|alarm is uitgeschakeld|
+EMAIL LOG FOR THIS LEAD|e-logboek voor deze lead|
+EMAIL TO|e-mail naar|
+ ATTACHMENTS | toebehoren |
+Called Since Last Reset|genoemd sinds de laatste reset|
+Timezone:|tijdzone:|
+Dial Link|dial koppeling|
+ LAST | laatste |
+SEARCH FOR A CONTACT|Een contact zoeken|
+Notes: when doing a search for a contact, wildcard or partial search terms are not allowed|notes: tijdens het zoeken naar een contact, wildcard of gedeeltelijke zoektermen zijn niet toegestaan|
+Contact search requests are all logged in the system|contact zoeken verzoeken worden allemaal geregistreerd in het systeem|
+Office Number|kantoor nummer|
+First Name|voornaam|
+Last Name|achternaam|
+BU Name|bedrijfsnaam|
+Department:|departement:|
+Group Name|groepsnaam|
+Job Title|functienaam|
+Location:|locatie:|
+### START translations for 2.8 release ###
+This agent screen was not opened properly|Dit scherm middel werd niet goed geopend|
+Dial Lead ID|Dial Lead ID|
+Agent Form Display Script|Agent Form Beeldscherm Script|
+Agent Notes|Agent Notes|
+You have been paused for too long, you have been logged out of your session|Je hebt onderbroken te lang, je bent uitgelogd van uw sessie|
+Too many network errors, please contact your administrator|Te veel fouten in het netwerk, neem dan contact op met de beheerder|
+No available servers, please contact your administrator|Geen beschikbare servers, neem dan contact op met de beheerder|
+No available phones, please contact your administrator|Geen beschikbare telefoons, neem dan contact op met de beheerder|
+You are already logged in, please log out of your other session first|Je bent al ingelogd, dan kunt u uit uw andere sessie eerst inloggen|
+Too many agents logged in, please contact your administrator|Te veel agenten aangemeld, kunt u contact opnemen met uw beheerder|
+Dial Countdown|Dial Countdown|

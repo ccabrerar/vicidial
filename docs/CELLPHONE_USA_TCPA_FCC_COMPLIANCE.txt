@@ -1,0 +1,112 @@
+CELLPHONE FILTERING DOC	  Started: 2013-09-20	Updated: 2018-08-05
+
+On October 16th, 2013 the FCC issued a rule change to not allow auto-dialing cellphones in the USA unless you have "express consent" from the person you are calling. This document is a summary of what this rule change means to businesses and organizations, and goes over how they can make sure they are in compliance with the TCPA(Telephone Consumer Protection Act of 1991) depending on their interpretation of the regulatory language. 
+
+First, here is a good summary of what the 2013 changes are, and what the definition of terms are(the June 2015 changes are detailed further down):
+http://www.copilevitz-canter.com/resources/articles/upcoming-fcc-rule-changes-regarding-express-consent-to-call-cell-phones
+
+Now time for a disclaimer. I am not a lawyer, and this document was not written by a lawyer. If you want legal advice on this topic, I strongly suggest discussing it with a lawyer who specializes in telecommunications law.
+
+In summary, the new regulations ban any calls to cellphones in the USA by "automatic telephone dialing systems"(or ATDS) unless you have specifically received explicit written or audio recorded permission from the person(or spouse of the person) you are calling that you are allowed to call them on their cell phone through an auto-dialer. The vague definition of ATDS that the FCC uses is,
+	"equipment which has the capacity 
+	(A) to store or produce telephone numbers to be called, using a random or sequential number generator;
+	  and 
+	(B) to dial such numbers". 
+
+This is such a broad definition that even a modern smartphone fits it's definition. But, the FCC also has said in 2013 that the basic function of an ATDS is “the capacity to dial numbers without human intervention”, which should pretty much exclude smartphones, as well as dialing systems where human intervention would be necessary for any calls to be placed, such as auto-dialers. Unfortunately, some recent court rulings have ignored the "human intervention" exclusion, and ruled against companies that were purely click-to-dial calling people because their phone systems had "the capacity to store and dial phone numbers". Under this very strict interpretation of the law, there is virtually no way to call anyone on a cellphone unless you use only a basic analog wired phone.
+
+Unfortunately in June of 2015, the FCC ruled that they will use the strict interpretation of an auto-dialer:
+
+"Kristi Lemoine of the FCC’s Consumer and Governmental Affairs Bureau, affirms that if equipment has the capacity to dial random or sequential  numbers, “even with some modification,” it qualifies as an autodialer."
+http://www.natlawreview.com/article/fcc-ruling-tightens-tcpa-restrictions-dissenters-warn-increased-class-action-abuse
+
+"Human intervention — like touch screen dialing button — is not sufficient to overcome ATDS status"
+http://www.natlawreview.com/article/fcc-approves-new-tcpa-rules-telephone-consumer-protection-act
+
+
+It is important to mention that this regulatory change has no effect on automated calls to land line phones, except that it does disallow all pre-recorded robo-calls for marketing purposes unless you have express consent.
+
+For our clients that believe preview dialing, or click-to-dial list dialing, is acceptable, we have added a programmatic option that is non-editable in System Settings called "Disable Auto Dial" which is disabled by default. This feature was added on July 11, 2013 and is available in svn/trunk versions 1999 and higher. To enable or disable this feature, you have to issue a MySQL command through the command line mysql interface:
+
+	mysql asterisk
+	UPDATE system_settings SET disable_auto_dial='1';
+	UPDATE vicidial_campaigns SET dial_method='INBOUND_MAN' where dial_method NOT IN('MANUAL','RATIO','INBOUND_MAN');
+	ALTER TABLE vicidial_campaigns MODIFY dial_method ENUM('MANUAL','RATIO','INBOUND_MAN') default 'MANUAL' NOT NULL;
+	UPDATE vicidial_campaigns SET auto_dial_level='1' where auto_dial_level NOT IN('0','1','1.0');
+	ALTER TABLE vicidial_campaigns MODIFY auto_dial_level ENUM('0','1','1.0') default '0' NOT NULL;
+	quit
+    <you can also optionally remove the adaptive dial methods from the web interface>
+	find /srv/www/htdocs/vicidial/ -type f -exec sed -i 's/ADAPT_HARD_LIMIT/MANUAL/g' {} +
+	find /srv/www/htdocs/vicidial/ -type f -exec sed -i 's/ADAPT_AVERAGE/MANUAL/g' {} +
+	find /srv/www/htdocs/vicidial/ -type f -exec sed -i 's/ADAPT_TAPERED/MANUAL/g' {} +
+
+Once this is done, the system will be incapable of automatically placing outbound calls. This includes dial methods using ADAPT and RATIO in campaigns. If this feature is enabled and you are using those dial methods, you will see this warning on the campaign modification screen: "Auto-dialing has been disabled on this system". If your system has this feature enabled, you should only be using the MANUAL and INBOUND_MAN campaign dial methods.
+
+The client that we added this feature for created a separate Vicidial system just for cellphone calling that has this feature enabled, so that they are using a separate system that is completely incapable of placing phone calls without human intervention.
+
+
+
+FILTERING CELLPHONES
+
+The next question we usually get after explaining all of this is, "How do I filter cellphones?". With number portability this has been made a much more complex task. There are companies that offer fee-based filtering services, like DNC.COM, which several of our clients use for this purpose, and can pre-filter leads before they are imported into Vicidial. It is important to mention that there is no 100% accurate lookup service for cell phones, but using a specialized daily filtering service like DNC.COM is considered a best effort solution because you can get very close to that.
+
+We recently added several software components to the Vicidial codebase that allows for integration with DNC.COM's on-site cellphone filtering database service. If you subscribe to this service then you can set the system to automatically download the data files nightly and have Vicidial scrub for cellphones on the entire system and/or manually scrub inactive lists through an administrative web page. More details on these processes are included below.
+
+Our NANPA list that is available for clients to purchase on vicidial.org also has the "Lata Type" definition for all North American phone number prefixes which will show phone prefix blocks that are land lines(S), cell phones(C), pagers(P) and mixed use(M). There is currently no filtering script included with Vicidial that uses this data, but it could be used with a custom script as a pre-filter before sending a list to an outside filtering company. It is important to mention that this IS NOT a compliance solution and IS NOT considered a best effort option to filter your numbers. Also, in our extensive testing, it is only 93% accurate at best in determining whether a phone number is really a cell phone.
+
+
+
+TCPA VIOLATION PENALTIES
+
+This is a good place to mention the penalties for calling a cellphone with an auto-dialer. The FCC fine is up to $16,000.00 per violation, with civil fines of up to $1000.00 per call that can also be levied against the offender. It also should be mentioned that if you are in compliance with the FCC's interpretation of the TCPA, you are not automatically immune from being sued in civil court for calling a cellphone. A civil court judge could interpret the definition of an auto-dialer more broadly to include even hand-dialed phone calls if the phone system is capable of storing numbers. This has happened in some cases, resulting in large fines even for manually dialed phone calls to cellphones.
+
+
+
+DNC.COM INTEGRATION FEATURES IN VICIDIAL
+
+Here is a list of scripts that we have added in order to integrate with DNC.COM's cellphone filtering database service.
+
+   bin/nanpa_type_populate.pl - 
+Requires "Net::SFTP::Foreign" and "IO::Pty" CPAN modules to run. Automatically goes to DNC.COM SFTP server and downloads the 3 required data files(Prefixes, Wired-to-wireless, Wireless-to-wired), then loads that data into database tables on the vicidial system to be used by the other scripts. This process should be set to run in the crontab every morning. There is an "--adminlog" run time option you can use to log the results of this process to the admin log under the server that it is run on, these log entries are viewable in the Administration web interface.
+  NOTE: before you can run this script, you will need to sftp into the dnc.com server first on the Linux command line, (sftp XXXX@sftp.dncscrub.com)
+  NOTE: you may need to edit the "/etc/ssh/ssh_config" file to include a line like this "Ciphers 3des-cbc,blowfish-cbc,aes128-cbc,aes128-ctr,aes256-ctr,aes256-cbc"
+
+   bin/nanpa_type_preload.pl - 
+This script is designed to load all of the prefixes and portability data into RAM and run against your entire database to scrub it for cellphone numbers every night after the data is refreshed. It takes several minutes to initialize, but runs very fast after that. This process should be set to run in the crontab every morning AFTER the populate script is finished running. The results of this process log to the admin log under the server that it is run on, these log entries are viewable in the Administration web interface.
+
+   bin/nanpa_type_filter.pl - 
+This script is designed to do one list or a few lists at a time, or the entire database on smaller systems. It works together with a PHP script to perform lookups of cellphones and updating vicidial_list records depending on settings
+
+   www/vicidial/nanpa_type.php - 
+PHP script designed to return S = Land line, C = Cellphone, I = Invalid for one to hundreds of numbers passed in either an HTTP GET or POST form submission to it. Also requires valid manager user credentials on the host system for it to work.
+
+NOTE: To find the command line options for the Perl scripts above, just run them with the "--help" flag
+
+
+These scripts need a /etc/vicidial_prefix.conf file on their server in order to run:
+ (example below shows local vicidial database repository)
+# Database connection information
+PREFIX_DB_server => 127.0.0.1
+PREFIX_DB_database => asterisk
+PREFIX_DB_user => cron
+PREFIX_DB_pass => 1234
+PREFIX_DB_port => 3306
+
+# URL connection information
+PREFIX_url => http://127.0.0.1/vicidial/nanpa_type.php
+PREFIX_user => 6666
+PREFIX_pass => 1234
+
+# SFTP login information
+PREFIX_SFTP_server => sftp.dncscrub.com
+PREFIX_SFTP_user => DEMOVICIDIAL
+PREFIX_SFTP_pass => sampLepass
+PREFIX_SFTP_port => 22
+
+
+
+Changing DB schema back to allow auto-dialing:
+
+UPDATE system_settings SET disable_auto_dial='0';
+ALTER TABLE vicidial_campaigns MODIFY dial_method ENUM('MANUAL','RATIO','ADAPT_HARD_LIMIT','ADAPT_TAPERED','ADAPT_AVERAGE','INBOUND_MAN') default 'MANUAL';
+ALTER TABLE vicidial_campaigns MODIFY auto_dial_level VARCHAR(6) default '0';

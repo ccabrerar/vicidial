@@ -1,0 +1,513 @@
+#!/usr/bin/perl
+#
+# cm_sc_ccc_lookup_insert.agi version 2.14
+# 
+# Designed to work with Call Menus to send a URL defined in a Settings Container
+# for a call with a call_id associated with it for calls coming from an external
+# VICIdial system on a private IAX trunk so that the lead information can be 
+# copied to this destination cluster.
+#
+# If container is not found, call will go to the 'C' option in the call menu
+# If call_id is not defined, call will go to the 'D' option in the call menu
+# If lead is not found on external system, call will go to the 'B' option in the call menu
+# If lead is found on external system, call will go to the 'A' option in the call menu
+#
+# Flag Options:  (separated by triple-pipe: "---")
+# 1- container_id for settings container with URL to send
+# 2- local list_id to insert lead into(if not populated, will use external list_id)
+#
+# example of what to set in the Call Menu:
+# Set the prompt to "wait-moment|cm_sc_ccc_lookup_insert.agi,ccc_test---8199"
+#
+# The URL that you define in the Settings Container will need to be sent to you
+# by the administrator of the external system. It should look something like this:
+# http://server/vicidial/non_agent_api.php?user=6666&pass=1234&source=test&function=ccc_lead_info&call_id=--A--call_id--B--
+#
+# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+#
+# changes:
+# 170609-1326 - First build
+# 180908-1414 - Added extra logging
+#
+
+$script = 'cm_sc_ccc_lookup_insert.agi';
+
+($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+$year = ($year + 1900);
+$mon++;
+if ($mon < 10) {$mon = "0$mon";}
+if ($mday < 10) {$mday = "0$mday";}
+if ($hour < 10) {$hour = "0$hour";}
+if ($min < 10) {$min = "0$min";}
+if ($sec < 10) {$sec = "0$sec";}
+
+$secX = time();
+$now_date_epoch = time();
+$now_date = "$year-$mon-$mday $hour:$min:$sec";
+$start_time=$now_date;
+$CIDdate = "$mon$mday$hour$min$sec";
+$tsSQLdate = "$year$mon$mday$hour$min$sec";
+$SQLdate = "$year-$mon-$mday $hour:$min:$sec";
+$SQLdateBEGIN = $SQLdate;
+$state='';
+$CIDlead_id='';
+$US='_';
+$AGILOG=1;
+	while (length($CIDdate) > 9) {$CIDdate =~ s/^.//gi;} # 0902235959 changed to 902235959
+
+
+# default path to astguiclient configuration file:
+$PATHconf =		'/etc/astguiclient.conf';
+
+open(conf, "$PATHconf") || die "can't open $PATHconf: $!\n";
+@conf = <conf>;
+close(conf);
+$i=0;
+foreach(@conf)
+	{
+	$line = $conf[$i];
+	$line =~ s/ |>|\n|\r|\t|\#.*|;.*//gi;
+	if ( ($line =~ /^PATHhome/) && ($CLIhome < 1) )
+		{$PATHhome = $line;   $PATHhome =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHlogs/) && ($CLIlogs < 1) )
+		{$PATHlogs = $line;   $PATHlogs =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHagi/) && ($CLIagi < 1) )
+		{$PATHagi = $line;   $PATHagi =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHweb/) && ($CLIweb < 1) )
+		{$PATHweb = $line;   $PATHweb =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHsounds/) && ($CLIsounds < 1) )
+		{$PATHsounds = $line;   $PATHsounds =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHmonitor/) && ($CLImonitor < 1) )
+		{$PATHmonitor = $line;   $PATHmonitor =~ s/.*=//gi;}
+	if ( ($line =~ /^VARserver_ip/) && ($CLIserver_ip < 1) )
+		{$VARserver_ip = $line;   $VARserver_ip =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_server/) && ($CLIDB_server < 1) )
+		{$VARDB_server = $line;   $VARDB_server =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_database/) && ($CLIDB_database < 1) )
+		{$VARDB_database = $line;   $VARDB_database =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_user/) && ($CLIDB_user < 1) )
+		{$VARDB_user = $line;   $VARDB_user =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_pass/) && ($CLIDB_pass < 1) )
+		{$VARDB_pass = $line;   $VARDB_pass =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_port/) && ($CLIDB_port < 1) )
+		{$VARDB_port = $line;   $VARDB_port =~ s/.*=//gi;}
+	$i++;
+	}
+
+if (!$VARDB_port) {$VARDB_port='3306';}
+if (!$AGILOGfile) {$AGILOGfile = "$PATHlogs/agiout.$year-$mon-$mday";}
+
+### find wget binary
+$exit_no_wget=0;
+$wgetbin = '';
+if ( -e ('/bin/wget')) {$wgetbin = '/bin/wget';}
+else
+	{
+	if ( -e ('/usr/bin/wget')) {$wgetbin = '/usr/bin/wget';}
+	else
+		{
+		if ( -e ('/usr/local/bin/wget')) {$wgetbin = '/usr/local/bin/wget';}
+		else
+			{
+			if ($AGILOG) {$agi_string = "Can't find wget binary! Exiting...";   &agi_output;}
+			$exit_no_wget=1;
+			}
+		}
+	}
+
+use DBI;
+use Asterisk::AGI;
+$AGI = new Asterisk::AGI;
+
+
+$|=1;
+while(<STDIN>) 
+	{
+	chomp;
+	last unless length($_);
+	if ($AGILOG)
+		{
+		if (/^agi_(\w+)\:\s+(.*)$/)
+			{
+			$AGI{$1} = $2;
+			}
+		}
+
+	if (/^agi_context\:\s+(.*)$/)		{$context = $1;}
+	if (/^agi_uniqueid\:\s+(.*)$/)		{$unique_id = $1; $uniqueid = $unique_id;}
+	if (/^agi_channel\:\s+(.*)$/)		{$channel = $1;}
+	if (/^agi_extension\:\s+(.*)$/)		{$extension = $1;}
+	if (/^agi_type\:\s+(.*)$/)			{$type = $1;}
+	if (/^agi_callerid\:\s+(.*)$/)		{$callerid = $1;}
+	if (/^agi_calleridname\:\s+(.*)$/)	{$calleridname = $1;}
+	}
+foreach $i (sort keys %AGI)
+	{
+	if ($AGILOG) {$agi_string = " -- $i = $AGI{$i}";   &agi_output;}
+	}
+
+$callerid =~ s/\'|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
+$calleridname =~ s/\'|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
+$extension =~ s/\'|\"|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
+
+$blind_xfer=0;
+$three_way=0;
+$remote_lead_id=0;
+
+if ($calleridname =~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^Y\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^M\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^J\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/)
+	{
+	$blind_xfer=1;
+	$remote_lead_id = substr($calleridname, 10, 10);
+	$remote_lead_id = ($remote_lead_id + 0);
+	}
+elsif ($calleridname =~ /^DC\d\d\d\d\d\dW\d\d\d\d\d\d\d\d\d\dW/)
+	{
+	$three_way=1;
+	$remote_lead_id = substr($calleridname, 9, 10);
+	$remote_lead_id = ($remote_lead_id + 0);
+	}
+else
+	{
+	if ($AGILOG) {$agi_string = "call_id not set($calleridname), exiting the cm_sc_ccc_lookup_insert.agi app, transferring call to D @ $context";   &agi_output;}
+	print "SET CONTEXT $context\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET EXTENSION D\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET PRIORITY 1\n";
+		$result = <STDIN>;
+		checkresult($result);
+	
+	exit;
+	}
+
+if ($exit_no_wget > 0) 
+	{
+	if ($AGILOG) {$agi_string = "wget not found, exiting the cm_sc_ccc_lookup_insert.agi app, transferring call to D @ $context";   &agi_output;}
+	print "SET CONTEXT $context\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET EXTENSION D\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET PRIORITY 1\n";
+		$result = <STDIN>;
+		checkresult($result);
+	
+	exit;
+	}
+
+if ($AGILOG) {$agi_string = "AGI Variables: |$unique_id|$channel|$extension|$blind_xfer|$three_way|$callerid|";   &agi_output;}
+
+$AGI->stream_file('sip-silence');
+$AGI->stream_file('sip-silence');
+$AGI->stream_file('sip-silence');
+
+
+$dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
+    or die "Couldn't connect to database: " . DBI->errstr;
+
+### Grab Server values from the database
+$stmtA = "SELECT agi_output FROM servers where server_ip = '$VARserver_ip';";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+$rec_count=0;
+while ($sthArows > $rec_count)
+	{
+	$AGILOG = '0';
+	@aryA = $sthA->fetchrow_array;
+	$DBagi_output =	$aryA[0];
+	if ($DBagi_output =~ /STDERR/)	{$AGILOG = '1';}
+	if ($DBagi_output =~ /FILE/)	{$AGILOG = '2';}
+	if ($DBagi_output =~ /BOTH/)	{$AGILOG = '3';}
+	$rec_count++;
+	}
+$sthA->finish();
+
+
+### begin parsing run-time options ###
+if (length($ARGV[0])>1)
+	{
+	if ($AGILOG) {$agi_string = "Perl Environment Dump:";   &agi_output;}
+	$i=0;
+	while ($#ARGV >= $i)
+		{
+		$args = "$args $ARGV[$i]";
+		if ($AGILOG) {$agi_string = "$i|$ARGV[$i]";   &agi_output;}
+		$i++;
+		}
+	
+	### list of command-line array arguments:
+	@ARGV_vars = split(/---/, $ARGV[0]);
+
+	$container_id = 	$ARGV_vars[0];
+	$local_list_id = 	$ARGV_vars[1];
+	}
+
+$no_container=0;
+if (length($container_id) < 1)
+	{$no_container=1;}
+else
+	{
+	$stmtA= "SELECT container_entry from vicidial_settings_containers where container_id='$container_id';";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+		if ($AGILOG) {$agi_string = "$sthArows|$stmtA|";   &agi_output;}
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$sc_call_url	= $aryA[0];
+		}
+	else
+		{$no_container=2;}
+	$sthA->finish();
+	}
+
+if ($no_container > 0) 
+	{
+	if ($AGILOG) {$agi_string = "container_id not set($container_id|$no_container), exiting the cm_sc_ccc_lookup_insert.agi app, transferring call to C @ $context";   &agi_output;}
+	print "SET CONTEXT $context\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET EXTENSION C\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET PRIORITY 1\n";
+		$result = <STDIN>;
+		checkresult($result);
+	
+	exit;
+	}
+
+
+
+$sc_call_url =~ s/--A--call_id--B--/$calleridname/gi;
+$sc_call_url =~ s/ /+/gi;
+$sc_call_url =~ s/&/\\&/gi;
+
+$external_found=0;
+
+### insert a new url log entry
+$SQL_log = "$sc_call_url";
+$SQL_log =~ s/;|\||\\//gi;
+$stmtA = "INSERT INTO vicidial_url_log SET uniqueid='$uniqueid',url_date='$now_date',url_type='ccc_look',url='$SQL_log',url_response='';";
+$affected_rows = $dbhA->do($stmtA);
+$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
+$sthA = $dbhA->prepare($stmtB) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+if ($sthArows > 0)
+	{
+	@aryA = $sthA->fetchrow_array;
+	$url_id = $aryA[0];
+	}
+$sthA->finish();
+
+$url = $sc_call_url;
+$url =~ s/'/\\'/gi;
+$url =~ s/"/\\"/gi;
+
+$secW = time();
+
+`$wgetbin --no-check-certificate --output-document=/tmp/ASUBtmpD$US$url_id$US$secX --output-file=/tmp/ASUBtmpF$US$url_id$US$secX $url `;
+
+$secY = time();
+$response_sec = ($secY - $secW);
+
+open(Wdoc, "/tmp/ASUBtmpD$US$url_id$US$secX") || die "can't open /tmp/ASUBtmpD$US$url_id$US$secX: $!\n";
+@Wdoc = <Wdoc>;
+close(Wdoc);
+$i=0;
+$Wdocline_cat='';
+foreach(@Wdoc)
+	{
+	$Wdocline = $Wdoc[$i];
+	$Wdocline =~ s/\n|\r//gi;
+	$Wdocline =~ s/\t|\`|\"//gi;
+	$Wdocline_cat .= "$Wdocline";
+	$i++;
+	}
+if (length($Wdocline_cat) < 1) 
+	{
+	$external_found=0;
+	$Wdocline_cat='<RESPONSE EMPTY>';
+	}
+
+if ( (length($Wdocline_cat) > 29) && ($Wdocline_cat !~ /ERROR: ccc_lead_info /) )
+	{
+	@lead_data = split(/\|/, $Wdocline_cat);
+	$LEADstatus =				$lead_data[0];
+	$LEADuser =					$lead_data[1];
+	$LEADvendor_lead_code =		$lead_data[2];
+	$LEADsource_id =			$lead_data[3];
+	$LEADlist_id =				$lead_data[4];
+	$LEADgmt_offset_now =		$lead_data[5];
+	$LEADphone_code =			$lead_data[6];
+	$LEADphone_number =			$lead_data[7];
+	$LEADtitle =				$lead_data[8];
+	$LEADfirst_name =			$lead_data[9];
+	$LEADmiddle_initial =		$lead_data[10];
+	$LEADlast_name =			$lead_data[11];
+	$LEADaddress1 =				$lead_data[12];
+	$LEADaddress2 =				$lead_data[13];
+	$LEADaddress3 =				$lead_data[14];
+	$LEADcity =					$lead_data[15];
+	$LEADstate =				$lead_data[16];
+	$LEADprovince =				$lead_data[17];
+	$LEADpostal_code =			$lead_data[18];
+	$LEADcountry_code =			$lead_data[19];
+	$LEADgender =				$lead_data[20];
+	$LEADdate_of_birth =		$lead_data[21];
+	$LEADalt_phone =			$lead_data[22];
+	$LEADemail =				$lead_data[23];
+	$LEADsecurity_phrase =		$lead_data[24];
+	$LEADcomments =				$lead_data[25];
+	$LEADcalled_count =			$lead_data[26];
+	$LEADlast_local_call_time = $lead_data[27];
+	$LEADrank =					$lead_data[28];
+	$LEADowner =				$lead_data[29];
+
+	if (length($LEADlist_id) < 2) 
+		{$external_found=0;}
+	else
+		{
+		# insert lead into local system
+		if (length($local_list_id) > 1) 
+			{$LEADlist_id = $local_list_id;}
+
+		$stmtA = "INSERT INTO vicidial_list SET status=\"$LEADstatus\",user=\"$LEADuser\",vendor_lead_code=\"$LEADvendor_lead_code\",source_id=\"$LEADsource_id\",list_id=\"$LEADlist_id\",gmt_offset_now=\"$LEADgmt_offset_now\",phone_code=\"$LEADphone_code\",phone_number=\"$LEADphone_number\",title=\"$LEADtitle\",first_name=\"$LEADfirst_name\",middle_initial=\"$LEADmiddle_initial\",last_name=\"$LEADlast_name\",address1=\"$LEADaddress1\",address2=\"$LEADaddress2\",address3=\"$LEADaddress3\",city=\"$LEADcity\",state=\"$LEADstate\",province=\"$LEADprovince\",postal_code=\"$LEADpostal_code\",country_code=\"$LEADcountry_code\",gender=\"$LEADgender\",date_of_birth=\"$LEADdate_of_birth\",alt_phone=\"$LEADalt_phone\",email=\"$LEADemail\",security_phrase=\"$LEADsecurity_phrase\",comments=\"$LEADcomments\",called_count=\"$LEADcalled_count\",last_local_call_time=\"$LEADlast_local_call_time\",rank=\"$LEADrank\",owner=\"$LEADowner\";";
+		$affected_rows = $dbhA->do($stmtA);
+		$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
+		$sthA = $dbhA->prepare($stmtB) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$new_lead_id = $aryA[0];
+			}
+		$sthA->finish();
+
+		$PADlead_id = sprintf("%010s", $new_lead_id);	while (length($PADlead_id) > 10) {chop($PADlead_id);}
+		# YmmddhhmmssLLLLLLLLL
+		$YqueryCID = "Y$CIDdate$PADlead_id";
+		$callerid = $YqueryCID;
+		$VCcallerid = $YqueryCID;
+		### set the callerid 
+		$Ynewcallerid = "\"$YqueryCID <$LEADphone_number>\"";
+		$AGI->set_callerid($Ynewcallerid);
+		if ($AGILOG) {$agi_string = "callerID changed: $Ynewcallerid";   &agi_output;}
+
+		$stmtA = "INSERT INTO vicidial_ccc_log SET call_date=NOW(),remote_call_id='$calleridname',local_call_id='$YqueryCID',lead_id='$new_lead_id',uniqueid='$uniqueid',channel='$channel',server_ip='$VARserver_ip',list_id='$LEADlist_id',container_id='$container_id',remote_lead_id='$remote_lead_id';";
+		$affected_rows = $dbhA->do($stmtA);
+
+		$external_found=1;
+		}
+	}
+
+
+open(Wfile, "/tmp/ASUBtmpF$US$url_id$US$secX") || die "can't open /tmp/ASUBtmpF$US$url_id$US$secX: $!\n";
+@Wfile = <Wfile>;
+close(Wfile);
+$i=0;
+$Wfileline_cat='';
+foreach(@Wfile)
+	{
+	$Wfileline = $Wfile[$i];
+	$Wfileline =~ s/\n|\r/!/gi;
+	$Wfileline =~ s/\"|\`/'/gi;
+	$Wfileline =~ s/  |\t|\`//gi;
+	$Wfileline_cat .= "$Wfileline";
+	$i++;
+	}
+if (length($Wfileline_cat)<1) 
+	{$Wfileline_cat='<HEADER EMPTY>';}
+
+
+### update url log entry
+$stmtA = "UPDATE vicidial_url_log SET url_response=\"$Wdocline_cat|$Wfileline_cat\",response_sec='$response_sec' where url_log_id='$url_id';";
+$affected_rows = $dbhA->do($stmtA);
+if ($AGILOG) {$agi_string = "$affected_rows|$stmtA";   &agi_output;}
+
+
+
+if ($external_found < 1)
+	{
+	if ($AGILOG) {$agi_string = "call_id not found on external system, exiting the cm_sc_ccc_lookup_insert.agi app, transferring call to B @ $context";   &agi_output;}
+	print "SET CONTEXT $context\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET EXTENSION B\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET PRIORITY 1\n";
+		$result = <STDIN>;
+		checkresult($result);
+	}
+else
+	{
+	if ($AGILOG) {$agi_string = "call_id found, new lead ID($new_lead_id), exiting the cm_sc_ccc_lookup_insert.agi app, transferring call to A @ $context";   &agi_output;}
+	print "SET CONTEXT $context\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET EXTENSION A\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET PRIORITY 1\n";
+		$result = <STDIN>;
+		checkresult($result);
+	}
+
+exit;
+
+
+
+
+##### SUBROUTINES #####
+
+sub agi_output
+{
+if ($AGILOG >=2)
+	{
+	### open the log file for writing ###
+	open(Lout, ">>$AGILOGfile")
+			|| die "Can't open $AGILOGfile: $!\n";
+	print Lout "$now_date|$script|$agi_string\n";
+	close(Lout);
+	}
+	### send to STDERR writing ###
+if ( ($AGILOG == '1') || ($AGILOG == '3') )
+	{print STDERR "$now_date|$script|$agi_string\n";}
+$agi_string='';
+}
+
+
+sub checkresult 
+	{
+	my ($res) = @_;
+	my $retval;
+	$tests++;
+	chomp $res;
+	if ($res =~ /^200/) 
+		{
+		$res =~ /result=(-?\d+)/;
+		if (!length($1)) 
+			{
+		#	print STDERR "FAIL ($res)\n";
+			$fail++;
+			} 
+		else 
+			{
+		#	print STDERR "PASS ($1)\n";
+			$pass++;
+			}
+		} 
+	else 
+		{
+	#	print STDERR "FAIL (unexpected result '$res')\n";
+		$fail++;
+		}
+	}

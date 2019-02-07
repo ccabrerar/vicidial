@@ -1,0 +1,325 @@
+############################################################  ADMIN
+Active Outbound Holiday Definitions for this Record||
+Modify Call Time State Holiday||
+Last Login Info||
+This shows the last login attempt date and time, and if there has been a recent failed login attempt. If this modify user form is submitted, then the failed login attempt counter will be reset and the agent can immediately attempt to log in again. If an agent has 10 failed login attempts in a row then they cannot attempt to log in again for at least 15 minutes unless their account is manually reset||
+Disable Auto-Dial||
+This option is only editable by a system administrator. It will not remove any options from the management web interface, but it will prevent any auto-dialing of leads from happening on the system. Only Manual Dial outbound calls triggered directly by agents will function if this option is enabled. Default is 0 for inactive||
+Auto-dialing has been disabled on this system||
+Password and Full Name each need to be at least 2 characters in length||
+PASSWORD IS ENCRYPTED, ONLY ENTER IN A PASSWORD BELOW IF YOU WANT TO CHANGE IT||
+Password Encryption||
+To log back in||
+click here||
+Dial Log Report||
+ADD NEW AGENT CONFERENCE||
+ADDING NEW SERVER TRUNK RECORD||
+ADDING NEW AGENT CONFERENCE||
+ADDING SYSTEM STATUSES||
+ADDING STATUS CATEGORY||
+ADDING QC STATUS CODE||
+MODIFY AGENT CONFERENCE||
+MODIFY SYSTEM SETTINGS||
+MODIFY SYSTEM STATUSES||
+MODIFY STATUS CATEGORY||
+MODIFY QC STATUS CODE||
+MODIFY SERVER TRUNK RECORD||
+MODIFY CONFERENCE||
+MODIFY SYSTEM SETTINGS||
+MODIFY SYSTEM STATUSES||
+MODIFY STATUS CATEGORIES||
+MODIFY QC STATUS CODE||
+DELETE AGENT CONFERENCE||
+DELETE SERVER TRUNK RECORD||
+DELETE AGENT CONFERENCE||
+ADMIN CHANGE LOG||
+USER ADMIN CHANGE LOG||
+SECTION ADMIN CHANGE LOG||
+DETAIL ADMIN CHANGE LOG||
+ADMIN REPORT LOG||
+USER ADMIN REPORT LOG||
+DETAIL ADMIN REPORT LOG||
+AGENT CONFERENCE LIST||
+USERS TABLE||
+CAMPAIGNS TABLE||
+LISTS TABLE||
+INBOUND_GROUPS TABLE||
+CALL MENU TABLE||
+REMOTE_AGENTS TABLE||
+This field is where you put the users ID number, can be up to 8 digits in length, Must be at least 2 characters in length||
+This field is where you put the users password. Must be at least 2 characters in length. A strong user password should be at least 8 characters in length and have lower case and upper case letters as well as at least one number||
+This field is where you put the users full name. Must be at least 2 characters in length||
+User Level||
+This menu is where you select the users user level. Must be a level of 1 to log into the agent screen, Must be level greater than 2 to log in as a closer, Must be user level 8 or greater to get into admin web section||
+This menu is where you select the users group that this user will belong to. There are several agent screen features that can be controlled through user group settings. If this field is left blank then the user cannot log in to the agent screen||
+Here is where you can set a default phone login value for when the user logs into the agent screen. This value will populate the phone_login automatically when the user logs in with their user-pass-campaign in the agent login screen||
+Here is where you can set a default phone pass value for when the user logs into the agent screen. This value will populate the phone_pass automatically when the user logs in with their user-pass-campaign in the agent login screen||
+This field defines whether the user is active in the system and can log in as an agent or manager. Default is Y||
+Hot Keys Active||
+This option if set to 1 allows the user to use the Hot Keys quick-dispositioning function in the agent screen||
+This option allows an agent to manually enter a new lead into the system and call them. This also allows the calling of any phone number from their agent screen and puts that call into their session. Use this option with caution||
+Agent Recording||
+This option can prevent an agent from doing any recordings after they log in to the agent screen. This option must be on for the agent screen to follow the campaign recording settings||
+Agent Transfers||
+This option can prevent an agent from opening the transfer - conference session in the agent screen. If this is disabled, the agent cannot third party call or blind transfer any calls||
+Agent Recording Override||
+This option will override whatever the option is in the campaign for recording. DISABLED will not override the campaign recording setting. NEVER will disable recording on the client. ONDEMAND is the default and allows the agent to start and stop recording as needed. ALLCALLS will start recording on the client whenever a call is sent to an agent. ALLFORCE will start recording on the client whenever a call is sent to an agent giving the agent no option to stop recording. For ALLCALLS and ALLFORCE there is an option to use the Recording Delay to cut down on very short recordings and reduce system load||
+This field shows whether the agent has web browser alerts enabled for when calls come into their agent screen session. Default is 0 for NO||
+This field gives you the ability to allow agent browser alerts to be enabled by the agent for when calls come into their agent screen session. Default is 0 for NO||
+This option if set to 1 allows the user to delete lists from the system||
+This option if set to 1 allows the user to delete campaigns from the system||
+This option if set to 1 allows the user to delete Inbound Groups from the system||
+This option if set to 1 allows the user to delete remote agents from the system||
+This option if set to 1 allows the user to load lead lists into the list table by way of the web based lead loader||
+This option allows the user to be able to delete lead filters from the system||
+This option allows the user to be able to delete call times records and state call times records from the system||
+This option allows the user to view the system web reports||
+This option allows the account to be used with the agent and non-agent API commands||
+This setting if set to 1 will allow a manager to remove phone numbers from the DNC lists in the system||
+This option will allow you to force a campaign calling stats refresh, even if the campaign is not active||
+select the first leads loaded into the list table||
+select the last leads loaded into the list table||
+This is the minimum number of leads the hopper loading script tries to keep in the hopper table for this campaign. If running VDhopper script every minute, make this slightly greater than the number of leads you go through in a minute||
+Setting this to Y will allow the system to automatically adjust the hopper based off the settings you have in your campaign.  The formula it uses to do this is||
+Setting this to Y will allow the system to automatically remove excess leads from the hopper. Default is Y||
+This is where you set how many lines the system should use per active agent. zero 0 means auto dialing is off and the agents will click to dial each number. Otherwise the system will keep dialing lines equal to active agents multiplied by the dial level to arrive at how many lines this campaign on each server should allow. The ADAPT OVERRIDE checkbox allows you to force a new dial level even though the dial method is in an ADAPT mode. This is useful if there is a dramatic shift in the quality of leads and you want to drastically change the dial_level manually||
+This feature allows for agents to access extended alternate phone numbers for leads beyond the standard Alt Phone and Address3 fields that can be used in the agent screen for phone numbers beyond the main phone number. The Extended phone numbers can be dialed automatically using the Auto-Alt-Dial feature in the Campaign settings, but enabling this Agent Screen feature will also allow for the agent to call these numbers from their agent screen as well as edit their information. This feature is in development and is not currently available||
+This field is where you select the status to be used for Not Interested. If DNC is used and the campaign is set to use DNC then the phone number will be automatically added to the internal DNC list and possibly the campaign-specific DNC list if that is enabled in the campaign||
+orders by the random update value in the live_agents table||
+orders by the user_level of the agent as defined in the users table a higher user_level will receive more calls||
+This field allows you to leave out the phone_code field while dialing within the system. For instance if you are dialing in the UK from the UK you would have 44 in as your phone_code field for all leads, but you just want to dial 10 digits in your dial plan extensions.conf to place calls instead of 44 then 10 digits. Default is N||
+This field allows for the sending of a custom callerid number on the outbound calls. This is the number that would show up on the callerid of the person you are calling. The default is UNKNOWN. If you are using T1 or E1s to dial out this option is only available if you are using PRIs - ISDN T1s or E1s - that have the custom callerid feature turned on, this will not work with Robbed-bit service -RBS- circuits. This will also work through most VOIP -SIP or IAX trunks- providers that allow dynamic outbound callerID. The custom callerID only applies to calls placed for the campaign directly, any 3rd party calls or transfers will not send the custom callerID. NOTE: Sometimes putting UNKNOWN or PRIVATE in the field will yield the sending of your default callerID number by your carrier with the calls. You may want to test this and put 0000000000 in the callerid field instead if you do not want to send you CallerID||
+When set to Y, this option allows you to use the security_phrase field in the list table as the CallerID to send out when placing for each specific lead. If this field has no CID in it then the Campaign CallerID defined above will be used instead. This option will disable the list CallerID Override if there is a CID present in the security_phrase field. Default is N. When set to AREACODE you have the ability to go into the AC-CID submenu and define multiple callerids to be used per areacode||
+This field allows for a custom recording extension to be used with the system. This allows you to use different extensions depending upon how long you want to allow a maximum recording and what type of codec you want to record in. The default exten is 8309 which if you follow the SCRATCH_INSTALL examples will record in the WAV format for up to one hour. Another option included in the examples is 8310 which will record in GSM format for up to one hour. The recording time can be lengthened by raising the setting in the Server Modification screen in the Admin section||
+These fields allow for you to have two sets of Transfer Conference and DTMF presets. When the call or campaign is loaded, the agent screen will show two buttons on the transfer-conference frame and auto-populate the number-to-dial and the send-dtmf fields when pressed. If you want to allow Consultative Transfers, a fronter to a closer, have the agent use the CONSULTATIVE checkbox, which does not work for third party non-agent consultative calls. For those just have the agent click the Dial With Customer button. Then the agent can just LEAVE-3WAY-CALL and move on to their next call. If you want to allow Blind transfers of customers to an AGI script for logging or an IVR, then place AXFER in the number-to-dial field. You can also specify an custom extension after the AXFER, for instance if you want to do a call to a special IVR you have set to extension 83900 you would put AXFER83900 in the number-to-dial field||
+Allows agents to select a pause code when they click on the PAUSE button in the agent screen. Pause codes are definable per campaign at the bottom of the campaign view detail screen and they are stored in the agent_log table. Default is N. FORCE will force the agents to choose a PAUSE code if they click on the PAUSE button||
+The default list_id to be used when an agent places a manual call and a new lead record is created in the list table. Default is 999. This field can contain digits only||
+This defines what is sent out as the outbound callerID number from 3-way calls placed by the agent, CAMPAIGN uses the custom campaign callerID, CUSTOMER uses the number of the customer that is active on the agents screen and AGENT_PHONE uses the callerID for the phone that the agent is logged into. AGENT_CHOOSE allows the agent to choose which callerID to use for 3-way calls from a list of choices. CUSTOM_CID will use the Custom CID that is defined in the security_phrase field of the list table for the lead||
+If Vtiger integration is enabled in the system settings then this setting will define where the vtiger_search.php page will search for the phone number that was entered. There are 4 options that can be used in this field: LEAD- This option will search through the Vtiger leads only, ACCOUNT- This option will search through the Vtiger accounts and all contacts and sub-contacts for the phone number, VENDOR- This option will only search through the Vtiger vendors, ACCTID- This option works only for accounts and it will take the list vendor_lead_code field and try to search for the Vtiger account ID. If unsuccessful it will try any other methods listed that you have selected. Multiple options can be used for each search, but on large databases this is not recommended. Default is LEAD. UNIFIED_CONTACT- This option will use the beta Vtiger 5.1.0 feature to search by phone number and bring up a search page in Vtiger||
+If Vtiger integration is enabled in the system settings then this setting will define whether the user is logged into the Vtiger interface automatically when they login to the agent screen. Default is Y. The NEW_WINDOW option will open a new window upon login to the agent screen||
+If Vtiger integration is enabled in the system settings then this setting will define whether the status of the Vtiger Account will be updated with the status of the call after it has been dispositioned. Default is N||
+This is the custom address that clicking on the WEB FORM button in the agent screen will take you to for calls that come in on this list. If you want to use custom fields in a web form address, you need to add &CF_uses_custom_fields=Y as part of your URL||
+Internal DNC List||
+This is the color that displays in the agent client app when a call comes in on this group. It must be between 2 and 7 characters long. If this is a hex color definition you must remember to put a # at the beginning of the string or the agent screen will not work properly||
+This determines whether this inbound group is available to take calls. If this is set to inactive then the After Hours Action will be used on any calls coming into it||
+This is the custom address that clicking on the WEB FORM button in the agent screen will take you to for calls that come in on this group. If you want to use custom fields in a web form address, you need to add &CF_uses_custom_fields=Y as part of your URL||
+orders by the random update value in the live_agents table||
+orders by the user_level of the agent as defined in the users table a higher user_level will receive more calls||
+This field determines whether the inbound agent would have the fronter name - if there is one - displayed in the Status field when the call comes to the agent||
+These four fields allow for you to have two sets of Transfer Conference and DTMF presets. When the call or campaign is loaded, the agent screen will show two buttons on the transfer-conference frame and auto-populate the number-to-dial and the send-dtmf fields when pressed. If you want to allow Consultative Transfers, a fronter to a closer, have the agent use the CONSULTATIVE checkbox, which does not work for third party agent screen consultative calls. For those just have the agent click the Dial With Customer button. Then the agent can just LEAVE-3WAY-CALL and move on to their next call. If you want to allow Blind transfers of customers to an AGI script for logging or an IVR, then place AXFER in the number-to-dial field. You can also specify an custom extension after the AXFER, for instance if you want to do a call to a special IVR you have set to extension 83900 you would put AXFER83900 in the number-to-dial field||
+This field allows for the overriding of the campaign call recording setting. This setting can be overridden by the user recording override setting. DISABLED will not override the campaign recording setting. NEVER will disable recording on the client. ONDEMAND is the default and allows the agent to start and stop recording as needed. ALLCALLS will start recording on the client whenever a call is sent to an agent. ALLFORCE will start recording on the client whenever a call is sent to an agent giving the agent no option to stop recording||
+This the type of route that you set the DID to use. EXTEN will send calls to the extension entered below, VOICEMAIL will send calls directly to the voicemail box entered below, AGENT will send calls to an agent if they are logged in, PHONE will send the call to a phones entry selected below, IN_GROUP will send calls directly to the specified inbound group. Default is EXTEN. CALLMENU will send the call to the defined Call Menu||
+If AGENT is selected as the DID Route, then this is the Agent that calls will be sent to||
+If IN_GROUP is selected as the DID Route, then this is the call handling method used for these calls. CID will add a new lead record with every call using the CallerID as the phone number, CIDLOOKUP will attempt to lookup the phone number by the CallerID in the entire system, CIDLOOKUPRL will attempt to lookup the phone number by the CallerID in only one specified list, CIDLOOKUPRC will attempt to lookup the phone number by the CallerID in all of the lists that belong to the specified campaign, CLOSER is specified for Closer calls, ANI will add a new lead record with every call using the ANI as the phone number, ANILOOKUP will attempt to lookup the phone number by the ANI in the entire system, ANILOOKUPRL will attempt to lookup the phone number by the ANI in only one specified list, XDIGITID will prompt the caller for an X digit code before the call will be put into the queue, VIDPROMPT will prompt the caller for their ID number and will create a new lead record with the CallerID as the phone number and the ID as the Vendor ID, VIDPROMPTLOOKUP will attempt to lookup the ID in the entire system, VIDPROMPTLOOKUPRL will attempt to lookup the vendor ID by the ID in only one specified list, VIDPROMPTLOOKUPRC will attempt to lookup the vendor ID by the ID in all of the lists that belong to the specified campaign. Default is CID. If a CIDLOOKUP method is used with ALT, it will search the alt_phone field for the phone number if no matches are found for the main phone number. If a CIDLOOKUP method is used with ADDR3, it will search the address3 field for the phone number if no matches are found for the main phone number and optionally the alt_phone field||
+This is the starting User ID that is used when the remote agent entries are inserted into the system. If the Number of Lines is set higher than 1, this number is incremented by one until each line has an entry. Make sure you create a new user account with a user level of 4 or great if you want them to be able to use the vdremote.php page for remote web access of this account||
+Through the use of custom campaign statuses, you can have statuses that only exist for a specific campaign. The Status must be 1-8 characters in length, the description must be 2-30 characters in length and Selectable defines whether it shows up in the system as a disposition. The human_answered field is used when calculating the drop percentage, or abandon rate. Setting human_answered to Y will use this status when counting the human-answered calls. The Category option allows you to group several statuses into a catogy that can be used for statistical analysis||
+Through the use of custom campaign hot keys, agents that use the agent web-client can hang up and disposition calls just by pressing a single key on their keyboard||
+If the Agent Pause Codes Active field is set to active then the agents will be able to select from these pause codes when they click on the PAUSE button on their screens. This data is then stored in the agent log. The Pause code must contain only letters and numbers and be less than 7 characters long. The pause code name can be no longer than 30 characters||
+This is the short name of a User group, try not to use any spaces or punctuation for this field. max 20 characters, minimum of 2 characters||
+This is the description of the user group max of 40 characters||
+This option allows you to not let an agent log in to the agent interface if they have not logged into the timeclock. Default is N. There is an option to exempt admin users, levels 8 and 9||
+This option defines whether the agent will be able to see their call log for calls handled through the agent screen. Default is N for no or disabled||
+This option if set to Y will set the height and width of the agent screen to the size of the web browser window without any allowance for the Agents View, Calls in Queue View or Calls in Session view. Default is N for no or disabled||
+This is the short name of a Script. This needs to be a unique identifier. Try not to use any spaces or punctuation for this field. max 10 characters, minimum of 2 characters||
+This is the title of a Script. This is a short summary of the script. max 50 characters, minimum of 2 characters. There should be no spaces or punctuation of any kind in theis field||
+This is where you can place comments for an agent screen Script such as -changed to free upgrade on Sept 23-.  max 255 characters, minimum of 2 characters||
+This is where you place the content of an agent screen Script. Minimum of 2 characters. You can have customer information be auto-populated in this script using||
+where field is one of the following fieldnames||
+You can also use an iframe to load a separate window within the SCRIPT tab, here is an example with prepopulated variables||
+This is the short name of a Lead Filter. This needs to be a unique identifier. Do not use any spaces or punctuation for this field. max 10 characters, minimum of 2 characters||
+This is where you can place comments for a Filter such as -calls all California leads-.  max 255 characters, minimum of 2 characters||
+This is the short name of a Call Time Definition. This needs to be a unique identifier. Do not use any spaces or punctuation for this field. max 10 characters, minimum of 2 characters||
+This is where you can place comments for a Call Time Definition such as -10am to 4pm with extra call state restrictions-.  max 255 characters||
+This is the short name of a system Shift Definition. This needs to be a unique identifier. Do not use any spaces or punctuation for this field. max 20 characters, minimum of 2 characters||
+This utility allows you to upload audio files to the web server so that they can be distributed to all of the system servers in a multi-server cluster. An important note, only two audio file types will work, .wav files that are PCM Mono 16bit 8k and .gsm files that are 8bit 8k. Please verify that your files are properly formatted before uploading them here||
+This is a more descriptive name of the Music On Hold entry. This is a short summary of the Music On Hold context and will show as a comment in the musiconhold conf file. max 255 characters, minimum of 2 characters||
+This is the actual Text To Speech data field that is sent to Cepstral for creation of the audio file to be played to the customer. you can use Speech Synthesis Markup Language -SSML- in this field, for example, &lt;break time='1000ms'/&gt; for a 1 second break. You can also use several variables such as first name, last name and title as system variables just like you do in a Script: --A--first_name--B--. If you have static audio files that you want to use based upon the value of one of the fields you can use those as well with C and D tags. The file names must be all lower case and they must be 8k 16bit pcm wav files. The field name must be the same but without the .wav in the filename. For example --C----A--address3--B----D-- would first find the value for address3, then it would try to find an audio file matching that value to put it into the prompt. Here is a list of the available variables||
+The basic web-based lead loader is designed simply to take a lead file - up to 8MB in size - that is either tab or pipe delimited and load it into the list table. The lead loader allows for field choosing and TXT- Plain Text, CSV- Comma Separated Values and XLS- Excel file formats. The lead loader does not do data validation, but it does allow you to check for duplicates in itself, within the campaign or within the entire system. Also, make sure that you have created the list that these leads are to be under so that you can use them. Here is a list of the fields in their proper order for the lead files||
+The layout of the file you are loading.  "Standard Format" uses the pre-defined standard file format.  "Custom layout" allows the user to define the layout of the file themselves.  "Custom template" is a hybrid of the previous two options, which allows the user to use a custom format they have defined previously and saved using the Custom Template Maker||
+The login used for the phone user to login to the client applications, like the agent screen||
+The difference from Greenwich Mean time, or ZULU time where the phone is located. DO NOT ADJUST FOR DAYLIGHT SAVINGS TIME. This is used by the campaign to accurately display the system time and customer time, as well as accurately log when events happen||
+Agent Default User||
+This is to place a default value in the agent user field whenever this phone user opens the client app. Leave blank for no user||
+Agent Default Pass||
+This is to place a default value in the agent password field whenever this phone user opens the client app. Leave blank for no pass||
+Agent Default Campaign||
+This is to place a default value in the agent screen campaign field whenever this phone user opens the client app. Leave blank for no campaign||
+Agent Park Exten||
+This is the default Parking extension for client app. Verify that a different one works before you change this||
+Agent Park File||
+This is the default agent screen park extension file name for the client apps. Verify that a different one works before you change this. limited to 10 characters||
+This is the dial plan context that the agent screen, primarily uses. It is assumed that all numbers dialed by the client apps are using this context so it is a good idea to make sure this is the most wide context possible. verify with extensions.conf file before changing. default is default||
+This is the dial plan context that this phone will use to dial out. If you are running a call center and you do not want your agents to be able to dial out outside of the agent screen applicaiton for example, then you would set this field to a dialplan context that does not exist, something like agent-nodial. default is default||
+Not used anymore||
+Agent Default URL||
+This is the web address of the page used to do custom agent Web Form queries. default testing address is defined in the database schema||
+This is set to true if the call_log step is in place in the extensions.conf file for all outbound and hang up 'h' extensions to log all calls. This should always be 1 because it is manditory for many of the system features to work properly||
+Set to true to have client apps use the Asterisk Central Queue system. Required for the system to work and recommended for all phones||
+If enabled the agent screen will dial the next number on the list automatically upon disposition of a call unless they selected to PAUSE AGENT DIALING on the disposition screen||
+If enabled the agent screen will stop whatever recording is going on after each call has been dispositioned. Useful if you are doing a lot of recording or you are using a web form to trigger recording||
+If enabled, the server will send messages to the SIP phone to display on the phone display screen when logged into the agent web interface. Feature only works with SIP phones and requires sipsak application to be installed on the web server. Default is 0||
+If populated, and the Template ID is set to --NONE-- then the contents of this field are used as the conf file entries for this phone. generate conf files for this phones server must be set to Y for this to work. This field should NOT contain the [extension] line, that will be automatically generated||
+The ID of the group alias used by agents to dial out calls from the agent interface with different Caller IDs. no spaces or other special characters allowed. Must be between 2 and 20 characters in length||
+Max Trunks||
+This field will determine the maximum number of lines that the auto-dialer will attempt to call on this server. If you want to dedicate two full PRI T1s to outbound dialing on a server then you would set this to 46. Any inbound or manual dial calls will be counted against this total as well. Default is 96||
+auto dial extension||
+The default extension if none is present in the campaign to send calls to for  auto dialing. Default is||
+Setting this option to Y will enable logging of all system related scripts to their text log files. Setting this to N will stop writing logs to files for these processes, also the screen logging of asterisk will be disabled if this is set to N when Asterisk is started. Default is Y||
+Setting this option to NONE will disable output from all system related AGI scripts. Setting this to STDERR will send the AGI output to the Asterisk CLI. Setting this to FILE will send the output to a file in the logs directory. Setting this to BOTH will send output to both the Asterisk CLI and a log file. Default is FILE||
+Balance Dialing||
+Setting this field to Y will allow the server to place balance calls for campaigns in the system so that the defined dial level can be met even if there are no agents logged into that campaign on this server. Default is N||
+Balance Rank||
+This field allows you to set the order in which this server is to be used for balance dialing, if balance dialing is enabled. The server with the highest rank will be used first in placing Balance fill calls. Default is 0||
+Balance Offlimits||
+This setting defines the number of trunks to not allow the balance dialing processes to use. For example if you have 40 max trunks and balance offlimits is set to 10 you will only be able to use 30 trunk lines for balance dialing. Default is 0||
+Some systems require setting up telephony servers in pairs. This setting is where you can put the server IP of another server that this server is twinned with. Default is empty for disabled||
+If Asterisk is not running on this server, or if the dialing processes should not be using this server, or if are only using this server for other scripts like the hopper loading script you would want to set this to N. Default is Y||
+Setting this option to N will prevent agents from being able to log in to this server through the agent screen. This is very useful when using a phone login load balanced setup. Default is Y||
+If you would like the system to auto-generate asterisk conf files based upon the phones entries, carrier entries and load balancing setup within the system then set this to Y. Default is Y||
+Recording Limit||
+This field is where you set the maximum number of minutes that a call recording initiated by the system can be. Default is 60 minutes||
+This field is used if you have not selected a template to use, and it is where you can enter in the specific account settings to be used for this carrier. If you will be taking in inbound calls from this carrier trunk you might want to set the context=trunkinbound within this field so that you can use the DID handling process within the system||
+This field is where you put the meetme conference dialplan number. It is also recommended that the meetme number in meetme.conf matches this number for each entry. This is for the conferences in the astGUIclient user screen and is used for leave-3way-call functionality in the system||
+Server Trunks allows you to restrict the outgoing lines that are used on this server for campaign dialing on a per-campaign basis. You have the option to reserve a specific number of lines to be used by only one campaign as well as allowing that campaign to run over its reserved lines into whatever lines remain open, as long at the total lines used by the system on this server is less than the Max Trunks setting. Not having any of these records will allow the campaign that dials the line first to have as many lines as it can get under the Max Trunks setting||
+Agent Disable Display||
+This field is used to select when to show an agent notices when their session has been disabled by the system, a manager action or by an external measure. The NOT_ACTIVE setting will disable the message on the agents screen. The LIVE_AGENT setting will only display the disabled message when the agents auto_calls record has been removed, such as during a force logout or emergency logout. Default is ALL||
+If set to 1, this will allow the sipsak phones table setting to work if the phone is set to the SIP protocol. The server will send messages to the SIP phone to display on the phone display when logged into the system. This feature only works with SIP phones and requires sipsak application to be installed on the web server that the agent is logged into. Default is 0||
+This menu allows you to choose the format of the date and time that shows up at the top of the agent screen. The options for this setting are: default is||
+This menu allows you to choose the format of the customer date and time that shows up at the top of the Customer Information section of the agent screen. The options for this setting are: default is||
+This menu allows you to choose the format of the customer phone number that shows up in the status section of the agent screen. The options for this setting are: default is||
+This is the web directory that your administation web content, like admin.php, are in. To figure out your Admin web directory, it is everything that is between the domain name and the admin.php in the URL on this page, without the beginning and ending slashes||
+This option allows you to enable or disable outbound auto-dialing within the system, setting this field to 0 will remove the LISTS and FILTERS sections and many fields from the Campaign Modification screens. Manual entry dialing will still be allowable from within the agent screen, but no list dialing will be possible. Default is 1 for active||
+This setting allows you to enable the User Territories settings from the user modification screen. This feature was added to allow for more integration with a customized Vtiger installation but can have applications in system by itself as well. Default is 0 for disabled||
+This setting enables the CallCard features to allow for callers to use pin numbers and card_ids that have a balance of minutes and those balances can have agent talk time on customer calls to in-groups deducted. Default is 0 for disabled||
+This option allows you to select the reports that you want to have use the MySQL slave database as defined in the option above instead of the master database that your live system is running on. You must set up the MySQL slave replication before you can enable this option. Default is empty for disabled||
+These 19 fields allow you to set the name as it will appear in the agent interface as well as the administrative modify lead page. Default is empty which will use the hard-coded defaults in the agent interface. You can also set a label to ---HIDE--- to hide both the label and the field||
+This setting allows you to define whether the system will insert log entries into the queue_log database table as Asterisk Queues activity does. QueueMetrics is a standalone, closed-source statistical analysis program. You must have QueueMetrics already installed and configured before enabling this feature. Default is 0||
+This is the server ID that all contact center logs going into the QueueMetrics database will use as an identifier for each record||
+This field is used to allow for prepending of one of the list data fields in front of the phone number of the customer for customized QueueMetrics reports. Default is NONE to not populate anything||
+This option affects how the system will log the logins and logouts of an agent in the queue_log. Default is STANDARD to use standard AGENTLOGIN AGENTLOGOFF, CALLBACK will use AGENTCALLBACKLOGIN and AGENTCALLBACKLOGOFF that QM will parse differently, NONE will not log any logins and logouts within queue_log||
+This setting allows you to enable Vtiger integration with the system. Currently links to Vtiger admin and search as well as user replication are the only integration features available. Default is 0||
+Through the use of system statuses, you can have statuses that exist for all campaigns and in-groups. The Status must be 1-6 characters in length, the description must be 2-30 characters in length and Selectable defines whether it shows up in the system as an agent disposition. The human_answered field is used when calculating the drop percentage, or abandon rate. Setting human_answered to Y will use this status when counting the human-answered calls. The Category option allows you to group several statuses into a category that can be used for statistical analysis. There are also 5 additional settings that will define the kind of status: sale, dnc, customer contact, not interested, unworkable, scheduled callback||
+These 19 fields allow you to set the name as it will appear in the agent interface as well as the administrative modify lead page. Default is empty which will use the hard-coded defaults in the agent interface. You can also set a label to ---HIDE--- to hide both the label and the field||
+The Email Accounts management section allows you to create, copy, and delete email account settings that will allow you to have email messages come into your system and be treated as if they were phone calls to agents.  EMAIL ACCOUNTS MUST BE SET UP BY YOU AND AN EMAIL SERVICE PROVIDER - THAT IS NOT COVERED BY THIS MODULE||
+This is the action that will be taken when a new email is found in the account.  EMAIL means all email messages will be inserted into the list table as a new lead.  EMAILLOOKUP will search the entire list table for the email address in the email column - if the lead is found, that lead list ID will be used in the record that goes into the email_list table.  EMAILLOOKUPRC does the same, but it will only search lists belonging to the campaign selected in the In-Group Campaign ID box below.  EMAILLOOKUPRL will only search one particular list, which is the one entered into the In-Group List ID box below||
+The custom template maker allows you to define your own file layouts for use with the list loader and also delete them, if necessary.  If you frequently upload files that are in a consistent layout other than the standard layout, you may find this tool helpful.  The saved layout will work on any uploaded file it matches, regardless of file type or delimiter||
+Once you have loaded a sample lead file matching the layout you want to make into a template and select a list ID to load leads into, all of the available columns from the list table and the custom table for the list you selected (if any) will be displayed here.  Columns highlighted in blue are standard columns from the list table.  Columns highlighted in pink belong to the custom table for the selected list.  Each column listed has a drop-down menu, which should be populated with the fields from the first row of the sample lead file you uploaded.  Assign the appropriate fields to the appropriate columns and press SUBMIT TEMPLATE to create your template.  You do not need to assign every field to a column, and you do not need to assign every column a field.  For details on the standard list columns, click||
+The Quality Control - QC function has its own set of status codes separate from those within the call handling functions of the system. QC status codes must be between 2 and 8 characters in length and contain no special characters like a space or colon. The QC status code description must be between 2 and 30 characters in length. For these functions to work, you must have QC enabled in the System Settings||
+SYSTEM SNAPSHOT STATS||
+Reset Lead-Called-Status for Campaigns||
+Total Stats for Today||
+Total Stats for Yesterday||
+Total Calls||
+Total Inbound Calls||
+Total Outbound Calls||
+Maximum Agents||
+System Summary||
+Agents Logged In||
+Agents In Calls||
+Active Calls||
+Calls Ringing||
+ Records ||
+ Active ||
+ Inactive ||
+ Total ||
+Status Duplicate Check||
+OMITTING DUPLICATES AGAINST FOLLOWING STATUSES ONLY||
+Duplicate Checking||
+The duplicate options allow you to check for duplicate entries as you load the leads into the system. You can select to check for duplicates within only the same list, only the same campaign lists or within the entire system. If you have chosen a duplicate check method, you can also optionally select the only specific statuses that you want to duplicate check against||
+Add inbound and outbound holiday rule||
+Add outbound holiday rule||
+If set to N, the calls will queue up, even if there are no agents logged in and set to take calls from this in-group||
+Active Voicemail Server is not set||
+QueueMetrics Hold Call Log||
+This option, if enabled, will log when a customer is put on hold and taken off hold in the newer record_tags QM table. Default is 0 for disabled||
+Country Code List Stats||
+This setting if enabled will show a country code breakdown summary on the list modify screen. Default is 0 for disabled||
+COUNTRY CODES WITHIN THIS LIST||
+Manual Dial by Lead ID||
+This allows the agent in manual dial mode to place a call by lead_id instead of a phone number. Default is N for disabled||
+The ViciDial Contact Center Suite is maintained by the||
+The ViciDial Contact Center Suite is released under the||
+This is the dial plan context that this phone will use to dial out. If you are running a call center and you do not want your agents to be able to dial out outside of the Contact Center applicaiton for example, then you would set this field to a dialplan context that does not exist, something like agent-nodial. default is default||
+Update List Owner||
+Advanced Lead Management Tools||
+Basic Lead Management Tools||
+System Uptime||
+This field will show the system uptime of this server. This field only updates if configured to do so by your administrator||
+Auto-Restart Asterisk||
+If Asterisk is running on this server and you want the system to make sure that it will be restarted in the event that it crashes, you might want to consider enabling this setting. If enabled, the system will check every minute to see if Asterisk is running, and if it is not it will attempt to restart it. This process will not run in the first 5 minutes after a system has been up. Default is N||
+Temp No-Restart Asterisk||
+If Auto-Restart Asterisk is enabled on this server, turning on this setting will prevent the auto-restart process from running until after the server is rebooted. Default is N||
+Dead Call Max Seconds||
+If this is set to greater than 0, after a customer hangs up and the agent has not clicked on the Hangup Customer button in this number of seconds, the call will automatically be hung up, the status below will be set and the agent will be paused. Default is 0 for disabled||
+Dead Call Max Status||
+If Dead Call Max Seconds is enabled, this is the status set for the call when the agent dead call is not hung up past the number of seconds set above. Default is DCMX||
+Dispo Call Max Seconds||
+If this is set to greater than 0, and the agent has not selected a disposition status in this number of seconds, the call will automatically be set to the status below and the agent will be paused. Default is 0 for disabled||
+Dispo Call Max Status||
+If Dispo Call Max Seconds is enabled, this is the status set for the call when the agent has not selected a status past the number of seconds set above. Default is DISMX||
+Agent Pause Max Seconds||
+If this is set to greater than 0, and the agent has not gone out of PAUSED status in this number of seconds, the agent will automatically be logged out of the agent screen. Default is 0 for disabled||
+If enabled, when an agent receives a call through this in-group they will see the uniqueid of the call added to the status line in their agent interface. The PREFIX option will add the prefix, defined below, to the beginning of the uniqueid in the display. Default is DISABLED. If there was already a Uniqueid defined on a call entering this in-group, then the original uniqueid will be displayed. If the PRESERVE option is used and the call is sent to a second agent, the uniqueid and prefix displayed to the first agent will also be displayed to the second agent||
+Used for Drop, After-hours and No-agent-no-queue actions. This is the caller ID number that the call uses before it is transferred to extensions, messages, voicemail or call menus. You can use CUSTOMER in this field to use the customer phone number, or CAMPAIGN to use the first allowed campaign caller id number. Default is CUSTOMER. If this is a call that will go to a Call Menu and then back to an in-group, we suggest you use CUSTOMERCLOSER in this field, and also you need to set the In-Group Handle Method in the Call Menu to CLOSER||
+VMAIL_NO_INST will send the call to the voicemail box that you have defined below and will not play instructions after the voicemail message||
+VMAIL Dump Exten NI||
+This is the dial plan prefix used to send calls directly to a user's voicemail from a live call in the astGUIclient app. This is the No Instructions setting||
+Voicemail Instructions||
+This setting allows you to define if the voicemail instructions will play after the voicemail greeting when a call rings on the agent extension and times out to voicemail. Default is Y||
+optional, possibly slow||
+Not set as allowed in any campaigns||
+DNC_INTERNAL will search by the internal DNC list. DNC_CAMPAIGN will search by one specific campaign DNC list||
+Filter DNC Campaign||
+If the Filter Inbound Number field is set to DNC_CAMPAIGN then this is the specific campaign ID that the campaign DNC list belongs to||
+Filter URL DID Redirect||
+If the Filter Inbound Number field is set to URL then this setting allows the URL response to specify a system DID to redirect the call to insead of using the default action. If a 0 is returned then the default action is used. If anything other than a 0 is returned then the call will be redirected to the resulting URL response value||
+Max Inbound Calls||
+If this setting is set to a number greater than 0, then it will be the maximum number of inbound calls that an agent can handle across all inbound groups in one day. If the agent reaches their maximum number of inbound calls, then they will not be able to select inbound groups to take calls from until the next day. This setting will override the Campaign setting of the same name. Default is 0 for disabled||
+If this setting is set to a number greater than 0, then it will be the maximum number of inbound calls that an agent can handle across all inbound groups in one day. If the agent reaches their maximum number of inbound calls, then they will not be able to select inbound groups to take calls from until the next day. This setting can be overridden by the User setting of the same name. Default is 0 for disabled||
+Manual Dial Search Checkbox||
+This allows you to define if you want the manual dial search checkbox to be selected by default or not. If an option with RESET is chosen, then the checkbox will be reset after every call. Default is SELECTED||
+Hide Call Log Info||
+Enabling this option will hide any call log or call count information when lead information is displayed on the agent screen. Default is N||
+Modify Custom Dialplans||
+This option if set to 1 allows the user to view and modify custom dialplan entries that are available in the Call Menu, System Settings and Servers modification screens||
+QueueMetrics Pause Type Logging||
+If enabled, this option will log the type of pause in the queue_log table data5 field. You must make sure that you have a data5 field or enabling this feature will break QM compatibility. Default is 0 for disabled||
+Clear Frozen Calls||
+This option can enable the ability for the general Reports page and the optional AST_timecheck.pl script to clear out the auto_calls entries for a frozen server so they do not affect call routing. Default is 0 for disabled||
+Clear List||
+LIST NOT CLEARED||
+LIST CLEAR CONFIRMATION||
+Click here to clear list and all of its leads||
+Manual Alt Num Dialing||
+This option allows an agent to manually dial the alternate phone number or address3 field after the main number has been called. If the option has SELECTED in it then the Alt Dial checkbox will be automatically checked for each call. If the option has TIMER in it then the Alt Phone or Address3 field will be automatically be dialed after Timer Alt Seconds. Default is N for disabled||
+Timer Alt Seconds||
+If the Manual Alt Num Dialing setting has TIMER in it then the Alt Phone or Address3 field will be automatically be dialed after this number of seconds. Default is 0 for disabled||
+
+
+########################## CHANGES TO EXISTING PHRASES IN ADMIN TRANSLATION
+
+
+
+############################################################ CLIENT
+
+This agent screen was not opened properly||
+Dial Lead ID||
+Agent Form Display Script||
+Agent Notes||
+You have been paused for too long, you have been logged out of your session||
+Too many network errors, please contact your administrator||
+No available servers, please contact your administrator||
+No available phones, please contact your administrator||
+You are already logged in, please log out of your other session first||
+Too many agents logged in, please contact your administrator||
+Dial Countdown||
+
+########################## CHANGES TO EXISTING PHRASES IN AGENT TRANSLATION
+
+
+############################################################  MANAGER Manual
+
+
+
+############################################################  AGENT Manual
+

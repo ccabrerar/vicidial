@@ -1,0 +1,659 @@
+﻿# jp_language.txt - this file is for the internationalization of the astGUIclient 
+# client web pages. The associated install.pl file will take the language as an 
+# argument and alter the php scripts to the language typed in the command line:
+# example: ./config.pl --language=es
+# current languages in the file:
+# - English - (en) no alterations
+# - Japanese - (jp) first column
+***LANGUAGES***
+en-English|jp-日本語|
+***FILES***
+agc|astguiclient.php|0
+agc|vicidial.php|0
+agc|vdc_db_query.php|0
+agc|manager_send.php|0
+agc|conf_exten_check.php|0
+agc|inbound_popup.php|0
+agc|active_list_refresh.php|0
+agc|park_calls_display.php|0
+agc|live_exten_check.php|0
+agc|call_log_display.php|0
+agc|voicemail_check.php|0
+agc|dbconnect.php|1
+agc|timeclock.php|0
+agc|vdc_script_display.php|1
+agc|vdc_script_notes.php|0
+agc|functions.php|0
+agc|vdc_form_display.php|1
+agc|calendar.css|1
+agc|calendar_db.js|0
+agc|phone_only.php|0
+agc|vdc_email_display.php|0
+agc|audit_comments.php|0
+agc|dbconnect_mysqli.php|1
+***TRANSLATIONS***
+### special translations that should stay at the top of the file ###
+"JAN"|"1月"|
+"FEB"|"2月"|
+"MAR"|"3月"|
+"APR"|"4月"|
+"MAY"|"5月"|
+"JUN"|"6月"|
+"JLY"|"7月"|
+"AUG"|"8月"|
+"SEP"|"9月"|
+"OCT"|"10月"|
+"NOV"|"11月"|
+"DEC"|"12月"|
+\./bp.pl|../agc/bp.pl|
+\./images/|../agc/images/|
+css/|../agc/css/|
+BORDER|Border|
+VALUE=SUBMIT|VALUE=SUBMIT|
+TYPE=SUBMIT|TYPE=Submit|
+MAXLENGTH|maxlength|
+### BEGIN translation phrases through 1.1.11 release ###
+English|英語|
+agc_live_call_DEAD.gif|agc_live_call_DEAD_jp.gif|
+agc_live_call_OFF.gif|agc_live_call_OFF_jp.gif|
+agc_live_call_ON.gif|agc_live_call_ON_jp.gif|
+vdc_LB_customxfer_OFF.gif|vdc_LB_customxfer_OFF_jp.gif|
+vdc_LB_customxfer.gif|vdc_LB_customxfer_jp.gif|
+vdc_LB_dialnextnumber_OFF.gif|vdc_LB_dialnextnumber_OFF_jp.gif|
+vdc_LB_dialnextnumber.gif|vdc_LB_dialnextnumber_jp.gif|
+vdc_LB_grabivrparkcall_OFF.gif|vdc_LB_grabivrparkcall_OFF_jp.gif|
+vdc_LB_grabivrparkcall.gif|vdc_LB_grabivrparkcall_jp.gif|
+vdc_LB_grabparkedcall_OFF.gif|vdc_LB_grabparkedcall_OFF_jp.gif|
+vdc_LB_grabparkedcall.gif|vdc_LB_grabparkedcall_jp.gif|
+vdc_LB_hangupcustomer_OFF.gif|vdc_LB_hangupcustomer_OFF_jp.gif|
+vdc_LB_hangupcustomer.gif|vdc_LB_hangupcustomer_jp.gif|
+vdc_LB_ivrparkcall_OFF.gif|vdc_LB_ivrparkcall_OFF_jp.gif|
+vdc_LB_ivrparkcall.gif|vdc_LB_ivrparkcall_jp.gif|
+vdc_LB_parkcall_OFF.gif|vdc_LB_parkcall_OFF_jp.gif|
+vdc_LB_parkcall.gif|vdc_LB_parkcall_jp.gif|
+vdc_LB_pause_OFF.gif|vdc_LB_pause_OFF_jp.gif|
+vdc_LB_pause.gif|vdc_LB_pause_jp.gif|
+vdc_LB_quickxfer_OFF.gif|vdc_LB_quickxfer_OFF_jp.gif|
+vdc_LB_quickxfer.gif|vdc_LB_quickxfer_jp.gif|
+vdc_LB_requeue_call_OFF.gif|vdc_LB_requeue_call_OFF_jp.gif|
+vdc_LB_requeue_call.gif|vdc_LB_requeue_call_jp.gif|
+vdc_LB_resume_OFF.gif|vdc_LB_resume_OFF_jp.gif|
+vdc_LB_resume.gif|vdc_LB_resume_jp.gif|
+vdc_LB_senddtmf_OFF.gif|vdc_LB_senddtmf_OFF_jp.gif|
+vdc_LB_senddtmf.gif|vdc_LB_senddtmf_jp.gif|
+vdc_LB_startrecording_OFF.gif|vdc_LB_startrecording_OFF_jp.gif|
+vdc_LB_startrecording.gif|vdc_LB_startrecording_jp.gif|
+vdc_LB_stoprecording_OFF.gif|vdc_LB_stoprecording_OFF_jp.gif|
+vdc_LB_stoprecording.gif|vdc_LB_stoprecording_jp.gif|
+vdc_LB_webform_OFF.gif|vdc_LB_webform_OFF_jp.gif|
+vdc_XB_blindtransfer.gif|vdc_XB_blindtransfer_jp.gif|
+vdc_XB_channel.gif|vdc_XB_channel_jp.gif|
+vdc_XB_code.gif|vdc_XB_code_jp.gif|
+vdc_XB_contactsbutton.gif|vdc_XB_contactsbutton_jp.gif|
+vdc_XB_dialwithcustomer_OFF.gif|vdc_XB_dialwithcustomer_OFF_jp.gif|
+vdc_XB_hangupbothlines_OFF.gif|vdc_XB_hangupbothlines_OFF_jp.gif|
+vdc_XB_hangupxferline_OFF.gif|vdc_XB_hangupxferline_OFF_jp.gif|
+vdc_XB_header.gif|vdc_XB_header_jp.gif|
+vdc_XB_hotkeysactive_OFF.gif|vdc_XB_hotkeysactive_OFF_jp.gif|
+vdc_XB_hotkeysactive.gif|vdc_XB_hotkeysactive_jp.gif|
+vdc_XB_internalcloser_OFF.gif|vdc_XB_internalcloser_OFF_jp.gif|
+vdc_XB_internalcloser.gif|vdc_XB_internalcloser_jp.gif|
+vdc_XB_leave3waycall_OFF.gif|vdc_XB_leave3waycall_OFF_jp.gif|
+vdc_XB_leave3waycall.gif|vdc_XB_leave3waycall_jp.gif|
+vdc_XB_localcloser_OFF.gif|vdc_XB_localcloser_OFF_jp.gif|
+vdc_XB_localcloser.gif|vdc_XB_localcloser_jp.gif|
+vdc_XB_number.gif|vdc_XB_number_jp.gif|
+vdc_XB_parkcustomerdial_OFF.gif|vdc_XB_parkcustomerdial_OFF_jp.gif|
+vdc_XB_parkcustomerdial.gif|vdc_XB_parkcustomerdial_jp.gif|
+vdc_XB_presetsbutton.gif|vdc_XB_presetsbutton_jp.gif|
+vdc_XB_seconds.gif|vdc_XB_seconds_jp.gif|
+vdc_LB_transferconf_OFF.gif|vdc_LB_transferconf_OFF_jp.gif|
+vdc_LB_transferconf.gif|vdc_LB_transferconf_jp.gif|
+vdc_LB_webform.gif|vdc_LB_webform_jp.gif|
+vdc_LB_webform_two_OFF.gif|vdc_LB_webform_two_OFF_jp.gif|
+vdc_LB_webform_two.gif|vdc_LB_webform_two_jp.gif|
+vdc_XB_hangupbothlines.gif|vdc_XB_hangupbothlines_jp.gif|
+vdc_tab_form.gif|vdc_tab_form_jp.gif|
+vdc_tab_script.gif|vdc_tab_script_jp.gif|
+vdc_XB_blindtransfer_OFF.gif|vdc_XB_blindtransfer_OFF_jp.gif|
+vdc_XB_dialwithcustomer.gif|vdc_XB_dialwithcustomer_jp.gif|
+vdc_XB_hangupxferline.gif|vdc_XB_hangupxferline_jp.gif|
+vdc_volume_MUTE.gif|vdc_volume_MUTE_jp.gif|
+vdc_volume_UNMUTE.gif|vdc_volume_UNMUTE_jp.gif|
+You have now logged out. Thank you|今、ログアウトしています。ありがとうございました。|
+astGUIclient web-client VERSION|astGUIclient web-クライアントバージョン|
+astGUIclient web client|astGUIclient webクライアント|
+VICIDIAL web client|VICIDIAL webクライアント|
+VICIDIAL web-client version|VICIDIAL web-クライアントバージョン|
+You can only monitor Zap channels|Zapチャンネルのみ監視できます。|
+Stop Record|記録を停止する。|
+you are logged into this phone|この電話にログインしています。|
+Back to Main Window|メインウィンドウに戻る|
+LIVE CALLS ON THIS PHONE|この電話でライブで呼び出す。|
+LIVE CALLS IN THIS CONFERENCE|この会議でライブで呼び出す。|
+LIVE CALL TRANSFER|ライブの電話転送|
+CLIENT CHANNEL|クライアントチャンネル|
+REMOTE CHANNEL|遠隔チャンネル|
+CLICK HERE TO LOG IN AGAIN|ここをクリックして再度ログインする。|
+ACTIVE DISPLAY PAUSED|アクティブディスプレイを一時停止する。|
+Main Panel|メインパネル|
+Active Lines Panel|アクティブラインパネル|
+Conferences Panel|会議パネル|
+Check Voicemail|ボイスメールをチェックする。|
+Live Call|ライブの電話|
+Hangup Trunk|ハングアップトランク|
+Hijack Trunk|ハイジャックトランク|
+Listen Trunk|リッスントランク|
+Active Local Menu|アクティブローカルメニュー|
+Hangup Local|ハングアップローカル|
+Hijack Local|ハイジャックローカル|
+Listen Local|リッスンローカル|
+Channel to be transferred|転送されるチャンネル|
+Extensions Menu|内線メニュー|
+Send to selected extension|選択内線へ送信|
+Send to selected vmail box|選択ボイスメールボックスへ送信|
+Send to this number|この番号に送信|
+click on a number below to send to a conference|会議に送信するために以下の番号をクリックする。|
+Send my channel too|私のチャンネルも送信する。|
+Conferences Menu|会議メニュー|
+LOCAL Extensions Dial|ローカル内線ダイアル|
+Phone calling from|電話呼び出し|
+Call selected extension|選択内線に電話する|
+Call selected vmail box|選択ボイスメールボックスに電話する|
+LOCAL DIAL EXTENSIONS|ローカルダイアル内線|
+OUTBOUND CALLS|外部への電話|
+INBOUND CALLS|内部への電話|
+Refresh rate|リスレッシュレート|
+MANUAL DIAL|マニュアルダイアル|
+CALL DATE\/TIME|日付\/時刻に電話する|
+LOCAL HANGUP|ローカルハングアップ|
+PARKED CALLS|保留電話|
+PARKED BY|保留者|
+PARKED TIME|保留時間|
+Registered to|へ登録された|
+Enter Conference|会議に入る|
+Dial From Conf|会議からダイヤルする|
+Active Extensions|有効な内線|
+Outside Lines|外線|
+Local Extensions|ローカル内線|
+Data Goes Here|データはここを通ります。|
+Trunk Action|トランクアクション|
+Local Action|ローカルアクション|
+Conferences List|会議リスト|
+Click on a conference room number on the left for info on that conference|その会議での情報については、左側の会議ルーム番号をクリックしてください。|
+List Display|リスト表示|
+Live Extensions|ライブ内線|
+Busy Extensions|話し中の内線|
+Outside Lines|外線|
+script runtime|スクリプトの実行時間|
+Call Log Display|電話ログ表示|
+is not valid|有効ではない|
+or protocol|またはプロトコル|
+Conf Extension Check|会議内線チェック|
+has been registered to|登録されています|
+LIVE INBOUND CALL|ライブ内部向け電話|
+Number Dialed|ダイアルした番号|
+SEND TO MY VOICEMAIL|マイボイスメールに送信する|
+Live Extension Check|ライブ内線チェック|
+Manager Send|マネージャーが送信する|
+command not inserted|挿入されていないコマンド|
+command sent for|送信されたコマンド|
+One of these variables|これらの変数の1つ|
+must be greater than 2 characters|2文字以上でなければなりません。|
+must be greater than 14 characters|14文字以上でなければなりません。|
+must be set|送信されなければなりません。|
+not sent|送信されない|
+Cannot find empty conference|空の会議を見つけることができません。|
+is not live|ライブではない|
+RECORDING WILL LAST UP TO 60 MINUTES|録音は最大60分まで続きます。|
+Parked Calls Display|保留中の電話表示|
+Database Query Script|データベースクエリースクリプト|
+Group Choice|グループ選択|
+has been registered to user|ユーザに登録されています|
+HOPPER EMPTY|ホッパーが空です|
+LOG NOT ENTERED|ログが入力されていません|
+has been changed to|変更されています|
+information has been updated|情報は更新されました|
+is now in status|今、状態です|
+Voicemail Check|ボイスメールチェック|
+voicemail box|ボイスメールボックス|
+Re-Login|再ログイン|
+User Password|ユーザパスワード|
+User Login|ユーザログイン|
+Phone Login|電話ログイン|
+Phone Password|電話パスワード|
+Campaign not active, please try again|キャンペーンがアクティブではありません。再度試してください。|
+Login incorrect, please try again|ログインが間違っています。再度試してください。|
+Campaign Login|キャンペーンログイン|
+Sorry, your phone login and password are not active in this system, please try again|すみません。あなたの電話ログインとパスワードはこのシステムでアクティブではありません。再度試してください。|
+leads left to call in hopper|ホッパーを呼ぶために残された見込み客|
+CAMPAIGN CUSTOM PARKING|キャンペーンカスターム保留|
+CAMPAIGN DEFAULT PARKING|キャンペーンデフォルト保留|
+CAMPAIGN CUSTOM WEB FORM|キャンペーンカスタムウェブフォーム|
+CAMPAIGN DEFAULT WEB FORM|キャンペーンデフォルトウェブフォーム|
+CAMPAIGN ALLOWS CLOSERS|キャンペーンはクローザーを許可します。|
+CAMPAIGN ALLOWS NO CLOSERS|キャンペーンはクローザーを許可しません。|
+USING PREVIOUS MEETME ROOM|前回のMEETMEルームを使用する|
+USING NEW MEETME ROOM|新たなMEETMEルームを使用する|
+old QUEUE and INCALL reverted list|古いキューとインコールがリストを戻しました。|
+old QUEUE and INCALL reverted hopper|古いキューとインコールがホッパーを戻しました。|
+old vicidial_live_agents records cleared|古いvicidial_live_agentsの記録が消去されました。|
+campaign is set to auto_dial_level|キャンペーンはauto_dial_levelに設定されています。|
+new vicidial_live_agents record inserted|新たなvicidial_live_agentsレコードが挿入されています。|
+campaign is set to manual dial|キャンペーンはマニュアルダイアルに設定されています。|
+Sorry, there are no leads in the hopper for this campaign|すみませんが、このキャンペーンへのホッパーにおける見込み客がありません。|
+Dial Next Number|次の番号をダイアルする|
+LIVE CALLS IN YOUR SESSION|あなたのセッションでライブコール|
+Stop Recording|記録を停止する|
+Start Recording|記録を開始する|
+Transfer number must have more than 1 digit|トランスファー番号は1桁以上でなければなりません|
+Grab Parked Call|保留電話を取る|
+Park Call|電話保留する|
+Waiting for Ring|電話が鳴るのを待つ|
+Called 3rd party|呼び出されたサードパーティ|
+LEAVE 3-WAY CALL|３方向の電話から出る|
+Dial With Customer|顧客とダイアルする|
+Park Customer Dial|顧客ダイアルを保留する|
+Hangup Xfer Line|Xferラインを停止させる|
+Hangup Both Lines|両方のラインを停止させる|
+Hangup Customer|顧客を停止させる|
+Transfer - Conference|トランスファー-会議|
+LOCAL CLOSER|ローカルクローザー|
+INTERNAL CLOSER|内部クローザー|
+Dial Blind Transfer|ブラインドトランスファーをダイアルする|
+Dial timed out, contact your system administrator|ダイアル時間切れです。システク管理者にご連絡ください。|
+No more leads in the hopper for campaign|キャンペーン用のホッパーにおける見込み客はありません。|
+Web Form|ウェブフォーム|
+You Must Select a Disposition|配置を選ばなければなりません。|
+GROUPS NOT SELECTED|グループが選択されていません。|
+SELECTED GROUPS|選択されたグループ|
+You cannot log out during a Dial attempt|ダイアル中にログアウトすることはできません。|
+Wait 50 seconds for the dial to fail out if it is not answered|返事がなければ、ダイアルを切るのに50秒待ってください。|
+STILL A LIVE CALL! Hang it up then you can log out|未だにライブコール！ログアウトできる時に電話を切る|
+Hide conference call channel information|会議コールチャンネル情報を隠す|
+Show conference call channel information|会議コールチャンネル情報を表示する|
+Logged in as User|ユーザとしてログインしました|
+No one is in your session|誰もあなたのセッションにいません|
+Customer has hung up|顧客が電話を切りました。|
+End-of-call Disposition Selection|End-of-call配置の選択|
+CLOSER INBOUND GROUP SELECTION|クローザー内部向けグループ選択|
+Closer Inbound Group Selection|クローザー内部向けグループ選択|
+BLENDED CALLING|混合コーリング|
+outbound activated|外部向けが有効化|
+Preview the Lead then|その時の見込み客をプレビューする|
+Lead was not reverted, there was an error|見込み客は戻されませんでした。エラーがありました。|
+call was not placed, there was an error|電話がかかっていません。エラーがありました。|
+Number to call|電話番号|
+Customer Information|顧客情報|
+Lead Dispositioned As|として配置された見込み客|
+Any changes made to the customer information below at this time will not be comitted, You must change customer information before you Hangup the call|今回以下の顧客情報の変更は行われません。電話を切る前に顧客情報を変更しなければなりません。|
+When active, simply press the keyboard key for the desired disposition for this call. The call will then be hungup and dispositioned automatically|アクティブな時は、この電話に対して希望する配置のキーボードのキーを単に押してください。電話はその時切れ、自動的に配置されます。|
+Disposition Hot Keys|ホットキーを配置する|
+Cust Time|顧客の時間|
+RECORD ID|IDを記録する|
+RECORDING FILE|ファイルを記録する|
+HOT KEYS ACTIVE|有効なホットキー|
+HOT KEYS INACTIVE|無効なホットキー|
+DIAL OVERRIDE|ダイアル優先|
+SKIP LEAD|見込み客をスキップする|
+DIAL LEAD|見込み客にダイアルする|
+LEAD PREVIEW|見込み客プレビュー|
+PAUSE AGENT DIALING|エージェントダイアルを一時停止|
+DISPOSITION CALL|コールを配置する|
+ session ID| セッションID|
+ to campaign| キャンペーンへ|
+Select a CallBack Date|電話のかけ直しの日付を選ぶ|
+ maximize | 最大化|
+ minimize | 最小化|
+You must choose a date|日付を選ばなければなりません。|
+Select a Date Below|以下の日付を選ぶ|
+Click on a callback below to call the customer back now. If you click on a record below to call it, it will be removed from the list|今、顧客に電話をかけ直すために以下のコールバックをクリックしてください。電話するために以下の記録をクリックすれば、それはリストから削除されます。|
+If you want to dial a number and have it NOT be added as a new lead, enter in the exact dialstring that you want to call in the Dial Override field below. To hangup this call you will have to open the CALLS IN THIS SESSION link at the bottom of the screen and hang it up by clicking on its channel link there|番号をダイアルしたいが、新たな見込み客として追加したくない場合、以下のダイアル優先欄に電話したいと思う正確なダイアル文字を入力してください。この電話を切るには、画面下のこのセッションリンク内の電話を開き、そこのチャンネルリンクをクリックし、電話を切らなければなりません。|
+YOU CANNOT SKIP A CALLBACK OR MANUAL DIAL, YOU MUST DIAL THE LEAD|かけ直しやマニュアルダイアルをスキップすることができません。見込み客にダイアルしなければなりません。|
+YOU MUST BE PAUSED TO MANUAL DIAL A NEW LEAD IN AUTO-DIAL MODE|自動ダイアルモードで新たな見込み客にマニュアルダイアルするには一時停止しなければなりません。|
+Enter information below for the new lead you wish to call|電話したいと思う新たな見込み客に対しては以下の情報を入力してください。|
+YOU MUST BE PAUSED TO CHECK CALLBACKS IN AUTO-DIAL MODE|自動ダイアルモードでの電話のかけ直しを確認するには一時停止しなければなりません。|
+Note: all new manual dial leads will go into list|注：全ての新たなマニュアルダイアルの見込み客はリストに入ります。|
+YOU DO NOT HAVE PERMISSIONS TO TRANSFER CALLS|電話を転送するための許可がありません。|
+will be added to the beginning of this number|この番号の最初に追加されます。|
+This is usually a 1 in the USA-Canada|これは通常、米国とカナダでの１です。|
+NEW MANUAL DIAL LEAD FOR|のための新たなマニュアルダイアルの見込み客|
+Finish and Disposition Call|電話を終え、配置する|
+10 digits max - digits only|最大１０桁-電話番号のみ|
+Note: a dial prefix of|注：ダイアル局番|
+Hangup Again|再度、電話を切る|
+Go Back|戻る|
+Call Agent Again|再度エージェントに電話する|
+MY CALLBACK ONLY|マイ・コールバックのみ|
+NO ACTIVE CALLBACKS|有効なコールバックはない|
+ACTIVE CALLBACKS|有効なコールバック|
+CALLBACKS FOR AGENT|エージェント用のコールバック|
+Dial Code:|ダイアルコード：|
+Dial Override|ダイアル優先|
+digits only please|電話番号のみです|
+Dial Now|今、ダイアルしてください|
+CB Comments|CBコメント|
+ Title| タイトル|
+Your Status|あなたのステータス|
+ STATUS| ステータス|
+ RESET| リセット|
+CLEAR FORM|クリアフォーム|
+SUBMIT|送信|
+Incoming|入ってくる|
+Calling|呼び出し|
+Called|呼ばれた|
+Campaign|キャンペーン|
+>Status|>ステータス|
+Inserted|挿入済み|
+ seconds| 秒|
+ Login | ログイン|
+Login:|ログイン：|
+User |ユーザ|
+Password|パスワード|
+VERSION|バージョン|
+BUILD|ビルド|
+Server|サーバ|
+RECORD |記録|
+>HANGUP|>電話を切る|
+>XFER|>XFER|
+IN-NUMBER|インナンバー|
+NUMBER|番号|
+CALLERID|呼び出し者ID|
+ CALL| 電話|
+PICKUP|電話を取る|
+CONFERENCE||
+Refresh|再読み込み|
+Send DTMF|DTMFを送信|
+>ORDER|>オーダー|
+ on | オン|
+>LOGOUT|>ログアウト|
+ Channel| チャンネル|
+Extensions|内線|
+Conferences|会議|
+Conference|会議|
+ Recording| 記録する|
+Welcome |ようこそ |
+VOICEMAIL|ボイスメール|
+ NEW| 新|
+ OLD| 旧|
+ Pause | 一時停止|
+Resume|再開|
+Faster|より速く|
+Slower|より遅く|
+Initializing|初期化中|
+Invalid|無効|
+Username|ユーザ名|
+Notes:|注:|
+First|最初|
+MI: |MI:|
+Last |最後 |
+Address|住所|
+City|市町村|
+ State| 都道府県|
+PostCode|郵便番号|
+Province|都道府県|
+Vendor ID|ベンダーID|
+DialCode|ダイアルコード|
+Alt. Phone|代替電話|
+ Email| メール|
+Show|示す|
+ Comments| コメント|
+REFRESH|再読み込み|
+ALT PHONE DIAL|代替電話ダイヤル|
+MAIN PHONE|主電話|
+ALT PHONE|代替電話|
+ADDRESS3|住所3|
+FINISH LEAD|見込み客を終える|
+Dial Alt Phone Number|代替電話番号をダイアルする|
+Phone|電話|
+ DIAL| ダイアル|
+SUBMIT FAVORITES CHANGES - requires logout|お気に入りの変更を送信する-要ログアウト|
+BACK TO MAIN WINDOW - ignore changes made|メインウィンドウに戻る-変更を無視する|
+AVAILABLE EXTENSIONS|提供されている内線|
+ edit| 編集|
+ FAVORITES| お気に入り|
+Search Existing Leads|既存の見込み客を検索|
+This option if checked will attempt to find the phone number in the system before inserting it as a new lead|このオプションがチェックされてる場合、新たな見込み客としてそれを挿入する前にシステム内で電話番号を見つけようとします。|
+Finish Wrapup and Move On|まとめを終え、続けてください。|
+seconds remaining in wrapup|秒がまとめに残っています。|
+Call Wrapup:|まとめを呼び出す：|
+January|1月|
+Frebruary|2月|
+March|3月|
+April|4月|
+May|5月|
+June|6月|
+July|7月|
+August|8月|
+September|9月|
+October|10月|
+November|11月|
+December|12月|
+Previous Callback Information|前のコールバック情報|
+Last Call: |最後の電話ll:|
+CallBack: |コールバック：|
+Agent: |エージェント：|
+Comments: |コメント：|
+VOLUME|量|
+FAST DIAL|高速ダイヤル|
+YOU MUST ENTER A PHONE NUMBER AND DIAL CODE TO USE FAST DIAL|高速ダイヤルを使用するには電話番号とダイヤルコードを入力しなければなりません。|
+ SELECT A PAUSE CODE :|一時停止コードを選んでください：|
+ENTER A PAUSE CODE|一時停止コードを選んでください|
+YOU MUST BE PAUSED TO ENTER A PAUSE CODE IN AUTO-DIAL MODE|自動ダイアルモードで一時停止コードを入力するには一時停止しなければなりません。|
+Your session has been disabled|あなたのセッションは無効になりました。|
+Gender: |性別：|
+Date of Birth: |誕生日：|
+YOU MUST BE PAUSED TO CHANGE GROUPS|グループを変更するには一時停止しなければなりません。|
+Calls in Queue:|列になっている電話：|
+ Timeclock| タイムクロック|
+The user and password you entered are not active in the system|入力したユーザ名とパスワードはこのシステム内では有効ではありません。|
+Please try again|再度、お試しください。|
+You cannot log in or out within 30 seconds of your last login or logout|最後にログインまたはログアウトの30秒以内にログインまたはログアウトすることができません。|
+You have now logged-out|今、ログアウトしました。|
+You logged out at |でログアウトしました。|
+Amount of time you were logged-in: |ログインしていた時間：|
+ERROR: timeclock log entry already made: |エラー：タイムクロックログ入力がすでに行われました：|
+BACK to Agent Login Screen|エージェントログイン画面に戻る|
+BACK to Administration|管理に戻る|
+BACK to Welcome Screen|ようこそ画面に戻る|
+Time since you were last logged-in: |最後にログインしてからの時間：|
+You last logged-out at: |以下の時間に最後にログアウトしました：|
+Click LOGIN below to log-in|ログインするために以下のログインをクリックする|
+Amount of time you have been logged-in: |ログインしていた時間：|
+You logged-in at:|以下の時間にログインしました：|
+Click LOGOUT below to log-out|ログアウトするために以下のログアウトをクリックする|
+Undefined|不明確|
+This phone number is not in the campaign lists|この電話番号はキャンペーンリストにありません。|
+Unspecified error|特定されないエラー|
+Extended Alt Phone Information: |拡張された代替電話情報：|
+ALT DIAL NUMBER:|代替ダイヤル番号：|
+Phone Code and Number:|電話コードと番号：|
+Notes: |注：|
+Active: |有効：|
+Alt Count: |代替カウント：|
+Change this phone number to INACTIVE|この電話番号を無効に変更する|
+Change this phone number to ACTIVE|この電話番号を有効に変更する|
+YOU MUST LOG IN TO THE TIMECLOCK FIRST|最初にタイムクロックにログインしなければなりません。|
+There is a time synchronization problem with your system, please tell your system administrator|あなたのシステムとは時間の同期化の問題があります。システム管理者に連絡してください。|
+Preview Call|プレビューコール|
+SELECT A GROUP ALIAS|グループエイリアスを選んでください。|
+Group Alias Selection|グループエイリアス選択|
+Click Here to Choose a Group Alias|グループエイリアスを選ぶためにここをクリックしてください。|
+Group Alias|グループエイリアス|
+ERROR: There are no Shifts enabled for your user group|エラー：あなたのユーザグループに有効化されたシフトはありません。|
+ERROR: You are not allowed to log in outside of your shift|エラー：あなたのシフトの外部にログインすることは許可されていません。|
+MANAGER OVERRIDE|マネージャー優先|
+Your Shift is over or has changed, you have been logged out of your session|あなたのシフトは終わっているか、変更しています。自分のセッションからログアウト済みです。|
+You are not allowed to dial into other agent sessions|他のエージェントセッションにダイアルすることは許可されていません。|
+QUICK TRANSFER|クイック転送|
+Other Agents Status|他のエージェントのステータス|
+Available Agents Transfer|提供されているエージェントの転送|
+Show Calls In Queue|列になっている電話を示す|
+Calls In Queue|列になっている電話|
+Hide Calls In Queue|列になっている電話を隠す|
+Calls in Queue View Disabled for this campaign|このキャンペーンに対し無効になっている列になっている電話ビュー|
+YOU MUST BE PAUSED TO GRAB CALLS IN QUEUE|列になっている電話を捉えるためには一時停止しなければなりません。|
+Manager |マネージャー|
+has selected your in-group choices|あなたのグループ内選択を選びました。|
+CONSULTATIVE|助言に関する|
+Close Message|メッセージを閉じる|
+TIMER NOTIFICATION|タイマー通知|
+login_language=en_us|ログイン_言語=en_us|
+>AGENTS<|>エージェント<|
+VIEW CALL LOG|コールログを見る|
+click to dial|ダイアルするためにクリックする|
+Close Call Log|コールログを閉じる|
+YOU MUST BE PAUSED TO VIEW YOUR CALL LOG|あなたのコールログを見るために一時停止しなければなりません。|
+Close Info Box|クローズ情報ボックス|
+No calls on this day|この日には電話がありません。|
+You are in ALT dial mode, you must finish the lead before logging out|あなたは代替ダイヤルモードです。ログアウトする前に見込み客を終えなければなりません。|
+Presets Button|プリセットボタン|
+SELECT A PRESET|プリセットを選ぶ|
+Customer Hung-up, 3-way Call Ended Automatically|顧客が電話を切りました。自動的に3方向電話が終了しました。|
+Manual Dial Queue Calls Waiting|マニュアルダイヤル列の電話が待機中|
+Manual Queue|マニュアルの列|
+This phone number is outside of the local call time|この電話番号はローカル電話時間外です。|
+Manual Queue is Off|マニュアル列はオフです。|
+Manual Queue is On|マニュアル列はオンです。|
+Call Notes:|電話メモ：|
+Call Notes List|電話メモリスト|
+view notes|メモを見る|
+CALL NOTES LOG|電話メモログ|
+Close Call Notes|電話メモを閉じる|
+CALL LOG FOR THIS LEAD|この見込み客に対する電話ログ|
+SEARCH FOR A LEAD|見込み客を検索|
+SEARCH RESULTS|検索結果|
+YOU MUST BE PAUSED TO SEARCH FOR A LEAD|見込み客を検索するには一時停止しなければなりません。|
+Notes: when doing a search for a lead, the phone number, lead ID or|注：見込み客を検索する時、電話番号、見込み客IDまたは|
+are the best fields to use|使用するのに最も良い欄|
+Using the other fields may be slower. Lead searching does not allow for wildcard or partial search terms|他の欄を使用すると遅くなる場合があります。見込み客検索はワイルドカードや部分的な検索条件は居されていません。|
+Lead search requests are all logged in the system|見込み客検索依頼はシステム内で全て記録されています。|
+Main Phone Number|主電話番号|
+Alternate Phone Number|代替電話番号|
+Address3 Phone Number|住所3電話番号|
+No results found|結果が見つかりません。|
+Results Found:|結果が見つかりました。|
+No calls found|電話がありません。|
+reset form|リセットフォーム|
+Callback Status|コールバックステータス|
+Callback Lead Status|コールバック見込み客ステータス|
+Callback Entry Time|コールバックエントリー時間|
+Callback Trigger Time|コールバックトリガー時間|
+Callback Comments|コールバックコメント|
+To see information on one of the callbacks below, click on the INFO link. To call the customer back now, click on the DIAL link. If you click on a record below to dial it, it will be removed from the list|以下の１つのコールバックにある情報を見るには、情報リンクをクリックしてください。今、顧客に電話をかけ直すためには、ダイヤルリンクをクリックしてください。電話するために以下の記録をクロックすると、それはリストから削除されます。|
+rings all available agents until one picks up the phone|電話を取るまで全ての利用できるエージェントに電話します。|
+No calls for this lead|この見込み客への電話はありません。|
+Time Zone Warning|タイムゾーン警告|
+Phone Area Code Outside Dialable Zone|ダイヤルできるゾーン以外の電話エリアコード|
+Postal Code Outside Dialable Zone|ダイヤルできるゾーン以外の郵便番号|
+Custom Transfer|カスタム転送|
+System Delay, Please try again|システム遅延です。再度試してください。|
+Disposition Status List Hidden|隠れた配置ステータスリスト|
+The system has received a command to log you out, you have been logged out of your session|システムがあなたをログアウトさせるためのコマンドを受け取りました。自分のセッションからログアウトしました。|
+Notes: when doing a search for a contact, wildcard or partial search terms are not allowed|注：連絡先を検索する時は、ワイルドカードや部分的な検索用語は許可されません。|
+Contact search requests are all logged in the system|連絡先検索依頼はシステム内で全て記録されます。|
+SEARCH FOR A CONTACT|連絡先の検索|
+CONTACTS SEARCH RESULTS|連絡先検索結果|
+LEAD SEARCH|見込み客検索|
+Customer Time|顧客の時間|
+TERRITORY SELECTION|領域選択|
+TERRITORIES NOT SELECTED|領域が選択されていません。|
+SELECTED TERRITORIES|選択された領域|
+Dialable Leads|ダイヤルできる見込み客|
+You have now logged-in|今、ログインしました。|
+You logged in at|でログインしました。|
+Refresh Campaign List|キャンペーンリストを再読み込みする|
+PLEASE SELECT A CAMPAIGN|キャンペーンを選択してください。|
+Agents View|エージェントビュー|
+-READY|-準備ができている|
+-INCALL|-インコール|
+-PAUSED|-一時停止|
+CALL DISPOSITION|電話配置|
+### START translations for 2.6 release ###
+Click Here to Choose a Dial In-Group|·グループダイヤルを選択するには、ここをクリック|
+SELECT A DIAL IN-GROUP|·グループダイヤルインを選択|
+DIAL IN-GROUP|グループ内をダイヤル|
+Dial In-Group|グループ内をダイヤル|
+Click Here to Activate|アクティブにするには、ここをクリック|
+Click Here to Deactivate|無効にするには、ここをクリック|
+ERROR: You must enter in search terms, one of these must be populated: lead ID, vendor ID, phone number, last name|エラー：あなたは、検索語に入力する必要があり、これらのいずれかが居住しなければなりません：リードID、ベンダーID、電話番号、姓|
+ERROR: You must enter in search terms, one of these must be populated: office number, last name, first name|エラー：あなたは、検索語に入力する必要があり、これらのいずれかが移入されている必要がありますオフィス番号、姓、名|
+ERROR: There was a problem with your search terms|検索条件に問題がありました：エラー|
+Phone and Post Code Time Zone Mismatch|電話や郵便番号のタイムゾーンの不一致|
+Last Local Call Time|最後のローカル通話時間|
+Called Count|カウントと呼ばれる|
+Unidentified Hangup Cause Code|正体不明のハングアップの原因コード|
+YOU MUST SELECT AN AGENT TO TRANSFER TO WHEN USING AGENTDIRECT|あなたはAGENTDIRECTを使用しているときに転送するエージェントを選択しなければならない（必要があり）|
+Another live agent session was open using your user ID. It has been disabled. Click OK to continue to the agent screen|別のライブエージェントセッションが開いているユーザーIDを使用していました。それが無効になっています。エージェントの画面に進みます[OK]をクリックして|
+View Comment History|コメント履歴の表示|
+reset form|フォームをリセット|
+SELECT THIS LEAD|このリードを選択する|
+YOU MUST BE ON AN ACTIVE INBOUND CALL TO SEARCH FOR A LEAD|あなたがリードを検索するアクティブインバウンドコール上にある必要があります|
+Attachments|添付ファイル|
+Next Call Pause|次にコールを一時停止|
+-History-|歴史|
+SUBMIT SEARCH|検索を送信|
+close |閉じる|
+AGENT CALL LOG|エージェントコールログ|
+ LENGTH | 長さ |
+ PHONE | 電話 |
+ FULL NAME | フルネーム |
+ CAMPAIGN | キャンペーン |
+ ALT | 代替の |
+ HANGUP | ハングアップ |
+ INFO | 情報 |
+phone login|電話機へのログイン|
+LAST CALL|ラストコール|
+ CALLBACK | 呼び戻す |
+ CITY | 都市 |
+ STATE | 状態 |
+ ZIP | 郵便番号 |
+Phone Number|電話番号|
+Phone Number Fields|電話番号フィールド|
+Lead ID|レコード番号|
+ WAIT | 待ち時間 |
+ AGENT | エージェント |
+ CALL GROUP | グループを呼び出す |
+ TYPE | タイプを呼び出す |
+digits only|数字だけ|
+DIAL ALERT|警告をダイヤル|
+WEB FORM SUBMIT|ウェブページは、提出|
+in campaign|キャンペーンの|
+ DATE\/TIME | 日付\/時刻 |
+ IN\/OUT | イン\/アウト |
+>GROUPS<|>グループ<|
+>GO<|>行く<|
+>recording<|>記録<|
+>SELECT<|>選択する<|
+Alert is ON|アラートがオンになっている|
+Alert is OFF|アラートはオフです|
+EMAIL LOG FOR THIS LEAD|この端子の電子メールログ|
+EMAIL TO|への電子メール|
+ ATTACHMENTS | 添付ファイル |
+Called Since Last Reset|最後のリセット以降に呼び出さ|
+Timezone:|タイムゾーン:|
+Dial Link|リンクをダイヤル|
+ LAST | 最後 |
+SEARCH FOR A CONTACT|連絡先を検索|
+Notes: when doing a search for a contact, wildcard or partial search terms are not allowed|注：連絡先の検索を行うとき、ワイルドカードまたは部分的な検索用語は許可されていません|
+Contact search requests are all logged in the system|連絡先の検索要求は、すべてのシステムに記録されます|
+Office Number|局番号|
+First Name|姓|
+Last Name|姓|
+BU Name|BU名|
+Department:|部門：|
+Group Name|グループ名|
+Job Title|職名|
+Location:|場所：|
+### START translations for 2.8 release ###
+This agent screen was not opened properly|このエージェントの画面が正常に開かれていない|
+Dial Lead ID|鉛のIDをダイヤル|
+Agent Form Display Script|エージェントフォームの表示スクリプト|
+Agent Notes|エージェントメモ|
+You have been paused for too long, you have been logged out of your session||あなたが長すぎるために一時停止されてきた、あなたのセッションからログアウトされました|
+Too many network errors, please contact your administrator|あまりにも多くのネットワークエラーは、管理者に連絡してください|
+No available servers, please contact your administrator|使用可能なサーバは、管理者に連絡していないしてください|
+No available phones, please contact your administrator|使用可能な携帯電話は、管理者に連絡していないしてください|
+You are already logged in, please log out of your other session first|あなたはすでにログインしている、あなたの他のセッションからログアウトしてください最初に|
+Too many agents logged in, please contact your administrator|あまりにも多くのエージェントがログインし、管理者に連絡してください|
+Dial Countdown|カウントダウンをダイヤル|

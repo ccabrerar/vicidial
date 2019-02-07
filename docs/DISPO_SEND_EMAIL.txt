@@ -1,0 +1,126 @@
+Sending email after agent dispositions a call		Started: 2015-08-06	Updated: 2017-11-21
+
+These instructions will show you how to set up automatic emails to be sent out when an agent dispositions a call with a specific defined "sale status".
+
+First, you should confirm that your web server is capable of sending emails, and that it is capable of sending emails from the email addresses that you want to be using in your configuration.
+
+Second, you must be using a version of Vicidial that has Admin -> Settings Containers for this to work
+
+Third, you will find an example below of how to configure a Settings Container as an email template
+
+Forth, you will find an example below of how to configure the Dispo Call URL entry
+
+
+UPDATE! 2017-11-20 - Added ALL-STATUSES option and called_count_trigger option
+
+UPDATE! 2017-11-21 - Added options to allow for up to 5 attachments to be sent(local files) defined in the URL
+
+
+
+
+HERE IS AN EXAMPLE DISPO CALL URL ENTRY FOR THIS FEATURE:
+
+	(in this example, only calls that are set by the agent as SALE, SSALE or XSALE status would have an email sent out, and the email would use the TEST_CONTAINER settings container as the email's template)
+
+VARhttp://192.168.1.1/agc/dispo_send_email.php?container_id=TEST_CONTAINER&lead_id=--A--lead_id--B--&call_id=--A--call_id--B--&dispo=--A--dispo--B--&user=--A--user--B--&pass=--A--pass--B--&sale_status=SALE---SSALE---XSALE&log_to_file=1&call_notes=--A--call_notes--B--
+
+
+	(in this example, only calls that are set by the agent as SALE status would have an email sent out, and the email would use the TEST_CONTAINER settings container as the email's template, and an attachment of the file "test.csv"[which is located in the "agc" web directory] would be sent along with the email)
+
+VARhttp://192.168.1.1/agc/dispo_send_email.php?container_id=TEST_CONTAINER&lead_id=--A--lead_id--B--&call_id=--A--call_id--B--&dispo=--A--dispo--B--&user=--A--user--B--&pass=--A--pass--B--&sale_status=SALE&email_attachment_1=test.csv&log_to_file=1&call_notes=--A--call_notes--B--
+
+
+
+
+HERE IS AN EXAMPLE SETTINGS CONTAINER TO SEND OUT AN EMAIL:
+
+	(The four keys you can use are: "email_to", "email_from", "email_subject" and "email_body_begin" will start your message while "email_body_end" will mark the finish of the message. You can use most standard SCRIPT variables in the subject and body fields, and you can use either fixed email addresses or "agent_email" and "customer_email" as variables for the email addresses as shown below. A semi-colon ";" at the beginning of a line will comment out that line and it will not be parsed. If you want to include custom fields values in the email, then you need to put "--A--CF_uses_custom_fields--B--" into the email body somewhere, it will be removed before the email is sent. Then you can put custom fields values in just like you do in a script.)
+
+; destination email (if you want to use more than one email address, you should separate them by a space ' ')
+;email_to => vicidialemailtesting@gmail.com
+email_to => --A--customer_email--B--
+
+; sending email address
+;email_from => customertesting@vicidial.com
+email_from => --A--agent_email--B--
+
+; subject of the email
+email_subject => Order confirmation --A--vendor_lead_code--B--
+
+; body of the email
+email_body_begin => 
+Hello --A--first_name--B--,
+
+This email is to welcome you to the wonderful ACME product-of-the-month club!
+
+You spoke to agent --A--fullname--B--.
+
+Here is a summary of your account information:
+
+lead_id: --A--lead_id--B--
+vendor_id: --A--vendor_id--B--
+vendor_lead_code: --A--vendor_lead_code--B--
+list_id: --A--list_id--B--
+list_name: --A--list_name--B--
+list_description: --A--list_description--B--
+gmt_offset_now: --A--gmt_offset_now--B--
+phone_code: --A--phone_code--B--
+phone_number: --A--phone_number--B--
+title: --A--title--B--
+first_name: --A--first_name--B--
+middle_initial: --A--middle_initial--B--
+last_name: --A--last_name--B--
+address1: --A--address1--B--
+address2: --A--address2--B--
+address3: --A--address3--B--
+city: --A--city--B--
+state: --A--state--B--
+province: --A--province--B--
+postal_code: --A--postal_code--B--
+country_code: --A--country_code--B--
+gender: --A--gender--B--
+date_of_birth: --A--date_of_birth--B--
+alt_phone: --A--alt_phone--B--
+email: --A--email--B--
+security_phrase: --A--security_phrase--B--
+comments: --A--comments--B--
+user: --A--user--B--
+closer: --A--user--B--
+SQLdate: --A--SQLdate--B--
+source_id: --A--source_id--B--
+rank: --A--rank--B--
+owner: --A--owner--B--
+entry_list_id: --A--entry_list_id--B--
+call_id: --A--call_id--B--
+entry_date: --A--entry_date--B--
+fullname: --A--fullname--B--
+agent_email: --A--agent_email--B--
+user_custom_one: --A--user_custom_one--B--
+user_custom_two: --A--user_custom_two--B--
+user_custom_three: --A--user_custom_three--B--
+user_custom_four: --A--user_custom_four--B--
+user_custom_five: --A--user_custom_five--B--
+user_group: --A--user_group--B--
+uniqueid: --A--uniqueid--B--
+did_id: --A--did_id--B--
+did_extension: --A--did_extension--B--
+did_pattern: --A--did_pattern--B--
+did_description: --A--did_description--B--
+did_carrier_description: --A--did_carrier_description--B--
+did_custom_one: --A--did_custom_one--B--
+did_custom_two: --A--did_custom_two--B--
+did_custom_three: --A--did_custom_three--B--
+did_custom_four: --A--did_custom_four--B--
+did_custom_five: --A--did_custom_five--B--
+custom field x: --A--custom_xyz--B--
+call notes: --A--call_notes--B--
+
+--A--CF_uses_custom_fields--B--
+
+We hope you enjoy your stuff, and happy roadrunner chasing!
+
+ACME Support Department
+312-555-1212
+
+
+email_body_end

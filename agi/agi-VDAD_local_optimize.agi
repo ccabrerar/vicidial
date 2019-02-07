@@ -1,0 +1,255 @@
+#!/usr/bin/perl
+#
+# agi_VDAD_local_optimize.agi
+#
+# This script looks up the Local channel in the cid_channels_recent table
+# and redirects the actual channel to the current extension with the first
+# two digits stripped off. IE 138368 -> 8368. This is to overcome the change
+# to Local channels in Asterisk 12 and later.
+#
+# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+#
+# CHANGELOG
+# 170104-1700 - First build
+# 170420-1100 - Indexed call_date and added it to the channel lookup
+# 180511-1220 - Changed to use server-specific cid_channels_recent table
+#
+
+use strict;
+
+my $script = 'agi_VDAD_local_optimize.agi';
+
+# constants and globals
+my ($servConf, $SYSLOG);
+my %conf;
+$conf{PATHconf} = '/etc/astguiclient.conf'; # default path to astguiclient configuration file:
+
+# Begin Parsing astguiclient config file.
+open(CONF, $conf{PATHconf}) || die "can't open " . $conf{PATHconf} . ": " . $! . "\n";
+while (my $line = <CONF>)
+        {
+        $line =~ s/ |>|\n|\r|\t|\#.*|;.*//gi;
+        foreach my $key (qw( PATHhome PATHlogs PATHagi PATHweb PATHsounds PATHmontior
+          VARserver_ip VARDB_server VARDB_database VARDB_user VARDB_pass VARDB_port))
+                {
+                if ($line =~ /^$key/)
+                        {
+                        $conf{$key} = $line;
+                        $conf{$key} =~ s/.*=//gi;
+                        }
+                }
+        }
+$conf{VARDB_port} = '3306' unless ($conf{VARDB_port});
+
+my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+$year = ($year + 1900);
+$mon++;
+if ($mon < 10) {$mon = "0$mon";}
+if ($mday < 10) {$mday = "0$mday";}
+if ($hour < 10) {$hour = "0$hour";}
+if ($min < 10) {$min = "0$min";}
+if ($sec < 10) {$sec = "0$sec";}
+my $SQLdate = "$year-$mon-$mday $hour:$min:$sec";
+
+my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time - 120);
+$year = ($year + 1900);
+$mon++;
+if ($mon < 10) {$mon = "0$mon";}
+if ($mday < 10) {$mday = "0$mday";}
+if ($hour < 10) {$hour = "0$hour";}
+if ($min < 10) {$min = "0$min";}
+if ($sec < 10) {$sec = "0$sec";}
+my $SQL2mindate = "$year-$mon-$mday $hour:$min:$sec";
+
+use DBI;
+use Asterisk::AGI;
+use Time::HiRes ('gettimeofday','usleep','sleep');
+
+my ($seconds, $microseconds) = gettimeofday;
+
+print STDERR "$seconds.$microseconds\n";
+
+my $AGI = new Asterisk::AGI;
+
+my $dbhA = DBI->connect("DBI:mysql:" . $conf{VARDB_database} . ":" . $conf{VARDB_server} . ":" . $conf{VARDB_port},
+        $conf{VARDB_user}, $conf{VARDB_pass}) or die "Couldn't connect to database: " . DBI->errstr;
+
+my $PADserver_ip = $conf{VARserver_ip};
+$PADserver_ip =~ s/(\d+)(\.|$)/sprintf "%3.3d$2",$1/eg; 
+$PADserver_ip =~ s/\.//eg; 
+
+my %agi_vars = $AGI->ReadParse();
+
+my $channel = $agi_vars{'channel'};
+my $cid_name = $agi_vars{'calleridname'};
+my $connected_line_name = $agi_vars{'arg_1'};
+my $extension = $agi_vars{'extension'};
+my $context = $agi_vars{'context'};
+my $uniqueid = $agi_vars{'uniqueid'};
+my $dest_channel = "";
+
+my $new_extension = substr( $extension, 2 );
+
+my $cid_channels_recent = 'cid_channels_recent';
+my $CCRrec=0;
+my $stmtA = "SHOW TABLES LIKE \"cid_channels_recent_$PADserver_ip\";";
+my $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$CCRrec=$sthA->rows;
+$sthA->finish();
+if ($CCRrec > 0)
+	{$cid_channels_recent = "cid_channels_recent_$PADserver_ip";}
+print STDERR "$CCRrec|$cid_channels_recent|$stmtA\n";
+
+# find the local channel's real channel
+my $stmtA = "SELECT dest_channel FROM $cid_channels_recent where (caller_id_name = '$cid_name' or connected_line_name = '$connected_line_name' or caller_id_name = '$connected_line_name' or connected_line_name = '$cid_name') and ( linkedid = '$uniqueid' or dest_uniqueid = '$uniqueid' or uniqueid = '$uniqueid') and call_date > '$SQL2mindate'";
+my $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+
+print STDERR "$stmtA\n";
+
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+my $sthArows=$sthA->rows;
+if ($sthArows > 0)
+	{
+	my @aryA = $sthA->fetchrow_array;
+	$dest_channel = $aryA[0];
+	}
+$sthA->finish();
+
+if ( $dest_channel ne "" ) 
+	{
+	print STDERR "$sthArows|$dest_channel\n";
+
+	### insert a NEW record to the vicidial_manager table to be processed
+	$stmtA = "INSERT INTO vicidial_manager values('','','$SQLdate','SENT','N','$conf{VARserver_ip}','','Redirect','$cid_name','Channel: $dest_channel','Context: $context','Exten: $new_extension','Priority: 1','','','','','','')";
+
+	print STDERR "$stmtA\n";
+
+	my $affected_rows = $dbhA->do($stmtA); 
+	my $man_id = $dbhA->{'mysql_insertid'};
+
+	### Grab Server values from the database
+	$servConf = getServerConfig($dbhA, $conf{VARserver_ip});
+	$SYSLOG = 1 if ($servConf->{vd_server_logs} =~ /Y/);
+	my $event_string='LOGGED INTO MYSQL SERVER ON 1 CONNECTION|';
+	eventLogger($conf{PATHlogs}, 'process', $event_string);
+
+	my $cPATHlogs = $conf{PATHlogs};
+
+	my $launch = $conf{PATHhome} . "/AST_send_action_child.pl";
+	$launch .= " --SYSLOG";
+	$launch .= " --PATHlogs=" . $cPATHlogs;
+	$launch .= " --telnet_host=" . $servConf->{telnet_host};
+	$launch .= " --telnet_port=" . $servConf->{telnet_port};
+	$launch .= " --ASTmgrUSERNAME=" . $servConf->{ASTmgrUSERNAME};
+	$launch .= " --ASTmgrSECRET=" . $servConf->{ASTmgrSECRET};
+	$launch .= " --ASTmgrUSERNAMEsend=" . $servConf->{ASTmgrUSERNAMEsend};
+	$launch .= " --man_id=" . $man_id;
+	$launch .= " --action=Redirect";
+	$launch .= " --cmd_line_b='Channel: $dest_channel'";
+	$launch .= " --cmd_line_c='Context: $context'";
+	$launch .= " --cmd_line_d='Exten: $new_extension'";
+	$launch .= " --cmd_line_e='Priority: 1'";
+
+	eventLogger($conf{'PATHlogs'}, 'launch', $launch . "  " .
+		$cid_name . " " . $uniqueid . " " . $dest_channel);
+
+	$launch .= " >> " . $conf{PATHlogs} . "/action_send." . logDate() if ($SYSLOG);
+	system($launch . ' &');
+
+	print STDERR "$launch\n";
+
+	usleep(1*10*1000);
+	}
+else
+	{
+	print STDERR "NO DestChannel for callid $cid_name|$agi_vars{'channel'}!!!\n";
+	}
+
+
+
+
+$dbhA->disconnect();
+
+exit;
+
+# getServerConfig usage:
+#    getServerConfig($dbh, $serverIP);
+# Requires:
+#    $dbh      : Database handle to current open DB.
+#    $serverIP : IP of server to get config for.
+# Returns:
+#    hashref with conents of table entry.
+sub getServerConfig
+        {
+        my ($dbhA, $serverip) = @_;
+        my $stmtA = "SELECT server_id,server_description,server_ip,active,asterisk_version,max_vicidial_trunks,telnet_host,telnet_port,ASTmgrUSERNAME,ASTmgrSECRET,ASTmgrUSERNAMEupdate,ASTmgrUSERNAMElisten,ASTmgrUSERNAMEsend,local_gmt,voicemail_dump_exten,answer_transfer_agent,ext_context,sys_perf_log,vd_server_logs,agi_output,vicidial_balance_active,balance_trunks_offlimits,recording_web_link,alt_server_ip,active_asterisk_server,generate_vicidial_conf,rebuild_conf_files,outbound_calls_per_second,sysload,channels_total,cpu_idle_percent,disk_usage,sounds_update,vicidial_recording_limit,carrier_logging_active,vicidial_balance_rank,rebuild_music_on_hold,active_agent_login_server,conf_secret FROM servers where server_ip = '" . $serverip ."';";
+        my $sthA = $dbhA->prepare($stmtA) or die "preparing: " . $dbhA->errstr;
+        $sthA->execute or die "executing: $stmtA " . $dbhA->errstr;
+        my $servConf = $sthA->fetchrow_hashref;
+        $SYSLOG = 1 if ($servConf->{vd_server_logs} =~ /Y/);
+        $sthA->finish();
+        return $servConf;
+        }
+
+# eventLogger usage:
+#    eventLgger($LogFileDir, $LogType, $EventString);
+# Requires:
+#    $LogFilePath : Directory where log files are.
+#    $LogType     : Type of log, ie process, send, launch, full
+#    $EventString : String to record in log.
+sub eventLogger
+        {
+        my ($path,$type,$string) = @_;
+        open(LOG, ">>" . $path . "/action_" . $type . "." . logDate())
+                || die "Can't open " . $path . "/action_" . $type . "." .
+                        logDate() . ": " . $! . "\n";
+        print LOG nowDate() . "|" . $string . "|\n";
+        close(LOG);
+        }
+
+# logDate usage:
+#   logDate($SecondsSinceEpoch);
+# Options:
+#   $SecondsSinceEpoch : Request time in seconds, defaults to current date/time.
+# Returns:
+#   scalar date string ie "2007-01-01"
+sub logDate
+        {
+        my ($tms) = @_;
+        my($sec,$min,$hour,$mday,$mon,$year) = getTime($tms);
+        return  $year . '-' . $mon . '-' . $mday;
+        }
+
+# nowDate usage:
+#   nowDate($SecondsSinceEpoch);
+# Options:
+#   $SecondsSinceEpoch : Request time in seconds, defaults to current date/time.
+# Returns:
+#   scalar date/time string (MySQL formatted) ie "2007-01-01 00:00:00"
+sub nowDate
+        {
+        my ($tms) = @_;
+        my($sec,$min,$hour,$mday,$mon,$year) = getTime($tms);
+        return $year.'-'.$mon.'-'.$mday.' '.$hour.':'.$min.':'.$sec;
+        }
+
+# getTime usage:
+#   getTime($SecondsSinceEpoch);
+# Options:
+#   $SecondsSinceEpoch : Request time in seconds, defaults to current date/time.
+# Returns:
+#   ($sec, $min, $hour. $day, $mon, $year)
+sub getTime
+        {
+        my ($tms) = @_;
+        $tms = time unless ($tms);
+        my($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst)=localtime($tms);
+        $year += 1900;
+        $mon++;
+        $mon = "0" . $mon if ($mon < 10);
+        $mday = "0" . $mday if ($mday < 10);
+        $min = "0" . $min if ($min < 10);
+        $sec = "0" . $sec if ($sec < 10);
+        return ($sec,$min,$hour,$mday,$mon,$year);
+        }

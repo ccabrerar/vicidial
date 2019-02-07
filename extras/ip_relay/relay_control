@@ -1,0 +1,74 @@
+#!/bin/sh
+#
+# relay_control      ip_relay startup/shutdown script
+#
+# Version: 1.1  ip_relay/relay_control  started: 2003-02-07 modified: 2016-01-28
+#
+# vicidial@gmail.com
+#
+# This script is released under the BSD license 
+# (for compatibility with the ip_relay project)
+# http://sourceforge.net/projects/iprelay/
+#
+# Thanks to Rachad ALAO (ralao@venus.org) for writing ip_relay
+#
+# Changes:
+# 140619-0954 - Added new port 42569 for playback loops
+# 160101-0912 - Added check for installed ip_relay binary
+# 160105-2336 - Fix for packaged ip_relay
+# 160128-1733 - Fix for some linux distros
+#
+
+case "$1" in
+  start)
+
+        echo "starting up ip_relay services at $IPRELAY_BIN"
+	
+	# Change directory to OS specific ip_relay, or user generic vicidial one
+	if [ -x "/usr/bin/ip_relay" ]; then
+		cd /usr/bin/
+	else
+		cd /usr/local/bin/
+	fi
+
+        ip_relay 40569 127.0.0.1    4569 9999999 &
+        ip_relay 41569 127.0.0.1    4569 9999999 &
+        ip_relay 42569 127.0.0.1    4569 9999999 &
+
+        echo "done "
+        echo
+        ;;
+
+  status)
+
+        echo "current running processes "
+
+        ps -C ip_relay
+
+        echo "Done "
+        exit 0
+        ;;
+
+  restart|reload)
+        $0 stop
+        $0 start
+        ;;
+
+  stop)
+        echo "Shutting down ip_relay services "
+
+        # Turn off IP Forwarding
+        echo "Running:  kill -9 `ps -C ip_relay -o pid --no-heading`"
+
+        kill -9 `ps -C ip_relay -o pid --no-heading`
+
+        echo "Done "
+
+        echo
+        ;;
+  *)
+        echo "Usage: relay_control {start|stop|status|restart|reload}"
+        exit 1
+esac
+
+exit 0

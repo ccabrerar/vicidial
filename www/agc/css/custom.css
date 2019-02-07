@@ -1,0 +1,57 @@
+input.red_btn{
+   font-family: Arial, Sans-Serif;
+   font-size: 10px;
+   color:#FFFFFF;
+   font-weight:bold;
+   background-color:#990000;
+   border:2px solid;
+   border-top-color:#FFCCCC;
+   border-left-color:#FFCCCC;
+   border-right-color:#330000;
+   border-bottom-color:#330000;
+}
+input.green_btn{
+   font-family: Arial, Sans-Serif;
+   font-size: 10px;
+   color:#FFFFFF;
+   font-weight:bold;
+   background-color:#009900;
+   border:2px solid;
+   border-top-color:#CCFFCC;
+   border-left-color:#CCFFCC;
+   border-right-color:#003300;
+   border-bottom-color:#003300;
+}
+input.blue_btn{
+   font-family: Arial, Sans-Serif;
+   font-size: 10px;
+   color:#FFFFFF;
+   font-weight:bold;
+   background-color:#000099;
+   border:2px solid;
+   border-top-color:#CCCCFF;
+   border-left-color:#CCCCFF;
+   border-right-color:#000033;
+   border-bottom-color:#000033;
+}
+input.form_field {
+    font-family: Arial, Sans-Serif;
+    font-size: 10px;
+    margin-bottom: 3px;
+    padding: 2px;
+    border: solid 1px #000066;
+}
+textarea.form_field {
+    font-family: Arial, Sans-Serif;
+    font-size: 10px;
+    margin-bottom: 3px;
+    padding: 2px;
+    border: solid 1px #000066;
+}
+select.form_field {
+    font-family: Arial, Sans-Serif;
+    font-size: 10px;
+    margin-bottom: 3px;
+    padding: 2px;
+    border: solid 1px #000066;
+} 

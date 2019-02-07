@@ -1,0 +1,971 @@
+  - ACTIVE DISPLAY PAUSED -|   - Aktive skærm pause -||
+ ALT PHONE DIAL|  alt telefon opkald||
+ Comments| kommentar||
+ DIAL | RING||
+ Email| Email||
+ Exten %1s is not valid or queryCID %2s is not valid, Originate command not inserted|  Exten %1s er ikke gyldigt eller querycid %2s ikke er gyldig, stammer kommandoen ikke indsat||
+ Gender|  køn||
+ Pause Code %1s has been recorded|  pause kode %1s er registreret||
+ Phone Area Code Outside Dialable Zone|  telefon områdekode uden dialable zone||
+ Phone: |  telefon:||
+ Postal Code Outside Dialable Zone|  postnummer udenfor dialable zone||
+ State| Stat||
+ Title| Títel||
+ You are not allowed to dial into other agent sessions|  du har ikke tilladelse til at ringe til andre agent sessioner||
+ to %1s on %2s|  til %1s den %2s||
+%1s %2s %3s or %4s is not valid| %1s %2s %3s eller %4s er ikke gyldig||
+%1s command sent for Channel %2s on %3s| %1s kommando, der sendes til kanal %2s på %3s||
+%1s is not valid| %1s er ikke gyldig||
+(This is usually a 1 in the USA-Canada)|(dette er normalt en 1 i USA og Canada)||
+(This option if checked will attempt to find the phone number in the system before inserting it as a new lead)|(denne indstilling, hvis markeret vil forsøge at finde telefonnummeret i systemet, før du indsætter det som en ny bly)||
+(click on a number below to send to a conference)|(Klik på et nummer nedenfor for at sende til en konference)||
+(digits only please)|(tal kun venligst)||
+(digits only)|(kun cifre)||
+-LOGGED-OUT|-logged-out||
+: %1s on Phone: %2s|: %1s på telefon: %2s||
+ACTIVE CALLBACKS|AKTIVE GENKALD||
+ACTIVE DISPLAY PAUSED|AKTIV SKÆRM I PAUSE||
+ADD ALL|tilføj alle||
+AGENT ALERT SETTING CHANGED %1s|agent alarm indstilling ændrede %1s||
+AGENT ALERT SETTING NOT CHANGED|agent alarm indstilling ikke ændret||
+AGENT CALL LOG:|agent opkaldslog:||
+AGENT SCRIPT|agent script||
+AGENT email frame|agent email ramme||
+AGENTS|agenter||
+AGENT_PHONE|agent_phone||
+AGENT|agent||
+ALERT :|advare:||
+ALT DIAL NUMBER: ADDRESS3|alt opkaldsnummer: address3||
+ALT DIAL NUMBER: ALT|alt opkaldsnummer: alt||
+ALT DIAL NUMBER:|ALT NUMMER:||
+ALT PHONE DIAL|RING ALT NUMMER||
+ALT PHONE NUMBER STATUS CHANGED|alt telefonnummer status ændret||
+ALT PHONE NUMBER STATUS NOT CHANGED|alt telefonnummer status ikke ændret||
+ALT PHONE|ALT TELEFONNUMMER||
+ALT|alt||
+APR|april||
+ATTACHMENTS|vedhæftede filer||
+AUG|august||
+AVAILABLE EXTENSIONS|TILGÆNGLIGE LINJER||
+Active Extensions|Aktive forbindelser||
+Active Local Menu|Aktive lokal menu||
+Active Trunks Menu|aktive kufferter menu||
+Active:|Aktive:||
+Address1|Address1||
+Address2|Address2||
+Address3 Phone Number|Address3 Telefonnummer||
+Address3|ADRESSE3||
+Agent %1s is now in status %2s|agent %1s er nu i status %2s||
+Agent Alert!|agent alert!||
+Agent Form Display Script|Agent Form Display Script||
+Agent Redirect|agent omdirigering||
+Agent Screen Opener|agent skærm opener||
+Agent Screen|agent skærm||
+Agent Timeclock|agent altid viser korrekt||
+Agent web client:  Login|agent web-klient: login||
+Agent web client:  Phone Login|agent web-klient: telefon login||
+Agent web client: Campaign Login|agent web-klient: kampagne login||
+Agent web client: Phone Login Error|agent web-klient: telefon login fejl||
+Agent web client: Re-Login|agent web-klient: re-login||
+Agent:|Agent:||
+Agents View +|agenter se +||
+Agents View|Agenter Vis||
+Alert Box|alert box||
+Alert is OFF|indberetning er slukket||
+Alert is ON|indberetning er på||
+Alt Count:|Alt Count:||
+Alt Phone Info|alt telefon info||
+Alt. Phone:|alt. telefon:||
+Alt. Phone|Alt. telefon||
+Alternate Phone Number|Alternativ Telefonnummer||
+Amount of time you have been logged-in:|Tid du har været indlogget:||
+Amount of time you were logged-in:|Tid som du har været indlogget:||
+Another live agent session was open using your user ID. It has been disabled. Click OK to continue to the agent screen.|anden live agent session var åben ved hjælp af din bruger-id. Det er blevet deaktiveret. klik ok for at fortsætte til agenten skærmen||
+Answer:|svar:||
+Any changes made to the customer information below at this time will not be comitted, You must change customer information before you Hangup the call.|Alle ændringer i kundeinfo der er lavet nu bliver ikke gemt du skal ændre information inden du lægger røret på||
+Appointment Date/Time:|udnævnelsen dato/tid:||
+Appointment Notes:|udnævnelse noter:||
+Attachments:|vedhæftede filer:||
+Available Agents Transfer:|tilgængelige midler overføre:||
+Available Chats:|tilgængelige chats:||
+Avatar Soundboard Display Script|avatar soundboard display script||
+Avatars disabled on your system|avatarer deaktiveret på dit system||
+BACK TO MAIN WINDOW - ignore changes made|TILBAGE TIL HOVEDVINDUE - gem ikke ændringer||
+BACK to Administration|TILBAGE til administration||
+BACK to Agent Login Screen|TILBAGE til Agent påloggning||
+BACK to Welcome Screen|TILBAGE til Velkomst skærm||
+BLENDED CALLING(outbound activated)|blandet opkald (udgående aktiveret)||
+BLENDED CALLING|BLENDED OPKALD||
+BU NAME|firmanavn||
+BU Name:|bu navn:||
+BUILD:|bygge:||
+BUILD|BUILD||
+Back to Main Window|Tilbage til hovedvinduet||
+Busy Extensions|Forbindelser der er optagat||
+CALL DATE/TIME|OPKALD DATO/TID||
+CALL DISPOSITION|CALL Disposition||
+CALL GROUP|call gruppe||
+CALL ID|opkald id||
+CALL LOG FOR THIS LEAD:|opkaldslog for denne bly:||
+CALL NOTES LOG:|Call noter log:||
+CALLBACK DATE/TIME|tilbagekald dato/tid||
+CALLBACKS FOR AGENT %1s:<br />To see information on one of the callbacks below, click on the INFO link. To call the customer back now, click on the DIAL link. If you click on a record below to dial it, it will be removed from the list.|tilbagekald til agent %1s: <br /> for at se oplysninger om en af tilbagekald nedenfor, skal du klikke på info-link. at ringe til kunden tilbage nu, skal du klikke på linket drejeknappen. hvis du klikker på en post nedenfor for at ringe til det, vil det blive fjernet fra listen.||
+CALLER ID|opkalds-id||
+CAMPAIGN|Kampanje||
+CB Comments:|CB kommentarer:||
+CITY|By||
+CLEAR FORM|RENS FORMULAR||
+CLEAR|klar||
+CLICK HERE TO LOG IN AGAIN|KLIK HER FOR AT LOGGE PÅ IGEN||
+CLIENT CHANNEL|KUNDE KANAL||
+CLOSER INBOUND GROUP SELECTION|LUKKERE INKOMMENDE GRUPPE VALG||
+CONFERENCE|konference||
+CONSULTATIVE|FORESPØRGSEL||
+CONTACTS SEARCH RESULTS:|kontakter søgeresultater:||
+COPY MESSAGE|kopi besked||
+CUSTOMER 3WAY HANGUP|kunde 3way dille||
+CUSTOMER|kunde||
+Call %1s %2s is not live on %3s, Checking Live Channel|kalder %1s %2s ikke leve af %3s, kontrol levende kanal||
+Call %1s could not be grabbed for %2s|call %1s kunne ikke greb til %2s||
+Call %1s grabbed for %2s|call %1s greb for %2s||
+Call Agent Again|Ring agent igen||
+Call Agent Webphone|opkald agent WEBPHONE||
+Call Notes List|Ring Notes List||
+Call Notes:|Ring Noter:||
+Call Rejected:|ringe forkastet:||
+Call Wrapup:|Samtale afslut:||
+Call log List|opkaldsliste liste||
+Call selected extension|Ring valgt forbindelse||
+Call selected vmail box|Ring valgt voicemail||
+CallBack:|Genkald:||
+Callback Comments:|callback kommentarer:||
+Callback Entry Time:|tilbagekald entry tid:||
+Callback Lead Status:|tilbagekald bly status:||
+Callback Status:|tilbagekald status:||
+Callback Trigger Time:|tilbagekald trigger tid:||
+Called 3rd party:|kaldet 3. part:||
+Called Count:|kaldet tæller:||
+Called Since Last Reset:|kaldet siden sidste nulstilling:||
+Called:|hedder:||
+CallerID|CALLERID||
+Calling:|kald:||
+Calls Dialing:|opkald opkald:||
+Calls In Queue:|Samtaler i kø:||
+Calls in Queue View Disabled for this campaign|Muligheden for at se opkald i kø er ikke aktivt i denne kampanje||
+Calls in Queue|Opkald I kø||
+Campaign %1s is not valid or lead_id %2s is not valid|kampagne %1s er ikke gyldigt eller lead_id %2s er ikke gyldig||
+Campaign %1s is not valid|kampagne %1s er ikke gyldig||
+Campaign Login|Kampanje login||
+Campaign not active, please try again|Kampanje ikke aktiv, prøv igen||
+Campaign not found|kampagne ikke fundet||
+Campaign:|kampagne:||
+Cannot find empty vicidial_conference on %1s, Redirect command not inserted|kan ikke finde tomme vicidial_conference på %1s, omdirigere kommandoen ikke indsat||
+Change this phone number to ACTIVE|Ændre dette telefonnummer til AKTIVT||
+Change this phone number to INACTIVE|Ændre dette telefonnummer til INAKTIVT||
+Channel %1s in use by another agent on %2s, Hangup command not inserted|kanal %1s bruges af en anden agent på %2s, hangup kommando ikke indsat||
+Channel %1s is not live on %2s, %3s command not inserted|kanal %1s er ikke leve af %2s, kommandoen %3s ikke indsat||
+Channel %1s is not live on %2s, Hangup command not inserted|kanal %1s er ikke leve af %2s, hangup kommando ikke indsat||
+Channel %1s is not live on %2s, Redirect command not inserted|kanal %1s er ikke leve af %2s, omdirigere kommandoen ikke indsat||
+Channel %1s is not valid or exten %2s is not valid or filename: %3s is not valid, %4s command not inserted|kanal %1s er ikke gyldigt eller EXTEN %2s er ikke gyldigt eller filnavn: %3s er ikke gyldig, kommandoen %4s ikke indsat||
+Channel %1s is not valid or queryCID %2s is not valid or filename: %3s is not valid, %4s command not inserted|kanal %1s er ikke gyldigt eller querycid %2s er ikke gyldigt eller filnavn: %3s er ikke gyldig, kommandoen %4s ikke indsat||
+Channel %1s is not valid or queryCID %2s is not valid, Hangup command not inserted|kanal %1s er ikke gyldigt eller querycid %2s er ikke gyldig, hangup kommando ikke indsat||
+Channel %1s must be greater than 2 characters|kanal %1s skal være større end 2 tegn||
+Channel to be transferred:|kanal, der skal overføres:||
+Channel:|kanal:||
+Channel|kanal||
+Click Here to Activate|klik her for at aktivere||
+Click Here to Choose a Dial In-Group|Klik her for at vælge en dial in-gruppen||
+Click Here to Choose a Group Alias|Klik her for at vælge et gruppe alias||
+Click Here to Deactivate|klik her for at deaktivere||
+Click LOGIN below to log-in|Klik LOGIN forneden for at logge på||
+Click LOGOUT below to log-out|Klik LOGOUT forneden for at logge ud||
+Click on a conference room number on the left for info on that conference|Klik på et konference nummer til venstre for info vdr den konference||
+Close Call Log|Luk Opkaldslog||
+Close Info Box|Luk Info Boks||
+Close Message|Lukke besked||
+Close Window|Luk vindue||
+Closer In Group Choice %1s has been registered to user %2s|tættere på gruppevalg %1s er registreret til brugeren %2s||
+Comments:|Kommentar:||
+Comments|kommentarer||
+Conf Exten %1s is not valid or Exten %2s is not valid|conf Exten %1s er ikke gyldigt eller EXTEN %2s er ikke gyldig||
+Conf Exten %1s is not valid|conf EXTEN %1s er ikke gyldig||
+Conf Exten %1s or campaign %2s or ext_context %3s is not valid|conf EXTEN %1s eller kampagne %2s eller ext_context %3s er ikke gyldig||
+Conf Extension Check|check conf forbindelser||
+Conference %1s has been registered to %2s|konference %1s er registreret til %2s||
+Conference %1s, Stage %2s is not valid or queryCID %3s is not valid, Originate command not inserted|konference %1s, scene %2s er ikke gyldigt eller querycid %3s er ikke gyldig, stammer kommandoen ikke indsat||
+Conferences List|konference liste||
+Conferences Menu|konference Menu||
+Conferences:|konferencer:||
+Conferences|konferencer||
+Could not connect: |kunne ikke forbinde:||
+Custom Fields Disabled:|brugerdefinerede felter deaktiveret:||
+Custom Form Output:|brugerdefineret formular udgang:||
+Customer Hung-up, 3-way Call Ended Automatically|Kunde Hung-up, 3-vejs Call afsluttes automatisk||
+Customer Information:|kunde oplysninger:||
+Customer Time:|kunde tid:||
+Customer has hung up:|kunden har hængt op:||
+D1 - DIAL|d1 - dial||
+D2 - DIAL|d2 - dial||
+DATE/TIME|dato/tid||
+DATE:|dato:||
+DEC|december||
+DELETE ALL|slette alle||
+DIAL ALERT:|dial alarm:||
+DIAL IN-GROUP|ringe ind-gruppen||
+DIAL LEAD|RING LEAD||
+DIAL OVERRIDE|DIAL OVERRIDE||
+DIAL|dial||
+DISPOSITION CALL :|disposition opkald:||
+DONE: %1s duplicates found,|gjort: %1s dubletter fundet,||
+DONE: %1s is empty for lead %2s|gjort: %1s er tom for bly %2s||
+DONE: %1s match found, %2s updated to %3s with %4s status|gjort: %1s match fundet, %2s opdateret til %3s med %4s status||
+DONE: dispo is not a sale status: %1s|gjort: dispo er ikke et salg status: %1s||
+DONE: dispo is not a sale status:|gjort: dispo er ikke et salg status:||
+DONE: no duplicates found within|gjort: ingen dubletter inden||
+DONE: no lists in campaign_check|gjort: ingen lister i campaign_check||
+DONE: no match found within %1s     %2s|gjort: ingen match findes inden %1s %2s||
+DONE:|gjort:||
+Data Goes Here|Data placeres her||
+Data Updated, Hanging up call, please wait|data opdateret, hængende up call, vent venligst||
+Date received:|dato modtaget:||
+Department:|afdeling:||
+Dept:|dept:||
+Dial Alt Phone Number:|dial alt telefonnummer:||
+Dial Code:|Dial Code:||
+Dial Countdown:|dial nedtælling:||
+Dial From Conf|Ring fra Konf||
+Dial In-Group Selection|dial in-gruppe udvælgelse||
+Dial In-Group:|dial in-gruppe:||
+Dial Lead ID:|dial bly id:||
+Dial Link:|dial link:||
+Dial Next Call|dial næste opkald||
+Dial Next Number|Ring næste nummer||
+Dial Now|Ring Nu||
+Dial Override:|dial overstyring:||
+DialCode|Landsnummer||
+Dialable Leads:|dialable kundeemner:||
+Dispo Choice %1s or lead_id %2s is not valid|dispo valg %1s eller lead_id %2s er ikke gyldig||
+Disposition Hot Keys:|disposition genvejstaster:||
+Disposition Status List Hidden|Disposition status skjult liste||
+Disposition:|disposition:||
+EMAIL LOG FOR THIS LEAD:|email log for denne bly:||
+EMAIL TO|e-mail til||
+END CHAT|ende chat||
+ENTER A PAUSE CODE|TAST EN PAUSEKODE||
+EPOCH:|epoke:||
+ERROR - ID variable missing|fejl - id variabel mangler||
+ERROR: Invalid File Name:|fejl: ugyldigt filnavn:||
+ERROR: System Settings missing|fejl: Systemindstillinger mangler||
+ERROR: There are no Shifts enabled for your user group|FEJL: Ingen vagter er aktiveret for din bruger gruppe||
+ERROR: You are not allowed to log in outside of your shift|FEJL: Du må ikke logge ind udenfor din vagttid||
+ERROR: no custom data for this lead: |fejl: ingen brugerdefinerede data for denne bly:||
+ERROR: no custom list fields table|fejl: ingen brugerdefineret liste felter bord||
+ERROR: no custom list fields|fejl: ingen brugerdefinerede listefelterne||
+ERROR: timeclock log entry already made:|Fejl: stempelklokken er allerede aktiv :||
+ERROR|fejl||
+Email:|email:||
+Email|email||
+End-of-call Disposition Selection|Valg af samtalets afsluttende udfald||
+Enter Conference|Medvirk i konference||
+Enter email address of guest:|Indtast e-mail-adresse gæst:||
+Enter information below for the new lead you wish to call.|Angiv information forneden vdr det nye lead du ønsker at ringe||
+Exten %1s is not valid or protocol %2s is not valid|Exten %1s er ikke gyldigt eller protokollen %2s er ikke gyldig||
+Exten %1s is not valid or queryCID %2s is not valid, Originate command not inserted|Exten %1s er ikke gyldigt eller querycid %2s ikke er gyldig, stammer kommandoen ikke indsat||
+Extended Alt Phone Information:|Udvidet information vdr alt nummer:||
+Extensions Menu|Lokalnummer menu||
+Extensions:|udvidelser:||
+ExtraChannel %1s must be greater than 2 characters|extrachannel %1s skal være større end 2 tegn||
+ExtraChannel %1s|extrachannel %1s||
+F - Female|f - hun||
+FAST DIAL|HURTIG KALD||
+FAVORITES|favoritter||
+FEB|februar||
+FINISH LEAD|AFSLUT LEAD||
+FIRST NAME|fornavn||
+FULL NAME|fulde navn||
+Faster|hurtigt||
+Favorites list has been updated to %1s for %2s|favoritliste er blevet opdateret til %1s for %2s||
+Finish Wrapup and Move On|Afslut samtale afslut og kom videre||
+Finish and Disposition Call|Afslut og sæt udfald på opkald||
+First Name:|fornavn:||
+First Sunday April to Last Sunday October|første søndag april til sidste søndag oktober||
+First Sunday October to Last Sunday March|første søndag oktober til sidste søndag march||
+First Sunday October to Third Sunday March|første søndag oktober til tredje søndag march||
+First|Første||
+From:|fra:||
+Fronter:|Fronter:||
+GO|gå||
+GROUP ALIAS|Gruppe alias||
+GROUPS NOT SELECTED|GRUPPE IKKE VALGT||
+GROUPS|grupper||
+Gender|køn||
+Go Back|Gå tilbage||
+Group Alias Selection|Gruppe alias valg||
+Group Alias:|gruppe alias:||
+Group Choice is not valid|gruppe valg er ikke gyldig||
+Group Name:|gruppenavn:||
+Group|gruppe||
+HANGUP|dille||
+HELP|hjælpe||
+HIDE|skjule||
+Hangup Again|Læg på igen||
+Hangup Local|Læg på lokal||
+Hangup Trunk|Læg på trunk||
+Hangup command sent for Channel %1s on %2s|pålægningsindikation kommando sendt til kanal %1s den %2s||
+Hide Calls In Queue|Gem opkald der i kø||
+Hide conference call channel information|Gem conferance opkalds kanal information||
+Hijack Local|Overtage lokal||
+Hijack Trunk|Overtage trunk||
+History|historie||
+Hour:|time:||
+Hungup %1s on %2s|hungup %1s den %2s||
+IN-NUMBER|IN-NUMMER||
+IN/OUT|ind/ud||
+INBOUND CALLS:|indgående opkald:||
+INCALL|Incall||
+INFO|info||
+INVITE|invitere||
+If you want to dial a number and have it NOT be added as a new lead, enter in the exact dialstring that you want to call in the Dial Override field below. To hangup this call you will have to open the CALLS IN THIS SESSION link at the bottom of the screen and hang it up by clicking on its channel link there.|Hvis du ønsker at ringe til et nummer og har det ikke tilføjes som en ny føring, indtaster i nøjagtig dialstring, du vil ringe til, i Dial Tilsidesæt feltet nedenfor. For at lægge på denne indkaldelse skal du åbne OPFORDRER i denne session linket i bunden af skærmen, og hænge det op ved at klikke på dets kanal link der.||
+Incoming:|indkommende:||
+Initializing..|initialisering ..||
+Invalid Date Format. Please correct and submit again.|ugyldigt datoformat. skal du rette og indsende igen.||
+Invalid Day, Month, or Year range detected. Please correct and submit again.|ugyldig dag, måned eller år interval opdaget. skal du rette og indsende igen.||
+Invalid Source|ugyldig kilde||
+Invalid Username/Password:|ugyldig brugernavn/adgangskode:||
+Invalid Username/Password|ugyldig brugernavn/kodeord||
+Invalid server_ip: %1s or Invalid session_name: %2s|ugyldig server_IP: %1s eller ugyldig session_name: %2s||
+Invalid server_ip:|ugyldig server_IP:||
+Invalid server_ip|ugyldig server_IP||
+Invalid session_name:|ugyldig session_name:||
+Invalid session_name|ugyldig session_name||
+JAN|januar||
+JLY|Jly||
+JUN|juni||
+Job Title:|stillingsbetegnelse:||
+Job:|job:||
+LAST CALL DATE/TIME|sidste opkald dato/tid||
+LAST CALL|sidste opkald||
+LAST NAME|efternavn||
+LEAD PREVIEW|FORHÅNDSVISNING AF LEAD||
+LEAD SEARCH|LEAD SØG||
+LENGTH|længde||
+LIVE CALL TRANSFER|VIDERESTILLING AF PÅGÅENDE SAMTALE||
+LIVE CALLS IN THIS CONFERENCE|PÅGÅENDE SAMTALER I DENNA konference||
+LIVE CALLS IN YOUR SESSION:|levende opkald i din session:||
+LIVE CALLS ON THIS PHONE|Denne telefons aktive samtaler||
+LIVE INBOUND CALL|PÅGÅENDE INKOMMEDE OPKALD||
+LIVE|leve||
+LOCAL DIAL EXTENSIONS|LOKALNUMRE||
+LOCAL Extensions Dial|Lokal numre opkald||
+LOCAL HANGUP|LÆG PÅ LOKALT||
+LOGOUT PROCESS COMPLETE, YOU MAY NOW CLOSE YOUR BROWSER OR LOG BACK IN|logout proces færdig, kan du nu lukke din browser eller logge ind igen||
+LOGOUT PROCESSING...|logout behandling ...||
+LOGOUT|logout||
+Language has not been changed, please try again|Sprog er ikke blevet ændret, skal du prøve igen||
+Last Call:|sidste opkald:||
+Last Local Call Time:|sidste lokalt opkald tid:||
+Last Name:|efternavn:||
+Last Sunday March to Last Sunday October|sidste søndag march til sidste søndag oktober||
+Last Sunday October to Last Sunday March|sidste søndag oktober til sidste søndag march||
+Last Sunday in September to First Sunday in April|sidste søndag i september til første søndag i april||
+Last |Sidste ||
+Lead %1s has been changed to %2s Status|bly %1s er blevet ændret til %2s status||
+Lead %1s information has%2s been updated|bly %1s oplysninger %2s blevet opdateret||
+Lead Dispositioned As:|bly dispositioned som:||
+Lead ID:|bly id:||
+Lead Info|bly info||
+Lead search requests are all logged in the system.|Bly søgeanmodninger er alle logget ind i systemet||
+Lead skipped, go on to next lead|bly sprunget, gå videre til næste bly||
+Lead was not reverted, there was an error:|bly var ikke vendt tilbage, var der en fejl:||
+Lead:|bly:||
+Leave 3Way Call Again|forlade 3way opkald igen||
+List ID:|liste id:||
+List:|liste:||
+Listen Local|lytte lokal||
+Listen Trunk|Lytte trunk||
+Live Extension Check|Check aktive forbindelser||
+Live Extensions|Aktive forbindelser||
+Local Action|Lokal handling||
+Local Extensions|Lokalforbindelser||
+Location:|location:||
+Logged in as User|Inlogget som Bruger||
+Login Error|login-fejl||
+Login incorrect, please try again|login er inkorrekt, prøv igen||
+Login incorrect, user names are case sensitive|Log forkert, brugernavne er store og små bogstaver||
+Login:| Login:||
+Login|logon||
+M - Male|m - han||
+MAIN PHONE|HOVED TELEFON||
+MANAGER OVERRIDE:|Manager overstyring:||
+MANUAL DIAL|MANUELT OPKALD||
+MAR|mar||
+MAY|Maj||
+MESSAGE:|besked:||
+MI|mi||
+MOBILE|mobil||
+MULTI_MATCH CHECK:|multi_match kontrol:||
+MULTI_MATCH:|multi_match:||
+MY CALLBACK ONLY|KUN MINE GENKALD||
+Main Phone Number|Main Telefonnummer||
+Manager Login:|leder login:||
+Manager Password:|chef password:||
+Manager Send: |Manager send:||
+Manager has selected groups for you|manager har valgt grupper for dig||
+Manager has selected territories for you|manager har valgt områder for dig||
+Manager|Din leder||
+Manual Dial Queue Calls Waiting:|Manuelt opkald kø ventende opkald:||
+Manual Queue is Off|Manuel Queue er Off||
+Manual Queue is On|Manuel Queue er på||
+Manual Queue:|manuel kø:||
+Max rank count|max rang tæller||
+Middle Initial:|midterste initial:||
+Minutes:|minutter:||
+NEW MANUAL DIAL LEAD FOR %1s in campaign %2s:|ny manual dial bly til %1s i kampagnen %2s:||
+NEW:|ny:||
+NO ONE|ingen||
+NON-DIALABLE|ikke-dialable||
+NONE|none||
+NOTES:|Notat:||
+NOTES|noter||
+NOTICE|varsel||
+NOV|november||
+NUMBER|NUMMER||
+Name:|Navn:||
+Next Call Pause Set|næste opkald pause sæt||
+Next Call Pause|næste opkald pause||
+No DST Method Found|ingen dst metode fundet||
+No Local agent to send call to, Redirect command not inserted|ingen lokale agent til at sende opkald til, omdirigere kommandoen ikke indsat||
+No available phones, please contact your administrator|Ingen tilgængelige telefoner, skal du kontakte din administrator||
+No available servers, please contact your administrator|Ingen tilgængelige servere, skal du kontakte din administrator||
+No calls found|Ingen opkald fundet||
+No calls on this day|Ingen opfordrer denne dag||
+No more leads in the hopper for campaign:|ikke flere kundeemner i tragten for kampagnen:||
+No one is in your session:|ingen er i din session:||
+No results found|Ingen resultater fundet||
+No-Call Dial:|no-call dial:||
+Note: a dial prefix of %1s will be added to the beginning of this number|Bemærk: En opkaldspræfiks af %1s vil blive føjet til begyndelsen af dette nummer||
+Note: all new manual dial leads will go into list %1s|bemærk: alle nye Manuelt opkald kundeemner vil gå i listen %1s||
+Notes: when doing a search for a contact, wildcard or partial search terms are not allowed. <br />Contact search requests are all logged in the system.|bemærker: når du laver en søgning efter en kontakt, wildcard eller delvise søgetermer er ikke tilladt. <br /> er kontakt søgeanmodninger alle logget på systemet.||
+Notes: when doing a search for a lead, the phone number, lead ID or %1s are the best fields to use.|noter: når du laver en søgning efter en bly, telefonnummeret, bly-id eller %1s er de bedste områder til at bruge.||
+Number Dialed:|kaldte nummer:||
+OCT|oktober||
+OFFICE|kontor||
+OFF|af||
+OK|ok||
+OLD:|gammel:||
+ORDER|bestilling||
+OTHER 1|andre 1||
+OTHER 2|andre 2||
+OUTBOUND CALLS:|udgående opkald:||
+Office Number:|kontor nummer:||
+One of these variables is not valid:|en af disse variabler ikke gælder:||
+Order ID:|id:||
+Originate command sent for Exten %1s Channel %2s on %3s|stammer, kommando, der sendes til EXTEN %1s kanal %2s på %3s||
+OriginateName Action not sent|originatename handling ikke sendt||
+OriginateNameVmail Action not sent|originatenamevmail handling ikke sendt||
+Other Agents Status:|andre midler status:||
+Outside Lines|Externe linjer||
+PARKED BY|SAT PÅ VENT AF||
+PARKED CALLS:|parkerede opkald:||
+PARKED CALLS|SAMTALE SAT PÅ VENT||
+PARKED TIME|VENTETID||
+PARK|park||
+PAUSE AGENT DIALING|PAUSE AF AGENT OPKALD||
+PAUSE CODE|pause kode||
+PAUSED|pause||
+PHONE|Telefon||
+PICKUP|LØFT||
+PLEASE CLICK THE LOGOUT LINK TO LOG OUT NEXT TIME.|du klikke på linket Log ud for at logge ud næste gang.||
+PLEASE SELECT A CAMPAIGN|Vælg en kampagne||
+PLEASE SELECT A LANGUAGE|Vælg et sprog||
+PREVIOUS CALLBACK|tidligere tilbagekald||
+Parked Calls Display|OPKALD SAT PÅ VENT||
+Password:|password:||
+Pause Code Selection|pause kode udvælgelse||
+Phone Code and Number:|landsnummer og telefonnummer:||
+Phone Login:|telefon login:||
+Phone Number Fields:|telefonnummer områder:||
+Phone Number:|telefonnummer:||
+Phone Password:|telefon password:||
+Phone and Post Code Time Zone Mismatch! |telefon og postnummer tidszone mismatch!||
+Phone calling from:|telefon ringer fra:||
+Phone web client: Login|telefon web-klient: login||
+Phone web client: Phone Login|telefon web-klient: telefon login||
+Phone web client|telefon web-klient||
+Phone-Only Login|telefon-only login||
+Placing call to next number|anbringelse opkald til næste nummer||
+Please click SUBMIT to commit the changes|klik forelægge begå ændringerne||
+Please click SUBMIT to hangup and disposition the call|klik forelægger lægge på og disposition opkaldet||
+PostCode|Postnummer||
+Presets Selection|forudindstillinger udvælgelse||
+Preview Call|Forhåndsvis opkald||
+Preview the Lead then|forhåndsvis leadet derefter||
+Previous Callback Information:|tidligere tilbagekald information:||
+Privacy ON|privatlivets fred på||
+Processing...|behandling ...||
+Province:|provins:||
+Province|Provins||
+Question:|spørgsmål:||
+READY|klar||
+RECORD ID:|Fortegnelse ID:||
+RECORDING FILE:|optagelse fil:||
+RECORD|INDSPILLNING ||
+REMOTE CHANNEL|REMOTE KANAL||
+REPLY|svar||
+RESET|reset||
+Re-Login|Logpå igen||
+Redirect Action not sent|omdirigere handling ikke sendt||
+Redirect command sent for Channel %1s on %2s|omdirigere kommando sendt til kanal %1s den %2s||
+RedirectFromPark Action not sent|redirectfrompark handling ikke sendt||
+RedirectName Action not sent|redirectname handling ikke sendt||
+RedirectNameVmail Action not sent|redirectnamevmail handling ikke sendt||
+RedirectToPark Action not sent|redirecttopark handling ikke sendt||
+RedirectVD Action not sent|redirectvd handling ikke sendt||
+RedirectXtra command sent for Channel %1s and|redirectxtra kommando sendt til kanal %1s og||
+RedirectXtra command sent for Channel %1s on %2s and|redirectxtra kommando sendt til kanal %1s den %2s og||
+RedirectXtraCX command sent for Channel %1s on %2s and|redirectxtracx kommando sendt til kanal %1s den %2s og||
+Refresh Campaign List|Opdater Kampagne List||
+Refresh rate:|opdateringshastighed:||
+Registered to|Registrered til||
+Reply:|svare:||
+Response:|svar:||
+Results Found:|Resultater fundet:||
+SEARCH FOR A CONTACT:|søge efter en kontakt:||
+SEARCH FOR A LEAD:|søge efter en bly:||
+SEARCH RESULTS:|Søgeresultater:||
+SELECT A DIAL IN-GROUP :|Vælg en dial in-gruppe:||
+SELECT A GROUP ALIAS :|vælge en gruppe alias:||
+SELECT A GROUP TO SEND YOUR CALL TO|vælge en gruppe til at sende dit opkald til||
+SELECT A PAUSE CODE :|Vælg en pause kode:||
+SELECT A PRESET :|vælge en forudindstillet:||
+SELECT THIS LEAD|vælge denne bly||
+SELECTED GROUPS|VALGTE GRUPPER||
+SELECTED TERRITORIES|UDVALGTE OMRÅDER||
+SELECT|Vælg||
+SEND MESSAGE|send besked||
+SEND TO MY VOICEMAIL|SEND TIL MIN VOICEMAIL||
+SEND|sende||
+SEP|september||
+SKIP LEAD|FORKAST LEAD||
+START CHAT|starte chat||
+START|begyndelse||
+STATE|stat||
+STATUS|status||
+STILL A LIVE CALL! Hang it up then you can log out.|STADIG ET AKTIVT OPKALD! læg på og derefter kan du logge ud||
+STOP|stoppe||
+SUBMIT FAVORITES CHANGES - requires logout|ANGIV VALG AF FAVORITER - udlogning er påkrævet||
+SUBMIT SEARCH|Afsend søgning||
+SUBMIT|INDSEND||
+SUCCESS|succes||
+Search Existing Leads:|søge eksisterende ledninger:||
+Search Results|SØGERESULTATER||
+Searching...|søger ...||
+Second Sunday March to First Sunday November|anden søndag march til første november søndag||
+Select a CallBack Date :|Vælg en tilbagekald dato:||
+Select a Date Below|Vælg en dato forneden||
+Send DTMF|Send DTMF||
+Send my channel too|Send min kanal også||
+Send to selected extension|Send til valgt lokalnummer||
+Send to selected vmail box|Send til valgt voicemail||
+Send to this number|Send til dette nummer||
+Server:|server:||
+Show Calls In Queue|Vis opkald der er i kø||
+Show conference call channel information|Gem conferance opkalds kanal information||
+Show:|show:||
+Show|Vis||
+Slower|langsomt||
+Sorry, there are no available sessions|Desværre, der er ikke ledige sessioner||
+Sorry, there are no leads in the hopper for this campaign|Beklager der er ingen leads i hoppern til denne kampanje||
+Sorry, you are not allowed to login to this campaign:|undskyld, er det ikke tilladt at logge ind på denne kampagne:||
+Sorry, your phone login and password are not active in this system, please try again:|undskyld, telefonen login og password er ikke aktive i dette system, prøv igen:||
+Status:|status:||
+Subject:|emne:||
+Sunday in October to First Sunday in April|søndag i oktober til første søndag i april||
+System API NOT ACTIVE|Systemet api ikke aktiv||
+System Delay, Please try again|System Delay, Prøv igen||
+TAKE CALL|tage opkald||
+TERRITORIES NOT SELECTED|TERRITORIER IKKE VALGT||
+TERRITORIES|territorier||
+TERRITORY SELECTION|Valg af landområde||
+TIMER NOTIFICATION:|timer meddelelse:||
+TRUNK HANGUP|trunk dille||
+TYPE|typen||
+Territory Choice %1s has been registered to user %2s|område Choice %1s er registreret til brugeren %2s||
+Territory Choice is not valid|område valg er ikke gyldig||
+The system has received a command to log you out, you have been logged out of your session|Systemet har modtaget en kommando for at logge dig ud, er du blevet logget ud af din session||
+The user and password you entered are not active in the system<BR>Please try again:|brugeren og adgangskode, du indtastede er ikke aktive i systemet <br> prøv igen:||
+There are no Shifts enabled for your user group|der er ingen forskydninger aktiveret for din brugergruppe||
+There are no custom fields for this list|der er ingen brugerdefinerede felter til denne liste||
+There is a time synchronization problem with your system, please tell your system administrator|der er problemer med synkroniseringen af klokke kontakt adminstrator||
+There was a problem with your search terms|der var et problem med dine søgetermer||
+Third Sunday October to Last Sunday February|tredje søndag oktober til sidste søndag februar||
+This agent screen was not opened properly.|Dette middel skærm blev ikke åbnet korrekt||
+This phone number is in the DNC list:|dette telefonnummer er i DNC liste:||
+This phone number is not in the campaign lists:|dette telefonnummer ikke er i kampagnelisterne:||
+This phone number is outside of the local call time:|dette telefonnummer er uden for det lokale opkald:||
+Time On Park:|tid på park:||
+Time since you were last logged-in:|Tid siden sidste login:||
+Timeclock|altid viser korrekt||
+Timezone:|tidszone:||
+Title:|titel:||
+Title|titel||
+Too many agents logged in, please contact your administrator|Alt for mange agenter logget ind, skal du kontakte din administrator||
+Too many login attempts, try again in 15 minutes|for mange login-forsøg, prøv igen på 15 minutter||
+Too many network errors, please contact your administrator|Alt for mange netværk fejl, skal du kontakte din administrator||
+Transfer number must have at least 1 digit:|transfer nummer skal have mindst 1 ciffer:||
+Trunk Action|Trunk handling||
+U - Undefined|u - undefined||
+UID:|uid:||
+USER LOGIN ERROR|bruger login fejl||
+USER|Bruger ||
+Unidentified Hangup Cause Code.|uidentificeret læg årsagskode||
+Unidentified SIP Hangup Cause Code.|uidentificeret sip dille årsag kode.||
+Unspecified error:|uspecificeret fejl:||
+User Login:|bruger login:||
+User Login|Bruger login||
+User Names are case sensitive|Brugernavne er store og små bogstaver||
+User Password:|brugeradgangskode:||
+User settings set as default|brugerindstillinger indstillet som standard||
+UserID: $FCS%1s - %2s$FCE,  Date: %3s|Bruger-ID: $FCS%1s - %2s$FCE, Dato: %3s||
+Using the other fields may be slower. Lead searching does not allow for wildcard or partial search terms.|Brug de andre felter kan være langsommere. Bly søgning tillader ikke jokertegn eller delvis søgetermer||
+VERSION: %1s BUILD: %2s|version: %1s bygge: %2s||
+VERSION:|version:||
+VERSION|VERSION||
+VICIDiaL Agent API|vicidial agent api||
+VICIDiaL Database Query Script|vicidial databaseforespørgsel script||
+VICIDiaL Script Display Script|vicidial script display script||
+VICIDiaL_LOG Inserted:|vicidial_log indsættes:||
+VIEW CALL LOG|SE Opkaldslog||
+VOICEMAIL|VOICEMAIL||
+VOLUME|VOLUMEN||
+Vendor ID:|leverandør-id:||
+Vendor ID|Vendor ID||
+ViciDial Notes|vicidial noter||
+ViciDial Script|vicidial script||
+View Comment History:|view kommentar historie:||
+Voicemail Check|Voicemail check||
+Volume command sent for Conference %1s, Stage %2s Channel %3s on %4s|kommando volumen sendt til konference %1s, scene %2s kanal %3s på %4s||
+WAIT|vente||
+WEB FORM SUBMIT|webside formularindsendelse||
+Waiting for Ring...|venter ring ...||
+WebPhone View -|WEBPHONE view -||
+WebPhone View|WEBPHONE visning||
+Welcome %1s, you are logged into this phone: %2s - %3s/%4s on %5s|velkommen %1s, er du logget ind i denne telefon: %2s - %3s/%4s på %5s||
+When active, simply press the keyboard key for the desired disposition for this call. The call will then be hungup and dispositioned automatically:|når aktiv, skal du blot trykke på tastaturet tasten for den ønskede disposition for denne indkaldelse. opkaldet vil da være hungup og dispositioned automatisk:||
+X ACTIVE CALLBACKS|x aktive tilbagekald||
+XFER|xfer||
+YES|ja||
+YOU CANNOT SKIP A CALLBACK OR MANUAL DIAL, YOU MUST DIAL THE LEAD|DU KAN IKKE FORKASTE ET GENKALD ELLER MANUELT OPKALD, DU SKAL RINGE LEADET||
+YOU DO NOT HAVE PERMISSIONS TO TRANSFER CALLS|DU HAR IKKE TILLADELSE TIL AT VIDERESTILLE OPKALD||
+YOU MUST BE ON AN ACTIVE INBOUND CALL TO SEARCH FOR A LEAD|du skal være på et aktivt indgående opkald for at søge efter et kundeemne||
+YOU MUST BE PAUSED TO CHANGE GROUPS|DU SKAL VÆRE I PAUSE FOR AT ÆNDRE GRUPPE||
+YOU MUST BE PAUSED TO CHANGE TERRITORIES|du skal hvile til at ændre områder||
+YOU MUST BE PAUSED TO CHECK CALLBACKS IN AUTO-DIAL MODE|DU SKAL VÆRE I PAUSE FOR AT CHECKE GENKALD I AUTODIAL MODE||
+YOU MUST BE PAUSED TO ENTER A PAUSE CODE IN AUTO-DIAL MODE|DU SKAL VÆRE I PAUSE FOR VÆLGE EN PAUSE KODE NÅR SYSTEMET ER SAT TIL AUTODIAL||
+YOU MUST BE PAUSED TO GRAB CALLS IN QUEUE|DU SKAL VÆRE I PAUSE FOR AT TAGE OPKALD DER ER I KØ||
+YOU MUST BE PAUSED TO MANUAL DIAL A NEW LEAD IN AUTO-DIAL MODE|DU SKAL VÆRE I PAUSE FOR AT LAVE ET MANUELT OPKALD AF ET NYT LEAD I AUTODIAL-MODE||
+YOU MUST BE PAUSED TO SEARCH FOR A LEAD|DU SKAL sættes på pause at søge efter et LEAD||
+YOU MUST BE PAUSED TO VIEW YOUR CALL LOG|DU SKAL sættes på pause AT SE DIN CALL LOG||
+YOU MUST ENTER A PHONE NUMBER AND DIAL CODE TO USE FAST DIAL|DU SKAL ANGIVE ET TELEFONNUMMER FOR AT BRUGE HURTIGKALD||
+YOU MUST LOG IN TO THE TIMECLOCK FIRST|DU SKAL FØST LOGGE PÅ STEMPELKLOKKEN||
+YOU MUST SELECT AN AGENT TO TRANSFER TO WHEN USING AGENTDIRECT|du skal vælge en agent til at overføre til, når du bruger agentdirect||
+You Must Select a Disposition|Du skal vælge et udfald||
+You are already logged in, please log out of your other session first|Du er allerede logget ind, skal du logge ud af din anden session først||
+You are in ALT dial mode, you must finish the lead before logging out.|Du befinder dig i ALT opkaldstilstanden, skal du afslutte føringen inden du logger ud||
+You are not allowed to log in outside of your shift|du er ikke tilladt at logge på uden for dit skift||
+You can only disposition a call once|du kan kun disposition et opkald, når||
+You can only monitor Zap channels|Du kan kun medlytte zap kanaler||
+You cannot log in or out within 30 seconds of your last login or logout|Du kan ikke logge ind eller ud inden 30 sekunder efter dit sidste indlog/udlog||
+You cannot log out during a Dial attempt. Wait 50 seconds for the dial to fail out if it is not answered|du kan ikke logge ud under en dial forsøg. vente 50 sekunder på drejeknappen til at mislykkes, hvis det ikke besvares||
+You have been paused for too long, you have been logged out of your session|Du er blevet sat på pause for længe, har du været logget ud af din session||
+You have now logged out. Thank you|Du er nu logget ud. Tak||
+You have now logged-in|Du har nu logget ind||
+You have now logged-out|Du har nu logget ud||
+You last logged-out at:|Sist loggede du ud:||
+You logged in at|Du er logget ind på||
+You logged out at|Du loggede ud:||
+You logged-in at:|Du loggede ind:||
+You must choose a date|Du ska vælge en dato||
+You must enter in search terms, one of these must be populated: lead ID, vendor ID, phone number, last name|du skal indtaste i søgetermer, skal en af disse være befolket: bly id, sælger id, telefonnummer, efternavn||
+You must enter in search terms, one of these must be populated: office number, last name, first name|du skal indtaste i søgetermer, en af disse skal befolket: kontor nummer, efternavn, fornavn||
+Your Shift is over or has changed, you have been logged out of your session|Din vagt er slut eller ændret du er logget ud fra din session||
+Your Status:|Deres status:||
+Your session has been disabled|Din session er aflyst||
+Your session has been paused|Din session er blevet sat på pause||
+Your system does not have the email setting enabled|dit system ikke har e-mail-indstillingen er aktiveret||
+ZIP|zip||
+add_lead PHONE NUMBER IN CAMPAIGN DNC|add_lead telefonnummer i kampagnen DNC||
+add_lead PHONE NUMBER IN DNC|add_lead telefonnummer i DNC||
+address1 set to|Address1 indstillet til||
+address2 set to|Address2 indstillet til||
+address3 set to|address3 indstillet til||
+agc_check_voicemail_BLINK.gif|agc_check_voicemail_BLINK.gif||
+agc_check_voicemail_OFF.gif|agc_check_voicemail_OFF.gif||
+agc_check_voicemail_ON.gif|agc_check_voicemail_ON.gif||
+agc_live_call_DEAD.gif|agc_live_call_DEAD.gif||
+agc_live_call_OFF.gif|agc_live_call_OFF.gif||
+agc_live_call_ON.gif|agc_live_call_ON.gif||
+agc_tab_active_lines.gif|agc_tab_active_lines.gif||
+agc_tab_astguiclient.gif|agc_tab_astguiclient.gif||
+agc_tab_conferences.gif|agc_tab_conferences.gif||
+agc_tab_main.gif|agc_tab_main.gif||
+agent_log_id %1s or pause_code %2s is not valid|agent_log_id %1s eller pause_code %2s er ikke gyldig||
+agent_user does not have a lead on their screen|agent_user har ikke en bly på deres skærm||
+agent_user does not have a live call|agent_user ikke har en levende opkald||
+agent_user is not allowed to place manual dial calls|agent_user er ikke tilladt at placere manuelle dial opkald||
+agent_user is not logged in|agent_user er ikke logget ind||
+agent_user is not paused|agent_user ikke sat på pause||
+alert.gif|alert.gif||
+alt number dialing not allowed on this campaign|alt nummer ringer til, ikke tilladt på denne kampagne||
+alt_phone set to|alt_phone indstillet til||
+apache processes: |apache processer:||
+apache version: |apache-version:||
+astGUIclient web client: Login|astguiclient web-klient: login||
+astGUIclient web client: Phone Login|astguiclient web-klient: telefon login||
+astGUIclient web client|web client astGUIclient||
+astGUIclient web-client VERSION: %1s BUILD: %2s|astguiclient web-klient version: %1s bygge: %2s||
+audio_playback error - audio already playing in agent session|audio_playback fejl - audio allerede spiller i agent session||
+audio_playback error - entry is empty|audio_playback fejl - indgang er tom||
+audio_playback error - no audio playing in agent session|audio_playback fejl - ingen lyd spiller i agent session||
+audio_playback error - no session data|audio_playback fejl - ingen data session||
+audio_playback function sent|audio_playback funktion sendt||
+audio_playback not valid|audio_playback ikke gyldig||
+audio_playback previous playback stopped|audio_playback tidligere afspilning stoppet||
+auto_dial_level %1s must be set|auto_dial_level %1s skal indstilles||
+blank.gif|blank.gif||
+call was not placed, there was an error:|Opkaldet blev ikke placeret, der opstod en fejl:||
+call_agent error - entry is empty|call_agent fejl - indgang er tom||
+call_agent error - no session data|call_agent fejl - ingen data session||
+call_agent function sent|call_agent funktion sendt||
+call_agent not valid|call_agent ikke gyldig||
+caller_id_number from group_alias is not valid|caller_id_number fra group_alias er ikke gyldig||
+campaign %1s must be set|kampagne %1s skal indstilles||
+campaign %1s or conf_exten %2s is not valid|kampagne %1s eller conf_exten %2s er ikke gyldig||
+campaign dial_method does not allow outbound autodial|kampagne dial_method ikke tillader udgående autoopkald||
+campaign does not allow inbound calls|kampagne tillader ikke indgående opkald||
+campaign manual dial list undefined|kampagne Manuelt opkald liste undefined||
+change_ingroups function set|change_ingroups funktion sæt||
+change_ingroups not valid|change_ingroups ikke gyldige||
+city set to|by indstillet til||
+click here to continue. . .|klik her for at fortsætte. . .||
+click here to continue|klik her for at fortsætte||
+close|lukke ||
+code:|kode:||
+comments set to|kommentarer indstillet til||
+conference %1s is not valid or ext_context %2s or queryCID %3s is not valid, Hangup command not inserted|konference %1s er ikke gyldigt eller ext_context %2s eller querycid %3s er ikke gyldig, hangup kommando ikke indsat||
+country_code set to|COUNTRY_CODE indstillet til||
+date_of_birth set to|date_of_birth sæt til||
+default socket timeout: |standard socket timeout:||
+denotes required fields|betegner obligatoriske felter||
+disk free space: |disk plads:||
+down.gif|down.gif||
+edit|edit||
+email set to|e indstillet til||
+error: API user not valid|fejl: api bruger ikke gyldig||
+error: avatar not valid|fejl: avatar ikke gyldig||
+ext_context %1s must be set|ext_context %1s skal indstilles||
+ext_priority %1s must be set|ext_priority %1s skal indstilles||
+exten %1s must be set|Exten %1s skal indstilles||
+extenName %1s must be set|extenname %1s skal indstilles||
+external_add_lead not valid|external_add_lead ikke gyldig||
+external_dial function set|external_dial funktion sæt||
+external_dial not valid|external_dial ikke gyldig||
+external_hangup function set|external_hangup funktion sæt||
+external_hangup not valid|external_hangup ikke gyldig||
+external_pause agent is not paused|external_pause agent er ikke sat på pause||
+external_pause function set|external_pause funktion sæt||
+external_pause not valid|external_pause ikke gyldig||
+external_status function set|external_status funktion sæt||
+external_status not valid|external_status ikke gyldig||
+favorites list %1s is not valid|favoritlisten %1s er ikke gyldig||
+first_name set to|FIRST_NAMEs indstillet til||
+gender set to|køn indstillet til||
+gmt_offset_now set to|gmt_offset_now indstillet til||
+group_alias is not valid|group_alias er ikke gyldig||
+has selected your in-group choices|har valgt din in-gruppe||
+hide comment history|skjul kommentar historie||
+host name: |vært navn:||
+ingroup does not exist|ingroup eksisterer ikke||
+ingroup is not valid|ingroup er ikke gyldig||
+ingroup_choices are required for ADD and REMOVE values|Der kræves ingroup_choices for tilføje og fjerne værdier||
+ini_get not allowed: |ini_get ikke tilladt:||
+last_name set to|last_name indstillet til||
+lead added|føre tilføjet||
+lead insertion failed|bly indsættelse mislykkedes||
+lead_id %1s is not valid|lead_id %1s er ikke gyldig||
+lead_id %1s must be set|lead_id %1s skal indstilles||
+lead_id is not valid|lead_id er ikke gyldig||
+loading.gif|loading.gif||
+logout function set|logout funktion sæt||
+logout not valid|logout ikke gyldig||
+mail could not be sent!|mail kunne ikke sendes!||
+maximize|maksimere||
+maximum execution time: |maksimale gennemførelsestid:||
+maximum input time: |maksimale input tid:||
+memory limit: |hukommelse grænse:||
+middle_initial set to|middle_initial sæt til||
+minimize|minimere||
+no Lead ID|ingen bly id||
+no active call found|ingen aktive opkald fundet||
+no active lead found|ingen aktiv bly fundet||
+no agent session|ingen agent session||
+no fields have been defined|ikke er defineret nogen felter||
+no lead active for this agent|ingen bly aktivt for denne agent||
+no lead info in system:|ingen bly info i systemet:||
+no user found|uden brugeranmeldelser fundet||
+not recording|ikke optager||
+or|eller||
+owner set to|Ejeren indstillet til||
+park_call function set|park_call funktion sæt||
+park_call not valid|park_call ikke gyldig||
+parkedby %1s must be set|parkedby %1s skal indstilles||
+pause_code error - agent is not paused|pause_code fejl - agent er ikke sat på pause||
+pause_code function sent|pause_code funktion sendt||
+pause_code not valid|pause_code ikke gyldig||
+phone login|Telefon login||
+phone number is not valid|telefonnummer er ikke gyldigt||
+phone number lead_id search not found|telefonnummer lead_id søgning ikke fundet||
+phone_code set to|phone_code indstillet til||
+phone_number %1s or lead_id %2s is not valid|PHONE_NUMBER %1s eller lead_id %2s er ikke gyldig||
+phone_number is already in this agents manual dial queue|PHONE_NUMBER er allerede i denne agenter manual dial kø||
+phone_number is not valid|PHONE_NUMBER er ikke gyldig||
+phone_number set to|PHONE_NUMBER indstillet til||
+php version: |php-version:||
+pixel.gif|pixel.gif||
+post maximum size: |skrive maksimale størrelse:||
+postal_code set to|postal_code indstillet til||
+preview dial skipping not allowed on this campaign|forhåndsvisning urskive Ignoreres ikke tilladt på denne kampagne||
+preview dialing not allowed on this campaign|forhåndsvisning opkald ikke tilladt på denne kampagne||
+preview_dial_action function set|preview_dial_action funktion sæt||
+preview_dial_action not valid|preview_dial_action ikke gyldig||
+province set to|provinsen indstillet til||
+queryCID %1s must be greater than 14 characters|querycid %1s skal være større end 14 tegn||
+ra_call_control hungup|ra_call_control hungup||
+ra_call_control not valid|ra_call_control ikke gyldig||
+ra_call_control transfer|ra_call_control overførsel||
+rank set to|Nummer indstillet til||
+recording active|optagelse aktiv||
+recording function sent|optagefunktion sendt||
+recording not valid|optagelse ikke gyldig||
+recording|optagelse||
+refresh|Genopfrisk||
+remove.gif|remove.gif||
+reset form|reset formular||
+ring|ring||
+seconds remaining in wrapup|sekunder tilbage i afslut||
+seconds:|sekunder:||
+seconds|sekunder||
+security_phrase set to|security_phrase indstillet til||
+send_dtmf not valid|send_dtmf ikke gyldig||
+server name: |servernavn:||
+session ID:|session id:||
+session_id %1s must be set|session_id %1s skal indstilles||
+set_timer_action lead updated|set_timer_action bly opdateret||
+set_timer_action not valid|set_timer_action ikke gyldig||
+show comment history|show kommentar historie||
+source_id set to|source_id indstillet til||
+st_get_agent_active_lead lead found|st_get_agent_active_lead bly fundet||
+st_get_agent_active_lead not valid|st_get_agent_active_lead ikke gyldig||
+st_login_log not valid|st_login_log ikke gyldig||
+st_login_log user found|st_login_log bruger fundet||
+stage %1s is not valid|stadie %1s er ikke gyldig||
+stage is not valid|stadie er ikke gyldig||
+state set to|tilstand er indstillet til||
+stop audio|stoppe lyd||
+stop recording error|stoppe optagelsen fejl||
+system load average: |Systemet belastning gennemsnit:||
+title set to|titel sat til||
+to campaign|til kampagne||
+transfer_conference function set|transfer_conference funktion sæt||
+transfer_conference not valid|transfer_conference ikke gyldig||
+uniqueid %1s must be set|UniqueID %1s skal indstilles||
+uniqueid %1s or lead_id: %2s is not valid|UniqueID %1s eller lead_id: %2s er ikke gyldig||
+uniqueid %1s or lead_id: %2s or list_id: %3s or phone_number: %4s or campaign: %5s is not valid|UniqueID %1s eller lead_id: %2s eller list_id: %3s eller PHONE_NUMBER: %4s eller kampagne: %5s er ikke gyldig||
+up.gif|up.gif||
+update_fields lead updated|update_fields bly opdateret||
+upload maximum filesize: |upload maksimal filstørrelse:||
+user is not allowed to change agent in-groups|Brugeren er ikke tilladt at ændre agent in-grupper||
+user is not allowed to modify campaign settings|Brugeren er ikke tilladt at ændre kampagneindstillinger||
+user is not allowed to modify lead information|Brugeren er ikke tilladt at ændre bly information||
+user not logged in|bruger ikke logget ind||
+value is not valid|værdi er ikke gyldig||
+vdc_LB_active.gif|vdc_LB_active_dk.gif||
+vdc_LB_blank_OFF.gif|vdc_LB_blank_OFF.gif||
+vdc_LB_customxfer.gif|vdc_LB_customxfer.gif||
+vdc_LB_customxfer_OFF.gif|vdc_LB_customxfer_OFF.gif||
+vdc_LB_dialnextnumber.gif|vdc_LB_dialnextnumber.gif||
+vdc_LB_dialnextnumber_OFF.gif|vdc_LB_dialnextnumber_OFF.gif||
+vdc_LB_grabivrparkcall.gif|vdc_LB_grabivrparkcall.gif||
+vdc_LB_grabivrparkcall_OFF.gif|vdc_LB_grabivrparkcall_OFF.gif||
+vdc_LB_grabparkedcall.gif|vdc_LB_grabparkedcall.gif||
+vdc_LB_grabparkedcall_OFF.gif|vdc_LB_grabparkedcall_OFF.gif||
+vdc_LB_hangupcustomer.gif|vdc_LB_hangupcustomer.gif||
+vdc_LB_hangupcustomer_OFF.gif|vdc_LB_hangupcustomer_OFF.gif||
+vdc_LB_ivrparkcall.gif|vdc_LB_ivrparkcall.gif||
+vdc_LB_ivrparkcall_OFF.gif|vdc_LB_ivrparkcall_OFF.gif||
+vdc_LB_parkcall.gif|vdc_LB_parkcall.gif||
+vdc_LB_parkcall_OFF.gif|vdc_LB_parkcall_OFF.gif||
+vdc_LB_pause.gif|vdc_LB_pause.gif||
+vdc_LB_pause_OFF.gif|vdc_LB_pause_OFF.gif||
+vdc_LB_paused.gif|vdc_LB_paused_dk.gif||
+vdc_LB_quickxfer.gif|vdc_LB_quickxfer.gif||
+vdc_LB_quickxfer_OFF.gif|vdc_LB_quickxfer_OFF.gif||
+vdc_LB_requeue_call.gif|vdc_LB_requeue_call.gif||
+vdc_LB_requeue_call_OFF.gif|vdc_LB_requeue_call_OFF.gif||
+vdc_LB_resume.gif|vdc_LB_resume.gif||
+vdc_LB_resume_OFF.gif|vdc_LB_resume_OFF.gif||
+vdc_LB_senddtmf.gif|vdc_LB_senddtmf.gif||
+vdc_LB_senddtmf_OFF.gif|vdc_LB_senddtmf_OFF.gif||
+vdc_LB_startrecording.gif|vdc_LB_startrecording.gif||
+vdc_LB_startrecording_OFF.gif|vdc_LB_startrecording_OFF.gif||
+vdc_LB_stoprecording.gif|vdc_LB_stoprecording.gif||
+vdc_LB_stoprecording_OFF.gif|vdc_LB_stoprecording_OFF.gif||
+vdc_LB_transferconf.gif|vdc_LB_transferconf.gif||
+vdc_LB_transferconf_OFF.gif|vdc_LB_transferconf_OFF.gif||
+vdc_LB_webform.gif|vdc_LB_webform.gif||
+vdc_LB_webform_OFF.gif|vdc_LB_webform_OFF.gif||
+vdc_LB_webform_two.gif|vdc_LB_webform_two.gif||
+vdc_LB_webform_two_OFF.gif|vdc_LB_webform_two_OFF.gif||
+vdc_XB_ammessage.gif|vdc_XB_ammessage.gif||
+vdc_XB_ammessage_OFF.gif|vdc_XB_ammessage_OFF.gif||
+vdc_XB_blindtransfer.gif|vdc_XB_blindtransfer.gif||
+vdc_XB_blindtransfer_OFF.gif|vdc_XB_blindtransfer_OFF.gif||
+vdc_XB_channel.gif|vdc_XB_channel.gif||
+vdc_XB_contactsbutton.gif|vdc_XB_contactsbutton.gif||
+vdc_XB_dialwithcustomer.gif|vdc_XB_dialwithcustomer.gif||
+vdc_XB_dialwithcustomer_OFF.gif|vdc_XB_dialwithcustomer_OFF.gif||
+vdc_XB_hangupbothlines.gif|vdc_XB_hangupbothlines.gif||
+vdc_XB_hangupxferline.gif|vdc_XB_hangupxferline.gif||
+vdc_XB_hangupxferline_OFF.gif|vdc_XB_hangupxferline_OFF.gif||
+vdc_XB_header.gif|vdc_XB_header.gif||
+vdc_XB_hotkeysactive.gif|vdc_XB_hotkeysactive.gif||
+vdc_XB_hotkeysactive_OFF.gif|vdc_XB_hotkeysactive_OFF.gif||
+vdc_XB_leave3waycall.gif|vdc_XB_leave3waycall.gif||
+vdc_XB_leave3waycall_OFF.gif|vdc_XB_leave3waycall_OFF.gif||
+vdc_XB_localcloser.gif|vdc_XB_localcloser.gif||
+vdc_XB_localcloser_OFF.gif|vdc_XB_localcloser_OFF.gif||
+vdc_XB_number.gif|vdc_XB_number.gif||
+vdc_XB_parkcustomerdial.gif|vdc_XB_parkcustomerdial.gif||
+vdc_XB_parkcustomerdial_OFF.gif|vdc_XB_parkcustomerdial_OFF.gif||
+vdc_XB_presetsbutton.gif|vdc_XB_presetsbutton.gif||
+vdc_XB_seconds.gif|vdc_XB_seconds.gif||
+vdc_tab_email.gif|vdc_tab_email.gif||
+vdc_tab_form.gif|vdc_tab_form.gif||
+vdc_tab_script.gif|vdc_tab_script.gif||
+vdc_tab_vicidial.gif|vdc_tab_vicidial.gif||
+vdc_volume_MUTE.gif|vdc_volume_MUTE.gif||
+vdc_volume_UNMUTE.gif|vdc_volume_UNMUTE.gif||
+vdc_volume_down.gif|vdc_volume_down.gif||
+vdc_volume_down_off.gif|vdc_volume_down_off.gif||
+vdc_volume_up.gif|vdc_volume_up.gif||
+vdc_volume_up_off.gif|vdc_volume_up_off.gif||
+vendor_lead_code set to|vendor_lead_code indstillet til||
+view notes|se noter||
+voicemail box %1s is not valid|voicemail boks %1s er ikke gyldig||
+vtc_tab_vicidial.gif|vtc_tab_vicidial.gif||
+vtiger callback activity does not exist in vtiger system|vtiger tilbagekald aktivitet findes ikke i vtiger systemet||
+webphone_url active and displayed|webphone_url aktiv og vises||
+webphone_url active and launched|webphone_url aktiv og lanceret||
+webphone_url error - no session data|webphone_url fejl - ingen data session||
+webphone_url error - webphone url is empty|webphone_url fejl - WEBPHONE url er tom||
+webphone_url not valid|webphone_url ikke gyldig||

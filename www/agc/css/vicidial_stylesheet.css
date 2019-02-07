@@ -1,0 +1,128 @@
+.vertical-text {
+	writing-mode:tb-rl;
+	-webkit-transform:rotate(90deg);
+	-moz-transform:rotate(90deg);
+	-o-transform: rotate(90deg);
+	white-space:nowrap;
+	display:block;
+	top:0;
+	width:20px;
+	height:20px;
+}
+input.tiny_red_btn{
+	color:#FFFFFF;
+	font-size:9px;
+	font-weight:bold;
+	background-color:#993333;
+	border:1px solid;
+	border-top-color:#FFCCCC;
+	border-left-color:#FFCCCC;
+	border-right-color:#660000;
+	border-bottom-color:#660000;
+	filter:progid:DXImageTransform.Microsoft.Gradient
+		(GradientType=0,StartColorStr='#00ffffff',EndColorStr='#ff660000');}
+input.tiny_blue_btn{
+	color:#FFFFFF;
+	font-size:9px;
+	font-weight:bold;
+	background-color:#3333FF;
+	border:1px solid;
+	border-top-color:#CCCCFF;
+	border-left-color:#CCCCFF;
+	border-right-color:#000066;
+	border-bottom-color:#000066;
+	filter:progid:DXImageTransform.Microsoft.Gradient
+		(GradientType=0,StartColorStr='#00ffffff',EndColorStr='#ff000066');}
+input.tiny_yellow_btn{
+	color:#000000;
+	font-size:9px;
+	font-weight:bold;
+	background-color:#FFFF00;
+	border:1px solid;
+	border-top-color:#FFFFCC;
+	border-left-color:#FFFFCC;
+	border-right-color:#333300;
+	border-bottom-color:#333300;
+	filter:progid:DXImageTransform.Microsoft.Gradient
+		(GradientType=0,StartColorStr='#00ffffff',EndColorStr='#ffFFFF00');}
+input.tiny_green_btn{
+	color:#FFFFFF;
+	font-size:9px;
+	font-weight:bold;
+	background-color:#009900;
+	border:1px solid;
+	border-top-color:#CCFFCC;
+	border-left-color:#CCFFCC;
+	border-right-color:#003300;
+	border-bottom-color:#003300;
+	filter:progid:DXImageTransform.Microsoft.Gradient
+		(GradientType=0,StartColorStr='#00ffffff',EndColorStr='#FF003300');}
+
+.title {  font-family: Arial, Helvetica, sans-serif; color: black; font-size: 18pt}
+.title_wh {  font-family: Arial, Helvetica, sans-serif; color: white; font-size: 14pt}
+.arial {  font-family: Arial, Helvetica, sans-serif; color: black; font-size: 10pt}
+.arial_bold {  font-family: Arial, Helvetica, sans-serif; color: black; font-size: 10pt; font-weight: bold}
+.arial_bold_white {  font-family: Arial, Helvetica, sans-serif; color: white; font-size: 10pt; font-weight: bold}
+.small_arial {  font-family: Arial, Helvetica, sans-serif; color: black; font-size: 8pt}
+.small_arial_bold {  font-family: Arial, Helvetica, sans-serif; color: black; font-size: 8pt; font-weight: bold}
+.tiny_arial {  font-family: Arial, Helvetica, sans-serif; color: black; font-size: 6pt}
+.arial_header {  font-family: Arial, Helvetica, sans-serif; color: black; font-size: 14pt; font-weight: bold}
+
+/* Manager/agent chat-specific classes */
+div.scrolling {
+	height: 77px;
+	width: 320px;
+	overflow: auto;
+	border: 1px solid #666;
+	background-color: #FFF;
+	padding: 5px;
+}
+textarea.chat_box {
+    font-family: Arial, Sans-Serif;
+    font-size: 10px;
+    margin-bottom: 3px;
+    padding: 2px;
+    border: solid 1px #000066;
+}
+div.scrolling_transcript {
+	height: 204px;
+	width: 370px;
+	overflow: auto;
+	border: 1px solid #666;
+	background-color: #FFF;
+	padding: 5px;
+}
+div.scrolling_chat_display {
+	height: 104px;
+	width: 150px;
+	overflow: auto;
+	border: 1px solid #666;
+	background-color: #FFF;
+	padding: 2px;
+}
+
+.button_active {
+    background-color: #4CAF50; /* Green */
+	border: 1px solid green;
+	border-radius: 2px;
+    color: white;
+    padding: 10px 22px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+	}
+
+.button_inactive {
+    background-color: #4CAF50; /* Green */
+    border: 1px solid green;
+	border-radius: 2px;
+    color: white;
+    padding: 10px 22px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+	opacity: 0.6;
+    cursor: not-allowed;
+	}

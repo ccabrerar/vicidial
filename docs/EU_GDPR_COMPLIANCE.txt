@@ -1,0 +1,90 @@
+EUROPEAN UNION GDPR COMPLIANCE	  Started: 2018-03-02	Updated: 2018-06-22
+
+
+!!!!! NOTE THIS SET OF FEATURES IS NOT ENABLED IN VICIDIAL BY DEFAULT !!!!!
+
+
+This document describes the new EU GDPR(General Data Protection Regulation) features in Vicidial, as well as a brief overview of the GDPR regulations going into effect for organizations that interact with residents of the European Union as of May 25th, 2018. 
+
+The official EU GDPR website is located here:
+https://www.eugdpr.org/
+
+Good overview of GDPR rules and scope:
+https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
+
+
+What is the GDPR?
+
+The right of access (Article 15) is a data subject right that gives citizens the right to get access to their personal data and information about how this personal data is are being processed. A data controller must provide, upon request, an overview of the categories of data that are being processed (Article 15(1)(b)) as well as a copy of the actual data (Article 15(3)). Furthermore, the data controller has to inform the data subject on details about the processing such as the purposes are of the processing (Article 15(1)(a)), with whom the data is shared (Article 15(1)(c)), and how it acquired the data (Article 15(1)(g)).
+
+A right to erasure (Article 17) provides that the data subject has the right to request erasure of personal data related to them on any one of a number of grounds, including noncompliance with Article 6.1 (lawfulness) that includes a case (f) if the legitimate interests of the controller is overridden by the interests or fundamental rights and freedoms of the data subject, which require protection of personal data.
+
+And there are many other sections not directly affecting VICIdial software for affected organizations that you should read about if your organization is affected.
+
+
+Who is affected by the GDPR?
+
+The regulation applies if the data controller, an organisation that collects data from EU residents, or processor, an organisation that processes data on behalf of data controller like cloud service providers or the data subject (person) is based in the EU. The regulation also applies to organisations based outside the EU if they collect or process personal data of individuals located inside the EU. According to the European Commission, "personal data is any information relating to an individual, whether it relates to his or her private, professional or public life. It can be anything from a name, a home address, a photo, an email address, bank details, posts on social networking websites, medical information, or a computer’s IP address."
+
+
+
+
+New VICIdial Settings - 
+
+Admin -> System Settings:
+
+Enable GDPR-compliant Data Download Deletion -This setting if enabled will allow for the complete download and/or deletion of all customer data for a particular lead, in compliance with the General Data Protection Regulation (GDPR). Default is 0 for disabled. A setting of 1 will enable downloading data, and a setting of 2 will enable not just downloading, but also deletion of data, including any recordings. 
+
+
+Users -> Modify User:
+
+GDPR-Compliant Export Delete Leads -This setting if enabled will allow for the complete download and/or deletion of all customer data for a particular lead, in compliance with the General Data Protection Regulation (GDPR). Default is 0 for disabled. A setting of 1 will enable downloading data, and a setting of 2 will enable not just downloading, but also deletion of data, including any recordings. 
+You are not allowed to set this user setting higher than the current system setting. 
+
+
+
+New VICIdial Web Administration Features - 
+
+On the Modify Lead Page(which you can access from either the "Lists -> Search for a Lead" page, or by clicking on a lead ID in the "User Stats" page):
+
+At the bottom of the page, you may see these options:
+
+GDPR compliance:
+Click here to download GDPR-formatted data for this lead
+Click here to review and purge customer data on lead
+
+
+The "download" option will provide you with a ZIP file containing all lead and log data for the lead record in the system as well as all of the recordings that are available for the lead record.
+
+The "review and purge" option will take you to a confirmation page where you can permanently delete the personal information that is stored in the system
+
+
+NOTE: if you are not using a VICIbox 8.x or newer web server, make sure that your installation of PHP has the ZipArchive class installed:
+http://php.net/manual/en/zip.installation.php
+
+
+
+New VICIdial back-end scripts - 
+
+AST_GDPR_audio_purge.pl:
+
+# This script queries the recording log deletion queue and purges any audio recordings
+# inserted into this table (done through the GDPR feature in the administration modify lead page)
+# Set to purge nightly, or as often as desired
+#
+# 1 0 * * * /usr/share/astguiclient/AST_GDPR_audio_purge.pl --recording_dir=/var/spool/asterisk/monitorDONE
+#
+#
+# FLAG FOR RECORDING DIRECTORY ON SERVER
+# *** REQUIRED ***
+# --recording_dir
+#
+# FLAG FOR NO DATE DIRECTORY ON SERVER
+# --nodatedir
+#
+# FLAG FOR Y/M/D DATE DIRECTORY ON SERVER
+# --YMDdatedir
+#
+# PERFORM ADDITIONAL DIRECTORY SEARCHES
+# --location_search
+#

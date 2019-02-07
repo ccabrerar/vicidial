@@ -1,0 +1,41 @@
+diff -Naur asterisk-1.8.19.0-vici-beta.old/channels/chan_sip.c asterisk-1.8.19.0-vici-beta/channels/chan_sip.c
+--- asterisk-1.8.19.0-vici-beta.old/channels/chan_sip.c	2012-12-05 12:43:37.000000000 -0500
++++ asterisk-1.8.19.0-vici-beta/channels/chan_sip.c	2013-04-17 13:54:35.000000000 -0400
+@@ -21462,6 +21462,20 @@
+ 	if (owner) {
+ 		const char *rp = NULL, *rh = NULL;
+ 
++		/* Send manager event for sip hangup cause code */
++		if ((resp >= 400) && (resp <= 900))
++			manager_event(
++				EVENT_FLAG_SYSTEM,
++				"SIP-Hangup-Cause",
++				"ChannelDriver: SIP\r\nChannel: %s\r\nCallerIDName: %s\r\nUniqueid: %s\r\nResult: %i|%s\r\n",
++				p->owner->name,
++				S_COR(p->owner->caller.id.name.valid, p->owner->caller.id.name.str, "<unknown>"),
++				p->owner->uniqueid,
++				resp,
++				rest
++			);
++
++
+ 		owner->hangupcause = 0;
+ 		if (ast_test_flag(&p->flags[1], SIP_PAGE2_Q850_REASON) && (rh = get_header(req, "Reason"))) {
+ 			rh = ast_skip_blanks(rh);
+@@ -21477,6 +21491,16 @@
+ 
+ 		if (!owner->hangupcause)
+ 			owner->hangupcause = hangup_sip2cause(resp);
++	} else {
++		/* Send manager event for sip hangup cause code */
++		manager_event(
++			EVENT_FLAG_SYSTEM,
++			"SIP-Response",
++			"ChannelDriver: SIP\r\nMethod: %s\r\nResult: %i|%s\r\n",
++			sip_methods[sipmethod].text,
++			resp,
++			rest
++		);
+ 	}
+ 
+ 	if (p->socket.type == SIP_TRANSPORT_UDP) {

@@ -1,0 +1,318 @@
+#!/usr/bin/perl
+#
+# cm_sc_send_url.agi version 2.14
+# 
+# Designed to work with Call Menus to send a URL defined in a Settings Container
+# for a call with a lead_id associated with it(use CUSTOMERCLOSER in the In-Group
+# Action Transfer CID field!).
+#
+# If container is not found, call will go to the 'C' option in the call menu
+# If lead_id is not defined, call will go to the 'D' option in the call menu
+# After URL is sent, call will go to the 'B' option in the call menu
+#
+# Flag Options:
+# 1- container_id for settings container with URL to send
+#
+# example of what to set in the Call Menu:
+# Set the prompt to "sip-silence|cm_sc_send_url.agi,test_cm_url"
+#
+# The URL that you define in the Settings Container can use most of the 
+# variables you can use in the Dispo Call URL fields. The 'user' and 'status' 
+# fields as well as the talk_time, talk_time_min and ivr_time fields that are 
+# also available will all use the last vicidial_agent_log entry for it's values.
+#
+# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+#
+# changes:
+# 170202-2339 - First build
+#
+
+$script = 'cm_sc_send_url.agi';
+
+($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+$year = ($year + 1900);
+$mon++;
+if ($mon < 10) {$mon = "0$mon";}
+if ($mday < 10) {$mday = "0$mday";}
+if ($hour < 10) {$hour = "0$hour";}
+if ($min < 10) {$min = "0$min";}
+if ($sec < 10) {$sec = "0$sec";}
+
+$now_date_epoch = time();
+$now_date = "$year-$mon-$mday $hour:$min:$sec";
+$start_time=$now_date;
+$CIDdate = "$mon$mday$hour$min$sec";
+$tsSQLdate = "$year$mon$mday$hour$min$sec";
+$SQLdate = "$year-$mon-$mday $hour:$min:$sec";
+$SQLdateBEGIN = $SQLdate;
+$state='';
+$CIDlead_id='';
+
+# default path to astguiclient configuration file:
+$PATHconf =		'/etc/astguiclient.conf';
+
+open(conf, "$PATHconf") || die "can't open $PATHconf: $!\n";
+@conf = <conf>;
+close(conf);
+$i=0;
+foreach(@conf)
+	{
+	$line = $conf[$i];
+	$line =~ s/ |>|\n|\r|\t|\#.*|;.*//gi;
+	if ( ($line =~ /^PATHhome/) && ($CLIhome < 1) )
+		{$PATHhome = $line;   $PATHhome =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHlogs/) && ($CLIlogs < 1) )
+		{$PATHlogs = $line;   $PATHlogs =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHagi/) && ($CLIagi < 1) )
+		{$PATHagi = $line;   $PATHagi =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHweb/) && ($CLIweb < 1) )
+		{$PATHweb = $line;   $PATHweb =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHsounds/) && ($CLIsounds < 1) )
+		{$PATHsounds = $line;   $PATHsounds =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHmonitor/) && ($CLImonitor < 1) )
+		{$PATHmonitor = $line;   $PATHmonitor =~ s/.*=//gi;}
+	if ( ($line =~ /^VARserver_ip/) && ($CLIserver_ip < 1) )
+		{$VARserver_ip = $line;   $VARserver_ip =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_server/) && ($CLIDB_server < 1) )
+		{$VARDB_server = $line;   $VARDB_server =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_database/) && ($CLIDB_database < 1) )
+		{$VARDB_database = $line;   $VARDB_database =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_user/) && ($CLIDB_user < 1) )
+		{$VARDB_user = $line;   $VARDB_user =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_pass/) && ($CLIDB_pass < 1) )
+		{$VARDB_pass = $line;   $VARDB_pass =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_port/) && ($CLIDB_port < 1) )
+		{$VARDB_port = $line;   $VARDB_port =~ s/.*=//gi;}
+	$i++;
+	}
+
+if (!$VARDB_port) {$VARDB_port='3306';}
+if (!$AGILOGfile) {$AGILOGfile = "$PATHlogs/agiout.$year-$mon-$mday";}
+
+use DBI;
+use Asterisk::AGI;
+$AGI = new Asterisk::AGI;
+
+
+$|=1;
+while(<STDIN>) 
+	{
+	chomp;
+	last unless length($_);
+	if ($AGILOG)
+		{
+		if (/^agi_(\w+)\:\s+(.*)$/)
+			{
+			$AGI{$1} = $2;
+			}
+		}
+
+	if (/^agi_context\:\s+(.*)$/)		{$context = $1;}
+	if (/^agi_uniqueid\:\s+(.*)$/)		{$unique_id = $1; $uniqueid = $unique_id;}
+	if (/^agi_channel\:\s+(.*)$/)		{$channel = $1;}
+	if (/^agi_extension\:\s+(.*)$/)		{$extension = $1;}
+	if (/^agi_type\:\s+(.*)$/)			{$type = $1;}
+	if (/^agi_callerid\:\s+(.*)$/)		{$callerid = $1;}
+	if (/^agi_calleridname\:\s+(.*)$/)	{$calleridname = $1;}
+	}
+foreach $i (sort keys %AGI)
+	{
+	if ($AGILOG) {$agi_string = " -- $i = $AGI{$i}";   &agi_output;}
+	}
+
+$callerid =~ s/\'|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
+$calleridname =~ s/\'|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
+$extension =~ s/\'|\"|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
+
+if ($calleridname =~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^Y\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^M\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/)
+	{
+	$callerid = $calleridname;
+	$callerid =~ s/\"//gi;
+	$callerid =~ s/ .*//gi;
+	$CIDlead_id = $callerid;
+	$CIDlead_id = substr($CIDlead_id, 10, 10);
+	$CIDlead_id = ($CIDlead_id + 0);
+	}
+else
+	{
+	if ($AGILOG) {$agi_string = "container_id not set($container_id|$no_container), exiting the cm_sc_areacode.agi app, transferring call to D @ $context";   &agi_output;}
+	print "SET CONTEXT $context\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET EXTENSION D\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET PRIORITY 1\n";
+		$result = <STDIN>;
+		checkresult($result);
+	
+	exit;
+	}
+
+if ($AGILOG) {$agi_string = "AGI Variables: |$unique_id|$channel|$extension|$type|$callerid|     |$country_code|$phone_number($phone_ac)|$ac_length|";   &agi_output;}
+
+$AGI->stream_file('sip-silence');
+$AGI->stream_file('sip-silence');
+$AGI->stream_file('sip-silence');
+
+
+$dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
+    or die "Couldn't connect to database: " . DBI->errstr;
+
+### Grab Server values from the database
+$stmtA = "SELECT agi_output FROM servers where server_ip = '$VARserver_ip';";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+$rec_count=0;
+while ($sthArows > $rec_count)
+	{
+	$AGILOG = '0';
+	@aryA = $sthA->fetchrow_array;
+	$DBagi_output =	$aryA[0];
+	if ($DBagi_output =~ /STDERR/)	{$AGILOG = '1';}
+	if ($DBagi_output =~ /FILE/)	{$AGILOG = '2';}
+	if ($DBagi_output =~ /BOTH/)	{$AGILOG = '3';}
+	$rec_count++;
+	}
+$sthA->finish();
+
+
+### begin parsing run-time options ###
+if (length($ARGV[0])>1)
+	{
+	if ($AGILOG) {$agi_string = "Perl Environment Dump:";   &agi_output;}
+	$i=0;
+	while ($#ARGV >= $i)
+		{
+		$args = "$args $ARGV[$i]";
+		if ($AGILOG) {$agi_string = "$i|$ARGV[$i]";   &agi_output;}
+		$i++;
+		}
+	
+	### list of command-line array arguments:
+	@ARGV_vars = split(/---/, $ARGV[0]);
+
+	$container_id = 	$ARGV_vars[0];
+	}
+
+$no_container=0;
+if (length($container_id) < 1)
+	{$no_container=1;}
+else
+	{
+	$stmtA= "SELECT container_entry from vicidial_settings_containers where container_id='$container_id';";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+		if ($AGILOG) {$agi_string = "$sthArows|$stmtA|";   &agi_output;}
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$container_entry	= $aryA[0];
+		}
+	else
+		{$no_container=2;}
+	$sthA->finish();
+	}
+
+if ($no_container > 0) 
+	{
+	if ($AGILOG) {$agi_string = "container_id not set($container_id|$no_container), exiting the cm_sc_areacode.agi app, transferring call to C @ $context";   &agi_output;}
+	print "SET CONTEXT $context\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET EXTENSION C\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET PRIORITY 1\n";
+		$result = <STDIN>;
+		checkresult($result);
+	
+	exit;
+	}
+
+
+
+
+$launch = $PATHhome . "/AST_send_URL.pl";
+$launch .= " --SYSLOG" if ($SYSLOG);
+$launch .= " --lead_id=" . $CIDlead_id;
+$launch .= " --phone_number=0";
+$launch .= " --user=VDAD";
+$launch .= " --call_type=IN";
+$launch .= " --campaign=0";
+$launch .= " --uniqueid=" . $uniqueid;
+$launch .= " --alt_dial=MAIN";
+$launch .= " --call_id=" . $calleridname;
+$launch .= " --list_id=" . $list_id;
+$launch .= " --function=SC_CALL_URL";
+$launch .= " --container=" . $container_id;
+
+system($launch . ' &');
+
+if ($AGILOG) {$agi_string = "$launch|";   &agi_output;}
+
+
+
+if ($AGILOG) {$agi_string = "SC URL sent($CIDlead_id|$container_id), exiting the cm_sc_areacode.agi app, transferring call to B @ $context";   &agi_output;}
+print "SET CONTEXT $context\n";
+	$result = <STDIN>;
+	checkresult($result);
+print "SET EXTENSION B\n";
+	$result = <STDIN>;
+	checkresult($result);
+print "SET PRIORITY 1\n";
+	$result = <STDIN>;
+	checkresult($result);
+
+exit;
+
+
+
+
+##### SUBROUTINES #####
+
+sub agi_output
+{
+if ($AGILOG >=2)
+	{
+	### open the log file for writing ###
+	open(Lout, ">>$AGILOGfile")
+			|| die "Can't open $AGILOGfile: $!\n";
+	print Lout "$now_date|$script|$agi_string\n";
+	close(Lout);
+	}
+	### send to STDERR writing ###
+if ( ($AGILOG == '1') || ($AGILOG == '3') )
+	{print STDERR "$now_date|$script|$agi_string\n";}
+$agi_string='';
+}
+
+
+sub checkresult 
+	{
+	my ($res) = @_;
+	my $retval;
+	$tests++;
+	chomp $res;
+	if ($res =~ /^200/) 
+		{
+		$res =~ /result=(-?\d+)/;
+		if (!length($1)) 
+			{
+		#	print STDERR "FAIL ($res)\n";
+			$fail++;
+			} 
+		else 
+			{
+		#	print STDERR "PASS ($1)\n";
+			$pass++;
+			}
+		} 
+	else 
+		{
+	#	print STDERR "FAIL (unexpected result '$res')\n";
+		$fail++;
+		}
+	}

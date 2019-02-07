@@ -1,0 +1,971 @@
+  - ACTIVE DISPLAY PAUSED -|   - Display ativo parou -||
+ ALT PHONE DIAL|  Telefone alt||
+ Comments| Comentários||
+ DIAL | SELETOR||
+ Email| Email||
+ Exten %1s is not valid or queryCID %2s is not valid, Originate command not inserted| %1s EXTEN não é %2s válidos ou querycid não é válido, se originam de comando não inserido||
+ Gender|  gênero||
+ Pause Code %1s has been recorded|  pausa de código %1s foi gravada||
+ Phone Area Code Outside Dialable Zone|  código de área do telefone fora da zona discável||
+ Phone: |  telefone:||
+ Postal Code Outside Dialable Zone|  CEP fora da zona discável||
+ State| Estado||
+ Title| Título||
+ You are not allowed to dial into other agent sessions|  você não tem permissão para discar para outras sessões do agente||
+ to %1s on %2s|  a %1s sobre %2s||
+%1s %2s %3s or %4s is not valid| %1s %2s %3s ou %4s não é válido||
+%1s command sent for Channel %2s on %3s| %1s comando enviado para o canal %2s em %3s||
+%1s is not valid| %1s não é válido||
+(This is usually a 1 in the USA-Canada)|(isto é, normalmente a 1 nos EUA-Canadá)||
+(This option if checked will attempt to find the phone number in the system before inserting it as a new lead)|(esta opção se verificado tentará encontrar o número do telefone no sistema antes de inseri-lo como uma nova liderança)||
+(click on a number below to send to a conference)|(clique em um número abaixo para enviar a uma conferência)||
+(digits only please)|(dígitos só por favor)||
+(digits only)|(apenas dígitos)||
+-LOGGED-OUT|-logged-out||
+: %1s on Phone: %2s|: %1s no telefone: %2s||
+ACTIVE CALLBACKS|RECHAMADAS ATIVAS||
+ACTIVE DISPLAY PAUSED|A EXPOSIÇÃO ATIVA PAUSOU||
+ADD ALL|adicionar todos||
+AGENT ALERT SETTING CHANGED %1s|agente de definição de alerta mudou %1s||
+AGENT ALERT SETTING NOT CHANGED|alerta de agente de ajuste não mudou||
+AGENT CALL LOG:|registro de chamadas agente:||
+AGENT SCRIPT|script de agente||
+AGENT email frame|agente quadro email||
+AGENTS|agentes||
+AGENT_PHONE|agent_phone||
+AGENT| agente ||
+ALERT :|alertar:||
+ALT DIAL NUMBER: ADDRESS3|número de discagem alt: address3||
+ALT DIAL NUMBER: ALT|número de discagem alt: alt||
+ALT DIAL NUMBER:|ALT PROGR.SELEC NÚMERO:||
+ALT PHONE DIAL|ALT DO TELEFONE||
+ALT PHONE NUMBER STATUS CHANGED|status de número de telefone alt mudou||
+ALT PHONE NUMBER STATUS NOT CHANGED|telefone status de número alt não mudou||
+ALT PHONE|ALT DEL TELEFONO||
+ALT| alternado ||
+APR|abril||
+ATTACHMENTS| anexos ||
+AUG|agosto||
+AVAILABLE EXTENSIONS|EXTENSÕES DISPONÍVEIS||
+Active Extensions|Extensões Ativas||
+Active Local Menu|Menu Local Ativo||
+Active Trunks Menu|menu de troncos ativos||
+Active:|Ativa:||
+Address1|address1||
+Address2|address2||
+Address3 Phone Number|Endereço3 número de telefone||
+Address3|ENDEREÇO3||
+Agent %1s is now in status %2s|agente %1s está agora em estado %2s||
+Agent Alert!|alerta de agente!||
+Agent Form Display Script|Formulário agente de script exibição||
+Agent Redirect|agente de redirecionamento||
+Agent Screen Opener|agente tela abridor||
+Agent Screen|tela agente||
+Agent Timeclock|agente timeclock||
+Agent web client:  Login|cliente web agente: login||
+Agent web client:  Phone Login|cliente web do agente: telefone de login||
+Agent web client: Campaign Login|cliente web do agente: campanha de login||
+Agent web client: Phone Login Error|cliente web do agente: erro de login telefone||
+Agent web client: Re-Login|Agente cliente web: re-login||
+Agent:|Agente:||
+Agents View +|agentes ver +||
+Agents View|Agentes Ver||
+Alert Box|caixa de alerta||
+Alert is OFF|alerta estiver desligado||
+Alert is ON|alerta está ligado||
+Alt Count:|Alt Count:||
+Alt Phone Info|alt Informação telefone||
+Alt. Phone:|Alt. Telefone:||
+Alt. Phone|Alt. Telefone||
+Alternate Phone Number|Número de telefone alternativo||
+Amount of time you have been logged-in:|Quantidade de tempo que tem sido registrado em:||
+Amount of time you were logged-in:|Quantidade de tempo que foram registradas em:||
+Another live agent session was open using your user ID. It has been disabled. Click OK to continue to the agent screen.|outra sessão de agente ao vivo foi aberta usando o seu ID de usuário. ele foi desativado. Clique em OK para continuar a tela do agente||
+Answer:|responder:||
+Any changes made to the customer information below at this time will not be comitted, You must change customer information before you Hangup the call.|Todas as mudanças feitas ao cliente que a informação abaixo neste tempo não será comitted, você devem mudar a informação do cliente antes de você hangup a chamada||
+Appointment Date/Time:|data / hora marcada:||
+Appointment Notes:|notas de nomeação:||
+Attachments:|anexos:||
+Available Agents Transfer:|Agentes de transferência disponíveis:||
+Available Chats:|chats disponíveis:||
+Avatar Soundboard Display Script|avatar roteiro exibição soundboard||
+Avatars disabled on your system|avatars ativado em seu sistema||
+BACK TO MAIN WINDOW - ignore changes made|PARA TRÁS À JANELA PRINCIPAL - ignore as mudanças feitas||
+BACK to Administration|Retornar para Administração||
+BACK to Agent Login Screen|BACK TO Agent Login Screen||
+BACK to Welcome Screen|ANTERIOR a tela Bem-vindo||
+BLENDED CALLING(outbound activated)|chamado blended (saída ativado)||
+BLENDED CALLING|CHAMADA MISTURADA||
+BU NAME|nome da empresa||
+BU Name:|nome da empresa:||
+BUILD:|CONFIGURAÇÃO:||
+BUILD|CONFIGURAÇÃO||
+Back to Main Window|Para trás à janela principal||
+Busy Extensions|Extensões Ocupadas||
+CALL DATE/TIME|DATE/TIME DA CHAMADA||
+CALL DISPOSITION|CONVITE DISPOSIÇÃO||
+CALL GROUP| grupo chamar ||
+CALL ID|id chamada||
+CALL LOG FOR THIS LEAD:|CONVITE PARA ESTE LOG LEAD:||
+CALL NOTES LOG:|Registro de chamadas NOTAS:||
+CALLBACK DATE/TIME|callback data / hora||
+CALLBACKS FOR AGENT %1s:<br />To see information on one of the callbacks below, click on the INFO link. To call the customer back now, click on the DIAL link. If you click on a record below to dial it, it will be removed from the list.|retornos de chamada para o agente %1s: <br /> para ver informações sobre uma das chamadas de retorno abaixo, clique no link info. para chamar o cliente de volta agora, clique no link de discagem. se você clicar em um registro abaixo para marcá-lo, ele será removido da lista.||
+CALLER ID|identificador de chamadas||
+CAMPAIGN| campanha ||
+CB Comments:|Comentários dos CB:||
+CITY| cidade ||
+CLEAR FORM|RESTAURAÇÃO||
+CLEAR|claro||
+CLICK HERE TO LOG IN AGAIN|ESTALE AQUI PARA LOGON OUTRA VEZ||
+CLIENT CHANNEL|CANALETA DO CLIENTE||
+CLOSER INBOUND GROUP SELECTION|SELEÇÃO DE GRUPO INBOUND MAIS PRÓXIMA||
+CONFERENCE|CONFERÊNCIA||
+CONSULTATIVE|CONSULTIVO||
+CONTACTS SEARCH RESULTS:|CONTACTOS PESQUISA:||
+COPY MESSAGE|mensagem de cópia||
+CUSTOMER 3WAY HANGUP|3way cliente hangup||
+CUSTOMER|cliente||
+Call %1s %2s is not live on %3s, Checking Live Channel|chamam %1s %2s não é viver em %3s, verificando canal ao vivo||
+Call %1s could not be grabbed for %2s|chamada %1s não poderia ser agarrado por %2s||
+Call %1s grabbed for %2s|chamam %1s agarrou %2s||
+Call Agent Again|Agente Da Chamada Outra vez||
+Call Agent Webphone|webphone agente de call||
+Call Notes List|Call List Notes||
+Call Notes:|Chame Notas:||
+Call Rejected:|chamar rejeitada:||
+Call Wrapup:|Chamada Wrapup:||
+Call log List|lista de registro de chamadas||
+Call selected extension|Extensão selecionada chamada||
+Call selected vmail box|Caixa selecionada chamada do vmail||
+CallBack:|Rechamada:||
+Callback Comments:|Comentários de retorno de chamada:||
+Callback Entry Time:|Tempo de entrada de retorno de chamada:||
+Callback Lead Status:|Callback Estado de chumbo:||
+Callback Status:|Estado de retorno de chamada:||
+Callback Trigger Time:|Callback tempo de disparo:||
+Called 3rd party:|Ó partido chamado:||
+Called Count:|número de chamadas:||
+Called Since Last Reset:|chamado desde a última reposição:||
+Called:|Chamado:||
+CallerID|CALLERID||
+Calling:|Chamada:||
+Calls Dialing:|chama de marcação:||
+Calls In Queue:|Solicita, em fila:||
+Calls in Queue View Disabled for this campaign|Chamadas na fila Ver condicionada para esta campanha||
+Calls in Queue|Solicita, em fila||
+Campaign %1s is not valid or lead_id %2s is not valid|Campanha %1s não é válido ou lead_id %2s não é válido||
+Campaign %1s is not valid|Campanha %1s não é válido||
+Campaign Login|Início de uma sessão Da Campanha||
+Campaign not active, please try again|A campanha nao ativa, tenta por favor outra vez||
+Campaign not found|campanha não encontrado||
+Campaign:|Campanha:||
+Cannot find empty vicidial_conference on %1s, Redirect command not inserted|não consegue encontrar vicidial_conference vazio em %1s, comando redirecionar não inserido||
+Change this phone number to ACTIVE|Altere este número de telefone para ACTIVAS||
+Change this phone number to INACTIVE|Altere este número de telefone para INATIVO||
+Channel %1s in use by another agent on %2s, Hangup command not inserted|canal %1s em uso por outro agente em %2s, comando de suspensão não inserido||
+Channel %1s is not live on %2s, %3s command not inserted|canal %1s não é viver em %2s, %3s comando não inserido||
+Channel %1s is not live on %2s, Hangup command not inserted|canal %1s não é viver em %2s, comando de suspensão não inserido||
+Channel %1s is not live on %2s, Redirect command not inserted|canal %1s não é viver em %2s, comando redirecionar não inserido||
+Channel %1s is not valid or exten %2s is not valid or filename: %3s is not valid, %4s command not inserted|canal %1s não é  %2s válidos ou EXTEN não é válido ou filename: %3s não é válido, %4s comando não inserido||
+Channel %1s is not valid or queryCID %2s is not valid or filename: %3s is not valid, %4s command not inserted|canal %1s não é %2s válidos ou querycid não é válido ou filename: %3s não é válido, %4s comando não inserido||
+Channel %1s is not valid or queryCID %2s is not valid, Hangup command not inserted|canal %1s não é válido ou querycid %2s não é válido, comando de suspensão não inseridas||
+Channel %1s must be greater than 2 characters| %1s canal tem de ser maior do que dois caracteres||
+Channel to be transferred:|Canaleta a ser transferida:||
+Channel:| Canaleta:||
+Channel| Canaleta||
+Click Here to Activate|Clique aqui para ativar||
+Click Here to Choose a Dial In-Group|clique aqui para escolher uma marcação em grupo||
+Click Here to Choose a Group Alias|Clique aqui para escolher um grupo Alias||
+Click Here to Deactivate|clique aqui para desativar||
+Click LOGIN below to log-in|LOGIN Clique abaixo para log-in||
+Click LOGOUT below to log-out|LOGOUT Clique abaixo para log-out||
+Click on a conference room number on the left for info on that conference|Estale sobre um número de quarto da conferência na esquerda para o||
+Close Call Log|Feche Registro de chamadas||
+Close Info Box|Info Box Fechar||
+Close Message|Fechar Mensagem||
+Close Window|Fechar a janela||
+Closer In Group Choice %1s has been registered to user %2s|mais estreita no grupo de escolha %1s foi registrado para o usuário %2s||
+Comments:| Comentários:||
+Comments| Comentários||
+Conf Exten %1s is not valid or Exten %2s is not valid|conf EXTEN %1s não é 2s% válidos ou EXTEN não é válido||
+Conf Exten %1s is not valid|conf exten %1s não é válido||
+Conf Exten %1s or campaign %2s or ext_context %3s is not valid|conf exten %1s ou campanha %2s ou %3s ext_context não é válido||
+Conf Extension Check|Verificação Da Extensão De Conf||
+Conference %1s has been registered to %2s|conferências %1s foi registado %2s||
+Conference %1s, Stage %2s is not valid or queryCID %3s is not valid, Originate command not inserted| %1s conferências, palco %2s não é %3s válidos ou querycid não é válido, o comando se originam não inserido||
+Conferences List|Lista Das Conferências||
+Conferences Menu|Menu Das Conferências||
+Conferences:|Conferências:||
+Conferences|Conferências||
+Could not connect: |não pôde se conectar:||
+Custom Fields Disabled:|campos personalizados desativado:||
+Custom Form Output:|saída formulário personalizado:||
+Customer Hung-up, 3-way Call Ended Automatically|Cliente Hung-up, 3-way chamada foi terminada automaticamente||
+Customer Information:|Informação Do Cliente:||
+Customer Time:|Hora do cliente:||
+Customer has hung up:|O cliente pendurou acima:||
+D1 - DIAL|d1 - disque||
+D2 - DIAL|d2 - disque||
+DATE/TIME| data/hora||
+DATE:|data:||
+DEC|dezembro||
+DELETE ALL|excluir todos||
+DIAL ALERT:|discar alerta:||
+DIAL IN-GROUP|discar grupo||
+DIAL LEAD|LIGAÇÃO DO SELETOR||
+DIAL OVERRIDE|ULTRAPASSAGEM DO SELETOR||
+DIAL| SELETOR||
+DISPOSITION CALL :|chamada disposição:||
+DONE: %1s duplicates found,|feito: %1s duplicatas encontrado,||
+DONE: %1s is empty for lead %2s|feito: %1s está vazio por chumbo %2s||
+DONE: %1s match found, %2s updated to %3s with %4s status|feito: %1s correspondência encontrada, %2s atualizado para %3s com %4s estado||
+DONE: dispo is not a sale status: %1s|feito: dispo não é um estado de venda: %1s||
+DONE: dispo is not a sale status:|feito: dispo não é um estado de venda:||
+DONE: no duplicates found within|feito: não há duplicatas encontrado dentro||
+DONE: no lists in campaign_check|feito: não há listas em campaign_check||
+DONE: no match found within %1s     %2s|feito: nenhuma correspondência encontrada dentro de %1s %2s||
+DONE:|feito:||
+Data Goes Here|Os Dados Vão Aqui||
+Data Updated, Hanging up call, please wait|Dados atualizados, suspensão up call, por favor aguarde||
+Date received:|data de recebimento:||
+Department:|departamento:||
+Dept:|dept:||
+Dial Alt Phone Number:|Número Alt Do Seletor:||
+Dial Code:|Código Do Seletor:||
+Dial Countdown:|Disque Contagem Regressiva:||
+Dial From Conf|Seletor De Conf||
+Dial In-Group Selection|discar-grupo seleção||
+Dial In-Group:|discar grupo:||
+Dial Lead ID:|Disque chumbo ID:||
+Dial Link:|ligação discar:||
+Dial Next Call|discar próxima chamada||
+Dial Next Number|Número Seguinte Do Seletor||
+Dial Now|Seletor Agora||
+Dial Override:|ULTRAPASSAGEM DO SELETOR:||
+DialCode|DialCode||
+Dialable Leads:|Leads discáveis:||
+Dispo Choice %1s or lead_id %2s is not valid|escolha dispo %1s ou %2s lead_id não é válido||
+Disposition Hot Keys:|Chaves Quentes Da Disposição:||
+Disposition Status List Hidden|Lista disposição Estado Escondido||
+Disposition:|disposição:||
+EMAIL LOG FOR THIS LEAD:|log e-mail para este chumbo:||
+EMAIL TO|enviar e-mail para||
+END CHAT|final do bate-papo||
+ENTER A PAUSE CODE|DÊ ENTRADA A um CÓDIGO Da PAUSA||
+EPOCH:|época:||
+ERROR - ID variable missing|erro - id falta variável||
+ERROR: Invalid File Name:|erro: nome de arquivo inválido:||
+ERROR: System Settings missing|configurações do sistema ausentes: erro||
+ERROR: There are no Shifts enabled for your user group|ERRO: Não existem Shifts activado para o Grupo de Usuários||
+ERROR: You are not allowed to log in outside of your shift|ERRO: Você não tem permissão para iniciar sessão no para fora do seu turno||
+ERROR: no custom data for this lead: |erro: não há dados personalizados para este chumbo:||
+ERROR: no custom list fields table|erro: nenhuma lista de campos personalizados tabela||
+ERROR: no custom list fields|erro: não há campos de lista personalizados||
+ERROR: timeclock log entry already made:|ERRO: timeclock entrada do log já realizados:||
+ERROR|erro||
+Email:| Email:||
+Email| Email||
+End-of-call Disposition Selection|Extremidade-$$$-CHAME A Seleção Da Disposição||
+Enter Conference|Incorpore A Conferência||
+Enter email address of guest:|digite o endereço de e-mail do cliente:||
+Enter information below for the new lead you wish to call.|Incorpore a informação abaixo para a ligação que nova você deseja se chamar||
+Exten %1s is not valid or protocol %2s is not valid|1s EXTEN% não é válido ou protocolo %2s não é válido||
+Exten %1s is not valid or queryCID %2s is not valid, Originate command not inserted|%1s EXTEN não é %2s válidos ou querycid não é válido, se originam de comando não inserido||
+Extended Alt Phone Information:|Extensão Alt Telefone Informação:||
+Extensions Menu|Menu Das Extensões||
+Extensions:|Extensões:||
+ExtraChannel %1s must be greater than 2 characters|extrachannel %1s deve ser maior do que dois caracteres||
+ExtraChannel %1s|extrachannel %1s||
+F - Female|f - feminino||
+FAST DIAL|SELETOR RÁPIDO||
+FAVORITES| FAVORITOS||
+FEB|fevereiro||
+FINISH LEAD|REVESTIMENTO||
+FIRST NAME|primeiro nome||
+FULL NAME| nome completo ||
+Faster|Mais rapidamente||
+Favorites list has been updated to %1s for %2s|lista de favoritos foi atualizado para %1s para %2s||
+Finish Wrapup and Move On|Revestimento Wrapup e movimento sobre||
+Finish and Disposition Call|Revestimento e chamada da disposição||
+First Name:|primeiro nome:||
+First Sunday April to Last Sunday October|primeiro domingo de abril a outubro último domingo||
+First Sunday October to Last Sunday March|primeiro domingo de Outubro e no último domingo de Março||
+First Sunday October to Third Sunday March|primeiro domingo de Outubro a terceira marcha domingo||
+First|Prime||
+From:|a partir de:||
+Fronter:|fronter:||
+GO|ir||
+GROUP ALIAS|Grupo Alias||
+GROUPS NOT SELECTED|GRUPOS NÃO SELECIONADOS||
+GROUPS|grupos||
+Gender|gênero||
+Go Back|Vá Para trás||
+Group Alias Selection|Grupo Alias Selecção||
+Group Alias:|Grupo Alias:||
+Group Choice is not valid|escolha de grupo não é válido||
+Group Name:|nome do grupo:||
+Group|grupo||
+HANGUP| hangup ||
+HELP|socorro||
+HIDE|esconder||
+Hangup Again|Hangup Outra vez||
+Hangup Local|Local Do Hangup||
+Hangup Trunk|Tronco Do Hangup||
+Hangup command sent for Channel %1s on %2s|comando de suspensão enviado para o canal %1s sobre %2s||
+Hide Calls In Queue|Solicita Hide Na fila||
+Hide conference call channel information|Informação da canaleta da chamada de conferência do hide||
+Hijack Local|Local Do Hijack||
+Hijack Trunk|Tronco Do Hijack||
+History|história||
+Hour:|hour:||
+Hungup %1s on %2s|hungup %1s sobre %2s||
+IN-NUMBER|IN-NUMBER||
+IN/OUT| dentro e fora ||
+INBOUND CALLS:|CHAMADAS INBOUND:||
+INCALL|incall||
+INFO| informações ||
+INVITE|convidar||
+If you want to dial a number and have it NOT be added as a new lead, enter in the exact dialstring that you want to call in the Dial Override field below. To hangup this call you will have to open the CALLS IN THIS SESSION link at the bottom of the screen and hang it up by clicking on its channel link there.|Se você quiser marcar um número e o ter não adicionado como uma ligação nova, entre no dialstring exato esse você querem chamar-se abaixo no campo da ultrapassagem do seletor. Ao hangup esta chamada você terá que abrir as CHAMADAS ncEsta ligação da SESSÃO no fundo da tela e pendurá-las acima estalando em sua ligação da canaleta lá||
+Incoming:|Entrante:||
+Initializing..|inicializar ..||
+Invalid Date Format. Please correct and submit again.|formato de data inválido. por favor, corrija e envie novamente.||
+Invalid Day, Month, or Year range detected. Please correct and submit again.|dia, mês ou ano intervalo inválido detectado. por favor, corrija e envie novamente.||
+Invalid Source|fonte inválido||
+Invalid Username/Password:|inválido nome de usuário / senha:||
+Invalid Username/Password|nome de usuário inválido / password||
+Invalid server_ip: %1s or Invalid session_name: %2s|server_ip inválido: %1s ou session_name inválido: %2s||
+Invalid server_ip:|server_ip inválida:||
+Invalid server_ip|server_ip inválido||
+Invalid session_name:|session_name inválida:||
+Invalid session_name|session_name inválido||
+JAN|janeiro||
+JLY|jly||
+JUN|junho||
+Job Title:|cargo:||
+Job:|trabalho:||
+LAST CALL DATE/TIME|data da última chamada / hora||
+LAST CALL|última chamada||
+LAST NAME|sobrenome||
+LEAD PREVIEW|INSPECÇÃO PRÉVIA DA LIGAÇÃO||
+LEAD SEARCH|LEAD PESQUISA||
+LENGTH| comprimento ||
+LIVE CALL TRANSFER|TRANSFERÊNCIA VIVA DA CHAMADA||
+LIVE CALLS IN THIS CONFERENCE|VIVEM AS CHAMADAS NCESTA CONFERÊNCIA||
+LIVE CALLS IN YOUR SESSION:|VIVEM AS CHAMADAS EM SUA SESSÃO:||
+LIVE CALLS ON THIS PHONE|VIVO CONVIDA ESTE TELEFONE||
+LIVE INBOUND CALL|CHAMADA INBOUND VIVA||
+LIVE|viver||
+LOCAL DIAL EXTENSIONS|EXTENSÕES LOCAIS DO SELETOR||
+LOCAL Extensions Dial|Seletor LOCAL Das Extensões||
+LOCAL HANGUP|HANGUP LOCAL||
+LOGOUT PROCESS COMPLETE, YOU MAY NOW CLOSE YOUR BROWSER OR LOG BACK IN|processo de logout completo, agora você pode fechar o navegador ou faça o login novamente||
+LOGOUT PROCESSING...|Sair de processamento ...||
+LOGOUT|Sair||
+Language has not been changed, please try again|A língua não foi alterado, por favor tente novamente||
+Last Call:|Última Chamada:||
+Last Local Call Time:|última vez chamada local:||
+Last Name:|sobrenome:||
+Last Sunday March to Last Sunday October|no último domingo de Março a outubro último domingo||
+Last Sunday October to Last Sunday March|no último domingo de outubro para último domingo de março||
+Last Sunday in September to First Sunday in April|último domingo de Setembro de primeiro domingo de abril||
+Last | último ||
+Lead %1s has been changed to %2s Status|%1s de chumbo foi alterado para %2s estado||
+Lead %1s information has%2s been updated|levar informações %1s %2s foi atualizado||
+Lead Dispositioned As:|Ligação Dispositioned Como:||
+Lead ID:|levar id:||
+Lead Info|informações de chumbo||
+Lead search requests are all logged in the system.|Solicitações de pesquisa de chumbo são todos registrados no sistema||
+Lead skipped, go on to next lead|lead ignorada, vá para a próxima liderança||
+Lead was not reverted, there was an error:|A ligação não reverted, não havia um erro:||
+Lead:|levar:||
+Leave 3Way Call Again|deixar chamada 3way novamente||
+List ID:|lista id:||
+List:|lista:||
+Listen Local|Escuta O Local||
+Listen Trunk|Escuta O Tronco||
+Live Extension Check|Verificação Viva Da Extensão||
+Live Extensions|Extensões Vivas||
+Local Action|Ação Local||
+Local Extensions|Extensões Locais||
+Location:|localização:||
+Logged in as User|Usuário||
+Login Error|erro de login||
+Login incorrect, please try again|O início de uma sessão incorreto, tenta por favor outra vez||
+Login incorrect, user names are case sensitive|Entre incorreto, nomes de usuário são case sensitive||
+Login:|Início de uma sessão:||
+Login| Início de uma sessão ||
+M - Male|m - masculino||
+MAIN PHONE|TELEFONE PRINCIPAL||
+MANAGER OVERRIDE:|GERENTE Override:||
+MANUAL DIAL|SELETOR MANUAL||
+MAR|estragar||
+MAY|Pode||
+MESSAGE:|message:||
+MI|mi||
+MOBILE|móvel||
+MULTI_MATCH CHECK:|verificação multi_match:||
+MULTI_MATCH:|multi_match:||
+MY CALLBACK ONLY|MINHA RECHAMADA SOMENTE||
+Main Phone Number|Número de telefone principal||
+Manager Login:|gerenciador de login:||
+Manager Password:|Password Manager:||
+Manager Send: |O Gerente Emite:||
+Manager has selected groups for you|gerente tem grupos selecionados para você||
+Manager has selected territories for you|gerente selecionou territórios para você||
+Manager|Gerente||
+Manual Dial Queue Calls Waiting:|Fila de Marcação Manual Chamadas em espera:||
+Manual Queue is Off|Manual de fila é Off||
+Manual Queue is On|Manual de fila está Ligado||
+Manual Queue:|Manual de fila:||
+Max rank count|max contagem de classificação||
+Middle Initial:|inicial do nome do meio:||
+Minutes:|minutos:||
+NEW MANUAL DIAL LEAD FOR %1s in campaign %2s:|nova pista de discagem manual para %1s em campanhas %2s:||
+NEW:| NOVO:||
+NO ONE|ninguém||
+NON-DIALABLE|não discável||
+NONE|nenhum||
+NOTES:|Notas:||
+NOTES|notas||
+NOTICE|aviso prévio||
+NOV|novembro||
+NUMBER|NÚMERO||
+Name:|Nome:||
+Next Call Pause Set|próxima chamada set pausa||
+Next Call Pause|próxima pausa chamada||
+No DST Method Found|nenhum método dst encontrado||
+No Local agent to send call to, Redirect command not inserted|nenhum agente local para enviar a chamada, comando redirecionar não inserido||
+No available phones, please contact your administrator|Não há telefones disponíveis, por favor, contate o administrador||
+No available servers, please contact your administrator|Não há servidores disponíveis, por favor, contate o administrador||
+No calls found|Nenhuma chamada encontrado||
+No calls on this day|Nenhuma chamada neste dia||
+No more leads in the hopper for campaign:|Não mais conduz no funil para a campanha:||
+No one is in your session:|Ninguém está na sua sessão:||
+No results found|Não foram encontrados resultados||
+No-Call Dial:|sem chamar disque:||
+Note: a dial prefix of %1s will be added to the beginning of this number|Atenção: um prefixo de discagem de %1s será adicionado ao início deste número||
+Note: all new manual dial leads will go into list %1s|Atenção: todos os novos leads discagem manual vai entrar em lista %1s||
+Notes: when doing a search for a contact, wildcard or partial search terms are not allowed. <br />Contact search requests are all logged in the system.|observa: ao fazer uma pesquisa para um contato, curinga ou termos de pesquisa parciais não são permitidos. <br /> solicitações de pesquisa de contato são todos registrados no sistema.||
+Notes: when doing a search for a lead, the phone number, lead ID or %1s are the best fields to use.|Notas: ao fazer uma busca por um chumbo, o número de telefone, de chumbo ou id %1s são as melhores áreas para o uso.||
+Number Dialed:|O Número Marcou:||
+OCT|outubro||
+OFFICE|escritório||
+OFF|fora||
+OK|está bem||
+OLD:| VELHO:||
+ORDER|ordem||
+OTHER 1|outro 1||
+OTHER 2|2 outra||
+OUTBOUND CALLS:|CHAMADAS OUTBOUND :||
+Office Number:|número do escritório:||
+One of these variables is not valid:|uma destas variáveis não é válido:||
+Order ID:|id ordem:||
+Originate command sent for Exten %1s Channel %2s on %3s|originam comando enviado para exten dos canais de %1s %2s em %3s||
+OriginateName Action not sent|ação originatename não enviado||
+OriginateNameVmail Action not sent|ação originatenamevmail não enviado||
+Other Agents Status:|Outros agentes Status:||
+Outside Lines|Linhas Exteriores||
+PARKED BY|ESTACIONADO PERTO||
+PARKED CALLS:|CHAMADAS ESTACIONADAS:||
+PARKED CALLS|CHAMADAS ESTACIONADAS||
+PARKED TIME|TEMPO ESTACIONADO||
+PARK|parque||
+PAUSE AGENT DIALING|PARE DE CHAMAR-SE||
+PAUSE CODE|código de pausa||
+PAUSED|pausada||
+PHONE| telefone ||
+PICKUP|COLETOR||
+PLEASE CLICK THE LOGOUT LINK TO LOG OUT NEXT TIME.|por favor clique no link Sair para encerrar a sessão da próxima vez.||
+PLEASE SELECT A CAMPAIGN|Selecione uma campanha||
+PLEASE SELECT A LANGUAGE|Por favor, selecione um idioma||
+PREVIOUS CALLBACK|callback anterior||
+Parked Calls Display|Exposição Estacionada Das Chamadas||
+Password:|Senha:||
+Pause Code Selection|seleção de código de pausa||
+Phone Code and Number:|Telefone Código e Número:||
+Phone Login:|telefone de login:||
+Phone Number Fields:|campos de número de telefone:||
+Phone Number:|número de telefone:||
+Phone Password:|Senha Do Telefone:||
+Phone and Post Code Time Zone Mismatch! |telefone e pós fuso horário código incompatibilidade!||
+Phone calling from:|Telefone que chama-se de:||
+Phone web client: Login|cliente web telefone: login||
+Phone web client: Phone Login|cliente telefone web: telefone de login||
+Phone web client|cliente web telefone||
+Phone-Only Login|de login só de telefone||
+Placing call to next number|chamada colocação para o próximo número||
+Please click SUBMIT to commit the changes|por favor, clique em enviar para confirmar as alterações||
+Please click SUBMIT to hangup and disposition the call|por favor, clique em enviar para suspender-e disposição a chamada||
+PostCode|PostCode||
+Presets Selection|seleção presets||
+Preview Call|Preview Call||
+Preview the Lead then|Inspecione a ligação então||
+Previous Callback Information:|Informação Precedente Da Rechamada:||
+Privacy ON|privacidade na||
+Processing...|processamento ...||
+Province:|Província:||
+Province|Província||
+Question:|pergunta:||
+READY|pronto||
+RECORD ID:|ID RECORD:||
+RECORDING FILE:|LIMA DE GRAVAÇÃO:||
+RECORD|REGISTRO ||
+REMOTE CHANNEL|CANALETA REMOTA||
+REPLY|responder||
+RESET| RESTAURAÇÃO||
+Re-Login|Re-Início de uma sessão||
+Redirect Action not sent|redirecionar a ação não foi enviado||
+Redirect command sent for Channel %1s on %2s|comando enviado para o canal %1s sobre %2s redirecionar||
+RedirectFromPark Action not sent|ação redirectfrompark não enviado||
+RedirectName Action not sent|ação redirectname não enviado||
+RedirectNameVmail Action not sent|ação redirectnamevmail não enviado||
+RedirectToPark Action not sent|ação redirecttopark não enviado||
+RedirectVD Action not sent|ação redirectvd não enviado||
+RedirectXtra command sent for Channel %1s and|redirectxtra comando enviado para o canal %1s e||
+RedirectXtra command sent for Channel %1s on %2s and|redirectxtra comando enviado para o canal %1s sobre %2s e||
+RedirectXtraCX command sent for Channel %1s on %2s and|redirectxtracx comando enviado para o canal %1s sobre %2s e||
+Refresh Campaign List|Atualizar lista de Campanha||
+Refresh rate:|Refresque a taxa:||
+Registered to|Registado a||
+Reply:|responder:||
+Response:|resposta:||
+Results Found:|Resultados Encontrado:||
+SEARCH FOR A CONTACT:|Procurar um Contato:||
+SEARCH FOR A LEAD:|BUSCA POR UMA LEAD:||
+SEARCH RESULTS:|RESULTADOS DA PROCURA:||
+SELECT A DIAL IN-GROUP :|seleccionar uma marcação em grupo:||
+SELECT A GROUP ALIAS :|selecionar um alias de grupo:||
+SELECT A GROUP TO SEND YOUR CALL TO|selecionar um grupo para enviar a sua chamada para||
+SELECT A PAUSE CODE :| SELECIONE Um CÓDIGO Da PAUSA :||
+SELECT A PRESET :|selecione uma predefinição:||
+SELECT THIS LEAD|selecionar essa liderança||
+SELECTED GROUPS|GRUPOS SELECIONADOS||
+SELECTED TERRITORIES|territórios selecionados||
+SELECT|selecionar||
+SEND MESSAGE|enviar mensagem||
+SEND TO MY VOICEMAIL|EMITA A MEU VOICEMAIL||
+SEND|enviar||
+SEP|setembro||
+SKIP LEAD|LIGAÇÃO DA FAIXA CLARA||
+START CHAT|iniciar bate-papo||
+START|começo||
+STATE| Estado||
+STATUS| STATUS||
+STILL A LIVE CALL! Hang it up then you can log out.|AINDA Uma CHAMADA VIVA! Pendure-a acima então que você pode||
+STOP|pare||
+SUBMIT FAVORITES CHANGES - requires logout|SUBMETA MUDANÇAS dos FAVORITOS - requer o logout||
+SUBMIT SEARCH|submeter pesquisa||
+SUBMIT|SUBMETA||
+SUCCESS|sucesso||
+Search Existing Leads:|Ligações Existentes Da Busca:||
+Search Results|RESULTADOS DA PROCURA||
+Searching...|pesquisar ...||
+Second Sunday March to First Sunday November|segundo domingo de março para primeiro domingo novembro||
+Select a CallBack Date :|selecione uma data de retorno de chamada:||
+Select a Date Below|Selecione uma data abaixo||
+Send DTMF|Emita DTMF||
+Send my channel too|Emita minha canaleta demasiado||
+Send to selected extension|Emita à extensão selecionada||
+Send to selected vmail box|Emita à caixa selecionada do vmail||
+Send to this number|Emita a este número||
+Server:|Usuário:||
+Show Calls In Queue|Solicita Show Em Fila||
+Show conference call channel information|Mostre a informação da canaleta da chamada de conferência||
+Show:|Mostra:||
+Show|Mostra||
+Slower|Mais lento||
+Sorry, there are no available sessions|Desculpe, não há sessões disponíveis||
+Sorry, there are no leads in the hopper for this campaign|Pesaroso, não há nenhuma ligação no funil para esta campanha||
+Sorry, you are not allowed to login to this campaign:|Desculpe, você não tem permissão para acessar esta campanha:||
+Sorry, your phone login and password are not active in this system, please try again:|Pesaroso, seus início de uma sessão do telefone e senha não seja:||
+Status:| STATUS:||
+Subject:|assunto:||
+Sunday in October to First Sunday in April|domingo de outubro para primeiro domingo de abril||
+System API NOT ACTIVE|api não ativa sistema||
+System Delay, Please try again|Atraso do Sistema, por favor, tente novamente||
+TAKE CALL|tomar chamada||
+TERRITORIES NOT SELECTED|TERRITÓRIOS NÃO SELECIONADA||
+TERRITORIES|territórios||
+TERRITORY SELECTION|SELEÇÃO DE TERRITÓRIO||
+TIMER NOTIFICATION:|NOTIFICAÇÃO TIMER:||
+TRUNK HANGUP|tronco hangup||
+TYPE| tipo ||
+Territory Choice %1s has been registered to user %2s|território escolha %1s foi registrado para o usuário %2s||
+Territory Choice is not valid|território escolha não é válido||
+The system has received a command to log you out, you have been logged out of your session|O sistema recebeu um comando para desconectá-lo, você foi desconectado da sessão||
+The user and password you entered are not active in the system<BR>Please try again:|o usuário e senha que você digitou não são ativos no sistema <br> por favor, tente novamente:||
+There are no Shifts enabled for your user group|não há mudanças habilitados para o seu grupo de usuários||
+There are no custom fields for this list|não existem campos personalizados para esta lista||
+There is a time synchronization problem with your system, please tell your system administrator|Há um tempo sincronização problema com o seu sistema, por favor informe o seu administrador de sistema||
+There was a problem with your search terms|houve um problema com os termos de pesquisa||
+Third Sunday October to Last Sunday February|terceiro domingo de outubro último domingo fevereiro||
+This agent screen was not opened properly.|Esta tela do agente não foi aberto corretamente||
+This phone number is in the DNC list:|este número de telefone está na lista de DNC:||
+This phone number is not in the campaign lists:|Esse número de telefone não está na campanha listas:||
+This phone number is outside of the local call time:|Este número de telefone se encontra fora do tempo chamada local:||
+Time On Park:|tempo no parque:||
+Time since you were last logged-in:|Vez desde que foi registrado em:||
+Timeclock|Timeclock||
+Timezone:|fuso horário:||
+Title:| Título:||
+Title| Título||
+Too many agents logged in, please contact your administrator|Muitos agentes conectados, por favor, contate o administrador||
+Too many login attempts, try again in 15 minutes|muitas tentativas de login, tente novamente em 15 minutos||
+Too many network errors, please contact your administrator|Muitos erros de rede, entre em contato com o administrador||
+Transfer number must have at least 1 digit:|número de transferência deve ter pelo menos 1 dígito:||
+Trunk Action|Ação Do Tronco||
+U - Undefined|u - indefinido||
+UID:|uid:||
+USER LOGIN ERROR|erro de login do usuário||
+USER|Usuário ||
+Unidentified Hangup Cause Code.|não identificado código causa hangup||
+Unidentified SIP Hangup Cause Code.|não identificado gole hangup código de causa.||
+Unspecified error:|Unspecified error:||
+User Login:|Início de uma sessão Do Usuário:||
+User Login|Início de uma sessão Do Usuário||
+User Names are case sensitive|Nomes de usuário são case sensitive||
+User Password:|Senha Do Usuário:||
+User settings set as default|configurações do usuário definido como padrão||
+UserID: $FCS%1s - %2s$FCE,  Date: %3s|UserID: $FCS%1s - %2s$FCE, Data: %3s||
+Using the other fields may be slower. Lead searching does not allow for wildcard or partial search terms.|Usando os outros campos pode ser mais lento. Busca de chumbo não permite termos de pesquisa curinga ou parcial||
+VERSION: %1s BUILD: %2s|versão: %1s construir: %2s||
+VERSION:|VERSÃO:||
+VERSION|VERSÃO||
+VICIDiaL Agent API|api agente vicidial||
+VICIDiaL Database Query Script|script de consulta de banco de dados vicidial||
+VICIDiaL Script Display Script|script de exibição roteiro vicidial||
+VICIDiaL_LOG Inserted:|vicidial_log inserido:||
+VIEW CALL LOG|VEJA Registro de chamadas||
+VOICEMAIL|VOICEMAIL||
+VOLUME|VOLUME||
+Vendor ID:|Vendedor Id:||
+Vendor ID|Vendedor Id||
+ViciDial Notes|notas vicidial||
+ViciDial Script|roteiro vicidial||
+View Comment History:|ver a história comentário:||
+Voicemail Check|Verificação De Voicemail||
+Volume command sent for Conference %1s, Stage %2s Channel %3s on %4s|comando de volume enviado para %1s conferências, palco% dos canais de %2s %3s sobre %4s||
+WAIT| esperar ||
+WEB FORM SUBMIT|forma webpage apresentar||
+Waiting for Ring...|à espera de anel ...||
+WebPhone View -|vista webphone -||
+WebPhone View|vista webphone||
+Welcome %1s, you are logged into this phone: %2s - %3s/%4s on %5s|1s de boas-vindas%, você está conectado ao telefone: %2s - %3s / %4s em %5s||
+When active, simply press the keyboard key for the desired disposition for this call. The call will then be hungup and dispositioned automatically:|Quando ativo, pressione simplesmente a chave de teclado para a:||
+X ACTIVE CALLBACKS|x callbacks ativos||
+XFER|xfer||
+YES|sim||
+YOU CANNOT SKIP A CALLBACK OR MANUAL DIAL, YOU MUST DIAL THE LEAD|VOCÊ NÃO PODE SALTAR Uma RECHAMADA OU SELETOR MANUAL, VOCÊ DEVE MARCAR A LIGAÇÃO||
+YOU DO NOT HAVE PERMISSIONS TO TRANSFER CALLS|VOCÊ NÃO TEM PERMISSÕES TRANSFERIR CHAMADAS||
+YOU MUST BE ON AN ACTIVE INBOUND CALL TO SEARCH FOR A LEAD|você deve estar em uma chamada de entrada ativa para procurar uma vantagem||
+YOU MUST BE PAUSED TO CHANGE GROUPS|Você deve estar PAUSED PARA ALTERAR GRUPOS||
+YOU MUST BE PAUSED TO CHANGE TERRITORIES|você deve estar parado para mudar territórios||
+YOU MUST BE PAUSED TO CHECK CALLBACKS IN AUTO-DIAL MODE|VOCÊ DEVE SER PAUSADO PARA VERIFICAR RECHAMADAS NA MODALIDADE DE AUTO-DIAL||
+YOU MUST BE PAUSED TO ENTER A PAUSE CODE IN AUTO-DIAL MODE|VOCÊ DEVE SER PAUSADO PARA DAR ENTRADA A um CÓDIGO Da PAUSA NaMODALIDADE De AUTO-DIAL||
+YOU MUST BE PAUSED TO GRAB CALLS IN QUEUE|VOCÊ DEVE SER PAUSA PARA GRAB APELA EM FILA||
+YOU MUST BE PAUSED TO MANUAL DIAL A NEW LEAD IN AUTO-DIAL MODE|VOCÊ DEVE SER PAUSADO Ao SELETOR MANUAL Uma LIGAÇÃO NOVA Na MODALIDADE De AUTO-DIAL||
+YOU MUST BE PAUSED TO SEARCH FOR A LEAD|VOCÊ DEVE ser pausado Para procurar um LEAD||
+YOU MUST BE PAUSED TO VIEW YOUR CALL LOG|VOCÊ DEVE ESTAR EM PAUSA PARA VER seu registro de chamadas||
+YOU MUST ENTER A PHONE NUMBER AND DIAL CODE TO USE FAST DIAL|VOCÊ DEVE DAR ENTRADA A um NÚMERO De TELEFONE E A um CÓDIGO DoSELETOR PARA USAR O SELETOR RÁPIDO||
+YOU MUST LOG IN TO THE TIMECLOCK FIRST|É necessário efetuar login AO PRIMEIRO TIMECLOCK||
+YOU MUST SELECT AN AGENT TO TRANSFER TO WHEN USING AGENTDIRECT|você deve selecionar um agente de transferir ao usar agentdirect||
+You Must Select a Disposition|Você deve selecionar uma disposição||
+You are already logged in, please log out of your other session first|Você já está logado, faça o login de sua outra sessão primeiro||
+You are in ALT dial mode, you must finish the lead before logging out.|Você está em ALT modo de discagem, você deve terminar a liderança antes de sair||
+You are not allowed to log in outside of your shift|você não tem permissão para entrar fora do seu turno||
+You can only disposition a call once|você só pode disposição uma chamada de uma vez||
+You can only monitor Zap channels|Você pode monitora somente zap as canaletas||
+You cannot log in or out within 30 seconds of your last login or logout|Você não pode efetuar login ou para fora dentro de 30 segundos do seu último login ou logout||
+You cannot log out during a Dial attempt. Wait 50 seconds for the dial to fail out if it is not answered|você não pode sair durante uma tentativa de discagem. esperar 50 segundos para que a marcação para falhar se ele não for atendida||
+You have been paused for too long, you have been logged out of your session|Você foi pausada por muito tempo, você foi desconectado da sua sessão||
+You have now logged out. Thank you|Você tem registrado agora para fora. Obrigado||
+You have now logged-in|Você tem agora registrados em||
+You have now logged-out|Você tem agora autenticado-out||
+You last logged-out at:|Você última autenticado-out em:||
+You logged in at|Você logou em||
+You logged out at|Você saiu em||
+You logged-in at:|Você autenticado-nos em:||
+You must choose a date|Você deve escolher uma data||
+You must enter in search terms, one of these must be populated: lead ID, vendor ID, phone number, last name|você deve entrar em termos de pesquisa, um deles deve ser preenchido: id chumbo, identificação do fornecedor, número de telefone, apelido||
+You must enter in search terms, one of these must be populated: office number, last name, first name|você deve entrar em termos de pesquisa, um deles deve ser preenchido: número do escritório, apelido, nome próprio||
+Your Shift is over or has changed, you have been logged out of your session|Seu Shift é mais ou mudou, você foi desconectado da sua sessão||
+Your Status:|Seu Status:||
+Your session has been disabled|Sua sessão foi incapacitada||
+Your session has been paused|a sessão foi interrompida||
+Your system does not have the email setting enabled|seu sistema não tem a configuração de e-mail habilitado||
+ZIP| zip ||
+add_lead PHONE NUMBER IN CAMPAIGN DNC|número de telefone add_lead em campanha dnc||
+add_lead PHONE NUMBER IN DNC|número de telefone add_lead em dnc||
+address1 set to|address1 definido para||
+address2 set to|endereço2 definido para||
+address3 set to|address3 definido para||
+agc_check_voicemail_BLINK.gif|agc_check_voicemail_BLINK.gif||
+agc_check_voicemail_OFF.gif|agc_check_voicemail_OFF.gif||
+agc_check_voicemail_ON.gif|agc_check_voicemail_ON.gif||
+agc_live_call_DEAD.gif|agc_live_call_DEAD.gif||
+agc_live_call_OFF.gif|agc_live_call_OFF.gif||
+agc_live_call_ON.gif|agc_live_call_ON.gif||
+agc_tab_active_lines.gif|agc_tab_active_lines.gif||
+agc_tab_astguiclient.gif|agc_tab_astguiclient.gif||
+agc_tab_conferences.gif|agc_tab_conferences.gif||
+agc_tab_main.gif|agc_tab_main.gif||
+agent_log_id %1s or pause_code %2s is not valid|%1s agent_log_id ou pause_code %2s não é válido||
+agent_user does not have a lead on their screen|não agent_user não tem uma pista sobre a sua tela||
+agent_user does not have a live call|não agent_user não tem uma chamada ao vivo||
+agent_user is not allowed to place manual dial calls|agent_user não tem permissão para fazer chamadas discagem manual||
+agent_user is not logged in|agent_user não está logado||
+agent_user is not paused|agent_user não está em pausa||
+alert.gif|alert.gif||
+alt number dialing not allowed on this campaign|alt número de discagem não permitido nesta campanha||
+alt_phone set to|alt_phone definido para||
+apache processes: |processos Apache:||
+apache version: |apache versão:||
+astGUIclient web client: Login|cliente web astguiclient: login||
+astGUIclient web client: Phone Login|cliente web astguiclient: telefone de login||
+astGUIclient web client|web client astGUIclient||
+astGUIclient web-client VERSION: %1s BUILD: %2s|astguiclient versão web-cliente: %1s construir: %2s||
+audio_playback error - audio already playing in agent session|erro audio_playback - áudio já tocando em sessão do agente||
+audio_playback error - entry is empty|audio_playback erro - a entrada está vazia||
+audio_playback error - no audio playing in agent session|erro audio_playback - sem reprodução de áudio em sessão agente||
+audio_playback error - no session data|erro audio_playback - sem os dados da sessão||
+audio_playback function sent|função audio_playback enviado||
+audio_playback not valid|audio_playback não é válido||
+audio_playback previous playback stopped|audio_playback reprodução anterior parou||
+auto_dial_level %1s must be set|auto_dial_level %1s deve ser definido||
+blank.gif|blank.gif||
+call was not placed, there was an error:|a chamada não foi colocada, não havia um erro:||
+call_agent error - entry is empty|erro call_agent - entrada está vazia||
+call_agent error - no session data|erro call_agent - sem os dados da sessão||
+call_agent function sent|função call_agent enviado||
+call_agent not valid|não call_agent válido||
+caller_id_number from group_alias is not valid|caller_id_number de group_alias não é válido||
+campaign %1s must be set| %1s de campanha deve ser definido||
+campaign %1s or conf_exten %2s is not valid|campanhas %1s ou %2s conf_exten não é válido||
+campaign dial_method does not allow outbound autodial|campanha dial_method não permite a marcação automática de saída||
+campaign does not allow inbound calls|campanha não permite chamadas de entrada||
+campaign manual dial list undefined|campanha de lista de discagem manual do indefinido||
+change_ingroups function set|change_ingroups função set||
+change_ingroups not valid|change_ingroups não válidos||
+city set to|cidade para definir||
+click here to continue. . .|clique aqui para continuar. . .||
+click here to continue|clique aqui para continuar||
+close|fechar ||
+code:|código:||
+comments set to|Comentários definido para||
+conference %1s is not valid or ext_context %2s or queryCID %3s is not valid, Hangup command not inserted|conferências %1s não é válido ou ext_context %2s ou %3s querycid não é válido, comando de suspensão não inserido||
+country_code set to|contry_code definido para||
+date_of_birth set to|conjunto date_of_birth para||
+default socket timeout: |Tomada de tempo limite padrão:||
+denotes required fields|indica campos obrigatórios||
+disk free space: |Espaço livre no disco:||
+down.gif|down.gif||
+edit| edite||
+email set to|e-mail para definir||
+error: API user not valid|erro: usuário api não é válido||
+error: avatar not valid|erro: avatar não é válido||
+ext_context %1s must be set|ext_context %1s deve ser definido||
+ext_priority %1s must be set|ext_priority %1s deve ser definido||
+exten %1s must be set|1s EXTEN% deve ser definido||
+extenName %1s must be set|extenname %1s deve ser definido||
+external_add_lead not valid|external_add_lead não é válido||
+external_dial function set|conjunto de funções external_dial||
+external_dial not valid|external_dial não é válido||
+external_hangup function set|conjunto de funções external_hangup||
+external_hangup not valid|external_hangup não é válido||
+external_pause agent is not paused|agente external_pause não está em pausa||
+external_pause function set|conjunto de funções external_pause||
+external_pause not valid|external_pause não é válido||
+external_status function set|conjunto de funções external_status||
+external_status not valid|external_status não é válido||
+favorites list %1s is not valid|favoritos listar %1s não é válido||
+first_name set to|First_Name definido para||
+gender set to|género definido para||
+gmt_offset_now set to|gmt_offset_now definido para||
+group_alias is not valid|group_alias não é válido||
+has selected your in-group choices|foi selecionado o grupo de escolhas||
+hide comment history|hide história comentário||
+host name: |nome do host:||
+ingroup does not exist|não ingroup não existe||
+ingroup is not valid|ingroup não é válido||
+ingroup_choices are required for ADD and REMOVE values|ingroup_choices são necessários para adicionar e remover valores||
+ini_get not allowed: |ini_get não permitidos:||
+last_name set to|Last_Name definido para||
+lead added|levar adicionado||
+lead insertion failed|inserção de chumbo falhou||
+lead_id %1s is not valid|lead_id %1s não é válido||
+lead_id %1s must be set|lead_id %1s deve ser definido||
+lead_id is not valid|lead_id não é válido||
+loading.gif|loading.gif||
+logout function set|conjunto de funções de logout||
+logout not valid|sair não é válido||
+mail could not be sent!|e-mail não pôde ser enviada!||
+maximize| maximize ||
+maximum execution time: |tempo máximo de execução:||
+maximum input time: |tempo máximo de entrada:||
+memory limit: |limite de memória:||
+middle_initial set to|conjunto middle_initial para||
+minimize| minimize ||
+no Lead ID|não id chumbo||
+no active call found|nenhuma chamada ativo encontrado||
+no active lead found|sem chumbo ativo encontrado||
+no agent session|nenhuma sessão agente||
+no fields have been defined|há campos foram definidos||
+no lead active for this agent|não ativo chumbo para este agente||
+no lead info in system:|sem info liderança no sistema:||
+no user found|Nenhum usuário encontrado||
+not recording|não gravação||
+or|ou||
+owner set to|dono definido para||
+park_call function set|conjunto de funções park_call||
+park_call not valid|park_call não é válido||
+parkedby %1s must be set|parkedby %1s deve ser definido||
+pause_code error - agent is not paused|erro pause_code - agente não está em pausa||
+pause_code function sent|função pause_code enviado||
+pause_code not valid|pause_code não é válido||
+phone login|telefone de login||
+phone number is not valid|número de telefone não é válido||
+phone number lead_id search not found|número de telefone lead_id não busca encontrado||
+phone_code set to|phone_code definido para||
+phone_number %1s or lead_id %2s is not valid|vis_telefone %1s ou %2s lead_id não é válido||
+phone_number is already in this agents manual dial queue|phone_number já está neste agentes fila de discagem manual||
+phone_number is not valid|phone_number não é válido||
+phone_number set to|phone_number definido para||
+php version: |php versão:||
+pixel.gif|pixel.gif||
+post maximum size: |postar tamanho máximo:||
+postal_code set to|postal_code definido para||
+preview dial skipping not allowed on this campaign|marcação prévia não pular permitido nesta campanha||
+preview dialing not allowed on this campaign|marcação prévia não permitidos nesta campanha||
+preview_dial_action function set|preview_dial_action conjunto de funções||
+preview_dial_action not valid|preview_dial_action não é válido||
+province set to|província definido para||
+queryCID %1s must be greater than 14 characters|querycid %1s deve ser maior que 14 caracteres||
+ra_call_control hungup|ra_call_control hungup||
+ra_call_control not valid|ra_call_control não é válido||
+ra_call_control transfer|transferência ra_call_control||
+rank set to|classificação definida para||
+recording active|gravação ativa||
+recording function sent|função de gravação enviado||
+recording not valid|a gravação não é válido||
+recording| Gravação||
+refresh|Refresque||
+remove.gif|remove.gif||
+reset form|forma de repor||
+ring|anel||
+seconds remaining in wrapup|segundos restantes no wrapup||
+seconds:| segundos:||
+seconds| segundos||
+security_phrase set to|security_phrase definido para||
+send_dtmf not valid|send_dtmf não é válido||
+server name: |nome do servidor:||
+session ID:| sessão ID:||
+session_id %1s must be set|1s SESSION_ID% deve ser definido||
+set_timer_action lead updated|set_timer_action chumbo atualizado||
+set_timer_action not valid|set_timer_action não é válido||
+show comment history|Mostrar histórico comentário||
+source_id set to|source_id definido para||
+st_get_agent_active_lead lead found|lead st_get_agent_active_lead encontrado||
+st_get_agent_active_lead not valid|st_get_agent_active_lead não é válido||
+st_login_log not valid|st_login_log não é válido||
+st_login_log user found|user st_login_log encontrado||
+stage %1s is not valid|estágio %1s não é válido||
+stage is not valid|fase não é válido||
+state set to|estado definido para||
+stop audio|parar de áudio||
+stop recording error|parar a gravação de erro||
+system load average: |carga do sistema média:||
+title set to|título definido como||
+to campaign| à campanha||
+transfer_conference function set|transfer_conference conjunto de funções||
+transfer_conference not valid|transfer_conference não é válido||
+uniqueid %1s must be set|1s UniqueID% deve ser definido||
+uniqueid %1s or lead_id: %2s is not valid|%1s UniqueID ou lead_id: %2s não é válido||
+uniqueid %1s or lead_id: %2s or list_id: %3s or phone_number: %4s or campaign: %5s is not valid|uniqueid %1s ou lead_id: %2s ou %3s list_id: ou phone_number: %4s ou campanha: %5s não é válido||
+up.gif|up.gif||
+update_fields lead updated|update_fields chumbo atualizado||
+upload maximum filesize: |máxima de upload de arquivo:||
+user is not allowed to change agent in-groups|usuário não tem permissão para alterar agente in-grupos||
+user is not allowed to modify campaign settings|usuário não tem permissão para modificar as configurações de campanha||
+user is not allowed to modify lead information|usuário não tem permissão para modificar as informações de chumbo||
+user not logged in|usuário não logado||
+value is not valid|valor não é válido||
+vdc_LB_active.gif|vdc_LB_active_br.gif||
+vdc_LB_blank_OFF.gif|vdc_LB_blank_OFF.gif||
+vdc_LB_customxfer.gif|vdc_LB_customxfer.gif||
+vdc_LB_customxfer_OFF.gif|vdc_LB_customxfer_OFF.gif||
+vdc_LB_dialnextnumber.gif|vdc_LB_dialnextnumber.gif||
+vdc_LB_dialnextnumber_OFF.gif|vdc_LB_dialnextnumber_OFF.gif||
+vdc_LB_grabivrparkcall.gif|vdc_LB_grabivrparkcall.gif||
+vdc_LB_grabivrparkcall_OFF.gif|vdc_LB_grabivrparkcall_OFF.gif||
+vdc_LB_grabparkedcall.gif|vdc_LB_grabparkedcall.gif||
+vdc_LB_grabparkedcall_OFF.gif|vdc_LB_grabparkedcall_OFF.gif||
+vdc_LB_hangupcustomer.gif|vdc_LB_hangupcustomer.gif||
+vdc_LB_hangupcustomer_OFF.gif|vdc_LB_hangupcustomer_OFF.gif||
+vdc_LB_ivrparkcall.gif|vdc_LB_ivrparkcall.gif||
+vdc_LB_ivrparkcall_OFF.gif|vdc_LB_ivrparkcall_OFF.gif||
+vdc_LB_parkcall.gif|vdc_LB_parkcall.gif||
+vdc_LB_parkcall_OFF.gif|vdc_LB_parkcall_OFF.gif||
+vdc_LB_pause.gif|vdc_LB_pause.gif||
+vdc_LB_pause_OFF.gif|vdc_LB_pause_OFF.gif||
+vdc_LB_paused.gif|vdc_LB_paused_br.gif||
+vdc_LB_quickxfer.gif|vdc_LB_quickxfer.gif||
+vdc_LB_quickxfer_OFF.gif|vdc_LB_quickxfer_OFF.gif||
+vdc_LB_requeue_call.gif|vdc_LB_requeue_call.gif||
+vdc_LB_requeue_call_OFF.gif|vdc_LB_requeue_call_OFF.gif||
+vdc_LB_resume.gif|vdc_LB_resume.gif||
+vdc_LB_resume_OFF.gif|vdc_LB_resume_OFF.gif||
+vdc_LB_senddtmf.gif|vdc_LB_senddtmf.gif||
+vdc_LB_senddtmf_OFF.gif|vdc_LB_senddtmf_OFF.gif||
+vdc_LB_startrecording.gif|vdc_LB_startrecording.gif||
+vdc_LB_startrecording_OFF.gif|vdc_LB_startrecording_OFF.gif||
+vdc_LB_stoprecording.gif|vdc_LB_stoprecording.gif||
+vdc_LB_stoprecording_OFF.gif|vdc_LB_stoprecording_OFF.gif||
+vdc_LB_transferconf.gif|vdc_LB_transferconf.gif||
+vdc_LB_transferconf_OFF.gif|vdc_LB_transferconf_OFF.gif||
+vdc_LB_webform.gif|vdc_LB_webform.gif||
+vdc_LB_webform_OFF.gif|vdc_LB_webform_OFF.gif||
+vdc_LB_webform_two.gif|vdc_LB_webform_two.gif||
+vdc_LB_webform_two_OFF.gif|vdc_LB_webform_two_OFF.gif||
+vdc_XB_ammessage.gif|vdc_XB_ammessage.gif||
+vdc_XB_ammessage_OFF.gif|vdc_XB_ammessage_OFF.gif||
+vdc_XB_blindtransfer.gif|vdc_XB_blindtransfer.gif||
+vdc_XB_blindtransfer_OFF.gif|vdc_XB_blindtransfer_OFF.gif||
+vdc_XB_channel.gif|vdc_XB_channel.gif||
+vdc_XB_contactsbutton.gif|vdc_XB_contactsbutton.gif||
+vdc_XB_dialwithcustomer.gif|vdc_XB_dialwithcustomer.gif||
+vdc_XB_dialwithcustomer_OFF.gif|vdc_XB_dialwithcustomer_OFF.gif||
+vdc_XB_hangupbothlines.gif|vdc_XB_hangupbothlines.gif||
+vdc_XB_hangupxferline.gif|vdc_XB_hangupxferline.gif||
+vdc_XB_hangupxferline_OFF.gif|vdc_XB_hangupxferline_OFF.gif||
+vdc_XB_header.gif|vdc_XB_header.gif||
+vdc_XB_hotkeysactive.gif|vdc_XB_hotkeysactive.gif||
+vdc_XB_hotkeysactive_OFF.gif|vdc_XB_hotkeysactive_OFF.gif||
+vdc_XB_leave3waycall.gif|vdc_XB_leave3waycall.gif||
+vdc_XB_leave3waycall_OFF.gif|vdc_XB_leave3waycall_OFF.gif||
+vdc_XB_localcloser.gif|vdc_XB_localcloser.gif||
+vdc_XB_localcloser_OFF.gif|vdc_XB_localcloser_OFF.gif||
+vdc_XB_number.gif|vdc_XB_number.gif||
+vdc_XB_parkcustomerdial.gif|vdc_XB_parkcustomerdial.gif||
+vdc_XB_parkcustomerdial_OFF.gif|vdc_XB_parkcustomerdial_OFF.gif||
+vdc_XB_presetsbutton.gif|vdc_XB_presetsbutton.gif||
+vdc_XB_seconds.gif|vdc_XB_seconds.gif||
+vdc_tab_email.gif|vdc_tab_email.gif||
+vdc_tab_form.gif|vdc_tab_form.gif||
+vdc_tab_script.gif|vdc_tab_script.gif||
+vdc_tab_vicidial.gif|vdc_tab_vicidial.gif||
+vdc_volume_MUTE.gif|vdc_volume_MUTE.gif||
+vdc_volume_UNMUTE.gif|vdc_volume_UNMUTE.gif||
+vdc_volume_down.gif|vdc_volume_down.gif||
+vdc_volume_down_off.gif|vdc_volume_down_off.gif||
+vdc_volume_up.gif|vdc_volume_up.gif||
+vdc_volume_up_off.gif|vdc_volume_up_off.gif||
+vendor_lead_code set to|vendor_lead_code definido para||
+view notes|ver as notas||
+voicemail box %1s is not valid|caixa de correio de voz %1s não é válido||
+vtc_tab_vicidial.gif|vtc_tab_vicidial.gif||
+vtiger callback activity does not exist in vtiger system|atividade callback vtiger não existe no sistema vtiger||
+webphone_url active and displayed|webphone_url activa e apresentada||
+webphone_url active and launched|webphone_url ativa e lançou||
+webphone_url error - no session data|erro webphone_url - sem os dados da sessão||
+webphone_url error - webphone url is empty|erro webphone_url - webphone url está vazio||
+webphone_url not valid|webphone_url não é válido||

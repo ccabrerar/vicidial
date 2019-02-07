@@ -1,0 +1,654 @@
+﻿# el_language.txt - this file is for the internationalization of the astGUIclient
+# client web pages. The associated install.pl file will take the language as an
+# argument and alter the php scripts to the language typed in the command line:
+# example: ./install.pl --language=el
+# current languages in the file:
+# - English - (en) no alterations
+# - Greek - (el) second column
+***LANGUAGES***
+en-English|el-Ελληνικά|
+***FILES***
+agc|astguiclient.php|0
+agc|vicidial.php|0
+agc|vdc_db_query.php|0
+agc|manager_send.php|0
+agc|conf_exten_check.php|0
+agc|inbound_popup.php|0
+agc|active_list_refresh.php|0
+agc|park_calls_display.php|0
+agc|live_exten_check.php|0
+agc|call_log_display.php|0
+agc|voicemail_check.php|0
+agc|dbconnect.php|1
+agc|timeclock.php|0
+agc|vdc_script_display.php|1
+agc|vdc_script_notes.php|0
+agc|functions.php|0
+agc|vdc_form_display.php|1
+agc|calendar.css|1
+agc|calendar_db.js|0
+agc|phone_only.php|0
+agc|vdc_email_display.php|0
+agc|audit_comments.php|0
+agc|dbconnect_mysqli.php|1
+***TRANSLATIONS***
+### special translations that should stay at the top of the file ###
+"JAN"|"ΙΑΝ"|
+"FEB"|"ΦΕΒ"|
+"MAR"|"ΜΑΡ"|
+"APR"|"ΑΠΡ"|
+"MAY"|"ΜΆΙ"|
+"JUN"|"ΙΟΝ"|
+"JLY"|"ΙΟΛ"|
+"AUG"|"ΑΥΓ"|
+"SEP"|"ΣΕΠ"|
+"OCT"|"ΟΚΤ"|
+"NOV"|"ΝΟΕ"|
+"DEC"|"ΔΕΚ"|
+\./bp.pl|../agc/bp.pl|
+\./images/|../agc/images/|
+css/|../agc/css/|
+BORDER|Border|
+VALUE=SUBMIT|VALUE=SUBMIT|
+TYPE=SUBMIT|TYPE=Submit|
+MAXLENGTH|maxlength|
+### BEGIN translation phrases through 1.1.11 release ###
+English|Αγγλικά|
+Spanish|Ισπανικά|
+French|Γαλλικά|
+German|Γερμανικά|
+Italian|Ιταλικά|
+agc_check_voicemail_BLINK.gif|agc_check_voicemail_BLINK_el.gif|
+agc_check_voicemail_OFF.gif|agc_check_voicemail_OFF_el.gif|
+agc_check_voicemail_ON.gif|agc_check_voicemail_ON_el.gif|
+agc_live_call_OFF.gif|agc_live_call_OFF.gif|
+agc_live_call_ON.gif|agc_live_call_ON.gif|
+agc_tab_active_lines.gif|agc_tab_active_lines_el.gif|
+agc_tab_conferences.gif|agc_tab_conferences_el.gif|
+agc_tab_main.gif|agc_tab_main_el.gif|
+vdc_LB_dialnextnumber.gif|vdc_LB_dialnextnumber_el.gif|
+vdc_LB_dialnextnumber_OFF.gif|vdc_LB_dialnextnumber_OFF_el.gif|
+vdc_LB_grabparkedcall.gif|vdc_LB_grabparkedcall_el.gif|
+vdc_LB_hangupcustomer.gif|vdc_LB_hangupcustomer_el.gif|
+vdc_LB_hangupcustomer_OFF.gif|vdc_LB_hangupcustomer_OFF_el.gif|
+vdc_LB_parkcall.gif|vdc_LB_parkcall_el.gif|
+vdc_LB_parkcall_OFF.gif|vdc_LB_parkcall_OFF_el.gif|
+vdc_LB_pause.gif|vdc_LB_pause_el.gif|
+vdc_LB_pause_OFF.gif|vdc_LB_pause_OFF_el.gif|
+vdc_LB_resume.gif|vdc_LB_resume_el.gif|
+vdc_LB_resume_OFF.gif|vdc_LB_resume_OFF_el.gif|
+vdc_LB_startrecording.gif|vdc_LB_startrecording_el.gif|
+vdc_LB_stoprecording.gif|vdc_LB_stoprecording_el.gif|
+vdc_LB_transferconf.gif|vdc_LB_transferconf_el.gif|
+vdc_LB_transferconf_OFF.gif|vdc_LB_transferconf_OFF_el.gif|
+vdc_LB_webform.gif|vdc_LB_webform_el.gif|
+vdc_LB_webform_OFF.gif|vdc_LB_webform_OFF_el.gif|
+vdc_XB_blindtransfer.gif|vdc_XB_blindtransfer_el.gif|
+vdc_XB_blindtransfer_OFF.gif|vdc_XB_blindtransfer_OFF_el.gif|
+vdc_XB_dialwithcustomer.gif|vdc_XB_dialwithcustomer_el.gif|
+vdc_XB_dialwithcustomer_OFF.gif|vdc_XB_dialwithcustomer_OFF_el.gif|
+vdc_XB_hangupbothlines.gif|vdc_XB_hangupbothlines_el.gif|
+vdc_XB_hangupbothlines_OFF.gif|vdc_XB_hangupbothlines_OFF_el.gif|
+vdc_XB_hangupxferline.gif|vdc_XB_hangupxferline_el.gif|
+vdc_XB_hangupxferline_OFF.gif|vdc_XB_hangupxferline_OFF_el.gif|
+vdc_XB_internalcloser.gif|vdc_XB_internalcloser_el.gif|
+vdc_XB_internalcloser_OFF.gif|vdc_XB_internalcloser_OFF_el.gif|
+vdc_XB_leave3waycall.gif|vdc_XB_leave3waycall_el.gif|
+vdc_XB_leave3waycall_OFF.gif|vdc_XB_leave3waycall_OFF_el.gif|
+vdc_XB_localcloser.gif|vdc_XB_localcloser_el.gif|
+vdc_XB_localcloser_OFF.gif|vdc_XB_localcloser_OFF_el.gif|
+vdc_XB_parkcustomerdial.gif|vdc_XB_parkcustomerdial_el.gif|
+vdc_XB_parkcustomerdial_OFF.gif|vdc_XB_parkcustomerdial_OFF_el.gif|
+vdc_XB_hotkeysactive.gif|vdc_XB_hotkeysactive_el.gif|
+vdc_XB_hotkeysactive_OFF.gif|vdc_XB_hotkeysactive_OFF_el.gif|
+vdc_LB_senddtmf.gif|vdc_LB_senddtmf_el.gif|
+vdc_LB_senddtmf_OFF.gif|vdc_LB_senddtmf_OFF_el.gif|
+vdc_XB_header.gif|vdc_XB_header_el.gif|
+vdc_XB_number.gif|vdc_XB_number_el.gif|
+vdc_XB_channel.gif|vdc_XB_channel_el.gif|
+vdc_XB_seconds.gif|vdc_XB_seconds_el.gif|
+vdc_tab_script.gif|vdc_tab_script.gif|
+agc_live_call_DEAD.gif|agc_live_call_DEAD.gif|
+vdc_LB_startrecording_OFF.gif|vdc_LB_startrecording_OFF.gif|
+vdc_LB_webform_two.gif|vdc_LB_webform_two.gif|
+vdc_LB_webform_two_OFF.gif|vdc_LB_webform_two_OFF.gif|
+vdc_volume_MUTE.gif|vdc_volume_MUTE.gif|
+vdc_volume_UNMUTE.gif|vdc_volume_UNMUTE.gif|
+You have now logged out. Thank you|Έχετε αποσυνδεθεί. Σας ευχαριστούμε|
+astGUIclient web-client VERSION|ΈΚΔΟΣΗ astGUIclient|
+astGUIclient web client|χειριστής astGUIclient|
+VICIDIAL web client|χειριστής VICIDIAL|
+VICIDIAL web-client version|Έκδοση VICIDIAL|
+You can only monitor Zap channels|Μπορείτε μόνο να ελέγξετε τα κανάλια Zap|
+Stop Record|Τερματισμός Ηχογράφησης|
+you are logged into this phone|συνδεμένος με το τηλ|
+Back to Main Window|Επιστροφή στο Βασικό Παράθυρο|
+LIVE CALLS ON THIS PHONE|ΕΝΕΡΓΕΣ ΚΛΗΣΕΙΣ ΣΕ ΑΥΤΟ ΤΟ ΤΗΛΕΦΩΝΟ|
+LIVE CALLS IN THIS CONFERENCE|ΕΝΕΡΓΕΣ ΚΛΗΣΕΙΣ ΣΕ ΑΥΤΗΝ ΤΗΝ ΔΙΑΣΚΕΨΗ|
+LIVE CALL TRANSFER|ΜΕΤΑΦΟΡΑ ΕΝΕΡΓΗΣ ΚΛΗΣΗΣ|
+CLIENT CHANNEL|ΚΑΝΑΛΙ ΠΕΛΑΤΩΝ|
+REMOTE CHANNEL|ΑΠΟΜΑΚΡΟ ΚΑΝΑΛΙ|
+CLICK HERE TO LOG IN AGAIN|ΕΠΙΛΕΞΤΕ ΕΔΩ ΓΙΑ ΝΑ ΣΥΝΔΕΘΕΙΤΕ ΠΑΛΙ|
+ACTIVE DISPLAY PAUSED|ΠΑΥΣΗ ΕΝΕΡΓΗΣ ΟΘΟΝΗΣ|
+Main Panel|Κύριος Πίνακας|
+Active Lines Panel|Πίνακας Ενεργών Γραμμών|
+Conferences Panel|Πίνακας διασκέψεων|
+Check Voicemail|Ελεγχος Φωνητικού ταχυδρομείου|
+Live Call|Ενεργή κλήση|
+Hangup Trunk|Κλείσιμο Κορμού|
+Hijack Trunk|Κλέψιμο Κορμού|
+Listen Trunk|Ακούστε Κορμό|
+Active Local Menu|Ενεργές Τοπικές Επιλογές|
+Hangup Local|Κλείσιμο τοπικού|
+Hijack Local|Κλέψιμο τοπικού|
+Listen Local|Ακούστε τοπικό|
+Channel to be transferred|Κανάλι προς μεταφορά|
+Extensions Menu|Επιλογές τηλ. συνδέσεων|
+Send to selected extension|Στείλε στην επιλεγμένη τηλ.σύνδεση|
+Send to selected vmail box|Στείλε στο επιλεγμένο vmail|
+Send to this number|Στείλε σε αυτόν τον αριθμό|
+click on a number below to send to a conference|επιλέξτε έναν αριθμό κατωτέρω που θα σταλεί σε μια διάσκεψη|
+Send my channel too|Στείλε το κανάλι μου επίσης|
+Conferences Menu|Επιλογές διασκέψεων|
+LOCAL Extensions Dial|ΤΟΠΙΚΕΣ τηλ. συνδέσεις Κλήσεως|
+Phone calling from|Τηλέφωνο που καλεί από|
+Call selected extension|Επιλεγμένη κλήση τηλ. σύνδεσης|
+Call selected vmail box|Επιλεγμένη κλήση vmail|
+LOCAL DIAL EXTENSIONS|ΤΗΛ.ΣΥΝΔ. ΤΟΠΙΚΗΣ ΚΛΗΣΗΣ|
+OUTBOUND CALLS|ΕΞΕΡΧΟΜΕΝΕΣ ΚΛΗΣΕΙΣ|
+INBOUND CALLS|ΕΙΣΕΡΧΟΜΕΝΕΣ ΚΛΗΣΕΙΣ|
+Refresh rate|Ρυθμός ανανέωσης|
+MANUAL DIAL|ΧΕΙΡ.ΚΛΗΣΗ|
+CALL DATE\/TIME|ΗΜΕΡΟΜΗΝΙΑ/ΧΡΟΝΟΣ ΚΛΗΣΗΣ|
+LOCAL HANGUP|ΤΟΠΙΚΟ ΚΛΕΙΣΙΜΟ ΤΗΛΕΦΩΝΟΥ|
+PARKED CALLS|ΣΤΑΘΜ.ΚΛΗΣΕΙΣ|
+PARKED BY|ΣΤΑΘΜΕΥΜΕΝΕΣ ΑΠΟ|
+PARKED TIME|ΧΡΟΝΟΣ ΣΤΑΘΜΕΥΣΗΣ|
+Registered to|Συμμετέχεις|
+Enter Conference|Συμμετοχή|
+Dial From Conf|Κλήση από συνψη|
+Active Extensions|Ενεργές τηλ. συνδέσεις|
+Outside Lines|Εξωτερικές γραμμές|
+Local Extensions|Τοπικές τηλ. συνδέσεις|
+Data Goes Here|Τα δεδομένα πηγαίνουν εδώ|
+Trunk Action|Κίνηση Κορμού|
+Local Action|Τοπική Κίνηση|
+Conferences List|Κατάλογος διασκέψεων|
+Click on a conference room number on the left for info on that conference|Επιλέξτε έναν αριθμό δωματίου συνδιάσκεψης στα αριστερά για τις πληροφορίες σε εκείνη την συνδιάσκεψη|
+List Display|Κατάλογος Οθόνης|
+Live Extensions|Ενεργές τηλ. συνδέσεις|
+Busy Extensions|Απασχολημένες τηλ. συνδέσεις|
+Outside Lines|Εξωτερικές γραμμές|
+script runtime|χρόνος εκτέλεσης|
+Call Log Display|Έμφάνιση Καταγραμμένων Κλήσεων|
+is not valid|δεν ισχύει|
+or protocol|ή πρωτόκολλο|
+Conf Extension Check|Ελεγχος τηλ.σύνδεσης διάσκεψης|
+has been registered to|έχει καταχωρηθεί|
+LIVE INBOUND CALL|ΕΝΕΡΓΗ ΕΙΣΕΡΧΟΜΕΝΗ ΚΛΗΣΗ|
+Number Dialed|Αριθμός που καλέσατε|
+SEND TO MY VOICEMAIL|ΣΤΕΙΛΕ ΣΤΟ ΦΩΝΗΤΙΚΟ ΤΑΧΥΔΡΟΜΕΙΟ ΜΟΥ|
+Live Extension Check|Ελεγχος ενεργής τηλ.σύνδεσης|
+Manager Send|Ο διαχτής στέλνει|
+command not inserted|εντολή που δεν έγινε εισαγωγή|
+command sent for|εντολή που στέλνεται για|
+One of these variables|Μία από αυτές τις μεταβλητές|
+must be greater than 2 characters|πρέπει να είναι μεγαλύτερος από 2 χαρακτήρες|
+must be greater than 14 characters|πρέπει να είναι μεγαλύτερος από 14 χαρακτήρες|
+must be set|πρέπει να τεθεί|
+not sent|μην σταλμένος|
+Cannot find empty conference|Δεν υπάρχει κενή διάσκεψη|
+is not live|δεν είναι ενεργό|
+RECORDING WILL LAST UP TO 60 MINUTES|Η ΚΑΤΑΓΡΑΦΗ ΘΑ ΔΙΑΡΚΕΣΕΙ ΜΕΧΡΙ 60 ΛΕΠΤΑ|
+Parked Calls Display|Εμφάνιση Σταθμευμένων Κλήσεων|
+Database Query Script|Κώδικας ερώτησης βάσεων δεδομένων|
+Group Choice|Επιλογή ομάδας|
+has been registered to user|έχει καταχωρηθεί στο χρήστη|
+HOPPER EMPTY|ΚΕΝΟΣ HOPPER|
+LOG NOT ENTERED|ΔΕΝ ΕΓΙΝΕ ΕΙΣΑΓΩΓΗ ΣΤΗΝ ΚΑΤΑΓΡΑΦΗ ΓΕΓΟΝΟΤΩΝ|
+has been changed to|έχει αλλαχτεί|
+information has been updated|οι πληροφορίες έχουν ενημερωθεί|
+is now in status|είναι τώρα στη κατάσταση|
+Voicemail Check|Έλεγχος φωνητικού ταχυδρομείου|
+voicemail box|Κουτί φωνητικού ταχυδρομείου|
+Re-Login|Επανασύνδεση|
+User Password|Κωδικός πρόσβασης χρήστη|
+User Login|Σύνδεση χρήστη|
+Phone Login|Σύνδεση Τηλεφώνου|
+Phone Password|Κωδικός πρόσβασης Τηλεφώνου|
+Campaign not active, please try again|Η εκστρατεία είναι μη ενεργή, παρακαλώ προσπαθήστε πάλι|
+Login incorrect, please try again|Η σύνδεση δεν είναι σωστή, παρακαλώ προσπαθήστε πάλι|
+Campaign Login|Σύνδεση εκστρατείας|
+Sorry, your phone login and password are not active in this system, please try again|Συγγνώμη, αλλά η τηλεφωνική σύνδεση και ο κωδικός πρόσβασής σας δεν είναι ενεργά σε αυτό το σύστημα, παρακαλώ προσπαθήστε πάλι|
+leads left to call in hopper|οδηγοί που απέμειναν για κλήση στον hopper|
+CAMPAIGN CUSTOM PARKING|ΠΡΟΣΑΡΜΟΣΜΕΝΟΣ ΧΩΡΟΣ ΣΤΑΘΜΕΥΣΗΣ ΕΚΣΤΡΑΤΕΙΑΣ|
+CAMPAIGN DEFAULT PARKING|ΠΡΟΕΠΙΛΟΓΗ ΧΩΡΟΥ ΣΤΑΘΜΕΥΣΗΣ ΕΚΣΤΡΑΤΕΙΑΣ|
+CAMPAIGN CUSTOM WEB FORM|ΠΡΟΣΑΡΜΟΣΜΕΝΗ ΙΣΤΟΣΕΛΙΔΑ ΕΚΣΤΡΑΤΕΙΑΣ|
+CAMPAIGN DEFAULT WEB FORM|ΠΡΟΕΠΙΛΟΓΗ ΙΣΤΟΣΕΛΙΔΑΣ ΕΚΣΤΡΑΤΕΙΑΣ|
+CAMPAIGN ALLOWS CLOSERS|Η ΕΚΣΤΡΑΤΕΙΑ ΕΠΙΤΡΕΠΕΙ CLOSERS|
+CAMPAIGN ALLOWS NO CLOSERS|Η ΕΚΣΤΡΑΤΕΙΑ ΔΕΝ ΕΠΙΤΡΕΠΕΙ CLOSERS|
+USING PREVIOUS MEETME ROOM|ΧΡΗΣΙΜΟΠΟΙΗΣΗ ΠΡΟΗΓΟΥΜΕΝΟΥ ΔΩΜΑΤΙΟΥ MEETME|
+USING NEW MEETME ROOM|ΧΡΗΣΙΜΟΠΟΙΗΣΗ ΝΕΟΥ ΔΩΜΑΤΟΥ MEETME|
+old QUEUE and INCALL reverted list|παλιά ΣΕΙΡΑ ΑΝΑΜΟΝΗΣ και σε-κλήση κλήσεις επαναστρέφουν την Λίστα|
+old QUEUE and INCALL reverted hopper|παλιά ΣΕΙΡΑ ΑΝΑΜΟΝΗΣ και σε-κλήση κλήσεις επαναστρέφουν τον hopper|
+old vicidial_live_agents records cleared|καθαρισμός παλαιών εγγραφών vicidial_live_agents|
+campaign is set to auto_dial_level|η εκστρατεία τίθεται στην αυτόματη κλήση|
+new vicidial_live_agents record inserted|νέο εισαγωγή εγγραφής vicidial_live_agents|
+campaign is set to manual dial|η εκστρατεία τίθεται στη χειρωνακτική κλήση|
+Sorry, there are no leads in the hopper for this campaign|Συγγνώμη, δεν υπάρχουν οδηγοί στον hopper για αυτήν την εκστρατεία|
+Dial Next Number|Κλήση επόμενου αριθμού|
+LIVE CALLS IN YOUR SESSION|ΕΝΕΡΓΕΣ ΚΛΗΣΕΙΣ ΣΤΗ ΣΥΝΟΔΟ ΣΑΣ|
+Stop Recording|Στάση ηχογράφισης|
+Start Recording|Εναρξη ηχογράφισης|
+Transfer number must have more than 1 digit|Ο αριθμός σε μεταφορά πρέπει να έχει περισσότερο από 1 ψηφίο|
+Grab Parked Call|Αρπαγμα σταθμευμένης κλήσης|
+Park Call|Στάθμευση Κλήσης|
+Waiting for Ring|Αναμονή για κουδούνισμα|
+Called 3rd party|Κλήση 3ου συμβαλλόμενου μέρους|
+LEAVE 3-WAY CALL|ΑΠΟΧΩΡΗΣΗ 3μελής ΚΛΗΣΗΣ|
+Dial With Customer|Κλήση με τον πελάτη|
+Park Customer Dial|Στάθμευση κλήσης πελάτη|
+Hangup Xfer Line|Κλείσιμο Γραμμής Xfer|
+Hangup Both Lines|Κλείσιμο και τις δύο γραμμές|
+Hangup Customer|Κλείσιμο Πελάτη|
+Transfer - Conference|Μεταφορά - διάσκεψη|
+LOCAL CLOSER|ΤΟΠΙΚΟΣ CLOSER|
+INTERNAL CLOSER|ΕΣΩΤΕΡΙΚΟΣ CLOSER|
+Dial Blind Transfer|Τυφλή μεταφορά κλήσης|
+Dial timed out, contact your system administrator|Τέλος χρόνος της κλήσης, να έρθετε σε επαφή με το διαχειριστή|
+No more leads in the hopper for campaign|Δεν υπάρχουν άλλοι οδηγοί στον hopper για την εκστρατεία|
+Web Form|Σελίδα Διαδικτύου|
+You Must Select a Disposition|Πρέπει να επιλέξετε ένα τερματισμό|
+GROUPS NOT SELECTED|ΟΜΑΔΕΣ ΠΟΥ ΔΕΝ ΕΧΟΥΝ ΕΠΙΛΕΓΕΙ|
+SELECTED GROUPS|ΕΠΙΛΕΓΜΕΝΕΣ ΟΜΑΔΕΣ|
+You cannot log out during a Dial attempt|Δεν μπορείτε να αποσυνδεθείτε κατά τη διάρκεια μιας προσπάθειας κλήσεως|
+Wait 50 seconds for the dial to fail out if it is not answered|Περιμένετε 50 δευτερόλεπτα την κλήση για να αποτύχει εάν δεν απαντέται|
+STILL A LIVE CALL! Hang it up then you can log out|Υπάρχει ΑΚΟΜΑ μια ΚΛΗΣΗ ΕΝΕΡΓΗ! Τερματίστε την κλήση και μετά μπορείτε να αποσυνδεθείτε|
+Hide conference call channel information|Απόκρυψη πηροφοριών κλήσης καναλιού συνδιάσκεψης|
+Show conference call channel information|Παρουσίαση πληροφοριών κλήσης καναλιού διασκέψης|
+Logged in as User|Σύνδεση ως χρήστης |
+No one is in your session|Κανένας δεν είναι στη σύνοδό σας|
+Customer has hung up|Ο πελάτης έχει κλείσει το τηλέφωνο|
+End-of-call Disposition Selection|Επιλογή τερματισμού της κλήσης|
+CLOSER INBOUND GROUP SELECTION|CLOSER ΕΙΣΕΡΧΟΜΕΝΗ ΕΠΙΛΟΓΗ ΟΜΑΔΑΣ|
+Closer Inbound Group Selection|Επιλογή Closer εισερχόμενης ομάδας|
+BLENDED CALLING|ΣΥΝΔΥΑΣΜΕΝΗ ΚΛΗΣΗ|
+outbound activated|εξερχόμενες ενεργοποιημένες|
+Preview the Lead then|Προβολή καθοδήγησης μετά|
+Lead was not reverted, there was an error|Η καθοδήγηση δεν επανήλθε, υπήρξε ένα λάθος|
+call was not placed, there was an error|η κλήση δεν τοποθετήθηκε, υπήρξε ένα λάθος|
+Number to call|Αριθμός για κλήση|
+Customer Information|Πληροφορίες Πελάτη|
+Lead Dispositioned As|Τερματισμό Καθοδήγησης όπως|
+Any changes made to the customer information below at this time will not be comitted, You must change customer information before you Hangup the call|Οποιεσδήποτε αλλαγές που γίνονται στις πληροφορίες πελατών κατωτέρω αυτή τη στιγμή δεν θα είναι, πρέπει να αλλάξετε τις πληροφορίες πελατών ενώπιον σας Hangup η κλήση|
+When active, simply press the keyboard key for the desired disposition for this call. The call will then be hungup and dispositioned automatically|Όταν είναι ενεργό, πιέστε απλά το πλήκτρο κλειδί για τον επιθυμητό τερματισμό της κλήσης. Η κλήση θα τρεματίσει αυτόματα|
+Disposition Hot Keys|Πλήκτρα κλειδιά Τερματισμού|
+Cust Time|Χρόνος Πελάτη|
+RECORD ID|ΤΑΥΤΟΤΗΤΑ ΕΓΓΡΑΦΗΣ|
+RECORDING FILE|ΑΡΧΕΙΟ ΗΧΟΓΡ|
+HOT KEYS ACTIVE|ΠΛΗΚΤΡΑ ΚΛΕΙΔΙΑ ΕΝΕΡΓΑ|
+HOT KEYS INACTIVE|ΠΛΗΚΤΡΑ ΚΛΕΙΔΙΑ ΑΝΕΝΕΡΓΑ|
+DIAL OVERRIDE|Υπέρβαση Κλήσης|
+SKIP LEAD|Παράλειψη Οδηγού|
+DIAL LEAD|ΚΛΗΣΗ ΟΔΗΓΟΥ|
+LEAD PREVIEW|ΠΡΟΒΟΛΗ ΟΔΗΓΟΥ|
+PAUSE AGENT DIALING|ΤΕΡΜΑΤΙΣΜΟΣ ΚΛΗΣΗΣ|
+DISPOSITION CALL|Τερματισμός Κλήσης|
+ session ID| ID εργασίας|
+ to campaign| στην εκστρατεία|
+Select a CallBack Date|Επιλέξτε μια ημερομηνία CallBack|
+ maximize | μεγιστοποιήστε |
+ minimize | ελαχιστοποιήστε |
+You must choose a date|Πρέπει να επιλέξετε μια ημερομηνία|
+Select a Date Below|Επιλέξτε μια ημερομηνία κατωτέρω|
+Click on a callback below to call the customer back now. If you click on a record below to call it, it will be removed from the list|Επιλέξτε μία επανάκληση παρακάτω για να καλέσετε τον πελάτη τώρα. Εάν επιλέξετε μία εγγραφή παρακάτω, θα διαγραφεί από την λίστα|
+If you want to dial a number and have it NOT be added as a new lead, enter in the exact dialstring that you want to call in the Dial Override field below. To hangup this call you will have to open the CALLS IN THIS SESSION link at the bottom of the screen and hang it up by clicking on its channel link there|Εάν θέλετε να καλέσετε έναν αριθμό και να μην προστεθεί ως νέος οδηγός, καταχωρήστε τον με την σωστή μορφή στο πεδίο Αγνόησε Κλήση παρακάτω. Για να κλείσετε αυτή την κλήση θα πρέπει να ανοίξετε το ΚΛΗΣΕΙΣ ΣΕ ΑΥΤΗ ΤΗΝ ΔΙΑΙΔΚΑΣΙΑ στο κάτω μέρος της οθόνης και να την κλείσετε επιλέγοντας το κανάλι|
+YOU CANNOT SKIP A CALLBACK OR MANUAL DIAL, YOU MUST DIAL THE LEAD|ΔΕΝ ΜΠΟΡΕΙΤΕ ΝΑ ΠΑΡΑΛΕΙΨΕΤΕ ΜΙΑ ΕΠΑΝΑΚΛΗΣΗ Ή ΧΕΙΡΟΚΙΝΗΤΗ ΚΛΗΣΗ, ΘΑ ΠΡΕΠΕΙ ΝΑ ΚΑΛΕΣΕΤΕ ΤΟΝ ΟΔΗΓΟ|
+YOU MUST BE PAUSED TO MANUAL DIAL A NEW LEAD IN AUTO-DIAL MODE|ΘΑ ΠΡΕΠΕΙ ΝΑ ΕΙΣΑΣΤΕ ΣΕ ΠΑΥΣΗ ΓΙΑ ΧΕΙΡΟΚΙΝΗΤΗ ΚΛΗΣΗ ΣΕ ΑΥΤΟΜΑΤΗ ΜΕΘΟΔΟ|
+Enter information below for the new lead you wish to call|Καταχωρήστε τις πληροφορίες παρακάτω για τον νέο οδηγό που επιθυμήτε να καλέσετε|
+YOU MUST BE PAUSED TO CHECK CALLBACKS IN AUTO-DIAL MODE|ΘΑ ΠΡΕΠΕΙ ΝΑ ΕΙΣΑΣΤΕ ΣΕ ΠΑΥΣΗ ΓΙΑ ΝΑ ΕΛΕΓΞΕΤΕ ΤΙΣ ΕΠΑΝΑΚΛΗΣΕΙΣ ΣΕ ΑΥΤΟΜΑΤΗ ΜΕΘΟΔΟ|
+Note: all new manual dial leads will go into list|Σημείωση: όλες οι νέες χειροκίνητες κλήσεις θα πάνε στην λίστα|
+YOU DO NOT HAVE PERMISSIONS TO TRANSFER CALLS|ΔΕΝ ΕΧΕΤΕ ΔΙΚΑΙΩΜΑΤΑ ΓΙΑ ΜΕΤΑΦΟΡΑ ΚΛΗΣΕΩΝ|
+will be added to the beginning of this number|θα προστεθεί στην αρχή του αριθμού|
+This is usually a 1 in the USA-Canada|Αυτό είναι συνήθως ένα 1 στις ΗΠΑ|
+NEW MANUAL DIAL LEAD FOR|ΝΕΑ ΧΕΙΡΟΚΙΝΗΤΗ ΚΛΗΣΗ ΟΔΗΓΟΥ ΓΙΑ|
+Finish and Disposition Call|Τελείωσε και Τερμάτισε την Κλήση|
+10 digits max - digits only|10 ψηφία μόνο|
+Note: a dial prefix of|Σημείωση: ένα πρόθεμα κλήσης από|
+Hangup Again|Ξανακλήσε|
+Go Back|Επιστροφή|
+Call Agent Again|Ξανακάλεσε τον Χειριστή|
+MY CALLBACK ONLY|ΜΟΝΟ ΤΗΝ ΕΠΑΝΑΚΛΗΣΗ ΜΟΥ|
+ACTIVE CALLBACKS|ΕΝΕΡΓΕΣ ΕΠΑΝΑΚΛΗΣΕΙΣ|
+CALLBACKS FOR AGENT|ΕΠΑΝΑΚΛΗΣΕΙΣ ΓΙΑ ΤΟΝ ΧΕΙΡΙΣΤΗ|
+Dial Code:|Κωδικός Κλήσης:|
+Dial Override|Αγνόησε Κλήση|
+digits only please|παρακαλώ μόνο ψηφία|
+Dial Now|Κάλεσε Τώρα|
+CB Comments|Σχόλια CB|
+ Title| Τίτλος|
+ STATUS| ΚΑΤΑΣΤΑΣΗ|
+ RESET| ΕΠΑΝΑΦΟΡΑ|
+CLEAR FORM|ΕΠΑΝΑΦΟΡΑ|
+SUBMIT|ΥΠΟΒΑΛΕΤΕ|
+Incoming|Εισερχόμενο|
+Calling|Σε Κλήση|
+Called|Αποκαλούμενος|
+Campaign|Εκστρατεία|
+>Status|>Κατάσταση|
+Inserted|Εισαγωγή |
+ seconds| δευτερόλεπτα|
+ Login | Σύνδεση |
+Login:|Σύνδεση:|
+User |Χρήστης |
+Password|Κωδικός πρόσβασης|
+VERSION|ΕΚΔΟΣΗ|
+BUILD|ΔΗΜΙΟΥΡΓΙΑ|
+Server|Κεντρικός υπολογιστής|
+RECORD |ΕΓΓΡΑΦΗ |
+>HANGUP|>ΚΛΕΙΣΙΜΟ|
+>XFER|>XFER|
+IN-NUMBER|ΣΕ-ΑΡΙΘΜΟ|
+NUMBER|ΑΡΙΘΜΟΣ|
+CALLERID|CALLERID|
+ CALL| ΚΛΗΣΗ|
+PICKUP|ΕΠΑΝΑΛΕΙΨΗ|
+CONFERENCE|ΣΥΝΔΙΑΣΚΕΨΗ|
+Refresh|Ανανέωση|
+Send DTMF|Στείλε DTMF|
+>ORDER|>ΤΑΞΙΝ|
+ on | στο |
+>LOGOUT|>ΑΠΟΣΥΝΔΕΣΗ|
+ Channel| Κανάλι|
+Extensions|Τηλ.συνδέσεις|
+Conferences|Διασκέψεις|
+Conference|Διάσκεψη|
+ Recording| Καταγραφή|
+Welcome |Χρήστης |
+VOICEMAIL|ΦΩΝ.ΤΑΧ.|
+ NEW| ΝΕΟ|
+ OLD| ΠΑΛΑΙΟ|
+ Pause | Παύση |
+Resume|Επανάληψη|
+Faster|Γρηγορότερα|
+Slower|Πιό αργά|
+Initializing|Αρχή|
+Invalid|Ακυρο|
+Username|Όνομα χρήστη|
+Notes:|Σημειώσεις:|
+First|Πρώτο|
+MI: |Μσ:|
+Last |Επίθετο |
+Address|Διεύθυνση|
+City|Πόλη|
+ State| Κράτος|
+PostCode|Ταχ.Κωδ.|
+Province|Επαρχία|
+Vendor ID|ID προμηθευτού|
+DialCode|Κωδικός Κλήσης|
+Alt. Phone|Εναλ/κό Τηλ|
+Show|Παρουσίαση|
+ Email| Ηλεκτρονικό ταχυδρομείο|
+ Comments| Σχόλια|
+REFRESH|ΑΝΑΝΕΩΣΗ|
+ALT PHONE DIAL|ΚΛΗΣΗ ENAΛ/ΚΟΥ ΤΗΛΕΦΩΝΟΥ|
+MAIN PHONE|ΚΥΡΙΟ ΤΗΛΕΦΩΝΟ|
+ALT PHONE|ΕΝΑΛΛΑΚΤΙΚΟ ΤΗΛΕΦΩΝΟ|
+ADDRESS3|3ΔΙΕΥΘΥΝΣΗ|
+FINISH LEAD|ΤΕΛΕΙΩΣΤΕ|
+Dial Alt Phone Number|Κλήση εναλκού αριθμού|
+Phone|Τηλ|
+ DIAL| ΚΛΗΣΗ|
+SUBMIT FAVORITES CHANGES - requires logout|ΥΠΟΒΑΛΤΕ τις ΑΛΛΑΓΕΣ ΣΥΜΠΑΘΕΙΩΝ - απαιτεί την αποσύνδεση|
+BACK TO MAIN WINDOW - ignore changes made|ΠΙΣΩ στο ΚΥΡΙΟ ΠΑΡΑΘΥΡΟ - αγνοήστε τις αλλαγές που γίνονται|
+AVAILABLE EXTENSIONS|ΔΙΑΘΕΣΙΜΕΣ ΕΠΕΚΤΑΣΕΙΣ|
+ edit| διορθώστε|
+ FAVORITES| ΑΓΑΠΗΜΕΝΑ|
+### END translation phrases through 1.1.11 release ###
+Search Existing Leads|Αναζήτηση Οδηγών|
+This option if checked will attempt to find the phone number in the system before inserting it as a new lead|Η επιλογή αυτή επιτρέπει να βρει τον αριθμό στο σύστημα προτού γίνει εισαγωγή ως νέος οδηγός|
+Finish Wrapup and Move On|Τελείωμα Αναδίπλωσης και Συνέχεια|
+seconds remaining in wrapup|απομύνοντα δευτερόλεπτα σε αναδίπλωση|
+Call Wrapup:|Αναδίπλωση Κλήσης:|
+### months of the year for CallBack date select screen ###
+January|Φεβρουάριος|
+Frebruary|Ιανουαρίου|
+March|Μάρτιος|
+April|Απρίλιος|
+May|Μάιος|
+June|Ιούνιος|
+July|Ιούλιος|
+August|Αύγουστος|
+September|Σεπτέμβριος|
+October|Οκτώβριος|
+November|Νοέμβριος|
+December|Δεκέμβριος|
+### BEGIN translation phrases for 2.0.1 release ###
+Previous Callback Information|Προηγούμενες πληροφορίες επανάκλησης|
+Last Call: |Τελευταία Κλήση: |
+CallBack: |Επανάκληση: |
+Agent: |Χειριστής: |
+Comments: |Σχολιασμός: |
+### BEGIN translation phrases for 2.0.2 release ###
+VOLUME|ΟΓΚΟΣ|
+### BEGIN translation phrases for 2.0.3 release ###
+FAST DIAL|ΓΡΗΓΟΡΗ ΚΛΗΣΗ|
+YOU MUST ENTER A PHONE NUMBER AND DIAL CODE TO USE FAST DIAL|ΠΡΕΠΕΙ ΝΑ ΠΛΗΚΤΡΟΛΟΓΕΙΣΕΤΕ έναν ΤΗΛΕΦΩΝΙΚΟ ΑΡΙΘΜΟ ΚΑΙ έναν ΚΩΔΙΚΟ ΓΙΑ ΤΗΝ ΓΡΗΓΟΡΗ ΚΛΗΣΗ|
+ SELECT A PAUSE CODE :| ΕΠΙΛΕΞΤΕ έναν ΚΩΔΙΚΟ ΓΙΑ ΣΥΝΤΟΜΗ ΔΙΑΚΟΠΗ :|
+ENTER A PAUSE CODE|ΠΛΗΚΤΡΟΛΟΓΕΣΤΕ έναν ΚΩΔΙΚΟ ΓΙΑ ΣΥΝΤΟΜΗ ΔΙΑΚΟΠΗ|
+YOU MUST BE PAUSED TO ENTER A PAUSE CODE IN AUTO-DIAL MODE|ΠΡΕΠΕΙ ΝΑ ΠΛΗΚΤΡΟΛΟΓΕΙΣΕΤΕ έναν ΚΩΔΙΚΟ ΣΥΝΤΟΜΗΣ ΔΙΑΚΟΠΗΣ στον ΤΡΟΠΟ αυτόματων κλήσεων|
+Your session has been disabled|Η σύνοδός σας έχει τεθεί εκτός λειτουργίας|
+### BEGIN translation phrases for 2.0.5 release ###
+Gender: |Φύλο:|
+Date of Birth: |Ημερομηνία Γέννησης:|
+YOU MUST BE PAUSED TO CHANGE GROUPS|Πρέπει να είστε σε ΠΑΥΣΗ για να αλλάξετε ΟΜΑΔΕΣ|
+Calls in Queue:|Κλήσεις στη ουρά:|
+ Timeclock| Timeclock|
+The user and password you entered are not active in the system|Ο χρήστης και ο κωδικός πρόσβασης που πληκτρολογήσατε δεν είναι ενεργός στο σύστημα|
+Please try again|Παρακαλώ δοκιμάστε ξανά|
+You cannot log in or out within 30 seconds of your last login or logout|Δεν μπορείτε να συνδεθείτε για διάστημα 30 δευτερολέπτων από την τελευταία σας σύνδεση ή αποσύνδεση|
+You have now logged-out|Έχετε αποσυνδεθεί|
+You logged out at |Έχετε αποσυνδεθεί από την|
+Amount of time you were logged-in: |Ποσό χρόνο ήταν συνδεδεμένος:|
+ERROR: timeclock log entry already made: |ERROR: η καταχώρηση του timeclock στο αρχείο καταγραφής έχει ήδη πραγματοποιηθεί:|
+BACK to Agent Login Screen|ΕΠΙΣΤΡΟΦΗ στην οθόνη Συνδεσης του Χειριστή|
+BACK to Administration|ΕΠΙΣΤΡΟΦΗ στην Διαχείριση|
+BACK to Welcome Screen|ΕΠΙΣΤΡΟΦΗ στην οθόνη υποδοχής|
+Time since you were last logged-in: |Ο χρόνος από την τελευταία φορά σύνδεσης:|
+You last logged-out at: |Τελευταάι αποσύνδεση:|
+Click LOGIN below to log-in|Κάντε κλικ παρακάτω για να συνδεθείτε|
+Amount of time you have been logged-in: |Χρονικό διάστημα που είσαστε συνδεμένος:|
+You logged-in at:|Συνδεθήκατε:|
+Click LOGOUT below to log-out|Κάντε κλικ στην ΑΠΣΥΝΔΕΣΗ για να αποσυνδεθείτε|
+Undefined|Μη Ορισμένο|
+This phone number is not in the campaign lists|Αυτός ο αριθμός τηλεφώνου δεν είναι στις λίστες της εκστρατεία|
+Unspecified error|Απροσδιόριστο σφάλμα|
+Extended Alt Phone Information: |Εκτεταμένη Πληροφορία Εναλλ Τηλεφώνου:|
+ALT DIAL NUMBER:|ΕΝΑΛΛ ΑΡΙΘΜΟΣ ΚΛΗΣΗΣ:|
+Phone Code and Number:|Τηλεφωνικός Αριθμός και Κωδικός:|
+Notes: |Σημειώσεις:|
+Active: |Ενεργό:|
+Alt Count: |Εναλλ Μετρητής:|
+Change this phone number to INACTIVE|Αλλαγή του αριθμού τηλεφώνου σε Ανενεργό|
+Change this phone number to ACTIVE|Αλλαγή του αριθμού τηλεφώνου σε Ενεργό|
+YOU MUST LOG IN TO THE TIMECLOCK FIRST|Πρέπει πρώτα να συνδεθείτε στο TIMECLOCK|
+There is a time synchronization problem with your system, please tell your system administrator|Υπάρχει πρόβλημα συγχρονισμού με το σύστημα, παρακαλούμε ενημερώστε τον διαχειριστή του συστήματός σας|
+Preview Call|Προεπισκόπηση Κλήσης|
+SELECT A GROUP ALIAS|ΕΠΙΛΕΞΤΕ ΕΝΑ ΨΕΥΔΩΝΥΜΟ ΟΜΑΔΑΣ|
+Group Alias Selection|Επιλογή Ψευδώνυμο Ομάδας|
+Click Here to Choose a Group Alias|Κάντε κλικ εδώ για να Επιλέξτε ένα Ψευδώνυμο Ομάδας|
+Group Alias|Ψευδώνυμο Ομάδας|
+### START translations for 2.2.0 release ###
+You are not allowed to dial into other agent sessions|Δεν επιτρέπεται να καλέσετε σε άλλες συνεδρίες χειριστή|
+QUICK TRANSFER|Γρήγορη μεταφορά|
+Other Agents Status|Άλλη Κατάσταση Χειριστών|
+Available Agents Transfer|Διαθέσιμοι Χειριστές για Μεταφορά|
+Show Calls In Queue|Παρουσίαση Κλήσεων Στην Ουρά|
+Calls In Queue|Κλήσεις Στην Ουρά|
+Hide Calls In Queue|Απόκρυψη Κλήσεων Στην Ουρά|
+Calls in Queue View Disabled for this campaign|Εμφάνιση Κλήσεων στην Ουρά απενεργοποιημένη για αυτή την εκστρατεία|
+YOU MUST BE PAUSED TO GRAB CALLS IN QUEUE|ΠΡΕΠΕΙ να είστε σε Παύση για να αρπάξετε τις ΚΛΗΣΕΙΣ στην Ουρά|
+Manager |Διευθυντής |
+has selected your in-group choices|έχει επιλέξει τις εισερχ-ομάδες|
+CONSULTATIVE|ΣΥΜΒΟΥΛΕΥΤΙΚΗ|
+Close Message|Κλείσιμο Μηνύματος|
+TIMER NOTIFICATION|ΚΟΙΝΟΠΟΙΗΣΗ ΧΡΟΝΟΥ|
+>AGENTS<|>ΧΕΙΡΙΣΤΕΣ<|
+### START translations for 2.4 release ###
+VIEW CALL LOG|ΔΕΙΤΕ ΠΡΟΣΚΛΗΣΗ LOG|
+click to dial|κάντε κλικ για να καλέσετε|
+Close Call Log|Κλείστε Πρόσκληση Σύνδεση|
+YOU MUST BE PAUSED TO VIEW YOUR CALL LOG|ΘΑ ΠΡΕΠΕΙ ΝΑ ΠΑΥΣΗ ΓΙΑ ΝΑ ΔΕΙΤΕ Κλήσεων ΣΑΣ|
+Close Info Box|Κλείσιμο Πληροφορίες|
+No calls on this day|Δεν υπάρχουν κλήσεις για αυτή την ημέρα|
+You are in ALT dial mode, you must finish the lead before logging out|Είστε σε λειτουργία κλήσης ALT, θα πρέπει να τελειώσει το προβάδισμα πριν από την αποσύνδεση|
+Presets Button|Προεπιλογές Κουμπί|
+SELECT A PRESET|Επιλέξτε ένα προκαθορισμένο|
+Customer Hung-up, 3-way Call Ended Automatically|Πελάτης Hung-up, 3-Way Κλήση τερματίζεται αυτόματα|
+Manual Dial Queue Calls Waiting|Εγχειρίδιο Ουρά σύνδεση κλήσεων Αναμονή|
+Manual Queue|Εγχειρίδιο Ουρά|
+This phone number is outside of the local call time|Αυτός ο αριθμός τηλεφώνου είναι έξω από την τοπική ώρα κλήσης|
+Manual Queue is Off|Εγχειρίδιο ουρά είναι εκτός λειτουργίας|
+Manual Queue is On|Εγχειρίδιο Ουρά είναι σε|
+Call Notes:|Καλέστε Σημειώσεις:|
+Call Notes List|Καλέστε Σημειώσεις Λίστα|
+view notes|δείτε τις σημειώσεις|
+CALL NOTES LOG|Σημειώσεων μητρώου κλήσεων|
+Close Call Notes|Κλείστε σημειώσεις κλήσεων|
+CALL LOG FOR THIS LEAD|Κλήσεων ΓΙΑ ΑΥΤΟ ΤΟ ΜΟΛΥΒΔΟ|
+SEARCH FOR A LEAD|Αναζήτηση ΜΟΛΥΒΔΟΥ|
+SEARCH RESULTS|ΑΠΟΤΕΛΕΣΜΑΤΑ ΑΝΑΖΗΤΗΣΗΣ|
+YOU MUST BE PAUSED TO SEARCH FOR A LEAD|ΘΑ ΠΡΕΠΕΙ ΝΑ ΠΑΥΣΗ Για να αναζητήσετε ένα ΜΟΛΥΒΔΟΥ|
+Notes: when doing a search for a lead, the phone number, lead ID or|Σημειώσεις: όταν κάνετε μια αναζήτηση για το μόλυβδο, τον αριθμό τηλεφώνου, να οδηγήσει ταυτότητας ή|
+are the best fields to use|είναι τα καλύτερα πεδία για να χρησιμοποιήσετε|
+Using the other fields may be slower. Lead searching does not allow for wildcard or partial search terms|Χρησιμοποιώντας τα άλλα πεδία μπορεί να είναι βραδύτερη. Ο μόλυβδος έρευνα δεν επιτρέπει μπαλαντέρ ή μερική όρους αναζήτησης|
+Lead search requests are all logged in the system|Οι επικεφαλής όλων των αιτημάτων αναζήτησης συνδεδεμένοι στο σύστημα|
+Main Phone Number|Κύρια Τηλέφωνο|
+Alternate Phone Number|Αναπληρωτής Τηλέφωνο|
+Address3 Phone Number|Address3 Τηλέφωνο|
+No results found|Δεν βρέθηκαν αποτελέσματα|
+Results Found:|Αποτελέσματα:|
+No calls found|Δεν υπάρχουν Προκηρύξεις|
+reset form|επαναφέρετε μορφή|
+Callback Status|Κατάσταση επανάκλησης|
+Callback Lead Status|Επανάκληση Κατάσταση μόλυβδο|
+Callback Entry Time|Χρόνος εισόδου επανάκλησης|
+Callback Trigger Time|Επανάκληση χρόνο ενεργοποίησης|
+Callback Comments|Σχόλια επανάκλησης|
+To see information on one of the callbacks below, click on the INFO link. To call the customer back now, click on the DIAL link. If you click on a record below to dial it, it will be removed from the list|Για να δείτε πληροφορίες για ένα από τα παρακάτω callbacks, κάντε κλικ στο link. Για να καλέσετε τον πελάτη πίσω τώρα, κάντε κλικ στο σύνδεσμο DIAL. Αν κάνετε κλικ σε ένα αρχείο για να το καλέσετε, θα πρέπει να αφαιρεθεί από τον κατάλογο|
+rings all available agents until one picks up the phone|δαχτυλίδια όλα τα διαθέσιμα μέσα έως ότου ένας να σηκώσει το τηλέφωνο|
+No calls for this lead|Δεν υπάρχουν προσκλήσεις για το μόλυβδο|
+Time Zone Warning|Χρόνος προειδοποίησης ζώνης|
+Phone Area Code Outside Dialable Zone|Κώδικας Τηλέφωνο περιοχή εκτός της ζώνης Dialable|
+Postal Code Outside Dialable Zone|Τ.Κ. Έξω Dialable Ζώνη|
+Custom Transfer|Προσαρμοσμένη Μεταφορά|
+System Delay, Please try again|Καθυστέρηση Σύστημα, παρακαλώ προσπαθήστε ξανά|
+Disposition Status List Hidden|Διάθεση Λίστα Κρυφό Κατάσταση|
+The system has received a command to log you out, you have been logged out of your session|Το σύστημα έχει λάβει εντολή για να κάνετε log out, σας έχει αποσυνδεθεί από τη συνεδρία σας|
+Notes: when doing a search for a contact, wildcard or partial search terms are not allowed|Σημειώσεις: όταν κάνετε μια αναζήτηση για μια επαφή, δεν επιτρέπεται μπαλαντέρ ή μερική όρους αναζήτησης|
+Contact search requests are all logged in the system|Τα αιτήματα αναζήτησης Επικοινωνία όλοι συνδεδεμένοι στο σύστημα|
+SEARCH FOR A CONTACT|Αναζήτηση επαφής|
+CONTACTS SEARCH RESULTS|ΕΠΙΚΟΙΝΩΝΙΑ ΑΠΟΤΕΛΕΣΜΑΤΑ ΑΝΑΖΗΤΗΣΗΣ|
+LEAD SEARCH|ΜΟΛΥΒΔΟΣ ΑΝΑΖΗΤΗΣΗ|
+Customer Time|Χρόνος πελατών|
+TERRITORY SELECTION|ΕΠΙΛΟΓΗ ΕΔΑΦΟΣ|
+TERRITORIES NOT SELECTED|Εδάφη που δεν ΕΠΙΛΕΓΜΕΝΕΣ|
+SELECTED TERRITORIES|επιλεγμένα εδάφη|
+Dialable Leads|Dialable Εκκινήσεις|
+You have now logged-in|Τώρα έχετε συνδεδεμένων|
+You logged in at|Μπορείτε συνδεδεμένος στο|
+Refresh Campaign List|Ανανέωση Λίστα Εκστρατεία|
+PLEASE SELECT A CAMPAIGN|Επιλέξτε μια καμπάνια|
+Agents View|Δείτε πράκτορες|
+-READY|-ΕΤΟΙΜΟ|
+-INCALL|-Incall|
+-PAUSED|-ΠΑΥΣΗ|
+CALL DISPOSITION|ΠΡΟΣΚΛΗΣΗ διάθεση|
+### START translations for 2.6 release ###
+Click Here to Choose a Dial In-Group|κάντε κλικ εδώ για να επιλέξετε μια σύνδεση μέσω τηλεφώνου στην ομάδα|
+SELECT A DIAL IN-GROUP|επιλέξτε μια κλήση στην ομάδα|
+DIAL IN-GROUP|καλέσουν ομάδα|
+Dial In-Group|καλέσουν ομάδα|
+Click Here to Activate|κάντε κλικ εδώ για να ενεργοποιήσετε|
+Click Here to Deactivate|κάντε κλικ εδώ για να απενεργοποιήσετε|
+ERROR: You must enter in search terms, one of these must be populated: lead ID, vendor ID, phone number, last name|error: θα πρέπει να εισάγετε όρους αναζήτησης, ένα από αυτά πρέπει να είναι πυκνοκατοικημένη: μόλυβδος id, id πωλητή, τον αριθμό τηλεφώνου, το επώνυμο|
+ERROR: You must enter in search terms, one of these must be populated: office number, last name, first name|error: θα πρέπει να εισάγετε όρους αναζήτησης, μία από αυτές θα πρέπει να συμπληρωθεί: αριθμός του γραφείου, το επώνυμο, το όνομα|
+ERROR: There was a problem with your search terms|error: υπήρχε ένα πρόβλημα με δικούς σας όρους αναζήτησης|
+Phone and Post Code Time Zone Mismatch|τηλεφώνου και μετά του χρόνου κωδικό αναντιστοιχία ζώνη|
+Last Local Call Time|τελευταία τοπική ώρα κλήσης|
+Called Count|αριθμό των κλήσεων|
+Unidentified Hangup Cause Code|αγνώστων κωδικό αιτία ανωμαλίας|
+YOU MUST SELECT AN AGENT TO TRANSFER TO WHEN USING AGENTDIRECT|θα πρέπει να επιλέξετε έναν πράκτορα να μεταφέρει κατά τη χρήση agentdirect|
+Another live agent session was open using your user ID. It has been disabled. Click OK to continue to the agent screen|μια άλλη ζωντανή συνεδρία παράγοντα που χρησιμοποιούν ανοικτού όνομα χρήστη σας. έχει απενεργοποιηθεί. κάντε κλικ στο κουμπί OK για να συνεχίσετε στην οθόνη παράγοντα|
+View Comment History|δείτε το ιστορικό σχόλιο|
+reset form|επαναφέρετε μορφή|
+SELECT THIS LEAD|επιλέξτε αυτό το προβάδισμα|
+YOU MUST BE ON AN ACTIVE INBOUND CALL TO SEARCH FOR A LEAD|θα πρέπει να είναι σε μια ενεργή εισερχόμενη κλήση για να αναζητήσετε ένα προβάδισμα|
+Attachments|συνημμένα|
+Next Call Pause|επόμενη παύση κλήσης|
+-History-|-history-|
+SUBMIT SEARCH|υποβολή αναζήτησης|
+close |κοντά |
+AGENT CALL LOG|παράγοντα καταγραφής κλήσεων|
+ LENGTH | μήκος |
+ PHONE | τηλέφωνο |
+ FULL NAME | ονοματεπώνυμο |
+ CAMPAIGN | εκστρατεία |
+ ALT | αναπληρωματικό |
+ HANGUP | ανωμαλίας |
+ INFO | info |
+phone login|Σύνδεση τηλεφώνου|
+LAST CALL|τελευταία κλήση|
+ CALLBACK | επανάκλησης |
+ CITY | πόλη |
+ STATE | κατάσταση |
+ ZIP | zip |
+Phone Number|αριθμός τηλεφώνου|
+Phone Number Fields|πεδία αριθμού τηλεφώνου|
+Lead ID|οδηγήσει id|
+ WAIT | περιμένετε |
+ AGENT | πράκτορας |
+ CALL GROUP | καλέστε την ομάδα |
+ TYPE | τύπος |
+digits only|μόνο ψηφία|
+DIAL ALERT|dial ειδοποιεί|
+WEB FORM SUBMIT|ιστοσελίδα μορφή υποβάλλει|
+in campaign|στην εκστρατεία|
+ DATE\/TIME | Ημερομηνία\/ώρα |
+ IN\/OUT | μέσα και έξω |
+>GROUPS<|>ΟΜΆΔΕΣ<|
+>GO<|>πάμε<|
+>recording<|>σημειώνοντας<|
+>SELECT<|>επιλέξτε<|
+Alert is ON|συναγερμού είναι|
+Alert is OFF|ειδοποίηση είναι απενεργοποιημένη|
+EMAIL LOG FOR THIS LEAD|log email για αυτό το προβάδισμα|
+EMAIL TO|email στο|
+ ATTACHMENTS | συνημμένα |
+Called Since Last Reset|ζήτησε από τον τελευταίο μηδενισμό|
+Timezone:|Χρονική ζώνη:|
+Dial Link|dial link|
+ LAST | τελευταίος |
+SEARCH FOR A CONTACT|αναζητήσετε μια επαφή|
+Notes: when doing a search for a contact, wildcard or partial search terms are not allowed|Σημειώσεις: Όταν κάνετε μια αναζήτηση για μια επαφή, δεν επιτρέπεται μπαλαντέρ ή μερική όρους αναζήτησης|
+Contact search requests are all logged in the system|Τα αιτήματα αναζήτησης επαφών όλοι συνδεδεμένοι στο σύστημα|
+Office Number|αριθμός γραφείων|
+First Name|όνομα|
+Last Name|επώνυμο|
+BU Name|εμπορική επωνυμία|
+Department:|Τμήμα:|
+Group Name|το όνομα της ομάδας|
+Job Title|τίτλος θέσης εργασίας|
+Location:|τοποθεσία:|
+### START translations for 2.8 release ###
+This agent screen was not opened properly|Αυτή η οθόνη πράκτορας δεν άνοιξε σωστά|
+Dial Lead ID|Κλήση Μόλυβδος Ιϋ|
+Agent Form Display Script|Έντυπο συνεργάτη Εμφάνιση Σενάριο|
+Agent Notes|Πράκτορας Σημειώσεις|
+You have been paused for too long, you have been logged out of your session|Θα έχουν διακοπεί εδώ και πολύ καιρό, έχετε αποσυνδεθεί από τη συνεδρία σας|
+Too many network errors, please contact your administrator|Πάρα πολλά σφάλματα του δικτύου, επικοινωνήστε με το διαχειριστή σας|
+No available servers, please contact your administrator|Δεν υπάρχουν διαθέσιμα servers, παρακαλούμε επικοινωνήστε με το διαχειριστή σας|
+No available phones, please contact your administrator|Δεν υπάρχουν διαθέσιμα τηλέφωνα, επικοινωνήστε με το διαχειριστή σας|
+You are already logged in, please log out of your other session first|Είστε ήδη συνδεδεμένοι, συνδεθείτε από άλλη συνεδρία σας πρώτα|
+Too many agents logged in, please contact your administrator|Πάρα πολλοί παράγοντες συνδεδεμένοι, επικοινωνήστε με το διαχειριστή σας|
+Dial Countdown|Κλήση Αντίστροφη μέτρηση|

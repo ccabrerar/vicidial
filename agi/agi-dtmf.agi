@@ -1,0 +1,188 @@
+#!/usr/bin/perl
+#
+# agi-dtmf.agi - script for playing DTMF tones or signals received as the callerid field or in the command CLI
+# 
+# DTMF sound files must be in /var/lib/asterisk/sounds for this to work
+#
+# Accepted values are: 1 2 3 4 5 6 7 8 9 0 # * ,
+# comma means pause for 1 second (use 'S' for pause in CLI mode)
+#
+# exten => 8500998,1,Answer
+# exten => 8500998,2,Playback(silence)
+# exten => 8500998,3,AGI(agi-dtmf.agi)
+#; exten => 8500998,3,AGI(agi-dtmf.agi,signalonly) ; optional signal only DTMF
+# exten => 8500998,4,Hangup
+#
+# Can also be used in a Call Menu: agi-dtmf.agi,signalonly---12345   # optional signal only DTMF with CLI-defined DTMF values
+#
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+#
+# CHANGES
+# 90312-1534 - Added signalonly option
+# 140611-1330 - Added CLI dtmf variable option
+# 180520-0942 - Fix for inconsistency problem, issue #1099
+# 190129-1030 - Added alphabet letters translation to phone DTMF digits feature
+#
+
+$signalonly=0;
+$cli_vars_set=0;
+### begin parsing run-time options ###
+if (length($ARGV[0])>1)
+	{
+	$i=0;
+	while ($#ARGV >= $i)
+		{
+		$args = "$args $ARGV[$i]";
+		$i++;
+		}
+	### list of command-line array arguments:
+	@ARGV_vars = split(/---/, $ARGV[0]);
+
+	$signalonly =		$ARGV_vars[0];
+	$cli_vars = 		$ARGV_vars[1];
+	}
+if ($signalonly =~ /signalonly/)
+	{$signalonly=1;}
+if (length($cli_vars) > 0)
+	{$cli_vars_set=1;}
+
+
+$|=1;
+while(<STDIN>) 
+	{
+	chomp;
+	last unless length($_);
+	if (/^agi_(\w+)\:\s+(.*)$/) 
+		{$AGI{$1} = $2;}
+	if (/^agi_callerid\:\s+(.*)$/)		{$caller_id = $1;}
+	if (/^agi_calleridname\:\s+(.*)$/)  {$caller_idname = $1;}
+	}
+
+print STDERR "AGI Environment Dump:\n";
+foreach $i (sort keys %AGI) {
+	print STDERR " -- $i = $AGI{$i}\n";
+}
+
+use Time::HiRes ('gettimeofday','usleep','sleep');  # necessary to have perl sleep command of less than one second
+
+use Asterisk::AGI;
+my $agi = new Asterisk::AGI;
+
+my $clid = $agi->get_variable('CALLERID');
+my $clidname = $agi->get_variable('CALLERIDNAME');
+
+print STDERR "X.  |$clid|$caller_id|$clidname|     |$signalonly|$cli_vars_set|$cli_vars|\n";
+
+
+print "STREAM FILE silence \"\"\n";
+
+### sleep for 5 tenths of a second
+usleep(1*10*1000);
+
+$caller_id = "$caller_id$caller_idname";
+$caller_id =~ s/unknown//g;
+
+if ($cli_vars_set > 0) 
+	{$caller_id = $cli_vars;}
+
+@CALLERID_DIGITS = split(//, $caller_id);
+
+foreach (@CALLERID_DIGITS)
+	{
+	if ($CALLERID_DIGITS[$g] =~ /\d/) 
+		{
+		if ($signalonly > 0)
+			{print "EXEC SendDTMF $CALLERID_DIGITS[$g] \"\"\n";}
+		else
+			{print "STREAM FILE $CALLERID_DIGITS[$g] \"\"\n";}
+		print STDERR "DIGIT: $CALLERID_DIGITS[$g]\n";
+		}
+	else
+		{
+		$dtmf_played=0;
+		if ($CALLERID_DIGITS[$g] =~ /\#/) 
+			{
+			if ($signalonly > 0)
+				{print "EXEC SendDTMF \# \"\"\n";}
+			else
+				{print "STREAM FILE hash \"\"\n";}
+			$dtmf_played++;
+			}
+		if ($CALLERID_DIGITS[$g] =~ /\*/) 
+			{
+			if ($signalonly > 0)
+				{print "EXEC SendDTMF \* \"\"\n";}
+			else
+				{print "STREAM FILE star \"\"\n";}
+			$dtmf_played++;
+			}
+		if ($CALLERID_DIGITS[$g] =~ /\,/) 
+			{
+			sleep(1);
+			$dtmf_played++;
+			}
+		if ($CALLERID_DIGITS[$g] =~ /[A-Za-z]/) 
+			{
+			$translated_digit='';
+			if ($CALLERID_DIGITS[$g] =~ /[A-Ca-c]/) {$translated_digit=2;}
+			if ($CALLERID_DIGITS[$g] =~ /[D-Fd-f]/) {$translated_digit=3;}
+			if ($CALLERID_DIGITS[$g] =~ /[G-Ig-i]/) {$translated_digit=4;}
+			if ($CALLERID_DIGITS[$g] =~ /[J-Lj-l]/) {$translated_digit=5;}
+			if ($CALLERID_DIGITS[$g] =~ /[M-Om-o]/) {$translated_digit=6;}
+			if ($CALLERID_DIGITS[$g] =~ /[P-Sp-s]/) {$translated_digit=7;}
+			if ($CALLERID_DIGITS[$g] =~ /[T-Vt-v]/) {$translated_digit=8;}
+			if ($CALLERID_DIGITS[$g] =~ /[W-Zw-z]/) {$translated_digit=9;}
+
+			if ($signalonly > 0)
+				{print "EXEC SendDTMF $translated_digit \"\"\n";}
+			else
+				{print "STREAM FILE $translated_digit \"\"\n";}
+			print STDERR "DIGIT: $translated_digit\n";
+
+			$dtmf_played++;
+			}
+		print STDERR "NON-DIGIT: $CALLERID_DIGITS[$g]\n";
+		}
+	$g++;
+
+	### sleep for 20 hundredths of a second
+	usleep(1*150*1000);
+
+	print "STREAM FILE silence \"\"\n";
+
+	### sleep for 10 hundredths of a second
+	usleep(1*100*1000);
+	}
+
+print "STREAM FILE silence \"\"\n";
+$result = <STDIN>;
+checkresult($result);
+
+exit;
+
+sub checkresult 
+	{
+	my ($res) = @_;
+	my $retval;
+	$tests++;
+	chomp $res;
+	if ($res =~ /^200/) 
+		{
+		$res =~ /result=(-?\d+)/;
+		if (!length($1)) 
+			{
+			print STDERR "FAIL ($res)\n";
+			$fail++;
+			} 
+		else 
+			{
+			print STDERR "PASS ($1)\n";
+			$pass++;
+			}
+		} 
+	else 
+		{
+		print STDERR "FAIL (unexpected result '$res')\n";
+		$fail++;
+		}
+	}

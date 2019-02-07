@@ -1,0 +1,162 @@
+CROSS-CLUSTER COMMUNICATION	Started: 2011-05-27	Updated: 2018-09-08
+
+
+--------------------------------
+ SIMPLER IMPLEMENTED OPTION: implemented in SVN/trunk revision 2777, must update to rev. 2801
+--------------------------------
+Below is a description of a simple cross-cluster option, which is to send lead data in one direction from one cluster to another as a phone call is sent over.
+
+
+- A call to be sent from one cluster to another should leave its callerIDname as the Caller Code, the 20-character code that includes the lead_id
+
+- This call will go through an IAX trunk between the two systems into an internal DID on the destination cluster
+	Set up an IAX "carrier" on the originating cluster and an IAX "phone" on the destination cluster to link the two together.
+		(Note: the phone entry on the destination cluster must have the Outbound CallerID and Fullname fields blank, and the Phone Type must have "trunk" in it)
+	The destination phone entry needs to use "trunkinbound" as it's phone and exten context
+
+- Agent on the originating cluster will do a blind-transfer or dial-with-customer to a custom dialplan number that goes to the destination cluster
+	Agent should click on the "commit" link in the Customer Information screen before transferring the call(top right corner)
+	This will ensure that any customer info they have altered is updated on the origination database before the destination cluster gets the call
+
+- At the DID, the call will get sent to a Call Menu where the call will go through an AGI script
+	Set the prompt to "wait-moment|cm_sc_ccc_lookup_insert.agi,ccc_test---8199"
+		# Flag Options:  (separated by triple-pipe: "---")
+		# 1- container_id for settings container with URL to send
+		# 2- local list_id to insert lead into(if not populated, will use external system's list_id for the lead)
+
+- The AGI script will use parameters defined in a Settings Container for the URL of the originating system's Non-Agent API and credentials
+	The originating server will need to set up a user of level 8 with view reports and Agent API abilities, and the 'ccc_lead_info' API function enabled
+	You will need to add a Settings Container to hold the URL for the originating system to look up the lead data, something like this:
+	http://server/vicidial/non_agent_api.php?user=6666&pass=1234&source=test&function=ccc_lead_info&call_id=--A--call_id--B--
+
+- That AGI script will look up the lead on the originating system using the Non-Agent API and credentials set in a Settings Container
+
+- The originating system will validate that the caller_code was a valid recent call before sending any data(within last 10 hours)
+
+- If there is a match, then the AGI script will gather the default lead information, insert the information into the new system and change the callerIDname with the destination system's lead_id included
+
+- The call will then go to option "A" and should probably be routed to an In-Group with the handle method set to "CLOSER" so it can go to an agent
+
+
+NOTES:
+	# If lead is not found on external system, call will go to the 'B' option in the call menu
+	# If container is not found, call will go to the 'C' option in the call menu
+	# If call_id is not defined, call will go to the 'D' option in the call menu
+	# If you are planning to use the 'force_fronter_leave_3way' function across this CCC connection, make sure you have that API permission set for the API user above
+
+
+
+
+
+
+
+
+
+
+
+
+
+BELOW THIS LINE ARE THE OLD PLANNING NOTES FOR A MUCH MORE COMPLEX CROSS-CLUSTER SETUP DESIGN
+---------------------------------------------------------------------------------------------------------------------------------------------
+!!!!! THIS FEATURE DOES NOT EXIST AS DESCRIBED BELOW, THIS IS FOR PLANNING PURPOSES ONLY !!!!!
+
+
+This is a planning document for how different vicidial clusters can communicate 
+with each other to send various types of information between them. The overall 
+goal is to allow for many clusters to talk to each other.
+
+Some of the types of communication that we would like to achieve are:
+- Setup of crossover trunks(SIP/IAX) allowing for 1-way or 2-way calling
+- Allowing lookup of lead information while transferring between clusters
+- Allow transmission of number of calls in queue, agents available and other stats
+- Allow routing of calls to another cluster based upon total daily call percentage, drop rate, number of waiting calls or number of waiting agents
+
+
+
+--------------------------------
+ DATABASE AND ADMIN CHANGES:
+--------------------------------
+
+A new options in System Settings will be added:
+- cross_cluster_enabled - Y/N
+- local_cluster_id - the id that is used for this cluster by other clusters
+
+This will require a new Admin subsection for cluster configuration:
+- cluster_id
+- cluster_name
+- active - Y/N
+- cluster_primary_server
+- cluster_trunk_protocall - SIP/IAX
+- cluster_agent_api_url
+- cluster_nonagent_api_url
+- cluster_api_user
+- cluster_api_pass
+- cluster_api_permissions - lead_lookup, user_lookup, ingroup_lookup, etc...
+- cluster_user_group - used to define the campaigns/ingroups cluster is allowed to get info on
+- <readonly auto-updated> cluster_dst, cluster_tz, cluster_local_gmt_now
+
+There will be new options added to Servers:
+- local_gmt_now - current calculated gmt offset
+- cluster_id - default will be LOCAL cluster
+- cluster_call_direction - IN_FROM_CLUSTER, OUT_TO_CLUSTER, BOTH, NONE
+- cluster_server_ip - SERVER_IP, ALT_IP, EXTERNAL_IP
+
+There will be a new table added to link lead_ids on clusters:
+-vicidial_list_cluster_link
+- lead_id
+- cluster_id
+- cluster_lead_id
+- call_date
+- caller_code
+
+New table to keep track of the active in-groups and campaigns on other clusters
+- group_id
+- name
+- type - INGROUP, CAMPAIGN
+- cluster_id
+
+Some tables will have a "cluster_id" field added to them to show where the call came from
+- vicidial_auto_calls
+- vicidial_campaign_stats
+
+
+
+--------------------------------
+ NON-AGENT API CHANGES:
+--------------------------------
+
+lead_id_lookup:
+- REQUIRES: cluster_id, caller_code
+- RETURNS: all lead and call information
+
+lead_notes_lookup:
+- REQUIRES: cluster_id, lead_id
+- RETURNS: call history for lead_id including per-call notes
+
+ingroup_status:
+- REQUIRES: cluster_id, group_id
+- RETURNS: status, after hours, number of agents waiting/incall/paused/total, number of calls waiting, calls today, drops today, drop %
+
+campaign_status:
+- REQUIRES: cluster_id, campaign_id
+- RETURNS: status, number of agents waiting/incall/paused/total, number of calls waiting, calls today, drops today, dialable leads, drop %
+
+ingroup_campaign_list:
+- REQUIRES: cluster_id
+- RETURNS: ID and name of all active campaigns and in-groups on the cluster
+
+cluster_server_status:
+- REQUIRES: cluster_id
+- RETURNS: listing of defined servers, their current times as well as PHP and DB times
+
+
+
+--------------------------------
+ CALL FLOW AND TRUNK CHANGES:
+--------------------------------
+
+- IAX/SIP crossover trunks would be added between every server on every active cluster(depending on direction settings)
+- dialplan context would be added for each foreign cluster to route calls with proper cluster_id flag allowing for lookups of lead information
+
+
+

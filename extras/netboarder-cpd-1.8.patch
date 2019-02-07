@@ -1,0 +1,223 @@
+diff -Naur asterisk-1.8.21.0.old//channels/chan_sip.c asterisk-1.8.21.0/channels/chan_sip.c
+--- asterisk-1.8.21.0.old//channels/chan_sip.c	2013-04-18 08:18:19.000000000 -0400
++++ asterisk-1.8.21.0/channels/chan_sip.c	2013-04-18 10:49:40.000000000 -0400
+@@ -1470,6 +1470,7 @@
+ static int sip_reinvite_retry(const void *data);
+ 
+ /*--- Parsing SIP requests and responses */
++static int check_cpd_results(struct sip_pvt *p, struct sip_request *req);
+ static void append_date(struct sip_request *req);	/* Append date to SIP packet */
+ static int determine_firstline_parts(struct sip_request *req);
+ static const struct cfsubscription_types *find_subscription_type(enum subscriptiontype subtype);
+@@ -5690,6 +5691,7 @@
+ 	dialog->callgroup = peer->callgroup;
+ 	dialog->pickupgroup = peer->pickupgroup;
+ 	dialog->allowtransfer = peer->allowtransfer;
++	dialog->enable_netborder_cpd = peer->enable_netborder_cpd;
+ 	dialog->jointnoncodeccapability = dialog->noncodeccapability;
+ 
+ 	/* Update dialog authorization credentials */
+@@ -7745,6 +7747,66 @@
+ 	return _default;
+ }
+ 
++/*! \brief Check for a CPD-Result
++ *  This looks for a CPD-Result in the sip_request 
++ *  and throws a manager event if it finds one
++ */
++static int check_cpd_results(struct sip_pvt *p, struct sip_request *req) {
++	const char *cpdr = get_header(req, "CPD-Result");
++	const char *cpddr = get_header(req, "X-Netborder-Detailed-CPD-Result-v2-0");
++	const char *cpdcid = get_header(req, "X-Netborder-Call-ID");
++	const char *cpdrid = get_header(req, "X-Netborder-Cpa-Reference-ID");
++	const char *cpdcamp = get_header(req, "X-Netborder-Cpa-Campaign-Name");
++	/* See if NetBorder had anything to say */
++	if (!(ast_strlen_zero(cpdr))) {
++		if (p->owner) {
++			/* If so throw a manager event with the result */
++			manager_event(
++				EVENT_FLAG_SYSTEM, 
++				"CPD-Result", 
++				"Channeltype: SIP\r\n"
++				"Channel: %s\r\n"
++				"CallerIDName: %s\r\n"
++				"Uniqueid: %s\r\n"
++				"CPDResult: %s\r\n"
++				"CPDDetailedResult: %s\r\n"
++				"CPDCallID: %s\r\n"
++				"CPDReferenceID: %s\r\n"
++				"CPDCampaignName: %s\r\n",
++				p->owner->name,
++				S_COR(p->owner->caller.id.name.valid, p->owner->caller.id.name.str, "<unknown>"),
++				p->owner->uniqueid,
++				cpdr,
++				S_OR(cpddr, ""),
++				S_OR(cpdcid, ""),
++				S_OR(cpdrid, ""),
++				S_OR(cpdcamp, "")
++			);
++		} else {  
++			/* Apparently we can have a CPD-Result and no owner, better not crash it though */
++			manager_event(
++				EVENT_FLAG_SYSTEM,
++				"CPD-Result",
++				"Channeltype: SIP\r\n"
++				"Channel: UNKNOWN\r\n"
++				"CallerIDName: UNKNOWN\r\n"
++				"Uniqueid: UNKNOWN\r\n"
++				"CPDResult: %s\r\n"
++				"CPDDetailedResult: %s\r\n"
++				"CPDCallID: %s\r\n"
++				"CPDReferenceID: %s\r\n"
++				"CPDCampaignName: %s\r\n",
++				cpdr,
++				S_OR(cpddr, ""),
++				S_OR(cpdcid, ""),
++				S_OR(cpdrid, ""),
++				S_OR(cpdcamp, "")
++			);
++		}
++	} 
++	return 0;
++}
++
+ static const char *__get_header(const struct sip_request *req, const char *name, int *start)
+ {
+ 	/*
+@@ -8178,6 +8240,7 @@
+ 	ast_string_field_set(p, mohsuggest, default_mohsuggest);
+ 	p->capability = sip_cfg.capability;
+ 	p->allowtransfer = sip_cfg.allowtransfer;
++	p->enable_netborder_cpd = sip_cfg.enable_netborder_cpd;
+ 	if ((ast_test_flag(&p->flags[0], SIP_DTMF) == SIP_DTMF_RFC2833) ||
+ 	    (ast_test_flag(&p->flags[0], SIP_DTMF) == SIP_DTMF_AUTO)) {
+ 		p->noncodeccapability |= AST_RTP_DTMF;
+@@ -12422,6 +12485,7 @@
+ 	const char *n = NULL;	/* XXX what is this, exactly ? */
+ 	const char *d = NULL;	/* domain in from header */
+ 	const char *urioptions = "";
++	const char *netbordercpd = ";cpd=on";  /* string used to enable NetBorder's CPD */
+ 	int ourport;
+ 
+ 	if (ast_test_flag(&p->flags[0], SIP_USEREQPHONE)) {
+@@ -12529,6 +12593,9 @@
+ 	/* If custom URI options have been provided, append them */
+ 	if (p->options && !ast_strlen_zero(p->options->uri_options))
+ 		ast_str_append(&invite, 0, ";%s", p->options->uri_options);
++
++	/* Tell NetBorder to enable CPD */
++	if (p->enable_netborder_cpd) ast_str_append(&invite, 0, "%s", netbordercpd);
+ 	
+  	/* This is the request URI, which is the next hop of the call
+  		which may or may not be the destination of the call
+@@ -18083,6 +18150,7 @@
+ 		if (!ast_strlen_zero(peer->accountcode))
+ 			ast_cli(fd, "  Accountcode  : %s\n", peer->accountcode);
+ 		ast_cli(fd, "  AMA flags    : %s\n", ast_cdr_flags2str(peer->amaflags));
++		ast_cli(fd, "  Netborder CPD: %s\n", AST_CLI_YESNO(peer->enable_netborder_cpd));
+ 		ast_cli(fd, "  Transfer mode: %s\n", transfermode2str(peer->allowtransfer));
+ 		ast_cli(fd, "  CallingPres  : %s\n", ast_describe_caller_presentation(peer->callingpres));
+ 		if (!ast_strlen_zero(peer->fromuser))
+@@ -18209,6 +18277,7 @@
+ 		astman_append(s, "MOHSuggest: %s\r\n", peer->mohsuggest);
+ 		peer_mailboxes_to_str(&mailbox_str, peer);
+ 		astman_append(s, "VoiceMailbox: %s\r\n", ast_str_buffer(mailbox_str));
++		astman_append(s, "Netborder CPD: %s\n", AST_CLI_YESNO(peer->enable_netborder_cpd));
+ 		astman_append(s, "TransferMode: %s\r\n", transfermode2str(peer->allowtransfer));
+ 		astman_append(s, "LastMsgsSent: %d\r\n", peer->lastmsgssent);
+ 		astman_append(s, "Maxforwards: %d\r\n", peer->maxforwards);
+@@ -18360,6 +18429,7 @@
+ 		if (!ast_strlen_zero(user->accountcode))
+ 			ast_cli(a->fd, "  Accountcode  : %s\n", user->accountcode);
+ 		ast_cli(a->fd, "  AMA flags    : %s\n", ast_cdr_flags2str(user->amaflags));
++		ast_cli(a->fd, "  Netborder CPD: %s\n", AST_CLI_YESNO(user->enable_netborder_cpd));
+ 		ast_cli(a->fd, "  Transfer mode: %s\n", transfermode2str(user->allowtransfer));
+ 		ast_cli(a->fd, "  MaxCallBR    : %d kbps\n", user->maxcallbitrate);
+ 		ast_cli(a->fd, "  CallingPres  : %s\n", ast_describe_caller_presentation(user->callingpres));
+@@ -18816,6 +18886,7 @@
+ 				sip_cfg.notifycid == IGNORE_CONTEXT ? " (Ignoring context)" : "");
+ 	}
+ 	ast_cli(a->fd, "  Notify hold state:      %s\n", AST_CLI_YESNO(sip_cfg.notifyhold));
++	ast_cli(a->fd, "  Enable Netborder CPD:   %s\n", AST_CLI_YESNO(sip_cfg.enable_netborder_cpd));
+ 	ast_cli(a->fd, "  SIP Transfer mode:      %s\n", transfermode2str(sip_cfg.allowtransfer));
+ 	ast_cli(a->fd, "  Max Call Bitrate:       %d kbps\n", default_maxcallbitrate);
+ 	ast_cli(a->fd, "  Auto-Framing:           %s\n", AST_CLI_YESNO(global_autoframing));
+@@ -19208,6 +19279,7 @@
+ 			ast_cli(a->fd, "  MaxCallBR:              %d kbps\n", cur->maxcallbitrate);
+ 			ast_cli(a->fd, "  Theoretical Address:    %s\n", ast_sockaddr_stringify(&cur->sa));
+ 			ast_cli(a->fd, "  Received Address:       %s\n", ast_sockaddr_stringify(&cur->recv));
++			ast_cli(a->fd, "  Enable Netborder CPD:   %s\n", AST_CLI_YESNO(cur->enable_netborder_cpd));
+ 			ast_cli(a->fd, "  SIP Transfer mode:      %s\n", transfermode2str(cur->allowtransfer));
+ 			ast_cli(a->fd, "  Force rport:            %s\n", AST_CLI_YESNO(ast_test_flag(&cur->flags[0], SIP_NAT_FORCE_RPORT)));
+ 			if (ast_sockaddr_isnull(&cur->redirip)) {
+@@ -21722,6 +21794,9 @@
+ 		return;
+ 	}
+ 
++	/* Check if NetBorder had anything to say */
++	check_cpd_results(p, req);
++
+ 	if (p->relatedpeer && sipmethod == SIP_OPTIONS) {
+ 		/* We don't really care what the response is, just that it replied back.
+ 		   Well, as long as it's not a 100 response...  since we might
+@@ -27822,6 +27897,7 @@
+ 	peer->rtpholdtimeout = global_rtpholdtimeout;
+ 	peer->rtpkeepalive = global_rtpkeepalive;
+ 	peer->allowtransfer = sip_cfg.allowtransfer;
++	peer->enable_netborder_cpd = sip_cfg.enable_netborder_cpd;
+ 	peer->autoframing = global_autoframing;
+ 	peer->t38_maxdatagram = global_t38_maxdatagram;
+ 	peer->qualifyfreq = global_qualifyfreq;
+@@ -28247,6 +28323,8 @@
+ 				peer->callgroup = ast_get_group(v->value);
+ 			} else if (!strcasecmp(v->name, "allowtransfer")) {
+ 				peer->allowtransfer = ast_true(v->value) ? TRANSFER_OPENFORALL : TRANSFER_CLOSED;
++			} else if (!strcasecmp(v->name, "enable-netborder-cpd")) {
++				peer->enable_netborder_cpd = ast_true(v->value);
+ 			} else if (!strcasecmp(v->name, "pickupgroup")) {
+ 				peer->pickupgroup = ast_get_group(v->value);
+ 			} else if (!strcasecmp(v->name, "allow")) {
+@@ -28814,6 +28892,7 @@
+ 	global_rtpholdtimeout = 0;
+ 	global_rtpkeepalive = DEFAULT_RTPKEEPALIVE;
+ 	sip_cfg.allowtransfer = TRANSFER_OPENFORALL;	/* Merrily accept all transfers by default */
++	sip_cfg.enable_netborder_cpd = 0;	/* Netborder CPD - Disable by default */
+ 	sip_cfg.rtautoclear = 120;
+ 	ast_set_flag(&global_flags[1], SIP_PAGE2_ALLOWSUBSCRIBE);	/* Default for all devices: TRUE */
+ 	ast_set_flag(&global_flags[1], SIP_PAGE2_ALLOWOVERLAP_YES);	/* Default for all devices: Yes */
+@@ -28922,6 +29001,8 @@
+ 			}
+ 		} else if (!strcasecmp(v->name, "allowtransfer")) {
+ 			sip_cfg.allowtransfer = ast_true(v->value) ? TRANSFER_OPENFORALL : TRANSFER_CLOSED;
++		} else if (!strcasecmp(v->name, "enable-netborder-cpd")) {
++			sip_cfg.enable_netborder_cpd = ast_true(v->value);
+ 		} else if (!strcasecmp(v->name, "rtcachefriends")) {
+ 			ast_set2_flag(&global_flags[1], ast_true(v->value), SIP_PAGE2_RTCACHEFRIENDS);
+ 		} else if (!strcasecmp(v->name, "rtsavesysname")) {
+diff -Naur asterisk-1.8.21.0.old//channels/sip/include/sip.h asterisk-1.8.21.0/channels/sip/include/sip.h
+--- asterisk-1.8.21.0.old//channels/sip/include/sip.h	2013-03-27 13:36:42.000000000 -0400
++++ asterisk-1.8.21.0/channels/sip/include/sip.h	2013-04-18 10:48:48.000000000 -0400
+@@ -705,6 +705,7 @@
+ 	int notifyhold;             /*!< Send notifications on hold */
+ 	enum notifycid_setting notifycid;  /*!< Send CID with ringing notifications */
+ 	enum transfermodes allowtransfer;  /*!< SIP Refer restriction scheme */
++	int enable_netborder_cpd;	/*!< Enable Sangoma Netborder CPD */
+ 	int allowsubscribe;         /*!< Flag for disabling ALL subscriptions, this is FALSE only if all peers are FALSE
+ 	                                 the global setting is in globals_flags[1] */
+ 	char realm[MAXHOSTNAMELEN]; /*!< Default realm */
+@@ -1059,6 +1060,7 @@
+ 	struct ast_sockaddr recv;            /*!< Received as */
+ 	struct ast_sockaddr ourip;           /*!< Our IP (as seen from the outside) */
+ 	enum transfermodes allowtransfer;   /*!< REFER: restriction scheme */
++	int enable_netborder_cpd;	/*!< Enable Sangoma Netborder CPD */
+ 	struct ast_channel *owner;          /*!< Who owns us (if we have an owner) */
+ 	struct sip_route *route;            /*!< Head of linked list of routing steps (fm Record-Route) */
+ 	struct sip_notify *notify;          /*!< Custom notify type */
+@@ -1236,6 +1238,7 @@
+ 	int busy_level;                 /*!< Level of active channels where we signal busy */
+ 	int maxforwards;                /*!< SIP Loop prevention */
+ 	enum transfermodes allowtransfer;   /*! SIP Refer restriction scheme */
++	int enable_netborder_cpd;	/*!< Enable Sangoma Netborder CPD */
+ 	struct ast_codec_pref prefs;    /*!<  codec prefs */
+ 	int lastmsgssent;
+ 	unsigned int sipoptions;        /*!<  Supported SIP options */

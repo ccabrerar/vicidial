@@ -1,0 +1,149 @@
+#!/usr/bin/perl
+#
+# cm_date.agi   version 2.6
+# 
+# Can be used in a call menu prompt to play a date string as defined by the settings below
+#
+# ; Below are the parameters needed for the script to be run properly
+# ; the "SAY DATETIME" parameters for what to say separated by three dashes
+# ; 1. offset from current epoch in seconds, positive or negative 
+# ;		1 hour is 3600
+# ;		1 day is 86400
+# ;		1 week is 604800
+# ;		30 days is 2592000
+# ;		1 year is 31536000
+# ; 2. format of the date to say, i.e. "ABdY":
+# ; 	A: Day of the week
+# ; 	B: Month (Full Text)
+# ; 	m: Month (Numeric)
+# ; 	d: Day of the month
+# ; 	Y: Year
+# ; 	I: Hour (12-hour format)
+# ; 	H: Hour (24-hour format)
+# ; 	M: Minutes
+# ; 	P: AM/PM
+# ; 	Q: Shorthand for Today, Yesterday or ABdY
+# ; 	R: Shorthand for HM
+# ; 	S: Seconds
+# ; 	T: Timezone
+#
+# ;inbound calls check calltime: 
+# ;   (this example is for yesterday and says "Monday March 25th 2013")
+# cm_date.agi,-86400---ABdY
+#
+# Copyright (C) 2013  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+#
+# changes:
+# 130326-1718 - First Build
+#
+
+$script = 'cm_date.agi';
+
+$now_date_epoch = time();
+$now_date = time();
+$AGILOG = '1';   # 1=STDERR output
+$exten='';
+
+use Asterisk::AGI;
+$AGI = new Asterisk::AGI;
+
+$AGI->stream_file('sip-silence');
+$AGI->stream_file('sip-silence');
+$AGI->stream_file('sip-silence');
+
+### begin parsing run-time options ###
+if (length($ARGV[0])>1)
+	{
+	if ($AGILOG) {$agi_string = "Perl Environment Dump:";   &agi_output;}
+	$i=0;
+	while ($#ARGV >= $i)
+		{
+		$args = "$args $ARGV[$i]";
+		if ($AGILOG) {$agi_string = "$i|$ARGV[$i]";   &agi_output;}
+		$i++;
+		}
+	
+	### list of command-line array arguments:
+	@ARGV_vars = split(/---/, $ARGV[0]);
+
+	$epoch_offset = 			$ARGV_vars[0];
+	$datetime_format =			$ARGV_vars[1];
+	}
+
+$|=1;
+while(<STDIN>) 
+	{
+	chomp;
+	last unless length($_);
+	if ($AGILOG)
+		{
+		if (/^agi_(\w+)\:\s+(.*)$/)
+			{
+			$AGI{$1} = $2;
+			}
+		}
+
+	if (/^agi_context\:\s+(.*)$/)		{$context = $1;}
+	}
+
+$new_epoch = ($now_date_epoch + $epoch_offset);
+if ($AGILOG) {$agi_string = "Date Epoch: |$now_date_epoch|$epoch_offset|$new_epoch|    Format: |$datetime_format|";   &agi_output;}
+
+
+# SAY DATETIME <time> <escape digits> [format] [timezone]
+print "SAY DATETIME $new_epoch 0 \"$datetime_format\"\n";   checkresult($result);
+
+
+exit;
+
+
+
+
+
+
+
+sub checkresult 
+	{
+	$pass=0;
+	$fail=0;
+	my ($res) = @_;
+	my $retval;
+	$tests++;
+	chomp $res;
+	if ($res =~ /^200/) 
+		{
+		$res =~ /result=(-?\d+)/;
+		if (!length($1)) 
+			{
+		#	print STDERR "FAIL ($res|$1)\n";
+			$fail++;
+			} 
+		else 
+			{
+		#	print STDERR "PASS ($res|$1)\n";
+			$pass++;
+			}
+		} 
+	else 
+		{
+	#	print STDERR "FAIL (unexpected result '$res')\n";
+		$fail++;
+		}
+	}
+
+
+sub agi_output
+	{
+	if ($AGILOG >=2)
+		{
+		### open the log file for writing ###
+		open(Lout, ">>$AGILOGfile")
+				|| die "Can't open $AGILOGfile: $!\n";
+		print Lout "$now_date|$script|$agi_string\n";
+		close(Lout);
+		}
+		### send to STDERR writing ###
+	if ( ($AGILOG == '1') || ($AGILOG == '3') )
+		{print STDERR "$now_date|$script|$agi_string\n";}
+	$agi_string='';
+	}

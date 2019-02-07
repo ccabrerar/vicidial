@@ -1,0 +1,32 @@
+UK OFCOM OUTBOUND DIALING COMPLIANCE	  Started: 2015-05-15	Updated: 2015-05-15
+
+
+
+This document describes the new UK OFCOM Drop Calculation features in Vicidial, as well as the specific changes that OFCOM made to Drop Percent Calculation in December of 2015. 
+
+In December of 2015, OFCOM in the UK released a new "Annex 5" document that outlined changes to their method of calculating the drop,or abandon, percentage for an outbound dialing campaign. 
+
+http://stakeholders.ofcom.org.uk/binaries/consultations/review-of-how-we-use-persistent-misuse-powers/annexes/Annex_5.pdf
+
+The new formula includes a process to estimate the number of drops that were answering machines, using that number to reduce the effective number of dropped calls. They do this by using the agent-answered percentage of answering machines and subtracting that percentage from the number of drops. NOTE: This can result in a fractional number. Then this new drop number is divided by the total agent-answered human-answered calls PLUS the number of drops. This differs in several ways from the way it had been done, as well as the way the drop percentage has been calculated in the USA and Canada. 
+
+This results in a much more complex final formula for calculating the drop percentage, see an example:
+	29 -	dropped calls
+	9 -	agent-answered live human calls
+	7 -	agent-answered answering machines
+DROP % = ( ( (29 - ( (7 / (9 + 7) ) * 29)) / (9 + (29 - ( (7 / (9 + 7) ) * 29)) ) ) * 100) = 16.3125 / 25.3125 = 64.44%
+
+
+Within Vicidial, this new UK drop calculation method can be activated as a system setting AND then as a campaign option. Both must be enabled for the campaign to use the new method. Both of these settings are turned off by default.
+
+Also, in order for agent-statused answering machines to be calculated properly, we have added an answering machine status flag that is used to gather those statuses.
+
+Both the Real-Time Report, and the Outbound Calling Report have been updated to show this new calculation. When the new calculation is used, you will see "(uk)" in a blue font on those reports next to the drop percentage.
+
+The Predictive algorithm has also been adjusted to calculate this new drop percentage, if enabled. These calculations also work with Drop Rate Groups.
+
+
+
+One other UK-OFCOM specific feature that is part of Vicidial is the campaign Drop Lockout Time feature:
+
+This campaign option can be set to a number of hours that DROP abandon calls will be prevented from being dialed, to disable set to 0. Default is 0. 

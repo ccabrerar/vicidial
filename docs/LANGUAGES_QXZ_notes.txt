@@ -1,0 +1,126 @@
+Notes on the non-English language translations(QXZ process)	Started: 2014-11-18	Updated: 2015-01-06
+
+
+Summary: 
+
+In the 2.10 branch, we converted from a static build process for non-English languages of the agent and admin web interfaces, to a dynamic load-time process. This necessitated creating a new function in the agent and admin web interface functions.php files to facilitate the printing or echoing of text and image names within PHP. We call this function QXZ.
+
+As of 2014-12-04, the administrative web interface to add/modify/delete langauges (and language phrases) was completed. To enable languages, you need to go to Admin -> System Settings in the admin.php web interface, then set "Enable Languages" to "1" and submit. Then go to your "user modify" page and set "Modify Languages" to "1" and submit. Now you will be able to go to Admin -> Languages and you can create new languages, copy existing languages, import languages and export languages.(The import and export processes use the existing <english>|<other-language>|| file format for UTF-8 text that is used for the language translations files currently in the codebase.)
+
+As of 2014-12-17, languages now follow User Group permissions for agents and managers just like other elements within Vicidial, and they can be assigned to users through the User Modify page, and if the agent has been given permission to change their own language, then the Agent Login screen will show a Language pull-down menu that will allow the agent to change their agent screen language upon logging in to the agent screen. Also, you can now quickly disable languages immediately systemwide by using the settings in the System Settings("Enable Languages" and "Language Method"). The Agent interface is now fully on-the-fly language capable. This means that you can create a language, and add phrases to it, and as you make changes to the language phrases, they are available immediately to the agent screen to display.
+
+As of 2014-12-31, on-the-fly translation is working for all admin web pages, and a new "Change language" page has been added and linked to at the top of the admin.php screen.
+
+As of 2015-01-06: All previous administrative interface translations have been completed.
+
+
+
+Available translation dictionaries:
+
+All available dictionaries will be placed in the following website directory:
+http://vicidial.org/translations/
+
+These translation dictionaries can simply be imported into the Admin web interface to use as is or updated as desired. The Admin web interface also has the ability to easily export dictionaries from your system that you can share or exchange with other Vicidial users.
+
+
+Currently Available Translations:
+Spanish -		AGENT	ADMIN
+German -		AGENT	ADMIN
+French -		AGENT	ADMIN
+Italian -		AGENT	ADMIN
+Greek -			AGENT	ADMIN
+Brazilian Portuguese -	AGENT	ADMIN
+Portuguese -		AGENT
+Polish -		AGENT
+Slovak -		AGENT
+Russian -		AGENT
+Dutch -			AGENT
+Traditional Chinese -	AGENT
+Swedish -		AGENT
+Danish -		AGENT
+Japanese -		AGENT
+
+
+
+Example PHP Code:
+
+echo _QXZ("Closer In Group Choice %1s has been registered to user %2s",0,'',$closer_choice,$user)."\n";
+
+The function call options in order are: "English text", "fixed legth", "l=left or r=right or blank for left", <list of up to 9 PHP variables>
+
+The QXZ function allows for up to 9 defined and ordered variables to be placed in the output using a "Percent-sign, digit, lower-case-s" format (i.e. "%1s") where the digit is the place that the variable is defined at the end of the QXZ function call.
+
+
+
+
+Utilities:
+
+/usr/share/astguiclient/ADMIN_www_languages.pl
+
+ADMIN_www_languages.pl - analyze all php scripts for QXZ functions and contents and insert in DB
+
+This script is designed to scan all scripts in the agc and vicidial web directories and gather all of the QXZ phrases present, then insert them into the "www_phrases" database table. After that is done, those phrases can be populated into the "vicidial_language_phrases" database table when adding new Languages in the Administration Web Interface.
+
+/usr/share/astguiclient/ADMIN_www_languages.pl --help
+
+options:
+  [--help] = this help screen
+  [--debug] = verbose debug messages
+  [--debugX] = extra verbose debug messages
+  [--agc-only] = only parse the agc directory
+  [--vicidial-only] = only parse the vicidial directory
+  [--QXZlines] = print full lines that include QXZ functions
+  [--QXZvalues] = print only QXZ function values
+  [--QXZvaronly] = print only QXZ function values with PHP variables in them
+  [--QXZlengthonly] = print only QXZ function values that include a length spec
+  [--QXZplaceonly] = print only QXZ function values with placeholder variables in them
+  [--conffile=/path/from/root] = define astguiclient.conf config file to use
+
+Sample output:
+
+FILE PARSING FINISHED!
+Files parsed: 283
+ConfFile:     /etc/astguiclient.conf
+QXZ line count:          17957
+QXZ count:               24578
+QXZ with length set:     1392
+QXZ with PHP vars:       681
+QXZ with var place set:  179
+QXZ with PHP vars inst:  814
+QXZ with var place inst: 292
+
+QXZ DB inserts:    6284
+QXZ DB dups:       18294
+
+
+
+/usr/share/astguiclient/QXZanalyzer.pl --debug --QXZvalues --QXZvaronly --file=/srv/www/htdocs/agc/astguiclient.php
+
+There is a utility stored in the /extras/ directory of the source tree called "QXZanalyzer.pl". This perl script can analyze the PHP scripts one at a time and print out various different types of output to help gather the phrases necessary for future translations as well as to help debug any issues with the PHP code itself
+
+/usr/share/astguiclient/QXZanalyzer.pl --help
+QXZanalyzer.pl - analyze php scripts for QXZ functions and contents
+
+options:
+  [--help] = this help screen
+  [--debug] = verbose debug messages
+  [--QXZlines] = print full lines that include QXZ functions
+  [--QXZvalues] = print only QXZ function values
+  [--QXZvaronly] = print only QXZ function values with PHP variables in them
+  [--QXZlengthonly] = print only QXZ function values that include a length spec
+  [--QXZplaceonly] = print only QXZ function values with placeholder variables in them
+  [--file=/path/from/root] = define PHP file to analyze
+
+Sample output:
+
+ANALYSIS FINISHED!
+File path:    /srv/www/htdocs/agc/manager_send.php
+Lines in file:           2256
+QXZ line count:          130
+QXZ count:               130
+QXZ with length set:     101
+QXZ with PHP vars:       101
+QXZ with var place set:  101
+QXZ with PHP vars inst:  149
+QXZ with var place inst: 149
+

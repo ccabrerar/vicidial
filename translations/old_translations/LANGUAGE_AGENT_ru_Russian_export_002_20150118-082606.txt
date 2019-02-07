@@ -1,0 +1,969 @@
+vdc_LB_active.gif|vdc_LB_active_ru.gif||
+vdc_LB_paused.gif|vdc_LB_paused_ru.gif||
+Calls in Queue|Вызовы в очереди||
+Note: a dial prefix of %1s will be added to the beginning of this number|Примечание: набор префикс %1s будет добавлен в начале этого количества||
+Manual Queue is On|Руководство Очередь на||
+close|близко ||
+CAMPAIGN|Кампания||
+SUBMIT|ВВОД||
+PLEASE SELECT A CAMPAIGN|ПОЖАЛУЙСТА ВЫБЕРИТЕ КАМПАНИЮ||
+YOU MUST LOG IN TO THE TIMECLOCK FIRST|СНАЧАЛА НУЖНО ОТМЕТИТЬСЯ В ТАБЕЛЬНЫХ ЧАСАХ||
+LAST CALL|Последний звонок||
+CITY|Город||
+No results found|Ничего не найдено||
+Calls in Queue View Disabled for this campaign|Для этой кампании просмотр вызовов в очереди запрещен||
+PHONE|телефон||
+BU NAME|наименование фирмы||
+Location:|Расположение:||
+No calls on this day|Нет звонков в этот день||
+Close Call Log|Закрыть журнал вызовов||
+Go Back|Вернуться||
+Results Found:|Результаты Найдено:||
+LOGOUT PROCESS COMPLETE, YOU MAY NOW CLOSE YOUR BROWSER OR LOG BACK IN|Выход процесс завершен, теперь вы можете закрыть браузер или снова войти в||
+to campaign|в кампании||
+START CHAT|начать Чат||
+INVITE|приглашать||
+END CHAT|конец чат||
+Enter email address of guest:|введите адрес электронной почты гостя:||
+SEND|послать||
+Custom Fields Disabled:|пользовательские поля инвалидов:||
+Custom Form Output:|пользовательскую форму выход:||
+First Sunday October to Last Sunday March|Первое воскресенье октября по последнее воскресенье марта||
+Last Sunday March to Last Sunday October|в последнее воскресенье марта в последний воскресенье Октябрь||
+First Sunday April to Last Sunday October|Первое воскресенье апреля прошлого воскресенье Октябрь||
+NOTES|примечания||
+ERROR: no custom list fields|Ошибка: нет пользовательских полей списка||
+click here to continue|нажмите здесь, чтобы продолжить||
+CLEAR|ясно||
+Number Dialed:|набранный номер:||
+Available Chats:|доступные чаты:||
+SEND MESSAGE|отправить сообщение||
+Conference %1s, Stage %2s is not valid or queryCID %3s is not valid, Originate command not inserted|конференц- %1s, сцена %2s не являются действительными или querycid %3s не является допустимым, происходят команду не вставлена||
+HELP|помогите||
+ERROR: no custom data for this lead: |Ошибка: нет пользовательских данных для данной свинца:||
+Channel %1s is not live on %2s, %3s command not inserted|Канал %1s не жить на %2s, %3s команда не вставлена||
+ExtraChannel %1s must be greater than 2 characters|extrachannel %1s должно быть больше, чем 2 символов||
+RedirectNameVmail Action not sent|redirectnamevmail действие не отправлено||
+No Local agent to send call to, Redirect command not inserted|не местный агент для отправки вызова на, перенаправлять команды не установлена||
+Exten %1s is not valid or queryCID %2s is not valid, Originate command not inserted|EXTEN %1s не действительным или querycid %2s не является допустимым, происходят команда не вставлена||
+Reply:|ответить:||
+Response:|ответ:||
+Channel %1s is not valid or queryCID %2s is not valid, Hangup command not inserted|Канал %1s не действует или querycid %2s не верный, зависание команда не вставлены||
+auto_dial_level %1s must be set|auto_dial_level %1s должен быть установлен||
+Channel %1s is not live on %2s, Redirect command not inserted|Канал %1s не жить на %2s, перенаправлять команды не установлена||
+Cannot find empty vicidial_conference on %1s, Redirect command not inserted|Невозможно найти пустой vicidial_conference на %1s, перенаправлять команды не установлена||
+Redirect Action not sent|перенаправить действие не отправлено||
+Alert Box|окно предупреждения||
+Agent Alert!|агент начеку!||
+ Phone: |  телефон:||
+Phone web client|Веб-клиент телефон||
+Phone-Only Login|телефон только Войти||
+mail could not be sent!|почта не может быть отправлено!||
+Date received:|Дата получения:||
+Originate command sent for Exten %1s Channel %2s on %3s|Происходят команда, посланная для Exten %1s Канал %2s на% 3 сек||
+Notes: when doing a search for a lead, the phone number, lead ID or %1s are the best fields to use.|Примечания: при выполнении поиска для свинца, номер телефона, свинец ID или %1s лучшие поля для использования.||
+Group Name:|Название группы:||
+ALERT :|Alert:||
+(digits only please)|(только цифры пожалуйста)||
+Dial Override:|набрать дублирование:||
+RESET|сброс||
+Channel|канал||
+BU Name:|Название бу:||
+Last Name:|фамилия:||
+Office Number:|Рабочий телефон:||
+(This option if checked will attempt to find the phone number in the system before inserting it as a new lead)|(этот вариант, если проверить будет пытаться найти номер телефона в системе, прежде чем вставлять его в качестве нового свинца)||
+Search Existing Leads:|искать существующие провода:||
+Dial Lead ID:|набрать ведущую ID:||
+BLENDED CALLING(outbound activated)|смешанный вызов (исходящий активирован)||
+Hour:|час:||
+(This is usually a 1 in the USA-Canada)|(это, как правило, 1 в США и Канады)||
+Calls Dialing:|называет набор:||
+No one is in your session:|никто не в сессии:||
+CB Comments:|CB комментарии:||
+View Comment History:|Посмотреть комментарии история:||
+DISPOSITION CALL :|расположение вызов:||
+CUSTOMER|клиент||
+Manager has selected territories for you|Менеджер выбран территорий для вас||
+DELETE ALL|удалить все||
+ADD ALL|добавить все||
+U - Undefined|U - определено||
+M - Male|м - мужчины||
+F - Female|F - женский||
+vdc_volume_down_off.gif|vdc_volume_down_off.gif||
+seconds|секунд||
+Calling:|призвание:||
+Unspecified error:|неизвестная ошибка:||
+This phone number is outside of the local call time:|Этот телефонный номер находится за пределами местному времени звонка:||
+No more leads in the hopper for campaign:|больше не лидирует в бункер для кампании:||
+ALT DIAL NUMBER: ALT|дополнительный Количество режимов: дополнительный||
+Lead skipped, go on to next lead|ведущий пропускается, перейдите к следующему свинца||
+Fronter:|Фронтер:||
+Incoming:|входящие:||
+vdc_LB_ivrparkcall_OFF.gif|vdc_LB_ivrparkcall_OFF.gif||
+Called 3rd party:|называется 3-й участник:||
+vdc_volume_down.gif|vdc_volume_down.gif||
+recording|запись||
+LIVE CALLS IN YOUR SESSION:|живые вызовы в сессии:||
+Manual Queue:|ручной очереди:||
+code:|код:||
+Group Alias:|Группа псевдоним:||
+Dial In-Group:|набрать в-группы:||
+No-Call Dial:|Нет вызову набрать:||
+PREVIOUS CALLBACK|предыдущая обратного вызова||
+vdc_LB_quickxfer.gif|vdc_LB_quickxfer.gif||
+NON-DIALABLE|Номера для dialable||
+CALLBACK DATE/TIME|обратного вызова дата/время||
+LAST CALL DATE/TIME|Последняя дата вызова/время||
+List:|список:||
+Dial Alt Phone Number:|набрать альт номер телефона:||
+or|или||
+Dialable Leads:|dialable лотов:||
+Your session has been paused|Ваша сессия была приостановлена||
+blank.gif|blank.gif||
+Password:|пароль:||
+Sorry, there are no available sessions|К сожалению, нет свободных сессий||
+Sorry, your phone login and password are not active in this system, please try again:|извините, ваш телефон Логин и пароль не активны в этой системе, попробуйте еще раз:||
+middle_initial set to|middle_initial набор для||
+phone_number set to|phone_number установлен в||
+postal_code set to|postal_code установлен в||
+province set to|провинция установлен в||
+security_phrase set to|security_phrase установлен в||
+source_id set to|source_id установлен в||
+agent_user does not have a lead on their screen|agent_user не имеет ведущую роль в их экране||
+update_fields lead updated|update_fields свинца обновляются||
+user not logged in|Пользователь не зарегистрирован||
+no active lead found|не является активным ведущий не найдено||
+st_get_agent_active_lead lead found|st_get_agent_active_lead ведущий найти||
+set_timer_action lead updated|set_timer_action ведущий обновляются||
+park_call not valid|park_call не действительны||
+no active call found|нет активного вызова нашли||
+ra_call_control transfer|перевод ra_call_control||
+ra_call_control hungup|ra_call_control hungup||
+pause_code function sent|Функция pause_code отправлено||
+pause_code not valid|pause_code не действительны||
+agent_user does not have a live call|agent_user не имеет вызовов||
+value is not valid|Недопустимое значение||
+Agent web client: Campaign Login|агент веб-клиент: кампания Логин||
+Phone Login:|телефон Войти:||
+vdc_tab_vicidial.gif|vdc_tab_vicidial.gif||
+ERROR: System Settings missing|Ошибка: системные настройки отсутствуют||
+User settings set as default|пользовательские настройки по умолчанию установлена||
+Agent web client:  Phone Login|агент веб-клиент: телефон Войти||
+Login|Войти||
+Agent web client:  Login|агент веб-клиент: Войти||
+st_login_log not valid|st_login_log не действительны||
+campaign does not allow inbound calls|Кампания не разрешать входящие звонки||
+change_ingroups function set|Функция change_ingroups набор||
+comments set to|Комментарии установлен в||
+city set to|город, стоящий на||
+address3 set to|адрес3 установлен в||
+date_of_birth set to|date_of_birth набор для||
+lead insertion failed|ведущий вставки удалось||
+lead added|свинца, добавленного||
+first_name set to|First_Name установлен в||
+gender set to|Пол установлен на||
+campaign manual dial list undefined|Кампания список Ручной набор не определен||
+audio_playback error - no session data|audio_playback погрешность - не данные сессии||
+recording active|регистрация активных||
+preview dialing not allowed on this campaign|Предварительный набор не разрешены на этой кампании||
+DONE:|сделано:||
+Processing...|обработка ...||
+Disposition:|распоряжения:||
+Answer:|ответ:||
+Question:|вопрос:||
+BUILD:|построить:||
+vtc_tab_vicidial.gif|vtc_tab_vicidial.gif||
+DATE:|дата:||
+voicemail box %1s is not valid|ящик голосовой почты %1s не действует||
+host name: |Имя хоста:||
+external_pause agent is not paused|external_pause агент не остановился||
+external_status function set|Функция набор external_status||
+audio_playback function sent|audio_playback функция отправлено||
+call_agent not valid|не call_agent действует||
+call_agent function sent|Функция call_agent отправлено||
+call_agent error - entry is empty|Ошибка call_agent - пустая строка||
+There was a problem with your search terms|было проблем с условиями поиска||
+SELECT|выбрать||
+Callback Lead Status:|обратного вызова ведущий статус:||
+ Gender|  пол||
+Called Since Last Reset:|называется с момента последнего сброса:||
+EMAIL LOG FOR THIS LEAD:|Электронная почта Вход для этого свинца:||
+Last Local Call Time:|в прошлом местному времени звонка:||
+Alt. Phone:|переменный телефон:||
+Middle Initial:|второй инициал:||
+Vendor ID:|Vendor ID:||
+Title:|название:||
+Data Updated, Hanging up call, please wait|Последнее обновление, висит звонок, пожалуйста, подождите||
+AGENT ALERT SETTING CHANGED %1s|агент оповещения измененная настройка %1s||
+%1s is not valid| %1s не действует||
+%1s %2s %3s or %4s is not valid| %1s %2s %3s или %4s не действует||
+Campaign %1s is not valid or lead_id %2s is not valid|Кампания %1s не действует или lead_id %2s не действует||
+lead_id %1s is not valid|lead_id %1s не действует||
+uniqueid %1s or lead_id: %2s is not valid|UniqueID %1s или lead_id: %2s не действует||
+VICIDiaL_LOG Inserted:|vicidial_log содержания:||
+Agent %1s is now in status %2s|агент %1s сейчас находится в статусе %2s||
+stage %1s is not valid|этап %1s не действует||
+Lead %1s information has%2s been updated|привести %1s информации %2s были обновлены||
+GO|идти||
+DATE/TIME|Дата/время||
+LENGTH|длина||
+CALL GROUP|групповой вызов||
+agent_log_id %1s or pause_code %2s is not valid|agent_log_id %1s или pause_code %2s не действует||
+Favorites list has been updated to %1s for %2s|Список избранных был обновлен до% 1с для %2s||
+ZIP|застежка-молния||
+IN/OUT|IN/OUT||
+ALT|дополнительный||
+You must enter in search terms, one of these must be populated: lead ID, vendor ID, phone number, last name|Вы должны ввести условия поиска, один из них должен быть заполнен: свинец ID, Vendor ID, номер телефона, фамилия||
+no Lead ID|нет свинца ID||
+Dept:|отдел:||
+Group|группа||
+Phone and Post Code Time Zone Mismatch! |телефон и почтовый индекс часовой пояс несоответствие!||
+uniqueid %1s or lead_id: %2s or list_id: %3s or phone_number: %4s or campaign: %5s is not valid|UniqueID %1s или lead_id: %2s или list_id: %3s или phone_number: %4s или кампания: %5s не действует||
+no lead active for this agent|нет ведущих активный образ этого агента||
+no lead info in system:|нет свинца Информация в системе:||
+Closer In Group Choice %1s has been registered to user %2s|ближе группового выбора %1s был зарегистрирован пользователю %2s||
+Group Choice is not valid|Группа выбор не действует||
+Manager Password:|менеджер паролей:||
+Conf Exten %1s or campaign %2s or ext_context %3s is not valid|конф Exten %1s или кампании %2s или ext_context %3s не действует||
+MANAGER OVERRIDE:|менеджер дублирование:||
+You are not allowed to log in outside of your shift|вы не можете войти в систему внешней рабочей смены||
+There are no Shifts enabled for your user group|нет никаких сдвигов разрешены для группы пользователей||
+Invalid server_ip: %1s or Invalid session_name: %2s|недействительным server_ip: %1s или неверное session_name: %2s||
+Parked Calls Display|Отображение запаркованных вызовов||
+agc_check_voicemail_OFF.gif|agc_check_voicemail_OFF_ru.gif||
+PICKUP|ПЕРЕХВАТИТЬ||
+CALL DATE/TIME|ДАТА И ВРЕМЯ ЗВОНКА||
+RECORD|ЗАПИСЬ ||
+AVAILABLE EXTENSIONS|ДОСТУПНЫЕ НОМЕРА||
+LIVE CALLS IN THIS CONFERENCE|АКТИВНЫЕ ЗВОНКИ ДЛЯ ЭТОЙ КОНФЕРЕНЦИИ||
+Registered to|Зарегистрировано на||
+Enter Conference|Войти в конференцию||
+Extensions Menu|Меню номеров||
+Hijack Trunk|Hijack Trunk||
+Listen Trunk|Listen Trunk||
+Back to Main Window|Вернуться в главное окно||
+LOCAL HANGUP|МЕСТНЫЙ ОТБОЙ||
+Active Local Menu|Активное местное меню||
+Hangup Local|Hangup Local||
+LIVE INBOUND CALL|АКТИВНЫЙ ВХОДЯЩИЙ ВЫЗОВ||
+Click on a conference room number on the left for info on that conference|Кликните на номере конференции слева для сведений о ней||
+Local Action|Местная операция||
+USER|Агент ||
+BUILD|СБОРКА||
+SEND TO MY VOICEMAIL|ПЕРЕВЕСТИ НА МОЮ ГОЛОСОВУЮ ПОЧТУ||
+DONE: %1s is empty for lead %2s|сделано: %1s пуст для свинцово %2s||
+Address3 Phone Number|Адрес3 номер телефона||
+Call Notes List|Call Notes список||
+Busy Extensions|Занятые номера||
+Outside Lines|Внешние линии||
+Local Extensions|Местные номера||
+Conferences|Конференции||
+This agent screen was not opened properly.|Этот экран агент не открывается,||
+CLOSER INBOUND GROUP SELECTION|ВЫБОР ВХОДЯЩЕЙ ГРУППЫ||
+Lead search requests are all logged in the system.|Ведущие поисковые запросы все вошли в систему||
+Department:|отдел:||
+TERRITORY SELECTION|ВЫБОР ТЕРРИТОРИИ||
+MY CALLBACK ONLY|ТОЛЬКО МОИ ОБРАТНЫЕ ВЫЗОВЫ||
+Close Message|Закрыть сообщение||
+WEB FORM SUBMIT|веб-страницы отправки формы||
+Finish and Disposition Call|Завершить вызов с кодом||
+vdc_XB_header.gif|vdc_XB_header_ru.gif||
+Call Agent Again|Снова вызвать агента||
+CLEAR FORM|ОЧИСТИТЬ ФОРМУ||
+End-of-call Disposition Selection|Выбор кода завершения по окончании вызова||
+vdc_XB_hangupxferline_OFF.gif|vdc_XB_hangupxferline_OFF_ru.gif||
+vdc_XB_leave3waycall_OFF.gif|vdc_XB_leave3waycall_OFF_ru.gif||
+Next Call Pause|Следующая пауза вызова||
+Hangup Again|Снова завершить вызов||
+You Must Select a Disposition|Вы должны выбрать код завершения||
+GROUP ALIAS|Псевдоним группы||
+SELECTED TERRITORIES|ОТДЕЛЬНЫХ ТЕРРИТОРИЙ||
+TERRITORIES NOT SELECTED|Территории, не ИЗБРАННЫЕ||
+Manual Queue is Off|Руководство Очередь Off||
+You have been paused for too long, you have been logged out of your session|Вы были паузы слишком долго, вы были отключены от вашей сессии||
+vdc_XB_channel.gif|vdc_XB_channel_ru.gif||
+CONSULTATIVE|СОВЕЩАТЕЛЬНЫЙ||
+vdc_XB_number.gif|vdc_XB_number_ru.gif||
+DIAL OVERRIDE|Ввод другого номера||
+Extended Alt Phone Information:|Расширенные сведения о дополнительном номере:||
+Calls In Queue:|Вызовов в очереди:||
+refresh|Обновить||
+reset form|очистка формы||
+Alert is ON|уведомлении о||
+Alert is OFF|оповещение выключено||
+LEAD SEARCH|ВЕСТИ ПОИСК||
+view notes|просмотра заметок||
+MANUAL DIAL|РУЧНОЙ НАБОР||
+FAST DIAL|БЫСТРЫЙ НАБОР||
+VIEW CALL LOG|View Call LOG||
+vdc_tab_script.gif|vdc_tab_script_ru.gif||
+YOU DO NOT HAVE PERMISSIONS TO TRANSFER CALLS|ВАМ НЕ РАЗРЕШЕНО ПЕРЕВОДИТЬ ВЫЗОВЫ||
+Logged in as User|Вход от имени||
+Customer Hung-up, 3-way Call Ended Automatically|Клиент Хун-до, 3-полосная окончании разговора автоматически||
+MAY|Май||
+ACTIVE DISPLAY PAUSED|АКТИВНОЕ ОТОБРАЖЕНИЕ ПРИОСТАНОВЛЕНО||
+LEAD PREVIEW|ПРЕДПРОСМОСТР СВЕДЕНИЙ О НОМЕРЕ||
+ALT PHONE DIAL|НАБОР ДОП.НОМЕРА||
+Hide conference call channel information|Скрыть сведения о линии конференции||
+Show conference call channel information|Показать сведения о линии конференции||
+vdc_XB_hotkeysactive.gif|vdc_XB_hotkeysactive_ru.gif||
+vdc_XB_hotkeysactive_OFF.gif|vdc_XB_hotkeysactive_OFF_ru.gif||
+YOU MUST BE PAUSED TO CHANGE GROUPS|ДЛЯ СМЕНЫ ГРУПП НУЖНО БЫТЬ В СОСТОЯНИИ ПАУЗЫ||
+Manager|Начальник ||
+You must choose a date|Вы должны выбрать дату||
+Select a Date Below|Выберите дату ниже||
+ENTER A PAUSE CODE|ВВЕСТИ КОД ПАУЗЫ||
+YOU MUST BE PAUSED TO VIEW YOUR CALL LOG|ВЫ ДОЛЖНЫ быть приостановлена ​​ЧТОБЫ УВИДЕТЬ журнала вызовов||
+CLICK HERE TO LOG IN AGAIN|КЛИКНИТЕ ЗДЕСЬ ДЛЯ ПОВТОРНОГО ВХОДА В СИСТЕМУ||
+Call Wrapup:|Передышка:||
+seconds remaining in wrapup|секунд до окончание передышки||
+YOU MUST BE PAUSED TO GRAB CALLS IN QUEUE|ЧТОБЫ ВЗЯТЬ ВЫЗОВ ИЗ ОЧЕРЕДИ НУЖНО БЫТЬ В СОСТОЯНИИ ПАУЗЫ||
+Hide Calls In Queue|Спрятать вызовы в очереди||
+Show Calls In Queue|Показать вызовы в очереди||
+You are in ALT dial mode, you must finish the lead before logging out.|Вы находитесь в режиме набора ALT, вы должны закончить свинца до выхода из||
+Your Shift is over or has changed, you have been logged out of your session|Ваша смена закончилась или изменена, Вы были выведены из своей сессии||
+The system has received a command to log you out, you have been logged out of your session|Система получила команду войти вы, вы вышли из вашей сессии||
+YOU MUST BE PAUSED TO MANUAL DIAL A NEW LEAD IN AUTO-DIAL MODE|ЧТОБЫ ПРОИЗВЕСТИ РУЧНОЙ НАБОР В РЕЖИМЕ АВТОДОЗВОНА ВАМ НУЖНО БЫТЬ В СОСТОЯНИИ ПАУЗЫ||
+REMOTE CHANNEL|УДАЛЕННАЯ ЛИНИЯ||
+vdc_XB_parkcustomerdial_OFF.gif|vdc_XB_parkcustomerdial_OFF_ru.gif||
+vdc_XB_dialwithcustomer_OFF.gif|vdc_XB_dialwithcustomer_OFF_ru.gif||
+vdc_volume_UNMUTE.gif|vdc_volume_UNMUTE.gif||
+agc_live_call_ON.gif|agc_live_call_ON_ru.gif||
+vdc_LB_senddtmf_OFF.gif|vdc_LB_senddtmf_OFF_ru.gif||
+vdc_LB_startrecording_OFF.gif|vdc_LB_startrecording_OFF_ru.gif||
+vdc_LB_webform_OFF.gif|vdc_LB_webform_OFF_ru.gif||
+YOU MUST SELECT AN AGENT TO TRANSFER TO WHEN USING AGENTDIRECT|Вы должны выбрать агента передать при использовании agentdirect||
+vdc_LB_resume.gif|vdc_LB_resume_ru.gif||
+agc_live_call_OFF.gif|agc_live_call_OFF_ru.gif||
+vdc_LB_pause.gif|vdc_LB_pause_ru.gif||
+Login incorrect, please try again|Имя неверно, попробуйте еще раз, пожалуйста||
+Campaign not active, please try again|Кампания не активна, попробуйте снова, пожалуйста||
+No available phones, please contact your administrator|Нет доступных телефонов, пожалуйста, обратитесь к администратору||
+Too many agents logged in, please contact your administrator|Слишком многие агенты вошли в систему, пожалуйста, обратитесь к администратору||
+BACK to Agent Login Screen|ВОЗВРАТ к странице агентского входа в систему||
+Voicemail Check|Проверка голосовой почты||
+You last logged-out at:|Ваш последний выход из системы был произведен в: ||
+Time since you were last logged-in:|Время после Вашего входа в систему:||
+BACK to Welcome Screen|ВОЗВРАТ к странице приветствия||
+group_alias is not valid|group_alias не действует||
+Could not connect: |не может подключиться:||
+vtiger callback activity does not exist in vtiger system|Обратный вызов деятельность Vtiger не существует в системе Vtiger||
+phone number lead_id search not found|Номер телефона lead_id поиска не найдено||
+alt number dialing not allowed on this campaign|дополнительный набора номера не разрешены на этой кампании||
+AGENT email frame|агент по электронной почте кадров||
+ERROR - ID variable missing|Ошибка - ID переменная отсутствует||
+ERROR: Invalid File Name:|Ошибка: неверное имя файла:||
+default socket timeout: |Тайм-аут сокета по умолчанию:||
+maximum input time: |Максимальное время ввода:||
+memory limit: |Ограничение по памяти:||
+post maximum size: |создавать максимальный размер:||
+DONE: %1s duplicates found,|сделано: найдено %1s дубликаты,||
+DONE: no duplicates found within|сделано: никаких дубликатов не найдено в||
+DONE: no lists in campaign_check|не сделали: нет списков в campaign_check||
+DONE: dispo is not a sale status:|сделано: Dispo не статус продажа:||
+Invalid server_ip:|недействительным server_ip:||
+OUTBOUND CALLS:|исходящие звонки:||
+INBOUND CALLS:|входящие звонки:||
+astGUIclient web-client VERSION: %1s BUILD: %2s|astguiclient веб-версия клиента: %1s построить: %2s||
+edit|редактировать||
+STOP|стоп||
+START|начало||
+Refresh rate:|частота обновления:||
+Initializing..|инициализации ..||
+NEW:|новый:||
+OLD:|старый:||
+Phone calling from:|телефон звонок из:||
+PARKED CALLS:|припаркованные звонки:||
+Conferences:|конференции:||
+(click on a number below to send to a conference)|(нажмите на ряде ниже, чтобы отправить конференции)||
+Channel to be transferred:|Канал для передачи:||
+Extensions:|расширения:||
+TRUNK HANGUP|ствол зависание||
+Active Trunks Menu|активное меню стволы||
+down.gif|down.gif||
+remove.gif|remove.gif||
+  - ACTIVE DISPLAY PAUSED -|   - Active Display остановился -||
+Welcome %1s, you are logged into this phone: %2s - %3s/%4s on %5s|Добро пожаловать %1s, вы вошли в этом телефоне: %2s - %3s/%4s на %5s||
+NO ONE|никто||
+FAVORITES|Избранные||
+up.gif|up.gif||
+XFER|Xfer||
+PARK|парк||
+CALLER ID|гость ID||
+CALL ID|Call ID||
+No DST Method Found|ни один метод DST не найдено||
+Exten %1s is not valid or protocol %2s is not valid|EXTEN %1s не действует или протокол %2s не действует||
+ViciDial Notes|vicidial ноты||
+Order ID:|ID заказа:||
+Appointment Date/Time:|Дата назначение/время:||
+Appointment Notes:|назначение замечания:||
+Please click SUBMIT to commit the changes|Пожалуйста, нажмите на кнопку отправить, чтобы принять изменения||
+astGUIclient web client: Login|astguiclient веб-клиент: Войти||
+agc_tab_astguiclient.gif|agc_tab_astguiclient.gif||
+astGUIclient web client: Phone Login|astguiclient веб-клиент: телефон Войти||
+VERSION: %1s BUILD: %2s|Версия: %1s построить: %2s||
+Sunday in October to First Sunday in April|Воскресенье в октябре до первого воскресенья в апреле||
+First Sunday October to Third Sunday March|Первое воскресенье октября по третье воскресенье марта||
+error: API user not valid|Ошибка: API пользователь не действует||
+Avatar Soundboard Display Script|Аватара сценарий дека дисплей||
+SUCCESS|успех||
+ERROR|ошибка||
+Invalid Source|недопустимый источник||
+Invalid Username/Password|неверное имя пользователя/пароль||
+System API NOT ACTIVE|Система API не работает||
+denotes required fields|обозначает обязательные поля||
+NEW MANUAL DIAL LEAD FOR %1s in campaign %2s:|Новое руководство свинец набор на %1s в кампании %2s:||
+Disposition Hot Keys:|Планировка горячие клавиши:||
+AGENT SCRIPT|агент сценарий||
+WebPhone View -|WebPhone вид -||
+D2 - DIAL|d2 - набрать||
+Customer has hung up:|клиент повесил трубку:||
+SELECT A GROUP TO SEND YOUR CALL TO|выберите группу, чтобы отправить вызов||
+AGENTS|агенты||
+vdc_XB_presetsbutton.gif|vdc_XB_presetsbutton.gif||
+vdc_LB_webform.gif|vdc_LB_webform_ru.gif||
+external_pause not valid|external_pause не действительны||
+SKIP LEAD|ПРОПУСТИТЬ НОМЕР||
+Pause Code Selection|Выбор пауза код||
+CALL NOTES LOG:|Call Notes войти:||
+Lead Info|ведущий Информация||
+external_hangup function set|external_hangup функция множества||
+ExtraChannel %1s|extrachannel %1s||
+ to %1s on %2s|  в %1s на %2s||
+RedirectXtra command sent for Channel %1s on %2s and|Команда redirectxtra отправлен на канале% 1 с на %2s и||
+Campaign not found|Кампания не найдено||
+php version: |PHP версии:||
+uniqueid %1s must be set|UniqueID %1s должен быть установлен||
+lead_id %1s must be set|lead_id %1s должен быть установлен||
+RedirectVD Action not sent|redirectvd действие не отправлено||
+parkedby %1s must be set|parkedby %1s должен быть установлен||
+RedirectToPark Action not sent|redirecttopark действие не отправлено||
+RedirectFromPark Action not sent|redirectfrompark действие не отправлено||
+RedirectName Action not sent|redirectname действие не отправлено||
+Call %1s %2s is not live on %3s, Checking Live Channel|вызвать %1s %2s не жить на% 3 сек, проверка канала в реальном времени||
+Channel %1s is not live on %2s, Hangup command not inserted|Канал %1s не жить на %2s, зависание команда не вставлена||
+Channel %1s in use by another agent on %2s, Hangup command not inserted|Канал %1s используется другим агентом по %2s, зависание команда не вставлена||
+Hangup command sent for Channel %1s on %2s|Команда зависание отправлен на канале% 1 с на %2s||
+One of these variables is not valid:|одной из этих переменных не действительна:||
+Channel %1s must be greater than 2 characters|Канал %1s должно быть больше, чем 2 символов||
+queryCID %1s must be greater than 14 characters|querycid %1s должно быть больше, чем 14 символов||
+extenName %1s must be set|extenname %1s должен быть установлен||
+ext_context %1s must be set|ext_context %1s должен быть установлен||
+ext_priority %1s must be set|ext_priority %1s должен быть установлен||
+OriginateName Action not sent|originatename действие не отправлено||
+exten %1s must be set|EXTEN %1s должен быть установлен||
+OriginateNameVmail Action not sent|originatenamevmail действие не отправлено||
+ Exten %1s is not valid or queryCID %2s is not valid, Originate command not inserted|  EXTEN %1s не действительным или querycid %2s не является допустимым, происходят команда не вставлена||
+ You are not allowed to dial into other agent sessions|  вы не можете набрать в других сессиях агента||
+conference %1s is not valid or ext_context %2s or queryCID %3s is not valid, Hangup command not inserted|конференц- %1s не является действительным или ext_context %2s или querycid %3s не верный, зависание команда не вставлена||
+Click LOGIN below to log-in|Кликните ВОЙТИ ниже для входа в систему||
+Click Here to Choose a Dial In-Group|Нажмите здесь, чтобы выбрать кино-группы||
+Click Here to Deactivate|нажмите здесь, чтобы отключить||
+Click Here to Choose a Group Alias|Кликните здесь для выбора псевдонима группы||
+Channel:|канал:||
+Customer Information:|Информация о клиенте:||
+Server:|сервер:||
+vdc_tab_email.gif|vdc_tab_email.gif||
+LIVE|жить||
+session ID:|идентификатор сессии:||
+Agent Screen|экран агент||
+pixel.gif|pixel.gif||
+ ALT PHONE DIAL| дополнительный Телефон с прямым набором||
+RECORDING FILE:|файла записи:||
+RECORD ID:|ID записи:||
+: %1s on Phone: %2s|: %1s по телефону: %2s||
+ring|кольцо||
+TERRITORIES|территории||
+GROUPS|группы||
+LOGOUT|выход||
+vdc_tab_form.gif|vdc_tab_form.gif||
+hide comment history|спрятать История комментарий||
+HIDE|скрывать||
+show comment history|показать историю комментарий||
+Time On Park:|время на парк:||
+CUSTOMER 3WAY HANGUP|3way клиентов зависание||
+JAN|январь||
+FEB|февраль||
+MAR|март||
+APR|апрель||
+JUN|июнь||
+JLY|JLY||
+AUG|август||
+SEP|сентябрь||
+OCT|октябрь||
+NOV|ноябрь||
+DEC|декабрь||
+ORDER|порядок||
+Searching...|поиск ...||
+maximize|максимизировать||
+Next Call Pause Set|Следующий вызов пауза набор||
+has selected your in-group choices|выбрал свой выбор в-групп||
+YOU MUST BE PAUSED TO CHANGE TERRITORIES|Вы должны быть приостановлены, чтобы изменить территории||
+DIAL ALERT:|набрать предупреждение:||
+TIMER NOTIFICATION:|Уведомление таймер:||
+Call Agent Webphone|агент WebPhone вызов||
+Dial Next Call|набрать следующий вызов||
+Dial Countdown:|набрать отсчет:||
+Agents View|агенты просмотра||
+WebPhone View|Посмотреть WebPhone||
+Invalid Date Format. Please correct and submit again.|неверный формат даты. пожалуйста исправить и вновь представить.||
+Invalid Day, Month, or Year range detected. Please correct and submit again.|обнаружены недействительным день, месяц или год диапазона. пожалуйста исправить и вновь представить.||
+Close Window|Закрыть окно||
+PLEASE CLICK THE LOGOUT LINK TO LOG OUT NEXT TIME.|Пожалуйста, нажмите на ссылку выхода из системы, чтобы выйти в следующий раз.||
+You cannot log out during a Dial attempt. Wait 50 seconds for the dial to fail out if it is not answered|Вы не можете войти во время попытки набора. подождите 50 секунд для набора на провал, если она не отвечает||
+Alt. Phone|Доп. телефон||
+DialCode|Префикс||
+Vendor ID|Код п.||
+PostCode|Почт.индекс||
+Address3|АДРЕС3||
+ Comments| Заметки||
+Timezone:|часовой пояс:||
+ATTACHMENTS|вложения||
+EMAIL TO|по электронной почте к||
+SELECT THIS LEAD|выберите этот провод||
+Unidentified Hangup Cause Code.|неизвестный код причины зависания||
+PAUSE AGENT DIALING|ПРИОСТАНОВИТЬ ДОЗВОН АГЕНТА||
+Comments:|Заметки:||
+You cannot log in or out within 30 seconds of your last login or logout|Нельзя войти или выйти из системы в течение 30 секунд после последнего входа или выхода||
+Re-Login|Повторный вход||
+You logged-in at:|Вы вошли в систему в:||
+Amount of time you have been logged-in:|Время, проведенное Вами в системе: ||
+BACK to Administration|ВОЗВРАТ к администрированию||
+ERROR: You are not allowed to log in outside of your shift|ОШИБКА: Вам не разрешено входить в систему вне своей смены||
+ERROR: timeclock log entry already made:|ОШИБКА: запись в журнале табельных часов уже сделана: ||
+Click LOGOUT below to log-out|Кликните ВЫЙТИ для выхода из системы||
+Campaign Login|Вход в кампанию||
+Refresh Campaign List|Обновить список кампаний||
+User Login|Ваше имя||
+You have now logged out. Thank you|Вы вышли из системы. Спасибо||
+ERROR: There are no Shifts enabled for your user group|ОШИБКА: для Вашей группы нет разрешенных смен||
+phone login|телефон Вход||
+Too many network errors, please contact your administrator|Слишком много ошибок сети, обратитесь к администратору||
+You are already logged in, please log out of your other session first|Вы уже вошли в систему, пожалуйста выйдите из другой сессии первый||
+No available servers, please contact your administrator|Нет доступных серверов, пожалуйста, обратитесь к администратору||
+Login:|Имя:||
+Sorry, there are no leads in the hopper for this campaign|Извините, в буфере нет номеров для кампании||
+vdc_LB_pause_OFF.gif|vdc_LB_pause_OFF_ru.gif||
+vdc_LB_dialnextnumber.gif|vdc_LB_dialnextnumber_ru.gif||
+vdc_LB_resume_OFF.gif|vdc_LB_resume_OFF_ru.gif||
+vdc_LB_transferconf.gif|vdc_LB_transferconf_ru.gif||
+vdc_LB_hangupcustomer.gif|vdc_LB_hangupcustomer_ru.gif||
+agc_live_call_DEAD.gif|agc_live_call_DEAD_ru.gif||
+vdc_LB_startrecording.gif|vdc_LB_startrecording_ru.gif||
+vdc_LB_stoprecording.gif|vdc_LB_stoprecording_ru.gif||
+vdc_LB_parkcall.gif|vdc_LB_parkcall_ru.gif||
+vdc_LB_grabparkedcall.gif|vdc_LB_grabparkedcall_ru.gif||
+vdc_LB_transferconf_OFF.gif|vdc_LB_transferconf_OFF_ru.gif||
+vdc_LB_hangupcustomer_OFF.gif|vdc_LB_hangupcustomer_OFF_ru.gif||
+vdc_LB_dialnextnumber_OFF.gif|vdc_LB_dialnextnumber_OFF_ru.gif||
+vdc_LB_senddtmf.gif|vdc_LB_senddtmf_ru.gif||
+NUMBER|НОМЕР||
+MAIN PHONE|ОСНОВНОЙ ТЕЛЕФОН||
+ALT PHONE|ДОП.ТЕЛЕФОН||
+FINISH LEAD|ЗАВЕРШИТЬ||
+vdc_LB_parkcall_OFF.gif|vdc_LB_parkcall_OFF_ru.gif||
+Dial Next Number|Позвонить по следующему номеру||
+VOLUME|ГРОМКОСТЬ||
+vdc_volume_MUTE.gif|vdc_volume_MUTE.gif||
+ACTIVE CALLBACKS|АКТИВНЫЕ ОБРАТНЫЕ ВЫЗОВЫ||
+YOU MUST BE PAUSED TO CHECK CALLBACKS IN AUTO-DIAL MODE|ДЛЯ ПРОВЕРКИ ОБРАТНЫХ ВЫЗОВОВ В РЕЖИМЕ АВТОДОЗВОНА ВЫ ДОЛЖНЫ БЫТЬ В СОСТОЯНИИ ПАУЗЫ||
+System Delay, Please try again|Система задержки, пожалуйста, попробуйте еще раз||
+Agent:|Агент:||
+vdc_LB_webform_two.gif|vdc_LB_webform_two_ru.gif||
+CallBack:|Обратный вызов:||
+Last Call:|Последний вызов:||
+Click Here to Activate|Нажмите здесь для активации||
+YOU MUST ENTER A PHONE NUMBER AND DIAL CODE TO USE FAST DIAL|ДЛЯ БЫСТРОГО НАБОРА НУЖНО ВВЕСТИ НОМЕР И КОД НАБОРА||
+DIAL LEAD|НАБРАТЬ НОМЕР||
+vdc_XB_parkcustomerdial.gif|vdc_XB_parkcustomerdial_ru.gif||
+vdc_XB_hangupxferline.gif|vdc_XB_hangupxferline_ru.gif||
+vdc_XB_hangupbothlines.gif|vdc_XB_hangupbothlines_ru.gif||
+vdc_XB_localcloser.gif|vdc_XB_localcloser_ru.gif||
+vdc_XB_blindtransfer.gif|vdc_XB_blindtransfer_ru.gif||
+vdc_XB_dialwithcustomer.gif|vdc_XB_dialwithcustomer_ru.gif||
+ALT DIAL NUMBER:|ДОПОЛНИТЕЛЬНЫЙ НОМЕР:||
+Phone Code and Number:|Код набора и номер:||
+Active:|Активный:||
+Preview the Lead then|Предпросмотр сведений о номере||
+YOU CANNOT SKIP A CALLBACK OR MANUAL DIAL, YOU MUST DIAL THE LEAD|ОБРАТНЫЙ ВЫЗОВ ИЛИ РУЧНОЙ НАБОР ПРОПУСТИТЬ НЕЛЬЗЯ, ВЫ ДОЛЖНЫ ПРОИЗВЕСТИ ВЫЗОВ||
+Alt Count:|Доп. счетчик:||
+Change this phone number to INACTIVE|Сделать этот номер НЕ АКТИВНЫМ||
+Change this phone number to ACTIVE|Сделать этот номер АКТИВНЫМ||
+vdc_XB_leave3waycall.gif|vdc_XB_leave3waycall_ru.gif||
+vdc_XB_blindtransfer_OFF.gif|vdc_XB_blindtransfer_OFF_ru.gif||
+vdc_XB_localcloser_OFF.gif|vdc_XB_localcloser_OFF_ru.gif||
+vdc_LB_webform_two_OFF.gif|vdc_LB_webform_two_OFF_ru.gif||
+YOU MUST BE ON AN ACTIVE INBOUND CALL TO SEARCH FOR A LEAD|вы должны быть на активное входящего вызова для поиска свинца||
+YOU MUST BE PAUSED TO SEARCH FOR A LEAD|ВЫ ДОЛЖНЫ быть приостановлена ​​Для поиска LEAD||
+YOU MUST BE PAUSED TO ENTER A PAUSE CODE IN AUTO-DIAL MODE|В РЕЖИМЕ АВТОДОЗВОНА ДЛЯ ВВОДА КОДА ПАУЗЫ НУЖНО БЫТЬ В СОСТОЯНИИ ПАУЗЫ||
+Disposition Status List Hidden|Расположение Статус Список Скрытые||
+CALL DISPOSITION|КОД ЗАВЕРШЕНИЯ ВЫЗОВА||
+Call Notes:|Вызовите Примечания:||
+Finish Wrapup and Move On|Окончить передышку и продолжить||
+DIAL IN-GROUP|набрать в группу||
+SELECTED GROUPS|ВЫБРАННЫЕ ГРУППЫ||
+GROUPS NOT SELECTED|НЕ ВЫБРАННЫЕ ГРУППЫ||
+STILL A LIVE CALL! Hang it up then you can log out.|ВЫЗОВ ВСЕ ЕЩЕ АКТИВЕН! Завершите его, а потом выходите из системы||
+vdc_XB_seconds.gif|vdc_XB_seconds_ru.gif||
+Any changes made to the customer information below at this time will not be comitted, You must change customer information before you Hangup the call.|Любые изменения в сведениях о клиенте, произведенные в настоящий момент не будут сохранены. Это нужно делать до завершения вызова||
+There is a time synchronization problem with your system, please tell your system administrator|В вашей системе есть ошибки синхронизации времени, сообщите, пожалуйста, своему системному администратору||
+Your session has been disabled|Ваша сессия отключена||
+Dial Code:|Код набора:||
+Enter information below for the new lead you wish to call.|Введите сведения о номере, который Вы хотите вызвать||
+SUBMIT SEARCH|начать поиск||
+Search Results|РЕЗУЛЬТАТЫ ПОИСКА||
+Using the other fields may be slower. Lead searching does not allow for wildcard or partial search terms.|Использование других областях может быть медленным. Ведущий поиски не позволяет шаблону или частичное условия поиска||
+If you want to dial a number and have it NOT be added as a new lead, enter in the exact dialstring that you want to call in the Dial Override field below. To hangup this call you will have to open the CALLS IN THIS SESSION link at the bottom of the screen and hang it up by clicking on its channel link there.|Если Вы хотите набрать номер, но не добавлять его в буфер, введите полный номер, который хотите вызвать, в поле ВВОД ДРУГОГО НОМЕРА ниже. Чтобы завершить этот вызов, Вам придется открыть ссылку ВЫЗОВЫ В ЭТОЙ СЕССИИ снизу на экране и завершить его кликом по ссылке на соответствующую линию||
+Preview Call|Предпросмотр сведений о вызове||
+Dial Now|Вызвать немедленно||
+BLENDED CALLING|Смешанный дозвон||
+Another live agent session was open using your user ID. It has been disabled. Click OK to continue to the agent screen.|еще один живой сессии агента была открыта под своим именем пользователя. она была отключена. Щелкните ОК, чтобы агент экрана||
+Close Info Box|Закрыть Box информация||
+Group Alias Selection|Выбор превдонима группы||
+Alternate Phone Number|Альтернативный номер телефона||
+Main Phone Number|Основной номер телефона||
+agc_check_voicemail_ON.gif|agc_check_voicemail_ON_ru.gif||
+agc_check_voicemail_BLINK.gif|agc_check_voicemail_BLINK_ru.gif||
+You can only monitor Zap channels|Отслеживать можно только линии ISDN (ZAP)||
+Live Extensions|Активные номера||
+IN-NUMBER|ВХОДЯЩИЙ-НОМЕР||
+CLIENT CHANNEL|ЛИНИЯ КЛИЕНТА||
+LIVE CALLS ON THIS PHONE|АКТИВНЫЕ ЗВОНКИ ДЛЯ ЭТОГО ТЕЛЕФОНА||
+agc_tab_active_lines.gif|agc_tab_active_lines_ru.gif||
+astGUIclient web client|Веб-клиент astGUIclient||
+PARKED TIME|ВРЕМЯ ПАРКОВКИ||
+PARKED BY|ЗАПАРКОВАНО||
+Call selected extension|Позвонить на выбранный номер||
+Send DTMF|Набор DTMF||
+Dial From Conf|Позвонить из конференции||
+agc_tab_conferences.gif|agc_tab_conferences_ru.gif||
+Hangup Trunk|Hangup Trunk||
+agc_tab_main.gif|agc_tab_main_ru.gif||
+CONFERENCE|КОНФЕРЕНЦИЯ||
+Hijack Local|Hijack Local||
+Listen Local|Listen Local||
+LIVE CALL TRANSFER|ПЕРЕВОД АКТИВНОГО ЗВОНКА||
+Send to this number|Перевести на этот номер||
+Send to selected vmail box|Перевести на выбранный номер голосовой почты||
+Send to selected extension|Перевести на выбранный номер||
+Call selected vmail box|Позвонить на выбранный номер голосовой почты||
+LOCAL Extensions Dial|Позвонить на МЕСТНЫЕ номера||
+Conferences Menu|Меню конференций||
+Send my channel too|Перевести также мою линию||
+LOCAL DIAL EXTENSIONS|МЕСТНЫЕ НОМЕРА ДЛЯ ВЫЗОВА||
+PARKED CALLS|ЗАПАРКОВАННЫЕ ВЫЗОВЫ||
+VOICEMAIL|ГОЛОСОВАЯПОЧТА||
+Faster|Быстрее||
+Slower|Медленнее||
+BACK TO MAIN WINDOW - ignore changes made|ВОЗВРАТ В ГЛАВНОЕ ОКНО - отмена произведенных изменений||
+SUBMIT FAVORITES CHANGES - requires logout|СОХРАНИТЬ ИЗМЕНЕНИЯ ПРЕДПОЧТЕНИЙ - нужно выйти||
+Live Extension Check|Проверка активного номера||
+Conferences List|Список конференций||
+Invalid session_name:|недействительным session_name:||
+VICIDiaL Database Query Script|Сценарий запрос vicidial базы данных||
+MULTI_MATCH CHECK:|multi_match проверка:||
+Trunk Action|Операция над транком||
+Data Goes Here|Данные идут сюда||
+Active Extensions|Активные номера||
+VERSION|ВЕРСИЯ||
+CallerID|CALLERID||
+Conf Extension Check|Проверка номера конференции||
+Agent Form Display Script|Форма Агент Показать скрипта||
+DONE: no match found within %1s     %2s|сделано: Не найдено в %1s %2s||
+DONE: %1s match found, %2s updated to %3s with %4s status|сделано: %1s матч, найдено %2s обновлена %3s с %4s статуса||
+Invalid Username/Password:|неверное имя пользователя/пароль:||
+MULTI_MATCH:|multi_match:||
+UserID: $FCS%1s - %2s$FCE,  Date: %3s|идентификатор: $FCS %1s - %2s $FCE, дата: %3s||
+DONE: dispo is not a sale status: %1s|сделано: Dispo не статус продажа: %1s||
+USER LOGIN ERROR|Пользователь ошибка Войти||
+Manager Login:|менеджер Логин:||
+no agent session|нет агента сессия||
+Territory Choice %1s has been registered to user %2s|Территория выбор %1s был зарегистрирован пользователю %2s||
+Territory Choice is not valid|Территория выбор не действует||
+ALT PHONE NUMBER STATUS NOT CHANGED|дополнительный телефон Статус артикула не изменилась||
+ Postal Code Outside Dialable Zone| почтовый индекс вне dialable зоны||
+ Phone Area Code Outside Dialable Zone| телефонный код города вне набрать способны зоны||
+AGENT ALERT SETTING NOT CHANGED|агент настройкой предупреждения не изменилась||
+ALT PHONE NUMBER STATUS CHANGED|Статус дополнительный номер телефона изменился||
+STATUS|статус||
+Dispo Choice %1s or lead_id %2s is not valid|Dispo выбор %1s или lead_id %2s не действует||
+campaign %1s or conf_exten %2s is not valid|Кампания %1s или conf_exten %2s не действует||
+Campaign %1s is not valid|Кампания %1s не действует||
+FULL NAME|полное имя||
+phone_number %1s or lead_id %2s is not valid|PHONE_NUMBER %1s или lead_id %2s не действует||
+Lead %1s has been changed to %2s Status|свинцовые %1s был изменен на %2s статуса||
+TAKE CALL|принять вызов||
+TYPE|тип||
+AGENT|агент||
+WAIT|ждать||
+PAUSED|остановился||
+-LOGGED-OUT|-logged-аут||
+INCALL|выезд||
+READY|готовы||
+ Pause Code %1s has been recorded|  пауза код %1s был записан||
+Callback Status:|Обратный вызов статус:||
+HANGUP|вешать трубку||
+favorites list %1s is not valid|список избранных %1s не действует||
+STATE|состояние||
+DIAL|диск||
+INFO|информация||
+Call %1s grabbed for %2s|Call %1s схватил %2s||
+Job:|Работа:||
+OTHER 2|Другое 2||
+OTHER 1|Другое 1||
+MOBILE|мобильный||
+OFFICE|офис||
+You must enter in search terms, one of these must be populated: office number, last name, first name|Вы должны ввести условия поиска, один из них должен быть заполнен: номер офиса, фамилию, имя, отчество||
+Callback Entry Time:|Обратный вызов времени запись:||
+MI|ми||
+Callback Comments:|обратного вызова комментарии:||
+Callback Trigger Time:|обратного вызова Время срабатывания:||
+Address2|адрес2||
+Address1|адрес1||
+List ID:|Список ID:||
+Status:|статус:||
+MESSAGE:|сообщение:||
+CALL LOG FOR THIS LEAD:|Журнал вызовов для этого свинца:||
+Called Count:|называется кол-во:||
+Dial Link:|набрать ссылку:||
+Email:|E-mail:||
+Province:|провинция:||
+ViciDial Script|vicidial сценарий||
+Comments|Комментарии||
+Email|E-mail||
+Gender|пол||
+Title|название||
+VICIDiaL Script Display Script|vicidial сценарий сценарий дисплей||
+Unidentified SIP Hangup Cause Code.|неизвестный глоток зависание код причины.||
+Call %1s could not be grabbed for %2s|Вызов %1s не может быть схватил %2s||
+Please click SUBMIT to hangup and disposition the call|Пожалуйста, нажмите на кнопку отправить, чтобы повесить трубку и распоряжения вызов||
+Show:|Показать:||
+VERSION:|версия:||
+User Password:|пароль пользователя:||
+User Login:|Пользователь Логин:||
+Timeclock|табельные часы||
+Agent Timeclock|агент табельные часы||
+The user and password you entered are not active in the system<BR>Please try again:|пользователя и пароль, которые вы ввели не действуют в системе <br> Пожалуйста, попробуйте еще раз:||
+disk free space: |свободного места на диске:||
+EPOCH:|эпоха:||
+upload maximum filesize: |загрузить Максимальный размер файла:||
+server name: |Имя сервера:||
+VICIDiaL Agent API|vicidial API агента||
+apache processes: |Apache процессы:||
+apache version: |Apache версия:||
+maximum execution time: |максимальное время выполнения:||
+system load average: |загрузка системы в среднем:||
+external_hangup not valid|external_hangup не действительны||
+external_status not valid|external_status не действительны||
+agent_user is not logged in|agent_user не вошли в систему||
+no user found|ни один пользователь не найдено||
+webphone_url error - webphone url is empty|webphone_url ошибка - WebPhone гиперссылка пуст||
+ini_get not allowed: |ini_get не допускается:||
+NOTICE|уведомление||
+recording not valid|запись не действительны||
+logout function set|Выход функция множества||
+logout not valid|выход не действительны||
+external_pause function set|external_pause функция множества||
+audio_playback error - entry is empty|audio_playback ошибка - пустая строка||
+audio_playback error - no audio playing in agent session|audio_playback погрешность - не воспроизведения звука в агента сессии||
+audio_playback error - audio already playing in agent session|audio_playback ошибка - аудио уже играет в агента сессии||
+audio_playback previous playback stopped|audio_playback предыдущая остановленном воспроизведении||
+audio_playback not valid|audio_playback не действительны||
+call_agent error - no session data|call_agent погрешность - не данные сессии||
+webphone_url error - no session data|webphone_url погрешность - не данные сессии||
+webphone_url not valid|webphone_url не действительны||
+click here to continue. . .|нажмите здесь, чтобы продолжить. , ,||
+webphone_url active and launched|webphone_url активным и запущен||
+webphone_url active and displayed|webphone_url активной и отображается||
+recording function sent|Функция записи отправлено||
+stop recording error|остановить ошибки записи||
+not recording|не запись||
+preview dial skipping not allowed on this campaign|Предварительный набор вприпрыжку не разрешены на этой кампании||
+external_dial function set|external_dial функция множества||
+preview_dial_action not valid|preview_dial_action не действительны||
+agent_user is not paused|agent_user не остановился||
+agent_user is not allowed to place manual dial calls|agent_user не допускается совершать звонки в режиме ручного набора||
+phone_number is already in this agents manual dial queue|phone_number уже в этом агентов ручной очереди набора||
+lead_id is not valid|lead_id не действует||
+phone number is not valid|Номер телефона не является действительным||
+caller_id_number from group_alias is not valid|caller_id_number от group_alias не действует||
+external_dial not valid|external_dial не действительны||
+preview_dial_action function set|preview_dial_action функция множества,||
+add_lead PHONE NUMBER IN CAMPAIGN DNC|add_lead номер телефона в кампании DNC||
+add_lead PHONE NUMBER IN DNC|add_lead номер телефона в DNC||
+external_add_lead not valid|external_add_lead не действительны||
+ingroup_choices are required for ADD and REMOVE values|ingroup_choices необходимы для добавления и удаления значений||
+ingroup does not exist|ингруппа не существует||
+campaign dial_method does not allow outbound autodial|Кампания dial_method не разрешить исходящий автонабор||
+change_ingroups not valid|change_ingroups не действительны||
+email set to|настройки электронной почты в||
+country_code set to|country_code установлен в||
+alt_phone set to|alt_phone установлен в||
+address2 set to|адрес2 установлен в||
+address1 set to|адрес1 установлен в||
+phone_code set to|phone_code установлен в||
+user is not allowed to change agent in-groups|Пользователю не разрешается изменять агента в-групп||
+Campaign:|кампания:||
+Phone Password:|Пароль телефона:||
+Agent web client: Re-Login|агент веб-клиент: повторное логин||
+pause_code error - agent is not paused|Ошибка pause_code - агент не остановился||
+transfer_conference function set|transfer_conference функция множества,||
+transfer_conference not valid|transfer_conference не действительны||
+park_call function set|park_call функция множества||
+send_dtmf not valid|send_dtmf не действительны||
+stage is not valid|этап не является действительным||
+ingroup is not valid|ингруппа не действует||
+phone_number is not valid|phone_number не действует||
+ra_call_control not valid|ra_call_control не действительны||
+state set to|государство поставило на||
+st_get_agent_active_lead not valid|st_get_agent_active_lead не действительны||
+st_login_log user found|Пользователь st_login_log найти||
+user is not allowed to modify campaign settings|Пользователю не разрешается изменять настройки кампании||
+set_timer_action not valid|set_timer_action не действительны||
+user is not allowed to modify lead information|Пользователю не разрешается изменять ведущую информацию||
+no fields have been defined|поля не были определены||
+owner set to|владельцем установлено||
+rank set to|Оценка установлена в||
+vendor_lead_code set to|vendor_lead_code установлен в||
+title set to|Название установлен в||
+last_name set to|Last_name установлен в||
+gmt_offset_now set to|gmt_offset_now установлен в||
+Too many login attempts, try again in 15 minutes|слишком много попыток входа в систему, попробуйте еще раз в 15 минут||
+Leave 3Way Call Again|оставить 3Way вызов снова||
+vdc_LB_grabivrparkcall_OFF.gif|vdc_LB_grabivrparkcall_OFF.gif||
+This phone number is in the DNC list:|это номер телефона в DNC списка:||
+Sorry, you are not allowed to login to this campaign:|извините, вы не можете войти в эту кампанию:||
+Login Error|Войти ошибка||
+Agent web client: Phone Login Error|агент веб-клиент: телефон Войти ошибка||
+loading.gif|loading.gif||
+vdc_LB_ivrparkcall.gif|vdc_LB_ivrparkcall.gif||
+vdc_LB_grabivrparkcall.gif|vdc_LB_grabivrparkcall.gif||
+vdc_LB_stoprecording_OFF.gif|vdc_LB_stoprecording_OFF.gif||
+vdc_LB_grabparkedcall_OFF.gif|vdc_LB_grabparkedcall_OFF.gif||
+Lead:|привести:||
+Transfer number must have at least 1 digit:|передаточное число должно быть по крайней мере 1 цифру:||
+vdc_volume_up.gif|vdc_volume_up.gif||
+Placing call to next number|размещение призыв к следующему номеру||
+vdc_LB_requeue_call_OFF.gif|vdc_LB_requeue_call_OFF.gif||
+vdc_LB_requeue_call.gif|vdc_LB_requeue_call.gif||
+vdc_LB_customxfer.gif|vdc_LB_customxfer.gif||
+vdc_XB_ammessage.gif|vdc_XB_ammessage.gif||
+Called:|называется:||
+Call Rejected:|Вызов отклонен:||
+Waiting for Ring...|ждет кольца ...||
+UID:|UID:||
+This phone number is not in the campaign lists:|Этот телефонный номер не находится в списках кампании:||
+vdc_LB_quickxfer_OFF.gif|vdc_LB_quickxfer_OFF.gif||
+ALT DIAL NUMBER: ADDRESS3|дополнительный Количество режимов: адрес3||
+Lead was not reverted, there was an error:|ведущий не вернулся, было сообщение об ошибке:||
+call was not placed, there was an error:|вызов не был сделан, произошла ошибка:||
+PAUSE CODE|пауза код||
+History|история||
+Manual Dial Queue Calls Waiting:|ручной очереди набором вызовов, ожидающих:||
+vdc_LB_customxfer_OFF.gif|vdc_LB_customxfer_OFF.gif||
+vdc_volume_up_off.gif|vdc_volume_up_off.gif||
+vdc_XB_ammessage_OFF.gif|vdc_XB_ammessage_OFF.gif||
+minimize|минимизировать||
+You can only disposition a call once|Вы можете только Планировка вызов раз||
+AGENT_PHONE|agent_phone||
+Manager has selected groups for you|Менеджер отдельных групп для вас||
+vdc_XB_contactsbutton.gif|vdc_XB_contactsbutton.gif||
+Customer Time:|Время товара:||
+Your Status:|Ваш статус:||
+seconds:|секунд:||
+When active, simply press the keyboard key for the desired disposition for this call. The call will then be hungup and dispositioned automatically:|когда он активен, просто нажмите клавишу клавиатуры для нужного расположения для этого вызова.Вызов будет hungup и планировки автоматически:||
+Lead Dispositioned As:|свинец планировки как:||
+Agents View +|агенты просмотра +||
+Other Agents Status:|другие агенты положение:||
+X ACTIVE CALLBACKS|х активных обратных вызовов||
+D1 - DIAL|d1 - набрать||
+Available Agents Transfer:|доступные агенты передачи:||
+Alt Phone Info|дополнительный телефон для информации||
+Minutes:|минуты:||
+Select a CallBack Date :|выберите дату обратного вызова:||
+Note: all new manual dial leads will go into list %1s|обратите внимание: все новые провода Ручной набор войдет в список %1s||
+CALLBACKS FOR AGENT %1s:<br />To see information on one of the callbacks below, click on the INFO link. To call the customer back now, click on the DIAL link. If you click on a record below to dial it, it will be removed from the list.|обратного вызова для агента% 1С: <br /> для просмотра информации на один из указанных ниже обратного вызова, нажмите на информационном ссылку. позвонить клиенту теперь назад, нажмите на ссылку набора. если вы нажмете на запись ниже набрать его, то он будет удален из списка.||
+Previous Callback Information:|предыдущая информация обратного вызова:||
+(digits only)|(только цифры)||
+Phone Number:|номер телефона:||
+SEARCH FOR A CONTACT:|Поиск контакта:||
+Call log List|списка журнала вызовов||
+AGENT CALL LOG:|агент журнала вызовов:||
+First Name:|имя:||
+Notes: when doing a search for a contact, wildcard or partial search terms are not allowed. <br />Contact search requests are all logged in the system.|отмечает: при выполнении поиска для контакта, шаблона или частичного условия поиска не допускаются. <br /> Контакты Поиск запросы всех зарегистрированных в системе.||
+Phone Number Fields:|телефон поля:||
+SEARCH FOR A LEAD:|искать свинца:||
+CONTACTS SEARCH RESULTS:|Контакты Результаты поиска:||
+Job Title:|должность:||
+Dial In-Group Selection|набрать в-отборочной группе||
+SELECT A DIAL IN-GROUP :|выбрать диск в-группы:||
+SELECT A GROUP ALIAS :|выбрать псевдоним группы:||
+Presets Selection|выбор пресетов||
+SELECT A PRESET :|выберите предустановку:||
+SELECT A PAUSE CODE :|выбрать код паузы:||
+SEARCH RESULTS:|Результаты поиска:||
+Lead ID:|ведущий ID:||
+alert.gif|alert.gif||
+OK|хорошо||
+Your system does not have the email setting enabled|ваша система не включена установка электронной почты||
+Phone web client: Phone Login|телефон веб-клиент: телефон Войти||
+From:|от:||
+Phone web client: Login|Веб-клиент телефон: Войти||
+Manager Send: |менеджер отправить:||
+REPLY|ответить||
+COPY MESSAGE|копия сообщения||
+Attachments:|навесное оборудование:||
+Subject:|Тема:||
+campaign %1s must be set|Кампания %1s должен быть установлен||
+%1s command sent for Channel %2s on %3s| %1s команду, посланную для канала %2s на% 3 сек||
+Redirect command sent for Channel %1s on %2s|перенаправить команду, посланную для канала% 1 с на %2s||
+RedirectXtra command sent for Channel %1s and|Команда redirectxtra отправлен на канале% 1 с и||
+session_id %1s must be set|SESSION_ID %1s должен быть установлен||
+Hungup %1s on %2s|hungup %1s на %2s||
+RedirectXtraCX command sent for Channel %1s on %2s and|Команда redirectxtracx отправлен на канале% 1 с на %2s и||
+Invalid server_ip|недействительным server_ip||
+Invalid session_name|недействительным session_name||
+Channel %1s is not valid or exten %2s is not valid or filename: %3s is not valid, %4s command not inserted|Канал %1s не действительным или EXTEN %2s не действует или имя: %3s не является допустимым, %4s команда не вставлена||
+There are no custom fields for this list|нет пользовательских полей для этого списка||
+Channel %1s is not valid or queryCID %2s is not valid or filename: %3s is not valid, %4s command not inserted|Канал %1s не является действительным или querycid %2s не действует или имя: %3s не является допустимым, %4s команда не вставлена||
+Volume command sent for Conference %1s, Stage %2s Channel %3s on %4s|Команда объем отправлен на конференции %1s, этап %2s Канал %3s на %4s||
+ERROR: no custom list fields table|Ошибка: нет настраиваемый список не полей таблицы||
+Last Sunday October to Last Sunday March|в последнее воскресенье октября по последнее воскресенье марта||
+Agent Screen Opener|Экран агент нож||
+Second Sunday March to First Sunday November|второе воскресенье марта к первому воскресенью ноября||
+NONE|никто||
+Third Sunday October to Last Sunday February|Третий воскресенье октября по последнее воскресенье Февраль||
+Last Sunday in September to First Sunday in April|в последнее воскресенье сентября в первое воскресенье апреля,||
+Max rank count|Max Count Оценка||
+error: avatar not valid|Ошибка: Аватар не действует||
+Avatars disabled on your system|аватары отключена в вашей системе||
+PLEASE SELECT A LANGUAGE|Пожалуйста, выберите язык||
+Agent Redirect|агент перенаправления||
+Privacy ON|конфиденциальность на||
+OFF|от||
+YES|да||
+Conf Exten %1s is not valid|конф Exten %1s не действует||
+Conf Exten %1s is not valid or Exten %2s is not valid|конф EXTEN %1s не действительным или EXTEN %2s не действует||
+stop audio|Выключение звукового||
+LOGOUT PROCESSING...|Выход обработка ...||
+Conference %1s has been registered to %2s|конференц- %1s была зарегистрирована в %2s||
+You logged in at|Вы вошли в||
+Show|Показать||
+ Email| Эл.почта||
+You have now logged-in|Вы сейчас вошли в||
+You logged out at|Вы вышли из системы в ||
+You have now logged-out|Вы вышли из системы||
+ State| государство ||
+Province|Область||
+ Title| Должность||
+No calls found|Нет звонков найден||
+Amount of time you were logged-in:|Время, проведенное Вами в системе: ||
+Last |Фамилия ||
+FIRST NAME|имя||
+First|Имя||
+ DIAL | ВЫЗОВ||
+LAST NAME|фамилия||
+NOTES:|Примечания:||
+Language has not been changed, please try again|Язык не был изменен, попробуйте еще раз||
+Name:|Имя:||
+vdc_LB_blank_OFF.gif|vdc_LB_blank_OFF.gif||
