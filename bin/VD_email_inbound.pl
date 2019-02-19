@@ -2,7 +2,7 @@
 # default path to astguiclient configuration file:
 $PATHconf =		'/etc/astguiclient.conf';
 
-# Copyright (C) 2018  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # VD_email_inbound.pl
 # This script is responsible for assigning transferred and new emails to 
@@ -24,6 +24,7 @@ $PATHconf =		'/etc/astguiclient.conf';
 # changes:
 # 121214-2303 - First Build
 # 180610-1812 - Added code to not allow XFER emails to go to user who transferred
+# 190216-0810 - Fix for user-group, email-group and campaign allowed/permissions matching issues
 #
 
 if ($ARGV[0]=~/--help/) 
@@ -324,7 +325,8 @@ sub AssignAgents()
 			my $LOCKaffected_rows = $dbhA->do($stmtA);
 			$dbhP=$dbhA;   $mysql_count='02158';   $MEL_aff_rows=$LOCKaffected_rows;   &mysql_error_logging;
 
-			$stmtA = "SELECT user FROM vicidial_live_agents where status IN('CLOSER','READY') and lead_id<1 $ADUfindSQL and campaign_id IN($INBOUNDcampsSQL) and closer_campaigns LIKE \"% $group_id %\" and last_update_time > '$BDtsSQLdate' and vicidial_live_agents.user NOT IN($ring_no_answer_agents) $qp_groupWAIT_SQL $qp_groupWAIT_camp_SQL $agent_call_order limit 1;";
+			$SQL_group_id=$group_id;   $SQL_group_id =~ s/_/\\_/gi;
+			$stmtA = "SELECT user FROM vicidial_live_agents where status IN('CLOSER','READY') and lead_id<1 $ADUfindSQL and campaign_id IN($INBOUNDcampsSQL) and closer_campaigns LIKE \"% $SQL_group_id %\" and last_update_time > '$BDtsSQLdate' and vicidial_live_agents.user NOT IN($ring_no_answer_agents) $qp_groupWAIT_SQL $qp_groupWAIT_camp_SQL $agent_call_order limit 1;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			if ($ARGV[0]=~/debug/i) {print $stmtA."\n";}

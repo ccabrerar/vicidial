@@ -466,10 +466,11 @@
 # 180926-2150 - Added translatable phrases, related to issue #1114
 # 181005-1744 - Added SYSTEM option for manual_dial_filter
 # 190106-1353 - Added manual_dial_validation feature
+# 190216-0805 - Fix for user-group, in-group and campaign allowed/permissions matching issues
 #
 
-$version = '2.14-360';
-$build = '190106-1353';
+$version = '2.14-361';
+$build = '190216-0805';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=787;
@@ -15091,7 +15092,8 @@ if ($ACTION == 'AGENTSview')
 		{
 		if ($status == 'Y')
 			{
-			$AGENTviewSQL .= " and (vla.closer_campaigns LIKE \"% $group_name %\")";
+			$SQL_group_id = preg_replace("/_/",'\\_',$group_name);
+			$AGENTviewSQL .= " and (vla.closer_campaigns LIKE \"% $SQL_group_id %\")";
 			}
 		else
 			{

@@ -375,6 +375,10 @@ OTHER CHANGES:
 	manually enter in the phone number before a call is placed. Does not 
 	affect 3way calls or transfers.
 
+105. Added alphabet letters translation to phone DTMF digits feature in Agent
+	Screen. For example, Putting "SMITH" in the SendDTMF field would result
+	in "76484" being sent over DTMF.
+
 
 
 

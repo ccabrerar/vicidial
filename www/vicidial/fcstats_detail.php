@@ -1,7 +1,7 @@
 <?php 
 # fcstats_detail.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -41,6 +41,7 @@
 # 170829-0040 - Added screen color settings
 # 171012-2015 - Fixed javascript/apache errors with graphs
 # 180508-2215 - Added new help display
+# 190216-0808 - Fix for user-group, in-group and campaign allowed/permissions matching issues
 #
 
 $startMS = microtime();
@@ -854,7 +855,8 @@ $HTML_text.=_QXZ("In-Group Fronter-Closer Stats Report",57)." $NOW_TIME\n";
 $HTML_text.="\n";
 $HTML_text.="---------- "._QXZ("TOTALS FOR")." $query_date_BEGIN "._QXZ("to")." $query_date_END\n";
 
-$sale_dispo_stmt="select distinct status from vicidial_campaign_statuses where sale='Y' and campaign_id in (SELECT campaign_id from vicidial_campaigns where closer_campaigns LIKE \"% " . implode(" %\" OR closer_campaigns LIKE \"% ", array_map(array($link, 'real_escape_string'), $group)) . " %\" $LOGallowed_campaignsSQL) UNION select distinct status from vicidial_statuses where sale='Y'";
+$SQL_group_id = preg_replace("/_/",'\\_',$group);
+$sale_dispo_stmt="select distinct status from vicidial_campaign_statuses where sale='Y' and campaign_id in (SELECT campaign_id from vicidial_campaigns where closer_campaigns LIKE \"% " . implode(" %\" OR closer_campaigns LIKE \"% ", array_map(array($link, 'real_escape_string'), $SQL_group_id)) . " %\" $LOGallowed_campaignsSQL) UNION select distinct status from vicidial_statuses where sale='Y'";
 if ($DB) {$HTML_text.="$sale_dispo_stmt\n";}
 $sale_dispo_rslt=mysql_to_mysqli($sale_dispo_stmt, $link);
 $sale_dispos="'SALE'"; $sale_dispo_str="|SALE";

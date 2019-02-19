@@ -231,6 +231,7 @@
 # 180806-0809 - Added CID callback number validation and change features
 # 180926-2351 - Added _wait_time options for next_agent_call
 # 190121-1505 - Added RA_USER_PHONE On-Hook CID to solve last RINGAGENT issues
+# 190216-0812 - Fix for user-group, in-group and campaign allowed/permissions matching issues
 #
 
 $script = 'agi-VDAD_ALL_inbound.agi';
@@ -1459,7 +1460,8 @@ if (length($action_xfer_cid) > 4)
 		{
 		$CIDcampaign_cid='0000000000';
 		### Grab ID values from the database
-		$stmtA = "SELECT campaign_id,campaign_cid FROM vicidial_campaigns where closer_campaigns LIKE \"% $channel_group %\" and active='Y';";
+		$SQL_group_id=$channel_group;   $SQL_group_id =~ s/_/\\_/gi;
+		$stmtA = "SELECT campaign_id,campaign_cid FROM vicidial_campaigns where closer_campaigns LIKE \"% $SQL_group_id %\" and active='Y';";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;
@@ -1835,7 +1837,8 @@ if ( ( ($no_agent_no_queue =~ /Y|NO_PAUSED|NO_READY/) || ($MCnanque_override > 0
 		{$NCsql = "and status IN('READY','CLOSER')";}
 	if ( ( ($channel_group =~ /AGENTDIRECT/i) || ($dial_ingroup_flag > 0) ) && (length($agent_only) > 1) )
 		{$ADsql = "and user='$agent_only'";}
-	$stmtA = "SELECT count(*) FROM vicidial_live_agents where closer_campaigns LIKE \"% $channel_group %\" $NPsql $ADsql $NCsql;";
+	$SQL_group_id=$channel_group;   $SQL_group_id =~ s/_/\\_/gi;
+	$stmtA = "SELECT count(*) FROM vicidial_live_agents where closer_campaigns LIKE \"% $SQL_group_id %\" $NPsql $ADsql $NCsql;";
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 	$sthArows=$sthA->rows;
@@ -2823,7 +2826,8 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 						{
 						$qp_groupWAIT .= "and ";
 						}
-					$qp_groupWAIT .= "closer_campaigns NOT LIKE \"% $aryA[0] %\" ";
+					$SQL_group_id=$aryA[0];   $SQL_group_id =~ s/_/\\_/gi;
+					$qp_groupWAIT .= "closer_campaigns NOT LIKE \"% $SQL_group_id %\" ";
 					$dbc++;
 					}
 
@@ -2841,7 +2845,8 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 						{
 						$qp_groupWAIT .= "and ";
 						}
-					$qp_groupWAIT .= "closer_campaigns NOT LIKE \"% $aryA[0] %\" ";
+					$SQL_group_id=$aryA[0];   $SQL_group_id =~ s/_/\\_/gi;
+					$qp_groupWAIT .= "closer_campaigns NOT LIKE \"% $SQL_group_id %\" ";
 					$dbc++;
 					$dbcQ++;
 					}
@@ -3005,7 +3010,8 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 						{$sthArows=0;}
 					else
 						{
-						$stmtA = "SELECT conf_exten,user,extension,server_ip,last_call_time,ra_user,campaign_id,on_hook_agent,on_hook_ring_time FROM vicidial_live_agents where status IN('CLOSER','READY') and lead_id<1 $ADUfindSQL and campaign_id IN($INBOUNDcampsSQL) and closer_campaigns LIKE \"% $channel_group %\" and last_update_time > '$BDtsSQLdate' and vicidial_live_agents.user NOT IN($ring_no_answer_agents'') $qp_groupWAIT_SQL $qp_groupWAIT_camp_SQL $agent_call_order limit 1;";
+						$SQL_group_id=$channel_group;   $SQL_group_id =~ s/_/\\_/gi;
+						$stmtA = "SELECT conf_exten,user,extension,server_ip,last_call_time,ra_user,campaign_id,on_hook_agent,on_hook_ring_time FROM vicidial_live_agents where status IN('CLOSER','READY') and lead_id<1 $ADUfindSQL and campaign_id IN($INBOUNDcampsSQL) and closer_campaigns LIKE \"% $SQL_group_id %\" and last_update_time > '$BDtsSQLdate' and vicidial_live_agents.user NOT IN($ring_no_answer_agents'') $qp_groupWAIT_SQL $qp_groupWAIT_camp_SQL $agent_call_order limit 1;";
 						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 						$sthArows=$sthA->rows;
@@ -3242,7 +3248,8 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 					if ($CAMP_callorder =~ /ring_all$/i)
 						{
 						### gather all available agents phones information (don't call more than 50 phones at once)
-						$stmtA = "SELECT conf_exten,user,extension,server_ip,ra_user,on_hook_ring_time from vicidial_live_agents where status IN('CLOSER','READY') and on_hook_agent='Y' and lead_id<1 $ADUfindSQL and campaign_id IN($INBOUNDcampsSQL) and closer_campaigns LIKE \"% $channel_group %\" and last_update_time > '$BDtsSQLdate' $qp_groupWAIT_SQL $qp_groupWAIT_camp_SQL $agent_call_order limit 50;";
+						$SQL_group_id=$channel_group;   $SQL_group_id =~ s/_/\\_/gi;
+						$stmtA = "SELECT conf_exten,user,extension,server_ip,ra_user,on_hook_ring_time from vicidial_live_agents where status IN('CLOSER','READY') and on_hook_agent='Y' and lead_id<1 $ADUfindSQL and campaign_id IN($INBOUNDcampsSQL) and closer_campaigns LIKE \"% $SQL_group_id %\" and last_update_time > '$BDtsSQLdate' $qp_groupWAIT_SQL $qp_groupWAIT_camp_SQL $agent_call_order limit 50;";
 						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 						$sthArowsAR=$sthA->rows;

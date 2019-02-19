@@ -21,7 +21,7 @@
 # exten => _8320*.,1,AGI(VD_amd.agi,${EXTEN}-----YES)
 # exten => _8320*.,2,Hangup
 #
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 60206-1434 - first build
@@ -53,6 +53,7 @@
 # 180529-1707 - Fix for missing called_count value in vicidial_log insertions
 # 180919-1831 - Fix for logging issue
 # 180924-1557 - Added called_count as AMM wildcard
+# 190216-0813 - Fix for user-group, in-group and campaign allowed/permissions matching issues
 #
 
 $script = 'VD_amd.agi';
@@ -441,7 +442,8 @@ else
 		{
 		$sthA->finish();
 		### Grab vmail forward message values from the database
-		$stmtA = "SELECT am_message_exten,amd_send_to_vmx,waitforsilence_options,survey_recording,campaign_rec_filename,cpd_amd_action,amd_inbound_group,amd_callmenu,cpd_unknown_action,campaign_id,am_message_wildcards FROM vicidial_campaigns where closer_campaigns LIKE \"% $VD_campaign_id %\" order by campaign_id limit 1;";
+		$SQL_group_id=$VD_campaign_id;   $SQL_group_id =~ s/_/\\_/gi;
+		$stmtA = "SELECT am_message_exten,amd_send_to_vmx,waitforsilence_options,survey_recording,campaign_rec_filename,cpd_amd_action,amd_inbound_group,amd_callmenu,cpd_unknown_action,campaign_id,am_message_wildcards FROM vicidial_campaigns where closer_campaigns LIKE \"% $SQL_group_id %\" order by campaign_id limit 1;";
 			if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;

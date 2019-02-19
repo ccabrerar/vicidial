@@ -13,7 +13,7 @@
 # ;inbound DID catch-all:
 #exten => _X.,1,AGI(agi-DID_route.agi)
 #
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 81007-0324 - First Build
@@ -44,6 +44,7 @@
 # 161102-1035 - Fixed QM partition problem
 # 170322-1708 - Added filter phone group entry BLANK for a blank CIDnumber
 # 170923-1355 - Added system filter feature, before any other actions
+# 190216-0814 - Fix for user-group, in-group and campaign settings matching issues
 #
 
 
@@ -1154,7 +1155,8 @@ if ( ($no_agent_ingroup_redirect =~ /Y|NO_PAUSED|READY_ONLY/) && ($pre_filter_ma
 		{$NPsql = "and status NOT IN('PAUSED')";}
 	if ($no_agent_ingroup_redirect =~ /READY_ONLY/) 
 		{$NPsql = "and status IN('READY','CLOSER')";}
-	$stmtA = "SELECT count(*) FROM vicidial_live_agents where closer_campaigns LIKE \"% $no_agent_ingroup_id %\" and last_update_time > '$BDtsSQLdate' $NPsql;";
+	$SQL_group_id=$no_agent_ingroup_id;   $SQL_group_id =~ s/_/\\_/gi;
+	$stmtA = "SELECT count(*) FROM vicidial_live_agents where closer_campaigns LIKE \"% $SQL_group_id %\" and last_update_time > '$BDtsSQLdate' $NPsql;";
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 	$sthArows=$sthA->rows;

@@ -3,7 +3,7 @@
 # 
 # shows the agents logged into vicidial and set to take calls from in-group
 #
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 100320-2102 - First Build
@@ -15,6 +15,7 @@
 # 141114-0658 - Finalized adding QXZ translation to all admin files
 # 141230-0045 - Added code for on-the-fly language translations display
 # 170409-1534 - Added IP List validation code
+# 190216-0806 - Fix for user-group, in-group and campaign allowed/permissions matching issues
 #
 
 $startMS = microtime();
@@ -254,7 +255,8 @@ else
 
 	echo "\n";
 
-	$stmt="select count(*) from vicidial_live_agents where closer_campaigns LIKE\"% " . mysqli_real_escape_string($link, $group) . " %\";";
+	$SQL_group_id = preg_replace("/_/",'\\_',$group);
+	$stmt="select count(*) from vicidial_live_agents where closer_campaigns LIKE\"% $SQL_group_id %\";";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	if ($DB) {echo "$stmt\n";}
 	$row=mysqli_fetch_row($rslt);

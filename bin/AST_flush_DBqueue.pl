@@ -9,7 +9,7 @@
 # !!!!!!!! IMPORTANT !!!!!!!!!!!!!!!!!!
 # THIS SCRIPT SHOULD ONLY BE RUN ON ONE SERVER ON YOUR CLUSTER
 #
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 60717-1214 - changed to DBI by Marin Blu
@@ -26,6 +26,7 @@
 # 180511-1223 - Added flush for server-specific cid_channels_recent_ tables
 # 180519-1431 - Added vicidial_inbound_groups optimization
 # 181003-2115 - Added optimize of cid_channels_recent_ tables
+# 190214-1758 - Fix for cid_recent_ table optimization issue
 #
 
 ### begin parsing run-time options ###
@@ -379,9 +380,9 @@ if (!$Q) {print " - OPTIMIZE vicidial_inbound_groups          \n";}
 $stmtA = "SELECT server_ip,server_id FROM servers where active='Y' and active_asterisk_server='Y';";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-$sthArows=$sthA->rows;
+$sthArowsSERVERS=$sthA->rows;
 $aas=0;
-while ($sthArows > $aas)
+while ($sthArowsSERVERS > $aas)
 	{
 	@aryA = $sthA->fetchrow_array;
 	$dialer_ip[$aas] =			$aryA[0];
@@ -394,7 +395,7 @@ while ($sthArows > $aas)
 $sthA->finish();
 
 $aas=0;
-while ($sthArows > $aas)
+while ($sthArowsSERVERS > $aas)
 	{
 	$CCRrec=0;
 	$stmtA = "SHOW TABLES LIKE \"cid_channels_recent_$PADserver_ip[$aas]\";";

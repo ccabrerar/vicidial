@@ -6,7 +6,7 @@
 # adjusts the auto_dial_level for vicidial adaptive-predictive campaigns. 
 # gather call stats for campaigns and in-groups
 #
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 60823-1302 - First build from AST_VDhopper.pl
@@ -48,6 +48,7 @@
 # 171221-1049 - Added caching of inbound call stats
 # 180203-1728 - Added function to check for inbound callback queue calls to be placed
 # 180519-2303 - Added Waiting Call On/Off URL feature for in-groups
+# 190216-0809 - Fix for user-group, in-group and campaign allowed/permissions matching issues
 #
 
 
@@ -877,7 +878,8 @@ while ($master_loop < $CLIloops)
 								{
 								$qp_groupWAIT .= "and ";
 								}
-							$qp_groupWAIT .= "closer_campaigns NOT LIKE \"% $aryA[0] %\" ";
+							$SQL_group_id=$aryA[0];   $SQL_group_id =~ s/_/\\_/gi;
+							$qp_groupWAIT .= "closer_campaigns NOT LIKE \"% $SQL_group_id %\" ";
 							$dbc++;
 							}
 
@@ -894,7 +896,8 @@ while ($master_loop < $CLIloops)
 								{
 								$qp_groupWAIT .= "and ";
 								}
-							$qp_groupWAIT .= "closer_campaigns NOT LIKE \"% $aryA[0] %\" ";
+							$SQL_group_id=$aryA[0];   $SQL_group_id =~ s/_/\\_/gi;
+							$qp_groupWAIT .= "closer_campaigns NOT LIKE \"% $SQL_group_id %\" ";
 							$dbc++;
 							$dbcQ++;
 							}
@@ -1068,7 +1071,8 @@ while ($master_loop < $CLIloops)
 						else
 							{
 							$sthArowsFA=0;
-							$stmtA = "SELECT conf_exten,user,extension,server_ip,last_call_time,ra_user,campaign_id,on_hook_agent,on_hook_ring_time FROM vicidial_live_agents where status IN('CLOSER','READY') and lead_id<1 $ADUfindSQL and campaign_id IN($INBOUNDcampsSQL) and closer_campaigns LIKE \"% $ICBQgroup_id[$r] %\" and last_update_time > '$BDtsSQLdate' and user NOT IN($routed_user_list'') $qp_groupWAIT_SQL $qp_groupWAIT_camp_SQL $agent_call_order limit 1;";
+							$SQL_group_id=$ICBQgroup_id[$r];   $SQL_group_id =~ s/_/\\_/gi;
+							$stmtA = "SELECT conf_exten,user,extension,server_ip,last_call_time,ra_user,campaign_id,on_hook_agent,on_hook_ring_time FROM vicidial_live_agents where status IN('CLOSER','READY') and lead_id<1 $ADUfindSQL and campaign_id IN($INBOUNDcampsSQL) and closer_campaigns LIKE \"% $SQL_group_id %\" and last_update_time > '$BDtsSQLdate' and user NOT IN($routed_user_list'') $qp_groupWAIT_SQL $qp_groupWAIT_camp_SQL $agent_call_order limit 1;";
 							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 							$sthArowsFA=$sthA->rows;
@@ -4195,7 +4199,8 @@ sub calculate_drops_inbound
 			}
 		$sthA->finish();
 
-		$stmtA = "SELECT count(*) from vicidial_live_agents where closer_campaigns LIKE \"% $group_id[$p] %\" and last_update_time > '$VDL_one';";
+		$SQL_group_id=$group_id[$p];   $SQL_group_id =~ s/_/\\_/gi;
+		$stmtA = "SELECT count(*) from vicidial_live_agents where closer_campaigns LIKE \"% $SQL_group_id %\" and last_update_time > '$VDL_one';";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;
@@ -4206,7 +4211,7 @@ sub calculate_drops_inbound
 			}
 		$sthA->finish();
 
-		$stmtA = "SELECT count(*) from vicidial_live_agents where closer_campaigns LIKE \"% $group_id[$p] %\" and last_update_time > '$VDL_one' and extension LIKE \"R/%\";";
+		$stmtA = "SELECT count(*) from vicidial_live_agents where closer_campaigns LIKE \"% $SQL_group_id %\" and last_update_time > '$VDL_one' and extension LIKE \"R/%\";";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;

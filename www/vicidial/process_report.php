@@ -199,7 +199,7 @@ if (!isset($group)) {$group = array();}
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (!isset($server_ip)) {$server_ip = '10.10.10.15';}
 
-$stmt="select distinct(serial_id) from vicidial_process_log order by serial_id desc limit 1000;";
+$stmt="select distinct(serial_id) from vicidial_process_log order by run_time desc limit 10000;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $campaigns_to_print = mysqli_num_rows($rslt);
