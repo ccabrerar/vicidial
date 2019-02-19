@@ -122,6 +122,7 @@ if (length($ARGV[0])>1)
 		print "  [--ftp-login=XXXXXXXX] = OVERRIDE FTP user\n";
 		print "  [--ftp-pass=XXXXXXXX] = OVERRIDE FTP pass\n";
 		print "  [--ftp-dir=XXXXXXXX] = OVERRIDE remote FTP server directory to post files to\n";
+		print "  [--no-flush-logs] = remove usage of --flush-logs in mysqldump\n";
 		print "  [--debugX] = super debug\n";
 		print "  [--debug] = debug\n";
 		print "  [--test] = test\n";
@@ -140,6 +141,15 @@ if (length($ARGV[0])>1)
 			{
 			$DBX=1;
 			print "\n----- SUPER DEBUG -----\n\n";
+			}
+		if ($args =~ /--no-flush-logs/i)
+			{
+			$flush_logs_flag="";
+			print "\n----- NO FLUSH LOGS -----\n\n";
+			}
+		else
+			{
+			$flush_logs_flag="--flush-logs";
 			}
 		if ($args =~ /--test/i)
 			{
@@ -444,8 +454,8 @@ if ( ($without_db < 1) && ($conf_only < 1) )
 					
 			if ($db_without_logs)
 				{
-				$dump_non_log_command = "$mysqldumpbin --host=$VARDB_server --user=$VARDB_user --password=$VARDB_pass --lock-tables --flush-logs $temp_dbname $regular_tables $conf_tables | $gzipbin > $ARCHIVEpath/temp/$VARserver_ip$temp_dbname$wday.gz";
-				$dump_log_command = "$mysqldumpbin --host=$VARDB_server --user=$VARDB_user --password=$VARDB_pass --lock-tables --flush-logs --no-data --no-create-db $temp_dbname $log_tables $archive_tables | $gzipbin > $ARCHIVEpath/temp/LOGS_$VARserver_ip$temp_dbname$wday.gz";
+				$dump_non_log_command = "$mysqldumpbin --host=$VARDB_server --user=$VARDB_user --password=$VARDB_pass --lock-tables $flush_logs_flag $temp_dbname $regular_tables $conf_tables | $gzipbin > $ARCHIVEpath/temp/$VARserver_ip$temp_dbname$wday.gz";
+				$dump_log_command = "$mysqldumpbin --host=$VARDB_server --user=$VARDB_user --password=$VARDB_pass --lock-tables $flush_logs_flag --no-data --no-create-db $temp_dbname $log_tables $archive_tables | $gzipbin > $ARCHIVEpath/temp/LOGS_$VARserver_ip$temp_dbname$wday.gz";
 
 				if ($DBX) {print "$dump_non_log_command\nDEBUG: LOG EXPORT COMMAND(not run): $dump_log_command\n";}
 				`$dump_non_log_command`;
@@ -453,8 +463,8 @@ if ( ($without_db < 1) && ($conf_only < 1) )
 				
 			elsif ($db_without_archives)
 				{
-				$dump_non_archive_command = "$mysqldumpbin --host=$VARDB_server --user=$VARDB_user --password=$VARDB_pass --lock-tables --flush-logs $temp_dbname $regular_tables $conf_tables $log_tables | $gzipbin > $ARCHIVEpath/temp/$VARserver_ip$temp_dbname$wday.gz";
-				$dump_archive_command = "$mysqldumpbin --host=$VARDB_server --user=$VARDB_user --password=$VARDB_pass --lock-tables --flush-logs --no-data --no-create-db $temp_dbname $archive_tables | $gzipbin > $ARCHIVEpath/temp/ARCHIVES_$VARserver_ip$temp_dbname$wday.gz";
+				$dump_non_archive_command = "$mysqldumpbin --host=$VARDB_server --user=$VARDB_user --password=$VARDB_pass --lock-tables $flush_logs_flag $temp_dbname $regular_tables $conf_tables $log_tables | $gzipbin > $ARCHIVEpath/temp/$VARserver_ip$temp_dbname$wday.gz";
+				$dump_archive_command = "$mysqldumpbin --host=$VARDB_server --user=$VARDB_user --password=$VARDB_pass --lock-tables $flush_logs_flag --no-data --no-create-db $temp_dbname $archive_tables | $gzipbin > $ARCHIVEpath/temp/ARCHIVES_$VARserver_ip$temp_dbname$wday.gz";
 
 				if ($DBX) {print "$dump_non_archive_command\nDEBUG: ARCHIVE EXPORT COMMAND(not run): $dump_archive_command\n";}
 				`$dump_non_archive_command`;
@@ -462,16 +472,16 @@ if ( ($without_db < 1) && ($conf_only < 1) )
 				
 			elsif ($db_settings_only)
 				{
-				$dump_non_log_command = "$mysqldumpbin --host=$VARDB_server --user=$VARDB_user --password=$VARDB_pass --lock-tables --flush-logs $temp_dbname $conf_tables | $gzipbin > $ARCHIVEpath/temp/SETTINGSONLY_$VARserver_ip$temp_dbname$wday.gz";
-				$dump_log_command = "$mysqldumpbin --host=$VARDB_server --user=$VARDB_user --password=$VARDB_pass --lock-tables --flush-logs --no-data --no-create-db $temp_dbname $log_tables $archive_tables $regular_tables | $gzipbin > $ARCHIVEpath/temp/LOGS_$VARserver_ip$temp_dbname$wday.gz";
+				$dump_non_log_command = "$mysqldumpbin --host=$VARDB_server --user=$VARDB_user --password=$VARDB_pass --lock-tables $flush_logs_flag $temp_dbname $conf_tables | $gzipbin > $ARCHIVEpath/temp/SETTINGSONLY_$VARserver_ip$temp_dbname$wday.gz";
+				$dump_log_command = "$mysqldumpbin --host=$VARDB_server --user=$VARDB_user --password=$VARDB_pass --lock-tables $flush_logs_flag --no-data --no-create-db $temp_dbname $log_tables $archive_tables $regular_tables | $gzipbin > $ARCHIVEpath/temp/LOGS_$VARserver_ip$temp_dbname$wday.gz";
 
 				if ($DBX) {print "$dump_non_log_command\nNOT ARCHIVED: $dump_log_command\n";}
 				`$dump_non_log_command`;
 				}
 			else
 				{
-				if ($DBX) {print "$mysqldumpbin --host=$VARDB_server --user=$VARDB_user --password=$VARDB_pass --lock-tables --flush-logs $temp_dbname | $gzipbin > $ARCHIVEpath/temp/$VARserver_ip$temp_dbname$wday.gz\n";}
-				`$mysqldumpbin --host=$VARDB_server --user=$VARDB_user --password=$VARDB_pass --lock-tables --flush-logs $temp_dbname | $gzipbin > $ARCHIVEpath/temp/$VARserver_ip$temp_dbname$wday.gz`;
+				if ($DBX) {print "$mysqldumpbin --host=$VARDB_server --user=$VARDB_user --password=$VARDB_pass --lock-tables $flush_logs_flag $temp_dbname | $gzipbin > $ARCHIVEpath/temp/$VARserver_ip$temp_dbname$wday.gz\n";}
+				`$mysqldumpbin --host=$VARDB_server --user=$VARDB_user --password=$VARDB_pass --lock-tables $flush_logs_flag $temp_dbname | $gzipbin > $ARCHIVEpath/temp/$VARserver_ip$temp_dbname$wday.gz`;
 				}
 			$c++;
 			}
