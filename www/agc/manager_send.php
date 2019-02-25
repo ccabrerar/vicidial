@@ -1,7 +1,7 @@
 <?php
 # manager_send.php    version 2.14
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed purely to insert records into the vicidial_manager table to signal Actions to an asterisk server
 # This script depends on the server_ip being sent and also needs to have a valid user/pass from the vicidial_users table
@@ -140,13 +140,14 @@
 # 170528-0850 - Fix for rare inbound logging issue #1017, Added additional variable filtering
 # 170921-2009 - Fix for CALLID in beginning of recording filename
 # 180522-1920 - Added more agent debug output for recordings
+# 190222-1318 - Added recent session per-call logging
 #
 
-$version = '2.14-87';
-$build = '180522-1920';
+$version = '2.14-88';
+$build = '190222-1318';
 $php_script = 'manager_send.php';
 $mel=1;					# Mysql Error Log enabled = 1
-$mysql_log_count=142;
+$mysql_log_count=143;
 $one_mysql_log=0;
 $SSagent_debug_logging=0;
 $startMS = microtime();
@@ -362,7 +363,7 @@ if (strlen($meetme_enter_leave3way_filename) > 0)
 	{$threeway_context = 'meetme-enter-leave3way';}
 
 $auth=0;
-$auth_message = user_authorization($user,$pass,'',0,1,0,0);
+$auth_message = user_authorization($user,$pass,'',0,1,0,0,'manager_send');
 if ($auth_message == 'GOOD')
 	{$auth=1;}
 
@@ -575,6 +576,14 @@ if ($ACTION=="Originate")
 		if ($DB) {echo "$stmt\n";}
 		$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02119',$user,$server_ip,$session_name,$one_mysql_log);}
+
+		if ( (strlen($lead_id) > 0) and (strlen($session_id) > 0) and (preg_match("/^DC/",$queryCID)) )
+			{
+			$stmt="INSERT INTO vicidial_sessions_recent SET lead_id='$lead_id',server_ip='$server_ip',call_date=NOW(),user='$user',campaign_id='$campaign',conf_exten='$session_id',call_type='X';";
+				if ($format=='debug') {echo "\n<!-- $stmt -->";}
+			$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02143',$user,$server_ip,$session_name,$one_mysql_log);}
+			}
 
 		if ($agent_dialed_number > 0)
 			{

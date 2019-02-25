@@ -299,7 +299,7 @@ if ( ($submit_button=='YES') or ($admin_submit=='YES') )
 	{$auth_api_flag = 1;}
 
 $auth=0;
-$auth_message = user_authorization($user,$pass,'',0,$bcrypt,0,$auth_api_flag);
+$auth_message = user_authorization($user,$pass,'',0,$bcrypt,0,$auth_api_flag,'vdc_form_display');
 if ($auth_message == 'GOOD')
 	{$auth=1;}
 

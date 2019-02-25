@@ -107,7 +107,7 @@ if ($non_latin < 1)
 	}
 
 $auth=0;
-$auth_message = user_authorization($user,$pass,'',0,1,0,0);
+$auth_message = user_authorization($user,$pass,'',0,1,0,0,'voicemail_check');
 if ($auth_message == 'GOOD')
 	{$auth=1;}
 if (strlen($SSagent_debug_logging) > 1)

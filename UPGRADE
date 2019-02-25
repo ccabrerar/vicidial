@@ -379,6 +379,13 @@ OTHER CHANGES:
 	Screen. For example, Putting "SMITH" in the SendDTMF field would result
 	in "76484" being sent over DTMF.
 
+106. Added "force_fronter_audio_stop" Agent API function, allowing an API
+	command to be sent to the fronter session of a closer call to stop
+	playing of an audio_playback pre-recorded audio stream
+
+107. Added options to define the static prompts to use for the Inbound Group 
+	"Play Place in Line" feature
+
 
 
 

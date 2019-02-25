@@ -125,7 +125,7 @@ if ($SSallow_chats < 1)
 	}
 
 $auth=0;
-$auth_message = user_authorization($user,$pass,'',0,0,0,0);
+$auth_message = user_authorization($user,$pass,'',0,0,0,0,'vdc_chat_display');
 if ($auth_message == 'GOOD')
 	{$auth=1;}
 

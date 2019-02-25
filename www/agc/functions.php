@@ -52,7 +52,7 @@
 # $mysql_queries = 26
 
 ##### BEGIN validate user login credentials, check for failed lock out #####
-function user_authorization($user,$pass,$user_option,$user_update,$bcrypt,$return_hash,$api_call)
+function user_authorization($user,$pass,$user_option,$user_update,$bcrypt,$return_hash,$api_call,$source)
 	{
 	require("dbconnect_mysqli.php");
 
@@ -115,7 +115,7 @@ function user_authorization($user,$pass,$user_option,$user_update,$bcrypt,$retur
 
 	if ($auth < 1)
 		{
-		$auth_key='BAD'."|$stmt";
+		$auth_key='BAD'."|$bcrypt|$source|$stmt";
 		$stmt="SELECT failed_login_count,UNIX_TIMESTAMP(last_login_date) from vicidial_users where user='$user';";
 		if ($non_latin > 0) {$rslt=mysql_to_mysqli("SET NAMES 'UTF8'", $link);}
 		$rslt=mysql_to_mysqli($stmt, $link);

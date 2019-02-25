@@ -1,4 +1,4 @@
-CROSS-CLUSTER COMMUNICATION	Started: 2011-05-27	Updated: 2018-09-08
+CROSS-CLUSTER COMMUNICATION	Started: 2011-05-27	Updated: 2019-02-22
 
 
 --------------------------------
@@ -42,7 +42,7 @@ NOTES:
 	# If lead is not found on external system, call will go to the 'B' option in the call menu
 	# If container is not found, call will go to the 'C' option in the call menu
 	# If call_id is not defined, call will go to the 'D' option in the call menu
-	# If you are planning to use the 'force_fronter_leave_3way' function across this CCC connection, make sure you have that API permission set for the API user above
+	# If you are planning to use the 'force_fronter_leave_3way' or 'force_fronter_audio_stop' functions across this CCC connection, make sure you have that API permission set for the API user above
 
 
 

@@ -133,7 +133,7 @@ if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if ( (strlen($soundboard_id) < 1) and (strlen($avatar_id) > 0) ) {$soundboard_id=$avatar_id;}
 
 $auth=0;
-$auth_message = user_authorization($user,$pass,'',0,$bcrypt,0,0);
+$auth_message = user_authorization($user,$pass,'',0,$bcrypt,0,0,'vdc_soundboard_display');
 if ($auth_message == 'GOOD')
 	{$auth=1;}
 

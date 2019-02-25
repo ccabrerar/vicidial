@@ -212,7 +212,7 @@ $random = (rand(1000000, 9999999) + 10000000);
 
 
 $auth=0;
-$auth_message = user_authorization($user,$pass,'',0,$bcrypt,0,0);
+$auth_message = user_authorization($user,$pass,'',0,$bcrypt,0,0,'conf_exten_check');
 if ($auth_message == 'GOOD')
 	{$auth=1;}
 

@@ -783,3 +783,24 @@ ALTER TABLE system_settings ADD manual_dial_validation ENUM('0','1','2','3','4')
 ALTER TABLE vicidial_campaigns ADD manual_dial_validation ENUM('Y','N') default 'N';
 
 UPDATE system_settings SET db_schema_version='1562',db_schema_update_date=NOW() where db_schema_version < 1562;
+
+CREATE TABLE vicidial_sessions_recent (
+lead_id INT(9) UNSIGNED,
+server_ip VARCHAR(15) NOT NULL,
+call_date DATETIME,
+user VARCHAR(20),
+campaign_id VARCHAR(20),
+conf_exten VARCHAR(20),
+call_type VARCHAR(1) default '',
+index(lead_id),
+index(call_date)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_sessions_recent_archive LIKE vicidial_sessions_recent;
+
+UPDATE system_settings SET db_schema_version='1563',db_schema_update_date=NOW() where db_schema_version < 1563;
+
+ALTER TABLE vicidial_inbound_groups ADD place_in_line_caller_number_filename TEXT;
+ALTER TABLE vicidial_inbound_groups ADD place_in_line_you_next_filename TEXT;
+
+UPDATE system_settings SET db_schema_version='1564',db_schema_update_date=NOW() where db_schema_version < 1564;

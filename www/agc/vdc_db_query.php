@@ -467,13 +467,14 @@
 # 181005-1744 - Added SYSTEM option for manual_dial_filter
 # 190106-1353 - Added manual_dial_validation feature
 # 190216-0805 - Fix for user-group, in-group and campaign allowed/permissions matching issues
+# 190220-1005 - Added vicidial_sessions_recent inserts when lead is set to INCALL status
 #
 
-$version = '2.14-361';
-$build = '190216-0805';
+$version = '2.14-362';
+$build = '190220-1005';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
-$mysql_log_count=787;
+$mysql_log_count=792;
 $one_mysql_log=0;
 $DB=0;
 $VD_login=0;
@@ -1138,7 +1139,7 @@ if ($ACTION == 'LogiNCamPaigns')
 else
 	{
 	$auth=0;
-	$auth_message = user_authorization($user,$pass,'',0,1,0,0);
+	$auth_message = user_authorization($user,$pass,'',0,1,0,0,'vdc_db_query');
 	if ($auth_message == 'GOOD')
 		{$auth=1;}
 
@@ -4064,7 +4065,6 @@ if ($ACTION == 'manDiaLnextCaLL')
 					$CBcallback_time =	trim("$row[1]");
 					$CBuser =			trim("$row[2]");
 					$CBcomments =		trim("$row[3]");
-
 					}
 				}
 
@@ -4121,6 +4121,11 @@ if ($ACTION == 'manDiaLnextCaLL')
 				if ($format=='debug') {echo "\n<!-- $stmt -->";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00439',$user,$server_ip,$session_name,$one_mysql_log);}
+
+			$stmt="INSERT INTO vicidial_sessions_recent SET lead_id='$lead_id',server_ip='$server_ip',call_date=NOW(),user='$user',campaign_id='$campaign',conf_exten='$conf_exten',call_type='M';";
+				if ($format=='debug') {echo "\n<!-- $stmt -->";}
+			$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00788',$user,$server_ip,$session_name,$one_mysql_log);}
 
 			$campaign_cid_override='';
 			$LISTweb_form_address='';
@@ -8155,6 +8160,7 @@ if ($ACTION == 'VDADcheckINCOMING')
 	$alt_phone_count='';
 	$INclosecallid='';
 	$INxfercallid='';
+	$rct = 'Q';
 
 	if ( (strlen($campaign)<1) || (strlen($server_ip)<1) )
 		{
@@ -8439,6 +8445,8 @@ if ($ACTION == 'VDADcheckINCOMING')
 					else
 						{$dialed_label = 'ALT';}
 					}
+				if ($call_type == 'IN') {$rct = 'Y';}
+				else {$rct = 'V';}
 				}
 			else
 				{
@@ -8447,11 +8455,13 @@ if ($ACTION == 'VDADcheckINCOMING')
 				if (preg_match('/^M|^V/',$callerid))
 					{
 					$call_type = 'OUT';
+					$rct = 'V';
 					$VDADchannel_group = $campaign;
 					}
 				else
 					{
 					$call_type = 'IN';
+					$rct = 'Y';
 					$stmt = "SELECT campaign_id,closecallid,xfercallid from vicidial_closer_log where lead_id = '$lead_id' order by closecallid desc limit 1;";
 					if ($DB) {echo "$stmt\n";}
 					$rslt=mysql_to_mysqli($stmt, $link);
@@ -8472,6 +8482,11 @@ if ($ACTION == 'VDADcheckINCOMING')
 					fclose($fp);
 					}
 				}
+
+			$stmt="INSERT INTO vicidial_sessions_recent SET lead_id='$lead_id',server_ip='$server_ip',call_date=NOW(),user='$user',campaign_id='$VDADchannel_group',conf_exten='$conf_exten',call_type='$rct';";
+				if ($format=='debug') {echo "\n<!-- $stmt -->";}
+			$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00789',$user,$server_ip,$session_name,$one_mysql_log);}
 
 			if ( ($call_type=='OUT') or ($call_type=='OUTBALANCE') )
 				{
@@ -9792,6 +9807,11 @@ if ($ACTION == 'VDADcheckINCOMINGother')
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00493',$user,$server_ip,$session_name,$one_mysql_log);}
 
+			$stmt="INSERT INTO vicidial_sessions_recent SET lead_id='$lead_id',server_ip='$server_ip',call_date=NOW(),user='$user',campaign_id='$VDADchannel_group',conf_exten='$conf_exten',call_type='E';";
+				if ($format=='debug') {echo "\n<!-- $stmt -->";}
+			$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00790',$user,$server_ip,$session_name,$one_mysql_log);}
+
 
 			### IF incoming result => answer email, not chat...
 	
@@ -9958,7 +9978,11 @@ if ($ACTION == 'VDADcheckINCOMINGother')
 			if ($DB) {echo "$stmt\n";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00645',$user,$server_ip,$session_name,$one_mysql_log);}
-			
+
+			$stmt="INSERT INTO vicidial_sessions_recent SET lead_id='$lead_id',server_ip='$server_ip',call_date=NOW(),user='$user',campaign_id='$VDADchannel_group',conf_exten='$conf_exten',call_type='C';";
+				if ($format=='debug') {echo "\n<!-- $stmt -->";}
+			$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00791',$user,$server_ip,$session_name,$one_mysql_log);}
 			}
 
 		if ($email_ct>0 || $chat_ct>0) {
@@ -11089,6 +11113,11 @@ if ($ACTION == 'LeaDSearcHSelecTUpdatE')
 				fwrite ($fp, "$NOW_TIME|INBND|$callerid|$user|$user_group|$list_id|$lead_id|$phone_number|$uniqueid|$VDADchannel_group|$call_type|$dialed_number|$dialed_label|$INclosecallid|$INxfercallid|\n");
 				fclose($fp);
 				}
+
+			$stmt="INSERT INTO vicidial_sessions_recent SET lead_id='$lead_id',server_ip='$server_ip',call_date=NOW(),user='$user',campaign_id='$VDADchannel_group',conf_exten='$conf_exten',call_type='S';";
+				if ($format=='debug') {echo "\n<!-- $stmt -->";}
+			$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00792',$user,$server_ip,$session_name,$one_mysql_log);}
 
 			### update the recording_log lead_id to the new lead_id
 			$stmt = "UPDATE recording_log set lead_id='$lead_id' where lead_id='$stage' and user='$user' and vicidial_id='$INclosecallid';";
@@ -14883,7 +14912,7 @@ if ($ACTION == 'PauseCodeMgrApr')
 		}
 	else
 		{
-		$auth_message = user_authorization($MgrApr_user,$MgrApr_pass,'',0,0,0,0);
+		$auth_message = user_authorization($MgrApr_user,$MgrApr_pass,'',0,0,0,0,'vdc_db_query_mgr');
 		if ($auth_message == 'GOOD')
 			{
 			$auth_pca=0;

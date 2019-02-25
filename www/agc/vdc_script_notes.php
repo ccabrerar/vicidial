@@ -328,7 +328,7 @@ if (!isset($ACTION))   {$ACTION="refresh";}
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 
 $auth=0;
-$auth_message = user_authorization($user,$pass,'',0,0,0,0);
+$auth_message = user_authorization($user,$pass,'',0,0,0,0,'script_notes');
 if ($auth_message == 'GOOD')
 	{$auth=1;}
 

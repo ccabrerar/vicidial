@@ -1,4 +1,4 @@
-AGENT API DOCUMENT		Started: 2008-07-03	Updated: 2018-09-08
+AGENT API DOCUMENT		Started: 2008-07-03	Updated: 2019-02-22
 
 This document describes the functions of an API(Application Programming Interface)
 for the VICIDIAL Agent screen. This functionality will be rather limited at first
@@ -36,6 +36,7 @@ audio_playback - basic play/pause/resume/stop/restart audio in agent session
 switch_lead - for inbound calls, switches lead_id of live inbound call on agent screen
 calls_in_queue_count - display a count of the calls waiting in queue for the specific agent
 force_fronter_leave_3way - will send a command to fronter agent to leave-3way call that executing agent is on
+force_fronter_audio_stop - will send a command to fronter agent session to stop any audio_playback playing on it
 
 
 New scripts:
@@ -939,6 +940,41 @@ ERROR: agent_user is not on a phone call - 6666
 ERROR: no fronter found - 6666
 SUCCESS: force_fronter_leave_3way SENT - 6667
 SUCCESS: force_fronter_leave_3way command sent over CCC - test_ccc
+
+
+
+
+
+--------------------------------------------------------------------------------
+force_fronter_audio_stop - 
+
+DESCRIPTION:
+will send a command to fronter agent session to stop any audio_playback playing on it. Will not execute command for the named 'agent_user', but will look for other user session currently on a call with the same lead_id that the named agent_user is on the phone with.
+
+VALUES:
+ value - 
+  REQUIRED, choices are below:
+   LOCAL_ONLY - looks for fronter only on local cluster
+   LOCAL_AND_CCC - looks on local cluster and remote CCC to send command to (will always check local first)
+   CCC_REMOTE - use this when the closer is not on this cluster
+  lead_id - 
+    OPTIONAL, only to be used with CCC_REMOTE value commands
+
+EXAMPLE URLS:
+http://server/agc/api.php?source=test&user=6666&pass=1234&agent_user=1000&function=force_fronter_audio_stop&value=LOCAL_ONLY
+http://server/agc/api.php?source=test&user=6666&pass=1234&agent_user=1000&function=force_fronter_audio_stop&value=LOCAL_AND_CCC
+
+RESPONSES:
+ERROR: force_fronter_audio_stop not valid - LOCAL_AND_CCC|6666
+ERROR: auth USER DOES NOT HAVE PERMISSION TO USE THIS FUNCTION - LOCAL_AND_CCC|6666|force_fronter_audio_stop
+ERROR: no user found - 6666
+ERROR: agent_user is not logged in - 6666
+ERROR: agent_user is not on a phone call - 6666
+ERROR: no fronter session found - |6666|1234
+ERROR: no fronter found - 6666
+ERROR: force_fronter_audio_stop error - no audio playing in other agent session - 8600051|10.0.0.5||6666|1234
+SUCCESS: force_fronter_audio_stop function SENT - LOCAL_AND_CCC||6667|1234
+SUCCESS: force_fronter_audio_stop command sent over CCC - test_ccc
 
 
 

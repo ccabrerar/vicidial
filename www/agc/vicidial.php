@@ -607,10 +607,11 @@
 # 181003-1737 - Added external_web_socket_url option
 # 181005-1909 - Added SYSTEM manual_dial_filter option
 # 190108-0833 - Added manual_dial_validation option, updated dates for 2019
+# 190222-1316 - Added recent session per-call logging
 #
 
-$version = '2.14-576c';
-$build = '190108-0833';
+$version = '2.14-577c';
+$build = '190222-1316';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=87;
 $one_mysql_log=0;
@@ -1014,7 +1015,7 @@ if ($campaign_login_list > 0)
 		$MGR_pass = preg_replace("/\'|\"|\\\\|;/","",$MGR_pass);
 
 		$MGR_auth=0;
-		$auth_message = user_authorization($MGR_login,$MGR_pass,'MGR',0,0,0,0);
+		$auth_message = user_authorization($MGR_login,$MGR_pass,'MGR',0,0,0,0,'vicidial_mgr_ovrd');
 		if (preg_match("/^GOOD/",$auth_message))
 			{$MGR_auth=1;}
 
@@ -1384,7 +1385,7 @@ else
 	else
 		{
 		$auth=0;
-		$auth_message = user_authorization($VD_login,$VD_pass,'',1,0,1,0);
+		$auth_message = user_authorization($VD_login,$VD_pass,'',1,0,1,0,'vicidial');
 		if (preg_match("/^GOOD/",$auth_message))
 			{
 			$auth=1;
@@ -5475,7 +5476,7 @@ if ($enable_fast_refresh < 1) {echo "\tvar refresh_interval = 1000;\n";}
 					{var call_cid = campaign_cid;}
 				}
 
-			VMCoriginate_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&user=" + user + "&pass=" + pass + "&ACTION=Originate&format=text&channel=" + originatevalue + "&queryCID=" + queryCID + "&exten=" + call_prefix + "" + dialnum + "&ext_context=" + ext_context + "&ext_priority=1&outbound_cid=" + call_cid + "&usegroupalias="+ usegroupalias + "&preset_name=" + taskpresetname + "&campaign=" + campaign + "&account=" + active_group_alias + "&agent_dialed_number=" + agent_dialed_number + "&agent_dialed_type=" + agent_dialed_type + "&lead_id=" + document.vicidial_form.lead_id.value + "&stage=" + CheckDEADcallON + "&" + alertquery + "&cid_lock=" + cid_lock + "&call_variables=" + taskvariables;
+			VMCoriginate_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&user=" + user + "&pass=" + pass + "&ACTION=Originate&format=text&channel=" + originatevalue + "&queryCID=" + queryCID + "&exten=" + call_prefix + "" + dialnum + "&ext_context=" + ext_context + "&ext_priority=1&outbound_cid=" + call_cid + "&usegroupalias="+ usegroupalias + "&preset_name=" + taskpresetname + "&campaign=" + campaign + "&account=" + active_group_alias + "&agent_dialed_number=" + agent_dialed_number + "&agent_dialed_type=" + agent_dialed_type + "&lead_id=" + document.vicidial_form.lead_id.value + "&stage=" + CheckDEADcallON + "&" + alertquery + "&cid_lock=" + cid_lock + "&session_id=" + session_id + "&call_variables=" + taskvariables;
 			xmlhttp.open('POST', 'manager_send.php'); 
 			xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
 			xmlhttp.send(VMCoriginate_query); 
@@ -7787,7 +7788,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 					}
 				if (xmlhttprequestselectupdate) 
 					{ 
-					checkVDAI_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&user=" + user + "&pass=" + pass + "&campaign=" + campaign + "&ACTION=LeaDSearcHSelecTUpdatE" + "&lead_id=" + LSSlead_id + "&stage=" + document.vicidial_form.lead_id.value + "&agent_log_id=" + agent_log_id + "&phone_number=" + document.vicidial_form.phone_number.value + "&user_group=" + VU_user_group;
+					checkVDAI_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&user=" + user + "&pass=" + pass + "&campaign=" + campaign + "&ACTION=LeaDSearcHSelecTUpdatE" + "&lead_id=" + LSSlead_id + "&stage=" + document.vicidial_form.lead_id.value + "&agent_log_id=" + agent_log_id + "&phone_number=" + document.vicidial_form.phone_number.value + "&user_group=" + VU_user_group + "&conf_exten=" + session_id;
 					xmlhttprequestselectupdate.open('POST', 'vdc_db_query.php'); 
 					xmlhttprequestselectupdate.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
 					xmlhttprequestselectupdate.send(checkVDAI_query); 
