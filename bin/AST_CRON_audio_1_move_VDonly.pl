@@ -25,7 +25,7 @@
 # This program assumes that recordings are saved by Asterisk as .wav
 # should be easy to change this code if you use .gsm instead
 # 
-# Copyright (C) 2016  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # 
 # 80302-1958 - First Build
@@ -33,6 +33,7 @@
 # 130805-1450 - Added check for length and gather length of recording for database record
 # 160523-0654 - Added --HTTPS option to use https instead of http in local location
 # 160731-2103 - Added --POST options to change filename with variable lookups
+# 190311-0105 - Added code to check for agent-muted recordings
 #
 
 $HTTPS=0;
@@ -207,6 +208,18 @@ use DBI;
 $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
  or die "Couldn't connect to database: " . DBI->errstr;
 
+##### Get the settings from system_settings #####
+$SSmute_recordings=0;
+$stmtA = "SELECT mute_recordings FROM system_settings;";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+if ($sthArows > 0)
+	{
+	@aryA = $sthA->fetchrow_array;
+	$SSmute_recordings =	$aryA[0];
+	}
+$sthA->finish();
 
 ### find soxi to gather the length info if needed
 $soxibin = '';
@@ -274,7 +287,8 @@ foreach(@FILES)
 			$filenameSQL='';
 
 			$length_in_sec=0;
-			$stmtA = "SELECT recording_id,length_in_sec,lead_id,vicidial_id from recording_log where filename='$SQLFILE' order by recording_id desc LIMIT 1;";
+			$rec_ended=0;
+			$stmtA = "SELECT recording_id,length_in_sec,lead_id,vicidial_id,start_time,end_time,user from recording_log where filename='$SQLFILE' order by recording_id desc LIMIT 1;";
 			if($DBX){print STDERR "\n|$stmtA|\n";}
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -286,117 +300,42 @@ foreach(@FILES)
 				$length_in_sec =	$aryA[1];
 				$lead_id =			$aryA[2];
 				$vicidial_id =		$aryA[3];
+				$start_time =		$aryA[4];
+				$end_time =			$aryA[5];
+				$user =				$aryA[6];
+				if (length($end_time) > 15) {$rec_ended=1;}
 				}
 			$sthA->finish();
 
-			if ($DB) {print "|$recording_id|$length_in_sec|$INfile|     |$ALLfile|\n";}
-
-			if (!$T)
+			$process_recording=1;
+			if ( ($SSmute_recordings > 0) && ($rec_ended < 1) )
 				{
-				`mv -f "$dir1/$INfile" "$dir2/$ALLfile"`;
-				`rm -f "$dir1/$OUTfile"`;
-				}
-			else
-				{
-				`cp -f "$dir1/$INfile" "$dir2/$ALLfile"`;
-				}
-
-			$lengthSQL='';
-			if ( ( ($length_in_sec < 1) || ($length_in_sec =~ /^NULL$/i) || (length($length_in_sec)<1) ) && (length($soxibin) > 3) )
-				{
-				@soxi_output = `$soxibin -D $dir2/$ALLfile`;
-				$soxi_sec = $soxi_output[0];
-				$soxi_sec =~ s/\..*|\n|\r| //gi;
-				$soxi_min = ($soxi_sec / 60);
-				$soxi_min = sprintf("%.2f", $soxi_min);
-				$lengthSQL = ",length_in_sec='$soxi_sec',length_in_min='$soxi_min'";
-				}
-
-			##### BEGIN post call variable replacement #####
-			if ($POST > 0) 
-				{
-				if ($ALLfile =~ /POSTVLC|POSTSP|POSTADDR3|POSTSTATUS/)
+				### check for active muted recordings
+				$rec_on_ct=0;   $rec_off_ct=0;
+				$stmtA = "SELECT count(*),stage from vicidial_agent_function_log where lead_id='$lead_id' and event_time >= \"$start_time\" and user='$user' and function='mute_rec' group by stage;";
+				if($DBX){print STDERR "\n|$stmtA|\n";}
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArows=$sthA->rows;
+				$rs=0;
+				while ($sthArows > $rs)
 					{
-					$origALLfile = $ALLfile;
-					$origSQLFILE = $SQLFILE;
-					$vendor_lead_code='';   $security_phrase='';   $address3='';   $status='';
-					$status_ALL=0;
-					$camp_ALL=0;
-					$camp_status_selected=0;
+					@aryA = $sthA->fetchrow_array;
+					if ($aryA[1] =~ /on/i) {$rec_on_ct = $aryA[0];}
+					if ($aryA[1] =~ /off/i) {$rec_off_ct = $aryA[0];}
+					$rs++;
+					}
+				$sthA->finish();
 
-					if ($status_post =~ /----ALL----/)
-						{
-						$status_ALL++;
-						if($DBX){print "All Statuses:  |$status_post|$status_ALL|\n";} 
-						}
+				if ($rec_on_ct > $rec_off_ct) 
+					{
+					if ($DBX > 0) {print "DEBUG: recording muting on for this call: ($rec_on_ct > $rec_off_ct) |$SQLFILE|ended: $rec_ended|\n";}
 
-					if ($camp_post =~ /----ALL----/)
+					$rs_recent_on=0;
+					if ($rec_ended < 1) 
 						{
-						$camp_ALL++;
-						if($DBX){print "All Campaigs and Ingroups:  |$camp_post|$camp_ALL|\n";} 
-						}
-
-					if ( ($camp_ALL < 1) || ($status_ALL < 1) ) 
-						{
-						$camp_postSQL='';
-						if ($camp_ALL < 1)
-							{
-							$camp_postSQL = $camp_post;
-							$camp_postSQL =~ s/---/','/gi;
-							$camp_postSQL = "and campaign_id IN('$camp_postSQL')";
-							}
-						if ($vicidial_id =~ /\./) 
-							{
-							$log_lookupSQL = "SELECT status from vicidial_log where uniqueid='$vicidial_id' and lead_id='$lead_id' $camp_postSQL;";
-							}
-						else
-							{
-							$log_lookupSQL = "SELECT status from vicidial_closer_log where closecallid='$vicidial_id' and lead_id='$lead_id' $camp_postSQL;";
-							}
-						if($DBX){print STDERR "\n|$log_lookupSQL|\n";}
-						$sthA = $dbhA->prepare($log_lookupSQL) or die "preparing: ",$dbhA->errstr;
-						$sthA->execute or die "executing: $log_lookupSQL ", $dbhA->errstr;
-						$sthArows=$sthA->rows;
-						if ($sthArows > 0)
-							{
-							@aryA = $sthA->fetchrow_array;
-							$lead_status =		$aryA[0];
-							if ($status_ALL > 0) 
-								{$camp_status_selected++;}
-							else
-								{
-								@status_vars = split(/---/,$status_post);
-								$fc=0;
-								foreach(@status_vars)
-									{
-									$status_temp = $status_vars[$fc];
-									if ($status_vars[$fc] =~ /\*/) 
-										{
-										$status_temp =~ s/\*/.*/gi;
-										if ( ($lead_status =~ /^$status_temp/) && ($status_vars[$fc] =~ /\*$/) )
-											{$camp_status_selected++;}
-										if ( ($lead_status =~ /$status_temp$/) && ($status_vars[$fc] =~ /^\*/) )
-											{$camp_status_selected++;}
-										}
-									else
-										{
-										if ($lead_status =~ /^$status_temp$/) 
-											{$camp_status_selected++;}
-										}
-									if ($DBX) {print "    POST processing DEBUG: $fc|$status_temp|$lead_status|$lead_id|$vicidial_id|$ALLfile|\n";}
-									$fc++;
-									}
-								}
-							if ($DB) {print "    POST processing SELECT: |$camp_status_selected|$sthArows|$camp_postSQL|$camp_ALL|$status_post|$status_ALL|$ALLfile|\n";}
-							}
-						else
-							{if ($DB) {print "    POST processing ERROR: lead not found: |$lead_id|$ALLfile|\n";} }
-						$sthA->finish();
-						}
-
-					if ( ( ($camp_ALL > 0) && ($status_ALL > 0) ) || ($camp_status_selected > 0) )
-						{
-						$stmtA = "SELECT vendor_lead_code,security_phrase,address3,status from vicidial_list where lead_id='$lead_id' LIMIT 1;";
+						### check if muting started in last 15 minutes
+						$stmtA = "SELECT count(*) from vicidial_agent_function_log where lead_id='$lead_id' and event_time >= \"$start_time\" and event_time > DATE_SUB(NOW(),INTERVAL 15 MINUTE) and user='$user' and function='mute_rec' and stage='on';";
 						if($DBX){print STDERR "\n|$stmtA|\n";}
 						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -404,69 +343,204 @@ foreach(@FILES)
 						if ($sthArows > 0)
 							{
 							@aryA = $sthA->fetchrow_array;
-							$vendor_lead_code =		$aryA[0];
-							$security_phrase =		$aryA[1];
-							$address3 =				$aryA[2];
-							$status =				$aryA[3];
-
-							$vendor_lead_code =~	s/[^a-zA-Z0-9_-]//gi;
-							$security_phrase =~		s/[^a-zA-Z0-9_-]//gi;
-							$address3 =~			s/[^a-zA-Z0-9_-]//gi;
-							$status =~				s/[^a-zA-Z0-9_-]//gi;
+							$rs_recent_on = $aryA[0];
 							}
-						else
-							{if ($DB) {print "    POST processing ERROR: lead not found: |$lead_id|$ALLfile|\n";} }
 						$sthA->finish();
+						}
 
-						$ALLfile =~ s/POSTVLC/$vendor_lead_code/gi;
-						$ALLfile =~ s/POSTSP/$security_phrase/gi;
-						$ALLfile =~ s/POSTADDR3/$address3/gi;
-						$ALLfile =~ s/POSTSTATUS/$status/gi;
-						$SQLFILE =~ s/POSTVLC/$vendor_lead_code/gi;
-						$SQLFILE =~ s/POSTSP/$security_phrase/gi;
-						$SQLFILE =~ s/POSTADDR3/$address3/gi;
-						$SQLFILE =~ s/POSTSTATUS/$status/gi;
-						$filenameSQL = ",filename='$SQLFILE'";
-
-						`mv -f "$dir2/$origALLfile" "$dir2/$ALLfile"`;
-
-						if ($DB) {print "    POST processing COMPLETE: old: |$origALLfile| new: |$ALLfile|\n";}
+					if ($rs_recent_on > 0) 
+						{
+						if ($DBX > 0) {print "DEBUG2: recording muting recently for this call, do not process: ($rs_recent_on) |$SQLFILE|ended: $rec_ended|\n";}
+						$process_recording=0;
 						}
 					else
 						{
-						if ($DB) {print "    POST processing SKIPPED: |$camp_ALL|$status_ALL|$camp_status_selected|$lead_id|$vicidial_id|$ALLfile|\n";}
+						if ($DBX > 0) {print "DEBUG3: recording muting started over 15 minutes ago, OK to process: ($rs_recent_on) |$SQLFILE|ended: $rec_ended|\n";}
+						}
+					}
+				}
 
-						if ($CLEAR_POST > 0) 
+			if ($process_recording > 0) 
+				{
+				if ($DB) {print "|$recording_id|$length_in_sec|$INfile|     |$ALLfile|\n";}
+
+				if (!$T)
+					{
+					`mv -f "$dir1/$INfile" "$dir2/$ALLfile"`;
+					`rm -f "$dir1/$OUTfile"`;
+					}
+				else
+					{
+					`cp -f "$dir1/$INfile" "$dir2/$ALLfile"`;
+					}
+
+				$lengthSQL='';
+				if ( ( ($length_in_sec < 1) || ($length_in_sec =~ /^NULL$/i) || (length($length_in_sec)<1) ) && (length($soxibin) > 3) )
+					{
+					@soxi_output = `$soxibin -D $dir2/$ALLfile`;
+					$soxi_sec = $soxi_output[0];
+					$soxi_sec =~ s/\..*|\n|\r| //gi;
+					$soxi_min = ($soxi_sec / 60);
+					$soxi_min = sprintf("%.2f", $soxi_min);
+					$lengthSQL = ",length_in_sec='$soxi_sec',length_in_min='$soxi_min'";
+					}
+
+				##### BEGIN post call variable replacement #####
+				if ($POST > 0) 
+					{
+					if ($ALLfile =~ /POSTVLC|POSTSP|POSTADDR3|POSTSTATUS/)
+						{
+						$origALLfile = $ALLfile;
+						$origSQLFILE = $SQLFILE;
+						$vendor_lead_code='';   $security_phrase='';   $address3='';   $status='';
+						$status_ALL=0;
+						$camp_ALL=0;
+						$camp_status_selected=0;
+
+						if ($status_post =~ /----ALL----/)
 							{
-							$ALLfile =~ s/POSTVLC//gi;
-							$ALLfile =~ s/POSTSP//gi;
-							$ALLfile =~ s/POSTADDR3//gi;
-							$ALLfile =~ s/POSTSTATUS//gi;
-							$SQLFILE =~ s/POSTVLC//gi;
-							$SQLFILE =~ s/POSTSP//gi;
-							$SQLFILE =~ s/POSTADDR3//gi;
-							$SQLFILE =~ s/POSTSTATUS//gi;
+							$status_ALL++;
+							if($DBX){print "All Statuses:  |$status_post|$status_ALL|\n";} 
+							}
+
+						if ($camp_post =~ /----ALL----/)
+							{
+							$camp_ALL++;
+							if($DBX){print "All Campaigs and Ingroups:  |$camp_post|$camp_ALL|\n";} 
+							}
+
+						if ( ($camp_ALL < 1) || ($status_ALL < 1) ) 
+							{
+							$camp_postSQL='';
+							if ($camp_ALL < 1)
+								{
+								$camp_postSQL = $camp_post;
+								$camp_postSQL =~ s/---/','/gi;
+								$camp_postSQL = "and campaign_id IN('$camp_postSQL')";
+								}
+							if ($vicidial_id =~ /\./) 
+								{
+								$log_lookupSQL = "SELECT status from vicidial_log where uniqueid='$vicidial_id' and lead_id='$lead_id' $camp_postSQL;";
+								}
+							else
+								{
+								$log_lookupSQL = "SELECT status from vicidial_closer_log where closecallid='$vicidial_id' and lead_id='$lead_id' $camp_postSQL;";
+								}
+							if($DBX){print STDERR "\n|$log_lookupSQL|\n";}
+							$sthA = $dbhA->prepare($log_lookupSQL) or die "preparing: ",$dbhA->errstr;
+							$sthA->execute or die "executing: $log_lookupSQL ", $dbhA->errstr;
+							$sthArows=$sthA->rows;
+							if ($sthArows > 0)
+								{
+								@aryA = $sthA->fetchrow_array;
+								$lead_status =		$aryA[0];
+								if ($status_ALL > 0) 
+									{$camp_status_selected++;}
+								else
+									{
+									@status_vars = split(/---/,$status_post);
+									$fc=0;
+									foreach(@status_vars)
+										{
+										$status_temp = $status_vars[$fc];
+										if ($status_vars[$fc] =~ /\*/) 
+											{
+											$status_temp =~ s/\*/.*/gi;
+											if ( ($lead_status =~ /^$status_temp/) && ($status_vars[$fc] =~ /\*$/) )
+												{$camp_status_selected++;}
+											if ( ($lead_status =~ /$status_temp$/) && ($status_vars[$fc] =~ /^\*/) )
+												{$camp_status_selected++;}
+											}
+										else
+											{
+											if ($lead_status =~ /^$status_temp$/) 
+												{$camp_status_selected++;}
+											}
+										if ($DBX) {print "    POST processing DEBUG: $fc|$status_temp|$lead_status|$lead_id|$vicidial_id|$ALLfile|\n";}
+										$fc++;
+										}
+									}
+								if ($DB) {print "    POST processing SELECT: |$camp_status_selected|$sthArows|$camp_postSQL|$camp_ALL|$status_post|$status_ALL|$ALLfile|\n";}
+								}
+							else
+								{if ($DB) {print "    POST processing ERROR: lead not found: |$lead_id|$ALLfile|\n";} }
+							$sthA->finish();
+							}
+
+						if ( ( ($camp_ALL > 0) && ($status_ALL > 0) ) || ($camp_status_selected > 0) )
+							{
+							$stmtA = "SELECT vendor_lead_code,security_phrase,address3,status from vicidial_list where lead_id='$lead_id' LIMIT 1;";
+							if($DBX){print STDERR "\n|$stmtA|\n";}
+							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+							$sthArows=$sthA->rows;
+							if ($sthArows > 0)
+								{
+								@aryA = $sthA->fetchrow_array;
+								$vendor_lead_code =		$aryA[0];
+								$security_phrase =		$aryA[1];
+								$address3 =				$aryA[2];
+								$status =				$aryA[3];
+
+								$vendor_lead_code =~	s/[^a-zA-Z0-9_-]//gi;
+								$security_phrase =~		s/[^a-zA-Z0-9_-]//gi;
+								$address3 =~			s/[^a-zA-Z0-9_-]//gi;
+								$status =~				s/[^a-zA-Z0-9_-]//gi;
+								}
+							else
+								{if ($DB) {print "    POST processing ERROR: lead not found: |$lead_id|$ALLfile|\n";} }
+							$sthA->finish();
+
+							$ALLfile =~ s/POSTVLC/$vendor_lead_code/gi;
+							$ALLfile =~ s/POSTSP/$security_phrase/gi;
+							$ALLfile =~ s/POSTADDR3/$address3/gi;
+							$ALLfile =~ s/POSTSTATUS/$status/gi;
+							$SQLFILE =~ s/POSTVLC/$vendor_lead_code/gi;
+							$SQLFILE =~ s/POSTSP/$security_phrase/gi;
+							$SQLFILE =~ s/POSTADDR3/$address3/gi;
+							$SQLFILE =~ s/POSTSTATUS/$status/gi;
 							$filenameSQL = ",filename='$SQLFILE'";
 
 							`mv -f "$dir2/$origALLfile" "$dir2/$ALLfile"`;
 
-							if ($DB) {print "    CLEAR POST COMPLETE: old: |$origALLfile| new: |$ALLfile|\n";}
+							if ($DB) {print "    POST processing COMPLETE: old: |$origALLfile| new: |$ALLfile|\n";}
+							}
+						else
+							{
+							if ($DB) {print "    POST processing SKIPPED: |$camp_ALL|$status_ALL|$camp_status_selected|$lead_id|$vicidial_id|$ALLfile|\n";}
+
+							if ($CLEAR_POST > 0) 
+								{
+								$ALLfile =~ s/POSTVLC//gi;
+								$ALLfile =~ s/POSTSP//gi;
+								$ALLfile =~ s/POSTADDR3//gi;
+								$ALLfile =~ s/POSTSTATUS//gi;
+								$SQLFILE =~ s/POSTVLC//gi;
+								$SQLFILE =~ s/POSTSP//gi;
+								$SQLFILE =~ s/POSTADDR3//gi;
+								$SQLFILE =~ s/POSTSTATUS//gi;
+								$filenameSQL = ",filename='$SQLFILE'";
+
+								`mv -f "$dir2/$origALLfile" "$dir2/$ALLfile"`;
+
+								if ($DB) {print "    CLEAR POST COMPLETE: old: |$origALLfile| new: |$ALLfile|\n";}
+								}
 							}
 						}
+					else
+						{if ($DB) {print "    POST processing ERROR: No variables found: |$ALLfile|\n";} }
 					}
-				else
-					{if ($DB) {print "    POST processing ERROR: No variables found: |$ALLfile|\n";} }
+				##### END post call variable replacement #####
+
+				$HTTP='http';
+				if ($HTTPS > 0) {$HTTP='https';}
+				$stmtA = "UPDATE recording_log set location='$HTTP://$server_ip/RECORDINGS/$ALLfile' $filenameSQL $lengthSQL where recording_id='$recording_id';";
+					if($DBX){print STDERR "\n|$stmtA|\n";}
+				$affected_rows = $dbhA->do($stmtA); #  or die  "Couldn't execute query:|$stmtA|\n";
+
+				### sleep for twenty hundredths of a second to not flood the server with disk activity
+				usleep(1*200*1000);
 				}
-			##### END post call variable replacement #####
-
-			$HTTP='http';
-			if ($HTTPS > 0) {$HTTP='https';}
-			$stmtA = "UPDATE recording_log set location='$HTTP://$server_ip/RECORDINGS/$ALLfile' $filenameSQL $lengthSQL where recording_id='$recording_id';";
-				if($DBX){print STDERR "\n|$stmtA|\n";}
-			$affected_rows = $dbhA->do($stmtA); #  or die  "Couldn't execute query:|$stmtA|\n";
-
-			### sleep for twenty hundredths of a second to not flood the server with disk activity
-			usleep(1*200*1000);
 			}
 		}
 	$i++;

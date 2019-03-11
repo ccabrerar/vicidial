@@ -1,12 +1,13 @@
 <?php
 # vicidial_stylesheet.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # CSS/PHP file that uses the system-defined screen colors to display report elements
 #
 # 170830-2123 - First build
 # 180501-0045 - New elements added
+# 190129-1303 - New mobile display elements added
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -71,6 +72,79 @@ redalert {font-size: 18px; font-weight:bold; font-family: Arial, Sans-Serif; col
 
 .border2px {border:solid 2px #<?php echo $SSmenu_background; ?>}
 
+.android_standard {
+	font-family: Arial, Helvetica, sans-serif; 
+	font-size: 8pt; 
+}
+.android_large {
+	font-family: Arial, Helvetica, sans-serif; 
+	font-size: 10pt; 
+	font-weight: bold;
+}
+.android_auto {
+	font-family: Arial, Helvetica, sans-serif;
+	font-weight: bold;
+	font-size: calc(14px + (26 - 14) * ((100vw - 300px) / (1600 - 300)));
+	line-height: calc(1.3em + (1.5 - 1.2) * ((100vw - 300px)/(1600 - 300)));
+}
+.android_auto_small {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: calc(8px + (18 - 8) * ((100vw - 300px) / (1600 - 300)));
+	line-height: calc(1.3em + (1.5 - 1.2) * ((100vw - 300px)/(1600 - 300)));
+}
+.android_whiteboard_small {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: calc(8px + (16 - 8) * ((100vw - 300px) / (1600 - 300)));
+	line-height: calc(1.3em + (1.5 - 1.2) * ((100vw - 300px)/(1600 - 300)));
+}
+.android_campaign_header {
+	FONT-FAMILY: Courier;
+	FONT-WEIGHT: bold;
+	FONT-SIZE: calc(4px + (18 - 4) * ((100vw - 300px) / (1600 - 300)));
+}
+.android_auto_percent {
+	font-family: Arial, Helvetica, sans-serif;
+	font-weight: bold;
+	width: 24vw;
+	font-size: calc(14px + (26 - 14) * ((100vw - 300px) / (1600 - 300)));
+	line-height: calc(1.3em + (1.5 - 1.2) * ((100vw - 300px)/(1600 - 300)));
+}
+.mobile_whiteboard_td_lg {width: 40vw; max-width: 400px;}
+.mobile_whiteboard_td_sm {width: 30vw; max-width: 300px;}
+.mobile_whiteboard_select {width: 27vw; max-width: 270px;}
+.mobile_whiteboard_button {width: 15vw; max-width: 150px;}
+.mobile_whiteboard_display {width: 80vw; max-width:800px; height:70vh; max-height:800px;}
+
+.autosize_10 {width: 10vw; max-width: 160px;}
+.autosize_12 {width: 12vw; max-width: 180px;}
+
+/* 
+	LEVEL ONE MENU
+*/
+ul.dropdown_android                    { position: relative;}
+ul.dropdown_android li                 { font-weight: bold; float: left; }
+ul.dropdown_android a:hover	{ color: #000; }
+ul.dropdown_android a:active   { color: #ffa500; }
+ul.dropdown_android li a               { display: block; border-right: 1px solid #333; color: #222; }
+ul.dropdown_android li:last-child a         { border-right: none; } /* Doesn't work in IE */
+ul.dropdown_android li.hover,
+ul.dropdown_android li:hover      { position: relative; }
+
+
+/* 
+	LEVEL TWO MENU
+*/
+ul.dropdown_android ul 		{ width: calc(25px + (150 - 25) * ((100vw - 300px) / (1600 - 300))); visibility: hidden; position: absolute; top: 100%; left: -40;}
+ul.dropdown_android ul li 		{ font-weight: normal; float: none; top: 100%; margin-top:-4;}
+
+/* IE 6 & 7 Needs Inline Block */
+ul.dropdown_android ul li a		{ border-right: none; width: 100%; display: inline-block; } 
+
+/* 
+	LEVEL THREE MENU
+*/
+ul.dropdown_android ul ul 		{ left: 100%; top: 0; }
+ul.dropdown_android li:hover > ul 	{ visibility: visible; }
 
 
 .records_list_x{
@@ -133,6 +207,10 @@ redalert {font-size: 18px; font-weight:bold; font-family: Arial, Sans-Serif; col
 	padding: 2px;
 	border: solid 1px #<?php echo $SSmenu_background; ?>;
 }
+.form_field_android {
+	font-family: Arial, Sans-Serif;
+	FONT-SIZE: calc(4px + (12 - 4) * ((100vw - 300px) / (1600 - 300)));
+}
 .required_field {
 	font-family: Arial, Sans-Serif;
 	font-size: 10px;
@@ -174,6 +252,34 @@ input.red_btn{
 	border-right-color:#330000;
 	border-bottom-color:#330000;
 }
+input.red_btn_mobile{
+	font-family: Arial, Sans-Serif;
+	font-size: calc(4px + (12 - 4) * ((100vw - 300px) / (1600 - 300)));
+	width: 10vw;
+	max-width:250px;
+	color:#FFFFFF;
+	font-weight:bold;
+	background-color:#990000;
+	border:2px solid;
+	border-top-color:#FFCCCC;
+	border-left-color:#FFCCCC;
+	border-right-color:#330000;
+	border-bottom-color:#330000;
+}
+input.red_btn_mobile_lg{
+	font-family: Arial, Sans-Serif;
+	font-size: calc(4px + (12 - 4) * ((100vw - 300px) / (1600 - 300)));
+	width: 15vw;
+	max-width:200px;
+	color:#FFFFFF;
+	font-weight:bold;
+	background-color:#990000;
+	border:2px solid;
+	border-top-color:#FFCCCC;
+	border-left-color:#FFCCCC;
+	border-right-color:#330000;
+	border-bottom-color:#330000;
+}
 input.green_btn{
 	font-family: Arial, Sans-Serif;
 	font-size: 12px;
@@ -186,9 +292,49 @@ input.green_btn{
 	border-right-color:#003300;
 	border-bottom-color:#003300;
 }
+input.green_btn_mobile{
+	font-family: Arial, Sans-Serif;
+	font-size: calc(4px + (12 - 4) * ((100vw - 300px) / (1600 - 300)));
+	width: 10vw;
+	max-width:250px;
+	color:#FFFFFF;
+	font-weight:bold;
+	background-color:#009900;
+	border:2px solid;
+	border-top-color:#CCFFCC;
+	border-left-color:#CCFFCC;
+	border-right-color:#003300;
+	border-bottom-color:#003300;
+}
+input.green_btn_mobile_lg{
+	font-family: Arial, Sans-Serif;
+	font-size: calc(4px + (12 - 4) * ((100vw - 300px) / (1600 - 300)));
+	width: 15vw;
+	max-width:200px;
+	color:#FFFFFF;
+	font-weight:bold;
+	background-color:#009900;
+	border:2px solid;
+	border-top-color:#CCFFCC;
+	border-left-color:#CCFFCC;
+	border-right-color:#003300;
+	border-bottom-color:#003300;
+}
 input.blue_btn{
 	font-family: Arial, Sans-Serif;
 	font-size: 12px;
+	color:#FFFFFF;
+	font-weight:bold;
+	background-color:#000099;
+	border:2px solid;
+	border-top-color:#CCCCFF;
+	border-left-color:#CCCCFF;
+	border-right-color:#000033;
+	border-bottom-color:#000033;
+}
+input.blue_btn_mobile{
+	font-family: Arial, Sans-Serif;
+	font-size: calc(4px + (10 - 4) * ((100vw - 300px) / (1600 - 300)));
 	color:#FFFFFF;
 	font-weight:bold;
 	background-color:#000099;
@@ -277,6 +423,16 @@ TABLE.help_td {
 	vertical-align: top;
 	border:solid 4px #<?php echo $SSmenu_background; ?>
 }
+TABLE.panel_td {
+	padding: 5px;
+	font-family: Arial, Helvetica, sans-serif; 
+	color: black; 
+	font-size: 12pt; 
+	font-weight: bold;
+	background: #<?php echo $SSframe_background; ?>;
+	color: #000000;
+	vertical-align: top;
+}
 
 TD.panel_td {
 	padding: 5px;
@@ -301,6 +457,16 @@ TD.search_td {
 	color: #000000;
 	vertical-align: top;
 	border:solid 2px #600
+}
+TD.bbottom {
+	border-bottom:1pt solid black;
+}
+TD.btop {
+	border-top:1pt solid black;
+}
+TD.bsides {
+	border-left:1pt solid black;
+	border-right:1pt solid black;
 }
 
 /* DIV ELEMENTS */
@@ -360,7 +526,164 @@ FONT-FAMILY: Courier;
 padding-left:10px;
 }
 
+div.android_switchbutton
+{
+background-color:#FFCCCC;
+box-shadow: 3px 3px 1px #000000;
+border:2px solid;
+WIDTH: calc(25px + (200 - 25) * ((100vw - 300px) / (1600 - 300)));
+FONT-WEIGHT: bold;
+FONT-SIZE: calc(6px + (24 - 6) * ((100vw - 300px) / (1600 - 300)));
+FONT-FAMILY: Courier;
+padding-left:3px;
+padding-right:3px;
+}
+div.android_switchbutton_blue
+{
+background-color:#99CCFF;
+box-shadow: 3px 3px 1px #000000;
+border:2px solid;
+WIDTH: calc(25px + (200 - 25) * ((100vw - 300px) / (1600 - 300)));
+FONT-WEIGHT: bold;
+FONT-SIZE: calc(6px + (24 - 6) * ((100vw - 300px) / (1600 - 300)));
+FONT-FAMILY: Courier;
+padding-left:3px;
+padding-right:3px;
+}
+div.android_offbutton
+{
+background-color:#CCCCCC;
+box-shadow: 3px 3px 1px #000000;
+border:2px solid;
+WIDTH: calc(25px + (200 - 25) * ((100vw - 300px) / (1600 - 300)));
+FONT-WEIGHT: bold;
+font-color: white;
+FONT-SIZE: calc(6px + (24 - 6) * ((100vw - 300px) / (1600 - 300)));
+FONT-FAMILY: Courier;
+padding-left:3px;
+padding-right:3px;
+}
+div.android_onbutton
+{
+background-color:#FFFFFF;
+box-shadow: 3px 3px 1px #000000;
+border:2px solid;
+WIDTH: calc(25px + (200 - 25) * ((100vw - 300px) / (1600 - 300)));
+FONT-WEIGHT: bold;
+FONT-SIZE: calc(6px + (24 - 6) * ((100vw - 300px) / (1600 - 300)));
+FONT-FAMILY: Courier;
+padding-left:3px;
+padding-right:3px;
+}
+div.android_offbutton_noshadow
+{
+background-color:#CCCCCC;
+border:2px solid;
+WIDTH: calc(25px + (200 - 25) * ((100vw - 300px) / (1600 - 300)));
+FONT-WEIGHT: bold;
+font-color: white;
+FONT-SIZE: calc(6px + (24 - 6) * ((100vw - 300px) / (1600 - 300)));
+FONT-FAMILY: Courier;
+padding-left:3px;
+padding-right:3px;
+}
+div.android_onbutton_noshadow
+{
+background-color:#FFFFFF;
+border:2px solid;
+WIDTH: calc(25px + (200 - 25) * ((100vw - 300px) / (1600 - 300)));
+FONT-WEIGHT: bold;
+FONT-SIZE: calc(6px + (24 - 6) * ((100vw - 300px) / (1600 - 300)));
+FONT-FAMILY: Courier;
+padding-left:3px;
+padding-right:3px;
+}
+div.dropdown_android_button
+{
+background-color:#CCCCCC;
+box-shadow: 3px 3px 1px #000000;
+border:2px solid;
+WIDTH: calc(25px + (200 - 25) * ((100vw - 300px) / (1600 - 300)));
+FONT-WEIGHT: bold;
+FONT-SIZE: calc(6px + (24 - 6) * ((100vw - 300px) / (1600 - 300)));
+FONT-FAMILY: Courier;
+padding-left:3px;
+padding-right:3px;
+}
+div.dropdown_android_button:hover{
+background-color: #F3D673; 
+color: black;
+}
+div.android_offbutton_large
+{
+background-color:#999999;
+box-shadow: 3px 3px 1px #000000;
+border:2px solid;
+WIDTH: calc(50px + (320 - 50) * ((100vw - 300px) / (1600 - 300)));
+FONT-WEIGHT: bold;
+font-color: white;
+FONT-SIZE: calc(6px + (24 - 6) * ((100vw - 300px) / (1600 - 300)));
+FONT-FAMILY: Courier;
+padding-left:3px;
+padding-right:3px;
+}
+div.android_onbutton_large
+{
+background-color:#FFFFFF;
+box-shadow: 3px 3px 1px #000000;
+border:2px solid;
+WIDTH: calc(60px + (320 - 60) * ((100vw - 300px) / (1600 - 300)));
+FONT-WEIGHT: bold;
+FONT-SIZE: calc(6px + (24 - 6) * ((100vw - 300px) / (1600 - 300)));
+FONT-FAMILY: Courier;
+padding-left:3px;
+padding-right:3px;
+}
+div.android_table
+{
+WIDTH: 100vw;
+border:5px solid;
+border-radius:5px;
+padding-left:3px;
+border-color:#<?php echo $SSframe_background; ?>;
+background-color:#<?php echo $SSframe_background; ?>;
+}
+div.android_settings_table
+{
+WIDTH: 94vw;
+border:5px solid;
+border-radius:5px;
+padding-left:3px;
+border-color:#<?php echo $SSframe_background; ?>;
+background-color:#<?php echo $SSframe_background; ?>;
+}
 div.help_info {position:absolute; top:0; left:0; display:none;}
+
+span.android_offbutton
+{
+background-color:#999999;
+box-shadow: 3px 3px 1px #000000;
+border:2px solid;
+border-radius:5px;
+FONT-WEIGHT: bold;
+font-color: white;
+FONT-SIZE: calc(8px + (14 - 8) * ((100vw - 300px) / (1600 - 300)));
+FONT-FAMILY: Courier;
+padding-left:3px;
+padding-right:3px;
+}
+span.android_onbutton
+{
+background-color:#FFFFFF;
+box-shadow: 3px 3px 1px #000000;
+border:2px solid;
+border-radius:5px;
+FONT-WEIGHT: bold;
+FONT-SIZE: calc(8px + (14 - 8) * ((100vw - 300px) / (1600 - 300)));
+FONT-FAMILY: Courier;
+padding-left:3px;
+padding-right:3px;
+}
 
 .button_active {
     background-color: #4CAF50; /* Green */

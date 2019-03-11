@@ -1,7 +1,7 @@
 <?php 
 # AST_timeonVDADall.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # live real-time stats for the VICIDIAL Auto-Dialer all servers
 #
@@ -108,6 +108,7 @@
 # 170409-1556 - Added IP List validation code
 # 170615-0023 - Added DIAL status for manual dial agent calls that have not been answered
 # 180204-1538 - Added display of LIVE Inbound Callback Queue Calls
+# 190206-1616 - Added mobile device display variable
 #
 
 $version = '2.14-96';
@@ -191,6 +192,8 @@ if (isset($_GET["droppedOFtotal"]))				{$droppedOFtotal=$_GET["droppedOFtotal"];
 	elseif (isset($_POST["droppedOFtotal"]))	{$droppedOFtotal=$_POST["droppedOFtotal"];}
 if (isset($_GET["report_display_type"]))			{$report_display_type=$_GET["report_display_type"];}
 	elseif (isset($_POST["report_display_type"]))	{$report_display_type=$_POST["report_display_type"];}
+if (isset($_GET["mobile_device"]))				{$mobile_device=$_GET["mobile_device"];}
+	elseif (isset($_POST["mobile_device"]))	{$mobile_device=$_POST["mobile_device"];}
 
 
 $report_name = 'Real-Time Main Report';
@@ -653,7 +656,7 @@ $NFB = '<b><font size=6 face="courier">';
 $NFE = '</font></b>';
 $F=''; $FG=''; $B=''; $BG='';
 
-$select_list = "<TABLE WIDTH=700 CELLPADDING=5 BGCOLOR=\"#D9E6FE\"><TR><TD VALIGN=TOP>"._QXZ("Select Campaigns").": <BR>";
+$select_list = "<TABLE class=\"realtime_settings_table\" CELLPADDING=5 BGCOLOR=\"#D9E6FE\"><TR><TD VALIGN=TOP>"._QXZ("Select Campaigns").": <BR>";
 $select_list .= "<SELECT SIZE=15 NAME=groups[] multiple>";
 $o=0;
 while ($groups_to_print > $o)
@@ -1724,7 +1727,7 @@ if (preg_match('/O/',$with_inbound))
 	$AVG_ANSWERagent_non_pause_sec = round($AVG_ANSWERagent_non_pause_sec, 2);
 	$AVG_ANSWERagent_non_pause_sec = sprintf("%01.2f", $AVG_ANSWERagent_non_pause_sec);
 
-	if ( ($report_display_type!='WALL_1') and ($report_display_type!='WALL_2') and ($report_display_type!='WALL_3') and ($report_display_type!='WALL_4') )
+	if ( ($report_display_type!='WALL_1') and ($report_display_type!='WALL_2') and ($report_display_type!='WALL_3') and ($report_display_type!='WALL_4') and !$mobile_device)
 		{
 		echo "<BR><table cellpadding=0 cellspacing=0><TR>";
 		echo "<TD ALIGN=RIGHT><font class='top_settings_key'>"._QXZ("CALLS TODAY").":</font></TD><TD ALIGN=LEFT><font class='top_settings_val'>&nbsp; $callsTODAY&nbsp; &nbsp; </TD>";
@@ -1906,7 +1909,7 @@ else
 	$agentsONEMIN = sprintf("%01.2f", $agentsONEMIN);
 	$diffONEMIN = sprintf("%01.2f", $diffONEMIN);
 
-	if ( ($report_display_type!='WALL_1') and ($report_display_type!='WALL_2') and ($report_display_type!='WALL_3') and ($report_display_type!='WALL_4') )
+	if ( ($report_display_type!='WALL_1') and ($report_display_type!='WALL_2') and ($report_display_type!='WALL_3') and ($report_display_type!='WALL_4') and !$mobile_device)
 		{
 		echo "<BR><table cellpadding=0 cellspacing=0><TR>";
 		echo "<TD ALIGN=RIGHT><font class=\"top_settings_key\">"._QXZ("DIAL LEVEL").":</font></TD><TD ALIGN=LEFT><font class=\"top_settings_val\">&nbsp; $DIALlev&nbsp; &nbsp; </TD>";
@@ -2014,31 +2017,38 @@ else
 
 if ( ($report_display_type!='WALL_1') and ($report_display_type!='WALL_2') and ($report_display_type!='WALL_3') and ($report_display_type!='WALL_4') )
 	{
-	echo "<TR>";
-	echo "<TD ALIGN=LEFT COLSPAN=8>";
-	if ( (!preg_match('/NULL/i',$VSCcat1)) and (strlen($VSCcat1)>0) )
-		{echo "<font class=\"top_settings_key\">$VSCcat1:</font><font class=\"top_settings_val\"> &nbsp; $VSCcat1tally &nbsp;  &nbsp;  &nbsp; </font>\n";}
-	if ( (!preg_match('/NULL/i',$VSCcat2)) and (strlen($VSCcat2)>0) )
-		{echo "<font class=\"top_settings_key\">$VSCcat2:</font><font class=\"top_settings_val\"> &nbsp; $VSCcat2tally &nbsp;  &nbsp;  &nbsp; </font>\n";}
-	if ( (!preg_match('/NULL/i',$VSCcat3)) and (strlen($VSCcat3)>0) )
-		{echo "<font class=\"top_settings_key\">$VSCcat3:</font><font class=\"top_settings_val\"> &nbsp; $VSCcat3tally &nbsp;  &nbsp;  &nbsp; </font>\n";}
-	if ( (!preg_match('/NULL/i',$VSCcat4)) and (strlen($VSCcat4)>0) )
-		{echo "<font class=\"top_settings_key\">$VSCcat4:</font><font class=\"top_settings_val\"> &nbsp; $VSCcat4tally &nbsp;  &nbsp;  &nbsp; </font>\n";}
-	echo "</TD></TR>";
-	echo "<TR>";
+
+	if (!$mobile_device) 
+		{
+		echo "<TR>";
+		echo "<TD ALIGN=LEFT COLSPAN=8>";
+		if ( (!preg_match('/NULL/i',$VSCcat1)) and (strlen($VSCcat1)>0) )
+			{echo "<font class=\"top_settings_key\">$VSCcat1:</font><font class=\"top_settings_val\"> &nbsp; $VSCcat1tally &nbsp;  &nbsp;  &nbsp; </font>\n";}
+		if ( (!preg_match('/NULL/i',$VSCcat2)) and (strlen($VSCcat2)>0) )
+			{echo "<font class=\"top_settings_key\">$VSCcat2:</font><font class=\"top_settings_val\"> &nbsp; $VSCcat2tally &nbsp;  &nbsp;  &nbsp; </font>\n";}
+		if ( (!preg_match('/NULL/i',$VSCcat3)) and (strlen($VSCcat3)>0) )
+			{echo "<font class=\"top_settings_key\">$VSCcat3:</font><font class=\"top_settings_val\"> &nbsp; $VSCcat3tally &nbsp;  &nbsp;  &nbsp; </font>\n";}
+		if ( (!preg_match('/NULL/i',$VSCcat4)) and (strlen($VSCcat4)>0) )
+			{echo "<font class=\"top_settings_key\">$VSCcat4:</font><font class=\"top_settings_val\"> &nbsp; $VSCcat4tally &nbsp;  &nbsp;  &nbsp; </font>\n";}
+		echo "</TD></TR>";
+		echo "<TR>";
+		}
 	echo "<TD ALIGN=LEFT COLSPAN=8>";
 
 	echo "$ingroup_detail";
 
 	if ($RTajax < 1)
 		{
-		if ($adastats<2)
+		if (!$mobile_device) 
 			{
-			echo "<a href=\"$PHP_SELF?$usergroupQS$groupQS&RR=$RR&DB=$DB&adastats=2&SIPmonitorLINK=$SIPmonitorLINK&IAXmonitorLINK=$IAXmonitorLINK&usergroup=$usergroup&UGdisplay=$UGdisplay&UidORname=$UidORname&orderby=$orderby&SERVdisplay=$SERVdisplay&CALLSdisplay=$CALLSdisplay&PHONEdisplay=$PHONEdisplay&CUSTPHONEdisplay=$CUSTPHONEdisplay&with_inbound=$with_inbound&monitor_active=$monitor_active&monitor_phone=$monitor_phone&ALLINGROUPstats=$ALLINGROUPstats&DROPINGROUPstats=$DROPINGROUPstats&NOLEADSalert=$NOLEADSalert&CARRIERstats=$CARRIERstats&PRESETstats=$PRESETstats&AGENTtimeSTATS=$AGENTtimeSTATS&INGROUPcolorOVERRIDE=$INGROUPcolorOVERRIDE&droppedOFtotal=$droppedOFtotal&report_display_type=$report_display_type\"><font class=\"top_settings_val\">+ "._QXZ("VIEW MORE")."</font></a>";
-			}
-		else
-			{
-			echo "<a href=\"$PHP_SELF?$usergroupQS$groupQS&RR=$RR&DB=$DB&adastats=1&SIPmonitorLINK=$SIPmonitorLINK&IAXmonitorLINK=$IAXmonitorLINK&usergroup=$usergroup&UGdisplay=$UGdisplay&UidORname=$UidORname&orderby=$orderby&SERVdisplay=$SERVdisplay&CALLSdisplay=$CALLSdisplay&PHONEdisplay=$PHONEdisplay&CUSTPHONEdisplay=$CUSTPHONEdisplay&with_inbound=$with_inbound&monitor_active=$monitor_active&monitor_phone=$monitor_phone&ALLINGROUPstats=$ALLINGROUPstats&DROPINGROUPstats=$DROPINGROUPstats&NOLEADSalert=$NOLEADSalert&CARRIERstats=$CARRIERstats&PRESETstats=$PRESETstats&AGENTtimeSTATS=$AGENTtimeSTATS&INGROUPcolorOVERRIDE=$INGROUPcolorOVERRIDE&droppedOFtotal=$droppedOFtotal&report_display_type=$report_display_type\"><font class=\"top_settings_val\">- "._QXZ("VIEW LESS")."</font></a>";
+			if ($adastats<2)
+				{
+				echo "<a href=\"$PHP_SELF?$usergroupQS$groupQS&RR=$RR&DB=$DB&adastats=2&SIPmonitorLINK=$SIPmonitorLINK&IAXmonitorLINK=$IAXmonitorLINK&usergroup=$usergroup&UGdisplay=$UGdisplay&UidORname=$UidORname&orderby=$orderby&SERVdisplay=$SERVdisplay&CALLSdisplay=$CALLSdisplay&PHONEdisplay=$PHONEdisplay&CUSTPHONEdisplay=$CUSTPHONEdisplay&with_inbound=$with_inbound&monitor_active=$monitor_active&monitor_phone=$monitor_phone&ALLINGROUPstats=$ALLINGROUPstats&DROPINGROUPstats=$DROPINGROUPstats&NOLEADSalert=$NOLEADSalert&CARRIERstats=$CARRIERstats&PRESETstats=$PRESETstats&AGENTtimeSTATS=$AGENTtimeSTATS&INGROUPcolorOVERRIDE=$INGROUPcolorOVERRIDE&droppedOFtotal=$droppedOFtotal&report_display_type=$report_display_type\"><font class=\"top_settings_val\">+ "._QXZ("VIEW MORE")."</font></a>";
+				}
+			else
+				{
+				echo "<a href=\"$PHP_SELF?$usergroupQS$groupQS&RR=$RR&DB=$DB&adastats=1&SIPmonitorLINK=$SIPmonitorLINK&IAXmonitorLINK=$IAXmonitorLINK&usergroup=$usergroup&UGdisplay=$UGdisplay&UidORname=$UidORname&orderby=$orderby&SERVdisplay=$SERVdisplay&CALLSdisplay=$CALLSdisplay&PHONEdisplay=$PHONEdisplay&CUSTPHONEdisplay=$CUSTPHONEdisplay&with_inbound=$with_inbound&monitor_active=$monitor_active&monitor_phone=$monitor_phone&ALLINGROUPstats=$ALLINGROUPstats&DROPINGROUPstats=$DROPINGROUPstats&NOLEADSalert=$NOLEADSalert&CARRIERstats=$CARRIERstats&PRESETstats=$PRESETstats&AGENTtimeSTATS=$AGENTtimeSTATS&INGROUPcolorOVERRIDE=$INGROUPcolorOVERRIDE&droppedOFtotal=$droppedOFtotal&report_display_type=$report_display_type\"><font class=\"top_settings_val\">- "._QXZ("VIEW LESS")."</font></a>";
+				}
 			}
 		if ($UGdisplay>0)
 			{
@@ -2117,7 +2127,7 @@ if ( ($with_inbound != 'O') and ($NOLEADSalert == 'YES') )
 	if ($ctp > 0)
 		{
 		echo "<span style=\"position:absolute;left:0px;top:47px;z-index:15;\" id=no_dialable_leads_span>\n";
-		echo "<TABLE WIDTH=700 CELLPADDING=0 CELLSPACING=0 BGCOLOR=\"#E9E6EE\"><TR><TD ALIGN=CENTER>\n";
+		echo "<TABLE class=\"realtime_settings_table\" CELLPADDING=0 CELLSPACING=0 BGCOLOR=\"#E9E6EE\"><TR><TD ALIGN=CENTER>\n";
 		echo "<BR><BR><BR><BR><a href=\"#\" onclick=\"closeAlert('no_dialable_leads_span');\">"._QXZ("Close Alert")."</a>";
 		echo "<BR><BR><BR><BR><BR><b>"._QXZ("Campaigns with no dialable leads").":<BR><BR>$NDLcampaigns<b><BR>";
 		echo "<BR><BR><BR><BR><BR><BR><BR><BR><BR><BR><BR> &nbsp; ";
@@ -2386,45 +2396,45 @@ if ( ($report_display_type=='HTML') or ($report_display_type=='WALL_2') )
 	$section_width=860;
 	echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 
-	echo "<TABLE width=$section_width cellpadding=3 cellspacing=0 border=0>\n";
+	echo "<TABLE class='realtime_table' cellpadding=3 cellspacing=0 border=0>\n";
 	echo "<tr>";
 #	echo "<td width=5 rowspan=2> &nbsp; </td>";
-	echo "<td align='center' valign='middle' bgcolor='#015b91' rowspan=2><img src=\"images/icon_calls.png\" width=42 height=42></td>";
+	echo "<td align='center' valign='middle' bgcolor='#015b91' rowspan=2><img src=\"images/icon_calls.png\" class='realtime_img_icon'></td>";
 	if ($campaign_allow_inbound > 0)
 		{
-		echo "<td align='center' valign='middle' bgcolor='#015b91'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("current active calls")."</font></td>";
+		echo "<td align='center' valign='middle' bgcolor='#015b91'><font class=\"realtime_img_text\">"._QXZ("current active calls")."</font></td>";
 		}
 	else
 		{
-		echo "<td align='center' valign='middle' bgcolor='#015b91'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("calls being placed")."</font></td>";
+		echo "<td align='center' valign='middle' bgcolor='#015b91'><font class=\"realtime_img_text\">"._QXZ("calls being placed")."</font></td>";
 		}
 	echo "<td width=6 rowspan=2> &nbsp; </td>";
-	echo "<td align='center' valign='middle' bgcolor='#015b91' rowspan=2><img src=\"images/icon_ringing.png\" width=42 height=42></td>";
-	echo "<td align='center' valign='middle' bgcolor='#015b91'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("calls ringing")."</font></td>";
+	echo "<td align='center' valign='middle' bgcolor='#015b91' rowspan=2><img src=\"images/icon_ringing.png\" class='realtime_img_icon'></td>";
+	echo "<td align='center' valign='middle' bgcolor='#015b91'><font class=\"realtime_img_text\">"._QXZ("calls ringing")."</font></td>";
 	echo "<td width=6 rowspan=2> &nbsp; </td>";
-	echo "<td align='center' valign='middle' bgcolor='#015b91' rowspan=2><img src=\"images/icon_callswaiting.png\" width=42 height=42></td>";
-	echo "<td align='center' valign='middle' bgcolor='#015b91'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("calls waiting for agents")."</font></td>";
+	echo "<td align='center' valign='middle' bgcolor='#015b91' rowspan=2><img src=\"images/icon_callswaiting.png\" class='realtime_img_icon'></td>";
+	echo "<td align='center' valign='middle' bgcolor='#015b91'><font class=\"realtime_img_text\">"._QXZ("calls waiting for agents")."</font></td>";
 	echo "<td width=6 rowspan=2> &nbsp; </td>";
-	echo "<td align='center' valign='middle' bgcolor='#015b91' rowspan=2><img src=\"images/icon_callsinivr.png\" width=42 height=42></td>";
-	echo "<td align='center' valign='middle' bgcolor='#015b91'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("calls in IVR")."</font></td>";
+	echo "<td align='center' valign='middle' bgcolor='#015b91' rowspan=2><img src=\"images/icon_callsinivr.png\" class='realtime_img_icon'></td>";
+	echo "<td align='center' valign='middle' bgcolor='#015b91'><font class=\"realtime_img_text\">"._QXZ("calls in IVR")."</font></td>";
 	echo "<td width=6 rowspan=2> &nbsp; </td>";
 
 	if ($allow_chats) 
 		{
-		echo "<td align='center' valign='middle' bgcolor='#015b91' rowspan=2><img src=\"images/icon_chatswaiting.png\" width=42 height=42></td>";
-		echo "<td align='center' valign='middle' bgcolor='#015b91'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("chats waiting for agents")."</font></td>";
+		echo "<td align='center' valign='middle' bgcolor='#015b91' rowspan=2><img src=\"images/icon_chatswaiting.png\" class='realtime_img_icon'></td>";
+		echo "<td align='center' valign='middle' bgcolor='#015b91'><font class=\"realtime_img_text\">"._QXZ("chats waiting for agents")."</font></td>";
 		}
 	else
 		{
 		echo "<td align='center' valign='middle' rowspan=2>&nbsp;</td>";
-		echo "<td align='center' valign='middle'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">&nbsp;</font></td>";
+		echo "<td align='center' valign='middle'><font class=\"realtime_img_text\">&nbsp;</font></td>";
 		}
 #	echo "<td align='center' valign='middle' rowspan=2>&nbsp;</td>";
 
 
 	echo "<td width=6 rowspan=2> &nbsp; </td>";
-	echo "<td align='center' valign='middle' bgcolor='#015b91' rowspan=2><img src=\"images/icon_callswaiting.png\" width=42 height=42></td>";
-	echo "<td align='center' valign='middle' bgcolor='#015b91'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("callback queue calls")."</font></td>";
+	echo "<td align='center' valign='middle' bgcolor='#015b91' rowspan=2><img src=\"images/icon_callswaiting.png\" class='realtime_img_icon'></td>";
+	echo "<td align='center' valign='middle' bgcolor='#015b91'><font class=\"realtime_img_text\">"._QXZ("callback queue calls")."</font></td>";
 
 	echo "</tr>";
 	echo "<tr>";
@@ -2530,7 +2540,7 @@ while($p<$k)
 		}
 	else
 		{
-		$Cecho .= "<tr class=\"csc$CDcampaign_id[$p]\">";
+		$Cecho .= "<tr class=\"csc$CDcampaign_id[$p] top_head_val\">";
 		$Cecho .= "<td NOWRAP align=center>$G$Cstatus$EG</td>";
 		$Cecho .= "<td NOWRAP align=right>$G$Ccampaign_id$EG</td>";
 		$Cecho .= "<td NOWRAP align=right>$G$Cphone_number$EG</td>";
@@ -2597,7 +2607,7 @@ if ($report_display_type=='TEXT')
 if ($report_display_type=='HTML')
 	{
 	$Aecho = '';
-	$Aecho .= "<table cellpadding=1 cellspacing=1 border=0 width=860>";
+	$Aecho .= "<table cellpadding=1 cellspacing=1 border=0 class='realtime_table'>";
 	$Aecho .= "<tr>";
 	$Aecho .= "<td colspan=4><font class='top_head_key'>&nbsp;"._QXZ("Agents Time On Calls Campaign").":</font></td>";
 	$Aecho .= "<td colspan=3><font class='top_settings_val'>&nbsp;</font></td>";
@@ -3552,23 +3562,23 @@ if ( ($report_display_type=='HTML') or ($report_display_type=='WALL_2') )
 #	echo "<TABLE width=$section_width cellpadding=3 cellspacing=0>\n";
 	echo "<tr>";
 #	echo "<td width=5 rowspan=2> &nbsp; </td>";
-	echo "<td align='center' valign='middle' bgcolor='#015b91' rowspan=2><img src=\"images/icon_users.png\" width=42 height=42></td>";
-	echo "<td align='center' valign='middle' bgcolor='#015b91'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("agents logged in")."</font></td>";
+	echo "<td align='center' valign='middle' bgcolor='#015b91' rowspan=2><img src=\"images/icon_users.png\" class='realtime_img_icon'></td>";
+	echo "<td align='center' valign='middle' bgcolor='#015b91'><font class=\"realtime_img_text\">"._QXZ("agents logged in")."</font></td>";
 	echo "<td width=6 rowspan=2> &nbsp; </td>";
-	echo "<td align='center' valign='middle' bgcolor='#015b91' rowspan=2><img src=\"images/icon_agentsincalls.png\" width=42 height=42></td>";
-	echo "<td align='center' valign='middle' bgcolor='#015b91'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("agents in calls")."$AIDtx</font></td>";
+	echo "<td align='center' valign='middle' bgcolor='#015b91' rowspan=2><img src=\"images/icon_agentsincalls.png\" class='realtime_img_icon'></td>";
+	echo "<td align='center' valign='middle' bgcolor='#015b91'><font class=\"realtime_img_text\">"._QXZ("agents in calls")."$AIDtx</font></td>";
 	echo "<td width=6 rowspan=2> &nbsp; </td>";
-	echo "<td align='center' valign='middle' bgcolor='#015b91' rowspan=2><img src=\"images/icon_agentswaiting.png\" width=42 height=42></td>";
-	echo "<td align='center' valign='middle' bgcolor='#015b91'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("agents waiting")."</font></td>";
+	echo "<td align='center' valign='middle' bgcolor='#015b91' rowspan=2><img src=\"images/icon_agentswaiting.png\" class='realtime_img_icon'></td>";
+	echo "<td align='center' valign='middle' bgcolor='#015b91'><font class=\"realtime_img_text\">"._QXZ("agents waiting")."</font></td>";
 	echo "<td width=6 rowspan=2> &nbsp; </td>";
-	echo "<td align='center' valign='middle' bgcolor='#808000' rowspan=2><img src=\"images/icon_agentspaused.png\" width=42 height=42></td>";
-	echo "<td align='center' valign='middle' bgcolor='#808000'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("paused agents")."</font></td>";
+	echo "<td align='center' valign='middle' bgcolor='#808000' rowspan=2><img src=\"images/icon_agentspaused.png\" class='realtime_img_icon'></td>";
+	echo "<td align='center' valign='middle' bgcolor='#808000'><font class=\"realtime_img_text\">"._QXZ("paused agents")."</font></td>";
 	echo "<td width=6 rowspan=2> &nbsp; </td>";
-	echo "<td align='center' valign='middle' bgcolor='black' rowspan=2><img src=\"images/icon_agentsindeadcalls.png\" width=42 height=42></td>";
-	echo "<td align='center' valign='middle' bgcolor='black'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("agents in dead calls")."</font></td>";
+	echo "<td align='center' valign='middle' bgcolor='black' rowspan=2><img src=\"images/icon_agentsindeadcalls.png\" class='realtime_img_icon'></td>";
+	echo "<td align='center' valign='middle' bgcolor='black'><font class=\"realtime_img_text\">"._QXZ("agents in dead calls")."</font></td>";
 	echo "<td width=6 rowspan=2> &nbsp; </td>";
-	echo "<td align='center' valign='middle' bgcolor='#808000' rowspan=2><img src=\"images/icon_agentsindispo.png\" width=42 height=42></td>";
-	echo "<td align='center' valign='middle' bgcolor='#808000'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("agents in dispo")."</font></td>";
+	echo "<td align='center' valign='middle' bgcolor='#808000' rowspan=2><img src=\"images/icon_agentsindispo.png\" class='realtime_img_icon'></td>";
+	echo "<td align='center' valign='middle' bgcolor='#808000'><font class=\"realtime_img_text\">"._QXZ("agents in dispo")."</font></td>";
 	echo "</tr>";
 	echo "<tr>";
 	echo "<td align='center' valign='middle' bgcolor='#015b91'><font style=\"font-family:HELVETICA;font-size:18;color:white;font-weight:bold;\">$agent_total</font></td>";

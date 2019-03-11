@@ -1,11 +1,12 @@
 <?php
 # whiteboard_reports.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # A PHP file that is for generating the stats that are displayed in the whiteboard report.  Returns values.
 #
 # 171027-2352 - First build
+# 190302-1707 - Added code to exclude active calls from being counted with some stats
 #
 
 require("dbconnect_mysqli.php");
@@ -70,6 +71,10 @@ if ($hourly_display)
 
 $rpt_string="";
 
+$exclude_statuses=array("INCALL", "DISPO", "QUEUE", "DONEM");
+$exc_status_SQL=" and status not in ('".implode("','", $exclude_statuses)."') ";
+
+
 $query_date=preg_replace("/[^0-9\-]/", "", $query_date);
 $end_date=preg_replace("/[^0-9\-]/", "", $end_date);
 $query_time=preg_replace("/[^0-9\:]/", "", $query_time);
@@ -123,7 +128,7 @@ if (preg_match("/status_performance/", $rpt_type)) {
 		$status_SQL=" and status in ($status_str) ";
 	}
 
-	$sale_stmt="SELECT distinct status from vicidial_statuses where sale='Y' $status_SQL UNION SELECT distinct status from vicidial_campaign_statuses where sale='Y' $campaign_id_SQL $status_SQL";
+	$sale_stmt="SELECT distinct status from vicidial_statuses where sale='Y' $status_SQL $exc_status_SQL UNION SELECT distinct status from vicidial_campaign_statuses where sale='Y' $campaign_id_SQL $status_SQL $exc_status_SQL";
 	$sale_rslt=mysql_to_mysqli($sale_stmt, $link);
 	$sale_dispos=array();
 	if ($DB) {$rpt_string.=$sale_stmt."<BR>\n";}
@@ -134,13 +139,13 @@ if (preg_match("/status_performance/", $rpt_type)) {
 	$shift_start="$query_date $query_time";
 	$shift_end="$end_date $end_time";
 
-	$outbound_max_time_stmt="SELECT if(min(call_date) is null, 0, min(call_date)), if(max(call_date) is null, 0, max(call_date)) From vicidial_log where call_date>='$query_date $query_time' and call_date<='$end_date $end_time' $campaign_id_SQL $user_SQL $status_SQL";
+	$outbound_max_time_stmt="SELECT if(min(call_date) is null, 0, min(call_date)), if(max(call_date) is null, 0, max(call_date)) From vicidial_log where call_date>='$query_date $query_time' and call_date<='$end_date $end_time' $campaign_id_SQL $user_SQL $status_SQL $exc_status_SQL";
 	$rslt=mysql_to_mysqli($outbound_max_time_stmt, $link);
 	$row=mysqli_fetch_row($rslt);
 	if ($row[0]>0) {$shift_start=$row[0];}
 	if ($row[1]>0) {$shift_end=$row[1];}
 
-	$inbound_max_time_stmt="SELECT if(min(call_date) is null, 0, min(call_date)), if(max(call_date) is null, 0, max(call_date)) From vicidial_closer_log where call_date>='$query_date $query_time' and call_date<='$end_date $end_time' $group_SQL $user_SQL $status_SQL";
+	$inbound_max_time_stmt="SELECT if(min(call_date) is null, 0, min(call_date)), if(max(call_date) is null, 0, max(call_date)) From vicidial_closer_log where call_date>='$query_date $query_time' and call_date<='$end_date $end_time' $group_SQL $user_SQL $status_SQL $exc_status_SQL";
 	$rslt=mysql_to_mysqli($inbound_max_time_stmt, $link);
 	$row=mysqli_fetch_row($rslt);
 	if ($row[0]>0 && preg_replace("/[^0-9]/", "", $row[0])<preg_replace("/[^0-9]/", "", $shift_start)) {$shift_start=$row[0];}
@@ -151,7 +156,7 @@ if (preg_match("/status_performance/", $rpt_type)) {
 	$time_row=mysqli_fetch_row($time_rslt);
 	$shift_duration=$time_row[0];
 
-	$outbound_stmt="SELECT status, count(*) From vicidial_log where call_date>='$query_date $query_time' and call_date<='$end_date $end_time' $campaign_id_SQL $user_SQL $status_SQL group by status order by status";
+	$outbound_stmt="SELECT status, count(*) From vicidial_log where call_date>='$query_date $query_time' and call_date<='$end_date $end_time' and end_epoch is not null $campaign_id_SQL $user_SQL $status_SQL $exc_status_SQL group by status order by status";
 	$status_counts=array();
 	$rslt=mysql_to_mysqli($outbound_stmt, $link);
 	while ($row=mysqli_fetch_row($rslt)) {
@@ -164,7 +169,7 @@ if (preg_match("/status_performance/", $rpt_type)) {
 		$status_counts["$row[0]"][2]+=$row[2];
 	}
 
-	$inbound_stmt="SELECT status, count(*) from vicidial_closer_log where call_date>='$query_date $query_time' and call_date<='$end_date $end_time' $group_SQL $user_SQL $status_SQL group by status order by status";
+	$inbound_stmt="SELECT status, count(*) from vicidial_closer_log where call_date>='$query_date $query_time' and call_date<='$end_date $end_time' and end_epoch is not null $group_SQL $user_SQL $status_SQL $exc_status_SQL group by status order by status";
 	$rslt=mysql_to_mysqli($inbound_stmt, $link);
 	while ($row=mysqli_fetch_row($rslt)) {
 		if ($row[1]!="") {
@@ -176,21 +181,38 @@ if (preg_match("/status_performance/", $rpt_type)) {
 		$status_counts["$row[0]"][2]+=$row[2];
 	}
 
+	while (list($key, $val)=each($status_counts)) {
+		$kstatus_counts[]=array('status' => $key, 'counts' => $val[0], 'sales' => $val[1], 'dead' => $val[2]);
+	}        
+
+	foreach ($kstatus_counts as $key2 => $row2) {
+		$status_ary[$key2]  = $row2['status'];
+		$counts_ary[$key2]  = $row2['counts'];
+		$sales_ary[$key2]  = $row2['sales'];
+		$dead_ary[$key2]  = $row2['dead'];
+	}
+
+	array_multisort($status_ary, SORT_ASC, $counts_ary, SORT_ASC, $sales_ary, SORT_ASC, $dead_ary, SORT_ASC, $kstatus_counts);
+	
 	if (count($status_counts)==0) {
 		$rpt_string="REPORT RETURNED NO RESULTS";
 	} else {
-		while(list($key, $val)=each($status_counts)) {
+#		while(list($key, $val)=each($status_counts)) {
+		foreach ($kstatus_counts as $row) {
+			$key=$row['status'];
+			$val0=$row['counts'];
+			$val1=$row['sales'];
 
-			$val[0]+=0;
-			$val[1]+=0;
-			$total_calls+=$val[0];
-			$total_sales+=$val[1];
+			$val0+=0;
+			$val1+=0;
+			$total_calls+=$val0;
+			$total_sales+=$val1;
 
 
 			$conv_rate=sprintf("%.2f", 100*MathZDC($val[1], $val[0])); # Conversion rate
 			$cph=sprintf("%.2f", (MathZDC($val[0], ($shift_duration/3600)))); # SPH - this is based on total time since start_time.  Switch to $val[2] if you want it based on the individual agent's total time in the dialer.
 			$sph=sprintf("%.2f", (MathZDC($val[1], ($shift_duration/3600)))); # SPH - this is based on total time since start_time.  Switch to $val[2] if you want it based on the individual agent's total time in the dialer.
-			$rpt_string.="$key|$full_name|$val[0]|$val[1]|$shift_duration|$conv_rate|$cph|$sph|$total_calls|$total_sales\n";
+			$rpt_string.="$key|$full_name|$val0|$val1|$shift_duration|$conv_rate|$cph|$sph|$total_calls|$total_sales|$inbound_stmt - $outbound_stmt\n";
 			# Agent/user group, total calls, total sales, total time, conversion rate, sales per hour
 		}
 	}
@@ -243,7 +265,7 @@ if (preg_match("/(agent|team)_performance/", $rpt_type)) {
 	$time_row=mysqli_fetch_row($time_rslt);
 	$shift_duration=$time_row[0];
 
-	$sale_stmt="SELECT distinct status from vicidial_statuses where sale='Y' $status_SQL UNION SELECT distinct status from vicidial_campaign_statuses where sale='Y' $campaign_id_SQL $status_SQL";
+	$sale_stmt="SELECT distinct status from vicidial_statuses where sale='Y' $status_SQL $exc_status_SQL UNION SELECT distinct status from vicidial_campaign_statuses where sale='Y' $campaign_id_SQL $status_SQL $exc_status_SQL";
 	$sale_rslt=mysql_to_mysqli($sale_stmt, $link);
 	$sale_dispos=array();
 	if ($DB) {$rpt_string.=$sale_stmt."<BR>\n";}
@@ -252,9 +274,9 @@ if (preg_match("/(agent|team)_performance/", $rpt_type)) {
 	}
 
 	if (preg_match("/agent_performance/", $rpt_type)) {
-		$stmt="SELECT user, status, sum(pause_sec+wait_sec+talk_sec+dispo_sec), count(*) from vicidial_agent_log where event_time>='$query_date $query_time' and event_time<='$end_date $end_time' $campaign_id_SQL $user_SQL $user_group_SQL $status_SQL group by user, status order by user, status";
+		$stmt="SELECT user, status, sum(pause_sec+wait_sec+talk_sec+dispo_sec), count(*) from vicidial_agent_log where event_time>='$query_date $query_time' and event_time<='$end_date $end_time' $campaign_id_SQL $user_SQL $user_group_SQL $status_SQL $exc_status_SQL group by user, status order by user, status";
 	} else if (preg_match("/team_performance/", $rpt_type)) {
-		$stmt="SELECT user_group, status, sum(pause_sec+wait_sec+talk_sec+dispo_sec), count(*) from vicidial_agent_log where event_time>='$query_date $query_time' and event_time<='$end_date $end_time' $campaign_id_SQL $user_SQL $user_group_SQL $status_SQL group by user_group, status order by user_group, status";
+		$stmt="SELECT user_group, status, sum(pause_sec+wait_sec+talk_sec+dispo_sec), count(*) from vicidial_agent_log where event_time>='$query_date $query_time' and event_time<='$end_date $end_time' $campaign_id_SQL $user_SQL $user_group_SQL $status_SQL $exc_status_SQL group by user_group, status order by user_group, status";
 	}
 
 	if ($DB) {$rpt_string.=$stmt."<BR>\n";}
@@ -275,7 +297,12 @@ if (preg_match("/(agent|team)_performance/", $rpt_type)) {
 		$rpt_string="REPORT RETURNED NO RESULTS";
 	} else {
 		while(list($key, $val)=each($agent_counts)) {
-			$user_stmt="SELECT full_name from vicidial_users where user='$key'";
+			$full_name="";
+			if (preg_match('/team_performance/', $rpt_type)) {
+				$user_stmt="select group_name from vicidial_user_groups where user_group='$key'";
+			} else {
+				$user_stmt="SELECT full_name from vicidial_users where user='$key'";
+			}
 			$user_rslt=mysql_to_mysqli($user_stmt, $link);
 			while ($user_row=mysqli_fetch_row($user_rslt)) {
 				$full_name=$user_row[0];
@@ -344,7 +371,7 @@ if (preg_match("/floor_performance/", $rpt_type)) {
 		$status_SQL=" and status in ($status_str) ";
 	}
 
-	$sale_stmt="SELECT distinct status from vicidial_statuses where sale='Y' $status_SQL UNION SELECT distinct status from vicidial_campaign_statuses where sale='Y' and campaign_id in ('".implode("','", $campaigns)."') $status_SQL";
+	$sale_stmt="SELECT distinct status from vicidial_statuses where sale='Y' $status_SQL $exc_status_SQL UNION SELECT distinct status from vicidial_campaign_statuses where sale='Y' and campaign_id in ('".implode("','", $campaigns)."') $status_SQL $exc_status_SQL";
 	# $rpt_string.="$sale_stmt\n";
 	$sale_rslt=mysql_to_mysqli($sale_stmt, $link);
 	$sale_dispos=array();
@@ -352,7 +379,7 @@ if (preg_match("/floor_performance/", $rpt_type)) {
 		array_push($sale_dispos, $sale_row[0]);
 	}
 
-	$stmt="SELECT substr(event_time+INTERVAL (pause_sec+wait_sec+talk_sec+dispo_sec) SECOND, 1, 16) as call_end_time_min, status, count(*) from vicidial_agent_log where event_time>='$query_date $query_time' and event_time<='$end_date $end_time' $campaign_id_SQL $user_SQL $user_group_SQL $status_SQL group by call_end_time_min, status order by call_end_time_min, status";
+	$stmt="SELECT substr(event_time+INTERVAL (pause_sec+wait_sec+talk_sec+dispo_sec) SECOND, 1, 16) as call_end_time_min, status, count(*) from vicidial_agent_log where event_time>='$query_date $query_time' and event_time<='$end_date $end_time' $campaign_id_SQL $user_SQL $user_group_SQL $status_SQL $exc_status_SQL group by call_end_time_min, status order by call_end_time_min, status";
 	# $rpt_string.="$stmt\n";
 	if ($DB) {$rpt_string.=$stmt."<BR>\n";}
 	$rslt=mysql_to_mysqli($stmt, $link);
@@ -473,7 +500,7 @@ if (preg_match("/(did|ingroup)_performance/", $rpt_type)) {
 		}
 	}
 
-	$sale_stmt="SELECT distinct status from vicidial_statuses where sale='Y' $status_SQL UNION SELECT distinct status from vicidial_campaign_statuses where sale='Y' $campaign_id_SQL $status_SQL"; # Leave it for all campaigns, given the nature.
+	$sale_stmt="SELECT distinct status from vicidial_statuses where sale='Y' $status_SQL $exc_status_SQL UNION SELECT distinct status from vicidial_campaign_statuses where sale='Y' $campaign_id_SQL $status_SQL $exc_status_SQL"; # Leave it for all campaigns, given the nature.
 	# $rpt_string.="$sale_stmt\n";
 	$sale_rslt=mysql_to_mysqli($sale_stmt, $link);
 	$sale_dispos=array();
@@ -483,10 +510,10 @@ if (preg_match("/(did|ingroup)_performance/", $rpt_type)) {
 
 	if (preg_match("/did_performance/", $rpt_type)) {
 		# $stmt="SELECT user, status, sum(pause_sec+wait_sec+talk_sec+dispo_sec), count(*) from vicidial_agent_log where event_time>='$query_date $query_time' and event_time<='$end_date $end_time' $campaign_id_SQL $user_SQL $user_group_SQL group by user, status order by user, status";
-		$stmt="SELECT vid.did_pattern, vcl.status, sum(vcl.length_in_sec-vcl.queue_seconds) as call_length, count(*) From vicidial_closer_log vcl, vicidial_did_log vdl, vicidial_inbound_dids vid where vcl.call_date>='$query_date $query_time' and vcl.call_date<='$end_date $end_time' and vcl.uniqueid=vdl.uniqueid and vdl.did_id=vid.did_id $did_SQL $status_SQL group by did_pattern, did_description, status order by did_pattern, status";
+		$stmt="SELECT vid.did_pattern, vcl.status, sum(vcl.length_in_sec-vcl.queue_seconds) as call_length, count(*) From vicidial_closer_log vcl, vicidial_did_log vdl, vicidial_inbound_dids vid where vcl.call_date>='$query_date $query_time' and vcl.call_date<='$end_date $end_time' and vcl.uniqueid=vdl.uniqueid and vdl.did_id=vid.did_id $did_SQL $status_SQL $exc_status_SQL group by did_pattern, did_description, status order by did_pattern, status";
 	} else if (preg_match("/ingroup_performance/", $rpt_type)) {
 		# $stmt="SELECT user_group, status, sum(pause_sec+wait_sec+talk_sec+dispo_sec), count(*) from vicidial_agent_log where event_time>='$query_date $query_time' and event_time<='$end_date $end_time' $campaign_id_SQL $user_SQL $user_group_SQL group by user_group, status order by user_group, status";
-		$stmt="SELECT campaign_id, status, sum(length_in_sec-queue_seconds), count(*) from vicidial_closer_log where call_date>='$query_date $query_time' and call_date<='$end_date $end_time' $group_SQL $status_SQL group by campaign_id, status order by campaign_id, status";
+		$stmt="SELECT campaign_id, status, sum(length_in_sec-queue_seconds), count(*) from vicidial_closer_log where call_date>='$query_date $query_time' and call_date<='$end_date $end_time' $group_SQL $status_SQL $exc_status_SQL group by campaign_id, status order by campaign_id, status";
 	}
 
 	if ($DB) {$rpt_string.=$stmt."<BR>\n";}
@@ -561,7 +588,7 @@ if ($rpt_type=="floor_performance_hourly") {
 		$status_SQL=" and status in ($status_str) ";
 	}
 
-	$sale_stmt="SELECT distinct status from vicidial_statuses where sale='Y' $status_SQL UNION SELECT distinct status from vicidial_campaign_statuses where sale='Y' and campaign_id in ('".implode("','", $campaigns)."') $status_SQL";
+	$sale_stmt="SELECT distinct status from vicidial_statuses where sale='Y' $status_SQL $exc_status_SQL UNION SELECT distinct status from vicidial_campaign_statuses where sale='Y' and campaign_id in ('".implode("','", $campaigns)."') $status_SQL $exc_status_SQL";
 	# $rpt_string.="$sale_stmt\n";
 	$sale_rslt=mysql_to_mysqli($sale_stmt, $link);
 	$sale_dispos=array();
@@ -569,7 +596,7 @@ if ($rpt_type=="floor_performance_hourly") {
 		array_push($sale_dispos, $sale_row[0]);
 	}
 
-	$stmt="SELECT substr(event_time+INTERVAL (pause_sec+wait_sec+talk_sec+dispo_sec) SECOND, 1, 13) as call_end_time_hour, count(*) from vicidial_agent_log where event_time>='$query_date $query_time' and event_time<='$end_date $end_time' and status in ('".implode("','", $sale_dispos)."')  $campaign_id_SQL $status_SQL group by call_end_time_hour order by call_end_time_hour";
+	$stmt="SELECT substr(event_time+INTERVAL (pause_sec+wait_sec+talk_sec+dispo_sec) SECOND, 1, 13) as call_end_time_hour, count(*) from vicidial_agent_log where event_time>='$query_date $query_time' and event_time<='$end_date $end_time' and status in ('".implode("','", $sale_dispos)."')  $campaign_id_SQL $status_SQL $exc_status_SQL group by call_end_time_hour order by call_end_time_hour";
 	$rpt_string.="$stmt\n";
 	if ($DB) {$rpt_string.=$stmt."<BR>\n";}
 	$rslt=mysql_to_mysqli($stmt, $link);

@@ -669,7 +669,8 @@ ready_max_logout MEDIUMINT(7) default '-1',
 export_gdpr_leads ENUM('0','1','2') default '0',
 pause_code_approval ENUM('1','0') default '0',
 max_hopper_calls SMALLINT(5) UNSIGNED default '0',
-max_hopper_calls_hour SMALLINT(5) UNSIGNED default '0'
+max_hopper_calls_hour SMALLINT(5) UNSIGNED default '0',
+mute_recordings ENUM('DISABLED','Y','N') default 'DISABLED'
 ) ENGINE=MyISAM;
 
 CREATE UNIQUE INDEX user ON vicidial_users (user);
@@ -1014,7 +1015,8 @@ scheduled_callbacks_auto_reschedule VARCHAR(10) default 'DISABLED',
 scheduled_callbacks_timezones_container VARCHAR(40) default 'DISABLED',
 three_way_volume_buttons VARCHAR(20) default 'ENABLED',
 callback_dnc ENUM('ENABLED','DISABLED') default 'DISABLED',
-manual_dial_validation ENUM('Y','N') default 'N'
+manual_dial_validation ENUM('Y','N') default 'N',
+mute_recordings ENUM('Y','N') default 'N'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_lists (
@@ -1806,7 +1808,8 @@ enable_gdpr_download_deletion ENUM('0','1','2') default '0',
 source_id_display ENUM('0','1') default '0',
 help_modification_date VARCHAR(20) default '0',
 agent_logout_link ENUM('0','1','2','3','4') default '1',
-manual_dial_validation ENUM('0','1','2','3','4') default '0'
+manual_dial_validation ENUM('0','1','2','3','4') default '0',
+mute_recordings ENUM('1','0') default '0'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaigns_list_mix (
@@ -4322,4 +4325,4 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1564',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1565',db_schema_update_date=NOW(),reload_timestamp=NOW();

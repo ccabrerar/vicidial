@@ -1,7 +1,7 @@
 <?php
 # admin_header.php - VICIDIAL administration header
 #
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 # 
 
 # CHANGES
@@ -77,7 +77,7 @@
 # 180512-1105 - Changed to dynamic DB help
 # 180614-2200 - Modified audio chooser window to appear at height where mouse was clicked in JS functions
 # 180618-2300 - Modified calls to audio file chooser function
-# 180716-2120 - Fix for audio chooser bug on call menu screen
+# 190121-1803 - Added special streamlined header option for mobile devices
 #
 
 $stmt="SELECT admin_home_url,enable_tts_integration,callcard_enabled,custom_fields_enabled,allow_emails,level_8_disable_add,allow_chats,enable_languages,admin_row_click,admin_screen_colors,user_new_lead_limit,user_territories_active,qc_features_active,agent_soundboards,enable_drop_lists,allow_ip_lists from system_settings;";
@@ -337,6 +337,21 @@ if($short_header)
 	<?php
 	}
 ######################### SMALL HTML HEADER END #######################################
+
+
+######################### MOBILE HTML HEADER BEGIN ####################################
+else if ($android_header)
+	{
+	?>
+	<TABLE CELLPADDING=0 CELLSPACING=0 BGCOLOR=#<?php echo "$SSmenu_background" ?> width='100%'><TR>
+	<TD><A HREF="./admin_mobile.php"><IMG SRC="<?php echo $selected_small_logo; ?>" WIDTH=71 HEIGHT=22 BORDER=0 ALT="System logo"></A> &nbsp; </TD>
+	<TD align='left'> &nbsp; <A HREF="admin_mobile.php?ADD=999990" ALT="Admin" STYLE="text-decoration:none;"><?php echo $admin_icon ?> <FONT FACE="ARIAL,HELVETICA" COLOR=WHITE SIZE=2><B><?php echo _QXZ("Admin"); ?></B></FONT></A> &nbsp; </TD>
+	</TR>
+	</TABLE>
+<?php
+	}
+######################### ANDROID HTML HEADER END ######################################
+
 
 
 ######################### FULL HTML HEADER BEGIN #######################################

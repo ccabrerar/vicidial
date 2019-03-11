@@ -1,7 +1,7 @@
 <?php
 # user_stats.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -58,6 +58,7 @@
 # 170412-2150 - Added park_rpt display option
 # 180323-2308 - Fix for user time calculation, subtracted queue_seconds
 # 180410-1754 - Added Agent lead switch log and manager pause code approval log displays
+# 190310-2206 - Added indication of muted recordings by agent
 #
 
 $startMS = microtime();
@@ -107,7 +108,7 @@ if (isset($_GET["search_archived_data"]))			{$search_archived_data=$_GET["search
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,user_territories_active,webroot_writable,allow_emails,level_8_disable_add,enable_languages,language_method,log_recording_access,admin_screen_colors FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,user_territories_active,webroot_writable,allow_emails,level_8_disable_add,enable_languages,language_method,log_recording_access,admin_screen_colors,mute_recordings FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
@@ -126,6 +127,7 @@ if ($qm_conf_ct > 0)
 	$SSlanguage_method =			$row[9];
 	$log_recording_access =			$row[10];
 	$SSadmin_screen_colors =		$row[11];
+	$SSmute_recordings =			$row[12];
 	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
@@ -1388,11 +1390,17 @@ else
 
 	##### vicidial recordings for this time period #####
 
+	$mute_column='';   $mute_column_csv='';
+	if ($SSmute_recordings > 0)
+		{
+		$mute_column = "<td align=center><font size=2>"._QXZ("MUTE")." &nbsp; </td>";
+		$mute_column_csv = ",\""._QXZ("MUTE")."\"";
+		}
 	$MAIN.="<B>"._QXZ("RECORDINGS FOR THIS TIME PERIOD: (10000 record limit)")."&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href='$download_link&file_download=8'>["._QXZ("DOWNLOAD")."]</a></B>\n";
-	$MAIN.="<TABLE width=750 cellspacing=0 cellpadding=1>\n";
-	$MAIN.="<tr><td><font size=1># </td><td align=left><font size=2> "._QXZ("LEAD")."</td><td><font size=2>"._QXZ("DATE/TIME")." </td><td align=left><font size=2>"._QXZ("SECONDS")." </td><td align=left><font size=2> &nbsp; "._QXZ("RECID")."</td><td align=center><font size=2>"._QXZ("FILENAME")."</td><td align=center><font size=2>"._QXZ("LOCATION")." &nbsp; </td></tr>\n";
+	$MAIN.="<TABLE width=900 cellspacing=0 cellpadding=1>\n";
+	$MAIN.="<tr><td><font size=1># </td><td align=left><font size=2> "._QXZ("LEAD")."</td><td><font size=2>"._QXZ("DATE/TIME")." </td><td align=left><font size=2>"._QXZ("SECONDS")." </td><td align=left><font size=2> &nbsp; "._QXZ("RECID")."</td><td align=center><font size=2>"._QXZ("FILENAME")."</td><td align=center><font size=2>"._QXZ("LOCATION")." &nbsp; </td>$mute_column</tr>\n";
 	$CSV_text8.="\""._QXZ("RECORDINGS FOR THIS TIME PERIOD: (10000 record limit)")."\"\n";
-	$CSV_text8.="\"\",\"#\",\""._QXZ("LEAD")."\",\""._QXZ("DATE/TIME")."\",\""._QXZ("SECONDS")."\",\""._QXZ("RECID")."\",\""._QXZ("FILENAME")."\",\""._QXZ("LOCATION")."\"\n";
+	$CSV_text8.="\"\",\"#\",\""._QXZ("LEAD")."\",\""._QXZ("DATE/TIME")."\",\""._QXZ("SECONDS")."\",\""._QXZ("RECID")."\",\""._QXZ("FILENAME")."\",\""._QXZ("LOCATION")."\"$mute_column_csv\n";
 
 	if (strlen($query_call_status) > 5)
 		{
@@ -1442,6 +1450,18 @@ else
 					}
 				}
 			}
+		if ($SSmute_recordings > 0)
+			{
+			$mute_events=0;
+			$stmt="SELECT count(*) from ".$vicidial_agent_function_log." where user='" . mysqli_real_escape_string($link, $user) . "' and event_time >= '$row[4]'  and event_time <= '$row[6]' and function='mute_rec' and lead_id='$row[12]' and stage='on';";
+			$rsltx=mysql_to_mysqli($stmt, $link);
+			$flogs_to_print = mysqli_num_rows($rsltx);
+			if ($flogs_to_print > 0) 
+				{
+				$rowx=mysqli_fetch_row($rsltx);
+				$mute_events = $rowx[0];
+				}
+			}
 
 		if (strlen($location)>30)
 			{$locat = substr($location,0,27);  $locat = "$locat...";}
@@ -1457,6 +1477,7 @@ else
 		else
 			{$location = $locat;}
 		$u++;
+		$mute_csv_record='';
 		$MAIN.="<tr $bgcolor>";
 		$MAIN.="<td><font size=1>$u</td>";
 		$MAIN.="<td align=left><font size=2> <A HREF=\"admin_modify_lead.php?lead_id=$row[12]\" target=\"_blank\">$row[12]</A> </td>";
@@ -1465,8 +1486,14 @@ else
 		$MAIN.="<td align=left><font size=2> $row[0] </td>\n";
 		$MAIN.="<td align=center><font size=2> $row[10] </td>\n";
 		$MAIN.="<td align=right><font size=2> $location &nbsp; </td>\n";
+		if ($SSmute_recordings > 0)
+			{
+			if ($mute_events < 1) {$mute_events='';}
+			$MAIN.="<td align=right><font size=2> $mute_events &nbsp; </td>\n";
+			$mute_csv_record=",\"$mute_events\"";
+			}
 		$MAIN.="</tr>\n";
-		$CSV_text8.="\"\",\"$u\",\"$row[12]\",\"$row[4]\",\"$row[8]\",\"$row[0]\",\"$row[10]\",\"$CSV_location\"\n";
+		$CSV_text8.="\"\",\"$u\",\"$row[12]\",\"$row[4]\",\"$row[8]\",\"$row[0]\",\"$row[10]\",\"$CSV_location\"$mute_csv_record\n";
 		}
 
 	$MAIN.="</TABLE><BR><BR>\n";
