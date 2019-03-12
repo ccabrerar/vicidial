@@ -468,13 +468,14 @@
 # 190106-1353 - Added manual_dial_validation feature
 # 190216-0805 - Fix for user-group, in-group and campaign allowed/permissions matching issues
 # 190220-1005 - Added vicidial_sessions_recent inserts when lead is set to INCALL status
+# 190312-0927 - Added more hide_call_log_info options
 #
 
-$version = '2.14-362';
-$build = '190220-1005';
+$version = '2.14-363';
+$build = '190312-0927';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
-$mysql_log_count=792;
+$mysql_log_count=793;
 $one_mysql_log=0;
 $DB=0;
 $VD_login=0;
@@ -16561,6 +16562,19 @@ if ($ACTION == 'LEADINFOview')
 			$screen_labels =		$row[0];
 			$hide_call_log_info =	$row[1];
 			}
+		### find the user-override setting for this user for call log view
+		$stmt="SELECT hide_call_log_info from vicidial_users where user='$user';";
+		$rslt=mysql_to_mysqli($stmt, $link);
+			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00793',$user,$server_ip,$session_name,$one_mysql_log);}
+		$csl_to_print = mysqli_num_rows($rslt);
+		if ($format=='debug') {echo "|$csl_to_print|$stmt|";}
+		if ($csl_to_print > 0)
+			{
+			$row=mysqli_fetch_row($rslt);
+			$VU_hide_call_log_info =	$row[0];
+			if ($VU_hide_call_log_info != 'DISABLED')
+				{$hide_call_log_info = $VU_hide_call_log_info;}
+			}
 
 		### BEGIN Display lead info and custom fields ###
 		### BEGIN find any custom field labels ###
@@ -16963,7 +16977,7 @@ if ($ACTION == 'LEADINFOview')
 
 		### BEGIN Gather Call Log and notes ###
 		$NOTESout='';
-		if ($hide_call_log_info=='N')
+		if ($hide_call_log_info!='Y')
 			{
 			if ($search != 'logfirst')
 				{$NOTESout .= "<CENTER>"._QXZ("CALL LOG FOR THIS LEAD:")."<br>\n";}
@@ -16983,8 +16997,10 @@ if ($ACTION == 'LEADINFOview')
 		#	$NOTESout .= "<TD BGCOLOR=\"#CCCCCC\" COLSPAN=9><font style=\"font-size:11px;font-family:sans-serif;\"><B> &nbsp; FULL NAME &nbsp; </font></TD>";
 			$NOTESout .= "</TR>";
 
-
-			$stmt="SELECT start_epoch,call_date,campaign_id,length_in_sec,status,phone_code,phone_number,lead_id,term_reason,alt_dial,comments,uniqueid,user from vicidial_log where lead_id='$lead_id' order by call_date desc limit 10000;";
+			if (preg_match("/SHOW/",$hide_call_log_info))
+				{$call_limit = preg_replace("/\D/",'',$hide_call_log_info);}
+			if (strlen($call_limit)<1) {$call_limit=10000;}
+			$stmt="SELECT start_epoch,call_date,campaign_id,length_in_sec,status,phone_code,phone_number,lead_id,term_reason,alt_dial,comments,uniqueid,user from vicidial_log where lead_id='$lead_id' order by call_date desc limit $call_limit;";
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00580',$user,$server_ip,$session_name,$one_mysql_log);}
 			$out_logs_to_print = mysqli_num_rows($rslt);
@@ -17036,8 +17052,10 @@ if ($ACTION == 'LEADINFOview')
 				$g++;
 				$u++;
 				}
+			$call_limit = ($call_limit - $g);
+			if ($call_limit < 0) {$call_limit=0;}
 
-			$stmt="SELECT start_epoch,call_date,campaign_id,length_in_sec,status,phone_code,phone_number,lead_id,term_reason,queue_seconds,uniqueid,closecallid,user from vicidial_closer_log where lead_id='$lead_id' order by closecallid desc limit 10000;";
+			$stmt="SELECT start_epoch,call_date,campaign_id,length_in_sec,status,phone_code,phone_number,lead_id,term_reason,queue_seconds,uniqueid,closecallid,user from vicidial_closer_log where lead_id='$lead_id' order by closecallid desc limit $call_limit;";
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00583',$user,$server_ip,$session_name,$one_mysql_log);}
 			$in_logs_to_print = mysqli_num_rows($rslt);

@@ -812,3 +812,9 @@ ALTER TABLE vicidial_campaigns ADD mute_recordings ENUM('Y','N') default 'N';
 ALTER TABLE vicidial_users ADD mute_recordings ENUM('DISABLED','Y','N') default 'DISABLED';
 
 UPDATE system_settings SET db_schema_version='1565',db_schema_update_date=NOW() where db_schema_version < 1565;
+
+ALTER TABLE vicidial_campaigns MODIFY hide_call_log_info ENUM('Y','N','SHOW_1','SHOW_2','SHOW_3','SHOW_4','SHOW_5','SHOW_6','SHOW_7','SHOW_8','SHOW_9','SHOW_10') default 'N';
+
+ALTER TABLE vicidial_users ADD hide_call_log_info ENUM('DISABLED','Y','N','SHOW_1','SHOW_2','SHOW_3','SHOW_4','SHOW_5','SHOW_6','SHOW_7','SHOW_8','SHOW_9','SHOW_10') default 'DISABLED';
+
+UPDATE system_settings SET db_schema_version='1566',db_schema_update_date=NOW() where db_schema_version < 1566;

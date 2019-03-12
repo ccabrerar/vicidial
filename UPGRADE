@@ -392,6 +392,10 @@ OTHER CHANGES:
 	screen. Must be enabled in System Settings to be able to use it in
 	campaigns. There is also a User Override option.
 
+110. Added more options to the Campaign "Hide Call Log Info" feature to be able
+	to show only the last X number of calls in the Lead Info screen. Also 
+	added a User Override setting for this feature.
+
 
 
 

@@ -670,7 +670,8 @@ export_gdpr_leads ENUM('0','1','2') default '0',
 pause_code_approval ENUM('1','0') default '0',
 max_hopper_calls SMALLINT(5) UNSIGNED default '0',
 max_hopper_calls_hour SMALLINT(5) UNSIGNED default '0',
-mute_recordings ENUM('DISABLED','Y','N') default 'DISABLED'
+mute_recordings ENUM('DISABLED','Y','N') default 'DISABLED',
+hide_call_log_info ENUM('DISABLED','Y','N','SHOW_1','SHOW_2','SHOW_3','SHOW_4','SHOW_5','SHOW_6','SHOW_7','SHOW_8','SHOW_9','SHOW_10') default 'DISABLED'
 ) ENGINE=MyISAM;
 
 CREATE UNIQUE INDEX user ON vicidial_users (user);
@@ -960,7 +961,7 @@ dispo_max_dispo VARCHAR(6) default 'DISMX',
 pause_max SMALLINT(5) UNSIGNED default '0',
 max_inbound_calls SMALLINT(5) UNSIGNED default '0',
 manual_dial_search_checkbox ENUM('SELECTED','SELECTED_RESET','UNSELECTED','UNSELECTED_RESET','SELECTED_LOCK','UNSELECTED_LOCK') default 'SELECTED',
-hide_call_log_info ENUM('Y','N') default 'N',
+hide_call_log_info ENUM('Y','N','SHOW_1','SHOW_2','SHOW_3','SHOW_4','SHOW_5','SHOW_6','SHOW_7','SHOW_8','SHOW_9','SHOW_10') default 'N',
 timer_alt_seconds SMALLINT(5) default '0',
 wrapup_bypass ENUM('DISABLED','ENABLED') default 'ENABLED',
 wrapup_after_hotkey ENUM('DISABLED','ENABLED') default 'DISABLED',
@@ -4064,7 +4065,7 @@ INSERT INTO system_settings (version,install_date,first_login_trigger) values('2
 
 INSERT INTO vicidial_status_categories (vsc_id,vsc_name) values('UNDEFINED','Default Category');
 
-INSERT INTO vicidial_user_groups SET user_group='ADMIN',group_name='VICIDIAL ADMINISTRATORS',allowed_campaigns=' -ALL-CAMPAIGNS- - -',agent_status_viewable_groups=' --ALL-GROUPS-- ';
+INSERT INTO vicidial_user_groups SET user_group='ADMIN',group_name='VICIDIAL ADMINISTRATORS',allowed_campaigns=' -ALL-CAMPAIGNS- - -',agent_status_viewable_groups=' --ALL-GROUPS-- ',admin_viewable_groups=' ---ALL--- ',admin_viewable_call_times=' ---ALL--- ',agent_allowed_chat_groups=' --ALL-GROUPS-- ';
 
 INSERT INTO vicidial_call_times SET call_time_id='24hours',call_time_name='default 24 hours calling',ct_default_start='0',ct_default_stop='2400';
 INSERT INTO vicidial_call_times SET call_time_id='9am-9pm',call_time_name='default 9am to 9pm calling',ct_default_start='900',ct_default_stop='2100';
@@ -4325,4 +4326,4 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1565',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1566',db_schema_update_date=NOW(),reload_timestamp=NOW();
