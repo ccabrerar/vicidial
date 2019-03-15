@@ -1,7 +1,7 @@
 <?php
 # non_agent_api.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed as an API(Application Programming Interface) to allow
 # other programs to interact with all non-agent-screen VICIDIAL functions
@@ -134,10 +134,11 @@
 # 180529-1102 - Fix for QM live monitoring
 # 180916-1059 - Added check for daily list reset limit
 # 181214-1606 - Added lead_callback_info function
+# 190313-0710 - Fix for update_lead custom fields issue #1134
 #
 
-$version = '2.14-111';
-$build = '181214-1606';
+$version = '2.14-112';
+$build = '190313-0710';
 $api_url_log = 0;
 
 $startMS = microtime();
@@ -9510,6 +9511,7 @@ if ($function == 'update_lead')
 											{
 											$new_field_value='';
 											$form_field_value='';
+											$update_this_field=0;
 											$rowx=mysqli_fetch_row($rslt);
 											$A_field_id[$o] =			$rowx[0];
 											$A_field_label[$o] =		$rowx[1];
@@ -9522,15 +9524,19 @@ if ($function == 'update_lead')
 											$A_field_value[$o] =		'';
 											$field_name_id =			$A_field_label[$o];
 
-											if (isset($_GET["$field_name_id"]))				{$form_field_value=$_GET["$field_name_id"];}
-												elseif (isset($_POST["$field_name_id"]))	{$form_field_value=$_POST["$field_name_id"];}
+											if (preg_match("/\?$field_name_id=|&$field_name_id=/",$query_string))
+												{
+												if (isset($_GET["$field_name_id"]))				{$form_field_value=$_GET["$field_name_id"];}
+													elseif (isset($_POST["$field_name_id"]))	{$form_field_value=$_POST["$field_name_id"];}
 
-											$form_field_value = preg_replace("/\+/"," ",$form_field_value);
-											$form_field_value = preg_replace("/;|\"/","",$form_field_value);
-											$form_field_value = preg_replace("/\\b/","",$form_field_value);
-											$A_field_value[$o] = $form_field_value;
+												$form_field_value = preg_replace("/\+/"," ",$form_field_value);
+												$form_field_value = preg_replace("/;|\"/","",$form_field_value);
+												$form_field_value = preg_replace("/\\b/","",$form_field_value);
+												$A_field_value[$o] = $form_field_value;
+												$update_this_field++;
+												}
 
-											if ( ($A_field_type[$o]=='DISPLAY') or ($A_field_type[$o]=='SCRIPT') )
+											if ( ($A_field_type[$o]=='DISPLAY') or ($A_field_type[$o]=='SCRIPT') or ($update_this_field < 1) )
 												{
 												$A_field_value[$o]='----IGNORE----';
 												}

@@ -109,10 +109,11 @@
 # 170615-0023 - Added DIAL status for manual dial agent calls that have not been answered
 # 180204-1538 - Added display of LIVE Inbound Callback Queue Calls
 # 190206-1616 - Added mobile device display variable
+# 190313-0607 - Fix for columns display issue #1141
 #
 
-$version = '2.14-96';
-$build = '180204-1538';
+$version = '2.14-97';
+$build = '190313-0607';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -2632,7 +2633,7 @@ if ($report_display_type=='TEXT')
 	$HTbegin =			"|";
 	$HDstation =		"----------------+";
 	$HTstation =		" "._QXZ("STATION", 14)." |";
-	$HDphone =		"-------------+";
+	$HDphone =		"-------------------+";
 	$HTphone =		" <a href=\"$PHP_SELF?$usergroupQS$groupQS&RR=$RR&DB=$DB&adastats=$adastats&SIPmonitorLINK=$SIPmonitorLINK&IAXmonitorLINK=$IAXmonitorLINK&usergroup=$usergroup&UGdisplay=$UGdisplay&UidORname=$UidORname&orderby=$phoneord&SERVdisplay=$SERVdisplay&CALLSdisplay=$CALLSdisplay&PHONEdisplay=$PHONEdisplay&CUSTPHONEdisplay=$CUSTPHONEdisplay&with_inbound=$with_inbound&monitor_active=$monitor_active&monitor_phone=$monitor_phone&ALLINGROUPstats=$ALLINGROUPstats&DROPINGROUPstats=$DROPINGROUPstats&NOLEADSalert=$NOLEADSalert&CARRIERstats=$CARRIERstats&PRESETstats=$PRESETstats&AGENTtimeSTATS=$AGENTtimeSTATS&INGROUPcolorOVERRIDE=$INGROUPcolorOVERRIDE&droppedOFtotal=$droppedOFtotal&report_display_type=$report_display_type\">"._QXZ("PHONE",11)."</a> |";
 	if ($RTajax > 0)
 		{$HTphone =		" <a href=\"#\" onclick=\"update_variables('orderby','phone');\">"._QXZ("PHONE",11)."</a>       |";}
@@ -2665,8 +2666,10 @@ if ($report_display_type=='TEXT')
 	$HTusergroup =		" <a href=\"$PHP_SELF?$usergroupQS$groupQS&RR=$RR&DB=$DB&adastats=$adastats&SIPmonitorLINK=$SIPmonitorLINK&IAXmonitorLINK=$IAXmonitorLINK&usergroup=$usergroup&UGdisplay=$UGdisplay&UidORname=$UidORname&orderby=$groupord&SERVdisplay=$SERVdisplay&CALLSdisplay=$CALLSdisplay&PHONEdisplay=$PHONEdisplay&CUSTPHONEdisplay=$CUSTPHONEdisplay&with_inbound=$with_inbound&monitor_active=$monitor_active&monitor_phone=$monitor_phone&ALLINGROUPstats=$ALLINGROUPstats&DROPINGROUPstats=$DROPINGROUPstats&NOLEADSalert=$NOLEADSalert&CARRIERstats=$CARRIERstats&PRESETstats=$PRESETstats&AGENTtimeSTATS=$AGENTtimeSTATS&INGROUPcolorOVERRIDE=$INGROUPcolorOVERRIDE&droppedOFtotal=$droppedOFtotal&report_display_type=$report_display_type\">"._QXZ("USER GROUP",12)."</a> |";
 	if ($RTajax > 0)
 		{$HTusergroup =	" <a href=\"#\" onclick=\"update_variables('orderby','group');\">"._QXZ("USER GROUP",12)."</a> |";}
-	$HDsessionid =		"------------------+";
-	$HTsessionid =		" "._QXZ("SESSIONID",16)." |";
+	$HDsessionid =		"-----------+";
+	$HTsessionid =		" "._QXZ("SESSIONID",9)." |";
+	$HDlisten =			"--------+";
+ 	$HTlisten =			" "._QXZ("LISTEN",6)." |";
 	$HDbarge =			"-------+";
 	$HTbarge =			" "._QXZ("BARGE",5)." |";
 	$HDwhisper =		"---------+";
@@ -2750,6 +2753,8 @@ if ($report_display_type=='HTML')
 		{$HTusergroup =	"<td NOWRAP>&nbsp;<a href=\"#\" onclick=\"update_variables('orderby','group');\"><font class='top_head_key'>"._QXZ("USER GROUP")."</a>&nbsp;</td>";}
 	$HDsessionid =		"";
 	$HTsessionid =		"<td NOWRAP><font class='top_head_key'>&nbsp; "._QXZ("SESSIONID")." </td>";
+ 	$HDlisten =			"";
+ 	$HTlisten =			"<td NOWRAP><font class='top_head_key'>&nbsp; "._QXZ("LISTEN")." </td>";
 	$HDbarge =			"";
 	$HTbarge =			"<td NOWRAP><font class='top_head_key'>&nbsp; "._QXZ("BARGE")." </td>";
 	$HDwhisper =		"";
@@ -2808,6 +2813,11 @@ if ($UGdisplay < 1)
 	$HDusergroup =	'';
 	$HTusergroup =	'';
 	}
+if ( ($SIPmonitorLINK<2) and ($IAXmonitorLINK<2) and (!preg_match("/MONITOR|BARGE|WHISPER/",$monitor_active) ) ) 
+	{
+	$HDlisten =		'';
+	$HTlisten =		'';
+	}
 if ( ($SIPmonitorLINK<2) and ($IAXmonitorLINK<2) and (!preg_match("/BARGE/",$monitor_active) ) ) 
 	{
 	$HDbarge =		'';
@@ -2829,13 +2839,13 @@ if ($SERVdisplay < 1)
 
 if ($realtime_block_user_info > 0)
 	{
-	$Aline  = "$HDbegin$HDusergroup$HDsessionid$HDbarge$HDwhisper$HDstatus$HDpause$HDcustphone$HDserver_ip$HDcall_server_ip$HDtime$HDcampaign$HDcalls$HDigcall\n";
-	$Bline  = "$HTbegin$HTusergroup$HTsessionid$HTbarge$HTwhisper$HTstatus$HTpause$HTcustphone$HTserver_ip$HTcall_server_ip$HTtime$HTcampaign$HTcalls$HTigcall\n";
+ 	$Aline  = "$HDbegin$HDusergroup$HDsessionid$HDlisten$HDbarge$HDwhisper$HDstatus$HDpause$HDcustphone$HDserver_ip$HDcall_server_ip$HDtime$HDcampaign$HDcalls$HDigcall\n";
+ 	$Bline  = "$HTbegin$HTusergroup$HTsessionid$HDlisten$HTbarge$HTwhisper$HTstatus$HTpause$HTcustphone$HTserver_ip$HTcall_server_ip$HTtime$HTcampaign$HTcalls$HTigcall\n";
 	}
 else
 	{
-	$Aline  = "$HDbegin$HDstation$HDphone$HDuser$HDusergroup$HDsessionid$HDbarge$HDwhisper$HDstatus$HDpause$HDcustphone$HDserver_ip$HDcall_server_ip$HDtime$HDcampaign$HDcalls$HDigcall\n";
-	$Bline  = "$HTbegin$HTstation$HTphone$HTuser$HTusergroup$HTsessionid$HTbarge$HTwhisper$HTstatus$HTpause$HTcustphone$HTserver_ip$HTcall_server_ip$HTtime$HTcampaign$HTcalls$HTigcall\n";
+ 	$Aline  = "$HDbegin$HDstation$HDphone$HDuser$HDusergroup$HDsessionid$HDlisten$HDbarge$HDwhisper$HDstatus$HDpause$HDcustphone$HDserver_ip$HDcall_server_ip$HDtime$HDcampaign$HDcalls$HDigcall\n";
+ 	$Bline  = "$HTbegin$HTstation$HTphone$HTuser$HTusergroup$HTsessionid$HTlisten$HTbarge$HTwhisper$HTstatus$HTpause$HTcustphone$HTserver_ip$HTcall_server_ip$HTtime$HTcampaign$HTcalls$HTigcall\n";
 	}
 $Aecho .= "$Aline";
 $Aecho .= "$Bline";
@@ -3082,7 +3092,7 @@ if ($talking_to_print > 0)
 				}
 			}
 
-		$phone =			sprintf("%-12s", $phone_split[0]);
+		$phone =			sprintf("%-18s", $phone_split[0]);
 		$custphone =		sprintf("%-11s", $custphone);
 		$Luser =			$Auser[$i];
 		$user =				sprintf("%-20s", $Auser[$i]);
@@ -3348,12 +3358,12 @@ if ($talking_to_print > 0)
 
 		if ($report_display_type=='TEXT')
 			{
-			if ($SIPmonitorLINK>0) {$L=" <a href=\"sip:0$Lsessionid@$server_ip\">"._QXZ("LISTEN",6)."</a>";   $R='';}
-			if ($IAXmonitorLINK>0) {$L=" <a href=\"iax:0$Lsessionid@$server_ip\">"._QXZ("LISTEN",6)."</a>";   $R='';}
+			if ($SIPmonitorLINK>0) {$L=" | <a href=\"sip:0$Lsessionid@$server_ip\">"._QXZ("LISTEN",6)."</a>";   $R='';}
+			if ($IAXmonitorLINK>0) {$L=" | <a href=\"iax:0$Lsessionid@$server_ip\">"._QXZ("LISTEN",6)."</a>";   $R='';}
 			if ($SIPmonitorLINK>1) {$R=" | <a href=\"sip:$Lsessionid@$server_ip\">"._QXZ("BARGE",5)."</a>";}
 			if ($IAXmonitorLINK>1) {$R=" | <a href=\"iax:$Lsessionid@$server_ip\">BARGE</a>";}
 			if ( (strlen($monitor_phone)>1) and (preg_match("/MONITOR|BARGE|WHISPER/",$monitor_active) ) )
-				{$L=" <a href=\"javascript:send_monitor('$Lsessionid','$Lserver_ip','MONITOR');\">"._QXZ("LISTEN",6)."</a>";   $R='';}
+				{$L=" | <a href=\"javascript:send_monitor('$Lsessionid','$Lserver_ip','MONITOR');\">"._QXZ("LISTEN",6)."</a>";   $R='';}
 			if ( (strlen($monitor_phone)>1) and (preg_match("/BARGE|WHISPER/",$monitor_active) ) )
 				{$R=" | <a href=\"javascript:send_monitor('$Lsessionid','$Lserver_ip','BARGE');\">"._QXZ("BARGE",5)."</a>";}
 			if ($SIPmonitorLINK>1) {$R=" | <a href=\"sip:47378218$Lsessionid@$server_ip\">WHISPER</a>";}
@@ -3412,18 +3422,18 @@ if ($talking_to_print > 0)
 		if ($report_display_type=='HTML')
 			{
 			$G = preg_replace("/SPAN class=\"/",'SPAN class="H',$G);
-			if ($SIPmonitorLINK>0) {$L="<td NOWRAP> <a href=\"sip:0$Lsessionid@$server_ip\">"._QXZ("LISTEN")."</a></td>";   $R='';}
-			if ($IAXmonitorLINK>0) {$L="<td NOWRAP> <a href=\"iax:0$Lsessionid@$server_ip\">"._QXZ("LISTEN")."</a></td>";   $R='';}
-			if ($SIPmonitorLINK>1) {$R=" <td NOWRAP> <a href=\"sip:$Lsessionid@$server_ip\">"._QXZ("BARGE")."</a></td>";}
-			if ($IAXmonitorLINK>1) {$R=" <td NOWRAP> <a href=\"iax:$Lsessionid@$server_ip\">BARGE</a></td>";}
+			if ($SIPmonitorLINK>0) {$L="<td NOWRAP align=center> <a href=\"sip:0$Lsessionid@$server_ip\">"._QXZ("LISTEN")."</a></td>";   $R='';}
+			if ($IAXmonitorLINK>0) {$L="<td NOWRAP align=center> <a href=\"iax:0$Lsessionid@$server_ip\">"._QXZ("LISTEN")."</a></td>";   $R='';}
+			if ($SIPmonitorLINK>1) {$R=" <td NOWRAP align=center> <a href=\"sip:$Lsessionid@$server_ip\">"._QXZ("BARGE")."</a></td>";}
+			if ($IAXmonitorLINK>1) {$R=" <td NOWRAP align=center> <a href=\"iax:$Lsessionid@$server_ip\">BARGE</a></td>";}
 			if ( (strlen($monitor_phone)>1) and (preg_match("/MONITOR|BARGE|WHISPER/",$monitor_active) ) )
-				{$L="<td NOWRAP> <a href=\"javascript:send_monitor('$Lsessionid','$Lserver_ip','MONITOR');\">"._QXZ("LISTEN")."</a></td>";   $R='';}
+				{$L="<td NOWRAP align=center> <a href=\"javascript:send_monitor('$Lsessionid','$Lserver_ip','MONITOR');\">"._QXZ("LISTEN")."</a></td>";   $R='';}
 			if ( (strlen($monitor_phone)>1) and (preg_match("/BARGE|WHISPER/",$monitor_active) ) )
-				{$R=" <td NOWRAP> <a href=\"javascript:send_monitor('$Lsessionid','$Lserver_ip','BARGE');\">"._QXZ("BARGE")."</a></td>";}
-			if ($SIPmonitorLINK>1) {$R=" </td><td NOWRAP> <a href=\"sip:47378218$Lsessionid@$server_ip\">WHISPER</a></td>";}
-			if ($IAXmonitorLINK>1) {$R=" </td><td NOWRAP> <a href=\"iax:47378218$Lsessionid@$server_ip\">WHISPER</a></td>";}
+				{$R=" <td NOWRAP align=center> <a href=\"javascript:send_monitor('$Lsessionid','$Lserver_ip','BARGE');\">"._QXZ("BARGE")."</a></td>";}
+			if ($SIPmonitorLINK>1) {$R=" </td><td NOWRAP align=center> <a href=\"sip:47378218$Lsessionid@$server_ip\">WHISPER</a></td>";}
+			if ($IAXmonitorLINK>1) {$R=" </td><td NOWRAP align=center> <a href=\"iax:47378218$Lsessionid@$server_ip\">WHISPER</a></td>";}
 			if ( (strlen($monitor_phone)>1) and (preg_match("/WHISPER/",$monitor_active) ) )
-				{$R=" <td NOWRAP> <a href=\"javascript:send_monitor('$Lsessionid','$Lserver_ip','WHISPER');\">WHISPER</a></td>";}
+				{$R=" <td NOWRAP align=center> <a href=\"javascript:send_monitor('$Lsessionid','$Lserver_ip','WHISPER');\">WHISPER</a></td>";}
 
 			if ($CUSTPHONEdisplay > 0)	{$CP = " $G$custphone$EG </td><td NOWRAP align=right>";}
 			else	{$CP = "";}
