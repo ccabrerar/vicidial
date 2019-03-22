@@ -8713,7 +8713,7 @@ if ($ADD==131111111111)
 		echo "$UUgroups_list";
 		echo "<option SELECTED value=\"---ALL---\">"._QXZ("All Admin User Groups")."</option>\n";
 		echo "</select>$NWB#conf_templates-user_group$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Template Contents").": </td><td align=left><TEXTAREA NAME=template_contents ROWS=10 COLS=70></TEXTAREA> $NWB#conf_templates-template_contents$NWE</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Template Contents").": </td><td align=left><TEXTAREA NAME=template_contents ROWS=12 COLS=70></TEXTAREA> $NWB#conf_templates-template_contents$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
@@ -21792,8 +21792,8 @@ if ($ADD==3)
 				if ($SSallow_ip_lists > 0)
 					{
 					echo "<tr bgcolor=#$SSmenu_background><td colspan=2 align=center><font color=white><B>"._QXZ("SECURITY OPTIONS, Only enable if needed").":</td></tr>\n";
-					echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("Modify IP Lists").": </td><td align=left><select size=1 name=modify_ip_lists><option>0</option><option>1</option><option SELECTED>$modify_ip_lists</option></select>$NWB#users-modify_sections$NWE</td></tr>\n";
-					echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("Ignore IP List").": </td><td align=left><select size=1 name=ignore_ip_list><option>0</option><option>1</option><option SELECTED>$ignore_ip_list</option></select>$NWB#users-modify_sections$NWE</td></tr>\n";
+					echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("Modify IP Lists").": </td><td align=left><select size=1 name=modify_ip_lists><option>0</option><option>1</option><option SELECTED>$modify_ip_lists</option></select>$NWB#users-modify_ip_lists$NWE</td></tr>\n";
+					echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("Ignore IP List").": </td><td align=left><select size=1 name=ignore_ip_list><option>0</option><option>1</option><option SELECTED>$ignore_ip_list</option></select>$NWB#users-ignore_ip_lists$NWE</td></tr>\n";
 					}
 				else
 					{
@@ -34837,7 +34837,7 @@ if ($ADD==331111111111)
 		echo "$UUgroups_list";
 		echo "<option SELECTED value=\"$user_group\">$user_group</option>\n";
 		echo "</select>$NWB#conf_templates-user_group$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Template Contents").": </td><td align=left><TEXTAREA NAME=template_contents ROWS=10 COLS=70>$template_contents</TEXTAREA> $NWB#conf_templates-template_contents$NWE</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Template Contents").": </td><td align=left><TEXTAREA NAME=template_contents ROWS=12 COLS=70>$template_contents</TEXTAREA> $NWB#conf_templates-template_contents$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 
@@ -37312,9 +37312,9 @@ if ($ADD==311111111111111)
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("No-Answer Log").": </td><td align=left><select size=1 name=noanswer_log><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$noanswer_log' selected>"._QXZ("$noanswer_log")."</option></select>$NWB#settings-noanswer_log$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("DID Agent Log").": </td><td align=left><select size=1 name=did_agent_log><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$did_agent_log' selected>"._QXZ("$did_agent_log")."</option></select>$NWB#settings-did_agent_log$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Alt-Log DB Server").": </td><td align=left><input type=text name=alt_log_server_ip size=18 maxlength=50 value=\"$alt_log_server_ip\">$NWB#settings-alt_log_server_ip$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Alt-Log DB Name").": </td><td align=left><input type=text name=alt_log_dbname size=18 maxlength=50 value=\"$alt_log_dbname\">$NWB#settings-alt_log_server_ip$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Alt-Log DB Login").": </td><td align=left><input type=text name=alt_log_login size=18 maxlength=50 value=\"$alt_log_login\">$NWB#settings-alt_log_server_ip$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Alt-Log DB Password").": </td><td align=left><input type=text name=alt_log_pass size=18 maxlength=50 value=\"$alt_log_pass\">$NWB#settings-alt_log_server_ip$NWE</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Alt-Log DB Name").": </td><td align=left><input type=text name=alt_log_dbname size=18 maxlength=50 value=\"$alt_log_dbname\">$NWB#settings-alt_log_dbname$NWE</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Alt-Log DB Login").": </td><td align=left><input type=text name=alt_log_login size=18 maxlength=50 value=\"$alt_log_login\">$NWB#settings-alt_log_login$NWE</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Alt-Log DB Password").": </td><td align=left><input type=text name=alt_log_pass size=18 maxlength=50 value=\"$alt_log_pass\">$NWB#settings-alt_log_pass$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Alt-Log Tables").": </td><td align=left><select MULTIPLE size=4 name=tables_use_alt_log_db[]>\n";
 		$Vtables_ARY = explode(',',$Vtables);
 		$Vtables_ct = count($Vtables_ARY);
@@ -41633,7 +41633,7 @@ if ($ADD==999997)
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("New Password").": </td><td align=left style=\"display:table-cell; vertical-align:middle;\" NOWRAP><input type=text id=reg_pass name=pass size=50 maxlength=100 onkeyup=\"return pwdChanged('reg_pass','reg_pass_img');\"> &nbsp; &nbsp; "._QXZ("Strength").": <IMG id=reg_pass_img src='images/pixel.gif' style=\"vertical-align:middle;\" onLoad=\"return pwdChanged('reg_pass','reg_pass_img');\"></td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=left colspan=2>"._QXZ("You are required to change your password before you can continue on to Administration. A strong password has both lower case and upper case letters as well as at least one number. Your password must be from 2 to 20 characters in length and cannot contain any characters that are not letters or numbers. Be sure that this password is something that you can remember, because as soon as you make this change you will be prompted to enter your new password to log back in to Administration")."</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=left colspan=2>"._QXZ("You are required to change your password before you can continue on to Administration. The longer the password is, the stronger it will be. Your password must be from 2 to 100 characters in length and cannot contain any characters that are not letters or numbers. Be sure that this password is something that you can remember, because as soon as you make this change you will be prompted to enter your new password to log back in to Administration")."</td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center></form>\n";
@@ -41724,7 +41724,7 @@ if ($ADD==999996)
 			echo "<input type=hidden name=user value=\"$PHP_AUTH_USER\">\n";
 			echo "<center><TABLE width=$section_width cellspacing=3>\n";
 
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=left colspan=2>"._QXZ("You are required to change your password before you can continue on to Administration. A strong password has both lower case and upper case letters as well as at least one number. Your password must be from 2 to 20 characters in length and cannot contain any characters that are not letters or numbers. Be sure that this password is something that you can remember, because as soon as you complete this initial setup screen you will be prompted to enter your new password in again to log back in to Administration")."</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=left colspan=2>"._QXZ("You are required to change your password before you can continue on to Administration. The longer the password is, the stronger it will be. Your password must be from 2 to 100 characters in length and cannot contain any characters that are not letters or numbers. Be sure that this password is something that you can remember, because as soon as you complete this initial setup screen you will be prompted to enter your new password in again to log back in to Administration")."</td></tr>\n";
 
 			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("New Password").": </td><td align=left style=\"display:table-cell; vertical-align:middle;\" NOWRAP><input type=text id=reg_pass name=pass size=50 maxlength=100 onkeyup=\"return pwdChanged('reg_pass','reg_pass_img');\"> &nbsp; &nbsp; "._QXZ("Strength").": <IMG id=reg_pass_img src='images/pixel.gif' style=\"vertical-align:middle;\" onLoad=\"return pwdChanged('reg_pass','reg_pass_img');\"></td></tr>\n";
 
