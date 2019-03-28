@@ -20,7 +20,7 @@
 # Based on perl scripts in ViciDial from Matt Florell and post: 
 # http://www.vicidial.org/VICIDIALforum/viewtopic.php?p=22506&sid=ca5347cffa6f6382f56ce3db9fb3d068#22506
 #
-# Copyright (C) 2018  I. Taushanov, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  I. Taushanov, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 90615-1701 - First version
@@ -54,6 +54,7 @@
 # 171026-0105 - Added --wipe-closer-log flag
 # 180410-1728 - Added vicidial_agent_function_log archiving
 # 180712-1641 - Added --wipe-all-being-archived AND --did-log-days options
+# 190318-1541 - Added vicidial_amd_log archiving
 #
 
 $CALC_TEST=0;
@@ -1156,6 +1157,56 @@ if (!$T)
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 				}
 			##### END vicidial_log DAILY processing #####
+
+			##### BEGIN vicidial_amd_log DAILY processing #####
+			$stmtA = "SELECT count(*) from vicidial_amd_log;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$vicidial_amd_log_count =	$aryA[0];
+				}
+			$sthA->finish();
+
+			$stmtA = "SELECT count(*) from vicidial_amd_log_archive;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$vicidial_amd_log_archive_count =	$aryA[0];
+				}
+			$sthA->finish();
+
+			if (!$Q) {print "\nProcessing vicidial_amd_log table...  ($vicidial_amd_log_count|$vicidial_amd_log_archive_count)\n";}
+			$stmtA = "INSERT IGNORE INTO vicidial_amd_log_archive SELECT * from vicidial_amd_log;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			
+			$sthArows = $sthA->rows;
+			if (!$Q) {print "$sthArows rows inserted into vicidial_amd_log_archive table \n";}
+			
+			$rv = $sthA->err();
+			if (!$rv) 
+				{
+				$stmtA = "DELETE FROM vicidial_amd_log WHERE call_date < '$del_time';";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArows = $sthA->rows;
+				if (!$Q) {print "$sthArows rows deleted from vicidial_amd_log table \n";}
+
+				$stmtA = "optimize table vicidial_amd_log;";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+
+				$stmtA = "optimize table vicidial_amd_log_archive;";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				}
+			##### END vicidial_amd_log DAILY processing #####
 			}
 
 
@@ -1999,6 +2050,58 @@ if (!$T)
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		}
 
+
+	##### vicidial_amd_log
+	$stmtA = "SELECT count(*) from vicidial_amd_log;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$vicidial_amd_log_count =	$aryA[0];
+		}
+	$sthA->finish();
+
+	$stmtA = "SELECT count(*) from vicidial_amd_log_archive;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$vicidial_amd_log_archive_count =	$aryA[0];
+		}
+	$sthA->finish();
+
+	if (!$Q) {print "\nProcessing vicidial_amd_log table...  ($vicidial_amd_log_count|$vicidial_amd_log_archive_count)\n";}
+	$stmtA = "INSERT IGNORE INTO vicidial_amd_log_archive SELECT * from vicidial_amd_log;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	
+	$sthArows = $sthA->rows;
+	if (!$Q) {print "$sthArows rows inserted into vicidial_amd_log_archive table \n";}
+	
+	$rv = $sthA->err();
+	if (!$rv) 
+		{
+		if ($wipe_all > 0)
+			{$stmtA = "DELETE FROM vicidial_amd_log;";}
+		else
+			{$stmtA = "DELETE FROM vicidial_amd_log WHERE call_date < '$del_time';";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows deleted from vicidial_amd_log table \n";}
+
+		$stmtA = "optimize table vicidial_amd_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+
+		$stmtA = "optimize table vicidial_amd_log_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		}
 
 
 	##### server_performance

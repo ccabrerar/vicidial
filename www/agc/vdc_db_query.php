@@ -469,10 +469,11 @@
 # 190216-0805 - Fix for user-group, in-group and campaign allowed/permissions matching issues
 # 190220-1005 - Added vicidial_sessions_recent inserts when lead is set to INCALL status
 # 190312-0927 - Added more hide_call_log_info options
+# 190322-1557 - Fix for issue with wrong script background with list-script-override on outbound autodial calls
 #
 
-$version = '2.14-363';
-$build = '190312-0927';
+$version = '2.14-364';
+$build = '190322-1557';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=793;
@@ -8536,27 +8537,12 @@ if ($ACTION == 'VDADcheckINCOMING')
 					$VDCL_timer_action_destination =	$row[15];
 					}
 
-				$VDCL_ingroup_script_color='';
-				if ( (strlen($VDCL_campaign_script)>1) and ($VDCL_campaign_script != 'NONE') )
-					{
-					$stmt = "SELECT script_color from vicidial_scripts where script_id='$VDCL_campaign_script';";
-					if ($DB) {echo "$stmt\n";}
-					$rslt=mysql_to_mysqli($stmt, $link);
-						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00628',$user,$server_ip,$session_name,$one_mysql_log);}
-					$VDIG_scrptcolor_ct = mysqli_num_rows($rslt);
-					if ($VDIG_scrptcolor_ct > 0)
-						{
-						$row=mysqli_fetch_row($rslt);
-						$VDCL_ingroup_script_color	= $row[0];
-						}
-					}
-
 				$VDCL_group_web='';
 				$VDCL_group_name='';
 				### Check for List ID override settings
 				if (strlen($list_id)>0)
 					{
-					$stmt = "SELECT xferconf_a_number,xferconf_b_number,xferconf_c_number,xferconf_d_number,xferconf_e_number,web_form_address,web_form_address_two,list_name,web_form_address_three,list_description,status_group_id,default_xfer_group from vicidial_lists where list_id='$list_id';";
+					$stmt = "SELECT xferconf_a_number,xferconf_b_number,xferconf_c_number,xferconf_d_number,xferconf_e_number,web_form_address,web_form_address_two,list_name,web_form_address_three,list_description,status_group_id,default_xfer_group,agent_script_override from vicidial_lists where list_id='$list_id';";
 					if ($DB) {echo "$stmt\n";}
 					$rslt=mysql_to_mysqli($stmt, $link);
 						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00281',$user,$server_ip,$session_name,$one_mysql_log);}
@@ -8586,6 +8572,23 @@ if ($ACTION == 'VDADcheckINCOMING')
 						$status_group_gather_data = status_group_gather($row[10],'LIST');
 						if ( (strlen($row[11]) > 0) and (!preg_match("/---NONE---/",$row[11])) )
 							{$VDCL_default_xfer_group =	$row[11];}
+						if (strlen($row[12]) > 1)
+							{$VDCL_campaign_script =	$row[12];}
+						}
+					}
+
+				$VDCL_ingroup_script_color='';
+				if ( (strlen($VDCL_campaign_script)>1) and ($VDCL_campaign_script != 'NONE') )
+					{
+					$stmt = "SELECT script_color from vicidial_scripts where script_id='$VDCL_campaign_script';";
+					if ($DB) {echo "$stmt\n";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00628',$user,$server_ip,$session_name,$one_mysql_log);}
+					$VDIG_scrptcolor_ct = mysqli_num_rows($rslt);
+					if ($VDIG_scrptcolor_ct > 0)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$VDCL_ingroup_script_color	= $row[0];
 						}
 					}
 

@@ -1,0 +1,78 @@
+--- asterisk-13.21.1/apps/app_amd.c	2018-06-11 17:02:31.000000000 -0400
++++ asterisk-13.21.1.new/apps/app_amd.c	2019-03-20 13:02:25.675807594 -0400
+@@ -45,6 +45,7 @@
+ 
+ ASTERISK_FILE_VERSION(__FILE__, "$Revision$")
+ 
++#include <sys/time.h>
+ #include "asterisk/module.h"
+ #include "asterisk/lock.h"
+ #include "asterisk/channel.h"
+@@ -164,6 +165,7 @@
+ static void isAnsweringMachine(struct ast_channel *chan, const char *data)
+ {
+ 	int res = 0;
++	int audioFrameCount = 0;
+ 	struct ast_frame *f = NULL;
+ 	struct ast_dsp *silenceDetector = NULL;
+ 	int dspsilence = 0, framelength = 0;
+@@ -176,7 +178,7 @@
+ 	int iWordsCount = 0;
+ 	int currentState = STATE_IN_WORD;
+ 	int consecutiveVoiceDuration = 0;
+-	char amdCause[256] = "", amdStatus[256] = "";
++	char amdCause[256] = "", amdStatus[256] = "", amdStats[256] = "";
+ 	char *parse = ast_strdupa(data);
+ 
+ 	/* Lets set the initial values of the variables that will control the algorithm.
+@@ -277,6 +279,9 @@
+ 	/* Set silence threshold to specified value */
+ 	ast_dsp_set_threshold(silenceDetector, silenceThreshold);
+ 
++	/* Set our start time so we can tie the loop to real world time and not RTP updates */
++	struct timeval amd_tvstart = ast_tvnow();
++
+ 	/* Now we go into a loop waiting for frames from the channel */
+ 	while ((res = ast_waitfor(chan, 2 * maxWaitTimeForFrame)) > -1) {
+ 		int ms = 0;
+@@ -295,7 +300,24 @@
+ 			break;
+ 		}
+ 
++		/* Check to make sure we haven't gone over our real-world timeout in case frames get stalled for whatever reason */
++                if ( (ast_tvdiff_ms(ast_tvnow(), amd_tvstart)) > totalAnalysisTime ) {
++			ast_frfree(f);
++			strcpy(amdStatus , "NOTSURE");
++			if ( audioFrameCount == 0 ) {
++				ast_verb(3, "AMD: Channel [%s]. No audio date recieved in [%d] seconds.\n", ast_channel_name(chan), totalAnalysisTime);
++				sprintf(amdCause , "NOAUDIODATA-%d", iTotalTime);
++				break;
++			}
++                        ast_verb(3, "AMD: Channel [%s]. Timeout...\n", ast_channel_name(chan));
++                        sprintf(amdCause , "TOOLONG-%d", iTotalTime);
++                        break;
++                }
++
+ 		if (f->frametype == AST_FRAME_VOICE || f->frametype == AST_FRAME_CNG) {
++			/* keep track of the number of audio frames we get */
++			audioFrameCount++;
++
+ 			/* Figure out how long the frame is in milliseconds */
+ 			if (f->frametype == AST_FRAME_VOICE) {
+ 				framelength = (ast_codec_samples_count(f) / DEFAULT_SAMPLES_PER_MS);
+@@ -423,9 +445,15 @@
+ 		sprintf(amdCause , "TOOLONG-%d", iTotalTime);
+ 	}
+ 
++	sprintf( amdStats, "%d-%d-%d-%d-%d-%d-%d-%d-%d", 
++			iTotalTime, silenceDuration, initialSilence, 
++			afterGreetingSilence, voiceDuration, consecutiveVoiceDuration, 
++			greeting, iWordsCount, maximumNumberOfWords);
++
+ 	/* Set the status and cause on the channel */
+ 	pbx_builtin_setvar_helper(chan , "AMDSTATUS" , amdStatus);
+ 	pbx_builtin_setvar_helper(chan , "AMDCAUSE" , amdCause);
++	pbx_builtin_setvar_helper(chan , "AMDSTATS" , amdStats);
+ 
+ 	/* Restore channel read format */
+ 	if (readFormat && ast_set_read_format(chan, readFormat))

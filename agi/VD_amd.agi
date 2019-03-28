@@ -54,12 +54,13 @@
 # 180919-1831 - Fix for logging issue
 # 180924-1557 - Added called_count as AMM wildcard
 # 190216-0813 - Fix for user-group, in-group and campaign allowed/permissions matching issues
+# 190320-2331 - Added more logging options
 #
 
 $script = 'VD_amd.agi';
 
 $A = 1;		# set to 1 for AMD output messages mode
-$AMD_LOG = 1;	# set to 1 for logfile
+$AMD_LOG = 3;	# set to 1 for logfile and 2 forDB log, 3 for both
 $wav='.wav';
 
 ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
@@ -73,6 +74,7 @@ if ($sec < 10) {$sec = "0$sec";}
 
 $now_date_epoch = time();
 $now_date = "$year-$mon-$mday $hour:$min:$sec";
+$file_day = "$year$mon$mday";
 
 # default path to astguiclient configuration file:
 $PATHconf =		'/etc/astguiclient.conf';
@@ -252,10 +254,16 @@ if ( ($channel =~ /Local/i) && ($AST_ver !~ /^1\.0\.8|^1\.0\.9/) )
 
 $AMDSTATUS = $AGI->get_variable(AMDSTATUS);
 $AMDCAUSE =	$AGI->get_variable(AMDCAUSE);
+$AMDSTATS =	$AGI->get_variable(AMDSTATS);
+$AMDRESPONSE = $AMDCAUSE;
+$AMDRESPONSE =~ s/-.*//gi;
+$run_time = $AMDSTATS;
+$run_time =~ s/-.*//gi;
+if (length($run_time) < 1) {$run_time=0;}
 
 if ($A)
 	{
-	if ($AGILOG) {$agi_string = "AAAAA AMD results: |$AMDSTATUS|$AMDCAUSE|";   &agi_output;}
+	if ($AGILOG) {$agi_string = "AAAAA AMD results: |$AMDSTATUS|$AMDCAUSE|$AMDSTATS|";   &agi_output;}
 	}
 
 # Asterisk 1.2.X
@@ -265,12 +273,19 @@ if ($A)
 # AAAAA AMD results: |HUMAN|HUMAN-1000-1000|0000000000| 
 # AAAAA AMD results: |MACHINE|MAXWORDS-4-4|0000000000| 
 
-if ($AMD_LOG) 
+if ( ($AMD_LOG == 1) || ($AMD_LOG == 3) )
 	{
-	open(Lout, ">>$PATHlogs/AMD_log.txt")
-			|| die "Can't open $PATHlogs/AMD_log.txt: $!\n";
-	print Lout "$now_date|$VD_lead_id|      |$AMDSTATUS|$AMDCAUSE|$calleridnum|\n";
+	open(Lout, ">>$PATHlogs/AMD_log".$file_day.".txt")
+			|| die "Can't open $PATHlogs/AMD_log".$file_day.".txt: $!\n";
+	print Lout "$now_date|$VD_lead_id|      |$AMDSTATUS|$AMDCAUSE|$calleridname|$calleridnum|\n";
 	close(Lout);
+	}
+if ( ($AMD_LOG == 2) || ($AMD_LOG == 3) )
+	{
+	if ($AGILOG) {$agi_string = "AMD logging result to DB: $uniqueid $calleridname $VD_lead_id $AMDSTATUS $AMDCAUSE";   &agi_output;}
+	$stmtA = "INSERT INTO vicidial_amd_log (uniqueid,lead_id,call_date,caller_code,channel,server_ip,AMDSTATUS,AMDRESPONSE,AMDCAUSE,run_time,AMDSTATS) values('$uniqueid','$VD_lead_id','$now_date','$calleridname','$channel','$VARserver_ip','$AMDSTATUS','$AMDRESPONSE','$AMDCAUSE','$run_time','$AMDSTATS')";
+		if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+	$affected_rows = $dbhA->do($stmtA);
 	}
 
 

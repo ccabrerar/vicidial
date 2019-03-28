@@ -396,6 +396,12 @@ OTHER CHANGES:
 	to show only the last X number of calls in the Lead Info screen. Also 
 	added a User Override setting for this feature.
 
+111. Released VICIdial Manager Manual version 2.14-704a:
+	http://www.vicidial.org/store.php#MANAGER
+
+112. Added more logging for Asterisk AMD as well as beta AMD patch for logging
+	of NOAUDIODATA answered calls and more AMD stats gathering
+
 
 
 

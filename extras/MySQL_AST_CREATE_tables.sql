@@ -4026,6 +4026,22 @@ index(lead_id),
 index(call_date)
 ) ENGINE=MyISAM;
 
+CREATE TABLE vicidial_amd_log (
+call_date DATETIME,
+caller_code VARCHAR(30) default '',
+lead_id INT(9) UNSIGNED,
+uniqueid VARCHAR(20) default '',
+channel VARCHAR(100) default '',
+server_ip VARCHAR(60) NOT NULL,
+AMDSTATUS VARCHAR(10) default '',
+AMDRESPONSE VARCHAR(20) default '',
+AMDCAUSE VARCHAR(30) default '',
+run_time VARCHAR(20) default '0',
+AMDSTATS VARCHAR(100) default '',
+index (call_date),
+index (lead_id)
+) ENGINE=MyISAM;
+
 
 ALTER TABLE vicidial_email_list MODIFY message text character set utf8;
 
@@ -4245,6 +4261,9 @@ CREATE TABLE vicidial_recent_ascb_calls_archive LIKE vicidial_recent_ascb_calls;
 CREATE TABLE vicidial_ccc_log_archive LIKE vicidial_ccc_log;
 CREATE UNIQUE INDEX ccc_unq_key on vicidial_ccc_log_archive(uniqueid, call_date, lead_id);
 
+CREATE TABLE vicidial_amd_log_archive LIKE vicidial_amd_log;
+CREATE UNIQUE INDEX amd_unq_key on vicidial_amd_log_archive(uniqueid, call_date, lead_id);
+
 CREATE TABLE vicidial_sessions_recent_archive LIKE vicidial_sessions_recent;
 
 GRANT RELOAD ON *.* TO cron@'%';
@@ -4326,4 +4345,4 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1566',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1567',db_schema_update_date=NOW(),reload_timestamp=NOW();

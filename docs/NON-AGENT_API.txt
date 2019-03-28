@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2018-12-14
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2019-03-25
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -48,6 +48,7 @@ lead_status_search - displays all field values of all leads that match the statu
 call_status_stats - report on number of calls made by campaign and ingroup, with hourly and status breakdowns
 call_dispo_report - call disposition breakdown report
 lead_callback_info - outputs scheduled callback data for a specific lead
+agent_campaigns - looks up allowed campaigns/in-groups for a specific user
 
 
 New scripts:
@@ -140,6 +141,7 @@ Changes:
 180331-1716 - Added options to update_campaign, add_user, update_phone. Added function update_did
 180916-1059 - Added check for daily list reset limit
 181214-1606 - Added lead_callback_info function
+190325-1055 - Added agent_campaigns function
 
 
 API Functions use the 'function' variable
@@ -288,6 +290,41 @@ http://server/vicidial/non_agent_api.php?source=test&function=agent_ingroup_info
 Example responses:
 ERROR: agent_ingroup_info USER DOES NOT HAVE PERMISSION TO GET AGENT INFO - 6666|0
 ERROR: agent_ingroup_info INVALID USER ID - 1255|6666
+
+
+
+
+
+--------------------------------------------------------------------------------
+agent_campaigns - looks up allowed campaigns/in-groups for a specific user
+
+NOTE: api user for this function must have user_level set to 7 or higher
+
+REQUIRED FIELDS-
+agent_user -		2-20 characters
+source -		description of what originated the API call (maximum 20 characters)
+
+OPTIONAL FIELDS-
+campaign_id -		2-8 characters
+ignore_agentdirect -	Y or N, default is N. Exclude AGENTDIRECT in-groups from results or not
+
+SETTINGS FIELDS-
+stage -			the format of the exported data: csv, tab, pipe(default)
+header -		include a header(YES) or not(NO). This is optional, default is not to include a header
+
+Example URL strings for API calls:
+http://server/vicidial/non_agent_api.php?source=test&function=agent_campaigns&user=6666&pass=1234&agent_user=1000
+http://server/vicidial/non_agent_api.php?source=test&function=agent_campaigns&campaign_id=TESTCAMP&ignore_agentdirect=Y&user=6666&pass=1234&agent_user=1000&stage=csv
+
+Example responses:
+ERROR: agent_campaigns USER DOES NOT HAVE PERMISSION TO GET AGENT INFO - 6666|0
+ERROR: agent_campaigns INVALID USER ID - 1255|6666
+ERROR: agent_campaigns AGENT USER DOES NOT EXIST - 1000|6666
+ERROR: agent_campaigns THIS AGENT USER HAS NO AVAILABLE CAMPAIGNS - 1000|6666
+
+A SUCCESS response will not show "SUCCESS", but instead will just print the results in the following format:
+user|allowed_campaigns_list|allowed_ingroups_list
+1000|TESTCAMP-TEST123-TEST987|TEST_IN-TEST_IN2-TEST_IN3-TEST_IN4-SALESLINE
 
 
 

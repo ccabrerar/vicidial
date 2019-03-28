@@ -135,10 +135,11 @@
 # 180916-1059 - Added check for daily list reset limit
 # 181214-1606 - Added lead_callback_info function
 # 190313-0710 - Fix for update_lead custom fields issue #1134
+# 190325-1055 - Added agent_campaigns function
 #
 
-$version = '2.14-112';
-$build = '190313-0710';
+$version = '2.14-113';
+$build = '190325-1055';
 $api_url_log = 0;
 
 $startMS = microtime();
@@ -495,6 +496,8 @@ if (isset($_GET["phone_extension"]))			{$phone_extension=$_GET["phone_extension"
 	elseif (isset($_POST["phone_extension"]))	{$phone_extension=$_POST["phone_extension"];}
 if (isset($_GET["filter_clean_cid_number"]))			{$filter_clean_cid_number=$_GET["filter_clean_cid_number"];}
 	elseif (isset($_POST["filter_clean_cid_number"]))	{$filter_clean_cid_number=$_POST["filter_clean_cid_number"];}
+if (isset($_GET["ignore_agentdirect"]))				{$ignore_agentdirect=$_GET["ignore_agentdirect"];}
+	elseif (isset($_POST["ignore_agentdirect"]))	{$ignore_agentdirect=$_POST["ignore_agentdirect"];}
 
 
 header ("Content-type: text/html; charset=utf-8");
@@ -708,6 +711,7 @@ if ($non_latin < 1)
 	$voicemail_ext = preg_replace('/[^\*\#\.\_0-9a-zA-Z]/','',$voicemail_ext);
 	$extension = preg_replace('/[^-\*\#\.\:\/\@\_0-9a-zA-Z]/','',$extension);
 	$filter_clean_cid_number = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$filter_clean_cid_number);
+	$ignore_agentdirect = preg_replace('/[^A-Z]/','',$ignore_agentdirect);
 	}
 else
 	{
@@ -1754,6 +1758,193 @@ if ($function == 'agent_ingroup_info')
 	}
 ################################################################################
 ### END agent_ingroup_info
+################################################################################
+
+
+
+
+
+################################################################################
+### agent_campaigns - looks up allowed campaigns/in-groups for a specific user
+################################################################################
+if ($function == 'agent_campaigns')
+	{
+	if(strlen($source)<2)
+		{
+		$result = 'ERROR';
+		$result_reason = "Invalid Source";
+		echo "$result: $result_reason - $source\n";
+		api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+		echo "ERROR: Invalid Source: |$source|\n";
+		exit;
+		}
+	else
+		{
+		if ( (!preg_match("/ $function /",$api_allowed_functions)) and (!preg_match("/ALL_FUNCTIONS/",$api_allowed_functions)) )
+			{
+			$result = 'ERROR';
+			$result_reason = "auth USER DOES NOT HAVE PERMISSION TO USE THIS FUNCTION";
+			echo "$result: $result_reason: |$user|$function|\n";
+			$data = "$allowed_user";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1' and view_reports='1' and user_level > 6 and active='Y';";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$row=mysqli_fetch_row($rslt);
+		$allowed_user=$row[0];
+		if ($allowed_user < 1)
+			{
+			$result = 'ERROR';
+			$result_reason = "agent_campaigns USER DOES NOT HAVE PERMISSION TO GET AGENT INFO";
+			echo "$result: $result_reason: |$user|$allowed_user|\n";
+			$data = "$allowed_user";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		else
+			{
+			$stmt="SELECT user_level,user_group from vicidial_users where user='$user' and vdc_agent_api_access='1' and modify_users='1' and user_level >= 8;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$row=mysqli_fetch_row($rslt);
+			$user_level =				$row[0];
+			$LOGuser_group =			$row[1];
+
+			$stmt="SELECT allowed_campaigns,admin_viewable_groups from vicidial_user_groups where user_group='$LOGuser_group';";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$row=mysqli_fetch_row($rslt);
+			$LOGallowed_campaigns =			$row[0];
+			$LOGadmin_viewable_groups =		$row[1];
+
+			$LOGadmin_viewable_groupsSQL='';
+			$whereLOGadmin_viewable_groupsSQL='';
+			if ( (!preg_match('/\-\-ALL\-\-/i',$LOGadmin_viewable_groups)) and (strlen($LOGadmin_viewable_groups) > 3) )
+				{
+				$rawLOGadmin_viewable_groupsSQL = preg_replace("/ -/",'',$LOGadmin_viewable_groups);
+				$rawLOGadmin_viewable_groupsSQL = preg_replace("/ /","','",$rawLOGadmin_viewable_groupsSQL);
+				$LOGadmin_viewable_groupsSQL = "and user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')";
+				$whereLOGadmin_viewable_groupsSQL = "where user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')";
+				}
+
+			$stmt="SELECT count(*) from vicidial_users where user='$agent_user' $LOGadmin_viewable_groupsSQL;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$row=mysqli_fetch_row($rslt);
+			$group_exists=$row[0];
+			if ($group_exists < 1)
+				{
+				$result = 'ERROR';
+				$result_reason = "agent_campaigns AGENT USER DOES NOT EXIST";
+				$data = "$agent_user";
+				echo "$result: $result_reason: |$user|$data\n";
+				api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+				exit;
+				}
+			else
+				{
+				$stmt="SELECT user_group from vicidial_users where user='$agent_user';";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$row=mysqli_fetch_row($rslt);
+				$aLOGuser_group =			$row[0];
+
+				$stmt="SELECT allowed_campaigns from vicidial_user_groups where user_group='$aLOGuser_group';";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$row=mysqli_fetch_row($rslt);
+				$aLOGallowed_campaigns =	$row[0];
+
+				$aLOGallowed_campaignsSQL='';
+				$AwhereLOGallowed_campaignsSQL='';
+				if ( (!preg_match('/\-ALL/i', $aLOGallowed_campaigns)) )
+					{
+					$ArawLOGallowed_campaignsSQL = preg_replace("/ -/",'',$aLOGallowed_campaigns);
+					$ArawLOGallowed_campaignsSQL = preg_replace("/ /","','",$ArawLOGallowed_campaignsSQL);
+					$aLOGallowed_campaignsSQL = "and campaign_id IN('$ArawLOGallowed_campaignsSQL')";
+					$AwhereLOGallowed_campaignsSQL = "where campaign_id IN('$ArawLOGallowed_campaignsSQL')";
+					}
+
+				$campaignSQL='';
+				if (strlen($campaign_id) > 0) {$campaignSQL = "and campaign_id='$campaign_id'";}
+				$campaigns_list='';
+				$closer_campaigns_list='';
+
+				$stmt="SELECT campaign_id,closer_campaigns from vicidial_campaigns where active='Y' $aLOGallowed_campaignsSQL $campaignSQL;";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$li_recs = mysqli_num_rows($rslt);
+				$L=0;
+				while ($li_recs > $L)
+					{
+					$row=mysqli_fetch_row($rslt);
+					$campaigns_list .=	"'$row[0]',";
+					$campaigns_output_list .=	$row[0]."-";
+					$row[1] = preg_replace('/-$/','',$row[1]);
+					$row[1] = preg_replace("/ /","','",$row[1]);
+					$closer_campaigns_list .=	"'$row[1]',";
+					$L++;
+					}
+				$campaigns_list = preg_replace('/,$/i', '',$campaigns_list);
+				$campaigns_output_list = preg_replace('/-$/i', '',$campaigns_output_list);
+				$closer_campaigns_list = preg_replace('/,$/i', '',$closer_campaigns_list);
+				$closer_campaigns_list = preg_replace("/'',/",'',$closer_campaigns_list);
+				$closer_campaigns_list = preg_replace("/,''/",'',$closer_campaigns_list);
+				if ($DB > 0) {echo "DEBUG: |$campaigns_list|$campaigns_output_list|$closer_campaigns_list|\n";}
+				}
+			if (strlen($campaigns_list) < 3)
+				{
+				$result = 'ERROR';
+				$result_reason = "agent_campaigns THIS AGENT USER HAS NO AVAILABLE CAMPAIGNS";
+				$data = "$agent_user|$user|";
+				echo "$result: $result_reason: $data\n";
+				api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+				exit;
+				}
+			else
+				{
+				$ingroup_output_list='';
+				if (strlen($closer_campaigns_list) > 2)
+					{
+					$excludeAGENTDIRECTsql='';
+					if ($ignore_agentdirect == 'Y') {$excludeAGENTDIRECTsql = 'and group_id NOT LIKE "AGENTDIRECT%"';}
+					$stmt="SELECT group_id from vicidial_inbound_groups where active='Y' and group_id IN($closer_campaigns_list) $excludeAGENTDIRECTsql;";
+					$rslt=mysql_to_mysqli($stmt, $link);
+					$ig_recs = mysqli_num_rows($rslt);
+					$M=0;
+					while ($ig_recs > $M)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$ingroup_output_list .=	$row[0]."-";
+						$M++;
+						}
+					$ingroup_output_list = preg_replace('/-$/i', '',$ingroup_output_list);
+					}
+
+				$output='';
+				$DLset=0;
+				if ($stage == 'csv')
+					{$DL = ',';   $DLset++;}
+				if ($stage == 'tab')
+					{$DL = "\t";   $DLset++;}
+				if ($stage == 'pipe')
+					{$DL = '|';   $DLset++;}
+				if ($DLset < 1)
+					{$DL='|';}
+				if ($header == 'YES')
+					{$output .= 'user' . $DL . 'allowed_campaigns_list' . $DL . "allowed_ingroups_list\n";}
+
+				$output .= "$agent_user$DL$campaigns_output_list$DL$ingroup_output_list\n";
+
+				echo "$output";
+
+				$result = 'SUCCESS';
+				$data = "$user|$agent_user|$campaigns_output_list|$ingroup_output_list";
+				$result_reason = "agent_campaigns RESULTS FOUND: 1";
+
+				api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+				}
+			}
+		}
+	exit;
+	}
+################################################################################
+### END agent_campaigns
 ################################################################################
 
 

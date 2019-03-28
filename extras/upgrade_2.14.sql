@@ -818,3 +818,24 @@ ALTER TABLE vicidial_campaigns MODIFY hide_call_log_info ENUM('Y','N','SHOW_1','
 ALTER TABLE vicidial_users ADD hide_call_log_info ENUM('DISABLED','Y','N','SHOW_1','SHOW_2','SHOW_3','SHOW_4','SHOW_5','SHOW_6','SHOW_7','SHOW_8','SHOW_9','SHOW_10') default 'DISABLED';
 
 UPDATE system_settings SET db_schema_version='1566',db_schema_update_date=NOW() where db_schema_version < 1566;
+
+CREATE TABLE vicidial_amd_log (
+call_date DATETIME,
+caller_code VARCHAR(30) default '',
+lead_id INT(9) UNSIGNED,
+uniqueid VARCHAR(20) default '',
+channel VARCHAR(100) default '',
+server_ip VARCHAR(60) NOT NULL,
+AMDSTATUS VARCHAR(10) default '',
+AMDRESPONSE VARCHAR(20) default '',
+AMDCAUSE VARCHAR(30) default '',
+run_time VARCHAR(20) default '0',
+AMDSTATS VARCHAR(100) default '',
+index (call_date),
+index (lead_id)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_amd_log_archive LIKE vicidial_amd_log;
+CREATE UNIQUE INDEX amd_unq_key on vicidial_amd_log_archive(uniqueid, call_date, lead_id);
+
+UPDATE system_settings SET db_schema_version='1567',db_schema_update_date=NOW() where db_schema_version < 1567;
