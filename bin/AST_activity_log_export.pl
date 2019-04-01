@@ -18,6 +18,7 @@
 #
 # CHANGES
 # 190323-0549 - First version based on AST_call_log_export.pl
+# 190329-1451 - Added agent_log_id to vicidial_agent_log export
 #
 
 $txt = '.txt';
@@ -440,7 +441,7 @@ open(VALout, ">$PATHoutfileVAL")
 		|| die "Can't open $PATHoutfileVAL: $!\n";
 
 # user,event_time,lead_id,campaign_id,pause_sec,wait_sec,talk_sec,dispo_sec,dead_sec,status
-$stmtA = "SELECT user,CONVERT_TZ(event_time,$convert_tz),lead_id,campaign_id,pause_sec,wait_sec,talk_sec,dispo_sec,dead_sec,status from $vicidial_agent_log where $VALcampaignSQL and $VALdateSQL order by agent_log_id;";
+$stmtA = "SELECT user,CONVERT_TZ(event_time,$convert_tz),lead_id,campaign_id,pause_sec,wait_sec,talk_sec,dispo_sec,dead_sec,status,agent_log_id from $vicidial_agent_log where $VALcampaignSQL and $VALdateSQL order by agent_log_id;";
 if ($DBX) {print "|$stmtA|\n";}
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -460,20 +461,21 @@ while ($sthArows > $rec_count)
 	$dispo_sec =		$aryA[7];
 	$dead_sec =			$aryA[8];
 	$status =			$aryA[9];
+	$agent_log_id =		$aryA[10];
 
 	if ($output_format =~ /^pipe-basic$/) 
 		{
-		$str = "$user|$event_time|$lead_id|$campaign_id|$pause_sec|$wait_sec|$talk_sec|$dispo_sec|$dead_sec|$status\n";
+		$str = "$user|$event_time|$lead_id|$campaign_id|$pause_sec|$wait_sec|$talk_sec|$dispo_sec|$dead_sec|$status|$agent_log_id\n";
 		}
 
 	if ($output_format =~ /^tab-basic$/) 
 		{
-		$str = "$user\t$event_time\t$lead_id\t$campaign_id\t$pause_sec\t$wait_sec\t$talk_sec\t$dispo_sec\t$dead_sec\t$status\n";
+		$str = "$user\t$event_time\t$lead_id\t$campaign_id\t$pause_sec\t$wait_sec\t$talk_sec\t$dispo_sec\t$dead_sec\t$status\t$agent_log_id\n";
 		}
 
 	if ($output_format =~ /^csv-basic$/) 
 		{		
-		$str = "$user,$event_time,$lead_id,$campaign_id,$pause_sec,$wait_sec,$talk_sec,$dispo_sec,$dead_sec,$status\n";
+		$str = "$user,$event_time,$lead_id,$campaign_id,$pause_sec,$wait_sec,$talk_sec,$dispo_sec,$dead_sec,$status,$agent_log_id\n";
 		}
 
 	print VALout "$str"; 

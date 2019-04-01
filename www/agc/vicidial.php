@@ -609,10 +609,11 @@
 # 190108-0833 - Added manual_dial_validation option, updated dates for 2019
 # 190222-1316 - Added recent session per-call logging
 # 190310-2017 - Added mute_recordings system/campaign/user option
+# 190330-0815 - Added logged_in_refresh_link option
 #
 
-$version = '2.14-578c';
-$build = '190310-2017';
+$version = '2.14-579c';
+$build = '190330-0815';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=87;
 $one_mysql_log=0;
@@ -832,6 +833,7 @@ $consult_custom_delay	= '2';	# number of seconds to delay consultative transfers
 $mrglock_ig_select_ct	= '4';	# number of seconds to leave in-group select screen open if agent select is disabled
 $link_to_grey_version	= '1';	# show link to old grey version of agent screen at login screen, next to timeclock link
 $no_empty_session_warnings=0;	# set to 1 to disable empty session warnings on agent screen
+$logged_in_refresh_link = '0';	# set to 1 to allow clickable "Logged in as..." link at top to force Javascript refresh
 
 $TEST_all_statuses		= '0';	# TEST variable allows all statuses in dispo screen, FOR DEBUG ONLY
 
@@ -19318,7 +19320,11 @@ $zi=2;
     <input type="hidden" name="custom_field_values" id="custom_field_values" value="" />
     <input type="hidden" name="FORM_LOADED" id="FORM_LOADED" value="0" />
 	<font class="queue_text">
-	<a href="#" onclick="start_all_refresh();"><font class="queue_text"><?php echo _QXZ("Logged in as User"); ?></font></a><?php 
+	<?php
+	if ($logged_in_refresh_link > 0)
+		{echo "<a href=\"#\" onclick=\"start_all_refresh();\"><font class=\"queue_text\">"._QXZ("Logged in as User")."</font></a>";}
+	else
+		{echo "<font class=\"queue_text\">"._QXZ("Logged in as User")."</font>";}
 	echo _QXZ(": %1s on Phone: %2s",0,'',$VD_login,$SIP_user); 
 	if ($on_hook_agent == 'Y')
 		{echo "(<a href=\"#\" onclick=\"NoneInSessionCalL();return false;\">"._QXZ("ring")."</a>)";}

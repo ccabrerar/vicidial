@@ -120,9 +120,9 @@ $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $QUERY_STRING = getenv("QUERY_STRING");
 
-$Vreports = 'NONE, Real-Time Main Report, Real-Time Campaign Summary, Real-Time Whiteboard Report, Inbound Report, Inbound Report by DID, Inbound Service Level Report, Inbound Summary Hourly Report, Inbound Daily Report, Inbound DID Report, Inbound DID Summary Report, Agent DID Report, Inbound IVR Report, Inbound Forecasting Report, Advanced Forecasting Report, Outbound Calling Report, Outbound Summary Interval Report, Outbound IVR Report, Callmenu Survey Report, Outbound Lead Source Report, Fronter - Closer Report, Fronter - Closer Detail Report, Lists Campaign Statuses Report, Lists Statuses Report, Campaign Status List Report, Export Calls Report, Export Leads Report, Agent Time Detail, Agent Status Detail, Agent Inbound Status Summary, Agent Performance Detail, Team Performance Detail, Performance Comparison Report, Single Agent Daily, Single Agent Daily Time, User Group Login Report, User Group Hourly Report, User Group Detail Hourly Report, User Timeclock Report, User Group Timeclock Status Report, User Timeclock Detail Report, Server Performance Report, Administration Change Log, List Update Stats, User Stats, User Time Sheet, Download List, Dialer Inventory Report, Maximum System Stats, Maximum Stats Detail, Search Leads Logs, Email Log Report, Carrier Log Report, Campaign Debug, Asterisk Debug, Hangup Cause Report, Lists Pass Report, Called Counts List IDs Report, Agent Debug Log Report, Agent Parked Call Report, Agent-Manager Chat Log, Recording Access Log Report, API Log Report, Real-Time Monitoring Log Report';
+$Vreports = 'NONE, Real-Time Main Report, Real-Time Campaign Summary, Real-Time Whiteboard Report, Inbound Report, Inbound Report by DID, Inbound Service Level Report, Inbound Summary Hourly Report, Inbound Daily Report, Inbound DID Report, Inbound DID Summary Report, Agent DID Report, Inbound IVR Report, Inbound Forecasting Report, Advanced Forecasting Report, Outbound Calling Report, Outbound Summary Interval Report, Outbound IVR Report, Callmenu Survey Report, Outbound Lead Source Report, Fronter - Closer Report, Fronter - Closer Detail Report, Lists Campaign Statuses Report, Lists Statuses Report, Campaign Status List Report, Export Calls Report, Export Leads Report, Agent Time Detail, Agent Status Detail, Agent Inbound Status Summary, Agent Performance Detail, Team Performance Detail, Performance Comparison Report, Single Agent Daily, Single Agent Daily Time, User Group Login Report, User Group Hourly Report, User Group Detail Hourly Report, User Timeclock Report, User Group Timeclock Status Report, User Timeclock Detail Report, Server Performance Report, Administration Change Log, List Update Stats, User Stats, User Time Sheet, Download List, Dialer Inventory Report, Maximum System Stats, Maximum Stats Detail, Search Leads Logs, Email Log Report, Carrier Log Report, Campaign Debug, Asterisk Debug, Hangup Cause Report, Lists Pass Report, Called Counts List IDs Report, Agent Debug Log Report, Agent Parked Call Report, Agent-Manager Chat Log, Recording Access Log Report, API Log Report, Real-Time Monitoring Log Report, AMD Log Report';
 
-$UGreports = 'ALL REPORTS, NONE, Real-Time Main Report, Real-Time Campaign Summary, Real-Time Whiteboard Report, Inbound Report, Inbound Report by DID, Inbound Service Level Report, Inbound Summary Hourly Report, Inbound Daily Report, Inbound DID Report, Inbound DID Summary Report, Agent DID Report, Inbound Email Report, Inbound Chat Report, Inbound IVR Report, Inbound Forecasting Report, Advanced Forecasting Report, Outbound Calling Report, Outbound Summary Interval Report, Outbound IVR Report, Callmenu Survey Report, Outbound Lead Source Report, Fronter - Closer Report, Fronter - Closer Detail Report, Lists Campaign Statuses Report, Lists Statuses Report, Campaign Status List Report, Export Calls Report, Export Leads Report, Agent Time Detail, Agent Status Detail, Agent Inbound Status Summary, Agent Performance Detail, Team Performance Detail, Performance Comparison Report, Single Agent Daily, Single Agent Daily Time, User Group Login Report, User Group Hourly Report, User Group Detail Hourly Report, User Timeclock Report, User Group Timeclock Status Report, User Timeclock Detail Report, Server Performance Report, Administration Change Log, List Update Stats, User Stats, User Time Sheet, Download List, Dialer Inventory Report, Custom Reports Links, CallCard Search, Maximum System Stats, Maximum Stats Detail, Search Leads Logs, Email Log Report, Lists Pass Report, Called Counts List IDs Report, Front Page System Summary, Report Page Servers Summary, Admin Utilities Page, Agent Debug Log Report, Agent Parked Call Report, Agent-Manager Chat Log, Recording Access Log Report, API Log Report, Real-Time Monitoring Log Report';
+$UGreports = 'ALL REPORTS, NONE, Real-Time Main Report, Real-Time Campaign Summary, Real-Time Whiteboard Report, Inbound Report, Inbound Report by DID, Inbound Service Level Report, Inbound Summary Hourly Report, Inbound Daily Report, Inbound DID Report, Inbound DID Summary Report, Agent DID Report, Inbound Email Report, Inbound Chat Report, Inbound IVR Report, Inbound Forecasting Report, Advanced Forecasting Report, Outbound Calling Report, Outbound Summary Interval Report, Outbound IVR Report, Callmenu Survey Report, Outbound Lead Source Report, Fronter - Closer Report, Fronter - Closer Detail Report, Lists Campaign Statuses Report, Lists Statuses Report, Campaign Status List Report, Export Calls Report, Export Leads Report, Agent Time Detail, Agent Status Detail, Agent Inbound Status Summary, Agent Performance Detail, Team Performance Detail, Performance Comparison Report, Single Agent Daily, Single Agent Daily Time, User Group Login Report, User Group Hourly Report, User Group Detail Hourly Report, User Timeclock Report, User Group Timeclock Status Report, User Timeclock Detail Report, Server Performance Report, Administration Change Log, List Update Stats, User Stats, User Time Sheet, Download List, Dialer Inventory Report, Custom Reports Links, CallCard Search, Maximum System Stats, Maximum Stats Detail, Search Leads Logs, Email Log Report, Lists Pass Report, Called Counts List IDs Report, Front Page System Summary, Report Page Servers Summary, Admin Utilities Page, Agent Debug Log Report, Agent Parked Call Report, Agent-Manager Chat Log, Recording Access Log Report, API Log Report, Real-Time Monitoring Log Report, AMD Log Report';
 
 $Vtables = 'NONE,log_noanswer,did_agent_log,contact_information';
 
@@ -4484,12 +4484,14 @@ else
 # 190310-1909 - Added mute_recordings system setting and campaign/user options
 # 190311-2153 - Added indicators for lists being assigned to non-existing campaigns
 # 190312-0928 - Added more hide_call_log_info options
+# 190327-2311 - Added READ_ONLY settings container type
+# 190329-1909 - Added AMD Log Report
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-704a';
-$build = '190312-0928';
+$admin_version = '2.14-706a';
+$build = '190329-1909';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -9050,7 +9052,7 @@ if ($ADD==192111111111)
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Container ID").": </td><td align=left><input type=text name=container_id size=40 maxlength=40>$NWB#settings_containers-container_id$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Container Notes").": </td><td align=left><input type=text name=container_notes size=50 maxlength=255>$NWB#settings_containers-container_notes$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Container Type").": </td><td align=left><select size=1 name=container_type><option value='OTHER'>"._QXZ("OTHER")."</option><option value='PERL_CLI'>"._QXZ("PERL_CLI")."</option><option value='EMAIL_TEMPLATE'>"._QXZ("EMAIL_TEMPLATE")."</option><option value='AGI'>"._QXZ("AGI")."</option><option value='INGROUP_LIST'>"._QXZ("INGROUP_LIST")."</option><option value='CAMPAIGN_LIST'>"._QXZ("CAMPAIGN_LIST")."</option><option value='TIMEZONE_LIST'>"._QXZ("TIMEZONE_LIST")."</option><option value='DISPO_FILTER'>"._QXZ("DISPO_FILTER")."</option>$NWB#settings_containers-container_type$NWE</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Container Type").": </td><td align=left><select size=1 name=container_type><option value='OTHER'>"._QXZ("OTHER")."</option><option value='PERL_CLI'>"._QXZ("PERL_CLI")."</option><option value='EMAIL_TEMPLATE'>"._QXZ("EMAIL_TEMPLATE")."</option><option value='AGI'>"._QXZ("AGI")."</option><option value='INGROUP_LIST'>"._QXZ("INGROUP_LIST")."</option><option value='CAMPAIGN_LIST'>"._QXZ("CAMPAIGN_LIST")."</option><option value='TIMEZONE_LIST'>"._QXZ("TIMEZONE_LIST")."</option><option value='DISPO_FILTER'>"._QXZ("DISPO_FILTER")."</option><option value='READ_ONLY'>"._QXZ("READ_ONLY")."</option></select>$NWB#settings_containers-container_type$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
 		echo "$UUgroups_list";
 		echo "<option SELECTED value=\"---ALL---\">"._QXZ("All Admin User Groups")."</option>\n";
@@ -17094,7 +17096,10 @@ if ($ADD==492111111111)
 			{echo "<br>"._QXZ("SETTINGS CONTAINER NOT MODIFIED - Please go back and look at the data you entered")."\n";}
 		else
 			{
-			$stmt="UPDATE vicidial_settings_containers set container_notes='$container_notes',container_type='$container_type',user_group='$user_group',container_entry='" . mysqli_real_escape_string($link, $container_entry) ."' where container_id='$container_id';";
+			$container_entrySQL = ",container_entry='" . mysqli_real_escape_string($link, $container_entry) ."'";
+			if ($container_type == 'READ_ONLY')
+				{$container_entrySQL = '';}
+			$stmt="UPDATE vicidial_settings_containers set container_notes='$container_notes',container_type='$container_type',user_group='$user_group' $container_entrySQL where container_id='$container_id';";
 			$rslt=mysql_to_mysqli($stmt, $link);
 
 			echo "<br>"._QXZ("SETTINGS CONTAINER MODIFIED").": $container_id\n";
@@ -35659,15 +35664,21 @@ if ($ADD==392111111111)
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Container Notes").": </td><td align=left><input type=text name=container_notes size=50 maxlength=255 value=\"$container_notes\">$NWB#settings_containers-container_notes$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Container Type").": </td><td align=left><select size=1 name=container_type><option value='OTHER'>"._QXZ("OTHER")."</option><option value='PERL_CLI'>"._QXZ("PERL_CLI")."</option><option value='EMAIL_TEMPLATE'>"._QXZ("EMAIL_TEMPLATE")."</option><option value='AGI'>"._QXZ("AGI")."</option><option value='INGROUP_LIST'>"._QXZ("INGROUP_LIST")."</option><option value='CAMPAIGN_LIST'>"._QXZ("CAMPAIGN_LIST")."</option><option value='TIMEZONE_LIST'>"._QXZ("TIMEZONE_LIST")."</option><option value='DISPO_FILTER'>"._QXZ("DISPO_FILTER")."</option><option SELECTED value='$container_type'>"._QXZ("$container_type")."</option>$NWB#settings_containers-container_type$NWE</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Container Type").": </td><td align=left><select size=1 name=container_type><option value='OTHER'>"._QXZ("OTHER")."</option><option value='PERL_CLI'>"._QXZ("PERL_CLI")."</option><option value='EMAIL_TEMPLATE'>"._QXZ("EMAIL_TEMPLATE")."</option><option value='AGI'>"._QXZ("AGI")."</option><option value='INGROUP_LIST'>"._QXZ("INGROUP_LIST")."</option><option value='CAMPAIGN_LIST'>"._QXZ("CAMPAIGN_LIST")."</option><option value='TIMEZONE_LIST'>"._QXZ("TIMEZONE_LIST")."</option><option value='DISPO_FILTER'>"._QXZ("DISPO_FILTER")."</option><option value='READ_ONLY'>"._QXZ("READ_ONLY")."</option><option SELECTED value='$container_type'>"._QXZ("$container_type")."</option></select>$NWB#settings_containers-container_type$NWE</td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
 		echo "$UUgroups_list";
 		echo "<option SELECTED value=\"$user_group\">$user_group</option>\n";
 		echo "</select>$NWB#settings_containers-user_group$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Container Entry").": </td><td align=left><TEXTAREA NAME=container_entry ROWS=25 COLS=75>$container_entry</TEXTAREA> $NWB#settings_containers-container_entry$NWE</td></tr>\n";
-
+		if ($container_type == 'READ_ONLY')
+			{
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Container Entry").": </td><td align=left><PRE>$container_entry</PRE> $NWB#settings_containers-container_entry$NWE</td></tr>\n";
+			}
+		else
+			{
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Container Entry").": </td><td align=left><TEXTAREA NAME=container_entry ROWS=25 COLS=75>$container_entry</TEXTAREA> $NWB#settings_containers-container_entry$NWE</td></tr>\n";
+			}
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 
@@ -41840,6 +41851,7 @@ if ($ADD==999994)
 		echo "<LI><a href=\"AST_dial_log_report.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>"._QXZ("Dial Log Report")."</a></FONT>\n";
 		echo "<LI><a href=\"AST_carrier_log_report.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>"._QXZ("Carrier Log Report")."</a></FONT>\n";
 		echo "<LI><a href=\"AST_hangup_cause_report.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>"._QXZ("Hangup Cause Report")."</a></FONT>\n";
+		echo "<LI><a href=\"AST_AMD_log_report.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>"._QXZ("AMD Log Report")."</a></FONT>\n";
 		echo "<LI><a href=\"asterisk_debug.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>"._QXZ("Asterisk Debug Page")."</a></FONT>\n";
 		echo "<LI><a href=\"call_report_export_carrier.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>"._QXZ("Export Calls Report Carrier")."</a></FONT>\n";
 		echo "<LI><a href=\"AST_url_log_report.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>"._QXZ("URL Log Report")."</a></FONT>\n";

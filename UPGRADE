@@ -400,7 +400,8 @@ OTHER CHANGES:
 	http://www.vicidial.org/store.php#MANAGER
 
 112. Added more logging for Asterisk AMD as well as beta AMD patch for logging
-	of NOAUDIODATA answered calls and more AMD stats gathering
+	of NOAUDIODATA answered calls and more AMD stats gathering. Also added
+	an AMD Log Report to the Admin Utilities page.
 
 
 

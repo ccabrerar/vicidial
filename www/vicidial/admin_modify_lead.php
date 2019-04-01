@@ -94,6 +94,7 @@
 # 180506-1813 - Added switch_list log entry display
 # 180807-0957 - Added new diff logging code
 # 190310-2223 - Added indication of muted recordings by agent
+# 190329-1917 - Added display of AMD log info when CIDdisplay=Yes is set
 #
 
 require("dbconnect_mysqli.php");
@@ -227,6 +228,7 @@ $NOW_TIME = date("Y-m-d H:i:s");
 $date = date("r");
 $ip = getenv("REMOTE_ADDR");
 $browser = getenv("HTTP_USER_AGENT");
+$AMDcount=0;
 
 $htmlconvert=1;
 $nonselectable_statuses=0;
@@ -1384,6 +1386,18 @@ else
 				$outbound_cid = preg_replace("/\".*\" /",'',$outbound_cid);
 				}
 			$call_log .= "<td align=right nowrap><font size=2>&nbsp; $outbound_cid $caller_code</td><td align=right><font size=2>&nbsp; $row[0]</td>\n";
+			$AMDSTATUS='';	$AMDRESPONSE='';
+			$stmtA="SELECT AMDSTATUS,AMDRESPONSE FROM vicidial_amd_log WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and caller_code='$caller_code';";
+			$rsltA=mysql_to_mysqli($stmtA, $link);
+			$amd_to_print = mysqli_num_rows($rslt);
+			if ($amd_to_print > 0)
+				{
+				$rowA=mysqli_fetch_row($rsltA);
+				$AMDSTATUS =	$rowA[0];
+				$AMDRESPONSE =	$rowA[1];
+				$call_log .= "<td align=right nowrap><font size=2>&nbsp; $AMDSTATUS</td><td align=right><font size=2>&nbsp; $AMDRESPONSE</td>\n";
+				if (strlen($AMDSTATUS) > 0) {$AMDcount++;}
+				}
 			}
 		$call_log .= "</tr>\n";
 
@@ -2356,8 +2370,13 @@ else
 		echo "<B>"._QXZ("CALLS TO THIS LEAD").":</B>\n";
 		if ($CIDdisplay == "Yes")
 			{
-			echo "<TABLE width=1100 cellspacing=0 cellpadding=1>\n";
-			echo "<tr><td><font size=1># </td><td><font size=2>"._QXZ("DATE/TIME")." </td><td align=left><font size=2>"._QXZ("LENGTH")."</td><td align=left><font size=2> "._QXZ("STATUS")."</td><td align=left><font size=2> "._QXZ("TSR")."</td><td align=right><font size=2> "._QXZ("CAMPAIGN")."</td><td align=right><font size=2> "._QXZ("LIST")."</td><td align=right><font size=2> "._QXZ("LEAD")."</td><td align=right><font size=2> "._QXZ("HANGUP REASON")."</td><td align=right><font size=2> "._QXZ("PHONE")."</td><td align=center><font size=2> <a href=\"$PHP_SELF?lead_id=$lead_id&archive_search=$archive_search&archive_log=$archive_log&CIDdisplay=$altCIDdisplay\">"._QXZ("CALLER ID")."</a></td><td align=right><font size=2> <a href=\"$PHP_SELF?lead_id=$lead_id&archive_search=$archive_search&archive_log=$archive_log&CIDdisplay=$altCIDdisplay\">"._QXZ("UNIQUEID")."</a></td></tr>\n";
+			$out_log_width=1100;
+			if ($AMDcount > 0) {$out_log_width=1300;}
+			echo "<TABLE width=$out_log_width cellspacing=0 cellpadding=1>\n";
+			echo "<tr><td><font size=1># </td><td><font size=2>"._QXZ("DATE/TIME")." </td><td align=left><font size=2>"._QXZ("LENGTH")."</td><td align=left><font size=2> "._QXZ("STATUS")."</td><td align=left><font size=2> "._QXZ("TSR")."</td><td align=right><font size=2> "._QXZ("CAMPAIGN")."</td><td align=right><font size=2> "._QXZ("LIST")."</td><td align=right><font size=2> "._QXZ("LEAD")."</td><td align=right><font size=2> "._QXZ("HANGUP REASON")."</td><td align=right><font size=2> "._QXZ("PHONE")."</td><td align=center><font size=2> <a href=\"$PHP_SELF?lead_id=$lead_id&archive_search=$archive_search&archive_log=$archive_log&CIDdisplay=$altCIDdisplay\">"._QXZ("CALLER ID")."</a></td><td align=right><font size=2> <a href=\"$PHP_SELF?lead_id=$lead_id&archive_search=$archive_search&archive_log=$archive_log&CIDdisplay=$altCIDdisplay\">"._QXZ("UNIQUEID")."</a></td>";
+			if ($AMDcount > 0)
+				{echo "<td align=right><font size=2> "._QXZ("AMD STATUS")."</td><td align=right><font size=2> "._QXZ("AMD RESPONSE")."</td>";}
+			echo "</tr>\n";
 			}
 		else
 			{

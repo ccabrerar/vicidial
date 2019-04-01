@@ -1,7 +1,7 @@
 <?php
 # options.php - manually defined options for vicidial.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # rename this file to options.php for the settings here to go into effect
 #
@@ -15,6 +15,7 @@
 # 160910-1317 - Added use_agent_colors option
 # 180223-1657 - Added $INSERT_ variables
 # 180425-2035 - Added #INSERT_first_onload variable
+# 190330-0817 - Added logged_in_refresh_link
 #
 
 $conf_silent_prefix		= '5';	# vicidial_conferences prefix to enter silently and muted for recording
@@ -52,6 +53,7 @@ $mrglock_ig_select_ct	= '4';	# number of seconds to leave in-group select screen
 $link_to_grey_version	= '1';	# show link to old grey version of agent screen at login screen, next to timeclock link
 $use_agent_colors		= '1';	# agent chat colors
 $no_empty_session_warnings=0;	# set to 1 to disable empty session warnings on agent screen
+$logged_in_refresh_link = '0';	# set to 1 to allow clickable "Logged in as..." link at top to force Javascript refresh
 
 $TEST_all_statuses		= '0';	# TEST variable allows all statuses in dispo screen
 
