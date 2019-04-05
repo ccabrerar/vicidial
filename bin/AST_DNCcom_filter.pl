@@ -6,13 +6,14 @@
 #
 # !!! REQUIRES A SETTINGS CONTAINER CALLED "DNCDOTCOM" TO BE SET UP TO USE !!!
 #
-# Copyright (C) 2015  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # 151004-1606 - Initial Build
 # 151005-1256 - Added logging
 # 151019-1456 - Reorganzied to reduce vicidial_list locks and improve dnc.com response
 # 151022-1900 - Code clean up
 # 151202-1435 - Added URL option for settings container
+# 190405-0617 - Small fix based on DNC.com response values
 #
 
 # constants
@@ -341,6 +342,8 @@ if ($sthArows > 0)
 							# update the lead
 							if ( $dnccom_settings{'ADD_INFO_TO_COMMENTS'} eq 'YES' ) 
 								{
+								$line =~ s/['"`]//g;
+								$line =~ s/[^a-zA-Z0-9 _-]/|/g;
 								$stmtA = "UPDATE vicidial_list SET status = '$up_status', comments = CONCAT(comments,'!N$leads[$result_count][2]!N$line') where lead_id=$leads[$result_count][0] and phone_number='$leads[$result_count][1]';";
 								} 
 							else 
