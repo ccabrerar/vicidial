@@ -8081,7 +8081,7 @@ if ($stage == "end")
 
 	### update vicidial_carrier_log to match uniqueIDs
 	$beginUNIQUEID = preg_replace("/\..*/","",$uniqueid);
-	$stmt="UPDATE vicidial_carrier_log set uniqueid='$uniqueid' where lead_id=$lead_id and uniqueid LIKE \"$beginUNIQUEID%\";";
+	$stmt="UPDATE vicidial_carrier_log FORCE INDEX (lead_id) set uniqueid='$uniqueid' where lead_id=$lead_id and uniqueid LIKE \"$beginUNIQUEID%\";";
 		if ($format=='debug') {echo "\n<!-- $stmt -->";}
 	$rslt=mysql_to_mysqli($stmt, $link);
 		if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00299',$user,$server_ip,$session_name,$one_mysql_log);}
