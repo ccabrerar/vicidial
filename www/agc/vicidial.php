@@ -610,10 +610,11 @@
 # 190222-1316 - Added recent session per-call logging
 # 190310-2017 - Added mute_recordings system/campaign/user option
 # 190330-0815 - Added logged_in_refresh_link option
+# 190406-1615 - Added agent next_dial_my_callbacks override
 #
 
-$version = '2.14-579c';
-$build = '190330-0815';
+$version = '2.14-580c';
+$build = '190406-1615';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=87;
 $one_mysql_log=0;
