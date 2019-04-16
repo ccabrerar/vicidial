@@ -843,3 +843,9 @@ UPDATE system_settings SET db_schema_version='1567',db_schema_update_date=NOW() 
 ALTER TABLE vicidial_users ADD next_dial_my_callbacks ENUM('NOT_ACTIVE','DISABLED','ENABLED') default 'NOT_ACTIVE';
 
 UPDATE system_settings SET db_schema_version='1568',db_schema_update_date=NOW() where db_schema_version < 1568;
+
+ALTER TABLE system_settings ADD user_admin_redirect ENUM('1','0') default '0';
+
+ALTER TABLE vicidial_users ADD user_admin_redirect_url TEXT;
+
+UPDATE system_settings SET db_schema_version='1569',db_schema_update_date=NOW() where db_schema_version < 1569;

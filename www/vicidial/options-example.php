@@ -1,7 +1,7 @@
 <?php
 # options.php - manually defined options for vicidial admin scripts
 # 
-# Copyright (C) 2016  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # rename this file to options.php for the settings here to go into effect
 #
@@ -21,6 +21,7 @@
 # 160102-1249 - Added htmlconvert option for modify lead pages
 # 160106-1321 - Added disable_user_group_bulk_change option
 # 160715-0752 - Added graph_canvas_size option for HTML reports
+# 190414-1121 - Added RS_logoutLINK
 #
 
 # used by the realtime_report.php script
@@ -61,6 +62,7 @@ $RS_CARRIERstats =		0;	# 0=no, 1=yes
 $RS_PRESETstats =		0;	# 0=no, 1=yes
 $RS_AGENTtimeSTATS =	0;	# 0=no, 1=yes
 $RS_droppedOFtotal =	0;	# 0=no, 1=yes
+$RS_logoutLINK =		0;	# 0=no, 1=yes
 
 # used by agent reports
 $user_case =			0;		# 1=upper-case, 2-lower-case, 0-no-case-change

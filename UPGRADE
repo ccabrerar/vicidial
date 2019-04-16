@@ -403,6 +403,12 @@ OTHER CHANGES:
 	of NOAUDIODATA answered calls and more AMD stats gathering. Also added
 	an AMD Log Report to the Admin Utilities page.
 
+113. Added Admin User Redirect URL settings, which allows you to define a web 
+	address that a user is to be sent to when they log in to the admin web 
+	screen. This is usually used for level 7 report only users to send them 
+	to one specific report when they log in without seeing the admin web 
+	screen at all. Must be enabled in System Settings.
+
 
 
 

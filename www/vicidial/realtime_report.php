@@ -42,6 +42,7 @@
 # 180330-1344 - Added fix for WebRTC webphone microphone permissions
 # 181128-1040 - Added external_web_socket_url option
 # 190302-1927 - Added variable-length header icon tables
+# 190414-1106 - Made admin and summary report links conditional, RS_logoutLINK options.php option
 #
 
 $startMS = microtime();
@@ -549,6 +550,10 @@ if ( (!preg_match("/$report_name/",$LOGallowed_reports)) and (!preg_match("/ALL 
     echo _QXZ("You are not allowed to view this report").": |$PHP_AUTH_USER|$report_name|"._QXZ("$report_name")."|\n";
     exit;
 	}
+
+$SUMMARYauth=1;
+if ( (!preg_match("/Real-Time Campaign Summary/",$LOGallowed_reports)) and (!preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
+	{$SUMMARYauth=0;}
 
 $LOGallowed_campaignsSQL='';
 $whereLOGallowed_campaignsSQL='';
@@ -1743,12 +1748,22 @@ echo "<span style=\"position:absolute;left:10px;top:120px;z-index:14;\" id=agent
 echo " &nbsp; ";
 echo "</span>\n";
 echo "<a href=\"#\" onclick=\"update_variables('form_submit','','YES')\"><font class='top_settings_val'>"._QXZ("RELOAD NOW")."</font></a>";
-if (preg_match('/ALL\-ACTIVE/i',$group_string))
-	{echo " &nbsp; &nbsp; &nbsp; <a href=\"./admin.php?ADD=10\"><font class='top_settings_val'>"._QXZ("MODIFY")."</font></a> | \n";}
-else
-	{echo " &nbsp; &nbsp; &nbsp; <a href=\"./admin.php?ADD=34&campaign_id=$group\"><font class='top_settings_val'>"._QXZ("MODIFY")."</font></a> | \n";}
+if ($LOGuser_level > 7)
+	{
+	if (preg_match('/ALL\-ACTIVE/i',$group_string))
+		{echo " &nbsp; &nbsp; &nbsp; <a href=\"./admin.php?ADD=10\"><font class='top_settings_val'>"._QXZ("MODIFY")."</font></a> | \n";}
+	else
+		{echo " &nbsp; &nbsp; &nbsp; <a href=\"./admin.php?ADD=34&campaign_id=$group\"><font class='top_settings_val'>"._QXZ("MODIFY")."</font></a> | \n";}
+	}
 
-echo "<a href=\"./AST_timeonVDADallSUMMARY.php?RR=$RR&DB=$DB&adastats=$adastats\"><font class='top_settings_val'>"._QXZ("SUMMARY")."</font></a> </FONT>\n";
+if ($SUMMARYauth > 0)
+	{echo "<a href=\"./AST_timeonVDADallSUMMARY.php?RR=$RR&DB=$DB&adastats=$adastats\"><font class='top_settings_val'>"._QXZ("SUMMARY")."</font></a> \n";}
+
+if ($RS_logoutLINK > 0)
+	{echo " | <a href=\"./admin.php?force_logout=1\"><font class='top_settings_val'>"._QXZ("LOGOUT")."</font></a> \n";}
+
+echo "</FONT>\n";
+
 
 
 echo " &nbsp; &nbsp; &nbsp; <font class='top_settings_val'>"._QXZ("refresh").": <span id=refresh_countdown name=refresh_countdown></span></font>\n\n";

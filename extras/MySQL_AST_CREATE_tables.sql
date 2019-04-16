@@ -672,7 +672,8 @@ max_hopper_calls SMALLINT(5) UNSIGNED default '0',
 max_hopper_calls_hour SMALLINT(5) UNSIGNED default '0',
 mute_recordings ENUM('DISABLED','Y','N') default 'DISABLED',
 hide_call_log_info ENUM('DISABLED','Y','N','SHOW_1','SHOW_2','SHOW_3','SHOW_4','SHOW_5','SHOW_6','SHOW_7','SHOW_8','SHOW_9','SHOW_10') default 'DISABLED',
-next_dial_my_callbacks ENUM('NOT_ACTIVE','DISABLED','ENABLED') default 'NOT_ACTIVE'
+next_dial_my_callbacks ENUM('NOT_ACTIVE','DISABLED','ENABLED') default 'NOT_ACTIVE',
+user_admin_redirect_url TEXT
 ) ENGINE=MyISAM;
 
 CREATE UNIQUE INDEX user ON vicidial_users (user);
@@ -1811,7 +1812,8 @@ source_id_display ENUM('0','1') default '0',
 help_modification_date VARCHAR(20) default '0',
 agent_logout_link ENUM('0','1','2','3','4') default '1',
 manual_dial_validation ENUM('0','1','2','3','4') default '0',
-mute_recordings ENUM('1','0') default '0'
+mute_recordings ENUM('1','0') default '0',
+user_admin_redirect ENUM('1','0') default '0'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaigns_list_mix (
@@ -4346,4 +4348,4 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1568',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1569',db_schema_update_date=NOW(),reload_timestamp=NOW();
