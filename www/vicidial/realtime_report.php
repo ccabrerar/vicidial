@@ -43,12 +43,13 @@
 # 181128-1040 - Added external_web_socket_url option
 # 190302-1927 - Added variable-length header icon tables
 # 190414-1106 - Made admin and summary report links conditional, RS_logoutLINK options.php option
+# 190420-1729 - Added RS_ListenBarge options.php setting
 #
 
 $startMS = microtime();
 
-$version = '2.14-30';
-$build = '190302-1927';
+$version = '2.14-31';
+$build = '190420-1729';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -157,6 +158,8 @@ $webphone_bufw =	'250';
 $webphone_bufh =	'1';
 $webphone_pad =		'10';
 $webphone_clpos =	"<BR>  &nbsp; <a href=\"#\" onclick=\"hideDiv('webphone_content');\">"._QXZ("webphone")." -</a>";
+
+$RS_ListenBarge =		'MONITOR|BARGE|WHISPER';
 
 if (file_exists('options.php'))
 	{
@@ -777,13 +780,19 @@ $select_list .= _QXZ("Monitor").":  </TD><TD align=left><SELECT SIZE=1 NAME=moni
 $select_list .= "<option value=''";
 	if (strlen($monitor_active) < 2) {$select_list .= " selected";} 
 $select_list .= ">"._QXZ("NONE")."</option>";
-$select_list .= "<option value='MONITOR'";
-	if ($monitor_active=='MONITOR') {$select_list .= " selected";} 
-$select_list .= ">"._QXZ("MONITOR")."</option>";
-$select_list .= "<option value='BARGE'";
-	if ($monitor_active=='BARGE') {$select_list .= " selected";} 
-$select_list .= ">"._QXZ("BARGE")."</option>";
-if ($agent_whisper_enabled == '1')
+if (preg_match("/MONITOR/",$RS_ListenBarge) )
+	{
+	$select_list .= "<option value='MONITOR'";
+		if ($monitor_active=='MONITOR') {$select_list .= " selected";} 
+	$select_list .= ">"._QXZ("MONITOR")."</option>";
+	}
+if (preg_match("/BARGE/",$RS_ListenBarge) )
+	{
+	$select_list .= "<option value='BARGE'";
+		if ($monitor_active=='BARGE') {$select_list .= " selected";} 
+	$select_list .= ">"._QXZ("BARGE")."</option>";
+	}
+if ( ($agent_whisper_enabled == '1') and (preg_match("/WHISPER/",$RS_ListenBarge) ) )
 	{
 	$select_list .= "<option value='WHISPER'";
 		if ($monitor_active=='WHISPER') {$select_list .= " selected";} 

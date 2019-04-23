@@ -73,7 +73,8 @@ if (length($ARGV[0])>1)
 		if ($args =~ /--session-flush/i)
 			{
 			$session_flush=1;
-			print "\n----- SESSION FLUSH(vicidial_sessions_recent) ----- $session_flush \n\n";
+			if ($Q < 1)
+				{print "\n----- SESSION FLUSH(vicidial_sessions_recent) ----- $session_flush \n\n";}
 			}
 		if ($args =~ /--seconds=/i)
 			{

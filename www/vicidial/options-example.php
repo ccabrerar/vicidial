@@ -22,6 +22,7 @@
 # 160106-1321 - Added disable_user_group_bulk_change option
 # 160715-0752 - Added graph_canvas_size option for HTML reports
 # 190414-1121 - Added RS_logoutLINK
+# 190420-1722 - Added RS_ListenBarge
 #
 
 # used by the realtime_report.php script
@@ -63,6 +64,7 @@ $RS_PRESETstats =		0;	# 0=no, 1=yes
 $RS_AGENTtimeSTATS =	0;	# 0=no, 1=yes
 $RS_droppedOFtotal =	0;	# 0=no, 1=yes
 $RS_logoutLINK =		0;	# 0=no, 1=yes
+$RS_ListenBarge =		'MONITOR|BARGE|WHISPER';	# list of listen-related features separated by pipes: "MONITOR|BARGE|WHISPER"
 
 # used by agent reports
 $user_case =			0;		# 1=upper-case, 2-lower-case, 0-no-case-change

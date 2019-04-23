@@ -110,10 +110,11 @@
 # 180204-1538 - Added display of LIVE Inbound Callback Queue Calls
 # 190206-1616 - Added mobile device display variable
 # 190313-0607 - Fix for columns display issue #1141
+# 190420-1728 - Added RS_ListenBarge options.php setting
 #
 
-$version = '2.14-97';
-$build = '190313-0607';
+$version = '2.14-98';
+$build = '190420-1728';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -233,6 +234,13 @@ if ( (strlen($slave_db_server)>5) and (preg_match("/$report_name/",$reports_use_
 	$db_source = 'S';
 	require("dbconnect_mysqli.php");
 	echo "<!-- Using slave server $slave_db_server $db_source -->\n";
+	}
+
+$RS_ListenBarge =		'MONITOR|BARGE|WHISPER';
+
+if (file_exists('options.php'))
+	{
+	require('options.php');
 	}
 
 if (!isset($DB))			{$DB=0;}
@@ -706,13 +714,19 @@ $select_list .= _QXZ("Monitor").":  </TD><TD align=left><SELECT SIZE=1 NAME=moni
 $select_list .= "<option value=\"\"";
 	if (strlen($monitor_active) < 2) {$select_list .= " selected";} 
 $select_list .= ">"._QXZ("NONE")."</option>";
-$select_list .= "<option value=\"MONITOR\"";
-	if ($monitor_active=='MONITOR') {$select_list .= " selected";} 
-$select_list .= ">"._QXZ("MONITOR")."</option>";
-$select_list .= "<option value=\"BARGE\"";
-	if ($monitor_active=='BARGE') {$select_list .= " selected";} 
-$select_list .= ">"._QXZ("BARGE")."</option>";
-if ($agent_whisper_enabled == '1')
+if (preg_match("/MONITOR/",$RS_ListenBarge) )
+	{
+	$select_list .= "<option value=\"MONITOR\"";
+		if ($monitor_active=='MONITOR') {$select_list .= " selected";} 
+	$select_list .= ">"._QXZ("MONITOR")."</option>";
+	}
+if (preg_match("/BARGE/",$RS_ListenBarge) )
+	{
+	$select_list .= "<option value=\"BARGE\"";
+		if ($monitor_active=='BARGE') {$select_list .= " selected";} 
+	$select_list .= ">"._QXZ("BARGE")."</option>";
+	}
+if ( ($agent_whisper_enabled == '1') and (preg_match("/WHISPER/",$RS_ListenBarge) ) )
 	{
 	$select_list .= "<option value='WHISPER'";
 		if ($monitor_active=='WHISPER') {$select_list .= " selected";} 
@@ -2813,17 +2827,17 @@ if ($UGdisplay < 1)
 	$HDusergroup =	'';
 	$HTusergroup =	'';
 	}
-if ( ($SIPmonitorLINK<2) and ($IAXmonitorLINK<2) and (!preg_match("/MONITOR|BARGE|WHISPER/",$monitor_active) ) ) 
+if ( ($SIPmonitorLINK<2) and ($IAXmonitorLINK<2) and ( (!preg_match("/MONITOR|BARGE|WHISPER/",$monitor_active) ) or (!preg_match("/MONITOR/",$RS_ListenBarge) ) ) )
 	{
 	$HDlisten =		'';
 	$HTlisten =		'';
 	}
-if ( ($SIPmonitorLINK<2) and ($IAXmonitorLINK<2) and (!preg_match("/BARGE/",$monitor_active) ) ) 
+if ( ($SIPmonitorLINK<2) and ($IAXmonitorLINK<2) and ( (!preg_match("/BARGE/",$monitor_active) ) or (!preg_match("/BARGE/",$RS_ListenBarge) ) ) )
 	{
 	$HDbarge =		'';
 	$HTbarge =		'';
 	}
-if ( ($SIPmonitorLINK<2) and ($IAXmonitorLINK<2) and (!preg_match("/WHISPER/",$monitor_active) ) ) 
+if ( ($SIPmonitorLINK<2) and ($IAXmonitorLINK<2) and ( (!preg_match("/WHISPER/",$monitor_active) ) or (!preg_match("/WHISPER/",$RS_ListenBarge) ) ) )
 	{
 	$HDwhisper =		'';
 	$HTwhisper =		'';
@@ -3355,20 +3369,19 @@ if ($talking_to_print > 0)
 		$L='';
 		$R='';
 
-
 		if ($report_display_type=='TEXT')
 			{
 			if ($SIPmonitorLINK>0) {$L=" | <a href=\"sip:0$Lsessionid@$server_ip\">"._QXZ("LISTEN",6)."</a>";   $R='';}
 			if ($IAXmonitorLINK>0) {$L=" | <a href=\"iax:0$Lsessionid@$server_ip\">"._QXZ("LISTEN",6)."</a>";   $R='';}
 			if ($SIPmonitorLINK>1) {$R=" | <a href=\"sip:$Lsessionid@$server_ip\">"._QXZ("BARGE",5)."</a>";}
 			if ($IAXmonitorLINK>1) {$R=" | <a href=\"iax:$Lsessionid@$server_ip\">BARGE</a>";}
-			if ( (strlen($monitor_phone)>1) and (preg_match("/MONITOR|BARGE|WHISPER/",$monitor_active) ) )
+			if ( (strlen($monitor_phone)>1) and (preg_match("/MONITOR|BARGE|WHISPER/",$monitor_active) ) and (preg_match("/MONITOR/",$RS_ListenBarge) ) )
 				{$L=" | <a href=\"javascript:send_monitor('$Lsessionid','$Lserver_ip','MONITOR');\">"._QXZ("LISTEN",6)."</a>";   $R='';}
-			if ( (strlen($monitor_phone)>1) and (preg_match("/BARGE|WHISPER/",$monitor_active) ) )
+			if ( (strlen($monitor_phone)>1) and (preg_match("/BARGE|WHISPER/",$monitor_active) ) and (preg_match("/BARGE/",$RS_ListenBarge) ) )
 				{$R=" | <a href=\"javascript:send_monitor('$Lsessionid','$Lserver_ip','BARGE');\">"._QXZ("BARGE",5)."</a>";}
 			if ($SIPmonitorLINK>1) {$R=" | <a href=\"sip:47378218$Lsessionid@$server_ip\">WHISPER</a>";}
 			if ($IAXmonitorLINK>1) {$R=" | <a href=\"iax:47378218$Lsessionid@$server_ip\">WHISPER</a>";}
-			if ( (strlen($monitor_phone)>1) and (preg_match("/WHISPER/",$monitor_active) ) )
+			if ( (strlen($monitor_phone)>1) and (preg_match("/WHISPER/",$monitor_active) ) and (preg_match("/WHISPER/",$RS_ListenBarge) ) )
 				{$R=" | <a href=\"javascript:send_monitor('$Lsessionid','$Lserver_ip','WHISPER');\">WHISPER</a>";}
 
 			if ($CUSTPHONEdisplay > 0)	{$CP = " $G$custphone$EG |";}
@@ -3426,13 +3439,13 @@ if ($talking_to_print > 0)
 			if ($IAXmonitorLINK>0) {$L="<td NOWRAP align=center> <a href=\"iax:0$Lsessionid@$server_ip\">"._QXZ("LISTEN")."</a></td>";   $R='';}
 			if ($SIPmonitorLINK>1) {$R=" <td NOWRAP align=center> <a href=\"sip:$Lsessionid@$server_ip\">"._QXZ("BARGE")."</a></td>";}
 			if ($IAXmonitorLINK>1) {$R=" <td NOWRAP align=center> <a href=\"iax:$Lsessionid@$server_ip\">BARGE</a></td>";}
-			if ( (strlen($monitor_phone)>1) and (preg_match("/MONITOR|BARGE|WHISPER/",$monitor_active) ) )
+			if ( (strlen($monitor_phone)>1) and (preg_match("/MONITOR|BARGE|WHISPER/",$monitor_active) ) and (preg_match("/MONITOR/",$RS_ListenBarge) ) )
 				{$L="<td NOWRAP align=center> <a href=\"javascript:send_monitor('$Lsessionid','$Lserver_ip','MONITOR');\">"._QXZ("LISTEN")."</a></td>";   $R='';}
-			if ( (strlen($monitor_phone)>1) and (preg_match("/BARGE|WHISPER/",$monitor_active) ) )
+			if ( (strlen($monitor_phone)>1) and (preg_match("/BARGE|WHISPER/",$monitor_active) ) and (preg_match("/BARGE/",$RS_ListenBarge) ) )
 				{$R=" <td NOWRAP align=center> <a href=\"javascript:send_monitor('$Lsessionid','$Lserver_ip','BARGE');\">"._QXZ("BARGE")."</a></td>";}
 			if ($SIPmonitorLINK>1) {$R=" </td><td NOWRAP align=center> <a href=\"sip:47378218$Lsessionid@$server_ip\">WHISPER</a></td>";}
 			if ($IAXmonitorLINK>1) {$R=" </td><td NOWRAP align=center> <a href=\"iax:47378218$Lsessionid@$server_ip\">WHISPER</a></td>";}
-			if ( (strlen($monitor_phone)>1) and (preg_match("/WHISPER/",$monitor_active) ) )
+			if ( (strlen($monitor_phone)>1) and (preg_match("/WHISPER/",$monitor_active) ) and (preg_match("/WHISPER/",$RS_ListenBarge) ) )
 				{$R=" <td NOWRAP align=center> <a href=\"javascript:send_monitor('$Lsessionid','$Lserver_ip','WHISPER');\">WHISPER</a></td>";}
 
 			if ($CUSTPHONEdisplay > 0)	{$CP = " $G$custphone$EG </td><td NOWRAP align=right>";}

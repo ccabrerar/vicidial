@@ -19,6 +19,7 @@
 # CHANGES
 # 190323-0549 - First version based on AST_call_log_export.pl
 # 190329-1451 - Added agent_log_id to vicidial_agent_log export
+# 190420-1702 - Added --quoted-vl option
 #
 
 $txt = '.txt';
@@ -30,6 +31,7 @@ $DB=0;
 $uniqueidLIST='|';
 $filename='';
 $dateset=0;
+$quoted_vl=0;
 
 # Default FTP account variables
 $VARREPORT_host = '10.0.0.4';
@@ -101,6 +103,7 @@ if (length($ARGV[0])>1)
 		print "  [--campaign=XXX] = Campaign that sales will be pulled from, use ---ALL--- for all campaigns\n";
 		print "  [--without-camp=XXX] = Campaign that will be excluded from ALL\n";
 		print "  [--output-format=XXX] = Format of file. Default \"pipe-standard\"\n";
+		print "  [--quoted-vl] = Put vicidial_list export fields in quotes: \"field\"\n";
 		print "  [--ftp-transfer] = Send results file by FTP to another server\n";
 		print "  [--email-list=test@test.com:test2@test.com] = send email results to these addresses\n";
 		print "  [--email-sender=vicidial@localhost] = sender for the email results\n";
@@ -241,6 +244,11 @@ if (length($ARGV[0])>1)
 			$output_format = $data_in[1];
 			$output_format =~ s/ .*$//gi;
 			if (!$Q) {print "\n----- OUTPUT FORMAT: $output_format -----\n\n";}
+			}
+		if ($args =~ /--quoted-vl/i)
+			{
+			$quoted_vl=1;
+			if (!$Q) {print "\n----- QUOTED VICIDIAL_LIST FIELDS: $quoted_vl -----\n\n";}
 			}
 		if ($args =~ /-ftp-transfer/i)
 			{
@@ -592,41 +600,41 @@ if ($DB) {print "$sthArows|$stmtA|\n";}
 while ($sthArows > $rec_count)
 	{
 	@aryA = $sthA->fetchrow_array;
-	$lead_id =					$aryA[0];
-	$entry_date =				$aryA[1];
-	$modify_date =				$aryA[2];
-	$status =					$aryA[3];
-	$user =						$aryA[4];
-	$vendor_lead_code =			$aryA[5];
-	$source_id =				$aryA[6];
-	$list_id =					$aryA[7];
-	$gmt_offset_now =			$aryA[8];
-	$called_since_last_reset =	$aryA[9];
-	$phone_code =				$aryA[10];
-	$phone_number =				$aryA[11];
-	$title =					$aryA[12];
-	$first_name =				$aryA[13];
-	$middle_initial =			$aryA[14];
-	$last_name =				$aryA[15];
-	$address1 =					$aryA[16];
-	$address2 =					$aryA[17];
-	$address3 =					$aryA[18];
-	$city =						$aryA[19];
-	$state =					$aryA[20];
-	$province =					$aryA[21];
-	$postal_code =				$aryA[22];
-	$country_code =				$aryA[23];
-	$gender =					$aryA[24];
-	$date_of_birth =			$aryA[25];
-	$alt_phone =				$aryA[26];
-	$email =					$aryA[27];
-	$security_phrase =			$aryA[28];
-	$comments =					$aryA[29];
-	$called_count =				$aryA[30];
-	$last_local_call_time =		$aryA[31];
-	$rank =						$aryA[32];
-	$owner =					$aryA[33];
-	$entry_list_id =			$aryA[34];
+	$lead_id =					$aryA[0];   if ($quoted_vl > 0) {$lead_id = '"'.$lead_id.'"';}
+	$entry_date =				$aryA[1];   if ($quoted_vl > 0) {$entry_date = '"'.$entry_date.'"';}
+	$modify_date =				$aryA[2];   if ($quoted_vl > 0) {$modify_date = '"'.$modify_date.'"';}
+	$status =					$aryA[3];   if ($quoted_vl > 0) {$status = '"'.$status.'"';}
+	$user =						$aryA[4];   if ($quoted_vl > 0) {$user = '"'.$user.'"';}
+	$vendor_lead_code =			$aryA[5];   if ($quoted_vl > 0) {$vendor_lead_code = '"'.$vendor_lead_code.'"';}
+	$source_id =				$aryA[6];   if ($quoted_vl > 0) {$source_id = '"'.$source_id.'"';}
+	$list_id =					$aryA[7];   if ($quoted_vl > 0) {$list_id = '"'.$list_id.'"';}
+	$gmt_offset_now =			$aryA[8];   if ($quoted_vl > 0) {$gmt_offset_now = '"'.$gmt_offset_now.'"';}
+	$called_since_last_reset =	$aryA[9];   if ($quoted_vl > 0) {$called_since_last_reset = '"'.$called_since_last_reset.'"';}
+	$phone_code =				$aryA[10];   if ($quoted_vl > 0) {$phone_code = '"'.$phone_code.'"';}
+	$phone_number =				$aryA[11];   if ($quoted_vl > 0) {$phone_number = '"'.$phone_number.'"';}
+	$title =					$aryA[12];   if ($quoted_vl > 0) {$title = '"'.$title.'"';}
+	$first_name =				$aryA[13];   if ($quoted_vl > 0) {$first_name = '"'.$first_name.'"';}
+	$middle_initial =			$aryA[14];   if ($quoted_vl > 0) {$middle_initial = '"'.$middle_initial.'"';}
+	$last_name =				$aryA[15];   if ($quoted_vl > 0) {$last_name = '"'.$last_name.'"';}
+	$address1 =					$aryA[16];   if ($quoted_vl > 0) {$address1 = '"'.$address1.'"';}
+	$address2 =					$aryA[17];   if ($quoted_vl > 0) {$address2 = '"'.$address2.'"';}
+	$address3 =					$aryA[18];   if ($quoted_vl > 0) {$address3 = '"'.$address3.'"';}
+	$city =						$aryA[19];   if ($quoted_vl > 0) {$city = '"'.$city.'"';}
+	$state =					$aryA[20];   if ($quoted_vl > 0) {$state = '"'.$state.'"';}
+	$province =					$aryA[21];   if ($quoted_vl > 0) {$province = '"'.$province.'"';}
+	$postal_code =				$aryA[22];   if ($quoted_vl > 0) {$postal_code = '"'.$postal_code.'"';}
+	$country_code =				$aryA[23];   if ($quoted_vl > 0) {$country_code = '"'.$country_code.'"';}
+	$gender =					$aryA[24];   if ($quoted_vl > 0) {$gender = '"'.$gender.'"';}
+	$date_of_birth =			$aryA[25];   if ($quoted_vl > 0) {$date_of_birth = '"'.$date_of_birth.'"';}
+	$alt_phone =				$aryA[26];   if ($quoted_vl > 0) {$alt_phone = '"'.$alt_phone.'"';}
+	$email =					$aryA[27];   if ($quoted_vl > 0) {$email = '"'.$email.'"';}
+	$security_phrase =			$aryA[28];   if ($quoted_vl > 0) {$security_phrase = '"'.$security_phrase.'"';}
+	$comments =					$aryA[29];   if ($quoted_vl > 0) {$comments = '"'.$comments.'"';}
+	$called_count =				$aryA[30];   if ($quoted_vl > 0) {$called_count = '"'.$called_count.'"';}
+	$last_local_call_time =		$aryA[31];   if ($quoted_vl > 0) {$last_local_call_time = '"'.$last_local_call_time.'"';}
+	$rank =						$aryA[32];   if ($quoted_vl > 0) {$rank = '"'.$rank.'"';}
+	$owner =					$aryA[33];   if ($quoted_vl > 0) {$owner = '"'.$owner.'"';}
+	$entry_list_id =			$aryA[34];   if ($quoted_vl > 0) {$entry_list_id = '"'.$entry_list_id.'"';}
 
 	if ($output_format =~ /^pipe-basic$/) 
 		{
