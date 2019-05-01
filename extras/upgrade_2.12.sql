@@ -447,9 +447,9 @@ UPDATE vicidial_user_groups INNER JOIN system_settings ON system_settings.db_sch
 
 UPDATE system_settings SET db_schema_version='1445',db_schema_update_date=NOW() where db_schema_version < 1445;
 
-ALTER TABLE vicidial_campaigns ADD routing_initiated_recordings ENUM('Y','N') default 'N';
+ALTER TABLE vicidial_campaigns ADD routing_initiated_recordings ENUM('Y','N') default 'Y';
 
-ALTER TABLE vicidial_inbound_groups ADD routing_initiated_recordings ENUM('Y','N') default 'N';
+ALTER TABLE vicidial_inbound_groups ADD routing_initiated_recordings ENUM('Y','N') default 'Y';
 
 CREATE TABLE routing_initiated_recordings (
 recording_id INT(10) UNSIGNED PRIMARY KEY NOT NULL,
