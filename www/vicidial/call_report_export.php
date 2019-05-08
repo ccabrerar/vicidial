@@ -549,7 +549,7 @@ if ($run_export > 0)
 		}
 
 	$outbound_calls=0;
-	$export_rows='';
+	$export_rows=array();
 	$k=0;
 	if ($RUNcampaign > 0)
 		{
