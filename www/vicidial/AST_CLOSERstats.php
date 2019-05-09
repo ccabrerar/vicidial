@@ -1,7 +1,7 @@
 <?php 
 # AST_CLOSERstats.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES:
 # 60619-1714 - Added variable filtering to eliminate SQL injection attack threat
@@ -61,6 +61,7 @@
 # 171012-2015 - Fixed javascript/apache errors with graphs
 # 180323-2306 - Fix for user time calculation, subtracted queue_seconds
 # 180712-1508 - Fix for rare allowed reports issue
+# 190508-1900 - Streamlined DID check to optimize page load
 #
 
 $startMS = microtime();
@@ -633,17 +634,21 @@ if ($DID=='Y')
 	$did_SQL = preg_replace('/,$/i', '',$did_SQL);
 	if (strlen($did_SQL)<3) {$did_SQL="''";}
 
-	$stmt="select uniqueid from ".$vicidial_did_log_table." where did_id IN($did_SQL);";
-	$rslt=mysql_to_mysqli($stmt, $link);
-	if ($DB) {$MAIN.="$stmt\n";}
-	$unids_to_print = mysqli_num_rows($rslt);
-	$i=0;
-	while ($i < $unids_to_print)
+	if ($dids_to_print>0) 
 		{
-		$row=mysqli_fetch_row($rslt);
-		$unid_SQL .= "'$row[0]',";
-		$i++;
+		$stmt="select uniqueid from ".$vicidial_did_log_table." where did_id IN($did_SQL);";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		if ($DB) {$MAIN.="$stmt\n";}
+		$unids_to_print = mysqli_num_rows($rslt);
+		$i=0;
+		while ($i < $unids_to_print)
+			{
+			$row=mysqli_fetch_row($rslt);
+			$unid_SQL .= "'$row[0]',";
+			$i++;
+			}
 		}
+
 	$unid_SQL = preg_replace('/,$/i', '',$unid_SQL);
 	if (strlen($unid_SQL)<3) {$unid_SQL="''";}
 
@@ -684,31 +689,34 @@ if ($group_ct > 1)
 	$i=0;
 	while($i < $group_ct)
 		{
-		$did_id[$i]='0';
-		$DIDunid_SQL='';
-		$stmt="select did_id from vicidial_inbound_dids where did_pattern='$group[$i]';";
-		$rslt=mysql_to_mysqli($stmt, $link);
-		if ($DB) {$ASCII_text.="$stmt\n";}
-		$Sdids_to_print = mysqli_num_rows($rslt);
-		if ($Sdids_to_print > 0)
+		if ($DID=='Y') 
 			{
-			$row=mysqli_fetch_row($rslt);
-			$did_id[$i] = $row[0];
-			}
+			$did_id[$i]='0';
+			$DIDunid_SQL='';
+			$stmt="select did_id from vicidial_inbound_dids where did_pattern='$group[$i]';";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			if ($DB) {$ASCII_text.="$stmt\n";}
+			$Sdids_to_print = mysqli_num_rows($rslt);
+			if ($Sdids_to_print > 0)
+				{
+				$row=mysqli_fetch_row($rslt);
+				$did_id[$i] = $row[0];
 
-		$stmt="select uniqueid from ".$vicidial_did_log_table." where did_id='$did_id[$i]';";
-		$rslt=mysql_to_mysqli($stmt, $link);
-		if ($DB) {$ASCII_text.="$stmt\n";}
-		$DIDunids_to_print = mysqli_num_rows($rslt);
-		$k=0;
-		while ($k < $DIDunids_to_print)
-			{
-			$row=mysqli_fetch_row($rslt);
-			$DIDunid_SQL .= "'$row[0]',";
-			$k++;
+				$stmt="select uniqueid from ".$vicidial_did_log_table." where did_id='$did_id[$i]';";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				if ($DB) {$ASCII_text.="$stmt\n";}
+				$DIDunids_to_print = mysqli_num_rows($rslt);
+				$k=0;
+				while ($k < $DIDunids_to_print)
+					{
+					$row=mysqli_fetch_row($rslt);
+					$DIDunid_SQL .= "'$row[0]',";
+					$k++;
+					}
+				}
+			$DIDunid_SQL = preg_replace('/,$/i', '',$DIDunid_SQL);
+			if (strlen($DIDunid_SQL)<3) {$DIDunid_SQL="''";}
 			}
-		$DIDunid_SQL = preg_replace('/,$/i', '',$DIDunid_SQL);
-		if (strlen($DIDunid_SQL)<3) {$DIDunid_SQL="''";}
 
 		$stmt="select count(*),sum(length_in_sec) from ".$vicidial_closer_log_table." where call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' and campaign_id='$group[$i]';";
 		if ($DID=='Y')

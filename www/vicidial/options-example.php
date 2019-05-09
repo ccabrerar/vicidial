@@ -23,6 +23,7 @@
 # 160715-0752 - Added graph_canvas_size option for HTML reports
 # 190414-1121 - Added RS_logoutLINK
 # 190420-1722 - Added RS_ListenBarge
+# 190503-1544 - Added enable_status_mismatch_leadloader_option
 #
 
 # used by the realtime_report.php script
@@ -104,5 +105,8 @@ $disable_user_group_bulk_change=0;
 
 # canvas size in pixels for Chartjs-style graphs (width and height)
 $graph_canvas_size=600;
+
+# enable the leadloader's duplicate-with-status-mismatch setting
+$enable_status_mismatch_leadloader_option=0;
 
 ?>

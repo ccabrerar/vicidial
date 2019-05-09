@@ -4333,6 +4333,7 @@ INSERT INTO vicidial_statuses (status,status_name,selectable,human_answered,cate
 INSERT INTO vicidial_statuses (status,status_name,selectable,human_answered,category,sale,dnc,customer_contact,not_interested,unworkable,scheduled_callback,completed,answering_machine) values('QCFAIL','QC_FAIL_CALLBK','N','Y','QC','N','N','Y','N','N','Y','N','N');
 INSERT INTO vicidial_statuses (status,status_name,selectable,human_answered,category,sale,dnc,customer_contact,not_interested,unworkable,scheduled_callback,completed,answering_machine) values('ADCT','Disconnected Number Temporary','N','N','UNDEFINED','N','N','N','N','N','N','N','N');
 INSERT INTO vicidial_statuses (status,status_name,selectable,human_answered,category,sale,dnc,customer_contact,not_interested,unworkable,scheduled_callback,completed,answering_machine) values('LSMERG','Agent lead search old lead mrg','N','N','UNDEFINED','N','N','N','N','N','N','N','N');
+INSERT INTO vicidial_statuses (status,status_name,selectable,human_answered,category,sale,dnc,customer_contact,not_interested,unworkable,scheduled_callback,completed,answering_machine) values('DAIR','Dead Air','Y','N','UNDEFINED','N','N','N','N','N','N','N','N');
 
 INSERT INTO vicidial_qc_codes (code,code_name,qc_result_type) VALUES ('QCPASS','PASS','PASS');
 INSERT INTO vicidial_qc_codes (code,code_name,qc_result_type) VALUES ('QCFAIL','FAIL','FAIL');
