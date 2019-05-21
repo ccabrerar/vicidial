@@ -86,7 +86,10 @@ require("functions.php");
 
 $enable_status_mismatch_leadloader_option=0;
 
-require("options.php");
+if (file_exists('options.php'))
+	{
+	require('options.php');
+	}
 
 $US='_';
 $MT[0]='';
