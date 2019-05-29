@@ -24,6 +24,7 @@
 # 190414-1121 - Added RS_logoutLINK
 # 190420-1722 - Added RS_ListenBarge
 # 190503-1544 - Added enable_status_mismatch_leadloader_option
+# 190525-2145 - Added RS_agentWAIT option
 #
 
 # used by the realtime_report.php script
@@ -66,6 +67,8 @@ $RS_AGENTtimeSTATS =	0;	# 0=no, 1=yes
 $RS_droppedOFtotal =	0;	# 0=no, 1=yes
 $RS_logoutLINK =		0;	# 0=no, 1=yes
 $RS_ListenBarge =		'MONITOR|BARGE|WHISPER';	# list of listen-related features separated by pipes: "MONITOR|BARGE|WHISPER"
+$RS_agentWAIT =			3;	# 3 or 4
+
 
 # used by agent reports
 $user_case =			0;		# 1=upper-case, 2-lower-case, 0-no-case-change

@@ -37,6 +37,7 @@
 # 180611-1703 - Added instructions for Dead Trigger URL
 # 180909-1907 - Added channel_group variable
 # 190129-1855 - Added --A--RUSfullname--B-- special variable flag
+# 190521-1715 - Added --A--dispo--B-- and --A--dispo_name--B-- to email_body
 #
 
 $api_script = 'send_email';
@@ -619,6 +620,8 @@ if ($match_found > 0)
 						{
 						$email_body = preg_replace('/^VAR|--A--CF_uses_custom_fields--B--/','',$email_body);
 						$email_body = preg_replace('/--A--lead_id--B--/i',"$lead_id",$email_body);
+						$email_body = preg_replace('/--A--dispo--B--/i',"$dispo",$email_body);
+						$email_body = preg_replace('/--A--dispo_name--B--/i',"$dispo_name",$email_body);
 						$email_body = preg_replace('/--A--vendor_id--B--/i',"$vendor_id",$email_body);
 						$email_body = preg_replace('/--A--vendor_lead_code--B--/i',"$vendor_lead_code",$email_body);
 						$email_body = preg_replace('/--A--list_id--B--/i',"$list_id",$email_body);

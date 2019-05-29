@@ -21,7 +21,7 @@
 #  - R = Recycled leads
 #  - S = Standard hopper load
 #
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 50810-1613 - Added database server variable definitions lookup
@@ -93,10 +93,11 @@
 # 180419-1109 - Fix for list mix to use call count limit on initial count, issue #1094
 # 180924-1734 - Added callback_dnc campaign option
 # 190213-1207 - Added additional $VLforce_index flags, for high-volume dialing systems
+# 190524-1228 - Fix for lead filters with 'NONE' in the filter ID
 #
 
 # constants
-$build = '190213-1207';
+$build = '190524-1228';
 $DB=0;  # Debug flag, set to 0 for no debug messages. Can be overriden with CLI --debug flag
 $US='__';
 $MT[0]='';
@@ -2527,7 +2528,7 @@ foreach(@campaign_id)
 			if ($DB) {print "     campaign mix: $list_order_mix[$i] |$vcl_id[$i] - $vcl_name[$i]|$list_mix_container[$i]|$x|$mix_method[$i]|\n";}
 			}
 
-		if ( ($lead_filter_id[$i] !~ /NONE/) && (length($lead_filter_id[$i])>0) )
+		if ( ($lead_filter_id[$i] !~ /^NONE$/) && (length($lead_filter_id[$i])>0) )
 			{
 			### Get SQL of lead filter for the campaign ###
 			$stmtA = "SELECT lead_filter_sql FROM vicidial_lead_filters where lead_filter_id='$lead_filter_id[$i]';";

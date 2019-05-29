@@ -112,10 +112,11 @@
 # 190313-0607 - Fix for columns display issue #1141
 # 190420-1728 - Added RS_ListenBarge options.php setting
 # 190513-1711 - Added ingroup filter
+# 190525-2133 - Added new agent time segment display
 #
 
-$version = '2.14-99';
-$build = '190513-1711';
+$version = '2.14-100';
+$build = '190525-2133';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -240,6 +241,7 @@ if ( (strlen($slave_db_server)>5) and (preg_match("/$report_name/",$reports_use_
 	}
 
 $RS_ListenBarge =		'MONITOR|BARGE|WHISPER';
+$RS_agentWAIT =			3;
 
 if (file_exists('options.php'))
 	{
@@ -1187,6 +1189,7 @@ else
 		.green {color: white; background-color: green}
 		.red {color: white; background-color: red}
 		.lightblue {color: black; background-color: #ADD8E6}
+		.rust {color: black; background-color: #F47442}
 		.blue {color: white; background-color: blue}
 		.midnightblue {color: white; background-color: #191970}
 		.purple {color: white; background-color: purple}
@@ -2278,6 +2281,7 @@ if ($campaign_allow_inbound > 0)
 		$closer_campaignsSQL=$filter_closer_campaigns;
 		}
 
+	$closer_campaignsSQL=preg_replace('/,$/', '', $closer_campaignsSQL);
 	
 	$stmtB="from vicidial_auto_calls where status NOT IN('XFER') and ( (call_type='IN' and campaign_id IN($closer_campaignsSQL)) or (call_type IN('OUT','OUTBALANCE') $group_SQLand) ) order by queue_priority desc,campaign_id,call_time;";
 	}
@@ -3460,9 +3464,19 @@ if ($talking_to_print > 0)
 		if ( (preg_match("/READY/i",$status)) or (preg_match("/CLOSER/i",$status)) ) {$agent_ready++;  $agent_total++;}
 		if ( (preg_match("/READY/i",$status)) or (preg_match("/CLOSER/i",$status)) ) 
 			{
-			$G='<SPAN class="lightblue"><B>'; $EG='</B></SPAN>';  $tr_class='TRlightblue';
-			if ($call_time_S >= 60) {$G='<SPAN class="blue"><B>'; $EG='</B></SPAN>'; $tr_class='TRblue';}
-			if ($call_time_S >= 300) {$G='<SPAN class="midnightblue"><B>'; $EG='</B></SPAN>'; $tr_class='TRmidnightblue';}
+			if ($RS_agentWAIT == 4)
+				{
+				$G='<SPAN class="lightblue"><B>'; $EG='</B></SPAN>';  $tr_class='TRlightblue';
+				if ($call_time_S >= 30) {$G='<SPAN class="rust"><B>'; $EG='</B></SPAN>'; $tr_class='TRrust';}
+				if ($call_time_S >= 60) {$G='<SPAN class="blue"><B>'; $EG='</B></SPAN>'; $tr_class='TRblue';}
+				if ($call_time_S >= 300) {$G='<SPAN class="midnightblue"><B>'; $EG='</B></SPAN>'; $tr_class='TRmidnightblue';}
+				}
+			else
+				{
+				$G='<SPAN class="lightblue"><B>'; $EG='</B></SPAN>';  $tr_class='TRlightblue';
+				if ($call_time_S >= 60) {$G='<SPAN class="blue"><B>'; $EG='</B></SPAN>'; $tr_class='TRblue';}
+				if ($call_time_S >= 300) {$G='<SPAN class="midnightblue"><B>'; $EG='</B></SPAN>'; $tr_class='TRmidnightblue';}
+				}
 			}
 
 		if ($Astatus[$i] == 'RING')
@@ -3617,9 +3631,19 @@ if ($talking_to_print > 0)
 #	$Aecho .= "  <SPAN class=\"orange\"><B>          </SPAN> - "._QXZ("Balanced call")."</B>\n";
 	$Aecho .= "  <SPAN class=\"red\"><B>          </SPAN> - "._QXZ("Agent chatting")."</B>\n";
 	$Aecho .= "  <SPAN class=\"orange\"><B>          </SPAN> - "._QXZ("Agent in email")."</B>\n";
-	$Aecho .= "  <SPAN class=\"lightblue\"><B>          </SPAN> - "._QXZ("Agent waiting for call")."</B>\n";
-	$Aecho .= "  <SPAN class=\"blue\"><B>          </SPAN> - "._QXZ("Agent waiting for call > 1 minute")."</B>\n";
-	$Aecho .= "  <SPAN class=\"midnightblue\"><B>          </SPAN> - "._QXZ("Agent waiting for call > 5 minutes")."</B>\n";
+	if ($RS_agentWAIT == 4)
+		{
+		$Aecho .= "  <SPAN class=\"lightblue\"><B>          </SPAN> - "._QXZ("Agent waiting for call")."</B>\n";
+		$Aecho .= "  <SPAN class=\"rust\"><B>          </SPAN> - "._QXZ("Agent waiting for call > 30 seconds")."</B>\n";
+		$Aecho .= "  <SPAN class=\"blue\"><B>          </SPAN> - "._QXZ("Agent waiting for call > 1 minute")."</B>\n";
+		$Aecho .= "  <SPAN class=\"midnightblue\"><B>          </SPAN> - "._QXZ("Agent waiting for call > 5 minutes")."</B>\n";
+		}
+	else
+		{
+		$Aecho .= "  <SPAN class=\"lightblue\"><B>          </SPAN> - "._QXZ("Agent waiting for call")."</B>\n";
+		$Aecho .= "  <SPAN class=\"blue\"><B>          </SPAN> - "._QXZ("Agent waiting for call > 1 minute")."</B>\n";
+		$Aecho .= "  <SPAN class=\"midnightblue\"><B>          </SPAN> - "._QXZ("Agent waiting for call > 5 minutes")."</B>\n";
+		}
 	$Aecho .= "  <SPAN class=\"thistle\"><B>          </SPAN> - "._QXZ("Agent on call > 10 seconds")."</B>\n";
 	$Aecho .= "  <SPAN class=\"violet\"><B>          </SPAN> - "._QXZ("Agent on call > 1 minute")."</B>\n";
 	$Aecho .= "  <SPAN class=\"purple\"><B>          </SPAN> - "._QXZ("Agent on call > 5 minutes")."</B>\n";

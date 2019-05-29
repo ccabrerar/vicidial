@@ -45,12 +45,13 @@
 # 190414-1106 - Made admin and summary report links conditional, RS_logoutLINK options.php option
 # 190420-1729 - Added RS_ListenBarge options.php setting
 # 190513-1711 - Added ingroup filter
+# 190525-2205 - Added rust color definition
 #
 
 $startMS = microtime();
 
-$version = '2.14-32';
-$build = '190513-1711';
+$version = '2.14-33';
+$build = '190525-2205';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -1699,6 +1700,7 @@ function update_variables(task_option,task_choice,force_reload)
 	.green {color: white; background-color: green;}
 	.red {color: white; background-color: red;}
 	.lightblue {color: black; background-color: #ADD8E6;}
+	.rust {color: black; background-color: #F47442}
 	.blue {color: white; background-color: blue;}
 	.midnightblue {color: white; background-color: #191970;}
 	.purple {color: white; background-color: purple;}
@@ -1717,6 +1719,7 @@ function update_variables(task_option,task_choice,force_reload)
 	.Hgreen {color: white; background-color: green; font-size: 11;}
 	.Hred {color: white; background-color: red; font-size: 11;}
 	.Hlightblue {color: black; background-color: #ADD8E6; font-size: 11;}
+	.Hrust {color: black; background-color: #F47442; font-size: 11;}
 	.Hblue {color: white; background-color: blue; font-size: 11;}
 	.Hmidnightblue {color: white; background-color: #191970; font-size: 11;}
 	.Hpurple {color: white; background-color: purple; font-size: 11;}
@@ -1735,6 +1738,7 @@ function update_variables(task_option,task_choice,force_reload)
 	tr.TRgreen {background-color: green}
 	tr.TRred {background-color: red}
 	tr.TRlightblue {background-color: #ADD8E6}
+	tr.TRrust {background-color: #F47442}
 	tr.TRblue {background-color: blue}
 	tr.TRmidnightblue {background-color: #191970}
 	tr.TRpurple {background-color: purple}
