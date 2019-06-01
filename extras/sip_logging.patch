@@ -1,0 +1,50 @@
+--- ../asterisk-13.21.1.stock/channels/chan_sip.c	2018-06-11 17:02:31.000000000 -0400
++++ channels/chan_sip.c	2019-05-28 22:08:06.304964097 -0400
+@@ -6528,6 +6528,22 @@
+ 								dialog_unref(_data, "dialog ptr dec when SCHED_REPLACE del op succeeded"),
+ 								dialog_unref(p, "dialog ptr dec when SCHED_REPLACE add failed"),
+ 								dialog_ref(p, "dialog ptr inc when SCHED_REPLACE add succeeded") );
++
++		if ( p->owner ) {
++			manager_event(EVENT_FLAG_CALL, "SIPInvite",
++				"Channel: %s\r\n"
++				"Uniqueid: %s\r\n"
++				"SIPCallID: %s\r\n"
++				"CallerIDName: %s\r\n"
++				"ConnectedLineName: %s\r\n",
++				ast_channel_name(p->owner),
++				ast_channel_uniqueid(p->owner),
++				p->callid,
++				ast_channel_caller(p->owner)->id.name.str,
++				ast_channel_connected(p->owner)->id.name.str
++			);
++		}
++
+ 		sip_pvt_unlock(p);
+ 	}
+ 	return res;
+@@ -24846,6 +24862,24 @@
+ 			ast_channel_hangupcause_set(owner, hangup_sip2cause(resp));
+ 	}
+ 
++	if ( p->owner ) {
++		manager_event(EVENT_FLAG_CALL, "SIPResponse",
++			"Response: %d\r\n"
++			"Channel: %s\r\n"
++			"Uniqueid: %s\r\n"
++			"SIPCallID: %s\r\n"
++			"CallerIDName: %s\r\n"
++			"ConnectedLineName: %s\r\n",
++ 			resp,
++			ast_channel_name(p->owner),
++			ast_channel_uniqueid(p->owner),
++			p->callid,
++			ast_channel_caller(p->owner)->id.name.str,
++			ast_channel_connected(p->owner)->id.name.str
++			);
++	}
++
++
+ 	/* Acknowledge whatever it is destined for */
+ 	if ((resp >= 100) && (resp <= 199)) {
+ 		/* NON-INVITE messages do not ack a 1XX response. RFC 3261 section 17.1.2.2 */

@@ -78,6 +78,7 @@
 # 180614-2200 - Modified audio chooser window to appear at height where mouse was clicked in JS functions
 # 180618-2300 - Modified calls to audio file chooser function
 # 190121-1803 - Added special streamlined header option for mobile devices
+# 190530-1013 - Added javascript for active list change feature
 #
 
 $stmt="SELECT admin_home_url,enable_tts_integration,callcard_enabled,custom_fields_enabled,allow_emails,level_8_disable_add,allow_chats,enable_languages,admin_row_click,admin_screen_colors,user_new_lead_limit,user_territories_active,qc_features_active,agent_soundboards,enable_drop_lists,allow_ip_lists from system_settings;";
@@ -588,6 +589,63 @@ if ( ( ($ADD==34) or ($ADD==31) or ($ADD==49) ) and ($SUB==29) and ($LOGmodify_c
 	<?php
 	}
 	?>
+
+	<?php
+	if ( ( ($ADD==34) or ($ADD==31) or ($ADD==44) or ($ADD==41) ) and ($LOGmodify_campaigns==1) and ( (preg_match("/$campaign_id/i", $LOGallowed_campaigns)) or (preg_match("/ALL\-CAMPAIGNS/i",$LOGallowed_campaigns)) ) ) 
+		{
+	?>
+	// List status change confirmation
+	function ConfirmListStatusChange(system_setting, listForm) {
+		if (!system_setting) {
+			// if the list change confirmation system setting is off, just submit the form
+			listForm.submit();
+			return false;
+		}
+
+		var previous_list_statuses=document.getElementById('last_list_statuses').value;
+
+		var new_list_statuses="";
+
+		var lists = document.getElementsByName('list_active_change[]');
+		var no_selected=0;
+		for (var i=0; i<lists.length; i++) {
+			new_list_statuses+=lists[i].value+"|";
+			if (lists[i].checked) {
+				new_list_statuses+="Y|";
+			} else {
+				new_list_statuses+="N|";
+			}
+		}
+
+		if (previous_list_statuses==new_list_statuses) {
+			// if none of the lists active status has been changed, just submit the form
+			listForm.submit();
+			return false;
+		} else {
+			var prev_array=previous_list_statuses.split("|");
+			var new_array=new_list_statuses.split("|");
+			if (prev_array.length!=new_array.length) {alert("List error. Reload the page and try again."); return false;}
+
+			var altered_lists="";
+			for(i=0; i<prev_array.length; i+=2) {
+				prev_status=prev_array[(i+1)];
+				new_status=new_array[(i+1)];
+				if (prev_status!=new_status) {
+					altered_lists+=" - List "+new_array[i]+": "+prev_status+" => "+new_status+"\n";
+				}
+			}
+
+			var proceed=confirm("You have changed the active status of the following lists:\n\n"+altered_lists+"\nWould you like to proceed with committing the changes?");
+			if (proceed) {
+				listForm.submit();
+			}
+		}
+
+	}
+	<?php
+		}
+	?>
+
 	var weak = new Image();
 	weak.src = "images/weak.png";
 	var medium = new Image();

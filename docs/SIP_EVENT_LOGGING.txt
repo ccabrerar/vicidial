@@ -1,0 +1,191 @@
+SIP EVENT LOGGING DOC	Started: 2019-05-30	Updated: 2019-05-31
+
+!!!! THIS IS AN EXPERIMENTAL FEATURE, PLEASE READ ALL IMPORTANT NOTES !!!!
+
+
+
+
+This document will go over the details of the new SIP event logging features that were added to VICIdial for use with patched versions of Asterisk 13
+
+The purpose of this SIP event logging is to hopefully help to be able to better identify FAS(False Answer Supervision) and PDD(Post Dial Delay), as well as manual dial call progress updates to the agent. For phase 1 of this project, which is all that is completed at this time, the basic framework of logging the SIP messages on all outbound calls is complete, as well as extended logging of answered calls. The maintenance of all involved new database log tables is also complete.
+
+
+
+
+IMPORTANT VICIDIAL VERSION NOTE!!!
+
+You will need to be running VICIdial svn/trunk revision 3108 or newer on all of the servers in your cluster in order to use these new features
+
+
+
+IMPORTANT DATABASE SOFTWARE NOTE!!!
+
+This new set of features is going to require database software from 2012 or newer, either MySQL 5.6(or higher) or MariaDB 5.3(or higher). That's when "microseconds" support was added in each. This is used for "DATETIME(6)" database fields that can store high-precision dates like so: "2019-05-30 15:29:22.374172".
+Current VICIdial code requires only MySQL 5.1+(from 2005).
+
+For more details:
+https://dev.mysql.com/doc/refman/5.6/en/fractional-seconds.html
+https://mariadb.com/kb/en/library/microseconds-in-mariadb/
+
+
+
+IMPORTANT ASTERISK 13 PATCH NOTE!!!
+
+This set of features requires a patch to Asterisk 13. It is included in the VICIdial codebase here: "extras/sip_logging.patch". We do not currently have a patched version of Asterisk for distribution, but we will soon.
+
+
+
+IMPORTANT ASTERISK 13 CONF FILE NOTE!!!
+
+You will need to add lines to the /etc/asterisk/manager.conf file to allow for the new SIP messages to arrive from Asterisk:
+# to see a complete version of this file, look at the "docs/conf_examples/manager.conf.sample-13" file
+
+# At the top(in the [general] section below "bindaddr = 0.0.0.0"):
+
+timestampevents = yes
+
+# At the bottom of the file, add:
+
+[sipcron]
+secret = 1234
+read = call
+write = command
+
+eventfilter=Event: SIPInvite
+eventfilter=Event: SIPResponse
+
+
+
+IMPORTANT FEATURE ENABLING NOTE!!!
+
+To enable the SIP event logging listener script, you will need to add 'S' to the "VARactive_keepalives" line in "/etc/astguiclient.conf" file on each dialer that you want these new features to be activated on.
+
+You will also need to enable this feature in Admin -> System Settings
+
+
+
+
+------------------- END OF IMPORTANT NOTES SECTION -----------------------------
+
+
+
+
+Scripts modified/added:
+- bin/AST_manager_listen_AMI2.pl
+- bin/ADMIN_keepalive_ALL.pl
+- bin/ADMIN_update_server_ip.pl
+- bin/AST_flush_DBqueue.pl
+- bin/ADMIN_archive_log_tables.pl
+- install.pl
+
+
+
+
+
+
+
+
+-------- SQL CHANGES FOR DOCUMENTATION PURPOSES ONLY !!!!!!!!!! ----------------
+
+
+ALTER TABLE system_settings ADD sip_event_logging ENUM('0','1','2','3','4','5','6','7') default '0';
+
+CREATE TABLE vicidial_sip_event_log ( 
+sip_event_id INT(9) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL, 
+caller_code VARCHAR(30) NOT NULL, 
+channel VARCHAR(100), 
+server_ip VARCHAR(15), 
+uniqueid VARCHAR(20), 
+sip_call_id VARCHAR(256), 
+event_date DATETIME(6), 
+event VARCHAR(10), 
+index(caller_code), 
+index(event_date) 
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_sip_event_log_0 LIKE vicidial_sip_event_log; 
+ALTER TABLE vicidial_sip_event_log_0 MODIFY sip_event_id INT(9) UNSIGNED NOT NULL;
+CREATE TABLE vicidial_sip_event_log_1 LIKE vicidial_sip_event_log; 
+ALTER TABLE vicidial_sip_event_log_1 MODIFY sip_event_id INT(9) UNSIGNED NOT NULL;
+CREATE TABLE vicidial_sip_event_log_2 LIKE vicidial_sip_event_log; 
+ALTER TABLE vicidial_sip_event_log_2 MODIFY sip_event_id INT(9) UNSIGNED NOT NULL;
+CREATE TABLE vicidial_sip_event_log_3 LIKE vicidial_sip_event_log; 
+ALTER TABLE vicidial_sip_event_log_3 MODIFY sip_event_id INT(9) UNSIGNED NOT NULL;
+CREATE TABLE vicidial_sip_event_log_4 LIKE vicidial_sip_event_log; 
+ALTER TABLE vicidial_sip_event_log_4 MODIFY sip_event_id INT(9) UNSIGNED NOT NULL;
+CREATE TABLE vicidial_sip_event_log_5 LIKE vicidial_sip_event_log; 
+ALTER TABLE vicidial_sip_event_log_5 MODIFY sip_event_id INT(9) UNSIGNED NOT NULL;
+CREATE TABLE vicidial_sip_event_log_6 LIKE vicidial_sip_event_log; 
+ALTER TABLE vicidial_sip_event_log_6 MODIFY sip_event_id INT(9) UNSIGNED NOT NULL;
+
+CREATE TABLE vicidial_sip_event_archive_details ( 
+wday TINYINT(1) UNSIGNED PRIMARY KEY NOT NULL, 
+start_event_date DATETIME(6), 
+end_event_date DATETIME(6),
+record_count INT(9) UNSIGNED default '0'
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_sip_event_recent ( 
+caller_code VARCHAR(20) default '', 
+channel VARCHAR(100), 
+server_ip VARCHAR(15), 
+uniqueid VARCHAR(20), 
+invite_date DATETIME(6), 
+first_100_date DATETIME(6), 
+first_180_date DATETIME(6), 
+first_183_date DATETIME(6), 
+last_100_date DATETIME(6), 
+last_180_date DATETIME(6), 
+last_183_date DATETIME(6), 
+200_date DATETIME(6), 
+error_date DATETIME(6), 
+processed ENUM('N','Y','U') default 'N', 
+index(caller_code), 
+index(invite_date), 
+index(processed) 
+) ENGINE=MyISAM;  
+
+CREATE TABLE vicidial_log_extended_sip (
+call_date DATETIME(6),
+caller_code VARCHAR(30) NOT NULL,
+invite_to_ring DECIMAL(10,6) DEFAULT '0.000000',
+ring_to_final DECIMAL(10,6) DEFAULT '0.000000',
+invite_to_final DECIMAL(10,6) DEFAULT '0.000000',
+last_event_code SMALLINT(3) default '0',
+index(call_date),
+index(caller_code)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_log_extended_sip_archive LIKE vicidial_log_extended_sip;
+CREATE UNIQUE INDEX vlesa on vicidial_log_extended_sip_archive (caller_code,call_date);
+
+
+MariaDB [asterisk]> SELECT * FROM vicidial_sip_event_log limit 10;
++--------------+----------------------+---------------------+----------------+-------------------+------------------------------------------------------+----------------------------+-----------+
+| sip_event_id | caller_code          | channel             | server_ip      | uniqueid          | sip_call_id                                          | event_date                 | sip_event |
++--------------+----------------------+---------------------+----------------+-------------------+------------------------------------------------------+----------------------------+-----------+
+|       118753 | M5301113130609827030 | SIP/proxy1-00006875 | 192.168.201.77 | 1559229194.141493 | 4fb064702f741e0623b34dae6c8dd108@118.98.355.182:5060 | 2019-05-30 11:13:15.883335 | 183       |
+|       118754 | M5301113120609740192 | SIP/proxy1-00006872 | 192.168.201.77 | 1559229192.141482 | 13de6de179d7d6b32858e4824f89cfbf@118.98.355.182:5060 | 2019-05-30 11:13:16.077451 | 183       |
+|       118755 | M5301112560609853853 | SIP/proxy1-00006835 | 192.168.201.77 | 1559229176.141185 | 314c99633566c7ef6de23fb360156df2@118.98.355.182:5060 | 2019-05-30 11:13:16.079431 | 183       |
+|       118756 | M5301113150609814022 | SIP/proxy1-0000687a | 192.168.201.77 | 1559229196.141522 | 2bcd9bfa0edef83f13f9aee22f6c0399@118.98.355.182:5060 | 2019-05-30 11:13:16.084397 | INVITE    |
+|       118757 | M5301113150609814022 | SIP/proxy1-0000687a | 192.168.201.77 | 1559229196.141522 | 2bcd9bfa0edef83f13f9aee22f6c0399@118.98.355.182:5060 | 2019-05-30 11:13:16.084989 | 100       |
+|       118758 | M5301113150609814022 | SIP/proxy1-0000687a | 192.168.201.77 | 1559229196.141522 | 2bcd9bfa0edef83f13f9aee22f6c0399@118.98.355.182:5060 | 2019-05-30 11:13:16.085231 | 100       |
+|       118759 | M5301112560609755273 | SIP/proxy1-00006838 | 192.168.201.77 | 1559229177.141198 | 6aa258ce5e0ba2085103ff2669d7e17b@118.98.355.182:5060 | 2019-05-30 11:13:16.244411 | 200       |
+|       118760 | M5301113130609789654 | SIP/proxy1-00006874 | 192.168.201.77 | 1559229193.141488 | 7cd4c05546aeb95242b8d1196113ced8@118.98.355.182:5060 | 2019-05-30 11:13:16.291505 | 183       |
+|       118761 | M5301113160609819452 | SIP/proxy1-0000687b | 192.168.201.77 | 1559229196.141527 | 5c3fc41572b6d91b04f1770d175f873d@118.98.355.182:5060 | 2019-05-30 11:13:16.292730 | INVITE    |
+|       118762 | M5301113160609819452 | SIP/proxy1-0000687b | 192.168.201.77 | 1559229196.141527 | 5c3fc41572b6d91b04f1770d175f873d@118.98.355.182:5060 | 2019-05-30 11:13:16.293336 | 100       |
++--------------+----------------------+---------------------+----------------+-------------------+------------------------------------------------------+----------------------------+-----------+
+
+
+MariaDB [asterisk]> select * from vicidial_log_extended_sip;
++----------------------------+----------------------+----------------+---------------+-----------------+-----------------+
+| call_date                  | caller_code          | invite_to_ring | ring_to_final | invite_to_final | last_event_code |
++----------------------------+----------------------+----------------+---------------+-----------------+-----------------+
+| 2019-05-31 14:44:41.820638 | V5311444410051765735 |      12.649792 |      9.486446 |       22.136238 |             200 |
+| 2019-05-31 14:44:30.615591 | V5311444290051826986 |       3.702375 |      0.198128 |        3.900503 |             200 |
+| 2019-05-31 14:44:24.227877 | V5311444230051773996 |       4.168916 |      0.169864 |        4.338780 |             200 |
+| 2019-05-31 14:44:17.887899 | V5311444170051774117 |       1.588209 |     28.109085 |       29.697294 |             200 |
+| 2019-05-31 14:44:09.180187 | V5311444080051793093 |       2.029566 |     29.918390 |       31.947956 |             200 |
+| 2019-05-31 14:43:51.428842 | V5311443510051782192 |       0.000000 |      0.000000 |        0.771248 |             200 |
++----------------------------+----------------------+----------------+---------------+-----------------+-----------------+
+

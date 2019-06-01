@@ -6,7 +6,7 @@
 # astguiclient.conf file to reflect a change in IP address. The script will 
 # automatically default to the first eth address in the ifconfig output.
 #
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 71205-2144 - Added display of extensions.conf example for call routing
@@ -16,6 +16,7 @@
 # 100428-0943 - Added DB custom user/pass fields
 # 150312-1000 - Added ExpectedDBSchema
 # 180928-1958 - Added update of report_server, active_twin_server_ip and active_voicemail_server, issue #1109
+# 190530-1517 - Added mising commented-out keepalives in conf file
 #
 
 # default path to astguiclient configuration file:
@@ -355,6 +356,8 @@ print conf "#  6 - FastAGI_log\n";
 print conf "#  7 - AST_VDauto_dial_FILL (only for multi-server, this must only be on one server)\n";
 print conf "#  8 - ip_relay (used for blind agent monitoring)\n";
 print conf "#  9 - Timeclock auto logout\n";
+print conf "#  E - Email processor, (If multi-server system, this must only be on one server)\n";
+print conf "#  S - SIP Logger (Patched Asterisk 13 required)\n";
 print conf "VARactive_keepalives => $VARactive_keepalives\n";
 print conf "\n";
 print conf "# Asterisk version VICIDIAL is installed for\n";

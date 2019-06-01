@@ -135,9 +135,10 @@
 # 180930-1007 - Added more allowed codecs to conf file generation
 # 181028-1451 - Added vicidial_list stuck QUEUE reset at TEoD
 # 190220-2258 - Added flushing of vicidial_sessions_recent table
+# 190530-1411 - Added SIP logger code
 #
 
-$build = '190220-2258';
+$build = '190530-1411';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -165,6 +166,7 @@ $now_date = "$year-$mon-$mday $hour:$min:$sec";
 $today_start = "$year-$mon-$mday 00:00:00";
 $today_date = "$year-$mon-$mday";
 $reset_test = "$hour$min";
+$wday_now = $wday;
 
 ### calculate the date and time for slightly less than 24 hours ago
 $secX = time();
@@ -388,6 +390,7 @@ foreach(@conf)
 #	8 - ip_relay for blind monitoring\n";
 #	9 - Timeclock auto logout\n";
 #	E - Email parser script
+#	S - SIP Logger
 #     - Other setting are set by configuring them in the database
 
 # Customized Variables
@@ -403,7 +406,7 @@ $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VA
 
 
 ##### Get the settings from system_settings #####
-$stmtA = "SELECT sounds_central_control_active,active_voicemail_server,custom_dialplan_entry,default_codecs,generate_cross_server_exten,voicemail_timezones,default_voicemail_timezone,call_menu_qualify_enabled,allow_voicemail_greeting,reload_timestamp,meetme_enter_login_filename,meetme_enter_leave3way_filename,allow_chats,enable_auto_reports,enable_drop_lists,expired_lists_inactive FROM system_settings;";
+$stmtA = "SELECT sounds_central_control_active,active_voicemail_server,custom_dialplan_entry,default_codecs,generate_cross_server_exten,voicemail_timezones,default_voicemail_timezone,call_menu_qualify_enabled,allow_voicemail_greeting,reload_timestamp,meetme_enter_login_filename,meetme_enter_leave3way_filename,allow_chats,enable_auto_reports,enable_drop_lists,expired_lists_inactive,sip_event_logging FROM system_settings;";
 #	print "$stmtA\n";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -427,6 +430,7 @@ if ($sthArows > 0)
 	$SSenable_auto_reports =			$aryA[13];
 	$SSenable_drop_lists =				$aryA[14];
 	$SSexpired_lists_inactive =			$aryA[15];
+	$SSsip_event_logging =				$aryA[16];
 	}
 $sthA->finish();
 if ($DBXXX > 0) {print "SYSTEM SETTINGS:     $sounds_central_control_active|$active_voicemail_server|$SScustom_dialplan_entry|$SSdefault_codecs\n";}
@@ -472,6 +476,7 @@ else
 	$email_inbound=0;
 	$AST_VDauto_dial_FILL=0;
 	$ip_relay=0;
+	$sip_logger=0;
 	$timeclock_auto_logout=0;
 	$runningAST_update=0;
 	$runningAST_send=0;
@@ -485,6 +490,7 @@ else
 	$runningAST_conf_3way=0;
 	$runningemail_inbound=0;
 	$runningASTERISK=0;
+	$runningsip_logger=0;
 	$AST_conf_3way=0;
 
 	if ($VARactive_keepalives =~ /1/) 
@@ -536,6 +542,11 @@ else
 		{
 		$email_inbound=1;
 		if ($DB) {print "Check to see if email parser should run\n";}
+		}
+	if ($VARactive_keepalives =~ /S/)
+		{
+		$sip_logger=1;
+		if ($DB) {print "Check to see if sip logger should run\n";}
 		}
 	if ($cu3way > 0) 
 		{
@@ -589,6 +600,11 @@ else
 			$listen_pid[$runningAST_listen] = $psoutput[$i];
 			$runningAST_listen++;
 			if ($DB) {print "AST_listen RUNNING:              |$psline[1]|\n";}
+			}
+		if ($psline[1] =~ /$REGhome\/AST_manager_sip_AMI2\.pl/)
+			{
+			$runningsip_logger++;
+			if ($DB) {print "SIP Logger RUNNING:         |$psline[1]|\n";}
 			}
 		if ($psline[1] =~ /$REGhome\/AST_VDauto_dial\.pl/) 
 			{
@@ -702,7 +718,8 @@ else
 		( ($AST_VDauto_dial_FILL > 0) && ($runningAST_VDauto_dial_FILL < 1) ) ||
 		( ($ip_relay > 0) && ($runningip_relay < 1) ) ||
 		( ($AST_conf_3way > 0) && ($runningAST_conf_3way < 1) ) || 
-		( ($email_inbound > 0) && ($runningemail_inbound < 1) )
+		( ($email_inbound > 0) && ($runningemail_inbound < 1) ) ||
+		( ($sip_logger > 0) && ($runningsip_logger < 1) )
 	   )
 		{
 
@@ -744,6 +761,11 @@ else
 				{
 				$runningAST_listen++;
 				if ($DB) {print "AST_listen RUNNING:              |$psline[1]|\n";}
+				}
+			if ($psline[1] =~ /$REGhome\/AST_manager_sip_AMI2\.pl/)
+				{
+				$runningsip_logger++;
+				if ($DB) {print "SIP Logger RUNNING:         |$psline[1]|\n";}
 				}
 			if ($psline[1] =~ /$REGhome\/AST_VDauto_dial\.pl/) 
 				{
@@ -847,6 +869,18 @@ else
 				`/usr/bin/screen -S ASTVDauto -X log`;
 				}
 			}
+		if ( ($sip_logger > 0) && ($runningsip_logger < 1) && ($SSsip_event_logging > 0) )
+			{
+			if ($DB) {print "starting SIP Logger...\n";}
+			# add a '-L' to the command below to activate logging
+			`/usr/bin/screen -d -m -S ASTSIPlogger $PATHhome/AST_manager_sip_AMI2.pl $debug_string`;
+			if ($megaDB)
+				{
+				`/usr/bin/screen -S ASTSIPlogger -X logfile $PATHlogs/ASTVDauto-screenlog.0`;
+				`/usr/bin/screen -S ASTSIPlogger -X log`;
+				}
+			}
+
 		if ( ($AST_VDremote_agents > 0) && ($runningAST_VDremote_agents < 1) )
 			{ 
 			if ($DB) {print "starting AST_VDremote_agents...\n";}
@@ -1820,6 +1854,106 @@ if ($timeclock_end_of_day_NOW > 0)
 			$i++;
 			}
 		$sthA->finish();
+
+		
+		##### BEGIN roll sip_event logs into one of the 7-day archive tables
+		if ($SSsip_event_logging > 0)
+			{
+			$TEMPvicidial_sip_event_log = "vicidial_sip_event_log_$wday_now";
+			if (!$Q) {print "\nRolling of vicidial_sip_event_log table into daily archive table($TEMPvicidial_sip_event_log)...\n";}
+			$stmtA = "DELETE FROM $TEMPvicidial_sip_event_log;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			$event_string = "$sthArows rows deleted from $TEMPvicidial_sip_event_log table";
+			if (!$Q) {print "$event_string \n";}
+			if ($teodDB) {&teod_logger;}
+
+			$stmtA = "optimize table $TEMPvicidial_sip_event_log;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$event_string = "$TEMPvicidial_sip_event_log table optimized";
+			if (!$Q) {print "$event_string \n";}
+			if ($teodDB) {&teod_logger;}
+
+			$stmtA = "INSERT IGNORE INTO $TEMPvicidial_sip_event_log SELECT * from vicidial_sip_event_log;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			$event_string = "$sthArows rows inserted into $TEMPvicidial_sip_event_log table";
+			if (!$Q) {print "$event_string \n";}
+			if ($teodDB) {&teod_logger;}
+
+			$rv = $sthA->err();
+			if (!$rv) 
+				{	
+				$stmtA = "DELETE FROM vicidial_sip_event_log;";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArows = $sthA->rows;
+				$event_string = "$sthArows rows deleted from vicidial_sessions_recent table";
+				if (!$Q) {print "$event_string \n";}
+				if ($teodDB) {&teod_logger;}
+
+				$stmtA = "optimize table vicidial_sip_event_log;";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$event_string = "vicidial_sip_event_log table optimized";
+				if (!$Q) {print "$event_string \n";}
+				if ($teodDB) {&teod_logger;}
+
+				$stmtC = "ALTER TABLE vicidial_sip_event_log AUTO_INCREMENT = 1;";
+				if($DBX){print STDERR "\n|$stmtC|\n";}
+				$Caffected_rows = $dbhC->do($stmtC);
+				$event_string = "vicidial_sip_event_log AUTO_INCREMENT reset to 1($Caffected_rows)";
+				if (!$Q) {print "$event_string \n";}
+				if ($teodDB) {&teod_logger;}
+				}
+
+			# get details on today archives and update archive details table
+			$vsel_count=0;
+			$stmtA = "SELECT count(*) FROM $TEMPvicidial_sip_event_log;";
+			if($DBX){print STDERR "\n|$stmtA|\n";}
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$vsel_count =				$aryA[0];
+				}
+			$stmtA = "SELECT event_date FROM $TEMPvicidial_sip_event_log order by sip_event_id LIMIT 1;";
+			if($DBX){print STDERR "\n|$stmtA|\n";}
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$vsel_start =				$aryA[0];
+				}
+
+			$stmtA = "SELECT event_date FROM $TEMPvicidial_sip_event_log order by sip_event_id desc LIMIT 1;";
+			if($DBX){print STDERR "\n|$stmtA|\n";}
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$vsel_end =				$aryA[0];
+				}
+
+			$stmtA = "INSERT INTO vicidial_sip_event_archive_details SET wday='$wday_now',start_event_date='$vsel_start',end_event_date='$vsel_end',record_count='$vsel_count' ON DUPLICATE KEY UPDATE start_event_date='$vsel_start',end_event_date='$vsel_end',record_count='$vsel_count';";
+			if($DBX){print STDERR "\n|$stmtA|\n";}
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			$event_string = "$sthArows rows updated in vicidial_sip_event_archive_details table";
+			if (!$Q) {print "$event_string \n";}
+			if ($teodDB) {&teod_logger;}
+			}
+		##### END roll sip_event logs into one of the 7-day archive tables
 		}
 	}
 

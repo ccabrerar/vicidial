@@ -1813,7 +1813,9 @@ help_modification_date VARCHAR(20) default '0',
 agent_logout_link ENUM('0','1','2','3','4') default '1',
 manual_dial_validation ENUM('0','1','2','3','4') default '0',
 mute_recordings ENUM('1','0') default '0',
-user_admin_redirect ENUM('1','0') default '0'
+user_admin_redirect ENUM('1','0') default '0',
+list_status_modification_confirmation ENUM('1','0') default '0',
+sip_event_logging ENUM('0','1','2','3','4','5','6','7') default '0'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaigns_list_mix (
@@ -4045,6 +4047,57 @@ index (call_date),
 index (lead_id)
 ) ENGINE=MyISAM;
 
+CREATE TABLE vicidial_sip_event_log ( 
+sip_event_id INT(9) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL, 
+caller_code VARCHAR(30) NOT NULL, 
+channel VARCHAR(100), 
+server_ip VARCHAR(15), 
+uniqueid VARCHAR(20), 
+sip_call_id VARCHAR(256), 
+event_date DATETIME(6), 
+event VARCHAR(10), 
+index(caller_code), 
+index(event_date) 
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_sip_event_archive_details ( 
+wday TINYINT(1) UNSIGNED PRIMARY KEY NOT NULL, 
+start_event_date DATETIME(6), 
+end_event_date DATETIME(6),
+record_count INT(9) UNSIGNED default '0'
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_sip_event_recent ( 
+caller_code VARCHAR(20) default '', 
+channel VARCHAR(100), 
+server_ip VARCHAR(15), 
+uniqueid VARCHAR(20), 
+invite_date DATETIME(6), 
+first_100_date DATETIME(6), 
+first_180_date DATETIME(6), 
+first_183_date DATETIME(6), 
+last_100_date DATETIME(6), 
+last_180_date DATETIME(6), 
+last_183_date DATETIME(6), 
+200_date DATETIME(6), 
+error_date DATETIME(6), 
+processed ENUM('N','Y','U') default 'N', 
+index(caller_code), 
+index(invite_date), 
+index(processed) 
+) ENGINE=MyISAM;  
+
+CREATE TABLE vicidial_log_extended_sip (
+call_date DATETIME(6),
+caller_code VARCHAR(30) NOT NULL,
+invite_to_ring DECIMAL(10,6) DEFAULT '0.000000',
+ring_to_final DECIMAL(10,6) DEFAULT '0.000000',
+invite_to_final DECIMAL(10,6) DEFAULT '0.000000',
+last_event_code SMALLINT(3) default '0',
+index(call_date),
+index(caller_code)
+) ENGINE=MyISAM;
+
 
 ALTER TABLE vicidial_email_list MODIFY message text character set utf8;
 
@@ -4213,6 +4266,9 @@ CREATE TABLE vicidial_outbound_ivr_log_archive LIKE vicidial_outbound_ivr_log;
 CREATE TABLE vicidial_log_extended_archive LIKE vicidial_log_extended;
 CREATE UNIQUE INDEX vlea on vicidial_log_extended_archive (uniqueid,call_date,lead_id);
 
+CREATE TABLE vicidial_log_extended_sip_archive LIKE vicidial_log_extended_sip;
+CREATE UNIQUE INDEX vlesa on vicidial_log_extended_sip_archive (caller_code,call_date);
+
 CREATE TABLE vicidial_log_noanswer_archive LIKE vicidial_log_noanswer; 
 
 CREATE TABLE vicidial_did_agent_log_archive LIKE vicidial_did_agent_log; 
@@ -4268,6 +4324,21 @@ CREATE TABLE vicidial_amd_log_archive LIKE vicidial_amd_log;
 CREATE UNIQUE INDEX amd_unq_key on vicidial_amd_log_archive(uniqueid, call_date, lead_id);
 
 CREATE TABLE vicidial_sessions_recent_archive LIKE vicidial_sessions_recent;
+
+CREATE TABLE vicidial_sip_event_log_0 LIKE vicidial_sip_event_log; 
+ALTER TABLE vicidial_sip_event_log_0 MODIFY sip_event_id INT(9) UNSIGNED NOT NULL;
+CREATE TABLE vicidial_sip_event_log_1 LIKE vicidial_sip_event_log; 
+ALTER TABLE vicidial_sip_event_log_1 MODIFY sip_event_id INT(9) UNSIGNED NOT NULL;
+CREATE TABLE vicidial_sip_event_log_2 LIKE vicidial_sip_event_log; 
+ALTER TABLE vicidial_sip_event_log_2 MODIFY sip_event_id INT(9) UNSIGNED NOT NULL;
+CREATE TABLE vicidial_sip_event_log_3 LIKE vicidial_sip_event_log; 
+ALTER TABLE vicidial_sip_event_log_3 MODIFY sip_event_id INT(9) UNSIGNED NOT NULL;
+CREATE TABLE vicidial_sip_event_log_4 LIKE vicidial_sip_event_log; 
+ALTER TABLE vicidial_sip_event_log_4 MODIFY sip_event_id INT(9) UNSIGNED NOT NULL;
+CREATE TABLE vicidial_sip_event_log_5 LIKE vicidial_sip_event_log; 
+ALTER TABLE vicidial_sip_event_log_5 MODIFY sip_event_id INT(9) UNSIGNED NOT NULL;
+CREATE TABLE vicidial_sip_event_log_6 LIKE vicidial_sip_event_log; 
+ALTER TABLE vicidial_sip_event_log_6 MODIFY sip_event_id INT(9) UNSIGNED NOT NULL;
 
 GRANT RELOAD ON *.* TO cron@'%';
 GRANT RELOAD ON *.* TO cron@localhost;
@@ -4349,4 +4420,4 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1569',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1571',db_schema_update_date=NOW(),reload_timestamp=NOW();

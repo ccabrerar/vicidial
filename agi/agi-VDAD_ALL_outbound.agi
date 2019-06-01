@@ -22,22 +22,21 @@
 # ; 	- LB - <default> Load Balance total system
 # ; 	- LO - Load Balance Overflow only (priority to home server)
 # ; 	- SO - Home server only
-# ; 3. the sound file to play when doing a SURVEY, REMINDER, REMINDX campaign
-# ; 4. the acceptible dtmf digits for a SURVEY
-# ; 5. the out-opt digit for a SURVEY (must be in the digit map)
-# ; 6. the sound file to play for a SURVEY when transfering to an agent
-# ; 7. the sound file to play for a SURVEY when DNCing the call
-# ; 8. OPTIN or OPTOUT: if OPTIN call is only sent to agent with button press
+# ; 3. The Connected Line Name to solve CID Name change issues.
+# ; 4. the sound file to play when doing a SURVEY, REMINDER, REMINDX campaign
+# ; 5. the acceptible dtmf digits for a SURVEY
+# ; 6. the out-opt digit for a SURVEY (must be in the digit map)
+# ; 7. the sound file to play for a SURVEY when transfering to an agent
+# ; 8. the sound file to play for a SURVEY when DNCing the call
+# ; 9. OPTIN or OPTOUT: if OPTIN call is only sent to agent with button press
 # ;     if OPTOUT call is sent to agent if no button press at all
-# ; 9. the status that is use for a SURVEY when someone opts out
+# ; 10. the status that is use for a SURVEY when someone opts out
 # ;     if the status is DNC it will also add them to the internal dnc table 
 #
-# ;outbound VICIDIAL calls:
+#; VICIDIAL_auto_dialer transfer script Load Balanced:
 #exten => 8368,1,AGI(agi://127.0.0.1:4577/call_log)
-#exten => 8368,2,AGI(agi-VDAD_ALL_outbound.agi,NORMAL-----LB)
-#exten => 8368,3,AGI(agi-VDAD_ALL_outbound.agi,NORMAL-----LB)
-#exten => 8368,4,AGI(agi-VDAD_ALL_outbound.agi,NORMAL-----LB)
-#exten => 8368,5,Hangup
+#exten => 8368,n,AGI(agi-VDAD_ALL_outbound.agi,NORMAL-----LB-----${CONNECTEDLINE(name)})
+#exten => 8368,n,Hangup()
 #
 # ;outbound VICIDIAL SURVEY calls:
 #exten => 8366,1,AGI(agi://127.0.0.1:4577/call_log)
@@ -46,7 +45,7 @@
 #exten => 8366,4,AGI(agi-VDAD_ALL_outbound.agi,SURVEY-----LB-----US_pol_survey_hello-----1238-----8-----US_pol_survey_transfer-----US_thanks_no_contact-----OPTOUT-----DNC)
 #exten => 8366,5,Hangup
 #
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 80218-2027 - First Build
@@ -119,12 +118,13 @@
 # 170921-2007 - Fix for CALLID in beginning of recording filename
 # 170930-0913 - Added extension append options
 # 180926-2350 - Added _wait_time options for next_agent_call
+# 190531-0901 - Changed dialplan inputs to accept connected-line name for CIDname validation, added SIP event processing
 #
 
 $script = 'agi-VDAD_ALL_outbound.agi';
 $AGILOG = '0';
 $mel=1;					# Mysql Error Log enabled = 1
-$mysql_log_count=136;
+$mysql_log_count=140;
 $one_mysql_log=0;
 
 use Time::HiRes ('gettimeofday','usleep','sleep');  # necessary to have perl sleep command of less than one second
@@ -235,6 +235,21 @@ $AGI = new Asterisk::AGI;
 $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
     or die "Couldn't connect to database: " . DBI->errstr;
 
+#############################################
+##### Gather system_settings #####
+$stmtA = "SELECT sip_event_logging FROM system_settings;";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+if ($sthArows > 0)
+	{
+	@aryA = $sthA->fetchrow_array;
+	$SSsip_event_logging =	$aryA[0];
+	}
+$sthA->finish();
+###########################################
+
+
 ### Grab Server values from the database
 $stmtA = "SELECT voicemail_dump_exten,ext_context,answer_transfer_agent,local_gmt,asterisk_version,max_vicidial_trunks,agi_output,voicemail_dump_exten_no_inst FROM servers where server_ip = '$VARserver_ip';";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
@@ -283,13 +298,14 @@ if (length($ARGV[0])>1)
 	@ARGV_vars = split(/-----/, $ARGV[0]);
 	$call_handle_method =		$ARGV_vars[0];
 	$agent_search_method = 		$ARGV_vars[1];
-	$survey_first_audio_file =	$ARGV_vars[2];
-	$survey_dtmf_digits =		$ARGV_vars[3];
-	$survey_ni_digit =			$ARGV_vars[4];
-	$survey_opt_in_audio_file =	$ARGV_vars[5];
-	$survey_ni_audio_file =		$ARGV_vars[6];
-	$survey_no_response_action =$ARGV_vars[7];
-	$survey_ni_status =			$ARGV_vars[8];
+	$connected_line_name =		$ARGV_vars[2];
+	$survey_first_audio_file =	$ARGV_vars[3];
+	$survey_dtmf_digits =		$ARGV_vars[4];
+	$survey_ni_digit =		$ARGV_vars[5];
+	$survey_opt_in_audio_file =	$ARGV_vars[6];
+	$survey_ni_audio_file =		$ARGV_vars[7];
+	$survey_no_response_action =	$ARGV_vars[8];
+	$survey_ni_status =		$ARGV_vars[9];
 	}
 
 if ($call_handle_method !~ /NORMAL|TEST|BROADCAST|SURVEY|REMIND/) 
@@ -363,11 +379,108 @@ $survey_drop=0;
 
 $callerid =~ s/\"//gi;
 $callerid =~ s/ .*//gi;
+
+# check if callerid is valid
+if ( !validate_cid_name( $callerid ) ) 
+{
+	if ($AGILOG) {$agi_string = "CALLERID '$callerid' INVALID!!!!!!! Trying to use Connected Line Name '$connected_line_name'"; &agi_output;}
+
+	if ( validate_cid_name( $connected_line_name ) ) 
+	{
+	$callerid = $connected_line_name; 
+	}
+	else 
+	{
+		if ($AGILOG) {$agi_string = "Connected Line Name $connected_line_name is also invalid! This is bad."; &agi_output;}	
+	}
+}
+
 $CIDlead_id = $callerid;
 $CIDlead_id = substr($CIDlead_id, 10, 10);
 $CIDlead_id = ($CIDlead_id + 0);
 
 if ($AGILOG) {$agi_string = "+++++ VDAD START : |$CIDlead_id|$now_date|$AST_ver|$priority|";   &agi_output;}
+
+
+##### BEGIN SIP event logging, if enabled in the system #####
+if ($SSsip_event_logging > 0) 
+	{
+	# flag the vicidial_sip_event_recent record as undergoing processing
+	$stmtA = "UPDATE vicidial_sip_event_recent set processed='U' where caller_code='$callerid' LIMIT 1;";
+		if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+	$affected_rows = $dbhA->do($stmtA);
+		$dbhP=$dbhA;   $mysql_count='01137';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
+	if ($AGILOG) {$agi_string = "--    SIP-event recent check: |$affected_rows|$callerid|";   &agi_output;}
+
+	if ($affected_rows > 0) 
+		{
+		$dial_time = 0;
+		$stmtA = "SELECT invite_date,UNIX_TIMESTAMP(first_180_date),UNIX_TIMESTAMP(first_183_date),UNIX_TIMESTAMP(200_date),TIMESTAMPDIFF(MICROSECOND,invite_date,200_date) as dial,TIMESTAMPDIFF(MICROSECOND,invite_date,first_180_date) as prog,TIMESTAMPDIFF(MICROSECOND,invite_date,first_183_date) as pdd from vicidial_sip_event_recent where caller_code='$callerid' LIMIT 1;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArowsVSER=$sthA->rows;
+			$dbhP=$dbhA;   $mysql_count='01138';   $MEL_aff_rows=$sthArowsLI;   &mysql_error_logging;
+		if ($sthArowsVSER > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$invite_date = 		$aryA[0];
+			$first_180_date = 	$aryA[1];
+			$first_183_date = 	$aryA[2];
+			$sip200_date = 		$aryA[3];
+			$dial_time = 		$aryA[4];
+			$time_to_progress = $aryA[5];
+			$time_to_ring = 	$aryA[6];
+			if ( ($first_180_date > 0) && ($first_180_date != 'NULL') && ($first_183_date > 0) && ($first_183_date != 'NULL')) 
+				{if ($first_180_date > $first_183_date) {$time_to_progress=$time_to_ring;}}
+			}
+		$sthA->finish();
+
+		if ($sthArowsVSER > 0)
+			{
+			if ( ($time_to_progress > 0) && ($time_to_progress != 'NULL') ) 
+				{
+				if ( ($dial_time <= 0) || ($dial_time == 'NULL') ) 
+					{$dial_time = $time_to_progress;}
+				$invite_to_ring = $time_to_progress;
+				$ring_to_final = ($dial_time - $invite_to_ring);
+				}
+			else
+				{
+				if ( ($time_to_ring > 0) && ($time_to_ring != 'NULL') ) 
+					{
+					if ( ($dial_time <= 0) || ($dial_time == 'NULL') ) 
+						{$dial_time = $time_to_ring;}
+					$invite_to_ring = $time_to_ring;
+					$ring_to_final = ($dial_time - $invite_to_ring);
+					}
+				else
+					{
+					$invite_to_ring = 0;
+					$ring_to_final = 0;
+					}
+				}
+			if ($invite_to_ring != '0') {$invite_to_ring = ($invite_to_ring / 1000000);}
+			if ($ring_to_final != '0') {$ring_to_final = ($ring_to_final / 1000000);}
+			if ($dial_time != '0') {$dial_time = ($dial_time / 1000000);}
+
+			# insert a record into the vicidial_log_extended_sip table for this call
+			$stmtA = "INSERT INTO vicidial_log_extended_sip SET call_date='$invite_date', caller_code='$callerid', invite_to_ring='$invite_to_ring', ring_to_final='$ring_to_final', invite_to_final='$dial_time', last_event_code='200';";
+				if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+			$affected_rows = $dbhA->do($stmtA);
+				$dbhP=$dbhA;   $mysql_count='01139';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
+			if ($AGILOG) {$agi_string = "--    SIP-event recent processed: |$affected_rows|$callerid|";   &agi_output;}
+
+			# flag the vicidial_sip_event_recent record as processed
+			$stmtA = "UPDATE vicidial_sip_event_recent set processed='Y' where caller_code='$callerid' LIMIT 1;";
+				if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+			$affected_rows = $dbhA->do($stmtA);
+				$dbhP=$dbhA;   $mysql_count='01140';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
+			if ($AGILOG) {$agi_string = "--    SIP-event recent processed: |$affected_rows|$callerid|";   &agi_output;}
+			}
+		}
+	}
+##### END SIP event logging, if enabled in the system #####
+
 
 if ( ($channel =~ /Local/i) && ($AST_ver !~ /^1\.0\.8|^1\.0\.9/) )
 	{
@@ -4271,4 +4384,27 @@ sub trigger_transfer_process
 	#		print Pout "$now_date|$VDADconf_exten|$VDADuser|$VDADextension|$CIDlead_id|$phone_number|$uniqueid|$channel_group|$drop_timer|$CLI|\n";
 	#		close(Pout);
 	#		}
+	}
+
+
+# function to validate whether a CID Name is a Vicidial Call ID that we care about
+sub validate_cid_name
+	{
+	my ($cid_name) = @_;
+
+	# check if it is a valid CID Name
+	if (
+		( $cid_name =~ /DC\d\d\d\d\d\dW\d\d\d\d\d\d\d\d\d\dW/ ) ||      # 3way transfers
+		( $cid_name =~ /M\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/) ||    # Manual Dials
+		( $cid_name =~ /V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/) ||    # Auto Dials
+		( $cid_name =~ /Y\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/)       # Inbound Calls
+	)
+		{
+		return 1; # if so return 1 for true
+		}
+	else
+		{
+		return 0; # if not return 0 for false
+		}
+
 	}

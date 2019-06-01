@@ -28,9 +28,11 @@
 # 181003-2115 - Added optimize of cid_channels_recent_ tables
 # 190214-1758 - Fix for cid_recent_ table optimization issue
 # 190222-1321 - Added optional flushing of vicidial_sessions_recent table
+# 190503-1606 - Added flushing of vicidial_sip_event_recent table
 #
 
 $session_flush=0;
+$SSsip_event_logging=0;
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -127,6 +129,17 @@ if ($min < 10) {$min = "0$min";}
 if ($sec < 10) {$sec = "0$sec";}
 $SQLdate_NEG_2min="$year-$mon-$mday $hour:$min:$sec";
 
+($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time() - ($purge_seconds * 2));
+$year = ($year + 1900);
+$yy = $year; $yy =~ s/^..//gi;
+$mon++;
+if ($mon < 10) {$mon = "0$mon";}
+if ($mday < 10) {$mday = "0$mday";}
+if ($hour < 10) {$hour = "0$hour";}
+if ($min < 10) {$min = "0$min";}
+if ($sec < 10) {$sec = "0$sec";}
+$SQLdate_NEG_2hour="$year-$mon-$mday $hour:$min:$sec";
+
 ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time() - $purge_seconds);
 $year = ($year + 1900);
 $yy = $year; $yy =~ s/^..//gi;
@@ -216,6 +229,18 @@ if ($sthArows > 0)
 	}
 $sthA->finish();
 
+### Grab system_settings values from the database
+$stmtA = "SELECT sip_event_logging FROM system_settings limit 1;";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+if ($sthArows > 0)
+	{
+	@aryA = $sthA->fetchrow_array;
+	$SSsip_event_logging =			$aryA[0];
+	}
+$sthA->finish();
+
 if ($SYSLOG) 
 	{$flush_time = $SQLdate_NEG_1hour;}
 else
@@ -245,6 +270,14 @@ $stmtA = "DELETE from cid_channels_recent where call_date < '$SQLdate_NEG_2min';
 if($DB){print STDERR "\n|$stmtA|\n";}
 if (!$T) {      $affected_rows = $dbhA->do($stmtA);}
 if (!$Q) {print " - cid_channels_recent flush: $affected_rows rows\n";}
+
+if ($SSsip_event_logging > 0)
+	{
+	$stmtA = "DELETE from vicidial_sip_event_recent where invite_date < '$SQLdate_NEG_2hour';";
+	if($DB){print STDERR "\n|$stmtA|\n";}
+	if (!$T) {      $affected_rows = $dbhA->do($stmtA);}
+	if (!$Q) {print " - vicidial_sip_event_recent flush: $affected_rows rows\n";}
+	}
 
 $stmtA = "OPTIMIZE table vicidial_manager;";
 if($DB){print STDERR "\n|$stmtA|\n";}
@@ -314,6 +347,22 @@ if (!$T)
         $sthA->finish();
         }
 if (!$Q) {print " - OPTIMIZE cid_channels_recent          \n";}
+
+if ($SSsip_event_logging > 0)
+	{
+	$stmtA = "OPTIMIZE table vicidial_sip_event_recent;";
+	if($DB){print STDERR "\n|$stmtA|\n";}
+	if (!$T)
+        {
+        $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+        $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+        $sthArows=$sthA->rows;
+        @aryA = $sthA->fetchrow_array;
+        if (!$Q) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+        $sthA->finish();
+        }
+	if (!$Q) {print " - OPTIMIZE vicidial_sip_event_recent          \n";}
+	}
 
 
 $stmtA = "OPTIMIZE table vicidial_live_agents;";

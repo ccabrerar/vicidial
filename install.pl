@@ -2,7 +2,7 @@
 
 # install.pl version 2.14
 #
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 
 # CHANGES
@@ -43,6 +43,7 @@
 # 151212-0840 - Added chat_customer web directory, removed static language build actions
 # 160101-0907 - Changed ip_relay code to look for installed package
 # 170915-1458 - Added Asterisk 13 compability pieces
+# 190530-1511 - Added 'S' keepalive option
 #
 
 ############################################
@@ -206,6 +207,7 @@ if (length($ARGV[0])>1)
 		print "     8 - ip_relay (used for blind agent monitoring)\n";
 		print "     9 - Timeclock auto-logout\n";
 		print "     E - Email processor, (If multi-server system, this must only be on one server)\n";
+		print "     S - SIP Logger (Patched Asterisk 13 required)\n";
 		print "  [--asterisk_version] = set the asterisk version you want to install for\n";
 		print "  [--copy_sample_conf_files] = copies the sample conf files to /etc/asterisk/\n";
 		print "  [--web-languages] = copy language translations (WARNING! may not work on trunk installs)\n";
@@ -1820,6 +1822,7 @@ else
 			print " 8 - ip_relay (used for blind agent monitoring)\n";
 			print " 9 - Timeclock auto logout\n";
 			print " E - Email processor, (If multi-server system, this must only be on one server)\n";
+			print " S - SIP Logger (Patched Asterisk 13 required)\n";
 			print "Enter active keepalives or press enter for default: [$VARactive_keepalives] ";
 			$PROMPTactive_keepalives = <STDIN>;
 			chomp($PROMPTactive_keepalives);
@@ -2425,6 +2428,7 @@ print conf "#  7 - AST_VDauto_dial_FILL (only for multi-server, this must only b
 print conf "#  8 - ip_relay (used for blind agent monitoring)\n";
 print conf "#  9 - Timeclock auto logout, (If multi-server system, this must only be on one server)\n";
 print conf "#  E - Email processor, (If multi-server system, this must only be on one server)\n";
+print conf "#  S - SIP Logger (Patched Asterisk 13 required)\n";
 print conf "VARactive_keepalives => $VARactive_keepalives\n";
 print conf "\n";
 print conf "# Asterisk version VICIDIAL is installed for\n";

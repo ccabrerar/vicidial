@@ -113,6 +113,7 @@
 # 190420-1728 - Added RS_ListenBarge options.php setting
 # 190513-1711 - Added ingroup filter
 # 190525-2133 - Added new agent time segment display
+# 190531-1454 - Upgraded ingroup filter
 #
 
 $version = '2.14-100';
@@ -3488,6 +3489,7 @@ if ($talking_to_print > 0)
 
 		$L='';
 		$R='';
+		$filtered_ingroup=1; # assume ingroup is not filtered out
 
 		if ($report_display_type=='TEXT')
 			{
@@ -3529,6 +3531,11 @@ if ($talking_to_print > 0)
 					if ($ingrp_to_print > 0)
 					{
 					$row=mysqli_fetch_row($rslt);
+					$vac_campaign_id=$row[0];
+					if (!in_array("ALL-INGROUPS", $ingroup_filter) && !in_array($vac_campaign_id, $ingroup_filter)) 
+						{
+						$filtered_ingroup=0;
+						}
 					$vac_campaign =	sprintf("%-20s", "$row[0] - $row[2]");
 					$row[1] = preg_replace('/.*\-/i', '',$row[1]);
 					$vac_stage =	sprintf("%-4s", $row[1]);
@@ -3543,14 +3550,18 @@ if ($talking_to_print > 0)
 
 			$agentcount++;
 
-			if ($realtime_block_user_info > 0)
+			if ($filtered_ingroup==1) 
 				{
-				$Aecho .= "|$UGD $G$sessionid$EG$L$R$Aring_note[$i]| $G"._QXZ("$status",6)."$EG $CM $pausecode|$CP$SVD$G$call_time_MS$EG | $G$campaign_id$EG | $G$calls_today$EG |$INGRP\n";
+				if ($realtime_block_user_info > 0)
+					{
+					$Aecho .= "|$UGD $G$sessionid$EG$L$R$Aring_note[$i]| $G"._QXZ("$status",6)."$EG $CM $pausecode|$CP$SVD$G$call_time_MS$EG | $G$campaign_id$EG | $G$calls_today$EG |$INGRP\n";
+					}
+				if ($realtime_block_user_info < 1)
+					{
+					$Aecho .= "| $G$extension$EG$Aring_note[$i]|$phoneD<a href=\"./user_status.php?user=$Luser\" target=\"_blank\">$G$user$EG</a> <a href=\"javascript:ingroup_info('$Luser','$j');\">+</a> |$UGD $G$sessionid$EG$L$R | $G"._QXZ("$status",6)."$EG $CM $pausecode|$CP$SVD$G$call_time_MS$EG | $G$campaign_id$EG | $G$calls_today$EG |$INGRP\n";
+					}
 				}
-			if ($realtime_block_user_info < 1)
-				{
-				$Aecho .= "| $G$extension$EG$Aring_note[$i]|$phoneD<a href=\"./user_status.php?user=$Luser\" target=\"_blank\">$G$user$EG</a> <a href=\"javascript:ingroup_info('$Luser','$j');\">+</a> |$UGD $G$sessionid$EG$L$R | $G"._QXZ("$status",6)."$EG $CM $pausecode|$CP$SVD$G$call_time_MS$EG | $G$campaign_id$EG | $G$calls_today$EG |$INGRP\n";
-				}
+
 			}
 		if ($report_display_type=='HTML')
 			{
@@ -3596,6 +3607,11 @@ if ($talking_to_print > 0)
 					if ($ingrp_to_print > 0)
 					{
 					$row=mysqli_fetch_row($rslt);
+					$vac_campaign_id=$row[0];
+					if (!in_array("ALL-INGROUPS", $ingroup_filter) && !in_array($vac_campaign_id, $ingroup_filter)) 
+						{
+						$filtered_ingroup=0;
+						}
 					$vac_campaign =	sprintf("%-20s", "$row[0] - $row[2]");
 					$row[1] = preg_replace('/.*\-/i', '',$row[1]);
 					$vac_stage =	sprintf("%-4s", $row[1]);
@@ -3610,13 +3626,16 @@ if ($talking_to_print > 0)
 
 			$agentcount++;
 
-			if ($realtime_block_user_info > 0)
+			if ($filtered_ingroup==1) 
 				{
-				$Aecho .= "<tr class='$tr_class'><td NOWRAP>$UGD $G$sessionid$EG$L$R$Aring_note[$i]</td><td NOWRAP align=center> $G"._QXZ("$status",6)."$EG</td><td bgcolor=white align=center><font class='Hblank'>$CM</td>$pausecodeHTML<td NOWRAP align=right>$CP$SVD$G$call_time_MS$EG </td><td NOWRAP align=right> $G$campaign_id$EG </td><td NOWRAP align=right> $G$calls_today$EG </td>$INGRP</tr>\n";
-				}
-			if ($realtime_block_user_info < 1)
-				{
-				$Aecho .= "<tr class='$tr_class'><td NOWRAP> $G$extension$EG$Aring_note[$i]</td><td NOWRAP>$phoneD<a href=\"./user_status.php?user=$Luser\" target=\"_blank\">$G$user$EG</a> <a href=\"javascript:ingroup_info('$Luser','$j');\">$G+$EG</a> </td><td NOWRAP align=right>$UGD $G$sessionid$EG$L$R </td><td NOWRAP align=center> $G"._QXZ("$status",6)."$EG</td><td bgcolor=white align=center><font class='Hblank'>$CM</td>$pausecodeHTML<td NOWRAP align=right>$CP$SVD$G$call_time_MS$EG </td><td NOWRAP align=right> $G$campaign_id$EG </td><td NOWRAP align=right> $G$calls_today$EG </td>$INGRP</tr>\n";
+				if ($realtime_block_user_info > 0)
+					{
+					$Aecho .= "<tr class='$tr_class'><td NOWRAP>$UGD $G$sessionid$EG$L$R$Aring_note[$i]</td><td NOWRAP align=center> $G"._QXZ("$status",6)."$EG</td><td bgcolor=white align=center><font class='Hblank'>$CM</td>$pausecodeHTML<td NOWRAP align=right>$CP$SVD$G$call_time_MS$EG </td><td NOWRAP align=right> $G$campaign_id$EG </td><td NOWRAP align=right> $G$calls_today$EG </td>$INGRP</tr>\n";
+					}
+				if ($realtime_block_user_info < 1)
+					{
+					$Aecho .= "<tr class='$tr_class'><td NOWRAP> $G$extension$EG$Aring_note[$i]</td><td NOWRAP>$phoneD<a href=\"./user_status.php?user=$Luser\" target=\"_blank\">$G$user$EG</a> <a href=\"javascript:ingroup_info('$Luser','$j');\">$G+$EG</a> </td><td NOWRAP align=right>$UGD $G$sessionid$EG$L$R </td><td NOWRAP align=center> $G"._QXZ("$status",6)."$EG</td><td bgcolor=white align=center><font class='Hblank'>$CM</td>$pausecodeHTML<td NOWRAP align=right>$CP$SVD$G$call_time_MS$EG </td><td NOWRAP align=right> $G$campaign_id$EG </td><td NOWRAP align=right> $G$calls_today$EG </td>$INGRP</tr>\n";
+					}
 				}
 			}
 		$j++;

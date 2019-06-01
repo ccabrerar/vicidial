@@ -409,6 +409,11 @@ OTHER CHANGES:
 	to one specific report when they log in without seeing the admin web 
 	screen at all. Must be enabled in System Settings.
 
+114. Added experimental SIP event logging. Requires patched Asteirsk 13 and 
+	newer version of MySQL/MariaDB. Must be enabled in System Settings and
+	each dialer's astguiclient.conf/extensions.conf/manager.conf files
+	Read SIP_EVENT_LOGGING.txt doc for more details
+
 
 
 
