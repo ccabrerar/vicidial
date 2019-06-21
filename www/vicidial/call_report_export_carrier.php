@@ -6,7 +6,7 @@
 # downloads to a flat text file that is tab delimited. This version also
 # attempts to link carrier and dial log entries to those calls.
 #
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -18,6 +18,7 @@
 # 150909-0748 - Fixed issues with translated select list values, issue #885
 # 160510-2100 - Added coding to remove tab characters from the data
 # 170409-1542 - Added IP List validation code
+# 190610-2037 - Fixed admin hide phone issue
 #
 
 $startMS = microtime();
@@ -505,16 +506,29 @@ if ($run_export > 0)
 					{
 					if ($DB > 0) {echo "HIDEPHONEDATA|$row[1]|$LOGadmin_hide_phone_data|\n";}
 					$phone_temp = $row[1];
-					if (strlen($phone_temp) > 0)
+					$phone_lead_temp = $row[10];
+					if ( (strlen($phone_temp) > 0) or (strlen($phone_lead_temp) > 0) )
 						{
 						if ($LOGadmin_hide_phone_data == '4_DIGITS')
-							{$row[1] = str_repeat("X", (strlen($phone_temp) - 4)) . substr($phone_temp,-4,4);}
+							{
+							$row[1] = str_repeat("X", (strlen($phone_temp) - 4)) . substr($phone_temp,-4,4);
+							$row[10] = str_repeat("X", (strlen($phone_lead_temp) - 4)) . substr($phone_lead_temp,-4,4);
+							}
 						elseif ($LOGadmin_hide_phone_data == '3_DIGITS')
-							{$row[1] = str_repeat("X", (strlen($phone_temp) - 3)) . substr($phone_temp,-3,3);}
+							{
+							$row[1] = str_repeat("X", (strlen($phone_temp) - 3)) . substr($phone_temp,-3,3);
+							$row[10] = str_repeat("X", (strlen($phone_lead_temp) - 3)) . substr($phone_lead_temp,-3,3);
+							}
 						elseif ($LOGadmin_hide_phone_data == '2_DIGITS')
-							{$row[1] = str_repeat("X", (strlen($phone_temp) - 2)) . substr($phone_temp,-2,2);}
+							{
+							$row[1] = str_repeat("X", (strlen($phone_temp) - 2)) . substr($phone_temp,-2,2);
+							$row[10] = str_repeat("X", (strlen($phone_lead_temp) - 2)) . substr($phone_lead_temp,-2,2);
+							}
 						else
-							{$row[1] = preg_replace("/./",'X',$phone_temp);}
+							{
+							$row[1] = preg_replace("/./",'X',$phone_temp);
+							$row[10] = preg_replace("/./",'X',$phone_lead_temp);
+							}
 						}
 					}
 				if ($LOGadmin_hide_lead_data != '0')
@@ -633,16 +647,29 @@ if ($run_export > 0)
 					{
 					if ($DB > 0) {echo "HIDEPHONEDATA|$row[1]|$LOGadmin_hide_phone_data|\n";}
 					$phone_temp = $row[1];
-					if (strlen($phone_temp) > 0)
+					$phone_lead_temp = $row[10];
+					if ( (strlen($phone_temp) > 0) or (strlen($phone_lead_temp) > 0) )
 						{
 						if ($LOGadmin_hide_phone_data == '4_DIGITS')
-							{$row[1] = str_repeat("X", (strlen($phone_temp) - 4)) . substr($phone_temp,-4,4);}
+							{
+							$row[1] = str_repeat("X", (strlen($phone_temp) - 4)) . substr($phone_temp,-4,4);
+							$row[10] = str_repeat("X", (strlen($phone_lead_temp) - 4)) . substr($phone_lead_temp,-4,4);
+							}
 						elseif ($LOGadmin_hide_phone_data == '3_DIGITS')
-							{$row[1] = str_repeat("X", (strlen($phone_temp) - 3)) . substr($phone_temp,-3,3);}
+							{
+							$row[1] = str_repeat("X", (strlen($phone_temp) - 3)) . substr($phone_temp,-3,3);
+							$row[10] = str_repeat("X", (strlen($phone_lead_temp) - 3)) . substr($phone_lead_temp,-3,3);
+							}
 						elseif ($LOGadmin_hide_phone_data == '2_DIGITS')
-							{$row[1] = str_repeat("X", (strlen($phone_temp) - 2)) . substr($phone_temp,-2,2);}
+							{
+							$row[1] = str_repeat("X", (strlen($phone_temp) - 2)) . substr($phone_temp,-2,2);
+							$row[10] = str_repeat("X", (strlen($phone_lead_temp) - 2)) . substr($phone_lead_temp,-2,2);
+							}
 						else
-							{$row[1] = preg_replace("/./",'X',$phone_temp);}
+							{
+							$row[1] = preg_replace("/./",'X',$phone_temp);
+							$row[10] = preg_replace("/./",'X',$phone_lead_temp);
+							}
 						}
 					}
 				if ($LOGadmin_hide_lead_data != '0')

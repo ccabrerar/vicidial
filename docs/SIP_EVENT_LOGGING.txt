@@ -1,4 +1,4 @@
-SIP EVENT LOGGING DOC	Started: 2019-05-30	Updated: 2019-05-31
+SIP EVENT LOGGING DOC	Started: 2019-05-30	Updated: 2019-06-09
 
 !!!! THIS IS AN EXPERIMENTAL FEATURE, PLEASE READ ALL IMPORTANT NOTES !!!!
 
@@ -7,7 +7,11 @@ SIP EVENT LOGGING DOC	Started: 2019-05-30	Updated: 2019-05-31
 
 This document will go over the details of the new SIP event logging features that were added to VICIdial for use with patched versions of Asterisk 13
 
-The purpose of this SIP event logging is to hopefully help to be able to better identify FAS(False Answer Supervision) and PDD(Post Dial Delay), as well as manual dial call progress updates to the agent. For phase 1 of this project, which is all that is completed at this time, the basic framework of logging the SIP messages on all outbound calls is complete, as well as extended logging of answered calls. The maintenance of all involved new database log tables is also complete.
+The purpose of this SIP event logging is to hopefully help to be able to better identify FAS(False Answer Supervision) and PDD(Post Dial Delay), as well as manual dial call progress updates to the agent. 
+
+For phase 1 of this project, the basic framework of logging the SIP messages on all outbound calls is complete, as well as extended logging of answered calls. The maintenance of all involved new database log tables is also complete.
+
+For phase 2 of this project, we added some basic reporting(AST_SIP_event_report.php) which can show the summary details of every Answered call on the system with pop-up displays for all of the SIP events that happened on each call as well as a link to the modify lead page where you can also see the SIP events for every call to that lead(the SIP events are only stored for 7 days).
 
 
 
@@ -76,6 +80,8 @@ Scripts modified/added:
 - bin/ADMIN_update_server_ip.pl
 - bin/AST_flush_DBqueue.pl
 - bin/ADMIN_archive_log_tables.pl
+- www/vicidial/AST_SIP_event_report.php
+- www/vicidial/admin_modify_lead.php
 - install.pl
 
 

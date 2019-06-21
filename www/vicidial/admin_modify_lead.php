@@ -95,6 +95,7 @@
 # 180807-0957 - Added new diff logging code
 # 190310-2223 - Added indication of muted recordings by agent
 # 190329-1917 - Added display of AMD log info when CIDdisplay=Yes is set
+# 190609-0927 - Added sip_event_logging support
 #
 
 require("dbconnect_mysqli.php");
@@ -243,7 +244,7 @@ if ($nonselectable_statuses > 0)
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,custom_fields_enabled,webroot_writable,allow_emails,enable_languages,language_method,active_modules,log_recording_access,admin_screen_colors,enable_gdpr_download_deletion,source_id_display,mute_recordings FROM system_settings;";
+$stmt = "SELECT use_non_latin,custom_fields_enabled,webroot_writable,allow_emails,enable_languages,language_method,active_modules,log_recording_access,admin_screen_colors,enable_gdpr_download_deletion,source_id_display,mute_recordings,sip_event_logging FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
@@ -262,6 +263,7 @@ if ($qm_conf_ct > 0)
 	$enable_gdpr_download_deletion = $row[9];
 	$SSsource_id_display =		$row[10];
 	$SSmute_recordings =		$row[11];
+	$SSsip_event_logging =		$row[12];
 	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
@@ -877,6 +879,9 @@ if ($scb_count_to_print > 0)
 	if (strlen($row[0])>0)	{$scheduled_callback =	$row[0];}
 	}
 
+$search_archived_data='';
+if ($archive_log == 'Yes') {$search_archived_data='checked';}
+
 $vdc_form_display = 'vdc_form_display.php';
 if (preg_match("/cf_encrypt/",$active_modules))
 	{$vdc_form_display = 'vdc_form_display_encrypt.php';}
@@ -952,8 +957,86 @@ function UpdateCallback(callback_id) {
 	document.getElementById('vsn').action="<?php echo $PHP_SELF; ?>?appointment_date="+appointment_date+"&appointment_time="+appointment_time+"&CBstatus="+CBstatus+"&CBchangeUSERtoANY="+CBchangeUSERtoANY+"&CBchangeANYtoUSER="+CBchangeANYtoUSER+"&CBuser="+CBuser+"&comments="+comments+"&callback_id="+callback_id;
 	document.vsn.submit();
 }
-</script>
 <?php
+
+if ( ($CIDdisplay == "Yes") and ($SSsip_event_logging > 0) )
+	{
+	echo "</script>\n";
+	echo "<div id='DetailDisplayDiv' style='position:absolute; top:0; left:0; z-index:20; background-color:white display:none;'></div>\n";
+	echo "<script language=\"JavaScript\">\n";
+	echo "mouseY=0;\n";
+	echo "function getMousePos(event) {mouseY=event.pageY;}\n";
+	echo "document.addEventListener(\"click\", getMousePos);\n";
+	echo "// Detect if the browser is IE or not.\n";
+	echo "// If it is not IE, we assume that the browser is NS.\n";
+	echo "var IE = document.all?true:false\n";
+	echo "// If NS -- that is, !IE -- then set up for mouse capture\n";
+	echo "if (!IE) document.captureEvents(Event.MOUSEMOVE)\n";
+	echo "\n";
+	echo "function ClearAndHideDetailDiv() {\n";
+	echo "	document.getElementById(\"DetailDisplayDiv\").innerHTML=\"\";\n";
+	echo "	document.getElementById(\"DetailDisplayDiv\").style.display=\"none\";\n";
+	echo "}\n";
+	echo "function ShowCallDetail(e, call_id, color) \n";
+	echo "	{\n";
+	echo "	document.getElementById(\"DetailDisplayDiv\").innerHTML=\"\";\n";
+	echo "	if (IE) { // grab the x-y pos.s if browser is IE\n";
+	echo "		tempX = event.clientX + document.body.scrollLeft+250\n";
+	echo "		tempY = event.clientY + document.body.scrollTop\n";
+	echo "	} else {  // grab the x-y pos.s if browser is NS\n";
+	echo "		tempX = e.pageX\n";
+	echo "		tempY = e.pageY\n";
+	echo "	}  \n";
+	echo "	// catch possible negative values in NS4\n";
+	echo "	if (tempX < 0){tempX = 0}\n";
+	echo "	if (tempY < 0){tempY = 0}  \n";
+	echo "	// show the position values in the form named Show\n";
+	echo "	// in the text fields named MouseX and MouseY\n";
+	echo "	tempX-=400;\n";
+	echo "	tempY+=10;\n";
+	echo "	document.getElementById(\"DetailDisplayDiv\").style.display=\"block\";\n";
+	echo "	document.getElementById(\"DetailDisplayDiv\").style.left = tempX + \"px\";\n";
+	echo "	document.getElementById(\"DetailDisplayDiv\").style.top = tempY + \"px\";\n";
+	#echo "  alert(tempX + '|' + tempY);\n";
+	echo "	var DetailVerbiage = null;\n";
+	echo "	var xmlhttp=false;\n";
+	echo "	/*@cc_on @*/\n";
+	echo "	/*@if (@_jscript_version >= 5)\n";
+	echo "	// JScript gives us Conditional compilation, we can cope with old IE versions.\n";
+	echo "	// and security blocked creation of the objects.\n";
+	echo "	 try {\n";
+	echo "	  xmlhttp = new ActiveXObject(\"Msxml2.XMLHTTP\");\n";
+	echo "	 } catch (e) {\n";
+	echo "	  try {\n";
+	echo "	   xmlhttp = new ActiveXObject(\"Microsoft.XMLHTTP\");\n";
+	echo "	  } catch (E) {\n";
+	echo "	   xmlhttp = false;\n";
+	echo "	  }\n";
+	echo "	 }\n";
+	echo "	@end @*/\n";
+	echo "	if (!xmlhttp && typeof XMLHttpRequest!='undefined')\n";
+	echo "		{\n";
+	echo "		xmlhttp = new XMLHttpRequest();\n";
+	echo "		}\n";
+	echo "	if (xmlhttp) \n";
+	echo "		{ \n";
+	echo "		detail_query = \"&search_archived_data=$search_archived_data&stage=\" + call_id + \"&color=\" + color;\n";
+	echo "		xmlhttp.open('POST', 'AST_SIP_event_report.php');\n";
+	echo "		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');\n";
+	echo "		xmlhttp.send(detail_query); \n";
+	echo "		xmlhttp.onreadystatechange = function() \n";
+	echo "			{ \n";
+	echo "			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) \n";
+	echo "				{\n";
+	echo "				DetailVerbiage = xmlhttp.responseText;\n";
+	echo "				document.getElementById(\"DetailDisplayDiv\").innerHTML=DetailVerbiage;\n";
+	echo "				}\n";
+	echo "			}\n";
+	echo "		delete xmlhttp;\n";
+	echo "		}\n";
+	echo "	}\n";
+	}
+echo "</script>\n";
 echo "<link rel=\"stylesheet\" href=\"calendar.css\">\n";
 echo "<span style=\"position:absolute;left:0px;top:0px;z-index:20;\" id=admin_header>";
 
@@ -1385,7 +1468,14 @@ else
 				$outbound_cid = $rowA[0];
 				$outbound_cid = preg_replace("/\".*\" /",'',$outbound_cid);
 				}
-			$call_log .= "<td align=right nowrap><font size=2>&nbsp; $outbound_cid $caller_code</td><td align=right><font size=2>&nbsp; $row[0]</td>\n";
+			if ($SSsip_event_logging > 0)
+				{
+				$call_log .= "<td align=right nowrap><font size=2>&nbsp; $outbound_cid  <span onClick=\"ShowCallDetail(event,'$caller_code','$SSframe_background')\"><font color=blue><u>$caller_code</u></font></span></td><td align=right><font size=2>&nbsp; $row[0]</td>\n";
+				}
+			else
+				{
+				$call_log .= "<td align=right nowrap><font size=2>&nbsp; $outbound_cid $caller_code</td><td align=right><font size=2>&nbsp; $row[0]</td>\n";
+				}
 			$AMDSTATUS='';	$AMDRESPONSE='';
 			$stmtA="SELECT AMDSTATUS,AMDRESPONSE FROM vicidial_amd_log WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and caller_code='$caller_code';";
 			$rsltA=mysql_to_mysqli($stmtA, $link);
@@ -1559,7 +1649,14 @@ else
 					$outbound_cid = $rowA[0];
 					$outbound_cid = preg_replace("/\".*\" /",'',$outbound_cid);
 					}
-				$call_log .= "<td align=right nowrap><font size=2>&nbsp; $outbound_cid  $caller_code</td><td align=right><font size=2>&nbsp; $row[0]</td>\n";
+				if ($SSsip_event_logging > 0)
+					{
+					$call_log .= "<td align=right nowrap><font size=2>&nbsp; $outbound_cid  <span onClick=\"ShowCallDetail(event,'$caller_code','$SSframe_background')\"><font color=blue><u>$caller_code</u></font></span></td><td align=right><font size=2>&nbsp; $row[0]</td>\n";
+					}
+				else
+					{
+					$call_log .= "<td align=right nowrap><font size=2>&nbsp; $outbound_cid $caller_code</td><td align=right><font size=2>&nbsp; $row[0]</td>\n";
+					}
 				}
 			$call_log .= "</tr>\n";
 

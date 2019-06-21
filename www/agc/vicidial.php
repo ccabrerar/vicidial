@@ -612,10 +612,11 @@
 # 190330-0815 - Added logged_in_refresh_link option
 # 190406-1615 - Added agent next_dial_my_callbacks override
 # 190529-2144 - Fix for shift enforcement dispo-call-url issue
+# 190617-1116 - Fix for script variable issue
 #
 
-$version = '2.14-581c';
-$build = '190529-2144';
+$version = '2.14-582c';
+$build = '190617-1116';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=87;
 $one_mysql_log=0;
@@ -4825,6 +4826,7 @@ if ($enable_fast_refresh < 1) {echo "\tvar refresh_interval = 1000;\n";}
 	var mute_recordings='<?php echo $mute_recordings ?>';
 	var active_rec_channel='';
 	var trigger_shift_logout=0;
+	var SCRIPTweb_form_vars='';
 	var DiaLControl_auto_HTML = "<a href=\"#\" onclick=\"AutoDial_ReSume_PauSe('VDADready','','','','','','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_paused.gif") ?>\" border=\"0\" alt=\"You are paused\" /></a>";
 	var DiaLControl_auto_HTML_ready = "<a href=\"#\" onclick=\"AutoDial_ReSume_PauSe('VDADpause','','','','','','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_active.gif") ?>\" border=\"0\" alt=\"You are active\" /></a>";
 	var DiaLControl_auto_HTML_OFF = "<img src=\"./images/<?php echo _QXZ("vdc_LB_blank_OFF.gif") ?>\" border=\"0\" alt=\"pause button disabled\" />";
@@ -10083,6 +10085,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 				manual_cancel_skip=0;
 				trigger_manual_validation=0;
 				manual_entry_dial=0;
+				SCRIPTweb_form_vars='';
 				if (manual_dial_preview < 1)
 					{
 					document.vicidial_form.LeadPreview.checked=false;
@@ -10618,7 +10621,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 			}
 		if (xmlhttp) 
 			{ 
-			NeWscript_query = "server_ip=" + server_ip + "&inOUT=" + inOUT + "&camp_script=" + campaign_script + '' + "&in_script=" + CalL_ScripT_id + "&session_name=" + session_name + "&user=" + user + "&pass=" + pass + "&called_count=" + document.vicidial_form.called_count.value + "&script_override=" + script_override + "&ScrollDIV=1&" + web_form_vars;
+			NeWscript_query = "server_ip=" + server_ip + "&inOUT=" + inOUT + "&camp_script=" + campaign_script + '' + "&in_script=" + CalL_ScripT_id + "&session_name=" + session_name + "&user=" + user + "&pass=" + pass + "&called_count=" + document.vicidial_form.called_count.value + "&script_override=" + script_override + "&ScrollDIV=1&" + SCRIPTweb_form_vars;
 		//	alert(NeWscript_query);
 			xmlhttp.open('POST', 'vdc_script_display.php'); 
 			xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
@@ -12235,6 +12238,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 			WebFormRefresH('','','1');
 			WebFormTwoRefresH('','','1');
 			WebFormThreeRefresH('','','1');
+			var TEMP_script_vars = URLDecode('','YES','DEFAULT','1');
 			load_script_contents('ScriptContents','');
 			}
 		}
@@ -14014,6 +14018,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 					manual_cancel_skip=0;
 					trigger_manual_validation=0;
 					manual_entry_dial=0;
+					SCRIPTweb_form_vars='';
 					if (manual_auto_next > 0)
 						{manual_auto_next_trigger=1;   manual_auto_next_count=manual_auto_next;}
 					if (agent_display_fields.match(adfREGentry_date))
@@ -15732,6 +15737,8 @@ else
 		"&LOGINvarFIVE=" + LOGINvarFIVE + '' +
 		"&web_vars=" + LIVE_web_vars + '' +
 		webform_session;
+
+		SCRIPTweb_form_vars = web_form_varsX;
 
 		if (custom_field_names.length > 2)
 			{
