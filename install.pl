@@ -44,7 +44,7 @@
 # 160101-0907 - Changed ip_relay code to look for installed package
 # 170915-1458 - Added Asterisk 13 compability pieces
 # 190530-1511 - Added 'S' keepalive option
-#
+# 190701-0127 - SVN revision hardcoded into this file (for Github usage)
 
 ############################################
 # install.pl - puts server files in the right places and creates conf file
@@ -154,6 +154,7 @@ $secX = time();
 $DB=1;  # Debug flag, set to 0 for no debug messages, lots of output
 $US='_';
 $MT[0]='';
+$svn_revision_fixed = 3119;
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -2758,15 +2759,15 @@ if ($dbhA)
 		$svn_notes .= "$svn_output_string\n";
 		}
 
-	$stmtA = "UPDATE servers SET svn_revision='$svn_revision',svn_info='$svn_notes' where server_ip='$VARserver_ip';";
+	$stmtA = "UPDATE servers SET svn_revision='$svn_revision_fixed',svn_info='$svn_notes' where server_ip='$VARserver_ip';";
 		if($DB){print STDERR "\n|$stmtA|\n";}
 	$affected_rows = $dbhA->do($stmtA); #  or die  "Couldn't execute query:|$stmtA|\n";
 
-	$stmtA = "UPDATE system_settings SET svn_revision='$svn_revision';";
+	$stmtA = "UPDATE system_settings SET svn_revision='$svn_revision_fixed';";
 		if($DB){print STDERR "\n|$stmtA|\n";}
 	$affected_rows = $dbhA->do($stmtA); #  or die  "Couldn't execute query:|$stmtA|\n";
 
-	print "Version information updated: $svn_revision|$VARserver_ip\n";
+	print "Version information updated: $svn_revision_fixed|$VARserver_ip\n";
 	}
 ##### END attempt to connect to database, if successful then update code information in database #####
 
