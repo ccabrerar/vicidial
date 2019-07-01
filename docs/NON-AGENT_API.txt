@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2019-03-25
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2019-06-28
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -49,7 +49,7 @@ call_status_stats - report on number of calls made by campaign and ingroup, with
 call_dispo_report - call disposition breakdown report
 lead_callback_info - outputs scheduled callback data for a specific lead
 agent_campaigns - looks up allowed campaigns/in-groups for a specific user
-
+update_cid_group_entry - updates CID Group entries
 
 New scripts:
 /vicidial/non_agent_api.php - the script that is accessed to execute commands
@@ -142,6 +142,7 @@ Changes:
 180916-1059 - Added check for daily list reset limit
 181214-1606 - Added lead_callback_info function
 190325-1055 - Added agent_campaigns function
+190628-1504 - Added update_cid_group_entry function
 
 
 API Functions use the 'function' variable
@@ -1778,6 +1779,53 @@ ERROR: update_did CLEAN CID NUMBER MUST BE FROM 1 TO 20 CHARACTERS, THIS IS AN O
 NOTICE: update_did NO UPDATES DEFINED - 6666|
 SUCCESS: update_did DID HAS BEEN UPDATED - 6666|1101
 
+
+
+
+
+--------------------------------------------------------------------------------
+update_cid_group_entry - updates CID Group entries in the vicidial_campaign_cid_areacodes table
+
+NOTE: api user for this function must have user_level set to 8 or higher and "Modify Campaigns" enabled
+
+REQUIRED FIELDS-
+cid_group_id -		2-20 characters, must be a valid CID Group ID or Campaign ID in the system
+source -		description of what originated the API call (maximum 20 characters)
+areacode -		This should be either the AREACODE(i.e. "312") or STATE(i.e. "FL") of the CID Group entry, you can also set this to "---ALL---"
+stage -			UPDATE, ADD, DELETE or INFO
+
+OPTIONAL FIELDS-
+outbound_cid -		1-20 digits, or (if you want to UPDATE, DELETE or INFO all entries for an areacode, you can set this to "---ALL---" or leave it blank)
+
+EDITABLE FIELDS- 
+cid_description -	6-50 characters, default is blank
+active -		Must be one of these: 'Y','N', default is 'N'
+
+Example URL strings for API calls:
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_cid_group_entry&stage=INFO&cid_group_id=TESTINX5&areacode=---ALL---
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_cid_group_entry&stage=ADD&cid_group_id=testing_here4&areacode=312&outbound_cid=3125551212&cid_description=Testing+DID&active=N
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_cid_group_entry&stage=DELETE&cid_group_id=testing_here4&areacode=312&outbound_cid=3125551212
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_cid_group_entry&stage=UPDATE&cid_group_id=testing_here4&areacode=312&outbound_cid=3125551212&active=Y
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_cid_group_entry&stage=UPDATE&cid_group_id=testing_here4&areacode=312&outbound_cid=---ALL---&active=N&cid_description=Deactivated+for+now
+
+Example responses:
+ERROR: update_cid_group_entry USER DOES NOT HAVE PERMISSION TO UPDATE CID GROUPS - 6666
+ERROR: update_cid_group_entry YOU MUST USE ALL REQUIRED FIELDS - 6666|1||
+ERROR: update_cid_group_entry NOT AN ALLOWED CID GROUP - 98762
+ERROR: update_cid_group_entry CID GROUP DOES NOT EXIST - 6666|1000
+ERROR: update_cid_group_entry THIS CID GROUP HAS NO ENTRIES - 6666|1000
+SUCCESS: update_cid_group_entry CID GROUP INFO AS FOLLOWS - 1101|---ALL---|---ALL---|3
+1|727|7275551212|N|FL1 test|0
+2|727|7275551313|N|FL1 test|0
+4|998|7275551114|N|FL2 test|0
+
+ERROR: update_cid_group_entry YOU MUST DEFINE AN AREACODE WHEN ADDING AND ENTRY - 6666|1000|---ALL---
+ERROR: update_cid_group_entry YOU MUST DEFINE A CID NUMBER WHEN ADDING AND ENTRY - 6666|1000|1
+ERROR: update_cid_group_entry THIS CID GROUP ENTRY ALREADY EXISTS - 6666|1000|813|8135551212
+SUCCESS: update_cid_group_entry CID GROUP ENTRY HAS BEEN ADDED - 6666|1101|813|8135551212|1
+SUCCESS: update_cid_group_entry CID GROUP ENTRIES HAVE BEEN DELETED - 6666|1101|813|8135551212|1
+ERROR: update_cid_group_entry NO UPDATES DEFINED - 6666|813|8135551212||
+SUCCESS: update_cid_group_entry CID GROUP ENTRIES HAVE BEEN UPDATED - 6666|1101|813|8135551212|1
 
 
 

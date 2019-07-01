@@ -1001,7 +1001,7 @@ hangup_xfer_record_start ENUM('Y','N') default 'N',
 scheduled_callbacks_email_alert ENUM('Y', 'N') default 'N',
 max_inbound_calls_outcome ENUM('DEFAULT','ALLOW_AGENTDIRECT','ALLOW_MI_PAUSE','ALLOW_AGENTDIRECT_AND_MI_PAUSE') default 'DEFAULT',
 manual_auto_next_options ENUM('DEFAULT','PAUSE_NO_COUNT') default 'DEFAULT',
-agent_screen_time_display ENUM('DISABLED','ENABLED_BASIC','ENABLED_FULL','ENABLED_BILL_BREAK_LUNCH_COACH') default 'DISABLED',
+agent_screen_time_display VARCHAR(40) default 'DISABLED',
 next_dial_my_callbacks ENUM('DISABLED','ENABLED') default 'DISABLED',
 inbound_no_agents_no_dial_container VARCHAR(40) default '---DISABLED---',
 inbound_no_agents_no_dial_threshold SMALLINT(5) default '0',
@@ -3155,7 +3155,8 @@ PRIMARY KEY (email_row_id),
 KEY email_list_account_key (email_account_id),
 KEY email_list_user_key (user),
 KEY vicidial_email_lead_id_key (lead_id),
-KEY vicidial_email_group_key (group_id)
+KEY vicidial_email_group_key (group_id),
+KEY vicidial_email_xfer_key (xfercallid)
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_email_accounts (
@@ -4420,4 +4421,4 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1571',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1572',db_schema_update_date=NOW(),reload_timestamp=NOW();

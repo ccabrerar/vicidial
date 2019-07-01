@@ -613,10 +613,11 @@
 # 190406-1615 - Added agent next_dial_my_callbacks override
 # 190529-2144 - Fix for shift enforcement dispo-call-url issue
 # 190617-1116 - Fix for script variable issue
+# 190627-2134 - Added new options for campaign agent_screen_time_display feature
 #
 
-$version = '2.14-582c';
-$build = '190617-1116';
+$version = '2.14-583c';
+$build = '190627-2134';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=87;
 $one_mysql_log=0;
@@ -700,6 +701,7 @@ $forever_stop=0;
 $isdst = date("I");
 $StarTtimE = date("U");
 $NOW_TIME = date("Y-m-d H:i:s");
+$NOW_DATE = date("Y-m-d");
 $tsNOW_TIME = date("YmdHis");
 $FILE_TIME = date("Ymd-His");
 $loginDATE = date("Ymd");
@@ -969,6 +971,8 @@ echo '<?xml version="1.0" encoding="UTF-8"?>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <link rel="stylesheet" type="text/css" href="css/style.css" />
 <link rel="stylesheet" type="text/css" href="css/custom.css" />
+<script language="JavaScript" src="calendar_db.js"></script>
+<link rel="stylesheet" href="calendar.css" />
 ';
 echo "<!-- VERSION: $version     "._QXZ("BUILD:")." $build -->\n";
 echo "<!-- BROWSER: $BROWSER_WIDTH x $BROWSER_HEIGHT     $JS_browser_width x $JS_browser_height -->\n";
@@ -17130,8 +17134,18 @@ function phone_number_format(formatphone) {
 
 
 // ################################################################################
+// Launch the Agent Time Report function
+	function LaunchAgentTimeReport(temp_none)
+		{
+		var temp_ATstart_date = document.vicidial_form.ATstart_date.value;
+		var temp_ATend_date = document.vicidial_form.ATend_date.value;
+		AgentTimeReport('open',temp_ATstart_date,temp_ATend_date);
+		}
+
+
+// ################################################################################
 // Agent Time Report loading function
-	function AgentTimeReport(temp_open_close)
+	function AgentTimeReport(temp_open_close,temp_start_date,temp_end_date)
 		{
 		if (temp_open_close == 'open')
 			{
@@ -17156,12 +17170,12 @@ function phone_number_format(formatphone) {
 				}
 			if (xmlhttp) 
 				{ 
-				var ATR_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&stage=" + agent_screen_time_display + "&lead_id=" + document.vicidial_form.lead_id.value + "&ACTION=AGENTtimeREPORT&format=text&user=" + user + "&campaign=" + campaign + "&pass=" + pass;
+				var ATR_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&stage=" + agent_screen_time_display + "&lead_id=" + document.vicidial_form.lead_id.value + "&ACTION=AGENTtimeREPORT&format=text&user=" + user + "&campaign=" + campaign + "&start_date=" + temp_start_date + "&end_date=" + temp_end_date + "&pass=" + pass;
 				xmlhttp.open('POST', 'vdc_db_query.php'); 
 				xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
 				xmlhttp.send(ATR_query); 
 				xmlhttp.onreadystatechange = function() 
-					{ 
+					{
 					if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
 						{
 					//	alert(xmlhttp.responseText);
@@ -20686,7 +20700,35 @@ if ($agent_display_dialable_leads > 0)
 </span>
 
 <span style="position:absolute;left:0px;top:0px;z-index:<?php $zi++; echo $zi ?>;" id="AgentTimeDisplayBox">
-	<table border="0" bgcolor="#CCFFCC" width="<?php echo $CAwidth ?>px" height="<?php echo $WRheight ?>px"><tr><td align="center" valign="top"> &nbsp; &nbsp; &nbsp; <font class="sd_text"><?php echo _QXZ("AGENT TIME REPORT FOR TODAY:"); ?></font> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <font class="sh_text"><a href="#" onclick="AgentTimeReport('close');return false;"><?php echo _QXZ("close"); ?> [X]</a><br />
+	<table border="0" bgcolor="#CCFFCC" width="<?php echo $CAwidth ?>px" height="<?php echo $WRheight ?>px"><tr><td align="center" valign="top">
+	<?php
+	if (preg_match("/RANGE/",$agent_screen_time_display))
+		{
+		echo " &nbsp; &nbsp; &nbsp; <font class=\"sd_text\">"._QXZ("AGENT TIME REPORT")." : &nbsp; <br />";
+		echo " <input type=text name=ATstart_date id=ATstart_date value=\"$NOW_DATE\" size=12 maxlength=10>";
+		echo "<script language=\"JavaScript\">\n";
+		echo "var o_cal = new tcal ({\n";
+		echo "	'formname': 'vicidial_form',\n";
+		echo "	'controlname': 'ATstart_date'});\n";
+		echo "o_cal.a_tpl.yearscroll = false;\n";
+		echo "</script>\n";
+		echo " &nbsp; "._QXZ("to");
+		echo " &nbsp; <input type=text name=ATend_date id=ATend_date value=\"$NOW_DATE\" size=12 maxlength=10>";
+		echo "<script language=\"JavaScript\">\n";
+		echo "var o_cal = new tcal ({\n";
+		echo "	'formname': 'vicidial_form',\n";
+		echo "	'controlname': 'ATend_date'});\n";
+		echo "o_cal.a_tpl.yearscroll = false;\n";
+		echo "</script>\n";
+		echo " &nbsp; <a href=\"#\" onclick=\"LaunchAgentTimeReport('');return false;\">"._QXZ("GO")."</a></font> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ";
+		echo "<font class=\"sh_text\"><a href=\"#\" onclick=\"AgentTimeReport('close');return false;\">"._QXZ("close")." [X]</a><br />";
+		}
+	else
+		{
+		echo "<input type=hidden name=ATstart_date id=ATstart_date value=\"$NOW_DATE\">\n";
+		echo "<input type=hidden name=ATend_date id=ATend_date value=\"$NOW_DATE\">\n";
+		}
+	?>
 	<div class="scroll_calllog" id="AgentTimeDisplaySpan"> <?php echo _QXZ("Agent Time Report"); ?> </div>
 	<br /><br /> &nbsp;</font>
 	</td></tr></table>

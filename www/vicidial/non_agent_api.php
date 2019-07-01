@@ -136,10 +136,11 @@
 # 181214-1606 - Added lead_callback_info function
 # 190313-0710 - Fix for update_lead custom fields issue #1134
 # 190325-1055 - Added agent_campaigns function
+# 190628-1504 - Added update_cid_group_entry function
 #
 
-$version = '2.14-113';
-$build = '190325-1055';
+$version = '2.14-114';
+$build = '190628-1504';
 $api_url_log = 0;
 
 $startMS = microtime();
@@ -498,6 +499,12 @@ if (isset($_GET["filter_clean_cid_number"]))			{$filter_clean_cid_number=$_GET["
 	elseif (isset($_POST["filter_clean_cid_number"]))	{$filter_clean_cid_number=$_POST["filter_clean_cid_number"];}
 if (isset($_GET["ignore_agentdirect"]))				{$ignore_agentdirect=$_GET["ignore_agentdirect"];}
 	elseif (isset($_POST["ignore_agentdirect"]))	{$ignore_agentdirect=$_POST["ignore_agentdirect"];}
+if (isset($_GET["areacode"]))				{$areacode=$_GET["areacode"];}
+	elseif (isset($_POST["areacode"]))		{$areacode=$_POST["areacode"];}
+if (isset($_GET["cid_group_id"]))			{$cid_group_id=$_GET["cid_group_id"];}
+	elseif (isset($_POST["cid_group_id"]))	{$cid_group_id=$_POST["cid_group_id"];}
+if (isset($_GET["cid_description"]))			{$cid_description=$_GET["cid_description"];}
+	elseif (isset($_POST["cid_description"]))	{$cid_description=$_POST["cid_description"];}
 
 
 header ("Content-type: text/html; charset=utf-8");
@@ -631,7 +638,7 @@ if ($non_latin < 1)
 	$registration_password=preg_replace('/[^-_0-9a-zA-Z]/','',$registration_password);
 	$phone_full_name=preg_replace('/[^- \+\.\_0-9a-zA-Z]/','',$phone_full_name);
 	$local_gmt=preg_replace('/[^-\.0-9]/','',$local_gmt);
-	$outbound_cid=preg_replace('/[^0-9]/','',$outbound_cid);
+	$outbound_cid=preg_replace('/[^-_0-9a-zA-Z]/','',$outbound_cid);
 	$phone_context=preg_replace('/[^-_0-9a-zA-Z]/','',$phone_context);
 	$list_name=preg_replace('/[^- \+\.\:\/\@\?\&\_0-9a-zA-Z]/','',$list_name);
 	$active=preg_replace('/[^A-Z]/','',$active);
@@ -712,6 +719,13 @@ if ($non_latin < 1)
 	$extension = preg_replace('/[^-\*\#\.\:\/\@\_0-9a-zA-Z]/','',$extension);
 	$filter_clean_cid_number = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$filter_clean_cid_number);
 	$ignore_agentdirect = preg_replace('/[^A-Z]/','',$ignore_agentdirect);
+	$areacode = preg_replace('/[^-_0-9a-zA-Z]/','',$areacode);
+	$cid_group_id = preg_replace('/[^-_0-9a-zA-Z]/','',$cid_group_id);
+	$cid_description = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$cid_description);
+	if ($outbound_cid != '---ALL---')
+		{$outbound_cid=preg_replace('/[^0-9]/','',$outbound_cid);}
+	if ($areacode != '---ALL---')
+		{$areacode=preg_replace('/[^0-9a-zA-Z]/','',$areacode);}
 	}
 else
 	{
@@ -5389,6 +5403,364 @@ if ($function == 'update_did')
 	}
 ################################################################################
 ### END update_did
+################################################################################
+
+
+
+
+
+################################################################################
+### update_cid_group_entry - updates CID Group entries in the vicidial_campaign_cid_areacodes table
+################################################################################
+if ($function == 'update_cid_group_entry')
+	{
+	if(strlen($source)<2)
+		{
+		$result = 'ERROR';
+		$result_reason = "Invalid Source";
+		echo "$result: $result_reason - $source\n";
+		api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+		echo "ERROR: Invalid Source: |$source|\n";
+		exit;
+		}
+	else
+		{
+		if ( (!preg_match("/ $function /",$api_allowed_functions)) and (!preg_match("/ALL_FUNCTIONS/",$api_allowed_functions)) )
+			{
+			$result = 'ERROR';
+			$result_reason = "auth USER DOES NOT HAVE PERMISSION TO USE THIS FUNCTION";
+			echo "$result: $result_reason: |$user|$function|\n";
+			$data = "$allowed_user";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1' and modify_campaigns='1' and user_level >= 8 and active='Y';";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$row=mysqli_fetch_row($rslt);
+		$allowed_user=$row[0];
+		if ($allowed_user < 1)
+			{
+			$result = 'ERROR';
+			$result_reason = "update_cid_group_entry USER DOES NOT HAVE PERMISSION TO UPDATE CID GROUPS";
+			$data = "$allowed_user";
+			echo "$result: $result_reason: |$user|$data\n";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		else
+			{
+			if ( (strlen($cid_group_id)<1) or (strlen($cid_group_id)>20) or (strlen($stage)<3) or (strlen($stage)>6) or (strlen($areacode)<1) or (strlen($areacode)>9) )
+				{
+				$result = 'ERROR';
+				$result_reason = "update_cid_group_entry YOU MUST USE ALL REQUIRED FIELDS";
+				$data = "$cid_group_id|$areacode|$stage";
+				echo "$result: $result_reason: |$user|$data\n";
+				api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+				exit;
+				}
+			else
+				{
+				$stmt="SELECT allowed_campaigns,admin_viewable_groups from vicidial_user_groups where user_group='$LOGuser_group';";
+				if ($DB>0) {echo "|$stmt|\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$row=mysqli_fetch_row($rslt);
+				$LOGallowed_campaigns =			$row[0];
+				$LOGadmin_viewable_groups =		$row[1];
+
+				$LOGallowed_campaignsSQL='';
+				$whereLOGallowed_campaignsSQL='';
+				if ( (!preg_match('/\-ALL/i', $LOGallowed_campaigns)) )
+					{
+					$rawLOGallowed_campaignsSQL = preg_replace("/ -/",'',$LOGallowed_campaigns);
+					$rawLOGallowed_campaignsSQL = preg_replace("/ /","','",$rawLOGallowed_campaignsSQL);
+					$LOGallowed_campaignsSQL = "and campaign_id IN('$rawLOGallowed_campaignsSQL')";
+					$whereLOGallowed_campaignsSQL = "where campaign_id IN('$rawLOGallowed_campaignsSQL')";
+					}
+				$admin_viewable_groupsSQL='';
+				$WHEREadmin_viewable_groupsSQL='';
+				if  (!preg_match('/\-\-ALL\-\-/i',$LOGadmin_viewable_groups))
+					{
+					$rawLOGadmin_viewable_groupsSQL = preg_replace("/ -/",'',$LOGadmin_viewable_groups);
+					$rawLOGadmin_viewable_groupsSQL = preg_replace("/ /","','",$rawLOGadmin_viewable_groupsSQL);
+					$admin_viewable_groupsSQL = "and user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')";
+					$WHEREadmin_viewable_groupsSQL = "where user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')";
+					}
+
+				$stmt="SELECT count(*) from vicidial_cid_groups where cid_group_id='$cid_group_id' $admin_viewable_groupsSQL;";
+				if ($DB>0) {echo "|$stmt|\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$row=mysqli_fetch_row($rslt);
+				$did_exists=$row[0];
+				if ($did_exists < 1)
+					{
+					$stmt="SELECT count(*) from vicidial_campaigns where campaign_id='$cid_group_id' $LOGallowed_campaignsSQL;";
+					if ($DB>0) {echo "|$stmt|\n";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+					$row=mysqli_fetch_row($rslt);
+					$campaign_exists=$row[0];
+
+					if ($campaign_exists < 1)
+						{
+						$result = 'ERROR';
+						$result_reason = "update_cid_group_entry CID GROUP DOES NOT EXIST";
+						$data = "$cid_group_id";
+						echo "$result: $result_reason: |$user|$data\n";
+						api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+						exit;
+						}
+					}
+
+				$areacodeSQL = "and areacode='$areacode'";
+				if ($areacode == '---ALL---')
+					{$areacodeSQL='';}
+				$outbound_cidSQL = "and outbound_cid='$outbound_cid'";
+				if ( ($outbound_cid == '---ALL---') or (strlen($outbound_cid) < 1) )
+					{$outbound_cidSQL='';}
+
+				##### BEGIN get information on CID Group entries #####
+				if ($stage == 'INFO')
+					{
+					$stmt="SELECT areacode,outbound_cid,active,cid_description,call_count_today from vicidial_campaign_cid_areacodes where campaign_id='$cid_group_id' $areacodeSQL $outbound_cidSQL order by areacode,outbound_cid;";
+					if ($DB>0) {echo "|$stmt|\n";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+					$vcca_recs = mysqli_num_rows($rslt);
+					$M=0;
+					if ($vcca_recs > $M)
+						{
+						$results_output="SUCCESS: update_cid_group_entry CID GROUP INFO AS FOLLOWS $cid_group_id|$areacode|$outbound_cid|$vcca_recs\n";
+						$data = "$cid_group_id|$areacode|$outbound_cid|$vcca_recs";
+						}
+					else
+						{
+						$result = 'ERROR';
+						$result_reason = "update_cid_group_entry THIS CID GROUP HAS NO ENTRIES";
+						$data = "$cid_group_id";
+						echo "$result: $result_reason: |$user|$data\n";
+						api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+						exit;
+						}
+					while ($vcca_recs > $M)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$ACareacode =			$row[0];
+						$ACoutbound_cid =		$row[1];
+						$ACactive =				$row[2];
+						$ACcid_description =	$row[3];
+						$ACcall_count_today =	$row[4];
+						if ($ACactive == '') {$ACactive='N';}
+
+						$M++;
+
+						$results_output.="$M|$ACareacode|$ACoutbound_cid|$ACactive|$ACcid_description|$ACcall_count_today\n";
+						}
+
+					$result = 'SUCCESS';
+					$result_reason = "update_cid_group_entry CID GROUP INFO AS FOLLOWS";
+					echo "$results_output";
+					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+					}
+				##### END get information on CID Group entries #####
+
+				##### BEGIN add a CID Group entry #####
+				if ($stage == 'ADD')
+					{
+					if ($areacode == '---ALL---')
+						{
+						$result = 'ERROR';
+						$result_reason = "update_cid_group_entry YOU MUST DEFINE AN AREACODE WHEN ADDING AND ENTRY";
+						$data = "$cid_group_id|$areacode";
+						echo "$result: $result_reason: |$user|$data\n";
+						api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+						exit;
+						}
+					if (strlen($outbound_cid) < 4)
+						{
+						$result = 'ERROR';
+						$result_reason = "update_cid_group_entry YOU MUST DEFINE A CID NUMBER WHEN ADDING AND ENTRY";
+						$data = "$cid_group_id|$outbound_cid";
+						echo "$result: $result_reason: |$user|$data\n";
+						api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+						exit;
+						}
+					if ( (strlen($active) < 1) or ($active == 'N') or ( ($active != 'Y') and ($active != 'N') ) )
+						{$active = '';}
+					if (strlen($cid_description) < 1)
+						{$cid_description = '';}
+
+					$stmt="SELECT count(*) from vicidial_campaign_cid_areacodes where campaign_id='$cid_group_id' and areacode='$areacode' and outbound_cid='$outbound_cid';";
+					if ($DB>0) {echo "|$stmt|\n";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+					$row=mysqli_fetch_row($rslt);
+					$cid_exists=$row[0];
+					if ($cid_exists > 0)
+						{
+						$result = 'ERROR';
+						$result_reason = "update_cid_group_entry THIS CID GROUP ENTRY ALREADY EXISTS";
+						$data = "$cid_group_id|$areacode|$outbound_cid";
+						echo "$result: $result_reason: |$user|$data\n";
+						api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+						exit;
+						}
+
+					$stmt="INSERT INTO vicidial_campaign_cid_areacodes SET campaign_id='$cid_group_id',areacode='$areacode',outbound_cid='$outbound_cid',active='$active',cid_description='$cid_description';";
+					$rslt=mysql_to_mysqli($stmt, $link);
+					$insert_count = mysqli_affected_rows($link);
+					if ($DB) {echo "$insert_count|$stmt|\n";}
+
+					### LOG INSERTION Admin Log Table ###
+					$SQL_log = "$stmt|";
+					$SQL_log = preg_replace('/;/', '', $SQL_log);
+					$SQL_log = addslashes($SQL_log);
+					$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$user', ip_address='$ip', event_section='CIDGROUPS', event_type='ADD', record_id='$cid_group_id', event_code='ADMIN API ADD CID', event_sql=\"$SQL_log\", event_notes='areacode: $areacode outbound_cid: $outbound_cid active: $active inserted: $insert_count';";
+					if ($DB) {echo "|$stmt|\n";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+
+					$result = 'SUCCESS';
+					$result_reason = "update_cid_group_entry CID GROUP ENTRY HAS BEEN ADDED";
+					$data = "$cid_group_id|$areacode|$outbound_cid|$insert_count";
+					echo "$result: $result_reason - $user|$data\n";
+					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+					}
+				##### END add a CID Group entry #####
+
+				##### BEGIN delete CID Group entries #####
+				if ($stage == 'DELETE')
+					{
+					$stmt="SELECT areacode,outbound_cid,active,cid_description,call_count_today from vicidial_campaign_cid_areacodes where campaign_id='$cid_group_id' $areacodeSQL $outbound_cidSQL order by areacode,outbound_cid;";
+					if ($DB>0) {echo "|$stmt|\n";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+					$vcca_recs = mysqli_num_rows($rslt);
+					$M=0;
+					if ($vcca_recs > $M)
+						{
+						$notes_output='';
+						}
+					else
+						{
+						$result = 'ERROR';
+						$result_reason = "update_cid_group_entry THIS CID GROUP HAS NO ENTRIES";
+						$data = "$cid_group_id";
+						echo "$result: $result_reason: |$user|$data\n";
+						api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+						exit;
+						}
+					while ($vcca_recs > $M)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$ACareacode =			$row[0];
+						$ACoutbound_cid =		$row[1];
+						$ACactive =				$row[2];
+						$ACcid_description =	$row[3];
+						$ACcall_count_today =	$row[4];
+						if ($ACactive == '') {$ACactive='N';}
+						$M++;
+						$notes_output.="$M|$ACareacode|$ACoutbound_cid|$ACactive|$ACcid_description|$ACcall_count_today\n";
+						}
+
+					$stmt="DELETE FROM vicidial_campaign_cid_areacodes WHERE campaign_id='$cid_group_id' $areacodeSQL $outbound_cidSQL;";
+					$rslt=mysql_to_mysqli($stmt, $link);
+					$delete_count = mysqli_affected_rows($link);
+					if ($DB) {echo "$insert_count|$stmt|\n";}
+
+					### LOG INSERTION Admin Log Table ###
+					$SQL_log = "$stmt|";
+					$SQL_log = preg_replace('/;/', '', $SQL_log);
+					$SQL_log = addslashes($SQL_log);
+					$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$user', ip_address='$ip', event_section='CIDGROUPS', event_type='DELETE', record_id='$cid_group_id', event_code='ADMIN API DELETE CID', event_sql=\"$SQL_log\", event_notes='areacode: $areacode outbound_cid: $outbound_cid deleted: $delete_count\n$notes_output';";
+					if ($DB) {echo "|$stmt|\n";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+
+					$result = 'SUCCESS';
+					$result_reason = "update_cid_group_entry CID GROUP ENTRIES HAVE BEEN DELETED";
+					$data = "$cid_group_id|$areacode|$outbound_cid|$delete_count";
+					echo "$result: $result_reason - $user|$data\n";
+					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+					}
+				##### END delete CID Group entries #####
+
+				##### BEGIN update CID Group entries #####
+				if ($stage == 'UPDATE')
+					{
+					$stmt="SELECT areacode,outbound_cid,active,cid_description,call_count_today from vicidial_campaign_cid_areacodes where campaign_id='$cid_group_id' $areacodeSQL $outbound_cidSQL order by areacode,outbound_cid;";
+					if ($DB>0) {echo "|$stmt|\n";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+					$vcca_recs = mysqli_num_rows($rslt);
+					$M=0;
+					if ($vcca_recs > $M)
+						{
+						$notes_output='';
+						}
+					else
+						{
+						$result = 'ERROR';
+						$result_reason = "update_cid_group_entry THIS CID GROUP HAS NO ENTRIES";
+						$data = "$cid_group_id";
+						echo "$result: $result_reason: |$user|$data\n";
+						api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+						exit;
+						}
+					while ($vcca_recs > $M)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$ACareacode =			$row[0];
+						$ACoutbound_cid =		$row[1];
+						$ACactive =				$row[2];
+						$ACcid_description =	$row[3];
+						$ACcall_count_today =	$row[4];
+						if ($ACactive == '') {$ACactive='N';}
+						$M++;
+						$notes_output.="$M|$ACareacode|$ACoutbound_cid|$ACactive|$ACcid_description|$ACcall_count_today\n";
+						}
+
+					$updateSQL='';
+					if ( ($active == 'Y') or ($active == 'N') )
+						{
+						$activeSQL=$active;
+						if ($active == 'N') {$activeSQL='';}
+						$updateSQL .= "active='$activeSQL'";
+						}
+					if (strlen($cid_description) > 0)
+						{
+						if (strlen($updateSQL) > 0) {$updateSQL .= ",";}
+						$updateSQL .= "cid_description='$cid_description'";
+						}
+					if (strlen($updateSQL) < 5)
+						{
+						$result = 'ERROR';
+						$result_reason = "update_cid_group_entry NO UPDATES WERE DEFINED";
+						$data = "$cid_group_id|$areacode|$outbound_cid|$active|$cid_description";
+						echo "$result: $result_reason: |$user|$data\n";
+						api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+						exit;
+						}
+
+					$stmt="UPDATE vicidial_campaign_cid_areacodes SET $updateSQL WHERE campaign_id='$cid_group_id' $areacodeSQL $outbound_cidSQL;";
+					$rslt=mysql_to_mysqli($stmt, $link);
+					$modify_count = mysqli_affected_rows($link);
+					if ($DB) {echo "$modify_count|$stmt|\n";}
+
+					### LOG INSERTION Admin Log Table ###
+					$SQL_log = "$stmt|";
+					$SQL_log = preg_replace('/;/', '', $SQL_log);
+					$SQL_log = addslashes($SQL_log);
+					$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$user', ip_address='$ip', event_section='CIDGROUPS', event_type='MODIFY', record_id='$cid_group_id', event_code='ADMIN API MODIFY CID', event_sql=\"$SQL_log\", event_notes='areacode: $areacode outbound_cid: $outbound_cid modified: $modify_count\n$notes_output';";
+					if ($DB) {echo "|$stmt|\n";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+
+					$result = 'SUCCESS';
+					$result_reason = "update_cid_group_entry CID GROUP ENTRIES HAVE BEEN UPDATED";
+					$data = "$cid_group_id|$areacode|$outbound_cid|$modify_count";
+					echo "$result: $result_reason - $user|$data\n";
+					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+					}
+				##### END update CID Group entries #####
+				}
+			}
+		}
+	exit;
+	}
+################################################################################
+### END update_cid_group_entry
 ################################################################################
 
 

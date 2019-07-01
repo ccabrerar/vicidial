@@ -126,7 +126,7 @@ $UGreports = 'ALL REPORTS, NONE, Real-Time Main Report, Real-Time Campaign Summa
 
 $Vtables = 'NONE,log_noanswer,did_agent_log,contact_information';
 
-$APIfunctions = 'ALL_FUNCTIONS add_group_alias add_lead add_list add_phone add_phone_alias add_user agent_ingroup_info agent_stats_export agent_status audio_playback blind_monitor call_agent callid_info change_ingroups check_phone_number did_log_export external_add_lead external_dial external_hangup external_pause external_status in_group_status logout moh_list park_call pause_code preview_dial_action ra_call_control recording recording_lookup send_dtmf server_refresh set_timer_action sounds_list st_get_agent_active_lead st_login_log transfer_conference update_fields update_lead update_list update_log_entry update_phone update_phone_alias update_user user_group_status vm_list webphone_url webserver logged_in_agents update_campaign update_did lead_field_info phone_number_log switch_lead ccc_lead_info lead_status_search call_status_stats calls_in_queue_count force_fronter_leave_3way force_fronter_audio_stop';
+$APIfunctions = 'ALL_FUNCTIONS add_group_alias add_lead add_list add_phone add_phone_alias add_user agent_ingroup_info agent_stats_export agent_status audio_playback blind_monitor call_agent callid_info change_ingroups check_phone_number did_log_export external_add_lead external_dial external_hangup external_pause external_status in_group_status logout moh_list park_call pause_code preview_dial_action ra_call_control recording recording_lookup send_dtmf server_refresh set_timer_action sounds_list st_get_agent_active_lead st_login_log transfer_conference update_fields update_lead update_list update_log_entry update_phone update_phone_alias update_user user_group_status vm_list webphone_url webserver logged_in_agents update_campaign update_did lead_field_info phone_number_log switch_lead ccc_lead_info lead_status_search call_status_stats calls_in_queue_count force_fronter_leave_3way force_fronter_audio_stop update_cid_group_entry';
 
 
 ### BEGIN housecleaning of old static report files, if not done before ###
@@ -4506,12 +4506,15 @@ else
 # 190530-1014 - Added list_status_modification_confirmation feature
 # 190530-1715 - Added sip_event_logging system setting
 # 190607-1525 - Added SIP Event Report link
+# 190627-1528 - Added new options for campaign agent_screen_time_display setting
+# 190628-0835 - Added copying/deleting of vicidial_url_multi records when copying/deleting campaigns/in-groups
+# 190628-1511 - Added API update_cid_group_entry function
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-711a';
-$build = '190607-1525';
+$admin_version = '2.14-714a';
+$build = '190628-1511';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -10103,40 +10106,53 @@ if ($ADD==20)
 
 						$stmt="INSERT INTO vicidial_campaigns (campaign_name,campaign_id,active,dial_status_a,dial_status_b,dial_status_c,dial_status_d,dial_status_e,lead_order,park_ext,park_file_name,web_form_address,allow_closers,hopper_level,auto_dial_level,next_agent_call,local_call_time,voicemail_ext,dial_timeout,dial_prefix,campaign_cid,campaign_vdad_exten,campaign_rec_exten,campaign_recording,campaign_rec_filename,campaign_script,get_call_launch,am_message_exten,amd_send_to_vmx,xferconf_a_dtmf,xferconf_a_number,xferconf_b_dtmf,xferconf_b_number,alt_number_dialing,scheduled_callbacks,lead_filter_id,drop_call_seconds,drop_action,safe_harbor_exten,display_dialable_count,wrapup_seconds,wrapup_message,closer_campaigns,use_internal_dnc,allcalls_delay,omit_phone_code,dial_method,available_only_ratio_tally,adaptive_dropped_percentage,adaptive_maximum_level,adaptive_latest_server_time,adaptive_intensity,adaptive_dl_diff_target,concurrent_transfers,auto_alt_dial,auto_alt_dial_statuses,agent_pause_codes_active,campaign_description,campaign_changedate,campaign_stats_refresh,campaign_logindate,dial_statuses,disable_alter_custdata,no_hopper_leads_logins,list_order_mix,campaign_allow_inbound,manual_dial_list_id,default_xfer_group,queue_priority,drop_inbound_group,qc_enabled,qc_statuses,qc_lists,qc_web_form_address,qc_script,survey_first_audio_file,survey_dtmf_digits,survey_ni_digit,survey_opt_in_audio_file,survey_ni_audio_file,survey_method,survey_no_response_action,survey_ni_status,survey_response_digit_map,survey_xfer_exten,survey_camp_record_dir,disable_alter_custphone,display_queue_count,qc_get_record_launch,qc_show_recording,qc_shift_id,manual_dial_filter,agent_clipboard_copy,agent_extended_alt_dial,use_campaign_dnc,three_way_call_cid,three_way_dial_prefix,web_form_target,vtiger_search_category,vtiger_create_call_record,vtiger_create_lead_record,vtiger_screen_login,cpd_amd_action,agent_allow_group_alias,default_group_alias,vtiger_search_dead,vtiger_status_call,survey_third_digit,survey_fourth_digit,survey_third_audio_file,survey_fourth_audio_file,survey_third_status,survey_fourth_status,survey_third_exten,survey_fourth_exten,drop_lockout_time,quick_transfer_button,prepopulate_transfer_preset,drop_rate_group,view_calls_in_queue,view_calls_in_queue_launch,grab_calls_in_queue,call_requeue_button,pause_after_each_call,no_hopper_dialing,agent_dial_owner_only,agent_display_dialable_leads,web_form_address_two,waitforsilence_options,agent_select_territories,crm_popup_login,crm_login_address,timer_action,timer_action_message,timer_action_seconds,start_call_url,dispo_call_url,xferconf_c_number,xferconf_d_number,xferconf_e_number,use_custom_cid,scheduled_callbacks_alert,queuemetrics_callstatus_override,extension_appended_cidname,scheduled_callbacks_count,manual_dial_override,blind_monitor_warning,blind_monitor_message,blind_monitor_filename,inbound_queue_no_dial,timer_action_destination,enable_xfer_presets,hide_xfer_number_to_dial,manual_dial_prefix,customer_3way_hangup_logging,customer_3way_hangup_seconds,customer_3way_hangup_action,ivr_park_call,ivr_park_call_agi,manual_preview_dial,realtime_agent_time_stats,use_auto_hopper,auto_hopper_multi,auto_trim_hopper,api_manual_dial,manual_dial_call_time_check,display_leads_count,lead_order_randomize,lead_order_secondary,per_call_notes,my_callback_option,agent_lead_search,agent_lead_search_method,queuemetrics_phone_environment,auto_pause_precall,auto_resume_precall,auto_pause_precall_code,manual_dial_cid,post_phone_time_diff_alert,custom_3way_button_transfer,available_only_tally_threshold,available_only_tally_threshold_agents,dial_level_threshold,dial_level_threshold_agents,safe_harbor_audio,safe_harbor_menu_id,survey_menu_id,callback_days_limit,dl_diff_target_method,disable_dispo_screen,disable_dispo_status,screen_labels,status_display_fields,na_call_url,survey_recording,pllb_grouping,pllb_grouping_limit,call_count_limit,call_count_target,callback_hours_block,callback_list_calltime,user_group,hopper_vlc_dup_check,safe_harbor_audio_field,pause_after_next_call,owner_populate,use_other_campaign_dnc,allow_emails,allow_chats,amd_inbound_group,amd_callmenu,survey_wait_sec,manual_dial_lead_id,dead_max,dispo_max,pause_max,dead_max_dispo,dispo_max_dispo,max_inbound_calls,manual_dial_search_checkbox,hide_call_log_info,timer_alt_seconds,wrapup_bypass,wrapup_after_hotkey,callback_active_limit,callback_active_limit_override,comments_all_tabs,comments_dispo_screen,comments_callback_screen,qc_comment_history,show_previous_callback,clear_script,cpd_unknown_action,manual_dial_search_filter,web_form_address_three,manual_dial_override_field,status_display_ingroup,customer_gone_seconds,agent_display_fields,am_message_wildcards,manual_dial_timeout,routing_initiated_recordings,manual_dial_hopper_check,callback_useronly_move_minutes,ofcom_uk_drop_calc,manual_auto_next,manual_auto_show,allow_required_fields,dead_to_dispo,agent_xfer_validation,ready_max_logout,callback_display_days,three_way_record_stop,hangup_xfer_record_start,scheduled_callbacks_email_alert,max_inbound_calls_outcome,manual_auto_next_options,agent_screen_time_display,next_dial_my_callbacks,inbound_no_agents_no_dial_container,inbound_no_agents_no_dial_threshold,cid_group_id,pause_max_dispo,script_top_dispo,dead_trigger_seconds,dead_trigger_action,dead_trigger_repeat,dead_trigger_filename,dead_trigger_url,scheduled_callbacks_force_dial,scheduled_callbacks_auto_reschedule,scheduled_callbacks_timezones_container,three_way_volume_buttons,callback_dnc,manual_dial_validation,mute_recordings) SELECT \"$campaign_name\",\"$campaign_id\",\"N\",dial_status_a,dial_status_b,dial_status_c,dial_status_d,dial_status_e,lead_order,park_ext,park_file_name,web_form_address,allow_closers,hopper_level,auto_dial_level,next_agent_call,local_call_time,voicemail_ext,dial_timeout,dial_prefix,campaign_cid,campaign_vdad_exten,campaign_rec_exten,campaign_recording,campaign_rec_filename,campaign_script,get_call_launch,am_message_exten,amd_send_to_vmx,xferconf_a_dtmf,xferconf_a_number,xferconf_b_dtmf,xferconf_b_number,alt_number_dialing,scheduled_callbacks,lead_filter_id,drop_call_seconds,drop_action,safe_harbor_exten,display_dialable_count,wrapup_seconds,wrapup_message,closer_campaigns,use_internal_dnc,allcalls_delay,omit_phone_code,dial_method,available_only_ratio_tally,adaptive_dropped_percentage,adaptive_maximum_level,adaptive_latest_server_time,adaptive_intensity,adaptive_dl_diff_target,concurrent_transfers,auto_alt_dial,auto_alt_dial_statuses,agent_pause_codes_active,campaign_description,campaign_changedate,campaign_stats_refresh,campaign_logindate,dial_statuses,disable_alter_custdata,no_hopper_leads_logins,\"DISABLED\",campaign_allow_inbound,manual_dial_list_id,default_xfer_group,queue_priority,drop_inbound_group,qc_enabled,qc_statuses,qc_lists,qc_web_form_address,qc_script,survey_first_audio_file,survey_dtmf_digits,survey_ni_digit,survey_opt_in_audio_file,survey_ni_audio_file,survey_method,survey_no_response_action,survey_ni_status,survey_response_digit_map,survey_xfer_exten,survey_camp_record_dir,disable_alter_custphone,display_queue_count,qc_get_record_launch,qc_show_recording,qc_shift_id,manual_dial_filter,agent_clipboard_copy,agent_extended_alt_dial,use_campaign_dnc,three_way_call_cid,three_way_dial_prefix,web_form_target,vtiger_search_category,vtiger_create_call_record,vtiger_create_lead_record,vtiger_screen_login,cpd_amd_action,agent_allow_group_alias,default_group_alias,vtiger_search_dead,vtiger_status_call,survey_third_digit,survey_fourth_digit,survey_third_audio_file,survey_fourth_audio_file,survey_third_status,survey_fourth_status,survey_third_exten,survey_fourth_exten,drop_lockout_time,quick_transfer_button,prepopulate_transfer_preset,drop_rate_group,view_calls_in_queue,view_calls_in_queue_launch,grab_calls_in_queue,call_requeue_button,pause_after_each_call,no_hopper_dialing,agent_dial_owner_only,agent_display_dialable_leads,web_form_address_two,waitforsilence_options,agent_select_territories,crm_popup_login,crm_login_address,timer_action,timer_action_message,timer_action_seconds,start_call_url,dispo_call_url,xferconf_c_number,xferconf_d_number,xferconf_e_number,use_custom_cid,scheduled_callbacks_alert,queuemetrics_callstatus_override,extension_appended_cidname,scheduled_callbacks_count,manual_dial_override,blind_monitor_warning,blind_monitor_message,blind_monitor_filename,inbound_queue_no_dial,timer_action_destination,enable_xfer_presets,hide_xfer_number_to_dial,manual_dial_prefix,customer_3way_hangup_logging,customer_3way_hangup_seconds,customer_3way_hangup_action,ivr_park_call,ivr_park_call_agi,manual_preview_dial,realtime_agent_time_stats,use_auto_hopper,auto_hopper_multi,auto_trim_hopper,api_manual_dial,manual_dial_call_time_check,display_leads_count,lead_order_randomize,lead_order_secondary,per_call_notes,my_callback_option,agent_lead_search,agent_lead_search_method,queuemetrics_phone_environment,auto_pause_precall,auto_resume_precall,auto_pause_precall_code,manual_dial_cid,post_phone_time_diff_alert,custom_3way_button_transfer,available_only_tally_threshold,available_only_tally_threshold_agents,dial_level_threshold,dial_level_threshold_agents,safe_harbor_audio,safe_harbor_menu_id,survey_menu_id,callback_days_limit,dl_diff_target_method,disable_dispo_screen,disable_dispo_status,screen_labels,status_display_fields,na_call_url,survey_recording,pllb_grouping,pllb_grouping_limit,call_count_limit,call_count_target,callback_hours_block,callback_list_calltime,user_group,hopper_vlc_dup_check,safe_harbor_audio_field,pause_after_next_call,owner_populate,use_other_campaign_dnc,allow_emails,allow_chats,amd_inbound_group,amd_callmenu,survey_wait_sec,manual_dial_lead_id,dead_max,dispo_max,pause_max,dead_max_dispo,dispo_max_dispo,max_inbound_calls,manual_dial_search_checkbox,hide_call_log_info,timer_alt_seconds,wrapup_bypass,wrapup_after_hotkey,callback_active_limit,callback_active_limit_override,comments_all_tabs,comments_dispo_screen,comments_callback_screen,qc_comment_history,show_previous_callback,clear_script,cpd_unknown_action,manual_dial_search_filter,web_form_address_three,manual_dial_override_field,status_display_ingroup,customer_gone_seconds,agent_display_fields,am_message_wildcards,manual_dial_timeout,routing_initiated_recordings,manual_dial_hopper_check,callback_useronly_move_minutes,ofcom_uk_drop_calc,manual_auto_next,manual_auto_show,allow_required_fields,dead_to_dispo,agent_xfer_validation,ready_max_logout,callback_display_days,three_way_record_stop,hangup_xfer_record_start,scheduled_callbacks_email_alert,max_inbound_calls_outcome,manual_auto_next_options,agent_screen_time_display,next_dial_my_callbacks,inbound_no_agents_no_dial_container,inbound_no_agents_no_dial_threshold,cid_group_id,pause_max_dispo,script_top_dispo,dead_trigger_seconds,dead_trigger_action,dead_trigger_repeat,dead_trigger_filename,dead_trigger_url,scheduled_callbacks_force_dial,scheduled_callbacks_auto_reschedule,scheduled_callbacks_timezones_container,three_way_volume_buttons,callback_dnc,manual_dial_validation,mute_recordings from vicidial_campaigns where campaign_id='$source_campaign_id';";
 						$rslt=mysql_to_mysqli($stmt, $link);
+						$affected_rows = mysqli_affected_rows($link);
 
 						$stmtA="INSERT INTO vicidial_campaign_stats (campaign_id) values('$campaign_id');";
 						$rslt=mysql_to_mysqli($stmtA, $link);
+						$affected_rowsA = mysqli_affected_rows($link);
 
 						$stmtB="INSERT INTO vicidial_campaign_stats_debug (campaign_id) values('$campaign_id');";
 						$rslt=mysql_to_mysqli($stmtB, $link);
+						$affected_rowsB = mysqli_affected_rows($link);
 
 						$stmtC="INSERT INTO vicidial_campaign_statuses (status,status_name,selectable,campaign_id,human_answered,category,sale,dnc,customer_contact,not_interested,unworkable,scheduled_callback,completed,min_sec,max_sec,answering_machine) SELECT status,status_name,selectable,\"$campaign_id\",human_answered,category,sale,dnc,customer_contact,not_interested,unworkable,scheduled_callback,completed,min_sec,max_sec,answering_machine from vicidial_campaign_statuses where campaign_id='$source_campaign_id';";
 						$rslt=mysql_to_mysqli($stmtC, $link);
+						$affected_rowsC = mysqli_affected_rows($link);
 
 						$stmtD="INSERT INTO vicidial_campaign_hotkeys (status,hotkey,status_name,selectable,campaign_id) SELECT status,hotkey,status_name,selectable,\"$campaign_id\" from vicidial_campaign_hotkeys where campaign_id='$source_campaign_id';";
 						$rslt=mysql_to_mysqli($stmtD, $link);
+						$affected_rowsD = mysqli_affected_rows($link);
 
 						$stmtE="INSERT INTO vicidial_lead_recycle (status,attempt_delay,attempt_maximum,active,campaign_id) SELECT status,attempt_delay,attempt_maximum,active,\"$campaign_id\" from vicidial_lead_recycle where campaign_id='$source_campaign_id';";
 						$rslt=mysql_to_mysqli($stmtE, $link);
+						$affected_rowsE = mysqli_affected_rows($link);
 
 						$stmtF="INSERT INTO vicidial_pause_codes (pause_code,pause_code_name,billable,campaign_id,time_limit,require_mgr_approval) SELECT pause_code,pause_code_name,billable,\"$campaign_id\",time_limit,require_mgr_approval from vicidial_pause_codes where campaign_id='$source_campaign_id';";
 						$rslt=mysql_to_mysqli($stmtF, $link);
+						$affected_rowsF = mysqli_affected_rows($link);
 
 						$stmtG="INSERT INTO vicidial_xfer_presets (campaign_id,preset_name,preset_number,preset_dtmf,preset_hide_number) SELECT \"$campaign_id\",preset_name,preset_number,preset_dtmf,preset_hide_number from vicidial_xfer_presets where campaign_id='$source_campaign_id';";
 						$rslt=mysql_to_mysqli($stmtG, $link);
+						$affected_rowsG = mysqli_affected_rows($link);
 
 						$stmtH="INSERT INTO vicidial_xfer_stats (campaign_id,preset_name) SELECT \"$campaign_id\",preset_name from vicidial_xfer_presets where campaign_id='$source_campaign_id';";
 						$rslt=mysql_to_mysqli($stmtH, $link);
+						$affected_rowsH = mysqli_affected_rows($link);
 
 						$stmtI="INSERT INTO vicidial_campaign_cid_areacodes (areacode,outbound_cid,active,cid_description,campaign_id) SELECT areacode,outbound_cid,active,cid_description,\"$campaign_id\" from vicidial_campaign_cid_areacodes where campaign_id='$source_campaign_id';";
 						$rslt=mysql_to_mysqli($stmtI, $link);
+						$affected_rowsI = mysqli_affected_rows($link);
 
+						$stmtJ="INSERT INTO vicidial_url_multi (entry_type,active,url_type,url_rank,url_statuses,url_description,url_address,url_lists,campaign_id) SELECT entry_type,active,url_type,url_rank,url_statuses,url_description,url_address,url_lists,\"$campaign_id\" from vicidial_url_multi where campaign_id='$source_campaign_id';";
+						$rslt=mysql_to_mysqli($stmtJ, $link);
+						$affected_rowsJ = mysqli_affected_rows($link);
 
 						### LOG INSERTION Admin Log Table ###
-						$SQL_log = "$stmt|$stmtA|$stmtB|$stmtC|$stmtD|$stmtE|$stmtF|$stmtG|$stmtH|$stmtI|$stmtX|";
+						$SQL_log = "$stmt|$stmtA|$stmtB|$stmtC|$stmtD|$stmtE|$stmtF|$stmtG|$stmtH|$stmtI|$stmtJ|";
 						$SQL_log = preg_replace('/;/', '', $SQL_log);
 						$SQL_log = addslashes($SQL_log);
-						$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGNS', event_type='COPY', record_id='$campaign_id', event_code='ADMIN COPY CAMPAIGN', event_sql=\"$SQL_log\", event_notes='';";
+						$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGNS', event_type='COPY', record_id='$campaign_id', event_code='ADMIN COPY CAMPAIGN', event_sql=\"$SQL_log\", event_notes='$affected_rows|$affected_rowsA|$affected_rowsB|$affected_rowsC|$affected_rowsD|$affected_rowsE|$affected_rowsF|$affected_rowsG|$affected_rowsH|$affected_rowsI|$affected_rowsJ';";
 						if ($DB) {echo "|$stmt|\n";}
 						$rslt=mysql_to_mysqli($stmt, $link);
 						}
@@ -11070,13 +11086,17 @@ if ($ADD==2011)
 					$rslt=mysql_to_mysqli($stmtD, $link);
 					$affected_rowsD = mysqli_affected_rows($link);
 
+					$stmtE="INSERT INTO vicidial_url_multi (entry_type,active,url_type,url_rank,url_statuses,url_description,url_address,url_lists,campaign_id) SELECT entry_type,active,url_type,url_rank,url_statuses,url_description,url_address,url_lists,\"$group_id\" from vicidial_url_multi where campaign_id='$source_group_id';";
+					$rslt=mysql_to_mysqli($stmtE, $link);
+					$affected_rowsE = mysqli_affected_rows($link);
+
 					echo "<br><B>"._QXZ("INBOUND GROUP ADDED").": $group_id</B>\n";
 
 					### LOG INSERTION Admin Log Table ###
-					$SQL_log = "$stmt|$stmtA|$stmtB|$stmtC|$stmtD|";
+					$SQL_log = "$stmt|$stmtA|$stmtB|$stmtC|$stmtD|$stmtE|";
 					$SQL_log = preg_replace('/;/', '', $SQL_log);
 					$SQL_log = addslashes($SQL_log);
-					$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='INGROUPS', event_type='COPY', record_id='$group_id', event_code='ADMIN COPY INBOUND GROUP', event_sql=\"$SQL_log\", event_notes='$affected_rows|$affected_rowsA|$affected_rowsB|$affected_rowsC|$affected_rowsD';";
+					$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='INGROUPS', event_type='COPY', record_id='$group_id', event_code='ADMIN COPY INBOUND GROUP', event_sql=\"$SQL_log\", event_notes='$affected_rows|$affected_rowsA|$affected_rowsB|$affected_rowsC|$affected_rowsD|$affected_rowsE';";
 					if ($DB) {echo "|$stmt|\n";}
 					$rslt=mysql_to_mysqli($stmt, $link);
 					}
@@ -11160,13 +11180,17 @@ if ( ($ADD==2911) and ($SSallow_emails>0) )
 					$rslt=mysql_to_mysqli($stmtD, $link);
 					$affected_rowsD = mysqli_affected_rows($link);
 
+					$stmtE="INSERT INTO vicidial_url_multi (entry_type,active,url_type,url_rank,url_statuses,url_description,url_address,url_lists,campaign_id) SELECT entry_type,active,url_type,url_rank,url_statuses,url_description,url_address,url_lists,\"$group_id\" from vicidial_url_multi where campaign_id='$source_group_id';";
+					$rslt=mysql_to_mysqli($stmtE, $link);
+					$affected_rowsE = mysqli_affected_rows($link);
+
 					echo "<br><B>"._QXZ("EMAIL GROUP ADDED").": $group_id</B>\n";
 
 					### LOG INSERTION Admin Log Table ###
-					$SQL_log = "$stmt|$stmtA|$stmtB|$stmtC|$stmtD|";
+					$SQL_log = "$stmt|$stmtA|$stmtB|$stmtC|$stmtD|$stmtE|";
 					$SQL_log = preg_replace('/;/', '', $SQL_log);
 					$SQL_log = addslashes($SQL_log);
-					$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='INGROUPS', event_type='COPY', record_id='$group_id', event_code='ADMIN COPY INBOUND GROUP', event_sql=\"$SQL_log\", event_notes='$affected_rows|$affected_rowsA|$affected_rowsB|$affected_rowsC|$affected_rowsD';";
+					$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='INGROUPS', event_type='COPY', record_id='$group_id', event_code='ADMIN COPY INBOUND GROUP', event_sql=\"$SQL_log\", event_notes='$affected_rows|$affected_rowsA|$affected_rowsB|$affected_rowsC|$affected_rowsD|$affected_rowsE';";
 					if ($DB) {echo "|$stmt|\n";}
 					$rslt=mysql_to_mysqli($stmt, $link);
 					}
@@ -11249,13 +11273,17 @@ if ( ($ADD==29111) and ($SSallow_chats>0) )
 					$rslt=mysql_to_mysqli($stmtD, $link);
 					$affected_rowsD = mysqli_affected_rows($link);
 
+					$stmtE="INSERT INTO vicidial_url_multi (entry_type,active,url_type,url_rank,url_statuses,url_description,url_address,url_lists,campaign_id) SELECT entry_type,active,url_type,url_rank,url_statuses,url_description,url_address,url_lists,\"$group_id\" from vicidial_url_multi where campaign_id='$source_group_id';";
+					$rslt=mysql_to_mysqli($stmtE, $link);
+					$affected_rowsE = mysqli_affected_rows($link);
+
 					echo "<br><B>CHAT GROUP ADDED: $group_id</B>\n";
 
 					### LOG INSERTION Admin Log Table ###
-					$SQL_log = "$stmt|$stmtA|$stmtB|$stmtC|$stmtD|";
+					$SQL_log = "$stmt|$stmtA|$stmtB|$stmtC|$stmtD|$stmtE|";
 					$SQL_log = preg_replace('/;/', '', $SQL_log);
 					$SQL_log = addslashes($SQL_log);
-					$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='INGROUPS', event_type='COPY', record_id='$group_id', event_code='ADMIN COPY INBOUND GROUP', event_sql=\"$SQL_log\", event_notes='$affected_rows|$affected_rowsA|$affected_rowsB|$affected_rowsC|$affected_rowsD';";
+					$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='INGROUPS', event_type='COPY', record_id='$group_id', event_code='ADMIN COPY INBOUND GROUP', event_sql=\"$SQL_log\", event_notes='$affected_rows|$affected_rowsA|$affected_rowsB|$affected_rowsC|$affected_rowsD|$affected_rowsE';";
 					if ($DB) {echo "|$stmt|\n";}
 					$rslt=mysql_to_mysqli($stmt, $link);
 					}
@@ -18865,64 +18893,86 @@ if ($ADD==61)
 			{
 			$stmtA="DELETE from vicidial_campaigns where campaign_id='$campaign_id' $LOGallowed_campaignsSQL limit 1;";
 			$rslt=mysql_to_mysqli($stmtA, $link);
+			$affected_rowsA = mysqli_affected_rows($link);
 
 			$stmtB="DELETE from vicidial_campaign_agents where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
 			$rslt=mysql_to_mysqli($stmtB, $link);
+			$affected_rowsB = mysqli_affected_rows($link);
 
 			$stmtC="DELETE from vicidial_live_agents where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
 			$rslt=mysql_to_mysqli($stmtC, $link);
+			$affected_rowsC = mysqli_affected_rows($link);
 
 			$stmtD="DELETE from vicidial_campaign_statuses where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
 			$rslt=mysql_to_mysqli($stmtD, $link);
+			$affected_rowsD = mysqli_affected_rows($link);
 
 			$stmtE="DELETE from vicidial_campaign_hotkeys where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
 			$rslt=mysql_to_mysqli($stmtE, $link);
+			$affected_rowsE = mysqli_affected_rows($link);
 
 			$stmtF="INSERT INTO vicidial_callbacks_archive SELECT * from vicidial_callbacks where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
 			$rslt=mysql_to_mysqli($stmtF, $link);
+			$affected_rowsF = mysqli_affected_rows($link);
 
 			$stmtG="DELETE from vicidial_callbacks where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
 			$rslt=mysql_to_mysqli($stmtG, $link);
+			$affected_rowsG = mysqli_affected_rows($link);
 
 			$stmtH="DELETE from vicidial_campaign_stats where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
 			$rslt=mysql_to_mysqli($stmtH, $link);
+			$affected_rowsH = mysqli_affected_rows($link);
 
 			$stmtI="DELETE from vicidial_campaign_stats_debug where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
 			$rslt=mysql_to_mysqli($stmtI, $link);
+			$affected_rowsI = mysqli_affected_rows($link);
 
 			$stmtJ="DELETE from vicidial_lead_recycle where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
 			$rslt=mysql_to_mysqli($stmtJ, $link);
+			$affected_rowsJ = mysqli_affected_rows($link);
 
 			$stmtK="DELETE from vicidial_campaign_server_stats where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
 			$rslt=mysql_to_mysqli($stmtK, $link);
+			$affected_rowsK = mysqli_affected_rows($link);
 
 			$stmtL="DELETE from vicidial_server_trunks where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
 			$rslt=mysql_to_mysqli($stmtL, $link);
+			$affected_rowsL = mysqli_affected_rows($link);
 
 			$stmtM="DELETE from vicidial_pause_codes where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
 			$rslt=mysql_to_mysqli($stmtM, $link);
+			$affected_rowsM = mysqli_affected_rows($link);
 
 			$stmtN="DELETE from vicidial_campaigns_list_mix where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
 			$rslt=mysql_to_mysqli($stmtN, $link);
+			$affected_rowsN = mysqli_affected_rows($link);
 
 			$stmtO="DELETE from vicidial_xfer_presets where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
 			$rslt=mysql_to_mysqli($stmtO, $link);
+			$affected_rowsO = mysqli_affected_rows($link);
 
 			$stmtP="DELETE from vicidial_xfer_stats where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
 			$rslt=mysql_to_mysqli($stmtP, $link);		
+			$affected_rowsP = mysqli_affected_rows($link);
 
 			$stmtQ="DELETE from vicidial_campaign_cid_areacodes where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
 			$rslt=mysql_to_mysqli($stmtQ, $link);		
+			$affected_rowsQ = mysqli_affected_rows($link);
+
+			$stmtR="DELETE from vicidial_url_multi where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
+			$rslt=mysql_to_mysqli($stmtR, $link);		
+			$affected_rowsR = mysqli_affected_rows($link);
 
 			echo "<br>"._QXZ("REMOVING LIST HOPPER LEADS FROM OLD CAMPAIGN HOPPER")." ($campaign_id)\n";
-			$stmtR="DELETE from vicidial_hopper where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
-			$rslt=mysql_to_mysqli($stmtR, $link);
+			$stmtS="DELETE from vicidial_hopper where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
+			$rslt=mysql_to_mysqli($stmtS, $link);
+			$affected_rowsS = mysqli_affected_rows($link);
 
 			### LOG INSERTION Admin Log Table ###
-			$SQL_log = "$stmtA|$stmtB|$stmtC|$stmtD|$stmtE|$stmtF|$stmtG|$stmtH|$stmtI|$stmtJ|$stmtK|$stmtL|$stmtM|$stmtN|$stmtO|$stmtP|$stmtQ|$stmtR|";
+			$SQL_log = "$stmtA|$stmtB|$stmtC|$stmtD|$stmtE|$stmtF|$stmtG|$stmtH|$stmtI|$stmtJ|$stmtK|$stmtL|$stmtM|$stmtN|$stmtO|$stmtP|$stmtQ|$stmtR|$stmtS|";
 			$SQL_log = preg_replace('/;/', '', $SQL_log);
 			$SQL_log = addslashes($SQL_log);
-			$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGNS', event_type='DELETE', record_id='$campaign_id', event_code='ADMIN DELETE CAMPAIGN', event_sql=\"$SQL_log\", event_notes='';";
+			$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGNS', event_type='DELETE', record_id='$campaign_id', event_code='ADMIN DELETE CAMPAIGN', event_sql=\"$SQL_log\", event_notes='$affected_rowsA|$affected_rowsB|$affected_rowsC|$affected_rowsD|$affected_rowsE|$affected_rowsF|$affected_rowsG|$affected_rowsH|$affected_rowsI|$affected_rowsJ|$affected_rowsK|$affected_rowsL|$affected_rowsM|$affected_rowsN|$affected_rowsO|$affected_rowsP|$affected_rowsQ|$affected_rowsR|$affected_rowsS';";
 			if ($DB) {echo "|$stmt|\n";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 
@@ -19756,24 +19806,33 @@ if ($ADD==6111)
 			{
 			$stmtA="DELETE from vicidial_inbound_groups where group_id='$group_id' and group_id NOT IN('AGENTDIRECT') $LOGadmin_viewable_groupsSQL limit 1;";
 			$rslt=mysql_to_mysqli($stmtA, $link);
+			$affected_rowsA = mysqli_affected_rows($link);
 
 			$stmtB="DELETE from vicidial_inbound_group_agents where group_id='$group_id';";
 			$rslt=mysql_to_mysqli($stmtB, $link);
+			$affected_rowsB = mysqli_affected_rows($link);
 
 			$stmtC="DELETE from vicidial_live_inbound_agents where group_id='$group_id';";
 			$rslt=mysql_to_mysqli($stmtC, $link);
+			$affected_rowsC = mysqli_affected_rows($link);
 
 			$stmtD="DELETE from vicidial_campaign_stats where campaign_id='$group_id';";
 			$rslt=mysql_to_mysqli($stmtD, $link);
+			$affected_rowsD = mysqli_affected_rows($link);
 
 			$stmtE="DELETE from vicidial_campaign_stats_debug where campaign_id='$group_id';";
 			$rslt=mysql_to_mysqli($stmtE, $link);
+			$affected_rowsE = mysqli_affected_rows($link);
+
+			$stmtF="DELETE from vicidial_url_multi where campaign_id='$group_id';";
+			$rslt=mysql_to_mysqli($stmtF, $link);		
+			$affected_rowsF = mysqli_affected_rows($link);
 
 			### LOG INSERTION Admin Log Table ###
-			$SQL_log = "$stmtA|$stmtB|$stmtC|$stmtD|$stmtE|";
+			$SQL_log = "$stmtA|$stmtB|$stmtC|$stmtD|$stmtE|$stmtF|";
 			$SQL_log = preg_replace('/;/', '', $SQL_log);
 			$SQL_log = addslashes($SQL_log);
-			$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='INGROUPS', event_type='DELETE', record_id='$group_id', event_code='ADMIN DELETE INGROUP', event_sql=\"$SQL_log\", event_notes='';";
+			$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='INGROUPS', event_type='DELETE', record_id='$group_id', event_code='ADMIN DELETE INGROUP', event_sql=\"$SQL_log\", event_notes='$affected_rowsA|$affected_rowsB|$affected_rowsC|$affected_rowsD|$affected_rowsE|$affected_rowsF';";
 			if ($DB) {echo "|$stmt|\n";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 
@@ -23558,7 +23617,7 @@ if ($ADD==31)
 
 		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Agent Display Fields").": </td><td align=left><input type=text name=agent_display_fields size=60 maxlength=100 value=\"$agent_display_fields\">$NWB#campaigns-agent_display_fields$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Agent Screen Time Display").": </td><td align=left><select size=1 name=agent_screen_time_display><option value='DISABLED'>"._QXZ("DISABLED")."</option><option value='ENABLED_BASIC'>"._QXZ("ENABLED_BASIC")."</option><option value='ENABLED_FULL'>"._QXZ("ENABLED_FULL")."</option><option value='ENABLED_BILL_BREAK_LUNCH_COACH'>"._QXZ("ENABLED_BILL_BREAK_LUNCH_COACH")."</option><option value='$agent_screen_time_display' SELECTED>"._QXZ("$agent_screen_time_display")."</option></select>$NWB#campaigns-agent_screen_time_display$NWE</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Agent Screen Time Display").": </td><td align=left><select size=1 name=agent_screen_time_display><option value='DISABLED'>"._QXZ("DISABLED")."</option><option value='ENABLED_BASIC'>"._QXZ("ENABLED_BASIC")."</option><option value='ENABLED_FULL'>"._QXZ("ENABLED_FULL")."</option><option value='ENABLED_BILL_BREAK_LUNCH_COACH'>"._QXZ("ENABLED_BILL_BREAK_LUNCH_COACH")."</option><option value='ENABLED_BASIC_RANGE'>"._QXZ("ENABLED_BASIC_RANGE")."</option><option value='ENABLED_FULL_RANGE'>"._QXZ("ENABLED_FULL_RANGE")."</option><option value='ENABLED_BILL_BREAK_LUNCH_COACH_RANGE'>"._QXZ("ENABLED_BILL_BREAK_LUNCH_COACH_RANGE")."</option><option value='$agent_screen_time_display' SELECTED>"._QXZ("$agent_screen_time_display")."</option></select>$NWB#campaigns-agent_screen_time_display$NWE</td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Agent Display Queue Count").": </td><td align=left><select size=1 name=display_queue_count><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$display_queue_count' SELECTED>"._QXZ("$display_queue_count")."</option></select>$NWB#campaigns-display_queue_count$NWE</td></tr>\n";
 

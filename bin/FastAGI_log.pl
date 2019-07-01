@@ -82,6 +82,7 @@
 # 170915-1753 - Asterisk 13 compatibility
 # 180521-1153 - Changed closer log logging to use agent if call was AGENTDIRECT
 # 180919-1729 - Fix for rare non-NA-set-as-NA call logging issue
+# 190626-1100 - Added more logging for Auto-Alt-Dial debug
 #
 
 # defaults for PreFork
@@ -1213,7 +1214,7 @@ sub process_request
 							{
 							$stmtA = "DELETE FROM vicidial_auto_calls where ( ( (status!='IVR') and (uniqueid='$uniqueid' or callerid = '$callerid') ) or ( (status='IVR') and (uniqueid='$uniqueid') ) ) order by call_time desc limit 1;";
 							$VACaffected_rows = $dbhA->do($stmtA);
-							if ($AGILOG) {$agi_string = "--    VDAC record deleted: |$VACaffected_rows|   |$VD_lead_id|$uniqueid|$VD_uniqueid|$VD_callerid|$callerid|$VD_status|$channel($VARserver_ip)|$PC_channel($VD_server_ip)|($PC_count_rows|$PCR_count)|";   &agi_output;}
+							if ($AGILOG) {$agi_string = "--    VDAC record deleted: |$VACaffected_rows|   |$VD_lead_id|$uniqueid|$VD_uniqueid|$VD_callerid|$callerid|$VD_status|$channel($VARserver_ip)|$PC_channel($VD_server_ip)|($PC_count_rows|$PCR_count)|$VD_alt_dial|";   &agi_output;}
 
 							$stmtA = "UPDATE vicidial_live_agents SET ring_callerid='' where ring_callerid='$callerid';";
 							$VLACaffected_rows = $dbhA->do($stmtA);
@@ -1415,7 +1416,7 @@ sub process_request
 							if ($calleridname !~ /^Y\d\d\d\d/)
 								{
 								########## FIND AND UPDATE vicidial_log ##########
-								$stmtA = "SELECT start_epoch,status,user,term_reason,comments FROM vicidial_log FORCE INDEX(lead_id) where lead_id = $VD_lead_id and uniqueid LIKE \"$Euniqueid%\" limit 1;";
+								$stmtA = "SELECT start_epoch,status,user,term_reason,comments,alt_dial FROM vicidial_log FORCE INDEX(lead_id) where lead_id = $VD_lead_id and uniqueid LIKE \"$Euniqueid%\" limit 1;";
 									if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 								$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 								$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -1428,6 +1429,7 @@ sub process_request
 									$VD_user =			$aryA[2];
 									$VD_term_reason =	$aryA[3];
 									$VD_comments =		$aryA[4];
+									$VD_alt_dial_log =	$aryA[5];
 									$epc_countCUSTDATA++;
 									}
 								$sthA->finish();
@@ -1659,7 +1661,7 @@ sub process_request
 				#			if ($AGILOG) {$agi_string = "AUTO-ALT TEST: |$VD_status|$VDL_status|$VD_auto_alt_dial_statuses|$VD_auto_alt_dial|";   &agi_output;}
 							if ($VD_auto_alt_dial_statuses =~ / $VD_status | $VDL_status /)
 								{
-								if ($AGILOG) {$agi_string = "AUTO-ALT MATCH: |$VD_status|$VDL_status|$VD_auto_alt_dial_statuses|$VD_auto_alt_dial|";   &agi_output;}
+								if ($AGILOG) {$agi_string = "AUTO-ALT MATCH: |$VD_status|$VDL_status|$VD_auto_alt_dial_statuses|$VD_auto_alt_dial|$VD_alt_dial|$VD_alt_dial_log|";   &agi_output;}
 								if ( ($VD_auto_alt_dial =~ /(ALT_ONLY|ALT_AND_ADDR3|ALT_AND_EXTENDED)/) && ($VD_alt_dial =~ /NONE|MAIN/) )
 									{
 									$alt_dial_skip=0;
