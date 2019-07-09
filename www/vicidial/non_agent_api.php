@@ -137,10 +137,11 @@
 # 190313-0710 - Fix for update_lead custom fields issue #1134
 # 190325-1055 - Added agent_campaigns function
 # 190628-1504 - Added update_cid_group_entry function
+# 190703-0858 - Added custom_fields_copy option to add_list function
 #
 
-$version = '2.14-114';
-$build = '190628-1504';
+$version = '2.14-115';
+$build = '190703-0858';
 $api_url_log = 0;
 
 $startMS = microtime();
@@ -505,6 +506,8 @@ if (isset($_GET["cid_group_id"]))			{$cid_group_id=$_GET["cid_group_id"];}
 	elseif (isset($_POST["cid_group_id"]))	{$cid_group_id=$_POST["cid_group_id"];}
 if (isset($_GET["cid_description"]))			{$cid_description=$_GET["cid_description"];}
 	elseif (isset($_POST["cid_description"]))	{$cid_description=$_POST["cid_description"];}
+if (isset($_GET["custom_fields_copy"]))				{$custom_fields_copy=$_GET["custom_fields_copy"];}
+	elseif (isset($_POST["custom_fields_copy"]))	{$custom_fields_copy=$_POST["custom_fields_copy"];}
 
 
 header ("Content-type: text/html; charset=utf-8");
@@ -513,7 +516,7 @@ header ("Pragma: no-cache");                          // HTTP/1.0
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,custom_fields_enabled,pass_hash_enabled,agent_whisper_enabled,active_modules,auto_dial_limit,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,custom_fields_enabled,pass_hash_enabled,agent_whisper_enabled,active_modules,auto_dial_limit,enable_languages,language_method,admin_web_directory FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
@@ -529,6 +532,7 @@ if ($qm_conf_ct > 0)
 	$SSauto_dial_limit = ($SSauto_dial_limit + 0.001);
 	$SSenable_languages =		$row[6];
 	$SSlanguage_method =		$row[7];
+	$SSadmin_web_directory =	$row[8];
 	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
@@ -722,6 +726,7 @@ if ($non_latin < 1)
 	$areacode = preg_replace('/[^-_0-9a-zA-Z]/','',$areacode);
 	$cid_group_id = preg_replace('/[^-_0-9a-zA-Z]/','',$cid_group_id);
 	$cid_description = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$cid_description);
+	$custom_fields_copy = preg_replace('/[^0-9]/','',$custom_fields_copy);
 	if ($outbound_cid != '---ALL---')
 		{$outbound_cid=preg_replace('/[^0-9]/','',$outbound_cid);}
 	if ($areacode != '---ALL---')
@@ -4712,6 +4717,64 @@ if ($function == 'add_list')
 								api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
 								exit;
 								}
+							$copy_custom_fields_trigger=0;
+							if ( (strlen($custom_fields_copy) > 1) and (strlen($custom_fields_copy) < 15) )
+								{
+								$stmt="SELECT count(*) from vicidial_lists where list_id='$custom_fields_copy';";
+								$rslt=mysql_to_mysqli($stmt, $link);
+								$row=mysqli_fetch_row($rslt);
+								$custom_fields_copy_exists=$row[0];
+								if ($DB>0) {echo "$custom_fields_copy_exists|$stmt|\n";}
+								if ($custom_fields_copy_exists < 1)
+									{
+									$result = 'ERROR';
+									$result_reason = "add_list CUSTOM FIELDS LIST ID TO COPY FROM DOES NOT EXIST, THIS IS AN OPTIONAL FIELD";
+									$data = "$custom_fields_copy_exists";
+									echo "$result: $result_reason: |$user|$data\n";
+									api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+									exit;
+									}
+								else
+									{
+									$stmt="SELECT count(*) from vicidial_lists_fields where list_id='$custom_fields_copy';";
+									$rslt=mysql_to_mysqli($stmt, $link);
+									$row=mysqli_fetch_row($rslt);
+									$vicidial_lists_fields_exists=$row[0];
+									if ($DB>0) {echo "$vicidial_lists_fields_exists|$stmt|\n";}
+									if ($vicidial_lists_fields_exists < 1)
+										{
+										$result = 'ERROR';
+										$result_reason = "add_list CUSTOM FIELDS LIST ID TO COPY FROM HAS NO CUSTOM FIELDS, THIS IS AN OPTIONAL FIELD";
+										$data = "$custom_fields_copy";
+										echo "$result: $result_reason: |$user|$data\n";
+										api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+										exit;
+										}
+									else
+										{
+										$stmt="SELECT count(*) from vicidial_users where user='$user' and custom_fields_modify='1';";
+										$rslt=mysql_to_mysqli($stmt, $link);
+										$row=mysqli_fetch_row($rslt);
+										$custom_fields_modify_exists=$row[0];
+										if ($DB>0) {echo "$custom_fields_modify_exists|$stmt|\n";}
+										if ($custom_fields_modify_exists < 1)
+											{
+											$result = 'ERROR';
+											$result_reason = "add_list USER DOES NOT HAVE PERMISSION TO MODIFY CUSTOM FIELDS, THIS IS AN OPTIONAL FIELD";
+											$data = "$custom_fields_copy";
+											echo "$result: $result_reason: |$user|$data\n";
+											api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+											exit;
+											}
+										else
+											{
+											if ($DB>0) {echo "Copy custom fields triggered|$copy_custom_fields_trigger|\n";}
+											$copy_custom_fields_trigger++;
+											}
+										}
+									}
+								}
+
 							$webformSQL='';
 							$webformtwoSQL='';
 							$webformthreeSQL='';
@@ -4758,11 +4821,38 @@ if ($function == 'add_list')
 							$rslt=mysql_to_mysqli($stmt, $link);
 							if ($DB) {echo "|$stmt|\n";}
 
+							if ( ($copy_custom_fields_trigger > 0) and (strlen($custom_fields_copy) > 1) )
+								{
+								### BEGIN copy custom fields ###
+								$admin_lists_custom = 'admin_lists_custom.php';
+
+								$url = "http" . (isset($_SERVER['HTTPS']) ? 's' : '') . "://$_SERVER[HTTP_HOST]/$SSadmin_web_directory/" . $admin_lists_custom . "?copy_option=APPEND&action=COPY_FIELDS_SUBMIT&list_id=$list_id&source_list_id=$custom_fields_copy";
+								
+								if ($DB>0) {echo "Copy custom fields url|$url|\n";}
+								# use cURL to call the copy custom fields code
+								$curl = curl_init();
+								
+								# Set some options - we are passing in a useragent too here
+								curl_setopt_array($curl, array(
+									CURLOPT_RETURNTRANSFER => 1,
+									CURLOPT_URL => $url,
+									CURLOPT_USERPWD => "$user:$pass",
+									CURLOPT_USERAGENT => 'non_agent_api.php'
+								));
+								
+								# Send the request & save response to $resp
+								$resp = curl_exec($curl);
+								
+								# Close request to clear up some resources
+								curl_close($curl);
+								### END copy custom fields ###
+								}
+
 							### LOG INSERTION Admin Log Table ###
 							$SQL_log = "$stmt|";
 							$SQL_log = preg_replace('/;/', '', $SQL_log);
 							$SQL_log = addslashes($SQL_log);
-							$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$user', ip_address='$ip', event_section='LISTS', event_type='ADD', record_id='$list_id', event_code='ADMIN API ADD LIST', event_sql=\"$SQL_log\", event_notes='list: $list_id|$campaign_id';";
+							$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$user', ip_address='$ip', event_section='LISTS', event_type='ADD', record_id='$list_id', event_code='ADMIN API ADD LIST', event_sql=\"$SQL_log\", event_notes='list: $list_id|$campaign_id|$custom_fields_copy';";
 							if ($DB) {echo "|$stmt|\n";}
 							$rslt=mysql_to_mysqli($stmt, $link);
 

@@ -414,6 +414,12 @@ OTHER CHANGES:
 	each dialer's astguiclient.conf/extensions.conf/manager.conf files
 	Read SIP_EVENT_LOGGING.txt doc for more details
 
+115. Added new Non-Agent API function 'update_cid_group_entry' which allows you
+	to add/update/delete/info CID Group entries and AC-CID entries
+
+116. Added new Non-Agent API 'custom_fields_copy' option to the 'add_list' 
+	function
+
 
 
 

@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2019-06-28
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2019-07-03
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -143,6 +143,7 @@ Changes:
 181214-1606 - Added lead_callback_info function
 190325-1055 - Added agent_campaigns function
 190628-1504 - Added update_cid_group_entry function
+190703-0858 - Added custom_fields_copy option to add_list function
 
 
 API Functions use the 'function' variable
@@ -1401,13 +1402,16 @@ web_form_address_two -	6-100 characters
 web_form_address_three - 6-100 characters
 reset_time -		4-100 characters, must be in valid 4-digit groups of 24-hour time (i.e. 0900-1700-2359)
 expiration_date -	10 characters, must be in valid date format YYYY-MM-DD (i.e. 2012-11-25)
+custom_fields_copy -	A valid list ID with custom fields to be copied to this new list, 2-14 digits
 NOTES: 
  - for the web form addresses, you can URL encode them to include standard URL special characters
+ - to use the 'custom_fields_copy' option, the API user must have the "Custom Fields Modify" user option enabled
 
 
 Example URL strings for API calls:
 http://server/vicidial/non_agent_api.php?source=test&function=add_list&user=6666&pass=1234&list_id=1101&list_name=Test+API+list&campaign_id=TESTCAMP
 http://server/vicidial/non_agent_api.php?source=test&function=add_list&user=6666&pass=1234&list_id=1101&list_name=Test+API+list&campaign_id=TESTCAMP&active=N&outbound_cid=7275551212&script=DEMOSCRIPT&am_message=8304&drop_inbound_group=SALESLINE&web_form_address=http://www.vicidial.org/?testing=hghg
+http://server/vicidial/non_agent_api.php?source=test&function=add_list&user=6666&pass=1234&list_id=303&list_name=Test+API+list+3&campaign_id=TESTCAMP&custom_fields_copy=222
 
 Example responses:
 ERROR: add_list USER DOES NOT HAVE PERMISSION TO ADD LISTS - 6666|0
@@ -1418,6 +1422,9 @@ ERROR: add_list SCRIPT DOES NOT EXIST, THIS IS AN OPTIONAL FIELD - 6666|TESTSCRI
 ERROR: add_list IN-GROUP DOES NOT EXIST, THIS IS AN OPTIONAL FIELD - 6666|TEST_IN8
 ERROR: add_list RESET TIME IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|012
 ERROR: add_list EXPIRATION DATE IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|012
+ERROR: add_list CUSTOM FIELDS LIST ID TO COPY FROM DOES NOT EXIST, THIS IS AN OPTIONAL FIELD - 6666|12
+ERROR: add_list CUSTOM FIELDS LIST ID TO COPY FROM HAS NO CUSTOM FIELDS, THIS IS AN OPTIONAL FIELD - 6666|12
+ERROR: add_list USER DOES NOT HAVE PERMISSION TO MODIFY CUSTOM FIELDS, THIS IS AN OPTIONAL FIELD - 6666|12
 SUCCESS: add_list LIST HAS BEEN ADDED - 6666|1101|TESTCAMP
 
 

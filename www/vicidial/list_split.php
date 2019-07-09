@@ -1,7 +1,7 @@
 <?php
 # list_split.php - split one big list into smaller lists. Part of Admin Utilities.
 #
-# Copyright (C) 2017  Matt Florell,Michael Cargile <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell,Michael Cargile <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 140916-1215 - Initial Build
@@ -11,10 +11,11 @@
 # 161014-0842 - Added screen colors
 # 170409-1542 - Added IP List validation code
 # 170819-1001 - Added allow_manage_active_lists option
+# 190703-0925 - Added use of admin_web_directory system setting
 #
 
-$version = '2.14-7';
-$build = '170819-1001';
+$version = '2.14-8';
+$build = '190703-0925';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -55,7 +56,7 @@ $num_leads = preg_replace('/[^0-9]/','',$num_leads);
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$sys_settings_stmt = "SELECT use_non_latin,outbound_autodial_active,sounds_central_control_active,enable_languages,language_method,active_modules,admin_screen_colors,allow_manage_active_lists FROM system_settings;";
+$sys_settings_stmt = "SELECT use_non_latin,outbound_autodial_active,sounds_central_control_active,enable_languages,language_method,active_modules,admin_screen_colors,allow_manage_active_lists,admin_web_directory FROM system_settings;";
 $sys_settings_rslt=mysql_to_mysqli($sys_settings_stmt, $link);
 if ($DB) {echo "$sys_settings_stmt\n";}
 $num_rows = mysqli_num_rows($sys_settings_rslt);
@@ -70,6 +71,7 @@ if ($num_rows > 0)
 	$SSactive_modules =					$sys_settings_row[5];
 	$SSadmin_screen_colors =			$sys_settings_row[6];
 	$SSallow_manage_active_lists =		$sys_settings_row[7];
+	$SSadmin_web_directory =			$sys_settings_row[8];
 	}
 else
 	{
@@ -440,7 +442,7 @@ if ($confirm == "confirm")
 			{
 			$admin_lists_custom = 'admin_lists_custom.php';
 
-			$url = "http" . (isset($_SERVER['HTTPS']) ? 's' : '') . "://$_SERVER[HTTP_HOST]/vicidial/" . $admin_lists_custom . "?action=COPY_FIELDS_SUBMIT&list_id=$new_list_id&source_list_id=$orig_list&copy_option=APPEND";
+			$url = "http" . (isset($_SERVER['HTTPS']) ? 's' : '') . "://$_SERVER[HTTP_HOST]/$SSadmin_web_directory/" . $admin_lists_custom . "?action=COPY_FIELDS_SUBMIT&list_id=$new_list_id&source_list_id=$orig_list&copy_option=APPEND";
 			
 			# use cURL to call the copy custom fields code
 			$curl = curl_init();

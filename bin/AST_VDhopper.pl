@@ -94,10 +94,11 @@
 # 180924-1734 - Added callback_dnc campaign option
 # 190213-1207 - Added additional $VLforce_index flags, for high-volume dialing systems
 # 190524-1228 - Fix for lead filters with 'NONE' in the filter ID
+# 190703-1650 - Allow for single-quotes in state field
 #
 
 # constants
-$build = '190524-1228';
+$build = '190703-1650';
 $DB=0;  # Debug flag, set to 0 for no debug messages. Can be overriden with CLI --debug flag
 $US='__';
 $MT[0]='';
@@ -654,7 +655,7 @@ if ($CBHOLD_count > 0)
 				$event_string = "|CALLBACKS LISTACT|$affected_rows|";
 				&event_logger;
 
-				$stmtA = "INSERT INTO $vicidial_hopper SET lead_id='$CA_lead_id[$CAu]',campaign_id='$CA_campaign_id[$CAu]',list_id='$CA_list_id[$CAu]',gmt_offset_now='$CA_gmt_offset_now[$CAu]',user='',state='$CA_state[$CAu]',priority='50',source='C',vendor_lead_code=\"$CA_vendor_lead_code[$CAu]\";";
+				$stmtA = "INSERT INTO $vicidial_hopper SET lead_id='$CA_lead_id[$CAu]',campaign_id='$CA_campaign_id[$CAu]',list_id='$CA_list_id[$CAu]',gmt_offset_now='$CA_gmt_offset_now[$CAu]',user='',state=\"$CA_state[$CAu]\",priority='50',source='C',vendor_lead_code=\"$CA_vendor_lead_code[$CAu]\";";
 				$affected_rows = $dbhA->do($stmtA);
 				if ($DB) {print "ANYONE Scheduled Callback Inserted into hopper:  $affected_rows|$CA_lead_id[$CAu]\n";}
 				}
@@ -3184,7 +3185,7 @@ foreach(@campaign_id)
 								{
 								if ($DNClead == '0')
 									{
-									$stmtA = "INSERT INTO $vicidial_hopper (lead_id,campaign_id,status,user,list_id,gmt_offset_now,state,priority,source,vendor_lead_code) values('$leads_to_hopper[$h]','$campaign_id[$i]','READY','','$lists_to_hopper[$h]','$gmt_to_hopper[$h]','$state_to_hopper[$h]','0','$source_to_hopper[$h]',\"$vlc_to_hopper[$h]\");";
+									$stmtA = "INSERT INTO $vicidial_hopper (lead_id,campaign_id,status,user,list_id,gmt_offset_now,state,priority,source,vendor_lead_code) values('$leads_to_hopper[$h]','$campaign_id[$i]','READY','','$lists_to_hopper[$h]','$gmt_to_hopper[$h]',\"$state_to_hopper[$h]\",'0','$source_to_hopper[$h]',\"$vlc_to_hopper[$h]\");";
 									$affected_rows = $dbhA->do($stmtA);
 									if ($DBX) {print "LEAD INSERTED: $affected_rows|$leads_to_hopper[$h]|\n";}
 									if ($DB_detail) 
@@ -3198,7 +3199,7 @@ foreach(@campaign_id)
 									##### Auto-Alt-Dial if DNCC or DNCL are set to campaign auto-alt-dial statuses, insert lead into hopper as DNC status
 									if ( ( ($auto_alt_dial_statuses[$i] =~ / DNCC /) && ($DNCC > 0) ) || ( ($auto_alt_dial_statuses[$i] =~ / DNCL /) && ($DNCL > 0) ) )
 										{
-										$stmtA = "INSERT INTO $vicidial_hopper (lead_id,campaign_id,status,user,list_id,gmt_offset_now,state,priority,source,vendor_lead_code) values('$leads_to_hopper[$h]','$campaign_id[$i]','DNC','','$lists_to_hopper[$h]','$gmt_to_hopper[$h]','$state_to_hopper[$h]','0','$source_to_hopper[$h]',\"$vlc_to_hopper[$h]\");";
+										$stmtA = "INSERT INTO $vicidial_hopper (lead_id,campaign_id,status,user,list_id,gmt_offset_now,state,priority,source,vendor_lead_code) values('$leads_to_hopper[$h]','$campaign_id[$i]','DNC','','$lists_to_hopper[$h]','$gmt_to_hopper[$h]',\"$state_to_hopper[$h]\",'0','$source_to_hopper[$h]',\"$vlc_to_hopper[$h]\");";
 										$affected_rows = $dbhA->do($stmtA);
 										if ($DBX) {print "LEAD INSERTED AS DNC: $affected_rows|$leads_to_hopper[$h]|\n";}
 										if ($DB_detail) 
