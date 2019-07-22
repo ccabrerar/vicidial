@@ -136,9 +136,10 @@
 # 181028-1451 - Added vicidial_list stuck QUEUE reset at TEoD
 # 190220-2258 - Added flushing of vicidial_sessions_recent table
 # 190530-1411 - Added SIP logger code
+# 190713-0900 - Added vicidial_lead_call_quota_counts log archiving
 #
 
-$build = '190530-1411';
+$build = '190713-0900';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -167,6 +168,7 @@ $today_start = "$year-$mon-$mday 00:00:00";
 $today_date = "$year-$mon-$mday";
 $reset_test = "$hour$min";
 $wday_now = $wday;
+$min_test = $min;
 
 ### calculate the date and time for slightly less than 24 hours ago
 $secX = time();
@@ -209,6 +211,19 @@ if ($SDmin < 10) {$SDmin = "0$SDmin";}
 if ($SDsec < 10) {$SDsec = "0$SDsec";}
 $SDSQLdate = "$SDyear-$SDmon-$SDmday $SDhour:$SDmin:$SDsec";
 $SDdate = "$SDyear-$SDmon-$SDmday";
+
+### calculate the date and time for 6 days ago
+$SXtarget = ($secX - 604800);	# 6 days ago
+($SXsec,$SXmin,$SXhour,$SXmday,$SXmon,$SXyear,$SXwday,$SXyday,$SXisdst) = localtime($SXtarget);
+$SXyear = ($SXyear + 1900);
+$SXmon++;
+if ($SXmon < 10) {$SXmon = "0$SXmon";}
+if ($SXmday < 10) {$SXmday = "0$SXmday";}
+if ($SXhour < 10) {$SXhour = "0$SXhour";}
+if ($SXmin < 10) {$SXmin = "0$SXmin";}
+if ($SXsec < 10) {$SXsec = "0$SXsec";}
+$SXSQLdate = "$SXyear-$SXmon-$SXmday $SXhour:$SXmin:$SXsec";
+$SXdate = "$SXyear-$SXmon-$SXmday";
 
 
 ### begin parsing run-time options ###
@@ -406,7 +421,7 @@ $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VA
 
 
 ##### Get the settings from system_settings #####
-$stmtA = "SELECT sounds_central_control_active,active_voicemail_server,custom_dialplan_entry,default_codecs,generate_cross_server_exten,voicemail_timezones,default_voicemail_timezone,call_menu_qualify_enabled,allow_voicemail_greeting,reload_timestamp,meetme_enter_login_filename,meetme_enter_leave3way_filename,allow_chats,enable_auto_reports,enable_drop_lists,expired_lists_inactive,sip_event_logging FROM system_settings;";
+$stmtA = "SELECT sounds_central_control_active,active_voicemail_server,custom_dialplan_entry,default_codecs,generate_cross_server_exten,voicemail_timezones,default_voicemail_timezone,call_menu_qualify_enabled,allow_voicemail_greeting,reload_timestamp,meetme_enter_login_filename,meetme_enter_leave3way_filename,allow_chats,enable_auto_reports,enable_drop_lists,expired_lists_inactive,sip_event_logging,call_quota_lead_ranking FROM system_settings;";
 #	print "$stmtA\n";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -431,6 +446,7 @@ if ($sthArows > 0)
 	$SSenable_drop_lists =				$aryA[14];
 	$SSexpired_lists_inactive =			$aryA[15];
 	$SSsip_event_logging =				$aryA[16];
+	$SScall_quota_lead_ranking =		$aryA[17];
 	}
 $sthA->finish();
 if ($DBXXX > 0) {print "SYSTEM SETTINGS:     $sounds_central_control_active|$active_voicemail_server|$SScustom_dialplan_entry|$SSdefault_codecs\n";}
@@ -1954,6 +1970,76 @@ if ($timeclock_end_of_day_NOW > 0)
 			if ($teodDB) {&teod_logger;}
 			}
 		##### END roll sip_event logs into one of the 7-day archive tables
+
+
+		##### BEGIN roll Call Quota Lead Ranking logs into the archive table after 7 days 
+		if ($SScall_quota_lead_ranking > 0)
+			{
+			if (!$Q) {print "\nProcessing vicidial_lead_call_quota_counts table...\n";}
+			$stmtA = "INSERT IGNORE INTO vicidial_lead_call_quota_counts_archive SELECT * from vicidial_lead_call_quota_counts where ( (first_call_date < \"$SXSQLdate\") or (first_call_date IS NULL) );";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			$event_string = "$sthArows rows inserted into vicidial_lead_call_quota_counts_archive table ($SXSQLdate) |$stmtA|";
+			if (!$Q) {print "$event_string \n";}
+			if ($teodDB) {&teod_logger;}
+
+			$rv = $sthA->err();
+			if (!$rv) 
+				{
+				# Gather list of the leads that were just archived, set rank=0
+				$stmtA = "SELECT lead_id from vicidial_lead_call_quota_counts where ( (first_call_date < \"$SXSQLdate\") or (first_call_date IS NULL) );";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArowsDLISTS=$sthA->rows;
+				if ($DB > 0) {print "CALL QUOTA LEADS BEING ARCHIVED TO SET TO 0 RANK: |$sthArowsDLISTS| \n";}
+				$e=0;
+				while ($sthArowsDLISTS > $e)
+					{
+					@aryA = $sthA->fetchrow_array;
+					$DLISTlead_id[$e] =			$aryA[0];
+					$e++;
+					}
+				$sthA->finish();
+
+				$e=0;
+				$e_update_ct=0;
+				while ($sthArowsDLISTS > $e)
+					{
+					$stmtA = "UPDATE vicidial_list SET rank=0 where lead_id='$DLISTlead_id[$e]';";
+					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+					$sthArows = $sthA->rows;
+					if ($DBX) {print "$sthArows|$event_string|$stmtA| \n";}
+					$e_update_ct = ($e_update_ct + $sthArows);
+					$e++;
+					}
+				$event_string = "$e_update_ct($e) leads updated to 0 rank";
+				if ($DBX) {print "$event_string \n";}
+				if ($teodDB) {&teod_logger;}
+
+				$stmtA = "DELETE FROM vicidial_lead_call_quota_counts where ( (first_call_date < \"$SXSQLdate\") or (first_call_date IS NULL) );";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArows = $sthA->rows;
+				$event_string = "$sthArows rows deleted from vicidial_lead_call_quota_counts table ($SXSQLdate) |$stmtA|";
+				if (!$Q) {print "$event_string \n";}
+				if ($teodDB) {&teod_logger;}
+
+				$stmtA = "optimize table vicidial_lead_call_quota_counts;";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				}
+
+			$stmtA = "UPDATE vicidial_lead_call_quota_counts SET session_one_today_calls='0',session_two_today_calls='0',session_three_today_calls='0',session_four_today_calls='0',session_five_today_calls='0',session_six_today_calls='0';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			$event_string = "$sthArows rows reset today session counts vicidial_lead_call_quota_counts table ($SXSQLdate)";
+			if (!$Q) {print "$event_string \n";}
+			if ($teodDB) {&teod_logger;}
+			}
+		##### END roll Call Quota Lead Ranking logs into the archive table after 7 days
 		}
 	}
 
@@ -4495,6 +4581,92 @@ if ($SSenable_drop_lists > 0)
 ################################################################################
 #####  END  drop lists
 ################################################################################
+
+
+
+
+
+################################################################################
+#####  BEGIN  Call Quota Lead Ranking recycling process
+################################################################################
+if ( ($SScall_quota_lead_ranking > 0) && ($THISserver_voicemail > 0) )
+	{
+	$stmtA = "SELECT campaign_id,call_quota_lead_ranking FROM vicidial_campaigns where active='Y' and call_quota_lead_ranking!='DISABLED' limit 1000;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthBrows=$sthA->rows;
+	if ($DB) {print "Checking for Call Quota campaigns: |$sthBrows|$stmtA|\n";}
+	$r=0;
+	while ($sthBrows > $r)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$CQcampaign_idARY[$r] =					$aryA[0];
+		$CQcall_quota_lead_rankingARY[$r] =		$aryA[1];
+		$r++;
+		}
+	$sthA->finish();
+
+	if ($sthBrows > 0)
+		{
+		$r=0;
+		while ($sthBrows > $r)
+			{
+			$call_quota_run_time='';
+			$stmtA = "SELECT container_entry FROM vicidial_settings_containers where container_id='$CQcall_quota_lead_rankingARY[$r]';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthSCrows=$sthA->rows;
+			if ($DB) {print "Checking for Call Quota campaigns: |$sthSCrows|$stmtA|\n";}
+			if ($sthSCrows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$TEMPcontainer_entry = $aryA[0];
+				$TEMPcontainer_entry =~ s/\\//gi;
+				if (length($TEMPcontainer_entry) > 5) 
+					{
+					@container_lines = split(/\n/,$TEMPcontainer_entry);
+					$c=0;
+					foreach(@container_lines)
+						{
+						$container_lines[$c] =~ s/;.*|\r|\t| //gi;
+						if (length($container_lines[$c]) > 5)
+							{
+							# define call_quota_run_time settings
+							if ($container_lines[$c] =~ /^call_quota_run_time/i)
+								{
+								$call_quota_run_time = $container_lines[$c];
+								$call_quota_run_time =~ s/call_quota_run_time=>//gi;
+								if ( (length($call_quota_run_time) > 0) && (length($call_quota_run_time) <= 70) ) 
+									{
+									$TESTcall_quota_run_time = ",$call_quota_run_time,";
+									}
+								else {$call_quota_run_time='';}
+								if ($DBX) {print "Call Quota DEBUG: $c|$CQcampaign_idARY[$r]|$CQcall_quota_lead_rankingARY[$r]|$TESTcall_quota_run_time|$call_quota_run_time|$min_test|\n";}
+								}
+							}
+						$c++;
+						}
+					}
+				}
+			$sthA->finish();
+
+			if ( (length($TESTcall_quota_run_time) >= 4) && ($TESTcall_quota_run_time =~ /,$min_test,/) ) 
+				{
+				$temp_campaign = $CQcampaign_idARY[$r];
+				$cq_command = "$PATHhome/AST_VDcall_quotas.pl --debug --log-to-adminlog --campaign=$temp_campaign ";
+
+				if ($DB) {print "starting call quota lead ranking process in a screen... |CQ$temp_campaign|   |$call_quota_run_time|$min_test|\n";}
+				`/usr/bin/screen -d -m -S CQ$temp_campaign $cq_command `;
+				}
+			$r++;
+			}
+		if ($DB) {print "Call Quota Lead Ranking process launching DONE: $r\n";}
+		}
+	}
+################################################################################
+#####  END  Call Quota Lead Ranking recycling process
+################################################################################
+
 
 
 

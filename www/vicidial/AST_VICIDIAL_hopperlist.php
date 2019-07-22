@@ -1,7 +1,7 @@
 <?php 
 # AST_VICIDIAL_hopperlist.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -26,6 +26,7 @@
 # 161026-0931 - Added links to leads and lists, added phone code, age, last call columns
 # 170409-1544 - Added IP List validation code
 # 180310-2250 - Added optional source_id display
+# 190716-2119 - Added rank
 #
 
 $startMS = microtime();
@@ -345,11 +346,11 @@ else
 		}
 	echo "\n";
 	echo "---------- "._QXZ("LEADS IN HOPPER")."\n";
-	echo "+------+--------+-----------+------------+-------------+---------+-------+--------+-------+--------+-------+-------+----------------------$SIDhead+----------+-----------+\n";
-	echo "|"._QXZ("ORDER",5)." |"._QXZ("PRIORITY",8)."| "._QXZ("LEAD ID",9)." | "._QXZ("LIST ID",10)." | "._QXZ("PHONE NUM",11)." | "._QXZ("PH CODE",7)." | "._QXZ("STATE",5)." | "._QXZ("STATUS",6)." | "._QXZ("COUNT",5)." | "._QXZ("GMT",6)." | "._QXZ("ALT",5)." | "._QXZ("SOURCE",6)."| "._QXZ("VENDOR LEAD CODE",20)." $SIDline| "._QXZ("AGE DAYS",8)." | "._QXZ("LAST CALL",9)." |\n";
-	echo "+------+--------+-----------+------------+-------------+---------+-------+--------+-------+--------+-------+-------+----------------------$SIDhead+----------+-----------+\n";
+	echo "+------+--------+-----------+------------+-------------+---------+-------+--------+-------+--------+--------+-------+-------+----------------------$SIDhead+----------+-----------+\n";
+	echo "|"._QXZ("ORDER",5)." |"._QXZ("PRIORITY",8)."| "._QXZ("LEAD ID",9)." | "._QXZ("LIST ID",10)." | "._QXZ("PHONE NUM",11)." | "._QXZ("PH CODE",7)." | "._QXZ("STATE",5)." | "._QXZ("STATUS",6)." | "._QXZ("COUNT",5)." | "._QXZ("GMT",6)." | "._QXZ("RANK",6)." | "._QXZ("ALT",5)." | "._QXZ("SOURCE",6)."| "._QXZ("VENDOR LEAD CODE",20)." $SIDline| "._QXZ("AGE DAYS",8)." | "._QXZ("LAST CALL",9)." |\n";
+	echo "+------+--------+-----------+------------+-------------+---------+-------+--------+-------+--------+--------+-------+-------+----------------------$SIDhead+----------+-----------+\n";
 
-	$stmt="select vicidial_hopper.lead_id,phone_number,vicidial_hopper.state,vicidial_list.status,called_count,vicidial_hopper.gmt_offset_now,hopper_id,alt_dial,vicidial_hopper.list_id,vicidial_hopper.priority,vicidial_hopper.source,vicidial_hopper.vendor_lead_code, phone_code,UNIX_TIMESTAMP(entry_date),UNIX_TIMESTAMP(last_local_call_time),source_id from vicidial_hopper,vicidial_list where vicidial_hopper.campaign_id='" . mysqli_real_escape_string($link, $group) . "' and vicidial_hopper.status='READY' and vicidial_hopper.lead_id=vicidial_list.lead_id $LOGallowed_campaignsSQL order by priority desc,hopper_id limit 5000;";
+	$stmt="select vicidial_hopper.lead_id,phone_number,vicidial_hopper.state,vicidial_list.status,called_count,vicidial_hopper.gmt_offset_now,hopper_id,alt_dial,vicidial_hopper.list_id,vicidial_hopper.priority,vicidial_hopper.source,vicidial_hopper.vendor_lead_code, phone_code,UNIX_TIMESTAMP(entry_date),UNIX_TIMESTAMP(last_local_call_time),source_id,vicidial_list.rank from vicidial_hopper,vicidial_list where vicidial_hopper.campaign_id='" . mysqli_real_escape_string($link, $group) . "' and vicidial_hopper.status='READY' and vicidial_hopper.lead_id=vicidial_list.lead_id $LOGallowed_campaignsSQL order by priority desc,hopper_id limit 5000;";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	if ($DB) {echo "$stmt\n";}
 	$users_to_print = mysqli_num_rows($rslt);
@@ -402,6 +403,7 @@ else
 		$entry_epoch =		$row[13];
 		$last_call_epoch =	$row[14];
 		$source_id_TEXT =	"| ".sprintf("%-20s", $row[15])." ";
+		$rank =			sprintf("%-6s", $row[16]);
 
 		$lead_age = intval(($STARTtime - $entry_epoch) / 86400);
 		$lead_age =		sprintf("%-8s", $lead_age);
@@ -444,13 +446,13 @@ else
 		if ($SSsource_id_display < 1)
 			{$source_id_TEXT='';}
 
-		if ($DB) {echo "| $FMT_i | $priority | <a href='./admin_modify_lead.php?lead_id=$lead_id_ns&archive_search=No&archive_log=0'>$lead_id</a> | <a href='./admin.php?ADD=311&list_id=$list_id_ns'>$list_id</a> | $phone_number  $phone_code || $state | $status | $count | $gmt | $alt_dial | $source | $vendor_lead_code | $lead_age | $last_call_age_TEXT | $hopper_id |\n";}
-		else {echo "| $FMT_i | $priority | <a href='./admin_modify_lead.php?lead_id=$lead_id_ns&archive_search=No&archive_log=0'>$lead_id</a> | <a href='./admin.php?ADD=311&list_id=$list_id_ns'>$list_id</a> | $phone_number | $phone_code | $state | $status | $count | $gmt | $alt_dial | $source | $vendor_lead_code $source_id_TEXT| $lead_age | $last_call_age_TEXT |\n";}
+		if ($DB) {echo "| $FMT_i | $priority | <a href='./admin_modify_lead.php?lead_id=$lead_id_ns&archive_search=No&archive_log=0'>$lead_id</a> | <a href='./admin.php?ADD=311&list_id=$list_id_ns'>$list_id</a> | $phone_number  $phone_code || $state | $status | $count | $gmt | $rank | $alt_dial | $source | $vendor_lead_code | $lead_age | $last_call_age_TEXT | $hopper_id |\n";}
+		else {echo "| $FMT_i | $priority | <a href='./admin_modify_lead.php?lead_id=$lead_id_ns&archive_search=No&archive_log=0'>$lead_id</a> | <a href='./admin.php?ADD=311&list_id=$list_id_ns'>$list_id</a> | $phone_number | $phone_code | $state | $status | $count | $gmt | $rank | $alt_dial | $source | $vendor_lead_code $source_id_TEXT| $lead_age | $last_call_age_TEXT |\n";}
 
 		$i++;
 		}
 
-	echo "+------+--------+-----------+------------+-------------+---------+-------+--------+-------+--------+-------+-------+----------------------$SIDhead+----------+-----------+\n";
+	echo "+------+--------+-----------+------------+-------------+---------+-------+--------+-------+--------+--------+-------+-------+----------------------$SIDhead+----------+-----------+\n";
 	}
 
 if ($db_source == 'S')

@@ -475,10 +475,11 @@
 # 190524-1142 - Added gmt_offset population to new manual dialed leads
 # 190531-1045 - Added sip_event_logging
 # 190627-1535 - Added new options for campaign agent_screen_time_display feature
+# 190709-1846 - Added Call Quota logging
 #
 
-$version = '2.14-369';
-$build = '190627-1535';
+$version = '2.14-370';
+$build = '190709-1846';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=797;
@@ -954,7 +955,7 @@ $sip_hangup_cause_dictionary = array(
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,timeclock_end_of_day,agentonly_callback_campaign_lock,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,qc_features_active,allow_emails,callback_time_24hour,enable_languages,language_method,agent_debug_logging,default_language,active_modules,allow_chats,default_phone_code,user_new_lead_limit,sip_event_logging FROM system_settings;";
+$stmt = "SELECT use_non_latin,timeclock_end_of_day,agentonly_callback_campaign_lock,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,qc_features_active,allow_emails,callback_time_24hour,enable_languages,language_method,agent_debug_logging,default_language,active_modules,allow_chats,default_phone_code,user_new_lead_limit,sip_event_logging,call_quota_lead_ranking FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00001',$user,$server_ip,$session_name,$one_mysql_log);}
 if ($DB) {echo "$stmt\n";}
@@ -982,6 +983,7 @@ if ($qm_conf_ct > 0)
 	$default_phone_code =					$row[17];
 	$SSuser_new_lead_limit =				$row[18];
 	$SSsip_event_logging =					$row[19];
+	$SScall_quota_lead_ranking =			$row[20];
 	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
@@ -12186,7 +12188,7 @@ if ($ACTION == 'updateDISPO')
 		}
 	### END Call Notes Logging ###
 
-	$stmt="SELECT auto_alt_dial_statuses,use_internal_dnc,use_campaign_dnc,api_manual_dial,use_other_campaign_dnc from vicidial_campaigns where campaign_id='$campaign';";
+	$stmt="SELECT auto_alt_dial_statuses,use_internal_dnc,use_campaign_dnc,api_manual_dial,use_other_campaign_dnc,call_quota_lead_ranking from vicidial_campaigns where campaign_id='$campaign';";
 	$rslt=mysql_to_mysqli($stmt, $link);
 		if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00155',$user,$server_ip,$session_name,$one_mysql_log);}
 	$row=mysqli_fetch_row($rslt);
@@ -12195,7 +12197,272 @@ if ($ACTION == 'updateDISPO')
 	$use_campaign_dnc =				$row[2];
 	$api_manual_dial =				$row[3];
 	$use_other_campaign_dnc =		$row[4];
+	$call_quota_lead_ranking =		$row[5];
 
+
+	### BEGIN Call Quota Lead Renking logging ###
+		$fp = fopen ("./CQdebug_log.txt", "a");
+		fwrite ($fp, "$NOW_TIME CQ-Debug 0: $call_quota_lead_ranking|$call_type|\n");
+		fclose($fp);  
+	if ( ($call_quota_lead_ranking != 'DISABLED') and ($call_type == 'OUT') and ($SScall_quota_lead_ranking > 0) )
+		{
+		$call_quota_sessions_valid=0;
+		$call_in_session=0;
+		$zero_rank_after_call=0;
+		# Gather details on the campaign's Call Quota settings container
+		$stmt = "SELECT container_entry FROM vicidial_settings_containers where container_id='$call_quota_lead_ranking';";
+		$rslt=mysql_to_mysqli($stmt, $link);
+			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+		if ($DB) {echo "$stmt\n";}
+		$SCinfo_ct = mysqli_num_rows($rslt);
+		if ($SCinfo_ct > 0)
+			{
+			$row=mysqli_fetch_row($rslt);
+			$CQcontainer_entry =	$row[0];
+			$CQcontainer_entry = preg_replace("/\r|\t|\'|\"| /",'',$CQcontainer_entry);
+			$call_quota_settings = explode("\n",$CQcontainer_entry);
+			$call_quota_settings_ct = count($call_quota_settings);
+			$cql=0;
+			while ($call_quota_settings_ct >= $cql)
+				{
+				if (preg_match("/^zero_rank_after_call=>/",$call_quota_settings[$cql]))
+					{
+					$call_quota_settings[$cql] = preg_replace("/zero_rank_after_call=>/",'',$call_quota_settings[$cql]);
+					$zero_rank_after_call = $call_quota_settings[$cql];
+					}
+				if (preg_match("/^session_one=>/",$call_quota_settings[$cql]))
+					{
+					$call_quota_settings[$cql] = preg_replace("/^session_one=>/",'',$call_quota_settings[$cql]);
+					$call_quota_line = explode(",",$call_quota_settings[$cql]);
+					$session_one_start =	$call_quota_line[0];
+					$session_one_end =		$call_quota_line[1];
+					$call_quota_sessions_valid++;
+					}
+				if (preg_match("/^session_two=>/",$call_quota_settings[$cql]))
+					{
+					$call_quota_settings[$cql] = preg_replace("/^session_two=>/",'',$call_quota_settings[$cql]);
+					$call_quota_line = explode(",",$call_quota_settings[$cql]);
+					$session_two_start =	$call_quota_line[0];
+					$session_two_end =		$call_quota_line[1];
+					$call_quota_sessions_valid++;
+					}
+				if (preg_match("/^session_three=>/",$call_quota_settings[$cql]))
+					{
+					$call_quota_settings[$cql] = preg_replace("/^session_three=>/",'',$call_quota_settings[$cql]);
+					$call_quota_line = explode(",",$call_quota_settings[$cql]);
+					$session_three_start =	$call_quota_line[0];
+					$session_three_end =	$call_quota_line[1];
+					$call_quota_sessions_valid++;
+					}
+				if (preg_match("/^session_four=>/",$call_quota_settings[$cql]))
+					{
+					$call_quota_settings[$cql] = preg_replace("/^session_four=>/",'',$call_quota_settings[$cql]);
+					$call_quota_line = explode(",",$call_quota_settings[$cql]);
+					$session_four_start =	$call_quota_line[0];
+					$session_four_end =		$call_quota_line[1];
+					$call_quota_sessions_valid++;
+					}
+				if (preg_match("/^session_five=>/",$call_quota_settings[$cql]))
+					{
+					$call_quota_settings[$cql] = preg_replace("/^session_five=>/",'',$call_quota_settings[$cql]);
+					$call_quota_line = explode(",",$call_quota_settings[$cql]);
+					$session_five_start =	$call_quota_line[0];
+					$session_five_end =		$call_quota_line[1];
+					$call_quota_sessions_valid++;
+					}
+				if (preg_match("/^session_six=>/",$call_quota_settings[$cql]))
+					{
+					$call_quota_settings[$cql] = preg_replace("/^session_six=>/",'',$call_quota_settings[$cql]);
+					$call_quota_line = explode(",",$call_quota_settings[$cql]);
+					$session_six_start =	$call_quota_line[0];
+					$session_six_end =		$call_quota_line[1];
+					$call_quota_sessions_valid++;
+					}
+				$cql++;
+				}
+			$fp = fopen ("./CQdebug_log.txt", "a");
+			fwrite ($fp, "$NOW_TIME CQ-Debug 1: $call_quota_settings_ct|$call_quota_lead_ranking|$call_quota_sessions_valid|\n");
+			fclose($fp);  
+
+			if ($call_quota_sessions_valid > 0)
+				{
+				# Gather list ID and called count for this lead
+				$stmt = "SELECT list_id,called_count,rank FROM vicidial_list where lead_id='$lead_id';";
+				$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+				if ($DB) {echo "$stmt\n";}
+				$VLinfo_ct = mysqli_num_rows($rslt);
+				if ($VLinfo_ct > 0)
+					{
+					$row=mysqli_fetch_row($rslt);
+					$VLlist_id =		$row[0];
+					$VLcalled_count =	$row[1];
+					$VLrank =			$row[2];
+					$tempVLrank = $VLrank;
+					if ( ($zero_rank_after_call > 0) and ($VLrank > 0) ) {$tempVLrank=0;}
+					}
+
+				# Gather the date/time this call was dialed
+				$stmt = "SELECT call_date from vicidial_dial_log where lead_id='$lead_id' and call_date > \"$four_hours_ago\" and caller_code LIKE \"%$lead_id\" order by call_date desc limit 1;";
+				$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+				if ($DB) {echo "$stmt\n";}
+				$VDLinfo_ct = mysqli_num_rows($rslt);
+				if ($VDLinfo_ct > 0)
+					{
+					$row=mysqli_fetch_row($rslt);
+					$VDLcall_datetime =		$row[0];
+
+					$VDLcall_datetimeARY = explode(" ",$VDLcall_datetime);
+					$VDLcall_timeARY = explode(":",$VDLcall_datetimeARY[1]);
+					$VDLcall_hourmin = "$VDLcall_timeARY[0]$VDLcall_timeARY[1]";
+
+					if ( ($session_one_start <= $VDLcall_hourmin) and ($session_one_end > $VDLcall_hourmin) ) 
+						{
+						$call_in_session=1; 
+						$session_newSQL=",session_one_calls='1',session_one_today_calls='1'"; 
+						$session_updateSQL=",session_one_calls=(session_one_calls + 1),session_one_today_calls=(session_one_today_calls + 1)";
+						}
+					if ( ($session_two_start <= $VDLcall_hourmin) and ($session_two_end > $VDLcall_hourmin) ) 
+						{
+						$call_in_session=2; 
+						$session_newSQL=",session_two_calls='1',session_two_today_calls='1'"; 
+						$session_updateSQL=",session_two_calls=(session_two_calls + 1),session_two_today_calls=(session_two_today_calls + 1)";
+						}
+					if ( ($session_three_start <= $VDLcall_hourmin) and ($session_three_end > $VDLcall_hourmin) ) 
+						{
+						$call_in_session=3; 
+						$session_newSQL=",session_three_calls='1',session_three_today_calls='1'"; 
+						$session_updateSQL=",session_three_calls=(session_three_calls + 1),session_three_today_calls=(session_three_today_calls + 1)";
+						}
+					if ( ($session_four_start <= $VDLcall_hourmin) and ($session_four_end > $VDLcall_hourmin) ) 
+						{
+						$call_in_session=4; 
+						$session_newSQL=",session_four_calls='1',session_four_today_calls='1'"; 
+						$session_updateSQL=",session_four_calls=(session_four_calls + 1),session_four_today_calls=(session_four_today_calls + 1)";
+						}
+					if ( ($session_five_start <= $VDLcall_hourmin) and ($session_five_end > $VDLcall_hourmin) ) 
+						{
+						$call_in_session=5; 
+						$session_newSQL=",session_five_calls='1',session_five_today_calls='1'"; 
+						$session_updateSQL=",session_five_calls=(session_five_calls + 1),session_five_today_calls=(session_five_today_calls + 1)";
+						}
+					if ( ($session_six_start <= $VDLcall_hourmin) and ($session_six_end > $VDLcall_hourmin) ) 
+						{
+						$call_in_session=6; 
+						$session_newSQL=",session_six_calls='1',session_six_today_calls='1'"; 
+						$session_updateSQL=",session_six_calls=(session_six_calls + 1),session_six_today_calls=(session_six_today_calls + 1)";
+						}
+
+					$fp = fopen ("./CQdebug_log.txt", "a");
+					fwrite ($fp, "$NOW_TIME CQ-Debug 2: $VDLcall_datetime|$VDLcall_hourmin|$timeclock_end_of_day|$session_one_start|$session_one_end|$call_in_session|\n");
+					fclose($fp);  
+
+					if ($call_in_session > 0)
+						{
+						if (strlen($timeclock_end_of_day) < 1) {$timeclock_end_of_day='0000';}
+						$timeclock_end_of_day_hour = (substr($timeclock_end_of_day, 0, 2) + 0);
+						$timeclock_end_of_day_min = (substr($timeclock_end_of_day, 2, 2) + 0);
+						$today_start_epoch = mktime($timeclock_end_of_day_hour,$timeclock_end_of_day_min,date("s"),date("m"),date("d"),date("Y"));
+						if ($timeclock_end_of_day > $VDLcall_hourmin)
+							{$today_start_epoch = mktime($timeclock_end_of_day_hour,$timeclock_end_of_day_min,date("s"),date("m"),date("d")-1,date("Y"));}
+						$day_two_start_epoch = ($today_start_epoch - (86400 * 1));
+						$day_three_start_epoch = ($today_start_epoch - (86400 * 2));
+						$day_four_start_epoch = ($today_start_epoch - (86400 * 3));
+						$day_five_start_epoch = ($today_start_epoch - (86400 * 4));
+						$day_six_start_epoch = ($today_start_epoch - (86400 * 5));
+						$day_seven_start_epoch = ($today_start_epoch - (86400 * 6));
+
+						# Gather the details on existing vicidial_lead_call_quota_counts for this lead, if there is one
+						$stmt = "SELECT first_call_date,UNIX_TIMESTAMP(first_call_date),last_call_date from vicidial_lead_call_quota_counts where lead_id='$lead_id' and list_id='$VLlist_id';";
+						$rslt=mysql_to_mysqli($stmt, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+						if ($DB) {echo "$stmt\n";}
+						$VLCQCinfo_ct = mysqli_num_rows($rslt);
+						if ($VLCQCinfo_ct > 0)
+							{
+							$row=mysqli_fetch_row($rslt);
+							$VLCQCfirst_call_datetime =		$row[0];
+							$VLCQCfirst_call_epoch =		$row[1];
+							$VLCQClast_call_date =			$row[2];
+							if (strcmp($VDLcall_datetime, $VLCQClast_call_date) !== 0) 
+								{
+								if ($VLCQCfirst_call_epoch >= $today_start_epoch) 
+									{$day_updateSQL=',day_one_calls=(day_one_calls+1)';}
+								if ( ($VLCQCfirst_call_epoch >= $day_two_start_epoch) and ($VLCQCfirst_call_epoch < $today_start_epoch) )
+									{$day_updateSQL=',day_two_calls=(day_two_calls+1)';}
+								if ( ($VLCQCfirst_call_epoch >= $day_three_start_epoch) and ($VLCQCfirst_call_epoch < $day_two_start_epoch) )
+									{$day_updateSQL=',day_three_calls=(day_three_calls+1)';}
+								if ( ($VLCQCfirst_call_epoch >= $day_four_start_epoch) and ($VLCQCfirst_call_epoch < $day_three_start_epoch) )
+									{$day_updateSQL=',day_four_calls=(day_four_calls+1)';}
+								if ( ($VLCQCfirst_call_epoch >= $day_five_start_epoch) and ($VLCQCfirst_call_epoch < $day_four_start_epoch) )
+									{$day_updateSQL=',day_five_calls=(day_five_calls+1)';}
+								if ( ($VLCQCfirst_call_epoch >= $day_six_start_epoch) and ($VLCQCfirst_call_epoch < $day_five_start_epoch) )
+									{$day_updateSQL=',day_six_calls=(day_six_calls+1)';}
+								if ( ($VLCQCfirst_call_epoch >= $day_seven_start_epoch) and ($VLCQCfirst_call_epoch < $day_six_start_epoch) )
+									{$day_updateSQL=',day_seven_calls=(day_seven_calls+1)';}
+								# Update in the vicidial_lead_call_quota_counts table for this lead
+								$stmt="UPDATE vicidial_lead_call_quota_counts SET last_call_date='$VDLcall_datetime',status='$dispo_choice',called_count='$VLcalled_count',rank='$tempVLrank',modify_date=NOW() $session_updateSQL $day_updateSQL where lead_id='$lead_id' and list_id='$VLlist_id';";
+								}
+							else
+								{
+								# Update in the vicidial_lead_call_quota_counts table for this lead
+								$stmt="UPDATE vicidial_lead_call_quota_counts SET status='$dispo_choice',called_count='$VLcalled_count',rank='$tempVLrank',modify_date=NOW() where lead_id='$lead_id' and list_id='$VLlist_id';";
+								}
+							if ($DB) {echo "$stmt\n";}
+							$rslt=mysql_to_mysqli($stmt, $link);
+								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$VD_login,$server_ip,$session_name,$one_mysql_log);}
+							$VLCQCaffected_rows_update = mysqli_affected_rows($link);
+							}
+						else
+							{
+							# Insert new record into vicidial_lead_call_quota_counts table for this lead
+							$stmt="INSERT INTO vicidial_lead_call_quota_counts SET lead_id='$lead_id',list_id='$VLlist_id',first_call_date='$VDLcall_datetime',last_call_date='$VDLcall_datetime',status='$dispo_choice',called_count='$VLcalled_count',day_one_calls='1',rank='$tempVLrank',modify_date=NOW() $session_newSQL;";
+							if ($DB) {echo "$stmt\n";}
+							$rslt=mysql_to_mysqli($stmt, $link);
+								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$VD_login,$server_ip,$session_name,$one_mysql_log);}
+							$VLCQCaffected_rows_update = mysqli_affected_rows($link);
+							}
+
+						$VLCQCaffected_rows_zero_rank=0;   $stmtR='';
+						if ( ($zero_rank_after_call > 0) and ($VLrank > 0) )
+							{
+							# Update this lead to rank=0
+							$stmtR="UPDATE vicidial_list SET rank='0' where lead_id='$lead_id';";
+							if ($DB) {echo "$stmt\n";}
+							$rslt=mysql_to_mysqli($stmtR, $link);
+								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmtR,'00XXX',$VD_login,$server_ip,$session_name,$one_mysql_log);}
+							$VLCQCaffected_rows_zero_rank = mysqli_affected_rows($link);
+							}
+
+						$fp = fopen ("./CQdebug_log.txt", "a");
+						fwrite ($fp, "$NOW_TIME CQ-Debug 3: $VLCQCaffected_rows_update|$stmt|$VLCQCaffected_rows_zero_rank|$stmtR|\n");
+						fclose($fp);  
+						}
+					else
+						{
+						# Call does not fit into any defined session
+						}
+					}
+				else
+					{
+					# No dial date/time found for this call
+					}
+				}
+			else
+				{
+				# Call Quota settings container is invalid, no sessions defined
+				}
+			}
+		else
+			{
+			# Call Quota settings container does not exist
+			}
+		}
+	### END Call Quota Lead Renking logging ###
+
+
+	### BEGIN Auto-Alt-Dial call dispo processing ###
 	if ( ($auto_dial_level > 0) and (preg_match("/\s$dispo_choice\s/",$VC_auto_alt_dial_statuses)) )
 		{
 		$stmt = "SELECT count(*) from vicidial_hopper where lead_id=$lead_id and status='HOLD';";
@@ -12298,6 +12565,7 @@ if ($ACTION == 'updateDISPO')
 		$rslt=mysql_to_mysqli($stmt, $link);
 			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00363',$user,$server_ip,$session_name,$one_mysql_log);}
 		}
+	### END Auto-Alt-Dial call dispo processing ###
 
 	####### START Vtiger Call Logging #######
 	$stmt = "SELECT enable_vtiger_integration,vtiger_server_ip,vtiger_dbname,vtiger_login,vtiger_pass,vtiger_url FROM system_settings;";

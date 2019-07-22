@@ -1,0 +1,306 @@
+CALL QUOTA LEAD RANKING		Started: 2019-07-01	Updated: 2019-07-22
+
+!!!! THIS IS AN EXPERIMENTAL FEATURE, PLEASE READ ALL IMPORTANT NOTES !!!!
+(If you plan on using this feature-set in production, you should read and understand everything in this document)
+
+
+
+
+
+This document will go over the details of the new Call Quota Lead Ranking lead recycling features that were added to VICIdial
+
+The purpose of this set of features is to allow for structured recycle dialing of leads where no contact is made over set time periods over a number of consecutive days. This feature set was built specifically for one client that has two main requirements:
+- To be able to dial leads that do not connect to a customer at least 6 times over 2 concurrent days with at least one attempt made in each of 3 time periods during the day.
+- To be able to automatically set an inactive list to active when the number of dialable NEW leads in the already active lists was about to be exhausted
+
+While the feature-set that was built offers more flexibility than the requirements that were specified above, these were the parameters that we specifically tested to ensure this set of features was working properly. 
+
+
+
+
+
+
+IMPORTANT VICIDIAL VERSION NOTE!!!
+
+You will need to be running VICIdial svn/trunk revision 3122 or newer on all of the servers in your cluster in order to use these new features
+
+
+IMPORTANT FEATURE ENABLING NOTE!!!
+
+To enable the Call Quota Lead Ranking feature set, you must enable it in "Admin -> System Settings -> Call Quota Lead Ranking" and the "Call Quota Lead Ranking" campaign setting must also be set to a valid CALL_QUOTA Settings Container for any campaigns that you want to use it on.
+
+
+IMPORTANT DATABASE LOAD NOTE!!!
+
+This set of features may impact your database performance if you have a large number of leads in the lists of the campaigns that you enable this feature for. For this reason, we recommend putting lists that you are not dialing on today into a separate inactive campaign that does not have these features enabled on it.
+
+
+
+NOTE:
+The Call Quota Lead Ranking features are not designed to work with standard campaign outbound Auto-Alt-Dialing. If you need to dial multiple numbers per account, please look into using the MULTI_LEAD auto-alt-dialing option, which can work with these call quota features.
+
+NOTE:
+We do not recommend using Call Quota Lead Ranking on the same statuses that you have enabled campaign Lead Recycling for. It is best not to use campaign Lead Recycling at all.
+
+NOTE:
+We do not recommend resetting your Lists, or using the List "Reset Time" feature, while using Call Quota Lead Ranking on a campaign. The Call Quota Lead Ranking process has a component that automatically resets individual leads so they can be dialed again when they have their rank updated, if the rank is above 0.
+
+NOTE:
+The lead ranking is performed on a per-lead-per-list basis, so if you move a lead to a different list, then the counts for the call quota lead ranking will be reset for that lead.
+
+NOTE:
+The Call Quota logs per-lead that are needed for this process to work correctly are archived after 7 days, so all Call Quota Lead Ranking recycling operations for a lead need to be set for 7 days or less.
+
+NOTE: 
+If Call Quota Lead Ranking is enabled on a campaign, then the campaign's "List Order" setting will be overridden by the Call Quota Settings Container settings.
+
+
+
+
+
+------------------- END OF "IMPORTANT NOTES" SECTION -----------------------------
+
+
+How the "Auto Active List New" feature works:
+
+This feature will automatically set an inactive list to active when it contains dialable NEW status leads and the campaign has less than this setting's number of NEW status leads to be dialed. The order in which the next list is set to active is determined by the Lists' Auto Active List Rank. This feature will only work if there has been calling on this campaign within the last hour. If no leads have been dialed within the last hour in this campaign, then this feature will not function. The default campaign setting for this feature is DISABLED.
+
+
+
+How the "Call Quota Lead Ranking" feature works:
+
+This feature works on a per-campaign basis, the campaign setting will allow you to choose a Settings Container which has the settings you want to use for Call Quota Lead Ranking(see the example setting container below)
+
+Example Settings Container Entry:
+
+redial_statuses => A,N,NA,VM,NSC,DROP,PDROP
+total_goal => 6
+daily_goal => 3
+daily_max => 5
+session_goal => 2
+session_day_max => 2
+new_shuffle => 3
+min_consecutive_days => 2
+active_days_of_week => 0123456
+zero_rank_after_call => 1
+call_quota_run_time => 01,31
+session_one => 0800,1200
+session_two => 1200,1600
+session_three => 1600,2000
+session_four => 
+session_five => 
+session_six => 
+
+For the Call Quota Settings Container to be valid, the first 11 core settings listed above must be set to valid values, see below:
+
+- redial_statuses: a comma-delimited list of the statuses that you want to recycle-dial
+			NOTE: Make sure you have these statuses also set as campaign dial statuses
+
+- total_goal: must be set to a number from 1 to 100, goal total number of calls during min_consecutive_days, since this is a "goal" the called count can go over this number
+
+- daily_goal: must be set to a number from 1 to 20, goal number of calls per day, since this is a "goal" the called count can go over this number
+
+- daily_max: must be set to a number from 1 to 20, maximum number of calls per day, leads that hit this count will have rank set < 0
+			NOTE: See note in the "TIPS & SUGGESTIONS" section about adding a filter to prevent these leads from being dialed any more
+
+- session_goal: must be set to a number from 1 to 20, goal number of calls during session, total across all days
+
+- session_day_max: must be set to a number from 1 to 20, maximum number of calls during each session for current day, leads that hit this count will have rank set < 0
+			NOTE: See note in the "TIPS & SUGGESTIONS" section about adding a filter to prevent these leads from being dialed any more
+
+- new_shuffle: must be set to a number from 0 to 6, 0 is no NEW lead shuffle, '1' is assumed to be '2' for every-other lead
+
+- min_consecutive_days: must be set to a number from 1 to 7, this is the number of days allowed to reach the "total_goal"
+
+- active_days_of_week: must be from one to seven digits, one for each day of the week, Sunday=0, example: "0123456" for all 7 days of the week
+
+- zero_rank_after_call: set to 0 or 1, if set to 1, the lead's rank will be set to 0 when the call is completed, if the lead's rank is above 0
+
+- call_quota_run_time: a comma-delimited list of the "minutes" of each hour when the call quota lead ranking process is to be run, once an hour, "01", is usually fine.
+			NOTE: If you are using Call Quotas on multiple campaigns, we recommend you schedule their run times to not overlap
+
+
+There are also up to 6 sessions that can be defined, they all follow the same format and must be put in chronological order.
+All times are based on server time, not the customer time. 
+It is assumed that the session times will cover all possible dialing times for the campaign.
+For the 'day X of dialing' determination, the "System Settings -> Timeclock End of Day" setting is used to determine when each day begins
+You must define at least one session.
+Sessions are not designed to start earler than "0000", or go past "2400".
+4-digit starting time(in 24 hour format with zero-padding), 4-digit ending time(in 24 hour format with zero-padding)
+
+
+
+TIPS & SUGGESTIONS:
+
+- Set the campaign's hopper level to the number of leads your campaign dials in 1-3 minutes, so that the updated rankings will be most effective, especially at session time boundaries
+
+- Deactivate lists after all leads have been called your desired amount of times. You can see that by looking at the data table on the List Modify page at the bottom
+
+- Set your call quota sessions to be similar lengths of time, and make sure all of your calling hours are covered by your sessions
+
+- Do not change your "sessions" after you have activated Call Quotas on your campaign
+
+- Keep less than 400,000 leads in the lists of a single campaign. Move your unused lists to an inactive campaign
+
+- Since there can sometimes be rare inconsistencies in how the multiple call logging processes work, you may have a call-quota log entry for a lead that shows a status different from the lead's current status. For instance, one may show "AB" while the other may show "B" for a busy number. You should include all possible statuses you want to re-dial in your "redial_statuses" setting.
+
+- When you start a brand-new campaign, you will have to dial only NEW leads, but after the first day, you should remove NEW from your campaign dialing statuses and use the Call Quota "new_shuffle" setting to shuffle in NEW leads instead. As your campaign progresses, you should be able to change new_shuffle from 2 down to 4, 5 or 6.
+
+- To ensure that leads with a negative rank are not called, you may want to create a Filter in the system with a Filter SQL of "(rank > 0)" and enable it for your campaign. This will help to ensure that unranked leads are not dialed. If you insert NEW leads with no rank, you will want to change this to use "(rank >= 0)".
+
+
+
+
+
+------------------- SCRIPTS INVOLVED IN THIS FEATURE -----------------------------
+
+Scripts modified/added:
+- bin/AST_VDcall_quotas.pl	* new script
+- bin/FastAGI_log.pl
+- bin/AST_VDauto_dial.pl
+- bin/AST_VDremote_agents.pl
+- bin/AST_VDadapt.pl
+- bin/ADMIN_keepalive_ALL.pl
+- agi/agi-VDAD_ALL_outbound.agi
+- agi/VD_amd.agi
+- www/agc/vdc_db_query.php
+- www/vicidial/campaign_debug.php
+
+
+There are two operating modes for the new "AST_VDcall_quotas.pl" script:
+1. To populate the Call Quota logs for a campaign that has been placing outbound calls but is just now having Call Quotas enabled on it. This needs to be run manually from one of the dialers like this:
+	/usr/share/astguiclient/AST_VDcall_quotas.pl --debugX --populate-call-quota-logs --campaign=TESTCAMP
+
+2. To perform the ranking of leads within the campaigns where Call Quotas are being used. This is run automatically at least once an hour(as defined in the "call_quota_run_time" Settings Container specified for the campaign) by the system at set intervals on the "Active Voicemail Server" as defined in "System Settings"
+
+
+
+
+The Campaign Debug report(accessible to level 9 users by going to "Reports -> Admin Utilities") will show you debug output from the last time the AST_VDcall_quotas.pl process ran for the campaign at the bottom of the page. Example output:
+
+Call Quota Lead Ranking Debug:     2019-07-18 09:36:54
+TESTCAMP CAMPAIGN ACTIVE DIALABLE NEW LEADS COUNT:   17588 
+TESTCAMP CAMPAIGN LISTS RECENTLY DIALED COUNT:       2 
+TESTCAMP CAMPAIGN LEAD RANK UPDATES:                 10756 
+TESTCAMP CAMPAIGN LEAD CALLED RESET UPDATES:         3639 (19128) 
+LIST CACHE STATS UPDATED: 99899   TOTAL: 60000   NEW: 17581   DIALABLE NEW: 17581 
+LIST CACHE STATS UPDATED: 107   TOTAL: 59904   NEW: 7   DIALABLE NEW: 7 
+LIST CACHE STATS UPDATED: 222   TOTAL: 1   NEW: 1   DIALABLE NEW: 1 
+LIST CACHE STATS UPDATED: 303   TOTAL: 1   NEW: 1   DIALABLE NEW: 1 
+LIST CACHE STATS UPDATED: 888   TOTAL: 5   NEW: 5   DIALABLE NEW: 5 
+LIST CACHE STATS UPDATED: 929   TOTAL: 0   NEW: 0   DIALABLE NEW: 0 
+LIST CACHE STATS UPDATED: 992   TOTAL: 10   NEW: 0   DIALABLE NEW: 0 
+LIST CACHE STATS UPDATED: 998   TOTAL: 101   NEW: 23   DIALABLE NEW: 8 
+LIST CACHE STATS UPDATED: 1101   TOTAL: 761   NEW: 761   DIALABLE NEW: 761 
+LIST CACHE STATS UPDATED: 10000   TOTAL: 0   NEW: 0   DIALABLE NEW: 0 
+LIST CACHE STATS UPDATED: 10001   TOTAL: 14   NEW: 14   DIALABLE NEW: 14 
+LIST CACHE STATS UPDATED: 10002   TOTAL: 7   NEW: 7   DIALABLE NEW: 7 
+LIST CACHE STATS UPDATED: 10003   TOTAL: 0   NEW: 0   DIALABLE NEW: 0 
+LIST CACHE STATS UPDATED: 10004   TOTAL: 0   NEW: 0   DIALABLE NEW: 0 
+LIST CACHE STATS UPDATED: 11091   TOTAL: 10   NEW: 10   DIALABLE NEW: 10 
+LIST CACHE STATS UPDATED: 89106   TOTAL: 13   NEW: 0   DIALABLE NEW: 0 
+LIST CACHE STATS UPDATED: 223344   TOTAL: 7   NEW: 3   DIALABLE NEW: 3 
+LIST CACHE STATS UPDATED: 334455   TOTAL: 1   NEW: 0   DIALABLE NEW: 0 
+LIST CACHE STATS UPDATED: 373737   TOTAL: 0   NEW: 0   DIALABLE NEW: 0 
+LIST CACHE STATS UPDATED: 999888   TOTAL: 6104   NEW: 0   DIALABLE NEW: 0 
+LIST CACHE STATS UPDATED: 3333301   TOTAL: 15   NEW: 14   DIALABLE NEW: 14 
+LIST CACHE STATS UPDATED: 3333302   TOTAL: 42   NEW: 42   DIALABLE NEW: 42 
+LIST CACHE STATS UPDATED: 3333304   TOTAL: 0   NEW: 0   DIALABLE NEW: 0 
+LIST CACHE STATS UPDATED: 12345678   TOTAL: 3   NEW: 0   DIALABLE NEW: 0 
+LIST CACHE STATS UPDATED: 100000010   TOTAL: 60000   NEW: 59999   DIALABLE NEW: 59999 
+LIST CACHE STATS UPDATED: 100000011   TOTAL: 60000   NEW: 59995   DIALABLE NEW: 59995 
+LIST CACHE STATS UPDATED: 999888999777   TOTAL: 0   NEW: 0   DIALABLE NEW: 0 
+ Call Quota run time: 56 seconds
+
+
+
+A new outbound auto-dial log-auditing function has been added to the AST_VDadapt.pl script when Call Quotas is enabled. This function validates logs and fixes them if logging at the end of a call does not happen in the way it is supposed to, which can happen on overloaded systems.
+
+
+
+
+
+
+
+-------- SQL CHANGES FOR DOCUMENTATION PURPOSES ONLY !!!!!!!!!!  DO NOT RUN THESE!!!!!    ----------------
+
+
+ALTER TABLE system_settings ADD call_quota_lead_ranking ENUM('0','1','2') default '0';
+
+ALTER TABLE vicidial_campaigns ADD auto_active_list_new VARCHAR(20) default 'DISABLED';
+ALTER TABLE vicidial_campaigns ADD call_quota_lead_ranking VARCHAR(20) default 'DISABLED';
+ALTER TABLE vicidial_campaigns ADD call_quota_process_running TINYINT(3) default '0';
+ALTER TABLE vicidial_campaigns ADD call_quota_last_run_date DATETIME;
+
+ALTER TABLE vicidial_lists ADD auto_active_list_rank SMALLINT(5) default '0';
+ALTER TABLE vicidial_lists ADD cache_count INT(9) UNSIGNED default '0';
+ALTER TABLE vicidial_lists ADD cache_count_new INT(9) UNSIGNED default '0';
+ALTER TABLE vicidial_lists ADD cache_count_dialable_new INT(9) UNSIGNED default '0';
+ALTER TABLE vicidial_lists ADD cache_date DATETIME;
+
+CREATE TABLE vicidial_lead_call_quota_counts (
+lead_id INT(9) UNSIGNED NOT NULL,
+list_id BIGINT(14) UNSIGNED DEFAULT '0',
+first_call_date DATETIME,
+last_call_date DATETIME,
+status VARCHAR(6),
+called_count SMALLINT(5) UNSIGNED default '0',
+session_one_calls TINYINT(3) default '0',
+session_two_calls TINYINT(3) default '0',
+session_three_calls TINYINT(3) default '0',
+session_four_calls TINYINT(3) default '0',
+session_five_calls TINYINT(3) default '0',
+session_six_calls TINYINT(3) default '0',
+day_one_calls TINYINT(3) default '0',
+day_two_calls TINYINT(3) default '0',
+day_three_calls TINYINT(3) default '0',
+day_four_calls TINYINT(3) default '0',
+day_five_calls TINYINT(3) default '0',
+day_six_calls TINYINT(3) default '0',
+day_seven_calls TINYINT(3) default '0',
+session_one_today_calls TINYINT(3) default '0',
+session_two_today_calls TINYINT(3) default '0',
+session_three_today_calls TINYINT(3) default '0',
+session_four_today_calls TINYINT(3) default '0',
+session_five_today_calls TINYINT(3) default '0',
+session_six_today_calls TINYINT(3) default '0',
+rank SMALLINT(5) NOT NULL default '0',
+modify_date DATETIME,
+unique index vlcqc_lead_list (lead_id, list_id),
+index(last_call_date),
+index(list_id),
+index(modify_date)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_lead_call_quota_counts_archive (
+lead_id INT(9) UNSIGNED NOT NULL,
+list_id BIGINT(14) UNSIGNED DEFAULT '0',
+first_call_date DATETIME,
+last_call_date DATETIME,
+status VARCHAR(6),
+called_count SMALLINT(5) UNSIGNED default '0',
+session_one_calls TINYINT(3) default '0',
+session_two_calls TINYINT(3) default '0',
+session_three_calls TINYINT(3) default '0',
+session_four_calls TINYINT(3) default '0',
+session_five_calls TINYINT(3) default '0',
+session_six_calls TINYINT(3) default '0',
+day_one_calls TINYINT(3) default '0',
+day_two_calls TINYINT(3) default '0',
+day_three_calls TINYINT(3) default '0',
+day_four_calls TINYINT(3) default '0',
+day_five_calls TINYINT(3) default '0',
+day_six_calls TINYINT(3) default '0',
+day_seven_calls TINYINT(3) default '0',
+session_one_today_calls TINYINT(3) default '0',
+session_two_today_calls TINYINT(3) default '0',
+session_three_today_calls TINYINT(3) default '0',
+session_four_today_calls TINYINT(3) default '0',
+session_five_today_calls TINYINT(3) default '0',
+session_six_today_calls TINYINT(3) default '0',
+rank SMALLINT(5) NOT NULL default '0',
+modify_date DATETIME,
+unique index vlcqc_lead_date (lead_id, first_call_date),
+index(first_call_date)
+) ENGINE=MyISAM;
+

@@ -25,7 +25,7 @@
 # exten => h,1,DeadAGI(agi://127.0.0.1:4577/call_log--HVcauses--PRI-----NODEBUG-----${HANGUPCAUSE}-----${DIALSTATUS}-----${DIALEDTIME}-----${ANSWEREDTIME})
 # 
 #
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG:
 # 61010-1007 - First test build
@@ -83,6 +83,7 @@
 # 180521-1153 - Changed closer log logging to use agent if call was AGENTDIRECT
 # 180919-1729 - Fix for rare non-NA-set-as-NA call logging issue
 # 190626-1100 - Added more logging for Auto-Alt-Dial debug
+# 190709-2240 - Added Call Quota logging
 #
 
 # defaults for PreFork
@@ -182,6 +183,7 @@ use vars qw(@ISA);
 use Net::Server::PreFork; # any personality will do
 @ISA = qw(Net::Server::PreFork);
 use Time::HiRes ('gettimeofday','usleep','sleep');  # necessary to have perl sleep command of less than one second
+use Time::Local;
 
 
 
@@ -1071,6 +1073,28 @@ sub process_request
 										if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 									$VDLXaffected_rows = $dbhA->do($stmtA);
 									if ($AGILOG) {$agi_string = "--    VDAD vicidial_extended_log insert: |$VDLXaffected_rows|$uniqueid|$CIDlead_id|$VDL_status|";   &agi_output;}
+
+									if ($SScall_quota_lead_ranking > 0)
+										{
+										### check to see if campaign call quotas enabled
+										$VD_call_quota_lead_ranking='DISABLED';
+										$stmtA="SELECT call_quota_lead_ranking FROM vicidial_campaigns where campaign_id='$VD_campaign_id';";
+											if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+										$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+										$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+										$sthArows=$sthA->rows;
+										if ($sthArows > 0)
+											{
+											@aryA = $sthA->fetchrow_array;
+											$VD_call_quota_lead_ranking =	$aryA[0];
+											}
+
+										if ($VD_call_quota_lead_ranking !~ /^DISABLED$/i) 
+											{
+											$temp_status = $VDL_status;
+											&call_quota_logging;
+											}
+										}
 									}
 								}
 							if ( ($CPDfound > 0) && ($VDL_status !~ /AA/) )
@@ -1400,14 +1424,16 @@ sub process_request
 
 							#############################################
 							##### SYSTEM SETTINGS LOOKUP #####
-							$stmtA = "SELECT enable_drop_lists FROM system_settings;";
+							$stmtA = "SELECT enable_drop_lists,call_quota_lead_ranking,timeclock_end_of_day FROM system_settings;";
 							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 							$sthArows=$sthA->rows;
 							if ($sthArows > 0)
 								{
 								@aryA = $sthA->fetchrow_array;
-								$enable_drop_lists =	$aryA[0];
+								$enable_drop_lists =			$aryA[0];
+								$SScall_quota_lead_ranking =	$aryA[1];
+								$timeclock_end_of_day =			$aryA[2];
 								}
 							$sthA->finish();
 							##### END SYSTEM SETTINGS LOOKUP #####
@@ -1495,6 +1521,9 @@ sub process_request
 									$sthA->finish();
 
 									$stmtA = "UPDATE vicidial_list SET status='PDROP' where lead_id=$VD_lead_id;";
+									if (length($VDL_status) < 1) {$VDL_status='PDROP';}
+
+									$stmtA = "UPDATE vicidial_list SET status='PDROP' where lead_id=$VD_lead_id;";
 									$VLPDaffected_rows = $dbhA->do($stmtA);
 									if ($AGILOG) {$agi_string = "--    PDROP vicidial_list update: |$VLPDaffected_rows|$uniqueid|$CIDlead_id|$VDL_status|";   &agi_output;}
 
@@ -1532,6 +1561,7 @@ sub process_request
 											{$VDLSQL_term_reason = '';}
 										}
 									$SQL_status = "status='DROP',$VDLSQL_term_reason";
+									if (length($VDL_status) < 1) {$VDL_status='DROP';}
 
 									########## FIND AND UPDATE vicidial_list ##########
 									$stmtA = "UPDATE vicidial_list set status='DROP' where lead_id = $VD_lead_id;";
@@ -1583,6 +1613,7 @@ sub process_request
 											{
 											$VDCLSQL_status = "status='DROP',";
 											$VDCLSQL_queue_seconds = "queue_seconds='$VD_seconds',";
+											if (length($VDL_status) < 1) {$VDL_status='DROP';}
 											}
 										else
 											{
@@ -1637,11 +1668,11 @@ sub process_request
 									}
 								}
 
-							##### BEGIN AUTO ALT PHONE DIAL SECTION #####
-							### check to see if campaign has alt_dial enabled
+							### check to see if campaign has alt_dial or call quotas enabled
 							$VD_auto_alt_dial = 'NONE';
 							$VD_auto_alt_dial_statuses='';
-							$stmtA="SELECT auto_alt_dial,auto_alt_dial_statuses,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc FROM vicidial_campaigns where campaign_id='$VD_campaign_id';";
+							$VD_call_quota_lead_ranking='DISABLED';
+							$stmtA="SELECT auto_alt_dial,auto_alt_dial_statuses,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc,call_quota_lead_ranking FROM vicidial_campaigns where campaign_id='$VD_campaign_id';";
 								if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -1655,8 +1686,22 @@ sub process_request
 								$VD_use_internal_dnc =			$aryA[2];
 								$VD_use_campaign_dnc =			$aryA[3];
 								$VD_use_other_campaign_dnc =	$aryA[4];
+								$VD_call_quota_lead_ranking =	$aryA[5];
 								$epc_countCAMPDATA++;
 								}
+
+							##### BEGIN Call Quota Lead Ranking logging #####
+							if ( ($SScall_quota_lead_ranking > 0) && ($VD_call_quota_lead_ranking !~ /^DISABLED$/i) )
+								{
+								$temp_status=$VDL_status;
+								if ( (length($VDL_status) < 1) || ($VDL_status =~ /^LIVE/i) ) {$temp_status=$VD_status;}
+								if ($temp_status =~ /^LIVE/i) {$temp_status='PU';}
+								&call_quota_logging;
+								}
+							##### END Call Quota Lead Ranking logging #####
+
+
+							##### BEGIN AUTO ALT PHONE DIAL SECTION #####
 							$sthA->finish();
 				#			if ($AGILOG) {$agi_string = "AUTO-ALT TEST: |$VD_status|$VDL_status|$VD_auto_alt_dial_statuses|$VD_auto_alt_dial|";   &agi_output;}
 							if ($VD_auto_alt_dial_statuses =~ / $VD_status | $VDL_status /)
@@ -2012,6 +2057,319 @@ exit;
 
 
 
+##### BEGIN Call Quota Lead Ranking logging #####
+sub call_quota_logging
+	{
+	# Gather settings container for Call Quota Lead Ranking
+	$CQcontainer_entry='';
+	$stmtA = "SELECT container_entry FROM vicidial_settings_containers where container_id='$VD_call_quota_lead_ranking';";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$CQcontainer_entry = $aryA[0];
+		$CQcontainer_entry =~ s/\\//gi;
+		}
+	$sthA->finish();
+
+	# Define variables for Call Quota settings
+	$session_one='';
+	$session_two='';
+	$session_three='';
+	$session_four='';
+	$session_five='';
+	$session_six='';
+	$settings_session_score=0;
+	$zero_rank_after_call=0;
+
+	if (length($CQcontainer_entry) > 5) 
+		{
+		@container_lines = split(/\n/,$CQcontainer_entry);
+		$c=0;
+		foreach(@container_lines)
+			{
+			$container_lines[$c] =~ s/;.*|\r|\t| //gi;
+			if (length($container_lines[$c]) > 5)
+				{
+				# define core settings
+				if ($container_lines[$c] =~ /^zero_rank_after_call/i)
+					{
+					$container_lines[$c] =~ s/zero_rank_after_call=>//gi;
+					if ( ($container_lines[$c] >= 0) && ($container_lines[$c] <= 1) ) 
+						{
+						$zero_rank_after_call = $container_lines[$c];
+						}
+					}
+				# define sessions
+				if ($container_lines[$c] =~ /^session_one/i)
+					{
+					$session_one_valid=0; $session_one_start=''; $session_one_end='';
+					$session_one = $container_lines[$c];
+					$session_one =~ s/session_one=>//gi;
+					if ( (length($session_one) > 0) && (length($session_one) <= 9) && ($session_one =~ /,/) ) 
+						{
+						@session_oneARY = split(/,/,$session_one);
+						$session_one_start = $session_oneARY[0];
+						$session_one_end = $session_oneARY[1];
+						if ( (length($session_one_start) >= 4) && (length($session_one_end) >= 4) && ($session_one_start < $session_one_end) && ($session_one_end <= 2400) ) 
+							{
+							$settings_session_score++;
+							$session_one_valid++;
+							}
+						}
+					}
+				if ($container_lines[$c] =~ /^session_two/i)
+					{
+					$session_two_valid=0; $session_two_start=''; $session_two_end='';
+					$session_two = $container_lines[$c];
+					$session_two =~ s/session_two=>//gi;
+					if ( (length($session_two) > 0) && (length($session_two) <= 9) && ($session_two =~ /,/) ) 
+						{
+						@session_twoARY = split(/,/,$session_two);
+						$session_two_start = $session_twoARY[0];
+						$session_two_end = $session_twoARY[1];
+						if ( (length($session_two_start) >= 4) && (length($session_two_end) >= 4) && ($session_one_valid > 0) && ($session_one_end <= $session_two_start) && ($session_two_start < $session_two_end) && ($session_two_end <= 2400) ) 
+							{
+							$settings_session_score++;
+							$session_two_valid++;
+							}
+						}
+					}
+				if ($container_lines[$c] =~ /^session_three/i)
+					{
+					$session_three_valid=0; $session_three_start=''; $session_three_end='';
+					$session_three = $container_lines[$c];
+					$session_three =~ s/session_three=>//gi;
+					if ( (length($session_three) > 0) && (length($session_three) <= 9) && ($session_three =~ /,/) ) 
+						{
+						@session_threeARY = split(/,/,$session_three);
+						$session_three_start = $session_threeARY[0];
+						$session_three_end = $session_threeARY[1];
+						if ( (length($session_three_start) >= 4) && (length($session_three_end) >= 4) && ($session_two_valid > 0) && ($session_two_end <= $session_three_start) && ($session_three_start < $session_three_end) && ($session_three_end <= 2400) ) 
+							{
+							$settings_session_score++;
+							$session_three_valid++;
+							}
+						}
+					}
+				if ($container_lines[$c] =~ /^session_four/i)
+					{
+					$session_four_valid=0; $session_four_start=''; $session_four_end='';
+					$session_four = $container_lines[$c];
+					$session_four =~ s/session_four=>//gi;
+					if ( (length($session_four) > 0) && (length($session_four) <= 9) && ($session_four =~ /,/) ) 
+						{
+						@session_fourARY = split(/,/,$session_four);
+						$session_four_start = $session_fourARY[0];
+						$session_four_end = $session_fourARY[1];
+						if ( (length($session_four_start) >= 4) && (length($session_four_end) >= 4) && ($session_three_valid > 0) && ($session_three_end <= $session_four_start) && ($session_four_start < $session_four_end) && ($session_four_end <= 2400) ) 
+							{
+							$settings_session_score++;
+							$session_four_valid++;
+							}
+						}
+					}
+				if ($container_lines[$c] =~ /^session_five/i)
+					{
+					$session_five_valid=0; $session_five_start=''; $session_five_end='';
+					$session_five = $container_lines[$c];
+					$session_five =~ s/session_five=>//gi;
+					if ( (length($session_five) > 0) && (length($session_five) <= 9) && ($session_five =~ /,/) ) 
+						{
+						@session_fiveARY = split(/,/,$session_five);
+						$session_five_start = $session_fiveARY[0];
+						$session_five_end = $session_fiveARY[1];
+						if ( (length($session_five_start) >= 4) && (length($session_five_end) >= 4) && ($session_four_valid > 0) && ($session_four_end <= $session_five_start) && ($session_five_start < $session_five_end) && ($session_five_end <= 2400) ) 
+							{
+							$settings_session_score++;
+							$session_five_valid++;
+							}
+						}
+					}
+				if ($container_lines[$c] =~ /^session_six/i)
+					{
+					$session_six_valid=0; $session_six_start=''; $session_six_end='';
+					$session_six = $container_lines[$c];
+					$session_six =~ s/session_six=>//gi;
+					if ( (length($session_six) > 0) && (length($session_six) <= 9) && ($session_six =~ /,/) ) 
+						{
+						@session_sixARY = split(/,/,$session_six);
+						$session_six_start = $session_sixARY[0];
+						$session_six_end = $session_sixARY[1];
+						if ( (length($session_six_start) >= 4) && (length($session_six_end) >= 4) && ($session_five_valid > 0) && ($session_five_end <= $session_six_start) && ($session_six_start < $session_six_end) && ($session_six_end <= 2400) ) 
+							{
+							$settings_session_score++;
+							$session_six_valid++;
+							}
+						}
+					}
+				}
+			else
+				{if ($DBX > 0) {print "     blank line: $c|$container_lines[$c]|\n";}}
+			$c++;
+			}
+		if ($settings_session_score >= 1)
+			{
+			$stmtA = "SELECT list_id,called_count,rank FROM vicidial_list where lead_id='$VD_lead_id';";
+				if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$VLlist_id =			$aryA[0];
+				$VLcalled_count =		$aryA[1];
+				$VLrank =				$aryA[2];
+				$tempVLrank = $VLrank;
+				if ( ($zero_rank_after_call > 0) && ($VLrank > 0) ) {$tempVLrank=0;}
+				}
+			$sthA->finish();
+
+			$secX = time();
+			$CQtarget = ($secX - 14400);	# look back 4 hours
+			($CQsec,$CQmin,$CQhour,$CQmday,$CQmon,$CQyear,$CQwday,$CQyday,$CQisdst) = localtime($CQtarget);
+			$CQyear = ($CQyear + 1900);
+			$CQmon++;
+			if ($CQmon < 10) {$CQmon = "0$CQmon";}
+			if ($CQmday < 10) {$CQmday = "0$CQmday";}
+			if ($CQhour < 10) {$CQhour = "0$CQhour";}
+			if ($CQmin < 10) {$CQmin = "0$CQmin";}
+			if ($CQsec < 10) {$CQsec = "0$CQsec";}
+			$CQSQLdate = "$CQyear-$CQmon-$CQmday $CQhour:$CQmin:$CQsec";
+
+			$VDL_call_datetime='';
+			$stmtA = "SELECT call_date from vicidial_dial_log where lead_id='$VD_lead_id' and call_date > \"$CQSQLdate\" and caller_code LIKE \"%$VD_lead_id\" order by call_date desc limit 1;";
+				if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$VDLcall_datetime = 	$aryA[0];
+				@VDLcall_datetimeARY = split(/ /,$VDLcall_datetime);
+				@VDLcall_timeARY = split(/:/,$VDLcall_datetimeARY[1]);
+				$VDLcall_hourmin = "$VDLcall_timeARY[0]$VDLcall_timeARY[1]";
+
+				if ( ($session_one_start <= $VDLcall_hourmin) and ($session_one_end > $VDLcall_hourmin) ) 
+					{
+					$call_in_session=1; 
+					$session_newSQL=",session_one_calls='1',session_one_today_calls='1'"; 
+					$session_updateSQL=",session_one_calls=(session_one_calls + 1),session_one_today_calls=(session_one_today_calls + 1)";
+					}
+				if ( ($session_two_start <= $VDLcall_hourmin) and ($session_two_end > $VDLcall_hourmin) ) 
+					{
+					$call_in_session=2; 
+					$session_newSQL=",session_two_calls='1',session_two_today_calls='1'"; 
+					$session_updateSQL=",session_two_calls=(session_two_calls + 1),session_two_today_calls=(session_two_today_calls + 1)";
+					}
+				if ( ($session_three_start <= $VDLcall_hourmin) and ($session_three_end > $VDLcall_hourmin) ) 
+					{
+					$call_in_session=3; 
+					$session_newSQL=",session_three_calls='1',session_three_today_calls='1'"; 
+					$session_updateSQL=",session_three_calls=(session_three_calls + 1),session_three_today_calls=(session_three_today_calls + 1)";
+					}
+				if ( ($session_four_start <= $VDLcall_hourmin) and ($session_four_end > $VDLcall_hourmin) ) 
+					{
+					$call_in_session=4; 
+					$session_newSQL=",session_four_calls='1',session_four_today_calls='1'"; 
+					$session_updateSQL=",session_four_calls=(session_four_calls + 1),session_four_today_calls=(session_four_today_calls + 1)";
+					}
+				if ( ($session_five_start <= $VDLcall_hourmin) and ($session_five_end > $VDLcall_hourmin) ) 
+					{
+					$call_in_session=5; 
+					$session_newSQL=",session_five_calls='1',session_five_today_calls='1'"; 
+					$session_updateSQL=",session_five_calls=(session_five_calls + 1),session_five_today_calls=(session_five_today_calls + 1)";
+					}
+				if ( ($session_six_start <= $VDLcall_hourmin) and ($session_six_end > $VDLcall_hourmin) ) 
+					{
+					$call_in_session=6; 
+					$session_newSQL=",session_six_calls='1',session_six_today_calls='1'"; 
+					$session_updateSQL=",session_six_calls=(session_six_calls + 1),session_six_today_calls=(session_six_today_calls + 1)";
+					}
+
+				if ($AGILOG) {$agi_string = "CQ-Debug 2: $VDLcall_datetime|$VDLcall_hourmin|$timeclock_end_of_day|$session_one_start|$session_one_end|$call_in_session|";   &agi_output;}
+
+				if ($call_in_session > 0)
+					{
+					if (length($timeclock_end_of_day) < 1) {$timeclock_end_of_day='0000';}
+					$timeclock_end_of_day_hour = (substr($timeclock_end_of_day, 0, 2) + 0);
+					$timeclock_end_of_day_min = (substr($timeclock_end_of_day, 2, 2) + 0);
+
+					$today_start_epoch = timelocal('0',$timeclock_end_of_day_min,$timeclock_end_of_day_hour,$mday,($mon-1),$year);
+					if ($timeclock_end_of_day > $VDLcall_hourmin)
+						{$today_start_epoch = ($today_start_epoch - 86400);}
+					$day_two_start_epoch = ($today_start_epoch - (86400 * 1));
+					$day_three_start_epoch = ($today_start_epoch - (86400 * 2));
+					$day_four_start_epoch = ($today_start_epoch - (86400 * 3));
+					$day_five_start_epoch = ($today_start_epoch - (86400 * 4));
+					$day_six_start_epoch = ($today_start_epoch - (86400 * 5));
+					$day_seven_start_epoch = ($today_start_epoch - (86400 * 6));
+
+					# Gather the details on existing vicidial_lead_call_quota_counts for this lead, if there is one
+					$stmtA = "SELECT first_call_date,UNIX_TIMESTAMP(first_call_date),last_call_date from vicidial_lead_call_quota_counts where lead_id='$VD_lead_id' and list_id='$VLlist_id';";
+						if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+					$VLCQCinfo_ct=$sthA->rows;
+					if ($VLCQCinfo_ct > 0)
+						{
+						@aryA = $sthA->fetchrow_array;
+						$VLCQCfirst_call_datetime =		$aryA[0];
+						$VLCQCfirst_call_epoch =		$aryA[1];
+						$VLCQClast_call_date =			$aryA[2];
+
+						if ($VDLcall_datetime ne $VLCQClast_call_date) 
+							{
+							if ($VLCQCfirst_call_epoch >= $today_start_epoch) 
+								{$day_updateSQL=',day_one_calls=(day_one_calls+1)';}
+							if ( ($VLCQCfirst_call_epoch >= $day_two_start_epoch) and ($VLCQCfirst_call_epoch < $today_start_epoch) )
+								{$day_updateSQL=',day_two_calls=(day_two_calls+1)';}
+							if ( ($VLCQCfirst_call_epoch >= $day_three_start_epoch) and ($VLCQCfirst_call_epoch < $day_two_start_epoch) )
+								{$day_updateSQL=',day_three_calls=(day_three_calls+1)';}
+							if ( ($VLCQCfirst_call_epoch >= $day_four_start_epoch) and ($VLCQCfirst_call_epoch < $day_three_start_epoch) )
+								{$day_updateSQL=',day_four_calls=(day_four_calls+1)';}
+							if ( ($VLCQCfirst_call_epoch >= $day_five_start_epoch) and ($VLCQCfirst_call_epoch < $day_four_start_epoch) )
+								{$day_updateSQL=',day_five_calls=(day_five_calls+1)';}
+							if ( ($VLCQCfirst_call_epoch >= $day_six_start_epoch) and ($VLCQCfirst_call_epoch < $day_five_start_epoch) )
+								{$day_updateSQL=',day_six_calls=(day_six_calls+1)';}
+							if ( ($VLCQCfirst_call_epoch >= $day_seven_start_epoch) and ($VLCQCfirst_call_epoch < $day_six_start_epoch) )
+								{$day_updateSQL=',day_seven_calls=(day_seven_calls+1)';}
+							# Update in the vicidial_lead_call_quota_counts table for this lead
+							$stmtA="UPDATE vicidial_lead_call_quota_counts SET last_call_date='$VDLcall_datetime',status='$temp_status',called_count='$VLcalled_count',rank='$tempVLrank',modify_date=NOW() $session_updateSQL $day_updateSQL where lead_id='$VD_lead_id' and list_id='$VLlist_id' and modify_date < NOW();";
+							}
+						else
+							{
+							# Update in the vicidial_lead_call_quota_counts table for this lead
+							$stmtA="UPDATE vicidial_lead_call_quota_counts SET status='$temp_status',called_count='$VLcalled_count',rank='$tempVLrank',modify_date=NOW() where lead_id='$VD_lead_id' and list_id='$VLlist_id';";
+							}
+						$VLCQCaffected_rows_update = $dbhA->do($stmtA);
+						if ($AGILOG) {$agi_string = "--    VLCQC record updated: |$VLCQCaffected_rows_update|   |$stmtA|";   &agi_output;}
+						}
+					else
+						{
+						# Insert new record into vicidial_lead_call_quota_counts table for this lead
+						$stmtA="INSERT INTO vicidial_lead_call_quota_counts SET lead_id='$VD_lead_id',list_id='$VLlist_id',first_call_date='$VDLcall_datetime',last_call_date='$VDLcall_datetime',status='$temp_status',called_count='$VLcalled_count',day_one_calls='1',rank='$tempVLrank',modify_date=NOW() $session_newSQL;";
+						$VLCQCaffected_rows_update = $dbhA->do($stmtA);
+						if ($AGILOG) {$agi_string = "--    VLCQC record inserted: |$VLCQCaffected_rows_update|   |$stmtA|";   &agi_output;}
+						}
+
+					if ( ($zero_rank_after_call > 0) && ($VLrank > 0) )
+						{
+						# Update this lead to rank=0
+						$stmtA="UPDATE vicidial_list SET rank='0' where lead_id='$VD_lead_id';";
+						$VLCQCaffected_rows_zero_rank = $dbhA->do($stmtA);
+						if ($AGILOG) {$agi_string = "--    VLCQC lead rank zero: |$VLCQCaffected_rows_zero_rank|   |$stmtA|";   &agi_output;}
+						}
+					}
+				}
+			$sthA->finish();
+			}
+		}
+	}
 
 sub agi_output
 	{

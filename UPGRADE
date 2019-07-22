@@ -420,6 +420,10 @@ OTHER CHANGES:
 116. Added new Non-Agent API 'custom_fields_copy' option to the 'add_list' 
 	function
 
+117. Added new Call Quota Lead Ranking recycling feature-set. A new and 
+	completely different way to do lead recycling for outbound campaigns.
+	See the CALL_QUOTA_LEAD_RANKING.txt document for more info
+
 
 
 
