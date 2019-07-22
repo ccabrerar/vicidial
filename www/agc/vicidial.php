@@ -15879,6 +15879,7 @@ else
 //			document.getElementById("debugbottomspan").innerHTML = CFN_debug;
 			}
 
+		SCRIPTweb_form_vars = web_form_varsX;
 		if (webformnumber == '1')
 			{web_form_vars = web_form_varsX;}
 		if (webformnumber == '2')
