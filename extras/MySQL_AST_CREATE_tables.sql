@@ -1021,9 +1021,10 @@ callback_dnc ENUM('ENABLED','DISABLED') default 'DISABLED',
 manual_dial_validation ENUM('Y','N') default 'N',
 mute_recordings ENUM('Y','N') default 'N',
 auto_active_list_new VARCHAR(20) default 'DISABLED',
-call_quota_lead_ranking VARCHAR(20) default 'DISABLED',
+call_quota_lead_ranking VARCHAR(40) default 'DISABLED',
 call_quota_process_running TINYINT(3) default '0',
-call_quota_last_run_date DATETIME
+call_quota_last_run_date DATETIME,
+sip_event_logging VARCHAR(40) default 'DISABLED'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_lists (
@@ -4496,4 +4497,4 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1573',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1574',db_schema_update_date=NOW(),reload_timestamp=NOW();

@@ -1,4 +1,4 @@
-CALL QUOTA LEAD RANKING		Started: 2019-07-01	Updated: 2019-07-22
+CALL QUOTA LEAD RANKING		Started: 2019-07-01	Updated: 2019-07-24
 
 !!!! THIS IS AN EXPERIMENTAL FEATURE, PLEASE READ ALL IMPORTANT NOTES !!!!
 (If you plan on using this feature-set in production, you should read and understand everything in this document)
@@ -22,7 +22,7 @@ While the feature-set that was built offers more flexibility than the requiremen
 
 IMPORTANT VICIDIAL VERSION NOTE!!!
 
-You will need to be running VICIdial svn/trunk revision 3122 or newer on all of the servers in your cluster in order to use these new features
+You will need to be running VICIdial svn/trunk revision 3125 or newer on all of the servers in your cluster in order to use these new features
 
 
 IMPORTANT FEATURE ENABLING NOTE!!!
@@ -228,7 +228,7 @@ A new outbound auto-dial log-auditing function has been added to the AST_VDadapt
 ALTER TABLE system_settings ADD call_quota_lead_ranking ENUM('0','1','2') default '0';
 
 ALTER TABLE vicidial_campaigns ADD auto_active_list_new VARCHAR(20) default 'DISABLED';
-ALTER TABLE vicidial_campaigns ADD call_quota_lead_ranking VARCHAR(20) default 'DISABLED';
+ALTER TABLE vicidial_campaigns ADD call_quota_lead_ranking VARCHAR(40) default 'DISABLED';
 ALTER TABLE vicidial_campaigns ADD call_quota_process_running TINYINT(3) default '0';
 ALTER TABLE vicidial_campaigns ADD call_quota_last_run_date DATETIME;
 

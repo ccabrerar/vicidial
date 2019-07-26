@@ -476,10 +476,11 @@
 # 190531-1045 - Added sip_event_logging
 # 190627-1535 - Added new options for campaign agent_screen_time_display feature
 # 190709-1846 - Added Call Quota logging
+# 190722-1658 - Added ENABLED_EXTENDED_RANGE Agent Screen Time Display option
 #
 
-$version = '2.14-370';
-$build = '190709-1846';
+$version = '2.14-371';
+$build = '190722-1658';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=797;
@@ -18036,6 +18037,8 @@ if ($ACTION == 'AGENTtimeREPORT')
 	if (strlen($end_date) < 8)
 		{$end_date = $NOW_DATE;}
 
+#	$format='debug';
+
 	$stmt="SELECT agent_screen_time_display from vicidial_campaigns where campaign_id='$campaign';";
 	$rslt=mysql_to_mysqli($stmt, $link);
 		if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00706',$user,$server_ip,$session_name,$one_mysql_log);}
@@ -18116,6 +18119,20 @@ if ($ACTION == 'AGENTtimeREPORT')
 					echo "<TD BGCOLOR='white'><font style=\"font-size:14px;font-family:sans-serif;\"><B> &nbsp; "._QXZ("PAUSE")." &nbsp; </font></TD>";
 					echo "</TR>";
 					}
+				if (preg_match("/ENABLED_EXTENDED/",$stage))
+					{
+					echo "<TABLE CELLPADDING=2 CELLSPACING=2 BORDER=0 WIDTH=800 BGCOLOR='#999999'>";
+					echo "<TR>";
+					echo "<TD BGCOLOR='white' NOWRAP><font style=\"font-size:14px;font-family:sans-serif;\"><B> &nbsp; "._QXZ("DATE")." &nbsp; </font></TD>";
+					echo "<TD BGCOLOR='white' NOWRAP><font style=\"font-size:14px;font-family:sans-serif;\"><B> &nbsp; "._QXZ("CAMPAIGN")." &nbsp; </font></TD>";
+					echo "<TD BGCOLOR='white' NOWRAP><font style=\"font-size:14px;font-family:sans-serif;\"><B> &nbsp; "._QXZ("TOTAL <BR>NON-PAUSE TIME")." &nbsp; </font></TD>";
+					echo "<TD BGCOLOR='white' NOWRAP><font style=\"font-size:14px;font-family:sans-serif;\"><B> &nbsp; "._QXZ("WAIT")." &nbsp; </font></TD>";
+					echo "<TD BGCOLOR='white' NOWRAP><font style=\"font-size:14px;font-family:sans-serif;\"><B> &nbsp; "._QXZ("TALK")." &nbsp; </font></TD>";
+					echo "<TD BGCOLOR='white' NOWRAP><font style=\"font-size:14px;font-family:sans-serif;\"><B> &nbsp; "._QXZ("DISPO")." &nbsp; </font></TD>";
+					echo "<TD BGCOLOR='white' NOWRAP><font style=\"font-size:14px;font-family:sans-serif;\"><B> &nbsp; "._QXZ("PAUSE")." &nbsp; </font></TD>";
+					echo "<TD BGCOLOR='white' NOWRAP><font style=\"font-size:14px;font-family:sans-serif;\"><B> &nbsp; "._QXZ("TOTAL <BR>LOGGED IN")." &nbsp; </font></TD>";
+					echo "</TR>";
+					}
 				if (preg_match("/ENABLED_BILL_BREAK_LUNCH_COACH/",$stage))
 					{
 					echo "<TABLE CELLPADDING=2 CELLSPACING=2 BORDER=0 WIDTH=700 BGCOLOR='#999999'>";
@@ -18127,6 +18144,12 @@ if ($ACTION == 'AGENTtimeREPORT')
 					echo "<TD BGCOLOR='white'><font style=\"font-size:14px;font-family:sans-serif;\"><B> &nbsp; "._QXZ("COACH")." &nbsp; </font></TD>";
 					echo "</TR>";
 					}
+				$GRANDpauseTOTAL=0;
+				$GRANDwaitTOTAL=0;
+				$GRANDtalkTOTAL=0;
+				$GRANDdispoTOTAL=0;
+				$GRANDloginTOTAL=0;
+				$GRANDnonpauseTOTAL=0;
 				$day_ct=0;
 				while ($days >= $day_ct)
 					{
@@ -18135,22 +18158,26 @@ if ($ACTION == 'AGENTtimeREPORT')
 					if ($temp_date_epoch < $archive_cutoff)
 						{$vicidial_agent_log = 'vicidial_agent_log_archive';   $archive_flag='';}
 					$temp_date = date("Y-m-d",$temp_date_epoch);
-					$stmt="SELECT pause_epoch,wait_epoch,talk_epoch,dispo_epoch,dead_epoch,pause_sec,wait_sec,talk_sec,dispo_sec,dead_sec,sub_status,agent_log_id from $vicidial_agent_log where user='$user' and event_time >= '$temp_date 00:00:00'  and event_time <= '$temp_date 23:59:59' order by agent_log_id desc limit 10000;";
+					$stmt="SELECT pause_epoch,wait_epoch,talk_epoch,dispo_epoch,dead_epoch,pause_sec,wait_sec,talk_sec,dispo_sec,dead_sec,sub_status,agent_log_id,campaign_id from $vicidial_agent_log where user='$user' and event_time >= '$temp_date 00:00:00'  and event_time <= '$temp_date 23:59:59' order by campaign_id desc limit 10000;";
 					$rslt=mysql_to_mysqli($stmt, $link);
 						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
 					$time_logs_to_print = mysqli_num_rows($rslt);
 					if ($format=='debug') {echo "|$stage|$time_logs_to_print|$stmt|";}
 
 					$g=0;
-					$pauseTOTAL=0;
-					$waitTOTAL=0;
-					$talkTOTAL=0;
-					$dispoTOTAL=0;
-					$billTOTAL=0;
-					$breakTOTAL=0;
-					$lunchTOTAL=0;
-					$coachTOTAL=0;
-					$loginTOTAL=0;
+					$pauseTOTAL[0]=0;
+					$waitTOTAL[0]=0;
+					$talkTOTAL[0]=0;
+					$dispoTOTAL[0]=0;
+					$billTOTAL[0]=0;
+					$breakTOTAL[0]=0;
+					$lunchTOTAL[0]=0;
+					$coachTOTAL[0]=0;
+					$loginTOTAL[0]=0;
+					$nonpauseTOTAL[0]=0;
+					$campaignTOTAL[0]='';
+					$ct=0;
+
 					while ($time_logs_to_print > $g) 
 						{
 						$row=mysqli_fetch_row($rslt);
@@ -18166,52 +18193,126 @@ if ($ACTION == 'AGENTtimeREPORT')
 						$Tdead_sec[$g] =		$row[9];
 						$Tsub_status[$g] =		$row[10];
 						$Tagent_log_id[$g] =	$row[11];
+						$Tcampaign_id[$g] =		$row[12];
+
+						if (strlen($campaignTOTAL[0]) < 1) {$campaignTOTAL[0] = $Tcampaign_id[$g];}
+						if ( ($g <= 0) or (!preg_match("/ENABLED_EXTENDED/",$stage)) )
+							{
+							$campaignTOTAL[0] = $Tcampaign_id[$g];
+							$test_campaign = $Tcampaign_id[$g];
+							}
+						else
+							{
+							if (!preg_match("/^$test_campaign$/", $Tcampaign_id[$g]))
+								{
+								$ct++;
+								$campaignTOTAL[$ct] = $Tcampaign_id[$g];
+								$test_campaign = $Tcampaign_id[$g];
+								}
+							}
 
 						if ($Tpause_sec[$g] < 65000)	
 							{
-							$pauseTOTAL = ($pauseTOTAL + $Tpause_sec[$g]);
-							if (preg_match("/break/i",$Tsub_status[$g])) {$breakTOTAL = ($breakTOTAL + $Tpause_sec[$g]);}
-							if (preg_match("/lunch/i",$Tsub_status[$g])) {$lunchTOTAL = ($lunchTOTAL + $Tpause_sec[$g]);}
-							if (preg_match("/coach/i",$Tsub_status[$g])) {$coachTOTAL = ($coachTOTAL + $Tpause_sec[$g]);}
+							$pauseTOTAL[$ct] = ($pauseTOTAL[$ct] + $Tpause_sec[$g]);
+							if (preg_match("/break/i",$Tsub_status[$g])) {$breakTOTAL[$ct] = ($breakTOTAL[$ct] + $Tpause_sec[$g]);}
+							if (preg_match("/lunch/i",$Tsub_status[$g])) {$lunchTOTAL[$ct] = ($lunchTOTAL[$ct] + $Tpause_sec[$g]);}
+							if (preg_match("/coach/i",$Tsub_status[$g])) {$coachTOTAL[$ct] = ($coachTOTAL[$ct] + $Tpause_sec[$g]);}
 							}
-						if ($Twait_sec[$g] < 65000)		{$waitTOTAL = ($waitTOTAL + $Twait_sec[$g]);}
-						if ($Ttalk_sec[$g] < 65000)		{$talkTOTAL = ($talkTOTAL + $Ttalk_sec[$g]);}
-						if ($Tdispo_sec[$g] < 65000)	{$dispoTOTAL = ($dispoTOTAL + $Tdispo_sec[$g]);}
+						if ($Twait_sec[$g] < 65000)		
+							{
+							$waitTOTAL[$ct] = ($waitTOTAL[$ct] + $Twait_sec[$g]);
+							$nonpauseTOTAL[$ct] = ($nonpauseTOTAL[$ct] + $Twait_sec[$g]);
+							}
+						if ($Ttalk_sec[$g] < 65000)		
+							{
+							$talkTOTAL[$ct] = ($talkTOTAL[$ct] + $Ttalk_sec[$g]);
+							$nonpauseTOTAL[$ct] = ($nonpauseTOTAL[$ct] + $Ttalk_sec[$g]);
+							}
+						if ($Tdispo_sec[$g] < 65000)	
+							{
+							$dispoTOTAL[$ct] = ($dispoTOTAL[$ct] + $Tdispo_sec[$g]);
+							$nonpauseTOTAL[$ct] = ($nonpauseTOTAL[$ct] + $Tdispo_sec[$g]);
+							}
 
-						if ($format=='debug') {echo "|$g|$Tagent_log_id[$g]|$Tpause_epoch[$g]|$Tpause_sec[$g]|<BR>\n";}
+						if ($format=='debug') {echo "|$g|$temp_date|$campaignTOTAL[$ct]|$ct|$Tagent_log_id[$g]|$Tpause_epoch[$g]|$Tpause_sec[$g]|$nonpauseTOTAL[$ct]|<BR>\n";}
 						$g++;
 						}
-					$billTOTAL = ($waitTOTAL + $talkTOTAL + $dispoTOTAL);
-					$loginTOTAL = ($pauseTOTAL + $waitTOTAL + $talkTOTAL + $dispoTOTAL);
 
-					if (preg_match("/ENABLED_BASIC/",$stage))
+					$ct_loop = $ct;
+					$ct=0;
+					while ($ct <= $ct_loop)
 						{
-						echo "<TR>";
-						echo "<TD BGCOLOR='white'><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; $temp_date &nbsp; $archive_flag</font></TD>";
-						echo "<TD BGCOLOR='white'><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $loginTOTAL) . " &nbsp; </font></TD></TR>";
-						}
-					if (preg_match("/ENABLED_FULL/",$stage))
-						{
-						echo "<TR>";
-						echo "<TD BGCOLOR='white'><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; $temp_date &nbsp; $archive_flag</font></TD>";
-						echo "<TD BGCOLOR='white'><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $loginTOTAL) . " &nbsp; </font></TD>";
-						echo "<TD BGCOLOR='white'><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $waitTOTAL) . " &nbsp; </font></TD>";
-						echo "<TD BGCOLOR='white'><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $talkTOTAL) . " &nbsp; </font></TD>";
-						echo "<TD BGCOLOR='white'><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $dispoTOTAL) . " &nbsp; </font></TD>";
-						echo "<TD BGCOLOR='white'><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $pauseTOTAL) . " &nbsp; </font></TD></TR>";
-						}
-					if (preg_match("/ENABLED_BILL_BREAK_LUNCH_COACH/",$stage))
-						{
-						echo "<TR>";
-						echo "<TD BGCOLOR='white'><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; $temp_date &nbsp; $archive_flag</font></TD>";
-						echo "<TD BGCOLOR='white'><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $billTOTAL) . " &nbsp; </font></TD>";
-						echo "<TD BGCOLOR='white'><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $breakTOTAL) . " &nbsp; </font></TD>";
-						echo "<TD BGCOLOR='white'><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $lunchTOTAL) . " &nbsp; </font></TD>";
-						echo "<TD BGCOLOR='white'><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $coachTOTAL) . " &nbsp; </font></TD></TR>";
+						$billTOTAL[$ct] = ($waitTOTAL[$ct] + $talkTOTAL[$ct] + $dispoTOTAL[$ct]);
+						$loginTOTAL[$ct] = ($pauseTOTAL[$ct] + $waitTOTAL[$ct] + $talkTOTAL[$ct] + $dispoTOTAL[$ct]);
+
+						$GRANDpauseTOTAL = ($GRANDpauseTOTAL + $pauseTOTAL[$ct]);
+						$GRANDwaitTOTAL = ($GRANDwaitTOTAL + $waitTOTAL[$ct]);
+						$GRANDtalkTOTAL = ($GRANDtalkTOTAL + $talkTOTAL[$ct]);
+						$GRANDdispoTOTAL = ($GRANDdispoTOTAL + $dispoTOTAL[$ct]);
+						$GRANDloginTOTAL = ($GRANDloginTOTAL + $loginTOTAL[$ct]);
+						$GRANDnonpauseTOTAL = ($GRANDnonpauseTOTAL + $nonpauseTOTAL[$ct]);
+
+						if (preg_match("/ENABLED_BASIC/",$stage))
+							{
+							echo "<TR>";
+							echo "<TD BGCOLOR='white'><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; $temp_date &nbsp; $archive_flag</font></TD>";
+							echo "<TD BGCOLOR='white'><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $loginTOTAL[$ct]) . " &nbsp; </font></TD></TR>";
+							}
+						if (preg_match("/ENABLED_FULL/",$stage))
+							{
+							echo "<TR>";
+							echo "<TD BGCOLOR='white'><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; $temp_date &nbsp; $archive_flag</font></TD>";
+							echo "<TD BGCOLOR='white'><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $loginTOTAL[$ct]) . " &nbsp; </font></TD>";
+							echo "<TD BGCOLOR='white'><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $waitTOTAL[$ct]) . " &nbsp; </font></TD>";
+							echo "<TD BGCOLOR='white'><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $talkTOTAL[$ct]) . " &nbsp; </font></TD>";
+							echo "<TD BGCOLOR='white'><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $dispoTOTAL[$ct]) . " &nbsp; </font></TD>";
+							echo "<TD BGCOLOR='white'><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $pauseTOTAL[$ct]) . " &nbsp; </font></TD></TR>";
+							}
+						if (preg_match("/ENABLED_EXTENDED/",$stage))
+							{
+							echo "<TR>";
+							echo "<TD BGCOLOR='white' NOWRAP><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; $temp_date &nbsp; $archive_flag</font></TD>";
+							echo "<TD BGCOLOR='white' NOWRAP><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; $campaignTOTAL[$ct] &nbsp; </font></TD>";
+							echo "<TD BGCOLOR='#66FF66' NOWRAP><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $nonpauseTOTAL[$ct]) . " &nbsp; </font></TD>";
+							echo "<TD BGCOLOR='white' NOWRAP><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $waitTOTAL[$ct]) . " &nbsp; </font></TD>";
+							echo "<TD BGCOLOR='white' NOWRAP><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $talkTOTAL[$ct]) . " &nbsp; </font></TD>";
+							echo "<TD BGCOLOR='white' NOWRAP><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $dispoTOTAL[$ct]) . " &nbsp; </font></TD>";
+							echo "<TD BGCOLOR='white' NOWRAP><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $pauseTOTAL[$ct]) . " &nbsp; </font></TD>";
+							echo "<TD BGCOLOR='white' NOWRAP><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $loginTOTAL[$ct]) . " &nbsp; </font></TD>";
+							echo "</TR>";
+							}
+						if (preg_match("/ENABLED_BILL_BREAK_LUNCH_COACH/",$stage))
+							{
+							echo "<TR>";
+							echo "<TD BGCOLOR='white'><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; $temp_date &nbsp; $archive_flag</font></TD>";
+							echo "<TD BGCOLOR='white'><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $billTOTAL[$ct]) . " &nbsp; </font></TD>";
+							echo "<TD BGCOLOR='white'><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $breakTOTAL[$ct]) . " &nbsp; </font></TD>";
+							echo "<TD BGCOLOR='white'><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $lunchTOTAL[$ct]) . " &nbsp; </font></TD>";
+							echo "<TD BGCOLOR='white'><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $coachTOTAL[$ct]) . " &nbsp; </font></TD></TR>";
+							}
+						$ct++;
 						}
 					$day_ct++;
 					$temp_date_epoch = ($temp_date_epoch + 86400);
 					}
+
+				if (preg_match("/ENABLED_EXTENDED/",$stage))
+					{
+					echo "<TR><TD BGCOLOR='black' COLSPAN=8 height=1 cellspacing=0><img src=\"images/blank.gif\"></TD></TR>";
+					echo "<TR>";
+					echo "<TD BGCOLOR='white' NOWRAP><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; "._QXZ("TOTALS").": &nbsp; </font></TD>";
+					echo "<TD BGCOLOR='white' NOWRAP><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; </font></TD>";
+					echo "<TD BGCOLOR='#66FF66' NOWRAP><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $GRANDnonpauseTOTAL) . " &nbsp; </font></TD>";
+					echo "<TD BGCOLOR='white' NOWRAP><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $GRANDwaitTOTAL) . " &nbsp; </font></TD>";
+					echo "<TD BGCOLOR='white' NOWRAP><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $GRANDtalkTOTAL) . " &nbsp; </font></TD>";
+					echo "<TD BGCOLOR='white' NOWRAP><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $GRANDdispoTOTAL) . " &nbsp; </font></TD>";
+					echo "<TD BGCOLOR='white' NOWRAP><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $GRANDpauseTOTAL) . " &nbsp; </font></TD>";
+					echo "<TD BGCOLOR='white' NOWRAP><font style=\"font-size:12px;font-family:sans-serif;\"><B> &nbsp; " . gmdate("H:i:s", $GRANDloginTOTAL) . " &nbsp; </font></TD>";
+					echo "</TR>";
+					}
+
+
+
 				echo "</TABLE>";
 				}
 			}

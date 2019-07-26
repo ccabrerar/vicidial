@@ -936,7 +936,7 @@ UPDATE system_settings SET db_schema_version='1572',db_schema_update_date=NOW() 
 ALTER TABLE system_settings ADD call_quota_lead_ranking ENUM('0','1','2') default '0';
 
 ALTER TABLE vicidial_campaigns ADD auto_active_list_new VARCHAR(20) default 'DISABLED';
-ALTER TABLE vicidial_campaigns ADD call_quota_lead_ranking VARCHAR(20) default 'DISABLED';
+ALTER TABLE vicidial_campaigns ADD call_quota_lead_ranking VARCHAR(40) default 'DISABLED';
 ALTER TABLE vicidial_campaigns ADD call_quota_process_running TINYINT(3) default '0';
 ALTER TABLE vicidial_campaigns ADD call_quota_last_run_date DATETIME;
 
@@ -1013,3 +1013,8 @@ index(first_call_date)
 ) ENGINE=MyISAM;
 
 UPDATE system_settings SET db_schema_version='1573',db_schema_update_date=NOW() where db_schema_version < 1573;
+
+ALTER TABLE vicidial_campaigns ADD sip_event_logging VARCHAR(40) default 'DISABLED';
+ALTER TABLE vicidial_campaigns MODIFY call_quota_lead_ranking VARCHAR(40) default 'DISABLED';
+
+UPDATE system_settings SET db_schema_version='1574',db_schema_update_date=NOW() where db_schema_version < 1574;
