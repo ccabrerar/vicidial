@@ -424,6 +424,9 @@ OTHER CHANGES:
 	completely different way to do lead recycling for outbound campaigns.
 	See the CALL_QUOTA_LEAD_RANKING.txt document for more info
 
+118. Added bench_agent_assign.php script to allow managers to move 
+	'owner-assigned' to another agent.
+
 
 
 

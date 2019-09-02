@@ -1018,3 +1018,15 @@ ALTER TABLE vicidial_campaigns ADD sip_event_logging VARCHAR(40) default 'DISABL
 ALTER TABLE vicidial_campaigns MODIFY call_quota_lead_ranking VARCHAR(40) default 'DISABLED';
 
 UPDATE system_settings SET db_schema_version='1574',db_schema_update_date=NOW() where db_schema_version < 1574;
+
+CREATE TABLE vicidial_bench_agent_log (
+lead_id INT(9) UNSIGNED,
+bench_date DATETIME,
+absent_agent VARCHAR(20),
+bench_agent VARCHAR(20),
+user VARCHAR(20),
+index (bench_date),
+index (lead_id)
+) ENGINE=MyISAM;
+
+UPDATE system_settings SET db_schema_version='1575',db_schema_update_date=NOW() where db_schema_version < 1575;

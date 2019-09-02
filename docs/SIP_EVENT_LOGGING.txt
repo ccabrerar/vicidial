@@ -1,4 +1,4 @@
-SIP EVENT LOGGING DOC	Started: 2019-05-30	Updated: 2019-06-09
+SIP EVENT LOGGING DOC	Started: 2019-05-30	Updated: 2019-07-30
 
 !!!! THIS IS AN EXPERIMENTAL FEATURE, PLEASE READ ALL IMPORTANT NOTES !!!!
 
@@ -13,6 +13,7 @@ For phase 1 of this project, the basic framework of logging the SIP messages on 
 
 For phase 2 of this project, we added some basic reporting(AST_SIP_event_report.php) which can show the summary details of every Answered call on the system with pop-up displays for all of the SIP events that happened on each call as well as a link to the modify lead page where you can also see the SIP events for every call to that lead(the SIP events are only stored for 7 days).
 
+ADDED 2019-07-24: The new campaign "SIP Event Actions" settings will allow you to define specific actions to happen depending on what is in the SIP Event Log for each call. Initially this feature will only affect manual dial agent screen calls, for example, allowing you to automatically hang up manual dial calls that take less than one seccond from the dial event to the answer. See the "Campaign SIP Event Actions" section below for more information.
 
 
 
@@ -82,10 +83,44 @@ Scripts modified/added:
 - bin/ADMIN_archive_log_tables.pl
 - www/vicidial/AST_SIP_event_report.php
 - www/vicidial/admin_modify_lead.php
+- www/vicidial/admin.php
+- www/agc/vicidial.php
+- www/agc/vdc_db_query.php
+- www/agc/conf_exten_check.php
 - install.pl
 
 
 
+
+
+Campaign SIP Event Actions:
+
+This is designed to be a set of features that will allow for flexible configuration of different actions that are to be taken on calls based upon their SIP event logs.
+
+The first action of this feature to be enabled is the ability to set agent screen manual dial calls to be hung up if certain criteria are met, for example, less than 1 second from dial to answer.
+
+
+This set of features is configured using a Settings Container of the "SIP_EVENT_ACTIONS" type, which you define in the Campaign Detail screen "SIP Event Actions" setting.
+
+
+Example SIP_EVENT_ACTIONS Settings Container:
+
+; agent screen actions
+AGENT_SCREEN_ACTIONS_START
+invite_to_final => 0.0,1.0,hangup-dispo-message,FAS,Auto Hangup and Dispo of False Answer Call
+AGENT_SCREEN_ACTIONS_FINISH
+
+
+
+Settings within agent screen actions:
+1. time range start -	a number with 1-6 decimal places
+2. time range finish -	a number with 1-6 decimal places
+3. agent screen action taken -	any combination of the following: 'hangup', 'dispo', 'message' separated by dashes
+4. If 'dispo' is included in #3, then this is the dispo set
+5. If 'message' is included in #3, then this is the message sent to the agent
+
+
+If you include a message, it will be displayed on the agent's screen for 4 seconds then it will automatically disappear.
 
 
 
@@ -95,6 +130,8 @@ Scripts modified/added:
 
 
 ALTER TABLE system_settings ADD sip_event_logging ENUM('0','1','2','3','4','5','6','7') default '0';
+
+ALTER TABLE vicidial_campaigns ADD sip_event_logging VARCHAR(40) default 'DISABLED';
 
 CREATE TABLE vicidial_sip_event_log ( 
 sip_event_id INT(9) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL, 

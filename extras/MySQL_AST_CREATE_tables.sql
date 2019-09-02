@@ -4175,6 +4175,16 @@ unique index vlcqc_lead_date (lead_id, first_call_date),
 index(first_call_date)
 ) ENGINE=MyISAM;
 
+CREATE TABLE vicidial_bench_agent_log (
+lead_id INT(9) UNSIGNED,
+bench_date DATETIME,
+absent_agent VARCHAR(20),
+bench_agent VARCHAR(20),
+user VARCHAR(20),
+index (bench_date),
+index (lead_id)
+) ENGINE=MyISAM;
+
 
 ALTER TABLE vicidial_email_list MODIFY message text character set utf8;
 
@@ -4497,4 +4507,4 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1574',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1575',db_schema_update_date=NOW(),reload_timestamp=NOW();

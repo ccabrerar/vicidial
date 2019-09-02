@@ -477,13 +477,14 @@
 # 190627-1535 - Added new options for campaign agent_screen_time_display feature
 # 190709-1846 - Added Call Quota logging
 # 190722-1658 - Added ENABLED_EXTENDED_RANGE Agent Screen Time Display option
+# 190730-0926 - Added campaign SIP Actions processing
 #
 
-$version = '2.14-371';
-$build = '190722-1658';
+$version = '2.14-372';
+$build = '190730-0926';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
-$mysql_log_count=797;
+$mysql_log_count=808;
 $one_mysql_log=0;
 $DB=0;
 $VD_login=0;
@@ -6727,11 +6728,12 @@ if ($ACTION == 'manDiaLlookCaLL')
 					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00742',$user,$server_ip,$session_name,$one_mysql_log);}
 				}
 
+			$sip_event_action_output='';
 			##### BEGIN SIP event logging, if enabled in the system #####
 			if ($SSsip_event_logging > 0) 
 				{
 				##### insert log into vicidial_log_extended for manual VICIDiaL call
-				$stmt="UPDATE vicidial_sip_event_recent set processed='U' where caller_code='$MDnextCID' LIMIT 1;;";
+				$stmt="UPDATE vicidial_sip_event_recent set processed='U' where caller_code='$MDnextCID' LIMIT 1;";
 				if ($DB) {echo "$stmt\n";}
 				$rslt=mysql_to_mysqli($stmt, $link);
 					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00794',$user,$server_ip,$session_name,$one_mysql_log);}
@@ -6800,13 +6802,77 @@ if ($ACTION == 'manDiaLlookCaLL')
 							$rslt=mysql_to_mysqli($stmt, $link);
 								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00797',$user,$server_ip,$session_name,$one_mysql_log);}
 							$affected_rowsX = mysqli_affected_rows($link);
+
+							
+							### BEGIN check for SIP event log actions ###
+							$CAMPsip_event_logging='DISABLED';
+							$invite_to_final='';
+							$stmt = "SELECT sip_event_logging FROM vicidial_campaigns where campaign_id='$campaign';";
+							$rslt=mysql_to_mysqli($stmt, $link);
+								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00798',$user,$server_ip,$session_name,$one_mysql_log);}
+							if ($DB) {echo "$stmt\n";}
+							$csel_ct = mysqli_num_rows($rslt);
+							if ($csel_ct > 0)
+								{
+								$row=mysqli_fetch_row($rslt);
+								$CAMPsip_event_logging = 	$row[0];
+								}
+
+							if ( (strlen($CAMPsip_event_logging) > 0) and ($CAMPsip_event_logging != 'DISABLED') )
+								{
+								# gather Sip event settings container
+								$stmt = "SELECT container_entry FROM vicidial_settings_containers where container_id='$CAMPsip_event_logging';";
+								$rslt=mysql_to_mysqli($stmt, $link);
+									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00799',$user,$server_ip,$session_name,$one_mysql_log);}
+								if ($DB) {echo "$stmt\n";}
+								$SCinfo_ct = mysqli_num_rows($rslt);
+								if ($SCinfo_ct > 0)
+									{
+									$row=mysqli_fetch_row($rslt);
+									$SAcontainer_entry =	$row[0];
+									$SAcontainer_entry = preg_replace("/\r|\t|\'|\"/",'',$SAcontainer_entry);
+									$sip_action_settings = explode("\n",$SAcontainer_entry);
+									$sip_action_settings_ct = count($sip_action_settings);
+									$sea=0;
+									while ($sip_action_settings_ct >= $sea)
+										{
+										if (preg_match("/^invite_to_final => /",$sip_action_settings[$sea]))
+											{
+											# invite_to_final => 0.0,1.0,hangup-dispo-message,FAS,Auto Hangup and Dispo of False Answer Call
+											$sip_action_settings[$sea] = preg_replace("/invite_to_final => /",'',$sip_action_settings[$sea]);
+											$invite_to_finalARY = explode(",",$sip_action_settings[$sea]);
+											$T_dial_time =	floatval($dial_time);
+											$itf_begin =	floatval($invite_to_finalARY[0]);
+											$itf_end =		floatval($invite_to_finalARY[1]);
+											$itf_actions =	$invite_to_finalARY[2];
+											$itf_dispo =	$invite_to_finalARY[3];
+											$itf_message =	$invite_to_finalARY[4];
+											if ( ($T_dial_time >= $itf_begin) and ($T_dial_time <= $itf_end) and (strlen($itf_actions) > 4) )
+												{
+											#	$call_output = "$uniqueid\n$channel\nERROR\n" . $hangup_cause_msg . "\n<br>" . $sip_hangup_cause_msg; 
+												$sip_event_action_output = "SIP ACTION\n" . $itf_actions . "\n" . $itf_dispo . "\n" . $itf_message;
+												}
+											}
+										$sea++;
+										}
+									}
+								}
+							### END check for SIP event log actions ###
+							}
+						else
+							{
+							# SIP event debug logging
+						#	$fp = fopen ("./SELdebug_log.txt", "a");
+						#	fwrite ($fp, "$NOW_TIME SEL-Debug 0, No 200: $invite_date|$sip200_date|$dial_time|$time_to_progress|$time_to_ring|\n");
+						#	fclose($fp);
+						#	$sip_event_action_output = "CALL UNANSWERED\n";
 							}
 						}
 					}
 				}
 			##### END SIP event logging, if enabled in the system #####
 
-			echo "$call_output";
+			echo "$call_output$sip_event_action_output";
 
 			$stage .= " $uniqueid $channel";
 			}
@@ -12202,9 +12268,9 @@ if ($ACTION == 'updateDISPO')
 
 
 	### BEGIN Call Quota Lead Renking logging ###
-		$fp = fopen ("./CQdebug_log.txt", "a");
-		fwrite ($fp, "$NOW_TIME CQ-Debug 0: $call_quota_lead_ranking|$call_type|\n");
-		fclose($fp);  
+	#	$fp = fopen ("./CQdebug_log.txt", "a");
+	#	fwrite ($fp, "$NOW_TIME CQ-Debug 0: $call_quota_lead_ranking|$call_type|\n");
+	#	fclose($fp);  
 	if ( ($call_quota_lead_ranking != 'DISABLED') and ($call_type == 'OUT') and ($SScall_quota_lead_ranking > 0) )
 		{
 		$call_quota_sessions_valid=0;
@@ -12213,7 +12279,7 @@ if ($ACTION == 'updateDISPO')
 		# Gather details on the campaign's Call Quota settings container
 		$stmt = "SELECT container_entry FROM vicidial_settings_containers where container_id='$call_quota_lead_ranking';";
 		$rslt=mysql_to_mysqli($stmt, $link);
-			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00800',$user,$server_ip,$session_name,$one_mysql_log);}
 		if ($DB) {echo "$stmt\n";}
 		$SCinfo_ct = mysqli_num_rows($rslt);
 		if ($SCinfo_ct > 0)
@@ -12281,16 +12347,16 @@ if ($ACTION == 'updateDISPO')
 					}
 				$cql++;
 				}
-			$fp = fopen ("./CQdebug_log.txt", "a");
-			fwrite ($fp, "$NOW_TIME CQ-Debug 1: $call_quota_settings_ct|$call_quota_lead_ranking|$call_quota_sessions_valid|\n");
-			fclose($fp);  
+		#	$fp = fopen ("./CQdebug_log.txt", "a");
+		#	fwrite ($fp, "$NOW_TIME CQ-Debug 1: $call_quota_settings_ct|$call_quota_lead_ranking|$call_quota_sessions_valid|\n");
+		#	fclose($fp);  
 
 			if ($call_quota_sessions_valid > 0)
 				{
 				# Gather list ID and called count for this lead
 				$stmt = "SELECT list_id,called_count,rank FROM vicidial_list where lead_id='$lead_id';";
 				$rslt=mysql_to_mysqli($stmt, $link);
-					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00801',$user,$server_ip,$session_name,$one_mysql_log);}
 				if ($DB) {echo "$stmt\n";}
 				$VLinfo_ct = mysqli_num_rows($rslt);
 				if ($VLinfo_ct > 0)
@@ -12306,7 +12372,7 @@ if ($ACTION == 'updateDISPO')
 				# Gather the date/time this call was dialed
 				$stmt = "SELECT call_date from vicidial_dial_log where lead_id='$lead_id' and call_date > \"$four_hours_ago\" and caller_code LIKE \"%$lead_id\" order by call_date desc limit 1;";
 				$rslt=mysql_to_mysqli($stmt, $link);
-					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00802',$user,$server_ip,$session_name,$one_mysql_log);}
 				if ($DB) {echo "$stmt\n";}
 				$VDLinfo_ct = mysqli_num_rows($rslt);
 				if ($VDLinfo_ct > 0)
@@ -12355,9 +12421,9 @@ if ($ACTION == 'updateDISPO')
 						$session_updateSQL=",session_six_calls=(session_six_calls + 1),session_six_today_calls=(session_six_today_calls + 1)";
 						}
 
-					$fp = fopen ("./CQdebug_log.txt", "a");
-					fwrite ($fp, "$NOW_TIME CQ-Debug 2: $VDLcall_datetime|$VDLcall_hourmin|$timeclock_end_of_day|$session_one_start|$session_one_end|$call_in_session|\n");
-					fclose($fp);  
+				#	$fp = fopen ("./CQdebug_log.txt", "a");
+				#	fwrite ($fp, "$NOW_TIME CQ-Debug 2: $VDLcall_datetime|$VDLcall_hourmin|$timeclock_end_of_day|$session_one_start|$session_one_end|$call_in_session|\n");
+				#	fclose($fp);  
 
 					if ($call_in_session > 0)
 						{
@@ -12377,7 +12443,7 @@ if ($ACTION == 'updateDISPO')
 						# Gather the details on existing vicidial_lead_call_quota_counts for this lead, if there is one
 						$stmt = "SELECT first_call_date,UNIX_TIMESTAMP(first_call_date),last_call_date from vicidial_lead_call_quota_counts where lead_id='$lead_id' and list_id='$VLlist_id';";
 						$rslt=mysql_to_mysqli($stmt, $link);
-							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00803',$user,$server_ip,$session_name,$one_mysql_log);}
 						if ($DB) {echo "$stmt\n";}
 						$VLCQCinfo_ct = mysqli_num_rows($rslt);
 						if ($VLCQCinfo_ct > 0)
@@ -12412,7 +12478,7 @@ if ($ACTION == 'updateDISPO')
 								}
 							if ($DB) {echo "$stmt\n";}
 							$rslt=mysql_to_mysqli($stmt, $link);
-								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$VD_login,$server_ip,$session_name,$one_mysql_log);}
+								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00804',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 							$VLCQCaffected_rows_update = mysqli_affected_rows($link);
 							}
 						else
@@ -12421,7 +12487,7 @@ if ($ACTION == 'updateDISPO')
 							$stmt="INSERT INTO vicidial_lead_call_quota_counts SET lead_id='$lead_id',list_id='$VLlist_id',first_call_date='$VDLcall_datetime',last_call_date='$VDLcall_datetime',status='$dispo_choice',called_count='$VLcalled_count',day_one_calls='1',rank='$tempVLrank',modify_date=NOW() $session_newSQL;";
 							if ($DB) {echo "$stmt\n";}
 							$rslt=mysql_to_mysqli($stmt, $link);
-								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$VD_login,$server_ip,$session_name,$one_mysql_log);}
+								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00805',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 							$VLCQCaffected_rows_update = mysqli_affected_rows($link);
 							}
 
@@ -12432,13 +12498,13 @@ if ($ACTION == 'updateDISPO')
 							$stmtR="UPDATE vicidial_list SET rank='0' where lead_id='$lead_id';";
 							if ($DB) {echo "$stmt\n";}
 							$rslt=mysql_to_mysqli($stmtR, $link);
-								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmtR,'00XXX',$VD_login,$server_ip,$session_name,$one_mysql_log);}
+								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmtR,'00806',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 							$VLCQCaffected_rows_zero_rank = mysqli_affected_rows($link);
 							}
 
-						$fp = fopen ("./CQdebug_log.txt", "a");
-						fwrite ($fp, "$NOW_TIME CQ-Debug 3: $VLCQCaffected_rows_update|$stmt|$VLCQCaffected_rows_zero_rank|$stmtR|\n");
-						fclose($fp);  
+					#	$fp = fopen ("./CQdebug_log.txt", "a");
+					#	fwrite ($fp, "$NOW_TIME CQ-Debug 3: $VLCQCaffected_rows_update|$stmt|$VLCQCaffected_rows_zero_rank|$stmtR|\n");
+					#	fclose($fp);  
 						}
 					else
 						{
@@ -18064,7 +18130,7 @@ if ($ACTION == 'AGENTtimeREPORT')
 			$archive_cutoff=0;
 			$stmt="SELECT event_time,UNIX_TIMESTAMP(event_time) from vicidial_agent_log order by agent_log_id limit 1;";
 			$rslt=mysql_to_mysqli($stmt, $link);
-				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00807',$user,$server_ip,$session_name,$one_mysql_log);}
 			$archive_check_to_print = mysqli_num_rows($rslt);
 			if ($format=='debug') {echo "|$archive_check_to_print|$stmt|";}
 			if ($archive_check_to_print > 0) 
@@ -18160,7 +18226,7 @@ if ($ACTION == 'AGENTtimeREPORT')
 					$temp_date = date("Y-m-d",$temp_date_epoch);
 					$stmt="SELECT pause_epoch,wait_epoch,talk_epoch,dispo_epoch,dead_epoch,pause_sec,wait_sec,talk_sec,dispo_sec,dead_sec,sub_status,agent_log_id,campaign_id from $vicidial_agent_log where user='$user' and event_time >= '$temp_date 00:00:00'  and event_time <= '$temp_date 23:59:59' order by campaign_id desc limit 10000;";
 					$rslt=mysql_to_mysqli($stmt, $link);
-						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00808',$user,$server_ip,$session_name,$one_mysql_log);}
 					$time_logs_to_print = mysqli_num_rows($rslt);
 					if ($format=='debug') {echo "|$stage|$time_logs_to_print|$stmt|";}
 

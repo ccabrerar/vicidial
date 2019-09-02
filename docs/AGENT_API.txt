@@ -1,4 +1,4 @@
-AGENT API DOCUMENT		Started: 2008-07-03	Updated: 2019-02-22
+AGENT API DOCUMENT		Started: 2008-07-03	Updated: 2019-09-01
 
 This document describes the functions of an API(Application Programming Interface)
 for the VICIDIAL Agent screen. This functionality will be rather limited at first
@@ -663,6 +663,8 @@ VALUES:
   OPTIONAL, dials exactly the phone number specified with no campaign-defined phone code or prefix, 'YES' and 'NO' are valid options
  group_alias - 
   OPTIONAL, defines what caller ID number to use when doing DIAL_WITH_CUSTOMER or PARK_CUSTOMER_DIAL
+ cid_choice - 
+  OPTIONAL, alternate method for caller ID number to use when doing DIAL_WITH_CUSTOMER or PARK_CUSTOMER_DIAL: 'CAMPAIGN','AGENT_PHONE','CUSTOMER','CUSTOM_CID'
 
 EXAMPLE URLS:
 http://server/agc/api.php?source=test&user=6666&pass=1234&agent_user=1000&function=transfer_conference&value=HANGUP_XFER
@@ -675,6 +677,7 @@ http://server/agc/api.php?source=test&user=6666&pass=1234&agent_user=1000&functi
 http://server/agc/api.php?source=test&user=6666&pass=1234&agent_user=1000&function=transfer_conference&value=DIAL_WITH_CUSTOMER&ingroup_choices=TEST_IN3&consultative=YES
 http://server/agc/api.php?source=test&user=6666&pass=1234&agent_user=1000&function=transfer_conference&value=DIAL_WITH_CUSTOMER&phone_number=8500
 http://server/agc/api.php?source=test&user=6666&pass=1234&agent_user=1000&function=transfer_conference&value=DIAL_WITH_CUSTOMER&phone_number=919998888112&dial_override=YES
+http://server/agc/api.php?source=test&user=6666&pass=1234&agent_user=1000&function=transfer_conference&value=DIAL_WITH_CUSTOMER&phone_number=919998888112&cid_choice=CUSTOMER
 http://server/agc/api.php?source=test&user=6666&pass=1234&agent_user=1000&function=transfer_conference&value=PARK_CUSTOMER_DIAL&ingroup_choices=TEST_IN3&consultative=YES
 http://server/agc/api.php?source=test&user=6666&pass=1234&agent_user=1000&function=transfer_conference&value=LEAVE_3WAY_CALL
 
@@ -687,6 +690,7 @@ ERROR: agent_user is not logged in - 6666
 ERROR: agent_user does not have a live call - 6666
 ERROR: caller_id_number from group_alias is not valid - 6666|TESTING|123
 ERROR: group_alias is not valid - 6666|TESTING
+ERROR: cid_choice is not valid - 6666|TESTING
 SUCCESS: transfer_conference function set - LOCAL_CLOSER|SALESLINE||YES|6666|M2141842580000000044|
 
 

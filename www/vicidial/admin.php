@@ -4522,12 +4522,13 @@ else
 # 190705-1012 - Added call_quota_lead_ranking settings
 # 190722-1602 - Added ENABLED_EXTENDED_RANGE Agent Screen Time campaign option
 # 190724-1603 - Added sip_event_logging campaign actions
+# 190902-0839 - Fixes for PHP 7.2
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-717a';
-$build = '190724-1603';
+$admin_version = '2.14-718a';
+$build = '190902-0839';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -27176,10 +27177,10 @@ if ($ADD==311)
 
 		if ($SSexpanded_list_stats > 0)
 			{
-			if ( ($complete_total < 1) or ($lead_list[count] < 1) )
+			if ( ($complete_total < 1) or ($lead_list['count'] < 1) )
 				{$total_complete_pct = "0";}
 			else
-				{$total_complete_pct = intval(($complete_total / $lead_list[count]) * 100);}
+				{$total_complete_pct = intval(($complete_total / $lead_list['count']) * 100);}
 			echo "<tr><td colspan=2><font size=1>"._QXZ("SUBTOTALS")."</td><td><font size=1>$lead_list[Y_count]</td><td><font size=1>$lead_list[N_count]</td><td><font size=1> &nbsp; </td><td><font size=1> &nbsp; </td></tr>\n";
 			echo "<tr bgcolor=\"#$SSstd_row1_background\"><td><font size=1>"._QXZ("TOTAL")."</td><td colspan=3 align=center><font size=1>$lead_list[count]</td><td><font size=1>$dialable_total</td><td align=right><font size=1> $total_complete_pct% &nbsp; </td></tr>\n";
 			}
@@ -27540,6 +27541,7 @@ if ($ADD==311)
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$status_called_to_print = mysqli_num_rows($rslt);
 
+		$status = $MT;
 		$o=0;
 		$sts=0;
 		$first_row=1;
@@ -40190,7 +40192,9 @@ if ($ADD==193000000000)
 	echo "</TR>\n";
 
 	$o=0;
-	$menu_id = $MT;
+	$status_group_id = $MT;
+	$status_group_notes = $MT;
+	$admin_group = $MT;
 
 	while ($status_groups_to_print > $o) 
 		{
@@ -40296,6 +40300,11 @@ if ($ADD==195000000000)
 	echo "<TD><font size=1 color=white>"._QXZ("MODIFY")."</TD>\n";
 	echo "</TR>\n";
 
+	$Xip_list_id = $MT;
+	$ip_list_name = $MT;
+	$active = $MT;
+	$admin_group = $MT;
+
 	$o=0;
 	while ($ip_lists_to_print > $o)
 		{
@@ -40354,7 +40363,10 @@ if ($ADD==196000000000)
 	echo "</TR>\n";
 
 	$o=0;
-	$menu_id = $MT;
+	$cid_group_id = $MT;
+	$cid_group_notes = $MT;
+	$cid_group_type = $MT;
+	$admin_group = $MT;
 
 	while ($cid_groups_to_print > $o) 
 		{
@@ -42664,6 +42676,15 @@ if ($ADD==999991)
 		{
 		if ($reports_only_user < 1)
 			{
+			$server_id = $MT;
+			$server_description = $MT;
+			$server_ip = $MT;
+			$active = $MT;
+			$sysload = $MT;
+			$channels_total = $MT;
+			$cpu_idle_percent = $MT;
+			$disk_usage = $MT;
+
 			echo "<PRE><TABLE BORDER=1 CELLPADDING=4 cellspacing=0>\n";
 
 			echo "<TR><TD>"._QXZ("SERVER")."</TD>";

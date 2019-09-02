@@ -1,7 +1,7 @@
 <?php
 # conf_exten_check.php    version 2.14
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed purely to send whether the meetme conference has live channels connected and which they are
 # This script depends on the server_ip being sent and also needs to have a valid user/pass from the vicidial_users table
@@ -80,13 +80,14 @@
 # 170709-1017 - Added xfer dead call checking process
 # 170817-0739 - Small change to xfer dead call checking process
 # 180602-0149 - Changed SQL query for email queue count for accuracy
+# 190730-0927 - Added campaign SIP Actions processing
 #
 
-$version = '2.14-54';
-$build = '170817-0739';
+$version = '2.14-55';
+$build = '190730-0927';
 $php_script = 'conf_exten_check.php';
 $mel=1;					# Mysql Error Log enabled = 1
-$mysql_log_count=46;
+$mysql_log_count=51;
 $one_mysql_log=0;
 $DB=0;
 $VD_login=0;
@@ -133,6 +134,12 @@ if (isset($_GET["live_call_seconds"]))			{$live_call_seconds=$_GET["live_call_se
 	elseif (isset($_POST["live_call_seconds"]))	{$live_call_seconds=$_POST["live_call_seconds"];}
 if (isset($_GET["xferchannel"]))			{$xferchannel=$_GET["xferchannel"];}
 	elseif (isset($_POST["xferchannel"]))	{$xferchannel=$_POST["xferchannel"];}
+if (isset($_GET["check_for_answer"]))			{$check_for_answer=$_GET["check_for_answer"];}
+	elseif (isset($_POST["check_for_answer"]))	{$check_for_answer=$_POST["check_for_answer"];}
+if (isset($_GET["MDnextCID"]))				{$MDnextCID=$_GET["MDnextCID"];}
+	elseif (isset($_POST["MDnextCID"]))		{$MDnextCID=$_POST["MDnextCID"];}
+if (isset($_GET["campaign"]))				{$campaign=$_GET["campaign"];}
+	elseif (isset($_POST["campaign"]))		{$campaign=$_POST["campaign"];}
 
 if ($bcrypt == 'OFF')
 	{$bcrypt=0;}
@@ -869,7 +876,140 @@ if ($ACTION == 'refresh')
 					}
 				}
 
-			echo 'DateTime: ' . $NOW_TIME . '|UnixTime: ' . $StarTtime . '|Logged-in: ' . $Alogin . '|CampCalls: ' . $RingCalls . '|Status: ' . $Astatus . '|DiaLCalls: ' . $DiaLCalls . '|APIHanguP: ' . $external_hangup . '|APIStatuS: ' . $external_status . '|APIPausE: ' . $external_pause . '|APIDiaL: ' . $external_dial . '|DEADcall: ' . $DEADcustomer . '|InGroupChange: ' . $InGroupChangeDetails . '|APIFields: ' . $external_update_fields . '|APIFieldsData: ' . $external_update_fields_data . '|APITimerAction: ' . $timer_action . '|APITimerMessage: ' . $timer_action_message . '|APITimerSeconds: ' . $timer_action_seconds . '|APIdtmf: ' . $external_dtmf . '|APItransferconf: ' . $external_transferconf . '|APIpark: ' . $external_park . '|APITimerDestination: ' . $timer_action_destination . '|APIManualDialQueue: ' . $MDQ_count . '|APIRecording: ' . $external_recording . '|APIPaUseCodE: ' . $external_pause_code . '|WaitinGChats: ' . $WaitinGChats . '|WaitinGEmails: ' . $WaitinGEmails . '|LivEAgentCommentS: ' . $live_agents_comments . '|LeadIDSwitch: ' . $external_lead_id .'|DEADxfer: '.$DEADxfer. "\n";
+			//Check for call answer
+			$CHANanswer='0-----';
+			if ( ($check_for_answer > 0) and (strlen($MDnextCID) > 18) )
+				{
+				$dial_time = 0;
+				$sip_event_action_output='';
+				$stmt = "SELECT invite_date,UNIX_TIMESTAMP(first_180_date),UNIX_TIMESTAMP(first_183_date),UNIX_TIMESTAMP(200_date),TIMESTAMPDIFF(MICROSECOND,invite_date,200_date) as dial,TIMESTAMPDIFF(MICROSECOND,invite_date,first_180_date) as prog,TIMESTAMPDIFF(MICROSECOND,invite_date,first_183_date) as pdd from vicidial_sip_event_recent where caller_code='$MDnextCID' LIMIT 1;";
+				if ($DB) {echo "$stmt\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03047',$user,$server_ip,$session_name,$one_mysql_log);}
+				$VSER_ct = mysqli_num_rows($rslt);
+				if ($VSER_ct > 0)
+					{
+					$row=mysqli_fetch_row($rslt);
+					$invite_date = 		$row[0];
+					$first_180_date = 	$row[1];
+					$first_183_date = 	$row[2];
+					$sip200_date = 		$row[3];
+					$dial_time = 		$row[4];
+					$time_to_progress = $row[5];
+					$time_to_ring = 	$row[6];
+					if ( ($first_180_date > 0) and ($first_180_date != 'NULL') and ($first_183_date > 0) and ($first_183_date != 'NULL')) 
+						{if ($first_180_date > $first_183_date) {$time_to_progress=$time_to_ring;}}
+
+					if ( ($dial_time > 0) and ($dial_time != 'NULL') )
+						{
+						if ( ($time_to_progress > 0) and ($time_to_progress != 'NULL') ) 
+							{
+							if ( ($dial_time <= 0) or ($dial_time == 'NULL') ) 
+								{$dial_time = $time_to_progress;}
+							$invite_to_ring = $time_to_progress;
+							$ring_to_final = ($dial_time - $invite_to_ring);
+							}
+						else
+							{
+							if ( ($time_to_ring > 0) and ($time_to_ring != 'NULL') ) 
+								{
+								if ( ($dial_time <= 0) or ($dial_time == 'NULL') ) 
+									{$dial_time = $time_to_ring;}
+								$invite_to_ring = $time_to_ring;
+								$ring_to_final = ($dial_time - $invite_to_ring);
+								}
+							else
+								{
+								$invite_to_ring = 0;
+								$ring_to_final = 0;
+								}
+							}
+
+						if ($invite_to_ring != '0') {$invite_to_ring = ($invite_to_ring / 1000000);}
+						if ($ring_to_final != '0') {$ring_to_final = ($ring_to_final / 1000000);}
+						if ($dial_time != '0') {$dial_time = ($dial_time / 1000000);}
+
+						# insert a record into the vicidial_log_extended_sip table for this call
+						$stmt = "INSERT INTO vicidial_log_extended_sip SET call_date='$invite_date', caller_code='$MDnextCID', invite_to_ring='$invite_to_ring', ring_to_final='$ring_to_final', invite_to_final='$dial_time', last_event_code='200';";
+						if ($DB) {echo "$stmt\n";}
+						$rslt=mysql_to_mysqli($stmt, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03048',$user,$server_ip,$session_name,$one_mysql_log);}
+						$affected_rowsX = mysqli_affected_rows($link);
+
+						# flag the vicidial_sip_event_recent record as processed
+						$stmt = "UPDATE vicidial_sip_event_recent set processed='Y' where caller_code='$MDnextCID' LIMIT 1;";
+						if ($DB) {echo "$stmt\n";}
+						$rslt=mysql_to_mysqli($stmt, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03049',$user,$server_ip,$session_name,$one_mysql_log);}
+						$affected_rowsX = mysqli_affected_rows($link);
+
+						
+						### BEGIN check for SIP event log actions ###
+						$CAMPsip_event_logging='DISABLED';
+						$invite_to_final='';
+						$stmt = "SELECT sip_event_logging FROM vicidial_campaigns where campaign_id='$campaign';";
+						$rslt=mysql_to_mysqli($stmt, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03050',$user,$server_ip,$session_name,$one_mysql_log);}
+						if ($DB) {echo "$stmt\n";}
+						$csel_ct = mysqli_num_rows($rslt);
+						if ($csel_ct > 0)
+							{
+							$row=mysqli_fetch_row($rslt);
+							$CAMPsip_event_logging = 	$row[0];
+							}
+
+						if ( (strlen($CAMPsip_event_logging) > 0) and ($CAMPsip_event_logging != 'DISABLED') )
+							{
+							# gather Sip event settings container
+							$stmt = "SELECT container_entry FROM vicidial_settings_containers where container_id='$CAMPsip_event_logging';";
+							$rslt=mysql_to_mysqli($stmt, $link);
+								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03051',$user,$server_ip,$session_name,$one_mysql_log);}
+							if ($DB) {echo "$stmt\n";}
+							$SCinfo_ct = mysqli_num_rows($rslt);
+							if ($SCinfo_ct > 0)
+								{
+								$row=mysqli_fetch_row($rslt);
+								$SAcontainer_entry =	$row[0];
+								$SAcontainer_entry = preg_replace("/\r|\t|\'|\"/",'',$SAcontainer_entry);
+								$sip_action_settings = explode("\n",$SAcontainer_entry);
+								$sip_action_settings_ct = count($sip_action_settings);
+								$sea=0;
+								while ($sip_action_settings_ct >= $sea)
+									{
+									if (preg_match("/^invite_to_final => /",$sip_action_settings[$sea]))
+										{
+										# invite_to_final => 0.0,1.0,hangup-dispo-message,FAS,Auto Hangup and Dispo of False Answer Call
+										$sip_action_settings[$sea] = preg_replace("/invite_to_final => /",'',$sip_action_settings[$sea]);
+										$invite_to_finalARY = explode(",",$sip_action_settings[$sea]);
+										$T_dial_time =	floatval($dial_time);
+										$itf_begin =	floatval($invite_to_finalARY[0]);
+										$itf_end =		floatval($invite_to_finalARY[1]);
+										$itf_actions =	$invite_to_finalARY[2];
+										$itf_dispo =	$invite_to_finalARY[3];
+										$itf_message =	$invite_to_finalARY[4];
+										if ( ($T_dial_time >= $itf_begin) and ($T_dial_time <= $itf_end) and (strlen($itf_actions) > 4) )
+											{
+										#	$call_output = "$uniqueid\n$channel\nERROR\n" . $hangup_cause_msg . "\n<br>" . $sip_hangup_cause_msg; 
+											$sip_event_action_output = "SIP ACTION-----" . $itf_actions . "-----" . $itf_dispo . "-----" . $itf_message;
+											}
+										}
+									$sea++;
+									}
+								}
+							}
+						### END check for SIP event log actions ###
+						$CHANanswer = "1-----" . $sip_event_action_output;
+
+							# SIP event debug logging
+						#	$fp = fopen ("./SELdebug_log.txt", "a");
+						#	fwrite ($fp, "$NOW_TIME SEL-CCC-Debug 1, chan-check: $check_for_answer|$MDnextCID|$invite_date|$sip200_date|$dial_time|$time_to_progress|$time_to_ring|\n");
+						#	fclose($fp);
+						}
+					}
+				}
+
+
+			echo 'DateTime: ' . $NOW_TIME . '|UnixTime: ' . $StarTtime . '|Logged-in: ' . $Alogin . '|CampCalls: ' . $RingCalls . '|Status: ' . $Astatus . '|DiaLCalls: ' . $DiaLCalls . '|APIHanguP: ' . $external_hangup . '|APIStatuS: ' . $external_status . '|APIPausE: ' . $external_pause . '|APIDiaL: ' . $external_dial . '|DEADcall: ' . $DEADcustomer . '|InGroupChange: ' . $InGroupChangeDetails . '|APIFields: ' . $external_update_fields . '|APIFieldsData: ' . $external_update_fields_data . '|APITimerAction: ' . $timer_action . '|APITimerMessage: ' . $timer_action_message . '|APITimerSeconds: ' . $timer_action_seconds . '|APIdtmf: ' . $external_dtmf . '|APItransferconf: ' . $external_transferconf . '|APIpark: ' . $external_park . '|APITimerDestination: ' . $timer_action_destination . '|APIManualDialQueue: ' . $MDQ_count . '|APIRecording: ' . $external_recording . '|APIPaUseCodE: ' . $external_pause_code . '|WaitinGChats: ' . $WaitinGChats . '|WaitinGEmails: ' . $WaitinGEmails . '|LivEAgentCommentS: ' . $live_agents_comments . '|LeadIDSwitch: ' . $external_lead_id .'|DEADxfer: '.$DEADxfer .'|CHANanswer: '.$CHANanswer. "\n";
 
 			if (strlen($timer_action) > 3)
 				{

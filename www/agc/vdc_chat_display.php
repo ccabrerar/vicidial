@@ -1,7 +1,7 @@
 <?php
 # vdc_chat_display.php
 #
-# Copyright (C) 2017  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This is the interface for agents to chat with customers and each other.  It's separate from the manager-to-agent 
 # chat interface out of necessity and calls the chat_db_query.php page to send information and display it.  It will
@@ -17,10 +17,14 @@
 # 160303-0051 - Added code for chat transfers
 # 160818-1235 - Added line colors and scrolling
 # 170528-1001 - Added variable filtering
+# 190902-0914 - Fix for PHP 7.2
 #
 
 require("dbconnect_mysqli.php");
 require("functions.php");
+
+$MT[0]='';
+$chat_group_ids=$MT;
 
 if (isset($_GET["email"]))							{$email=$_GET["email"];}
 	elseif (isset($_POST["email"]))					{$email=$_POST["email"];}
