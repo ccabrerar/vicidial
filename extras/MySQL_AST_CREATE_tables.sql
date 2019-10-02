@@ -486,7 +486,7 @@ user VARCHAR(20),
 comments VARCHAR(255),
 processed ENUM('Y','N'),
 user_group VARCHAR(20),
-term_reason  ENUM('CALLER','AGENT','QUEUETIMEOUT','ABANDON','AFTERHOURS','NONE') default 'NONE',
+term_reason  ENUM('CALLER','AGENT','QUEUETIMEOUT','ABANDON','AFTERHOURS','NONE','SYSTEM') default 'NONE',
 alt_dial VARCHAR(6) default 'NONE',
 called_count SMALLINT(5) UNSIGNED default '0',
 index (lead_id),
@@ -1062,6 +1062,7 @@ resets_today SMALLINT(5) UNSIGNED default '0',
 auto_active_list_rank SMALLINT(5) default '0',
 cache_count INT(9) UNSIGNED default '0',
 cache_count_new INT(9) UNSIGNED default '0',
+cache_count_dialable_new INT(9) UNSIGNED default '0',
 cache_date DATETIME
 ) ENGINE=MyISAM;
 
@@ -2453,7 +2454,7 @@ user VARCHAR(20),
 comments VARCHAR(255),
 processed ENUM('Y','N'),
 user_group VARCHAR(20),
-term_reason  ENUM('CALLER','AGENT','QUEUETIMEOUT','ABANDON','AFTERHOURS','NONE') default 'NONE',
+term_reason  ENUM('CALLER','AGENT','QUEUETIMEOUT','ABANDON','AFTERHOURS','NONE','SYSTEM') default 'NONE',
 alt_dial VARCHAR(6) default 'NONE',
 index (lead_id),
 index (call_date)
@@ -2908,7 +2909,7 @@ user VARCHAR(20),
 comments VARCHAR(255),
 processed ENUM('Y','N'),
 user_group VARCHAR(20),
-term_reason  ENUM('CALLER','AGENT','QUEUETIMEOUT','ABANDON','AFTERHOURS','NONE') default 'NONE',
+term_reason  ENUM('CALLER','AGENT','QUEUETIMEOUT','ABANDON','AFTERHOURS','NONE','SYSTEM') default 'NONE',
 alt_dial VARCHAR(6) default 'NONE',
 caller_code VARCHAR(30) NOT NULL,
 index (lead_id),
@@ -4185,6 +4186,18 @@ index (bench_date),
 index (lead_id)
 ) ENGINE=MyISAM;
 
+CREATE TABLE vicidial_sip_action_log (
+call_date DATETIME(6),
+caller_code VARCHAR(30) NOT NULL,
+lead_id INT(9) UNSIGNED,
+phone_number VARCHAR(18),
+user VARCHAR(20),
+result VARCHAR(40),
+index(call_date),
+index(caller_code),
+index(result)
+) ENGINE=MyISAM;
+
 
 ALTER TABLE vicidial_email_list MODIFY message text character set utf8;
 
@@ -4427,6 +4440,9 @@ ALTER TABLE vicidial_sip_event_log_5 MODIFY sip_event_id INT(9) UNSIGNED NOT NUL
 CREATE TABLE vicidial_sip_event_log_6 LIKE vicidial_sip_event_log; 
 ALTER TABLE vicidial_sip_event_log_6 MODIFY sip_event_id INT(9) UNSIGNED NOT NULL;
 
+CREATE TABLE vicidial_sip_action_log_archive LIKE vicidial_sip_action_log;
+CREATE UNIQUE INDEX vlesa on vicidial_sip_action_log_archive (caller_code,call_date);
+
 GRANT RELOAD ON *.* TO cron@'%';
 GRANT RELOAD ON *.* TO cron@localhost;
 
@@ -4507,4 +4523,4 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1575',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1576',db_schema_update_date=NOW(),reload_timestamp=NOW();

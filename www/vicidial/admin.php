@@ -4523,12 +4523,13 @@ else
 # 190722-1602 - Added ENABLED_EXTENDED_RANGE Agent Screen Time campaign option
 # 190724-1603 - Added sip_event_logging campaign actions
 # 190902-0839 - Fixes for PHP 7.2
+# 190930-2110 - More PHP7 fixes
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-718a';
-$build = '190902-0839';
+$admin_version = '2.14-719a';
+$build = '190930-2110';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -38612,6 +38613,14 @@ if ($ADD==130)
 	echo "<TD><font size=1 color=white>"._QXZ("MODIFY")."</TD>\n";
 	echo "</TR>\n";
 
+	$dl_id_ary = $MT;
+	$dl_name_ary = $MT;
+	$last_run_ary = $MT;
+	$dl_active_ary = $MT;
+	$list_id_ary = $MT;
+	$group_group_ary = $MT;
+	$closer_campaigns_ary = $MT;
+
 	$o=0;
 	while ($droplists_to_print > $o) 
 		{
@@ -38682,6 +38691,14 @@ if ($ADD==1000)
 	echo "<TD><font size=1 color=white>"._QXZ("COLOR")."</TD>\n";
 	echo "<TD><font size=1 color=white>"._QXZ("MODIFY")."</TD>\n";
 	echo "</TR>\n";
+
+	$group_id_ary = $MT;
+	$group_name_ary = $MT;
+	$group_priority_ary = $MT;
+	$group_active_ary = $MT;
+	$group_time_ary = $MT;
+	$group_color_ary = $MT;
+	$group_group_ary = $MT;
 
 	$o=0;
 	while ($ingroups_to_print > $o) 
@@ -38986,6 +39003,10 @@ if ($ADD==1500)
 
 	$o=0;
 	$menu_id = $MT;
+	$menu_name = $MT;
+	$menu_prompt = $MT;
+	$menu_timeout = $MT;
+	$menu_group = $MT;
 
 	while ($menus_to_print > $o) 
 		{
@@ -40683,6 +40704,8 @@ if ($ADD==710000000000000)
 	echo "<TABLE><TR><TD>\n";
 	echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 
+	$user_name='';
+
 	$stmt="SELECT full_name from vicidial_users where user='$stage' $LOGadmin_viewable_groupsSQL;";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$names_to_print = mysqli_num_rows($rslt);
@@ -41085,6 +41108,8 @@ if ($ADD==810000000000000)
 	echo "<TABLE><TR><TD>\n";
 	echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 
+	$user_name='';
+
 	$stmt="SELECT full_name from vicidial_users where user='$stage' $LOGadmin_viewable_groupsSQL;";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$names_to_print = mysqli_num_rows($rslt);
@@ -41224,6 +41249,17 @@ if ($ADD==999999)
 
 		echo "<TABLE><TR><TD>\n";
 		echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
+
+		$server_id=$MT;
+		$server_description=$MT;
+		$server_ip=$MT;
+		$active=$MT;
+		$sysload=$MT;
+		$channels_total=$MT;
+		$cpu_idle_percent=$MT;
+		$disk_usage=$MT;
+		$active_agent_login_server=$MT;
+		$active_asterisk_server=$MT;
 
 		$stmt="SELECT server_id,server_description,server_ip,active,sysload,channels_total,cpu_idle_percent,disk_usage,active_agent_login_server,active_asterisk_server from servers order by server_id;";
 		$rslt=mysql_to_mysqli($stmt, $link);

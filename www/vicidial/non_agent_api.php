@@ -138,10 +138,11 @@
 # 190325-1055 - Added agent_campaigns function
 # 190628-1504 - Added update_cid_group_entry function
 # 190703-0858 - Added custom_fields_copy option to add_list function
+# 190930-1629 - Added list_description field to add_list and update_list functions
 #
 
-$version = '2.14-115';
-$build = '190703-0858';
+$version = '2.14-116';
+$build = '190930-1629';
 $api_url_log = 0;
 
 $startMS = microtime();
@@ -508,6 +509,8 @@ if (isset($_GET["cid_description"]))			{$cid_description=$_GET["cid_description"
 	elseif (isset($_POST["cid_description"]))	{$cid_description=$_POST["cid_description"];}
 if (isset($_GET["custom_fields_copy"]))				{$custom_fields_copy=$_GET["custom_fields_copy"];}
 	elseif (isset($_POST["custom_fields_copy"]))	{$custom_fields_copy=$_POST["custom_fields_copy"];}
+if (isset($_GET["list_description"]))			{$list_description=$_GET["list_description"];}
+	elseif (isset($_POST["list_description"]))	{$list_description=$_POST["list_description"];}
 
 
 header ("Content-type: text/html; charset=utf-8");
@@ -4175,6 +4178,7 @@ if ($function == 'update_list')
 					$webformthreeSQL='';
 					$resettimeSQL='';
 					$expiration_dateSQL='';
+					$list_descriptionSQL='';
 					if (strlen($campaign_id) > 0)
 						{
 						$stmt="SELECT count(*) from vicidial_campaigns where campaign_id='$campaign_id';";
@@ -4379,8 +4383,15 @@ if ($function == 'update_list')
 						else
 							{$webformthreeSQL = " ,web_form_address_three='$web_form_address_three'";}
 						}
+					if (strlen($list_description) > 0)
+						{
+						if ($list_description == '--BLANK--')
+							{$list_descriptionSQL = " ,list_description=''";}
+						else
+							{$list_descriptionSQL = " ,list_description='$list_description'";}
+						}
 
-					$updateSQL = "$webformthreeSQL$webformtwoSQL$webformSQL$ammessageSQL$outboundcidSQL$activeSQL$listnameSQL$campaignSQL$scriptSQL$dropingroupSQL$resettimeSQL$expiration_dateSQL";
+					$updateSQL = "$webformthreeSQL$webformtwoSQL$webformSQL$ammessageSQL$outboundcidSQL$activeSQL$listnameSQL$campaignSQL$scriptSQL$dropingroupSQL$resettimeSQL$expiration_dateSQL$list_descriptionSQL";
 
 					if (strlen($updateSQL)< 3)
 						{
@@ -4778,6 +4789,7 @@ if ($function == 'add_list')
 							$webformSQL='';
 							$webformtwoSQL='';
 							$webformthreeSQL='';
+							$list_descriptionSQL='';
 							if (strlen($web_form_address) > 0)
 								{
 								if (preg_match("/%3A%2F%2F/",$web_form_address)) 
@@ -4816,8 +4828,15 @@ if ($function == 'add_list')
 								}
 							if (strlen($active)<1) {$active='N';}
 							if (strlen($expiration_date)<10) {$expiration_date='2099-12-31';}
+							if (strlen($list_description) > 0)
+								{
+								if ($list_description == '--BLANK--')
+									{$list_descriptionSQL = " ,list_description=''";}
+								else
+									{$list_descriptionSQL = " ,list_description='$list_description'";}
+								}
 
-							$stmt="INSERT INTO vicidial_lists SET list_id='$list_id', list_name='$list_name', campaign_id='$campaign_id', active='$active', campaign_cid_override='$outbound_cid', agent_script_override='$script', am_message_exten_override='$am_message', drop_inbound_group_override='$drop_inbound_group', reset_time='$reset_time', expiration_date='$expiration_date' $webformSQL $webformtwoSQL $webformthreeSQL;";
+							$stmt="INSERT INTO vicidial_lists SET list_id='$list_id', list_name='$list_name', campaign_id='$campaign_id', active='$active', campaign_cid_override='$outbound_cid', agent_script_override='$script', am_message_exten_override='$am_message', drop_inbound_group_override='$drop_inbound_group', reset_time='$reset_time', expiration_date='$expiration_date' $webformSQL $webformtwoSQL $webformthreeSQL $list_descriptionSQL;";
 							$rslt=mysql_to_mysqli($stmt, $link);
 							if ($DB) {echo "|$stmt|\n";}
 

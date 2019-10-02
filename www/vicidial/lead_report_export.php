@@ -33,6 +33,7 @@
 # 180422-0923 - Fix for missing header row in translated language, issue #1090
 # 180610-1634 - Added option to allow --ALL-- as a campaign value
 # 190610-2036 - Fixed admin hide phone issue
+# 190926-0926 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -567,6 +568,15 @@ if ($run_export > 0)
 
 	$outbound_calls=0;
 	$export_rows='';
+	$export_status = array();
+	$export_list_id = array();
+	$export_lead_id = array();
+	$export_uniqueid = array();
+	$export_vicidial_id = array();
+	$export_entry_list_id = array();
+	$export_epoch_time = array();
+	$export_duplicate_check_line = array();
+	$export_rows = array();
 	$k=0;
 	if ($RUNcampaign > 0)
 		{

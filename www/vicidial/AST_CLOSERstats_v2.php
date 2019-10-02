@@ -66,6 +66,7 @@
 # 180323-2307 - Fix for user time calculation, subtracted queue_seconds
 # 180712-1508 - Fix for rare allowed reports issue
 # 190508-1901 - Streamlined DID check to optimize page load
+# 190930-1345 - Fixed PHP7 array issue
 #
 
 $startMS = microtime();
@@ -315,6 +316,9 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $groups_to_print = mysqli_num_rows($rslt);
 $i=0;
+$LISTgroups=array();
+$LISTgroup_names=array();
+$LISTgroup_ids=array();
 $LISTgroups[$i]='---NONE---';
 $i++;
 $groups_to_print++;
@@ -417,6 +421,9 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $statcats_to_print = mysqli_num_rows($rslt);
 $i=0;
+$vsc_id=array();
+$vsc_name=array();
+$vsc_count=array();
 while ($i < $statcats_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -906,7 +913,7 @@ else
 	}
 
 
-
+$did_id=array();
 if ($DID=='Y')
 	{
 	$stmt="select did_id from vicidial_inbound_dids where did_pattern IN($group_SQL) $LOGadmin_viewable_groupsSQL;";
@@ -946,6 +953,7 @@ if ($DID=='Y')
 
 	}
 
+$graph_data_ary=array();
 if ($group_ct > 1)
 	{
 	$ASCII_text.="\n";
@@ -1332,6 +1340,12 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $statuses_to_print = mysqli_num_rows($rslt);
 $p=0;
+$status=array();
+$status_name=array();
+$human_answered=array();
+$category=array();
+$statname_list=array();
+$statcat_list=array();
 while ($p < $statuses_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -1512,6 +1526,7 @@ $CSV_text2.="\"\",\"$hd_0\",\"$hd_5\",\"$hd10\",\"$hd15\",\"$hd20\",\"$hd25\",\"
 
 
 if ($report_display_type=="HTML") {
+	$graph_stats=array();
 	$stmt="select count(*),round(queue_seconds) as rd_sec from ".$vicidial_closer_log_table." where call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' $calldate_call_time_clause and campaign_id IN($group_SQL) group by rd_sec order by rd_sec asc;";
 	$ms_stmt="select queue_seconds from ".$vicidial_closer_log_table." where call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' $calldate_call_time_clause and campaign_id IN($group_SQL) order by queue_seconds desc limit 1;"; 
 	$mc_stmt="select count(*) as ct from ".$vicidial_closer_log_table." where call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' $calldate_call_time_clause and  campaign_id IN($group_SQL) group by queue_seconds order by ct desc limit 1;";
@@ -2108,6 +2123,7 @@ $CSV_text2.="\""._QXZ("CUM ANS")." %\",\"$ApCad_0\",\"$ApCad_5\",\"$ApCad10\",\"
 
 if ($report_display_type=="HTML") {
 	$graph_stats=array();
+	$sec_ary=array();
 	$stmt="select count(*),round(queue_seconds) as rd_sec from ".$vicidial_closer_log_table." where call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' $calldate_call_time_clause and campaign_id IN($group_SQL) and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','INBND','MAXCAL') group by rd_sec order by rd_sec asc;";
 	$ms_stmt="select queue_seconds from ".$vicidial_closer_log_table." where call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' $calldate_call_time_clause and campaign_id IN($group_SQL) and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','INBND','MAXCAL') order by queue_seconds desc limit 1;"; 
 	$mc_stmt="select count(*) as ct from ".$vicidial_closer_log_table." where call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' $calldate_call_time_clause and  campaign_id IN($group_SQL) and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','INBND','MAXCAL') group by queue_seconds order by ct desc limit 1;";
@@ -2438,6 +2454,7 @@ $max_calls=1;
 $max_total_time=1;
 $max_avg_time=1;
 $max_callshr=1;
+$graph_stats=array();
 ###########################
 
 while ($i < $statuses_to_print)
@@ -2842,6 +2859,7 @@ $CSV_text6.="\"\",\"$qp_1\",\"$qp_2\",\"$qp_3\",\"$qp_4\",\"$qp_5\",\"$qp_6\",\"
 if ($report_display_type=="HTML") 
 	{
 	$graph_stats=array();
+	$queue_position=array();
 	$stmt="select count(*),queue_position as qp from ".$vicidial_closer_log_table." where call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' $calldate_call_time_clause and campaign_id IN($group_SQL) group by qp order by qp asc;";
 	$ms_stmt="select queue_position from ".$vicidial_closer_log_table." where call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' $calldate_call_time_clause and campaign_id IN($group_SQL) order by queue_position desc limit 1;"; 
 	$mc_stmt="select count(*) as ct from ".$vicidial_closer_log_table." where call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' $calldate_call_time_clause and campaign_id IN($group_SQL) group by queue_position order by ct desc limit 1;";
@@ -3203,6 +3221,11 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $calls_to_print = mysqli_num_rows($rslt);
 $j=0;
+$Cstatus=array();
+$Cqueue=array();
+$Cepoch=array();
+$Cdate=array();
+$Crem=array();
 while ($j < $calls_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -3219,6 +3242,23 @@ while ($j < $calls_to_print)
 
 ### Loop through all call records and gather stats for total call/drop report and answered report
 $j=0;
+$Ftotal=array();
+$Fdrop=array();
+$adB_0=array();
+$adB_5=array();
+$adB10=array();
+$adB15=array();
+$adB20=array();
+$adB25=array();
+$adB30=array();
+$adB35=array();
+$adB40=array();
+$adB45=array();
+$adB50=array();
+$adB55=array();
+$adB60=array();
+$adB90=array();
+$adB99=array();
 while ($j < $calls_to_print)
 	{
 	$i=0; $sec=0; $sec_end=900;
@@ -3269,6 +3309,8 @@ $hi_hour_count=0;
 $last_full_record=0;
 $i=0;
 $h=0;
+$hour_count=array();
+$drop_count=array();
 while ($i <= 96)
 	{
 	$hour_count[$i] = $Ftotal[$i];

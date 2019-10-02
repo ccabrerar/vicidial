@@ -618,10 +618,11 @@
 # 190730-0925 - Added campaign SIP Actions processing
 # 190901-0956 - Added cid_choice option to API transfer_conference function
 # 190902-0914 - Fix for PHP 7.2
+# 190925-1346 - Changes for more SIP Event Action features
 #
 
-$version = '2.14-587c';
-$build = '190902-0914';
+$version = '2.14-588c';
+$build = '190925-1346';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=87;
 $one_mysql_log=0;
@@ -5748,7 +5749,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 				}
 			if (xmlhttprequestcheckconf)
 				{
-				checkconf_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&user=" + user + "&pass=" + pass + "&client=vdc&conf_exten=" + taskconfnum + "&auto_dial_level=" + auto_dial_level + "&campagentstdisp=" + campagentstdisp + "&customer_chat_id=" + document.vicidial_form.customer_chat_id.value + "&live_call_seconds=" + VD_live_call_secondS + "&xferchannel=" + document.vicidial_form.xferchannel.value + "&check_for_answer=" + MDcheck_for_answer + "&MDnextCID=" + MDnextCID + "&campaign=" + campaign + "&clicks=" + button_click_log;
+				checkconf_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&user=" + user + "&pass=" + pass + "&client=vdc&conf_exten=" + taskconfnum + "&auto_dial_level=" + auto_dial_level + "&campagentstdisp=" + campagentstdisp + "&customer_chat_id=" + document.vicidial_form.customer_chat_id.value + "&live_call_seconds=" + VD_live_call_secondS + "&xferchannel=" + document.vicidial_form.xferchannel.value + "&check_for_answer=" + MDcheck_for_answer + "&MDnextCID=" + MDnextCID + "&campaign=" + campaign + "&phone_number=" + dialed_number + "&clicks=" + button_click_log;
 				button_click_log='';
 				xmlhttprequestcheckconf.open('POST', 'conf_exten_check.php');
 				xmlhttprequestcheckconf.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
@@ -8689,7 +8690,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 			if ( (script_recording_delay < 1) && (routing_initiated_recording == 'Y') && ( (LIVE_campaign_recording == 'ALLCALLS') || (LIVE_campaign_recording == 'ALLFORCE') ) )
 				{temp_rir='Y';}
 
-			manDiaLlook_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&ACTION=manDiaLlookCaLL&conf_exten=" + session_id + "&user=" + user + "&pass=" + pass + "&MDnextCID=" + CIDcheck + "&agent_log_id=" + agent_log_id + "&lead_id=" + document.vicidial_form.lead_id.value + "&DiaL_SecondS=" + MD_ring_secondS + "&stage=" + taskCheckOR + "&campaign=" + campaign + "&routing_initiated_recording=" + temp_rir;
+			manDiaLlook_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&ACTION=manDiaLlookCaLL&conf_exten=" + session_id + "&user=" + user + "&pass=" + pass + "&MDnextCID=" + CIDcheck + "&agent_log_id=" + agent_log_id + "&lead_id=" + document.vicidial_form.lead_id.value + "&DiaL_SecondS=" + MD_ring_secondS + "&stage=" + taskCheckOR + "&campaign=" + campaign + "&phone_number=" + dialed_number + "&routing_initiated_recording=" + temp_rir;
 			xmlhttp.open('POST', 'vdc_db_query.php');
 			xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
 			xmlhttp.send(manDiaLlook_query);
@@ -10543,6 +10544,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 				alert_box_close_counter=10;
 				alert_box("<?php echo _QXZ("CHECK-FOR-CALL RUNNING, PLEASE WAIT");?>: " + CFAI_sent);
 				button_click_log = button_click_log + "" + SQLdate + "-----CFAI_stopped_pause_click---" + CFAI_sent + " " + taskaction + " " + agent_log_id + "|";
+				agent_events('agent_alert', "CHECK-FOR-CALL RUNNING: " + agent_log_id, aec);   aec++;
 				}
 			else
 				{
@@ -11590,6 +11592,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 							alert_box_close_counter=0;
 							hideDiv('AlertBox');
 							}
+						agent_events('agent_alert', "CHECK-FOR-CALL COMPLETE: " + agent_log_id, aec);   aec++;
 						}
 					}
 				}

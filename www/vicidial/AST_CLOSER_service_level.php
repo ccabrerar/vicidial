@@ -1,7 +1,7 @@
 <?php 
 # AST_CLOSER_service_level.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -41,6 +41,7 @@
 # 170829-0040 - Added screen color settings
 # 171012-2015 - Fixed javascript/apache errors with graphs
 # 180502-2115 - Added new help display
+# 190930-1647 - Fixed PHP7 array issue
 #
 
 $startMS = microtime();
@@ -304,6 +305,8 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $groups_to_print = mysqli_num_rows($rslt);
 $i=0;
+$groups=array();
+$group_names=array();
 $groups_string='|';
 while ($i < $groups_to_print)
 	{
@@ -534,6 +537,8 @@ $CSV_text.="\n";
 $CSV_text.="\""._QXZ("Time range")." $DURATIONday "._QXZ("days").":\",\"$query_date_BEGIN "._QXZ("to")." $query_date_END\"\n\n";
 
 $d=0;
+$daySTART=array();
+$dayEND=array();
 while ($d < $DURATIONday)
 	{
 	$dSQepoch = ($SQepoch + ($d * 86400) );
@@ -570,6 +575,12 @@ if ($SQtime_ARY[1] > 14)
 	}
 if ($SQtime_ARY[1] > 29) {$h=2;}
 if ($SQtime_ARY[1] > 44) {$h=3;}
+
+$HMdisplay=array();
+$HMstart=array();
+$HMend=array();
+$HMSepoch=array();
+$HMEepoch=array();
 while ($i < 96)
 	{
 	$startSEC = ($startSEC + 900);
@@ -640,6 +651,11 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $records_to_grab = mysqli_num_rows($rslt);
 $i=0;
+$qs=array();
+$dt=array();
+$ut=array();
+$ls=array();
+$st=array();
 while ($i < $records_to_grab)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -664,6 +680,34 @@ while ($i < $records_to_grab)
 	}
 
 ### PARSE THROUGH ALL RECORDS AND GENERATE STATS ###
+$MT=array();
+$hd__0=array();
+$hd_20=array();
+$hd_40=array();
+$hd_60=array();
+$hd_80=array();
+$hd100=array();
+$hd120=array();
+$hd121=array();
+$jd__0=array();
+$jd_20=array();
+$jd_40=array();
+$jd_60=array();
+$jd_80=array();
+$jd100=array();
+$jd120=array();
+$jd121=array();
+$Phd__0=array();
+$Phd_20=array();
+$Phd_40=array();
+$Phd_60=array();
+$Phd_80=array();
+$Phd100=array();
+$Phd120=array();
+$Phd121=array();
+$totCALLSsecDATE=array();
+$totDROPSsecDATE=array();
+$totQUEUEsecDATE=array();
 $MT[0]='0';
 $totCALLS=0;
 $totDROPS=0;
@@ -692,6 +736,7 @@ $qrtQUEUEmax=$MT;
 $j=0;
 while ($j < $TOTintervals)
 	{
+	$hd__0[$j]=0; $hd_20[$j]=0; $hd_40[$j]=0; $hd_60[$j]=0; $hd_80[$j]=0; $hd100[$j]=0; $hd120[$j]=0; $hd121[$j]=0;
 	$jd__0[$j]=0; $jd_20[$j]=0; $jd_40[$j]=0; $jd_60[$j]=0; $jd_80[$j]=0; $jd100[$j]=0; $jd120[$j]=0; $jd121[$j]=0;
 	$Phd__0[$j]=0; $Phd_20[$j]=0; $Phd_40[$j]=0; $Phd_60[$j]=0; $Phd_80[$j]=0; $Phd100[$j]=0; $Phd120[$j]=0; $Phd121[$j]=0;
 	$qrtCALLS[$j]=0; $qrtCALLSsec[$j]=0; $qrtCALLSmax[$j]=0;
@@ -765,6 +810,13 @@ $CSV_text.="\""._QXZ("SHIFT DATE-TIME RANGE")."\",\""._QXZ("DROPS")."\",\" "._QX
 
 
 $graph_stats=array();
+$totDROPSpctDATE=array();
+$totDROPSavgDATE=array();
+$totQUEUEpctDATE=array();
+$totQUEUEavgDATE=array();
+$totQUEUEtotDATE=array();
+$totCALLSavgDATE=array();
+
 $max_drops=1;
 $max_droppct=1;
 $max_avgdrops=1;
@@ -822,10 +874,10 @@ while ($d < $DURATIONday)
 	$graph_stats[$d][5]=trim(sprintf("%6.2f", $totQUEUEpctDATE[$d]));
 	$graph_stats[$d][6]=trim(sprintf("%7.2f", $totQUEUEavgDATE[$d]));
 	$graph_stats[$d][7]=trim(sprintf("%7.2f", $totQUEUEtotDATE[$d]));
-	$graph_stats[$d][8]=trim($totCALLSdate[$d]);
-	$graph_stats[$d][9]=trim($totCALLSsecDATE[$d]);
+	$graph_stats[$d][8]=trim($totCALLSdate[$d]+0);
+	$graph_stats[$d][9]=trim($totCALLSsecDATE[$d]+0);
 	$graph_stats[$d][10]=trim($totTIME_MS);
-	$graph_stats[$d][11]=trim(sprintf("%6.0f", $totCALLSavgDATE[$d]));
+	$graph_stats[$d][11]=trim(sprintf("%6.0f", $totCALLSavgDATE[$d]+0));
 
 	$totCALLSavgDATE[$d] =	sprintf("%6.0f", $totCALLSavgDATE[$d]);
 	$totDROPSavgDATE[$d] =	sprintf("%7.2f", $totDROPSavgDATE[$d]);
@@ -1363,6 +1415,10 @@ $CSV_text.="\""._QXZ("CALL HOLD TIME BREAKDOWN IN SECONDS")."\"\n";
 $CSV_text.="\""._QXZ("TIME 15-MIN INT")."\",\""._QXZ("CALLS")."\",\"0 ("._QXZ("seconds").")\",\"20\",\"40\",\"60\",\"80\",\"100\",\"120\",\"120+\",\""._QXZ("AVG TIME BEFORE ANSWER(SEC)")."\"\n";
 
 $APhd__0=0; $APhd_20=0; $APhd_40=0; $APhd_60=0; $APhd_80=0; $APhd100=0; $APhd120=0; $APhd121=0;
+$ALLhd__0=0; $ALLhd_20=0; $ALLhd_40=0; $ALLhd_60=0; $ALLhd_80=0; $ALLhd100=0; $ALLhd120=0; $ALLhd121=0;
+$Aavg_hold=array();
+$qrtQUEUEavg_scale=array();
+$qrtQUEUEavg_val=array();
 $h=0;
 while ($h < $TOTintervals)
 	{

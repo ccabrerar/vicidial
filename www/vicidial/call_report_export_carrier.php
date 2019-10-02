@@ -19,6 +19,7 @@
 # 160510-2100 - Added coding to remove tab characters from the data
 # 170409-1542 - Added IP List validation code
 # 190610-2037 - Fixed admin hide phone issue
+# 190926-0927 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -456,6 +457,17 @@ if ($run_export > 0)
 
 	$outbound_calls=0;
 	$export_rows='';
+	$export_status = array();
+	$export_list_id = array();
+	$export_lead_id = array();
+	$export_uniqueid = array();
+	$export_vicidial_id = array();
+	$export_entry_list_id = array();
+	$export_wrapup_time = array();
+	$export_queue_time = array();
+	$export_user = array();
+	$export_rows = array();
+	$carrier_dial_log_rows = array();
 	$k=0;
 	if ($RUNcampaign > 0)
 		{

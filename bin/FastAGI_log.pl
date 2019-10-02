@@ -84,6 +84,7 @@
 # 180919-1729 - Fix for rare non-NA-set-as-NA call logging issue
 # 190626-1100 - Added more logging for Auto-Alt-Dial debug
 # 190709-2240 - Added Call Quota logging
+# 191001-1509 - Small fix for monitoring issue
 #
 
 # defaults for PreFork
@@ -366,7 +367,7 @@ sub process_request
 	#	if ( (length($calleridname)>5) && ( (!$callerid) or ($callerid =~ /unknown|private|00000000/i) or ($callerid =~ /5551212/) ) )
 		if ( ( 
 		(length($calleridname)>5) && ( (!$callerid) or ($callerid =~ /unknown|private|00000000/i) or ($callerid =~ /5551212/) )
-		) or ( (length($calleridname)>17) && ($calleridname =~ /\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/) ) )
+		) or ( (length($calleridname)>17) && ($calleridname =~ /\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/) ) )
 			{$callerid = $calleridname;}
 
 			### allow for ANI being sent with the DNIS "*3125551212*9999*"
@@ -731,6 +732,7 @@ sub process_request
 				if ( ( ($callerid =~ /^BM\d\d\d\d\d\d\d\d/) && ($channel =~ /ASTblind/) ) || ($callerid =~ /^BB\d\d\d\d\d\d\d\d/) || ($callerid =~ /^BW\d\d\d\d\d\d\d\d/) )
 					{
 					$stmtA = "SELECT monitor_start_time,UNIX_TIMESTAMP(monitor_start_time) from vicidial_rt_monitor_log where caller_code='$callerid' and ( (monitor_end_time is NULL) or (monitor_start_time=monitor_end_time) );";
+			#		if ($AGILOG) {$agi_string = "|JCJ|$stmtA|$monitor_start_time|$EPOCHmonitor_start_time|";   &agi_output;}
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows=$sthA->rows;

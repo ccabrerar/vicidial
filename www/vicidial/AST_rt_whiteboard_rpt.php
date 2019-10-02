@@ -1,7 +1,7 @@
 <?php
 # AST_rt_whiteboard_rpt.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # Real-time report that allows users to create a customized, graphical display of various data sets
 #
@@ -9,6 +9,7 @@
 # 180129-1745 - Translation corrections, uses vicidial_state_report_functions.php instead of vicidial_state_report_functions.js
 # 180507-2315 - Added new help display
 # 180512-0000 - Fixed slave server capability
+# 190927-1758 - Fixed PHP7 array issue
 #
 
 $startMS = microtime();
@@ -126,7 +127,7 @@ if ($sl_ct > 0)
 $auth=0;
 $reports_auth=0;
 $admin_auth=0;
-$auth_message = user_authorization($PHP_AUTH_USER,$PHP_AUTH_PW,'REPORTS',1);
+$auth_message = user_authorization($PHP_AUTH_USER,$PHP_AUTH_PW,'REPORTS',1,0);
 if ($auth_message == 'GOOD')
 	{$auth=1;}
 
@@ -238,6 +239,17 @@ $LOGallowed_reports =			$row[1];
 $LOGadmin_viewable_groups =		$row[2];
 $LOGadmin_viewable_call_times =	$row[3];
 
+$LOGallowed_campaignsSQL='';
+$whereLOGallowed_campaignsSQL='';
+if ( (!preg_match('/\-ALL/i', $LOGallowed_campaigns)) )
+	{
+	$rawLOGallowed_campaignsSQL = preg_replace("/ -/",'',$LOGallowed_campaigns);
+	$rawLOGallowed_campaignsSQL = preg_replace("/ /","','",$rawLOGallowed_campaignsSQL);
+	$LOGallowed_campaignsSQL = "and campaign_id IN('$rawLOGallowed_campaignsSQL')";
+	$whereLOGallowed_campaignsSQL = "where campaign_id IN('$rawLOGallowed_campaignsSQL')";
+	}
+
+
 if ( (!preg_match("/$report_name/",$LOGallowed_reports)) and (!preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
 	{
     Header("WWW-Authenticate: Basic realm=\"CONTACT-CENTER-ADMIN\"");
@@ -246,6 +258,21 @@ if ( (!preg_match("/$report_name/",$LOGallowed_reports)) and (!preg_match("/ALL 
     exit;
 	}
 
+	
+$MT[0]='';
+$NOW_DATE = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$STARTtime = date("U");
+if (!isset($campaigns)) {$campaigns = array();}
+if (!isset($users)) {$users = array();}
+if (!isset($user_groups)) {$user_groups = array();}
+if (!isset($dids)) {$dids = array();}
+if (!isset($groups)) {$groups = array();}
+if (!isset($report_display_type)) {$report_display_type = "HTML";}
+if (!isset($query_date)) {$query_date = $NOW_DATE;}
+if (!isset($end_date)) {$end_date = $NOW_DATE;}
+
+
 $stmt="SELECT campaign_id from vicidial_campaigns $whereLOGallowed_campaignsSQL order by campaign_id;";
 if ($DB) {$MAIN.="$stmt\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
@@ -253,6 +280,7 @@ $campaigns_to_print = mysqli_num_rows($rslt);
 $i=0;
 $campaign_string='|';
 $campaigns_selected=count($campaigns);
+$campaign_list=array();
 while ($i < $campaigns_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -280,6 +308,8 @@ if ($DB) {$MAIN.="$stmt\n";}
 $users_to_print = mysqli_num_rows($rslt);
 $i=0;
 $user_array=array(); # For quick full-name reference
+$user_list=array();
+$user_names=array();
 while ($i < $users_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -303,6 +333,8 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $user_groups_to_print = mysqli_num_rows($rslt);
 $i=0;
+$user_group_list=array();
+$user_group_names=array();
 $user_group_array=array(); # For quick full-name reference
 while ($i < $user_groups_to_print)
 	{
@@ -323,6 +355,9 @@ $i=0;
 #$i++;
 # $groups_to_print++;
 $groups_string='|';
+$LISTgroups=array();
+$LISTgroup_names=array();
+$LISTgroup_ids=array();
 while ($i < $groups_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -371,6 +406,9 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $dids_to_print = mysqli_num_rows($rslt);
 $i=0;
+$did_pattern=array();
+$did_description=array();
+$did_ids=array();
 $did_array=array(); # For quick full-name reference
 while ($i < $dids_to_print)
 	{
@@ -381,21 +419,6 @@ while ($i < $dids_to_print)
 	$did_array["$row[0]"]=$row[1];
 	$i++;
 	}
-
-	
-
-$MT[0]='';
-$NOW_DATE = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-$STARTtime = date("U");
-if (!isset($campaigns)) {$campaign = array();}
-if (!isset($users)) {$users = array();}
-if (!isset($user_groups)) {$user_groups = array();}
-if (!isset($dids)) {$dids = array();}
-if (!isset($groups)) {$groups = array();}
-if (!isset($report_display_type)) {$report_display_type = "HTML";}
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
-if (!isset($end_date)) {$end_date = $NOW_DATE;}
 
 $i=0;
 $campaigns_string='|';

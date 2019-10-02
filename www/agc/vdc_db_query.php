@@ -478,13 +478,14 @@
 # 190709-1846 - Added Call Quota logging
 # 190722-1658 - Added ENABLED_EXTENDED_RANGE Agent Screen Time Display option
 # 190730-0926 - Added campaign SIP Actions processing
+# 190925-1347 - Added logtable SIP Action
 #
 
-$version = '2.14-372';
-$build = '190730-0926';
+$version = '2.14-373';
+$build = '190925-1347';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
-$mysql_log_count=808;
+$mysql_log_count=809;
 $one_mysql_log=0;
 $DB=0;
 $VD_login=0;
@@ -6732,7 +6733,7 @@ if ($ACTION == 'manDiaLlookCaLL')
 			##### BEGIN SIP event logging, if enabled in the system #####
 			if ($SSsip_event_logging > 0) 
 				{
-				##### insert log into vicidial_log_extended for manual VICIDiaL call
+				##### update vicidial_sip_event_recent entry to processed for manual VICIDiaL call
 				$stmt="UPDATE vicidial_sip_event_recent set processed='U' where caller_code='$MDnextCID' LIMIT 1;";
 				if ($DB) {echo "$stmt\n";}
 				$rslt=mysql_to_mysqli($stmt, $link);
@@ -6849,8 +6850,20 @@ if ($ACTION == 'manDiaLlookCaLL')
 											$itf_message =	$invite_to_finalARY[4];
 											if ( ($T_dial_time >= $itf_begin) and ($T_dial_time <= $itf_end) and (strlen($itf_actions) > 4) )
 												{
-											#	$call_output = "$uniqueid\n$channel\nERROR\n" . $hangup_cause_msg . "\n<br>" . $sip_hangup_cause_msg; 
-												$sip_event_action_output = "SIP ACTION\n" . $itf_actions . "\n" . $itf_dispo . "\n" . $itf_message;
+												if (preg_match("/logtable/i",$itf_actions))
+													{
+													##### insert record into vicidial_sip_action_log
+													$stmt="INSERT INTO vicidial_sip_action_log set call_date='$invite_date',caller_code='$MDnextCID',lead_id='$lead_id',phone_number='$phone_number',user='$user',result='$itf_dispo';";
+													if ($DB) {echo "$stmt\n";}
+													$rslt=mysql_to_mysqli($stmt, $link);
+														if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00809',$user,$server_ip,$session_name,$one_mysql_log);}
+													$affected_rowsX = mysqli_affected_rows($link);
+													}
+												if (preg_match("/hangup|dispo|message/i",$itf_actions))
+													{
+												#	$call_output = "$uniqueid\n$channel\nERROR\n" . $hangup_cause_msg . "\n<br>" . $sip_hangup_cause_msg; 
+													$sip_event_action_output = "SIP ACTION\n" . $itf_actions . "\n" . $itf_dispo . "\n" . $itf_message;
+													}
 												}
 											}
 										$sea++;
@@ -17768,6 +17781,16 @@ if ($ACTION == 'CalLBacKLisT')
 	if ($rslt) {$callbacks_count = mysqli_num_rows($rslt);}
 	echo "$callbacks_count\n";
 	$loop_count=0;
+	$callback_id = array();
+	$lead_id = array();
+	$campaign_id = array();
+	$status = array();
+	$entry_time = array();
+	$callback_time = array();
+	$comments = array();
+	$customer_timezone = array();
+	$customer_time = array();
+	$customer_timezone_diff = array();
 	while ($callbacks_count>$loop_count)
 		{
 		$row=mysqli_fetch_row($rslt);

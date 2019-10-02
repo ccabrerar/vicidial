@@ -1,7 +1,7 @@
 <?php 
 # AST_timeonVDADallSUMMARY.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # Summary for all campaigns live real-time stats for the VICIDIAL Auto-Dialer all servers
 #
@@ -30,6 +30,7 @@
 # 141001-2200 - Finalized adding QXZ translation to all admin files
 # 141230-0038 - Added code for on-the-fly language translations display
 # 170409-1534 - Added IP List validation code
+# 190927-1300 - Fixed PHP7 array issue
 #
 
 require("dbconnect_mysqli.php");
@@ -210,6 +211,7 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if (!isset($DB))   {$DB=0;}
 if ($DB) {$MAIN.="$stmt\n";}
 $groups_to_print = mysqli_num_rows($rslt);
+$groups=array();
 $i=0;
 while ($i < $groups_to_print)
 	{

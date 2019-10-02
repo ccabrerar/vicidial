@@ -4,7 +4,7 @@
 # downloads the entire contents of a vicidial list ID to a flat text file
 # that is tab delimited
 #
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -35,6 +35,7 @@
 # 170306-0858 - Added proper report URL logging
 # 170409-1556 - Added IP List validation code
 # 180330-1414 - Added option for downloading of CID Groups
+# 190926-1015 - Fix for PHP7
 #
 
 $startMS = microtime();
@@ -503,6 +504,11 @@ flush();
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $leads_to_print = mysqli_num_rows($rslt);
+$row = array();
+$row_data = array();
+$export_list_id = array();
+$export_lead_id = array();
+$custom_data = array();
 $i=0;
 while ($i < $leads_to_print)
 	{
@@ -599,6 +605,10 @@ while ($i < $leads_to_print)
 	$i++;
 	}
 
+$custom_list_id = array();
+$custom_tablecount = array();
+$custom_columns = array();
+$column_list_array = array();
 $ch=0;
 if ( ($custom_fields_enabled > 0) and ($event_code_type=='LIST') )
 	{

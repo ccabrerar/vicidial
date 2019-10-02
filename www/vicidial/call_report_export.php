@@ -56,6 +56,7 @@
 # 180418-1555 - Fix for missing call notes on inbound calls
 # 190116-2116 - Added ---ALL--- options for Campaigns and In-Groups
 # 190610-2035 - Fixed admin hide phone issue
+# 190926-0925 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -565,6 +566,15 @@ if ($run_export > 0)
 
 	$outbound_calls=0;
 	$export_rows=array();
+	$export_status = array();
+	$export_list_id = array();
+	$export_lead_id = array();
+	$export_uniqueid = array();
+	$export_vicidial_id = array();
+	$export_entry_list_id = array();
+	$export_wrapup_time = array();
+	$export_queue_time = array();
+	$export_rows = array();
 	$k=0;
 	if ($RUNcampaign > 0)
 		{

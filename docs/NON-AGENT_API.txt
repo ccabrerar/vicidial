@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2019-07-03
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2019-09-30
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -144,6 +144,7 @@ Changes:
 190325-1055 - Added agent_campaigns function
 190628-1504 - Added update_cid_group_entry function
 190703-0858 - Added custom_fields_copy option to add_list function
+190930-1629 - Added list_description field to add_list and update_list functions
 
 
 API Functions use the 'function' variable
@@ -1393,6 +1394,7 @@ campaign_id -		2-8 characters, must be a valid campaign_id
 
 OPTIONAL FIELDS-
 active -		Must be one of these: 'Y','N', will default to 'N'
+list_description -	up to 255 characters, to empty this field, set to --BLANK--
 outbound_cid -		6-20 digits
 script -		1-10 characters, must be a valid script
 am_message -		2-100 characters
@@ -1449,6 +1451,7 @@ delete_leads -		Y or N, Setting this to Y will delete all of the leads with this
 
 EDITABLE FIELDS- 
 list_name -		6-30 characters
+list_description -	up to 255 characters, to empty this field, set to --BLANK--
 campaign_id -		2-8 characters, must be a valid campaign_id
 active -		Must be one of these: 'Y','N', will default to 'N'
 outbound_cid -		6-20 digits

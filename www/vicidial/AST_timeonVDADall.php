@@ -114,10 +114,11 @@
 # 190513-1711 - Added ingroup filter
 # 190525-2133 - Added new agent time segment display
 # 190531-1454 - Upgraded ingroup filter
+# 190927-1759 - Fixed PHP7 array issue
 #
 
-$version = '2.14-100';
-$build = '190525-2133';
+$version = '2.14-101';
+$build = '190927-1759';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -254,6 +255,7 @@ if (!isset($RR))			{$RR=40;}
 if (!isset($group))			{$group='ALL-ACTIVE';}
 if (!isset($groups))		{$groups=array();}
 if (!isset($user_group_filter))		{$user_group_filter=array();}
+if (!isset($ingroup_filter))		{$ingroup_filter=array();}
 if (!isset($usergroup))		{$usergroup='';}
 if (!isset($UGdisplay))		{$UGdisplay=0;}	# 0=no, 1=yes
 if (!isset($UidORname))		{$UidORname=1;}	# 0=id, 1=name
@@ -542,6 +544,8 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $groups_to_print = mysqli_num_rows($rslt);
 $i=0;
+$LISTgroups=array();
+$LISTnames=array();
 $LISTgroups[$i]='ALL-ACTIVE';
 $i++;
 $groups_to_print++;
@@ -693,6 +697,8 @@ if (!isset($DB))   {$DB=0;}
 if ($DB) {echo "$stmt\n";}
 $usergroups_to_print = mysqli_num_rows($rslt);
 $i=0;
+$usergroups=array();
+$usergroupnames=array();
 $usergroups[$i]='ALL-GROUPS';
 $usergroupnames[$i] = 'All user groups';
 $i++;
@@ -709,6 +715,8 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $ingroups_to_print = mysqli_num_rows($rslt);
 $i=0;
+$LISTingroups=array();
+$LISTingroup_names=array();
 $LISTingroups[$i]='ALL-INGROUPS';
 $i++;
 $ingroups_to_print++;
@@ -1540,6 +1548,15 @@ if ( ($DROPINGROUPstats > 0) and (!preg_match("/ALL-ACTIVE/",$group_string)) )
 $CARRIERstatsHTML='';
 if ($CARRIERstats > 0)
 	{
+	$TFhour_status=array();
+	$TFhour_count=array();
+	$TFhour_total=array();
+	$SIXhour_count=array();
+	$ONEhour_count=array();
+	$FTminute_count=array();
+	$FIVEminute_count=array();
+	$ONEminute_count=array();
+
 	if ($cache_carrier_stats_realtime > 0)
 		{
 		$stmtB="SELECT stats_html from vicidial_html_cache_stats where stats_type='carrier_stats' and stats_id='ALL';";
@@ -2321,6 +2338,15 @@ $out_ring=0;
 $out_live=0;
 $in_ivr=0;
 $D_active_calls=0;
+$CDstatus=array();
+$CDcampaign_id=array();
+$CDphone_number=array();
+$CDserver_ip=array();
+$CDcall_time=array();
+$CDcall_type=array();
+$CDqueue_priority=array();
+$CDagent_only=array();
+
 $stmt = "$stmtA $stmtB";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
@@ -3006,6 +3032,28 @@ if ( (preg_match('/ALL\-GROUPS/i',$user_group_string)) and (strlen($user_group_S
 else {$user_group_filter_SQL = " and vicidial_users.user_group IN($user_group_SQL)";}
 
 $ring_agents=0;
+$Aextension=array();
+$Auser=array();
+$Asessionid=array();
+$Astatus=array();
+$Aserver_ip=array();
+$Acall_time=array();
+$Acall_finish=array();
+$Acall_server_ip=array();
+$Acampaign_id=array();
+$Auser_group=array();
+$Afull_name=array();
+$Acomments=array();
+$Acalls_today=array();
+$Acallerid=array();
+$Alead_id=array();
+$Astate_change=array();
+$Aon_hook_agent=array();
+$Aring_callerid=array();
+$Aagent_log_id=array();
+$Aring_note=array();
+$VAClead_ids=array();
+$VACphones=array();
 $stmt="SELECT extension,vicidial_live_agents.user,conf_exten,vicidial_live_agents.status,vicidial_live_agents.server_ip,UNIX_TIMESTAMP(last_call_time),UNIX_TIMESTAMP(last_call_finish),call_server_ip,vicidial_live_agents.campaign_id,vicidial_users.user_group,vicidial_users.full_name,vicidial_live_agents.comments,vicidial_live_agents.calls_today,vicidial_live_agents.callerid,lead_id,UNIX_TIMESTAMP(last_state_change),on_hook_agent,ring_callerid,agent_log_id from vicidial_live_agents,vicidial_users where vicidial_live_agents.user=vicidial_users.user and vicidial_users.user_hide_realtime='0' $UgroupSQL $usergroupSQL $user_group_filter_SQL order by $orderSQL;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}

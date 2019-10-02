@@ -46,12 +46,13 @@
 # 190420-1729 - Added RS_ListenBarge options.php setting
 # 190513-1711 - Added ingroup filter
 # 190525-2205 - Added rust color definition
+# 190927-1758 - Fixed PHP7 array issue
 #
 
 $startMS = microtime();
 
-$version = '2.14-33';
-$build = '190525-2205';
+$version = '2.14-34';
+$build = '190927-1758';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -266,6 +267,8 @@ $ingroup_detail='';
 
 if ( (strlen($group)>1) and (strlen($groups[0])<1) ) {$groups[0] = $group;}
 else {$group = $groups[0];}
+if (!isset($user_group_filter)) {$user_group_filter=array();}
+if (!isset($ingroup_filter)) {$ingroup_filter=array();}
 
 $NOW_TIME = date("Y-m-d H:i:s");
 $NOW_DAY = date("Y-m-d");
@@ -578,6 +581,8 @@ $stmt="select campaign_id,campaign_name from vicidial_campaigns where active='Y'
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $groups_to_print = mysqli_num_rows($rslt);
+$LISTgroups=array();
+$LISTnames=array();
 $i=0;
 $LISTgroups[$i]='ALL-ACTIVE';
 $i++;
@@ -733,6 +738,8 @@ if (!isset($DB))   {$DB=0;}
 if ($DB) {echo "$stmt\n";}
 $usergroups_to_print = mysqli_num_rows($rslt);
 $i=0;
+$usergroups=array();
+$usergroupnames=array();
 $usergroups[$i]='ALL-GROUPS';
 $usergroupnames[$i] = _QXZ("All user groups");
 $i++;
@@ -750,6 +757,8 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $ingroups_to_print = mysqli_num_rows($rslt);
 $i=0;
+$LISTingroups=array();
+$LISTingroup_names=array();
 $LISTingroups[$i]='ALL-INGROUPS';
 $i++;
 $ingroups_to_print++;

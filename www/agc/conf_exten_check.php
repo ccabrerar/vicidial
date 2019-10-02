@@ -81,10 +81,11 @@
 # 170817-0739 - Small change to xfer dead call checking process
 # 180602-0149 - Changed SQL query for email queue count for accuracy
 # 190730-0927 - Added campaign SIP Actions processing
+# 190925-1348 - Added logtable SIP Action
 #
 
-$version = '2.14-55';
-$build = '190730-0927';
+$version = '2.14-56';
+$build = '190925-1348';
 $php_script = 'conf_exten_check.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=51;
@@ -140,6 +141,9 @@ if (isset($_GET["MDnextCID"]))				{$MDnextCID=$_GET["MDnextCID"];}
 	elseif (isset($_POST["MDnextCID"]))		{$MDnextCID=$_POST["MDnextCID"];}
 if (isset($_GET["campaign"]))				{$campaign=$_GET["campaign"];}
 	elseif (isset($_POST["campaign"]))		{$campaign=$_POST["campaign"];}
+if (isset($_GET["phone_number"]))			{$phone_number=$_GET["phone_number"];}
+	elseif (isset($_POST["phone_number"]))	{$phone_number=$_POST["phone_number"];}
+
 
 if ($bcrypt == 'OFF')
 	{$bcrypt=0;}
@@ -989,8 +993,20 @@ if ($ACTION == 'refresh')
 										$itf_message =	$invite_to_finalARY[4];
 										if ( ($T_dial_time >= $itf_begin) and ($T_dial_time <= $itf_end) and (strlen($itf_actions) > 4) )
 											{
-										#	$call_output = "$uniqueid\n$channel\nERROR\n" . $hangup_cause_msg . "\n<br>" . $sip_hangup_cause_msg; 
-											$sip_event_action_output = "SIP ACTION-----" . $itf_actions . "-----" . $itf_dispo . "-----" . $itf_message;
+											if (preg_match("/logtable/i",$itf_actions))
+												{
+												##### insert record into vicidial_sip_action_log
+												$stmt="INSERT INTO vicidial_sip_action_log set call_date='$invite_date',caller_code='$MDnextCID',lead_id='$lead_id',phone_number='$phone_number',user='$user',result='$itf_dispo';";
+												if ($DB) {echo "$stmt\n";}
+												$rslt=mysql_to_mysqli($stmt, $link);
+													if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03052',$user,$server_ip,$session_name,$one_mysql_log);}
+												$affected_rowsX = mysqli_affected_rows($link);
+												}
+											if (preg_match("/hangup|dispo|message/i",$itf_actions))
+												{
+											#	$call_output = "$uniqueid\n$channel\nERROR\n" . $hangup_cause_msg . "\n<br>" . $sip_hangup_cause_msg; 
+												$sip_event_action_output = "SIP ACTION-----" . $itf_actions . "-----" . $itf_dispo . "-----" . $itf_message;
+												}
 											}
 										}
 									$sea++;
