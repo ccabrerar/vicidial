@@ -1,17 +1,18 @@
 <?php 
-# AST_campaign_status_list_report.php
+# AST_source_vlc_status_report.php
 #
 # This report is designed to show the breakdown by either vendor_lead_code
 # or aource_id (user's choice) of the calls and their statuses for all lists 
 # within a campaign for a set time period
 #
-# Copyright (C) 2018  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
 # 180211-1111 - First build
 # 180214-2230 - Added column to download for VLC or source_id
 # 180507-2315 - Added new help display
+# 191013-0834 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -277,6 +278,7 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$HTML_text.="$stmt\n";}
 $campaigns_to_print = mysqli_num_rows($rslt);
 $i=0;
+$groups=array();
 while ($i < $campaigns_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);

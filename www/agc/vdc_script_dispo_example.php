@@ -1,7 +1,7 @@
 <?php
 # vdc_script_dispo_example.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to be used in the SCRIPT tab in an IFRAME and will not submit unless a specific field is filled in
 #
@@ -21,10 +21,11 @@
 # 141216-2133 - Added language settings lookups and user/pass variable standardization
 # 170526-2345 - Added additional variable filtering
 # 170528-0902 - Added more variable filtering
+# 190111-0910 - Fix for PHP7
 #
 
-$version = '2.14-9';
-$build = '170528-0902';
+$version = '2.14-10';
+$build = '190111-0910';
 
 require_once("dbconnect_mysqli.php");
 require_once("functions.php");
@@ -364,7 +365,7 @@ if (!isset($ACTION))   {$ACTION="refresh";}
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 
 $auth=0;
-$auth_message = user_authorization($user,$pass,'',0,0,0,0);
+$auth_message = user_authorization($user,$pass,'',0,0,0,0,'vdc_script_dispo');
 if ($auth_message == 'GOOD')
 	{$auth=1;}
 

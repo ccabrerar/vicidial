@@ -1,7 +1,7 @@
 <?php
 # astguiclient.php - the web-based version of the astGUIclient client application
 # 
-# Copyright (C) 2015  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # make sure you have added a user to the vicidial_users MySQL table with at least
 # user_level 1 or greater to access this page. Also you need to have the login
@@ -68,10 +68,11 @@
 # 141216-2115 - Added language settings lookups and user/pass variable standardization
 # 150218-1110 - Fixes for QXZ enclosed in single-quotes
 # 150727-0915 - Added default_language
+# 190111-0902 - Fix for PHP7
 #
 
-$version = '2.2.6-1';
-$build = '150727-0915';
+$version = '2.2.6-2';
+$build = '190111-0902';
 
 require_once("dbconnect_mysqli.php");
 require_once("functions.php");
@@ -168,7 +169,7 @@ $month_old = mktime(0, 0, 0, date("m"), date("d")-7,  date("Y"));
 $past_month_date = date("Y-m-d H:i:s",$month_old);
 
 $auth=0;
-$auth_message = user_authorization($user,$pass,'',1,0,1,0);
+$auth_message = user_authorization($user,$pass,'',1,0,1,0,'astguiclient');
 if (preg_match("/^GOOD/",$auth_message))
 	{
 	$auth=1;

@@ -4,7 +4,7 @@
 # Pulls time stats per agent selectable by campaign or user group
 # should be most accurate agent stats of all of the reports
 #
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 90522-0723 - First build
@@ -54,6 +54,7 @@
 # 170829-0040 - Added screen color settings
 # 171012-2015 - Fixed javascript/apache errors with graphs
 # 180502-2215 - Added new help display, added CONNECTED column
+# 191013-0846 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -415,14 +416,15 @@ else
 	$group_SQL = "and campaign_id IN($group_SQL)";
 	}
 
-for ($i=0; $i<count($user_group); $i++)
-	{
-	if (preg_match('/\-\-ALL\-\-/', $user_group[$i])) {$all_user_groups=1; $user_group="";}
-	}
+#for ($i=0; $i<count($user_group); $i++)
+#	{
+#	if (preg_match('/\-\-ALL\-\-/', $user_group[$i])) {$all_user_groups=1; $user_group="";}
+#	}
 $stmt="select user_group from vicidial_user_groups $whereLOGadmin_viewable_groupsSQL order by user_group;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $user_groups_to_print = mysqli_num_rows($rslt);
+$user_groups=array();
 $i=0;
 while ($i < $user_groups_to_print)
 	{

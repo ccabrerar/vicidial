@@ -1,7 +1,7 @@
 <?php 
 # AST_dial_log_report.php
 # 
-# Copyright (C) 2017  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 130709-1346 - First build
@@ -12,6 +12,7 @@
 # 170409-1534 - Added IP List validation code
 # 170821-2323 - Added HTML formatting
 # 170829-0040 - Added screen color settings
+# 191013-0818 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -320,6 +321,8 @@ $server_stmt="select server_ip,server_description from servers where active_aste
 $server_rslt=mysql_to_mysqli($server_stmt, $link);
 $servers_to_print=mysqli_num_rows($server_rslt);
 $i=0;
+$LISTserverIPs=array();
+$LISTserver_names=array();
 while ($i < $servers_to_print)
 	{
 	$row=mysqli_fetch_row($server_rslt);

@@ -1,7 +1,7 @@
 <?php 
 # AST_LISTS_campaign_stats.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This is a list inventory report, not a calling report. This report will show
 # statistics for all of the lists in the selected campaigns
@@ -31,6 +31,7 @@
 # 170829-0040 - Added screen color settings
 # 171012-2015 - Fixed javascript/apache errors with graphs
 # 180507-2315 - Added new help display
+# 191013-0819 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -290,6 +291,8 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $campaigns_to_print = mysqli_num_rows($rslt);
 $i=0;
+$groups=array();
+$group_names=array();
 while ($i < $campaigns_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -345,6 +348,9 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $statcats_to_print = mysqli_num_rows($rslt);
 $i=0;
+$vsc_id=array();
+$vsc_name=array();
+$vsc_count=array();
 while ($i < $statcats_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -383,6 +389,7 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $statha_to_print = mysqli_num_rows($rslt);
 $i=0;
+$statname_list=array();
 while ($i < $statha_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -545,7 +552,8 @@ else
 	$CSV_text1.="\""._QXZ("LIST ID SUMMARY")."\"\n";
 	$CSV_text1.="\""._QXZ("LIST")."\",\""._QXZ("LEADS")."\",\""._QXZ("ACTIVE")."\"\n";
 
-	$max_calls=1; $graph_stats=array();
+	$max_calls=1; 
+	$graph_stats=array();
 	$lists_id_str="";
 	$list_stmt="SELECT list_id from vicidial_lists where active IN('Y','N') $group_SQLand";
 	$list_rslt=mysql_to_mysqli($list_stmt, $link);
@@ -559,6 +567,8 @@ else
 	if ($DB) {$MAIN.="$stmt\n";}
 	$listids_to_print = mysqli_num_rows($rslt);
 	$i=0;
+	$LISTIDcalls=array();
+	$LISTIDlists=array();
 	while ($i < $listids_to_print)
 		{
 		$row=mysqli_fetch_row($rslt);
@@ -574,6 +584,8 @@ else
 	else {$list_id_SQL="''";}
 
 	$i=0;
+	$LISTIDlist_names=array();
+	$LISTIDlist_active=array();
 	while ($i < $listids_to_print)
 		{
 		$stmt="select list_name,active from vicidial_lists where list_id='$LISTIDlists[$i]';";
@@ -948,7 +960,8 @@ else
 	$CSV_text3.="\""._QXZ("CUSTOM STATUS CATEGORY STATS")."\"\n";
 	$CSV_text3.="\""._QXZ("CATEGORY")."\",\""._QXZ("CALLS")."\",\""._QXZ("DESCRIPTION")."\"\n";
 
-	$max_calls=1; $graph_stats=array();
+	$max_calls=1; 
+	$graph_stats=array();
 
 	$TOTCATcalls=0;
 	$r=0; $i=0;

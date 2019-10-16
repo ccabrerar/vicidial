@@ -1,7 +1,7 @@
 <?php 
 # AST_agent_days_detail.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -33,6 +33,7 @@
 # 170409-1542 - Added IP List validation code
 # 171012-2015 - Fixed javascript/apache errors with graphs
 # 171204-2300 - Fixed minor reporting bug
+# 191013-0848 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -305,6 +306,7 @@ if ( (!preg_match('/\-\-ALL\-\-/i', $LOGadmin_viewable_call_times)) and (strlen(
 	$whereLOGadmin_viewable_call_timesSQL = "where call_time_id IN('---ALL---','$rawLOGadmin_viewable_call_timesSQL')";
 	}
 
+$MT=array();
 $MT[0]='';
 $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
@@ -327,6 +329,7 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $campaigns_to_print = mysqli_num_rows($rslt);
 $i=0;
+$groups=array();
 while ($i < $campaigns_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -476,10 +479,16 @@ else
 	$statusesHEAD='';
 	$statusesHTML='';
 	$statusesFILE='';
+	$statusesARY=array();
 	$statusesARY[0]='';
 	$j=0;
 	$dates='-';
+	$date=array();
+	$calls=array();
+	$status=array();
+	$datesARY=array();
 	$datesARY[0]='';
+	$date_namesARY=array();
 	$date_namesARY[0]='';
 	$k=0;
 
@@ -541,6 +550,10 @@ else
 	$DNCcountTOT=0;
 
 	$graph_stats=array();
+	$TOPsort=array();
+	$TOPsortTALLY=array();
+	$TOPsorted_output=array();
+	$TOPsorted_outputFILE=array();
 	$max_calls=1;
 	$max_cicalls=1;
 	$max_dncci=1;
@@ -692,6 +705,7 @@ else
 			{rsort($TOPsort, SORT_NUMERIC);}
 
 		$m=0;
+		$sort_order=array();
 		while ($m < $k)
 			{
 			$sort_split = explode("-----",$TOPsort[$m]);
@@ -1018,6 +1032,7 @@ if ($report_display_type=="TEXT" || !$report_display_type)
 	echo "<PRE><FONT SIZE=2>\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
 
 	$m=0;
+	$sort_order=array();
 	while ($m < $k)
 		{
 		$sort_split = explode("-----",$TOPsort[$m]);

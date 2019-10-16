@@ -1,7 +1,7 @@
 <?php 
 # AST_DIDstats.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -35,6 +35,7 @@
 # 170409-1555 - Added IP List validation code
 # 170829-0040 - Added screen color settings
 # 171012-2015 - Fixed javascript/apache errors with graphs
+# 191013-0850 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -249,6 +250,9 @@ if ($DB) {$MAIN.="$stmt\n";}
 $groups_to_print = mysqli_num_rows($rslt);
 $groups_string='|';
 $i=0;
+$groups=array();
+$group_patterns=array();
+$group_names=array();
 while ($i < $groups_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -631,6 +635,8 @@ else
 	$CSV_text1.="\""._QXZ("Time range")." $DURATIONday "._QXZ("days").":\",\"$query_date_BEGIN "._QXZ("to")." $query_date_END\",\"$suffix\"\n\n";
 
 	$d=0;
+	$daySTART=array();
+	$dayEND=array();
 	while ($d < $DURATIONday)
 		{
 		$dSQepoch = ($SQepoch + ($d * 86400) );
@@ -667,6 +673,12 @@ else
 		}
 	if ($SQtime_ARY[1] > 29) {$h=2;}
 	if ($SQtime_ARY[1] > 44) {$h=3;}
+
+	$HMdisplay=array();
+	$HMstart=array();
+	$HMend=array();
+	$HMSepoch=array();
+	$HMEepoch=array();
 	while ($i < 96)
 		{
 		$startSEC = ($startSEC + 900);
@@ -737,6 +749,10 @@ else
 	if ($DB) {$MAIN.="$stmt\n";}
 	$records_to_grab = mysqli_num_rows($rslt);
 	$i=0;
+	$ut=array();
+	$dt=array();
+	$extension=array();
+	$did_server_ip=array();
 	$extension[0]='';
 	$did_server_ip[0]='';
 	while ($i < $records_to_grab)
@@ -790,6 +806,7 @@ else
 
 		$d=0;
 		$max_calls=1;
+		$graph_stats=array();
 		while ($d < $stats_array_ct)
 			{
 			$stat_description =		' *** default *** ';
@@ -927,6 +944,11 @@ else
 	$qrtCALLS=$MT;
 	$qrtCALLSavg=$MT;
 	$qrtCALLSmax=$MT;
+	$qrtCALLSsec=array();
+	$qrtDROPS=array();
+	$qrtQUEUEavg=$MT;
+	$qrtQUEUEmax=$MT;
+	$qs=array();
 	$j=0;
 	while ($j < $TOTintervals)
 		{
@@ -981,6 +1003,7 @@ else
 
 		$d=0;
 		$max_calls=1;
+		$SVgraph_stats=array();
 		while ($d < $SVstats_array_ct)
 			{
 			$stat_description =		' *** default *** ';
@@ -1115,6 +1138,7 @@ else
 	$d=0;
 	$max_calls=1;
 	$graph_stats=array();
+	$totCALLSavgDATE=array();
 	while ($d < $DURATIONday)
 		{
 		if ($totCALLSdate[$d] < 1) {$totCALLSdate[$d]=0;}
@@ -1131,13 +1155,14 @@ else
 		$totTIME_MS = "$totTIME_M_int:$totTIME_S";
 		$totTIME_MS =		sprintf("%8s", $totTIME_MS);
 
+
+		if ($totCALLSdate[$d]>$max_calls) {$max_calls=$totCALLSdate[$d];}
+		$graph_stats[$d][0]=$totCALLSdate[$d];
+		$graph_stats[$d][1]=substr($daySTART[$d],0,10);
+
 		if ($totCALLSdate[$d] < 1) 
 			{$totCALLSdate[$d]='';}
 		$totCALLSdate[$d] =	sprintf("%6s", $totCALLSdate[$d]);
-
-		if ($totCALLSdate[$d]>$max_calls) {$max_calls=$totCALLSdate[$d];}
-		$graph_stats[$d][0]=$totCALLSdate[$d]+0;
-		$graph_stats[$d][1]=substr($daySTART[$d],0,10);
 
 		$ASCII_text.="| $daySTART[$d] - $dayEND[$d] | $totCALLSdate[$d] |\n";
 		$CSV_text1.="\"$daySTART[$d]\",\"$dayEND[$d]\",\"$totCALLSdate[$d]\"\n";

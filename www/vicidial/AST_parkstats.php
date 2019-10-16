@@ -1,7 +1,7 @@
 <?php 
 # AST_parkstats.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -19,6 +19,7 @@
 # 170808-0220 - Added detailed log option
 # 170823-2154 - Added HTML formatting and screen colors
 # 180311-0327 - Added unique lead ID count
+# 191013-0858 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -252,6 +253,7 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $groups_to_print = mysqli_num_rows($rslt);
 $i=0;
+$groups=array();
 while ($i < $groups_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -462,6 +464,12 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $users_to_print = mysqli_num_rows($rslt);
 $i=0;
+$user=array();
+$full_name=array();
+$USERcalls=array();
+$USERleads=array();
+$USERtotTALK_MS=array();
+$USERavgTALK_MS=array();
 while ($i < $users_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -496,6 +504,9 @@ while ($i < $users_to_print)
 	}
 
 $i=0;
+$USERdrops=array();
+$USERtotDROP_MS=array();
+$USERavgDROP_MS=array();
 while ($i < $users_to_print)
 	{
 	$stmt="select count(*),sum(parked_sec),avg(parked_sec) from park_log where parked_time >= '$query_date 00:00:00' and parked_time <= '$query_date 23:59:59' and status IN('HUNGUP') and channel_group='" . mysqli_real_escape_string($link, $group) . "' and parked_sec is not null and park_log.user='$user[$i]' group by park_log.user;";
@@ -578,6 +589,8 @@ $hi_hour_count=0;
 $last_full_record=0;
 $i=0;
 $h=0;
+$hour_count=array();
+$drop_count=array();
 while ($i <= 96)
 	{
 	$stmt="select count(*) from park_log where parked_time >= '$query_date $h:00:00' and parked_time <= '$query_date $h:14:59' and status IN('HUNGUP','GRABBED','GRABBEDIVR','IVRPARKED','PARKED') and channel_group='" . mysqli_real_escape_string($link, $group) . "';";

@@ -1,7 +1,7 @@
 <?php 
 # AST_agent_status_detail.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -36,6 +36,7 @@
 # 170409-1556 - Added IP List validation code
 # 170829-0040 - Added screen color settings
 # 171012-2015 - Fixed javascript/apache errors with graphs
+# 191013-0904 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -287,7 +288,6 @@ if (!isset($user_group)) {$user_group = array();}
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (!isset($end_date)) {$end_date = $NOW_DATE;}
 
-
 $i=0;
 $group_string='|';
 $group_ct = count($group);
@@ -302,6 +302,7 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $campaigns_to_print = mysqli_num_rows($rslt);
 $i=0;
+$groups=array();
 while ($i < $campaigns_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -311,15 +312,16 @@ while ($i < $campaigns_to_print)
 	$i++;
 	}
 
-for ($i=0; $i<count($user_group); $i++)
-	{
-	if (preg_match('/\-\-ALL\-\-/', $user_group[$i])) {$all_user_groups=1; $user_group="";}
-	}
+#for ($i=0; $i<count($user_group); $i++)
+#	{
+#	if (preg_match('/\-\-ALL\-\-/', $user_group[$i])) {$all_user_groups=1; $user_group="";}
+#	}
 $stmt="SELECT user_group from vicidial_user_groups $whereLOGadmin_viewable_groupsSQL order by user_group;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $user_groups_to_print = mysqli_num_rows($rslt);
 $i=0;
+$user_groups=array();
 while ($i < $user_groups_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -368,12 +370,15 @@ else
 	}
 
 if ($DB) {echo "$user_group_string|$user_group_ct|$user_groupQS|$i<BR>";}
-
+# |5| | 1 | &user_group[]=5 | 1
 $stmt="SELECT vsc_id,vsc_name from vicidial_status_categories;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $statcats_to_print = mysqli_num_rows($rslt);
 $i=0;
+$vsc_id=array();
+$vsc_name=array();
+$vsc_count=array();
 while ($i < $statcats_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -505,10 +510,13 @@ else
 	$statusesHEAD='';
 	$statusesHTML='';
 	$statusesFILE='';
+	$statusesARY=array();
 	$statusesARY[0]='';
 	$j=0;
 	$users='-';
+	$usersARY=array();
 	$usersARY[0]='';
+	$user_namesARY=array();
 	$user_namesARY[0]='';
 	$k=0;
 
@@ -572,6 +580,10 @@ else
 		if ($DB) {echo "$status_stmt\n";}
 	$status_rslt=mysql_to_mysqli($status_stmt, $link);
 	$q=0;
+	$calls=array();
+	$full_name=array();
+	$user=array();
+	$status=array();
 	$status_rows_to_print=0; $sub_status_count=0;
 	while($status_row=mysqli_fetch_row($status_rslt)) 
 		{
@@ -669,6 +681,10 @@ else
 	$DNCcountTOT=0;
 
 	$graph_stats=array();
+	$TOPsort=array();
+	$TOPsortTALLY=array();
+	$TOPsorted_output=array();
+	$TOPsorted_outputFILE=array();
 	$max_calls=1;
 	$max_cicalls=1;
 	$max_dncci=1;
@@ -833,6 +849,7 @@ else
 			{rsort($TOPsort, SORT_NUMERIC);}
 
 		$m=0;
+		$sort_order=array();
 		while ($m < $k)
 			{
 			$sort_split = explode("-----",$TOPsort[$m]);
@@ -1157,6 +1174,7 @@ if (!$report_display_type || $report_display_type=="TEXT")
 	echo "<PRE><FONT SIZE=2>\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
 
 	$m=0;
+	$sort_order=array();
 	while ($m < $k)
 		{
 		$sort_split = explode("-----",$TOPsort[$m]);

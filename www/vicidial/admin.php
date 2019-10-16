@@ -4524,12 +4524,13 @@ else
 # 190724-1603 - Added sip_event_logging campaign actions
 # 190902-0839 - Fixes for PHP 7.2
 # 190930-2110 - More PHP7 fixes
+# 191014-1816 - Additional PHP7 fixes
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-719a';
-$build = '190930-2110';
+$admin_version = '2.14-720a';
+$build = '191014-1816';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -17636,7 +17637,7 @@ if ($ADD==411111111111111)
 		echo "<br>"._QXZ("SYSTEM SETTINGS MODIFIED")."\n";
 
 		$k=0;
-		$multi_count = count($reports_use_slave_db);
+		if (is_array($reports_use_slave_db)) {$multi_count = count($reports_use_slave_db);} else {$multi_count=0;}
 		$multi_array = $reports_use_slave_db;
 		while ($k < $multi_count)
 			{
@@ -17646,7 +17647,7 @@ if ($ADD==411111111111111)
 		$reports_use_slave_db = preg_replace("/,$/","",$new_field_value);
 
 		$m=0;
-		$altlog_count = count($tables_use_alt_log_db);
+		if (is_array($tables_use_alt_log_db)) {$altlog_count = count($tables_use_alt_log_db);} else {$altlog_count=0;}
 		$altlog_array = $tables_use_alt_log_db;
 		while ($m < $altlog_count)
 			{
@@ -17664,9 +17665,12 @@ if ($ADD==411111111111111)
 		$custom_reports_slave_SQL='';
 		if (mysqli_num_rows($custom_rslt)>0) 
 			{
-			for ($q=0; $q<count($custom_reports_use_slave_db); $q++) 
+			if (is_array($custom_reports_use_slave_db)) 
 				{
-				$custom_reports_slave_SQL.=$custom_reports_use_slave_db[$q].",";
+				for ($q=0; $q<count($custom_reports_use_slave_db); $q++) 
+					{
+					$custom_reports_slave_SQL.=$custom_reports_use_slave_db[$q].",";
+					}
 				}
 			if (preg_match('/\-\-NONE\-\-/i', $custom_reports_slave_SQL))
 				{
@@ -24219,10 +24223,10 @@ if ($ADD==31)
 
 				if ($SSexpanded_list_stats > 0)
 					{
-					if ( ($complete_total < 1) or ($lead_list[count] < 1) )
+					if ( ($complete_total < 1) or ($lead_list['count'] < 1) )
 						{$total_complete_pct = "0";}
 					else
-						{$total_complete_pct = intval(($complete_total / $lead_list[count]) * 100);}
+						{$total_complete_pct = intval(($complete_total / $lead_list['count']) * 100);}
 					echo "<tr><td colspan=2><font size=1>"._QXZ("SUBTOTALS")."</td><td><font size=1>$lead_list[Y_count]</td><td><font size=1>$lead_list[N_count]</td><td><font size=1> &nbsp; </td><td><font size=1> &nbsp; </td></tr>\n";
 					echo "<tr bgcolor=\"#$SSstd_row1_background\"><td><font size=1>"._QXZ("TOTAL")."</td><td colspan=3 align=center><font size=1>$lead_list[count]</td><td><font size=1>$dialable_total</td><td align=right><font size=1> $total_complete_pct% &nbsp; </td></tr>\n";
 					}

@@ -3,7 +3,7 @@
 #
 # This report is for viewing the a report of API activity to the vicidial_api_log table
 #
-# Copyright (C) 2018  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -15,6 +15,7 @@
 # 180206-2300 - Added option for displaying individual URL variables
 # 180301-2303 - Added DATA column to TEXT/HTML output, Added GET-AND-POST URL logging
 # 180502-2115 - Added new help display
+# 191013-0829 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -348,6 +349,9 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $users_to_print = mysqli_num_rows($rslt);
 $i=0;
+$user_list=array();
+$user_names=array();
+$user_directory=array();
 while ($i < $users_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -741,7 +745,7 @@ if ($SUBMIT && $api_date_D && $api_date_T && $api_date_end_D && $api_date_end_T)
 
 	$HTML.="<BR><table border='0' cellpadding='3' cellspacing='1'>";
 	$HTML.="<tr bgcolor='#".$SSstd_row1_background."'>";
-	$HTML.="<th colspan='".($show_urls ? (11+count($url_vars)) : "9")."'><font size='2'>$ASCII_rpt_header</font></th>";
+	$HTML.="<th colspan='".($show_urls ? (11+count($url_vars)) : "10")."'><font size='2'>$ASCII_rpt_header</font></th>";
 	$HTML.="<th><font size='2'><a href=\"$PHP_SELF?api_date_D=$api_date_D&api_date_T=$api_date_T&api_date_end_D=$api_date_end_D&api_date_end_T=$api_date_end_T$resultQS$functionQS$agent_userQS$userQS&file_download=1&show_urls=$show_urls&search_archived_data=$search_archived_data&SUBMIT=$SUBMIT\">"._QXZ("DOWNLOAD")."</a></font></th>";
 	$HTML.="</tr>\n";
 	$HTML.="<tr bgcolor='#".$SSstd_row1_background."'>";
@@ -781,6 +785,20 @@ if ($SUBMIT && $api_date_D && $api_date_T && $api_date_end_D && $api_date_end_T)
 
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$g=0;
+	$full_user=array();
+	$full_agent_user=array();
+	$api_id=array();
+	$api_date=array();
+	$api_script=array();
+	$function=array();
+	$result=array();
+	$source=array();
+	$run_time=array();
+	$webserver=array();
+	$api_url=array();
+	$value=array();
+	$result_reason=array();
+	$data=array();
 	while ($row=mysqli_fetch_array($rslt)) 
 		{
 		$full_user[$g] =		substr($row["user"].$user_directory[$row["user"]], 0, 30);

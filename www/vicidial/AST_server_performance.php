@@ -1,7 +1,7 @@
 <?php 
 # AST_server_performance.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -28,6 +28,7 @@
 # 170409-1550 - Added IP List validation code
 # 170422-0750 - Added input variable filtering
 # 180223-1541 - Fixed blank default date/time ranges
+# 191013-0842 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -252,6 +253,7 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $servers_to_print = mysqli_num_rows($rslt);
 $i=0;
+$groups=array();
 while ($i < $servers_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);

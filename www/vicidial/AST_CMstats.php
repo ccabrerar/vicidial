@@ -1,11 +1,12 @@
 <?php 
 # AST_CMstats.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 180724-2109 - First build
 # 180829-1155 - Added totals
+# 191013-0849 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -281,6 +282,7 @@ if ( (!preg_match("/$report_name/",$LOGallowed_reports)) and (!preg_match("/ALL 
 $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 $STARTtime = date("U");
+if (!isset($callmenus)) {$callmenus=array();}
 if (!isset($group)) {$group = array();}
 if (!isset($query_date)) {$query_date = "$NOW_DATE 00:00:00";}
 if (!isset($end_date)) {$end_date = "$NOW_DATE 23:23:59";}
@@ -293,6 +295,8 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $callmenus_to_print = mysqli_num_rows($rslt);
 $i=0;
+$LISTcallmenus=array();
+$LISTcallmenus_names=array();
 while ($i < $callmenus_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -306,6 +310,8 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $groups_to_print = mysqli_num_rows($rslt);
 $i=0;
+$LISTgroups=array();
+$LISTgroups_names=array();
 while ($i < $groups_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -368,6 +374,9 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $statcats_to_print = mysqli_num_rows($rslt);
 $i=0;
+$vsc_id=array();
+$vsc_name=array();
+$vsc_count=array();
 while ($i < $statcats_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -720,7 +729,7 @@ else
 		$al_rslt=mysql_to_mysqli($al_stmt, $link);
 		$max_prompts=0;
 		$prompts_array=array();
-		$agents_array=array();
+		$agent_array=array();
 		$calls_array=array();
 		$total_calls_array=array();
 		$HTML_text="";

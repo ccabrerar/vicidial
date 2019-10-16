@@ -1,7 +1,7 @@
 <?php
 # vdc_soundboard_display.php
 # 
-# Copyright (C) 2016  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed display the contents of an audio soundboard in the system
 #
@@ -12,10 +12,11 @@
 # 160428-1848 - Fix for user_authorization
 # 161103-1656 - Added Agent Debug Logging
 # 161111-1647 - Added HIDENUMBERS display option, Font size, button type and layout options
+# 191013-2122 - Fixes for PHP7
 #
 
-$version = '2.12-6';
-$build = '161111-1647';
+$version = '2.12-7';
+$build = '191013-2122';
 
 require_once("dbconnect_mysqli.php");
 require_once("functions.php");
@@ -524,6 +525,22 @@ $soundboardfiles_to_print = mysqli_num_rows($rsltx);
 $levels = 2;
 $ranks=0;
 $rank_max_count=0;
+$Aaudio_filename = array();
+$Aaudio_name = array();
+$Arank = array();
+$Alevel = array();
+$Aparent_audio_filename = array();
+$Aparent_rank = array();
+$Ah_ord = array();
+$Abutton_type = array();
+$Afont_size = array();
+$Abold_start = array();
+$Abold_end = array();
+$Aitalic_start = array();
+$Aitalic_end = array();
+$Uranks = array();
+$Rcount = array();
+$Rtally = array();
 $o=0;
 while ($soundboardfiles_to_print > $o)
 	{

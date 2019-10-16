@@ -1,7 +1,7 @@
 <?php
 # admin_lists_custom.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # this screen manages the custom lists fields in ViciDial
 #
@@ -52,10 +52,11 @@
 # 180316-0754 - Translated phrases fixes, issue #1081
 # 180502-2215 - Added new help display
 # 180504-1807 - Added new SWITCH field type
+# 191013-1014 - Fixes for PHP7
 #
 
-$admin_version = '2.14-43';
-$build = '180504-1807';
+$admin_version = '2.14-44';
+$build = '191013-1014';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -1068,6 +1069,26 @@ if ( ($action == "MODIFY_CUSTOM_FIELDS") and ($list_id > 99) )
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$fields_to_print = mysqli_num_rows($rslt);
 	$fields_list='';
+
+	$A_field_id = array();
+	$A_field_label = array();
+	$A_field_name = array();
+	$A_field_description = array();
+	$A_field_rank = array();
+	$A_field_help = array();
+	$A_field_type = array();
+	$A_field_options = array();
+	$A_field_size = array();
+	$A_field_max = array();
+	$A_field_default = array();
+	$A_field_cost = array();
+	$A_field_required = array();
+	$A_multi_position = array();
+	$A_name_position = array();
+	$A_field_order = array();
+	$A_field_encrypt = array();
+	$A_field_show_hide = array();
+	$A_field_duplicate = array();
 	$o=0;
 	while ($fields_to_print > $o) 
 		{
@@ -1364,6 +1385,7 @@ if ( ($action == "MODIFY_CUSTOM_FIELDS") and ($list_id > 99) )
 			}
 		if ($A_field_type[$o]=='TIME') 
 			{
+			if ( ($A_field_default[$o] == 'NULL') or (strlen($A_field_default[$o]) < 1) ) {$A_field_default[$o]=0;}
 			$minute_diff = $A_field_default[$o];
 			$default_time = date("H:i:s", mktime(date("H"),date("i")+$minute_diff,date("s"),date("m"),date("d"),date("Y")));
 			$default_hour = date("H", mktime(date("H"),date("i")+$minute_diff,date("s"),date("m"),date("d"),date("Y")));
@@ -1663,6 +1685,10 @@ if ($action == "LIST")
 	$stmt="SELECT list_id,list_name,active,campaign_id from vicidial_lists $whereLOGallowed_campaignsSQL order by list_id;";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$lists_to_print = mysqli_num_rows($rslt);
+	$A_list_id = array();
+	$A_list_name = array();
+	$A_active = array();
+	$A_campaign_id = array();
 	$o=0;
 	while ($lists_to_print > $o) 
 		{

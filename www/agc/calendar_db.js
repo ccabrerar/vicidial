@@ -23,7 +23,7 @@ function f_tcalParseDate (s_date) {
 	
 	if (n_year < 100)
 		n_year += (n_year < this.a_tpl.centyear ? 2000 : 1900);
-	if (n_month < 1 || n_month > 12)
+	if (n_month < 0 || n_month > 12)
 		return alert ("Invalid month value: '" + n_month + "'.\nAllowed range is 01-12.");
 	var d_numdays = new Date(n_year, n_month, 0);
 	if (n_day > d_numdays.getDate())

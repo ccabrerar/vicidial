@@ -1,7 +1,7 @@
 <?php
 # callbacks_bulk_move.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 150218-0923 - First build based on callbacks_bulk_change.php
@@ -9,6 +9,7 @@
 # 161105-0056 - Added options to purge uncalled callbacks, and also to revert callbacks to their most recent non-callback-dispo based on the callback entry time and the log tables.
 # 170409-1548 - Added IP List validation code
 # 180508-0115 - Added new help display
+# 191013-0853 - Fixes for PHP7
 #
 
 require("dbconnect_mysqli.php");
@@ -92,6 +93,8 @@ else
 $StarTtimE = date("U");
 $TODAY = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
+if (!isset($group)) {$group=array();}
+if (!isset($users)) {$users=array();}
 $ip = getenv("REMOTE_ADDR");
 $date = date("r");
 $ip = getenv("REMOTE_ADDR");
@@ -228,6 +231,7 @@ while($i < $users_ct)
 	$i++;
 	}
 
+/*
 $i=0;
 $user_group_string='|';
 $user_group_ct = count($user_group);
@@ -236,6 +240,7 @@ while($i < $users_ct)
 	$user_group_string .= "$user_group[$i]|";
 	$i++;
 	}
+*/
 
 $stmt="SELECT campaign_id from vicidial_campaigns $whereLOGallowed_campaignsSQL order by campaign_id;";
 $rslt=mysql_to_mysqli($stmt, $link);
@@ -299,6 +304,7 @@ else
 #	$user_agent_log_SQL = "and vicidial_agent_log.user IN($user_SQL)";
 	}
 
+/*
 $i=0;
 $user_group_string='|';
 $user_group_ct = count($user_group);
@@ -319,6 +325,7 @@ else
 #	$user_group_agent_log_SQL = "and vicidial_agent_log.user_group IN($user_group_SQL)";
 	$user_group_SQL = "and ($user_group_SQL or selected_user_groups='|')";
 	}
+*/
 
 $i=0;
 $group_string='|';

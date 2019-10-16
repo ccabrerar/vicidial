@@ -1,7 +1,7 @@
 <?php
 # AST_chat_log_report.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # This is the report page where you can view report information of any of the dialer's chats.  The web page will 
 # display the information about the chat, including the start time and participants, and will also provide links 
@@ -13,6 +13,7 @@
 # 160108-2300 - Changed some mysqli_query to mysql_to_mysqli for consistency
 # 161217-0820 - Added chat-type to allow for multi-user internal chat sessions
 # 170409-1550 - Added IP List validation code
+# 191013-0857 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -329,6 +330,7 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $campaigns_to_print = mysqli_num_rows($rslt);
 $i=0;
+$groups=array();
 while ($i < $campaigns_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -343,6 +345,7 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $user_groups_to_print = mysqli_num_rows($rslt);
 $i=0;
+$user_groups=array();
 while ($i < $user_groups_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -357,6 +360,7 @@ if ($DB) {$HTML_text.="$stmt\n";}
 $inbound_groups_to_print = mysqli_num_rows($rslt);
 $i=0;
 $inbound_groups_string='|';
+$inbound_groups=array();
 while ($i < $inbound_groups_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -370,6 +374,8 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $users_to_print = mysqli_num_rows($rslt);
 $i=0;
+$user_list=array();
+$user_names=array();
 while ($i < $users_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -850,7 +856,7 @@ else
 				$ASCII_text.="          | "._QXZ("MESSAGE TIME",19)." | "._QXZ("CHAT MEMBER NAME",28)." | "._QXZ("MESSAGE",53)." |\n";
 				$ASCII_text.="          +---------------------+------------------------------+-------------------------------------------------------+\n";
 
-				$GRAPH_text.="<tr><td align='center' colspan='$colspan'><span id='ChatReport".$sub_row["chat_id"]."' style='display: none;'><table width='600'>";
+				$GRAPH_text.="<tr><td align='center' colspan='$colspan'><span id='ChatReport".$row["chat_id"]."' style='display: none;'><table width='600'>";
 				$GRAPH_text.="  <tr><th class='column_header grey_graph_cell'>"._QXZ("MESSAGE TIME")."</th><th class='column_header grey_graph_cell'>"._QXZ("CHAT MEMBER NAME")."</th><th class='thgraph'>"._QXZ("MESSAGE")."</th><th class='thgraph'>&nbsp;</th></tr>";
 				while ($sub_row=mysqli_fetch_array($sub_rslt)) 
 					{
@@ -896,6 +902,7 @@ else
 			$user_stmt="select vu.user, vu.full_name from vicidial_users vu, vicidial_manager_chat_log_archive v where manager_chat_id='$download_chat_id' and v.user=vu.user";
 			if ($download_chat_subid) {$user_stmt.=" and manager_chat_subid='$download_chat_subid' ";}
 			$user_rslt=mysql_to_mysqli($user_stmt, $link);
+			$user_name=array();
 			while ($user_row=mysqli_fetch_row($user_rslt)) {
 				$user_name["$user_row[0]"]=$user_row[1];
 			}

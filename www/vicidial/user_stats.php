@@ -59,6 +59,7 @@
 # 180323-2308 - Fix for user time calculation, subtracted queue_seconds
 # 180410-1754 - Added Agent lead switch log and manager pause code approval log displays
 # 190310-2206 - Added indication of muted recordings by agent
+# 191013-0843 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -692,6 +693,9 @@ else
 		$VLstatuses_to_print = mysqli_num_rows($rslt);
 		$total_calls=0;
 		$o=0;   $p=0;
+		$counts=array();
+		$status=array();
+		$call_sec=array();
 		while ($VLstatuses_to_print > $o) 
 			{
 			$row=mysqli_fetch_row($rslt);
@@ -839,7 +843,7 @@ else
 					}
 				}
 
-			$total_calls = ($total_calls + $row[0]);
+			$total_calls++;
 
 			$call_seconds=0;
 			$o++;

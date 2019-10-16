@@ -3,7 +3,7 @@
 # 
 # Pulls all timeclock records for an agent
 #
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 90602-2244 - First build
@@ -28,6 +28,7 @@
 # 170409-1555 - Added IP List validation code
 # 170829-0040 - Added screen color settings
 # 171012-2015 - Fixed javascript/apache errors with graphs
+# 191013-0833 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -297,6 +298,7 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $campaigns_to_print = mysqli_num_rows($rslt);
 $i=0;
+$groups=array();
 while ($i < $campaigns_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -308,6 +310,7 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $user_groups_to_print = mysqli_num_rows($rslt);
 $i=0;
+$user_groups=array();
 while ($i < $user_groups_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -361,6 +364,8 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $statha_to_print = mysqli_num_rows($rslt);
 $i=0;
+$pause_code=array();
+$pause_code_name=array();
 while ($i < $statha_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -594,6 +599,9 @@ else
 	if ($DB) {echo "$stmt\n";}
 	$users_to_print = mysqli_num_rows($rslt);
 	$i=0;
+	$ULname=array();
+	$ULuser=array();
+	$ULgroup=array();
 	while ($i < $users_to_print)
 		{
 		$row=mysqli_fetch_row($rslt);
@@ -611,6 +619,8 @@ else
 	if ($DB) {echo "$stmt\n";}
 	$punches_to_print = mysqli_num_rows($rslt);
 	$i=0;
+	$TCuser=array();
+	$TCtime=array();
 	while ($i < $punches_to_print)
 		{
 		$row=mysqli_fetch_row($rslt);
@@ -657,6 +667,15 @@ else
 	$max_time=1;
 	$graph_stats=array();
 	$q=0;
+	$Suser=array();
+	$Stime=array();
+	$Sname=array();
+	$Sgroup=array();
+	$StimeTC=array();
+	$TOPsort=array();
+	$TOPsortTALLY=array();
+	$TOPsorted_output=array();
+	$TOPsorted_outputFILE=array();
 	while ( ($m < $uc) and ($m < 50000) )
 		{
 		$TCdetail='';
@@ -934,6 +953,7 @@ else
 			{sort($TOPsort, SORT_STRING);}
 
 		$m=0;
+		$sort_order=array();
 		while ($m < $k)
 			{
 			$sort_split = explode("-----",$TOPsort[$m]);

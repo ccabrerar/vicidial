@@ -1,11 +1,12 @@
 <?php 
 # AST_agent_inbound_status.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
 # 170913-0853 - First build based upon AST_agent_status_detail.php
+# 191013-0841 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -300,16 +301,17 @@ if (in_array('--ALL--', $group)) {
 	$groupQS="&group[]=--ALL--";
 }
 
-for ($i=0; $i<count($user_group); $i++)
-	{
-	if (preg_match('/\-\-ALL\-\-/', $user_group[$i])) {$all_user_groups=1; $user_group="";}
-	}
+#for ($i=0; $i<count($user_group); $i++)
+#	{
+#	if (preg_match('/\-\-ALL\-\-/', $user_group[$i])) {$all_user_groups=1; $user_group="";}
+#	}
 
 $stmt="SELECT user_group from vicidial_user_groups $whereLOGadmin_viewable_groupsSQL order by user_group;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $user_groups_to_print = mysqli_num_rows($rslt);
 $i=0;
+$user_groups=array();
 while ($i < $user_groups_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -343,6 +345,9 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $statcats_to_print = mysqli_num_rows($rslt);
 $i=0;
+$vsc_id=array();
+$vsc_name=array();
+$vsc_count=array();
 while ($i < $statcats_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -471,10 +476,13 @@ else
 	$statusesHEAD='';
 	$statusesHTML='';
 	$statusesFILE='';
+	$statusesARY=array();
 	$statusesARY[0]='';
 	$j=0;
 	$users='-';
+	$usersARY=array();
 	$usersARY[0]='';
+	$user_namesARY=array();
 	$user_namesARY[0]='';
 	$k=0;
 
@@ -490,6 +498,10 @@ else
 		if ($DB) {echo "$user_stmt\n";}
 	$user_rslt=mysql_to_mysqli($user_stmt, $link);
 	$q=0;
+	$calls=array();
+	$full_name=array();
+	$user=array();
+	$status=array();
 	while($q<mysqli_num_rows($user_rslt)) 
 		{
 		$user_row=mysqli_fetch_row($user_rslt);
@@ -643,6 +655,11 @@ else
 
 	### BEGIN loop through each user ###
 	$m=0;
+	$TOPsorted_output=array();
+	$TOPsorted_outputFILE=array();
+	$TOPsorted_outputHTML=array();
+	$TOPsort=array();
+	$TOPsortTALLY=array();
 	$CIScountTOT=0;
 	$DNCcountTOT=0;
 

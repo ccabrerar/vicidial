@@ -1,10 +1,12 @@
 <?php 
 # AST_LISTS_pass_report.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This is a list inventory report, not a calling report. This report will show
 # statistics for all of the lists in the selected campaigns
+#
+# NOTE! This report can cause high database load on even moderate-sized systems. We do not recommend running it during production hours.
 #
 # CHANGES
 # 140116-0839 - First build based upon AST_LISTS_campaign_stats.php
@@ -21,6 +23,7 @@
 # 170829-0040 - Added screen color settings
 # 171012-2015 - Fixed javascript/apache errors with graphs
 # 180507-2315 - Added new help display
+# 191013-0828 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -278,6 +281,8 @@ if ( (!preg_match('/\-ALL/i', $LOGallowed_campaigns)) )
 	}
 $regexLOGallowed_campaigns = " $LOGallowed_campaigns ";
 
+$groups=array();
+$group_names=array();
 if ($use_lists < 1)
 	{
 	$stmt="select campaign_id,campaign_name from vicidial_campaigns $whereLOGallowed_campaignsSQL order by campaign_id;";
@@ -665,6 +670,7 @@ else
 	$graph_stats=array();
 	$graph_stats2=array();
 	$max_stats2=array();
+	$totals2=array();
 	$lists_id_str="";
 	$list_stmt="SELECT list_id from vicidial_lists where active IN('Y','N') $group_SQLand";
 	$list_rslt=mysql_to_mysqli($list_stmt, $link);

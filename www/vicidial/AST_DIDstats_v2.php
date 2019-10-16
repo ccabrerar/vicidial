@@ -1,12 +1,13 @@
 <?php 
 # AST_DIDstats_v2.php - DID sumary report
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
 # 170828-2018 - First build, based on AST_DIDstats.php
 # 170903-0941 - Added screen color settings
+# 191013-0817 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -221,6 +222,9 @@ if ($DB) {$MAIN.="$stmt\n";}
 $groups_to_print = mysqli_num_rows($rslt);
 $groups_string='|';
 $i=0;
+$groups=array();
+$group_patterns=array();
+$group_names=array();
 while ($i < $groups_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -478,6 +482,8 @@ else
 	$CSV_text1.="\""._QXZ("Time range")." $DURATIONday "._QXZ("days").":\",\"$query_date_BEGIN "._QXZ("to")." $query_date_END\",\"$suffix\"\n\n";
 
 	$d=0;
+	$daySTART=array();
+	$dayEND=array();
 	while ($d < $DURATIONday)
 		{
 		$dSQepoch = ($SQepoch + ($d * 86400) );
@@ -502,6 +508,8 @@ else
 	$i=0;
 	$extension[0]='';
 	$did_server_ip[0]='';
+	$dt=array();
+	$ut=array();
 	while ($i < $records_to_grab)
 		{
 		$row=mysqli_fetch_row($rslt);
@@ -535,6 +543,9 @@ else
 
 	###################################################
 	### TOTALS DID SUMMARY SECTION ###
+	$qrtCALLS=array();
+	$qrtCALLSavg=array();
+	$qrtCALLSsec=array();
 	if (strlen($extension[0]) > 0)
 		{
 		$ASCII_text.=_QXZ("DID Summary").":\n";
@@ -571,6 +582,7 @@ else
 
 		$d=0;
 		$max_calls=1;
+		$graph_stats=array();
 		while ($d < $stats_array_ct)
 			{
 			$stat_description =		' *** default *** ';
@@ -697,6 +709,9 @@ else
 	$hi_hour_count=0;
 	$hi_hold_count=0;
 
+	$qrtCALLS=array();
+	$qrtCALLSavg=array();
+	$qrtCALLSsec=array();
 	while ($i < $TOTintervals)
 		{
 		$qrtCALLSavg[$i] = MathZDC($qrtCALLSsec[$i], $qrtCALLS[$i]);

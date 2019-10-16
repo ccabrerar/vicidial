@@ -3,7 +3,7 @@
 #
 # This report is for viewing the a report of which users accessed which recordings
 #
-# Copyright (C) 2018  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -11,6 +11,7 @@
 # 170409-1538 - Added IP List validation code
 # 170824-2130 - Added HTML formatting and screen colors
 # 180507-2315 - Added new help display
+# 191013-0830 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -55,7 +56,8 @@ if (isset($_GET["DB"]))					{$DB=$_GET["DB"];}
 
 $report_name="Recording Access Log Report";
 $NOW_DATE = date("Y-m-d");
-if (!isset($users)) {$uesrs=array();}
+if (!isset($users)) {$users=array();}
+if (!isset($user_group)) {$user_group=array();}
 if (!isset($access_date_D)) {$access_date_D=$NOW_DATE;}
 if (!isset($access_date_end_D)) {$access_date_end_D=$NOW_DATE;}
 if (!isset($access_date_T)) {$access_date_T="00:00:00";}

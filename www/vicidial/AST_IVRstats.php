@@ -1,7 +1,7 @@
 <?php 
 # AST_IVRstats.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 81026-2026 - First build
@@ -40,6 +40,7 @@
 # 170829-0040 - Added screen color settings
 # 171012-2015 - Fixed javascript/apache errors with graphs
 # 180507-2315 - Added new help display
+# 191013-0835 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -365,6 +366,8 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $groups_to_print = mysqli_num_rows($rslt);
 $i=0;
+$LISTgroups=array();
+$LISTgroups_names=array();
 if ($type == 'inbound')
 	{
 	if ($CALL_MENUdisplay > 0)
@@ -421,6 +424,9 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $statcats_to_print = mysqli_num_rows($rslt);
 $i=0;
+$vsc_id=array();
+$vsc_name=array();
+$vsc_count=array();
 while ($i < $statcats_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -695,6 +701,14 @@ else
 	if ($DB) {$MAIN.="$stmt\n";}
 	$logs_to_print = mysqli_num_rows($rslt);
 	$p=0;
+	$uniqueid=array();
+	$extension=array();
+	$start_time=array();
+	$comment_a=array();
+	$comment_b=array();
+	$comment_d=array();
+	$epoch=array();
+	$phone_ext=array();
 	while ($p < $logs_to_print)
 		{
 		$row=mysqli_fetch_row($rslt);
@@ -711,8 +725,10 @@ else
 
 	### create the call flow of all calls by uniqueid
 	$last_uniqueid='';
-	$first_epoch='';
-	$last_epoch='';
+	$first_epoch=array();
+	$last_epoch=array();
+	$unique_calls=array();
+	$FLOWuniqueid=array();
 	$p=0;
 	$r=-1;
 	while ($p < $logs_to_print)
@@ -758,6 +774,8 @@ else
 	$last_Suniqueid='';
 	$p=-1;
 	$s=0;
+	$STunique_calls=array();
+	$STunique_calls_count=array();
 	while ($s <= $r)
 		{
 		if ($DB > 0) {$MAIN.="$s|$unique_calls[$s]\n";}
@@ -779,6 +797,7 @@ else
 	### put call flows and counts together for sorting again
 	$TOTALcalls=0;
 	$s=0;
+	$FLOWunique_calls=array();
 	while ($s <= $p)
 		{
 		$TOTALcalls = ($TOTALcalls + $STunique_calls_count[$s]);
@@ -806,6 +825,8 @@ else
 	### put call flows and counts together for sorting again
 	$RUC_ct = count($RAWunique_calls);
 	$s=0;
+	$FLOWivr_time=array();
+	$FLOWunique_calls_list=array();
 	while ($s <= $p)
 		{
 		$FLOWsummary = explode('__________',$FLOWunique_calls[$s]);
@@ -849,15 +870,20 @@ else
 
 	$CSV_text.="\"\",\""._QXZ("IVR CALLS")."\",\""._QXZ("QUEUE CALLS")."\",\""._QXZ("QUEUE DROP CALLS")."\",\""._QXZ("QUEUE DROP PERCENT")."\",\""._QXZ("IVR AVG TIME")."\",\""._QXZ("TOTAL AVG TIME")."\",\""._QXZ("CALL PATH")."\"\n";
 
+	$FLOWdrop=array();
+	$FLOWtotal=array();
+	$FLOWdropPCT=array();
+	$FLOWclose_time=array();
+	$FLOWtotal_time=array();
+	$avgFLOWivr_time=array();
+	$avgFLOWtotal_time=array();
 	while ($s <= $p)
 		{
-		$vcl_statuses = $MT;
 		$FLOWdrop[$s]=0;
 		$FLOWtotal[$s]=0;
 		$FLOWdropPCT[$s]=0;
 		$FLOWsummary = explode('__________',$FLOWunique_calls[$s]);
 		$FLOWsummary[0] = ($FLOWsummary[0] + 0);
-
 		$FLOWunique_calls_list[$s] = preg_replace("/,$/","",$FLOWunique_calls_list[$s]);
 
 
@@ -869,6 +895,7 @@ else
 			if ($DB) {$ASCII_text.="$stmt\n";}
 			$vcl_statuses_to_print = mysqli_num_rows($rslt);
 			$w=0;
+			$vcl_statuses = array();
 			while ($w < $vcl_statuses_to_print)
 				{
 				$row=mysqli_fetch_row($rslt);
@@ -1074,6 +1101,7 @@ else
 	$i=0;
 	$h=0;
 	$total_calls=0;
+	$hour_count=array();
 	while ($i <= 96)
 		{
 		$time_index=substr("0$h", -2)."00";

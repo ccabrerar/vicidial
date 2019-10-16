@@ -1,7 +1,7 @@
 <?php 
 # AST_inbound_daily_report.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -32,6 +32,7 @@
 # 170409-1555 - Added IP List validation code
 # 170829-0040 - Added screen color settings
 # 171012-2015 - Fixed javascript/apache errors with graphs
+# 191013-0902 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -285,6 +286,8 @@ if ( (!preg_match('/\-\-ALL\-\-/i',$LOGadmin_viewable_groups)) and (strlen($LOGa
 	$whereLOGadmin_viewable_groupsSQL = "where user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')";
 	}
 
+$call_times=array();
+$call_time_names=array();
 if ($IDR_calltime_available==1)
 	{
 	$LOGadmin_viewable_call_timesSQL='';
@@ -346,6 +349,8 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $groups_to_print = mysqli_num_rows($rslt);
 $i=0;
+$groups=array();
+$group_names=array();
 $groups_string='|';
 while ($i < $groups_to_print)
 	{
@@ -504,6 +509,8 @@ if ($groups_selected==0)
 else
 	{
 	### FOR SHIFTS IT IS BEST TO STICK TO 15-MINUTE INCREMENTS FOR START TIMES ###
+	$start_time_ary=array();
+	$stop_time_ary=array();
 	if ($shift && $shift!="ALL") {
 		# call_time_id | call_time_name              | call_time_comments | ct_default_start | ct_default_stop | ct_sunday_start | ct_sunday_stop | ct_monday_start | ct_monday_stop | ct_tuesday_start | ct_tuesday_stop | ct_wednesday_start | ct_wednesday_stop | ct_thursday_start | ct_thursday_stop | ct_friday_start | ct_friday_stop | ct_saturday_start | ct_saturday_stop
 		$big_shift_time_SQL_clause ="";
@@ -700,6 +707,7 @@ else
 	if ($shift && $IDR_calltime_available) {$CSV_text.=_QXZ("for")." $shift "._QXZ("shift");}
 	$CSV_text.="\n\n";
 
+	$status_array=array();
 	if ($show_disposition_statuses) {
 		$dispo_stmt="select distinct status from ".$vicidial_closer_log_table." where call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' and  campaign_id in (" . $groups_selected_str . ") $big_shift_time_SQL_clause order by status;";
 		#echo $dispo_stmt."<BR>";
@@ -726,6 +734,8 @@ else
 	}
 
 	$d=0; $q=0; $hr=0; $shift_hrs=0;
+	$daySTART=array();
+	$dayEND=array();
 	while ($d < $DURATIONday)
 		{
 		$dSQepoch = ($SQepoch + ($d * 86400) + ($hr * 3600));
@@ -875,6 +885,14 @@ else
 	$records_to_grab = mysqli_num_rows($rslt);
 	$i=0;
 	$fTOTAL_agents=array();
+	$qs=array();
+	$dt=array();
+	$ut=array();
+	$ls=array();
+	$st=array();
+	$tr=array();
+	$at=array();
+	$ag=array();
 	if($hourly_breakdown) {$epoch_interval=3600;} else {$epoch_interval=86400;}
 	while ($i < $records_to_grab)
 		{
@@ -930,6 +948,7 @@ else
 	$qrtQUEUEmax=$MT;
 
 	$totABANDONSdate=$MT;
+	$totAGENTSdate=array();
 	$totANSWERSdate=$MT;
 
 	$totANSWERS=0;
@@ -939,6 +958,14 @@ else
 	$totABANDONSsec=0;
 	$totANSWERSspeed=0;
 	$totSTATUSES=array();
+
+	$totABANDONSsecdate=array();
+	$totANSWERSsecdate=array();
+	$totCALLSsecDATE=array();
+	$totDROPSsecDATE=array();
+	$totQUEUEsecDATE=array();
+	$totSTATUSESdate=array();
+	$totANSWERSspeeddate=array();
 
 	$FtotANSWERS=0;
 	$FtotAGENTS=count(array_count_values($ag));
@@ -1156,6 +1183,19 @@ else
 	$totABANDONSqtd=0;
 	$totABANDONSsecqtd=0;
 	$totSTATUSESqtd=array();
+
+	$totDROPSpctDATE=array();
+	$totQUEUEpctDATE=array();
+	$totDROPSavgDATE=array();
+	$totQUEUEtotDATE=array();
+	$totCALLSavgDATE=array();
+	$totABANDONSpctDATE=array();
+	$totABANDONSavgTIME=array();
+	$totANSWERSavgspeedTIME=array();
+	$totANSWERSavgTIME=array();
+	$totANSWERStalkTIME=array();
+	$totANSWERSwrapTIME=array();
+	$totANSWERStotTIME=array();
 
 	$d=0;
 	while ($d < $TOTintervals)
@@ -1385,10 +1425,10 @@ else
 				if (trim($totANSWERSsecqtd+($totANSWERSqtd*15))>$max_qtd_totalcalltime) {$max_qtd_totalcalltime=trim($totANSWERSsecqtd+($totANSWERSqtd*15));}
 				$month=date("m", strtotime($dayEND[$d]));
 				$year=substr($dayEND[$d], 0, 4);
-				$qtr4=array(01,02,03);
-				$qtr1=array(04,05,06);
-				$qtr2=array(07,08,09);
-				$qtr3=array(10,11,12);
+				$qtr4=array("01","02","03");
+				$qtr1=array("04","05","06");
+				$qtr2=array("07","08","09");
+				$qtr3=array("10","11","12");
 				if(in_array($month,$qtr1)) {
 					$qtr="1st";
 				} else if(in_array($month,$qtr2)) {
@@ -1433,6 +1473,7 @@ else
 				}
 			}
 
+		if (!isset($totAGENTSdate[$d])) {$totAGENTSdate[$d]=array();}
 		$totAGENTSdayCOUNT=count($totAGENTSdate[$d]);
 		$totAGENTSday=sprintf("%8s", count($totAGENTSdate[$d]));
 

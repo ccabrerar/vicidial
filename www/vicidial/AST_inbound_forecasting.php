@@ -1,7 +1,7 @@
 <?php
 # AST_inbound_forecasting.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -11,6 +11,7 @@
 # 171012-2015 - Fixed javascript/apache errors with graphs
 # 180507-2315 - Added new help display
 # 180712-1508 - Fix for rare allowed reports issue
+# 191013-0856 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -360,6 +361,7 @@ $campaigns_to_print = mysqli_num_rows($rslt);
 $i=0;
 $campaigns_string='|';
 $campaigns_selected=count($campaign);
+$campaigns=array();
 while ($i < $campaigns_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -379,6 +381,8 @@ $groups_to_print = mysqli_num_rows($rslt);
 $i=0;
 $groups_string='|';
 $groups_selected=count($group);
+$groups=array();
+$group_names=array();
 while ($i < $groups_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -473,6 +477,8 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $times_to_print = mysqli_num_rows($rslt);
 $i=0;
+$call_times=array();
+$call_time_names=array();
 while ($i < $times_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -1237,7 +1243,7 @@ else
 			while(list($key, $val)=each($graph_stats)) {
 				$val[$dataset_index]=preg_replace("/N\/A/", "0", $val[$dataset_index]);
 				$data.="\"".$val[$dataset_index]."\","; 
-				$current_graph_total+=$val[$dataset_index];
+				$current_graph_total+=intval($val[$dataset_index]);
 				$bgcolor=$backgroundColor[($d%count($backgroundColor))];
 				$hbgcolor=$hoverBackgroundColor[($d%count($hoverBackgroundColor))];
 				$hbcolor=$hoverBorderColor[($d%count($hoverBorderColor))];

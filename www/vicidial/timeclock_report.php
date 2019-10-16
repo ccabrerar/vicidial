@@ -1,7 +1,7 @@
 <?php 
 # timeclock_report.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -31,6 +31,7 @@
 # 170227-1723 - Fix for default HTML report format, issue #997
 # 170409-1555 - Added IP List validation code
 # 171012-2015 - Fixed javascript/apache errors with graphs
+# 191013-0827 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -112,7 +113,6 @@ else
 	}
 $query_date = preg_replace("/'|\"|\\\\|;/","",$query_date);
 $end_date = preg_replace("/'|\"|\\\\|;/","",$end_date);
-$user_group = preg_replace("/'|\"|\\\\|;/","",$user_group);
 $shift = preg_replace("/'|\"|\\\\|;/","",$shift);
 $order = preg_replace("/'|\"|\\\\|;/","",$order);
 $user = preg_replace("/'|\"|\\\\|;/","",$user);
@@ -295,9 +295,10 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $user_groups_to_print = mysqli_num_rows($rslt);
 $i=0;
-	$LISTuser_groups[$i]='---ALL---';
-	$i++;
-	$user_groups_to_print++;
+$LISTuser_groups=array();
+$LISTuser_groups[$i]='---ALL---';
+$i++;
+$user_groups_to_print++;
 while ($i < $user_groups_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -416,6 +417,7 @@ $HEADER.="<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=utf-8\"
 $HEADER.="<TITLE>\n";
 
 $HEADER.= _QXZ("$report_name");
+$HEADER.="</TITLE>\n";
 
 ##### BEGIN Set variables to make header show properly #####
 $ADD =					'311111';
@@ -595,6 +597,12 @@ if (!$report_display_type || $report_display_type=="TEXT")
 	$rows_to_print = mysqli_num_rows($rslt);
 	$i=0;
 
+	$user_id=array();
+	$full_name=array();
+	$login_sec=array();
+	$u_group=array();
+	$hours=array();
+	$hoursSORT=array();
 	while ($i < $rows_to_print)
 		{
 		$dbHOURS=0;
@@ -671,6 +679,7 @@ else
 	######## GRAPHING #########
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$high_ct=0; $i=0;
+	$ct_ary=array();
 	while ($row=mysqli_fetch_row($rslt)) {
 
 		if ($row[2] > 0)

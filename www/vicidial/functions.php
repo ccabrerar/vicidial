@@ -4,7 +4,7 @@
 #
 # functions for administrative scripts and reports
 #
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 #
 # CHANGES:
@@ -33,6 +33,7 @@
 # 170526-2142 - Added additional auth variable filtering, issue #1016
 # 170930-0852 - Added code for custom reports variable display
 # 180508-2215 - Added new help display
+# 191013-0901 - Fixes for PHP7
 #
 
 ##### BEGIN validate user login credentials, check for failed lock out #####
@@ -1403,7 +1404,7 @@ function _QXZ($English_text, $sprintf=0, $align="l", $v_one='', $v_two='', $v_th
 			{
 			$fmt="%-".$sprintf."s";
 			}
-		$English_text=sprintf($fmt, $English_text);
+		$English_text=sprintf($fmt, substr($English_text, 0, $sprintf));
 		}
 	return $English_text;
 	}

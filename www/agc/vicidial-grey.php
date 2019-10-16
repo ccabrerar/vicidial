@@ -1,7 +1,7 @@
 <?php
 # vicidial-grey.php - the web-based version of the astVICIDIAL client application
 # 
-# Copyright (C) 2016  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # Other scripts that this application depends on:
 # - vdc_db_query.php: Updates information in the database
@@ -526,10 +526,11 @@
 # 160618-1006 - Branched old agent screen design, added logging of browser width/height
 #               NOTE: THIS VERSION WILL EVENTUALLY BECOME UNSUPPORTED!!!!!!!!!!
 # 161102-1120 - Fixed QM partition problem
+# 190111-0908 - Fix for PHP7
 #
 
-$version = '2.12-493c-grey';
-$build = '161102-1120';
+$version = '2.12-494c-grey';
+$build = '190111-0908';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=87;
 $one_mysql_log=0;
@@ -834,7 +835,7 @@ if ($campaign_login_list > 0)
 		$MGR_pass = preg_replace("/\'|\"|\\\\|;/","",$MGR_pass);
 
 		$MGR_auth=0;
-		$auth_message = user_authorization($MGR_login,$MGR_pass,'MGR',0,0,0,0);
+		$auth_message = user_authorization($MGR_login,$MGR_pass,'MGR',0,0,0,0,'vicidial-grey');
 		if (preg_match("/^GOOD/",$auth_message))
 			{$MGR_auth=1;}
 
@@ -1180,7 +1181,7 @@ else
 	else
 		{
 		$auth=0;
-		$auth_message = user_authorization($VD_login,$VD_pass,'',1,0,1,0);
+		$auth_message = user_authorization($VD_login,$VD_pass,'',1,0,1,0,'vicidial-grey');
 		if (preg_match("/^GOOD/",$auth_message))
 			{
 			$auth=1;

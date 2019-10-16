@@ -1,11 +1,12 @@
 <?php 
 # asterisk_debug.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 151229-1703 - First build
 # 170409-1536 - Added IP List validation code
+# 191013-0905 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -205,6 +206,8 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $servers_to_print = mysqli_num_rows($rslt);
 $i=0;
+$server_id=array();
+$Aserver_ip=array();
 while ($i < $servers_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);

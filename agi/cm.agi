@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# cm.agi   version 2.12
+# cm.agi   version 2.14
 # 
 # Used by Call Menus to log digit presses if enabled in the settings. You should
 # not need to manually use this script, it is used by the dialplan builder.
@@ -21,7 +21,7 @@
 #exten => _XXXXX,1,AGI(cm.agi,INBOUND-----${EXTEN}-----postal_code)
 #exten => _XXXXX,n,Goto(next_callmenu_here,s,1)
 #
-# Copyright (C) 2016  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 110525-2100 - First Build
@@ -31,6 +31,7 @@
 # 130926-1547 - Added new queue_log IVR entries for QM
 # 160305-2244 - Added Alt IVR Logging options
 # 161102-1039 - Fixed QM partition problem
+# 191011-0921 - Fixed logging issue with missing active call record
 #
 
 $script = 'cm.agi';
@@ -203,6 +204,11 @@ if ($calleridname =~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/)
 		@aryA = $sthA->fetchrow_array;
 		$campaign_id =	$aryA[0];
 		$lead_id =		$aryA[1];
+		}
+	else
+		{
+		$lead_id = substr($calleridname, 10, 10);
+		$lead_id = ($lead_id + 0);
 		}
 	$sthA->finish();
 	}

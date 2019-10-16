@@ -1,7 +1,7 @@
 <?php
 # timeclock.php - VICIDIAL system user timeclock
 # 
-# Copyright (C) 2016  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 80523-0134 - First Build 
@@ -22,10 +22,11 @@
 # 150212-0033 - Added case-sensitive user validation(issue #682)
 # 150727-0912 - Added default_language
 # 161106-2112 - Added screen colors, fixed formatting
+# 190111-0901 - Fix for PHP7
 #
 
-$version = '2.12-17';
-$build = '161106-2112';
+$version = '2.12-18';
+$build = '190111-0901';
 
 $StarTtimE = date("U");
 $NOW_TIME = date("Y-m-d H:i:s");
@@ -220,7 +221,7 @@ if ( ($stage == 'login') or ($stage == 'logout') )
 	{
 	### see if user/pass exist for this user in vicidial_users table
 	$valid_user=0;
-	$auth_message = user_authorization($user,$pass,'',1,0,0,0);
+	$auth_message = user_authorization($user,$pass,'',1,0,0,0,'timeclock');
 	if ($auth_message == 'GOOD')
 		{$valid_user=1;}
 

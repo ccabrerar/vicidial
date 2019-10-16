@@ -1,7 +1,7 @@
 <?php
 # audit_comments.php
 # 
-# Copyright (C) 2014  poundteam.com,vicidial.org    LICENSE: AGPLv2
+# Copyright (C) 2019  poundteam.com,vicidial.org    LICENSE: AGPLv2
 #
 # This script is designed to display QC audit comments, contributed by poundteam.com
 #
@@ -10,6 +10,7 @@
 # 130802-0957 - Changed to PHP mysqli functions
 # 140304-2154 - Enabled special characters in comments
 # 141120-1053 - Added user name and date and flag for admin user for comment log display, code cleanup
+# 191014-0630 - Fixes for PHP7
 #
 
 require_once("functions.php");
@@ -87,6 +88,11 @@ function get_audited_comments($lead_id,$format,$user,$mel,$NOW_TIME,$link,$serve
     $ACcount=mysqli_num_rows($rslt);
     if($ACcount>0) 
 		{
+		$C_user = array();
+		$C_comment = array();
+		$C_date = array();
+		$C_name = array();
+		$C_level = array();
         $i=0;
         while ($i < $ACcount) 
 			{

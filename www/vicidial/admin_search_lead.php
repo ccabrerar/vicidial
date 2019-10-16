@@ -1,7 +1,7 @@
 <?php
 # admin_search_lead.php   version 2.14
 #
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # AST GUI database administration search for lead info
 # admin_modify_lead.php
@@ -48,6 +48,7 @@
 # 160508-0753 - Added colors features
 # 170409-1541 - Added IP List validation code
 # 180421-0813 - Fix for slave db use, issue #1092
+# 191014-1316 - Fix for foreign language, issue #1187
 #
 
 require("dbconnect_mysqli.php");
@@ -342,7 +343,7 @@ if ( (!$vendor_id) and (!$phone)  and (!$lead_id) and (!$log_phone)  and (!$log_
 	if (mysqli_num_rows($archive_rslt)>0) 
 		{
 		echo "<TR bgcolor=#$SSstd_row2_background>";
-		echo "<TD ALIGN=right>"._QXZ("Archive search").": &nbsp; </TD><TD ALIGN=left><select size=1 name=archive_search><option>"._QXZ("No")."</option><option>"._QXZ("Yes")."</option><option	SELECTED>$archive_search</option></select></TD>";
+		echo "<TD ALIGN=right>"._QXZ("Archive search").": &nbsp; </TD><TD ALIGN=left><select size=1 name=archive_search><option value='No'>"._QXZ("No")."</option><option value='Yes'>"._QXZ("Yes")."</option><option	SELECTED value='$archive_search'>"._QXZ("$archive_search")."</option></select></TD>";
 		echo "<TD> &nbsp; </TD>\n";
 		echo "</TR><TR bgcolor=#$SSmenu_background>";
 		echo "<TD colspan=3 align=center height=1></TD></TR>";
@@ -358,7 +359,7 @@ if ( (!$vendor_id) and (!$phone)  and (!$lead_id) and (!$log_phone)  and (!$log_
 	echo "<TD ALIGN=right>$label_phone_number: &nbsp; </TD><TD ALIGN=left><input type=text name=phone size=14 maxlength=18></TD>";
 	echo "<TD rowspan=2><INPUT TYPE=SUBMIT NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'></TD>\n";
 	echo "</TR><TR bgcolor=#$SSstd_row2_background>";
-	echo "<TD ALIGN=right>$label_alt_phone "._QXZ("search").": &nbsp; </TD><TD ALIGN=left><select size=1 name=alt_phone_search><option>"._QXZ("No")."</option><option>"._QXZ("Yes")."</option><option SELECTED>$alt_phone_search</option></select></TD>";
+	echo "<TD ALIGN=right>$label_alt_phone "._QXZ("search").": &nbsp; </TD><TD ALIGN=left><select size=1 name=alt_phone_search><option value='No'>"._QXZ("No")."</option><option value='Yes'>"._QXZ("Yes")."</option><option SELECTED value='$alt_phone_search'>"._QXZ("$alt_phone_search")."</option></select></TD>";
 
 	echo "</TR><TR bgcolor=#$SSmenu_background>";
 	echo "<TD colspan=3 align=center height=1></TD>";

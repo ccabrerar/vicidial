@@ -4,7 +4,7 @@
 #
 # functions for agent scripts
 #
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 #
 # CHANGES:
@@ -47,6 +47,7 @@
 # 180327-1357 - Added code for LOCALFQDN conversion to browser-used server URL script iframes
 # 180503-1817 - Added code for SWITCH field type
 # 181004-1644 - Fix for defaut field in AREA type
+# 191013-1029 - Fixes for PHP7
 #
 
 # $mysql_queries = 26
@@ -370,6 +371,26 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 			$duplicates_list='';
 			$duplicates_master_list='';
 			$duplicates_count=0;
+			$A_field_id = array();
+			$A_field_label = array();
+			$A_field_name = array();
+			$A_field_description = array();
+			$A_field_rank = array();
+			$A_field_help = array();
+			$A_field_type = array();
+			$A_field_options = array();
+			$A_field_size = array();
+			$A_field_max = array();
+			$A_field_default = array();
+			$A_field_cost = array();
+			$A_field_required = array();
+			$A_multi_position = array();
+			$A_name_position = array();
+			$A_field_order = array();
+			$A_field_duplicate = array();
+			$A_field_value = array();
+			$A_master_field = array();
+			$A_field_select = array();
 			$o=0;
 			while ($fields_to_print > $o) 
 				{

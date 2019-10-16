@@ -1,7 +1,7 @@
 <?php
 # called_counts_multilist_report.php
 # 
-# Copyright (C) 2018  Joe Johnson <freewermadmin@gmail.com>, Matt Florell <mattf@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Joe Johnson <freewermadmin@gmail.com>, Matt Florell <mattf@vicidial.com>    LICENSE: AGPLv2
 #
 # This is a report designed for showing called counts similar to the results
 # at the bottom of each list detail screen, but for multiple lists and using
@@ -18,6 +18,7 @@
 # 170409-1539 - Added IP List validation code
 # 170829-0040 - Added screen color settings
 # 180508-0115 - Added new help display
+# 191013-0840 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -136,7 +137,6 @@ else
 	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
 	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
 	}
-$group = preg_replace("/'|\"|\\\\|;/","",$group);
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
@@ -319,6 +319,8 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $campaigns_to_print = mysqli_num_rows($rslt);
 $i=0;
+$groups=array();
+$group_names=array();
 while ($i < $campaigns_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -335,6 +337,7 @@ $rslt=mysql_to_mysqli($stmt, $link);
 $statuses_to_print = mysqli_num_rows($rslt);
 
 $o=0;
+$statuses_list=array();
 while ($statuses_to_print > $o) 
 	{
 	$rowx=mysqli_fetch_row($rslt);
@@ -700,6 +703,10 @@ if (strlen($QUERY_STRING) > 5)
 	$first_row=1;
 	$all_called_first=1000;
 	$all_called_last=0;
+	$count_statuses=array();
+	$count_called=array();
+	$count_count=array();
+	$all_called_count=array();
 	while ($status_called_to_print > $o) 
 		{
 		$rowx=mysqli_fetch_row($rslt);

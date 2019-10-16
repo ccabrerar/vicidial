@@ -1,7 +1,7 @@
 <?php 
 # AST_agent_performance_detail.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -63,6 +63,7 @@
 # 171012-2015 - Fixed javascript/apache errors with graphs
 # 180208-1724 - Added times to/from
 # 180330-1750 - Fixed display bug for individual user selection
+# 191013-0847 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -384,6 +385,7 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$HTML_text.="$stmt\n";}
 $campaigns_to_print = mysqli_num_rows($rslt);
 $i=0;
+$groups=array();
 while ($i < $campaigns_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -392,16 +394,17 @@ while ($i < $campaigns_to_print)
 		{$group[$i] = $groups[$i];}
 	$i++;
 	}
-for ($i=0; $i<count($user_group); $i++)
-	{
-	if (preg_match('/\-\-ALL\-\-/', $user_group[$i])) {$all_user_groups=1; $user_group="";}
-	}
+#for ($i=0; $i<count($user_group); $i++)
+#	{
+#	if (preg_match('/\-\-ALL\-\-/', $user_group[$i])) {$all_user_groups=1; $user_group="";}
+#	}
 
 $stmt="SELECT user_group from vicidial_user_groups $whereLOGadmin_viewable_groupsSQL order by user_group;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$HTML_text.="$stmt\n";}
 $user_groups_to_print = mysqli_num_rows($rslt);
 $i=0;
+$user_groups=array();
 while ($i < $user_groups_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -415,6 +418,8 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$HTML_text.="$stmt\n";}
 $users_to_print = mysqli_num_rows($rslt);
 $i=0;
+$user_list=array();
+$user_names=array();
 while ($i < $users_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -712,10 +717,13 @@ if ($show_percentages) {
 
 
 $statusesHTML='';
+$statusesARY=array();
 $statusesARY[0]='';
 $j=0;
 $users='-';
+$usersARY=array();
 $usersARY[0]='';
+$user_namesARY=array();
 $user_namesARY[0]='';
 $k=0;
 
@@ -735,6 +743,7 @@ if ($live_agents) {
 $recent_UG_stmt="SELECT max(agent_log_id), user from ".$agent_log_table." where event_time <= '$query_date_END' and event_time >= '$query_date_BEGIN' and pause_sec<65000 and wait_sec<65000 and talk_sec<65000 and dispo_sec<65000 $group_SQL $user_group_agent_log_SQL $user_agent_log_SQL group by user";
 if ($DB) {$HTML_text.="$recent_UG_stmt\n";}
 $recent_UG_rslt=mysql_to_mysqli($recent_UG_stmt, $link);
+$recent_user_groups=array();
 while ($UG_row=mysqli_fetch_row($recent_UG_rslt)) {
 	$agent_log_id=$UG_row[0];
 	$al_stmt="SELECT user_group from ".$agent_log_table." where agent_log_id='$agent_log_id'";
@@ -745,6 +754,8 @@ while ($UG_row=mysqli_fetch_row($recent_UG_rslt)) {
 }
 
 $graph_stats=array();
+$full_name=array();
+$user=array();
 $max_calls=1;
 $max_time=1;
 $max_pause=1;
@@ -825,6 +836,18 @@ $stat_rslt=mysql_to_mysqli($stat_stmt, $link);
 	if ($DB) {$HTML_text.="$stat_stmt\n";}
 $q=0;
 $userTOTcalls=array();
+$calls=array();
+$talk_sec=array();
+$full_name=array();
+$user=array();
+$pause_sec=array();
+$wait_sec=array();
+$dispo_sec=array();
+$status=array();
+$dead_sec=array();
+$user_group=array();
+$call_date=array();
+$customer_sec=array();
 
 while ($stat_row=mysqli_fetch_row($stat_rslt)) {
 	$current_status=$stat_row[0];
@@ -973,6 +996,15 @@ while ($m < $k)
 			if ($DB) {$ASCII_text.=$cd_stmt."\n";}
 
 			$x=0;
+			$calls_sub=array();
+			$talk_sec_sub=array();
+			$user_sub=array();
+			$pause_sec_sub=array();
+			$wait_sec_sub=array();
+			$dispo_sec_sub=array();
+			$status_sub=array();
+			$dead_sec_sub=array();
+			$customer_sec_sub=array();
 			while ($cd_row=mysqli_fetch_row($cd_rslt)) 
 				{
 				$calls_sub[$x] =		$cd_row[0];
@@ -1699,10 +1731,13 @@ $sub_statusesTXT='';
 $sub_statusesHEAD='';
 $sub_statusesHTML='';
 $CSV_statuses='';
+$sub_statusesARY=array();
 $sub_statusesARY=$MT;
 $j=0;
 $PCusers='-';
+$PCusersARY=array();
 $PCusersARY=$MT;
+$PCuser_namesARY=array();
 $PCuser_namesARY=$MT;
 $k=0;
 
@@ -1716,6 +1751,12 @@ $sub_status_stmt="SELECT distinct if(sub_status is null, '*', sub_status) as all
 $sub_status_rslt=mysql_to_mysqli($sub_status_stmt, $link);
 $subs_to_print=0;
 $q=0;
+$PCfull_name=array();
+$PCuser=array();
+$PCpause_sec=array();
+$sub_status=array();
+$PCnon_pause_sec=array();
+$PCuser_group=array();
 while($ss_row=mysqli_fetch_row($sub_status_rslt)) {
 	$current_ss=$ss_row[0];
 	# FOR NULL SUB STATUSES

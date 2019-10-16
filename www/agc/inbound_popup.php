@@ -1,7 +1,7 @@
 <?php
 # inbound_popup.php    version 2.14
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to open up when a live_inbound call comes in giving the user
 #   options of what to do with the call or options to lookup the callerID on various web sites
@@ -37,10 +37,11 @@
 # 140811-0843 - Changed to use QXZ function for echoing text
 # 141216-2120 - Added language settings lookups and user/pass variable standardization
 # 170526-2231 - Added additional variable filtering
+# 190111-0905 - Fix for PHP7
 #
 
-$version = '2.14-13';
-$build = '170526-2231';
+$version = '2.14-14';
+$build = '190111-0905';
 
 require_once("dbconnect_mysqli.php");
 require_once("functions.php");
@@ -127,7 +128,7 @@ if ($non_latin < 1)
 	}
 
 $auth=0;
-$auth_message = user_authorization($user,$pass,'',0,1,0,0);
+$auth_message = user_authorization($user,$pass,'',0,1,0,0,'inbound_popup');
 if ($auth_message == 'GOOD')
 	{$auth=1;}
 

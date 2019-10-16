@@ -1,7 +1,7 @@
 <?php 
 # AST_agent_days_time.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -10,6 +10,7 @@
 # 160121-2217 - Added report title header, default report format, cleaned up formatting
 # 170409-1538 - Added IP List validation code
 # 170829-0040 - Added screen color settings
+# 191013-0812 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -304,6 +305,7 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $campaigns_to_print = mysqli_num_rows($rslt);
 $i=0;
+$groups=array();
 while ($i < $campaigns_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -452,10 +454,15 @@ else
 	$statusesHEAD='';
 	$statusesHTML='';
 	$statusesFILE='';
+	$statusesARY=array();
 	$statusesARY[0]='';
 	$j=0;
+	$calls=array();
+	$date=array();
 	$dates='-';
+	$datesARY=array();
 	$datesARY[0]='';
+	$date_namesARY=array();
 	$date_namesARY[0]='';
 	$k=0;
 
@@ -721,6 +728,7 @@ if ($report_display_type=="TEXT" || !$report_display_type)
 	echo "<PRE><FONT SIZE=2>\n\n\n\n\n\n\n\n\n\n";
 
 	$m=0;
+	$sort_order=array();
 	while ($m < $k)
 		{
 		$sort_split = explode("-----",$TOPsort[$m]);

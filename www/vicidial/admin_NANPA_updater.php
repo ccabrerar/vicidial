@@ -1,7 +1,7 @@
 <?php
 # admin_NANPA_updater.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to launch NANPA filter batch proccesses through the
 # triggering process
@@ -16,10 +16,11 @@
 # 170409-1536 - Added IP List validation code
 # 170822-2230 - Added screen color settings
 # 180503-2015 - Added new help display
+# 191013-0814 - Fixes for PHP7
 #
 
-$version = '2.14-7';
-$build = '170409-1536';
+$version = '2.14-8';
+$build = '191013-0814';
 $startMS = microtime();
 
 require("dbconnect_mysqli.php");
@@ -185,6 +186,7 @@ if ($delete_trigger_id)
 	$delete_rslt=mysql_to_mysqli($delete_stmt, $link);
 	}
 
+if (!isset($lists)) {$lists=array();}
 $list_ct=count($lists);
 if ($submit_form=="SUBMIT" && $list_ct>0 && (strlen($vl_field_update)>0 || strlen($cellphone_list_id)>0 || strlen($landline_list_id)>0 || strlen($invalid_list_id)>0) ) 
 	{

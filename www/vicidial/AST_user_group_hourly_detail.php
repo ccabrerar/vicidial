@@ -1,7 +1,7 @@
 <?php 
 # AST_user_group_hourly_detail.php
 #
-# Copyright (C) 2018  Joseph Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Joseph Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # Gives hourly count of distinct agents per user group, with totals.
 # For single days only
@@ -12,6 +12,7 @@
 # 170816-2026 - Added HTML formatting
 # 170829-0040 - Added screen color settings
 # 180507-2315 - Added new help display
+# 191013-0855 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -305,6 +306,7 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$HTML_text.="$stmt\n";}
 $user_groups_to_print = mysqli_num_rows($rslt);
 $i=0;
+$user_groups=array();
 while ($i < $user_groups_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -338,6 +340,7 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$HTML_text.="$stmt\n";}
 $campaigns_to_print = mysqli_num_rows($rslt);
 $i=0;
+$groups=array();
 while ($i < $campaigns_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -444,6 +447,7 @@ if ($SUBMIT && $query_date && $start_hour && $end_hour) {
 	$user_group_array=array();
 	$hour_array=array();
 	$hour_total_array=array();
+	$usergroup_total_array=array();
 	while($row=mysqli_fetch_array($rslt)) {
 		$user_group_array[$row["user_group"]]+=$row["ct"];
 		$hour_array[$row["hour"]]+=$row["ct"];

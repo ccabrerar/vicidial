@@ -1,7 +1,7 @@
 <?php 
 # AST_dialer_inventory_report.php
 # 
-# Copyright (C) 2017  Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #                     Matt Florell <vicidial@gmail.com>
 #
 # NOTES:
@@ -25,6 +25,7 @@
 # 160227-1933 - Uniform form format
 # 170409-1538 - Added IP List validation code
 # 170829-0040 - Added screen color settings
+# 191013-0845 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -277,6 +278,7 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) { echo "$stmt\n";}
 $campaigns_to_print = mysqli_num_rows($rslt);
 $i=0;
+$groups=array();
 while ($i < $campaigns_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -314,6 +316,8 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$HTML_header.="$stmt\n";}
 $lists_to_print = mysqli_num_rows($rslt);
 $i=0;
+$lists=array();
+$list_names=array();
 while ($i < $lists_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -430,6 +434,7 @@ if ($SUBMIT)
 	$total_average_call_count=0;
 	$total_penetration=0;
 
+	$shift_ary=array();
 	if ($snapshot_time && $report_source=="SNAPSHOT") 
 		{
 		$rpt_header=_QXZ("SNAPSHOT from")." $snapshot_time\n";
@@ -489,6 +494,7 @@ if ($SUBMIT)
 			while ($b < count($shift_ary))
 				{
 				$a=0;
+				$no_match=0;
 				while ($a < count($shift_data_a))
 					{
 					$shift_data_b=explode(",", $shift_data_a[$a]);
@@ -500,9 +506,15 @@ if ($SUBMIT)
 						$total_varname="total_".$shift_data_b[0];
 						$$total_varname+=$shift_data_b[1];
 						$line_match++;
+						$no_match++;
 						}
 					if ($DB > 0) {echo "<BR>-$a-$b-$shift_ary[$b]-$shift_data_b[0]($shift_data_b[1])-$line_match-\n";}
 					$a++;
+					}
+				if ($no_match==0) 
+					{
+					$rpt_body.=" ".sprintf("%8s", "0")." |";
+					$CSV_body.=",\"0\"";
 					}
 				$b++;
 				}

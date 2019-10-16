@@ -479,10 +479,11 @@
 # 190722-1658 - Added ENABLED_EXTENDED_RANGE Agent Screen Time Display option
 # 190730-0926 - Added campaign SIP Actions processing
 # 190925-1347 - Added logtable SIP Action
+# 191013-0934 - Fixes for PHP7 issues
 #
 
-$version = '2.14-373';
-$build = '190925-1347';
+$version = '2.14-374';
+$build = '191013-0934';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=809;
@@ -2679,6 +2680,9 @@ if ($ACTION == 'manDiaLnextCaLL')
 							{
 							$g=0;
 							$p='13';
+							$GMT_gmt = array();
+							$GMT_hour = array();
+							$GMT_day = array();
 							$GMT_gmt[0] = '';
 							$GMT_hour[0] = '';
 							$GMT_day[0] = '';
@@ -3125,6 +3129,9 @@ if ($ACTION == 'manDiaLnextCaLL')
 								##### BEGIN calculate what gmt_offset_now values are within the allowed local_call_time setting ###
 								$g=0;
 								$p='13';
+								$GMT_gmt = array();
+								$GMT_hour = array();
+								$GMT_day = array();
 								$GMT_gmt[0] = '';
 								$GMT_hour[0] = '';
 								$GMT_day[0] = '';
@@ -8032,6 +8039,9 @@ if ($stage == "end")
 		$total_rec=0;
 		$total_hangup=0;
 		$loop_count=0;
+		$row = array();
+		$rec_channels = array();
+		$hangup_channels = array();
 		$stmt="SELECT channel FROM live_sip_channels where server_ip = '$server_ip' and extension = '$conf_exten' order by channel desc;";
 			if ($format=='debug') {echo "\n<!-- $stmt -->";}
 		$rslt=mysql_to_mysqli($stmt, $link);
@@ -8115,6 +8125,7 @@ if ($stage == "end")
 
 		$total_recFN=0;
 		$loop_count=0;
+		$filename = array();
 		$filename=$MT;		# not necessary : and cmd_line_f LIKE \"%_$user_abb\"
 		$stmt="SELECT cmd_line_f FROM vicidial_manager where server_ip='$server_ip' and action='Originate' and cmd_line_b = 'Channel: $local_DEF$conf_silent_prefix$conf_exten$local_AMP$ext_context' order by entry_date desc limit $total_rec;";
 			if ($format=='debug') {echo "\n<!-- $stmt -->";}
@@ -13246,6 +13257,7 @@ if ($ACTION == 'updateDISPO')
 	### BEGIN Issue Dispo Call URL if defined
 	############################################
 	$dispo_call_url_count=0;
+	$dispo_call_urlARY = array();
 	$dispo_call_urlARY[0]='';
 	$dispo_urls='';
 	if ( (strlen($dispo_call_url) > 7) or ($dispo_call_url == 'ALT') )
@@ -15139,6 +15151,7 @@ if ($ACTION == 'userLOGout')
 						if ($mel > 0) {mysql_error_logging($NOW_TIME,$linkB,$mel,$stmt,'00351',$user,$server_ip,$session_name,$one_mysql_log);}
 					if ($DB) {echo "$stmt\n";}
 					$amq_conf_ct = mysqli_num_rows($rslt);
+					$AMqueue = array();
 					$i=0;
 					while ($i < $amq_conf_ct)
 						{
@@ -15589,6 +15602,11 @@ if ($ACTION == 'AGENTSview')
 	$rslt=mysql_to_mysqli($stmt, $link);
 		if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00227',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 	if ($rslt) {$agents_count = mysqli_num_rows($rslt);}
+	$AXVSuserORDER = array();
+	$AXVSuser = array();
+	$AXVSfull_name = array();
+	$AXVScall_time = array();
+	$AXVSstatuscolor = array();
 	$loop_count=0;
 	while ($agents_count > $loop_count)
 		{
@@ -15788,6 +15806,13 @@ if ($ACTION == 'CALLSINQUEUEview')
 		$rslt=mysql_to_mysqli($stmt, $link);
 			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00230',$user,$server_ip,$session_name,$one_mysql_log);}
 		if ($rslt) {$calls_count = mysqli_num_rows($rslt);}
+		$CQlead_id = array();
+		$CQcampaign_id = array();
+		$CQphone_number = array();
+		$CQuniqueid = array();
+		$CQcall_time = array();
+		$CQcall_type = array();
+		$CQauto_call_id = array();
 		$loop_count=0;
 		while ($calls_count > $loop_count)
 			{
@@ -15986,6 +16011,20 @@ if ($ACTION == 'CALLLOGview')
 	$out_logs_to_print = mysqli_num_rows($rslt);
 	if ($format=='debug') {echo "|$out_logs_to_print|$stmt|";}
 
+	$ALLsort = array();
+	$ALLstart_epoch = array();
+	$ALLcall_date = array();
+	$ALLcampaign_id = array();
+	$ALLlength_in_sec = array();
+	$ALLstatus = array();
+	$ALLphone_code = array();
+	$ALLphone_number = array();
+	$ALLlead_id = array();
+	$ALLhangup_reason = array();
+	$ALLalt_dial = array();
+	$ALLin_out = array();
+	$Allfirst_name = array();
+	$Alllast_name = array();
 	$g=0;
 	$u=0;
 	while ($out_logs_to_print > $u) 
@@ -16202,7 +16241,19 @@ if ($ACTION == 'SEARCHRESULTSview')
 			}
 		}
 	### END find any custom field labels ###
-	
+
+	$ALLsort = array();
+	$ALLname = array();
+	$ALLphone_code = array();
+	$ALLphone_number = array();
+	$ALLstatus = array();
+	$ALLcall_date = array();
+	$ALLlead_id = array();
+	$ALLcity = array();
+	$ALLstate = array();
+	$ALLpostal_code = array();
+	$ALLvendor_lead_code = array();
+
 	$stmt="SELECT agent_lead_search_method,manual_dial_list_id from vicidial_campaigns where campaign_id='$campaign';";
 	if ($non_latin > 0) {$rslt=mysql_to_mysqli("SET NAMES 'UTF8'", $link);}
 	$rslt=mysql_to_mysqli($stmt, $link);
@@ -16742,6 +16793,19 @@ if ($ACTION == 'SEARCHCONTACTSRESULTSview')
 			if ($SSagent_debug_logging > 0) {vicidial_ajax_log($NOW_TIME,$startMS,$link,$ACTION,$php_script,$user,$stage,$lead_id,$session_name,$stmt);}
 			exit;
 			}
+
+		$ALLsort = array();
+		$ALLfirst = array();
+		$ALLlast = array();
+		$ALLoffice_num = array();
+		$ALLcell_num = array();
+		$ALLother_num1 = array();
+		$ALLother_num2 = array();
+		$ALLbu_name = array();
+		$ALLdepartment = array();
+		$ALLgroup_name = array();
+		$ALLjob_title = array();
+		$ALLlocation = array();
 
 		##### BEGIN search queries and output #####
 		$stmt="SELECT count(*) from contact_information where $searchSQL;";
@@ -17359,6 +17423,9 @@ if ($ACTION == 'LEADINFOview')
 						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00384',$user,$server_ip,$session_name,$one_mysql_log);}
 					$fields_to_print = mysqli_num_rows($rslt);
 					$select_SQL='';
+					$A_field_name = array();
+					$A_field_encrypt = array();
+					$A_field_show_hide = array();
 					$o=0;
 					while ($fields_to_print > $o) 
 						{
@@ -17455,6 +17522,22 @@ if ($ACTION == 'LEADINFOview')
 			$out_logs_to_print = mysqli_num_rows($rslt);
 			if ($format=='debug') {$NOTESout .= "|$out_logs_to_print|$stmt|";}
 
+			$ALLsort = array();
+			$ALLstart_epoch = array();
+			$ALLcall_date = array();
+			$ALLcampaign_id = array();
+			$ALLlength_in_sec = array();
+			$ALLstatus = array();
+			$ALLphone_code = array();
+			$ALLphone_number = array();
+			$ALLlead_id = array();
+			$ALLhangup_reason = array();
+			$ALLalt_dial = array();
+			$ALLuniqueid = array();
+			$ALLuser = array();
+			$ALLin_out = array();
+			$Allcall_notes = array();
+			$Allcounter = array();
 			$g=0;
 			$u=0;
 			while ($out_logs_to_print > $u) 
@@ -17791,6 +17874,8 @@ if ($ACTION == 'CalLBacKLisT')
 	$customer_timezone = array();
 	$customer_time = array();
 	$customer_timezone_diff = array();
+	$row = array();
+	$rowy = array();
 	while ($callbacks_count>$loop_count)
 		{
 		$row=mysqli_fetch_row($rslt);
@@ -18148,6 +18233,30 @@ if ($ACTION == 'AGENTtimeREPORT')
 		}
 	else
 		{
+		$Tpause_epoch = array();
+		$Twait_epoch = array();
+		$talk_epoch = array();
+		$Tdispo_epoch = array();
+		$Tdead_epoch = array();
+		$Tpause_sec = array();
+		$Twait_sec = array();
+		$Ttalk_sec = array();
+		$Tdispo_sec = array();
+		$Tdead_sec = array();
+		$Tsub_status = array();
+		$Tagent_log_id = array();
+		$Tcampaign_id = array();
+		$pauseTOTAL = array();
+		$waitTOTAL = array();
+		$talkTOTAL = array();
+		$dispoTOTAL = array();
+		$billTOTAL = array();
+		$breakTOTAL = array();
+		$lunchTOTAL = array();
+		$coachTOTAL = array();
+		$loginTOTAL = array();
+		$nonpauseTOTAL = array();
+		$campaignTOTAL = array();
 		if (preg_match("/RANGE/",$stage))
 			{
 			$archive_cutoff=0;
@@ -18233,6 +18342,7 @@ if ($ACTION == 'AGENTtimeREPORT')
 					echo "<TD BGCOLOR='white'><font style=\"font-size:14px;font-family:sans-serif;\"><B> &nbsp; "._QXZ("COACH")." &nbsp; </font></TD>";
 					echo "</TR>";
 					}
+
 				$GRANDpauseTOTAL=0;
 				$GRANDwaitTOTAL=0;
 				$GRANDtalkTOTAL=0;

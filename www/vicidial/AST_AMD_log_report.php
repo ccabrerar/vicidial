@@ -5,6 +5,7 @@
 #
 # CHANGES
 # 190329-1852 - First build, based on AST_carrier_log_report.php
+# 191013-0839 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -228,6 +229,8 @@ if ($DB) {echo "|$server_stmt|\n";}
 $server_rslt=mysql_to_mysqli($server_stmt, $link);
 $servers_to_print=mysqli_num_rows($server_rslt);
 $i=0;
+$LISTserverIPs=array();
+$LISTserver_names=array();
 while ($i < $servers_to_print)
 	{
 	$row=mysqli_fetch_row($server_rslt);

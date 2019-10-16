@@ -1,7 +1,7 @@
 <?php 
 # AST_carrier_log_report.php
 # 
-# Copyright (C) 2017  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 120210-2202 - First build
@@ -15,6 +15,7 @@
 # 141230-1513 - Added code for on-the-fly language translations display
 # 170409-1534 - Added IP List validation code
 # 170821-2219 - Added HTML formatting and screen colors
+# 191013-0815 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -223,6 +224,8 @@ $server_stmt="select server_ip,server_description from servers where active_aste
 $server_rslt=mysql_to_mysqli($server_stmt, $link);
 $servers_to_print=mysqli_num_rows($server_rslt);
 $i=0;
+$LISTserverIPs=array();
+$LISTserver_names=array();
 while ($i < $servers_to_print)
 	{
 	$row=mysqli_fetch_row($server_rslt);

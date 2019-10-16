@@ -6,6 +6,7 @@
 # CHANGES
 #
 # 190607-1522 - First build
+# 191013-0824 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -642,6 +643,12 @@ else
 	if ($DB) {echo "$stmt\n";}
 	$rows_to_print = mysqli_num_rows($rslt);
 	$i=0;
+	$SIPcall_date=array();
+	$SIPcaller_code=array();
+	$SIPinvite_to_ring=array();
+	$SIPring_to_final=array();
+	$SIPinvite_to_final=array();
+	$SIPlast_event_code=array();
 	while ($i < $rows_to_print)
 		{
 		$row=mysqli_fetch_row($rslt);
@@ -658,6 +665,14 @@ else
 
 	### loop through every call, pick up details from other tables and put in display variable to be printed
 	$i=0;
+	$SIPuniqueid=array();
+	$SIPserver_ip=array();
+	$SIPlead_id=array();
+	$SIPlength_in_sec=array();
+	$SIPstatus=array();
+	$SIPphone_number=array();
+	$SIPcalled_count=array();
+	$SIPuser=array();
 	while ($i < $rows_to_print)
 		{
 		$stmt="SELECT uniqueid,server_ip,lead_id from ".$vicidial_log_extended_table." where caller_code = '$SIPcaller_code[$i]' order by call_date desc limit 1;";
@@ -857,6 +872,7 @@ if ($report_display_type=="TEXT" || !$report_display_type)
 	echo "<PRE><FONT SIZE=2>\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
 
 	$m=0;
+	$sort_order=array();
 	while ($m < $k)
 		{
 		$sort_split = explode("-----",$TOPsort[$m]);

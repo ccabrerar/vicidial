@@ -1,7 +1,7 @@
 <?php 
 # AST_user_group_hourly_detail.php
 #
-# Copyright (C) 2018  Liz Tejada <liz@softkyrios.com> 
+# Copyright (C) 2019  Liz Tejada <liz@softkyrios.com> 
 #                     Joseph Johnson <freewermadmin@gmail.com>
 #                     Matt Florell <vicidial@gmail.com>
 #  
@@ -17,6 +17,7 @@
 # 170818-0749 - Added upgraded code, fixes and link to v1 of report
 # 170829-0040 - Added screen color settings
 # 180507-2315 - Added new help display
+# 191013-0816 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -300,6 +301,7 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$HTML_text.="$stmt\n";}
 $user_groups_to_print = mysqli_num_rows($rslt);
 $i=0;
+$user_groups=array();
 while ($i < $user_groups_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -333,6 +335,7 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$HTML_text.="$stmt\n";}
 $campaigns_to_print = mysqli_num_rows($rslt);
 $i=0;
+$groups=array();
 while ($i < $campaigns_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -432,6 +435,9 @@ if ($SUBMIT && $query_date && $start_hour && $end_hour) {
 	$hour_array=array();
 	$hour_total_array=array();
 	$tempIDPerusegroup=array();
+	$countByUserGroupByHour=array();
+	$countByUserGroup=array();
+	$countUserHour=array();
 	$cont=0;
 	$allData=array();
 	$temp[]=9;

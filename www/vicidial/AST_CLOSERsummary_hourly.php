@@ -1,7 +1,7 @@
 <?php 
 # AST_CLOSERsummary_hourly.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -31,6 +31,7 @@
 # 170409-1555 - Added IP List validation code
 # 170829-0040 - Added screen color settings
 # 171012-2015 - Fixed javascript/apache errors with graphs
+# 191013-0831 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -322,6 +323,8 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $groups_to_print = mysqli_num_rows($rslt);
 $i=0;
+$LISTgroups=array();
+$LISTgroup_names=array();
 $groups_string='|';
 #$LISTgroups[$i]='---NONE---';
 #$i++;
@@ -366,6 +369,9 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $statcats_to_print = mysqli_num_rows($rslt);
 $i=0;
+$vsc_id=array();
+$vsc_name=array();
+$vsc_count=array();
 while ($i < $statcats_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -380,6 +386,8 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $times_to_print = mysqli_num_rows($rslt);
 $i=0;
+$call_times=array();
+$call_time_names=array();
 while ($i < $times_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -574,6 +582,7 @@ else
 			}
 		}
 	$h=0;
+	$Hcalltime=array();
 	while ($h < 24)
 		{
 		$H_test = $h . "00";
@@ -620,6 +629,15 @@ else
 		$TOTqueue_avg=0;
 		$TOTmax_queue_seconds=0;
 		$TOTdrop_count=0;
+		$length_in_sec=array();
+		$queue_seconds=array();
+		$talk_sec=array();
+		$calls_count=array();
+		$drop_count=array();
+		$answer_count=array();
+		$max_queue_seconds=array();
+		$group_name=array();
+		$agent_alert_delay=array();
 		$SUBoutput='';
 
 		while($i < $group_ct)

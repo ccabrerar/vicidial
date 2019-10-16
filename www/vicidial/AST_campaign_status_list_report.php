@@ -4,7 +4,7 @@
 # This report is designed to show the breakdown by list_id of the calls and 
 # their statuses for all lists within a campaign for a set time period
 #
-# Copyright (C) 2018  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -28,6 +28,7 @@
 # 170829-0040 - Added screen color settings
 # 171012-2015 - Fixed javascript/apache errors with graphs
 # 180807-1204 - Fixed log query issue
+# 191013-0832 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -293,6 +294,7 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$HTML_text.="$stmt\n";}
 $campaigns_to_print = mysqli_num_rows($rslt);
 $i=0;
+$groups=array();
 while ($i < $campaigns_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -447,6 +449,15 @@ while($i < $group_ct)
 	{
 	$stmt="SELECT status, status_name, human_answered, sale, dnc, customer_contact, not_interested, unworkable, scheduled_callback, completed from vicidial_campaign_statuses where campaign_id='$group[$i]' UNION SELECT status, status_name, human_answered, sale, dnc, customer_contact, not_interested, unworkable, scheduled_callback, completed from vicidial_statuses order by status, status_name";
 	$rslt=mysql_to_mysqli($stmt, $link);
+	$status_ary=array();
+	$HA_ary=array();
+	$SALE_ary=array();
+	$DNC_ary=array();
+	$CC_ary=array();
+	$NI_ary=array();
+	$UW_ary=array();
+	$SC_ary=array();
+	$COMP_ary=array();
 	while ($row=mysqli_fetch_row($rslt)) 
 		{
 		$status_ary[$row[0]] = " - $row[1]";
@@ -494,7 +505,7 @@ while($i < $group_ct)
 		$SC_count=0;
 		$COMP_count=0;
 
-		$dispo_ary="";
+		$dispo_ary=array();
 		$ASCII_text.="<FONT SIZE=2><B>"._QXZ("List ID")." #$list_id: $list_name</B>\n";
 		$CSV_text.="\""._QXZ("List ID")." #$list_id: $list_name\"\n";
 
@@ -524,20 +535,20 @@ while($i < $group_ct)
 				#$duration=sec_convert(($stat_row[3]+$stat_row[4]+$stat_row[5]), 'H');
 				#$total_handle_time+=($stat_row[4]-$stat_row[6]);
 				#$total_duration+=($stat_row[3]+$stat_row[4]+$stat_row[5]);
-				$dispo_ary[$stat_row[0]][0]++;
-				$dispo_ary[$stat_row[0]][1]+=$stat_row[2];
-				$dispo_ary[$stat_row[0]][2]+=$stat_row[3];
+				$dispo_ary["$stat_row[0]"][0]++;
+				$dispo_ary["$stat_row[0]"][1]+=$stat_row[2];
+				$dispo_ary["$stat_row[0]"][2]+=$stat_row[3];
 				$total_calls++;
 				$total_duration+=$stat_row[2];
 				$total_handle_time+=$stat_row[3];
-				if ($HA_ary[$stat_row[0]]=="Y") {$HA_count++;}
-				if ($SALE_ary[$stat_row[0]]=="Y") {$SALE_count++;}
-				if ($DNC_ary[$stat_row[0]]=="Y") {$DNC_count++;}
-				if ($CC_ary[$stat_row[0]]=="Y") {$CC_count++;}
-				if ($NI_ary[$stat_row[0]]=="Y") {$NI_count++;}
-				if ($UW_ary[$stat_row[0]]=="Y") {$UW_count++;}
-				if ($SC_ary[$stat_row[0]]=="Y") {$SC_count++;}
-				if ($COMP_ary[$stat_row[0]]=="Y") {$COMP_count++;}
+				if ($HA_ary["$stat_row[0]"]=="Y") {$HA_count++;}
+				if ($SALE_ary["$stat_row[0]"]=="Y") {$SALE_count++;}
+				if ($DNC_ary["$stat_row[0]"]=="Y") {$DNC_count++;}
+				if ($CC_ary["$stat_row[0]"]=="Y") {$CC_count++;}
+				if ($NI_ary["$stat_row[0]"]=="Y") {$NI_count++;}
+				if ($UW_ary["$stat_row[0]"]=="Y") {$UW_count++;}
+				if ($SC_ary["$stat_row[0]"]=="Y") {$SC_count++;}
+				if ($COMP_ary["$stat_row[0]"]=="Y") {$COMP_count++;}
 				}
 
 			$d=0;

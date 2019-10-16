@@ -4,7 +4,7 @@
 # This User-Group based report runs some very intensive SQL queries, so it is
 # not recommended to run this on long time periods. 
 #
-# Copyright (C) 2018  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -23,6 +23,7 @@
 # 170409-1538 - Added IP List validation code
 # 170829-0040 - Added screen color settings
 # 180507-2315 - Added new help display
+# 191013-0822 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -104,7 +105,6 @@ else
 	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
 	}
 $group = preg_replace("/'|\"|\\\\|;/","",$group);
-$user_group = preg_replace("/'|\"|\\\\|;/","",$user_group);
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
@@ -264,16 +264,17 @@ if ( (!preg_match('/\-\-ALL\-\-/i',$LOGadmin_viewable_groups)) and (strlen($LOGa
 	}
 
 #######################################
-for ($i=0; $i<count($user_group); $i++) 
-	{
-	if (preg_match('/\-\-ALL\-\-/', $user_group[$i])) {$all_user_groups=1; $user_group="";}
-	}
+#for ($i=0; $i<count($user_group); $i++) 
+#	{
+#	if (preg_match('/\-\-ALL\-\-/', $user_group[$i])) {$all_user_groups=1; $user_group="";}
+#	}
 
 $stmt="select user_group from vicidial_user_groups $whereLOGadmin_viewable_groupsSQL order by user_group;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$HTML_text.="$stmt\n";}
 $user_groups_to_print = mysqli_num_rows($rslt);
 $i=0;
+$user_groups=array();
 while ($i < $user_groups_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -305,6 +306,7 @@ if ( (preg_match('/\-\-ALL\-\-/',$user_group_string) ) or ($user_group_ct < 1) )
 else
 	{
 	$user_group_SQL = preg_replace('/,$/i', '',$user_group_SQL);
+	$user_group_SQL = "where user_group in ($user_group_SQL)";
 	#$user_group_SQL = "and vicidial_agent_log.user_group IN($user_group_SQL)";
 	}
 
@@ -431,7 +433,7 @@ if ($SUBMIT)
 
 	$CSV_text="\""._QXZ("User group login report")."\",\""._QXZ("User groups").":\",\""._QXZ("$user_group_string")."\"\n\n";
 	$CSV_text.="\""._QXZ("User name")."\",\""._QXZ("User ID")."\",\""._QXZ("User group")."\",\""._QXZ("First login date")."\",\""._QXZ("Last login date")."\",\""._QXZ("Campaign ID")."\",\""._QXZ("Server IP")."\",\""._QXZ("Computer IP")."\",\""._QXZ("Extension")."\",\""._QXZ("Browser")."\",\""._QXZ("Phone login")."\",\""._QXZ("Server phone")."\",\""._QXZ("Phone IP")."\"\n";
-	$stmt="select distinct user, substr(full_name,1,30) as fullname, full_name from vicidial_users where user_group in ($user_group_SQL) order by user";
+	$stmt="select distinct user, substr(full_name,1,30) as fullname, full_name from vicidial_users $user_group_SQL order by user";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	while ($row=mysqli_fetch_array($rslt)) 
 		{

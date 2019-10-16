@@ -1,7 +1,7 @@
 <?php
 # Erlang_report.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -12,6 +12,7 @@
 # 171205-2304 - Modified to include disposition seconds in C report
 # 180508-2215 - Added new help display
 # 180712-1508 - Fix for rare allowed reports issue
+# 191013-0820 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -357,6 +358,7 @@ if ($DB) {$HTML_text.="$stmt\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $campaigns_to_print = mysqli_num_rows($rslt);
 $i=0;
+$campaigns=array();
 $campaigns_string='|';
 $campaigns_selected=count($campaign);
 while ($i < $campaigns_to_print)
@@ -376,6 +378,8 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $groups_to_print = mysqli_num_rows($rslt);
 $i=0;
+$groups=array();
+$group_names=array();
 $groups_string='|';
 $groups_selected=count($group);
 while ($i < $groups_to_print)
@@ -472,6 +476,8 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $times_to_print = mysqli_num_rows($rslt);
 $i=0;
+$call_times=array();
+$call_time_names=array();
 while ($i < $times_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -1272,7 +1278,7 @@ else
 			while(list($key, $val)=each($graph_stats)) {
 				$val[$dataset_index]=preg_replace("/N\/A/", "0", $val[$dataset_index]);
 				$data.="\"".$val[$dataset_index]."\","; 
-				$current_graph_total+=$val[$dataset_index];
+				$current_graph_total+=intval($val[$dataset_index]);
 				$bgcolor=$backgroundColor[($d%count($backgroundColor))];
 				$hbgcolor=$hoverBackgroundColor[($d%count($hoverBackgroundColor))];
 				$hbcolor=$hoverBorderColor[($d%count($hoverBorderColor))];

@@ -1,7 +1,7 @@
 <?php 
 # AST_VDADstats.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 60619-1718 - Added variable filtering to eliminate SQL injection attack threat
@@ -56,6 +56,7 @@
 # 171012-2015 - Fixed javascript/apache errors with graphs
 # 180508-0115 - Added new help display
 # 190823-1620 - Fixed download archive bug
+# 191013-0852 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -196,7 +197,7 @@ else
 	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
 	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
 	}
-$group = preg_replace("/'|\"|\\\\|;/","",$group);
+# $group = preg_replace("/'|\"|\\\\|;/","",$group);
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
@@ -374,6 +375,8 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $campaigns_to_print = mysqli_num_rows($rslt);
 $i=0;
+$groups=array();
+$group_names=array();
 while ($i < $campaigns_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -487,6 +490,9 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $statcats_to_print = mysqli_num_rows($rslt);
 $i=0;
+$vsc_id=array();
+$vsc_name=array();
+$vsc_count=array();
 while ($i < $statcats_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -964,6 +970,12 @@ else
 	if ($DB) {$OUToutput .= "$stmt\n";}
 	$statuses_to_print = mysqli_num_rows($rslt);
 	$p=0;
+	$status=array();
+	$status_name=array();
+	$human_answered=array();
+	$category=array();
+	$statname_list=array();
+	$statcat_list=array();
 	while ($p < $statuses_to_print)
 		{
 		$row=mysqli_fetch_row($rslt);
@@ -1200,6 +1212,7 @@ else
 	if ($DB) {$ASCII_text .= "$stmt\n";}
 	$reasons_to_print = mysqli_num_rows($rslt);
 	$i=0;
+	$graph_stats=array();
 	while ($i < $reasons_to_print)
 		{
 		$row=mysqli_fetch_row($rslt);
@@ -1370,6 +1383,9 @@ else
 	if ($DB) {$ASCII_text .= "$stmt\n";}
 	$statuses_to_print = mysqli_num_rows($rslt);
 	$i=0;
+	$STATUScountARY=array();
+	$RAWstatusARY=array();
+	$RAWhoursARY=array();
 	while ($i < $statuses_to_print)
 		{
 		$row=mysqli_fetch_row($rslt);
@@ -1623,7 +1639,10 @@ else
 	if ($DB) {$ASCII_text .= "$stmt\n";}
 	$listids_to_print = mysqli_num_rows($rslt);
 	$i=0;
-	$max_calls=1; $graph_stats=array();
+	$max_calls=1; 
+	$graph_stats=array();
+	$LISTIDcalls=array();
+	$LISTIDlists=array();
 	while ($i < $listids_to_print)
 		{
 		$row=mysqli_fetch_row($rslt);
@@ -1636,6 +1655,7 @@ else
 		}
 
 	$i=0;
+	$LISTIDlist_names=array();
 	while ($i < $listids_to_print)
 		{
 		$stmt="select list_name from vicidial_lists where list_id='$LISTIDlists[$i]';";
@@ -1824,7 +1844,8 @@ else
 		#$GRAPH.="<th class=\"thgraph\" scope=\"col\">"._QXZ("PRESET NAME")."</th>\n";
 		#$GRAPH.="<th class=\"thgraph\" scope=\"col\">"._QXZ("CALLS")."</th>\n";
 		#$GRAPH.="</tr>\n";
-		$max_calls=1; $graph_stats=array();
+		$max_calls=1; 
+		$graph_stats=array();
 
 		## get counts and time totals for all statuses in this campaign
 		$stmt="select preset_name,count(*) from ".$user_call_log_table."$VL_INC where call_date > \"$query_date_BEGIN\" and call_date < \"$query_date_END\" and preset_name!='' and preset_name is not NULL  $group_SQLand  $list_id_SQLandUCLJOIN group by preset_name order by preset_name;";
@@ -1960,7 +1981,8 @@ else
 #	$GRAPH.="<th class=\"thgraph\" scope=\"col\">"._QXZ("CATEGORY")."</th>\n";
 #	$GRAPH.="<th class=\"thgraph\" scope=\"col\">"._QXZ("CALLS")."</th>\n";
 #	$GRAPH.="</tr>\n";
-	$max_calls=1; $graph_stats=array();
+	$max_calls=1; 
+	$graph_stats=array();
 
 	$TOTCATcalls=0;
 	$r=0; $i=0;
@@ -2101,6 +2123,11 @@ else
 	if ($DB) {$ASCII_text .= "$stmt\n";}
 	$users_to_print = mysqli_num_rows($rslt);
 	$i=0;
+	$RAWuser=array();
+	$RAWfull_name=array();
+	$RAWuser_calls=array();
+	$RAWuser_talk=array();
+	$RAWuser_average=array();
 	while ($i < $users_to_print)
 		{
 		$row=mysqli_fetch_row($rslt);
@@ -2447,6 +2474,8 @@ else
 			$last_full_record=0;
 			$i=0;
 			$h=0;
+			$hour_count=array();
+			$drop_count=array();
 			while ($i <= 96)
 				{
 				$stmt="select count(*) from ".$vicidial_log_table." where call_date >= '$query_date $h:00:00' and call_date <= '$query_date $h:14:59' $group_SQLand $list_id_SQLand;";

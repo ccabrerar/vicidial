@@ -6,7 +6,7 @@
 # QC statuses of QCFAIL, QCCANC and sales are defined by the Sale=Y status
 # flags being set on those statuses.
 #
-# Copyright (C) 2018  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -32,6 +32,7 @@
 # 170829-0040 - Added screen color settings
 # 171012-2015 - Fixed javascript/apache errors with graphs
 # 180507-2315 - Added new help display
+# 191013-0825 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -332,6 +333,7 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$HTML_text.="$stmt\n";}
 $campaigns_to_print = mysqli_num_rows($rslt);
 $i=0;
+$groups=array();
 while ($i < $campaigns_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -375,7 +377,7 @@ while ($i < $call_statuses_to_print)
 #######################################
 for ($i=0; $i<count($user_group); $i++) 
 	{
-	if (preg_match('/\-\-ALL\-\-/', $user_group[$i])) {$all_user_groups=1; $user_group="";}
+	if (preg_match('/\-\-ALL\-\-/', $user_group[$i])) {$all_user_groups=1;}
 	}
 
 $stmt="select user_group from vicidial_user_groups $whereLOGadmin_viewable_groupsSQL order by user_group;";
@@ -383,6 +385,7 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$HTML_text.="$stmt\n";}
 $user_groups_to_print = mysqli_num_rows($rslt);
 $i=0;
+$user_groups=array();
 while ($i < $user_groups_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -626,6 +629,9 @@ if ( ($SUBMIT=="SUBMIT") or ($SUBMIT==_QXZ("SUBMIT")) )
 	$stmt="select max(event_time), ".$vicidial_agent_log_table.".user, ".$vicidial_agent_log_table.".lead_id, ".$vicidial_list_table.".status as current_status from ".$vicidial_agent_log_table.", ".$vicidial_list_table." where event_time>='$query_date' and event_time<='$end_date' $group_SQL and ".$vicidial_agent_log_table.".status in (select status from vicidial_campaign_statuses where sale='Y' $group_SQL UNION select status from vicidial_statuses where sale='Y') and ".$vicidial_agent_log_table.".lead_id=".$vicidial_list_table.".lead_id group by ".$vicidial_agent_log_table.".user, ".$vicidial_agent_log_table.".lead_id";
 	if ($DB) {$ASCII_text.="$stmt\n";}
 	$rslt=mysql_to_mysqli($stmt, $link);
+	$cancel_array=array();
+	$incomplete_array=array();
+	$sale_array=array();
 	while ($row=mysqli_fetch_array($rslt)) 
 		{
 		$lead_id=$row["lead_id"];
@@ -667,11 +673,12 @@ if ( ($SUBMIT=="SUBMIT") or ($SUBMIT==_QXZ("SUBMIT")) )
 	$total_cnc_sales=0;
 	$total_callbacks=0;
 	$total_stcall=0;
+	$call_status_totals_grand_total=array();
 	for ($q=0; $q<count($call_status); $q++) {
 		$call_status_totals_grand_total[$q]=0;
 		$GRAPH2.="<th class='column_header grey_graph_cell' id='teamTotalgraph".($q+17)."'><a href='#' onClick=\"DrawTotalGraph('".$call_status[$q]."', '".($q+17)."'); return false;\">".$call_status[$q]."</a></th>";
 	}
-	$total_graph_stats[]="";
+	$total_graph_stats=array();
 	$max_totalcalls=1;
 	$max_totalleads=1;
 	$max_totalcontacts=1;
@@ -708,6 +715,7 @@ if ( ($SUBMIT=="SUBMIT") or ($SUBMIT==_QXZ("SUBMIT")) )
 		$name_rslt=mysql_to_mysqli($name_stmt, $link);
 		$name_row=mysqli_fetch_row($name_rslt);
 		$group_name=$name_row[0];
+		$call_status_group_totals=array();
 		for ($q=0; $q<count($call_status); $q++) {
 			$call_status_group_totals[$q]=0;
 		}

@@ -38,6 +38,7 @@
 # 180909-1907 - Added channel_group variable
 # 190129-1855 - Added --A--RUSfullname--B-- special variable flag
 # 190521-1715 - Added --A--dispo--B-- and --A--dispo_name--B-- to email_body
+# 191013-2113 - Fixes for PHP7
 #
 
 $api_script = 'send_email';
@@ -486,6 +487,7 @@ if ($match_found > 0)
 								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'60013',$user,$server_ip,$session_name,$one_mysql_log);}
 							if ($DB) {echo "$stmt\n";}
 							$cffn_ct = mysqli_num_rows($rslt);
+							$field_name_id = array();
 							$d=0;   $field_query_SQL='';
 							while ($cffn_ct > $d)
 								{
@@ -1331,7 +1333,7 @@ if ($match_found > 0)
 	}
 else
 	{
-	$MESSAGE = _QXZ("DONE: dispo is not a sale status: %1s  Count: ",0,'',$dispo) . $called_count|$called_count_trigger;
+	$MESSAGE = _QXZ("DONE: dispo is not a sale status: %1s  Count: ",0,'',$dispo) . "$called_count|$called_count_trigger";
 	echo "$MESSAGE\n";
 	}
 

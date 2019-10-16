@@ -1,7 +1,7 @@
 <?php
 # AST_rt_monitor_log_report.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -9,6 +9,7 @@
 # 170822-2231 - Modified to use screen colors
 # 180507-2315 - Added new help display
 # 180712-1508 - Fix for rare allowed reports issue
+# 191013-0906 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -52,6 +53,17 @@ if (isset($_GET["report_display_type"]))				{$report_display_type=$_GET["report_
 	elseif (isset($_POST["report_display_type"]))	{$report_display_type=$_POST["report_display_type"];}
 
 if (strlen($shift)<2) {$shift='ALL';}
+$MT[0]='';
+$NOW_DATE = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$STARTtime = date("U");
+if (!isset($campaign)) {$campaign = array();}
+if (!isset($managers)) {$managers = array();}
+if (!isset($users)) {$users = array();}
+if (!isset($report_display_type)) {$report_display_type = "HTML";}
+if (!isset($query_date)) {$query_date = $NOW_DATE;}
+if (!isset($end_date)) {$end_date = $NOW_DATE;}
+if (!isset($order_by)) {$order_by="monitor_start_time-asc";} 
 
 $report_name = 'Real-Time Monitoring Log Report';
 $db_source = 'M';
@@ -314,6 +326,8 @@ if ($DB) {$MAIN.="$stmt\n";}
 $users_to_print = mysqli_num_rows($rslt);
 $i=0;
 $user_array=array(); # For quick full-name reference
+$user_list=array();
+$user_names=array();
 while ($i < $users_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -340,6 +354,8 @@ if ($DB) {$MAIN.="$stmt\n";}
 $managers_to_print = mysqli_num_rows($rslt);
 $i=0;
 $manager_array=array(); # For quick full-name reference
+$manager_list=array();
+$manager_names=array();
 while ($i < $managers_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -349,18 +365,6 @@ while ($i < $managers_to_print)
 	if ($all_managers) {$manager_list[$i]=$row[0];}
 	$i++;
 	}
-
-$MT[0]='';
-$NOW_DATE = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-$STARTtime = date("U");
-if (!isset($campaign)) {$campaign = array();}
-if (!isset($managers)) {$managers = array();}
-if (!isset($users)) {$users = array();}
-if (!isset($report_display_type)) {$report_display_type = "HTML";}
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
-if (!isset($end_date)) {$end_date = $NOW_DATE;}
-if (!isset($order_by)) {$order_by="monitor_start_time-asc";} 
 
 $i=0;
 $campaign_string='|';

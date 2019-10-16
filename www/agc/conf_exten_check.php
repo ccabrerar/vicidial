@@ -82,10 +82,11 @@
 # 180602-0149 - Changed SQL query for email queue count for accuracy
 # 190730-0927 - Added campaign SIP Actions processing
 # 190925-1348 - Added logtable SIP Action
+# 191013-2105 - Fixes for PHP7
 #
 
-$version = '2.14-56';
-$build = '190925-1348';
+$version = '2.14-57';
+$build = '191013-2105';
 $php_script = 'conf_exten_check.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=51;
@@ -1043,8 +1044,9 @@ if ($ACTION == 'refresh')
 			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03011',$user,$server_ip,$session_name,$one_mysql_log);}
 		if ($rslt) {$sip_list = mysqli_num_rows($rslt);}
 	#	echo "$sip_list|";
+		$ChannelA = array();
 		$loop_count=0;
-			while ($sip_list>$loop_count)
+		while ($sip_list > $loop_count)
 			{
 			$loop_count++; $total_conf++;
 			$row=mysqli_fetch_row($rslt);
@@ -1058,7 +1060,7 @@ if ($ACTION == 'refresh')
 		if ($rslt) {$channels_list = mysqli_num_rows($rslt);}
 	#	echo "$channels_list|";
 		$loop_count=0;
-		while ($channels_list>$loop_count)
+		while ($channels_list > $loop_count)
 			{
 			$loop_count++; $total_conf++;
 			$row=mysqli_fetch_row($rslt);
@@ -1071,7 +1073,7 @@ if ($ACTION == 'refresh')
 
 	$counter=0;
 	$countecho='';
-	while($total_conf > $counter)
+	while ($total_conf > $counter)
 		{
 		$counter++;
 		$countecho = "$countecho$ChannelA[$counter] ~";

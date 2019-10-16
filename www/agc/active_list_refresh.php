@@ -1,7 +1,7 @@
 <?php
 # active_list_refresh.php    version 2.12
 # 
-# Copyright (C) 2015  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed purely to serve updates of the live data to the display scripts
 # This script depends on the server_ip being sent and also needs to have a valid user/pass from the vicidial_users table
@@ -46,10 +46,11 @@
 # 141128-0901 - Code cleanup for QXZ functions
 # 141216-2119 - Added language settings lookups and user/pass variable standardization
 # 150723-1715 - Added ajax logging
+# 190111-0903 - Fix for PHP7
 # 
 
-$version = '0.0.17';
-$build = '150723-1715';
+$version = '0.0.18';
+$build = '190111-0903';
 $php_script = 'active_list_refresh.php';
 $SSagent_debug_logging=0;
 $startMS = microtime();
@@ -175,7 +176,7 @@ if (strlen($SSagent_debug_logging) > 1)
 	}
 
 $auth=0;
-$auth_message = user_authorization($user,$pass,'',0,1,0,0);
+$auth_message = user_authorization($user,$pass,'',0,1,0,0,'active_list_refresh');
 if ($auth_message == 'GOOD')
 	{$auth=1;}
 

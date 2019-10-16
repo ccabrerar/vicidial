@@ -1,7 +1,7 @@
 <?php
 # vdc_script_display.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed display the contents of the SCRIPT tab in the agent interface
 #
@@ -39,10 +39,11 @@
 # 171126-1124 - Added email message display from inbound emails only
 # 180224-1406 - Added LOGINvar variables, and options.php $INSERT_ variables
 # 180327-1356 - Added code for LOCALFQDN conversion to browser-used server URL for script iframes
+# 191013-2145 - Fixes for PHP7
 #
 
-$version = '2.14-33';
-$build = '180224-1406';
+$version = '2.14-34';
+$build = '191013-2145';
 
 require_once("dbconnect_mysqli.php");
 require_once("functions.php");
@@ -754,6 +755,23 @@ if (preg_match('/--A--TABLEper_call_notes--B--/i',$script_text))
 		$out_logs_to_print = mysqli_num_rows($rslt);
 		if ($format=='debug') {$NOTESout .= "|$out_logs_to_print|$stmt|";}
 
+		$ALLsort = array();
+		$ALLstart_epoch = array();
+		$ALLcall_date = array();
+		$ALLcampaign_id = array();
+		$ALLlength_in_sec = array();
+		$ALLstatus = array();
+		$ALLphone_code = array();
+		$ALLphone_number = array();
+		$ALLlead_id = array();
+		$ALLhangup_reason = array();
+		$ALLalt_dial = array();
+		$ALLuniqueid = array();
+		$ALLuser = array();
+		$ALLin_out = array();
+		$Allcall_notes = array();
+		$ALLemail = array();
+		$Allcounter = array();
 		$g=0;
 		$u=0;
 		while ($out_logs_to_print > $u) 

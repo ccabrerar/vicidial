@@ -1,7 +1,7 @@
 <?php 
 # AST_email_log_report.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # report of emails handled by the system
 # 
@@ -20,12 +20,13 @@
 # 160227-1045 - Uniform form format
 # 170409-1538 - Added IP List validation code
 # 170829-0040 - Added screen color settings
+# 191013-0823 - Fixes for PHP7
 #
 
 $startMS = microtime();
 
-$version = '2.14-12';
-$build = '170409-1538';
+$version = '2.14-13';
+$build = '191013-0823';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -311,6 +312,9 @@ $LISTgroups[$i]='---NONE---';
 $i++;
 $groups_to_print++;
 $groups_string='|';
+$LISTgroups=array();
+$LISTgroup_names=array();
+$LISTgroup_ids=array();
 while ($i < $groups_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -588,7 +592,7 @@ else if ($email_type=="answered")
 		$stmt="select vel.email_row_id, vel.lead_id, vel.email_date, vel.email_from, vel.email_from_name, convert(vel.message using 'UTF8') as message, vel.status, vcl.call_date, vl.email_date as date_response_sent, vl.email_log_id, vl.user as sending_user, vl.message as sent_message from ".$vicidial_email_list_table." vel, ".$vicidial_closer_log_table." vcl, ".$vicidial_email_log_table." vl where vel.$date_type>='$query_date_BEGIN' and vel.$date_type<='$query_date_END' and vcl.uniqueid=vel.uniqueid and vel.group_id in ($group_SQL) and vel.email_row_id=vl.email_row_id order by vel.$date_type asc";
 		}
 	}
-#echo $stmt."\n";
+# echo $stmt."\n";
 $rslt=mysql_to_mysqli($stmt, $link);
 if (mysqli_num_rows($rslt)>0) {
 	$i=0;

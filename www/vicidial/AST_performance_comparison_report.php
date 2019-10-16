@@ -1,7 +1,7 @@
 <?php 
 # AST_performance_comparison_report.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -19,6 +19,7 @@
 # 170829-0040 - Added screen color settings
 # 171012-2015 - Fixed javascript/apache errors with graphs
 # 180507-2315 - Added new help display
+# 191013-0900 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -342,6 +343,7 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$HTML_text.="$stmt\n";}
 $campaigns_to_print = mysqli_num_rows($rslt);
 $i=0;
+$groups=array();
 while ($i < $campaigns_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -350,16 +352,17 @@ while ($i < $campaigns_to_print)
 		{$group[$i] = $groups[$i];}
 	$i++;
 	}
-for ($i=0; $i<count($user_group); $i++)
-	{
-	if (preg_match('/\-\-ALL\-\-/', $user_group[$i])) {$all_user_groups=1; $user_group="";}
-	}
+#for ($i=0; $i<count($user_group); $i++)
+#	{
+#	if (preg_match('/\-\-ALL\-\-/', $user_group[$i])) {$all_user_groups=1; $user_group="";}
+#	}
 
 $stmt="select user_group from vicidial_user_groups $whereLOGadmin_viewable_groupsSQL order by user_group;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$HTML_text.="$stmt\n";}
 $user_groups_to_print = mysqli_num_rows($rslt);
 $i=0;
+$user_groups=array();
 while ($i < $user_groups_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -373,6 +376,8 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$HTML_text.="$stmt\n";}
 $users_to_print = mysqli_num_rows($rslt);
 $i=0;
+$user_list=array();
+$user_names=array();
 while ($i < $users_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -644,6 +649,7 @@ else
 	$initial_user_stmt="select distinct ".$vicidial_agent_log_table.".user, full_name from ".$vicidial_agent_log_table.", vicidial_users where event_time <= '$query_date $time_END' and event_time >= '$thirtydaysago $time_BEGIN' $group_SQL $user_group_SQL $user_SQL and ".$vicidial_agent_log_table.".user=vicidial_users.user order by full_name asc";
 	if ($DB) {echo $initial_user_stmt;}
 	$initial_user_rslt=mysql_to_mysqli($initial_user_stmt, $link);
+	$agent_performance_array=array();
 	while ($user_row=mysqli_fetch_array($initial_user_rslt)) 
 		{
 		$agent_performance_array[$user_row[0]][0]=$user_row[1];
@@ -673,11 +679,13 @@ else
 		$rpt_date=$rpt_date_array[$q];
 		$rpt_date_numeric=preg_replace('/[^0-9]/', '', $rpt_date_array[$q]);
 		$array_offset=($q*5)+1;
-						$master_graph_array[$q]=array("APC_CALLSdata$rpt_date_numeric|1|CALLS|integer|", "APC_SALESdata$rpt_date_numeric|2|SALES|integer|", "APC_SALECONVdata$rpt_date_numeric|3|SALE CONV %|percent|", "APC_SPHdata$rpt_date_numeric|4|SALES PER HOUR|decimal|", "APC_TIMEdata$rpt_date_numeric|5|TIME|time|");
+		$master_graph_array[$q]=array("APC_CALLSdata$rpt_date_numeric|1|CALLS|integer|", "APC_SALESdata$rpt_date_numeric|2|SALES|integer|", "APC_SALECONVdata$rpt_date_numeric|3|SALE CONV %|percent|", "APC_SPHdata$rpt_date_numeric|4|SALES PER HOUR|decimal|", "APC_TIMEdata$rpt_date_numeric|5|TIME|time|");
 		}
-
+	
+	$TOTALS_array=array();
+	$graph_TOTALS_array=array();
 	$TOTALS_array[0]=_QXZ("TOTALS");
-	$graph_TOTALS_array[0]+=_QXZ("TOTALS");
+	$graph_TOTALS_array[0]=_QXZ("TOTALS");
 
 	$GRAPH="";
 	for ($y=0; $y<count($rpt_date_array); $y++) 

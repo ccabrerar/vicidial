@@ -1,7 +1,7 @@
 <?php 
 # AST_webserver_url_report.php
 # 
-# Copyright (C) 2017  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 140225-0229 - First build
@@ -10,6 +10,7 @@
 # 170409-1534 - Added IP List validation code
 # 170818-2130 - Added HTML formatting
 # 170829-0040 - Added screen color settings
+# 191013-0907 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -53,6 +54,8 @@ $NOW_DATE = date("Y-m-d");
 
 if (strlen($query_date_D) < 6) {$query_date_D = "00:00:00";}
 if (strlen($query_date_T) < 6) {$query_date_T = "23:59:59";}
+if (!isset($webserver)) {$webserver = array();}
+if (!isset($url)) {$url = array();}
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (!isset($end_date)) {$end_date = $NOW_DATE;}
 
@@ -226,6 +229,9 @@ $webserver_stmt="select webserver_id,webserver,hostname from vicidial_webservers
 $webserver_rslt=mysql_to_mysqli($webserver_stmt, $link);
 $webservers_to_print=mysqli_num_rows($webserver_rslt);
 $i=0;
+$LISTwebserver_ids=array();
+$LISTwebservers=array();
+$LISThostnames=array();
 while ($i < $webservers_to_print)
 	{
 	$row=mysqli_fetch_row($webserver_rslt);

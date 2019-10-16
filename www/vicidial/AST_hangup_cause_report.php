@@ -1,7 +1,7 @@
 <?php 
 # AST_carrier_log_report.php
 # 
-# Copyright (C) 2017  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 120331-2301 - First build
@@ -17,6 +17,7 @@
 # 170409-1534 - Added IP List validation code
 # 170818-2345 - Added HTML formatting
 # 170829-0040 - Added screen color settings
+# 191013-0858 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -388,6 +389,8 @@ if ($DB) {echo "|$server_stmt|\n";}
 $server_rslt=mysql_to_mysqli($server_stmt, $link);
 $servers_to_print=mysqli_num_rows($server_rslt);
 $i=0;
+$LISTserverIPs=array();
+$LISTserver_names=array();
 while ($i < $servers_to_print)
 	{
 	$row=mysqli_fetch_row($server_rslt);
@@ -744,7 +747,7 @@ if ($SUBMIT && $server_ip_ct>0) {
 		
 		$TEXT.="--- "._QXZ("CARRIER LOG RECORDS FOR")." $query_date, $query_date_D "._QXZ("TO")." $query_date_T $server_rpt_string, $HC_rpt_string, $DS_rpt_string\n --- "._QXZ("RECORDS")." #$lower_limit-$upper_limit               <a href=\"$PHP_SELF?SUBMIT=$SUBMIT&DB=$DB&type=$type&query_date=$query_date&query_date_D=$query_date_D&query_date_T=$query_date_T$server_ipQS&lower_limit=$lower_limit&upper_limit=$upper_limit&file_download=1\">["._QXZ("DOWNLOAD")."]</a>\n";
 		$carrier_rpt.="+----------------------+---------------------+-----------------+-----------+--------------+-------------+------------------------------------------+-----------+---------------+--------------+--------------+--------------------------------+\n";
-		$carrier_rpt.="| "._QXZ("UNIQUE ID",20)." | "._QXZ("CALL DATE",19)." | "._QXZ("SERVER IP",15)." | "._QXZ("LEAD ID",9)." | "._QXZ("HANGUP CAUSE",11)." | "._QXZ("DIAL STATUS",11)." | "._QXZ("CHANNEL",40)." | "._QXZ("DIAL TIME",9)." | "._QXZ("ANSWERED TIME",13)." | "._QXZ("PHONE NUMBER",12)." | "._QXZ("SIP RESPONSE",12)." | "._QXZ("SIP REASON",30)." |\n";
+		$carrier_rpt.="| "._QXZ("UNIQUE ID",20)." | "._QXZ("CALL DATE",19)." | "._QXZ("SERVER IP",15)." | "._QXZ("LEAD ID",9)." | "._QXZ("HANGUP CAUSE",12)." | "._QXZ("DIAL STATUS",11)." | "._QXZ("CHANNEL",40)." | "._QXZ("DIAL TIME",9)." | "._QXZ("ANSWERED TIME",13)." | "._QXZ("PHONE NUMBER",12)." | "._QXZ("SIP RESPONSE",12)." | "._QXZ("SIP REASON",30)." |\n";
 		$carrier_rpt.="+----------------------+---------------------+-----------------+-----------+--------------+-------------+------------------------------------------+-----------+---------------+--------------+--------------+--------------------------------+\n";
 		$CSV_text="\""._QXZ("UNIQUE ID")."\",\""._QXZ("CALL DATE")."\",\""._QXZ("SERVER IP")."\",\""._QXZ("LEAD ID")."\",\""._QXZ("HANGUP CAUSE")."\",\""._QXZ("DIAL STATUS")."\",\""._QXZ("CHANNEL")."\",\""._QXZ("DIAL TIME")."\",\""._QXZ("ANSWERED TIME")."\",\""._QXZ("PHONE NUMBER")."\",\""._QXZ("SIP RESPONSE")."\",\""._QXZ("SIP REASON")."\"\n";
 
@@ -860,7 +863,7 @@ if ($SUBMIT && $server_ip_ct>0) {
 }
 	if ($file_download>0) {
 		$FILE_TIME = date("Ymd-His");
-		$CSVfilename = "AST_carrier_log_report_$US$FILE_TIME.csv";
+		$CSVfilename = "AST_hangup_cause_report_$US$FILE_TIME.csv";
 		$CSV_text=preg_replace('/ +\"/', '"', $CSV_text);
 		$CSV_text=preg_replace('/\" +/', '"', $CSV_text);
 		// We'll be outputting a TXT file

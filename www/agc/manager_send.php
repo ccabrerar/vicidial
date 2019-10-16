@@ -142,10 +142,11 @@
 # 180522-1920 - Added more agent debug output for recordings
 # 190222-1318 - Added recent session per-call logging
 # 190310-1202 - Added MuteRecording function
+# 191013-2114 - Fixes for PHP7
 #
 
-$version = '2.14-89';
-$build = '190310-1202';
+$version = '2.14-90';
+$build = '191013-2114';
 $php_script = 'manager_send.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=143;
@@ -2536,8 +2537,9 @@ if ( ($ACTION=="MonitorConf") || ($ACTION=="StopMonitorConf") )
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02080',$user,$server_ip,$session_name,$one_mysql_log);}
 		#	$rec_count = intval(mysqli_num_rows($rslt) / 2);
 			$rec_count = mysqli_num_rows($rslt);
+			$HUchannel = array();
 			$h=0;
-			while ($rec_count>$h)
+			while ($rec_count > $h)
 				{
 				$rowx=mysqli_fetch_row($rslt);
 				$HUchannel[$h] = $rowx[0];

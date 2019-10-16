@@ -3,7 +3,7 @@
 # 
 # Used for integration with QueueMetrics of audio recordings
 #
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 # Copyright (C) 2007  Lenz Emilitri <lenz.loway@gmail.com> LICENSE: ????
 # 
 # CHANGES
@@ -17,6 +17,7 @@
 # 130615-2324 - Added filtering of input to prevent SQL injection attacks
 # 130901-0829 - Changed to mysqli PHP functions
 # 180529-1016 - Added debug logging
+# 191016-0129 - Added alternate recording lookup method
 #
 
 // $Id: xmlrpc_audio_server.php,v 1.3 2007/11/12 17:53:09 lenz Exp $
@@ -81,6 +82,7 @@ function find_file( $ServerID, $AsteriskID, $QMUserID, $QMUserName )
 	global $FILE_LENGTH;
 	global $FILE_ENCODING;
 	global $FILE_DURATION;
+	global $FIND_LAST;
 	global $DBlogfile;
 
 	if ($DBlogfile > 0)
@@ -128,13 +130,30 @@ function find_file( $ServerID, $AsteriskID, $QMUserID, $QMUserName )
 			$row=mysqli_fetch_row($rslt);
 			$time_id	= $row[0];
 			$time_id_end = ($time_id + 14400);
-
 			$lead_id_test = substr($AsteriskID, -10,1);
 			if ($lead_id_test=='0')
 				{$lead_id = substr($AsteriskID, -10);}
 			else
 				{$lead_id = substr($AsteriskID, -9);}
 			$lead_id = ($lead_id + 0);
+			}
+		else
+			{
+			$stmt = "SELECT lead_id,UNIX_TIMESTAMP(call_date),uniqueid from vicidial_log_extended where caller_code='$AsteriskID' limit 1;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			if ($DB) {echo "$stmt\n";}
+			$VICI_ql_ct = mysqli_num_rows($rslt);
+			if ($VICI_ql_ct > 0)
+				{
+				$row=mysqli_fetch_row($rslt);
+				$lead_id =		$row[0];
+				$time_id =		$row[1];
+				$uniqueid =		$row[2];
+				$time_id_end = ($time_id + 14400);
+				}
+			}
+		if ( ($QM_ql_ct > 0) or ($VICI_ql_ct > 0) )
+			{
 			$stmt = "SELECT start_epoch,length_in_sec,location from recording_log where start_epoch>=$time_id and start_epoch<=$time_id_end and lead_id='$lead_id' order by recording_id limit 1;";
 			$rslt=mysql_to_mysqli($stmt, $link);
 			if ($DB) {echo "$stmt\n";}
@@ -145,6 +164,35 @@ function find_file( $ServerID, $AsteriskID, $QMUserID, $QMUserName )
 				$start_epoch =		$row[0];
 				$length_in_sec =	$row[1];
 				$location =			$row[2];
+				}
+			else
+				{
+				$stmt = "SELECT lead_id,UNIX_TIMESTAMP(call_date),uniqueid from vicidial_log_extended where caller_code='$AsteriskID' limit 1;";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				if ($DB) {echo "$stmt\n";}
+				$VICI_ql_ct = mysqli_num_rows($rslt);
+				if ($VICI_ql_ct > 0)
+					{
+					$row=mysqli_fetch_row($rslt);
+					$lead_id =		$row[0];
+					$time_id =		$row[1];
+					$uniqueid =		$row[2];
+
+					$stmt = "SELECT start_epoch,length_in_sec,location from recording_log where start_epoch>=$time_id and start_epoch<=$time_id_end and lead_id='$lead_id' order by recording_id limit 1;";
+					$rslt=mysql_to_mysqli($stmt, $link);
+					if ($DB) {echo "$stmt\n";}
+					$rl_ct = mysqli_num_rows($rslt);
+					if ($rl_ct > 0)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$start_epoch =		$row[0];
+						$length_in_sec =	$row[1];
+						$location =			$row[2];
+						}
+					}
+				}
+			if ($rl_ct > 0)
+				{
 				if (strlen($location)>2)
 					{
 					$extension = substr($location, strrpos($location, '.') + 1);
@@ -175,7 +223,8 @@ function find_file( $ServerID, $AsteriskID, $QMUserID, $QMUserName )
 					$FILE_LISTEN_URL = "$location";
 					$FILE_LENGTH     = "$filesize";
 					$FILE_ENCODING   = "$extension";	
-					$FILE_DURATION   = sec_convert($length_in_sec,'H'); 
+					$FILE_DURATION   = sec_convert($length_in_sec,'H');
+					$FIND_LAST       = "FOUND";
 					}
 				else
 					{
@@ -183,7 +232,8 @@ function find_file( $ServerID, $AsteriskID, $QMUserID, $QMUserName )
 					$FILE_LISTEN_URL = "";
 					$FILE_LENGTH     = "0";
 					$FILE_ENCODING   = "wav";	
-					$FILE_DURATION   = "0:00"; 	
+					$FILE_DURATION   = "0:00";
+					$FIND_LAST       = "No Location: $stmt";
 					}
 				}
 			else
@@ -192,7 +242,8 @@ function find_file( $ServerID, $AsteriskID, $QMUserID, $QMUserName )
 				$FILE_LISTEN_URL = "";
 				$FILE_LENGTH     = "0";
 				$FILE_ENCODING   = "wav";	
-				$FILE_DURATION   = "0:00"; 	
+				$FILE_DURATION   = "0:00";
+				$FIND_LAST       = "$stmt";
 				}
 			}
 		else
@@ -201,7 +252,8 @@ function find_file( $ServerID, $AsteriskID, $QMUserID, $QMUserName )
 			$FILE_LISTEN_URL = "";
 			$FILE_LENGTH     = "0";
 			$FILE_ENCODING   = "wav";	
-			$FILE_DURATION   = "0:00"; 	
+			$FILE_DURATION   = "0:00";
+			$FIND_LAST       = "$stmt";
 			}
 		mysqli_close($linkB);
 		}
@@ -209,7 +261,7 @@ function find_file( $ServerID, $AsteriskID, $QMUserID, $QMUserName )
 	if ($DBlogfile > 0)
 		{
 		$logfile=fopen('qm_rpc_debug.txt', "a");
-		fwrite($logfile, date("U") . "|find_file|$FILE_FOUND|$FILE_LISTEN_URL|$FILE_LENGTH|$FILE_ENCODING|$FILE_DURATION|\n");
+		fwrite($logfile, date("U") . "|find_file|$FILE_FOUND|$FILE_LISTEN_URL|$FILE_LENGTH|$FILE_ENCODING|$FILE_DURATION|$FIND_LAST|\n");
 		fclose($logfile);
 		}
 
@@ -226,6 +278,7 @@ function listen_call( $ServerID, $AsteriskID, $Agent, $QMUserID, $QMUserName )
 	global $CALL_LISTEN_URL;
 	global $CALL_POPUP_WIDTH;
 	global $CALL_POPUP_HEIGHT;
+	global $FIND_LAST;
 	global $DBlogfile;
 
 	require("dbconnect_mysqli.php");
@@ -320,6 +373,7 @@ function xmlrpc_find_file( $params ) {
 	global $FILE_LENGTH;
 	global $FILE_ENCODING;	
 	global $FILE_DURATION;
+	global $FIND_LAST;
 	global $DBlogfile;
 	
 	$p0 = $params->getParam(0)->scalarval(); // server ID
@@ -354,6 +408,7 @@ function xmlrpc_listen_call( $params ) {
 	global $CALL_LISTEN_URL;
 	global $CALL_POPUP_WIDTH;
 	global $CALL_POPUP_HEIGHT;
+	global $FIND_LAST;
 	global $DBlogfile;
 
 	$p0 = $params->getParam(0)->scalarval(); // server ID

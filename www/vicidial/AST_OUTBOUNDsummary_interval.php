@@ -1,7 +1,7 @@
 <?php 
 # AST_OUTBOUNDsummary_interval.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -33,6 +33,7 @@
 # 170829-0040 - Added screen color settings, fixed display bug
 # 171012-2015 - Fixed javascript/apache errors with graphs
 # 180507-2315 - Added new help display
+# 191013-0813 - Fixes for PHP7
 #
 
 $startMS = microtime();
@@ -352,6 +353,8 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $campaigns_to_print = mysqli_num_rows($rslt);
 $i=0;
+$groups=array();
+$group_names=array();
 while ($i < $campaigns_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -368,6 +371,7 @@ $rollover_groups_count=0;
 $i=0;
 $group_string='|';
 $group_ct = count($group);
+$group_cname=array();
 while($i < $group_ct)
 	{
 	$stmt="select campaign_name from vicidial_campaigns where campaign_id='$group[$i]' $LOGallowed_campaignsSQL;";
@@ -421,6 +425,9 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $statcats_to_print = mysqli_num_rows($rslt);
 $i=0;
+$vsc_id=array();
+$vsc_name=array();
+$vsc_count=array();
 while ($i < $statcats_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -435,6 +442,8 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $times_to_print = mysqli_num_rows($rslt);
 $i=0;
+$call_times=array();
+$call_time_names=array();
 while ($i < $times_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -736,6 +745,8 @@ else
 		}
 	$h=0;
 	$hh=0;
+	$Hcalltime=array();
+	$Hcalltime_HHMM=array();
 	while ($h < $interval_count)
 		{
 		if ($interval_count>=96)
@@ -829,6 +840,57 @@ else
 		$TOTagent_login_sec=0;
 		$TOTagent_pause_sec=0;
 		$SUBoutput='';
+		$ATcall_date=array();
+		$ATepoch=array();
+		$ATcampaign_id=array();
+		$ATpause_sec=array();
+		$ATagent_sec=array();
+		$CPstatus=array();
+		$CPlength_in_sec=array();
+		$CPcall_date=array();
+		$CPepoch=array();
+		$CPphone_number=array();
+		$CPcampaign_id=array();
+		$CPvicidial_id=array();
+		$CPlead_id=array();
+		$TESTlead_id=array();
+		$TESTuniqueid=array();
+		$CPin_out=array();
+		$length_in_sec=array();
+		$queue_seconds=array();
+		$agent_sec=array();
+		$pause_sec=array();
+		$talk_sec=array();
+		$calls_count=array();
+		$calls_count_IN=array();
+		$drop_count=array();
+		$drop_count_OUT=array();
+		$system_count=array();
+		$agent_count=array();
+		$ptp_count=array();
+		$rtp_count=array();
+		$na_count=array();
+		$answer_count=array();
+		$max_queue_seconds=array();
+		$Hlength_in_sec=array();
+		$Hqueue_seconds=array();
+		$Hagent_sec=array();
+		$Hpause_sec=array();
+		$Htalk_sec=array();
+		$Hcalls_count=array();
+		$Hcalls_count_IN=array();
+		$Hdrop_count=array();
+		$Hdrop_count_OUT=array();
+		$Hsystem_count=array();
+		$Hagent_count=array();
+		$Hptp_count=array();
+		$Hrtp_count=array();
+		$Hna_count=array();
+		$Hanswer_count=array();
+		$Hmax_queue_seconds=array();
+		$talk_avg=array();
+		$queue_avg=array();
+		$graph_stats=array();
 
 		while($i < $group_ct)
 			{
@@ -1313,6 +1375,7 @@ else
 			###########################
 
 			$h=0; $z=0;
+			$SUBgraph_stats=array();
 			while ($h < $interval_count)
 				{
 				if ($Hcalltime[$h] > 0)

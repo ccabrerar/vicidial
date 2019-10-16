@@ -363,6 +363,15 @@ if ($stage=='SUBMIT')
 			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'06003',$user,$server_ip,$session_name,$one_mysql_log);}
 		$fields_to_print = mysqli_num_rows($rslt);
 		$fields_list='';
+		$A_field_id = array();
+		$A_field_label = array();
+		$A_field_name = array();
+		$A_field_type = array();
+		$A_field_size = array();
+		$A_field_max = array();
+		$A_field_required = array();
+		$A_field_duplicate = array();
+		$A_field_value = array();
 		$o=0;
 		while ($fields_to_print > $o) 
 			{
@@ -388,7 +397,8 @@ if ($stage=='SUBMIT')
 			if ( ($A_field_type[$o]=='MULTI') or ($A_field_type[$o]=='CHECKBOX') or ($A_field_type[$o]=='RADIO') )
 				{
 				$k=0;
-				$multi_count = count($form_field_value);
+				$multi_count=0;
+				if (is_array($form_field_value)) {$multi_count = count($form_field_value);}
 				$multi_array = $form_field_value;
 				while ($k < $multi_count)
 					{
