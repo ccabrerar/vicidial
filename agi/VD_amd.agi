@@ -56,6 +56,8 @@
 # 190216-0813 - Fix for user-group, in-group and campaign allowed/permissions matching issues
 # 190320-2331 - Added more logging options
 # 190720-1007 - Added Call Quota logging
+# 191017-1051 - Added option for multiple prompts in DYN messages
+# 191029-1243 - Added code for agent-selected message override
 #
 
 $script = 'VD_amd.agi';
@@ -633,6 +635,21 @@ else
 		$sthA->finish();
 		}
 
+	### Check for agent-selected message override
+	$stmtA = "SELECT vm_message,user FROM vicidial_agent_vmm_overrides where caller_code='$callerid' order by call_date desc limit 1;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArowsL=$sthA->rows;
+	if ($sthArowsL > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		if ($AGILOG) {$agi_string = "--    AMD user override: |$aryA[0]|$aryA[1]|$DB_am_message_exten|$am_message_exten_override|";   &agi_output;}
+		$am_message_exten_override =	$aryA[0];
+		if (length($am_message_exten_override) > 0)
+			{$DB_am_message_exten = $am_message_exten_override;}
+		}
+	$sthA->finish();
+
 	if ($AGILOG) {$agi_string = "--    AMD campaign values: |$VD_campaign_id|$DB_am_message_exten|$DB_amd_send_to_vmx|";   &agi_output;}
 
 	if ( ( ($DB_amd_send_to_vmx =~ /Y/) || ($force_playback =~ /YES/) ) && (length($DB_am_message_exten) > 0) )
@@ -664,10 +681,18 @@ else
 			{
 			$useTTS=0;
 			if ($DB_am_message_exten =~ /^TTS/) 
-				{$useTTS++;}
-			$TTS_filename = $DB_am_message_exten;
-			$TTS_filename =~s/^TTS|^DYN//gi;
-			$TTS_filename =~s/\|.*//gi;
+				{
+				$useTTS++;
+				$TTS_filename = $DB_am_message_exten;
+				$TTS_filename =~s/^TTS//gi;
+				$TTS_filename =~s/\|.*//gi;
+				}
+			else
+				{
+				$TTS_filename = $DB_am_message_exten;
+				$TTS_filename =~s/^DYN//gi;
+				$TTS_text = $TTS_filename;
+				}
 
 			if ($AGILOG) {$agi_string = "--    TTS : |$useTTS|$TTS_filename|";   &agi_output;}
 

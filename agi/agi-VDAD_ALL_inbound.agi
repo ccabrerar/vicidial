@@ -2683,6 +2683,8 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 	if ($CAMP_callorder =~ /oldest_call_finish/i)	{$agent_call_order = 'order by vicidial_live_agents.last_call_finish';}
 	if ($CAMP_callorder =~ /oldest_inbound_call_start/i)	{$agent_call_order = 'order by vicidial_live_agents.last_inbound_call_time';}
 	if ($CAMP_callorder =~ /oldest_inbound_call_finish/i)	{$agent_call_order = 'order by vicidial_live_agents.last_inbound_call_finish';}
+	if ($CAMP_callorder =~ /oldest_inbound_filtered_call_start/i)	{$agent_call_order = 'order by vicidial_live_agents.last_inbound_call_time_filtered';}
+	if ($CAMP_callorder =~ /oldest_inbound_filtered_call_finish/i)	{$agent_call_order = 'order by vicidial_live_agents.last_inbound_call_finish_filtered';}
 	if ($CAMP_callorder =~ /random/i)				{$agent_call_order = 'order by random_id';}
 	if ($CAMP_callorder =~ /campaign_rank/i)		{$agent_call_order = 'order by campaign_weight desc,last_call_finish';}
 	if ($CAMP_callorder =~ /fewest_calls_campaign/i) {$agent_call_order = 'order by vicidial_live_agents.calls_today,vicidial_live_agents.last_call_finish';}
@@ -3748,8 +3750,24 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 					$AGI->stream_file('sip-silence');
 					}
 
+				### gather user details for max calls and filtered settings
+				$max_inbound_calls=0;
+				$stmtA = "SELECT max_inbound_calls,max_inbound_filter_enabled,max_inbound_filter_ingroups FROM vicidial_users where user='$VDADuser';";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArowsMIC=$sthA->rows;
+					$dbhP=$dbhA;   $mysql_count='02199';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
+				if ($sthArowsMIC > 0)
+					{
+					@aryA = $sthA->fetchrow_array;
+					$VU_max_inbound_calls =				$aryA[0];
+					$VU_max_inbound_filter_enabled =	$aryA[1];
+					$VU_max_inbound_filter_ingroups =	$aryA[2];
+					}
+
 				### update calls_today for vicidial_live_inbound_agents ###
-				$stmtA = "SELECT calls_today from vicidial_inbound_group_agents WHERE user='$VDADuser' and group_id='$channel_group';";
+				$calls_today_filteredSQL='';
+				$stmtA = "SELECT calls_today,calls_today_filtered from vicidial_inbound_group_agents WHERE user='$VDADuser' and group_id='$channel_group';";
 					if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -3758,34 +3776,38 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 				if ($sthArows > 0)
 					{
 					@aryA = $sthA->fetchrow_array;
-					$calls_today = $aryA[0];
+					$calls_today =			$aryA[0];
+					$calls_today_filtered = $aryA[1];
 					$calls_today++;
+				#	if ($VU_max_inbound_filter_enabled > 0) 
+				#		{
+				#		$VU_max_inbound_filter_ingroupsTEST = ",$VU_max_inbound_filter_ingroups,";
+				#		if ($VU_max_inbound_filter_ingroups !~ /,$channel_group,/) 
+				#			{
+				#			$calls_today_filtered++;
+				#			$calls_today_filteredSQL = ",calls_today_filtered='$calls_today_filtered'";
+				#			}
+				#		}
+				#	else
+				#		{
+				#		$calls_today_filtered++;
+				#		$calls_today_filteredSQL = ",calls_today_filtered='$calls_today_filtered'";
+				#		}
 					}
 				$sthA->finish();
 
 				if ($sthArows > 0)
 					{
-					$stmtA = "UPDATE vicidial_live_inbound_agents set calls_today='$calls_today',last_call_time=NOW() WHERE user='$VDADuser' and group_id='$channel_group';";
+					$stmtA = "UPDATE vicidial_live_inbound_agents set calls_today='$calls_today',last_call_time=NOW() $calls_today_filteredSQL WHERE user='$VDADuser' and group_id='$channel_group';";
 					$affected_rows = $dbhA->do($stmtA);
 						$dbhP=$dbhA;   $mysql_count='02070';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
-					$stmtA = "UPDATE vicidial_inbound_group_agents set calls_today='$calls_today' WHERE user='$VDADuser' and group_id='$channel_group';";
+					$stmtA = "UPDATE vicidial_inbound_group_agents set calls_today='$calls_today' $calls_today_filteredSQL WHERE user='$VDADuser' and group_id='$channel_group';";
 					$affected_rows = $dbhA->do($stmtA);
 						$dbhP=$dbhA;   $mysql_count='02071';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
-					if ($AGILOG) {$agi_string = "--    VDLIA agent calls: |$calls_today|$VDADuser|$channel_group|";   &agi_output;}
+					if ($AGILOG) {$agi_string = "--    VDLIA agent calls: |$calls_today|$calls_today_filtered|$VDADuser|$channel_group|";   &agi_output;}
 					}
 
 				##### BEGIN check for user max inbound calls #####
-				$max_inbound_calls=0;
-				$stmtA = "SELECT max_inbound_calls FROM vicidial_users where user='$VDADuser';";
-				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-				$sthArowsMIC=$sthA->rows;
-					$dbhP=$dbhA;   $mysql_count='02199';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
-				if ($sthArowsMIC > 0)
-					{
-					@aryA = $sthA->fetchrow_array;
-					$VU_max_inbound_calls = $aryA[0];
-					}
 				$stmtA = "SELECT max_inbound_calls,max_inbound_calls_outcome FROM vicidial_campaigns where campaign_id='$log_campaign';";
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -3802,9 +3824,11 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 					{
 					$max_inbound_calls = $CP_max_inbound_calls;
 					if ($VU_max_inbound_calls > 0)
-						{$max_inbound_calls = $VU_max_inbound_calls;}
+						{
+						$max_inbound_calls = $VU_max_inbound_calls;
+						}
 					$max_inbound_count=0;
-					$stmtA = "SELECT sum(calls_today) FROM vicidial_inbound_group_agents where user='$VDADuser' and group_type='C';";
+					$stmtA = "SELECT sum(calls_today),sum(calls_today_filtered) FROM vicidial_inbound_group_agents where user='$VDADuser' and group_type='C';";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArowsVIGA=$sthA->rows;
@@ -3813,6 +3837,10 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 						{
 						@aryA = $sthA->fetchrow_array;
 						$max_inbound_count = $aryA[0];
+						if ($VU_max_inbound_filter_enabled > 0) 
+							{
+							$max_inbound_count = $aryA[1];
+							}
 						}
 					if ($max_inbound_count >= $max_inbound_calls)
 						{
