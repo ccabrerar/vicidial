@@ -366,7 +366,7 @@ while ($groups_to_print > $o)
 	$o++;
 	}
 echo "$groups_list</select><br>\n";
-echo _QXZ("status").": <input type=text name=status size=10 maxlength=10 value=\"$status\"> &nbsp; ("._QXZ("example").": XFER)<br>\n";
+echo _QXZ("status").": <input type=text name=status size=10 maxlength=10 value=\"$status\"> &nbsp; ("._QXZ("example").": "._QXZ("XFER").")<br>\n";
 echo _QXZ("date with hour").": <input type=text name=date_with_hour size=14 maxlength=13 value=\"$date_with_hour\"> &nbsp; ("._QXZ("example").": 2004-06-25 14)<br>\n";
 echo "<input type=submit name=submit value='"._QXZ("SUBMIT")."'>\n";
 echo "<BR><BR><BR>\n";

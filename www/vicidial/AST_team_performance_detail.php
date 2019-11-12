@@ -509,7 +509,7 @@ $HTML_text.="<FORM ACTION=\"$PHP_SELF\" METHOD=GET name=vicidial_report id=vicid
 $HTML_text.="<TABLE CELLSPACING=3 BGCOLOR=\"#".$SSframe_background."\"><TR><TD VALIGN=TOP>";
 $HTML_text.="<INPUT TYPE=HIDDEN NAME=DB VALUE=\"$DB\">\n";
 $HTML_text.="<INPUT TYPE=HIDDEN NAME=type VALUE=\"$type\">\n";
-$HTML_text.="Date Range:<BR>\n";
+$HTML_text.=_QXZ("Date Range").":<BR>\n";
 
 $HTML_text.="<INPUT TYPE=hidden NAME=query_date ID=query_date VALUE=\"$query_date\">\n";
 $HTML_text.="<INPUT TYPE=hidden NAME=end_date ID=end_date VALUE=\"$end_date\">\n";
@@ -611,7 +611,7 @@ $HTML_text.="</SELECT></TD>\n";
 $HTML_text.="<TD VALIGN=TOP>\n";
 $HTML_text.=_QXZ("Display as").":<BR>";
 $HTML_text.="<select name='report_display_type'>";
-if ($report_display_type) {$HTML_text.="<option value='$report_display_type' selected>$report_display_type</option>";}
+if ($report_display_type) {$HTML_text.="<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
 $HTML_text.="<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select>\n<BR><BR>";
 $HTML_text.="<INPUT TYPE=SUBMIT NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>\n";
 $HTML_text.="</TD><TD VALIGN=TOP> &nbsp; &nbsp; &nbsp; &nbsp; ";
@@ -652,7 +652,7 @@ if ( ($SUBMIT=="SUBMIT") or ($SUBMIT==_QXZ("SUBMIT")) )
 			# Get actual talk time for all calls made by the user for this particular lead. If cancelled and incomplete sales are to have their times 
 			# counted towards sales talk time, move the below lines OUTSIDE the curly bracket below, so the query runs regardless of what "type" of 
 			# sale it is.
-			$sale_time_stmt="select sum(talk_sec)-sum(dead_sec) from ".$vicidial_agent_log_table." where user='$user' and lead_id='$lead_id' $group_SQL";
+			$sale_time_stmt="select sum(talk_sec)-sum(dead_sec) from ".$vicidial_agent_log_table." where user='$user' and lead_id=$lead_id $group_SQL";
 			if ($DB) {$ASCII_text.="$sale_time_stmt\n";}
 			$sale_time_rslt=mysql_to_mysqli($sale_time_stmt, $link);
 			$sale_time_row=mysqli_fetch_row($sale_time_rslt);

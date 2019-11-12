@@ -498,7 +498,7 @@ $MAIN.="</SELECT>\n<BR>\n<a href=\"AST_LISTS_stats.php?DB=$DB\">"._QXZ("SWITCH T
 $MAIN.="</TD><TD VALIGN=TOP>";
 $MAIN.=_QXZ("Display as").":<BR/>";
 $MAIN.="<select name='report_display_type'>";
-if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>$report_display_type</option>";}
+if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
 $MAIN.="<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select>&nbsp; ";
 
 if ($archives_available=="Y") 
@@ -1233,7 +1233,7 @@ else
 		$SC_count =	sprintf("%9s", "$SC_count"); while(strlen($SC_count)>9) {$SC_count = substr("$SC_count", 0, -1);}
 		$COMP_count =	sprintf("%9s", "$COMP_count"); while(strlen($COMP_count)>9) {$COMP_count = substr("$COMP_count", 0, -1);}
 
-		$OUToutput .= "| "._QXZ("STATUS FLAGS BREAKDOWN",22).":  "._QXZ("(and % of total leads in the list)",34)." |\n";
+		$OUToutput .= "| "._QXZ("STATUS FLAGS BREAKDOWN",22).":  "._QXZ("(and % of total leads in the list)",35)." |\n";
 		$OUToutput .= "|   "._QXZ("Human Answer:",19)." $HA_count    $HA_percent%                   |\n";
 		$OUToutput .= "|   "._QXZ("Sale:",19)." $SALE_count    $SALE_percent%                   |\n";
 		$OUToutput .= "|   "._QXZ("DNC:",19)." $DNC_count    $DNC_percent%                   |\n";

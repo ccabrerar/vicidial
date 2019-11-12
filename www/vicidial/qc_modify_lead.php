@@ -352,7 +352,7 @@ while ($scvl_ct > $s)
 ##### END vicidial_list FIELD LENGTH LOOKUP #####
 
 //Added by Poundteam for QC. Gather record data to display on page and prepopulate title and hrefs, etc.
-$stmt="SELECT * from vicidial_list A inner join vicidial_lists B on A.list_id=B.list_id inner join vicidial_campaigns C on B.campaign_id=C.campaign_id left outer join vicidial_statuses D on A.status=D.status left outer join vicidial_qc_codes E on A.status=E.code where A.lead_id='$lead_id'";
+$stmt="SELECT * from vicidial_list A inner join vicidial_lists B on A.list_id=B.list_id inner join vicidial_campaigns C on B.campaign_id=C.campaign_id left outer join vicidial_statuses D on A.status=D.status left outer join vicidial_qc_codes E on A.status=E.code where A.lead_id=$lead_id";
 $rslt=mysql_to_mysqli($stmt, $link);
 if (mysqli_num_rows ($rslt) < '1' )
 	{
@@ -435,7 +435,7 @@ if ($end_call > 0)
 	$rslt=mysql_to_mysqli($stmt, $link);
 	//STATUS just changed, re-capture all data for client!
 	//Added by Poundteam for QC. Gather record data to display on page and prepopulate title and hrefs, etc.
-	$stmt="SELECT * from vicidial_list A inner join vicidial_lists B on A.list_id=B.list_id inner join vicidial_campaigns C on B.campaign_id=C.campaign_id left outer join vicidial_statuses D on A.status=D.status left outer join vicidial_qc_codes E on A.status=E.code where A.lead_id='$lead_id'";
+	$stmt="SELECT * from vicidial_list A inner join vicidial_lists B on A.list_id=B.list_id inner join vicidial_campaigns C on B.campaign_id=C.campaign_id left outer join vicidial_statuses D on A.status=D.status left outer join vicidial_qc_codes E on A.status=E.code where A.lead_id=$lead_id";
 	if($DB) { echo "$stmt\n"; }
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$row=mysqli_fetch_assoc($rslt);
@@ -465,7 +465,7 @@ if ($end_call > 0)
 		$elapsed_seconds=$STARTtime-$view_epoch;
 
 		$stmt="UPDATE vicidial_qc_agent_log set save_datetime='$NOW_TIME',save_epoch='$STARTtime',elapsed_seconds='$elapsed_seconds',old_status='{$original_record['status']}',new_status='{$new_record['status']}',details='$qcchangelist'
-			where view_epoch='$view_epoch' and lead_id='$lead_id'";
+			where view_epoch='$view_epoch' and lead_id=$lead_id";
 		if ($DB) {echo "|$stmt|\n";}
 		$rslt=mysql_to_mysqli($stmt, $link);
         }
@@ -483,7 +483,7 @@ if ($end_call > 0)
 	$SQL_log = "$stmt|";
 	$SQL_log = preg_replace('/;/', '', $SQL_log);
 	$SQL_log = addslashes($SQL_log);
-	$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LEADS', event_type='MODIFY', record_id='$lead_id', event_code='ADMIN MODIFY LEAD', event_sql=\"$SQL_log\", event_notes='';";
+	$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LEADS', event_type='MODIFY', record_id=$lead_id, event_code='ADMIN MODIFY LEAD', event_sql=\"$SQL_log\", event_notes='';";
 	if ($DB) {echo "|$stmt|\n";}
 	$rslt=mysql_to_mysqli($stmt, $link);
 	if($DB) 
@@ -979,7 +979,7 @@ else
 	echo "<tr><td align=right>Rank : </td><td align=left><input type=text name=rank size=7 maxlength=5 value=\"$rank\"></td></tr>\n";
 	echo "<tr><td align=right>Owner : </td><td align=left><input type=text name=owner size=22 maxlength=$MAXowner value=\"$owner\"></td></tr>\n";
 	echo "<tr><td align=right>$label_comments : </td><td align=left><TEXTAREA name=comments ROWS=3 COLS=65>$comments</TEXTAREA></td></tr>\n";
-	$stmt="SELECT user_id, timestamp, list_id, campaign_id, comment from vicidial_comments where lead_id='$lead_id' order by timestamp";
+	$stmt="SELECT user_id, timestamp, list_id, campaign_id, comment from vicidial_comments where lead_id=$lead_id order by timestamp";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$row_count = mysqli_num_rows($rslt);
 	$o=0;
@@ -1298,7 +1298,7 @@ else
 		$tablecount_to_print = mysqli_num_rows($rslt);
 		if ($tablecount_to_print > 0)
 			{
-			$stmt="SELECT count(*) from custom_$CLlist_id where lead_id='$lead_id';";
+			$stmt="SELECT count(*) from custom_$CLlist_id where lead_id=$lead_id;";
 			if ($DB>0) {echo "$stmt";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 			$fieldscount_to_print = mysqli_num_rows($rslt);

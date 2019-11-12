@@ -285,7 +285,7 @@ if ( ($LOGuser_level >= 9) and $LOGmodify_campaigns>0 and $LOGmodify_lists>0 and
 				{
 				$selected="selected";
 				}
-			echo "<option value='$campaign_row[campaign_id]' $selected>$campaign_row[campaign_id] - $campaign_row[campaign_name], $campaign_row[ct] list(s)</option>\n";
+			echo "<option value='$campaign_row[campaign_id]' $selected>$campaign_row[campaign_id] - $campaign_row[campaign_name], $campaign_row[ct] "._QXZ("list")."(s)</option>\n";
 			}
 		}
 	echo "</select></td>";

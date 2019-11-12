@@ -603,7 +603,7 @@ echo "<input type=hidden name=force_allow value=\"$force_allow\">\n";
 echo _QXZ("Original file").": <input type=text size=50 maxlength=100 name=master_audiofile id=master_audiofile value=\"\"><BR>\n";
 echo _QXZ("New file").": <input type=text size=50 maxlength=100 name=new_audiofile id=new_audiofile value=\"\"><BR>\n";
 echo "<input type=hidden name=DB value=\"$DB\">\n";
-echo "<input type=submit name=submit value=submit></form>\n";
+echo "<input type=submit name=submit value='"._QXZ("submit")."'></form>\n";
 
 ?>
 
@@ -619,7 +619,7 @@ if ($auth_delete > 0)
 	echo "<input type=hidden name=force_allow value=\"$force_allow\">\n";
 	echo "<input type=text size=50 maxlength=100 name=delete_file id=delete_file value=\"\">\n";
 	echo "<input type=hidden name=DB value=\"$DB\">\n";
-	echo "<input type=submit name=submit value=submit>\n";
+	echo "<input type=submit name=submit value='"._QXZ("submit")."'>\n";
 	}
 else
 	{

@@ -1791,7 +1791,7 @@ if ($function == 'external_dial')
 						if ($alt_dial=='SEARCH')
 							{
 							$alt_dial='';
-							$stmt = "SELECT phone_number,alt_phone,address3 FROM vicidial_list where lead_id='$lead_id';";
+							$stmt = "SELECT phone_number,alt_phone,address3 FROM vicidial_list where lead_id=$lead_id;";
 							$rslt=mysql_to_mysqli($stmt, $link);
 							$paa_ct = mysqli_num_rows($rslt);
 							if ($paa_ct > 0)
@@ -1819,11 +1819,11 @@ if ($function == 'external_dial')
 								}
 							}
 						if ($alt_dial=='ALT')
-							{$stmtPF = "select alt_phone,phone_code from vicidial_list where lead_id='$lead_id';";}
+							{$stmtPF = "select alt_phone,phone_code from vicidial_list where lead_id=$lead_id;";}
 						if ($alt_dial=='ADDR3')
-							{$stmtPF = "select address3,phone_code from vicidial_list where lead_id='$lead_id';";}
+							{$stmtPF = "select address3,phone_code from vicidial_list where lead_id=$lead_id;";}
 						if (strlen($stmtPF)<20)
-							{$stmtPF = "select phone_number,phone_code from vicidial_list where lead_id='$lead_id';";}
+							{$stmtPF = "select phone_number,phone_code from vicidial_list where lead_id=$lead_id;";}
 						if ($DB) {echo "$stmtPF\n";}
 						$rslt=mysql_to_mysqli($stmtPF, $link);
 						$VL_lead_id_ct = mysqli_num_rows($rslt);
@@ -2769,7 +2769,7 @@ if ($function == 'update_fields')
 						$fieldsSQL = preg_replace("/,$/","",$fieldsSQL);
 						$fieldsLIST = preg_replace("/,$/","",$fieldsLIST);
 
-						$stmt="UPDATE vicidial_list set $fieldsSQL where lead_id='$lead_id';";
+						$stmt="UPDATE vicidial_list set $fieldsSQL where lead_id=$lead_id;";
 							if ($format=='debug') {echo "\n<!-- $stmt -->";}
 						$rslt=mysql_to_mysqli($stmt, $link);
 
@@ -3004,7 +3004,7 @@ if ($function == 'st_get_agent_active_lead')
 
 				if ($lead_id > 0)
 					{
-					$stmt = "select phone_number,vendor_lead_code,province,security_phrase,source_id from vicidial_list where lead_id='$lead_id';";
+					$stmt = "select phone_number,vendor_lead_code,province,security_phrase,source_id from vicidial_list where lead_id=$lead_id;";
 					if ($DB) {echo "$stmt\n";}
 					$rslt=mysql_to_mysqli($stmt, $link);
 					$row=mysqli_fetch_row($rslt);
@@ -3231,16 +3231,16 @@ if ($function == 'ra_call_control')
 						{$status='RAXFER';}
 					if ($call_type=='IN')
 						{
-						$stmt = "UPDATE vicidial_closer_log SET status='$status' where uniqueid='$uniqueid' and lead_id='$lead_id' and campaign_id='$campaign_id' order by closecallid desc limit 1;";
+						$stmt = "UPDATE vicidial_closer_log SET status='$status' where uniqueid='$uniqueid' and lead_id=$lead_id and campaign_id='$campaign_id' order by closecallid desc limit 1;";
 						}
 					else
 						{
-						$stmt = "UPDATE vicidial_log SET status='$status',user='$agent_user' where uniqueid='$uniqueid' and lead_id='$lead_id' order by call_date desc limit 1;";
+						$stmt = "UPDATE vicidial_log SET status='$status',user='$agent_user' where uniqueid='$uniqueid' and lead_id=$lead_id order by call_date desc limit 1;";
 						}
 					if ($format=='debug') {echo "\n<!-- $stmt -->";}
 					$rslt=mysql_to_mysqli($stmt, $link);
 
-					$stmt = "UPDATE vicidial_list SET status='$status' where lead_id='$lead_id' limit 1;";
+					$stmt = "UPDATE vicidial_list SET status='$status' where lead_id=$lead_id limit 1;";
 					if ($format=='debug') {echo "\n<!-- $stmt -->";}
 					$rslt=mysql_to_mysqli($stmt, $link);
 
@@ -3332,7 +3332,7 @@ if ($function == 'ra_call_control')
 							if (preg_match("/--A--/",$queuemetrics_socket_url))
 								{
 								##### grab the data from vicidial_list for the lead_id
-								$stmt="SELECT vendor_lead_code,list_id,phone_code,phone_number,title,first_name,middle_initial,last_name,postal_code FROM vicidial_list where lead_id='$lead_id' LIMIT 1;";
+								$stmt="SELECT vendor_lead_code,list_id,phone_code,phone_number,title,first_name,middle_initial,last_name,postal_code FROM vicidial_list where lead_id=$lead_id LIMIT 1;";
 								$rslt=mysql_to_mysqli($stmt, $link);
 								if ($DB) {echo "$stmt\n";}
 								$list_lead_ct = mysqli_num_rows($rslt);
@@ -3940,7 +3940,7 @@ if ($function == 'switch_lead')
 						if ( ($agent_lead_search == 'LIVE_CALL_INBOUND') or ($agent_lead_search == 'LIVE_CALL_INBOUND_AND_MANUAL') )
 							{
 							### search for defined lead ###
-							$searchSQL = "lead_id='$lead_id'";
+							$searchSQL = "lead_id=$lead_id";
 							if (strlen($vendor_lead_code)>0) {$searchSQL = "vendor_lead_code='$vendor_lead_code' order by lead_id desc limit 1";}
 							$stmt = "SELECT lead_id,vendor_lead_code from vicidial_list where $searchSQL;";
 							if ($DB) {echo "$stmt\n";}

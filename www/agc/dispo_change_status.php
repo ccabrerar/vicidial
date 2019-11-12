@@ -198,7 +198,7 @@ if ($match_found > 0)
 		$search_count=0;
 		if ( ($in_out_search == 'OUT') or ($in_out_search == 'BOTH') )
 			{
-			$stmt = "SELECT count(*) FROM vicidial_log where lead_id='$lead_id' and status='$logged_status' $days_searchSQL;";
+			$stmt = "SELECT count(*) FROM vicidial_log where lead_id=$lead_id and status='$logged_status' $days_searchSQL;";
 			$rslt=mysql_to_mysqli($stmt, $link);
 			if ($DB) {echo "$stmt\n";}
 			$sc_ct = mysqli_num_rows($rslt);
@@ -209,7 +209,7 @@ if ($match_found > 0)
 				}
 			if ($archive_search == 'Y')
 				{
-				$stmt = "SELECT count(*) FROM vicidial_log_archive where lead_id='$lead_id' and status='$logged_status' $days_searchSQL;";
+				$stmt = "SELECT count(*) FROM vicidial_log_archive where lead_id=$lead_id and status='$logged_status' $days_searchSQL;";
 				$rslt=mysql_to_mysqli($stmt, $link);
 				if ($DB) {echo "$stmt\n";}
 				$sc_ct = mysqli_num_rows($rslt);
@@ -222,7 +222,7 @@ if ($match_found > 0)
 			}
 		if ( ($in_out_search == 'IN') or ($in_out_search == 'BOTH') )
 			{
-			$stmt = "SELECT count(*) FROM vicidial_closer_log where lead_id='$lead_id' and status='$logged_status' $days_searchSQL;";
+			$stmt = "SELECT count(*) FROM vicidial_closer_log where lead_id=$lead_id and status='$logged_status' $days_searchSQL;";
 			$rslt=mysql_to_mysqli($stmt, $link);
 			if ($DB) {echo "$stmt\n";}
 			$sc_ct = mysqli_num_rows($rslt);
@@ -233,7 +233,7 @@ if ($match_found > 0)
 				}
 			if ($archive_search == 'Y')
 				{
-				$stmt = "SELECT count(*) FROM vicidial_closer_log_archive where lead_id='$lead_id' and status='$logged_status' $days_searchSQL;";
+				$stmt = "SELECT count(*) FROM vicidial_closer_log_archive where lead_id=$lead_id and status='$logged_status' $days_searchSQL;";
 				$rslt=mysql_to_mysqli($stmt, $link);
 				if ($DB) {echo "$stmt\n";}
 				$sc_ct = mysqli_num_rows($rslt);
@@ -249,7 +249,7 @@ if ($match_found > 0)
 
 		if ($search_count >= $logged_count)
 			{
-			$stmt="UPDATE vicidial_list SET status='$new_status' where lead_id='$lead_id';";
+			$stmt="UPDATE vicidial_list SET status='$new_status' where lead_id=$lead_id;";
 			if ($DB) {echo "$stmt\n";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 			$affected_rows = mysqli_affected_rows($link);
@@ -257,7 +257,7 @@ if ($match_found > 0)
 			$SQL_log = "$stmt|";
 			$SQL_log = preg_replace('/;/','',$SQL_log);
 			$SQL_log = addslashes($SQL_log);
-			$stmt="INSERT INTO vicidial_api_log set user='$user',agent_user='$user',function='$api_script',value='$lead_id',result='$affected_rows',result_reason='$new_status',source='vdc',data='$SQL_log',api_date='$NOW_TIME',api_script='$api_script';";
+			$stmt="INSERT INTO vicidial_api_log set user='$user',agent_user='$user',function='$api_script',value=$lead_id,result='$affected_rows',result_reason='$new_status',source='vdc',data='$SQL_log',api_date='$NOW_TIME',api_script='$api_script';";
 			$rslt=mysql_to_mysqli($stmt, $link);
 
 			$MESSAGE = _QXZ("DONE: %1s x %2s match found, %3s lead_id %4s changed to %5s status",0,'',$search_count,$logged_status,$affected_rows,$lead_id,$new_status);

@@ -509,9 +509,9 @@ $MAIN.="<SELECT SIZE=5 NAME=user_group[] multiple>\n";
 	while ($user_groups_to_print > $o)
 	{
 		if (preg_match("/\|$LISTuser_groups[$o]\|/",$user_group_string)) 
-			{$MAIN.="<option selected value=\"$LISTuser_groups[$o]\">$LISTuser_groups[$o]</option>\n";}
+			{$MAIN.="<option selected value=\"$LISTuser_groups[$o]\">"._QXZ("$LISTuser_groups[$o]")."</option>\n";}
 		else 
-			{$MAIN.="<option value=\"$LISTuser_groups[$o]\">$LISTuser_groups[$o]</option>\n";}
+			{$MAIN.="<option value=\"$LISTuser_groups[$o]\">"._QXZ("$LISTuser_groups[$o]")."</option>\n";}
 		$o++;
 	}
 $MAIN.="</SELECT>\n";
@@ -519,12 +519,12 @@ $MAIN.="</SELECT>\n";
 $MAIN.="</TD></TD><TD ALIGN=LEFT VALIGN=TOP><font class=\"select_bold\">";
 $MAIN.=_QXZ("Display as").":<BR>";
 $MAIN.="<select name='report_display_type'>";
-if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>$report_display_type</option>";}
+if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
 $MAIN.="<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select>\n<BR>\n";
 $MAIN.="</font></TD><TD ALIGN=LEFT VALIGN=TOP>\n";
 $MAIN.="<font class=\"select_bold\"><B>"._QXZ("Order").":</B><BR>\n";
 $MAIN.="<SELECT SIZE=1 NAME=order>\n";
-$MAIN.="<option selected value=\"$order\">$order</option>\n";
+$MAIN.="<option selected value=\"$order\">"._QXZ("$order")."</option>\n";
 $MAIN.="<option value=\"\">--</option>\n";
 $MAIN.="<option value='hours_up'>"._QXZ("hours_up")."</option value=''>\n";
 $MAIN.="<option value='hours_down'>"._QXZ("hours_down")."</option value=''>\n";

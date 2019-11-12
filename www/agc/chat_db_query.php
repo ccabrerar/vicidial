@@ -899,7 +899,7 @@ if ($action=="agent_leave_chat" && $user && $chat_id) {
 			$row=mysqli_fetch_row($rslt);
 			$lead_id=$row[0];
 			# CHECK IF SHOULD USE SPECIAL DROP STATUS 'CDROP' FOR DROPPED CHATS
-			$upd_stmt="update vicidial_list set status='CDROP' where lead_id='$lead_id'";
+			$upd_stmt="update vicidial_list set status='CDROP' where lead_id=$lead_id";
 			$upd_rslt=mysql_to_mysqli($upd_stmt, $link);
 			
 			$ins_stmt="insert ignore into vicidial_chat_archive select * From vicidial_live_chats where chat_id='$chat_id'";
@@ -1067,7 +1067,7 @@ if ($action=="send_invite" && $chat_id && $email && $chat_group_id) {
 	
 	if ($sendmail) 
 		{
-		$upd_stmt="update vicidial_live_chats set lead_id='$lead_id' where chat_id='$chat_id'";
+		$upd_stmt="update vicidial_live_chats set lead_id=$lead_id where chat_id='$chat_id'";
 		$upd_rslt=mysql_to_mysqli($upd_stmt, $link);
 		if (mysqli_affected_rows($link)>0) 
 			{

@@ -377,8 +377,8 @@ $HTML_text.="</TD>\n";
 $HTML_text.="<TD VALIGN=TOP>\n";
 $HTML_text.=_QXZ("Display as:")."<BR>";
 $HTML_text.="<select name='report_display_type'>";
-if ($report_display_type) {$HTML_text.="<option value='$report_display_type' selected>$report_display_type</option>";}
-$HTML_text.="<option value='TEXT'>TEXT</option><option value='HTML'>HTML</option></select>\n<BR><BR>";
+if ($report_display_type) {$HTML_text.="<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
+$HTML_text.="<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select>\n<BR><BR>";
 
 if ($archives_available=="Y") 
 	{

@@ -2040,7 +2040,7 @@ else
 		echo "<BR><table cellpadding=0 cellspacing=0><TR>";
 		echo "<TD ALIGN=RIGHT><font class=\"top_settings_key\">"._QXZ("DIAL LEVEL").":</font></TD><TD ALIGN=LEFT><font class=\"top_settings_val\">&nbsp; $DIALlev&nbsp; &nbsp; </TD>";
 		echo "<TD ALIGN=RIGHT><font class=\"top_settings_key\">"._QXZ("TRUNK SHORT/FILL").":</font></TD><TD ALIGN=LEFT><font class=\"top_settings_val\">&nbsp; $balanceSHORT / $balanceFILL &nbsp; &nbsp; </TD>";
-		echo "<TD ALIGN=RIGHT><font class=\"top_settings_key\">"._QXZ("FILTER").":</font></TD><TD ALIGN=LEFT><font class=\"top_settings_val\">&nbsp; $DIALfilter &nbsp; </TD>";
+		echo "<TD ALIGN=RIGHT><font class=\"top_settings_key\">"._QXZ("FILTER").":</font></TD><TD ALIGN=LEFT><font class=\"top_settings_val\">&nbsp; "._QXZ("$DIALfilter")." &nbsp; </TD>";
 		echo "<TD ALIGN=RIGHT><font class=\"top_settings_key\"> "._QXZ("TIME").": &nbsp; </font></TD><TD ALIGN=LEFT><font class=\"top_settings_val\"> $NOW_TIME </TD>";
 		echo "";
 		echo "</TR>";
@@ -2070,7 +2070,7 @@ else
 		echo "<TD ALIGN=RIGHT><font class=\"top_settings_key\">"._QXZ("DIALABLE LEADS").":</font></TD><TD ALIGN=LEFT><font class=\"top_settings_val\">&nbsp; $DAleads &nbsp; &nbsp; </TD>";
 		echo "<TD ALIGN=RIGHT><font class=\"top_settings_key\">"._QXZ("CALLS TODAY").":</font></TD><TD ALIGN=LEFT><font class=\"top_settings_val\">&nbsp; $callsTODAY &nbsp; &nbsp; </TD>";
 		echo "<TD ALIGN=RIGHT><font class=\"top_settings_key\">"._QXZ("AVG AGENTS").":</font></TD><TD ALIGN=LEFT><font class=\"top_settings_val\">&nbsp; $agentsONEMIN &nbsp; &nbsp; </TD>";
-		echo "<TD ALIGN=RIGHT><font class=\"top_settings_key\">"._QXZ("DIAL METHOD").":</font></TD><TD ALIGN=LEFT><font class=\"top_settings_val\">&nbsp; $DIALmethod &nbsp; &nbsp; </TD>";
+		echo "<TD ALIGN=RIGHT><font class=\"top_settings_key\">"._QXZ("DIAL METHOD").":</font></TD><TD ALIGN=LEFT><font class=\"top_settings_val\">&nbsp; "._QXZ("$DIALmethod")." &nbsp; &nbsp; </TD>";
 		echo "</TR>";
 
 		echo "<TR>";
@@ -2104,7 +2104,7 @@ else
 
 
 		echo "<TD ALIGN=RIGHT><font class=\"top_settings_key\">"._QXZ("DIFF").":</font></TD><TD ALIGN=LEFT><font class=\"top_settings_val\">&nbsp; $diffpctONEMIN% &nbsp; &nbsp; </TD>";
-		echo "<TD ALIGN=RIGHT><font class=\"top_settings_key\">"._QXZ("ORDER").":</font></TD><TD ALIGN=LEFT><font class=\"top_settings_val\">&nbsp; $DIALorder &nbsp; &nbsp; </TD>";
+		echo "<TD ALIGN=RIGHT><font class=\"top_settings_key\">"._QXZ("ORDER").":</font></TD><TD ALIGN=LEFT><font class=\"top_settings_val\">&nbsp; "._QXZ("$DIALorder")." &nbsp; &nbsp; </TD>";
 		echo "</TR>";
 
 		if ($AGENTtimeSTATS>0)

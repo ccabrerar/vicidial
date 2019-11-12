@@ -423,13 +423,13 @@ $MAIN.="<TD align=left valign=top><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZ
 $MAIN.="<INPUT TYPE=hidden NAME=DB VALUE=\"$DB\">\n";
 $MAIN.=_QXZ("Display as:")."</FONT><BR>";
 $MAIN.="<select name='report_display_type'>";
-if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>$report_display_type</option>";}
+if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
 $MAIN.="<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select>\n<BR><BR>";
 if ($archives_available=="Y") 
 	{
 	$MAIN.="<input type='checkbox' name='search_archived_data' value='checked' $search_archived_data>"._QXZ("Search archived data")."<BR><BR>\n";
 	}
-$MAIN.="<INPUT TYPE=submit NAME=SUBMIT VALUE=SUBMIT>\n";
+$MAIN.="<INPUT TYPE=submit NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>\n";
 $MAIN.="<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a href=\"$PHP_SELF?query_date=$query_date&end_date=$end_date$groupQS&shift=$shift&DB=$DB&SUBMIT=$SUBMIT&file_download=1\">"._QXZ("DOWNLOAD")."</a> | <a href=\"./admin.php?ADD=3311&did_id=$group[0]\">"._QXZ("MODIFY")."</a> | <a href=\"./admin.php?ADD=999999\">"._QXZ("REPORTS")."</a> </FONT>\n";
 $MAIN.="</TD></TR></TABLE>\n";
 $MAIN.="</FORM>\n";

@@ -325,10 +325,10 @@ echo "</title>\n";
 echo "</head>\n";
 echo "<BODY BGCOLOR=white marginheight=0 marginwidth=0 leftmargin=0 topmargin=0>\n";
 echo "<CENTER>\n";
-echo "<TABLE WIDTH=98% BGCOLOR=#E6E6E6 cellpadding=2 cellspacing=0><TR><TD ALIGN=LEFT><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=4><B>ADMINISTRATION: HELP<BR></B></FONT><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2><BR><BR>\n";
+echo "<TABLE WIDTH=98% BGCOLOR=#E6E6E6 cellpadding=2 cellspacing=0><TR><TD ALIGN=LEFT><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=4><B>"._QXZ("ADMINISTRATION: HELP")."<BR></B></FONT><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2><BR><BR>\n";
 
 ?>
-<B><FONT SIZE=3>USERS TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3><?php echo _QXZ("USERS TABLE"); ?></FONT></B><BR><BR>
 <A NAME="users-user">
 <BR>
 <B><?php echo _QXZ("User ID"); ?> -</B><?php echo _QXZ("This field is where you put the users ID number, can be up to 8 digits in length, Must be at least 2 characters in length."); ?>
@@ -841,7 +841,7 @@ if ($SSqc_features_active > 0)
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>CAMPAIGNS TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3><?php echo _QXZ("CAMPAIGNS TABLE"); ?></FONT></B><BR><BR>
 <A NAME="campaigns-campaign_id">
 <BR>
 <B><?php echo _QXZ("Campaign ID"); ?> -</B><?php echo _QXZ("This is the short name of the campaign, it is not editable after initial submission, cannot contain spaces and must be between 2 and 8 characters in length."); ?>
@@ -2192,7 +2192,7 @@ if ($SSqc_features_active > 0)
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>LISTS TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3><?php echo _QXZ("LISTS TABLE"); ?></FONT></B><BR><BR>
 <A NAME="lists-list_id">
 <BR>
 <B><?php echo _QXZ("List ID"); ?> -</B><?php echo _QXZ("This is the numerical name of the list, it is not editable after initial submission, must contain only numbers and must be between 2 and 8 characters in length. Must be a number greater than 99."); ?>
@@ -2336,7 +2336,7 @@ if ($SSqc_features_active > 0)
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>Drop Lists Help</FONT></B><BR><BR>
+<B><FONT SIZE=3><?php echo _QXZ("Drop Lists Help"); ?></FONT></B><BR><BR>
 <A NAME="drop_lists">
 <BR>
 <?php echo _QXZ("The Drop Lists process allows you to take the phone numbers of calls that have been dropped from inbound groups and put them into a specified list at defined scheduled days and times."); ?>
@@ -2423,7 +2423,7 @@ if ($SSqc_features_active > 0)
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>Lists Custom Fields Help</FONT></B><BR><BR>
+<B><FONT SIZE=3><?php echo _QXZ("Lists Custom Fields Help"); ?></FONT></B><BR><BR>
 
 <A NAME="lists_fields-field_label">
 <BR>
@@ -2525,7 +2525,7 @@ if ($SSqc_features_active > 0)
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>INBOUND_GROUPS TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3>INBOUND_GROUPS <?php echo _QXZ("TABLE"); ?></FONT></B><BR><BR>
 <A NAME="inbound_groups-group_id">
 <BR>
 <B><?php echo _QXZ("Group ID"); ?> -</B><?php echo _QXZ("This is the short name of the inbound group, it is not editable after initial submission, must not contain any spaces and must be between 2 and 20 characters in length."); ?>
@@ -3370,7 +3370,7 @@ if ($SSqc_features_active > 0)
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>INBOUND_DIDS TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3>INBOUND_DIDS <?php echo _QXZ("TABLE"); ?></FONT></B><BR><BR>
 <BR>
 <A NAME="inbound_dids-did_pattern">
 <BR>
@@ -3584,7 +3584,7 @@ if ($SSqc_features_active > 0)
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>CALL MENU TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3><?php echo _QXZ("CALL MENU TABLE"); ?></FONT></B><BR><BR>
 <A NAME="call_menu-menu_id">
 <BR>
 <B><?php echo _QXZ("Menu ID"); ?> -</B><?php echo _QXZ("This is the ID for this step of the call menu. This will also show up as the context that is used in the dialplan for this call menu. Here is a list of reserved phrases that cannot be used as menu IDs: vicidial, vicidial-auto, general, globals, default, trunkinbound, loopback-no-log, monitor_exit, monitor."); ?>
@@ -3736,7 +3736,7 @@ if ($SSqc_features_active > 0)
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>REMOTE_AGENTS TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3>REMOTE_AGENTS <?php echo _QXZ("TABLE"); ?></FONT></B><BR><BR>
 <A NAME="remote_agents-user_start">
 <BR>
 <B><?php echo _QXZ("User ID Start"); ?> -</B><?php echo _QXZ("This is the starting User ID that is used when the remote agent entries are inserted into the system. If the Number of Lines is set higher than 1, this number is incremented by one until each line has an entry. Make sure you create a new user account with a user level of 4 or great if you want them to be able to use the vdremote.php page for remote web access of this account."); ?>
@@ -3792,7 +3792,7 @@ if ($SSqc_features_active > 0)
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>EXTENSION_GROUPS TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3>EXTENSION_GROUPS <?php echo _QXZ("TABLE"); ?></FONT></B><BR><BR>
 <A NAME="extension_groups-extension_group_id">
 <BR>
 <B><?php echo _QXZ("Extension Group"); ?> -</B><?php echo _QXZ("This required field is where you enter the group ID that you want this extension to be put into. No spaces or special characters except for underscore letters and numbers."); ?>
@@ -3830,7 +3830,7 @@ if ($SSqc_features_active > 0)
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>CAMPAIGN_STATUSES TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3>CAMPAIGN_STATUSES <?php echo _QXZ("TABLE"); ?></FONT></B><BR><BR>
 <A NAME="campaign_statuses">
 <BR>
 <B><?php echo _QXZ("Through the use of custom campaign statuses, you can have statuses that only exist for a specific campaign. The Status must be 1-8 characters in length, the description must be 2-30 characters in length and Selectable defines whether it shows up in the system as a disposition. The human_answered field is used when calculating the drop percentage, or abandon rate. Setting human_answered to Y will use this status when counting the human-answered calls. The Category option allows you to group several statuses into a category that can be used for statistical analysis. There are also 7 additional settings that will define the kind of status: sale, dnc, customer contact, not interested, unworkable, scheduled callback, completed. The MIN SEC and MAX SEC fields for each status will determine whether an agent can select that status at the end of their call based upon the length of the call. If the call is 10 seconds and the MIN SEC for a status is set to 20 seconds, then the agent will not be able to select that status. Also, if a call is 40 seconds and the MAX SEC for a status is set to 30 seconds, then the agent will not be able to select that status.")."</B>";
@@ -3844,7 +3844,7 @@ if ($SSoutbound_autodial_active > 0)
 	?>
 	<BR><BR><BR><BR>
 
-	<B><FONT SIZE=3>CAMPAIGN_HOTKEYS TABLE</FONT></B><BR><BR>
+	<B><FONT SIZE=3>CAMPAIGN_HOTKEYS <?php echo _QXZ("TABLE"); ?></FONT></B><BR><BR>
 	<A NAME="campaign_hotkeys">
 	<BR>
 	<B><?php echo _QXZ("Through the use of custom campaign hot keys, agents that use the agent web-client can hang up and disposition calls just by pressing a single key on their keyboard. There are two special HotKey options that you can use in conjunction with Alternate Phone number dialing, ALTPH2 - Alternate Phone Hot Dial and ADDR3-----Address3 Hot Dial allow an agent to use a hotkey to hang up their call, stay on the same lead, and dial another contact number from that lead. You can also use LTMG or XFTAMM as statuses to trigger an automatic transfer to the Leave-Voicemail option."); ?></B>
@@ -3855,7 +3855,7 @@ if ($SSoutbound_autodial_active > 0)
 
 	<BR><BR><BR><BR>
 
-	<B><FONT SIZE=3>LEAD_RECYCLE TABLE</FONT></B><BR><BR>
+	<B><FONT SIZE=3>LEAD_RECYCLE <?php echo _QXZ("TABLE"); ?></FONT></B><BR><BR>
 	<A NAME="lead_recycle">
 	<BR>
 	<B><?php echo _QXZ("Through the use of lead recycling, you can call specific statuses of leads again at a specified interval without resetting the entire list. Lead recycling is campaign-specific and does not have to be a selected dialable status in your campaign. The attempt delay field is the number of seconds until the lead can be placed back in the hopper, this number must be at least 120 seconds. The attempt maximum field is the maximum number of times that a lead of this status can be attempted before the list needs to be reset, this number can be from 1 to 10. You can activate and deactivate a lead recycle entry with the provided links."); ?></B>
@@ -3866,7 +3866,7 @@ if ($SSoutbound_autodial_active > 0)
 
 	<BR><BR><BR><BR>
 
-	<B><FONT SIZE=3>AUTO ALT DIAL STATUSES</FONT></B><BR><BR>
+	<B><FONT SIZE=3><?php echo _QXZ("AUTO ALT DIAL STATUSES"); ?></FONT></B><BR><BR>
 	<A NAME="auto_alt_dial_statuses">
 	<BR>
 	<B><?php echo _QXZ("If the Auto Alt-Number Dialing field is set, then the leads that are dispositioned under these auto alt dial statuses will have their alt_phone and-or address3 fields dialed after any of these no-answer statuses are set."); ?></B>
@@ -3879,7 +3879,7 @@ if ($SSoutbound_autodial_active > 0)
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>AGENT PAUSE CODES</FONT></B><BR><BR>
+<B><FONT SIZE=3><?php echo _QXZ("AGENT PAUSE CODES"); ?></FONT></B><BR><BR>
 <A NAME="pause_codes">
 <BR>
 <B><?php echo _QXZ("If the Agent Pause Codes Active field is set to active then the agents will be able to select from these pause codes when they click on the PAUSE button on their screens. This data is then stored in the agent log. The Pause code must contain only letters and numbers and be less than 7 characters long. The pause code name can be no longer than 30 characters.") . ' ' . _QXZ("The Time Limit field, if enabled in System Settings, will change the color of the agent on the Real-Time Report if they are in that pause code for more than the defined amount of seconds.") . ' ' . _QXZ("The Mgr Approval field, if enabled, will require a manager to go to the agent screen and enter their login credentials to allow the agent to enter that pause code."); ?></B>
@@ -3890,7 +3890,7 @@ if ($SSoutbound_autodial_active > 0)
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>CAMPAIGN PRESETS</FONT></B><BR><BR>
+<B><FONT SIZE=3><?php echo _QXZ("CAMPAIGN PRESETS"); ?></FONT></B><BR><BR>
 <A NAME="xfer_presets">
 <BR>
 <B><?php echo _QXZ("If the Campaign setting for presets is set to ENABLED then you have the ability to define Transfer-Conference presets that will be available to the agent allowing them to 3-way call these presets or blind transfer calls to these preset numbers. These presets also have an option to hide the number associated with each preset from the agent."); ?></B>
@@ -3901,7 +3901,7 @@ if ($SSoutbound_autodial_active > 0)
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>CAMPAIGN CID AREACODES</FONT></B><BR><BR>
+<B><FONT SIZE=3><?php echo _QXZ("CAMPAIGN CID AREACODES"); ?></FONT></B><BR><BR>
 <A NAME="campaign_cid_areacodes">
 <BR>
 <B><?php echo _QXZ("If the System Setting for Areacode CIDs is enabled and the Campaign setting for Use Custom CallerID is set to AREACODE then you have the ability to define Areacode CIDs that will be used when outbound calling to leads in this specific campaign. You can add multiple callerIDs per areacode and you can activate and deactivate them each in real time. If more than one callerID is active for a specific areacode then the system will use the callerid that has been used the least number of times today. If no callerIDs are active for the areacode then the campaign CallerID or list override CallerID will be used. An areacode in this section can be from 2 to 5 digits in length, and if a shorter defined areacode overlaps with a longer areacode then the longer areacode will be used. For example, if the areacodes 31 and 312 are both defined and active for a campaign, then areacode 312 would be used for phone number 3125551212."); ?></B>
@@ -3912,7 +3912,7 @@ if ($SSoutbound_autodial_active > 0)
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>CID GROUPS</FONT></B><BR><BR>
+<B><FONT SIZE=3><?php echo _QXZ("CID GROUPS"); ?></FONT></B><BR><BR>
 <A NAME="cid_groups">
 <BR>
 <B><?php echo _QXZ("CID Groups are very similar to Campaign AC-CID, except with CID Groups you can use the same set of CIDs across multiple campaigns, and you can also define CID Groups on a per-state basis as well as per-areacode, instead of just by areacode like with Campaign AC-CID. If the STATE type is used, then the STATE value should match the state field for a lead, and if no match is found, the dialer will use the campaign CID as a default."); ?></B>
@@ -3923,7 +3923,7 @@ if ($SSoutbound_autodial_active > 0)
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>USER_GROUPS TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3>USER_GROUPS <?php echo _QXZ("TABLE"); ?></FONT></B><BR><BR>
 <A NAME="user_groups-user_group">
 <BR>
 <B><?php echo _QXZ("User Group"); ?> -</B><?php echo _QXZ("This is the short name of a User group, try not to use any spaces or punctuation for this field. max 20 characters, minimum of 2 characters."); ?>
@@ -4067,7 +4067,7 @@ if ($SSqc_features_active > 0)
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>SCRIPTS TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3><?php echo _QXZ("SCRIPTS TABLE"); ?></FONT></B><BR><BR>
 <A NAME="scripts-script_id">
 <BR>
 <B><?php echo _QXZ("Script ID"); ?> -</B><?php echo _QXZ("This is the short name of a Script. This needs to be a unique identifier. Try not to use any spaces or punctuation for this field. max 20 characters, minimum of 2 characters."); ?>
@@ -4115,7 +4115,7 @@ if ($SSoutbound_autodial_active > 0)
 	?>
 	<BR><BR><BR><BR>
 
-	<B><FONT SIZE=3>LEAD_FILTERS TABLE</FONT></B><BR><BR>
+	<B><FONT SIZE=3>LEAD_FILTERS <?php echo _QXZ("TABLE"); ?></FONT></B><BR><BR>
 	<A NAME="lead_filters-lead_filter_id">
 	<BR>
 	<B><?php echo _QXZ("Filter ID"); ?> -</B><?php echo _QXZ("This is the short name of a Lead Filter. This needs to be a unique identifier. Do not use any spaces or punctuation for this field. max 10 characters, minimum of 2 characters."); ?>
@@ -4144,7 +4144,7 @@ if ($SSoutbound_autodial_active > 0)
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>CALL TIMES TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3><?php echo _QXZ("CALL TIMES TABLE"); ?></FONT></B><BR><BR>
 <A NAME="call_times-call_time_id">
 <BR>
 <B><?php echo _QXZ("Call Time ID"); ?> -</B><?php echo _QXZ("This is the short name of a Call Time Definition. This needs to be a unique identifier. Do not use any spaces or punctuation for this field. max 10 characters, minimum of 2 characters."); ?>
@@ -4209,7 +4209,7 @@ if ($SSoutbound_autodial_active > 0)
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>SHIFTS TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3><?php echo _QXZ("SHIFTS TABLE"); ?></FONT></B><BR><BR>
 <A NAME="shifts-shift_id">
 <BR>
 <B><?php echo _QXZ("Shift ID"); ?> -</B><?php echo _QXZ("This is the short name of a system Shift Definition. This needs to be a unique identifier. Do not use any spaces or punctuation for this field. max 20 characters, minimum of 2 characters."); ?>
@@ -4257,7 +4257,7 @@ if ($SSoutbound_autodial_active > 0)
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>MUSIC_ON_HOLD TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3>MUSIC_ON_HOLD <?php echo _QXZ("TABLE"); ?></FONT></B><BR><BR>
 <A NAME="music_on_hold-moh_id">
 <BR>
 <B><?php echo _QXZ("Music On Hold ID"); ?> -</B><?php echo _QXZ("This is the short name of a Music On Hold entry. This needs to be a unique identifier. Do not use any spaces or punctuation for this field. max 100 characters, minimum of 2 characters."); ?>
@@ -4289,7 +4289,7 @@ if ($SSoutbound_autodial_active > 0)
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>TTS_PROMPTS TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3>TTS_PROMPTS <?php echo _QXZ("TABLE"); ?></FONT></B><BR><BR>
 <A NAME="tts_prompts-tts_id">
 <BR>
 <B><?php echo _QXZ("TTS ID"); ?> -</B><?php echo _QXZ("This is the short name of a TTS entry. This needs to be a unique identifier. Do not use any spaces or punctuation for this field. max 50 characters, minimum of 2 characters."); ?>
@@ -4321,7 +4321,7 @@ if ($SSoutbound_autodial_active > 0)
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>VOICEMAIL TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3><?php echo _QXZ("VOICEMAIL TABLE"); ?></FONT></B><BR><BR>
 <A NAME="voicemail-voicemail_id">
 <BR>
 <B><?php echo _QXZ("Voicemail ID"); ?> -</B><?php echo _QXZ("This is the all numbers identifier of this mailbox. This must not be a duplicate of an existing voicemail ID or the voicemail ID of a phone on the system, minimum of 2 characters."); ?>
@@ -4383,7 +4383,7 @@ if ($SSoutbound_autodial_active > 0)
 
 	<BR><BR><BR><BR>
 
-	<B><FONT SIZE=3>LIST LOADER FUNCTIONALITY</FONT></B><BR><BR>
+	<B><FONT SIZE=3><?php echo _QXZ("LIST LOADER FUNCTIONALITY"); ?></FONT></B><BR><BR>
 	<A NAME="list_loader">
 	<BR>
 	<?php echo _QXZ("The basic web-based lead loader is designed simply to take a lead file - up to 8MB in size - that is either tab or pipe delimited and load it into the list table. The lead loader allows for field choosing and TXT- Plain Text, CSV- Comma Separated Values and XLS- Excel file formats. The lead loader does not do data validation, but it does allow you to check for duplicates in itself, within the campaign or within the entire system. Also, make sure that you have created the list that these leads are to be under so that you can use them. Here is a list of the fields in their proper order for the lead files:"); ?>
@@ -4448,7 +4448,7 @@ if ($SSoutbound_autodial_active > 0)
 
 
 
-<B><FONT SIZE=3>PHONES TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3><?php echo _QXZ("PHONES TABLE"); ?></FONT></B><BR><BR>
 <A NAME="phones-extension">
 <BR>
 <B><?php echo _QXZ("Phone Extension"); ?> -</B><?php echo _QXZ("This field is where you put the phones name as it appears to Asterisk not including the protocol or slash at the beginning. For Example: for the SIP phone SIP/test101 the Phone extension would be test101. Also, for IAX2 phones: IAX2/IAXphone1@IAXphone1 would be IAXphone1. For Zap and Dahdi attached channelbank or FXS phones make sure you put the full channel number without the prefix: Zap/25-1 would be 25-1.  Another note, make sure you set the Protocol field below correctly for your type of phone. For SIP and IAX phones, this field should not contain any dashes."); ?>
@@ -4992,7 +4992,7 @@ if ($SSoutbound_autodial_active > 0)
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>SERVERS TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3><?php echo _QXZ("SERVERS TABLE"); ?></FONT></B><BR><BR>
 <A NAME="servers-server_id">
 <BR>
 <B><?php echo _QXZ("Server ID"); ?> -</B><?php echo _QXZ("This field is where you put the Asterisk servers name, does not have to be an official domain sub, just a nickname to identify the server to Admin users."); ?>
@@ -5249,7 +5249,7 @@ if ($SSoutbound_autodial_active > 0)
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>conf_templates TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3>conf_templates <?php echo _QXZ("TABLE"); ?></FONT></B><BR><BR>
 <A NAME="conf_templates-template_id">
 <BR>
 <B><?php echo _QXZ("Template ID"); ?> -</B><?php echo _QXZ("This field needs to be at least 2 characters in length and no more than 15 characters in length, no spaces. This is the ID that will be used to identify the conf template throughout the system."); ?>
@@ -5275,7 +5275,7 @@ if ($SSoutbound_autodial_active > 0)
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>server_carriers TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3>server_carriers <?php echo _QXZ("TABLE"); ?></FONT></B><BR><BR>
 <A NAME="server_carriers-carrier_id">
 <BR>
 <B><?php echo _QXZ("Carrier ID"); ?> -</B><?php echo _QXZ("This field needs to be at least 2 characters in length and no more than 15 characters in length, no spaces. This is the ID that will be used to identify the carrier for this specific entry throughout the system."); ?>
@@ -5341,7 +5341,7 @@ if ($SSoutbound_autodial_active > 0)
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>CONFERENCES TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3>CONFERENCES <?php echo _QXZ("TABLE"); ?></FONT></B><BR><BR>
 <A NAME="conferences-conf_exten">
 <BR>
 <B><?php echo _QXZ("Conference Number"); ?> -</B><?php echo _QXZ("This field is where you put the meetme conference dialplan number. It is also recommended that the meetme number in meetme.conf matches this number for each entry. This is for the conferences in the astGUIclient user screen and is used for leave-3way-call functionality in the system."); ?>
@@ -5359,7 +5359,7 @@ if ($SSoutbound_autodial_active > 0)
 	?>
 	<BR><BR><BR><BR>
 
-	<B><FONT SIZE=3>SERVER_TRUNKS TABLE</FONT></B><BR><BR>
+	<B><FONT SIZE=3>SERVER_TRUNKS <?php echo _QXZ("TABLE"); ?></FONT></B><BR><BR>
 	<A NAME="server_trunks">
 	<BR>
 	<B><?php echo _QXZ("Server Trunks allows you to restrict the outgoing lines that are used on this server for campaign dialing on a per-campaign basis. You have the option to reserve a specific number of lines to be used by only one campaign as well as allowing that campaign to run over its reserved lines into whatever lines remain open, as long at the total lines used by the system on this server is less than the Max Trunks setting. Not having any of these records will allow the campaign that dials the line first to have as many lines as it can get under the Max Trunks setting."); ?></B>
@@ -5372,7 +5372,7 @@ if ($SSoutbound_autodial_active > 0)
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>SYSTEM_SETTINGS TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3>SYSTEM_SETTINGS <?php echo _QXZ("TABLE"); ?></FONT></B><BR><BR>
 <A NAME="settings-use_non_latin">
 <BR>
 <B><?php echo _QXZ("Use Non-Latin"); ?> -</B><?php echo _QXZ("This option allows you to default the web display script to use UTF8 characters and not do any latin-character-family regular expression filtering or display formatting. Default is 0."); ?>
@@ -6098,7 +6098,7 @@ FR_SPAC 00 00 00 00 00 - <?php echo _QXZ("France space separated phone number");
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>STATUSES TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3>STATUSES <?php echo _QXZ("TABLE"); ?></FONT></B><BR><BR>
 <A NAME="system_statuses">
 <BR>
 <B><?php echo _QXZ("Through the use of system statuses, you can have statuses that exist for all campaigns and in-groups. The Status must be 1-6 characters in length, the description must be 2-30 characters in length and Selectable defines whether it shows up in the system as an agent disposition. The human_answered field is used when calculating the drop percentage, or abandon rate. Setting human_answered to Y will use this status when counting the human-answered calls. The Category option allows you to group several statuses into a category that can be used for statistical analysis. There are also 7 additional settings that will define the kind of status: sale, dnc, customer contact, not interested, unworkable, scheduled callback, completed. The MIN SEC and MAX SEC fields for each status will determine whether an agent can select that status at the end of their call based upon the length of the call. If the call is 10 seconds and the MIN SEC for a status is set to 20 seconds, then the agent will not be able to select that status. Also, if a call is 40 seconds and the MAX SEC for a status is set to 30 seconds, then the agent will not be able to select that status."); ?></B>
@@ -6109,7 +6109,7 @@ FR_SPAC 00 00 00 00 00 - <?php echo _QXZ("France space separated phone number");
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>STATUS_GROUPS TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3>STATUS_GROUPS <?php echo _QXZ("TABLE"); ?></FONT></B><BR><BR>
 <A NAME="status_groups">
 <BR>
 <B><?php echo _QXZ("Through the use of status groups, you can have statuses that exist for lists or in-groups specifically. The Status must be 1-6 characters in length, the description must be 2-30 characters in length and Selectable defines whether it shows up in the system as an agent disposition. The human_answered field is used when calculating the drop percentage, or abandon rate. Setting human_answered to Y will use this status when counting the human-answered calls. The Category option allows you to group several statuses into a category that can be used for statistical analysis. There are also 7 additional settings that will define the kind of status: sale, dnc, customer contact, not interested, unworkable, scheduled callback, completed. The MIN SEC and MAX SEC fields for each status will determine whether an agent can select that status at the end of their call based upon the length of the call. If the call is 10 seconds and the MIN SEC for a status is set to 20 seconds, then the agent will not be able to select that status. Also, if a call is 40 seconds and the MAX SEC for a status is set to 30 seconds, then the agent will not be able to select that status. The Status Group ID field must be between 2 and 20 characters in length, must not match a current campaign ID, and cannot contain spaces or other special characters."); ?></B>
@@ -6121,7 +6121,7 @@ FR_SPAC 00 00 00 00 00 - <?php echo _QXZ("France space separated phone number");
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>SCREEN_LABELS TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3>SCREEN_LABELS <?php echo _QXZ("TABLE"); ?></FONT></B><BR><BR>
 <A NAME="screen_labels">
 <BR>
 <B><?php echo _QXZ("Screen labels give you the option of setting different labels for the default agent screen fields on a per campaign basis."); ?></B>
@@ -6156,7 +6156,7 @@ FR_SPAC 00 00 00 00 00 - <?php echo _QXZ("France space separated phone number");
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>SCREEN_COLORS TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3>SCREEN_COLORS <?php echo _QXZ("TABLE"); ?></FONT></B><BR><BR>
 <A NAME="screen_colors">
 <BR>
 <B><?php echo _QXZ("Screen colors give you the option of setting a different color scheme and logo for the web interface in the System Settings."); ?></B>
@@ -6207,7 +6207,7 @@ FR_SPAC 00 00 00 00 00 - <?php echo _QXZ("France space separated phone number");
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>SETTINGS CONTAINERS TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3><?php echo _QXZ("SETTINGS CONTAINERS TABLE"); ?></FONT></B><BR><BR>
 <A NAME="settings_containers">
 <BR>
 <B><?php echo _QXZ("Settings Containers allow for an easy way to add, modify and delete large configurations of settings, or for elements like email templates to be used by PHP and Perl scripts within the codebase."); ?></B>
@@ -6243,7 +6243,7 @@ FR_SPAC 00 00 00 00 00 - <?php echo _QXZ("France space separated phone number");
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>AUTOMATED REPORTS TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3><?php echo _QXZ("AUTOMATED REPORTS TABLE"); ?></FONT></B><BR><BR>
 <A NAME="auto_reports">
 <BR>
 <B><?php echo _QXZ("Automated Reports allow for a simplified way of configuring reports to be run on a scheduled and recurring basis, and to have the results sent by email or uploaded to an FTP server."); ?></B>
@@ -6355,7 +6355,7 @@ FR_SPAC 00 00 00 00 00 - <?php echo _QXZ("France space separated phone number");
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>IP LISTS TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3><?php echo _QXZ("IP LISTS TABLE"); ?></FONT></B><BR><BR>
 <A NAME="ip_lists">
 <BR>
 <?php echo _QXZ("The purpose of this feature is to allow an administrator the ability to restrict who can use the system web resources on an IP Address basis. This is designed to allow you to create IP Lists and then assign those IP Lists on a per-User-Group basis separated as Admin, Agent and API permissions. For example, you can set the IP List for Agent web access to DISABLED to allow anyone in the User Group to log in as an agent from any location, this is the default behavior. You can then set an IP List with one IP Address in it so within that same User Group, managers will only be able to log in to the admin web screens from that one location. You can also set an IP List with no entries in it for the API access IP List to not allow any user in that User Group to use the APIs."); ?><BR><BR>
@@ -6399,7 +6399,7 @@ FR_SPAC 00 00 00 00 00 - <?php echo _QXZ("France space separated phone number");
 
 <BR><BR><BR><BR>
 
-<B><FONT SIZE=3>STATUS_CATEGORIES TABLE</FONT></B><BR><BR>
+<B><FONT SIZE=3>STATUS_CATEGORIES <?php echo _QXZ("TABLE"); ?></FONT></B><BR><BR>
 <A NAME="status_categories">
 <BR>
 <B><?php echo _QXZ("Through the use of system status categories, you can group together statuses to allow for statistical analysis on a group of statuses. The Category ID must be 2-20 characters in length with no spaces, the name must be 2-50 characters in length, the description is optional and TimeonVDAD Display defines whether that status will be one of the upto 4 statuses that can be calculated and displayed on the Time On VDAD Real-Time report.</B> The Sale Category and Dead Lead Category are both used by the List Suggestion system when analyzing list statistics."); ?>
@@ -6413,7 +6413,7 @@ FR_SPAC 00 00 00 00 00 - <?php echo _QXZ("France space separated phone number");
 if ($SSallow_emails>0)
 	{
 ?>
-<B><FONT SIZE=3>EMAIL ACCOUNTS</FONT></B><BR><BR>
+<B><FONT SIZE=3><?php echo _QXZ("EMAIL ACCOUNTS"); ?></FONT></B><BR><BR>
 <A NAME="email_accounts">
 <BR>
 <B><?php echo _QXZ("The Email Accounts management section allows you to create, copy, and delete email account settings that will allow you to have email messages come into your system and be treated as if they were phone calls to agents.  EMAIL ACCOUNTS MUST BE SET UP BY YOU AND AN EMAIL SERVICE PROVIDER - THAT IS NOT COVERED BY THIS MODULE."); ?></B>
@@ -6519,7 +6519,7 @@ if ($SSallow_emails>0)
 
 <BR><BR><BR><BR>
 <?php } ?>
-<B><FONT SIZE=3>CUSTOM TEMPLATE MAKER</FONT></B><BR><BR>
+<B><FONT SIZE=3><?php echo _QXZ("CUSTOM TEMPLATE MAKER"); ?></FONT></B><BR><BR>
 <A NAME="template_maker">
 <BR>
 <?php echo _QXZ("The custom template maker allows you to define your own file layouts for use with the list loader and also delete them, if necessary.  If you frequently upload files that are in a consistent layout other than the standard layout, you may find this tool helpful.  The saved layout will work on any uploaded file it matches, regardless of file type or delimiter."); ?>
@@ -6566,7 +6566,7 @@ if ($SSallow_emails>0)
 <BR><BR><BR><BR>
 
 <A NAME="max_stats">
-<B><FONT SIZE=3>Maximum System Stats Reports</FONT></B><BR><BR>
+<B><FONT SIZE=3><?php echo _QXZ("Maximum System Stats Reports"); ?></FONT></B><BR><BR>
 <BR>
 <B><?php echo _QXZ("These statistics are cached totals that are stored throughout each day in real-time through back-end processes. For inbound calls, the total calls per in-group are calculated for each call that enters the process that calculates. For the whole system counts, the totals are generated from log entries as well as other in-group and campaign totals. These totals may not add up due to the settings that you have in your system as well as when the call is hung up."); ?></B>
 
@@ -6577,7 +6577,7 @@ if ($SSqc_features_active > 0)
 	?>
 	<BR><BR><BR><BR>
 
-	<B><FONT SIZE=3>QC STATUS CODES</FONT></B><BR><BR>
+	<B><FONT SIZE=3><?php echo _QXZ("QC STATUS CODES"); ?></FONT></B><BR><BR>
 	<A NAME="qc_status_codes">
 	<BR>
 	<B><?php echo _QXZ("The Quality Control"); ?> -</B> <?php echo _QXZ("QC function has its own set of status codes separate from those within the call handling functions of the system. QC status codes must be between 2 and 8 characters in length and contain no special characters like a space or colon. The QC status code description must be between 2 and 30 characters in length. For these functions to work, you must have QC enabled in the System Settings."); ?>
@@ -7225,7 +7225,7 @@ if ($SSqc_features_active > 0)
 <BR><BR><BR><BR>
 
 <A NAME="custom_reports_admin">
-<B><FONT SIZE=3>Custom Reports Admin</FONT></B><BR><BR>
+<B><FONT SIZE=3><?php echo _QXZ("Custom Reports Admin"); ?></FONT></B><BR><BR>
 <BR>
 
 

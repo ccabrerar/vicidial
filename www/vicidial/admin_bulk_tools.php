@@ -137,7 +137,7 @@ if ($num_rows > 0)
 	}
 else
 	{
-	echo "There are no system settings. You might want to look into that.";
+	echo _QXZ("There are no system settings. You might want to look into that.");
 	exit;
 	}
 ##### END SETTINGS LOOKUP #####
@@ -729,7 +729,7 @@ elseif ($form_to_run == "ACCIDDELETEselect")
 		$i++;
 		}
 	echo "</select></td></tr>\n";
-	echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=did_submit value='Submit'></td></tr>\n";
+	echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=did_submit value='"._QXZ("Submit")."'></td></tr>\n";
 
 	echo "</table></center></form>\n";
 	echo "</html>";
@@ -1610,7 +1610,7 @@ elseif ($form_to_run == "BULKUSERSDELETEconfirmed")### BULK USER DELETE CONFIRM
 #### Build forms
 else
 	{
-	echo "<html><center><p>These are tools for adding, copying and deleting DIDs, Campaign AC-CIDs and Users.<br>Adding and copying are limited to $INSERTmax_limit per run.<br></p>";
+	echo "<html><center><p>"._QXZ("These are tools for adding, copying and deleting DIDs, Campaign AC-CIDs and Users.")."<br>"._QXZ("Adding and copying are limited to")." $INSERTmax_limit "._QXZ("per run").".<br></p>";
 	### DID - ADD
 	if ( $modify_dids < 1 )
 		{
@@ -1655,7 +1655,7 @@ else
 
 		echo "</select></td></tr>\n";
 		echo "<tr bgcolor=#". $SSstd_row1_background ."><td align=right>"._QXZ("DIDs to insert").":</td><td align=left><textarea name='DIDto_insert' cols='11' rows='10'></textarea></td></td></tr>";
-		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=did_submit value='Submit'></td></tr>\n";
+		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=did_submit value='"._QXZ("Submit")."'></td></tr>\n";
 		echo "</table></center></form>\n";
 		}
 
@@ -1699,7 +1699,7 @@ else
 			$i++;
 			}
 		echo "</select></td></tr>\n";
-		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=did_submit value='Submit'></td></tr>\n";
+		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=did_submit value='"._QXZ("Submit")."'></td></tr>\n";
 		echo "</table></center></form>\n";
 		echo "</html>";
 		}
@@ -1739,7 +1739,7 @@ else
 			$row = mysqli_fetch_row($SQL_rslt);
 			$ACCIDcampaigns_to_copy[$g] = $row[0];
 			$ACCIDcampaigns_to_copy_names[$g] = $row[1];
-			$ACCIDcampaigns_to_copy_type[$g] = 'AREACODE';
+			$ACCIDcampaigns_to_copy_type[$g] = _QXZ('AREACODE');
 			$i++;
 			$g++;
 			}
@@ -1753,7 +1753,7 @@ else
 			$row = mysqli_fetch_row($SQL_rslt);
 			$ACCIDcampaigns_to_copy[$g] = $row[0];
 			$ACCIDcampaigns_to_copy_names[$g] = $row[1];
-			$ACCIDcampaigns_to_copy_type[$g] = $row[2];
+			$ACCIDcampaigns_to_copy_type[$g] = _QXZ("$row[2]");
 			$i++;
 			$g++;
 			}
@@ -1769,13 +1769,13 @@ else
 			}
 
 		echo "</select></td></tr>\n";	
-		echo "<tr bgcolor=#". $SSstd_row1_background ."><td align=right>"._QXZ("Active?").":</td><td align=left><select size=1 name=ACCIDactive>\n";	
-		echo "<option value='N'>No</option>\n";
-		echo "<option value='Y'>Yes</option>\n";
-		echo "<option value='F'>Input</option>\n";
+		echo "<tr bgcolor=#". $SSstd_row1_background ."><td align=right>"._QXZ("Active")."?:</td><td align=left><select size=1 name=ACCIDactive>\n";	
+		echo "<option value='N'>"._QXZ("No")."</option>\n";
+		echo "<option value='Y'>"._QXZ("Yes")."</option>\n";
+		echo "<option value='F'>"._QXZ("Input")."</option>\n";
 		echo "</select></td></tr>\n";	
 		echo "<tr bgcolor=#". $SSstd_row1_background ."><td align=right>"._QXZ("AC-CIDs").":</td><td align=left><textarea name='ACCIDdids' cols='70' rows='10'></textarea></td>\n";	
-		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=accid_submit value='Submit'></td></tr>\n";
+		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=accid_submit value='"._QXZ("Submit")."'></td></tr>\n";
 		echo "</table></center></form>\n";
 		echo "</html>";
 		}
@@ -1811,7 +1811,7 @@ else
 			$row = mysqli_fetch_row($SQL_rslt);
 			$ACCIDdelete_campaign_selection[$g] = $row[0];
 			$ACCIDdelete_campaign_name[$g] = $row[1];
-			$ACCIDdelete_campaign_type[$g] = 'AREACODE';
+			$ACCIDdelete_campaign_type[$g] = _QXZ('AREACODE');
 			$i++;
 			$g++;
 			}
@@ -1825,7 +1825,7 @@ else
 			$row = mysqli_fetch_row($SQL_rslt);
 			$ACCIDdelete_campaign_selection[$g] = $row[0];
 			$ACCIDdelete_campaign_name[$g] = $row[1];
-			$ACCIDdelete_campaign_type[$g] = $row[2];
+			$ACCIDdelete_campaign_type[$g] = _QXZ("$row[2]");
 			$i++;
 			$g++;
 			}
@@ -1845,7 +1845,7 @@ else
 		echo "<option value='N'>"._QXZ("No")."</option>\n";
 		echo "<option value='Y'>"._QXZ("Yes")."</option>\n";
 		echo "</select></td></tr>\n";		
-		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=accid_submit value='Submit'></td></tr>\n";
+		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=accid_submit value='"._QXZ("Submit")."'></td></tr>\n";
 		echo "</table></center></form>\n";
 		echo "</html>";
 		}
@@ -1899,7 +1899,7 @@ else
 		echo "<option value='N'>"._QXZ("No")."</option>\n";
 		echo "<option value='Y'>"._QXZ("Yes")."</option>\n";
 		echo "</select></td></tr>\n";
-		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=did_submit value='Submit'></td></tr>\n";
+		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=did_submit value='"._QXZ("Submit")."'></td></tr>\n";
 		echo "</table></center></form>\n";
 		echo "</html>";
 		}
@@ -1971,7 +1971,7 @@ else
 			}
 		
 		echo "</select></td></tr>\n";
-		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=did_submit value='Submit'></td></tr>\n";
+		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=did_submit value='"._QXZ("Submit")."'></td></tr>\n";
 		echo "</table></center></form>\n";
 		
 		echo "<br> <font size=1><p align=left>"._QXZ("Version").": $version   "._QXZ("Build").": $build</p></font>";

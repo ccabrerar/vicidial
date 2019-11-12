@@ -8,7 +8,7 @@
 # 170409-1548 - Added IP List validation code
 # 170819-1000 - Added allow_manage_active_lists option
 # 180508-2215 - Added new help display
-
+# 191101-1630 - Translation patch, removed function.js 
 #
 
 $version = '2.14-3';
@@ -195,7 +195,35 @@ if ( $modify_lists < 1 )
 echo "<html>\n";
 echo "<head>\n";
 echo "<link rel=\"stylesheet\" type=\"text/css\" href=\"vicidial_stylesheet.css\" />";
-echo "<script language=\"JavaScript\" src=\"functions.js\"></script>\n";
+#echo "<script language=\"JavaScript\" src=\"functions.js\"></script>\n";
+?>
+<script language="JavaScript">
+function PopulateMergeMenu(clearit) {
+	var DDtoPop = document.getElementById("destination_list_id");
+	var PopLength = DDtoPop.options.length;
+	DDtoPop.options.length = 0;
+	if (clearit) {return false;}
+
+	var SourceDD = document.getElementById("available_lists");
+	var DDoption = document.createElement("option");
+	DDoption.text = '<?php echo _QXZ("ALTERNATE LIST (enter below)"); ?>';
+	DDoption.value = '';
+	DDtoPop.appendChild(DDoption);
+
+	var SourceLength = SourceDD.options.length;
+	for (var i = 1; i < SourceLength; i++) {
+		if(SourceDD.options[i].selected) {
+			var DDoption = document.createElement("option");
+			DDoption.text = SourceDD.options[i].text;
+			DDoption.value = SourceDD.options[i].value;
+			DDtoPop.appendChild(DDoption);
+		}
+	}
+
+
+}
+</script>
+<?php
 
 echo "<link rel=\"stylesheet\" type=\"text/css\" href=\"vicidial_stylesheet.php\">\n";
 echo "<script language=\"JavaScript\" src=\"help.js\"></script>\n";
@@ -545,7 +573,7 @@ if (($submit != "submit" ) && ($confirm != "CONFIRM"))
 	# Available Lists
 	echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("Available Lists")."</td><td align=left>\n";
 	echo "<select size=".($num_rows<10 ? $num_rows : 10)." name=available_lists[] id='available_lists' multiple onClick='PopulateMergeMenu()'>\n";
-	echo "<option value=''>-- SELECT LISTS BELOW --</option>\n";
+	echo "<option value=''>-- "._QXZ("SELECT LISTS BELOW")." --</option>\n";
 	$i = 0;
 	while ( $i < $allowed_lists_count )
 		{
@@ -564,16 +592,16 @@ if (($submit != "submit" ) && ($confirm != "CONFIRM"))
 	# Destination List ID
 	echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("List to merge into:")."</td><td align=left>\n";
 	echo "<select name='destination_list_id' id='destination_list_id' size='1'>\n";
-	echo "<option value=''>ALTERNATE LIST (enter below)</option>\n";
+	echo "<option value=''>"._QXZ("ALTERNATE LIST (enter below)")."</option>\n";
 	echo "</select>\n";
 	# echo " <input type=button value='CLEAR' onClick='PopulateMergeMenu(1)'>";
 	#echo " <input type='checkbox' name='retain_original_list' id='retain_original_list' value='Y' ".($retain_original_list ? "checked" : "")."><font size='1'>Retain original list ID (stored in entry_list_id column)</font>";
-	echo "<font size='1'>(Lists selected above will automatically populate here)</font></td></tr>\n";
+	echo "<font size='1'>("._QXZ("Lists selected above will automatically populate here").")</font></td></tr>\n";
 
 	# Destination List ID
 	echo "<tr bgcolor=#$SSmenu_background><td colspan=2 align=center><font color=white><b>"._QXZ("Alternate list information - only required if -ALTERNATE LIST- is selected above")."</b></font></td></tr>\n";
 	echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("Alternate list ID:")."</td><td align=left>\n";
-	echo "<input type='text' name='new_list_id' id='new_list_id' size='19' maxlength='19' value='".$new_list_id."'> (digits only)\n";
+	echo "<input type='text' name='new_list_id' id='new_list_id' size='19' maxlength='19' value='".$new_list_id."'> ("._QXZ("digits only").")\n";
 	echo "</td></tr>\n";
 	
 	echo "<tr bgcolor=#$SSstd_row1_background><td colspan=2 align=center><b>"._QXZ("Below fields are required ONLY if -Alternate list ID- is filled out and not an already-existing list")."</b></td></tr>\n";
@@ -602,7 +630,7 @@ if (($submit != "submit" ) && ($confirm != "CONFIRM"))
 	echo "<input type=hidden name=DB value='$DB'>\n";
 	
 	# Submit
-	echo "<tr bgcolor=#$SSstd_row2_background><td colspan=2 align=center><input type=submit name=submit value=submit></td></tr>\n";
+	echo "<tr bgcolor=#$SSstd_row2_background><td colspan=2 align=center><input type=submit name=submit value='"._QXZ("submit")."'></td></tr>\n";
 	echo "</table></center>\n";
 	echo "</form>\n";
 

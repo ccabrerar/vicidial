@@ -1545,7 +1545,7 @@ while ($user_groups_to_print > $o)
 echo "</SELECT>\n";
 echo "</TD><TD VALIGN=TOP>"._QXZ("Shift").":<BR>";
 echo "<SELECT SIZE=1 NAME=shift>\n";
-echo "<option selected value=\"$shift\">$shift</option>\n";
+echo "<option selected value=\"$shift\">"._QXZ("$shift")."</option>\n";
 echo "<option value=\"\">--</option>\n";
 echo "<option value=\"AM\">"._QXZ("AM")."</option>\n";
 echo "<option value=\"PM\">"._QXZ("PM")."</option>\n";
@@ -1558,7 +1558,7 @@ echo "<input type='checkbox' name='time_in_sec' value='checked' $time_in_sec>"._
 echo "<input type='checkbox' name='search_archived_data' value='checked' $search_archived_data>"._QXZ("Search archived data")."<BR>\n";
 echo "</TD><TD VALIGN=TOP>"._QXZ("Display as").":<BR>";
 echo "<select name='report_display_type'>";
-if ($report_display_type) {echo "<option value='$report_display_type' selected>$report_display_type</option>";}
+if ($report_display_type) {echo "<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
 echo "<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select>\n<BR><BR>";
 echo "<INPUT TYPE=SUBMIT NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>\n";
 echo "</TD><TD VALIGN=TOP> &nbsp; &nbsp; &nbsp; &nbsp; ";

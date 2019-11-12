@@ -413,7 +413,7 @@ $HTML_text.="</TD><TD VALIGN=TOP>&nbsp;\n";
 $HTML_text.="</TD><TD VALIGN=TOP>\n";
 $HTML_text.=_QXZ("Display as").":<BR>";
 $HTML_text.="<select name='report_display_type'>";
-if ($report_display_type) {$HTML_text.="<option value='$report_display_type' selected>$report_display_type</option>";}
+if ($report_display_type) {$HTML_text.="<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
 $HTML_text.="<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select>\n<BR><BR>";
 
 if ($archives_available=="Y") 
@@ -504,10 +504,10 @@ while($i < $group_ct)
 			}
 		
 		$HTML_body.="<table border='0' cellpadding='0' cellspacing='0' width='600'>";
-		$HTML_body.="<tr bgcolor='#".$SSmenu_background."'><th colspan='3'><font color='#FFFFFF'>"._QXZ("$rpt_group_title")." : ".($key !="" ? $key : "(NONE)")."</font></th></tr>";
+		$HTML_body.="<tr bgcolor='#".$SSmenu_background."'><th colspan='3'><font color='#FFFFFF'>"._QXZ("$rpt_group_title")." : ".($key !="" ? $key : "("._QXZ("NONE").")")."</font></th></tr>";
 		$HTML_body.="<tr bgcolor='#FFFFFF'><td align='left'><a href='$report_URL&sort_by=".($sort_by == "dispo_asc" ? "dispo_desc" : "dispo_asc")."'>"._QXZ("DISPOSITION",40)."</a></td><td align='center'><a href='$report_URL&sort_by=".($sort_by == "count_desc" ? "count_asc" : "count_desc")."'>"._QXZ("CALLS",6)."</a></td><td align='center'>"._QXZ("PERCENT", 7)."</td></tr>";
 		
-		$ASCII_text.="<FONT SIZE=2><B>"._QXZ("$rpt_group_title")." : ".($key !="" ? $key : "(NONE)")."</B>\n";
+		$ASCII_text.="<FONT SIZE=2><B>"._QXZ("$rpt_group_title")." : ".($key !="" ? $key : "("._QXZ("NONE").")")."</B>\n";
 		$ASCII_text.="+------------------------------------------+--------+----------+\n";
 		$ASCII_text.="| <a href='$report_URL&sort_by=".($sort_by == "dispo_asc" ? "dispo_desc" : "dispo_asc")."'>"._QXZ("DISPOSITION",40)."</a> | <a href='$report_URL&sort_by=".($sort_by == "count_asc" ? "count_desc" : "count_asc")."'>"._QXZ("CALLS",6)."</a> | "._QXZ("PERCENT", 8)." |\n";
 		$ASCII_text.="+------------------------------------------+--------+----------+\n";
@@ -530,7 +530,7 @@ while($i < $group_ct)
 			$percent=sprintf("%.2f", 100*MathZDC($val2, $total_ary["$key"]));
 			$HTML_body.="<tr bgcolor='#".$bgcolor."'><td align='left'>".($dispo_ary["$key2"] !="" ? $dispo_ary["$key2"] : $key2)."</td><td align='center'>".$val2."</td><td align='center'>".$percent." %</td></tr>";
 			$ASCII_text.="| ".sprintf("%-40s", ($dispo_ary["$key2"] !="" ? $dispo_ary["$key2"] : $key2))." | ".sprintf("%6s", $val2)." | ".sprintf("%7s", $percent)."% |\n";
-			$CSV_text.="\"".($key !="" ? $key : "(NONE)")."\",\"".($dispo_ary["$key2"] !="" ? $dispo_ary["$key2"] : $key2)."\",\"".$val2."\",\"".$percent." %\"\n";
+			$CSV_text.="\"".($key !="" ? $key : "("._QXZ("NONE").")")."\",\"".($dispo_ary["$key2"] !="" ? $dispo_ary["$key2"] : $key2)."\",\"".$val2."\",\"".$percent." %\"\n";
 
 			$j++;
 			}
@@ -539,15 +539,15 @@ while($i < $group_ct)
 		$ASCII_text.="+------------------------------------------+--------+----------+\n";
 		$ASCII_text.="| "._QXZ("TOTAL",40)." | ".sprintf("%6s", $total_ary["$key"])." | ".sprintf("%8s", " ")." |\n";
 		$ASCII_text.="+------------------------------------------+--------+----------+\n\n";
-		$CSV_text.="\"".($key !="" ? $key : "(NONE)")."\",\""._QXZ("TOTAL")."\",\"".$total_ary["$key"]."\",\"\"\n\n";
+		$CSV_text.="\"".($key !="" ? $key : "("._QXZ("NONE").")")."\",\""._QXZ("TOTAL")."\",\"".$total_ary["$key"]."\",\"\"\n\n";
 		}
 	$i++;
 
 	$HTML_body.="<table border='0' cellpadding='0' cellspacing='0' width='600'>";
-	$HTML_body.="<tr bgcolor='#".$SSmenu_background."'><th colspan='3'><font color='#FFFFFF'>"._QXZ("$rpt_group_title")." : TOTALS</font></th></tr>";
+	$HTML_body.="<tr bgcolor='#".$SSmenu_background."'><th colspan='3'><font color='#FFFFFF'>"._QXZ("$rpt_group_title")." : "._QXZ("TOTALS")."</font></th></tr>";
 	$HTML_body.="<tr bgcolor='#FFFFFF'><td align='left'><a href='$report_URL&sort_by=".($sort_by == "dispo_asc" ? "dispo_desc" : "dispo_asc")."'>"._QXZ("DISPOSITION",40)."</a></td><td align='center'><a href='$report_URL&sort_by=".($sort_by == "count_desc" ? "count_asc" : "count_desc")."'>"._QXZ("CALLS",6)."</a></td><td align='center'>"._QXZ("PERCENT", 7)."</td></tr>";
 		
-	$ASCII_text.="<FONT SIZE=2><B>"._QXZ("$rpt_group_title")." : TOTALS</B>\n";
+	$ASCII_text.="<FONT SIZE=2><B>"._QXZ("$rpt_group_title")." : "._QXZ("TOTALS")."</B>\n";
 	$ASCII_text.="+------------------------------------------+--------+----------+\n";
 	$ASCII_text.="| <a href='$report_URL&sort_by=".($sort_by == "dispo_asc" ? "dispo_desc" : "dispo_asc")."'>"._QXZ("DISPOSITION",40)."</a> | <a href='$report_URL&sort_by=".($sort_by == "count_asc" ? "count_desc" : "count_asc")."'>"._QXZ("CALLS",6)."</a> | "._QXZ("PERCENT", 8)." |\n";
 	$ASCII_text.="+------------------------------------------+--------+----------+\n";

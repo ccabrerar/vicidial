@@ -171,7 +171,7 @@ if (mysqli_num_rows($user_rslt)>0) {
 		$chat_id=$chat_row[0];
 	}
 }
-$stmt="select * from vicidial_list where lead_id='$lead_id'";
+$stmt="select * from vicidial_list where lead_id=$lead_id";
 $rslt=mysql_to_mysqli($stmt, $link);
 if (mysqli_num_rows($rslt)>0) {
 	$row=mysqli_fetch_array($rslt);

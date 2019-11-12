@@ -369,8 +369,9 @@ if ( ($SSweb_logo!='default_new') and ($SSweb_logo!='default_old') )
 $HEADER.="<html>\n";
 $HEADER.="<head>\n";
 $HEADER.="<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=utf-8\">\n";
-$HEADER.="<title>ADMINISTRATION: \n";
+$HEADER.="<title>"._QXZ("ADMINISTRATION").": \n";
 $HEADER.=_QXZ("$report_name");
+$HEADER.="</title>";
 
 ##### BEGIN Set variables to make header show properly #####
 $ADD =					'311111';

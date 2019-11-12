@@ -373,14 +373,14 @@ if ($type == 'inbound')
 	if ($CALL_MENUdisplay > 0)
 		{
 		$LISTgroups[$i]='CALLMENU';
-		$LISTgroups_names[$i]='IVR';
+		$LISTgroups_names[$i]=_QXZ('IVR');
 		$i++;
 		$groups_to_print++;
 		}
 	if ($XML_PULLdisplay > 0)
 		{
 		$LISTgroups[$i]='XMLPULL';
-		$LISTgroups_names[$i]='Dynamic Application';
+		$LISTgroups_names[$i]=_QXZ('Dynamic Application');
 		$i++;
 		$groups_to_print++;
 		}
@@ -634,7 +634,7 @@ $MAIN.="<TR><TD>\n";
 #	}
 #$MAIN.="</SELECT>\n";
 $MAIN.=_QXZ("Shift").": <SELECT SIZE=1 NAME=shift>\n";
-$MAIN.="<option selected value=\"$shift\">$shift</option>\n";
+$MAIN.="<option selected value=\"$shift\">"._QXZ("$shift")."</option>\n";
 $MAIN.="<option value=\"\">--</option>\n";
 $MAIN.="<option value=\"AM\">"._QXZ("AM")."</option>\n";
 $MAIN.="<option value=\"PM\">"._QXZ("PM")."</option>\n";
@@ -655,7 +655,7 @@ $MAIN.="</SCRIPT>\n";
 
 $MAIN.="<BR>"._QXZ("Display as").":&nbsp; ";
 $MAIN.="<select name='report_display_type'>";
-if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>$report_display_type</option>";}
+if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
 $MAIN.="<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select>\n<BR>";
 if ($archives_available=="Y") 
 	{

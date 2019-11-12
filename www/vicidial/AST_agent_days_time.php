@@ -691,7 +691,7 @@ echo "</TD><TD VALIGN=TOP>"._QXZ("User").":<BR>";
 echo "<INPUT TYPE=TEXT SIZE=10 NAME=user value=\"$user\">\n";
 echo "</TD><TD VALIGN=TOP>"._QXZ("Shift").":<BR>";
 echo "<SELECT SIZE=1 NAME=shift>\n";
-echo "<option selected value=\"$shift\">$shift</option>\n";
+echo "<option selected value=\"$shift\">"._QXZ("$shift")."</option>\n";
 echo "<option value=\"\">--</option>\n";
 echo "<option value=\"AM\">"._QXZ("AM")."</option>\n";
 echo "<option value=\"PM\">"._QXZ("PM")."</option>\n";

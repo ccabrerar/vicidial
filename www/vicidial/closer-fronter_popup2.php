@@ -291,7 +291,7 @@ if ($parked_count > 0)
 	if ($DB) {echo "|$stmt|\n";}
 	$rslt=mysql_to_mysqli($stmt, $link);
 
-	$stmt = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user) values('$channel','" . mysqli_real_escape_string($link, $server_ip) . "','SIP/" . mysqli_real_escape_string($link, $SIPexten) . "','$NOW_TIME','$STARTtime','" . mysqli_real_escape_string($link, $filename) . "','$lead_id','$user')";
+	$stmt = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user) values('$channel','" . mysqli_real_escape_string($link, $server_ip) . "','SIP/" . mysqli_real_escape_string($link, $SIPexten) . "','$NOW_TIME','$STARTtime','" . mysqli_real_escape_string($link, $filename) . "',$lead_id,'$user')";
 	if ($DB) {echo "|$stmt|\n";}
 	$rslt=mysql_to_mysqli($stmt, $link);
 

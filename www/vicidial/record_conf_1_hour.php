@@ -187,7 +187,7 @@ else
 	echo "server_ip: <input type=text name=server_ip size=15 maxlength=15> | \n";
 	echo "session_id: <input type=text name=session_id size=7 maxlength=7> | \n";
 	echo "station: <input type=text name=station size=5 maxlength=5> | \n";
-	echo "<input type=submit name=submit value=submit>\n";
+	echo "<input type=submit name=submit value='"._QXZ("submit")."'>\n";
 	echo "<BR><BR><BR>\n";
 	}
 ?>

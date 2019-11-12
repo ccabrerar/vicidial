@@ -163,7 +163,7 @@ $RUNtime = ($ENDtime - $STARTtime);
 
 echo "\n\n\n<br><br><br>\n<FORM ACTION=\"$PHP_SELF\" METHOD=GET>\n";
 echo "<INPUT TYPE=text name=QUERY_recid size=12 maxlength=10>\n";
-echo "<INPUT type=submit name=submit value=submit>\n";
+echo "<INPUT type=submit name=submit value='"._QXZ("submit")."'>\n";
 echo "</FORM>\n";
 
 

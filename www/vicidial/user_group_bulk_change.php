@@ -185,8 +185,9 @@ while ($i < $groups_to_print)
 <html>
 <head>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
-<title>ADMINISTRATION: User Group Bulk Change
+<title>
 <?php
+echo _QXZ("ADMINISTRATION: User Group Bulk Change");
 
 ##### BEGIN Set variables to make header show properly #####
 $ADD =					'311111';

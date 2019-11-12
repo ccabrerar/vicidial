@@ -365,8 +365,8 @@ while ($servers_to_print > $o)
 $MAIN.="</SELECT></TD><TD ROWSPAN=2 VALIGN=middle align=center>\n";
 $MAIN.=_QXZ("Display as:")."<BR>";
 $MAIN.="<select name='report_display_type'>";
-if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>$report_display_type</option>";}
-$MAIN.="<option value='TEXT'>TEXT</option><option value='HTML'>HTML</option></select>\n<BR><BR>";
+if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
+$MAIN.="<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select>\n<BR><BR>";
 $MAIN.="<INPUT TYPE=submit NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>\n";
 $MAIN.="</TD></TR></TABLE>\n";
 if ($SUBMIT && $server_ip_ct>0) {

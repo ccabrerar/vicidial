@@ -531,10 +531,10 @@ if ($shift == 'ALL')
 $query_date_BEGIN = "$query_date 00:00:00";   
 $query_date_END = "$end_date 23:59:59";
 
-$rpt_title=_QXZ("Showing emails")." $email_title "._QXZ("that were")." $date_title "._QXZ("from")." $query_date_BEGIN "._QXZ("to")." $query_date_END\n\n";
+$rpt_title=_QXZ("Showing emails")." "._QXZ("$email_title")." "._QXZ("that were")." "._QXZ("$date_title")." "._QXZ("from")." $query_date_BEGIN "._QXZ("to")." $query_date_END\n\n";
 $MAIN.=$rpt_title;
 $MAIN.=_QXZ("Email log results").": $group_string          $NOW_TIME        <a href=\"$PHP_SELF?DB=$DB&query_date=$query_date&end_date=$end_date$groupQS&shift=$shift&SUBMIT=$SUBMIT&file_download=1&date_type=$date_type&email_type=$email_type&search_archived_data=$search_archived_data\">"._QXZ("DOWNLOAD")."</a>\n";
-$CSV_text1.="\""._QXZ("Showing emails")." $email_title "._QXZ("that were")." $date_title "._QXZ("from")." $query_date_BEGIN "._QXZ("to")." $query_date_END\"\n\n";
+$CSV_text1.="\""._QXZ("Showing emails")." "._QXZ("$email_title")." "._QXZ("that were")." "._QXZ("$date_title")." "._QXZ("from")." $query_date_BEGIN "._QXZ("to")." $query_date_END\"\n\n";
 
 if ($email_type=="received") 
 	{

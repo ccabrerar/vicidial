@@ -135,7 +135,7 @@ if (preg_match("/$TD$dispo$TD/",$sale_status))
 		exit;
 		}
 
-	$stmt = "SELECT $search_field FROM vicidial_list where lead_id='$lead_id';";
+	$stmt = "SELECT $search_field FROM vicidial_list where lead_id=$lead_id;";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	if ($DB) {echo "$stmt\n";}
 	$sv_ct = mysqli_num_rows($rslt);
@@ -186,7 +186,7 @@ if (preg_match("/$TD$dispo$TD/",$sale_status))
 				$SQL_log = "$stmt|";
 				$SQL_log = preg_replace('/;/','',$SQL_log);
 				$SQL_log = addslashes($SQL_log);
-				$stmt="INSERT INTO vicidial_api_log set user='$user',agent_user='$user',function='deactivate_lead',value='$lead_id',result='$affected_rows',result_reason='$search_field',source='vdc',data='$SQL_log',api_date='$NOW_TIME',api_script='$api_script';";
+				$stmt="INSERT INTO vicidial_api_log set user='$user',agent_user='$user',function='deactivate_lead',value=$lead_id,result='$affected_rows',result_reason='$search_field',source='vdc',data='$SQL_log',api_date='$NOW_TIME',api_script='$api_script';";
 				$rslt=mysql_to_mysqli($stmt, $link);
 
 				$MESSAGE = _QXZ("DONE: %1s duplicates found,",0,'',$search_count)." $affected_rows updated to $new_status from $dispo";

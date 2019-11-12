@@ -352,10 +352,10 @@ $MAIN.="<SELECT SIZE=1 NAME=group>\n";
 $MAIN.="</SELECT></TD><TD VALIGN=middle align=center>\n";
 $MAIN.=_QXZ("Display as:")."&nbsp;";
 $MAIN.="<select name='report_display_type'>";
-if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>$report_display_type</option>";}
-$MAIN.="<option value='TEXT'>TEXT</option><option value='HTML'>HTML</option></select>";
+if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
+$MAIN.="<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select>";
 $MAIN.="</TD><TD VALIGN=middle align=center>\n";
-$MAIN.="<INPUT TYPE=checkbox NAME=show_details VALUE='checked' $show_details>Show details\n";
+$MAIN.="<INPUT TYPE=checkbox NAME=show_details VALUE='checked' $show_details>"._QXZ("Show details")."\n";
 $MAIN.="</TD><TD VALIGN=middle align=center>\n";
 $MAIN.="<INPUT TYPE=SUBMIT NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>\n";
 $MAIN.="<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a href=\"./admin.php?ADD=34&campaign_id=$group\">"._QXZ("MODIFY")."</a> | <a href=\"./admin.php?ADD=999999\">"._QXZ("REPORTS")."</a> </FONT>\n";

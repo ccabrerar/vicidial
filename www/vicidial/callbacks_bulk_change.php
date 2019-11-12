@@ -277,7 +277,7 @@ else
 			if (mysqli_num_rows($user_rslt)>0) 
 				{
 				$user_row=mysqli_fetch_array($user_rslt);
-				echo "\t<option value='$row[user]'>$row[user] - $user_row[full_name] - ($row[ct] callbacks)</option>\n";
+				echo "\t<option value='$row[user]'>$row[user] - $user_row[full_name] - ($row[ct] "._QXZ("callbacks").")</option>\n";
 				}
 			}
 		} 
@@ -292,7 +292,7 @@ else
 	if ($DB) {echo "$stmt\n";}
 	$rslt=mysql_to_mysqli($stmt, $link);
 	echo "<select name='new_user' size=5>\n";
-	echo "\t<option value='ANYONE'>Anyone - available to all agents in campaign</option>\n";
+	echo "\t<option value='ANYONE'>"._QXZ("Anyone - available to all agents in campaign")."</option>\n";
 	while ($row=mysqli_fetch_array($rslt)) 
 		{
 		echo "\t<option value='$row[user]'>$row[user] - $row[full_name]</option>\n";

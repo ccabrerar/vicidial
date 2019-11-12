@@ -2668,7 +2668,7 @@ foreach(@FILES)
 					while ($r < $map_count)
 						{
 						$s++;
-						$stmtZ = "INSERT INTO vicidial_list_alt_phones (lead_id,phone_code,phone_number,alt_phone_note,alt_phone_count) values('$lead_id','$ALTm_phone_code[$r]','$ALTm_phone_number[$r]','$ALTm_phone_note[$r]','$s');";
+						$stmtZ = "INSERT INTO vicidial_list_alt_phones (lead_id,phone_code,phone_number,alt_phone_note,alt_phone_count) values($lead_id,'$ALTm_phone_code[$r]','$ALTm_phone_number[$r]','$ALTm_phone_note[$r]','$s');";
 							if (!$T) {$affected_rows = $dbhA->do($stmtZ); } #  or die  "Couldn't execute query: |$stmtZ|\n";
 						#	$alt_phone_id = $dbhA->{'mysql_insertid'};
 							if($DB){print STDERR "\n|$affected_rows|$stmtZ|\n";}

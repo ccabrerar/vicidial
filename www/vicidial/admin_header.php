@@ -79,6 +79,7 @@
 # 180618-2300 - Modified calls to audio file chooser function
 # 190121-1803 - Added special streamlined header option for mobile devices
 # 190530-1013 - Added javascript for active list change feature
+# 191028-1739 - Added VM Message Groups
 #
 
 $stmt="SELECT admin_home_url,enable_tts_integration,callcard_enabled,custom_fields_enabled,allow_emails,level_8_disable_add,allow_chats,enable_languages,admin_row_click,admin_screen_colors,user_new_lead_limit,user_territories_active,qc_features_active,agent_soundboards,enable_drop_lists,allow_ip_lists from system_settings;";
@@ -278,8 +279,6 @@ else
 	$qc_icon="<img src=\"images/icon_qc.png\" border=0 alt=\"Quality Control\" width=14 height=14 valign=middle>";
 	}
 ##### END populate dynamic header content #####
-
-
 
 ######################### SMALL HTML HEADER BEGIN #######################################
 if($short_header)
@@ -1897,12 +1896,12 @@ if ($subcamp_font_size < 4) {$subcamp_font_size='11';}
 			{
 		?>
 		<TR <?php echo $listCG_sh ?><?php if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='$ADMIN?ADD=1900';\"";} ?>><TD ALIGN=LEFT> &nbsp; 
-		<a href="<?php echo $ADMIN ?>?ADD=1900" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> Show Chat Groups </a>
+		<a href="<?php echo $ADMIN ?>?ADD=1900" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Show Chat Groups"); ?> </a>
 		</TD></TR><TR <?php echo $newCG_sh ?><?php if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='$ADMIN?ADD=18111';\"";} ?>><TD ALIGN=LEFT> &nbsp; 
 		<?php if ($add_copy_disabled < 1) { ?>
-		<a href="<?php echo $ADMIN ?>?ADD=18111" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> Add New Chat Group </a>
+		<a href="<?php echo $ADMIN ?>?ADD=18111" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Add New Chat Group"); ?> </a>
 		</TD></TR><TR <?php echo $copyCG_sh ?><?php if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='$ADMIN?ADD=19111';\"";} ?>><TD ALIGN=LEFT> &nbsp; 
-		<a href="<?php echo $ADMIN ?>?ADD=19111" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> Copy Chat Group </a>
+		<a href="<?php echo $ADMIN ?>?ADD=19111" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Copy Chat Group"); ?> </a>
 		<?php } ?>
 		<TR WIDTH=160 CLASS="subhead_style"><TD><DIV CLASS="horiz_line_grey"></DIV></TD></TR>
 		<?php
@@ -2041,6 +2040,7 @@ if ($subcamp_font_size < 4) {$subcamp_font_size='11';}
 		$sc_sh="CLASS=\"subhead_style\"";
 		$sg_sh="CLASS=\"subhead_style\"";
 		$cg_sh="CLASS=\"subhead_style\"";
+		$vmmg_sh="CLASS=\"subhead_style\"";
 		$emails_sh="CLASS=\"subhead_style\"";
 		$ar_sh="CLASS=\"subhead_style\"";
 		$il_sh="CLASS=\"subhead_style\"";
@@ -2067,6 +2067,7 @@ if ($subcamp_font_size < 4) {$subcamp_font_size='11';}
 		if ($sh=='sc') {$sc_sh="CLASS=\"subhead_style_selected\"";}
 		if ($sh=='sg') {$sg_sh="CLASS=\"subhead_style_selected\"";}
 		if ($sh=='cg') {$cg_sh="CLASS=\"subhead_style_selected\"";}
+		if ($sh=='vmmg') {$vmmg_sh="CLASS=\"subhead_style_selected\"";}
 		if ($sh=='emails') {$emails_sh="CLASS=\"subhead_style_selected\"";}
 		if ($sh=='ar') {$ar_sh="CLASS=\"subhead_style_selected\"";}
 		if ($sh=='il') {$il_sh="CLASS=\"subhead_style_selected\"";}
@@ -2126,7 +2127,7 @@ if ($subcamp_font_size < 4) {$subcamp_font_size='11';}
 			</TR>
 			<?php
 		if ($SSenable_languages > 0)
-			{ ?>
+				{ ?>
 			<TR <?php echo $languages_sh ?><?php if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='admin_languages.php?ADD=163000000000';\"";} ?>><TD ALIGN=LEFT <?php echo $languages_sh ?>> &nbsp; 
 			<a href="admin_languages.php?ADD=163000000000" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> &nbsp; <img src="images/icon_languages.png" border=0 alt=\"Users\" width=14 height=14 valign=middle> <?php echo _QXZ("Languages"); ?> </a></TD>
 			</TR>
@@ -2135,16 +2136,24 @@ if ($subcamp_font_size < 4) {$subcamp_font_size='11';}
 				{
 			?>
 			<TR <?php echo $soundboard_sh ?><?php if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='admin_soundboard.php?ADD=162000000000';\"";} ?>><TD ALIGN=LEFT <?php echo $soundboard_sh ?>> &nbsp; 
-			<a href="admin_soundboard.php?ADD=162000000000" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> &nbsp; <img src="images/icon_audiosoundboards.png" border=0 alt=\"Users\" width=14 height=14 valign=middle> <?php echo _QXZ("Audio Soundboards"); ?> </a></TD>
+			<a href="admin_soundboard.php?ADD=162000000000" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> &nbsp; <img src="images/icon_audiosoundboards.png" border=0 alt=\"Audio Soundboards\" width=14 height=14 valign=middle> <?php echo _QXZ("Audio Soundboards"); ?> </a></TD>
 			</TR>
 
 		<?php 
 				}
+
+			?>
+			<TR <?php echo $vmmg_sh ?><?php if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='admin.php?ADD=197000000000';\"";} ?>><TD ALIGN=LEFT <?php echo $vmmg_sh ?>> &nbsp; 
+			<a href="admin.php?ADD=197000000000" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> &nbsp; <img src="images/icon_vm_messages.png" border=0 alt=\"VM Message Groups\" width=14 height=14 valign=middle> <?php echo _QXZ("VM Message Groups"); ?> </a></TD>
+			</TR>
+
+		<?php 
+
 			}
 		if ($SSenable_tts_integration > 0)
 			{ ?>
 			<TR <?php echo $tts_sh ?><?php if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='$ADMIN?ADD=150000000000';\"";} ?>><TD ALIGN=LEFT <?php echo $tts_sh ?>> &nbsp; 
-			<a href="<?php echo $ADMIN ?>?ADD=150000000000" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> &nbsp; <img src="images/icon_texttospeech.png" border=0 alt=\"Users\" width=14 height=14 valign=middle> <?php echo _QXZ("Text To Speech"); ?> </a></TD>
+			<a href="<?php echo $ADMIN ?>?ADD=150000000000" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> &nbsp; <img src="images/icon_texttospeech.png" border=0 alt=\"Text To Speech\" width=14 height=14 valign=middle> <?php echo _QXZ("Text To Speech"); ?> </a></TD>
 			</TR>
 
 		<?php }
@@ -2367,7 +2376,11 @@ if ($SSenable_languages == '1')
 	<?php }
 	if (strlen($cg_sh) > 25) { 
 		?>
-	<TR BGCOLOR=<?php echo $sg_color ?>><TD ALIGN=LEFT COLSPAN=2> &nbsp; <a href="<?php echo $ADMIN ?>?ADD=196000000000"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("CID Groups"); ?> </a> &nbsp; |<?php if ($add_copy_disabled < 1) { ?> &nbsp; <a href="<?php echo $ADMIN ?>?ADD=196111111111"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Add A CID Group"); ?> </a><?php } ?></TD></TR>
+	<TR BGCOLOR=<?php echo $cg_color ?>><TD ALIGN=LEFT COLSPAN=2> &nbsp; <a href="<?php echo $ADMIN ?>?ADD=196000000000"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("CID Groups"); ?> </a> &nbsp; |<?php if ($add_copy_disabled < 1) { ?> &nbsp; <a href="<?php echo $ADMIN ?>?ADD=196111111111"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Add A CID Group"); ?> </a><?php } ?></TD></TR>
+	<?php }
+	if (strlen($vmmg_sh) > 25) { 
+		?>
+	<TR BGCOLOR=<?php echo $vmmg_color ?>><TD ALIGN=LEFT COLSPAN=2> &nbsp; <a href="<?php echo $ADMIN ?>?ADD=197000000000"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("VM Message Groups"); ?> </a> &nbsp; |<?php if ($add_copy_disabled < 1) { ?> &nbsp; <a href="<?php echo $ADMIN ?>?ADD=197111111111"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Add A VM Message Group"); ?> </a><?php } ?></TD></TR>
 	<?php }
 	if ( (strlen($status_sh) > 25) and (!preg_match('/campaign|user/i',$hh) ) ) { 
 		?>

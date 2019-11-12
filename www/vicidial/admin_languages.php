@@ -550,7 +550,7 @@ if ($ADD==363211111111)
 			{
 			active_edit=0;
 			var translated_text_value = document.language_form.original_translate.value;
-			document.getElementById(LINKspan).innerHTML = "<a href=\"#\" onclick=\"edit_translation('" + TEXTspan + "','" + LINKspan + "');return false;\">edit</a>";
+			document.getElementById(LINKspan).innerHTML = "<a href=\"#\" onclick=\"edit_translation('" + TEXTspan + "','" + LINKspan + "');return false;\"><?php echo _QXZ("edit"); ?></a>";
 			document.getElementById(TEXTspan).innerHTML = translated_text_value;
 			}
 		function submit_translation(TEXTspan,LINKspan)
@@ -592,7 +592,7 @@ if ($ADD==363211111111)
 						translate_response = xmlhttp.responseText;
 					//	alert(translate_response);
 
-						document.getElementById(LINKspan).innerHTML = "<a href=\"#\" onclick=\"edit_translation('" + TEXTspan + "','" + LINKspan + "');return false;\">edit</a>";
+						document.getElementById(LINKspan).innerHTML = "<a href=\"#\" onclick=\"edit_translation('" + TEXTspan + "','" + LINKspan + "');return false;\"><?php echo _QXZ("edit"); ?></a>";
 						document.getElementById(TEXTspan).innerHTML = translated_text_value;
 						}
 					}
@@ -664,7 +664,7 @@ if ($ADD==363211111111)
 				echo "<tr bgcolor=#$SSstd_row1_background><td align=left colspan=5>$english_text</td></tr>\n";
 				echo "<tr bgcolor=$ttbgcolor><td align=left colspan=5><span id=\"TEXT-----$language_id$DS$phrase_id\">$translated_text</span>";
 				echo " &nbsp; <span id=\"LINK-----$language_id$DS$phrase_id\">";
-				echo "<a href=\"#\" onclick=\"edit_translation('TEXT-----$language_id$DS$phrase_id','LINK-----$language_id$DS$phrase_id');return false;\">edit</a></span></td></tr>\n";
+				echo "<a href=\"#\" onclick=\"edit_translation('TEXT-----$language_id$DS$phrase_id','LINK-----$language_id$DS$phrase_id');return false;\">"._QXZ("edit")."</a></span></td></tr>\n";
 				}
 			echo "</TABLE></center>\n";
 			}
@@ -1411,7 +1411,7 @@ if ($ADD==363111111111)
 		echo "</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
 		echo "$UUgroups_list";
-		echo "<option SELECTED value=\"$user_group\">$user_group</option>\n";
+		echo "<option SELECTED value=\"$user_group\">".(preg_match('/\-\-ALL\-\-/', $user_group) ? _QXZ("$user_group") : $user_group)."</option>\n";
 		echo "</select>$NWB#languages-user_group$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active").": </td><td align=left><select size=1 name=active>\n";
 		echo "<option value=\"Y\">"._QXZ("Y")."</option><option value=\"N\">"._QXZ("N")."</option>";
@@ -1447,7 +1447,7 @@ if ($ADD==363111111111)
 
 		echo "<tr bgcolor=#$SSstd_row2_background><td align=right nowrap>"._QXZ("Add A New Language Phrase").": </td><td nowrap><input type=text size=70 maxlength=10000 name=english_text id=english_text value=\"\">  $NWB#languages-english_text$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center valign=middle colspan=2><input type=submit name=submit VALUE='"._QXZ("SUBMIT CHANGES")."'> &nbsp; <a href=\"$PHP_SELF?ADD=363111111111&language_id=$language_id&DB=$DB&action=$action\">RELOAD PAGE</a></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center valign=middle colspan=2><input type=submit name=submit VALUE='"._QXZ("SUBMIT CHANGES")."'> &nbsp; <a href=\"$PHP_SELF?ADD=363111111111&language_id=$language_id&DB=$DB&action=$action\">"._QXZ("RELOAD PAGE")."</a></td></tr>\n";
 		echo "</TABLE></center>\n";
 
 		echo "<center><br><br><b>\n";
@@ -1503,11 +1503,11 @@ if ($ADD==163000000000)
 		while(strlen($row[1]) > 40) {$row[1] = substr("$row[1]", 0, -1);}
 		if(strlen($row[1]) > 37) {$row[1] = "$row[1]...";}
 		$Alanguage_id[$o] =				$row[0];
-		$Alanguage_description[$o] =	$row[1];
+		$Alanguage_description[$o] =	_QXZ("$row[1]");
 		$Alanguage_code[$o] =			$row[2];
-		$Auser_group[$o] =				$row[3];
+		$Auser_group[$o] =				(preg_match('/\-\-ALL\-\-/', $row[3]) ? _QXZ("$row[3]") : $row[3]);
 		$Amodify_date[$o] =				$row[4];
-		$Aactive[$o] =					$row[5];
+		$Aactive[$o] =					_QXZ("$row[5]");
 		$o++;
 		}
 

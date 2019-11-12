@@ -532,9 +532,9 @@ $o=0;
 while ($groups_to_print > $o)
 	{
 	if (preg_match("/\|$LISTgroups[$o]\|/",$group_string)) 
-		{$MAIN.="<option selected value=\"$LISTgroups[$o]\">$LISTgroups[$o] - $LISTgroup_names[$o]</option>\n";}
+		{$MAIN.="<option selected value=\"$LISTgroups[$o]\">"._QXZ("$LISTgroups[$o]")." - "._QXZ("$LISTgroup_names[$o]")."</option>\n";}
 	else
-		{$MAIN.="<option value=\"$LISTgroups[$o]\">$LISTgroups[$o] - $LISTgroup_names[$o]</option>\n";}
+		{$MAIN.="<option value=\"$LISTgroups[$o]\">"._QXZ("$LISTgroups[$o]")." - "._QXZ("$LISTgroup_names[$o]")."</option>\n";}
 	$o++;
 	}
 $MAIN.="</SELECT>\n";
@@ -562,9 +562,9 @@ $MAIN.="<TR><TD>\n";
 #	}
 #$MAIN.="</SELECT>\n";
 $MAIN.=_QXZ("Shift/Call time").": <SELECT SIZE=1 NAME=shift>\n";
-$MAIN.="<option selected value=\"$shift\">$shift</option>\n";
+$MAIN.="<option selected value=\"$shift\">"._QXZ("$shift")."</option>\n";
 $MAIN.="<option value=\"\"></option>\n";
-$MAIN.="<option value=\"\">--- Shifts ---</option>\n";
+$MAIN.="<option value=\"\">--- "._QXZ("Shifts")." ---</option>\n";
 $MAIN.="<option value=\"AM\">"._QXZ("AM  (03:45 - 15:15)")."</option>\n";
 $MAIN.="<option value=\"PM\">"._QXZ("PM  (15:15 - 23:15)")."</option>\n";
 $MAIN.="<option value=\"ALL\">"._QXZ("ALL")."</option>\n";
@@ -573,7 +573,7 @@ $call_time_stmt="select call_time_id, call_time_name from vicidial_call_times $w
 $call_time_rslt=mysql_to_mysqli($call_time_stmt, $link);
 if (mysqli_num_rows($call_time_rslt)>0) {
 	$MAIN.="<option value=\"\"></option>\n";
-	$MAIN.="<option value=\"\">--- Call times ---</option>\n";
+	$MAIN.="<option value=\"\">--- "._QXZ("Call times")." ---</option>\n";
 	while ($call_time_row=mysqli_fetch_array($call_time_rslt)) {
 		$MAIN.="<option value=\"".$call_time_row["call_time_id"]."\">".$call_time_row["call_time_name"]."</option>\n";
 	}
@@ -582,7 +582,7 @@ if (mysqli_num_rows($call_time_rslt)>0) {
 $MAIN.="</SELECT>\n";
 $MAIN.="<BR> &nbsp; &nbsp; &nbsp; "._QXZ("Display as").":&nbsp; ";
 $MAIN.="<select name='report_display_type'>";
-if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>$report_display_type</option>";}
+if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
 $MAIN.="<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select>\n<BR>";
 if ($archives_available=="Y") 
 	{
@@ -1459,7 +1459,7 @@ $TOTALcalls = 0;
 $ASCII_text="\n";
 $ASCII_text.="---------- $rpt_type_verbiage "._QXZ("HOLD TIME BREAKDOWN IN SECONDS",36)." <a href=\"$PHP_SELF?DB=$DB&DID=$DID&query_date=$query_date&end_date=$end_date$groupQS&shift=$shift&SUBMIT=$SUBMIT&file_download=2&search_archived_data=$search_archived_data\">"._QXZ("DOWNLOAD")."</a>\n";
 $ASCII_text.="+-------------------------------------------------------------------------------------------+------------+\n";
-$ASCII_text.="|     0     5    10    15    20    25    30    35    40    45    50    55    60    90   +90 | TOTAL      |\n";
+$ASCII_text.="|     0     5    10    15    20    25    30    35    40    45    50    55    60    90   +90 | "._QXZ("TOTAL", 10)." |\n";
 $ASCII_text.="+-------------------------------------------------------------------------------------------+------------+\n";
 
 $CSV_text2.="\n\"$rpt_type_verbiage "._QXZ("HOLD TIME BREAKDOWN IN SECONDS")."\"\n";

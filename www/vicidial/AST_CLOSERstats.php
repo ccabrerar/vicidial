@@ -311,6 +311,7 @@ $LISTgroups=array();
 $LISTgroup_names=array();
 $LISTgroup_ids=array();
 $LISTgroups[$i]='---NONE---';
+$LISTgroup_names[$i]=_QXZ("None selected");
 $i++;
 $groups_to_print++;
 $groups_string='|';
@@ -549,7 +550,7 @@ $MAIN.="<TR><TD>\n";
 #	}
 #$MAIN.="</SELECT>\n";
 $MAIN.=_QXZ("Shift").": <SELECT SIZE=1 NAME=shift>\n";
-$MAIN.="<option selected value=\"$shift\">$shift</option>\n";
+$MAIN.="<option selected value=\"$shift\">"._QXZ("$shift")."</option>\n";
 $MAIN.="<option value=\"\">--</option>\n";
 $MAIN.="<option value=\"AM\">"._QXZ("AM")."</option>\n";
 $MAIN.="<option value=\"PM\">"._QXZ("PM")."</option>\n";
@@ -557,7 +558,7 @@ $MAIN.="<option value=\"ALL\">"._QXZ("ALL")."</option>\n";
 $MAIN.="</SELECT>\n";
 $MAIN.="<BR>"._QXZ("Display as").":&nbsp; ";
 $MAIN.="<select name='report_display_type'>";
-if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>$report_display_type</option>";}
+if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
 $MAIN.="<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select>\n<BR>";
 if ($archives_available=="Y") 
 	{
@@ -928,8 +929,8 @@ if ($EMAIL=='Y')
 	$MAIN.=_QXZ("Total DROP Emails:",47)."$DROPcalls  $DROPpercent%               "._QXZ("drop/answered").": $DROP_ANSWEREDpercent%\n";
 	$MAIN.=_QXZ("Average hold time for DROP Emails:",47)."$average_hold_seconds "._QXZ("seconds")."\n";
 
-	$CSV_text1.="\"Total DROP Emails:\",\"$DROPcalls\",\"$DROPpercent%\",\""._QXZ("drop/answered").":\",\"$DROP_ANSWEREDpercent%\"\n";
-	$CSV_text1.="\"Average hold time for DROP Emails:\",\"$average_hold_seconds "._QXZ("seconds")."\"\n";
+	$CSV_text1.="\""._QXZ("Total DROP Emails").":\",\"$DROPcalls\",\"$DROPpercent%\",\""._QXZ("drop/answered").":\",\"$DROP_ANSWEREDpercent%\"\n";
+	$CSV_text1.="\""._QXZ("Average hold time for DROP Emails").":\",\"$average_hold_seconds "._QXZ("seconds")."\"\n";
 	}
 else
 	{
@@ -1112,11 +1113,11 @@ $TOTALcalls = 0;
 $ASCII_text="\n";
 $ASCII_text.="---------- $rpt_type_verbiage "._QXZ("HOLD TIME BREAKDOWN IN SECONDS",36)." <a href=\"$PHP_SELF?DB=$DB&DID=$DID&query_date=$query_date&end_date=$end_date$groupQS&shift=$shift&SUBMIT=$SUBMIT&file_download=2&search_archived_data=$search_archived_data\">"._QXZ("DOWNLOAD")."</a>\n";
 $ASCII_text.="+-------------------------------------------------------------------------------------------+------------+\n";
-$ASCII_text.="|     0     5    10    15    20    25    30    35    40    45    50    55    60    90   +90 | TOTAL      |\n";
+$ASCII_text.="|     0     5    10    15    20    25    30    35    40    45    50    55    60    90   +90 | "._QXZ("TOTAL", 10)." |\n";
 $ASCII_text.="+-------------------------------------------------------------------------------------------+------------+\n";
 
 $CSV_text2.="\n\"$rpt_type_verbiage "._QXZ("HOLD TIME BREAKDOWN IN SECONDS")."\"\n";
-$CSV_text2.="\"\",\"0\",\"5\",\"10\",\"15\",\"20\",\"25\",\"30\",\"35\",\"40\",\"45\",\"50\",\"55\",\"60\",\"90\",\"+90\",\"TOTAL\"\n";
+$CSV_text2.="\"\",\"0\",\"5\",\"10\",\"15\",\"20\",\"25\",\"30\",\"35\",\"40\",\"45\",\"50\",\"55\",\"60\",\"90\",\"+90\",\""._QXZ("TOTAL")."\"\n";
 
 
 $stmt="select count(*),queue_seconds from ".$vicidial_closer_log_table." where call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' and  campaign_id IN($group_SQL) group by queue_seconds;";

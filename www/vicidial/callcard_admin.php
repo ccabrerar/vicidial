@@ -287,7 +287,7 @@ header ("Pragma: no-cache");                          // HTTP/1.0
 <div id='HelpDisplayDiv' class='help_info' style='display:none;'></div>
 
 <!-- VERSION: <?php echo $version ?>     BUILD: <?php echo $build ?> -->
-<title>ADMINISTRATION: CallCard Admin
+<title><?php echo _QXZ("ADMINISTRATION").": "._QXZ("CallCard Admin"); ?></title>
 <?php
 
 
@@ -587,7 +587,7 @@ if ($action == "CALLCARD_SUMMARY")
 		else
 			{$bgcolor='bgcolor="#'.$SSstd_row3_background.'"';} 
 		echo "<tr $bgcolor>\n";
-		echo "<td><font size=1> $Lstatus[$i] </td>";
+		echo "<td><font size=1> "._QXZ("$Lstatus[$i]")."</td>";
 		echo "<td><font size=1> $Lcount[$i] </td>";
 		echo "</tr>\n";
 
@@ -693,7 +693,7 @@ if ($action == "CALLCARD_RUNS")
 		echo "<tr $bgcolor>\n";
 		echo "<td><font size=1> $Lrun[$i] </td>";
 		echo "<td><font size=1> $Lcount[$i] </td>";
-		echo "<td><font size=1> <a href=\"$PHP_SELF?action=SEARCH_RESULTS&run=$Lrun[$i]&DB=$DB\">LIST</a> </td>";
+		echo "<td><font size=1> <a href=\"$PHP_SELF?action=SEARCH_RESULTS&run=$Lrun[$i]&DB=$DB\">"._QXZ("LIST")."</a> </td>";
 		echo "</tr>\n";
 
 		$i++;
@@ -738,7 +738,7 @@ if ($action == "CALLCARD_BATCHES")
 		echo "<tr $bgcolor>\n";
 		echo "<td><font size=1> $Lbatch[$i] </td>";
 		echo "<td><font size=1> $Lcount[$i] </td>";
-		echo "<td><font size=1> <a href=\"$PHP_SELF?action=SEARCH_RESULTS&batch=$Lbatch[$i]&DB=$DB\">LIST</a> </td>";
+		echo "<td><font size=1> <a href=\"$PHP_SELF?action=SEARCH_RESULTS&batch=$Lbatch[$i]&DB=$DB\">"._QXZ("LIST")."</a> </td>";
 		echo "</tr>\n";
 
 		$i++;
@@ -937,7 +937,7 @@ if ($action == "SEARCH_RESULTS")
 
 	if (strlen($searchSQL) < 5)
 		{
-		echo "you must enter something to search for<BR><BR>\n";
+		echo _QXZ("you must enter something to search for")."<BR><BR>\n";
 		$action = 'SEARCH';
 		}
 	else
@@ -985,7 +985,7 @@ if ($action == "SEARCH_RESULTS")
 			echo "<td><font size=1> $Lactivate_time[$i] </td>";
 			echo "<td><font size=1> $Lused_time[$i] </td>";
 			echo "<td><font size=1> $Lvoid_time[$i] </td>";
-			echo "<td><font size=1> <a href=\"$PHP_SELF?action=CALLCARD_DETAIL&card_id=$Lcard_id[$i]&DB=$DB\">DETAILS</a> </td>";
+			echo "<td><font size=1> <a href=\"$PHP_SELF?action=CALLCARD_DETAIL&card_id=$Lcard_id[$i]&DB=$DB\">"._QXZ("DETAILS")."</a> </td>";
 			echo "</tr>\n";
 
 			$i++;

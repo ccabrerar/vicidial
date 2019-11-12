@@ -404,7 +404,7 @@ while ($groups_to_print > $o)
 $MAIN.="</SELECT>\n";
 $MAIN.="&nbsp;";
 $MAIN.="<select name='report_display_type'>";
-if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>$report_display_type</option>";}
+if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
 $MAIN.="<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select>\n";
 $MAIN.=" &nbsp; ";
 $MAIN.="<SELECT SIZE=1 NAME=shift>\n";
@@ -420,7 +420,7 @@ $MAIN.="<option value=\"8AM-5PM\">"._QXZ("8AM-5PM")."</option>\n";
 $MAIN.="<option value=\"845-1745\">845-1745</option>\n";
 $MAIN.="<option value=\"1745-100\">1745-100</option>\n";
 $MAIN.="</SELECT>\n";
-$MAIN.="<INPUT TYPE=submit NAME=SUBMIT VALUE=SUBMIT>\n";
+$MAIN.="<INPUT TYPE=submit NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>\n";
 $MAIN.="<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a href=\"$PHP_SELF?DB=$DB&query_date=$query_date&end_date=$end_date&group=$group&shift=$shift&SUBMIT=$SUBMIT&file_download=1&search_archived_data=$search_archived_data\">"._QXZ("DOWNLOAD")."</a> | <a href=\"./admin.php?ADD=3111&group_id=$group\">"._QXZ("MODIFY")."</a> | <a href=\"./admin.php?ADD=999999\">"._QXZ("REPORTS")."</a>";
 if ($archives_available=="Y") 
 	{

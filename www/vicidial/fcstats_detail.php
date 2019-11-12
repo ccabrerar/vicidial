@@ -532,7 +532,7 @@ $HTML_head.="<TITLE>"._QXZ("$report_name")."</TITLE></HEAD><BODY BGCOLOR=WHITE m
 
 $HTML_text.="<b>"._QXZ("$report_name")."</b> $NWB#fcstats$NWE\n";
 $HTML_text.="<FORM ACTION=\"$PHP_SELF\" METHOD=GET name=vicidial_report id=vicidial_report>\n";
-$HTML_text.="<TABLE CELLPADDING=3 CELLSPACING=0 BGCOLOR=\"#".$SSframe_background."\"><TR><TD>Date:<BR>";
+$HTML_text.="<TABLE CELLPADDING=3 CELLSPACING=0 BGCOLOR=\"#".$SSframe_background."\"><TR><TD>"._QXZ("Date").":<BR>";
 
 $HTML_text.="<INPUT TYPE=TEXT NAME=query_date SIZE=10 MAXLENGTH=10 VALUE=\"$query_date\">";
 $HTML_text.="<script language=\"JavaScript\">\n";
@@ -544,7 +544,7 @@ $HTML_text.="	'controlname': 'query_date'\n";
 $HTML_text.="});\n";
 $HTML_text.="o_cal.a_tpl.yearscroll = false;\n";
 $HTML_text.="// o_cal.a_tpl.weekstart = 1; // Monday week start\n";
-$HTML_text.="</script> <BR>to:<BR>\n";
+$HTML_text.="</script> <BR>"._QXZ("to").":<BR>\n";
 
 $HTML_text.="<INPUT TYPE=TEXT NAME=end_date SIZE=10 MAXLENGTH=10 VALUE=\"$end_date\">";
 $HTML_text.="<script language=\"JavaScript\">\n";
@@ -559,11 +559,11 @@ $HTML_text.="// o_cal.a_tpl.weekstart = 1; // Monday week start\n";
 $HTML_text.="</script>\n";
 
 $HTML_text.="<BR><BR>";
-$HTML_text.="Display: <select name='report_display_type'>";
-if ($report_display_type) {$HTML_text.="<option value='$report_display_type' selected>$report_display_type</option>";}
+$HTML_text.=_QXZ("Display").": <select name='report_display_type'>";
+if ($report_display_type) {$HTML_text.="<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
 $HTML_text.="<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select><BR><BR>\n";
-$HTML_text.="Shift: <SELECT SIZE=1 NAME=shift>\n";
-$HTML_text.="<option selected value=\"$shift\">$shift</option>\n";
+$HTML_text.=_QXZ("Shift").": <SELECT SIZE=1 NAME=shift>\n";
+$HTML_text.="<option selected value=\"$shift\">"._QXZ("$shift")."</option>\n";
 $HTML_text.="<option value=\"\">--</option>\n";
 $HTML_text.="<option value=\"AM\">"._QXZ("AM")."</option>\n";
 $HTML_text.="<option value=\"PM\">"._QXZ("PM")."</option>\n";
@@ -571,7 +571,7 @@ $HTML_text.="<option value=\"ALL\">"._QXZ("ALL")."</option>\n";
 $HTML_text.="</SELECT>\n";
 
 $HTML_text.="</td><td valign=TOP>";
-$HTML_text.="Ingroup: <BR><SELECT SIZE=5 NAME=group[] multiple>\n";
+$HTML_text.=_QXZ("Ingroup").": <BR><SELECT SIZE=5 NAME=group[] multiple>\n";
 	$o=0;
 	while ($groups_to_print > $o)
 	{
@@ -635,7 +635,7 @@ if ($archives_available=="Y")
 	$HTML_text.="<input type='checkbox' name='search_archived_data' value='checked' $search_archived_data>"._QXZ("Search archived data")."<BR><BR>\n";
 	}
 $HTML_text.="<input type='checkbox' name='show_summary' value='checked' $show_summary>"._QXZ("Show fronter/closer summary")."<BR><BR>\n";
-$HTML_text.="<INPUT TYPE=submit NAME=SUBMIT VALUE=SUBMIT><BR><BR>\n";
+$HTML_text.="<INPUT TYPE=submit NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'><BR><BR>\n";
 $HTML_text.="<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2><a href=\"$PHP_SELF?query_date=$query_date&end_date=$end_date&group[]=" . implode("&group[]=", array_map(array($link, 'real_escape_string'), $group)) . "&shift=$shift&file_download=1&search_archived_data=$search_archived_data&show_summary=$show_summary$campaignQS$user_groupQS$userQS\">"._QXZ("DOWNLOAD")."</a> | <a href=\"./admin.php?ADD=3111&group_id=$group\">"._QXZ("MODIFY")."</a> | <a href=\"./admin.php?ADD=999999\">"._QXZ("REPORTS")."</a><BR/></FONT>\n";
 $HTML_text.="</TD>";
 
@@ -643,7 +643,7 @@ $HTML_text.="</TD>";
 $HTML_text.="</TR></TABLE>\n";
 $HTML_text.="</FORM>\n\n";
 
-$HTML_text.="<PRE><FONT SIZE=2>$report_display_type\n\n";
+$HTML_text.="<PRE><FONT SIZE=2>\n\n";
 
 
 if (!$group)
@@ -823,8 +823,8 @@ if (count($complete_xfer_log)>0) {
 	$output_header="+---------------------+-----------+----------------------+----------------------+----------------------+----------------------+------------+----------------------+------------+----------------------+----------------------+----------------------+---------------------+--------+\n";
 	$HTML_text.="\n";
 	$HTML_text.=$output_header;
-	$HTML_text.="| CALL DATE (INITIAL) | LEAD ID   | PHONE NUMBER         | PROVINCE             | USER                 | USER GROUP - FRONTER | FRONT CAMP | INBOUND/XFER GROUP   | RECVD CAMP | RCVD GROUP           |  USER                | USER GROUP - CLOSER  | RECEIPT DATE        | STATUS |\n";
-	$CSV_text1="\"CALL DATE (INITIAL)\",\"LEAD ID\",\"PHONE NUMBER\",\"PROVINCE\",\"USER\",\"USER GROUP - FRONTER\",\"FRONT CAMP\",\"INBOUND/XFER GROUP\",\"RECVD CAMP\",\"RCVD GROUP\",\"USER\",\"USER GROUP - CLOSER\",\"RECEIPT DATE\",\"STATUS\"\n";
+	$HTML_text.="| "._QXZ("CALL DATE (INITIAL)", 19)." | "._QXZ("LEAD ID", 9)." | "._QXZ("PHONE NUMBER", 20)." | "._QXZ("PROVINCE", 20)." | "._QXZ("USER", 20)." | "._QXZ("USER GROUP - FRONTER", 20)." | "._QXZ("FRONT CAMP", 10)." | "._QXZ("INBOUND/XFER GROUP", 20)." | "._QXZ("RECVD CAMP", 10)." | "._QXZ("RCVD GROUP", 20)." | "._QXZ("USER", 20)." | "._QXZ("USER GROUP - CLOSER", 20)." | "._QXZ("RECEIPT DATE", 19)." | "._QXZ("STATUS", 6)." |\n";
+	$CSV_text1="\""._QXZ("CALL DATE (INITIAL)")."\",\""._QXZ("LEAD ID")."\",\""._QXZ("PHONE NUMBER")."\",\""._QXZ("PROVINCE")."\",\""._QXZ("USER")."\",\""._QXZ("USER GROUP - FRONTER")."\",\""._QXZ("FRONT CAMP")."\",\""._QXZ("INBOUND/XFER GROUP")."\",\""._QXZ("RECVD CAMP")."\",\""._QXZ("RCVD GROUP")."\",\""._QXZ("USER")."\",\""._QXZ("USER GROUP - CLOSER")."\",\""._QXZ("RECEIPT DATE")."\",\""._QXZ("STATUS")."\"\n";
 	$HTML_text.=$output_header;
 	for($i=0; $i<count($complete_xfer_log); $i++) {
 		$HTML_text.="| ";

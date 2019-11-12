@@ -195,7 +195,7 @@ if (preg_match("/status_performance/", $rpt_type)) {
 	array_multisort($status_ary, SORT_ASC, $counts_ary, SORT_ASC, $sales_ary, SORT_ASC, $dead_ary, SORT_ASC, $kstatus_counts);
 	
 	if (count($status_counts)==0) {
-		$rpt_string="REPORT RETURNED NO RESULTS";
+		$rpt_string=_QXZ("REPORT RETURNED NO RESULTS");
 	} else {
 #		while(list($key, $val)=each($status_counts)) {
 		foreach ($kstatus_counts as $row) {
@@ -278,7 +278,7 @@ if (preg_match("/(agent|team)_performance/", $rpt_type)) {
 	} else if (preg_match("/team_performance/", $rpt_type)) {
 		$stmt="SELECT user_group, status, sum(pause_sec+wait_sec+talk_sec+dispo_sec), count(*) from vicidial_agent_log where event_time>='$query_date $query_time' and event_time<='$end_date $end_time' $campaign_id_SQL $user_SQL $user_group_SQL $status_SQL $exc_status_SQL group by user_group, status order by user_group, status";
 	}
-
+	
 	if ($DB) {$rpt_string.=$stmt."<BR>\n";}
 
 	$agent_counts=array();
@@ -294,7 +294,7 @@ if (preg_match("/(agent|team)_performance/", $rpt_type)) {
 	}
 
 	if (count($agent_counts)==0) {
-		$rpt_string="REPORT RETURNED NO RESULTS";
+		$rpt_string=_QXZ("REPORT RETURNED NO RESULTS");
 	} else {
 		while(list($key, $val)=each($agent_counts)) {
 			$full_name="";
@@ -399,7 +399,7 @@ if (preg_match("/floor_performance/", $rpt_type)) {
 	}
 
 	if (count($call_counts)==0) {
-		$rpt_string="REPORT RETURNED NO RESULTS";
+		$rpt_string=_QXZ("REPORT RETURNED NO RESULTS");
 	} else {
 		$mins=0;
 		ksort($call_counts);
@@ -533,7 +533,7 @@ if (preg_match("/(did|ingroup)_performance/", $rpt_type)) {
 	$total_calls=0; $total_sales=0;
 
 	if (count($inbound_counts)==0) {
-		$rpt_string="REPORT RETURNED NO RESULTS";
+		$rpt_string=_QXZ("REPORT RETURNED NO RESULTS");
 	} else {
 		while(list($key, $val)=each($inbound_counts)) {
 
@@ -622,7 +622,7 @@ if ($rpt_type=="floor_performance_hourly") {
 	}
 
 	if (count($cumulative_hours_array)==0) {
-		$rpt_string="REPORT RETURNED NO RESULTS";
+		$rpt_string=_QXZ("REPORT RETURNED NO RESULTS");
 	} else {
 		while(list($key, $val)=each($cumulative_hours_array)) {
 			$rpt_string.="$key|$val\n";

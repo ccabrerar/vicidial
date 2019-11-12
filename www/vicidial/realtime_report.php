@@ -741,7 +741,7 @@ $i=0;
 $usergroups=array();
 $usergroupnames=array();
 $usergroups[$i]='ALL-GROUPS';
-$usergroupnames[$i] = _QXZ("All user groups");
+$usergroupnames[$i] = "All user groups";
 $i++;
 $usergroups_to_print++;
 while ($i < $usergroups_to_print)
@@ -785,9 +785,9 @@ $o=0;
 while ($groups_to_print > $o)
 	{
 	if (preg_match("/\|$LISTgroups[$o]\|/",$group_string)) 
-		{$select_list .= "<option selected value='$LISTgroups[$o]'>$LISTgroups[$o] - $LISTnames[$o]</option>";}
+		{$select_list .= "<option selected value='$LISTgroups[$o]'>"._QXZ("$LISTgroups[$o]")." - "._QXZ("$LISTnames[$o]")."</option>";}
 	else
-		{$select_list .= "<option value='$LISTgroups[$o]'>$LISTgroups[$o] - $LISTnames[$o]</option>";}
+		{$select_list .= "<option value='$LISTgroups[$o]'>"._QXZ("$LISTgroups[$o]")." - "._QXZ("$LISTnames[$o]")."</option>";}
 	$o++;
 	}
 $select_list .= "</SELECT>";
@@ -799,13 +799,13 @@ $o=0;
 while ($o < $usergroups_to_print)
 	{
 	if (preg_match("/\|$usergroups[$o]\|/",$user_group_string))
-		{$select_list .= "<option selected value='$usergroups[$o]'>$usergroups[$o] - $usergroupnames[$o]</option>";}
+		{$select_list .= "<option selected value='$usergroups[$o]'>"._QXZ("$usergroups[$o]")." - "._QXZ("$usergroupnames[$o]")."</option>";}
 	else
 		{
 		if ( ($user_group_none > 0) and ($usergroups[$o] == 'ALL-GROUPS') )
-			{$select_list .= "<option selected value='$usergroups[$o]'>$usergroups[$o] - $usergroupnames[$o]</option>";}
+			{$select_list .= "<option selected value='$usergroups[$o]'>"._QXZ("$usergroups[$o]")." - "._QXZ("$usergroupnames[$o]")."</option>";}
 		else
-			{$select_list .= "<option value='$usergroups[$o]'>$usergroups[$o] - $usergroupnames[$o]</option>";}
+			{$select_list .= "<option value='$usergroups[$o]'>"._QXZ("$usergroups[$o]")." - "._QXZ("$usergroupnames[$o]")."</option>";}
 		}
 	$o++;
 	}
@@ -817,13 +817,13 @@ $o=0;
 while ($o < $ingroups_to_print)
 	{
 	if (preg_match("/\|$LISTingroups[$o]\|/",$ingroup_string))
-		{$select_list .= "<option selected value='$LISTingroups[$o]'>$LISTingroups[$o] - $LISTingroup_names[$o]</option>";}
+		{$select_list .= "<option selected value='$LISTingroups[$o]'>"._QXZ("$LISTingroups[$o]")." - "._QXZ("$LISTingroup_names[$o]")."</option>";}
 	else
 		{
 		if ( ($in_group_none > 0) and ($LISTingroups[$o] == 'ALL-INGROUPS') )
-			{$select_list .= "<option selected value='$LISTingroups[$o]'>$LISTingroups[$o] - $LISTingroup_names[$o]</option>";}
+			{$select_list .= "<option selected value='$LISTingroups[$o]'>"._QXZ("$LISTingroups[$o]")." - "._QXZ("$LISTingroup_names[$o]")."</option>";}
 		else
-			{$select_list .= "<option value='$LISTingroups[$o]'>$LISTingroups[$o] - $LISTingroup_names[$o]</option>";}
+			{$select_list .= "<option value='$LISTingroups[$o]'>"._QXZ("$LISTingroups[$o]")."- "._QXZ("$LISTingroup_names[$o]")."</option>";}
 		}
 	$o++;
 	}
@@ -1018,7 +1018,7 @@ $select_list .= "</SELECT></TD></TR>";
 
 $select_list .= "</TABLE><BR>";
 $select_list .= "<INPUT type=hidden name=droppedOFtotal value='$droppedOFtotal'>";
-$select_list .= "<INPUT type=button VALUE=SUBMIT onclick=\\\"update_variables('form_submit','');\\\"><FONT FACE='ARIAL,HELVETICA' COLOR=BLACK SIZE=2> &nbsp; &nbsp; &nbsp; &nbsp; ";
+$select_list .= "<INPUT type=button VALUE='"._QXZ("SUBMIT")."' onclick=\\\"update_variables('form_submit','');\\\"><FONT FACE='ARIAL,HELVETICA' COLOR=BLACK SIZE=2> &nbsp; &nbsp; &nbsp; &nbsp; ";
 $select_list .= "</TD></TR>";
 $select_list .= "<TR><TD ALIGN=CENTER>";
 $select_list .= "<font class='top_settings_val'> &nbsp; </font>";
@@ -1817,7 +1817,7 @@ $row=mysqli_fetch_row($rslt);
 $campaign_allow_inbound = $row[0];
 
 echo "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=utf-8\">\n";
-echo "<TITLE>$report_name: $group</TITLE></HEAD><BODY BGCOLOR=WHITE marginheight=0 marginwidth=0 leftmargin=0 topmargin=0>\n";
+echo "<TITLE>"._QXZ("$report_name").": $group</TITLE></HEAD><BODY BGCOLOR=WHITE marginheight=0 marginwidth=0 leftmargin=0 topmargin=0>\n";
 
 	$short_header=1;
 

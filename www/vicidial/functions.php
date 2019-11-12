@@ -393,7 +393,7 @@ function horizontal_bar_chart($campaign_id,$days_graph,$title,$link,$metric,$met
 		while($i < $days_graph)
 			{
 			$bar_width = intval($max_multi * $Btotal_calls[$i]);
-			if ($Btotal_calls[$i] < 1) {$Btotal_calls[$i] = "-none-";}
+			if ($Btotal_calls[$i] < 1) {$Btotal_calls[$i] = "-"._QXZ("none")."-";}
 			echo "<tr>\n";
 			echo "<td class=\"chart_td\"><font style=\"font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 60%;\">$Bstats_date[$i] </font></td>\n";
 			echo "<td class=\"chart_td\"><img src=\"images/bar.png\" alt=\"\" width=\"$bar_width\" height=\"10\" style=\"vertical-align: middle; margin: 2px 2px 2px 0;\"/><font style=\"font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 60%;\"> $Btotal_calls[$i]</font></td>\n";

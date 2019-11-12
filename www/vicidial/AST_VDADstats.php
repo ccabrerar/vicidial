@@ -711,13 +711,13 @@ $MAIN.=$list_options;
 $MAIN.="</TD><TD VALIGN=TOP>";
 $MAIN.=_QXZ("Include Drop")." &nbsp; <BR>"._QXZ("Rollover").":<BR>";
 $MAIN.="<SELECT SIZE=1 NAME=include_rollover>\n";
-$MAIN.="<option selected value=\"$include_rollover\">$include_rollover</option>\n";
+$MAIN.="<option selected value=\"$include_rollover\">"._QXZ("$include_rollover")."</option>\n";
 $MAIN.="<option value=\"YES\">"._QXZ("YES")."</option>\n";
 $MAIN.="<option value=\"NO\">"._QXZ("NO")."</option>\n";
 $MAIN.="</SELECT>\n";
 $MAIN.="<BR>"._QXZ("Bottom Graph").": &nbsp; <BR>\n";
 $MAIN.="<SELECT SIZE=1 NAME=bottom_graph>\n";
-$MAIN.="<option selected value=\"$bottom_graph\">$bottom_graph</option>\n";
+$MAIN.="<option selected value=\"$bottom_graph\">"._QXZ("$bottom_graph")."</option>\n";
 $MAIN.="<option value=\"YES\">"._QXZ("YES")."</option>\n";
 $MAIN.="<option value=\"NO\">"._QXZ("NO")."</option>\n";
 $MAIN.="</SELECT><BR>\n";
@@ -725,18 +725,18 @@ if ($carrier_logging_active > 0)
 	{
 	$MAIN.="</TD><TD VALIGN=TOP>"._QXZ("Carrier Stats").": &nbsp; <BR>";
 	$MAIN.="<SELECT SIZE=1 NAME=carrier_stats>\n";
-	$MAIN.="<option selected value=\"$carrier_stats\">$carrier_stats</option>\n";
+	$MAIN.="<option selected value=\"$carrier_stats\">"._QXZ("$carrier_stats")."</option>\n";
 	$MAIN.="<option value=\"YES\">"._QXZ("YES")."</option>\n";
 	$MAIN.="<option value=\"NO\">"._QXZ("NO")."</option>\n";
 	$MAIN.="</SELECT>\n";
 	}
 $MAIN.="<BR><BR>"._QXZ("Display as").":<BR>";
 $MAIN.="<select name='report_display_type'>";
-if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>$report_display_type</option>";}
+if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
 $MAIN.="<option value='TEXT'>TEXT</option><option value='HTML'>HTML</option></select>\n<BR>";
 $MAIN.="</TD><TD VALIGN=TOP>"._QXZ("Shift").": &nbsp; <BR>";
 $MAIN.="<SELECT SIZE=1 NAME=shift>\n";
-$MAIN.="<option selected value=\"$shift\">$shift</option>\n";
+$MAIN.="<option selected value=\"$shift\">"._QXZ("$shift")."</option>\n";
 $MAIN.="<option value=\"\">--</option>\n";
 $MAIN.="<option value=\"AM\">"._QXZ("AM")."</option>\n";
 $MAIN.="<option value=\"PM\">"._QXZ("PM")."</option>\n";

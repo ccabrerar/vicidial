@@ -16,6 +16,7 @@
 # 180223-1657 - Added $INSERT_ variables
 # 180425-2035 - Added #INSERT_first_onload variable
 # 190330-0817 - Added logged_in_refresh_link
+# 191107-0925 - Added $webphone_call_seconds
 #
 
 $conf_silent_prefix		= '5';	# vicidial_conferences prefix to enter silently and muted for recording
@@ -54,6 +55,7 @@ $link_to_grey_version	= '1';	# show link to old grey version of agent screen at 
 $use_agent_colors		= '1';	# agent chat colors
 $no_empty_session_warnings=0;	# set to 1 to disable empty session warnings on agent screen
 $logged_in_refresh_link = '0';	# set to 1 to allow clickable "Logged in as..." link at top to force Javascript refresh
+$webphone_call_seconds	= '0';	# set to 1 or higher to have the agent phone(if set to webphone) called X seconds after login
 
 $TEST_all_statuses		= '0';	# TEST variable allows all statuses in dispo screen
 

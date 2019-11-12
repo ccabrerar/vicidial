@@ -25,6 +25,7 @@ $PATHconf =		'/etc/astguiclient.conf';
 # 121214-2303 - First Build
 # 180610-1812 - Added code to not allow XFER emails to go to user who transferred
 # 190216-0810 - Fix for user-group, email-group and campaign allowed/permissions matching issues
+# 191017-2043 - Added filtered routing options
 #
 
 if ($ARGV[0]=~/--help/) 
@@ -259,6 +260,8 @@ sub AssignAgents()
 		if ($CAMP_callorder =~ /oldest_call_finish/i)	{$agent_call_order = 'order by vicidial_live_agents.last_call_finish';}
 		if ($CAMP_callorder =~ /oldest_inbound_call_start/i)	{$agent_call_order = 'order by vicidial_live_agents.last_inbound_call_time';} #
 		if ($CAMP_callorder =~ /oldest_inbound_call_finish/i)	{$agent_call_order = 'order by vicidial_live_agents.last_inbound_call_finish';} #
+		if ($CAMP_callorder =~ /oldest_inbound_filtered_call_start/i)	{$agent_call_order = 'order by vicidial_live_agents.last_inbound_call_time_filtered';}
+		if ($CAMP_callorder =~ /oldest_inbound_filtered_call_finish/i)	{$agent_call_order = 'order by vicidial_live_agents.last_inbound_call_finish_filtered';}
 		if ($CAMP_callorder =~ /random/i)				{$agent_call_order = 'order by random_id';}
 		if ($CAMP_callorder =~ /campaign_rank/i)		{$agent_call_order = 'order by campaign_weight desc,last_call_finish';}
 		if ($CAMP_callorder =~ /fewest_calls_campaign/i) {$agent_call_order = 'order by vicidial_live_agents.calls_today,vicidial_live_agents.last_call_finish';}

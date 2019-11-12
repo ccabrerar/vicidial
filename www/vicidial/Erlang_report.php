@@ -566,8 +566,8 @@ $MAIN.="});\n";
 $MAIN.="o_cal.a_tpl.yearscroll = false;\n";
 $MAIN.="// o_cal.a_tpl.weekstart = 1; // Monday week start\n";
 $MAIN.="</script><BR><BR>";
-$MAIN.="<b>"._QXZ("Target drop rate").":</b><input type='text' size='3' maxlength='4' name='drop_percent' value='$drop_percent'>% (B report)<BR>";
-$MAIN.="<b>"._QXZ("Target queue prob.").":</b><input type='text' size='3' maxlength='4' name='target_pqueue' value='$target_pqueue'>% (C report)";
+$MAIN.="<b>"._QXZ("Target drop rate").":</b><input type='text' size='3' maxlength='4' name='drop_percent' value='$drop_percent'>% (B "._QXZ("report").")<BR>";
+$MAIN.="<b>"._QXZ("Target queue prob.").":</b><input type='text' size='3' maxlength='4' name='target_pqueue' value='$target_pqueue'>% (C "._QXZ("report").")";
 $MAIN.="</TD>\n";
 
 $MAIN.="<TD VALIGN=TOP> <b>"._QXZ("Campaigns").":</b> <BR>";

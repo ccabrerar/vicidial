@@ -226,12 +226,12 @@ if ($stage == "join_chat") { # For people invited to an existing chat from an ag
 
 		# SEARCH FOR CUSTOMER IN DATABASE - IF NOT FOUND BY PHONE OR IP ADDRESS MAKE A NEW USER
 		if ($lead_id) { # CAN OCCUR VIA INVITE
-			$upd_stmt="UPDATE vicidial_list set first_name=\"$first_name\", last_name=\"$last_name\", status='WCHAT' where lead_id='$lead_id' limit 1";
+			$upd_stmt="UPDATE vicidial_list set first_name=\"$first_name\", last_name=\"$last_name\", status='WCHAT' where lead_id=$lead_id limit 1";
 			# update email and security_phrase?
 			$upd_rslt=mysql_to_mysqli($upd_stmt, $link);
 
 			# Private message
-			$alert_stmt="select chat_creator from vicidial_live_chats where chat_id='$chat_id' and lead_id='$lead_id'";
+			$alert_stmt="select chat_creator from vicidial_live_chats where chat_id='$chat_id' and lead_id=$lead_id";
 			$alert_rslt=mysql_to_mysqli($alert_stmt, $link);
 			if (mysqli_num_rows($alert_rslt)>0) {
 				$alert_row=mysqli_fetch_row($alert_rslt);
@@ -256,7 +256,7 @@ if ($stage == "join_chat") { # For people invited to an existing chat from an ag
 				$lead_id=$row[0];
 
 				# Update to reflect chat request - should I do this?  And use WCHAT status for "waiting for chat"?
-				$upd_stmt="UPDATE vicidial_list set first_name=\"$first_name\", last_name=\"$last_name\", status='WCHAT' where lead_id='$lead_id' limit 1";
+				$upd_stmt="UPDATE vicidial_list set first_name=\"$first_name\", last_name=\"$last_name\", status='WCHAT' where lead_id=$lead_id limit 1";
 				# update email and security_phrase?
 				$upd_rslt=mysql_to_mysqli($upd_stmt, $link);
 			} else if (!$error_msg) {
@@ -279,7 +279,7 @@ if ($stage == "join_chat") { # For people invited to an existing chat from an ag
 		if (!$lead_id || $lead_id==0) {
 			$error_msg.="<BR>\n"._QXZ("Could not find or create dialer entry");
 		} else {
-			$chat_upd_stmt="UPDATE vicidial_live_chats set lead_id='$lead_id' where chat_id='$chat_id'";
+			$chat_upd_stmt="UPDATE vicidial_live_chats set lead_id=$lead_id where chat_id='$chat_id'";
 			$chat_upd_rslt=mysql_to_mysqli($chat_upd_stmt, $link);
 
 		}
@@ -333,7 +333,7 @@ if ($stage == 'send_request') { # For people requesting a chat with an agent; co
 		$lead_id=$row[0];
 
 		# Update to reflect chat request - should I do this?  And use WCHAT status for "waiting for chat"?
-		$upd_stmt="UPDATE vicidial_list set first_name='" . mysqli_real_escape_string($link, $first_name) . "', last_name='" . mysqli_real_escape_string($link, $last_name) . "', status='WCHAT' where lead_id='$lead_id' limit 1";
+		$upd_stmt="UPDATE vicidial_list set first_name='" . mysqli_real_escape_string($link, $first_name) . "', last_name='" . mysqli_real_escape_string($link, $last_name) . "', status='WCHAT' where lead_id=$lead_id limit 1";
 		# update email and security_phrase?
 		$upd_rslt=mysql_to_mysqli($upd_stmt, $link);
 	} else if (!$error_msg) {

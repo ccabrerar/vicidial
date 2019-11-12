@@ -423,6 +423,7 @@ while($i < $list_id_ct)
 $list_id_title_str=$list_id_SQL;
 $list_id_title_str=preg_replace('/\'/', '',$list_id_title_str);
 $list_id_title_str = preg_replace('/,$/i', '',$list_id_title_str);
+$list_id_title_str=_QXZ("$list_id_title_str");
 
 # If ALL lists are selected, filter it down to all lists within selected campaigns
 if ( preg_match('/\-\-ALL\-\-/',$list_id_string) )
@@ -550,7 +551,7 @@ $HEADER.="	// Clear List menu\n";
 $HEADER.="	document.getElementById('list_ids').options.length=0;\n";
 $HEADER.="	var new_list = new Option();\n";
 $HEADER.="	new_list.value = \"--ALL--\";\n";
-$HEADER.="	new_list.text = \"--ALL LISTS--\";\n";
+$HEADER.="	new_list.text = \"--"._QXZ("ALL LISTS")."--\";\n";
 $HEADER.="	document.getElementById('list_ids')[0] = new_list;\n";
 $HEADER.="\n";
 $HEADER.="	list_id_index=1;\n";

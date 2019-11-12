@@ -53,6 +53,7 @@
 # 161102-1032 - Fixed QM partition problem
 # 170527-2348 - Fix for rare inbound logging issue #1017
 # 190716-1628 - Added code for Call Quotas
+# 191017-1909 - Added code for filtered maximum inbound calls
 #
 
 ### begin parsing run-time options ###
@@ -367,7 +368,7 @@ while($one_day_interval > 0)
 				if ($QHcall_type[$w] =~ /IN/)
 					{$licf_SQL = ",last_inbound_call_time='$SQLdate'";}
 
-				$stmtA = "UPDATE vicidial_live_agents set status='INCALL',last_call_time='$SQLdate',comments='REMOTE',calls_today=(calls_today + 1),last_state_change='$SQLdate' $licf_SQL where live_agent_id='$QHlive_agent_id[$w]';";
+				$stmtA = "UPDATE vicidial_live_agents set status='INCALL',last_call_time='$SQLdate',last_inbound_call_time_filtered='$SQLdate',last_inbound_call_finish_filtered='$SQLdate',comments='REMOTE',calls_today=(calls_today + 1),last_state_change='$SQLdate' $licf_SQL where live_agent_id='$QHlive_agent_id[$w]';";
 				$Aaffected_rows = $dbhA->do($stmtA);
 
 				$stmtB = "UPDATE vicidial_list set status='XFER',user='$QHuser[$w]' where lead_id='$QHlead_id[$w]';";
@@ -375,27 +376,54 @@ while($one_day_interval > 0)
 
 				if ($QHcall_type[$w] =~ /IN/)
 					{
-					$stmtC = "UPDATE vicidial_closer_log set status='XFER',user='$QHuser[$w]',comments='REMOTE' where lead_id='$QHlead_id[$w]' and uniqueid='$QHuniqueid[$w]' and campaign_id='$QHcampaign_id[$w]' order by closecallid desc limit 1;";
-					$Caffected_rows = $dbhA->do($stmtC);
-
-					$stmtD = "INSERT IGNORE INTO vicidial_live_inbound_agents SET calls_today='1',last_call_time='$SQLdate',user='$QHuser[$w]', group_id='$QHcampaign_id[$w]' ON DUPLICATE KEY UPDATE calls_today=(calls_today + 1),last_call_time='$SQLdate';";
-					$Daffected_rows = $dbhA->do($stmtD);
-
-				#	$stmtE = "INSERT IGNORE INTO vicidial_inbound_group_agents set calls_today=1,user='$QHuser[$w]',group_id='$QHcampaign_id[$w]' ON DUPLICATE KEY UPDATE calls_today=(calls_today + 1);";
-					$stmtE = "INSERT IGNORE INTO vicidial_inbound_group_agents set calls_today=1,user='$QHuser[$w]',group_id='$QHcampaign_id[$w]';";
-					$Eaffected_rows = $dbhA->do($stmtE);
-
-					##### BEGIN check for user max inbound calls #####
+					### Gather user details for max inbound calls
 					$max_inbound_calls=0;
-					$stmtJ = "SELECT max_inbound_calls FROM vicidial_users where user='$QHuser[$w]';";
+					$stmtJ = "SELECT max_inbound_calls,max_inbound_filter_enabled,max_inbound_filter_ingroups FROM vicidial_users where user='$QHuser[$w]';";
 					$sthA = $dbhA->prepare($stmtJ) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtJ ", $dbhA->errstr;
 					$sthArowsMIC=$sthA->rows;
 					if ($sthArowsMIC > 0)
 						{
 						@aryA = $sthA->fetchrow_array;
-						$VU_max_inbound_calls = $aryA[0];
+						$VU_max_inbound_calls =				$aryA[0];
+						$VU_max_inbound_filter_enabled =	$aryA[1];
+						$VU_max_inbound_filter_ingroups =	$aryA[2];
 						}
+					$channel_group = $QHcampaign_id[$w];
+					$calls_today_filteredSQL = ",calls_today_filtered=(calls_today_filtered + 1),last_call_time_filtered='$SQLdate'";
+					$calls_today_filteredSQLnew = ",calls_today_filtered='1',last_call_time_filtered='$SQLdate'";
+					$calls_today_filteredSQLnewIGA = ",calls_today_filtered='1' ON DUPLICATE KEY UPDATE calls_today_filtered=(calls_today_filtered + 1)";
+					if ($VU_max_inbound_filter_enabled > 0) 
+						{
+						$calls_today_filteredSQL = '';
+						$calls_today_filteredSQLnew = '';
+						$calls_today_filteredSQLnewIGA = '';
+						$VU_max_inbound_filter_ingroupsTEST = ",$VU_max_inbound_filter_ingroups,";
+						if ($VU_max_inbound_filter_ingroupsTEST !~ /,$channel_group,/) 
+							{
+							$calls_today_filteredSQL = ",calls_today_filtered=(calls_today_filtered + 1),last_call_time_filtered='$SQLdate'";
+							$calls_today_filteredSQLnew = ",calls_today_filtered='1',last_call_time_filtered='$SQLdate'";
+							$calls_today_filteredSQLnewIGA = ",calls_today_filtered='1' ON DUPLICATE KEY UPDATE calls_today_filtered=(calls_today_filtered + 1)";
+							}
+						}
+
+					$stmtC = "UPDATE vicidial_closer_log set status='XFER',user='$QHuser[$w]',comments='REMOTE' where lead_id='$QHlead_id[$w]' and uniqueid='$QHuniqueid[$w]' and campaign_id='$QHcampaign_id[$w]' order by closecallid desc limit 1;";
+					$Caffected_rows = $dbhA->do($stmtC);
+
+					$stmtD = "INSERT IGNORE INTO vicidial_live_inbound_agents SET calls_today='1',last_call_time='$SQLdate',user='$QHuser[$w]', group_id='$QHcampaign_id[$w]' $calls_today_filteredSQLnew ON DUPLICATE KEY UPDATE calls_today=(calls_today + 1) $calls_today_filteredSQL;";
+					$Daffected_rows = $dbhA->do($stmtD);
+
+				#	$stmtE = "INSERT IGNORE INTO vicidial_inbound_group_agents set calls_today=1,user='$QHuser[$w]',group_id='$QHcampaign_id[$w]' ON DUPLICATE KEY UPDATE calls_today=(calls_today + 1);";
+					$stmtE = "INSERT IGNORE INTO vicidial_inbound_group_agents set calls_today=1,user='$QHuser[$w]',group_id='$QHcampaign_id[$w]' $calls_today_filteredSQLnewIGA;";
+					$Eaffected_rows = $dbhA->do($stmtE);
+
+					if (length($calls_today_filteredSQL) > 10) 
+						{
+						$stmtF = "UPDATE vicidial_live_agents set last_inbound_call_time_filtered='$SQLdate' where live_agent_id='$QHlive_agent_id[$w]';";
+						$Faffected_rows = $dbhA->do($stmtF);
+						}
+
+					##### BEGIN check for user max inbound calls #####
 					$stmtJ = "SELECT max_inbound_calls FROM vicidial_campaigns where campaign_id='$QHcampaign_id[$w]';";
 					$sthA = $dbhA->prepare($stmtJ) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtJ ", $dbhA->errstr;
@@ -412,7 +440,7 @@ while($one_day_interval > 0)
 						if ($VU_max_inbound_calls > 0)
 							{$max_inbound_calls = $VU_max_inbound_calls;}
 						$max_inbound_count=0;
-						$stmtJ = "SELECT sum(calls_today) FROM vicidial_inbound_group_agents where user='$QHuser[$w]' and group_type='C';";
+						$stmtJ = "SELECT sum(calls_today),sum(calls_today_filtered) FROM vicidial_inbound_group_agents where user='$QHuser[$w]' and group_type='C';";
 						$sthA = $dbhA->prepare($stmtJ) or die "preparing: ",$dbhA->errstr;
 						$sthA->execute or die "executing: $stmtJ ", $dbhA->errstr;
 						$sthArowsVIGA=$sthA->rows;
@@ -420,6 +448,10 @@ while($one_day_interval > 0)
 							{
 							@aryA = $sthA->fetchrow_array;
 							$max_inbound_count = $aryA[0];
+							if ($VU_max_inbound_filter_enabled > 0) 
+								{
+								$max_inbound_count = $aryA[1];
+								}
 							}
 						if ($max_inbound_count >= $max_inbound_calls)
 							{
@@ -868,16 +900,17 @@ while($one_day_interval > 0)
 							$TEMPexistsVLIA=0;
 							# grab the group weight and calls today of the agent in each in-group
 							$DBuser_level[$h]='1';
-							$stmtA = "SELECT group_weight,calls_today,group_grade FROM vicidial_inbound_group_agents where user='$DBuser_start[$h]' and group_id='$TEMPingroups[$s]';";
+							$stmtA = "SELECT group_weight,calls_today,group_grade,calls_today_filtered FROM vicidial_inbound_group_agents where user='$DBuser_start[$h]' and group_id='$TEMPingroups[$s]';";
 							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 							$sthArowsVIGA=$sthA->rows;
 							if ($sthArowsVIGA > 0)
 								{
 								@aryA = $sthA->fetchrow_array;
-								$TEMPagentWEIGHT =	$aryA[0];
-								$TEMPagentCALLS =	$aryA[1];
-								$TEMPagentGRADE =	$aryA[2];
+								$TEMPagentWEIGHT =		$aryA[0];
+								$TEMPagentCALLS =		$aryA[1];
+								$TEMPagentGRADE =		$aryA[2];
+								$TEMPagentCALLSftl =	$aryA[3];
 								}
 							$sthA->finish();
 
@@ -898,7 +931,7 @@ while($one_day_interval > 0)
 
 							if ($TEMPexistsVLIA < 1)
 								{
-								$stmtA = "INSERT IGNORE INTO vicidial_live_inbound_agents SET user='$DBremote_user[$h]', group_id='$TEMPingroups[$s]', group_weight='$TEMPagentWEIGHT', calls_today='$TEMPagentCALLS', last_call_time='$SQLdate', last_call_finish='$SQLdate', group_grade='$TEMPagentGRADE' ON DUPLICATE KEY UPDATE group_weight='$TEMPagentWEIGHT',group_grade='$TEMPagentGRADE';";
+								$stmtA = "INSERT IGNORE INTO vicidial_live_inbound_agents SET user='$DBremote_user[$h]', group_id='$TEMPingroups[$s]', group_weight='$TEMPagentWEIGHT', calls_today='$TEMPagentCALLS', calls_today_filtered='$TEMPagentCALLSftl', last_call_time='$SQLdate', last_call_time_filtered='$SQLdate', last_call_finish='$SQLdate', group_grade='$TEMPagentGRADE' ON DUPLICATE KEY UPDATE group_weight='$TEMPagentWEIGHT',group_grade='$TEMPagentGRADE';";
 								$affected_rows = $dbhA->do($stmtA);
 								if ( ($DBX) && ($affected_rows > 0) ) {print STDERR "$DBremote_user[$h] VLIA UPDATE: $affected_rows|$TEMPingroups[$s]|$TEMPagentWEIGHT\n";}
 

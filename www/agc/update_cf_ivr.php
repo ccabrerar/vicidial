@@ -172,7 +172,7 @@ if ( (strlen($field) > 0) and (strlen($value) > 0) and ($list_id > 0) )
 		$SQL_log = "$stmt|$stmtB|$CBaffected_rows|";
 		$SQL_log = preg_replace('/;/','',$SQL_log);
 		$SQL_log = addslashes($SQL_log);
-		$stmt="INSERT INTO vicidial_api_log set user='$user',agent_user='$user',function='update_cf',value='$field',result='$affected_rows',result_reason='$lead_id',source='vdc',data='$SQL_log',api_date='$NOW_TIME',api_script='$api_script';";
+		$stmt="INSERT INTO vicidial_api_log set user='$user',agent_user='$user',function='update_cf',value='$field',result='$affected_rows',result_reason=$lead_id,source='vdc',data='$SQL_log',api_date='$NOW_TIME',api_script='$api_script';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 
 		$MESSAGE = _QXZ("DONE: %1s found, %2s CF record %3s",0,'',$field,$affected_rows,$updatetype);

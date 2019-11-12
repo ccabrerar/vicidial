@@ -500,11 +500,11 @@ if ($bareformat < 1)
 	$MAIN.="</FONT>\n";
 	$MAIN.="<BR> &nbsp; "._QXZ("Display as").":&nbsp;";
 	$MAIN.="<select name='report_display_type'>";
-	if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>$report_display_type</option>";}
+	if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
 	$MAIN.="<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select>\n<BR>";
 	$MAIN.=" &nbsp; "._QXZ("Exclude Outbound Drop Groups").": <BR>";
 	$MAIN.=" &nbsp; <SELECT SIZE=1 NAME=exclude_rollover>\n";
-	$MAIN.="<option selected value=\"$exclude_rollover\">$exclude_rollover</option>\n";
+	$MAIN.="<option selected value=\"$exclude_rollover\">"._QXZ("$exclude_rollover")."</option>\n";
 	$MAIN.="<option value=\"YES\">"._QXZ("YES")."</option>\n";
 	$MAIN.="<option value=\"NO\">"._QXZ("NO")."</option>\n";
 	$MAIN.="</SELECT>\n";
@@ -514,7 +514,7 @@ if ($bareformat < 1)
 	}
 
 	$MAIN.="<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ";
-	$MAIN.="<INPUT TYPE=submit NAME=SUBMIT VALUE=SUBMIT>\n";
+	$MAIN.="<INPUT TYPE=submit NAME=SUBMIT VALUE'"._QXZ("SUBMIT")."'>\n";
 
 	$MAIN.="</TD></TR>\n";
 	$MAIN.="<TR><TD>\n";
@@ -813,15 +813,15 @@ else
 			$ASCII_text .= "<!-- OUT OF CALLTIME: $out_of_call_time -->\n";
 
 			### hour by hour sumaries
-			$SUBoutput .= "\n---------- $group[$i] - $group_name[$i]     HOURLY BREAKDOWN:\n";
+			$SUBoutput .= "\n---------- $group[$i] - $group_name[$i]     "._QXZ("HOURLY BREAKDOWN").":\n";
 			$SUBoutput .= "+------+--------+--------+-----------+---------+-----------+---------+---------+--------+\n";
-			$SUBoutput .= "|      |        |        |           |         | TOTAL     | AVERAGE | MAXIMUM | TOTAL  |\n";
-			$SUBoutput .= "|      | TOTAL  | TOTAL  | TOTAL     | AVERAGE | QUEUE     | QUEUE   | QUEUE   | ABANDON|\n";
-			$SUBoutput .= "| HOUR | CALLS  | ANSWER | TALK      | TALK    | TIME      | TIME    | TIME    | CALLS  |\n";
+			$SUBoutput .= "|      |        |        |           |         | "._QXZ("TOTAL", 9)." | "._QXZ("AVERAGE", 7)." | "._QXZ("MAXIMUM", 7)." | "._QXZ("TOTAL", 7)."|\n";
+			$SUBoutput .= "|      | "._QXZ("TOTAL", 6)." | "._QXZ("TOTAL", 6)." | "._QXZ("TOTAL", 9)." | "._QXZ("AVERAGE", 7)." | "._QXZ("QUEUE", 9)." | "._QXZ("QUEUE", 7)." | "._QXZ("QUEUE", 7)." | "._QXZ("ABANDON", 7)."|\n";
+			$SUBoutput .= "| "._QXZ("HOUR", 4)." | "._QXZ("CALLS", 6)." | "._QXZ("ANSWER", 6)." | "._QXZ("TALK", 9)." | "._QXZ("TALK", 7)." | "._QXZ("TIME", 9)." | "._QXZ("TIME", 7)." | "._QXZ("TIME", 7)." | "._QXZ("CALLS", 7)."|\n";
 			$SUBoutput .= "+------+--------+--------+-----------+---------+-----------+---------+---------+--------+\n";
 
-			$CSV_subreports.="\n\n\"$group[$i] - $group_name[$i]\"\n\"HOURLY BREAKDOWN:\"\n";
-			$CSV_subreports.="\"HOUR\",\"TOTAL CALLS\",\"TOTAL ANSWER\",\" TOTAL TALK\",\" AVERAGE TALK\",\" TOTAL QUEUE TIME\",\" AVERAGE QUEUE TIME\",\" MAXIMUM QUEUE TIME\",\" TOTAL ABANDON CALLS\"\n";
+			$CSV_subreports.="\n\n\"$group[$i] - $group_name[$i]\"\n\""._QXZ("HOURLY BREAKDOWN").":\"\n";
+			$CSV_subreports.="\""._QXZ("HOUR")."\",\""._QXZ("TOTAL CALLS")."\",\""._QXZ("TOTAL ANSWER")."\",\" "._QXZ("TOTAL TALK")."\",\" "._QXZ("AVERAGE TALK")."\",\" "._QXZ("TOTAL QUEUE TIME")."\",\" "._QXZ("AVERAGE QUEUE TIME")."\",\" "._QXZ("MAXIMUM QUEUE TIME")."\",\" "._QXZ("TOTAL ABANDON CALLS")."\"\n";
 
 			$sub_graph_stats=array();
 
@@ -1203,7 +1203,7 @@ else
 
 	$ENDtime = date("U");
 	$RUNtime = ($ENDtime - $STARTtime);
-	echo "\n\nRun Time: $RUNtime seconds|$db_source\n";
+	echo "\n\n"._QXZ("Run Time").": $RUNtime "._QXZ("seconds")."|$db_source\n";
 	echo "</PRE>";
 	echo "</TD></TR></TABLE>";
 

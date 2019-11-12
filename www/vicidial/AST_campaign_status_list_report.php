@@ -420,7 +420,7 @@ $HTML_text.="</TD><TD VALIGN=TOP>&nbsp;\n";
 $HTML_text.="</TD><TD VALIGN=TOP>\n";
 $HTML_text.=_QXZ("Display as").":<BR>";
 $HTML_text.="<select name='report_display_type'>";
-if ($report_display_type) {$HTML_text.="<option value='$report_display_type' selected>$report_display_type</option>";}
+if ($report_display_type) {$HTML_text.="<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
 $HTML_text.="<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select>\n<BR><BR>";
 
 if ($archives_available=="Y") 
@@ -596,7 +596,7 @@ while($i < $group_ct)
 			$SC_count =	sprintf("%9s", "$SC_count"); while(strlen($SC_count)>9) {$SC_count = substr("$SC_count", 0, -1);}
 			$COMP_count =	sprintf("%9s", "$COMP_count"); while(strlen($COMP_count)>9) {$COMP_count = substr("$COMP_count", 0, -1);}
 
-			if ($list_active=='Y') {$list_active = 'ACTIVE  ';} else {$list_active = 'INACTIVE';}
+			if ($list_active=='Y') {$list_active = _QXZ('ACTIVE', 8);} else {$list_active = _QXZ('INACTIVE', 8);}
 			$header_list_id = "$list_id - $list_name";
 			$header_list_id =	sprintf("%-51s", $header_list_id); while(strlen($header_list_id)>51) {$header_list_id = substr("$header_list_id", 0, -1);}
 			$header_list_count =	sprintf("%10s", $total_calls); while(strlen($header_list_count)>10) {$header_list_count = substr("$header_list_count", 0, -1);}

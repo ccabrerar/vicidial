@@ -450,7 +450,7 @@ if ($stage=='SUBMIT')
 		if (strlen($update_SQL)>3)
 			{
 			$custom_record_lead_count=0;
-			$stmt="SELECT count(*) from custom_$list_id where lead_id='$lead_id';";
+			$stmt="SELECT count(*) from custom_$list_id where lead_id=$lead_id;";
 			if ($DB>0) {echo "$stmt";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'06004',$user,$server_ip,$session_name,$one_mysql_log);}
@@ -461,9 +461,9 @@ if ($stage=='SUBMIT')
 				$custom_record_lead_count =	$rowx[0];
 				}
 			$update_SQL = preg_replace("/,$/","",$update_SQL);
-			$custom_table_update_SQL = "INSERT INTO custom_$list_id SET lead_id='$lead_id',$update_SQL;";
+			$custom_table_update_SQL = "INSERT INTO custom_$list_id SET lead_id=$lead_id,$update_SQL;";
 			if ($custom_record_lead_count > 0)
-				{$custom_table_update_SQL = "UPDATE custom_$list_id SET $update_SQL where lead_id='$lead_id';";}
+				{$custom_table_update_SQL = "UPDATE custom_$list_id SET $update_SQL where lead_id=$lead_id;";}
 
 			$rslt=mysql_to_mysqli($custom_table_update_SQL, $link);
 			$custom_update_count = mysqli_affected_rows($link);
@@ -479,7 +479,7 @@ if ($stage=='SUBMIT')
 			if ($custom_update_count > 0)
 				{$custom_update_vl_SQL = "entry_list_id='$list_id',";}
 			$VL_update_SQL = preg_replace("/,$/","",$VL_update_SQL);
-			$list_table_update_SQL = "UPDATE vicidial_list SET $custom_update_vl_SQL $VL_update_SQL where lead_id='$lead_id';";
+			$list_table_update_SQL = "UPDATE vicidial_list SET $custom_update_vl_SQL $VL_update_SQL where lead_id=$lead_id;";
 
 			$rslt=mysql_to_mysqli($list_table_update_SQL, $link);
 			$list_update_count = mysqli_affected_rows($link);
@@ -492,7 +492,7 @@ if ($stage=='SUBMIT')
 			{
 			if ($custom_update_count > 0)
 				{
-				$list_table_update_SQL = "UPDATE vicidial_list SET entry_list_id='$list_id' where lead_id='$lead_id';";
+				$list_table_update_SQL = "UPDATE vicidial_list SET entry_list_id='$list_id' where lead_id=$lead_id;";
 				$rslt=mysql_to_mysqli($list_table_update_SQL, $link);
 				$list_update_count = mysqli_affected_rows($link);
 				if ($DB) {echo "$list_update_count|$list_table_update_SQL\n";}
@@ -507,7 +507,7 @@ if ($stage=='SUBMIT')
 			$SQL_log = "$list_table_update_SQL|$custom_table_update_SQL|";
 			$SQL_log = preg_replace('/;/','',$SQL_log);
 			$SQL_log = addslashes($SQL_log);
-			$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$user', ip_address='$ip', event_section='LEADS', event_type='MODIFY', record_id='$lead_id', event_code='ADMIN MODIFY CUSTOM LEAD', event_sql=\"$SQL_log\", event_notes='$custom_update_count|$list_update_count';";
+			$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$user', ip_address='$ip', event_section='LEADS', event_type='MODIFY', record_id=$lead_id, event_code='ADMIN MODIFY CUSTOM LEAD', event_sql=\"$SQL_log\", event_notes='$custom_update_count|$list_update_count';";
 			if ($DB) {echo "|$stmt|\n";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 			}
@@ -520,7 +520,7 @@ if ($stage=='SUBMIT')
 		$SUBMIT_only=0;
 
 		### change the entry_list_id for this lead to new list ID
-		$new_list_table_update_SQL = "UPDATE vicidial_list SET entry_list_id='$new_list_id' where lead_id='$lead_id';";
+		$new_list_table_update_SQL = "UPDATE vicidial_list SET entry_list_id='$new_list_id' where lead_id=$lead_id;";
 		$rslt=mysql_to_mysqli($new_list_table_update_SQL, $link);
 		$new_list_update_count = mysqli_affected_rows($link);
 		if ($DB) {echo "$new_list_update_count|$new_list_table_update_SQL \n";}
@@ -534,7 +534,7 @@ if ($stage=='SUBMIT')
 		if (!$rslt) {die('Could not execute: ' . mysqli_error($link));}
 
 		### insert into the vicidial_agent_function_log table that the list switch happened
-		$stmt = "INSERT INTO vicidial_agent_function_log set agent_log_id='$agent_log_id',user='$user',function='switch_list',event_time=NOW(),campaign_id='$campaign',user_group='$user_group',lead_id='$lead_id',uniqueid='$uniqueid',caller_code='$call_id',stage='$new_list_id',comments='$list_id';";
+		$stmt = "INSERT INTO vicidial_agent_function_log set agent_log_id='$agent_log_id',user='$user',function='switch_list',event_time=NOW(),campaign_id='$campaign',user_group='$user_group',lead_id=$lead_id,uniqueid='$uniqueid',caller_code='$call_id',stage='$new_list_id',comments='$list_id';";
 		if ($DB) {echo "$stmt\n";}
 		$rslt=mysql_to_mysqli($stmt, $link);
 			if ($mel > 0) {$errno = mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'06006',$user,$server_ip,$session_name,$one_mysql_log);}

@@ -471,7 +471,7 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 			if (strlen($select_SQL)>0)
 				{
 				##### BEGIN grab the data from custom table for the lead_id
-				$stmt="SELECT $select_SQL FROM custom_$list_id where lead_id='$lead_id' LIMIT 1;";
+				$stmt="SELECT $select_SQL FROM custom_$list_id where lead_id=$lead_id LIMIT 1;";
 				$rslt=mysql_to_mysqli($stmt, $link);
 					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'05005',$user,$server_ip,$session_name,$one_mysql_log);}
 				if ($DB) {echo "$stmt\n";}
@@ -902,7 +902,7 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 				$NOTESout .= "</TR>";
 
 
-				$stmt="SELECT start_epoch,call_date,campaign_id,length_in_sec,status,phone_code,phone_number,lead_id,term_reason,alt_dial,comments,uniqueid,user from vicidial_log where lead_id='$lead_id' order by call_date desc limit 10000;";
+				$stmt="SELECT start_epoch,call_date,campaign_id,length_in_sec,status,phone_code,phone_number,lead_id,term_reason,alt_dial,comments,uniqueid,user from vicidial_log where lead_id=$lead_id order by call_date desc limit 10000;";
 				$rslt=mysql_to_mysqli($stmt, $link);
 					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'05014',$user,$server_ip,$session_name,$one_mysql_log);}
 				$out_logs_to_print = mysqli_num_rows($rslt);
@@ -955,7 +955,7 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 					$u++;
 					}
 
-				$stmt="SELECT start_epoch,call_date,campaign_id,length_in_sec,status,phone_code,phone_number,lead_id,term_reason,queue_seconds,uniqueid,closecallid,user from vicidial_closer_log where lead_id='$lead_id' order by closecallid desc limit 10000;";
+				$stmt="SELECT start_epoch,call_date,campaign_id,length_in_sec,status,phone_code,phone_number,lead_id,term_reason,queue_seconds,uniqueid,closecallid,user from vicidial_closer_log where lead_id=$lead_id order by closecallid desc limit 10000;";
 				$rslt=mysql_to_mysqli($stmt, $link);
 					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'05017',$user,$server_ip,$session_name,$one_mysql_log);}
 				$in_logs_to_print = mysqli_num_rows($rslt);
@@ -1054,7 +1054,7 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 			}
 
 		##### grab the data from vicidial_list for the lead_id
-		$stmt="SELECT lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,gmt_offset_now,called_since_last_reset,phone_code,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner FROM vicidial_list where lead_id='$lead_id' LIMIT 1;";
+		$stmt="SELECT lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,gmt_offset_now,called_since_last_reset,phone_code,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner FROM vicidial_list where lead_id=$lead_id LIMIT 1;";
 		$rslt=mysql_to_mysqli($stmt, $link);
 			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'05007',$user,$server_ip,$session_name,$one_mysql_log);}
 		if ($DB) {echo "$stmt\n";}
@@ -2448,7 +2448,7 @@ function vicidial_ajax_log($NOW_TIME,$startMS,$link,$ACTION,$php_script,$user,$s
 	$stage = preg_replace("/\'|\"|\\\\|;/","",$stage);
 	$session_name = preg_replace('/[^-_0-9a-zA-Z]/','',$session_name);
 
-	$stmtA="INSERT INTO vicidial_ajax_log set user='$user',start_time='$NOW_TIME',db_time=NOW(),run_time='$TOTALrun',php_script='$php_script',action='$ACTION',lead_id='$lead_id',stage='$stage',session_name='$session_name',last_sql=\"$stmt\";";
+	$stmtA="INSERT INTO vicidial_ajax_log set user='$user',start_time='$NOW_TIME',db_time=NOW(),run_time='$TOTALrun',php_script='$php_script',action='$ACTION',lead_id=$lead_id,stage='$stage',session_name='$session_name',last_sql=\"$stmt\";";
 	$rslt=mysql_to_mysqli($stmtA, $link);
 
 #	$ajx = fopen ("./vicidial_ajax_log.txt", "a");

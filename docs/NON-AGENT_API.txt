@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2019-09-30
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2019-11-07
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -31,6 +31,7 @@ add_phone_alias - adds a phone alias record to the system
 update_phone_alias - updates or deletes an existing phone alias record in the system
 add_list - adds a list to the system
 update_list - updates list settings in the system, reset leads in list, delete list
+list_info - summary information about a list
 add_group_alias - adds group alias to the system
 user_group_status - real-time status of one or more user groups
 in_group_status - real-time status of one or more in groups
@@ -145,6 +146,7 @@ Changes:
 190628-1504 - Added update_cid_group_entry function
 190703-0858 - Added custom_fields_copy option to add_list function
 190930-1629 - Added list_description field to add_list and update_list functions
+191107-1143 - Added list_info function
 
 
 API Functions use the 'function' variable
@@ -1501,6 +1503,41 @@ NOTICE: update_list LIST HAS BEEN DELETED - 6666|1101|1
 NOTICE: update_list USER DOES NOT HAVE PERMISSION TO DELETE LEADS - 6666|0
 NOTICE: update_list LEADS IN LIST HAVE BEEN DELETED - 6666|1101|324
 
+
+
+
+
+--------------------------------------------------------------------------------
+list_info - summary information about a list
+
+NOTE: api user for this function must have user_level set to 8 or higher and "modify lists" enabled
+
+REQUIRED FIELDS-
+list_id -		must be all numbers, 2-14 digits
+source -		description of what originated the API call (maximum 20 characters)
+
+SETTINGS FIELDS- (optional)
+leads_counts -		Y or N, will include the counts of all leads and NEW status leads in the response, default is 'N'
+stage -			the format of the exported data: csv, tab, pipe(default)
+header -		include a header(YES) or not(NO). This is optional, default is not to include a header
+
+
+Example URL strings for API calls:
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=list_info&list_id=1101&leads_counts=Y&header=YES
+
+Example responses:
+ERROR: list_info USER DOES NOT HAVE PERMISSION TO MODIFY LISTS - 6666
+ERROR: list_info YOU MUST USE ALL REQUIRED FIELDS - 6666|1
+ERROR: list_info NOT AN ALLOWED LIST ID - 98762
+ERROR: list_info LIST DOES NOT EXIST - 98762
+
+A SUCCESS response will not show "SUCCESS", but instead will just print the results in the following formats:
+
+list_id|list_name|campaign_id|active|list_changedate|list_lastcalldate|expiration_date|resets_today
+1101|performance list|TESTCAMP|Y|2019-09-02 08:52:50|2019-11-07 10:12:12|2099-12-31|0|
+
+list_id|list_name|campaign_id|active|list_changedate|list_lastcalldate|expiration_date|resets_today|all_leads_count|new_leads_count
+1101|performance list|TESTCAMP|Y|2019-09-02 08:52:50|2019-11-07 10:12:12|2099-12-31|0|59896|3
 
 
 

@@ -148,6 +148,7 @@ function RefreshReportWindow() {
 	var target_per_agent=document.getElementById("target_per_agent").value;
 	var rpt_field = document.getElementById("report_type");
 	var report_type = rpt_field.options[rpt_field.selectedIndex].value;
+	var report_type_text = rpt_field.options[rpt_field.selectedIndex].text;
 
 	if (!target_per_agent) {target_per_agent=0;}
 	if (!target_gross) {target_gross=0;}
@@ -241,6 +242,7 @@ function RefreshReportWindow() {
 		var regRPTrates = new RegExp("rates","g");
 		var regRPTcomma = new RegExp(", $","g");
 		var regRPTpipe = new RegExp("|$","g");
+		var regRPTall = new RegExp("--ALL--","g");
 
 		var CPstr=campaign_parameters_str.replace(regRPTcomma, '');
 		var UGPstr=user_groups_parameters_str.replace(regRPTcomma, '');
@@ -249,9 +251,13 @@ function RefreshReportWindow() {
 		var DPstr=did_parameters_str.replace(regRPTcomma, '');
 		var SFstr=status_flags_parameters_str.replace(regRPTcomma, '');
 
+		var CPstr=CPstr.replace(regRPTall, '<?php echo "ALL CAMPAIGNS"; ?>');
+		var UGPstr=UGPstr.replace(regRPTall, '<?php echo "ALL USER GROUPS"; ?>');
+		var USPstr=USPstr.replace(regRPTall, '<?php echo "ALL USERS"; ?>');
+		var GPstr=GPstr.replace(regRPTall, '<?php echo "ALL IN-GROUPS"; ?>');
 		
 		var report_parameters="<div class='embossed border2px round_corners sm_shadow alt_row1'>";
-		report_parameters+="<?php echo _QXZ("Report Type"); ?>: "+report_type+"<BR>\n";
+		report_parameters+="<?php echo _QXZ("Report Type"); ?>: "+report_type_text+"<BR>\n";
 		report_parameters+=query_date_str+"<BR>\n";
 		if (campaign_parameters_str.length>0) {report_parameters+="<?php echo _QXZ("Campaigns"); ?>: "+CPstr+"<BR>\n";}
 		if (user_groups_parameters_str.length>0) {report_parameters+="<?php echo _QXZ("User groups"); ?>: "+UGPstr+"<BR>\n";}
@@ -416,7 +422,7 @@ function RefreshReportWindow() {
 				TotalMinutes="0"+TotalMinutes;
 				TotalSeconds="0"+TotalSeconds;
 
-				if (response_txt && response_txt=="REPORT RETURNED NO RESULTS") {
+				if (response_txt && response_txt=="<?php echo _QXZ("REPORT RETURNED NO RESULTS"); ?>") {
 					document.getElementById("total_calls_div").innerHTML="** <?php echo _QXZ("NO RESULTS"); ?> **";
 					document.getElementById("total_sales_div").innerHTML="** <?php echo _QXZ("NO RESULTS"); ?> **";
 					document.getElementById("total_time_div").innerHTML="** <?php echo _QXZ("NO RESULTS"); ?> **";

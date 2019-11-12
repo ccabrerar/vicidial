@@ -316,7 +316,7 @@ else
 		{
 		$row=mysqli_fetch_row($rslt);
 
-		echo "$row[1] Debug:     $row[0]\n";
+		echo "$row[1] "._QXZ("Debug").":     $row[0]\n";
 		echo "$row[2]\n";
 		echo "$row[3]\n";
 
@@ -329,8 +329,8 @@ else
 	$shortages_to_print = mysqli_num_rows($rslt);
 	if ($shortages_to_print > 0)
 		{
-		echo "Per-Server Shortages:\n";
-		echo " SERVER         DATE/TIME            SHORT\n";
+		echo _QXZ("Per-Server Shortages").":\n";
+		echo " "._QXZ("SERVER", 6)."         "._QXZ("DATE/TIME", 9)."            "._QXZ("SHORT")."\n";
 		}
 	$i=0;
 	while ($shortages_to_print > $i)
@@ -352,8 +352,8 @@ else
 	$shortages_to_print = mysqli_num_rows($rslt);
 	if ($shortages_to_print > 0)
 		{
-		echo "Per-Server and Per-Type Campaign Calls:\n";
-		echo " SERVER         CALL TYPE   COUNT\n";
+		echo _QXZ("Per-Server and Per-Type Campaign Calls").":\n";
+		echo " "._QXZ("SERVER", 6)."         "._QXZ("CALL TYPE", 9)."   "._QXZ("COUNT")."\n";
 		}
 	$i=0;
 	while ($shortages_to_print > $i)

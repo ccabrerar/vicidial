@@ -436,6 +436,8 @@ external_pause_code VARCHAR(6) default '',
 pause_code VARCHAR(6) default '',
 preview_lead_id INT(9) UNSIGNED default '0',
 external_lead_id INT(9) UNSIGNED default '0',
+last_inbound_call_time_filtered DATETIME,
+last_inbound_call_finish_filtered DATETIME,
 index (random_id),
 index (last_call_time),
 index (last_update_time),
@@ -673,7 +675,12 @@ max_hopper_calls_hour SMALLINT(5) UNSIGNED default '0',
 mute_recordings ENUM('DISABLED','Y','N') default 'DISABLED',
 hide_call_log_info ENUM('DISABLED','Y','N','SHOW_1','SHOW_2','SHOW_3','SHOW_4','SHOW_5','SHOW_6','SHOW_7','SHOW_8','SHOW_9','SHOW_10') default 'DISABLED',
 next_dial_my_callbacks ENUM('NOT_ACTIVE','DISABLED','ENABLED') default 'NOT_ACTIVE',
-user_admin_redirect_url TEXT
+user_admin_redirect_url TEXT,
+max_inbound_filter_enabled ENUM('0','1') default '0',
+max_inbound_filter_statuses TEXT,
+max_inbound_filter_ingroups TEXT,
+max_inbound_filter_min_sec SMALLINT(5) default '-1',
+status_group_id VARCHAR(20) default ''
 ) ENGINE=MyISAM;
 
 CREATE UNIQUE INDEX user ON vicidial_users (user);
@@ -765,7 +772,7 @@ campaign_rec_exten VARCHAR(20) default '8309',
 campaign_recording ENUM('NEVER','ONDEMAND','ALLCALLS','ALLFORCE') default 'ONDEMAND',
 campaign_rec_filename VARCHAR(50) default 'FULLDATE_CUSTPHONE',
 campaign_script VARCHAR(20),
-get_call_launch ENUM('NONE','SCRIPT','WEBFORM','WEBFORMTWO','WEBFORMTHREE','FORM','PREVIEW_WEBFORM','PREVIEW_WEBFORMTWO','PREVIEW_WEBFORMTHREE') default 'NONE',
+get_call_launch ENUM('NONE','SCRIPT','SCRIPTTWO','WEBFORM','WEBFORMTWO','WEBFORMTHREE','FORM','PREVIEW_WEBFORM','PREVIEW_WEBFORMTWO','PREVIEW_WEBFORMTHREE') default 'NONE',
 am_message_exten VARCHAR(100) default 'vm-goodbye',
 amd_send_to_vmx ENUM('Y','N') default 'N',
 xferconf_a_dtmf VARCHAR(50),
@@ -1024,7 +1031,12 @@ auto_active_list_new VARCHAR(20) default 'DISABLED',
 call_quota_lead_ranking VARCHAR(40) default 'DISABLED',
 call_quota_process_running TINYINT(3) default '0',
 call_quota_last_run_date DATETIME,
-sip_event_logging VARCHAR(40) default 'DISABLED'
+sip_event_logging VARCHAR(40) default 'DISABLED',
+campaign_script_two VARCHAR(20) default '',
+leave_vm_no_dispo ENUM('ENABLED','DISABLED') default 'DISABLED',
+leave_vm_message_group_id VARCHAR(40) default '---NONE---',
+dial_timeout_lead_container VARCHAR(40) default 'DISABLED',
+amd_type ENUM('AMD','CPD','KHOMP') default 'AMD'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_lists (
@@ -1146,7 +1158,7 @@ voicemail_ext VARCHAR(10),
 next_agent_call VARCHAR(40) default 'longest_wait_time',
 fronter_display ENUM('Y','N') default 'Y',
 ingroup_script VARCHAR(20),
-get_call_launch ENUM('NONE','SCRIPT','WEBFORM','WEBFORMTWO','WEBFORMTHREE','FORM','EMAIL') default 'NONE',
+get_call_launch ENUM('NONE','SCRIPT','SCRIPTTWO','WEBFORM','WEBFORMTWO','WEBFORMTHREE','FORM','EMAIL') default 'NONE',
 xferconf_a_dtmf VARCHAR(50),
 xferconf_a_number VARCHAR(50),
 xferconf_b_dtmf VARCHAR(50),
@@ -1308,7 +1320,8 @@ cid_cb_invalid_filename TEXT,
 cid_cb_reenter_filename TEXT,
 cid_cb_error_filename TEXT,
 place_in_line_caller_number_filename TEXT,
-place_in_line_you_next_filename TEXT
+place_in_line_you_next_filename TEXT,
+ingroup_script_two VARCHAR(20) default ''
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_stations (
@@ -1826,7 +1839,8 @@ mute_recordings ENUM('1','0') default '0',
 user_admin_redirect ENUM('1','0') default '0',
 list_status_modification_confirmation ENUM('1','0') default '0',
 sip_event_logging ENUM('0','1','2','3','4','5','6','7') default '0',
-call_quota_lead_ranking ENUM('0','1','2') default '0'
+call_quota_lead_ranking ENUM('0','1','2') default '0',
+enable_second_script ENUM('0','1') default '0'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaigns_list_mix (
@@ -1916,6 +1930,7 @@ calls_today SMALLINT(5) UNSIGNED default '0',
 group_web_vars VARCHAR(255) default '',
 group_grade TINYINT(2) UNSIGNED default '1',
 group_type VARCHAR(1) default 'C',
+calls_today_filtered SMALLINT(5) UNSIGNED default '0',
 index (group_id),
 index (user),
 unique index viga_user_group_id (user, group_id)
@@ -1929,6 +1944,9 @@ calls_today SMALLINT(5) UNSIGNED default '0',
 last_call_time DATETIME,
 last_call_finish DATETIME,
 group_grade TINYINT(2) UNSIGNED default '1',
+calls_today_filtered SMALLINT(5) UNSIGNED default '0',
+last_call_time_filtered DATETIME,
+last_call_finish_filtered DATETIME,
 index (group_id),
 index (group_weight),
 unique index vlia_user_group_id (user, group_id)
@@ -4198,6 +4216,33 @@ index(caller_code),
 index(result)
 ) ENGINE=MyISAM;
 
+CREATE TABLE leave_vm_message_groups (
+leave_vm_message_group_id VARCHAR(40) PRIMARY KEY NOT NULL,
+leave_vm_message_group_notes VARCHAR(255) default '',
+active ENUM('Y','N') default 'Y',
+user_group VARCHAR(20) default '---ALL---'
+) ENGINE=MyISAM CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE TABLE leave_vm_message_groups_entries (
+leave_vm_message_group_id VARCHAR(40) NOT NULL,
+audio_filename VARCHAR(255) NOT NULL,
+audio_name VARCHAR(255) default '',
+rank SMALLINT(5) default '0',
+time_start VARCHAR(4) default '0000',
+time_end VARCHAR(4) default '2400'
+) ENGINE=MyISAM CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE TABLE vicidial_agent_vmm_overrides (
+call_date DATETIME,
+caller_code VARCHAR(30) default '',
+lead_id INT(9) UNSIGNED,
+user VARCHAR(20) default '',
+vm_message VARCHAR(255) default '',
+index (caller_code),
+index (call_date),
+index (lead_id)
+) ENGINE=MyISAM;
+
 
 ALTER TABLE vicidial_email_list MODIFY message text character set utf8;
 
@@ -4523,4 +4568,4 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1576',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1580',db_schema_update_date=NOW(),reload_timestamp=NOW();

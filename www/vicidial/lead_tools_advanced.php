@@ -3519,7 +3519,7 @@ if (
 	echo "<option value='range'>range</option>\n";
 	echo "<option value='=' SELECTED>=</option>\n";
 	echo "</select>\n";
-	echo "<input type='text' name='move_entry_date' id='move_entry_date' value='' disabled=true length=20 maxlength=19> "._QXZ("to")." <input type='text' name='move_entry_date_end' id='move_entry_date_end' value='' disabled=true length=20 maxlength=19> <font size=1>(YYYY-MM-DD) or (YYYY-MM-DD HH:MM:SS)</font>\n";
+	echo "<input type='text' name='move_entry_date' id='move_entry_date' value='' disabled=true length=20 maxlength=19> "._QXZ("to")." <input type='text' name='move_entry_date_end' id='move_entry_date_end' value='' disabled=true length=20 maxlength=19> <font size=1>(YYYY-MM-DD) "._QXZ("or")." (YYYY-MM-DD HH:MM:SS)</font>\n";
 	echo "</td></tr>\n";
 	echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Modify Date")."</td></td><td align=left>\n";
 	echo "<input type='checkbox' name='enable_move_modify_date' id='enable_move_modify_date' value='enabled'>\n";
@@ -3531,7 +3531,7 @@ if (
 	echo "<option value='range'>range</option>\n";
 	echo "<option value='=' SELECTED>=</option>\n";
 	echo "</select>\n";
-	echo "<input type='text' name='move_modify_date' id='move_modify_date' value='' disabled=true length=20 maxlength=19> "._QXZ("to")." <input type='text' name='move_modify_date_end' id='move_modify_date_end' value='' disabled=true length=20 maxlength=19> <font size=1>(YYYY-MM-DD) or (YYYY-MM-DD HH:MM:SS)</font>\n";
+	echo "<input type='text' name='move_modify_date' id='move_modify_date' value='' disabled=true length=20 maxlength=19> "._QXZ("to")." <input type='text' name='move_modify_date_end' id='move_modify_date_end' value='' disabled=true length=20 maxlength=19> <font size=1>(YYYY-MM-DD) "._QXZ("or")." (YYYY-MM-DD HH:MM:SS)</font>\n";
 	echo "</td></tr>\n";
 	echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Security Phrase")."</td></td><td align=left>\n";
 	echo "<input type='checkbox' name='enable_move_security_phrase' id='enable_move_security_phrase' value='enabled'>\n";
@@ -3628,7 +3628,7 @@ if (
 	echo "<option value='range'>range</option>\n";
 	echo "<option value='=' SELECTED>=</option>\n";
 	echo "</select>\n";
-	echo "<input type='text' name='update_entry_date' id='update_entry_date' value='' disabled=true length=20 maxlength=19> "._QXZ("to")." <input type='text' name='update_entry_date_end' id='update_entry_date_end' value='' disabled=true length=20 maxlength=19> <font size=1>(YYYY-MM-DD) or (YYYY-MM-DD HH:MM:SS)</font>\n";
+	echo "<input type='text' name='update_entry_date' id='update_entry_date' value='' disabled=true length=20 maxlength=19> "._QXZ("to")." <input type='text' name='update_entry_date_end' id='update_entry_date_end' value='' disabled=true length=20 maxlength=19> <font size=1>(YYYY-MM-DD) "._QXZ("or")." (YYYY-MM-DD HH:MM:SS)</font>\n";
 	echo "</td></tr>\n";
 	echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Modify Date")."</td></td><td align=left>\n";
 	echo "<input type='checkbox' name='enable_update_modify_date' id='enable_update_modify_date' value='enabled'>\n";
@@ -3640,7 +3640,7 @@ if (
 	echo "<option value='range'>range</option>\n";
 	echo "<option value='=' SELECTED>=</option>\n";
 	echo "</select>\n";
-	echo "<input type='text' name='update_modify_date' id='update_modify_date' value='' disabled=true length=20 maxlength=19> "._QXZ("to")." <input type='text' name='update_modify_date_end' id='update_modify_date_end' value='' disabled=true length=20 maxlength=19> <font size=1>(YYYY-MM-DD) or (YYYY-MM-DD HH:MM:SS)</font>\n";
+	echo "<input type='text' name='update_modify_date' id='update_modify_date' value='' disabled=true length=20 maxlength=19> "._QXZ("to")." <input type='text' name='update_modify_date_end' id='update_modify_date_end' value='' disabled=true length=20 maxlength=19> <font size=1>(YYYY-MM-DD) "._QXZ("or")." (YYYY-MM-DD HH:MM:SS)</font>\n";
 	echo "</td></tr>\n";
 	echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Security Phrase")."</td></td><td align=left>\n";
 	echo "<input type='checkbox' name='enable_update_security_phrase' id='enable_update_security_phrase' value='enabled'>\n";
@@ -3727,7 +3727,7 @@ if (
 		echo "<option value='range'>range</option>\n";
 		echo "<option value='=' SELECTED>=</option>\n";
 		echo "</select>\n";
-		echo "<input type='text' name='delete_entry_date' id='delete_entry_date' value='' disabled=true length=20 maxlength=19> "._QXZ("to")." <input type='text' name='delete_entry_date_end' id='delete_entry_date_end' value='' disabled=true length=20 maxlength=19> <font size=1>(YYYY-MM-DD) or (YYYY-MM-DD HH:MM:SS)</font>\n";
+		echo "<input type='text' name='delete_entry_date' id='delete_entry_date' value='' disabled=true length=20 maxlength=19> "._QXZ("to")." <input type='text' name='delete_entry_date_end' id='delete_entry_date_end' value='' disabled=true length=20 maxlength=19> <font size=1>(YYYY-MM-DD) "._QXZ("or")." (YYYY-MM-DD HH:MM:SS)</font>\n";
 		echo "</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Modify Date")."</td></td><td align=left>\n";
 		echo "<input type='checkbox' name='enable_delete_modify_date' id='enable_delete_modify_date' value='enabled'>\n";
@@ -3739,7 +3739,7 @@ if (
 		echo "<option value='range'>range</option>\n";
 		echo "<option value='=' SELECTED>=</option>\n";
 		echo "</select>\n";
-		echo "<input type='text' name='delete_modify_date' id='delete_modify_date' value='' disabled=true length=20 maxlength=19> "._QXZ("to")." <input type='text' name='delete_modify_date_end' id='delete_modify_date_end' value='' disabled=true length=20 maxlength=19> <font size=1>(YYYY-MM-DD) or (YYYY-MM-DD HH:MM:SS)</font>\n";
+		echo "<input type='text' name='delete_modify_date' id='delete_modify_date' value='' disabled=true length=20 maxlength=19> "._QXZ("to")." <input type='text' name='delete_modify_date_end' id='delete_modify_date_end' value='' disabled=true length=20 maxlength=19> <font size=1>(YYYY-MM-DD) "._QXZ("or")." (YYYY-MM-DD HH:MM:SS)</font>\n";
 		echo "</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Security Phrase")."</td></td><td align=left>\n";
 		echo "<input type='checkbox' name='enable_delete_security_phrase' id='enable_delete_security_phrase' value='enabled'>\n";

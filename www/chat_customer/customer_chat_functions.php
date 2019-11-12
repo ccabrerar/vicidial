@@ -171,7 +171,7 @@ if ($action=="leave_chat" && $user && $chat_id) {
 
 			if ($chat_status=="WAITING" && $chat_creator=="NONE") {
 				# USE SPECIAL DROP STATUS 'CDROP' FOR DROPPED CHATS WHERE NO AGENT RESPONDED TO CHAT
-				$upd_stmt="UPDATE vicidial_list set status='CDROP' where lead_id='$lead_id'";
+				$upd_stmt="UPDATE vicidial_list set status='CDROP' where lead_id=$lead_id";
 				$upd_rslt=mysql_to_mysqli($upd_stmt, $link);
 			
 				$ins_stmt="INSERT IGNORE INTO vicidial_chat_archive SELECT chat_id, chat_start_time, 'DROP', chat_creator, group_id, lead_id, transferring_agent, user_direct, user_direct_group_id From vicidial_live_chats where chat_id='$chat_id'";

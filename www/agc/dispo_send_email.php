@@ -343,7 +343,7 @@ if ($match_found > 0)
 					if ( (preg_match('/--A--/i',$email_subject)) or (preg_match('/--A--/i',$email_body)) or (preg_match('/--A--/i',$email_to)) or (preg_match('/--A--/i',$email_from)) )
 						{
 						##### grab the data from vicidial_list for the lead_id
-						$stmt="SELECT lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,gmt_offset_now,called_since_last_reset,phone_code,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner,entry_list_id FROM vicidial_list where lead_id='$lead_id' LIMIT 1;";
+						$stmt="SELECT lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,gmt_offset_now,called_since_last_reset,phone_code,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner,entry_list_id FROM vicidial_list where lead_id=$lead_id LIMIT 1;";
 						$rslt=mysql_to_mysqli($stmt, $link);
 							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'60007',$user,$server_ip,$session_name,$one_mysql_log);}
 						if ($DB) {echo "$stmt\n";}
@@ -499,7 +499,7 @@ if ($match_found > 0)
 							if ($d > 0)
 								{
 								$field_query_SQL = preg_replace("/,$/",'',$field_query_SQL);
-								$stmt="SELECT $field_query_SQL FROM custom_$entry_list_id where lead_id='$lead_id' LIMIT 1;";
+								$stmt="SELECT $field_query_SQL FROM custom_$entry_list_id where lead_id=$lead_id LIMIT 1;";
 								$rslt=mysql_to_mysqli($stmt, $link);
 									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'60014',$user,$server_ip,$session_name,$one_mysql_log);}
 								if ($DB) {echo "$stmt\n";}

@@ -997,7 +997,7 @@ if ($ACTION == 'refresh')
 											if (preg_match("/logtable/i",$itf_actions))
 												{
 												##### insert record into vicidial_sip_action_log
-												$stmt="INSERT INTO vicidial_sip_action_log set call_date='$invite_date',caller_code='$MDnextCID',lead_id='$lead_id',phone_number='$phone_number',user='$user',result='$itf_dispo';";
+												$stmt="INSERT INTO vicidial_sip_action_log set call_date='$invite_date',caller_code='$MDnextCID',lead_id=$lead_id,phone_number='$phone_number',user='$user',result='$itf_dispo';";
 												if ($DB) {echo "$stmt\n";}
 												$rslt=mysql_to_mysqli($stmt, $link);
 													if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03052',$user,$server_ip,$session_name,$one_mysql_log);}
@@ -1141,7 +1141,7 @@ if ($SSagent_debug_logging > 0)
 			$click_function = $click_function_data[0];
 			$click_options = $click_function_data[1];
 
-			$stmtA="INSERT INTO vicidial_ajax_log set user='$user',start_time='$click_time',db_time=NOW(),run_time='0',php_script='vicidial.php',action='$click_function',lead_id='$lead_id',stage='$cd|$click_options',session_name='$session_name',last_sql='';";
+			$stmtA="INSERT INTO vicidial_ajax_log set user='$user',start_time='$click_time',db_time=NOW(),run_time='0',php_script='vicidial.php',action='$click_function',lead_id=$lead_id,stage='$cd|$click_options',session_name='$session_name',last_sql='';";
 			$rslt=mysql_to_mysqli($stmtA, $link);
 
 			$cd++;

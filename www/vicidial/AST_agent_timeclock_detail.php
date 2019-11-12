@@ -495,11 +495,11 @@ window.open(url,"",'width=620,height=300,scrollbars=yes,menubar=yes,address=yes'
 	echo "</TD><TD VALIGN=TOP>";
 	echo _QXZ("Display as").":&nbsp;&nbsp;&nbsp;<BR>";
 	echo "<select name='report_display_type'>";
-	if ($report_display_type) {echo "<option value='$report_display_type' selected>$report_display_type</option>";}
+	if ($report_display_type) {echo "<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
 	echo "<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select>\n<BR><BR>";
 	echo "</TD><TD VALIGN=TOP>"._QXZ("Shift").":<BR>";
 	echo "<SELECT SIZE=1 NAME=shift>\n";
-	echo "<option selected value=\"$shift\">$shift</option>\n";
+	echo "<option selected value=\"$shift\">"._QXZ("$shift")."</option>\n";
 	echo "<option value=\"\">--</option>\n";
 	echo "<option value=\"AM\">"._QXZ("AM")."</option>\n";
 	echo "<option value=\"PM\">"._QXZ("PM")."</option>\n";

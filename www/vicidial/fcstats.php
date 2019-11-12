@@ -391,10 +391,10 @@ $HTML_text.="<SELECT SIZE=1 NAME=group>\n";
 $HTML_text.="</SELECT>\n";
 $HTML_text.=" &nbsp; ";
 $HTML_text.="<select name='report_display_type'>";
-if ($report_display_type) {$HTML_text.="<option value='$report_display_type' selected>$report_display_type</option>";}
+if ($report_display_type) {$HTML_text.="<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
 $HTML_text.="<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select>\n";
 $HTML_text.="<SELECT SIZE=1 NAME=shift>\n";
-$HTML_text.="<option selected value=\"$shift\">$shift</option>\n";
+$HTML_text.="<option selected value=\"$shift\">"._QXZ("$shift")."</option>\n";
 $HTML_text.="<option value=\"\">--</option>\n";
 $HTML_text.="<option value=\"AM\">"._QXZ("AM")."</option>\n";
 $HTML_text.="<option value=\"PM\">"._QXZ("PM")."</option>\n";
@@ -408,7 +408,7 @@ if ($archives_available=="Y")
 
 
 $HTML_text.="<INPUT TYPE=hidden NAME=DB VALUE=\"$DB\">\n";
-$HTML_text.="<INPUT TYPE=submit NAME=SUBMIT VALUE=SUBMIT>\n";
+$HTML_text.="<INPUT TYPE=submit NAME=SUBMIT VALUE='"._QxZ("SUBMIT")."'>\n";
 $HTML_text.="<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  <a href=\"$PHP_SELF?query_date=$query_date&group=$group&shift=$shift&file_download=1&search_archived_data=$search_archived_data\">"._QXZ("DOWNLOAD")."</a> | <a href=\"./admin.php?ADD=3111&group_id=$group\">"._QXZ("MODIFY")."</a> | <a href=\"./admin.php?ADD=999999\">"._QXZ("REPORTS")."</a><BR/></FONT>\n";
 $HTML_text.="</FORM>\n\n";
 $HTML_text.="</TD></TR></TABLE>\n";

@@ -1161,7 +1161,7 @@ if ( ($action == "MODIFY_CUSTOM_FIELDS") and ($list_id > 99) )
 		echo "<td align=right><font size=2> "._QXZ("$A_field_type[$o]")." &nbsp; &nbsp; </td>";
 		if ($hide_enc < 1)
 			{
-			echo "<td align=right><font size=2> $A_field_encrypt[$o] &nbsp; &nbsp; </td>";
+			echo "<td align=right><font size=2> "._QXZ("$A_field_encrypt[$o]")." &nbsp; &nbsp; </td>";
 			}
 		echo "<td align=right><font size=2> $A_field_cost[$o] &nbsp; &nbsp; </td></tr>\n";
 
@@ -1357,12 +1357,12 @@ if ( ($action == "MODIFY_CUSTOM_FIELDS") and ($list_id > 99) )
 		if ($A_field_type[$o]=='HIDDEN')
 			{
 			if ($A_field_default[$o]=='NULL') {$A_field_default[$o]='';}
-			$field_HTML .= "-- HIDDEN --\n";
+			$field_HTML .= "-- "._QXZ("HIDDEN")." --\n";
 			}
 		if ($A_field_type[$o]=='HIDEBLOB')
 			{
 			if ($A_field_default[$o]=='NULL') {$A_field_default[$o]='';}
-			$field_HTML .= "-- HIDDEN --\n";
+			$field_HTML .= "-- "._QXZ("HIDDEN")." --\n";
 			}
 		if ($A_field_type[$o]=='SCRIPT')
 			{
@@ -1500,7 +1500,7 @@ if ( ($action == "MODIFY_CUSTOM_FIELDS") and ($list_id > 99) )
 		echo "<tr $bgcolor><td align=right>"._QXZ("Field Name Position")." $A_field_rank[$o]: </td><td align=left><select size=1 name=name_position>\n";
 		echo "<option value=\"LEFT\">"._QXZ("LEFT")."</option>\n";
 		echo "<option value=\"TOP\">"._QXZ("TOP")."</option>\n";
-		echo "<option selected>$A_name_position[$o]</option>\n";
+		echo "<option selected value='$A_name_position[$o]'>"._QXZ("$A_name_position[$o]")."</option>\n";
 		echo "</select>  $NWB#lists_fields-name_position$NWE </td></tr>\n";
 		echo "<tr $bgcolor><td align=right>"._QXZ("Field Description")." $A_field_rank[$o]: </td><td align=left><input type=text name=field_description size=70 maxlength=100 value=\"$A_field_description[$o]\"> $NWB#lists_fields-field_description$NWE </td></tr>\n";
 		echo "<tr $bgcolor><td align=right>"._QXZ("Field Help")." $A_field_rank[$o]: </td><td align=left><textarea name=field_help rows=2 cols=60>$A_field_help[$o]</textarea> $NWB#lists_fields-field_help$NWE </td></tr>\n";
@@ -1534,33 +1534,33 @@ if ( ($action == "MODIFY_CUSTOM_FIELDS") and ($list_id > 99) )
 		echo "<option value=\"N\">"._QXZ("NO")."</option>\n";
 		echo "<option value=\"Y\">"._QXZ("YES")."</option>\n";
 		echo "<option value=\"INBOUND_ONLY\">"._QXZ("INBOUND_ONLY")."</option>\n";
-		echo "<option selected>$A_field_required[$o]</option>\n";
+		echo "<option selected value='$A_field_required[$o]'>"._QXZ("$A_field_required[$o]")."</option>\n";
 		echo "</select>  $NWB#lists_fields-field_required$NWE </td></tr>\n";
-		echo "<tr $bgcolor><td align=right>"._QXZ("Field Duplicate")." $A_field_rank[$o]: </td><td align=left>$A_field_duplicate[$o]  $NWB#lists_fields-field_duplicate$NWE </td></tr>\n";
+		echo "<tr $bgcolor><td align=right>"._QXZ("Field Duplicate")." $A_field_rank[$o]: </td><td align=left>"._QXZ("$A_field_duplicate[$o]")."  $NWB#lists_fields-field_duplicate$NWE </td></tr>\n";
 		if ($hide_enc < 1)
 			{
 			if ( ($custom_records_count < 1) and ( ($A_field_type[$o]=='TEXT') or ($A_field_type[$o]=='HIDDEN') or ($A_field_type[$o]=='READONLY') or ($A_field_type[$o]=='HIDEBLOB') or ($A_field_type[$o]=='AREA') or ($A_field_type[$o]=='DATE') or ($A_field_type[$o]=='TIME') ) )
 				{
 				echo "<tr $bgcolor><td align=right>"._QXZ("Field Encrypt")." $A_field_rank[$o]: </td><td align=left><select size=1 name=field_encrypt>\n";
-				echo "<option value=\"Y\">YES</option>\n";
-				echo "<option value=\"N\">NO</option>\n";
-				echo "<option selected>$A_field_encrypt[$o]</option>\n";
+				echo "<option value=\"Y\">"._QXZ("YES")."</option>\n";
+				echo "<option value=\"N\">"._QXZ("NO")."</option>\n";
+				echo "<option selected value='$A_field_encrypt[$o]'>"._QXZ("$A_field_encrypt[$o]")."</option>\n";
 				echo "</select>  $NWB#lists_fields-field_encrypt$NWE </td></tr>\n";
 				}
 			else
 				{
-				echo "<tr $bgcolor><td align=right>"._QXZ("Field Encrypt")." $A_field_rank[$o]: </td><td align=left><input type=hidden name=field_encrypt value=\"$A_field_encrypt[$o]\"> $A_field_encrypt[$o]\n";
+				echo "<tr $bgcolor><td align=right>"._QXZ("Field Encrypt")." $A_field_rank[$o]: </td><td align=left><input type=hidden name=field_encrypt value=\"$A_field_encrypt[$o]\"> "._QXZ("$A_field_encrypt[$o]")."\n";
 				echo "  $NWB#lists_fields-field_encrypt$NWE </td></tr>\n";
 				}
 			echo "<tr $bgcolor><td align=right>"._QXZ("Field Show Hide").": </td><td align=left><select size=1 name=field_show_hide>\n";
-			echo "<option value=\"DISABLED\">DISABLED</option>\n";
-			echo "<option value=\"X_OUT_ALL\">X_OUT_ALL</option>\n";
-			echo "<option value=\"LAST_1\">LAST_1</option>\n";
-			echo "<option value=\"LAST_2\">LAST_2</option>\n";
-			echo "<option value=\"LAST_3\">LAST_3</option>\n";
-			echo "<option value=\"LAST_4\">LAST_4</option>\n";
-			echo "<option value=\"FIRST_1_LAST_4\">FIRST_1_LAST_4</option>\n";
-			echo "<option selected>$A_field_show_hide[$o]</option>\n";
+			echo "<option value=\"DISABLED\">"._QXZ("DISABLED")."</option>\n";
+			echo "<option value=\"X_OUT_ALL\">"._QXZ("X_OUT_ALL")."</option>\n";
+			echo "<option value=\"LAST_1\">"._QXZ("LAST_1")."</option>\n";
+			echo "<option value=\"LAST_2\">"._QXZ("LAST_2")."</option>\n";
+			echo "<option value=\"LAST_3\">"._QXZ("LAST_3")."</option>\n";
+			echo "<option value=\"LAST_4\">"._QXZ("LAST_4")."</option>\n";
+			echo "<option value=\"FIRST_1_LAST_4\">"._QXZ("FIRST_1_LAST_4")."</option>\n";
+			echo "<option selected value='$A_field_show_hide[$o]'>"._QXZ("$A_field_show_hide[$o]")."</option>\n";
 			echo "</select>  $NWB#lists_fields-field_show_hide$NWE </td></tr>\n";
 			}
 		else
@@ -1644,17 +1644,17 @@ if ( ($action == "MODIFY_CUSTOM_FIELDS") and ($list_id > 99) )
 	if ($hide_enc < 1)
 		{
 		echo "<tr $bgcolor><td align=right>"._QXZ("Field Encrypt").": </td><td align=left><select size=1 name=field_encrypt>\n";
-		echo "<option value=\"Y\">YES</option>\n";
-		echo "<option selected value=\"N\">NO</option>\n";
+		echo "<option value=\"Y\">"._QXZ("YES")."</option>\n";
+		echo "<option selected value=\"N\">"._QXZ("NO")."</option>\n";
 		echo "</select>  $NWB#lists_fields-field_encrypt$NWE </td></tr>\n";
 		echo "<tr $bgcolor><td align=right>"._QXZ("Field Show Hide").": </td><td align=left><select size=1 name=field_show_hide>\n";
-		echo "<option selected value=\"DISABLED\">DISABLED</option>\n";
-		echo "<option value=\"X_OUT_ALL\">X_OUT_ALL</option>\n";
-		echo "<option value=\"LAST_1\">LAST_1</option>\n";
-		echo "<option value=\"LAST_2\">LAST_2</option>\n";
-		echo "<option value=\"LAST_3\">LAST_3</option>\n";
-		echo "<option value=\"LAST_4\">LAST_4</option>\n";
-		echo "<option value=\"FIRST_1_LAST_4\">FIRST_1_LAST_4</option>\n";
+		echo "<option selected value=\"DISABLED\">"._QXZ("DISABLED")."</option>\n";
+		echo "<option value=\"X_OUT_ALL\">"._QXZ("X_OUT_ALL")."</option>\n";
+		echo "<option value=\"LAST_1\">"._QXZ("LAST_1")."</option>\n";
+		echo "<option value=\"LAST_2\">"._QXZ("LAST_2")."</option>\n";
+		echo "<option value=\"LAST_3\">"._QXZ("LAST_3")."</option>\n";
+		echo "<option value=\"LAST_4\">"._QXZ("LAST_4")."</option>\n";
+		echo "<option value=\"FIRST_1_LAST_4\">"._QXZ("FIRST_1_LAST_4")."</option>\n";
 		echo "</select>  $NWB#lists_fields-field_show_hide$NWE </td></tr>\n";
 		}
 	else
@@ -1730,7 +1730,7 @@ if ($action == "LIST")
 			{$bgcolor='class="records_list_y"';}
 		echo "<tr $bgcolor align=right"; if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='$PHP_SELF?action=MODIFY_CUSTOM_FIELDS&list_id=$A_list_id[$o]'\"";} echo "><td><a href=\"admin.php?ADD=311&list_id=$A_list_id[$o]\"><font size=1 color=black>$A_list_id[$o]</a></td>";
 		echo "<td align=right><font size=1> $A_list_name[$o]</td>";
-		echo "<td align=right><font size=1> $A_active[$o]</td>";
+		echo "<td align=right><font size=1> "._QXZ("$A_active[$o]")."</td>";
 		echo "<td align=right><font size=1> $A_campaign_id[$o]</td>";
 		echo "<td align=right><font size=1> $A_list_fields_count[$o]</td>";
 		echo "<td align=right><font size=1><a href=\"$PHP_SELF?action=MODIFY_CUSTOM_FIELDS&list_id=$A_list_id[$o]\">"._QXZ("MODIFY FIELDS")."</a></td></tr>\n";

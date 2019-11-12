@@ -1006,10 +1006,10 @@ if ($ADD==362111111111)
 		echo "<tr bgcolor=#". $SSstd_row2_background ."><td align=right>"._QXZ("Active").": </td><td align=left><select size=1 name=active><option value='N'>"._QXZ("N")."</option><option value='Y'>"._QXZ("Y")."</option><option value='$active' SELECTED>"._QXZ("$active")."</option></select>$NWB#soundboard-active$NWE</td></tr>\n";
 		echo "<tr bgcolor=#". $SSstd_row2_background ."><td align=right>"._QXZ("Audio Functions").": </td><td align=left><input type=text name=audio_functions size=70 maxlength=100 value=\"$audio_functions\">$NWB#soundboard-audio_functions$NWE</td></tr>\n";
 		echo "<tr bgcolor=#". $SSstd_row2_background ."><td align=right>"._QXZ("Audio Display").": </td><td align=left><input type=text name=audio_display size=70 maxlength=100 value=\"$audio_display\">$NWB#soundboard-audio_display$NWE</td></tr>\n";
-		echo "<tr bgcolor=#". $SSstd_row2_background ."><td align=right>"._QXZ("Layout").": </td><td align=left><select size=1 name=soundboard_layout><option value='default'>"._QXZ("default")."</option><option value='columns01'>"._QXZ("columns01")."</option><option value='$soundboard_layout' SELECTED>$soundboard_layout</option></select>$NWB#soundboard-soundboard_layout$NWE &nbsp; "._QXZ("Columns Limit").": <input type=text name=columns_limit size=3 maxlength=2 value=\"$columns_limit\"></td></tr>\n";
+		echo "<tr bgcolor=#". $SSstd_row2_background ."><td align=right>"._QXZ("Layout").": </td><td align=left><select size=1 name=soundboard_layout><option value='default'>"._QXZ("default")."</option><option value='columns01'>"._QXZ("columns01")."</option><option value='$soundboard_layout' SELECTED>"._QXZ("$soundboard_layout")."</option></select>$NWB#soundboard-soundboard_layout$NWE &nbsp; "._QXZ("Columns Limit").": <input type=text name=columns_limit size=3 maxlength=2 value=\"$columns_limit\"></td></tr>\n";
 		echo "<tr bgcolor=#". $SSstd_row2_background ."><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
 		echo "$UUgroups_list";
-		echo "<option SELECTED value=\"$user_group\">$user_group</option>\n";
+		echo "<option SELECTED value=\"$user_group\">".(preg_match('/\-\-ALL\-\-/', $user_group) ? _QXZ("$user_group") : $user_group)."</option>\n";
 		echo "</select>$NWB#soundboard-user_group$NWE</td></tr>\n";
 
 		echo "<tr bgcolor=#". $SSstd_row2_background ."><td align=center colspan=2>"._QXZ("Audio Files").": </td></tr>\n";
@@ -1049,11 +1049,11 @@ if ($ADD==362111111111)
 				}
 			echo "</select></td>\n";
 			echo "<td nowrap><select size=1 name=\"--TYPE--$rowx[0]--$rowx[3]--$rowx[2]--\">";
-			echo "<option SELECTED>$rowx[7]</option>\n";
-			echo "<option>button</option>\n";
-			echo "<option>header</option>\n";
-			echo "<option>head2r</option>\n";
-			echo "<option>space</option>\n";
+			echo "<option SELECTED value='$rowx[7]'>"._QXZ("$rowx[7]")."</option>\n";
+			echo "<option value='button'>"._QXZ("button")."</option>\n";
+			echo "<option value='header'>"._QXZ("header")."</option>\n";
+			echo "<option value='head2r'>"._QXZ("head2r")."</option>\n";
+			echo "<option value='space'>"._QXZ("space")."</option>\n";
 			echo "</select></td>\n";
 			echo "<td nowrap><select size=1 name=\"--FONT--$rowx[0]--$rowx[3]--$rowx[2]--\">";
 			echo "<option SELECTED>$rowx[8]</option>\n";
@@ -1121,10 +1121,10 @@ if ($ADD==362111111111)
 					}
 				echo "</select></td>\n";
 				echo "<td nowrap><select size=1 name=\"--TYPE--$rowC[0]--$rowC[3]--$rowC[2]--$rowx[0]\">";
-				echo "<option SELECTED>$rowC[7]</option>\n";
-				echo "<option>button</option>\n";
-				echo "<option>header</option>\n";
-				echo "<option>space</option>\n";
+				echo "<option SELECTED value='$rowC[7]'>"._QXZ("$rowC[7]")."</option>\n";
+				echo "<option value='button'>"._QXZ("button")."</option>\n";
+				echo "<option value='header'>"._QXZ("header")."</option>\n";
+				echo "<option value='space'>"._QXZ("space")."</option>\n";
 				echo "</select></td>\n";
 				echo "<td nowrap><select size=1 name=\"--FONT--$rowC[0]--$rowC[3]--$rowC[2]--$rowx[0]\">";
 				echo "<option SELECTED>$rowC[8]</option>\n";
@@ -1297,10 +1297,10 @@ if ($ADD==162000000000)
 			{$bgcolor='class="records_list_y"';}
 		echo "<tr $bgcolor"; if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='$PHP_SELF?ADD=362111111111&soundboard_id=$row[0]&DB=$DB'\"";} echo "><td><a href=\"$PHP_SELF?ADD=362111111111&soundboard_id=$row[0]&DB=$DB\"><font size=1 color=black>$row[0]</a></td>";
 		echo "<td><font size=1>$row[1]</td>";
-		echo "<td><font size=1>$row[2]</td>";
+		echo "<td><font size=1>"._QXZ("$row[2]")."</td>";
 		echo "<td><font size=1>$row[5]</td>";
 		echo "<td><font size=1>$row[3]</td>";
-		echo "<td><font size=1>$row[4]</td>";
+		echo "<td><font size=1>".(preg_match('/\-\-ALL\-\-/', $row[4]) ? _QXZ("$row[4]") : $row[4])."</td>";
 		echo "<td align=center><font size=1><a href=\"$PHP_SELF?ADD=362111111111&soundboard_id=$row[0]&DB=$DB\">"._QXZ("MODIFY")."</a></td></tr>\n";
 		$o++;
 		}

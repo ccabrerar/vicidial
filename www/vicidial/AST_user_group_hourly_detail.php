@@ -425,18 +425,18 @@ if ($SUBMIT && $query_date && $start_hour && $end_hour) {
 
 	$CSV_text .= "\""._QXZ("$report_name",24).":  $NOW_TIME ($db_source)\"\n\n";
 	$CSV_text .= "\""._QXZ("Time range").": $query_date $start_hour:00:00 "._QXZ("to")." $query_date $end_hour:59:59\"\n";
-	$CSV_text .= "\""._QXZ("User groups").": ".implode(', ', $user_group)."\"\n";
-	$CSV_text .= "\""._QXZ("Campaigns").": ".implode(', ', $group)."\"\n\n";
+	$CSV_text .= "\""._QXZ("User groups").": ".preg_replace('/\-\-ALL\-\-/', "--"._QXZ("ALL")."--", implode(', ', $user_group))."\"\n";
+	$CSV_text .= "\""._QXZ("Campaigns").": ".preg_replace('/\-\-ALL\-\-/', "--"._QXZ("ALL")."--", implode(', ', $group))."\"\n\n";
 
 	$ASCII_text .= _QXZ("$report_name",24).": $user                     $NOW_TIME ($db_source)\n\n";
 	$ASCII_text .= _QXZ("Time range").": $query_date $start_hour:00:00 "._QXZ("to")." $query_date $end_hour:59:59\n";
-	$ASCII_text .= _QXZ("User groups").": ".implode(', ', $user_group)."\n";
-	$ASCII_text .= _QXZ("Campaigns").": ".implode(', ', $group)."\n\n";
+	$ASCII_text .= _QXZ("User groups").": ".preg_replace('/\-\-ALL\-\-/', "--"._QXZ("ALL")."--", implode(', ', $user_group))."\n";
+	$ASCII_text .= _QXZ("Campaigns").": ".preg_replace('/\-\-ALL\-\-/', "--"._QXZ("ALL")."--", implode(', ', $group))."\n\n";
 
 	$HTML_text .= _QXZ("$report_name",24).": $user                     $NOW_TIME ($db_source)\n\n";
 	$HTML_text .= _QXZ("Time range").": $query_date $start_hour:00:00 "._QXZ("to")." $query_date $end_hour:59:59\n";
-	$HTML_text .= _QXZ("User groups").": ".implode(', ', $user_group)."\n";
-	$HTML_text .= _QXZ("Campaigns").": ".implode(', ', $group)."\n\n";
+	$HTML_text .= _QXZ("User groups").": ".preg_replace('/\-\-ALL\-\-/', "--"._QXZ("ALL")."--", implode(', ', $user_group))."\n";
+	$HTML_text .= _QXZ("Campaigns").": ".preg_replace('/\-\-ALL\-\-/', "--"._QXZ("ALL")."--", implode(', ', $group))."\n\n";
 
 	$stmt="select user_group, substr(event_time, 12,2) as hour, count(distinct user) as ct from ".$vicidial_agent_log_table." where event_time>='$query_date $start_hour:00:00' and event_time<='$query_date $end_hour:59:59' $group_SQL $user_group_SQL group by user_group, hour order by hour, user_group";
 	if ($DB) {$ASCII_text.=$stmt."\n";}
@@ -665,8 +665,8 @@ echo "<TD VALIGN=TOP ROWSPAN=2>\n";
 
 echo _QXZ("Display as:")."<BR>";
 echo "<select name='report_display_type'>";
-if ($report_display_type) {echo "<option value='$report_display_type' selected>$report_display_type</option>";}
-echo "<option value='TEXT'>TEXT</option><option value='HTML'>HTML</option></select>\n<BR><BR>";
+if ($report_display_type) {echo "<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
+echo "<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select>\n<BR><BR>";
 
 if ($archives_available=="Y") 
 	{

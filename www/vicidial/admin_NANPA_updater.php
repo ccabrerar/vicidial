@@ -448,23 +448,23 @@ if (mysqli_num_rows($schedule_rslt)>0 || (mysqli_num_rows($running_rslt)>0)) {
 					{
 					$data_in=explode("--cellphone-list-id=", $trigger_array[$q]);
 					$cellphone_list_id=trim($data_in[1]);
-					$conversion_lists.="Cellphone list: $cellphone_list_id<BR>";
+					$conversion_lists.=_QXZ("Cellphone list").": $cellphone_list_id<BR>";
 					}
 				if (preg_match('/--landline-list-id=/', $trigger_array[$q]))
 					{
 					$data_in=explode("--landline-list-id=", $trigger_array[$q]);
 					$landline_list_id=trim($data_in[1]);
-					$conversion_lists.="Landline list: $landline_list_id<BR>";
+					$conversion_lists.=_QXZ("Landline list").": $landline_list_id<BR>";
 					}
 				if (preg_match('/--invalid-list-id=/', $trigger_array[$q]))
 					{
 					$data_in=explode("--invalid-list-id=", $trigger_array[$q]);
 					$invalid_list_id=trim($data_in[1]);
-					$conversion_lists.="Invalid list: $invalid_list_id<BR>";
+					$conversion_lists.=_QXZ("Invalid list").": $invalid_list_id<BR>";
 					}
 			}
-			if (strlen($vl_update_field)==0) {$vl_update_field="**NONE**";}
-			if (strlen($conversion_lists)==0) {$conversion_lists="**NONE**";}
+			if (strlen($vl_update_field)==0) {$vl_update_field="**"._QXZ("NONE")."**";}
+			if (strlen($conversion_lists)==0) {$conversion_lists="**"._QXZ("NONE")."**";}
 			echo "<tr>";
 			echo "<td align='left'><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>$row[trigger_time]</font><BR><FONT FACE=\"ARIAL,HELVETICA\" size='1' color='red'>($row[time_until_execution] "._QXZ("until run time").")</font></td>";
 			echo "<td align='left'><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>$lists</font></td>";

@@ -898,7 +898,7 @@ while ($sthBrowsC > $i)
 			$sthA->finish();
 
 			$VL_count=0;
-			$stmtA = "SELECT count(*) FROM vicidial_log where lead_id='$lead_id' and call_date >= \"$TODAY 00:00:00\" and call_date <= \"$ENDDAY 23:59:59\";";
+			$stmtA = "SELECT count(*) FROM vicidial_log where lead_id=$lead_id and call_date >= \"$TODAY 00:00:00\" and call_date <= \"$ENDDAY 23:59:59\";";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
@@ -910,7 +910,7 @@ while ($sthBrowsC > $i)
 			$sthA->finish();
 
 			$VCL_count=0;
-			$stmtA = "SELECT count(*) FROM vicidial_closer_log where lead_id='$lead_id' and call_date >= \"$TODAY 00:00:00\" and call_date <= \"$ENDDAY 23:59:59\";";
+			$stmtA = "SELECT count(*) FROM vicidial_closer_log where lead_id=$lead_id and call_date >= \"$TODAY 00:00:00\" and call_date <= \"$ENDDAY 23:59:59\";";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
@@ -936,7 +936,7 @@ while ($sthBrowsC > $i)
 
 			if ($VL_count > 0)
 				{
-				$stmtA = "SELECT uniqueid,vl.user,user_code,phone_number,vl.status,length_in_sec,call_date,comments FROM vicidial_log vl,vicidial_users vu where lead_id='$lead_id' and call_date >= \"$TODAY 00:00:00\" and call_date <= \"$ENDDAY 23:59:59\" and vl.user=vu.user order by call_date;";
+				$stmtA = "SELECT uniqueid,vl.user,user_code,phone_number,vl.status,length_in_sec,call_date,comments FROM vicidial_log vl,vicidial_users vu where lead_id=$lead_id and call_date >= \"$TODAY 00:00:00\" and call_date <= \"$ENDDAY 23:59:59\" and vl.user=vu.user order by call_date;";
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 				$sthArows=$sthA->rows;
@@ -964,7 +964,7 @@ while ($sthBrowsC > $i)
 
 			if ($VCL_count > 0)
 				{
-				$stmtA = "SELECT closecallid,vcl.user,user_code,phone_number,vcl.status,length_in_sec,call_date,comments FROM vicidial_closer_log vcl,vicidial_users vu where lead_id='$lead_id' and call_date >= \"$TODAY 00:00:00\" and call_date <= \"$ENDDAY 23:59:59\" and vcl.user=vu.user order by call_date;";
+				$stmtA = "SELECT closecallid,vcl.user,user_code,phone_number,vcl.status,length_in_sec,call_date,comments FROM vicidial_closer_log vcl,vicidial_users vu where lead_id=$lead_id and call_date >= \"$TODAY 00:00:00\" and call_date <= \"$ENDDAY 23:59:59\" and vcl.user=vu.user order by call_date;";
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 				$sthArows=$sthA->rows;

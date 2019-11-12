@@ -629,7 +629,7 @@ if ($bareformat < 1)
 	$MAIN.="</TD><TD VALIGN=TOP ROWSPAN=2>";
 	$MAIN.=_QXZ("Include Drop")." &nbsp; <BR>"._QXZ("Rollover").":<BR>";
 	$MAIN.="<SELECT SIZE=1 NAME=include_rollover>\n";
-	$MAIN.="<option selected value=\"$include_rollover\">$include_rollover</option>\n";
+	$MAIN.="<option selected value=\"$include_rollover\">"._QXZ("$include_rollover")."</option>\n";
 	$MAIN.="<option value=\"YES\">"._QXZ("YES")."</option>\n";
 	$MAIN.="<option value=\"NO\">"._QXZ("NO")."</option>\n";
 	$MAIN.="</SELECT><BR>\n";
@@ -669,7 +669,7 @@ if ($bareformat < 1)
 	$MAIN.="</FONT><BR><BR>\n";
 	$MAIN.=_QXZ("Display as").":<BR>";
 	$MAIN.="<select name='report_display_type'>";
-	if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>$report_display_type</option>";}
+	if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
 	$MAIN.="<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select>\n<BR>";
 	if ($archives_available=="Y") 
 		{

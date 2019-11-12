@@ -73,7 +73,7 @@ if ($auth_message == 'GOOD')
 if ($auth < 1)
 	{
 	$VDdisplayMESSAGE = _QXZ("Login incorrect, please try again");
-	$log_stmt="insert into vicidial_recording_access_log(recording_id, lead_id, user, access_datetime, access_result, ip) VALUES('$recording_id', '$lead_id', '$PHP_AUTH_USER', now(), 'INVALID USER', '$ip');";
+	$log_stmt="insert into vicidial_recording_access_log(recording_id, lead_id, user, access_datetime, access_result, ip) VALUES('$recording_id', $lead_id, '$PHP_AUTH_USER', now(), 'INVALID USER', '$ip');";
 	$log_rslt=mysql_to_mysqli($log_stmt, $link);
 	if ($auth_message == 'LOCK')
 		{
@@ -108,7 +108,7 @@ if ( ( $access_recordings < 1 ) or ( $log_recording_access < 1 ) )
 	{
 	header ("Content-type: text/html; charset=utf-8");
 	echo _QXZ("You do not have permissions to access recordings")."\n";
-	$log_stmt="insert into vicidial_recording_access_log(recording_id, lead_id, user, access_datetime, access_result, ip) VALUES('$recording_id', '$lead_id', '$PHP_AUTH_USER', now(), 'INVALID PERMISSIONS', '$ip')";
+	$log_stmt="insert into vicidial_recording_access_log(recording_id, lead_id, user, access_datetime, access_result, ip) VALUES('$recording_id', $lead_id, '$PHP_AUTH_USER', now(), 'INVALID PERMISSIONS', '$ip')";
 	$log_rslt=mysql_to_mysqli($log_stmt, $link);
 	exit;
 	}
@@ -123,7 +123,7 @@ else
 	$rec_lookup_rslt=mysql_to_mysqli($rec_lookup_stmt, $link);
 	if (mysqli_num_rows($rec_lookup_rslt)==0) 
 		{
-		$log_stmt="insert into vicidial_recording_access_log(recording_id, user, access_datetime, access_result, ip, lead_id) VALUES ('$recording_id', '$PHP_AUTH_USER', now(), 'NO RECORDING', '$ip', '$lead_id');";
+		$log_stmt="insert into vicidial_recording_access_log(recording_id, user, access_datetime, access_result, ip, lead_id) VALUES ('$recording_id', '$PHP_AUTH_USER', now(), 'NO RECORDING', '$ip', $lead_id);";
 		$log_rslt=mysql_to_mysqli($log_stmt, $link);
 		echo _QXZ("Not a valid recording")."\n";
 		exit;
@@ -162,7 +162,7 @@ else
 			}
 		else
 			{
-			$log_stmt="insert into vicidial_recording_access_log(recording_id, lead_id, user, access_datetime, access_result, ip) VALUES ('$recording_id', '$lead_id', '$PHP_AUTH_USER', now(), 'RECORDING UNAVAILABLE', '$ip');";
+			$log_stmt="insert into vicidial_recording_access_log(recording_id, lead_id, user, access_datetime, access_result, ip) VALUES ('$recording_id', $lead_id, '$PHP_AUTH_USER', now(), 'RECORDING UNAVAILABLE', '$ip');";
 			$log_rslt=mysql_to_mysqli($log_stmt, $link);
 			echo _QXZ("Recording is not available yet.  Try again later.")."\n";
 			exit;
@@ -170,7 +170,7 @@ else
 		}
 	}
 
-$log_stmt="insert into vicidial_recording_access_log(recording_id, lead_id, user, access_datetime, access_result, ip) VALUES('$recording_id', '$lead_id', '$PHP_AUTH_USER', now(), 'ACCESSED', '$ip')";
+$log_stmt="insert into vicidial_recording_access_log(recording_id, lead_id, user, access_datetime, access_result, ip) VALUES('$recording_id', $lead_id, '$PHP_AUTH_USER', now(), 'ACCESSED', '$ip')";
 $log_rslt=mysql_to_mysqli($log_stmt, $link);
 
 header("Location: $location");

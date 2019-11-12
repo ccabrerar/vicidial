@@ -242,7 +242,7 @@ if ($REPLY)
 	if ($sendmail) 
 		{
 		$reply_message=preg_replace('/(\"|\||\'|\;)/', '\\\$1', $reply_message); 
-		$log_stmt="INSERT INTO vicidial_email_log(email_row_id, lead_id, email_date, user, email_to, message, campaign_id, attachments) VALUES('$email_row_id', '$lead_id', now(), '$user', '$reply_to_address', '$reply_message', '$campaign', '$attachment_str')";
+		$log_stmt="INSERT INTO vicidial_email_log(email_row_id, lead_id, email_date, user, email_to, message, campaign_id, attachments) VALUES('$email_row_id', $lead_id, now(), '$user', '$reply_to_address', '$reply_message', '$campaign', '$attachment_str')";
 		$log_rslt=mysql_to_mysqli($log_stmt, $link);
 		echo "<p>mail sent to $to!</p>";
 
@@ -262,9 +262,9 @@ if ($REPLY)
 
 if ( ($lead_id) or (strlen($email_row_id)>0) ) 
 	{
-	$stmt="SELECT * from vicidial_email_list where lead_id='$lead_id' and direction='INBOUND' and status IN('NEW','INCALL') order by email_date asc";
+	$stmt="SELECT * from vicidial_email_list where lead_id=$lead_id and direction='INBOUND' and status IN('NEW','INCALL') order by email_date asc";
 	if ($email_row_id)
-		{$stmt="SELECT * from vicidial_email_list where lead_id='$lead_id' and email_row_id='$email_row_id' and direction='INBOUND' and status IN('NEW','INCALL') order by email_date asc";}
+		{$stmt="SELECT * from vicidial_email_list where lead_id=$lead_id and email_row_id='$email_row_id' and direction='INBOUND' and status IN('NEW','INCALL') order by email_date asc";}
 	if ($DB > 0) {echo "$stmt\n";}
 	$rslt=mysql_to_mysqli($stmt, $link);
 	if (mysqli_num_rows($rslt)>0) {
@@ -315,7 +315,7 @@ if ( ($lead_id) or (strlen($email_row_id)>0) )
 		$EMAIL_form.="<input type='hidden' name='reply_to_address' value='$email_from'>\n";
 		$EMAIL_form.="<input type='hidden' name='reply_from_address' value='$email_to'>\n";
 		$EMAIL_form.="<input type='hidden' name='campaign' value='$campaign'>\n";
-		$EMAIL_form.="<input type='hidden' name='lead_id' value='$lead_id'>\n";
+		$EMAIL_form.="<input type='hidden' name='lead_id' value=$lead_id>\n";
 		$EMAIL_form.="<input type='hidden' name='email_row_id' value='$email_row_id'>\n";
 		$EMAIL_form.="<input type='hidden' name='user' value='$user'>\n";
 		$EMAIL_form.="<input type='hidden' name='pass' value='$pass'>\n";

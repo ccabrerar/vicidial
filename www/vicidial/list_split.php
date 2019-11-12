@@ -263,7 +263,7 @@ if ($DB>0)
 	}
 
 # confirmation page
-if ($submit == "submit" )
+if ($submit == _QXZ("submit") )
 	{
 	# make sure the original list id is valid
 	$id_chk_stmt = "SELECT list_id FROM vicidial_lists where list_id = $orig_list;";
@@ -507,7 +507,7 @@ if ($confirm == "confirm")
 
 
 # main page display
-if (($submit != "submit" ) && ($confirm != "confirm"))
+if (($submit != _QXZ("submit") ) && ($confirm != "confirm"))
 	{
 	# figure out which campaigns this user is allowed to work on
 	$allowed_campaigns_stmt="SELECT allowed_campaigns from vicidial_user_groups where user_group='$user_group';";
@@ -641,7 +641,7 @@ if (($submit != "submit" ) && ($confirm != "confirm"))
 	echo "<input type=hidden name=DB value='$DB'>\n";
 	
 	# Submit
-	echo "<tr bgcolor=#$SSstd_row4_background><td colspan=2 align=center><input type=submit name=submit value=submit></td></tr>\n";
+	echo "<tr bgcolor=#$SSstd_row4_background><td colspan=2 align=center><input type=submit name=submit value='"._QXZ("submit")."'></td></tr>\n";
 	echo "</table></center>\n";
 	echo "</form>\n";
 

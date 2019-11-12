@@ -568,8 +568,8 @@ $HTML_text.="</script>\n";
 $HTML_text.="</TD><TD VALIGN='TOP'>";
 $HTML_text.=_QXZ("Display as:")."<BR>";
 $HTML_text.="<select name='report_display_type'>";
-if ($report_display_type) {$HTML_text.="<option value='$report_display_type' selected>$report_display_type</option>";}
-$HTML_text.="<option value='TEXT'>TEXT</option><option value='HTML'>HTML</option></select>\n<BR><BR>";
+if ($report_display_type) {$HTML_text.="<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
+$HTML_text.="<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select>\n<BR><BR>";
 $HTML_text.="<INPUT TYPE=SUBMIT NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>\n";
 if ($archives_available=="Y") 
 	{
@@ -607,10 +607,10 @@ if ($SUBMIT)
 	$HTML.="</tr>\n";
 
 	$TEXT.=$ASCII_border;
-	$TEXT.="| RECORDING ID | RECORDING DATE/TIME | LEAD ID    | USER                           | DATE/TIME ACCESSED  | ACCESS RESULT       | IP              |\n";
+	$TEXT.="| "._QXZ("RECORDING ID", 12)." | "._QXZ("RECORDING DATE/TIME", 19)." | "._QXZ("LEAD ID", 10)." | "._QXZ("USER", 30)." | "._QXZ("DATE/TIME ACCESSED", 19)." | "._QXZ("ACCESS RESULT", 19)." | "._QXZ("IP", 15)." |\n";
 	$TEXT.=$ASCII_border;
 
-	$CSV_text.="\n\"RECORDING ID\",\"RECORDING DATE/TIME\",\"LEAD ID\",\"USER\",\"DATE/TIME ACCESSED\",\"ACCESS RESULT\",\"IP\"\n";
+	$CSV_text.="\n\""._QXZ("RECORDING ID")."\",\""._QXZ("RECORDING DATE/TIME")."\",\""._QXZ("LEAD ID")."\",\""._QXZ("USER")."\",\""._QXZ("DATE/TIME ACCESSED")."\",\""._QXZ("ACCESS RESULT")."\",\""._QXZ("IP")."\"\n";
 
 	$rslt=mysql_to_mysqli($stmt, $link);
 	while ($row=mysqli_fetch_array($rslt)) 
@@ -622,7 +622,7 @@ if ($SUBMIT)
 		$TEXT.=sprintf("%-10s", $row["lead_id"])." | ";
 		$TEXT.=sprintf("%-30s", $full_user)." | ";
 		$TEXT.=sprintf("%-19s", $row["access_datetime"])." | ";
-		$TEXT.=sprintf("%-19s", $row["access_result"])." | ";
+		$TEXT.=sprintf("%-19s", _QXZ($row["access_result"], 19))." | ";
 		$TEXT.=sprintf("%-15s", $row["ip"])." |\n";
 
 		$HTML.="<tr bgcolor='#".$SSstd_row2_background."'>";
@@ -631,7 +631,7 @@ if ($SUBMIT)
 		$HTML.="<th><font size='2'>".$row["lead_id"]."</font></th>";
 		$HTML.="<th><font size='2'>".$row["user"]." - ".$row["full_name"]."</font></th>";
 		$HTML.="<th><font size='2'>".$row["access_datetime"]."</font></th>";
-		$HTML.="<th><font size='2'>".$row["access_result"]."</font></th>";
+		$HTML.="<th><font size='2'>"._QXZ($row["access_result"])."</font></th>";
 		$HTML.="<th><font size='2'>".$row["ip"]."</font></th>";
 		$HTML.="</tr>\n";
 

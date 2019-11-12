@@ -441,9 +441,9 @@ $o=0;
 while ($AMDSTATUSes_to_print > $o)
 	{
 	if (preg_match("/\|$master_AMDSTATUS_array[$o]\|/",$AMDSTATUSes_string)) 
-		{$MAIN.="<option selected value=\"$master_AMDSTATUS_array[$o]\">$master_AMDSTATUS_array[$o]</option>\n";}
+		{$MAIN.="<option selected value=\"$master_AMDSTATUS_array[$o]\">"._QXZ("$master_AMDSTATUS_array[$o]")."</option>\n";}
 	else
-		{$MAIN.="<option value=\"$master_AMDSTATUS_array[$o]\">$master_AMDSTATUS_array[$o]</option>\n";}
+		{$MAIN.="<option value=\"$master_AMDSTATUS_array[$o]\">"._QXZ("$master_AMDSTATUS_array[$o]")."</option>\n";}
 	$o++;
 	}
 $MAIN.="</SELECT>";
@@ -461,9 +461,9 @@ $o=0;
 while ($AMDRESPONSEs_to_print > $o)
 	{
 	if (preg_match("/\|$master_AMDRESPONSE_array[$o]\|/",$AMDRESPONSEs_string)) 
-		{$MAIN.="<option selected value=\"$master_AMDRESPONSE_array[$o]\">$master_AMDRESPONSE_array[$o]</option>\n";}
+		{$MAIN.="<option selected value=\"$master_AMDRESPONSE_array[$o]\">"._QXZ("$master_AMDRESPONSE_array[$o]")."</option>\n";}
 	else
-		{$MAIN.="<option value=\"$master_AMDRESPONSE_array[$o]\">$master_AMDRESPONSE_array[$o]</option>\n";}
+		{$MAIN.="<option value=\"$master_AMDRESPONSE_array[$o]\">"._QXZ("$master_AMDRESPONSE_array[$o]")."</option>\n";}
 	$o++;
 	}
 $MAIN.="</SELECT>";
@@ -472,8 +472,8 @@ $MAIN.="</TD>";
 $MAIN.="<TD ROWSPAN=2 VALIGN=middle align=center>\n";
 $MAIN.=_QXZ("Display as:")."<BR>";
 $MAIN.="<select name='report_display_type'>";
-if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>$report_display_type</option>";}
-$MAIN.="<option value='TEXT'>TEXT</option><option value='HTML'>HTML</option></select>\n<BR><BR>";
+if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
+$MAIN.="<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select>\n<BR><BR>";
 $MAIN.="<INPUT TYPE=submit NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'><BR/><BR/>\n";
 $MAIN.="</TD></TR></TABLE>\n";
 if ($SUBMIT && $server_ip_ct>0) {

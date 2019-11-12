@@ -20,7 +20,7 @@ function audit_comments($lead_id,$list_id,$format,$user,$mel,$NOW_TIME,$link,$se
     if ($audit_comments_active) 
 		{
         //Get comment from list
-        $stmt="SELECT comments from vicidial_list where lead_id='$lead_id' limit 1;";
+        $stmt="SELECT comments from vicidial_list where lead_id=$lead_id limit 1;";
         if ($format=='debug') 
 			{echo "\n<!-- $stmt -->";}
         $rslt=mysql_to_mysqli($stmt, $link);
@@ -31,7 +31,7 @@ function audit_comments($lead_id,$list_id,$format,$user,$mel,$NOW_TIME,$link,$se
 			{
             $comment=$row[0];
             //Put comment in comment table
-            $stmt="INSERT INTO vicidial_comments (lead_id,user_id,list_id,campaign_id,comment) VALUES ('$lead_id','$user','$list_id','$campaign','".mysqli_real_escape_string($link, $comment)."');";
+            $stmt="INSERT INTO vicidial_comments (lead_id,user_id,list_id,campaign_id,comment) VALUES ($lead_id,'$user','$list_id','$campaign','".mysqli_real_escape_string($link, $comment)."');";
             if ($format=='debug') 
 				{echo "\n<!-- $stmt -->";}
             $rslt=mysql_to_mysqli($stmt, $link);
@@ -40,7 +40,7 @@ function audit_comments($lead_id,$list_id,$format,$user,$mel,$NOW_TIME,$link,$se
             $affected=mysqli_affected_rows($link);
             if($affected>0) 
 				{
-                $stmt="UPDATE vicidial_list set comments='' where lead_id='$lead_id';";
+                $stmt="UPDATE vicidial_list set comments='' where lead_id=$lead_id;";
                 if ($format=='debug') 
 					{echo "\n<!-- $stmt -->";}
                 $rslt=mysql_to_mysqli($stmt, $link);
@@ -81,7 +81,7 @@ function get_audited_comments($lead_id,$format,$user,$mel,$NOW_TIME,$link,$serve
 	{
     global $ACcount;
     global $ACcomments;
-    $stmt="SELECT user_id,comment,timestamp from vicidial_comments where lead_id='$lead_id' order by timestamp desc;";
+    $stmt="SELECT user_id,comment,timestamp from vicidial_comments where lead_id=$lead_id order by timestamp desc;";
     $rslt=mysql_to_mysqli($stmt, $link);
     if ($mel > 0) 
 		{mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00142-69-AuditComments',$user,$server_ip,$session_name,$one_mysql_log);}

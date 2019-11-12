@@ -742,11 +742,11 @@ if ( (!$OK_to_process) or ( ($leadfile) and ($file_layout!="standard" && $file_l
 		<td width='80%'>
 		<span id='status_mismatch_display'>
 			<select id='status_mismatch_action' name='status_mismatch_action'>
-			<option value='' selected>NONE</option>
-			<option value='MOVE RECENT FROM SYSTEM'>MOVE MOST RECENT PHONE DUPLICATE, CHECK ENTIRE SYSTEM</option>
-			<option value='MOVE ALL FROM SYSTEM'>MOVE ALL PHONE DUPLICATES, CHECK ENTIRE SYSTEM</option>
-			<option value='MOVE RECENT USING CHECK'>MOVE MOST RECENT PHONE FROM DUPLICATE CHECK TO CURRENT LIST</option>
-			<option value='MOVE ALL USING CHECK'>MOVE ALL PHONES FROM DUPLICATE CHECK TO CURRENT LIST</option>
+			<option value='' selected><?php echo _QXZ("NONE"); ?></option>
+			<option value='MOVE RECENT FROM SYSTEM'><?php echo _QXZ("MOVE MOST RECENT PHONE DUPLICATE, CHECK ENTIRE SYSTEM"); ?></option>
+			<option value='MOVE ALL FROM SYSTEM'><?php echo _QXZ("MOVE ALL PHONE DUPLICATES, CHECK ENTIRE SYSTEM"); ?></option>
+			<option value='MOVE RECENT USING CHECK'><?php echo _QXZ("MOVE MOST RECENT PHONE FROM DUPLICATE CHECK TO CURRENT LIST"); ?></option>
+			<option value='MOVE ALL USING CHECK'><?php echo _QXZ("MOVE ALL PHONES FROM DUPLICATE CHECK TO CURRENT LIST"); ?></option>
 			</select></font>		
 		</span> <?php echo "$NWB#list_loader-status_mismatch_action$NWE"; ?>
 		</td>
@@ -1490,7 +1490,7 @@ if ($OK_to_process)
 							{fwrite($stmt_file, $stmtZ."\r\n");}
 						$multistmt='';
 
-						$custom_SQL_query = "INSERT INTO custom_$list_id_override SET lead_id='$lead_id',$custom_SQL;";
+						$custom_SQL_query = "INSERT INTO custom_$list_id_override SET lead_id=$lead_id,$custom_SQL;";
 						$rslt=mysql_to_mysqli($custom_SQL_query, $link);
 						$affected_rows = mysqli_affected_rows($link);
 						if ($DB > 0) {echo "<!-- $affected_rows|$custom_SQL_query -->";}
@@ -2194,7 +2194,7 @@ if (($leadfile) && ($LF_path))
 								{fwrite($stmt_file, $stmtZ."\r\n");}
 							$multistmt='';
 
-							#$custom_SQL_query = "INSERT INTO custom_$list_id_override SET lead_id='$lead_id',$custom_SQL;";
+							#$custom_SQL_query = "INSERT INTO custom_$list_id_override SET lead_id=$lead_id,$custom_SQL;";
 							#$rslt=mysql_to_mysqli($custom_SQL_query, $link);
 							#$affected_rows = mysqli_affected_rows($link);
 
@@ -2242,7 +2242,7 @@ if (($leadfile) && ($LF_path))
 									$custom_SQL_values.=",\"".$custom_fields_row[$$varname]."\"";
 									} 
 								}
-							$custom_ins_stmt.=") VALUES('$lead_id'$custom_SQL_values)";
+							$custom_ins_stmt.=") VALUES($lead_id$custom_SQL_values)";
 							$custom_rslt=mysql_to_mysqli($custom_ins_stmt, $link);
 							$affected_rows = mysqli_affected_rows($link);
 							echo "<!-- $custom_ins_stmt //-->\n";

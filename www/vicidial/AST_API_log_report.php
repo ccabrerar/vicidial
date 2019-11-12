@@ -592,7 +592,7 @@ $HTML_head.="<TITLE>"._QXZ("$report_name")."</TITLE></HEAD><BODY BGCOLOR=WHITE m
 
 #	require("admin_header.php");
 
-$HTML_text.="<B>$report_name</B> $NWB#api_log_report$NWE<BR>";
+$HTML_text.="<B>"._QXZ("$report_name")."</B> $NWB#api_log_report$NWE<BR>";
 $HTML_text.="<TABLE CELLPADDING=4 CELLSPACING=0><TR><TD>";
 
 $HTML_text.="<FORM ACTION=\"$PHP_SELF\" METHOD=GET name=vicidial_report id=vicidial_report>\n";
@@ -665,8 +665,8 @@ else
 	{$HTML_text.="<option value=\"--ALL--\">-- "._QXZ("ALL FUNCTIONS")." --</option>\n";}
 for ($o=0; $o<count($functions_array); $o++)
 	{
-	if  (preg_match("/$functions_array[$o]\|/i",$function_string)) {$HTML_text.="<option selected value=\"$functions_array[$o]\">$functions_array[$o]</option>\n";}
-	  else {$HTML_text.="<option value=\"$functions_array[$o]\">$functions_array[$o]</option>\n";}
+	if  (preg_match("/$functions_array[$o]\|/i",$function_string)) {$HTML_text.="<option selected value=\"$functions_array[$o]\">"._QXZ("$functions_array[$o]")."</option>\n";}
+	  else {$HTML_text.="<option value=\"$functions_array[$o]\">"._QXZ("$functions_array[$o]")."</option>\n";}
 	}
 $HTML_text.="</SELECT>\n";
 $HTML_text.="</TD>\n";
@@ -680,8 +680,8 @@ else
 $o=0;
 for ($o=0; $o<count($results_array); $o++)
 	{
-	if  (preg_match("/$results_array[$o]\|/i",$result_string)) {$HTML_text.="<option selected value=\"$results_array[$o]\">$results_array[$o]</option>\n";}
-	  else {$HTML_text.="<option value=\"$results_array[$o]\">$results_array[$o]</option>\n";}
+	if  (preg_match("/$results_array[$o]\|/i",$result_string)) {$HTML_text.="<option selected value=\"$results_array[$o]\">"._QXZ("$results_array[$o]")."</option>\n";}
+	  else {$HTML_text.="<option value=\"$results_array[$o]\">"._QXZ("$results_array[$o]")."</option>\n";}
 	}
 $HTML_text.="</SELECT>\n";
 $HTML_text.="</TD>\n";
@@ -689,8 +689,8 @@ $HTML_text.="</TD>\n";
 $HTML_text.="<TD VALIGN='TOP'>";
 $HTML_text.=_QXZ("Display as:")."<BR>";
 $HTML_text.="<select name='report_display_type'>";
-if ($report_display_type) {$HTML_text.="<option value='$report_display_type' selected>$report_display_type</option>";}
-$HTML_text.="<option value='TEXT'>TEXT</option><option value='HTML'>HTML</option></select>\n<BR><BR>";
+if ($report_display_type) {$HTML_text.="<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
+$HTML_text.="<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select>\n<BR><BR>";
 $HTML_text.="<INPUT TYPE=SUBMIT NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>\n";
 $HTML_text.="<BR><BR><input type='checkbox' name='show_urls' value='checked' $show_urls>"._QXZ("Show URLs, slower")."\n";
 if ($archives_available=="Y") 
@@ -805,10 +805,10 @@ if ($SUBMIT && $api_date_D && $api_date_T && $api_date_end_D && $api_date_end_T)
 		$full_agent_user[$g] =	substr($row["agent_user"].$user_directory[$row["agent_user"]], 0, 30);
 		$api_id[$g] =			$row["api_id"];
 		$api_date[$g] =			sprintf("%-19s", $row["api_date"]);
-		$api_script[$g] =		sprintf("%-10s", $row["api_script"]);
-		$function[$g] =			sprintf("%-20s", $row["function"]);
-		$result[$g] =			sprintf("%-10s", $row["result"]);
-		$source[$g] =			sprintf("%-20s", $row["source"]);
+		$api_script[$g] =		sprintf("%-10s", _QXZ($row["api_script"], 10));
+		$function[$g] =			sprintf("%-20s", _QXZ($row["function"], 20));
+		$result[$g] =			sprintf("%-10s", _QXZ($row["result"], 10));
+		$source[$g] =			sprintf("%-20s", _QXZ($row["source"], 20));
 		$run_time[$g] =			sprintf("%-8s", substr($row["run_time"],0,8));
 		$webserver[$g] =		sprintf("%-9s", $row["webserver"]);
 		$api_url[$g] =			sprintf("%-9s", $row["api_url"]);
@@ -837,11 +837,11 @@ if ($SUBMIT && $api_date_D && $api_date_T && $api_date_end_D && $api_date_end_T)
 		$HTML.="<tr bgcolor='#".$SSstd_row2_background."'>";
 		$HTML.="<th><font size='2'>".$api_date[$h]."</font></th>";
 		$HTML.="<th><font size='2'>".$full_user[$h]."</font></th>";
-		$HTML.="<th><font size='2'>".$api_script[$h]."</font></th>";
-		$HTML.="<th><font size='2'>".$function[$h]."</font></th>";
+		$HTML.="<th><font size='2'>"._QXZ("$api_script[$h]")."</font></th>";
+		$HTML.="<th><font size='2'>"._QXZ("$function[$h]")."</font></th>";
 		$HTML.="<th><font size='2'>".$full_agent_user[$h]."</font></th>";
-		$HTML.="<th><font size='2'>".$result[$h]."</font></th>";
-		$HTML.="<th><font size='2'>".$source[$h]."</font></th>";
+		$HTML.="<th><font size='2'>"._QXZ("$result[$h]")."</font></th>";
+		$HTML.="<th><font size='2'>"._QXZ("$source[$h]")."</font></th>";
 		$HTML.="<th><font size='2'>".$run_time[$h]."</font></th>";
 		$HTML.="<th><font size='2'>".$webserver[$h]."</font></th>";
 		$HTML.="<th><font size='2'>".sprintf("%-20s", substr($data[$h],0,20))."</font></th>";

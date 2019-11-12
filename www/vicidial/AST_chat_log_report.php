@@ -458,12 +458,12 @@ if ( (preg_match('/\-\-ALL\-\-/',$group_string) ) or ($group_ct < 1) )
 else
 	{
 	# $group_string=preg_replace("/^\||\|$/", "", $group_string);
-	$ASCII_rpt_header.="   Campaigns: ".preg_replace("/\|/", ", ", $group_string);
+	$ASCII_rpt_header.="   "._QXZ("Campaigns", 9).": ".preg_replace("/\|/", ", ", $group_string);
 	$group_SQL = preg_replace('/ or $/i', '',$group_SQL);
 	$group_SQL = "and ($group_SQL or selected_campaigns='|')";
 	$ASCII_border_header.="----------------------------------------------------+";
 	$ASCII_header       .=" ".sprintf("%-50s", "SELECTED CAMPAIGNS")." |";
-	$GRAPH_header.="<th class='column_header grey_graph_cell'>SELECTED CAMPAIGNS</th>";
+	$GRAPH_header.="<th class='column_header grey_graph_cell'>"._QXZ("SELECTED CAMPAIGNS")."</th>";
 	}
 
 $i=0;
@@ -484,12 +484,12 @@ if ( (preg_match('/\-\-ALL\-\-/',$inbound_group_string) ) or ($inbound_group_ct 
 else
 	{
 	# $group_string=preg_replace("/^\||\|$/", "", $group_string);
-	$ASCII_rpt_header.="Inbound groups: ".preg_replace("/\|/", ", ", $inbound_group_string);
+	$ASCII_rpt_header.=_QXZ("Inbound groups", 22).": ".preg_replace("/\|/", ", ", $inbound_group_string);
 	$inbound_group_SQL = preg_replace('/,$/i', '',$inbound_group_SQL);
 	$inbound_group_SQL = "and group_id in ($inbound_group_SQL)";
 	$ASCII_border_header.="----------------------------------------------------+";
 	$ASCII_header       .=" ".sprintf("%-50s", "SELECTED INBOUND GROUPS")." |";
-	$GRAPH_header.="<th class='column_header grey_graph_cell'>SELECTED INBOUND GROUPS</th>";
+	$GRAPH_header.="<th class='column_header grey_graph_cell'>"._QXZ("SELECTED INBOUND GROUPS")."</th>";
 	}
 
 
@@ -665,7 +665,7 @@ $HTML_text.=_QXZ("Chat text").":<BR>";
 $HTML_text.="<textarea name='text_search' rows='3' cols='20'>$text_search</textarea><BR><BR>";
 $HTML_text.=_QXZ("Display as").":<BR>";
 $HTML_text.="<select name='report_display_type'>";
-if ($report_display_type) {$HTML_text.="<option value='$report_display_type' selected>$report_display_type</option>";}
+if ($report_display_type) {$HTML_text.="<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
 $HTML_text.="<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select><BR><BR>\n";
 $HTML_text.="<INPUT TYPE=SUBMIT NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>$NWB#agent_performance_detail$NWE\n";
 $HTML_text.="</TD><TD VALIGN=TOP> &nbsp; &nbsp; &nbsp; &nbsp; ";
@@ -734,7 +734,7 @@ else
 				$colspan='6';
 				$ASCII_text.="| ".sprintf("%7s", $row["manager_chat_id"])." ";
 				$ASCII_text.="| ".$row["chat_start_date"]." ";
-				$ASCII_text.="| ".sprintf("%9s", $row["internal_chat_type"])." ";
+				$ASCII_text.="| ".sprintf("%9s", _QXZ($row["internal_chat_type"], 9))." ";
 				$ASCII_text.="| ".sprintf("%-10s", $row["manager"])." ";
 				$ASCII_text.="|    ".$row["allow_replies"]."    ";
 				$selected_agents=preg_replace('/^\|$/', "ALL", $row["selected_agents"]);
@@ -747,7 +747,7 @@ else
 				$selected_user_groups=preg_replace('/\|/', ', ', $selected_user_groups);
 				$selected_campaigns=preg_replace('/\|/', ', ', $selected_campaigns);
 
-				$GRAPH_text.="<tr><th class='thgraph' scope='col'>$row[manager_chat_id]</th><th class='thgraph' scope='col' nowrap>$row[chat_start_date]</th><th class='thgraph' scope='col'>$row[manager]</th><th class='thgraph' scope='col'>$row[allow_replies]</th>";
+				$GRAPH_text.="<tr><th class='thgraph' scope='col'>$row[manager_chat_id]</th><th class='thgraph' scope='col' nowrap>$row[chat_start_date]</th><th class='thgraph' scope='col'>"._QXZ("$row[manager]")."</th><th class='thgraph' scope='col'>$row[allow_replies]</th>";
 				if (!preg_match("/\-\-ALL\-\-/", $user_string)) {
 					$ASCII_text.="| ".sprintf("%-50s", $selected_agents)." ";
 					$GRAPH_text.="<th class='thgraph' scope='col'>$selected_agents</th>";

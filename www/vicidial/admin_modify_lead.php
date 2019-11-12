@@ -499,8 +499,8 @@ if ($enable_gdpr_download_deletion>0)
 		if ($gdpr_action=="confirm_purge")
 			{
 			$archive_table_name=use_archive_table("vicidial_list");
-			$mysql_stmt="(select list_id from vicidial_list where lead_id='$lead_id')";
-			if ($archive_table_name!="vicidial_list") {$mysql_stmt.=" UNION (select list_id from ".$archive_table_name." where lead_id='$lead_id')";}
+			$mysql_stmt="(select list_id from vicidial_list where lead_id=$lead_id)";
+			if ($archive_table_name!="vicidial_list") {$mysql_stmt.=" UNION (select list_id from ".$archive_table_name." where lead_id=$lead_id)";}
 			$mysql_rslt=mysql_to_mysqli($mysql_stmt, $link);
 			if(mysqli_num_rows($mysql_rslt)>0)
 				{
@@ -536,17 +536,17 @@ if ($enable_gdpr_download_deletion>0)
 					{
 					if ($table_name=="recording_log") 
 						{
-						$ins_stmt="insert ignore into recording_log_deletion_queue(recording_id,lead_id, filename, location, date_queued) (select recording_id,lead_id, filename, location, now() from recording_log where lead_id='$lead_id') UNION (select recording_id,lead_id, filename, location, now() from recording_log_archive where lead_id='$lead_id')";
+						$ins_stmt="insert ignore into recording_log_deletion_queue(recording_id,lead_id, filename, location, date_queued) (select recording_id,lead_id, filename, location, now() from recording_log where lead_id=$lead_id) UNION (select recording_id,lead_id, filename, location, now() from recording_log_archive where lead_id=$lead_id)";
 						$ins_rslt=mysql_to_mysqli($ins_stmt, $link);
 						}
 					
 					$upd_clause=implode("=null, ", $purge_field_array["$table_name"])."=null ";
-					$upd_stmt="update $table_name set $upd_clause where lead_id='$lead_id'";
+					$upd_stmt="update $table_name set $upd_clause where lead_id=$lead_id";
 					$upd_rslt=mysql_to_mysqli($upd_stmt, $link);
 					$SQL_log.="$upd_stmt|";
 					if ($archive_table_name!=$table_name) 
 						{
-						$upd_stmt="update $archive_table_name set $upd_clause where lead_id='$lead_id'";
+						$upd_stmt="update $archive_table_name set $upd_clause where lead_id=$lead_id";
 						$upd_rslt=mysql_to_mysqli($upd_stmt, $link);
 						$SQL_log.="$upd_stmt|";
 						}
@@ -554,7 +554,7 @@ if ($enable_gdpr_download_deletion>0)
 				}
 
 			$SQL_log = addslashes($SQL_log);
-			$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LEADS', event_type='DELETE', record_id='$lead_id', event_code='GDPR PURGE LEAD DATA', event_sql=\"$SQL_log\", event_notes='';";
+			$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LEADS', event_type='DELETE', record_id=$lead_id, event_code='GDPR PURGE LEAD DATA', event_sql=\"$SQL_log\", event_notes='';";
 			if ($DB) {echo "|$stmt|\n";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 			
@@ -573,8 +573,8 @@ if ($enable_gdpr_download_deletion>0)
 			{
 			$table_name=$table_array[$t];
 			$archive_table_name=use_archive_table($table_name);
-			$mysql_stmt="(select * from ".$table_name." where lead_id='$lead_id')";
-			if ($archive_table_name!=$table_name) {$mysql_stmt.=" UNION (select * from ".$archive_table_name." where lead_id='$lead_id')";}
+			$mysql_stmt="(select * from ".$table_name." where lead_id=$lead_id)";
+			if ($archive_table_name!=$table_name) {$mysql_stmt.=" UNION (select * from ".$archive_table_name." where lead_id=$lead_id)";}
 			$list_id=""; $HTML_header=""; $CSV_header=""; $HTML_body=""; $CSV_body="";
 			
 			$mysql_stmt.=" order by ".$date_field_array[$t]." desc";
@@ -656,7 +656,7 @@ if ($enable_gdpr_download_deletion>0)
 
 		if (strlen($CSV_text)>0 && $gdpr_action=="download") 
 			{
-			$rec_stmt="select start_time, location, filename from recording_log where lead_id='$lead_id' order by start_time asc";
+			$rec_stmt="select start_time, location, filename from recording_log where lead_id=$lead_id order by start_time asc";
 			$rec_rslt=mysql_to_mysqli($rec_stmt, $link);
 			$files_to_zip=array();
 			while ($rec_row=mysqli_fetch_row($rec_rslt)) {
@@ -682,7 +682,7 @@ if ($enable_gdpr_download_deletion>0)
 				array_push($files_to_zip, "$destination_filename");
 			}
 
-			$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LEADS', event_type='EXPORT', record_id='$lead_id', event_code='GDPR EXPORT LEAD DATA', event_sql=\"$SQL_log\", event_notes='';";
+			$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LEADS', event_type='EXPORT', record_id=$lead_id, event_code='GDPR EXPORT LEAD DATA', event_sql=\"$SQL_log\", event_notes='';";
 			if ($DB) {echo "|$stmt|\n";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 
@@ -1318,7 +1318,7 @@ if ($end_call > 0)
 		$SQL_log = "$stmtA|$stmtB|$stmtC|$stmtE|$stmtF|$stmtG|$stmtH|$stmtI|$stmtJ|";
 		$SQL_log = preg_replace('/;/', '', $SQL_log);
 		$SQL_log = addslashes($SQL_log);
-		$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LEADS', event_type='MODIFY', record_id='$lead_id', event_code='ADMIN MODIFY LEAD', event_sql=\"$SQL_log\", event_notes=\"".$diff_orig."---ORIG---NEW---".$diff_new."\";";
+		$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LEADS', event_type='MODIFY', record_id=$lead_id, event_code='ADMIN MODIFY LEAD', event_sql=\"$SQL_log\", event_notes=\"".$diff_orig."---ORIG---NEW---".$diff_new."\";";
 		if ($DB) {echo "|$stmt|\n";}
 		$rslt=mysql_to_mysqli($stmt, $link);
 		}
@@ -1366,7 +1366,7 @@ else
 		$SQL_log = "$stmtK|$stmtL|$stmtM|$stmtN|";
 		$SQL_log = preg_replace('/;/', '', $SQL_log);
 		$SQL_log = addslashes($SQL_log);
-		$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LEADS', event_type='MODIFY', record_id='$lead_id', event_code='ADMIN MODIFY LEAD CALLBACK', event_sql=\"$SQL_log\", event_notes='';";
+		$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LEADS', event_type='MODIFY', record_id=$lead_id, event_code='ADMIN MODIFY LEAD CALLBACK', event_sql=\"$SQL_log\", event_notes='';";
 		if ($DB) {echo "|$stmt|\n";}
 		$rslt=mysql_to_mysqli($stmt, $link);
 		}
@@ -1988,7 +1988,7 @@ else
 
 	if ($lead_id != 'NEW') 
 		{
-		$stmt="SELECT user_id, timestamp, list_id, campaign_id, comment from vicidial_comments where lead_id='$lead_id' order by timestamp;";
+		$stmt="SELECT user_id, timestamp, list_id, campaign_id, comment from vicidial_comments where lead_id=$lead_id order by timestamp;";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$row_count = mysqli_num_rows($rslt);
 		$audit_comments=false;
@@ -2447,7 +2447,7 @@ else
 			$tablecount_to_print = mysqli_num_rows($rslt);
 			if ($tablecount_to_print > 0) 
 				{
-				$stmt="SELECT count(*) from custom_$CLlist_id where lead_id='$lead_id';";
+				$stmt="SELECT count(*) from custom_$CLlist_id where lead_id=$lead_id;";
 				if ($DB>0) {echo "$stmt";}
 				$rslt=mysql_to_mysqli($stmt, $link);
 				$fieldscount_to_print = mysqli_num_rows($rslt);

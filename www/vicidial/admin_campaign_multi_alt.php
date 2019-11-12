@@ -415,8 +415,8 @@ if ($action == "BLANK")
 
 	echo "</td></tr>\n";
 
-	echo "<tr bgcolor=#$SSstd_row1_background><td align=right>"._QXZ("List Order Randomize").": </td><td align=left><select size=1 name=lead_order_randomize><option>Y</option><option>N</option><option SELECTED>$lead_order_randomize</option></select></td></tr>\n";
-	echo "<tr bgcolor=#$SSstd_row1_background><td align=right>"._QXZ("List Order Secondary").": </td><td align=left><select size=1 name=lead_order_secondary><option value='LEAD_ASCEND'>"._QXZ("LEAD_ASCEND")."</option><option value='LEAD_DESCEND'>"._QXZ("LEAD_DESCEND")."</option><option value='CALLTIME_ASCEND'>"._QXZ("CALLTIME_ASCEND")."</option><option value='CALLTIME_DESCEND'>"._QXZ("CALLTIME_DESCEND")."</option><option value='VENDOR_ASCEND'>"._QXZ("VENDOR_ASCEND")."</option><option value='VENDOR_DESCEND'>"._QXZ("VENDOR_DESCEND")."</option><option SELECTED>$lead_order_secondary</option></select></td></tr>\n";
+	echo "<tr bgcolor=#$SSstd_row1_background><td align=right>"._QXZ("List Order Randomize").": </td><td align=left><select size=1 name=lead_order_randomize><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$lead_order_randomize' SELECTED>"._QXZ("$lead_order_randomize")."</option></select></td></tr>\n";
+	echo "<tr bgcolor=#$SSstd_row1_background><td align=right>"._QXZ("List Order Secondary").": </td><td align=left><select size=1 name=lead_order_secondary><option value='LEAD_ASCEND'>"._QXZ("LEAD_ASCEND")."</option><option value='LEAD_DESCEND'>"._QXZ("LEAD_DESCEND")."</option><option value='CALLTIME_ASCEND'>"._QXZ("CALLTIME_ASCEND")."</option><option value='CALLTIME_DESCEND'>"._QXZ("CALLTIME_DESCEND")."</option><option value='VENDOR_ASCEND'>"._QXZ("VENDOR_ASCEND")."</option><option value='VENDOR_DESCEND'>"._QXZ("VENDOR_DESCEND")."</option><option value='$lead_order_secondary' SELECTED>"._QXZ("$lead_order_secondary")."</option></select></td></tr>\n";
 
 	echo "<tr bgcolor=#$SSstd_row1_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 	echo "</TABLE></center>\n";

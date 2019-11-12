@@ -571,7 +571,7 @@ while ($users_to_print > $o)
 $HTML_text.="</SELECT>\n";
 $HTML_text.="</TD><TD VALIGN=TOP>"._QXZ("Shift").":<BR>";
 $HTML_text.="<SELECT SIZE=1 NAME=shift>\n";
-$HTML_text.="<option selected value=\"$shift\">$shift</option>\n";
+$HTML_text.="<option selected value=\"$shift\">"._QXZ("$shift")."</option>\n";
 $HTML_text.="<option value=\"\">--</option>\n";
 $HTML_text.="<option value=\"AM\">"._QXZ("AM")."</option>\n";
 $HTML_text.="<option value=\"PM\">"._QXZ("PM")."</option>\n";
@@ -580,7 +580,7 @@ $HTML_text.="</SELECT>\n";
 $HTML_text.="</TD><TD VALIGN=TOP>";
 $HTML_text.=_QXZ("Display as").":<BR>";
 $HTML_text.="<select name='report_display_type'>";
-if ($report_display_type) {$HTML_text.="<option value='$report_display_type' selected>$report_display_type</option>";}
+if ($report_display_type) {$HTML_text.="<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
 $HTML_text.="<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select>\n";
 
 if ($archives_available=="Y") 

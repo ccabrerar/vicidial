@@ -64,6 +64,7 @@
 # 180208-1724 - Added times to/from
 # 180330-1750 - Fixed display bug for individual user selection
 # 191013-0847 - Fixes for PHP7
+# 191030-1530 - Query fixes
 #
 
 $startMS = microtime();
@@ -618,7 +619,7 @@ $HTML_text.="<input type='checkbox' name='show_defunct_users' value='checked' $s
 $HTML_text.="</TD><TD VALIGN=TOP>";
 $HTML_text.=_QXZ("Display as").":<BR>";
 $HTML_text.="<select name='report_display_type'>";
-if ($report_display_type) {$HTML_text.="<option value='$report_display_type' selected>$report_display_type</option>";}
+if ($report_display_type) {$HTML_text.="<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
 $HTML_text.="<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select><BR>\n";
 $HTML_text.=_QXZ("Shift").":<BR>";
 $HTML_text.="<SELECT SIZE=1 NAME=shift>\n";
@@ -826,7 +827,7 @@ $max_customeravg=1;
 
 if ($show_defunct_users=="checked")
 	{
-	$stat_stmt="SELECT distinct status from ".$agent_log_table." where event_time <= '$query_date_END' and event_time >= '$query_date_BEGIN' and pause_sec<65000 and wait_sec<65000 and talk_sec<65000 and dispo_sec<65000 $live_user_SQL $group_SQL $user_agent_log_SQL $user_SQL order by status asc";
+	$stat_stmt="SELECT distinct status from ".$agent_log_table." where event_time <= '$query_date_END' and event_time >= '$query_date_BEGIN' and pause_sec<65000 and wait_sec<65000 and talk_sec<65000 and dispo_sec<65000 $live_user_SQL $group_SQL $user_agent_log_SQL order by status asc";
 	}
 else 
 	{
@@ -854,7 +855,7 @@ while ($stat_row=mysqli_fetch_row($stat_rslt)) {
 
 	if ($show_defunct_users=="checked")
 		{
-		$stmt="SELECT count(*) as calls,sum(talk_sec) as talk,'' as full_name,user,sum(pause_sec),sum(wait_sec),sum(dispo_sec),status,sum(dead_sec), '' as user_group,date(event_time) as call_date from ".$agent_log_table." where event_time <= '$query_date_END' and event_time >= '$query_date_BEGIN' and pause_sec<65000 and wait_sec<65000 and talk_sec<65000 and dispo_sec<65000 and status='$current_status' $live_user_SQL $group_SQL $user_agent_log_SQL $user_SQL group by user,full_name,user_group,status,call_date order by full_name,user,status desc limit 500000;";
+		$stmt="SELECT count(*) as calls,sum(talk_sec) as talk,'' as full_name,user,sum(pause_sec),sum(wait_sec),sum(dispo_sec),status,sum(dead_sec), '' as user_group,date(event_time) as call_date from ".$agent_log_table." where event_time <= '$query_date_END' and event_time >= '$query_date_BEGIN' and pause_sec<65000 and wait_sec<65000 and talk_sec<65000 and dispo_sec<65000 and status='$current_status' $live_user_SQL $group_SQL $user_agent_log_SQL group by user,full_name,user_group,status,call_date order by full_name,user,status desc limit 500000;";
 		}
 	else
 		{
@@ -991,7 +992,7 @@ while ($m < $k)
 			{
 			$call_dateX=$date_row[0];
 
-			$cd_stmt="SELECT count(*) as calls,sum(talk_sec) as talk,'' as full_name,user,sum(pause_sec),sum(wait_sec),sum(dispo_sec),status,sum(dead_sec), '' as user_group from ".$agent_log_table." where date(event_time)='$call_dateX' and pause_sec<65000 and wait_sec<65000 and talk_sec<65000 and dispo_sec<65000 and user='$Suser' $group_SQL $user_agent_log_SQL $user_SQL group by user,full_name,user_group,status order by full_name,user,status desc limit 500000;";
+			$cd_stmt="SELECT count(*) as calls,sum(talk_sec) as talk,'' as full_name,user,sum(pause_sec),sum(wait_sec),sum(dispo_sec),status,sum(dead_sec), '' as user_group from ".$agent_log_table." where date(event_time)='$call_dateX' and pause_sec<65000 and wait_sec<65000 and talk_sec<65000 and dispo_sec<65000 and user='$Suser' $group_SQL $user_agent_log_SQL group by user,full_name,user_group,status order by full_name,user,status desc limit 500000;";
 			$cd_rslt=mysql_to_mysqli($cd_stmt, $link); 
 			if ($DB) {$ASCII_text.=$cd_stmt."\n";}
 
@@ -1764,7 +1765,7 @@ while($ss_row=mysqli_fetch_row($sub_status_rslt)) {
 
 	if ($show_defunct_users=="checked")
 		{
-		$stmt="SELECT '' as full_name,user,sum(pause_sec),sub_status,sum(wait_sec + talk_sec + dispo_sec), '' as user_group from ".$agent_log_table." where event_time <= '$query_date_END' and event_time >= '$query_date_BEGIN' $sub_status_clause and pause_sec<65000 $live_user_SQL $group_SQL $user_group_agent_log_SQL $user_SQL group by user,full_name,sub_status order by user,full_name,sub_status desc limit 100000;";
+		$stmt="SELECT '' as full_name,user,sum(pause_sec),sub_status,sum(wait_sec + talk_sec + dispo_sec), '' as user_group from ".$agent_log_table." where event_time <= '$query_date_END' and event_time >= '$query_date_BEGIN' $sub_status_clause and pause_sec<65000 $live_user_SQL $group_SQL $user_group_agent_log_SQL group by user,full_name,sub_status order by user,full_name,sub_status desc limit 100000;";
 		}
 	else
 		{
