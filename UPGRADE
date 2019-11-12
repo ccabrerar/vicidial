@@ -427,6 +427,31 @@ OTHER CHANGES:
 118. Added bench_agent_assign.php script to allow managers to move 
 	'owner-assigned' to another agent.
 
+119. Added User Inbound Max Calls filtering options. Allowing selective counting
+	of inbound calls excluding calls involving set in-groups, statuses and 
+	with a minimum time threshold. Also, new in-group routing options based
+	on last non-filtered call times
+
+120. Added System Settings option for second agent screen script tab
+
+121. Added a Campaign option for VoiceMail Message Groups, allowing agents to be
+	able to select a message to transfer a customer answering machine to
+	from a list of pre-recorded messages that can be defined by time-of-day.
+
+122. Added a Campaign option to not send an agent immediately to the disposition
+	screen after transferring a customer call to a VoiceMail Message.
+
+123. Added Campaign option for Dial Timeout Lead overrides, allowing you to set
+	up a Settings Container with values for manual-dial and/or auto-dial
+	lead fields and associated values that will tie to different 
+	Dial Timeouts.
+
+124. Added LTMGAD and XAMMAD Campaign Hotkey options that will transfer to the 
+	Leave-Voicemail option as well as dispositioning the call.
+
+125. Added a per-User option to define an additional Status Group of call 
+	statuses that agents can use to disposition all calls they handle.
+
 
 
 

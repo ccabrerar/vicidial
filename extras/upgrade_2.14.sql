@@ -446,7 +446,7 @@ ALTER TABLE vicidial_campaigns ADD agent_screen_time_display VARCHAR(40) default
 
 UPDATE system_settings SET db_schema_version='1527',db_schema_update_date=NOW() where db_schema_version < 1527;
 
-ALTER TABLE vicidial_campaigns MODIFY get_call_launch ENUM('NONE','SCRIPT','WEBFORM','WEBFORMTWO','WEBFORMTHREE','FORM','PREVIEW_WEBFORM','PREVIEW_WEBFORMTWO','PREVIEW_WEBFORMTHREE') default 'NONE';
+ALTER TABLE vicidial_campaigns MODIFY get_call_launch ENUM('NONE','SCRIPT','SCRIPTTWO','WEBFORM','WEBFORMTWO','WEBFORMTHREE','FORM','PREVIEW_WEBFORM','PREVIEW_WEBFORMTWO','PREVIEW_WEBFORMTHREE') default 'NONE';
 
 UPDATE system_settings SET db_schema_version='1528',db_schema_update_date=NOW() where db_schema_version < 1528;
 
@@ -1052,5 +1052,69 @@ ALTER TABLE vicidial_log_noanswer MODIFY term_reason  ENUM('CALLER','AGENT','QUE
 ALTER TABLE vicidial_log_archive MODIFY term_reason ENUM('CALLER','AGENT','QUEUETIMEOUT','ABANDON','AFTERHOURS','NONE','SYSTEM') default 'NONE';
 ALTER TABLE vicidial_log_noanswer_archive MODIFY term_reason ENUM('CALLER','AGENT','QUEUETIMEOUT','ABANDON','AFTERHOURS','NONE','SYSTEM') default 'NONE';
 
-
 UPDATE system_settings SET db_schema_version='1576',db_schema_update_date=NOW() where db_schema_version < 1576;
+
+ALTER TABLE vicidial_users ADD max_inbound_filter_enabled ENUM('0','1') default '0';
+ALTER TABLE vicidial_users ADD max_inbound_filter_statuses TEXT;
+ALTER TABLE vicidial_users ADD max_inbound_filter_ingroups TEXT;
+ALTER TABLE vicidial_users ADD max_inbound_filter_min_sec SMALLINT(5) default '-1';
+
+ALTER TABLE vicidial_live_inbound_agents ADD calls_today_filtered SMALLINT(5) UNSIGNED default '0';
+ALTER TABLE vicidial_live_inbound_agents ADD last_call_time_filtered DATETIME;
+ALTER TABLE vicidial_live_inbound_agents ADD last_call_finish_filtered DATETIME;
+
+ALTER TABLE vicidial_inbound_group_agents ADD calls_today_filtered SMALLINT(5) UNSIGNED default '0';
+
+ALTER TABLE vicidial_live_agents ADD last_inbound_call_time_filtered DATETIME;
+ALTER TABLE vicidial_live_agents ADD last_inbound_call_finish_filtered DATETIME;
+
+UPDATE system_settings SET db_schema_version='1577',db_schema_update_date=NOW() where db_schema_version < 1577;
+
+ALTER TABLE system_settings ADD enable_second_script ENUM('0','1') default '0';
+
+ALTER TABLE vicidial_inbound_groups ADD ingroup_script_two VARCHAR(20) default '';
+ALTER TABLE vicidial_inbound_groups MODIFY get_call_launch ENUM('NONE','SCRIPT','SCRIPTTWO','WEBFORM','WEBFORMTWO','WEBFORMTHREE','FORM','EMAIL') default 'NONE';
+
+ALTER TABLE vicidial_campaigns ADD campaign_script_two VARCHAR(20) default '';
+ALTER TABLE vicidial_campaigns MODIFY get_call_launch ENUM('NONE','SCRIPT','SCRIPTTWO','WEBFORM','WEBFORMTWO','WEBFORMTHREE','FORM','PREVIEW_WEBFORM','PREVIEW_WEBFORMTWO','PREVIEW_WEBFORMTHREE') default 'NONE';
+ALTER TABLE vicidial_campaigns ADD leave_vm_no_dispo ENUM('ENABLED','DISABLED') default 'DISABLED';
+ALTER TABLE vicidial_campaigns ADD leave_vm_message_group_id VARCHAR(40) default '---NONE---';
+
+CREATE TABLE leave_vm_message_groups (
+leave_vm_message_group_id VARCHAR(40) PRIMARY KEY NOT NULL,
+leave_vm_message_group_notes VARCHAR(255) default '',
+active ENUM('Y','N') default 'Y',
+user_group VARCHAR(20) default '---ALL---'
+) ENGINE=MyISAM CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE TABLE leave_vm_message_groups_entries (
+leave_vm_message_group_id VARCHAR(40) NOT NULL,
+audio_filename VARCHAR(255) NOT NULL,
+audio_name VARCHAR(255) default '',
+rank SMALLINT(5) default '0',
+time_start VARCHAR(4) default '0000',
+time_end VARCHAR(4) default '2400'
+) ENGINE=MyISAM CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE TABLE vicidial_agent_vmm_overrides (
+call_date DATETIME,
+caller_code VARCHAR(30) default '',
+lead_id INT(9) UNSIGNED,
+user VARCHAR(20) default '',
+vm_message VARCHAR(255) default '',
+index (caller_code),
+index (call_date),
+index (lead_id)
+) ENGINE=MyISAM;
+
+UPDATE system_settings SET db_schema_version='1578',db_schema_update_date=NOW() where db_schema_version < 1578;
+
+ALTER TABLE vicidial_campaigns ADD dial_timeout_lead_container VARCHAR(40) default 'DISABLED';
+
+UPDATE system_settings SET db_schema_version='1579',db_schema_update_date=NOW() where db_schema_version < 1579;
+
+ALTER TABLE vicidial_users ADD status_group_id VARCHAR(20) default '';
+
+ALTER TABLE vicidial_campaigns ADD amd_type ENUM('AMD','CPD','KHOMP') default 'AMD';
+
+UPDATE system_settings SET db_schema_version='1580',db_schema_update_date=NOW() where db_schema_version < 1580;
