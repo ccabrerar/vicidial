@@ -625,10 +625,12 @@
 # 191105-0824 - Fix for issue #1177
 # 191107-0935 - Added $webphone_call_seconds option
 # 191107-1011 - Fix for issue #1180, hide phone number in callback list
+# 191111-0837 - Added LTMGAD/XAMMAD Hotkey options
+# 191111-1619 - Added user additional status groups
 #
 
-$version = '2.14-594c';
-$build = '191107-1011';
+$version = '2.14-596c';
+$build = '191111-1619';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=91;
 $one_mysql_log=0;
@@ -1428,7 +1430,7 @@ else
 		if($auth>0)
 			{
 			##### grab the full name and other settings of the agent
-			$stmt="SELECT full_name,user_level,hotkeys_active,agent_choose_ingroups,scheduled_callbacks,agentonly_callbacks,agentcall_manual,vicidial_recording,vicidial_transfers,closer_default_blended,user_group,vicidial_recording_override,alter_custphone_override,alert_enabled,agent_shift_enforcement_override,shift_override_flag,allow_alerts,closer_campaigns,agent_choose_territories,custom_one,custom_two,custom_three,custom_four,custom_five,agent_call_log_view_override,agent_choose_blended,agent_lead_search_override,preset_contact_search,max_inbound_calls,wrapup_seconds_override,email,user_choose_language,ready_max_logout,mute_recordings,max_inbound_filter_enabled from vicidial_users where user='$VD_login' and active='Y' and api_only_user != '1';";
+			$stmt="SELECT full_name,user_level,hotkeys_active,agent_choose_ingroups,scheduled_callbacks,agentonly_callbacks,agentcall_manual,vicidial_recording,vicidial_transfers,closer_default_blended,user_group,vicidial_recording_override,alter_custphone_override,alert_enabled,agent_shift_enforcement_override,shift_override_flag,allow_alerts,closer_campaigns,agent_choose_territories,custom_one,custom_two,custom_three,custom_four,custom_five,agent_call_log_view_override,agent_choose_blended,agent_lead_search_override,preset_contact_search,max_inbound_calls,wrapup_seconds_override,email,user_choose_language,ready_max_logout,mute_recordings,max_inbound_filter_enabled,status_group_id from vicidial_users where user='$VD_login' and active='Y' and api_only_user != '1';";
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01007',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 			$row=mysqli_fetch_row($rslt);
@@ -1467,6 +1469,7 @@ else
 			$VU_ready_max_logout =					$row[32];
 			$VU_mute_recordings =					$row[33];
 			$VU_max_inbound_filter_enabled =		$row[34];
+			$VU_status_group_id =					$row[35];
 
 			if ( ($VU_alert_enabled > 0) and ($VU_allow_alerts > 0) ) {$VU_alert_enabled = 'ON';}
 			else {$VU_alert_enabled = 'OFF';}
@@ -1808,7 +1811,7 @@ else
 				$cVARMINstatuses='';
 				$cVARMAXstatuses='';
 				$cVARCBstatusesLIST='';
-				##### grab the statuses that can be used for dispositioning by an agent
+				##### grab the statuses that can be used for dispositioning by an agent for all calls
 				$stmt="SELECT status,status_name,scheduled_callback,selectable,min_sec,max_sec FROM vicidial_statuses WHERE status != 'NEW' order by status limit 500;";
 				$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01010',$VD_login,$server_ip,$session_name,$one_mysql_log);}
@@ -1836,6 +1839,40 @@ else
 					if ($SELstatuses[$i] == 'Y')
 						{$VARSELstatuses_ct++;}
 					$i++;
+					}
+
+				##### grab the additional user statuses that can be used for dispositioning by an agent for all calls
+				if (strlen($VU_status_group_id) > 0)
+					{
+					$stmt="SELECT status,status_name,scheduled_callback,selectable,min_sec,max_sec FROM vicidial_campaign_statuses WHERE status != 'NEW' and campaign_id='$VU_status_group_id' order by status limit 500;";
+					$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01XXX',$VD_login,$server_ip,$session_name,$one_mysql_log);}
+					if ($DB) {echo "$stmt\n";}
+					$VU_statuses_ct = mysqli_num_rows($rslt);
+					$k=0;
+					while ($k < $VU_statuses_ct)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$statuses[$i] =		$row[0];
+						$status_names[$i] =	$row[1];
+						$CBstatuses[$i] =	$row[2];
+						$SELstatuses[$i] =	$row[3];
+						$MINsec[$i] =		$row[4];
+						$MAXsec[$i] =		$row[5];
+						if ($TEST_all_statuses > 0) {$SELstatuses[$i]='Y';}
+						$VARstatuses = "$VARstatuses'$statuses[$i]',";
+						$VARstatusnames = "$VARstatusnames'$status_names[$i]',";
+						$VARSELstatuses = "$VARSELstatuses'$SELstatuses[$i]',";
+						$VARCBstatuses = "$VARCBstatuses'$CBstatuses[$i]',";
+						$VARMINstatuses = "$VARMINstatuses'$MINsec[$i]',";
+						$VARMAXstatuses = "$VARMAXstatuses'$MAXsec[$i]',";
+						if ($CBstatuses[$i] == 'Y')
+							{$VARCBstatusesLIST .= " $statuses[$i]";}
+						if ($SELstatuses[$i] == 'Y')
+							{$VARSELstatuses_ct++;}
+						$i++;
+						$k++;
+						}
 					}
 
 				##### grab the campaign-specific statuses that can be used for dispositioning by an agent
@@ -15890,13 +15927,17 @@ if ($useIE > 0)
 						}
 					if (HKerror < 1)
 						{
-						// transfer call to answering maching message with hotkey
+						// transfer call to answering maching message with hotkey 
 						if ( (HKdispo_ary[0] == 'LTMG') || (HKdispo_ary[0] == 'XFTAMM') )
 							{
 							mainxfer_send_redirect('XfeRVMAIL', lastcustchannel, lastcustserverip);
 							}
 						else
 							{
+							if ( (HKdispo_ary[0] == 'LTMGAD') || (HKdispo_ary[0] == 'XAMMAD') )
+								{
+								mainxfer_send_redirect('XfeRVMAIL', lastcustchannel, lastcustserverip);
+								}
 							HKdispo_display = 3;
 							// Check for hotkeys enabled wrapup message
 							if ( (wrapup_after_hotkey == 'ENABLED') && (wrapup_seconds > 0) )
@@ -16023,6 +16064,10 @@ else
 							}
 						else
 							{
+							if ( (HKdispo_ary[0] == 'LTMGAD') || (HKdispo_ary[0] == 'XAMMAD') )
+								{
+								mainxfer_send_redirect('XfeRVMAIL', lastcustchannel, lastcustserverip);
+								}
 							HKdispo_display = 3;
 							// Check for hotkeys enabled wrapup message
 							if ( (wrapup_after_hotkey == 'ENABLED') && (wrapup_seconds > 0) )
