@@ -6010,7 +6010,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 						var APIpark_array = check_time_array[22].split("APIpark: ");
 						api_parkcustomer = APIpark_array[1];
 
-						if (CHANanswer_detail[0] > 0) 
+						if (CHANanswer_detail[0] > 0)
 							{
 							if (CHANanswer_detail[1] == 'SIP ACTION')
 								{
@@ -7756,6 +7756,9 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 // Request list of active manager chats for this agent
 	function InternalChatsCheck(line_code)
 		{
+			// If chat is disabled globally, theres no need to do anything
+			if (chat_enabled <= 0)
+				return false;
 			var xmlhttp=false;
 			// var MGR_chat_print=0;
 			var MGRpre='';
@@ -13988,15 +13991,15 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 			{
 			xmlhttp = new XMLHttpRequest();
 			}
-		if (xmlhttp) 
-			{ 
+		if (xmlhttp)
+			{
 			VMMG_list_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&user=" + user + "&pass=" + pass  + "&ACTION=VMMG_list_build&format=text&campaign=" + campaign + "&stage=" + leave_vm_message_group_id + "&start_date=" + customer_HHMM;
-			xmlhttp.open('POST', 'vdc_db_query.php'); 
+			xmlhttp.open('POST', 'vdc_db_query.php');
 			xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
-			xmlhttp.send(VMMG_list_query); 
-			xmlhttp.onreadystatechange = function() 
-				{ 
-				if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
+			xmlhttp.send(VMMG_list_query);
+			xmlhttp.onreadystatechange = function()
+				{
+				if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
 					{
 					document.getElementById("VMMessageSelectBoxContent").innerHTML = xmlhttp.responseText;
 
@@ -14037,15 +14040,15 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 			{
 			xmlhttp = new XMLHttpRequest();
 			}
-		if (xmlhttp) 
-			{ 
+		if (xmlhttp)
+			{
 			VMMG_list_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&user=" + user + "&pass=" + pass  + "&ACTION=VMMG_selected&format=text&campaign=" + campaign + "&stage=" + taskvmmessagefile + "&MDnextCID=" + LasTCID + "&lead_id=" + document.vicidial_form.lead_id.value;
-			xmlhttp.open('POST', 'vdc_db_query.php'); 
+			xmlhttp.open('POST', 'vdc_db_query.php');
 			xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
-			xmlhttp.send(VMMG_list_query); 
-			xmlhttp.onreadystatechange = function() 
-				{ 
-				if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
+			xmlhttp.send(VMMG_list_query);
+			xmlhttp.onreadystatechange = function()
+				{
+				if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
 					{
 					var VMMselectresponse = xmlhttp.responseText;
 					var regVMMerror = new RegExp("ERROR","ig");
@@ -14062,7 +14065,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 				}
 			delete xmlhttp;
 			}
-		
+
 		scroll(0,0);
 		}
 
@@ -15927,7 +15930,7 @@ if ($useIE > 0)
 						}
 					if (HKerror < 1)
 						{
-						// transfer call to answering maching message with hotkey 
+						// transfer call to answering maching message with hotkey
 						if ( (HKdispo_ary[0] == 'LTMG') || (HKdispo_ary[0] == 'XFTAMM') )
 							{
 							mainxfer_send_redirect('XfeRVMAIL', lastcustchannel, lastcustserverip);
@@ -17909,6 +17912,10 @@ function phone_number_format(formatphone) {
 // Refresh the agent/customer CHAT content
 	function CustomerChatContentsLoad(clickMute, CHTrefresh, email_invite_lead_id)
 		{
+		// If chat is disabled globally, theres no need to do anything
+		if (chat_enabled <= 0)
+			return false;
+
 		if (CHTrefresh=='YES')
 			{button_click_log = button_click_log + "" + SQLdate + "-----CustomerChatContentsLoad---|";}		var form_list_id = document.vicidial_form.list_id.value;
 		var form_entry_list_id = document.vicidial_form.entry_list_id.value;
@@ -17926,6 +17933,10 @@ function phone_number_format(formatphone) {
 // Refresh the agent/manager CHAT content
 	function InternalChatContentsLoad(ICHrefresh)
 		{
+		// If chat is disabled globally, theres no need to do anything
+		if (chat_enabled <= 0)
+			return false;
+
 		if (ICHrefresh=='YES')
 			{button_click_log = button_click_log + "" + SQLdate + "-----InternalChatContentsLoad---|";}		var form_list_id = document.vicidial_form.list_id.value;
 		var form_list_id = document.vicidial_form.list_id.value;
@@ -18607,7 +18618,7 @@ function phone_number_format(formatphone) {
 					{
 				NoneInSession();
 				document.getElementById("NoneInSessionLink").innerHTML = "<a href=\"#\" onclick=\"NoneInSessionCalL('LOGIN');return false;\"><?php echo _QXZ("Call Agent Webphone"); ?> -></a>";
-					
+
 				var WebPhonEtarget = 'webphonewindow';
 
 			//	WebPhonEwin =window.open(WebPhonEurl, WebPhonEtarget,'toolbar=1,location=1,directories=1,status=1,menubar=1,scrollbars=1,resizable=1,width=180,height=270');
