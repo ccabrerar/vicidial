@@ -137,9 +137,10 @@
 # 190220-2258 - Added flushing of vicidial_sessions_recent table
 # 190530-1411 - Added SIP logger code
 # 190713-0900 - Added vicidial_lead_call_quota_counts log archiving
+# 191017-2039 - Added reset of calls_today_filtered fields
 #
 
-$build = '190713-0900';
+$build = '191017-2039';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -1153,7 +1154,7 @@ if ($timeclock_end_of_day_NOW > 0)
 		if ($DB) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
 		$sthA->finish();
 
-		$stmtA = "update vicidial_inbound_group_agents SET calls_today=0;";
+		$stmtA = "update vicidial_inbound_group_agents SET calls_today=0,calls_today_filtered=0;";
 		if($DBX){print STDERR "\n|$stmtA|\n";}
 		$affected_rows = $dbhA->do($stmtA);
 		if($DB){print STDERR "\n|$affected_rows vicidial_inbound_group_agents call counts reset|\n";}
@@ -1258,7 +1259,7 @@ if ($timeclock_end_of_day_NOW > 0)
 		if ($DB) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
 		$sthA->finish();
 
-		$stmtA = "update vicidial_live_inbound_agents SET calls_today=0;";
+		$stmtA = "update vicidial_live_inbound_agents SET calls_today=0,calls_today_filtered=0;";
 		if($DBX){print STDERR "\n|$stmtA|\n";}
 		$affected_rows = $dbhA->do($stmtA);
 		if($DB){print STDERR "\n|$affected_rows vicidial_live_inbound_agents call counts reset|\n";}

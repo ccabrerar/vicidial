@@ -26,10 +26,11 @@
 # --destination_folder (optional, used for specifying a destination folder to 
 #                       transfer to once logged into the FTP account)
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # 180307-2120 - First Build
 # 180625-0211 - Added options to use different date ranges for exports and deletes
+# 191111-1700 - Committed 'now' option for export range with 5am caveat
 #
 
 ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
@@ -214,7 +215,7 @@ if ($rslt->rows>0)
 			my @data_in = split(/--last_call_date_days=/,$args);
 			$last_call_date_days = $data_in[1];
 			$last_call_date_days =~ s/ .*//gi;
-			$last_call_date_days =~ s/[^0-9]//gi;
+			$last_call_date_days =~ s/[^0-9|(now)]//gi;
 			if ($DB) {print "\n----- LAST CALL DATE EXPIRATION DAYS: $last_call_date_days -----\n\n";}
 			}
 		if ($args =~ /--last_call_date_days_export/i)
@@ -222,7 +223,7 @@ if ($rslt->rows>0)
 			my @data_in = split(/--last_call_date_days_export=/,$args);
 			$last_call_date_days_export = $data_in[1];
 			$last_call_date_days_export =~ s/ .*//gi;
-			$last_call_date_days_export =~ s/[^0-9]//gi;
+			$last_call_date_days_export =~ s/[^0-9|(now)]//gi;
 			if ($DB) {print "\n----- LAST CALL DATE EXPIRATION DAYS, EXPORT ONLY: $last_call_date_days_export -----\n\n";}
 			}
 		if ($args =~ /--last_call_date_days_delete/i)
@@ -230,7 +231,7 @@ if ($rslt->rows>0)
 			my @data_in = split(/--last_call_date_days_delete=/,$args);
 			$last_call_date_days_delete = $data_in[1];
 			$last_call_date_days_delete =~ s/ .*//gi;
-			$last_call_date_days_delete =~ s/[^0-9]//gi;
+			$last_call_date_days_delete =~ s/[^0-9|(now)]//gi;
 			if ($DB) {print "\n----- LAST CALL DATE EXPIRATION DAYS, DELETE ONLY: $last_call_date_days_delete -----\n\n";}
 			}
 		if ($args =~ /--custom_ftp_host/i)
@@ -309,6 +310,24 @@ if ($rslt->rows>0)
 		{
 		print "Script failed - missing FTP info\n";
 		exit;
+		}
+	if ($last_call_date_days_export=~/now/i) 
+		{
+		$last_call_date_days_export=0;
+		if ($hour>5) 
+			{
+			print "Script failed - cannot run 'now' date range after 6am.\n";
+			exit;
+			}
+		}
+	if ($last_call_date_days_delete=~/now/i) 
+		{
+		$last_call_date_days_delete=0;
+		if ($hour>5) 
+			{
+			print "Script failed - cannot run 'now' date range after 6am.\n";
+			exit;
+			}
 		}
 	if (!$custom_ftp_port) {$custom_ftp_port=21;}
 
@@ -397,7 +416,7 @@ if ($rslt->rows>0)
 				}
 			if ($pull_custom_info) 
 				{
-				$cdata_stmt="select * from custom_".$list_id." where lead_id='$lead_id'";
+				$cdata_stmt="select * from custom_".$list_id." where lead_id=$lead_id";
 				if ($DBX) {print "\n$cdata_stmt\n";}
 				$cdata_rslt=$dbhD->prepare($cdata_stmt);
 				$cdata_rslt->execute();

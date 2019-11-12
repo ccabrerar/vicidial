@@ -312,7 +312,7 @@ foreach(@FILES)
 				{
 				### check for active muted recordings
 				$rec_on_ct=0;   $rec_off_ct=0;
-				$stmtA = "SELECT count(*),stage from vicidial_agent_function_log where lead_id='$lead_id' and event_time >= \"$start_time\" and user='$user' and function='mute_rec' group by stage;";
+				$stmtA = "SELECT count(*),stage from vicidial_agent_function_log where lead_id=$lead_id and event_time >= \"$start_time\" and user='$user' and function='mute_rec' group by stage;";
 				if($DBX){print STDERR "\n|$stmtA|\n";}
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -335,7 +335,7 @@ foreach(@FILES)
 					if ($rec_ended < 1) 
 						{
 						### check if muting started in last 15 minutes
-						$stmtA = "SELECT count(*) from vicidial_agent_function_log where lead_id='$lead_id' and event_time >= \"$start_time\" and event_time > DATE_SUB(NOW(),INTERVAL 15 MINUTE) and user='$user' and function='mute_rec' and stage='on';";
+						$stmtA = "SELECT count(*) from vicidial_agent_function_log where lead_id=$lead_id and event_time >= \"$start_time\" and event_time > DATE_SUB(NOW(),INTERVAL 15 MINUTE) and user='$user' and function='mute_rec' and stage='on';";
 						if($DBX){print STDERR "\n|$stmtA|\n";}
 						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -420,11 +420,11 @@ foreach(@FILES)
 								}
 							if ($vicidial_id =~ /\./) 
 								{
-								$log_lookupSQL = "SELECT status from vicidial_log where uniqueid='$vicidial_id' and lead_id='$lead_id' $camp_postSQL;";
+								$log_lookupSQL = "SELECT status from vicidial_log where uniqueid='$vicidial_id' and lead_id=$lead_id $camp_postSQL;";
 								}
 							else
 								{
-								$log_lookupSQL = "SELECT status from vicidial_closer_log where closecallid='$vicidial_id' and lead_id='$lead_id' $camp_postSQL;";
+								$log_lookupSQL = "SELECT status from vicidial_closer_log where closecallid='$vicidial_id' and lead_id=$lead_id $camp_postSQL;";
 								}
 							if($DBX){print STDERR "\n|$log_lookupSQL|\n";}
 							$sthA = $dbhA->prepare($log_lookupSQL) or die "preparing: ",$dbhA->errstr;
@@ -469,7 +469,7 @@ foreach(@FILES)
 
 						if ( ( ($camp_ALL > 0) && ($status_ALL > 0) ) || ($camp_status_selected > 0) )
 							{
-							$stmtA = "SELECT vendor_lead_code,security_phrase,address3,status from vicidial_list where lead_id='$lead_id' LIMIT 1;";
+							$stmtA = "SELECT vendor_lead_code,security_phrase,address3,status from vicidial_list where lead_id=$lead_id LIMIT 1;";
 							if($DBX){print STDERR "\n|$stmtA|\n";}
 							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;

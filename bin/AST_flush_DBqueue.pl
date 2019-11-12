@@ -29,6 +29,7 @@
 # 190214-1758 - Fix for cid_recent_ table optimization issue
 # 190222-1321 - Added optional flushing of vicidial_sessions_recent table
 # 190503-1606 - Added flushing of vicidial_sip_event_recent table
+# 191029-1555 - Added flushing of vicidial_agent_vmm_overrides table
 #
 
 $session_flush=0;
@@ -271,6 +272,12 @@ if($DB){print STDERR "\n|$stmtA|\n";}
 if (!$T) {      $affected_rows = $dbhA->do($stmtA);}
 if (!$Q) {print " - cid_channels_recent flush: $affected_rows rows\n";}
 
+$stmtA = "DELETE from vicidial_agent_vmm_overrides where call_date < '$flush_time';";
+if($DB){print STDERR "\n|$stmtA|\n";}
+if (!$T) {      $affected_rows = $dbhA->do($stmtA);}
+if (!$Q) {print " - vicidial_agent_vmm_overrides flush: $affected_rows rows\n";}
+
+
 if ($SSsip_event_logging > 0)
 	{
 	$stmtA = "DELETE from vicidial_sip_event_recent where invite_date < '$SQLdate_NEG_2hour';";
@@ -347,6 +354,21 @@ if (!$T)
         $sthA->finish();
         }
 if (!$Q) {print " - OPTIMIZE cid_channels_recent          \n";}
+
+
+$stmtA = "OPTIMIZE table vicidial_agent_vmm_overrides;";
+if($DB){print STDERR "\n|$stmtA|\n";}
+if (!$T)
+        {
+        $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+        $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+        $sthArows=$sthA->rows;
+        @aryA = $sthA->fetchrow_array;
+        if (!$Q) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+        $sthA->finish();
+        }
+if (!$Q) {print " - OPTIMIZE vicidial_agent_vmm_overrides          \n";}
+
 
 if ($SSsip_event_logging > 0)
 	{
