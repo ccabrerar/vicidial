@@ -814,7 +814,7 @@ sub handle_dtmf_end_event
 #			$lead_id = ($lead_id + 0);
 #	
 #			# TODO change the cpd log and this insert to include the new SIP Headers for 2.0 CPD
-#			$stmtA = "INSERT INTO vicidial_cpd_log set channel='$event_hash{'Channel'}', uniqueid='$event_hash{'Uniqueid'}', callerid='$call_id', server_ip='$event_hash{'ServerIP'}', lead_id='$lead_id', event_date='$now_date', result='$event_hash{'CPDResult'}';";
+#			$stmtA = "INSERT INTO vicidial_cpd_log set channel='$event_hash{'Channel'}', uniqueid='$event_hash{'Uniqueid'}', callerid='$call_id', server_ip='$event_hash{'ServerIP'}', lead_id=$lead_id, event_date='$now_date', result='$event_hash{'CPDResult'}';";
 #			if($DB){print STDERR "|$stmtA|\n";}
 #			my $affected_rows = $dbhA->do($stmtA);
 #			if($DB){print "|$affected_rows CPD_log inserted|$now_date|\n";}
@@ -856,7 +856,7 @@ sub handle_dtmf_end_event
 #			$lead_id = ($lead_id + 0);
 #			$beginUNIQUEID = $event_hash{'Uniqueid'};
 #			$beginUNIQUEID =~ s/\..*//gi;
-#			$stmtA = "UPDATE vicidial_dial_log SET sip_hangup_cause='$result_details[0]',sip_hangup_reason='$result_details[1]',uniqueid='$event_hash{'Uniqueid'}' where caller_code='$call_id' and server_ip='$event_hash{'ServerIP'}' and lead_id='$lead_id';";
+#			$stmtA = "UPDATE vicidial_dial_log SET sip_hangup_cause='$result_details[0]',sip_hangup_reason='$result_details[1]',uniqueid='$event_hash{'Uniqueid'}' where caller_code='$call_id' and server_ip='$event_hash{'ServerIP'}' and lead_id=$lead_id;";
 #			if($DB){print STDERR "|$stmtA|\n";}
 #			my $affected_rows = $dbhA->do($stmtA);
 #			if($DB){print "|$affected_rows dial_log updated|$call_id|$event_hash{'ServerIP'}|$event_hash{'Result'}|\n";}
@@ -884,7 +884,7 @@ sub handle_dtmf_end_event
 #			if ($postCsec < 10) {$postCsec = "0$postCsec";}
 #			$postCSQLdate = "$postCyear-$postCmon-$postCmday $postChour:$postCmin:$postCsec";
 #	
-#			$stmtA = "UPDATE vicidial_carrier_log SET sip_hangup_cause='$result_details[0]',sip_hangup_reason='$result_details[1]' where server_ip='$event_hash{'ServerIP'}' and caller_code='$call_id' and lead_id='$lead_id' and call_date > \"$preCSQLdate\" and call_date < \"$postCSQLdate\" order by call_date desc limit 1;";
+#			$stmtA = "UPDATE vicidial_carrier_log SET sip_hangup_cause='$result_details[0]',sip_hangup_reason='$result_details[1]' where server_ip='$event_hash{'ServerIP'}' and caller_code='$call_id' and lead_id=$lead_id and call_date > \"$preCSQLdate\" and call_date < \"$postCSQLdate\" order by call_date desc limit 1;";
 #			if($DB){print STDERR "|$stmtA|\n";}
 #			my $affected_rows = $dbhA->do($stmtA);
 #			if($DB){print "|$affected_rows carrier_log updated|$call_id|$event_hash{'ServerIP'}|$event_hash{'Uniqueid'}|$result_details[0]|$result_details[1]|\n";}
