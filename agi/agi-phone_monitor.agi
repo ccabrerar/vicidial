@@ -2,6 +2,10 @@
 #
 # agi-phone_monitor.agi      version 2.8
 #
+# NOTE! - To use this script you MUST have entries in the System Settings
+#         "Custom Dialplan Entry" for this to work. 
+#         Read the AGENT_MONITOR.txt document for more information.
+#
 # This script is designed to allow managers to listen to agent sessions by 
 # dialing a phone exten number or user ID number. For this to work, the user ID
 # or phone extension must be only digits. If you are using the phone extension,
@@ -23,7 +27,7 @@
 #
 # ; or as extension transfer to "up_monitor_exit" context and "s" extension
 #
-# Copyright (C) 2013  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 130401-0724 - First build

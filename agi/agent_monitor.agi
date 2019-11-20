@@ -1,6 +1,10 @@
 #!/usr/bin/perl
 #
-# agent_monitor.agi      version 2.8
+# agent_monitor.agi      version 2.14
+#
+# NOTE! - To use this script you MUST have entries in the System Settings
+#         "Custom Dialplan Entry" for this to work. 
+#         Read the AGENT_MONITOR.txt document for more information.
 #
 # This script is designed to allow managers to listen to agent sessions by 
 # dialing a phone exten number or user ID number. For this to work, the user ID
@@ -11,7 +15,7 @@
 # then the user is forwarded to monitor the active vicidial agent session
 #
 # ; settings for this script:
-# ; 1. USER, PHONE, PLOGIN or REDIRECT, lookup by user id, phone extension or phone login (default is USER)
+# ; 1. USER, PHONE, PLOGIN, REDIRECT or RANDOM, lookup by user id, phone extension or phone login (default is USER)
 # ; 2. Y or N, log in api log (default is N)
 # ; 3. BARGE or LISTEN, (default is LISTEN)
 # ; 4. Prepopulated ID, for use in context by itself
@@ -25,11 +29,12 @@
 #
 # ; or as extension transfer to "up_monitor" context and "s" extension
 #
-# Copyright (C) 2013  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 130716-1315 - First build based upon agi-phone_monitor.agi
 # 130925-1823 - Added variable filter to prevent DID SQL injection attack
+# 191120-0835 - Added RANDOM option, issue #1110
 #
 
 &get_time_now;
@@ -53,7 +58,7 @@ $CIDdate = "$mon$mday$hour$min$sec";
 while (length($CIDdate) > 9) {$CIDdate =~ s/^.//gi;} # 0902235959 changed to 902235959
 
 $US='_';
-
+$DB=0; 	# set to 1 for extra debug output
 
 # default path to astguiclient configuration file:
 $PATHconf =		'/etc/astguiclient.conf';
@@ -124,8 +129,11 @@ if (length($ARGV[0])>1)
 	$campaigns_limit =	$ARGV_vars[4];
 	$users_list =		$ARGV_vars[5];
 	}
-if ( (length($user_phone) < 1) || ($user_phone !~ /USER|PHONE|PLOGIN|REDIRECT/) )
+
+if ( ($AGILOG) && ($DB > 0) ) {$agi_string = "--    DEBUG USER PHONE STEP 1 : |$user_phone|";   &agi_output;}
+if ( (length($user_phone) < 1) || ($user_phone !~ /USER|PHONE|PLOGIN|RANDOM|REDIRECT/) )
 	{$user_phone = 'USER';}
+if ( ($AGILOG) && ($DB > 0) ) {$agi_string = "--    DEBUG USER PHONE STEP 2 : |$user_phone|";   &agi_output;}
 if ( (length($api_log) < 1) || ($api_log !~ /Y|N/) )
 	{$api_log = 'N';}
 if ( (length($barge_listen) < 1) || ($barge_listen !~ /BARGE|LISTEN/) )
@@ -202,6 +210,7 @@ while ($sthArows > $rec_count)
 $sthA->finish();
 
 
+if ( ($AGILOG) && ($DB > 0) ) {$agi_string = "--    DEBUG USER PHONE STEP 3 : |$user_phone|$callerid|";   &agi_output;}
 if ($calleridname =~ /^AGMON/) 
 	{
 	$user_REDIRECT=0;
@@ -266,6 +275,7 @@ $AGI->stream_file('sip-silence');
 $AGI->stream_file('sip-silence');
 
 
+if ( ($AGILOG) && ($DB > 0) ) {$agi_string = "--    DEBUG USER PHONE STEP 4 : |$user_phone|$callerid|";   &agi_output;}
 
 if ($users_list =~ /Y/i) 
 	{
@@ -380,6 +390,8 @@ else
 
 	###### Check if user is logged in, vicidial_live_agents table
 	$stmtA = "SELECT count(*) FROM vicidial_live_agents where user='$PIN_number' and extension NOT LIKE \"R/%\" and last_update_time > \"$PDtsSQLdate\" $campaigns_limitSQL;";
+	if ($user_phone =~ /RANDOM/)
+		{$stmtA = "SELECT count(*) FROM vicidial_live_agents where extension NOT LIKE \"R/%\" and last_update_time > \"$PDtsSQLdate\" $campaigns_limitSQL;";}
 	if ($user_phone =~ /PHONE/)
 		{$stmtA = "SELECT count(*) FROM vicidial_live_agents where extension LIKE \"%/$PIN_number\" and extension NOT LIKE \"R/%\" and last_update_time > \"$PDtsSQLdate\" $campaigns_limitSQL;";}
 	if ($user_phone =~ /PLOGIN/)
@@ -433,6 +445,9 @@ else
 	else
 		{
 		$stmtA = "SELECT conf_exten,extension,server_ip,campaign_id from vicidial_live_agents WHERE user='$PIN_number' and extension NOT LIKE \"R/%\" and last_update_time > \"$PDtsSQLdate\" $campaigns_limitSQL limit 1;";
+		if ($user_phone =~ /RANDOM/)
+			{$stmtA = "SELECT conf_exten,extension,server_ip,campaign_id from vicidial_live_agents WHERE extension NOT LIKE \"R/%\" and last_update_time > \"$PDtsSQLdate\" $campaigns_limitSQL ORDER BY rand() limit 1;";}
+
 		if ($user_phone =~ /PHONE/)
 			{$stmtA = "SELECT conf_exten,extension,server_ip,campaign_id FROM vicidial_live_agents where extension LIKE \"%/$PIN_number\" and extension NOT LIKE \"R/%\" and last_update_time > \"$PDtsSQLdate\" $campaigns_limitSQL limit 1;";}
 		if ($user_phone =~ /PLOGIN/)
@@ -495,7 +510,7 @@ else
 		$affected_rows = $dbhA->do($stmtA);
 		if ($AGILOG) {$agi_string = "MONITOR LOG INSERT $affected_rows|$stmtA|";   &agi_output;}
 
-		if ($AGILOG) {$agi_string = "Agent $PIN_number sent to $VDADremDIALstr";   &agi_output;}
+		if ($AGILOG) {$agi_string = "Agent $PIN_number sent to $ext_context|$VDADremDIALstr|   for $callerid";   &agi_output;}
 
 		print "SET CONTEXT $ext_context\n";
 			$result = <STDIN>;

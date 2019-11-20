@@ -1,4 +1,4 @@
-AGENT MONITOR DOC		Started: 2013-07-16	Updated: 2017-09-15
+AGENT MONITOR DOC		Started: 2013-07-16	Updated: 2019-11-20
 
 
 Requirements:
@@ -18,7 +18,7 @@ This will also work across a multiple server cluster.
 The CLI option flags below can be used for the agent_monitor.agi script in the 
 up_monitor context below:
 
- 1. USER, PHONE, PLOGIN or REDIRECT, lookup by user id, phone extension or phone login (default is USER)
+ 1. USER, PHONE, PLOGIN, REDIRECT or RANDOM, lookup by user id, phone extension or phone login (default is USER)
  2. Y or N, log in api log (default is N)
  3. BARGE or LISTEN, (default is LISTEN)
  4. Prepopulated ID, for use in context by itself
