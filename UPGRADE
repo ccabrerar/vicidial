@@ -452,6 +452,12 @@ OTHER CHANGES:
 125. Added a per-User option to define an additional Status Group of call 
 	statuses that agents can use to disposition all calls they handle.
 
+126. Added System Setting to hide the first web form button on the agent screen.
+
+127. Added System Setting options for alternate agent screen recording buttons.
+	This includes different wording, different sizes and removing the blank
+	space below the recording buttons.
+
 
 
 

@@ -115,6 +115,7 @@
 # 190525-2133 - Added new agent time segment display
 # 190531-1454 - Upgraded ingroup filter
 # 190927-1759 - Fixed PHP7 array issue
+# 191113-2027 - Fixed cached carrier stats bug
 #
 
 $version = '2.14-101';
@@ -1550,7 +1551,7 @@ if ($CARRIERstats > 0)
 	{
 	$TFhour_status=array();
 	$TFhour_count=array();
-	$TFhour_total=array();
+	$TFhour_total=0;
 	$SIXhour_count=array();
 	$ONEhour_count=array();
 	$FTminute_count=array();

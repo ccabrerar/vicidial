@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2019-11-07
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2019-11-14
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -51,6 +51,9 @@ call_dispo_report - call disposition breakdown report
 lead_callback_info - outputs scheduled callback data for a specific lead
 agent_campaigns - looks up allowed campaigns/in-groups for a specific user
 update_cid_group_entry - updates CID Group entries
+add_dnc_phone - adds a phone number to one of the DNC lists
+add_fpg_phone - adds a phone number to a Filter Phone Group
+
 
 New scripts:
 /vicidial/non_agent_api.php - the script that is accessed to execute commands
@@ -147,6 +150,8 @@ Changes:
 190703-0858 - Added custom_fields_copy option to add_list function
 190930-1629 - Added list_description field to add_list and update_list functions
 191107-1143 - Added list_info function
+191113-1758 - Added add_dnc_phone and add_fpg_phone functions
+191114-1637 - Added remove_from_hopper option to update_lead function
 
 
 API Functions use the 'function' variable
@@ -958,6 +963,7 @@ callback_user -		User ID the USERONLY callback is assigned to
 callback_comments -	Optional comments to appear when the callback is called back
 update_phone_number -	Y or N, Optional setting to update the phone_number field, default is N.
 add_to_hopper -		Y or N, default is N
+remove_from_hopper -	Y or N, default is N
 hopper_priority -	99 to -99, the higher number the higher priority, default is 0
 hopper_local_call_time_check - Y or N, default is N. Validate the local call time and/or state call time before inserting lead in the hopper
 
@@ -1047,6 +1053,9 @@ NOTICE: update_lead NOT ADDED TO HOPPER - 7275551111|6666|193715|1677922
 NOTICE: update_lead NOT ADDED TO HOPPER, OUTSIDE OF LOCAL TIME - 7275551111|193715|-5|0|6666
 NOTICE: update_lead NOT ADDED TO HOPPER, LEAD NOT FOUND - 7275551111|193715|6666
 NOTICE: update_lead NOT ADDED TO HOPPER, LEAD IS ALREADY IN THE HOPPER - 7275551111|193715|6666
+NOTICE: update_lead REMOVED FROM HOPPER - 7275551111|193715|READY|6666
+NOTICE: update_lead NOT REMOVED FROM HOPPER - 7275551111|193715|DNC|6666
+NOTICE: update_lead NOT REMOVED FROM HOPPER, LEAD IS NOT IN THE HOPPER - 7275551111|193715|6666
 
 ERROR: update_lead INVALID DATA FOR LEAD INSERTION - 6666|||
 ERROR: update_lead NO MATCHES FOUND IN THE SYSTEM - 6666|||
@@ -1202,6 +1211,50 @@ ERROR: add_group_alias GROUP ALIAS ALREADY EXISTS - 6666|7275551212
 SUCCESS: add_group_alias GROUP ALIAS HAS BEEN ADDED - 6666|7275551212|test_group_alias|test group alias
 
 
+
+
+
+--------------------------------------------------------------------------------
+add_dnc_phone - adds phone number to a DNC list in the system
+
+NOTE: api user for this function must have user_level set to 8 or higher and "modify lists" enabled
+
+REQUIRED FIELDS-
+phone_number -	6-20 characters
+campaign_id -	2-30 characters, should be a valid campaign ID or "SYSTEM_INTERNAL" for the internal DNC list
+
+Example URL strings for API calls:
+http://server/vicidial/non_agent_api.php?source=test&function=add_dnc_phone&user=6666&pass=1234&phone_number=7275551212&campaign_id=TESTCAMP
+http://server/vicidial/non_agent_api.php?source=test&function=add_dnc_phone&user=6666&pass=1234&phone_number=7275551212&campaign_id=SYSTEM_INTERNAL
+
+Example responses:
+ERROR: add_dnc_phone USER DOES NOT HAVE PERMISSION TO ADD DNC NUMBERS - 6666|0
+ERROR: add_dnc_phone YOU MUST USE ALL REQUIRED FIELDS - 6666|||1000
+ERROR: add_dnc_phone DNC NUMBER ALREADY EXISTS - 6666|7275551212
+SUCCESS: add_dnc_phone DNC NUMBER HAS BEEN ADDED - 6666|7275551212|TESTCAMP
+
+
+
+
+
+--------------------------------------------------------------------------------
+add_fpg_phone - adds phone number to a Filter Phone Group in the system
+
+NOTE: api user for this function must have user_level set to 8 or higher and "modify lists" enabled
+
+REQUIRED FIELDS-
+phone_number -	6-20 characters
+group -		2-30 characters, should be a valid Filter Phone Group ID in the system
+
+Example URL strings for API calls:
+http://server/vicidial/non_agent_api.php?source=test&function=add_fpg_phone&user=6666&pass=1234&phone_number=7275551212&group=TEST_IN_FILTER
+
+Example responses:
+ERROR: add_fpg_phone USER DOES NOT HAVE PERMISSION TO ADD FILTER PHONE GROUP NUMBERS - 6666|0
+ERROR: add_fpg_phone YOU MUST USE ALL REQUIRED FIELDS - 6666|||1000
+ERROR: add_fpg_phone FILTER PHONE GROUP DOES NOT EXIST - 6666|TEST_IN_FILTER2
+ERROR: add_fpg_phone FILTER PHONE GROUP NUMBER ALREADY EXISTS - 6666|7275551212|TEST_IN_FILTER
+SUCCESS: add_fpg_phone FILTER PHONE GROUP NUMBER HAS BEEN ADDED - 6666|7275551212|TEST_IN_FILTER
 
 
 

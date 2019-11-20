@@ -1118,3 +1118,8 @@ ALTER TABLE vicidial_users ADD status_group_id VARCHAR(20) default '';
 ALTER TABLE vicidial_campaigns ADD amd_type ENUM('AMD','CPD','KHOMP') default 'AMD';
 
 UPDATE system_settings SET db_schema_version='1580',db_schema_update_date=NOW() where db_schema_version < 1580;
+
+ALTER TABLE system_settings ADD enable_first_webform ENUM('0','1') default '1';
+ALTER TABLE system_settings ADD recording_buttons VARCHAR(30) default 'START_STOP';
+
+UPDATE system_settings SET db_schema_version='1581',db_schema_update_date=NOW() where db_schema_version < 1581;

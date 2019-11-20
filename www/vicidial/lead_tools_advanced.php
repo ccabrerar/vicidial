@@ -1,7 +1,7 @@
 <?php
 # lead_tools_advanced.php - Various tools for lead basic lead management, advanced version.
 #
-# Copyright (C) 2017  Matt Florell,Michael Cargile <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell,Michael Cargile <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 131016-1948 - Initial Build based upon lead_tools.php
@@ -14,10 +14,11 @@
 # 170409-1554 - Added IP List validation code
 # 170711-1104 - Added screen colors
 # 170819-1003 - Added allow_manage_active_lists option, Changed list selection to multi
+# 191119-1817 - Fixes for translations compatibility, issue #1142
 #
 
-$version = '2.14-10';
-$build = '170819-1003';
+$version = '2.14-11';
+$build = '191119-1817';
 
 # This limit is to prevent data inconsistancies.
 # If there are too many leads in a list this
@@ -744,7 +745,7 @@ echo "<tr bgcolor='#$SSframe_background'><td align=left colspan=2><font face='AR
 
 ##### BEGIN move functions #####
 # move confirmation page
-if ($move_submit == "move" )
+if ($move_submit == _QXZ("move") )
 	{
 	# get the variables
 	$enable_move_status="";
@@ -1170,7 +1171,7 @@ if ($move_submit == "move" )
 	}
 
 # actually do the move
-if ($confirm_move == "confirm")
+if ($confirm_move == _QXZ("confirm"))
 	{
 	# get the variables
 	$enable_move_status="";
@@ -1536,7 +1537,7 @@ if ($confirm_move == "confirm")
 
 
 ##### BEGIN update confirmation page #####
-if ($update_submit == "update" )
+if ($update_submit == _QXZ("update") )
 	{
 	# get the variables
 	$enable_update_from_status="";
@@ -1937,7 +1938,7 @@ if ($update_submit == "update" )
 	}
 
 # actually do the update
-if ($confirm_update == "confirm")
+if ($confirm_update == _QXZ("confirm"))
 	{
 	# get the variables
 	$enable_update_from_status="";
@@ -2308,7 +2309,7 @@ if ($confirm_update == "confirm")
 
 ##### BEGIN delete process #####
 # delete confirmation page
-if ( ( $delete_submit == "delete" ) && ( $delete_lists > 0 ) )
+if ( ( $delete_submit == _QXZ("delete") ) && ( $delete_lists > 0 ) )
 	{
 	# get the variables
 	$enable_delete_lead_id="";
@@ -2704,14 +2705,14 @@ if ( ( $delete_submit == "delete" ) && ( $delete_lists > 0 ) )
 	echo "<input type=hidden name=delete_count_num value=\"$delete_count_num\">\n";
 	echo "<input type=hidden name=delete_lead_id value=\"$delete_lead_id\">\n";
 	echo "<input type=hidden name=DB value='$DB'>\n";
-	echo "<input type=submit name=confirm_delete value=confirm>\n";
+	echo "<input type=submit name=confirm_delete value='"._QXZ("confirm")."'>\n";
 	echo "</form></center>\n";
 	echo "<p><a href='$PHP_SELF$DBlink'>"._QXZ("Click here to start over").".</a></p>\n";
 	echo "</body>\n</html>\n";
 	}
 
 # actually do the delete
-if ( ( $confirm_delete == "confirm" ) && ( $delete_lists > 0 ) )
+if ( ( $confirm_delete == _QXZ("confirm") ) && ( $delete_lists > 0 ) )
 	{
 	# get the variables
 	$enable_delete_lead_id="";
@@ -3085,7 +3086,7 @@ if ( ( $confirm_delete == "confirm" ) && ( $delete_lists > 0 ) )
 
 ##### BEGIN callback process #####
 # callback confirmation page
-if ($callback_submit == "switchcallbacks" )
+if ($callback_submit == _QXZ("switchcallbacks") )
 	{
 	# get the variables
 	$enable_callback_entry_date="";
@@ -3206,7 +3207,7 @@ if ($callback_submit == "switchcallbacks" )
 	}
 
 # actually do the callback
-if ($confirm_callback == "confirm")
+if ($confirm_callback == _QXZ("confirm"))
 	{
 	# get the variables
 	$enable_callback_entry_date="";
@@ -3327,8 +3328,8 @@ if ($confirm_callback == "confirm")
 ##### BEGIN main page display #####
 # main page display
 if (
-		($move_submit != "move" ) && ($update_submit != "update") && ($delete_submit != "delete") && ($callback_submit != "switchcallbacks") &&
-		($confirm_move != "confirm") && ($confirm_update != "confirm") && ($confirm_delete != "confirm") && ($confirm_callback != "confirm")
+		($move_submit != _QXZ("move") ) && ($update_submit != _QXZ("update")) && ($delete_submit != _QXZ("delete")) && ($callback_submit != _QXZ("switchcallbacks")) &&
+		($confirm_move != _QXZ("confirm")) && ($confirm_update != _QXZ("confirm")) && ($confirm_delete != _QXZ("confirm")) && ($confirm_callback != _QXZ("confirm"))
 	)
 	{
 	# figure out which campaigns this user is allowed to work on

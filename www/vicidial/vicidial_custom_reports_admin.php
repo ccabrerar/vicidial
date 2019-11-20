@@ -219,7 +219,7 @@ if (preg_match('/\-\-ALL\-\-/i',$LOGadmin_viewable_groups)) {
 $Vreports = array("Real-Time Main Report", " Real-Time Campaign Summary", " Inbound Report", " Inbound Service Level Report", " Inbound Summary Hourly Report", " Inbound Daily Report", " Inbound DID Report", " Inbound IVR Report", " Outbound Calling Report", " Outbound Summary Interval Report", " Outbound IVR Report", " Fronter - Closer Report", " Lists Campaign Statuses Report", " Campaign Status List Report", " Export Calls Report", " Export Leads Report", " Agent Time Detail", " Agent Status Detail", " Agent Performance Detail", " Team Performance Detail", " Performance Comparison Report", " Single Agent Daily", " Single Agent Daily Time", " User Group Login Report", " User Timeclock Report", " User Group Timeclock Status Report", " User Timeclock Detail Report", " Server Performance Report", " Administration Change Log", " List Update Stats", " User Stats", " User Time Sheet", " Download List", " Dialer Inventory Report", " Maximum System Stats", " Maximum Stats Detail", " Search Leads Logs", " Email Log Report", " Carrier Log Report", " Campaign Debug", " Hangup Cause Report", " Lists Pass Report", " Called Counts List IDs Report");
 
 
-if ($add_custom_report=="ADD REPORT") {
+if ($add_custom_report) {
 	if (!$report_name || !$path_name) {
 		$error_msg="<BR><B>"._QXZ("CANNOT ADD REPORT, SOME FIELDS ARE MISSING")."</B><BR>";
 	} else {

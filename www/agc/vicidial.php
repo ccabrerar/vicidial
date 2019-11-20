@@ -627,10 +627,11 @@
 # 191107-1011 - Fix for issue #1180, hide phone number in callback list
 # 191111-0837 - Added LTMGAD/XAMMAD Hotkey options
 # 191111-1619 - Added user additional status groups
+# 191114-0949 - Added options for enable_first_webform and recording_buttons
 #
 
-$version = '2.14-596c';
-$build = '191111-1619';
+$version = '2.14-597c';
+$build = '191114-0949';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=91;
 $one_mysql_log=0;
@@ -745,7 +746,7 @@ if ($sl_ct > 0)
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,vdc_header_date_format,vdc_customer_date_format,vdc_header_phone_format,webroot_writable,timeclock_end_of_day,vtiger_url,enable_vtiger_integration,outbound_autodial_active,enable_second_webform,user_territories_active,static_agent_url,custom_fields_enabled,pllb_grouping_limit,qc_features_active,allow_emails,callback_time_24hour,enable_languages,language_method,meetme_enter_login_filename,meetme_enter_leave3way_filename,enable_third_webform,default_language,active_modules,allow_chats,chat_url,default_phone_code,agent_screen_colors,manual_auto_next,agent_xfer_park_3way,admin_web_directory,agent_script,agent_push_events,agent_push_url,agent_logout_link,agentonly_callback_campaign_lock,manual_dial_validation,mute_recordings,enable_second_script FROM system_settings;";
+$stmt = "SELECT use_non_latin,vdc_header_date_format,vdc_customer_date_format,vdc_header_phone_format,webroot_writable,timeclock_end_of_day,vtiger_url,enable_vtiger_integration,outbound_autodial_active,enable_second_webform,user_territories_active,static_agent_url,custom_fields_enabled,pllb_grouping_limit,qc_features_active,allow_emails,callback_time_24hour,enable_languages,language_method,meetme_enter_login_filename,meetme_enter_leave3way_filename,enable_third_webform,default_language,active_modules,allow_chats,chat_url,default_phone_code,agent_screen_colors,manual_auto_next,agent_xfer_park_3way,admin_web_directory,agent_script,agent_push_events,agent_push_url,agent_logout_link,agentonly_callback_campaign_lock,manual_dial_validation,mute_recordings,enable_second_script,enable_first_webform,recording_buttons FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01001',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 if ($DB) {echo "$stmt\n";}
@@ -792,6 +793,8 @@ if ($qm_conf_ct > 0)
 	$SSmanual_dial_validation =			$row[36];
 	$SSmute_recordings =				$row[37];
 	$SSenable_second_script =			$row[38];
+	$SSenable_first_webform =			$row[39];
+	$SSrecording_buttons =				$row[40];
 	}
 else
 	{
@@ -4048,6 +4051,27 @@ if ($webphone_location == 'bar')
 $AVTheight = '0';
 if ($is_webphone) {$AVTheight = '20';}
 
+$start_recording_GIF = 'vdc_LB_startrecording.gif';
+$start_recording_GIF_off = 'vdc_LB_startrecording_OFF.gif';
+$stop_recording_GIF = 'vdc_LB_stoprecording.gif';
+$stop_recording_GIF_off = 'vdc_LB_stoprecording_OFF.gif';
+if (preg_match("/RECORDING/",$SSrecording_buttons))
+	{
+	if (preg_match("/2xHEIGHT/",$SSrecording_buttons))
+		{
+		$start_recording_GIF = 'vdc_LB_startrecording_altx2.gif';
+		$start_recording_GIF_off = 'vdc_LB_startrecording_altx2_OFF.gif';
+		$stop_recording_GIF = 'vdc_LB_stoprecording_altx2.gif';
+		$stop_recording_GIF_off = 'vdc_LB_stoprecording_altx2_OFF.gif';
+		}
+	else
+		{
+		$start_recording_GIF = 'vdc_LB_startrecording_alt.gif';
+		$start_recording_GIF_off = 'vdc_LB_startrecording_alt_OFF.gif';
+		$stop_recording_GIF = 'vdc_LB_stoprecording_alt.gif';
+		$stop_recording_GIF_off = 'vdc_LB_stoprecording_alt_OFF.gif';
+		}
+	}
 
 ################################################################
 ### BEGIN - build the callback calendar (12 months)          ###
@@ -4662,8 +4686,10 @@ if ($enable_fast_refresh < 1) {echo "\tvar refresh_interval = 1000;\n";}
 	var allow_recording_mute = '<?php echo $allow_recording_mute ?>';
 	var script_width = '<?php echo $SDwidth ?>';
 	var script_height = '<?php echo $SSheight ?>';
+	var enable_first_webform = '<?php echo $SSenable_first_webform ?>';
 	var enable_second_webform = '<?php echo $enable_second_webform ?>';
 	var enable_third_webform = '<?php echo $enable_third_webform ?>';
+	var recording_buttons = '<?php echo $SSrecording_buttons ?>';
 	var no_delete_VDAC=0;
 	var manager_ingroups_set=0;
 	var external_igb_set_name='';
@@ -4971,9 +4997,9 @@ if ($enable_fast_refresh < 1) {echo "\tvar refresh_interval = 1000;\n";}
 	var image_LB_webform = new Image();
 		image_LB_webform.src="./images/<?php echo _QXZ("vdc_LB_webform.gif") ?>";
 	var image_LB_stoprecording = new Image();
-		image_LB_stoprecording.src="./images/<?php echo _QXZ("vdc_LB_stoprecording.gif") ?>";
+		image_LB_stoprecording.src="./images/<?php echo _QXZ("$stop_recording_GIF") ?>";
 	var image_LB_startrecording = new Image();
-		image_LB_startrecording.src="./images/<?php echo _QXZ("vdc_LB_startrecording.gif") ?>";
+		image_LB_startrecording.src="./images/<?php echo _QXZ("$start_recording_GIF") ?>";
 	var image_LB_paused = new Image();
 		image_LB_paused.src="./images/<?php echo _QXZ("vdc_LB_paused.gif") ?>";
 	var image_LB_active = new Image();
@@ -4995,9 +5021,9 @@ if ($enable_fast_refresh < 1) {echo "\tvar refresh_interval = 1000;\n";}
 	var image_LB_webform_OFF = new Image();
 		image_LB_webform_OFF.src="./images/<?php echo _QXZ("vdc_LB_webform_OFF.gif") ?>";
 	var image_LB_stoprecording_OFF = new Image();
-		image_LB_stoprecording_OFF.src="./images/<?php echo _QXZ("vdc_LB_stoprecording_OFF.gif") ?>";
+		image_LB_stoprecording_OFF.src="./images/<?php echo _QXZ("$stop_recording_GIF_off") ?>";
 	var image_LB_startrecording_OFF = new Image();
-		image_LB_startrecording_OFF.src="./images/<?php echo _QXZ("vdc_LB_startrecording_OFF.gif") ?>";
+		image_LB_startrecording_OFF.src="./images/<?php echo _QXZ("$start_recording_GIF_off") ?>";
 	var image_LB_senddtmf_OFF = new Image();
 		image_LB_senddtmf_OFF.src="./images/<?php echo _QXZ("vdc_LB_senddtmf_OFF.gif") ?>";
 	var image_LB_ivrgrabparkedcall = new Image();
@@ -6727,12 +6753,12 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 			//	filename = filedate + "_" + user_abb;
 				var query_recording_exten = recording_exten;
 				var channelrec = "Local/" + conf_silent_prefix + '' + taskconfrec + "@" + ext_context;
-                var conf_rec_start_html = "<a href=\"#\" onclick=\"conf_send_recording('StopMonitorConf','" + taskconfrec + "','" + filename + "','','','YES');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_LB_stoprecording.gif") ?>\" border=\"0\" alt=\"Stop Recording\" /></a>";
+                var conf_rec_start_html = "<a href=\"#\" onclick=\"conf_send_recording('StopMonitorConf','" + taskconfrec + "','" + filename + "','','','YES');return false;\"><img src=\"./images/<?php echo _QXZ("$stop_recording_GIF") ?>\" border=\"0\" alt=\"Stop Recording\" /></a>";
 				var conf_rec_mute_html = "<a href=\"#\" onclick=\"MuteRecording('on');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_LB_mute_recording_AVAILABLE.gif") ?>\" border=\"0\" alt=\"Mute Recording\" /></a><br />";
 
 				if (LIVE_campaign_recording == 'ALLFORCE')
 					{
-                    document.getElementById("RecorDControl").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_LB_startrecording_OFF.gif") ?>\" border=\"0\" alt=\"Start Recording\" />";
+                    document.getElementById("RecorDControl").innerHTML = "<img src=\"./images/<?php echo _QXZ("$start_recording_GIF_off") ?>\" border=\"0\" alt=\"Start Recording\" />";
 					}
 				else
 					{
@@ -6748,11 +6774,11 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 				filename = taskconffile;
 				var query_recording_exten = session_id;
 				var channelrec = "Local/" + conf_silent_prefix + '' + taskconfrec + "@" + ext_context;
-                var conf_rec_start_html = "<a href=\"#\" onclick=\"conf_send_recording('MonitorConf','" + taskconfrec + "','','','','YES');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_LB_startrecording.gif") ?>\" border=\"0\" alt=\"Start Recording\" /></a>";
+                var conf_rec_start_html = "<a href=\"#\" onclick=\"conf_send_recording('MonitorConf','" + taskconfrec + "','','','','YES');return false;\"><img src=\"./images/<?php echo _QXZ("$start_recording_GIF") ?>\" border=\"0\" alt=\"Start Recording\" /></a>";
 				var conf_rec_mute_html = "<img src=\"./images/<?php echo _QXZ("vdc_LB_mute_recording_DISABLED.gif") ?>\" border=\"0\" alt=\"Mute Recording Disabled\" /><br />";
 				if (LIVE_campaign_recording == 'ALLFORCE')
 					{
-                    document.getElementById("RecorDControl").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_LB_startrecording_OFF.gif") ?>\" border=\"0\" alt=\"Start Recording\" />";
+                    document.getElementById("RecorDControl").innerHTML = "<img src=\"./images/<?php echo _QXZ("$start_recording_GIF_off") ?>\" border=\"0\" alt=\"Start Recording\" />";
 					}
 				else
 					{
@@ -6804,11 +6830,11 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 
 						if (taskconfrectype == 'MonitorConf')
 							{
-							var conf_rec_start_html = "<a href=\"#\" onclick=\"conf_send_recording('StopMonitorConf','" + taskconfrec + "','ID:" + recording_id + "','','','YES');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_LB_stoprecording.gif") ?>\" border=\"0\" alt=\"Stop Recording\" /></a>";
+							var conf_rec_start_html = "<a href=\"#\" onclick=\"conf_send_recording('StopMonitorConf','" + taskconfrec + "','ID:" + recording_id + "','','','YES');return false;\"><img src=\"./images/<?php echo _QXZ("$stop_recording_GIF") ?>\" border=\"0\" alt=\"Stop Recording\" /></a>";
 							var conf_rec_mute_html = "<a href=\"#\" onclick=\"MuteRecording('on');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_LB_mute_recording_AVAILABLE.gif") ?>\" border=\"0\" alt=\"Mute Recording\" /></a><br />";
 							if (LIVE_campaign_recording == 'ALLFORCE')
 								{
-								document.getElementById("RecorDControl").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_LB_startrecording_OFF.gif") ?>\" border=\"0\" alt=\"Start Recording\" />";
+								document.getElementById("RecorDControl").innerHTML = "<img src=\"./images/<?php echo _QXZ("$start_recording_GIF_off") ?>\" border=\"0\" alt=\"Start Recording\" />";
 								}
 							else
 								{
@@ -7458,11 +7484,11 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 				//		alert("VICIDIAL Call log entered:\n" + document.vicidial_form.uniqueid.value);
 						if ( (taskMDstage != "start") && (VDstop_rec_after_each_call == 1) )
 							{
-                            var conf_rec_start_html = "<a href=\"#\" onclick=\"conf_send_recording('MonitorConf','" + session_id + "','','','','YES');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_LB_startrecording.gif") ?>\" border=\"0\" alt=\"Start Recording\" /></a>";
+                            var conf_rec_start_html = "<a href=\"#\" onclick=\"conf_send_recording('MonitorConf','" + session_id + "','','','','YES');return false;\"><img src=\"./images/<?php echo _QXZ("$start_recording_GIF") ?>\" border=\"0\" alt=\"Start Recording\" /></a>";
 							var conf_rec_mute_html = "<img src=\"./images/<?php echo _QXZ("vdc_LB_mute_recording_DISABLED.gif") ?>\" border=\"0\" alt=\"Mute Recording Disabled\" /><br />";
 							if ( (LIVE_campaign_recording == 'NEVER') || (LIVE_campaign_recording == 'ALLFORCE') )
 								{
-                                document.getElementById("RecorDControl").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_LB_startrecording_OFF.gif") ?>\" border=\"0\" alt=\"Start Recording\" />";
+                                document.getElementById("RecorDControl").innerHTML = "<img src=\"./images/<?php echo _QXZ("$start_recording_GIF_off") ?>\" border=\"0\" alt=\"Start Recording\" />";
 								}
 							else
 								{document.getElementById("RecorDControl").innerHTML = conf_rec_start_html;}
@@ -8509,13 +8535,14 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 									TEMP_VDIC_web_form_address_three = URLDecode(VDIC_web_form_address_three,'YES','DEFAULT','3');
 									}
 
+								if (enable_first_webform > 0)
+									{
 								document.getElementById("WebFormSpan").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormRefresH();\" onclick=\"webform_click_log('webform1');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform.gif"); ?>\" border=\"0\" alt=\"Web Form\" /></a>\n";
-
+									}
 								if (enable_second_webform > 0)
 									{
 									document.getElementById("WebFormSpanTwo").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_two + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormTwoRefresH();\" onclick=\"webform_click_log('webform2');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_two.gif"); ?>\" border=\"0\" alt=\"Web Form 2\" /></a>\n";
 									}
-
 								if (enable_third_webform > 0)
 									{
 									document.getElementById("WebFormSpanThree").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_three + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormThreeRefresH();\" onclick=\"webform_click_log('webform3');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_three.gif"); ?>\" border=\"0\" alt=\"Web Form 3\" /></a>\n";
@@ -9439,7 +9466,10 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 							TEMP_VDIC_web_form_address_three = URLDecode(VDIC_web_form_address_three,'YES','DEFAULT','3');
 							}
 
+						if (enable_first_webform > 0)
+							{
                         document.getElementById("WebFormSpan").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormRefresH();\" onclick=\"webform_click_log('webform1');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform.gif"); ?>\" border=\"0\" alt=\"Web Form\" /></a>\n";
+							}
 						if (enable_second_webform > 0)
 							{
                             document.getElementById("WebFormSpanTwo").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_two + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormTwoRefresH();\" onclick=\"webform_click_log('webform2');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_two.gif"); ?>\" border=\"0\" alt=\"Web Form 2\" /></a>\n";
@@ -9988,7 +10018,10 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 									TEMP_VDIC_web_form_address_three = URLDecode(VDIC_web_form_address_three,'YES','DEFAULT','3');
 									}
 
+								if (enable_first_webform > 0)
+									{
 								document.getElementById("WebFormSpan").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormRefresH();\" onclick=\"webform_click_log('webform1');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform.gif"); ?>\" border=\"0\" alt=\"Web Form\" /></a>\n";
+									}
 								if (enable_second_webform > 0)
 									{
 									document.getElementById("WebFormSpanTwo").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_two + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormTwoRefresH();\" onclick=\"webform_click_log('webform2');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_two.gif"); ?>\" border=\"0\" alt=\"Web Form 2\" /></a>\n";
@@ -11649,9 +11682,10 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								TEMP_VDIC_web_form_address_three = URLDecode(VDIC_web_form_address_three,'YES','DEFAULT','3');
 								}
 
-
+							if (enable_first_webform > 0)
+								{
                             document.getElementById("WebFormSpan").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormRefresH();\" onclick=\"webform_click_log('webform1');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform.gif"); ?>\" border=\"0\" alt=\"Web Form\" /></a>\n";
-
+								}
 							if (enable_second_webform > 0)
 								{
                                 document.getElementById("WebFormSpanTwo").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_two + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormTwoRefresH();\" onclick=\"webform_click_log('webform2');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_two.gif"); ?>\" border=\"0\" alt=\"Web Form 2\" /></a>\n";
@@ -12448,9 +12482,10 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								TEMP_VDIC_web_form_address_three = URLDecode(VDIC_web_form_address_three,'YES','DEFAULT','3');
 								}
 
-
+							if (enable_first_webform > 0)
+								{
 							document.getElementById("WebFormSpan").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormRefresH();\" onclick=\"webform_click_log('webform1');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform.gif"); ?>\" border=\"0\" alt=\"Web Form\" /></a>\n";
-
+								}
 							if (enable_second_webform > 0)
 								{
 								document.getElementById("WebFormSpanTwo").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_two + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormTwoRefresH();\" onclick=\"webform_click_log('webform2');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_two.gif"); ?>\" border=\"0\" alt=\"Web Form 2\" /></a>\n";
@@ -12690,6 +12725,8 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 				}
 			}
 
+		if (enable_first_webform > 0)
+			{
 		if (taskrefresh == 'OUT')
 			{
             document.getElementById("WebFormSpan").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormRefresH('IN');\" onclick=\"webform_click_log('webform1');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform.gif"); ?>\" border=\"0\" alt=\"Web Form\" /></a>\n";
@@ -12698,6 +12735,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 			{
             document.getElementById("WebFormSpan").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address + "\" target=\"" + web_form_target + "\" onMouseOut=\"WebFormRefresH('OUT');\" onclick=\"webform_click_log('webform1');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform.gif"); ?>\" border=\"0\" alt=\"Web Form\" /></a>\n";
 			}
+		}
 		}
 
 
@@ -13233,7 +13271,10 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 					}
 
 				if( document.images ) { document.images['livecall'].src = image_livecall_OFF.src;}
+				if (enable_first_webform > 0)
+					{
 				document.getElementById("WebFormSpan").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_LB_webform_OFF.gif"); ?>\" border=\"0\" alt=\"Web Form\" />";
+					}
 				if (enable_second_webform > 0)
 					{
 					document.getElementById("WebFormSpanTwo").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_LB_webform_two_OFF.gif"); ?>\" border=\"0\" alt=\"Web Form 2\" />";
@@ -14173,7 +14214,10 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 
 			WebFormRefresH('NO','YES');
 
+			if (enable_first_webform > 0)
+				{
             document.getElementById("WebFormSpan").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_LB_webform_OFF.gif"); ?>\" border=\"0\" alt=\"Web Form\" />";
+				}
 			if (enable_second_webform > 0)
 				{
                 document.getElementById("WebFormSpanTwo").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_LB_webform_two_OFF.gif"); ?>\" border=\"0\" alt=\"Web Form 2\" />";
@@ -18531,7 +18575,7 @@ function phone_number_format(formatphone) {
 			document.getElementById("sessionIDspan").innerHTML = session_id;
 			if ( (LIVE_campaign_recording == 'NEVER') || (LIVE_campaign_recording == 'ALLFORCE') )
 				{
-                document.getElementById("RecorDControl").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_LB_startrecording_OFF.gif"); ?>\" border=\"0\" alt=\"Start Recording\" />";
+                document.getElementById("RecorDControl").innerHTML = "<img src=\"./images/<?php echo _QXZ("$start_recording_GIF_off"); ?>\" border=\"0\" alt=\"Start Recording\" />";
 				}
 			if (mute_recordings == 'Y')
 				{
@@ -20082,11 +20126,13 @@ $zi=2;
     <?php echo _QXZ("RECORD ID:"); ?> <font class="body_small"><span id="RecorDID"></span></font><br />
 	<center>
 	<!-- <a href=\"#\" onclick=\"conf_send_recording('MonitorConf','" + head_conf + "','','','');return false;\">Record</a> -->
-    <span style="background-color: <?php echo $MAIN_COLOR ?>" id="RecorDControl"><a href="#" onclick="conf_send_recording('MonitorConf',session_id,'','','','YES');return false;"><img src="./images/<?php echo _QXZ("vdc_LB_startrecording.gif"); ?>" border="0" alt="Start Recording" /></a></span><br />
+    <span style="background-color: <?php echo $MAIN_COLOR ?>" id="RecorDControl"><a href="#" onclick="conf_send_recording('MonitorConf',session_id,'','','','YES');return false;"><img src="./images/<?php echo _QXZ("$start_recording_GIF"); ?>" border="0" alt="Start Recording" /></a></span><br />
     <span style="background-color: <?php echo $MAIN_COLOR ?>" id="RecorDMute"></span>
-    <span id="SpacerSpanA"><img src="./images/<?php echo _QXZ("blank.gif"); ?>" width="145px" height="16px" border="0" /></span><br />
-    <span style="background-color: #FFFFFF" id="WebFormSpan"><img src="./images/<?php echo _QXZ("vdc_LB_webform_OFF.gif"); ?>" border="0" alt="Web Form" /></span><br />
 	<?php
+	if (!preg_match("/NOGAP/",$SSrecording_buttons))
+        {echo "<span id=\"SpacerSpanA\"><img src=\"./images/"._QXZ("blank.gif")."\" width=\"145px\" height=\"16px\" border=\"0\" /></span><br />\n";}
+	if ($SSenable_first_webform > 0)
+        {echo "<span style=\"background-color: #FFFFFF\" id=\"WebFormSpan\"><img src=\"./images/"._QXZ("vdc_LB_webform_OFF.gif")."\" border=\"0\" alt=\"Web Form\" /></span><br />\n";}
 	if ($enable_second_webform > 0)
         {echo "<span style=\"background-color: #FFFFFF\" id=\"WebFormSpanTwo\"><img src=\"./images/"._QXZ("vdc_LB_webform_two_OFF.gif")."\" border=\"0\" alt=\"Web Form 2\" /></span><br />\n";}
 	if ($enable_third_webform > 0)

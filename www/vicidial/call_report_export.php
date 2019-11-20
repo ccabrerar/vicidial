@@ -57,6 +57,7 @@
 # 190116-2116 - Added ---ALL--- options for Campaigns and In-Groups
 # 190610-2035 - Fixed admin hide phone issue
 # 190926-0925 - Fixes for PHP7
+# 191119-1731 - Fix for alternate server url for recordings, issue #1175
 #
 
 $startMS = microtime();
@@ -403,19 +404,21 @@ if ($run_export > 0)
 	$list_string='|';
 	$status_string='|';
 
-	// If LOCATION or ALL is seleced in recording fields, we need to get information from the vicidial_servers table
-	if (preg_match("/(ALL|LOCATION)/", $rec_fields)) {
+	# If LOCATION or ALL is seleced in recording fields, we need to get information from the vicidial_servers table
+	if (preg_match("/(ALL|LOCATION)/", $rec_fields)) 
+		{
 		$server_recording_links = array();
 		$stmt="SELECT recording_web_link, server_ip, alt_server_ip, external_server_ip FROM servers";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		while (($row = mysqli_fetch_row($rslt))) {
+		while (($row = mysqli_fetch_row($rslt))) 
+			{
 			$server_recording_links[$row[1]] = $row[1];
 			if ($row[0] == 'ALT_IP')
-				$server_recording_links[$row[1]] = $row[2];
+				{$server_recording_links[$row[1]] = $row[2];}
 			elseif ($row[0] == 'EXTERNAL_IP')
-				$server_recording_links[$row[1]] = $row[3];
+				{$server_recording_links[$row[1]] = $row[3];}
+			}
 		}
-	}
 
 	$i=0;
 	while($i < $campaign_ct)
@@ -995,18 +998,17 @@ if ($run_export > 0)
 						$rec_id .=			"$row[0]|";
 						$rec_filename .=	"$row[1]|";
 						$rec_location .=	"$row[2]|";
-
 						$u++;
 						}
 					}
 				$rec_id = preg_replace("/.$/",'',$rec_id);
 				$rec_filename = preg_replace("/.$/",'',$rec_filename);
 				$rec_location = preg_replace("/.$/",'',$rec_location);
-				if (isset($server_recording_links)) {
+				if (isset($server_recording_links)) 
+					{
 					foreach ($server_recording_links as $server_ip => $recording_ip)
-						$rec_location = str_replace($server_ip,$recording_ip,$rec_location);
-				}
-
+						{$rec_location = str_replace($server_ip,$recording_ip,$rec_location);}
+					}
 				if ($rec_fields=='ID')
 					{$rec_data = "\t$rec_id";}
 				if ($rec_fields=='FILENAME')

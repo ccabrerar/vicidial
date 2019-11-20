@@ -96,6 +96,7 @@
 # 190310-2223 - Added indication of muted recordings by agent
 # 190329-1917 - Added display of AMD log info when CIDdisplay=Yes is set
 # 190609-0927 - Added sip_event_logging support
+# 191113-2204 - Added support for per-User additional status groups
 #
 
 require("dbconnect_mysqli.php");
@@ -377,12 +378,13 @@ if ($auth < 1)
 	}
 
 if ($non_latin > 0) {$rslt=mysql_to_mysqli("SET NAMES 'UTF8'", $link);}
-$rights_stmt = "SELECT modify_leads,selected_language from vicidial_users where user='$PHP_AUTH_USER';";
+$rights_stmt = "SELECT modify_leads,selected_language,status_group_id from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
 $rights_rslt=mysql_to_mysqli($rights_stmt, $link);
 $rights_row=mysqli_fetch_row($rights_rslt);
 $modify_leads =			$rights_row[0];
 $VUselected_language =	$rights_row[1];
+$VU_status_group_id =	$rights_row[2];
 
 # check their permissions
 if ($modify_leads < 1)
@@ -2093,6 +2095,26 @@ else
 			$o++;
 			}
 
+		if (strlen($VU_status_group_id) > 0)
+			{
+			$stmt="SELECT status,status_name,selectable,campaign_id,human_answered,category,sale,dnc,customer_contact,not_interested,unworkable from vicidial_campaign_statuses where campaign_id='$VU_status_group_id' $selectableSQLand order by status";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$USERstatuses_to_print = mysqli_num_rows($rslt);
+
+			$o=0;
+			$CBhold_set=0;
+			while ($USERstatuses_to_print > $o) 
+				{
+				$rowx=mysqli_fetch_row($rslt);
+				if ( (strlen($dispo) ==  strlen($rowx[0])) and (preg_match("/$dispo/i",$rowx[0])) )
+					{$statuses_list .= "<option SELECTED value=\"$rowx[0]\">$rowx[0] - $rowx[1]</option>\n"; $DS++;}
+				else
+					{$statuses_list .= "<option value=\"$rowx[0]\">$rowx[0] - $rowx[1]</option>\n";}
+				if ($rowx[0] == 'CBHOLD') {$CBhold_set++;}
+				$o++;
+				}
+			}	
+
 		if ($dispo == 'CBHOLD') {$CBhold_set++;}
 
 		if ($DS < 1) 
@@ -2187,6 +2209,26 @@ else
 							{$statuses_list .= "<option value=\"$rowx[0]\">$rowx[0] - $rowx[1]</option>\n";}
 						$o++;
 						}
+
+
+					if (strlen($VU_status_group_id) > 0)
+						{
+						$stmt="SELECT status,status_name,selectable,campaign_id,human_answered,category,sale,dnc,customer_contact,not_interested,unworkable from vicidial_campaign_statuses where campaign_id='$VU_status_group_id' and scheduled_callback='Y' $selectableSQLand order by status";
+						$rslt=mysql_to_mysqli($stmt, $link);
+						$USERstatuses_to_print = mysqli_num_rows($rslt);
+
+						$o=0;
+						$CBhold_set=0;
+						while ($USERstatuses_to_print > $o) 
+							{
+							$rowx=mysqli_fetch_row($rslt);
+							if ( (strlen($lead_status) ==  strlen($rowx[0])) and (preg_match("/$lead_status/i",$rowx[0])) )
+								{$statuses_list .= "<option SELECTED value=\"$rowx[0]\">$rowx[0] - $rowx[1]</option>\n"; $DS++;}
+							else
+								{$statuses_list .= "<option value=\"$rowx[0]\">$rowx[0] - $rowx[1]</option>\n";}
+							$o++;
+							}
+						}	
 
 					if ($DS < 1) 
 						{$statuses_list .= "<option SELECTED value=\"$lead_status\">$lead_status</option>\n";}

@@ -1,7 +1,7 @@
 <?php
 # lead_tools.php - Various tools for lead basic lead management.
 #
-# Copyright (C) 2017  Matt Florell,Michael Cargile <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell,Michael Cargile <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 121110-1446 - Initial Build
@@ -16,10 +16,11 @@
 # 170409-1533 - Added IP List validation code
 # 170711-1105 - Added screen colors
 # 170819-1002 - Added allow_manage_active_lists option
+# 191119-1815 - Fixes for translations compatibility, issue #1142
 #
 
-$version = '2.14-12';
-$build = '170819-1002';
+$version = '2.14-13';
+$build = '191119-1815';
 
 # This limit is to prevent data inconsistancies.
 # If there are too many leads in a list this
@@ -288,7 +289,7 @@ echo "</tr>\n";
 echo "<tr bgcolor='#$SSframe_background'><td align=left colspan=2><font face='ARIAL,HELVETICA' color=black size=3> &nbsp; \n";
 
 # move confirmation page
-if ($move_submit == "move" )
+if ($move_submit == _QXZ("move") )
 	{
 	# get the variables
 	$move_from_list="";
@@ -371,7 +372,7 @@ if ($move_submit == "move" )
 		echo "<input type=hidden name=move_status value='$move_status'>\n";
 		echo "<input type=hidden name=move_count_op value='$move_count_op'>\n";
 		echo "<input type=hidden name=move_count_num value='$move_count_num'>\n";
-		echo "<input type=submit name=confirm_move value=confirm>\n";
+		echo "<input type=submit name=confirm_move value='"._QXZ("confirm")."'>\n";
 		echo "</form></center>\n";
 				echo "<p><a href='$PHP_SELF'>"._QXZ("Click here to start over").".</a></p>\n";
 		echo "</body>\n</html>\n";
@@ -379,7 +380,7 @@ if ($move_submit == "move" )
 	}
 
 # actually do the move
-if ($confirm_move == "confirm")
+if ($confirm_move == _QXZ("confirm"))
 	{
 	# get the variables
 	$move_from_list="";
@@ -443,7 +444,7 @@ if ($confirm_move == "confirm")
 
 
 # update confirmation page
-if ($update_submit == "update" )
+if ($update_submit == _QXZ("update") )
 	{
 	# get the variables
 	$update_list="";
@@ -502,7 +503,7 @@ if ($update_submit == "update" )
 	echo "<input type=hidden name=update_to_status value='$update_to_status'>\n";
 	echo "<input type=hidden name=update_count_op value='$update_count_op'>\n";
 	echo "<input type=hidden name=update_count_num value='$update_count_num'>\n";
-	echo "<input type=submit name=confirm_update value=confirm>\n";
+	echo "<input type=submit name=confirm_update value='"._QXZ("confirm")."'>\n";
 	echo "</form></center>\n";
 	echo "<p><a href='$PHP_SELF'>"._QXZ("Click here to start over").".</a></p>\n";
 	echo "</body>\n</html>\n";
@@ -510,7 +511,7 @@ if ($update_submit == "update" )
 	}
 
 # actually do the update
-if ($confirm_update == "confirm")
+if ($confirm_update == _QXZ("confirm"))
 	{
 	# get the variables
 	$update_list="";
@@ -574,7 +575,7 @@ if ($confirm_update == "confirm")
 
 
 # delete confirmation page
-if ( ( $delete_submit == "delete" ) && ( $delete_lists > 0 ) )
+if ( ( $delete_submit == _QXZ("delete") ) && ( $delete_lists > 0 ) )
 	{
 	# get the variables
 	$delete_list="";
@@ -628,7 +629,7 @@ if ( ( $delete_submit == "delete" ) && ( $delete_lists > 0 ) )
 	echo "<input type=hidden name=delete_status value='$delete_status'>\n";
 	echo "<input type=hidden name=delete_count_op value='$delete_count_op'>\n";
 	echo "<input type=hidden name=delete_count_num value='$delete_count_num'>\n";
-	echo "<input type=submit name=confirm_delete value=confirm>\n";
+	echo "<input type=submit name=confirm_delete value='"._QXZ("confirm")."'>\n";
 	echo "</form></center>\n";
 	echo "<p><a href='$PHP_SELF'>"._QXZ("Click here to start over").".</a></p>\n";
 	echo "</body>\n</html>\n";
@@ -636,7 +637,7 @@ if ( ( $delete_submit == "delete" ) && ( $delete_lists > 0 ) )
 	}
 
 # actually do the delete
-if ( ( $confirm_delete == "confirm" ) && ( $delete_lists > 0 ) )
+if ( ( $confirm_delete == _QXZ("confirm") ) && ( $delete_lists > 0 ) )
 	{
 	# get the variables
 	$delete_list="";
@@ -696,8 +697,8 @@ if ( ( $confirm_delete == "confirm" ) && ( $delete_lists > 0 ) )
 
 # main page display
 if (
-		($move_submit != "move" ) && ($update_submit != "update") && ($delete_submit != "delete") &&
-		($confirm_move != "confirm") && ($confirm_update != "confirm") && ($confirm_delete != "confirm")
+		($move_submit != _QXZ("move") ) && ($update_submit != _QXZ("update")) && ($delete_submit != _QXZ("delete")) &&
+		($confirm_move != _QXZ("confirm")) && ($confirm_update != _QXZ("confirm")) && ($confirm_delete != _QXZ("confirm"))
 	)
 	{
 	# figure out which campaigns this user is allowed to work on

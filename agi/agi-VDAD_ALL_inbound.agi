@@ -233,6 +233,7 @@
 # 190121-1505 - Added RA_USER_PHONE On-Hook CID to solve last RINGAGENT issues
 # 190216-0812 - Fix for user-group, in-group and campaign allowed/permissions matching issues
 # 190223-0920 - Added definable play-place-in-line static prompts
+# 191117-2156 - Fix for truncated extension issue #1193
 #
 
 $script = 'agi-VDAD_ALL_inbound.agi';
@@ -575,6 +576,33 @@ if ($call_handle_method =~ /^CLOSER/)
 	### allow for internal PRI/IAX/SIP transfer data string "90009*CL_uk3survy_*8301*10000123*universal*7275551212*1234*"
 	if ($extension =~ /^900\d\d\*|^9900\d\d\*/)
 		{
+		### BEGIN check for truncated extension ###
+		$LENGTHextension = length($extension);
+		$LENGTHcmd_line_b=0;
+		if ($callerid =~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^Y\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/)
+			{
+			$stmtA = "SELECT cmd_line_b FROM vicidial_manager where callerid='$callerid' and action='Originate' and cmd_line_b LIKE \"Exten: 8305888888888888_90009%\" order by man_id desc limit 1;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+				$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;	
+				$cmd_line_b	=	$aryA[0];
+				$cmd_line_b =~ s/^Exten: 8305888888888888\d90009/990009/gi;
+				$LENGTHcmd_line_b = length($cmd_line_b);
+				}
+			$sthA->finish();
+
+			if ($LENGTHcmd_line_b > $LENGTHextension) 
+				{
+				if ($AGILOG) {$agi_string = "CLOSER extension override: ($LENGTHcmd_line_b <> $LENGTHextension)|$cmd_line_b|";   &agi_output;}
+				$extension = $cmd_line_b;
+				}
+			}
+		### END check for truncated extension ###
+
 		@EXT_vars = split(/\*/, $extension);
 		
 		$referring_extension =	$EXT_vars[0];	# initial extension sent
