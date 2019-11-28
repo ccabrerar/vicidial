@@ -458,6 +458,9 @@ OTHER CHANGES:
 	This includes different wording, different sizes and removing the blank
 	space below the recording buttons.
 
+128. Added ability to play multiple audio prompts for outbound survey campaigns
+	and to use DYN for lead field wildcards defined as audio prompts.
+
 
 
 

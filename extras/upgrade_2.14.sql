@@ -1123,3 +1123,11 @@ ALTER TABLE system_settings ADD enable_first_webform ENUM('0','1') default '1';
 ALTER TABLE system_settings ADD recording_buttons VARCHAR(30) default 'START_STOP';
 
 UPDATE system_settings SET db_schema_version='1581',db_schema_update_date=NOW() where db_schema_version < 1581;
+
+ALTER TABLE vicidial_campaigns MODIFY survey_first_audio_file TEXT;
+ALTER TABLE vicidial_campaigns MODIFY survey_opt_in_audio_file TEXT;
+ALTER TABLE vicidial_campaigns MODIFY survey_ni_audio_file TEXT;
+ALTER TABLE vicidial_campaigns MODIFY survey_third_audio_file TEXT;
+ALTER TABLE vicidial_campaigns MODIFY survey_fourth_audio_file TEXT;
+
+UPDATE system_settings SET db_schema_version='1582',db_schema_update_date=NOW() where db_schema_version < 1582;

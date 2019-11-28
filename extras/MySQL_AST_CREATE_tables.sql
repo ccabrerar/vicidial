@@ -825,11 +825,11 @@ qc_get_record_launch ENUM('NONE','SCRIPT','WEBFORM','QCSCRIPT','QCWEBFORM') defa
 qc_show_recording ENUM('Y','N') default 'Y',
 qc_web_form_address VARCHAR(255),
 qc_script VARCHAR(20),
-survey_first_audio_file VARCHAR(50) default 'US_pol_survey_hello',
+survey_first_audio_file TEXT,
 survey_dtmf_digits VARCHAR(16) default '1238',
 survey_ni_digit VARCHAR(1) default '8',
-survey_opt_in_audio_file VARCHAR(50) default 'US_pol_survey_transfer',
-survey_ni_audio_file VARCHAR(50) default 'US_thanks_no_contact',
+survey_opt_in_audio_file TEXT,
+survey_ni_audio_file TEXT,
 survey_method ENUM('AGENT_XFER','VOICEMAIL','EXTENSION','HANGUP','CAMPREC_60_WAV','CALLMENU','VMAIL_NO_INST') default 'AGENT_XFER',
 survey_no_response_action ENUM('OPTIN','OPTOUT','DROP') default 'OPTIN',
 survey_ni_status VARCHAR(6) default 'NI',
@@ -855,11 +855,11 @@ default_group_alias VARCHAR(30) default '',
 vtiger_search_dead ENUM('DISABLED','ASK','RESURRECT') default 'ASK',
 vtiger_status_call ENUM('Y','N') default 'N',
 survey_third_digit VARCHAR(1) default '',
-survey_third_audio_file VARCHAR(50) default 'US_thanks_no_contact',
+survey_third_audio_file TEXT,
 survey_third_status VARCHAR(6) default 'NI',
 survey_third_exten VARCHAR(20) default '8300',
 survey_fourth_digit VARCHAR(1) default '',
-survey_fourth_audio_file VARCHAR(50) default 'US_thanks_no_contact',
+survey_fourth_audio_file TEXT,
 survey_fourth_status VARCHAR(6) default 'NI',
 survey_fourth_exten VARCHAR(20) default '8300',
 drop_lockout_time VARCHAR(6) default '0',
@@ -4570,4 +4570,4 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1581',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1582',db_schema_update_date=NOW(),reload_timestamp=NOW();
