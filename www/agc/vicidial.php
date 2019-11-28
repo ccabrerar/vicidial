@@ -968,6 +968,7 @@ $FQDN = "$server_name$server_port";
 $chat_URL = preg_replace("/LOCALFQDN/",$FQDN,$chat_URL);
 $agent_push_url = preg_replace("/LOCALFQDN/",$FQDN,$agent_push_url);
 $agcPAGE = "$HTTPprotocol$server_name$server_port$script_name";
+$agcPAGE = "$script_name";
 $agcDIR = preg_replace('/vicidial\.php/i','',$agcPAGE);
 $agcDIR = preg_replace("/$SSagent_script/i",'',$agcDIR);
 if (strlen($static_agent_url) > 5)
