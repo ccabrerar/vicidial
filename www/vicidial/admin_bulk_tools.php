@@ -1,7 +1,7 @@
 <?php
 # admin_bulk_tools.php
 #
-# Copyright (C) 2018  Mike Coate, Mike Cargile, Matt Florell	<vicidial@gmail.com>	LICENSE: AGPLv2
+# Copyright (C) 2020  Mike Coate, Mike Cargile, Matt Florell	<vicidial@gmail.com>	LICENSE: AGPLv2
 #
 # This is the admin screen for various bulk copy/delete tools.
 #
@@ -25,13 +25,14 @@
 # 180323-1643 - Updated column labels in user copy function to add ones that had been created since script was made.
 # 180330-1427 - Added 'active' column to CID Group import
 # 180502-2115 - Added new help display
+# 200108-0956 - Added CID Group type of NONE
 #
 
 require("dbconnect_mysqli.php");
 require("functions.php");
 
-$version = '2.14-19';
-$build = '180502-2115';
+$version = '2.14-20';
+$build = '200108-0956';
 
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
@@ -439,6 +440,10 @@ if ($form_to_run == "ACCID")
 				$SQL_rslt = mysql_to_mysqli($SQL, $link);
 				$row=mysqli_fetch_row($SQL_rslt);
 				$areacode[$i] = $row[0];
+				}
+			if ($CGT == 'NONE')
+				{
+				$areacode[$i] = 'NONE';
 				}
 			}
 		if ($ACCIDmethod == "CSV") {$areacode[$i] = $ACCIDareacode_raw[$i];}

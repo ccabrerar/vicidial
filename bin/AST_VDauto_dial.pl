@@ -25,7 +25,7 @@
 # It is good practice to keep this program running by placing the associated 
 # KEEPALIVE script running every minute to ensure this program is always running
 #
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG:
 # 50125-1201 - Changed dial timeout to 120 seconds from 180 seconds
@@ -131,6 +131,7 @@
 # 180812-1026 - Added code for scheduled_callbacks_auto_reschedule campaign feature
 # 190709-2239 - Added Call Quota logging
 # 191108-0922 - Added Dial Timeout Lead override function
+# 200108-1315 - Added CID Group type of NONE
 #
 
 ### begin parsing run-time options ###
@@ -1564,7 +1565,11 @@ while($one_day_interval > 0)
 															{
 															$temp_state = $state;
 															$stmtA = "SELECT outbound_cid,areacode FROM vicidial_campaign_cid_areacodes where campaign_id='$DBIPcid_group_id[$user_CIPct]' and areacode IN('$temp_state') and active='Y' order by call_count_today desc limit 100000;";
-															}											$temp_CID='';
+															}
+														if ($cid_group_type =~ /NONE/)
+															{
+															$stmtA = "SELECT outbound_cid,areacode FROM vicidial_campaign_cid_areacodes where campaign_id='$DBIPcid_group_id[$user_CIPct]' and active='Y' order by call_count_today desc limit 100000;";
+															}
 														$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 														$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 														$sthArows=$sthA->rows;

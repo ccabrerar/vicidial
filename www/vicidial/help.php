@@ -1,7 +1,7 @@
 <?php
 # help.php - VICIDIAL administration page
 #
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 # 
 
 # CHANGELOG:
@@ -160,6 +160,7 @@
 # 180424-1530 - Added in-group populate_lead_source, populate_lead_vendor entries
 # 180430-1837 - Added inbound_groups-park_ext entry
 # 180506-1822 - Added text for custom list fields SWITCH field type
+# 191227-0857 - Fixes for translated phrases gathering
 #
 
 require("dbconnect_mysqli.php");
@@ -6999,7 +7000,7 @@ if ($SSqc_features_active > 0)
 <?php echo _QXZ("<U>BLOCKING</U> = The drop rate, expressed as a decimal in TEXT or a percent in graph form, of an hourly interval.  This is taken by dividing the number dropped calls active in the hour by the number of calls active in the hour."); ?><BR>
 <?php echo _QXZ("<U>ERLANGS</U> = Number of Erlangs for the hour.  Erlangs are calculated by taking the number of calls received in an interval, multiplied by the average duration of a call expressed as a decimal value relative to the interval.  For example, if 100 calls came in during an hour, and the average call length is 6 minutes, the Erlang value is 100 calls/hour * .1 hour (6 minutes is 1/10th of an hour), or 10."); ?><BR>
 
-<A NAME="inbound_forecasting_gos"><?php echo _QXZ("<U>GOS</U> = \"Grade of Service\".  This is the probability that a call is dropped, which is given by the equation"); ?><BR><BR> GoS = (E<sup>M</sup>/M!)<big>/</big>(<big>&#8721;</big><sup>M</sup><sub style="margin-left:-10px;">n=0</sub> E<sup>n</sup>/n!)<BR><BR>
+<A NAME="inbound_forecasting_gos"><?php echo _QXZ("<U>GOS</U> = -Grade of Service-.  This is the probability that a call is dropped, which is given by the equation"); ?><BR><BR> GoS = (E<sup>M</sup>/M!)<big>/</big>(<big>&#8721;</big><sup>M</sup><sub style="margin-left:-10px;">n=0</sub> E<sup>n</sup>/n!)<BR><BR>
 <?php echo _QXZ("where -GoS- is the desired drop rate, -E- is the Erlang value, and -M- is the number of lines/agents needed"); ?><BR>
 
 
@@ -7029,7 +7030,7 @@ if ($SSqc_features_active > 0)
 <?php echo _QXZ("<U>BLOCKING</U> = The drop rate, expressed as a decimal in TEXT or a percent in graph form, of an hourly interval.  This is taken by dividing the number dropped calls active in the hour by the number of calls active in the hour."); ?><BR>
 <?php echo _QXZ("<U>ERLANGS</U> = Number of Erlangs for the hour.  Erlangs are calculated by taking the number of calls received in an interval, multiplied by the average duration of a call expressed as a decimal value relative to the interval.  For example, if 100 calls came in during an hour, and the average call length is 6 minutes, the Erlang value is 100 calls/hour * .1 hour (6 minutes is 1/10th of an hour), or 10."); ?><BR>
 
-<A NAME="erlang_report_gos"><?php echo _QXZ("<U>GOS</U> = \"Grade of Service\".   A -B- report value - this is the probability that a call is dropped, which is given by the equation"); ?><BR><BR> GoS = (E<sup>M</sup>/M!)<big>/</big>(<big>&#8721;</big><sup>M</sup><sub style="margin-left:-10px;">n=0</sub> E<sup>n</sup>/n!)<BR><BR>
+<A NAME="erlang_report_gos"><?php echo _QXZ("<U>GOS</U> = -Grade of Service-.   A -B- report value - this is the probability that a call is dropped, which is given by the equation"); ?><BR><BR> GoS = (E<sup>M</sup>/M!)<big>/</big>(<big>&#8721;</big><sup>M</sup><sub style="margin-left:-10px;">n=0</sub> E<sup>n</sup>/n!)<BR><BR>
 <?php echo _QXZ("where -GoS- is the desired drop rate, -E- is the Erlang value, and -M- is the number of lines/agents needed"); ?><BR>
 
 <?php echo _QXZ("<U>QUEUE PROB</U> =  A -C- report value - the probability that a call is queued, which is given by the equation"); ?><BR><BR> P<sub><small>queued</small></sub> = (E<sup>M</sup>/M!)<big>/</big>[E<sup>M</sup>/M! + (1 - E/M)<big>&#8721;</big><sup>M-1</sup><sub style="margin-left:-23px;">n=0</sub> E<sup>n</sup>/n!]<BR><BR>
@@ -7109,7 +7110,7 @@ if ($SSqc_features_active > 0)
 <BR>
 <B><?php echo _QXZ("API Log report"); ?> -</B><?php echo _QXZ("This report shows all records in the API logging table that meet the report criteria.  Reports can be run by date range that the API was accessed, the user, agent user, the API function called, and the API result.  The report can also be run to include the actual URL of the API that was called and the IP address the request came from."); ?>
 <BR><BR>
-<?php echo _QXZ("Additionally, if this extended version of the report is run, the variables used in the API call can be listed separately if the user creates a system container in the System Containers settings by the name of API_LOG_URL_COLUMNS <B>(name must be exact)</B>.  In this container, variable names are listed individually per line, and each listed variable is given it's own column in the detailed URL report."); ?><BR><BR>
+<?php echo _QXZ("Additionally, if this extended version of the report is run, the variables used in the API call can be listed separately if the user creates a system container in the System Containers settings by the name of API_LOG_URL_COLUMNS <B>(name must be exact)</B>.  In this container, variable names are listed individually per line, and each listed variable is given its own column in the detailed URL report."); ?><BR><BR>
 <A NAME="api_log_report-parameters">
 
 
@@ -7250,15 +7251,15 @@ if ($SSqc_features_active > 0)
 <B><?php echo _QXZ("Preset constants"); ?> -</B><?php echo _QXZ("Here is where a user can define a preset value to pass to the report when it is accessed from the custom report link.  This is useful if the user is viewing a report that accepts multiple variables that change the report output and there is a certain set of report parameters the user frequently uses and they wish to save time by coming to the report with those values already set."); ?>
 <BR>
 
-<B><?php echo _QXZ("Variable name"); ?> -</B><?php echo _QXZ("The enters the variable name here.  Names allow alphanumeric characters, underscores, and to a limited extent brackets.  Brackets are used to pass an array to the report and should be placed at the end of the variable name, such as 'var_name[]'.  The interface will condense brackets by removing any characters within a pair of them, and will also remove unmatched brackets."); ?>
+<B><?php echo _QXZ("Variable name"); ?> -</B><?php echo _QXZ("The enters the variable name here.  Names allow alphanumeric characters, underscores, and to a limited extent brackets.  Brackets are used to pass an array to the report and should be placed at the end of the variable name, such as -var_name[]-.  The interface will condense brackets by removing any characters within a pair of them, and will also remove unmatched brackets."); ?>
 <BR>
 
-<B><?php echo _QXZ("Value"); ?> -</B><?php echo _QXZ("Then, the user enters a variable value in the \"Value\" field, either by selecting a pre-defined variable value or a custom value.  With the exception of 'datetime' and 'filedatetime', all pre-defined variables are dates in yyyy-mm-dd format.  The predefined values are: 'today' for today's date, 'yesterday' for yesterday's date, 'datetime' which is a timestamp in the format of 'yyyy-mm-dd hh:ii:ss', 'filedatetime' which is an all-numeric timestamp in the format 'yyyymmddhhiiss', and 6/7/8/13/14/15/30days, all of which are the date 6/7/etc days ago.  If the user would like to define their own value for the variable, they can set the value to \"Custom Value\", then fill out the custom value in the field to the right.  Click 'ADD' to add the variable name/value pair to the presets to include in the report.  Values will be URL-encoded prior to being entered in the database."); ?>
+<B><?php echo _QXZ("Value"); ?> -</B><?php echo _QXZ("Then, the user enters a variable value in the -Value- field, either by selecting a pre-defined variable value or a custom value.  With the exception of -datetime- and -filedatetime-, all pre-defined variables are dates in yyyy-mm-dd format.  The predefined values are: -today- for today-s date, -yesterday- for yesterday-s date, -datetime- which is a timestamp in the format of -yyyy-mm-dd hh:ii:ss-, -filedatetime- which is an all-numeric timestamp in the format -yyyymmddhhiiss-, and 6/7/8/13/14/15/30days, all of which are the date 6/7/etc days ago.  If the user would like to define their own value for the variable, they can set the value to -Custom Value-, then fill out the custom value in the field to the right.  Click -ADD- to add the variable name/value pair to the presets to include in the report.  Values will be URL-encoded prior to being entered in the database."); ?>
 
 <BR><BR>
 <A NAME="custom_reports_admin-current_constants">
 <BR>
-<B><?php echo _QXZ("Current constants"); ?> -</B><?php echo _QXZ("Any report constant the user has entered to add to the report is displayed here.  They are not editable, but they can be removed by clicking 'REMOVE' and then re-entered."); ?>
+<B><?php echo _QXZ("Current constants"); ?> -</B><?php echo _QXZ("Any report constant the user has entered to add to the report is displayed here.  They are not editable, but they can be removed by clicking -REMOVE- and then re-entered."); ?>
 
 <BR><BR>
 <A NAME="custom_reports_admin-preset_constants">

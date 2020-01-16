@@ -1891,7 +1891,7 @@ NOTE: api user for this function must have user_level set to 8 or higher and "Mo
 REQUIRED FIELDS-
 cid_group_id -		2-20 characters, must be a valid CID Group ID or Campaign ID in the system
 source -		description of what originated the API call (maximum 20 characters)
-areacode -		This should be either the AREACODE(i.e. "312") or STATE(i.e. "FL") of the CID Group entry, you can also set this to "---ALL---"
+areacode -		This should be either the AREACODE(i.e. "312") or STATE(i.e. "FL") or NONE of the CID Group entry, you can also set this to "---ALL---"
 stage -			UPDATE, ADD, DELETE or INFO
 
 OPTIONAL FIELDS-

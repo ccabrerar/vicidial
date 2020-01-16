@@ -1,7 +1,7 @@
 <?php
 # options.php - manually defined options for vicidial admin scripts
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # rename this file to options.php for the settings here to go into effect
 #
@@ -25,6 +25,7 @@
 # 190420-1722 - Added RS_ListenBarge
 # 190503-1544 - Added enable_status_mismatch_leadloader_option
 # 190525-2145 - Added RS_agentWAIT option
+# 100115-1157 - Added call report export ALTERNATE_2 header
 #
 
 # used by the realtime_report.php script
@@ -111,5 +112,8 @@ $graph_canvas_size=600;
 
 # enable the leadloader's duplicate-with-status-mismatch setting
 $enable_status_mismatch_leadloader_option=0;
+
+# call report export ALTERNATE_2 header
+$call_export_report_ALTERNATE_2_header="address3\tfirst_name\tlast_name\tphone_number\tstatus_name\tstatus_date\r\n";
 
 ?>

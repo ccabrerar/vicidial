@@ -5,7 +5,7 @@
 # and/or vicidial_closer_log information by status, list_id and date range.
 # downloads to a flat text file that is tab delimited
 #
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -58,6 +58,7 @@
 # 190610-2035 - Fixed admin hide phone issue
 # 190926-0925 - Fixes for PHP7
 # 191119-1731 - Fix for alternate server url for recordings, issue #1175
+# 200115-1151 - Added ALTERNATE_2 export option with alternate header option in options.php
 #
 
 $startMS = microtime();
@@ -706,7 +707,12 @@ if ($run_export > 0)
 						{$export_fieldsDATA = "$row[39]\t$row[40]\t$row[41]\t$row[42]\t$row[43]\t$row[44]\t";}
 					if ($export_fields == 'EXTENDED_3')
 						{$export_fieldsDATA = "$row[39]\t$row[40]\t$row[41]\t$row[42]\t$row[43]\t$row[44]\t";}
-					$export_rows[$k] = "$row[0]\t$row[1]\t$row[2]\t$row[3]\t$row[4]\t$row[5]\t$row[6]\t$row[7]\t$row[8]\t$row[9]\t$row[10]\t$row[11]\t$row[12]\t$row[13]\t$row[14]\t$row[15]\t$row[16]\t$row[17]\t$row[18]\t$row[19]\t$row[20]\t$row[21]\t$row[22]\t$row[23]\t$row[24]\t$row[25]\t$row[26]\t$row[27]\t$row[28]\t$row[29]\t$row[30]\t$row[31]\t$row[32]\t$row[33]\t$row[34]\t$row[35]\t$export_fieldsDATA";
+					if ($export_fields == 'ALTERNATE_2') 
+						{$export_rows[$k] = "$row[18]\t$row[13]\t$row[15]\t$row[11]\t!STATUS_DESCRIPTION!\t$row[0]";}
+					else 
+						{
+						$export_rows[$k] = "$row[0]\t$row[1]\t$row[2]\t$row[3]\t$row[4]\t$row[5]\t$row[6]\t$row[7]\t$row[8]\t$row[9]\t$row[10]\t$row[11]\t$row[12]\t$row[13]\t$row[14]\t$row[15]\t$row[16]\t$row[17]\t$row[18]\t$row[19]\t$row[20]\t$row[21]\t$row[22]\t$row[23]\t$row[24]\t$row[25]\t$row[26]\t$row[27]\t$row[28]\t$row[29]\t$row[30]\t$row[31]\t$row[32]\t$row[33]\t$row[34]\t$row[35]\t$export_fieldsDATA";
+						}
 					}
 				$i++;
 				$k++;
@@ -843,7 +849,12 @@ if ($run_export > 0)
 						{$export_fieldsDATA = "$row[40]\t$row[41]\t$row[42]\t$row[43]\t$row[44]\t$row[45]\t";}
 					if ($export_fields == 'EXTENDED_3')
 						{$export_fieldsDATA = "$row[40]\t$row[41]\t$row[42]\t$row[43]\t$row[44]\t$row[45]\t";}
-					$export_rows[$k] = "$row[0]\t$row[1]\t$row[2]\t$row[3]\t$row[4]\t$row[5]\t$row[6]\t$row[7]\t$row[8]\t$row[9]\t$row[10]\t$row[11]\t$row[12]\t$row[13]\t$row[14]\t$row[15]\t$row[16]\t$row[17]\t$row[18]\t$row[19]\t$row[20]\t$row[21]\t$row[22]\t$row[23]\t$row[24]\t$row[25]\t$row[26]\t$row[27]\t$row[28]\t$row[29]\t$row[30]\t$row[31]\t$row[32]\t$row[33]\t$row[34]\t$row[35]\t$export_fieldsDATA";
+					if ($export_fields == 'ALTERNATE_2') 
+						{$export_rows[$k] = "$row[18]\t$row[13]\t$row[15]\t$row[11]\t!STATUS_DESCRIPTION!\t$row[0]";}	
+					else 
+						{
+						$export_rows[$k] = "$row[0]\t$row[1]\t$row[2]\t$row[3]\t$row[4]\t$row[5]\t$row[6]\t$row[7]\t$row[8]\t$row[9]\t$row[10]\t$row[11]\t$row[12]\t$row[13]\t$row[14]\t$row[15]\t$row[16]\t$row[17]\t$row[18]\t$row[19]\t$row[20]\t$row[21]\t$row[22]\t$row[23]\t$row[24]\t$row[25]\t$row[26]\t$row[27]\t$row[28]\t$row[29]\t$row[30]\t$row[31]\t$row[32]\t$row[33]\t$row[34]\t$row[35]\t$export_fieldsDATA";
+						}
 					}
 				$i++;
 				$k++;
@@ -866,6 +877,11 @@ if ($run_export > 0)
 		header('Pragma: public');
 		ob_clean();
 		flush();
+
+		if (file_exists('options.php'))
+			{
+			require('options.php');
+			}
 
 		if ($header_row=='YES')
 			{
@@ -902,6 +918,10 @@ if ($run_export > 0)
 			if ($export_fields == 'ALTERNATE_1')
 				{
 				echo "call_date|phone_number_dialed|status|campaign_id|vendor_lead_code|source_id|first_name|last_name|length_in_sec$EFheader$RFheader$EXheader$NFheader$IVRheader$CFheader\r\n";
+				}
+			else if ($export_fields == 'ALTERNATE_2')
+				{
+				echo $call_export_report_ALTERNATE_2_header;
 				}
 			else
 				{
@@ -1345,6 +1365,11 @@ if ($run_export > 0)
 				{
 				echo "$export_rows[$i]$rec_data$extended_data$notes_data$ivr_data$custom_data\r\n";
 				}
+			else if ($export_fields=='ALTERNATE_2')
+				{
+				$export_rows[$i]=preg_replace('/!STATUS_DESCRIPTION!/', "$ex_status_name", $export_rows[$i]);
+				echo "$export_rows[$i]\r\n";
+				}
 			else
 				{
 				echo "$export_rows[$i]$ex_list_name\t$ex_list_description\t$ex_status_name$rec_data$extended_data$notes_data$ivr_data$custom_data\r\n";
@@ -1591,7 +1616,7 @@ else
 	echo "<BR><BR>\n";
 
 	echo "<B>"._QXZ("Export Fields").":</B><BR>\n";
-	echo "<select size=1 name=export_fields><option selected value=\"STANDARD\">"._QXZ("STANDARD")."</option><option value=\"EXTENDED\">"._QXZ("EXTENDED")."</option><option value=\"EXTENDED_2\">"._QXZ("EXTENDED_2")."</option><option value=\"EXTENDED_3\">"._QXZ("EXTENDED_3")."</option><option value=\"ALTERNATE_1\">ALTERNATE_1</option></select>\n";
+	echo "<select size=1 name=export_fields><option selected value=\"STANDARD\">"._QXZ("STANDARD")."</option><option value=\"EXTENDED\">"._QXZ("EXTENDED")."</option><option value=\"EXTENDED_2\">"._QXZ("EXTENDED_2")."</option><option value=\"EXTENDED_3\">"._QXZ("EXTENDED_3")."</option><option value=\"ALTERNATE_1\">ALTERNATE_1</option><option value=\"ALTERNATE_2\">ALTERNATE_2</option></select>\n";
 
 
 	if ($archives_available=="Y")

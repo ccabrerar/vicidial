@@ -1036,7 +1036,8 @@ campaign_script_two VARCHAR(20) default '',
 leave_vm_no_dispo ENUM('ENABLED','DISABLED') default 'DISABLED',
 leave_vm_message_group_id VARCHAR(40) default '---NONE---',
 dial_timeout_lead_container VARCHAR(40) default 'DISABLED',
-amd_type ENUM('AMD','CPD','KHOMP') default 'AMD'
+amd_type ENUM('AMD','CPD','KHOMP') default 'AMD',
+vmm_daily_limit TINYINT(3) UNSIGNED default '0'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_lists (
@@ -3989,7 +3990,7 @@ index (date_deleted)
 CREATE TABLE vicidial_cid_groups (
 cid_group_id VARCHAR(20) PRIMARY KEY NOT NULL,
 cid_group_notes VARCHAR(255) default '',
-cid_group_type ENUM('AREACODE','STATE') default 'AREACODE',
+cid_group_type ENUM('AREACODE','STATE','NONE') default 'AREACODE',
 user_group VARCHAR(20) default '---ALL---'
 ) ENGINE=MyISAM CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
@@ -4245,6 +4246,15 @@ index (call_date),
 index (lead_id)
 ) ENGINE=MyISAM;
 
+CREATE TABLE vicidial_vmm_counts (
+call_date DATE,
+lead_id INT(9) UNSIGNED,
+vmm_count SMALLINT(5) UNSIGNED default '0',
+vmm_played SMALLINT(5) UNSIGNED default '0',
+index (call_date),
+index (lead_id)
+) ENGINE=MyISAM;
+
 
 ALTER TABLE vicidial_email_list MODIFY message text character set utf8;
 
@@ -4383,6 +4393,7 @@ CREATE INDEX date_user on vicidial_closer_log (call_date,user);
 CREATE INDEX comment_a on live_inbound_log (comment_a);
 CREATE UNIQUE INDEX vicidial_campaign_statuses_key on vicidial_campaign_statuses(status, campaign_id);
 CREATE INDEX vlecc on vicidial_log_extended (caller_code);
+CREATE UNIQUE INDEX vvmmcount on vicidial_vmm_counts (lead_id,call_date);
 
 CREATE INDEX vlali on vicidial_live_agents (lead_id);
 CREATE INDEX vlaus on vicidial_live_agents (user);
@@ -4490,6 +4501,8 @@ ALTER TABLE vicidial_sip_event_log_6 MODIFY sip_event_id INT(9) UNSIGNED NOT NUL
 CREATE TABLE vicidial_sip_action_log_archive LIKE vicidial_sip_action_log;
 CREATE UNIQUE INDEX vlesa on vicidial_sip_action_log_archive (caller_code,call_date);
 
+CREATE TABLE vicidial_vmm_counts_archive LIKE vicidial_vmm_counts;
+
 GRANT RELOAD ON *.* TO cron@'%';
 GRANT RELOAD ON *.* TO cron@localhost;
 
@@ -4570,4 +4583,4 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1582',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1584',db_schema_update_date=NOW(),reload_timestamp=NOW();

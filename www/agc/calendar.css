@@ -8,7 +8,7 @@ img.tcalIcon {
 div#tcal {
 	position: absolute;
 	visibility: hidden;
-	z-index: 100;
+	z-index: 500;
 	width: 158px;
 	padding: 2px 0 0 0;
 }
@@ -74,14 +74,14 @@ div#tcal td.selected {
 iframe#tcalIF {
 	position: absolute;
 	visibility: hidden;
-	z-index: 98;
+	z-index: 498;
 	border: 0;
 }
 /* transparent shadow */
 div#tcalShade {
 	position: absolute;
 	visibility: hidden;
-	z-index: 99;
+	z-index: 499;
 }
 div#tcalShade table {
 	border: 0;

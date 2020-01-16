@@ -2,7 +2,7 @@
 # AST_source_vlc_status_report.php
 #
 # This report is designed to show the breakdown by either vendor_lead_code
-# or aource_id (user's choice) of the calls and their statuses for all lists 
+# or aource_id ,user's choice, of the calls and their statuses for all lists 
 # within a campaign for a set time period
 #
 # Copyright (C) 2019  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2

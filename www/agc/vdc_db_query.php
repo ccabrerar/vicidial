@@ -1,7 +1,7 @@
 <?php
 # vdc_db_query.php
 #
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to exchange information between vicidial.php and the database server for various actions
 #
@@ -485,10 +485,11 @@
 # 191104-1800 - Fixes for translations
 # 191107-1010 - Fix for issue #1180, hide phone number in callback info
 # 191108-0920 - Added Dial Timeout Lead override function
+# 200108-0947 - Added cid_group_id of NONE
 #
 
-$version = '2.14-378';
-$build = '191108-0920';
+$version = '2.14-379';
+$build = '200108-0947';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=824;
@@ -4393,6 +4394,10 @@ if ($ACTION == 'manDiaLnextCaLL')
 									$temp_state = $state;
 									$stmt = "SELECT outbound_cid,areacode FROM vicidial_campaign_cid_areacodes where campaign_id='$cid_group_id' and areacode IN('$temp_state') and active='Y' order by call_count_today desc limit 100000;";
 									}
+								if ($cid_group_type == 'NONE')
+									{
+									$stmt = "SELECT outbound_cid,areacode FROM vicidial_campaign_cid_areacodes where campaign_id='$cid_group_id' and active='Y' order by call_count_today desc limit 100000;";
+									}
 								$rslt=mysql_to_mysqli($stmt, $link);
 									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00715',$user,$server_ip,$session_name,$one_mysql_log);}
 								if ($DB) {echo "$stmt\n";}
@@ -5972,6 +5977,10 @@ if ($ACTION == 'manDiaLonly')
 							{
 							$temp_state = $state;
 							$stmt = "SELECT outbound_cid,areacode FROM vicidial_campaign_cid_areacodes where campaign_id='$cid_group_id' and areacode IN('$temp_state') and active='Y' order by call_count_today desc limit 100000;";
+							}
+						if ($cid_group_type == 'NONE')
+							{
+							$stmt = "SELECT outbound_cid,areacode FROM vicidial_campaign_cid_areacodes where campaign_id='$cid_group_id' and active='Y' order by call_count_today desc limit 100000;";
 							}
 						$rslt=mysql_to_mysqli($stmt, $link);
 							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00718',$user,$server_ip,$session_name,$one_mysql_log);}

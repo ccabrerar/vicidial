@@ -20,7 +20,7 @@
 # Based on perl scripts in ViciDial from Matt Florell and post: 
 # http://www.vicidial.org/VICIDIALforum/viewtopic.php?p=22506&sid=ca5347cffa6f6382f56ce3db9fb3d068#22506
 #
-# Copyright (C) 2019  I. Taushanov, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  I. Taushanov, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 90615-1701 - First version
@@ -57,6 +57,7 @@
 # 190318-1541 - Added vicidial_amd_log archiving
 # 190531-0841 - Added vicidial_log_extended_sip archiving
 # 190926-0005 - Added vicidial_sip_action_log archiving
+# 200102-0846 - Added vicidial_vmm_counts archiving
 #
 
 $CALC_TEST=0;
@@ -259,6 +260,7 @@ if ($daily > 0)
 	if ($RMmin < 10) {$RMmin = "0$RMmin";}
 	if ($RMsec < 10) {$RMsec = "0$RMsec";}
 	$del_time = "$RMyear-$RMmon-$RMmday $RMhour:$RMmin:$RMsec";
+	$del_date = "$RMyear-$RMmon-$RMmday";
 	}
 else
 	{
@@ -272,6 +274,7 @@ else
 	if ($RMmin < 10) {$RMmin = "0$RMmin";}
 	if ($RMsec < 10) {$RMsec = "0$RMsec";}
 	$del_time = "$RMyear-$RMmon-$RMmday $RMhour:$RMmin:$RMsec";
+	$del_date = "$RMyear-$RMmon-$RMmday";
 	}
 if ($recording_log_archive > 0) 
 	{
@@ -319,7 +322,7 @@ if (!$Q) {print "This program is designed to put all records from  call_log, vic
 if (!$Q) {print "server_performance, vicidial_agent_log, vicidial_carrier_log, \n";}
 if (!$Q) {print "vicidial_call_notes, vicidial_lead_search_log and others into relevant\n";}
 if (!$Q) {print "_archive tables and delete records in original tables older than\n";}
-if (!$Q) {print "$CLIdays days ( $del_time|$del_epoch ) from current date \n\n";}
+if (!$Q) {print "$CLIdays days ( $del_time [$del_date]|$del_epoch ) from current date \n\n";}
 if ( (!$Q) && ($recording_log_archive > 0) ) {print "REC $RECORDINGdays days ( $RECdel_time|$RECdel_epoch ) from current date \n\n";}
 if ( (!$Q) && ($did_log_archive > 0) ) {print "DID $diddays days ( $DIDdel_time|$DIDdel_epoch ) from current date \n\n";}
 if ( (!$Q) && ($cpd_log_purge > 0) ) {print "CPD $CPDdays days ( $CPDdel_time|$CPDdel_epoch ) from current date \n\n";}
@@ -2252,6 +2255,59 @@ if (!$T)
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 
 		$stmtA = "optimize table vicidial_amd_log_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		}
+
+
+	##### vicidial_vmm_counts
+	$stmtA = "SELECT count(*) from vicidial_vmm_counts;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$vicidial_vmm_counts_count =	$aryA[0];
+		}
+	$sthA->finish();
+
+	$stmtA = "SELECT count(*) from vicidial_vmm_counts_archive;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$vicidial_vmm_counts_archive_count =	$aryA[0];
+		}
+	$sthA->finish();
+
+	if (!$Q) {print "\nProcessing vicidial_vmm_counts table...  ($vicidial_vmm_counts_count|$vicidial_vmm_counts_archive_count)\n";}
+	$stmtA = "INSERT IGNORE INTO vicidial_vmm_counts_archive SELECT * from vicidial_vmm_counts;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	
+	$sthArows = $sthA->rows;
+	if (!$Q) {print "$sthArows rows inserted into vicidial_vmm_counts_archive table \n";}
+	
+	$rv = $sthA->err();
+	if (!$rv) 
+		{
+		if ($wipe_all > 0)
+			{$stmtA = "DELETE FROM vicidial_vmm_counts;";}
+		else
+			{$stmtA = "DELETE FROM vicidial_vmm_counts WHERE call_date < '$del_date';";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows deleted from vicidial_vmm_counts table \n";}
+
+		$stmtA = "optimize table vicidial_vmm_counts;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+
+		$stmtA = "optimize table vicidial_vmm_counts_archive;";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		}

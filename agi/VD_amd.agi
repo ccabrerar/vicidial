@@ -21,7 +21,7 @@
 # exten => _8320*.,1,AGI(VD_amd.agi,${EXTEN}-----YES)
 # exten => _8320*.,2,Hangup
 #
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 60206-1434 - first build
@@ -58,6 +58,7 @@
 # 190720-1007 - Added Call Quota logging
 # 191017-1051 - Added option for multiple prompts in DYN messages
 # 191029-1243 - Added code for agent-selected message override
+# 200102-0823 - Added vmm_daily_limit campaign setting
 #
 
 $script = 'VD_amd.agi';
@@ -78,6 +79,7 @@ if ($sec < 10) {$sec = "0$sec";}
 $now_date_epoch = time();
 $now_date = "$year-$mon-$mday $hour:$min:$sec";
 $file_day = "$year$mon$mday";
+$SQL_day = "$year-$mon-$mday";
 
 # default path to astguiclient configuration file:
 $PATHconf =		'/etc/astguiclient.conf';
@@ -451,7 +453,7 @@ else
 
 	$selected_campaign='';
 	### Grab vmail forward message values from the database
-	$stmtA = "SELECT am_message_exten,amd_send_to_vmx,waitforsilence_options,survey_recording,campaign_rec_filename,cpd_amd_action,amd_inbound_group,amd_callmenu,cpd_unknown_action,campaign_id,am_message_wildcards,call_quota_lead_ranking FROM vicidial_campaigns where campaign_id = '$VD_campaign_id' limit 1;";
+	$stmtA = "SELECT am_message_exten,amd_send_to_vmx,waitforsilence_options,survey_recording,campaign_rec_filename,cpd_amd_action,amd_inbound_group,amd_callmenu,cpd_unknown_action,campaign_id,am_message_wildcards,call_quota_lead_ranking,vmm_daily_limit FROM vicidial_campaigns where campaign_id = '$VD_campaign_id' limit 1;";
 		if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -471,6 +473,7 @@ else
 		$selected_campaign =			$aryA[9];
 		$am_message_wildcards =			$aryA[10];
 		$VD_call_quota_lead_ranking =	$aryA[11];
+		$vmm_daily_limit =				$aryA[12];
 		$sthA->finish();
 		}
 	else
@@ -478,7 +481,7 @@ else
 		$sthA->finish();
 		### Grab vmail forward message values from the database
 		$SQL_group_id=$VD_campaign_id;   $SQL_group_id =~ s/_/\\_/gi;
-		$stmtA = "SELECT am_message_exten,amd_send_to_vmx,waitforsilence_options,survey_recording,campaign_rec_filename,cpd_amd_action,amd_inbound_group,amd_callmenu,cpd_unknown_action,campaign_id,am_message_wildcards FROM vicidial_campaigns where closer_campaigns LIKE \"% $SQL_group_id %\" order by campaign_id limit 1;";
+		$stmtA = "SELECT am_message_exten,amd_send_to_vmx,waitforsilence_options,survey_recording,campaign_rec_filename,cpd_amd_action,amd_inbound_group,amd_callmenu,cpd_unknown_action,campaign_id,am_message_wildcards,vmm_daily_limit FROM vicidial_campaigns where closer_campaigns LIKE \"% $SQL_group_id %\" order by campaign_id limit 1;";
 			if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -498,6 +501,7 @@ else
 			$selected_campaign =			$aryA[9];
 			$am_message_wildcards =			$aryA[10];
 			$VD_call_quota_lead_ranking =	'DISABLED';
+			$vmm_daily_limit =				$aryA[12];
 			$sthA->finish();
 			if ($AGILOG) {$agi_string = "--    Inbound call, settings gathered from: |$selected_campaign|$DB_am_message_exten|$DB_amd_send_to_vmx|$waitforsilence_options";   &agi_output;}
 			}
@@ -509,6 +513,24 @@ else
 		{
 		$temp_status = 'AA';
 		&call_quota_logging;
+		}
+
+	$vmm_daily_count=0;
+	$vmm_daily_played=0;
+	if ($vmm_daily_limit > 0)
+		{
+		$stmtA = "SELECT vmm_count,vmm_played FROM vicidial_vmm_counts where lead_id = '$VD_lead_id' and call_date='$SQL_day';";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$vmm_daily_count	= $aryA[0];
+			$vmm_daily_played	= $aryA[1];
+			$sthA->finish();
+			}
+		if ($AGILOG) {$agi_string = "VVMM counts: $vmm_daily_count|$vmm_daily_played|$VD_lead_id|$SQL_day|";   &agi_output;}
 		}
 
 	### if not a CPD message, log to the extended log
@@ -650,7 +672,18 @@ else
 		}
 	$sthA->finish();
 
-	if ($AGILOG) {$agi_string = "--    AMD campaign values: |$VD_campaign_id|$DB_am_message_exten|$DB_amd_send_to_vmx|";   &agi_output;}
+	if ($AGILOG) {$agi_string = "--    AMD campaign values: |$VD_campaign_id|$DB_am_message_exten|$DB_amd_send_to_vmx|$vmm_daily_limit|";   &agi_output;}
+
+	### if campaign daily limit is set and the number of logged times today has been reached, then hangup call
+	if ( ($vmm_daily_limit > 0) && ($vmm_daily_count >= $vmm_daily_limit) ) 
+		{
+		if ($AGILOG) {$agi_string = "--    AMD VMM Limit Reached, exiting: ($vmm_daily_count >= $vmm_daily_limit)   $callerid ($vmm_daily_played)";   &agi_output;}
+		$dbhA->disconnect();
+
+		$AGI->hangup($channel);
+
+		exit;
+		}
 
 	if ( ( ($DB_amd_send_to_vmx =~ /Y/) || ($force_playback =~ /YES/) ) && (length($DB_am_message_exten) > 0) )
 		{
@@ -667,6 +700,11 @@ else
 			if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 		$affected_rows = $dbhA->do($stmtA);
 		if ($AGILOG) {$agi_string = "--    VDAD vicidial_list AM update: |$affected_rows|$uniqueid|";   &agi_output;}
+
+		$stmtA = "INSERT IGNORE INTO vicidial_vmm_counts set vmm_count='1', lead_id='$VD_lead_id', call_date='$SQL_day' ON DUPLICATE KEY UPDATE vmm_count=(vmm_count + 1);";
+			if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+		$affected_rows = $dbhA->do($stmtA);
+		if ($AGILOG) {$agi_string = "--    VVMM vicidial_vmm_counts update: |$affected_rows|$VD_lead_id|$SQL_day|";   &agi_output;}
 
 		if ( ($SScall_quota_lead_ranking > 0) && ($VD_call_quota_lead_ranking !~ /^DISABLED$/i) )
 			{
@@ -1322,6 +1360,11 @@ else
 			if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 		$affected_rows = $dbhA->do($stmtA);
 		if ($AGILOG) {$agi_string = "--    VDAD vicidial_list AL update: |$affected_rows|$uniqueid|";   &agi_output;}
+
+		$stmtA = "UPDATE vicidial_vmm_counts set vmm_played=(vmm_played + 1) where lead_id='$VD_lead_id' and call_date='$SQL_day';";
+			if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+		$affected_rows = $dbhA->do($stmtA);
+		if ($AGILOG) {$agi_string = "--    VVMM vicidial_vmm_counts update: |$affected_rows|$VD_lead_id|$SQL_day|";   &agi_output;}
 
 		if ( ($SScall_quota_lead_ranking > 0) && ($VD_call_quota_lead_ranking !~ /^DISABLED$/i) )
 			{

@@ -628,10 +628,11 @@
 # 191111-0837 - Added LTMGAD/XAMMAD Hotkey options
 # 191111-1619 - Added user additional status groups
 # 191114-0949 - Added options for enable_first_webform and recording_buttons
+# 191227-1227 - Fix for translation phrases gathering process
 #
 
-$version = '2.14-597c';
-$build = '191114-0949';
+$version = '2.14-598c';
+$build = '191227-1227';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=91;
 $one_mysql_log=0;
@@ -4118,12 +4119,14 @@ while ($CINC < 12)
 	$CfirstdayARY = getdate($Cstart);
 	#echo "|$Cmon|$Cmonth|$CINC|\n";
 	$CPRNTDAY = date("Y-m", $Cstart);
+	$temp_Cmonths = $Cmonths[$CfirstdayARY['mon']];
+	$temp_Cfirstday = $CfirstdayARY[year];
 
 	$CCAL_OUT .= "<table border=\"1\" cellpadding=\"1\" bordercolor=\"000000\" cellspacing=\"0\" bgcolor=\"white\">";
 	$CCAL_OUT .= "<tr>";
 	$CCAL_OUT .= "<td colspan=\"7\" bordercolor=\"#ffffff\" bgcolor=\"#FFFFCC\">";
 	$CCAL_OUT .= "<div align=\"center\"><font color=\"#000066\"><b><font face=\"Arial, Helvetica, sans-serif\" size=\"2\">";
-	$CCAL_OUT .= _QXZ($Cmonths[$CfirstdayARY['mon']])." $CfirstdayARY[year]";
+	$CCAL_OUT .= _QXZ($temp_Cmonths)." $temp_Cfirstday";
 	$CCAL_OUT .= "</font></b></font></div>";
 	$CCAL_OUT .= "</td>";
 	$CCAL_OUT .= "</tr>";
