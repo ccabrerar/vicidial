@@ -45,6 +45,7 @@
 # 180910-1759 - Small fix for data validation
 # 191108-1023 - Added Dial Timeout Lead override function
 # 200108-1314 - Added CID Group type of NONE
+# 200122-1850 - Added code for CID Group auto-rotate feature
 #
 
 ### begin parsing run-time options ###
@@ -1000,6 +1001,12 @@ while($one_day_interval > 0)
 																	$sthA->finish();
 																	$stmtA="UPDATE vicidial_campaign_cid_areacodes set call_count_today=(call_count_today + 1) where campaign_id='$DBIPcid_group_id[$camp_CIPct]' and areacode='$temp_ac' and outbound_cid='$temp_vcca';";
 																	$affected_rows = $dbhA->do($stmtA);
+
+																	if ($cid_group_type =~ /NONE/)
+																		{
+																		$stmtA="UPDATE vicidial_cid_groups set cid_auto_rotate_calls=(cid_auto_rotate_calls + 1) where cid_group_id='$DBIPcid_group_id[$camp_CIPct]';";
+																		$affected_rows = $dbhA->do($stmtA);
+																		}
 																	}
 																else
 																	{$sthA->finish();}

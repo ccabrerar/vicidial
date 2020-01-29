@@ -3991,7 +3991,12 @@ CREATE TABLE vicidial_cid_groups (
 cid_group_id VARCHAR(20) PRIMARY KEY NOT NULL,
 cid_group_notes VARCHAR(255) default '',
 cid_group_type ENUM('AREACODE','STATE','NONE') default 'AREACODE',
-user_group VARCHAR(20) default '---ALL---'
+user_group VARCHAR(20) default '---ALL---',
+cid_auto_rotate_minutes MEDIUMINT(7) UNSIGNED default '0',
+cid_auto_rotate_minimum MEDIUMINT(7) UNSIGNED default '0',
+cid_auto_rotate_calls MEDIUMINT(7) UNSIGNED default '0',
+cid_last_auto_rotate DATETIME,
+cid_auto_rotate_cid VARCHAR(20) default ''
 ) ENGINE=MyISAM CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE vicidial_agent_function_log (
@@ -4583,4 +4588,4 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1584',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1585',db_schema_update_date=NOW(),reload_timestamp=NOW();

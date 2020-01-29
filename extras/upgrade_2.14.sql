@@ -1152,3 +1152,13 @@ UPDATE system_settings SET db_schema_version='1583',db_schema_update_date=NOW() 
 ALTER TABLE vicidial_cid_groups MODIFY cid_group_type ENUM('AREACODE','STATE','NONE') default 'AREACODE';
 
 UPDATE system_settings SET db_schema_version='1584',db_schema_update_date=NOW() where db_schema_version < 1584;
+
+ALTER TABLE vicidial_cid_groups ADD cid_auto_rotate_minutes MEDIUMINT(7) UNSIGNED default '0';
+ALTER TABLE vicidial_cid_groups ADD cid_auto_rotate_minimum MEDIUMINT(7) UNSIGNED default '0';
+ALTER TABLE vicidial_cid_groups ADD cid_auto_rotate_calls MEDIUMINT(7) UNSIGNED default '0';
+ALTER TABLE vicidial_cid_groups ADD cid_last_auto_rotate DATETIME;
+ALTER TABLE vicidial_cid_groups ADD cid_auto_rotate_cid VARCHAR(20) default '';
+
+UPDATE vicidial_cid_groups SET cid_last_auto_rotate=NOW() where cid_last_auto_rotate IS NULL;
+
+UPDATE system_settings SET db_schema_version='1585',db_schema_update_date=NOW() where db_schema_version < 1585;

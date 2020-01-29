@@ -10,6 +10,7 @@
 # CHANGES
 #
 # 200115-1512 - First build
+# 200120-1430 - Added total calls, percentage of calls matched, default CID notation
 #
 
 $startMS = microtime();
@@ -24,12 +25,18 @@ if (isset($_GET["query_date"]))				{$query_date=$_GET["query_date"];}
 	elseif (isset($_POST["query_date"]))	{$query_date=$_POST["query_date"];}
 if (isset($_GET["end_date"]))				{$end_date=$_GET["end_date"];}
 	elseif (isset($_POST["end_date"]))		{$end_date=$_POST["end_date"];}
+if (isset($_GET["query_time"]))				{$query_time=$_GET["query_time"];}
+	elseif (isset($_POST["query_time"]))	{$query_time=$_POST["query_time"];}
+if (isset($_GET["end_time"]))				{$end_time=$_GET["end_time"];}
+	elseif (isset($_POST["end_time"]))		{$end_time=$_POST["end_time"];}
 if (isset($_GET["campaign"]))				{$campaign=$_GET["campaign"];}
 	elseif (isset($_POST["campaign"]))		{$campaign=$_POST["campaign"];}
 if (isset($_GET["status"]))					{$status=$_GET["status"];}
 	elseif (isset($_POST["status"]))		{$status=$_POST["status"];}
 if (isset($_GET["interval"]))						{$interval=$_GET["interval"];}
 	elseif (isset($_POST["interval"]))			{$interval=$_POST["interval"];}
+if (isset($_GET["search_archived_data"]))			{$search_archived_data=$_GET["search_archived_data"];}
+	elseif (isset($_POST["search_archived_data"]))	{$search_archived_data=$_POST["search_archived_data"];}
 if (isset($_GET["DB"]))						{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))			{$DB=$_POST["DB"];}
 if (isset($_GET["SUBMIT"]))					{$SUBMIT=$_GET["SUBMIT"];}
@@ -46,6 +53,28 @@ $NWB = "<IMG SRC=\"help.png\" onClick=\"FillAndShowHelpDiv(event, '";
 $NWE = "')\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP>";
 if (!isset($interval)) {$interval = '0';}
 $interval=preg_replace('/[^0-9]/', '', $interval);
+
+### ARCHIVED DATA CHECK CONFIGURATION
+$archives_available="N";
+$log_tables_array=array("vicidial_dial_log", "vicidial_log");
+for ($t=0; $t<count($log_tables_array); $t++) 
+	{
+	$table_name=$log_tables_array[$t];
+	$archive_table_name=use_archive_table($table_name);
+	if ($archive_table_name!=$table_name) {$archives_available="Y";}
+	}
+
+if ($search_archived_data) 
+	{
+	$vicidial_dial_log_table=use_archive_table("vicidial_dial_log");
+	$vicidial_log_table=use_archive_table("vicidial_log");
+	}
+else
+	{
+	$vicidial_dial_log_table="vicidial_dial_log";
+	$vicidial_log_table="vicidial_log";
+	}
+#############
 
 
 #############################################
@@ -279,6 +308,8 @@ if ($SUBMIT)
 	if (!isset($status)) {$status = array();}
 	if (!isset($query_date)) {$query_date = $NOW_DATE;}
 	if (!isset($end_date)) {$end_date = $NOW_DATE;}
+	$log_calls=0;
+	$total_calls=0;
 
 	$campaign_ct = count($campaign);
 	$status_ct = count($status);
@@ -314,34 +345,15 @@ if ($SUBMIT)
 	else if (preg_match('/\-\-\-ALL\-\-\-/',$campaign_string) )  
 		{
 		$campaign_SQL = "";
+		$campaign_SQL_where = "";
 		$RUNcampaign=1;
 		}
 	else
 		{
 		$campaign_SQL = preg_replace('/,$/i', '',$campaign_SQL);
-		$campaign_SQL = "and vl.campaign_id IN($campaign_SQL)";
+		$campaign_SQL = "and campaign_id IN($campaign_SQL)";
+		$campaign_SQL_where = "where campaign_id IN($campaign_SQL)";
 		$RUNcampaign++;
-		}
-
-	$i=0;
-	while($i < $group_ct)
-		{
-		$group_string .= "$group[$i]|";
-		$group_SQL .= "'$group[$i]',";
-		$groupQS .= "&group[]=$group[$i]";
-		$i++;
-		}
-	if ( (preg_match('/\s\-\-NONE\-\-\s/',$group_string) ) or ($group_ct < 1) )
-		{
-		$group_SQL = "''";
-		$group_SQL = "campaign_id IN('')";
-		$RUNgroup=0;
-		}
-	else
-		{
-		$group_SQL = preg_replace('/,$/i', '',$group_SQL);
-		$group_SQL = "and vl.campaign_id IN($group_SQL)";
-		$RUNgroup++;
 		}
 
 	$i=0;
@@ -362,28 +374,41 @@ if ($SUBMIT)
 		$status_SQL = "and vl.status IN($status_SQL)";
 		}
 
-	$stmt="select lead_id, call_date from vicidial_log vl where call_date>='$query_date 00:00:00' and call_date<='$end_date 23:59:59' $status_SQL $campaign_SQL";
+	$CCIDs=array();
+	$campaign_CID_stmt="select campaign_cid from vicidial_campaigns $campaign_SQL_where";
+	$campaign_CID_rslt=mysql_to_mysqli($campaign_CID_stmt, $link);
+	while ($ccid_row=mysqli_fetch_row($campaign_CID_rslt)) {
+		array_push($CCIDs, "$ccid_row[0]");
+	}
+
+	$stmt="select lead_id, call_date, status from ".$vicidial_log_table." vl where call_date>='$query_date $query_time' and call_date<='$end_date $end_time' $campaign_SQL";
 	$rslt=mysql_to_mysqli($stmt, $link);
-	$found_calls=mysqli_num_rows($rslt);
+	$vlog_calls=mysqli_num_rows($rslt);
 	while ($row=mysqli_fetch_row($rslt)) 
 		{
 		$lead_id=$row[0];
 		$call_date=$row[1];
-		$stmt2="select call_date, channel, outbound_cid from vicidial_dial_log where lead_id='$lead_id' and call_date>='$call_date'-INTERVAL $interval SECOND and call_date<='$call_date'+INTERVAL $interval SECOND";
+		$status=$row[2];
+		$stmt2="select call_date, channel, outbound_cid from ".$vicidial_dial_log_table." where lead_id='$lead_id' and call_date>='$call_date'-INTERVAL $interval SECOND and call_date<='$call_date'+INTERVAL $interval SECOND";
 		$rslt2=mysql_to_mysqli($stmt2, $link);
 		while($row2=mysqli_fetch_row($rslt2)) 
 			{
 			preg_match('/<[0-9]+>/', $row2[2], $matches);
 			$caller_id=preg_replace('/[^0-9]/', '', $matches[0]);
-			$CID["$caller_id"]++;
-			$log_calls++;
+			$total_calls++;
+			$CID["$caller_id"][0]++;
+			if (preg_match("/\|($status|\-\-\-ALL\-\-\-)\|/i", $status_string))
+				{
+				$CID["$caller_id"][1]++;
+				$log_calls++;
+				}
 			}
 		}
 
 	ksort($CID);
 
+	$alt_stmt="select vdl.call_date, vdl.channel, vdl.outbound_cid from ".$vicidial_dial_log_table." vdl, ".$vicidial_log_table." vl where vl.call_date>='$query_date 00:00:00' and vl.call_date<='$end_date 23:59:59' $status_SQL $campaign_SQL and vdl.lead_id=vl.lead_id and vdl.call_date>=vl.call_date-INTERVAL $interval SECOND and vdl.call_date<=vl.call_date+INTERVAL $interval SECOND";
 /*
-	$alt_stmt="select vdl.call_date, vdl.channel, vdl.outbound_cid from vicidial_dial_log vdl, vicidial_log vl where vl.call_date>='$query_date 00:00:00' and vl.call_date<='$end_date 23:59:59' $status_SQL $campaign_SQL and vdl.lead_id=vl.lead_id and vdl.call_date>=vl.call_date-INTERVAL $interval SECOND and vdl.call_date<=vl.call_date+INTERVAL $interval SECOND";
 	$alt_rslt=mysql_to_mysqli($alt_stmt, $link);
 	$found_calls=mysqli_num_rows($alt_rslt);
 	$log_calls=mysqli_num_rows($alt_rslt);
@@ -395,7 +420,7 @@ if ($SUBMIT)
 		}
 */
 
-	if ($found_calls>0) 
+	if ($vlog_calls>0) 
 		{
 		if ($file_download==1)
 			{
@@ -414,11 +439,21 @@ if ($SUBMIT)
 
 			$i=0;
 
-			echo "CALLER ID\tCOUNT\n";
+			echo "CALLER ID\tCALLS WITH STATUS\tTOTAL CALLS\tPERCENT\n";
 
 			foreach($CID as $key => $value)
 				{
-				echo $key."\t".$value."\n";
+				if (in_array($key, $CCIDs))
+					{
+					$apx=" **";
+					} 
+				else 
+					{
+					$apx="";
+					}
+
+				$pct=round((1000*$value[1])/$value[0])/10;
+				echo $key.$apx."\t".($value[1]+0)."\t".$value[0]."\t".$pct." %\n";
 				}
 
 			exit;
@@ -426,10 +461,12 @@ if ($SUBMIT)
 			}
 		else
 			{
-			$rslt_msg="<TABLE BORDER=0 align='center' width='500' cellpadding=0 cellspacing=0>";
+			$rslt_msg="<TABLE BORDER=0 align='center' width='600' cellpadding=5 cellspacing=0>";
 			$rslt_msg.="<tr bgcolor=black>";
 			$rslt_msg.="<td align='center'><font SIZE=3 FACE=\"Arial,Helvetica\" color=white align=left><B>"._QXZ("Caller ID")."</B></font></td>";
-			$rslt_msg.="<td align='center'><font SIZE=3 FACE=\"Arial,Helvetica\" color=white align=left><B>"._QXZ("COUNT")."</B></font></td>";
+			$rslt_msg.="<td align='center'><font SIZE=3 FACE=\"Arial,Helvetica\" color=white align=left><B>"._QXZ("CALLS W/STATUS")."</B></font></td>";
+			$rslt_msg.="<td align='center'><font SIZE=3 FACE=\"Arial,Helvetica\" color=white align=left><B>"._QXZ("TOTAL CALLS")."</B></font></td>";
+			$rslt_msg.="<td align='center'><font SIZE=3 FACE=\"Arial,Helvetica\" color=white align=left><B>"._QXZ("PCT")."</B></font></td>";
 			$rslt_msg.="</tr>\n";
 
 			foreach($CID as $key => $value)
@@ -438,17 +475,34 @@ if ($SUBMIT)
 					{$bgcolor='class="records_list_x"';} 
 				else
 					{$bgcolor='class="records_list_y"';}
+				if (in_array($key, $CCIDs))
+					{
+					$bgcolor="bgcolor='$SSstd_row3_background'";
+					$apx=" **";
+					} 
+				else 
+					{
+					$apx="";
+					}
+
 				$rslt_msg.="<tr $bgcolor>";
-				$rslt_msg.="<td align='center'><font SIZE=2 FACE=\"Arial,Helvetica\" color=black align=left>".$key."</font></td>";
-				$rslt_msg.="<td align='center'><font SIZE=2 FACE=\"Arial,Helvetica\" color=black align=left>".$value."</font></td>";
+				$rslt_msg.="<td align='left'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font SIZE=2 FACE=\"Arial,Helvetica\" color=black align=left>".$key.$apx."</font></td>";
+				$rslt_msg.="<td align='center'><font SIZE=2 FACE=\"Arial,Helvetica\" color=black align=left>".($value[1]+0)."</font></td>";
+				$rslt_msg.="<td align='center'><font SIZE=2 FACE=\"Arial,Helvetica\" color=black align=left>".$value[0]."</font></td>";
+				$pct=round((1000*$value[1])/$value[0])/10;
+				$rslt_msg.="<td align='center'><font SIZE=2 FACE=\"Arial,Helvetica\" color=black align=left>".$pct." %</font></td>";
 				$rslt_msg.="</tr>";
 				$p++;
 				}
 			$rslt_msg.="<tr bgcolor=black>";
 			$rslt_msg.="<td align='center'><font SIZE=3 FACE=\"Arial,Helvetica\" color=white align=left><B>"._QXZ("TOTAL")."</B></font></td>";
 			$rslt_msg.="<td align='center'><font SIZE=3 FACE=\"Arial,Helvetica\" color=white align=left>$log_calls</font></td>";
+			$rslt_msg.="<td align='center'><font SIZE=3 FACE=\"Arial,Helvetica\" color=white align=left>$total_calls</font></td>";
+			$pct=round((1000*$log_calls)/$total_calls)/10;
+			$rslt_msg.="<td align='center'><font SIZE=2 FACE=\"Arial,Helvetica\" color=white align=left>".$pct." %</font></td>";
 			$rslt_msg.="</tr>\n";
-			$rslt_msg.="<tr><th colspan='2'><font SIZE=3 FACE=\"Arial,Helvetica\"><a href='$PHP_SELF?query_date=$query_date&end_date=$end_date$campaignQS$statusQS&SUBMIT=SUBMIT&file_download=1&interval=$interval'>Download file here</a></font></th></tr>";
+			$rslt_msg.="<tr><th colspan='4'><font SIZE=3 FACE=\"Arial,Helvetica\"><a href='$PHP_SELF?query_date=$query_date&end_date=$end_date$campaignQS$statusQS&SUBMIT=SUBMIT&file_download=1&interval=$interval&search_archived_data=$search_archived_data'>Download file here</a></font></th></tr>";
+			$rslt_msg.="<tr><td align='left'><font SIZE=2 FACE=\"Arial,Helvetica\">** - denotes default campaign CID</font></td></tr>";
 			$rslt_msg.="</table>";
 
 
@@ -459,7 +513,7 @@ if ($SUBMIT)
 				echo "$campaign_ct|$campaign_string|$campaign_SQL\n";
 				echo "<BR>\n";
 				echo "$status_ct|$status_string|$status_SQL\n";
-				echo "<BR>$stmt<BR>$stmt2<BR>\n";
+				echo "<BR>$Tstmt<BR>$stmt<BR>$alt_stmt<BR>\n";
 				}
 			}
 		}
@@ -476,6 +530,8 @@ if ($file_exported < 1)
 	if (!isset($status)) {$status = array();}
 	if (!isset($query_date)) {$query_date = $NOW_DATE;}
 	if (!isset($end_date)) {$end_date = $NOW_DATE;}
+	if (!isset($query_time)) {$query_time = "00:00:00";}
+	if (!isset($end_time)) {$end_time = "23:59:59";}
 
 	$stmt="select campaign_id from vicidial_campaigns $whereLOGallowed_campaignsSQL order by campaign_id;";
 	$rslt=mysql_to_mysqli($stmt, $link);
@@ -582,6 +638,7 @@ if ($file_exported < 1)
 	// o_cal.a_tpl.weekstart = 1; // Monday week start
 	</script>
 	<?php
+	echo "<INPUT TYPE=TEXT NAME=query_time SIZE=8 MAXLENGTH=8 VALUE=\"$query_time\">";
 
 	echo "<BR>"._QXZ("to")."<BR>\n";
 	echo "<INPUT TYPE=TEXT NAME=end_date SIZE=10 MAXLENGTH=10 VALUE=\"$end_date\">";
@@ -598,6 +655,7 @@ if ($file_exported < 1)
 	// o_cal.a_tpl.weekstart = 1; // Monday week start
 	</script>
 	<?php
+	echo "<INPUT TYPE=TEXT NAME=end_time SIZE=8 MAXLENGTH=8 VALUE=\"$end_time\">";
 
 	echo "<BR><BR>\n";
 
@@ -634,7 +692,12 @@ if ($file_exported < 1)
 
 	echo "<font class=\"select_bold\"><B>"._QXZ("Log second diff").":</B></font>$NWB#callerID_log_report-log_second_diff$NWE<BR><CENTER>\n";
 	echo "<INPUT TYPE=TEXT NAME=interval SIZE=2 MAXLENGTH=2 VALUE=\"".$interval."\">";
-	echo "<BR><BR><BR>";
+	echo "<BR><BR>";
+	if ($archives_available=="Y") 
+		{
+		echo "<input type='checkbox' name='search_archived_data' value='checked' $search_archived_data>"._QXZ("Search archived data")."<BR>\n";
+		echo "<BR><BR>";
+		}
 	echo "<INPUT TYPE=SUBMIT NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>\n";	
 	echo "</TD></TR><TR></TD><TD ALIGN=LEFT VALIGN=TOP COLSPAN=4> &nbsp; \n";
 

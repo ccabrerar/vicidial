@@ -486,10 +486,11 @@
 # 191107-1010 - Fix for issue #1180, hide phone number in callback info
 # 191108-0920 - Added Dial Timeout Lead override function
 # 200108-0947 - Added cid_group_id of NONE
+# 200122-1847 - Added code for CID Group auto-rotate feature
 #
 
-$version = '2.14-379';
-$build = '200108-0947';
+$version = '2.14-380';
+$build = '200122-1847';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=824;
@@ -4412,10 +4413,18 @@ if ($ACTION == 'manDiaLnextCaLL')
 									}
 								if ($act > 0)
 									{
-									$stmt="UPDATE vicidial_campaign_cid_areacodes set call_count_today=(call_count_today + 1) where campaign_id='$cid_group_id' and areacode='$temp_ac' and outbound_cid='$temp_vcca';";
+									$stmt="UPDATE vicidial_campaign_cid_areacodes SET call_count_today=(call_count_today + 1) where campaign_id='$cid_group_id' and areacode='$temp_ac' and outbound_cid='$temp_vcca';";
 										if ($format=='debug') {echo "\n<!-- $stmt -->";}
 									$rslt=mysql_to_mysqli($stmt, $link);
 										if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00716',$user,$server_ip,$session_name,$one_mysql_log);}
+
+									if ($cid_group_type == 'NONE')
+										{
+										$stmt="UPDATE vicidial_cid_groups SET cid_auto_rotate_calls=(cid_auto_rotate_calls + 1) where cid_group_id='$cid_group_id';";
+											if ($format=='debug') {echo "\n<!-- $stmt -->";}
+										$rslt=mysql_to_mysqli($stmt, $link);
+											if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+										}
 									}
 								}
 							$temp_CID = preg_replace("/\D/",'',$temp_vcca);
@@ -6000,6 +6009,14 @@ if ($ACTION == 'manDiaLonly')
 								if ($format=='debug') {echo "\n<!-- $stmt -->";}
 							$rslt=mysql_to_mysqli($stmt, $link);
 								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00719',$user,$server_ip,$session_name,$one_mysql_log);}
+
+							if ($cid_group_type == 'NONE')
+								{
+								$stmt="UPDATE vicidial_cid_groups SET cid_auto_rotate_calls=(cid_auto_rotate_calls + 1) where cid_group_id='$cid_group_id';";
+									if ($format=='debug') {echo "\n<!-- $stmt -->";}
+								$rslt=mysql_to_mysqli($stmt, $link);
+									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+								}
 							}
 						}
 					$temp_CID = preg_replace("/\D/",'',$temp_vcca);

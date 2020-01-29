@@ -15,7 +15,7 @@
 #  - Auto reset lists at defined times
 #  - Auto restarts Asterisk process if enabled in servers settings
 #
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 61011-1348 - First build
@@ -138,9 +138,10 @@
 # 190530-1411 - Added SIP logger code
 # 190713-0900 - Added vicidial_lead_call_quota_counts log archiving
 # 191017-2039 - Added reset of calls_today_filtered fields
+# 200122-0847 - Added CID Groups auto-rotate feature
 #
 
-$build = '191017-2039';
+$build = '200122-0847';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -165,6 +166,7 @@ if ($hour < 10) {$hour = "0$hour";}
 if ($min < 10) {$min = "0$min";}
 if ($sec < 10) {$sec = "0$sec";}
 $now_date = "$year-$mon-$mday $hour:$min:$sec";
+$dateint = "$year$mon$mday$hour$min$sec";
 $today_start = "$year-$mon-$mday 00:00:00";
 $today_date = "$year-$mon-$mday";
 $reset_test = "$hour$min";
@@ -226,6 +228,7 @@ if ($SXsec < 10) {$SXsec = "0$SXsec";}
 $SXSQLdate = "$SXyear-$SXmon-$SXmday $SXhour:$SXmin:$SXsec";
 $SXdate = "$SXyear-$SXmon-$SXmday";
 
+$FMtarget = ($secX - 300);	# 5 minutes ago
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -1176,6 +1179,15 @@ if ($timeclock_end_of_day_NOW > 0)
 		if ($teodDB) {$event_string = "vicidial_campaign_cid_areacodes records reset: $affected_rows";   &teod_logger;}
 
 		$stmtA = "optimize table vicidial_campaign_cid_areacodes;";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		@aryA = $sthA->fetchrow_array;
+		if ($DB) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+		$sthA->finish();
+
+		$stmtA = "optimize table vicidial_cid_groups;";
 		if($DBX){print STDERR "\n|$stmtA|\n";}
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -4298,7 +4310,7 @@ if ($active_asterisk_server =~ /Y/)
 ################################################################################
 #####  START scheduled callbacks move old USERONLY triggered to ANYONE
 ################################################################################
-# only run this on active voicemail servver
+# only run this on active voicemail server
 if ( ($active_voicemail_server =~ /$server_ip/) && ((length($active_voicemail_server)) eq (length($server_ip))) )
 	{
 	##### BEGIN gather campaign settings #####
@@ -4354,6 +4366,200 @@ if ( ($active_voicemail_server =~ /$server_ip/) && ((length($active_voicemail_se
 	}
 ################################################################################
 #####  END scheduled callbacks move old USERONLY triggered to ANYONE
+################################################################################
+
+
+
+
+
+################################################################################
+#####  START CID Group auto-rotate feature, for CID Type NONE only
+################################################################################
+# only run this on active voicemail server
+if ( ($active_voicemail_server =~ /$server_ip/) && ((length($active_voicemail_server)) eq (length($server_ip))) )
+	{
+	##### BEGIN gather CID Group settings #####
+	@cid_group_id=@MT;
+	$stmtA = "SELECT cid_group_id,cid_auto_rotate_minutes,cid_auto_rotate_minimum,cid_auto_rotate_calls,cid_last_auto_rotate,cid_auto_rotate_cid,UNIX_TIMESTAMP(cid_last_auto_rotate) FROM vicidial_cid_groups where cid_group_type='NONE' and cid_auto_rotate_minutes > 0 order by cid_group_id;";
+	if ($DBX) {print "$stmtA\n";}
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	$i=0;
+	while ($sthArows > $i)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$cid_group_id[$i] =					$aryA[0];
+		$cid_auto_rotate_minutes[$i] =		$aryA[1];
+		$cid_auto_rotate_minimum[$i] =		$aryA[2];
+		$cid_auto_rotate_calls[$i] =		$aryA[3];
+		$cid_last_auto_rotate[$i] =			$aryA[4];
+		$cid_auto_rotate_cid[$i] =			$aryA[5];
+		$cid_last_auto_rotate_epoch[$i] =	$aryA[6];
+		$i++;
+		}
+	$sthA->finish();
+
+	if ($DB) {print "   CID Groups with Auto-Rotate enabled: $i\n";}
+
+	$i=0;
+	while ($sthArows > $i)
+		{
+		$stmtA = "SELECT campaign_calldate,campaign_id,UNIX_TIMESTAMP(campaign_calldate) from vicidial_campaigns where cid_group_id='$cid_group_id[$i]' order by campaign_calldate desc limit 1;";
+		if ($DBX) {print "$stmtA\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArowsX=$sthA->rows;
+		if ($sthArowsX > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$Rcampaign_calldate =			$aryA[0];
+			$Rcampaign_id =					$aryA[1];
+			$Rcampaign_calldate_epoch =		$aryA[2];
+			}
+		$sthA->finish();
+
+		if ( ($Rcampaign_calldate_epoch < $FMtarget) && (length($cid_auto_rotate_cid[$i]) >= 6 ) )
+			{
+			if ($DB) {print "     skip CID Group rotate, no recent campaign calls: $cid_group_id[$i]|$Rcampaign_id|$Rcampaign_calldate|  ($Rcampaign_calldate_epoch <> $FMtarget)\n";}
+			}
+		else
+			{
+			if ($DBX) {print "     DEBUG: CID Group rotate, recent campaign calls: $cid_group_id[$i]|$Rcampaign_id|$Rcampaign_calldate|  ($Rcampaign_calldate_epoch <> $FMtarget)\n";}
+			$rotate_run_minutes = (($secX - $cid_last_auto_rotate_epoch[$i]) / 60);
+			if ($rotate_run_minutes < $cid_auto_rotate_minutes[$i]) 
+				{
+				if ($DB) {print "     skip CID Group rotate, too soon: $cid_group_id[$i]   ($rotate_run_minutes <> $cid_auto_rotate_minutes[$i])\n";}
+				}
+			else
+				{
+				if ( ($cid_auto_rotate_calls[$i] < $cid_auto_rotate_minimum[$i]) && (length($cid_auto_rotate_cid[$i]) >= 6 ) )
+					{
+					if ($DB) {print "     skip CID Group rotate, too few calls: $cid_group_id[$i]   ($cid_auto_rotate_calls[$i] <> $cid_auto_rotate_minimum[$i])\n";}
+					}
+				else
+					{
+					$CIDrotate_CIDs_count=0;
+					$stmtA = "SELECT count(*) from vicidial_campaign_cid_areacodes where campaign_id='$cid_group_id[$i]' and cid_description NOT IN('NOROTATE','NO-ROTATE','NO_ROTATE','INACTIVE','DONOTUSE') and cid_description NOT LIKE \"%NOROTATE%\";";
+					if ($DBX) {print "$stmtA\n";}
+					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+					$sthArowsX=$sthA->rows;
+					if ($sthArowsX > 0)
+						{
+						@aryA = $sthA->fetchrow_array;
+						$CIDrotate_CIDs_count =			$aryA[0];
+						}
+					$sthA->finish();
+
+					if ($CIDrotate_CIDs_count < 2) 
+						{
+						if ($DB) {print "     skip CID Group rotate, too few CIDs available, must be at least 2: $cid_group_id[$i]   ($CIDrotate_CIDs_count)\n";}
+						}
+					else
+						{
+						### BEGIN if last-CID-used for this CID Group is blank or invalid, order the CIDs and set them all to inactive ###
+						if (length($cid_auto_rotate_cid[$i]) < 6 ) 
+							{
+							@outbound_cid=@MT;
+							$stmtA = "SELECT outbound_cid from vicidial_campaign_cid_areacodes where campaign_id='$cid_group_id[$i]' and cid_description NOT IN('NOROTATE','NO-ROTATE','NO_ROTATE','INACTIVE','DONOTUSE') and cid_description NOT LIKE \"%NOROTATE%\" order by call_count_today limit 100000;";
+							if ($DBX) {print "$stmtA\n";}
+							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+							$sthArows=$sthA->rows;
+							$j=0;
+							while ($sthArows > $j)
+								{
+								@aryA = $sthA->fetchrow_array;
+								$outbound_cid[$j] =					$aryA[0];
+								$j++;
+								}
+							$sthA->finish();
+
+							$j=0;
+							while ($sthArows > $j)
+								{
+								$stmtA = "UPDATE vicidial_campaign_cid_areacodes SET cid_description='$j',active='N' where campaign_id='$cid_group_id[$i]' and outbound_cid='$outbound_cid[$j]';";
+								if ($j < 1) 
+									{
+									$stmtA = "UPDATE vicidial_campaign_cid_areacodes SET cid_description='$dateint',active='Y' where campaign_id='$cid_group_id[$i]' and outbound_cid='$outbound_cid[$j]';";
+									}
+								$affected_rows = $dbhA->do($stmtA) or die  "Couldn't execute query: |$stmtA|\n";
+								if ($DBX) {print "     CID Group entry updated: $affected_rows|$j|$cid_group_id[$i]|$outbound_cid[$j]|$stmtA|\n";}
+
+								if ($j < 1) 
+									{
+									$stmtB = "UPDATE vicidial_cid_groups SET cid_auto_rotate_calls='0',cid_last_auto_rotate=NOW(),cid_auto_rotate_cid='$outbound_cid[$j]' where cid_group_id='$cid_group_id[$i]';";
+									$affected_rowsB = $dbhA->do($stmtB) or die  "Couldn't execute query: |$stmtB|\n";
+									if ($DBX) {print "     CID Group entry updated: $affected_rows|$j|$cid_group_id[$i]|$outbound_cid[$j]|$stmtB|\n";}
+									if ($teodDB) 
+										{
+										$event_string = "     CID Group entry updated: $affected_rowsB|$j|$cid_group_id[$i]|$outbound_cid[$j]|$stmtB|";
+										&teod_logger;
+										}
+									}
+								if ($teodDB) 
+									{
+									$event_string = "CID Group entry updated: $affected_rows|$j|$cid_group_id[$i]|$outbound_cid[$j]|$stmtA|";
+									&teod_logger;
+									}
+								$j++;
+								}
+							}
+						### END if last-CID-used for this CID Group is blank or invalid, order the CIDs and set them all to inactive ###
+						else
+							{
+							### BEGIN set the next CID to active and the current one to inactive ###
+							$outbound_cid_next='';
+							$stmtA = "SELECT outbound_cid from vicidial_campaign_cid_areacodes where campaign_id='$cid_group_id[$i]' and cid_description NOT IN('NOROTATE','NO-ROTATE','NO_ROTATE','INACTIVE','DONOTUSE') and cid_description NOT LIKE \"%NOROTATE%\" order by CAST(cid_description as SIGNED INTEGER) limit 1;";
+							if ($DBX) {print "$stmtA\n";}
+							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+							$sthArows=$sthA->rows;
+							if ($sthArows > 0)
+								{
+								@aryA = $sthA->fetchrow_array;
+								$outbound_cid_next =					$aryA[0];
+								}
+							$sthA->finish();
+
+							if (length($outbound_cid_next) < 6) 
+								{
+								if ($DB) {print "     skip CID Group rotate, next CID could not be found: $cid_group_id[$i]   ($stmtA)\n";}
+								}
+							else
+								{
+								$stmtA = "UPDATE vicidial_campaign_cid_areacodes SET cid_description='$dateint',active='Y' where campaign_id='$cid_group_id[$i]' and outbound_cid='$outbound_cid_next';";
+								$affected_rows = $dbhA->do($stmtA) or die  "Couldn't execute query: |$stmtA|\n";
+								if ($DBX) {print "     CID Group entry updated: $affected_rows|$j|$cid_group_id[$i]|$outbound_cid_next|$stmtA|\n";}
+
+								$stmtB = "UPDATE vicidial_cid_groups SET cid_auto_rotate_calls='0',cid_last_auto_rotate=NOW(),cid_auto_rotate_cid='$outbound_cid_next' where cid_group_id='$cid_group_id[$i]';";
+								$affected_rowsB = $dbhA->do($stmtB) or die  "Couldn't execute query: |$stmtB|\n";
+								if ($DBX) {print "     CID Group entry updated: $affected_rows|$j|$cid_group_id[$i]|$outbound_cid_next|$stmtB|\n";}
+
+								$stmtC = "UPDATE vicidial_campaign_cid_areacodes SET active='N' where campaign_id='$cid_group_id[$i]' and outbound_cid='$cid_auto_rotate_cid[$i]';";
+								$affected_rowsC = $dbhA->do($stmtC) or die  "Couldn't execute query: |$stmtC|\n";
+								if ($DBX) {print "     CID Group entry updated: $affected_rows|$j|$cid_group_id[$i]|$cid_auto_rotate_cid[$i]|$stmtC|\n";}
+
+								if ($teodDB) 
+									{
+									$event_string = "CID Group entry updated: $affected_rows|$j|$cid_group_id[$i]|$outbound_cid_next|$stmtA|\n";
+									$event_string .= "     CID Group entry updated: $affected_rowsB|$j|$cid_group_id[$i]|$outbound_cid_next|$stmtB|\n";
+									$event_string .= "     CID Group entry updated: $affected_rowsC|$j|$cid_group_id[$i]|$cid_auto_rotate_cid[$i]|$stmtC|";
+									&teod_logger;
+									}
+								}
+							### END set the next CID to active and the current one to inactive ###
+							}
+						}
+					}
+				}
+			}
+		$i++;
+		}
+	}
+################################################################################
+#####  END CID Group auto-rotate feature, for CID Type NONE only
 ################################################################################
 
 

@@ -467,6 +467,9 @@ OTHER CHANGES:
 130. Added CID Group Type of NONE to allow for a group of outbound CIDs to be 
 	used for all outbound phone calls no matter where they are. 
 
+131. Added Auto-Rotating CID Group numbers, allowing for timed automatic cycling
+	of CID numbers, one-at-a-time, within a CID Group.
+
 
 
 

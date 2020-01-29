@@ -1,4 +1,4 @@
-VICIDIAL and QueueMetrics				UPDATED: 2017-10-06
+VICIDIAL and QueueMetrics				UPDATED: 2020-01-26
 
 queue_log logging was added to VICIDIAL outbound auto calling as an option in the 2.0.3 release, and for inbound in the 2.0.4 release.
 
@@ -95,9 +95,9 @@ If it did, then you want to add the following lines to your /etc/rc.d/rc.local f
 
 cd /usr/local
 *** download QueueMetrics and place it in /usr/local ***
-wget http://downloads.loway.ch/qm/QueueMetrics-16.09.2.tar.gz
-tar xvfz QueueMetrics-16.09.2.tar.gz
-mv queuemetrics-16.09.2 /usr/local/tomcat/webapps/qm
+wget https://downloads.loway.ch/qm/QueueMetrics-19.10.6.tar.gz
+tar xvfz QueueMetrics-19.10.6.tar.gz
+mv queuemetrics-19.10.6 /usr/local/tomcat/webapps/qm
 cd /usr/local/tomcat/webapps/qm/WEB_INF
 wget ftp://mirrors.easynews.com/mysql/Downloads/Connector-J/mysql-connector-java-3.0.10-stable.tar.gz
 gunzip mysql-connector-java-3.0.10-stable.tar.gz
@@ -437,12 +437,12 @@ How to install Queue Metrics on OpenSuSE LEAP 42.3 and VICIbox 8 with a system t
 - Say yes to install, and say yes to license
 
 3) cd /usr/src
-4) wget http://downloads.loway.ch/qm/QueueMetrics-17.06.1.tar.gz
+4) wget https://downloads.loway.ch/qm/QueueMetrics-19.10.6.tar.gz
 5) mkdir tars (incase it doesn't exist)
-6) tar xvfz QueueMetrics-17.06.1.tar.gz
-7) mv QueueMetrics-17.06.1.tar.gz ./tars/
+6) tar xvfz QueueMetrics-19.10.6.tar.gz
+7) mv QueueMetrics-19.10.6.tar.gz ./tars/
 8) mkdir /srv/tomcat/webapps/QM
-9) cp -r queuemetrics-17.06.1/* /srv/tomcat/webapps/QM/
+9) cp -r queuemetrics-19.10.6/* /srv/tomcat/webapps/QM/
 10) zypper in mysql-connector-java
 11) cp /usr/share/java/mysql-connector-java.jar /srv/tomcat/webapps/QM/WEB-INF/lib/
 12) chkconfig tomcat on

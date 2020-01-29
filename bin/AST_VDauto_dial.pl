@@ -132,6 +132,7 @@
 # 190709-2239 - Added Call Quota logging
 # 191108-0922 - Added Dial Timeout Lead override function
 # 200108-1315 - Added CID Group type of NONE
+# 200122-1851 - Added code for CID Group auto-rotate feature
 #
 
 ### begin parsing run-time options ###
@@ -1586,6 +1587,12 @@ while($one_day_interval > 0)
 															$sthA->finish();
 															$stmtA="UPDATE vicidial_campaign_cid_areacodes set call_count_today=(call_count_today + 1) where campaign_id='$DBIPcid_group_id[$user_CIPct]' and areacode='$temp_ac' and outbound_cid='$temp_vcca';";
 															$affected_rows = $dbhA->do($stmtA);
+
+															if ($cid_group_type =~ /NONE/)
+																{
+																$stmtA="UPDATE vicidial_cid_groups set cid_auto_rotate_calls=(cid_auto_rotate_calls + 1) where cid_group_id='$DBIPcid_group_id[$user_CIPct]';";
+																$affected_rows = $dbhA->do($stmtA);
+																}
 															}
 														else
 															{$sthA->finish();}

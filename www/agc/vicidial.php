@@ -1,7 +1,7 @@
 <?php
 # vicidial.php - the web-based version of the astVICIDIAL client application
 #
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # Other scripts that this application depends on:
 # - vdc_db_query.php: Updates information in the database
@@ -629,10 +629,11 @@
 # 191111-1619 - Added user additional status groups
 # 191114-0949 - Added options for enable_first_webform and recording_buttons
 # 191227-1227 - Fix for translation phrases gathering process
+# 200123-1554 - PHP7 fix for array
 #
 
-$version = '2.14-598c';
-$build = '191227-1227';
+$version = '2.14-599c';
+$build = '200123-1554';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=91;
 $one_mysql_log=0;
@@ -4120,7 +4121,7 @@ while ($CINC < 12)
 	#echo "|$Cmon|$Cmonth|$CINC|\n";
 	$CPRNTDAY = date("Y-m", $Cstart);
 	$temp_Cmonths = $Cmonths[$CfirstdayARY['mon']];
-	$temp_Cfirstday = $CfirstdayARY[year];
+	$temp_Cfirstday = $CfirstdayARY['year'];
 
 	$CCAL_OUT .= "<table border=\"1\" cellpadding=\"1\" bordercolor=\"000000\" cellspacing=\"0\" bgcolor=\"white\">";
 	$CCAL_OUT .= "<tr>";
@@ -18975,6 +18976,7 @@ function phone_number_format(formatphone) {
 								alt_dial_status_display = 0;
 								document.vicidial_form.DispoSelection.value = dead_max_dispo;
 								document.vicidial_form.DispoSelectStop.checked=true;
+							//	alert('Check your status');
 								dialedcall_send_hangup('NO', 'NO', dead_max_dispo);
 								if (custom_fields_enabled > 0)
 									{

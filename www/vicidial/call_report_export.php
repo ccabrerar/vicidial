@@ -708,7 +708,7 @@ if ($run_export > 0)
 					if ($export_fields == 'EXTENDED_3')
 						{$export_fieldsDATA = "$row[39]\t$row[40]\t$row[41]\t$row[42]\t$row[43]\t$row[44]\t";}
 					if ($export_fields == 'ALTERNATE_2') 
-						{$export_rows[$k] = "$row[18]\t$row[13]\t$row[15]\t$row[11]\t!STATUS_DESCRIPTION!\t$row[0]";}
+						{$export_rows[$k] = "$row[18]\t$row[13]\t$row[15]\t$row[11]\t$row[17]\t!STATUS_DESCRIPTION!\t$row[0]";}
 					else 
 						{
 						$export_rows[$k] = "$row[0]\t$row[1]\t$row[2]\t$row[3]\t$row[4]\t$row[5]\t$row[6]\t$row[7]\t$row[8]\t$row[9]\t$row[10]\t$row[11]\t$row[12]\t$row[13]\t$row[14]\t$row[15]\t$row[16]\t$row[17]\t$row[18]\t$row[19]\t$row[20]\t$row[21]\t$row[22]\t$row[23]\t$row[24]\t$row[25]\t$row[26]\t$row[27]\t$row[28]\t$row[29]\t$row[30]\t$row[31]\t$row[32]\t$row[33]\t$row[34]\t$row[35]\t$export_fieldsDATA";
@@ -850,7 +850,7 @@ if ($run_export > 0)
 					if ($export_fields == 'EXTENDED_3')
 						{$export_fieldsDATA = "$row[40]\t$row[41]\t$row[42]\t$row[43]\t$row[44]\t$row[45]\t";}
 					if ($export_fields == 'ALTERNATE_2') 
-						{$export_rows[$k] = "$row[18]\t$row[13]\t$row[15]\t$row[11]\t!STATUS_DESCRIPTION!\t$row[0]";}	
+						{$export_rows[$k] = "$row[18]\t$row[13]\t$row[15]\t$row[11]\t$row[17]\t!STATUS_DESCRIPTION!\t$row[0]";}	
 					else 
 						{
 						$export_rows[$k] = "$row[0]\t$row[1]\t$row[2]\t$row[3]\t$row[4]\t$row[5]\t$row[6]\t$row[7]\t$row[8]\t$row[9]\t$row[10]\t$row[11]\t$row[12]\t$row[13]\t$row[14]\t$row[15]\t$row[16]\t$row[17]\t$row[18]\t$row[19]\t$row[20]\t$row[21]\t$row[22]\t$row[23]\t$row[24]\t$row[25]\t$row[26]\t$row[27]\t$row[28]\t$row[29]\t$row[30]\t$row[31]\t$row[32]\t$row[33]\t$row[34]\t$row[35]\t$export_fieldsDATA";
