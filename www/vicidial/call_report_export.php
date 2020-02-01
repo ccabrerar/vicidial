@@ -406,12 +406,12 @@ if ($run_export > 0)
 	$status_string='|';
 
 	# If LOCATION or ALL is seleced in recording fields, we need to get information from the vicidial_servers table
-	if (preg_match("/(ALL|LOCATION)/", $rec_fields)) 
+	if (preg_match("/(ALL|LOCATION)/", $rec_fields))
 		{
 		$server_recording_links = array();
 		$stmt="SELECT recording_web_link, server_ip, alt_server_ip, external_server_ip FROM servers";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		while (($row = mysqli_fetch_row($rslt))) 
+		while (($row = mysqli_fetch_row($rslt)))
 			{
 			$server_recording_links[$row[1]] = $row[1];
 			if ($row[0] == 'ALT_IP')
@@ -707,9 +707,9 @@ if ($run_export > 0)
 						{$export_fieldsDATA = "$row[39]\t$row[40]\t$row[41]\t$row[42]\t$row[43]\t$row[44]\t";}
 					if ($export_fields == 'EXTENDED_3')
 						{$export_fieldsDATA = "$row[39]\t$row[40]\t$row[41]\t$row[42]\t$row[43]\t$row[44]\t";}
-					if ($export_fields == 'ALTERNATE_2') 
+					if ($export_fields == 'ALTERNATE_2')
 						{$export_rows[$k] = "$row[18]\t$row[13]\t$row[15]\t$row[11]\t$row[17]\t!STATUS_DESCRIPTION!\t$row[0]";}
-					else 
+					else
 						{
 						$export_rows[$k] = "$row[0]\t$row[1]\t$row[2]\t$row[3]\t$row[4]\t$row[5]\t$row[6]\t$row[7]\t$row[8]\t$row[9]\t$row[10]\t$row[11]\t$row[12]\t$row[13]\t$row[14]\t$row[15]\t$row[16]\t$row[17]\t$row[18]\t$row[19]\t$row[20]\t$row[21]\t$row[22]\t$row[23]\t$row[24]\t$row[25]\t$row[26]\t$row[27]\t$row[28]\t$row[29]\t$row[30]\t$row[31]\t$row[32]\t$row[33]\t$row[34]\t$row[35]\t$export_fieldsDATA";
 						}
@@ -849,9 +849,9 @@ if ($run_export > 0)
 						{$export_fieldsDATA = "$row[40]\t$row[41]\t$row[42]\t$row[43]\t$row[44]\t$row[45]\t";}
 					if ($export_fields == 'EXTENDED_3')
 						{$export_fieldsDATA = "$row[40]\t$row[41]\t$row[42]\t$row[43]\t$row[44]\t$row[45]\t";}
-					if ($export_fields == 'ALTERNATE_2') 
-						{$export_rows[$k] = "$row[18]\t$row[13]\t$row[15]\t$row[11]\t$row[17]\t!STATUS_DESCRIPTION!\t$row[0]";}	
-					else 
+					if ($export_fields == 'ALTERNATE_2')
+						{$export_rows[$k] = "$row[18]\t$row[13]\t$row[15]\t$row[11]\t$row[17]\t!STATUS_DESCRIPTION!\t$row[0]";}
+					else
 						{
 						$export_rows[$k] = "$row[0]\t$row[1]\t$row[2]\t$row[3]\t$row[4]\t$row[5]\t$row[6]\t$row[7]\t$row[8]\t$row[9]\t$row[10]\t$row[11]\t$row[12]\t$row[13]\t$row[14]\t$row[15]\t$row[16]\t$row[17]\t$row[18]\t$row[19]\t$row[20]\t$row[21]\t$row[22]\t$row[23]\t$row[24]\t$row[25]\t$row[26]\t$row[27]\t$row[28]\t$row[29]\t$row[30]\t$row[31]\t$row[32]\t$row[33]\t$row[34]\t$row[35]\t$export_fieldsDATA";
 						}
@@ -958,7 +958,8 @@ if ($run_export > 0)
 				}
 			else
 				{
-				$stmt = "SELECT status_name FROM vicidial_campaign_statuses where status='$export_status[$i]';";
+
+				$stmt = "SELECT status_name FROM vicidial_campaign_statuses where status='$export_status[$i]' AND campaign_id IN ('" . implode("','",$campaign) . "');";
 				$rslt=mysql_to_mysqli($stmt, $link);
 				if ($DB) {echo "$stmt\n";}
 				$ex_list_ct = mysqli_num_rows($rslt);
@@ -1024,7 +1025,7 @@ if ($run_export > 0)
 				$rec_id = preg_replace("/.$/",'',$rec_id);
 				$rec_filename = preg_replace("/.$/",'',$rec_filename);
 				$rec_location = preg_replace("/.$/",'',$rec_location);
-				if (isset($server_recording_links)) 
+				if (isset($server_recording_links))
 					{
 					foreach ($server_recording_links as $server_ip => $recording_ip)
 						{$rec_location = str_replace($server_ip,$recording_ip,$rec_location);}
