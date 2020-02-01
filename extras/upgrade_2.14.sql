@@ -864,7 +864,7 @@ server_ip VARCHAR(15),
 uniqueid VARCHAR(20), 
 sip_call_id VARCHAR(256), 
 event_date DATETIME(6), 
-event VARCHAR(10), 
+sip_event VARCHAR(10), 
 index(caller_code), 
 index(event_date) 
 ) ENGINE=MyISAM;

@@ -1,4 +1,4 @@
-SIP EVENT LOGGING DOC	Started: 2019-05-30	Updated: 2019-09-25
+SIP EVENT LOGGING DOC	Started: 2019-05-30	Updated: 2020-01-30
 
 !!!! THIS IS AN EXPERIMENTAL FEATURE, PLEASE READ ALL IMPORTANT NOTES !!!!
 
@@ -39,7 +39,7 @@ https://mariadb.com/kb/en/library/microseconds-in-mariadb/
 
 IMPORTANT ASTERISK 13 PATCH NOTE!!!
 
-This set of features requires a patch to Asterisk 13. It is included in the VICIdial codebase here: "extras/sip_logging.patch". We do not currently have a patched version of Asterisk for distribution, but we will soon.
+This set of features requires a patch to Asterisk 13. It is included in the VICIdial codebase here: "extras/sip_logging.patch". A patched version of Asterisk 13.29.2 is available for VICIbox 8 and 9, or through the OpenSuSE OBS which VICIbox uses.
 
 
 
@@ -152,7 +152,7 @@ server_ip VARCHAR(15),
 uniqueid VARCHAR(20), 
 sip_call_id VARCHAR(256), 
 event_date DATETIME(6), 
-event VARCHAR(10), 
+sip_event VARCHAR(10), 
 index(caller_code), 
 index(event_date) 
 ) ENGINE=MyISAM;
