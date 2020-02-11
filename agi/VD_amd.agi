@@ -59,6 +59,7 @@
 # 191017-1051 - Added option for multiple prompts in DYN messages
 # 191029-1243 - Added code for agent-selected message override
 # 200102-0823 - Added vmm_daily_limit campaign setting
+# 200205-1839 - Fix for list override message
 #
 
 $script = 'VD_amd.agi';
@@ -639,7 +640,7 @@ else
 		}
 
 	### check for list_id override
-	if ( ( ($DB_amd_send_to_vmx =~ /Y/) || ($AMDSTATUS =~ /CPD/) ) && ($AMDCAUSE !~ /^Unknown|\?\?\?/i) )
+	if (length($VD_list_id) > 0)
 		{
 		$am_message_exten_override='';
 		### gather list_id overrides
@@ -651,6 +652,7 @@ else
 			{
 			@aryA = $sthA->fetchrow_array;
 			$am_message_exten_override =	$aryA[0];
+			if ($AGILOG) {$agi_string = "--    AMD Check for List Override: |$DB_am_message_exten|$am_message_exten_override|$VD_list_id|";   &agi_output;}
 			if (length($am_message_exten_override) > 0)
 				{$DB_am_message_exten = $am_message_exten_override;}
 			}

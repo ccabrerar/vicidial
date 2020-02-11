@@ -1,14 +1,15 @@
 <?php
 # admin_mobile.php - VICIDIAL administration page, reduced functions for mobile app
 #
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
 # 
 # CHANGES
 # 190205-1702 - First Build
+# 200210-1618 - Added links to more mobile-compatible reports
 #
 
-$admin_version = '2.14-1a';
-$build = '190205-1702';
+$admin_version = '2.14-2a';
+$build = '200210-1618';
 
 $startMS = microtime();
 
@@ -820,12 +821,14 @@ if ($ADD==999990)
 		$stmt="SELECT extension,user,conf_exten,status,server_ip,UNIX_TIMESTAMP(last_call_time),UNIX_TIMESTAMP(last_call_finish),call_server_ip,campaign_id from vicidial_live_agents $whereLOGallowed_campaignsSQL";
 		if ($DB) {echo "|$stmt|\n";}
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$agent_incall=0; $agent_total=0;
+		$agent_incall=0; $agent_total=0; $agent_paused=0; $agent_waiting=0;
 		while($row=mysqli_fetch_array($rslt)) 
 			{
 			$status=$row[3];
 			$agent_total++;
 			if ( (preg_match("/INCALL/i",$status)) or (preg_match("/QUEUE/i",$status)) ) {$agent_incall++; }
+			if ( (preg_match("/PAUSED/i",$status))) {$agent_paused++; }
+			if ( (preg_match("/READY/i",$status)) or (preg_match("/CLOSER/i",$status)) ) {$agent_waiting++; }
 			}
 		if (preg_match("/MXAG/",$SShosted_settings))
 			{
@@ -847,20 +850,61 @@ if ($ADD==999990)
 
 	if ($LOGview_reports==1)
 		{
-		echo "<TABLE class='admin_stats_table'><TR><TD>\n";
+		echo "<TABLE class='admin_stats_table' valign='top'><TR><TD>\n";
 		echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
-		echo "<B>"._QXZ("Real-Time Reports")."</B><BR>\n";
+
+		### Report link ###
+		echo "<B><a href='#' id='ReportLink' onClick='ToggleReports()'>SHOW REPORTS</a></B>";
+
+		### Reports to show ###
+		echo "<div id='ReportStorageDiv' style='display:none'>";
+		echo "<BR><B>"._QXZ("Real-Time Reports")."</B><BR>\n";
 		echo "<UL>\n";
+		echo "<LI><a href=\"#HourlyCampaignCounts\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Hourly Campaign Counts")."</a></FONT></LI>\n";
+		echo "<LI><a href=\"#SystemSummary\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("System Summary")."</a></FONT></LI>\n";
+		if ( (preg_match("/Agent Sales Report/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
+			{echo "<LI><a href=\"agent_sales_report_mobile.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Agent Sales Report")."</a></FONT></LI>\n";}
 		if ( (preg_match("/Real-Time Main Report/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
-			{echo "<LI><a href=\"realtime_report_mobile.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Real-Time Main Report")."</a></FONT>\n";}
+			{echo "<LI><a href=\"realtime_report_mobile.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Real-Time Main Report")."</a></FONT></LI>\n";}
 				#	echo "<BR> &nbsp; Real-Time SIP: <a href=\"AST_timeonVDADall.php?SIPmonitorLINK=1\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Listen")."</a></FONT> - <a href=\"AST_timeonVDADall.php?SIPmonitorLINK=2\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Barge")."</a></FONT>\n";
 				#	echo "<BR> &nbsp; Real-Time IAX: <a href=\"AST_timeonVDADall.php?IAXmonitorLINK=1\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Listen")."</a></FONT> - <a href=\"AST_timeonVDADall.php?IAXmonitorLINK=2\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Barge")."</a></FONT><BR><BR>\n";
 		if ( (preg_match("/Real-Time Campaign Summary/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
-			{echo "<LI><a href=\"AST_timeonVDADallSUMMARY_mobile.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Real-Time Campaign Summary")."</a></FONT>\n";}
+			{echo "<LI><a href=\"AST_timeonVDADallSUMMARY_mobile.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Real-Time Campaign Summary")."</a></FONT></LI>\n";}
 		if ( (preg_match("/Real-Time Whiteboard Report/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
-			{echo "<LI><a href=\"AST_rt_whiteboard_rpt_mobile.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Real-Time Whiteboard Report")."</a></FONT>\n";}
+			{echo "<LI><a href=\"AST_rt_whiteboard_rpt_mobile.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Real-Time Whiteboard Report")."</a></FONT></LI>\n";}
+		echo "</UL><BR>\n";
+
+
+		echo "<B>"._QXZ("Agent Reports")."</B><BR>\n";
+		echo "<UL>\n";
+#		if ( (preg_match("/Agent Time Detail/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
+#			{echo "<LI><a href=\"AST_agent_time_detail.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Agent Time Detail")."</a></FONT>\n";}
+#		if ( (preg_match("/Agent Status Detail/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
+#			{echo "<LI><a href=\"AST_agent_status_detail.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Agent Status Detail")."</a></FONT>\n";}
+#		if ( (preg_match("/Agent Inbound Status Summary/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
+#			{echo " - <a href=\"AST_agent_inbound_status.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Inbound Summary")."</a></FONT>\n";}
+		if ( (preg_match("/Agent Performance Detail/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
+			{echo "<LI><a href=\"AST_agent_performance_detail_mobile.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Agent Performance Detail")."</a></FONT></LI>\n";}
+		if ( (preg_match("/Team Performance Detail/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
+			{echo "<LI><a href=\"AST_team_performance_detail_mobile.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Team Performance Detail")."</a></FONT></LI>\n";}
+#		if ( (preg_match("/Performance Comparison Report/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
+#			{echo "<LI><a href=\"AST_performance_comparison_report.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Performance Comparison Report")."</a></FONT>\n";}
+#		if ( (preg_match("/Single Agent Daily$/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
+#			{echo "<LI><a href=\"AST_agent_days_detail.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Single Agent Daily")."</a></FONT>\n";}
+#		if ( (preg_match("/Single Agent Daily Time/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
+#			{echo " - <a href=\"AST_agent_days_time.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Time")."</a></FONT>\n";}
+#		if ( (preg_match("/User Group Login Report/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
+#			{echo "<LI><a href=\"AST_usergroup_login_report.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("User Group Login Report")."</a></FONT>\n";}
+#		if ( (preg_match("/User Group Hourly Report/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
+#			{echo "<LI><a href=\"AST_user_group_hourly_detail.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("User Group Hourly Report")."</a></FONT> - <a href=\"AST_user_group_hourly_detail_v2.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("v2")."</a></FONT>\n";}
+#		if ( (preg_match("/User Stats/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
+#			{echo "<LI><a href=\"user_stats.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("User Stats")."</a></FONT>\n";}
+#		if ( (preg_match("/User Time Sheet/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
+#			{echo "<LI><a href=\"AST_agent_time_sheet.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("User Time Sheet")."</a></FONT>\n";}
 		echo "</UL>\n";
-		echo "</TD></TR></TABLE>\n";		
+		echo "</div>";
+
+		echo "<BR></TD></TR></TABLE>\n";		
 		echo "<BR>\n";
 		}
 		
@@ -868,25 +912,48 @@ if ($ADD==999990)
 		echo "<tr"; if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='realtime_report_mobile.php?report_display_type=HTML';\"";} echo ">";
 		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background' rowspan=2><a href=\"realtime_report_mobile.php?report_display_type=HTML\"><img src=\"images/icon_users.png\" width=42 height=42 border=0></a></td>";
 		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("Agents Logged In")."</font></td>";
-		echo "<td width=10 rowspan=2> &nbsp; </td>";
+		echo "<td width=3 rowspan=2> &nbsp; </td>";
 		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background' rowspan=2><a href=\"realtime_report_mobile.php?report_display_type=HTML\"><img src=\"images/icon_agentsincalls.png\" width=42 height=42 border=0></a></td>";
 		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("Agents In Calls")."</font></td>";
-		echo "<td width=10 rowspan=2> &nbsp; </td>";
-		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background' rowspan=2><a href=\"realtime_report_mobile.php?report_display_type=HTML\"><img src=\"images/icon_calls.png\" width=42 height=42 border=0></a></td>";
-		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("Active Calls")."</font></td>";
-		echo "<td width=10 rowspan=2> &nbsp; </td>";
-		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background' rowspan=2><a href=\"realtime_report_mobile.php?report_display_type=HTML\"><img src=\"images/icon_ringing.png\" width=42 height=42 border=0></a></td>";
-		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("Calls Ringing")."</font></td>";
 		echo "</tr>";
 		echo "<tr"; if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='realtime_report_mobile.php?report_display_type=HTML';\"";} echo ">";
 		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font style=\"font-family:HELVETICA;font-size:18;color:white;font-weight:bold;\">$agent_total</font></td>";
 		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font style=\"font-family:HELVETICA;font-size:18;color:white;font-weight:bold;\">$agent_incall</font></td>";
+		echo "</tr>";
+		echo "<tr"; if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='realtime_report_mobile.php?report_display_type=HTML';\"";} echo ">";
+		echo "<td height=3 colspan=5> </td>";
+		echo "</tr>";
+
+		echo "<tr"; if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='realtime_report_mobile.php?report_display_type=HTML';\"";} echo ">";
+		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background' rowspan=2><a href=\"realtime_report_mobile.php?report_display_type=HTML\"><img src=\"images/icon_agentspaused.png\" width=42 height=42 border=0></a></td>";
+		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("Agents Paused")."</font></td>";
+		echo "<td width=3 rowspan=2> &nbsp; </td>";
+		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background' rowspan=2><a href=\"realtime_report_mobile.php?report_display_type=HTML\"><img src=\"images/icon_agentswaiting.png\" width=42 height=42 border=0></a></td>";
+		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("Agents Waiting")."</font></td>";
+		echo "</tr>";
+		echo "<tr"; if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='realtime_report_mobile.php?report_display_type=HTML';\"";} echo ">";
+		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font style=\"font-family:HELVETICA;font-size:18;color:white;font-weight:bold;\">$agent_paused</font></td>";
+		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font style=\"font-family:HELVETICA;font-size:18;color:white;font-weight:bold;\">$agent_waiting</font></td>";
+		echo "</tr>";
+		echo "<tr"; if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='realtime_report_mobile.php?report_display_type=HTML';\"";} echo ">";
+		echo "<td height=3 colspan=5>  </td>";
+		echo "</tr>";
+
+		echo "<tr"; if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='realtime_report_mobile.php?report_display_type=HTML';\"";} echo ">";
+		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background' rowspan=2><a href=\"realtime_report_mobile.php?report_display_type=HTML\"><img src=\"images/icon_calls.png\" width=42 height=42 border=0></a></td>";
+		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("Active Calls")."</font></td>";
+		echo "<td width=3 rowspan=2> &nbsp; </td>";
+		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background' rowspan=2><a href=\"realtime_report_mobile.php?report_display_type=HTML\"><img src=\"images/icon_ringing.png\" width=42 height=42 border=0></a></td>";
+		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("Calls Ringing")."</font></td>";
+		echo "</tr>";
+		echo "<tr"; if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='realtime_report_mobile.php?report_display_type=HTML';\"";} echo ">";
 		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font style=\"font-family:HELVETICA;font-size:18;color:white;font-weight:bold;\">$agent_incall</font></td>";
 		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font style=\"font-family:HELVETICA;font-size:18;color:white;font-weight:bold;\">$ringing_calls</font></td>";
 		echo "</tr>";
 		echo "</TABLE>";
 		echo "<br><br>";
 
+		echo "<a name='HourlyCampaignCounts'>";
 		echo "<TABLE align='center' class='admin_stats_table' cellspacing=2>\n";
 		echo "<tr><td>";
 		echo "<canvas id='campaign_hour_chart'></canvas>"; #  style='width: 40vw; max-width: 350px;'
@@ -895,7 +962,7 @@ if ($ADD==999990)
 
 		echo "<BR><BR>";
 
-
+		echo "<a name='SystemSummary'>";
 		echo "<TABLE class='admin_stats_table' cellspacing=2>\n";
 		echo "<tr>";
 		echo "<td align='left' colspan='4'><font style=\"font-family:HELVETICA;font-size:16;color:black;font-weight:bold;\">"._QXZ("System Summary").":</font></td>";
@@ -1175,7 +1242,7 @@ $ingroup_rslt=mysqli_query($link, $ingroup_stmt);
 while ($ingroup_row=mysqli_fetch_row($ingroup_rslt)) 
 	{
 	$closer_campaigns=preg_replace('/ -$/', '', $ingroup_row[0]);
-	$campaign_ingroups=split(" ", $closer_campaigns);
+	$campaign_ingroups=explode(" ", $closer_campaigns);
 	$ingroup_array=array_merge($ingroup_array, $campaign_ingroups);
 	}
 $allowed_ingroups=array_unique($ingroup_array);
@@ -1209,6 +1276,17 @@ echo "// $hour_stmt\n";
 echo $JS_text.$JS_calls;
 
 ?>
+
+function ToggleReports() {
+	var link_text=document.getElementById('ReportLink').innerHTML;
+	if (link_text=="SHOW REPORTS") {
+		document.getElementById('ReportLink').innerHTML="HIDE REPORTS";
+		document.getElementById('ReportStorageDiv').style="display:block";
+	} else {
+		document.getElementById('ReportStorageDiv').style="display:none";
+		document.getElementById('ReportLink').innerHTML="SHOW REPORTS";
+	}
+}
 
 function LoadHourlyCharts() {
 	if (campaign_calls_hours.length>0)

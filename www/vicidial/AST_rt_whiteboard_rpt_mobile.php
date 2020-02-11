@@ -123,7 +123,7 @@ if ($sl_ct > 0)
 $auth=0;
 $reports_auth=0;
 $admin_auth=0;
-$auth_message = user_authorization($PHP_AUTH_USER,$PHP_AUTH_PW,'REPORTS',1);
+$auth_message = user_authorization($PHP_AUTH_USER,$PHP_AUTH_PW,'REPORTS',1,0);
 if ($auth_message == 'GOOD')
 	{$auth=1;}
 
@@ -581,12 +581,12 @@ $HEADER.="<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=utf-8\"
 $HEADER.="<TITLE>"._QXZ("$report_name")."</TITLE></HEAD><BODY BGCOLOR='$SSframe_background' marginheight=0 marginwidth=0 leftmargin=0 topmargin=0>\n";
 
 $MAIN.="<FORM ACTION=\"$PHP_SELF\" METHOD=GET name=vicidial_report id=vicidial_report>\n";
-$MAIN.="<b>"._QXZ("$report_name")."</b> $NWB#rt_whiteboard_report$NWE\n";
+# $MAIN.="<b>"._QXZ("$report_name")."</b> $NWB#rt_whiteboard_report$NWE\n";
 
 $MAIN.="<span id='report_control_panel' style='display:block'>";
 $MAIN.="<TABLE CELLPADDING=3 CELLSPACING=3 border='0' class=\"panel_td\" style='width:95vw'><TR>";
 $MAIN.="<TD VALIGN='TOP' class='mobile_whiteboard_td_sm' align='center' colspan='2'><FONT class='embossed android_whiteboard_small'>"._QXZ("Report Type").":</font> $NWB#rt_whiteboard_report-report_type$NWE";
-$MAIN.="<SELECT NAME=report_type ID=report_type class='form_field sm_shadow round_corners mobile_whiteboard_select' onChange=HighlightRelatedFields(this.value)>\n";
+$MAIN.="<SELECT NAME=report_type ID=report_type class='form_field_android sm_shadow round_corners mobile_whiteboard_select' onChange=HighlightRelatedFields(this.value)>\n";
 $MAIN.="<option value='' selected>-- "._QXZ("Select a report")." --</option>";
 $MAIN.="<option value='status_performance_total'>"._QXZ("Disposition Totals")."</option>";
 $MAIN.="<option value='agent_performance_total'>"._QXZ("Agent Performance Totals")."</option>";
@@ -604,7 +604,7 @@ $MAIN.="</TD>\n";
 $MAIN.="</TR>\n";
 
 $MAIN.="<TR><TD VALIGN=TOP class='mobile_whiteboard_td_sm'> <FONT class='embossed android_whiteboard_small'>"._QXZ("Campaigns").":</font> $NWB#rt_whiteboard_report-parameters$NWE<BR>";
-$MAIN.="<SELECT SIZE=5 NAME=campaigns ID=campaigns multiple class='form_field sm_shadow round_corners mobile_whiteboard_select'>\n";
+$MAIN.="<SELECT NAME=campaigns ID=campaigns multiple class='form_field_android sm_shadow round_corners mobile_whiteboard_select'>\n";
 #if  (preg_match('/\-\-ALL\-\-/',$campaign_string))
 #	{$MAIN.="<option value=\"--ALL--\" selected>-- "._QXZ("ALL CAMPAIGNS")." --</option>\n";}
 #else
@@ -630,7 +630,7 @@ $MAIN.="</TD>\n";
 
 $MAIN.="<TD VALIGN=TOP ALIGN='LEFT' class='mobile_whiteboard_td_lg'>";
 $MAIN.="<FONT class='embossed android_whiteboard_small'>"._QXZ("Status flags").":</font> $NWB#rt_whiteboard_report-parameters$NWE<BR>";
-$MAIN.="<SELECT SIZE=5 NAME='status_flags' ID='status_flags' multiple class='form_field sm_shadow round_corners mobile_whiteboard_select'>\n";
+$MAIN.="<SELECT NAME='status_flags' ID='status_flags' multiple class='form_field_android sm_shadow round_corners mobile_whiteboard_select'>\n";
 $MAIN.="<option value='--ALL--'>"._QXZ("ALL FLAGS")."</option>\n";
 $MAIN.="<option value='selectable'>"._QXZ("AGENT SELECTABLE")."</option>\n";
 $MAIN.="<option value='human_answered'>"._QXZ("HUMAN ANSWERED")."</option>\n";
@@ -655,7 +655,7 @@ $MAIN.="</TR>\n";
 $MAIN.="<TR>";
 
 $MAIN.="<TD VALIGN=TOP class='mobile_whiteboard_td_sm'><FONT class='embossed android_whiteboard_small'>"._QXZ("In-groups").": $NWB#rt_whiteboard_report-parameters$NWE</font><BR>";
-$MAIN.="<SELECT SIZE=5 NAME=groups ID=groups multiple class='form_field sm_shadow round_corners mobile_whiteboard_select'>\n";
+$MAIN.="<SELECT NAME=groups ID=groups multiple class='form_field_android sm_shadow round_corners mobile_whiteboard_select'>\n";
 if  (preg_match('/\-\-ALL\-\-/',$groups_string))
 	{$MAIN.="<option value=\"--ALL--\" selected>-- "._QXZ("ALL IN-GROUPS")." --</option>\n";}
 else
@@ -671,7 +671,7 @@ $MAIN.="</SELECT>\n";
 $MAIN.="</TD>\n";
 
 $MAIN.="<TD VALIGN=TOP class='mobile_whiteboard_td_sm'><FONT class='embossed android_whiteboard_small'>"._QXZ("DIDs").": $NWB#rt_whiteboard_report-parameters$NWE</font><BR>";
-$MAIN.="<SELECT SIZE=5 NAME=dids ID=dids multiple class='form_field sm_shadow round_corners mobile_whiteboard_select'>\n";
+$MAIN.="<SELECT NAME=dids ID=dids multiple class='form_field_android sm_shadow round_corners mobile_whiteboard_select'>\n";
 if  (preg_match('/\-\-ALL\-\-/',$dids_string))
 	{$MAIN.="<option value=\"--ALL--\" selected>-- "._QXZ("ALL DIDS")." --</option>\n";}
 else
@@ -689,7 +689,7 @@ $MAIN.="</TR>";
 
 $MAIN.="<TR>";
 $MAIN.="<TD VALIGN=TOP class='mobile_whiteboard_td_sm'><FONT class='embossed android_whiteboard_small'>"._QXZ("User Groups").":  $NWB#rt_whiteboard_report-parameters$NWE</font><BR>";
-$MAIN.="<SELECT SIZE=5 NAME='user_groups' ID='user_groups' multiple class='form_field sm_shadow round_corners mobile_whiteboard_select'>\n";
+$MAIN.="<SELECT NAME='user_groups' ID='user_groups' multiple class='form_field_android sm_shadow round_corners mobile_whiteboard_select'>\n";
 if  (preg_match('/\-\-ALL\-\-/',$user_groups_string))
 	{$MAIN.="<option value=\"--ALL--\" selected>-- "._QXZ("ALL USER GROUPS")." --</option>\n";}
 else
@@ -705,7 +705,7 @@ $MAIN.="</SELECT>\n";
 $MAIN.="</TD>\n";
 
 $MAIN.="<TD VALIGN=TOP class='mobile_whiteboard_td_sm'><FONT class='embossed android_whiteboard_small'>"._QXZ("Users").": $NWB#rt_whiteboard_report-parameters$NWE</font><BR>";
-$MAIN.="<SELECT SIZE=5 NAME='users' ID='users' multiple class='form_field sm_shadow round_corners mobile_whiteboard_select'>\n";
+$MAIN.="<SELECT NAME='users' ID='users' multiple class='form_field_android sm_shadow round_corners mobile_whiteboard_select'>\n";
 if  (preg_match('/\-\-ALL\-\-/',$users_string))
 	{$MAIN.="<option value=\"--ALL--\" selected>-- "._QXZ("ALL USERS")." --</option>\n";}
 else
@@ -722,10 +722,10 @@ $MAIN.="</TD>\n";
 $MAIN.="</TR>\n";
 
 $MAIN.="<TR>\n";
-$MAIN.="<TD VALIGN=MIDDLE ALIGN='LEFT' nowrap class='mobile_whiteboard_td_lg'> <FONT class='embossed android_whiteboard_small'>"._QXZ("Start date/time").":</font>";
+$MAIN.="<TD VALIGN=MIDDLE ALIGN='LEFT' nowrap class='mobile_whiteboard_td_lg'> <FONT class='embossed android_whiteboard_small'>"._QXZ("Start date/time").":</font> $NWB#rt_whiteboard_report-start_date$NWE";
 $MAIN.="<INPUT TYPE=hidden NAME=DB VALUE=\"$DB\"><BR>\n";
-$MAIN.="<INPUT TYPE=TEXT NAME=query_date ID=query_date SIZE=6 MAXLENGTH=10 VALUE=\"$query_date\" class='form_field sm_shadow round_corners'>";
-
+$MAIN.="<INPUT TYPE=TEXT NAME=query_date ID=query_date SIZE=10 MAXLENGTH=10 VALUE=\"$query_date\" class='form_field_android sm_shadow round_corners'>";
+/*
 $MAIN.="<script language=\"JavaScript\">\n";
 $MAIN.="function openNewWindow(url)\n";
 $MAIN.="	{\n";
@@ -740,21 +740,21 @@ $MAIN.="});\n";
 $MAIN.="o_cal.a_tpl.yearscroll = false;\n";
 $MAIN.="// o_cal.a_tpl.weekstart = 1; // Monday week start\n";
 $MAIN.="</script>\n";
+*/
+$MAIN.="&nbsp;&nbsp;<INPUT TYPE=TEXT NAME=query_time ID=query_time SIZE=8 MAXLENGTH=8 VALUE=\"$query_time\" class='form_field_android sm_shadow round_corners'>";
 
-$MAIN.="&nbsp;&nbsp;<INPUT TYPE=TEXT NAME=query_time ID=query_time SIZE=6 MAXLENGTH=8 VALUE=\"$query_time\" class='form_field sm_shadow round_corners'> $NWB#rt_whiteboard_report-start_date$NWE";
-
-$MAIN.="<BR><FONT class='embossed android_whiteboard_small'>"._QXZ("OR")."</font><BR>";
-$MAIN.="<FONT class='embossed android_whiteboard_small'>"._QXZ("Results for the past")." <input type='text' class='form_field sm_shadow round_corners' size='2' maxlength='2' name='hourly_display' id='hourly_display' value=''> "._QXZ("hours")."</font> $NWB#rt_whiteboard_report-show_results$NWE";
+$MAIN.="<BR><BR>";
+$MAIN.="<FONT class='embossed android_whiteboard_small'>"._QXZ("OR Past")." <input type='text' class='form_field_android sm_shadow round_corners' size='2' maxlength='2' name='hourly_display' id='hourly_display' value=''> "._QXZ("hours")."</font> $NWB#rt_whiteboard_report-show_results$NWE";
 $MAIN.="</TD>\n";
 
 $MAIN.="<TD VALIGN='TOP' ALIGN='left' class='mobile_whiteboard_td_lg'>";
 $MAIN.="<table border='0' cellpadding='2' cellspacing='0' class='mobile_whiteboard_td_lg'>";
 $MAIN.="<tr>";
-$MAIN.="<td align='right' VALIGN='TOP' class='panel_td'><FONT class='embossed android_whiteboard_small'>"._QXZ("Target per unit").":</font></td>";
-$MAIN.="<td align='left' VALIGN='TOP' class='panel_td'><input type='text' size='5' maxlength='5' name='target_per_agent' id='target_per_agent' value='$target_per_agent' class='form_field sm_shadow round_corners'> $NWB#rt_whiteboard_report-target_per_unit$NWE</td>";
+$MAIN.="<td align='right' VALIGN='TOP' class='panel_td'><FONT class='embossed android_whiteboard_small'>"._QXZ("Target per unit").": <input type='text' size='2' maxlength='5' name='target_per_agent' id='target_per_agent' value='$target_per_agent' class='form_field_android sm_shadow round_corners'> $NWB#rt_whiteboard_report-target_per_unit$NWE</font></td>";
+$MAIN.="<td align='left' VALIGN='TOP' class='panel_td'></td>";
 $MAIN.="</tr><tr>";
-$MAIN.="<td align='right' VALIGN='TOP' class='panel_td'><FONT class='embossed android_whiteboard_small'>"._QXZ("Target gross sales").":</font></td>";
-$MAIN.="<td align='left' VALIGN='TOP' class='panel_td'><input type='text' size='5' maxlength='5' name='target_gross' id='target_gross' value='$target_gross' class='form_field sm_shadow round_corners'> $NWB#rt_whiteboard_report-target_gross_sales$NWE</td>";
+$MAIN.="<td align='right' VALIGN='TOP' class='panel_td'><FONT class='embossed android_whiteboard_small'>"._QXZ("Target sales").": <input type='text' size='2' maxlength='5' name='target_gross' id='target_gross' value='$target_gross' class='form_field_android sm_shadow round_corners'> $NWB#rt_whiteboard_report-target_gross_sales$NWE</font></td>";
+$MAIN.="<td align='left' VALIGN='TOP' class='panel_td'></td>";
 $MAIN.="</tr></table>";
 $MAIN.="</TD>\n";
 $MAIN.="</TR>\n";
@@ -777,7 +777,7 @@ $MAIN.="</TD>";
 
 $MAIN.="<TD ALIGN=center width='*' class='embossed android_whiteboard_small'>";
 $MAIN.=_QXZ("Refresh rate").":&nbsp;";
-$MAIN.="<select name='refresh_rate' id='refresh_rate' class='form_field sm_shadow round_corners'>";
+$MAIN.="<select name='refresh_rate' id='refresh_rate' class='form_field_android sm_shadow round_corners'>";
 $MAIN.="<option value='5'>5 "._QXZ("seconds")."</option>";
 $MAIN.="<option value='10'>10 "._QXZ("seconds")."</option>";
 $MAIN.="<option value='15'>15 "._QXZ("seconds")."</option>";
@@ -790,7 +790,7 @@ $MAIN.="<option value='300'>5 "._QXZ("minutes")."</option>";
 $MAIN.="</select>";
 $MAIN.="<BR>";
 $MAIN.=_QXZ("Start date/time").":&nbsp;";
-$MAIN.="<INPUT TYPE=TEXT NAME=query_date2 ID=query_date2 SIZE=10 MAXLENGTH=10 VALUE=\"$query_date\" class='form_field sm_shadow round_corners'>";
+$MAIN.="<INPUT TYPE=TEXT NAME=query_date2 ID=query_date2 SIZE=10 MAXLENGTH=10 VALUE=\"$query_date\" class='form_field_android sm_shadow round_corners'>";
 $MAIN.="<script language=\"JavaScript\">\n";
 $MAIN.="function openNewWindow(url)\n";
 $MAIN.="	{\n";
@@ -805,9 +805,9 @@ $MAIN.="});\n";
 $MAIN.="o_cal.a_tpl.yearscroll = false;\n";
 $MAIN.="// o_cal.a_tpl.weekstart = 1; // Monday week start\n";
 $MAIN.="</script>\n";
-$MAIN.="<INPUT TYPE=TEXT NAME=query_time2 ID=query_time2 SIZE=10 MAXLENGTH=8 VALUE=\"$query_time\" class='form_field sm_shadow round_corners'>";
+$MAIN.="<INPUT TYPE=TEXT NAME=query_time2 ID=query_time2 SIZE=10 MAXLENGTH=8 VALUE=\"$query_time\" class='form_field_android sm_shadow round_corners'>";
 
-$MAIN.="<BR>"._QXZ("OR")."&nbsp;"._QXZ("Show results for the past")." <input type='text' class='form_field sm_shadow round_corners' size='2' maxlength='2' name='hourly_display2' id='hourly_display2' value=''> "._QXZ("hours");
+$MAIN.="<BR>"._QXZ("OR")."&nbsp;"._QXZ("Show results for the past")." <input type='text' class='form_field_android sm_shadow round_corners' size='2' maxlength='2' name='hourly_display2' id='hourly_display2' value=''> "._QXZ("hours");
 $MAIN.="</TD>";
 
 $MAIN.="<TD ALIGN=left valign='top' class='embossed android_whiteboard_small'>";

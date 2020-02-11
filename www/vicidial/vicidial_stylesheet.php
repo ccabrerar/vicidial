@@ -468,6 +468,10 @@ TD.bsides {
 	border-left:1pt solid black;
 	border-right:1pt solid black;
 }
+TD.text_overflow {
+	text-overflow: ellipis; 
+	overflow: hidden;
+}
 
 /* DIV ELEMENTS */
 div.shadowbox

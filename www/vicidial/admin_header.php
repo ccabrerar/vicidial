@@ -1,7 +1,7 @@
 <?php
 # admin_header.php - VICIDIAL administration header
 #
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 # 
 
 # CHANGES
@@ -80,6 +80,7 @@
 # 190121-1803 - Added special streamlined header option for mobile devices
 # 190530-1013 - Added javascript for active list change feature
 # 191028-1739 - Added VM Message Groups
+# 200206-2314 - Added password length indicator
 #
 
 $stmt="SELECT admin_home_url,enable_tts_integration,callcard_enabled,custom_fields_enabled,allow_emails,level_8_disable_add,allow_chats,enable_languages,admin_row_click,admin_screen_colors,user_new_lead_limit,user_territories_active,qc_features_active,agent_soundboards,enable_drop_lists,allow_ip_lists from system_settings;";
@@ -652,10 +653,12 @@ if ( ( ($ADD==34) or ($ADD==31) or ($ADD==49) ) and ($SUB==29) and ($LOGmodify_c
 	var strong = new Image();
 	strong.src = "images/strong.png";
 
-	function pwdChanged(pwd_field_str, pwd_img_str) 
+	function pwdChanged(pwd_field_str, pwd_img_str, pwd_len_field, pwd_len_min) 
 		{
 		var pwd_field = document.getElementById(pwd_field_str);
+		var pwd_field_value = pwd_field.value;
 		var pwd_img = document.getElementById(pwd_img_str);
+		var pwd_len = pwd_field_value.length
 
 	//	var strong_regex = new RegExp( "^(?=.{8,})(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])", "g" );
 	//	var medium_regex = new RegExp( "^(?=.{6,})(((?=.*[a-z])(?=.*[A-Z]))|((?=.*[a-z])(?=.*[0-9]))|((?=.*[A-Z])(?=.*[0-9]))).*$", "g" );
@@ -677,6 +680,10 @@ if ( ( ($ADD==34) or ($ADD==31) or ($ADD==49) ) and ($SUB==29) and ($LOGmodify_c
 			if (pwd_img.src != weak.src) 
 				{pwd_img.src = weak.src;}
 			}
+		if ( (pwd_len_min > 0) && (pwd_len_min > pwd_len) )
+			{document.getElementById(pwd_len_field).innerHTML = "<font color=red><b>" + pwd_len + "</b></font>";}
+		else
+			{document.getElementById(pwd_len_field).innerHTML = "<font color=black><b>" + pwd_len + "</b></font>";}
 		}
 
 	function openNewWindow(url) 

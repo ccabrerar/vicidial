@@ -1,4 +1,4 @@
-EMAIL HANDLING DOC		Started: 2012-12-23	Updated: 2017-04-05
+EMAIL HANDLING DOC		Started: 2012-12-23	Updated: 2020-02-10
 
 (example of how to set up an email account with Gmail is at the bottom)
 
@@ -231,6 +231,12 @@ when unread emails are detected, once their information has been imported into
 the database, then the email message is erased.  This is a limitation of the 
 software that "sweeps" the email account, which is why IMAP is the preferred 
 protocol.
+
+There are several settings within the Gmail "Settings" screen for IMAP settings
+that you may need to modify to ensure that VICIdial has access to your mailbox.
+
+You may need to go into your Google Account "Security "settings and enable the
+"Less secure app access" setting in order to use the IMAP connection for email.
 
 
 NOTES:

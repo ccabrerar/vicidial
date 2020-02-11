@@ -470,6 +470,18 @@ OTHER CHANGES:
 131. Added Auto-Rotating CID Group numbers, allowing for timed automatic cycling
 	of CID numbers, one-at-a-time, within a CID Group.
 
+132. Added optional OpenSIPs CallerID Name settings, for use only with systems
+	that use an OpenSIPs server to route outbound calls where this feature
+	has been enabled.
+
+133. Added system settings option to require passwords of a set minimum length.
+	This setting affects User passwords, Phone and Server registration 
+	passwords and the System Settings default passwords.
+
+134. Added support for KHOMP Answering Machine Detection. This is a 3rd-party
+	commercial(paid-for) solution. The code and documentation can be found
+	in the "extras/KHOMP" directory of the codebase.
+
 
 
 

@@ -1162,3 +1162,13 @@ ALTER TABLE vicidial_cid_groups ADD cid_auto_rotate_cid VARCHAR(20) default '';
 UPDATE vicidial_cid_groups SET cid_last_auto_rotate=NOW() where cid_last_auto_rotate IS NULL;
 
 UPDATE system_settings SET db_schema_version='1585',db_schema_update_date=NOW() where db_schema_version < 1585;
+
+ALTER TABLE system_settings ADD opensips_cid_name ENUM('0','1') default '0';
+
+ALTER TABLE vicidial_campaigns ADD opensips_cid_name VARCHAR(15) default '';
+
+UPDATE system_settings SET db_schema_version='1586',db_schema_update_date=NOW() where db_schema_version < 1586;
+
+ALTER TABLE system_settings ADD require_password_length TINYINT(3) UNSIGNED default '0';
+
+UPDATE system_settings SET db_schema_version='1587',db_schema_update_date=NOW() where db_schema_version < 1587;

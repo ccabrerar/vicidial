@@ -39,12 +39,13 @@
 # 
 # This program assumes that recordings are saved by Asterisk as .wav
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES:
 # 130730-1849 - First Build based upon AST_CRON_audio_4_ftp2.pl script
 # 161212-1650 - Changed to use hard-coded encryption flag for module
 # 180516-2011 - Added --noping option
+# 200205-1717 - Added comments for TLS Session Resumption settings
 #
 
 ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
@@ -424,6 +425,18 @@ foreach(@FILES)
 						{
 						$ftps = Net::FTPSSL->new("$VARFTP_host", Port => $VARFTP_port, Encryption => EXP_CRYPT, Debug => $FTPdb);
 						}
+					# for "TLS Session Resumption", use the below connection options:
+					# $ftps = Net::FTPSSL->new("$VARFTP_host", Port => $VARFTP_port, Encryption => IMP_CRYPT, Debug => $FTPdb, Trace => 1, SSL_Client_Certificate => { SSL_session_cache_size => 100 });
+
+					# For advanced debug, you may need to do the following:
+					# Here is how to enable high debug in the IO::Socket::SSL library that Net::FTPSSL is using:
+					# $IO::Socket::SSL::DEBUG = 3;
+					#   and here are the possible values:
+					# 0 - No debugging (default).
+					# 1 - Print out errors from IO::Socket::SSL and ciphers from Net::SSLeay.
+					# 2 - Print also information about call flow from IO::Socket::SSL and progress information from Net::SSLeay.
+					# 3 - Print also some data dumps from IO::Socket::SSL and from Net::SSLeay.
+
 					if($DBX){print STDERR "DEBUG: auth: ($VARFTP_user|$VARFTP_pass)\n";}
 					$ftps->login($VARFTP_user,$VARFTP_pass);
 					$ftps->cwd("$VARFTP_dir");
