@@ -482,6 +482,16 @@ OTHER CHANGES:
 	commercial(paid-for) solution. The code and documentation can be found
 	in the "extras/KHOMP" directory of the codebase.
 
+135. Added AMD Agent Route Options as a campaign option allowing you to set
+	the specific AMD responses for calls that should be routed to agents
+
+136. Added the "list_custom_fields" Non-Agent API function, to show all list 
+	custom data fields in a list/all-lists.
+
+137. Added an optional "send this user a login link email" link to the User
+	Modify page to send a shortcut URL link for the agent to more easily
+	log into the agent screen. Must be enabled in System Settings.
+
 
 
 

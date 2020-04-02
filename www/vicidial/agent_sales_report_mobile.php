@@ -1,6 +1,13 @@
 <?php 
 # agent_sales_report_mobile.php
-
+# 
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+#
+# Streamlined report for displaying sale-only statistics in a format easily readable on a mobile device
+#
+# CHANGELOG:
+# 200309-1819 - First Build
+#
 
 $startMS = microtime();
 
@@ -282,7 +289,10 @@ while ($i < $campaigns_to_print)
 	$row=mysqli_fetch_row($rslt);
 	$groups[$i] =$row[0];
 	if (preg_match('/\-ALL/',$group_string) )
-		{$group[$i] = $groups[$i];}
+		{
+		$group[$i] = $groups[$i];
+		$all_groups=1;
+		}
 	$i++;
 	}
 
@@ -327,6 +337,7 @@ else
 	$group_SQL_str=$group_SQL;
 	$group_SQL = "and campaign_id IN($group_SQL)";
 	}
+if (preg_match('/\-\-ALL\-\-/',$group_string) || $all_groups) {$groupQS="&group[]=--ALL--"; $group_string="--ALL--";}
 
 $i=0;
 $user_group_string='|';
@@ -346,6 +357,7 @@ else
 	$user_group_SQL = preg_replace('/,$/i', '',$user_group_SQL);
 	$user_group_SQL = "and user_group IN($user_group_SQL)";
 	}
+if ($all_user_groups) {$user_groupQS="&user_group[]=--ALL--"; $user_group_string="--ALL--";}
 
 $rpt_params="SUBMIT=".$SUBMIT."&DB=".$DB."&query_date_D=".$query_date_D."&query_date_T=".$query_date_T."&report_display_type=".$report_display_type."&refresh_rate=".$refresh_rate."&top_agents=".$top_agents."&sort_by=".$sort_by.$user_groupQS.$groupQS;
 

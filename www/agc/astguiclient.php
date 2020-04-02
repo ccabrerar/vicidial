@@ -1,7 +1,7 @@
 <?php
 # astguiclient.php - the web-based version of the astGUIclient client application
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # make sure you have added a user to the vicidial_users MySQL table with at least
 # user_level 1 or greater to access this page. Also you need to have the login
@@ -69,10 +69,11 @@
 # 150218-1110 - Fixes for QXZ enclosed in single-quotes
 # 150727-0915 - Added default_language
 # 190111-0902 - Fix for PHP7
+# 200319-1532 - Small fixes for conference tab issues
 #
 
-$version = '2.2.6-2';
-$build = '190111-0902';
+$version = '2.2.6-3';
+$build = '200319-1532';
 
 require_once("dbconnect_mysqli.php");
 require_once("functions.php");
@@ -1754,6 +1755,7 @@ if ($enable_fast_refresh < 1) {echo "var refresh_interval = 1000;\n";}
 					{
 					var all_conf = null;
 					all_conf = xmlhttp.responseText;
+				//	alert(conferences_list_query);
 				//	alert(xmlhttp.responseText);
 					var all_conf_array=all_conf.split("\n");
 					var all_conf_array_rows=all_conf_array.length;
@@ -1852,7 +1854,7 @@ if ($enable_fast_refresh < 1) {echo "var refresh_interval = 1000;\n";}
 			}
 		if (xmlhttp) 
 			{ 
-			checkconf_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&user=" + user + "&pass=" + pass + "&conf_exten=" + taskconfnum + "&bcrypt=ON";
+			checkconf_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&user=" + user + "&pass=" + pass + "&conf_exten=" + taskconfnum + "&bcrypt=1";
 			xmlhttp.open('POST', 'conf_exten_check.php'); 
 			xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
 			xmlhttp.send(checkconf_query); 
@@ -1960,7 +1962,7 @@ if ($enable_fast_refresh < 1) {echo "var refresh_interval = 1000;\n";}
 			}
 		if (xmlhttp) 
 			{ 
-			reg_conf_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&user=" + user + "&pass=" + pass + "&conf_exten=" + taskconfreg + "&exten=" + extension + "&ACTION=register&bcrypt=OFF";
+			reg_conf_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&user=" + user + "&pass=" + pass + "&conf_exten=" + taskconfreg + "&exten=" + extension + "&ACTION=register&bcrypt=1";
 			xmlhttp.open('POST', 'conf_exten_check.php'); 
 			xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
 			xmlhttp.send(reg_conf_query); 
@@ -2436,6 +2438,8 @@ if ($enable_fast_refresh < 1) {echo "var refresh_interval = 1000;\n";}
 		{
 
 			hideDiv('MainPanel');
+			hideDiv('ActiveLinesPanel');
+			hideDiv('ConfereNcesPanel');
 			showDiv('LogouTBox');
 
 		document.getElementById("LogouTBoxLink").innerHTML = "<a href=\"" + agcPAGE + "?relogin=YES&session_epoch=" + epoch_sec + "&session_name=" + session_name + "&user=" + user + "&pass=" + orig_pass + "&user=" + user + "&phone_login=" + phone_login + "&phone_pass=" + phone_pass + "\"><?php echo _QXZ("CLICK HERE TO LOG IN AGAIN"); ?></a>\n";
@@ -2765,7 +2769,7 @@ echo "</head>\n";
 <BODY onload="all_refresh();">
 <FORM name=extensions_list>
 <span style="position:absolute;left:0px;top:0px;z-index:1;" id="Header">
-<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 BGCOLOR=white WIDTH=640 MARGINWIDTH=0 MARGINHEIGHT=0 LEFTMARGIN=0 TOPMARGIN=0 VALIGN=TOP ALIGN=LEFT>
+<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 BGCOLOR=white WIDTH=840 MARGINWIDTH=0 MARGINHEIGHT=0 LEFTMARGIN=0 TOPMARGIN=0 VALIGN=TOP ALIGN=LEFT>
 <TR VALIGN=TOP ALIGN=LEFT><TD COLSPAN=5 VALIGN=TOP ALIGN=LEFT>
 <INPUT TYPE=HIDDEN NAME=extension>
 <font class="body_text">

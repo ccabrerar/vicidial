@@ -1,13 +1,15 @@
 <?php
 # vicidial_stylesheet.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # CSS/PHP file that uses the system-defined screen colors to display report elements
 #
 # 170830-2123 - First build
 # 180501-0045 - New elements added
 # 190129-1303 - New mobile display elements added
+# 200309-1819 - Modifications for display formatting
+#
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -57,6 +59,9 @@ redalert {font-size: 18px; font-weight:bold; font-family: Arial, Sans-Serif; col
 	font-size: 12pt;
 	opacity: 1.0;
 }
+.bold {
+	font-weight:bold;
+}
 .green {color: black; background-color: #99FF99}
 .red {color: black; background-color: #FF9999}
 .orange {color: black; background-color: #FFCC99}
@@ -73,12 +78,16 @@ redalert {font-size: 18px; font-weight:bold; font-family: Arial, Sans-Serif; col
 .border2px {border:solid 2px #<?php echo $SSmenu_background; ?>}
 
 .android_standard {
-	font-family: Arial, Helvetica, sans-serif; 
-	font-size: 8pt; 
+	font-family: Arial, Sans-Serif;
+	FONT-SIZE: calc(8px + 1vw);
+}
+.android_medium {
+	font-family: Arial, Sans-Serif;
+	FONT-SIZE: calc(9px + 1vw);
 }
 .android_large {
-	font-family: Arial, Helvetica, sans-serif; 
-	font-size: 10pt; 
+	font-family: Arial, Sans-Serif;
+	FONT-SIZE: calc(10px + 1vw);
 	font-weight: bold;
 }
 .android_auto {
@@ -87,6 +96,10 @@ redalert {font-size: 18px; font-weight:bold; font-family: Arial, Sans-Serif; col
 	font-size: calc(14px + (26 - 14) * ((100vw - 300px) / (1600 - 300)));
 	line-height: calc(1.3em + (1.5 - 1.2) * ((100vw - 300px)/(1600 - 300)));
 }
+.android_small {
+	font-family: Arial, Sans-Serif;
+	FONT-SIZE: calc(7px + .5vw);
+}
 .android_auto_small {
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: calc(8px + (18 - 8) * ((100vw - 300px) / (1600 - 300)));
@@ -94,7 +107,7 @@ redalert {font-size: 18px; font-weight:bold; font-family: Arial, Sans-Serif; col
 }
 .android_whiteboard_small {
 	font-family: Arial, Helvetica, sans-serif;
-	font-size: calc(8px + (16 - 8) * ((100vw - 300px) / (1600 - 300)));
+	FONT-SIZE: calc(8px + .5vw);
 	line-height: calc(1.3em + (1.5 - 1.2) * ((100vw - 300px)/(1600 - 300)));
 }
 .android_campaign_header {
@@ -209,7 +222,18 @@ ul.dropdown_android li:hover > ul 	{ visibility: visible; }
 }
 .form_field_android {
 	font-family: Arial, Sans-Serif;
-	FONT-SIZE: calc(4px + (12 - 4) * ((100vw - 300px) / (1600 - 300)));
+	FONT-SIZE: calc(8px + 1vw);
+}
+.form_field_android_small {
+	font-family: Arial, Sans-Serif;
+	FONT-SIZE: calc(6px + 0.5vw);
+}
+.form_field_whiteboard_android {
+	font-family: Arial, Sans-Serif;
+	font-size: calc(8px + 1vw);
+	margin-bottom: 3px;
+	background-color: #<?php echo $SSalt_row3_background; ?>;
+	border: solid 1px #<?php echo $SSmenu_background; ?>;
 }
 .required_field {
 	font-family: Arial, Sans-Serif;
@@ -218,6 +242,14 @@ ul.dropdown_android li:hover > ul 	{ visibility: visible; }
 	background-color: #FFCCCC;
 	padding: 2px;
 	border: groove 2px #990000;
+	background-position: top;
+}
+.required_field_whiteboard_android {
+	font-family: Arial, Sans-Serif;
+	font-size: calc(8px + 1vw);
+	margin-bottom: 3px;
+	background-color: #FFCCCC;
+	border: groove 1px #990000;
 	background-position: top;
 }
 textarea.chat_box {
@@ -254,9 +286,9 @@ input.red_btn{
 }
 input.red_btn_mobile{
 	font-family: Arial, Sans-Serif;
-	font-size: calc(4px + (12 - 4) * ((100vw - 300px) / (1600 - 300)));
-	width: 10vw;
-	max-width:250px;
+	FONT-SIZE: calc(12px + .5vw);
+	width: 36vw;
+	max-width:600px;
 	color:#FFFFFF;
 	font-weight:bold;
 	background-color:#990000;
@@ -268,9 +300,9 @@ input.red_btn_mobile{
 }
 input.red_btn_mobile_lg{
 	font-family: Arial, Sans-Serif;
-	font-size: calc(4px + (12 - 4) * ((100vw - 300px) / (1600 - 300)));
-	width: 15vw;
-	max-width:200px;
+	FONT-SIZE: calc(14px + 1vw);
+	width: 48vw;
+	max-width:800px;
 	color:#FFFFFF;
 	font-weight:bold;
 	background-color:#990000;
@@ -280,6 +312,33 @@ input.red_btn_mobile_lg{
 	border-right-color:#330000;
 	border-bottom-color:#330000;
 }
+input.red_btn_mobile_sm{
+	font-family: Arial, Sans-Serif;
+	FONT-SIZE: calc(12px + .2vw);
+	width: 30vw;
+	max-width:400px;
+	color:#FFFFFF;
+	font-weight:bold;
+	background-color:#990000;
+	border:2px solid;
+	border-top-color:#FFCCCC;
+	border-left-color:#FFCCCC;
+	border-right-color:#330000;
+	border-bottom-color:#330000;
+}
+input.red_btn_anywidth{
+	font-family: Arial, Sans-Serif;
+	FONT-SIZE: calc(12px + .5vw);
+	color:#FFFFFF;
+	font-weight:bold;
+	background-color:#990000;
+	border:2px solid;
+	border-top-color:#FFCCCC;
+	border-left-color:#FFCCCC;
+	border-right-color:#330000;
+	border-bottom-color:#330000;
+}
+
 input.green_btn{
 	font-family: Arial, Sans-Serif;
 	font-size: 12px;
@@ -294,8 +353,8 @@ input.green_btn{
 }
 input.green_btn_mobile{
 	font-family: Arial, Sans-Serif;
-	font-size: calc(4px + (12 - 4) * ((100vw - 300px) / (1600 - 300)));
-	width: 10vw;
+	FONT-SIZE: calc(12px + .5vw);
+	width: 11vw;
 	max-width:250px;
 	color:#FFFFFF;
 	font-weight:bold;
@@ -308,9 +367,33 @@ input.green_btn_mobile{
 }
 input.green_btn_mobile_lg{
 	font-family: Arial, Sans-Serif;
-	font-size: calc(4px + (12 - 4) * ((100vw - 300px) / (1600 - 300)));
+	FONT-SIZE: calc(14px + 1vw);
 	width: 15vw;
 	max-width:200px;
+	color:#FFFFFF;
+	font-weight:bold;
+	background-color:#009900;
+	border:2px solid;
+	border-top-color:#CCFFCC;
+	border-left-color:#CCFFCC;
+	border-right-color:#003300;
+	border-bottom-color:#003300;
+}
+input.green_btn_anywidth{
+	font-family: Arial, Sans-Serif;
+	FONT-SIZE: calc(12px + .5vw);
+	color:#FFFFFF;
+	font-weight:bold;
+	background-color:#009900;
+	border:2px solid;
+	border-top-color:#CCFFCC;
+	border-left-color:#CCFFCC;
+	border-right-color:#003300;
+	border-bottom-color:#003300;
+}
+input.green_btn_anywidth_lg{
+	font-family: Arial, Sans-Serif;
+	FONT-SIZE: calc(14px + 1vw);
 	color:#FFFFFF;
 	font-weight:bold;
 	background-color:#009900;
@@ -334,7 +417,7 @@ input.blue_btn{
 }
 input.blue_btn_mobile{
 	font-family: Arial, Sans-Serif;
-	font-size: calc(4px + (10 - 4) * ((100vw - 300px) / (1600 - 300)));
+	FONT-SIZE: calc(12px + .5vw);
 	color:#FFFFFF;
 	font-weight:bold;
 	background-color:#000099;

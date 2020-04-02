@@ -941,7 +941,7 @@ else
 		{
 		echo __LINE__."\n";
 		}
-	echo "<br>Call information: $first_name $last_name - $phone_number<br><br><form action=$PHP_SELF method=POST>\n";
+	echo "<br>"._QXZ("Call information").": $first_name $last_name - $phone_number<br><br><form action=$PHP_SELF method=POST>\n";
 	echo "<input type=hidden name=end_call value=1>\n";
 	echo "<input type=hidden name=DB value=\"$DB\">\n";
 	echo "<input type=hidden name=lead_id value=\"$lead_id\">\n";

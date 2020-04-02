@@ -2,9 +2,6 @@
 header('Content-Type: application/javascript');
 require("functions.php");
 
-if (isset($_GET["mobile"]))				{$mobile=$_GET["mobile"];}
-	elseif (isset($_POST["mobile"]))		{$mobile=$_POST["mobile"];}
-
 ?>
 // vicidial_whiteboard_functions.php
 // 
@@ -23,13 +20,8 @@ var size = {
   width: window.innerWidth || document.body.clientWidth,
   height: window.innerHeight || document.body.clientHeight
 }
-<?php if (!$mobile) { ?>
-main_canvas.width=size.width-220;
-main_canvas.height=size.height-220;
-<?php } else { ?>
 main_canvas.width=size.width-220;
 main_canvas.height=size.height-300;
-<?php } ?>
 
 // global chart names
 var MainGraph=null;
@@ -111,22 +103,24 @@ function HighlightRelatedFields(report_type) {
 
 	var form_elements = document.getElementById("vicidial_report").elements;
 	for (var i=0, element; element=form_elements[i++];) {
-		if (element.type=="text" || element.type=="select-one" || element.type=="select-multiple") {
-			element.className='form_field sm_shadow round_corners';
+		if (element.type=="select-one" || element.type=="select-multiple") {
+			element.className='mobile_whiteboard_select form_field_whiteboard_android sm_shadow round_corners';
 			for (var j=0; j<related_fields.length; j++) {
 				if (related_fields[j]==element.id) {
-					element.className='required_field sm_shadow round_corners';
+					element.className='mobile_whiteboard_select required_field_whiteboard_android sm_shadow round_corners';
 				}
 			}
+		} else if (element.type=="text") {
+			element.className='form_field_whiteboard_android sm_shadow round_corners';
+			for (var j=0; j<related_fields.length; j++) {
+				if (related_fields[j]==element.id) {
+					element.className='required_field_whiteboard_android sm_shadow round_corners';
+				}
+			}			
 		}
 	}
 }
 
-<?php if (!$mobile) { ?>
-document.getElementById("goto_reports").onclick = function() {
-	location.href = "./admin.php?ADD=999999";
-};
-<?php } ?>
 document.getElementById("adjust_report").onclick = function() {
 	document.getElementById("query_date").value=document.getElementById("query_date2").value;
 	// document.getElementById("end_date").value=document.getElementById("end_date2").value;
@@ -368,14 +362,14 @@ function RefreshReportWindow() {
 					Top10Array.sort(sortFunction);
 				}
 
-				var Top10HTMLChart="<div class='embossed border2px round_corners sm_shadow alt_row1' align='center'><table cellpadding='8' valign='top'>";
+				var Top10HTMLChart="<div class='border2px round_corners sm_shadow alt_row1' align='center'><table cellpadding='8' valign='top'>";
 				Top10HTMLChart+="<tr>";
-				Top10HTMLChart+="<th colspan='3'><font size='+2'><?php echo _QXZ("TOP 10 PERFORMERS"); ?></font></th>";
-				Top10HTMLChart+="<td align='right'><input type='button' class='red_btn sm_shadow' style='width:20px;height:20px' value=' X' onClick=\"ToggleVisibility('top_10_display'); ToggleVisibility('graph_display');\"></td>";
+				Top10HTMLChart+="<th colspan='3'><font class='android_large'><?php echo _QXZ("TOP 10 PERFORMERS"); ?></font></th>";
+				Top10HTMLChart+="<td align='right'><input type='button' class='red_btn sm_shadow' style='width:20px;height:20px' value='X' onClick=\"ToggleVisibility('top_10_display'); ToggleVisibility('graph_display');\"></td>";
 				Top10HTMLChart+="</tr>";
 				Top10HTMLChart+="<tr>";
-				Top10HTMLChart+="<th><?php echo _QXZ("RANK"); ?></th>";
-				Top10HTMLChart+="<th><?php echo _QXZ("NAME"); ?></th>";
+				Top10HTMLChart+="<th class='android_standard'><?php echo _QXZ("RANK"); ?></th>";
+				Top10HTMLChart+="<th class='android_standard'><?php echo _QXZ("NAME"); ?></th>";
 				Top10HTMLChart+="<th></th>";
 				Top10HTMLChart+="</tr>";
 
@@ -396,7 +390,7 @@ function RefreshReportWindow() {
 					}
 					if (breakloop=="no")
 						{
-						Top10HTMLChart+="<tr class='"+trClass+"'>";
+						Top10HTMLChart+="<tr class='"+trClass+" android_small'>";
 						Top10HTMLChart+="<td align='right'><B>"+ranking+".</B></td>";
 						Top10HTMLChart+="<td align='left'><B>"+Top10Array[i][1];
 						if (typeof Top10Array[i][2] !== "undefined" && report_type!="status_performance_total") {Top10HTMLChart+=" - "+Top10Array[i][2];}

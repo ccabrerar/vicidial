@@ -1,7 +1,7 @@
 <?php 
 # realtime_report_mobile.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
 #
 # streamlined mobile version of live real-time stats for the VICIDIAL Auto-Dialer all servers
 #
@@ -13,12 +13,13 @@
 # CHANGELOG:
 # 190206-1616 - First Build
 # 190228-1535 - Minor pre-release changes
+# 200309-1819 - Modifications for display formatting
 #
 
 $startMS = microtime();
 
-$version = '2.14-2';
-$build = '190228-1535';
+$version = '2.14-3';
+$build = '200309-1819';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -124,6 +125,7 @@ $webphone_bufw =	'250';
 $webphone_bufh =	'1';
 $webphone_pad =		'10';
 $webphone_clpos =	"<BR>  &nbsp; <a href=\"#\" onclick=\"hideDiv('webphone_content');\">"._QXZ("webphone")." -</a>";
+$TOTALdisplays=0;
 
 if (file_exists('options.php'))
 	{
@@ -154,6 +156,7 @@ if (!isset($UGdisplay))
 	{
 	if (!isset($RS_UGdisplay)) {$UGdisplay=0;}
 	else {$UGdisplay = $RS_UGdisplay;}
+	$TOTALdisplay+=$UGdisplay;
 	}
 if (!isset($UidORname)) 
 	{
@@ -169,21 +172,25 @@ if (!isset($SERVdisplay))
 	{
 	if (!isset($RS_SERVdisplay)) {$SERVdisplay=0;}
 	else {$SERVdisplay = $RS_SERVdisplay;}
+	$TOTALdisplay+=$SERVdisplay;
 	}
 if (!isset($CALLSdisplay)) 
 	{
 	if (!isset($RS_CALLSdisplay)) {$CALLSdisplay=1;}
 	else {$CALLSdisplay = $RS_CALLSdisplay;}
+	$TOTALdisplay+=$CALLSdisplay;
 	}
 if (!isset($PHONEdisplay)) 
 	{
 	if (!isset($RS_PHONEdisplay)) {$PHONEdisplay=0;}
 	else {$PHONEdisplay = $RS_PHONEdisplay;}
+	$TOTALdisplay+=$PHONEdisplay;
 	}
 if (!isset($CUSTPHONEdisplay)) 
 	{
 	if (!isset($RS_CUSTPHONEdisplay)) {$CUSTPHONEdisplay=0;}
 	else {$CUSTPHONEdisplay = $RS_CUSTPHONEdisplay;}
+	$TOTALdisplay+=$CUSTPHONEdisplay;
 	}
 if (!isset($PAUSEcodes)) 
 	{
@@ -282,6 +289,8 @@ $PRESETstats = preg_replace('/[^-_0-9a-zA-Z]/', '', $PRESETstats);
 $AGENTtimeSTATS = preg_replace('/[^-_0-9a-zA-Z]/', '', $AGENTtimeSTATS);
 $INGROUPcolorOVERRIDE = preg_replace('/[^-_0-9a-zA-Z]/', '', $INGROUPcolorOVERRIDE);
 $droppedOFtotal = preg_replace('/[^-_0-9a-zA-Z]/', '', $droppedOFtotal);
+
+$TOTALdisplay+=$ALLINGROUPstats;
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
@@ -666,8 +675,10 @@ $NFB = '<b><font size=6 face="courier">';
 $NFE = '</font></b>';
 $F=''; $FG=''; $B=''; $BG='';
 
-$select_list = "<TABLE class='realtime_settings_table' CELLPADDING=5 BGCOLOR='#D9E6FE'><TR><TD VALIGN=TOP><font class='top_settings_header'>"._QXZ("Select Campaigns").": </font><BR>";
-$select_list .= "<SELECT class='top_settings_input' SIZE=8 NAME=groups[] ID=groups[] multiple>";
+$select_list = "<TABLE class='realtime_settings_table' CELLPADDING=5 BGCOLOR='#D9E6FE' border='0'><TR><TD VALIGN=TOP>";
+$select_list .= "<font class='top_settings_header bold'><a href='#' onclick=\\\"hideDiv('campaign_select_list');\\\">"._QXZ("Close Panel")."</a></font><BR><BR>"; #*
+$select_list .= "<font class='top_settings_header'>"._QXZ("Select Campaigns").": </font><BR>";
+$select_list .= "<SELECT class='form_field_android_small' NAME=groups[] ID=groups[] multiple>";
 $o=0;
 while ($groups_to_print > $o)
 	{
@@ -680,8 +691,8 @@ while ($groups_to_print > $o)
 $select_list .= "</SELECT>";
 $select_list .= "<BR><font class='top_settings_val'>("._QXZ("To select more than 1 campaign, hold down the Ctrl key and click").")</font>";
 
-$select_list .= "<BR><BR><font class='top_settings_val'>"._QXZ("Select User Groups").": </font><BR>";
-$select_list .= "<SELECT class='top_settings_input' SIZE=8 NAME=user_group_filter[] ID=user_group_filter[] multiple>";
+$select_list .= "<BR><BR><font class='top_settings_header'>"._QXZ("Select User Groups").": </font><BR>";
+$select_list .= "<SELECT class='form_field_android_small' NAME=user_group_filter[] ID=user_group_filter[] multiple>";
 $o=0;
 while ($o < $usergroups_to_print)
 	{
@@ -698,12 +709,12 @@ while ($o < $usergroups_to_print)
 	}
 $select_list .= "</SELECT>";
 
-$select_list .= "</TD><TD VALIGN=TOP ALIGN=CENTER><font class='top_settings_header'>";
-$select_list .= "<a href='#' onclick=\\\"hideDiv('campaign_select_list');\\\">"._QXZ("Close Panel")."</a></font><BR><BR>";
-$select_list .= "<TABLE CELLPADDING=2 CELLSPACING=2 BORDER=0>";
+#$select_list .= "</TD><TD VALIGN=TOP ALIGN=CENTER><font class='top_settings_header'>";
+#*
+$select_list .= "<BR><BR><TABLE CELLPADDING=2 CELLSPACING=2 BORDER=0>";
 
 $select_list .= "<TR><TD align=right><font class='top_settings_header'>";
-$select_list .= _QXZ("Screen Refresh Rate").":  </font></TD><TD align=left><SELECT class='top_settings_input' SIZE=1 NAME=RR ID=RR>";
+$select_list .= _QXZ("Screen Refresh Rate").":  </font></TD><TD align=left><SELECT class='form_field_android_small' SIZE=1 NAME=RR ID=RR>";
 $select_list .= "<option value='4'";   if ($RR < 5) {$select_list .= " selected";}    $select_list .= ">4 "._QXZ("seconds")."</option>";
 $select_list .= "<option value='10'";   if ( ($RR >= 5) and ($RR <=10) ) {$select_list .= " selected";}    $select_list .= ">10 "._QXZ("seconds")."</option>";
 $select_list .= "<option value='20'";   if ( ($RR >= 11) and ($RR <=20) ) {$select_list .= " selected";}    $select_list .= ">20 "._QXZ("seconds")."</option>";
@@ -722,7 +733,7 @@ $select_list .= "<option value='63072000'";   if ($RR >= 7201) {$select_list .= 
 $select_list .= "</SELECT></TD></TR>";
 
 $select_list .= "<TR><TD align=right><font class='top_settings_header'>";
-$select_list .= _QXZ("Inbound").":  </font></TD><TD align=left><SELECT class='top_settings_input' SIZE=1 NAME=with_inbound ID=with_inbound>";
+$select_list .= _QXZ("Inbound").":  </font></TD><TD align=left><SELECT class='form_field_android_small' SIZE=1 NAME=with_inbound ID=with_inbound>";
 $select_list .= "<option value='N'";
 	if ($with_inbound=='N') {$select_list .= " selected";} 
 $select_list .= ">"._QXZ("No")."</option>";
@@ -735,7 +746,7 @@ $select_list .= ">"._QXZ("Only")."</option>";
 $select_list .= "</SELECT></TD></TR>";
 
 $select_list .= "<TR><TD align=right><font class='top_settings_header'>";
-$select_list .= _QXZ("Monitor").":  </font></TD><TD align=left><SELECT class='top_settings_input' SIZE=1 NAME=monitor_active ID=monitor_active>";
+$select_list .= _QXZ("Monitor").":  </font></TD><TD align=left><SELECT class='form_field_android_small' SIZE=1 NAME=monitor_active ID=monitor_active>";
 $select_list .= "<option value=''";
 	if (strlen($monitor_active) < 2) {$select_list .= " selected";} 
 $select_list .= ">"._QXZ("NONE")."</option>";
@@ -758,7 +769,7 @@ $select_list .= "</SELECT></TD></TR>";
 
 $select_list .= "<TR><TD align=right><font class='top_settings_header'>";
 $select_list .= _QXZ("Phone").":  </font></TD><TD align=left>";
-$select_list .= "<INPUT class='top_settings_input' type=text size=10 maxlength=20 NAME=monitor_phone ID=monitor_phone VALUE='$monitor_phone'>";
+$select_list .= "<INPUT class='form_field_android_small' type=text size=10 maxlength=20 NAME=monitor_phone ID=monitor_phone VALUE='$monitor_phone'>";
 $select_list .= "</TD></TR>";
 $select_list .= "<TR><TD align=center COLSPAN=2> &nbsp; </TD></TR>";
 
@@ -766,7 +777,7 @@ if ($UGdisplay > 0)
 	{
 	$select_list .= "<TR><TD align=right><font class='top_settings_header'>";
 	$select_list .= _QXZ("Select User Group").":  </font></TD><TD align=left>";
-	$select_list .= "<SELECT class='top_settings_input' SIZE=1 NAME=usergroup ID=usergroup>";
+	$select_list .= "<SELECT class='form_field_android_small' SIZE=1 NAME=usergroup ID=usergroup>";
 	$select_list .= "<option value=''>"._QXZ("ALL USER GROUPS")."</option>";
 	$o=0;
 	while ($usergroups_to_print > $o)
@@ -779,7 +790,7 @@ if ($UGdisplay > 0)
 	}
 
 $select_list .= "<TR><TD align=right><font class='top_settings_header'>";
-$select_list .= _QXZ("Dialable Leads Alert").":  </font></TD><TD align=left><SELECT class='top_settings_input' SIZE=1 NAME=NOLEADSalert ID=NOLEADSalert>";
+$select_list .= _QXZ("Dialable Leads Alert").":  </font></TD><TD align=left><SELECT class='form_field_android_small' SIZE=1 NAME=NOLEADSalert ID=NOLEADSalert>";
 $select_list .= "<option value=''";
 	if (strlen($NOLEADSalert) < 2) {$select_list .= " selected";} 
 $select_list .= ">"._QXZ("NO")."</option>";
@@ -789,7 +800,7 @@ $select_list .= ">"._QXZ("YES")."</option>";
 $select_list .= "</SELECT></TD></TR>";
 
 $select_list .= "<TR><TD align=right><font class='top_settings_header'>";
-$select_list .= _QXZ("Show Drop In-Group Row").":  </font></TD><TD align=left><SELECT class='top_settings_input' SIZE=1 NAME=DROPINGROUPstats ID=DROPINGROUPstats>";
+$select_list .= _QXZ("Show Drop In-Group Row").":  </font></TD><TD align=left><SELECT class='form_field_android_small' SIZE=1 NAME=DROPINGROUPstats ID=DROPINGROUPstats>";
 $select_list .= "<option value='0'";
 	if ($DROPINGROUPstats < 1) {$select_list .= " selected";} 
 $select_list .= ">"._QXZ("NO")."</option>";
@@ -799,7 +810,7 @@ $select_list .= ">"._QXZ("YES")."</option>";
 $select_list .= "</SELECT></TD></TR>";
 
 $select_list .= "<TR><TD align=right><font class='top_settings_header'>";
-$select_list .= _QXZ("Show Carrier Stats").":  </font></TD><TD align=left><SELECT class='top_settings_input' SIZE=1 NAME=CARRIERstats ID=CARRIERstats>";
+$select_list .= _QXZ("Show Carrier Stats").":  </font></TD><TD align=left><SELECT class='form_field_android_small' SIZE=1 NAME=CARRIERstats ID=CARRIERstats>";
 $select_list .= "<option value='0'";
 	if ($CARRIERstats < 1) {$select_list .= " selected";} 
 $select_list .= ">"._QXZ("NO")."</option>";
@@ -822,7 +833,7 @@ if ($presets_enabled_count > 0)
 if ($presets_enabled > 0)
 	{
 	$select_list .= "<TR><TD align=right><font class='top_settings_header'>";
-	$select_list .= _QXZ("Show Presets Stats").":  </font></TD><TD align=left><SELECT class='top_settings_input' SIZE=1 NAME=PRESETstats ID=PRESETstats>";
+	$select_list .= _QXZ("Show Presets Stats").":  </font></TD><TD align=left><SELECT class='form_field_android_small' SIZE=1 NAME=PRESETstats ID=PRESETstats>";
 	$select_list .= "<option value='0'";
 		if ($PRESETstats < 1) {$select_list .= " selected";} 
 	$select_list .= ">"._QXZ("NO")."</option>";
@@ -837,7 +848,7 @@ else
 	}
 
 $select_list .= "<TR><TD align=right><font class='top_settings_header'>";
-$select_list .= _QXZ("Agent Time Stats").":  </font></TD><TD align=left><SELECT class='top_settings_input' SIZE=1 NAME=AGENTtimeSTATS ID=AGENTtimeSTATS>";
+$select_list .= _QXZ("Agent Time Stats").":  </font></TD><TD align=left><SELECT class='form_field_android_small' SIZE=1 NAME=AGENTtimeSTATS ID=AGENTtimeSTATS>";
 $select_list .= "<option value='0'";
 	if ($AGENTtimeSTATS < 1) {$select_list .= " selected";} 
 $select_list .= ">"._QXZ("NO")."</option>";
@@ -847,7 +858,7 @@ $select_list .= ">"._QXZ("YES")."</option>";
 $select_list .= "</SELECT></TD></TR>";
 
 $select_list .= "<TR><TD align=right><font class='top_settings_header'>";
-$select_list .= _QXZ("In-group color override").":  </font></TD><TD align=left><SELECT class='top_settings_input' SIZE=1 NAME=INGROUPcolorOVERRIDE ID=INGROUPcolorOVERRIDE>";
+$select_list .= _QXZ("In-group color override").":  </font></TD><TD align=left><SELECT class='form_field_android_small' SIZE=1 NAME=INGROUPcolorOVERRIDE ID=INGROUPcolorOVERRIDE>";
 $select_list .= "<option value='0'";
 	if ($INGROUPcolorOVERRIDE < 1) {$select_list .= " selected";} 
 $select_list .= ">"._QXZ("NO")."</option>";
@@ -856,16 +867,14 @@ $select_list .= "<option value='1'";
 $select_list .= ">"._QXZ("YES")."</option>";
 $select_list .= "</SELECT></TD></TR>";
 
-$select_list .= "<TR><TD align=right>&nbsp;</TD></TR>";
+$select_list .= "<TR><TD align=right colspan='2'>&nbsp;</TD></TR>";
 
+$select_list .= "<TR><TD align=center colspan='2'><INPUT class='red_btn_mobile_sm' type=button VALUE=SUBMIT onclick=\\\"update_variables('form_submit','');\\\"></TD></TR>";
 
 $select_list .= "</TABLE><BR>";
 $select_list .= "<INPUT type=hidden name=droppedOFtotal value='$droppedOFtotal'>";
-$select_list .= "<INPUT class='top_settings_input' type=button VALUE=SUBMIT onclick=\\\"update_variables('form_submit','');\\\"><FONT FACE='ARIAL,HELVETICA' COLOR=BLACK SIZE=2> &nbsp; &nbsp; &nbsp; &nbsp; ";
 $select_list .= "</TD></TR>";
-$select_list .= "<TR><TD ALIGN=CENTER>";
-$select_list .= "<font class='top_settings_val'> &nbsp; </font>";
-$select_list .= "</TD>";
+$select_list .= "<TR>";
 $select_list .= "<TD NOWRAP align=right>";
 $select_list .= "<font class='top_settings_val'>"._QXZ("VERSION").": $version &nbsp; "._QXZ("BUILD").": $build</font>";
 $select_list .= "</TD></TR></TABLE>";
@@ -988,7 +997,7 @@ if (strlen($monitor_phone)>1)
 ##### END code for embedded webphone for monitoring #####
 
 
-
+require("screen_colors.php");
 ?>
 
 <HTML>
@@ -1332,15 +1341,18 @@ function gather_realtime_content()
 	  }
 	 }
 	@end @*/
+
+	var RTdisplay_type=document.getElementById("RTDisplayInfo").value;
+
 	if (!xmlhttp && typeof XMLHttpRequest!='undefined')
 		{
 		xmlhttp = new XMLHttpRequest();
 		}
 	if (xmlhttp) 
 		{
-		RTupdate_query = "RTajax=1&mobile_device=1&DB=" + DB + "" + groupQS + usergroupQS + "&adastats=" + adastats + "&SIPmonitorLINK=" + SIPmonitorLINK + "&IAXmonitorLINK=" + IAXmonitorLINK + "&usergroup=" + usergroup + "&UGdisplay=" + UGdisplay + "&UidORname=" + UidORname + "&orderby=" + orderby + "&SERVdisplay=" + SERVdisplay + "&CALLSdisplay=" + CALLSdisplay + "&PHONEdisplay=" + PHONEdisplay + "&CUSTPHONEdisplay=" + CUSTPHONEdisplay + "&with_inbound=" + with_inbound + "&monitor_active=" + monitor_active + "&monitor_phone=" + monitor_phone + "&ALLINGROUPstats=" + ALLINGROUPstats + "&DROPINGROUPstats=" + DROPINGROUPstats + "&NOLEADSalert=" + NOLEADSalert + "&CARRIERstats=" + CARRIERstats + "&PRESETstats=" + PRESETstats + "&AGENTtimeSTATS=" + AGENTtimeSTATS + "&INGROUPcolorOVERRIDE=" + INGROUPcolorOVERRIDE + "&droppedOFtotal=" + droppedOFtotal + "&report_display_type=" + report_display_type + "";
+		RTupdate_query = "RTajax=1&mobile_device=1&RTdisplay_type=" + RTdisplay_type + "&DB=" + DB + "" + groupQS + usergroupQS + "&adastats=" + adastats + "&SIPmonitorLINK=" + SIPmonitorLINK + "&IAXmonitorLINK=" + IAXmonitorLINK + "&usergroup=" + usergroup + "&UGdisplay=" + UGdisplay + "&UidORname=" + UidORname + "&orderby=" + orderby + "&SERVdisplay=" + SERVdisplay + "&CALLSdisplay=" + CALLSdisplay + "&PHONEdisplay=" + PHONEdisplay + "&CUSTPHONEdisplay=" + CUSTPHONEdisplay + "&with_inbound=" + with_inbound + "&monitor_active=" + monitor_active + "&monitor_phone=" + monitor_phone + "&ALLINGROUPstats=" + ALLINGROUPstats + "&DROPINGROUPstats=" + DROPINGROUPstats + "&NOLEADSalert=" + NOLEADSalert + "&CARRIERstats=" + CARRIERstats + "&PRESETstats=" + PRESETstats + "&AGENTtimeSTATS=" + AGENTtimeSTATS + "&INGROUPcolorOVERRIDE=" + INGROUPcolorOVERRIDE + "&droppedOFtotal=" + droppedOFtotal + "&report_display_type=" + report_display_type + "";
 
-		xmlhttp.open('POST', 'AST_timeonVDADall.php'); 
+		xmlhttp.open('POST', 'AST_timeonVDADall_mobile.php'); 
 		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
 		xmlhttp.send(RTupdate_query); 
 		xmlhttp.onreadystatechange = function() 
@@ -1523,7 +1535,27 @@ function update_variables(task_option,task_choice,force_reload)
 	gather_realtime_content();
 	}
 
-
+function ToggleDisplay() 
+	{
+	if (document.getElementById("RTDisplayInfo").value=="CALL")
+		{
+		document.getElementById("RTDisplayInfo").value="AGENT";
+		document.getElementById("RTDisplayButton").value="CALL INFO";
+		// document.getElementById("RTDisplayButton").class="blue_btn";
+		document.getElementById("RTAgentInfoOptions").style="display:block";
+		document.getElementById("RTAgentDisplayInfo").style="display:block";
+		document.getElementById("RTCallDisplayInfo").style="display:none";
+		}
+	else
+		{
+		document.getElementById("RTDisplayInfo").value="CALL";
+		document.getElementById("RTDisplayButton").value="AGENT INFO";
+		// document.getElementById("RTDisplayButton").class="red_btn";
+		document.getElementById("RTAgentInfoOptions").style="display:none";
+		document.getElementById("RTAgentDisplayInfo").style="display:none";
+		document.getElementById("RTCallDisplayInfo").style="display:block";
+		}
+	}
 </script>
 
 <STYLE type="text/css">
@@ -1606,8 +1638,8 @@ function update_variables(task_option,task_choice,force_reload)
 
 	.realtime_img_icon {width: 8vw; max-width: 42px; height: auto; }
 	.realtime_img_text {font-family:HELVETICA; font-size:calc(6px + (11 - 6) * ((100vw - 300px) / (1600 - 300))); color:white; font-weight:bold;}
-	.realtime_table {width: 100vw; max-width: 860px;}
-	.realtime_settings_table {width: 85vw; max-width: 700px; }
+	.realtime_table {width:  96vw; max-width: 960px;}
+	.realtime_settings_table {width: 50vw; max-width: 600px; }
 	.realtime_display_span_def {position: absolute; left:calc(105px + 55 * (100vw / 1600));} 
 	.realtime_display_table {width: 25vw; max-width: 250px; }
 
@@ -1643,7 +1675,7 @@ $row=mysqli_fetch_row($rslt);
 $campaign_allow_inbound = $row[0];
 
 echo "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=utf-8\">\n";
-echo "<TITLE>$report_name: $group</TITLE></HEAD><BODY BGCOLOR=WHITE marginheight=0 marginwidth=0 leftmargin=0 topmargin=0>\n";
+echo "<TITLE>$report_name: $group</TITLE></HEAD><BODY BGCOLOR='#".$SSframe_background."' marginheight=0 marginwidth=0 leftmargin=0 topmargin=0>\n";
 
 	$android_header=1;
 
@@ -1657,35 +1689,28 @@ echo "<INPUT TYPE=HIDDEN NAME=cursorY ID=cursorY>\n";
 
 echo "<table class='realtime_table'>";
 echo "<tr>";
-echo "<td align=left class='top_head_key'>"._QXZ("$report_name")."</td>";
 echo "<td align=left class='top_head_key'>";
 	echo "<span style=\"z-index:20;\" id=campaign_select_list_link>\n";
-	echo "<TABLE class='realtime_display_table' CELLPADDING=0 CELLSPACING=0 BGCOLOR=\"#D9E6FE\"><TR><TD ALIGN=CENTER>\n";
-	echo "<a href=\"#\" onclick=\"showDiv('campaign_select_list');\"><font class='top_head_key'>"._QXZ("Choose Report Display Options")."</a>";
+	echo "<TABLE CELLPADDING=0 CELLSPACING=0 BGCOLOR=\"#D9E6FE\"><TR><TD ALIGN=CENTER>\n";
+	echo "<a href=\"#\" onclick=\"showDiv('campaign_select_list');\"><font class='android_small bold'>"._QXZ("Choose Report Display Options")."</a>";
 	echo "</TD></TR></TABLE>\n";
 	echo "</span>\n";
 echo "</td>";
-echo "<td align=left class='top_head_key'>";
+echo "<td align=left class='android_standard bold'>";
 	echo "<span style=\"position:absolute;left:0px;z-index:21;\" id=campaign_select_list>\n";
 	echo "<TABLE WIDTH=0 HEIGHT=0 CELLPADDING=0 CELLSPACING=0 BGCOLOR=\"#D9E6FE\"><TR><TD ALIGN=CENTER>\n";
 	echo "";
 	echo "</TD></TR></TABLE>\n";
 	echo "</span>\n";
 echo "</td>";
-echo "<td align=left class='top_settings_val'>";
-	echo "<a href=\"#\" onclick=\"update_variables('form_submit','','YES')\"><font class='top_settings_val'>"._QXZ("RELOAD NOW")."</font></a>";
+echo "<td align=left class='android_small'>";
+	echo "<a href=\"#\" onclick=\"update_variables('form_submit','','YES')\"><font class='android_small'>"._QXZ("RELOAD NOW")."</font></a>";
 echo "</td>";
-echo "<td align=right class='top_settings_val'>";
-#	if (preg_match('/ALL\-ACTIVE/i',$group_string))
-#		{echo "<a href=\"./admin.php?ADD=10\"><font class='top_settings_val'>"._QXZ("MODIFY")."</font></a> | \n";}
-#	else
-#		{echo "<a href=\"./admin.php?ADD=34&campaign_id=$group\"><font class='top_settings_val'>"._QXZ("MODIFY")."</font></a> | \n";}
-echo "&nbsp;</td>";
-echo "<td align=left class='top_settings_val'>";
-	echo "<a href=\"./AST_timeonVDADallSUMMARY_mobile.php?RR=$RR&DB=$DB&adastats=$adastats\"><font class='top_settings_val'>"._QXZ("SUMMARY")."</font></a> </FONT>\n";
+echo "<td align=left class='android_small'>";
+	echo "<a href=\"./AST_timeonVDADallSUMMARY_mobile.php?RR=$RR&DB=$DB&adastats=$adastats\"><font class='android_small'>"._QXZ("SUMMARY")."</font></a> </FONT>\n";
 echo "</td>";
-echo "<td align=left class='top_settings_val'>";
-	echo "<font class='top_settings_val'>"._QXZ("refresh").": <span id=refresh_countdown name=refresh_countdown></span></font>\n\n";
+echo "<td align=left class='android_small'>";
+	echo "<font class='android_small'>"._QXZ("refresh").": <span id=refresh_countdown name=refresh_countdown></span></font>\n\n";
 echo "</td>";
 echo "</tr>";
 echo "</table>";
@@ -1734,39 +1759,67 @@ echo " &nbsp; &nbsp; &nbsp; <font class='top_settings_val'>"._QXZ("refresh").": 
 if (!preg_match("/WALL/",$report_display_type))
 	{
 	if ($is_webphone == 'Y')
-		{echo " &nbsp; &nbsp; <span id=webphone_visibility name=webphone_visibility><a href=\"#\" onclick=\"ShowWebphone('show');\"><font class='top_settings_val'>"._QXZ("webphone")." +</font></a></span>\n\n";}
+		{echo " &nbsp; &nbsp; <span id=webphone_visibility name=webphone_visibility><a href=\"#\" onclick=\"ShowWebphone('show');\"><font class='android_small'>"._QXZ("webphone")." +</font></a></span>\n\n";}
 	else
 		{echo " &nbsp; &nbsp; <span id=webphone_visibility name=webphone_visibility></span>\n\n";}
 
 	if ($webphone_bufh > 10)
 		{echo "<BR><img src=\"images/pixel.gif\" width=1 height=$webphone_bufh>\n";}
-	echo "<BR>\n\n";
+	# echo "<BR>\n\n";
 
+	echo "<table class='realtime_table'><tr><th><input type='button' id='RTDisplayButton' class='red_btn_mobile' value='AGENT INFO' onClick='ToggleDisplay()'><input type=hidden id='RTDisplayInfo' value='CALL'></th></tr></table>";
 
+	echo "<span id='RTAgentInfoOptions' style='display:none'>";
+	echo "<table class='realtime_table'>";
+	echo "<tr>";
+	echo "<th style='width: 32vw'>";
 	if ($UGdisplay>0)
-		{echo " <a href=\"#\" onclick=\"update_variables('UGdisplay','');\"><font class=\"top_settings_val\"><span id=UGdisplayTXT>"._QXZ("HIDE USER GROUP")."</span></font></a>";}
+		{echo " <a href=\"#\" onclick=\"update_variables('UGdisplay','');\"><font class=\"android_small\"><span id=UGdisplayTXT>"._QXZ("HIDE USER GROUP")."</span></font></a>";}
 	else
-		{echo " <a href=\"#\" onclick=\"update_variables('UGdisplay','');\"><font class=\"top_settings_val\"><span id=UGdisplayTXT>"._QXZ("VIEW USER GROUP")."</span></font></a>";}
+		{echo " <a href=\"#\" onclick=\"update_variables('UGdisplay','');\"><font class=\"android_small\"><span id=UGdisplayTXT>"._QXZ("VIEW USER GROUP")."</span></font></a>";}
+	echo "</th>";
+
+	echo "<th style='width: 32vw'>";
 	if ($SERVdisplay>0)
-		{echo " &nbsp; &nbsp; <a href=\"#\" onclick=\"update_variables('SERVdisplay','');\"><font class=\"top_settings_val\"><span id=SERVdisplayTXT>"._QXZ("HIDE SERVER INFO")."</span></font></a>";}
+		{echo " <a href=\"#\" onclick=\"update_variables('SERVdisplay','');\"><font class=\"android_small\"><span id=SERVdisplayTXT>"._QXZ("HIDE SERVER INFO")."</span></font></a>";}
 	else
-		{echo " &nbsp; &nbsp; <a href=\"#\" onclick=\"update_variables('SERVdisplay','');\"><font class=\"top_settings_val\"><span id=SERVdisplayTXT>"._QXZ("SHOW SERVER INFO")."</span></font></a>";}
+		{echo " <a href=\"#\" onclick=\"update_variables('SERVdisplay','');\"><font class=\"android_small\"><span id=SERVdisplayTXT>"._QXZ("SHOW SERVER INFO")."</span></font></a>";}
+	echo "</th>";
+
+	echo "<th style='width: 32vw'>";
 	if ($CALLSdisplay>0)
-		{echo " &nbsp; &nbsp; <a href=\"#\" onclick=\"update_variables('CALLSdisplay','');\"><font class=\"top_settings_val\"><span id=CALLSdisplayTXT>"._QXZ("HIDE WAITING CALLS")."</span></font></a>";}
+		{echo " <a href=\"#\" onclick=\"update_variables('CALLSdisplay','');\"><font class=\"android_small\"><span id=CALLSdisplayTXT>"._QXZ("HIDE WAITING CALLS")."</span></font></a>";}
 	else
-		{echo " &nbsp; &nbsp; <a href=\"#\" onclick=\"update_variables('CALLSdisplay','');\"><font class=\"top_settings_val\"><span id=CALLSdisplayTXT>"._QXZ("SHOW WAITING CALLS")."</span></font></a>";}
+		{echo " <a href=\"#\" onclick=\"update_variables('CALLSdisplay','');\"><font class=\"android_small\"><span id=CALLSdisplayTXT>"._QXZ("SHOW WAITING CALLS")."</span></font></a>";}
+	echo "</th>";
+
+	echo "</tr>";
+	echo "<tr>";
+
+	echo "<th style='width: 32vw'>";
 	if ($ALLINGROUPstats>0)
-		{echo " &nbsp; &nbsp; <a href=\"#\" onclick=\"update_variables('ALLINGROUPstats','');\"><font class=\"top_settings_val\"><span id=ALLINGROUPstatsTXT>"._QXZ("HIDE IN-GROUP STATS")."</span></font></a>";}
+		{echo "<a href=\"#\" onclick=\"update_variables('ALLINGROUPstats','');\"><font class=\"android_small\"><span id=ALLINGROUPstatsTXT>"._QXZ("HIDE IN-GROUP STATS")."</span></font></a>";}
 	else
-		{echo " &nbsp; &nbsp; <a href=\"#\" onclick=\"update_variables('ALLINGROUPstats','');\"><font class=\"top_settings_val\"><span id=ALLINGROUPstatsTXT>"._QXZ("SHOW IN-GROUP STATS")."</span></font></a>";}
+		{echo "<a href=\"#\" onclick=\"update_variables('ALLINGROUPstats','');\"><font class=\"android_small\"><span id=ALLINGROUPstatsTXT>"._QXZ("SHOW IN-GROUP STATS")."</span></font></a>";}
+	echo "</th>";
+
+	echo "<th style='width: 32vw'>";
 	if ($PHONEdisplay>0)
-		{echo " &nbsp; &nbsp; <a href=\"#\" onclick=\"update_variables('PHONEdisplay','');\"><font class=\"top_settings_val\"><span id=PHONEdisplayTXT>"._QXZ("HIDE PHONES")."</span></font></a>";}
+		{echo " <a href=\"#\" onclick=\"update_variables('PHONEdisplay','');\"><font class=\"android_small\"><span id=PHONEdisplayTXT>"._QXZ("HIDE PHONES")."</span></font></a>";}
 	else
-		{echo " &nbsp; &nbsp; <a href=\"#\" onclick=\"update_variables('PHONEdisplay','');\"><font class=\"top_settings_val\"><span id=PHONEdisplayTXT>"._QXZ("SHOW PHONES")."</span></font></a>";}
+		{echo " <a href=\"#\" onclick=\"update_variables('PHONEdisplay','');\"><font class=\"android_small\"><span id=PHONEdisplayTXT>"._QXZ("SHOW PHONES")."</span></font></a>";}
+	echo "</th>";
+
+	echo "<th style='width: 32vw'>";
 	if ($CUSTPHONEdisplay>0)
-		{echo " &nbsp; &nbsp; <a href=\"#\" onclick=\"update_variables('CUSTPHONEdisplay','');\"><font class=\"top_settings_val\"><span id=CUSTPHONEdisplayTXT>"._QXZ("HIDE CUSTPHONES")."</span></font></a>";}
+		{echo " <a href=\"#\" onclick=\"update_variables('CUSTPHONEdisplay','');\"><font class=\"android_small\"><span id=CUSTPHONEdisplayTXT>"._QXZ("HIDE CUSTPHONES")."</span></font></a>";}
 	else
-		{echo " &nbsp; &nbsp; <a href=\"#\" onclick=\"update_variables('CUSTPHONEdisplay','');\"><font class=\"top_settings_val\"><span id=CUSTPHONEdisplayTXT>"._QXZ("SHOW CUSTPHONES")."</span></font></a>";}
+		{echo " <a href=\"#\" onclick=\"update_variables('CUSTPHONEdisplay','');\"><font class=\"android_small\"><span id=CUSTPHONEdisplayTXT>"._QXZ("SHOW CUSTPHONES")."</span></font></a>";}
+	echo "</th>";
+
+	echo "</tr>";
+	echo "</table>";
+	echo "</span>";
 	}
 
 #echo "</TD></TR></TABLE>";

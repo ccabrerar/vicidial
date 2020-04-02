@@ -487,10 +487,11 @@
 # 191108-0920 - Added Dial Timeout Lead override function
 # 200108-0947 - Added cid_group_id of NONE
 # 200122-1847 - Added code for CID Group auto-rotate feature
+# 200310-1117 - Added manual_dial_cid AGENT_PHONE_OVERRIDE option 
 #
 
-$version = '2.14-380';
-$build = '200122-1847';
+$version = '2.14-381';
+$build = '200310-1117';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=824;
@@ -4212,7 +4213,7 @@ if ($ACTION == 'manDiaLnextCaLL')
 			##### BEGIN if NOT preview dialing, do send the call #####
 			if ( (strlen($preview)<1) or ($preview == 'NO') or (strlen($dial_ingroup) > 1) )
 				{
-				$stmt = "SELECT use_custom_cid,manual_dial_hopper_check,start_call_url,manual_dial_filter,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc,cid_group_id,scheduled_callbacks_auto_reschedule,dial_timeout_lead_container FROM vicidial_campaigns where campaign_id='$campaign';";
+				$stmt = "SELECT use_custom_cid,manual_dial_hopper_check,start_call_url,manual_dial_filter,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc,cid_group_id,scheduled_callbacks_auto_reschedule,dial_timeout_lead_container,manual_dial_cid FROM vicidial_campaigns where campaign_id='$campaign';";
 				$rslt=mysql_to_mysqli($stmt, $link);
 					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00313',$user,$server_ip,$session_name,$one_mysql_log);}
 				if ($DB) {echo "$stmt\n";}
@@ -4230,6 +4231,7 @@ if ($ACTION == 'manDiaLnextCaLL')
 					$cid_group_id =							$row[7];
 					$scheduled_callbacks_auto_reschedule =	$row[8];
 					$dial_timeout_lead_container =			$row[9];
+					$manual_dial_cid =						$row[10];
 					}
 
 				### BEGIN check for Dial Timeout Lead Override ###
@@ -4604,6 +4606,26 @@ if ($ACTION == 'manDiaLnextCaLL')
 							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00758',$user,$server_ip,$session_name,$one_mysql_log);}
 						}
 					}
+
+				#### BEGIN check for manual_dial_cid == 'AGENT_PHONE_OVERRIDE'
+				if ($manual_dial_cid == 'AGENT_PHONE_OVERRIDE')
+					{
+					$PHONEoutbound_cid='';
+					$stmt = "SELECT outbound_cid FROM phones where login='$phone_login' limit 1;";
+					$rslt=mysql_to_mysqli($stmt, $link);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+					if ($DB) {echo "$stmt\n";}
+					$pocid_ct = mysqli_num_rows($rslt);
+					if ($pocid_ct > 0)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$PHONEoutbound_cid =	$row[0];
+						}
+					$PHONEoutbound_cid = preg_replace("/\D/",'',$PHONEoutbound_cid);
+					if (strlen($PHONEoutbound_cid) > 6) 
+						{$CCID = "$PHONEoutbound_cid";   $CCID_on++;}
+					}
+				#### END check for manual_dial_cid == 'AGENT_PHONE_OVERRIDE'
 
 				if ($CCID_on) {$CIDstring = "\"$MqueryCID$EAC\" <$CCID>";}
 				else {$CIDstring = "$MqueryCID$EAC";}
@@ -5919,7 +5941,7 @@ if ($ACTION == 'manDiaLonly')
 			{
 			### check for custom cid use
 			$use_custom_cid=0;
-			$stmt = "SELECT use_custom_cid,manual_dial_hopper_check,cid_group_id FROM vicidial_campaigns where campaign_id='$campaign';";
+			$stmt = "SELECT use_custom_cid,manual_dial_hopper_check,cid_group_id,manual_dial_cid FROM vicidial_campaigns where campaign_id='$campaign';";
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00314',$user,$server_ip,$session_name,$one_mysql_log);}
 			if ($DB) {echo "$stmt\n";}
@@ -5930,6 +5952,7 @@ if ($ACTION == 'manDiaLonly')
 				$use_custom_cid =			$row[0];
 				$manual_dial_hopper_check =	$row[1];
 				$cid_group_id =				$row[2];
+				$manual_dial_cid =			$row[3];
 				if ($use_custom_cid == 'Y')
 					{
 					$temp_CID = preg_replace("/\D/",'',$security_phrase);
@@ -6058,6 +6081,26 @@ if ($ACTION == 'manDiaLonly')
 					}
 				}
 			}
+
+		#### BEGIN check for manual_dial_cid == 'AGENT_PHONE_OVERRIDE'
+		if ($manual_dial_cid ==  'AGENT_PHONE_OVERRIDE')
+			{
+			$PHONEoutbound_cid='';
+			$stmt = "SELECT outbound_cid FROM phones where login='$phone_login' limit 1;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+			if ($DB) {echo "$stmt\n";}
+			$pocid_ct = mysqli_num_rows($rslt);
+			if ($pocid_ct > 0)
+				{
+				$row=mysqli_fetch_row($rslt);
+				$PHONEoutbound_cid =	$row[0];
+				}
+			$PHONEoutbound_cid = preg_replace("/\D/",'',$PHONEoutbound_cid);
+			if (strlen($PHONEoutbound_cid) > 6) 
+				{$CCID = "$PHONEoutbound_cid";   $CCID_on++;}
+			}
+		#### END check for manual_dial_cid == 'AGENT_PHONE_OVERRIDE'
 
 		#### BEGIN run manual_dial_hopper_check process if enabled
 		if ($manual_dial_hopper_check == 'Y')
@@ -16594,8 +16637,8 @@ if ($ACTION == 'CALLLOGview')
 		$ALLlead_id[$g] =		$row[7];
 		$ALLhangup_reason[$g] =	$row[8];
 		$ALLalt_dial[$g] =		$row[9];
-		$ALLin_out[$g] =		"OUT-AUTO";
-		if ($row[10] == 'MANUAL') {$ALLin_out[$g] = "OUT-MANUAL";}
+		$ALLin_out[$g] =		_QXZ("OUT-AUTO");
+		if ($row[10] == 'MANUAL') {$ALLin_out[$g] = _QXZ("OUT-MANUAL");}
 
 		$stmtA="SELECT first_name,last_name FROM vicidial_list WHERE lead_id='$ALLlead_id[$g]';";
 		$rsltA=mysql_to_mysqli($stmtA, $link);

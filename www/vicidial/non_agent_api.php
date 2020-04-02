@@ -1,7 +1,7 @@
 <?php
 # non_agent_api.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed as an API(Application Programming Interface) to allow
 # other programs to interact with all non-agent-screen VICIDIAL functions
@@ -142,10 +142,11 @@
 # 191107-1143 - Added list_info function
 # 191113-1758 - Added add_dnc_phone and add_fpg_phone functions
 # 191114-1637 - Added remove_from_hopper option to update_lead function
+# 200331-1207 - Added list_custom_fields function
 #
 
-$version = '2.14-119';
-$build = '191114-1637';
+$version = '2.14-120';
+$build = '200331-1207';
 $api_url_log = 0;
 
 $startMS = microtime();
@@ -518,6 +519,12 @@ if (isset($_GET["leads_counts"]))			{$leads_counts=$_GET["leads_counts"];}
 	elseif (isset($_POST["leads_counts"]))	{$leads_counts=$_POST["leads_counts"];}
 if (isset($_GET["remove_from_hopper"]))				{$remove_from_hopper=$_GET["remove_from_hopper"];}
 	elseif (isset($_POST["remove_from_hopper"]))	{$remove_from_hopper=$_POST["remove_from_hopper"];}
+if (isset($_GET["dedupe_statuses"]))				{$dedupe_statuses=$_GET["dedupe_statuses"];}
+	elseif (isset($_POST["dedupe_statuses"]))		{$dedupe_statuses=$_POST["dedupe_statuses"];}
+if (isset($_GET["status_mismatch_action"]))				{$status_mismatch_action=$_GET["status_mismatch_action"];}
+	elseif (isset($_POST["status_mismatch_action"]))		{$status_mismatch_action=$_POST["status_mismatch_action"];}
+if (isset($_GET["custom_order"]))				{$custom_order=$_GET["custom_order"];}
+	elseif (isset($_POST["custom_order"]))		{$custom_order=$_POST["custom_order"];}
 
 
 header ("Content-type: text/html; charset=utf-8");
@@ -566,7 +573,7 @@ if ($non_latin < 1)
 	$pass=preg_replace('/[^-_0-9a-zA-Z]/','',$pass);
 	$function = preg_replace('/[^-\_0-9a-zA-Z]/', '',$function);
 	$format = preg_replace('/[^0-9a-zA-Z]/','',$format);
-	$list_id = preg_replace('/[^0-9]/','',$list_id);
+	$list_id = preg_replace('/[^-_0-9a-zA-Z]/','',$list_id);
 	$entry_list_id = preg_replace('/[^0-9]/','',$entry_list_id);
 	$phone_code = preg_replace('/[^0-9]/','',$phone_code);
 	$update_phone_number=preg_replace('/[^A-Z]/','',$update_phone_number);
@@ -744,6 +751,7 @@ if ($non_latin < 1)
 	$leads_counts = preg_replace('/[^-_0-9a-zA-Z]/','',$leads_counts);
 	$remove_from_hopper=preg_replace('/[^0-9a-zA-Z]/','',$remove_from_hopper);
 	$list_description=preg_replace('/[^- \+\.\:\/\@\?\&\_0-9a-zA-Z]/','',$list_description);
+	$custom_order = preg_replace('/[^-_0-9a-zA-Z]/','',$custom_order);
 	}
 else
 	{
@@ -919,7 +927,7 @@ $api_list_restrict =		$row[0];
 $api_allowed_functions =	$row[1];
 $LOGuser_group =			$row[2];
 $VUselected_language =		$row[3];
-if ( ($api_list_restrict > 0) and ( ($function == 'add_lead') or ($function == 'update_lead') or ($function == 'update_list') ) )
+if ( ($api_list_restrict > 0) and ( ($function == 'add_lead') or ($function == 'update_lead') or ($function == 'update_list') or ($function == 'list_info') or ($function == 'list_custom_fields') ) )
 	{
 	$stmt="SELECT allowed_campaigns from vicidial_user_groups where user_group='$LOGuser_group';";
 	if ($DB>0) {echo "|$stmt|\n";}
@@ -944,13 +952,16 @@ if ( ($api_list_restrict > 0) and ( ($function == 'add_lead') or ($function == '
 		$lists_to_print = mysqli_num_rows($rslt);
 		$i=0;
 		$allowed_lists=' ';
+		$allowed_listsSQL='';
 		while ($i < $lists_to_print)
 			{
 			$row=mysqli_fetch_row($rslt);
-			$allowed_lists .=	"$row[0] ";
+			$allowed_lists .=		"$row[0] ";
+			$allowed_listsSQL .=	"'$row[0]',";
 			$i++;
 			}
-		if ($DB>0) {echo "Allowed lists:|$allowed_lists|\n";}
+		$allowed_listsSQL = preg_replace("/,$/",'',$allowed_listsSQL);
+		if ($DB>0) {echo "Allowed lists:|$allowed_lists|$allowed_listsSQL|\n";}
 		}
 	else
 		{
@@ -4953,6 +4964,222 @@ if ($function == 'list_info')
 	}
 ################################################################################
 ### END list_info
+################################################################################
+
+
+
+
+
+################################################################################
+### list_custom_fields - shows the custom fields that are in a list, or all lists
+################################################################################
+if ($function == 'list_custom_fields')
+	{
+	if(strlen($source)<2)
+		{
+		$result = 'ERROR';
+		$result_reason = "Invalid Source";
+		echo "$result: $result_reason - $source\n";
+		api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+		echo "ERROR: Invalid Source: |$source|\n";
+		exit;
+		}
+	else
+		{
+		if ( (!preg_match("/ $function /",$api_allowed_functions)) and (!preg_match("/ALL_FUNCTIONS/",$api_allowed_functions)) )
+			{
+			$result = 'ERROR';
+			$result_reason = "auth USER DOES NOT HAVE PERMISSION TO USE THIS FUNCTION";
+			echo "$result: $result_reason: |$user|$function|\n";
+			$data = "$allowed_user";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		if ($custom_fields_enabled < 1)
+			{
+			$result = 'ERROR';
+			$result_reason = "CUSTOM LIST FIELDS ARE NOT ENABLED ON THIS SYSTEM";
+			echo "$result: $result_reason: |$user|$function|\n";
+			$data = "$allowed_user";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1' and modify_lists='1' and user_level >= 8 and active='Y';";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$row=mysqli_fetch_row($rslt);
+		$allowed_user=$row[0];
+		if ($allowed_user < 1)
+			{
+			$result = 'ERROR';
+			$result_reason = "list_custom_fields USER DOES NOT HAVE PERMISSION TO MODIFY LISTS";
+			$data = "$allowed_user";
+			echo "$result: $result_reason: |$user|$data\n";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		else
+			{
+			if ( (strlen($list_id)<2) or (strlen($list_id)>14) )
+				{
+				$result = 'ERROR';
+				$result_reason = "list_custom_fields YOU MUST USE ALL REQUIRED FIELDS";
+				$data = "$list_id|$list_name|$campaign_id";
+				echo "$result: $result_reason: |$user|$data\n";
+				api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+				exit;
+				}
+			else
+				{
+				if ($api_list_restrict > 0)
+					{
+					if ( (!preg_match("/ $list_id /",$allowed_lists)) and ($list_id != '---ALL---') )
+						{
+						$result = 'ERROR';
+						$result_reason = "list_custom_fields NOT AN ALLOWED LIST ID";
+						$data = "$list_id";
+						echo "$result: $result_reason - $data\n";
+						api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+						exit;
+						}
+					}
+				$stmt="SELECT allowed_campaigns,admin_viewable_groups from vicidial_user_groups where user_group='$LOGuser_group';";
+				if ($DB>0) {echo "|$stmt|\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$row=mysqli_fetch_row($rslt);
+				$LOGallowed_campaigns =			$row[0];
+				$LOGadmin_viewable_groups =		$row[1];
+
+				$LOGallowed_campaignsSQL='';
+				$whereLOGallowed_campaignsSQL='';
+				if ( (!preg_match('/\-ALL/i', $LOGallowed_campaigns)) )
+					{
+					$rawLOGallowed_campaignsSQL = preg_replace("/ -/",'',$LOGallowed_campaigns);
+					$rawLOGallowed_campaignsSQL = preg_replace("/ /","','",$rawLOGallowed_campaignsSQL);
+					$LOGallowed_campaignsSQL = "and campaign_id IN('$rawLOGallowed_campaignsSQL')";
+					$whereLOGallowed_campaignsSQL = "where campaign_id IN('$rawLOGallowed_campaignsSQL')";
+					}
+
+				if ($list_id == '---ALL---')
+					{$list_exists=1;}
+				else
+					{
+					$stmt="SELECT count(*) from vicidial_lists where list_id='$list_id' $LOGallowed_campaignsSQL;";
+					$rslt=mysql_to_mysqli($stmt, $link);
+					$row=mysqli_fetch_row($rslt);
+					$list_exists=$row[0];
+					}
+				if ($list_exists < 1)
+					{
+					$result = 'ERROR';
+					$result_reason = "list_custom_fields LIST DOES NOT EXIST";
+					$data = "$list_id";
+					echo "$result: $result_reason: |$user|$data\n";
+					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+					exit;
+					}
+				else
+					{
+					$listSQL = "list_id='$list_id'";
+					if ($list_id == '---ALL---')
+						{
+						if (strlen($allowed_listsSQL) > 3)
+							{$listSQL = "list_id IN($allowed_listsSQL)";}
+						else
+							{$listSQL = "list_id > 0";}
+						}
+					$stmt="SELECT list_name,campaign_id,active,list_changedate,list_lastcalldate,expiration_date,resets_today,list_id from vicidial_lists where $listSQL $LOGallowed_campaignsSQL order by list_id;";
+					if ($DB>0) {echo "|$stmt|\n";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+					$lists_to_print = mysqli_num_rows($rslt);
+					$lp=0;
+					while ($lp < $lists_to_print)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$OUTlist_name[$lp] =			$row[0];
+						$OUTcampaign_id[$lp] =			$row[1];
+						$OUTactive[$lp] =				$row[2];
+						$OUTlist_changedate[$lp] =		$row[3];
+						$OUTlist_lastcalldate[$lp] =	$row[4];
+						$OUTexpiration_date[$lp] =		$row[5];
+						$OUTresets_today[$lp] =			$row[6];
+						$OUTlist_id[$lp] =				$row[7];
+						$lp++;
+						}
+
+					$output='';
+					$DLset=0;
+					if ($stage == 'csv')
+						{$DL = ',';   $DLset++;}
+					if ($stage == 'tab')
+						{$DL = "\t";   $DLset++;}
+					if ($stage == 'pipe')
+						{$DL = '|';   $DLset++;}
+					if ($DLset < 1)
+						{$DL='|';}
+					if ($header == 'YES')
+						{$output .= 'list_id' . $DL . 'list_name' . $DL . 'campaign_id' . $DL . 'active' . $DL . 'list_changedate' . $DL . 'list_lastcalldate' . $DL . 'custom_fields_list_space_delimited' . "\n";}
+
+					$lp=0;
+					while ($lp < $lists_to_print)
+						{
+						$stmt="SHOW TABLES LIKE \"custom_$OUTlist_id[$lp]\";";
+						if ($DB>0) {echo "$stmt";}
+						$rslt=mysql_to_mysqli($stmt, $link);
+						$tablecount_to_print = mysqli_num_rows($rslt);
+						$cf=0;   $af=0;
+						$CFtable_order='';
+						if ($tablecount_to_print > 0)
+							{
+							$stmtA = "describe custom_$OUTlist_id[$lp];";
+							$rslt=mysql_to_mysqli($stmtA, $link);
+							if ($DB) {echo "$stmtA\n";}
+							$columns_ct = mysqli_num_rows($rslt);
+							while ($columns_ct > $cf)
+								{
+								$row=mysqli_fetch_row($rslt);
+								$column[$cf] =	$row[0];
+								if ( ($row[0] != 'lead_id') and (strlen($row[0]) > 0) )
+									{
+									$field_list[$af] =	$row[0];
+									if ($af > 0)
+										{$CFtable_order .= " $field_list[$af]";}
+									else
+										{$CFtable_order .= "$field_list[$af]";}
+									$af++;
+									}
+								$cf++;
+								}
+							}
+						$leads_fields_output = $CFtable_order;
+						if ($custom_order == 'alpha_up')
+							{
+							sort($field_list);
+							$leads_fields_output = implode(" ",$field_list);
+							}
+						if ($custom_order == 'alpha_down')
+							{
+							rsort($field_list);
+							$leads_fields_output = implode(" ",$field_list);
+							}
+
+						$output .= "$OUTlist_id[$lp]" . $DL . "$OUTlist_name[$lp]" . $DL . "$OUTcampaign_id[$lp]" . $DL . "$OUTactive[$lp]" . $DL . "$OUTlist_changedate[$lp]" . $DL . "$OUTlist_lastcalldate[$lp]" . $DL . $leads_fields_output . "\n";
+
+						$lp++;
+						}
+
+					$result = 'SUCCESS';
+					$result_reason = "list_custom_fields LIST CUSTOM FIELDS INFORMATION SENT";
+					$data = "$list_id";
+					echo $output;
+					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+					exit;
+					}
+				}
+			}
+		}
+	}
+################################################################################
+### END list_custom_fields
 ################################################################################
 
 

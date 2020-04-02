@@ -524,11 +524,11 @@ while ($users_to_print > $o)
 $HTML_text.="</SELECT>\n";
 $HTML_text.="</TD><TD VALIGN=TOP>Shift:<BR>";
 $HTML_text.="<SELECT SIZE=1 NAME=shift>\n";
-$HTML_text.="<option selected value=\"$shift\">$shift</option>\n";
+$HTML_text.="<option selected value=\"$shift\">"._QXZ("$shift")."</option>\n";
 $HTML_text.="<option value=\"\">--</option>\n";
-$HTML_text.="<option value=\"AM\">AM</option>\n";
-$HTML_text.="<option value=\"PM\">PM</option>\n";
-$HTML_text.="<option value=\"ALL\">ALL</option>\n";
+$HTML_text.="<option value=\"AM\">"._QXZ("AM")."</option>\n";
+$HTML_text.="<option value=\"PM\">"._QXZ("PM")."</option>\n";
+$HTML_text.="<option value=\"ALL\">"._QXZ("ALL")."</option>\n";
 $HTML_text.="</SELECT><BR><BR>\n";
 $HTML_text.="Display as:<BR>";
 $HTML_text.="<select name='report_display_type'>";

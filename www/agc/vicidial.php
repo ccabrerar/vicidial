@@ -630,10 +630,11 @@
 # 191114-0949 - Added options for enable_first_webform and recording_buttons
 # 191227-1227 - Fix for translation phrases gathering process
 # 200123-1554 - PHP7 fix for array
+# 200310-1116 - Added manual_dial_cid AGENT_PHONE_OVERRIDE option 
 #
 
-$version = '2.14-599c';
-$build = '200123-1554';
+$version = '2.14-600c';
+$build = '200310-1116';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=91;
 $one_mysql_log=0;
@@ -4094,9 +4095,8 @@ $cb_display_days=999;
 if ($callback_display_days > 0)
 	{$cb_display_days=$callback_display_days;}
 
-$Cmonths = Array('0','January','February','March','April','May','June',
-				'July','August','September','October','November','December');
-$Cdays = Array('Sun','Mon','Tue','Wed','Thu','Fri','Sat');
+$Cmonths = Array('0',_QXZ('January'),_QXZ('February'),_QXZ('March'),_QXZ('April'),_QXZ('May'),_QXZ('June'),_QXZ('July'),_QXZ('August'),_QXZ('September'),_QXZ('October'),_QXZ('November'),_QXZ('December'));
+$Cdays = Array(_QXZ('Sun'),_QXZ('Mon'),_QXZ('Tue'),_QXZ('Wed'),_QXZ('Thu'),_QXZ('Fri'),_QXZ('Sat'));
 
 $CCAL_OUT = '';
 
@@ -5488,7 +5488,7 @@ if ($enable_fast_refresh < 1) {echo "\tvar refresh_interval = 1000;\n";}
 			var manual_number = document.vicidial_form.xfernumber.value;
 			var manual_string = manual_number.toString();
 			var threeway_cid='1';
-			if (manual_dial_cid == 'AGENT_PHONE')
+			if ( (manual_dial_cid == 'AGENT_PHONE') || (manual_dial_cid == 'AGENT_PHONE_OVERRIDE') )
 				{
 				cid_lock=1;
 				threeway_cid = outbound_cid;
@@ -9632,7 +9632,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 				else
 					{
 					var call_cid = campaign_cid;
-					if (manual_dial_cid == 'AGENT_PHONE')
+					if ( (manual_dial_cid == 'AGENT_PHONE') || (manual_dial_cid == 'AGENT_PHONE_OVERRIDE') )
 						{
 						cid_lock=1;
 						call_cid = outbound_cid;
@@ -9651,7 +9651,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 				var temp_manual_dial_validation = manual_dial_validation;
 				if (manual_entry_dial > 0) {temp_manual_dial_validation='N';}
 
-				manDiaLnext_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&ACTION=manDiaLnextCaLL&conf_exten=" + session_id + "&user=" + user + "&pass=" + pass + "&campaign=" + campaign + "&ext_context=" + ext_context + "&dial_timeout=" + manual_dial_timeout + "&dial_prefix=" + call_prefix + "&campaign_cid=" + call_cid + "&preview=" + man_preview + "&agent_log_id=" + agent_log_id + "&callback_id=" + mdnCBid + "&lead_id=" + mdnBDleadid + "&phone_code=" + mdnDiaLCodE + "&phone_number=" + mdnPhonENumbeR + "&list_id=" + mdnLisT_id + "&stage=" + mdnStagE  + "&use_internal_dnc=" + use_internal_dnc + "&use_campaign_dnc=" + use_campaign_dnc + "&omit_phone_code=" + omit_phone_code + "&manual_dial_filter=" + manual_dial_filter + "&manual_dial_search_filter=" + manual_dial_search_filter + "&vendor_lead_code=" + mdVendorid + "&usegroupalias=" + mdgroupalias + "&account=" + active_group_alias + "&agent_dialed_number=" + agent_dialed_number + "&agent_dialed_type=" + agent_dialed_type + "&vtiger_callback_id=" + vtiger_callback_id + "&dial_method=" + dial_method + "&manual_dial_call_time_check=" + manual_dial_call_time_check + "&qm_extension=" + qm_extension + "&dial_ingroup=" + active_ingroup_dial + "&nocall_dial_flag=" + nocall_dial_flag + "&cid_lock=" + cid_lock + "&last_VDRP_stage=" + last_VDRP_stage + "&routing_initiated_recording=" + temp_rir + "&exten=" + recording_exten + "&recording_filename=" + LIVE_campaign_rec_filename + "&channel=" + channelrec + "&manual_dial_validation=" + manual_dial_validation;
+				manDiaLnext_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&ACTION=manDiaLnextCaLL&conf_exten=" + session_id + "&user=" + user + "&pass=" + pass + "&campaign=" + campaign + "&ext_context=" + ext_context + "&dial_timeout=" + manual_dial_timeout + "&dial_prefix=" + call_prefix + "&campaign_cid=" + call_cid + "&preview=" + man_preview + "&agent_log_id=" + agent_log_id + "&callback_id=" + mdnCBid + "&lead_id=" + mdnBDleadid + "&phone_code=" + mdnDiaLCodE + "&phone_number=" + mdnPhonENumbeR + "&list_id=" + mdnLisT_id + "&stage=" + mdnStagE  + "&use_internal_dnc=" + use_internal_dnc + "&use_campaign_dnc=" + use_campaign_dnc + "&omit_phone_code=" + omit_phone_code + "&manual_dial_filter=" + manual_dial_filter + "&manual_dial_search_filter=" + manual_dial_search_filter + "&vendor_lead_code=" + mdVendorid + "&usegroupalias=" + mdgroupalias + "&account=" + active_group_alias + "&agent_dialed_number=" + agent_dialed_number + "&agent_dialed_type=" + agent_dialed_type + "&vtiger_callback_id=" + vtiger_callback_id + "&dial_method=" + dial_method + "&manual_dial_call_time_check=" + manual_dial_call_time_check + "&qm_extension=" + qm_extension + "&dial_ingroup=" + active_ingroup_dial + "&nocall_dial_flag=" + nocall_dial_flag + "&cid_lock=" + cid_lock + "&last_VDRP_stage=" + last_VDRP_stage + "&routing_initiated_recording=" + temp_rir + "&exten=" + recording_exten + "&recording_filename=" + LIVE_campaign_rec_filename + "&channel=" + channelrec + "&manual_dial_validation=" + manual_dial_validation + "&phone_login=" + phone_login;
 				//		alert(manual_dial_filter + "\n" +manDiaLnext_query);
 				xmlhttp.open('POST', 'vdc_db_query.php');
 				xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
@@ -10563,7 +10563,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 				else
 					{
 					var call_cid = campaign_cid;
-					if (manual_dial_cid == 'AGENT_PHONE')
+					if ( (manual_dial_cid == 'AGENT_PHONE') || (manual_dial_cid == 'AGENT_PHONE_OVERRIDE') )
 						{
 						cid_lock=1;
 						call_cid = outbound_cid;
@@ -10579,7 +10579,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 				if ( (script_recording_delay < 1) && (routing_initiated_recording == 'Y') && ( (LIVE_campaign_recording == 'ALLCALLS') || (LIVE_campaign_recording == 'ALLFORCE') ) )
 					{temp_rir='Y';}
 
-				manDiaLonly_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&ACTION=manDiaLonly&conf_exten=" + session_id + "&user=" + user + "&pass=" + pass + "&lead_id=" + document.vicidial_form.lead_id.value + "&phone_number=" + manDiaLonly_num + "&phone_code=" + document.vicidial_form.phone_code.value + "&campaign=" + campaign + "&ext_context=" + ext_context + "&dial_timeout=" + manual_dial_timeout + "&dial_prefix=" + call_prefix + "&campaign_cid=" + call_cid + "&omit_phone_code=" + omit_phone_code + "&usegroupalias=" + usegroupalias + "&account=" + active_group_alias + "&agent_dialed_number=" + dialed_number + "&agent_dialed_type=" + dialed_label + "&dial_method=" + dial_method + "&agent_log_id=" + agent_log_id + "&security=" + document.vicidial_form.security_phrase.value + "&qm_extension=" + qm_extension + "&old_CID=" + LastCallCID + "&cid_lock=" + cid_lock + "&routing_initiated_recording=" + temp_rir + "&exten=" + recording_exten + "&recording_filename=" + LIVE_campaign_rec_filename + "&channel=" + channelrec + "&vendor_lead_code=" + document.vicidial_form.search_vendor_lead_code.value + "&state=" + encodeURIComponent(document.vicidial_form.state.value);
+				manDiaLonly_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&ACTION=manDiaLonly&conf_exten=" + session_id + "&user=" + user + "&pass=" + pass + "&lead_id=" + document.vicidial_form.lead_id.value + "&phone_number=" + manDiaLonly_num + "&phone_code=" + document.vicidial_form.phone_code.value + "&campaign=" + campaign + "&ext_context=" + ext_context + "&dial_timeout=" + manual_dial_timeout + "&dial_prefix=" + call_prefix + "&campaign_cid=" + call_cid + "&omit_phone_code=" + omit_phone_code + "&usegroupalias=" + usegroupalias + "&account=" + active_group_alias + "&agent_dialed_number=" + dialed_number + "&agent_dialed_type=" + dialed_label + "&dial_method=" + dial_method + "&agent_log_id=" + agent_log_id + "&security=" + document.vicidial_form.security_phrase.value + "&qm_extension=" + qm_extension + "&old_CID=" + LastCallCID + "&cid_lock=" + cid_lock + "&routing_initiated_recording=" + temp_rir + "&exten=" + recording_exten + "&recording_filename=" + LIVE_campaign_rec_filename + "&channel=" + channelrec + "&vendor_lead_code=" + document.vicidial_form.search_vendor_lead_code.value + "&phone_login=" + phone_login + "&state=" + encodeURIComponent(document.vicidial_form.state.value);
 				xmlhttp.open('POST', 'vdc_db_query.php');
 				xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
 				xmlhttp.send(manDiaLonly_query);

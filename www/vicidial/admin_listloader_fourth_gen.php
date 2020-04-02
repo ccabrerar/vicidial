@@ -707,7 +707,7 @@ if ( (!$OK_to_process) or ( ($leadfile) and ($file_layout!="standard" && $file_l
 						echo "<option value='$row[template_id]'>$row[template_id] - $row[template_name]</option>";
 					}
 				} else {
-					echo "<option value='' selected>--No custom templates defined--</option>";
+					echo "<option value='' selected>--"._QXZ("No custom templates defined")."--</option>";
 				}
 ?>
 			</select> <a href='AST_admin_template_maker.php'><font face="arial, helvetica" size=1><?php echo _QXZ("template builder"); ?></font></a><?php echo "$NWB#list_loader-template_id$NWE"; ?><BR><a href='#' onClick="TemplateSpecs()"><font face="arial, helvetica" size=1><?php echo _QXZ("View template info"); ?></font></a></td>

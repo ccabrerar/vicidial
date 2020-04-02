@@ -25,7 +25,7 @@
 # exten => h,1,DeadAGI(agi://127.0.0.1:4577/call_log--HVcauses--PRI-----NODEBUG-----${HANGUPCAUSE}-----${DIALSTATUS}-----${DIALEDTIME}-----${ANSWEREDTIME})
 # 
 #
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG:
 # 61010-1007 - First test build
@@ -85,6 +85,7 @@
 # 190626-1100 - Added more logging for Auto-Alt-Dial debug
 # 190709-2240 - Added Call Quota logging
 # 191001-1509 - Small fix for monitoring issue
+# 200318-1054 - Added code for OpenSIPs CallerIDname
 #
 
 # defaults for PreFork
@@ -550,6 +551,46 @@ sub process_request
 					$AGI->exec("EXEC Set(_CAMPCUST=$CAMPCUST)");
 					if ($AGILOG) {$agi_string = "|CAMPCUST: $CAMPCUST|$callerid|";   &agi_output;}
 					}
+
+				### BEGIN OpenSIPs CallerIDname code ###
+				### get system_settings
+				$stmtA = "SELECT opensips_cid_name FROM system_settings";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArows=$sthA->rows;
+				if ($sthArows > 0)
+					{
+					@aryA = $sthA->fetchrow_array;
+					$opensips_cid_name =     $aryA[0];
+					}
+				$sthA->finish();
+				if ($AGILOG) {$agi_string = "$stmtA|$opensips_cid_name";   &agi_output;}
+
+				### opensips_cid_name is active
+				if ( $opensips_cid_name == 1)
+					{
+					### get the Campaign CID Name
+					$stmtA = "SELECT opensips_cid_name FROM vicidial_campaigns where campaign_id = '$CAMPCUST';";
+					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+					$sthArows=$sthA->rows;
+					if ($sthArows > 0)
+						{
+						@aryA = $sthA->fetchrow_array;
+						$camp_opensips_cid_name =     $aryA[0];
+						}
+					$sthA->finish();
+					if ($AGILOG) {$agi_string = "$stmtA|$camp_opensips_cid_name";   &agi_output;}
+
+					### check that the campaign has a CID Name set
+					if ( $camp_opensips_cid_name ne "" ) 
+						{
+						if ($AGILOG) {$agi_string = "Adding \"X-CIDNAME: $camp_opensips_cid_name\" header to INVITE";   &agi_output;}
+						$header = "X-CIDNAME: " . $camp_opensips_cid_name;
+						$AGI->exec("EXEC SIPAddHeader(\"$header\")");
+						}
+					}
+				### END OpenSIPs CallerIDname code ###
 				}
 
 			$stmtA = "INSERT INTO call_log (uniqueid,channel,channel_group,type,server_ip,extension,number_dialed,start_time,start_epoch,end_time,end_epoch,length_in_sec,length_in_min,caller_code) values('$unique_id','$channel','$channel_group','$type','$VARserver_ip','$extension','$number_dialed','$now_date','$now_date_epoch','','','','','$callerid')";

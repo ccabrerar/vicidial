@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2019-11-14
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2020-03-31
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -32,6 +32,7 @@ update_phone_alias - updates or deletes an existing phone alias record in the sy
 add_list - adds a list to the system
 update_list - updates list settings in the system, reset leads in list, delete list
 list_info - summary information about a list
+list_custom_fields - shows the custom fields that are in a list, or all lists
 add_group_alias - adds group alias to the system
 user_group_status - real-time status of one or more user groups
 in_group_status - real-time status of one or more in groups
@@ -152,6 +153,7 @@ Changes:
 191107-1143 - Added list_info function
 191113-1758 - Added add_dnc_phone and add_fpg_phone functions
 191114-1637 - Added remove_from_hopper option to update_lead function
+200331-1207 - Added list_custom_fields function
 
 
 API Functions use the 'function' variable
@@ -1591,6 +1593,42 @@ list_id|list_name|campaign_id|active|list_changedate|list_lastcalldate|expiratio
 
 list_id|list_name|campaign_id|active|list_changedate|list_lastcalldate|expiration_date|resets_today|all_leads_count|new_leads_count
 1101|performance list|TESTCAMP|Y|2019-09-02 08:52:50|2019-11-07 10:12:12|2099-12-31|0|59896|3
+
+
+
+
+
+--------------------------------------------------------------------------------
+list_custom_fields - shows the custom data fields that are in a list, or all lists
+
+NOTE: api user for this function must have user_level set to 8 or higher and "modify lists" enabled
+NOTE: this output will not include display-only fields in the FORM, only the non-default custom data fields,
+      any DISPLAY, SCRIPT and SWITCH form elements will be ignored
+
+REQUIRED FIELDS-
+list_id -		must be all numbers, 2-14 digits, OR use "---ALL---" for all lists
+source -		description of what originated the API call (maximum 20 characters)
+
+SETTINGS FIELDS- (optional)
+stage -			the format of the exported data: csv, tab, pipe(default)
+header -		include a header(YES) or not(NO). This is optional, default is not to include a header
+custom_order -		the order to put the custom fields into: table_order, alpha_up, alpha_down (default is 'table_order')
+
+Example URL strings for API calls:
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=list_custom_fields&list_id=1101&header=YES
+
+Example responses:
+ERROR: list_custom_fields CUSTOM LIST FIELDS ARE NOT ENABLED ON THIS SYSTEM - 6666
+ERROR: list_custom_fields USER DOES NOT HAVE PERMISSION TO MODIFY LISTS - 6666
+ERROR: list_custom_fields YOU MUST USE ALL REQUIRED FIELDS - 6666|1
+ERROR: list_custom_fields NOT AN ALLOWED LIST ID - 98762
+ERROR: list_custom_fields LIST DOES NOT EXIST - 98762
+
+A SUCCESS response will not show "SUCCESS", but instead will just print the results in the following formats:
+
+list_id|list_name|campaign_id|active|list_changedate|list_lastcalldate|custom_fields_list_space_delimited
+1101|performance list|TESTCAMP|Y|2019-09-02 08:52:50|2019-11-07 10:12:12|fav_color fav_food res_city res_state res_zip
+
 
 
 

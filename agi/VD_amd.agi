@@ -60,6 +60,7 @@
 # 191029-1243 - Added code for agent-selected message override
 # 200102-0823 - Added vmm_daily_limit campaign setting
 # 200205-1839 - Fix for list override message
+# 200311-0041 - Added amd_agent_route_options feature
 #
 
 $script = 'VD_amd.agi';
@@ -311,9 +312,83 @@ if ( ($AMD_LOG == 2) || ($AMD_LOG == 3) )
 	}
 
 
+########## FIND vicidial_auto_calls record ##########
+$stmtA = "SELECT campaign_id,phone_code,phone_number,uniqueid,server_ip,status FROM vicidial_auto_calls where callerid='$callerid' order by auto_call_id desc limit 1;";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArowsVAC=$sthA->rows;
+if ($AGILOG) {$agi_string = "$sthArowsVAC|$stmtA|";   &agi_output;}
+if ($sthArowsVAC > 0)
+	{
+	@aryA = $sthA->fetchrow_array;
+	$VD_campaign_id =	$aryA[0];
+	$VD_phone_code =	$aryA[1];
+	$VD_phone_number =	$aryA[2];
+	$VD_uniqueid =		$aryA[3];
+	$VD_server_ip =		$aryA[4];
+	$VD_status =		$aryA[5];
+	$sthA->finish();
+	}
+if ( (length($CLIcampaign_id) > 1) && (length($VD_campaign_id) < 1) )
+	{$VD_campaign_id = $CLIcampaign_id;}
+if ( (length($CLIphone_code) > 1) && (length($VD_phone_code) < 1) )
+	{$VD_phone_code = $CLIphone_code;}
+if ( (length($CLIphone_number) > 1) && (length($VD_phone_number) < 1) )
+	{$VD_phone_number = $CLIphone_number;}
+
+$amd_agent_route_options='';
+$AMDcontainer_entry='';
+$AMD_agent_send=0;
+$stmtA = "SELECT amd_agent_route_options FROM vicidial_campaigns where campaign_id='$VD_campaign_id' limit 1;";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+if ($AGILOG) {$agi_string = "$sthArows|$stmtA|";   &agi_output;}
+if ($sthArows > 0)
+	{
+	@aryA = $sthA->fetchrow_array;
+	$amd_agent_route_options =	$aryA[0];
+	$sthA->finish();
+	}
+
+if ($amd_agent_route_options =~ /ENABLED/i) 
+	{
+	$stmtA = "SELECT container_entry FROM vicidial_settings_containers where container_id='AMD_AGENT_OPT_$VD_campaign_id' limit 1;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArowsVSC=$sthA->rows;
+	if ($AGILOG) {$agi_string = "$sthArowsVSC|$stmtA|";   &agi_output;}
+	if ($sthArowsVSC > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$AMDcontainer_entry =	$aryA[0];
+		$sthA->finish();
+		}
+	if (length($AMDcontainer_entry) > 3) 
+		{
+		@AMDcontainer_lines = split(/\n/,$AMDcontainer_entry);
+		$c=0;
+		foreach(@AMDcontainer_lines)
+			{
+			$AMDcontainer_lines[$c] =~ s/;.*|\r|\t| //gi;
+			if ( (length($AMDcontainer_lines[$c]) > 3) && ($AMDcontainer_lines[$c] =~ /,/) )
+				{
+				@AMDline = split(/,/,$AMDcontainer_lines[$c]);
+				if ( ($AMDline[0] =~ /^$AMDSTATUS$/i) && ($AMDline[1] =~ /^$AMDRESPONSE$/i) ) 
+					{
+					$AMD_agent_send++;
+					if ($AGILOG) {$agi_string = "AMD Agent send MATCH: $c|$AMDline[0]($AMDSTATUS)|$AMDline[1]($AMDRESPONSE)|";   &agi_output;}
+					}
+				}
+			$c++;
+			}
+		}
+	}
+
+
 ##################################################################################
 ########## AMD says it's a person so exit and go on to transfer scripts ##########
-if ( ($AMDSTATUS =~ /PERSON|HUMAN|NOTSURE|HANGUP/) && ($force_playback !~ /YES/) )
+if ( ( ($AMDSTATUS =~ /PERSON|HUMAN|NOTSURE|HANGUP/) && ($force_playback !~ /YES/) && (length($AMDcontainer_entry) < 4) ) || ( ($AMD_agent_send > 0) && (length($AMDcontainer_entry) > 3) ) )
 	{
 	if ($A) 
 		{
@@ -331,25 +406,7 @@ else
 	$AGI->stream_file('sip-silence');
 	$AGI->stream_file('sip-silence');
 
-
-	########## FIND vicidial_auto_calls record ##########
-	$stmtA = "SELECT campaign_id,phone_code,phone_number,uniqueid,server_ip,status FROM vicidial_auto_calls where callerid='$callerid' order by auto_call_id desc limit 1;";
-	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-	$sthArows=$sthA->rows;
-	if ($AGILOG) {$agi_string = "$sthArows|$stmtA|";   &agi_output;}
-	if ($sthArows > 0)
-		{
-		@aryA = $sthA->fetchrow_array;
-		$VD_campaign_id =	$aryA[0];
-		$VD_phone_code =	$aryA[1];
-		$VD_phone_number =	$aryA[2];
-		$VD_uniqueid =		$aryA[3];
-		$VD_server_ip =		$aryA[4];
-		$VD_status =		$aryA[5];
-		$sthA->finish();
-		}
-	else
+	if ($sthArowsVAC < 1)
 		{
 		########## FIND vicidial_log_extended record if no vicidial_auto_calls record found ##########
 		$stmtA = "SELECT uniqueid,server_ip FROM vicidial_log_extended where caller_code='$callerid' order by call_date desc limit 1;";
@@ -365,12 +422,6 @@ else
 			$sthA->finish();
 			}
 		}
-	if ( (length($CLIcampaign_id) > 1) && (length($VD_campaign_id) < 1) )
-		{$VD_campaign_id = $CLIcampaign_id;}
-	if ( (length($CLIphone_code) > 1) && (length($VD_phone_code) < 1) )
-		{$VD_phone_code = $CLIphone_code;}
-	if ( (length($CLIphone_number) > 1) && (length($VD_phone_number) < 1) )
-		{$VD_phone_number = $CLIphone_number;}
 	$VD_uniqueidSQL = '';
 	if (length($VD_uniqueid) > 1)
 		{

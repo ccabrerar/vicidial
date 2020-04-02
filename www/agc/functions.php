@@ -2497,6 +2497,9 @@ function _QXZ($English_text, $sprintf=0, $align="l", $v_one='', $v_two='', $v_th
 			{
 			if ( (strlen($VUselected_language) > 0) and ($VUselected_language != 'default English') )
 				{
+				if ($English_text=="Y" && !preg_match('/english/i', $VUselected_language)) {$English_text="YES";}
+				if ($English_text=="N" && !preg_match('/english/i', $VUselected_language)) {$English_text="NO";}
+
 				if ($SSlanguage_method == 'MYSQL')
 					{
 					$stmt="SELECT translated_text from vicidial_language_phrases where english_text='$English_text' and language_id='$VUselected_language';";

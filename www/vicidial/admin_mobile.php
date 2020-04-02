@@ -6,10 +6,11 @@
 # CHANGES
 # 190205-1702 - First Build
 # 200210-1618 - Added links to more mobile-compatible reports
+# 200309-1819 - Modifications for display formatting
 #
 
-$admin_version = '2.14-2a';
-$build = '200210-1618';
+$admin_version = '2.14-3a';
+$build = '200309-1819';
 
 $startMS = microtime();
 
@@ -387,7 +388,7 @@ if ($user_auth > 0)
 	$qc_only_user=0;
 	if ( ($reports_auth > 0) and ($auth < 1) )
 		{
-		$ADD=999999;
+		$ADD=999990;
 		$reports_only_user=1;
 		}
 	if ( ($qc_auth > 0) and ($reports_auth < 1) and ($auth < 1) )
@@ -713,7 +714,7 @@ echo "<link rel=\"stylesheet\" href=\"calendar.css\">\n";
 echo "<link rel=\"stylesheet\" type=\"text/css\" href=\"vicidial_stylesheet.php\">\n";
 echo "<STYLE type=\"text/css\">\n";
 echo "<!--\n";
-echo "	.admin_stats_table {width: 85vw; max-width: 700px; }\n";
+echo "	.admin_stats_table {width: 95vw; max-width: 950px; }\n";
 echo "-->\n";
 echo "</STYLE>\n";
 
@@ -747,7 +748,7 @@ $android_header=1;
 require("admin_header.php");
 
 
-echo "<TABLE CELLPADDING=0 CELLSPACING=0 BGCOLOR='#$SSframe_background' width='100%' style='height:100vh'><TR><TD>";
+echo "<TABLE CELLPADDING=0 CELLSPACING=0 BGCOLOR='#$SSframe_background' width='100%' style='height:100vh' valign='top'><TR><TD>";
 
 ######################
 # ADD=999990 - new main landing page with system stats
@@ -844,14 +845,14 @@ if ($ADD==999990)
 				}
 			}
 
-		echo "<BR><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
+		echo "<BR><FONT CLASS=\"android_standard\">";
 
 		echo "<center>";
 
 	if ($LOGview_reports==1)
 		{
 		echo "<TABLE class='admin_stats_table' valign='top'><TR><TD>\n";
-		echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
+		echo "<FONT CLASS=\"android_standard bold\">";
 
 		### Report link ###
 		echo "<B><a href='#' id='ReportLink' onClick='ToggleReports()'>SHOW REPORTS</a></B>";
@@ -860,47 +861,47 @@ if ($ADD==999990)
 		echo "<div id='ReportStorageDiv' style='display:none'>";
 		echo "<BR><B>"._QXZ("Real-Time Reports")."</B><BR>\n";
 		echo "<UL>\n";
-		echo "<LI><a href=\"#HourlyCampaignCounts\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Hourly Campaign Counts")."</a></FONT></LI>\n";
-		echo "<LI><a href=\"#SystemSummary\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("System Summary")."</a></FONT></LI>\n";
+		echo "<LI><a href=\"#HourlyCampaignCounts\"><FONT CLASS=\"android_standard\">"._QXZ("Hourly Campaign Counts")."</a></FONT></LI>\n";
+		echo "<LI><a href=\"#SystemSummary\"><FONT CLASS=\"android_standard\">"._QXZ("System Summary")."</a></FONT></LI>\n";
 		if ( (preg_match("/Agent Sales Report/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
-			{echo "<LI><a href=\"agent_sales_report_mobile.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Agent Sales Report")."</a></FONT></LI>\n";}
+			{echo "<LI><a href=\"agent_sales_report_mobile.php\"><FONT CLASS=\"android_standard\">"._QXZ("Agent Sales Report")."</a></FONT></LI>\n";}
 		if ( (preg_match("/Real-Time Main Report/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
-			{echo "<LI><a href=\"realtime_report_mobile.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Real-Time Main Report")."</a></FONT></LI>\n";}
-				#	echo "<BR> &nbsp; Real-Time SIP: <a href=\"AST_timeonVDADall.php?SIPmonitorLINK=1\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Listen")."</a></FONT> - <a href=\"AST_timeonVDADall.php?SIPmonitorLINK=2\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Barge")."</a></FONT>\n";
-				#	echo "<BR> &nbsp; Real-Time IAX: <a href=\"AST_timeonVDADall.php?IAXmonitorLINK=1\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Listen")."</a></FONT> - <a href=\"AST_timeonVDADall.php?IAXmonitorLINK=2\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Barge")."</a></FONT><BR><BR>\n";
+			{echo "<LI><a href=\"realtime_report_mobile.php\"><FONT CLASS=\"android_standard\">"._QXZ("Real-Time Main Report")."</a></FONT></LI>\n";}
+				#	echo "<BR> &nbsp; Real-Time SIP: <a href=\"AST_timeonVDADall.php?SIPmonitorLINK=1\"><FONT CLASS=\"android_standard\">"._QXZ("Listen")."</a></FONT> - <a href=\"AST_timeonVDADall.php?SIPmonitorLINK=2\"><FONT CLASS=\"android_standard\">"._QXZ("Barge")."</a></FONT>\n";
+				#	echo "<BR> &nbsp; Real-Time IAX: <a href=\"AST_timeonVDADall.php?IAXmonitorLINK=1\"><FONT CLASS=\"android_standard\">"._QXZ("Listen")."</a></FONT> - <a href=\"AST_timeonVDADall.php?IAXmonitorLINK=2\"><FONT CLASS=\"android_standard\">"._QXZ("Barge")."</a></FONT><BR><BR>\n";
 		if ( (preg_match("/Real-Time Campaign Summary/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
-			{echo "<LI><a href=\"AST_timeonVDADallSUMMARY_mobile.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Real-Time Campaign Summary")."</a></FONT></LI>\n";}
+			{echo "<LI><a href=\"AST_timeonVDADallSUMMARY_mobile.php\"><FONT CLASS=\"android_standard\">"._QXZ("Real-Time Campaign Summary")."</a></FONT></LI>\n";}
 		if ( (preg_match("/Real-Time Whiteboard Report/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
-			{echo "<LI><a href=\"AST_rt_whiteboard_rpt_mobile.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Real-Time Whiteboard Report")."</a></FONT></LI>\n";}
+			{echo "<LI><a href=\"AST_rt_whiteboard_rpt_mobile.php\"><FONT CLASS=\"android_standard\">"._QXZ("Real-Time Whiteboard Report")."</a></FONT></LI>\n";}
 		echo "</UL><BR>\n";
 
 
 		echo "<B>"._QXZ("Agent Reports")."</B><BR>\n";
 		echo "<UL>\n";
 #		if ( (preg_match("/Agent Time Detail/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
-#			{echo "<LI><a href=\"AST_agent_time_detail.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Agent Time Detail")."</a></FONT>\n";}
+#			{echo "<LI><a href=\"AST_agent_time_detail.php\"><FONT CLASS=\"android_standard\">"._QXZ("Agent Time Detail")."</a></FONT>\n";}
 #		if ( (preg_match("/Agent Status Detail/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
-#			{echo "<LI><a href=\"AST_agent_status_detail.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Agent Status Detail")."</a></FONT>\n";}
+#			{echo "<LI><a href=\"AST_agent_status_detail.php\"><FONT CLASS=\"android_standard\">"._QXZ("Agent Status Detail")."</a></FONT>\n";}
 #		if ( (preg_match("/Agent Inbound Status Summary/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
-#			{echo " - <a href=\"AST_agent_inbound_status.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Inbound Summary")."</a></FONT>\n";}
+#			{echo " - <a href=\"AST_agent_inbound_status.php\"><FONT CLASS=\"android_standard\">"._QXZ("Inbound Summary")."</a></FONT>\n";}
 		if ( (preg_match("/Agent Performance Detail/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
-			{echo "<LI><a href=\"AST_agent_performance_detail_mobile.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Agent Performance Detail")."</a></FONT></LI>\n";}
+			{echo "<LI><a href=\"AST_agent_performance_detail_mobile.php\"><FONT CLASS=\"android_standard\">"._QXZ("Agent Performance Detail")."</a></FONT></LI>\n";}
 		if ( (preg_match("/Team Performance Detail/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
-			{echo "<LI><a href=\"AST_team_performance_detail_mobile.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Team Performance Detail")."</a></FONT></LI>\n";}
+			{echo "<LI><a href=\"AST_team_performance_detail_mobile.php\"><FONT CLASS=\"android_standard\">"._QXZ("Team Performance Detail")."</a></FONT></LI>\n";}
 #		if ( (preg_match("/Performance Comparison Report/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
-#			{echo "<LI><a href=\"AST_performance_comparison_report.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Performance Comparison Report")."</a></FONT>\n";}
+#			{echo "<LI><a href=\"AST_performance_comparison_report.php\"><FONT CLASS=\"android_standard\">"._QXZ("Performance Comparison Report")."</a></FONT>\n";}
 #		if ( (preg_match("/Single Agent Daily$/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
-#			{echo "<LI><a href=\"AST_agent_days_detail.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Single Agent Daily")."</a></FONT>\n";}
+#			{echo "<LI><a href=\"AST_agent_days_detail.php\"><FONT CLASS=\"android_standard\">"._QXZ("Single Agent Daily")."</a></FONT>\n";}
 #		if ( (preg_match("/Single Agent Daily Time/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
-#			{echo " - <a href=\"AST_agent_days_time.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("Time")."</a></FONT>\n";}
+#			{echo " - <a href=\"AST_agent_days_time.php\"><FONT CLASS=\"android_standard\">"._QXZ("Time")."</a></FONT>\n";}
 #		if ( (preg_match("/User Group Login Report/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
-#			{echo "<LI><a href=\"AST_usergroup_login_report.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("User Group Login Report")."</a></FONT>\n";}
+#			{echo "<LI><a href=\"AST_usergroup_login_report.php\"><FONT CLASS=\"android_standard\">"._QXZ("User Group Login Report")."</a></FONT>\n";}
 #		if ( (preg_match("/User Group Hourly Report/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
-#			{echo "<LI><a href=\"AST_user_group_hourly_detail.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("User Group Hourly Report")."</a></FONT> - <a href=\"AST_user_group_hourly_detail_v2.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("v2")."</a></FONT>\n";}
+#			{echo "<LI><a href=\"AST_user_group_hourly_detail.php\"><FONT CLASS=\"android_standard\">"._QXZ("User Group Hourly Report")."</a></FONT> - <a href=\"AST_user_group_hourly_detail_v2.php\"><FONT CLASS=\"android_standard\">"._QXZ("v2")."</a></FONT>\n";}
 #		if ( (preg_match("/User Stats/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
-#			{echo "<LI><a href=\"user_stats.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("User Stats")."</a></FONT>\n";}
+#			{echo "<LI><a href=\"user_stats.php\"><FONT CLASS=\"android_standard\">"._QXZ("User Stats")."</a></FONT>\n";}
 #		if ( (preg_match("/User Time Sheet/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
-#			{echo "<LI><a href=\"AST_agent_time_sheet.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("User Time Sheet")."</a></FONT>\n";}
+#			{echo "<LI><a href=\"AST_agent_time_sheet.php\"><FONT CLASS=\"android_standard\">"._QXZ("User Time Sheet")."</a></FONT>\n";}
 		echo "</UL>\n";
 		echo "</div>";
 
@@ -911,14 +912,14 @@ if ($ADD==999990)
 		echo "<TABLE class='admin_stats_table' cellpadding=6 cellspacing=0>\n";
 		echo "<tr"; if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='realtime_report_mobile.php?report_display_type=HTML';\"";} echo ">";
 		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background' rowspan=2><a href=\"realtime_report_mobile.php?report_display_type=HTML\"><img src=\"images/icon_users.png\" width=42 height=42 border=0></a></td>";
-		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("Agents Logged In")."</font></td>";
+		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font CLASS=\"android_small bold\" color=\"white\">"._QXZ("Agents Logged In")."</font></td>";
 		echo "<td width=3 rowspan=2> &nbsp; </td>";
 		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background' rowspan=2><a href=\"realtime_report_mobile.php?report_display_type=HTML\"><img src=\"images/icon_agentsincalls.png\" width=42 height=42 border=0></a></td>";
-		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("Agents In Calls")."</font></td>";
+		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font CLASS=\"android_small bold\" color=\"white\">"._QXZ("Agents In Calls")."</font></td>";
 		echo "</tr>";
 		echo "<tr"; if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='realtime_report_mobile.php?report_display_type=HTML';\"";} echo ">";
-		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font style=\"font-family:HELVETICA;font-size:18;color:white;font-weight:bold;\">$agent_total</font></td>";
-		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font style=\"font-family:HELVETICA;font-size:18;color:white;font-weight:bold;\">$agent_incall</font></td>";
+		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font CLASS=\"android_large\" color=\"white\">$agent_total</font></td>";
+		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font CLASS=\"android_large\" color=\"white\">$agent_incall</font></td>";
 		echo "</tr>";
 		echo "<tr"; if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='realtime_report_mobile.php?report_display_type=HTML';\"";} echo ">";
 		echo "<td height=3 colspan=5> </td>";
@@ -926,14 +927,14 @@ if ($ADD==999990)
 
 		echo "<tr"; if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='realtime_report_mobile.php?report_display_type=HTML';\"";} echo ">";
 		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background' rowspan=2><a href=\"realtime_report_mobile.php?report_display_type=HTML\"><img src=\"images/icon_agentspaused.png\" width=42 height=42 border=0></a></td>";
-		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("Agents Paused")."</font></td>";
+		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font CLASS=\"android_small bold\" color=\"white\">"._QXZ("Agents Paused")."</font></td>";
 		echo "<td width=3 rowspan=2> &nbsp; </td>";
 		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background' rowspan=2><a href=\"realtime_report_mobile.php?report_display_type=HTML\"><img src=\"images/icon_agentswaiting.png\" width=42 height=42 border=0></a></td>";
-		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("Agents Waiting")."</font></td>";
+		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font CLASS=\"android_small bold\" color=\"white\">"._QXZ("Agents Waiting")."</font></td>";
 		echo "</tr>";
 		echo "<tr"; if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='realtime_report_mobile.php?report_display_type=HTML';\"";} echo ">";
-		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font style=\"font-family:HELVETICA;font-size:18;color:white;font-weight:bold;\">$agent_paused</font></td>";
-		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font style=\"font-family:HELVETICA;font-size:18;color:white;font-weight:bold;\">$agent_waiting</font></td>";
+		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font CLASS=\"android_large\" color=\"white\">$agent_paused</font></td>";
+		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font CLASS=\"android_large\" color=\"white\">$agent_waiting</font></td>";
 		echo "</tr>";
 		echo "<tr"; if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='realtime_report_mobile.php?report_display_type=HTML';\"";} echo ">";
 		echo "<td height=3 colspan=5>  </td>";
@@ -941,14 +942,14 @@ if ($ADD==999990)
 
 		echo "<tr"; if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='realtime_report_mobile.php?report_display_type=HTML';\"";} echo ">";
 		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background' rowspan=2><a href=\"realtime_report_mobile.php?report_display_type=HTML\"><img src=\"images/icon_calls.png\" width=42 height=42 border=0></a></td>";
-		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("Active Calls")."</font></td>";
+		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font CLASS=\"android_small bold\" color=\"white\">"._QXZ("Active Calls")."</font></td>";
 		echo "<td width=3 rowspan=2> &nbsp; </td>";
 		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background' rowspan=2><a href=\"realtime_report_mobile.php?report_display_type=HTML\"><img src=\"images/icon_ringing.png\" width=42 height=42 border=0></a></td>";
-		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font style=\"font-family:HELVETICA;font-size:11;color:white;font-weight:bold;\">"._QXZ("Calls Ringing")."</font></td>";
+		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font CLASS=\"android_small bold\" color=\"white\">"._QXZ("Calls Ringing")."</font></td>";
 		echo "</tr>";
 		echo "<tr"; if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='realtime_report_mobile.php?report_display_type=HTML';\"";} echo ">";
-		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font style=\"font-family:HELVETICA;font-size:18;color:white;font-weight:bold;\">$agent_incall</font></td>";
-		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font style=\"font-family:HELVETICA;font-size:18;color:white;font-weight:bold;\">$ringing_calls</font></td>";
+		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font CLASS=\"android_large\" color=\"white\">$agent_incall</font></td>";
+		echo "<td align='center' valign='middle' bgcolor='#$SSmenu_background'><font CLASS=\"android_large\" color=\"white\">$ringing_calls</font></td>";
 		echo "</tr>";
 		echo "</TABLE>";
 		echo "<br><br>";
@@ -956,7 +957,7 @@ if ($ADD==999990)
 		echo "<a name='HourlyCampaignCounts'>";
 		echo "<TABLE align='center' class='admin_stats_table' cellspacing=2>\n";
 		echo "<tr><td>";
-		echo "<canvas id='campaign_hour_chart'></canvas>"; #  style='width: 40vw; max-width: 350px;'
+		echo "<canvas id='campaign_hour_chart' style='height: 40vh; max-height: 500px'></canvas>"; #  style='width: 40vw; max-width: 350px;'
 		echo "</td></tr>";
 		echo "</table>";
 
@@ -965,20 +966,20 @@ if ($ADD==999990)
 		echo "<a name='SystemSummary'>";
 		echo "<TABLE class='admin_stats_table' cellspacing=2>\n";
 		echo "<tr>";
-		echo "<td align='left' colspan='4'><font style=\"font-family:HELVETICA;font-size:16;color:black;font-weight:bold;\">"._QXZ("System Summary").":</font></td>";
+		echo "<td align='left' colspan='4'><font CLASS=\"android_standard bold\">"._QXZ("System Summary").":</font></td>";
 		echo "</tr>";
 
 		echo "<tr bgcolor=black>";
-		echo "<td align='center'><font style=\"font-family:HELVETICA;font-size:14;color:white;font-weight:bold;\">&nbsp; "._QXZ("Records")." &nbsp;</font></td>";
-		echo "<td align='center'><font style=\"font-family:HELVETICA;font-size:14;color:white;font-weight:bold;\">&nbsp; "._QXZ("Active")." &nbsp;</font></td>";
-		echo "<td align='center'><font style=\"font-family:HELVETICA;font-size:14;color:white;font-weight:bold;\">&nbsp; "._QXZ("Inactive")." &nbsp;</font></td>";
-		echo "<td align='center'><font style=\"font-family:HELVETICA;font-size:14;color:white;font-weight:bold;\">&nbsp; "._QXZ("Total")." &nbsp;</font></td>";
+		echo "<td align='center'><font CLASS=\"android_standard\" color=\"white\">&nbsp; "._QXZ("Records")." &nbsp;</font></td>";
+		echo "<td align='center'><font CLASS=\"android_standard\" color=\"white\">&nbsp; "._QXZ("Active")." &nbsp;</font></td>";
+		echo "<td align='center'><font CLASS=\"android_standard\" color=\"white\">&nbsp; "._QXZ("Inactive")." &nbsp;</font></td>";
+		echo "<td align='center'><font CLASS=\"android_standard\" color=\"white\">&nbsp; "._QXZ("Total")." &nbsp;</font></td>";
 		echo "</tr>";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href='$PHP_SELF?ADD=0A' STYLE=\"text-decoration:none;\"><font color=black>"._QXZ("Users").": </a></td><td align=center><b>".($users["Y"]+0)."</b></td><td align=center><b>".($users["N"]+0)."</b></td><td align=center><b>".($users["Y"]+$users["N"]+0)."</b></td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href='$PHP_SELF?ADD=10' STYLE=\"text-decoration:none;\"><font color=black>"._QXZ("Campaigns").": </a></td><td align=center><b>".($campaigns["Y"]+0)."</b></td><td align=center><b>".($campaigns["N"]+0)."</b></td><td align=center><b>".($campaigns["Y"]+$campaigns["N"]+0)."</b></td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href='$PHP_SELF?ADD=100' STYLE=\"text-decoration:none;\"><font color=black>"._QXZ("Lists").": </a></td><td align=center><b>".($lists["Y"]+0)."</b></td><td align=center><b>".($lists["N"]+0)."</b></td><td align=center><b>".($lists["Y"]+$lists["N"]+0)."</b></td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href='$PHP_SELF?ADD=1000' STYLE=\"text-decoration:none;\"><font color=black>"._QXZ("In-Groups").": </a></td><td align=center><b>".($ingroups["Y"]+0)."</b></td><td align=center><b>".($ingroups["N"]+0)."</b></td><td align=center><b>".($ingroups["Y"]+$ingroups["N"]+0)."</b></td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href='$PHP_SELF?ADD=1300' STYLE=\"text-decoration:none;\"><font color=black>"._QXZ("DIDs").": </a></td><td align=center><b>".($dids["Y"]+0)."</b></td><td align=center><b>".($dids["N"]+0)."</b></td><td align=center><b>".($dids["Y"]+$dids["N"]+0)."</b></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right><font class=\"android_standard\">"._QXZ("Users").": </font></td><td align=center><font class=\"android_standard bold\">".($users["Y"]+0)."</font></td><td align=center><font class=\"android_standard bold\">".($users["N"]+0)."</font></td><td align=center><font class=\"android_standard bold\">".($users["Y"]+$users["N"]+0)."</font></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right><font class=\"android_standard\">"._QXZ("Campaigns").": </font></td><td align=center><font class=\"android_standard bold\">".($campaigns["Y"]+0)."</font></td><td align=center><font class=\"android_standard bold\">".($campaigns["N"]+0)."</font></td><td align=center><font class=\"android_standard bold\">".($campaigns["Y"]+$campaigns["N"]+0)."</font></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right><font class=\"android_standard\">"._QXZ("Lists").": </font></td><td align=center><font class=\"android_standard bold\">".($lists["Y"]+0)."</font></td><td align=center><font class=\"android_standard bold\">".($lists["N"]+0)."</font></td><td align=center><font class=\"android_standard bold\">".($lists["Y"]+$lists["N"]+0)."</font></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right><font class=\"android_standard\">"._QXZ("In-Groups").": </font></td><td align=center><font class=\"android_standard bold\">".($ingroups["Y"]+0)."</font></td><td align=center><font class=\"android_standard bold\">".($ingroups["N"]+0)."</font></td><td align=center><font class=\"android_standard bold\">".($ingroups["Y"]+$ingroups["N"]+0)."</font></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right><font class=\"android_standard\">"._QXZ("DIDs").": </font></td><td align=center><font class=\"android_standard bold\">".($dids["Y"]+0)."</font></td><td align=center><font class=\"android_standard bold\">".($dids["N"]+0)."</font></td><td align=center><font class=\"android_standard bold\">".($dids["Y"]+$dids["N"]+0)."</font></td></tr>\n";
 	
 		// New voicemailbox code
 		$stmt="(SELECT voicemail_id,count(*),messages,old_messages,'vm','vm' from vicidial_voicemail where on_login_report='Y' $LOGadmin_viewable_groupsSQL group by voicemail_id) UNION (SELECT voicemail_id,count(*),messages,old_messages,extension,server_ip from phones where on_login_report='Y' $LOGadmin_viewable_groupsSQL group by voicemail_id) order by voicemail_id;";
@@ -991,10 +992,10 @@ if ($ADD==999990)
 			echo "<td align='left' colspan='4'>&nbsp;</td>";  # Padding
 			echo "</tr>";
 			echo "<tr bgcolor=black>";
-			echo "<td  align='center'><font style=\"font-family:HELVETICA;font-size:14;color:white;font-weight:bold;\">&nbsp; Voicemail Box &nbsp;</font></td>\n";
-			echo "<td  align='center'><font style=\"font-family:HELVETICA;font-size:14;color:white;font-weight:bold;\">&nbsp; New &nbsp;</font></td>\n";
-			echo "<td  align='center'><font style=\"font-family:HELVETICA;font-size:14;color:white;font-weight:bold;\">&nbsp; Old &nbsp;</font></td>\n";
-			echo "<td  align='center'><font style=\"font-family:HELVETICA;font-size:14;color:white;font-weight:bold;\">&nbsp; Total &nbsp;</font></td>\n";
+			echo "<td  align='center'><font CLASS=\"android_standard\" color=\"white\">&nbsp; Voicemail Box &nbsp;</font></td>\n";
+			echo "<td  align='center'><font CLASS=\"android_standard\" color=\"white\">&nbsp; New &nbsp;</font></td>\n";
+			echo "<td  align='center'><font CLASS=\"android_standard\" color=\"white\">&nbsp; Old &nbsp;</font></td>\n";
+			echo "<td  align='center'><font CLASS=\"android_standard\" color=\"white\">&nbsp; Total &nbsp;</font></td>\n";
 			echo "</tr>\n";
 	
 			while($row=mysqli_fetch_array($rslt)) 
@@ -1002,15 +1003,15 @@ if ($ADD==999990)
 				echo "<tr bgcolor='#$SSstd_row2_background'>\n";
 				if ($row[4] == 'vm')
 					{
-					echo "<td align='right'><a href='$PHP_SELF?ADD=371111111111&voicemail_id=$row[0]' STYLE=\"text-decoration:none;\"><font color=black>$row[0]:</a></font></td>\n";
+					echo "<td align='right'><font class=\"android_standard\">$row[0]:</font></font></td>\n";
 					}
 				else
 					{
-					echo "<td align='right'><a href='$PHP_SELF?ADD=31111111111&extension=$row[4]&server_ip=$row[5]' STYLE=\"text-decoration:none;\"><font color=black>$row[0]:</a></font></td>\n";
+					echo "<td align='right'><font class=\"android_standard\">$row[0]:</font></td>\n";
 					}
-				echo "<td align='center'>$row[2]</font></td>\n";
-				echo "<td align='center'>$row[3]</font></td>\n";
-				echo "<td align='center'>".($row[2]+$row[3])."</font></td>\n";
+				echo "<td align='center'><font class=\"android_standard\">$row[2]</font></td>\n";
+				echo "<td align='center'><font class=\"android_standard\">$row[3]</font></td>\n";
+				echo "<td align='center'><font class=\"android_standard\">".($row[2]+$row[3])."</font></td>\n";
 				echo "</tr>\n";
 				}
 			}
@@ -1043,17 +1044,17 @@ if ($ADD==999990)
 		$stmt="SELECT * from vicidial_daily_max_stats where stats_date='$today' and stats_flag='OPEN' and stats_type='TOTAL' $LOGallowed_campaignsSQL order by stats_date, campaign_id asc";
 		if ($DB) {echo "|$stmt|\n";}
 		$rslt=mysql_to_mysqli($stmt, $link);
-		echo "<center><TABLE class='admin_stats_table' cellspacing=0 cellpadding=1>\n";
+		echo "<center><TABLE class='admin_stats_table' cellspacing=2 cellpadding=1>\n";
 		echo "<tr>";
-		echo "<td align='left' colspan='4'><font style=\"font-family:HELVETICA;font-size:12;color:black;font-weight:bold;\">"._QXZ("Total Stats for Today").":</font></td>";
+		echo "<td align='left' colspan='4'><font CLASS=\"android_standard bold\">"._QXZ("Total Stats for Today").":</font></td>";
 #		echo "<td align='right'><font size=1><a href='$PHP_SELF?query_date=$thirtydays&end_date=$today&max_system_stats_submit=ADJUST+DATE+RANGE&ADD=999992&stage=TOTAL'>["._QXZ("view max stats")."]</a></font></td>";
 		echo "</tr>";
 		echo "<tr bgcolor=black>";
 		# echo "<td><font size=1 color=white align=left><B>CAMPAIGN ID</B></font></td>";
-		echo "<td><font size=1 color=white><B>&nbsp; "._QXZ("Total Calls")." &nbsp;</B></font></td>";
-		echo "<td><font size=1 color=white><B>&nbsp; "._QXZ("Total Inbound Calls")." &nbsp;</B></font></td>";
-		echo "<td><font size=1 color=white><B>&nbsp; "._QXZ("Total Outbound Calls")." &nbsp;</B></font></td>";
-		echo "<td><font size=1 color=white><B>&nbsp; "._QXZ("Maximum Agents")." &nbsp;</B></font></td>";
+		echo "<td align='center'><font CLASS=\"android_standard\" color=white>"._QXZ("Total Calls")." &nbsp;</font></td>";
+		echo "<td align='center'><font CLASS=\"android_standard\" color=white>"._QXZ("Total Inbound Calls")." &nbsp;</font></td>";
+		echo "<td align='center'><font CLASS=\"android_standard\" color=white>"._QXZ("Total Outbound Calls")." &nbsp;</font></td>";
+		echo "<td align='center'><font CLASS=\"android_standard\" color=white>"._QXZ("Maximum Agents")." &nbsp;</font></td>";
 
 		if (mysqli_num_rows($rslt)>0) 
 			{
@@ -1061,17 +1062,17 @@ if ($ADD==999990)
 				{
 				echo "<tr bgcolor='#$SSstd_row2_background'>";
 			#	echo "<td align='left'><font size=1>".$row["campaign_id"]."</font></td>";
-				echo "<td align='center'><font size=1>".($total_calls+0)."</font></td>";
-				echo "<td align='center'><font size=1>".($total_inbound+0)."</font></td>";
-				echo "<td align='center'><font size=1>".($total_outbound+0)."</font></td>";
-				echo "<td align='center'><font size=1>".($row["max_agents"]+0)."</font></td>";
+				echo "<td align='center'><font CLASS=\"android_standard bold\">".($total_calls+0)."</font></td>";
+				echo "<td align='center'><font CLASS=\"android_standard bold\">".($total_inbound+0)."</font></td>";
+				echo "<td align='center'><font CLASS=\"android_standard bold\">".($total_outbound+0)."</font></td>";
+				echo "<td align='center'><font CLASS=\"android_standard bold\">".($row["max_agents"]+0)."</font></td>";
 				echo "</tr>";
 				}
 			} 
 		else 
 			{
 			echo "<tr bgcolor='#$SSstd_row2_background'>";
-			echo "<td align='center' colspan='4'><font size=1>*** "._QXZ("NO ACTIVITY FOR")." $today ***</font></td>";
+			echo "<td align='center' colspan='4'><font CLASS=\"android_standard bold\">*** "._QXZ("NO ACTIVITY FOR")." $today ***</font></td>";
 			echo "</tr>";
 			}
 		echo "</TABLE></center>\n";
@@ -1093,17 +1094,17 @@ if ($ADD==999990)
 				}
 			}
 
-		echo "<center><TABLE class='admin_stats_table' cellspacing=0 cellpadding=1>\n";
+		echo "<center><TABLE class='admin_stats_table' cellspacing=2 cellpadding=1>\n";
 		echo "<tr>";
-		echo "<td align='left' colspan='4'><font style=\"font-family:HELVETICA;font-size:12;color:black;font-weight:bold;\">"._QXZ("Total Stats for Yesterday").":</font></td>";
+		echo "<td align='left' colspan='4'><font CLASS=\"android_standard bold\">"._QXZ("Total Stats for Yesterday").":</font></td>";
 		# echo "<td align='right'><font size=1><a href='$PHP_SELF?query_date=$thirtydays&end_date=$today&max_system_stats_submit=ADJUST+DATE+RANGE&ADD=999992&stage=TOTAL'>["._QXZ("view max stats")."]</a></font></td>";
 		echo "</tr>";
 		echo "<tr bgcolor=black>";
 	#	echo "<td><font size=1 color=white align=left><B>CAMPAIGN ID</B></font></td>";
-		echo "<td><font size=1 color=white><B>&nbsp; "._QXZ("Total Calls")." &nbsp;</B></font></td>";
-		echo "<td><font size=1 color=white><B>&nbsp; "._QXZ("Total Inbound Calls")." &nbsp;</B></font></td>";
-		echo "<td><font size=1 color=white><B>&nbsp; "._QXZ("Total Outbound Calls")." &nbsp;</B></font></td>";
-		echo "<td><font size=1 color=white><B>&nbsp; "._QXZ("Maximum Agents")." &nbsp;</B></font></td>";
+		echo "<td align='center'><font CLASS=\"android_standard\" color=white>"._QXZ("Total Calls")." &nbsp;</font></td>";
+		echo "<td align='center'><font CLASS=\"android_standard\" color=white>"._QXZ("Total Inbound Calls")." &nbsp;</font></td>";
+		echo "<td align='center'><font CLASS=\"android_standard\" color=white>"._QXZ("Total Outbound Calls")." &nbsp;</font></td>";
+		echo "<td align='center'><font CLASS=\"android_standard\" color=white>"._QXZ("Maximum Agents")." &nbsp;</font></td>";
 
 		$stmt="SELECT * from vicidial_daily_max_stats where stats_date='$yesterday' and stats_type='TOTAL' $LOGallowed_campaignsSQL order by stats_date, campaign_id asc";
 		if ($DB) {echo "|$stmt|\n";}
@@ -1114,17 +1115,17 @@ if ($ADD==999990)
 				{
 				echo "<tr bgcolor='#$SSstd_row2_background'>";
 				#echo "<td align='left'><font size=1>".$row["campaign_id"]."</font></td>";
-				echo "<td align='center'><font size=1>".($row["total_calls"]+0)." / ".($total_calls+0)."</font></td>";
-				echo "<td align='center'><font size=1>".($total_inbound+0)."</font></td>";
-				echo "<td align='center'><font size=1>".($total_outbound+0)."</font></td>";
-				echo "<td align='center'><font size=1>".($row["max_agents"]+0)."</font></td>";
+				echo "<td align='center'><font CLASS=\"android_standard bold\">".($row["total_calls"]+0)." / ".($total_calls+0)."</font></td>";
+				echo "<td align='center'><font CLASS=\"android_standard bold\">".($total_inbound+0)."</font></td>";
+				echo "<td align='center'><font CLASS=\"android_standard bold\">".($total_outbound+0)."</font></td>";
+				echo "<td align='center'><font CLASS=\"android_standard bold\">".($row["max_agents"]+0)."</font></td>";
 				echo "</tr>";
 				}
 			} 
 		else 
 			{
 			echo "<tr bgcolor='#$SSstd_row2_background'>";
-			echo "<td align='center' colspan='4'><font size=1>*** "._QXZ("NO ACTIVITY FOR")." $today ***</font></td>";
+			echo "<td align='center' colspan='4'><font CLASS=\"android_standard bold\">*** "._QXZ("NO ACTIVITY FOR")." $today ***</font></td>";
 			echo "</tr>";
 			}
 
@@ -1132,8 +1133,7 @@ if ($ADD==999990)
 		}
 	else
 		{
-		$section_width=640;
-		echo "<BR><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
+		echo "<BR><FONT CLASS=\"android_standard\">";
 		echo "<center><TABLE class='admin_stats_table' cellspacing=2>\n";
 		echo "<tr>";
 		echo "<td align='left' colspan='4'>"._QXZ("Welcome")."</td>";
@@ -1373,11 +1373,11 @@ function LoadHourlyCharts() {
 	else
 		{
 		var ctx = document.getElementById('campaign_hour_chart').getContext('2d');
-		document.getElementById('campaign_hour_chart').height=40;
+		document.getElementById('campaign_hour_chart').height=400;
 		ctx.font = "bold 14px Arial";
 		ctx.textAlign = "center";
-		ctx.fillText("<?php echo "*** "._QXZ("NO HOURLY CAMPAIGN COUNTS")." ***"; ?>", document.getElementById('campaign_hour_chart').width/2, document.getElementById('campaign_hour_chart').height/2);
-		// document.getElementById('campaign_hour_chart').innerHTML="<TABLE class='admin_stats_table' cellspacing=2><tr bgcolor=black><td align='center'><font style=\"font-family:HELVETICA;font-size:14;color:white;font-weight:bold;\">&nbsp;  &nbsp;</font></td></table>";
+		ctx.fillText("<?php echo "*** "._QXZ("NO HOURLY CAMPAIGN COUNTS")." ***"; ?>", document.getElementById('campaign_hour_chart').width/2, document.getElementById('campaign_hour_chart').height/4);
+		// document.getElementById('campaign_hour_chart').innerHTML="<TABLE class='admin_stats_table' cellspacing=2><tr bgcolor=black><td align='center'><font CLASS=\"android_standard\">&nbsp;  &nbsp;</font></td></table>";
 		}
 <?php
 if ($voodoo)
@@ -1435,7 +1435,7 @@ if ($voodoo)
 		ctx2.font = "bold 14px Arial";
 		ctx2.textAlign = "center";
 		ctx2.fillText("<?php echo "*** "._QXZ("NO HOURLY INGROUP COUNTS")." ***"; ?>", document.getElementById('ingroup_hour_chart').width/2, document.getElementById('ingroup_hour_chart').height/2);
-		// document.getElementById('ingroup_hour_chart').innerHTML="<TABLE class='admin_stats_table' cellspacing=2><tr bgcolor=black><td align='center'><font style=\"font-family:HELVETICA;font-size:14;color:white;font-weight:bold;\">&nbsp; <?php echo "*** "._QXZ("NO HOURLY INGROUP COUNTS")." ***"; ?> &nbsp;</font></td></table>";
+		// document.getElementById('ingroup_hour_chart').innerHTML="<TABLE class='admin_stats_table' cellspacing=2><tr bgcolor=black><td align='center'><font CLASS=\"android_standard\">&nbsp; <?php echo "*** "._QXZ("NO HOURLY INGROUP COUNTS")." ***"; ?> &nbsp;</font></td></table>";
 		}
 
 <?php } ?>

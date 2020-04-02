@@ -298,7 +298,7 @@ $MAIN.="<FORM ACTION=\"$PHP_SELF\" METHOD=GET name=vicidial_report id=vicidial_r
 $MAIN.="<TABLE BORDER=0 cellspacing=5 cellpadding=5><TR><TD VALIGN=TOP align=center>\n";
 $MAIN.="<INPUT TYPE=HIDDEN NAME=DB VALUE=\"$DB\">\n";
 $MAIN.=_QXZ("Report Type").":\n";
-$MAIN.="<SELECT NAME='stage'><option>SUMMARY</option><option>CALL</option><option>DETAIL</option><option SELECTED>$stage</option></SELECT> &nbsp; &nbsp; &nbsp; ";
+$MAIN.="<SELECT NAME='stage'><option value='SUMMARY'>"._QXZ("SUMMARY")."</option><option value='CALL'>"._QXZ("CALL")>"</option><option value='DETAIL'>"._QXZ("DETAIL")."</option><option SELECTED value='$stage'>"._QXZ("$stage")."</option></SELECT> &nbsp; &nbsp; &nbsp; ";
 $MAIN.=_QXZ("Date").":\n";
 $MAIN.="<INPUT TYPE=TEXT NAME=query_date SIZE=10 MAXLENGTH=10 VALUE=\"$query_date\">";
 $MAIN.="<script language=\"JavaScript\">\n";
