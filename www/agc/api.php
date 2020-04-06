@@ -1,7 +1,7 @@
 <?php
 # api.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed as an API(Application Programming Interface) to allow
 # other programs to interact with the VICIDIAL Agent screen
@@ -99,10 +99,11 @@
 # 180908-1433 - Added force_fronter_leave_3way function
 # 190222-1152 - Added force_fronter_audio_stop function
 # 190901-0952 - Added cid_choice option to transfer_conference function
+# 200403-1510 - Added outbound_cid option to external_dial function
 #
 
-$version = '2.14-65';
-$build = '190901-0952';
+$version = '2.14-66';
+$build = '200403-1510';
 
 $startMS = microtime();
 
@@ -247,6 +248,8 @@ if (isset($_GET["dial_ingroup"]))			{$dial_ingroup=$_GET["dial_ingroup"];}
 	elseif (isset($_POST["dial_ingroup"]))	{$dial_ingroup=$_POST["dial_ingroup"];}
 if (isset($_GET["cid_choice"]))				{$cid_choice=$_GET["cid_choice"];}
 	elseif (isset($_POST["cid_choice"]))	{$cid_choice=$_POST["cid_choice"];}
+if (isset($_GET["outbound_cid"]))			{$outbound_cid=$_GET["outbound_cid"];}
+	elseif (isset($_POST["outbound_cid"]))	{$outbound_cid=$_POST["outbound_cid"];}
 
 header ("Content-type: text/html; charset=utf-8");
 header ("Cache-Control: no-cache, must-revalidate");  // HTTP/1.1
@@ -272,7 +275,7 @@ if ($sl_ct > 0)
 	$VUuser_group =				$row[3];
 	}
 
-$stmt = "SELECT use_non_latin,enable_languages,language_method,agent_debug_logging FROM system_settings;";
+$stmt = "SELECT use_non_latin,enable_languages,language_method,agent_debug_logging,outbound_cid_any FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
 if ($DB) {echo "$stmt\n";}
@@ -284,6 +287,7 @@ if ($qm_conf_ct > 0)
 	$SSenable_languages =		$row[1];
 	$SSlanguage_method =		$row[2];
 	$SSagent_debug_logging =	$row[3];
+	$SSoutbound_cid_any =		$row[4];
 	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
@@ -371,6 +375,7 @@ if ($non_latin < 1)
 	$status = preg_replace("/[^-\_0-9a-zA-Z]/","",$status);
 	$dial_ingroup = preg_replace("/[^-\_0-9a-zA-Z]/","",$dial_ingroup);
 	$cid_choice = preg_replace("/[^-\_0-9a-zA-Z]/","",$cid_choice);
+	$outbound_cid = preg_replace("/[^-\_0-9a-zA-Z]/","",$outbound_cid);
 	}
 else
 	{
@@ -1683,6 +1688,23 @@ if ($function == 'external_dial')
 							echo "$result: $result_reason - $agent_user|$data\n";
 							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
 							exit;
+							}
+						}
+					if (strlen($outbound_cid)>1)
+						{
+						if ($SSoutbound_cid_any != 'API_ONLY')
+							{
+							$result = _QXZ("ERROR");
+							$result_reason = _QXZ("outbound_cid is not allowed on this system");
+							$data = "$outbound_cid|$SSoutbound_cid_any";
+							echo "$result: $result_reason - $agent_user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							exit;
+							}
+						else
+							{
+							$caller_id_number = $outbound_cid;
+							$group_alias='-FORCE-';
 							}
 						}
 

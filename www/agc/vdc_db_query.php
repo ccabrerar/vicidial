@@ -488,10 +488,11 @@
 # 200108-0947 - Added cid_group_id of NONE
 # 200122-1847 - Added code for CID Group auto-rotate feature
 # 200310-1117 - Added manual_dial_cid AGENT_PHONE_OVERRIDE option 
+# 200403-1601 - Added option for forced outbound CID through API
 #
 
-$version = '2.14-381';
-$build = '200310-1117';
+$version = '2.14-382';
+$build = '200403-1601';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=824;
@@ -4627,6 +4628,16 @@ if ($ACTION == 'manDiaLnextCaLL')
 					}
 				#### END check for manual_dial_cid == 'AGENT_PHONE_OVERRIDE'
 
+				#### BEGIN check for API forced CID override ####
+				if ( ($usegroupalias > 0) and ($account=='-FORCE-') and (strlen($campaign_cid) > 6) )
+					{
+					$FORCEoutbound_cid = preg_replace("/\D/",'',$campaign_cid);
+					if (strlen($FORCEoutbound_cid) > 6) 
+						{$CCID = "$FORCEoutbound_cid";   $CCID_on++;}
+					}
+				#### END check for API forced CID override ####
+
+
 				if ($CCID_on) {$CIDstring = "\"$MqueryCID$EAC\" <$CCID>";}
 				else {$CIDstring = "$MqueryCID$EAC";}
 
@@ -6101,6 +6112,15 @@ if ($ACTION == 'manDiaLonly')
 				{$CCID = "$PHONEoutbound_cid";   $CCID_on++;}
 			}
 		#### END check for manual_dial_cid == 'AGENT_PHONE_OVERRIDE'
+
+		#### BEGIN check for API forced CID override ####
+		if ( ($usegroupalias > 0) and ($account=='-FORCE-') and (strlen($campaign_cid) > 6) )
+			{
+			$FORCEoutbound_cid = preg_replace("/\D/",'',$campaign_cid);
+			if (strlen($FORCEoutbound_cid) > 6) 
+				{$CCID = "$FORCEoutbound_cid";   $CCID_on++;}
+			}
+		#### END check for API forced CID override ####
 
 		#### BEGIN run manual_dial_hopper_check process if enabled
 		if ($manual_dial_hopper_check == 'Y')

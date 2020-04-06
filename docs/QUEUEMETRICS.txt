@@ -1,4 +1,4 @@
-VICIDIAL and QueueMetrics				UPDATED: 2020-01-26
+VICIDIAL and QueueMetrics				UPDATED: 2020-04-04
 
 queue_log logging was added to VICIDIAL outbound auto calling as an option in the 2.0.3 release, and for inbound in the 2.0.4 release.
 
@@ -95,9 +95,9 @@ If it did, then you want to add the following lines to your /etc/rc.d/rc.local f
 
 cd /usr/local
 *** download QueueMetrics and place it in /usr/local ***
-wget https://downloads.loway.ch/qm/QueueMetrics-19.10.6.tar.gz
-tar xvfz QueueMetrics-19.10.6.tar.gz
-mv queuemetrics-19.10.6 /usr/local/tomcat/webapps/qm
+wget https://downloads.loway.ch/qm/QueueMetrics-19.10.11.tar.gz
+tar xvfz QueueMetrics-19.10.11.tar.gz
+mv queuemetrics-19.10.11 /usr/local/tomcat/webapps/qm
 cd /usr/local/tomcat/webapps/qm/WEB_INF
 wget ftp://mirrors.easynews.com/mysql/Downloads/Connector-J/mysql-connector-java-3.0.10-stable.tar.gz
 gunzip mysql-connector-java-3.0.10-stable.tar.gz

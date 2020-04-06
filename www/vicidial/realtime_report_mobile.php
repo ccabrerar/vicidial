@@ -907,6 +907,9 @@ if (strlen($monitor_phone)>1)
 		$outbound_cid =				$row[11];
 		$webphone_auto_answer =		$row[12];
 
+		## Important - don't want this on mobile
+		$is_webphone='N';
+
 		if ($is_webphone == 'Y')
 			{
 			### build Iframe variable content for webphone here
@@ -1089,6 +1092,10 @@ function hideDiv(divvar)
 			document.getElementById(divvar).style.zIndex=-1;
 			}
 		}
+	}
+function closeAlert(divvar)
+	{
+	document.getElementById(divvar).innerHTML = '';
 	}
 
 function ShowWebphone(divvis)
@@ -1720,6 +1727,7 @@ echo "</table>";
 	echo "$webphone_content\n$webphone_clpos\n";
 	echo "</TD></TR></TABLE>\n";
 	echo "</span>\n";
+
 echo "<span style=\"position:absolute;left:10px;top:120px;z-index:14;\" id=agent_ingroup_display>\n";
 echo " &nbsp; ";
 echo "</span>\n";

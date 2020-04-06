@@ -3,7 +3,7 @@
 # cm_dnc.agi version 2.14
 # 
 # Designed to work with Cell Menus to allow setting of a number as DNC or NI
-# This script is meant as a replacecment for the agi-VDADinbound_NI_DNC_CIDlookup.agi
+# This script is meant as a replacement for the agi-VDADinbound_NI_DNC_CIDlookup.agi
 # script. It is designed to work easily in the Call Menu framework, it plays no
 # audio itself, and it has more options.
 #
@@ -17,7 +17,7 @@
 # example of what to put in the AGI entry for a Call Menu AGI route:
 # cm_dnc.agi,DNC---YES---TESTCAMP---B---CAMP
 #
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 121109-1623 - First draft

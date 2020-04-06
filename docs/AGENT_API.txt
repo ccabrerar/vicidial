@@ -1,4 +1,4 @@
-AGENT API DOCUMENT		Started: 2008-07-03	Updated: 2019-09-01
+AGENT API DOCUMENT		Started: 2008-07-03	Updated: 2020-04-03
 
 This document describes the functions of an API(Application Programming Interface)
 for the VICIDIAL Agent screen. This functionality will be rather limited at first
@@ -257,6 +257,9 @@ alt_dial -
 	   an ERROR will be returned
 dial_ingroup -
  OPTIONAL, place the call as an in-group outbound calls
+outbound_cid - 
+ OPTIONAL, the CallerID to send for this outbound call. NOTE: This will only work if "Outbound Call Any CID" is enabled in System Settings!
+
 
 EXAMPLE URLS:
 http://server/agc/api.php?source=test&user=6666&pass=1234&agent_user=1000&function=external_dial&value=7275551212&phone_code=1&search=YES&preview=NO&focus=YES
@@ -270,6 +273,7 @@ ERROR: agent_user is not logged in - 6666
 ERROR: agent_user is not allowed to place manual dial calls - 6666
 ERROR: caller_id_number from group_alias is not valid - 6666|TESTING|123
 ERROR: group_alias is not valid - 6666|TESTING
+ERROR: outbound_cid is not allowed on this system - 6666|3125551212|DISABLED
 ERROR: vtiger callback activity does not exist in vtiger system - 12345
 ERROR: phone_number is already in this agents manual dial queue - 6666|7275551211
 ERROR: lead_id is not valid - 6666|1234567

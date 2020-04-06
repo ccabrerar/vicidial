@@ -898,10 +898,6 @@ else
 		document.getElementById(divvar).innerHTML = open_list;
 		document.getElementById(divvar).style.left = 160;
 		}
-	function closeAlert(divvar)
-		{
-		document.getElementById(divvar).innerHTML = '';
-		}
 	// function to launch monitoring calls
 
 	function send_monitor(session_id,server_ip,stage)

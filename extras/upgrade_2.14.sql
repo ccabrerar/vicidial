@@ -1181,3 +1181,11 @@ UPDATE system_settings SET db_schema_version='1588',db_schema_update_date=NOW() 
 ALTER TABLE system_settings ADD user_account_emails ENUM('DISABLED','SEND_NO_PASS','SEND_WITH_PASS') DEFAULT 'DISABLED';
 
 UPDATE system_settings SET db_schema_version='1589',db_schema_update_date=NOW() where db_schema_version < 1589;
+
+ALTER TABLE system_settings ADD outbound_cid_any ENUM('DISABLED','API_ONLY') DEFAULT 'DISABLED';
+
+UPDATE system_settings SET db_schema_version='1590',db_schema_update_date=NOW() where db_schema_version < 1590;
+
+ALTER TABLE system_settings ADD entries_per_page SMALLINT(5) UNSIGNED DEFAULT '0';
+
+UPDATE system_settings SET db_schema_version='1591',db_schema_update_date=NOW() where db_schema_version < 1591;

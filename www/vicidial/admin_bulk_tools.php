@@ -26,13 +26,14 @@
 # 180330-1427 - Added 'active' column to CID Group import
 # 180502-2115 - Added new help display
 # 200108-0956 - Added CID Group type of NONE
+# 200405-1738 - Fix for Issue #1202
 #
 
 require("dbconnect_mysqli.php");
 require("functions.php");
 
-$version = '2.14-20';
-$build = '200108-0956';
+$version = '2.14-21';
+$build = '200405-1738';
 
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
@@ -560,7 +561,7 @@ elseif ($form_to_run == "ACCIDconfirmed")
 		}
 	else
 		{
-		$description = array();
+		$ACCIDdescription = array();
 		$i = 0;
 		while ($i < count($ACCIDto_insert_CONFIRMED))
 			{

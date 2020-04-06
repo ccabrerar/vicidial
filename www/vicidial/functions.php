@@ -4,7 +4,7 @@
 #
 # functions for administrative scripts and reports
 #
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 #
 # CHANGES:
@@ -34,6 +34,7 @@
 # 170930-0852 - Added code for custom reports variable display
 # 180508-2215 - Added new help display
 # 191013-0901 - Fixes for PHP7
+# 200401-1920 - Added TimeToText function to convert integers to strings
 #
 
 ##### BEGIN validate user login credentials, check for failed lock out #####
@@ -1461,6 +1462,31 @@ function ConvertPresets($URL_string)
 	return $URL_string;
 	}
 
+function TimeToText($interval) 
+	{
+	$interval=preg_replace('/[^0-9]/', '', $interval);
+	$interval+=0;
+	if ($interval==0) 
+		{
+		return "0 "._QXZ("seconds");
+		}
+	$return_str="";
+
+	$minutes=floor($interval/60);
+	$seconds=floor($interval%60);
+	if ($minutes>0) 
+		{
+		if ($minutes==1) {$return_str.="$minutes "._QXZ("minute").", ";} 
+		else {$return_str.="$minutes "._QXZ("minutes").", ";}
+		}
+	if ($seconds>0) 
+		{
+		if ($seconds==1) {$return_str.="$seconds "._QXZ("second");}
+		else {$return_str.="$seconds "._QXZ("seconds");}
+		}
+	$return_str=preg_replace('/, $/', $return_str);
+	return $return_str;
+	}
 function createDateRangeArray($strDateFrom,$strDateTo)
 	{
 	$aryRange=array();

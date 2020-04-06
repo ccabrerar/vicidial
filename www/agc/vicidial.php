@@ -631,10 +631,11 @@
 # 191227-1227 - Fix for translation phrases gathering process
 # 200123-1554 - PHP7 fix for array
 # 200310-1116 - Added manual_dial_cid AGENT_PHONE_OVERRIDE option 
+# 200403-1539 - Added Manual Dial API outbound_cid function
 #
 
-$version = '2.14-600c';
-$build = '200310-1116';
+$version = '2.14-601c';
+$build = '200403-1539';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=91;
 $one_mysql_log=0;
@@ -749,7 +750,7 @@ if ($sl_ct > 0)
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,vdc_header_date_format,vdc_customer_date_format,vdc_header_phone_format,webroot_writable,timeclock_end_of_day,vtiger_url,enable_vtiger_integration,outbound_autodial_active,enable_second_webform,user_territories_active,static_agent_url,custom_fields_enabled,pllb_grouping_limit,qc_features_active,allow_emails,callback_time_24hour,enable_languages,language_method,meetme_enter_login_filename,meetme_enter_leave3way_filename,enable_third_webform,default_language,active_modules,allow_chats,chat_url,default_phone_code,agent_screen_colors,manual_auto_next,agent_xfer_park_3way,admin_web_directory,agent_script,agent_push_events,agent_push_url,agent_logout_link,agentonly_callback_campaign_lock,manual_dial_validation,mute_recordings,enable_second_script,enable_first_webform,recording_buttons FROM system_settings;";
+$stmt = "SELECT use_non_latin,vdc_header_date_format,vdc_customer_date_format,vdc_header_phone_format,webroot_writable,timeclock_end_of_day,vtiger_url,enable_vtiger_integration,outbound_autodial_active,enable_second_webform,user_territories_active,static_agent_url,custom_fields_enabled,pllb_grouping_limit,qc_features_active,allow_emails,callback_time_24hour,enable_languages,language_method,meetme_enter_login_filename,meetme_enter_leave3way_filename,enable_third_webform,default_language,active_modules,allow_chats,chat_url,default_phone_code,agent_screen_colors,manual_auto_next,agent_xfer_park_3way,admin_web_directory,agent_script,agent_push_events,agent_push_url,agent_logout_link,agentonly_callback_campaign_lock,manual_dial_validation,mute_recordings,enable_second_script,enable_first_webform,recording_buttons,outbound_cid_any FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01001',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 if ($DB) {echo "$stmt\n";}
@@ -798,6 +799,7 @@ if ($qm_conf_ct > 0)
 	$SSenable_second_script =			$row[38];
 	$SSenable_first_webform =			$row[39];
 	$SSrecording_buttons =				$row[40];
+	$SSoutbound_cid_any =				$row[41];
 	}
 else
 	{
@@ -4967,6 +4969,7 @@ if ($enable_fast_refresh < 1) {echo "\tvar refresh_interval = 1000;\n";}
 	var webphone_call_seconds='<?php echo $webphone_call_seconds ?>';
 	var temp_webphone_call_seconds=0;
 	var SSenable_second_script='<?php echo $SSenable_second_script ?>';
+	var SSoutbound_cid_any='<?php echo $SSoutbound_cid_any ?>';
 	var DiaLControl_auto_HTML = "<a href=\"#\" onclick=\"AutoDial_ReSume_PauSe('VDADready','','','','','','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_paused.gif") ?>\" border=\"0\" alt=\"You are paused\" /></a>";
 	var DiaLControl_auto_HTML_ready = "<a href=\"#\" onclick=\"AutoDial_ReSume_PauSe('VDADpause','','','','','','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_active.gif") ?>\" border=\"0\" alt=\"You are active\" /></a>";
 	var DiaLControl_auto_HTML_OFF = "<img src=\"./images/<?php echo _QXZ("vdc_LB_blank_OFF.gif") ?>\" border=\"0\" alt=\"pause button disabled\" />";
@@ -9628,7 +9631,11 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 			if (xmlhttp)
 				{
 				if (cid_choice.length > 3)
-					{var call_cid = cid_choice;}
+					{
+					var call_cid = cid_choice;
+					if (active_group_alias == '-FORCE-')
+						{cid_lock=1;}
+					}
 				else
 					{
 					var call_cid = campaign_cid;
@@ -10559,6 +10566,8 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 					{
 					var call_cid = cid_choice;
 					usegroupalias=1;
+					if (active_group_alias == '-FORCE-')
+						{cid_lock=1;}
 					}
 				else
 					{

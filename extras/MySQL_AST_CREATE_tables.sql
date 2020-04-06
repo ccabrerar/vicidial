@@ -1848,7 +1848,9 @@ enable_first_webform ENUM('0','1') default '1',
 recording_buttons VARCHAR(30) default 'START_STOP',
 opensips_cid_name ENUM('0','1') default '0',
 require_password_length TINYINT(3) UNSIGNED default '0',
-user_account_emails ENUM('DISABLED','SEND_NO_PASS','SEND_WITH_PASS') DEFAULT 'DISABLED'
+user_account_emails ENUM('DISABLED','SEND_NO_PASS','SEND_WITH_PASS') DEFAULT 'DISABLED',
+outbound_cid_any ENUM('DISABLED','API_ONLY') DEFAULT 'DISABLED',
+entries_per_page SMALLINT(5) UNSIGNED DEFAULT '0'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaigns_list_mix (
@@ -4593,4 +4595,4 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1589',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1591',db_schema_update_date=NOW(),reload_timestamp=NOW();
