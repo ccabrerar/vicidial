@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2020-03-31
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2020-04-05
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -527,7 +527,7 @@ NOTES-
 There is a hard limit of 10000000 records analyzed
 
 Example URL strings for API calls:
-http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&stage=csv&function=in_group_status&user_groups=SALESLINE|SUPPORT&header=YES
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&stage=csv&function=in_group_status&in_groups=SALESLINE|SUPPORT&header=YES
 
 Example responses:
 ERROR: in_group_status USER DOES NOT HAVE PERMISSION TO GET IN-GROUP INFO - 6666|0

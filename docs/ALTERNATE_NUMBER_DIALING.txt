@@ -1,4 +1,4 @@
-ALTERNATE NUMBER DIALING Redesign	Started: 2008-08-20	Updated: 2014-07-15
+ALTERNATE NUMBER DIALING Redesign	Started: 2008-08-20	Updated: 2020-04-06
 
 *** THIS SECTION OUTLINES PROPOSED CHANGES TO ALT-NUMBER-DIALING  in the 2.0.5 version ***
 *** FOR INFORMATION ON THE 2.0.3 AND 2.0.4 VERSION OF ALT NUMBER DIALING LOOK BELOW THIS SECTION ***
@@ -39,13 +39,36 @@ The multi-alt-entries field is formatted as a field of phone-number/phone-code/p
 
 
 
-MULTI LEAD Auto Alt number dialing:
+MULTI LEAD Auto Alt number dialing: (PREFERRED, WITH MORE OPTIONS THAN STANDARD AUTO-ALT-DIALING, unlimited numbers per account, tied together by vendor_lead_code)
 
 Using MULTI_LEAD is different from the other standard Auto-Alt-Dial functions, it allows you to use a separate lead for each number on a customer account that all share a common vendor_lead_code, and the type of phone number for each is to be defined with a label in the Owner field. This option will disable some options on the Modify Campaign screen and show a link to the Multi-Alt Settings page which allows you to set which phone number types, defined by the label of each lead, will be dialed and in what order. This will create a special lead filter and will alter the Rank field of all of the leads inside the lists set to this campaign in order to call them in the order you have specified. 
 
 The Auto-Alt-Statuses are still in used for MULTI_LEAD so you may want to make sure that statuses like DROP, PDROP and others to your campaign's auto-alt-dial statuses so that the other leads tied by vendor_lead_code in the campaign's lists are not deactivated.
 
 There is a feature in the hopper section of the modify campaign page that it is recommended you activate if you are using MULTI_LEAD auto-alt dialing: Hopper VLC Dup Check. This feature will prevent multiple numbers from the same account from getting inserted into the hopper at the same time.
+
+
+
+EXTENDED Auto-Alt-Dialing Notes(more than 3 phone numbers per lead):
+
+- To set this up, you'll need to load your lead files through the CLI using the /usr/share/astguiclient/VICIDIAL_IN_new_leads_file.pl perl script.
+
+- Each lead will need to be formatted in the STANDARD format which is a pipe-delimted list in the following order:
+vendor_lead_code|source_id|list_id|phone_code|phone_number|title|first_name|middle|last_name|address1|address2|address3|city|state|province|postal_code|country|gender|date_of_birth|alt_phone|email|security_phrase|COMMENTS|called_count|status|entry_date|multi-alt-entries
+
+The multi-alt-entries also have a special format:
+phoneNumberA_phoneCodeA_phoneNoteA!phoneNumberB_phoneCodeB_phoneNoteB!phoneNumberC_phoneCodeC_phoneNoteC.....
+
+An example row would be this:
+3857822|31022|105|01144|1625551212|MRS|B||BURTON|249 MUNDON ROAD|MALDON|ESSEX||||CM9 6PW|UK||||||COMMENTS|2|B|2007-08-09 00:00:00|7275551212_1_work!7275551213_61_sister house!7275551214_44_neighbor
+
+- Place each lead file in /usr/share/astguiclient/LEADS_IN/ and run the perl script.
+
+- This will load the multi-alt-entries into a special table called vicidial_list_alt_phones which ties all the alternate numbers to the same lead. These will be viewable inside each lead record.
+
+- When Auto Alt-Number Dialing is set to EXTENDED (or one of the options including it), the campaign will follow the Auto Alt Dial statuses that are defined and call through the alternate numbers.
+
+
 
 
 

@@ -4644,12 +4644,15 @@ else
 # 200331-1148 - Added list_custom_fields API function, and more translation fixes
 # 200401-1448 - Added email_agent_login_link.php feature
 # 200405-1805 - Added entries_per_page system setting option, fixed phone relocate conf file load issue
+# 200405-2339 - Added warnings for inactive voicemail server
+# 200406-0033 - Fix for Remote Agents where user deleted
+# 200406-2319 - Small changes to entries_per_page display(w/ display all), also added it for DIDs
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-745a';
-$build = '200405-1805';
+$admin_version = '2.14-748a';
+$build = '200406-2319';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -6260,7 +6263,7 @@ if ( ($ADD==211111) or ($ADD==311111) or ($ADD==411111) or ($ADD==511111) or ($A
 if ( (strlen($ADD)==11) or (strlen($ADD)>12) or ( ($ADD > 1299) and ($ADD < 9999) ) or ($ADD=='141111111111') or ($ADD=='140111111111') or ($ADD=='341111111111') or ($ADD=='311111111111111') or ( (strlen($ADD)>4) and ($ADD < 99998) ) or ($ADD==3) or (($ADD>20) and ($ADD<70)) or ($ADD=="4A") or ($ADD=="4B") or (strlen($ADD)==12) )
 	{
 	##### get server listing for dynamic pulldown 
-	$stmt="SELECT server_ip,server_description,external_server_ip from servers order by server_ip";
+	$stmt="SELECT server_ip,server_description,external_server_ip,active,active_asterisk_server from servers order by server_ip";
 	$rsltx=mysql_to_mysqli($stmt, $link);
 	$servers_to_print = mysqli_num_rows($rsltx);
 	$servers_list='';
@@ -6269,7 +6272,7 @@ if ( (strlen($ADD)==11) or (strlen($ADD)>12) or ( ($ADD > 1299) and ($ADD < 9999
 	while ($servers_to_print > $o)
 		{
 		$rowx=mysqli_fetch_row($rsltx);
-		$servers_list .= "<option value=\"$rowx[0]\">$rowx[0] - $rowx[1] - $rowx[2]</option>\n";
+		$servers_list .= "<option value=\"$rowx[0]\">$rowx[0] - $rowx[1] - $rowx[2] - "._QXZ("$rowx[3]")." - "._QXZ("$rowx[4]")."</option>\n";
 		$o++;
 		}
 	}
@@ -19608,8 +19611,11 @@ if ($ADD==6)
 				$stmtC="DELETE from vicidial_inbound_group_agents where user='$user';";
 				$rslt=mysql_to_mysqli($stmtC, $link);
 
+				$stmtD="UPDATE vicidial_remote_agents SET status='INACTIVE' where user_start='$user';";
+				$rslt=mysql_to_mysqli($stmtD, $link);
+
 				### LOG INSERTION Admin Log Table ###
-				$SQL_log = "$stmtA|$stmtB|$stmtC|";
+				$SQL_log = "$stmtA|$stmtB|$stmtC|$stmtD|";
 				$SQL_log = preg_replace('/;/', '', $SQL_log);
 				$SQL_log = addslashes($SQL_log);
 				$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='USERS', event_type='DELETE', record_id='$user', event_code='ADMIN DELETE USER', event_sql=\"$SQL_log\", event_notes='';";
@@ -35799,7 +35805,7 @@ if ($ADD==311111111111)
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("System Load").": </td><td align=left>$sysload - $cpu% &nbsp; $NWB#servers-sysload$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Live Channels").": </td><td align=left>$channels_total &nbsp; &nbsp; "._QXZ("Agents").": $live_agents &nbsp; $NWB#servers-channels_total$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Disk Usage").": </td><td align=left nowrap>$disk_usage &nbsp; $NWB#servers-disk_usage$NWE</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Disk Usage").": </td><td align=left><font size=0>$disk_usage</font> &nbsp; $NWB#servers-disk_usage$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("System Uptime").": </td><td align=left>$system_uptime &nbsp; $NWB#servers-system_uptime$NWE</td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
@@ -38402,10 +38408,29 @@ if ($ADD==311111111111111)
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Agent Screen Script").": </td><td align=left><input type=text name=agent_script size=50 maxlength=100 value=\"$agent_script\">$NWB#settings-agent_script$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active Voicemail Server").": </td><td align=left><select size=1 name=active_voicemail_server>\n";
+		$stmt="SELECT server_id,active,active_asterisk_server from servers where server_ip='$active_voicemail_server' $LOGadmin_viewable_groupsSQL limit 1;";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$servers_to_print = mysqli_num_rows($rslt);
+		$avmMESSAGE='';
+		$AVMactive=0;
+		$AVMlinkA='';   $AVMlinkB='';
+		if ($servers_to_print > 0) 
+			{
+			$rowx=mysqli_fetch_row($rslt);
+			if ( ($rowx[1] == 'Y') and ($rowx[2] == 'Y') )
+				{$AVMactive++;}
+			$AVMlinkA = "<a href=\"$PHP_SELF?ADD=311111111111&server_id=$rowx[0]\">\n";
+			$AVMlinkB = "</a>";
+			}
+		if ($AVMactive < 1)
+			{
+			$avmMESSAGE .= "<BR><font size=2 color=red><b>"._QXZ("WARNING! The defined Active Voicemail Server is not an active server!")."</b></font>\n";
+			}
+
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>$AVMlinkA"._QXZ("Active Voicemail Server")."$AVMlinkB: </td><td align=left><select size=1 name=active_voicemail_server>\n";
 		echo "$servers_list";
 		echo "<option SELECTED>$active_voicemail_server</option>\n";
-		echo "</select>$NWB#settings-active_voicemail_server$NWE</td></tr>\n";
+		echo "</select>$NWB#settings-active_voicemail_server$NWE$avmMESSAGE</td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Allow Voicemail Greeting Chooser").": </td><td align=left><select size=1 name=allow_voicemail_greeting><option>1</option><option>0</option><option selected>$allow_voicemail_greeting</option></select>$NWB#settings-allow_voicemail_greeting$NWE</td></tr>\n";
 
@@ -40142,35 +40167,78 @@ if ($ADD==1300)
 	echo "<TABLE><TR><TD>\n";
 	echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 
-	$DIDlink='stage=DIDDOWN';
-	$DESClink='stage=DESCDOWN';
-	$CARRIERlink='stage=CARRIERDOWN';
-	$ACTIVElink='stage=ACTIVEDOWN';
-	$GROUPlink='stage=GROUPDOWN';
-	$ROUTElink='stage=ROUTEDOWN';
-	$REClink='stage=RECDOWN';
+	$DIDlink="stage=DIDDOWN&status=$status";
+	$DESClink="stage=DESCDOWN&status=$status";
+	$CARRIERlink="stage=CARRIERDOWN&status=$status";
+	$ACTIVElink="stage=ACTIVEDOWN&status=$status";
+	$GROUPlink="stage=GROUPDOWN&status=$status";
+	$ROUTElink="stage=ROUTEDOWN&status=$status";
+	$REClink="stage=RECDOWN&status=$status";
 	$SQLorder='order by did_pattern';
 
-	if (preg_match("/DIDUP/i",$stage)) {$SQLorder='order by did_pattern asc';   $DIDlink='stage=DIDDOWN';}
-	if (preg_match("/DIDDOWN/i",$stage)) {$SQLorder='order by did_pattern desc';   $DIDlink='stage=DIDUP';}
-	if (preg_match("/DESCUP/i",$stage)) {$SQLorder='order by did_description asc';   $DESClink='stage=DESCDOWN';}
-	if (preg_match("/DESCDOWN/i",$stage)) {$SQLorder='order by did_description desc';   $DESClink='stage=DESCUP';}
-	if (preg_match("/CARRIERUP/i",$stage)) {$SQLorder='order by did_carrier_description asc';   $CARRIERlink='stage=CARRIERDOWN';}
-	if (preg_match("/CARRIERDOWN/i",$stage)) {$SQLorder='order by did_carrier_description desc';   $CARRIERlink='stage=CARRIERUP';}
-	if (preg_match("/ACTIVEUP/i",$stage)) {$SQLorder='order by did_active asc';   $ACTIVElink='stage=ACTIVEDOWN';}
-	if (preg_match("/ACTIVEDOWN/i",$stage)) {$SQLorder='order by did_active desc';   $ACTIVElink='stage=ACTIVEUP';}
-	if (preg_match("/GROUPUP/i",$stage)) {$SQLorder='order by user_group asc';   $GROUPlink='stage=GROUPDOWN';}
-	if (preg_match("/GROUPDOWN/i",$stage)) {$SQLorder='order by user_group desc';   $GROUPlink='stage=GROUPUP';}
-	if (preg_match("/ROUTEUP/i",$stage)) {$SQLorder='order by did_route asc';   $ROUTElink='stage=ROUTEDOWN';}
-	if (preg_match("/ROUTEDOWN/i",$stage)) {$SQLorder='order by did_route desc';   $ROUTElink='stage=ROUTEUP';}
-	if (preg_match("/RECUP/i",$stage)) {$SQLorder='order by record_call asc';   $REClink='stage=RECDOWN';}
-	if (preg_match("/RECDOWN/i",$stage)) {$SQLorder='order by record_call desc';   $REClink='stage=RECUP';}
+	if (preg_match("/DIDUP/i",$stage)) {$SQLorder='order by did_pattern asc';   $DIDlink="stage=DIDDOWN&status=$status";}
+	if (preg_match("/DIDDOWN/i",$stage)) {$SQLorder='order by did_pattern desc';   $DIDlink="stage=DIDUP&status=$status";}
+	if (preg_match("/DESCUP/i",$stage)) {$SQLorder='order by did_description asc';   $DESClink="stage=DESCDOWN&status=$status";}
+	if (preg_match("/DESCDOWN/i",$stage)) {$SQLorder='order by did_description desc';   $DESClink="stage=DESCUP&status=$status";}
+	if (preg_match("/CARRIERUP/i",$stage)) {$SQLorder='order by did_carrier_description asc';   $CARRIERlink="stage=CARRIERDOWN&status=$status";}
+	if (preg_match("/CARRIERDOWN/i",$stage)) {$SQLorder='order by did_carrier_description desc';   $CARRIERlink="stage=CARRIERUP&status=$status";}
+	if (preg_match("/ACTIVEUP/i",$stage)) {$SQLorder='order by did_active asc';   $ACTIVElink="stage=ACTIVEDOWN&status=$status";}
+	if (preg_match("/ACTIVEDOWN/i",$stage)) {$SQLorder='order by did_active desc';   $ACTIVElink="stage=ACTIVEUP&status=$status";}
+	if (preg_match("/GROUPUP/i",$stage)) {$SQLorder='order by user_group asc';   $GROUPlink="stage=GROUPDOWN&status=$status";}
+	if (preg_match("/GROUPDOWN/i",$stage)) {$SQLorder='order by user_group desc';   $GROUPlink="stage=GROUPUP&status=$status";}
+	if (preg_match("/ROUTEUP/i",$stage)) {$SQLorder='order by did_route asc';   $ROUTElink="stage=ROUTEDOWN&status=$status";}
+	if (preg_match("/ROUTEDOWN/i",$stage)) {$SQLorder='order by did_route desc';   $ROUTElink="stage=ROUTEUP&status=$status";}
+	if (preg_match("/RECUP/i",$stage)) {$SQLorder='order by record_call asc';   $REClink="stage=RECDOWN&status=$status";}
+	if (preg_match("/RECDOWN/i",$stage)) {$SQLorder='order by record_call desc';   $REClink="stage=RECUP&status=$status";}
 
-	$stmt="SELECT did_id,did_pattern,did_description,did_carrier_description,did_active,did_route,record_call,user_group from vicidial_inbound_dids where did_pattern!='did_system_filter' $LOGadmin_viewable_groupsSQL  $SQLorder;";
+	$limitSQL='';
+	$next_prev_HTML='';
+	if ($SSentries_per_page > 0)
+		{
+		$stmt="SELECT count(*) from vicidial_inbound_dids where did_pattern!='did_system_filter' $LOGadmin_viewable_groupsSQL";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$row=mysqli_fetch_row($rslt);
+		$dids_count = $row[0];
+
+		if ( ($dids_count > $SSentries_per_page) and ($status != 'display_all') )
+			{
+			if (strlen($start_count) < 1) {$start_count=0;}
+			$next_count = ($start_count + $SSentries_per_page);
+			$nextnext_count = ($next_count + $SSentries_per_page);
+			if ($next_count > $dids_count) 
+				{$next_count = $dids_count;}
+			else
+				{
+				if ($nextnext_count > $dids_count) 
+					{
+					$next_temp = ($dids_count - $next_count);
+					$nextHTML = "<a href=\"$PHP_SELF?ADD=1300&start_count=$next_count&stage=$stage\">"._QXZ("NEXT")." $next_temp</a> &nbsp; ";
+					}
+				else
+					{
+					$nextHTML = "<a href=\"$PHP_SELF?ADD=1300&start_count=$next_count&stage=$stage\">"._QXZ("NEXT")." $SSentries_per_page</a> &nbsp; ";
+					}
+				}
+			$next_prev_HTML .= _QXZ("RECORDS")." $start_count - $next_count &nbsp; ";
+			$limitSQL="limit $SSentries_per_page";
+			if ($start_count > 0)
+				{
+				$prev_count = ($start_count - $SSentries_per_page);
+				$limitSQL="limit $start_count,$SSentries_per_page";
+				$next_prev_HTML .= "<a href=\"$PHP_SELF?ADD=1300&start_count=$prev_count&stage=$stage\">"._QXZ("PREVIOUS")." $SSentries_per_page</a> &nbsp; ";
+				}
+			$next_prev_HTML .= $nextHTML;
+			$next_prev_HTML .= " &nbsp;  &nbsp;  &nbsp;  &nbsp;  &nbsp; </b><a href=\"$PHP_SELF?ADD=1300&status=display_all&stage=$stage\"><font size=1 color=black>"._QXZ("show all DIDs")."</font></a><b> &nbsp; ";
+			}
+		}
+
+	$stmt="SELECT did_id,did_pattern,did_description,did_carrier_description,did_active,did_route,record_call,user_group from vicidial_inbound_dids where did_pattern!='did_system_filter' $LOGadmin_viewable_groupsSQL $SQLorder $limitSQL;";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$dids_to_print = mysqli_num_rows($rslt);
 
-	echo "<br>"._QXZ("INBOUND DID LISTINGS").":\n";
+	echo "<img src=\"images/icon_black_inbound.png\" alt=\"Inbound Groups\" width=42 height=42> "._QXZ("INBOUND DID LISTINGS").":\n";
+	if (strlen($next_prev_HTML) > 10)
+		{echo "<br><b> &nbsp; $next_prev_HTML</b><br>";}
 	echo "<center><TABLE width=$section_width cellspacing=0 cellpadding=1>\n";
 	echo "<TR BGCOLOR=BLACK>";
 	echo "<TD><font size=1 color=white>#</TD>";
@@ -40780,23 +40848,23 @@ if ($ADD==10000000000)
 	echo "<TABLE><TR><TD>\n";
 	echo "<img src=\"images/icon_phones.png\" width=42 height=42 align=left> <FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 
-	$EXTENlink='stage=EXTENDOWN';
-	$EXTENNUMlink='stage=EXTENNUMDOWN';
-	$PROTOlink='stage=PROTODOWN';
-	$SERVERlink='stage=SERVERDOWN';
-	$STATUSlink='stage=STATUSDOWN';
+	$EXTENlink="stage=EXTENDOWN&status=$status";
+	$EXTENNUMlink="stage=EXTENNUMDOWN&status=$status";
+	$PROTOlink="stage=PROTODOWN&status=$status";
+	$SERVERlink="stage=SERVERDOWN&status=$status";
+	$STATUSlink="stage=STATUSDOWN&status=$status";
 	$SQLorder='order by extension,server_ip';
 
-	if (preg_match("/EXTENUP/i",$stage)) {$SQLorder='order by extension asc';   $EXTENlink='stage=EXTENDOWN';}
-	if (preg_match("/EXTENDOWN/i",$stage)) {$SQLorder='order by extension desc';   $EXTENlink='stage=EXTENUP';}
-	if (preg_match("/EXTENNUMUP/i",$stage)) {$SQLorder='order by CAST(extension as SIGNED INTEGER) desc';   $EXTENNUMlink='stage=EXTENNUMDOWN';}
-	if (preg_match("/EXTENNUMDOWN/i",$stage)) {$SQLorder='order by CAST(extension as SIGNED INTEGER) asc';   $EXTENNUMlink='stage=EXTENNUMUP';}
-	if (preg_match("/PROTOUP/i",$stage)) {$SQLorder='order by protocol asc';   $PROTOlink='stage=PROTODOWN';}
-	if (preg_match("/PROTODOWN/i",$stage)) {$SQLorder='order by protocol desc';   $PROTOlink='stage=PROTOUP';}
-	if (preg_match("/SERVERUP/i",$stage)) {$SQLorder='order by server_ip asc';   $SERVERlink='stage=SERVERDOWN';}
-	if (preg_match("/SERVERDOWN/i",$stage)) {$SQLorder='order by server_ip desc';   $SERVERlink='stage=SERVERUP';}
-	if (preg_match("/STATUSUP/i",$stage)) {$SQLorder='order by status asc';   $STATUSlink='stage=STATUSDOWN';}
-	if (preg_match("/STATUSDOWN/i",$stage)) {$SQLorder='order by status desc';   $STATUSlink='stage=STATUSUP';}
+	if (preg_match("/EXTENUP/i",$stage)) {$SQLorder='order by extension asc';   $EXTENlink="stage=EXTENDOWN&status=$status";}
+	if (preg_match("/EXTENDOWN/i",$stage)) {$SQLorder='order by extension desc';   $EXTENlink="stage=EXTENUP&status=$status";}
+	if (preg_match("/EXTENNUMUP/i",$stage)) {$SQLorder='order by CAST(extension as SIGNED INTEGER) desc';   $EXTENNUMlink="stage=EXTENNUMDOWN&status=$status";}
+	if (preg_match("/EXTENNUMDOWN/i",$stage)) {$SQLorder='order by CAST(extension as SIGNED INTEGER) asc';   $EXTENNUMlink="stage=EXTENNUMUP&status=$status";}
+	if (preg_match("/PROTOUP/i",$stage)) {$SQLorder='order by protocol asc';   $PROTOlink="stage=PROTODOWN&status=$status";}
+	if (preg_match("/PROTODOWN/i",$stage)) {$SQLorder='order by protocol desc';   $PROTOlink="stage=PROTOUP&status=$status";}
+	if (preg_match("/SERVERUP/i",$stage)) {$SQLorder='order by server_ip asc';   $SERVERlink="stage=SERVERDOWN&status=$status";}
+	if (preg_match("/SERVERDOWN/i",$stage)) {$SQLorder='order by server_ip desc';   $SERVERlink="stage=SERVERUP&status=$status";}
+	if (preg_match("/STATUSUP/i",$stage)) {$SQLorder='order by status asc';   $STATUSlink="stage=STATUSDOWN&status=$status";}
+	if (preg_match("/STATUSDOWN/i",$stage)) {$SQLorder='order by status desc';   $STATUSlink="stage=STATUSUP&status=$status";}
 
 	$limitSQL='';
 	$next_prev_HTML='';
@@ -40807,32 +40875,36 @@ if ($ADD==10000000000)
 		$row=mysqli_fetch_row($rslt);
 		$phones_count = $row[0];
 
-		if (strlen($start_count) < 1) {$start_count=0;}
-		$next_count = ($start_count + $SSentries_per_page);
-		$nextnext_count = ($next_count + $SSentries_per_page);
-		if ($next_count > $phones_count) 
-			{$next_count = $phones_count;}
-		else
+		if ( ($phones_count > $SSentries_per_page) and ($status != 'display_all') )
 			{
-			if ($nextnext_count > $phones_count) 
-				{
-				$next_temp = ($phones_count - $next_count);
-				$nextHTML = "<a href=\"$PHP_SELF?ADD=10000000000&start_count=$next_count&stage=$stage\">"._QXZ("NEXT")." $next_temp</a> &nbsp; ";
-				}
+			if (strlen($start_count) < 1) {$start_count=0;}
+			$next_count = ($start_count + $SSentries_per_page);
+			$nextnext_count = ($next_count + $SSentries_per_page);
+			if ($next_count > $phones_count) 
+				{$next_count = $phones_count;}
 			else
 				{
-				$nextHTML = "<a href=\"$PHP_SELF?ADD=10000000000&start_count=$next_count&stage=$stage\">"._QXZ("NEXT")." $SSentries_per_page</a> &nbsp; ";
+				if ($nextnext_count > $phones_count) 
+					{
+					$next_temp = ($phones_count - $next_count);
+					$nextHTML = "<a href=\"$PHP_SELF?ADD=10000000000&start_count=$next_count&stage=$stage\">"._QXZ("NEXT")." $next_temp</a> &nbsp; ";
+					}
+				else
+					{
+					$nextHTML = "<a href=\"$PHP_SELF?ADD=10000000000&start_count=$next_count&stage=$stage\">"._QXZ("NEXT")." $SSentries_per_page</a> &nbsp; ";
+					}
 				}
+			$next_prev_HTML .= _QXZ("RECORDS")." $start_count - $next_count &nbsp; ";
+			$limitSQL="limit $SSentries_per_page";
+			if ($start_count > 0)
+				{
+				$prev_count = ($start_count - $SSentries_per_page);
+				$limitSQL="limit $start_count,$SSentries_per_page";
+				$next_prev_HTML .= "<a href=\"$PHP_SELF?ADD=10000000000&start_count=$prev_count&stage=$stage\">"._QXZ("PREVIOUS")." $SSentries_per_page</a> &nbsp; ";
+				}
+			$next_prev_HTML .= $nextHTML;
+			$next_prev_HTML .= " &nbsp;  &nbsp;  &nbsp;  &nbsp;  &nbsp; </b><a href=\"$PHP_SELF?ADD=10000000000&status=display_all&stage=$stage\"><font size=1 color=black>"._QXZ("show all phones")."</font></a><b> &nbsp; ";
 			}
-		$next_prev_HTML .= _QXZ("RECORDS")." $start_count - $next_count &nbsp; ";
-		$limitSQL="limit $SSentries_per_page";
-		if ($start_count > 0)
-			{
-			$prev_count = ($start_count - $SSentries_per_page);
-			$limitSQL="limit $start_count,$SSentries_per_page";
-			$next_prev_HTML .= "<a href=\"$PHP_SELF?ADD=10000000000&start_count=$prev_count&stage=$stage\">"._QXZ("PREVIOUS")." $SSentries_per_page</a> &nbsp; ";
-			}
-		$next_prev_HTML .= $nextHTML;
 		}
 
 	$stmt="SELECT extension,protocol,server_ip,dialplan_number,voicemail_id,status,fullname,messages,old_messages,user_group from phones $whereLOGadmin_viewable_groupsSQL $SQLorder $limitSQL";
@@ -40840,8 +40912,8 @@ if ($ADD==10000000000)
 	$phones_to_print = mysqli_num_rows($rslt);
 
 	echo "<br>"._QXZ("PHONE LISTINGS").":\n";
-	if ($SSentries_per_page > 0)
-		{echo "<br><br><b> &nbsp; $next_prev_HTML</b><br><br>";}
+	if (strlen($next_prev_HTML) > 10)
+		{echo "<br><br><b> &nbsp; $next_prev_HTML</b><br>";}
 	echo "<center><TABLE width=$section_width cellspacing=0 cellpadding=1>\n";
 	echo "<tr bgcolor=black>";
 	echo "<td><a href=\"$PHP_SELF?ADD=10000000000&$EXTENlink\"><font size=1 color=white><B>"._QXZ("EXTEN")."</B></a> &nbsp; ";

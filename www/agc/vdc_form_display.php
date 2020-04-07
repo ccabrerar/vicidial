@@ -1,7 +1,7 @@
 <?php
 # vdc_form_display.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed display the contents of the FORM tab in the agent 
 # interface, as well as take submission of the form submission when the agent 
@@ -43,10 +43,11 @@
 # 171021-1339 - Fix to update default field if duplicate field in custom fields changed
 # 171116-2333 - Added code for duplicate fields
 # 180503-1813 - Added code for SWITCH field type
+# 200406-1137 - Added hide_gender and gender default population
 #
 
-$version = '2.14-33';
-$build = '180503-1813';
+$version = '2.14-34';
+$build = '200406-1137';
 $php_script = 'vdc_form_display.php';
 
 require_once("dbconnect_mysqli.php");
@@ -197,6 +198,8 @@ if (isset($_GET["did_custom_four"]))			{$did_custom_four=$_GET["did_custom_four"
 	elseif (isset($_POST["did_custom_four"]))	{$did_custom_four=$_POST["did_custom_four"];}
 if (isset($_GET["did_custom_five"]))			{$did_custom_five=$_GET["did_custom_five"];}
 	elseif (isset($_POST["did_custom_five"]))	{$did_custom_five=$_POST["did_custom_five"];}
+if (isset($_GET["hide_gender"]))			{$hide_gender=$_GET["hide_gender"];}
+	elseif (isset($_POST["hide_gender"]))	{$hide_gender=$_POST["hide_gender"];}
 if (isset($_GET["DB"]))				{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))	{$DB=$_POST["DB"];}
 
@@ -583,10 +586,35 @@ if ($SUBMIT_only < 1)
 	echo "		document.getElementById(taskspan).style.background = \"white\";\n";
 	echo "		}\n";
 	echo "	function update_default_vd_field(taskfield) \n";
-	echo "		{\n";  
+	echo "		{\n";
 	echo "		var tempvalue = document.getElementById(taskfield).value;\n";
 	echo "		parent.document.getElementById(taskfield).value = tempvalue;\n";
 	echo "		}\n";
+	if ($hide_gender > 0)
+		{
+		echo "	function update_default_vd_select(taskfield) \n";
+		echo "		{\n";
+		echo "		var taskIndex = document.getElementById(taskfield).selectedIndex;\n";
+		echo "		var taskValue = document.getElementById(taskfield).options[taskIndex].value;\n";
+		echo "		parent.document.getElementById(taskfield).value = taskValue;\n";
+		echo "		}\n";
+		}
+	else
+		{
+		echo "	function update_default_vd_select(taskfield) \n";
+		echo "		{\n";
+		echo "		var taskIndex = document.getElementById(taskfield).selectedIndex;\n";
+		echo "		var taskValue = document.getElementById(taskfield).options[taskIndex].value;\n";
+		echo "		var gIndex = 0;\n";
+		echo "		if (taskValue == 'U') {var gIndex = 0;}\n";
+		echo "		if (taskValue == 'M') {var gIndex = 1;}\n";
+		echo "		if (taskValue == 'F') {var gIndex = 2;}\n";
+		echo "		parent.document.getElementById('gender_list').selectedIndex = gIndex;\n";
+		echo "		var genderIndex = parent.document.getElementById('gender_list').selectedIndex;\n";
+		echo "		var genderValue = parent.document.getElementById('gender_list').options[genderIndex].value;\n";
+		echo "		parent.document.getElementById('gender').value = genderValue;\n";
+		echo "		}\n";
+		}
 	echo "	function update_dup_field(taskmasterfield,taskupdatefields,taskupdatecount,taskdefaultflag,taskdefaultfield) \n";
 	echo "		{\n";
 #	echo "		alert('1: ' + taskmasterfield + ' 2: ' + taskupdatefields + ' 3: ' + taskupdatecount + ' 4: ' + taskdefaultflag);\n";

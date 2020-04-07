@@ -4,7 +4,7 @@
 #
 # functions for agent scripts
 #
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 #
 # CHANGES:
@@ -48,6 +48,7 @@
 # 180503-1817 - Added code for SWITCH field type
 # 181004-1644 - Fix for defaut field in AREA type
 # 191013-1029 - Fixes for PHP7
+# 200406-1204 - Fix for gender default field population
 #
 
 # $mysql_queries = 26
@@ -539,7 +540,14 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 
 				if ($A_field_type[$o]=='SELECT')
 					{
-					$field_HTML .= "<select size=1 name=$A_field_label[$o] id=$A_field_label[$o]>\n";
+					$change_trigger='';
+					$default_field_flag=0;
+					if (preg_match("/\|$A_field_label[$o]\|/i",'|gender|'))
+						{
+						$change_trigger="onchange=\"update_default_vd_select('$A_field_label[$o]');\"";
+						$default_field_flag++;
+						}
+					$field_HTML .= "<select size=1 name=$A_field_label[$o] id=$A_field_label[$o] $change_trigger>\n";
 					}
 				if ($A_field_type[$o]=='MULTI')
 					{
@@ -557,7 +565,25 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 							{
 							$field_selected='';
 							$field_options_value_array = explode(",",$field_options_array[$te]);
-							if ( ($A_field_type[$o]=='SELECT') or ($A_field_type[$o]=='MULTI') )
+							if ($A_field_type[$o]=='SELECT')
+								{
+								if (strlen($A_field_value[$o]) > 0)
+									{
+									$temp_opt_val = $field_options_value_array[0];
+									if ( (preg_match("/^$temp_opt_val$/",$A_field_value[$o])) or (preg_match("/,$temp_opt_val$/",$A_field_value[$o])) or (preg_match("/$temp_opt_val,/",$A_field_value[$o])) )
+										{$field_selected = 'SELECTED';}
+									if ($default_field_flag > 0)
+										{$field_selected = '--A--gender'.$field_options_value_array[0].'SELECT--B--';}
+									if ($DB > 0) {echo "DEBUG2: |$field_options_value_array[0]|$A_field_value[$o]|$field_selected|\n";}
+									}
+								else
+									{
+									if ($A_field_default[$o] == "$field_options_value_array[0]") {$field_selected = 'SELECTED';}
+									}
+								$field_HTML .= "<option value=\"$field_options_value_array[0]\" $field_selected>"._QXZ("$field_options_value_array[1]")."</option>\n";
+								$te_printed++;
+								}
+							if ($A_field_type[$o]=='MULTI')
 								{
 								if (strlen($A_field_value[$o]) > 0)
 									{
@@ -1270,6 +1296,13 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 		$CFoutput = preg_replace('/--A--did_carrier_description--B--/i',"$did_carrier_description",$CFoutput);
 		$CFoutput = preg_replace('/--A--list_name--B--/i',"$list_name",$CFoutput);
 		$CFoutput = preg_replace('/--A--list_description--B--/i',"$list_description",$CFoutput);
+
+		if ($gender == 'U') {$CFoutput = preg_replace('/--A--genderUSELECT--B--/i','SELECTED',$CFoutput);}
+		if ($gender == 'M') {$CFoutput = preg_replace('/--A--genderMSELECT--B--/i','SELECTED',$CFoutput);}
+		if ($gender == 'F') {$CFoutput = preg_replace('/--A--genderFSELECT--B--/i','SELECTED',$CFoutput);}
+		$CFoutput = preg_replace('/--A--genderUSELECT--B--/i','',$CFoutput);
+		$CFoutput = preg_replace('/--A--genderMSELECT--B--/i','',$CFoutput);
+		$CFoutput = preg_replace('/--A--genderFSELECT--B--/i','',$CFoutput);
 
 		$CFoutput = preg_replace('/--A--TABLEper_call_notes--B--/i',"$NOTESout",$CFoutput);
 		$CFoutput = preg_replace("/LOCALFQDN/",$FQDN,$CFoutput);
