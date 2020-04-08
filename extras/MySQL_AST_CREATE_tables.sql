@@ -1039,7 +1039,9 @@ dial_timeout_lead_container VARCHAR(40) default 'DISABLED',
 amd_type ENUM('AMD','CPD','KHOMP') default 'AMD',
 vmm_daily_limit TINYINT(3) UNSIGNED default '0',
 opensips_cid_name VARCHAR(15) default '',
-amd_agent_route_options ENUM('ENABLED','DISABLED','PENDING') default 'DISABLED'
+amd_agent_route_options ENUM('ENABLED','DISABLED','PENDING') default 'DISABLED',
+browser_alert_sound VARCHAR(20) default '---NONE---',
+browser_alert_volume TINYINT(3) UNSIGNED default '50'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_lists (
@@ -1324,7 +1326,9 @@ cid_cb_reenter_filename TEXT,
 cid_cb_error_filename TEXT,
 place_in_line_caller_number_filename TEXT,
 place_in_line_you_next_filename TEXT,
-ingroup_script_two VARCHAR(20) default ''
+ingroup_script_two VARCHAR(20) default '',
+browser_alert_sound VARCHAR(20) default '---NONE---',
+browser_alert_volume TINYINT(3) UNSIGNED default '50'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_stations (
@@ -1850,7 +1854,8 @@ opensips_cid_name ENUM('0','1') default '0',
 require_password_length TINYINT(3) UNSIGNED default '0',
 user_account_emails ENUM('DISABLED','SEND_NO_PASS','SEND_WITH_PASS') DEFAULT 'DISABLED',
 outbound_cid_any ENUM('DISABLED','API_ONLY') DEFAULT 'DISABLED',
-entries_per_page SMALLINT(5) UNSIGNED DEFAULT '0'
+entries_per_page SMALLINT(5) UNSIGNED DEFAULT '0',
+browser_call_alerts ENUM('0','1','2') DEFAULT '0'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaigns_list_mix (
@@ -4595,4 +4600,4 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1591',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1592',db_schema_update_date=NOW(),reload_timestamp=NOW();

@@ -1189,3 +1189,13 @@ UPDATE system_settings SET db_schema_version='1590',db_schema_update_date=NOW() 
 ALTER TABLE system_settings ADD entries_per_page SMALLINT(5) UNSIGNED DEFAULT '0';
 
 UPDATE system_settings SET db_schema_version='1591',db_schema_update_date=NOW() where db_schema_version < 1591;
+
+ALTER TABLE system_settings ADD browser_call_alerts ENUM('0','1','2') DEFAULT '0';
+
+ALTER TABLE vicidial_campaigns ADD browser_alert_sound VARCHAR(20) default '---NONE---';
+ALTER TABLE vicidial_campaigns ADD browser_alert_volume TINYINT(3) UNSIGNED default '50';
+
+ALTER TABLE vicidial_inbound_groups ADD browser_alert_sound VARCHAR(20) default '---DISABLED---';
+ALTER TABLE vicidial_inbound_groups ADD browser_alert_volume TINYINT(3) UNSIGNED default '50';
+
+UPDATE system_settings SET db_schema_version='1592',db_schema_update_date=NOW() where db_schema_version < 1592;

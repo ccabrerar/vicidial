@@ -498,6 +498,11 @@ OTHER CHANGES:
 139. Added system setting to allow you to restrict Admin Phones display to a 
 	set number of records per page.
 
+140. Added options at the campaign and in-group levels to allow you to play 
+	alert sounds when a call arrives in the agent's session, in the agents'
+	web browser that they are logged into the agent screen with. Must be
+	enabled in system settings.
+
 
 
 
