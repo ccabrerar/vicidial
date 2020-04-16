@@ -1,7 +1,7 @@
 <?php 
 # AST_timeonVDADallSUMMARY_mobile.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # Mobile version of summary report for all campaigns live real-time stats for the VICIDIAL Auto-Dialer all servers
 #
@@ -10,6 +10,7 @@
 # changes:
 #
 # 190129-1258 - First release
+# 200414-2000 - Minor display modifications, auto-selecting refresh rate onload
 #
 
 require("dbconnect_mysqli.php");
@@ -37,7 +38,6 @@ if (isset($_GET["file_download"]))				{$file_download=$_GET["file_download"];}
 if (isset($_GET["browser_dimension"]))	{$browser_dimension=$_GET["browser_dimension"];}
 	elseif (isset($_POST["browser_dimension"]))	{$browser_dimension=$_POST["browser_dimension"];}
 
-if (!isset($RR))			{$RR=4000;}
 if (!isset($browser_dimension))			{$browser_dimension=800;}
 if (!isset($types))			{$types='LIST ALL CAMPAIGNS';}
 $cell_dimension=floor($browser_dimension/10);
@@ -226,12 +226,18 @@ $i=0;
 while ($i < $campaigns_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
-	$campaign_options.="<option value='$row[0]'>$row[0]</option>\n";
+	$campaign_options.="<option onClick='ClearTypes(1)' value='$row[0]'>$row[0]</option>\n";
 	$i++;
 	}
 
-
-if (!isset($RR))   {$RR=4;}
+$stop_button_class="android_offbutton_noshadow";
+$slow_button_class="android_offbutton_noshadow";
+$fast_button_class="android_offbutton_noshadow";
+if (!isset($RR))   {
+	if ($campaigns_to_print<=20) {$RR=4; $fast_button_class="android_onbutton_noshadow";}
+	else if ($campaigns_to_print<=500) {$RR=40; $slow_button_class="android_onbutton_noshadow";}
+	else {$RR=4000; $stop_button_class="android_offbutton_noshadow";}
+}
 
 require("screen_colors.php");
 
@@ -687,7 +693,7 @@ $out_total_JS.="];\n";
 $out_ring_JS.="];\n";
 $out_live_JS.="];\n";
 $in_ivr_JS.="];\n";
-$agent_incall_JS.="];\n";
+$agent_incall_JS.="];\n"; 
 $agent_ready_JS.="];\n";
 $agent_paused_JS.="];\n";
 $agent_total_JS.="];\n";
@@ -704,23 +710,29 @@ $MAIN.="<span id='graph_display' style='display:block; background:white;'>";
 $MAIN.="<table class='android_table' border='0' cellpadding='0' cellspacing='5'>";
 
 $MAIN.="<tr valign='top'>";
-$MAIN.="<th rowspan='2'><font class='android_campaign_header'>"._QXZ("CAMPAIGNS").": </font><BR><select name=types size='5' multiple class='form_field_android'>\n";
-$MAIN.="<option value=\"LIST ALL CAMPAIGNS\"";
+$MAIN.="<th rowspan='2'><font class='android_campaign_header'>"._QXZ("CAMPAIGNS").": </font><BR><select name=types onBlur='RefreshReportWindow()' size='5' multiple class='form_field_android'>\n";
+$MAIN.="<option onClick='ClearTypes(0)' value=\"LIST ALL CAMPAIGNS\"";
 	if ($types == 'LIST ALL CAMPAIGNS') {$MAIN.=" selected";} 
 $MAIN.=">"._QXZ("LIST ALL CAMPAIGNS")."</option>";
-$MAIN.="<option value=\"AUTO-DIAL ONLY\"";
+$MAIN.="<option onClick='ClearTypes(1)' value=\"AUTO-DIAL ONLY\"";
 	if ($types == 'AUTO-DIAL ONLY') {$MAIN.=" selected";} 
 $MAIN.=">"._QXZ("AUTO-DIAL ONLY")."</option>";
-$MAIN.="<option value=\"MANUAL ONLY\"";
+$MAIN.="<option onClick='ClearTypes(1)' value=\"MANUAL ONLY\"";
 	if ($types == 'MANUAL ONLY') {$MAIN.=" selected";} 
 $MAIN.=">"._QXZ("MANUAL ONLY")."</option>";
-$MAIN.="<option value=\"INBOUND ONLY\"";
+$MAIN.="<option onClick='ClearTypes(1)' value=\"INBOUND ONLY\"";
 	if ($types == 'INBOUND ONLY') {$MAIN.=" selected";} 
 $MAIN.=">"._QXZ("INBOUND ONLY")."</option>";
 $MAIN.=$campaign_options;
 $MAIN.="</select> \n";
 # $MAIN.="<input type=button name=submit value='"._QXZ("SUBMIT")."' onClick='SwitchGraphs()'>\n";
 $MAIN.="</th>";
+
+$MAIN.="<th><ul class=\"dropdown_android\" style='list-style:none'><li><a class='nodec' onClick=\"ToggleVisibility('graph_display', 0); ToggleVisibility('settings_display', 1); ToggleVisibility('percentages_display', 0)\"><div id='settings_button' class='android_switchbutton'>"._QXZ("SETTINGS")."</div></a></li></ul></th>";
+$MAIN.="<th><ul class=\"dropdown_android\" style='list-style:none'><li><a class='nodec' onClick=\"ToggleVisibility('graph_display', 0); ToggleVisibility('settings_display', 0); ToggleVisibility('percentages_display', 1)\"><div id='percentage_graph_button' class='android_switchbutton'>"._QXZ("PERCENTS")."</div></a></li></ul></th>";
+$MAIN.="</tr>";
+$MAIN.="<tr valign='top'>";
+
 $MAIN.="<th>";
 $MAIN.="<ul class=\"dropdown_android\" style='list-style:none'><li><div class='android_switchbutton_blue'><a class='nodec' href=\"#\">REPORT</a></div>\n";
 	$MAIN.="<ul class=\"sub_menu\" style=\"z-index:1;list-style:none\">\n";
@@ -737,15 +749,15 @@ $MAIN.="</th>";
 $MAIN.="<th>";
 $MAIN.="<ul class=\"dropdown_android\" style='list-style:none'><li><div class='android_switchbutton_blue'><a class='nodec' href=\"#\">REFRESH</a></div>\n";
 	$MAIN.="<ul class=\"sub_menu\" style=\"z-index:1;list-style:none\">\n";
-		$MAIN.="<li><a class='nodec' onClick=\"SwitchIntervals(4000); document.getElementById('stop_button').className='android_onbutton_noshadow'\"><div id='stop_button' class='android_onbutton_noshadow'>"._QXZ("STOP")."</div></a></li>\n";
-		$MAIN.="<li><a class='nodec' onClick=\"SwitchIntervals(40); document.getElementById('slow_button').className='android_onbutton_noshadow'\"><div id='slow_button' class='android_offbutton_noshadow'>"._QXZ("SLOW")."</div></a>\n";
-		$MAIN.="<li><a class='nodec' onClick=\"SwitchIntervals(4); document.getElementById('go_button').className='android_onbutton_noshadow'\"><div id='go_button' class='android_offbutton_noshadow'>"._QXZ("GO")."</div></a></li>\n";
+		$MAIN.="<li><a class='nodec' onClick=\"SwitchIntervals(4000); document.getElementById('stop_button').className='android_onbutton_noshadow'\"><div id='stop_button' class='$stop_button_class'>"._QXZ("STOP")."</div></a></li>\n";
+		$MAIN.="<li><a class='nodec' onClick=\"SwitchIntervals(40); document.getElementById('slow_button').className='android_onbutton_noshadow'\"><div id='slow_button' class='$slow_button_class'>"._QXZ("SLOW")."</div></a>\n";
+		$MAIN.="<li><a class='nodec' onClick=\"SwitchIntervals(4); document.getElementById('go_button').className='android_onbutton_noshadow'\"><div id='go_button' class='$fast_button_class'>"._QXZ("FAST")."</div></a></li>\n";
 	$MAIN.="</ul>";
 $MAIN.="</li></ul>";
 $MAIN.="</th>";
 
-$MAIN.="<th><ul class=\"dropdown_android\" style='list-style:none'><li><a class='nodec' onClick=\"ToggleVisibility('graph_display', 0); ToggleVisibility('settings_display', 1); ToggleVisibility('percentages_display', 0)\"><div id='settings_button' class='android_switchbutton'>"._QXZ("SETTINGS")."</div></a></li></ul></th>";
-$MAIN.="<th><ul class=\"dropdown_android\" style='list-style:none'><li><a class='nodec' onClick=\"ToggleVisibility('graph_display', 0); ToggleVisibility('settings_display', 0); ToggleVisibility('percentages_display', 1)\"><div id='percentage_graph_button' class='android_switchbutton'>"._QXZ("PERCENTS")."</div></a></li></ul></th>";
+# $MAIN.="<th><ul class=\"dropdown_android\" style='list-style:none'><li><a class='nodec' onClick=\"ToggleVisibility('graph_display', 0); ToggleVisibility('settings_display', 1); ToggleVisibility('percentages_display', 0)\"><div id='settings_button' class='android_switchbutton'>"._QXZ("SETTINGS")."</div></a></li></ul></th>";
+# $MAIN.="<th><ul class=\"dropdown_android\" style='list-style:none'><li><a class='nodec' onClick=\"ToggleVisibility('graph_display', 0); ToggleVisibility('settings_display', 0); ToggleVisibility('percentages_display', 1)\"><div id='percentage_graph_button' class='android_switchbutton'>"._QXZ("PERCENTS")."</div></a></li></ul></th>";
 
 $MAIN.="</tr>";
 
@@ -1199,6 +1211,23 @@ function SwitchIntervals(current_refresh_rate) {
 function ToggleVisibility(span_name, visibility_flag) {
 	var span_vis = document.getElementById(span_name).style;
 	if (visibility_flag==1) { span_vis.display = 'block'; } else { span_vis.display = 'none'; }
+}
+
+function ClearTypes(sIndex) {
+	var InvForm = document.forms[0];
+	if (sIndex==0) 
+		{
+		for (x=1;x<InvForm.types.length;x++)
+			{
+			InvForm.types[x].selected=false;
+			}
+		}
+	else 
+		{
+		InvForm.types[0].selected=false;
+		}
+
+	RefreshReportWindow();
 }
 
 function RefreshReportWindow() {

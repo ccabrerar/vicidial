@@ -635,10 +635,11 @@
 # 200406-0949 - Fix for manual dial box with no phone number, Issue #1188
 # 200406-1205 - Fix for gender custom field population, Issue #1205
 # 200407-1822 - Added Agent Browser Call Alert Sounds
+# 200408-0952 - Small fix for Issue #1188, allow dial override
 #
 
-$version = '2.14-604c';
-$build = '200407-1822';
+$version = '2.14-605c';
+$build = '200408-0952';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=91;
 $one_mysql_log=0;
@@ -8743,9 +8744,9 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 			if (MDLeadIDEntryform.length > 0)
 				{MDLeadIDform = document.vicidial_form.MDLeadIDEntry.value;}
 
-			if ( (NeWManuaLDiaLBox_open > 0) && (MDPhonENumbeRform.length < 5) && (MDLeadIDform.length < 1) )
+			if ( (NeWManuaLDiaLBox_open > 0) && (MDPhonENumbeRform.length < 5) && (MDLeadIDform.length < 1) && (MDDiaLOverridEform.length < 1) )
 				{
-				button_click_log = button_click_log + "" + SQLdate + "-----ManDialEmptyPhone---" + agent_log_id + " " + NeWManuaLDiaLBox_open + " " + MDPhonENumbeRform + " " + MDLeadIDform + "|";
+				button_click_log = button_click_log + "" + SQLdate + "-----ManDialEmptyPhone---" + agent_log_id + " " + NeWManuaLDiaLBox_open + " " + MDPhonENumbeRform + " " + MDLeadIDform + " " + MDDiaLOverridEform + "|";
 				alert_box("<?php echo _QXZ("YOU MUST ENTER A PHONE NUMBER TO USE MANUAL DIAL"); ?>");
 				}
 			else

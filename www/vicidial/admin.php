@@ -4659,12 +4659,13 @@ else
 # 200406-0033 - Fix for Remote Agents where user deleted
 # 200406-2319 - Small changes to entries_per_page display(w/ display all), also added it for DIDs
 # 200407-1030 - Added browser_call_alerts system setting
+# 200409-1719 - Reorganized Inbound admin section
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-749a';
-$build = '200407-1030';
+$admin_version = '2.14-750a';
+$build = '200409-1719';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -5562,6 +5563,7 @@ if ($ADD==8111)			{$hh='usergroups';	echo _QXZ("CallBacks Within User Group");}
 if ($ADD==10)			{$hh='campaigns';	$sh='list';	echo _QXZ("Campaigns");}
 if ($ADD==100)			{$hh='lists';		$sh='list';	echo _QXZ("Lists");}
 if ($ADD==130)			{$hh='lists';		$sh='droplist';	echo _QXZ("Drop Lists");}
+if ($ADD==1001)			{$hh='ingroups';	$sh='sections';	echo _QXZ("Inbound");}
 if ($ADD==1000)			{$hh='ingroups';	$sh='listIG';	echo _QXZ("In-Groups");}
 if ($ADD==1300)			{$hh='ingroups';	$sh='listDID';	echo _QXZ("DIDs");}
 if ($ADD==1320)			{$hh='ingroups';	$sh='didRA';	echo _QXZ("Modify DID RA Extension Overrides");}
@@ -7880,7 +7882,7 @@ if ($ADD==1811)
 		echo "<TABLE><TR><TD>\n";
 		echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 
-		echo "<br>"._QXZ("ADD A NEW EMAIL GROUP")."<form action=$PHP_SELF method=GET>\n";
+		echo "<img src=\"images/icon_email.png\" alt=\"Email Groups\" width=42 height=42> "._QXZ("ADD A NEW EMAIL GROUP")."<form action=$PHP_SELF method=GET>\n";
 		echo "<input type=hidden name=ADD value=2811>\n";
 		echo "<center><TABLE width=$section_width cellspacing=3>\n";
 		if ($voi_count > 0)
@@ -7960,7 +7962,7 @@ if ($ADD==18111)
 		echo "<TABLE><TR><TD>\n";
 		echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 
-		echo "<br>"._QXZ("ADD A NEW CHAT GROUP")."<form action=$PHP_SELF method=GET>\n";
+		echo "<img src=\"images/icon_chat.png\" alt=\"Chat Groups\" width=42 height=42> "._QXZ("ADD A NEW CHAT GROUP")."<form action=$PHP_SELF method=GET>\n";
 		echo "<input type=hidden name=ADD value=28111>\n";
 		echo "<center><TABLE width=$section_width cellspacing=3>\n";
 		if ($voi_count > 0)
@@ -8103,7 +8105,7 @@ if ($ADD==1911)
 		echo "<TABLE><TR><TD>\n";
 		echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 
-		echo "<br>"._QXZ("COPY EMAIL GROUP")."<form action=$PHP_SELF method=POST>\n";
+		echo "<img src=\"images/icon_email.png\" alt=\"Email Groups\" width=42 height=42> "._QXZ("COPY EMAIL GROUP")."<form action=$PHP_SELF method=POST>\n";
 		echo "<input type=hidden name=ADD value=2911>\n";
 		echo "<center><TABLE width=$section_width cellspacing=3>\n";
 		if ($voi_count > 0)
@@ -8165,7 +8167,7 @@ if ($ADD==19111)
 		echo "<TABLE><TR><TD>\n";
 		echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 
-		echo "<br>"._QXZ("COPY CHAT GROUP")."<form action=$PHP_SELF method=POST>\n";
+		echo "<img src=\"images/icon_chat.png\" alt=\"Chat Groups\" width=42 height=42> "._QXZ("COPY CHAT GROUP")."<form action=$PHP_SELF method=POST>\n";
 		echo "<input type=hidden name=ADD value=29111>\n";
 		echo "<center><TABLE width=$section_width cellspacing=3>\n";
 		if ($voi_count > 0)
@@ -8214,9 +8216,9 @@ if ($ADD==1311)
 	if ($LOGmodify_dids==1)
 		{
 		echo "<TABLE><TR><TD>\n";
-		echo "<img src=\"images/icon_black_inbound.png\" alt=\"Inbound\" width=42 height=42> <FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
+		echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 
-		echo "<br>"._QXZ("ADD A NEW DID")."<form action=$PHP_SELF method=POST>\n";
+		echo "<img src=\"images/icon_cidgroups.png\" alt=\"DIDs\" width=42 height=42> "._QXZ("ADD A NEW DID")."<form action=$PHP_SELF method=POST>\n";
 		echo "<input type=hidden name=ADD value=2311>\n";
 		echo "<center><TABLE width=$section_width cellspacing=3>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("DID Extension").": </td><td align=left><input type=text name=did_pattern size=20 maxlength=50> ("._QXZ("no spaces or dashes").")$NWB#inbound_dids-did_pattern$NWE</td></tr>\n";
@@ -8244,9 +8246,9 @@ if ($ADD==1411)
 	if ($LOGmodify_dids==1)
 		{
 		echo "<TABLE><TR><TD>\n";
-		echo "<img src=\"images/icon_black_inbound.png\" alt=\"Inbound\" width=42 height=42> <FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
+		echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 
-		echo "<br>"._QXZ("COPY DID")."<form action=$PHP_SELF method=POST>\n";
+		echo "<img src=\"images/icon_cidgroups.png\" alt=\"DIDs\" width=42 height=42> "._QXZ("COPY DID")."<form action=$PHP_SELF method=POST>\n";
 		echo "<input type=hidden name=ADD value=2411>\n";
 		echo "<center><TABLE width=$section_width cellspacing=3>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("DID Extension").": </td><td align=left><input type=text name=did_pattern size=20 maxlength=50> ("._QXZ("no spaces or dashes").")$NWB#inbound_dids-did_pattern$NWE</td></tr>\n";
@@ -8299,9 +8301,9 @@ if ($ADD==1511)
 		##### END ID override optional section #####
 
 		echo "<TABLE><TR><TD>\n";
-		echo "<img src=\"images/icon_black_inbound.png\" alt=\"Inbound\" width=42 height=42> <FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
+		echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 
-		echo "<br>"._QXZ("ADD A NEW CALL MENU")."<form action=$PHP_SELF method=POST>\n";
+		echo "<img src=\"images/icon_callmenu.png\" alt=\"Call Menus\" width=42 height=42> "._QXZ("ADD A NEW CALL MENU")."<form action=$PHP_SELF method=POST>\n";
 		echo "<input type=hidden name=ADD value=2511>\n";
 		echo "<center><TABLE width=$section_width cellspacing=3>\n";
 		if ($voi_count > 0)
@@ -8347,9 +8349,9 @@ if ($ADD==1611)
 		##### END ID override optional section #####
 
 		echo "<TABLE><TR><TD>\n";
-		echo "<img src=\"images/icon_black_inbound.png\" alt=\"Inbound\" width=42 height=42> <FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
+		echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 
-		echo "<br>"._QXZ("COPY CALL MENU")."<form action=$PHP_SELF method=POST>\n";
+		echo "<img src=\"images/icon_callmenu.png\" alt=\"Call Menus\" width=42 height=42> "._QXZ("COPY CALL MENU")."<form action=$PHP_SELF method=POST>\n";
 		echo "<input type=hidden name=ADD value=2611>\n";
 		echo "<center><TABLE width=$section_width cellspacing=3>\n";
 		if ($voi_count > 0)
@@ -8400,7 +8402,7 @@ if ($ADD==1711)
 		echo "<TABLE><TR><TD>\n";
 		echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 
-		echo "<br>"._QXZ("Add Filter Phone Group")."<form action=$PHP_SELF method=POST>\n";
+		echo "<img src=\"images/icon_filterphonegroup.png\" alt=\"Filter Phone Groups\" width=42 height=42> "._QXZ("Add Filter Phone Group")."<form action=$PHP_SELF method=POST>\n";
 		echo "<input type=hidden name=ADD value=2711>\n";
 		echo "<center><TABLE width=$section_width cellspacing=3>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Filter Phone Group ID").": </td><td align=left><input type=text name=filter_phone_group_id size=20 maxlength=20> ("._QXZ("no spaces or special characters").")$NWB#filter_phone_groups-filter_phone_group_id$NWE</td></tr>\n";
@@ -40046,6 +40048,75 @@ if ($ADD==130)
 
 
 ######################
+# ADD=1001 display all inbound sections
+######################
+if ($ADD==1001)
+	{
+	$subhead_font = "style=\"font-family:HELVETICA;font-size:14;color:BLACK;font-weight:bold;\"";
+	?>
+
+	</head><BODY BGCOLOR=WHITE>
+	<img src="images/icon_black_inbound.png" alt="Inbound" width=42 height=42> <FONT FACE="ARIAL,HELVETICA" SIZE=4><B> <?php echo _QXZ("Inbound"); ?></B></FONT><BR><CENTER>
+	<TABLE BORDER=0 CELLPADDING=5 CELLSPACING=0 WIDTH=800>
+	<?php
+	echo "<TR>\n";
+	echo "<TD ALIGN=LEFT VALIGN=TOP WIDTH=100>&nbsp;\n";
+	echo "</TD>\n";
+	echo "<TD ALIGN=LEFT VALIGN=TOP WIDTH=220>\n";
+	echo "<TABLE BORDER=0 CELLPADDING=5 CELLSPACING=5 WIDTH=100%>\n";
+	echo "<TR CLASS=\"adminmenu_style_selected\""; if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='$PHP_SELF?ADD=1000';\"";} echo ">\n";
+	echo "<TD><a href=\"$PHP_SELF?ADD=1000\"><img src=\"images/icon_black_inbound.png\" border=0 width=42 height=42 valign=middle> </a></TD>\n";
+	echo "<TD><a href=\"$PHP_SELF?ADD=1000\" STYLE=\"text-decoration:none;\"><SPAN $subhead_font> "._QXZ("Inbound Groups")." </SPAN></a></TD>\n";
+	echo "</TR>\n";
+	if ($SSemail_enabled>0) 
+		{
+		echo "<TR CLASS=\"adminmenu_style_selected\""; if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='$PHP_SELF?ADD=1800';\"";} echo ">\n";
+		echo "<TD><a href=\"$PHP_SELF?ADD=1800\"><img src=\"images/icon_email.png\" border=0 width=42 height=42 valign=middle> </a></TD>\n";
+		echo "<TD><a href=\"$PHP_SELF?ADD=1800\" STYLE=\"text-decoration:none;\"><SPAN $subhead_font> "._QXZ("Email Groups")." </SPAN></a></TD>\n";
+		echo "</TR>\n";
+		}
+	if ($SSchat_enabled>0) 
+		{
+		echo "<TR CLASS=\"adminmenu_style_selected\""; if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='$PHP_SELF?ADD=1900';\"";} echo ">\n";
+		echo "<TD><a href=\"$PHP_SELF?ADD=1900\"><img src=\"images/icon_chat.png\" border=0 width=42 height=42 valign=middle> </a></TD>\n";
+		echo "<TD><a href=\"$PHP_SELF?ADD=1900\" STYLE=\"text-decoration:none;\"><SPAN $subhead_font> "._QXZ("Chat Groups")." </SPAN></a></TD>\n";
+		echo "</TR>\n";
+		}
+	echo "<TR CLASS=\"adminmenu_style_selected\""; if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='$PHP_SELF?ADD=1300';\"";} echo ">\n";
+	echo "<TD><a href=\"$PHP_SELF?ADD=1300\"><img src=\"images/icon_cidgroups.png\" border=0 width=42 height=42 valign=middle> </a></TD>\n";
+	echo "<TD><a href=\"$PHP_SELF?ADD=1300\" STYLE=\"text-decoration:none;\"><SPAN $subhead_font> "._QXZ("Inbound DIDs")." </SPAN></a></TD>\n";
+	echo "</TR>\n";
+	echo "<TR CLASS=\"adminmenu_style_selected\""; if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='$PHP_SELF?ADD=1500';\"";} echo ">\n";
+	echo "<TD><a href=\"$PHP_SELF?ADD=1500\"><img src=\"images/icon_callmenu.png\" border=0 width=42 height=42 valign=middle> </a></TD>\n";
+	echo "<TD><a href=\"$PHP_SELF?ADD=1500\" STYLE=\"text-decoration:none;\"><SPAN $subhead_font> "._QXZ("Call Menus")." </SPAN></a></TD>\n";
+	echo "</TR>\n";
+	echo "<TR CLASS=\"adminmenu_style_selected\""; if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='$PHP_SELF?ADD=1700';\"";} echo ">\n";
+	echo "<TD><a href=\"$PHP_SELF?ADD=1700\"><img src=\"images/icon_filterphonegroup.png\" border=0 width=42 height=42 valign=middle> </a></TD>\n";
+	echo "<TD><a href=\"$PHP_SELF?ADD=1700\" STYLE=\"text-decoration:none;\"><SPAN $subhead_font> "._QXZ("Filter Phone Groups")." </SPAN></a></TD>\n";
+	echo "</TR>\n";
+	echo "</TABLE>\n";
+	echo "</TD>\n";
+
+	echo "<TD ALIGN=LEFT VALIGN=TOP WIDTH=220>\n";
+	echo "<TABLE BORDER=0 CELLPADDING=5 CELLSPACING=5 WIDTH=100%><TR><TD> &nbsp; </TD></TR>\n";
+	echo "</TABLE>\n";
+	echo "</TD>\n";
+
+	echo "<TD ALIGN=LEFT VALIGN=TOP WIDTH=220>\n";
+	echo "<TABLE BORDER=0 CELLPADDING=5 CELLSPACING=5 WIDTH=100%><TR><TD> &nbsp; </TD></TR>\n";
+	echo "</TABLE>\n";
+	echo "</TD>\n";
+
+	echo "<TD ALIGN=LEFT VALIGN=TOP WIDTH=220>\n";
+	echo "<TABLE BORDER=0 CELLPADDING=5 CELLSPACING=5 WIDTH=100%><TR><TD> &nbsp; </TD></TR>\n";
+	echo "</TABLE>\n";
+	echo "</TD>\n";
+
+	echo "<TD WIDTH=100> &nbsp; \n";
+	}
+
+
+######################
 # ADD=1000 display all inbound groups
 ######################
 if ($ADD==1000)
@@ -40154,7 +40225,7 @@ if ( ($ADD==1800) and ($SSallow_emails>0) )
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$ingroups_to_print = mysqli_num_rows($rslt);
 
-	echo "<br>"._QXZ("EMAIL GROUP LISTINGS").":\n";
+	echo "<img src=\"images/icon_email.png\" alt=\"Email Groups\" width=42 height=42> "._QXZ("EMAIL GROUP LISTINGS").":\n";
 	echo "<center><TABLE width=$section_width cellspacing=0 cellpadding=1>\n";
 	echo "<TR BGCOLOR=BLACK>";
 	echo "<TD><font size=1 color=white>"._QXZ("IN-GROUP")."</TD>";
@@ -40221,7 +40292,7 @@ if ( ($ADD==1900) and ($SSallow_chats>0) )
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$ingroups_to_print = mysqli_num_rows($rslt);
 
-	echo "<br>"._QXZ("CHAT GROUP LISTINGS").":\n";
+	echo "<img src=\"images/icon_chat.png\" alt=\"Chat Groups\" width=42 height=42> "._QXZ("CHAT GROUP LISTINGS").":\n";
 	echo "<center><TABLE width=$section_width cellspacing=0 cellpadding=1>\n";
 	echo "<TR BGCOLOR=BLACK>";
 	echo "<TD><font size=1 color=white>"._QXZ("IN-GROUP")."</TD>";
@@ -40345,7 +40416,7 @@ if ($ADD==1300)
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$dids_to_print = mysqli_num_rows($rslt);
 
-	echo "<img src=\"images/icon_black_inbound.png\" alt=\"Inbound Groups\" width=42 height=42> "._QXZ("INBOUND DID LISTINGS").":\n";
+	echo "<img src=\"images/icon_cidgroups.png\" alt=\"Inbound DIDs\" width=42 height=42> "._QXZ("INBOUND DID LISTINGS").":\n";
 	if (strlen($next_prev_HTML) > 10)
 		{echo "<br><b> &nbsp; $next_prev_HTML</b><br>";}
 	echo "<center><TABLE width=$section_width cellspacing=0 cellpadding=1>\n";
@@ -40410,7 +40481,7 @@ if ($ADD==1500)
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$menus_to_print = mysqli_num_rows($rslt);
 
-	echo "<br>"._QXZ("CALL MENU LISTINGS").":\n";
+	echo "<img src=\"images/icon_callmenu.png\" alt=\"Call Menus\" width=42 height=42> "._QXZ("CALL MENU LISTINGS").":\n";
 	echo "<center><TABLE width=$section_width cellspacing=0 cellpadding=1>\n";
 	echo "<TR BGCOLOR=BLACK>";
 	echo "<TD><font size=1 color=white>"._QXZ("MENU ID")."</TD>";
@@ -40476,7 +40547,7 @@ if ($ADD==1700)
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$lists_to_print = mysqli_num_rows($rslt);
 
-	echo "<br>"._QXZ("FILTER PHONE GROUP LISTINGS").":\n";
+	echo "<img src=\"images/icon_filterphonegroup.png\" alt=\"Filter Phone Groups\" width=42 height=42> "._QXZ("FILTER PHONE GROUP LISTINGS").":\n";
 	echo "<center><TABLE width=$section_width cellspacing=0 cellpadding=1>\n";
 	echo "<TR BGCOLOR=BLACK>";
 	echo "<TD><B><FONT FACE=\"Arial,Helvetica\" size=1 color=white>"._QXZ("FPG ID")."</B></a></TD>";

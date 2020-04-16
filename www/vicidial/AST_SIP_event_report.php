@@ -1,12 +1,13 @@
 <?php 
 # AST_SIP_event_report.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
 # 190607-1522 - First build
 # 191013-0824 - Fixes for PHP7
+# 200409-1634 - Fixed help popup
 #
 
 $startMS = microtime();
@@ -480,8 +481,8 @@ if (strlen($group) < 1) {$group = 'call_date desc';}
 
 $LINKbase = "$PHP_SELF?query_date=$query_date&query_date_D=$query_date_D&query_date_T=$query_date_T&group=$group&DB=$DB&search_archived_data=$search_archived_data&report_display_type=$report_display_type";
 
-$NWB = " &nbsp; <a href=\"javascript:openNewWindow('help.php?ADD=99999";
-$NWE = "')\"><IMG SRC=\"help.gif\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP></A>";
+$NWB = "<IMG SRC=\"help.png\" onClick=\"FillAndShowHelpDiv(event, '";
+$NWE = "')\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP>";
 
 if ($file_download < 1)
 	{
@@ -501,8 +502,13 @@ if ($file_download < 1)
 	<?php
 
 	echo "<script language=\"JavaScript\" src=\"calendar_db.js\"></script>\n";
+	echo "<script language=\"JavaScript\" src=\"help.js\"></script>\n";
+
+	echo "<div id='HelpDisplayDiv' class='help_info' style='display:none;z-index:100';'></div>";
+
 	echo "<link rel=\"stylesheet\" href=\"calendar.css\">\n";
 	echo "<link rel=\"stylesheet\" href=\"horizontalbargraph.css\">\n";
+	echo "<link rel=\"stylesheet\" type=\"text/css\" href=\"vicidial_stylesheet.php\">\n";
 	require("chart_button.php");
 	echo "<script src='chart/Chart.js'></script>\n"; 
 	echo "<script language=\"JavaScript\" src=\"vicidial_chart_functions.js\"></script>\n";
@@ -591,7 +597,7 @@ if ($file_download < 1)
 
 	echo "</span>\n";
 	echo "<span style=\"position:absolute;left:3px;top:30px;z-index:19;\"  id=agent_status_stats>\n";
-	echo "<b>"._QXZ("$report_name")."</b> $NWB#single_agent_daily$NWE\n";
+	echo "<b>"._QXZ("$report_name")."</b> $NWB#sip_event_report$NWE\n";
 	echo "<PRE><FONT SIZE=2>";
 	}
 

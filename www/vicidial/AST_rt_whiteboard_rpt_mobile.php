@@ -601,6 +601,7 @@ $MAIN.="<option value='ingroup_performance_rates'>"._QXZ("Ingroup Performance Ra
 $MAIN.="<option value='did_performance_total'>"._QXZ("DID Performance Total")."</option>"; #  (ticker)
 $MAIN.="<option value='did_performance_rates'>"._QXZ("DID Performance Rates")."</option>"; #  (ticker)
 $MAIN.="</SELECT>\n";
+$MAIN.="<BR><font class='android_small'>(on selecting a report, the relevant parameters will be highlighted in red)</font>";
 $MAIN.="</TD>\n";
 $MAIN.="</TR>\n";
 
