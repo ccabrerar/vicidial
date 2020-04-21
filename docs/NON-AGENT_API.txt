@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2020-04-05
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2020-04-18
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -154,6 +154,7 @@ Changes:
 191113-1758 - Added add_dnc_phone and add_fpg_phone functions
 191114-1637 - Added remove_from_hopper option to update_lead function
 200331-1207 - Added list_custom_fields function
+200418-0837 - Added custom_copy_method option for the add_list function
 
 
 API Functions use the 'function' variable
@@ -1462,6 +1463,10 @@ web_form_address_three - 6-100 characters
 reset_time -		4-100 characters, must be in valid 4-digit groups of 24-hour time (i.e. 0900-1700-2359)
 expiration_date -	10 characters, must be in valid date format YYYY-MM-DD (i.e. 2012-11-25)
 custom_fields_copy -	A valid list ID with custom fields to be copied to this new list, 2-14 digits
+custom_copy_method -	(APPEND,UPDATE,REPLACE) method for how to perform the 'custom_fields_copy', default is APPEND
+				APPEND - the only 100% safe method, will not result in any lost existing data, only adds fields not present in the new list
+				UPDATE - will only update existing custom fields definitions to match the source list
+				REPLACE - will delete all existing custom field lead data in new list and start clean
 NOTES: 
  - for the web form addresses, you can URL encode them to include standard URL special characters
  - to use the 'custom_fields_copy' option, the API user must have the "Custom Fields Modify" user option enabled
@@ -1481,9 +1486,9 @@ ERROR: add_list SCRIPT DOES NOT EXIST, THIS IS AN OPTIONAL FIELD - 6666|TESTSCRI
 ERROR: add_list IN-GROUP DOES NOT EXIST, THIS IS AN OPTIONAL FIELD - 6666|TEST_IN8
 ERROR: add_list RESET TIME IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|012
 ERROR: add_list EXPIRATION DATE IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|012
-ERROR: add_list CUSTOM FIELDS LIST ID TO COPY FROM DOES NOT EXIST, THIS IS AN OPTIONAL FIELD - 6666|12
-ERROR: add_list CUSTOM FIELDS LIST ID TO COPY FROM HAS NO CUSTOM FIELDS, THIS IS AN OPTIONAL FIELD - 6666|12
-ERROR: add_list USER DOES NOT HAVE PERMISSION TO MODIFY CUSTOM FIELDS, THIS IS AN OPTIONAL FIELD - 6666|12
+ERROR: add_list CUSTOM FIELDS LIST ID TO COPY FROM DOES NOT EXIST, THIS IS AN OPTIONAL FIELD - 6666|1101|1102|0
+ERROR: add_list CUSTOM FIELDS LIST ID TO COPY FROM HAS NO CUSTOM FIELDS, THIS IS AN OPTIONAL FIELD - 6666|1101|1102|0
+ERROR: add_list USER DOES NOT HAVE PERMISSION TO MODIFY CUSTOM FIELDS, THIS IS AN OPTIONAL FIELD - 6666|1101|1102|0
 SUCCESS: add_list LIST HAS BEEN ADDED - 6666|1101|TESTCAMP
 
 
@@ -1520,6 +1525,11 @@ web_form_address_two -	6-100 characters
 web_form_address_three - 6-100 characters
 reset_time -		4-100 characters, must be in valid 4-digit groups of 24-hour time (i.e. 0900-1700-2359)
 expiration_date -	10 characters, must be in valid date format YYYY-MM-DD (i.e. 2012-11-25)
+custom_fields_copy -	A valid list ID with custom fields to be copied to the list being updated, 2-14 digits
+custom_copy_method -	(APPEND,UPDATE,REPLACE) method for how to perform the 'custom_fields_copy', default is APPEND
+				APPEND - the only 100% safe method, will not result in any lost existing data, only adds fields not present in the destination list
+				UPDATE - will only update existing custom fields definitions to match the source list, will not add new fields
+				REPLACE - will delete all existing custom field lead data in destination list and start clean with new fields
 NOTES: 
  - in order to set a field to empty('') set it equal to --BLANK--, i.e. "&drop_inbound_group=--BLANK--"
  - please use no special characters like apostrophes, quotes or amphersands
@@ -1557,6 +1567,10 @@ NOTICE: update_list USER DOES NOT HAVE PERMISSION TO DELETE LISTS - 6666|0
 NOTICE: update_list LIST HAS BEEN DELETED - 6666|1101|1
 NOTICE: update_list USER DOES NOT HAVE PERMISSION TO DELETE LEADS - 6666|0
 NOTICE: update_list LEADS IN LIST HAVE BEEN DELETED - 6666|1101|324
+NOTICE: update_list CUSTOM FIELDS LIST ID TO COPY FROM DOES NOT EXIST, THIS IS AN OPTIONAL FIELD - 6666|1101|1102|0
+NOTICE: update_list CUSTOM FIELDS LIST ID TO COPY FROM HAS NO CUSTOM FIELDS, THIS IS AN OPTIONAL FIELD - 6666|1101|1102|0
+NOTICE: update_list USER DOES NOT HAVE PERMISSION TO MODIFY CUSTOM FIELDS, THIS IS AN OPTIONAL FIELD - 6666|1101|1102|0
+NOTICE: update_list COPY CUSTOM FIELDS COMMAND SENT - 6666|1101|APPEND
 
 
 

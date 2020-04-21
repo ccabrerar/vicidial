@@ -332,7 +332,7 @@ else
 	}
 
 #$hostname = parse_url($PHP_SELF, PHP_URL_HOST);
-$hostname = $_SERVER[HTTP_HOST];
+$hostname = $_SERVER['HTTP_HOST'];
 $referrer = $_SERVER['HTTP_REFERER'];
 $from_email = "no-reply@$hostname";
 

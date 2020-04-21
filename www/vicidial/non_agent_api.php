@@ -143,10 +143,11 @@
 # 191113-1758 - Added add_dnc_phone and add_fpg_phone functions
 # 191114-1637 - Added remove_from_hopper option to update_lead function
 # 200331-1207 - Added list_custom_fields function
+# 200418-0837 - Added custom_copy_method option for the add_list function, also added this feature to update_list
 #
 
-$version = '2.14-120';
-$build = '200331-1207';
+$version = '2.14-121';
+$build = '200418-0837';
 $api_url_log = 0;
 
 $startMS = microtime();
@@ -525,6 +526,8 @@ if (isset($_GET["status_mismatch_action"]))				{$status_mismatch_action=$_GET["s
 	elseif (isset($_POST["status_mismatch_action"]))		{$status_mismatch_action=$_POST["status_mismatch_action"];}
 if (isset($_GET["custom_order"]))				{$custom_order=$_GET["custom_order"];}
 	elseif (isset($_POST["custom_order"]))		{$custom_order=$_POST["custom_order"];}
+if (isset($_GET["custom_copy_method"]))				{$custom_copy_method=$_GET["custom_copy_method"];}
+	elseif (isset($_POST["custom_copy_method"]))	{$custom_copy_method=$_POST["custom_copy_method"];}
 
 
 header ("Content-type: text/html; charset=utf-8");
@@ -752,6 +755,7 @@ if ($non_latin < 1)
 	$remove_from_hopper=preg_replace('/[^0-9a-zA-Z]/','',$remove_from_hopper);
 	$list_description=preg_replace('/[^- \+\.\:\/\@\?\&\_0-9a-zA-Z]/','',$list_description);
 	$custom_order = preg_replace('/[^-_0-9a-zA-Z]/','',$custom_order);
+	$custom_copy_method = preg_replace('/[^-_0-9a-zA-Z]/','',$custom_copy_method);
 	}
 else
 	{
@@ -4795,6 +4799,96 @@ if ($function == 'update_list')
 							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
 							}
 						}
+
+					$copy_custom_fields_trigger=0;
+					if ( (strlen($custom_fields_copy) > 1) and (strlen($custom_fields_copy) < 15) )
+						{
+						$stmt="SELECT count(*) from vicidial_lists where list_id='$custom_fields_copy';";
+						$rslt=mysql_to_mysqli($stmt, $link);
+						$row=mysqli_fetch_row($rslt);
+						$custom_fields_copy_exists=$row[0];
+						if ($DB>0) {echo "$custom_fields_copy_exists|$stmt|\n";}
+						if ($custom_fields_copy_exists < 1)
+							{
+							$result = 'NOTICE';
+							$result_reason = "update_list CUSTOM FIELDS LIST ID TO COPY FROM DOES NOT EXIST, THIS IS AN OPTIONAL FIELD";
+							$data = "$list_id|$custom_fields_copy|$custom_fields_copy_exists";
+							echo "$result: $result_reason: |$user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							}
+						else
+							{
+							$stmt="SELECT count(*) from vicidial_lists_fields where list_id='$custom_fields_copy';";
+							$rslt=mysql_to_mysqli($stmt, $link);
+							$row=mysqli_fetch_row($rslt);
+							$vicidial_lists_fields_exists=$row[0];
+							if ($DB>0) {echo "$vicidial_lists_fields_exists|$stmt|\n";}
+							if ($vicidial_lists_fields_exists < 1)
+								{
+								$result = 'NOTICE';
+								$result_reason = "update_list CUSTOM FIELDS LIST ID TO COPY FROM HAS NO CUSTOM FIELDS, THIS IS AN OPTIONAL FIELD";
+								$data = "$list_id|$custom_fields_copy|$vicidial_lists_fields_exists";
+								echo "$result: $result_reason: |$user|$data\n";
+								api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+								}
+							else
+								{
+								$stmt="SELECT count(*) from vicidial_users where user='$user' and custom_fields_modify='1';";
+								$rslt=mysql_to_mysqli($stmt, $link);
+								$row=mysqli_fetch_row($rslt);
+								$custom_fields_modify_exists=$row[0];
+								if ($DB>0) {echo "$custom_fields_modify_exists|$stmt|\n";}
+								if ($custom_fields_modify_exists < 1)
+									{
+									$result = 'NOTICE';
+									$result_reason = "update_list USER DOES NOT HAVE PERMISSION TO MODIFY CUSTOM FIELDS, THIS IS AN OPTIONAL FIELD";
+									$data = "$list_id|$custom_fields_copy|$custom_fields_modify_exists";
+									echo "$result: $result_reason: |$user|$data\n";
+									api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+									}
+								else
+									{
+									if ($DB>0) {echo "Copy custom fields triggered|$copy_custom_fields_trigger|\n";}
+									$copy_custom_fields_trigger++;
+									}
+								}
+							}
+
+						if ( ($copy_custom_fields_trigger > 0) and (strlen($custom_fields_copy) > 1) )
+							{
+							### BEGIN copy custom fields ###
+							$admin_lists_custom = 'admin_lists_custom.php';
+							if (!preg_match("/^APPEND$|^UPDATE$|^REPLACE$/",$custom_copy_method))
+								{$custom_copy_method = 'APPEND';}
+
+							$url = "http" . (isset($_SERVER['HTTPS']) ? 's' : '') . "://$_SERVER[HTTP_HOST]/$SSadmin_web_directory/" . $admin_lists_custom . "?copy_option=" . $custom_copy_method . "&action=COPY_FIELDS_SUBMIT&list_id=$list_id&source_list_id=$custom_fields_copy";
+							
+							if ($DB>0) {echo "Copy custom fields url|$url|\n";}
+							# use cURL to call the copy custom fields code
+							$curl = curl_init();
+							
+							# Set some options - we are passing in a useragent too here
+							curl_setopt_array($curl, array(
+								CURLOPT_RETURNTRANSFER => 1,
+								CURLOPT_URL => $url,
+								CURLOPT_USERPWD => "$user:$pass",
+								CURLOPT_USERAGENT => 'non_agent_api.php'
+							));
+							
+							# Send the request & save response to $resp
+							$resp = curl_exec($curl);
+							
+							# Close request to clear up some resources
+							curl_close($curl);
+							### END copy custom fields ###
+
+							$result = 'NOTICE';
+							$result_reason = "update_list COPY CUSTOM FIELDS COMMAND SENT";
+							$data = "$list_id|$custom_fields_copy|$custom_copy_method|";
+							echo "$result: $result_reason - $user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							}
+						}
 					}
 				}
 			}
@@ -5352,7 +5446,7 @@ if ($function == 'add_list')
 									{
 									$result = 'ERROR';
 									$result_reason = "add_list CUSTOM FIELDS LIST ID TO COPY FROM DOES NOT EXIST, THIS IS AN OPTIONAL FIELD";
-									$data = "$custom_fields_copy_exists";
+									$data = "$list_id|$custom_fields_copy|$custom_fields_copy_exists";
 									echo "$result: $result_reason: |$user|$data\n";
 									api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
 									exit;
@@ -5368,7 +5462,7 @@ if ($function == 'add_list')
 										{
 										$result = 'ERROR';
 										$result_reason = "add_list CUSTOM FIELDS LIST ID TO COPY FROM HAS NO CUSTOM FIELDS, THIS IS AN OPTIONAL FIELD";
-										$data = "$custom_fields_copy";
+										$data = "$list_id|$custom_fields_copy|$vicidial_lists_fields_exists";
 										echo "$result: $result_reason: |$user|$data\n";
 										api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
 										exit;
@@ -5384,7 +5478,7 @@ if ($function == 'add_list')
 											{
 											$result = 'ERROR';
 											$result_reason = "add_list USER DOES NOT HAVE PERMISSION TO MODIFY CUSTOM FIELDS, THIS IS AN OPTIONAL FIELD";
-											$data = "$custom_fields_copy";
+											$data = "$list_id|$custom_fields_copy|$custom_fields_modify_exists";
 											echo "$result: $result_reason: |$user|$data\n";
 											api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
 											exit;
@@ -5456,8 +5550,10 @@ if ($function == 'add_list')
 								{
 								### BEGIN copy custom fields ###
 								$admin_lists_custom = 'admin_lists_custom.php';
+								if (!preg_match("/^APPEND$|^UPDATE$|^REPLACE$/",$custom_copy_method))
+									{$custom_copy_method = 'APPEND';}
 
-								$url = "http" . (isset($_SERVER['HTTPS']) ? 's' : '') . "://$_SERVER[HTTP_HOST]/$SSadmin_web_directory/" . $admin_lists_custom . "?copy_option=APPEND&action=COPY_FIELDS_SUBMIT&list_id=$list_id&source_list_id=$custom_fields_copy";
+								$url = "http" . (isset($_SERVER['HTTPS']) ? 's' : '') . "://$_SERVER[HTTP_HOST]/$SSadmin_web_directory/" . $admin_lists_custom . "?copy_option=" . $custom_copy_method . "&action=COPY_FIELDS_SUBMIT&list_id=$list_id&source_list_id=$custom_fields_copy";
 								
 								if ($DB>0) {echo "Copy custom fields url|$url|\n";}
 								# use cURL to call the copy custom fields code
