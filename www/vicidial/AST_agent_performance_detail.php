@@ -1,7 +1,7 @@
 <?php 
 # AST_agent_performance_detail.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -65,6 +65,7 @@
 # 180330-1750 - Fixed display bug for individual user selection
 # 191013-0847 - Fixes for PHP7
 # 191030-1530 - Query fixes
+# 200421-1411 - user_group bug fix
 #
 
 $startMS = microtime();
@@ -405,11 +406,11 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$HTML_text.="$stmt\n";}
 $user_groups_to_print = mysqli_num_rows($rslt);
 $i=0;
-$user_groups=array();
+$allowed_user_groups=array();
 while ($i < $user_groups_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
-	$user_groups[$i] =$row[0];
+	$allowed_user_groups[$i] =$row[0];
 	if ($all_user_groups) {$user_group[$i]=$row[0];}
 	$i++;
 	}
@@ -463,7 +464,22 @@ while($i < $user_group_ct)
 	$i++;
 	}
 if ( (preg_match('/\-\-ALL\-\-/',$user_group_string) ) or ($user_group_ct < 1) )
-	{$user_group_SQL = "";}
+	{
+	$i=0;
+	$user_group_SQL = "";
+	$user_groupQS = "";
+	$user_groups_ct = count($allowed_user_groups);
+	while($i < $user_groups_ct)
+		{
+		# $user_group_string .= "$user_groups[$i]|";
+		$user_group_SQL .= "'$allowed_user_groups[$i]',";
+		$user_groupQS .= "&user_group[]=$allowed_user_groups[$i]";
+		$i++;
+		}
+	$user_group_SQL = preg_replace('/,$/i', '',$user_group_SQL);
+	$user_group_agent_log_SQL = "and ".$agent_log_table.".user_group IN($user_group_SQL)";
+	$user_group_SQL = "and vicidial_users.user_group IN($user_group_SQL)";
+	}
 else
 	{
 	$user_group_SQL = preg_replace('/,$/i', '',$user_group_SQL);
@@ -589,8 +605,8 @@ else
 $o=0;
 while ($user_groups_to_print > $o)
 	{
-	if  (preg_match("/$user_groups[$o]\|/i",$user_group_string)) {$HTML_text.="<option selected value=\"$user_groups[$o]\">$user_groups[$o]</option>\n";}
-	  else {$HTML_text.="<option value=\"$user_groups[$o]\">$user_groups[$o]</option>\n";}
+	if  (preg_match("/$allowed_user_groups[$o]\|/i",$user_group_string)) {$HTML_text.="<option selected value=\"$allowed_user_groups[$o]\">$allowed_user_groups[$o]</option>\n";}
+	  else {$HTML_text.="<option value=\"$allowed_user_groups[$o]\">$allowed_user_groups[$o]</option>\n";}
 	$o++;
 	}
 $HTML_text.="</SELECT>\n";

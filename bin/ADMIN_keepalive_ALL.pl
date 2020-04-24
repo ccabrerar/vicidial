@@ -139,9 +139,10 @@
 # 190713-0900 - Added vicidial_lead_call_quota_counts log archiving
 # 191017-2039 - Added reset of calls_today_filtered fields
 # 200122-0847 - Added CID Groups auto-rotate feature
+# 200422-1544 - Added purging of vicidial_security_event_log table after 7 days
 #
 
-$build = '200122-0847';
+$build = '200422-1544';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -1834,6 +1835,24 @@ if ($timeclock_end_of_day_NOW > 0)
 		if ($DB) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
 		$sthA->finish();
 		##### END vicidial_sessions_recent_archive end of day process removing records older than 7 days #####
+
+
+		##### BEGIN vicidial_security_event_log end of day process removing records older than 7 days #####
+		$stmtA = "DELETE from vicidial_security_event_log where event_time < \"$SDSQLdate\";";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$affected_rows = $dbhA->do($stmtA);
+		if($DB){print STDERR "\n|$affected_rows vicidial_security_event_log records older than 7 days purged|\n";}
+		if ($teodDB) {$event_string = "vicidial_security_event_log records older than 7 days purged: |$stmtA|$affected_rows|";   &teod_logger;}
+
+		$stmtA = "optimize table vicidial_security_event_log;";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		@aryA = $sthA->fetchrow_array;
+		if ($DB) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+		$sthA->finish();
+		##### END vicidial_security_event_log end of day process removing records older than 7 days #####
 
 
 		##### BEGIN usacan_phone_dialcode_fix funciton #####

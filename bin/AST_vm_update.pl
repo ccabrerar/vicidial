@@ -14,7 +14,7 @@
 #
 # NOTE: THIS SHOULD ONLY BE RUN ON THE DESIGNATED VOICEMAIL SERVER IN A CLUSTER!
 #
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # 50823-1422 - Added database server variable definitions lookup
 # 50823-1452 - Added commandline arguments for debug at runtime
@@ -26,6 +26,7 @@
 # 141124-1019 - Changed to only allow running on designated voicemail server, run for all mailboxes
 # 150610-1200 - Added support for AMI version 1.3
 # 170609-0936 - Added support for Asterisk 13
+# 200413-1356 - Fix for \n\n at the end of PING commands causing errors in AMI
 #
 
 # constants
@@ -204,18 +205,31 @@ $sthA->finish();
 
 $max_buffer = 4*1024*1024; # 4 meg buffer
 
+$t = '';
+$telnet_log_file = '';
 ### connect to asterisk manager through telnet
-$t = new Net::Telnet (
-        Port => $telnet_port,
-        Prompt => '/\r\n/',
-        Output_record_separator => "\n\n",
-        Max_buffer_length => $max_buffer,
-        Telnetmode => 0,
-);
-
-##### uncomment both lines below for telnet log
-#        $LItelnetlog = "$PATHlogs/listen_telnet_log.txt";
-#        $fh = $t->dump_log("$LItelnetlog");
+if ($DBX)
+	{
+	$telnet_log_file = "$PATHlogs/AST_vm_telnet_log.$secX";
+        $t = new Net::Telnet (
+                Port => $telnet_port,
+                Prompt => '/\r\n/',
+                Output_record_separator => "\n\n",
+                Max_buffer_length => $max_buffer,
+                Telnetmode => 0,
+		Dump_log => $telnet_log_file
+        );
+	}
+else
+	{
+	$t = new Net::Telnet (
+        	Port => $telnet_port,
+        	Prompt => '/\r\n/',
+        	Output_record_separator => "\n\n",
+        	Max_buffer_length => $max_buffer,
+        	Telnetmode => 0,
+	);
+	}	
 
 if (length($ASTmgrUSERNAMEsend) > 3) {$telnet_login = $ASTmgrUSERNAMEsend;}
 else {$telnet_login = $ASTmgrUSERNAME;}
@@ -233,16 +247,20 @@ $t->waitfor('/Authentication accepted/');              # waitfor auth accepted
 
 $t->buffer_empty;
 
+# determine if we should use a \n\n at the end of the AMI commands
+%ast_ver_str = parse_asterisk_version($asterisk_version);
+$command_end = "\n\n";
+if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} >= 13)) { $command_end = '';}
+
 
 $i=0;
 foreach(@PTvoicemail_ids)
 	{
 	@list_channels=@MT;
 	$t->buffer_empty;
-	%ast_ver_str = parse_asterisk_version($asterisk_version);
 	if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6))
 		{
-		@list_channels = $t->cmd(String => "Action: MailboxCount\nMailbox: $PTvoicemail_ids[$i]\n\nAction: Ping\n\n", Prompt => '/Response: Pong.*/'); 
+		@list_channels = $t->cmd(String => "Action: MailboxCount\nMailbox: $PTvoicemail_ids[$i]\n\nAction: Ping$command_end", Prompt => '/Response: Pong.*/'); 
 		
 		$j=0;
 		foreach(@list_channels)
@@ -259,7 +277,7 @@ foreach(@PTvoicemail_ids)
 		}
 	elsif (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 13))
 		{
-		@list_channels = $t->cmd(String => "Action: MailboxCount\nMailbox: $PTvoicemail_ids[$i]\n\nAction: Ping\n\n", Prompt => '/Response: Success\nPing: Pong.*/');
+		@list_channels = $t->cmd(String => "Action: MailboxCount\nMailbox: $PTvoicemail_ids[$i]\n\nAction: Ping$command_end", Prompt => '/Response: Success\nPing: Pong.*/');
 	
 		$j=0;
 		foreach(@list_channels)
@@ -291,7 +309,7 @@ foreach(@PTvoicemail_ids)
 			# create a new action id
 			$action_id = "$now_sec.$now_micro_sec";
 
-			@list_channels = $t->cmd(String => "Action: MailboxCount\nActionID: $action_id\nMailbox: $PTvoicemail_ids[$i]\n\nAction: Ping\n\n", Prompt => '/Response: Success\nPing: Pong.*/');
+			@list_channels = $t->cmd(String => "Action: MailboxCount\nActionID: $action_id\nMailbox: $PTvoicemail_ids[$i]\n\nAction: Ping$command_end", Prompt => '/Response: Success\nPing: Pong.*/');
 
 			$j=0;
 			foreach(@list_channels)
@@ -397,7 +415,7 @@ if ($active_voicemail_server > 0)
 		%ast_ver_str = parse_asterisk_version($asterisk_version);
 		if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6))
 			{
-			@list_channels = $t->cmd(String => "Action: MailboxCount\nMailbox: $PTvoicemail_ids[$i]\n\nAction: Ping\n\n", Prompt => '/Response: Pong.*/');
+			@list_channels = $t->cmd(String => "Action: MailboxCount\nMailbox: $PTvoicemail_ids[$i]\n\nAction: Ping$command_end", Prompt => '/Response: Pong.*/');
 	
 			$j=0;
 			foreach(@list_channels)
@@ -414,7 +432,7 @@ if ($active_voicemail_server > 0)
 			}
 		elsif (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 13))
 			{
-			@list_channels = $t->cmd(String => "Action: MailboxCount\nMailbox: $PTvoicemail_ids[$i]\n\nAction: Ping\n\n", Prompt => '/Response: Success\nPing: Pong.*/');
+			@list_channels = $t->cmd(String => "Action: MailboxCount\nMailbox: $PTvoicemail_ids[$i]\n\nAction: Ping$command_end", Prompt => '/Response: Success\nPing: Pong.*/');
 	
 			$j=0;
 			foreach(@list_channels)
@@ -446,7 +464,7 @@ if ($active_voicemail_server > 0)
 			# create a new action id
 			$action_id = "$now_sec.$now_micro_sec";
 
-			@list_channels = $t->cmd(String => "Action: MailboxCount\nActionID: $action_id\nMailbox: $PTvoicemail_ids[$i]\n\nAction: Ping\n\n", Prompt => '/Response: Success\nPing: Pong.*/');
+			@list_channels = $t->cmd(String => "Action: MailboxCount\nActionID: $action_id\nMailbox: $PTvoicemail_ids[$i]\n\nAction: Ping$command_end", Prompt => '/Response: Success\nPing: Pong.*/');
 
 			$j=0;
 			foreach(@list_channels)
@@ -491,7 +509,7 @@ if ($active_voicemail_server > 0)
 
 
 $t->buffer_empty;
-@hangup = $t->cmd(String => "Action: Logoff\n\n", Prompt => "/.*/"); 
+@hangup = $t->cmd(String => "Action: Logoff$command_end", Prompt => "/.*/"); 
 $t->buffer_empty;
 $t->waitfor(Match => '/Message:.*\n\n/', Timeout => 10);
 $ok = $t->close;
@@ -499,6 +517,15 @@ $ok = $t->close;
 
 $dbhA->disconnect();
 
+
+if($DBX)
+	{
+	open (FILE, '<', "$telnet_log_file") or die "could not open the log file\n";
+	print <FILE>;
+	close (FILE);
+
+	unlink($telnet_log_file) or die "Can't delete $telnet_log_file: $!\n";
+	}
 
 if($DB)
 	{

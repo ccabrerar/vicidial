@@ -196,7 +196,8 @@ parked_time DATETIME
 CREATE TABLE conferences (
 conf_exten INT(7) UNSIGNED NOT NULL,
 server_ip VARCHAR(15) NOT NULL,
-extension VARCHAR(100)
+extension VARCHAR(100),
+unique index extenserver (conf_exten, server_ip)
 ) ENGINE=MyISAM;
 
 CREATE TABLE recording_log (
@@ -249,7 +250,8 @@ department VARCHAR(30)
 CREATE TABLE server_updater (
 server_ip VARCHAR(15) NOT NULL,
 last_update DATETIME,
-db_time TIMESTAMP
+db_time TIMESTAMP,
+unique index serverip (server_ip)
 ) ENGINE=MyISAM;
 
 CREATE TABLE call_log (
@@ -1135,7 +1137,8 @@ conf_exten INT(7) UNSIGNED NOT NULL,
 server_ip VARCHAR(15) NOT NULL,
 extension VARCHAR(100),
 leave_3way ENUM('0','1') default '0',
-leave_3way_datetime DATETIME
+leave_3way_datetime DATETIME,
+unique index vextenserver (conf_exten, server_ip)
 ) ENGINE=MyISAM;
 
 CREATE UNIQUE INDEX serverconf on vicidial_conferences (server_ip, conf_exten);
@@ -4272,6 +4275,31 @@ index (call_date),
 index (lead_id)
 ) ENGINE=MyISAM;
 
+CREATE TABLE vicidial_security_event_log (
+event_id int(9) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
+server_ip varchar(15),
+event VARCHAR(25) NOT NULL,
+event_time DATETIME(3) NOT NULL,
+severity ENUM('Informational','Error') NOT NULL,
+service VARCHAR(25) NOT NULL,
+event_version VARCHAR(25) NOT NULL,
+account_id VARCHAR(25) NOT NULL,
+session_id VARCHAR(25) NOT NULL,
+local_address VARCHAR(15) NOT NULL,
+local_port SMALLINT NOT NULL,
+remote_address VARCHAR(15) NOT NULL,
+remote_port SMALLINT NOT NULL,
+module VARCHAR(25),
+session_time DATETIME(3),
+optional_one VARCHAR(100),
+optional_two VARCHAR(100),
+optional_three VARCHAR(100),
+index (server_ip),
+index (event),
+index (event_time),
+index (remote_address)
+) ENGINE=MyISAM;
+
 
 ALTER TABLE vicidial_email_list MODIFY message text character set utf8;
 
@@ -4600,4 +4628,4 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1592',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1593',db_schema_update_date=NOW(),reload_timestamp=NOW();

@@ -1199,3 +1199,30 @@ ALTER TABLE vicidial_inbound_groups ADD browser_alert_sound VARCHAR(20) default 
 ALTER TABLE vicidial_inbound_groups ADD browser_alert_volume TINYINT(3) UNSIGNED default '50';
 
 UPDATE system_settings SET db_schema_version='1592',db_schema_update_date=NOW() where db_schema_version < 1592;
+
+CREATE TABLE vicidial_security_event_log (
+event_id int(9) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
+server_ip varchar(15),
+event VARCHAR(25) NOT NULL,
+event_time DATETIME(3) NOT NULL,
+severity ENUM('Informational','Error') NOT NULL,
+service VARCHAR(25) NOT NULL,
+event_version VARCHAR(25) NOT NULL,
+account_id VARCHAR(25) NOT NULL,
+session_id VARCHAR(25) NOT NULL,
+local_address VARCHAR(15) NOT NULL,
+local_port SMALLINT NOT NULL,
+remote_address VARCHAR(15) NOT NULL,
+remote_port SMALLINT NOT NULL,
+module VARCHAR(25),
+session_time DATETIME(3),
+optional_one VARCHAR(100),
+optional_two VARCHAR(100),
+optional_three VARCHAR(100),
+index (server_ip),
+index (event),
+index (event_time),
+index (remote_address)
+) ENGINE=MyISAM;
+
+UPDATE system_settings SET db_schema_version='1593',db_schema_update_date=NOW() where db_schema_version < 1593;

@@ -4,7 +4,7 @@
 #
 # This script checks if there are channels in reserved conferences
 #
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # 50810-1532 - Added database server variable definitions lookup
 # 50823-1456 - Added commandline arguments for debug at runtime
@@ -20,10 +20,12 @@
 # 150610-1200 - Added support for AMI version 1.3
 # 170916-0947 - Added support for AMI version 2+
 # 180420-2302 - Fix for high-volume systems, added varibles to hangup queryCID
+# 200413-1356 - Fix for \n\n at the end of PING commands causing errors in AMI
 #
 
 # constants
 $DB=0;  # Debug flag, set to 0 for no debug messages per minute
+$DBX=0;
 $US='__';
 $MT[0]='';
 $no_vc_3way_check=0;
@@ -43,6 +45,7 @@ if (length($ARGV[0])>1)
 		print "allowed run time options:\n";
 		print "  [-t] = test\n";
 		print "  [-debug] = verbose debug messages\n";
+		print "  [-debugX] = extra verbose debug messages\n";
 		print "  [--no-vc-3way-check] = separate 3way script is running\n";
 		print "\n";
 		exit;
@@ -54,6 +57,12 @@ if (length($ARGV[0])>1)
 			$DB=1; # Debug flag
 			print "-- DEBUGGING ENABLED --\n\n";
 			}
+		if ($args =~ /-debugX/i)
+			{
+			$DB=1;
+			$DBX=1;
+			print "-- SUPER DEBUGGING ENABLED --\n\n";
+		}
 		if ($args =~ /-no-vc-3way-check/i)
 			{
 			$no_vc_3way_check=1; # no 3way check flag
@@ -158,8 +167,12 @@ if ($sthArows > 0)
 	if ($DBext_context)				{$ext_context = $DBext_context;}
 	if ($vicidial_recording_limit < 60) {$vicidial_recording_limit=60;}
 	}
- $sthA->finish(); 
+$sthA->finish(); 
 
+# determine if we should use a \n\n at the end of the AMI commands
+$command_end = "\n\n";
+%ast_ver_str = parse_asterisk_version($asterisk_version);
+if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} >= 13)) { $command_end = ''; };
 
 ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
 $year = ($year + 1900);
@@ -256,16 +269,32 @@ if ($no_vc_3way_check < 1)
 
 	$max_buffer = 4*1024*1024; # 4 meg buffer
 	
+
+	$t='';
+	$telnet_log_file = '';
 	### connect to asterisk manager through telnet
-	$t = new Net::Telnet (
-		Port => $telnet_port,
-		Prompt => '/\r\n/',
-		Output_record_separator => "\n\n",
-		Max_buffer_length => $max_buffer,
-		Telnetmode => 0,
-	);
-	$LItelnetlog = "$PATHlogs/listen_telnet_log.txt";  # uncomment for telnet log
-	#$fh = $t->dump_log("$LItelnetlog");  # uncomment for telnet log
+	if ($DBX)
+		{
+		$telnet_log_file = "$PATHlogs/AST_conf_telnet_log.$now_date_epoch";
+		$t = new Net::Telnet (
+			Port => $telnet_port,
+			Prompt => '/\r\n/',
+			Output_record_separator => "\n\n",
+			Max_buffer_length => $max_buffer,
+			Telnetmode => 0,
+			Dump_log => $telnet_log_file
+		);
+		}
+	else
+		{
+		$t = new Net::Telnet (
+			Port => $telnet_port,
+			Prompt => '/\r\n/',
+			Output_record_separator => "\n\n",
+			Max_buffer_length => $max_buffer,
+			Telnetmode => 0,
+		);
+		}
 	if (length($ASTmgrUSERNAMEsend) > 3) {$telnet_login = $ASTmgrUSERNAMEsend;}
 	else {$telnet_login = $ASTmgrUSERNAME;}
 	$t->open("$telnet_host");
@@ -291,7 +320,7 @@ if ($no_vc_3way_check < 1)
 
 			if ($ami_version =~ /^1\./i) 
 				{
-				$COMMAND = "Action: Command\nCommand: Meetme list $PT_conf_extens[$i]\n\nAction: Ping\n\n";
+				$COMMAND = "Action: Command\nCommand: Meetme list $PT_conf_extens[$i]\n\nAction: Ping$command_end";
 				if ($DB) {print "|$PTextensions[$i]|$PT_conf_extens[$i]|$COMMAND|\n";}
 				%ast_ver_str = parse_asterisk_version($asterisk_version);
 				if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6))
@@ -306,16 +335,16 @@ if ($no_vc_3way_check < 1)
 			elsif ($ami_version =~ /^2\./i)
 				{
 				# get the current time
-                		( $now_sec, $now_micro_sec ) = gettimeofday();
+				( $now_sec, $now_micro_sec ) = gettimeofday();
 
-		                # figure out how many micro seconds since epoch
-		                $now_micro_epoch = $now_sec * 1000000;
-		                $now_micro_epoch = $now_micro_epoch + $now_micro_sec;
+				# figure out how many micro seconds since epoch
+				$now_micro_epoch = $now_sec * 1000000;
+				$now_micro_epoch = $now_micro_epoch + $now_micro_sec;
 
-                		$begin_micro_epoch = $now_micro_epoch;
+				$begin_micro_epoch = $now_micro_epoch;
 
-                		# create a new action id
-		                $action_id = "$now_sec.$now_micro_sec";
+				# create a new action id
+				$action_id = "$now_sec.$now_micro_sec";
 
 				$COMMAND = "Action: Command\nActionID:$action_id\nCommand: Meetme list $PT_conf_extens[$i]";
 				if ($DB) {print "\n\n|$PTextensions[$i]|$PT_conf_extens[$i]|$COMMAND|\n";}
@@ -384,7 +413,7 @@ if ($no_vc_3way_check < 1)
 		}
 
 	$t->buffer_empty;
-	@hangup = $t->cmd(String => "Action: Logoff\n\n", Prompt => "/.*/"); 
+	@hangup = $t->cmd(String => "Action: Logoff$command_end", Prompt => "/.*/"); 
 	$t->buffer_empty;
 	$t->waitfor(Match => '/Message:.*\n\n/', Timeout => 10);
 	$ok = $t->close;
@@ -393,7 +422,14 @@ if ($no_vc_3way_check < 1)
 	sleep(5);
 	}
 
+if($DBX)
+	{
+	open (FILE, '<', "$telnet_log_file") or die "could not open the log file\n";
+	print <FILE>;
+	close (FILE);
 
+	unlink($telnet_log_file) or die "Can't delete $telnet_log_file: $!\n";
+	}
 
 
 
@@ -422,16 +458,32 @@ if (!$telnet_port) {$telnet_port = '5038';}
 
 $max_buffer = 4*1024*1024; # 4 meg buffer
 
+$t='';
+$telnet_log_file = '';
 ### connect to asterisk manager through telnet
-$t = new Net::Telnet (
-	Port => $telnet_port,
-	Prompt => '/\r\n/',
-	Output_record_separator => "\n\n",
-	Max_buffer_length => $max_buffer,
-	Telnetmode => 0,
-);
-$LItelnetlog = "$PATHlogs/listen_telnet_log.txt";  # uncomment for telnet log
-#$fh = $t->dump_log("$LItelnetlog");  # uncomment for telnet log
+if ($DBX)
+	{
+	$telnet_log_file = "$PATHlogs/AST_conf_telnet_log.$now_date_epoch";
+	$t = new Net::Telnet (
+		Port => $telnet_port,
+		Prompt => '/\r\n/',
+		Output_record_separator => "\n\n",
+		Max_buffer_length => $max_buffer,
+		Telnetmode => 0,
+		Dump_log => $telnet_log_file
+	);
+	}
+else
+	{
+	$t = new Net::Telnet (
+		Port => $telnet_port,
+		Prompt => '/\r\n/',
+		Output_record_separator => "\n\n",
+		Max_buffer_length => $max_buffer,
+		Telnetmode => 0,
+	);
+	}
+
 if (length($ASTmgrUSERNAMEsend) > 3) {$telnet_login = $ASTmgrUSERNAMEsend;}
 else {$telnet_login = $ASTmgrUSERNAME;}
 $t->open("$telnet_host");
@@ -459,7 +511,7 @@ if ( !( ( @PTextensions == 1 ) && ( $PTextensions[0] eq '') ) )
 
 			if ($ami_version =~ /^1\./i)
 				{
-				$COMMAND = "Action: Command\nCommand: Meetme list $PT_conf_extens[$i]\n\nAction: Ping\n\n";
+				$COMMAND = "Action: Command\nCommand: Meetme list $PT_conf_extens[$i]\n\nAction: Ping$command_end";
 				if ($DB) {print "|$PT_conf_extens[$i]|$COMMAND|\n";}
 				%ast_ver_str = parse_asterisk_version($asterisk_version);
 				if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6))
@@ -472,23 +524,23 @@ if ( !( ( @PTextensions == 1 ) && ( $PTextensions[0] eq '') ) )
 					}
 				}
 			elsif ($ami_version =~ /^2\./i)
-                                {
+				{
 				# get the current time
-                                ( $now_sec, $now_micro_sec ) = gettimeofday();
+				( $now_sec, $now_micro_sec ) = gettimeofday();
 
-                                # figure out how many micro seconds since epoch
-                                $now_micro_epoch = $now_sec * 1000000;
-                                $now_micro_epoch = $now_micro_epoch + $now_micro_sec;
+				# figure out how many micro seconds since epoch
+				$now_micro_epoch = $now_sec * 1000000;
+				$now_micro_epoch = $now_micro_epoch + $now_micro_sec;
 
-                                $begin_micro_epoch = $now_micro_epoch;
+				$begin_micro_epoch = $now_micro_epoch;
 
-                                # create a new action id
-                                $action_id = "$now_sec.$now_micro_sec";
+				# create a new action id
+				$action_id = "$now_sec.$now_micro_sec";
 
-                                $COMMAND = "Action: Command\nActionID: $action_id\nCommand: Meetme list $PT_conf_extens[$i]";
-                                if ($DB) {print "|$PTextensions[$i]|$PT_conf_extens[$i]|$COMMAND|\n";}
-                                @list_channels = $t->cmd(String => "$COMMAND", Prompt => '/--END COMMAND--/');
-                                }
+				$COMMAND = "Action: Command\nActionID: $action_id\nCommand: Meetme list $PT_conf_extens[$i]";
+				if ($DB) {print "|$PTextensions[$i]|$PT_conf_extens[$i]|$COMMAND|\n";}
+				@list_channels = $t->cmd(String => "$COMMAND", Prompt => '/--END COMMAND--/');
+				}
 
 			$j=0;
 			$conf_empty[$i]=0;
@@ -542,12 +594,22 @@ if ( !( ( @PTextensions == 1 ) && ( $PTextensions[0] eq '') ) )
 
 
 $t->buffer_empty;
-@hangup = $t->cmd(String => "Action: Logoff\n\n", Prompt => "/.*/"); 
+@hangup = $t->cmd(String => "Action: Logoff$command_end", Prompt => "/.*/"); 
 $t->buffer_empty;
 $t->waitfor(Match => '/Message:.*\n\n/', Timeout => 10);
 $ok = $t->close;
 
 $dbhA->disconnect();
+
+if($DBX)
+	{
+	open (FILE, '<', "$telnet_log_file") or die "could not open the log file\n";
+	print <FILE>;
+	close (FILE);
+
+	unlink($telnet_log_file) or die "Can't delete $telnet_log_file: $!\n";
+	}
+
 
 if($DB){print "DONE... Exiting... Goodbye... See you later... \n";}
 

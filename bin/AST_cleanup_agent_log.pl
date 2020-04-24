@@ -10,7 +10,7 @@
 #
 # This program only needs to be run by one server
 #
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 60711-0945 - Changed to DBI by Marin Blu
@@ -42,6 +42,7 @@
 # 161102-1033 - Fixed QM partition problem
 # 170609-2356 - Added option for fixing length_in_sec on vicidial_log and vicidial_closer_log records
 # 180102-0111 - Added a check for vicidial_log entries with a user with no vicidial_agent_log entry
+# 200422-1621 - Added optional check for duplicate vicidial_agent_log entries
 #
 
 # constants
@@ -69,6 +70,7 @@ if (length($ARGV[0])>1)
 		print "  [-one-day-ago] = will clean up logs for the last 24-48 hours ago only\n";
 		print "  [-one-minute-run] = short settings for running every minute\n";
 		print "  [-check-complete-pauses] = make sure every complete with a pause has a pausereason\n";
+		print "  [-check-agent-dups] = check for and fix agent log duplicates, ONLY RUN AFTER HOURS!\n";
 		print "  [-check-call-lengths] = will check for too-long call lengths\n";
 		print "  [-skip-queue-log-inserts] = will skip only the queue_log missing record checks\n";
 		print "  [-skip-agent-log-validation] = will skip only the vicidial_agent_log validation\n";
@@ -161,6 +163,11 @@ if (length($ARGV[0])>1)
 			{
 			$check_complete_pauses=1;
 			if ($Q < 1) {print "\n----- CHECK COMPLETE PAUSES -----\n\n";}
+			}
+		if ($args =~ /-check-agent-dups/i)
+			{
+			$check_agent_dups=1;
+			if ($Q < 1) {print "\n----- CHECK FOR AGENT LOG DUPLICATES -----\n\n";}
 			}
 		if ($args =~ /-check-call-lengths/i)
 			{
@@ -1256,6 +1263,89 @@ if ($vl_dup_check > 0)
 ### END check for duplicate vicidial_log entries
 
 
+
+
+### BEGIN optional check for vicidial_agent_log duplicate entries ###
+if ($check_agent_dups > 0)
+	{
+	if ($DB) {print " - vicidial_agent_log duplicate check starting\n";}
+	$stmtA = "SELECT * from ((SELECT user, pause_epoch, count(*) as ct from vicidial_agent_log where ( (pause_sec > 0) or (wait_sec > 0) or (talk_sec > 0) or (dispo_sec > 0) ) $VDAD_SQL_time group by user, pause_epoch) as dupes) where ct>1;";
+	if($DBX){print STDERR "\n|$stmtA|\n";}
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	$i=0;
+	$j=0;
+	$nonDUP=0;
+	while ( ($sthArows > $i) && ($nonDUP < 1) )
+		{
+		@aryA = $sthA->fetchrow_array;
+		if ($aryA[2] > 1)
+			{
+			$dup_user[$j] =			$aryA[0];
+			$dup_pause_epoch[$j] =	$aryA[1];
+			$dup_count[$j] =		$aryA[2];
+			if($DBX){print "     DEBUG: |$dup_user[$j]|$dup_pause_epoch[$j]|$dup_count[$j]|\n";}
+			$j++;
+			}
+		else
+			{
+			$nonDUP++;
+			}
+		$i++;
+		}
+	$sthA->finish();
+
+	# loop through results to look for log entries to delete #
+	$h=0;
+	$VAL_deleted_ct=0;
+	while ($h < $j)
+		{
+		$stmtA = "SELECT agent_log_id,lead_id,pause_sec,wait_epoch,wait_sec,talk_epoch,talk_sec,dispo_epoch,dispo_sec,status,uniqueid,comments from vicidial_agent_log where user='$dup_user[$h]' and pause_epoch='$dup_pause_epoch[$h]';";
+			if ($DBX) {print "$stmtA\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		$i=0;
+		$VAL_agent_log_id='';
+		$VAL_agent_log_output='';
+		while ($sthArows > $i)
+			{
+			@aryA = $sthA->fetchrow_array;
+			if ( ( ($aryA[1] eq 'NULL') || (length($aryA[1]) < 1) ) && ( ($aryA[7] eq 'NULL') || (length($aryA[7]) < 1) ) && ($dup_pause_epoch[$h] eq $aryA[3]) )
+				{
+				if ($DBX) {print "$h $i - BAD:    |$aryA[0]|$aryA[1]|$aryA[2]|$aryA[3]|$aryA[4]|$aryA[5]|$aryA[6]|$aryA[7]|$aryA[8]|$aryA[9]|$aryA[10]|$aryA[11]|\n";}
+				if (length($VAL_agent_log_id)>0) {$VAL_agent_log_id .= ",";}
+				$VAL_agent_log_id .= "'$aryA[0]'";
+				$VAL_agent_log_output .= "|$aryA[0]|$aryA[1]|$aryA[2]|$aryA[3]|$aryA[4]|$aryA[5]|$aryA[6]|$aryA[7]|$aryA[8]|$aryA[9]|$aryA[10]|$aryA[11]|\n";
+				}
+			else
+				{
+				if ($DBX) {print "$h $i - GOOD:   |$aryA[0]|$aryA[1]|$aryA[2]|$aryA[3]|$aryA[4]|$aryA[5]|$aryA[6]|$aryA[7]|$aryA[8]|$aryA[9]|$aryA[10]|$aryA[11]|\n";}
+				}
+			$i++;
+			}
+		$sthA->finish();
+
+		if (length($VAL_agent_log_id)>2)
+			{
+			$stmtA = "DELETE FROM vicidial_agent_log where agent_log_id IN($VAL_agent_log_id);";
+				if($DBX){print STDERR "\n|$stmtA|\n";}
+			if ($TEST < 1)	
+				{
+				$affected_rows = $dbhA->do($stmtA);
+				$VAL_deleted_ct = ($VAL_deleted_ct + $affected_rows);
+				}
+			$event_string = "VAL DELETE: $h|$affected_rows|$stmtA|     $VAL_agent_log_output";
+			&event_logger;
+			}
+
+		$h++;
+		}
+
+	if ($DB) {print STDERR "     vicidial_agent_log records scanned: $h ($j|$nonDUP)   Deleted: $VAL_deleted_ct \n";}
+	}
+### END optional check for vicidial_agent_log duplicate entries ###
 
 
 ### BEGIN check for call lengths longer than 1 day(84600 seconds) and correct them

@@ -5,7 +5,7 @@
 # DESCRIPTION:
 # checks the registered IP address of the phone and updates the phones table
 #
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # 70521-1529 - first build
 # 100625-1220 - Added waitfors after logout to fix broken pipe errors in asterisk <MikeC>
@@ -13,7 +13,7 @@
 # 131210-1305 - Added Asterisk 1.8 compatibility
 # 150610-1200 - Added support for AMI version 1.3
 # 180403-1545 - Updated telnet login process to work with newer Asterisk versions
-#
+# 200413-2156 - Fix for \n\n at the end of PING commands causing errors in AMI
 
 # constants
 $DB=0;  # Debug flag, set to 0 for no debug messages per minute
@@ -157,6 +157,13 @@ $sthA->finish();
 	
 $secX = time();
 
+# determine if we should use a \n\n at the end of the AMI commands
+$command_end = "\n\n";
+%ast_ver_str = parse_asterisk_version($asterisk_version);
+if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} >= 13)) { $command_end = ''; };
+$max_buffer = 4*1024*1024; # 4 meg buffer
+
+
 $BDtarget = ($secX - 86400);
 ($Bsec,$Bmin,$Bhour,$Bmday,$Bmon,$Byear,$Bwday,$Byday,$Bisdst) = localtime($BDtarget);
 $Byear = ($Byear + 1900);
@@ -214,15 +221,29 @@ if ( ($sip_count > 0) || ($agent_lookup < 1) )
 		}
 	$sthA->finish(); 
 
-
+	$t='';
+	$telnet_log_file = '';
 	### connect to asterisk manager through telnet
-	$t = new Net::Telnet (Port => 5038,
-						  Prompt => '/\r\n/',
-						  Output_record_separator => '',);
-
-	##### uncomment both lines below for telnet log
-	#        $LItelnetlog = "$PATHlogs/phone_telnet_log.txt";
-	#        $fh = $t->dump_log("$LItelnetlog");
+	if ($DBX)
+		{
+		$telnet_log_file = "$PATHlogs/AST_phone_telnet_log.$secX";
+		$t = new Net::Telnet (
+			Port => $telnet_port,
+			Prompt => '/\r\n/',
+			Output_record_separator => "\n\n",
+			Max_buffer_length => $max_buffer,
+			Dump_log => $telnet_log_file
+		);
+		}
+	else
+		{
+		$t = new Net::Telnet (
+			Port => $telnet_port,
+			Prompt => '/\r\n/',
+			Output_record_separator => "\n\n",
+			Max_buffer_length => $max_buffer,
+		);
+		}
 
 	if (length($ASTmgrUSERNAMEsend) > 3) {$telnet_login = $ASTmgrUSERNAMEsend;}
 	else {$telnet_login = $ASTmgrUSERNAME;}
@@ -235,8 +256,8 @@ if ( ($sip_count > 0) || ($agent_lookup < 1) )
 	if ($DB) {print "----- AMI Version $ami_version -----\n";}
 
 	# Login
-	$t->print("Action: Login\nUsername: $telnet_login\nSecret: $ASTmgrSECRET\n\n");
-	$t->waitfor('/Authentication accepted/');              # waitfor auth accepted
+	$t->print("Action: Login\nUsername: $telnet_login\nSecret: $ASTmgrSECRET$command_end");
+	$t->waitfor('/Authentication accepted/');	      # waitfor auth accepted
 
 	$t->buffer_empty;
 
@@ -249,11 +270,11 @@ if ( ($sip_count > 0) || ($agent_lookup < 1) )
 		%ast_ver_str = parse_asterisk_version($asterisk_version);
 		if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6))
 			{
-			@list_channels = $t->cmd(String => "Action: Command\nCommand: sip show peer $PTextensions[$i]\n\nAction: Ping\n\n", Prompt => '/Response: Pong.*/'); 
+			@list_channels = $t->cmd(String => "Action: Command\nCommand: sip show peer $PTextensions[$i]\n\nAction: Ping$command_end", Prompt => '/Response: Pong.*/'); 
 			}
 		else
 			{
-			@list_channels = $t->cmd(String => "Action: Command\nCommand: sip show peer $PTextensions[$i]\n\nAction: Ping\n\n", Prompt => '/Response: Success\nPing: Pong.*/'); 
+			@list_channels = $t->cmd(String => "Action: Command\nCommand: sip show peer $PTextensions[$i]\n\nAction: Ping$command_end", Prompt => '/Response: Success\nPing: Pong.*/'); 
 			}
 
 		$j=0;
@@ -299,10 +320,19 @@ if ( ($sip_count > 0) || ($agent_lookup < 1) )
 		}
 
 	$t->buffer_empty;
-	@hangup = $t->cmd(String => "Action: Logoff\n\n", Prompt => "/.*/"); 
+	@hangup = $t->cmd(String => "Action: Logoff$command_end", Prompt => "/.*/"); 
 	$t->buffer_empty;
 	$t->waitfor(Match => '/Message:.*\n\n/', Timeout => 10);
 	$ok = $t->close;
+
+	if($DBX)
+		{
+		open (FILE, '<', "$telnet_log_file") or die "could not open the log file\n";
+		print <FILE>;
+		close (FILE);
+
+		unlink($telnet_log_file) or die "Can't delete $telnet_log_file: $!\n";
+		}
 	}
 ############# END SIP SECTION ################################################
 
@@ -355,14 +385,29 @@ if ( ($iax_count > 0) || ($agent_lookup < 1) )
 	$sthA->finish(); 
 
 
+	$t='';
+	$telnet_log_file = '';
 	### connect to asterisk manager through telnet
-	$t = new Net::Telnet (Port => 5038,
-						  Prompt => '/\r\n/',
-						  Output_record_separator => '',);
-
-	##### uncomment both lines below for telnet log
-	#        $LItelnetlog = "$PATHlogs/phone_telnet_log.txt";
-	#        $fh = $t->dump_log("$LItelnetlog");
+	if ($DBX)
+		{
+		$telnet_log_file = "$PATHlogs/AST_phone_telnet_log.$secX";
+		$t = new Net::Telnet (
+			Port => $telnet_port,
+			Prompt => '/\r\n/',
+			Output_record_separator => "\n\n",
+			Max_buffer_length => $max_buffer,
+			Dump_log => $telnet_log_file
+		);
+		}
+	else
+		{
+		$t = new Net::Telnet (
+			Port => $telnet_port,
+			Prompt => '/\r\n/',
+			Output_record_separator => "\n\n",
+			Max_buffer_length => $max_buffer,
+		);
+		}
 
 	if (length($ASTmgrUSERNAMEsend) > 3) {$telnet_login = $ASTmgrUSERNAMEsend;}
 	else {$telnet_login = $ASTmgrUSERNAME;}
@@ -375,8 +420,8 @@ if ( ($iax_count > 0) || ($agent_lookup < 1) )
 	if ($DB) {print "----- AMI Version $ami_version -----\n";}
 
 	# Login
-	$t->print("Action: Login\nUsername: $telnet_login\nSecret: $ASTmgrSECRET\n\n");
-	$t->waitfor('/Authentication accepted/');              # waitfor auth accepted
+	$t->print("Action: Login\nUsername: $telnet_login\nSecret: $ASTmgrSECRET$command_end");
+	$t->waitfor('/Authentication accepted/');	      # waitfor auth accepted
 
 	$t->buffer_empty;
 
@@ -388,11 +433,11 @@ if ( ($iax_count > 0) || ($agent_lookup < 1) )
 		%ast_ver_str = parse_asterisk_version($asterisk_version);
 		if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6))
 			{
-			@list_channels = $t->cmd(String => "Action: Command\nCommand: iax2 show peer $PTextensions[$i]\n\nAction: Ping\n\n", Prompt => '/Response: Pong.*/'); 
+			@list_channels = $t->cmd(String => "Action: Command\nCommand: iax2 show peer $PTextensions[$i]\n\nAction: Ping$command_end", Prompt => '/Response: Pong.*/'); 
 			}
 		else
 			{
-			@list_channels = $t->cmd(String => "Action: Command\nCommand: iax2 show peer $PTextensions[$i]\n\nAction: Ping\n\n", Prompt => '/Response: Success\nPing: Pong.*/'); 
+			@list_channels = $t->cmd(String => "Action: Command\nCommand: iax2 show peer $PTextensions[$i]\n\nAction: Ping$command_end", Prompt => '/Response: Success\nPing: Pong.*/'); 
 			}
 
 		$j=0;
@@ -438,10 +483,19 @@ if ( ($iax_count > 0) || ($agent_lookup < 1) )
 		}
 
 	$t->buffer_empty;
-	@hangup = $t->cmd(String => "Action: Logoff\n\n", Prompt => "/.*/"); 
+	@hangup = $t->cmd(String => "Action: Logoff$command_end", Prompt => "/.*/"); 
 	$t->buffer_empty;
 	$t->waitfor(Match => '/Message:.*\n\n/', Timeout => 10);
 	$ok = $t->close;
+
+	if($DBX)
+		{
+		open (FILE, '<', "$telnet_log_file") or die "could not open the log file\n";
+		print <FILE>;
+		close (FILE);
+
+		unlink($telnet_log_file) or die "Can't delete $telnet_log_file: $!\n";
+		}
 	}
 ############# END IAX2 SECTION ################################################
 

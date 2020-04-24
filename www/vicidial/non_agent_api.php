@@ -144,10 +144,11 @@
 # 191114-1637 - Added remove_from_hopper option to update_lead function
 # 200331-1207 - Added list_custom_fields function
 # 200418-0837 - Added custom_copy_method option for the add_list function, also added this feature to update_list
+# 200423-0356 - Fix for update_lead --BLANK-- issue
 #
 
-$version = '2.14-121';
-$build = '200418-0837';
+$version = '2.14-122';
+$build = '200423-0356';
 $api_url_log = 0;
 
 $startMS = microtime();
@@ -10645,7 +10646,7 @@ if ($function == 'update_lead')
                         if ( (strlen($update_phone_number)>0 && $update_phone_number=='Y' && strlen($phone_number)>0) ) {$VL_update_SQL .= "phone_number='$phone_number',";}
 						if ( (strlen($entry_list_id)>0) and ($custom_fields!='Y') )	{$VL_update_SQL .= "entry_list_id=\"$entry_list_id\",";}
 						$VL_update_SQL = preg_replace("/,$/","",$VL_update_SQL);
-						$VL_update_SQL = preg_replace("/'--BLANK--'/","''",$VL_update_SQL);
+						$VL_update_SQL = preg_replace("/\"--BLANK--\"/",'""',$VL_update_SQL);
 						$VL_update_SQL = preg_replace("/\n/","!N",$VL_update_SQL);
 
 						$n=0;

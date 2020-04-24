@@ -567,7 +567,7 @@ if ($stage == "log_agent_out")
 		$kick_local_channel = "$local_DEF$VLA_conf_exten$local_AMP$ext_context";
 		$queryCID = "ULGH3457$StarTtimE";
 
-		$stmtC="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$VLA_server_ip','','Originate','$queryCID','Channel: $kick_local_channel','Context: $ext_context','Exten: 8300','Priority: 1','Callerid: $queryCID','','','','$channel','$exten');";
+		$stmtC="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$VLA_server_ip','','Originate','$queryCID','Channel: $kick_local_channel','Context: $ext_context','Exten: 8300','Priority: 1','Callerid: $queryCID','','','','','');";
 		if ($DB) {echo "<BR>$stmtC\n";}
 		$rslt=mysql_to_mysqli($stmtC, $link);
 
