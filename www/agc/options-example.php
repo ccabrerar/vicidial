@@ -1,6 +1,6 @@
 <?php
 # options.php - manually defined options for vicidial.php
-# 
+#
 # Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # rename this file to options.php for the settings here to go into effect
@@ -22,7 +22,7 @@
 $conf_silent_prefix		= '5';	# vicidial_conferences prefix to enter silently and muted for recording
 $dtmf_silent_prefix		= '7';	# vicidial_conferences prefix to enter silently
 $HKuser_level			= '1';	# minimum vicidial user_level for HotKeys
-$campaign_login_list	= '1';	# show drop-down list of campaigns at login	
+$campaign_login_list	= '1';	# show drop-down list of campaigns at login
 $manual_dial_preview	= '1';	# allow preview lead option when manual dial
 $multi_line_comments	= '1';	# set to 1 to allow multi-line comment box
 $user_login_first		= '0';	# set to 1 to have the vicidial_user login before the phone login
@@ -56,7 +56,8 @@ $use_agent_colors		= '1';	# agent chat colors
 $no_empty_session_warnings=0;	# set to 1 to disable empty session warnings on agent screen
 $logged_in_refresh_link = '0';	# set to 1 to allow clickable "Logged in as..." link at top to force Javascript refresh
 $webphone_call_seconds	= '0';	# set to 1 or higher to have the agent phone(if set to webphone) called X seconds after login
-
+$customer_chat_refresh_seconds	= 1;	# How often (in seconds) to refresh customer ang agent chat window
+$manager_chat_refresh_seconds	= 1;	# How often (in seconds) to refresh manager chat window
 $TEST_all_statuses		= '0';	# TEST variable allows all statuses in dispo screen
 
 $stretch_dimensions		= '1';	# sets the vicidial screen to the size of the browser window
