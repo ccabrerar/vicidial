@@ -332,11 +332,11 @@ exten => _86120XX,1,ZapBarge(${EXTEN:5})
 exten => _86120XX,n,Hangup()
 
 ; MeetMe Adjustment Extensions
-exten => _X48600XXX,1,MeetMeAdmin(${EXTEN:2},T,${EXTEN:0:1})
-exten => _X48600XXX,2,Hangup()
+;exten => _X48600XXX,1,MeetMeAdmin(${EXTEN:2},T,${EXTEN:0:1})
+;exten => _X48600XXX,2,Hangup()
 
-exten => _X38600XXX,1,MeetMeAdmin(${EXTEN:2},t,${EXTEN:0:1})
-exten => _X38600XXX,2,Hangup()
+;exten => _X38600XXX,1,MeetMeAdmin(${EXTEN:2},t,${EXTEN:0:1})
+;exten => _X38600XXX,2,Hangup()
 
 exten => _X28600XXX,1,MeetMeAdmin(${EXTEN:2},m,${EXTEN:0:1})
 exten => _X28600XXX,2,Hangup()
