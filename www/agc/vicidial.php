@@ -636,10 +636,11 @@
 # 200406-1205 - Fix for gender custom field population, Issue #1205
 # 200407-1822 - Added Agent Browser Call Alert Sounds
 # 200408-0952 - Small fix for Issue #1188, allow dial override
+# 200425-0948 - Added 2nd option for agentcall_manual to disable FAST DIAL
 #
 
-$version = '2.14-605c';
-$build = '200408-0952';
+$version = '2.14-606c';
+$build = '200425-0948';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=91;
 $one_mysql_log=0;
@@ -2328,7 +2329,7 @@ else
 					}
 				if ($manual_preview_dial == 'DISABLED')
 					{$manual_dial_preview = 0;}
-				if ($manual_dial_override == 'ALLOW_ALL')
+				if ( ($manual_dial_override == 'ALLOW_ALL') and ($agentcall_manual < 1) )
 					{$agentcall_manual = 1;}
 				if ($manual_dial_override == 'DISABLE_ALL')
 					{$agentcall_manual = 0;}
@@ -18606,7 +18607,7 @@ function phone_number_format(formatphone) {
 			if (allow_alerts < 1)
 				{hideDiv('AgentAlertSpan');}
 		//	if ( (agentcall_manual != '1') && (starting_dial_level > 0) )
-			if (agentcall_manual != '1')
+			if (agentcall_manual < 1)
 				{hideDiv('ManuaLDiaLButtons');}
 			if (agent_call_log_view != '1')
 				{
@@ -20694,7 +20695,11 @@ $zi=2;
 <span style="position:absolute;left:0px;top:<?php echo $DBheight ?>px;z-index:<?php $zi++; echo $zi ?>;" id="debugbottomspan"></span>
 
 <span style="position:absolute;left:300px;top:<?php echo $MBheight ?>px;z-index:<?php $zi++; echo $zi ?>;" id="DiaLlOgButtonspan">
-<span id="ManuaLDiaLButtons"><font class="body_text"><span id="MDstatusSpan"><a href="#" onclick="NeWManuaLDiaLCalL('NO','','','','','YES','YES');return false;"><?php echo _QXZ("MANUAL DIAL"); ?></a></span>&nbsp; &nbsp; <a href="#" onclick="NeWManuaLDiaLCalL('FAST','','','','','YES','YES');return false;"><?php echo _QXZ("FAST DIAL"); ?></a></span>&nbsp; &nbsp; </font>
+<span id="ManuaLDiaLButtons"><font class="body_text"><span id="MDstatusSpan"><a href="#" onclick="NeWManuaLDiaLCalL('NO','','','','','YES','YES');return false;"><?php echo _QXZ("MANUAL DIAL"); ?></a></span>&nbsp; &nbsp; 
+<?php if ($agentcall_manual == '1') { ?>
+<a href="#" onclick="NeWManuaLDiaLCalL('FAST','','','','','YES','YES');return false;"><?php echo _QXZ("FAST DIAL"); ?></a>
+<?php } ?>
+</span>&nbsp; &nbsp; </font>
 <span id="CallLogButtons"><font class="body_text"><span id="CallLogLinkSpan"><a href="#" onclick="VieWCalLLoG();return false;"><?php echo _QXZ("VIEW CALL LOG"); ?></a></span><br /></font></span>
 </span>
 

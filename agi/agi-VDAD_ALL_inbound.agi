@@ -82,7 +82,7 @@
 #exten => _99909*.,2,AGI(agi-VDAD_ALL_inbound.agi)
 #exten => _99909*.,3,Hangup
 #
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 70828-0924 - First Build
@@ -234,6 +234,7 @@
 # 190216-0812 - Fix for user-group, in-group and campaign allowed/permissions matching issues
 # 190223-0920 - Added definable play-place-in-line static prompts
 # 191117-2156 - Fix for truncated extension issue #1193
+# 200424-1044 - Fix for incorrect list_id logging
 #
 
 $script = 'agi-VDAD_ALL_inbound.agi';
@@ -640,7 +641,7 @@ if ($call_handle_method =~ /^CLOSER/)
 		$VCcallerid = $callerid;
 		$insert_lead_id = $CIDlead_id;
 
-		$stmtA= "SELECT phone_number,called_count from vicidial_list where lead_id='$insert_lead_id';";
+		$stmtA= "SELECT phone_number,called_count,list_id from vicidial_list where lead_id='$insert_lead_id';";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;
@@ -650,6 +651,7 @@ if ($call_handle_method =~ /^CLOSER/)
 			@aryA = $sthA->fetchrow_array;
 			$phone_number =		$aryA[0];
 			$called_count =		$aryA[1];
+			$list_id =			$aryA[2];
 			$originalCID = $phone_number;
 			} 
 		$sthA->finish();
@@ -1270,11 +1272,11 @@ if ($call_handle_method =~ /LOOKUP/)
 		$cbc=0;
 		if ($call_handle_method =~ /^VID/) 
 			{
-			$stmtA= "SELECT lead_id,called_count from vicidial_list where vendor_lead_code='$vendor_id' $listSQL order by last_local_call_time desc limit 1;";
+			$stmtA= "SELECT lead_id,called_count,list_id from vicidial_list where vendor_lead_code='$vendor_id' $listSQL order by last_local_call_time desc limit 1;";
 			}
 		else 
 			{
-			$stmtA= "SELECT lead_id,called_count from vicidial_list where phone_number='$phone_number' $listSQL order by last_local_call_time desc limit 1;";
+			$stmtA= "SELECT lead_id,called_count,list_id from vicidial_list where phone_number='$phone_number' $listSQL order by last_local_call_time desc limit 1;";
 			}
 		if ($AGILOG) {$agi_string = "VDAD vicidial_list search |$phone_number|$stmtA|";   &agi_output;}
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
@@ -1288,18 +1290,19 @@ if ($call_handle_method =~ /LOOKUP/)
 				@aryA = $sthA->fetchrow_array;
 				$insert_lead_id =	$aryA[0];
 				$called_count =		$aryA[1];
+				$list_id =			$aryA[2];
 				$cbc++;	
 				} 
 			$sthA->finish();
 
-			if ($AGILOG) {$agi_string = "VDAD vicidial_list found |$insert_lead_id|$stmtA|";   &agi_output;}
+			if ($AGILOG) {$agi_string = "VDAD vicidial_list found |$insert_lead_id|$called_count|$list_id|$stmtA|";   &agi_output;}
 			} 
 		else 
 			{
 			$VLfound=0;
 			if ($call_handle_method =~ /ALT/) 
 				{
-				$stmtA= "SELECT lead_id,called_count from vicidial_list where alt_phone='$phone_number' $listSQL order by last_local_call_time desc limit 1;";
+				$stmtA= "SELECT lead_id,called_count,list_id from vicidial_list where alt_phone='$phone_number' $listSQL order by last_local_call_time desc limit 1;";
 					if ($AGILOG) {$agi_string = "VDAD vicidial_list ALT search |$phone_number|$stmtA|";   &agi_output;}
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -1310,14 +1313,15 @@ if ($call_handle_method =~ /LOOKUP/)
 					@aryA = $sthA->fetchrow_array;
 					$insert_lead_id =	$aryA[0];
 					$called_count =		$aryA[1];
+					$list_id =			$aryA[2];
 					$VLfound++;
 					$sthA->finish();
-					if ($AGILOG) {$agi_string = "VDAD vicidial_list ALT found |$insert_lead_id|$stmtA|";   &agi_output;}
+					if ($AGILOG) {$agi_string = "VDAD vicidial_list ALT found |$insert_lead_id|$called_count|$list_id|$stmtA|";   &agi_output;}
 					}
 				}
 			if ( ($call_handle_method =~ /ADDR3/) && ($VLfound < 1) )
 				{
-				$stmtA= "SELECT lead_id,called_count from vicidial_list where address3='$phone_number' $listSQL order by last_local_call_time desc limit 1;";
+				$stmtA= "SELECT lead_id,called_count,list_id from vicidial_list where address3='$phone_number' $listSQL order by last_local_call_time desc limit 1;";
 					if ($AGILOG) {$agi_string = "VDAD vicidial_list ADDR3 search |$phone_number|$stmtA|";   &agi_output;}
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -1328,9 +1332,10 @@ if ($call_handle_method =~ /LOOKUP/)
 					@aryA = $sthA->fetchrow_array;
 					$insert_lead_id =	$aryA[0];
 					$called_count =		$aryA[1];
+					$list_id =			$aryA[2];
 					$VLfound++;
 					$sthA->finish();
-					if ($AGILOG) {$agi_string = "VDAD vicidial_list ADDR3 found |$insert_lead_id|$stmtA|";   &agi_output;}
+					if ($AGILOG) {$agi_string = "VDAD vicidial_list ADDR3 found |$insert_lead_id|$called_count|$list_id|$stmtA|";   &agi_output;}
 					}
 				}
 			if ($VLfound < 1)
@@ -1391,7 +1396,7 @@ if ($call_handle_method =~ /LOOKUP/)
 					}
 				### END the Add-Lead-URL get process
 
-				if ($AGILOG) {$agi_string = "VDAD vicidial_list insert |$insert_lead_id|$stmtA|";   &agi_output;}
+				if ($AGILOG) {$agi_string = "VDAD vicidial_list insert |$insert_lead_id|$list_id|$stmtA|";   &agi_output;}
 				}
 			}
 		}
@@ -1403,7 +1408,7 @@ else
 		{
 		### Grab call lead parameters from vicidial_list table
 		$cbc=0;
-		$stmtA = "SELECT phone_number,phone_code,user,vendor_lead_code,called_count FROM vicidial_list where lead_id='$CIDlead_id' limit 1;";
+		$stmtA = "SELECT phone_number,phone_code,user,vendor_lead_code,called_count,list_id FROM vicidial_list where lead_id='$CIDlead_id' limit 1;";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;
@@ -1419,6 +1424,7 @@ else
 			$fronter =			$aryA[2];
 			$vendor_id =		$aryA[3];
 			$called_count =		$aryA[4];
+			$list_id =			$aryA[5];
 			$cbc++;
 			}
 		$sthA->finish();

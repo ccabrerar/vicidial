@@ -140,9 +140,10 @@
 # 191017-2039 - Added reset of calls_today_filtered fields
 # 200122-0847 - Added CID Groups auto-rotate feature
 # 200422-1544 - Added purging of vicidial_security_event_log table after 7 days
+# 200425-0218 - Added purging of vicidial_lead_messages after 1 day
 #
 
-$build = '200422-1544';
+$build = '200425-0218';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -1853,6 +1854,21 @@ if ($timeclock_end_of_day_NOW > 0)
 		if ($DB) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
 		$sthA->finish();
 		##### END vicidial_security_event_log end of day process removing records older than 7 days #####
+
+
+		##### BEGIN vicidial_lead_messages end of day process removing records older than 1 day #####
+		$stmtA = "DELETE FROM vicidial_lead_messages WHERE call_date < \"$RMSQLdate\";";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows = $sthA->rows;
+		$event_string = "$sthArows rows deleted from vicidial_lead_messages table";
+		if (!$Q) {print "$event_string \n";}
+		if ($teodDB) {&teod_logger;}
+
+		$stmtA = "optimize table vicidial_lead_messages;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		##### END vicidial_lead_messages end of day process removing records older than 1 day #####
 
 
 		##### BEGIN usacan_phone_dialcode_fix funciton #####

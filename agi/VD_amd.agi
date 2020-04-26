@@ -61,6 +61,7 @@
 # 200102-0823 - Added vmm_daily_limit campaign setting
 # 200205-1839 - Fix for list override message
 # 200311-0041 - Added amd_agent_route_options feature
+# 200424-1839 - Added STC(settings-container) and LTT(lead temp table) message playback options
 #
 
 $script = 'VD_amd.agi';
@@ -533,7 +534,7 @@ else
 		$sthA->finish();
 		### Grab vmail forward message values from the database
 		$SQL_group_id=$VD_campaign_id;   $SQL_group_id =~ s/_/\\_/gi;
-		$stmtA = "SELECT am_message_exten,amd_send_to_vmx,waitforsilence_options,survey_recording,campaign_rec_filename,cpd_amd_action,amd_inbound_group,amd_callmenu,cpd_unknown_action,campaign_id,am_message_wildcards,vmm_daily_limit FROM vicidial_campaigns where closer_campaigns LIKE \"% $SQL_group_id %\" order by campaign_id limit 1;";
+		$stmtA = "SELECT am_message_exten,amd_send_to_vmx,waitforsilence_options,survey_recording,campaign_rec_filename,cpd_amd_action,amd_inbound_group,amd_callmenu,cpd_unknown_action,campaign_id,am_message_wildcards,vmm_daily_limit FROM vicidial_campaigns where closer_campaigns LIKE \"% $SQL_group_id %\" order by active,campaign_id limit 1;";
 			if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -767,10 +768,13 @@ else
 			if ($AGILOG) {$agi_string = "--    VDAD vicidial_lead_call_quota_counts AM update: |$affected_rows|$uniqueid|";   &agi_output;}
 			}
 
-		##### BEGIN Check if prompt uses TTS or DYN, if so, create TTS and set the filename to the generated prompt #####
-		if ( ($DB_am_message_exten =~ /^TTS/) || ($DB_am_message_exten =~ /^DYN/) )
+		##### BEGIN Check if prompt uses TTS, STC, LTT or DYN. If so, create TTS and set the filename to the generated prompt #####
+		if ($DB_am_message_exten =~ /^TTS|^STC|^LTT|^DYN/)
 			{
 			$useTTS=0;
+			$useSTC=0;
+			$useLTT=0;
+			# Cepstral Text-To-Speech, vicidial_tts_prompts
 			if ($DB_am_message_exten =~ /^TTS/) 
 				{
 				$useTTS++;
@@ -778,6 +782,23 @@ else
 				$TTS_filename =~s/^TTS//gi;
 				$TTS_filename =~s/\|.*//gi;
 				}
+			# Settings Container entry, vicidial_settings_containers
+			elsif ($DB_am_message_exten =~ /^STC/) 
+				{
+				$useSTC++;
+				$TTS_filename = $DB_am_message_exten;
+				$TTS_filename =~s/^STC//gi;
+				$TTS_filename =~s/\|.*//gi;
+				}
+			# Lead Temp Table entry, vicidial_lead_messages
+			elsif ($DB_am_message_exten =~ /^LTT/) 
+				{
+				$useLTT++;
+				$TTS_filename = $DB_am_message_exten;
+				$TTS_filename =~s/^LTT//gi;
+				$TTS_filename =~s/\|.*//gi;
+				}
+			# dynamic filename lookup
 			else
 				{
 				$TTS_filename = $DB_am_message_exten;
@@ -785,7 +806,7 @@ else
 				$TTS_text = $TTS_filename;
 				}
 
-			if ($AGILOG) {$agi_string = "--    TTS : |$useTTS|$TTS_filename|";   &agi_output;}
+			if ($AGILOG) {$agi_string = "--    TTS : |$useTTS|$useSTC|$useLTT|$TTS_filename|";   &agi_output;}
 
 			$stmtA = "SELECT lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner FROM vicidial_list where lead_id='$VD_lead_id';";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
@@ -828,19 +849,70 @@ else
 				}
 			$sthA->finish();
 
-			$TTS_voice = 'Allison-8kHz';
-			$TTS_text = $TTS_filename;
-			$stmtA = "SELECT tts_text,tts_voice FROM vicidial_tts_prompts where tts_id='$TTS_filename';";
-			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-			$sthArows=$sthA->rows;
-			if ($sthArows > 0)
+			if ($useTTS > 0) 
 				{
-				@aryA = $sthA->fetchrow_array;
-				$TTS_voice =	$aryA[1];
-				$TTS_text =		$aryA[0];
+				$TTS_voice = 'Allison-8kHz';
+				$TTS_text = $TTS_filename;
+				$stmtA = "SELECT tts_text,tts_voice FROM vicidial_tts_prompts where tts_id='$TTS_filename';";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArows=$sthA->rows;
+				if ($sthArows > 0)
+					{
+					@aryA = $sthA->fetchrow_array;
+					$TTS_voice =	$aryA[1];
+					$TTS_text =		$aryA[0];
+					}
+				$sthA->finish();
 				}
-			$sthA->finish();
+			if ($useSTC > 0) 
+				{
+				$TTS_text = $TTS_filename;
+				$stmtA = "SELECT container_entry FROM vicidial_settings_containers where container_id='$TTS_filename';";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArows=$sthA->rows;
+				if ($sthArows > 0)
+					{
+					@aryA = $sthA->fetchrow_array;
+					$TTS_text =		$aryA[0];
+					$TTS_text =~s/^DYN//gi;
+					}
+				$sthA->finish();
+				}
+			if ($useLTT > 0) 
+				{
+				$TTS_text = $TTS_filename;
+				$stmtA = "SELECT message_entry,call_date FROM vicidial_lead_messages where lead_id='$VD_lead_id' order by call_date desc limit 1;";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArows=$sthA->rows;
+				if ($sthArows > 0)
+					{
+					@aryA = $sthA->fetchrow_array;
+					$TTS_text =			$aryA[0];
+					$TTS_call_date =	$aryA[1];
+					}
+				$sthA->finish();
+
+				if ($sthArows > 0)
+					{
+					$stmtA = "UPDATE vicidial_lead_messages SET played=(played+1) where lead_id='$VD_lead_id' and call_date='$TTS_call_date' limit 1;";
+						if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+					$affected_rows = $dbhA->do($stmtA);
+					if ($AGILOG) {$agi_string = "--    VLM vicidial_lead_messages update: |$affected_rows|$stmtA|";   &agi_output;}
+					}
+				else
+					{
+					if ($AGILOG) {$agi_string = "ERROR: VLM no vicidial_lead_messages record found: |$useLTT|$TTS_filename|$VD_lead_id|$callerid|";   &agi_output;}
+
+					$dbhA->disconnect();
+
+					$AGI->hangup($channel);
+
+					exit;
+					}
+				}
 
 			### BEGIN replace variables with record values ###
 			$TTS_text =~ s/--A--lead_id--B--/$TTS_lead_id/gi;
@@ -1425,6 +1497,14 @@ else
 				if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 			$affected_rows = $dbhA->do($stmtA);
 			if ($AGILOG) {$agi_string = "--    VDAD vicidial_lead_call_quota_counts AL update: |$affected_rows|$uniqueid|";   &agi_output;}
+			}
+
+		if ($useLTT > 0) 
+			{
+			$stmtA = "UPDATE vicidial_lead_messages SET played=(played+1) where lead_id='$VD_lead_id' and call_date='$TTS_call_date' limit 1;";
+				if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+			$affected_rows = $dbhA->do($stmtA);
+			if ($AGILOG) {$agi_string = "--    VLM vicidial_lead_messages POST-CALL update: |$affected_rows|$stmtA|";   &agi_output;}
 			}
 		}
 

@@ -4660,12 +4660,13 @@ else
 # 200406-2319 - Small changes to entries_per_page display(w/ display all), also added it for DIDs
 # 200407-1030 - Added browser_call_alerts system setting
 # 200409-1719 - Reorganized Inbound admin section
+# 200425-0949 - Added 2nd option for agentcall_manual to disable FAST DIAL
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-750a';
-$build = '200409-1719';
+$admin_version = '2.14-751a';
+$build = '200425-0949';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -22374,7 +22375,7 @@ if ($ADD==3)
 				echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Scheduled Callbacks").": </td><td align=left><select size=1 name=scheduled_callbacks><option>0</option><option>1</option><option SELECTED>$scheduled_callbacks</option></select>$NWB#users-scheduled_callbacks$NWE</td></tr>\n";
 				echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Agent-Only Callbacks").": </td><td align=left><select size=1 name=agentonly_callbacks><option>0</option><option>1</option><option SELECTED>$agentonly_callbacks</option></select>$NWB#users-agentonly_callbacks$NWE</td></tr>\n";
 				echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Next-Dial My Callbacks Override").": </td><td align=left><select size=1 name=next_dial_my_callbacks><option value='NOT_ACTIVE'>"._QXZ("NOT_ACTIVE")."</option><option value='ENABLED'>"._QXZ("ENABLED")."</option><option value='DISABLED'>"._QXZ("DISABLED")."</option><option value='$next_dial_my_callbacks' SELECTED>"._QXZ("$next_dial_my_callbacks")."</option></select>$NWB#users-next_dial_my_callbacks$NWE</td></tr>\n";
-				echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Agent Call Manual").": </td><td align=left><select size=1 name=agentcall_manual><option>0</option><option>1</option><option SELECTED>$agentcall_manual</option></select>$NWB#users-agentcall_manual$NWE</td></tr>\n";
+				echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Agent Call Manual").": </td><td align=left><select size=1 name=agentcall_manual><option>0</option><option>1</option><option>2</option><option SELECTED>$agentcall_manual</option></select>$NWB#users-agentcall_manual$NWE</td></tr>\n";
 				if ($SSallow_emails > 0) {
 					echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Agent Call Email").": </td><td align=left><select size=1 name=agentcall_email><option>0</option><option>1</option><option SELECTED>$agentcall_email</option></select>$NWB#users-agentcall_email$NWE</td></tr>\n";
 					}
