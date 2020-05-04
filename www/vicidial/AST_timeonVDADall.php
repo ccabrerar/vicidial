@@ -117,10 +117,11 @@
 # 190927-1759 - Fixed PHP7 array issue
 # 191113-2027 - Fixed cached carrier stats bug
 # 200401-1930 - Added option to show more customer info for level 9 users and customize the color chart times
-#
+# 200428-1337 - Added RS_INcolumnsHIDE, RS_report_default_format & RS_AGENTstatusTALLY options.php settings
+# 
 
-$version = '2.14-102';
-$build = '200401-1930';
+$version = '2.14-103';
+$build = '200428-1337';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -244,7 +245,7 @@ $db_source = 'M';
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,agent_whisper_enabled,allow_chats,cache_carrier_stats_realtime,report_default_format,ofcom_uk_drop_calc,enable_pause_code_limits FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,agent_whisper_enabled,allow_chats,cache_carrier_stats_realtime,report_default_format,ofcom_uk_drop_calc,enable_pause_code_limits,timeclock_end_of_day FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
@@ -263,11 +264,10 @@ if ($qm_conf_ct > 0)
 	$SSreport_default_format =		$row[9];
 	$SSofcom_uk_drop_calc =			$row[10];
 	$SSenable_pause_code_limits =	$row[11];
+	$SStimeclock_end_of_day =		$row[12];
 	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
-if (strlen($report_display_type)<2) {$report_display_type = $SSreport_default_format;}
-
 if ( (strlen($slave_db_server)>5) and (preg_match("/$report_name/",$reports_use_slave_db)) )
 	{
 	mysqli_close($link);
@@ -279,11 +279,15 @@ if ( (strlen($slave_db_server)>5) and (preg_match("/$report_name/",$reports_use_
 
 $RS_ListenBarge =		'MONITOR|BARGE|WHISPER';
 $RS_agentWAIT =			3;
+$RS_INcolumnsHIDE =		0;
 
 if (file_exists('options.php'))
 	{
 	require('options.php');
 	}
+
+if (strlen($RS_report_default_format) > 3) {$SSreport_default_format = $RS_report_default_format;}
+if (strlen($report_display_type)<2) {$report_display_type = $SSreport_default_format;}
 
 if (!isset($DB))			{$DB=0;}
 if (!isset($RR))			{$RR=40;}
@@ -2895,7 +2899,18 @@ if ($report_display_type=='TEXT')
 	$HTpause =	'';
 	$HDigcall =			"------+------------------";
 	$HTigcall =			" "._QXZ("HOLD",4)." | "._QXZ("IN-GROUP",8)." ";
-
+	if ($RS_INcolumnsHIDE > 0)
+		{
+		$HDigcall =			'';
+		$HTigcall =			'';
+		}
+	$HDastcall =			'';
+	$HTastcall =			'';
+	if (strlen($RS_AGENTstatusTALLY) > 0)
+		{
+		$HDastcall =			'--------+';
+		$HTastcall =			" "._QXZ("$RS_AGENTstatusTALLY",6)." |";
+		}
 	if ($agent_pause_codes_active > 0)
 		{
 		$HDstatus =			"----------";
@@ -2981,8 +2996,19 @@ if ($report_display_type=='HTML')
 	$HDpause =	'';
 	$HTpause =	'';
 	$HDigcall =			"";
-	$HTigcall =			"<td NOWRAP><font class='top_head_key'>&nbsp; "._QXZ("HOLD")." </td><td NOWRAP><font class='top_head_key'>&nbsp; "._QXZ("IN-GROUP",8)." </td></tr>";
-
+	$HTigcall =			"<td NOWRAP><font class='top_head_key'>&nbsp; "._QXZ("HOLD")." </td><td NOWRAP><font class='top_head_key'>&nbsp; "._QXZ("IN-GROUP",8)." </td>";
+	if ($RS_INcolumnsHIDE > 0)
+		{
+		$HDigcall =			'';
+		$HTigcall =			'';
+		}
+	$HDastcall =			'';
+	$HTastcall =			'';
+	if (strlen($RS_AGENTstatusTALLY) > 0)
+		{
+		$HDastcall =			'';
+		$HTastcall =			"<td NOWRAP><font class='top_head_key'>&nbsp; "._QXZ("$RS_AGENTstatusTALLY",6)." </td>";
+		}
 	if ($agent_pause_codes_active > 0)
 		{
 		$HDstatus =			"";
@@ -3045,13 +3071,13 @@ if ($SERVdisplay < 1)
 
 if ($realtime_block_user_info > 0)
 	{
- 	$Aline  = "$HDbegin$HDusergroup$HDsessionid$HDlisten$HDbarge$HDwhisper$HDstatus$HDpause$HDcustphone$HDcustinfo$HDserver_ip$HDcall_server_ip$HDtime$HDcampaign$HDcalls$HDigcall\n";
- 	$Bline  = "$HTbegin$HTusergroup$HTsessionid$HDlisten$HTbarge$HTwhisper$HTstatus$HTpause$HTcustphone$HTcustinfo$HTserver_ip$HTcall_server_ip$HTtime$HTcampaign$HTcalls$HTigcall\n";
+ 	$Aline  = "$HDbegin$HDusergroup$HDsessionid$HDlisten$HDbarge$HDwhisper$HDstatus$HDpause$HDcustphone$HDcustinfo$HDserver_ip$HDcall_server_ip$HDtime$HDcampaign$HDcallsHDastcall$HDigcall$</tr>\n";
+ 	$Bline  = "$HTbegin$HTusergroup$HTsessionid$HDlisten$HTbarge$HTwhisper$HTstatus$HTpause$HTcustphone$HTcustinfo$HTserver_ip$HTcall_server_ip$HTtime$HTcampaign$HTcalls$HTastcall$HTigcall</tr>\n";
 	}
 else
 	{
- 	$Aline  = "$HDbegin$HDstation$HDphone$HDuser$HDusergroup$HDsessionid$HDlisten$HDbarge$HDwhisper$HDstatus$HDpause$HDcustphone$HDcustinfo$HDserver_ip$HDcall_server_ip$HDtime$HDcampaign$HDcalls$HDigcall\n";
- 	$Bline  = "$HTbegin$HTstation$HTphone$HTuser$HTusergroup$HTsessionid$HTlisten$HTbarge$HTwhisper$HTstatus$HTpause$HTcustphone$HTcustinfo$HTserver_ip$HTcall_server_ip$HTtime$HTcampaign$HTcalls$HTigcall\n";
+ 	$Aline  = "$HDbegin$HDstation$HDphone$HDuser$HDusergroup$HDsessionid$HDlisten$HDbarge$HDwhisper$HDstatus$HDpause$HDcustphone$HDcustinfo$HDserver_ip$HDcall_server_ip$HDtime$HDcampaign$HDcalls$HDastcall$HDigcall</tr>\n";
+ 	$Bline  = "$HTbegin$HTstation$HTphone$HTuser$HTusergroup$HTsessionid$HTlisten$HTbarge$HTwhisper$HTstatus$HTpause$HTcustphone$HTcustinfo$HTserver_ip$HTcall_server_ip$HTtime$HTcampaign$HTcalls$HTastcall$HTigcall</tr>\n";
 	}
 $Aecho .= "$Aline";
 $Aecho .= "$Bline";
@@ -3641,6 +3667,7 @@ if ($talking_to_print > 0)
 			$vac_stage='';
 			$vac_campaign='';
 			$INGRP='';
+			$INORcolor='';
 			if ($CM == 'I') 
 				{
 				$stmt="SELECT vac.campaign_id,vac.stage,vig.group_name,vig.group_id from vicidial_auto_calls vac,vicidial_inbound_groups vig where vac.callerid='$Acallerid[$i]' and vac.campaign_id=vig.group_id LIMIT 1;";
@@ -3648,7 +3675,7 @@ if ($talking_to_print > 0)
 				if ($DB) {echo "$stmt\n";}
 				$ING=$G; $INEG=$EG;
 				$ingrp_to_print = mysqli_num_rows($rslt);
-					if ($ingrp_to_print > 0)
+				if ($ingrp_to_print > 0)
 					{
 					$row=mysqli_fetch_row($rslt);
 					$vac_campaign_id=$row[0];
@@ -3659,13 +3686,44 @@ if ($talking_to_print > 0)
 					$vac_campaign =	sprintf("%-20s", "$row[0] - $row[2]");
 					$row[1] = preg_replace('/.*\-/i', '',$row[1]);
 					$vac_stage =	sprintf("%-4s", $row[1]);
+					$INORcolor = $row[3];
 					
 					if ( ($INGROUPcolorOVERRIDE>0) or ($INGROUPcolorOVERRIDE=='YES') )
 						{
-						$ING='<SPAN class="csc'.$row[3].'"><B>'; $INEG='</B></SPAN>';
+						$ING='<SPAN class="csc'.$INORcolor.'"><B>'; $INEG='</B></SPAN>';
 						}
 					}
 				$INGRP = " $ING$vac_stage$INEG | $ING$vac_campaign$INEG ";
+				if ($RS_INcolumnsHIDE > 0)
+					{
+					$INGRP =			'';
+					}
+				}
+
+			$ASTCT='';
+			if (strlen($RS_AGENTstatusTALLY) > 0)
+				{
+				$AST_ct=0;
+				$SStimeclock_end_of_day_HH = substr($SStimeclock_end_of_day,0,2);
+				$SStimeclock_end_of_day_MM = substr($SStimeclock_end_of_day,2,2);
+				$TCEODdate = date("Y-m-d H:i:s", mktime($SStimeclock_end_of_day_HH,$SStimeclock_end_of_day_MM,0,date("m"),date("d"),date("Y")));
+
+				$stmt="SELECT count(*) from vicidial_agent_log where event_time >= \"$TCEODdate\" and user='$Auser[$i]' and status='$RS_AGENTstatusTALLY';";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				if ($DB) {echo "$stmt\n";}
+				$AST=$G; $ASTG=$EG;
+				$ast_to_print = mysqli_num_rows($rslt);
+				if ($ast_to_print > 0)
+					{
+					$row=mysqli_fetch_row($rslt);
+					$AST_ct =	sprintf("%-6s", $row[0]);
+					
+					if ($INORcolor > 0)
+						{
+						$AST='<SPAN class="csc'.$INORcolor.'"><B>'; $ASTG='</B></SPAN>';
+						}
+					}
+				$ASTCT = " $AST$AST_ct$ASTG |";
 				}
 
 			$agentcount++;
@@ -3674,11 +3732,11 @@ if ($talking_to_print > 0)
 				{
 				if ($realtime_block_user_info > 0)
 					{
-					$Aecho .= "|$UGD $G$sessionid$EG$L$R$Aring_note[$i]| $G"._QXZ("$status",6)."$EG $CM $pausecode|$CP$CI$SVD$G$call_time_MS$EG | $G$campaign_id$EG | $G$calls_today$EG |$INGRP\n";
+					$Aecho .= "|$UGD $G$sessionid$EG$L$R$Aring_note[$i]| $G"._QXZ("$status",6)."$EG $CM $pausecode|$CP$CI$SVD$G$call_time_MS$EG | $G$campaign_id$EG | $G$calls_today$EG |$ASTCT$INGRP\n";
 					}
 				if ($realtime_block_user_info < 1)
 					{
-					$Aecho .= "| $G$extension$EG$Aring_note[$i]|$phoneD<a href=\"./user_status.php?user=$Luser\" target=\"_blank\">$G$user$EG</a> <a href=\"javascript:ingroup_info('$Luser','$j');\">+</a> |$UGD $G$sessionid$EG$L$R | $G"._QXZ("$status",6)."$EG $CM $pausecode|$CP$CI$SVD$G$call_time_MS$EG | $G$campaign_id$EG | $G$calls_today$EG |$INGRP\n";
+					$Aecho .= "| $G$extension$EG$Aring_note[$i]|$phoneD<a href=\"./user_status.php?user=$Luser\" target=\"_blank\">$G$user$EG</a> <a href=\"javascript:ingroup_info('$Luser','$j');\">+</a> |$UGD $G$sessionid$EG$L$R | $G"._QXZ("$status",6)."$EG $CM $pausecode|$CP$CI$SVD$G$call_time_MS$EG | $G$campaign_id$EG | $G$calls_today$EG |$ASTCT$INGRP\n";
 					}
 				}
 
@@ -3738,13 +3796,44 @@ if ($talking_to_print > 0)
 					$vac_campaign =	sprintf("%-20s", "$row[0] - $row[2]");
 					$row[1] = preg_replace('/.*\-/i', '',$row[1]);
 					$vac_stage =	sprintf("%-4s", $row[1]);
+					$INORcolor = $row[3];
 					
 					if ( ($INGROUPcolorOVERRIDE>0) or ($INGROUPcolorOVERRIDE=='YES') )
 						{
-						$ING='<SPAN class="csc'.$row[3].'"><B>'; $INEG='</B></SPAN>';
+						$ING='<SPAN class="csc'.$INORcolor.'"><B>'; $INEG='</B></SPAN>';
 						}
 					}
 				$INGRP = "<td NOWRAP align=right> $ING$vac_stage$INEG </td><td NOWRAP> $ING$vac_campaign$INEG </td>";
+				if ($RS_INcolumnsHIDE > 0)
+					{
+					$INGRP =			'';
+					}
+				}
+
+			$ASTCT='';
+			if (strlen($RS_AGENTstatusTALLY) > 0)
+				{
+				$AST_ct=0;
+				$SStimeclock_end_of_day_HH = substr($SStimeclock_end_of_day,0,2);
+				$SStimeclock_end_of_day_MM = substr($SStimeclock_end_of_day,2,2);
+				$TCEODdate = date("Y-m-d H:i:s", mktime($SStimeclock_end_of_day_HH,$SStimeclock_end_of_day_MM,0,date("m"),date("d"),date("Y")));
+
+				$stmt="SELECT count(*) from vicidial_agent_log where event_time >= \"$TCEODdate\" and user='$Auser[$i]' and status='$RS_AGENTstatusTALLY';";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				if ($DB) {echo "$stmt\n";}
+				$AST=$G; $ASTG=$EG;
+				$ast_to_print = mysqli_num_rows($rslt);
+				if ($ast_to_print > 0)
+					{
+					$row=mysqli_fetch_row($rslt);
+					$AST_ct =	sprintf("%-6s", $row[0]);
+					
+					if ($INORcolor > 0)
+						{
+						$AST='<SPAN class="csc'.$INORcolor.'"><B>'; $ASTG='</B></SPAN>';
+						}
+					}
+				$ASTCT = "<td NOWRAP align=right> $AST$AST_ct$ASTG </td>";
 				}
 
 			$agentcount++;
@@ -3753,11 +3842,11 @@ if ($talking_to_print > 0)
 				{
 				if ($realtime_block_user_info > 0)
 					{
-					$Aecho .= "<tr class='$tr_class'><td NOWRAP>$UGD $G$sessionid$EG$L$R$Aring_note[$i]</td><td NOWRAP align=center> $G"._QXZ("$status",6)."$EG</td><td bgcolor=white align=center><font class='Hblank'>$CM</td>$pausecodeHTML<td NOWRAP align=right>$CP$CI$SVD$G$call_time_MS$EG </td><td NOWRAP align=right> $G$campaign_id$EG </td><td NOWRAP align=right> $G$calls_today$EG </td>$INGRP</tr>\n";
+					$Aecho .= "<tr class='$tr_class'><td NOWRAP>$UGD $G$sessionid$EG$L$R$Aring_note[$i]</td><td NOWRAP align=center> $G"._QXZ("$status",6)."$EG</td><td bgcolor=white align=center><font class='Hblank'>$CM</td>$pausecodeHTML<td NOWRAP align=right>$CP$CI$SVD$G$call_time_MS$EG </td><td NOWRAP align=right> $G$campaign_id$EG </td><td NOWRAP align=right> $G$calls_today$EG </td>$ASTCT$INGRP</tr>\n";
 					}
 				if ($realtime_block_user_info < 1)
 					{
-					$Aecho .= "<tr class='$tr_class'><td NOWRAP> $G$extension$EG$Aring_note[$i]</td><td NOWRAP>$phoneD<a href=\"./user_status.php?user=$Luser\" target=\"_blank\">$G$user$EG</a> <a href=\"javascript:ingroup_info('$Luser','$j');\">$G+$EG</a> </td><td NOWRAP align=right>$UGD $G$sessionid$EG$L$R </td><td NOWRAP align=center> $G"._QXZ("$status",6)."$EG</td><td bgcolor=white align=center><font class='Hblank'>$CM</td>$pausecodeHTML<td NOWRAP align=right>$CP$CI$SVD$G$call_time_MS$EG </td><td NOWRAP align=right> $G$campaign_id$EG </td><td NOWRAP align=right> $G$calls_today$EG </td>$INGRP</tr>\n";
+					$Aecho .= "<tr class='$tr_class'><td NOWRAP> $G$extension$EG$Aring_note[$i]</td><td NOWRAP>$phoneD<a href=\"./user_status.php?user=$Luser\" target=\"_blank\">$G$user$EG</a> <a href=\"javascript:ingroup_info('$Luser','$j');\">$G+$EG</a> </td><td NOWRAP align=right>$UGD $G$sessionid$EG$L$R </td><td NOWRAP align=center> $G"._QXZ("$status",6)."$EG</td><td bgcolor=white align=center><font class='Hblank'>$CM</td>$pausecodeHTML<td NOWRAP align=right>$CP$CI$SVD$G$call_time_MS$EG </td><td NOWRAP align=right> $G$campaign_id$EG </td><td NOWRAP align=right> $G$calls_today$EG </td>$ASTCT$INGRP</tr>\n";
 					}
 				}
 			}

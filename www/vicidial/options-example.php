@@ -25,7 +25,8 @@
 # 190420-1722 - Added RS_ListenBarge
 # 190503-1544 - Added enable_status_mismatch_leadloader_option
 # 190525-2145 - Added RS_agentWAIT option
-# 100115-1157 - Added call report export ALTERNATE_2 header
+# 200115-1157 - Added call report export ALTERNATE_2 header
+# 200428-1336 - Added RS_INcolumnsHIDE, RS_report_default_format & RS_AGENTstatusTALLY options
 #
 
 # used by the realtime_report.php script
@@ -69,7 +70,10 @@ $RS_droppedOFtotal =	0;	# 0=no, 1=yes
 $RS_logoutLINK =		0;	# 0=no, 1=yes
 $RS_ListenBarge =		'MONITOR|BARGE|WHISPER';	# list of listen-related features separated by pipes: "MONITOR|BARGE|WHISPER"
 $RS_agentWAIT =			3;	# 3 or 4
-
+$RS_INcolumnsHIDE =		0;	# 0=no, 1=yes  # whether to hide the 'HOLD' & 'IN-GROUP' columns in the agent detail section
+$RS_report_default_format = '';	# 'TEXT', 'HTML' or '': If set, this will override the System Setting for this report only
+$RS_AGENTstatusTALLY =	'';	# <any valid status>: If set, will look at the number of calls statused by the agent in this status for today
+							# WARNING!!! Using the above option may cause system lag issues, USE WITH CAUTION!
 
 # used by agent reports
 $user_case =			0;		# 1=upper-case, 2-lower-case, 0-no-case-change

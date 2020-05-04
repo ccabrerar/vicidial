@@ -1484,7 +1484,7 @@ function TimeToText($interval)
 		if ($seconds==1) {$return_str.="$seconds "._QXZ("second");}
 		else {$return_str.="$seconds "._QXZ("seconds");}
 		}
-	$return_str=preg_replace('/, $/', $return_str);
+	$return_str=preg_replace('/, $/','', $return_str);
 	return $return_str;
 	}
 function createDateRangeArray($strDateFrom,$strDateTo)

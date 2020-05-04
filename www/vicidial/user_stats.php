@@ -1,7 +1,7 @@
 <?php
 # user_stats.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -60,6 +60,7 @@
 # 180410-1754 - Added Agent lead switch log and manager pause code approval log displays
 # 190310-2206 - Added indication of muted recordings by agent
 # 191013-0843 - Fixes for PHP7
+# 200501-0811 - Added NVAuser option for NVA recordings user column
 #
 
 $startMS = microtime();
@@ -106,6 +107,9 @@ if (isset($_GET["park_rpt"]))				{$park_rpt=$_GET["park_rpt"];}
 	elseif (isset($_POST["park_rpt"]))		{$park_rpt=$_POST["park_rpt"];}
 if (isset($_GET["search_archived_data"]))			{$search_archived_data=$_GET["search_archived_data"];}
 	elseif (isset($_POST["search_archived_data"]))	{$search_archived_data=$_POST["search_archived_data"];}
+if (isset($_GET["NVAuser"]))			{$NVAuser=$_GET["NVAuser"];}
+	elseif (isset($_POST["NVAuser"]))	{$NVAuser=$_POST["NVAuser"];}
+
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
@@ -199,6 +203,7 @@ $begin_date = preg_replace("/'|\"|\\\\|;/","",$begin_date);
 $end_date = preg_replace("/'|\"|\\\\|;/","",$end_date);
 $user = preg_replace("/'|\"|\\\\|;/","",$user);
 $call_status = preg_replace("/'|\"|\\\\|;/","",$call_status);
+$NVAuser = preg_replace("/'|\"|\\\\|;/","",$NVAuser);
 
 if ($call_status != "") 
 	{
@@ -519,10 +524,11 @@ $MAIN.="</TD><TD ALIGN=RIGHT><FONT FACE=\"ARIAL,HELVETICA\" SIZE=2> &nbsp; </TD>
 
 $MAIN.="<TR BGCOLOR=\"#$SSframe_background\"><TD ALIGN=LEFT COLSPAN=2><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2><B> &nbsp; \n";
 
-$download_link="$PHP_SELF?DB=$DB&pause_code_rpt=$pause_code_rpt&park_rpt=$park_rpt&did_id=$did_id&did=$did&begin_date=$begin_date&end_date=$end_date&user=$user&submit=$submit&search_archived_data=$search_archived_data\n";
+$download_link="$PHP_SELF?DB=$DB&pause_code_rpt=$pause_code_rpt&park_rpt=$park_rpt&did_id=$did_id&did=$did&begin_date=$begin_date&end_date=$end_date&user=$user&submit=$submit&search_archived_data=$search_archived_data&NVAuser=$NVAuser\n";
 
 $MAIN.="<form action=$PHP_SELF method=GET name=vicidial_report id=vicidial_report>\n";
 $MAIN.="<input type=hidden name=DB value=\"$DB\">\n";
+$MAIN.="<input type=hidden name=NVAuser value=\"$NVAuser\">\n";
 $MAIN.="<input type=hidden name=did_id value=\"$did_id\">\n";
 $MAIN.="<input type=hidden name=did value=\"$did\">\n";
 $MAIN.="<input type=hidden name=pause_code_rpt value=\"$pause_code_rpt\">\n";
@@ -1395,16 +1401,22 @@ else
 	##### vicidial recordings for this time period #####
 
 	$mute_column='';   $mute_column_csv='';
+	$agent_column='';   $agent_column_csv='';
 	if ($SSmute_recordings > 0)
 		{
 		$mute_column = "<td align=center><font size=2>"._QXZ("MUTE")." &nbsp; </td>";
 		$mute_column_csv = ",\""._QXZ("MUTE")."\"";
 		}
+	if ($NVAuser > 0)
+		{
+		$agent_column = "<td align=center><font size=2>"._QXZ("AGENT")." &nbsp; </td>";
+		$agent_column_csv = ",\""._QXZ("AGENT")."\"";
+		}
 	$MAIN.="<B>"._QXZ("RECORDINGS FOR THIS TIME PERIOD: (10000 record limit)")."&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href='$download_link&file_download=8'>["._QXZ("DOWNLOAD")."]</a></B>\n";
 	$MAIN.="<TABLE width=900 cellspacing=0 cellpadding=1>\n";
-	$MAIN.="<tr><td><font size=1># </td><td align=left><font size=2> "._QXZ("LEAD")."</td><td><font size=2>"._QXZ("DATE/TIME")." </td><td align=left><font size=2>"._QXZ("SECONDS")." </td><td align=left><font size=2> &nbsp; "._QXZ("RECID")."</td><td align=center><font size=2>"._QXZ("FILENAME")."</td><td align=center><font size=2>"._QXZ("LOCATION")." &nbsp; </td>$mute_column</tr>\n";
+	$MAIN.="<tr><td><font size=1># </td>$agent_column<td align=left><font size=2> "._QXZ("LEAD")."</td><td><font size=2>"._QXZ("DATE/TIME")." </td><td align=left><font size=2>"._QXZ("SECONDS")." </td><td align=left><font size=2> &nbsp; "._QXZ("RECID")."</td><td align=center><font size=2>"._QXZ("FILENAME")."</td><td align=center><font size=2>"._QXZ("LOCATION")." &nbsp; </td>$mute_column</tr>\n";
 	$CSV_text8.="\""._QXZ("RECORDINGS FOR THIS TIME PERIOD: (10000 record limit)")."\"\n";
-	$CSV_text8.="\"\",\"#\",\""._QXZ("LEAD")."\",\""._QXZ("DATE/TIME")."\",\""._QXZ("SECONDS")."\",\""._QXZ("RECID")."\",\""._QXZ("FILENAME")."\",\""._QXZ("LOCATION")."\"$mute_column_csv\n";
+	$CSV_text8.="\"\",\"#\"$agent_column_csv,\""._QXZ("LEAD")."\",\""._QXZ("DATE/TIME")."\",\""._QXZ("SECONDS")."\",\""._QXZ("RECID")."\",\""._QXZ("FILENAME")."\",\""._QXZ("LOCATION")."\"$mute_column_csv\n";
 
 	if (strlen($query_call_status) > 5)
 		{
@@ -1457,13 +1469,25 @@ else
 		if ($SSmute_recordings > 0)
 			{
 			$mute_events=0;
-			$stmt="SELECT count(*) from ".$vicidial_agent_function_log." where user='" . mysqli_real_escape_string($link, $user) . "' and event_time >= '$row[4]'  and event_time <= '$row[6]' and function='mute_rec' and lead_id='$row[12]' and stage='on';";
+			$stmt="SELECT count(*) from ".$vicidial_agent_function_log." where user='" . mysqli_real_escape_string($link, $user) . "' and event_time >= '$row[4]' and event_time <= '$row[6]' and function='mute_rec' and lead_id='$row[12]' and stage='on';";
 			$rsltx=mysql_to_mysqli($stmt, $link);
 			$flogs_to_print = mysqli_num_rows($rsltx);
 			if ($flogs_to_print > 0) 
 				{
 				$rowx=mysqli_fetch_row($rsltx);
 				$mute_events = $rowx[0];
+				}
+			}
+		if ($NVAuser > 0)
+			{
+			$agent_user='';
+			$stmt="SELECT user from ".$vicidial_agent_log_table." where lead_id='$row[12]' and event_time <= '$row[4]'  and event_time >= '" . mysqli_real_escape_string($link, $begin_date) . " 0:00:01' order by event_time;";
+			$rsltx=mysql_to_mysqli($stmt, $link);
+			$valogs_to_print = mysqli_num_rows($rsltx);
+			if ($valogs_to_print > 0) 
+				{
+				$rowx=mysqli_fetch_row($rsltx);
+				$agent_user = $rowx[0];
 				}
 			}
 
@@ -1482,8 +1506,14 @@ else
 			{$location = $locat;}
 		$u++;
 		$mute_csv_record='';
+		$NVAuser_csv_record='';
 		$MAIN.="<tr $bgcolor>";
 		$MAIN.="<td><font size=1>$u</td>";
+		if ($NVAuser > 0)
+			{
+			$MAIN.="<td align=right><font size=2> $agent_user &nbsp; </td>\n";
+			$NVAuser_csv_record=",\"$agent_user\"";
+			}
 		$MAIN.="<td align=left><font size=2> <A HREF=\"admin_modify_lead.php?lead_id=$row[12]\" target=\"_blank\">$row[12]</A> </td>";
 		$MAIN.="<td align=left><font size=2> $row[4] </td>\n";
 		$MAIN.="<td align=left><font size=2> $row[8] </td>\n";
@@ -1497,7 +1527,7 @@ else
 			$mute_csv_record=",\"$mute_events\"";
 			}
 		$MAIN.="</tr>\n";
-		$CSV_text8.="\"\",\"$u\",\"$row[12]\",\"$row[4]\",\"$row[8]\",\"$row[0]\",\"$row[10]\",\"$CSV_location\"$mute_csv_record\n";
+		$CSV_text8.="\"\",\"$u\"$NVAuser_csv_record,\"$row[12]\",\"$row[4]\",\"$row[8]\",\"$row[0]\",\"$row[10]\",\"$CSV_location\"$mute_csv_record\n";
 		}
 
 	$MAIN.="</TABLE><BR><BR>\n";

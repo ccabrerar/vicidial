@@ -145,10 +145,11 @@
 # 200331-1207 - Added list_custom_fields function
 # 200418-0837 - Added custom_copy_method option for the add_list function, also added this feature to update_list
 # 200423-0356 - Fix for update_lead --BLANK-- issue
+# 200502-0858 - Fix for update_lead --BLANK-- issue with custom fields
 #
 
-$version = '2.14-122';
-$build = '200423-0356';
+$version = '2.14-123';
+$build = '200502-0858';
 $api_url_log = 0;
 
 $startMS = microtime();
@@ -10190,7 +10191,7 @@ if ($function == 'add_lead')
 
 								if (strlen($CFinsert_SQL)>3)
 									{
-									$CFinsert_SQL = preg_replace("/,$/","",$CFinsert_SQL);
+									$CFinsert_SQL = preg_replace("/\"--BLANK--\"/",'""',$CFinsert_SQL);
 									$custom_table_update_SQL = "INSERT INTO custom_$list_id SET lead_id=$lead_id,$CFinsert_SQL;";
 									if ($DB>0) {echo "$custom_table_update_SQL\n";}
 									$rslt=mysql_to_mysqli($custom_table_update_SQL, $link);
@@ -10963,6 +10964,7 @@ if ($function == 'update_lead')
 												$custom_record_lead_count =	$rowx[0];
 												}
 											$update_SQL = preg_replace("/,$/","",$update_SQL);
+											$update_SQL = preg_replace("/\"--BLANK--\"/",'""',$update_SQL);
 											$custom_table_update_SQL = "INSERT INTO custom_$lead_custom_list SET lead_id='$search_lead_id[$n]',$update_SQL;";
 											if ($custom_record_lead_count > 0)
 												{$custom_table_update_SQL = "UPDATE custom_$lead_custom_list SET $update_SQL where lead_id='$search_lead_id[$n]';";}
@@ -11187,6 +11189,8 @@ if ($function == 'update_lead')
 													if (strlen($force_entry_list_id) > 1)
 														{$temp_entry_list_id = $force_entry_list_id;}
 													$CFinsert_SQL = preg_replace("/,$/","",$CFinsert_SQL);
+
+													$CFinsert_SQL = preg_replace("/\"--BLANK--\"/",'""',$CFinsert_SQL);
 													$custom_table_update_SQL = "INSERT INTO custom_$temp_entry_list_id SET lead_id=$lead_id,$CFinsert_SQL;";
 													$rslt=mysql_to_mysqli($custom_table_update_SQL, $link);
 													$custom_insert_count = mysqli_affected_rows($link);

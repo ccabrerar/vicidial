@@ -48,12 +48,13 @@
 # 190525-2205 - Added rust color definition
 # 190927-1758 - Fixed PHP7 array issue
 # 200401-1930 - Added option to show more customer info to level 9 users
+# 200428-1002 - Added RS_report_default_format options.php setting
 #
 
 $startMS = microtime();
 
-$version = '2.14-35';
-$build = '200401-1930';
+$version = '2.14-36';
+$build = '200428-1002';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -156,7 +157,6 @@ if ($qm_conf_ct > 0)
 	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
-if (strlen($report_display_type)<2) {$report_display_type = $SSreport_default_format;}
 
 $webphone_width =	'460';
 $webphone_height =	'500';
@@ -169,10 +169,14 @@ $webphone_clpos =	"<BR>  &nbsp; <a href=\"#\" onclick=\"hideDiv('webphone_conten
 
 $RS_ListenBarge =		'MONITOR|BARGE|WHISPER';
 
+
 if (file_exists('options.php'))
 	{
 	require('options.php');
 	}
+
+if (strlen($RS_report_default_format) > 3) {$SSreport_default_format = $RS_report_default_format;}
+if (strlen($report_display_type)<2) {$report_display_type = $SSreport_default_format;}
 
 if (!isset($DB)) 
 	{
