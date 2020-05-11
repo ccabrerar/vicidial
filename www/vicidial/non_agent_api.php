@@ -146,10 +146,11 @@
 # 200418-0837 - Added custom_copy_method option for the add_list function, also added this feature to update_list
 # 200423-0356 - Fix for update_lead --BLANK-- issue
 # 200502-0858 - Fix for update_lead --BLANK-- issue with custom fields
+# 200508-1503 - Fix for PHP7 issues
 #
 
-$version = '2.14-123';
-$build = '200502-0858';
+$version = '2.14-124';
+$build = '200508-1503';
 $api_url_log = 0;
 
 $startMS = microtime();
@@ -1065,6 +1066,14 @@ if ($function == 'sounds_list')
 
 			$dh = opendir($dirpath);
 			if ($DB>0) {echo "DEBUG: sounds_list variables - $dirpath|$stage|$format\n";}
+
+			$file_names=array();
+			$file_namesPROMPT=array();
+			$file_epoch=array();
+			$file_dates=array();
+			$file_sizes=array();
+			$file_sizesPAD=array();
+
 			while (false !== ($file = readdir($dh))) 
 				{
 				# Do not list subdirectories
@@ -1282,6 +1291,11 @@ if ($function == 'moh_list')
 			echo "<td>"._QXZ("Random")."</td>\n";
 			echo "</tr>\n";
 
+			$rowx=array();
+			$moh_id=array();
+			$moh_name=array();
+			$random=array();
+
 			$stmt="SELECT moh_id,moh_name,random from vicidial_music_on_hold where active='Y' $LOGadmin_viewable_groupsSQL order by moh_id";
 			$rslt=mysql_to_mysqli($stmt, $link);
 			$moh_to_print = mysqli_num_rows($rslt);
@@ -1321,7 +1335,6 @@ if ($function == 'moh_list')
 					$MOHfiles .=	"$rowx[0] &nbsp; ";
 					$m++;
 					}
-
 
 				echo "<tr $bgcolor><td colspan=2 width=100><font size=1 face=\"Arial,Helvetica\">&nbsp;</td>\n";
 				echo "<td colspan=3 width=590><font size=2 face=\"Arial,Helvetica\">Files: </font><font size=1 face=\"Arial,Helvetica\">$MOHfiles</td></tr>\n";
@@ -1424,6 +1437,12 @@ if ($function == 'vm_list')
 		echo "<td>"._QXZ("Name")."</td>\n";
 		echo "<td>"._QXZ("Email")."</td>\n";
 		echo "</tr>\n";
+
+		$rowx=array();
+		$voicemail_id=array();
+		$fullname=array();
+		$email=array();
+		$extension=array();
 
 		$stmt="SELECT voicemail_id,fullname,email from vicidial_voicemail where active='Y' $LOGadmin_viewable_groupsSQL order by voicemail_id";
 		$rslt=mysql_to_mysqli($stmt, $link);
@@ -1644,6 +1663,8 @@ if ($function == 'agent_ingroup_info')
 						$in_groups = explode(" ",$in_groups_pre);
 						$in_groups_ct = count($in_groups);
 						$k=1;
+						$closer_select=array();
+
 						while ($k < $closer_groups_ct)
 							{
 							$closer_select[$k]=0;
@@ -5183,6 +5204,16 @@ if ($function == 'list_custom_fields')
 						else
 							{$listSQL = "list_id > 0";}
 						}
+
+					$OUTlist_name=array();
+					$OUTcampaign_id=array();
+					$OUTactive=array();
+					$OUTlist_changedate=array();
+					$OUTlist_lastcalldate=array();
+					$OUTexpiration_date=array();
+					$OUTresets_today=array();
+					$OUTlist_id=array();
+
 					$stmt="SELECT list_name,campaign_id,active,list_changedate,list_lastcalldate,expiration_date,resets_today,list_id from vicidial_lists where $listSQL $LOGallowed_campaignsSQL order by list_id;";
 					if ($DB>0) {echo "|$stmt|\n";}
 					$rslt=mysql_to_mysqli($stmt, $link);
@@ -5230,6 +5261,7 @@ if ($function == 'list_custom_fields')
 							$rslt=mysql_to_mysqli($stmtA, $link);
 							if ($DB) {echo "$stmtA\n";}
 							$columns_ct = mysqli_num_rows($rslt);
+							$column=array();
 							while ($columns_ct > $cf)
 								{
 								$row=mysqli_fetch_row($rslt);
@@ -6860,6 +6892,12 @@ if ($function == 'did_log_export')
 						{$DL='|';   $stage='pipe';}
 					if ($header == 'YES')
 						{$output .= 'did_number' . $DL . 'call_date' . $DL . 'caller_id_number' . $DL . "length_in_sec\n";}
+					$DLuniqueid=array();
+					$DLcall_date=array();
+					$DLcaller_id_number=array();
+					$DLepoch=array();
+					$DLlength_in_sec=array();
+					$DLcloser_epoch=array();
 
 					while ($rec_recs > $k)
 						{
@@ -7014,6 +7052,17 @@ if ($function == 'phone_number_log')
 					{$DL = '|';   $DLset++;}
 				if ($DLset < 1)
 					{$DL='|';   $stage='pipe';}
+
+				$DLphone_number=array();
+				$DLcall_date=array();
+				$DLlist_id=array();
+				$DLlead_id=array();
+				$DLlength_in_sec=array();
+				$DLdispo_status=array();
+				$DLhangup_reason=array();
+				$DLlead_status=array();
+				$DLsource_id=array();
+				$DLuser=array();
 
 				while($phones_count > $m)
 					{
@@ -7250,6 +7299,21 @@ if ($function == 'agent_stats_export')
 						{$time_format = 'HF';}
 					if ($header == 'YES')
 						{$output .= 'user' . $DL . 'full_name' . $DL . 'user_group' . $DL . 'calls' . $DL . 'login_time' . $DL . 'total_talk_time' . $DL . 'avg_talk_time' . $DL . 'avg_wait_time' . $DL . 'pct_of_queue' . $DL . 'pause_time' . $DL . 'sessions' . $DL . 'avg_session' . $DL . 'pauses' . $DL . 'avg_pause_time' . $DL . 'pause_pct' . $DL . 'pauses_per_session' . "\n";}
+
+					$ASuser=array();
+					$ASstart_epoch=array();
+					$AScalls=array();
+					$ASpauses=array();
+					$ASsessions=array();
+					$ASpause_sec=array();
+					$ASwait_sec=array();
+					$AStalk_sec=array();
+					$ASdispo_sec=array();
+					$ASdead_sec=array();
+					$ASend_epoch=array();
+					$ASend_sec=array();
+					$ASfull_name=array();
+					$ASuser_group=array();
 
 					$last_user='998877665544332211328497';
 					$total_calls=0;
@@ -7498,6 +7562,8 @@ if ($function == 'user_group_status')
 				$total_calls_waiting=0;
 				$call_camps[0]='';
 				$call_types[0]='';
+				$call_camps=array();
+				$call_types=array();
 
 				$callerids='';
 				$pausecode='';
@@ -7766,6 +7832,8 @@ if ($function == 'in_group_status')
 				$total_agents_in_dial=0;
 				$total_calls=0;
 				$total_calls_waiting=0;
+				$call_camps=array();
+				$call_types=array();
 				$call_camps[0]='';
 				$call_types[0]='';
 
@@ -9147,6 +9215,7 @@ if ($function == 'lead_status_search')
 				$leads_exist = mysqli_num_rows($rslt);
 				$x=0;
 				$lead_id_list="'0'";
+				$export_lead_id=array();
 				while ($leads_exist > $x)
 					{
 					$row=mysqli_fetch_row($rslt);
@@ -10533,6 +10602,9 @@ if ($function == 'update_lead')
 					$rslt=mysql_to_mysqli($stmt, $link);
 					$pc_recs = mysqli_num_rows($rslt);
 					$n=0;
+					$search_lead_id=array();
+					$search_lead_list=array();
+					$search_entry_list=array();
 					while ($pc_recs > $n)
 						{
 						$row=mysqli_fetch_row($rslt);
@@ -11779,6 +11851,20 @@ if ($function == 'logged_in_agents')
 					{$header_sub_status = $DL . 'pause_code' . $DL . 'sub_status';}
 				$output .= 'user' . $DL . 'campaign_id' . $DL . 'session_id' . $DL . 'status' . $DL . 'lead_id' . $DL . 'callerid' . $DL . 'calls_today' . $DL . 'full_name' . $DL . 'user_group' . $DL . 'user_level' . $header_sub_status . "\n";
 				}
+			$Astatus=array();
+			$Acallerid=array();
+			$Alead_id=array();
+			$Acampaign_id=array();
+			$Acalls_today=array();
+			$Aagent_log_id=array();
+			$Aon_hook_agent=array();
+			$Aring_callerid=array();
+			$Apreview_lead_id=array();
+			$Aconf_exten=array();
+			$Auser=array();
+			$Acomments=array();
+			$Apause_code=array();
+			$Artr_status=array();
 
 			$stmt="SELECT status,callerid,lead_id,campaign_id,calls_today,agent_log_id,on_hook_agent,ring_callerid,preview_lead_id,conf_exten,user,comments from vicidial_live_agents $whereLOGallowed_campaignsSQL $search_CAMP_SQL;";
 			$rslt=mysql_to_mysqli($stmt, $link);

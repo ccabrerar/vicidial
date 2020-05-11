@@ -49,12 +49,13 @@
 # 190927-1758 - Fixed PHP7 array issue
 # 200401-1930 - Added option to show more customer info to level 9 users
 # 200428-1002 - Added RS_report_default_format options.php setting
+# 200506-1633 - Added RS_CUSTINFOminUL options.php setting
 #
 
 $startMS = microtime();
 
-$version = '2.14-36';
-$build = '200428-1002';
+$version = '2.14-37';
+$build = '200506-1633';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -238,6 +239,11 @@ if (!isset($CUSTINFOdisplay))
 	if (!isset($RS_CUSTINFOdisplay)) {$CUSTINFOdisplay=0;}
 	else {$CUSTINFOdisplay = $RS_CUSTINFOdisplay;}
 	}
+if (isset($RS_CUSTINFOminUL)) 
+	{
+	$CUSTINFOminUL = $RS_CUSTINFOminUL;
+	}
+else {$CUSTINFOminUL = 9;}
 if (!isset($PAUSEcodes)) 
 	{
 	if (!isset($RS_PAUSEcodes)) {$PAUSEcodes='N';}
@@ -1974,7 +1980,7 @@ if (!preg_match("/WALL/",$report_display_type))
 	else
 		{echo " &nbsp; &nbsp; &nbsp; <a href=\"#\" onclick=\"update_variables('CUSTPHONEdisplay','');\"><font class=\"top_settings_val\"><span id=CUSTPHONEdisplayTXT>"._QXZ("SHOW CUSTPHONES")."</span></font></a>";}
 	
-	if ($LOGuser_level >= 9) 
+	if ($LOGuser_level >= $CUSTINFOminUL) 
 		{
 		if ($CUSTINFOdisplay>0)
 			{echo " &nbsp; &nbsp; &nbsp; <a href=\"#\" onclick=\"update_variables('CUSTINFOdisplay','');\"><font class=\"top_settings_val\"><span id=CUSTINFOdisplayTXT>"._QXZ("HIDE CUST INFO")."</span></font></a>";}

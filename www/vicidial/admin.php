@@ -4661,12 +4661,13 @@ else
 # 200407-1030 - Added browser_call_alerts system setting
 # 200409-1719 - Reorganized Inbound admin section
 # 200425-0949 - Added 2nd option for agentcall_manual to disable FAST DIAL
+# 200508-1024 - Added feature to Call Menus to allow copying of previous option
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-751a';
-$build = '200425-0949';
+$admin_version = '2.14-752a';
+$build = '200508-1024';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -33142,7 +33143,10 @@ if ($ADD==3511)
 			$modify_url = "$PHP_SELF?ADD=3511&menu_id=$menu_id";
 			$modify_footer_refresh=1;
 			}
-		echo "<TABLE><TR><TD>\n";
+		$temp_section_width = $section_width;
+		if ($temp_section_width < 850) {$temp_section_width = 850;}
+		$temp_main_section_width = ($temp_section_width + 50);
+		echo "<TABLE WIDTH=$temp_main_section_width><TR><TD>\n";
 		echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 
 		$stmt="SELECT menu_name,menu_prompt,menu_timeout,menu_timeout_prompt,menu_invalid_prompt,menu_repeat,menu_time_check,call_time_id,track_in_vdac,custom_dialplan_entry,tracking_group,dtmf_log,dtmf_field,user_group,qualify_sql,alt_dtmf_log,question from vicidial_call_menu where menu_id='$menu_id' $LOGadmin_viewable_groupsSQL;";
@@ -33169,7 +33173,7 @@ if ($ADD==3511)
 		echo "<br>"._QXZ("MODIFY A CALL MENU RECORD").": $menu_id<form action=$PHP_SELF method=POST name=admin_form id=admin_form>\n";
 		echo "<input type=hidden name=ADD value=4511>\n";
 		echo "<input type=hidden name=menu_id value=\"$menu_id\">\n";
-		echo "<center><TABLE width=$section_width cellspacing=3>\n";
+		echo "<center><TABLE width=$temp_section_width cellspacing=3>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Menu ID").": </td><td align=left>$menu_id $NWB#call_menu-menu_id$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Menu Name").": </td><td align=left><input type=text name=menu_name size=40 maxlength=50 value=\"$menu_name\">$NWB#call_menu-menu_name$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
@@ -33294,7 +33298,7 @@ if ($ADD==3511)
 			$option_route_value =			$Aoption_route_value[$j];
 			$option_route_value_context =	$Aoption_route_value_context[$j];
 
-			$dtmf_list = "<select size=1 name=option_value_$j>";
+			$dtmf_list = "<select size=1 name=option_value_$j id=option_value_$j>";
 			$h=0;
 			while ($h <= 20)
 				{
@@ -33313,7 +33317,7 @@ if ($ADD==3511)
 
 			echo "<tr $bgcolor><td align=CENTER colspan=2> 
 			"._QXZ("Option").": $dtmf_list &nbsp; 
-			"._QXZ("Description").": <input type=text name=option_description_$j size=40 maxlength=255 value=\"$option_description\"> 
+			"._QXZ("Description").": <input type=text name=option_description_$j id=option_description_$j size=40 maxlength=255 value=\"$option_description\"> 
 			"._QXZ("Route").": <select size=1 name=option_route_$j id=option_route_$j onChange=\"call_menu_option('$j','$option_route','$option_route_value','$option_route_value_context','$choose_height');\">
 				<option value='CALLMENU'>"._QXZ("CALLMENU")."</option>
 				<option value='INGROUP'>"._QXZ("INGROUP")."</option>
@@ -33326,8 +33330,12 @@ if ($ADD==3511)
 				<option value='AGI'>"._QXZ("AGI")."</option>
 				<option value=\"\">* "._QXZ("REMOVE")." *</option>
 				<option selected value=\"$option_route\">$option_route</option>
-			</select>		$NWB#call_menu-option_value$NWE <BR>
+			</select>		$NWB#call_menu-option_value$NWE ";
+			
+			if ($j > 0) {echo "<span id='cm_copy_$j' name='cm_copy_$j' onclick=\"copy_prev_cm_option('$j','$choose_height');\"><font size=1><u>copy ^</u></font></span> ";}
+			else {echo "<span id='cm_copy_$j' name='cm_copy_$j'><font size=1> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </font></span> ";}
 
+			echo "<BR>
 			<span id=\"option_value_value_context_$j\" name=\"option_value_value_context_$j\">\n";
 
 			if ($option_route=='CALLMENU')
@@ -33412,7 +33420,7 @@ if ($ADD==3511)
 		while ($j <= 20)
 			{
 			$choose_height = (($j * 100) + 550);
-			$dtmf_list = "<select size=1 name=option_value_$j><option value=\"\"></option>";
+			$dtmf_list = "<select size=1 name=option_value_$j id=option_value_$j><option value=\"\"></option>";
 			$h=0;
 			while ($h <= 20)
 				{
@@ -33428,7 +33436,7 @@ if ($ADD==3511)
 
 			echo "<tr $bgcolor><td align=CENTER colspan=2> 
 			"._QXZ("Option").": $dtmf_list &nbsp; 
-			"._QXZ("Description").": <input type=text name=option_description_$j size=40 maxlength=255 value=\"\">  
+			"._QXZ("Description").": <input type=text name=option_description_$j id=option_description_$j size=40 maxlength=255 value=\"\">  
 			"._QXZ("Route").": <select size=1 name=option_route_$j id=option_route_$j onChange=\"call_menu_option('$j','','','','$choose_height');\">
 				<option value='CALLMENU'>"._QXZ("CALLMENU")."</option>
 				<option value='INGROUP'>"._QXZ("INGROUP")."</option>
@@ -33441,8 +33449,12 @@ if ($ADD==3511)
 				<option value='AGI'>"._QXZ("AGI")."</option>
 				<option SELECTED value=\"\"> </option>
 			</select> 
-			$NWB#call_menu-option_value$NWE <BR>
+			$NWB#call_menu-option_value$NWE ";
+			
+			if ($j > 0) {echo "<span id='cm_copy_$j' name='cm_copy_$j' onclick=\"copy_prev_cm_option('$j','$choose_height');\"><font size=1><u>copy ^</u></font></span> ";}
+			else {echo "<span id='cm_copy_$j' name='cm_copy_$j'><font size=1> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </font></span> ";}
 
+			echo "<BR>
 			<span id=\"option_value_value_context_$j\" name=\"option_value_value_context_$j\">\n";
 			echo "</span>
 			<BR> &nbsp; </td></tr>\n";

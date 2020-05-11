@@ -118,10 +118,11 @@
 # 191113-2027 - Fixed cached carrier stats bug
 # 200401-1930 - Added option to show more customer info for level 9 users and customize the color chart times
 # 200428-1337 - Added RS_INcolumnsHIDE, RS_report_default_format & RS_AGENTstatusTALLY options.php settings
-# 
+# 200506-1642 - Added RS_CUSTINFOminUL options.php setting
+#
 
-$version = '2.14-103';
-$build = '200428-1337';
+$version = '2.14-104';
+$build = '200506-1642';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -773,6 +774,13 @@ while ($i < $ingroups_to_print)
 	}
 
 if (!isset($RR))   {$RR=4;}
+
+if (isset($RS_CUSTINFOminUL)) 
+	{
+	$CUSTINFOminUL = $RS_CUSTINFOminUL;
+	}
+else {$CUSTINFOminUL = 9;}
+if ($LOGuser_level < $CUSTINFOminUL) {$CUSTINFOdisplay=0;}
 
 $NFB = '<b><font size=6 face="courier">';
 $NFE = '</font></b>';

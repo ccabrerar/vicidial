@@ -302,10 +302,16 @@ function f_tcalRelDate (d_date, d_diff, s_units) {
 	return ' onclick="A_TCALS[\'' + this.s_id + '\'].f_update(' + d_result.valueOf() + ')"';
 }
 
-function f_tcalHideAll () {
-	for (var i = 0; i < window.A_TCALSIDX.length; i++)
-		window.A_TCALSIDX[i].f_hide();
-}	
+function f_tcalHideAll () 
+	{
+	if (!window.A_TCALSIDX)
+		{var nothing=1;}
+	else
+		{
+		for (var i = 0; i < window.A_TCALSIDX.length; i++)
+			{window.A_TCALSIDX[i].f_hide();}
+		}
+	}
 
 function f_tcalResetTime (d_date) {
 	d_date.setHours(0);

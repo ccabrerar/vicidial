@@ -27,6 +27,7 @@
 # 190525-2145 - Added RS_agentWAIT option
 # 200115-1157 - Added call report export ALTERNATE_2 header
 # 200428-1336 - Added RS_INcolumnsHIDE, RS_report_default_format & RS_AGENTstatusTALLY options
+# 200506-1628 - Added RS_CUSTINFOdisplay & RS_CUSTINFOminUL options
 #
 
 # used by the realtime_report.php script
@@ -61,6 +62,8 @@ $RS_SERVdisplay =		0;	# 0=no, 1=yes
 $RS_CALLSdisplay =		1;	# 0=no, 1=yes
 $RS_PHONEdisplay =		0;	# 0=no, 1=yes
 $RS_CUSTPHONEdisplay =	0;	# 0=no, 1=yes
+$RS_CUSTINFOdisplay =	0;	# 0=no, 1=yes
+$RS_CUSTINFOminUL =		9;	# 7-9 (minimum user level to use CUST INFO option)
 $RS_PAUSEcodes =		'N';
 $RS_with_inbound =		'Y';
 $RS_CARRIERstats =		0;	# 0=no, 1=yes

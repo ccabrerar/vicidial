@@ -83,6 +83,7 @@
 # 200206-2314 - Added password length indicator
 # 200407-1534 - Added play_browser_sound javascript function for campaigns/ingroups
 # 200409-1720 - Reorganized the Inbound section
+# 200508-1052 - Added copy_prev_cm_option() JS function
 #
 
 $stmt="SELECT admin_home_url,enable_tts_integration,callcard_enabled,custom_fields_enabled,allow_emails,level_8_disable_add,allow_chats,enable_languages,admin_row_click,admin_screen_colors,user_new_lead_limit,user_territories_active,qc_features_active,agent_soundboards,enable_drop_lists,allow_ip_lists from system_settings;";
@@ -1105,9 +1106,9 @@ if ( ($ADD==3511) or ($ADD==2511) or ($ADD==2611) or ($ADD==4511) or ($ADD==5511
 				}
 
 			new_content = '<input type=hidden name=option_route_value_context_' + option + ' id=option_route_value_context_' + option + ' value="' + selected_value + '">';
-			new_content = new_content + '<span name=option_route_link_' + option + 'id=option_route_link_' + option + '>';
+			new_content = new_content + '<span name="option_route_link_' + option + '" id="option_route_link_' + option + '">';
 			new_content = new_content + "<a href=\"admin.php?ADD=3111&group_id=" + value + "\"><?php echo _QXZ("In-Group"); ?>:</a> </span>";
-			new_content = new_content + '<select size=1 name=option_route_value_' + option + ' id=option_route_value_' + option + ' onChange="call_menu_link("' + option + '","INGROUP");">';
+			new_content = new_content + '<select size=1 name=option_route_value_' + option + ' id=option_route_value_' + option + " onChange=\"call_menu_link('" + option + "','INGROUP');\">";
 			new_content = new_content + '' + ingroup_list + "\n" + selected_value + '<option>DYNAMIC_INGROUP_VAR</option></select>';
 			new_content = new_content + " &nbsp; <?php echo _QXZ("Handle Method"); ?>: <select size=1 name=IGhandle_method_" + option + ' id=IGhandle_method_' + option + '>';
 			new_content = new_content + '' + IGhandle_method_list + "\n" + '<option SELECTED>' + IGhandle_method + '</select>';
@@ -1214,13 +1215,237 @@ if ( ($ADD==3511) or ($ADD==2511) or ($ADD==2611) or ($ADD==4511) or ($ADD==5511
 			}
 
 		if (new_content.length < 1)
-			{new_content = selected_route}
+			{new_content = selected_value}
 
 		span_to_update.innerHTML = new_content;
 		}
 
+	function copy_prev_cm_option(item_number,item_height)
+		{
+		var prev_item_number = (item_number - 1)
+
+		var temp_option_value = 'option_value_' + item_number;
+		var temp_option_description = 'option_description_' + item_number;
+		var temp_option_route = 'option_route_' + item_number;
+		var temp_option_route_value = 'option_route_value_' + item_number;
+		var temp_option_route_value_context = 'option_route_value_context_' + item_number;
+
+		var temp_prev_option_value = 'option_value_' + prev_item_number;
+		var temp_prev_option_description = 'option_description_' + prev_item_number;
+		var temp_prev_option_route = 'option_route_' + prev_item_number;
+		var temp_prev_option_route_value = 'option_route_value_' + prev_item_number;
+		var temp_prev_option_route_value_context = 'option_route_value_context_' + prev_item_number;
+
+		var temp_ValIndex = document.getElementById(temp_prev_option_value).selectedIndex;
+		var temp_ValLength = document.getElementById(temp_prev_option_value).length;
+		var temp_ValValue =  document.getElementById(temp_prev_option_value).options[temp_ValIndex].value;
+		var temp_ValNewLength = document.getElementById(temp_option_value).length;
+		var NEWtemp_ValIndex = (temp_ValIndex + 1);
+		if (temp_ValNewLength >= 21) 
+			{
+			if (temp_ValNewLength > temp_ValLength) 
+				{
+				NEWtemp_ValIndex = (NEWtemp_ValIndex + 1);
+				}
+			if (NEWtemp_ValIndex > 21) {NEWtemp_ValIndex=1;}
+			}
+		else
+			{
+			if (NEWtemp_ValIndex > 20) {NEWtemp_ValIndex=0;}
+			}
+		document.getElementById(temp_option_value).selectedIndex = NEWtemp_ValIndex;
+
+		var temp_optionIndex = document.getElementById(temp_prev_option_route).selectedIndex;
+		var temp_optionValue =  document.getElementById(temp_prev_option_route).options[temp_optionIndex].value;
+
+		var rIndex = 0;
+		if (temp_optionValue == 'CALLMENU') {rIndex = 0;}
+		if (temp_optionValue == 'INGROUP') {rIndex = 1;}
+		if (temp_optionValue == 'DID') {rIndex = 2;}
+		if (temp_optionValue == 'HANGUP') {rIndex = 3;}
+		if (temp_optionValue == 'EXTENSION') {rIndex = 4;}
+		if (temp_optionValue == 'PHONE') {rIndex = 5;}
+		if (temp_optionValue == 'VOICEMAIL') {rIndex = 6;}
+		if (temp_optionValue == 'VMAIL_NO_INST') {rIndex = 7;}
+		document.getElementById(temp_option_route).selectedIndex = rIndex;
+		document.getElementById(temp_option_description).value = document.getElementById(temp_prev_option_description).value;
+
+		call_menu_option(item_number,temp_optionValue,'','',item_height);
+
+		if ( (temp_optionValue == 'CALLMENU') || (temp_optionValue == 'DID') || (temp_optionValue == 'PHONE') )
+			{
+			var temp_prev_optionVal = document.getElementById(temp_prev_option_route_value);
+			var temp_prev_optionValIndex = temp_prev_optionVal.selectedIndex;
+			var temp_prev_optionValValue = temp_prev_optionVal.options[temp_prev_optionValIndex].value;
+
+			var temp_optionVal = document.getElementById(temp_option_route_value);
+			var temp_optionValIndex = 0;
+			var temp_optionValLength = temp_optionVal.length;
+			var temp_counter=0; 
+			while (temp_counter < temp_optionValLength)
+				{
+				if (temp_prev_optionValValue == temp_optionVal.options[temp_counter].value)
+					{temp_optionValIndex = temp_counter;}
+
+				temp_counter++;
+				}
+			document.getElementById(temp_option_route_value).selectedIndex = temp_optionValIndex;
+
+			if ( (temp_optionValue == 'CALLMENU') || (temp_optionValue == 'DID') )
+				{
+				call_menu_link(item_number,temp_optionValue);
+				}
+			}
+
+		if ( (temp_optionValue == 'HANGUP') || (temp_optionValue == 'VOICEMAIL') || (temp_optionValue == 'VMAIL_NO_INST') )
+			{
+			var temp_prev_optionVal = document.getElementById(temp_prev_option_route_value);
+			var temp_optionVal = document.getElementById(temp_option_route_value);
+
+			temp_optionVal.value = temp_prev_optionVal.value;
+			}
+
+		if (temp_optionValue == 'EXTENSION') 
+			{
+			var temp_prev_optionVal = document.getElementById(temp_prev_option_route_value);
+			var temp_optionVal = document.getElementById(temp_option_route_value);
+			var temp_prev_optionValContext = document.getElementById(temp_prev_option_route_value_context);
+			var temp_optionValContext = document.getElementById(temp_option_route_value_context);
+
+			temp_optionVal.value = temp_prev_optionVal.value;
+			temp_optionValContext.value = temp_prev_optionValContext.value;
+			}
+
+		if (temp_optionValue == 'INGROUP') 
+			{
+			// In-Group select list
+			var temp_prev_optionVal = document.getElementById(temp_prev_option_route_value);
+			var temp_prev_optionValIndex = temp_prev_optionVal.selectedIndex;
+			var temp_prev_optionValValue = temp_prev_optionVal.options[temp_prev_optionValIndex].value;
+
+			var temp_optionVal = document.getElementById(temp_option_route_value);
+			var temp_optionValIndex = 0;
+			var temp_optionValLength = temp_optionVal.length;
+			var temp_counter=0; 
+			while (temp_counter < temp_optionValLength)
+				{
+				if (temp_prev_optionValValue == temp_optionVal.options[temp_counter].value)
+					{temp_optionValIndex = temp_counter;}
+
+				temp_counter++;
+				}
+			document.getElementById(temp_option_route_value).selectedIndex = temp_optionValIndex;
+			call_menu_link(item_number,temp_optionValue);
+
+			// In-Group Handle Method
+			var temp2_option_route_value = 'IGhandle_method_' + item_number;
+			var temp2_prev_option_route_value = 'IGhandle_method_' + prev_item_number;
+
+			var temp2_prev_optionVal = document.getElementById(temp2_prev_option_route_value);
+			var temp2_prev_optionValIndex = temp2_prev_optionVal.selectedIndex;
+			var temp2_prev_optionValValue = temp2_prev_optionVal.options[temp2_prev_optionValIndex].value;
+
+			var temp2_optionVal = document.getElementById(temp2_option_route_value);
+			var temp2_optionValIndex = 0;
+			var temp2_optionValLength = temp2_optionVal.length;
+			var temp2_counter=0; 
+			while (temp2_counter < temp2_optionValLength)
+				{
+				if (temp2_prev_optionValValue == temp2_optionVal.options[temp2_counter].value)
+					{temp2_optionValIndex = temp2_counter;}
+
+				temp2_counter++;
+				}
+			document.getElementById(temp2_option_route_value).selectedIndex = temp2_optionValIndex;
+
+			// In-Group Search Method
+			var temp3_option_route_value = 'IGsearch_method_' + item_number;
+			var temp3_prev_option_route_value = 'IGsearch_method_' + prev_item_number;
+
+			var temp3_prev_optionVal = document.getElementById(temp3_prev_option_route_value);
+			var temp3_prev_optionValIndex = temp3_prev_optionVal.selectedIndex;
+			var temp3_prev_optionValValue = temp3_prev_optionVal.options[temp3_prev_optionValIndex].value;
+
+			var temp3_optionVal = document.getElementById(temp3_option_route_value);
+			var temp3_optionValIndex = 0;
+			var temp3_optionValLength = temp3_optionVal.length;
+			var temp3_counter=0; 
+			while (temp3_counter < temp3_optionValLength)
+				{
+				if (temp3_prev_optionValValue == temp3_optionVal.options[temp3_counter].value)
+					{temp3_optionValIndex = temp3_counter;}
+
+				temp3_counter++;
+				}
+			document.getElementById(temp3_option_route_value).selectedIndex = temp3_optionValIndex;
+
+			// In-Group Campaign
+			var temp4_option_route_value = 'IGcampaign_id_' + item_number;
+			var temp4_prev_option_route_value = 'IGcampaign_id_' + prev_item_number;
+
+			var temp4_prev_optionVal = document.getElementById(temp4_prev_option_route_value);
+			var temp4_prev_optionValIndex = temp4_prev_optionVal.selectedIndex;
+			var temp4_prev_optionValValue = temp4_prev_optionVal.options[temp4_prev_optionValIndex].value;
+
+			var temp4_optionVal = document.getElementById(temp4_option_route_value);
+			var temp4_optionValIndex = 0;
+			var temp4_optionValLength = temp4_optionVal.length;
+			var temp4_counter=0; 
+			while (temp4_counter < temp4_optionValLength)
+				{
+				if (temp4_prev_optionValValue == temp4_optionVal.options[temp4_counter].value)
+					{temp4_optionValIndex = temp4_counter;}
+
+				temp4_counter++;
+				}
+			document.getElementById(temp4_option_route_value).selectedIndex = temp4_optionValIndex;
+
+			// In-Group List ID
+			var temp5 = 'IGlist_id_' + item_number;
+			var temp5_prev = 'IGlist_id_' + prev_item_number;
+			var temp5_optionVal = document.getElementById(temp5);
+			var temp5_prev_optionVal = document.getElementById(temp5_prev);
+			temp5_optionVal.value = temp5_prev_optionVal.value;
+
+			// In-Group Phone Code
+			var temp6 = 'IGphone_code_' + item_number;
+			var temp6_prev = 'IGphone_code_' + prev_item_number;
+			var temp6_optionVal = document.getElementById(temp6);
+			var temp6_prev_optionVal = document.getElementById(temp6_prev);
+			temp6_optionVal.value = temp6_prev_optionVal.value;
+
+			// In-Group VID Enter Filename
+			var temp7 = 'IGvid_enter_filename_' + item_number;
+			var temp7_prev = 'IGvid_enter_filename_' + prev_item_number;
+			var temp7_optionVal = document.getElementById(temp7);
+			var temp7_prev_optionVal = document.getElementById(temp7_prev);
+			temp7_optionVal.value = temp7_prev_optionVal.value;
+
+			// In-Group VID ID Number Filename
+			var temp8 = 'IGvid_id_number_filename_' + item_number;
+			var temp8_prev = 'IGvid_id_number_filename_' + prev_item_number;
+			var temp8_optionVal = document.getElementById(temp8);
+			var temp8_prev_optionVal = document.getElementById(temp8_prev);
+			temp8_optionVal.value = temp8_prev_optionVal.value;
+
+			// In-Group VID Confirm Filename
+			var temp9 = 'IGvid_confirm_filename_' + item_number;
+			var temp9_prev = 'IGvid_confirm_filename_' + prev_item_number;
+			var temp9_optionVal = document.getElementById(temp9);
+			var temp9_prev_optionVal = document.getElementById(temp9_prev);
+			temp9_optionVal.value = temp9_prev_optionVal.value;
+
+			// In-Group VID Digits
+			var temp10 = 'IGvid_validate_digits_' + item_number;
+			var temp10_prev = 'IGvid_validate_digits_' + prev_item_number;
+			var temp10_optionVal = document.getElementById(temp10);
+			var temp10_prev_optionVal = document.getElementById(temp10_prev);
+			temp10_optionVal.value = temp10_prev_optionVal.value;
+			}
+		}
 	<?php
 	}
+
 
 ### Javascript for dynamic in-group option value entries
 if ( ($ADD==2811) or ($ADD==3811) or ($ADD==3111) or ($ADD==2111) or ($ADD==2011) or ($ADD==4111) or ($ADD==5111) )
