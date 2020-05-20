@@ -637,10 +637,12 @@
 # 200407-1822 - Added Agent Browser Call Alert Sounds
 # 200408-0952 - Small fix for Issue #1188, allow dial override
 # 200425-0948 - Added 2nd option for agentcall_manual to disable FAST DIAL
+# 200512-1005 - Added hide_relogin_fields URL variable feature
+# 200515-1352 - Disable volume controls for Asterisk 13 servers, added options.php override setting(ast13_volume_override)
 #
 
-$version = '2.14-606c';
-$build = '200425-0948';
+$version = '2.14-608c';
+$build = '200515-1352';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=91;
 $one_mysql_log=0;
@@ -683,7 +685,11 @@ if (isset($_GET["LOGINvarFOUR"]))				{$LOGINvarFOUR=$_GET["LOGINvarFOUR"];}
         elseif (isset($_POST["LOGINvarFOUR"]))	{$LOGINvarFOUR=$_POST["LOGINvarFOUR"];}
 if (isset($_GET["LOGINvarFIVE"]))				{$LOGINvarFIVE=$_GET["LOGINvarFIVE"];}
         elseif (isset($_POST["LOGINvarFIVE"]))	{$LOGINvarFIVE=$_POST["LOGINvarFIVE"];}
-if (!isset($phone_login))
+
+if (isset($_GET["hide_relogin_fields"]))				{$hide_relogin_fields=$_GET["hide_relogin_fields"];}
+        elseif (isset($_POST["hide_relogin_fields"]))	{$hide_relogin_fields=$_POST["hide_relogin_fields"];}
+
+if (!isset($phone_login)) 
 	{
 	if (isset($_GET["pl"]))            {$phone_login=$_GET["pl"];}
 		elseif (isset($_POST["pl"]))   {$phone_login=$_POST["pl"];}
@@ -718,6 +724,7 @@ $LOGINvarTWO=preg_replace("/[^-_0-9a-zA-Z]/","",$LOGINvarTWO);
 $LOGINvarTHREE=preg_replace("/[^-_0-9a-zA-Z]/","",$LOGINvarTHREE);
 $LOGINvarFOUR=preg_replace("/[^-_0-9a-zA-Z]/","",$LOGINvarFOUR);
 $LOGINvarFIVE=preg_replace("/[^-_0-9a-zA-Z]/","",$LOGINvarFIVE);
+$hide_relogin_fields=preg_replace("/[^-_0-9a-zA-Z]/","",$hide_relogin_fields);
 
 $forever_stop=0;
 
@@ -850,6 +857,7 @@ $local_consult_xfers	= '1';	# set to 1 to send consultative transfers from origi
 $clientDST				= '1';	# set to 1 to check for DST on server for agent time
 $no_delete_sessions		= '1';	# set to 1 to not delete sessions at logout
 $volumecontrol_active	= '1';	# set to 1 to allow agents to alter volume of channels
+$ast13_volume_override	= '1';	# set to 1 to allow agent to use volume controls even on Asterisk 13 servers
 $PreseT_DiaL_LinKs		= '0';	# set to 1 to show a DIAL link for Dial Presets
 $LogiNAJAX				= '1';	# set to 1 to do lookups on campaigns for login
 $HidEMonitoRSessionS	= '1';	# set to 1 to hide remote monitoring channels from "session calls"
@@ -1250,12 +1258,34 @@ if ($relogin == 'YES')
     echo "<input type=\"hidden\" name=\"LOGINvarTHREE\" id=\"LOGINvarTHREE\" value=\"$LOGINvarTHREE\" />\n";
     echo "<input type=\"hidden\" name=\"LOGINvarFOUR\" id=\"LOGINvarFOUR\" value=\"$LOGINvarFOUR\" />\n";
     echo "<input type=\"hidden\" name=\"LOGINvarFIVE\" id=\"LOGINvarFIVE\" value=\"$LOGINvarFIVE\" />\n";
+	if (preg_match("/^YES$|^READONLY_LOGIN$|^READONLY_LOGINPHONE$/",$hide_relogin_fields))
+		{
+	    echo "<input type=\"hidden\" name=\"hide_relogin_fields\" id=\"hide_relogin_fields\" value=\"$hide_relogin_fields\" />\n";
+	    echo "<input type=\"hidden\" name=\"phone_login\" id=\"phone_login\" value=\"$phone_login\" />\n";
+	    echo "<input type=\"hidden\" name=\"phone_pass\" id=\"phone_pass\" value=\"$phone_pass\" />\n";
+	    echo "<input type=\"hidden\" name=\"VD_login\" id=\"VD_login\" value=\"$VD_login\" />\n";
+	    echo "<input type=\"hidden\" name=\"VD_pass\" id=\"VD_pass\" value=\"$VD_pass\" />\n";
+		}
     echo "<br /><br /><br /><center><table width=\"460px\" cellpadding=\"3\" cellspacing=\"0\" bgcolor=\"#$SSframe_background\"><tr bgcolor=\"white\">";
     echo "<td align=\"left\" valign=\"bottom\" bgcolor=\"#$SSmenu_background\" width=\"170\"><img src=\"$selected_logo\" border=\"0\" height=\"45\" width=\"170\" alt=\"Agent Screen\" /></td>";
     echo "<td align=\"center\" valign=\"middle\" bgcolor=\"#$SSmenu_background\"> <font class=\"sh_text_white\">"._QXZ("Re-Login")."</font> </td>";
     echo "</tr>\n";
     echo "<tr><td align=\"left\" colspan=\"2\"><font size=\"1\"> &nbsp; </font></td></tr>\n";
+	if (preg_match("/^READONLY_LOGIN$/",$hide_relogin_fields))
+		{
+		echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("User Login").":</font>  </td>";
+		echo "<td align=\"left\"><b>$VD_login</b></td></tr>\n";
+		}
+	if (preg_match("/^READONLY_LOGINPHONE$/",$hide_relogin_fields))
+		{
+		echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("User Login").":</font>  </td>";
+		echo "<td align=\"left\"><b>$VD_login</b></td></tr>\n";
     echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("Phone Login:")."</font> </td>";
+		echo "<td align=\"left\"><b>$phone_login</b></td></tr>\n";
+		}
+	if (!preg_match("/^YES$|^READONLY_LOGIN$|^READONLY_LOGINPHONE$/",$hide_relogin_fields))
+		{
+		echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("Phone Login:")."</font> </td>";
     echo "<td align=\"left\"><input type=\"text\" name=\"phone_login\" size=\"10\" maxlength=\"20\" value=\"$phone_login\" /></td></tr>\n";
     echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("Phone Password:")."</font>  </td>";
     echo "<td align=\"left\"><input type=\"password\" name=\"phone_pass\" size=\"10\" maxlength=\"20\" value=\"$phone_pass\" /></td></tr>\n";
@@ -1263,6 +1293,7 @@ if ($relogin == 'YES')
     echo "<td align=\"left\"><input type=\"text\" name=\"VD_login\" size=\"10\" maxlength=\"20\" value=\"$VD_login\" /></td></tr>\n";
     echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("User Password:")."</font>  </td>";
     echo "<td align=\"left\"><input type=\"password\" name=\"VD_pass\" size=\"10\" maxlength=\"20\" value=\"$VD_pass\" /></td></tr>\n";
+		}
     echo "<tr><td align=\"right\" valign=\"top\"><font class=\"skb_text\">"._QXZ("Campaign:")."</font>  </td>";
     echo "<td align=\"left\"><font class=\"skb_text\"><span id=\"LogiNCamPaigns\">$camp_form_code</span></font></td></tr>\n";
     echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";
@@ -1298,6 +1329,7 @@ if ($user_login_first == 1)
 		echo "<input type=\"hidden\" name=\"LOGINvarTHREE\" id=\"LOGINvarTHREE\" value=\"$LOGINvarTHREE\" />\n";
 		echo "<input type=\"hidden\" name=\"LOGINvarFOUR\" id=\"LOGINvarFOUR\" value=\"$LOGINvarFOUR\" />\n";
 		echo "<input type=\"hidden\" name=\"LOGINvarFIVE\" id=\"LOGINvarFIVE\" value=\"$LOGINvarFIVE\" />\n";
+		echo "<input type=\"hidden\" name=\"hide_relogin_fields\" id=\"hide_relogin_fields\" value=\"$hide_relogin_fields\" />\n";
         echo "<center><br /><b>"._QXZ("User Login")."</b><br /><br />";
         echo "<table width=\"460px\" cellpadding=\"3\" cellspacing=\"0\" bgcolor=\"#$SSframe_background\"><tr bgcolor=\"white\">";
         echo "<td align=\"left\" valign=\"bottom\" bgcolor=\"#$SSmenu_background\" width=\"170\"><img src=\"$selected_logo\" border=\"0\" height=\"45\" width=\"170\" alt=\"Agent Screen\" /></td>";
@@ -1350,6 +1382,7 @@ if ($user_login_first == 1)
 				echo "<input type=\"hidden\" name=\"LOGINvarTHREE\" id=\"LOGINvarTHREE\" value=\"$LOGINvarTHREE\" />\n";
 				echo "<input type=\"hidden\" name=\"LOGINvarFOUR\" id=\"LOGINvarFOUR\" value=\"$LOGINvarFOUR\" />\n";
 				echo "<input type=\"hidden\" name=\"LOGINvarFIVE\" id=\"LOGINvarFIVE\" value=\"$LOGINvarFIVE\" />\n";
+				echo "<input type=\"hidden\" name=\"hide_relogin_fields\" id=\"hide_relogin_fields\" value=\"$hide_relogin_fields\" />\n";
                 echo "<br /><br /><br /><center><table width=\"460px\" cellpadding=\"3\" cellspacing=\"0\"  bgcolor=\"#$SSframe_background\"><tr bgcolor=\"white\">";
                 echo "<td align=\"left\" valign=\"bottom\" bgcolor=\"#$SSmenu_background\" width=\"170\"><img src=\"$selected_logo\" border=\"0\" height=\"45\" width=\"170\" alt=\"Agent Screen\" /></td>";
                 echo "<td align=\"center\" valign=\"middle\" bgcolor=\"#$SSmenu_background\"> <font class=\"sh_text_white\">"._QXZ("Login")."</font> </td>";
@@ -1397,6 +1430,7 @@ if ( (strlen($phone_login)<2) or (strlen($phone_pass)<2) )
     echo "<input type=\"hidden\" name=\"LOGINvarTHREE\" id=\"LOGINvarTHREE\" value=\"$LOGINvarTHREE\" />\n";
     echo "<input type=\"hidden\" name=\"LOGINvarFOUR\" id=\"LOGINvarFOUR\" value=\"$LOGINvarFOUR\" />\n";
     echo "<input type=\"hidden\" name=\"LOGINvarFIVE\" id=\"LOGINvarFIVE\" value=\"$LOGINvarFIVE\" />\n";
+	echo "<input type=\"hidden\" name=\"hide_relogin_fields\" id=\"hide_relogin_fields\" value=\"$hide_relogin_fields\" />\n";
     echo "<br /><br /><br /><center><table width=\"460px\" cellpadding=\"3\" cellspacing=\"0\" bgcolor=\"#$SSframe_background\"><tr bgcolor=\"white\">";
     echo "<td align=\"left\" valign=\"bottom\" bgcolor=\"#$SSmenu_background\" width=\"170\"><img src=\"$selected_logo\" border=\"0\" height=\"45\" width=\"170\" alt=\"Agent Screen\" /></td>";
     echo "<td align=\"center\" valign=\"middle\" bgcolor=\"#$SSmenu_background\"> <font class=\"sh_text_white\">"._QXZ("phone login")."</font> </td>";
@@ -1701,6 +1735,7 @@ else
                     $VDdisplayMESSAGE.= "<input type=\"hidden\" name=\"LOGINvarTHREE\" id=\"LOGINvarTHREE\" value=\"$LOGINvarTHREE\" />\n";
                     $VDdisplayMESSAGE.= "<input type=\"hidden\" name=\"LOGINvarFOUR\" id=\"LOGINvarFOUR\" value=\"$LOGINvarFOUR\" />\n";
                     $VDdisplayMESSAGE.= "<input type=\"hidden\" name=\"LOGINvarFIVE\" id=\"LOGINvarFIVE\" value=\"$LOGINvarFIVE\" />\n";
+                    $VDdisplayMESSAGE.= "<input type=\"hidden\" name=\"hide_relogin_fields\" id=\"hide_relogin_fields\" value=\"$hide_relogin_fields\" />\n";
                     $VDdisplayMESSAGE.= "Manager Login: <input type=\"text\" name=\"MGR_login$loginDATE\" size=\"10\" maxlength=\"20\" /><br />\n";
                     $VDdisplayMESSAGE.= "Manager Password: <input type=\"password\" name=\"MGR_pass$loginDATE\" size=\"10\" maxlength=\"20\" /><br />\n";
                     $VDdisplayMESSAGE.= "<input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /></form>\n";
@@ -1792,6 +1827,7 @@ else
 				echo "<input type=\"hidden\" name=\"LOGINvarTHREE\" id=\"LOGINvarTHREE\" value=\"$LOGINvarTHREE\" />\n";
 				echo "<input type=\"hidden\" name=\"LOGINvarFOUR\" id=\"LOGINvarFOUR\" value=\"$LOGINvarFOUR\" />\n";
 				echo "<input type=\"hidden\" name=\"LOGINvarFIVE\" id=\"LOGINvarFIVE\" value=\"$LOGINvarFIVE\" />\n";
+				echo "<input type=\"hidden\" name=\"hide_relogin_fields\" id=\"hide_relogin_fields\" value=\"$hide_relogin_fields\" />\n";
                 echo "<font class=\"skb_text\">"._QXZ("Login").": <input type=\"text\" name=\"VD_login\" size=\"10\" maxlength=\"20\" value=\"$VD_login\" />\n<br />";
                 echo "<font class=\"skb_text\">"._QXZ("Password").": <input type=\"password\" name=\"VD_pass\" size=\"10\" maxlength=\"20\" value=\"$VD_pass\" /><br />\n";
                 echo "<font class=\"skb_text\">"._QXZ("Campaign").": <span id=\"LogiNCamPaigns\">$camp_form_code</span><br />\n";
@@ -2807,6 +2843,7 @@ else
 		echo "<input type=\"hidden\" name=\"LOGINvarTHREE\" id=\"LOGINvarTHREE\" value=\"$LOGINvarTHREE\" />\n";
 		echo "<input type=\"hidden\" name=\"LOGINvarFOUR\" id=\"LOGINvarFOUR\" value=\"$LOGINvarFOUR\" />\n";
 		echo "<input type=\"hidden\" name=\"LOGINvarFIVE\" id=\"LOGINvarFIVE\" value=\"$LOGINvarFIVE\" />\n";
+		echo "<input type=\"hidden\" name=\"hide_relogin_fields\" id=\"hide_relogin_fields\" value=\"$hide_relogin_fields\" />\n";
         echo "<center><br /><b>$VDdisplayMESSAGE</b><br /><br />";
         echo "<table width=\"460px\" cellpadding=\"3\" cellspacing=\"0\" bgcolor=\"#$SSframe_background\"><tr bgcolor=\"white\">";
         echo "<td align=\"left\" valign=\"bottom\" bgcolor=\"#$SSmenu_background\" width=\"170\"><img src=\"$selected_logo\" border=\"0\" height=\"45\" width=\"170\" alt=\"Agent Screen\" /></td>";
@@ -2913,6 +2950,7 @@ else
 		echo "<input type=\"hidden\" name=\"LOGINvarTHREE\" id=\"LOGINvarTHREE\" value=\"$LOGINvarTHREE\" />\n";
 		echo "<input type=\"hidden\" name=\"LOGINvarFOUR\" id=\"LOGINvarFOUR\" value=\"$LOGINvarFOUR\" />\n";
 		echo "<input type=\"hidden\" name=\"LOGINvarFIVE\" id=\"LOGINvarFIVE\" value=\"$LOGINvarFIVE\" />\n";
+		echo "<input type=\"hidden\" name=\"hide_relogin_fields\" id=\"hide_relogin_fields\" value=\"$hide_relogin_fields\" />\n";
         echo "<br /><br /><br /><center><table width=\"460px\" cellpadding=\"3\" cellspacing=\"0\" bgcolor=\"#$SSframe_background\"><tr bgcolor=\"white\">";
         echo "<td align=\"left\" valign=\"bottom\" bgcolor=\"#$SSmenu_background\" width=\"170\"><img src=\"$selected_logo\" border=\"0\" height=\"45\" width=\"170\" alt=\"Agent Screen\" /></td>";
         echo "<td align=\"center\" valign=\"middle\" bgcolor=\"#$SSmenu_background\"> <font class=\"sh_text_white\">"._QXZ("Login Error")."</font></td>";
@@ -3201,6 +3239,15 @@ else
 		$external_web_socket_url =	$row[2];
 		if ( ($use_external_server_ip=='Y') and (strlen($external_web_socket_url) > 5) )
 			{$web_socket_url = $external_web_socket_url;}
+		$major_version = explode('.',$asterisk_version);
+		if ($major_version[0] >= 13)
+			{
+			if ( ($volumecontrol_active > 0) and ($ast13_volume_override < 1) )
+				{
+				echo "<!-- ASTERISK 13 VOLUME CONTROLS DISABLED:  |$asterisk_version($major_version[0])|$volumecontrol_active|$ast13_volume_override| -->\n";
+				$volumecontrol_active=0;
+				}
+			}
 
 		if ($protocol == 'EXTERNAL')
 			{
@@ -3781,6 +3828,7 @@ else
 			echo "<input type=\"hidden\" name=\"LOGINvarTHREE\" id=\"LOGINvarTHREE\" value=\"$LOGINvarTHREE\" />\n";
 			echo "<input type=\"hidden\" name=\"LOGINvarFOUR\" id=\"LOGINvarFOUR\" value=\"$LOGINvarFOUR\" />\n";
 			echo "<input type=\"hidden\" name=\"LOGINvarFIVE\" id=\"LOGINvarFIVE\" value=\"$LOGINvarFIVE\" />\n";
+			echo "<input type=\"hidden\" name=\"hide_relogin_fields\" id=\"hide_relogin_fields\" value=\"$hide_relogin_fields\" />\n";
             echo "<font class=\"skb_text\">"._QXZ("Login:")." <input type=\"text\" name=\"VD_login\" size=\"10\" maxlength=\"20\" value=\"$VD_login\" />\n<br />";
             echo "<font class=\"skb_text\">"._QXZ("Password:")." <input type=\"password\" name=\"VD_pass\" size=\"10\" maxlength=\"20\" value=\"$VD_pass\" /><br />\n";
             echo "<font class=\"skb_text\">"._QXZ("Campaign:")." <span id=\"LogiNCamPaigns\">$camp_form_code</span><br />\n";
@@ -3813,6 +3861,7 @@ else
 			echo "<input type=\"hidden\" name=\"LOGINvarTHREE\" id=\"LOGINvarTHREE\" value=\"$LOGINvarTHREE\" />\n";
 			echo "<input type=\"hidden\" name=\"LOGINvarFOUR\" id=\"LOGINvarFOUR\" value=\"$LOGINvarFOUR\" />\n";
 			echo "<input type=\"hidden\" name=\"LOGINvarFIVE\" id=\"LOGINvarFIVE\" value=\"$LOGINvarFIVE\" />\n";
+			echo "<input type=\"hidden\" name=\"hide_relogin_fields\" id=\"hide_relogin_fields\" value=\"$hide_relogin_fields\" />\n";
             echo "<font class=\"skb_text\">"._QXZ("Login:")." <input type=\"text\" name=\"VD_login\" size=\"10\" maxlength=\"20\" value=\"$VD_login\" />\n<br />";
             echo "<font class=\"skb_text\">"._QXZ("Password:")." <input type=\"password\" name=\"VD_pass\" size=\"10\" maxlength=\"20\" value=\"$VD_pass\" /><br />\n";
             echo "<font class=\"skb_text\">"._QXZ("Campaign:")." <span id=\"LogiNCamPaigns\">$camp_form_code</span><br />\n";
@@ -4950,6 +4999,7 @@ if ($enable_fast_refresh < 1) {echo "\tvar refresh_interval = 1000;\n";}
 	var LOGINvarTHREE='<?php echo $LOGINvarTHREE ?>';
 	var LOGINvarFOUR='<?php echo $LOGINvarFOUR ?>';
 	var LOGINvarFIVE='<?php echo $LOGINvarFIVE ?>';
+	var hide_relogin_fields='<?php echo $hide_relogin_fields ?>';
 	var MD_dial_timed_out=0;
 	var routing_initiated_recording='<?php echo $routing_initiated_recording ?>';
 	var dead_trigger_count=0;
@@ -15988,15 +16038,15 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 						{
 						if (agent_logout_link == '1')
 							{
-							document.getElementById("LogouTBoxLink").innerHTML = logout_content + "<font class=\"loading_text\"><a href=\"" + agcPAGE + "?relogin=YES&session_epoch=" + epoch_sec + "&session_id=" + session_id + "&session_name=" + session_name + "&VD_login=" + user + "&VD_campaign=" + campaign + "&phone_login=" + original_phone_login + "&phone_pass=" + phone_pass + "&VD_pass=" + orig_pass + "&LOGINvarONE=" + LOGINvarONE + "&LOGINvarTWO=" + LOGINvarTWO + "&LOGINvarTHREE=" + LOGINvarTHREE + "&LOGINvarFOUR=" + LOGINvarFOUR + "&LOGINvarFIVE=" + LOGINvarFIVE + "\" onclick=\"needToConfirmExit = false;\"><?php echo _QXZ("CLICK HERE TO LOG IN AGAIN"); ?></a></font>\n";
+							document.getElementById("LogouTBoxLink").innerHTML = logout_content + "<font class=\"loading_text\"><a href=\"" + agcPAGE + "?relogin=YES&session_epoch=" + epoch_sec + "&session_id=" + session_id + "&session_name=" + session_name + "&VD_login=" + user + "&VD_campaign=" + campaign + "&phone_login=" + original_phone_login + "&phone_pass=" + phone_pass + "&VD_pass=" + orig_pass + "&LOGINvarONE=" + LOGINvarONE + "&LOGINvarTWO=" + LOGINvarTWO + "&LOGINvarTHREE=" + LOGINvarTHREE + "&LOGINvarFOUR=" + LOGINvarFOUR + "&LOGINvarFIVE=" + LOGINvarFIVE + "&hide_relogin_fields=" + hide_relogin_fields + "\" onclick=\"needToConfirmExit = false;\"><?php echo _QXZ("CLICK HERE TO LOG IN AGAIN"); ?></a></font>\n";
 							}
 						else if (agent_logout_link == '2')
 							{
-							document.getElementById("LogouTBoxLink").innerHTML = logout_content + "<font class=\"loading_text\"><a href=\"" + agcPAGE + "?relogin=YES&session_epoch=" + epoch_sec + "&session_id=" + session_id + "&session_name=" + session_name + "&VD_login=" + user + "&VD_campaign=" + campaign + "&phone_login=" + original_phone_login + "&LOGINvarONE=" + LOGINvarONE + "&LOGINvarTWO=" + LOGINvarTWO + "&LOGINvarTHREE=" + LOGINvarTHREE + "&LOGINvarFOUR=" + LOGINvarFOUR + "&LOGINvarFIVE=" + LOGINvarFIVE + "\" onclick=\"needToConfirmExit = false;\"><?php echo _QXZ("CLICK HERE TO LOG IN AGAIN"); ?></a></font>\n";
+							document.getElementById("LogouTBoxLink").innerHTML = logout_content + "<font class=\"loading_text\"><a href=\"" + agcPAGE + "?relogin=YES&session_epoch=" + epoch_sec + "&session_id=" + session_id + "&session_name=" + session_name + "&VD_login=" + user + "&VD_campaign=" + campaign + "&phone_login=" + original_phone_login + "&LOGINvarONE=" + LOGINvarONE + "&LOGINvarTWO=" + LOGINvarTWO + "&LOGINvarTHREE=" + LOGINvarTHREE + "&LOGINvarFOUR=" + LOGINvarFOUR + "&LOGINvarFIVE=" + LOGINvarFIVE + "&hide_relogin_fields=" + hide_relogin_fields + "\" onclick=\"needToConfirmExit = false;\"><?php echo _QXZ("CLICK HERE TO LOG IN AGAIN"); ?></a></font>\n";
 							}
 						else
 							{
-							document.getElementById("LogouTBoxLink").innerHTML = logout_content + "<font class=\"loading_text\"><a href=\"" + agcPAGE + "?relogin=YES&LOGINvarONE=" + LOGINvarONE + "&LOGINvarTWO=" + LOGINvarTWO + "&LOGINvarTHREE=" + LOGINvarTHREE + "&LOGINvarFOUR=" + LOGINvarFOUR + "&LOGINvarFIVE=" + LOGINvarFIVE + "\" onclick=\"needToConfirmExit = false;\"><?php echo _QXZ("CLICK HERE TO LOG IN AGAIN"); ?></a></font>\n";
+							document.getElementById("LogouTBoxLink").innerHTML = logout_content + "<font class=\"loading_text\"><a href=\"" + agcPAGE + "?relogin=YES&LOGINvarONE=" + LOGINvarONE + "&LOGINvarTWO=" + LOGINvarTWO + "&LOGINvarTHREE=" + LOGINvarTHREE + "&LOGINvarFOUR=" + LOGINvarFOUR + "&LOGINvarFIVE=" + LOGINvarFIVE + "&hide_relogin_fields=" + hide_relogin_fields + "\" onclick=\"needToConfirmExit = false;\"><?php echo _QXZ("CLICK HERE TO LOG IN AGAIN"); ?></a></font>\n";
 							}
 						}
 					else
@@ -16417,6 +16467,7 @@ else
 		"&LOGINvarTHREE=" + LOGINvarTHREE + '' +
 		"&LOGINvarFOUR=" + LOGINvarFOUR + '' +
 		"&LOGINvarFIVE=" + LOGINvarFIVE + '' +
+		"&hide_relogin_fields=" + hide_relogin_fields + '' +
 		"&web_vars=" + LIVE_web_vars + '' +
 		webform_session;
 

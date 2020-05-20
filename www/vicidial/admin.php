@@ -3797,7 +3797,8 @@ if ($non_latin < 1)
 	$account_entry = preg_replace('/;/','',$account_entry);
 	$account_entry = preg_replace('/\r/', '',$account_entry);
 	$globals_string = preg_replace('/;/','',$globals_string);
-	$dialplan_entry = preg_replace('/;/','',$dialplan_entry);
+	$dialplan_entry = preg_replace('/\\\\/', '',$dialplan_entry);
+	$dialplan_entry = preg_replace('/\'/', '',$dialplan_entry);
 	$dialplan_entry = preg_replace('/\r/', '',$dialplan_entry);
 	$custom_dialplan_entry = preg_replace('/\\\\/', '',$custom_dialplan_entry);
 	$custom_dialplan_entry = preg_replace('/\'/', '',$custom_dialplan_entry);
@@ -4662,12 +4663,13 @@ else
 # 200409-1719 - Reorganized Inbound admin section
 # 200425-0949 - Added 2nd option for agentcall_manual to disable FAST DIAL
 # 200508-1024 - Added feature to Call Menus to allow copying of previous option
+# 200518-0828 - Fixed issue with Carrier custom dialplan allowing comments';'
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-752a';
-$build = '200508-1024';
+$admin_version = '2.14-753a';
+$build = '200518-0828';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");

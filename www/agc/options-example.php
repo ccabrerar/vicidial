@@ -1,7 +1,7 @@
 <?php
 # options.php - manually defined options for vicidial.php
 #
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # rename this file to options.php for the settings here to go into effect
 #
@@ -17,6 +17,7 @@
 # 180425-2035 - Added #INSERT_first_onload variable
 # 190330-0817 - Added logged_in_refresh_link
 # 191107-0925 - Added $webphone_call_seconds
+# 200515-1339 - Added ast13_volume_override option
 #
 
 $conf_silent_prefix		= '5';	# vicidial_conferences prefix to enter silently and muted for recording
@@ -37,6 +38,7 @@ $local_consult_xfers	= '1';	# set to 1 to send consultative transfers from origi
 $clientDST				= '1';	# set to 1 to check for DST on server for agent time
 $no_delete_sessions		= '1';	# set to 1 to not delete sessions at logout
 $volumecontrol_active	= '1';	# set to 1 to allow agents to alter volume of channels
+$ast13_volume_override	= '0';	# set to 1 to allow agent to use volume controls even on Asterisk 13 servers
 $PreseT_DiaL_LinKs		= '0';	# set to 1 to show a DIAL link for Dial Presets
 $LogiNAJAX				= '1';	# set to 1 to do lookups on campaigns for login
 $HidEMonitoRSessionS	= '1';	# set to 1 to hide remote monitoring channels from "session calls"

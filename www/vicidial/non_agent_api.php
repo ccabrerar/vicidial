@@ -147,10 +147,11 @@
 # 200423-0356 - Fix for update_lead --BLANK-- issue
 # 200502-0858 - Fix for update_lead --BLANK-- issue with custom fields
 # 200508-1503 - Fix for PHP7 issues
+# 200525-0118 - Fix for middle_initial --BLANK--
 #
 
-$version = '2.14-124';
-$build = '200508-1503';
+$version = '2.14-125';
+$build = '200525-0118';
 $api_url_log = 0;
 
 $startMS = microtime();
@@ -592,7 +593,7 @@ if ($non_latin < 1)
 	$title = preg_replace('/[^- \'\_\.0-9a-zA-Z]/','',$title);
 	$first_name = preg_replace('/[^- \'\+\_\.0-9a-zA-Z]/','',$first_name);
 		$first_name = preg_replace('/\+/',' ',$first_name);
-	$middle_initial = preg_replace('/[^0-9a-zA-Z]/','',$middle_initial);
+	$middle_initial = preg_replace('/[^-_0-9a-zA-Z]/','',$middle_initial);
 	$last_name = preg_replace('/[^- \'\+\_\.0-9a-zA-Z]/','',$last_name);
 		$last_name = preg_replace('/\+/',' ',$last_name);
 	$address1 = preg_replace('/[^- \'\+\.\:\/\@\_0-9a-zA-Z]/','',$address1);
