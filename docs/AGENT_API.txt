@@ -1,4 +1,4 @@
-AGENT API DOCUMENT		Started: 2008-07-03	Updated: 2020-04-03
+AGENT API DOCUMENT		Started: 2008-07-03	Updated: 2020-05-22
 
 This document describes the functions of an API(Application Programming Interface)
 for the VICIDIAL Agent screen. This functionality will be rather limited at first
@@ -7,6 +7,8 @@ and will be built upon as critical functions are identified and programmed into 
 There is also a new NON-agent API script, for more information on that, please
 read the NON-AGENT_API.txt document.
 
+NOTE: The API is able to use HTTPS if your webserver is configured to use HTTPS.
+	For example, all VICIhost accounts are able to use HTTPS for API functions
 
 
 API functions:

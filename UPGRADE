@@ -503,6 +503,9 @@ OTHER CHANGES:
 	web browser that they are logged into the agent screen with. Must be
 	enabled in system settings.
 
+141. Added "3-Way Recording Stop Exception" campaign option to override the 
+	"3-Way Recording Stop" setting based upon the 3way phone number dialed.
+
 
 
 

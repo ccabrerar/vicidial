@@ -1043,7 +1043,8 @@ vmm_daily_limit TINYINT(3) UNSIGNED default '0',
 opensips_cid_name VARCHAR(15) default '',
 amd_agent_route_options ENUM('ENABLED','DISABLED','PENDING') default 'DISABLED',
 browser_alert_sound VARCHAR(20) default '---NONE---',
-browser_alert_volume TINYINT(3) UNSIGNED default '50'
+browser_alert_volume TINYINT(3) UNSIGNED default '50',
+three_way_record_stop_exception VARCHAR(40) default 'DISABLED'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_lists (
@@ -4638,4 +4639,4 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1595',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1596',db_schema_update_date=NOW(),reload_timestamp=NOW();

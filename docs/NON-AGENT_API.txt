@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2020-04-18
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2020-05-22
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -8,7 +8,8 @@ critical functions are identified and programmed into it.
 There is also an Agent API script, for more information on that, please read
 the AGENT_API.txt document.
 
-
+NOTE: The API is able to use HTTPS if your webserver is configured to use HTTPS.
+	For example, all VICIhost accounts are able to use HTTPS for API functions
 
 
 API functions:
