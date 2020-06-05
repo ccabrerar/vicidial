@@ -506,6 +506,9 @@ OTHER CHANGES:
 141. Added "3-Way Recording Stop Exception" campaign option to override the 
 	"3-Way Recording Stop" setting based upon the 3way phone number dialed.
 
+142. Added the ability to use Automated Reports with standard SFTP and FTPSSL
+	remote servers.
+
 
 
 

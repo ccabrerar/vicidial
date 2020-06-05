@@ -1,27 +1,29 @@
 #!/usr/bin/perl
 #
-# AST_email_web_report.pl                version: 2.14
+# AST_email_web_reportFTPSSL.pl                version: 2.14
 #
-# This script is designed to wget a web report and then email it as an attachment or send it to an FTP server
+# This script is designed to wget a web report and then email it as an attachment or send it to an FTP server with SSL encryption
 # this script should be run from a vicidial web server.
 #
 # NOTE: you need to either use Automated Reports in the admin web screens, or alter the URL within this script to change the report that is run by this script
 #
-# /usr/share/astguiclient/AST_email_web_report.pl --email-list=test@gmail.com --email-sender=test@test.com
+# /usr/share/astguiclient/AST_email_web_reportFTPSSL.pl --email-list=test@gmail.com --email-sender=test@test.com
+#
+# ************* IMPORTANT!!!!!!!!!!!!!!!!!!!! ***************************
+#  THIS SCRIPT REQUIRES THE Net::FTPSSL PERL MODULE TO RUN!!!
+#  $ cpan
+#  cpan> install ExtUtils::MakeMaker
+#  cpan> install IO::Socket::SSL
+#  cpan> install Net::SSLeay::Handle
+#  cpan> install Net::FTPSSL
+#  cpan> quit
+#
+#  MAKE SURE YOU TEST THAT THIS IS WORKING MANUALLY!!!
 #
 # Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
-# 90225-1247 - First version
-# 111004-1057 - Added ftp options
-# 111012-2220 - Added optional begin date flag
-# 111214-0922 - Added remove images and links options as well as email subject option
-# 160415-1421 - Fixed minor bug in file to attach to email
-# 170304-1400 - Added options for running a defined Automated Report, and admin logging
-# 170306-0915 - Fixed proper file extensions for different download report types
-# 170719-1242 - Added more debug and '8days' date option
-# 170825-1114 - Added report filename_override option
-# 200601-0941 - Added support to launch an SFTP process using settings containers, added settings container CLI option for Email/FTP settings
+# 200601-1047 - First version, based upon AST_email_web_report.pl
 #
 
 $txt = '.txt';
@@ -230,10 +232,12 @@ if (length($ARGV[0])>1)
 		print "  [--email-sender=vicidial@localhost] = sender for the email results\n";
 		print "  [--date=YYYY-MM-DD] = date override, can also use 'today' and 'yesterday'\n";
 		print "  [--begin-date=YYYY-MM-DD] = begin date override, can also use '6days', '7days', '8days' and '30days', if not filled in will only use the --date\n";
-		print "  [--ftp-server=XXXXXXXX] = FTP server to send file to\n";
-		print "  [--ftp-login=XXXXXXXX] = FTP user\n";
-		print "  [--ftp-pass=XXXXXXXX] = FTP pass\n";
-		print "  [--ftp-dir=XXXXXXXX] = remote FTP server directory to post files to\n";
+		print "  [--ftp-server=XXXXXXXX] = FTP SSL server to send file to\n";
+		print "  [--ftp-login=XXXXXXXX] = FTP SSL user\n";
+		print "  [--ftp-pass=XXXXXXXX] = FTP SSL pass\n";
+		print "  [--ftp-port=XXX] = FTP SSL port number, optional, default is 21\n";
+		print "  [--ftp-dir=XXXXXXXX] = remote FTP SSL server directory to post files to\n";
+		print "  [--ftp-encrypt=X] = FTPSSL encryption type, E=Explicit, I=Implicit, default=E\n";
 		print "\n";
 
 		exit;
@@ -298,7 +302,7 @@ if (length($ARGV[0])>1)
 					{
 					@aryA = $sthA->fetchrow_array;
 					$container_entry	= $aryA[0];
-					$container_entry =~ s/\t|\r|'|;|`|\\\\|\///gi;
+					$container_entry =~ s/\t|\r|'|;|`|\\\\//gi;
 					$container_entry =~ s/\n/ /gi;
 					$container_entry_length = length($container_entry);
 					}
@@ -341,6 +345,16 @@ if (length($ARGV[0])>1)
 				}
 			else
 				{$VARREPORT_pass = '';}
+			if ($args =~ /--ftp-port=/i)
+				{
+				@data_in = split(/--ftp-port=/,$args);
+				$VARREPORT_port = $data_in[1];
+				$VARREPORT_port =~ s/ .*//gi;
+				$VARREPORT_port =~ s/:/,/gi;
+				if ($DB > 0) {print "\n----- FTP port: $VARREPORT_port -----\n\n";}
+				}
+			else
+				{$VARREPORT_port = '21';}
 			if ($args =~ /--ftp-dir=/i)
 				{
 				@data_in = split(/--ftp-dir=/,$args);
@@ -351,6 +365,18 @@ if (length($ARGV[0])>1)
 				}
 			else
 				{$VARREPORT_dir = '';}
+			if ($args =~ /--ftp-encrypt=/i) 
+				{
+				my @data_in = split(/--ftp-encrypt=/,$args);
+				$VARFTP_encrypt = $data_in[1];
+				$VARFTP_encrypt =~ s/ .*//gi;
+				if ($VARFTP_encrypt =~ /E/) {$VARFTP_encrypt = 'EXP_CRYPT';}
+				if ($VARFTP_encrypt =~ /I/) {$VARFTP_encrypt = 'IMP_CRYPT';}
+				if (length($VARFTP_encrypt)<5) {$VARFTP_encrypt = 'EXP_CRYPT';}
+				$CLIFTP_encrypt=1;
+				if ($DB > 0) 
+					{print "\n----- FTPSSL ENCRYPTION: $VARFTP_encrypt -----\n\n";}
+				}
 
 			if ($args =~ /--email-subject=/i)
 				{
@@ -482,12 +508,14 @@ if (length($Bstart_date) < 8)
 	{$Bstart_date = $start_date;}
 if (length($begindate) < 8) 
 	{$begindate = $shipdate;}
+if (length($VARFTP_encrypt)<5) 
+	{$VARFTP_encrypt = 'EXP_CRYPT';}
 
 
 if (!$Q)
 	{
-	print "\n\n\n\n\n\n\n\n\n\n\n\n-- AST_email_web_report.pl --\n\n";
-	print "This program is designed to wget a web report and email or FTP it. \n";
+	print "\n\n\n\n\n\n\n\n\n\n\n\n-- AST_email_web_reportFTPSSL.pl --\n\n";
+	print "This program is designed to wget a web report and email or FTPSSL it. \n";
 	print "\n";
 	}
 
@@ -599,49 +627,7 @@ if (length($report_id) > 1)
 	if (length($filename_override) > 0) 
 		{$HTMLfile = "$filename_override$file_extension";}
 	$HTMLfileLOG = $report_id . "_" . $start_date . "_" . $hms . '' . $txt;
-	$shipdate='';
-
-	### check for SFTP Settings Container
-	if ($VARREPORT_host =~ /^SFTPCNTR|^FTPSCNTR/)
-		{
-		$SFTPcontainer_entry_length=0;
-		$temp_VARREPORT_host = $VARREPORT_host;
-		$temp_VARREPORT_host =~ s/^SFTPCNTR|^FTPSCNTR//gi;
-
-		$stmtA= "SELECT container_entry from vicidial_settings_containers where container_id='$temp_VARREPORT_host';";
-		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-		$sthArows=$sthA->rows;
-		if ($sthArows > 0)
-			{
-			@aryA = $sthA->fetchrow_array;
-			$SFTPcontainer_entry	= $aryA[0];
-			$SFTPcontainer_entry =~ s/\t|\r|'|;|`|\\\\//gi;
-			$SFTPcontainer_entry =~ s/\n/ /gi;
-			$SFTPcontainer_entry_length = length($SFTPcontainer_entry);
-			print "$SFTPcontainer_entry\n";
-			}
-
-		if ($SFTPcontainer_entry_length > 10) 
-			{
-			$FTP_EMAIL_WEB_SCRIPT = 'AST_email_web_report.pl';
-			if ($VARREPORT_host =~ /^SFTPCNTR/) {$FTP_EMAIL_WEB_SCRIPT = 'AST_email_web_reportSFTP.pl';}
-			if ($VARREPORT_host =~ /^FTPSCNTR/) {$FTP_EMAIL_WEB_SCRIPT = 'AST_email_web_reportFTPSSL.pl';}
-
-			if (!$Q) {print "SFTP server settings detected, launching separate SFTP process: $VARREPORT_host ($temp_VARREPORT_host)|$SFTPcontainer_entry_length \n";}
-
-			$ar_command = "$PATHhome/$FTP_EMAIL_WEB_SCRIPT --quiet --remove-images --remove-links --log-to-adminlog --report-id=$report_id --container-id=$temp_VARREPORT_host ";
-
-			if ($DB) {print "starting SFTP automated report process in a screen... |ARS$report_id|   $ar_command \n";}
-			`/usr/bin/screen -d -m -S ARS$report_id $ar_command `;
-
-			$stmtA="UPDATE vicidial_automated_reports SET run_now_trigger='N' where run_now_trigger='Y' and report_server IN('$server_ip'$THISserver_voicemailSQL) and report_id='$report_id';";
-			$ARaffected_rows = $dbhA->do($stmtA);
-			if ($DB) {print "FINISHED:   $ARaffected_rows|$stmtA| \n";}
-
-			exit;
-			}
-		}
+	$shipdate='';		
 	}
 else
 	{
@@ -757,14 +743,43 @@ if (length($VARREPORT_host) > 7)
 	{
 	if (length($VARREPORT_port) < 1) {$VARREPORT_port = '21';}
 
-	use Net::FTP;
+	use Net::FTPSSL;
 
-	if (!$Q) {print "Sending File Over FTP: $HTMLfile\n";}
-	$ftp = Net::FTP->new("$VARREPORT_host", Port => $VARREPORT_port, Debug => $DBX);
-	$ftp->login("$VARREPORT_user","$VARREPORT_pass");
-	$ftp->cwd("$VARREPORT_dir");
-	$ftp->put("/tmp/$HTMLfile", "$HTMLfile");
-	$ftp->quit;
+	if (!$Q) {print "Sending File Over FTPSSL: $HTMLfile\n";}
+
+	$FTPdb=0;
+	if ($DBX>0) {$FTPdb=1;}
+
+	# Some versions of the FTPSSL perl module require you to hard code the encryption value: IMP_CRYPT or EXP_CRYPT
+	# $ftps = Net::FTPSSL->new("$VARREPORT_host", Port => $VARREPORT_port, Encryption => $VARFTP_encrypt, Debug => $FTPdb);
+	if ( $VARFTP_encrypt eq "IMP_CRYPT" ) 
+		{
+		$ftps = Net::FTPSSL->new("$VARREPORT_host", Port => $VARREPORT_port, Encryption => IMP_CRYPT, Debug => $FTPdb);
+		}
+	else 
+		{
+		$ftps = Net::FTPSSL->new("$VARREPORT_host", Port => $VARREPORT_port, Encryption => EXP_CRYPT, Debug => $FTPdb);
+		}
+	# for "TLS Session Resumption", use the below connection options:
+	# $ftps = Net::FTPSSL->new("$VARREPORT_host", Port => $VARREPORT_port, Encryption => IMP_CRYPT, Debug => $FTPdb, Trace => 1, SSL_Client_Certificate => { SSL_session_cache_size => 100 });
+
+	# For advanced debug, you may need to do the following:
+	# Here is how to enable high debug in the IO::Socket::SSL library that Net::FTPSSL is using:
+	# $IO::Socket::SSL::DEBUG = 3;
+	#   and here are the possible values:
+	# 0 - No debugging (default).
+	# 1 - Print out errors from IO::Socket::SSL and ciphers from Net::SSLeay.
+	# 2 - Print also information about call flow from IO::Socket::SSL and progress information from Net::SSLeay.
+	# 3 - Print also some data dumps from IO::Socket::SSL and from Net::SSLeay.
+
+	if($DBX){print STDERR "DEBUG: auth: ($VARREPORT_user|$VARREPORT_pass)\n";}
+	$ftps->login($VARREPORT_user,$VARREPORT_pass);
+	$ftps->cwd("$VARREPORT_dir");
+	$ftps->binary();
+	$ftps->put("/tmp/$HTMLfile", "$HTMLfile");
+	$ftps->quit;
+
+	if (!$Q) {print "FTPSSL File Sending Process Complete, Exiting... \n";}
 	}
 ###### END FTP SECTION #####
 

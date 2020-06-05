@@ -4668,12 +4668,13 @@ else
 # 200508-1024 - Added feature to Call Menus to allow copying of previous option
 # 200518-0828 - Fixed issue with Carrier custom dialplan allowing comments';'
 # 200528-2126 - Added three_way_record_stop_exception campaign option
+# 200601-2129 - Added link for Auto Reports FTP server if using SFTP or FTPSSL
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-754a';
-$build = '200528-2126';
+$admin_version = '2.14-755a';
+$build = '200601-2129';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -37588,7 +37589,17 @@ if ($ADD==394111111111)
 		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Email From").": </td><td align=left><input type=text name=email_from size=40 maxlength=100 value=\"$email_from\">$NWB#auto_reports-email_from$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Email To").": </td><td align=left><input type=text name=email_to size=70 maxlength=100 value=\"$email_to\">$NWB#auto_reports-email_to$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Email Subject").": </td><td align=left><input type=text name=email_subject size=60 maxlength=100 value=\"$email_subject\">$NWB#auto_reports-email_subject$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("FTP Server").": </td><td align=left><input type=text name=ftp_server size=40 maxlength=100 value=\"$ftp_server\">$NWB#auto_reports-ftp_server$NWE</td></tr>\n";
+
+		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>";
+		if (preg_match("/^SFTPCNTR|^FTPSCNTR/",$ftp_server))
+			{
+			$temp_container_id = preg_replace("/^SFTPCNTR|^FTPSCNTR/",'',$ftp_server);
+			echo "<a href=\"$PHP_SELF?ADD=392111111111&container_id=$temp_container_id\">"._QXZ("FTP Server")."</a>";
+			}
+		else
+			{echo ""._QXZ("FTP Server")."";}
+		echo "</td><td align=left><input type=text name=ftp_server size=40 maxlength=100 value=\"$ftp_server\">$NWB#auto_reports-ftp_server$NWE</td></tr>\n";
+
 		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("FTP User").": </td><td align=left><input type=text name=ftp_user size=40 maxlength=100 value=\"$ftp_user\">$NWB#auto_reports-ftp_user$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("FTP Pass").": </td><td align=left><input type=text name=ftp_pass size=40 maxlength=100 value=\"$ftp_pass\">$NWB#auto_reports-ftp_pass$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("FTP Directory").": </td><td align=left><input type=text name=ftp_directory size=60 maxlength=100 value=\"$ftp_directory\">$NWB#auto_reports-ftp_directory$NWE</td></tr>\n";
