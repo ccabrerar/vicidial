@@ -140,6 +140,7 @@ if (!$VARDB_port) {$VARDB_port='3306';}
 if ($run_check > 0)
 	{
 	my $grepout = `/bin/ps ax | grep timeclock | grep -v grep | grep -v '/bin/sh' | grep -v 'Timeclock'`;
+#	my $grepout = `/bin/ps ax | grep timeclock | grep -v grep | grep -v '/bin/sh' | grep -v 'SCREEN' | grep -v 'screen'`;
 	my $grepnum=0;
 	$grepnum++ while ($grepout =~ m/\n/g);
 	if ($DBX) {print "CONCURRENCY CHECK: |$grepnum|\n$grepout\n";}

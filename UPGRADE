@@ -509,6 +509,10 @@ OTHER CHANGES:
 142. Added the ability to use Automated Reports with standard SFTP and FTPSSL
 	remote servers.
 
+143. Added the ability to configure when the Answer signal is sent to inbound 
+	calls at the DID, In-Group and Call Menu level. For this to work, you 
+	must set the conf files to be rebuilt after upgrading your systems.
+
 
 
 

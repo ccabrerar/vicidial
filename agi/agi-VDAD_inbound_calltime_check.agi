@@ -24,14 +24,15 @@
 # ;    * only works with lead_id-populated calleridname phone calls.
 # ;    This option allows you to specify a SQL fragment used to do a count(*)
 # ;    against the vicidial_list table for the lead and other field values
-# ;    This feature will look for the qualify_sql in the cacll menu record
+# ;    This feature will look for the qualify_sql in the call menu record
+# ; 9. play sip-silence audio, YES/NO, default is YES
 # ;
 # ;inbound calls check calltime:
 #exten => 1234,1,Answer                  ; Answer the line
-#exten => 1234,2,AGI(agi-VDAD_inbound_calltime_check.agi,INBOUND-----YES-----START-----24hours-----EXTENSION-----101-----default-----NO)
+#exten => 1234,2,AGI(agi-VDAD_inbound_calltime_check.agi,INBOUND-----YES-----START-----24hours-----EXTENSION-----101-----default-----NO-----YES)
 #exten => 1234,3,Hangup
 #
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 80525-0144 - First Build
@@ -54,6 +55,7 @@
 # 140126-1141 - Added VMAIL_NO_INST options
 # 161102-1038 - Fixed QM partition problem
 # 180213-0935 - Fixed issues with VMAIL_NO_INST timecheck route
+# 200624-2302 - Added play sip-silence audio option
 #
 
 $script = 'agi-VDAD_inbound_calltime_check.agi';
@@ -205,6 +207,7 @@ if (length($ARGV[0])>1)
 	$route_value_override =		$ARGV_vars[5];
 	$route_context_override =	$ARGV_vars[6];
 	$query_qualification =		$ARGV_vars[7];
+	$sip_silence_playback =		$ARGV_vars[8];
 	}
 
 $|=1;
@@ -301,6 +304,7 @@ else
 
 if (length($callerid)<8) {$callerid = $parked_by;}
 if (length($pin)>0) {$callerid = $pin;}
+if ($sip_silence_playback !~ /YES|NO/i) {$sip_silence_playback='YES';}
 
 foreach $i (sort keys %AGI) 
 	{
@@ -518,8 +522,11 @@ if (length($ct_holidays) > 2)
 		}
 	}
 
-$AGI->stream_file('sip-silence');
-$AGI->stream_file('sip-silence');
+if ($sip_silence_playback =~ /YES/i) 
+	{
+	$AGI->stream_file('sip-silence');
+	$AGI->stream_file('sip-silence');
+	}
 
 ##### BEGIN AFTER HOURS CHECK #####
 $ct_stop_overflow=0;   # allow for overflow time, past midnight
@@ -590,9 +597,11 @@ if ( ( ($hm < $ct_default_start) || ($hm > $ct_default_stop) ) && ($hm >= $ct_st
 			}
 		if (length($DROPexten)>0)
 			{	### if DROP extension is defined then send the dropped call there instead of hangup
-
-			$AGI->stream_file('sip-silence'); # stop music-on-hold process
-			$AGI->stream_file('sip-silence'); # stop music-on-hold process
+			if ($sip_silence_playback =~ /YES/i) 
+				{
+				$AGI->stream_file('sip-silence'); # stop music-on-hold process
+				$AGI->stream_file('sip-silence'); # stop music-on-hold process
+				}
 
 			sleep(1);
 
@@ -611,8 +620,11 @@ if ( ( ($hm < $ct_default_start) || ($hm > $ct_default_stop) ) && ($hm >= $ct_st
 
 	if ($after_hours_action =~ /MESSAGE|HANGUP/)
 		{
-		$AGI->stream_file('sip-silence');
-		$AGI->stream_file('sip-silence');
+		if ($sip_silence_playback =~ /YES/i) 
+			{
+			$AGI->stream_file('sip-silence');
+			$AGI->stream_file('sip-silence');
+			}
 		$AGI->stream_file("$after_hours_message_filename");
 		sleep(1);
 
@@ -666,8 +678,11 @@ if ( ($call_menu_qualify_enabled > 0) && ($query_qualification =~ /YES/) && ( ($
 
 		if ($qualify_count < 1)
 			{
-			$AGI->stream_file('sip-silence'); # stop music-on-hold process
-			$AGI->stream_file('sip-silence'); # stop music-on-hold process
+			if ($sip_silence_playback =~ /YES/i) 
+				{
+				$AGI->stream_file('sip-silence'); # stop music-on-hold process
+				$AGI->stream_file('sip-silence'); # stop music-on-hold process
+				}
 
 			# sleep for one tenth of a second
 			usleep(1*100*1000);

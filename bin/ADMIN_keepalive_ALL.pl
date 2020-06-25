@@ -141,9 +141,10 @@
 # 200122-0847 - Added CID Groups auto-rotate feature
 # 200422-1544 - Added purging of vicidial_security_event_log table after 7 days
 # 200425-0218 - Added purging of vicidial_lead_messages after 1 day
+# 200623-2304 - Added Answer Signal options
 #
 
-$build = '200425-0218';
+$build = '200623-2304';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -427,7 +428,7 @@ $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VA
 
 
 ##### Get the settings from system_settings #####
-$stmtA = "SELECT sounds_central_control_active,active_voicemail_server,custom_dialplan_entry,default_codecs,generate_cross_server_exten,voicemail_timezones,default_voicemail_timezone,call_menu_qualify_enabled,allow_voicemail_greeting,reload_timestamp,meetme_enter_login_filename,meetme_enter_leave3way_filename,allow_chats,enable_auto_reports,enable_drop_lists,expired_lists_inactive,sip_event_logging,call_quota_lead_ranking FROM system_settings;";
+$stmtA = "SELECT sounds_central_control_active,active_voicemail_server,custom_dialplan_entry,default_codecs,generate_cross_server_exten,voicemail_timezones,default_voicemail_timezone,call_menu_qualify_enabled,allow_voicemail_greeting,reload_timestamp,meetme_enter_login_filename,meetme_enter_leave3way_filename,allow_chats,enable_auto_reports,enable_drop_lists,expired_lists_inactive,sip_event_logging,call_quota_lead_ranking,inbound_answer_config FROM system_settings;";
 #	print "$stmtA\n";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -453,6 +454,7 @@ if ($sthArows > 0)
 	$SSexpired_lists_inactive =			$aryA[15];
 	$SSsip_event_logging =				$aryA[16];
 	$SScall_quota_lead_ranking =		$aryA[17];
+	$SSinbound_answer_config =			$aryA[18];
 	}
 $sthA->finish();
 if ($DBXXX > 0) {print "SYSTEM SETTINGS:     $sounds_central_control_active|$active_voicemail_server|$SScustom_dialplan_entry|$SSdefault_codecs\n";}
@@ -2552,6 +2554,20 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		$Lext .= "exten => _473782188600XXX,n(fin),Hangup()\n";
 		}
 
+	$Lext .= "\n";
+	if ($SSinbound_answer_config > 0) 
+		{$Lext .= "; Inbound Answer Config ENABLED\n";}
+	else
+		{$Lext .= "; Inbound Answer Config DISABLED\n";}
+	$Lext .= "; Unanswered inbound VICIDIAL transfer calls\n";
+	$Lext .= "exten => _98009.,1,Dial(\${TRUNKloop}/9\${EXTEN},,to)\n";
+	$Lext .= "exten => _98009.,n,Hangup()\n";
+	$Lext .= "exten => _998009.,1,AGI(agi-VDAD_ALL_inbound.agi,CLOSER-----LB-----CL_TESTCAMP-----7275551212-----Closer-----park----------999-----1)\n";
+	$Lext .= "exten => _998009.,n,Hangup()\n";
+	$Lext .= "; Unanswered DID forwarded calls\n";
+	$Lext .= "exten => _99809*.,1,AGI(agi-VDAD_ALL_inbound.agi)\n";
+	$Lext .= "exten => _99809*.,n,Hangup()\n";
+
 	$Liax .= "\n";
 	$Liax .= "[ASTloop]\n";
 	$Liax .= "accountcode=ASTloop\n";
@@ -3279,7 +3295,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 
 
 	##### BEGIN Generate the Call Menu entries #####
-	$stmtA = "SELECT menu_id,menu_name,menu_prompt,menu_timeout,menu_timeout_prompt,menu_invalid_prompt,menu_repeat,menu_time_check,call_time_id,track_in_vdac,custom_dialplan_entry,tracking_group,dtmf_log,dtmf_field,qualify_sql,alt_dtmf_log,question FROM vicidial_call_menu order by menu_id;";
+	$stmtA = "SELECT menu_id,menu_name,menu_prompt,menu_timeout,menu_timeout_prompt,menu_invalid_prompt,menu_repeat,menu_time_check,call_time_id,track_in_vdac,custom_dialplan_entry,tracking_group,dtmf_log,dtmf_field,qualify_sql,alt_dtmf_log,question,answer_signal FROM vicidial_call_menu order by menu_id;";
 	#	print "$stmtA\n";
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -3305,6 +3321,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		$qualify_sql[$i] =			$aryA[14];
 		$alt_dtmf_log[$i] =			$aryA[15];
 		$question[$i] =				$aryA[16];
+		$answer_signal[$i] =		$aryA[17];
 
 		if ($track_in_vdac[$i] > 0)
 			{$track_in_vdac[$i] = 'YES';}
@@ -3640,7 +3657,15 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 							}
 						else
 							{
-							$menu_prompt_ext .= "exten => s,n,Background($menu_prompts_array[$w])\n";
+							if ($menu_prompts_array[$w] =~ /^NOPLAY/)
+								{
+								$menu_prompts_array[$w] =~ s/^NOPLAY//g;
+								$menu_prompt_ext .= "exten => s,n,NoOp($menu_prompts_array[$w])\n";
+								}
+							else
+								{
+								$menu_prompt_ext .= "exten => s,n,Background($menu_prompts_array[$w])\n";
+								}
 							}
 						}
 					}
@@ -3662,7 +3687,15 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 					}
 				else
 					{
-					$menu_prompt_ext .= "exten => s,n,Background($menu_prompt[$i])\n";
+					if ($menu_prompt[$i] =~ /^NOPLAY/)
+						{
+						$menu_prompt[$i] =~ s/^NOPLAY//g;
+						$menu_prompt_ext .= "exten => s,n,NoOp($menu_prompt[$i])\n";
+						}
+					else
+						{
+						$menu_prompt_ext .= "exten => s,n,Background($menu_prompt[$i])\n";
+						}
 					}
 				}
 			}
@@ -3691,8 +3724,17 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		$call_menu_ext .= "\n";
 		$call_menu_ext .= "; $menu_name[$i]\n";
 		$call_menu_ext .= "[$menu_id[$i]]\n";
-		$call_menu_ext .= "exten => s,1,Answer\n";
-		$call_menu_ext .= "exten => s,n,AGI(agi-VDAD_inbound_calltime_check.agi,$tracking_group[$i]-----$track_in_vdac[$i]-----$menu_id[$i]-----$time_check_scheme-----$time_check_route-----$time_check_route_value-----$time_check_route_context-----$qualify_sql_active[$i])\n";
+		if ( ($SSinbound_answer_config > 0) && ($answer_signal[$i] =~ /N/i) ) 
+			{
+			$call_menu_ext .= "exten => s,1,NoOp(NoAnswer-Call-Menu-Start)\n";
+			$call_menu_ext .= "exten => s,n,AGI(agi-VDAD_inbound_calltime_check.agi,$tracking_group[$i]-----$track_in_vdac[$i]-----$menu_id[$i]-----$time_check_scheme-----$time_check_route-----$time_check_route_value-----$time_check_route_context-----$qualify_sql_active[$i]-----NO)\n";
+			}
+		else
+			{
+			$call_menu_ext .= "exten => s,1,Answer\n";
+			$call_menu_ext .= "exten => s,n,AGI(agi-VDAD_inbound_calltime_check.agi,$tracking_group[$i]-----$track_in_vdac[$i]-----$menu_id[$i]-----$time_check_scheme-----$time_check_route-----$time_check_route_value-----$time_check_route_context-----$qualify_sql_active[$i]-----YES)\n";
+			}
+		
 		$call_menu_ext .= "exten => s,n,Set(INVCOUNT=0) \n";
 		$call_menu_ext .= "$menu_prompt_ext";
 		if ($menu_timeout[$i] > 0)

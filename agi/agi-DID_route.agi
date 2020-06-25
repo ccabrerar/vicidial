@@ -13,7 +13,7 @@
 # ;inbound DID catch-all:
 #exten => _X.,1,AGI(agi-DID_route.agi)
 #
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 81007-0324 - First Build
@@ -45,6 +45,7 @@
 # 170322-1708 - Added filter phone group entry BLANK for a blank CIDnumber
 # 170923-1355 - Added system filter feature, before any other actions
 # 190216-0814 - Fix for user-group, in-group and campaign settings matching issues
+# 200623-2258 - Added Answer Signal options
 #
 
 
@@ -146,7 +147,7 @@ $sthA->finish();
 
 #############################################
 ##### START SYSTEM SETTINGS LOOKUP      #####
-$stmtA = "SELECT enable_queuemetrics_logging,queuemetrics_server_ip,queuemetrics_dbname,queuemetrics_login,queuemetrics_pass,queuemetrics_log_id,queuemetrics_eq_prepend,did_agent_log,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,did_system_filter FROM system_settings;";
+$stmtA = "SELECT enable_queuemetrics_logging,queuemetrics_server_ip,queuemetrics_dbname,queuemetrics_login,queuemetrics_pass,queuemetrics_log_id,queuemetrics_eq_prepend,did_agent_log,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,did_system_filter,inbound_answer_config FROM system_settings;";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -167,6 +168,7 @@ if ($sthArows > 0)
 	$alt_log_pass =					$aryA[11];
 	$tables_use_alt_log_db =		$aryA[12];
 	$SSdid_system_filter =			$aryA[13];
+	$SSinbound_answer_config =		$aryA[14];
 	}
 $sthA->finish();
 ##### END SYSTEM SETTINGS LOOKUP      #####
@@ -216,7 +218,7 @@ $extension =~ s/\'|\"|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
 if ($SSdid_system_filter > 0) 
 	{
 	if ($AGILOG) {$agi_string = "--    DID SYSTEM FILTER ENABLED: |$SSdid_system_filter|";   &agi_output;}
-	$stmtA = "SELECT did_id,did_pattern,did_description,did_active,did_route,extension,exten_context,voicemail_ext,phone,server_ip,user,user_unavailable_action,user_route_settings_ingroup,menu_id,record_call,filter_inbound_number,filter_phone_group_id,filter_url,filter_action,filter_extension,filter_exten_context,filter_voicemail_ext,filter_phone,filter_server_ip,filter_user,filter_user_unavailable_action,filter_user_route_settings_ingroup,filter_group_id,filter_call_handle_method,filter_agent_search_method,filter_list_id,filter_campaign_id,filter_phone_code,filter_menu_id,filter_clean_cid_number,group_id,filter_dnc_campaign,filter_url_did_redirect,no_agent_ingroup_redirect,no_agent_ingroup_id,no_agent_ingroup_extension,pre_filter_phone_group_id,pre_filter_extension,max_queue_ingroup_calls,max_queue_ingroup_id,max_queue_ingroup_extension FROM vicidial_inbound_dids where did_pattern = 'did_system_filter' and did_active='Y';";
+	$stmtA = "SELECT did_id,did_pattern,did_description,did_active,did_route,extension,exten_context,voicemail_ext,phone,server_ip,user,user_unavailable_action,user_route_settings_ingroup,menu_id,record_call,filter_inbound_number,filter_phone_group_id,filter_url,filter_action,filter_extension,filter_exten_context,filter_voicemail_ext,filter_phone,filter_server_ip,filter_user,filter_user_unavailable_action,filter_user_route_settings_ingroup,filter_group_id,filter_call_handle_method,filter_agent_search_method,filter_list_id,filter_campaign_id,filter_phone_code,filter_menu_id,filter_clean_cid_number,group_id,filter_dnc_campaign,filter_url_did_redirect,no_agent_ingroup_redirect,no_agent_ingroup_id,no_agent_ingroup_extension,pre_filter_phone_group_id,pre_filter_extension,max_queue_ingroup_calls,max_queue_ingroup_id,max_queue_ingroup_extension,inbound_route_answer FROM vicidial_inbound_dids where did_pattern = 'did_system_filter' and did_active='Y';";
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 	$sthArows=$sthA->rows;
@@ -269,6 +271,7 @@ if ($SSdid_system_filter > 0)
 		$max_queue_ingroup_calls =		$aryA[43];
 		$max_queue_ingroup_id =			$aryA[44];
 		$max_queue_ingroup_extension =	$aryA[45];
+		$inbound_route_answer =			$aryA[46];
 		}
 	else
 		{
@@ -558,10 +561,14 @@ if ($SSdid_system_filter > 0)
 					$did_route = 'EXTEN';
 					}
 
+				$did_ig_prefix='99909';
+				if ( ($SSinbound_answer_config > 0) && ($inbound_route_answer =~ /N/i) )
+					{$did_ig_prefix='99809';}
+
 				### Route call to a VICIDIAL Inbound Group
 				if ($did_route =~ /IN_GROUP/)
 					{
-					$did_extension = "99909$S$did_id$S$S$S$route_type";
+					$did_extension = "$did_ig_prefix$S$did_id$S$S$S$route_type";
 					$exten_context = $ext_context;
 					$did_route = 'EXTEN';
 					}
@@ -569,7 +576,7 @@ if ($SSdid_system_filter > 0)
 				### Route call to a logged-in VICIDIAL agent
 				if ($did_route =~ /AGENT/)
 					{
-					$did_extension = "99909$S$did_id$S$S$S$route_type";
+					$did_extension = "$did_ig_prefix$S$did_id$S$S$S$route_type";
 					$exten_context = $ext_context;
 					$did_route = 'EXTEN';
 					}
@@ -662,7 +669,7 @@ if ($SSdid_system_filter > 0)
 
 ### Grab DID values from the database
 $DIDs_in_system=0;
-$stmtA = "SELECT did_id,did_pattern,did_description,did_active,did_route,extension,exten_context,voicemail_ext,phone,server_ip,user,user_unavailable_action,user_route_settings_ingroup,menu_id,record_call,filter_inbound_number,filter_phone_group_id,filter_url,filter_action,filter_extension,filter_exten_context,filter_voicemail_ext,filter_phone,filter_server_ip,filter_user,filter_user_unavailable_action,filter_user_route_settings_ingroup,filter_group_id,filter_call_handle_method,filter_agent_search_method,filter_list_id,filter_campaign_id,filter_phone_code,filter_menu_id,filter_clean_cid_number,group_id,filter_dnc_campaign,filter_url_did_redirect,no_agent_ingroup_redirect,no_agent_ingroup_id,no_agent_ingroup_extension,pre_filter_phone_group_id,pre_filter_extension,max_queue_ingroup_calls,max_queue_ingroup_id,max_queue_ingroup_extension FROM vicidial_inbound_dids where did_pattern = '$extension' and did_active='Y';";
+$stmtA = "SELECT did_id,did_pattern,did_description,did_active,did_route,extension,exten_context,voicemail_ext,phone,server_ip,user,user_unavailable_action,user_route_settings_ingroup,menu_id,record_call,filter_inbound_number,filter_phone_group_id,filter_url,filter_action,filter_extension,filter_exten_context,filter_voicemail_ext,filter_phone,filter_server_ip,filter_user,filter_user_unavailable_action,filter_user_route_settings_ingroup,filter_group_id,filter_call_handle_method,filter_agent_search_method,filter_list_id,filter_campaign_id,filter_phone_code,filter_menu_id,filter_clean_cid_number,group_id,filter_dnc_campaign,filter_url_did_redirect,no_agent_ingroup_redirect,no_agent_ingroup_id,no_agent_ingroup_extension,pre_filter_phone_group_id,pre_filter_extension,max_queue_ingroup_calls,max_queue_ingroup_id,max_queue_ingroup_extension,inbound_route_answer FROM vicidial_inbound_dids where did_pattern = '$extension' and did_active='Y';";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -715,6 +722,7 @@ if ($sthArows > 0)
 	$max_queue_ingroup_calls =		$aryA[43];
 	$max_queue_ingroup_id =			$aryA[44];
 	$max_queue_ingroup_extension =	$aryA[45];
+	$inbound_route_answer =			$aryA[46];
 
 	$DIDs_in_system++;
 	}
@@ -723,7 +731,7 @@ $sthA->finish();
 if ($sthArows < 1)
 	{
 	### Grab DID values from the database for a default DID pattern if there is one
-	$stmtA = "SELECT did_id,did_pattern,did_description,did_active,did_route,extension,exten_context,voicemail_ext,phone,server_ip,user,user_unavailable_action,user_route_settings_ingroup,menu_id,record_call,filter_inbound_number,filter_phone_group_id,filter_url,filter_action,filter_extension,filter_exten_context,filter_voicemail_ext,filter_phone,filter_server_ip,filter_user,filter_user_unavailable_action,filter_user_route_settings_ingroup,filter_group_id,filter_call_handle_method,filter_agent_search_method,filter_list_id,filter_campaign_id,filter_phone_code,filter_menu_id,filter_clean_cid_number,group_id,filter_dnc_campaign,filter_url_did_redirect,no_agent_ingroup_redirect,no_agent_ingroup_id,no_agent_ingroup_extension,pre_filter_phone_group_id,pre_filter_extension,max_queue_ingroup_calls,max_queue_ingroup_id,max_queue_ingroup_extension FROM vicidial_inbound_dids where did_pattern = 'default' and did_active='Y';";
+	$stmtA = "SELECT did_id,did_pattern,did_description,did_active,did_route,extension,exten_context,voicemail_ext,phone,server_ip,user,user_unavailable_action,user_route_settings_ingroup,menu_id,record_call,filter_inbound_number,filter_phone_group_id,filter_url,filter_action,filter_extension,filter_exten_context,filter_voicemail_ext,filter_phone,filter_server_ip,filter_user,filter_user_unavailable_action,filter_user_route_settings_ingroup,filter_group_id,filter_call_handle_method,filter_agent_search_method,filter_list_id,filter_campaign_id,filter_phone_code,filter_menu_id,filter_clean_cid_number,group_id,filter_dnc_campaign,filter_url_did_redirect,no_agent_ingroup_redirect,no_agent_ingroup_id,no_agent_ingroup_extension,pre_filter_phone_group_id,pre_filter_extension,max_queue_ingroup_calls,max_queue_ingroup_id,max_queue_ingroup_extension,inbound_route_answer FROM vicidial_inbound_dids where did_pattern = 'default' and did_active='Y';";
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 	$DIDs_in_system=$sthA->rows;
@@ -776,6 +784,7 @@ if ($sthArows < 1)
 		$max_queue_ingroup_calls =		$aryA[43];
 		$max_queue_ingroup_id =			$aryA[44];
 		$max_queue_ingroup_extension =	$aryA[45];
+		$inbound_route_answer =			$aryA[46];
 		}
 	$sthA->finish();
 	}
@@ -1292,11 +1301,14 @@ if ($did_route =~ /VOICEMAIL|VMAIL_NO_INST/)
 	$did_route = 'EXTEN';
 	}
 
+$did_ig_prefix='99909';
+if ( ($SSinbound_answer_config > 0) && ($inbound_route_answer =~ /N/i) )
+	{$did_ig_prefix='99809';}
 
 ### Route call to a VICIDIAL Inbound Group
 if ($did_route =~ /IN_GROUP/)
 	{
-	$did_extension = "99909$S$did_id$S$S$S$route_type";
+	$did_extension = "$did_ig_prefix$S$did_id$S$S$S$route_type";
 	$exten_context = $ext_context;
 	$did_route = 'EXTEN';
 	}
@@ -1305,7 +1317,7 @@ if ($did_route =~ /IN_GROUP/)
 ### Route call to a logged-in VICIDIAL agent
 if ($did_route =~ /AGENT/)
 	{
-	$did_extension = "99909$S$did_id$S$S$S$route_type";
+	$did_extension = "$did_ig_prefix$S$did_id$S$S$S$route_type";
 	$exten_context = $ext_context;
 	$did_route = 'EXTEN';
 	}

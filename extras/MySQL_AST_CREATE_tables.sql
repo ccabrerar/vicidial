@@ -1332,7 +1332,8 @@ place_in_line_caller_number_filename TEXT,
 place_in_line_you_next_filename TEXT,
 ingroup_script_two VARCHAR(20) default '',
 browser_alert_sound VARCHAR(20) default '---NONE---',
-browser_alert_volume TINYINT(3) UNSIGNED default '50'
+browser_alert_volume TINYINT(3) UNSIGNED default '50',
+answer_signal ENUM('START','ROUTE','NONE') DEFAULT 'START'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_stations (
@@ -1859,7 +1860,9 @@ require_password_length TINYINT(3) UNSIGNED default '0',
 user_account_emails ENUM('DISABLED','SEND_NO_PASS','SEND_WITH_PASS') DEFAULT 'DISABLED',
 outbound_cid_any ENUM('DISABLED','API_ONLY') DEFAULT 'DISABLED',
 entries_per_page SMALLINT(5) UNSIGNED DEFAULT '0',
-browser_call_alerts ENUM('0','1','2') DEFAULT '0'
+browser_call_alerts ENUM('0','1','2') DEFAULT '0',
+queuemetrics_pausereason ENUM('STANDARD','EVERY_NEW') default 'STANDARD',
+inbound_answer_config ENUM('0','1','2','3','4','5') DEFAULT '0'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaigns_list_mix (
@@ -2179,6 +2182,7 @@ max_queue_ingroup_calls SMALLINT(5) default '0',
 max_queue_ingroup_id VARCHAR(20) default '',
 max_queue_ingroup_extension VARCHAR(50) default '9998811112',
 did_carrier_description VARCHAR(255) default '',
+inbound_route_answer ENUM('Y','N') DEFAULT 'Y',
 unique index (did_pattern),
 index (group_id)
 ) ENGINE=MyISAM;
@@ -2332,7 +2336,8 @@ dtmf_field VARCHAR(50) default 'NONE',
 user_group VARCHAR(20) default '---ALL---',
 qualify_sql TEXT,
 alt_dtmf_log ENUM('0','1') default '0',
-question INT(11) DEFAULT NULL
+question INT(11) DEFAULT NULL,
+answer_signal ENUM('Y','N') DEFAULT 'Y'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_call_menu_options (
@@ -4639,4 +4644,4 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1596',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1598',db_schema_update_date=NOW(),reload_timestamp=NOW();

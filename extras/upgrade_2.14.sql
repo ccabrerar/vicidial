@@ -1246,3 +1246,19 @@ UPDATE system_settings SET db_schema_version='1595',db_schema_update_date=NOW() 
 ALTER TABLE vicidial_campaigns ADD three_way_record_stop_exception VARCHAR(40) default 'DISABLED';
 
 UPDATE system_settings SET db_schema_version='1596',db_schema_update_date=NOW() where db_schema_version < 1596;
+
+ALTER TABLE system_settings ADD queuemetrics_pausereason ENUM('STANDARD','EVERY_NEW') default 'STANDARD';
+
+UPDATE system_settings SET db_schema_version='1597',db_schema_update_date=NOW() where db_schema_version < 1597;
+
+ALTER TABLE system_settings ADD inbound_answer_config ENUM('0','1','2','3','4','5') DEFAULT '0';
+
+ALTER TABLE vicidial_inbound_dids ADD inbound_route_answer ENUM('Y','N') DEFAULT 'Y';
+
+ALTER TABLE vicidial_call_menu ADD answer_signal ENUM('Y','N') DEFAULT 'Y';
+
+ALTER TABLE vicidial_inbound_groups ADD answer_signal ENUM('START','ROUTE','NONE') DEFAULT 'START';
+
+UPDATE servers SET rebuild_conf_files='Y' where active_asterisk_server='Y';
+
+UPDATE system_settings SET db_schema_version='1598',db_schema_update_date=NOW() where db_schema_version < 1598;

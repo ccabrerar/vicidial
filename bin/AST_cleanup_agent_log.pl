@@ -43,6 +43,7 @@
 # 170609-2356 - Added option for fixing length_in_sec on vicidial_log and vicidial_closer_log records
 # 180102-0111 - Added a check for vicidial_log entries with a user with no vicidial_agent_log entry
 # 200422-1621 - Added optional check for duplicate vicidial_agent_log entries
+# 200606-1802 - Added optional queue_log cleanup for multiple PAUSEREASON records in the same PAUSE session
 #
 
 # constants
@@ -76,6 +77,7 @@ if (length($ARGV[0])>1)
 		print "  [-skip-agent-log-validation] = will skip only the vicidial_agent_log validation\n";
 		print "  [-only-check-agent-login-lags] = will only fix queue_log missing PAUSEREASON records\n";
 		print "  [-only-qm-live-call-check] = will only check the queue_log calls that report as live, in ViciDial\n";
+		print "  [-qm-pausereason-check] = will check/fix the queue_log for multiple PAUSEREASON entries in same pause session\n";
 		print "  [-only-fix-old-lagged] = will go through old lagged entries and add a new entry after\n";
 		print "  [-only-dedupe-vicidial-log] = will look for duplicate vicidial_log and extended entries\n";
 		print "  [-only-check-vicidial-log-agent] = will check for missing agent log entries\n";
@@ -125,6 +127,11 @@ if (length($ARGV[0])>1)
 			$qm_live_call_check=1;
 			if ($Q < 1) {print "\n----- QM LIVE CALL CHECK -----\n\n";}
 			}
+		if ($args =~ /-qm-pausereason-check/i)
+			{
+			$qm_pausereason_check=1;
+			if ($Q < 1) {print "\n----- QM PAUSEREASON CHECK -----\n\n";}
+			}	
 		if ($args =~ /-only-dedupe-vicidial-log/i)
 			{
 			$vl_dup_check=1;
@@ -791,12 +798,185 @@ if ($fix_old_lagged_entries > 0)
 ### BEGIN CHECKING ENTERQUEUE/CALLOUTBOUND ENTRIES FOR LIVE CALLS
 if ($enable_queuemetrics_logging > 0)
 	{
-	if ($DB) {print " - Checking queue_log in-queue calls in ViciDial\n";}
-
 	$dbhB = DBI->connect("DBI:mysql:$queuemetrics_dbname:$queuemetrics_server_ip:3306", "$queuemetrics_login", "$queuemetrics_pass")
 	 or die "Couldn't connect to database: " . DBI->errstr;
 
 	if ($DBX) {print "CONNECTED TO DATABASE:  $queuemetrics_server_ip|$queuemetrics_dbname\n";}
+	
+	if ($qm_pausereason_check > 0) 
+		{
+		$PRdeleted=0;
+		$PRsecondchoice=0;
+		##############################################################
+		##### grab all queue_log entries with a PAUSEREASON to validate  ,'LOGIN'
+		$stmtB = "SELECT time_id,agent FROM queue_log where verb='PAUSEREASON' and data1 NOT IN('LAGGED') $QM_SQL_time_H order by time_id;";
+		$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
+		$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
+		$P_pr_records=$sthB->rows;
+		if ($DB) {print "TOTAL PAUSEREASON Records: $P_pr_records|$stmtB|\n";}
+		$h=0;
+		while ($P_pr_records > $h)
+			{
+			@aryB = $sthB->fetchrow_array;
+			$time_id[$h] =	$aryB[0];
+			$agent[$h] =	$aryB[1];
+			$h++;
+			}
+		$sthB->finish();
+
+		$h=0;
+		while ($P_pr_records > $h)
+			{
+			$temp_8hours_prev_time = ($time_id[$h] - 28800);
+			$PAUSEtime=$temp_8hours_prev_time;
+			$temp_8hours_next_time = ($time_id[$h] + 28800);
+			$UNPAUSEtime=$temp_8hours_next_time;
+			$PAUSEfound=0;
+			$UNPAUSEfound=0;
+			##### find the most recent PAUSEALL queue_log record before the PAUSEREASON record
+			$stmtB = "SELECT time_id FROM queue_log where agent='$agent[$h]' and time_id <= '$time_id[$h]' and time_id > '$temp_8hours_prev_time' and verb='PAUSEALL' and agent='$agent[$h]' order by time_id desc limit 1;";
+			$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
+			$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
+			$PL_records=$sthB->rows;
+			if ($PL_records > 0)
+				{
+				@aryB = $sthB->fetchrow_array;
+				$PAUSEtime =		$aryB[0];
+				$PAUSEfound++;
+				}
+			$sthB->finish();
+			##### find the most recent UNPAUSEALL queue_log record after the PAUSEREASON record
+			$stmtB = "SELECT time_id FROM queue_log where agent='$agent[$h]' and time_id >= '$time_id[$h]' and time_id < '$temp_8hours_next_time' and verb IN('UNPAUSEALL') and agent='$agent[$h]' order by time_id limit 1;";
+			$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
+			$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
+			$PL_recordsUNPAUSEALL=$sthB->rows;
+			if ($PL_recordsUNPAUSEALL > 0)
+				{
+				@aryB = $sthB->fetchrow_array;
+				$UNPAUSEtime =		$aryB[0];
+				$UNPAUSEfound++;
+				}
+			$sthB->finish();
+			##### find the most recent AGENTLOGOFF queue_log record after the PAUSEREASON record
+			$stmtB = "SELECT time_id FROM queue_log where agent='$agent[$h]' and time_id >= '$time_id[$h]' and time_id < '$temp_8hours_next_time' and verb IN('AGENTLOGOFF') and agent='$agent[$h]' order by time_id limit 1;";
+			$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
+			$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
+			$PL_recordsAGENTLOGOFF=$sthB->rows;
+			if ($PL_recordsAGENTLOGOFF > 0)
+				{
+				@aryB = $sthB->fetchrow_array;
+				if ($aryB[0] < $UNPAUSEtime) 
+					{
+					$UNPAUSEtime =		$aryB[0];
+					$UNPAUSEfound++;
+					}
+				}
+			$sthB->finish();
+			##### find the most recent AGENTLOGIN queue_log record after the PAUSEREASON record
+			$stmtB = "SELECT time_id FROM queue_log where agent='$agent[$h]' and time_id >= '$time_id[$h]' and time_id < '$temp_8hours_next_time' and verb IN('AGENTLOGIN') and agent='$agent[$h]' order by time_id limit 1;";
+			$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
+			$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
+			$PL_recordsAGENTLOGIN=$sthB->rows;
+			if ($PL_recordsAGENTLOGIN > 0)
+				{
+				@aryB = $sthB->fetchrow_array;
+				if ($aryB[0] < $UNPAUSEtime) 
+					{
+					$UNPAUSEtime =		$aryB[0];
+					$UNPAUSEfound++;
+					}
+				}
+			$sthB->finish();
+ 			##### find the most recent PAUSEALL queue_log record after the PAUSEREASON record
+			$stmtB = "SELECT time_id FROM queue_log where agent='$agent[$h]' and time_id >= '$time_id[$h]' and time_id < '$temp_8hours_next_time' and verb IN('PAUSEALL') and agent='$agent[$h]' order by time_id limit 1;";
+			$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
+			$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
+			$PL_recordsPAUSEALL=$sthB->rows;
+			if ($PL_recordsPAUSEALL > 0)
+				{
+				@aryB = $sthB->fetchrow_array;
+				if ($aryB[0] < $UNPAUSEtime) 
+					{
+					$UNPAUSEtime =		$aryB[0];
+					$UNPAUSEfound++;
+					}
+				}
+			$sthB->finish();
+
+			if ( ($PAUSEfound > 0) && ($UNPAUSEfound > 0) )
+				{
+			#	if ($DBX) {print "PAUSES FOUND: $h|$time_id[$h]|$agent[$h]|$NEXTtime|$NEXTverb|$NEXTqueue|$NEXTcall_id\n";}
+
+				$firstPAUSEREASONtime=0;
+				$firstPAUSEREASONdata1='';
+				##### find the PAUSEREASON records during the pause session
+				$stmtB = "SELECT time_id,data1 FROM queue_log where agent='$agent[$h]' and time_id >= '$PAUSEtime' and time_id <= '$UNPAUSEtime' and verb='PAUSEREASON' and agent='$agent[$h]' and data1 NOT IN('LAGGED') order by time_id limit 100;";
+				$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
+				$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
+				$PR_records=$sthB->rows;
+				if ( ($DBX) && ($PR_records > 1) ) {print "PAUSEREASON Records: $PR_records     ($h / $P_pr_records)   $PRdeleted    |$stmtB|\n";}
+				$pr=0;
+				while ($PR_records > $pr)
+					{
+					@aryB = $sthB->fetchrow_array;
+					$PAUSEREASONtime[$pr] =		$aryB[0];
+					$PAUSEREASONdata1[$pr] =	$aryB[1];
+					if ($pr < 1) 
+						{
+						$firstPAUSEREASONtime=$aryB[0];
+						$firstPAUSEREASONdata1=$aryB[1];
+						}
+					else 
+						{
+						if ( ( ($firstPAUSEREASONdata1 == 'ANDIAL') || ($firstPAUSEREASONdata1 == 'PNCALL') ) && ( ($aryB[1] != 'ANDIAL') && ($aryB[1] != 'PNCALL') ) )
+							{
+							$firstPAUSEREASONtime=$aryB[0];
+							$firstPAUSEREASONdata1=$aryB[1];
+							$PRsecondchoice++;
+							}
+						}
+					$pr++;
+					}
+				$sthB->finish();
+			#	if ($DBX) {print "PAUSEREASON records found: $pr|$firstPAUSEREASONtime|$firstPAUSEREASONdata1|\n";}
+
+				if ($pr > 1) 
+					{
+					$pr=0;
+					while ($PR_records > $pr)
+						{
+						if ($PAUSEREASONtime[$pr] != $firstPAUSEREASONtime)
+							{
+							##### delete the extra PAUSEREASON records in the queue_log
+							$stmtB = "DELETE from queue_log where agent='$agent[$h]' and time_id='$PAUSEREASONtime[$pr]' and data1='$PAUSEREASONdata1[$pr]' and verb='PAUSEREASON' limit 1;";
+							if ($TEST < 1)
+								{$Baffected_rows = $dbhB->do($stmtB);}
+							if ($DB) {print "     extra PAUSEREASON record deleted: $Baffected_rows|$stmtB|\n";}
+							$PRdeleted++;
+
+							$event_string = "extra PAUSEREASON record deleted: $h|$PR_records|$pr|$time_id[$h]|$agent[$h]|$PAUSEREASONtime[$pr]|$PAUSEREASONdata1[$pr]|";
+							&event_logger;
+							}
+						$pr++;
+						}
+					}
+				}
+			else
+				{
+				if ($DBX) {print "Missing PAUSEALL or UNPAUSEALL for PAUSEREASON record: $time_id[$h]|$agent[$h]|$PAUSEfound|$UNPAUSEfound|\n";}
+				}
+
+		#	if ($PRdeleted > 100) {exit;}
+
+			$h++;
+			}
+		@time_id=@MT;
+		@agent=@MT;
+
+		if ($DB) {print "PAUSEREASON cleanup done, records deleted: $PRdeleted ($PRsecondchoice) \n";}
+		}
+
+	if ($DB) {print " - Checking queue_log in-queue calls in ViciDial\n";}
 
 	##############################################################
 	##### grab all queue_log entries for ENTERQUEUE verb to validate

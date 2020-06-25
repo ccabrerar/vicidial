@@ -148,10 +148,13 @@
 # 200502-0858 - Fix for update_lead --BLANK-- issue with custom fields
 # 200508-1503 - Fix for PHP7 issues
 # 200525-0118 - Fix for middle_initial --BLANK--
+# 200606-0938 - Added more settings to add_list & update_list
+# 200610-1447 - Added duration option to recording_lookup function
+# 200622-1609 - Added more options to add_phone and update_phone functions
 #
 
-$version = '2.14-125';
-$build = '200525-0118';
+$version = '2.14-128';
+$build = '200622-1609';
 $api_url_log = 0;
 
 $startMS = microtime();
@@ -532,6 +535,18 @@ if (isset($_GET["custom_order"]))				{$custom_order=$_GET["custom_order"];}
 	elseif (isset($_POST["custom_order"]))		{$custom_order=$_POST["custom_order"];}
 if (isset($_GET["custom_copy_method"]))				{$custom_copy_method=$_GET["custom_copy_method"];}
 	elseif (isset($_POST["custom_copy_method"]))	{$custom_copy_method=$_POST["custom_copy_method"];}
+if (isset($_GET["duration"]))			{$duration=$_GET["duration"];}
+	elseif (isset($_POST["duration"]))	{$duration=$_POST["duration"];}
+if (isset($_GET["is_webphone"]))			{$is_webphone=$_GET["is_webphone"];}
+	elseif (isset($_POST["is_webphone"]))	{$is_webphone=$_POST["is_webphone"];}
+if (isset($_GET["webphone_auto_answer"]))			{$webphone_auto_answer=$_GET["webphone_auto_answer"];}
+	elseif (isset($_POST["webphone_auto_answer"]))	{$webphone_auto_answer=$_POST["webphone_auto_answer"];}
+if (isset($_GET["use_external_server_ip"]))			{$use_external_server_ip=$_GET["use_external_server_ip"];}
+	elseif (isset($_POST["use_external_server_ip"]))	{$use_external_server_ip=$_POST["use_external_server_ip"];}
+if (isset($_GET["template_id"]))			{$template_id=$_GET["template_id"];}
+	elseif (isset($_POST["template_id"]))	{$template_id=$_POST["template_id"];}
+if (isset($_GET["on_hook_agent"]))			{$on_hook_agent=$_GET["on_hook_agent"];}
+	elseif (isset($_POST["on_hook_agent"]))	{$on_hook_agent=$_POST["on_hook_agent"];}
 
 
 header ("Content-type: text/html; charset=utf-8");
@@ -760,6 +775,12 @@ if ($non_latin < 1)
 	$list_description=preg_replace('/[^- \+\.\:\/\@\?\&\_0-9a-zA-Z]/','',$list_description);
 	$custom_order = preg_replace('/[^-_0-9a-zA-Z]/','',$custom_order);
 	$custom_copy_method = preg_replace('/[^-_0-9a-zA-Z]/','',$custom_copy_method);
+	$duration = preg_replace('/[^-_0-9a-zA-Z]/','',$duration);
+	$is_webphone = preg_replace('/[^-_0-9a-zA-Z]/','',$is_webphone);
+	$webphone_auto_answer = preg_replace('/[^-_0-9a-zA-Z]/','',$webphone_auto_answer);
+	$use_external_server_ip = preg_replace('/[^-_0-9a-zA-Z]/','',$use_external_server_ip);
+	$template_id = preg_replace('/[^-_0-9a-zA-Z]/','',$template_id);
+	$on_hook_agent = preg_replace('/[^-_0-9a-zA-Z]/','',$on_hook_agent);
 	}
 else
 	{
@@ -3423,10 +3444,47 @@ if ($function == 'add_phone')
 								}
 							else
 								{
+								$is_webphone_SQL='';
+								$webphone_auto_answer_SQL='';
+								$use_external_server_ip_SQL='';
+								$template_id_SQL='';
+								$on_hook_agent_SQL='';
+								if (preg_match("/^Y$|^N$|^Y_API_LAUNCH$/i",$is_webphone))
+									{$is_webphone_SQL = ",is_webphone='$is_webphone'";}
+								if (preg_match("/^Y$|^N$/i",$webphone_auto_answer))
+									{$webphone_auto_answer_SQL = ",webphone_auto_answer='$webphone_auto_answer'";}
+								if (preg_match("/^Y$|^N$/i",$use_external_server_ip))
+									{$use_external_server_ip_SQL = ",use_external_server_ip='$use_external_server_ip'";}
+								if (preg_match("/^Y$|^N$/i",$on_hook_agent))
+									{$on_hook_agent_SQL = ",on_hook_agent='$on_hook_agent'";}
+								if (strlen($template_id) > 1)
+									{
+									if (preg_match("/^--BLANK--$/i",$template_id))
+										{$template_id_SQL = ",template_id=''";}
+									else
+										{
+										$stmt="SELECT count(*) from vicidial_conf_templates where template_id='$template_id';";
+										$rslt=mysql_to_mysqli($stmt, $link);
+										$row=mysqli_fetch_row($rslt);
+										$template_id_exists=$row[0];
+										if ($template_id_exists > 0)
+											{$template_id_SQL = ",template_id='$template_id'";}
+										else
+											{
+											$result = 'ERROR';
+											$result_reason = "add_phone TEMPLATE ID DOES NOT EXIST, THIS IS AN OPTIONAL FIELD";
+											$data = "$phone_login|$template_id";
+											echo "$result: $result_reason: |$user|$data\n";
+											api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+											exit;
+											}
+										}
+									}
+								
 								if (strlen($phone_context)<1) {$phone_context='default';}
 								if (strlen($admin_user_group)<1) {$admin_user_group='---ALL---';}
 
-								$stmt="INSERT INTO phones SET  extension='$extension', dialplan_number='$dialplan_number', voicemail_id='$voicemail_id', login='$phone_login', pass='$phone_pass', server_ip='$server_ip', protocol='$protocol', conf_secret='$registration_password', fullname='$phone_full_name', local_gmt='$local_gmt', outbound_cid='$outbound_cid', phone_context='$phone_context', email='$email', active='Y', status='ACTIVE', user_group='$admin_user_group';";
+								$stmt="INSERT INTO phones SET  extension='$extension', dialplan_number='$dialplan_number', voicemail_id='$voicemail_id', login='$phone_login', pass='$phone_pass', server_ip='$server_ip', protocol='$protocol', conf_secret='$registration_password', fullname='$phone_full_name', local_gmt='$local_gmt', outbound_cid='$outbound_cid', phone_context='$phone_context', email='$email', active='Y', status='ACTIVE', user_group='$admin_user_group' $is_webphone_SQL $webphone_auto_answer_SQL $use_external_server_ip_SQL $template_id_SQL $on_hook_agent_SQL;";
 								$rslt=mysql_to_mysqli($stmt, $link);
 
 								### LOG INSERTION Admin Log Table ###
@@ -3619,6 +3677,11 @@ if ($function == 'update_phone')
 						$outbound_alt_cidSQL='';
 						$phone_ring_timeoutSQL='';
 						$delete_vm_after_emailSQL='';
+						$is_webphone_SQL='';
+						$webphone_auto_answer_SQL='';
+						$use_external_server_ip_SQL='';
+						$template_id_SQL='';
+						$on_hook_agent_SQL='';
 
 						if (strlen($local_gmt) > 0)
 							{
@@ -3878,9 +3941,39 @@ if ($function == 'update_phone')
 							else
 								{$delete_vm_after_emailSQL = " ,delete_vm_after_email='$delete_vm_after_email'";}
 							}
-
-
-						$updateSQL = "$dialplan_numberSQL$activeSQL$outboundcidSQL$voicemail_idSQL$phone_loginSQL$phone_passSQL$protocolSQL$registration_passwordSQL$phone_full_nameSQL$phone_contextSQL$emailSQL$local_gmtSQL$admin_user_groupSQL$outbound_alt_cidSQL$phone_ring_timeoutSQL$delete_vm_after_emailSQL";
+						if (preg_match("/^Y$|^N$|^Y_API_LAUNCH$/i",$is_webphone))
+							{$is_webphone_SQL = ",is_webphone='$is_webphone'";}
+						if (preg_match("/^Y$|^N$/i",$webphone_auto_answer))
+							{$webphone_auto_answer_SQL = ",webphone_auto_answer='$webphone_auto_answer'";}
+						if (preg_match("/^Y$|^N$/i",$use_external_server_ip))
+							{$use_external_server_ip_SQL = ",use_external_server_ip='$use_external_server_ip'";}
+						if (preg_match("/^Y$|^N$/i",$on_hook_agent))
+							{$on_hook_agent_SQL = ",on_hook_agent='$on_hook_agent'";}
+						if (strlen($template_id) > 1)
+							{
+							if (preg_match("/^--BLANK--$/i",$template_id))
+								{$template_id_SQL = ",template_id=''";}
+							else
+								{
+								$stmt="SELECT count(*) from vicidial_conf_templates where template_id='$template_id';";
+								$rslt=mysql_to_mysqli($stmt, $link);
+								$row=mysqli_fetch_row($rslt);
+								$template_id_exists=$row[0];
+								if ($template_id_exists > 0)
+									{$template_id_SQL = ",template_id='$template_id'";}
+								else
+									{
+									$result = 'ERROR';
+									$result_reason = "update_phone TEMPLATE ID DOES NOT EXIST, THIS IS AN OPTIONAL FIELD";
+									$data = "$phone_login|$template_id";
+									echo "$result: $result_reason: |$user|$data\n";
+									api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+									exit;
+									}
+								}
+							}
+						
+						$updateSQL = "$dialplan_numberSQL$activeSQL$outboundcidSQL$voicemail_idSQL$phone_loginSQL$phone_passSQL$protocolSQL$registration_passwordSQL$phone_full_nameSQL$phone_contextSQL$emailSQL$local_gmtSQL$admin_user_groupSQL$outbound_alt_cidSQL$phone_ring_timeoutSQL$delete_vm_after_emailSQL $is_webphone_SQL $webphone_auto_answer_SQL $use_external_server_ip_SQL $template_id_SQL $on_hook_agent_SQL";
 
 
 						if (strlen($updateSQL)< 3)
@@ -4443,6 +4536,8 @@ if ($function == 'update_list')
 					$resettimeSQL='';
 					$expiration_dateSQL='';
 					$list_descriptionSQL='';
+					$tz_methodSQL='';
+					$local_call_timeSQL='';
 					if (strlen($campaign_id) > 0)
 						{
 						$stmt="SELECT count(*) from vicidial_campaigns where campaign_id='$campaign_id';";
@@ -4654,8 +4749,45 @@ if ($function == 'update_list')
 						else
 							{$list_descriptionSQL = " ,list_description='$list_description'";}
 						}
+					if (strlen($tz_method) > 0)
+						{
+						if (preg_match("/^COUNTRY_AND_AREA_CODE$|^POSTAL_CODE$|^NANPA_PREFIX$|^OWNER_TIME_ZONE_CODE$/",$tz_method))
+							{$tz_methodSQL = " ,time_zone_setting='$tz_method'";}
+						else
+							{
+							$result = 'ERROR';
+							$result_reason = "update_list TIME ZONE METHOD IS NOT VALID, THIS IS AN OPTIONAL FIELD";
+							$data = "$tz_method";
+							echo "$result: $result_reason: |$user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							exit;
+							}
+						}
+					if (strlen($local_call_time) > 0)
+						{
+						if (preg_match("/^campaign$/",$local_call_time))
+							{$local_call_timeSQL = " ,local_call_time='$local_call_time'";}
+						else
+							{
+							$stmt="SELECT count(*) from vicidial_call_times where call_time_id='$local_call_time';";
+							$rslt=mysql_to_mysqli($stmt, $link);
+							$row=mysqli_fetch_row($rslt);
+							$call_time_exists=$row[0];
+							if ($call_time_exists < 1)
+								{
+								$result = 'ERROR';
+								$result_reason = "update_list LOCAL CALL TIME DOES NOT EXIST, THIS IS AN OPTIONAL FIELD";
+								$data = "$local_call_time";
+								echo "$result: $result_reason: |$user|$data\n";
+								api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+								exit;
+								}
+							else
+								{$local_call_timeSQL = " ,local_call_time='$local_call_time'";}
+							}
+						}
 
-					$updateSQL = "$webformthreeSQL$webformtwoSQL$webformSQL$ammessageSQL$outboundcidSQL$activeSQL$listnameSQL$campaignSQL$scriptSQL$dropingroupSQL$resettimeSQL$expiration_dateSQL$list_descriptionSQL";
+					$updateSQL = "$webformthreeSQL$webformtwoSQL$webformSQL$ammessageSQL$outboundcidSQL$activeSQL$listnameSQL$campaignSQL$scriptSQL$dropingroupSQL$resettimeSQL$expiration_dateSQL$list_descriptionSQL$tz_methodSQL$local_call_timeSQL";
 
 					if (strlen($updateSQL)< 3)
 						{
@@ -5531,6 +5663,8 @@ if ($function == 'add_list')
 							$webformtwoSQL='';
 							$webformthreeSQL='';
 							$list_descriptionSQL='';
+							$tz_methodSQL='';
+							$local_call_timeSQL='';
 							if (strlen($web_form_address) > 0)
 								{
 								if (preg_match("/%3A%2F%2F/",$web_form_address)) 
@@ -5576,8 +5710,40 @@ if ($function == 'add_list')
 								else
 									{$list_descriptionSQL = " ,list_description='$list_description'";}
 								}
+							if (strlen($tz_method) > 0)
+								{
+								if (preg_match("/^COUNTRY_AND_AREA_CODE$|^POSTAL_CODE$|^NANPA_PREFIX$|^OWNER_TIME_ZONE_CODE$/",$tz_method))
+									{$tz_methodSQL = " ,time_zone_setting='$tz_method'";}
+								else
+									{
+									$result = 'ERROR';
+									$result_reason = "add_list TIME ZONE METHOD IS NOT VALID, THIS IS AN OPTIONAL FIELD";
+									$data = "$tz_method";
+									echo "$result: $result_reason: |$user|$data\n";
+									api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+									exit;
+									}
+								}
+							if ( (strlen($local_call_time) > 0) and (!preg_match("/^campaign$/",$local_call_time)) )
+								{
+								$stmt="SELECT count(*) from vicidial_call_times where call_time_id='$local_call_time';";
+								$rslt=mysql_to_mysqli($stmt, $link);
+								$row=mysqli_fetch_row($rslt);
+								$call_time_exists=$row[0];
+								if ($call_time_exists < 1)
+									{
+									$result = 'ERROR';
+									$result_reason = "add_list LOCAL CALL TIME DOES NOT EXIST, THIS IS AN OPTIONAL FIELD";
+									$data = "$local_call_time";
+									echo "$result: $result_reason: |$user|$data\n";
+									api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+									exit;
+									}
+								else
+									{$local_call_timeSQL = " ,local_call_time='$local_call_time'";}
+								}
 
-							$stmt="INSERT INTO vicidial_lists SET list_id='$list_id', list_name='$list_name', campaign_id='$campaign_id', active='$active', campaign_cid_override='$outbound_cid', agent_script_override='$script', am_message_exten_override='$am_message', drop_inbound_group_override='$drop_inbound_group', reset_time='$reset_time', expiration_date='$expiration_date' $webformSQL $webformtwoSQL $webformthreeSQL $list_descriptionSQL;";
+							$stmt="INSERT INTO vicidial_lists SET list_id='$list_id', list_name='$list_name', campaign_id='$campaign_id', active='$active', campaign_cid_override='$outbound_cid', agent_script_override='$script', am_message_exten_override='$am_message', drop_inbound_group_override='$drop_inbound_group', reset_time='$reset_time', expiration_date='$expiration_date' $webformSQL $webformtwoSQL $webformthreeSQL $list_descriptionSQL $tz_methodSQL $local_call_timeSQL;";
 							$rslt=mysql_to_mysqli($stmt, $link);
 							if ($DB) {echo "|$stmt|\n";}
 
@@ -6736,7 +6902,7 @@ if ($function == 'recording_lookup')
 				}
 			else
 				{
-				$stmt="SELECT start_time,user,recording_id,lead_id,location from recording_log where $search_SQL order by start_time limit 100000;";
+				$stmt="SELECT start_time,user,recording_id,lead_id,location,start_epoch,end_epoch,length_in_sec from recording_log where $search_SQL order by start_time limit 100000;";
 				$rslt=mysql_to_mysqli($stmt, $link);
 				$rec_recs = mysqli_num_rows($rslt);
 				if ($DB>0) {echo "DEBUG: recording_lookup query - $rec_recs|$stmt\n";}
@@ -6773,8 +6939,26 @@ if ($function == 'recording_lookup')
 						$RLrecording_id =	$row[2];
 						$RLlead_id =		$row[3];
 						$RLlocation =		$row[4];
+						$Rduration='';
+						if (preg_match("/Y/",$duration))
+							{
+							$Rduration .= "$DL";
+							$temp_duration=0;
+							if ($row[7] > 0) 
+								{$temp_duration = $row[7];}
+							else
+								{
+								$calc_duration = ($row[6] - $row[5]);
+								if ( ($calc_duration > 0) and ($calc_duration < 86400) )
+									{
+									if ($DB > 0) {echo "DEBUG: CALC duration";}
+									$temp_duration = $calc_duration;
+									}
+								}
+							$Rduration .= "$temp_duration";
+							}
 
-						$output .= "$RLstart_time$DL$RLuser$DL$RLrecording_id$DL$RLlead_id$DL$RLlocation\n";
+						$output .= "$RLstart_time$DL$RLuser$DL$RLrecording_id$DL$RLlead_id$Rduration$DL$RLlocation\n";
 	
 						$k++;
 						}

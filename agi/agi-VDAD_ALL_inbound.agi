@@ -235,6 +235,7 @@
 # 190223-0920 - Added definable play-place-in-line static prompts
 # 191117-2156 - Fix for truncated extension issue #1193
 # 200424-1044 - Fix for incorrect list_id logging
+# 200624-0011 - Added options for Answer signal settings
 #
 
 $script = 'agi-VDAD_ALL_inbound.agi';
@@ -365,7 +366,7 @@ $sthA->finish();
 
 #############################################
 ##### START SYSTEM SETTINGS LOOKUP      #####
-$stmtA = "SELECT enable_queuemetrics_logging,queuemetrics_server_ip,queuemetrics_dbname,queuemetrics_login,queuemetrics_pass,queuemetrics_log_id,queuemetrics_eq_prepend,queuemetrics_pe_phone_append,did_agent_log,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,did_ra_extensions_enabled,queuemetrics_socket,queuemetrics_socket_url,enable_did_entry_list_id,enable_drop_lists FROM system_settings;";
+$stmtA = "SELECT enable_queuemetrics_logging,queuemetrics_server_ip,queuemetrics_dbname,queuemetrics_login,queuemetrics_pass,queuemetrics_log_id,queuemetrics_eq_prepend,queuemetrics_pe_phone_append,did_agent_log,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,did_ra_extensions_enabled,queuemetrics_socket,queuemetrics_socket_url,enable_did_entry_list_id,enable_drop_lists,inbound_answer_config FROM system_settings;";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -392,6 +393,7 @@ if ($sthArows > 0)
 	$queuemetrics_socket_url = 		$aryA[16];
 	$enable_did_entry_list_id =		$aryA[17];
 	$enable_drop_lists =			$aryA[18];
+	$inbound_answer_config =		$aryA[19];
 	}
 $sthA->finish();
 ##### END SYSTEM SETTINGS LOOKUP      #####
@@ -488,7 +490,7 @@ if ($callerid !~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^Y\d\d\d\d\d\d\d\d\d\
 
 $user_unavailable_action='';
 ##### special processing for DID forwarded calls  "99909*1***DID"
-if ($extension =~ /^999\d\d\*/)
+if ($extension =~ /^999\d\d\*|^998\d\d\*/)
 	{
 	@EXT_vars = split(/\*/, $extension);
 	
@@ -575,14 +577,14 @@ $originalCID = $callerid;
 if ($call_handle_method =~ /^CLOSER/)
 	{
 	### allow for internal PRI/IAX/SIP transfer data string "90009*CL_uk3survy_*8301*10000123*universal*7275551212*1234*"
-	if ($extension =~ /^900\d\d\*|^9900\d\d\*/)
+	if ($extension =~ /^900\d\d\*|^9900\d\d\*|^980\d\d\*|^9980\d\d\*/)
 		{
 		### BEGIN check for truncated extension ###
 		$LENGTHextension = length($extension);
 		$LENGTHcmd_line_b=0;
 		if ($callerid =~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^Y\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/)
 			{
-			$stmtA = "SELECT cmd_line_b FROM vicidial_manager where callerid='$callerid' and action='Originate' and cmd_line_b LIKE \"Exten: 8305888888888888_90009%\" order by man_id desc limit 1;";
+			$stmtA = "SELECT cmd_line_b FROM vicidial_manager where callerid='$callerid' and action='Originate' and ( (cmd_line_b LIKE \"Exten: 8305888888888888_90009%\") or (cmd_line_b LIKE \"Exten: 8305888888888888_98009%\") ) order by man_id desc limit 1;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
@@ -592,6 +594,7 @@ if ($call_handle_method =~ /^CLOSER/)
 				@aryA = $sthA->fetchrow_array;	
 				$cmd_line_b	=	$aryA[0];
 				$cmd_line_b =~ s/^Exten: 8305888888888888\d90009/990009/gi;
+				$cmd_line_b =~ s/^Exten: 8305888888888888\d98009/998009/gi;
 				$LENGTHcmd_line_b = length($cmd_line_b);
 				}
 			$sthA->finish();
@@ -795,7 +798,7 @@ $affected_rows = $dbhA->do($stmtA);
 
 ### Grab inbound groups values from the database
 $cbc=0;
-$stmtA = "SELECT call_time_id,after_hours_action,after_hours_message_filename,after_hours_exten,after_hours_voicemail,welcome_message_filename,moh_context,onhold_prompt_filename,prompt_interval,agent_alert_exten,agent_alert_delay,drop_call_seconds,drop_action,drop_exten,next_agent_call,voicemail_ext,queue_priority,drop_inbound_group,afterhours_xfer_group,play_place_in_line,play_estimate_hold_time,hold_time_option,hold_time_option_seconds,hold_time_option_exten,hold_time_option_voicemail,hold_time_option_xfer_group,hold_time_option_callback_filename,hold_time_option_callback_list_id,hold_recall_xfer_group,no_delay_call_route,play_welcome_message,no_agent_no_queue,no_agent_action,no_agent_action_value,extension_appended_cidname,uniqueid_status_display,uniqueid_status_prefix,hold_time_option_minimum,hold_time_option_press_filename,hold_time_option_callmenu,onhold_prompt_no_block,onhold_prompt_seconds,hold_time_option_no_block,hold_time_option_prompt_seconds,hold_time_second_option,hold_time_third_option,wait_hold_option_priority,wait_time_option,wait_time_second_option,wait_time_third_option,wait_time_option_seconds,wait_time_option_exten,wait_time_option_voicemail,wait_time_option_xfer_group,wait_time_option_callmenu,wait_time_option_callback_filename,wait_time_option_callback_list_id,wait_time_option_press_filename,wait_time_option_no_block,wait_time_option_prompt_seconds,active,calculate_estimated_hold_seconds,add_lead_url,eht_minimum_prompt_filename,eht_minimum_prompt_no_block,eht_minimum_prompt_seconds,on_hook_ring_time,ingroup_recording_override,ingroup_rec_filename,on_hook_cid,action_xfer_cid,drop_callmenu,after_hours_callmenu,max_calls_method,max_calls_count,max_calls_action,populate_lead_ingroup,na_call_url,drop_lead_reset,after_hours_lead_reset,nanq_lead_reset,wait_time_lead_reset,hold_time_lead_reset,routing_initiated_recordings,on_hook_cid_number,populate_lead_province,areacode_filter,areacode_filter_seconds,areacode_filter_action,areacode_filter_action_value,populate_state_areacode,inbound_survey,inbound_survey_filename,inbound_survey_accept_digit,closing_time_action,closing_time_now_trigger,closing_time_filename,closing_time_end_filename,closing_time_lead_reset,closing_time_option_exten,closing_time_option_callmenu,closing_time_option_voicemail,closing_time_option_xfer_group,closing_time_option_callback_list_id,add_lead_timezone,populate_lead_source,populate_lead_vendor,enter_ingroup_url,cid_cb_confirm_number, cid_cb_invalid_filter_phone_group, cid_cb_valid_length, cid_cb_valid_filename, cid_cb_confirmed_filename, cid_cb_enter_filename, cid_cb_you_entered_filename, cid_cb_press_to_confirm_filename, cid_cb_invalid_filename, cid_cb_reenter_filename, cid_cb_error_filename,place_in_line_caller_number_filename,place_in_line_you_next_filename FROM vicidial_inbound_groups where group_id = '$channel_group';";
+$stmtA = "SELECT call_time_id,after_hours_action,after_hours_message_filename,after_hours_exten,after_hours_voicemail,welcome_message_filename,moh_context,onhold_prompt_filename,prompt_interval,agent_alert_exten,agent_alert_delay,drop_call_seconds,drop_action,drop_exten,next_agent_call,voicemail_ext,queue_priority,drop_inbound_group,afterhours_xfer_group,play_place_in_line,play_estimate_hold_time,hold_time_option,hold_time_option_seconds,hold_time_option_exten,hold_time_option_voicemail,hold_time_option_xfer_group,hold_time_option_callback_filename,hold_time_option_callback_list_id,hold_recall_xfer_group,no_delay_call_route,play_welcome_message,no_agent_no_queue,no_agent_action,no_agent_action_value,extension_appended_cidname,uniqueid_status_display,uniqueid_status_prefix,hold_time_option_minimum,hold_time_option_press_filename,hold_time_option_callmenu,onhold_prompt_no_block,onhold_prompt_seconds,hold_time_option_no_block,hold_time_option_prompt_seconds,hold_time_second_option,hold_time_third_option,wait_hold_option_priority,wait_time_option,wait_time_second_option,wait_time_third_option,wait_time_option_seconds,wait_time_option_exten,wait_time_option_voicemail,wait_time_option_xfer_group,wait_time_option_callmenu,wait_time_option_callback_filename,wait_time_option_callback_list_id,wait_time_option_press_filename,wait_time_option_no_block,wait_time_option_prompt_seconds,active,calculate_estimated_hold_seconds,add_lead_url,eht_minimum_prompt_filename,eht_minimum_prompt_no_block,eht_minimum_prompt_seconds,on_hook_ring_time,ingroup_recording_override,ingroup_rec_filename,on_hook_cid,action_xfer_cid,drop_callmenu,after_hours_callmenu,max_calls_method,max_calls_count,max_calls_action,populate_lead_ingroup,na_call_url,drop_lead_reset,after_hours_lead_reset,nanq_lead_reset,wait_time_lead_reset,hold_time_lead_reset,routing_initiated_recordings,on_hook_cid_number,populate_lead_province,areacode_filter,areacode_filter_seconds,areacode_filter_action,areacode_filter_action_value,populate_state_areacode,inbound_survey,inbound_survey_filename,inbound_survey_accept_digit,closing_time_action,closing_time_now_trigger,closing_time_filename,closing_time_end_filename,closing_time_lead_reset,closing_time_option_exten,closing_time_option_callmenu,closing_time_option_voicemail,closing_time_option_xfer_group,closing_time_option_callback_list_id,add_lead_timezone,populate_lead_source,populate_lead_vendor,enter_ingroup_url,cid_cb_confirm_number, cid_cb_invalid_filter_phone_group, cid_cb_valid_length, cid_cb_valid_filename, cid_cb_confirmed_filename, cid_cb_enter_filename, cid_cb_you_entered_filename, cid_cb_press_to_confirm_filename, cid_cb_invalid_filename, cid_cb_reenter_filename, cid_cb_error_filename,place_in_line_caller_number_filename,place_in_line_you_next_filename,answer_signal FROM vicidial_inbound_groups where group_id = '$channel_group';";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -931,6 +934,7 @@ if ($sthArows > 0)
 	$cid_cb_error_filename =			$aryA[118];
 	$place_in_line_caller_number_filename =	$aryA[119];
 	$place_in_line_you_next_filename =	$aryA[120];
+	$answer_signal =					$aryA[121];
 
 	if ( (length($place_in_line_caller_number_filename) < 1) || ($place_in_line_caller_number_filename =~ /^NULL$/i) ) 
 		{$place_in_line_caller_number_filename='queue-thereare';}
@@ -943,6 +947,13 @@ if ($sthArows > 0)
 		{$custom_call_id = "$uniqueid_status_prefix$uniqueid";}
 	}
 $sthA->finish();
+
+# If answer signal config is enabled and the in-group is set to send one, send an Answer signal
+if ( ($inbound_answer_config > 0) and ($answer_signal !~ /NONE|ROUTE/i) ) 
+	{
+	$AGI->answer();
+	if ($AGILOG) {$agi_string = "   Answering call: - $channel|$answer_signal";   &agi_output;}
+	}
 
 # When VID or VIDPROMPT, methods are not used, no Vendor Lead Code can be supplied. Fill it with inbound_number
 if ($call_handle_method !~ /^VID/) 
@@ -1151,8 +1162,15 @@ if ( ($channel_group =~ /AGENTDIRECT/i) && (length($agent_only) < 1) )
 
 $LOGuser='VDCL';
 
-$AGI->stream_file('sip-silence');
-$AGI->stream_file('sip-silence');
+if ( ($inbound_answer_config > 0) and ($answer_signal =~ /NONE|ROUTE/i) ) 
+	{
+	if ($AGILOG) {$agi_string = "     skipping sip-silence playback: $channel|";   &agi_output;}
+	}
+else
+	{
+	$AGI->stream_file('sip-silence');
+	$AGI->stream_file('sip-silence');
+	}
 
 if ($call_handle_method =~ /DIGITID$/)
 	{
@@ -1787,10 +1805,21 @@ if ( ( ( ( ($hm < $ct_default_start) || ($hm > $ct_default_stop) ) && ($hm >= $c
 			}
 		if ($after_hours_action =~ /IN_GROUP/)
 			{ # 90009*CL_uk3survy_*8301*10000123*universal*7275551212*1234*"
-			$DROPexten = "90009*$afterhours_xfer_group$S$S$insert_lead_id$S$S$phone_number$S$fronter$S";
+			$AH_prefix='90009';
+			if ( ($inbound_answer_config > 0) && ($answer_signal =~ /NONE/i) )
+				{$AH_prefix='98009';}
+			$DROPexten = "$AH_prefix*$afterhours_xfer_group$S$S$insert_lead_id$S$S$phone_number$S$fronter$S";
 			}
+		### if DROP extension is defined then send the dropped call there instead of hangup
 		if (length($DROPexten)>0)
-			{	### if DROP extension is defined then send the dropped call there instead of hangup
+			{
+			# If answer signal config is enabled and the in-group is set to send one at ROUTE, send an Answer signal
+			if ( ($inbound_answer_config > 0) and ($answer_signal =~ /ROUTE/i) ) 
+				{
+				$AGI->answer();
+				if ($AGILOG) {$agi_string = "   Answering call: - $channel|$answer_signal";   &agi_output;}
+				}
+
 			if ($no_delay_call_route =~ /N/)
 				{
 				$AGI->stream_file('sip-silence'); # stop music-on-hold process
@@ -1799,10 +1828,17 @@ if ( ( ( ( ($hm < $ct_default_start) || ($hm > $ct_default_stop) ) && ($hm >= $c
 				usleep(1*990*1000);
 				}
 
-			$AGI->stream_file('sip-silence');
-			$AGI->stream_file('sip-silence');
-			$AGI->stream_file('sip-silence');
-			$AGI->stream_file('sip-silence');
+			if ( ($inbound_answer_config > 0) and ($answer_signal =~ /NONE/i) ) 
+				{
+				if ($AGILOG) {$agi_string = "     skipping sip-silence playback: $channel|";   &agi_output;}
+				}
+			else
+				{
+				$AGI->stream_file('sip-silence');
+				$AGI->stream_file('sip-silence');
+				$AGI->stream_file('sip-silence');
+				$AGI->stream_file('sip-silence');
+				}
 
 			if ($AGILOG) {$agi_string = "exiting the VDAD app after hours, transferring call to $DROPexten";   &agi_output;}
 			print "SET CONTEXT $ext_context\n";
@@ -2067,10 +2103,21 @@ if ( ( ($no_agent_no_queue =~ /Y|NO_PAUSED|NO_READY/) || ($MCnanque_override > 0
 				$IGcampaign_id =	$IGno_agent_action_value[4];
 				$IGphone_code =		$IGno_agent_action_value[5];
 
-				$DROPexten = "90009*$IGgroup_id$S$S$insert_lead_id$S$S$phone_number$S$fronter$S";
+				$NA_prefix='90009';
+				if ( ($inbound_answer_config > 0) && ($answer_signal =~ /NONE/i) )
+					{$NA_prefix='98009';}
+				$DROPexten = "$NA_prefix*$IGgroup_id$S$S$insert_lead_id$S$S$phone_number$S$fronter$S";
 				}
+			### if DROP extension is defined then send the dropped call there instead of hangup
 			if (length($DROPexten)>0)
-				{	### if DROP extension is defined then send the dropped call there instead of hangup
+				{
+				# If answer signal config is enabled and the in-group is set to send one at ROUTE, send an Answer signal
+				if ( ($inbound_answer_config > 0) and ($answer_signal =~ /ROUTE/i) ) 
+					{
+					$AGI->answer();
+					if ($AGILOG) {$agi_string = "   Answering call: - $channel|$answer_signal";   &agi_output;}
+					}
+
 				if ($no_delay_call_route =~ /N/)
 					{
 					$AGI->stream_file('sip-silence'); # stop music-on-hold process
@@ -2079,10 +2126,17 @@ if ( ( ($no_agent_no_queue =~ /Y|NO_PAUSED|NO_READY/) || ($MCnanque_override > 0
 					usleep(1*990*1000);
 					}
 
-				$AGI->stream_file('sip-silence');
-				$AGI->stream_file('sip-silence');
-				$AGI->stream_file('sip-silence');
-				$AGI->stream_file('sip-silence');
+				if ( ($inbound_answer_config > 0) and ($answer_signal =~ /NONE/i) ) 
+					{
+					if ($AGILOG) {$agi_string = "     skipping sip-silence playback: $channel|";   &agi_output;}
+					}
+				else
+					{
+					$AGI->stream_file('sip-silence');
+					$AGI->stream_file('sip-silence');
+					$AGI->stream_file('sip-silence');
+					$AGI->stream_file('sip-silence');
+					}
 
 				if ($AGILOG) {$agi_string = "exiting the VDAD app no agent no queue, transferring call to $DROPexten";   &agi_output;}
 				print "SET CONTEXT $ext_context\n";
@@ -4203,10 +4257,24 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 					$dbhP=$dbhA;   $mysql_count='02072';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 				if ($AGILOG) {$agi_string = "--    VDCL vcl update: |$affected_rows|$insert_lead_id|\n|$stmtA|";   &agi_output;}
 
-				$AGI->stream_file('sip-silence');
-				$AGI->stream_file('sip-silence');
-				$AGI->stream_file('sip-silence');
-				$AGI->stream_file('sip-silence');
+				# If answer signal config is enabled and the in-group is set to send one at ROUTE, send an Answer signal
+				if ( ($inbound_answer_config > 0) and ($answer_signal =~ /ROUTE/i) ) 
+					{
+					$AGI->answer();
+					if ($AGILOG) {$agi_string = "   Answering call: - $channel|$answer_signal";   &agi_output;}
+					}
+
+				if ( ($inbound_answer_config > 0) and ($answer_signal =~ /NONE/i) ) 
+					{
+					if ($AGILOG) {$agi_string = "     skipping sip-silence playback: $channel|";   &agi_output;}
+					}
+				else
+					{
+					$AGI->stream_file('sip-silence');
+					$AGI->stream_file('sip-silence');
+					$AGI->stream_file('sip-silence');
+					$AGI->stream_file('sip-silence');
+					}
 
 				print "SET CONTEXT $ext_context\n";
 					$result = <STDIN>;
@@ -4288,7 +4356,10 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 
 		if ($hrxg_count > 1)
 			{
-			$DROPexten = "90009*$hold_recall_xfer_group$S$S$insert_lead_id$S$S$phone_number$S$fronter$S";
+			$HRXG_prefix='90009';
+			if ( ($inbound_answer_config > 0) && ($answer_signal =~ /NONE/i) )
+				{$HRXG_prefix='98009';}
+			$DROPexten = "$HRXG_prefix*$hold_recall_xfer_group$S$S$insert_lead_id$S$S$phone_number$S$fronter$S";
 
 			if ($no_delay_call_route =~ /N/)
 				{
@@ -4353,10 +4424,24 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 				$dbhB->disconnect();
 				}
 
-			$AGI->stream_file('sip-silence');
-			$AGI->stream_file('sip-silence');
-			$AGI->stream_file('sip-silence');
-			$AGI->stream_file('sip-silence');
+			# If answer signal config is enabled and the in-group is set to send one at ROUTE, send an Answer signal
+			if ( ($inbound_answer_config > 0) and ($answer_signal =~ /ROUTE/i) ) 
+				{
+				$AGI->answer();
+				if ($AGILOG) {$agi_string = "   Answering call: - $channel|$answer_signal";   &agi_output;}
+				}
+
+			if ( ($inbound_answer_config > 0) and ($answer_signal =~ /NONE/i) ) 
+				{
+				if ($AGILOG) {$agi_string = "     skipping sip-silence playback: $channel|";   &agi_output;}
+				}
+			else
+				{
+				$AGI->stream_file('sip-silence');
+				$AGI->stream_file('sip-silence');
+				$AGI->stream_file('sip-silence');
+				$AGI->stream_file('sip-silence');
+				}
 
 			if ($AGILOG) {$agi_string = "exiting the VDAD app, transferring call to $DROPexten";   &agi_output;}
 			print "SET CONTEXT $ext_context\n";
@@ -4925,10 +5010,21 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 					$IGcampaign_id =	$IGareacode_filter_action_value[4];
 					$IGphone_code =		$IGareacode_filter_action_value[5];
 
-					$DROPexten = "90009*$IGgroup_id$S$S$insert_lead_id$S$S$phone_number$S$fronter$S";
+					$AC_prefix='90009';
+					if ( ($inbound_answer_config > 0) && ($answer_signal =~ /NONE/i) )
+						{$AC_prefix='98009';}
+					$DROPexten = "$AC_prefix*$IGgroup_id$S$S$insert_lead_id$S$S$phone_number$S$fronter$S";
 					}
+				### if DROP extension is defined then send the dropped call there instead of hangup
 				if (length($DROPexten)>0)
-					{	### if DROP extension is defined then send the dropped call there instead of hangup
+					{
+					# If answer signal config is enabled and the in-group is set to send one at ROUTE, send an Answer signal
+					if ( ($inbound_answer_config > 0) and ($answer_signal =~ /ROUTE/i) ) 
+						{
+						$AGI->answer();
+						if ($AGILOG) {$agi_string = "   Answering call: - $channel|$answer_signal";   &agi_output;}
+						}
+
 					if ($no_delay_call_route =~ /N/)
 						{
 						$AGI->stream_file('sip-silence'); # stop music-on-hold process
@@ -4937,10 +5033,17 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 						usleep(1*990*1000);
 						}
 
-					$AGI->stream_file('sip-silence');
-					$AGI->stream_file('sip-silence');
-					$AGI->stream_file('sip-silence');
-					$AGI->stream_file('sip-silence');
+					if ( ($inbound_answer_config > 0) and ($answer_signal =~ /NONE/i) ) 
+						{
+						if ($AGILOG) {$agi_string = "     skipping sip-silence playback: $channel|";   &agi_output;}
+						}
+					else
+						{
+						$AGI->stream_file('sip-silence');
+						$AGI->stream_file('sip-silence');
+						$AGI->stream_file('sip-silence');
+						$AGI->stream_file('sip-silence');
+						}
 
 					if ($AGILOG) {$agi_string = "exiting the VDAD app areacode filter, transferring call to $DROPexten";   &agi_output;}
 					print "SET CONTEXT $ext_context\n";
@@ -5242,7 +5345,10 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 			}
 		if ( ($wait_time_option =~ /IN_GROUP/) && ($wait_in_queue < 2) )
 			{ # 90009*CL_uk3survy_*8301*10000123*universal*7275551212*1234*"
-			$DROPexten = "90009*$wait_time_option_xfer_group$S$S$insert_lead_id$S$S$phone_number$S$fronter$S";
+			$WT_prefix='90009';
+			if ( ($inbound_answer_config > 0) && ($answer_signal =~ /NONE/i) )
+				{$WT_prefix='98009';}
+			$DROPexten = "$WT_prefix*$wait_time_option_xfer_group$S$S$insert_lead_id$S$S$phone_number$S$fronter$S";
 			}
 		if ( ($wait_time_option =~ /CALLERID_CALLBACK/) && ($wait_in_queue < 2) )
 			{
@@ -5489,6 +5595,13 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 						}
 					else
 						{$AGI->stream_file("$wait_time_option_callback_filename");}
+					}
+
+				# If answer signal config is enabled and the in-group is set to send one at ROUTE, send an Answer signal
+				if ( ($inbound_answer_config > 0) and ($answer_signal =~ /ROUTE/i) ) 
+					{
+					$AGI->answer();
+					if ($AGILOG) {$agi_string = "   Answering call: - $channel|$answer_signal";   &agi_output;}
 					}
 
 				$AGI->stream_file('sip-silence');
@@ -5782,7 +5895,10 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 					}
 				if ( ($hold_time_option =~ /IN_GROUP/) && ($wait_in_queue < 2) )
 					{ # 90009*CL_uk3survy_*8301*10000123*universal*7275551212*1234*"
-					$DROPexten = "90009*$hold_time_option_xfer_group$S$S$insert_lead_id$S$S$phone_number$S$fronter$S";
+					$HT_prefix='90009';
+					if ( ($inbound_answer_config > 0) && ($answer_signal =~ /NONE/i) )
+						{$HT_prefix='98009';}
+					$DROPexten = "$HT_prefix*$hold_time_option_xfer_group$S$S$insert_lead_id$S$S$phone_number$S$fronter$S";
 					}
 				if ( ($hold_time_option =~ /CALLERID_CALLBACK/) && ($wait_in_queue < 2) )
 					{
@@ -6029,6 +6145,13 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 								}
 							else
 								{$AGI->stream_file("$hold_time_option_callback_filename");}
+							}
+
+						# If answer signal config is enabled and the in-group is set to send one at ROUTE, send an Answer signal
+						if ( ($inbound_answer_config > 0) and ($answer_signal =~ /ROUTE/i) ) 
+							{
+							$AGI->answer();
+							if ($AGILOG) {$agi_string = "   Answering call: - $channel|$answer_signal";   &agi_output;}
 							}
 
 						$AGI->stream_file('sip-silence');
@@ -6339,7 +6462,10 @@ if ($closing_check > 0)
 		}
 	if ($closing_time_action =~ /IN_GROUP/)
 		{ # 90009*CL_uk3survy_*8301*10000123*universal*7275551212*1234*"
-		$DROPexten = "90009*$closing_time_option_xfer_group$S$S$insert_lead_id$S$S$phone_number$S$fronter$S";
+		$CT_prefix='90009';
+		if ( ($inbound_answer_config > 0) && ($answer_signal =~ /NONE/i) )
+			{$CT_prefix='98009';}
+		$DROPexten = "$CT_prefix*$closing_time_option_xfer_group$S$S$insert_lead_id$S$S$phone_number$S$fronter$S";
 		}
 	if ($closing_time_action =~ /CALLERID_CALLBACK/)
 		{
@@ -6566,6 +6692,13 @@ if ($closing_check > 0)
 				{$AGI->stream_file("$closing_time_end_filename");}
 			}
 
+		# If answer signal config is enabled and the in-group is set to send one at ROUTE, send an Answer signal
+		if ( ($inbound_answer_config > 0) and ($answer_signal =~ /ROUTE/i) ) 
+			{
+			$AGI->answer();
+			if ($AGILOG) {$agi_string = "   Answering call: - $channel|$answer_signal";   &agi_output;}
+			}
+
 		$AGI->stream_file('sip-silence');
 		$AGI->stream_file('sip-silence');
 
@@ -6752,7 +6885,10 @@ if ( ($drop_timer > $DROP_TIME) || ($MCdrop_override > 0) )
 		}
 	if ($drop_action =~ /IN_GROUP/)
 		{ # 90009*CL_uk3survy_*8301*10000123*universal*7275551212*1234*"
-		$DROPexten = "90009*$drop_inbound_group$S$S$insert_lead_id$S$S$phone_number$S$fronter$S";
+		$DA_prefix='90009';
+		if ( ($inbound_answer_config > 0) && ($answer_signal =~ /NONE/i) )
+			{$DA_prefix='98009';}
+		$DROPexten = "$DA_prefix*$drop_inbound_group$S$S$insert_lead_id$S$S$phone_number$S$fronter$S";
 		}
 	if ($drop_action =~ /PHONE/)
 		{
@@ -6825,8 +6961,15 @@ if ( ($drop_timer > $DROP_TIME) || ($MCdrop_override > 0) )
 	### use STDOUT to send call to proper DROP location
 	$VHqueryCID = "VH$CIDdate$VDADconf_exten";
 
+	### if DROP extension is defined then send the dropped call there instead of hangup
 	if (length($DROPexten)>0)
-		{	### if DROP extension is defined then send the dropped call there instead of hangup
+		{
+		# If answer signal config is enabled and the in-group is set to send one at ROUTE, send an Answer signal
+		if ( ($inbound_answer_config > 0) and ($answer_signal =~ /ROUTE/i) ) 
+			{
+			$AGI->answer();
+			if ($AGILOG) {$agi_string = "   Answering call: - $channel|$answer_signal";   &agi_output;}
+			}
 
 		if ($no_delay_call_route =~ /N/)
 			{
@@ -6836,10 +6979,17 @@ if ( ($drop_timer > $DROP_TIME) || ($MCdrop_override > 0) )
 			usleep(1*990*1000);
 			}
 
-		$AGI->stream_file('sip-silence');
-		$AGI->stream_file('sip-silence');
-		$AGI->stream_file('sip-silence');
-		$AGI->stream_file('sip-silence');
+		if ( ($inbound_answer_config > 0) and ($answer_signal =~ /NONE/i) ) 
+			{
+			if ($AGILOG) {$agi_string = "     skipping sip-silence playback: $channel|";   &agi_output;}
+			}
+		else
+			{
+			$AGI->stream_file('sip-silence');
+			$AGI->stream_file('sip-silence');
+			$AGI->stream_file('sip-silence');
+			$AGI->stream_file('sip-silence');
+			}
 
 		if ($AGILOG) {$agi_string = "exiting the VDAD app, transferring call to $DROPexten";   &agi_output;}
 		print "SET CONTEXT $ext_context\n";
