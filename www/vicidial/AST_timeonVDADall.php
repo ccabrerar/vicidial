@@ -3583,7 +3583,7 @@ if ($talking_to_print > 0)
 				$pausecode = sprintf("%-6s ", $Apause_code[$i]);
 				if ($SSenable_pause_code_limits > 0)
 					{
-					$pause_limit_stmt="SELECT time_limit from vicidial_pause_codes where campaign_id='$Acampaign_id[$i]' and pause_code='$rowC[0]'";
+					$pause_limit_stmt="SELECT time_limit from vicidial_pause_codes where campaign_id='$Acampaign_id[$i]' and pause_code='$Apause_code[$i]'";
 					$pause_limit_rslt=mysql_to_mysqli($pause_limit_stmt, $link);
 					if (mysqli_num_rows($pause_limit_rslt)>0)
 						{
