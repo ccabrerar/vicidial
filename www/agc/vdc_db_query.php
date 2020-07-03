@@ -487,7 +487,7 @@
 # 191108-0920 - Added Dial Timeout Lead override function
 # 200108-0947 - Added cid_group_id of NONE
 # 200122-1847 - Added code for CID Group auto-rotate feature
-# 200310-1117 - Added manual_dial_cid AGENT_PHONE_OVERRIDE option 
+# 200310-1117 - Added manual_dial_cid AGENT_PHONE_OVERRIDE option
 # 200403-1601 - Added option for forced outbound CID through API
 # 200407-2036 - Added option for browser alert sounds
 # 200609-2357 - Added NONE_ options for the campaign manual_dial_filter
@@ -4627,7 +4627,7 @@ if ($ACTION == 'manDiaLnextCaLL')
 						$PHONEoutbound_cid =	$row[0];
 						}
 					$PHONEoutbound_cid = preg_replace("/\D/",'',$PHONEoutbound_cid);
-					if (strlen($PHONEoutbound_cid) > 6) 
+					if (strlen($PHONEoutbound_cid) > 6)
 						{$CCID = "$PHONEoutbound_cid";   $CCID_on++;}
 					}
 				#### END check for manual_dial_cid == 'AGENT_PHONE_OVERRIDE'
@@ -4636,7 +4636,7 @@ if ($ACTION == 'manDiaLnextCaLL')
 				if ( ($usegroupalias > 0) and ($account=='-FORCE-') and (strlen($campaign_cid) > 6) )
 					{
 					$FORCEoutbound_cid = preg_replace("/\D/",'',$campaign_cid);
-					if (strlen($FORCEoutbound_cid) > 6) 
+					if (strlen($FORCEoutbound_cid) > 6)
 						{$CCID = "$FORCEoutbound_cid";   $CCID_on++;}
 					}
 				#### END check for API forced CID override ####
@@ -6117,7 +6117,7 @@ if ($ACTION == 'manDiaLonly')
 				$PHONEoutbound_cid =	$row[0];
 				}
 			$PHONEoutbound_cid = preg_replace("/\D/",'',$PHONEoutbound_cid);
-			if (strlen($PHONEoutbound_cid) > 6) 
+			if (strlen($PHONEoutbound_cid) > 6)
 				{$CCID = "$PHONEoutbound_cid";   $CCID_on++;}
 			}
 		#### END check for manual_dial_cid == 'AGENT_PHONE_OVERRIDE'
@@ -6126,7 +6126,7 @@ if ($ACTION == 'manDiaLonly')
 		if ( ($usegroupalias > 0) and ($account=='-FORCE-') and (strlen($campaign_cid) > 6) )
 			{
 			$FORCEoutbound_cid = preg_replace("/\D/",'',$campaign_cid);
-			if (strlen($FORCEoutbound_cid) > 6) 
+			if (strlen($FORCEoutbound_cid) > 6)
 				{$CCID = "$FORCEoutbound_cid";   $CCID_on++;}
 			}
 		#### END check for API forced CID override ####
@@ -15811,6 +15811,9 @@ if ($ACTION == 'PauseCodeSubmit')
 		### if this is the first pause code entry in a pause session, simply update and log to queue_log
 		if ( ($stage < 1) or ($pause_to_code_jump > 0) )
 			{
+			$stmt="UPDATE vicidial_live_agents SET pause_code = '$status' WHERE user='$user'";
+			mysql_to_mysqli($stmt, $link);
+
 			$stmt="UPDATE vicidial_agent_log set sub_status=\"$status\",pause_type='AGENT' where agent_log_id >= '$agent_log_id' and user='$user' and ( (sub_status is NULL) or (sub_status='') )order by agent_log_id limit 2;";
 				if ($format=='debug') {echo "\n<!-- $stmt -->";}
 			$rslt=mysql_to_mysqli($stmt, $link);
@@ -15855,7 +15858,7 @@ if ($ACTION == 'PauseCodeSubmit')
 			$affected_rows = mysqli_affected_rows($link);
 			$agent_log_id = mysqli_insert_id($link);
 
-			$stmt="UPDATE vicidial_live_agents SET agent_log_id='$agent_log_id',last_state_change='$NOW_TIME' where user='$user';";
+			$stmt="UPDATE vicidial_live_agents SET agent_log_id='$agent_log_id',last_state_change='$NOW_TIME',pause_code='$status' where user='$user';";
 			if ($DB) {echo "$stmt\n";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00310',$VD_login,$server_ip,$session_name,$one_mysql_log);}
