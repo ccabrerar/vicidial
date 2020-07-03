@@ -4686,12 +4686,13 @@ else
 # 200619-1643 - Added queuemetrics_pausereason system settings option
 # 200623-1957 - Added inbound answer configuration
 # 200624-1939 - Added Callbacks Export report
+# 200701-1525 - Added more concurrent_transfers options
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-759a';
-$build = '200624-1939';
+$admin_version = '2.14-760a';
+$build = '200701-1525';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -24110,7 +24111,7 @@ if ($ADD==31)
 
 			echo "<tr bgcolor=#$SSalt_row1_background><td align=right>"._QXZ("Dial Level Difference Target Method").": </td><td align=left><select size=1 name=dl_diff_target_method><option value='ADAPT_CALC_ONLY'>"._QXZ("ADAPT_CALC_ONLY")."</option><option value='CALLS_PLACED'>"._QXZ("CALLS_PLACED")."</option><option value='$dl_diff_target_method' SELECTED>"._QXZ("$dl_diff_target_method")."</option></select>$NWB#campaigns-dl_diff_target_method$NWE</td></tr>\n";
 
-			echo "<tr bgcolor=#$SSalt_row1_background><td align=right>"._QXZ("Concurrent Transfers").": </td><td align=left><select size=1 name=concurrent_transfers><option value='AUTO'>"._QXZ("AUTO")."</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>15</option><option>20</option><option>25</option><option>30</option><option>40</option><option>50</option><option>60</option><option>80</option><option>100</option><option value=\"$concurrent_transfers\" SELECTED>"._QXZ("$concurrent_transfers")."</option></select>$NWB#campaigns-concurrent_transfers$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSalt_row1_background><td align=right>"._QXZ("Concurrent Transfers").": </td><td align=left><select size=1 name=concurrent_transfers><option value='AUTO'>"._QXZ("AUTO")."</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>15</option><option>20</option><option>25</option><option>30</option><option>40</option><option>50</option><option>60</option><option>80</option><option>100</option><option>1000</option><option>10000</option><option value=\"$concurrent_transfers\" SELECTED>"._QXZ("$concurrent_transfers")."</option></select>$NWB#campaigns-concurrent_transfers$NWE</td></tr>\n";
 
 			echo "<tr bgcolor=#$SSalt_row1_background><td align=right>"._QXZ("Queue Priority").": </td><td align=left><select size=1 name=queue_priority>\n";
 			$n=99;

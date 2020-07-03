@@ -1262,3 +1262,7 @@ ALTER TABLE vicidial_inbound_groups ADD answer_signal ENUM('START','ROUTE','NONE
 UPDATE servers SET rebuild_conf_files='Y' where active_asterisk_server='Y';
 
 UPDATE system_settings SET db_schema_version='1598',db_schema_update_date=NOW() where db_schema_version < 1598;
+
+ALTER TABLE vicidial_campaigns MODIFY concurrent_transfers ENUM('AUTO','1','2','3','4','5','6','7','8','9','10','15','20','25','30','40','50','60','80','100','1000','10000') default 'AUTO';
+
+UPDATE system_settings SET db_schema_version='1599',db_schema_update_date=NOW() where db_schema_version < 1599;
