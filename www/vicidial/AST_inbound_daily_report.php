@@ -33,6 +33,7 @@
 # 170829-0040 - Added screen color settings
 # 171012-2015 - Fixed javascript/apache errors with graphs
 # 191013-0902 - Fixes for PHP7
+# 200701-1500 - Added option to exclude after-hours from abandons, list ID filtering
 #
 
 $startMS = microtime();
@@ -50,6 +51,8 @@ $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
 if (isset($_GET["group"]))				{$group=$_GET["group"];}
 	elseif (isset($_POST["group"]))		{$group=$_POST["group"];}
+if (isset($_GET["list_ids"]))				{$list_ids=$_GET["list_ids"];}
+	elseif (isset($_POST["list_ids"]))		{$list_ids=$_POST["list_ids"];}
 if (isset($_GET["query_date"]))				{$query_date=$_GET["query_date"];}
 	elseif (isset($_POST["query_date"]))	{$query_date=$_POST["query_date"];}
 if (isset($_GET["end_date"]))				{$end_date=$_GET["end_date"];}
@@ -64,6 +67,8 @@ if (isset($_GET["show_disposition_statuses"]))			{$show_disposition_statuses=$_G
 	elseif (isset($_POST["show_disposition_statuses"]))	{$show_disposition_statuses=$_POST["show_disposition_statuses"];}
 if (isset($_GET["ignore_afterhours"]))			{$ignore_afterhours=$_GET["ignore_afterhours"];}
 	elseif (isset($_POST["ignore_afterhours"]))	{$ignore_afterhours=$_POST["ignore_afterhours"];}
+if (isset($_GET["exclude_afterhours"]))			{$exclude_afterhours=$_GET["exclude_afterhours"];}
+	elseif (isset($_POST["exclude_afterhours"]))	{$exclude_afterhours=$_POST["exclude_afterhours"];}
 if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
 	elseif (isset($_POST["submit"]))	{$submit=$_POST["submit"];}
 if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
@@ -275,6 +280,17 @@ if ( (!preg_match("/$report_name/",$LOGallowed_reports)) and (!preg_match("/ALL 
     exit;
 	}
 
+$LOGallowed_campaignsSQL='';
+$whereLOGallowed_campaignsSQL='';
+if ( (!preg_match('/\-ALL/i', $LOGallowed_campaigns)) )
+	{
+	$rawLOGallowed_campaignsSQL = preg_replace("/ -/",'',$LOGallowed_campaigns);
+	$rawLOGallowed_campaignsSQL = preg_replace("/ /","','",$rawLOGallowed_campaignsSQL);
+	$LOGallowed_campaignsSQL = "and campaign_id IN('$rawLOGallowed_campaignsSQL')";
+	$whereLOGallowed_campaignsSQL = "where campaign_id IN('$rawLOGallowed_campaignsSQL')";
+	}
+$regexLOGallowed_campaigns = " $LOGallowed_campaigns ";
+
 $ag[0]='';
 $LOGadmin_viewable_groupsSQL='';
 $whereLOGadmin_viewable_groupsSQL='';
@@ -322,8 +338,11 @@ $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 $STARTtime = date("U");
 if (!isset($group)) {$group = array();}
+if (!isset($list_ids)) {$list_ids = array(); $all_lists_selected="selected";}
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (!isset($end_date)) {$end_date = $NOW_DATE;}
+
+###### INGROUPS ######
 $groups_selected = count($group);
 $group_name_str="";
 $groups_selected_str="";
@@ -367,6 +386,55 @@ while ($i < $groups_to_print)
 
 $groups_selected_str=preg_replace('/, $/', '', $groups_selected_str);
 $group_name_str=preg_replace('/, $/', '', $group_name_str);
+######################
+
+###### LISTS #########
+$lists_selected = count($list_ids);
+$list_name_str="";
+$lists_selected_str="";
+$lists_selected_URLstr="";
+
+for ($i=0; $i<$lists_selected; $i++) 
+	{
+	$selected_group_URLstr.="&list_ids[]=$list_ids[$i]";
+	if ($list_ids[$i]=="--ALL--") 
+		{
+		$list_ids=array("--ALL--");
+		$lists_selected=1;
+		$list_name_str.="-- ALL LISTS --";
+		$all_lists_selected="selected";
+		}
+	else 
+		{
+		$lists_selected_str.="'$list_ids[$i]', ";
+		}
+	}
+
+$stmt="select list_id,list_name from vicidial_lists $whereLOGallowed_campaignsSQL order by list_id;";
+$rslt=mysql_to_mysqli($stmt, $link);
+if ($DB) {$MAIN.="$stmt\n";}
+$lists_to_print = mysqli_num_rows($rslt);
+$i=0;
+$lists=array();
+$list_names=array();
+$lists_string='|';
+while ($i < $lists_to_print)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$lists[$i] =		$row[0];
+	$list_names[$i] =	$row[1];
+	$lists_string .= "$lists[$i]|";
+	for ($j=0; $j<$lists_selected; $j++) 
+		{
+		if ($list_ids[$j] && $lists[$i]==$list_ids[$j]) {$list_name_str.="$lists[$i] - $list_names[$i], ";}
+		if ($list_ids[$j]=="--ALL--") {$lists_selected_str.="'$lists[$i]', ";}
+		}
+	$i++;
+	}
+
+$lists_selected_str=preg_replace('/, $/', '', $lists_selected_str);
+$list_name_str=preg_replace('/, $/', '', $list_name_str);
+######################
 
 $stmt="select call_time_id,call_time_name from vicidial_call_times $whereLOGadmin_viewable_call_timesSQL order by call_time_id;";
 $rslt=mysql_to_mysqli($stmt, $link);
@@ -448,6 +516,24 @@ $MAIN.="});\n";
 $MAIN.="o_cal.a_tpl.yearscroll = false;\n";
 $MAIN.="// o_cal.a_tpl.weekstart = 1; // Monday week start\n";
 $MAIN.="</script>\n";
+$MAIN.="</TD><TD rowspan=3>\n";
+
+$MAIN.="<SELECT SIZE=5 NAME=list_ids[] multiple>\n";
+$MAIN.="<option $all_lists_selected value=\"--ALL--\">--"._QXZ("ALL LISTS")."--</option>\n";
+$o=0;
+while ($lists_to_print > $o)
+	{
+	$selected="";
+	for ($i=0; $i<$lists_selected; $i++) 
+		{
+		if ( ($file_download < 1) and ($DB) ) {echo "<!-- $lists[$o] == $list_ids[$i] //-->\n";}
+		if ($lists[$o] == $list_ids[$i]) {$selected="selected";}
+		}
+	$MAIN.="<option $selected value=\"$lists[$o]\">$lists[$o] - $list_names[$o]</option>\n";
+	$o++;
+	}
+$MAIN.="</SELECT>\n";
+
 $MAIN.="</TD><TD rowspan=2>\n";
 $MAIN.="<SELECT SIZE=5 NAME=group[] multiple>\n";
 $MAIN.="<option $all_selected value=\"--ALL--\">--"._QXZ("ALL INGROUPS")."--</option>\n";
@@ -486,7 +572,7 @@ if ($IDR_calltime_available==1)
 	}
 
 $MAIN.="<INPUT TYPE=submit NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'></TD></TR>\n";
-$MAIN.="<TR><TD align='left' rowspan=2><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2><INPUT TYPE=checkbox NAME=hourly_breakdown VALUE='checked' $hourly_breakdown>"._QXZ("Show hourly results")."<BR><INPUT TYPE=checkbox NAME=show_disposition_statuses VALUE='checked' $show_disposition_statuses>"._QXZ("Show disposition statuses")."<BR><INPUT TYPE=checkbox NAME=ignore_afterhours VALUE='checked' $ignore_afterhours>"._QXZ("Ignore after-hours calls");
+$MAIN.="<TR><TD align='left' rowspan=2><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2><INPUT TYPE=checkbox NAME=hourly_breakdown VALUE='checked' $hourly_breakdown>"._QXZ("Show hourly results")."<BR><INPUT TYPE=checkbox NAME=show_disposition_statuses VALUE='checked' $show_disposition_statuses>"._QXZ("Show disposition statuses")."<BR><INPUT TYPE=checkbox NAME=ignore_afterhours VALUE='checked' $ignore_afterhours>"._QXZ("Ignore after-hours calls")."<BR><INPUT TYPE=checkbox NAME=exclude_afterhours VALUE='checked' $exclude_afterhours>"._QXZ("Exclude after-hours from abandons");
 if ($archives_available=="Y") 
 	{
 	$MAIN.="<BR><input type='checkbox' name='search_archived_data' value='checked' $search_archived_data>"._QXZ("Search archived data")."\n";
@@ -709,7 +795,7 @@ else
 
 	$status_array=array();
 	if ($show_disposition_statuses) {
-		$dispo_stmt="select distinct status from ".$vicidial_closer_log_table." where call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' and  campaign_id in (" . $groups_selected_str . ") $big_shift_time_SQL_clause order by status;";
+		$dispo_stmt="select distinct status from ".$vicidial_closer_log_table." where call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' and  campaign_id in (" . $groups_selected_str . ")  and list_id in (" . $lists_selected_str . ") $status_clause $big_shift_time_SQL_clause order by status;";
 		#echo $dispo_stmt."<BR>";
 		$dispo_rslt=mysql_to_mysqli($dispo_stmt, $link);
 		$dispo_str="";
@@ -879,7 +965,7 @@ else
 
 
 	### GRAB ALL RECORDS WITHIN RANGE FROM THE DATABASE ###
-	$stmt="select queue_seconds,UNIX_TIMESTAMP(call_date),length_in_sec,status,term_reason,call_date,user from ".$vicidial_closer_log_table." where call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' and  campaign_id in (" . $groups_selected_str . ");";
+	$stmt="select queue_seconds,UNIX_TIMESTAMP(call_date),length_in_sec,status,term_reason,call_date,user from ".$vicidial_closer_log_table." where call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' and campaign_id in (" . $groups_selected_str . ") and list_id in (" . $lists_selected_str . ") $status_clause;";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	if ($DB) {$ASCII_text.="$stmt\n";}
 	$records_to_grab = mysqli_num_rows($rslt);
@@ -1008,12 +1094,16 @@ else
 
 				if ($totCALLSmax < $ls[$i]) {$totCALLSmax = $ls[$i];}
 				if ($qrtCALLSmax[$j] < $ls[$i]) {$qrtCALLSmax[$j] = $ls[$i];}
-				if (preg_match('/ABANDON|NOAGENT|QUEUETIMEOUT|AFTERHOURS|MAXCALLS/', $tr[$i])) 
+				$abandons_match_str='ABANDON|NOAGENT|QUEUETIMEOUT|AFTERHOURS|MAXCALLS';
+				if (preg_match("/$abandons_match_str/", $tr[$i])) 
 					{
-					$totABANDONSdate[$j]++;
-					$totABANDONSsecdate[$j]+=$ls[$i];
-					$FtotABANDONS++;
-					$FtotABANDONSsec+=$ls[$i];
+					if (!$exclude_afterhours || !preg_match('/AFTERHOURS/', $tr[$i]))
+						{
+						$totABANDONSdate[$j]++;
+						$totABANDONSsecdate[$j]+=$ls[$i];
+						$FtotABANDONS++;
+						$FtotABANDONSsec+=$ls[$i];
+						}
 					}
 				else 
 					{

@@ -56,21 +56,21 @@ $defaultPATHconf =		'/etc/astguiclient.conf';
 $PATHconf =		$defaultPATHconf;
 # default path to home directory:
 $PATHhome =		'/usr/share/astguiclient';
-# default path to astguiclient logs directory: 
+# default path to astguiclient logs directory:
 $PATHlogs =		'/var/log/astguiclient';
-# default path to asterisk agi-bin directory: 
+# default path to asterisk agi-bin directory:
 $PATHagi =		'/var/lib/asterisk/agi-bin';
-# default path to web root directory: 
+# default path to web root directory:
 #$PATHweb =		'/var/www/html';
 #$PATHweb =		'/home/www/htdocs';
 $PATHweb =		'/usr/local/apache2/htdocs';
-# default path to asterisk sounds directory: 
+# default path to asterisk sounds directory:
 $PATHsounds =	'/var/lib/asterisk/sounds';
-# default path to asterisk recordings directory: 
+# default path to asterisk recordings directory:
 $PATHmonitor =	'/var/spool/asterisk/monitor';
-# default path to asterisk recordings DONE directory: 
+# default path to asterisk recordings DONE directory:
 $PATHDONEmonitor =	'/var/spool/asterisk/monitorDONE';
-# default database server variables: 
+# default database server variables:
 $VARDB_server =	'localhost';
 $VARDB_database =	'asterisk';
 $VARDB_user =	'cron';
@@ -78,9 +78,9 @@ $VARDB_pass =	'1234';
 $VARDB_custom_user =	'custom';
 $VARDB_custom_pass =	'custom1234';
 $VARDB_port =	'3306';
-# default keepalive processes: 
+# default keepalive processes:
 $VARactive_keepalives =		'1234568';
-# default Asterisk version: 
+# default Asterisk version:
 $VARasterisk_version =		'1.4';
 # default recording FTP archive variables:
 $VARFTP_host = '10.0.0.4';
@@ -154,7 +154,7 @@ $secX = time();
 $DB=1;  # Debug flag, set to 0 for no debug messages, lots of output
 $US='_';
 $MT[0]='';
-$svn_revision_fixed = 3260;
+$svn_revision_fixed = 3263;
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -745,7 +745,7 @@ if (length($ARGV[0])>1)
 			$server_ip = $VARserver_ip;		# Asterisk server IP
 			if (!$VARDB_port) {$VARDB_port='3306';}
 
-			use DBI;	  
+			use DBI;
 
 			$dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
 			 or die "Couldn't connect to database: " . DBI->errstr;
@@ -754,9 +754,9 @@ if (length($ARGV[0])>1)
 			$S='*';
 			if( $VARserver_ip =~ m/(\S+)\.(\S+)\.(\S+)\.(\S+)/ )
 				{
-				$a = leading_zero($1); 
-				$b = leading_zero($2); 
-				$c = leading_zero($3); 
+				$a = leading_zero($1);
+				$b = leading_zero($2);
+				$c = leading_zero($3);
 				$d = leading_zero($4);
 				$VARremDIALstr = "$a$S$b$S$c$S$d";
 				}
@@ -834,9 +834,9 @@ if (length($ARGV[0])>1)
 
 				if( $server_ip[$i] =~ m/(\S+)\.(\S+)\.(\S+)\.(\S+)/ )
 					{
-					$a = leading_zero($1); 
-					$b = leading_zero($2); 
-					$c = leading_zero($3); 
+					$a = leading_zero($1);
+					$b = leading_zero($2);
+					$c = leading_zero($3);
 					$d = leading_zero($4);
 					$VARremDIALstr = "$a$S$b$S$c$S$d";
 					}
@@ -911,7 +911,7 @@ if (length($ARGV[0])>1)
 			$server_ip = $VARserver_ip;		# Asterisk server IP
 			if (!$VARDB_port) {$VARDB_port='3306';}
 
-			use DBI;	  
+			use DBI;
 
 			$dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
 			 or die "Couldn't connect to database: " . DBI->errstr;
@@ -1008,7 +1008,7 @@ else
 	}
 ### end parsing run-time options ###
 
-if (-e "$PATHconf") 
+if (-e "$PATHconf")
 	{
 	print "Previous astGUIclient configuration file found at: $PATHconf\n";
 	open(conf, "$PATHconf") || die "can't open $PATHconf: $!\n";
@@ -1127,7 +1127,7 @@ else
 				$continue='YES';
 				}
 			}
-		if (-e "$PATHconf") 
+		if (-e "$PATHconf")
 			{
 			print "Previous astGUIclient configuration file found at: $PATHconf\n";
 			open(conf, "$PATHconf") || die "can't open $PATHconf: $!\n";
@@ -1629,7 +1629,7 @@ else
 
 		##### BEGIN server_ip prompting and check #####
 		if (length($VARserver_ip)<7)
-			{	
+			{
 			### get best guess of IP address from ifconfig output ###
 			# inet addr:10.10.11.17  Bcast:10.10.255.255  Mask:255.255.0.0
 			@ip = `/sbin/ifconfig`;
@@ -1664,7 +1664,7 @@ else
 
 		##### BEGIN DB_server prompting and check #####
 		if (length($VARDB_server)<7)
-			{	
+			{
 			$VARDB_server = 'localhost';
 			}
 		$continue='NO';
@@ -1947,7 +1947,7 @@ else
 
 		##### BEGIN FTP_host prompting and check #####
 		if (length($VARFTP_host)<7)
-			{	
+			{
 			$VARFTP_host = 'localhost';
 			}
 		$continue='NO';
@@ -2071,7 +2071,7 @@ else
 
 		##### BEGIN REPORT_host prompting and check #####
 		if (length($VARREPORT_host)<7)
-			{	
+			{
 			$VARREPORT_host = 'localhost';
 			}
 		$continue='NO';
@@ -2366,7 +2366,7 @@ else
 	}
 
 $ExpectedDBSchema='?';
-if (-e "./extras/MySQL_AST_CREATE_tables.sql") 
+if (-e "./extras/MySQL_AST_CREATE_tables.sql")
 	{
 	print "Gathering expected DB Schema version...\n";
 	open(DBcreate, "./extras/MySQL_AST_CREATE_tables.sql") || die "can't open ./extras/MySQL_AST_CREATE_tables.sql: $!\n";
@@ -2480,26 +2480,26 @@ if ($WEBONLY < 1)
 		`mkdir -p $PATHhome/PREPROCESS/DONE`;
 		`chmod -R 0766 $PATHhome/PREPROCESS`;
 		}
-	if (!-e "$PATHhome/VTIGER_IN/DONE")	
+	if (!-e "$PATHhome/VTIGER_IN/DONE")
 		{
 		`mkdir -p $PATHhome/VTIGER_IN/DONE`;
 		`chmod -R 0766 $PATHhome/VTIGER_IN`;
 		}
-	if (!-e "$PATHhome/UPDATE_IN/DONE")	
+	if (!-e "$PATHhome/UPDATE_IN/DONE")
 		{
 		`mkdir -p $PATHhome/UPDATE_IN/DONE`;
 		`chmod -R 0766 $PATHhome/UPDATE_IN`;
 		}
 
 	print "Creating $PATHmonitor directories...\n";
-	if (!-e "$PATHmonitor")					
+	if (!-e "$PATHmonitor")
 		{
 		`mkdir -p $PATHmonitor`;
 		`chmod -R 0766 $PATHmonitor`;
 		}
 	if (!-e "$PATHmonitor/MIX")	{`mkdir -p $PATHmonitor/MIX`;}
 
-	if (!-e "$PATHDONEmonitor")					
+	if (!-e "$PATHDONEmonitor")
 		{
 		`mkdir -p $PATHDONEmonitor`;
 		`chmod -R 0766 $PATHDONEmonitor`;
@@ -2552,7 +2552,7 @@ if ($WEBONLY < 1)
 	`chmod 0755 $PATHhome/ip_relay/ip_relay_linux_i386`;
 	`ln -s $PATHhome/ip_relay/ip_relay_linux_i386 $PATHhome/ip_relay/ip_relay`;
 	`ln -s $PATHhome/ip_relay/ip_relay_linux_i386 /usr/local/bin/ip_relay`;
-	if (! -x "/usr/bin/ip_relay" ) 
+	if (! -x "/usr/bin/ip_relay" )
 		{`ln -s $PATHhome/ip_relay/ip_relay_linux_i386 /usr/bin/ip_relay`;}
 
 	print "Starting ip_relay port forwarding for IAX on 40569, 41569 and 42569\n";
@@ -2689,7 +2689,7 @@ if ( ($PROMPTcopy_conf_files =~ /y/i) || ($CLIcopy_conf_files =~ /y/i) )
 
 
 ##### BEGIN attempt to connect to database, if successful then update code information in database #####
-use DBI;	  
+use DBI;
 
 $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
  or warn "Couldn't connect to database: " . DBI->errstr;
@@ -2704,10 +2704,10 @@ if ($dbhA)
 	### find pwd binary to do the compression
 	$pwdbin = '';
 	if ( -e ('/bin/pwd')) {$pwdbin = '/bin/pwd';}
-	else 
+	else
 		{
 		if ( -e ('/usr/bin/pwd')) {$pwdbin = '/usr/bin/pwd';}
-		else 
+		else
 			{
 			if ( -e ('/usr/local/bin/pwd')) {$pwdbin = '/usr/local/bin/pwd';}
 			else
@@ -2719,10 +2719,10 @@ if ($dbhA)
 	### find svn binary to do the compression
 	$svnbin = '';
 	if ( -e ('/bin/svn')) {$svnbin = '/bin/svn';}
-	else 
+	else
 		{
 		if ( -e ('/usr/bin/svn')) {$svnbin = '/usr/bin/svn';}
-		else 
+		else
 			{
 			if ( -e ('/usr/local/bin/svn')) {$svnbin = '/usr/local/bin/svn';}
 			else
@@ -2785,7 +2785,7 @@ exit;
 
 
 
-sub leading_zero($) 
+sub leading_zero($)
 	{
 	$_ = $_[0];
 	s/^(\d)$/0$1/;

@@ -61,6 +61,7 @@
 # 190310-2206 - Added indication of muted recordings by agent
 # 191013-0843 - Fixes for PHP7
 # 200501-0811 - Added NVAuser option for NVA recordings user column
+# 200702-1710 - Added ANI to INBOUND/CLOSER records for NVAuser, added secondary check to find lead ID for DIDs 
 #
 
 $startMS = microtime();
@@ -1161,7 +1162,7 @@ else
 	$stmt="SELECT call_date,length_in_sec,status,phone_number,campaign_id,queue_seconds,list_id,lead_id,term_reason,closecallid from ".$vicidial_closer_log_table." where user='" . mysqli_real_escape_string($link, $user) . "' and call_date >= '" . mysqli_real_escape_string($link, $begin_date) . " 0:00:01'  and call_date <= '" . mysqli_real_escape_string($link, $end_date) . " 23:59:59' $query_call_status order by call_date desc limit 10000;";
 	if ($did > 0)
 		{
-		$stmt="SELECT start_time,length_in_sec,0,caller_code,0,0,0,extension,0,0 from ".$call_log_table." where channel_group='DID_INBOUND' and number_dialed='" . mysqli_real_escape_string($link, $user) . "' and start_time >= '" . mysqli_real_escape_string($link, $begin_date) . " 0:00:01'  and start_time <= '" . mysqli_real_escape_string($link, $end_date) . " 23:59:59' order by start_time desc limit 10000;";
+		$stmt="SELECT start_time,length_in_sec,0,caller_code,0,0,0,extension,0,0,uniqueid from ".$call_log_table." where channel_group='DID_INBOUND' and number_dialed='" . mysqli_real_escape_string($link, $user) . "' and start_time >= '" . mysqli_real_escape_string($link, $begin_date) . " 0:00:01'  and start_time <= '" . mysqli_real_escape_string($link, $end_date) . " 23:59:59' order by start_time desc limit 10000;";
 		}
 	else
 		{
@@ -1193,7 +1194,16 @@ else
 				$row[7] = ($row[7] + 0);
 				}
 			else
-				{$row[7]='0';}
+				{
+				$row[7]='0';
+				$lead_id_stmt="select lead_id from vicidial_closer_log where uniqueid='$row[10]'";
+				$lead_id_rslt=mysql_to_mysqli($lead_id_stmt, $link);
+				if (mysqli_num_rows($lead_id_rslt)>0) 
+					{
+					$lead_id_row=mysqli_fetch_row($lead_id_rslt);
+					$row[7]=$lead_id_row[0];
+					}
+				}
 			}
 		$TOTALinSECONDS = ($TOTALinSECONDS + $row[1]);
 		$AGENTseconds = ($row[1] - $row[5]);
@@ -1402,6 +1412,7 @@ else
 
 	$mute_column='';   $mute_column_csv='';
 	$agent_column='';   $agent_column_csv='';
+	$ANI_column='';   $ANI_column_csv='';
 	if ($SSmute_recordings > 0)
 		{
 		$mute_column = "<td align=center><font size=2>"._QXZ("MUTE")." &nbsp; </td>";
@@ -1411,12 +1422,14 @@ else
 		{
 		$agent_column = "<td align=center><font size=2>"._QXZ("AGENT")." &nbsp; </td>";
 		$agent_column_csv = ",\""._QXZ("AGENT")."\"";
+		$ANI_column = "<td align=center><font size=2>"._QXZ("ANI")." &nbsp; </td>";
+		$ANI_column_csv = ",\""._QXZ("ANI")."\"";
 		}
 	$MAIN.="<B>"._QXZ("RECORDINGS FOR THIS TIME PERIOD: (10000 record limit)")."&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href='$download_link&file_download=8'>["._QXZ("DOWNLOAD")."]</a></B>\n";
 	$MAIN.="<TABLE width=900 cellspacing=0 cellpadding=1>\n";
-	$MAIN.="<tr><td><font size=1># </td>$agent_column<td align=left><font size=2> "._QXZ("LEAD")."</td><td><font size=2>"._QXZ("DATE/TIME")." </td><td align=left><font size=2>"._QXZ("SECONDS")." </td><td align=left><font size=2> &nbsp; "._QXZ("RECID")."</td><td align=center><font size=2>"._QXZ("FILENAME")."</td><td align=center><font size=2>"._QXZ("LOCATION")." &nbsp; </td>$mute_column</tr>\n";
+	$MAIN.="<tr><td><font size=1># </td>$agent_column<td align=left><font size=2> "._QXZ("LEAD")."</td>$ANI_column<td><font size=2>"._QXZ("DATE/TIME")." </td><td align=left><font size=2>"._QXZ("SECONDS")." </td><td align=left><font size=2> &nbsp; "._QXZ("RECID")."</td><td align=center><font size=2>"._QXZ("FILENAME")."</td><td align=center><font size=2>"._QXZ("LOCATION")." &nbsp; </td>$mute_column</tr>\n";
 	$CSV_text8.="\""._QXZ("RECORDINGS FOR THIS TIME PERIOD: (10000 record limit)")."\"\n";
-	$CSV_text8.="\"\",\"#\"$agent_column_csv,\""._QXZ("LEAD")."\",\""._QXZ("DATE/TIME")."\",\""._QXZ("SECONDS")."\",\""._QXZ("RECID")."\",\""._QXZ("FILENAME")."\",\""._QXZ("LOCATION")."\"$mute_column_csv\n";
+	$CSV_text8.="\"\",\"#\"$agent_column_csv,\""._QXZ("LEAD")."\",\"$ANI_column_csv\",\""._QXZ("DATE/TIME")."\",\""._QXZ("SECONDS")."\",\""._QXZ("RECID")."\",\""._QXZ("FILENAME")."\",\""._QXZ("LOCATION")."\"$mute_column_csv\n";
 
 	if (strlen($query_call_status) > 5)
 		{
@@ -1427,6 +1440,7 @@ else
 	$stmt="SELECT recording_id,channel,server_ip,extension,start_time,start_epoch,end_time,end_epoch,length_in_sec,length_in_min,filename,location,lead_id,user,vicidial_id from ".$recording_log_table." where user='" . mysqli_real_escape_string($link, $user) . "' and start_time >= '" . mysqli_real_escape_string($link, $begin_date) . " 0:00:01'  and start_time <= '" . mysqli_real_escape_string($link, $end_date) . " 23:59:59' $CS_vicidial_id_list_SQL order by recording_id desc limit 10000;";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$logs_to_print = mysqli_num_rows($rslt);
+	if ($DB) {$MAIN.="agent activity|$stmt|";}
 
 	$u=0;
 	while ($logs_to_print > $u) 
@@ -1439,6 +1453,7 @@ else
 
 		$location = $row[11];
 		$CSV_location=$row[11];
+		$vicidial_id=$row[14];
 
 		if (strlen($location)>2)
 			{
@@ -1489,6 +1504,17 @@ else
 				$rowx=mysqli_fetch_row($rsltx);
 				$agent_user = $rowx[0];
 				}
+
+			$ANI='';
+			$ANI_stmt="SELECT caller_code from call_log where uniqueid='$vicidial_id' order by event_time;";
+			$ANI_rslt=mysql_to_mysqli($ANI_stmt, $link);
+			$ANI_logs_to_print = mysqli_num_rows($ANI_rslt);
+			if ($ANI_logs_to_print > 0) 
+				{
+				$ANI_row=mysqli_fetch_row($ANI_rslt);
+				$ANI = $ANI_row[0];
+				}
+
 			}
 
 		if (strlen($location)>30)
@@ -1515,6 +1541,11 @@ else
 			$NVAuser_csv_record=",\"$agent_user\"";
 			}
 		$MAIN.="<td align=left><font size=2> <A HREF=\"admin_modify_lead.php?lead_id=$row[12]\" target=\"_blank\">$row[12]</A> </td>";
+		if ($NVAuser > 0)
+			{
+			$MAIN.="<td align=right><font size=2> $ANI &nbsp; </td>\n";
+			$NVAuser_csv_record=",\"$ANI\"";
+			}
 		$MAIN.="<td align=left><font size=2> $row[4] </td>\n";
 		$MAIN.="<td align=left><font size=2> $row[8] </td>\n";
 		$MAIN.="<td align=left><font size=2> $row[0] </td>\n";
@@ -1826,3 +1857,4 @@ $rslt=mysql_to_mysqli($stmt, $link);
 exit;
 
 ?>
+
