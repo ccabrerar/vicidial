@@ -498,7 +498,7 @@ $version = '2.14-385';
 $build = '200621-1027';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
-$mysql_log_count=824;
+$mysql_log_count=839;
 $one_mysql_log=0;
 $DB=0;
 $VD_login=0;
@@ -4248,7 +4248,7 @@ if ($ACTION == 'manDiaLnextCaLL')
 					# Gather details on Dial Timeout Lead settings container
 					$stmt = "SELECT container_entry FROM vicidial_settings_containers where container_id='$dial_timeout_lead_container';";
 					$rslt=mysql_to_mysqli($stmt, $link);
-						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00825',$user,$server_ip,$session_name,$one_mysql_log);}
 					if ($DB) {echo "$stmt\n";}
 					$SCinfo_ct = mysqli_num_rows($rslt);
 					if ($SCinfo_ct > 0)
@@ -4430,7 +4430,7 @@ if ($ACTION == 'manDiaLnextCaLL')
 										$stmt="UPDATE vicidial_cid_groups SET cid_auto_rotate_calls=(cid_auto_rotate_calls + 1) where cid_group_id='$cid_group_id';";
 											if ($format=='debug') {echo "\n<!-- $stmt -->";}
 										$rslt=mysql_to_mysqli($stmt, $link);
-											if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+											if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00826',$user,$server_ip,$session_name,$one_mysql_log);}
 										}
 									}
 								}
@@ -4618,7 +4618,7 @@ if ($ACTION == 'manDiaLnextCaLL')
 					$PHONEoutbound_cid='';
 					$stmt = "SELECT outbound_cid FROM phones where login='$phone_login' limit 1;";
 					$rslt=mysql_to_mysqli($stmt, $link);
-						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00827',$user,$server_ip,$session_name,$one_mysql_log);}
 					if ($DB) {echo "$stmt\n";}
 					$pocid_ct = mysqli_num_rows($rslt);
 					if ($pocid_ct > 0)
@@ -5794,7 +5794,7 @@ if ($ACTION == 'manDiaLonly')
 			# Gather details on Dial Timeout Lead settings container
 			$stmt = "SELECT container_entry FROM vicidial_settings_containers where container_id='$dial_timeout_lead_container';";
 			$rslt=mysql_to_mysqli($stmt, $link);
-				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00828',$user,$server_ip,$session_name,$one_mysql_log);}
 			if ($DB) {echo "$stmt\n";}
 			$SCinfo_ct = mysqli_num_rows($rslt);
 			if ($SCinfo_ct > 0)
@@ -5809,7 +5809,7 @@ if ($ACTION == 'manDiaLonly')
 				### BEGIN load lead information to be used by Dial Timeout Lead Override ###
 				$stmt="SELECT lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,gmt_offset_now,called_since_last_reset,phone_code,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner,entry_list_id FROM vicidial_list where lead_id=$lead_id LIMIT 1;";
 				$rslt=mysql_to_mysqli($stmt, $link);
-					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00829',$user,$server_ip,$session_name,$one_mysql_log);}
 				if ($DB) {echo "$stmt\n";}
 				$list_lead_ct = mysqli_num_rows($rslt);
 				if ($list_lead_ct > 0)
@@ -6058,7 +6058,7 @@ if ($ACTION == 'manDiaLonly')
 								$stmt="UPDATE vicidial_cid_groups SET cid_auto_rotate_calls=(cid_auto_rotate_calls + 1) where cid_group_id='$cid_group_id';";
 									if ($format=='debug') {echo "\n<!-- $stmt -->";}
 								$rslt=mysql_to_mysqli($stmt, $link);
-									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00830',$user,$server_ip,$session_name,$one_mysql_log);}
 								}
 							}
 						}
@@ -6108,7 +6108,7 @@ if ($ACTION == 'manDiaLonly')
 			$PHONEoutbound_cid='';
 			$stmt = "SELECT outbound_cid FROM phones where login='$phone_login' limit 1;";
 			$rslt=mysql_to_mysqli($stmt, $link);
-				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00831',$user,$server_ip,$session_name,$one_mysql_log);}
 			if ($DB) {echo "$stmt\n";}
 			$pocid_ct = mysqli_num_rows($rslt);
 			if ($pocid_ct > 0)
@@ -15922,25 +15922,78 @@ if ($ACTION == 'PauseCodeSubmit')
 					$affected_rows = mysqli_affected_rows($linkB);
 					}
 
-				if ($queuemetrics_pausereason == 'EVERY_NEW')
+				if ( (preg_match("/ADMINCALL/",$queuemetrics_pausereason)) and (preg_match("/^ADMIN$|^220208$/",$status)) )
 					{
-					##### BEGIN insert new pause session, back-dated before the PAUSEREASON
-					$unpauseall_time = ($secX - 2);
+					##### BEGIN insert new 1-second fake phone call, back-dated before the PAUSEREASON
+					$unpauseall_time = ($secX - 3);
+					$calloutbound_time = ($secX - 3);
+					$connect_time = ($secX - 3);
+					$completecaller_time = ($secX - 2);
+					$callstatus_time = ($secX - 1);
 					$pauseall_time = ($secX - 1);
+					$fake_call_id = $secX;
+						while (strlen($fake_call_id) > 9) {$fake_call_id = substr("$fake_call_id", 1);}
+					$fake_call_id = "F".$fake_call_id."0000000001";
 
-					$stmt = "INSERT INTO queue_log SET `partition`='P01',time_id='$unpauseall_time',call_id='$pause_call_id',queue='NONE',agent='Agent/$user',verb='UNPAUSEALL',serverid='$queuemetrics_log_id';";
+					$stmt = "INSERT INTO queue_log SET `partition`='P01',time_id='$unpauseall_time',call_id='',queue='NONE',agent='Agent/$user',verb='UNPAUSEALL',serverid='$queuemetrics_log_id';";
 					if ($DB) {echo "$stmt\n";}
 					$rslt=mysql_to_mysqli($stmt, $linkB);
-						if ($mel > 0) {mysql_error_logging($NOW_TIME,$linkB,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$linkB,$mel,$stmt,'00832',$user,$server_ip,$session_name,$one_mysql_log);}
 					$UPAaffected_rows = mysqli_affected_rows($linkB);
 
-					$stmt = "INSERT INTO queue_log SET `partition`='P01',time_id='$pauseall_time',call_id='$pause_call_id',queue='NONE',agent='Agent/$user',verb='PAUSEALL',serverid='$queuemetrics_log_id';";
+					$stmt = "INSERT INTO queue_log SET `partition`='P01',time_id='$calloutbound_time',call_id='$fake_call_id',queue='$campaign',agent='Agent/$user',verb='CALLOUTBOUND',data2='9998881112',serverid='$queuemetrics_log_id';";
 					if ($DB) {echo "$stmt\n";}
 					$rslt=mysql_to_mysqli($stmt, $linkB);
-						if ($mel > 0) {mysql_error_logging($NOW_TIME,$linkB,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
-					$PAaffected_rows = mysqli_affected_rows($linkB);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$linkB,$mel,$stmt,'00833',$user,$server_ip,$session_name,$one_mysql_log);}
+					$UPAaffected_rows = mysqli_affected_rows($linkB);
 
+					$stmt = "INSERT INTO queue_log SET `partition`='P01',time_id='$connect_time',call_id='$fake_call_id',queue='$campaign',agent='Agent/$user',verb='CONNECT',data1='0',serverid='$queuemetrics_log_id';";
+					if ($DB) {echo "$stmt\n";}
+					$rslt=mysql_to_mysqli($stmt, $linkB);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$linkB,$mel,$stmt,'00834',$user,$server_ip,$session_name,$one_mysql_log);}
+					$UPAaffected_rows = mysqli_affected_rows($linkB);
+
+					$stmt = "INSERT INTO queue_log SET `partition`='P01',time_id='$completecaller_time',call_id='$fake_call_id',queue='$campaign',agent='Agent/$user',verb='COMPLETECALLER',data1='0',data2='1',data3='1',serverid='$queuemetrics_log_id';";
+					if ($DB) {echo "$stmt\n";}
+					$rslt=mysql_to_mysqli($stmt, $linkB);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$linkB,$mel,$stmt,'00835',$user,$server_ip,$session_name,$one_mysql_log);}
+					$UPAaffected_rows = mysqli_affected_rows($linkB);
+
+					$stmt = "INSERT INTO queue_log SET `partition`='P01',time_id='$callstatus_time',call_id='$fake_call_id',queue='$campaign',agent='Agent/$user',verb='CALLSTATUS',data1='NOCALL',serverid='$queuemetrics_log_id';";
+					if ($DB) {echo "$stmt\n";}
+					$rslt=mysql_to_mysqli($stmt, $linkB);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$linkB,$mel,$stmt,'00836',$user,$server_ip,$session_name,$one_mysql_log);}
+					$UPAaffected_rows = mysqli_affected_rows($linkB);
+
+					$stmt = "INSERT INTO queue_log SET `partition`='P01',time_id='$pauseall_time',call_id='',queue='NONE',agent='Agent/$user',verb='PAUSEALL',serverid='$queuemetrics_log_id';";
+					if ($DB) {echo "$stmt\n";}
+					$rslt=mysql_to_mysqli($stmt, $linkB);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$linkB,$mel,$stmt,'00837',$user,$server_ip,$session_name,$one_mysql_log);}
+					$PAaffected_rows = mysqli_affected_rows($linkB);
 					##### END insert new pause session, back-dated before the PAUSEREASON
+					}
+				else
+					{
+					if (preg_match("/EVERY_NEW/",$queuemetrics_pausereason))
+						{
+						##### BEGIN insert new pause session, back-dated before the PAUSEREASON
+						$unpauseall_time = ($secX - 2);
+						$pauseall_time = ($secX - 1);
+
+						$stmt = "INSERT INTO queue_log SET `partition`='P01',time_id='$unpauseall_time',call_id='$pause_call_id',queue='NONE',agent='Agent/$user',verb='UNPAUSEALL',serverid='$queuemetrics_log_id';";
+						if ($DB) {echo "$stmt\n";}
+						$rslt=mysql_to_mysqli($stmt, $linkB);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$linkB,$mel,$stmt,'00838',$user,$server_ip,$session_name,$one_mysql_log);}
+						$UPAaffected_rows = mysqli_affected_rows($linkB);
+
+						$stmt = "INSERT INTO queue_log SET `partition`='P01',time_id='$pauseall_time',call_id='$pause_call_id',queue='NONE',agent='Agent/$user',verb='PAUSEALL',serverid='$queuemetrics_log_id';";
+						if ($DB) {echo "$stmt\n";}
+						$rslt=mysql_to_mysqli($stmt, $linkB);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$linkB,$mel,$stmt,'00839',$user,$server_ip,$session_name,$one_mysql_log);}
+						$PAaffected_rows = mysqli_affected_rows($linkB);
+
+						##### END insert new pause session, back-dated before the PAUSEREASON
+						}
 					}
 
 				mysqli_close($linkB);

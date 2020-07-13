@@ -1083,7 +1083,9 @@ auto_active_list_rank SMALLINT(5) default '0',
 cache_count INT(9) UNSIGNED default '0',
 cache_count_new INT(9) UNSIGNED default '0',
 cache_count_dialable_new INT(9) UNSIGNED default '0',
-cache_date DATETIME
+cache_date DATETIME,
+inbound_drop_voicemail VARCHAR(20),
+inbound_after_hours_voicemail VARCHAR(20)
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_statuses (
@@ -1861,7 +1863,7 @@ user_account_emails ENUM('DISABLED','SEND_NO_PASS','SEND_WITH_PASS') DEFAULT 'DI
 outbound_cid_any ENUM('DISABLED','API_ONLY') DEFAULT 'DISABLED',
 entries_per_page SMALLINT(5) UNSIGNED DEFAULT '0',
 browser_call_alerts ENUM('0','1','2') DEFAULT '0',
-queuemetrics_pausereason ENUM('STANDARD','EVERY_NEW') default 'STANDARD',
+queuemetrics_pausereason ENUM('STANDARD','EVERY_NEW','EVERY_NEW_ADMINCALL') default 'STANDARD',
 inbound_answer_config ENUM('0','1','2','3','4','5') DEFAULT '0'
 ) ENGINE=MyISAM;
 
@@ -4644,4 +4646,4 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1599',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1601',db_schema_update_date=NOW(),reload_timestamp=NOW();

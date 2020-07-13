@@ -236,6 +236,7 @@
 # 191117-2156 - Fix for truncated extension issue #1193
 # 200424-1044 - Fix for incorrect list_id logging
 # 200624-0011 - Added options for Answer signal settings
+# 200708-1126 - Added some list override settings
 #
 
 $script = 'agi-VDAD_ALL_inbound.agi';
@@ -1779,6 +1780,26 @@ if ( ( ( ( ($hm < $ct_default_start) || ($hm > $ct_default_stop) ) && ($hm >= $c
 			}
 		if ($after_hours_action =~ /VOICEMAIL|VMAIL_NO_INST/)
 			{
+			# First, look for a list override for after-hours voicemail from the database
+			$inbound_after_hours_voicemail='';
+			$stmtA = "SELECT inbound_after_hours_voicemail FROM vicidial_lists where list_id='$list_id';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+				$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$inbound_after_hours_voicemail = 	$aryA[0];
+				}
+			$sthA->finish();
+
+			if (length($inbound_after_hours_voicemail) > 0) 
+				{
+				if ($AGILOG) {$agi_string = "List Override for After Hours Voicemail set: $inbound_after_hours_voicemail($after_hours_voicemail)     $list_id|$callerid";   &agi_output;}
+				$after_hours_voicemail = $inbound_after_hours_voicemail;
+				}
+
 			if ( ($channel_group =~ /AGENTDIRECT/i) && (length($agent_only) > 1) && ($after_hours_voicemail =~ /AGENTVMAIL/) )
 				{
 				### Grab user's voicemail ID from the database
@@ -6781,6 +6802,29 @@ if ( ($drop_timer > $DROP_TIME) || ($MCdrop_override > 0) )
 	if ($drop_seconds < 1) 
 		{
 		$drop_seconds = $DROP_TIME;
+		}
+
+	# Look for a list override for drop voicemail from the database
+	if ($drop_action =~ /VOICEMAIL|VMAIL_NO_INST/)
+		{
+		$inbound_drop_voicemail='';
+		$stmtA = "SELECT inbound_drop_voicemail FROM vicidial_lists where list_id='$list_id';";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+			$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$inbound_drop_voicemail = 	$aryA[0];
+			}
+		$sthA->finish();
+
+		if (length($inbound_drop_voicemail) > 0) 
+			{
+			if ($AGILOG) {$agi_string = "List Override for Drop Voicemail set: $inbound_drop_voicemail($VDADvoicemail_ext)     $list_id|$callerid";   &agi_output;}
+			$VDADvoicemail_ext = $inbound_drop_voicemail;
+			}
 		}
 
 	if ( ($channel_group =~ /AGENTDIRECT/i) && (length($agent_only) > 1) && ( (length($user_unavailable_action) > 1) || ($VDADvoicemail_ext =~ /AGENTVMAIL/) ) )
