@@ -1,0 +1,57 @@
+ENCRYPTED CALL RECORDINGS DOC		Started: 2015-09-11	Updated: 2020-07-17
+
+
+NOTE: THIS FEATURE IS OPTIONAL, AND SHOULD ONLY BE ACTIVATED AFTER YOUR SYSTEM 
+      HAS BEEN INSTALLED, CONFIGURED AND TESTED!
+
+
+
+DESCRIPTION:
+
+Basically, every person that wants to access call recordings, once "PGP 
+encrypted recordings" is enabled, will have to have the PGP application 
+installed on their workstations. They also have to have the PGP private keys 
+for any files they wish to decrypt imported into the PGP application on their
+workstations. They also need to know the "passphrase" for those private PGP 
+keys in order to decrypt each PGP-encrypted file, and enter in the passphrase 
+for every recording they want to listen to.
+
+
+How it works from the VICIdial side is:
+1. At the end of the phone call, the call recording is compressed(usually MP3)
+   as it normally is by each dialer
+2. The encryption script(AST_CRON_audio_2_encrypt.pl) goes through the 
+   compressed recordings, encrypting them with the defined PGP public keys
+3. The FTP script sends encrypted recordings(with ".pgp" file extension) to 
+   archive server <this step is optional, if configured>
+4. Users click on recording links in admin web pages to download recordings
+5. PGP application on the user workstation opens up, they are prompted for the
+   PGP key passphrase, and the enter it
+6. The recording plays in an audio player on the workstation
+
+
+
+
+INSTALLATION:
+
+1. Make sure "gpg" is installed on each dialer. For VICIbox installations, you 
+   should be able to do this through "yast" in the Software Management screen
+2. Import all of the PGP public keys that you will want to use for the 
+   "recipients" of these PGP-encrypted recordings on each dialer(if you don't 
+   have any, you can create them in the PGP workstation application)
+3. You need to manually test encrypting something on each dialer with "gpg" and
+   ensure that the recipients can open them
+4. The next step is to put the new crontab entry in for the 
+   "AST_CRON_audio_2_encrypt.pl" script on each dialer
+5. The last step is to modify the crontab audio scripts for "step 3" to use the
+   "--GPG" flag on each dialer
+6. Make test calls and confirm everything is workin on each dialer!
+
+
+
+
+RECOMMENDED WORKSTATION SOFTWARE:
+
+For Windows workstations, we recommend using "Gpg4win"(Kleopatra) to create and 
+manage your PGP keys, as well as to decrypt any encrypted audio recordings:
+https://www.gpg4win.org/download.html

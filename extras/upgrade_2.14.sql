@@ -1247,7 +1247,7 @@ ALTER TABLE vicidial_campaigns ADD three_way_record_stop_exception VARCHAR(40) d
 
 UPDATE system_settings SET db_schema_version='1596',db_schema_update_date=NOW() where db_schema_version < 1596;
 
-ALTER TABLE system_settings ADD queuemetrics_pausereason ENUM('STANDARD','EVERY_NEW','EVERY_NEW_ADMINCALL') default 'STANDARD';
+ALTER TABLE system_settings ADD queuemetrics_pausereason ENUM('STANDARD','EVERY_NEW','EVERY_NEW_ADMINCALL','EVERY_NEW_ALLCALL') default 'STANDARD';
 
 UPDATE system_settings SET db_schema_version='1597',db_schema_update_date=NOW() where db_schema_version < 1597;
 
@@ -1272,6 +1272,10 @@ ALTER TABLE vicidial_lists ADD inbound_after_hours_voicemail VARCHAR(20);
 
 UPDATE system_settings SET db_schema_version='1600',db_schema_update_date=NOW() where db_schema_version < 1600;
 
-ALTER TABLE system_settings MODIFY queuemetrics_pausereason ENUM('STANDARD','EVERY_NEW','EVERY_NEW_ADMINCALL') default 'STANDARD';
+ALTER TABLE system_settings MODIFY queuemetrics_pausereason ENUM('STANDARD','EVERY_NEW','EVERY_NEW_ADMINCALL','EVERY_NEW_ALLCALL') default 'STANDARD';
 
 UPDATE system_settings SET db_schema_version='1601',db_schema_update_date=NOW() where db_schema_version < 1601;
+
+ALTER TABLE system_settings MODIFY queuemetrics_pausereason ENUM('STANDARD','EVERY_NEW','EVERY_NEW_ADMINCALL','EVERY_NEW_ALLCALL') default 'STANDARD';
+
+UPDATE system_settings SET db_schema_version='1602',db_schema_update_date=NOW() where db_schema_version < 1602;

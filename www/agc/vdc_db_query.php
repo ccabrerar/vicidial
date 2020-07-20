@@ -492,10 +492,12 @@
 # 200407-2036 - Added option for browser alert sounds
 # 200609-2357 - Added NONE_ options for the campaign manual_dial_filter
 # 200621-1027 - Added queuemetrics_pausereason options
+# 200712-2034 - Fix for use_custom_cid variable issue
+# 200719-1645 - Added EVERY_NEW_ALLCALL queuemetrics_pausereason option
 #
 
-$version = '2.14-385';
-$build = '200621-1027';
+$version = '2.14-387';
+$build = '200719-1645';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=839;
@@ -4218,6 +4220,7 @@ if ($ACTION == 'manDiaLnextCaLL')
 			##### BEGIN if NOT preview dialing, do send the call #####
 			if ( (strlen($preview)<1) or ($preview == 'NO') or (strlen($dial_ingroup) > 1) )
 				{
+				$use_custom_cid='N';
 				$stmt = "SELECT use_custom_cid,manual_dial_hopper_check,start_call_url,manual_dial_filter,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc,cid_group_id,scheduled_callbacks_auto_reschedule,dial_timeout_lead_container,manual_dial_cid FROM vicidial_campaigns where campaign_id='$campaign';";
 				$rslt=mysql_to_mysqli($stmt, $link);
 					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00313',$user,$server_ip,$session_name,$one_mysql_log);}
@@ -4332,7 +4335,6 @@ if ($ACTION == 'manDiaLnextCaLL')
 				if (strlen($dial_prefix) > 0) {$Local_out_prefix = "$dial_prefix";}
 				if (strlen($campaign_cid) > 6) {$CCID = "$campaign_cid";   $CCID_on++;}
 				### check for custom cid use
-				$use_custom_cid=0;
 
 				if ($no_hopper_dialing_used > 0)
 					{
@@ -5661,7 +5663,7 @@ if ($ACTION == 'manDiaLonly')
 
 		### check for manual dial filter and extension append settings in campaign
 		$use_eac=0;
-		$use_custom_cid=0;
+		$use_custom_cid='N';
 		$stmt = "SELECT manual_dial_filter,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc,extension_appended_cidname,start_call_url,scheduled_callbacks_auto_reschedule,dial_timeout_lead_container FROM vicidial_campaigns where campaign_id='$campaign';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00325',$user,$server_ip,$session_name,$one_mysql_log);}
@@ -5960,7 +5962,7 @@ if ($ACTION == 'manDiaLonly')
 		else
 			{
 			### check for custom cid use
-			$use_custom_cid=0;
+			$use_custom_cid='N';
 			$stmt = "SELECT use_custom_cid,manual_dial_hopper_check,cid_group_id,manual_dial_cid FROM vicidial_campaigns where campaign_id='$campaign';";
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00314',$user,$server_ip,$session_name,$one_mysql_log);}
@@ -15922,7 +15924,37 @@ if ($ACTION == 'PauseCodeSubmit')
 					$affected_rows = mysqli_affected_rows($linkB);
 					}
 
-				if ( (preg_match("/ADMINCALL/",$queuemetrics_pausereason)) and (preg_match("/^ADMIN$|^220208$/",$status)) )
+				$recentCONNECT=0;
+				if ( ( (preg_match("/ADMINCALL/",$queuemetrics_pausereason)) and (preg_match("/^ADMIN$|^220208$/",$status)) ) or (preg_match("/ALLCALL/",$queuemetrics_pausereason)) )
+					{
+					### BEGIN Check for any calls connecting(CONNECT) to this agent since the last AGENTLOGIN event ###
+					$lastAGENTLOGIN = $secX;
+					$checkAGENTLOGIN = ($secX - 86400);
+
+					$stmt="SELECT time_id from queue_log where agent='Agent/$user' and verb='AGENTLOGIN' and time_id <= \"$secX\" and time_id > \"$checkAGENTLOGIN\" order by time_id desc limit 1;";
+					$rslt=mysql_to_mysqli($stmt, $linkB);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$linkB,$mel,$stmt,'00080',$user,$server_ip,$session_name,$one_mysql_log);}
+					if ($DB) {echo "$stmt\n";}
+					$QM_AL_ct = mysqli_num_rows($rslt);
+					if ($QM_AL_ct > 0)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$lastAGENTLOGIN	= $row[0];
+						}
+
+					$stmt="SELECT count(*) from queue_log where agent='Agent/$user' and verb='CONNECT' and time_id <= \"$secX\" and time_id > \"$lastAGENTLOGIN\";";
+					$rslt=mysql_to_mysqli($stmt, $linkB);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$linkB,$mel,$stmt,'00080',$user,$server_ip,$session_name,$one_mysql_log);}
+					if ($DB) {echo "$stmt\n";}
+					$QM_RC_ct = mysqli_num_rows($rslt);
+					if ($QM_RC_ct > 0)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$recentCONNECT	= $row[0];
+						}
+					### END Check for any calls connecting(CONNECT) to this agent since the last AGENTLOGIN event ###
+					}
+				if ( ( ( (preg_match("/ADMINCALL/",$queuemetrics_pausereason)) and (preg_match("/^ADMIN$|^220208$/",$status)) ) or (preg_match("/ALLCALL/",$queuemetrics_pausereason)) ) and ($recentCONNECT < 1) )
 					{
 					##### BEGIN insert new 1-second fake phone call, back-dated before the PAUSEREASON
 					$unpauseall_time = ($secX - 3);

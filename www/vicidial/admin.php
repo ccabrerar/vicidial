@@ -4695,12 +4695,13 @@ else
 # 200701-1525 - Added more concurrent_transfers options
 # 200708-1033 - Added List overrides for some inbound settings
 # 200711-1822 - Added EVERY_NEW_ADMINCALL option for QM PAUSEREASON system setting
+# 200719-1645 - Added EVERY_NEW_ALLCALL option for QM PAUSEREASON system setting
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-762a';
-$build = '200711-1822';
+$admin_version = '2.14-763a';
+$build = '200719-1645';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -39102,7 +39103,7 @@ if ($ADD==311111111111111)
 		echo "<tr bgcolor=#99FFCC><td align=right>"._QXZ("QueueMetrics Addmember Enabled").": </td><td align=left><select size=1 name=queuemetrics_addmember_enabled><option>1</option><option>0</option><option selected>$queuemetrics_addmember_enabled</option></select>$NWB#settings-queuemetrics_addmember_enabled$NWE</td></tr>\n";
 		echo "<tr bgcolor=#99FFCC><td align=right>"._QXZ("QueueMetrics Dispo Pause Code").": </td><td align=left><input type=text name=queuemetrics_dispo_pause size=8 maxlength=6 value=\"$queuemetrics_dispo_pause\">$NWB#settings-queuemetrics_dispo_pause$NWE</td></tr>\n";
 		echo "<tr bgcolor=#99FFCC><td align=right>"._QXZ("QueueMetrics Pause Type Logging").": </td><td align=left><select size=1 name=queuemetrics_pause_type><option>1</option><option>0</option><option selected>$queuemetrics_pause_type</option></select>$NWB#settings-queuemetrics_pause_type$NWE</td></tr>\n";
-		echo "<tr bgcolor=#99FFCC><td align=right>"._QXZ("QueueMetrics PAUSEREASON Logging").": </td><td align=left><select size=1 name=queuemetrics_pausereason><option>STANDARD</option><option>EVERY_NEW</option><option>EVERY_NEW_ADMINCALL</option><option selected>$queuemetrics_pausereason</option></select>$NWB#settings-queuemetrics_pausereason$NWE</td></tr>\n";
+		echo "<tr bgcolor=#99FFCC><td align=right>"._QXZ("QueueMetrics PAUSEREASON Logging").": </td><td align=left><select size=1 name=queuemetrics_pausereason><option>STANDARD</option><option>EVERY_NEW</option><option>EVERY_NEW_ADMINCALL</option><option>EVERY_NEW_ALLCALL</option><option selected>$queuemetrics_pausereason</option></select>$NWB#settings-queuemetrics_pausereason$NWE</td></tr>\n";
 		echo "<tr bgcolor=#99FFCC><td align=right>"._QXZ("QueueMetrics Phone Environment Phone Append").": </td><td align=left><select size=1 name=queuemetrics_pe_phone_append><option>1</option><option>0</option><option selected>$queuemetrics_pe_phone_append</option></select>$NWB#settings-queuemetrics_pe_phone_append$NWE</td></tr>\n";
 		echo "<tr bgcolor=#99FFCC><td align=right>"._QXZ("QueueMetrics Hold Call Log").": </td><td align=left><select size=1 name=queuemetrics_record_hold><option>1</option><option>0</option><option selected>$queuemetrics_record_hold</option></select>$NWB#settings-queuemetrics_record_hold$NWE</td></tr>\n";
 		echo "<tr bgcolor=#99FFCC><td align=right>"._QXZ("QueueMetrics Socket Send").": </td><td align=left><select size=1 name=queuemetrics_socket><option value='NONE'>"._QXZ("NONE")."</option><option value='CONNECT_COMPLETE'>"._QXZ("CONNECT_COMPLETE")."</option><option selected value='$queuemetrics_socket'>"._QXZ("$queuemetrics_socket")."</option></select>$NWB#settings-queuemetrics_socket$NWE</td></tr>\n";
