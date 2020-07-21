@@ -24,4 +24,4 @@ perl install.pl
 This way, you should end with the official code inside ```/usr/src/astguiclient/trunk``` and the modified GIT one in ```/usr/src/astguiclient-git/trunk```. Depending on which one you install, you will get that one working.
 
 ## Related repositories
-You may want to look at my [Viciphone](https://github.com/ccabrerar/viciphone) repository, which is an excellent companion for Vicidial.
+You may want to look at my [Viciphone 2.0](https://github.com/ccabrerar/viciphone) repository, which is an excellent companion for Vicidial.
