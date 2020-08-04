@@ -1,11 +1,11 @@
 <?php
 # non_agent_api.php
-# 
+#
 # Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed as an API(Application Programming Interface) to allow
 # other programs to interact with all non-agent-screen VICIDIAL functions
-# 
+#
 # required variables:
 #  - $user
 #  - $pass
@@ -28,7 +28,7 @@
 # 90118-1056 - Added logging of API functions
 # 90428-0209 - Added blind_monitor function
 # 90508-0642 - Changed to PHP long tags
-# 90514-0602 - Added sounds_list function 
+# 90514-0602 - Added sounds_list function
 # 90522-0506 - Security fix
 # 90530-0946 - Added QueueMetrics blind monitoring option
 # 90721-1428 - Added rank and owner as vicidial_list fields
@@ -851,7 +851,7 @@ if ($gmt_recs > 0)
 	$row=mysqli_fetch_row($rslt);
 	$DBSERVER_GMT =			$row[0];
 	if (strlen($DBSERVER_GMT)>0)	{$SERVER_GMT = $DBSERVER_GMT;}
-	if ($isdst) {$SERVER_GMT++;} 
+	if ($isdst) {$SERVER_GMT++;}
 	}
 else
 	{
@@ -1040,7 +1040,9 @@ if ($function == 'sounds_list')
 		$server_port = getenv("SERVER_PORT");
 		if (preg_match("/443/i",$server_port)) {$HTTPprotocol = 'https://';}
 		  else {$HTTPprotocol = 'http://';}
-		$admDIR = "$HTTPprotocol$server_name:$server_port";
+		// $admDIR = "$HTTPprotocol$server_name:$server_port";
+		// By setting this variable to empty, we'll use the same protocol and port as per the original request
+		$admDIR = ""
 		$admin_web_dir='';
 
 		#############################################
@@ -1076,7 +1078,7 @@ if ($function == 'sounds_list')
 			$i=0;
 			$filename_sort=$MT;
 			$dirpath = "$WeBServeRRooT/$sounds_web_directory";
-			if (!file_exists("$WeBServeRRooT/$sounds_web_directory")) 
+			if (!file_exists("$WeBServeRRooT/$sounds_web_directory"))
 				{
 				$result = 'ERROR';
 				$result_reason = "audio store web directory does not exist";
@@ -1096,12 +1098,12 @@ if ($function == 'sounds_list')
 			$file_sizes=array();
 			$file_sizesPAD=array();
 
-			while (false !== ($file = readdir($dh))) 
+			while (false !== ($file = readdir($dh)))
 				{
 				# Do not list subdirectories
 				if ( (!is_dir("$dirpath/$file")) and (preg_match('/\.wav$|\.gsm$/', $file)) )
 					{
-					if (file_exists("$dirpath/$file")) 
+					if (file_exists("$dirpath/$file"))
 						{
 						$file_names[$i] = $file;
 						$file_namesPROMPT[$i] = preg_replace("/\.wav$|\.gsm$/","",$file);
@@ -1235,7 +1237,10 @@ if ($function == 'moh_list')
 		$server_port = getenv("SERVER_PORT");
 		if (preg_match("/443/i",$server_port)) {$HTTPprotocol = 'https://';}
 		  else {$HTTPprotocol = 'http://';}
-		$admDIR = "$HTTPprotocol$server_name:$server_port";
+		// $admDIR = "$HTTPprotocol$server_name:$server_port";
+		// By setting this variable to empty, we'll use the same protocol and port as per the original request
+		$admDIR = ""
+
 
 		#############################################
 		##### START SYSTEM_SETTINGS LOOKUP #####
@@ -1323,7 +1328,7 @@ if ($function == 'moh_list')
 			$moh_to_print = mysqli_num_rows($rslt);
 			$k=0;
 			$sf=0;
-			while ($moh_to_print > $k) 
+			while ($moh_to_print > $k)
 				{
 				$rowx=mysqli_fetch_row($rslt);
 				$moh_id[$k] =	$rowx[0];
@@ -1334,11 +1339,11 @@ if ($function == 'moh_list')
 
 			$k=0;
 			$sf=0;
-			while ($moh_to_print > $k) 
+			while ($moh_to_print > $k)
 				{
 				$sf++;
 				if (preg_match("/1$|3$|5$|7$|9$/i", $sf))
-					{$bgcolor='bgcolor="#E6E6E6"';} 
+					{$bgcolor='bgcolor="#E6E6E6"';}
 				else
 					{$bgcolor='bgcolor="#F6F6F6"';}
 				echo "<tr $bgcolor><td width=30><font size=1 face=\"Arial,Helvetica\">$sf</td>\n";
@@ -1351,7 +1356,7 @@ if ($function == 'moh_list')
 				$mohfiles_to_print = mysqli_num_rows($rslt);
 				$m=0;
 				$MOHfiles = '';
-				while ($mohfiles_to_print > $m) 
+				while ($mohfiles_to_print > $m)
 					{
 					$rowx=mysqli_fetch_row($rslt);
 					$MOHfiles .=	"$rowx[0] &nbsp; ";
@@ -1426,7 +1431,10 @@ if ($function == 'vm_list')
 		$server_port = getenv("SERVER_PORT");
 		if (preg_match("/443/i",$server_port)) {$HTTPprotocol = 'https://';}
 		  else {$HTTPprotocol = 'http://';}
-		$admDIR = "$HTTPprotocol$server_name:$server_port";
+		// $admDIR = "$HTTPprotocol$server_name:$server_port";
+		// By setting this variable to empty, we'll use the same protocol and port as per the original request
+		$admDIR = ""
+
 
 		echo "\n";
 		echo "<HTML><head><title>NON-AGENT API</title>\n";
@@ -1471,7 +1479,7 @@ if ($function == 'vm_list')
 		$vm_to_print = mysqli_num_rows($rslt);
 		$k=0;
 		$sf=0;
-		while ($vm_to_print > $k) 
+		while ($vm_to_print > $k)
 			{
 			$rowx=mysqli_fetch_row($rslt);
 			$voicemail_id[$k] =	$rowx[0];
@@ -1479,7 +1487,7 @@ if ($function == 'vm_list')
 			$email[$k] =		$rowx[2];
 			$sf++;
 			if (preg_match("/1$|3$|5$|7$|9$/i", $sf))
-				{$bgcolor='bgcolor="#E6E6E6"';} 
+				{$bgcolor='bgcolor="#E6E6E6"';}
 			else
 				{$bgcolor='bgcolor="#F6F6F6"';}
 			echo "<tr $bgcolor><td width=30><font size=1 face=\"Arial,Helvetica\">$sf</td>\n";
@@ -1495,7 +1503,7 @@ if ($function == 'vm_list')
 		$vm_to_print = mysqli_num_rows($rslt);
 		$k=0;
 		$sf=0;
-		while ($vm_to_print > $k) 
+		while ($vm_to_print > $k)
 			{
 			$rowx=mysqli_fetch_row($rslt);
 			$voicemail_id[$k] =	$rowx[0];
@@ -1504,7 +1512,7 @@ if ($function == 'vm_list')
 			$extension[$k] =	$rowx[3];
 			$sf++;
 			if (preg_match("/1$|3$|5$|7$|9$/i", $sf))
-				{$bgcolor='bgcolor="#E6E6E6"';} 
+				{$bgcolor='bgcolor="#E6E6E6"';}
 			else
 				{$bgcolor='bgcolor="#F6F6F6"';}
 			echo "<tr $bgcolor><td width=30><font size=1 face=\"Arial,Helvetica\">$sf</td>\n";
@@ -1716,7 +1724,7 @@ if ($function == 'agent_ingroup_info')
 							$output .= "<TR><TD ALIGN=RIGHT VALIGN=TOP>"._QXZ("Selected In-Groups").": </TD><TD ALIGN=LEFT>\n";
 							$output .= "<INPUT TYPE=HIDDEN NAME=agent_user ID=agent_user value=\"$agent_user\">\n";
 							$output .= "<SELECT SIZE=10 NAME=ingroup_new_selections ID=ingroup_new_selections multiple>\n";
-							
+
 							$m=0;
 							$m_printed=0;
 							while ($m < $closer_groups_ct)
@@ -1805,7 +1813,7 @@ if ($function == 'agent_ingroup_info')
 						else
 							{
 							$output .= "<TABLE CELLPADDING=0 CELLSPACING=3 BORDER=0>\n";
-							
+
 							$m=0;
 							$m_printed=0;
 							while ($m < $closer_groups_ct)
@@ -2153,9 +2161,9 @@ if ($function == 'blind_monitor')
 					if ( (preg_match('/MONITOR/',$stage)) or (strlen($stage)<1) ) {$stage = '0';}
 					if (preg_match('/BARGE/',$stage)) {$stage = $barge_prefix; $monitor_type='BARGE'; $cid_prefix='BB';}
 					if (preg_match('/HIJACK/',$stage)) {$stage = ''; $monitor_type='HIJACK'; $cid_prefix='BB';}
-					if (preg_match('/WHISPER/',$stage)) 
+					if (preg_match('/WHISPER/',$stage))
 						{
-						if ($agent_whisper_enabled == '1') 
+						if ($agent_whisper_enabled == '1')
 							{$stage = '47378218'; $monitor_type='WHISPER'; $cid_prefix='BW';}
 						else
 							{
@@ -2163,7 +2171,7 @@ if ($function == 'blind_monitor')
 							$stage = '0';
 							}
 						}
-					
+
 					$PADuser = sprintf("%08s", $user);
 						while (strlen($PADuser) > 8) {$PADuser = substr("$PADuser", 0, -1);}
 					$BMquery = "$cid_prefix$StarTtime$PADuser";
@@ -2237,7 +2245,7 @@ if ($api_url_log > 0)
 	$REQUEST_URI = getenv("REQUEST_URI");
 	$POST_URI = '';
 	foreach($_POST as $key=>$value)
-		{$POST_URI .= '&'.$key.'='.$value;} 
+		{$POST_URI .= '&'.$key.'='.$value;}
 	$REQUEST_URI = preg_replace("/'|\"|\\\\|;/","",$REQUEST_URI);
 	$POST_URI = preg_replace("/'|\"|\\\\|;/","",$POST_URI);
 	$NOW_DATE = date("Y-m-d");
@@ -2389,7 +2397,7 @@ if ($function == 'add_user')
 										{
 										$new_user++;
 										}
-									else 
+									else
 										{
 									#	echo "<!-- AG: $auto_user_add_value -->\n";
 										$auto_user_add_value = ($auto_user_add_value + 7);
@@ -2673,7 +2681,7 @@ if ($function == 'update_user')
 							$rslt=mysql_to_mysqli($stmt, $link);
 							$row=mysqli_fetch_row($rslt);
 							$valid_user_group =			$row[0];
-							
+
 							if ( (strlen($agent_user_group) > 20) or (strlen($agent_user_group) < 1) or ($valid_user_group < 1) )
 								{
 								$result = 'ERROR';
@@ -3480,7 +3488,7 @@ if ($function == 'add_phone')
 											}
 										}
 									}
-								
+
 								if (strlen($phone_context)<1) {$phone_context='default';}
 								if (strlen($admin_user_group)<1) {$admin_user_group='---ALL---';}
 
@@ -3972,7 +3980,7 @@ if ($function == 'update_phone')
 									}
 								}
 							}
-						
+
 						$updateSQL = "$dialplan_numberSQL$activeSQL$outboundcidSQL$voicemail_idSQL$phone_loginSQL$phone_passSQL$protocolSQL$registration_passwordSQL$phone_full_nameSQL$phone_contextSQL$emailSQL$local_gmtSQL$admin_user_groupSQL$outbound_alt_cidSQL$phone_ring_timeoutSQL$delete_vm_after_emailSQL $is_webphone_SQL $webphone_auto_answer_SQL $use_external_server_ip_SQL $template_id_SQL $on_hook_agent_SQL";
 
 
@@ -4508,7 +4516,7 @@ if ($function == 'update_list')
 						$data = "$list_id";
 						echo "$result: $result_reason: |$user|$data\n";
 						api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
-						
+
 						$function = 'add_list';
 						}
 					else
@@ -4708,7 +4716,7 @@ if ($function == 'update_list')
 						}
 					if (strlen($web_form_address) > 0)
 						{
-						if (preg_match("/%3A%2F%2F/",$web_form_address)) 
+						if (preg_match("/%3A%2F%2F/",$web_form_address))
 							{
 							$web_form_address = urldecode($web_form_address);
 							$web_form_address = preg_replace("/ /",'+',$web_form_address);
@@ -4720,7 +4728,7 @@ if ($function == 'update_list')
 						}
 					if (strlen($web_form_address_two) > 0)
 						{
-						if (preg_match("/%3A%2F%2F/",$web_form_address_two)) 
+						if (preg_match("/%3A%2F%2F/",$web_form_address_two))
 							{
 							$web_form_address_two = urldecode($web_form_address_two);
 							$web_form_address_two = preg_replace("/ /",'+',$web_form_address_two);
@@ -4732,7 +4740,7 @@ if ($function == 'update_list')
 						}
 					if (strlen($web_form_address_three) > 0)
 						{
-						if (preg_match("/%3A%2F%2F/",$web_form_address_three)) 
+						if (preg_match("/%3A%2F%2F/",$web_form_address_three))
 							{
 							$web_form_address_three = urldecode($web_form_address_three);
 							$web_form_address_three = preg_replace("/ /",'+',$web_form_address_three);
@@ -5018,11 +5026,11 @@ if ($function == 'update_list')
 								{$custom_copy_method = 'APPEND';}
 
 							$url = "http" . (isset($_SERVER['HTTPS']) ? 's' : '') . "://$_SERVER[HTTP_HOST]/$SSadmin_web_directory/" . $admin_lists_custom . "?copy_option=" . $custom_copy_method . "&action=COPY_FIELDS_SUBMIT&list_id=$list_id&source_list_id=$custom_fields_copy";
-							
+
 							if ($DB>0) {echo "Copy custom fields url|$url|\n";}
 							# use cURL to call the copy custom fields code
 							$curl = curl_init();
-							
+
 							# Set some options - we are passing in a useragent too here
 							curl_setopt_array($curl, array(
 								CURLOPT_RETURNTRANSFER => 1,
@@ -5030,10 +5038,10 @@ if ($function == 'update_list')
 								CURLOPT_USERPWD => "$user:$pass",
 								CURLOPT_USERAGENT => 'non_agent_api.php'
 							));
-							
+
 							# Send the request & save response to $resp
 							$resp = curl_exec($curl);
-							
+
 							# Close request to clear up some resources
 							curl_close($curl);
 							### END copy custom fields ###
@@ -5667,7 +5675,7 @@ if ($function == 'add_list')
 							$local_call_timeSQL='';
 							if (strlen($web_form_address) > 0)
 								{
-								if (preg_match("/%3A%2F%2F/",$web_form_address)) 
+								if (preg_match("/%3A%2F%2F/",$web_form_address))
 									{
 									$web_form_address = urldecode($web_form_address);
 									$web_form_address = preg_replace("/ /",'+',$web_form_address);
@@ -5679,7 +5687,7 @@ if ($function == 'add_list')
 								}
 							if (strlen($web_form_address_two) > 0)
 								{
-								if (preg_match("/%3A%2F%2F/",$web_form_address_two)) 
+								if (preg_match("/%3A%2F%2F/",$web_form_address_two))
 									{
 									$web_form_address_two = urldecode($web_form_address_two);
 									$web_form_address_two = preg_replace("/ /",'+',$web_form_address_two);
@@ -5691,7 +5699,7 @@ if ($function == 'add_list')
 								}
 							if (strlen($web_form_address_three) > 0)
 								{
-								if (preg_match("/%3A%2F%2F/",$web_form_address_three)) 
+								if (preg_match("/%3A%2F%2F/",$web_form_address_three))
 									{
 									$web_form_address_three = urldecode($web_form_address_three);
 									$web_form_address_three = preg_replace("/ /",'+',$web_form_address_three);
@@ -5755,11 +5763,11 @@ if ($function == 'add_list')
 									{$custom_copy_method = 'APPEND';}
 
 								$url = "http" . (isset($_SERVER['HTTPS']) ? 's' : '') . "://$_SERVER[HTTP_HOST]/$SSadmin_web_directory/" . $admin_lists_custom . "?copy_option=" . $custom_copy_method . "&action=COPY_FIELDS_SUBMIT&list_id=$list_id&source_list_id=$custom_fields_copy";
-								
+
 								if ($DB>0) {echo "Copy custom fields url|$url|\n";}
 								# use cURL to call the copy custom fields code
 								$curl = curl_init();
-								
+
 								# Set some options - we are passing in a useragent too here
 								curl_setopt_array($curl, array(
 									CURLOPT_RETURNTRANSFER => 1,
@@ -5767,10 +5775,10 @@ if ($function == 'add_list')
 									CURLOPT_USERPWD => "$user:$pass",
 									CURLOPT_USERAGENT => 'non_agent_api.php'
 								));
-								
+
 								# Send the request & save response to $resp
 								$resp = curl_exec($curl);
-								
+
 								# Close request to clear up some resources
 								curl_close($curl);
 								### END copy custom fields ###
@@ -6100,7 +6108,7 @@ if ($function == 'update_campaign')
 						$data = "$campaign_id|$affected_rows";
 						echo "$result: $result_reason - $user|$data\n";
 						api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
-						}						
+						}
 					}
 				}
 			}
@@ -6412,7 +6420,7 @@ if ($function == 'update_did')
 						$data = "$did_pattern";
 						echo "$result: $result_reason - $user|$data\n";
 						api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
-						}				
+						}
 					}
 				}
 			}
@@ -6944,7 +6952,7 @@ if ($function == 'recording_lookup')
 							{
 							$Rduration .= "$DL";
 							$temp_duration=0;
-							if ($row[7] > 0) 
+							if ($row[7] > 0)
 								{$temp_duration = $row[7];}
 							else
 								{
@@ -6959,7 +6967,7 @@ if ($function == 'recording_lookup')
 							}
 
 						$output .= "$RLstart_time$DL$RLuser$DL$RLrecording_id$DL$RLlead_id$Rduration$DL$RLlocation\n";
-	
+
 						$k++;
 						}
 
@@ -7089,8 +7097,8 @@ if ($function == 'did_log_export')
 						$row=mysqli_fetch_row($rslt);
 						$DLuniqueid[$k] =			$row[0];
 						$DLcall_date[$k] =			$row[1];
-						$DLcaller_id_number[$k] =	$row[2];	
-						$DLepoch[$k] =				$row[3];	
+						$DLcaller_id_number[$k] =	$row[2];
+						$DLepoch[$k] =				$row[3];
 						$k++;
 						}
 
@@ -7113,7 +7121,7 @@ if ($function == 'did_log_export')
 						$total_sec = ( ($DLcloser_epoch[$k] + $DLlength_in_sec[$k]) - $DLepoch[$k]);
 
 						$output .= "$phone_number$DL$DLcall_date[$k]$DL$DLcaller_id_number[$k]$DL$total_sec\n";
-	
+
 						$k++;
 						}
 
@@ -7280,11 +7288,11 @@ if ($function == 'phone_number_log')
 								$DLlist_id[$k] =			$row[1];
 								$DLlead_id[$k] =			$row[2];
 								$DLlength_in_sec[$k] =		$row[3];
-								$DLdispo_status[$k] =		$row[4];	
-								$DLhangup_reason[$k] =		$row[5];	
-								$DLlead_status[$k] =		$row[4];	
-								$DLsource_id[$k] =			'';	
-								$DLuser[$k] =				$row[6];	
+								$DLdispo_status[$k] =		$row[4];
+								$DLhangup_reason[$k] =		$row[5];
+								$DLlead_status[$k] =		$row[4];
+								$DLsource_id[$k] =			'';
+								$DLuser[$k] =				$row[6];
 								$k++;
 								$s++;
 								}
@@ -7315,11 +7323,11 @@ if ($function == 'phone_number_log')
 								$DLlist_id[$k] =			$row[1];
 								$DLlead_id[$k] =			$row[2];
 								$DLlength_in_sec[$k] =		$row[3];
-								$DLdispo_status[$k] =		$row[4];	
-								$DLhangup_reason[$k] =		$row[5];	
-								$DLstatus[$k] =				$row[4];	
-								$DLsource_id[$k] =			'';	
-								$DLuser[$k] =				$row[6];	
+								$DLdispo_status[$k] =		$row[4];
+								$DLhangup_reason[$k] =		$row[5];
+								$DLstatus[$k] =				$row[4];
+								$DLsource_id[$k] =			'';
+								$DLuser[$k] =				$row[6];
 								$k++;
 								$s++;
 								}
@@ -7517,12 +7525,12 @@ if ($function == 'agent_stats_export')
 							$ASpauses[$uc] =		0;
 							$ASsessions[$uc] =		0;
 							}
-						if ($row[1] > 0)		
+						if ($row[1] > 0)
 							{
 							$AScalls[$uc]++;
 							$total_calls++;
 							}
-						if ($row[3] > -1)		
+						if ($row[3] > -1)
 							{
 							$ASpauses[$uc]++;
 							}
@@ -7594,7 +7602,7 @@ if ($function == 'agent_stats_export')
 						$avg_wait_sec =		sec_convert($avg_wait_sec,$time_format);
 
 						$output .= "$ASuser[$k]$DL$ASfull_name[$k]$DL$ASuser_group[$k]$DL$AScalls[$k]$DL$login_sec$DL$cust_sec$DL$avg_cust_sec$DL$avg_wait_sec$DL$pct_of_queue%$DL$ASpause_sec[$k]$DL$ASsessions[$k]$DL$avg_session_sec$DL$ASpauses[$k]$DL$avg_pause_sec$DL$pct_pause%$DL$avg_pause_session$DL$wait_sec\n";
-	
+
 						$k++;
 						}
 
@@ -7763,7 +7771,7 @@ if ($function == 'user_group_status')
 						{
 						$row=mysqli_fetch_row($rslt);
 						$callerids .=	"$row[0]|";
-						if (preg_match("/LIVE/i",$row[1])) 
+						if (preg_match("/LIVE/i",$row[1]))
 							{$total_calls_waiting++;}
 						$call_camps[$i] = $row[2];
 						$call_types[$i] = $row[3];
@@ -7788,7 +7796,7 @@ if ($function == 'user_group_status')
 								{$row[1] =	'DISPO';}
 							}
 
-						if (preg_match("/INCALL/i",$row[1])) 
+						if (preg_match("/INCALL/i",$row[1]))
 							{
 							$stmtP="select count(*) from parked_channels where channel_group='$row[5]';";
 							$rsltP=mysql_to_mysqli($stmtP,$link);
@@ -7854,13 +7862,13 @@ if ($function == 'user_group_status')
 							{$total_agents_dead++;}
 						if ($row[1]=='DISPO')
 							{$total_agents_dispo++;}
-						if ($row[1]=='PAUSED') 
+						if ($row[1]=='PAUSED')
 							{$total_agents_paused++;}
-						if ( (preg_match("/INCALL|DIAL/i",$row[1])) or (preg_match("/QUEUE/i",$row[1])) or (preg_match('/PARK/i',$row[1]))) 
+						if ( (preg_match("/INCALL|DIAL/i",$row[1])) or (preg_match("/QUEUE/i",$row[1])) or (preg_match('/PARK/i',$row[1])))
 							{$total_agents_in_calls++;}
 						if (preg_match("/DIAL/i",$row[1]))
 							{$total_agents_in_dial++;}
-						if ( (preg_match("/READY/i",$row[1])) or (preg_match("/CLOSER/i",$row[1])) ) 
+						if ( (preg_match("/READY/i",$row[1])) or (preg_match("/CLOSER/i",$row[1])) )
 							{$total_agents_waiting++;}
 
 						$total_agents++;
@@ -8035,7 +8043,7 @@ if ($function == 'in_group_status')
 						{
 						$row=mysqli_fetch_row($rslt);
 						$callerids .=	"$row[0]|";
-						if (preg_match("/LIVE/i",$row[1])) 
+						if (preg_match("/LIVE/i",$row[1]))
 							{$total_calls_waiting++;}
 						$call_camps[$i] = $row[2];
 						$call_types[$i] = $row[3];
@@ -8079,13 +8087,13 @@ if ($function == 'in_group_status')
 							}
 						if ($row[1]=='DISPO')
 							{$total_agents_dispo++;}
-						if ($row[1]=='PAUSED') 
+						if ($row[1]=='PAUSED')
 							{$total_agents_paused++;}
-						if ( (preg_match("/INCALL|DIAL/i",$row[1])) or (preg_match("/QUEUE/i",$row[1])) or (preg_match('/PARK/i',$row[1]))) 
+						if ( (preg_match("/INCALL|DIAL/i",$row[1])) or (preg_match("/QUEUE/i",$row[1])) or (preg_match('/PARK/i',$row[1])))
 							{$total_agents_in_calls++;}
 						if (preg_match("/DIAL/i",$row[1]))
 							{$total_agents_in_dial++;}
-						if ( (preg_match("/READY/i",$row[1])) or (preg_match("/CLOSER/i",$row[1])) ) 
+						if ( (preg_match("/READY/i",$row[1])) or (preg_match("/CLOSER/i",$row[1])) )
 							{$total_agents_waiting++;}
 
 						$total_agents++;
@@ -8264,7 +8272,7 @@ if ($function == 'agent_status')
 								{
 								$threewaystmt="select UNIX_TIMESTAMP(last_call_time) from vicidial_live_agents where lead_id=$lead_id and status='INCALL' order by UNIX_TIMESTAMP(last_call_time) desc;";
 								$threewayrslt=mysql_to_mysqli($threewaystmt, $link);
-								if (mysqli_num_rows($threewayrslt)>1) 
+								if (mysqli_num_rows($threewayrslt)>1)
 									{$rtr_status = '3-WAY';}
 								}
 
@@ -9126,7 +9134,7 @@ if ($function == 'lead_field_info')
 					$row=mysqli_fetch_row($rslt);
 					$lead_list_id =			$row[0];
 					$lead_entry_list_id =	$row[1];
-	
+
 					$stmt="SELECT count(*) from vicidial_lists where list_id='$lead_list_id' $LOGallowed_campaignsSQL;";
 					if ($DB) {$MAIN.="|$stmt|\n";}
 					$rslt=mysql_to_mysqli($stmt, $link);
@@ -9392,7 +9400,7 @@ if ($function == 'lead_status_search')
 					$LOGadmin_cf_show_hidden =		$row[2];
 					if ($DB) {echo "CF user: |$LOGadmin_hide_lead_data|$LOGadmin_hide_phone_data|$LOGadmin_cf_show_hidden|\n";}
 					}
-				
+
 				### gather outbound calls
 				$stmt="SELECT distinct(lead_id) from vicidial_log $lead_search_SQL $LOGallowed_campaignsSQL;";
 				$rslt=mysql_to_mysqli($stmt, $link);
@@ -9612,7 +9620,7 @@ if ($function == 'lead_status_search')
 											{
 											$row=mysqli_fetch_row($rslt);
 											$t=0;
-											while ($columns_ct >= $t) 
+											while ($columns_ct >= $t)
 												{
 												if ($enc_fields > 0)
 													{
@@ -9797,7 +9805,7 @@ if ($function == 'update_log_entry')
 						{$stmt="UPDATE vicidial_log SET status='$status' where campaign_id='$group' and uniqueid='$uniqueid';";}
 					$rslt=mysql_to_mysqli($stmt, $link);
 					$update_count = mysqli_affected_rows($link);
-					if ($update_count > 0) 
+					if ($update_count > 0)
 						{
 						$result = 'SUCCESS';
 						$result_reason = "update_log_entry RECORD HAS BEEN UPDATED";
@@ -9997,7 +10005,7 @@ if ($function == 'add_lead')
 					$row=mysqli_fetch_row($rslt);
 					$dnc_found=$row[0];
 
-					if ($dnc_found > 0) 
+					if ($dnc_found > 0)
 						{
 						$result = 'ERROR';
 						$result_reason = "add_lead PHONE NUMBER IN DNC";
@@ -10031,7 +10039,7 @@ if ($function == 'add_lead')
 					$row=mysqli_fetch_row($rslt);
 					$dnc_found=$row[0];
 
-					if ($dnc_found > 0) 
+					if ($dnc_found > 0)
 						{
 						$result = 'ERROR';
 						$result_reason = "add_lead PHONE NUMBER IN CAMPAIGN DNC";
@@ -10094,7 +10102,7 @@ if ($function == 'add_lead')
 						$duplicate_lead_list =	$row[1];
 						}
 
-					if ($duplicate_found > 0) 
+					if ($duplicate_found > 0)
 						{
 						$result = 'ERROR';
 						$result_reason = "add_lead DUPLICATE PHONE NUMBER IN LIST";
@@ -10119,7 +10127,7 @@ if ($function == 'add_lead')
 						$duplicate_lead_list =	$row[1];
 						}
 
-					if ($duplicate_found > 0) 
+					if ($duplicate_found > 0)
 						{
 						$result = 'ERROR';
 						$result_reason = "add_lead DUPLICATE PHONE NUMBER IN CAMPAIGN LISTS";
@@ -10144,7 +10152,7 @@ if ($function == 'add_lead')
 						$duplicate_lead_list =	$row[1];
 						}
 
-					if ($duplicate_found > 0) 
+					if ($duplicate_found > 0)
 						{
 						$result = 'ERROR';
 						$result_reason = "add_lead DUPLICATE PHONE NUMBER IN SYSTEM";
@@ -10169,7 +10177,7 @@ if ($function == 'add_lead')
 						$duplicate_lead_list =	$row[1];
 						}
 
-					if ($duplicate_found > 0) 
+					if ($duplicate_found > 0)
 						{
 						$result = 'ERROR';
 						$result_reason = "add_lead DUPLICATE TITLE ALT_PHONE IN LIST";
@@ -10194,7 +10202,7 @@ if ($function == 'add_lead')
 						$duplicate_lead_list =	$row[1];
 						}
 
-					if ($duplicate_found > 0) 
+					if ($duplicate_found > 0)
 						{
 						$result = 'ERROR';
 						$result_reason = "add_lead DUPLICATE TITLE ALT_PHONE IN CAMPAIGN LISTS";
@@ -10219,7 +10227,7 @@ if ($function == 'add_lead')
 						$duplicate_lead_list =	$row[1];
 						}
 
-					if ($duplicate_found > 0) 
+					if ($duplicate_found > 0)
 						{
 						$result = 'ERROR';
 						$result_reason = "add_lead DUPLICATE TITLE ALT_PHONE IN SYSTEM";
@@ -10244,7 +10252,7 @@ if ($function == 'add_lead')
 						$duplicate_lead_list =	$row[1];
 						}
 
-					if ($duplicate_found > 0) 
+					if ($duplicate_found > 0)
 						{
 						$result = 'ERROR';
 						$result_reason = "add_lead DUPLICATE NAME PHONE IN LIST";
@@ -10269,7 +10277,7 @@ if ($function == 'add_lead')
 						$duplicate_lead_list =	$row[1];
 						}
 
-					if ($duplicate_found > 0) 
+					if ($duplicate_found > 0)
 						{
 						$result = 'ERROR';
 						$result_reason = "add_lead DUPLICATE NAME PHONE IN CAMPAIGN LISTS";
@@ -10294,7 +10302,7 @@ if ($function == 'add_lead')
 						$duplicate_lead_list =	$row[1];
 						}
 
-					if ($duplicate_found > 0) 
+					if ($duplicate_found > 0)
 						{
 						$result = 'ERROR';
 						$result_reason = "add_lead DUPLICATE NAME PHONE IN SYSTEM";
@@ -10306,7 +10314,7 @@ if ($function == 'add_lead')
 					}
 				### END checking for duplicate if defined ###
 
-				
+
 				### get current gmt_offset of the phone_number
 				$gmt_offset = lookup_gmt_api($phone_code,$USarea,$state,$LOCAL_GMT_OFF_STD,$Shour,$Smin,$Ssec,$Smon,$Smday,$Syear,$tz_method,$postal_code,$owner,$USprefix);
 
@@ -10378,7 +10386,7 @@ if ($function == 'add_lead')
 							if ($DB>0) {echo "$stmt\n";}
 							$rslt=mysql_to_mysqli($stmt, $link);
 							$tablecount_to_print = mysqli_num_rows($rslt);
-							if ($tablecount_to_print > 0) 
+							if ($tablecount_to_print > 0)
 								{
 								$CFinsert_SQL='';
 								$stmt="SELECT field_id,field_label,field_name,field_description,field_rank,field_help,field_type,field_options,field_size,field_max,field_default,field_cost,field_required,multi_position,name_position,field_order,field_encrypt from vicidial_lists_fields where list_id='$list_id' and field_duplicate!='Y' order by field_rank,field_order,field_label;";
@@ -10387,7 +10395,7 @@ if ($function == 'add_lead')
 								$fields_to_print = mysqli_num_rows($rslt);
 								$fields_list='';
 								$o=0;
-								while ($fields_to_print > $o) 
+								while ($fields_to_print > $o)
 									{
 									$new_field_value='';
 									$form_field_value='';
@@ -10450,9 +10458,9 @@ if ($function == 'add_lead')
 									if ($DB>0) {echo "$custom_table_update_SQL\n";}
 									$rslt=mysql_to_mysqli($custom_table_update_SQL, $link);
 									$custom_insert_count = mysqli_affected_rows($link);
-									if ($custom_insert_count > 0) 
+									if ($custom_insert_count > 0)
 										{
-										# Update vicidial_list entry to put list_id as entry_list_id 
+										# Update vicidial_list entry to put list_id as entry_list_id
 										$vl_table_entry_update_SQL = "UPDATE vicidial_list SET entry_list_id='$list_id' where lead_id=$lead_id;";
 										$rslt=mysql_to_mysqli($vl_table_entry_update_SQL, $link);
 										$vl_table_entry_update_count = mysqli_affected_rows($link);
@@ -10522,7 +10530,7 @@ if ($function == 'add_lead')
 							### call function to determine if lead is dialable
 							$dialable = dialable_gmt($DB,$link,$local_call_time,$gmt_offset,$state);
 							}
-						if ($dialable < 1) 
+						if ($dialable < 1)
 							{
 							$result = 'NOTICE';
 							$result_reason = "add_lead NOT ADDED TO HOPPER, OUTSIDE OF LOCAL TIME";
@@ -10602,9 +10610,9 @@ if ($function == 'add_lead')
 								}
 							if ($valid_callback > 0)
 								{
-								if ($callback_datetime == 'NOW') 
+								if ($callback_datetime == 'NOW')
 									{$callback_datetime=$NOW_TIME;}
-								if (strlen($callback_status)<1) 
+								if (strlen($callback_status)<1)
 									{$callback_status='CALLBK';}
 
 								$stmt="INSERT INTO vicidial_callbacks (lead_id,list_id,campaign_id,status,entry_time,callback_time,user,recipient,comments,user_group,lead_status) values($lead_id,'$list_id','$campaign_id','ACTIVE','$NOW_TIME','$callback_datetime','$callback_user','$callback_type','$callback_comments','$user_group','$callback_status');";
@@ -10972,23 +10980,23 @@ if ($function == 'update_lead')
 								if ($lead_recs > 0)
 									{
 									### Update existing scheduled callback
-									if (strlen($callback_datetime)>0) 
+									if (strlen($callback_datetime)>0)
 										{
-										if ($callback_datetime == 'NOW') 
+										if ($callback_datetime == 'NOW')
 											{$callback_datetime=$NOW_TIME;}
 										$callback_datetimeSQL=",callback_time='$callback_datetime'";
 										}
-									if (strlen($campaign_id)>0) 
+									if (strlen($campaign_id)>0)
 										{$campaign_idSQL=",campaign_id='$campaign_id'";}
-									if (strlen($list_id_field)>0) 
+									if (strlen($list_id_field)>0)
 										{$list_idSQL=",list_id='$list_id_field'";}
-									if (strlen($callback_status)>0) 
+									if (strlen($callback_status)>0)
 										{$callback_statusSQL=",lead_status='$callback_status'";}
-									if (strlen($callback_comments)>0) 
+									if (strlen($callback_comments)>0)
 										{$callback_commentsSQL=",comments='$callback_comments'";}
-									if (strlen($callback_type)>0) 
+									if (strlen($callback_type)>0)
 										{$callback_typeSQL=",recipient='$callback_type'";}
-									if (strlen($callback_user)>0) 
+									if (strlen($callback_user)>0)
 										{$callback_userSQL=",user='$callback_user'";}
 
 									$CBupdateSQL = "$callback_datetimeSQL$callback_statusSQL$campaign_idSQL$list_idSQL$callback_typeSQL$callback_commentsSQL$callback_userSQL";
@@ -11059,9 +11067,9 @@ if ($function == 'update_lead')
 											}
 										if ($valid_callback > 0)
 											{
-											if ($callback_datetime == 'NOW') 
+											if ($callback_datetime == 'NOW')
 												{$callback_datetime=$NOW_TIME;}
-											if (strlen($callback_status)<1) 
+											if (strlen($callback_status)<1)
 												{$callback_status='CALLBK';}
 
 											$stmt="INSERT INTO vicidial_callbacks (lead_id,list_id,campaign_id,status,entry_time,callback_time,user,recipient,comments,user_group,lead_status) values('$search_lead_id[$n]','$search_lead_list[$n]','$campaign_id','ACTIVE','$NOW_TIME','$callback_datetime','$callback_user','$callback_type','$callback_comments','$user_group','$callback_status');";
@@ -11119,7 +11127,7 @@ if ($function == 'update_lead')
 								if ($DB>0) {echo "$stmt";}
 								$rslt=mysql_to_mysqli($stmt, $link);
 								$tablecount_to_print = mysqli_num_rows($rslt);
-								if ($tablecount_to_print > 0) 
+								if ($tablecount_to_print > 0)
 									{
 									if ($delete_lead=='Y')
 										{
@@ -11146,7 +11154,7 @@ if ($function == 'update_lead')
 										$fields_to_print = mysqli_num_rows($rslt);
 										$fields_list='';
 										$o=0;
-										while ($fields_to_print > $o) 
+										while ($fields_to_print > $o)
 											{
 											$new_field_value='';
 											$form_field_value='';
@@ -11215,7 +11223,7 @@ if ($function == 'update_lead')
 											if ($DB>0) {echo "$stmt";}
 											$rslt=mysql_to_mysqli($stmt, $link);
 											$fieldleadcount_to_print = mysqli_num_rows($rslt);
-											if ($fieldleadcount_to_print > 0) 
+											if ($fieldleadcount_to_print > 0)
 												{
 												$rowx=mysqli_fetch_row($rslt);
 												$custom_record_lead_count =	$rowx[0];
@@ -11376,7 +11384,7 @@ if ($function == 'update_lead')
 											if ($DB>0) {echo "$stmt";}
 											$rslt=mysql_to_mysqli($stmt, $link);
 											$tablecount_to_print = mysqli_num_rows($rslt);
-											if ($tablecount_to_print > 0) 
+											if ($tablecount_to_print > 0)
 												{
 												$CFinsert_SQL='';
 												$stmt="SELECT field_id,field_label,field_name,field_description,field_rank,field_help,field_type,field_options,field_size,field_max,field_default,field_cost,field_required,multi_position,name_position,field_order,field_encrypt from vicidial_lists_fields where list_id='$list_id' and field_duplicate!='Y' order by field_rank,field_order,field_label;";
@@ -11384,7 +11392,7 @@ if ($function == 'update_lead')
 												$fields_to_print = mysqli_num_rows($rslt);
 												$fields_list='';
 												$o=0;
-												while ($fields_to_print > $o) 
+												while ($fields_to_print > $o)
 													{
 													$new_field_value='';
 													$form_field_value='';
@@ -11451,9 +11459,9 @@ if ($function == 'update_lead')
 													$custom_table_update_SQL = "INSERT INTO custom_$temp_entry_list_id SET lead_id=$lead_id,$CFinsert_SQL;";
 													$rslt=mysql_to_mysqli($custom_table_update_SQL, $link);
 													$custom_insert_count = mysqli_affected_rows($link);
-													if ($custom_insert_count > 0) 
+													if ($custom_insert_count > 0)
 														{
-														# Update vicidial_list entry to put list_id as entry_list_id 
+														# Update vicidial_list entry to put list_id as entry_list_id
 														$vl_table_entry_update_SQL = "UPDATE vicidial_list SET entry_list_id='$temp_entry_list_id' where lead_id=$lead_id;";
 														$rslt=mysql_to_mysqli($vl_table_entry_update_SQL, $link);
 														$vl_table_entry_update_count = mysqli_affected_rows($link);
@@ -11546,7 +11554,7 @@ if ($function == 'update_lead')
 								### call function to determine if lead is dialable
 								$dialable = dialable_gmt($DB,$link,$local_call_time,$gmt_offset,$state);
 								}
-							if ($dialable < 1) 
+							if ($dialable < 1)
 								{
 								$result = 'NOTICE';
 								$result_reason = "update_lead NOT ADDED TO HOPPER, OUTSIDE OF LOCAL TIME";
@@ -11809,7 +11817,7 @@ if ($function == 'check_phone_number')
 						$row=mysqli_fetch_row($rslt);
 						$dnc_found=$row[0];
 
-						if ($dnc_found > 0) 
+						if ($dnc_found > 0)
 							{
 							$result = 'ERROR';
 							$result_reason = "check_phone_number PHONE NUMBER IN DNC";
@@ -11843,7 +11851,7 @@ if ($function == 'check_phone_number')
 						$row=mysqli_fetch_row($rslt);
 						$dnc_found=$row[0];
 
-						if ($dnc_found > 0) 
+						if ($dnc_found > 0)
 							{
 							$result = 'ERROR';
 							$result_reason = "check_phone_number PHONE NUMBER IN CAMPAIGN DNC";
@@ -11854,7 +11862,7 @@ if ($function == 'check_phone_number')
 							}
 						}
 					### END checking for DNC if defined ###
-					
+
 					$tz_run=0;
 					$result_reason='';
 					$gmt_offset='';   $dialable='0';
@@ -12124,7 +12132,7 @@ if ($function == 'logged_in_agents')
 								{
 								$threewaystmt="select UNIX_TIMESTAMP(last_call_time) from vicidial_live_agents where lead_id='$Alead_id[$i]' and status='INCALL' order by UNIX_TIMESTAMP(last_call_time) desc;";
 								$threewayrslt=mysql_to_mysqli($threewaystmt, $link);
-								if (mysqli_num_rows($threewayrslt)>1) 
+								if (mysqli_num_rows($threewayrslt)>1)
 									{$rtr_status = '3-WAY';}
 								}
 
@@ -12281,24 +12289,24 @@ if ($function == 'call_status_stats')
 			$total_hr_array=array();
 			$total_stat_array=array();
 */
-			
+
 			$campaign_array=explode("-", $campaigns);
 			$campaign_SQL=" and campaign_id in ('".implode("', '", $campaign_array)."') ";
-			if (in_array("ALLCAMPAIGNS", $campaign_array) || preg_match('/\-\-\-ALL\-\-\-/', $campaigns)) 
+			if (in_array("ALLCAMPAIGNS", $campaign_array) || preg_match('/\-\-\-ALL\-\-\-/', $campaigns))
 				{
 				$campaign_SQL="";
 				$campaign_stmt="select campaign_id from vicidial_campaigns order by campaign_id";
 				if ($DB>0) {echo $campaign_stmt."\n";}
 				$campaign_rslt=mysql_to_mysqli($campaign_stmt, $link);
-				while ($row=mysqli_fetch_row($campaign_rslt)) 
+				while ($row=mysqli_fetch_row($campaign_rslt))
 					{
 					$outbound_array{"$row[0]"}[0]=0;
 					$outbound_array{"$row[0]"}[1]=0;
 					}
-				} 
-			else 
+				}
+			else
 				{
-				for ($i=0; $i<count($campaign_array); $i++) 
+				for ($i=0; $i<count($campaign_array); $i++)
 					{
 					$outbound_array{"$campaign_array[$i]"}[0]=0;
 					$outbound_array{"$campaign_array[$i]"}[1]=0;
@@ -12310,28 +12318,28 @@ if ($function == 'call_status_stats')
 			if ($DB>0) {echo $ha_stmt."\n";}
 			$ha_rslt=mysql_to_mysqli($ha_stmt, $link);
 			$human_ans_array=array();
-			while ($ha_row=mysqli_fetch_row($ha_rslt)) 
+			while ($ha_row=mysqli_fetch_row($ha_rslt))
 				{
 				array_push($human_ans_array, $ha_row[0]);
 				}
 
-			if (strlen($statuses)>0) 
+			if (strlen($statuses)>0)
 				{
 				$status_array=explode("-", $statuses);
 				$status_SQL=" and status in ('".implode("', '", $status_array)."') ";
-				} 
-			else 
+				}
+			else
 				{
 				$status_SQL="";
 				}
 
-			if (strlen($ingroups)==0) 
+			if (strlen($ingroups)==0)
 				{
 				$ingroup_array=array();
 				$ingroup_stmt="select closer_campaigns from vicidial_campaigns where closer_campaigns is not null and closer_campaigns!='' $campaign_SQL";
 				if ($DB>0) {echo $ingroup_stmt."\n";}
 				$ingroup_rslt=mysql_to_mysqli($ingroup_stmt, $link);
-				while($ingroup_row=mysqli_fetch_row($ingroup_rslt)) 
+				while($ingroup_row=mysqli_fetch_row($ingroup_rslt))
 					{
 					$ingroup_row[0]=preg_replace('/ -$/', "", trim($ingroup_row[0]));
 					$ing_ary=explode(" ", $ingroup_row[0]);
@@ -12340,13 +12348,13 @@ if ($function == 'call_status_stats')
 				$ingroup_array=array_unique($ingroup_array);
 				$ingroup_array=array_values($ingroup_array);
 				}
-			else 
+			else
 				{
 				$ingroup_array=explode("-", $ingroups);
 				}
 
 			$ingroup_SQL=" and campaign_id in ('".implode("', '", $ingroup_array)."') ";
-			for ($i=0; $i<count($ingroup_array); $i++) 
+			for ($i=0; $i<count($ingroup_array); $i++)
 				{
 				$inbound_array{"$ingroup_array[$i]"}[0]=0;
 				$inbound_array{"$ingroup_array[$i]"}[1]=0;
@@ -12357,16 +12365,16 @@ if ($function == 'call_status_stats')
 			if ($DB>0) {echo $outb_stmt."\n";}
 			$outb_rslt=mysql_to_mysqli($outb_stmt, $link);
 
-			for ($i=0; $i<24; $i++) 
+			for ($i=0; $i<24; $i++)
 				{
 				$hrkey=substr("0$i", -2);
 				$total_hr_array{"$hrkey"}=0;
 				}
 
-			while($outb_row=mysqli_fetch_row($outb_rslt)) 
+			while($outb_row=mysqli_fetch_row($outb_rslt))
 				{
 				$outbound_array{"$outb_row[0]"}[0]+=$outb_row[3];
-				if (in_array($outb_row[1], $human_ans_array)) 
+				if (in_array($outb_row[1], $human_ans_array))
 					{
 					$outbound_array{"$outb_row[0]"}[1]+=$outb_row[3];
 					}
@@ -12377,10 +12385,10 @@ if ($function == 'call_status_stats')
 			$inb_stmt="select campaign_id, status, substr(call_date, 12, 2) as hour, count(*) from vicidial_closer_log where call_date>='$query_date $query_time' and call_date<='$end_date $end_time' $ingroup_SQL $status_SQL group by campaign_id, status, hour order by campaign_id, status, hour";
 			if ($DB>0) {echo $inb_stmt."\n";}
 			$inb_rslt=mysql_to_mysqli($inb_stmt, $link);
-			while($inb_row=mysqli_fetch_row($inb_rslt)) 
+			while($inb_row=mysqli_fetch_row($inb_rslt))
 				{
 				$inbound_array{"$inb_row[0]"}[0]+=$inb_row[3];
-				if (in_array($inb_row[1], $human_ans_array)) 
+				if (in_array($inb_row[1], $human_ans_array))
 					{
 					$inbound_array{"$inb_row[0]"}[1]+=$inb_row[3];
 					}
@@ -12388,11 +12396,11 @@ if ($function == 'call_status_stats')
 				$temp_hour_array{"$inb_row[0]"}{"$inb_row[2]"}+=$inb_row[3];
 				}
 			}
-			
+
 			while(list($key, $val)=each($outbound_array)) {
 				$hour_str="";
 				$status_str="";
-				for ($i=0; $i<24; $i++) 
+				for ($i=0; $i<24; $i++)
 					{
 					$hrkey=substr("0$i", -2);
 					$hrs=$temp_hour_array{"$key"}{"$hrkey"}+=0;
@@ -12404,7 +12412,7 @@ if ($function == 'call_status_stats')
 				if ($temp_ary_ct > 0)
 					{
 					ksort($temp_stat_array{"$key"});
-					while(list($statkey, $statval)=each($temp_stat_array{"$key"})) 
+					while(list($statkey, $statval)=each($temp_stat_array{"$key"}))
 						{
 						$status_str.=$statkey."-".$temp_stat_array{"$key"}{"$statkey"}.",";
 						}
@@ -12417,7 +12425,7 @@ if ($function == 'call_status_stats')
 			while(list($key, $val)=each($inbound_array)) {
 				$hour_str="";
 				$status_str="";
-				for ($i=0; $i<24; $i++) 
+				for ($i=0; $i<24; $i++)
 					{
 					$hrkey=substr("0$i", -2);
 					$hrs=$temp_hour_array{"$key"}{"$hrkey"}+=0;
@@ -12429,7 +12437,7 @@ if ($function == 'call_status_stats')
 				if ($temp_ary_ct > 0)
 					{
 					ksort($temp_stat_array{"$key"});
-					while(list($statkey, $statval)=each($temp_stat_array{"$key"})) 
+					while(list($statkey, $statval)=each($temp_stat_array{"$key"}))
 						{
 						$status_str.=$statkey."-".$temp_stat_array{"$key"}{"$statkey"}.",";
 						}
@@ -12452,7 +12460,7 @@ if ($function == 'call_status_stats')
 
 
 ################################################################################
-### call_dispo_report - call disposition breakdown report                 
+### call_dispo_report - call disposition breakdown report
 ################################################################################
 if ($function == 'call_dispo_report')
 	{
@@ -12498,34 +12506,34 @@ if ($function == 'call_dispo_report')
 			if (!$end_time) {$end_time="23:59:59";}
 			if ($show_percentages && !$status_breakdown) {$show_percentages="";}
 
-			# COMPILE INBOUND CAMPAIGN CLAUSE 
+			# COMPILE INBOUND CAMPAIGN CLAUSE
 			$skip_inbound=0;
-			if (strlen($ingroups)>0) 
+			if (strlen($ingroups)>0)
 				{
 				$ingroup_array=explode("-", $ingroups);
 				$inb_SQL="and campaign_id in ('".implode("', '", $ingroup_array)."')";
-				if (in_array("ALLGROUPS", $ingroup_array) || preg_match('/\-\-\-ALL\-\-\-/', $ingroups)) 
+				if (in_array("ALLGROUPS", $ingroup_array) || preg_match('/\-\-\-ALL\-\-\-/', $ingroups))
 					{
 					$inb_SQL="";
 					}
 				}
-			else 
+			else
 				{
 				$skip_inbound=1;
 				}
 			########################
 
-			# COMPILE OUTBOUND CAMPAIGN CLAUSE 
-			$skip_outbound=0;  # 
-			if (strlen($campaigns)>0) 
+			# COMPILE OUTBOUND CAMPAIGN CLAUSE
+			$skip_outbound=0;  #
+			if (strlen($campaigns)>0)
 				{
 				$campaign_array=explode("-", $campaigns);
 				$campaign_SQL=" and campaign_id in ('".implode("', '", $campaign_array)."') ";
-				if (in_array("ALLCAMPAIGNS", $campaign_array) || preg_match('/\-\-\-ALL\-\-\-/', $campaigns)) 
+				if (in_array("ALLCAMPAIGNS", $campaign_array) || preg_match('/\-\-\-ALL\-\-\-/', $campaigns))
 					{
 					$campaign_SQL="";
 					}
-				
+
 				}
 			else
 				{
@@ -12533,16 +12541,16 @@ if ($function == 'call_dispo_report')
 				}
 			########################
 
-			# COMPILE DID CLAUSE 
+			# COMPILE DID CLAUSE
 			$skip_dids=0;
-			if (strlen($did_patterns)>0 || strlen($did_ids)>0) 
+			if (strlen($did_patterns)>0 || strlen($did_ids)>0)
 				{
 				$did_id_array=explode("-", $did_ids);
 				$did_pattern_array=explode("-", $did_patterns);
 				$did_stmt="select did_id, did_pattern from vicidial_inbound_dids where did_pattern in ('".implode("','", $did_pattern_array)."')";
 				if ($DB) {$rpt_str.=$did_stmt."<BR>\n";}
 				$did_rslt=mysql_to_mysqli($did_stmt, $link);
-				while ($did_row=mysqli_fetch_row($did_rslt)) 
+				while ($did_row=mysqli_fetch_row($did_rslt))
 					{
 					if (!in_array($did_row[0], $did_id_array))
 						{
@@ -12551,30 +12559,30 @@ if ($function == 'call_dispo_report')
 						}
 					}
 				}
-			
+
 			if (count($did_id_array)>0 && $skip_inbound) # DON'T DO A REPORT FOR INGROUPS AND DIDS YET.
 				{
 				$did_SQL="and did_id in ('".implode("', '", $did_id_array)."')";
-				if (in_array("ALLDIDS", $did_id_array) || preg_match('/\-\-\-ALL\-\-\-/', $did_ids) || in_array("ALLPATTERNS", $did_pattern_array) || preg_match('/\-\-\-ALL\-\-\-/', $did_patterns)) 
+				if (in_array("ALLDIDS", $did_id_array) || preg_match('/\-\-\-ALL\-\-\-/', $did_ids) || in_array("ALLPATTERNS", $did_pattern_array) || preg_match('/\-\-\-ALL\-\-\-/', $did_patterns))
 					{
 					$did_SQL="";
 					}
 				}
-			else 
+			else
 				{
 				$skip_dids=1;
 				}
 			########################
 
-			# COMPILE STATUS CLAUSE 
-			if (strlen($categories)>0 || strlen($statuses)>0) 
+			# COMPILE STATUS CLAUSE
+			if (strlen($categories)>0 || strlen($statuses)>0)
 				{
 				$status_array=explode("-", $statuses);
 				$categories_array=explode("-", $categories);
 				$cat_stmt="select distinct statuses from vicidial_statuses where category in ('".implode("','", $categories_array)."') UNION select distinct statuses from vicidial_campaign_statuses where category in ('".implode("','", $categories_array)."') $campaign_SQL";
 				if ($DB) {$rpt_str.=$cat_stmt."<BR>\n";}
 				$cat_rslt=mysql_to_mysqli($cat_stmt, $link);
-				while($cat_row=mysqli_fetch_row($cat_rslt)) 
+				while($cat_row=mysqli_fetch_row($cat_rslt))
 					{
 					if (!in_array($cat_row[0], $status_array))
 						{
@@ -12583,25 +12591,25 @@ if ($function == 'call_dispo_report')
 					}
 				}
 
-			if (count($status_array)>0) 
+			if (count($status_array)>0)
 				{
 				$status_SQL=" and status in ('".implode("', '", $status_array)."') ";
-				if (in_array("ALLSTATUSES", $status_array) || preg_match('/\-\-\-ALL\-\-\-/', $statuses) || in_array("ALLCATEGORIES", $categories_array) || preg_match('/\-\-\-ALL\-\-\-/', $categories)) 
+				if (in_array("ALLSTATUSES", $status_array) || preg_match('/\-\-\-ALL\-\-\-/', $statuses) || in_array("ALLCATEGORIES", $categories_array) || preg_match('/\-\-\-ALL\-\-\-/', $categories))
 					{
 					$status_SQL="";
 					}
 				}
 			########################
 
-			# COMPILE USER CLAUSE 
-			if (strlen($user_groups)>0 || strlen($users)>0) 
+			# COMPILE USER CLAUSE
+			if (strlen($user_groups)>0 || strlen($users)>0)
 				{
 				$user_array=explode("-", $users);
 				$user_group_array=explode("-", $user_groups);
 				$ug_stmt="select user from vicidial_users where user_group in ('".implode("', '", $user_group_array)."')";
 				if ($DB) {$rpt_str.=$ug_stmt."<BR>\n";}
 				$ug_rslt=mysql_to_mysqli($ug_stmt, $link);
-				while ($ug_row=mysqli_fetch_row($ug_rslt)) 
+				while ($ug_row=mysqli_fetch_row($ug_rslt))
 					{
 					if (!in_array($ug_row[0], $user_array))
 						{
@@ -12609,10 +12617,10 @@ if ($function == 'call_dispo_report')
 						}
 					}
 				}
-			if (count($user_array)>0) 
+			if (count($user_array)>0)
 				{
 				$user_SQL=" and user in ('".implode("', '", $user_array)."') ";
-				if (in_array("ALLUSERS", $user_array) || preg_match('/\-\-\-ALL\-\-\-/', $users) || in_array("ALLGROUPS", $user_group_array) || preg_match('/\-\-\-ALL\-\-\-/', $user_groups)) 
+				if (in_array("ALLUSERS", $user_array) || preg_match('/\-\-\-ALL\-\-\-/', $users) || in_array("ALLGROUPS", $user_group_array) || preg_match('/\-\-\-ALL\-\-\-/', $user_groups))
 					{
 					$user_SQL="";
 					}
@@ -12625,18 +12633,18 @@ if ($function == 'call_dispo_report')
 			$status_ct_array=array();
 			$grand_total_array=array();
 			$grand_total_calls=0;
-			if (!$skip_outbound) 
+			if (!$skip_outbound)
 				{
 				$stmt="select campaign_id, status, count(*) from vicidial_log where call_date>='$query_date $query_time' and call_date<='$end_date $end_time' $ingroup_SQL $status_SQL $user_SQL group by campaign_id, status order by campaign_id, status asc";
 				if ($DB) {$rpt_str.=$stmt."<BR>\n";}
 				$rslt=mysql_to_mysqli($stmt, $link);
-				while ($row=mysqli_fetch_row($rslt)) 
+				while ($row=mysqli_fetch_row($rslt))
 					{
 					$outbound_ct_array{"$row[0]"}{"TOTAL CALLS"}+=$row[2];
 					$grand_total_calls+=$row[2];
-					if ($status_breakdown) 
+					if ($status_breakdown)
 						{
-						if (!in_array("$row[1]", $status_ct_array)) 
+						if (!in_array("$row[1]", $status_ct_array))
 							{
 							array_push($status_ct_array, "$row[1]");
 							}
@@ -12650,13 +12658,13 @@ if ($function == 'call_dispo_report')
 				$stmt="select campaign_id, status, count(*) from vicidial_closer_log where call_date>='$query_date $query_time' and call_date<='$end_date $end_time' $inb_SQL $status_SQL $user_SQL group by campaign_id, status order by campaign_id, status asc";
 				if ($DB) {$rpt_str.=$stmt."<BR>\n";}
 				$rslt=mysql_to_mysqli($stmt, $link);
-				while ($row=mysqli_fetch_row($rslt)) 
+				while ($row=mysqli_fetch_row($rslt))
 					{
 					$inbound_ct_array{"$row[0]"}{"TOTAL CALLS"}+=$row[2];
 					$grand_total_calls+=$row[2];
-					if ($status_breakdown) 
+					if ($status_breakdown)
 						{
-						if (!in_array("$row[1]", $status_ct_array)) 
+						if (!in_array("$row[1]", $status_ct_array))
 							{
 							array_push($status_ct_array, "$row[1]");
 							}
@@ -12670,13 +12678,13 @@ if ($function == 'call_dispo_report')
 				$stmt="select did_id, extension, campaign_id, status, count(*) from vicidial_did_log vdl, vicidial_closer_log vcl where vdl.call_date>='$query_date $query_time' and vdl.call_date<='$end_date $end_time' $did_SQL $status_SQL $user_SQL and vcl.uniqueid=vdl.uniqueid group by campaign_id, status order by campaign_id, status asc";
 				if ($DB) {$rpt_str.=$stmt."<BR>\n";}
 				$rslt=mysql_to_mysqli($stmt, $link);
-				while ($row=mysqli_fetch_row($rslt)) 
+				while ($row=mysqli_fetch_row($rslt))
 					{
 					$did_ct_array{"$row[1]"}{"TOTAL CALLS"}+=$row[4];
 					$grand_total_calls+=$row[4];
-					if ($status_breakdown) 
+					if ($status_breakdown)
 						{
-						if (!in_array("$row[1]", $status_ct_array)) 
+						if (!in_array("$row[1]", $status_ct_array))
 							{
 							array_push($status_ct_array, "$row[3]");
 							}
@@ -12687,30 +12695,30 @@ if ($function == 'call_dispo_report')
 				}
 
 			$rpt_str.="CAMPAIGN,TOTAL CALLS";
-			if ($status_breakdown) 
+			if ($status_breakdown)
 				{
-				for ($i=0; $i<count($status_ct_array); $i++) 
+				for ($i=0; $i<count($status_ct_array); $i++)
 					{
 					$rpt_str.=",$status_ct_array[$i]";
 					}
 				}
 			$rpt_str.="\n";
-			while (list($key, $val)=each($outbound_ct_array)) 
+			while (list($key, $val)=each($outbound_ct_array))
 				{
 				$total_calls=$outbound_ct_array{$key}{"TOTAL CALLS"};
 				$rpt_str.="$key,".$outbound_ct_array{$key}{"TOTAL CALLS"};
 				unset($outbound_ct_array{$key}{"TOTAL CALLS"});
-				if ($status_breakdown) 
+				if ($status_breakdown)
 					{
-					for ($i=0; $i<count($status_ct_array); $i++) 
+					for ($i=0; $i<count($status_ct_array); $i++)
 						{
 						$outbound_ct_array{$key}{"$status_ct_array[$i]"}+=0;
 						}
 					ksort($outbound_ct_array{$key});
-					while (list($key2, $val2)=each($outbound_ct_array{$key})) 
+					while (list($key2, $val2)=each($outbound_ct_array{$key}))
 						{
 						$rpt_str.=",$val2";
-						if ($show_percentages) 
+						if ($show_percentages)
 							{
 							$rpt_str.=" (";
 							$rpt_str.=sprintf("%.1f", (100*$val2/$total_calls));
@@ -12720,22 +12728,22 @@ if ($function == 'call_dispo_report')
 					}
 				$rpt_str.="\n";
 				}
-			while (list($key, $val)=each($inbound_ct_array)) 
+			while (list($key, $val)=each($inbound_ct_array))
 				{
 				$total_calls=$inbound_ct_array{$key}{"TOTAL CALLS"};
 				$rpt_str.="$key,".$inbound_ct_array{$key}{"TOTAL CALLS"};
 				unset($inbound_ct_array{$key}{"TOTAL CALLS"});
-				if ($status_breakdown) 
+				if ($status_breakdown)
 					{
-					for ($i=0; $i<count($status_ct_array); $i++) 
+					for ($i=0; $i<count($status_ct_array); $i++)
 						{
 						$inbound_ct_array{$key}{"$status_ct_array[$i]"}+=0;
 						}
 					ksort($inbound_ct_array{$key});
-					while (list($key2, $val2)=each($inbound_ct_array{$key})) 
+					while (list($key2, $val2)=each($inbound_ct_array{$key}))
 						{
 						$rpt_str.=",$val2";
-						if ($show_percentages) 
+						if ($show_percentages)
 							{
 							$rpt_str.=" (";
 							$rpt_str.=sprintf("%.1f", (100*$val2/$total_calls));
@@ -12745,22 +12753,22 @@ if ($function == 'call_dispo_report')
 					}
 				$rpt_str.="\n";
 				}
-			while (list($key, $val)=each($did_ct_array)) 
+			while (list($key, $val)=each($did_ct_array))
 				{
 				$total_calls=$did_ct_array{$key}{"TOTAL CALLS"};
 				$rpt_str.="$key,".$did_ct_array{$key}{"TOTAL CALLS"};
 				unset($did_ct_array{$key}{"TOTAL CALLS"});
-				if ($status_breakdown) 
+				if ($status_breakdown)
 					{
-					for ($i=0; $i<count($status_ct_array); $i++) 
+					for ($i=0; $i<count($status_ct_array); $i++)
 						{
 						$did_ct_array{$key}{"$status_ct_array[$i]"}+=0;
 						}
 					ksort($did_ct_array{$key});
-					while (list($key2, $val2)=each($did_ct_array{$key})) 
+					while (list($key2, $val2)=each($did_ct_array{$key}))
 						{
 						$rpt_str.=",$val2";
-						if ($show_percentages) 
+						if ($show_percentages)
 							{
 							$rpt_str.=" (";
 							$rpt_str.=sprintf("%.1f", (100*$val2/$total_calls));
@@ -12772,10 +12780,10 @@ if ($function == 'call_dispo_report')
 				}
 			$rpt_str.="TOTAL,$grand_total_calls";
 			ksort($grand_total_array);
-			while (list($key, $val)=each($grand_total_array)) 
+			while (list($key, $val)=each($grand_total_array))
 				{
 				$rpt_str.=",$val";
-				if ($show_percentages) 
+				if ($show_percentages)
 					{
 					$rpt_str.=" (";
 					$rpt_str.=sprintf("%.1f", (100*$val/$grand_total_calls));
@@ -12783,7 +12791,7 @@ if ($function == 'call_dispo_report')
 					}
 				}
 
-			if ($file_download>0) 
+			if ($file_download>0)
 				{
 				$CSVfilename = "API_call_dispo_report_$ENTRYdate.csv";
 				// We'll be outputting a TXT file
@@ -12800,7 +12808,7 @@ if ($function == 'call_dispo_report')
 				echo "$rpt_str";
 				exit;
 				}
-			else 
+			else
 				{
 				header('Content-type: text/plain');
 				echo "$rpt_str";
@@ -12832,15 +12840,15 @@ api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$resul
 
 
 
-if ($format=='debug') 
+if ($format=='debug')
 	{
 	$ENDtime = date("U");
 	$RUNtime = ($ENDtime - $StarTtime);
 	echo "\n<!-- script runtime: $RUNtime seconds -->";
 	echo "\n</body>\n</html>\n";
 	}
-		
-exit; 
+
+exit;
 
 
 
@@ -13006,7 +13014,7 @@ if ( (!$AC_processed) and ($dst_range == 'SSM-FSN') )
 	if ($DBX) {print "     Second Sunday March to First Sunday November\n";}
 	#**********************************************************************
 	# SSM-FSN
-	#     This is returns 1 if Daylight Savings Time is in effect and 0 if 
+	#     This is returns 1 if Daylight Savings Time is in effect and 0 if
 	#       Standard time is in effect.
 	#     Based on Second Sunday March to First Sunday November at 2 am.
 	#     INPUTS:
@@ -13017,10 +13025,10 @@ if ( (!$AC_processed) and ($dst_range == 'SSM-FSN') )
 	#     OPTIONAL INPUT:
 	#       timezone        INTEGER       hour difference UTC - local standard time
 	#                                      (DEFAULT is blank)
-	#                                     make calculations based on UTC time, 
+	#                                     make calculations based on UTC time,
 	#                                     which means shift at 10:00 UTC in April
 	#                                     and 9:00 UTC in October
-	#     OUTPUT: 
+	#     OUTPUT:
 	#                       INTEGER       1 = DST, 0 = not DST
 	#
 	# S  M  T  W  T  F  S
@@ -13029,14 +13037,14 @@ if ( (!$AC_processed) and ($dst_range == 'SSM-FSN') )
 	#15 16 17 18 19 20 21
 	#22 23 24 25 26 27 28
 	#29 30 31
-	# 
+	#
 	# S  M  T  W  T  F  S
 	#    1  2  3  4  5  6
 	# 7  8  9 10 11 12 13
 	#14 15 16 17 18 19 20
 	#21 22 23 24 25 26 27
 	#28 29 30 31
-	# 
+	#
 	#**********************************************************************
 
 		$USACAN_DST=0;
@@ -13046,50 +13054,50 @@ if ( (!$AC_processed) and ($dst_range == 'SSM-FSN') )
 		$dow= $wday;
 
 		if ($mm < 3 || $mm > 11) {
-		$USACAN_DST=0;   
+		$USACAN_DST=0;
 		} elseif ($mm >= 4 and $mm <= 10) {
-		$USACAN_DST=1;   
+		$USACAN_DST=1;
 		} elseif ($mm == 3) {
 		if ($dd > 13) {
-			$USACAN_DST=1;   
+			$USACAN_DST=1;
 		} elseif ($dd >= ($dow+8)) {
 			if ($timezone) {
 			if ($dow == 0 and $ns < (7200+$timezone*3600)) {
-				$USACAN_DST=0;   
+				$USACAN_DST=0;
 			} else {
-				$USACAN_DST=1;   
+				$USACAN_DST=1;
 			}
 			} else {
 			if ($dow == 0 and $ns < 7200) {
-				$USACAN_DST=0;   
+				$USACAN_DST=0;
 			} else {
-				$USACAN_DST=1;   
+				$USACAN_DST=1;
 			}
 			}
 		} else {
-			$USACAN_DST=0;   
+			$USACAN_DST=0;
 		}
 		} elseif ($mm == 11) {
 		if ($dd > 7) {
-			$USACAN_DST=0;   
+			$USACAN_DST=0;
 		} elseif ($dd < ($dow+1)) {
-			$USACAN_DST=1;   
+			$USACAN_DST=1;
 		} elseif ($dow == 0) {
 			if ($timezone) { # UTC calculations
 			if ($ns < (7200+($timezone-1)*3600)) {
-				$USACAN_DST=1;   
+				$USACAN_DST=1;
 			} else {
-				$USACAN_DST=0;   
+				$USACAN_DST=0;
 			}
 			} else { # local time calculations
 			if ($ns < 7200) {
-				$USACAN_DST=1;   
+				$USACAN_DST=1;
 			} else {
-				$USACAN_DST=0;   
+				$USACAN_DST=0;
 			}
 			}
 		} else {
-			$USACAN_DST=0;   
+			$USACAN_DST=0;
 		}
 		} # end of month checks
 	if ($DBX) {print "     DST: $USACAN_DST\n";}
@@ -13102,11 +13110,11 @@ if ( (!$AC_processed) and ($dst_range == 'FSA-LSO') )
 	if ($DBX) {print "     First Sunday April to Last Sunday October\n";}
 	#**********************************************************************
 	# FSA-LSO
-	#     This is returns 1 if Daylight Savings Time is in effect and 0 if 
+	#     This is returns 1 if Daylight Savings Time is in effect and 0 if
 	#       Standard time is in effect.
 	#     Based on first Sunday in April and last Sunday in October at 2 am.
 	#**********************************************************************
-		
+
 		$USA_DST=0;
 		$mm = $mon;
 		$dd = $mday;
@@ -13170,11 +13178,11 @@ if ( (!$AC_processed) and ($dst_range == 'LSM-LSO') )
 	{
 	if ($DBX) {print "     Last Sunday March to Last Sunday October\n";}
 	#**********************************************************************
-	#     This is s 1 if Daylight Savings Time is in effect and 0 if 
+	#     This is s 1 if Daylight Savings Time is in effect and 0 if
 	#       Standard time is in effect.
 	#     Based on last Sunday in March and last Sunday in October at 1 am.
 	#**********************************************************************
-		
+
 		$GBR_DST=0;
 		$mm = $mon;
 		$dd = $mday;
@@ -13238,11 +13246,11 @@ if ( (!$AC_processed) and ($dst_range == 'LSO-LSM') )
 	{
 	if ($DBX) {print "     Last Sunday October to Last Sunday March\n";}
 	#**********************************************************************
-	#     This is s 1 if Daylight Savings Time is in effect and 0 if 
+	#     This is s 1 if Daylight Savings Time is in effect and 0 if
 	#       Standard time is in effect.
 	#     Based on last Sunday in October and last Sunday in March at 1 am.
 	#**********************************************************************
-		
+
 		$AUS_DST=0;
 		$mm = $mon;
 		$dd = $mday;
@@ -13297,7 +13305,7 @@ if ( (!$AC_processed) and ($dst_range == 'LSO-LSM') )
 		} else {
 			$AUS_DST=1;
 		}
-		} # end of month checks						
+		} # end of month checks
 	if ($DBX) {print "     DST: $AUS_DST\n";}
 	if ($AUS_DST) {$gmt_offset++;}
 	$AC_processed++;
@@ -13308,11 +13316,11 @@ if ( (!$AC_processed) and ($dst_range == 'FSO-LSM') )
 	if ($DBX) {print "     First Sunday October to Last Sunday March\n";}
 	#**********************************************************************
 	#   TASMANIA ONLY
-	#     This is s 1 if Daylight Savings Time is in effect and 0 if 
+	#     This is s 1 if Daylight Savings Time is in effect and 0 if
 	#       Standard time is in effect.
 	#     Based on first Sunday in October and last Sunday in March at 1 am.
 	#**********************************************************************
-		
+
 		$AUST_DST=0;
 		$mm = $mon;
 		$dd = $mday;
@@ -13365,7 +13373,7 @@ if ( (!$AC_processed) and ($dst_range == 'FSO-LSM') )
 		} else {
 			$AUST_DST=0;
 		}
-		} # end of month checks						
+		} # end of month checks
 	if ($DBX) {print "     DST: $AUST_DST\n";}
 	if ($AUST_DST) {$gmt_offset++;}
 	$AC_processed++;
@@ -13377,11 +13385,11 @@ if ( (!$AC_processed) and ($dst_range == 'FSO-FSA') )
 	#**********************************************************************
 	# FSO-FSA
 	#   2008+ AUSTRALIA ONLY (country code 61)
-	#     This is returns 1 if Daylight Savings Time is in effect and 0 if 
+	#     This is returns 1 if Daylight Savings Time is in effect and 0 if
 	#       Standard time is in effect.
 	#     Based on first Sunday in October and first Sunday in April at 1 am.
 	#**********************************************************************
-    
+
 	$AUSE_DST=0;
 	$mm = $mon;
 	$dd = $mday;
@@ -13389,48 +13397,48 @@ if ( (!$AC_processed) and ($dst_range == 'FSO-FSA') )
 	$dow= $wday;
 
     if ($mm < 4 or $mm > 10) {
-	$AUSE_DST=1;   
+	$AUSE_DST=1;
     } elseif ($mm >= 5 and $mm <= 9) {
-	$AUSE_DST=0;   
+	$AUSE_DST=0;
     } elseif ($mm == 4) {
 	if ($dd > 7) {
-	    $AUSE_DST=0;   
+	    $AUSE_DST=0;
 	} elseif ($dd >= ($dow+1)) {
 	    if ($timezone) {
 		if ($dow == 0 and $ns < (3600+$timezone*3600)) {
-		    $AUSE_DST=1;   
+		    $AUSE_DST=1;
 		} else {
-		    $AUSE_DST=0;   
+		    $AUSE_DST=0;
 		}
 	    } else {
 		if ($dow == 0 and $ns < 7200) {
-		    $AUSE_DST=1;   
+		    $AUSE_DST=1;
 		} else {
-		    $AUSE_DST=0;   
+		    $AUSE_DST=0;
 		}
 	    }
 	} else {
-	    $AUSE_DST=1;   
+	    $AUSE_DST=1;
 	}
     } elseif ($mm == 10) {
 	if ($dd >= 8) {
-	    $AUSE_DST=1;   
+	    $AUSE_DST=1;
 	} elseif ($dd >= ($dow+1)) {
 	    if ($timezone) {
 		if ($dow == 0 and $ns < (7200+$timezone*3600)) {
-		    $AUSE_DST=0;   
+		    $AUSE_DST=0;
 		} else {
-		    $AUSE_DST=1;   
+		    $AUSE_DST=1;
 		}
 	    } else {
 		if ($dow == 0 and $ns < 3600) {
-		    $AUSE_DST=0;   
+		    $AUSE_DST=0;
 		} else {
-		    $AUSE_DST=1;   
+		    $AUSE_DST=1;
 		}
 	    }
 	} else {
-	    $AUSE_DST=0;   
+	    $AUSE_DST=0;
 	}
     } # end of month checks
 	if ($DBX) {print "     DST: $AUSE_DST\n";}
@@ -13442,11 +13450,11 @@ if ( (!$AC_processed) and ($dst_range == 'FSO-TSM') )
 	{
 	if ($DBX) {print "     First Sunday October to Third Sunday March\n";}
 	#**********************************************************************
-	#     This is s 1 if Daylight Savings Time is in effect and 0 if 
+	#     This is s 1 if Daylight Savings Time is in effect and 0 if
 	#       Standard time is in effect.
 	#     Based on first Sunday in October and third Sunday in March at 1 am.
 	#**********************************************************************
-		
+
 		$NZL_DST=0;
 		$mm = $mon;
 		$dd = $mday;
@@ -13499,7 +13507,7 @@ if ( (!$AC_processed) and ($dst_range == 'FSO-TSM') )
 		} else {
 			$NZL_DST=0;
 		}
-		} # end of month checks						
+		} # end of month checks
 	if ($DBX) {print "     DST: $NZL_DST\n";}
 	if ($NZL_DST) {$gmt_offset++;}
 	$AC_processed++;
@@ -13511,11 +13519,11 @@ if ( (!$AC_processed) and ($dst_range == 'LSS-FSA') )
 	#**********************************************************************
 	# LSS-FSA
 	#   2007+ NEW ZEALAND (country code 64)
-	#     This is returns 1 if Daylight Savings Time is in effect and 0 if 
+	#     This is returns 1 if Daylight Savings Time is in effect and 0 if
 	#       Standard time is in effect.
 	#     Based on last Sunday in September and first Sunday in April at 1 am.
 	#**********************************************************************
-    
+
 	$NZLN_DST=0;
 	$mm = $mon;
 	$dd = $mday;
@@ -13523,50 +13531,50 @@ if ( (!$AC_processed) and ($dst_range == 'LSS-FSA') )
 	$dow= $wday;
 
     if ($mm < 4 || $mm > 9) {
-	$NZLN_DST=1;   
+	$NZLN_DST=1;
     } elseif ($mm >= 5 && $mm <= 9) {
-	$NZLN_DST=0;   
+	$NZLN_DST=0;
     } elseif ($mm == 4) {
 	if ($dd > 7) {
-	    $NZLN_DST=0;   
+	    $NZLN_DST=0;
 	} elseif ($dd >= ($dow+1)) {
 	    if ($timezone) {
 		if ($dow == 0 && $ns < (3600+$timezone*3600)) {
-		    $NZLN_DST=1;   
+		    $NZLN_DST=1;
 		} else {
-		    $NZLN_DST=0;   
+		    $NZLN_DST=0;
 		}
 	    } else {
 		if ($dow == 0 && $ns < 7200) {
-		    $NZLN_DST=1;   
+		    $NZLN_DST=1;
 		} else {
-		    $NZLN_DST=0;   
+		    $NZLN_DST=0;
 		}
 	    }
 	} else {
-	    $NZLN_DST=1;   
+	    $NZLN_DST=1;
 	}
     } elseif ($mm == 9) {
 	if ($dd < 25) {
-	    $NZLN_DST=0;   
+	    $NZLN_DST=0;
 	} elseif ($dd < ($dow+25)) {
-	    $NZLN_DST=0;   
+	    $NZLN_DST=0;
 	} elseif ($dow == 0) {
 	    if ($timezone) { # UTC calculations
 		if ($ns < (3600+($timezone-1)*3600)) {
-		    $NZLN_DST=0;   
+		    $NZLN_DST=0;
 		} else {
-		    $NZLN_DST=1;   
+		    $NZLN_DST=1;
 		}
 	    } else { # local time calculations
 		if ($ns < 3600) {
-		    $NZLN_DST=0;   
+		    $NZLN_DST=0;
 		} else {
-		    $NZLN_DST=1;   
+		    $NZLN_DST=1;
 		}
 	    }
 	} else {
-	    $NZLN_DST=1;   
+	    $NZLN_DST=1;
 	}
     } # end of month checks
 	if ($DBX) {print "     DST: $NZLN_DST\n";}
@@ -13579,11 +13587,11 @@ if ( (!$AC_processed) and ($dst_range == 'TSO-LSF') )
 	if ($DBX) {print "     Third Sunday October to Last Sunday February\n";}
 	#**********************************************************************
 	# TSO-LSF
-	#     This is returns 1 if Daylight Savings Time is in effect and 0 if 
+	#     This is returns 1 if Daylight Savings Time is in effect and 0 if
 	#       Standard time is in effect. Brazil
 	#     Based on Third Sunday October to Last Sunday February at 1 am.
 	#**********************************************************************
-		
+
 		$BZL_DST=0;
 		$mm = $mon;
 		$dd = $mday;
@@ -13591,52 +13599,52 @@ if ( (!$AC_processed) and ($dst_range == 'TSO-LSF') )
 		$dow= $wday;
 
 		if ($mm < 2 || $mm > 10) {
-		$BZL_DST=1;   
+		$BZL_DST=1;
 		} elseif ($mm >= 3 and $mm <= 9) {
-		$BZL_DST=0;   
+		$BZL_DST=0;
 		} elseif ($mm == 2) {
 		if ($dd < 22) {
-			$BZL_DST=1;   
+			$BZL_DST=1;
 		} elseif ($dd < ($dow+22)) {
-			$BZL_DST=1;   
+			$BZL_DST=1;
 		} elseif ($dow == 0) {
 			if ($timezone) { # UTC calculations
 			if ($ns < (3600+($timezone-1)*3600)) {
-				$BZL_DST=1;   
+				$BZL_DST=1;
 			} else {
-				$BZL_DST=0;   
+				$BZL_DST=0;
 			}
 			} else { # local time calculations
 			if ($ns < 3600) {
-				$BZL_DST=1;   
+				$BZL_DST=1;
 			} else {
-				$BZL_DST=0;   
+				$BZL_DST=0;
 			}
 			}
 		} else {
-			$BZL_DST=0;   
+			$BZL_DST=0;
 		}
 		} elseif ($mm == 10) {
 		if ($dd < 22) {
-			$BZL_DST=0;   
+			$BZL_DST=0;
 		} elseif ($dd < ($dow+22)) {
-			$BZL_DST=0;   
+			$BZL_DST=0;
 		} elseif ($dow == 0) {
 			if ($timezone) { # UTC calculations
 			if ($ns < (3600+($timezone-1)*3600)) {
-				$BZL_DST=0;   
+				$BZL_DST=0;
 			} else {
-				$BZL_DST=1;   
+				$BZL_DST=1;
 			}
 			} else { # local time calculations
 			if ($ns < 3600) {
-				$BZL_DST=0;   
+				$BZL_DST=0;
 			} else {
-				$BZL_DST=1;   
+				$BZL_DST=1;
 			}
 			}
 		} else {
-			$BZL_DST=1;   
+			$BZL_DST=1;
 		}
 		} # end of month checks
 	if ($DBX) {print "     DST: $BZL_DST\n";}
@@ -13667,7 +13675,7 @@ function dialable_gmt($DB,$link,$local_call_time,$gmt_offset,$state)
 	$pmin=(gmdate("i", time() + $pzone));
 	$phour=( (gmdate("G", time() + $pzone)) * 100);
 	$pday=gmdate("w", time() + $pzone);
-	$tz = sprintf("%.2f", $p);	
+	$tz = sprintf("%.2f", $p);
 	$GMT_gmt = "$tz";
 	$GMT_day = "$pday";
 	$GMT_hour = ($phour + $pmin);
@@ -13676,7 +13684,7 @@ function dialable_gmt($DB,$link,$local_call_time,$gmt_offset,$state)
 	if ($DB) {echo "$stmt\n";}
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$call_times_to_print = mysqli_num_rows($rslt);
-	if ($call_times_to_print > 0) 
+	if ($call_times_to_print > 0)
 		{
 		$rowx=mysqli_fetch_row($rslt);
 		$Gct_default_start =	$rowx[3];
@@ -13707,7 +13715,7 @@ function dialable_gmt($DB,$link,$local_call_time,$gmt_offset,$state)
 			if ($DB) {echo "$stmt\n";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 			$state_times_to_print = mysqli_num_rows($rslt);
-			if ($state_times_to_print > 0) 
+			if ($state_times_to_print > 0)
 				{
 				$rowx=mysqli_fetch_row($rslt);
 				$Gct_default_start =	$rowx[0];
