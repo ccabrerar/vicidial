@@ -229,6 +229,7 @@ if ($names_to_print > 0)
 	$camp_name = $row[0];
 	}
 
+require("screen_colors.php");
 ?>
 <html>
 <head>
@@ -425,7 +426,7 @@ if ($action == "BLANK")
 		echo "<td><font size=1><input type=text size=4 maxlength=3 name=amm_rank value=\"$Ramm_rank\"></td>";
 		echo "<td><font size=1><input type=text size=20 maxlength=1000 name=amm_wildcard value=\"$Ramm_wildcard\"></td>";
 		echo "<td><font size=1><input type=text size=30 maxlength=255 name=amm_description value=\"$Ramm_description\"></td>";
-		echo "<td rowspan=2><font size=1><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'>";
+		echo "<td rowspan=2><font size=1><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'>";
 		echo "<BR><BR>";
 		if ($Ractive == 'N')
 			{echo "<a href=\"$PHP_SELF?DB=$DB&campaign_id=$campaign_id&entry_type=$entry_type&amm_field=$amm_field&amm_id=$Ramm_id&action=AMM_MULTI_DELETE\">"._QXZ("DELETE")."</a>";}
@@ -456,7 +457,7 @@ if ($action == "BLANK")
 	echo "<td><font size=1>"._QXZ("RANK").": <input type=text size=4 maxlength=3 name=amm_rank value=\"\"></td>";
 	echo "<td><font size=1>"._QXZ("WILDCARD").": <input type=text size=20 maxlength=1000 name=amm_wildcard value=\"\"></td>";
 	echo "<td><font size=1>"._QXZ("DESCRIPTION").": <input type=text size=30 maxlength=255 name=amm_description value=\"\"></td>";
-	echo "<td rowspan=2><font size=1><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td>";
+	echo "<td rowspan=2><font size=1><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td>";
 	echo "</tr>";
 	echo "<tr $bgcolor>";
 	echo "<td><font size=1>"._QXZ("FIELD").": <select name=amm_field><option>vendor_lead_code</option><option>source_id</option><option>list_id</option><option>phone_number</option><option>title</option><option>first_name</option><option>middle_initial</option><option>last_name</option><option>address1</option><option>address2</option><option>address3</option><option>city</option><option>state</option><option>province</option><option>postal_code</option><option>country_code</option><option>gender</option><option>date_of_birth</option><option>alt_phone</option><option>email</option><option>security_phrase</option><option>comments</option><option>rank</option><option>owner</option><option>called_count</option></select></td>";

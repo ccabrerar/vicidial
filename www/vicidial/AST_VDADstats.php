@@ -742,7 +742,7 @@ $MAIN.="<option value=\"AM\">"._QXZ("AM")."</option>\n";
 $MAIN.="<option value=\"PM\">"._QXZ("PM")."</option>\n";
 $MAIN.="<option value=\"ALL\">"._QXZ("ALL")."</option>\n";
 $MAIN.="</SELECT><BR><BR>\n";
-$MAIN.="<INPUT type=submit NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>\n";
+$MAIN.="<INPUT style='background-color:#$SSbutton_color' type=submit NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>\n";
 $MAIN.="</TD><TD VALIGN=TOP> &nbsp; &nbsp; &nbsp; &nbsp; ";
 $MAIN.="<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 $MAIN.="<a href=\"$PHP_SELF?agent_hours=$agent_hours&outbound_rate=$outbound_rate&costformat=$costformat&print_calls=$print_calls&query_date=$query_date&end_date=$end_date$groupQS$list_idQS&include_rollover=$include_rollover&bottom_graph=$bottom_graph&carrier_stats=$carrier_stats&report_display_type=$report_display_type&shift=$shift&SUBMIT=$SUBMIT&file_download=1&search_archived_data=$search_archived_data\">"._QXZ("DOWNLOAD")."</a> |";

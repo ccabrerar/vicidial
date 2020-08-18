@@ -1,4 +1,4 @@
-Sending email after agent dispositions a call		Started: 2015-08-06	Updated: 2017-11-21
+Sending email after agent dispositions a call		Started: 2015-08-06	Updated: 2020-08-14
 
 These instructions will show you how to set up automatic emails to be sent out when an agent dispositions a call with a specific defined "sale status".
 
@@ -15,6 +15,8 @@ UPDATE! 2017-11-20 - Added ALL-STATUSES option and called_count_trigger option
 
 UPDATE! 2017-11-21 - Added options to allow for up to 5 attachments to be sent(local files) defined in the URL
 
+UPDATE! 2020-08-14 - Added "email_body_html" flag so the email is sent as an HTML email and not plain text
+                     Added "email_body_utf8" flag so the email is sent with a 'utf-8' charset and not 'iso-8859-1'
 
 
 
@@ -46,6 +48,12 @@ email_from => --A--agent_email--B--
 
 ; subject of the email
 email_subject => Order confirmation --A--vendor_lead_code--B--
+
+; format as HTML
+email_body_html
+
+; use UTF-8 charset
+email_body_utf8
 
 ; body of the email
 email_body_begin => 

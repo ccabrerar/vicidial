@@ -524,7 +524,7 @@ if ($archives_available=="Y")
 	$MAIN.="<BR><input type='checkbox' name='search_archived_data' value='checked' $search_archived_data>"._QXZ("Search archived data")."\n";
 	}
 $MAIN.="<BR><BR>\n";
-$MAIN.="<INPUT type=submit NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>\n";
+$MAIN.="<INPUT style='background-color:#$SSbutton_color' type=submit NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>\n";
 $MAIN.="</TD><TD VALIGN=TOP> &nbsp; &nbsp; &nbsp; &nbsp; ";
 $MAIN.="<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 if ($use_lists > 0)

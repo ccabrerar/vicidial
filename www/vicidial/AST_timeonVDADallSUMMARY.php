@@ -222,6 +222,8 @@ while ($i < $groups_to_print)
 
 if (!isset($RR))   {$RR=4;}
 
+require("screen_colors.php");
+
 $HEADER.="<HTML>\n";
 $HEADER.="<HEAD>\n";
 $HEADER.="<STYLE type=\"text/css\">\n";
@@ -292,7 +294,7 @@ $MAIN.="<option value=\"INBOUND ONLY\"";
 	if ($types == 'INBOUND ONLY') {$MAIN.=" selected";} 
 $MAIN.=">"._QXZ("INBOUND ONLY")."</option>";
 $MAIN.="</select> \n";
-$MAIN.="<input type=submit name=submit value='"._QXZ("SUBMIT")."'>\n";
+$MAIN.="<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'>\n";
 $MAIN.="<BR><BR>\n\n";
 
 $k=0;

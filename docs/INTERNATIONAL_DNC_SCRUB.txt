@@ -1,0 +1,53 @@
+INTERNATIONAL DNC SCRUB DOC	Started: 2020-07-20	Updated: 2020-08-14
+
+NOTE: Requires svn/trunk code revision 3273 or higher to work properly!!!
+
+NOTE: THIS FEATURE IS OPTIONAL, AND SHOULD ONLY BE CONFIGURED AFTER YOUR SYSTEM 
+      HAS BEEN INSTALLED AND TESTED!
+
+
+Instructions for using the international DNC scrub.
+
+### SETTING UP DNC LISTS TO BE PROCESSED ###
+- The international DNC scrub can be enabled via a system setting "Enable International DNCs".  Set the value to "1" in order to get access to the DNC web interface as well as cause the option to scrub against international DNCs to appear in the lead loader.  
+
+- To start loading a file, you must have a settings container in your system by the name of "INTERNATIONAL_DNC_IMPORT".  The container outlines the necessary values it must have, which consists of a "--file-dir" variable and a "--file-destination" variable.
+
+- There is a Perl script that must be put into your cron, "Vicidial_international_DNC_parser_1.pl".  This script will check that the system setting is enabled and that the "INTERNATIONAL_DNC_IMPORT" exists and contains the two necessary variables.  It will confirm that the file directories given by the variables both exist, are directories, and are not the same.  It will also do some other checks depending on what variables you have active in that container.  If these conditions are met, the script will proceed to check for any .txt, .csv, .xls, or .xlsx files in the "--file-dir" directory.  For any files found in this directory, the script will check the queue table to see if the file is currently in the database with a status other than "FINISHED" or "CANCELLED".  Finding no records will add the file to the queue table with a status of "READY". 
+
+- Additionally, this script will also take the list of files it finds in the folder and check it against any unfinished file currently in the queue.  Unfinished files in the queue table not on the list will be automatically purged.  Also, any filenames marked as "CANCELLED" will be purged from the "--file-dir" folder if they are still there.
+
+- Once files are loaded into the queue table, they will be viewable through the DNC web interface.
+
+
+### USING THE WEB INTERFACE TO PROCESS DNC LISTS ###
+- The link to the DNC web interface can be found in the "Admin Utilities" page under the "International DNC Loader" link as long as the "Enable International DNCs" setting is active.
+
+- Users must have the privilege to load leads in order to view the DNC web interface.
+
+- The DNC Web Interface page will show all files currently in the queue table, including ones that have been processed ("FINISHED") for up to 1 week.
+
+- If a file's current status is "READY" or "INVALID_LAYOUT" (more on "INVALID_LAYOUT" below), the user can assign to the file a country code, a file action of either "PURGE" or "APPEND", and a file layout that the file follows.  Selecting a file layout will cause a brief description of the layout to appear below the corresponding drop-down menu.  Once all three parameters have been defined and if the file's current status makes it eligible for processing, the user will have the option to "START FILE" or "CANCEL" it.  "START FILE" will set the file status to "PENDING" so it can be picked up by an automated script that will handle it.  "CANCEL" will set the file status to "CANCELLED" and the file will shortly be purged from the queue table.
+
+- If a file is "FINISHED" or "PROCESSING", it can no longer be modified or set to "PENDING" or "CANCELLED".  If a file is currently "PENDING" or "CANCELLED", you have a narrow window of time until the processing script automatically runs to change it to the other value.
+
+- Once a file is marked as "PENDING", there is a second automated script that should be placed in your cron, "Vicidial_international_DNC_parser_2.pl".  This script will constantly check for records in the queue table where a file is marked as "PENDING", and will handle it per the parameters defined by the user in the web interface when the file was submitted.  It will check that the file still exists in the folder given by the "--file-dir" variable and do a count on the number of records in that file.  Using the "country_code" value, the script will create a table named "vicidial_dnc_<country_code>" if no such table currently exists.  If the "file_action" value is set to "PURGE", the script will empty out and optimize the table prior to attempting to insert the records from the pending file.
+
+- The script will then open the file and begin reading from it.  Using the "file_layout" value, as well as the type of file gleaned from the filename, the script will parse out the phone number from .  If the file_layout is not found in the "DNC_IMPORT_FORMATS" setting or if the layout doesn't give adequate information to parse the file (i.e. no phone field is given), then the file status is changed to "INVALID LAYOUT" and the script terminates.  Otherwise the status of the file is changed to "PROCESSING".  As the script reads through the file, every 1,000 records it will update the queue table to reflect how many records were processed and how many were inserted.  This is so the user can track the progress of the file through the web interface.
+
+- When the file is finished, it is moved to the location given by the "--file-destination" variable from the "INTERNATIONAL_DNC_IMPORT" settings container and is marked as "FINISHED" in the queue table.  The DNC list can now be used to dedupe against from the lead loader.
+
+
+### USING THE DNC LISTS IN THE LEAD LOADER ###
+- To dedupe against a country's DNC list when new leads are loaded, simply select a country from the "DNC Scrub by Country" drop-down menu from the main lead loader page.  Only countries that have had DNC lists loaded will appear here.  When the new lead file is being processed, phone numbers matching a phone number in the selected country's DNC list will not be loaded and will be individually listed, similar to other invalid leads, with a "DNC" code instead of "INV".
+
+- If a lead file is loaded into a specific list using a country's DNC list as a suppression file, that list will become "locked" ***AND WILL BE COMPLETELY UNDIALABLE UNTIL THE REST OF THE LIST IS CHECKED AGAINST THE SELECTED COUNTRY'S DNC LIST***.  This will also cause any leads from that list to be deleted from the hopper immediately.
+
+- Lists that are currently locked can be viewed in the settings container named "DNC_CURRENT_BLOCKED_LISTS".  This is a read-only settings container and cannot be modified once a list is placed into it.  Entries are stored here in the format "<list id> => <DNC country>".  The hopper script will use this settings container to block any list ID currently in it (provided that the "Enable International DNC" system setting is still active).
+
+- The list(s) will remain locked for the remainder of the day.  DNC scrubs for existing lists are handled by the "Vicidial_international_DNC_parser_1.pl" cron job.  This script has a two-hour window between midnight and 2am wherein it will take any list ID/country pairings it finds in the "DNC_CURRENT_BLOCKED_LISTS" settings container and scrub the dialer list against the country DNC list.  Any phone number found in the country's DNC list will be marked as "DNCI", regardless of it's current status in the dialer.   If an alternate DNC code is desired instead of "DNCI", that can be set via the "--dnc-status-override" variable in the "INTERNATIONAL_DNC_IMPORT".  The settings container has instructions on how to use this variable.
+
+- If an admin wishes to force the "Vicidial_international_DNC_parser_1.pl" script to perform the DNC scrub regardless of the time of day, it can be run with the command line option "--force-dnc-scrub". 
+
+- Once the DNC scrub is completed for all lists, the "DNC_CURRENT_BLOCKED_LISTS" container will be cleared and the hopper script will no longer block the lists from having leads loaded into the hopper.
+

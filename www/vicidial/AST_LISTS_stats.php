@@ -452,7 +452,7 @@ $MAIN.="<TD VALIGN=TOP>";
 #if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>$report_display_type</option>";}
 #$MAIN.="<option value='TEXT'>TEXT</option><option value='HTML'>HTML</option></select>&nbsp; ";
 $MAIN.="<BR><BR><BR>\n";
-$MAIN.="<INPUT type=submit NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>\n";
+$MAIN.="<INPUT style='background-color:#$SSbutton_color' type=submit NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>\n";
 $MAIN.="</TD><TD VALIGN=TOP> &nbsp; &nbsp; &nbsp; &nbsp; ";
 $MAIN.="<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 if (strlen($group[0]) > 1)

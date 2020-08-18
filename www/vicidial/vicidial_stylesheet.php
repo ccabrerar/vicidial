@@ -74,6 +74,8 @@ redalert {font-size: 18px; font-weight:bold; font-family: Arial, Sans-Serif; col
 .alt_row1 {background-color: <?php echo $SSalt_row1_background; ?>}
 .alt_row2 {background-color: <?php echo $SSalt_row2_background; ?>}
 .alt_row3 {background-color: <?php echo $SSalt_row3_background; ?>}
+.std_btn  {background-color: <?php echo $SSbutton_background; ?>;}
+
 
 .border2px {border:solid 2px #<?php echo $SSmenu_background; ?>}
 
@@ -272,6 +274,7 @@ textarea.chat_box_ended {
 	font-size: 10px; 
 	overflow: hidden; 
 }
+
 input.red_btn{
 	font-family: Arial, Sans-Serif;
 	font-size: 12px;

@@ -237,6 +237,7 @@
 # 200424-1044 - Fix for incorrect list_id logging
 # 200624-0011 - Added options for Answer signal settings
 # 200708-1126 - Added some list override settings
+# 200816-0910 - Fixed issue with cid_cb_confirmed_filename multi-prompt not playing last file
 #
 
 $script = 'agi-VDAD_ALL_inbound.agi';
@@ -7711,22 +7712,15 @@ sub cid_cb_number_validation
 			foreach(@cid_cb_confirmed_filename_array)
 				{
 				if ($AGILOG) {$agi_string = "DEBUG: CID CB confirm: |$w($ct_cid_cb_confirmed_filename)|$cid_cb_confirmed_filename_array[$w]|";   &agi_output;}
-				if ($ct_cid_cb_confirmed_filename == $w) 
+				if (length($cid_cb_confirmed_filename_array[$w])>0)
 					{
-					$temp_12_choice_prompt = $cid_cb_confirmed_filename_array[$w];
-					}
-				else
-					{
-					if (length($cid_cb_confirmed_filename_array[$w])>0)
+					if ($cid_cb_confirmed_filename_array[$w] =~ /--PHONE--/i) 
 						{
-						if ($cid_cb_confirmed_filename_array[$w] =~ /--PHONE--/i) 
-							{
-							$AGI->say_digits("$cid_cb_number");
-							}
-						else
-							{
-							$AGI->stream_file("$cid_cb_confirmed_filename_array[$w]");
-							}
+						$AGI->say_digits("$cid_cb_number");
+						}
+					else
+						{
+						$AGI->stream_file("$cid_cb_confirmed_filename_array[$w]");
 						}
 					}
 				$w++;

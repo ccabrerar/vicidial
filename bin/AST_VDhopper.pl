@@ -21,7 +21,7 @@
 #  - R = Recycled leads
 #  - S = Standard hopper load
 #
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 50810-1613 - Added database server variable definitions lookup
@@ -95,6 +95,7 @@
 # 190213-1207 - Added additional $VLforce_index flags, for high-volume dialing systems
 # 190524-1228 - Fix for lead filters with 'NONE' in the filter ID
 # 190703-1650 - Allow for single-quotes in state field
+# 200814-2132 - Added support for Internation DNC scrubbing
 #
 
 # constants
@@ -326,7 +327,7 @@ $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VA
 
 ### Grab system_settings values from the database
 $anyone_callback_inactive_lists='default';
-$stmtA = "SELECT anyone_callback_inactive_lists FROM system_settings;";
+$stmtA = "SELECT anyone_callback_inactive_lists,enable_international_dncs FROM system_settings;";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -334,6 +335,7 @@ if ($sthArows > 0)
 	{
 	@aryA = $sthA->fetchrow_array;
 	$anyone_callback_inactive_lists =			$aryA[0];
+	$enable_international_dncs =				$aryA[1];
 	}
 $sthA->finish();
 
@@ -354,6 +356,35 @@ if ($sthArows > 0)
 	}
 $sthA->finish();
 
+### Grab "blocked" lists from settings container if international DNCs activated
+if ($enable_international_dncs) 
+	{
+	$dnc_list_stmt="select container_entry from vicidial_settings_containers where container_id='DNC_CURRENT_BLOCKED_LISTS' and container_entry!=''";
+	if ($DBX) {print "$dnc_list_stmt\n";}
+	$dnc_list_rslt=$dbhA->prepare($dnc_list_stmt);
+	$dnc_list_rslt->execute();
+	if ($dnc_list_rslt->rows>0) 
+		{
+		$dnc_blocked_lists="";
+		@dnc_list_row=$dnc_list_rslt->fetchrow_array;
+
+		@blocked_dnc_lists=split(/\n/, $dnc_list_row[0]);
+		for ($i=0; $i<scalar(@blocked_dnc_lists); $i++) 
+			{
+			@current_scrub=split(/\=\>/, $blocked_dnc_lists[$i]);
+			$dnc_list_id=$current_scrub[0];
+			$dnc_list_id=~s/[^0-9]//g;
+			$dnc_blocked_lists.="'$dnc_list_id', ";
+			}
+		$dnc_blocked_lists=~s/, $//;
+		}
+	if ($DBX) {print "BLOCKED LISTS: $dnc_blocked_lists\n";}
+	if (length($dnc_blocked_lists)>0) 
+		{
+		$dnc_blocked_lists_SQL="and list_id not in ($dnc_blocked_lists)";
+		}
+	$dnc_list_rslt->finish;
+	}
 
 $secX = time();
 ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($secX);
@@ -2752,7 +2783,7 @@ foreach(@campaign_id)
 					if ($hopper_vlc_dup_check[$i] =~ /Y/) 
 						{$vlc_dup_check_SQL = "and vendor_lead_code NOT IN($live_vlc$vlc_lists)";}
 
-					$stmtA = "SELECT lead_id,list_id,gmt_offset_now,phone_number,state,status,modify_date,user,vendor_lead_code FROM vicidial_list $VLforce_index where $recycle_SQL[$i] and ($list_id_sql[$i]) and lead_id NOT IN($lead_id_lists) $vlc_dup_check_SQL and ($all_gmtSQL[$i]) $lead_filter_sql[$i] $CCLsql[$i] $DLTsql[$i] $order_stmt limit $hopper_level[$i];";
+					$stmtA = "SELECT lead_id,list_id,gmt_offset_now,phone_number,state,status,modify_date,user,vendor_lead_code FROM vicidial_list $VLforce_index where $recycle_SQL[$i] and ($list_id_sql[$i]) and lead_id NOT IN($lead_id_lists) $vlc_dup_check_SQL and ($all_gmtSQL[$i]) $lead_filter_sql[$i] $CCLsql[$i] $DLTsql[$i] $dnc_blocked_lists_SQL $order_stmt limit $hopper_level[$i];";
 					if ($DBX) {print "     |$stmtA|\n";}
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -2808,7 +2839,7 @@ foreach(@campaign_id)
 					if ($hopper_vlc_dup_check[$i] =~ /Y/) 
 						{$vlc_dup_check_SQL = "and vendor_lead_code NOT IN($live_vlc$vlc_lists)";}
 
-					$stmtA = "SELECT lead_id,list_id,gmt_offset_now,phone_number,state,status,modify_date,user,vendor_lead_code FROM vicidial_list $VLforce_index where called_since_last_reset='N' and status IN('NEW') and ($list_id_sql[$i]) and lead_id NOT IN($lead_id_lists) $vlc_dup_check_SQL and ($all_gmtSQL[$i]) $lead_filter_sql[$i] $CCLsql[$i] $DLTsql[$i] $order_stmt limit $NEW_level;";
+					$stmtA = "SELECT lead_id,list_id,gmt_offset_now,phone_number,state,status,modify_date,user,vendor_lead_code FROM vicidial_list $VLforce_index where called_since_last_reset='N' and status IN('NEW') and ($list_id_sql[$i]) and lead_id NOT IN($lead_id_lists) $vlc_dup_check_SQL and ($all_gmtSQL[$i]) $lead_filter_sql[$i] $CCLsql[$i] $DLTsql[$i] $dnc_blocked_lists_SQL $order_stmt limit $NEW_level;";
 					if ($DBX) {print "     |$stmtA|\n";}
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -2862,7 +2893,7 @@ foreach(@campaign_id)
 
 					if ($list_order_mix[$i] =~ /DISABLED/)
 						{
-						$stmtA = "SELECT lead_id,list_id,gmt_offset_now,phone_number,state,status,modify_date,user,vendor_lead_code FROM vicidial_list $VLforce_index where called_since_last_reset='N' and status IN($STATUSsql[$i]) and ($list_id_sql[$i]) and lead_id NOT IN($lead_id_lists) $vlc_dup_check_SQL and ($all_gmtSQL[$i]) $lead_filter_sql[$i] $CCLsql[$i] $DLTsql[$i] $order_stmt limit $OTHER_level;";
+						$stmtA = "SELECT lead_id,list_id,gmt_offset_now,phone_number,state,status,modify_date,user,vendor_lead_code FROM vicidial_list $VLforce_index where called_since_last_reset='N' and status IN($STATUSsql[$i]) and ($list_id_sql[$i]) and lead_id NOT IN($lead_id_lists) $vlc_dup_check_SQL and ($all_gmtSQL[$i]) $lead_filter_sql[$i] $CCLsql[$i] $DLTsql[$i] $dnc_blocked_lists_SQL $order_stmt limit $OTHER_level;";
 						if ($DBX) {print "     |$stmtA|\n";}
 						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -2965,7 +2996,7 @@ foreach(@campaign_id)
 							if ($hopper_vlc_dup_check[$i] =~ /Y/) 
 								{$vlc_dup_check_SQL = "and vendor_lead_code NOT IN($live_vlc$vlc_lists)";}
 
-							$stmtA = "SELECT lead_id,list_id,gmt_offset_now,phone_number,state,status,modify_date,user,vendor_lead_code FROM vicidial_list $VLforce_index where called_since_last_reset='N' and ($list_mix_dialableSQL) and lead_id NOT IN($lead_id_lists) $vlc_dup_check_SQL and ($all_gmtSQL[$i]) $lead_filter_sql[$i] $CCLsql[$i] $DLTsql[$i] $order_stmt limit $LM_step_goal[$x];";
+							$stmtA = "SELECT lead_id,list_id,gmt_offset_now,phone_number,state,status,modify_date,user,vendor_lead_code FROM vicidial_list $VLforce_index where called_since_last_reset='N' and ($list_mix_dialableSQL) and lead_id NOT IN($lead_id_lists) $vlc_dup_check_SQL and ($all_gmtSQL[$i]) $lead_filter_sql[$i] $CCLsql[$i] $DLTsql[$i] $dnc_blocked_lists_SQL $order_stmt limit $LM_step_goal[$x];";
 							if ($DBX) {print "     |$stmtA|\n";}
 							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;

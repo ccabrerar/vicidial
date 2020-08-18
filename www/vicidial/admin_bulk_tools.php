@@ -27,13 +27,14 @@
 # 180502-2115 - Added new help display
 # 200108-0956 - Added CID Group type of NONE
 # 200405-1738 - Fix for Issue #1202
+# 200816-0930 - Added CID Groups to several labels
 #
 
 require("dbconnect_mysqli.php");
 require("functions.php");
 
-$version = '2.14-21';
-$build = '200405-1738';
+$version = '2.14-22';
+$build = '200816-0930';
 
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
@@ -308,11 +309,11 @@ if ($form_to_run == "help")
 	echo "<BR><BR>";
 	
 	echo "<A NAME=\"ACCIDADD\"><BR>";
-	echo "<B>"._QXZ("AC-CID Bulk Add")." -</B> "._QXZ("This allows you to paste in a listing of CIDs to insert into a campaign AC-CID list or CID Group list. There are two methods to choose from: <ul> <li><b>STATE LOOKUP</b> - This will take a list of CIDs and insert them as Area Code Caller IDs into the selected campaign. The area code lookup is designed to work only with numbers in the North American Numbering Plan as it uses the first three digits of each CID. The description will automatically be filled with the appropriate US state abbreviation corresponding to the given CIDs 3-digit area code. <li><b>CSV</b> - This will take a comma separated list in the format of  NPA,CID,DESCRIPTION,ACTIVE and insert each line into the specified campaigns AC-CID list using the supplied values. For example, given a listing of  813,7271234567,Florida,Y  will result in an AC-CID entry for area code 813 using the CID 7271234567 and a description of -Florida- with the status being active. Descriptions are limited to 50 characters. For CID Groups of a STATE type, use this format for CSV-  STATE,CID,DESCRIPTION,ACTIVE. The -ACTIVE- column will only be used if the Active select list above is set to -Input-.<li><b>STATE FILL</b> - Similar to the STATE LOOKUP method above, this will take a list of CIDs and insert them as AC-CIDs in the specified campaign but will also make an entry for each area code in a state based off the state the CID is in. For example, if given the CID 7271234567, 19 CID entries will be created with the same CID, one each for every area code in Florida. If you are inserting into a CID Group that is a STATE type, then you will not want to use the STATE FILL method.</ul> CIDs must be between 6 and 20 digits in length and only digits 0-9 are allowed. Optionally, you can have the AC-CIDs set to active upon insertion.");
+	echo "<B>"._QXZ("CID Groups and AC-CID Bulk Add")." -</B> "._QXZ("This allows you to paste in a listing of CIDs to insert into a campaign AC-CID list or CID Group list. There are two methods to choose from: <ul> <li><b>STATE LOOKUP</b> - This will take a list of CIDs and insert them as Area Code Caller IDs into the selected campaign. The area code lookup is designed to work only with numbers in the North American Numbering Plan as it uses the first three digits of each CID. The description will automatically be filled with the appropriate US state abbreviation corresponding to the given CIDs 3-digit area code. <li><b>CSV</b> - This will take a comma separated list in the format of  NPA,CID,DESCRIPTION,ACTIVE and insert each line into the specified campaigns AC-CID list using the supplied values. For example, given a listing of  813,7271234567,Florida,Y  will result in an AC-CID entry for area code 813 using the CID 7271234567 and a description of -Florida- with the status being active. Descriptions are limited to 50 characters. For CID Groups of a STATE type, use this format for CSV-  STATE,CID,DESCRIPTION,ACTIVE. The -ACTIVE- column will only be used if the Active select list above is set to -Input-.<li><b>STATE FILL</b> - Similar to the STATE LOOKUP method above, this will take a list of CIDs and insert them as AC-CIDs in the specified campaign but will also make an entry for each area code in a state based off the state the CID is in. For example, if given the CID 7271234567, 19 CID entries will be created with the same CID, one each for every area code in Florida. If you are inserting into a CID Group that is a STATE type, then you will not want to use the STATE FILL method.</ul> CIDs must be between 6 and 20 digits in length and only digits 0-9 are allowed. Optionally, you can have the AC-CIDs set to active upon insertion.");
 	echo "<BR><BR>";
 	
 	echo "<A NAME=\"ACCIDDELETE\"><BR>";
-	echo "<B>"._QXZ("AC-CID Bulk Delete")." -</B> "._QXZ("This will delete the Areacode Caller ID entries you select from the next screen based on the campaign or CID group you select here. Setting Clear All CIDs to YES will bypass the AC-CID selection and wipe all AC-CIDs for the selected campaign or CID group.");
+	echo "<B>"._QXZ("CID Groups and AC-CID Bulk Delete")." -</B> "._QXZ("This will delete the Areacode Caller ID entries you select from the next screen based on the campaign or CID group you select here. Setting Clear All CIDs to YES will bypass the AC-CID selection and wipe all AC-CIDs for the selected campaign or CID group.");
 	echo "<BR><BR></TD></TR></TABLE></BODY><BR><BR><BR><BR><BR><BR><BR><BR><BR><BR><BR><BR><BR><BR></HTML>";
 	
 	exit;
@@ -473,7 +474,7 @@ if ($form_to_run == "ACCID")
 	if (empty($ACCIDto_insert[0]))
 		{
 		echo "<br> <b>"._QXZ("Go back, nothing is going to be created.")."</b> ";
-		echo "<br> "._QXZ("The following AC-CIDs are duplicates and will not be created").": ";
+		echo "<br> "._QXZ("The following CID Groups or AC-CIDs are duplicates and will not be created").": ";
 		if (empty($ACCIDduplicate[0])) {echo "<br> "._QXZ("NONE");}
 		$i = 0;
 		while ($i < count($ACCIDduplicate))
@@ -481,7 +482,7 @@ if ($form_to_run == "ACCID")
 			echo "<br> $ACCIDduplicate[$i]";
 			$i++;
 			}
-		echo "<br> "._QXZ("The following AC-CIDs are of invalid length and will not be created").": ";
+		echo "<br> "._QXZ("The following CID Groups or AC-CIDs are of invalid length and will not be created").": ";
 		if (empty($ACCIDbadlen[0])) {echo "<br> "._QXZ("NONE");}
 		$i = 0;
 		while ($i < count($ACCIDbadlen))
@@ -531,7 +532,7 @@ if ($form_to_run == "ACCID")
 	echo "<input type=hidden name=ACCIDactiveinput value='$ACCIDactiveinput_raw'>";
 	echo "<input type=hidden name=ACCIDactive value='$ACCIDactive'>";
 	echo "<input type=hidden name=ACCIDmethod value='$ACCIDmethod'>";
-	echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=did_submit value='CONFIRM'></td></tr>\n";
+	echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit name=did_submit value='CONFIRM'></td></tr>\n";
 	echo "</table></center></form>\n";
 	echo "</html>";
 	}
@@ -735,7 +736,7 @@ elseif ($form_to_run == "ACCIDDELETEselect")
 		$i++;
 		}
 	echo "</select></td></tr>\n";
-	echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=did_submit value='"._QXZ("Submit")."'></td></tr>\n";
+	echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit name=did_submit value='"._QXZ("Submit")."'></td></tr>\n";
 
 	echo "</table></center></form>\n";
 	echo "</html>";
@@ -760,7 +761,7 @@ elseif ($form_to_run == "ACCIDDELETEconfirm")
 		echo "<input type=hidden name=DB value='$DB'>";
 		echo "<input type=hidden name=ACCIDdelete_campaign value='$ACCIDdelete_campaign'>";
 		echo "<input type=hidden name=ACCIDclear_all_CONFIRMED value='$ACCIDclear_all'>";
-		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=did_submit value='CONFIRM'></td></tr>\n";
+		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit name=did_submit value='CONFIRM'></td></tr>\n";
 		echo "</table></center></form>\n";
 		echo "</html>";
 		}
@@ -792,7 +793,7 @@ elseif ($form_to_run == "ACCIDDELETEconfirm")
 		echo "<input type=hidden name=DB value='$DB'>";
 		echo "<input type=hidden name=ACCIDdelete_from_CONFIRMED value='$ACCIDdelete_from'>";
 		echo "<input type=hidden name=ACCIDdelete_campaign value='$ACCIDdelete_campaign'>";
-		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=did_submit value='CONFIRM'></td></tr>\n";
+		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit name=did_submit value='CONFIRM'></td></tr>\n";
 		echo "</table></center></form>\n";
 		echo "</html>";
 		}
@@ -980,7 +981,7 @@ elseif ($form_to_run == "BULKDIDS")
 		echo "<input type=hidden name=DB value='$DB'>";
 		echo "<input type=hidden name=DIDto_insert_CONFIRMED value='$DIDto_insert'>";
 		echo "<input type=hidden name=DIDcopy_from value='$DIDcopy_from'>";
-		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=did_submit value='CONFIRM'></td></tr>\n";
+		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit name=did_submit value='CONFIRM'></td></tr>\n";
 		echo "</table></center></form>\n";
 		echo "</html>";
 	}
@@ -1172,7 +1173,7 @@ elseif ($form_to_run == "BULKDIDSDELETE")
 	echo "<input type=hidden name=form_to_run value='BULKDIDSDELETEconfirmed'>";
 	echo "<input type=hidden name=DB value='$DB'>";
 	echo "<input type=hidden name=DIDdelete_from_CONFIRMED value='$DIDdelete_from'>";
-	echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=did_submit value='CONFIRM'></td></tr>\n";
+	echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit name=did_submit value='CONFIRM'></td></tr>\n";
 	echo "</table></center></form>\n";
 	echo "</html>";
 	}
@@ -1324,7 +1325,7 @@ elseif ($form_to_run == "BULKUSERS")
 	echo "<input type=hidden name=USERto_insert value='$USERto_insert'>";
 	echo "<input type=hidden name=USERcopy_from value='$USERcopy_from'>";
 	echo "<input type=hidden name=USERforce_pw value='$USERforce_pw'>";
-	echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=did_submit value='CONFIRM'></td></tr>\n";
+	echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit name=did_submit value='CONFIRM'></td></tr>\n";
 	echo "</table></center></form>\n";
 	echo "</html>";
 	}
@@ -1575,7 +1576,7 @@ elseif ($form_to_run == "BULKUSERSDELETE") ### BULK USER DELETE
 	echo "<input type=hidden name=form_to_run value='BULKUSERSDELETEconfirmed'>";
 	echo "<input type=hidden name=DB value='$DB'>";
 	echo "<input type=hidden name=USERdelete_from_CONFIRMED value='$USERdelete_from'>";
-	echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=did_submit value='CONFIRM'></td></tr>\n";
+	echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input style='background-color:#".$SSbutton_color."' type=submit name=did_submit value='CONFIRM'></td></tr>\n";
 	echo "</table></center></form>\n";
 	echo "</html>";
 	}
@@ -1661,7 +1662,7 @@ else
 
 		echo "</select></td></tr>\n";
 		echo "<tr bgcolor=#". $SSstd_row1_background ."><td align=right>"._QXZ("DIDs to insert").":</td><td align=left><textarea name='DIDto_insert' cols='11' rows='10'></textarea></td></td></tr>";
-		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=did_submit value='"._QXZ("Submit")."'></td></tr>\n";
+		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit name=did_submit value='"._QXZ("Submit")."'></td></tr>\n";
 		echo "</table></center></form>\n";
 		}
 
@@ -1705,7 +1706,7 @@ else
 			$i++;
 			}
 		echo "</select></td></tr>\n";
-		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=did_submit value='"._QXZ("Submit")."'></td></tr>\n";
+		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit name=did_submit value='"._QXZ("Submit")."'></td></tr>\n";
 		echo "</table></center></form>\n";
 		echo "</html>";
 		}
@@ -1714,7 +1715,7 @@ else
 	if ( $modify_campaigns < 1 )
 		{
 		echo "<center><table width=$section_width cellspacing='3'>";
-		echo "<tr bgcolor=#". $SSmenu_background ."><td colspan=2 align=center><font color=white><b>"._QXZ("AC-CID Bulk Add")."</b>$NWB#ACCIDADD$NWE</font></td></tr>\n";
+		echo "<tr bgcolor=#". $SSmenu_background ."><td colspan=2 align=center><font color=white><b>"._QXZ("CID Groups and AC-CID Bulk Add")."</b>$NWB#ACCIDADD$NWE</font></td></tr>\n";
 		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><font color=black><b>"._QXZ("You do not have permission to use this section.")."</b></font></td></tr>\n";
 		echo "</table></center>\n";
 		}
@@ -1725,13 +1726,13 @@ else
 		echo "<input type=hidden name=DB value='$DB'>";
 		echo "<center><table width=$section_width cellspacing='3'>";
 		echo "<col width=50%><col width=50%>";
-		echo "<tr bgcolor=#". $SSmenu_background ."><td colspan=2 align=center><font color=white><b>"._QXZ("AC-CID Bulk Add")."</b>$NWB#ACCIDADD$NWE</font></td></tr>\n";
+		echo "<tr bgcolor=#". $SSmenu_background ."><td colspan=2 align=center><font color=white><b>"._QXZ("CID Groups and AC-CID Bulk Add")."</b>$NWB#ACCIDADD$NWE</font></td></tr>\n";
 		echo "<tr bgcolor=#". $SSstd_row1_background ."><td align=right>"._QXZ("Method").": </td><td align=left><select size=1 name=ACCIDmethod>\n";	
 		echo "<option value='CID'>"._QXZ("STATE LOOKUP")."</option>\n";
 		echo "<option value='CSV'>"._QXZ("CSV")."</option>\n";
 		echo "<option value='STATEFILL'>"._QXZ("STATE FILL")."</option>\n";
 		echo "</select></td></tr>\n";
-		echo "<tr bgcolor=#". $SSstd_row1_background ."><td align=right>"._QXZ("Campaign").":</td><td align=left>\n";
+		echo "<tr bgcolor=#". $SSstd_row1_background ."><td align=right>"._QXZ("Campaign or CID Group").":</td><td align=left>\n";
 				
 		$ACCIDcampaigns_to_copy = array();
 		$SQL="SELECT campaign_id,campaign_name FROM vicidial_campaigns WHERE $allowed_campaignsSQL AND $admin_viewable_groupsSQL ORDER BY campaign_id ASC;";
@@ -1780,8 +1781,8 @@ else
 		echo "<option value='Y'>"._QXZ("Yes")."</option>\n";
 		echo "<option value='F'>"._QXZ("Input")."</option>\n";
 		echo "</select></td></tr>\n";	
-		echo "<tr bgcolor=#". $SSstd_row1_background ."><td align=right>"._QXZ("AC-CIDs").":</td><td align=left><textarea name='ACCIDdids' cols='70' rows='10'></textarea></td>\n";	
-		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=accid_submit value='"._QXZ("Submit")."'></td></tr>\n";
+		echo "<tr bgcolor=#". $SSstd_row1_background ."><td align=right>"._QXZ("CID Group and AC-CID entries").":</td><td align=left><textarea name='ACCIDdids' cols='70' rows='10'></textarea></td>\n";	
+		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit name=accid_submit value='"._QXZ("Submit")."'></td></tr>\n";
 		echo "</table></center></form>\n";
 		echo "</html>";
 		}
@@ -1791,7 +1792,7 @@ else
 	if ( $delete_campaigns < 1 )
 		{
 		echo "<center><table width=$section_width cellspacing='3'>";
-		echo "<tr bgcolor=#". $SSmenu_background ."><td colspan=2 align=center><font color=white><b>"._QXZ("AC-CID Bulk Delete")."</b>$NWB#ACCIDDELETE$NWE</font></td></tr>\n";
+		echo "<tr bgcolor=#". $SSmenu_background ."><td colspan=2 align=center><font color=white><b>"._QXZ("CID Groups and AC-CID Bulk Delete")."</b>$NWB#ACCIDDELETE$NWE</font></td></tr>\n";
 		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><font color=black><b>"._QXZ("You do not have permission to use this section.")."</b></font></td></tr>\n";
 		echo "</table></center>\n";
 		}
@@ -1802,8 +1803,8 @@ else
 		echo "<input type=hidden name=DB value='$DB'>";
 		echo "<center><table width=$section_width cellspacing='3'>";
 		echo "<col width=50%><col width=50%>";
-		echo "<tr bgcolor=#". $SSmenu_background ."><td colspan=2 align=center><font color=white><b>"._QXZ("AC-CID Bulk Delete")."</b>$NWB#ACCIDDELETE$NWE</font></td></tr>\n";
-		echo "<tr bgcolor=#". $SSstd_row1_background ."><td align=right>"._QXZ("Campaign").":</td><td align=left>\n";
+		echo "<tr bgcolor=#". $SSmenu_background ."><td colspan=2 align=center><font color=white><b>"._QXZ("CID Groups and AC-CID Bulk Delete")."</b>$NWB#ACCIDDELETE$NWE</font></td></tr>\n";
+		echo "<tr bgcolor=#". $SSstd_row1_background ."><td align=right>"._QXZ("Campaign or CID Group").":</td><td align=left>\n";
 		
 		$ACCIDdelete_campaign_selection = array();
 		$SQL="SELECT campaign_id,campaign_name from vicidial_campaigns WHERE campaign_id IN (select distinct campaign_id from vicidial_campaign_cid_areacodes) AND $allowed_campaignsSQL AND $admin_viewable_groupsSQL ORDER BY campaign_id ASC;";
@@ -1847,11 +1848,11 @@ else
 			}	
 
 		echo "</select></td></tr>\n";
-		echo "<tr bgcolor=#". $SSstd_row1_background ."><td align=right>"._QXZ("Clear all AC-CIDs?").":</td><td align=left><select size=1 name=ACCIDclear_all>\n";	
+		echo "<tr bgcolor=#". $SSstd_row1_background ."><td align=right>"._QXZ("Clear all CID Group or AC-CID entries?").":</td><td align=left><select size=1 name=ACCIDclear_all>\n";	
 		echo "<option value='N'>"._QXZ("No")."</option>\n";
 		echo "<option value='Y'>"._QXZ("Yes")."</option>\n";
 		echo "</select></td></tr>\n";		
-		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=accid_submit value='"._QXZ("Submit")."'></td></tr>\n";
+		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit name=accid_submit value='"._QXZ("Submit")."'></td></tr>\n";
 		echo "</table></center></form>\n";
 		echo "</html>";
 		}
@@ -1905,7 +1906,7 @@ else
 		echo "<option value='N'>"._QXZ("No")."</option>\n";
 		echo "<option value='Y'>"._QXZ("Yes")."</option>\n";
 		echo "</select></td></tr>\n";
-		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=did_submit value='"._QXZ("Submit")."'></td></tr>\n";
+		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit name=did_submit value='"._QXZ("Submit")."'></td></tr>\n";
 		echo "</table></center></form>\n";
 		echo "</html>";
 		}
@@ -1977,7 +1978,7 @@ else
 			}
 		
 		echo "</select></td></tr>\n";
-		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input type=submit name=did_submit value='"._QXZ("Submit")."'></td></tr>\n";
+		echo "<tr bgcolor=#". $SSstd_row1_background ."><td colspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit name=did_submit value='"._QXZ("Submit")."'></td></tr>\n";
 		echo "</table></center></form>\n";
 		
 		echo "<br> <font size=1><p align=left>"._QXZ("Version").": $version   "._QXZ("Build").": $build</p></font>";

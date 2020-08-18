@@ -981,7 +981,7 @@ $HTML_text.="	</table>\n";
 $HTML_text.="</TD>\n";
 $HTML_text.="<TD VALIGN='top' align='center'>\n";
 $HTML_text.="<font color='BLACK' face='ARIAL,HELVETICA' size='2'> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a href='$PHP_SELF?DB=$DB$groupQS&selected_list=$selected_list&report_type=$report_type&time_setting=$time_setting&report_source=$report_source&snapshot_time=$snapshot_time&file_download=1&SUBMIT=$SUBMIT'>"._QXZ("DOWNLOAD")."</a> | <a href='./admin.php?ADD=999999'>"._QXZ("REPORTS")."</a> </font><BR><BR>\n";
-$HTML_text.="<input name='SUBMIT' value='"._QXZ("SUBMIT")."' type='submit'>\n";
+$HTML_text.="<input name='SUBMIT' value='"._QXZ("SUBMIT")."' style='background-color:#$SSbutton_color' type='submit'>\n";
 $HTML_text.="</TD>\n";
 $HTML_text.="</TR>\n";
 $HTML_text.="</TABLE>\n";

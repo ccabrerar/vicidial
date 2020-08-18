@@ -661,7 +661,7 @@ if ($archives_available=="Y")
 	{
 	$MAIN.="<BR><input type='checkbox' name='search_archived_data' value='checked' $search_archived_data>"._QXZ("Search archived data")."<BR>\n";
 	}
-$MAIN.="&nbsp; &nbsp; <input type=button value=\""._QXZ("SUBMIT")."\" name=smt id=smt onClick=\"submit_form()\">\n";
+$MAIN.="&nbsp; &nbsp; <input style='background-color:#$SSbutton_color' type=button value=\""._QXZ("SUBMIT")."\" name=smt id=smt onClick=\"submit_form()\">\n";
 
 $MAIN.="</TD></TR></TABLE>\n";
 $MAIN.="</FORM>\n\n";

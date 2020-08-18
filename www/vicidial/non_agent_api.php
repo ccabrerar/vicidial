@@ -151,10 +151,11 @@
 # 200606-0938 - Added more settings to add_list & update_list
 # 200610-1447 - Added duration option to recording_lookup function
 # 200622-1609 - Added more options to add_phone and update_phone functions
+# 200815-1025 - Added campaigns_list & hopper_list functions
 #
 
-$version = '2.14-128';
-$build = '200622-1609';
+$version = '2.14-129';
+$build = '200815-1025';
 $api_url_log = 0;
 
 $startMS = microtime();
@@ -2046,6 +2047,346 @@ if ($function == 'agent_campaigns')
 	}
 ################################################################################
 ### END agent_campaigns
+################################################################################
+
+
+
+
+
+################################################################################
+### campaigns_list - displays information about all campaigns in the system
+################################################################################
+if ($function == 'campaigns_list')
+	{
+	if(strlen($source)<2)
+		{
+		$result = 'ERROR';
+		$result_reason = "Invalid Source";
+		echo "$result: $result_reason - $source\n";
+		api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+		echo "ERROR: Invalid Source: |$source|\n";
+		exit;
+		}
+	else
+		{
+		if ( (!preg_match("/ $function /",$api_allowed_functions)) and (!preg_match("/ALL_FUNCTIONS/",$api_allowed_functions)) )
+			{
+			$result = 'ERROR';
+			$result_reason = "auth USER DOES NOT HAVE PERMISSION TO USE THIS FUNCTION";
+			echo "$result: $result_reason: |$user|$function|\n";
+			$data = "$allowed_user";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1' and view_reports='1' and user_level > 6 and active='Y';";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$row=mysqli_fetch_row($rslt);
+		$allowed_user=$row[0];
+		if ($allowed_user < 1)
+			{
+			$result = 'ERROR';
+			$result_reason = "campaigns_list USER DOES NOT HAVE PERMISSION TO GET CAMPAIGN INFO";
+			echo "$result: $result_reason: |$user|$allowed_user|\n";
+			$data = "$allowed_user";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		else
+			{
+			$stmt="SELECT user_level,user_group from vicidial_users where user='$user' and vdc_agent_api_access='1' and modify_users='1' and user_level >= 8;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$row=mysqli_fetch_row($rslt);
+			$user_level =				$row[0];
+			$LOGuser_group =			$row[1];
+
+			$stmt="SELECT allowed_campaigns,admin_viewable_groups from vicidial_user_groups where user_group='$LOGuser_group';";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$row=mysqli_fetch_row($rslt);
+			$LOGallowed_campaigns =			$row[0];
+			$LOGadmin_viewable_groups =		$row[1];
+
+			$LOGadmin_viewable_groupsSQL='';
+			$whereLOGadmin_viewable_groupsSQL='';
+			if ( (!preg_match('/\-\-ALL\-\-/i',$LOGadmin_viewable_groups)) and (strlen($LOGadmin_viewable_groups) > 3) )
+				{
+				$rawLOGadmin_viewable_groupsSQL = preg_replace("/ -/",'',$LOGadmin_viewable_groups);
+				$rawLOGadmin_viewable_groupsSQL = preg_replace("/ /","','",$rawLOGadmin_viewable_groupsSQL);
+				$LOGadmin_viewable_groupsSQL = "and user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')";
+				$whereLOGadmin_viewable_groupsSQL = "where user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')";
+				}
+			if ( (!preg_match('/\-ALL/i', $LOGallowed_campaigns)) )
+				{
+				$rawLOGallowed_campaignsSQL = preg_replace("/ -/",'',$LOGallowed_campaigns);
+				$rawLOGallowed_campaignsSQL = preg_replace("/ /","','",$rawLOGallowed_campaignsSQL);
+				$LOGallowed_campaignsSQL = "and campaign_id IN('$rawLOGallowed_campaignsSQL')";
+				$whereLOGallowed_campaignsSQL = "where campaign_id IN('$rawLOGallowed_campaignsSQL')";
+				}
+
+			$campaignSQL='';
+			if (strlen($campaign_id) > 0) {$campaignSQL = "and campaign_id='$campaign_id'";}
+			$campaigns_list='';
+			$CLoutput='';
+			$DLset=0;
+			if ($stage == 'csv')
+				{$DL = ',';   $DLset++;}
+			if ($stage == 'tab')
+				{$DL = "\t";   $DLset++;}
+			if ($stage == 'pipe')
+				{$DL = '|';   $DLset++;}
+			if ($DLset < 1)
+				{$DL='|';}
+			if ($header == 'YES')
+				{$CLoutput .= 'campaign_id' . $DL . 'campaign_name' . $DL . 'active' . $DL . 'user_group' . $DL . 'dial_method' . $DL . 'dial_level' . $DL . 'lead_order' . $DL . 'dial_statuses'."\n";}
+
+			$stmt="SELECT campaign_id,campaign_name,active,user_group,dial_method,auto_dial_level,lead_order,dial_statuses from vicidial_campaigns where active IN('Y','N') $LOGallowed_campaignsSQL $campaignSQL;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$li_recs = mysqli_num_rows($rslt);
+			$L=0;
+			while ($li_recs > $L)
+				{
+				$row=mysqli_fetch_row($rslt);
+				$campaigns_list .=	"'$row[0]',";
+				$row[7] = preg_replace('/^ | -$/i', '',$row[7]);
+				$CLoutput .=	"$row[0]$DL$row[1]$DL$row[2]$DL$row[3]$DL$row[4]$DL$row[5]$DL$row[6]$DL$row[7]\n";
+				$L++;
+				}
+			$campaigns_list = preg_replace('/,$/i', '',$campaigns_list);
+			if ($DB > 0) {echo "DEBUG: $L|$campaigns_list|\n";}
+			
+			if (strlen($campaigns_list) < 3)
+				{
+				$result = 'ERROR';
+				$result_reason = "campaigns_list THIS USER HAS NO VIEWABLE CAMPAIGNS";
+				$data = "$user|";
+				echo "$result: $result_reason: $data\n";
+				api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+				exit;
+				}
+			else
+				{
+				echo "$CLoutput";
+
+				$result = 'SUCCESS';
+				$data = "$user|$campaigns_list|";
+				$result_reason = "campaigns_list RESULTS FOUND: $L";
+
+				api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+				}
+			}
+		}
+	exit;
+	}
+################################################################################
+### END campaigns_list
+################################################################################
+
+
+
+
+
+################################################################################
+### hopper_list - displays information about leads in the hopper for a campaign
+################################################################################
+if ($function == 'hopper_list')
+	{
+	if(strlen($source)<2)
+		{
+		$result = 'ERROR';
+		$result_reason = "Invalid Source";
+		echo "$result: $result_reason - $source\n";
+		api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+		echo "ERROR: Invalid Source: |$source|\n";
+		exit;
+		}
+	else
+		{
+		if ( (!preg_match("/ $function /",$api_allowed_functions)) and (!preg_match("/ALL_FUNCTIONS/",$api_allowed_functions)) )
+			{
+			$result = 'ERROR';
+			$result_reason = "auth USER DOES NOT HAVE PERMISSION TO USE THIS FUNCTION";
+			echo "$result: $result_reason: |$user|$function|\n";
+			$data = "$allowed_user";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1' and view_reports='1' and user_level > 6 and active='Y';";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$row=mysqli_fetch_row($rslt);
+		$allowed_user=$row[0];
+		if ($allowed_user < 1)
+			{
+			$result = 'ERROR';
+			$result_reason = "hopper_list USER DOES NOT HAVE PERMISSION TO GET CAMPAIGN INFO";
+			echo "$result: $result_reason: |$user|$allowed_user|\n";
+			$data = "$allowed_user";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		else
+			{
+			$stmt="SELECT user_level,user_group from vicidial_users where user='$user' and vdc_agent_api_access='1' and modify_users='1' and user_level >= 8;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$row=mysqli_fetch_row($rslt);
+			$user_level =				$row[0];
+			$LOGuser_group =			$row[1];
+
+			$stmt="SELECT allowed_campaigns,admin_viewable_groups from vicidial_user_groups where user_group='$LOGuser_group';";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$row=mysqli_fetch_row($rslt);
+			$LOGallowed_campaigns =			$row[0];
+			$LOGadmin_viewable_groups =		$row[1];
+
+			$LOGadmin_viewable_groupsSQL='';
+			$whereLOGadmin_viewable_groupsSQL='';
+			if ( (!preg_match('/\-\-ALL\-\-/i',$LOGadmin_viewable_groups)) and (strlen($LOGadmin_viewable_groups) > 3) )
+				{
+				$rawLOGadmin_viewable_groupsSQL = preg_replace("/ -/",'',$LOGadmin_viewable_groups);
+				$rawLOGadmin_viewable_groupsSQL = preg_replace("/ /","','",$rawLOGadmin_viewable_groupsSQL);
+				$LOGadmin_viewable_groupsSQL = "and user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')";
+				$whereLOGadmin_viewable_groupsSQL = "where user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')";
+				}
+			if ( (!preg_match('/\-ALL/i', $LOGallowed_campaigns)) )
+				{
+				$rawLOGallowed_campaignsSQL = preg_replace("/ -/",'',$LOGallowed_campaigns);
+				$rawLOGallowed_campaignsSQL = preg_replace("/ /","','",$rawLOGallowed_campaignsSQL);
+				$LOGallowed_campaignsSQL = "and campaign_id IN('$rawLOGallowed_campaignsSQL')";
+				$whereLOGallowed_campaignsSQL = "where campaign_id IN('$rawLOGallowed_campaignsSQL')";
+				}
+
+			$stmt="SELECT count(*) from vicidial_campaigns where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$row=mysqli_fetch_row($rslt);
+			$allowed_user=$row[0];
+			if ($allowed_user < 1)
+				{
+				$result = 'ERROR';
+				$result_reason = "hopper_list THIS CAMPAIGN DOES NOT EXIST";
+				echo "$result: $result_reason: |$user|$campaign_id\n";
+				$data = "$allowed_user";
+				api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+				exit;
+				}
+			else
+				{
+				$campaignSQL = "and campaign_id='$campaign_id'";
+				$Hlead_id=array();
+				$Hstatus=array();
+				$Hlist_id=array();
+				$Hgmt_offset_now=array();
+				$Hstate=array();
+				$Halt_dial=array();
+				$Hpriority=array();
+				$Hsource=array();
+				$Hvendor_lead_code=array();
+				$CLoutput='';
+				$DLset=0;
+				if ($stage == 'csv')
+					{$DL = ',';   $DLset++;}
+				if ($stage == 'tab')
+					{$DL = "\t";   $DLset++;}
+				if ($stage == 'pipe')
+					{$DL = '|';   $DLset++;}
+				if ($DLset < 1)
+					{$DL='|';}
+				if ($header == 'YES')
+					{
+					$CLoutput .= 'hopper_order' . $DL . 'priority' . $DL . 'lead_id' . $DL . 'list_id' . $DL . 'phone_number' . $DL . 'phone_code' . $DL . 'state' . $DL . 'status' . $DL . 'count' . $DL . 'gmt_offset' . $DL . 'rank' . $DL . 'alt' . $DL . 'hopper_source' . $DL . 'vendor_lead_code' . $DL . 'source_id' . $DL . 'age_days' . $DL . 'last_call_time'."\n";
+					}
+
+				$stmt="SELECT lead_id,status,user,list_id,gmt_offset_now,state,alt_dial,priority,source,vendor_lead_code from vicidial_hopper where status='READY' $LOGallowed_campaignsSQL $campaignSQL order by priority desc,hopper_id limit 10000;";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$hl_recs = mysqli_num_rows($rslt);
+				$L=0;
+				while ($hl_recs > $L)
+					{
+					$row=mysqli_fetch_row($rslt);
+					$Hlead_id[$L] =				$row[0];
+					$Hlist_id[$L] =				$row[3];
+					$Hgmt_offset_now[$L] =		$row[4];
+					$Hstate[$L] =				$row[5];
+					$Halt_dial[$L] =			$row[6];
+					$Hpriority[$L] =			$row[7];
+					$Hsource[$L] =				$row[8];
+					$Hvendor_lead_code[$L] =	$row[9];
+					$L++;
+					}
+				if ($DB > 0) {echo "DEBUG: $L hopper records\n";}
+				
+				if (strlen($L) < 1)
+					{
+					$result = 'ERROR';
+					$result_reason = "hopper_list THERE ARE NO LEADS IN THE HOPPER FOR THIS CAMPAIGN";
+					$data = "$user|$campaign_id";
+					echo "$result: $result_reason: $data\n";
+					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+					exit;
+					}
+				else
+					{
+					$L=0;
+					while ($hl_recs > $L)
+						{
+						$stmt="SELECT phone_number,status,called_count,phone_code,UNIX_TIMESTAMP(entry_date),UNIX_TIMESTAMP(last_local_call_time),source_id,rank from vicidial_list where lead_id='$Hlead_id[$L]';";
+						$rslt=mysql_to_mysqli($stmt, $link);
+						$vl_recs = mysqli_num_rows($rslt);
+						if ($vl_recs > 0)
+							{
+							$row=mysqli_fetch_row($rslt);
+							$entry_epoch =		$row[4];
+							$last_call_epoch =	$row[5];
+
+							$lead_age = intval(($StarTtime - $entry_epoch) / 86400);
+
+							$lead_offset = ($Hgmt_offset_now[$L] - $SERVER_GMT);
+							if (($lead_offset > 0) or ($lead_offset < 0))
+								{$lead_offset = ($lead_offset * 3600);}
+							$last_call_epoch = ($last_call_epoch + $lead_offset);
+							$last_call_age = intval(($StarTtime - $last_call_epoch) / 3600);
+							if ($DB > 0) {echo "GMT: $lead_offset($gmt|$SERVER_GMT)|LC: $last_call_epoch($StarTtime - $row[5])|$last_call_age|\n";}
+							if ($last_call_age < 24)
+								{
+								$last_call_age_TEXT = $last_call_age." "._QXZ("HOURS",6);
+								}
+							else
+								{
+								$last_call_age = intval(($last_call_age) / 24);
+								if ($last_call_age < 365)
+									{
+									$last_call_age_TEXT = $last_call_age." "._QXZ("DAYS",6);
+									}
+								else
+									{
+									$last_call_age = intval(($last_call_age) / 365);
+									if ($last_call_age < 30)
+										{
+										$last_call_age_TEXT = $last_call_age." "._QXZ("YEARS",6);
+										}
+									else
+										{
+										$last_call_age_TEXT = _QXZ("NEVER",9);
+										}
+									}
+								}
+							$CLoutput .= $L . $DL . $Hpriority[$L] . $DL . $Hlead_id[$L] . $DL . $Hlist_id[$L] . $DL . $row[0] . $DL . $row[3] . $DL . $Hstate[$L] . $DL . $row[1] . $DL . $row[2] . $DL . $Hgmt_offset_now[$L] . $DL . $row[7] . $DL . $Halt_dial[$L] . $DL . $Hsource[$L] . $DL . $Hvendor_lead_code[$L] . $DL . $row[6] . $DL . $lead_age . $DL . $last_call_age_TEXT."\n";
+							}
+						$L++;
+						}
+
+					echo "$CLoutput";
+
+					$result = 'SUCCESS';
+					$data = "$user|$hopper_list|";
+					$result_reason = "hopper_list RESULTS FOUND: $L";
+
+					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+					}
+				}
+			}
+		}
+	exit;
+	}
+################################################################################
+### END hopper_list
 ################################################################################
 
 

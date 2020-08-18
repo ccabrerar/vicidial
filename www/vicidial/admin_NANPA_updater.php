@@ -271,6 +271,7 @@ $SSstd_row5_background='FFFFFF';
 $SSalt_row1_background='BDFFBD';
 $SSalt_row2_background='99FF99';
 $SSalt_row3_background='CCFFCC';
+$SSbutton_color='DEDEDE';
 
 $screen_color_stmt="select admin_screen_colors from system_settings";
 $screen_color_rslt=mysql_to_mysqli($screen_color_stmt, $link);
@@ -279,7 +280,7 @@ $agent_screen_colors="$screen_color_row[0]";
 
 if ($agent_screen_colors != 'default')
 	{
-	$asc_stmt = "SELECT menu_background,frame_background,std_row1_background,std_row2_background,std_row3_background,std_row4_background,std_row5_background,alt_row1_background,alt_row2_background,alt_row3_background,web_logo FROM vicidial_screen_colors where colors_id='$agent_screen_colors';";
+	$asc_stmt = "SELECT menu_background,frame_background,std_row1_background,std_row2_background,std_row3_background,std_row4_background,std_row5_background,alt_row1_background,alt_row2_background,alt_row3_background,web_logo,button_color FROM vicidial_screen_colors where colors_id='$agent_screen_colors';";
 	$asc_rslt=mysql_to_mysqli($asc_stmt, $link);
 	$qm_conf_ct = mysqli_num_rows($asc_rslt);
 	if ($qm_conf_ct > 0)
@@ -295,7 +296,8 @@ if ($agent_screen_colors != 'default')
 		$SSalt_row1_background =        $asc_row[7];
 		$SSalt_row2_background =        $asc_row[8];
 		$SSalt_row3_background =        $asc_row[9];
-		$SSweb_logo =		           $asc_row[10];
+		$SSweb_logo =			$asc_row[10];
+		$SSbutton_color = 		$asc_row[11];
 		}
 	}
 
@@ -575,7 +577,7 @@ else
 	echo "</tr>";
 	echo "<tr><td align='right'><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>"._QXZ("Invalid").":</font></td><td align='left'><input type='text' name='invalid_list_id' size='5' maxlength='10'></td></tr>";
 	echo "";
-	echo "<tr><td align='center' colspan='5'><input type='submit' value='"._QXZ("SUBMIT")."' name='submit_form'></td></tr>";
+	echo "<tr><td align='center' colspan='5'><input style='background-color:#$SSbutton_color' type='submit' value='"._QXZ("SUBMIT")."' name='submit_form'></td></tr>";
 	echo "</table>";
 
 	echo "</td></tr>";

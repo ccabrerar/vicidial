@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2020-06-22
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2020-08-15
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -55,6 +55,8 @@ agent_campaigns - looks up allowed campaigns/in-groups for a specific user
 update_cid_group_entry - updates CID Group entries
 add_dnc_phone - adds a phone number to one of the DNC lists
 add_fpg_phone - adds a phone number to a Filter Phone Group
+campaigns_list - displays information about all campaigns in the system
+hopper_list - displays information about leads in the hopper for a campaign
 
 
 New scripts:
@@ -159,6 +161,7 @@ Changes:
 200606-0938 - Added more settings to add_list & update_list
 200610-1447 - Added duration option to recording_lookup function
 200622-1609 - Added more options to add_phone and update_phone functions
+200815-1025 - Added campaigns_list & hopper_list functions
 
 
 API Functions use the 'function' variable
@@ -342,6 +345,67 @@ ERROR: agent_campaigns THIS AGENT USER HAS NO AVAILABLE CAMPAIGNS - 1000|6666
 A SUCCESS response will not show "SUCCESS", but instead will just print the results in the following format:
 user|allowed_campaigns_list|allowed_ingroups_list
 1000|TESTCAMP-TEST123-TEST987|TEST_IN-TEST_IN2-TEST_IN3-TEST_IN4-SALESLINE
+
+
+
+
+
+--------------------------------------------------------------------------------
+campaigns_list - displays information about all campaigns in the system
+
+NOTE: api user for this function must have user_level set to 7 or higher
+
+REQUIRED FIELDS-
+source -		description of what originated the API call (maximum 20 characters)
+
+OPTIONAL FIELDS-
+campaign_id -		2-8 characters, for all campaigns, leave blank
+
+SETTINGS FIELDS-
+stage -			the format of the exported data: csv, tab, pipe(default)
+header -		include a header(YES) or not(NO). This is optional, default is not to include a header
+
+Example URL strings for API calls:
+http://server/vicidial/non_agent_api.php?source=test&function=campaigns_list&user=6666&pass=1234
+http://server/vicidial/non_agent_api.php?source=test&function=campaigns_list&campaign_id=TESTCAMP&user=6666&pass=1234&stage=csv
+
+Example responses:
+ERROR: campaigns_list USER DOES NOT HAVE PERMISSION TO GET CAMPAIGN INFO - 6666|0
+ERROR: campaigns_list THIS USER HAS NO VIEWABLE CAMPAIGNS - 6666
+
+A SUCCESS response will not show "SUCCESS", but instead will just print the results in the following format:
+campaign_id|campaign_name|active|user_group|dial_method|dial_level|lead_order|dial_statuses
+TESTCAMP|Test Campaign|Y|---ALL---|INBOUND_MAN|1|DOWN|PDROP DROP B NEW
+
+
+
+
+
+--------------------------------------------------------------------------------
+hopper_list - displays information about leads in the hopper for a campaign
+
+NOTE: api user for this function must have user_level set to 7 or higher
+
+REQUIRED FIELDS-
+source -		description of what originated the API call (maximum 20 characters)
+campaign_id -		2-8 characters
+
+SETTINGS FIELDS-
+stage -			the format of the exported data: csv, tab, pipe(default)
+header -		include a header(YES) or not(NO). This is optional, default is not to include a header
+
+Example URL strings for API calls:
+http://server/vicidial/non_agent_api.php?source=test&function=hopper_list&campaign_id=TESTCAMP&user=6666&pass=1234&stage=csv
+
+Example responses:
+ERROR: hopper_list USER DOES NOT HAVE PERMISSION TO GET CAMPAIGN INFO - 6666|0
+ERROR: hopper_list THIS CAMPAIGN DOES NOT EXIST - 6666|TESTCAMP
+ERROR: hopper_list THERE ARE NO LEADS IN THE HOPPER FOR THIS CAMPAIGN - 6666|TESTCAMP
+
+A SUCCESS response will not show "SUCCESS", but instead will just print the results in the following format:
+hopper_order,priority,lead_id,list_id,phone_number,phone_code,state,status,count,gmt_offset,rank,alt,hopper_source,vendor_lead_code,source_id,age_days,last_call_time
+0,0,796292,107,9999001095,1,NY,PDROP,7,-4.00,0,,S,1001095,A321,2681,1 YEARS 
+1,0,796295,107,9999001098,1,NY,PDROP,2,-4.00,0,,S,1001098,A322,2681,3 YEARS 
 
 
 

@@ -2,7 +2,7 @@
 # admin_listloader_fourth_gen.php - version 2.14
 #  (based upon - new_listloader_superL.php script)
 # 
-# Copyright (C) 2019  Matt Florell,Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell,Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # ViciDial web-based lead loader from formatted file
 # 
@@ -76,10 +76,11 @@
 # 180502-2215 - Added new help display
 # 180927-0702 - Fixed translation-related issue #1114
 # 190503-1547 - Added enable_status_mismatch_leadloader_option
+# 200812-1745 - Added international DNC scrub option
 #
 
-$version = '2.14-74';
-$build = '190503-1547';
+$version = '2.14-75';
+$build = '200812-1745';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -193,6 +194,8 @@ if (isset($_GET["state_conversion"]))			{$state_conversion=$_GET["state_conversi
 	elseif (isset($_POST["state_conversion"]))	{$state_conversion=$_POST["state_conversion"];}
 if (isset($_GET["web_loader_phone_length"]))			{$web_loader_phone_length=$_GET["web_loader_phone_length"];}
 	elseif (isset($_POST["web_loader_phone_length"]))	{$web_loader_phone_length=$_POST["web_loader_phone_length"];}
+if (isset($_GET["international_dnc_scrub"]))			{$international_dnc_scrub=$_GET["international_dnc_scrub"];}
+	elseif (isset($_POST["international_dnc_scrub"]))	{$international_dnc_scrub=$_POST["international_dnc_scrub"];}
 
 
 if (strlen($dedupe_statuses_override)>0) {
@@ -211,7 +214,7 @@ $vicidial_list_fields = '|lead_id|vendor_lead_code|source_id|list_id|gmt_offset_
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,admin_web_directory,custom_fields_enabled,webroot_writable,enable_languages,language_method,active_modules,admin_screen_colors,web_loader_phone_length FROM system_settings;";
+$stmt = "SELECT use_non_latin,admin_web_directory,custom_fields_enabled,webroot_writable,enable_languages,language_method,active_modules,admin_screen_colors,web_loader_phone_length,enable_international_dncs FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
@@ -227,6 +230,7 @@ if ($qm_conf_ct > 0)
 	$SSactive_modules =				$row[6];
 	$SSadmin_screen_colors =		$row[7];
 	$SSweb_loader_phone_length =	$row[8];
+	$SSenable_international_dncs =	$row[9];
 	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
@@ -725,6 +729,40 @@ if ( (!$OK_to_process) or ( ($leadfile) and ($file_layout!="standard" && $file_l
 			<option value="DUPTITLEALTPHONESYS"><?php echo _QXZ("CHECK FOR DUPLICATES BY TITLE/ALT-PHONE IN ENTIRE SYSTEM"); ?></option>
 			</select> <?php echo "$NWB#list_loader-duplicate_check$NWE"; ?></td>
 		  </tr>
+<?php
+if ($SSenable_international_dncs)
+	{
+	$dnc_stmt="select iso3, country_name from vicidial_country_iso_tld where iso3 is not null and iso3!='' order by country_name asc";
+	$dnc_rslt=mysql_to_mysqli($dnc_stmt, $link);
+	$available_countries=0;
+	while($dnc_row=mysqli_fetch_row($dnc_rslt)) 
+		{
+		$iso=$dnc_row[0];
+		$country_name=$dnc_row[1];
+		$dnc_table_stmt="show tables like 'vicidial_dnc_".$iso."'";
+		$dnc_table_rslt=mysql_to_mysqli($dnc_table_stmt, $link);
+		if (mysqli_num_rows($dnc_table_rslt)>0)
+			{
+			$available_countries++;
+			$drop_down_dnc_options.="\t\t\t\t<option value='$iso'>$iso - $country_name</option>\n";
+			}
+		}
+	echo "\t\t<tr>\n";
+	echo "\t\t\t<td align=right width='20%'><font face='arial, helvetica' size=2>"._QXZ("DNC Scrub by Country").": </font></td>\n";
+	echo "\t\t\t<td align=left width='80%' nowrap><font face='arial, helvetica' size=1><select size='1' name='international_dnc_scrub'>\n";
+	if ($available_countries>0)
+		{
+		echo "\t\t\t\t<option>-- SELECT COUNTRY DNC LIST--</option>\n";
+		echo $drop_down_dnc_options;
+		}
+	else
+		{
+		echo "\t\t\t\t<option>-- NO COUNTRY DNC TABLES EXIST --</option>\n";
+		}
+	echo "\t\t</tr>\n";
+	echo "\t\t<tr>\n";
+	}
+?>
 	<tr bgcolor="#<?php echo $SSframe_background; ?>">
 		<td width='20%' align="right"><font class="standard"><?php echo _QXZ("Status Duplicate Check"); ?>:</font></td>
 		<td width='80%'>
@@ -827,6 +865,17 @@ else
 	<td align=right width="35%"><B><font face="arial, helvetica" size=2><?php echo _QXZ("Lead Duplicate Check"); ?>:</font></B></td>
 	<td align=left width="75%"><font face="arial, helvetica" size=2><?php echo $dupcheck ?></font></td>
 	</tr>
+<?php
+if ($SSenable_international_dncs)
+		{
+?>
+	<tr>
+	<td align=right width="35%"><B><font face="arial, helvetica" size=2><?php echo _QXZ("International DNC scrub"); ?>:</font></B></td>
+	<td align=left width="75%"><font face="arial, helvetica" size=2><?php echo $international_dnc_scrub ?></font></td>
+	</tr>
+<?php
+		}
+?>
 	<tr>
 	<td align=right width="35%"><B><font face="arial, helvetica" size=2><?php echo _QXZ("Lead Time Zone Lookup"); ?>:</font></B></td>
 	<td align=left width="75%"><font face="arial, helvetica" size=2><?php echo $postalgmt ?></font></td>
@@ -922,6 +971,10 @@ if ($OK_to_process)
 			{
 			print "<BR>"._QXZ("LEAD DUPLICATE CHECK").": $dupcheck<BR>\n";
 			}
+		if (strlen($international_dnc_scrub)>0) 
+			{
+			print "<BR>"._QXZ("INTERNATIONAL DNC SCRUB").": $international_dnc_scrub<BR>\n";
+			}
 		if (strlen($status_dedupe_str)>0) 
 			{
 			print "<BR>"._QXZ("OMITTING DUPLICATES AGAINST FOLLOWING STATUSES ONLY").": $status_dedupe_str<BR>\n";
@@ -984,6 +1037,16 @@ if ($OK_to_process)
 						}
 					}
 				}
+			}
+
+		#  If a list is being scrubbed against a country's DNC list, block the list from being dialed and purge any lead from the hopper that belongs to that list.
+		if (strlen($international_dnc_scrub)>0 && strlen($list_id_override)>0 && $SSenable_international_dncs)
+			{
+			$upd_dnc_stmt="update vicidial_settings_containers set container_entry=concat('$list_id_override => $international_dnc_scrub', if(length(container_entry)>0, '\r\n', ''), if(container_entry is null, '', container_entry)) where container_id='DNC_CURRENT_BLOCKED_LISTS'";
+			$upd_dnc_rslt=mysql_to_mysqli($upd_dnc_stmt, $link);
+
+			$delete_hopper_stmt="delete from vicidial_hopper where list_id='$list_id_override'";
+			$delete_hopper_rslt=mysql_to_mysqli($delete_hopper_stmt, $link);
 			}
 
 		while (!feof($file)) 
@@ -1469,8 +1532,21 @@ if ($OK_to_process)
 						$invalid_reason = _QXZ("INVALID PHONE NUMBER NANPA AREACODE PREFIX");
 						}
 					}
+				if ($international_dnc_scrub and $valid_number > 0)
+					{
+					$dnc_table_name="vicidial_dnc_".$international_dnc_scrub;
+					$dnc_stmt="select count(*) from $dnc_table_name where phone_number='$phone_number'";
+					if ($DB>0) {echo "DEBUG: $international_dnc_scrub DNC query - $dnc_stmt\n";}
+					$dnc_rslt=mysql_to_mysqli($dnc_stmt, $link);
+					$dnc_row=mysqli_fetch_row($dnc_rslt);
+					$dnc_matches=$dnc_row[0];
+					if ($dnc_matches >0)
+						{
+						$invalid_reason = _QXZ("NUMBER FOUND IN $international_dnc_scrub DNC LIST");
+						}
+					}
 
-				if ( ($valid_number>0) and ($dup_lead<1) and ($list_id >= 100 ))
+				if ( ($valid_number>0)  and ($dnc_matches<1) and ($dup_lead<1) and ($list_id >= 100 ))
 					{
 					if (preg_match("/TITLEALTPHONE/i",$dupcheck))
 						{$phone_list .= "$alt_phone$title$US$list_id|";}
@@ -1529,6 +1605,10 @@ if ($OK_to_process)
 								{
 								print "<BR></b><font size=1 color=red>"._QXZ("record")." $total "._QXZ("BAD- PHONE").": $phone_number "._QXZ("ROW").": |$row[0]| "._QXZ("INV").": $phone_number</font><b>\n";
 								}
+							else if ($dnc_matches > 0)
+								{
+								print "<BR></b><font size=1 color=red>record $total "._QXZ("BAD- PHONE").": $phone_number "._QXZ("ROW").": |$row[0]| "._QXZ("DNC")."($invalid_reason): $phone_number</font><b>\n";
+								}
 							else
 								{
 								print "<BR></b><font size=1 color=red>"._QXZ("record")." $total "._QXZ("BAD- PHONE").": $phone_number "._QXZ("ROW").": |$row[0]| "._QXZ("DUP").": $dup_lead  $dup_lead_list</font><b>\n";
@@ -1556,7 +1636,7 @@ if ($OK_to_process)
 			}
 
 		### LOG INSERTION Admin Log Table ###
-		$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LISTS', event_type='LOAD', record_id='$list_id_override', event_code='ADMIN LOAD LIST CUSTOM', event_sql='', event_notes='File Name: $leadfile_name, GOOD: $good, BAD: $bad, MOVED: $moved, TOTAL: $total, DEBUG: dedupe_statuses:$dedupe_statuses[0]| dedupe_statuses_override:$dedupe_statuses_override| dupcheck:$dupcheck| status mismatch action: $status_mismatch_action| lead_file:$lead_file| list_id_override:$list_id_override| phone_code_override:$phone_code_override| postalgmt:$postalgmt| template_id:$template_id| usacan_check:$usacan_check| state_conversion:$state_conversion| web_loader_phone_length:$web_loader_phone_length|';";
+		$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LISTS', event_type='LOAD', record_id='$list_id_override', event_code='ADMIN LOAD LIST CUSTOM', event_sql='', event_notes='File Name: $leadfile_name, GOOD: $good, BAD: $bad, MOVED: $moved, TOTAL: $total, DEBUG: dedupe_statuses:$dedupe_statuses[0]| dedupe_statuses_override:$dedupe_statuses_override| dupcheck:$dupcheck| status mismatch action: $status_mismatch_action| lead_file:$lead_file| list_id_override:$list_id_override| phone_code_override:$phone_code_override| postalgmt:$postalgmt| template_id:$template_id| usacan_check:$usacan_check| dnc_country_scrub:$international_dnc_scrub| state_conversion:$state_conversion| web_loader_phone_length:$web_loader_phone_length|';";
 		if ($DB) {echo "|$stmt|\n";}
 		$rslt=mysql_to_mysqli($stmt, $link);
 
@@ -1576,7 +1656,7 @@ if (($leadfile) && ($LF_path))
 	$total=0; $good=0; $bad=0; $dup=0; $post=0; $moved=0; $phone_list='';
 
 	### LOG INSERTION Admin Log Table ###
-	$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LISTS', event_type='LOAD', record_id='$list_id_override', event_code='ADMIN LOAD LIST', event_sql='', event_notes='File Name: $leadfile_name, DEBUG: dedupe_statuses:$dedupe_statuses[0]| dedupe_statuses_override:$dedupe_statuses_override| dupcheck:$dupcheck | status mismatch action: $status_mismatch_action| lead_file:$lead_file| list_id_override:$list_id_override| phone_code_override:$phone_code_override| postalgmt:$postalgmt| template_id:$template_id| usacan_check:$usacan_check| state_conversion:$state_conversion| web_loader_phone_length:$web_loader_phone_length|';";
+	$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LISTS', event_type='LOAD', record_id='$list_id_override', event_code='ADMIN LOAD LIST', event_sql='', event_notes='File Name: $leadfile_name, DEBUG: dedupe_statuses:$dedupe_statuses[0]| dedupe_statuses_override:$dedupe_statuses_override| dupcheck:$dupcheck | status mismatch action: $status_mismatch_action| lead_file:$lead_file| list_id_override:$list_id_override| phone_code_override:$phone_code_override| postalgmt:$postalgmt| template_id:$template_id| usacan_check:$usacan_check| dnc_country_scrub:$international_dnc_scrub| state_conversion:$state_conversion| web_loader_phone_length:$web_loader_phone_length|';";
 	if ($DB) {echo "|$stmt|\n";}
 	$rslt=mysql_to_mysqli($stmt, $link);
 
@@ -1717,6 +1797,10 @@ if (($leadfile) && ($LF_path))
 				{
 				print "<BR>"._QXZ("LEAD DUPLICATE CHECK").": $dupcheck<BR>\n";
 				}
+			if (strlen($international_dnc_scrub)>0) 
+				{
+				print "<BR>"._QXZ("INTERNATIONAL DNC SCRUB").": $international_dnc_scrub<BR>\n";
+				}
 			if (strlen($template_statuses)>0) 
 				{
 				print "<BR>"._QXZ("OMITTING DUPLICATES AGAINST FOLLOWING STATUSES ONLY").": ".preg_replace('/\'/', '', $template_statuses)."<BR>\n";
@@ -1740,6 +1824,17 @@ if (($leadfile) && ($LF_path))
 				$ninetydaySQL = "and entry_date > \"$ninetyday\"";
 				if ($DB > 0) {echo "DEBUG: 90day SQL: |$ninetydaySQL|";}
 				}
+
+			#  If a list is being scrubbed against a country's DNC list, block the list from being dialed and purge any lead from the hopper that belongs to that list.
+			if (strlen($international_dnc_scrub)>0 && strlen($list_id_override)>0 && $SSenable_international_dncs)
+				{
+				$upd_dnc_stmt="update vicidial_settings_containers set container_entry=concat('$list_id_override => $international_dnc_scrub', if(length(container_entry)>0, '\r\n', ''), if(container_entry is null, '', container_entry)) where container_id='DNC_CURRENT_BLOCKED_LISTS'";
+				$upd_dnc_rslt=mysql_to_mysqli($upd_dnc_stmt, $link);
+
+				$delete_hopper_stmt="delete from vicidial_hopper where list_id='$list_id_override'";
+				$delete_hopper_rslt=mysql_to_mysqli($delete_hopper_stmt, $link);
+				}
+
 
 			while (!feof($file)) 
 				{
@@ -2166,8 +2261,21 @@ if (($leadfile) && ($LF_path))
 							$invalid_reason = _QXZ("INVALID PHONE NUMBER NANPA AREACODE PREFIX");
 							}
 						}
+					if ($international_dnc_scrub and $valid_number > 0)
+						{
+						$dnc_table_name="vicidial_dnc_".$international_dnc_scrub;
+						$dnc_stmt="select count(*) from $dnc_table_name where phone_number='$phone_number'";
+						if ($DB>0) {echo "DEBUG: $international_dnc_scrub DNC query - $dnc_stmt\n";}
+						$dnc_rslt=mysql_to_mysqli($dnc_stmt, $link);
+						$dnc_row=mysqli_fetch_row($dnc_rslt);
+						$dnc_matches=$dnc_row[0];
+						if ($dnc_matches >0)
+							{
+							$invalid_reason = _QXZ("NUMBER FOUND IN $international_dnc_scrub DNC LIST");
+							}
+						}
 
-					if ( ($valid_number>0) and ($dup_lead<1) and ($list_id >= 100 ))
+					if ( ($valid_number>0) and ($dnc_matches<1) and ($dup_lead<1) and ($list_id >= 100 ))
 						{
 						if (preg_match("/TITLEALTPHONE/i",$dupcheck))
 							{$phone_list .= "$alt_phone$title$US$list_id|";}
@@ -2284,6 +2392,10 @@ if (($leadfile) && ($LF_path))
 									{
 									print "<BR></b><font size=1 color=red>"._QXZ("record")." $total "._QXZ("BAD- PHONE").": $phone_number "._QXZ("ROW").":|$row[0]| "._QXZ("INV").": $phone_number</font><b>\n";
 									}
+								else if ($dnc_matches > 0)
+									{
+									print "<BR></b><font size=1 color=red>record $total "._QXZ("BAD- PHONE").": $phone_number "._QXZ("ROW").": |$row[0]| "._QXZ("DNC")."($invalid_reason): $phone_number</font><b>\n";
+									}
 								else
 									{
 									print "<BR></b><font size=1 color=red>"._QXZ("record")." $total "._QXZ("BAD- PHONE").": $phone_number "._QXZ("ROW").":|$row[0] | "._QXZ("DUP").": $dup_lead  $dup_lead_list</font><b>\n";
@@ -2326,7 +2438,7 @@ if (($leadfile) && ($LF_path))
 					{fwrite($stmt_file, $custom_ins_stmt."\r\n");}
 				}
 			### LOG INSERTION Admin Log Table ###
-			$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LISTS', event_type='LOAD', record_id='$list_id_override', event_code='ADMIN LOAD LIST STANDARD', event_sql='', event_notes='File Name: $leadfile_name, GOOD: $good, BAD: $bad, MOVED: $moved, TOTAL: $total, DEBUG: dedupe_statuses:$dedupe_statuses[0]| dedupe_statuses_override:$dedupe_statuses_override| dupcheck:$dupcheck| status mismatch action: $status_mismatch_action| lead_file:$lead_file| list_id_override:$list_id_override| phone_code_override:$phone_code_override| postalgmt:$postalgmt| template_id:$template_id| usacan_check:$usacan_check| state_conversion:$state_conversion| web_loader_phone_length:$web_loader_phone_length|';";
+			$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LISTS', event_type='LOAD', record_id='$list_id_override', event_code='ADMIN LOAD LIST STANDARD', event_sql='', event_notes='File Name: $leadfile_name, GOOD: $good, BAD: $bad, MOVED: $moved, TOTAL: $total, DEBUG: dedupe_statuses:$dedupe_statuses[0]| dedupe_statuses_override:$dedupe_statuses_override| dupcheck:$dupcheck| status mismatch action: $status_mismatch_action| lead_file:$lead_file| list_id_override:$list_id_override| phone_code_override:$phone_code_override| postalgmt:$postalgmt| template_id:$template_id| usacan_check:$usacan_check| dnc_country_scrub:$international_dnc_scrub| state_conversion:$state_conversion| web_loader_phone_length:$web_loader_phone_length|';";
 			if ($DB) {echo "|$stmt|\n";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 
@@ -2438,6 +2550,10 @@ if (($leadfile) && ($LF_path))
 				{
 				print "<BR>"._QXZ("LEAD DUPLICATE CHECK").": $dupcheck<BR>\n";
 				}
+			if (strlen($international_dnc_scrub)>0) 
+				{
+				print "<BR>"._QXZ("INTERNATIONAL DNC SCRUB").": $international_dnc_scrub<BR>\n";
+				}
 			if (strlen($status_dedupe_str)>0) 
 				{
 				print "<BR>"._QXZ("OMITTING DUPLICATES AGAINST FOLLOWING STATUSES ONLY").": $status_dedupe_str<BR>\n";
@@ -2460,6 +2576,16 @@ if (($leadfile) && ($LF_path))
 				$ninetyday = date("Y-m-d H:i:s", mktime(date("H"),date("i"),date("s"),date("m"),date("d")-90,date("Y")));
 				$ninetydaySQL = "and entry_date > \"$ninetyday\"";
 				if ($DB > 0) {echo "DEBUG: 90day SQL: |$ninetydaySQL|";}
+				}
+
+			#  If a list is being scrubbed against a country's DNC list, block the list from being dialed and purge any lead from the hopper that belongs to that list.
+			if (strlen($international_dnc_scrub)>0 && strlen($list_id_override)>0 && $SSenable_international_dncs)
+				{
+				$upd_dnc_stmt="update vicidial_settings_containers set container_entry=concat('$list_id_override => $international_dnc_scrub', if(length(container_entry)>0, '\r\n', ''), if(container_entry is null, '', container_entry)) where container_id='DNC_CURRENT_BLOCKED_LISTS'";
+				$upd_dnc_rslt=mysql_to_mysqli($upd_dnc_stmt, $link);
+
+				$delete_hopper_stmt="delete from vicidial_hopper where list_id='$list_id_override'";
+				$delete_hopper_rslt=mysql_to_mysqli($delete_hopper_stmt, $link);
 				}
 
 			while (!feof($file)) 
@@ -2834,6 +2960,7 @@ if (($leadfile) && ($LF_path))
 						}
 
 					$valid_number=1;
+					$dnc_matches=0;
 					$invalid_reason='';
 					if ( (strlen($phone_number)<5) || (strlen($phone_number)>18) )
 						{
@@ -2882,8 +3009,21 @@ if (($leadfile) && ($LF_path))
 							$invalid_reason = _QXZ("INVALID PHONE NUMBER NANPA AREACODE PREFIX");
 							}
 						}
+					if ($international_dnc_scrub and $valid_number > 0)
+						{
+						$dnc_table_name="vicidial_dnc_".$international_dnc_scrub;
+						$dnc_stmt="select count(*) from $dnc_table_name where phone_number='$phone_number'";
+						if ($DB>0) {echo "DEBUG: $international_dnc_scrub DNC query - $dnc_stmt\n";}
+						$dnc_rslt=mysql_to_mysqli($dnc_stmt, $link);
+						$dnc_row=mysqli_fetch_row($dnc_rslt);
+						$dnc_matches=$dnc_row[0];
+						if ($dnc_matches >0)
+							{
+							$invalid_reason = _QXZ("NUMBER FOUND IN $international_dnc_scrub DNC LIST");
+							}
+						}
 
-					if ( ($valid_number>0) and ($dup_lead<1) and ($list_id >= 100 ))
+					if ( ($valid_number>0) and ($dnc_matches<1) and ($dup_lead<1) and ($list_id >= 100 ))
 						{
 						if (preg_match("/TITLEALTPHONE/i",$dupcheck))
 							{$phone_list .= "$alt_phone$title$US$list_id|";}
@@ -2923,6 +3063,10 @@ if (($leadfile) && ($LF_path))
 									{
 									print "<BR></b><font size=1 color=red>record $total "._QXZ("BAD- PHONE").": $phone_number "._QXZ("ROW").": |$row[0]| "._QXZ("INV")."($invalid_reason): $phone_number</font><b>\n";
 									}
+								else if ($dnc_matches > 0)
+									{
+									print "<BR></b><font size=1 color=red>record $total "._QXZ("BAD- PHONE").": $phone_number "._QXZ("ROW").": |$row[0]| "._QXZ("DNC")."($invalid_reason): $phone_number</font><b>\n";
+									}
 								else
 									{
 									print "<BR></b><font size=1 color=red>record $total "._QXZ("BAD- PHONE").": $phone_number "._QXZ("ROW").": |$row[0]| "._QXZ("DUP").": $dup_lead  $dup_lead_list</font><b>\n";
@@ -2949,7 +3093,7 @@ if (($leadfile) && ($LF_path))
 					{fwrite($stmt_file, $stmtZ."\r\n");}
 				}
 			### LOG INSERTION Admin Log Table ###
-			$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LISTS', event_type='LOAD', record_id='$list_id_override', event_code='ADMIN LOAD LIST STANDARD', event_sql='', event_notes='File Name: $leadfile_name, GOOD: $good, BAD: $bad, MOVED: $moved, TOTAL: $total, DEBUG: dedupe_statuses:$dedupe_statuses[0]| dedupe_statuses_override:$dedupe_statuses_override| dupcheck:$dupcheck| status mismatch action: $status_mismatch_action| lead_file:$lead_file| list_id_override:$list_id_override| phone_code_override:$phone_code_override| postalgmt:$postalgmt| template_id:$template_id| usacan_check:$usacan_check| state_conversion:$state_conversion| web_loader_phone_length:$web_loader_phone_length|';";
+			$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LISTS', event_type='LOAD', record_id='$list_id_override', event_code='ADMIN LOAD LIST STANDARD', event_sql='', event_notes='File Name: $leadfile_name, GOOD: $good, BAD: $bad, MOVED: $moved, TOTAL: $total, DEBUG: dedupe_statuses:$dedupe_statuses[0]| dedupe_statuses_override:$dedupe_statuses_override| dupcheck:$dupcheck| status mismatch action: $status_mismatch_action| lead_file:$lead_file| list_id_override:$list_id_override| phone_code_override:$phone_code_override| postalgmt:$postalgmt| template_id:$template_id| usacan_check:$usacan_check| dnc_country_scrub:$international_dnc_scrub| state_conversion:$state_conversion| web_loader_phone_length:$web_loader_phone_length|';";
 			if ($DB) {echo "|$stmt|\n";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 
@@ -3113,6 +3257,10 @@ if (($leadfile) && ($LF_path))
 			{
 			print "<BR>"._QXZ("LEAD DUPLICATE CHECK").": $dupcheck<BR>\n";
 			}
+		if (strlen($international_dnc_scrub)>0)
+			{
+			print "<BR>"._QXZ("INTERNATIONAL DNC SCRUB").": $international_dnc_scrub<BR>\n";
+			}
 		if (strlen($status_dedupe_str)>0) 
 			{
 			print "<BR>"._QXZ("OMITTING DUPLICATES AGAINST FOLLOWING STATUSES ONLY").": $status_dedupe_str<BR>\n";
@@ -3159,6 +3307,7 @@ if (($leadfile) && ($LF_path))
 				}
 			}
 		print "  <tr bgcolor='#$SSmenu_background'>\r\n";
+		print "  <input type=hidden name=international_dnc_scrub value=\"$international_dnc_scrub\">\r\n";
 		print "  <input type=hidden name=dedupe_statuses_override value=\"$status_dedupe_str\">\r\n";
 		print "  <input type=hidden name=status_mismatch_action value=\"$status_mismatch_action\">\r\n";
 		print "  <input type=hidden name=dupcheck value=\"$dupcheck\">\r\n";

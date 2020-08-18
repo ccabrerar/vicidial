@@ -50,12 +50,13 @@
 # 200401-1930 - Added option to show more customer info to level 9 users
 # 200428-1002 - Added RS_report_default_format options.php setting
 # 200506-1633 - Added RS_CUSTINFOminUL options.php setting
+# 200815-0928 - Added agent-paused 10 & 15 minute indicators
 #
 
 $startMS = microtime();
 
-$version = '2.14-37';
-$build = '200506-1633';
+$version = '2.14-38';
+$build = '200815-0928';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -1767,6 +1768,8 @@ function update_variables(task_option,task_choice,force_reload)
 	.violet {color: black; background-color: #EE82EE;}
 	.thistle {color: black; background-color: #D8BFD8;}
 	.olive {color: white; background-color: #808000;}
+	.darkolivegreen {color: white; background-color: #556B2F}
+	.saddlebrown {color: white; background-color: #8B4513}
 	.lime {color: white; background-color: #006600;}
 	.yellow {color: black; background-color: yellow;}
 	.khaki {color: black; background-color: #F0E68C;}
@@ -1786,6 +1789,8 @@ function update_variables(task_option,task_choice,force_reload)
 	.Hviolet {color: black; background-color: #EE82EE; font-size: 11;}
 	.Hthistle {color: black; background-color: #D8BFD8; font-size: 11;}
 	.Holive {color: white; background-color: #808000; font-size: 11;}
+	.Hdarkolivegreen {color: white; background-color: #556B2F; font-size: 11;}
+	.Hsaddlebrown {color: white; background-color: #8B4513; font-size: 11;}
 	.Hlime {color: white; background-color: #006600; font-size: 11;}
 	.Hyellow {color: black; background-color: yellow; font-size: 11;}
 	.Hkhaki {color: black; background-color: #F0E68C; font-size: 11;}
@@ -1805,6 +1810,8 @@ function update_variables(task_option,task_choice,force_reload)
 	tr.TRviolet {background-color: #EE82EE} 
 	tr.TRthistle {background-color: #D8BFD8} 
 	tr.TRolive {background-color: #808000}
+	tr.TRdarkolivegreen {background-color: #556B2F}
+	tr.TRsaddlebrown {background-color: #8B4513}
 	tr.TRlime {background-color: #006600}
 	tr.TRyellow {background-color: yellow}
 	tr.TRkhaki {background-color: #F0E68C}

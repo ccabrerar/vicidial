@@ -1,7 +1,7 @@
 <?php
 # dispo_send_email.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to be used in the "Dispo URL" field of a campaign
 # or in-group. It will send out an email to a fixed email address as defined
@@ -39,6 +39,7 @@
 # 190129-1855 - Added --A--RUSfullname--B-- special variable flag
 # 190521-1715 - Added --A--dispo--B-- and --A--dispo_name--B-- to email_body
 # 191013-2113 - Fixes for PHP7
+# 200814-1829 - added email_body_html, email_body_utf8 flags
 #
 
 $api_script = 'send_email';
@@ -141,6 +142,8 @@ $match_found=0;
 $k=0;
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=14;
+$email_format = 'TEXT';
+$email_charset = 'iso-8859-1';
 
 # filter variables
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
@@ -325,6 +328,10 @@ if ($match_found > 0)
 							{$email_from = $line;   $email_from = trim(preg_replace("/.*=/",'',$email_from));}
 						if (preg_match("/^email_subject/",$line))
 							{$email_subject = $line;   $email_subject = trim(preg_replace("/.*=/",'',$email_subject));}
+						if (preg_match("/^email_body_html/",$line))
+							{$email_format = 'HTML';}
+						if (preg_match("/^email_body_utf8/",$line))
+							{$email_charset = 'utf-8';}
 						if (preg_match("/^email_body_begin/",$line))
 							{$email_body = $line;   $email_body = trim(preg_replace("/.*=/",'',$email_body)) . "\n";   $email_body_gather++;}
 						}
@@ -1238,8 +1245,11 @@ if ($match_found > 0)
 						$header .= "--".$boundary.PHP_EOL;
 
 						// Email content
-						// Content-type can be text/plain or text/html
-						$header .= "Content-type:text/plain; charset=iso-8859-1".PHP_EOL;
+						// Content-type can be text/plain or text/html, with encoding as 'iso-8859-1' or 'utf-8' charset
+						if (preg_match("/HTML/",$email_format))
+							{$header .= "Content-type:text/html; charset=$email_charset".PHP_EOL;}
+						else
+							{$header .= "Content-type:text/plain; charset=$email_charset".PHP_EOL;}
 						$header .= "Content-Transfer-Encoding: 7bit".PHP_EOL.PHP_EOL;
 						$header .= "$email_body".PHP_EOL;
 						$header .= "--".$boundary.PHP_EOL;
@@ -1294,8 +1304,21 @@ if ($match_found > 0)
 						}
 					else
 						{
+						// Email header
+						$header = "From: ".$email_from.PHP_EOL;
+						$header .= "Reply-To: ".$email_from.PHP_EOL;
+						$header .= "MIME-Version: 1.0".PHP_EOL;
+
+						// Email content
+						// Content-type can be text/plain or text/html, with encoding as 'iso-8859-1' or 'utf-8' charset
+						if (preg_match("/HTML/",$email_format))
+							{$header .= "Content-type:text/html; charset=$email_charset".PHP_EOL;}
+						else
+							{$header .= "Content-type:text/plain; charset=$email_charset".PHP_EOL;}
+						$header .= "Content-Transfer-Encoding: 7bit".PHP_EOL.PHP_EOL;
+
 						##### sending standard email with no attachments through PHP #####
-						mail("$email_to","$email_subject","$email_body", "From: $email_from");
+						mail("$email_to","$email_subject","$email_body", $header);
 						}
 
 					$SQL_log = "$stmt|$stmtB|$CBaffected_rows|$email_from|$email_to|$email_subject|";

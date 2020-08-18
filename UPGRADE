@@ -513,6 +513,17 @@ OTHER CHANGES:
 	calls at the DID, In-Group and Call Menu level. For this to work, you 
 	must set the conf files to be rebuilt after upgrading your systems.
 
+144. Added options for HTML formatting and UTF-8 charset in emails through the
+	dispo_send_email.php script.
+
+145. Added tools for International DNC phone number scrubbing. See the
+	INTERNATIONAL_DNC_SCRUB.txt doc for more information.
+
+146. Added option '2' to the User Modify "Modify Leads" setting allowing admin
+	users to modify all lead fields except for phone number and alt phone.
+
+147. Added campaigns_list & hopper_list functions to the Non-Agent API
+
 
 
 

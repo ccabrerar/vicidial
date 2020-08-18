@@ -8,7 +8,7 @@
 # just needs to enter the leadID and then they can view and modify the 
 # information in the record for that lead
 #
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -97,6 +97,7 @@
 # 190329-1917 - Added display of AMD log info when CIDdisplay=Yes is set
 # 190609-0927 - Added sip_event_logging support
 # 191113-2204 - Added support for per-User additional status groups
+# 200815-0017 - Added support for additional modify_leads setting
 #
 
 require("dbconnect_mysqli.php");
@@ -447,10 +448,11 @@ $SSalt_row1_background='BDFFBD';
 $SSalt_row2_background='99FF99';
 $SSalt_row3_background='CCFFCC';
 $SSweb_logo='default_old';
+$SSbutton_color='EFEFEF';
 
 if ($SSadmin_screen_colors != 'default')
 	{
-	$stmt = "SELECT menu_background,frame_background,std_row1_background,std_row2_background,std_row3_background,std_row4_background,std_row5_background,alt_row1_background,alt_row2_background,alt_row3_background,web_logo FROM vicidial_screen_colors where colors_id='$SSadmin_screen_colors';";
+	$stmt = "SELECT menu_background,frame_background,std_row1_background,std_row2_background,std_row3_background,std_row4_background,std_row5_background,alt_row1_background,alt_row2_background,alt_row3_background,web_logo,button_color FROM vicidial_screen_colors where colors_id='$SSadmin_screen_colors';";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	if ($DB) {echo "$stmt\n";}
 	$colors_ct = mysqli_num_rows($rslt);
@@ -468,6 +470,7 @@ if ($SSadmin_screen_colors != 'default')
 		$SSalt_row2_background =	$row[8];
 		$SSalt_row3_background =	$row[9];
 		$SSweb_logo =				$row[10];
+		$SSbutton_color =			$row[11];
 		}
 	}
 
@@ -1975,9 +1978,20 @@ else
 		echo "<tr><td align=right>$label_province : </td><td align=left><input type=text name=province size=40 maxlength=$MAXprovince value=\"".htmlparse($province)."\"></td></tr>\n";
 		echo "<tr><td align=right>"._QXZ("Country")." : </td><td align=left><input type=text name=country_code size=3 maxlength=$MAXcountry_code value=\"".htmlparse($country_code)."\"> &nbsp; \n";
 		echo " "._QXZ("Date of Birth").": <input type=text name=date_of_birth size=12 maxlength=10 value=\"".htmlparse($date_of_birth)."\"></td></tr>\n";
-		echo "<tr><td align=right>$label_phone_number : </td><td align=left><input type=text name=phone_number size=18 maxlength=$MAXphone_number value=\"".htmlparse($phone_number)."\"></td></tr>\n";
-		echo "<tr><td align=right>$label_phone_code : </td><td align=left><input type=text name=phone_code size=10 maxlength=$MAXphone_code value=\"".htmlparse($phone_code)."\"></td></tr>\n";
-		echo "<tr><td align=right>$label_alt_phone : </td><td align=left><input type=text name=alt_phone size=12 maxlength=$MAXalt_phone value=\"".htmlparse($alt_phone)."\"></td></tr>\n";
+
+		if ( ($LOGmodify_leads == '1') or ($lead_id == 'NEW') )
+			{
+			echo "<tr><td align=right>$label_phone_number : </td><td align=left><input type=text name=phone_number size=18 maxlength=$MAXphone_number value=\"".htmlparse($phone_number)."\"></td></tr>\n";
+			echo "<tr><td align=right>$label_phone_code : </td><td align=left><input type=text name=phone_code size=10 maxlength=$MAXphone_code value=\"".htmlparse($phone_code)."\"></td></tr>\n";
+			echo "<tr><td align=right>$label_alt_phone : </td><td align=left><input type=text name=alt_phone size=12 maxlength=$MAXalt_phone value=\"".htmlparse($alt_phone)."\"></td></tr>\n";
+			}
+		else
+			{
+			echo "<tr><td align=right>$label_phone_number : </td><td align=left><input type=hidden name=phone_number value=\"".htmlparse($phone_number)."\">".htmlparse($phone_number)."</td></tr>\n";
+			echo "<tr><td align=right>$label_phone_code : </td><td align=left><input type=hidden name=phone_code value=\"".htmlparse($phone_code)."\">".htmlparse($phone_code)."</td></tr>\n";
+			echo "<tr><td align=right>$label_alt_phone : </td><td align=left><input type=hidden name=alt_phone value=\"".htmlparse($alt_phone)."\">".htmlparse($alt_phone)."</td></tr>\n";
+			}
+
 		echo "<tr><td align=right>$label_email : </td><td align=left><input type=text name=email size=40 maxlength=$MAXemail value=\"".htmlparse($email)."\"></td></tr>\n";
 		echo "<tr><td align=right>$label_security_phrase : </td><td align=left><input type=text name=security size=30 maxlength=$MAXsecurity_phrase value=\"".htmlparse($security)."\"></td></tr>\n";
 		echo "<tr><td align=right>$label_vendor_lead_code : </td><td align=left><input type=text name=vendor_id size=30 maxlength=$MAXvendor_lead_code value=\"".htmlparse($vendor_id)."\"></td></tr>\n";
@@ -2137,7 +2151,7 @@ else
 
 	if ( ($LOGadmin_hide_lead_data == '0') or ($lead_id == 'NEW') )
 		{
-		echo "<tr><td colspan=2 align=center><input type=submit name=submit value=\""._QXZ("SUBMIT")."\"></td></tr>\n";
+		echo "<tr><td colspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit name=submit value=\""._QXZ("SUBMIT")."\"></td></tr>\n";
 		}
 	echo "</table></form>\n";
 	echo "<BR><BR><BR>\n";
@@ -3009,7 +3023,7 @@ else
 		echo "</TABLE><BR><BR>\n";
 		}
 
-		$stmt="SELECT count(*) from vicidial_users where user='$PHP_AUTH_USER' and user_level >= 9 and modify_leads='1';";
+		$stmt="SELECT count(*) from vicidial_users where user='$PHP_AUTH_USER' and user_level >= 9 and modify_leads IN('1','2','3','4','5','6');";
 		if ($DB) {echo "|$stmt|\n";}
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$row=mysqli_fetch_row($rslt);

@@ -64,6 +64,8 @@ if (isset($_GET["report_display_type"]))			{$report_display_type=$_GET["report_d
 if (strlen($shift)<2) {$shift='ALL';}
 if (strlen($stage)<2) {$stage='ID';}
 
+require("screen_colors.php");
+
 $report_name = 'User Timeclock Detail Report';
 $db_source = 'M';
 
@@ -519,7 +521,7 @@ window.open(url,"",'width=620,height=300,scrollbars=yes,menubar=yes,address=yes'
 
 	</SCRIPT>
 
-	<input type=button value="<?php echo _QXZ("SUBMIT"); ?>" name=smt id=smt onClick="submit_form()">
+	<input <?php echo "style='background-color:#$SSbutton_color'"; ?> type=button value="<?php echo _QXZ("SUBMIT"); ?>" name=smt id=smt onClick="submit_form()">
 <?php
 	echo "</TD><TD VALIGN=TOP> &nbsp; &nbsp; &nbsp; &nbsp; ";
 

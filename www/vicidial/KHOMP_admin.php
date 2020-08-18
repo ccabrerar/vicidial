@@ -21,6 +21,8 @@ $Mselected_color ='#C6C6C6';
 $Mhead_color ='#A3C3D6';
 $Mmain_bgcolor ='#015B91';
 
+require("screen_colors.php");
+/*
 $SSmenu_background='015B91';
 $SSframe_background='D9E6FE';
 $SSstd_row1_background='9BB9FB';
@@ -55,6 +57,7 @@ if ($SSadmin_screen_colors != 'default')
 		$SSweb_logo =				$row[10];
 		}
 	}
+*/
 
 $Mhead_color =	$SSstd_row5_background;
 $Mmain_bgcolor = $SSmenu_background;
@@ -360,7 +363,7 @@ echo "<tr>";
 echo "<td NOWRAP>"._QXZ("Dial Status").":</td><td align='left'><select name='update_dialstatus' id='update_dialstatus' class='form_field' size='1'><option value=''></option><option value='AMD'>AMD</option><option value='ANSWER'>ANSWER</option><option value='BUSY'>BUSY</option><option value='CANCEL'>CANCEL</option><option value='CHANUNAVAIL'>CHANUNAVAIL</option><option value='CONGESTION'>CONGESTION</option><option value='DISCONNECT'>DISCONNECT</option><option value='DONTCALL'>DONTCALL</option><option value='FAX'>FAX</option><option value='INVALIDARGS'>INVALIDARGS</option><option value='NOANSWER'>NOANSWER</option><option value='TORTURE'>TORTURE</option></td>";
 echo "</tr>";
 echo "<tr>";
-echo "<td colspan='3' align='center'><input type='submit' name='submit_khomp' value='"._QXZ("UPDATE")."'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type='button' onClick=\"ClearKhompCode()\" value='"._QXZ("CANCEL")."'></td>";
+echo "<td colspan='3' align='center'><input style='background-color:#$SSbutton_color' type='submit' name='submit_khomp' value='"._QXZ("UPDATE")."'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input style='background-color:#$SSbutton_color' type='button' onClick=\"ClearKhompCode()\" value='"._QXZ("CANCEL")."'></td>";
 echo "</tr>";
 echo "</table>";
 echo "</form>";
@@ -477,7 +480,7 @@ array_multisort($blank_khomp_keys, SORT_ASC, $blank_khomp_vals, SORT_ASC, $blank
 		echo "<td width='$td_max_width3'><font size=1 color=black align=left>".$vvalues[0]."</font></td>";
 		echo "<td width='$td_max_width3'><font size=1 color=black align=left>".$vvalues[1]."</font></td>";
 		echo "<td width='$td_max_width3'><font size=1 color=black align=left>".$vvalues[2]."</font></td>";
-		echo "<td align='center' width='$td_max_width3'><font size=1 color=black align=left><input type='button' value='"._QXZ("MODIFY")."' onClick=\"ModifyKhompCode(event, '".$kvalues[0]."', '".$kvalues[1]."', '".$vvalues[0]."', '".$vvalues[1]."', '".$vvalues[2]."')\"</td>";
+		echo "<td align='center' width='$td_max_width3'><font size=1 color=black align=left><input style='background-color:#$SSbutton_color' type='button' value='"._QXZ("MODIFY")."' onClick=\"ModifyKhompCode(event, '".$kvalues[0]."', '".$kvalues[1]."', '".$vvalues[0]."', '".$vvalues[1]."', '".$vvalues[2]."')\"</td>";
 		echo "</tr>";
 		$p++;
 		}
@@ -499,7 +502,7 @@ array_multisort($blank_khomp_keys, SORT_ASC, $blank_khomp_vals, SORT_ASC, $blank
 		echo "<td width='$td_max_width3'><font size=1 color=black align=left>".$vvalues[0]."</font></td>";
 		echo "<td width='$td_max_width3'><font size=1 color=black align=left>".$vvalues[1]."</font></td>";
 		echo "<td width='$td_max_width3'><font size=1 color=black align=left>".$vvalues[2]."</font></td>";
-		echo "<td align='center' width='$td_max_width3'><font size=1 color=black align=left><input type='button' value='"._QXZ("MODIFY")."' onClick=\"ModifyKhompCode(event, '".$kvalues[0]."', '".$kvalues[1]."', '".$vvalues[0]."', '".$vvalues[1]."', '".$vvalues[2]."')\"</td>";
+		echo "<td align='center' width='$td_max_width3'><font size=1 color=black align=left><input style='background-color:#$SSbutton_color' type='button' value='"._QXZ("MODIFY")."' onClick=\"ModifyKhompCode(event, '".$kvalues[0]."', '".$kvalues[1]."', '".$vvalues[0]."', '".$vvalues[1]."', '".$vvalues[2]."')\"</td>";
 		echo "</tr>";
 		$p++;
 		}
@@ -518,7 +521,7 @@ array_multisort($blank_khomp_keys, SORT_ASC, $blank_khomp_vals, SORT_ASC, $blank
 	echo "<td NOWRAP width='$td_max_width3'><input type='text' name='new_action' class='form_field' size='10' maxlength='20'></td>";
 	echo "<td NOWRAP width='$td_max_width3'><input type='text' name='new_status' class='form_field' size='10' maxlength='20'></td>";
 	echo "<td NOWRAP width='$td_max_width3'><input type='text' name='new_dialstatus' class='form_field' size='10' maxlength='20'></td>";
-	echo "<td NOWRAP align='center' width='$td_max_width3'><input type='submit' name='submit_khomp' value='"._QXZ("ADD")."'></td>";
+	echo "<td NOWRAP align='center' width='$td_max_width3'><input style='background-color:#$SSbutton_color' type='submit' name='submit_khomp' value='"._QXZ("ADD")."'></td>";
 	echo "</tr>";
 	
 	echo "</table></form>";

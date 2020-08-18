@@ -1972,6 +1972,8 @@ if (isset($_GET["enable_third_webform"]))			{$enable_third_webform=$_GET["enable
 	elseif (isset($_POST["enable_third_webform"]))	{$enable_third_webform=$_POST["enable_third_webform"];}
 if (isset($_GET["web_form_address_three"]))			{$web_form_address_three=$_GET["web_form_address_three"];}
 	elseif (isset($_POST["web_form_address_three"]))	{$web_form_address_three=$_POST["web_form_address_three"];}
+if (isset($_GET["enable_international_dncs"]))			{$enable_international_dncs=$_GET["enable_international_dncs"];}
+	elseif (isset($_POST["enable_international_dncs"]))	{$enable_international_dncs=$_POST["enable_international_dncs"];}
 if (isset($_GET["api_list_restrict"]))			{$api_list_restrict=$_GET["api_list_restrict"];}
 	elseif (isset($_POST["api_list_restrict"]))	{$api_list_restrict=$_POST["api_list_restrict"];}
 if (isset($_GET["api_allowed_functions"]))			{$api_allowed_functions=$_GET["api_allowed_functions"];}
@@ -2116,6 +2118,8 @@ if (isset($_GET["alt_row2_background"]))			{$alt_row2_background=$_GET["alt_row2
 	elseif (isset($_POST["alt_row2_background"]))	{$alt_row2_background=$_POST["alt_row2_background"];}
 if (isset($_GET["alt_row3_background"]))			{$alt_row3_background=$_GET["alt_row3_background"];}
 	elseif (isset($_POST["alt_row3_background"]))	{$alt_row3_background=$_POST["alt_row3_background"];}
+if (isset($_GET["button_color"]))			{$button_color=$_GET["button_color"];}
+	elseif (isset($_POST["button_color"]))	{$button_color=$_POST["button_color"];}
 if (isset($_GET["modify_colors"]))			{$modify_colors=$_GET["modify_colors"];}
 	elseif (isset($_POST["modify_colors"]))	{$modify_colors=$_POST["modify_colors"];}
 if (isset($_GET["admin_screen_colors"]))			{$admin_screen_colors=$_GET["admin_screen_colors"];}
@@ -2532,7 +2536,7 @@ if (strlen($dial_status) > 0)
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,enable_queuemetrics_logging,enable_vtiger_integration,qc_features_active,outbound_autodial_active,sounds_central_control_active,enable_second_webform,user_territories_active,custom_fields_enabled,admin_web_directory,webphone_url,first_login_trigger,hosted_settings,default_phone_registration_password,default_phone_login_password,default_server_password,test_campaign_calls,active_voicemail_server,voicemail_timezones,default_voicemail_timezone,default_local_gmt,campaign_cid_areacodes_enabled,pllb_grouping_limit,did_ra_extensions_enabled,expanded_list_stats,contacts_enabled,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,call_menu_qualify_enabled,admin_list_counts,allow_voicemail_greeting,svn_revision,allow_emails,level_8_disable_add,pass_key,pass_hash_enabled,disable_auto_dial,country_code_list_stats,frozen_server_call_clear,active_modules,allow_chats,enable_languages,language_method,meetme_enter_login_filename,meetme_enter_leave3way_filename,enable_did_entry_list_id,enable_third_webform,default_language,user_hide_realtime_enabled,log_recording_access,alt_ivr_logging,admin_row_click,admin_screen_colors,ofcom_uk_drop_calc,agent_screen_colors,script_remove_js,manual_auto_next,user_new_lead_limit,agent_xfer_park_3way,agent_soundboards,web_loader_phone_length,agent_script,enable_auto_reports,enable_pause_code_limits,enable_drop_lists,allow_ip_lists,system_ip_blacklist,hide_inactive_lists,allow_manage_active_lists,expired_lists_inactive,did_system_filter,enable_gdpr_download_deletion,mute_recordings,user_admin_redirect,list_status_modification_confirmation,sip_event_logging,call_quota_lead_ranking,enable_second_script,enable_first_webform,recording_buttons,opensips_cid_name,require_password_length,user_account_emails,outbound_cid_any,entries_per_page,browser_call_alerts,inbound_answer_config FROM system_settings;";
+$stmt = "SELECT use_non_latin,enable_queuemetrics_logging,enable_vtiger_integration,qc_features_active,outbound_autodial_active,sounds_central_control_active,enable_second_webform,user_territories_active,custom_fields_enabled,admin_web_directory,webphone_url,first_login_trigger,hosted_settings,default_phone_registration_password,default_phone_login_password,default_server_password,test_campaign_calls,active_voicemail_server,voicemail_timezones,default_voicemail_timezone,default_local_gmt,campaign_cid_areacodes_enabled,pllb_grouping_limit,did_ra_extensions_enabled,expanded_list_stats,contacts_enabled,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,call_menu_qualify_enabled,admin_list_counts,allow_voicemail_greeting,svn_revision,allow_emails,level_8_disable_add,pass_key,pass_hash_enabled,disable_auto_dial,country_code_list_stats,frozen_server_call_clear,active_modules,allow_chats,enable_languages,language_method,meetme_enter_login_filename,meetme_enter_leave3way_filename,enable_did_entry_list_id,enable_third_webform,default_language,user_hide_realtime_enabled,log_recording_access,alt_ivr_logging,admin_row_click,admin_screen_colors,ofcom_uk_drop_calc,agent_screen_colors,script_remove_js,manual_auto_next,user_new_lead_limit,agent_xfer_park_3way,agent_soundboards,web_loader_phone_length,agent_script,enable_auto_reports,enable_pause_code_limits,enable_drop_lists,allow_ip_lists,system_ip_blacklist,hide_inactive_lists,allow_manage_active_lists,expired_lists_inactive,did_system_filter,enable_gdpr_download_deletion,mute_recordings,user_admin_redirect,list_status_modification_confirmation,sip_event_logging,call_quota_lead_ranking,enable_second_script,enable_first_webform,recording_buttons,opensips_cid_name,require_password_length,user_account_emails,outbound_cid_any,entries_per_page,browser_call_alerts,inbound_answer_config,enable_international_dncs FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
@@ -2629,6 +2633,7 @@ if ($qm_conf_ct > 0)
 	$SSentries_per_page =					$row[87];
 	$SSbrowser_call_alerts =				$row[88];
 	$SSinbound_answer_config =				$row[89];
+	$SSenable_international_dncs =			$row[90];
 	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
@@ -2976,6 +2981,7 @@ if ($non_latin < 1)
 	$browser_call_alerts = preg_replace('/[^0-9]/','',$browser_call_alerts);
 	$browser_alert_volume = preg_replace('/[^0-9]/','',$browser_alert_volume);
 	$inbound_answer_config = preg_replace('/[^0-9]/','',$inbound_answer_config);
+	$enable_international_dncs = preg_replace('/[^0-9]/','',$enable_international_dncs);
 
 	$user_new_lead_limit = preg_replace('/[^-0-9]/','',$user_new_lead_limit);
 	$drop_call_seconds = preg_replace('/[^-0-9]/','',$drop_call_seconds);
@@ -3200,6 +3206,7 @@ if ($non_latin < 1)
 	$alt_row1_background = preg_replace('/[^0-9a-zA-Z]/','',$alt_row1_background);
 	$alt_row2_background = preg_replace('/[^0-9a-zA-Z]/','',$alt_row2_background);
 	$alt_row3_background = preg_replace('/[^0-9a-zA-Z]/','',$alt_row3_background);
+	$button_color = preg_replace('/[^0-9a-zA-Z]/','',$button_color);
 	$dead_to_dispo = preg_replace('/[^0-9a-zA-Z]/','',$dead_to_dispo);
 	$routing_prefix = preg_replace('/[^0-9a-zA-Z]/','',$routing_prefix);
 	$inbound_survey = preg_replace('/[^0-9a-zA-Z]/','',$inbound_survey);
@@ -4696,12 +4703,15 @@ else
 # 200708-1033 - Added List overrides for some inbound settings
 # 200711-1822 - Added EVERY_NEW_ADMINCALL option for QM PAUSEREASON system setting
 # 200719-1645 - Added EVERY_NEW_ALLCALL option for QM PAUSEREASON system setting
+# 200814-2249 - Added International DNC scrub options
+# 200815-0015 - Added another modify_leads option for users
+# 200816-0912 - Removed the ability to delete the 'default' DID entry
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-763a';
-$build = '200719-1645';
+$admin_version = '2.14-766a';
+$build = '200816-0912';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -5106,11 +5116,12 @@ $SSstd_row5_background='A3C3D6';
 $SSalt_row1_background='BDFFBD';
 $SSalt_row2_background='99FF99';
 $SSalt_row3_background='CCFFCC';
+$SSbutton_color='EFEFEF';
 $SSweb_logo='default_old';
 
 if ($SSadmin_screen_colors != 'default')
 	{
-	$stmt = "SELECT menu_background,frame_background,std_row1_background,std_row2_background,std_row3_background,std_row4_background,std_row5_background,alt_row1_background,alt_row2_background,alt_row3_background,web_logo FROM vicidial_screen_colors where colors_id='$SSadmin_screen_colors';";
+	$stmt = "SELECT menu_background,frame_background,std_row1_background,std_row2_background,std_row3_background,std_row4_background,std_row5_background,alt_row1_background,alt_row2_background,alt_row3_background,web_logo,button_color FROM vicidial_screen_colors where colors_id='$SSadmin_screen_colors';";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	if ($DB) {echo "$stmt\n";}
 	$colors_ct = mysqli_num_rows($rslt);
@@ -5128,6 +5139,7 @@ if ($SSadmin_screen_colors != 'default')
 		$SSalt_row2_background =	$row[8];
 		$SSalt_row3_background =	$row[9];
 		$SSweb_logo =				$row[10];
+		$SSbutton_color =			$row[11];
 		}
 	}
 
@@ -6740,7 +6752,7 @@ if ($ADD=="1")
 			}
 		else
 			{
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("User Number").": </td><td align=left><input type=text name=user id=user size=20 maxlength=20> <input type=button name=auto_user value=\""._QXZ("AUTO-GENERATE")."\" onClick=\"user_auto()\"> $NWB#users-user$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("User Number").": </td><td align=left><input type=text name=user id=user size=20 maxlength=20> <input style='background-color:#$SSbutton_color' type=button name=auto_user value=\""._QXZ("AUTO-GENERATE")."\" onClick=\"user_auto()\"> $NWB#users-user$NWE</td></tr>\n";
 			}
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Password").": </td><td align=left style=\"display:table-cell; vertical-align:middle;\" NOWRAP><input type=text id=reg_pass name=pass size=50 maxlength=100 onkeyup=\"return pwdChanged('reg_pass','reg_pass_img','pass_length','$SSrequire_password_length');\">$NWB#users-pass$NWE &nbsp; &nbsp; <font size=1> "._QXZ("Strength").":</font> <IMG id=reg_pass_img src='images/pixel.gif' style=\"vertical-align:middle;\" onLoad=\"return pwdChanged('reg_pass','reg_pass_img','pass_length','$SSrequire_password_length');\"> &nbsp; <font size=1>"._QXZ("Length").": <span id=pass_length name=pass_length>0</span></font></td></tr>\n";
@@ -6762,7 +6774,7 @@ if ($ADD=="1")
 		echo "</select>$NWB#users-user_group$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Phone Login").": </td><td align=left><input type=text name=phone_login size=20 maxlength=20>$NWB#users-phone_login$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Phone Pass").": </td><td align=left><input type=text name=phone_pass size=20 maxlength=20>$NWB#users-phone_pass$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=button name=SUBMIT value='"._QXZ("SUBMIT")."' onClick=\"user_submit()\"></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=button name=SUBMIT value='"._QXZ("SUBMIT")."' onClick=\"user_submit()\"></td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -6804,7 +6816,7 @@ if ($ADD=="1A")
 			}
 		else
 			{
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("User Number").": </td><td align=left><input type=text name=user id=user size=20 maxlength=20> <input type=button name=auto_user value=\""._QXZ("AUTO-GENERATE")."\" onClick=\"user_auto()\"> $NWB#users-user$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("User Number").": </td><td align=left><input type=text name=user id=user size=20 maxlength=20> <input style='background-color:#$SSbutton_color' type=button name=auto_user value=\""._QXZ("AUTO-GENERATE")."\" onClick=\"user_auto()\"> $NWB#users-user$NWE</td></tr>\n";
 			}
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Password").": </td><td align=left style=\"display:table-cell; vertical-align:middle;\" NOWRAP><input type=text id=reg_pass name=pass size=50 maxlength=100 onkeyup=\"return pwdChanged('reg_pass','reg_pass_img','pass_length','$SSrequire_password_length');\">$NWB#users-pass$NWE &nbsp; &nbsp; <font size=1>"._QXZ("Strength").":</font> <IMG id=reg_pass_img src='images/pixel.gif' style=\"vertical-align:middle;\" onLoad=\"return pwdChanged('reg_pass','reg_pass_img','pass_length','$SSrequire_password_length');\"> &nbsp; <font size=1> "._QXZ("Length").": <span id=pass_length name=pass_length>0</span></font></td></tr>\n";
@@ -6830,7 +6842,7 @@ if ($ADD=="1A")
 			}
 		echo "$Uusers_list";
 		echo "</select>$NWB#users-user$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=button name=SUBMIT value='"._QXZ("SUBMIT")."' onClick=\"user_submit()\"></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=button name=SUBMIT value='"._QXZ("SUBMIT")."' onClick=\"user_submit()\"></td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -6978,7 +6990,7 @@ if ($ADD==11)
 		if ($SSallow_chats > 0)
 			{$achHTML .= "<option value='CHAT'>"._QXZ("CHAT")."</option>";}
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Get Call Launch").": </td><td align=left><select size=1 name=get_call_launch><option selected value='NONE'>"._QXZ("NONE")."</option><option value='SCRIPT'>"._QXZ("SCRIPT")."</option><option value='WEBFORM'>"._QXZ("WEBFORM")."</option>$eswHTML$cfwHTML$aemHTML$achHTML</select>$NWB#campaigns-get_call_launch$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -7041,7 +7053,7 @@ if ($ADD==12)
 		echo "$campaigns_list";
 		echo "</select>$NWB#campaigns-campaign_id$NWE</td></tr>\n";
 		
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2>"._QXZ("NOTE: Copying a campaign will copy all settings from the master campaign you select, but it will not copy a campaign-specific DNC list if there was one on the selected master campaign.")."</td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
@@ -7105,7 +7117,7 @@ if ($ADD==111)
 		echo "<option SELECTED>$campaign_id</option>\n";
 		echo "</select>$NWB#lists-campaign_id$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active").": </td><td align=left><select size=1 name=active><option value='Y'>"._QXZ("Y")."</option><option value=\"N\" SELECTED>"._QXZ("N")."</option></select>$NWB#lists-active$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -7494,14 +7506,14 @@ if ($ADD==121)
 		{
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Add or Delete").": </td><td align=left><select size=1 name=stage><option value='add' SELECTED>"._QXZ("add")."</option><option value='delete'>"._QXZ("delete")."</option></select></td></tr>\n";
 		}
-	echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+	echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 	echo "</FORM></TABLE></center>\n";
 
 	echo "<br>"._QXZ("DNC LOG SEARCH")."<BR><form action=$PHP_SELF method=POST>\n";
 	echo "<input type=hidden name=ADD value=121>\n";
 	echo "<center><TABLE width=400 cellspacing=3>\n";
 	echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Phone Number").": </td><td align=left><input type=text name=phone size=12 maxlength=18></td></tr>\n";
-	echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SEARCH")."'></td></tr>\n";
+	echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SEARCH")."'></td></tr>\n";
 	echo "</FORM></TABLE></center>\n";
 
 	if ( ($LOGuser_level >= 9) and ( (preg_match("/Download List/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
@@ -7510,7 +7522,7 @@ if ($ADD==121)
 		echo "<input type=hidden name=download_type value=dnc>\n";
 		echo "<select size=1 name=group_id>\n";
 		echo "$campaigns_list";
-		echo "</select><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></FORM>\n";
+		echo "</select><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></FORM>\n";
 		}
 	}
 
@@ -7548,7 +7560,7 @@ if ($ADD==131)
 			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Drop List ID").": </td><td align=left><input type=text name=dl_id size=20 maxlength=30> $NWB#drop_lists-dl_id$NWE</td></tr>\n";
 			}
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Drop List Name").": </td><td align=left><input type=text name=dl_name size=30 maxlength=100>$NWB#drop_lists-dl_name$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -7653,7 +7665,7 @@ if ($ADD==171)
 		{
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Add or Delete").": </td><td align=left><select size=1 name=stage><option SELECTED value='add'>"._QXZ("add")."</option><option value='delete'>"._QXZ("delete")."</option></select></td></tr>\n";
 		}
-	echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+	echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 	echo "</FORM></TABLE></center>\n";
 
 	if ( ($LOGuser_level >= 9) and ( (preg_match("/Download List/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
@@ -7662,7 +7674,7 @@ if ($ADD==171)
 		echo "<input type=hidden name=download_type value=fpgn>\n";
 		echo "<select size=1 name=group_id>\n";
 		echo "$vfpg_list";
-		echo "</select><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></FORM>\n";
+		echo "</select><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></FORM>\n";
 		}
 
 	}
@@ -7790,7 +7802,7 @@ if ($ADD==3211)
 			echo "<center><TABLE width=500 cellspacing=3>\n";
 			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("In-Group").": </td><td align=left><b>$group_id</b> - <a href=\"$PHP_SELF?ADD=3111&group_id=$group_id\">modify</a></td></tr>\n";
 			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Areacodes").": <BR><BR> ("._QXZ("one areacode per line only").")<BR>$NWB#internal_list-dnc$NWE</td><td align=left><TEXTAREA name=areacode_list ROWS=20 COLS=7>$vaf_textarea</TEXTAREA></td></tr>\n";
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 			echo "</FORM></TABLE></center>\n";
 			}
 		else
@@ -7886,7 +7898,7 @@ if ($ADD==1111)
 */
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right></td><td align=left><input type=hidden name=group_handling value=PHONE></td></tr>\n";
 #			}
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -7966,7 +7978,7 @@ if ($ADD==1811)
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right></td><td align=left><input type=hidden name=group_handling value='EMAIL'></td></tr>\n";
 		
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -8047,7 +8059,7 @@ if ($ADD==18111)
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right></td><td align=left><input type=hidden name=group_handling value='CHAT'></td></tr>\n";
 		
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -8109,7 +8121,7 @@ if ($ADD==1211)
 		echo "$groups_list";
 		echo "</select>$NWB#inbound_groups-group_id$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -8171,7 +8183,7 @@ if ($ADD==1911)
 		echo "$groups_list";
 		echo "</select>$NWB#inbound_groups-group_id$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -8233,7 +8245,7 @@ if ($ADD==19111)
 		echo "$groups_list";
 		echo "</select>$NWB#inbound_groups-group_id$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -8263,7 +8275,7 @@ if ($ADD==1311)
 		echo "$UUgroups_list";
 		echo "<option SELECTED value=\"---ALL---\">"._QXZ("All Admin User Groups")."</option>\n";
 		echo "</select>$NWB#inbound_dids-user_group$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -8307,7 +8319,7 @@ if ($ADD==1411)
 		echo "$dids_list";
 		echo "</select>$NWB#inbound_dids-did_pattern$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -8355,7 +8367,7 @@ if ($ADD==1511)
 		echo "$UUgroups_list";
 		echo "<option SELECTED value=\"---ALL---\">"._QXZ("All Admin User Groups")."</option>\n";
 		echo "</select>$NWB#call_menu-user_group$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -8417,7 +8429,7 @@ if ($ADD==1611)
 		echo "$menus_list";
 		echo "</select>$NWB#call_menu-menu_id$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -8448,7 +8460,7 @@ if ($ADD==1711)
 		echo "$UUgroups_list";
 		echo "<option SELECTED value=\"---ALL---\">"._QXZ("All Admin User Groups")."</option>\n";
 		echo "</select>$NWB#filter_phone_groups-user_group$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -8485,7 +8497,7 @@ if ($ADD==11111)
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Inbound Groups").": </td><td align=left>\n";
 		echo "$groups_list";
 		echo "$NWB#remote_agents-closer_campaigns$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 		echo _QXZ("NOTE: It can take up to 30 seconds for changes submitted on this screen to go live")."\n";
 		}
@@ -8525,7 +8537,7 @@ if ($ADD==12111)
 			}
 		echo "</select> $NWB#extension_groups-rank$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Campaigns Groups").": </td><td align=left><input type=text name=campaign_groups size=50 maxlength=255> ("._QXZ("pipe-delimited list").")$NWB#extension_groups-campaign_groups$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -8569,7 +8581,7 @@ if ($ADD==111111)
 			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Group").": </td><td align=left><input type=text name=user_group size=15 maxlength=20> ("._QXZ("no spaces or punctuation").")$NWB#user_groups-user_group$NWE</td></tr>\n";
 			}
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Description").": </td><td align=left><input type=text name=group_name size=40 maxlength=40> ("._QXZ("description of group").")$NWB#user_groups-group_name$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -8703,7 +8715,7 @@ if ($ADD==1111111)
 		echo "<input type=\"button\" name=\"insertField\" value=\""._QXZ("Insert")."\" onClick=\"scriptInsertField();\"><BR>";
 		# END Insert Field
 		echo "<TEXTAREA NAME=script_text ROWS=20 COLS=50 value=\"\"></TEXTAREA> $NWB#scripts-script_text$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -8753,7 +8765,7 @@ if ($ADD==11111111)
 		echo "<option SELECTED value=\"---ALL---\">"._QXZ("All Admin User Groups")."</option>\n";
 		echo "</select>$NWB#lead_filters-user_group$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Filter SQL").": </td><td align=left><TEXTAREA NAME=lead_filter_sql ROWS=20 COLS=50 value=\"\"></TEXTAREA> $NWB#lead_filters-lead_filter_sql$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -8786,7 +8798,7 @@ if ($ADD==111111111)
 		echo "</select>$NWB#call_times-user_group$NWE</td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2>"._QXZ("Day and time options will appear once you have created the Call Time Definition")."</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -8820,7 +8832,7 @@ if ($ADD==1111111111)
 		echo "</select>$NWB#call_times-user_group$NWE</td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2>"._QXZ("Day and time options will appear once you have created the Call Time Definition")."</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -8866,7 +8878,7 @@ if ($ADD==1211111111)
 		echo "</select>$NWB#call_times-user_group$NWE</td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2>"._QXZ("Day and time options will appear once you have created the Holiday Definition")."</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -8898,7 +8910,7 @@ if ($ADD==131111111)
 		echo "</select>$NWB#shifts-user_group$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Shift Start Time").": </td><td align=left><input type=text name=shift_start_time size=5 maxlength=4 id=shift_start_time>\n";
 		echo " &nbsp; "._QXZ("Shift End Time").": <input type=text name=shift_end_time size=5 maxlength=4 id=shift_end_time>\n";
-		echo "<input type=button name=shift_calc value=\""._QXZ("Calculate Shift Length")."\" onClick=\"shift_time();\"> $NWB#shifts-shift_start_time$NWE</td></tr>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=button name=shift_calc value=\""._QXZ("Calculate Shift Length")."\" onClick=\"shift_time();\"> $NWB#shifts-shift_start_time$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Shift Length").": </td><td align=left><input type=text name=shift_length id=shift_length size=6 maxlength=5> $NWB#shifts-shift_length$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Shift Weekdays").": <BR>$NWB#shifts-shift_weekdays$NWE</td><td align=left>\n";
 		echo "<input type=\"checkbox\" name=\"shift_weekdays[]\" value=\"0\">Sunday<BR>\n";
@@ -8910,7 +8922,7 @@ if ($ADD==131111111)
 		echo "<input type=\"checkbox\" name=\"shift_weekdays[]\" value=\"6\">Saturday<BR>\n";
 		echo "</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Report Option").": </td><td align=left><select size=1 name=report_option><option value='Y'>"._QXZ("Y")."</option><option value=\"N\" SELECTED>"._QXZ("N")."</option></select>$NWB#shifts-report_option$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -8979,7 +8991,7 @@ if ($ADD==11111111111)
 #		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>Picture: </td><td align=left><input type=text name=picture size=20 maxlength=19>$NWB#phones-picture$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Client Protocol").": </td><td align=left><select size=1 name=protocol><option SELECTED>SIP</option><option>Zap</option><option>IAX2</option><option value='EXTERNAL'>"._QXZ("EXTERNAL")."</option><option>DAHDI</option></select>$NWB#phones-protocol$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Local GMT").": </td><td align=left><select size=1 name=local_gmt><option>12.75</option><option>12.00</option><option>11.00</option><option>10.00</option><option>9.50</option><option>9.00</option><option>8.00</option><option>7.00</option><option>6.50</option><option>6.00</option><option>5.75</option><option>5.50</option><option>5.00</option><option>4.50</option><option>4.00</option><option>3.50</option><option>3.00</option><option>2.00</option><option>1.00</option><option>0.00</option><option>-1.00</option><option>-2.00</option><option>-3.00</option><option>-3.50</option><option>-4.00</option><option>-5.00</option><option>-6.00</option><option>-7.00</option><option>-8.00</option><option>-9.00</option><option>-10.00</option><option>-11.00</option><option>-12.00</option><option SELECTED>$SSdefault_local_gmt</option></select> ("._QXZ("Do NOT Adjust for DST").")$NWB#phones-local_gmt$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -9013,7 +9025,7 @@ if ($ADD==12111111111)
 		echo "</select>$NWB#phones-user_group$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Phone Logins List").": </td><td align=left><input type=text name=logins_list size=50 maxlength=255> ("._QXZ("comma separated").")$NWB#phones-logins_list$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -9049,7 +9061,7 @@ if ($ADD==13111111111)
 		echo "<option SELECTED value=\"---ALL---\">"._QXZ("All Admin User Groups")."</option>\n";
 		echo "</select>$NWB#phones-user_group$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -9082,7 +9094,7 @@ if ($ADD==111111111111)
 		echo "$UUgroups_list";
 		echo "<option SELECTED value=\"---ALL---\">"._QXZ("All Admin User Groups")."</option>\n";
 		echo "</select>$NWB#servers-user_group$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -9114,7 +9126,7 @@ if ($ADD==131111111111)
 		echo "<option SELECTED value=\"---ALL---\">"._QXZ("All Admin User Groups")."</option>\n";
 		echo "</select>$NWB#conf_templates-user_group$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Template Contents").": </td><td align=left><TEXTAREA NAME=template_contents ROWS=12 COLS=70></TEXTAREA> $NWB#conf_templates-template_contents$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -9173,7 +9185,7 @@ if ($ADD==141111111111)
 		echo "$servers_list";
 		echo "</select>$NWB#server_carriers-server_ip$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -9221,7 +9233,7 @@ if ($ADD==140111111111)
 		echo "$menus_list";
 		echo "</select>$NWB#server_carriers-carrier_id$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -9254,7 +9266,7 @@ if ($ADD==151111111111)
 		echo "<option SELECTED value=\"---ALL---\">"._QXZ("All Admin User Groups")."</option>\n";
 		echo "</select>$NWB#tts_prompts-user_group$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -9287,7 +9299,7 @@ if ($ADD==161111111111)
 		echo "<option SELECTED value=\"---ALL---\">"._QXZ("All Admin User Groups")."</option>\n";
 		echo "</select>$NWB#music_on_hold-user_group$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -9322,7 +9334,7 @@ if ($ADD==171111111111)
 		echo "<option SELECTED value=\"---ALL---\">"._QXZ("All Admin User Groups")."</option>\n";
 		echo "</select>$NWB#voicemail-user_group$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -9354,7 +9366,7 @@ if ($ADD==181111111111)
 		echo "<option SELECTED value=\"---ALL---\">"._QXZ("All Admin User Groups")."</option>\n";
 		echo "</select>$NWB#screen_labels-user_group$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -9386,7 +9398,7 @@ if ($ADD==182111111111)
 		echo "<option SELECTED value=\"---ALL---\">"._QXZ("All Admin User Groups")."</option>\n";
 		echo "</select>$NWB#screen_labels-user_group$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -9423,7 +9435,7 @@ if ($ADD==191111111111)
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Job Title").": </td><td align=left><input type=text name=job_title size=50 maxlength=100>$NWB#contact_information$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Location").": </td><td align=left><input type=text name=location size=50 maxlength=100>$NWB#contact_information$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -9471,7 +9483,7 @@ if ($ADD==192111111111)
 		echo "<option SELECTED value=\"---ALL---\">"._QXZ("All Admin User Groups")."</option>\n";
 		echo "</select>$NWB#settings_containers-user_group$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -9503,7 +9515,7 @@ if ($ADD==193111111111)
 		echo "<option SELECTED value=\"---ALL---\">"._QXZ("All Admin User Groups")."</option>\n";
 		echo "</select>$NWB#status_groups$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -9534,7 +9546,7 @@ if ($ADD==194111111111)
 		echo "<option SELECTED value=\"---ALL---\">"._QXZ("All Admin User Groups")."</option>\n";
 		echo "</select>$NWB#auto_reports-user_group$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -9565,7 +9577,7 @@ if ($ADD==195111111111)
 		echo "<option SELECTED value=\"---ALL---\">"._QXZ("All Admin User Groups")."</option>\n";
 		echo "</select>$NWB#ip_lists-user_group$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -9602,7 +9614,7 @@ if ($ADD==196111111111)
 		echo "<option SELECTED value=\"---ALL---\">"._QXZ("All Admin User Groups")."</option>\n";
 		echo "</select>$NWB#cid_groups$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -9638,7 +9650,7 @@ if ($ADD==197111111111)
 		echo "<option SELECTED value=\"---ALL---\">"._QXZ("All Admin User Groups")."</option>\n";
 		echo "</select>$NWB#vm_message_groups$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -9666,7 +9678,7 @@ if ($ADD==1111111111111)
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Server IP").": </td><td align=left><select size=1 name=server_ip>\n";
 		echo "$servers_list";
 		echo "</select>$NWB#conferences-server_ip$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -9694,7 +9706,7 @@ if ($ADD==11111111111111)
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Server IP").": </td><td align=left><select size=1 name=server_ip>\n";
 		echo "$servers_list";
 		echo "</select>$NWB#conferences-server_ip$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 		}
 	else
@@ -17793,7 +17805,7 @@ if ($ADD==482111111111)
 			{echo "<br>"._QXZ("SCREEN COLORS NOT MODIFIED - Please go back and look at the data you entered")."\n";}
 		else
 			{
-			$stmt="UPDATE vicidial_screen_colors set colors_name='$colors_name',active='$active',menu_background='$menu_background',frame_background='$frame_background',std_row1_background='$std_row1_background',std_row2_background='$std_row2_background',std_row3_background='$std_row3_background',std_row4_background='$std_row4_background',std_row5_background='$std_row5_background',alt_row1_background='$alt_row1_background',alt_row2_background='$alt_row2_background',alt_row3_background='$alt_row3_background',user_group='$user_group',web_logo='$web_logo' where colors_id='$colors_id';";
+			$stmt="UPDATE vicidial_screen_colors set colors_name='$colors_name',active='$active',menu_background='$menu_background',frame_background='$frame_background',std_row1_background='$std_row1_background',std_row2_background='$std_row2_background',std_row3_background='$std_row3_background',std_row4_background='$std_row4_background',std_row5_background='$std_row5_background',alt_row1_background='$alt_row1_background',alt_row2_background='$alt_row2_background',alt_row3_background='$alt_row3_background',button_color='$button_color',user_group='$user_group',web_logo='$web_logo' where colors_id='$colors_id';";
 			$rslt=mysql_to_mysqli($stmt, $link);
 
 			echo "<br>"._QXZ("SCREEN COLORS MODIFIED").": $colors_id\n";
@@ -18469,7 +18481,7 @@ if ($ADD==411111111111111)
 					}
 				}
 
-			$stmt="UPDATE system_settings set use_non_latin='$use_non_latin',webroot_writable='$webroot_writable',enable_queuemetrics_logging='$enable_queuemetrics_logging',queuemetrics_server_ip='$queuemetrics_server_ip',queuemetrics_dbname='$queuemetrics_dbname',queuemetrics_login='$queuemetrics_login',queuemetrics_pass='$queuemetrics_pass',queuemetrics_url='$queuemetrics_url',queuemetrics_log_id='$queuemetrics_log_id',queuemetrics_eq_prepend='$queuemetrics_eq_prepend',vicidial_agent_disable='$vicidial_agent_disable',allow_sipsak_messages='$allow_sipsak_messages',admin_home_url='$admin_home_url',enable_agc_xfer_log='$enable_agc_xfer_log',timeclock_end_of_day='$timeclock_end_of_day',vdc_header_date_format='$vdc_header_date_format',vdc_customer_date_format='$vdc_customer_date_format',vdc_header_phone_format='$vdc_header_phone_format',vdc_agent_api_active='$vdc_agent_api_active',enable_vtiger_integration='$enable_vtiger_integration',vtiger_server_ip='$vtiger_server_ip',vtiger_dbname='$vtiger_dbname',vtiger_login='$vtiger_login',vtiger_pass='$vtiger_pass',vtiger_url='$vtiger_url',qc_features_active='$qc_features_active',outbound_autodial_active='$outbound_autodial_active',outbound_calls_per_second='$outbound_calls_per_second',enable_tts_integration='$enable_tts_integration',agentonly_callback_campaign_lock='$agentonly_callback_campaign_lock',sounds_central_control_active='$sounds_central_control_active',sounds_web_server='$sounds_web_server',sounds_web_directory='$sounds_web_directory',active_voicemail_server='$active_voicemail_server',auto_dial_limit='$auto_dial_limit',user_territories_active='$user_territories_active',allow_custom_dialplan='$allow_custom_dialplan',enable_second_webform='$enable_second_webform',default_webphone='$default_webphone',default_external_server_ip='$default_external_server_ip',webphone_url='" . mysqli_real_escape_string($link, $webphone_url) . "',enable_agc_dispo_log='$enable_agc_dispo_log',queuemetrics_loginout='$queuemetrics_loginout',callcard_enabled='$callcard_enabled',queuemetrics_callstatus='$queuemetrics_callstatus',default_codecs='$default_codecs',admin_web_directory='$admin_web_directory',label_title='$label_title',label_first_name='$label_first_name',label_middle_initial='$label_middle_initial',label_last_name='$label_last_name',label_address1='$label_address1',label_address2='$label_address2',label_address3='$label_address3',label_city='$label_city',label_state='$label_state',label_province='$label_province',label_postal_code='$label_postal_code',label_vendor_lead_code='$label_vendor_lead_code',label_gender='$label_gender',label_phone_number='$label_phone_number',label_phone_code='$label_phone_code',label_alt_phone='$label_alt_phone',label_security_phrase='$label_security_phrase',label_email='$label_email',label_comments='$label_comments',custom_fields_enabled='$custom_fields_enabled',slave_db_server='$slave_db_server',reports_use_slave_db='$reports_use_slave_db'$custom_reports_slave_SQL,webphone_systemkey='$webphone_systemkey',first_login_trigger='$first_login_trigger',default_phone_registration_password='$default_phone_registration_password',default_phone_login_password='$default_phone_login_password',default_server_password='$default_server_password',admin_modify_refresh='$admin_modify_refresh',nocache_admin='$nocache_admin',generate_cross_server_exten='$generate_cross_server_exten',queuemetrics_addmember_enabled='$queuemetrics_addmember_enabled',queuemetrics_dispo_pause='$queuemetrics_dispo_pause',label_hide_field_logs='$label_hide_field_logs',queuemetrics_pe_phone_append='$queuemetrics_pe_phone_append',test_campaign_calls='$test_campaign_calls',agents_calls_reset='$agents_calls_reset',default_voicemail_timezone='$default_voicemail_timezone',default_local_gmt='$default_local_gmt',noanswer_log='$noanswer_log',alt_log_server_ip='$alt_log_server_ip',alt_log_dbname='$alt_log_dbname',alt_log_login='$alt_log_login',alt_log_pass='$alt_log_pass',tables_use_alt_log_db='$tables_use_alt_log_db',did_agent_log='$did_agent_log',campaign_cid_areacodes_enabled='$campaign_cid_areacodes_enabled',pllb_grouping_limit='$pllb_grouping_limit',did_ra_extensions_enabled='$did_ra_extensions_enabled',expanded_list_stats='$expanded_list_stats',contacts_enabled='$contacts_enabled',call_menu_qualify_enabled='$call_menu_qualify_enabled',admin_list_counts='$admin_list_counts',allow_voicemail_greeting='$allow_voicemail_greeting',queuemetrics_socket='$queuemetrics_socket',queuemetrics_socket_url='$queuemetrics_socket_url',enhanced_disconnect_logging='$enhanced_disconnect_logging',allow_emails='$allow_emails',level_8_disable_add='$level_8_disable_add',queuemetrics_record_hold='$queuemetrics_record_hold',country_code_list_stats='$country_code_list_stats',queuemetrics_pause_type='$queuemetrics_pause_type',frozen_server_call_clear='$frozen_server_call_clear',callback_time_24hour='$callback_time_24hour',enable_languages='$enable_languages',language_method='$language_method',meetme_enter_login_filename='$meetme_enter_login_filename',meetme_enter_leave3way_filename='$meetme_enter_leave3way_filename',enable_did_entry_list_id='$enable_did_entry_list_id',enable_third_webform='$enable_third_webform',allow_chats='$allow_chats',chat_url='$chat_url',chat_timeout='$chat_timeout',agent_debug_logging='$agent_debug_logging',default_language='$default_language',agent_whisper_enabled='$agent_whisper_enabled',user_hide_realtime_enabled='$user_hide_realtime_enabled',usacan_phone_dialcode_fix='$usacan_phone_dialcode_fix',cache_carrier_stats_realtime='$cache_carrier_stats_realtime',log_recording_access='$log_recording_access',report_default_format='$report_default_format',alt_ivr_logging='$alt_ivr_logging',default_phone_code='$default_phone_code',admin_row_click='$admin_row_click',admin_screen_colors='$admin_screen_colors',ofcom_uk_drop_calc='$ofcom_uk_drop_calc',agent_screen_colors='$agent_screen_colors',script_remove_js='$script_remove_js',manual_auto_next='$manual_auto_next',user_new_lead_limit='$user_new_lead_limit',agent_xfer_park_3way='$agent_xfer_park_3way',agent_soundboards='$agent_soundboards',web_loader_phone_length='$web_loader_phone_length',agent_script='$agent_script',agent_chat_screen_colors='$agent_chat_screen_colors',enable_auto_reports='$enable_auto_reports',enable_pause_code_limits='$enable_pause_code_limits',enable_drop_lists='$enable_drop_lists',allow_ip_lists='$allow_ip_lists',system_ip_blacklist='$system_ip_blacklist',agent_push_events='$agent_push_events',agent_push_url='$agent_push_url',hide_inactive_lists='$hide_inactive_lists',allow_manage_active_lists='$allow_manage_active_lists',expired_lists_inactive='$expired_lists_inactive',did_system_filter='$did_system_filter',anyone_callback_inactive_lists='$anyone_callback_inactive_lists',enable_gdpr_download_deletion='$enable_gdpr_download_deletion',source_id_display='$source_id_display',agent_logout_link='$agent_logout_link',manual_dial_validation='$manual_dial_validation',mute_recordings='$mute_recordings',user_admin_redirect='$user_admin_redirect',list_status_modification_confirmation='$list_status_modification_confirmation',sip_event_logging='$sip_event_logging',call_quota_lead_ranking='$call_quota_lead_ranking',enable_second_script='$enable_second_script',enable_first_webform='$enable_first_webform',recording_buttons='$recording_buttons',opensips_cid_name='$opensips_cid_name',require_password_length='$require_password_length',user_account_emails='$user_account_emails',outbound_cid_any='$outbound_cid_any',entries_per_page='$entries_per_page',browser_call_alerts='$browser_call_alerts',queuemetrics_pausereason='$queuemetrics_pausereason',inbound_answer_config='$inbound_answer_config'$custom_dialplanSQL;";
+			$stmt="UPDATE system_settings set use_non_latin='$use_non_latin',webroot_writable='$webroot_writable',enable_queuemetrics_logging='$enable_queuemetrics_logging',queuemetrics_server_ip='$queuemetrics_server_ip',queuemetrics_dbname='$queuemetrics_dbname',queuemetrics_login='$queuemetrics_login',queuemetrics_pass='$queuemetrics_pass',queuemetrics_url='$queuemetrics_url',queuemetrics_log_id='$queuemetrics_log_id',queuemetrics_eq_prepend='$queuemetrics_eq_prepend',vicidial_agent_disable='$vicidial_agent_disable',allow_sipsak_messages='$allow_sipsak_messages',admin_home_url='$admin_home_url',enable_agc_xfer_log='$enable_agc_xfer_log',timeclock_end_of_day='$timeclock_end_of_day',vdc_header_date_format='$vdc_header_date_format',vdc_customer_date_format='$vdc_customer_date_format',vdc_header_phone_format='$vdc_header_phone_format',vdc_agent_api_active='$vdc_agent_api_active',enable_vtiger_integration='$enable_vtiger_integration',vtiger_server_ip='$vtiger_server_ip',vtiger_dbname='$vtiger_dbname',vtiger_login='$vtiger_login',vtiger_pass='$vtiger_pass',vtiger_url='$vtiger_url',qc_features_active='$qc_features_active',outbound_autodial_active='$outbound_autodial_active',outbound_calls_per_second='$outbound_calls_per_second',enable_tts_integration='$enable_tts_integration',agentonly_callback_campaign_lock='$agentonly_callback_campaign_lock',sounds_central_control_active='$sounds_central_control_active',sounds_web_server='$sounds_web_server',sounds_web_directory='$sounds_web_directory',active_voicemail_server='$active_voicemail_server',auto_dial_limit='$auto_dial_limit',user_territories_active='$user_territories_active',allow_custom_dialplan='$allow_custom_dialplan',enable_second_webform='$enable_second_webform',default_webphone='$default_webphone',default_external_server_ip='$default_external_server_ip',webphone_url='" . mysqli_real_escape_string($link, $webphone_url) . "',enable_agc_dispo_log='$enable_agc_dispo_log',queuemetrics_loginout='$queuemetrics_loginout',callcard_enabled='$callcard_enabled',queuemetrics_callstatus='$queuemetrics_callstatus',default_codecs='$default_codecs',admin_web_directory='$admin_web_directory',label_title='$label_title',label_first_name='$label_first_name',label_middle_initial='$label_middle_initial',label_last_name='$label_last_name',label_address1='$label_address1',label_address2='$label_address2',label_address3='$label_address3',label_city='$label_city',label_state='$label_state',label_province='$label_province',label_postal_code='$label_postal_code',label_vendor_lead_code='$label_vendor_lead_code',label_gender='$label_gender',label_phone_number='$label_phone_number',label_phone_code='$label_phone_code',label_alt_phone='$label_alt_phone',label_security_phrase='$label_security_phrase',label_email='$label_email',label_comments='$label_comments',custom_fields_enabled='$custom_fields_enabled',slave_db_server='$slave_db_server',reports_use_slave_db='$reports_use_slave_db'$custom_reports_slave_SQL,webphone_systemkey='$webphone_systemkey',first_login_trigger='$first_login_trigger',default_phone_registration_password='$default_phone_registration_password',default_phone_login_password='$default_phone_login_password',default_server_password='$default_server_password',admin_modify_refresh='$admin_modify_refresh',nocache_admin='$nocache_admin',generate_cross_server_exten='$generate_cross_server_exten',queuemetrics_addmember_enabled='$queuemetrics_addmember_enabled',queuemetrics_dispo_pause='$queuemetrics_dispo_pause',label_hide_field_logs='$label_hide_field_logs',queuemetrics_pe_phone_append='$queuemetrics_pe_phone_append',test_campaign_calls='$test_campaign_calls',agents_calls_reset='$agents_calls_reset',default_voicemail_timezone='$default_voicemail_timezone',default_local_gmt='$default_local_gmt',noanswer_log='$noanswer_log',alt_log_server_ip='$alt_log_server_ip',alt_log_dbname='$alt_log_dbname',alt_log_login='$alt_log_login',alt_log_pass='$alt_log_pass',tables_use_alt_log_db='$tables_use_alt_log_db',did_agent_log='$did_agent_log',campaign_cid_areacodes_enabled='$campaign_cid_areacodes_enabled',pllb_grouping_limit='$pllb_grouping_limit',did_ra_extensions_enabled='$did_ra_extensions_enabled',expanded_list_stats='$expanded_list_stats',contacts_enabled='$contacts_enabled',call_menu_qualify_enabled='$call_menu_qualify_enabled',admin_list_counts='$admin_list_counts',allow_voicemail_greeting='$allow_voicemail_greeting',queuemetrics_socket='$queuemetrics_socket',queuemetrics_socket_url='$queuemetrics_socket_url',enhanced_disconnect_logging='$enhanced_disconnect_logging',allow_emails='$allow_emails',level_8_disable_add='$level_8_disable_add',queuemetrics_record_hold='$queuemetrics_record_hold',country_code_list_stats='$country_code_list_stats',queuemetrics_pause_type='$queuemetrics_pause_type',frozen_server_call_clear='$frozen_server_call_clear',callback_time_24hour='$callback_time_24hour',enable_languages='$enable_languages',language_method='$language_method',meetme_enter_login_filename='$meetme_enter_login_filename',meetme_enter_leave3way_filename='$meetme_enter_leave3way_filename',enable_did_entry_list_id='$enable_did_entry_list_id',enable_third_webform='$enable_third_webform',allow_chats='$allow_chats',chat_url='$chat_url',chat_timeout='$chat_timeout',agent_debug_logging='$agent_debug_logging',default_language='$default_language',agent_whisper_enabled='$agent_whisper_enabled',user_hide_realtime_enabled='$user_hide_realtime_enabled',usacan_phone_dialcode_fix='$usacan_phone_dialcode_fix',cache_carrier_stats_realtime='$cache_carrier_stats_realtime',log_recording_access='$log_recording_access',report_default_format='$report_default_format',alt_ivr_logging='$alt_ivr_logging',default_phone_code='$default_phone_code',admin_row_click='$admin_row_click',admin_screen_colors='$admin_screen_colors',ofcom_uk_drop_calc='$ofcom_uk_drop_calc',agent_screen_colors='$agent_screen_colors',script_remove_js='$script_remove_js',manual_auto_next='$manual_auto_next',user_new_lead_limit='$user_new_lead_limit',agent_xfer_park_3way='$agent_xfer_park_3way',agent_soundboards='$agent_soundboards',web_loader_phone_length='$web_loader_phone_length',agent_script='$agent_script',agent_chat_screen_colors='$agent_chat_screen_colors',enable_auto_reports='$enable_auto_reports',enable_pause_code_limits='$enable_pause_code_limits',enable_drop_lists='$enable_drop_lists',allow_ip_lists='$allow_ip_lists',system_ip_blacklist='$system_ip_blacklist',agent_push_events='$agent_push_events',agent_push_url='$agent_push_url',hide_inactive_lists='$hide_inactive_lists',allow_manage_active_lists='$allow_manage_active_lists',expired_lists_inactive='$expired_lists_inactive',did_system_filter='$did_system_filter',anyone_callback_inactive_lists='$anyone_callback_inactive_lists',enable_gdpr_download_deletion='$enable_gdpr_download_deletion',source_id_display='$source_id_display',agent_logout_link='$agent_logout_link',manual_dial_validation='$manual_dial_validation',mute_recordings='$mute_recordings',user_admin_redirect='$user_admin_redirect',list_status_modification_confirmation='$list_status_modification_confirmation',sip_event_logging='$sip_event_logging',call_quota_lead_ranking='$call_quota_lead_ranking',enable_second_script='$enable_second_script',enable_first_webform='$enable_first_webform',recording_buttons='$recording_buttons',opensips_cid_name='$opensips_cid_name',require_password_length='$require_password_length',user_account_emails='$user_account_emails',outbound_cid_any='$outbound_cid_any',entries_per_page='$entries_per_page',browser_call_alerts='$browser_call_alerts',queuemetrics_pausereason='$queuemetrics_pausereason',inbound_answer_config='$inbound_answer_config',enable_international_dncs='$enable_international_dncs'$custom_dialplanSQL;";
 			$rslt=mysql_to_mysqli($stmt, $link);
 
 			if ( ($meetme_enter_login_filename != $SSmeetme_enter_login_filename) or ($meetme_enter_leave3way_filename != $SSmeetme_enter_leave3way_filename) )
@@ -22789,7 +22801,7 @@ if ($ADD==3)
 				echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("Modify Lists").": </td><td align=left><select size=1 name=modify_lists><option>0</option><option>1</option><option SELECTED>$modify_lists</option></select>$NWB#users-modify_sections$NWE</td></tr>\n";
 				echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("Delete Lists").": </td><td align=left><select size=1 name=delete_lists><option>0</option><option>1</option><option SELECTED>$delete_lists</option></select>$NWB#users-delete_lists$NWE</td></tr>\n";
 				echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("Load Leads").": </td><td align=left><select size=1 name=load_leads><option>0</option><option>1</option><option SELECTED>$load_leads</option></select>$NWB#users-load_leads$NWE</td></tr>\n";
-				echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("Modify Leads").": </td><td align=left><select size=1 name=modify_leads><option>0</option><option>1</option><option SELECTED>$modify_leads</option></select>$NWB#users-modify_leads$NWE</td></tr>\n";
+				echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("Modify Leads").": </td><td align=left><select size=1 name=modify_leads><option>0</option><option>1</option><option>2</option><option SELECTED>$modify_leads</option></select>$NWB#users-modify_leads$NWE</td></tr>\n";
 				echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("GDPR-Compliant Export Delete Leads").": </td><td align=left><select size=1 name=export_gdpr_leads>";
 				for ($i=0; $i<=$SSenable_gdpr_download_deletion; $i++) 
 					{
@@ -22942,7 +22954,7 @@ if ($ADD==3)
 					echo "<tr bgcolor=#$SSstd_row1_background><td align=right>"._QXZ("Alter Admin Interface Options").": </td><td align=left><select size=1 name=alter_admin_interface_options><option>0</option><option>1</option><option SELECTED>$alter_admin_interface_options</option></select>$NWB#users-alter_admin_interface_options$NWE</td></tr>\n";
 					}
 				}
-			echo "<tr bgcolor=#$SSstd_row1_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row1_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 			echo "</TABLE></center>\n";
 
 			if ($LOGdelete_users > 0)
@@ -23762,7 +23774,7 @@ if ($ADD==31)
 
 			echo "$dial_statuses_list";
 			echo "</select> &nbsp; \n";
-			echo "<input type=submit name=submit value='"._QXZ("ADD")."'> &nbsp; &nbsp; $NWB#campaigns-dial_status$NWE</td></tr>\n";
+			echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("ADD")."'> &nbsp; &nbsp; $NWB#campaigns-dial_status$NWE</td></tr>\n";
 
 			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("List Order").": </td><td align=left>";
 			if ($ALTmultiDISABLE > 0)
@@ -25083,7 +25095,7 @@ if ($ADD==31)
 
 		echo "<input type=hidden name=form_end value=\"END\">\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center></FORM>\n";
 
 		if ($SSbrowser_call_alerts > 0)
@@ -25199,7 +25211,7 @@ if ($ADD==31)
 				$o++;
 				}
 
-			echo "<TR><TD COLSPAN=9 ALIGN=CENTER><input type=button onClick='return ConfirmListStatusChange($SSlist_status_modification_confirmation, this.form)' value=\""._QXZ("SUBMIT ACTIVE LIST CHANGES")."\"></TD></TR>\n";
+			echo "<TR><TD COLSPAN=9 ALIGN=CENTER><input style='background-color:#$SSbutton_color' type=button onClick='return ConfirmListStatusChange($SSlist_status_modification_confirmation, this.form)' value=\""._QXZ("SUBMIT ACTIVE LIST CHANGES")."\"></TD></TR>\n";
 			echo "</TABLE>";
 			echo "<input type='hidden' name='last_list_statuses' id='last_list_statuses' value='$last_list_statuses'>";
 			echo "</center><BR></FORM>\n";
@@ -25452,7 +25464,7 @@ if ($ADD==31)
 				echo _QXZ("code").": <input type=text name=phone_code id=phone_code size=2 maxlength=10 value=\"\"> &nbsp; ";
 				echo _QXZ("number").": <input type=text name=phone_number id=phone_number size=14 maxlength=20 value=\"\"> &nbsp; ";
 				echo _QXZ("server").": <select size=1 name=old_server_ip>$servers_menu</select> &nbsp; ";
-				echo "<input type=submit value=\""._QXZ("PLACE TEST CALL")."\"> &nbsp; $NWB#settings-test_campaign_calls$NWE</form><br><br>\n";
+				echo "<input style='background-color:#$SSbutton_color' type=submit value=\""._QXZ("PLACE TEST CALL")."\"> &nbsp; $NWB#settings-test_campaign_calls$NWE</form><br><br>\n";
 				}
 			else
 				{
@@ -25610,7 +25622,7 @@ if ($ADD==31)
 			echo "</td>\n";
 			echo "<td><input type=text name=min_sec size=3 maxlength=5 value=\"$rowx[12]\" class=\"cust_form\"></td>\n";
 			echo "<td><input type=text name=max_sec size=3 maxlength=5 value=\"$rowx[13]\" class=\"cust_form\"></td>\n";
-			echo "</td><td align=center nowrap><font size=1><input type=submit name=submit value='"._QXZ("MODIFY")."'> &nbsp; &nbsp; &nbsp; &nbsp; \n";
+			echo "</td><td align=center nowrap><font size=1><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("MODIFY")."'> &nbsp; &nbsp; &nbsp; &nbsp; \n";
 			echo " &nbsp; \n";
 			
 			if (preg_match("/^B$|^NA$|^DNC$|^NA$|^DROP$|^INCALL$|^QUEUE$|^NEW$/i",$rowx[0]))
@@ -25647,7 +25659,7 @@ if ($ADD==31)
 		echo "$cats_list";
 		echo "<option selected value=\"$AScategory\">$AScategory - $catsname_list[$AScategory]</option>\n";
 		echo "</select> &nbsp; <BR>\n";
-		echo "<input type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
 
 		echo "</FORM><br><br></center></center>\n";
 
@@ -25705,7 +25717,7 @@ if ($ADD==31)
 		echo "<option value=\"LTMGAD-----"._QXZ("Send to AM Message and Dispo")."\">LTMGAD - "._QXZ("Send to AM Message and Dispo")."</option>\n";
 		echo "<option value=\"XAMMAD-----"._QXZ("Send to AM Message and Dispo")."\">XAMMAD - "._QXZ("Send to AM Message and Dispo")."</option>\n";
 		echo "</select> &nbsp; \n";
-		echo "<input type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
 		echo "</form><BR>\n";
 		}
 
@@ -25785,7 +25797,7 @@ if ($ADD==31)
 			echo "<td><font size=1><input type=text size=5 maxlength=3 name=attempt_maximum value=\"$RECYCLE_attempt[$o]\"></td>\n";
 			echo "<td align=right><font size=2>$recycle_limit &nbsp; </td>\n";
 			echo "<td><select size=1 name=active><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$RECYCLE_active[$o]' SELECTED>"._QXZ("$RECYCLE_active[$o]")."</option></select></td>\n";
-			echo "<td><font size=1><input type=submit name=submit value='"._QXZ("MODIFY")."'></form></td>\n";
+			echo "<td><font size=1><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("MODIFY")."'></form></td>\n";
 			echo "<td><font size=1><a href=\"$PHP_SELF?ADD=65&campaign_id=$campaign_id&status=$RECYCLE_status[$o]\">"._QXZ("DELETE")."</a></td></tr>\n";
 			$o++;
 			}
@@ -25801,7 +25813,7 @@ if ($ADD==31)
 		echo "</select> &nbsp; \n";
 		echo _QXZ("Attempt Delay").": <input type=text size=7 maxlength=5 name=attempt_delay>\n";
 		echo _QXZ("Attempt Maximum").": <input type=text size=5 maxlength=3 name=attempt_maximum>\n";
-		echo "<input type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
 
 		echo "</FORM><br>\n";
 		echo "<br>\n";
@@ -25840,7 +25852,7 @@ if ($ADD==31)
 		echo _QXZ("Status").": <select size=1 name=status>\n";
 		echo "$LRstatuses_list\n";
 		echo "</select> &nbsp; \n";
-		echo "<input type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
 
 		echo "</FORM><br>\n";
 		}
@@ -25884,7 +25896,7 @@ if ($ADD==31)
 				echo "<td><input type=text size=5 maxlength=5 name=time_limit value=\"$rowx[4]\"></td>\n";
 				}
 			echo "<td><select size=1 name=require_mgr_approval><option value='YES'>"._QXZ("YES")."</option><option value='NO'>"._QXZ("NO")."</option><option value='$rowx[5]' SELECTED>"._QXZ("$rowx[5]")."</option></select></td>\n";
-			echo "<td><font size=1><input type=submit name=submit value='"._QXZ("MODIFY")."'></form></td>\n";
+			echo "<td><font size=1><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("MODIFY")."'></form></td>\n";
 			echo "<td><font size=1><a href=\"$PHP_SELF?ADD=67&campaign_id=$campaign_id&pause_code=$rowx[0]\">"._QXZ("DELETE")."</a></td>\n";
 			echo "</tr>\n";
 			}
@@ -25902,7 +25914,7 @@ if ($ADD==31)
 			{
 			echo " &nbsp; "._QXZ("Time Limit").": <input type=text size=5 maxlength=5 name=time_limit>\n";
 			}
-		echo "<BR><input type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
+		echo "<BR><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
 
 		echo "</center></FORM><br>\n";
 		}
@@ -25983,7 +25995,7 @@ if ($ADD==31)
 		echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("QC Get Record Launch").": </td><td><select size=1 name=qc_get_record_launch><option value='NONE'>"._QXZ("NONE")."</option><option value='SCRIPT'>"._QXZ("SCRIPT")."</option><option value='WEBFORM'>"._QXZ("WEBFORM")."</option><option value='QCSCRIPT'>"._QXZ("QCSCRIPT")."</option><option value='QCWEBFORM'>"._QXZ("QCWEBFORM")."</option><option value='$qc_get_record_launch' SELECTED>"._QXZ("$qc_get_record_launch")."</option></select> $NWB#campaigns-qc_get_record_launch$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("QC Show Recording").": </td><td><select size=1 name=qc_show_recording><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$qc_show_recording' SELECTED>"._QXZ("$qc_show_recording")."</option></select> $NWB#campaigns-qc_show_recording$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row2_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row2_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</table>\n";
 		echo "<BR></center></FORM><br>\n";
 		}
@@ -26025,7 +26037,7 @@ if ($ADD==31)
 		echo "<tr bgcolor=#$SSstd_row2_background><td align=right><a href=\"$PHP_SELF?ADD=3511&menu_id=$survey_menu_id\">"._QXZ("Survey Call Menu")."</a>: </td><td align=left><select size=1 name=survey_menu_id id=survey_menu_id>$call_menu_list<option SELECTED>$survey_menu_id</option></select>$NWB#campaigns-survey_menu_id$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("Survey Recording").": </td><td align=left><select size=1 name=survey_recording id=survey_recording><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='Y_WITH_AMD'>"._QXZ("Y_WITH_AMD")."</option><option value='$survey_recording' SELECTED>"._QXZ("$survey_recording")."</option></select>$NWB#campaigns-survey_recording$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row2_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row2_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</table>\n";
 		echo "<BR></center></FORM><br>\n";
 		}
@@ -26047,7 +26059,7 @@ if ($ADD==31)
 		echo " "._QXZ("Number").": <input type=text size=18 maxlength=50 name=preset_number style=\"font-family: sans-serif; font-size: 10px;\">\n";
 		echo " "._QXZ("DTMF").": <input type=text size=5 maxlength=50 name=preset_dtmf style=\"font-family: sans-serif; font-size: 10px;\">\n";
 		echo " &nbsp; "._QXZ("Hide Number").": <select size=1 name=preset_hide_number style=\"font-family: sans-serif; font-size: 10px;\"><option value='Y'>"._QXZ("Y")."</option><option value='N' SELECTED>"._QXZ("N")."</option></select> &nbsp;\n";
-		echo "<input type=submit name=submit value='"._QXZ("ADD")."' style=\"font-family: sans-serif; font-size: 10px;\"><BR>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("ADD")."' style=\"font-family: sans-serif; font-size: 10px;\"><BR>\n";
 		echo "</font></center></FORM><br>\n";
 
 		echo "<center><table width=700 cellspacing=3>\n";
@@ -26073,7 +26085,7 @@ if ($ADD==31)
 			echo "<td><input type=text size=20 maxlength=50 name=preset_number value=\"$rowx[1]\" style=\"font-family: sans-serif; font-size: 10px;\"></td>\n";
 			echo "<td><input type=text size=20 maxlength=50 name=preset_dtmf value=\"$rowx[2]\" style=\"font-family: sans-serif; font-size: 10px;\"></td>\n";
 			echo "<td><select size=1 name=preset_hide_number style=\"font-family: sans-serif; font-size: 10px;\"><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$rowx[3]' SELECTED>"._QXZ("$rowx[3]")."</option></select></td>\n";
-			echo "<td><font size=1><input type=submit name=submit value='"._QXZ("MODIFY")."' style=\"font-family: sans-serif; font-size: 10px;\"></td>\n";
+			echo "<td><font size=1><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("MODIFY")."' style=\"font-family: sans-serif; font-size: 10px;\"></td>\n";
 			echo "<td><font size=1><a href=\"$PHP_SELF?ADD=601&campaign_id=$campaign_id&preset_name=$rowx[0]\">"._QXZ("DELETE")."</a></td></tr></form>\n";
 			}
 
@@ -26170,7 +26182,7 @@ if ($ADD==31)
 			}
 
 		echo "</table>\n";
-		echo "<input type=submit name=submit value=\""._QXZ("SUBMIT CHANGES")."\"></form><br><br>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value=\""._QXZ("SUBMIT CHANGES")."\"></form><br><br>\n";
 
 		echo "<br>"._QXZ("ADD NEW AREACODE CID")."<BR><form action=$PHP_SELF method=POST>\n";
 		echo "<input type=hidden name=ADD value=202>\n";
@@ -26179,7 +26191,7 @@ if ($ADD==31)
 		echo _QXZ("Areacode").": <input type=text size=7 maxlength=5 name=areacode>\n";
 		echo _QXZ("Outbound CID").": <input type=text size=20 maxlength=20 name=outbound_cid><BR>\n";
 		echo _QXZ("Description").": <input type=text size=50 maxlength=100 name=cid_description>\n";
-		echo "<input type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
 
 		echo "</center></FORM><br>\n";
 		if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
@@ -26486,7 +26498,7 @@ if ($ADD==34)
 
 			echo "$dial_statuses_list";
 			echo "</select> &nbsp; \n";
-			echo "<input type=submit name=submit value='"._QXZ("ADD")."'> &nbsp; &nbsp; $NWB#campaigns-dial_status$NWE</td></tr>\n";
+			echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("ADD")."'> &nbsp; &nbsp; $NWB#campaigns-dial_status$NWE</td></tr>\n";
 
 			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("List Order").": </td><td align=left>";
 			if ($ALTmultiDISABLE > 0)
@@ -26721,7 +26733,7 @@ if ($ADD==34)
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Get Call Launch").": </td><td align=left>"._QXZ("$get_call_launch")."</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center></FORM>\n";
 
 		echo "<center>\n";
@@ -26823,7 +26835,7 @@ if ($ADD==34)
 			$o++;
 			}
 
-		echo "<TR><TD COLSPAN=9 ALIGN=CENTER><input type=button onClick='return ConfirmListStatusChange($SSlist_status_modification_confirmation, this.form)' value=\""._QXZ("SUBMIT ACTIVE LIST CHANGES")."\"></TD></TR>\n";
+		echo "<TR><TD COLSPAN=9 ALIGN=CENTER><input style='background-color:#$SSbutton_color' type=button onClick='return ConfirmListStatusChange($SSlist_status_modification_confirmation, this.form)' value=\""._QXZ("SUBMIT ACTIVE LIST CHANGES")."\"></TD></TR>\n";
 		echo "</TABLE>";
 		echo "<input type='hidden' name='last_list_statuses' id='last_list_statuses' value='$last_list_statuses'>";
 		echo "</center><BR></FORM>\n";
@@ -27194,7 +27206,7 @@ if ( ($ADD==34) or ($ADD==31) )
 			echo _QXZ("Difference")." %: <input type=text size=4 name=PCT_DIFF_$vcl_id id=PCT_DIFF_$vcl_id value=0 readonly>\n";
 			echo "</td>\n";
 
-			echo "<td colspan=2><input type=button name=submit_$vcl_id id=submit_$vcl_id value=\""._QXZ("SUBMIT")."\" onClick=\"submit_mix('$vcl_id','$Ms_to_print')\"> &nbsp; \n";
+			echo "<td colspan=2><input style='background-color:#$SSbutton_color' type=button name=submit_$vcl_id id=submit_$vcl_id value=\""._QXZ("SUBMIT")."\" onClick=\"submit_mix('$vcl_id','$Ms_to_print')\"> &nbsp; \n";
 			echo "<span id=ERROR_$vcl_id></span>\n";
 			echo "</form></td></tr>\n";
 
@@ -27213,7 +27225,7 @@ if ( ($ADD==34) or ($ADD==31) )
 			
 			if ($q > 39) {$AE_disabled = 'DISABLED';}
 			else {$AE_disabled = '';}
-			echo "<input type=submit name=submit value=\""._QXZ("ADD ENTRY")."\" $AE_disabled>\n";
+			echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value=\""._QXZ("ADD ENTRY")."\" $AE_disabled>\n";
 			echo "</form></td>\n";
 
 			$X='X';
@@ -27252,7 +27264,7 @@ if ( ($ADD==34) or ($ADD==31) )
 		echo "<td>"._QXZ("Dial Status").": <select size=1 name=status>\n";
 		echo "$dial_statuses_list";
 		echo "</select></td>\n";
-		echo "<td> &nbsp; <input type=submit name=submit value='"._QXZ("SUBMIT")."'></form></td>\n";
+		echo "<td> &nbsp; <input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'></form></td>\n";
 		echo "</tr>\n";
 		echo "</table>\n";
 
@@ -28200,7 +28212,7 @@ if ($ADD==311)
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Time Zone Setting").": </td><td align=left><select size=1 name=time_zone_setting><option value='COUNTRY_AND_AREA_CODE'>"._QXZ("COUNTRY_AND_AREA_CODE")."</option><option value='POSTAL_CODE'>"._QXZ("POSTAL_CODE")."</option><option value='NANPA_PREFIX'>"._QXZ("NANPA_PREFIX")."</option><option value='OWNER_TIME_ZONE_CODE'>"._QXZ("OWNER_TIME_ZONE_CODE")."</option><option value='$time_zone_setting' SELECTED>"._QXZ("$time_zone_setting")."</option></select>$NWB#lists-time_zone_setting$NWE</td></tr>\n";
 
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 
 		echo "<center>\n";
@@ -28485,7 +28497,7 @@ if ($ADD==311)
 				}
 
 			echo "<tr><td><font size=1>"._QXZ("SUBTOTALS")."</td><td><font size=1>$lead_list[Y_count]</td><td><font size=1>$lead_list[N_count]</td>\n";
-			echo "<td rowspan=2 align=center><input type=submit value=\""._QXZ("SUBMIT")."\"></td></tr>\n";
+			echo "<td rowspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit value=\""._QXZ("SUBMIT")."\"></td></tr>\n";
 			echo "<tr bgcolor=\"#$SSstd_row1_background\"><td><font size=1>"._QXZ("TOTAL")."</td><td colspan=3 align=center><font size=1>$lead_list[count]</td></tr>\n";
 			echo "</form>\n";
 
@@ -29155,7 +29167,7 @@ if ($ADD==331)
 			echo "<option>TIMEOT</option>\n";
 			echo "<option>PDROP</option>\n";
 			echo "</select> &nbsp; \n";
-			echo "<input type=submit name=submit value='"._QXZ("ADD")."'> &nbsp; &nbsp; $NWB#drop_lists-drop_statuses$NWE</td></tr>\n";
+			echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("ADD")."'> &nbsp; &nbsp; $NWB#drop_lists-drop_statuses$NWE</td></tr>\n";
 
 			$closer_campaignsSQL = 'closer_campaigns';
 			$groups_list='';
@@ -29200,7 +29212,7 @@ if ($ADD==331)
 			echo "$groups_list";
 			echo "</td></tr>\n";
 
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 			echo "</TABLE></center>\n";
 
 			echo "</center><BR><BR>\n";
@@ -30326,7 +30338,7 @@ if ($ADD==3111)
 		echo "<tr bgcolor=#$SSstd_row3_background><td align=right><a href=\"$PHP_SELF?ADD=3511&menu_id=$inbound_survey_callmenu\">"._QXZ("After Call End Call Menu").":</a></td><td align=left><select size=1 name=inbound_survey_callmenu id=inbound_survey_callmenu>$call_menu_list<option SELECTED>$inbound_survey_callmenu</option></select>$NWB#inbound_groups-inbound_survey_callmenu$NWE</td></tr>\n";
 
 		echo "<input type=hidden name=form_end value=\"END\">\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 
 		if ($SSqc_features_active > 0)
 			{
@@ -30429,7 +30441,7 @@ if ($ADD==3111)
 
 			echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("QC Get Record Launch").": </td><td><select size=1 name=qc_get_record_launch><option value='NONE'>"._QXZ("NONE")."</option><option value='SCRIPT'>"._QXZ("SCRIPT")."</option><option value='WEBFORM'>"._QXZ("WEBFORM")."</option><option value='QCSCRIPT'>"._QXZ("QCSCRIPT")."</option><option value='QCWEBFORM'>"._QXZ("QCWEBFORM")."</option><option value='$qc_get_record_launch' SELECTED>"._QXZ("$qc_get_record_launch")."</option></select> $NWB#inbound_groups-qc_get_record_launch$NWE</td></tr>\n";
 			echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("QC Show Recording").": </td><td><select size=1 name=qc_show_recording><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$qc_show_recording' SELECTED>"._QXZ("$qc_show_recording")."</option></select> $NWB#inbound_groups-qc_show_recording$NWE</td></tr>\n";
-			echo "<tr bgcolor=#$SSstd_row2_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'></td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row2_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'></td></tr>\n";
 			}
 
 		echo "</table>\n";
@@ -30658,7 +30670,7 @@ if ($ADD==3111)
 
 		echo "$users_output";
 
-		echo "<tr><td align=center colspan=4><input type=submit name=submit value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr><td align=center colspan=4><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'></td></tr>\n";
 
 		echo "</table></center><br></FORM>\n";
 
@@ -31187,7 +31199,7 @@ if ($ADD==3811)
 		echo "<input type=hidden name=form_end value=\"END\">\n";
 		echo "</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 
 		if ($SSqc_features_active > 0)
 			{
@@ -31290,7 +31302,7 @@ if ($ADD==3811)
 
 			echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("QC Get Record Launch").": </td><td><select size=1 name=qc_get_record_launch><option value='NONE'>"._QXZ("NONE")."</option><option value='SCRIPT'>"._QXZ("SCRIPT")."</option><option value='WEBFORM'>"._QXZ("WEBFORM")."</option><option value='QCSCRIPT'>"._QXZ("QCSCRIPT")."</option><option value='QCWEBFORM'>"._QXZ("QCWEBFORM")."</option><option value='$qc_get_record_launch' SELECTED>"._QXZ("$qc_get_record_launch")."</option></select> $NWB#inbound_groups-qc_get_record_launch$NWE</td></tr>\n";
 			echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("QC Show Recording").": </td><td><select size=1 name=qc_show_recording><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$qc_show_recording' SELECTED>"._QXZ("$qc_show_recording")."</option></select> $NWB#inbound_groups-qc_show_recording$NWE</td></tr>\n";
-			echo "<tr bgcolor=#$SSstd_row2_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'></td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row2_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'></td></tr>\n";
 			}
 
 		echo "</table>\n";
@@ -31508,7 +31520,7 @@ if ($ADD==3811)
 
 		echo "$users_output";
 
-		echo "<tr><td align=center colspan=4><input type=submit name=submit value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr><td align=center colspan=4><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'></td></tr>\n";
 
 		echo "</table></center><br></FORM>\n";
 
@@ -32002,7 +32014,7 @@ if ($ADD==3911)
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Customer Chat Link").": </td><td align=left><a href='../chat_customer/customer_chat_code.php?group_id=$group_id'>"._QXZ("First Link")."</a> &nbsp; <a href='../chat_customer/vicidial_chat_customer_side.php?group_id=$group_id'>"._QXZ("Second Link")."</a> $NWB#inbound_groups-customer_chat_link$NWE</td></tr>\n";
 
 		echo "<input type=hidden name=form_end value=\"END\">\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 
 		if ($SSqc_features_active > 0)
 			{
@@ -32105,7 +32117,7 @@ if ($ADD==3911)
 
 			echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("QC Get Record Launch").": </td><td><select size=1 name=qc_get_record_launch><option value='NONE'>"._QXZ("NONE")."</option><option value='SCRIPT'>"._QXZ("SCRIPT")."</option><option value='WEBFORM'>"._QXZ("WEBFORM")."</option><option value='QCSCRIPT'>"._QXZ("QCSCRIPT")."</option><option value='QCWEBFORM'>"._QXZ("QCWEBFORM")."</option><option value='$qc_get_record_launch' SELECTED>"._QXZ("$qc_get_record_launch")."</option></select> $NWB#inbound_groups-qc_get_record_launch$NWE</td></tr>\n";
 			echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("QC Show Recording").": </td><td><select size=1 name=qc_show_recording><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$qc_show_recording' SELECTED>"._QXZ("$qc_show_recording")."</option></select> $NWB#inbound_groups-qc_show_recording$NWE</td></tr>\n";
-			echo "<tr bgcolor=#$SSstd_row2_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'></td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row2_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'></td></tr>\n";
 			}
 
 		echo "</table>\n";
@@ -32323,7 +32335,7 @@ if ($ADD==3911)
 
 		echo "$users_output";
 
-		echo "<tr><td align=center colspan=4><input type=submit name=submit value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr><td align=center colspan=4><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'></td></tr>\n";
 
 		echo "</table></center><br></FORM>\n";
 
@@ -32794,7 +32806,7 @@ if ($ADD==3311)
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Custom")." 4: </td><td align=left><input type=text name=custom_four size=50 maxlength=100 value=\"$custom_four\">$NWB#inbound_dids-custom_one$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Custom")." 5: </td><td align=left><input type=text name=custom_five size=50 maxlength=100 value=\"$custom_five\">$NWB#inbound_dids-custom_one$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</table>\n";
 		echo "<BR></center></FORM><br>\n";
 
@@ -32907,7 +32919,10 @@ if ($ADD==3311)
 			}
 		if ($LOGdelete_dids > 0)
 			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=5311&did_id=$did_id\">"._QXZ("DELETE THIS DID")."</a>\n";
+			if ($did_pattern == 'default')
+				{echo "<br><br><DEL>"._QXZ("DELETE THIS DID")."</DEL>\n";}
+			else
+				{echo "<br><br><a href=\"$PHP_SELF?ADD=5311&did_id=$did_id\">"._QXZ("DELETE THIS DID")."</a>\n";}
 			}
 		if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
 			{
@@ -33194,7 +33209,7 @@ if ($ADD==3321)
 			}
 
 		echo "</table>\n";
-		echo "<input type=submit name=submit value=\""._QXZ("SUBMIT CHANGES")."\"></form><br><br>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value=\""._QXZ("SUBMIT CHANGES")."\"></form><br><br>\n";
 
 		echo "<br>"._QXZ("ADD NEW REMOTE AGENT EXTENSION OVERRIDE")."<BR><form action=$PHP_SELF method=POST>\n";
 		echo "<input type=hidden name=ADD value=3321>\n";
@@ -33203,7 +33218,7 @@ if ($ADD==3321)
 		echo _QXZ("User Start").": <input type=text size=10 maxlength=20 name=user_start>\n";
 		echo _QXZ("Extension").": <input type=text size=20 maxlength=20 name=extension><BR>\n";
 		echo _QXZ("Description").": <input type=text size=50 maxlength=100 name=description>\n";
-		echo "<input type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
 
 		echo "</center></FORM><br>\n";
 
@@ -33370,7 +33385,7 @@ if ($ADD==3511)
 			echo "<tr bgcolor=#$SSstd_row4_background><td align=right></td><td align=left><input type=hidden name=answer_signal value='Y'></td></tr>";
 			}
 
-		echo "<tr><td align=center colspan=2> <input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'> </td></tr>\n";
+		echo "<tr><td align=center colspan=2> <input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'> </td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=CENTER colspan=2> "._QXZ("Call Menu Options").": </td></tr>\n";
 
 		$j=0;
@@ -33578,7 +33593,7 @@ if ($ADD==3511)
 		else
 			{echo "<tr bgcolor=#$SSstd_row4_background><td align=right> </td><td align=left> <input type=hidden name=qualify_sql value=\"\"></td></tr>\n";}
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</table>\n";
 		echo "<BR></center></FORM><br>\n";
 
@@ -33750,7 +33765,7 @@ if ($ADD==31111)
 			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Inbound Groups").": </td><td align=left>\n";
 			echo "$groups_list";
 			echo "$NWB#remote_agents-closer_campaigns$NWE</td></tr>\n";
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 			echo "</TABLE></center>\n";
 			echo _QXZ("NOTE: It can take up to 30 seconds for changes submitted on this screen to go live")."\n";
 
@@ -33826,7 +33841,7 @@ if ($ADD==3711)
 		echo "$UUgroups_list";
 		echo "<option SELECTED value=\"$user_group\">".(preg_match('/\-\-ALL\-\-/', $user_group) ? _QXZ("$user_group") : $user_group)."</option>\n";
 		echo "</select>$NWB#filter_phone_groups-user_group$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 
 		$stmt="SELECT count(*) from vicidial_filter_phone_numbers where filter_phone_group_id='$filter_phone_group_id';";
@@ -33909,7 +33924,7 @@ if ($ADD==32111)
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Call Count Today").": </td><td align=left>$call_count_today</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Last Call Time").": </td><td align=left>$last_call_time</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Last Call ID").": </td><td align=left>$last_callerid</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 
 		if ($LOGdelete_remote_agents > 0)
@@ -34346,7 +34361,7 @@ if ($ADD==311111)
 				}
 			echo " <BR>&nbsp;</td></tr>\n";
 
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 			echo "</TABLE></center>\n";
 
 
@@ -34404,7 +34419,7 @@ if ($ADD==311111)
 				}
 			echo "<select size=1 name=stage><option value=\"add\" SELECTED>"._QXZ("add")."</option><option value=\"remove\">"._QXZ("remove")."</option></select> &nbsp; \n";
 			echo _QXZ("In-Group").": <select size=1 name=group_id>$Xgroups_menu</select><br>\n";
-			echo "<input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></form>\n";
+			echo "<input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></form>\n";
 			##### END add/remove in-group as selected for all active users in this group #####
 
 			echo "<br><br><a href=\"$PHP_SELF?ADD=8111&user_group=$user_group\">"._QXZ("Click here to see all CallBack Holds in this user group")."</a><BR><BR>\n";
@@ -34552,7 +34567,7 @@ if ($ADD==3111111)
 		echo "<input type=\"button\" name=\"insertField\" value=\""._QXZ("Insert")."\" onClick=\"scriptInsertField();\"><BR>";
 		# END Insert Field
 		echo "<TEXTAREA NAME=script_text ROWS=20 COLS=50>$script_text</TEXTAREA> $NWB#scripts-script_text$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 
 
@@ -34685,7 +34700,7 @@ if ($ADD==31111111)
 		echo "<option SELECTED value=\"$user_group\">".(preg_match('/\-\-ALL\-\-/', $user_group) ? _QXZ("$user_group") : $user_group)."</option>\n";
 		echo "</select>$NWB#lead_filters-user_group$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Filter SQL").":</td><td align=left><TEXTAREA NAME=lead_filter_sql ROWS=20 COLS=50>$lead_filter_sql</TEXTAREA> $NWB#lead_filters-lead_filter_sql$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center></form>\n";
 
 		##### get campaigns listing for dynamic pulldown
@@ -34710,7 +34725,7 @@ if ($ADD==31111111)
 		echo "<select size=1 name=campaign_id>\n";
 		echo "$campaigns_list";
 		echo "</select>\n";
-		echo "<input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'>\n";
 
 
 		echo "<BR><BR><B>"._QXZ("CAMPAIGNS USING THIS FILTER").":</B><BR>\n";
@@ -35014,7 +35029,7 @@ if ($ADD==311111111)
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Thursday Start").":</td><td align=left><input type=text name=ct_thursday_start size=5 maxlength=4 value=\"$ct_thursday_start\"> </td><td align=right>"._QXZ("Thursday Stop").":</td><td align=left><input type=text name=ct_thursday_stop size=5 maxlength=4 value=\"$ct_thursday_stop\"> $NWB#call_times-ct_sunday_start$NWE &nbsp; &nbsp; &nbsp; "._QXZ("AH Override").": <input type=text name=thursday_afterhours_filename_override id=thursday_afterhours_filename_override size=20 maxlength=255 value=\"$thursday_afterhours_filename_override\"> <a href=\"javascript:launch_chooser('thursday_afterhours_filename_override','date');\">"._QXZ("audio chooser")."</a> $NWB#call_times-default_afterhours_filename_override$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Friday Start").":</td><td align=left><input type=text name=ct_friday_start size=5 maxlength=4 value=\"$ct_friday_start\"> </td><td align=right>"._QXZ("Friday Stop").":</td><td align=left><input type=text name=ct_friday_stop size=5 maxlength=4 value=\"$ct_friday_stop\"> $NWB#call_times-ct_sunday_start$NWE &nbsp; &nbsp; &nbsp; "._QXZ("AH Override").": <input type=text name=friday_afterhours_filename_override id=friday_afterhours_filename_override size=20 maxlength=255 value=\"$friday_afterhours_filename_override\"> <a href=\"javascript:launch_chooser('friday_afterhours_filename_override','date');\">"._QXZ("audio chooser")."</a> $NWB#call_times-default_afterhours_filename_override$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Saturday Start").":</td><td align=left><input type=text name=ct_saturday_start size=5 maxlength=4 value=\"$ct_saturday_start\"> </td><td align=right>"._QXZ("Saturday Stop").":</td><td align=left><input type=text name=ct_saturday_stop size=5 maxlength=4 value=\"$ct_saturday_stop\"> $NWB#call_times-ct_sunday_start$NWE &nbsp; &nbsp; &nbsp; "._QXZ("AH Override").": <input type=text name=saturday_afterhours_filename_override id=saturday_afterhours_filename_override size=20 maxlength=255 value=\"$saturday_afterhours_filename_override\"> <a href=\"javascript:launch_chooser('saturday_afterhours_filename_override','date');\">"._QXZ("audio chooser")."</a> $NWB#call_times-default_afterhours_filename_override$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=4><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></FORM></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=4><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></FORM></td></tr>\n";
 
 		$ct_srs=1;
 		$b=0;
@@ -35066,7 +35081,7 @@ if ($ADD==311111111)
 		echo _QXZ("Add state call time rule").": </td><td align=left colspan=2><select size=1 name=state_rule>\n";
 		echo "$sct_list";
 		echo "</select></td>\n";
-		echo "<td align=center colspan=4><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></FORM></td></tr>\n";
+		echo "<td align=center colspan=4><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></FORM></td></tr>\n";
 
 
 		$ct_hrs=1;
@@ -35119,7 +35134,7 @@ if ($ADD==311111111)
 		echo _QXZ("Add holiday rule").": </td><td align=left colspan=2><select size=1 name=holiday_rule>\n";
 		echo "$hct_list";
 		echo "</select></td>\n";
-		echo "<td align=center colspan=4><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></FORM></td></tr>\n";
+		echo "<td align=center colspan=4><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></FORM></td></tr>\n";
 
 
 		echo "</TABLE><BR><BR>\n";
@@ -35265,7 +35280,7 @@ if ($ADD==3111111111)
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Thursday Start").":</td><td align=left><input type=text name=ct_thursday_start size=5 maxlength=4 value=\"$ct_thursday_start\"> </td><td align=right>"._QXZ("Thursday Stop").":</td><td align=left><input type=text name=ct_thursday_stop size=5 maxlength=4 value=\"$ct_thursday_stop\"> $NWB#call_times-ct_sunday_start$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Friday Start").":</td><td align=left><input type=text name=ct_friday_start size=5 maxlength=4 value=\"$ct_friday_start\"> </td><td align=right>"._QXZ("Friday Stop").":</td><td align=left><input type=text name=ct_friday_stop size=5 maxlength=4 value=\"$ct_friday_stop\"> $NWB#call_times-ct_sunday_start$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Saturday Start").":</td><td align=left><input type=text name=ct_saturday_start size=5 maxlength=4 value=\"$ct_saturday_start\"> </td><td align=right>"._QXZ("Saturday Stop").":</td><td align=left><input type=text name=ct_saturday_stop size=5 maxlength=4 value=\"$ct_saturday_stop\"> $NWB#call_times-ct_sunday_start$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=4><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=4><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=4>&nbsp;</form></td></tr>\n";
 
 
@@ -35320,11 +35335,11 @@ if ($ADD==3111111111)
 		echo _QXZ("Add outbound holiday rule").": </td><td align=left colspan=2><select size=1 name=holiday_rule>\n";
 		echo "$hct_list";
 		echo "</select></td>\n";
-		echo "<td align=center colspan=4><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></FORM></td></tr>\n";
+		echo "<td align=center colspan=4><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></FORM></td></tr>\n";
 
 
 
-		# echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=4><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		# echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=4><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE><BR><BR>\n";
 		echo "<B>"._QXZ("CALL TIMES USING THIS STATE CALL TIME").":</B><BR>\n";
 		echo "<TABLE>\n";
@@ -35418,7 +35433,7 @@ if ($ADD==3211111111)
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Holiday Status").": </td><td align=left colspan=3><select size=1 name=holiday_status><option value='ACTIVE' SELECTED>"._QXZ("ACTIVE")."</option><option value='INACTIVE'>"._QXZ("INACTIVE")."</option><option value='EXPIRED'>"._QXZ("EXPIRED")."</option><option value='$holiday_status' SELECTED>"._QXZ("$holiday_status")."</option></select>$NWB#call_times-holiday_status$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=4><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=4><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE><BR><BR>\n";
 		echo "<B>"._QXZ("CALL TIMES USING THIS HOLIDAY").":</B><BR>\n";
 		echo "<TABLE>\n";
@@ -35528,7 +35543,7 @@ if ($ADD==331111111)
 		echo "</select>$NWB#shifts-user_group$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Shift Start Time").": </td><td align=left><input type=text name=shift_start_time size=5 maxlength=4 id=shift_start_time value=\"$shift_start_time\">\n";
 		echo " &nbsp; "._QXZ("Shift End Time").": <input type=text name=shift_end_time size=5 maxlength=4 id=shift_end_time value=\"$shift_end\">\n";
-		echo "<input type=button name=shift_calc value=\""._QXZ("Calculate Shift Length")."\" onClick=\"shift_time();\"> $NWB#shifts-shift_start_time$NWE</td></tr>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=button name=shift_calc value=\""._QXZ("Calculate Shift Length")."\" onClick=\"shift_time();\"> $NWB#shifts-shift_start_time$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Shift Length").": </td><td align=left><input type=text name=shift_length id=shift_length size=6 maxlength=5 value=\"$shift_length\"> $NWB#shifts-shift_length$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Shift Weekdays").": <BR>$NWB#shifts-shift_weekdays$NWE</td><td align=left>\n";
 		echo "<input type=\"checkbox\" name=\"shift_weekdays[]\" value=\"0\"";
@@ -35564,7 +35579,7 @@ if ($ADD==331111111)
 			}
 		echo "</select>$NWB#shifts-report_rank$NWE</td></tr>\n";
 		
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 
 		echo "</TABLE><BR><BR>\n";
@@ -35777,7 +35792,7 @@ if ($ADD==31111111111)
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Conf Override").": </td><td align=left><TEXTAREA NAME=conf_override ROWS=10 COLS=70>$row[69]</TEXTAREA> $NWB#phones-conf_override$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 
 		echo "<br><br><a href=\"./phone_stats.php?extension=$row[0]&server_ip=$row[5]\">"._QXZ("Click here for phone stats")."</a>\n";
@@ -35831,7 +35846,7 @@ if ($ADD==32111111111)
 		echo "<option SELECTED value=\"$row[3]\">"._QXZ("$row[3]")."</option>\n";
 		echo "</select>$NWB#phones-user_group$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Phones Logins List").": </td><td align=left><input type=text name=logins_list size=50 maxlength=255 value=\"$row[2]\"> ("._QXZ("comma separated").")$NWB#phones-logins_list$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 
 
@@ -35913,7 +35928,7 @@ if ($ADD==33111111111)
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("CallerID Number").": </td><td align=left><input type=text name=caller_id_number size=20 maxlength=20 value=\"$row[2]\"> $NWB#phones-caller_id_number$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("CallerID Name").": </td><td align=left><input type=text name=caller_id_name size=20 maxlength=20 value=\"$row[3]\"> $NWB#phones-caller_id_name$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active").": </td><td align=left><select size=1 name=active><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$row[4]'>"._QXZ("$row[4]")."</option></select></td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 
 
@@ -36098,7 +36113,7 @@ if ($ADD==311111111111)
 
 
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center></form>\n";
 
 
@@ -36127,7 +36142,7 @@ if ($ADD==311111111111)
 			echo "<input type=hidden name=ADD value=421111111111></td>\n";
 			echo "<td><font size=1><input size=6 maxlength=4 name=dedicated_trunks value=\"$rowx[2]\"></td>\n";
 			echo "<td><select size=1 name=trunk_restriction><option value='MAXIMUM_LIMIT'>"._QXZ("MAXIMUM_LIMIT")."</option><option value='OVERFLOW_ALLOWED'>"._QXZ("OVERFLOW_ALLOWED")."</option><option value='$rowx[3]' SELECTED>"._QXZ("$rowx[3]")."</option></select></td>\n";
-			echo "<td><font size=1><input type=submit name=submit value='"._QXZ("MODIFY")."'></form></td>\n";
+			echo "<td><font size=1><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("MODIFY")."'></form></td>\n";
 			echo "<td><font size=1><a href=\"$PHP_SELF?ADD=621111111111&campaign_id=$rowx[1]&server_ip=$server_ip\">"._QXZ("DELETE")."</a></td></tr>\n";
 			}
 
@@ -36141,7 +36156,7 @@ if ($ADD==311111111111)
 		echo "$campaigns_list\n";
 		echo "</select><BR>\n";
 		echo _QXZ("RESTRICTION").": <select size=1 name=trunk_restriction><option value='MAXIMUM_LIMIT'>"._QXZ("MAXIMUM_LIMIT")."</option><option value='OVERFLOW_ALLOWED'>"._QXZ("OVERFLOW_ALLOWED")."</option></select><BR>\n";
-		echo "<input type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
 
 		echo "</center></FORM><br>\n";
 
@@ -36338,7 +36353,7 @@ if ($ADD==331111111111)
 		echo "<option SELECTED value=\"$user_group\">$user_group</option>\n";
 		echo "</select>$NWB#conf_templates-user_group$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Template Contents").": </td><td align=left><TEXTAREA NAME=template_contents ROWS=12 COLS=70>$template_contents</TEXTAREA> $NWB#conf_templates-template_contents$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 
 		echo "<center><b>\n";
@@ -36497,7 +36512,7 @@ if ($ADD==341111111111)
 		echo "<option SELECTED>$server_ip</option>\n";
 		echo "</select> <i>(0.0.0.0 "._QXZ("is all servers").")</i>$NWB#server_carriers-server_ip$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active").": </td><td align=left><select size=1 name=active><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$active' SELECTED>"._QXZ("$active")."</option></select>$NWB#server_carriers-active$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 
 		echo "<center><b>\n";
@@ -36560,7 +36575,7 @@ if ($ADD==351111111111)
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("TTS Text").": </td><td align=left><TEXTAREA NAME=tts_text ROWS=20 COLS=70>$tts_text</TEXTAREA> $NWB#tts_prompts-tts_text$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 
 		echo "<center><b>\n";
@@ -36649,7 +36664,7 @@ if ($ADD==361111111111)
 
 		echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("Add An Audio File").": </td><td><input type=text size=50 maxlength=50 name=filename id=filename value=\"\"> <a href=\"javascript:launch_chooser('filename','date');\">"._QXZ("audio chooser")."</a>  $NWB#music_on_hold-filename$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 
 		echo "<center><b>\n";
@@ -36754,7 +36769,7 @@ if ($ADD==397111111111)
 		echo ""._QXZ("Display Name").": <input type=text size=20 maxlength=255 name=audio_name value=\"\"> &nbsp; "._QXZ("Time Range").": <input type=text size=4 maxlength=4 name=time_start value=\"0000\"> "._QXZ("to")." <input type=text size=4 maxlength=4 name=time_end value=\"2400\">\n";
 		echo "</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 
 		echo "<center><b>\n";
@@ -36871,7 +36886,7 @@ if ($ADD==371111111111)
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("New Messages").": </td><td align=left><B>$messages</B></td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Old Messages").": </td><td align=left><B>$old_messages</B></td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 
 		echo "<center><b>\n";
@@ -36991,7 +37006,7 @@ if ($ADD==381111111111)
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Comments").": </td><td align=left><input type=text name=label_comments size=20 maxlength=60 value=\"$label_comments\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 
 		echo "<center><b>\n";
@@ -37046,7 +37061,7 @@ if ($ADD==382111111111)
 		echo "<TABLE><TR><TD>\n";
 		echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 
-		$stmt="SELECT colors_id,colors_name,active,menu_background,frame_background,std_row1_background,std_row2_background,std_row3_background,std_row4_background,std_row5_background,alt_row1_background,alt_row2_background,alt_row3_background,user_group,web_logo from vicidial_screen_colors where colors_id='$colors_id' $LOGadmin_viewable_groupsSQL;";
+		$stmt="SELECT colors_id,colors_name,active,menu_background,frame_background,std_row1_background,std_row2_background,std_row3_background,std_row4_background,std_row5_background,alt_row1_background,alt_row2_background,alt_row3_background,user_group,web_logo,button_color from vicidial_screen_colors where colors_id='$colors_id' $LOGadmin_viewable_groupsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$row=mysqli_fetch_row($rslt);
 		$colors_id =				$row[0];
@@ -37064,6 +37079,7 @@ if ($ADD==382111111111)
 		$alt_row3_background =		$row[12];
 		$user_group =				$row[13];
 		$web_logo =					$row[14];
+		$button_color =		$row[15];
 
 		echo "<br>"._QXZ("MODIFY SCREEN COLORS").": $colors_id<form action=$PHP_SELF method=POST>\n";
 		echo "<input type=hidden name=ADD value=482111111111>\n";
@@ -37145,7 +37161,9 @@ if ($ADD==382111111111)
 		echo "<option SELECTED value=\"$web_logo\">$web_logo</option>\n";
 		echo "</select>$NWB#screen_colors-web_logo$NWE &nbsp; &nbsp; </td><td align=left valign=top bgcolor=#$menu_background><img src=\"$selected_logo\"></td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=3><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Button Color").": </td><td align=left bgcolor=#$button_color colspan=2><input type=text name=button_color size=7 maxlength=6 value=\"$button_color\">$NWB#screen_colors-alt_row_background$NWE</td></tr>\n";
+
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=3><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 
 		echo "<center><b>\n";
@@ -37226,7 +37244,7 @@ if ($ADD==391111111111)
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Job Title").": </td><td align=left><input type=text name=job_title value=\"$job_title\" size=50 maxlength=100>$NWB#contact_information$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Location").": </td><td align=left><input type=text name=location value=\"$location\" size=50 maxlength=100>$NWB#contact_information$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 
 		echo "<center><b>\n";
@@ -37311,7 +37329,7 @@ if ($ADD==392111111111)
 			{
 			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Container Entry").": </td><td align=left><TEXTAREA NAME=container_entry ROWS=25 COLS=75>$container_entry</TEXTAREA> $NWB#settings_containers-container_entry$NWE</td></tr>\n";
 			}
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 
 		echo "<center><b>\n";
@@ -37371,7 +37389,7 @@ if ($ADD==393111111111)
 		echo "<option SELECTED value=\"$user_group\">".(preg_match('/\-\-ALL\-\-/', $user_group) ? _QXZ("$user_group") : $user_group)."</option>\n";
 		echo "</select>$NWB#status_groups$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center></form>\n";
 
 		echo "<center><b>\n";
@@ -37453,7 +37471,7 @@ if ($ADD==393111111111)
 			echo "</td>\n";
 			echo "<td><input type=text name=min_sec size=3 maxlength=5 value=\"$rowx[12]\" class=\"cust_form\"></td>\n";
 			echo "<td><input type=text name=max_sec size=3 maxlength=5 value=\"$rowx[13]\" class=\"cust_form\"></td>\n";
-			echo "</td><td align=center nowrap><font size=1><input type=submit name=submit value='"._QXZ("MODIFY")."'> &nbsp; &nbsp; &nbsp; &nbsp; \n";
+			echo "</td><td align=center nowrap><font size=1><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("MODIFY")."'> &nbsp; &nbsp; &nbsp; &nbsp; \n";
 			echo " &nbsp; \n";
 			
 			if (preg_match("/^B$|^NA$|^DNC$|^NA$|^DROP$|^INCALL$|^QUEUE$|^NEW$/i",$rowx[0]))
@@ -37491,7 +37509,7 @@ if ($ADD==393111111111)
 		echo "$cats_list";
 		echo "<option selected value=\"$AScategory\">$AScategory - $catsname_list[$AScategory]</option>\n";
 		echo "</select> &nbsp; <BR>\n";
-		echo "<input type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
 
 		echo "</FORM><br>\n";
 
@@ -37678,7 +37696,7 @@ if ($ADD==394111111111)
 		echo "<option value=\"$run_now_trigger\" SELECTED>"._QXZ("$run_now_trigger")."</option>\n";
 		echo "</select>$NWB#auto_reports-run_now_trigger$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Report URL").": </td><td align=left><TEXTAREA NAME=report_url ROWS=25 COLS=75>$report_url</TEXTAREA> $NWB#auto_reports-report_url$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center>\n";
 
 		echo "</center><BR><BR>\n";
@@ -37858,7 +37876,7 @@ if ($ADD==395111111111)
 			echo "<option SELECTED value=\"$user_group\">".(preg_match('/\-\-ALL\-\-/', $user_group) ? _QXZ("$user_group") : $user_group)."</option>\n";
 			echo "</select>$NWB#ip_lists-user_group$NWE</td></tr>\n";
 			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("IP Addresses").": <BR><BR> ("._QXZ("one ip address per line only").")<BR>$NWB#ip_lists-ip_address$NWE</td><td align=left><TEXTAREA name=ip_address ROWS=20 COLS=45>$vaf_textarea</TEXTAREA></td></tr>\n";
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 			echo "</FORM></TABLE></center><BR>\n";
 
 			echo "<B>"._QXZ("USER GROUPS USING THIS IP LIST").":</B><BR>\n";
@@ -37961,7 +37979,7 @@ if ($ADD==396111111111)
 			echo "<input type=hidden name=cid_auto_rotate_minimum value=\"$cid_auto_rotate_minimum\"></td></tr>\n";
 			}
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center></form>\n";
 
 		echo "<center><b>\n";
@@ -38051,7 +38069,7 @@ if ($ADD==396111111111)
 			}
 
 		echo "</table>\n";
-		echo "<input type=submit name=submit value=\""._QXZ("SUBMIT CHANGES")."\"></form><br><br>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value=\""._QXZ("SUBMIT CHANGES")."\"></form><br><br>\n";
 
 		echo "<br>"._QXZ("ADD NEW $cid_group_type CID")."<BR><form action=$PHP_SELF method=POST>\n";
 		echo "<input type=hidden name=ADD value=496111111111>\n";
@@ -38064,7 +38082,7 @@ if ($ADD==396111111111)
 			{echo _QXZ("$cid_group_type").": <input type=text size=7 maxlength=5 name=areacode>\n";}
 		echo _QXZ("Outbound CID").": <input type=text size=20 maxlength=20 name=outbound_cid><BR>\n";
 		echo _QXZ("Description").": <input type=text size=50 maxlength=100 name=cid_description>\n";
-		echo "<input type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
 
 		echo "</center></FORM><br></center>\n";
 
@@ -38137,7 +38155,7 @@ if ($ADD==3111111111111)
 		echo "<option SELECTED>$row[1]</option>\n";
 		echo "</select>$NWB#conferences-server_ip$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Current Extension").": </td><td align=left><input type=text name=extension size=20 maxlength=20 value=\"$row[2]\"></td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 
 		echo "<center><b>\n";
@@ -38187,7 +38205,7 @@ if ($ADD==31111111111111)
 		echo "<option SELECTED>$row[1]</option>\n";
 		echo "</select>$NWB#conferences-server_ip$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Current Extension").": </td><td align=left><input type=text name=extension size=20 maxlength=20 value=\"$row[2]\"></td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 
 		echo "<center><b>\n";
@@ -38292,7 +38310,7 @@ if ($ADD==311111111111111)
 			$ALLagent_count =		$rowx[2];
 			}
 
-		$stmt="SELECT version,install_date,use_non_latin,webroot_writable,enable_queuemetrics_logging,queuemetrics_server_ip,queuemetrics_dbname,queuemetrics_login,queuemetrics_pass,queuemetrics_url,queuemetrics_log_id,queuemetrics_eq_prepend,vicidial_agent_disable,allow_sipsak_messages,admin_home_url,enable_agc_xfer_log,db_schema_version,auto_user_add_value,timeclock_end_of_day,timeclock_last_reset_date,vdc_header_date_format,vdc_customer_date_format,vdc_header_phone_format,vdc_agent_api_active,qc_last_pull_time,enable_vtiger_integration,vtiger_server_ip,vtiger_dbname,vtiger_login,vtiger_pass,vtiger_url,qc_features_active,outbound_autodial_active,outbound_calls_per_second,enable_tts_integration,agentonly_callback_campaign_lock,sounds_central_control_active,sounds_web_server,sounds_web_directory,active_voicemail_server,auto_dial_limit,user_territories_active,allow_custom_dialplan,db_schema_update_date,enable_second_webform,default_webphone,default_external_server_ip,webphone_url,enable_agc_dispo_log,custom_dialplan_entry,queuemetrics_loginout,callcard_enabled,queuemetrics_callstatus,default_codecs,admin_web_directory,label_title,label_first_name,label_middle_initial,label_last_name,label_address1,label_address2,label_address3,label_city,label_state,label_province,label_postal_code,label_vendor_lead_code,label_gender,label_phone_number,label_phone_code,label_alt_phone,label_security_phrase,label_email,label_comments,custom_fields_enabled,slave_db_server,reports_use_slave_db,webphone_systemkey,first_login_trigger,default_phone_registration_password,default_phone_login_password,default_server_password,admin_modify_refresh,nocache_admin,generate_cross_server_exten,queuemetrics_addmember_enabled,queuemetrics_dispo_pause,label_hide_field_logs,queuemetrics_pe_phone_append,test_campaign_calls,agents_calls_reset,default_voicemail_timezone,default_local_gmt,noanswer_log,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,did_agent_log,campaign_cid_areacodes_enabled,pllb_grouping_limit,did_ra_extensions_enabled,expanded_list_stats,contacts_enabled,call_menu_qualify_enabled,admin_list_counts,allow_voicemail_greeting,svn_revision,queuemetrics_socket,queuemetrics_socket_url,enhanced_disconnect_logging,allow_emails,level_8_disable_add,pass_hash_enabled,pass_key,pass_cost,disable_auto_dial,queuemetrics_record_hold,country_code_list_stats,reload_timestamp,queuemetrics_pause_type,frozen_server_call_clear,callback_time_24hour,allow_chats,chat_url,chat_timeout,enable_languages,language_method,meetme_enter_login_filename,meetme_enter_leave3way_filename,enable_did_entry_list_id,enable_third_webform,agent_debug_logging,default_language,agent_whisper_enabled,user_hide_realtime_enabled,usacan_phone_dialcode_fix,cache_carrier_stats_realtime,oldest_logs_date,log_recording_access,report_default_format,alt_ivr_logging,default_phone_code,admin_row_click,admin_screen_colors,ofcom_uk_drop_calc,agent_screen_colors,script_remove_js,manual_auto_next,user_new_lead_limit,agent_xfer_park_3way,rec_prompt_count,agent_soundboards,web_loader_phone_length,agent_script,agent_chat_screen_colors,enable_auto_reports,enable_pause_code_limits,enable_drop_lists,allow_ip_lists,system_ip_blacklist,agent_push_events,agent_push_url,hide_inactive_lists,allow_manage_active_lists,expired_lists_inactive,did_system_filter,anyone_callback_inactive_lists,enable_gdpr_download_deletion,source_id_display,agent_logout_link,manual_dial_validation,mute_recordings,user_admin_redirect,list_status_modification_confirmation,sip_event_logging,call_quota_lead_ranking,enable_second_script,enable_first_webform,recording_buttons,opensips_cid_name,require_password_length,user_account_emails,outbound_cid_any,entries_per_page,browser_call_alerts,queuemetrics_pausereason,inbound_answer_config from system_settings;";
+		$stmt="SELECT version,install_date,use_non_latin,webroot_writable,enable_queuemetrics_logging,queuemetrics_server_ip,queuemetrics_dbname,queuemetrics_login,queuemetrics_pass,queuemetrics_url,queuemetrics_log_id,queuemetrics_eq_prepend,vicidial_agent_disable,allow_sipsak_messages,admin_home_url,enable_agc_xfer_log,db_schema_version,auto_user_add_value,timeclock_end_of_day,timeclock_last_reset_date,vdc_header_date_format,vdc_customer_date_format,vdc_header_phone_format,vdc_agent_api_active,qc_last_pull_time,enable_vtiger_integration,vtiger_server_ip,vtiger_dbname,vtiger_login,vtiger_pass,vtiger_url,qc_features_active,outbound_autodial_active,outbound_calls_per_second,enable_tts_integration,agentonly_callback_campaign_lock,sounds_central_control_active,sounds_web_server,sounds_web_directory,active_voicemail_server,auto_dial_limit,user_territories_active,allow_custom_dialplan,db_schema_update_date,enable_second_webform,default_webphone,default_external_server_ip,webphone_url,enable_agc_dispo_log,custom_dialplan_entry,queuemetrics_loginout,callcard_enabled,queuemetrics_callstatus,default_codecs,admin_web_directory,label_title,label_first_name,label_middle_initial,label_last_name,label_address1,label_address2,label_address3,label_city,label_state,label_province,label_postal_code,label_vendor_lead_code,label_gender,label_phone_number,label_phone_code,label_alt_phone,label_security_phrase,label_email,label_comments,custom_fields_enabled,slave_db_server,reports_use_slave_db,webphone_systemkey,first_login_trigger,default_phone_registration_password,default_phone_login_password,default_server_password,admin_modify_refresh,nocache_admin,generate_cross_server_exten,queuemetrics_addmember_enabled,queuemetrics_dispo_pause,label_hide_field_logs,queuemetrics_pe_phone_append,test_campaign_calls,agents_calls_reset,default_voicemail_timezone,default_local_gmt,noanswer_log,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,did_agent_log,campaign_cid_areacodes_enabled,pllb_grouping_limit,did_ra_extensions_enabled,expanded_list_stats,contacts_enabled,call_menu_qualify_enabled,admin_list_counts,allow_voicemail_greeting,svn_revision,queuemetrics_socket,queuemetrics_socket_url,enhanced_disconnect_logging,allow_emails,level_8_disable_add,pass_hash_enabled,pass_key,pass_cost,disable_auto_dial,queuemetrics_record_hold,country_code_list_stats,reload_timestamp,queuemetrics_pause_type,frozen_server_call_clear,callback_time_24hour,allow_chats,chat_url,chat_timeout,enable_languages,language_method,meetme_enter_login_filename,meetme_enter_leave3way_filename,enable_did_entry_list_id,enable_third_webform,agent_debug_logging,default_language,agent_whisper_enabled,user_hide_realtime_enabled,usacan_phone_dialcode_fix,cache_carrier_stats_realtime,oldest_logs_date,log_recording_access,report_default_format,alt_ivr_logging,default_phone_code,admin_row_click,admin_screen_colors,ofcom_uk_drop_calc,agent_screen_colors,script_remove_js,manual_auto_next,user_new_lead_limit,agent_xfer_park_3way,rec_prompt_count,agent_soundboards,web_loader_phone_length,agent_script,agent_chat_screen_colors,enable_auto_reports,enable_pause_code_limits,enable_drop_lists,allow_ip_lists,system_ip_blacklist,agent_push_events,agent_push_url,hide_inactive_lists,allow_manage_active_lists,expired_lists_inactive,did_system_filter,anyone_callback_inactive_lists,enable_gdpr_download_deletion,source_id_display,agent_logout_link,manual_dial_validation,mute_recordings,user_admin_redirect,list_status_modification_confirmation,sip_event_logging,call_quota_lead_ranking,enable_second_script,enable_first_webform,recording_buttons,opensips_cid_name,require_password_length,user_account_emails,outbound_cid_any,entries_per_page,browser_call_alerts,queuemetrics_pausereason,inbound_answer_config,enable_international_dncs from system_settings;";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$row=mysqli_fetch_row($rslt);
 		$version =						$row[0];
@@ -38484,6 +38502,7 @@ if ($ADD==311111111111111)
 		$browser_call_alerts =			$row[186];
 		$queuemetrics_pausereason =		$row[187];
 		$inbound_answer_config =		$row[188];
+		$enable_international_dncs =	$row[189];
 
 		if ($pass_hash_enabled > 0) {$pass_hash_enabled = 'ENABLED';}
 		else {$pass_hash_enabled = 'DISABLED';}
@@ -38761,6 +38780,8 @@ if ($ADD==311111111111111)
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Enable CallCard").": </td><td align=left><select size=1 name=callcard_enabled><option>1</option><option>0</option><option selected>$callcard_enabled</option></select>$NWB#settings-callcard_enabled$NWE</td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Enable Campaign Test Calls").": </td><td align=left><select size=1 name=test_campaign_calls><option>1</option><option>0</option><option selected>$test_campaign_calls</option></select>$NWB#settings-test_campaign_calls$NWE</td></tr>\n";
+
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Enable International DNCs").": </td><td align=left><select size=1 name=enable_international_dncs><option>1</option><option>0</option><option selected>$enable_international_dncs</option></select>$NWB#settings-enable_international_dncs$NWE</td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href=\"$PHP_SELF?ADD=3311&did_id=did_system_filter\">"._QXZ("DID System Filter")."</a>: </td><td align=left><select size=1 name=did_system_filter><option>1</option><option>0</option><option selected>$did_system_filter</option></select>$NWB#settings-did_system_filter$NWE</td></tr>\n";
 
@@ -39119,7 +39140,7 @@ if ($ADD==311111111111111)
 		echo "<tr bgcolor=#CCFFFF><td align=right>"._QXZ("Vtiger DB Password").": </td><td align=left><input type=text name=vtiger_pass size=18 maxlength=50 value=\"$vtiger_pass\">$NWB#settings-vtiger_pass$NWE</td></tr>\n";
 		echo "<tr bgcolor=#CCFFFF><td align=right>"._QXZ("Vtiger URL").": </td><td align=left><input type=text name=vtiger_url size=50 maxlength=255 value=\"$vtiger_url\">$NWB#settings-vtiger_url$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 		echo "</form>\n";
 		if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
@@ -39226,7 +39247,7 @@ if ($ADD==321111111111111)
 			echo "</td>\n";
 			echo "<td><input type=text name=min_sec size=3 maxlength=5 value=\"$rowx[12]\" class=\"cust_form\"></td>\n";
 			echo "<td><input type=text name=max_sec size=3 maxlength=5 value=\"$rowx[13]\" class=\"cust_form\"></td>\n";
-			echo "</td><td align=center nowrap><font size=1><input type=submit name=submit value='"._QXZ("MODIFY")."'> &nbsp; &nbsp; &nbsp; &nbsp; \n";
+			echo "</td><td align=center nowrap><font size=1><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("MODIFY")."'> &nbsp; &nbsp; &nbsp; &nbsp; \n";
 			echo " &nbsp; \n";
 			
 			if (preg_match("/^B$|^NA$|^DNC$|^NA$|^DROP$|^INCALL$|^QUEUE$|^NEW$/i",$rowx[0]))
@@ -39261,7 +39282,7 @@ if ($ADD==321111111111111)
 		echo "$cats_list";
 		echo "<option selected value=\"$AScategory\">$AScategory - $catsname_list[$AScategory]</option>\n";
 		echo "</select> &nbsp; <BR>\n";
-		echo "<input type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
 
 		echo "</FORM><br>\n";
 
@@ -39351,7 +39372,7 @@ if ($ADD==331111111111111)
 			echo "<tr $bgcolor>\n";
 			echo "<td colspan=3>"._QXZ("To Realtime Display").": <select size=1 name=tovdad_display><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$Atovdad_display[$p]' selected>"._QXZ("$Atovdad_display[$p]")."</option></select> &nbsp; &nbsp; "._QXZ("Sale Category").": <select size=1 name=sale_category><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$Asale_category[$p]' selected>"._QXZ("$Asale_category[$p]")."</option></select> &nbsp; &nbsp; "._QXZ("Dead Lead Category").": <select size=1 name=dead_lead_category><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$Adead_lead_category[$p]' selected>"._QXZ("$Adead_lead_category[$p]")."</option></select> &nbsp; </td></tr>\n";
 			echo "<tr $bgcolor><td colspan=3><font size=1>"._QXZ("Description").": <input type=text name=vsc_description size=90 maxlength=255 value=\"$Avsc_description[$p]\"></td></tr>\n";
-			echo "<tr $bgcolor><td colspan=3 align=center><font size=1><input type=submit name=submit value='"._QXZ("MODIFY")."'> &nbsp; &nbsp; &nbsp; &nbsp; \n";
+			echo "<tr $bgcolor><td colspan=3 align=center><font size=1><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("MODIFY")."'> &nbsp; &nbsp; &nbsp; &nbsp; \n";
 			echo " &nbsp; <a href=\"$PHP_SELF?ADD=431111111111111&vsc_id=$Avsc_id[$p]&stage=delete\">"._QXZ("DELETE")."</a></td></tr>\n";
 			echo "<tr><td colspan=4><font size=1> &nbsp; </form></td></tr>\n";
 
@@ -39368,7 +39389,7 @@ if ($ADD==331111111111111)
 		echo _QXZ("Sale Category").": <select size=1 name=sale_category><option value='Y'>"._QXZ("Y")."</option><option value='N' SELECTED>"._QXZ("N")."</option></select> &nbsp; \n";
 		echo _QXZ("Dead Lead Category").": <select size=1 name=dead_lead_category><option value='Y'>"._QXZ("Y")."</option><option value='N' SELECTED>"._QXZ("N")."</option></select> &nbsp; <BR>\n";
 		echo _QXZ("Description").": <input type=text name=vsc_description size=80 maxlength=255> &nbsp; \n";
-		echo "<input type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
 
 		echo "</FORM><br>\n";
 
@@ -39468,7 +39489,7 @@ if ($ADD==341111111111111)
 				echo "<font size=2><B>$rowx[0]</B></td>\n";
 				echo "<td><input type=text name=code_name size=20 maxlength=30 value=\"$rowx[1]\"></td>\n";
 				echo "<td><font size=2><B>"._QXZ("$rowx[2]")."</B></td>\n";
-				echo "<td align=center nowrap><font size=1><input type=submit name=submit value='"._QXZ("MODIFY")."'> &nbsp; &nbsp; &nbsp; &nbsp; \n";
+				echo "<td align=center nowrap><font size=1><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("MODIFY")."'> &nbsp; &nbsp; &nbsp; &nbsp; \n";
 				echo " &nbsp; \n";
 
 				if (preg_match("/^B$|^NA$|^DNC$|^NA$|^DROP$|^INCALL$|^QUEUE$|^NEW$/i",$rowx[0]))
@@ -39489,7 +39510,7 @@ if ($ADD==341111111111111)
 		echo _QXZ("Status").": <input type=text name=code size=9 maxlength=8> &nbsp; \n";
 		echo _QXZ("Description").": <input type=text name=code_name size=25 maxlength=30> \n";
 		echo _QXZ("QC Category").": <select name=qc_category><option selected value=''>-"._QXZ("Choose")."-</option><option value='PASS'>"._QXZ("PASS")."</option><option value='FAIL'>"._QXZ("FAIL")."</option><option value='CANCEL'>"._QXZ("CANCEL")."</option><option value='COMMIT'>"._QXZ("COMMIT")."</option><BR>\n";
-		echo "<input type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
 
 		echo "</FORM><br>\n";
 		}
@@ -39530,7 +39551,7 @@ if ($ADD==550)
 		}
 	echo "$groups_list</select></td></tr>\n";
 
-	echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=search value='"._QXZ("search")."'></td></tr>\n";
+	echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=search value='"._QXZ("search")."'></td></tr>\n";
 	echo "</TABLE></center>\n";
 	}
 
@@ -43661,7 +43682,7 @@ if ($ADD==999997)
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=left colspan=2>"._QXZ("You are required to change your password before you can continue on to Administration. The longer the password is, the stronger it will be. Your password must be from 2 to 100 characters in length and cannot contain any characters that are not letters or numbers. Be sure that this password is something that you can remember, because as soon as you make this change you will be prompted to enter your new password to log back in to Administration")."</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center></form>\n";
 		}
 	}
@@ -43796,7 +43817,7 @@ if ($ADD==999996)
 
 			echo "<tr><td colspan=2> &nbsp; </td></tr>\n";
 
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 			echo "</TABLE></center></form>\n";
 			}
 		}
@@ -43905,6 +43926,8 @@ if ($ADD==999994)
 		echo "<LI><a href=\"lead_tools.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>"._QXZ("Basic Lead Management Tools")."</FONT></a> | <a href=\"lead_tools_advanced.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>"._QXZ("Advanced Lead Management Tools")."</FONT></a> | <a href=\"list_split.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>"._QXZ("List Split")."</FONT></a> | <a href=\"list_merge.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>"._QXZ("List Merge")."</FONT></a>\n";
 		echo "<LI><a href=\"reset_campaign_lists.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>"._QXZ("Reset Campaign Lists")."</a></FONT>\n";
 		echo "<LI><a href=\"callbacks_bulk_change.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>"._QXZ("Callbacks Transferral Page")."</a></FONT> | <a href=\"callbacks_bulk_move.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>"._QXZ("Callbacks Bulk Move")."</FONT></a> | <a href=\"callbacks_export.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>"._QXZ("Callbacks Export")."</FONT></a>\n";
+		if ($SSenable_international_dncs)
+			{echo "<LI><a href=\"Vicidial_international_DNC_interface.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>"._QXZ("International DNC Loader")."</a></FONT></a>\n";}
 		echo "<LI><a href=\"vicidial_custom_reports_admin.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>"._QXZ("Custom Reports Admin Page")."</a></FONT></a>\n";
 		echo "<LI><a href=\"send_CID_call.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>"._QXZ("Send a Call With Custom CID Page")."</a></FONT>\n";
 		echo "<LI><a href=\"voice_lab.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>"._QXZ("Speech Voice Lab Page")."</a></FONT>\n";
@@ -43987,7 +44010,7 @@ if ($ADD==999993)
 		echo "<input type=hidden name=DB value=\"$DB\">\n";
 		echo "<input type=hidden name=stage value=\"$stage\">\n";
 		echo "<input type=hidden name=campaign_id value=\"$campaign_id\">\n";
-		echo "Days: <input type=text id=SUB name=SUB size=5 maxlength=4 value=\"$day_count\"> &nbsp; &nbsp;<input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'>\n";
+		echo "Days: <input type=text id=SUB name=SUB size=5 maxlength=4 value=\"$day_count\"> &nbsp; &nbsp;<input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'>\n";
 		echo "</form>\n";
 		
 		echo "<center><TABLE width=$section_width cellspacing=5 cellpadding=2>\n";
@@ -44077,7 +44100,7 @@ if ($ADD==999992)
 	echo "});\n";
 	echo "o_cal.a_tpl.yearscroll = false;\n";
 	echo "// o_cal.a_tpl.weekstart = 1; // Monday week start\n";
-	echo "</script>&nbsp;&nbsp;&nbsp;&nbsp;<input type='submit' name='max_system_stats_submit' VALUE='"._QXZ("ADJUST DATE RANGE")."'><input type='hidden' name='ADD' value='$ADD'><input type='hidden' name='stage' value='$stage'></form><BR>\n";
+	echo "</script>&nbsp;&nbsp;&nbsp;&nbsp;<input style='background-color:#$SSbutton_color' type='submit' name='max_system_stats_submit' VALUE='"._QXZ("ADJUST DATE RANGE")."'><input type='hidden' name='ADD' value='$ADD'><input type='hidden' name='stage' value='$stage'></form><BR>\n";
 	echo "<center><a href='$PHP_SELF?query_date=$query_date&end_date=$end_date&max_system_stats_submit=$max_system_stats_submit&ADD=$ADD&stage=$stage&download_max_system_stats_metric_name=ALL'>["._QXZ("DOWNLOAD ALL")."]</a><TABLE width=$section_width cellspacing=5 cellpadding=2>\n";
 
 	if ( (preg_match("/Maximum System Stats/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
@@ -44674,7 +44697,7 @@ if ($ADD==999989)
 		echo "</select>\n";
 		echo "</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "</TABLE></center></form>\n";
 		}
 	}

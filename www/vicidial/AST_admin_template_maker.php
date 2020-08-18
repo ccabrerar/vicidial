@@ -514,7 +514,7 @@ if (mysqli_num_rows($template_rslt)>0) {
 		</td>
 	</tr>
 	<tr bgcolor="#<?php echo $SSframe_background; ?>">
-		<th colspan='2'><input type='submit' name='submit_template' onClick="return checkForm(this.form)" value='<?php echo _QXZ("SUBMIT TEMPLATE"); ?>'></th>
+		<th colspan='2'><input <?php echo "style='background-color:#$SSbutton_color'"; ?> type='submit' name='submit_template' onClick="return checkForm(this.form)" value='<?php echo _QXZ("SUBMIT TEMPLATE"); ?>'></th>
 	</tr>
 <tr bgcolor="#<?php echo $SSframe_background; ?>"><td align="center" colspan=2>
 <table border=0 cellpadding=3 cellspacing=1 width="100%" align="center">

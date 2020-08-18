@@ -277,6 +277,7 @@ $NFB = '<b><font size=6 face="courier">';
 $NFE = '</font></b>';
 $F=''; $FG=''; $B=''; $BG='';
 
+require("screen_colors.php");
 ?>
 
 <HTML>
@@ -412,7 +413,7 @@ if ($UGdisplay > 0)
 		}
 	echo "</SELECT>\n";
 	}
-echo "<INPUT type=submit NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2> &nbsp; &nbsp; &nbsp; &nbsp; \n";
+echo "<INPUT style='background-color:#$SSbutton_color' type=submit NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2> &nbsp; &nbsp; &nbsp; &nbsp; \n";
 echo "<a href=\"$PHP_SELF?group=$group&RR=4000&DB=$DB&adastats=$adastats&SIPmonitorLINK=$SIPmonitorLINK&IAXmonitorLINK=$IAXmonitorLINK&RECmonitorLINK=$RECmonitorLINK&usergroup=$usergroup&UGdisplay=$UGdisplay&UidORname=$UidORname&orderby=$orderby&SERVdisplay=$SERVdisplay\">"._QXZ("STOP")."</a> | ";
 echo "<a href=\"$PHP_SELF?group=$group&RR=40&DB=$DB&adastats=$adastats&SIPmonitorLINK=$SIPmonitorLINK&IAXmonitorLINK=$IAXmonitorLINK&RECmonitorLINK=$RECmonitorLINK&usergroup=$usergroup&UGdisplay=$UGdisplay&UidORname=$UidORname&orderby=$orderby&SERVdisplay=$SERVdisplay\">"._QXZ("SLOW")."</a> | ";
 echo "<a href=\"$PHP_SELF?group=$group&RR=4&DB=$DB&adastats=$adastats&SIPmonitorLINK=$SIPmonitorLINK&IAXmonitorLINK=$IAXmonitorLINK&RECmonitorLINK=$RECmonitorLINK&usergroup=$usergroup&UGdisplay=$UGdisplay&UidORname=$UidORname&orderby=$orderby&SERVdisplay=$SERVdisplay\">"._QXZ("GO")."</a>";

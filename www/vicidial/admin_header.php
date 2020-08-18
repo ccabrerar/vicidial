@@ -116,10 +116,11 @@ $SSstd_row5_background='A3C3D6';
 $SSalt_row1_background='BDFFBD';
 $SSalt_row2_background='99FF99';
 $SSalt_row3_background='CCFFCC';
+$SSbutton_color='EFEFEF';
 
 if ($SSadmin_screen_colors != 'default')
 	{
-	$stmt = "SELECT menu_background,frame_background,std_row1_background,std_row2_background,std_row3_background,std_row4_background,std_row5_background,alt_row1_background,alt_row2_background,alt_row3_background,web_logo FROM vicidial_screen_colors where colors_id='$SSadmin_screen_colors';";
+	$stmt = "SELECT menu_background,frame_background,std_row1_background,std_row2_background,std_row3_background,std_row4_background,std_row5_background,alt_row1_background,alt_row2_background,alt_row3_background,web_logo,button_color FROM vicidial_screen_colors where colors_id='$SSadmin_screen_colors';";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	if ($DB) {echo "$stmt\n";}
 	$colors_ct = mysqli_num_rows($rslt);
@@ -136,7 +137,8 @@ if ($SSadmin_screen_colors != 'default')
 		$SSalt_row1_background =	$row[7];
 		$SSalt_row2_background =	$row[8];
 		$SSalt_row3_background =	$row[9];
-		$SSweb_logo =				$row[10];
+		$SSweb_logo =			$row[10];
+		$SSbutton_color = 		$row[11];
 		}
 	}
 $Mhead_color =	$SSstd_row5_background;

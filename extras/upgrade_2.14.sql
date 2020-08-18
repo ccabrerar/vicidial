@@ -1279,3 +1279,31 @@ UPDATE system_settings SET db_schema_version='1601',db_schema_update_date=NOW() 
 ALTER TABLE system_settings MODIFY queuemetrics_pausereason ENUM('STANDARD','EVERY_NEW','EVERY_NEW_ADMINCALL','EVERY_NEW_ALLCALL') default 'STANDARD';
 
 UPDATE system_settings SET db_schema_version='1602',db_schema_update_date=NOW() where db_schema_version < 1602;
+
+ALTER TABLE vicidial_screen_colors ADD button_color VARCHAR(6) default 'EFEFEF';
+
+ALTER TABLE system_settings ADD enable_international_dncs ENUM('0','1') default '0'; 
+
+CREATE TABLE vicidial_country_dnc_queue (
+dnc_file_id int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+filename varchar(250) DEFAULT NULL,
+country_code varchar(3) DEFAULT NULL,
+file_layout varchar(30) DEFAULT NULL,
+file_status enum('UPLOADING','READY','PENDING','INVALID LAYOUT','PROCESSING','FINISHED','CANCELLED') DEFAULT NULL,
+file_action enum('PURGE','APPEND') DEFAULT NULL,
+date_uploaded DATETIME DEFAULT NULL,
+total_records int(10) UNSIGNED DEFAULT NULL,
+records_processed int(10) UNSIGNED DEFAULT NULL,
+records_inserted int(10) UNSIGNED DEFAULT NULL,
+date_processed DATETIME DEFAULT NULL,
+PRIMARY KEY (dnc_file_id),
+KEY vicidial_country_dnc_queue_filename_key (filename)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO vicidial_settings_containers VALUES ('INTERNATIONAL_DNC_IMPORT','Process DNC lists of various countries from FTP site','PERL_CLI','---ALL---','# This setting container is used for the international DNC system. \r\n# The below two settings are mandatory for importing suppression lists\r\n# and tell the import process where to look for new files and where to\r\n# move them when handled.  These settings cannot have the same value. \r\n--file-dir=/root/ftp\r\n--file-destination=/root/ftp/DONE\r\n\r\n# Uncomment below and set the status to whatever custom disposition you \r\n# would like already-loaded leads to be set to when they dedupe against\r\n# a country\'s DNC list (default is \"DNCI\")\r\n# --dnc-status-override=BMNR\r\n\r\n# The below settings are optional for when files are stored on a remote\r\n# server.  It is strongly recommended these settings are not used and\r\n# that the processing scripts and files are stored locally on the same\r\n# server. \r\n# --ftp-host=localhost\r\n# --ftp-user=user\r\n# --ftp-pwd=pwd\r\n# --ftp-port=21\r\n# --ftp-passive=1\r\n'),('DNC_IMPORT_FORMATS','Import formats for DNC files','OTHER','---ALL---','# This setting container is used for storing file formats used when \r\n# loading DNC suppression lists into the dialer. \r\n#\r\n# import template => (delimited|fixed),delimiter,phone1(,phone2,phone3)\r\n#\r\n# For delimited files, the phone1 value should be the index value of\r\n# the field where the phone appears.  The first array index is 0 and\r\n# indexes continue through the natural numbers.\r\n\r\n# In delimited files, acceptable values for the \"delimiter\" field are:\r\n# - \"tab\", \"pipe\", \"comma\", \"quote-comma\"\r\nBASIC_DELIMITED_FORMAT => delimited,pipe,0\r\n\r\n# If the phone number is split into multiple fields (ex: area code in\r\n# one field, rest of the number in another), simply list additional \r\n# indices of the phone number fields separated by commas in the order \r\n# in which the data should be combined to make the complete phone \r\n# number \r\nDELIMITED_WITH_AC_AND_EXCHANGE_SPLIT => delimited,tab,0,1\r\n\r\n# For fixed-length files, the phone field values should be of the type:\r\n# - \"starting_position|length\"\r\nBASIC_FIXED_FORMAT => fixed,,0|10\r\n\r\n# (delimited|fixed) is not used for CSV/Excel files, so all that needs \r\n# providing for those is the index field value(s) of the phone number\r\nBASIC_CSV_OR_EXCEL_FORMAT => ,,0'),('DNC_CURRENT_BLOCKED_LISTS','Lists currently blocked due to pending DNC scrub','READ_ONLY','---ALL---','');
+
+UPDATE system_settings SET db_schema_version='1603',db_schema_update_date=NOW() where db_schema_version < 1603;
+
+ALTER TABLE vicidial_users MODIFY modify_leads ENUM('0','1','2','3','4','5','6') default '0';
+
+UPDATE system_settings SET db_schema_version='1604',db_schema_update_date=NOW() where db_schema_version < 1604;
