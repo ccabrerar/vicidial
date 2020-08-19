@@ -1043,7 +1043,7 @@ if ($function == 'sounds_list')
 		  else {$HTTPprotocol = 'http://';}
 		// $admDIR = "$HTTPprotocol$server_name:$server_port";
 		// By setting this variable to empty, we'll use the same protocol and port as per the original request
-		$admDIR = ""
+		$admDIR = "";
 		$admin_web_dir='';
 
 		#############################################
@@ -2152,7 +2152,7 @@ if ($function == 'campaigns_list')
 				}
 			$campaigns_list = preg_replace('/,$/i', '',$campaigns_list);
 			if ($DB > 0) {echo "DEBUG: $L|$campaigns_list|\n";}
-			
+
 			if (strlen($campaigns_list) < 3)
 				{
 				$result = 'ERROR';
@@ -2311,7 +2311,7 @@ if ($function == 'hopper_list')
 					$L++;
 					}
 				if ($DB > 0) {echo "DEBUG: $L hopper records\n";}
-				
+
 				if (strlen($L) < 1)
 					{
 					$result = 'ERROR';
