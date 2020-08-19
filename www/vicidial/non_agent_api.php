@@ -1240,7 +1240,7 @@ if ($function == 'moh_list')
 		  else {$HTTPprotocol = 'http://';}
 		// $admDIR = "$HTTPprotocol$server_name:$server_port";
 		// By setting this variable to empty, we'll use the same protocol and port as per the original request
-		$admDIR = ""
+		$admDIR = "";
 
 
 		#############################################
@@ -1434,7 +1434,7 @@ if ($function == 'vm_list')
 		  else {$HTTPprotocol = 'http://';}
 		// $admDIR = "$HTTPprotocol$server_name:$server_port";
 		// By setting this variable to empty, we'll use the same protocol and port as per the original request
-		$admDIR = ""
+		$admDIR = "";
 
 
 		echo "\n";
