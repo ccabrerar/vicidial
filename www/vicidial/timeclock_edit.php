@@ -491,7 +491,7 @@ if ( ($invalid_record < 1) or (strlen($timeclock_id)<1) )
 		echo _QXZ("NEW NOTES").": <input type=text name=notes value='' size=80 maxlength=255>\n";
 		echo "</TD></TR>\n";
 		echo "<TR><TD COLSPAN=3 ALIGN=CENTER>\n";
-		echo "<input type=button name=go_submit id=go_submit value="._QXZ("SUBMIT")." onclick=\"run_submit();\"><BR></form>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=button name=go_submit id=go_submit value="._QXZ("SUBMIT")." onclick=\"run_submit();\"><BR></form>\n";
 		echo "</TD></TR></TABLE>\n";
 		echo "<BR><BR>\n";
 		}

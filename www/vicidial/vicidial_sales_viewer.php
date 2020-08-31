@@ -233,7 +233,7 @@ echo "<TABLE CELLPADDING=4 CELLSPACING=0><TR><TD>";
 	<td align=right><font class="standard_bold"><?php echo _QXZ("Campaign is"); ?>:&nbsp;&nbsp;&nbsp;&nbsp;<input type=radio name="forc" value="F"><?php echo _QXZ("Transfer"); ?></font></td>
 	<td colspan=2 align=left><font class="standard_bold">&nbsp;&nbsp;<input type=radio name="forc" value="C" checked><?php echo _QXZ("Non-transfer"); ?></font></td>
 </tr>
-<tr><th colspan=3><input type=submit name="submit_report" value="<?php echo _QXZ("SUBMIT"); ?>"></th></tr>
+<tr><th colspan=3><input style='background-color:#<?php echo "$SSbutton_color"; ?>' type=submit name="submit_report" value="<?php echo _QXZ("SUBMIT"); ?>"></th></tr>
 <!-- <tr><th colspan=3><input type=checkbox name="weekly_report" value="WEEKLY_REPORT"><font class="small_standard">Generate weekly report</font></th></tr> //-->
 <tr><td colspan=3 align=center><font class="small_standard">** - <?php echo _QXZ("sorted by call date"); ?></font></td></tr>
 </table>

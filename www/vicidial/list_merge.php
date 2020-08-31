@@ -630,7 +630,7 @@ if (($submit != "submit" ) && ($confirm != "CONFIRM"))
 	echo "<input type=hidden name=DB value='$DB'>\n";
 	
 	# Submit
-	echo "<tr bgcolor=#$SSstd_row2_background><td colspan=2 align=center><input type=submit name=submit value='"._QXZ("submit")."'></td></tr>\n";
+	echo "<tr bgcolor=#$SSstd_row2_background><td colspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("submit")."'></td></tr>\n";
 	echo "</table></center>\n";
 	echo "</form>\n";
 

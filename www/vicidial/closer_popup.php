@@ -144,6 +144,8 @@ $row=mysqli_fetch_row($rslt);
 $LOGfullname=$row[0];
 $fullname = $row[0];
 
+require("screen_colors.php");
+
 echo "<html>\n";
 echo "<head>\n";
 echo "<title>"._QXZ("VICIDIAL CLOSER: Popup")."</title>\n";
@@ -288,7 +290,7 @@ if (preg_match('/CL_TEST/i',$channel_group))
 		<td align=left width="50%" nowrap><input type=text size=10 maxlength=10 name="search_phone" value="<?php echo $search_phone ?>"></td>
 	</tr>
 	<tr>
-		<th colspan=2 bgcolor='#666666'><input type=submit name="submit_COF" value="<?php echo _QXZ("SEARCH"); ?>"></th>
+		<th colspan=2 bgcolor='#666666'><input style='background-color:#<?php echo "$SSbutton_color"; ?>' type=submit name="submit_COF" value="<?php echo _QXZ("SEARCH"); ?>"></th>
 	</tr>
 	</table>
 	</form>
@@ -323,7 +325,7 @@ if (preg_match('/CL_MWCOF/i',$channel_group))
 		<td align=left width="50%" nowrap><input type=text size=10 maxlength=10 name="search_phone" value="<?php echo $search_phone ?>"></td>
 	</tr>
 	<tr>
-		<th colspan=2 bgcolor='#666666'><input type=submit name="submit_COF" value="<?php echo _QXZ("SEARCH"); ?>"></th>
+		<th colspan=2 bgcolor='#666666'><input style='background-color:#<?php echo "$SSbutton_color"; ?>' type=submit name="submit_COF" value="<?php echo _QXZ("SEARCH"); ?>"></th>
 	</tr>
 	</table>
 	</form>
@@ -375,7 +377,7 @@ if (preg_match('/CL_GAL/i',$channel_group))
 		<td align=left width="50%" nowrap><input type=text size=10 maxlength=10 name="search_phone" value="<?php echo $phone ?>"></td>
 	</tr>
 	<tr>
-		<th colspan=2 bgcolor='#666666'><input type=submit name="submit_COF" value="<?php echo _QXZ("SEARCH"); ?>"></th>
+		<th colspan=2 bgcolor='#666666'><input style='background-color:#<?php echo "$SSbutton_color"; ?>' type=submit name="submit_COF" value="<?php echo _QXZ("SEARCH"); ?>"></th>
 	</tr>
 	</table>
 	</form>
@@ -394,7 +396,7 @@ if (preg_match('/CL_GAL/i',$channel_group))
 		<td align=left width="50%" nowrap><input type=text size=10 maxlength=10 name="search_phone" value="<?php echo $phone ?>"></td>
 	</tr>
 	<tr>
-		<th colspan=2 bgcolor='#666666'><input type=submit name="submit_COF" value="SEARCH"></th>
+		<th colspan=2 bgcolor='#666666'><input style='background-color:#<?php echo "$SSbutton_color"; ?>' type=submit name="submit_COF" value="SEARCH"></th>
 	</tr>
 	</table>
 	</form>
@@ -435,7 +437,7 @@ if (preg_match('/CL_UNIV/i',$channel_group))
 	name="phone" value="" ONKEYPRESS="var keyCode = event.which ? event.which : event.keyCode; if (keyCode!=8 && keyCode!=9 && keyCode!=37 && keyCode!=39) return ((keyCode >= '0'.charCodeAt() && keyCode <= '9'.charCodeAt()))"></td>
 
 	</tr><tr>
-		<th colspan=2 bgcolor='#CCCCCC'><input type=submit name="submit_COF" value="<?php echo _QXZ("SEARCH"); ?>" onClick="javascript:btn_name='search'"><br><br></th>
+		<th colspan=2 bgcolor='#CCCCCC'><input style='background-color:#<?php echo "$SSbutton_color"; ?>' type=submit name="submit_COF" value="<?php echo _QXZ("SEARCH"); ?>" onClick="javascript:btn_name='search'"><br><br></th>
 	</tr>
 	<tr>
 		<th colspan=2 bgcolor='#666666'><font class='standard_bold'><a href='closer_popup.php'><?php echo _QXZ("Back"); ?></a></font></th>
@@ -459,7 +461,7 @@ if (preg_match('/CL_UNIV/i',$channel_group))
 else
 {
 	echo _QXZ("Redirect command FAILED for channel")." $channel &nbsp; &nbsp; &nbsp; $NOW_TIME\n<BR><BR>\n";
-	echo "<form><input type=button value=\""._QXZ("Close This Window")."\" onClick=\"javascript:window.close();\"></form>\n";
+	echo "<form><input style='background-color:#$SSbutton_color' type=button value=\""._QXZ("Close This Window")."\" onClick=\"javascript:window.close();\"></form>\n";
 }
 
 

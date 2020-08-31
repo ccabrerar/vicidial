@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2020-08-15
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2020-08-24
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -162,6 +162,7 @@ Changes:
 200610-1447 - Added duration option to recording_lookup function
 200622-1609 - Added more options to add_phone and update_phone functions
 200815-1025 - Added campaigns_list & hopper_list functions
+200824-2330 - Added search_method BLOCK option for hopper_list function
 
 
 API Functions use the 'function' variable
@@ -393,6 +394,9 @@ campaign_id -		2-8 characters
 SETTINGS FIELDS-
 stage -			the format of the exported data: csv, tab, pipe(default)
 header -		include a header(YES) or not(NO). This is optional, default is not to include a header
+
+OPTIONAL FIELDS-
+search_method -		for faster but blocking SQL queries that may affect database performance, set this to BLOCK
 
 Example URL strings for API calls:
 http://server/vicidial/non_agent_api.php?source=test&function=hopper_list&campaign_id=TESTCAMP&user=6666&pass=1234&stage=csv

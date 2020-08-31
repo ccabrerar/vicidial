@@ -169,6 +169,7 @@ $rsltx=mysql_to_mysqli($stmt, $link);
 $rowx=mysqli_fetch_row($rsltx);
 $fullname = $row[0];
 
+require("screen_colors.php");
 ?>
 <html>
 <head>
@@ -190,7 +191,7 @@ echo "<input type=hidden name=extension value=\"$extension\">\n";
 echo "<input type=hidden name=server_ip value=\"$server_ip\">\n";
 echo "<input type=text name=begin_date value=\"$begin_date\" size=10 maxsize=10> "._QXZ("to")." \n";
 echo "<input type=text name=end_date value=\"$end_date\" size=10 maxsize=10> &nbsp;\n";
-echo "<input type=submit name=submit value='"._QXZ("submit")."'>\n";
+echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("submit")."'>\n";
 
 
 echo " &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; $user - $full_name\n";

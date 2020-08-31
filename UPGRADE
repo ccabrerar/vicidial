@@ -524,6 +524,12 @@ OTHER CHANGES:
 
 147. Added campaigns_list & hopper_list functions to the Non-Agent API
 
+148. Added code and instructions for multi-campaign outbound agents, see the
+	AGENT_MULTI-CAMPAIGN_DIALING.txt doc
+
+149. Added Screen Colors option to set the submit button color on the admin
+	screens and reports.
+
 
 
 

@@ -290,7 +290,7 @@ while ($groups_to_print > $o)
 	$o++;
 	}
 echo "</SELECT>\n";
-echo "<BR><CENTER><input type=submit name=submit value='"._QXZ("SUBMIT")."'></CENTER><BR></form>\n";
+echo "<BR><CENTER><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'></CENTER><BR></form>\n";
 
 echo "\n<BR><BR><BR>";
 
@@ -308,7 +308,7 @@ while ($groups_to_print > $o)
 	$o++;
 	}
 echo "</SELECT>\n";
-echo "<BR><CENTER><input type=submit name=submit value='"._QXZ("SUBMIT")."'></CENTER><BR></form>\n";
+echo "<BR><CENTER><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'></CENTER><BR></form>\n";
 
 echo "\n<BR>";
 

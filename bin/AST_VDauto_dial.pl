@@ -133,6 +133,7 @@
 # 191108-0922 - Added Dial Timeout Lead override function
 # 200108-1315 - Added CID Group type of NONE
 # 200122-1851 - Added code for CID Group auto-rotate feature
+# 200825-0032 - Include live agents from other campaigns if they have the campaign Drop-InGroup selected and drop sec < 0
 #
 
 ### begin parsing run-time options ###
@@ -200,6 +201,7 @@ $RECprefix='7'; ### leave blank for no REC prefix
 $useJAMdebugFILE='1'; ### leave blank for no Jam call debug file writing
 $max_vicidial_trunks=0; ### setting a default value for max_vicidial_trunks
 $run_check=1; # concurrency check
+$new_agent_multicampaign=1; # new process for handling multi-campaign agents
 
 # default path to astguiclient configuration file:
 $PATHconf =		'/etc/astguiclient.conf';
@@ -255,6 +257,8 @@ use DBI;
 
 ### connect to MySQL database defined in the conf file
 $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
+or die "Couldn't connect to database: " . DBI->errstr;
+$dbhC = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
 or die "Couldn't connect to database: " . DBI->errstr;
 
 ### Grab Server values from the database
@@ -413,7 +417,13 @@ while($one_day_interval > 0)
 		@DBIPdial_level_threshold_agents=@MT;
 		@DBIPadaptive_dl_diff_target=@MT;
 		@DBIPdl_diff_target_method=@MT;
-
+		@DBIPscheduled_callbacks_auto_reschedule=@MT;
+		@DBIPcall_quota_lead_ranking=@MT;
+		@DBIPdial_timeout_lead_container=@MT;
+		@DBIPdial_timeout_lead_container_entry=@MT;
+		@DBIPdrop_call_seconds=@MT;
+		@DBIPdrop_action=@MT;
+		@DBIPdrop_inbound_group=@MT;
 		$active_line_counter=0;
 		$user_counter=0;
 		$user_campaigns = '|';
@@ -648,7 +658,7 @@ while($one_day_interval > 0)
 
 			### grab the dial_level and multiply by active agents to get your goalcalls
 			$DBIPadlevel[$user_CIPct]=0;
-			$stmtA = "SELECT auto_dial_level,local_call_time,dial_timeout,dial_prefix,campaign_cid,active,campaign_vdad_exten,closer_campaigns,omit_phone_code,available_only_ratio_tally,auto_alt_dial,campaign_allow_inbound,queue_priority,dial_method,use_custom_cid,inbound_queue_no_dial,available_only_tally_threshold,available_only_tally_threshold_agents,dial_level_threshold,dial_level_threshold_agents,adaptive_dl_diff_target,dl_diff_target_method,inbound_no_agents_no_dial_container,inbound_no_agents_no_dial_threshold,cid_group_id,scheduled_callbacks_auto_reschedule,call_quota_lead_ranking,dial_timeout_lead_container FROM vicidial_campaigns where campaign_id='$DBIPcampaign[$user_CIPct]'";
+			$stmtA = "SELECT auto_dial_level,local_call_time,dial_timeout,dial_prefix,campaign_cid,active,campaign_vdad_exten,closer_campaigns,omit_phone_code,available_only_ratio_tally,auto_alt_dial,campaign_allow_inbound,queue_priority,dial_method,use_custom_cid,inbound_queue_no_dial,available_only_tally_threshold,available_only_tally_threshold_agents,dial_level_threshold,dial_level_threshold_agents,adaptive_dl_diff_target,dl_diff_target_method,inbound_no_agents_no_dial_container,inbound_no_agents_no_dial_threshold,cid_group_id,scheduled_callbacks_auto_reschedule,call_quota_lead_ranking,dial_timeout_lead_container,drop_call_seconds,drop_action,drop_inbound_group FROM vicidial_campaigns where campaign_id='$DBIPcampaign[$user_CIPct]'";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
@@ -688,23 +698,69 @@ while($one_day_interval > 0)
 				$DBIPcall_quota_lead_ranking[$user_CIPct] =	$aryA[26];
 				$DBIPdial_timeout_lead_container[$user_CIPct] =	$aryA[27];
 				$DBIPdial_timeout_lead_container_entry[$user_CIPct]='';
+				$DBIPdrop_call_seconds[$user_CIPct] =	$aryA[28];
+				$DBIPdrop_action[$user_CIPct] =			$aryA[29];
+				$DBIPdrop_inbound_group[$user_CIPct] =	$aryA[30];
 
 				# check for Dial Timeout Lead override
 				if ( (length($DBIPdial_timeout_lead_container[$user_CIPct]) > 1) && ($DBIPdial_timeout_lead_container[$user_CIPct] !~ /^DISABLED$/i) )
 					{
 					# Gather settings container for Call Quota Lead Ranking
-					$stmtA = "SELECT container_entry FROM vicidial_settings_containers where container_id='$DBIPdial_timeout_lead_container[$user_CIPct]';";
-					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-					$sthArows=$sthA->rows;
-					if ($sthArows > 0)
+					$stmtC = "SELECT container_entry FROM vicidial_settings_containers where container_id='$DBIPdial_timeout_lead_container[$user_CIPct]';";
+					$sthC = $dbhC->prepare($stmtC) or die "preparing: ",$dbhC->errstr;
+					$sthC->execute or die "executing: $stmtC ", $dbhC->errstr;
+					$sthCrows=$sthC->rows;
+					if ($sthCrows > 0)
 						{
-						@aryA = $sthA->fetchrow_array;
-						$DBIPdial_timeout_lead_container_entry[$user_CIPct] = $aryA[0];
+						@aryC = $sthC->fetchrow_array;
+						$DBIPdial_timeout_lead_container_entry[$user_CIPct] = $aryC[0];
 						$DBIPdial_timeout_lead_container_entry[$user_CIPct] =~ s/\r|\t|\'|\"|\\//gi;
 						}
-					$sthA->finish();
+					$sthC->finish();
 					}
+
+				# BEGIN check if drop-in-group agents should be included ---NONE--- #
+				if ( ($DBIPdrop_call_seconds[$user_CIPct] < 0) && ($DBIPdrop_action[$user_CIPct] =~ /IN_GROUP/i) && ($DBIPdrop_inbound_group[$user_CIPct] !~ /^---NONE---$/) && (length($DBIPdrop_inbound_group[$user_CIPct]) > 0) && ($new_agent_multicampaign > 0) ) 
+					{
+					if ($DBIPcount[$user_CIPct] > 0) {$DBIPcount[$user_CIPct] = ($DBIPcount[$user_CIPct] - 1);}
+					if ($DBIPACTIVEcount[$user_CIPct] > 0) {$DBIPACTIVEcount[$user_CIPct] = ($DBIPACTIVEcount[$user_CIPct] - 1);}
+					$SQL_group_id=$DBIPdrop_inbound_group[$user_CIPct];   $SQL_group_id =~ s/_/\\_/gi;
+					$temp_drop_ingroup_SQL = "and ( (campaign_id!='$DBIPcampaign[$user_CIPct]') and (closer_campaigns LIKE \"% $SQL_group_id %\") )";
+
+					$stmtC = "SELECT user,status from vicidial_live_agents where last_update_time > '$BDtsSQLdate' $temp_drop_ingroup_SQL;";
+					$sthC = $dbhC->prepare($stmtC) or die "preparing: ",$dbhC->errstr;
+					$sthC->execute or die "executing: $stmtC ", $dbhC->errstr;
+					$sthCrows=$sthC->rows;
+					$temp_dig_ct=0;
+					$temp_dig_ACTIVE=0;
+					$temp_dig_INCALL=0;
+					while ($sthCrows > $temp_dig_ct)
+						{
+						@aryC = $sthC->fetchrow_array;
+						$temp_agent_status = $aryC[1];
+
+						if ($temp_agent_status =~ /READY|DONE|CLOSER/) 
+							{
+							$DBIPcount[$user_CIPct]++;
+							$DBIPACTIVEcount[$user_CIPct]++;
+							$temp_dig_ACTIVE++;
+							}
+						else
+							{
+							if ($temp_agent_status =~ /INCALL/) 
+								{
+								$DBIPcount[$user_CIPct]++;
+								$DBIPINCALLcount[$user_CIPct]++;
+								$temp_dig_INCALL++;
+								}
+							}
+						$temp_dig_ct++;
+						}
+					$sthC->finish();
+					if ($DB) {print "     $DBIPcampaign[$user_CIPct] Drop In-Group agents included from $DBIPdrop_inbound_group[$user_CIPct]: READY $temp_dig_ACTIVE + INCALL $temp_dig_INCALL  ($temp_dig_ct)\n";}
+					$debug_string .= "     $DBIPcampaign[$user_CIPct] Drop In-Group agents included from $DBIPdrop_inbound_group[$user_CIPct]: READY $temp_dig_ACTIVE + INCALL $temp_dig_INCALL  ($temp_dig_ct)\n";
+					}
+				# END check if drop-in-group agents should be included ---NONE--- #
 
 				if ($DBIPdl_diff_target_method[$user_CIPct] =~ /ADAPT_CALC_ONLY/)
 					{
@@ -1076,6 +1132,25 @@ while($one_day_interval > 0)
 				$waiting_calls_OUT = $aryA[0];
 				}
 			$sthA->finish();
+
+			# check for drop-ingroup calls active in the system
+			if ( ($DBIPdrop_call_seconds[$user_CIPct] < 0) && ($DBIPdrop_action[$user_CIPct] =~ /IN_GROUP/i) && ($DBIPdrop_inbound_group[$user_CIPct] !~ /^---NONE---$/) && (length($DBIPdrop_inbound_group[$user_CIPct]) > 0) && ($new_agent_multicampaign > 0) ) 
+				{
+				$stmtA = "SELECT count(*) FROM vicidial_auto_calls where (campaign_id='$DBIPdrop_inbound_group[$user_CIPct]' and call_type IN('IN','OUT','OUTBALANCE')) and  status IN('LIVE');";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArows=$sthA->rows;
+				if ($sthArows > 0)
+					{
+					@aryA = $sthA->fetchrow_array;
+					$event_string="     $DBIPcampaign[$user_CIPct] Drop In-Group calls: $aryA[0]  ($waiting_calls_OUT)\n";
+					$debug_string .= "$event_string\n";
+					&event_logger;
+
+					$waiting_calls_OUT = ($aryA[0] + $waiting_calls_OUT);
+					}
+				$sthA->finish();
+				}
 
 			$waiting_calls = ($waiting_calls_IN + $waiting_calls_OUT);
 

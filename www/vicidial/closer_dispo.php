@@ -177,6 +177,7 @@ $row=mysqli_fetch_row($rslt);
 $LOGfullname=$row[0];
 $fullname = $row[0];
 
+require("screen_colors.php");
 ?>
 <html>
 <head>
@@ -223,12 +224,12 @@ $call_length = ($STARTtime - $call_began);
 
 		echo _QXZ("Hangup command sent for channel")." $channel &nbsp; &nbsp; &nbsp; $NOW_TIME\n<BR><BR>\n";
 
-		echo "<form><input type=button value=\""._QXZ("Close This Window")."\" onClick=\"javascript:window.close();\"></form>\n";
+		echo "<form><input style='background-color:#$SSbutton_color' type=button value=\""._QXZ("Close This Window")."\" onClick=\"javascript:window.close();\"></form>\n";
 	}
 	else
 	{
 		echo _QXZ("Hangup command FAILED for channel")." $channel &nbsp; &nbsp; &nbsp; $NOW_TIME\n<BR><BR>\n";
-		echo "<form><input type=button value=\""._QXZ("Close This Window")."\" onClick=\"javascript:window.close();\"></form>\n";
+		echo "<form><input style='background-color:#$SSbutton_color' type=button value=\""._QXZ("Close This Window")."\" onClick=\"javascript:window.close();\"></form>\n";
 	}
 }
 else
@@ -320,7 +321,7 @@ else
 			echo "</select></td></tr>\n";
 
 
-		echo "<tr><td colspan=2><input type=submit name=submit value=\""._QXZ("END CALL")."\"></td></tr>\n";
+		echo "<tr><td colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value=\""._QXZ("END CALL")."\"></td></tr>\n";
 		echo "</table></form>\n";
 		echo "<BR><BR><BR>\n";
 

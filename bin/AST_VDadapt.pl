@@ -6,7 +6,7 @@
 # adjusts the auto_dial_level for vicidial adaptive-predictive campaigns. 
 # gather call stats for campaigns and in-groups
 #
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 60823-1302 - First build from AST_VDhopper.pl
@@ -51,8 +51,8 @@
 # 190216-0809 - Fix for user-group, in-group and campaign allowed/permissions matching issues
 # 190720-2122 - Added audit and fixing of missing outbound auto-dial logs if Call Quotas is enabled
 # 190722-1004 - Added more logging and log-audit portions to Call Quotas log audit code
+# 200811-1600 - Include live agents from other campaigns if they have the campaign Drop-InGroup selected and drop sec < 0
 #
-
 
 # constants
 $DB=0;  # Debug flag, set to 0 for no debug messages, On an active system this will generate lots of lines of output per minute
@@ -61,6 +61,7 @@ $MT[0]='';
 $run_check=1; # concurrency check
 $VLhour_counts=1; # use cached hour counts for vicidial_log entries per campaign
 $VCLhour_counts=1; # use cached hour counts for vicidial_closer_log entries per in-group
+$new_agent_multicampaign=1; # new process for handling multi-campaign agents
 
 ##### table definitions(used to force index usage for better performance):
 	$vicidial_log = 'vicidial_log FORCE INDEX (call_date) ';
@@ -455,7 +456,7 @@ while ($master_loop < $CLIloops)
 		}
 	else
 		{
-		$stmtA = "SELECT campaign_id,lead_order,hopper_level,auto_dial_level,local_call_time,lead_filter_id,use_internal_dnc,dial_method,available_only_ratio_tally,adaptive_dropped_percentage,adaptive_maximum_level,adaptive_latest_server_time,adaptive_intensity,adaptive_dl_diff_target,UNIX_TIMESTAMP(campaign_changedate),campaign_stats_refresh,campaign_allow_inbound,drop_rate_group,UNIX_TIMESTAMP(campaign_calldate),realtime_agent_time_stats,available_only_tally_threshold,available_only_tally_threshold_agents,dial_level_threshold,dial_level_threshold_agents,ofcom_uk_drop_calc from vicidial_campaigns where ( (active='Y') or (campaign_stats_refresh='Y') )";
+		$stmtA = "SELECT campaign_id,lead_order,hopper_level,auto_dial_level,local_call_time,lead_filter_id,use_internal_dnc,dial_method,available_only_ratio_tally,adaptive_dropped_percentage,adaptive_maximum_level,adaptive_latest_server_time,adaptive_intensity,adaptive_dl_diff_target,UNIX_TIMESTAMP(campaign_changedate),campaign_stats_refresh,campaign_allow_inbound,drop_rate_group,UNIX_TIMESTAMP(campaign_calldate),realtime_agent_time_stats,available_only_tally_threshold,available_only_tally_threshold_agents,dial_level_threshold,dial_level_threshold_agents,ofcom_uk_drop_calc,drop_call_seconds,drop_action,drop_inbound_group from vicidial_campaigns where ( (active='Y') or (campaign_stats_refresh='Y') )";
 		}
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -492,6 +493,9 @@ while ($master_loop < $CLIloops)
 		$dial_level_threshold[$rec_count] =			$aryA[22];
 		$dial_level_threshold_agents[$rec_count] =	$aryA[23];
 		$ofcom_uk_drop_calc[$rec_count] =			$aryA[24];
+		$drop_call_seconds[$rec_count] =			$aryA[25];
+		$drop_action[$rec_count] =					$aryA[26];
+		$drop_inbound_group[$rec_count] =			$aryA[27];
 
 		$rec_count++;
 		}
@@ -524,7 +528,16 @@ while ($master_loop < $CLIloops)
 		$sthA->finish();
 
 		### Find out how many agents are logged in to a specific campaign
-		$stmtA = "SELECT count(*) from vicidial_live_agents where campaign_id='$campaign_id[$i]' and last_update_time > '$VDL_one';";
+		# check if drop-in-group agents should be included ---NONE---
+		$drop_ingroup_SQL[$i]='';
+		if ( ($drop_call_seconds[$i] < 0) && ($drop_action[$i] =~ /IN_GROUP/i) && ($drop_inbound_group[$i] !~ /^---NONE---$/) && (length($drop_inbound_group[$i]) > 0) && ($new_agent_multicampaign > 0) ) 
+			{
+			$SQL_group_id=$drop_inbound_group[$i];   $SQL_group_id =~ s/_/\\_/gi;
+			$drop_ingroup_SQL[$i] = " or ( (campaign_id!='$campaign_id[$i]') and (closer_campaigns LIKE \"% $SQL_group_id %\") )";
+			if ($DB) {print "     $campaign_id[$i] Drop In-Group agents included from:   $drop_inbound_group[$i]";}
+			$debug_camp_output .= "     $campaign_id[$i] Drop In-Group agents included from:   $drop_inbound_group[$i]\n";
+			}
+		$stmtA = "SELECT count(*) from vicidial_live_agents where ( (campaign_id='$campaign_id[$i]') $drop_ingroup_SQL[$i] ) and last_update_time > '$VDL_one';";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;
@@ -2148,7 +2161,7 @@ sub count_agents_lines
 	$total_agents_avg[$i]=0;
 	$stat_differential[$i]=0;
 
-	$stmtA = "SELECT count(*),status from vicidial_live_agents where campaign_id='$campaign_id[$i]' and last_update_time > '$VDL_one' group by status;";
+	$stmtA = "SELECT count(*),status from vicidial_live_agents where ( (campaign_id='$campaign_id[$i]') $drop_ingroup_SQL[$i] ) and last_update_time > '$VDL_one' group by status;";
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 	$sthArows=$sthA->rows;
@@ -2205,7 +2218,7 @@ sub count_agents_lines
 	# LIVE CAMPAIGN CALLS RIGHT NOW
 	if ($daily_stats > 0)
 		{
-		$stmtA = "SELECT count(*) from vicidial_live_agents where campaign_id='$campaign_id[$i]' and last_update_time > '$VDL_one' and extension LIKE \"R/%\";";
+		$stmtA = "SELECT count(*) from vicidial_live_agents where ( (campaign_id='$campaign_id[$i]') $drop_ingroup_SQL[$i] ) and last_update_time > '$VDL_one' and extension LIKE \"R/%\";";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;
@@ -5946,7 +5959,7 @@ sub calculate_dial_level
 	$adaptive_string .= "CAMPAIGN:   $campaign_id[$i]     $i\n";
 
 	# COUNTS OF STATUSES OF AGENTS IN THIS CAMPAIGN
-	$stmtA = "SELECT count(*),status from vicidial_live_agents where campaign_id='$campaign_id[$i]' and last_update_time > '$VDL_one' group by status;";
+	$stmtA = "SELECT count(*),status from vicidial_live_agents where ( (campaign_id='$campaign_id[$i]') $drop_ingroup_SQL[$i] ) and last_update_time > '$VDL_one' group by status;";
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 	$sthArows=$sthA->rows;

@@ -408,6 +408,7 @@ $vdc_form_display = 'vdc_form_display.php';
 if (preg_match("/cf_encrypt/",$active_modules))
 	{$vdc_form_display = 'vdc_form_display_encrypt.php';}
 
+require("screen_colors.php");
 ?>
 <html>
 <head>
@@ -1071,7 +1072,7 @@ else
 //	echo "<tr bgcolor=#B6D3FC><td align=left>Modify closer log </td><td align=left><input type=checkbox name=modify_closer_logs value=\"1\"></td></tr>\n";
 	echo "<tr bgcolor=#B6D3FC><td align=left>"._QXZ("Disable QC log entry")." </td><td align=left><input type=checkbox name=add_qc_record value=\"1\">("._QXZ("this feature is not active yet").")</td></tr>\n";
 
-	echo "<tr><td colspan=2 align=center><input type=submit name=submit value=\""._QXZ("SUBMIT")."\"></td></tr>\n";
+	echo "<tr><td colspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit name=submit value=\""._QXZ("SUBMIT")."\"></td></tr>\n";
 	echo "<tr><td align=right>";
 	if (strlen($qc_webform) > 4)
 		{
@@ -1106,7 +1107,7 @@ else
 				echo "<input type=hidden name=DB value=\"$DB\">\n";
 				echo "<input type=hidden name=lead_id value=\"$lead_id\">\n";
 				echo "<input type=hidden name=callback_id value=\"$rowx[0]\">\n";
-				echo "<input type=submit name=submit value=\""._QXZ("CHANGE TO ANYONE CALLBACK")."\"><input type=hidden name=viewtime value='$STARTtime' /></form><BR>\n";
+				echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value=\""._QXZ("CHANGE TO ANYONE CALLBACK")."\"><input type=hidden name=viewtime value='$STARTtime' /></form><BR>\n";
 
 				echo "<br><form action=$PHP_SELF method=POST>\n";
 				echo "<input type=hidden name=CBchangeUSERtoUSER value=\"YES\">\n";
@@ -1114,7 +1115,7 @@ else
 				echo "<input type=hidden name=lead_id value=\"$lead_id\">\n";
 				echo "<input type=hidden name=callback_id value=\"$rowx[0]\">\n";
 				echo _QXZ("New Callback Owner UserID").": <input type=text name=CBuser size=18 maxlength=20 value=\"$rowx[8]\"> \n";
-				echo "<input type=submit name=submit value=\""._QXZ("CHANGE USERONLY CALLBACK USER")."\"><input type=hidden name=viewtime value='$STARTtime' /></form><BR>\n";
+				echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value=\""._QXZ("CHANGE USERONLY CALLBACK USER")."\"><input type=hidden name=viewtime value='$STARTtime' /></form><BR>\n";
 				}
 			else
 				{
@@ -1124,7 +1125,7 @@ else
 				echo "<input type=hidden name=lead_id value=\"$lead_id\">\n";
 				echo "<input type=hidden name=callback_id value=\"$rowx[0]\">\n";
 				echo _QXZ("New Callback Owner UserID").": <input type=text name=CBuser size=18 maxlength=20 value=\"$rowx[8]\"> \n";
-				echo "<input type=submit name=submit value=\""._QXZ("CHANGE TO USERONLY CALLBACK")."\"><input type=hidden name=viewtime value='$STARTtime' /></form><BR>\n";
+				echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value=\""._QXZ("CHANGE TO USERONLY CALLBACK")."\"><input type=hidden name=viewtime value='$STARTtime' /></form><BR>\n";
 				}
 
 			$appointment_datetimeARRAY = explode(" ",$rowx[6]);
@@ -1239,7 +1240,7 @@ else
 
 			</SCRIPT>
 
-			<input type=button value="<?php echo _QXZ("SUBMIT"); ?>" name=smt id=smt onClick="submit_form()">
+			<input style='background-color:#<?php echo "$SSbutton_color"; ?>' type=button value="<?php echo _QXZ("SUBMIT"); ?>" name=smt id=smt onClick="submit_form()">
 			</TD>
 			</TR>
 <input type=hidden name=viewtime value='<?php echo $STARTtime; ?>' />

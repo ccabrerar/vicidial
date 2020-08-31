@@ -1,4 +1,4 @@
-CRM EXAMPLE SKIN DOCUMENT	Started: 2015-12-27	Updated: 2017-06-01
+CRM EXAMPLE SKIN DOCUMENT	Started: 2015-12-27	Updated: 2020-08-28
 
 This document describes one method of integrating with the agent screen using 
 a basic skin. This method could be used as a guide to integrate a CRM web system
@@ -56,3 +56,10 @@ Notes:
 - The example code shown assumes a campaign with only outbound auto-dial and inbound call handling in a RATIO or ADAPT dial method.
 - The example code assumes Campaign Pause Codes is not enabled
 - For more tight integration with your CRM, take a look at the AGENT_EVENTS_PUSH.txt document for information on how to get agent events pushed to your system
+
+
+Additional enhancements:
+- The agc/alt_display.php script can function as a top panel for a custom agent web screen showing a live call indicator, call timer and call-waiting counter and timer. To activate it you will need to enable the options.php setting "$alt_display_enabled". Example URLs:
+http://server/agc/alt_display.php?user=6666&ACTION=top_panel
+http://server/agc/alt_display.php?user=6666&ACTION=top_panel_realtime
+http://server/agc/alt_display.php?user=6666&ACTION=agent_status

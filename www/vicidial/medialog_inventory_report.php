@@ -641,7 +641,7 @@ if ($archives_available=="Y")
 	}
 
 
-$MAIN.="<BR><BR><INPUT type=submit NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>\n";
+$MAIN.="<BR><BR><INPUT style='background-color:#$SSbutton_color' type=submit NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>\n";
 $MAIN.="<BR><BR><a href=\"$PHP_SELF\">"._QXZ("reset")."</a>";
 $MAIN.="</TD></TR></TABLE>";
 $MAIN.="</FORM>\n\n";

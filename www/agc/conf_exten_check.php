@@ -1,7 +1,7 @@
 <?php
 # conf_exten_check.php    version 2.14
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed purely to send whether the meetme conference has live channels connected and which they are
 # This script depends on the server_ip being sent and also needs to have a valid user/pass from the vicidial_users table
@@ -83,10 +83,11 @@
 # 190730-0927 - Added campaign SIP Actions processing
 # 190925-1348 - Added logtable SIP Action
 # 191013-2105 - Fixes for PHP7
+# 200825-2343 - Added option for manual-only sip actions
 #
 
-$version = '2.14-57';
-$build = '191013-2105';
+$version = '2.14-58';
+$build = '200825-2343';
 $php_script = 'conf_exten_check.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=51;
@@ -981,7 +982,7 @@ if ($ACTION == 'refresh')
 								$sea=0;
 								while ($sip_action_settings_ct >= $sea)
 									{
-									if (preg_match("/^invite_to_final => /",$sip_action_settings[$sea]))
+									if ( (preg_match("/^invite_to_final => /",$sip_action_settings[$sea])) and (!preg_match("/auto-only/i",$sip_action_settings[$sea])) )
 										{
 										# invite_to_final => 0.0,1.0,hangup-dispo-message,FAS,Auto Hangup and Dispo of False Answer Call
 										$sip_action_settings[$sea] = preg_replace("/invite_to_final => /",'',$sip_action_settings[$sea]);

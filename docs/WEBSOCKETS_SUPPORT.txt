@@ -1,0 +1,42 @@
+WEBSOCKETS DOC	Started: 2018-02-23	Updated: 2020-08-26
+
+
+
+This document will go over how we have helped clients integrate with WebSockets-based applications through the VICIdial agent screen.
+
+Support for WebSocket applications was added to the agent screen on 2018-04-25(svn/trunk revision 2974) with the addition of the following variables to the "agc/options.php" file:
+
+$INSERT_head_script	= '';	# inserted right above the <script language="Javascript"> line after logging in
+$INSERT_head_js		= '';	# inserted after first javascript function
+$INSERT_first_onload	= '';	# inserted at the beginning of the first section of the onload function
+$INSERT_window_onload	= '';	# inserted at the end of the onload function
+$INSERT_agent_events	= '';	# inserted within the agent_events function
+
+
+
+These new variables allow for specific content needed for WebSockets to be loaded and activated on the agent screen to be inserted into the proper places in the web code as it is loaded. Here's an example of what one client is using in these fields:
+
+
+# inserted right above the <script language="Javascript"> line after logging in
+$INSERT_head_script     = '<script type="text/javascript" src="./mywebchan.js"></script>';
+
+# inserted after first javascript function
+$INSERT_head_js         = 'function init_webchan() {var socket = new WebSocket("wss://localhost:" + LOGINvarONE); socket.onopen = function() {new MyWebChan(socket, function(channel) {window.obj_in_question = channel.objects.obj_in_question;});}}';
+
+# inserted within the onload function
+$INSERT_first_onload   = 'init_webchan();';
+$INSERT_window_onload   = '';
+
+# inserted within the agent_events function
+$INSERT_agent_events    = 'if( !(typeof obj_in_question === "undefined") ) {obj_in_question.agent_events(event_type,event_msg,event_counter,SQLdate);}';
+
+
+NOTES:
+- In the example above, the client only has to have their "mywebchan.js" file uploaded to the agc/ web directory for it to work with their WebSockets application.
+- The WebSocket application will also have to know the socket number that it is using locally, and it will have to pass the "LOGINvarONE" variable to the vicidial.php login screen in the URL so that when the agent screen loads it will be able to use that variable in the javascript seen above. Here's an example URL the application will send the agent screen:
+	http://192.168.1.2/agc/vicidial.php?VD_login=1000&VD_campaign=TESTCAMP&phone_login=nophone&phone_pass=test&VD_pass=1234&LOGINvarONE=5478
+
+
+
+There are multiple platforms that you can develop a WebSocket-compatible application on, one of them that our clients have used that is open-source based is Qt:
+https://www.qt.io/

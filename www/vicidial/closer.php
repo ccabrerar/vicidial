@@ -153,6 +153,8 @@ $color_class[6] = 'red';
 $color_class[7] = 'blue';
 $color_class[8] = 'purple';
 $color_class[9] = 'orange';
+
+require("screen_colors.php");
 ?>
 
 <HTML>
@@ -222,7 +224,7 @@ if (!$dialplan_number)
 					$o++;
 				}
 			echo "</td></tr></table>\n";
-			echo "<input type=submit name=submit value='"._QXZ("submit")."'>\n";
+			echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("submit")."'>\n";
 			echo "<BR><BR><BR>\n";
 			}
 		else
@@ -250,7 +252,7 @@ if (!$dialplan_number)
 		echo "<br>"._QXZ("Please enter your phone_ID").": <form action=$PHP_SELF method=POST>\n";
 		echo "<input type=hidden name=PHONE_LOGIN value=1>\n";
 		echo _QXZ("phone station ID").": <input type=text name=extension size=10 maxlength=10 value=\"$extension\"> &nbsp; \n";
-		echo "<input type=submit name=submit value='"._QXZ("submit")."'>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("submit")."'>\n";
 		echo "<BR><BR><BR>\n";
 		}
 
@@ -260,7 +262,7 @@ if (!$dialplan_number)
 	echo "<br>"._QXZ("Please enter your phone_ID").": <form action=$PHP_SELF method=POST>\n";
 	echo "<input type=hidden name=PHONE_LOGIN value=1>\n";
 	echo _QXZ("phone station ID").": <input type=text name=extension size=10 maxlength=10> &nbsp; \n";
-	echo "<input type=submit name=submit value='"._QXZ("submit")."'>\n";
+	echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("submit")."'>\n";
 	echo "<BR><BR><BR>\n";
 	}
 

@@ -1,7 +1,7 @@
 <?php
 # admin_languages.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # this screen manages the optional language tables in ViciDial
 #
@@ -18,10 +18,11 @@
 # 161120-0919 - Added CHAT option
 # 170409-1547 - Added IP List validation code
 # 180502-2215 - Added new help display
+# 200828-1628 - Fix for early permissions message, Issue #1227
 #
 
-$admin_version = '2.14-11';
-$build = '170409-1547';
+$admin_version = '2.14-12';
+$build = '200828-1628';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -211,21 +212,7 @@ if ($auth < 1)
 	exit;
 	}
 
-$rights_stmt = "SELECT modify_languages from vicidial_users where user='$PHP_AUTH_USER';";
-if ($DB) {echo "|$stmt|\n";}
-$rights_rslt=mysql_to_mysqli($rights_stmt, $link);
-$rights_row=mysqli_fetch_row($rights_rslt);
-$modify_languages =		$rights_row[0];
-
-# check their permissions
-if ( ($modify_languages < 1) or ($SSenable_languages < 1) )
-	{
-	header ("Content-type: text/html; charset=utf-8");
-	echo _QXZ("You do not have permissions to modify languages")."\n";
-	exit;
-	}
-
-$stmt="SELECT full_name,modify_scripts,user_level,user_group,qc_enabled from vicidial_users where user='$PHP_AUTH_USER';";
+$stmt="SELECT full_name,modify_scripts,user_level,user_group,qc_enabled,modify_languages from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "$stmt\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $row=mysqli_fetch_row($rslt);
@@ -234,6 +221,7 @@ $LOGmodify_scripts =		$row[1];
 $LOGuser_level =			$row[2];
 $LOGuser_group =			$row[3];
 $qc_auth =					$row[4];
+$modify_languages =			$row[5];
 
 $stmt="SELECT allowed_campaigns,allowed_reports,admin_viewable_groups,admin_viewable_call_times from vicidial_user_groups where user_group='$LOGuser_group';";
 if ($DB) {echo "$stmt\n";}

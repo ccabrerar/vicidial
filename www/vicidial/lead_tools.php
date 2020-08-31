@@ -372,7 +372,7 @@ if ($move_submit == _QXZ("move") )
 		echo "<input type=hidden name=move_status value='$move_status'>\n";
 		echo "<input type=hidden name=move_count_op value='$move_count_op'>\n";
 		echo "<input type=hidden name=move_count_num value='$move_count_num'>\n";
-		echo "<input type=submit name=confirm_move value='"._QXZ("confirm")."'>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=confirm_move value='"._QXZ("confirm")."'>\n";
 		echo "</form></center>\n";
 				echo "<p><a href='$PHP_SELF'>"._QXZ("Click here to start over").".</a></p>\n";
 		echo "</body>\n</html>\n";
@@ -429,7 +429,7 @@ if ($confirm_move == _QXZ("confirm"))
 	$move_lead_rslt = mysql_to_mysqli($move_lead_stmt, $link);
 	$move_lead_count = mysqli_affected_rows($link);
 		
-	$move_sentence = "$move_lead_count leads have been moved from list $move_from_list to $move_to_list with the status $move_status and that were called $move_count_op_phrase$move_count_num times.";
+	$move_sentence = "$move_lead_count "._QXZ("leads have been moved from list")." $move_from_list "._QXZ("to")." $move_to_list "._QXZ("with the status")." $move_status "._QXZ("and that were called")." $move_count_op_phrase$move_count_num "._QXZ("times").".";
 	
 	$SQL_log = "$move_lead_stmt|";
 	$SQL_log = preg_replace('/;/', '', $SQL_log);
@@ -503,7 +503,7 @@ if ($update_submit == _QXZ("update") )
 	echo "<input type=hidden name=update_to_status value='$update_to_status'>\n";
 	echo "<input type=hidden name=update_count_op value='$update_count_op'>\n";
 	echo "<input type=hidden name=update_count_num value='$update_count_num'>\n";
-	echo "<input type=submit name=confirm_update value='"._QXZ("confirm")."'>\n";
+	echo "<input style='background-color:#$SSbutton_color' type=submit name=confirm_update value='"._QXZ("confirm")."'>\n";
 	echo "</form></center>\n";
 	echo "<p><a href='$PHP_SELF'>"._QXZ("Click here to start over").".</a></p>\n";
 	echo "</body>\n</html>\n";
@@ -560,7 +560,7 @@ if ($confirm_update == _QXZ("confirm"))
 	$update_lead_rslt = mysql_to_mysqli($update_lead_stmt, $link);
 	$update_lead_count = mysqli_affected_rows($link);
 		
-		$update_sentence = "$update_lead_count leads had their status changed from $update_from_status to $update_to_status in list $update_list that were called $update_count_op_phrase$update_count_num times.";
+		$update_sentence = "$update_lead_count "._QXZ("leads had their status changed from")." $update_from_status "._QXZ("to")." $update_to_status "._QXZ("in list")." $update_list "._QXZ("that were called")." $update_count_op_phrase$update_count_num "._QXZ("times").".";
 		
 		$SQL_log = "$update_lead_stmt|";
 		$SQL_log = preg_replace('/;/', '', $SQL_log);
@@ -629,7 +629,7 @@ if ( ( $delete_submit == _QXZ("delete") ) && ( $delete_lists > 0 ) )
 	echo "<input type=hidden name=delete_status value='$delete_status'>\n";
 	echo "<input type=hidden name=delete_count_op value='$delete_count_op'>\n";
 	echo "<input type=hidden name=delete_count_num value='$delete_count_num'>\n";
-	echo "<input type=submit name=confirm_delete value='"._QXZ("confirm")."'>\n";
+	echo "<input style='background-color:#$SSbutton_color' type=submit name=confirm_delete value='"._QXZ("confirm")."'>\n";
 	echo "</form></center>\n";
 	echo "<p><a href='$PHP_SELF'>"._QXZ("Click here to start over").".</a></p>\n";
 	echo "</body>\n</html>\n";
@@ -874,7 +874,7 @@ if (
 		$i++;
 		}
 	echo "</select></td></tr>\n";
-	echo "<tr bgcolor=#$SSstd_row3_background><td colspan=2 align=center><input type=submit name=move_submit value='"._QXZ("move")."'></td></tr>\n";
+	echo "<tr bgcolor=#$SSstd_row3_background><td colspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit name=move_submit value='"._QXZ("move")."'></td></tr>\n";
 	echo "</table></center>\n";
 	# END lead move
 
@@ -933,7 +933,7 @@ if (
 		$i++;
 		}
 	echo "</select></td></tr>\n";
-	echo "<tr bgcolor=#$SSstd_row3_background><td colspan=2 align=center><input type=submit name=update_submit value='"._QXZ("update")."'></td></tr>\n";
+	echo "<tr bgcolor=#$SSstd_row3_background><td colspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit name=update_submit value='"._QXZ("update")."'></td></tr>\n";
 	# END Status Update
 
 	if ( $delete_lists > 0 )
@@ -982,7 +982,7 @@ if (
 			$i++;
 			}
 		echo "</select></td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row3_background><td colspan=2 align=center><input type=submit name=delete_submit value='"._QXZ("delete")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row3_background><td colspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit name=delete_submit value='"._QXZ("delete")."'></td></tr>\n";
 		# END Delete Leads
 
 		}

@@ -300,40 +300,8 @@ if (strlen($user_group) > 0)
 	$group_name = $row[0];
 	}
 
+require("screen_colors.php");
 
-$SSmenu_background='015B91';
-$SSframe_background='D9E6FE';
-$SSstd_row1_background='9BB9FB';
-$SSstd_row2_background='B9CBFD';
-$SSstd_row3_background='8EBCFD';
-$SSstd_row4_background='B6D3FC';
-$SSstd_row5_background='A3C3D6';
-$SSalt_row1_background='BDFFBD';
-$SSalt_row2_background='99FF99';
-$SSalt_row3_background='CCFFCC';
-
-if ($SSadmin_screen_colors != 'default')
-	{
-	$stmt = "SELECT menu_background,frame_background,std_row1_background,std_row2_background,std_row3_background,std_row4_background,std_row5_background,alt_row1_background,alt_row2_background,alt_row3_background,web_logo FROM vicidial_screen_colors where colors_id='$SSadmin_screen_colors';";
-	$rslt=mysql_to_mysqli($stmt, $link);
-	if ($DB) {echo "$stmt\n";}
-	$colors_ct = mysqli_num_rows($rslt);
-	if ($colors_ct > 0)
-		{
-		$row=mysqli_fetch_row($rslt);
-		$SSmenu_background =		$row[0];
-		$SSframe_background =		$row[1];
-		$SSstd_row1_background =	$row[2];
-		$SSstd_row2_background =	$row[3];
-		$SSstd_row3_background =	$row[4];
-		$SSstd_row4_background =	$row[5];
-		$SSstd_row5_background =	$row[6];
-		$SSalt_row1_background =	$row[7];
-		$SSalt_row2_background =	$row[8];
-		$SSalt_row3_background =	$row[9];
-		$SSweb_logo =				$row[10];
-		}
-	}
 $Mhead_color =	$SSstd_row5_background;
 $Mmain_bgcolor = $SSmenu_background;
 $Mhead_color =	$SSstd_row5_background;
@@ -407,7 +375,7 @@ $MAIN.="<TR BGCOLOR=\"#". $SSstd_row3_background ."\"><TD ALIGN=LEFT COLSPAN=2><
 $MAIN.="<form action=$PHP_SELF method=GET>\n";
 $MAIN.="<input type=hidden name=DB value=\"$DB\">\n";
 $MAIN.="<select size=1 name=user_group>$FORMuser_groups</select>";
-$MAIN.="<input type=submit name=submit VALUE='"._QXZ("SUBMIT")."'\n";
+$MAIN.="<input style='background-color:#$SSbutton_color' type=submit name=submit VALUE='"._QXZ("SUBMIT")."'\n";
 
 $MAIN.="</B></TD></TR>\n";
 $MAIN.="<TR><TD ALIGN=LEFT COLSPAN=2>\n";

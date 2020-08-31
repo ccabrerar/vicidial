@@ -1,4 +1,4 @@
-SIP EVENT LOGGING DOC	Started: 2019-05-30	Updated: 2020-01-30
+SIP EVENT LOGGING DOC	Started: 2019-05-30	Updated: 2020-08-25
 
 !!!! THIS IS AN EXPERIMENTAL FEATURE, PLEASE READ ALL IMPORTANT NOTES !!!!
 
@@ -79,6 +79,7 @@ You will also need to enable this feature in Admin -> System Settings
 
 
 Scripts modified/added:
+- agi/agi-VDAD_ALL_outbound.agi
 - bin/AST_manager_listen_AMI2.pl
 - bin/ADMIN_keepalive_ALL.pl
 - bin/ADMIN_update_server_ip.pl
@@ -118,12 +119,23 @@ AGENT_SCREEN_ACTIONS_FINISH
 
 
 
+Example SIP_EVENT_ACTIONS Settings Container(with separate lines for auto-dial and manual-dial calls):
+
+; agent screen actions
+AGENT_SCREEN_ACTIONS_START
+invite_to_final => 0.0,1.2,hangup-dispo-message-logtable,FAS,Auto Hangup and Dispo of False Answer Call,auto-only
+invite_to_final => 0.0,0.1,hangup-dispo-message-logtable,FAS,Auto Hangup and Dispo of False Answer Call,manual-only
+AGENT_SCREEN_ACTIONS_FINISH
+
+
+
 Settings within agent screen actions:
 1. time range start -	a number with 1-6 decimal places
 2. time range finish -	a number with 1-6 decimal places
 3. agent screen action taken -	any combination of the following: 'hangup', 'dispo', 'message', 'logtable' separated by dashes
 4. If 'dispo' is included in #3, then this is the dispo set. If 'logtable' is used, then this is the result logged
 5. If 'message' is included in #3, then this is the message sent to the agent
+6. Define if the action is for 'both', 'auto-only' or 'manual-only'. Default or blank is 'both'
 
 
 If you include a message, it will be displayed on the agent's screen for 4 seconds then it will automatically disappear.

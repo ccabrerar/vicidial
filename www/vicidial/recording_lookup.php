@@ -78,6 +78,8 @@ else
 #	fwrite ($fp, "AUTH|VDC   |$date|$username|$passwd|$ip|$QUERY_recid|$browser|\n");
 #	fclose($fp);
 
+require("screen_colors.php");
+
 ?>
 <html>
 <head>
@@ -163,7 +165,7 @@ $RUNtime = ($ENDtime - $STARTtime);
 
 echo "\n\n\n<br><br><br>\n<FORM ACTION=\"$PHP_SELF\" METHOD=GET>\n";
 echo "<INPUT TYPE=text name=QUERY_recid size=12 maxlength=10>\n";
-echo "<INPUT type=submit name=submit value='"._QXZ("submit")."'>\n";
+echo "<INPUT style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("submit")."'>\n";
 echo "</FORM>\n";
 
 

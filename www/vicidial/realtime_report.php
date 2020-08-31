@@ -794,6 +794,7 @@ while ($i < $ingroups_to_print)
 	$i++;
 	}
 
+require("screen_colors.php");
 
 if (!isset($RR))   {$RR=4;}
 
@@ -1040,7 +1041,7 @@ $select_list .= "</SELECT></TD></TR>";
 
 $select_list .= "</TABLE><BR>";
 $select_list .= "<INPUT type=hidden name=droppedOFtotal value='$droppedOFtotal'>";
-$select_list .= "<INPUT type=button VALUE='"._QXZ("SUBMIT")."' onclick=\\\"update_variables('form_submit','');\\\"><FONT FACE='ARIAL,HELVETICA' COLOR=BLACK SIZE=2> &nbsp; &nbsp; &nbsp; &nbsp; ";
+$select_list .= "<INPUT style='background-color:#$SSbutton_color' type=button VALUE='"._QXZ("SUBMIT")."' onclick=\\\"update_variables('form_submit','');\\\"><FONT FACE='ARIAL,HELVETICA' COLOR=BLACK SIZE=2> &nbsp; &nbsp; &nbsp; &nbsp; ";
 $select_list .= "</TD></TR>";
 $select_list .= "<TR><TD ALIGN=CENTER>";
 $select_list .= "<font class='top_settings_val'> &nbsp; </font>";

@@ -175,6 +175,8 @@ else
 		}
 	}
 
+require("screen_colors.php");
+
 echo "<html>\n";
 echo "<head>\n";
 echo "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=utf-8\">\n";
@@ -320,7 +322,7 @@ if ($ADD==31111)
 	echo "<tr bgcolor=#B6D3FC><td align=right>"._QXZ("Inbound Groups").": </td><td align=left>\n";
 	echo "$groups_list";
 	echo "</td></tr>\n";
-	echo "<tr bgcolor=#B6D3FC><td align=center colspan=2><input type=submit name=submit value='"._QXZ("submit")."'></td></tr>\n";
+	echo "<tr bgcolor=#B6D3FC><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("submit")."'></td></tr>\n";
 	echo "</TABLE></center>\n";
 	echo _QXZ("NOTE: It can take up to 30 seconds for changes submitted on this screen to go live")."\n";
 	}
@@ -375,7 +377,7 @@ if ($ADD==41111)
 	echo "<tr bgcolor=#B6D3FC><td align=right>"._QXZ("Inbound Groups").": </td><td align=left>\n";
 	echo "$groups_list";
 	echo "</td></tr>\n";
-	echo "<tr bgcolor=#B6D3FC><td align=center colspan=2><input type=submit name=submit value='"._QXZ("submit")."'></td></tr>\n";
+	echo "<tr bgcolor=#B6D3FC><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("submit")."'></td></tr>\n";
 	echo "</TABLE></center>\n";
 	echo _QXZ("NOTE: It can take up to 30 seconds for changes submitted on this screen to go live")."\n";
 	}

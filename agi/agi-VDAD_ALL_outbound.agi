@@ -45,7 +45,7 @@
 #exten => 8366,4,AGI(agi-VDAD_ALL_outbound.agi,SURVEY-----LB-----US_pol_survey_hello-----1238-----8-----US_pol_survey_transfer-----US_thanks_no_contact-----OPTOUT-----DNC)
 #exten => 8366,5,Hangup
 #
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 80218-2027 - First Build
@@ -123,6 +123,7 @@
 # 190925-1348 - Added campaign SIP Actions processing
 # 191104-2026 - Added code for Khomp version compatibility
 # 191120-2235 - Added DYN multi-prompt survey prompts functionality
+# 200825-2342 - Added option for auto-only sip actions
 #
 
 $script = 'agi-VDAD_ALL_outbound.agi';
@@ -860,9 +861,9 @@ if ($VDACaffected_rows > 0)
 			$sea=0;
 			foreach (@sip_action_settings)
 				{
-				if ($sip_action_settings[$sea] =~ /^invite_to_final => /)
+				if ( ($sip_action_settings[$sea] =~ /^invite_to_final => /) && ($sip_action_settings[$sea] !~ /manual-only/i) )
 					{
-					# invite_to_final => 0.0,1.0,hangup-dispo-message,FAS,Auto Hangup and Dispo of False Answer Call
+					# invite_to_final => 0.0,1.0,hangup-dispo-message,FAS,Auto Hangup and Dispo of False Answer Call,auto-only
 					$sip_action_settings[$sea] =~ s/invite_to_final => //gi;
 					@invite_to_finalARY = split(/,/,$sip_action_settings[$sea]);
 					$T_dial_time =	($invite_to_final + 0);

@@ -405,7 +405,7 @@ function AddConstant() {
 	var SpanInnerHTML="<table width='100%' border='0' cellpadding='3'>";
 	for (y=0; y<ALL_presets_array.length; y++) {
 		var key_value=ALL_presets_array[y].split("\=");
-		SpanInnerHTML+="<tr><td align='left'>"+key_value[0]+"</td><td align='left'>"+key_value[1]+"</td><td align='center'><input type='button' onClick='RemoveConstant("+y+")' value='REMOVE'></td></tr>";
+		SpanInnerHTML+="<tr><td align='left'>"+key_value[0]+"</td><td align='left'>"+key_value[1]+"</td><td align='center'><input style='background-color:#<?php echo "$SSbutton_color"; ?>' type='button' onClick='RemoveConstant("+y+")' value='REMOVE'></td></tr>";
 	}
 	SpanInnerHTML+="</table>";
 	document.getElementById('new_presets').innerHTML=SpanInnerHTML;
@@ -420,7 +420,7 @@ function RemoveConstant(array_index) {
 		if (y!=array_index) {
 			new_constants_string+="&"+ALL_presets_array[y];
 			var key_value=ALL_presets_array[y].split("\=");
-			SpanInnerHTML+="<tr><td align='left'>"+key_value[0]+"</td><td align='left'>"+key_value[1]+"</td><td align='center'><input type='button' onClick='RemoveConstant("+x+")' value='REMOVE'></td></tr>";
+			SpanInnerHTML+="<tr><td align='left'>"+key_value[0]+"</td><td align='left'>"+key_value[1]+"</td><td align='center'><input style='background-color:#<?php echo "$SSbutton_color"; ?>' type='button' onClick='RemoveConstant("+x+")' value='REMOVE'></td></tr>";
 			x++;
 		}
 	}
@@ -482,7 +482,7 @@ function RemoveConstant(array_index) {
 	echo "<tr bgcolor=#".$SSstd_row2_background."><td align=right>"._QXZ("Path Name").": </td><td align=left><input type=text id='path_name' name='path_name' size=20>$NWB#custom_reports_admin-path_name$NWE</td></tr>\n";
 	echo "<tr bgcolor=#".$SSstd_row2_background."><td align=right>"._QXZ("Preset constants").": </td><td align=left>"._QXZ("Variable name").": <input type='text' id='new_preset_name' name='new_preset_name' size='10' maxlength='100'>&nbsp;&nbsp;"._QXZ("Value").": ";
 	echo "<select name='new_preset_value' id='new_preset_value'><option value=''>"._QXZ("Custom value")." --->></option><option value='today'>"._QXZ("today")."</option><option value='yesterday'>"._QXZ("yesterday")."</option><option value='datetime'>"._QXZ("datetime")."</option><option value='filedatetime'>"._QXZ("filedatetime")."</option><option value='6days'>"._QXZ("6days")."</option><option value='7days'>"._QXZ("7days")."</option><option value='8days'>"._QXZ("8days")."</option><option value='13days'>"._QXZ("13days")."</option><option value='14days'>"._QXZ("14days")."</option><option value='15days'>"._QXZ("15days")."</option><option value='30days'>"._QXZ("30days")."</option></select>&nbsp;";
-	echo "<input type='text' name='new_preset_custom' id='new_preset_custom' size='10' maxlength='100'>&nbsp;<input type='button' onClick='AddConstant()' value='"._QXZ("ADD")."'>$NWB#custom_reports_admin-constants$NWE</td></tr>\n";
+	echo "<input type='text' name='new_preset_custom' id='new_preset_custom' size='10' maxlength='100'>&nbsp;<input style='background-color:#$SSbutton_color' type='button' onClick='AddConstant()' value='"._QXZ("ADD")."'>$NWB#custom_reports_admin-constants$NWE</td></tr>\n";
 	echo "<tr bgcolor=#".$SSstd_row2_background."><td align=right>"._QXZ("Current constants").":</td><td align=left><span id='new_presets'></span>$NWB#custom_reports_admin-current_constants$NWE<input type='hidden' name='presets_string' id='presets_string'></td></tr>\n";
 	# echo "<tr bgcolor=#".$SSstd_row2_background."><td align=right>"._QXZ("Use slave").": </td><td align=left><select size=1 name=slave><option value='Y'>"._QXZ("Y")."</option><option value='N' selected>"._QXZ("N")."</option></select>$NWB#custom_reports_admin-use_slave$NWE</td></tr>\n";
 	echo "<tr bgcolor=#".$SSstd_row2_background."><td align=right>"._QXZ("User groups").": </td><td align=left><select size=5 name=custom_reports_user_groups[] multiple><option value='---ALL---'>"._QXZ("ALL USER GROUPS")."</option>";
@@ -498,7 +498,7 @@ function RemoveConstant(array_index) {
 	}
 
 	echo "</select>$NWB#custom_reports_admin-custom_reports_user_groups$NWE</td></tr>\n";
-	echo "<tr bgcolor=#".$SSstd_row2_background."><td align='center' colspan='2'><input type='submit' name='add_custom_report' id='add_custom_report' value='"._QXZ("ADD REPORT")."'></td></tr>\n";
+	echo "<tr bgcolor=#".$SSstd_row2_background."><td align='center' colspan='2'><input style='background-color:#$SSbutton_color' type='submit' name='add_custom_report' id='add_custom_report' value='"._QXZ("ADD REPORT")."'></td></tr>\n";
 	echo "</table>";
 	echo "</form>";
 

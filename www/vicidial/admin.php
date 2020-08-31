@@ -28497,7 +28497,7 @@ if ($ADD==311)
 				}
 
 			echo "<tr><td><font size=1>"._QXZ("SUBTOTALS")."</td><td><font size=1>$lead_list[Y_count]</td><td><font size=1>$lead_list[N_count]</td>\n";
-			echo "<td rowspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit value=\""._QXZ("SUBMIT")."\"></td></tr>\n";
+			echo "<td rowspan=2 align=center bgcolor=\"#$SSframe_background\"><input style='background-color:#$SSbutton_color' type=submit value=\""._QXZ("SUBMIT")."\"></td></tr>\n";
 			echo "<tr bgcolor=\"#$SSstd_row1_background\"><td><font size=1>"._QXZ("TOTAL")."</td><td colspan=3 align=center><font size=1>$lead_list[count]</td></tr>\n";
 			echo "</form>\n";
 

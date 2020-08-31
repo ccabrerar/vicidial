@@ -359,7 +359,7 @@ else
 
 
 	echo "</TD></TR><TR></TD><TD ALIGN=LEFT VALIGN=TOP COLSPAN=3>\n";
-	echo "<INPUT TYPE=SUBMIT NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>\n";
+	echo "<INPUT style='background-color:#$SSbutton_color' TYPE=SUBMIT NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>\n";
 	echo "</TD></TR></TABLE>\n";
 	echo "</FORM>\n\n";
 	}

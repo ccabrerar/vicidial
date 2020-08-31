@@ -152,10 +152,11 @@
 # 200610-1447 - Added duration option to recording_lookup function
 # 200622-1609 - Added more options to add_phone and update_phone functions
 # 200815-1025 - Added campaigns_list & hopper_list functions
+# 200824-2330 - Added search_method BLOCK option for hopper_list function
 #
 
-$version = '2.14-129';
-$build = '200815-1025';
+$version = '2.14-130';
+$build = '200824-2330';
 $api_url_log = 0;
 
 $startMS = microtime();
@@ -2268,16 +2269,23 @@ if ($function == 'hopper_list')
 				}
 			else
 				{
-				$campaignSQL = "and campaign_id='$campaign_id'";
+				$campaignSQL = "and vicidial_hopper.campaign_id='$campaign_id'";
 				$Hlead_id=array();
-				$Hstatus=array();
-				$Hlist_id=array();
-				$Hgmt_offset_now=array();
+				$Lphone_number=array();
 				$Hstate=array();
+				$Lstatus=array();
+				$Lcalled_count=array();
+				$Hgmt_offset_now=array();
 				$Halt_dial=array();
+				$Hlist_id=array();
 				$Hpriority=array();
 				$Hsource=array();
 				$Hvendor_lead_code=array();
+				$Lphone_code=array();
+				$Lentry_epoch=array();
+				$Llast_call_epoch=array();
+				$Lsource_id=array();
+				$Lrank=array();
 				$CLoutput='';
 				$DLset=0;
 				if ($stage == 'csv')
@@ -2293,9 +2301,42 @@ if ($function == 'hopper_list')
 					$CLoutput .= 'hopper_order' . $DL . 'priority' . $DL . 'lead_id' . $DL . 'list_id' . $DL . 'phone_number' . $DL . 'phone_code' . $DL . 'state' . $DL . 'status' . $DL . 'count' . $DL . 'gmt_offset' . $DL . 'rank' . $DL . 'alt' . $DL . 'hopper_source' . $DL . 'vendor_lead_code' . $DL . 'source_id' . $DL . 'age_days' . $DL . 'last_call_time'."\n";
 					}
 
+				if (preg_match("/BLOCK/",$search_method))
+					{
+					$stmt="SELECT vicidial_hopper.lead_id,phone_number,vicidial_hopper.state,vicidial_list.status,called_count,vicidial_hopper.gmt_offset_now,hopper_id,alt_dial,vicidial_hopper.list_id,vicidial_hopper.priority,vicidial_hopper.source,vicidial_hopper.vendor_lead_code, phone_code,UNIX_TIMESTAMP(entry_date),UNIX_TIMESTAMP(last_local_call_time),source_id,vicidial_list.rank from vicidial_hopper,vicidial_list where vicidial_hopper.status='READY' and vicidial_hopper.lead_id=vicidial_list.lead_id $LOGallowed_campaignsSQL $campaignSQL order by priority desc,hopper_id limit 10000;";
+					$rslt=mysql_to_mysqli($stmt, $link);
+					$hl_recs = mysqli_num_rows($rslt);
+						if ($DB > 0) {echo "DEBUG: $hl_recs|$stmt|\n";}
+					$L=0;
+					while ($hl_recs > $L)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$Hlead_id[$L] =				$row[0];
+						$Lphone_number[$L] =		$row[1];
+						$Hstate[$L] =				$row[2];
+						$Lstatus[$L] =				$row[3];
+						$Lcalled_count[$L] =		$row[4];
+						$Hgmt_offset_now[$L] =		$row[5];
+						$Halt_dial[$L] =			$row[7];
+						$Hlist_id[$L] =				$row[8];
+						$Hpriority[$L] =			$row[9];
+						$Hsource[$L] =				$row[10];
+						$Hvendor_lead_code[$L] =	$row[11];
+						$Lphone_code[$L] =			$row[12];
+						$Lentry_epoch[$L] =			$row[13];
+						$Llast_call_epoch[$L] =		$row[14];
+						$Lsource_id[$L] =			$row[15];
+						$Lrank[$L] =				$row[16];
+
+						$L++;
+						}
+					}
+				else
+					{
 				$stmt="SELECT lead_id,status,user,list_id,gmt_offset_now,state,alt_dial,priority,source,vendor_lead_code from vicidial_hopper where status='READY' $LOGallowed_campaignsSQL $campaignSQL order by priority desc,hopper_id limit 10000;";
 				$rslt=mysql_to_mysqli($stmt, $link);
 				$hl_recs = mysqli_num_rows($rslt);
+						if ($DB > 0) {echo "DEBUG: $hl_recs|$stmt|\n";}
 				$L=0;
 				while ($hl_recs > $L)
 					{
@@ -2311,8 +2352,29 @@ if ($function == 'hopper_list')
 					$L++;
 					}
 				if ($DB > 0) {echo "DEBUG: $L hopper records\n";}
-
-				if (strlen($L) < 1)
+					
+					$L=0;
+					while ($hl_recs > $L)
+					{
+						$stmt="SELECT phone_number,status,called_count,phone_code,UNIX_TIMESTAMP(entry_date),UNIX_TIMESTAMP(last_local_call_time),source_id,rank from vicidial_list where lead_id='$Hlead_id[$L]';";
+						$rslt=mysql_to_mysqli($stmt, $link);
+						$vl_recs = mysqli_num_rows($rslt);
+						if ($vl_recs > 0)
+							{
+							$row=mysqli_fetch_row($rslt);
+							$Lphone_number[$L] =	$row[0];
+							$Lstatus[$L] =			$row[1];
+							$Lcalled_count[$L] =	$row[2];
+							$Lphone_code[$L] =		$row[3];
+							$Lentry_epoch[$L] =		$row[4];
+							$Llast_call_epoch[$L] =	$row[5];
+							$Lsource_id[$L] =		$row[6];
+							$Lrank[$L] =			$row[7];
+							}
+						$L++;
+						}
+					}
+				if ($L < 1)
 					{
 					$result = 'ERROR';
 					$result_reason = "hopper_list THERE ARE NO LEADS IN THE HOPPER FOR THIS CAMPAIGN";
@@ -2326,23 +2388,14 @@ if ($function == 'hopper_list')
 					$L=0;
 					while ($hl_recs > $L)
 						{
-						$stmt="SELECT phone_number,status,called_count,phone_code,UNIX_TIMESTAMP(entry_date),UNIX_TIMESTAMP(last_local_call_time),source_id,rank from vicidial_list where lead_id='$Hlead_id[$L]';";
-						$rslt=mysql_to_mysqli($stmt, $link);
-						$vl_recs = mysqli_num_rows($rslt);
-						if ($vl_recs > 0)
-							{
-							$row=mysqli_fetch_row($rslt);
-							$entry_epoch =		$row[4];
-							$last_call_epoch =	$row[5];
-
-							$lead_age = intval(($StarTtime - $entry_epoch) / 86400);
+						$lead_age = intval(($StarTtime - $Lentry_epoch[$L]) / 86400);
 
 							$lead_offset = ($Hgmt_offset_now[$L] - $SERVER_GMT);
 							if (($lead_offset > 0) or ($lead_offset < 0))
 								{$lead_offset = ($lead_offset * 3600);}
-							$last_call_epoch = ($last_call_epoch + $lead_offset);
-							$last_call_age = intval(($StarTtime - $last_call_epoch) / 3600);
-							if ($DB > 0) {echo "GMT: $lead_offset($gmt|$SERVER_GMT)|LC: $last_call_epoch($StarTtime - $row[5])|$last_call_age|\n";}
+						$Llast_call_epoch[$L] = ($Llast_call_epoch[$L] + $lead_offset);
+						$last_call_age = intval(($StarTtime - $Llast_call_epoch[$L]) / 3600);
+						if ($DB > 0) {echo "GMT: $lead_offset($gmt|$SERVER_GMT)|LC: $Llast_call_epoch[$L]($StarTtime)|$last_call_age|\n";}
 							if ($last_call_age < 24)
 								{
 								$last_call_age_TEXT = $last_call_age." "._QXZ("HOURS",6);
@@ -2367,11 +2420,10 @@ if ($function == 'hopper_list')
 										}
 									}
 								}
-							$CLoutput .= $L . $DL . $Hpriority[$L] . $DL . $Hlead_id[$L] . $DL . $Hlist_id[$L] . $DL . $row[0] . $DL . $row[3] . $DL . $Hstate[$L] . $DL . $row[1] . $DL . $row[2] . $DL . $Hgmt_offset_now[$L] . $DL . $row[7] . $DL . $Halt_dial[$L] . $DL . $Hsource[$L] . $DL . $Hvendor_lead_code[$L] . $DL . $row[6] . $DL . $lead_age . $DL . $last_call_age_TEXT."\n";
-							}
+						$CLoutput .= $L . $DL . $Hpriority[$L] . $DL . $Hlead_id[$L] . $DL . $Hlist_id[$L] . $DL . $Lphone_number[$L] . $DL . $Lphone_code[$L] . $DL . $Hstate[$L] . $DL . $Lstatus[$L] . $DL . $Lcalled_count[$L] . $DL . $Hgmt_offset_now[$L] . $DL . $Lrank[$L] . $DL . $Halt_dial[$L] . $DL . $Hsource[$L] . $DL . $Hvendor_lead_code[$L] . $DL . $Lsource_id[$L] . $DL . $lead_age . $DL . $last_call_age_TEXT."\n";
+
 						$L++;
 						}
-
 					echo "$CLoutput";
 
 					$result = 'SUCCESS';

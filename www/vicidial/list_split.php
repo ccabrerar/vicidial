@@ -322,7 +322,7 @@ if ($submit == _QXZ("submit") )
 	# keep debug active
 	echo "<input type=hidden name=DB value='$DB'>\n";
 	
-	echo "<input type=submit name=confirm value=confirm>\n";
+	echo "<input style='background-color:#$SSbutton_color' type=submit name=confirm value=confirm>\n";
 	echo "</form></center>\n";
 	echo "<p><a href='$PHP_SELF'>"._QXZ("Click here to start over.")."</a></p>\n";
 	echo "</body>\n</html>\n";
@@ -641,7 +641,7 @@ if (($submit != _QXZ("submit") ) && ($confirm != "confirm"))
 	echo "<input type=hidden name=DB value='$DB'>\n";
 	
 	# Submit
-	echo "<tr bgcolor=#$SSstd_row4_background><td colspan=2 align=center><input type=submit name=submit value='"._QXZ("submit")."'></td></tr>\n";
+	echo "<tr bgcolor=#$SSstd_row4_background><td colspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("submit")."'></td></tr>\n";
 	echo "</table></center>\n";
 	echo "</form>\n";
 

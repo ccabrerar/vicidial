@@ -226,7 +226,7 @@ if ( ($action == "CHANGE_TERRITORY_OWNER_ACCOUNT") and ($enable_vtiger_integrati
 	echo "<option value='NO'>"._QXZ("NO")."</option>\n";
 	echo "</select></td></tr>\n";
 
-	echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+	echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 	echo "</TABLE></center>\n";
 	exit;
 	}
@@ -442,7 +442,7 @@ if ( ($action == "CHANGE_TERRITORY_OWNER") and ($enable_vtiger_integration > 0) 
 	echo "<option value='NO'>"._QXZ("NO")."</option>\n";
 	echo "</select></td></tr>\n";
 
-	echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+	echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 	echo "</TABLE></center>\n";
 	}
 ### END change territory owner in the system
@@ -617,7 +617,7 @@ if ($action == "ADD_USER_TERRITORY")
 	echo "$territories_list";
 	echo "</select></td></tr>\n";
 	echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Level").": </td><td align=left><select size=1 name=level><option value='TOP_AGENT'>"._QXZ("TOP_AGENT")."</option><option value='STANDARD_AGENT'>"._QXZ("STANDARD_AGENT")."</option><option value='BOTTOM_AGENT'>"._QXZ("BOTTOM_AGENT")."</option></select></td></tr>\n";
-	echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+	echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 	echo "</TABLE></center>\n";
 	}
 ### END add user territory page
@@ -761,7 +761,7 @@ if ($action == "ADD_TERRITORY")
 	echo "<center><TABLE width=$section_width cellspacing=3>\n";
 	echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Territory").": </td><td align=left><input type=text name=territory size=30 maxlength=100></td></tr>\n";
 	echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Territory Description").": </td><td align=left><input type=text name=territory_description size=50 maxlength=255></td></tr>\n";
-	echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+	echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 	echo "</TABLE></center>\n";
 	}
 ### END add territory page
@@ -934,7 +934,7 @@ if ($action == "MODIFY_TERRITORY")
 				}
 			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Vtiger Accounts").": </td><td align=left><B>$vtiger_count</B></td></tr>";
 			}
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></form></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></form></td></tr>\n";
 		echo "</TABLE></center>\n";
 		echo "<BR><BR>\n";
 
@@ -1006,7 +1006,7 @@ if ($action == "MODIFY_TERRITORY")
 			echo "<input type=hidden name=territory value=\"$territory\">";
 			echo "<input type=hidden name=user value=\"$Tuser[$o]\">";
 			echo "<select size=1 name=level><option SELECTED>$Tlevel[$o]</option><option value='TOP_AGENT'>"._QXZ("TOP_AGENT")."</option><option value='STANDARD_AGENT'>"._QXZ("STANDARD_AGENT")."</option><option value='BOTTOM_AGENT'>"._QXZ("BOTTOM_AGENT")."</option></select> ";
-			echo "<input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'>";
+			echo "<input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'>";
 			echo "</form>";
 			echo "</TD>";
 			echo "<TD><a href=\"$PHP_SELF?action=DELETE_USER_TERRITORY&territory=$territory&user=$Tuser[$o]\">"._QXZ("DELETE")."</a></TD>";

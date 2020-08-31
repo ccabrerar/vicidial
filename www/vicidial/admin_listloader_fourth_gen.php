@@ -833,7 +833,7 @@ if ($SSenable_international_dncs)
 		  </tr>
 
 		<tr>
-			<td align=center colspan=2><input type=submit value="<?php echo _QXZ("SUBMIT"); ?>" name='submit_file'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type=button onClick="javascript:document.location='admin_listloader_fourth_gen.php'" value="<?php echo _QXZ("START OVER"); ?>" name='reload_page'></td>
+			<td align=center colspan=2><input style='background-color:#<?php echo "$SSbutton_color"; ?>' type=submit value="<?php echo _QXZ("SUBMIT"); ?>" name='submit_file'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input style='background-color:#<?php echo "$SSbutton_color"; ?>' type=button onClick="javascript:document.location='admin_listloader_fourth_gen.php'" value="<?php echo _QXZ("START OVER"); ?>" name='reload_page'></td>
 		  </tr>
 		  <tr><td align=left><font size=1> &nbsp; &nbsp; &nbsp; &nbsp; <a href="admin.php?ADD=100" target="_parent"><?php echo _QXZ("BACK TO ADMIN"); ?></a> &nbsp; &nbsp; </font></td><td align=right><font size=1><?php echo _QXZ("LIST LOADER 4th Gen"); ?>- &nbsp; &nbsp; <?php echo _QXZ("VERSION"); ?>: <?php echo $version ?> &nbsp; &nbsp; <?php echo _QXZ("BUILD"); ?>: <?php echo $build ?> &nbsp; &nbsp; </td></tr>
 		</table>
@@ -3319,7 +3319,7 @@ if (($leadfile) && ($LF_path))
 		print "  <input type=hidden name=list_id_override value=\"$list_id_override\">\r\n";
 		print "  <input type=hidden name=phone_code_override value=\"$phone_code_override\">\r\n";
 		print "  <input type=hidden name=DB value=\"$DB\">\r\n";
-		print "    <th colspan=2><input type=submit name='OK_to_process' value='"._QXZ("OK TO PROCESS")."'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type=button onClick=\"javascript:document.location='admin_listloader_fourth_gen.php'\" value=\""._QXZ("START OVER")."\" name='reload_page'></th>\r\n";
+		print "    <th colspan=2><input style='background-color:#$SSbutton_color' type=submit name='OK_to_process' value='"._QXZ("OK TO PROCESS")."'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type=button onClick=\"javascript:document.location='admin_listloader_fourth_gen.php'\" value=\""._QXZ("START OVER")."\" name='reload_page'></th>\r\n";
 		print "  </tr>\r\n";
 		print "</table>\r\n";
 

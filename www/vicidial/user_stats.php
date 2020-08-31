@@ -296,38 +296,8 @@ if (($LOGuser_level < 9) and ($SSlevel_8_disable_add > 0))
 	{$add_copy_disabled++;}
 
 
-$SSmenu_background='015B91';
-$SSframe_background='D9E6FE';
-$SSstd_row1_background='9BB9FB';
-$SSstd_row2_background='B9CBFD';
-$SSstd_row3_background='8EBCFD';
-$SSstd_row4_background='B6D3FC';
-$SSstd_row5_background='A3C3D6';
-$SSalt_row1_background='BDFFBD';
-$SSalt_row2_background='99FF99';
-$SSalt_row3_background='CCFFCC';
+require("screen_colors.php");
 
-if ($SSadmin_screen_colors != 'default')
-	{
-	$stmt = "SELECT menu_background,frame_background,std_row1_background,std_row2_background,std_row3_background,std_row4_background,std_row5_background,alt_row1_background,alt_row2_background,alt_row3_background FROM vicidial_screen_colors where colors_id='$SSadmin_screen_colors';";
-	$rslt=mysql_to_mysqli($stmt, $link);
-	if ($DB) {echo "$stmt\n";}
-	$colors_ct = mysqli_num_rows($rslt);
-	if ($colors_ct > 0)
-		{
-		$row=mysqli_fetch_row($rslt);
-		$SSmenu_background =		$row[0];
-		$SSframe_background =		$row[1];
-		$SSstd_row1_background =	$row[2];
-		$SSstd_row2_background =	$row[3];
-		$SSstd_row3_background =	$row[4];
-		$SSstd_row4_background =	$row[5];
-		$SSstd_row5_background =	$row[6];
-		$SSalt_row1_background =	$row[7];
-		$SSalt_row2_background =	$row[8];
-		$SSalt_row3_background =	$row[9];
-		}
-	}
 $Mhead_color =	$SSstd_row5_background;
 $Mmain_bgcolor = $SSmenu_background;
 $Mhead_color =	$SSstd_row5_background;
@@ -571,7 +541,7 @@ if ($archives_available=="Y")
 	$MAIN.="<input type='checkbox' name='search_archived_data' value='checked' $search_archived_data>"._QXZ("Search archived data")."\n";
 	}
 
-$MAIN.="<input type=submit name=submit value='"._QXZ("submit")."'>\n";
+$MAIN.="<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("submit")."'>\n";
 
 
 $MAIN.=" &nbsp; &nbsp; &nbsp; $user - $full_name<BR><BR>\n";

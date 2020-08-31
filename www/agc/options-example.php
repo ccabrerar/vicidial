@@ -18,6 +18,7 @@
 # 190330-0817 - Added logged_in_refresh_link
 # 191107-0925 - Added $webphone_call_seconds
 # 200515-1339 - Added ast13_volume_override option
+# 200827-1230 - Added alt_display_enabled option
 #
 
 $conf_silent_prefix		= '5';	# vicidial_conferences prefix to enter silently and muted for recording
@@ -58,8 +59,11 @@ $use_agent_colors		= '1';	# agent chat colors
 $no_empty_session_warnings=0;	# set to 1 to disable empty session warnings on agent screen
 $logged_in_refresh_link = '0';	# set to 1 to allow clickable "Logged in as..." link at top to force Javascript refresh
 $webphone_call_seconds	= '0';	# set to 1 or higher to have the agent phone(if set to webphone) called X seconds after login
+$alt_display_enabled	= '0';	# set to 1 to allow the alt_display.php script to be used
 $customer_chat_refresh_seconds	= 1;	# How often (in seconds) to refresh customer ang agent chat window
 $manager_chat_refresh_seconds	= 1;	# How often (in seconds) to refresh manager chat window
+
+
 $TEST_all_statuses		= '0';	# TEST variable allows all statuses in dispo screen
 
 $stretch_dimensions		= '1';	# sets the vicidial screen to the size of the browser window

@@ -191,7 +191,7 @@ while ($campaigns_to_print > $o)
 	$o++;
 	}
 
-
+require("screen_colors.php");
 
 
 ?>
@@ -218,7 +218,7 @@ if ($NEW_VOICE_LAB > 0)
 		echo "<input type=hidden name=server_ip value=$server_ip>\n";
 		echo "<input type=hidden name=campaign_id value=$campaign_id>\n";
 		echo _QXZ("Message Extension")."<input type=text name=message>\n";
-		echo "<input type=submit name=submit value='"._QXZ("PLAY THIS MESSAGE")."'>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("PLAY THIS MESSAGE")."'>\n";
 		echo "</form><BR><BR><BR>\n";
 		
 		$S='*';
@@ -277,7 +277,7 @@ if ($NEW_VOICE_LAB > 0)
 		echo "<input type=hidden name=session_id value=8600900>\n";
 		echo "<input type=hidden name=server_ip value=$server_ip>\n";
 		echo "<input type=hidden name=campaign_id value=$campaign_id>\n";
-		echo "<input type=submit name=submit value='"._QXZ("KILL THIS VOICE LAB")."'>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("KILL THIS VOICE LAB")."'>\n";
 		echo "</form><BR><BR><BR>\n";
 		}
 		else
@@ -301,7 +301,7 @@ else
 			echo "<input type=hidden name=server_ip value=$server_ip>\n";
 			echo "<input type=hidden name=campaign_id value=$campaign_id>\n";
 			echo _QXZ("Message Extension")."<input type=text name=message>\n";
-			echo "<input type=submit name=submit value='"._QXZ("PLAY THIS MESSAGE")."'>\n";
+			echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("PLAY THIS MESSAGE")."'>\n";
 			echo "</form><BR><BR><BR>\n";
 			
 			$nn='99';
@@ -318,7 +318,7 @@ else
 			echo "<input type=hidden name=session_id value=8600900>\n";
 			echo "<input type=hidden name=server_ip value=$server_ip>\n";
 			echo "<input type=hidden name=campaign_id value=$campaign_id>\n";
-			echo "<input type=submit name=submit value='"._QXZ("KILL THIS VOICE LAB")."'>\n";
+			echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("KILL THIS VOICE LAB")."'>\n";
 			echo "</form><BR><BR><BR>\n";
 			}
 			else
@@ -337,7 +337,7 @@ else
 		echo "<BR>\n";
 		echo _QXZ("Campaign").": <select size=1 name=campaign_id>$campaigns_list</select>";
 		echo "<BR>\n";
-		echo "<input type=submit name=submit value='"._QXZ("submit")."'>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("submit")."'>\n";
 		echo "</form><BR><BR><BR>\n";
 
 
@@ -348,7 +348,7 @@ else
 		echo "<BR>\n";
 		echo _QXZ("Campaign").": <select size=1 name=campaign_id>$campaigns_list</select>";
 		echo "<BR>\n";
-		echo "<input type=submit name=submit value='"._QXZ("submit")."'>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("submit")."'>\n";
 		echo "</form><BR><BR><BR>\n";
 		}
 	}

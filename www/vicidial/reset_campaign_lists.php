@@ -294,7 +294,7 @@ if ( ($LOGuser_level >= 9) and $LOGmodify_campaigns>0 and $LOGmodify_lists>0 and
 	echo "<option value=''>"._QXZ("All lists")."</option>";
 	echo "</select>";
 	echo "</td>";
-	echo "<td align='right'><input type='submit' name='submit_campaign_reset' value='"._QXZ("SUBMIT")."'></td></tr>";
+	echo "<td align='right'><input style='background-color:#$SSbutton_color' type='submit' name='submit_campaign_reset' value='"._QXZ("SUBMIT")."'></td></tr>";
 	echo "<tr ><td colspan='3'>";
 
 	if ($submit_campaign_reset && $reset_lead_called_campaigns) 

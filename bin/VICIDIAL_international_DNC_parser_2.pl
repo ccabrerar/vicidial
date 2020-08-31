@@ -518,6 +518,7 @@ if ($rslt->rows>0)
 			$ftp->login("$ftp_user","$ftp_pwd");
 			if ($file_dir) {$ftp->cwd("$file_dir");}
 #			$ftp->get("$filename", "/tmp/$filename");
+#			$ftp->rename("$file_dir/$filename", "$file_destination/$filename");
 #			$ftp->quit;
 #			$full_filename="/tmp/$filename";
 			}

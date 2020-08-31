@@ -567,7 +567,7 @@ if ($stage == "log_agent_out")
 		$kick_local_channel = "$local_DEF$VLA_conf_exten$local_AMP$ext_context";
 		$queryCID = "ULGH3457$StarTtimE";
 
-		$stmtC="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$VLA_server_ip','','Originate','$queryCID','Channel: $kick_local_channel','Context: $ext_context','Exten: 8300','Priority: 1','Callerid: $queryCID','','','','','');";
+		$stmtC="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$VLA_server_ip','','Originate','$queryCID','Channel: $kick_local_channel','Context: $ext_context','Exten: 8300','Priority: 1','Callerid: $queryCID','','','','$channel','$exten');";
 		if ($DB) {echo "<BR>$stmtC\n";}
 		$rslt=mysql_to_mysqli($stmtC, $link);
 
@@ -960,14 +960,14 @@ if ($agents_to_print > 0)
 			$o++;
 			}
 		echo "</SELECT>\n";
-		echo "<input type=submit name=submit value='"._QXZ("CHANGE")."' disabled><BR></form>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("CHANGE")."' disabled><BR></form>\n";
 */
 
 		echo "<form action=$PHP_SELF method=POST>\n";
 		echo "<input type=hidden name=DB value=\"$DB\">\n";
 		echo "<input type=hidden name=user value=\"$user\">\n";
 		echo "<input type=hidden name=stage value=\"log_agent_out\">\n";
-		echo "<input type=submit name=submit value=\""._QXZ("EMERGENCY LOG AGENT OUT")."\"> &nbsp; "._QXZ("NOTE: this will hang up all calls in the agent session")."<BR></form>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value=\""._QXZ("EMERGENCY LOG AGENT OUT")."\"> &nbsp; "._QXZ("NOTE: this will hang up all calls in the agent session")."<BR></form>\n";
 		}
 
 	}
@@ -1007,7 +1007,7 @@ if ($modify_timeclock_log > 0)
 	echo "<input type=hidden name=DB value=\"$DB\">\n";
 	echo "<input type=hidden name=user value=\"$user\">\n";
 	echo "<input type=hidden name=stage value=\"$TC_log_change_stage\">\n";
-	echo "<input type=submit name=submit value=\"$TC_log_change_button\"><BR></form>\n";
+	echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value=\"$TC_log_change_button\"><BR></form>\n";
 	echo "<BR><BR>\n";
 	}
 

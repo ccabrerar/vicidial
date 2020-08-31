@@ -1163,7 +1163,7 @@ if ($move_submit == _QXZ("move") )
 		echo "<input type=hidden name=move_count_op value=\"$move_count_op\">\n";
 		echo "<input type=hidden name=move_count_num value=\"$move_count_num\">\n";
 		echo "<input type=hidden name=DB value='$DB'>\n";
-		echo "<input type=submit name=confirm_move value='"._QXZ("confirm")."'>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=confirm_move value='"._QXZ("confirm")."'>\n";
 		echo "</form></center>\n";
 		echo "<p><a href='$PHP_SELF$DBlink'>"._QXZ("Click here to start over").".</a></p>\n";
 		echo "</body>\n</html>\n";
@@ -1930,7 +1930,7 @@ if ($update_submit == _QXZ("update") )
 	echo "<input type=hidden name=update_count_op value=\"$update_count_op\">\n";
 	echo "<input type=hidden name=update_count_num value=\"$update_count_num\">\n";
 	echo "<input type=hidden name=DB value='$DB'>\n";
-	echo "<input type=submit name=confirm_update value='"._QXZ("confirm")."'>\n";
+	echo "<input style='background-color:#$SSbutton_color' type=submit name=confirm_update value='"._QXZ("confirm")."'>\n";
 	echo "</form></center>\n";
 	echo "<p><a href='$PHP_SELF$DBlink'>"._QXZ("Click here to start over").".</a></p>\n";
 	echo "</body>\n</html>\n";
@@ -2705,7 +2705,7 @@ if ( ( $delete_submit == _QXZ("delete") ) && ( $delete_lists > 0 ) )
 	echo "<input type=hidden name=delete_count_num value=\"$delete_count_num\">\n";
 	echo "<input type=hidden name=delete_lead_id value=\"$delete_lead_id\">\n";
 	echo "<input type=hidden name=DB value='$DB'>\n";
-	echo "<input type=submit name=confirm_delete value='"._QXZ("confirm")."'>\n";
+	echo "<input style='background-color:#$SSbutton_color' type=submit name=confirm_delete value='"._QXZ("confirm")."'>\n";
 	echo "</form></center>\n";
 	echo "<p><a href='$PHP_SELF$DBlink'>"._QXZ("Click here to start over").".</a></p>\n";
 	echo "</body>\n</html>\n";
@@ -3200,7 +3200,7 @@ if ($callback_submit == _QXZ("switchcallbacks") )
 		echo "<input type=hidden name=callback_callback_end_date value='$callback_callback_end_date'>\n";
 		echo "<input type=hidden name=callback_list value='".implode("|", $callback_list)."'>\n";
 		echo "<input type=hidden name=DB value='$DB'>\n";
-		echo "<input type=submit name=confirm_callback value='"._QXZ("confirm")."'>\n";
+		echo "<input style='background-color:#$SSbutton_color' type=submit name=confirm_callback value='"._QXZ("confirm")."'>\n";
 		echo "</form></center>\n";
 		echo "<p><a href='$PHP_SELF$DBlink'>"._QXZ("Click here to start over").".</a></p>\n";
 		echo "</body>\n</html>\n";
@@ -3555,7 +3555,7 @@ if (
 		$i++;
 		}
 	echo "</select></td></tr>\n";
-	echo "<tr bgcolor=#$SSstd_row3_background><td colspan=2 align=center><input type=submit name=move_submit value='"._QXZ("move")."'></td></tr>\n";
+	echo "<tr bgcolor=#$SSstd_row3_background><td colspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit name=move_submit value='"._QXZ("move")."'></td></tr>\n";
 	echo "</table></center>\n";
 	# END lead move
 
@@ -3664,7 +3664,7 @@ if (
 		$i++;
 		}
 	echo "</select></td></tr>\n";
-	echo "<tr bgcolor=#$SSstd_row3_background><td colspan=2 align=center><input type=submit name=update_submit value='"._QXZ("update")."'></td></tr>\n";
+	echo "<tr bgcolor=#$SSstd_row3_background><td colspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit name=update_submit value='"._QXZ("update")."'></td></tr>\n";
 	# END Status Update
 
 	if ( $delete_lists > 0 )
@@ -3768,7 +3768,7 @@ if (
 			$i++;
 			}
 		echo "</select></td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row3_background><td colspan=2 align=center><input type=submit name=delete_submit value='"._QXZ("delete")."'></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row3_background><td colspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit name=delete_submit value='"._QXZ("delete")."'></td></tr>\n";
 		# END Delete Leads
 		}
 
@@ -3798,7 +3798,7 @@ if (
 	echo "<input type='text' name='callback_callback_start_date' id='callback_callback_start_date' value='' disabled=true length=20 maxlength=19> "._QXZ("to")." ";
 	echo "<input type='text' name='callback_callback_end_date' id='callback_callback_end_date' value='' disabled=true length=20 maxlength=19> <font size=1>(YYYY-MM-DD)</font>\n";
 	echo "</td></tr>\n";
-	echo "<tr bgcolor=#$SSstd_row3_background><td colspan=2 align=center><input type=submit name=callback_submit value='"._QXZ("switch callbacks")."'></td></tr>\n";
+	echo "<tr bgcolor=#$SSstd_row3_background><td colspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit name=callback_submit value='"._QXZ("switch callbacks")."'></td></tr>\n";
 	# END Callback Convert
 
 

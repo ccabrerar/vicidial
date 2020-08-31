@@ -1,0 +1,102 @@
+AGENT MULTI-CAMPAIGN DIALING DOC	Started: 2020-08-24	Updated: 2020-08-26
+
+NOTE: Requires VICIdial svn/trunk code revision 3284 or higher to work properly!!!
+
+NOTE: THIS FEATURE IS OPTIONAL, AND SHOULD ONLY BE CONFIGURED AFTER YOUR SYSTEM 
+      HAS BEEN INSTALLED AND TESTED!
+
+
+
+DESCRIPTION:
+
+In cases where a company wants the same group of agents to be able to outbound auto-dial on more than one campaign, you can configure your system to be able to operate in this way. Although it will often lead to a higher total dropped call rate than using separated campaigns or using separate lists within the same campaign and the list override settings to achieve unique configurations per list.
+
+First, a description of how to use List Overrides on multiple lists in a single campaign to achieve the goals of most of our clients that initially say they want to run multiple campaigns for the same group of agents. In the List Modification screen, you will see a series of settings that allow you to override campaign settings for calls placed from that list. For example, all of the following settings can be overriden at the list level:
+
+- Agent Script Override	
+- Inbound Script Override	
+- Inbound Drop Voicemail Override	
+- Inbound After Hours Voicemail Override	
+- Campaign CID Override	
+- Answering Machine Message Override	
+- Drop Inbound Group Override	
+- Status Group Override	
+- Web Form	
+- Web Form Two	
+- Web Form Three	
+- No Agent Call URL	
+- Transfer-Conf Number 1 Override	
+- Transfer-Conf Number 2 Override	
+- Transfer-Conf Number 3 Override	
+- Transfer-Conf Number 4 Override	
+- Transfer-Conf Number 5 Override	
+- Default Transfer Group	
+
+The above settings will allow calls to go out and back in with unique settings, allowing for unique calls paths and agent screens for each list. So if you have a set of services to perform on a customer list, you can define one per list and have the same group of agents call on all of those separate lists all in one single campaign.
+
+
+In some cases, like different agent spoken language skills, the above approach will not work, so you have to set up different campaigns(and lists) for each spoken language. In the example below we will detail each of the settings that need to be configured in Campaigns and In-Groups for this to work. We will use the example of an outbound appointment confirmation program that calls people who speak both English and Spanish and have agents who speak one or both of those languages.
+
+NOTE: The following instructions below assume that you already know how to set up and run an outbound auto-dialing campaign.
+
+1. Set up three campaigns: 
+	APPTENG(Appointments English)
+	APPTSPA(Appointments Spanish)
+	APPTAGNT(Appointments All Agents)
+
+2. Set up two lists:
+	1101(Appointments English List), assigned to the APPTENG campaign
+	1102(Appointments English List), assigned to the APPTSPA campaign
+
+3. Set up two Inbound Groups to use as Drop In-Groups:
+	DROP_APPT_ENG(Appointments English Drop InGroup)
+	DROP_APPT_SPA(Appointments Spanish Drop InGroup)
+     * RECOMMENDATIONS:
+		- You may want to set the In-Group "Drop Call Seconds" to a lower number and send the call to a Call Menu if no agent is available
+
+4. Set the following settings on both the APPTENG & APPTSPA campaigns (these are your two outbound dialing campaigns)
+     * Start by setting these campaigns up as you would to be normal outbound auto-dialing campaigns
+	Dial Method: ADAPT_AVERAGE or RATIO
+	Available Only Tally: Y
+	Drop Call Seconds: -1
+	Drop Action: IN_GROUP
+	Drop Transfer Group: DROP_APPT_ENG(for the APPTENG campaign) or DROP_APPT_SPA(for the APPTSPA campaign)
+     * RECOMMENDATIONS:
+		- You may want to enable "Available Only Tally" or "Available Only Tally Threshold" to reduce the drop levels on these campaigns
+		- Depending on the number of agents, you may want to set "Dial Level Difference Target" to a negative number to reduce drops
+		- For high-contact lists, you should use a RATIO dial method and a Dial Level of '1'
+
+5. Set the following settings on the APPTAGNT campaign:
+	Allow Inbound and Blended: Y
+	Dial Method: RATIO
+	Allow No-Hopper-Leads Logins: Y
+	Allowed Inbound Groups: select both "DROP_APPT_ENG" & "DROP_APPT_SPA"
+
+6. Set the following settings on both the DROP_APPT_ENG & DROP_APPT_SPA inbound groups
+	Welcome Message Filename: ---NONE---
+	Play Welcome Message: NEVER
+	No Delay Call Route: Y
+
+7. Set up two Users(which will be used for Remote Agents)
+	User Number: 900000 & 910000
+
+8. Set up two Remote Agents
+	User ID Start: 900000 & 910000
+	Number of Lines: 1
+	Server IP: <set to an active dialer with agents on your system>
+		NOTE: On a multi-dialer cluster with multiple outbound campaigns, you will want to spread out Remote Agents across your active dialers
+	External Extension: 8300
+	Status: ACTIVE <You may want to leave this as INACTIVE until you are ready to dial>
+	Campaign: assign one to the APPTENG campaign and the other to the APPTSPA campaign
+
+9. All agents will log into the "APPTAGNT" campaign and will select the "DROP_APPT_ENG" and/or "DROP_APPT_SPA" in-groups to take calls from when they log in, or managers can select those in-groups for the agents in the User Modify screen for those agents if they don't want their agents to have the ability to choose.
+
+
+
+
+
+HOW IT WORKS:
+
+When an outbound dialing campaign has the "Drop Call Seconds" set to '-1' and the "Drop Action" set to 'IN_GROUP' then the predictive dialing system will look for active agents logged in to other campaigns that have selected that campaign's "Drop Transfer Group" and will count them as agents in the outbound campaign, for the purposes of calculating how many calls to place outbound. For this reason, we recommend enabling the campaign "Available Only Tally" settings, to ensure too many calls are not being placed for agents already in phone calls since any agent with more than one campaign "drop in-group" selected will appear as more than one agent to the dialing system. The Remote Agents are used as a way of telling the system that the outbound dialing campaigns should be active, and when the "Drop Call Seconds" set to '-1' and the "Drop Action" set to 'IN_GROUP' then the first remote agent entry will be ignored for a campaign when the system calculates how many calls to place outbound.
+
+When "Drop Call Seconds" set to '-1' in a campaign, and a call is answered by a customer, the system will not even look for an agent in that campaign to send a call to, it will immediately drop the call to the selected drop in-group. With the In-Group "No Delay Call Route" set to 'Y', the system will attempt to send the call to an agent as fast as possible.
