@@ -641,10 +641,11 @@
 # 200515-1352 - Disable volume controls for Asterisk 13 servers, added options.php override setting(ast13_volume_override)
 # 200524-1021 - Fix for agentchannel not populating while volumecontrol_active disabled
 # 200528-2239 - Added three_way_record_stop_exception campaign setting
+# 200909-0952 - Fix for script_top_dispo issue #1228
 #
 
-$version = '2.14-610c';
-$build = '200528-2239';
+$version = '2.14-611c';
+$build = '200909-0952';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=92;
 $one_mysql_log=0;
@@ -14846,6 +14847,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 					ViewComments('OFF','OFF');
 					if (script_top_dispo == 'Y')
 						{
+						ScriptPanelToFront();
 						hideDiv('ScriptTopBGspan');
 						document.getElementById("ScriptPanel").style.zIndex = script_span_zindex;
 						}
@@ -18902,6 +18904,7 @@ function phone_number_format(formatphone) {
 
 				if (script_top_dispo == 'Y')
 					{
+					ScriptPanelToFront();
 					script_span_zindex = document.getElementById("ScriptPanel").style.zIndex;
 					showDiv('ScriptTopBGspan');
 					document.getElementById("ScriptPanel").style.zIndex = 100;

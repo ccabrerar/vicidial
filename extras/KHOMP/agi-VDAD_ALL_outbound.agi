@@ -124,6 +124,7 @@
 # 191104-2026 - Added code for Khomp version compatibility
 # 191120-2235 - Added DYN multi-prompt survey prompts functionality
 # 200210-1645 - Added KHOMP code
+# 200902-1610 - Fixed bug with khomp_end_call data
 #
 
 $script = 'agi-VDAD_ALL_outbound.agi';
@@ -5360,8 +5361,8 @@ sub khomp_end_call
 	{
 	%khomp_call_data, $vdad_action, $vdad_result = @_;
 	
-	my $conclusion = khomp_call_data{'conclusion'};
-	my $pattern = khomp_call_data{'pattern'};
+	my $conclusion = $khomp_call_data{'conclusion'};
+	my $pattern = $khomp_call_data{'pattern'};
 	
 	($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
 	$year = ($year + 1900);
