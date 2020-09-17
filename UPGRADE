@@ -530,6 +530,10 @@ OTHER CHANGES:
 149. Added Screen Colors option to set the submit button color on the admin
 	screens and reports.
 
+150. Added the ability to modify the status of any call or agent log in the
+	Admin Modify Lead page. Must use new 'Modify Leads' options to enable
+	for a user.
+
 
 
 

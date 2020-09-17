@@ -65,6 +65,13 @@ redalert {font-size: 18px; font-weight:bold; font-family: Arial, Sans-Serif; col
 .green {color: black; background-color: #99FF99}
 .red {color: black; background-color: #FF9999}
 .orange {color: black; background-color: #FFCC99}
+.white_text {color: #FFF;}
+
+/* Basic fonts */
+.small_standard {  font-family: Arial, Helvetica, sans-serif; font-size: 8pt}
+.small_standard_bold {  font-family: Arial, Helvetica, sans-serif; font-size: 8pt; font-weight: bold}
+.standard {  font-family: Arial, Helvetica, sans-serif; font-size: 10pt}
+.standard_bold {  font-family: Arial, Helvetica, sans-serif; font-size: 10pt; font-weight: bold}
 
 .std_row1 {background-color: <?php echo $SSstd_row1_background; ?>}
 .std_row2 {background-color: <?php echo $SSstd_row2_background; ?>}

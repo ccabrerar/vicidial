@@ -124,6 +124,7 @@
 # 191104-2026 - Added code for Khomp version compatibility
 # 191120-2235 - Added DYN multi-prompt survey prompts functionality
 # 200825-2342 - Added option for auto-only sip actions
+# 200915-2218 - Fixes for surveys with hash-star
 #
 
 $script = 'agi-VDAD_ALL_outbound.agi';
@@ -1601,7 +1602,7 @@ if ($call_handle_method =~ /SURVEY/)
 		}
 
 	# they opted out
-	if ($opt_code =~ /$survey_ni_digit/)
+	if ($opt_code eq $survey_ni_digit)
 		{
 		if ( $survey_ni_audio_file ne "") 
 			{
@@ -1715,7 +1716,7 @@ if ($call_handle_method =~ /SURVEY/)
 		}
 
 	### third digit option
-	if ($opt_code =~ /$survey_third_digit/)
+	if ($opt_code eq $survey_third_digit)
 		{
 		if ( $survey_third_audio_file ne "") 
 			{
@@ -1844,7 +1845,7 @@ if ($call_handle_method =~ /SURVEY/)
 
 
 	### fourth digit option
-	if ($opt_code =~ /$survey_fourth_digit/)
+	if ($opt_code eq $survey_fourth_digit)
 		{
 		if ( $survey_fourth_audio_file ne "") 
 			{
@@ -1972,7 +1973,7 @@ if ($call_handle_method =~ /SURVEY/)
 		}
 
 	# they opted in
-	if ( ($opt_code =~ /\d/) || ($survey_no_response_action =~ /OPTOUT/) )
+	if ( ($opt_code =~ /\d|\*|\#/) || ($survey_no_response_action =~ /OPTOUT/) )
 		{
 		$now_date_epoch = time();
 		$FDtarget = ($now_date_epoch + 60);
@@ -4257,7 +4258,10 @@ sub enter_pin_number
 	$totalDTMF='';
 	if ($interrupt_digit > 1)
 		{
-		$interrupt_digit = $interrupt_digit - 48;
+		if ($interrupt_digit == 35) {$interrupt_digit='#';}
+		if ($interrupt_digit == 42) {$interrupt_digit='*';}
+		if ($interrupt_digit >= 48)
+			{$interrupt_digit = $interrupt_digit - 48;}
 		
 		$totalDTMF=$interrupt_digit;
 		}
@@ -4285,7 +4289,7 @@ sub enter_pin_number
 			}
 		}
 
-	$totalDTMF =~ s/\D//gi;
+	#$totalDTMF =~ s/\D//gi;
 	$pin = $totalDTMF;
 	if ($totalDTMF) {if ($AGILOG) {$agi_string = "digit |$digit|     TotalDTMF |$totalDTMF|";   &agi_output;}}
 

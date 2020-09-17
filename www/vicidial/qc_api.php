@@ -423,7 +423,7 @@ if ($function == 'external_dial_lead')
 				}
 			if ($agent_ready > 0)
 				{
-				$stmt = "select count(*) from vicidial_users where user='$agent_user' and agentcall_manual='1';";
+				$stmt = "select count(*) from vicidial_users where user='$agent_user' and agentcall_manual>='1';";
 				if ($DB) {echo "$stmt\n";}
 				$rslt=mysql_to_mysqli($stmt, $link);
 				$row=mysqli_fetch_row($rslt);

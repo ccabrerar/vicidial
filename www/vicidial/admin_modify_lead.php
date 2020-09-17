@@ -98,6 +98,7 @@
 # 190609-0927 - Added sip_event_logging support
 # 191113-2204 - Added support for per-User additional status groups
 # 200815-0017 - Added support for additional modify_leads setting
+# 200916-2321 - Added options to allow users to modify any call or agent log status
 #
 
 require("dbconnect_mysqli.php");
@@ -218,6 +219,18 @@ if (isset($_GET["gdpr_action"]))			{$gdpr_action=$_GET["gdpr_action"];}
 	elseif (isset($_POST["gdpr_action"]))	{$gdpr_action=$_POST["gdpr_action"];}
 if (isset($_GET["CIDdisplay"]))				{$CIDdisplay=$_GET["CIDdisplay"];}
 	elseif (isset($_POST["CIDdisplay"]))	{$CIDdisplay=$_POST["CIDdisplay"];}
+if (isset($_GET["modify_log_submit"]))			{$modify_log_submit=$_GET["modify_log_submit"];}
+	elseif (isset($_POST["modify_log_submit"]))	{$modify_log_submit=$_POST["modify_log_submit"];}
+if (isset($_GET["modify_log_table"]))			{$modify_log_table=$_GET["modify_log_table"];}
+	elseif (isset($_POST["modify_log_table"]))	{$modify_log_table=$_POST["modify_log_table"];}
+if (isset($_GET["modify_log_status"]))			{$modify_log_status=$_GET["modify_log_status"];}
+	elseif (isset($_POST["modify_log_status"]))	{$modify_log_status=$_POST["modify_log_status"];}
+if (isset($_GET["modify_old_status"]))			{$modify_old_status=$_GET["modify_old_status"];}
+	elseif (isset($_POST["modify_old_status"]))	{$modify_old_status=$_POST["modify_old_status"];}
+if (isset($_GET["vicidial_id"]))			{$vicidial_id=$_GET["vicidial_id"];}
+	elseif (isset($_POST["vicidial_id"]))	{$vicidial_id=$_POST["vicidial_id"];}
+if (isset($_GET["log_date"]))			{$log_date=$_GET["log_date"];}
+	elseif (isset($_POST["log_date"]))	{$log_date=$_POST["log_date"];}
 
 
 if ($archive_search=="Yes") {$vl_table="vicidial_list_archive";} 
@@ -271,6 +284,9 @@ if ($qm_conf_ct > 0)
 ###########################################
 
 $lead_id = preg_replace('/[^0-9a-zA-Z]/','',$lead_id);
+$modify_log_submit = preg_replace('/[^-_0-9a-zA-Z]/','',$modify_log_submit);
+$modify_log_table = preg_replace('/[^-_0-9a-zA-Z]/','',$modify_log_table);
+$vicidial_id = preg_replace('/[^-\+\.\:\_0-9a-zA-Z]/','',$vicidial_id);
 
 if ($non_latin < 1)
 	{
@@ -341,6 +357,9 @@ if ($non_latin < 1)
 	$callback_type = preg_replace('/[^A-Z]/','',$callback_type);
 	$callback_user = preg_replace('/[^-\_0-9a-zA-Z]/', '',$callback_user);
 	$callback_comments = preg_replace('/[^- \+\.\:\/\@\_0-9a-zA-Z]/','',$callback_comments);
+	$modify_log_status = preg_replace('/[^-\_0-9a-zA-Z]/', '',$modify_log_status);
+	$modify_old_status = preg_replace('/[^-\_0-9a-zA-Z]/', '',$modify_old_status);
+	$log_date = preg_replace('/[^- \+\.\:\/\@\_0-9a-zA-Z]/','',$log_date);
 	}	# end of non_latin
 else
 	{
@@ -475,6 +494,90 @@ if ($SSadmin_screen_colors != 'default')
 	}
 
 
+#############################################
+##### BEGIN modify log status functions #####
+#############################################
+if ($modify_log_submit>0)
+	{
+	if ( ($LOGmodify_leads == '3') or ($LOGmodify_leads == '4') )
+		{
+		if (strlen($modify_log_status)>0)
+			{
+			if ( (strlen($lead_id)>0) and (strlen($modify_log_table)>3) and (strlen($modify_log_status)>0) and (strlen($modify_old_status)>0) and (strlen($vicidial_id) > 0) and (strlen($log_date) > 10) )
+				{
+				$stmt='';
+				if ($modify_log_table == 'vicidial_log')
+					{
+					$stmt="UPDATE vicidial_log set status='$modify_log_status' where lead_id='$lead_id' and uniqueid='$vicidial_id' and call_date='$log_date';";
+					}
+				if ($modify_log_table == 'vicidial_log_archive')
+					{
+					$stmt="UPDATE vicidial_log_archive set status='$modify_log_status' where lead_id='$lead_id' and uniqueid='$vicidial_id' and call_date='$log_date';";
+					}
+				if ($modify_log_table == 'vicidial_closer_log')
+					{
+					$stmt="UPDATE vicidial_closer_log set status='$modify_log_status' where lead_id='$lead_id' and closecallid='$vicidial_id' and call_date='$log_date';";
+					}
+				if ($modify_log_table == 'vicidial_closer_log_archive')
+					{
+					$stmt="UPDATE vicidial_closer_log_archive set status='$modify_log_status' where lead_id='$lead_id' and closecallid='$vicidial_id' and call_date='$log_date';";
+					}
+				if ($modify_log_table == 'vicidial_agent_log')
+					{
+					$stmt="UPDATE vicidial_agent_log set status='$modify_log_status' where lead_id='$lead_id' and agent_log_id='$vicidial_id' and event_time='$log_date';";
+					}
+				if ($modify_log_table == 'vicidial_agent_log_archive')
+					{
+					$stmt="UPDATE vicidial_agent_log_archive set status='$modify_log_status' where lead_id='$lead_id' and agent_log_id='$vicidial_id' and event_time='$log_date';";
+					}
+
+				if (strlen($stmt)>20)
+					{
+					if ($DB) {echo "$stmt\n";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+					$affected_rows = mysqli_affected_rows($link);
+
+					$SQL_log = addslashes($stmt);
+					$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LEADS', event_type='MODIFY', record_id='$lead_id', event_code='MODIFY LEAD LOG STATUS', event_sql=\"$SQL_log\", event_notes='$lead_id|$modify_log_table|$modify_log_status|$modify_old_status|$vicidial_id|$log_date|$affected_rows';";
+					if ($DB) {echo "|$stmt|\n";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+
+					echo "SUCCESS: "._QXZ("Log Status Modified").": $modify_log_status \n";
+					exit;
+					}
+				else
+					{
+					echo "ERROR: "._QXZ("Modification could not be completed").": $stmt|$lead_id|$modify_log_table|$modify_log_status|$modify_old_status|$vicidial_id|$log_date \n";
+					exit;
+					}
+				}
+			else
+				{
+				echo "ERROR: "._QXZ("Missing required fields").": $lead_id|$modify_log_table|$modify_log_status|$modify_old_status|$vicidial_id|$log_date \n";
+				exit;
+				}
+			}
+		else
+			{
+			echo "ERROR: "._QXZ("Log status not changed, new status is blank or the same as the old status").": $modify_log_status \n";
+			exit;
+			}
+		}
+	else
+		{
+		echo "ERROR: "._QXZ("You do not have permission to modify log statuses").": $LOGmodify_leads \n";
+		exit;
+		}
+	}
+############################################
+##### END modify log status functions #####
+#############################################
+
+
+
+################################
+##### BEGIN GDPR functions #####
+################################
 if ($enable_gdpr_download_deletion>0) 
 	{
 	$stmt="SELECT export_gdpr_leads from vicidial_users where user='$PHP_AUTH_USER' and export_gdpr_leads >= 1;";
@@ -562,7 +665,6 @@ if ($enable_gdpr_download_deletion>0)
 			$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LEADS', event_type='DELETE', record_id=$lead_id, event_code='GDPR PURGE LEAD DATA', event_sql=\"$SQL_log\", event_notes='';";
 			if ($DB) {echo "|$stmt|\n";}
 			$rslt=mysql_to_mysqli($stmt, $link);
-			
 			}
 
 		$HTML_text.="<BR><BR>";
@@ -738,6 +840,9 @@ if ($enable_gdpr_download_deletion>0)
 
 
 	}
+################################
+##### END GDPR functions #####
+################################
 
 
 $label_title =				_QXZ("Title");
@@ -916,10 +1021,6 @@ body
 
 -->
 </STYLE>
-<?php
-echo "</HEAD><BODY BGCOLOR=white marginheight=0 marginwidth=0 leftmargin=0 topmargin=0>\n";
-echo "<script language=\"JavaScript\" src=\"calendar_db.js\"></script>\n";
-?>
 <script language="JavaScript">
 function UpdateCallback(callback_id) {
 	var apt_date_field="appointment_date_"+callback_id;
@@ -962,22 +1063,158 @@ function UpdateCallback(callback_id) {
 	document.getElementById('vsn').action="<?php echo $PHP_SELF; ?>?appointment_date="+appointment_date+"&appointment_time="+appointment_time+"&CBstatus="+CBstatus+"&CBchangeUSERtoANY="+CBchangeUSERtoANY+"&CBchangeANYtoUSER="+CBchangeANYtoUSER+"&CBuser="+CBuser+"&comments="+comments+"&callback_id="+callback_id;
 	document.vsn.submit();
 }
+
+var mouseY=0;
+function getMousePos(event) {mouseY=event.pageY;}
+document.addEventListener("click", getMousePos);
+// Detect if the browser is IE or not.
+// If it is not IE, we assume that the browser is NS.
+var IE = document.all?true:false
+// If NS -- that is, !IE -- then set up for mouse capture
+if (!IE) document.captureEvents(Event.MOUSEMOVE);
+
 <?php
 
+##############################################
+##### BEGIN Log Status Modify javascript #####
+##############################################
+if ( ($LOGmodify_leads == '3') or ($LOGmodify_leads == '4') )
+	{
+	echo "vicidial_log_mod = new Array('');\n";
+	echo "vicidial_closer_log_mod = new Array('');\n";
+	echo "vicidial_agent_log_mod = new Array('');\n";
+	echo "vicidial_log_archive_mod = new Array('');\n";
+	echo "vicidial_closer_log_archive_mod = new Array('');\n";
+	echo "vicidial_agent_log_archive_mod = new Array('');\n";
+	echo "var LogMod_ct = '';\n";
+	echo "var LogMod_log_table = '';\n";
+	echo "var LogMod_uniqueid = '';\n";
+	echo "var LogMod_lead_id = '';\n";
+	echo "var LogMod_call_date = '';\n";
+	echo "var LogMod_status = '';\n";
+	echo "var LogMod_new_status = '';\n";
+	echo "\n";
+	echo "function ClearAndHideLogModDiv() {\n";
+	echo "	document.getElementById(\"LogModDisplayDiv\").innerHTML=\"\";\n";
+	echo "	document.getElementById(\"LogModDisplayDiv\").style.display=\"none\";\n";
+	echo "	document.getElementById(\"LogModDisplayDiv\").style.backgroundColor=\"transparent\";\n";
+	echo "	document.getElementById(\"LogModDisplayDiv\").style.padding=\"0px\";\n";
+	echo "  LogMod_ct = '';\n";
+	echo "  LogMod_log_table = '';\n";
+	echo "  LogMod_uniqueid = '';\n";
+	echo "  LogMod_lead_id = '';\n";
+	echo "  LogMod_call_date = '';\n";
+	echo "  LogMod_status = '';\n";
+	echo "  LogMod_new_status = '';\n";
+	echo "}\n";
+	echo "function ModifyLogDisplayShow(e, ct, log_table, uniqueid, lead_id, call_date, status, user) \n";
+	echo "	{\n";
+	echo "	document.getElementById(\"LogModDisplayDiv\").innerHTML=\"\";\n";
+	echo "	if (IE) { // grab the x-y pos.s if browser is IE\n";
+	echo "		tempX = event.clientX + document.body.scrollLeft+10\n";
+	echo "		tempY = event.clientY + document.body.scrollTop\n";
+	echo "	} else {  // grab the x-y pos.s if browser is NS\n";
+	echo "		tempX = e.pageX\n";
+	echo "		tempY = e.pageY\n";
+	echo "	}  \n";
+	echo "	// catch possible negative values in NS4\n";
+	echo "	if (tempX < 0){tempX = 0}\n";
+	echo "	if (tempY < 0){tempY = 0}  \n";
+	echo "	// show the position values in the form named Show\n";
+	echo "	// in the text fields named MouseX and MouseY\n";
+	echo "	tempX-=40;\n";
+	echo "	tempY+=10;\n";
+	echo "	document.getElementById(\"LogModDisplayDiv\").style.display=\"block\";\n";
+	echo "	document.getElementById(\"LogModDisplayDiv\").style.left = tempX + \"px\";\n";
+	echo "	document.getElementById(\"LogModDisplayDiv\").style.top = tempY + \"px\";\n";
+	echo "	document.getElementById(\"LogModDisplayDiv\").style.backgroundColor=\"#$SSframe_background\";\n";
+	echo "	document.getElementById(\"LogModDisplayDiv\").style.padding=\"15px\";\n";
+	#echo "  alert(tempX + '|' + tempY);\n";
+	echo "	var ModifyVerbiage = null;\n";
+	echo "  if (log_table == 'vicidial_log') {ModifyVerbiage = vicidial_log_mod[ct];}\n";
+	echo "  if (log_table == 'vicidial_closer_log') {ModifyVerbiage = vicidial_closer_log_mod[ct];}\n";
+	echo "  if (log_table == 'vicidial_agent_log') {ModifyVerbiage = vicidial_agent_log_mod[ct];}\n";
+	echo "  if (log_table == 'vicidial_log_archive') {ModifyVerbiage = vicidial_log_archive_mod[ct];}\n";
+	echo "  if (log_table == 'vicidial_closer_log_archive') {ModifyVerbiage = vicidial_closer_log_archive_mod[ct];}\n";
+	echo "  if (log_table == 'vicidial_agent_log_archive') {ModifyVerbiage = vicidial_agent_log_archive_mod[ct];}\n";
+	echo "	\n";
+	echo "  LogMod_ct = ct;\n";
+	echo "  LogMod_log_table = log_table;\n";
+	echo "  LogMod_uniqueid = uniqueid;\n";
+	echo "  LogMod_lead_id = lead_id;\n";
+	echo "  LogMod_call_date = call_date;\n";
+	echo "  LogMod_status = status;\n";
+	echo "  \n";
+	echo "	var temp_status_list = document.getElementById(\"statuses_listMODLOG\").innerHTML;\n";
+	echo "	ModifyVerbiage = \"<b>"._QXZ("Log Entry Status Change").":</b><br>\" + ModifyVerbiage + \""._QXZ("New Status").": <br><select class='form_field' size=1 name='LogNewStatus' id='LogNewStatus'>\" + temp_status_list + \"<option SELECTED value=''>\" + status + \"</option></select><br><span id='LogNewSubmit' onClick='ModifyLogStatus()'><u><font color='blue'>SUBMIT</font></u></span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span id='LogNewClose' onClick='ClearAndHideLogModDiv()'><u><font color='blue'>close</font></u></span>\";";
+	echo "	\n";
+	echo "	document.getElementById(\"LogModDisplayDiv\").innerHTML=ModifyVerbiage;\n";
+	echo "	}\n";
+
+	echo "function ModifyLogStatus() \n";
+	echo "	{\n";
+	echo "  LogMod_new_status = '';\n";
+	echo "  var temp_LogMod_new_statusIndex = document.getElementById('LogNewStatus').selectedIndex;\n";
+	echo "  LogMod_new_status =  document.getElementById('LogNewStatus').options[temp_LogMod_new_statusIndex].value;\n";
+	echo "	var ModifyVerbiage = null;\n";
+	echo "	var xmlhttp=false;\n";
+	echo "	/*@cc_on @*/\n";
+	echo "	/*@if (@_jscript_version >= 5)\n";
+	echo "	// JScript gives us Conditional compilation, we can cope with old IE versions.\n";
+	echo "	// and security blocked creation of the objects.\n";
+	echo "	 try {\n";
+	echo "	  xmlhttp = new ActiveXObject(\"Msxml2.XMLHTTP\");\n";
+	echo "	 } catch (e) {\n";
+	echo "	  try {\n";
+	echo "	   xmlhttp = new ActiveXObject(\"Microsoft.XMLHTTP\");\n";
+	echo "	  } catch (E) {\n";
+	echo "	   xmlhttp = false;\n";
+	echo "	  }\n";
+	echo "	 }\n";
+	echo "	@end @*/\n";
+	echo "	if (!xmlhttp && typeof XMLHttpRequest!='undefined')\n";
+	echo "		{\n";
+	echo "		xmlhttp = new XMLHttpRequest();\n";
+	echo "		}\n";
+	echo "	if (xmlhttp) \n";
+	echo "		{ \n";
+	echo "		modify_query = \"&modify_log_submit=1&lead_id=\"  + LogMod_lead_id + \"&modify_log_table=\"  + LogMod_log_table + \"&modify_old_status=\"  + LogMod_status + \"&vicidial_id=\"  + LogMod_uniqueid + \"&log_date=\"  + LogMod_call_date + \"&modify_log_status=\" + LogMod_new_status;\n";
+	echo "		xmlhttp.open('POST', 'admin_modify_lead.php');\n";
+	echo "		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');\n";
+	echo "		xmlhttp.send(modify_query); \n";
+	echo "		xmlhttp.onreadystatechange = function() \n";
+	echo "			{ \n";
+	echo "			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) \n";
+	echo "				{\n";
+	echo "				ModifyVerbiage = xmlhttp.responseText;\n";
+	echo "				var regLMerror = new RegExp(\"ERROR\",\"ig\");\n";
+	echo "				if (ModifyVerbiage.match(regLMerror))\n";
+	echo "				    {\n";
+	echo "				 // alert('ERROR');\n";
+	echo "				    }\n";
+	echo "				else\n";
+	echo "				    {\n";
+	echo "                  var temp_ct_status = LogMod_log_table + '_status_' + LogMod_ct;\n";
+	echo "                  document.getElementById(temp_ct_status).innerHTML = \"<font color=purple><b>\" + LogMod_new_status + \"</b></font>\";\n";
+	echo "				    }\n";
+	echo "	            ModifyVerbiage = ModifyVerbiage + \"<br><br><span id='LogNewClose' onClick='ClearAndHideLogModDiv()'><u><font color='blue'>close</font></u></span>\";";
+	echo "				document.getElementById(\"LogModDisplayDiv\").innerHTML=ModifyVerbiage;\n";
+	echo "				}\n";
+	echo "			}\n";
+	echo "		delete xmlhttp;\n";
+	echo "		}\n";
+	echo "	}\n";
+	}
+##############################################
+##### END Log Status Modify javascript #####
+##############################################
+
+
+#######################################
+##### BEGIN CID display javascript #####
+#######################################
 if ( ($CIDdisplay == "Yes") and ($SSsip_event_logging > 0) )
 	{
-	echo "</script>\n";
-	echo "<div id='DetailDisplayDiv' style='position:absolute; top:0; left:0; z-index:20; background-color:white display:none;'></div>\n";
-	echo "<script language=\"JavaScript\">\n";
-	echo "mouseY=0;\n";
-	echo "function getMousePos(event) {mouseY=event.pageY;}\n";
-	echo "document.addEventListener(\"click\", getMousePos);\n";
-	echo "// Detect if the browser is IE or not.\n";
-	echo "// If it is not IE, we assume that the browser is NS.\n";
-	echo "var IE = document.all?true:false\n";
-	echo "// If NS -- that is, !IE -- then set up for mouse capture\n";
-	echo "if (!IE) document.captureEvents(Event.MOUSEMOVE)\n";
-	echo "\n";
 	echo "function ClearAndHideDetailDiv() {\n";
 	echo "	document.getElementById(\"DetailDisplayDiv\").innerHTML=\"\";\n";
 	echo "	document.getElementById(\"DetailDisplayDiv\").style.display=\"none\";\n";
@@ -1041,24 +1278,29 @@ if ( ($CIDdisplay == "Yes") and ($SSsip_event_logging > 0) )
 	echo "		}\n";
 	echo "	}\n";
 	}
-echo "</script>\n";
-echo "<link rel=\"stylesheet\" href=\"calendar.css\">\n";
-echo "<span style=\"position:absolute;left:0px;top:0px;z-index:20;\" id=admin_header>";
-
-$short_header=1;
-
-require("admin_header.php");
-
-echo "</span>\n";
+#######################################
+##### END CID display javascript #####
+#######################################
 
 if ($gdpr_display==2 && preg_match("/purge$/", $gdpr_action))
 	{
+	echo "</script>\n";
+	echo "<link rel=\"stylesheet\" href=\"calendar.css\">\n";
+	echo "</head><BODY BGCOLOR=white marginheight=0 marginwidth=0 leftmargin=0 topmargin=0>\n";
+	echo "<span style=\"position:absolute;left:0px;top:0px;z-index:20;\" id=admin_header>";
+
+	$short_header=1;
+
+	require("admin_header.php");
+
+	echo "</span>\n";
 	echo $HTML_text;
 	echo "</body></html>";
 	exit;
 	}
 
-echo "<span style=\"position:absolute;left:3px;top:30px;z-index:19;\" id=agent_status_stats>\n";
+$messagesHTML='';
+$messagesHTML .= "<span style=\"position:absolute;left:3px;top:30px;z-index:19;\" id=agent_status_stats>\n";
 
 ### BEGIN - Add a new lead in the system ###
 if ($lead_id == 'NEW')
@@ -1130,15 +1372,15 @@ if ($lead_id == 'NEW')
 		if ($affected_rows > 0)
 			{
 			$lead_id = mysqli_insert_id($link);
-			echo _QXZ("Lead has been added").": $lead_id ($gmt_offset)<BR><BR>\n";
+			$messagesHTML .= _QXZ("Lead has been added").": $lead_id ($gmt_offset)<BR><BR>\n";
 			$end_call=0;
 			}
 		else
-			{echo _QXZ("ERROR: Lead not added, please go back and look at what you entered")."<BR><BR>\n";}
+			{$messagesHTML .= _QXZ("ERROR: Lead not added, please go back and look at what you entered")."<BR><BR>\n";}
 		}
 	else
 		{
-		echo _QXZ("you do not have permission to add this lead")." $list_id &nbsp; &nbsp; &nbsp; $NOW_TIME\n<BR><BR>\n";
+		$messagesHTML .= _QXZ("you do not have permission to add this lead")." $list_id &nbsp; &nbsp; &nbsp; $NOW_TIME\n<BR><BR>\n";
 		}
 	### END - Add a new lead in the system ###
 	}
@@ -1213,9 +1455,9 @@ if ($end_call > 0)
 			$diff_new = "lead_id=$row[0]|entry_date=$row[1]|modify_date=$row[2]|status=$row[3]|user=$row[4]|vendor_lead_code=$row[5]|source_id=$row[6]|list_id=$row[7]|gmt_offset_now=$row[8]|called_since_last_reset=$row[9]|phone_code=$row[10]|phone_number=$row[11]|title=$row[12]|first_name=$row[13]|middle_initial=$row[14]|last_name=$row[15]|address1=$row[16]|address2=$row[17]|address3=$row[18]|city=$row[19]|state=$row[20]|province=$row[21]|postal_code=$row[22]|country_code=$row[23]|gender=$row[24]|date_of_birth=$row[25]|alt_phone=$row[26]|email=$row[27]|security_phrase=$row[28]|comments=$row[29]|called_count=$row[30]|last_local_call_time=$row[31]|rank=$row[32]|owner=$row[33]|entry_list_id=$row[34]|";
 			}
 
-		echo _QXZ("information modified")."<BR><BR>\n";
-		echo "<a href=\"$PHP_SELF?lead_id=$lead_id&DB=$DB&archive_search=$archive_search&archive_log=$archive_log\">"._QXZ("Go back to the lead modification page")."</a><BR><BR>\n";
-		echo "<form><input type=button value=\""._QXZ("Close This Window")."\" onClick=\"javascript:window.close();\"></form>\n";
+		$messagesHTML .= _QXZ("information modified")."<BR><BR>\n";
+		$messagesHTML .= "<a href=\"$PHP_SELF?lead_id=$lead_id&DB=$DB&archive_search=$archive_search&archive_log=$archive_log\">"._QXZ("Go back to the lead modification page")."</a><BR><BR>\n";
+		$messagesHTML .= "<form><input type=button value=\""._QXZ("Close This Window")."\" onClick=\"javascript:window.close();\"></form>\n";
 		
 		if ( ($dispo != $status) and ($dispo == 'CBHOLD') )
 			{
@@ -1224,7 +1466,7 @@ if ($end_call > 0)
 			if ($DB) {echo "|$stmtB|\n";}
 			$rslt=mysql_to_mysqli($stmtB, $link);
 
-			echo "<BR>"._QXZ("vicidial_callback record inactivated").": $lead_id<BR>\n";
+			$messagesHTML .= "<BR>"._QXZ("vicidial_callback record inactivated").": $lead_id<BR>\n";
 			}
 		if ( ($dispo != $status) and ( ($dispo == 'CALLBK') or ($scheduled_callback == 'Y') ) )
 			{
@@ -1233,7 +1475,7 @@ if ($end_call > 0)
 			if ($DB) {echo "|$stmtC|\n";}
 			$rslt=mysql_to_mysqli($stmtC, $link);
 
-			echo "<BR>"._QXZ("vicidial_callback record inactivated").": $lead_id<BR>\n";
+			$messagesHTML .= "<BR>"._QXZ("vicidial_callback record inactivated").": $lead_id<BR>\n";
 			}
 
 		if ( ($dispo != $status) and ($status == 'CBHOLD') )
@@ -1271,7 +1513,7 @@ if ($end_call > 0)
 				if ($DB) {echo "|$stmtE|\n";}
 				$rslt=mysql_to_mysqli($stmtE, $link);
 
-				echo "<BR>"._QXZ("Scheduled Callback added").": $lead_id - $phone_number<BR>\n";
+				$messagesHTML .= "<BR>"._QXZ("Scheduled Callback added").": $lead_id - $phone_number<BR>\n";
 				}
 			}
 
@@ -1283,7 +1525,7 @@ if ($end_call > 0)
 			if ($DB) {echo "|$stmtF|\n";}
 			$rslt=mysql_to_mysqli($stmtF, $link);
 
-			echo "<BR>"._QXZ("Lead added to DNC List").": $lead_id - $phone_number<BR>\n";
+			$messagesHTML .= "<BR>"._QXZ("Lead added to DNC List").": $lead_id - $phone_number<BR>\n";
 			}
 		### update last record in vicidial_log table
 		   if (($dispo != $status) and ($modify_logs > 0)) 
@@ -1329,7 +1571,7 @@ if ($end_call > 0)
 		}
 	else
 		{
-		echo _QXZ("you do not have permission to modify this lead")." $lead_id &nbsp; &nbsp; &nbsp; $list_id &nbsp; &nbsp; &nbsp; $NOW_TIME\n<BR><BR>\n";
+		$messagesHTML .= _QXZ("you do not have permission to modify this lead")." $lead_id &nbsp; &nbsp; &nbsp; $list_id &nbsp; &nbsp; &nbsp; $NOW_TIME\n<BR><BR>\n";
 		}
 	}
 else
@@ -1341,7 +1583,7 @@ else
 		if ($DB) {echo "|$stmtK|\n";}
 		$rslt=mysql_to_mysqli($stmtK, $link);
 
-		echo "<BR>"._QXZ("vicidial_callback record changed to ANYONE")."<BR>\n";
+		$messagesHTML .= "<BR>"._QXZ("vicidial_callback record changed to ANYONE")."<BR>\n";
 		}
 	if ($CBchangeANYtoUSER == 'YES')
 		{
@@ -1350,7 +1592,7 @@ else
 		if ($DB) {echo "|$stmtM|\n";}
 		$rslt=mysql_to_mysqli($stmtM, $link);
 
-		echo "<BR>"._QXZ("vicidial_callback record changed to USERONLY, user").": $CBuser<BR>\n";
+		$messagesHTML .= "<BR>"._QXZ("vicidial_callback record changed to USERONLY, user").": $CBuser<BR>\n";
 		}	
 	
 	if ($CBchangeDATE == 'YES')
@@ -1362,7 +1604,7 @@ else
 		if ($DB) {echo "|$stmtN|\n";}
 		$rslt=mysql_to_mysqli($stmtN, $link);
 
-		echo "<BR>"._QXZ("vicidial_callback record changed to")." $appointment_date $appointment_time $CBstatus<BR>\n";
+		$messagesHTML .= "<BR>"._QXZ("vicidial_callback record changed to")." $appointment_date $appointment_time $CBstatus<BR>\n";
 		}	
 
 	if ( (strlen($stmtK)>10) or (strlen($stmtL)>10) or (strlen($stmtM)>10) or (strlen($stmtN)>10) )
@@ -1430,12 +1672,13 @@ else
 	$u=0;
 	$call_log = '';
 	$log_campaign = '';
+	$HTML_inline_script = '';
 	while ($logs_to_print > $u) 
 		{
 		$row=mysqli_fetch_row($rslt);
 		if (strlen($log_campaign)<1) {$log_campaign = $row[3];}
 		if (preg_match("/1$|3$|5$|7$|9$/i", $u))
-			{$bgcolor="bgcolor=\"#$SSstd_row2_background\"";} 
+			{$bgcolor="bgcolor=\"#$SSstd_row2_background\"";}
 		else
 			{$bgcolor="bgcolor=\"#$SSstd_row1_background\"";}
 
@@ -1444,7 +1687,13 @@ else
 		$call_log .= "<td><font size=1>$u</td>";
 		$call_log .= "<td><font size=2>$row[4]</td>";
 		$call_log .= "<td align=left><font size=2> $row[7]</td>\n";
-		$call_log .= "<td align=left><font size=2> $row[8]</td>\n";
+		if ( ($LOGmodify_leads == '3') or ($LOGmodify_leads == '4') )
+			{
+			$call_log .= "<td align=left><font size=2><font color=blue><u><span id=\"vicidial_log_status_$u\" onClick=\"ModifyLogDisplayShow(event, $u,'vicidial_log','$row[0]','$row[1]','$row[4]','$row[8]','$row[11]')\">$row[8]</span></u></font></td>\n";
+			$HTML_inline_script .= "vicidial_log_mod[$u] = \"Call Date: $row[4]<br>Lead ID: $row[1]<br>Current Status: $row[8]<br>\";\n";
+			}
+		else
+			{$call_log .= "<td align=left><font size=2> $row[8]</td>\n";}
 		$call_log .= "<td align=left><font size=2> <A HREF=\"user_stats.php?user=$row[11]\" target=\"_blank\">$row[11]</A> </td>\n";
 		$call_log .= "<td align=right><font size=2> $row[3] </td>\n";
 		$call_log .= "<td align=right><font size=2> $row[2] </td>\n";
@@ -1542,7 +1791,13 @@ else
 		$agent_log .= "<td align=right><font size=2> $row[9] </td>\n";
 		$agent_log .= "<td align=right><font size=2> $row[11] </td>\n";
 		$agent_log .= "<td align=right><font size=2> $row[13] </td>\n";
-		$agent_log .= "<td align=right><font size=2> &nbsp; $row[14] </td>\n";
+		if ( ($LOGmodify_leads == '3') or ($LOGmodify_leads == '4') )
+			{
+			$agent_log .= "<td align=left><font size=2> &nbsp; <font color=blue><u><span id=\"vicidial_agent_log_status_$y\" onClick=\"ModifyLogDisplayShow(event, $y,'vicidial_agent_log','$row[0]','$row[4]','$row[3]','$row[14]','$row[1]')\">$row[14]</span></u></font></td>\n";
+			$HTML_inline_script .= "vicidial_agent_log_mod[$y] = \"Event Date: $row[3]<br>Lead ID: $row[4]<br>Current Status: $row[14]<br>\";\n";
+			}
+		else
+			{$agent_log .= "<td align=left><font size=2> $row[14]</td>\n";}
 		$agent_log .= "<td align=right><font size=2> &nbsp; $row[15] </td>\n";
 		$agent_log .= "<td align=right><font size=2> &nbsp; $row[17] </td></tr>\n";
 
@@ -1572,7 +1827,13 @@ else
 		$closer_log .= "<td><font size=1>$y</td>";
 		$closer_log .= "<td><font size=2>$row[4]</td>";
 		$closer_log .= "<td align=left><font size=2> $row[7]</td>\n";
-		$closer_log .= "<td align=left><font size=2> $row[8]</td>\n";
+		if ( ($LOGmodify_leads == '3') or ($LOGmodify_leads == '4') )
+			{
+			$closer_log .= "<td align=left><font size=2><font color=blue><u><span id=\"vicidial_closer_log_status_$y\" onClick=\"ModifyLogDisplayShow(event, $y,'vicidial_closer_log','$row[0]','$row[1]','$row[4]','$row[8]','$row[11]')\">$row[8]</span></u></font></td>\n";
+			$HTML_inline_script .= "vicidial_closer_log_mod[$y] = \"Call Date: $row[4]<br>Lead ID: $row[1]<br>Current Status: $row[8]<br>\";\n";
+			}
+		else
+			{$closer_log .= "<td align=left><font size=2> $row[8]</td>\n";}
 		$closer_log .= "<td align=left><font size=2> <A HREF=\"user_stats.php?user=$row[11]\" target=\"_blank\">$row[11]</A> </td>\n";
 		$closer_log .= "<td align=right><font size=2> $row[3] </td>\n";
 		$closer_log .= "<td align=right><font size=2> $row[2] </td>\n";
@@ -1625,7 +1886,13 @@ else
 			$call_log .= "<td><font size=1>$u</td>";
 			$call_log .= "<td><font size=2><font color='#FF0000'>$row[4]</font></td>";
 			$call_log .= "<td align=left><font size=2> $row[7]</td>\n";
-			$call_log .= "<td align=left><font size=2> $row[8]</td>\n";
+			if ( ($LOGmodify_leads == '3') or ($LOGmodify_leads == '4') )
+				{
+				$call_log .= "<td align=left><font size=2><font color=blue><u><span id=\"vicidial_log_archive_status_$u\" onClick=\"ModifyLogDisplayShow(event, $u,'vicidial_log_archive','$row[0]','$row[1]','$row[4]','$row[8]','$row[11]')\">$row[8]</span></u></font></td>\n";
+				$HTML_inline_script .= "vicidial_log_archive_mod[$u] = \"Call Date: $row[4]<br>Lead ID: $row[1]<br>Current Status: $row[8]<br>\";\n";
+				}
+			else
+				{$call_log .= "<td align=left><font size=2> $row[8]</td>\n";}
 			$call_log .= "<td align=left><font size=2> <A HREF=\"user_stats.php?user=$row[11]\" target=\"_blank\">$row[11]</A> </td>\n";
 			$call_log .= "<td align=right><font size=2> $row[3] </td>\n";
 			$call_log .= "<td align=right><font size=2> $row[2] </td>\n";
@@ -1711,7 +1978,13 @@ else
 			$agent_log .= "<td align=right><font size=2> $row[9] </td>\n";
 			$agent_log .= "<td align=right><font size=2> $row[11] </td>\n";
 			$agent_log .= "<td align=right><font size=2> $row[13] </td>\n";
-			$agent_log .= "<td align=right><font size=2> &nbsp; $row[14] </td>\n";
+			if ( ($LOGmodify_leads == '3') or ($LOGmodify_leads == '4') )
+				{
+				$agent_log .= "<td align=left><font size=2> &nbsp; <font color=blue><u><span id=\"vicidial_agent_log_archive_status_$y\" onClick=\"ModifyLogDisplayShow(event, $y,'vicidial_agent_log_archive','$row[0]','$row[4]','$row[3]','$row[14]','$row[1]')\">$row[14]</span></u></font></td>\n";
+				$HTML_inline_script .= "vicidial_agent_log_archive_mod[$y] = \"Event Date: $row[3]<br>Lead ID: $row[4]<br>Current Status: $row[14]<br>\";\n";
+				}
+			else
+				{$agent_log .= "<td align=left><font size=2> $row[14]</td>\n";}
 			$agent_log .= "<td align=right><font size=2> &nbsp; $row[15] </td>\n";
 			$agent_log .= "<td align=right><font size=2> &nbsp; $row[17] </td></tr>\n";
 
@@ -1741,7 +2014,13 @@ else
 			$closer_log .= "<td><font size=1>$y</td>";
 			$closer_log .= "<td><font size=2><font color='#FF0000'>$row[4]</font></td>";
 			$closer_log .= "<td align=left><font size=2> $row[7]</td>\n";
-			$closer_log .= "<td align=left><font size=2> $row[8]</td>\n";
+			if ( ($LOGmodify_leads == '3') or ($LOGmodify_leads == '4') )
+				{
+				$closer_log .= "<td align=left><font size=2><font color=blue><u><span id=\"vicidial_closer_log_archive_status_$y\" onClick=\"ModifyLogDisplayShow(event, $y,'vicidial_closer_log_archive','$row[0]','$row[1]','$row[4]','$row[8]','$row[11]')\">$row[8]</span></u></font></td>\n";
+				$HTML_inline_script .= "vicidial_closer_log_archive_mod[$y] = \"Call Date: $row[4]<br>Lead ID: $row[1]<br>Current Status: $row[8]<br>\";\n";
+				}
+			else
+				{$closer_log .= "<td align=left><font size=2> $row[8]</td>\n";}
 			$closer_log .= "<td align=left><font size=2> <A HREF=\"user_stats.php?user=$row[11]\" target=\"_blank\">$row[11]</A> </td>\n";
 			$closer_log .= "<td align=right><font size=2> $row[3] </td>\n";
 			$closer_log .= "<td align=right><font size=2> $row[2] </td>\n";
@@ -1888,6 +2167,27 @@ else
 		$list_id=$select_list;
 		}
 
+	if (strlen($HTML_inline_script) > 0)
+		{
+		echo "$HTML_inline_script\n";
+		}
+
+	echo "</script>\n";
+	echo "<link rel=\"stylesheet\" href=\"calendar.css\">\n";
+	echo "</head><BODY BGCOLOR=white marginheight=0 marginwidth=0 leftmargin=0 topmargin=0>\n";
+	echo "<script language=\"JavaScript\" src=\"calendar_db.js\"></script>\n";
+	echo "<span style=\"position:absolute;left:0px;top:0px;z-index:20;\" id=admin_header>";
+	echo "<div id='LogModDisplayDiv' style='position:absolute; top:0; left:0; z-index:21; background-color:white display:none;'></div>\n";
+	echo "<div id='DetailDisplayDiv' style='position:absolute; top:0; left:0; z-index:20; background-color:white display:none;'></div>\n";
+
+	$short_header=1;
+
+	require("admin_header.php");
+
+	echo "</span>\n";
+	echo "$messagesHTML\n";
+
+
 	if ($lead_id == 'NEW')
 		{echo "<br><b>"._QXZ("Add A New Lead")."</B>\n";}
 	else
@@ -1979,7 +2279,7 @@ else
 		echo "<tr><td align=right>"._QXZ("Country")." : </td><td align=left><input type=text name=country_code size=3 maxlength=$MAXcountry_code value=\"".htmlparse($country_code)."\"> &nbsp; \n";
 		echo " "._QXZ("Date of Birth").": <input type=text name=date_of_birth size=12 maxlength=10 value=\"".htmlparse($date_of_birth)."\"></td></tr>\n";
 
-		if ( ($LOGmodify_leads == '1') or ($lead_id == 'NEW') )
+		if ( ($LOGmodify_leads == '1') or ($LOGmodify_leads == '3') or ($lead_id == 'NEW') )
 			{
 			echo "<tr><td align=right>$label_phone_number : </td><td align=left><input type=text name=phone_number size=18 maxlength=$MAXphone_number value=\"".htmlparse($phone_number)."\"></td></tr>\n";
 			echo "<tr><td align=right>$label_phone_code : </td><td align=left><input type=text name=phone_code size=10 maxlength=$MAXphone_code value=\"".htmlparse($phone_code)."\"></td></tr>\n";
@@ -2078,6 +2378,7 @@ else
 		$stmt="SELECT status,status_name,selectable,human_answered,category,sale,dnc,customer_contact,not_interested,unworkable from vicidial_statuses $selectableSQL order by status";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$statuses_to_print = mysqli_num_rows($rslt);
+		$statuses_listMODLOG='';
 		$statuses_list='';
 
 		$o=0;
@@ -2089,6 +2390,7 @@ else
 				{$statuses_list .= "<option SELECTED value=\"$rowx[0]\">$rowx[0] - $rowx[1]</option>\n"; $DS++;}
 			else
 				{$statuses_list .= "<option value=\"$rowx[0]\">$rowx[0] - $rowx[1]</option>\n";}
+			$statuses_listMODLOG .= "<option value=\"$rowx[0]\">$rowx[0] - $rowx[1]</option>";
 			$o++;
 			}
 
@@ -2105,6 +2407,7 @@ else
 				{$statuses_list .= "<option SELECTED value=\"$rowx[0]\">$rowx[0] - $rowx[1]</option>\n"; $DS++;}
 			else
 				{$statuses_list .= "<option value=\"$rowx[0]\">$rowx[0] - $rowx[1]</option>\n";}
+			$statuses_listMODLOG .= "<option value=\"$rowx[0]\">$rowx[0] - $rowx[1]</option>";
 			if ($rowx[0] == 'CBHOLD') {$CBhold_set++;}
 			$o++;
 			}
@@ -2124,6 +2427,7 @@ else
 					{$statuses_list .= "<option SELECTED value=\"$rowx[0]\">$rowx[0] - $rowx[1]</option>\n"; $DS++;}
 				else
 					{$statuses_list .= "<option value=\"$rowx[0]\">$rowx[0] - $rowx[1]</option>\n";}
+				$statuses_listMODLOG .= "<option value=\"$rowx[0]\">$rowx[0] - $rowx[1]</option>";
 				if ($rowx[0] == 'CBHOLD') {$CBhold_set++;}
 				$o++;
 				}
@@ -2153,6 +2457,10 @@ else
 		{
 		echo "<tr><td colspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit name=submit value=\""._QXZ("SUBMIT")."\"></td></tr>\n";
 		}
+
+	if ( ($LOGmodify_leads == '3') or ($LOGmodify_leads == '4') )
+		{echo "<span id='statuses_listMODLOG' style=\"display:none\">$statuses_listMODLOG</span>\n";}
+
 	echo "</table></form>\n";
 	echo "<BR><BR><BR>\n";
 
