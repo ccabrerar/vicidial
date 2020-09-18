@@ -2595,7 +2595,7 @@ if ($function == 'update_fields')
 		$row=mysqli_fetch_row($rslt);
 		if ($row[0] > 0)
 			{
-			$stmt = "select count(*) from vicidial_users where user='$user' and modify_leads='1';";
+			$stmt = "select count(*) from vicidial_users where user='$user' and modify_leads IN('1','2','3','4');";
 			if ($DB) {echo "$stmt\n";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 			$row=mysqli_fetch_row($rslt);

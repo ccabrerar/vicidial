@@ -1433,7 +1433,7 @@ else
 	echo "</TABLE><BR><BR>\n";
 
 
-	$stmt="SELECT count(*) from vicidial_users where user='$PHP_AUTH_USER' and pass='$PHP_AUTH_PW' and user_level >= 9 and modify_leads='1';";
+	$stmt="SELECT count(*) from vicidial_users where user='$PHP_AUTH_USER' and pass='$PHP_AUTH_PW' and user_level >= 9 and modify_leads IN('1','2','3','4');";
 	if ($DB) {echo "|$stmt|\n";}
 	if ($non_latin > 0) {$rslt=mysql_to_mysqli("SET NAMES 'UTF8'", $link);}
 	$rslt=mysql_to_mysqli($stmt, $link);

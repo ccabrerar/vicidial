@@ -306,7 +306,7 @@ $auth_message = user_authorization($user,$pass,'',0,$bcrypt,0,$auth_api_flag,'vd
 if ($auth_message == 'GOOD')
 	{$auth=1;}
 
-$stmt="SELECT count(*) from vicidial_users where user='$user' and ( (modify_leads='1') or (qc_enabled='1') );";
+$stmt="SELECT count(*) from vicidial_users where user='$user' and ( (modify_leads IN('1','2','3','4')) or (qc_enabled='1') );";
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $row=mysqli_fetch_row($rslt);
