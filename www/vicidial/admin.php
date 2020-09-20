@@ -18190,7 +18190,7 @@ if ($ADD==496111111111)
 				}
 			elseif ($stage == 'DELETE')
 				{
-				$stmt="SELECT count(*) from vicidial_campaign_cid_areacodes where campaign_id='$cid_group_id' and areacode='$areacode' and outbound_cid='$outbound_cid' $LOGallowed_campaignsSQL;";
+				$stmt="SELECT count(*) from vicidial_campaign_cid_areacodes where campaign_id='$cid_group_id' and areacode='$areacode' and outbound_cid='$outbound_cid';";
 				$rslt=mysql_to_mysqli($stmt, $link);
 				$row=mysqli_fetch_row($rslt);
 				if ($row[0] < 1)
