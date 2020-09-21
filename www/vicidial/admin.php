@@ -18220,7 +18220,7 @@ if ($ADD==496111111111)
 				}
 			elseif ($stage == 'MODIFY')
 				{
-				$stmt="SELECT areacode,outbound_cid,active,cid_description,call_count_today from vicidial_campaign_cid_areacodes where campaign_id='$cid_group_id' $LOGallowed_campaignsSQL order by areacode,outbound_cid";
+				$stmt="SELECT areacode,outbound_cid,active,cid_description,call_count_today from vicidial_campaign_cid_areacodes where campaign_id='$cid_group_id' order by areacode,outbound_cid";
 				$rslt=mysql_to_mysqli($stmt, $link);
 				$accids_to_print = mysqli_num_rows($rslt);
 				$o=0;
