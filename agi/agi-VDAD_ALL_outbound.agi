@@ -496,7 +496,7 @@ if ($SSsip_event_logging > 0)
 ##### END SIP event logging, if enabled in the system #####
 
 
-if ( ($channel =~ /Local/i) && ($AST_ver !~ /^1\.0\.8|^1\.0\.9/) )
+if ( ($channel =~ /^Local/i) && ($AST_ver !~ /^1\.0\.8|^1\.0\.9/) )
 	{
 	if ($AGILOG) {$agi_string = "+++++ VDAD START LOCAL CHANNEL: EXITING- $priority";   &agi_output;}
 	if ($priority > 2) 
