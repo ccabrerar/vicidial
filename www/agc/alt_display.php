@@ -16,10 +16,11 @@
 #
 # CHANGELOG:
 # 200827-1157 - First build
+# 200920-0906 - Added agent-lag-time to agent_status action
 #
 
-$version = '2.14-1';
-$build = '200827-1157';
+$version = '2.14-2';
+$build = '200920-0906';
 $php_script = 'alt_display.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=11;
@@ -443,8 +444,8 @@ if ($ACTION == 'top_panel_realtime')
 
 ################################################################################
 ### agent_status - data-only compressed details for logged-in agent status
-###                will output these fields: agent-status|call-time|dead_time|pause-code|calls-today|calls-waiting|waiting-time
-###                   example:     PAUSED|0|0|BREAK|12|0|0
+###                will output these fields: agent-status|call-time|dead_time|pause-code|calls-today|calls-waiting|waiting-time|agent-lag-time
+###                   example:     PAUSED|0|0|BREAK|12|0|0|1
 ################################################################################
 if ($ACTION == 'agent_status')
 	{
@@ -454,7 +455,7 @@ if ($ACTION == 'agent_status')
 	$CIQcount=0;
 	$wait_length=0;
 
-	$stmt="SELECT server_ip,status,lead_id,campaign_id,callerid,last_update_time,closer_campaigns,calls_today,pause_code,UNIX_TIMESTAMP(last_call_time),UNIX_TIMESTAMP(last_state_change),preview_lead_id,pause_code from vicidial_live_agents where user='$user';";
+	$stmt="SELECT server_ip,status,lead_id,campaign_id,callerid,last_update_time,closer_campaigns,calls_today,pause_code,UNIX_TIMESTAMP(last_call_time),UNIX_TIMESTAMP(last_state_change),preview_lead_id,pause_code,UNIX_TIMESTAMP(last_update_time) from vicidial_live_agents where user='$user';";
 	$rslt=mysql_to_mysqli($stmt, $link);
 		if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'09008',$user,$server_ip,$session_name,$one_mysql_log);}
 	$cl_user_ct = mysqli_num_rows($rslt);
@@ -474,6 +475,7 @@ if ($ACTION == 'agent_status')
 		$VLAlast_state_change_epoch =		$row[10];
 		$VLApreview_lead_id =				($row[11] + 0);
 		$VLApause_code =					$row[12];
+		$VLAlast_update_time_epoch =		$row[13];
 		if ( ($VLAstatus == 'INCALL') or ($VLAstatus == 'QUEUE') or ($VLAstatus == 'MQUEUE') ) {$agent_status = 'DEAD';}
 		if ( ($VLAstatus == 'PAUSED') and ($VLAlead_id > 0) ) {$agent_status = 'DISPO';}
 		if ( ($VLAstatus == 'PAUSED') and ($VLApreview_lead_id > 0) ) {$agent_status = 'PREVIEW';}
@@ -560,8 +562,13 @@ if ($ACTION == 'agent_status')
 			$wait_length = ($StarTtime - $CIQcall_time_epoch);
 			}
 		}
+	if ($VLAlast_update_time_epoch > 10)
+			{
+			$lagged_length = ($StarTtime - $VLAlast_update_time_epoch);
+			}
+
 	### END Calls in Queue section ###
-	$stage="$agent_status|$call_length|$hangup_length|$VLApause_code|$VLAcalls_today|$CIQcount|$wait_length";
+	$stage="$agent_status|$call_length|$hangup_length|$VLApause_code|$VLAcalls_today|$CIQcount|$wait_length|$lagged_length";
 	echo "$stage\n";
 
 	if ($SSagent_debug_logging > 0) {vicidial_ajax_log($NOW_TIME,$startMS,$link,$ACTION,$php_script,$user,$stage,$lead_id,$session_name,$stmt);}

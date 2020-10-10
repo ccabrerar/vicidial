@@ -1044,7 +1044,8 @@ opensips_cid_name VARCHAR(15) default '',
 amd_agent_route_options ENUM('ENABLED','DISABLED','PENDING') default 'DISABLED',
 browser_alert_sound VARCHAR(20) default '---NONE---',
 browser_alert_volume TINYINT(3) UNSIGNED default '50',
-three_way_record_stop_exception VARCHAR(40) default 'DISABLED'
+three_way_record_stop_exception VARCHAR(40) default 'DISABLED',
+pause_max_exceptions VARCHAR(40) default ''
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_lists (
@@ -1865,7 +1866,9 @@ entries_per_page SMALLINT(5) UNSIGNED DEFAULT '0',
 browser_call_alerts ENUM('0','1','2') DEFAULT '0',
 queuemetrics_pausereason ENUM('STANDARD','EVERY_NEW','EVERY_NEW_ADMINCALL','EVERY_NEW_ALLCALL') default 'STANDARD',
 inbound_answer_config ENUM('0','1','2','3','4','5') DEFAULT '0',
-enable_international_dncs ENUM('0','1') default '0'
+enable_international_dncs ENUM('0','1') default '0',
+web_loader_phone_strip VARCHAR(10) default 'DISABLED',
+manual_dial_phone_strip VARCHAR(10) default 'DISABLED'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaigns_list_mix (
@@ -4666,4 +4669,4 @@ INSERT INTO vicidial_settings_containers VALUES ('INTERNATIONAL_DNC_IMPORT','Pro
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1606',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1608',db_schema_update_date=NOW(),reload_timestamp=NOW();

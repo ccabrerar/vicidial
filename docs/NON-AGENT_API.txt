@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2020-08-24
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2020-10-04
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -163,6 +163,7 @@ Changes:
 200622-1609 - Added more options to add_phone and update_phone functions
 200815-1025 - Added campaigns_list & hopper_list functions
 200824-2330 - Added search_method BLOCK option for hopper_list function
+201002-1545 - Added extension as recording_lookup option, Allowed for secure sounds_web_server setting
 
 
 API Functions use the 'function' variable
@@ -420,11 +421,12 @@ recording_lookup - looks up recordings based upon user and date or lead_id
 
 NOTE: api user for this function must have user_level set to 7 or higher and "view reports" enabled
 
-REQUIRED FIELDS-
+SEARCH FIELDS-
 agent_user -		2-20 characters
 lead_id -		1-10 digits
 date -			date of the calls to pull (must be in YYYY-MM-DD format)
 uniqueid -		uniqueid of the call, works best included with another search field
+extension -		3-100 characters, the extension listed in the recording_log
 
 SETTINGS FIELDS-
 stage -			the format of the exported data: csv, tab, pipe(default)

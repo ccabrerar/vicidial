@@ -127,7 +127,7 @@ if ($ACCIDclear_all == "Y")					{$form_to_run="ACCIDDELETEconfirm";}
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$sys_settings_stmt = "SELECT use_non_latin,enable_languages,language_method FROM system_settings;";
+$sys_settings_stmt = "SELECT use_non_latin,enable_languages,language_method,campaign_cid_areacodes_enabled,sounds_central_control_active,contacts_enabled,enable_auto_reports FROM system_settings;";
 $sys_settings_rslt=mysql_to_mysqli($sys_settings_stmt, $link);
 if ($DB) {echo "$sys_settings_stmt|";}
 $num_rows = mysqli_num_rows($sys_settings_rslt);
@@ -137,6 +137,10 @@ if ($num_rows > 0)
 	$non_latin =						$sys_settings_row[0];
 	$SSenable_languages =				$sys_settings_row[1];
 	$SSlanguage_method =				$sys_settings_row[2];
+	$SScampaign_cid_areacodes_enabled = $sys_settings_row[3];
+	$SSsounds_central_control_active =	$sys_settings_row[4];
+	$SScontacts_enabled =				$sys_settings_row[5];
+	$SSenable_auto_reports =			$sys_settings_row[6];
 	}
 else
 	{

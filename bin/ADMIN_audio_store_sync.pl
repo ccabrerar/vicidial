@@ -6,7 +6,7 @@
 # syncronizes audio between audio store and this server
 #
 # 
-# Copyright (C) 2015  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 90513-0458 - First Build
@@ -19,6 +19,7 @@
 # 141124-2309 - Fixed Fhour variable bug
 # 141125-1555 - Added audio_store_details audio file info gathering and DB population
 # 150712-2210 - Added touch of conf files to Asterisk will notice changes
+# 201002-1537 - Allowed for secure sounds_web_server setting
 #
 
 # constants
@@ -284,8 +285,10 @@ else
 		}
 	}
 
-
-$URL = "http://$sounds_web_server/$admin_web_directory/audio_store.php?action=LIST&audio_server_ip=$VARserver_ip";
+$sounds_web_server_URL_prefix = $sounds_web_server;
+if ($sounds_web_server_URL_prefix !~ /^http|^https/i) 
+	{$sounds_web_server_URL_prefix = "http://$sounds_web_server";}
+$URL = "$sounds_web_server_URL_prefix/$admin_web_directory/audio_store.php?action=LIST&audio_server_ip=$VARserver_ip";
 
 $URL =~ s/&/\\&/gi;
 if ($DB) 
@@ -336,7 +339,7 @@ while ($i <= $#list)
 
 	if ( ($found_file < 1) || ($force_download > 0) )
 		{
-		`$wgetbin -q --output-document=$PATHsounds/$filename http://$sounds_web_server/$web_prefix$sounds_web_directory/$filename`;
+		`$wgetbin -q --output-document=$PATHsounds/$filename $sounds_web_server_URL_prefix/$web_prefix$sounds_web_directory/$filename`;
 		$event_string = "DOWNLOADING: $filename     $filesize";
 		if ($DB > 0) {print "          $event_string\n";}
 		&event_logger;
@@ -410,7 +413,7 @@ if ($upload > 0)
 
 			if ( ($found_file < 1) || ($force_upload > 0) )
 				{
-				$curloptions = "-s 'http://$sounds_web_server/$admin_web_directory/audio_store.php?action=AUTOUPLOAD&audio_server_ip=$VARserver_ip' -F \"audiofile=\@$PATHsounds/$soundname\"";
+				$curloptions = "-s '$sounds_web_server_URL_prefix/$admin_web_directory/audio_store.php?action=AUTOUPLOAD&audio_server_ip=$VARserver_ip' -F \"audiofile=\@$PATHsounds/$soundname\"";
 				`$curlbin $curloptions`;
 				$event_string = "UPLOADING: $soundname     $soundsize";
 				if ($DB > 0) {print "          $event_string\n|$curlbin $curloptions|\n";}

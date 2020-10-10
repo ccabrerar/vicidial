@@ -1315,3 +1315,12 @@ UPDATE system_settings SET db_schema_version='1605',db_schema_update_date=NOW() 
 ALTER TABLE vicidial_campaigns MODIFY alt_number_dialing ENUM('N','Y','SELECTED','SELECTED_TIMER_ALT','SELECTED_TIMER_ADDR3','UNSELECTED','UNSELECTED_TIMER_ALT','UNSELECTED_TIMER_ADDR3') default 'N';
 
 UPDATE system_settings SET db_schema_version='1606',db_schema_update_date=NOW() where db_schema_version < 1606;
+
+ALTER TABLE system_settings ADD web_loader_phone_strip VARCHAR(10) default 'DISABLED'; 
+ALTER TABLE system_settings ADD manual_dial_phone_strip VARCHAR(10) default 'DISABLED'; 
+
+UPDATE system_settings SET db_schema_version='1607',db_schema_update_date=NOW() where db_schema_version < 1607;
+
+ALTER TABLE vicidial_campaigns ADD pause_max_exceptions VARCHAR(40) default '';
+
+UPDATE system_settings SET db_schema_version='1608',db_schema_update_date=NOW() where db_schema_version < 1608;

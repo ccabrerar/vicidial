@@ -87,7 +87,7 @@ $SEARCHONLY=0;
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,callcard_enabled,enable_languages,language_method,active_modules,contacts_enabled,allow_emails,outbound_autodial_active,enable_tts_integration,sounds_central_control_active,qc_features_active FROM system_settings;";
+$stmt = "SELECT use_non_latin,callcard_enabled,enable_languages,language_method,active_modules,contacts_enabled,allow_emails,outbound_autodial_active,enable_tts_integration,sounds_central_control_active,qc_features_active,enable_auto_reports,campaign_cid_areacodes_enabled FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $ss_conf_ct = mysqli_num_rows($rslt);
@@ -105,6 +105,8 @@ if ($ss_conf_ct > 0)
 	$SSenable_tts_integration =			$row[8];
 	$SSsounds_central_control_active =	$row[9];
 	$SSqc_features_active =				$row[10];
+	$SSenable_auto_reports =			$row[11];
+	$SScampaign_cid_areacodes_enabled = $row[12];
 	}
 ##### END SETTINGS LOOKUP #####
 ###########################################

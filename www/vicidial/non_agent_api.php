@@ -153,10 +153,11 @@
 # 200622-1609 - Added more options to add_phone and update_phone functions
 # 200815-1025 - Added campaigns_list & hopper_list functions
 # 200824-2330 - Added search_method BLOCK option for hopper_list function
+# 201002-1545 - Added extension as recording lookup option, Allowed for secure sounds_web_server setting
 #
 
-$version = '2.14-130';
-$build = '200824-2330';
+$version = '2.14-131';
+$build = '201002-1545';
 $api_url_log = 0;
 
 $startMS = microtime();
@@ -1142,7 +1143,11 @@ if ($function == 'sounds_list')
 					if (preg_match('/tab/i',$format))
 						{echo "$k\t$file_names[$m]\t$file_dates[$m]\t$file_sizes[$m]\t$file_epoch[$m]\n";}
 					if (preg_match('/link/i',$format))
-						{echo "<a href=\"http://$sounds_web_server/$admin_web_dir$sounds_web_directory/$file_names[$m]\">$file_names[$m]</a><br>\n";}
+						{
+						if (!preg_match("/^http:|^https:/i",$sounds_web_server))
+							{$sounds_web_server = "http://".$sounds_web_server;}
+						echo "<a href=\"$sounds_web_server/$admin_web_dir$sounds_web_directory/$file_names[$m]\">$file_names[$m]</a><br>\n";
+						}
 					if (preg_match('/selectframe/i',$format))
 						{
 						if ($sf < 1)
@@ -7283,6 +7288,13 @@ if ($function == 'recording_lookup')
 					{$search_SQL .= " and ";}
 				$search_SQL .= "lead_id=$lead_id";
 				$search_ready++;
+				$search_ready++;
+				}
+			if ( (strlen($extension)>2) and (strlen($extension)<101) )
+				{
+				if (strlen($search_SQL)>5)
+					{$search_SQL .= " and ";}
+				$search_SQL .= "extension='$extension'";
 				$search_ready++;
 				}
 			if ( (strlen($date)>9) and (strlen($date)<11) )

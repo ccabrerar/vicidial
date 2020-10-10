@@ -1,7 +1,7 @@
 <?php 
 # AST_CLOSERstats_v2.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES:
 # 60619-1714 - Added variable filtering to eliminate SQL injection attack threat
@@ -67,6 +67,7 @@
 # 180712-1508 - Fix for rare allowed reports issue
 # 190508-1901 - Streamlined DID check to optimize page load
 # 190930-1345 - Fixed PHP7 array issue
+# 200924-0918 - Added two new drop calculations
 #
 
 $startMS = microtime();
@@ -1213,6 +1214,7 @@ $MAIN.="---------- "._QXZ("DROPS")."\n";
 
 $CSV_text1.="\n\""._QXZ("DROPS")."\"\n";
 
+# Calculate all dropped calls
 $stmt="select count(*),sum(length_in_sec) from ".$vicidial_closer_log_table." where call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' $calldate_call_time_clause and campaign_id IN($group_SQL) and status IN('DROP','XDROP') and (length_in_sec <= 49999 or length_in_sec is null);";
 if ($DID=='Y')
 	{
@@ -1221,7 +1223,6 @@ if ($DID=='Y')
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $row=mysqli_fetch_row($rslt);
-
 $DROPcalls =	sprintf("%10s", $row[0]);
 $DROPpercent = (MathZDC($DROPcalls, $TOTALcalls) * 100);
 $DROPpercent = round($DROPpercent, 0);
@@ -1233,29 +1234,68 @@ $average_hold_seconds =	sprintf("%10s", $average_hold_seconds);
 $DROP_ANSWEREDpercent = (MathZDC($DROPcalls, $ANSWEREDcalls) * 100);
 $DROP_ANSWEREDpercent = round($DROP_ANSWEREDpercent, 0);
 
+# Calculate dropped calls >= 5 seconds
+$stmt="select count(*),sum(length_in_sec) from ".$vicidial_closer_log_table." where call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' $calldate_call_time_clause and campaign_id IN($group_SQL) and status IN('DROP','XDROP') and ( (length_in_sec <= 49999 and length_in_sec >= 5) or length_in_sec is null);";
+if ($DID=='Y')
+	{
+	$stmt="select count(*),sum(length_in_sec) from ".$vicidial_closer_log_table." where call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' $calldate_call_time_clause and status IN('DROP','XDROP') and ((length_in_sec <= 49999 and length_in_sec >= 5) or length_in_sec is null) and uniqueid IN($unid_SQL);";
+	}
+$rslt=mysql_to_mysqli($stmt, $link);
+if ($DB) {$MAIN.="$stmt\n";}
+$row=mysqli_fetch_row($rslt);
+$DROPcalls5 =	sprintf("%10s", $row[0]);
+$DROPpercent5 = (MathZDC($DROPcalls5, $TOTALcalls) * 100);
+$DROPpercent5 = round($DROPpercent5, 0);
+
+# Calculate dropped calls >= 10 seconds
+$stmt="select count(*),sum(length_in_sec) from ".$vicidial_closer_log_table." where call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' $calldate_call_time_clause and campaign_id IN($group_SQL) and status IN('DROP','XDROP') and ( (length_in_sec <= 49999 and length_in_sec >= 10) or length_in_sec is null);";
+if ($DID=='Y')
+	{
+	$stmt="select count(*),sum(length_in_sec) from ".$vicidial_closer_log_table." where call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' $calldate_call_time_clause and status IN('DROP','XDROP') and ((length_in_sec <= 49999 and length_in_sec >= 10) or length_in_sec is null) and uniqueid IN($unid_SQL);";
+	}
+$rslt=mysql_to_mysqli($stmt, $link);
+if ($DB) {$MAIN.="$stmt\n";}
+$row=mysqli_fetch_row($rslt);
+$DROPcalls10 =	sprintf("%10s", $row[0]);
+$DROPpercent10 = (MathZDC($DROPcalls10, $TOTALcalls) * 100);
+$DROPpercent10 = round($DROPpercent10, 0);
+
+
 if ($CHAT=='Y')
 	{
 	$MAIN.=_QXZ("Total DROP Chats:",47)."$DROPcalls  $DROPpercent%               "._QXZ("drop/answered").": $DROP_ANSWEREDpercent%\n";
 	$MAIN.=_QXZ("Average hold time for DROP Chats:",47)."$average_hold_seconds "._QXZ("seconds")."\n";
+	$MAIN.=_QXZ("Drop rate for chats >= 5 seconds:",47)."$DROPcalls5  $DROPpercent5% \n";
+	$MAIN.=_QXZ("Drop rate for chats >= 10 seconds:",47)."$DROPcalls10  $DROPpercent10% \n";
 
 	$CSV_text1.="\"Total DROP Chats:\",\"$DROPcalls\",\"$DROPpercent%\",\""._QXZ("drop/answered").":\",\"$DROP_ANSWEREDpercent%\"\n";
 	$CSV_text1.="\"Average hold time for DROP Chats:\",\"$average_hold_seconds "._QXZ("seconds")."\"\n";
+	$CSV_text1.="\""._QXZ("Drop rate for chats >= 5 seconds").":\",\"$DROPcalls5\",\"$DROPpercent5%\"\n";
+	$CSV_text1.="\""._QXZ("Drop rate for chats >= 10 seconds").":\",\"$DROPcalls10\",\"$DROPpercent10%\"\n";
 	}
 elseif ($EMAIL=='Y')
 	{
 	$MAIN.=_QXZ("Total DROP Emails:",47)."$DROPcalls  $DROPpercent%               "._QXZ("drop/answered").": $DROP_ANSWEREDpercent%\n";
 	$MAIN.=_QXZ("Average hold time for DROP Emails:",47)."$average_hold_seconds "._QXZ("seconds")."\n";
+	$MAIN.=_QXZ("Drop rate for emails >= 5 seconds:",47)."$DROPcalls5  $DROPpercent5% \n";
+	$MAIN.=_QXZ("Drop rate for emails >= 10 seconds:",47)."$DROPcalls10  $DROPpercent10% \n";
 
 	$CSV_text1.="\"Total DROP Emails:\",\"$DROPcalls\",\"$DROPpercent%\",\""._QXZ("drop/answered").":\",\"$DROP_ANSWEREDpercent%\"\n";
 	$CSV_text1.="\"Average hold time for DROP Emails:\",\"$average_hold_seconds "._QXZ("seconds")."\"\n";
+	$CSV_text1.="\""._QXZ("Drop rate for emails >= 5 seconds").":\",\"$DROPcalls5\",\"$DROPpercent5%\"\n";
+	$CSV_text1.="\""._QXZ("Drop rate for emails >= 10 seconds").":\",\"$DROPcalls10\",\"$DROPpercent10%\"\n";
 	}
 else
 	{
 	$MAIN.=_QXZ("Total DROP Calls:",47)."$DROPcalls  $DROPpercent%               "._QXZ("drop/answered").": $DROP_ANSWEREDpercent%\n";
 	$MAIN.=_QXZ("Average hold time for DROP Calls:",47)."$average_hold_seconds "._QXZ("seconds")."\n";
+	$MAIN.=_QXZ("Drop rate for calls >= 5 seconds:",47)."$DROPcalls5  $DROPpercent5% \n";
+	$MAIN.=_QXZ("Drop rate for calls >= 10 seconds:",47)."$DROPcalls10  $DROPpercent10% \n";
 
 	$CSV_text1.="\""._QXZ("Total DROP Calls").":\",\"$DROPcalls\",\"$DROPpercent%\",\""._QXZ("drop/answered").":\",\"$DROP_ANSWEREDpercent%\"\n";
 	$CSV_text1.="\""._QXZ("Average hold time for DROP Calls").":\",\"$average_hold_seconds "._QXZ("seconds")."\"\n";
+	$CSV_text1.="\""._QXZ("Drop rate for calls >= 5 seconds").":\",\"$DROPcalls5\",\"$DROPpercent5%\"\n";
+	$CSV_text1.="\""._QXZ("Drop rate for calls >= 10 seconds").":\",\"$DROPcalls10\",\"$DROPpercent10%\"\n";
 	}
 
 if (strlen($group_SQL)>3)

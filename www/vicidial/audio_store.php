@@ -1,7 +1,7 @@
 <?php
 # audio_store.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # Central Audio Storage script
 # 
@@ -30,10 +30,11 @@
 # 170630-1440 - Require modify_audiostore user permissions to access this page
 # 180508-0115 - Added new help display
 # 180618-2300 - Modified calls to audio file chooser function
+# 201002-1536 - Allowed for secure sounds_web_server setting
 #
 
-$version = '2.14-22';
-$build = '170630-1440';
+$version = '2.14-23';
+$build = '201002-1536';
 
 $MT[0]='';
 
@@ -100,8 +101,8 @@ if ($ss_conf_ct > 0)
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-
 ### check if sounds server matches this server IP, if not then exit with an error
+$sounds_web_server = str_replace(array('http://','https://'), '', $sounds_web_server);
 if ( ( ( (strlen($sounds_web_server)) != (strlen($server_name)) ) or (!preg_match("/$sounds_web_server/i",$server_name) ) ) and ($force_allow!='FORCED') )
 	{
 	echo _QXZ("ERROR").": "._QXZ("server")."($server_name) "._QXZ("does not match sounds web server ip")."($sounds_web_server)\n";

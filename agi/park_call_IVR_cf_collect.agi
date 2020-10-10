@@ -30,10 +30,11 @@
 #
 # NOTE: For Asterisk 1.4, use a pipe instead of a comma in the Park Call AGI IVR field
 #
-# Copyright (C) 2015  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 150814-1119 - First build based on park_call_IVR_example.agi script
+# 201002-1538 - Allowed for secure sounds_web_server setting
 #
 
 $script = 'park_call_IVR_cf_collect.agi';
@@ -126,6 +127,9 @@ if ($sthArows > 0)
 	{
 	@aryA = $sthA->fetchrow_array;
 	$sounds_web_server =	$aryA[0];
+	$sounds_web_server_URL_prefix = $sounds_web_server;
+	if ($sounds_web_server_URL_prefix !~ /^http|^https/i) 
+		{$sounds_web_server_URL_prefix = "http://$sounds_web_server";}
 	}
 $sthA->finish();
 
@@ -353,7 +357,7 @@ if ($VACcount > 0)
 				}
 
 			### URL to be sent to populate the custom field value that was collected from the customer
-			$parse_url = "http://$sounds_web_server/agc/update_cf_ivr.php\?lead_id=$VAC_lead_id&caller_id=$callerid&list_id=$VL_list_id&field=$custom_field&value=$customer_id_number&user=$VLA_user";
+			$parse_url = "$sounds_web_server_URL_prefix/agc/update_cf_ivr.php\?lead_id=$VAC_lead_id&caller_id=$callerid&list_id=$VL_list_id&field=$custom_field&value=$customer_id_number&user=$VLA_user";
 
 			### insert a new url log entry
 			$SQL_log = "$parse_url";

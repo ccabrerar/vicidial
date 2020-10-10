@@ -534,6 +534,12 @@ OTHER CHANGES:
 	Admin Modify Lead page. Must use new 'Modify Leads' options to enable
 	for a user.
 
+151. Added system settings allowing you to remove digits from the beginning of
+	a phone number when it is manual dialed or through the web lead loader.
+
+152. Added Pause Max Exceptions campaign setting, allowing for exceptions to the
+	Agent Pause Max feature for specified Pause Codes.
+
 
 
 

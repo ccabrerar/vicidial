@@ -84,7 +84,7 @@ $PHP_SELF=$_SERVER['PHP_SELF'];
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,auto_dial_limit,user_territories_active,allow_custom_dialplan,callcard_enabled,admin_modify_refresh,nocache_admin,webroot_writable,allow_emails,active_modules,sounds_central_control_active,qc_features_active,contacts_enabled,enable_languages,language_method,admin_web_directory,admin_screen_colors FROM system_settings;";
+$stmt = "SELECT use_non_latin,auto_dial_limit,user_territories_active,allow_custom_dialplan,callcard_enabled,admin_modify_refresh,nocache_admin,webroot_writable,allow_emails,active_modules,sounds_central_control_active,qc_features_active,contacts_enabled,enable_languages,language_method,admin_web_directory,admin_screen_colors,enable_auto_reports,campaign_cid_areacodes_enabled FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
@@ -108,6 +108,8 @@ if ($qm_conf_ct > 0)
 	$SSlanguage_method =			$row[14];
 	$SSadmin_web_directory =		$row[15];
 	$SSadmin_screen_colors =		$row[16];
+	$SSenable_auto_reports =		$row[17];
+	$SScampaign_cid_areacodes_enabled = $row[18];
 	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
