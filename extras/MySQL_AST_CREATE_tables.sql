@@ -1336,7 +1336,8 @@ place_in_line_you_next_filename TEXT,
 ingroup_script_two VARCHAR(20) default '',
 browser_alert_sound VARCHAR(20) default '---NONE---',
 browser_alert_volume TINYINT(3) UNSIGNED default '50',
-answer_signal ENUM('START','ROUTE','NONE') DEFAULT 'START'
+answer_signal ENUM('START','ROUTE','NONE') DEFAULT 'START',
+no_agent_delay SMALLINT(5) default '0'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_stations (
@@ -4669,4 +4670,4 @@ INSERT INTO vicidial_settings_containers VALUES ('INTERNATIONAL_DNC_IMPORT','Pro
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1608',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1609',db_schema_update_date=NOW(),reload_timestamp=NOW();

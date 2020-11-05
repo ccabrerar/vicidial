@@ -1324,3 +1324,7 @@ UPDATE system_settings SET db_schema_version='1607',db_schema_update_date=NOW() 
 ALTER TABLE vicidial_campaigns ADD pause_max_exceptions VARCHAR(40) default '';
 
 UPDATE system_settings SET db_schema_version='1608',db_schema_update_date=NOW() where db_schema_version < 1608;
+
+ALTER TABLE vicidial_inbound_groups ADD no_agent_delay SMALLINT(5) default '0';
+
+UPDATE system_settings SET db_schema_version='1609',db_schema_update_date=NOW() where db_schema_version < 1609;

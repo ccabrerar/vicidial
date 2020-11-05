@@ -646,10 +646,12 @@
 # 200913-0817 - Added UNSELECTED options for campaign alt_number_dialing
 # 200922-0948 - Added manual_dial_phone_strip system setting feature
 # 201004-1112 - Added pause_max_exceptions campaign feature
+# 201010-2223 - Added force change password feature
+# 201026-0143 - Fix for pause_max_exceptions issue
 #
 
-$version = '2.14-614c';
-$build = '201004-1112';
+$version = '2.14-616c';
+$build = '201026-0143';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=92;
 $one_mysql_log=0;
@@ -695,6 +697,12 @@ if (isset($_GET["LOGINvarFIVE"]))				{$LOGINvarFIVE=$_GET["LOGINvarFIVE"];}
 
 if (isset($_GET["hide_relogin_fields"]))				{$hide_relogin_fields=$_GET["hide_relogin_fields"];}
         elseif (isset($_POST["hide_relogin_fields"]))	{$hide_relogin_fields=$_POST["hide_relogin_fields"];}
+if (isset($_GET["set_pass"]))					{$set_pass=$_GET["set_pass"];}
+        elseif (isset($_POST["set_pass"]))		{$set_pass=$_POST["set_pass"];}
+if (isset($_GET["new_pass1"]))					{$new_pass1=$_GET["new_pass1"];}
+        elseif (isset($_POST["new_pass1"]))		{$new_pass1=$_POST["new_pass1"];}
+if (isset($_GET["new_pass2"]))					{$new_pass2=$_GET["new_pass2"];}
+        elseif (isset($_POST["new_pass2"]))		{$new_pass2=$_POST["new_pass2"];}
 
 if (!isset($phone_login)) 
 	{
@@ -732,6 +740,11 @@ $LOGINvarTHREE=preg_replace("/[^-_0-9a-zA-Z]/","",$LOGINvarTHREE);
 $LOGINvarFOUR=preg_replace("/[^-_0-9a-zA-Z]/","",$LOGINvarFOUR);
 $LOGINvarFIVE=preg_replace("/[^-_0-9a-zA-Z]/","",$LOGINvarFIVE);
 $hide_relogin_fields=preg_replace("/[^-_0-9a-zA-Z]/","",$hide_relogin_fields);
+$set_pass=preg_replace("/\'|\"|\\\\|;| /","",$set_pass);
+$new_pass1=preg_replace("/\'|\"|\\\\|;| /","",$new_pass1);
+$new_pass2=preg_replace("/\'|\"|\\\\|;| /","",$new_pass2);
+$JS_browser_width=preg_replace("/[^0-9a-z]/","",$JS_browser_width);
+$JS_browser_height=preg_replace("/[^0-9a-z]/","",$JS_browser_height);
 
 $forever_stop=0;
 
@@ -755,7 +768,7 @@ $VUselected_language = '';
 $random = (rand(1000000, 9999999) + 10000000);
 
 
-$stmt="SELECT user,selected_language from vicidial_users where user='$VD_login';";
+$stmt="SELECT user,selected_language,force_change_password from vicidial_users where user='$VD_login';";
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01081',$VD_login,$server_ip,$session_name,$one_mysql_log);}
@@ -765,11 +778,12 @@ if ($sl_ct > 0)
 	$row=mysqli_fetch_row($rslt);
 	$VUuser =				$row[0];
 	$VUselected_language =	$row[1];
+	$VUforce_change_password =	$row[2];
 	}
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,vdc_header_date_format,vdc_customer_date_format,vdc_header_phone_format,webroot_writable,timeclock_end_of_day,vtiger_url,enable_vtiger_integration,outbound_autodial_active,enable_second_webform,user_territories_active,static_agent_url,custom_fields_enabled,pllb_grouping_limit,qc_features_active,allow_emails,callback_time_24hour,enable_languages,language_method,meetme_enter_login_filename,meetme_enter_leave3way_filename,enable_third_webform,default_language,active_modules,allow_chats,chat_url,default_phone_code,agent_screen_colors,manual_auto_next,agent_xfer_park_3way,admin_web_directory,agent_script,agent_push_events,agent_push_url,agent_logout_link,agentonly_callback_campaign_lock,manual_dial_validation,mute_recordings,enable_second_script,enable_first_webform,recording_buttons,outbound_cid_any,browser_call_alerts,manual_dial_phone_strip FROM system_settings;";
+$stmt = "SELECT use_non_latin,vdc_header_date_format,vdc_customer_date_format,vdc_header_phone_format,webroot_writable,timeclock_end_of_day,vtiger_url,enable_vtiger_integration,outbound_autodial_active,enable_second_webform,user_territories_active,static_agent_url,custom_fields_enabled,pllb_grouping_limit,qc_features_active,allow_emails,callback_time_24hour,enable_languages,language_method,meetme_enter_login_filename,meetme_enter_leave3way_filename,enable_third_webform,default_language,active_modules,allow_chats,chat_url,default_phone_code,agent_screen_colors,manual_auto_next,agent_xfer_park_3way,admin_web_directory,agent_script,agent_push_events,agent_push_url,agent_logout_link,agentonly_callback_campaign_lock,manual_dial_validation,mute_recordings,enable_second_script,enable_first_webform,recording_buttons,outbound_cid_any,browser_call_alerts,manual_dial_phone_strip,require_password_length,pass_hash_enabled FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01001',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 if ($DB) {echo "$stmt\n";}
@@ -821,6 +835,8 @@ if ($qm_conf_ct > 0)
 	$SSoutbound_cid_any =				$row[41];
 	$SSbrowser_call_alerts =			$row[42];
 	$SSmanual_dial_phone_strip =		$row[43];
+	$SSrequire_password_length =		$row[44];
+	$SSpass_hash_enabled =				$row[45];
 	}
 else
 	{
@@ -1294,13 +1310,13 @@ if ($relogin == 'YES')
 	if (!preg_match("/^YES$|^READONLY_LOGIN$|^READONLY_LOGINPHONE$/",$hide_relogin_fields))
 		{
 		echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("Phone Login:")."</font> </td>";
-    echo "<td align=\"left\"><input type=\"text\" name=\"phone_login\" size=\"10\" maxlength=\"20\" value=\"$phone_login\" /></td></tr>\n";
+		echo "<td align=\"left\"><input type=\"text\" name=\"phone_login\" size=\"20\" maxlength=\"20\" value=\"$phone_login\" /></td></tr>\n";
     echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("Phone Password:")."</font>  </td>";
-    echo "<td align=\"left\"><input type=\"password\" name=\"phone_pass\" size=\"10\" maxlength=\"20\" value=\"$phone_pass\" /></td></tr>\n";
+		echo "<td align=\"left\"><input type=\"password\" name=\"phone_pass\" size=\"20\" maxlength=\"100\" value=\"$phone_pass\" /></td></tr>\n";
     echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("User Login").":</font>  </td>";
-    echo "<td align=\"left\"><input type=\"text\" name=\"VD_login\" size=\"10\" maxlength=\"20\" value=\"$VD_login\" /></td></tr>\n";
+		echo "<td align=\"left\"><input type=\"text\" name=\"VD_login\" size=\"20\" maxlength=\"20\" value=\"$VD_login\" /></td></tr>\n";
     echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("User Password:")."</font>  </td>";
-    echo "<td align=\"left\"><input type=\"password\" name=\"VD_pass\" size=\"10\" maxlength=\"20\" value=\"$VD_pass\" /></td></tr>\n";
+		echo "<td align=\"left\"><input type=\"password\" name=\"VD_pass\" size=\"20\" maxlength=\"100\" value=\"$VD_pass\" /></td></tr>\n";
 		}
     echo "<tr><td align=\"right\" valign=\"top\"><font class=\"skb_text\">"._QXZ("Campaign:")."</font>  </td>";
     echo "<td align=\"left\"><font class=\"skb_text\"><span id=\"LogiNCamPaigns\">$camp_form_code</span></font></td></tr>\n";
@@ -1345,9 +1361,9 @@ if ($user_login_first == 1)
         echo "</tr>\n";
         echo "<tr><td align=\"left\" colspan=\"2\"><font size=\"1\"> &nbsp; </font></td></tr>\n";
         echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("User Login").":</font>  </td>";
-        echo "<td align=\"left\"><input type=\"text\" name=\"VD_login\" size=\"10\" maxlength=\"20\" value=\"$VD_login\" /></td></tr>\n";
+        echo "<td align=\"left\"><input type=\"text\" name=\"VD_login\" size=\"20\" maxlength=\"20\" value=\"$VD_login\" /></td></tr>\n";
         echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("User Password:")."</font>  </td>";
-        echo "<td align=\"left\"><input type=\"password\" name=\"VD_pass\" size=\"10\" maxlength=\"20\" value=\"$VD_pass\" /></td></tr>\n";
+        echo "<td align=\"left\"><input type=\"password\" name=\"VD_pass\" size=\"20\" maxlength=\"100\" value=\"$VD_pass\" /></td></tr>\n";
         echo "<tr><td align=\"right\" valign=\"top\"><font class=\"skb_text\">"._QXZ("Campaign:")."</font>  </td>";
         echo "<td align=\"left\"><font class=\"skb_text\"><span id=\"LogiNCamPaigns\">$camp_form_code</span></font></td></tr>\n";
         echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";
@@ -1397,13 +1413,13 @@ if ($user_login_first == 1)
                 echo "</tr>\n";
                 echo "<tr><td align=\"left\" colspan=\"2\"><font size=\"1\"> &nbsp; </font></td></tr>\n";
                 echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("Phone Login:")."</font> </td>";
-                echo "<td align=\"left\"><input type=\"text\" name=\"phone_login\" size=\"10\" maxlength=\"20\" value=\"$phone_login\" /></td></tr>\n";
+                echo "<td align=\"left\"><input type=\"text\" name=\"phone_login\" size=\"20\" maxlength=\"20\" value=\"$phone_login\" /></td></tr>\n";
                 echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("Phone Password:")."</font>  </td>";
-                echo "<td align=\"left\"><input type=\"password\" name=\"phone_pass\" size=\"10\" maxlength=\"20\" value=\"$phone_pass\" /></td></tr>\n";
+                echo "<td align=\"left\"><input type=\"password\" name=\"phone_pass\" size=\"20\" maxlength=\"100\" value=\"$phone_pass\" /></td></tr>\n";
                 echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("User Login").":</font>  </td>";
-                echo "<td align=\"left\"><input type=\"text\" name=\"VD_login\" size=\"10\" maxlength=\"20\" value=\"$VD_login\" /></td></tr>\n";
+                echo "<td align=\"left\"><input type=\"text\" name=\"VD_login\" size=\"20\" maxlength=\"20\" value=\"$VD_login\" /></td></tr>\n";
                 echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("User Password:")."</font>  </td>";
-                echo "<td align=\"left\"><input type=\"password\" name=\"VD_pass\" size=\"10\" maxlength=\"20\" value=\"$VD_pass\" /></td></tr>\n";
+                echo "<td align=\"left\"><input type=\"password\" name=\"VD_pass\" size=\"20\" maxlength=\"100\" value=\"$VD_pass\" /></td></tr>\n";
                 echo "<tr><td align=\"right\" valign=\"top\"><font class=\"skb_text\">"._QXZ("Campaign:")."</font>  </td>";
                 echo "<td align=\"left\"><font class=\"skb_text\"><span id=\"LogiNCamPaigns\">$camp_form_code</span></font></td></tr>\n";
                 echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";
@@ -1488,6 +1504,146 @@ else
 
 		if($auth>0)
 			{
+			if ($VUforce_change_password == 'Y')
+				{
+				echo "<script  type=\"text/javascript\">\n";
+				echo "function pwdChanged(pwd_field_str, pwd_len_field) \n";
+				echo "	{\n";
+				echo "	var pwd_field = document.getElementById(pwd_field_str);\n";
+				echo "	var pwd_field_value = pwd_field.value;\n";
+				echo "	var pwd_len = pwd_field_value.length\n";
+				echo "	if (pwd_len < $SSrequire_password_length)\n";
+				echo "		{document.getElementById(pwd_len_field).innerHTML = \"<font color=red><b>\" + pwd_len + \" "._QXZ("characters")."</b></font>\";}\n";
+				echo "	else\n";
+				echo "		{document.getElementById(pwd_len_field).innerHTML = \"<font color=black><b>\" + pwd_len + \" "._QXZ("characters")."</b></font>\";}\n";
+				echo "	}\n";
+				echo "</script>\n";
+
+				if ($DB > 0)
+					{$DBoutput = "<!-- 1: $new_pass1   2: $new_pass2   set: $set_pass -->\n";}
+				$set_pass_message = _QXZ("You are required to change your password. Please enter a new password below");
+				if ($set_pass == '1')
+					{
+					$set_pass=2;
+					if ($new_pass1 != $new_pass2)
+						{
+						$set_pass_message = _QXZ("You must confirm your new password by typing it in twice");
+						$set_pass=1;
+						}
+					if (strlen($new_pass1) < $SSrequire_password_length)
+						{
+						$set_pass_message = _QXZ("Your password is not long enough").', '.$SSrequire_password_length.' '._QXZ("characters minimum");
+						$set_pass=1;
+						}
+					if ($set_pass == '2')
+						{
+						$pass_hash='';
+						$pass_hashSQL='';
+						if ($SSpass_hash_enabled > 0)
+							{
+							if (strlen($new_pass1) > 1)
+								{
+								$pass = preg_replace("/\'|\"|\\\\|;| /","",$new_pass1);
+								$pass_hash = exec("../agc/bp.pl --pass=$pass");
+								$pass_hash = preg_replace("/PHASH: |\n|\r|\t| /",'',$pass_hash);
+								$pass_hashSQL = ",pass_hash='$pass_hash'";
+								}
+							$new_pass1='';
+							}
+
+						$stmt="UPDATE vicidial_users SET force_change_password='N',pass='$new_pass1' $pass_hashSQL where user='$VD_login';";
+						if ($DB) {echo "$stmt\n";}
+						$rslt=mysql_to_mysqli($stmt, $link);
+								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01XXX',$VD_login,$server_ip,$session_name,$one_mysql_log);}
+						$VUpassword_affected_rows = mysqli_affected_rows($link);
+
+						echo "<title>"._QXZ("Agent web client: Change Password")."</title>\n";
+						echo "</head>\n";
+						echo "<body onresize=\"browser_dimensions();\" onload=\"browser_dimensions();\">\n";
+						if ($hide_timeclock_link < 1)
+							{echo "<a href=\"./timeclock.php?referrer=agent&amp;pl=$phone_login&amp;pp=$phone_pass&amp;VD_login=$VD_login&amp;VD_pass=$VD_pass\"> <font class=\"sb_text\">"._QXZ("Timeclock")."</font></a><br /><br />\n";}
+						echo "<table width=\"100%\"><tr><td></td>\n";
+						echo "<!-- INTERNATIONALIZATION-LINKS-PLACEHOLDER-VICIDIAL -->\n";
+						echo "<!-- USER PASSWORD CHANGED: |$VUpassword_affected_rows| -->\n";
+						echo "$DBoutput";
+						echo "</tr></table>\n";
+						echo "<form name=\"vicidial_form\" id=\"vicidial_form\" action=\"$PHP_SELF\" method=\"post\">\n";
+						echo "<input type=\"hidden\" name=\"DB\" value=\"$DB\" />\n";
+						echo "<input type=\"hidden\" name=\"JS_browser_height\" id=\"JS_browser_height\" value=\"\" />\n";
+						echo "<input type=\"hidden\" name=\"JS_browser_width\" id=\"JS_browser_width\" value=\"\" />\n";
+						echo "<input type=\"hidden\" name=\"relogin\" value=\"YES\" />\n";
+						echo "<input type=\"hidden\" name=\"phone_login\" value=\"$phone_login\" />\n";
+						echo "<input type=\"hidden\" name=\"phone_pass\" value=\"$phone_pass\" />\n";
+						echo "<input type=\"hidden\" name=\"VD_login\" value=\"$VD_login\" />\n";
+						echo "<input type=\"hidden\" name=\"VD_pass\" value=\"\" />\n";
+						echo "<input type=\"hidden\" name=\"VD_campaign\" value=\"$VD_campaign\" />\n";
+						echo "<input type=\"hidden\" name=\"LOGINvarONE\" id=\"LOGINvarONE\" value=\"$LOGINvarONE\" />\n";
+						echo "<input type=\"hidden\" name=\"LOGINvarTWO\" id=\"LOGINvarTWO\" value=\"$LOGINvarTWO\" />\n";
+						echo "<input type=\"hidden\" name=\"LOGINvarTHREE\" id=\"LOGINvarTHREE\" value=\"$LOGINvarTHREE\" />\n";
+						echo "<input type=\"hidden\" name=\"LOGINvarFOUR\" id=\"LOGINvarFOUR\" value=\"$LOGINvarFOUR\" />\n";
+						echo "<input type=\"hidden\" name=\"LOGINvarFIVE\" id=\"LOGINvarFIVE\" value=\"$LOGINvarFIVE\" />\n";
+						echo "<input type=\"hidden\" name=\"hide_relogin_fields\" id=\"hide_relogin_fields\" value=\"$hide_relogin_fields\" />\n";
+						echo "<br /><br /><br /><center><table width=\"660px\" cellpadding=\"3\" cellspacing=\"0\" bgcolor=\"#$SSframe_background\"><tr bgcolor=\"white\">";
+						echo "<td align=\"left\" valign=\"bottom\" bgcolor=\"#$SSmenu_background\" width=\"170\"><img src=\"$selected_logo\" border=\"0\" height=\"45\" width=\"170\" alt=\"Agent Screen\" /></td>";
+						echo "<td align=\"center\" valign=\"middle\" bgcolor=\"#$SSmenu_background\"> <font class=\"sh_text_white\">"._QXZ("Password has been changed successfully")."</font> </td>";
+						echo "</tr>\n";
+						echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("CLICK HERE TO LOG IN")."\" /> &nbsp; \n";
+						echo "<span id=\"LogiNReseT\"></span></td></tr>\n";
+						echo "<tr><td align=\"left\" colspan=\"2\"><font class=\"body_tiny\"><br />"._QXZ("VERSION:")." $version &nbsp; &nbsp; &nbsp; "._QXZ("BUILD:")." $build</font></td></tr>\n";
+						echo "</table></center>\n";
+						echo "</form>\n\n";
+						echo "</body>\n\n";
+						echo "</html>\n\n";
+						exit;
+						}
+					}
+				if ( ($set_pass == '0') or (strlen($set_pass) < 1) )
+					{
+					$set_pass=1;
+					}
+				echo "<title>"._QXZ("Agent web client: Change Password")."</title>\n";
+				echo "</head>\n";
+				echo "<body onresize=\"browser_dimensions();\" onload=\"browser_dimensions();\">\n";
+				if ($hide_timeclock_link < 1)
+					{echo "<a href=\"./timeclock.php?referrer=agent&amp;pl=$phone_login&amp;pp=$phone_pass&amp;VD_login=$VD_login&amp;VD_pass=$VD_pass\"> <font class=\"sb_text\">"._QXZ("Timeclock")."</font></a><br /><br />\n";}
+				echo "<table width=\"100%\"><tr><td></td>\n";
+				echo "<!-- INTERNATIONALIZATION-LINKS-PLACEHOLDER-VICIDIAL -->\n";
+				echo "$DBoutput";
+				echo "</tr></table>\n";
+				echo "<form name=\"vicidial_form\" id=\"vicidial_form\" action=\"$PHP_SELF\" method=\"post\">\n";
+				echo "<input type=\"hidden\" name=\"DB\" value=\"$DB\" />\n";
+				echo "<input type=\"hidden\" name=\"JS_browser_height\" id=\"JS_browser_height\" value=\"\" />\n";
+				echo "<input type=\"hidden\" name=\"JS_browser_width\" id=\"JS_browser_width\" value=\"\" />\n";
+				echo "<input type=\"hidden\" name=\"phone_login\" value=\"$phone_login\" />\n";
+				echo "<input type=\"hidden\" name=\"phone_pass\" value=\"$phone_pass\" />\n";
+				echo "<input type=\"hidden\" name=\"VD_login\" value=\"$VD_login\" />\n";
+				echo "<input type=\"hidden\" name=\"VD_pass\" value=\"$VD_pass\" />\n";
+				echo "<input type=\"hidden\" name=\"VD_campaign\" value=\"$VD_campaign\" />\n";
+				echo "<input type=\"hidden\" name=\"LOGINvarONE\" id=\"LOGINvarONE\" value=\"$LOGINvarONE\" />\n";
+				echo "<input type=\"hidden\" name=\"LOGINvarTWO\" id=\"LOGINvarTWO\" value=\"$LOGINvarTWO\" />\n";
+				echo "<input type=\"hidden\" name=\"LOGINvarTHREE\" id=\"LOGINvarTHREE\" value=\"$LOGINvarTHREE\" />\n";
+				echo "<input type=\"hidden\" name=\"LOGINvarFOUR\" id=\"LOGINvarFOUR\" value=\"$LOGINvarFOUR\" />\n";
+				echo "<input type=\"hidden\" name=\"LOGINvarFIVE\" id=\"LOGINvarFIVE\" value=\"$LOGINvarFIVE\" />\n";
+				echo "<input type=\"hidden\" name=\"hide_relogin_fields\" id=\"hide_relogin_fields\" value=\"$hide_relogin_fields\" />\n";
+				echo "<input type=\"hidden\" name=\"set_pass\" id=\"set_pass\" value=\"$set_pass\" />\n";
+				echo "<br /><br /><br /><center><table width=\"660px\" cellpadding=\"3\" cellspacing=\"0\" bgcolor=\"#$SSframe_background\"><tr bgcolor=\"white\">";
+				echo "<td align=\"left\" valign=\"bottom\" bgcolor=\"#$SSmenu_background\" width=\"170\"><img src=\"$selected_logo\" border=\"0\" height=\"45\" width=\"170\" alt=\"Agent Screen\" /></td>";
+				echo "<td align=\"center\" valign=\"middle\" bgcolor=\"#$SSmenu_background\"> <font class=\"sh_text_white\">$set_pass_message</font> </td>";
+				echo "</tr>\n";
+				echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("New Password").": </font> </td>";
+				echo "<td align=\"left\"><input type=\"password\" name=\"new_pass1\" id=\"new_pass1\" size=\"40\" maxlength=\"100\" onkeyup=\"return pwdChanged('new_pass1','pass_length1');\" /> &nbsp; <font size=1 face=\"Arial,Helvetica\"><span id=\"pass_length1\"></font></td></tr>\n";
+				echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("Confirm New Password").":  </font> </td>";
+				echo "<td align=\"left\"><input type=\"password\" name=\"new_pass2\" id=\"new_pass2\" size=\"40\" maxlength=\"100\" onkeyup=\"return pwdChanged('new_pass2','pass_length2');\" /> &nbsp; <font size=1 face=\"Arial,Helvetica\"><span id=\"pass_length2\"></font></td></tr>\n";
+				echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";
+				echo "<span id=\"LogiNReseT\"></span></td></tr>\n";
+				echo "<tr><td align=\"left\" colspan=\"2\"><font class=\"body_tiny\"><br />"._QXZ("VERSION:")." $version &nbsp; &nbsp; &nbsp; "._QXZ("BUILD:")." $build</font></td></tr>\n";
+				echo "</table></center>\n";
+				echo "</form>\n\n";
+				echo "</body>\n\n";
+				echo "</html>\n\n";
+				exit;
+				}
+
 			##### grab the full name and other settings of the agent
 			$stmt="SELECT full_name,user_level,hotkeys_active,agent_choose_ingroups,scheduled_callbacks,agentonly_callbacks,agentcall_manual,vicidial_recording,vicidial_transfers,closer_default_blended,user_group,vicidial_recording_override,alter_custphone_override,alert_enabled,agent_shift_enforcement_override,shift_override_flag,allow_alerts,closer_campaigns,agent_choose_territories,custom_one,custom_two,custom_three,custom_four,custom_five,agent_call_log_view_override,agent_choose_blended,agent_lead_search_override,preset_contact_search,max_inbound_calls,wrapup_seconds_override,email,user_choose_language,ready_max_logout,mute_recordings,max_inbound_filter_enabled,status_group_id from vicidial_users where user='$VD_login' and active='Y' and api_only_user != '1';";
 			$rslt=mysql_to_mysqli($stmt, $link);
@@ -1836,8 +1992,8 @@ else
 				echo "<input type=\"hidden\" name=\"LOGINvarFOUR\" id=\"LOGINvarFOUR\" value=\"$LOGINvarFOUR\" />\n";
 				echo "<input type=\"hidden\" name=\"LOGINvarFIVE\" id=\"LOGINvarFIVE\" value=\"$LOGINvarFIVE\" />\n";
 				echo "<input type=\"hidden\" name=\"hide_relogin_fields\" id=\"hide_relogin_fields\" value=\"$hide_relogin_fields\" />\n";
-                echo "<font class=\"skb_text\">"._QXZ("Login").": <input type=\"text\" name=\"VD_login\" size=\"10\" maxlength=\"20\" value=\"$VD_login\" />\n<br />";
-                echo "<font class=\"skb_text\">"._QXZ("Password").": <input type=\"password\" name=\"VD_pass\" size=\"10\" maxlength=\"20\" value=\"$VD_pass\" /><br />\n";
+                echo "<font class=\"skb_text\">"._QXZ("Login").": <input type=\"text\" name=\"VD_login\" size=\"20\" maxlength=\"20\" value=\"$VD_login\" />\n<br />";
+                echo "<font class=\"skb_text\">"._QXZ("Password").": <input type=\"password\" name=\"VD_pass\" size=\"20\" maxlength=\"100\" value=\"$VD_pass\" /><br />\n";
                 echo "<font class=\"skb_text\">"._QXZ("Campaign").": <span id=\"LogiNCamPaigns\">$camp_form_code</span><br />\n";
                 echo "<input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";
 				echo "<span id=\"LogiNReseT\"></span>\n";
@@ -2899,9 +3055,9 @@ else
         echo "</tr>\n";
         echo "<tr><td align=\"left\" colspan=\"2\"><font size=\"1\"> &nbsp; </font></td></tr>\n";
         echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("User Login").":</font>  </td>";
-        echo "<td align=\"left\"><input type=\"text\" name=\"VD_login\" size=\"10\" maxlength=\"20\" value=\"$VD_login\" /></td></tr>\n";
+        echo "<td align=\"left\"><input type=\"text\" name=\"VD_login\" size=\"20\" maxlength=\"20\" value=\"$VD_login\" /></td></tr>\n";
         echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("User Password:")."</font>  </td>";
-        echo "<td align=\"left\"><input type=\"password\" name=\"VD_pass\" size=\"10\" maxlength=\"20\" value=\"$VD_pass\" /></td></tr>\n";
+        echo "<td align=\"left\"><input type=\"password\" name=\"VD_pass\" size=\"20\" maxlength=\"100\" value=\"$VD_pass\" /></td></tr>\n";
         echo "<tr><td align=\"right\" valign=\"top\"><font class=\"skb_text\">"._QXZ("Campaign:")."</font>  </td>";
         echo "<td align=\"left\"><font class=\"skb_text\"><span id=\"LogiNCamPaigns\">$camp_form_code</span></font></td></tr>\n";
         echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";
@@ -3005,9 +3161,9 @@ else
         echo "</tr>\n";
         echo "<tr><td align=\"center\" colspan=\"2\"><font size=\"1\"> &nbsp; <br /><font size=\"3\">"._QXZ("Sorry, your phone login and password are not active in this system, please try again:")." <br /> &nbsp;</font></td></tr>\n";
         echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("Phone Login:")."</font> </td>";
-        echo "<td align=\"left\"><input type=\"text\" name=\"phone_login\" size=\"10\" maxlength=\"20\" value=\"$phone_login\"></td></tr>\n";
+        echo "<td align=\"left\"><input type=\"text\" name=\"phone_login\" size=\"20\" maxlength=\"20\" value=\"$phone_login\"></td></tr>\n";
         echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("Phone Password:")."</font>  </td>";
-        echo "<td align=\"left\"><input type=\"password\" name=\"phone_pass\" size=10 maxlength=20 value=\"$phone_pass\"></td></tr>\n";
+        echo "<td align=\"left\"><input type=\"password\" name=\"phone_pass\" size=20 maxlength=100 value=\"$phone_pass\"></td></tr>\n";
         echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /></td></tr>\n";
         echo "<tr><td align=\"left\" colspan=\"2\"><font class=\"body_tiny\"><br />"._QXZ("VERSION:")." $version &nbsp; &nbsp; &nbsp; "._QXZ("BUILD:")." $build</font></td></tr>\n";
         echo "</table></center>\n";
@@ -3877,8 +4033,8 @@ else
 			echo "<input type=\"hidden\" name=\"LOGINvarFOUR\" id=\"LOGINvarFOUR\" value=\"$LOGINvarFOUR\" />\n";
 			echo "<input type=\"hidden\" name=\"LOGINvarFIVE\" id=\"LOGINvarFIVE\" value=\"$LOGINvarFIVE\" />\n";
 			echo "<input type=\"hidden\" name=\"hide_relogin_fields\" id=\"hide_relogin_fields\" value=\"$hide_relogin_fields\" />\n";
-            echo "<font class=\"skb_text\">"._QXZ("Login:")." <input type=\"text\" name=\"VD_login\" size=\"10\" maxlength=\"20\" value=\"$VD_login\" />\n<br />";
-            echo "<font class=\"skb_text\">"._QXZ("Password:")." <input type=\"password\" name=\"VD_pass\" size=\"10\" maxlength=\"20\" value=\"$VD_pass\" /><br />\n";
+            echo "<font class=\"skb_text\">"._QXZ("Login:")." <input type=\"text\" name=\"VD_login\" size=\"20\" maxlength=\"20\" value=\"$VD_login\" />\n<br />";
+            echo "<font class=\"skb_text\">"._QXZ("Password:")." <input type=\"password\" name=\"VD_pass\" size=\"20\" maxlength=\"100\" value=\"$VD_pass\" /><br />\n";
             echo "<font class=\"skb_text\">"._QXZ("Campaign:")." <span id=\"LogiNCamPaigns\">$camp_form_code</span><br />\n";
             echo "<input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";
 			echo "<span id=\"LogiNReseT\"></span>\n";
@@ -3910,8 +4066,8 @@ else
 			echo "<input type=\"hidden\" name=\"LOGINvarFOUR\" id=\"LOGINvarFOUR\" value=\"$LOGINvarFOUR\" />\n";
 			echo "<input type=\"hidden\" name=\"LOGINvarFIVE\" id=\"LOGINvarFIVE\" value=\"$LOGINvarFIVE\" />\n";
 			echo "<input type=\"hidden\" name=\"hide_relogin_fields\" id=\"hide_relogin_fields\" value=\"$hide_relogin_fields\" />\n";
-            echo "<font class=\"skb_text\">"._QXZ("Login:")." <input type=\"text\" name=\"VD_login\" size=\"10\" maxlength=\"20\" value=\"$VD_login\" />\n<br />";
-            echo "<font class=\"skb_text\">"._QXZ("Password:")." <input type=\"password\" name=\"VD_pass\" size=\"10\" maxlength=\"20\" value=\"$VD_pass\" /><br />\n";
+            echo "<font class=\"skb_text\">"._QXZ("Login:")." <input type=\"text\" name=\"VD_login\" size=\"20\" maxlength=\"20\" value=\"$VD_login\" />\n<br />";
+            echo "<font class=\"skb_text\">"._QXZ("Password:")." <input type=\"password\" name=\"VD_pass\" size=\"20\" maxlength=\"100\" value=\"$VD_pass\" /><br />\n";
             echo "<font class=\"skb_text\">"._QXZ("Campaign:")." <span id=\"LogiNCamPaigns\">$camp_form_code</span><br />\n";
             echo "<input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";
 			echo "<span id=\"LogiNReseT\"></span>\n";
@@ -15181,6 +15337,8 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 						if (agent_log_id.length > 0) {previous_agent_log_id = agent_log_id;}
 						agent_log_id = check_PC_array[2];
 						current_pause_code = newpausecode;
+						if (pause_max_exceptions.length > 2)
+							{VDRP_stage_seconds=0;}
 						}
 				//	alert(VMCpausecode_query);
 				//	alert(xmlhttp.responseText + "\n|" + check_PC_array[1] + "\n|" + check_PC_array[2] + "|" + agent_log_id + "|" + pause_code_counter);
@@ -22111,8 +22269,6 @@ if ($SSbrowser_call_alerts > 0)
 </html>
 
 <?php
-
-exit;
 
 exit;
 

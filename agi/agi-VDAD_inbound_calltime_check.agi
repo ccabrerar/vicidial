@@ -56,6 +56,7 @@
 # 161102-1038 - Fixed QM partition problem
 # 180213-0935 - Fixed issues with VMAIL_NO_INST timecheck route
 # 200624-2302 - Added play sip-silence audio option
+# 201026-1501 - Fix for overwriting short CIDnum
 #
 
 $script = 'agi-VDAD_inbound_calltime_check.agi';
@@ -302,7 +303,7 @@ else
 	   else {$VLcomments = '';}
    }
 
-if (length($callerid)<8) {$callerid = $parked_by;}
+if ( (length($callerid)<8) && (length($parked_by) > 6) ) {$callerid = $parked_by;}
 if (length($pin)>0) {$callerid = $pin;}
 if ($sip_silence_playback !~ /YES|NO/i) {$sip_silence_playback='YES';}
 

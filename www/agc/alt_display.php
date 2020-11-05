@@ -17,10 +17,11 @@
 # CHANGELOG:
 # 200827-1157 - First build
 # 200920-0906 - Added agent-lag-time to agent_status action
+# 201026-1504 - Fix for LIVE call issue in top_panel
 #
 
-$version = '2.14-2';
-$build = '200920-0906';
+$version = '2.14-3';
+$build = '201026-1504';
 $php_script = 'alt_display.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=11;
@@ -239,23 +240,26 @@ if ($ACTION == 'top_panel')
 		}
 
 	### BEGIN Live Call Display section ###
-	$stmt="SELECT server_ip,status,lead_id,campaign_id,callerid,call_time,call_type,UNIX_TIMESTAMP(call_time) from vicidial_auto_calls where callerid='$VLAcallerid';";
-	$rslt=mysql_to_mysqli($stmt, $link);
-		if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'09005',$user,$server_ip,$session_name,$one_mysql_log);}
-	$cl_calls_ct = mysqli_num_rows($rslt);
-	if ($cl_calls_ct > 0)
+	if (strlen($VLAcallerid) > 5)
 		{
-		$row=mysqli_fetch_row($rslt);
-		$VACserver_ip =						$row[0];
-		$VACstatus =						$row[1];
-		$VAClead_id =						$row[2];
-		$VACcampaign_id =					$row[3];
-		$VACcallerid =						$row[4];
-		$VACcall_time =						$row[5];
-		$VACcall_type =						$row[6];
-		$VACcalls_today =					$row[7];
-		$VACcall_time_epoch =				$row[8];
-		$live_call = 'LIVE';
+		$stmt="SELECT server_ip,status,lead_id,campaign_id,callerid,call_time,call_type,UNIX_TIMESTAMP(call_time) from vicidial_auto_calls where callerid='$VLAcallerid';";
+		$rslt=mysql_to_mysqli($stmt, $link);
+			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'09005',$user,$server_ip,$session_name,$one_mysql_log);}
+		$cl_calls_ct = mysqli_num_rows($rslt);
+		if ($cl_calls_ct > 0)
+			{
+			$row=mysqli_fetch_row($rslt);
+			$VACserver_ip =						$row[0];
+			$VACstatus =						$row[1];
+			$VAClead_id =						$row[2];
+			$VACcampaign_id =					$row[3];
+			$VACcallerid =						$row[4];
+			$VACcall_time =						$row[5];
+			$VACcall_type =						$row[6];
+			$VACcalls_today =					$row[7];
+			$VACcall_time_epoch =				$row[8];
+			$live_call = 'LIVE';
+			}
 		}
 
 	if ( ($live_call != 'NONE') and ($live_call != 'PREVIEW') )

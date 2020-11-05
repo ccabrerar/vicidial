@@ -238,6 +238,8 @@
 # 200624-0011 - Added options for Answer signal settings
 # 200708-1126 - Added some list override settings
 # 200816-0910 - Fixed issue with cid_cb_confirmed_filename multi-prompt not playing last file
+# 201026-2333 - Fix for AGENTDIRECT issue
+# 201101-1058 - Added no_agent_delay option
 #
 
 $script = 'agi-VDAD_ALL_inbound.agi';
@@ -255,6 +257,7 @@ $dial_ingroup_flag=0;
 $called_count=1;
 $entry_list_id=0;
 $areacode_filter_run=0;
+$no_agent_no_queue_checked=0;
 
 
 ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
@@ -800,7 +803,7 @@ $affected_rows = $dbhA->do($stmtA);
 
 ### Grab inbound groups values from the database
 $cbc=0;
-$stmtA = "SELECT call_time_id,after_hours_action,after_hours_message_filename,after_hours_exten,after_hours_voicemail,welcome_message_filename,moh_context,onhold_prompt_filename,prompt_interval,agent_alert_exten,agent_alert_delay,drop_call_seconds,drop_action,drop_exten,next_agent_call,voicemail_ext,queue_priority,drop_inbound_group,afterhours_xfer_group,play_place_in_line,play_estimate_hold_time,hold_time_option,hold_time_option_seconds,hold_time_option_exten,hold_time_option_voicemail,hold_time_option_xfer_group,hold_time_option_callback_filename,hold_time_option_callback_list_id,hold_recall_xfer_group,no_delay_call_route,play_welcome_message,no_agent_no_queue,no_agent_action,no_agent_action_value,extension_appended_cidname,uniqueid_status_display,uniqueid_status_prefix,hold_time_option_minimum,hold_time_option_press_filename,hold_time_option_callmenu,onhold_prompt_no_block,onhold_prompt_seconds,hold_time_option_no_block,hold_time_option_prompt_seconds,hold_time_second_option,hold_time_third_option,wait_hold_option_priority,wait_time_option,wait_time_second_option,wait_time_third_option,wait_time_option_seconds,wait_time_option_exten,wait_time_option_voicemail,wait_time_option_xfer_group,wait_time_option_callmenu,wait_time_option_callback_filename,wait_time_option_callback_list_id,wait_time_option_press_filename,wait_time_option_no_block,wait_time_option_prompt_seconds,active,calculate_estimated_hold_seconds,add_lead_url,eht_minimum_prompt_filename,eht_minimum_prompt_no_block,eht_minimum_prompt_seconds,on_hook_ring_time,ingroup_recording_override,ingroup_rec_filename,on_hook_cid,action_xfer_cid,drop_callmenu,after_hours_callmenu,max_calls_method,max_calls_count,max_calls_action,populate_lead_ingroup,na_call_url,drop_lead_reset,after_hours_lead_reset,nanq_lead_reset,wait_time_lead_reset,hold_time_lead_reset,routing_initiated_recordings,on_hook_cid_number,populate_lead_province,areacode_filter,areacode_filter_seconds,areacode_filter_action,areacode_filter_action_value,populate_state_areacode,inbound_survey,inbound_survey_filename,inbound_survey_accept_digit,closing_time_action,closing_time_now_trigger,closing_time_filename,closing_time_end_filename,closing_time_lead_reset,closing_time_option_exten,closing_time_option_callmenu,closing_time_option_voicemail,closing_time_option_xfer_group,closing_time_option_callback_list_id,add_lead_timezone,populate_lead_source,populate_lead_vendor,enter_ingroup_url,cid_cb_confirm_number, cid_cb_invalid_filter_phone_group, cid_cb_valid_length, cid_cb_valid_filename, cid_cb_confirmed_filename, cid_cb_enter_filename, cid_cb_you_entered_filename, cid_cb_press_to_confirm_filename, cid_cb_invalid_filename, cid_cb_reenter_filename, cid_cb_error_filename,place_in_line_caller_number_filename,place_in_line_you_next_filename,answer_signal FROM vicidial_inbound_groups where group_id = '$channel_group';";
+$stmtA = "SELECT call_time_id,after_hours_action,after_hours_message_filename,after_hours_exten,after_hours_voicemail,welcome_message_filename,moh_context,onhold_prompt_filename,prompt_interval,agent_alert_exten,agent_alert_delay,drop_call_seconds,drop_action,drop_exten,next_agent_call,voicemail_ext,queue_priority,drop_inbound_group,afterhours_xfer_group,play_place_in_line,play_estimate_hold_time,hold_time_option,hold_time_option_seconds,hold_time_option_exten,hold_time_option_voicemail,hold_time_option_xfer_group,hold_time_option_callback_filename,hold_time_option_callback_list_id,hold_recall_xfer_group,no_delay_call_route,play_welcome_message,no_agent_no_queue,no_agent_action,no_agent_action_value,extension_appended_cidname,uniqueid_status_display,uniqueid_status_prefix,hold_time_option_minimum,hold_time_option_press_filename,hold_time_option_callmenu,onhold_prompt_no_block,onhold_prompt_seconds,hold_time_option_no_block,hold_time_option_prompt_seconds,hold_time_second_option,hold_time_third_option,wait_hold_option_priority,wait_time_option,wait_time_second_option,wait_time_third_option,wait_time_option_seconds,wait_time_option_exten,wait_time_option_voicemail,wait_time_option_xfer_group,wait_time_option_callmenu,wait_time_option_callback_filename,wait_time_option_callback_list_id,wait_time_option_press_filename,wait_time_option_no_block,wait_time_option_prompt_seconds,active,calculate_estimated_hold_seconds,add_lead_url,eht_minimum_prompt_filename,eht_minimum_prompt_no_block,eht_minimum_prompt_seconds,on_hook_ring_time,ingroup_recording_override,ingroup_rec_filename,on_hook_cid,action_xfer_cid,drop_callmenu,after_hours_callmenu,max_calls_method,max_calls_count,max_calls_action,populate_lead_ingroup,na_call_url,drop_lead_reset,after_hours_lead_reset,nanq_lead_reset,wait_time_lead_reset,hold_time_lead_reset,routing_initiated_recordings,on_hook_cid_number,populate_lead_province,areacode_filter,areacode_filter_seconds,areacode_filter_action,areacode_filter_action_value,populate_state_areacode,inbound_survey,inbound_survey_filename,inbound_survey_accept_digit,closing_time_action,closing_time_now_trigger,closing_time_filename,closing_time_end_filename,closing_time_lead_reset,closing_time_option_exten,closing_time_option_callmenu,closing_time_option_voicemail,closing_time_option_xfer_group,closing_time_option_callback_list_id,add_lead_timezone,populate_lead_source,populate_lead_vendor,enter_ingroup_url,cid_cb_confirm_number, cid_cb_invalid_filter_phone_group, cid_cb_valid_length, cid_cb_valid_filename, cid_cb_confirmed_filename, cid_cb_enter_filename, cid_cb_you_entered_filename, cid_cb_press_to_confirm_filename, cid_cb_invalid_filename, cid_cb_reenter_filename, cid_cb_error_filename,place_in_line_caller_number_filename,place_in_line_you_next_filename,answer_signal,no_agent_delay FROM vicidial_inbound_groups where group_id = '$channel_group';";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -937,6 +940,7 @@ if ($sthArows > 0)
 	$place_in_line_caller_number_filename =	$aryA[119];
 	$place_in_line_you_next_filename =	$aryA[120];
 	$answer_signal =					$aryA[121];
+	$no_agent_delay =					$aryA[122];
 
 	if ( (length($place_in_line_caller_number_filename) < 1) || ($place_in_line_caller_number_filename =~ /^NULL$/i) ) 
 		{$place_in_line_caller_number_filename='queue-thereare';}
@@ -1925,290 +1929,10 @@ if ( ( ( ( ($hm < $ct_default_start) || ($hm > $ct_default_stop) ) && ($hm >= $c
 
 
 ##### BEGIN NO AGENT NO QUEUE CHECK #####
-if ( ( ($no_agent_no_queue =~ /Y|NO_PAUSED|NO_READY/) || ($MCnanque_override > 0) ) && ($dial_ingroup_flag < 1) )
+if ( ( ($no_agent_no_queue =~ /Y|NO_PAUSED|NO_READY/) || ($MCnanque_override > 0) ) && ($dial_ingroup_flag < 1) && ($no_agent_delay < 1) )
 	{
-	$NPsql='';
-	$ADsql='';
-	$NCsql='';
-	if ($no_agent_no_queue =~ /NO_PAUSED/) 
-		{$NPsql = "and status NOT IN('PAUSED')";}
-	if ($no_agent_no_queue =~ /NO_READY/) 
-		{$NCsql = "and status IN('READY','CLOSER')";}
-	if ( ( ($channel_group =~ /AGENTDIRECT/i) || ($dial_ingroup_flag > 0) ) && (length($agent_only) > 1) )
-		{$ADsql = "and user='$agent_only'";}
-	$SQL_group_id=$channel_group;   $SQL_group_id =~ s/_/\\_/gi;
-	$stmtA = "SELECT count(*) FROM vicidial_live_agents where closer_campaigns LIKE \"% $SQL_group_id %\" $NPsql $ADsql $NCsql;";
-	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-	$sthArows=$sthA->rows;
-		$dbhP=$dbhA;   $mysql_count='02104';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
-	if ($sthArows > 0)
-		{
-		@aryA = $sthA->fetchrow_array;	
-		$group_agents_count	= $aryA[0];
-		}
-	$sthA->finish();
-	if ($AGILOG) {$agi_string = "--  NANQUE Check: |$group_agents_count|$stmtA";   &agi_output;}
-
-	if ( ($group_agents_count < 1) || ($MCnanque_override > 0) )
-		{
-		$VHqueryCID = "VA$CIDdate$hour$min$sec$sec";
-		$NQstatus='NANQUE';
-		$NQterm='NOAGENT';
-		$NQcomments='NO AGENT DROP';
-		if ($MCnanque_override > 0) 
-			{
-			$NQstatus = $MCstatus;
-			$NQterm = $MCterm;
-			$NQcomments = $MCcomments;
-			}
-		# set the log-user to the agentdirect destination user, if set
-		if ( ($channel_group =~ /AGENTDIRECT/i) && (length($agent_only) > 1) )
-			{$LOGuser = $agent_only;}
-
-		$stmtA = "INSERT INTO vicidial_closer_log set status='$NQstatus',start_epoch='$now_date_epoch',end_epoch='$now_date_epoch',length_in_sec='1',queue_seconds='0',lead_id='$insert_lead_id',campaign_id='$channel_group',user='$LOGuser',list_id='$list_id',call_date='$now_date',phone_code='$phone_code',phone_number='$phone_number',comments='$NQcomments',term_reason='$NQterm',uniqueid='$uniqueid',called_count='$called_count';";
-		$affected_rows = $dbhA->do($stmtA);
-			$dbhP=$dbhA;   $mysql_count='02105';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
-		$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
-		$sthA = $dbhA->prepare($stmtB) or die "preparing: ",$dbhA->errstr;
-		$sthA->execute or die "executing: $stmtB ", $dbhA->errstr;
-		$sthArows=$sthA->rows;
-			$dbhP=$dbhA;   $stmtA=$stmtB;   $mysql_count='02017';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
-		if ($sthArows > 0)
-			{
-			@aryA = $sthA->fetchrow_array;
-			$insert_close_id = $aryA[0];
-			$cbc++; 
-			}
-		$sthA->finish();
-		if ($AGILOG) {$agi_string = "--  NA VDCL vcl insert: |$affected_rows|$insert_lead_id|$insert_close_id|$MCnanque_override|\n|$stmtA|";   &agi_output;}
-
-		$PADlead_id = sprintf("%010s", $insert_lead_id);	while (length($PADlead_id) > 10) {chop($PADlead_id);}
-		$NACqueryCID = "Y$CIDdate$PADlead_id";
-
-		if ($VLEcount < 1)
-			{
-			$stmtA = "INSERT INTO vicidial_log_extended set uniqueid='$uniqueid',server_ip='$VARserver_ip',call_date='$now_date',lead_id = '$insert_lead_id',caller_code='$NACqueryCID',custom_call_id='$custom_call_id';";
-			$affected_rows = $dbhA->do($stmtA);
-				$dbhP=$dbhA;   $mysql_count='02146';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
-			if ($AGILOG) {$agi_string = "--  NANQUE VLE insert: |$affected_rows|\n|$stmtA|";   &agi_output;}
-			$VLEcount++;
-			}
-
-		if ($enable_drop_lists > 0) 
-			{
-			$stmtA="INSERT IGNORE INTO vicidial_drop_log SET uniqueid='$uniqueid',server_ip='$VARserver_ip',drop_date=NOW(),lead_id='$insert_lead_id',campaign_id='$VD_campaign_id',status='$NQstatus',phone_code='$phone_code',phone_number='$phone_number';";
-			$VDDLaffected_rows = $dbhA->do($stmtA);
-			if ($AGILOG) {$agi_string = "--    vicidial_drop_log insert: |$VDDLaffected_rows|$uniqueid|$insert_lead_id|$NQstatus|";   &agi_output;}
-			}
-
-		$called_since_last_resetSQL='';
-		if ( ($no_agent_action =~ /VOICEMAIL|HANGUP|MESSAGE|VMAIL_NO_INST/) && ($nanq_lead_reset =~ /Y/) )
-			{$called_since_last_resetSQL = ",called_since_last_reset='N'";}
-		
-		$populate_provinceUPDATE='';
-		if ($populate_lead_province =~ /OW_did/i) 
-			{&populate_lead_province_process;}
-		$stmtA = "UPDATE vicidial_list set status='$NQstatus' $populate_provinceUPDATE $UPDATEstateSQL $called_since_last_resetSQL where lead_id = '$insert_lead_id';";
-		$affected_rows = $dbhA->do($stmtA);
-			$dbhP=$dbhA;   $mysql_count='02106';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
-		if ($AGILOG) {$agi_string = "--  NA VDCL vl update: |$affected_rows|$insert_lead_id|\n|$stmtA|";   &agi_output;}
-
-		$stmtA = "DELETE FROM vicidial_auto_calls where callerid='$callerid' and server_ip='$VARserver_ip' order by call_time desc limit 1;";
-		$affected_rows = $dbhA->do($stmtA);
-			$dbhP=$dbhA;   $mysql_count='02107';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
-		if ($AGILOG) {$agi_string = "--  NA VDCL vac record deleted: |$affected_rows| $channel_group|";   &agi_output;}
-
-		if ($no_agent_action =~ /CALLMENU|INGROUP|DID|EXTENSION|VOICEMAIL|VMAIL_NO_INST/)
-			{
-			if ($no_agent_action =~ /EXTENSION/)
-				{
-				if (length($no_agent_action_value) < 3)
-					{$no_agent_action_value = '8304,default';}
-				@EXno_agent_action_value = split(/,/,$no_agent_action_value);
-				$DROPexten =	$EXno_agent_action_value[0];
-				$ext_context =	$EXno_agent_action_value[1];
-
-				if ( ($channel_group =~ /AGENTDIRECT/i) && (length($agent_only) > 1) && ($DROPexten =~ /AGENTEXT/) )
-					{
-					### Grab user's custom_five field from the database
-					$stmtA = "SELECT custom_five FROM vicidial_users where user='$agent_only';";
-					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-					$sthArows=$sthA->rows;
-						$dbhP=$dbhA;   $mysql_count='02175';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
-					if ($sthArows > 0)
-						{
-						@aryA = $sthA->fetchrow_array;
-						$DROPexten = 	$aryA[0];
-						}
-					$sthA->finish();
-					}
-
-				$newcallerid = "\"$callerid <$transfer_cid>\"";
-				$AGI->set_callerid($newcallerid);
-				print STDERR "Setting CID \"$newcallerid\"\n";
-				checkresult($result);
-				if ($AGILOG) {$agi_string = "callerID changed: \"$callerid\" \<$transfer_cid\> from $CIDcampaign_id";   &agi_output;}
-				}
-			if ($no_agent_action =~ /DID/)
-				{
-				$newcallerid = "\"$VCcallerid <$transfer_cid>\"";
-				$AGI->set_callerid($newcallerid);
-				print STDERR "Setting CID \"$newcallerid\"\n";
-				checkresult($result);
-				if ($AGILOG) {$agi_string = "callerID changed: $newcallerid";   &agi_output;}
-				if (length($no_agent_action_value) < 1)
-					{$no_agent_action_value = '6666';}
-				$DROPexten =	$no_agent_action_value;
-				$ext_context =	'trunkinbound';
-				}
-			if ($no_agent_action =~ /CALLMENU/)
-				{
-				$newcallerid = "\"$VCcallerid <$transfer_cid>\"";
-				if ($action_xfer_cid =~ /CLOSER/)
-						{$newcallerid = "\"$XXqueryCID <$transfer_cid>\"";}
-				$AGI->set_callerid($newcallerid);
-				print STDERR "Setting CID \"$newcallerid\"\n";
-				checkresult($result);
-				if ($AGILOG) {$agi_string = "callerID changed: $newcallerid";   &agi_output;}
-				$DROPexten =	's';
-				$ext_context =	$no_agent_action_value;
-
-				if ($enable_queuemetrics_logging > 0)
-					{
-					$dbhB = DBI->connect("DBI:mysql:$queuemetrics_dbname:$queuemetrics_server_ip:3306", "$queuemetrics_login", "$queuemetrics_pass")
-					 or die "Couldn't connect to database: " . DBI->errstr;
-
-					if ($DBX) {print "CONNECTED TO QM DATABASE:  $queuemetrics_server_ip|$queuemetrics_dbname\n";}
-
-					$stmtB = "INSERT INTO queue_log SET `partition`='P01',time_id='$now_date_epoch',call_id='$uniqueid',queue='NONE',agent='NONE',verb='INFO',data1='IVRSTART',data2='$phone_number',data3='$channel_group',serverid='$queuemetrics_log_id';";
-					$Baffected_rows = $dbhB->do($stmtB);
-						$dbhP=$dbhB;   $stmtA=$stmtB;   $mysql_count='02198';   $MEL_aff_rows=$Baffected_rows;   &mysql_error_logging;
-					}
-				}
-			if ($no_agent_action =~ /VOICEMAIL|VMAIL_NO_INST/)
-				{
-				if ( ($channel_group =~ /AGENTDIRECT/i) && (length($agent_only) > 1) && ($no_agent_action_value =~ /AGENTVMAIL/) )
-					{
-					### Grab user's voicemail ID from the database
-					$stmtA = "SELECT voicemail_id FROM vicidial_users where user='$agent_only';";
-					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-					$sthArows=$sthA->rows;
-						$dbhP=$dbhA;   $mysql_count='02125';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
-					if ($sthArows > 0)
-						{
-						@aryA = $sthA->fetchrow_array;
-						$no_agent_action_value = 	$aryA[0];
-						}
-					$sthA->finish();
-					}
-				$newcallerid = "\"$VCcallerid <$transfer_cid>\"";
-				$AGI->set_callerid($newcallerid);
-				print STDERR "Setting CID \"$newcallerid\"\n";
-				checkresult($result);
-				if ($AGILOG) {$agi_string = "callerID changed: $newcallerid";   &agi_output;}
-				if ($no_agent_action =~ /VMAIL_NO_INST/) 
-					{$voicemail_dump_exten = $voicemail_dump_exten_no_inst;}
-				$DROPexten = "$voicemail_dump_exten$no_agent_action_value";
-				}
-			if ($no_agent_action =~ /INGROUP/)
-				{ # 90009*CL_uk3survy_*8301*10000123*universal*7275551212*1234*"
-				if (length($no_agent_action_value) < 10)
-					{$no_agent_action_value = 'SALESLINE,CID,LB,998,TESTCAMP,1';}
-				@IGno_agent_action_value = split(/,/,$no_agent_action_value);
-				$IGgroup_id =		$IGno_agent_action_value[0];
-				$IGhandle_method =	$IGno_agent_action_value[1];
-				$IGsearch_method =	$IGno_agent_action_value[2];
-				$IGlist_id =		$IGno_agent_action_value[3];
-				$IGcampaign_id =	$IGno_agent_action_value[4];
-				$IGphone_code =		$IGno_agent_action_value[5];
-
-				$NA_prefix='90009';
-				if ( ($inbound_answer_config > 0) && ($answer_signal =~ /NONE/i) )
-					{$NA_prefix='98009';}
-				$DROPexten = "$NA_prefix*$IGgroup_id$S$S$insert_lead_id$S$S$phone_number$S$fronter$S";
-				}
-			### if DROP extension is defined then send the dropped call there instead of hangup
-			if (length($DROPexten)>0)
-				{
-				# If answer signal config is enabled and the in-group is set to send one at ROUTE, send an Answer signal
-				if ( ($inbound_answer_config > 0) and ($answer_signal =~ /ROUTE/i) ) 
-					{
-					$AGI->answer();
-					if ($AGILOG) {$agi_string = "   Answering call: - $channel|$answer_signal";   &agi_output;}
-					}
-
-				if ($no_delay_call_route =~ /N/)
-					{
-					$AGI->stream_file('sip-silence'); # stop music-on-hold process
-					$AGI->stream_file('sip-silence');
-					### sleep for 99 hundredths of a second
-					usleep(1*990*1000);
-					}
-
-				if ( ($inbound_answer_config > 0) and ($answer_signal =~ /NONE/i) ) 
-					{
-					if ($AGILOG) {$agi_string = "     skipping sip-silence playback: $channel|";   &agi_output;}
-					}
-				else
-					{
-					$AGI->stream_file('sip-silence');
-					$AGI->stream_file('sip-silence');
-					$AGI->stream_file('sip-silence');
-					$AGI->stream_file('sip-silence');
-					}
-
-				if ($AGILOG) {$agi_string = "exiting the VDAD app no agent no queue, transferring call to $DROPexten";   &agi_output;}
-				print "SET CONTEXT $ext_context\n";
-					$result = <STDIN>;
-					checkresult($result);
-				print "SET EXTENSION $DROPexten\n";
-					$result = <STDIN>;
-					checkresult($result);
-				print "SET PRIORITY 1\n";
-					$result = <STDIN>;
-					checkresult($result);
-				}
-			}
-
-		if ($no_agent_action =~ /MESSAGE/)
-			{
-			if (length($no_agent_action_value) > 0)
-				{
-				$AGI->stream_file('sip-silence');
-				$AGI->stream_file('sip-silence');
-				if ($no_agent_action_value =~ /\|/)
-					{
-					@no_agent_action_value_array = split(/\|/,$no_agent_action_value);
-					$w=0;
-					foreach(@no_agent_action_value_array)
-						{
-						if (length($no_agent_action_value_array[$w])>0)
-							{
-							$AGI->stream_file("$no_agent_action_value_array[$w]");
-							}
-						$w++;
-						}
-					}
-				else
-					{$AGI->stream_file("$no_agent_action_value");}
-				}
-			### sleep for 99 hundredths of a second
-			usleep(1*990*1000);
-
-			### insert a NEW record to the vicidial_manager table to hangup the channel
-			$stmtA = "INSERT INTO vicidial_manager values('','','$SQLdate','NEW','N','$VARserver_ip','','Hangup','$VHqueryCID','Channel: $channel','','','','','','','','','')";
-			$affected_rows = $dbhA->do($stmtA);  
-				$dbhP=$dbhA;   $mysql_count='02021';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
-			if ($AGILOG) {$agi_string = "--  NA VDCL call_hungup after hours: |$VHqueryCID|$VDADconf_exten|$channel|insert to vicidial_manager";   &agi_output;}
-			}
-
-		$dbhA->disconnect();
-
-		exit;
-		}
+	if ($AGILOG) {$agi_string = "--  NANQUE check started: |$callerid|$insert_lead_id|$channel|$no_agent_delay|$no_agent_no_queue_checked";   &agi_output;}
+	&no_agent_no_queue_process;
 	}
 ##### END NO AGENT NO QUEUE CHECK #####
 
@@ -2893,6 +2617,7 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 		if ( ( ($rec_countWAITrem < 1) && ($rec_countWAITqueue < 1) ) || ($AGENTgrab > 0) )
 			{
 			$qp_countWAIT=0;
+
 			### Get count of number of waiting calls in higher priority groups than this call or the same priority with longer wait time
 			$stmtA = "SELECT count(*) FROM vicidial_auto_calls where status = 'LIVE' and lead_id != '$insert_lead_id' $ADfindSQL and ( (queue_priority > '$queue_priority') or (queue_priority = '$queue_priority' and call_time < \"$SQLdateBEGIN\") );";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
@@ -2906,6 +2631,34 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 				}
 			$sthA->finish();
 			if ($AGILOG) {$agi_string = "$qp_countWAIT|$stmtA|";   &agi_output;}
+
+			$AGENTDIRECT_higher_count=0;
+			$AGENTDIRECT_higher_users='';
+			$AGENTDIRECT_higherSQL='';
+			if ($channel_group !~ /AGENTDIRECT/) 
+				{
+				### Get count of number of waiting calls in higher priority AGENTDIRECT groups than this call or the same priority with longer wait time
+				$stmtA = "SELECT agent_only FROM vicidial_auto_calls where status = 'LIVE' and campaign_id LIKE \"%AGENTDIRECT%\" and ( (queue_priority > '$queue_priority') or (queue_priority = '$queue_priority' and call_time < \"$SQLdateBEGIN\") );";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$AGENTDIRECT_higher_count=$sthA->rows;
+					$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$AGENTDIRECT_higher_count;   &mysql_error_logging;
+				$ad_ct=0;
+				while ($AGENTDIRECT_higher_count > $ad_ct)
+					{
+					@aryA = $sthA->fetchrow_array;
+					if ($ad_ct > 0) 
+						{$AGENTDIRECT_higher_users .= ",";}
+					$AGENTDIRECT_higher_users .= "'$aryA[0]'";
+					$ad_ct++;
+					}
+				$sthA->finish();
+				if ($AGENTDIRECT_higher_count > 0) 
+					{
+					$AGENTDIRECT_higherSQL = "and vicidial_live_agents.user NOT IN($AGENTDIRECT_higher_users)";
+					}
+				if ($AGILOG) {$agi_string = "AGENTDIRECT calls check: $AGENTDIRECT_higher_count|$AGENTDIRECT_higher_users|$AGENTDIRECT_higherSQL|$stmtA|";   &agi_output;}
+				}
 
 			$qp_countWAITqueue=0;
 			### Get count of number of waiting calls in higher priority groups than this call or the same priority with longer wait time
@@ -3027,7 +2780,7 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 							@GRADEuser=@MT;
 							@GRADEgrade=@MT;
 							@userGRADEarray=@MT;
-							$stmtA = "SELECT vicidial_live_agents.user,vicidial_live_inbound_agents.group_grade,vicidial_live_agents.campaign_grade from vicidial_live_agents, vicidial_live_inbound_agents WHERE vicidial_live_agents.user=vicidial_live_inbound_agents.user and status IN('CLOSER','READY') and lead_id<1 $ADUfindSQL and vicidial_live_inbound_agents.group_id='$channel_group' and last_update_time > '$BDtsSQLdate' and vicidial_live_agents.user NOT IN($ring_no_answer_agents$vlia_users) and ring_callerid='' $qp_groupWAIT_camp_SQL limit 1000;";
+							$stmtA = "SELECT vicidial_live_agents.user,vicidial_live_inbound_agents.group_grade,vicidial_live_agents.campaign_grade from vicidial_live_agents, vicidial_live_inbound_agents WHERE vicidial_live_agents.user=vicidial_live_inbound_agents.user and status IN('CLOSER','READY') and lead_id<1 $ADUfindSQL and vicidial_live_inbound_agents.group_id='$channel_group' and last_update_time > '$BDtsSQLdate' and vicidial_live_agents.user NOT IN($ring_no_answer_agents$vlia_users) and ring_callerid='' $qp_groupWAIT_camp_SQL $AGENTDIRECT_higherSQL limit 1000;";
 							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 							$sthArows=$sthA->rows;
@@ -3091,7 +2844,7 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 						### END grade random next-agent-call routing ###
 						else
 							{
-							$stmtA = "SELECT vicidial_live_agents.conf_exten,vicidial_live_agents.user,vicidial_live_agents.extension,vicidial_live_agents.server_ip,vicidial_live_inbound_agents.group_weight,ra_user,vicidial_live_agents.campaign_id,on_hook_agent,on_hook_ring_time,vicidial_live_inbound_agents.group_grade,vicidial_live_agents.campaign_grade from vicidial_live_agents, vicidial_live_inbound_agents WHERE vicidial_live_agents.user=vicidial_live_inbound_agents.user and status IN('CLOSER','READY') and lead_id<1 $ADUfindSQL and vicidial_live_inbound_agents.group_id='$channel_group' and last_update_time > '$BDtsSQLdate' and vicidial_live_agents.user NOT IN($ring_no_answer_agents$vlia_users) and ring_callerid='' $qp_groupWAIT_camp_SQL $agent_call_order limit 1;";
+							$stmtA = "SELECT vicidial_live_agents.conf_exten,vicidial_live_agents.user,vicidial_live_agents.extension,vicidial_live_agents.server_ip,vicidial_live_inbound_agents.group_weight,ra_user,vicidial_live_agents.campaign_id,on_hook_agent,on_hook_ring_time,vicidial_live_inbound_agents.group_grade,vicidial_live_agents.campaign_grade from vicidial_live_agents, vicidial_live_inbound_agents WHERE vicidial_live_agents.user=vicidial_live_inbound_agents.user and status IN('CLOSER','READY') and lead_id<1 $ADUfindSQL and vicidial_live_inbound_agents.group_id='$channel_group' and last_update_time > '$BDtsSQLdate' and vicidial_live_agents.user NOT IN($ring_no_answer_agents$vlia_users) and ring_callerid='' $qp_groupWAIT_camp_SQL $AGENTDIRECT_higherSQL $agent_call_order limit 1;";
 							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 							$sthArows=$sthA->rows;
@@ -3130,7 +2883,7 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 					else
 						{
 						$SQL_group_id=$channel_group;   $SQL_group_id =~ s/_/\\_/gi;
-						$stmtA = "SELECT conf_exten,user,extension,server_ip,last_call_time,ra_user,campaign_id,on_hook_agent,on_hook_ring_time FROM vicidial_live_agents where status IN('CLOSER','READY') and lead_id<1 $ADUfindSQL and campaign_id IN($INBOUNDcampsSQL) and closer_campaigns LIKE \"% $SQL_group_id %\" and last_update_time > '$BDtsSQLdate' and vicidial_live_agents.user NOT IN($ring_no_answer_agents'') $qp_groupWAIT_SQL $qp_groupWAIT_camp_SQL $agent_call_order limit 1;";
+						$stmtA = "SELECT conf_exten,user,extension,server_ip,last_call_time,ra_user,campaign_id,on_hook_agent,on_hook_ring_time FROM vicidial_live_agents where status IN('CLOSER','READY') and lead_id<1 $ADUfindSQL and campaign_id IN($INBOUNDcampsSQL) and closer_campaigns LIKE \"% $SQL_group_id %\" and last_update_time > '$BDtsSQLdate' and vicidial_live_agents.user NOT IN($ring_no_answer_agents'') $qp_groupWAIT_SQL $qp_groupWAIT_camp_SQL $AGENTDIRECT_higherSQL $agent_call_order limit 1;";
 						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 						$sthArows=$sthA->rows;
@@ -6203,6 +5956,14 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 	### END hold time options ###
 
 
+	##### BEGIN NO AGENT NO QUEUE CHECK #####
+	if ( ( ($no_agent_no_queue =~ /Y|NO_PAUSED|NO_READY/) || ($MCnanque_override > 0) ) && ($dial_ingroup_flag < 1) && ($no_agent_delay < $drop_timer) && ($no_agent_no_queue_checked < 1) )
+		{
+		if ($AGILOG) {$agi_string = "--  NANQUE check started delayed($drop_timer): |$callerid|$insert_lead_id|$channel|$no_agent_delay|$no_agent_no_queue_checked";   &agi_output;}
+		&no_agent_no_queue_process;
+		}
+	##### END NO AGENT NO QUEUE CHECK #####
+
 
 	##### wait before looking again for an agent to take the call
 	if ($wait_in_queue > 0) 
@@ -8666,6 +8427,298 @@ sub cid_cb_length_and_fpg
 		}
 	}
 	### END check for invalid customer phone number in filter phone group, if defined ###
+
+
+
+### BEGIN No-Agent-No-Queue process ###
+sub no_agent_no_queue_process 
+	{
+	$no_agent_no_queue_checked++;
+	$NPsql='';
+	$ADsql='';
+	$NCsql='';
+	if ($no_agent_no_queue =~ /NO_PAUSED/) 
+		{$NPsql = "and status NOT IN('PAUSED')";}
+	if ($no_agent_no_queue =~ /NO_READY/) 
+		{$NCsql = "and status IN('READY','CLOSER')";}
+	if ( ( ($channel_group =~ /AGENTDIRECT/i) || ($dial_ingroup_flag > 0) ) && (length($agent_only) > 1) )
+		{$ADsql = "and user='$agent_only'";}
+	$SQL_group_id=$channel_group;   $SQL_group_id =~ s/_/\\_/gi;
+	$stmtA = "SELECT count(*) FROM vicidial_live_agents where closer_campaigns LIKE \"% $SQL_group_id %\" $NPsql $ADsql $NCsql;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+		$dbhP=$dbhA;   $mysql_count='02104';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;	
+		$group_agents_count	= $aryA[0];
+		}
+	$sthA->finish();
+	if ($AGILOG) {$agi_string = "--  NANQUE Check: |$group_agents_count|$stmtA";   &agi_output;}
+
+	if ( ($group_agents_count < 1) || ($MCnanque_override > 0) )
+		{
+		$VHqueryCID = "VA$CIDdate$hour$min$sec$sec";
+		$NQstatus='NANQUE';
+		$NQterm='NOAGENT';
+		$NQcomments='NO AGENT DROP';
+		if ($MCnanque_override > 0) 
+			{
+			$NQstatus = $MCstatus;
+			$NQterm = $MCterm;
+			$NQcomments = $MCcomments;
+			}
+		# set the log-user to the agentdirect destination user, if set
+		if ( ($channel_group =~ /AGENTDIRECT/i) && (length($agent_only) > 1) )
+			{$LOGuser = $agent_only;}
+
+		$stmtA = "INSERT INTO vicidial_closer_log set status='$NQstatus',start_epoch='$now_date_epoch',end_epoch='$now_date_epoch',length_in_sec='1',queue_seconds='0',lead_id='$insert_lead_id',campaign_id='$channel_group',user='$LOGuser',list_id='$list_id',call_date='$now_date',phone_code='$phone_code',phone_number='$phone_number',comments='$NQcomments',term_reason='$NQterm',uniqueid='$uniqueid',called_count='$called_count';";
+		$affected_rows = $dbhA->do($stmtA);
+			$dbhP=$dbhA;   $mysql_count='02105';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
+		$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
+		$sthA = $dbhA->prepare($stmtB) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtB ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+			$dbhP=$dbhA;   $stmtA=$stmtB;   $mysql_count='02017';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$insert_close_id = $aryA[0];
+			$cbc++; 
+			}
+		$sthA->finish();
+		if ($AGILOG) {$agi_string = "--  NA VDCL vcl insert: |$affected_rows|$insert_lead_id|$insert_close_id|$MCnanque_override|\n|$stmtA|";   &agi_output;}
+
+		$PADlead_id = sprintf("%010s", $insert_lead_id);	while (length($PADlead_id) > 10) {chop($PADlead_id);}
+		$NACqueryCID = "Y$CIDdate$PADlead_id";
+
+		if ($VLEcount < 1)
+			{
+			$stmtA = "INSERT INTO vicidial_log_extended set uniqueid='$uniqueid',server_ip='$VARserver_ip',call_date='$now_date',lead_id = '$insert_lead_id',caller_code='$NACqueryCID',custom_call_id='$custom_call_id';";
+			$affected_rows = $dbhA->do($stmtA);
+				$dbhP=$dbhA;   $mysql_count='02146';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
+			if ($AGILOG) {$agi_string = "--  NANQUE VLE insert: |$affected_rows|\n|$stmtA|";   &agi_output;}
+			$VLEcount++;
+			}
+
+		if ($enable_drop_lists > 0) 
+			{
+			$stmtA="INSERT IGNORE INTO vicidial_drop_log SET uniqueid='$uniqueid',server_ip='$VARserver_ip',drop_date=NOW(),lead_id='$insert_lead_id',campaign_id='$VD_campaign_id',status='$NQstatus',phone_code='$phone_code',phone_number='$phone_number';";
+			$VDDLaffected_rows = $dbhA->do($stmtA);
+			if ($AGILOG) {$agi_string = "--    vicidial_drop_log insert: |$VDDLaffected_rows|$uniqueid|$insert_lead_id|$NQstatus|";   &agi_output;}
+			}
+
+		$called_since_last_resetSQL='';
+		if ( ($no_agent_action =~ /VOICEMAIL|HANGUP|MESSAGE|VMAIL_NO_INST/) && ($nanq_lead_reset =~ /Y/) )
+			{$called_since_last_resetSQL = ",called_since_last_reset='N'";}
+		
+		$populate_provinceUPDATE='';
+		if ($populate_lead_province =~ /OW_did/i) 
+			{&populate_lead_province_process;}
+		$stmtA = "UPDATE vicidial_list set status='$NQstatus' $populate_provinceUPDATE $UPDATEstateSQL $called_since_last_resetSQL where lead_id = '$insert_lead_id';";
+		$affected_rows = $dbhA->do($stmtA);
+			$dbhP=$dbhA;   $mysql_count='02106';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
+		if ($AGILOG) {$agi_string = "--  NA VDCL vl update: |$affected_rows|$insert_lead_id|\n|$stmtA|";   &agi_output;}
+
+		$stmtA = "DELETE FROM vicidial_auto_calls where callerid='$callerid' and server_ip='$VARserver_ip' order by call_time desc limit 1;";
+		$affected_rows = $dbhA->do($stmtA);
+			$dbhP=$dbhA;   $mysql_count='02107';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
+		if ($AGILOG) {$agi_string = "--  NA VDCL vac record deleted: |$affected_rows| $channel_group|";   &agi_output;}
+
+		if ($no_agent_action =~ /CALLMENU|INGROUP|DID|EXTENSION|VOICEMAIL|VMAIL_NO_INST/)
+			{
+			if ($no_agent_action =~ /EXTENSION/)
+				{
+				if (length($no_agent_action_value) < 3)
+					{$no_agent_action_value = '8304,default';}
+				@EXno_agent_action_value = split(/,/,$no_agent_action_value);
+				$DROPexten =	$EXno_agent_action_value[0];
+				$ext_context =	$EXno_agent_action_value[1];
+
+				if ( ($channel_group =~ /AGENTDIRECT/i) && (length($agent_only) > 1) && ($DROPexten =~ /AGENTEXT/) )
+					{
+					### Grab user's custom_five field from the database
+					$stmtA = "SELECT custom_five FROM vicidial_users where user='$agent_only';";
+					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+					$sthArows=$sthA->rows;
+						$dbhP=$dbhA;   $mysql_count='02175';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
+					if ($sthArows > 0)
+						{
+						@aryA = $sthA->fetchrow_array;
+						$DROPexten = 	$aryA[0];
+						}
+					$sthA->finish();
+					}
+
+				$newcallerid = "\"$callerid <$transfer_cid>\"";
+				$AGI->set_callerid($newcallerid);
+				print STDERR "Setting CID \"$newcallerid\"\n";
+				checkresult($result);
+				if ($AGILOG) {$agi_string = "callerID changed: \"$callerid\" \<$transfer_cid\> from $CIDcampaign_id";   &agi_output;}
+				}
+			if ($no_agent_action =~ /DID/)
+				{
+				$newcallerid = "\"$VCcallerid <$transfer_cid>\"";
+				$AGI->set_callerid($newcallerid);
+				print STDERR "Setting CID \"$newcallerid\"\n";
+				checkresult($result);
+				if ($AGILOG) {$agi_string = "callerID changed: $newcallerid";   &agi_output;}
+				if (length($no_agent_action_value) < 1)
+					{$no_agent_action_value = '6666';}
+				$DROPexten =	$no_agent_action_value;
+				$ext_context =	'trunkinbound';
+				}
+			if ($no_agent_action =~ /CALLMENU/)
+				{
+				$newcallerid = "\"$VCcallerid <$transfer_cid>\"";
+				if ($action_xfer_cid =~ /CLOSER/)
+						{$newcallerid = "\"$XXqueryCID <$transfer_cid>\"";}
+				$AGI->set_callerid($newcallerid);
+				print STDERR "Setting CID \"$newcallerid\"\n";
+				checkresult($result);
+				if ($AGILOG) {$agi_string = "callerID changed: $newcallerid";   &agi_output;}
+				$DROPexten =	's';
+				$ext_context =	$no_agent_action_value;
+
+				if ($enable_queuemetrics_logging > 0)
+					{
+					$dbhB = DBI->connect("DBI:mysql:$queuemetrics_dbname:$queuemetrics_server_ip:3306", "$queuemetrics_login", "$queuemetrics_pass")
+					 or die "Couldn't connect to database: " . DBI->errstr;
+
+					if ($DBX) {print "CONNECTED TO QM DATABASE:  $queuemetrics_server_ip|$queuemetrics_dbname\n";}
+
+					$stmtB = "INSERT INTO queue_log SET `partition`='P01',time_id='$now_date_epoch',call_id='$uniqueid',queue='NONE',agent='NONE',verb='INFO',data1='IVRSTART',data2='$phone_number',data3='$channel_group',serverid='$queuemetrics_log_id';";
+					$Baffected_rows = $dbhB->do($stmtB);
+						$dbhP=$dbhB;   $stmtA=$stmtB;   $mysql_count='02198';   $MEL_aff_rows=$Baffected_rows;   &mysql_error_logging;
+					}
+				}
+			if ($no_agent_action =~ /VOICEMAIL|VMAIL_NO_INST/)
+				{
+				if ( ($channel_group =~ /AGENTDIRECT/i) && (length($agent_only) > 1) && ($no_agent_action_value =~ /AGENTVMAIL/) )
+					{
+					### Grab user's voicemail ID from the database
+					$stmtA = "SELECT voicemail_id FROM vicidial_users where user='$agent_only';";
+					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+					$sthArows=$sthA->rows;
+						$dbhP=$dbhA;   $mysql_count='02125';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
+					if ($sthArows > 0)
+						{
+						@aryA = $sthA->fetchrow_array;
+						$no_agent_action_value = 	$aryA[0];
+						}
+					$sthA->finish();
+					}
+				$newcallerid = "\"$VCcallerid <$transfer_cid>\"";
+				$AGI->set_callerid($newcallerid);
+				print STDERR "Setting CID \"$newcallerid\"\n";
+				checkresult($result);
+				if ($AGILOG) {$agi_string = "callerID changed: $newcallerid";   &agi_output;}
+				if ($no_agent_action =~ /VMAIL_NO_INST/) 
+					{$voicemail_dump_exten = $voicemail_dump_exten_no_inst;}
+				$DROPexten = "$voicemail_dump_exten$no_agent_action_value";
+				}
+			if ($no_agent_action =~ /INGROUP/)
+				{ # 90009*CL_uk3survy_*8301*10000123*universal*7275551212*1234*"
+				if (length($no_agent_action_value) < 10)
+					{$no_agent_action_value = 'SALESLINE,CID,LB,998,TESTCAMP,1';}
+				@IGno_agent_action_value = split(/,/,$no_agent_action_value);
+				$IGgroup_id =		$IGno_agent_action_value[0];
+				$IGhandle_method =	$IGno_agent_action_value[1];
+				$IGsearch_method =	$IGno_agent_action_value[2];
+				$IGlist_id =		$IGno_agent_action_value[3];
+				$IGcampaign_id =	$IGno_agent_action_value[4];
+				$IGphone_code =		$IGno_agent_action_value[5];
+
+				$NA_prefix='90009';
+				if ( ($inbound_answer_config > 0) && ($answer_signal =~ /NONE/i) )
+					{$NA_prefix='98009';}
+				$DROPexten = "$NA_prefix*$IGgroup_id$S$S$insert_lead_id$S$S$phone_number$S$fronter$S";
+				}
+			### if DROP extension is defined then send the dropped call there instead of hangup
+			if (length($DROPexten)>0)
+				{
+				# If answer signal config is enabled and the in-group is set to send one at ROUTE, send an Answer signal
+				if ( ($inbound_answer_config > 0) and ($answer_signal =~ /ROUTE/i) ) 
+					{
+					$AGI->answer();
+					if ($AGILOG) {$agi_string = "   Answering call: - $channel|$answer_signal";   &agi_output;}
+					}
+
+				if ($no_delay_call_route =~ /N/)
+					{
+					$AGI->stream_file('sip-silence'); # stop music-on-hold process
+					$AGI->stream_file('sip-silence');
+					### sleep for 99 hundredths of a second
+					usleep(1*990*1000);
+					}
+
+				if ( ($inbound_answer_config > 0) and ($answer_signal =~ /NONE/i) ) 
+					{
+					if ($AGILOG) {$agi_string = "     skipping sip-silence playback: $channel|";   &agi_output;}
+					}
+				else
+					{
+					$AGI->stream_file('sip-silence');
+					$AGI->stream_file('sip-silence');
+					$AGI->stream_file('sip-silence');
+					$AGI->stream_file('sip-silence');
+					}
+
+				if ($AGILOG) {$agi_string = "exiting the VDAD app no agent no queue, transferring call to $DROPexten";   &agi_output;}
+				print "SET CONTEXT $ext_context\n";
+					$result = <STDIN>;
+					checkresult($result);
+				print "SET EXTENSION $DROPexten\n";
+					$result = <STDIN>;
+					checkresult($result);
+				print "SET PRIORITY 1\n";
+					$result = <STDIN>;
+					checkresult($result);
+				}
+			}
+
+		if ($no_agent_action =~ /MESSAGE/)
+			{
+			if (length($no_agent_action_value) > 0)
+				{
+				$AGI->stream_file('sip-silence');
+				$AGI->stream_file('sip-silence');
+				if ($no_agent_action_value =~ /\|/)
+					{
+					@no_agent_action_value_array = split(/\|/,$no_agent_action_value);
+					$w=0;
+					foreach(@no_agent_action_value_array)
+						{
+						if (length($no_agent_action_value_array[$w])>0)
+							{
+							$AGI->stream_file("$no_agent_action_value_array[$w]");
+							}
+						$w++;
+						}
+					}
+				else
+					{$AGI->stream_file("$no_agent_action_value");}
+				}
+			### sleep for 99 hundredths of a second
+			usleep(1*990*1000);
+
+			### insert a NEW record to the vicidial_manager table to hangup the channel
+			$stmtA = "INSERT INTO vicidial_manager values('','','$SQLdate','NEW','N','$VARserver_ip','','Hangup','$VHqueryCID','Channel: $channel','','','','','','','','','')";
+			$affected_rows = $dbhA->do($stmtA);  
+				$dbhP=$dbhA;   $mysql_count='02021';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
+			if ($AGILOG) {$agi_string = "--  NA VDCL call_hungup after hours: |$VHqueryCID|$VDADconf_exten|$channel|insert to vicidial_manager";   &agi_output;}
+			}
+
+		$dbhA->disconnect();
+
+		exit;
+		}
+	}
+### END No-Agent-No-Queue process ###
+
 
 
 sub checkresult 
