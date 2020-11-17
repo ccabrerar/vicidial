@@ -288,8 +288,10 @@ talked_sec INT(10),
 extension VARCHAR(100),
 user VARCHAR(20),
 lead_id INT(9) UNSIGNED default '0',
+campaign_id VARCHAR(20) default '',
 index (parked_time),
-index (lead_id)
+index (lead_id),
+index (campaign_id)
 ) ENGINE=MyISAM;
 
 CREATE INDEX uniqueid_park on park_log (uniqueid);
@@ -1045,7 +1047,8 @@ amd_agent_route_options ENUM('ENABLED','DISABLED','PENDING') default 'DISABLED',
 browser_alert_sound VARCHAR(20) default '---NONE---',
 browser_alert_volume TINYINT(3) UNSIGNED default '50',
 three_way_record_stop_exception VARCHAR(40) default 'DISABLED',
-pause_max_exceptions VARCHAR(40) default ''
+pause_max_exceptions VARCHAR(40) default '',
+hopper_drop_run_trigger VARCHAR(1) default 'N'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_lists (
@@ -1613,7 +1616,9 @@ agent_custtalk_today BIGINT(14) UNSIGNED default '0',
 agent_acw_today BIGINT(14) UNSIGNED default '0',
 agent_pause_today BIGINT(14) UNSIGNED default '0',
 answering_machines_today INT(9) UNSIGNED default '0',
-agenthandled_today INT(9) UNSIGNED default '0'
+agenthandled_today INT(9) UNSIGNED default '0',
+park_calls_today MEDIUMINT(8) UNSIGNED default '0',
+park_sec_today BIGINT(14) UNSIGNED default '0'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_dnc (
@@ -4588,6 +4593,9 @@ CREATE UNIQUE INDEX vlesa on vicidial_sip_action_log_archive (caller_code,call_d
 
 CREATE TABLE vicidial_vmm_counts_archive LIKE vicidial_vmm_counts;
 
+CREATE TABLE park_log_archive LIKE park_log;
+CREATE UNIQUE INDEX uniqueidtime_park on park_log_archive (uniqueid,parked_time);
+
 GRANT RELOAD ON *.* TO cron@'%';
 GRANT RELOAD ON *.* TO cron@localhost;
 
@@ -4670,4 +4678,4 @@ INSERT INTO vicidial_settings_containers VALUES ('INTERNATIONAL_DNC_IMPORT','Pro
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1609',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1611',db_schema_update_date=NOW(),reload_timestamp=NOW();

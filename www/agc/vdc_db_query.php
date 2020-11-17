@@ -496,10 +496,11 @@
 # 200719-1645 - Added EVERY_NEW_ALLCALL queuemetrics_pausereason option
 # 200825-2342 - Added option for manual-only sip actions
 # 200828-1535 - Fixed issue with dispo URL statuse being sent for CBHOLD statuses
+# 201111-2139 - Fix for AGENTDIRECT selected in-groups issue #1241
 #
 
-$version = '2.14-389';
-$build = '200828-1535';
+$version = '2.14-390';
+$build = '201111-2139';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=839;
@@ -16568,8 +16569,8 @@ if ($ACTION == 'CALLSINQUEUEview')
 		$AccampSQL = preg_replace('/\s/',"','", $AccampSQL);
 		if (preg_match('/AGENTDIRECT/i', $AccampSQL))
 			{
-			$AccampSQL = preg_replace('/AGENTDIRECT/','', $AccampSQL);
-			$ADsql = "or ( (campaign_id LIKE \"%AGENTDIRECT%\") and (agent_only='$user') )";
+			$ADsql = "or ( (campaign_id IN('$AccampSQL')) and (agent_only='$user') )";
+			$AccampSQL = preg_replace('/AGENTDIRECT/i','', $AccampSQL);
 			}
 
 		### grab the basic data on calls in the queue for this agent

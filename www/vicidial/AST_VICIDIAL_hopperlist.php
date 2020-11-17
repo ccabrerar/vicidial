@@ -1,7 +1,7 @@
 <?php 
 # AST_VICIDIAL_hopperlist.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -27,6 +27,7 @@
 # 170409-1544 - Added IP List validation code
 # 180310-2250 - Added optional source_id display
 # 190716-2119 - Added rank
+# 201111-1435 - Added Campaign Drop-Run load
 #
 
 $startMS = microtime();
@@ -484,6 +485,7 @@ P = <?php echo _QXZ("Non-Agent API hopper load"); ?><br>
 Q = <?php echo _QXZ("No-hopper queue insert"); ?><br>
 R = <?php echo _QXZ("Recycled leads"); ?><br>
 S = <?php echo _QXZ("Standard hopper load"); ?><br>
+D = <?php echo _QXZ("Campaign Drop-Run load"); ?><br>
 
 
 

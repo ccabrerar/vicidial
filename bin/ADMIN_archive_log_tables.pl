@@ -58,6 +58,7 @@
 # 190531-0841 - Added vicidial_log_extended_sip archiving
 # 190926-0005 - Added vicidial_sip_action_log archiving
 # 200102-0846 - Added vicidial_vmm_counts archiving
+# 201107-2206 - Added optional park_log archiving
 #
 
 $CALC_TEST=0;
@@ -65,6 +66,7 @@ $T=0;   $TEST=0;
 $only_trim_archive=0;
 $recording_log_archive=0;
 $did_log_archive=0;
+$park_log_archive=0;
 $wipe_closer_log=0;
 
 ### begin parsing run-time options ###
@@ -95,6 +97,7 @@ if (length($ARGV[0])>1)
 		print "                               vicidial_log_archive, vicidial_agent_log_archive, vicidial_closer_log_archive, vicidial_xfer_log_archive\n";
 		print "  [--recording-log-days=XX] = OPTIONAL, number of days to archive recording_log table only past\n";
 		print "  [--did-log-days=XX] = OPTIONAL, number of days to archive vicidial_did_log table only past\n";
+		print "  [--park-log-days=XX] = OPTIONAL, number of days to archive park_log table only past\n";
 		print "  [--cpd-log-purge-days=XX] = OPTIONAL, number of days to purge vicidial_cpd_log table only past\n";
 		print "  [--wipe-closer-log] = OPTIONAL, deletes all records from vicidial_closer_log after archiving\n";
 		print "  [--wipe-all-being-archived] = OPTIONAL, deletes all records from most tables after archiving\n";
@@ -217,6 +220,18 @@ if (length($ARGV[0])>1)
 			if ($Q < 1)
 				{print "\n----- DID LOG ARCHIVE ACTIVE, DAYS: $diddays -----\n\n";}
 			}
+		if ($args =~ /--park-log-days=/i)
+			{
+			$park_log_archive++;
+			@data_in = split(/--park-log-days=/,$args);
+			$parkdays = $data_in[1];
+			$parkdays =~ s/ .*$//gi;
+			$parkdays =~ s/\D//gi;
+			if ($parkdays > 999999)
+				{$parkdays=1825;}
+			if ($Q < 1) 
+				{print "\n----- PARK LOG ARCHIVE ACTIVE, DAYS: $parkdays -----\n\n";}
+			}
 		if ($args =~ /--cpd-log-purge-days=/i)
 			{
 			$cpd_log_purge++;
@@ -302,6 +317,19 @@ if ($did_log_archive > 0)
 	if ($DIDsec < 10) {$DIDsec = "0$DIDsec";}
 	$DIDdel_time = "$DIDyear-$DIDmon-$DIDmday $DIDhour:$DIDmin:$DIDsec";
 	}
+if ($park_log_archive > 0) 
+	{
+	$PARKdel_epoch = ($secX - (86400 * $parkdays));   # X days ago
+	($PARKsec,$PARKmin,$PARKhour,$PARKmday,$PARKmon,$PARKyear,$PARKwday,$PARKyday,$PARKisdst) = localtime($PARKdel_epoch);
+	$PARKyear = ($PARKyear + 1900);
+	$PARKmon++;
+	if ($PARKmon < 10) {$PARKmon = "0$PARKmon";}
+	if ($PARKmday < 10) {$PARKmday = "0$PARKmday";}
+	if ($PARKhour < 10) {$PARKhour = "0$PARKhour";}
+	if ($PARKmin < 10) {$PARKmin = "0$PARKmin";}
+	if ($PARKsec < 10) {$PARKsec = "0$PARKsec";}
+	$PARKdel_time = "$PARKyear-$PARKmon-$PARKmday $PARKhour:$PARKmin:$PARKsec";
+	}
 if ($cpd_log_purge > 0)
 	{
 	$CPDdel_epoch = ($secX - (86400 * $CPDdays));   # X days ago
@@ -325,6 +353,7 @@ if (!$Q) {print "_archive tables and delete records in original tables older tha
 if (!$Q) {print "$CLIdays days ( $del_time [$del_date]|$del_epoch ) from current date \n\n";}
 if ( (!$Q) && ($recording_log_archive > 0) ) {print "REC $RECORDINGdays days ( $RECdel_time|$RECdel_epoch ) from current date \n\n";}
 if ( (!$Q) && ($did_log_archive > 0) ) {print "DID $diddays days ( $DIDdel_time|$DIDdel_epoch ) from current date \n\n";}
+if ( (!$Q) && ($park_log_archive > 0) ) {print "PARK $parkdays days ( $PARKdel_time|$PARKdel_epoch ) from current date \n\n";}
 if ( (!$Q) && ($cpd_log_purge > 0) ) {print "CPD $CPDdays days ( $CPDdel_time|$CPDdel_epoch ) from current date \n\n";}
 
 if ($CALC_TEST > 0)
@@ -401,6 +430,7 @@ if (!$T)
 		#    LEVEL 1:
 		# call_log_archive, vicidial_log_extended_archive, vicidial_dial_log_archive, vicidial_drop_log
 		#    LEVEL 2:
+
 		# vicidial_carrier_log_archive, vicidial_api_log_archive, vicidial_amd_log_archive
 		#    LEVEL 3:
 		# vicidial_log_archive, vicidial_agent_log_archive, vicidial_closer_log_archive, vicidial_xfer_log_archive
@@ -2884,6 +2914,59 @@ if (!$T)
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 
 			$stmtA = "optimize table vicidial_did_log_archive;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			}
+		}
+
+
+	if ($park_log_archive > 0) 
+		{
+		##### park_log
+		$stmtA = "SELECT count(*) from park_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$park_log_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		$stmtA = "SELECT count(*) from park_log_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$park_log_archive_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		if (!$Q) {print "\nProcessing park_log table...  ($park_log_count|$park_log_archive_count)\n";}
+		$stmtA = "INSERT IGNORE INTO park_log_archive SELECT * from park_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows inserted into park_log_archive table \n";}
+		
+		$rv = $sthA->err();
+		if (!$rv) 
+			{	
+			$stmtA = "DELETE FROM park_log WHERE parked_time < '$DIDdel_time';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			if (!$Q) {print "$sthArows rows deleted from park_log table \n";}
+
+			$stmtA = "optimize table park_log;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+
+			$stmtA = "optimize table park_log_archive;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			}

@@ -233,7 +233,7 @@ else
 	# VARhttp://127.0.0.1/agc/vdc_LTT_generate.php?lead_id=--A--lead_id--B--&user=--A--user--B--&address3=--A--address3--B--&vendor_lead_code=--A--vendor_lead_code--B--&owner=--A--owner--B--&province=--A--province--B--&security_phrase=--A--security_phrase--B--&alt_phone=--A--alt_phone--B--
 	#
 	# NOTES:
-	# After this page loads, the agent will just need to open the transfer panel and click on the 'VM' button to send the call to the customized message(or use a properly-configured HotKey to do so). Keep in mind that there are many campaign settings that can override this function, so you will want to disable 'AM Message Wildcards' and 'VM Message Groups', and also set the 'Answering Machine Message' to 'LTTagent' for this to work.
+	# After this page loads, the agent will just need to open the transfer panel and click on the 'VM' button to send the call to the customized message(or use a properly-configured HotKey to do so). Keep in mind that there are some campaign settings that can override this function, so you will want to disable 'AM Message Wildcards' and 'VM Message Groups', and also set the 'Answering Machine Message' to 'LTTagent' for this to work.
 	#
 
 	if ($address3 == 'ACME Shipping') {$EXship01a = 'EXshipACME.wav';}

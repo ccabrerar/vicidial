@@ -28,6 +28,7 @@
 # 200115-1157 - Added call report export ALTERNATE_2 header
 # 200428-1336 - Added RS_INcolumnsHIDE, RS_report_default_format & RS_AGENTstatusTALLY options
 # 200506-1628 - Added RS_CUSTINFOdisplay & RS_CUSTINFOminUL options
+# 201107-2257 - Added RS_parkSTATS option
 #
 
 # used by the realtime_report.php script
@@ -71,6 +72,8 @@ $RS_PRESETstats =		0;	# 0=no, 1=yes
 $RS_AGENTtimeSTATS =	0;	# 0=no, 1=yes
 $RS_droppedOFtotal =	0;	# 0=no, 1=yes
 $RS_logoutLINK =		0;	# 0=no, 1=yes
+$RS_parkSTATS =			0;	# 0=no, 1=yes, 2=limited
+$RS_SLAinSTATS =		0;	# 0=no, 1=yes, 2=TMA
 $RS_ListenBarge =		'MONITOR|BARGE|WHISPER';	# list of listen-related features separated by pipes: "MONITOR|BARGE|WHISPER"
 $RS_agentWAIT =			3;	# 3 or 4
 $RS_INcolumnsHIDE =		0;	# 0=no, 1=yes  # whether to hide the 'HOLD' & 'IN-GROUP' columns in the agent detail section

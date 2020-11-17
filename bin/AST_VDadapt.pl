@@ -52,6 +52,7 @@
 # 190720-2122 - Added audit and fixing of missing outbound auto-dial logs if Call Quotas is enabled
 # 190722-1004 - Added more logging and log-audit portions to Call Quotas log audit code
 # 200811-1600 - Include live agents from other campaigns if they have the campaign Drop-InGroup selected and drop sec < 0
+# 201106-2141 - Added calculation and caching of park_log stats per campaign/in-group
 #
 
 # constants
@@ -2358,6 +2359,8 @@ sub calculate_drops
 	$VCSagent_acw_today[$i]=0;
 	$VCSagent_calls_today[$i]=0;
 	$VCSlive_calls[$i]=0;
+	$VCSpark_calls_today[$i]=0;
+	$VCSpark_sec_today[$i]=0;
 
 	# LAST ONE MINUTE CALL AND DROP STATS
 	$stmtA = "SELECT count(*) from $vicidial_log where campaign_id='$campaign_id[$i]' and call_date > '$VDL_one';";
@@ -3485,7 +3488,19 @@ sub calculate_drops
 		$sthA->finish();
 		}
 
-	$stmtA = "UPDATE vicidial_campaign_stats SET calls_today='$VCScalls_today[$i]',answers_today='$VCSanswers_today[$i]',drops_today='$VCSdrops_today[$i]',drops_today_pct='$VCSdrops_today_pct[$i]',drops_answers_today_pct='$VCSdrops_answers_today_pct[$i]',calls_hour='$VCScalls_hour[$i]',answers_hour='$VCSanswers_hour[$i]',drops_hour='$VCSdrops_hour[$i]',drops_hour_pct='$VCSdrops_hour_pct[$i]',calls_halfhour='$VCScalls_halfhour[$i]',answers_halfhour='$VCSanswers_halfhour[$i]',drops_halfhour='$VCSdrops_halfhour[$i]',drops_halfhour_pct='$VCSdrops_halfhour_pct[$i]',calls_fivemin='$VCScalls_five[$i]',answers_fivemin='$VCSanswers_five[$i]',drops_fivemin='$VCSdrops_five[$i]',drops_fivemin_pct='$VCSdrops_five_pct[$i]',calls_onemin='$VCScalls_one[$i]',answers_onemin='$VCSanswers_one[$i]',drops_onemin='$VCSdrops_one[$i]',drops_onemin_pct='$VCSdrops_one_pct[$i]',agent_non_pause_sec='$VCSagent_nonpause_time[$i]',agent_calls_today='$VCSagent_calls_today[$i]',agent_pause_today='$VCSagent_pause_today[$i]',agent_wait_today='$VCSagent_wait_today[$i]',agent_custtalk_today='$VCSagent_custtalk_today[$i]',agent_acw_today='$VCSagent_acw_today[$i]',answering_machines_today='$VCSam_today[$i]',agenthandled_today='$VCSagenthandled_today[$i]',$VSCupdateSQL where campaign_id='$campaign_id[$i]';";
+	$stmtA = "SELECT count(*),sum(parked_sec) from park_log where campaign_id='$campaign_id[$i]' and parked_time > '$VDL_date';";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$VCSpark_calls_today[$i] =	$aryA[0];
+		$VCSpark_sec_today[$i] =	$aryA[1];
+		}
+	$sthA->finish();
+
+	$stmtA = "UPDATE vicidial_campaign_stats SET calls_today='$VCScalls_today[$i]',answers_today='$VCSanswers_today[$i]',drops_today='$VCSdrops_today[$i]',drops_today_pct='$VCSdrops_today_pct[$i]',drops_answers_today_pct='$VCSdrops_answers_today_pct[$i]',calls_hour='$VCScalls_hour[$i]',answers_hour='$VCSanswers_hour[$i]',drops_hour='$VCSdrops_hour[$i]',drops_hour_pct='$VCSdrops_hour_pct[$i]',calls_halfhour='$VCScalls_halfhour[$i]',answers_halfhour='$VCSanswers_halfhour[$i]',drops_halfhour='$VCSdrops_halfhour[$i]',drops_halfhour_pct='$VCSdrops_halfhour_pct[$i]',calls_fivemin='$VCScalls_five[$i]',answers_fivemin='$VCSanswers_five[$i]',drops_fivemin='$VCSdrops_five[$i]',drops_fivemin_pct='$VCSdrops_five_pct[$i]',calls_onemin='$VCScalls_one[$i]',answers_onemin='$VCSanswers_one[$i]',drops_onemin='$VCSdrops_one[$i]',drops_onemin_pct='$VCSdrops_one_pct[$i]',agent_non_pause_sec='$VCSagent_nonpause_time[$i]',agent_calls_today='$VCSagent_calls_today[$i]',agent_pause_today='$VCSagent_pause_today[$i]',agent_wait_today='$VCSagent_wait_today[$i]',agent_custtalk_today='$VCSagent_custtalk_today[$i]',agent_acw_today='$VCSagent_acw_today[$i]',answering_machines_today='$VCSam_today[$i]',agenthandled_today='$VCSagenthandled_today[$i]',park_calls_today='$VCSpark_calls_today[$i]',park_sec_today='$VCSpark_sec_today[$i]',$VSCupdateSQL where campaign_id='$campaign_id[$i]';";
 	$affected_rows = $dbhA->do($stmtA);
 	if ($DBX) {print "OUTBOUND $campaign_id[$i]|$affected_rows|$stmtA|\n";}
 
@@ -4436,6 +4451,8 @@ sub calculate_drops_inbound
 	$iVCSlive_calls[$p]=0;
 	$itotal_agents[$p]=0;
 	$itotal_remote_agents[$p]=0;
+	$iVCSpark_calls_today[$p]=0;
+	$iVCSpark_sec_today[$p]=0;
 
 	# DAILY STATS UPDATE
 	if ($daily_stats > 0)
@@ -4473,6 +4490,7 @@ sub calculate_drops_inbound
 			$itotal_remote_agents[$p] =	$aryA[0];
 			}
 		$sthA->finish();
+
 		$debug_ingroup_output .= "     DAILY STATS|$iVCSlive_calls[$p]|$itotal_agents[$p]|$itotal_remote_agents[$p]|";
 		}
 
@@ -5648,6 +5666,18 @@ sub calculate_drops_inbound
 				}
 			$sthA->finish();
 			}
+
+		$stmtA = "SELECT count(*),sum(parked_sec) from park_log where campaign_id='$group_id[$p]' and parked_time > '$VDL_date';";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$iVCSpark_calls_today[$p] =	$aryA[0];
+			$iVCSpark_sec_today[$p] =	$aryA[1];
+			}
+		$sthA->finish();
 		}
 
 
@@ -5879,7 +5909,7 @@ sub calculate_drops_inbound
 		if ($DBX) {print "$group_id[$p]|$stmtA|\n";}
 		}
 
-	$stmtA = "UPDATE vicidial_campaign_stats SET calls_today='$iVCScalls_today[$p]',answers_today='$iVCSanswers_today[$p]',drops_today='$iVCSdrops_today[$p]',drops_today_pct='$iVCSdrops_today_pct[$p]',drops_answers_today_pct='$iVCSdrops_answers_today_pct[$p]',hold_sec_stat_one='$answer_sec_pct_rt_stat_one_PCT[$p]',hold_sec_stat_two='$answer_sec_pct_rt_stat_two_PCT[$p]',hold_sec_answer_calls='$hold_sec_answer_calls[$p]',hold_sec_drop_calls='$hold_sec_drop_calls[$p]',hold_sec_queue_calls='$hold_sec_queue_calls[$p]',$VSCupdateSQL where campaign_id='$group_id[$p]';";
+	$stmtA = "UPDATE vicidial_campaign_stats SET calls_today='$iVCScalls_today[$p]',answers_today='$iVCSanswers_today[$p]',drops_today='$iVCSdrops_today[$p]',drops_today_pct='$iVCSdrops_today_pct[$p]',drops_answers_today_pct='$iVCSdrops_answers_today_pct[$p]',hold_sec_stat_one='$answer_sec_pct_rt_stat_one_PCT[$p]',hold_sec_stat_two='$answer_sec_pct_rt_stat_two_PCT[$p]',hold_sec_answer_calls='$hold_sec_answer_calls[$p]',hold_sec_drop_calls='$hold_sec_drop_calls[$p]',hold_sec_queue_calls='$hold_sec_queue_calls[$p]',park_calls_today='$iVCSpark_calls_today[$p]',park_sec_today='$iVCSpark_sec_today[$p]',$VSCupdateSQL where campaign_id='$group_id[$p]';";
 	$affected_rows = $dbhA->do($stmtA);
 	if ($DBX) {print "INBOUND $group_id[$p]|$affected_rows|$stmtA|\n";}
 

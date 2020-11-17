@@ -1,7 +1,7 @@
 <?php
 # callcard_admin.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This callcard script is to administer the callcard accounts in ViciDial
 # it is separate from the standard admin.php script. callcard_enabled in
@@ -22,10 +22,11 @@
 # 170409-1539 - Added IP List validation code
 # 170829-0040 - Added screen color settings
 # 180508-0115 - Added new help display
+# 201111-1615 - Fix for Issue #1230
 #
 
-$version = '2.14-12';
-$build = '170409-1539';
+$version = '2.14-13';
+$build = '201111-1615';
 
 $MT[0]='';
 
@@ -137,22 +138,28 @@ if (preg_match("/YES/i",$batch))
 	}
 else
 	{
-	$USER=$_SERVER['PHP_AUTH_USER'];
 	$PASS=$_SERVER['PHP_AUTH_PW'];
+	$USER=$_SERVER['PHP_AUTH_USER'];
+	$user=$_SERVER['PHP_AUTH_USER'];
+	$PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 	}
 
 if ($non_latin < 1)
 	{
-	$USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $USER);
 	$PASS = preg_replace('/[^-_0-9a-zA-Z]/', '', $PASS);
+	$USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $USER);
+	$user = preg_replace('/[^-_0-9a-zA-Z]/', '', $user);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
 	}
 else
 	{
 	$PASS = preg_replace("/'|\"|\\\\|;/","",$PASS);
 	$USER = preg_replace("/'|\"|\\\\|;/","",$USER);
+	$user = preg_replace("/'|\"|\\\\|;/","",$user);
+	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
 	}
 
-$stmt="SELECT selected_language from vicidial_users where user='$USER';";
+$stmt="SELECT selected_language from vicidial_users where user='$user';";
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $sl_ct = mysqli_num_rows($rslt);
@@ -177,13 +184,13 @@ if ($auth_message == 'GOOD')
 
 if ($auth > 0)
 	{
-	$stmt="SELECT count(*) from vicidial_users where user='$USER' and user_level > 7 and view_reports='1';";
+	$stmt="SELECT count(*) from vicidial_users where user='$user' and user_level > 7 and view_reports='1';";
 	if ($DB) {echo "|$stmt|\n";}
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$row=mysqli_fetch_row($rslt);
 	$admin_auth=$row[0];
 
-	$stmt="SELECT count(*) from vicidial_users where user='$USER' and user_level > 6 and view_reports='1';";
+	$stmt="SELECT count(*) from vicidial_users where user='$user' and user_level > 6 and view_reports='1';";
 	if ($DB) {echo "|$stmt|\n";}
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$row=mysqli_fetch_row($rslt);
@@ -225,7 +232,7 @@ else
 	exit;
 	}
 
-$stmt="SELECT callcard_admin,user_group,full_name,qc_enabled from vicidial_users where user='$USER';";
+$stmt="SELECT callcard_admin,user_group,full_name,qc_enabled from vicidial_users where user='$user';";
 $rslt=mysql_to_mysqli($stmt, $link);
 $row=mysqli_fetch_row($rslt);
 $LOGcallcard_admin =	$row[0];

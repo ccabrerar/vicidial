@@ -1328,3 +1328,17 @@ UPDATE system_settings SET db_schema_version='1608',db_schema_update_date=NOW() 
 ALTER TABLE vicidial_inbound_groups ADD no_agent_delay SMALLINT(5) default '0';
 
 UPDATE system_settings SET db_schema_version='1609',db_schema_update_date=NOW() where db_schema_version < 1609;
+
+ALTER TABLE park_log ADD campaign_id VARCHAR(20) default '';
+CREATE INDEX pl_campaign_id on park_log(campaign_id);
+CREATE TABLE park_log_archive LIKE park_log;
+CREATE UNIQUE INDEX uniqueidtime_park on park_log_archive (uniqueid,parked_time);
+
+ALTER TABLE vicidial_campaign_stats ADD park_calls_today MEDIUMINT(8) UNSIGNED default '0';
+ALTER TABLE vicidial_campaign_stats ADD park_sec_today BIGINT(14) UNSIGNED default '0';
+
+UPDATE system_settings SET db_schema_version='1610',db_schema_update_date=NOW() where db_schema_version < 1610;
+
+ALTER TABLE vicidial_campaigns ADD hopper_drop_run_trigger VARCHAR(1) default 'N';
+
+UPDATE system_settings SET db_schema_version='1611',db_schema_update_date=NOW() where db_schema_version < 1611;

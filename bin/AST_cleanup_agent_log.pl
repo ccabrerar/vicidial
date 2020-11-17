@@ -44,6 +44,7 @@
 # 180102-0111 - Added a check for vicidial_log entries with a user with no vicidial_agent_log entry
 # 200422-1621 - Added optional check for duplicate vicidial_agent_log entries
 # 200606-1802 - Added optional queue_log cleanup for multiple PAUSEREASON records in the same PAUSE session
+# 201106-2146 - Added EXITEMPTY verb for queue_log cleanup section
 #
 
 # constants
@@ -1004,8 +1005,8 @@ if ($enable_queuemetrics_logging > 0)
 	while ($EQenter_records > $h)
 		{
 		$EQend_count=0;
-		##### find the CONNECT/ABANDON/COMPLETEAGENT/COMPLETECALLER/CALLSTATUS/EXITWITHKEY/EXITWITHTIMEOUT count for each record
-		$stmtB = "SELECT count(*) FROM queue_log where verb IN('CONNECT','ABANDON','COMPLETEAGENT','COMPLETECALLER','CALLSTATUS','EXITWITHKEY','EXITWITHTIMEOUT') and call_id='$call_id[$h]';";
+		##### find the CONNECT/ABANDON/COMPLETEAGENT/COMPLETECALLER/CALLSTATUS/EXITWITHKEY/EXITWITHTIMEOUT/EXITEMPTY count for each record
+		$stmtB = "SELECT count(*) FROM queue_log where verb IN('CONNECT','ABANDON','COMPLETEAGENT','COMPLETECALLER','CALLSTATUS','EXITWITHKEY','EXITWITHTIMEOUT','EXITEMPTY') and call_id='$call_id[$h]';";
 		$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
 		$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
 		$CQ_records=$sthB->rows;

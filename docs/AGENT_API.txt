@@ -1,4 +1,4 @@
-AGENT API DOCUMENT		Started: 2008-07-03	Updated: 2020-05-22
+AGENT API DOCUMENT		Started: 2008-07-03	Updated: 2020-11-12
 
 This document describes the functions of an API(Application Programming Interface)
 for the VICIDIAL Agent screen. This functionality will be rather limited at first
@@ -39,6 +39,7 @@ switch_lead - for inbound calls, switches lead_id of live inbound call on agent 
 calls_in_queue_count - display a count of the calls waiting in queue for the specific agent
 force_fronter_leave_3way - will send a command to fronter agent to leave-3way call that executing agent is on
 force_fronter_audio_stop - will send a command to fronter agent session to stop any audio_playback playing on it
+vm_message - set a custom voicemail message to be played when agent clicks the VM button on the agent screen
 
 
 New scripts:
@@ -870,6 +871,38 @@ ERROR: campaign not found - 6666|TESTCAMP
 ERROR: campaign does not allow inbound lead search - 6666|TESTCAMP
 ERROR: switch-to lead not found - 6666|12345|123456789
 SUCCESS: switch_lead function set - 6666|12345|1234567890|TESTCAMP|12346
+
+
+
+
+
+--------------------------------------------------------------------------------
+vm_message - 
+
+IMPORTANT NOTES: 
+- Set the campaign "Answering Machine Message" setting to 'LTTagent' for this to work.
+- There are some other campaign settings that can override this function, so you will want to disable 'AM Message Wildcards' and 'VM Message Groups'.
+
+DESCRIPTION:
+Set a custom voicemail message to be played when agent clicks the VM button on the agent screen
+
+VALUES:
+value -
+ REQUIRED, One audio file or multiple audio files(separated by pipes) to play when the call is sent to VM by the agent
+lead_id -
+ OPTIONAL, The lead_id of the call that the agent is currently on, if populated it will validate that is the lead the agent is talking to
+
+EXAMPLE URLS:
+http://server/agc/api.php?source=test&user=6666&pass=1234&agent_user=1000&function=vm_message&value=EXship01|EXship02|EXship03
+http://server/agc/api.php?source=test&user=6666&pass=1234&agent_user=1000&function=vm_message&lead_id=12345&value=appointment_reminder2
+
+RESPONSES:
+ERROR: vm_message not valid - ||6666
+ERROR: no user found - 6666
+ERROR: agent_user is not logged in - 6666
+ERROR: current call does not match lead_id submitted - 6666
+ERROR: agent_user does not have a live call - 6666
+SUCCESS: vm_message function set - 6666|12345|EXship01|EXship02|EXship03
 
 
 

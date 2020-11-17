@@ -1,7 +1,7 @@
 <?php
 # admin_search_lead.php   version 2.14
 #
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # AST GUI database administration search for lead info
 # admin_modify_lead.php
@@ -49,6 +49,7 @@
 # 170409-1541 - Added IP List validation code
 # 180421-0813 - Fix for slave db use, issue #1092
 # 191014-1316 - Fix for foreign language, issue #1187
+# 201111-1957 - Fix for side menu issue #1233
 #
 
 require("dbconnect_mysqli.php");
@@ -100,7 +101,7 @@ if (isset($_GET["called_count"]))			{$called_count=$_GET["called_count"];}
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,user_territories_active,slave_db_server,reports_use_slave_db,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,user_territories_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,qc_features_active FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
@@ -115,6 +116,7 @@ if ($qm_conf_ct > 0)
 	$reports_use_slave_db =			$row[5];
 	$SSenable_languages =			$row[6];
 	$SSlanguage_method =			$row[7];
+	$SSqc_features_active =			$row[8];
 	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
@@ -200,7 +202,7 @@ if ( $modify_leads < 1 )
 	exit;
 	}
 
-$stmt="SELECT full_name,modify_leads,admin_hide_lead_data,admin_hide_phone_data,user_group,ignore_group_on_search from vicidial_users where user='$PHP_AUTH_USER';";
+$stmt="SELECT full_name,modify_leads,admin_hide_lead_data,admin_hide_phone_data,user_group,ignore_group_on_search,qc_enabled from vicidial_users where user='$PHP_AUTH_USER';";
 $rslt=mysql_to_mysqli($stmt, $link);
 $row=mysqli_fetch_row($rslt);
 $LOGfullname =					$row[0];
@@ -209,6 +211,8 @@ $LOGadmin_hide_lead_data =		$row[2];
 $LOGadmin_hide_phone_data =		$row[3];
 $LOGuser_group =				$row[4];
 $LOGignore_group_on_search =	$row[5];
+$qc_auth =						$row[6];
+
 
 $stmt="SELECT allowed_campaigns,allowed_reports,admin_viewable_groups,admin_viewable_call_times from vicidial_user_groups where user_group='$LOGuser_group';";
 if ($DB) {echo "|$stmt|\n";}

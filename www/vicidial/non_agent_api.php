@@ -154,10 +154,12 @@
 # 200815-1025 - Added campaigns_list & hopper_list functions
 # 200824-2330 - Added search_method BLOCK option for hopper_list function
 # 201002-1545 - Added extension as recording lookup option, Allowed for secure sounds_web_server setting
+# 201106-1654 - Added campaign_id option to agent_stats_export function
+# 201113-0713 - Added delete_did option to update_did function, Issue #1242
 #
 
-$version = '2.14-131';
-$build = '201002-1545';
+$version = '2.14-133';
+$build = '201113-0713';
 $api_url_log = 0;
 
 $startMS = microtime();
@@ -550,6 +552,8 @@ if (isset($_GET["template_id"]))			{$template_id=$_GET["template_id"];}
 	elseif (isset($_POST["template_id"]))	{$template_id=$_POST["template_id"];}
 if (isset($_GET["on_hook_agent"]))			{$on_hook_agent=$_GET["on_hook_agent"];}
 	elseif (isset($_POST["on_hook_agent"]))	{$on_hook_agent=$_POST["on_hook_agent"];}
+if (isset($_GET["delete_did"]))				{$delete_did=$_GET["delete_did"];}
+	elseif (isset($_POST["delete_did"]))	{$delete_did=$_POST["delete_did"];}
 
 
 header ("Content-type: text/html; charset=utf-8");
@@ -784,6 +788,7 @@ if ($non_latin < 1)
 	$use_external_server_ip = preg_replace('/[^-_0-9a-zA-Z]/','',$use_external_server_ip);
 	$template_id = preg_replace('/[^-_0-9a-zA-Z]/','',$template_id);
 	$on_hook_agent = preg_replace('/[^-_0-9a-zA-Z]/','',$on_hook_agent);
+	$delete_did = preg_replace('/[^0-9a-zA-Z]/','',$delete_did);
 	}
 else
 	{
@@ -951,7 +956,7 @@ if ($auth < 1)
 	exit;
 	}
 
-$stmt="SELECT api_list_restrict,api_allowed_functions,user_group,selected_language from vicidial_users where user='$user' and active='Y';";
+$stmt="SELECT api_list_restrict,api_allowed_functions,user_group,selected_language,delete_inbound_dids from vicidial_users where user='$user' and active='Y';";
 if ($DB>0) {echo "DEBUG: auth query - $stmt\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $row=mysqli_fetch_row($rslt);
@@ -959,6 +964,8 @@ $api_list_restrict =		$row[0];
 $api_allowed_functions =	$row[1];
 $LOGuser_group =			$row[2];
 $VUselected_language =		$row[3];
+$VUdelete_inbound_dids =	$row[4];
+
 if ( ($api_list_restrict > 0) and ( ($function == 'add_lead') or ($function == 'update_lead') or ($function == 'update_list') or ($function == 'list_info') or ($function == 'list_custom_fields') ) )
 	{
 	$stmt="SELECT allowed_campaigns from vicidial_user_groups where user_group='$LOGuser_group';";
@@ -6622,6 +6629,41 @@ if ($function == 'update_did')
 					$groupSQL='';
 					$filter_clean_cid_numberSQL='';
 
+					if ($delete_did == 'Y')
+						{
+						if ($VUdelete_inbound_dids < 1)
+							{
+							$result = 'ERROR';
+							$result_reason = "update_did USER DOES NOT HAVE PERMISSION TO DELETE DIDS";
+							$data = "$allowed_user";
+							echo "$result: $result_reason: |$user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							exit;
+							}
+						else
+							{
+							$stmt="DELETE FROM vicidial_inbound_dids WHERE did_pattern='$did_pattern' limit 1;";
+							$rslt=mysql_to_mysqli($stmt, $link);
+							$update_count = mysqli_affected_rows($link);
+							if ($DB) {echo "$update_count|$stmt|\n";}
+
+							### LOG INSERTION Admin Log Table ###
+							$SQL_log = "$stmt|";
+							$SQL_log = preg_replace('/;/', '', $SQL_log);
+							$SQL_log = addslashes($SQL_log);
+							$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$user', ip_address='$ip', event_section='DIDS', event_type='DELETE', record_id='$did_id', event_code='ADMIN API DELETE DID', event_sql=\"$SQL_log\", event_notes='did: $did_pattern did_id: $did_id';";
+							if ($DB) {echo "|$stmt|\n";}
+							$rslt=mysql_to_mysqli($stmt, $link);
+
+							$result = 'SUCCESS';
+							$result_reason = "update_did DID HAS BEEN DELETED";
+							$data = "$did_pattern|$did_id";
+							echo "$result: $result_reason - $user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+
+							exit;
+							}
+						}
 					if (strlen($did_description) > 0)
 						{
 						if ( (strlen($did_description) > 50) or (strlen($did_description) < 6) )
@@ -7845,6 +7887,13 @@ if ($function == 'agent_stats_export')
 				$search_SQL .= "user='$agent_user'";
 				$search_ready++;
 				}
+			if ( (strlen($campaign_id)>0) and (strlen($campaign_id)<9) )
+				{
+				if (strlen($search_SQL)>5)
+					{$search_SQL .= " and ";}
+				$search_SQL .= "campaign_id='$campaign_id'";
+				$search_ready++;
+				}
 			if ( (strlen($datetime_start)>18) and (strlen($datetime_start)<20) and (strlen($datetime_end)>18) and (strlen($datetime_end)<20) )
 				{
 				$datetime_start = preg_replace("/\+/",' ',$datetime_start);
@@ -7860,7 +7909,7 @@ if ($function == 'agent_stats_export')
 				{
 				$result = 'ERROR';
 				$result_reason = "agent_stats_export INVALID SEARCH PARAMETERS";
-				$data = "$user|$agent_user|$datetime_start|$datetime_end";
+				$data = "$user|$agent_user|$datetime_start|$datetime_end|$campaign_id";
 				echo "$result: $result_reason: $data\n";
 				api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
 				exit;
@@ -7875,7 +7924,7 @@ if ($function == 'agent_stats_export')
 					{
 					$result = 'ERROR';
 					$result_reason = "agent_stats_export NO RECORDS FOUND";
-					$data = "$user|$agent_user|$lead_id|$date";
+					$data = "$user|$agent_user|$datetime_start|$datetime_end|$campaign_id";
 					echo "$result: $result_reason - $data\n";
 					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
 					exit;

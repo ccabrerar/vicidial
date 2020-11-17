@@ -84,10 +84,11 @@
 # 190925-1348 - Added logtable SIP Action
 # 191013-2105 - Fixes for PHP7
 # 200825-2343 - Added option for manual-only sip actions
+# 201111-2140 - Fix for AGENTDIRECT selected in-groups issue #1241
 #
 
-$version = '2.14-58';
-$build = '200825-2343';
+$version = '2.14-59';
+$build = '201111-2140';
 $php_script = 'conf_exten_check.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=51;
@@ -365,8 +366,8 @@ if ($ACTION == 'refresh')
 				$AccampSQL = preg_replace('/\s/',"','", $AccampSQL);
 				if (preg_match('/AGENTDIRECT/i', $AccampSQL))
 					{
+					$ADsql = "or ( (campaign_id IN('$AccampSQL')) and (agent_only='$user') )";
 					$AccampSQL = preg_replace('/AGENTDIRECT/i','', $AccampSQL);
-					$ADsql = "or ( (campaign_id LIKE \"%AGENTDIRECT%\") and (agent_only='$user') )";
 					}
 
 				### grab the number of calls being placed from this server and campaign
@@ -418,8 +419,8 @@ if ($ACTION == 'refresh')
 				$AccampSQL = preg_replace('/\s/',"','", $AccampSQL);
 				if (preg_match('/AGENTDIRECT/i', $AccampSQL))
 					{
+					$ADsql = "or ( (campaign_id IN('$AccampSQL')) and (agent_only='$user') )";
 					$AccampSQL = preg_replace('/AGENTDIRECT/i','', $AccampSQL);
-					$ADsql = "or ( (campaign_id LIKE \"%AGENTDIRECT%\") and (agent_only='$user') )";
 					}
 				}
 

@@ -46,6 +46,7 @@
 # 170923-1355 - Added system filter feature, before any other actions
 # 190216-0814 - Fix for user-group, in-group and campaign settings matching issues
 # 200623-2258 - Added Answer Signal options
+# 201112-0834 - Fix for AGENT routing, check for availability, issue #1211
 #
 
 
@@ -1251,6 +1252,63 @@ if ( ( ($max_queue_ingroup_calls > 0) || ($max_queue_ingroup_calls < 0) ) && ($n
 ##### END max queue ingroup calls redirect process #####
 
 
+### Route AGENT call to a logged-in VICIDIAL agent
+if ($did_route =~ /AGENT/)
+	{
+	if ($AGILOG) {$agi_string = "  did_route AGENT: |$user|$extension|$user_unavailable_action|";   &agi_output;}
+
+	$agent_live=0;
+	$queue_date_epoch = time();
+	$BDtarget = ($queue_date_epoch - 5);
+	($Bsec,$Bmin,$Bhour,$Bmday,$Bmon,$Byear,$Bwday,$Byday,$Bisdst) = localtime($BDtarget);
+	$Byear = ($Byear + 1900);
+	$Bmon++;
+	if ($Bmon < 10) {$Bmon = "0$Bmon";}
+	if ($Bmday < 10) {$Bmday = "0$Bmday";}
+	if ($Bhour < 10) {$Bhour = "0$Bhour";}
+	if ($Bmin < 10) {$Bmin = "0$Bmin";}
+	if ($Bsec < 10) {$Bsec = "0$Bsec";}
+	$BDtsSQLdate = "$Byear$Bmon$Bmday$Bhour$Bmin$Bsec";
+
+	# check for agent being logged-in  (removed ' and status NOT IN('PAUSED')')
+	$stmtA = "SELECT count(*) FROM vicidial_live_agents where user='$user' and last_update_time > '$BDtsSQLdate';";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$agent_live =    $aryA[0];
+		}
+	$sthA->finish();
+	if ($agent_live > 0)
+		{
+		$did_ig_prefix='99909';
+		if ( ($SSinbound_answer_config > 0) && ($inbound_route_answer =~ /N/i) )
+			{$did_ig_prefix='99809';}
+		$did_extension =	"$did_ig_prefix$S$did_id$S$S$S$route_type";
+		$exten_context =	$ext_context;
+		$did_route =		'EXTEN';
+
+		if ($AGILOG) {$agi_string = "AGENT available, Routing call: $agent_live|$user"; &agi_output;}
+		}
+	else
+		{
+		$did_route =		$user_unavailable_action;
+		$exten_context =	'default';
+		$route_type =		'NOAGENT';
+
+		if ($AGILOG) {$agi_string = "AGENT unavailable Redirect: |$user|$user_unavailable_action|$user_route_settings_ingroup|$did_extension|$stmtA|";   &agi_output;}
+
+		### Update the call in vicidial_did_log
+		$stmtA = "UPDATE vicidial_did_log SET did_route='NA_$did_route' where uniqueid='$uniqueid' and channel='$channel' and server_ip='$VARserver_ip' and caller_id_number='$callerid' and call_date='$SQLdate';";
+		if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+		$affected_rowsL = $dbhA->do($stmtA);
+		if ($AGILOG) {$agi_string = "--    DID UPDATE LOG : |$affected_rowsL|$stmtA|";   &agi_output;}
+		}
+	}
+
+
 ### Route call to a VICIDIAL-defined phone
 if ($did_route =~ /PHONE/)
 	{
@@ -1307,15 +1365,6 @@ if ( ($SSinbound_answer_config > 0) && ($inbound_route_answer =~ /N/i) )
 
 ### Route call to a VICIDIAL Inbound Group
 if ($did_route =~ /IN_GROUP/)
-	{
-	$did_extension = "$did_ig_prefix$S$did_id$S$S$S$route_type";
-	$exten_context = $ext_context;
-	$did_route = 'EXTEN';
-	}
-
-
-### Route call to a logged-in VICIDIAL agent
-if ($did_route =~ /AGENT/)
 	{
 	$did_extension = "$did_ig_prefix$S$did_id$S$S$S$route_type";
 	$exten_context = $ext_context;

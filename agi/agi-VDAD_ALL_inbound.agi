@@ -240,6 +240,7 @@
 # 200816-0910 - Fixed issue with cid_cb_confirmed_filename multi-prompt not playing last file
 # 201026-2333 - Fix for AGENTDIRECT issue
 # 201101-1058 - Added no_agent_delay option
+# 201106-2146 - Added EXITEMPTY and CALLSTATUS queue_log entry for NANQUE calls
 #
 
 $script = 'agi-VDAD_ALL_inbound.agi';
@@ -1932,6 +1933,7 @@ if ( ( ( ( ($hm < $ct_default_start) || ($hm > $ct_default_stop) ) && ($hm >= $c
 if ( ( ($no_agent_no_queue =~ /Y|NO_PAUSED|NO_READY/) || ($MCnanque_override > 0) ) && ($dial_ingroup_flag < 1) && ($no_agent_delay < 1) )
 	{
 	if ($AGILOG) {$agi_string = "--  NANQUE check started: |$callerid|$insert_lead_id|$channel|$no_agent_delay|$no_agent_no_queue_checked";   &agi_output;}
+	$NQ_sec=1;
 	&no_agent_no_queue_process;
 	}
 ##### END NO AGENT NO QUEUE CHECK #####
@@ -5960,6 +5962,7 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 	if ( ( ($no_agent_no_queue =~ /Y|NO_PAUSED|NO_READY/) || ($MCnanque_override > 0) ) && ($dial_ingroup_flag < 1) && ($no_agent_delay < $drop_timer) && ($no_agent_no_queue_checked < 1) )
 		{
 		if ($AGILOG) {$agi_string = "--  NANQUE check started delayed($drop_timer): |$callerid|$insert_lead_id|$channel|$no_agent_delay|$no_agent_no_queue_checked";   &agi_output;}
+		$NQ_sec=$drop_timer;
 		&no_agent_no_queue_process;
 		}
 	##### END NO AGENT NO QUEUE CHECK #####
@@ -8437,6 +8440,7 @@ sub no_agent_no_queue_process
 	$NPsql='';
 	$ADsql='';
 	$NCsql='';
+	$now_date_epoch = time();
 	if ($no_agent_no_queue =~ /NO_PAUSED/) 
 		{$NPsql = "and status NOT IN('PAUSED')";}
 	if ($no_agent_no_queue =~ /NO_READY/) 
@@ -8473,7 +8477,7 @@ sub no_agent_no_queue_process
 		if ( ($channel_group =~ /AGENTDIRECT/i) && (length($agent_only) > 1) )
 			{$LOGuser = $agent_only;}
 
-		$stmtA = "INSERT INTO vicidial_closer_log set status='$NQstatus',start_epoch='$now_date_epoch',end_epoch='$now_date_epoch',length_in_sec='1',queue_seconds='0',lead_id='$insert_lead_id',campaign_id='$channel_group',user='$LOGuser',list_id='$list_id',call_date='$now_date',phone_code='$phone_code',phone_number='$phone_number',comments='$NQcomments',term_reason='$NQterm',uniqueid='$uniqueid',called_count='$called_count';";
+		$stmtA = "INSERT INTO vicidial_closer_log set status='$NQstatus',start_epoch='$now_date_epoch',end_epoch='$now_date_epoch',length_in_sec='$NQ_sec',queue_seconds='$NQ_sec',lead_id='$insert_lead_id',campaign_id='$channel_group',user='$LOGuser',list_id='$list_id',call_date='$now_date',phone_code='$phone_code',phone_number='$phone_number',comments='$NQcomments',term_reason='$NQterm',uniqueid='$uniqueid',called_count='$called_count';";
 		$affected_rows = $dbhA->do($stmtA);
 			$dbhP=$dbhA;   $mysql_count='02105';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 		$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -8525,6 +8529,14 @@ sub no_agent_no_queue_process
 		$affected_rows = $dbhA->do($stmtA);
 			$dbhP=$dbhA;   $mysql_count='02107';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 		if ($AGILOG) {$agi_string = "--  NA VDCL vac record deleted: |$affected_rows| $channel_group|";   &agi_output;}
+
+		if ($enable_queuemetrics_logging > 0)
+			{
+			$dbhB = DBI->connect("DBI:mysql:$queuemetrics_dbname:$queuemetrics_server_ip:3306", "$queuemetrics_login", "$queuemetrics_pass")
+			 or die "Couldn't connect to database: " . DBI->errstr;
+
+			if ($DBX) {print "CONNECTED TO QM DATABASE:  $queuemetrics_server_ip|$queuemetrics_dbname\n";}
+			}
 
 		if ($no_agent_action =~ /CALLMENU|INGROUP|DID|EXTENSION|VOICEMAIL|VMAIL_NO_INST/)
 			{
@@ -8584,11 +8596,6 @@ sub no_agent_no_queue_process
 
 				if ($enable_queuemetrics_logging > 0)
 					{
-					$dbhB = DBI->connect("DBI:mysql:$queuemetrics_dbname:$queuemetrics_server_ip:3306", "$queuemetrics_login", "$queuemetrics_pass")
-					 or die "Couldn't connect to database: " . DBI->errstr;
-
-					if ($DBX) {print "CONNECTED TO QM DATABASE:  $queuemetrics_server_ip|$queuemetrics_dbname\n";}
-
 					$stmtB = "INSERT INTO queue_log SET `partition`='P01',time_id='$now_date_epoch',call_id='$uniqueid',queue='NONE',agent='NONE',verb='INFO',data1='IVRSTART',data2='$phone_number',data3='$channel_group',serverid='$queuemetrics_log_id';";
 					$Baffected_rows = $dbhB->do($stmtB);
 						$dbhP=$dbhB;   $stmtA=$stmtB;   $mysql_count='02198';   $MEL_aff_rows=$Baffected_rows;   &mysql_error_logging;
@@ -8667,6 +8674,17 @@ sub no_agent_no_queue_process
 					$AGI->stream_file('sip-silence');
 					}
 
+				if ($enable_queuemetrics_logging > 0)
+					{
+					$stmtB = "INSERT INTO queue_log SET `partition`='P01',time_id='$now_date_epoch',call_id='$YqueryCID',queue='$channel_group',agent='NONE',verb='EXITEMPTY',data1='1',data2='1',data3='$NQ_sec',serverid='$queuemetrics_log_id';";
+					$Baffected_rows = $dbhB->do($stmtB);
+						$dbhP=$dbhB;   $stmtA=$stmtB;   $mysql_count='02078';   $MEL_aff_rows=$Baffected_rows;   &mysql_error_logging;
+
+					$stmtB = "INSERT INTO queue_log SET `partition`='P01',time_id='$now_date_epoch',call_id='$YqueryCID',queue='$channel_group',agent='NONE',verb='CALLSTATUS',data1='$NQstatus',serverid='$queuemetrics_log_id';";
+					$Baffected_rows = $dbhB->do($stmtB);
+						$dbhP=$dbhB;   $stmtA=$stmtB;   $mysql_count='02079';   $MEL_aff_rows=$Baffected_rows;   &mysql_error_logging;
+					}
+
 				if ($AGILOG) {$agi_string = "exiting the VDAD app no agent no queue, transferring call to $DROPexten";   &agi_output;}
 				print "SET CONTEXT $ext_context\n";
 					$result = <STDIN>;
@@ -8705,11 +8723,22 @@ sub no_agent_no_queue_process
 			### sleep for 99 hundredths of a second
 			usleep(1*990*1000);
 
+			if ($enable_queuemetrics_logging > 0)
+				{
+				$stmtB = "INSERT INTO queue_log SET `partition`='P01',time_id='$now_date_epoch',call_id='$YqueryCID',queue='$channel_group',agent='NONE',verb='EXITEMPTY',data1='1',data2='1',data3='$NQ_sec',serverid='$queuemetrics_log_id';";
+				$Baffected_rows = $dbhB->do($stmtB);
+					$dbhP=$dbhB;   $stmtA=$stmtB;   $mysql_count='02078';   $MEL_aff_rows=$Baffected_rows;   &mysql_error_logging;
+
+				$stmtB = "INSERT INTO queue_log SET `partition`='P01',time_id='$now_date_epoch',call_id='$YqueryCID',queue='$channel_group',agent='NONE',verb='CALLSTATUS',data1='$NQstatus',serverid='$queuemetrics_log_id';";
+				$Baffected_rows = $dbhB->do($stmtB);
+					$dbhP=$dbhB;   $stmtA=$stmtB;   $mysql_count='02079';   $MEL_aff_rows=$Baffected_rows;   &mysql_error_logging;
+				}
+
 			### insert a NEW record to the vicidial_manager table to hangup the channel
 			$stmtA = "INSERT INTO vicidial_manager values('','','$SQLdate','NEW','N','$VARserver_ip','','Hangup','$VHqueryCID','Channel: $channel','','','','','','','','','')";
 			$affected_rows = $dbhA->do($stmtA);  
 				$dbhP=$dbhA;   $mysql_count='02021';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
-			if ($AGILOG) {$agi_string = "--  NA VDCL call_hungup after hours: |$VHqueryCID|$VDADconf_exten|$channel|insert to vicidial_manager";   &agi_output;}
+			if ($AGILOG) {$agi_string = "--  NA VDCL call_hungup no-agent-no-queue: |$VHqueryCID|$VDADconf_exten|$channel|insert to vicidial_manager";   &agi_output;}
 			}
 
 		$dbhA->disconnect();

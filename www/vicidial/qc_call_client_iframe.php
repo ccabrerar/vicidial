@@ -311,6 +311,6 @@ else
 	{
     echo "$qc_user_logged_in";
 	}
-echo "&nbsp;<A HREF=$PHP_SELF?lead_id=$lead_id&list_id=$CLlist_id&stage=DISPLAY&submit_button=YES&user=$PHP_AUTH_USER&pass=$PHP_AUTH_PW&bgcolor=E6E6E6>"._QXZ("Refresh")."</A>";
+echo "&nbsp;<A HREF=$PHP_SELF?phone_number=$phone_number&phone_code=$phone_code&lead_id=$lead_id&list_id=$CLlist_id&stage=DISPLAY&submit_button=YES&user=$PHP_AUTH_USER&pass=$PHP_AUTH_PW&bgcolor=E6E6E6>"._QXZ("Refresh")."</A>";
 
 ?>

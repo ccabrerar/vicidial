@@ -155,7 +155,7 @@ if ($time_in_sec)
 ##### START SYSTEM_SETTINGS LOOKUP #####
 $stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,report_default_format FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+if ($DB) {echo "|$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -274,7 +274,7 @@ if (strlen($LOGserver_name)<1) {$LOGserver_name='X';}
 
 $stmt="SELECT webserver_id FROM vicidial_webservers where webserver='$LOGserver_name' and hostname='$LOGhostname' LIMIT 1;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+if ($DB) {echo "|$stmt\n";}
 $webserver_id_ct = mysqli_num_rows($rslt);
 if ($webserver_id_ct > 0)
 	{
@@ -382,7 +382,7 @@ while($i < $group_ct)
 
 $stmt="select campaign_id from vicidial_campaigns $whereLOGallowed_campaignsSQL order by campaign_id;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+if ($DB) {echo "|$stmt\n";}
 $campaigns_to_print = mysqli_num_rows($rslt);
 $i=0;
 while ($i < $campaigns_to_print)
@@ -422,7 +422,7 @@ else
 #	}
 $stmt="select user_group from vicidial_user_groups $whereLOGadmin_viewable_groupsSQL order by user_group;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+if ($DB) {echo "|$stmt\n";}
 $user_groups_to_print = mysqli_num_rows($rslt);
 $user_groups=array();
 $i=0;
@@ -454,11 +454,11 @@ else
 	$TCuser_group_SQL = "and user_group IN($TCuser_group_SQL)";
 	}
 
-if ($DB) {echo "$user_group_string|$user_group_ct|$user_groupQS|$i<BR>";}
+if ($DB) {echo "|$user_group_string|$user_group_ct|$user_groupQS|$i<BR>";}
 
 $stmt="select distinct pause_code,pause_code_name from vicidial_pause_codes;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+if ($DB) {echo "|$stmt\n";}
 $statha_to_print = mysqli_num_rows($rslt);
 $i=0;
 while ($i < $statha_to_print)
@@ -588,7 +588,7 @@ else
 	### BEGIN gather user IDs and names for matching up later
 	$stmt="select full_name,$userSQL from vicidial_users $whereLOGadmin_viewable_groupsSQL order by user limit 100000;";
 	$rslt=mysql_to_mysqli($stmt, $link);
-	if ($DB) {echo "$stmt\n";}
+	if ($DB) {echo "|$stmt\n";}
 	$users_to_print = mysqli_num_rows($rslt);
 	$i=0;
 	$graph_stats=array();

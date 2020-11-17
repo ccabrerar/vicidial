@@ -99,6 +99,7 @@
 # 191113-2204 - Added support for per-User additional status groups
 # 200815-0017 - Added support for additional modify_leads setting
 # 200916-2321 - Added options to allow users to modify any call or agent log status
+# 201113-0841 - Added server_ip information to extended log view
 #
 
 require("dbconnect_mysqli.php");
@@ -1704,31 +1705,33 @@ else
 		if ($CIDdisplay=="Yes")
 			{
 			$caller_code='';
-			$stmtA="SELECT caller_code FROM vicidial_log_extended WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and uniqueid='$row[0]';";
+			$stmtA="SELECT caller_code,server_ip FROM vicidial_log_extended WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and uniqueid='$row[0]';";
 			$rsltA=mysql_to_mysqli($stmtA, $link);
-			$cc_to_print = mysqli_num_rows($rslt);
+			$cc_to_print = mysqli_num_rows($rsltA);
 			if ($cc_to_print > 0)
 				{
 				$rowA=mysqli_fetch_row($rsltA);
-				$caller_code = $rowA[0];
+				$caller_code =	$rowA[0];
+				$VLEserver_ip = $rowA[1];
 				}
 			$outbound_cid='';
-			$stmtA="SELECT outbound_cid FROM vicidial_dial_log WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and caller_code='$caller_code';";
+			$stmtA="SELECT outbound_cid,server_ip FROM vicidial_dial_log WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and caller_code='$caller_code';";
 			$rsltA=mysql_to_mysqli($stmtA, $link);
-			$cid_to_print = mysqli_num_rows($rslt);
+			$cid_to_print = mysqli_num_rows($rsltA);
 			if ($cid_to_print > 0)
 				{
 				$rowA=mysqli_fetch_row($rsltA);
 				$outbound_cid = $rowA[0];
 				$outbound_cid = preg_replace("/\".*\" /",'',$outbound_cid);
+				$VDLserver_ip = $rowA[1];
 				}
 			if ($SSsip_event_logging > 0)
 				{
-				$call_log .= "<td align=right nowrap><font size=2>&nbsp; $outbound_cid  <span onClick=\"ShowCallDetail(event,'$caller_code','$SSframe_background')\"><font color=blue><u>$caller_code</u></font></span></td><td align=right><font size=2>&nbsp; $row[0]</td>\n";
+				$call_log .= "<td align=right nowrap><font size=2>&nbsp; $outbound_cid  <span onClick=\"ShowCallDetail(event,'$caller_code','$SSframe_background')\"><font color=blue><u>$caller_code</u></font></span></td><td align=right><font size=2>&nbsp; $row[0]</td><td align=right><font size=2>&nbsp; $rowA[1]</td>\n";
 				}
 			else
 				{
-				$call_log .= "<td align=right nowrap><font size=2>&nbsp; $outbound_cid $caller_code</td><td align=right><font size=2>&nbsp; $row[0]</td>\n";
+				$call_log .= "<td align=right nowrap><font size=2>&nbsp; $outbound_cid $caller_code</td><td align=right><font size=2>&nbsp; $row[0]</td><td align=right><font size=2>&nbsp; $rowA[1]</td>\n";
 				}
 			$AMDSTATUS='';	$AMDRESPONSE='';
 			$stmtA="SELECT AMDSTATUS,AMDRESPONSE FROM vicidial_amd_log WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and caller_code='$caller_code';";
@@ -1839,7 +1842,33 @@ else
 		$closer_log .= "<td align=right><font size=2> $row[2] </td>\n";
 		$closer_log .= "<td align=right><font size=2> $row[1] </td>\n";
 		$closer_log .= "<td align=right><font size=2> &nbsp; $row[14] </td>\n";
-		$closer_log .= "<td align=right><font size=2> &nbsp; $row[17] </td></tr>\n";
+		$closer_log .= "<td align=right><font size=2> &nbsp; $row[17] </td>\n";
+
+		if ($CIDdisplay=="Yes")
+			{
+			$extension='';
+			$stmtA="SELECT extension,server_ip FROM vicidial_did_log WHERE uniqueid='$row[18]' and call_date < \"$row[4]\" order by call_date desc;";
+			$rsltA=mysql_to_mysqli($stmtA, $link);
+			$cid_to_print = mysqli_num_rows($rsltA);
+			if ($cid_to_print > 0)
+				{
+				$rowA=mysqli_fetch_row($rsltA);
+				$extension = $rowA[0];
+				$VDLserver_ip = $rowA[1];
+				}
+			$caller_code='';
+			$stmtA="SELECT caller_code,server_ip FROM vicidial_log_extended WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and uniqueid='$row[18]';";
+			$rsltA=mysql_to_mysqli($stmtA, $link);
+			$cc_to_print = mysqli_num_rows($rsltA);
+			if ($cc_to_print > 0)
+				{
+				$rowA=mysqli_fetch_row($rsltA);
+				$caller_code =	$rowA[0];
+				$VLEserver_ip = $rowA[1];
+				}
+			$closer_log .= "<td align=right nowrap><font size=2>&nbsp; $caller_code</td><td align=right nowrap><font size=2>&nbsp; <a href=\"admin.php?ADD=3311&did_pattern=$extension\">$extension</a></td><td align=right><font size=2>&nbsp; $row[18]</td><td align=right><font size=2>&nbsp; $rowA[1]</td>\n";
+			}
+		$closer_log .= "</tr>\n";
 
 		$stmtA="SELECT call_notes FROM vicidial_call_notes WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and vicidial_id IN('$row[0]','$row[18]');";
 		$rsltA=mysql_to_mysqli($stmtA, $link);
@@ -1903,31 +1932,33 @@ else
 			if ($CIDdisplay=="Yes")
 				{
 				$caller_code='';
-				$stmtA="SELECT caller_code FROM vicidial_log_extended_archive WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and uniqueid='$row[0]';";
+				$stmtA="SELECT caller_code,server_ip FROM vicidial_log_extended_archive WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and uniqueid='$row[0]';";
 				$rsltA=mysql_to_mysqli($stmtA, $link);
-				$cc_to_print = mysqli_num_rows($rslt);
+				$cc_to_print = mysqli_num_rows($rsltA);
 				if ($cc_to_print > 0)
 					{
 					$rowA=mysqli_fetch_row($rsltA);
 					$caller_code = $rowA[0];
+					$VLEserver_ip = $rowA[1];
 					}
 				$outbound_cid='';
-				$stmtA="SELECT outbound_cid FROM vicidial_dial_log_archive WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and caller_code='$caller_code';";
+				$stmtA="SELECT outbound_cid,server_ip FROM vicidial_dial_log_archive WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and caller_code='$caller_code';";
 				$rsltA=mysql_to_mysqli($stmtA, $link);
-				$cid_to_print = mysqli_num_rows($rslt);
+				$cid_to_print = mysqli_num_rows($rsltA);
 				if ($cid_to_print > 0)
 					{
 					$rowA=mysqli_fetch_row($rsltA);
 					$outbound_cid = $rowA[0];
 					$outbound_cid = preg_replace("/\".*\" /",'',$outbound_cid);
+					$VDLserver_ip = $rowA[1];
 					}
 				if ($SSsip_event_logging > 0)
 					{
-					$call_log .= "<td align=right nowrap><font size=2>&nbsp; $outbound_cid  <span onClick=\"ShowCallDetail(event,'$caller_code','$SSframe_background')\"><font color=blue><u>$caller_code</u></font></span></td><td align=right><font size=2>&nbsp; $row[0]</td>\n";
+					$call_log .= "<td align=right nowrap><font size=2>&nbsp; $outbound_cid  <span onClick=\"ShowCallDetail(event,'$caller_code','$SSframe_background')\"><font color=blue><u>$caller_code</u></font></span></td><td align=right><font size=2>&nbsp; $row[0]</td><td align=right><font size=2>&nbsp; $rowA[1]</td>\n";
 					}
 				else
 					{
-					$call_log .= "<td align=right nowrap><font size=2>&nbsp; $outbound_cid $caller_code</td><td align=right><font size=2>&nbsp; $row[0]</td>\n";
+					$call_log .= "<td align=right nowrap><font size=2>&nbsp; $outbound_cid $caller_code</td><td align=right><font size=2>&nbsp; $row[0]</td><td align=right><font size=2>&nbsp; $rowA[1]</td>\n";
 					}
 				}
 			$call_log .= "</tr>\n";
@@ -2026,7 +2057,33 @@ else
 			$closer_log .= "<td align=right><font size=2> $row[2] </td>\n";
 			$closer_log .= "<td align=right><font size=2> $row[1] </td>\n";
 			$closer_log .= "<td align=right><font size=2> &nbsp; $row[14] </td>\n";
-			$closer_log .= "<td align=right><font size=2> &nbsp; $row[17] </td></tr>\n";
+			$closer_log .= "<td align=right><font size=2> &nbsp; $row[17] </td>\n";
+
+			if ($CIDdisplay=="Yes")
+				{
+				$extension='';
+				$stmtA="SELECT extension,server_ip FROM vicidial_did_log_archive WHERE uniqueid='$row[18]' and call_date < \"$row[4]\" order by call_date desc;";
+				$rsltA=mysql_to_mysqli($stmtA, $link);
+				$cid_to_print = mysqli_num_rows($rsltA);
+				if ($cid_to_print > 0)
+					{
+					$rowA=mysqli_fetch_row($rsltA);
+					$extension = $rowA[0];
+					$VDLserver_ip = $rowA[1];
+					}
+				$caller_code='';
+				$stmtA="SELECT caller_code,server_ip FROM vicidial_log_extended_archive WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and uniqueid='$row[18]';";
+				$rsltA=mysql_to_mysqli($stmtA, $link);
+				$cc_to_print = mysqli_num_rows($rsltA);
+				if ($cc_to_print > 0)
+					{
+					$rowA=mysqli_fetch_row($rsltA);
+					$caller_code =	$rowA[0];
+					$VLEserver_ip = $rowA[1];
+					}
+				$closer_log .= "<td align=right nowrap><font size=2>&nbsp; $caller_code</td><td align=right nowrap><font size=2>&nbsp; <a href=\"admin.php?ADD=3311&did_pattern=$extension\">$extension</a></td><td align=right><font size=2>&nbsp; $row[18]</td><td align=right><font size=2>&nbsp; $rowA[1]</td>\n";
+				}
+			$closer_log .= "</tr>\n";
 
 			$stmtA="SELECT call_notes FROM vicidial_call_notes WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and vicidial_id IN('$row[0]','$row[18]');";
 			$rsltA=mysql_to_mysqli($stmtA, $link);
@@ -2829,12 +2886,12 @@ else
 
 
 		echo "<B>"._QXZ("CALLS TO THIS LEAD").":</B>\n";
-		if ($CIDdisplay == "Yes")
+		if ($CIDdisplay=="Yes")
 			{
-			$out_log_width=1100;
-			if ($AMDcount > 0) {$out_log_width=1300;}
+			$out_log_width=1300;
+			if ($AMDcount > 0) {$out_log_width=1500;}
 			echo "<TABLE width=$out_log_width cellspacing=0 cellpadding=1>\n";
-			echo "<tr><td><font size=1># </td><td><font size=2>"._QXZ("DATE/TIME")." </td><td align=left><font size=2>"._QXZ("LENGTH")."</td><td align=left><font size=2> "._QXZ("STATUS")."</td><td align=left><font size=2> "._QXZ("TSR")."</td><td align=right><font size=2> "._QXZ("CAMPAIGN")."</td><td align=right><font size=2> "._QXZ("LIST")."</td><td align=right><font size=2> "._QXZ("LEAD")."</td><td align=right><font size=2> "._QXZ("HANGUP REASON")."</td><td align=right><font size=2> "._QXZ("PHONE")."</td><td align=center><font size=2> <a href=\"$PHP_SELF?lead_id=$lead_id&archive_search=$archive_search&archive_log=$archive_log&CIDdisplay=$altCIDdisplay\">"._QXZ("CALLER ID")."</a></td><td align=right><font size=2> <a href=\"$PHP_SELF?lead_id=$lead_id&archive_search=$archive_search&archive_log=$archive_log&CIDdisplay=$altCIDdisplay\">"._QXZ("UNIQUEID")."</a></td>";
+			echo "<tr><td><font size=1># </td><td><font size=2>"._QXZ("DATE/TIME")." </td><td align=left><font size=2>"._QXZ("LENGTH")."</td><td align=left><font size=2> "._QXZ("STATUS")."</td><td align=left><font size=2> "._QXZ("TSR")."</td><td align=right><font size=2> "._QXZ("CAMPAIGN")."</td><td align=right><font size=2> "._QXZ("LIST")."</td><td align=right><font size=2> "._QXZ("LEAD")."</td><td align=right><font size=2> "._QXZ("HANGUP REASON")."</td><td align=right><font size=2> "._QXZ("PHONE")."</td><td align=center><font size=2> <a href=\"$PHP_SELF?lead_id=$lead_id&archive_search=$archive_search&archive_log=$archive_log&CIDdisplay=$altCIDdisplay\">"._QXZ("CALLER ID")."</a></td><td align=right><font size=2> <a href=\"$PHP_SELF?lead_id=$lead_id&archive_search=$archive_search&archive_log=$archive_log&CIDdisplay=$altCIDdisplay\">"._QXZ("UNIQUEID")."</a></td><td align=right><font size=2> <a href=\"$PHP_SELF?lead_id=$lead_id&archive_search=$archive_search&archive_log=$archive_log&CIDdisplay=$altCIDdisplay\">"._QXZ("SERVER IP")."</a></td>";
 			if ($AMDcount > 0)
 				{echo "<td align=right><font size=2> "._QXZ("AMD STATUS")."</td><td align=right><font size=2> "._QXZ("AMD RESPONSE")."</td>";}
 			echo "</tr>\n";
@@ -2851,8 +2908,16 @@ else
 		echo "<BR><BR>\n";
 
 		echo "<B>"._QXZ("CLOSER RECORDS FOR THIS LEAD").":</B>\n";
-		echo "<TABLE width=750 cellspacing=0 cellpadding=1>\n";
-		echo "<tr><td><font size=1># </td><td><font size=2>"._QXZ("DATE/TIME")." </td><td align=left><font size=2>"._QXZ("LENGTH")."</td><td align=left><font size=2> "._QXZ("STATUS")."</td><td align=left><font size=2> "._QXZ("TSR")."</td><td align=right><font size=2> "._QXZ("CAMPAIGN")."</td><td align=right><font size=2> "._QXZ("LIST")."</td><td align=right><font size=2> "._QXZ("LEAD")."</td><td align=right><font size=2> "._QXZ("WAIT")."</td><td align=right><font size=2> "._QXZ("HANGUP REASON")."</td></tr>\n";
+		if ($CIDdisplay=="Yes")
+			{
+			echo "<TABLE width=1150 cellspacing=0 cellpadding=1>\n";
+			echo "<tr><td><font size=1># </td><td><font size=2>"._QXZ("DATE/TIME")." </td><td align=left><font size=2>"._QXZ("LENGTH")."</td><td align=left><font size=2> "._QXZ("STATUS")."</td><td align=left><font size=2> "._QXZ("TSR")."</td><td align=right><font size=2> "._QXZ("CAMPAIGN")."</td><td align=right><font size=2> "._QXZ("LIST")."</td><td align=right><font size=2> "._QXZ("LEAD")."</td><td align=right><font size=2> "._QXZ("WAIT")."</td><td align=right><font size=2> "._QXZ("HANGUP REASON")."</td><td align=center><font size=2> <a href=\"$PHP_SELF?lead_id=$lead_id&archive_search=$archive_search&archive_log=$archive_log&CIDdisplay=$altCIDdisplay\">"._QXZ("CALL ID")."</a></td><td align=center><font size=2> <a href=\"$PHP_SELF?lead_id=$lead_id&archive_search=$archive_search&archive_log=$archive_log&CIDdisplay=$altCIDdisplay\">"._QXZ("DID")."</a></td><td align=right><font size=2> <a href=\"$PHP_SELF?lead_id=$lead_id&archive_search=$archive_search&archive_log=$archive_log&CIDdisplay=$altCIDdisplay\">"._QXZ("UNIQUEID")."</a></td><td align=right><font size=2> <a href=\"$PHP_SELF?lead_id=$lead_id&archive_search=$archive_search&archive_log=$archive_log&CIDdisplay=$altCIDdisplay\">"._QXZ("SERVER IP")."</a></td></tr>\n";
+			}
+		else
+			{
+			echo "<TABLE width=850 cellspacing=0 cellpadding=1>\n";
+			echo "<tr><td><font size=1># </td><td><font size=2>"._QXZ("DATE/TIME")." </td><td align=left><font size=2>"._QXZ("LENGTH")."</td><td align=left><font size=2> "._QXZ("STATUS")."</td><td align=left><font size=2> "._QXZ("TSR")."</td><td align=right><font size=2> "._QXZ("CAMPAIGN")."</td><td align=right><font size=2> "._QXZ("LIST")."</td><td align=right><font size=2> "._QXZ("LEAD")."</td><td align=right><font size=2> "._QXZ("WAIT")."</td><td align=right><font size=2> "._QXZ("HANGUP REASON")."</td><td align=right><font size=2> <a href=\"$PHP_SELF?lead_id=$lead_id&archive_search=$archive_search&archive_log=$archive_log&CIDdisplay=$altCIDdisplay\">"._QXZ("CALL ID")."</a></td></tr>\n";
+			}
 
 		echo "$closer_log\n";
 

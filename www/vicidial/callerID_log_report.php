@@ -11,6 +11,7 @@
 #
 # 200115-1512 - First build
 # 200120-1430 - Added total calls, percentage of calls matched, default CID notation
+# 201111-1630 - Translation issue fix, Issue #1231
 #
 
 $startMS = microtime();
@@ -617,7 +618,7 @@ if ($file_exported < 1)
 	if ($ivr_export == 'YES')
 		{echo " IVR";}
 	echo "</B></FONT><BR>\n";
-	echo "<FONT SIZE=3 FACE=\"Arial,Helvetica\">"._QXZ("This report will provide a breakdown by caller ID of calls from specified campaigns and specified statuses within a date range.  It's primary purpose is to show if particular caller IDs have been flagged by carriers as being scam numbers.")."</FONT><BR><BR>\n";
+	echo "<FONT SIZE=3 FACE=\"Arial,Helvetica\">"._QXZ("This report will provide a breakdown by caller ID of calls from specified campaigns and specified statuses within a date range.  Its primary purpose is to show if particular caller IDs have been flagged by carriers as being scam numbers.")."</FONT><BR><BR>\n";
 	echo "<FORM ACTION=\"$PHP_SELF\" METHOD=GET name=vicidial_report id=vicidial_report>\n";
 	echo "<INPUT TYPE=HIDDEN NAME=DB VALUE=\"$DB\">";
 	echo "<INPUT TYPE=HIDDEN NAME=run_export VALUE=\"1\">";

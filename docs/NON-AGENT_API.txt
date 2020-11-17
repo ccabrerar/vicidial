@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2020-10-04
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2020-11-13
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -164,6 +164,8 @@ Changes:
 200815-1025 - Added campaigns_list & hopper_list functions
 200824-2330 - Added search_method BLOCK option for hopper_list function
 201002-1545 - Added extension as recording_lookup option, Allowed for secure sounds_web_server setting
+201106-1654 - Added campaign_id option to agent_stats_export function
+201113-0713 - Added delete_did option to update_did function
 
 
 API Functions use the 'function' variable
@@ -531,7 +533,8 @@ datetime_start -	start date/time of the agent activity to pull (must be in "YYYY
 datetime_end -		end date/time of the agent activity to pull (must be in "YYYY-MM-DD+HH:MM:SS" format)
 
 SETTINGS FIELDS-
-agent_user -		2-20 characters, use only for one agent stats
+agent_user -		2-20 characters, use only for one agent stats <optional>
+campaign_id -		2-8 characters, use only for one campaign stats <optional>
 stage -			the format of the exported data: csv, tab, pipe(default)
 header -		include a header(YES) or not(NO). This is optional, default is not to include a header
 time_format -		time format('H','HF','M','S') in hours, minutes or seconds: H = 1:23:45, M = 83:45, S = 5023  (default 'HF')
@@ -546,8 +549,8 @@ http://server/vicidial/non_agent_apiX.php?DB=0&stage=pipe&user=6666&pass=1234&so
 
 Example responses:
 ERROR: agent_stats_export USER DOES NOT HAVE PERMISSION TO GET AGENT INFO - 6666|0
-ERROR: agent_stats_export INVALID SEARCH PARAMETERS - 6666||2010-12-03 00:00:00|2010-12-03 00:00:01
-ERROR: agent_stats_export NO RECORDS FOUND - 1255||2010-12-03 00:00:00|2010-12-03 00:00:01
+ERROR: agent_stats_export INVALID SEARCH PARAMETERS - 6666||2010-12-03 00:00:00|2010-12-03 00:00:01|
+ERROR: agent_stats_export NO RECORDS FOUND - 1255||2010-12-03 00:00:00|2010-12-03 00:00:01|
 
 A SUCCESS response will not show "SUCCESS", but instead will just print the results in the following format:
 user|full_name|user_group|calls|login_time|total_talk_time|avg_talk_time|avg_wait_time|pct_of_queue|pause_time|sessions|avg_session|pauses|avg_pause_time|pause_pct|pauses_per_session|total_wait_time
@@ -2005,6 +2008,7 @@ phone_extension -	1-100 characters
 server_ip -		must be all numbers and dots, max 15 characters
 group -			a valid in-group group_id
 filter_clean_cid_number - 1-20 characters
+delete_did -		Can be one of these: 'Y','N' (default is 'N')
 
 Example URL strings for API calls:
 http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_did&did_pattern=%2B1727555112&did_description=Updated+test+API+DID&active=Y
@@ -2012,6 +2016,7 @@ http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&functio
 
 Example responses:
 ERROR: update_did USER DOES NOT HAVE PERMISSION TO UPDATE DIDS - 6666
+ERROR: update_did USER DOES NOT HAVE PERMISSION TO DELETE DIDS - 6666
 ERROR: update_did YOU MUST USE ALL REQUIRED FIELDS - 6666|1
 ERROR: update_did NOT AN ALLOWED DID - 98762
 ERROR: update_did DID DOES NOT EXIST - 6666|1000
@@ -2027,6 +2032,7 @@ ERROR: update_did SERVER IP MUST BE A VALID SERVER IN THE SYSTEM, THIS IS AN OPT
 ERROR: update_did GROUP ID MUST BE A VALID INBOUND GROUP IN THE SYSTEM, THIS IS AN OPTIONAL FIELD - 6666|test
 ERROR: update_did CLEAN CID NUMBER MUST BE FROM 1 TO 20 CHARACTERS, THIS IS AN OPTIONAL FIELD - 6666|
 NOTICE: update_did NO UPDATES DEFINED - 6666|
+SUCCESS: update_did DID HAS BEEN DELETED - 6666|23|1101
 SUCCESS: update_did DID HAS BEEN UPDATED - 6666|1101
 
 

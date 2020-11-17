@@ -1,7 +1,7 @@
 <?php
 # manager_send.php    version 2.14
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed purely to insert records into the vicidial_manager table to signal Actions to an asterisk server
 # This script depends on the server_ip being sent and also needs to have a valid user/pass from the vicidial_users table
@@ -143,10 +143,11 @@
 # 190222-1318 - Added recent session per-call logging
 # 190310-1202 - Added MuteRecording function
 # 191013-2114 - Fixes for PHP7
+# 201107-2228 - Added campaign/in-group logging in park_log
 #
 
-$version = '2.14-90';
-$build = '191013-2114';
+$version = '2.14-91';
+$build = '201107-2228';
 $php_script = 'manager_send.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=143;
@@ -252,6 +253,8 @@ if (isset($_GET["customerparked"]))				{$customerparked=$_GET["customerparked"];
 	elseif (isset($_POST["customerparked"]))	{$customerparked=$_POST["customerparked"];}
 if (isset($_GET["user_group"]))				{$user_group=$_GET["user_group"];}
 	elseif (isset($_POST["user_group"]))	{$user_group=$_POST["user_group"];}
+if (isset($_GET["group_id"]))			{$group_id=$_GET["group_id"];}
+	elseif (isset($_POST["group_id"]))	{$group_id=$_POST["group_id"];}
 
 
 header ("Content-type: text/html; charset=utf-8");
@@ -304,6 +307,7 @@ $queryCID = preg_replace("/\'|\"|\\\\|;/","",$queryCID);
 $secondS = preg_replace('/[^0-9]/','',$secondS);
 $stage = preg_replace("/\'|\"|\\\\|;/","",$stage);
 $usegroupalias = preg_replace('/[^0-9]/','',$usegroupalias);
+$group_id = preg_replace('/[^-_0-9a-zA-Z]/','',$group_id);
 
 # default optional vars if not set
 if (!isset($ACTION))   {$ACTION="Originate";}
@@ -1073,7 +1077,8 @@ if ($ACTION=="RedirectToPark")
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02025',$user,$server_ip,$session_name,$one_mysql_log);}
 			$ACTION="Redirect";
 
-			$stmt = "INSERT INTO park_log SET uniqueid='$uniqueid',status='PARKED',channel='$channel',channel_group='$campaign',server_ip='$server_ip',parked_time='$NOW_TIME',parked_sec=0,extension='$CalLCID',user='$user',lead_id=$lead_id;";
+
+			$stmt = "INSERT INTO park_log SET uniqueid='$uniqueid',status='PARKED',channel='$channel',channel_group='$campaign',server_ip='$server_ip',parked_time='$NOW_TIME',parked_sec=0,extension='$CalLCID',user='$user',lead_id=$lead_id,campaign_id='$group_id';";
 				if ($format=='debug') {echo "\n<!-- $stmt -->";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02098',$user,$server_ip,$session_name,$one_mysql_log);}
@@ -1322,7 +1327,7 @@ if ($ACTION=="RedirectToParkIVR")
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02088',$user,$server_ip,$session_name,$one_mysql_log);}
 
-			$stmt = "INSERT INTO park_log SET uniqueid='$uniqueid',status='IVRPARKED',channel='$channel',channel_group='$campaign',server_ip='$server_ip',parked_time='$NOW_TIME',parked_sec=0,extension='$CalLCID',user='$user',lead_id=$lead_id;";
+			$stmt = "INSERT INTO park_log SET uniqueid='$uniqueid',status='IVRPARKED',channel='$channel',channel_group='$campaign',server_ip='$server_ip',parked_time='$NOW_TIME',parked_sec=0,extension='$CalLCID',user='$user',lead_id=$lead_id,campaign_id='$group_id';";
 				if ($format=='debug') {echo "\n<!-- $stmt -->";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02107',$user,$server_ip,$session_name,$one_mysql_log);}

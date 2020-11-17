@@ -100,10 +100,11 @@
 # 190222-1152 - Added force_fronter_audio_stop function
 # 190901-0952 - Added cid_choice option to transfer_conference function
 # 200403-1510 - Added outbound_cid option to external_dial function
+# 201112-2053 - Added vm_message function
 #
 
-$version = '2.14-66';
-$build = '200403-1510';
+$version = '2.14-67';
+$build = '201112-2053';
 
 $startMS = microtime();
 
@@ -303,7 +304,7 @@ if ($non_latin < 1)
 	$pass=preg_replace("/[^-_0-9a-zA-Z]/","",$pass);
 	$agent_user=preg_replace("/[^0-9a-zA-Z]/","",$agent_user);
 	$function = preg_replace("/[^-\_0-9a-zA-Z]/","",$function);
-	$value = preg_replace("/[^-\_0-9a-zA-Z]/","",$value);
+	$value = preg_replace("/[^-\|\_0-9a-zA-Z]/","",$value);
 	$focus = preg_replace("/[^-\_0-9a-zA-Z]/","",$focus);
 	$preview = preg_replace("/[^-\_0-9a-zA-Z]/","",$preview);
 		$notes = preg_replace("/\+/"," ",$notes);
@@ -4034,6 +4035,114 @@ if ($function == 'switch_lead')
 	}
 ################################################################################
 ### END - switch_lead
+################################################################################
+
+
+
+
+
+################################################################################
+### BEGIN - vm_message - set a custom voicemail message to be played when agent clicks the VM button on the agent screen
+################################################################################
+if ($function == 'vm_message')
+	{
+	if ( ( (strlen($agent_user)<1) and (strlen($alt_user)<2) ) or (strlen($value)<1) )
+		{
+		$result = _QXZ("ERROR");
+		$result_reason = _QXZ("vm_message not valid");
+		echo "$result: $result_reason - $lead_id|$value|$agent_user\n";
+		api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+		}
+	else
+		{
+		if ( (!preg_match("/ $function /",$VUapi_allowed_functions)) and (!preg_match("/ALL_FUNCTIONS/",$VUapi_allowed_functions)) )
+			{
+			$result = _QXZ("ERROR");
+			$result_reason = _QXZ("auth USER DOES NOT HAVE PERMISSION TO USE THIS FUNCTION");
+			echo "$result: $result_reason - $lead_id|$user|$function|$VUuser_group\n";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		$processed=0;
+		$SUCCESS=0;
+		if (strlen($alt_user)>1)
+			{
+			$stmt = "select count(*) from vicidial_users where custom_three='$alt_user';";
+			if ($DB) {echo "$stmt\n";}
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$row=mysqli_fetch_row($rslt);
+			if ($row[0] > 0)
+				{
+				$stmt = "select user from vicidial_users where custom_three='$alt_user' order by user;";
+				if ($DB) {echo "$stmt\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$row=mysqli_fetch_row($rslt);
+				$agent_user = $row[0];
+				}
+			else
+				{
+				$result = _QXZ("ERROR");
+				$result_reason = _QXZ("no user found");
+				echo "$result: $result_reason - $alt_user\n";
+				api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+				}
+			}
+		$stmt = "select count(*) from vicidial_live_agents where user='$agent_user';";
+		if ($DB) {echo "$stmt\n";}
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$row=mysqli_fetch_row($rslt);
+		if ($row[0] > 0)
+			{
+			$stmt = "select lead_id,callerid,campaign_id from vicidial_live_agents where user='$agent_user';";
+			if ($DB) {echo "$stmt\n";}
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$row=mysqli_fetch_row($rslt);
+			$current_lead_id =		$row[0];
+			$callerid =				$row[1];
+			$campaign_id =			$row[2];
+
+			if ( ($current_lead_id > 0) and (strlen($callerid)>15) )
+				{
+				if (strlen($lead_id) < 1) {$lead_id = $current_lead_id;}
+				if ($current_lead_id == $lead_id)
+					{
+					$stmt="INSERT INTO vicidial_lead_messages (lead_id,call_date,user,message_entry) values('$lead_id',NOW(),'$user','$value');";
+						if ($format=='debug') {echo "\n<!-- $stmt -->";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+					$result = _QXZ("SUCCESS");
+					$result_reason = _QXZ("vm_message function set");
+					$data = "$lead_id|$value";
+					echo "$result: $result_reason - $agent_user|$data|\n";
+					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+					}
+				else
+					{
+					$result = _QXZ("ERROR");
+					$result_reason = _QXZ("current call does not match lead_id submitted");
+					$data = "$lead_id|$current_lead_id";
+					echo "$result: $result_reason - $agent_user\n";
+					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+					}
+				}
+			else
+				{
+				$result = _QXZ("ERROR");
+				$result_reason = _QXZ("agent_user does not have a live call");
+				echo "$result: $result_reason - $agent_user\n";
+				api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+				}
+			}
+		else
+			{
+			$result = _QXZ("ERROR");
+			$result_reason = _QXZ("agent_user is not logged in");
+			echo "$result: $result_reason - $agent_user\n";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			}
+		}
+	}
+################################################################################
+### END - vm_message
 ################################################################################
 
 

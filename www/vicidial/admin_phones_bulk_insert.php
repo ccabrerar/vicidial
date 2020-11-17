@@ -1,7 +1,7 @@
 <?php
 # admin_phones_bulk_insert.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # this screen will insert phones into your multi-server system with aliases
 #
@@ -20,10 +20,11 @@
 # 170409-1532 - Added IP List validation code
 # 180503-2015 - Added new help display
 # 181130-1304 - Added template option
+# 201112-1017 - Fix for side menu issue #1223
 #
 
-$admin_version = '2.14-13';
-$build = '181130-1304';
+$admin_version = '2.14-14';
+$build = '201112-1017';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -73,18 +74,22 @@ if (strlen($DB) < 1)
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,webroot_writable,enable_languages,language_method,admin_screen_colors FROM system_settings;";
+$stmt = "SELECT use_non_latin,webroot_writable,enable_languages,language_method,admin_screen_colors,campaign_cid_areacodes_enabled,sounds_central_control_active,contacts_enabled,enable_auto_reports FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $ss_conf_ct = mysqli_num_rows($rslt);
 if ($ss_conf_ct > 0)
 	{
 	$row=mysqli_fetch_row($rslt);
-	$non_latin =				$row[0];
-	$webroot_writable =			$row[1];
-	$SSenable_languages =		$row[2];
-	$SSlanguage_method =		$row[3];
-	$SSadmin_screen_colors =	$row[4];
+	$non_latin =						$row[0];
+	$webroot_writable =					$row[1];
+	$SSenable_languages =				$row[2];
+	$SSlanguage_method =				$row[3];
+	$SSadmin_screen_colors =			$row[4];
+	$SScampaign_cid_areacodes_enabled = $row[5];
+	$SSsounds_central_control_active =	$row[6];
+	$SScontacts_enabled =				$row[7];
+	$SSenable_auto_reports =			$row[8];
 	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
