@@ -1,7 +1,7 @@
 <?php
 # dispo_change_status.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to be used in the "Dispo URL" field of a campaign
 # or in-group. It can update the status of a lead to a new status if the lead 
@@ -24,6 +24,7 @@
 #
 # CHANGES
 # 171127-1736 - First Build
+# 201117-2217 - Changes for better compatibility with non-latin data input
 #
 
 $api_script = 'dispo_change_status';
@@ -80,14 +81,6 @@ $k=0;
 # filter variables
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
-$lead_id = preg_replace('/[^0-9]/','',$lead_id);
-$logged_status = preg_replace('/[^-_0-9a-zA-Z]/','',$logged_status);
-$logged_count = preg_replace('/[^0-9]/','',$logged_count);
-$new_status = preg_replace('/[^-_0-9a-zA-Z]/','',$new_status);
-$days_search = preg_replace('/[^0-9]/','',$days_search);
-$archive_search = preg_replace('/[^-_0-9a-zA-Z]/','',$archive_search);
-$in_out_search = preg_replace('/[^-_0-9a-zA-Z]/','',$in_out_search);
-$log_to_file = preg_replace('/[^0-9]/','',$log_to_file);
 
 # set defaults for variables not set
 if (strlen($days_search) < 1)
@@ -124,10 +117,24 @@ if ($qm_conf_ct > 0)
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
+$lead_id = preg_replace('/[^0-9]/','',$lead_id);
+$logged_count = preg_replace('/[^0-9]/','',$logged_count);
+$days_search = preg_replace('/[^0-9]/','',$days_search);
+$archive_search = preg_replace('/[^-_0-9a-zA-Z]/','',$archive_search);
+$in_out_search = preg_replace('/[^-_0-9a-zA-Z]/','',$in_out_search);
+$log_to_file = preg_replace('/[^0-9]/','',$log_to_file);
+
 if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
 	$pass=preg_replace("/[^-_0-9a-zA-Z]/","",$pass);
+	$logged_status = preg_replace('/[^-_0-9a-zA-Z]/','',$logged_status);
+	$new_status = preg_replace('/[^-_0-9a-zA-Z]/','',$new_status);
+	}
+else
+	{
+	$logged_status = preg_replace('/[^-_0-9\p{L}]/u','',$logged_status);
+	$new_status = preg_replace('/[^-_0-9\p{L}]/u','',$new_status);
 	}
 
 if ($DB>0) {echo "$lead_id|$dispo|$logged_status|$logged_count|$new_status|$days_search|$archive_search|$in_out_search|$user|$pass|$DB|$log_to_file|\n";}

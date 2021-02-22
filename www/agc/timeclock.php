@@ -1,7 +1,7 @@
 <?php
 # timeclock.php - VICIDIAL system user timeclock
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 80523-0134 - First Build 
@@ -23,10 +23,11 @@
 # 150727-0912 - Added default_language
 # 161106-2112 - Added screen colors, fixed formatting
 # 190111-0901 - Fix for PHP7
+# 201117-2117 - Changes for better compatibility with non-latin data input
 #
 
-$version = '2.12-18';
-$build = '190111-0901';
+$version = '2.12-19';
+$build = '201117-2117';
 
 $StarTtimE = date("U");
 $NOW_TIME = date("Y-m-d H:i:s");
@@ -87,16 +88,8 @@ if (!isset($phone_pass))
 
 ### security strip all non-alphanumeric characters out of the variables ###
 $DB=preg_replace("/[^0-9a-z]/","",$DB);
-$phone_login=preg_replace("/[^\,0-9a-zA-Z]/","",$phone_login);
-$phone_pass=preg_replace("/[^-_0-9a-zA-Z]/","",$phone_pass);
-$user=preg_replace("/\'|\"|\\\\|;| /","",$user);
-$pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
 $VD_login=preg_replace("/\'|\"|\\\\|;| /","",$VD_login);
 $VD_pass=preg_replace("/\'|\"|\\\\|;| /","",$VD_pass);
-$VD_campaign=preg_replace("/[^-_0-9a-zA-Z]/","",$VD_campaign);
-$stage=preg_replace("/[^0-9a-zA-Z]/","",$stage);
-$commit=preg_replace("/[^0-9a-zA-Z]/","",$commit);
-$referrer=preg_replace("/[^0-9a-zA-Z]/","",$referrer);
 
 require_once("dbconnect_mysqli.php");
 require_once("functions.php");
@@ -139,12 +132,27 @@ if (strlen($VUselected_language) < 1)
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
+$user=preg_replace("/\'|\"|\\\\|;| /","",$user);
+$pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
+$phone_login=preg_replace("/\'|\"|\\\\|;| /","",$phone_login);
+$phone_pass=preg_replace("/\'|\"|\\\\|;| /","",$phone_pass);
+$stage=preg_replace("/[^0-9a-zA-Z]/","",$stage);
+$commit=preg_replace("/[^0-9a-zA-Z]/","",$commit);
+$referrer=preg_replace("/[^0-9a-zA-Z]/","",$referrer);
+
 if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
 	$pass=preg_replace("/[^-_0-9a-zA-Z]/","",$pass);
 	$VD_login=preg_replace("/[^-_0-9a-zA-Z]/","",$VD_login);
 	$VD_pass=preg_replace("/[^-_0-9a-zA-Z]/","",$VD_pass);
+	$VD_campaign=preg_replace("/[^-_0-9a-zA-Z]/","",$VD_campaign);
+	$phone_login=preg_replace("/[^\,0-9a-zA-Z]/","",$phone_login);
+	$phone_pass=preg_replace("/[^-_0-9a-zA-Z]/","",$phone_pass);
+	}
+else
+	{
+	$VD_campaign=preg_replace("/[^-_0-9\p{L}]/u","",$VD_campaign);
 	}
 
 header ("Content-type: text/html; charset=utf-8");

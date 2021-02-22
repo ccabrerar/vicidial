@@ -100,6 +100,9 @@
 # 200815-0017 - Added support for additional modify_leads setting
 # 200916-2321 - Added options to allow users to modify any call or agent log status
 # 201113-0841 - Added server_ip information to extended log view
+# 201117-0807 - Changes for better compatibility with non-latin data input
+# 201109-1725 - Fix for blank page after certain updates submitted
+# 201123-1704 - Added today called count display
 #
 
 require("dbconnect_mysqli.php");
@@ -284,89 +287,123 @@ if ($qm_conf_ct > 0)
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
+$DB=preg_replace('/[^0-9]/','',$DB);
+$list_id = preg_replace('/[^0-9]/','',$list_id);
 $lead_id = preg_replace('/[^0-9a-zA-Z]/','',$lead_id);
-$modify_log_submit = preg_replace('/[^-_0-9a-zA-Z]/','',$modify_log_submit);
-$modify_log_table = preg_replace('/[^-_0-9a-zA-Z]/','',$modify_log_table);
-$vicidial_id = preg_replace('/[^-\+\.\:\_0-9a-zA-Z]/','',$vicidial_id);
+$entry_list_id = preg_replace('/[^0-9]/','',$entry_list_id);
+$phone_code = preg_replace('/[^0-9]/','',$phone_code);
+$update_phone_number=preg_replace('/[^A-Z]/','',$update_phone_number);
+$phone_number = preg_replace('/[^0-9]/','',$phone_number);
+$old_phone = preg_replace('/[^0-9]/','',$old_phone);
+$vendor_lead_code = preg_replace('/;|#/','',$vendor_lead_code);
+	$vendor_lead_code = preg_replace('/\+/',' ',$vendor_lead_code);
+$source_id = preg_replace('/;|#/','',$source_id);
+	$source_id = preg_replace('/\+/',' ',$source_id);
+$gmt_offset_now = preg_replace('/[^-\_\.0-9]/','',$gmt_offset_now);
+$country_code = preg_replace('/[^A-Z]/','',$country_code);
+$gender = preg_replace('/[^A-Z]/','',$gender);
+$date_of_birth = preg_replace('/[^-0-9]/','',$date_of_birth);
+$comments = preg_replace('/;|#/','',$comments);
+	$comments = preg_replace('/\+/',' ',$comments);
+$rank = preg_replace('/[^0-9]/','',$rank);
+$no_update = preg_replace('/[^A-Z]/','',$no_update);
+$called_count=preg_replace('/[^0-9]/','',$called_count);
+$local_gmt=preg_replace('/[^-\.0-9]/','',$local_gmt);
+$callback = preg_replace('/[^A-Z]/','',$callback);
+$callback_type = preg_replace('/[^A-Z]/','',$callback_type);
 
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/','',$PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/','',$PHP_AUTH_PW);
-
-	$DB=preg_replace('/[^0-9]/','',$DB);
 	$user=preg_replace('/[^-_0-9a-zA-Z]/','',$user);
 	$pass=preg_replace('/[^-_0-9a-zA-Z]/','',$pass);
 	$function = preg_replace('/[^-\_0-9a-zA-Z]/', '',$function);
 	$format = preg_replace('/[^0-9a-zA-Z]/','',$format);
-	$list_id = preg_replace('/[^0-9]/','',$list_id);
-	$entry_list_id = preg_replace('/[^0-9]/','',$entry_list_id);
-	$phone_code = preg_replace('/[^0-9]/','',$phone_code);
-	$update_phone_number=preg_replace('/[^A-Z]/','',$update_phone_number);
-	$phone_number = preg_replace('/[^0-9]/','',$phone_number);
-	$old_phone = preg_replace('/[^0-9]/','',$old_phone);
-	$vendor_lead_code = preg_replace('/;|#/','',$vendor_lead_code);
-		$vendor_lead_code = preg_replace('/\+/',' ',$vendor_lead_code);
-	$source_id = preg_replace('/;|#/','',$source_id);
-		$source_id = preg_replace('/\+/',' ',$source_id);
-	$gmt_offset_now = preg_replace('/[^-\_\.0-9]/','',$gmt_offset_now);
 	$title = preg_replace('/[^- \'\_\.0-9a-zA-Z]/','',$title);
 	$first_name = preg_replace('/[^- \'\+\_\.0-9a-zA-Z]/','',$first_name);
-		$first_name = preg_replace('/\+/',' ',$first_name);
 	$middle_initial = preg_replace('/[^0-9a-zA-Z]/','',$middle_initial);
 	$last_name = preg_replace('/[^- \'\+\_\.0-9a-zA-Z]/','',$last_name);
-		$last_name = preg_replace('/\+/',' ',$last_name);
 	$address1 = preg_replace('/[^- \'\+\.\:\/\@\_0-9a-zA-Z]/','',$address1);
 	$address2 = preg_replace('/[^- \'\+\.\:\/\@\_0-9a-zA-Z]/','',$address2);
 	$address3 = preg_replace('/[^- \'\+\.\:\/\@\_0-9a-zA-Z]/','',$address3);
-		$address1 = preg_replace('/\+/',' ',$address1);
-		$address2 = preg_replace('/\+/',' ',$address2);
-		$address3 = preg_replace('/\+/',' ',$address3);
 	$city = preg_replace('/[^- \'\+\.\:\/\@\_0-9a-zA-Z]/','',$city);
-		$city = preg_replace('/\+/',' ',$city);
 	$state = preg_replace('/[^- 0-9a-zA-Z]/','',$state);
 	$province = preg_replace('/[^- \'\+\.\_0-9a-zA-Z]/','',$province);
-		$province = preg_replace('/\+/',' ',$province);
 	$postal_code = preg_replace('/[^- \'\+0-9a-zA-Z]/','',$postal_code);
-		$postal_code = preg_replace('/\+/',' ',$postal_code);
-	$country_code = preg_replace('/[^A-Z]/','',$country_code);
-	$gender = preg_replace('/[^A-Z]/','',$gender);
-	$date_of_birth = preg_replace('/[^-0-9]/','',$date_of_birth);
 	$alt_phone = preg_replace('/[^- \'\+\_\.0-9a-zA-Z]/','',$alt_phone);
-		$alt_phone = preg_replace('/\+/',' ',$alt_phone);
 	$email = preg_replace('/[^- \'\+\.\:\/\@\%\_0-9a-zA-Z]/','',$email);
-		$email = preg_replace('/\+/',' ',$email);
 	$security_phrase = preg_replace('/[^- \'\+\.\:\/\@\_0-9a-zA-Z]/','',$security_phrase);
-		$security_phrase = preg_replace('/\+/',' ',$security_phrase);
-	$comments = preg_replace('/;|#/','',$comments);
-		$comments = preg_replace('/\+/',' ',$comments);
 	$campaign_id = preg_replace('/[^-\_0-9a-zA-Z]/', '',$campaign_id);
 	$multi_alt_phones = preg_replace('/[^- \+\!\:\_0-9a-zA-Z]/','',$multi_alt_phones);
-		$multi_alt_phones = preg_replace('/\+/',' ',$multi_alt_phones);
 	$source = preg_replace('/[^0-9a-zA-Z]/','',$source);
 	$stage = preg_replace('/[^a-zA-Z]/','',$stage);
-	$rank = preg_replace('/[^0-9]/','',$rank);
 	$owner = preg_replace('/[^- \'\+\.\:\/\@\_0-9a-zA-Z]/','',$owner);
-		$owner = preg_replace('/\+/',' ',$owner);
 	$custom_fields = preg_replace('/[^0-9a-zA-Z]/','',$custom_fields);
-	$no_update = preg_replace('/[^A-Z]/','',$no_update);
-	$called_count=preg_replace('/[^0-9]/','',$called_count);
-	$local_gmt=preg_replace('/[^-\.0-9]/','',$local_gmt);
-	$callback = preg_replace('/[^A-Z]/','',$callback);
 	$callback_status = preg_replace('/[^-\_0-9a-zA-Z]/', '',$callback_status);
 	$callback_datetime = preg_replace('/[^- \+\.\:\/\@\_0-9a-zA-Z]/','',$callback_datetime);
-	$callback_type = preg_replace('/[^A-Z]/','',$callback_type);
 	$callback_user = preg_replace('/[^-\_0-9a-zA-Z]/', '',$callback_user);
 	$callback_comments = preg_replace('/[^- \+\.\:\/\@\_0-9a-zA-Z]/','',$callback_comments);
 	$modify_log_status = preg_replace('/[^-\_0-9a-zA-Z]/', '',$modify_log_status);
 	$modify_old_status = preg_replace('/[^-\_0-9a-zA-Z]/', '',$modify_old_status);
 	$log_date = preg_replace('/[^- \+\.\:\/\@\_0-9a-zA-Z]/','',$log_date);
-	}	# end of non_latin
+	$modify_log_submit = preg_replace('/[^-_0-9a-zA-Z]/','',$modify_log_submit);
+	$modify_log_table = preg_replace('/[^-_0-9a-zA-Z]/','',$modify_log_table);
+	$vicidial_id = preg_replace('/[^-\+\.\:\_0-9a-zA-Z]/','',$vicidial_id);
+	}
 else
 	{
 	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
+	$user=preg_replace('/[^-_0-9\p{L}]/u','',$user);
+	$pass=preg_replace('/[^-_0-9\p{L}]/u','',$pass);
+	$function = preg_replace('/[^-\_0-9\p{L}]/u', '',$function);
+	$format = preg_replace('/[^0-9\p{L}]/u','',$format);
+	$title = preg_replace('/[^- \'\_\.0-9\p{L}]/u','',$title);
+	$first_name = preg_replace('/[^- \'\+\_\.0-9\p{L}]/u','',$first_name);
+	$middle_initial = preg_replace('/[^0-9\p{L}]/u','',$middle_initial);
+	$last_name = preg_replace('/[^- \'\+\_\.0-9\p{L}]/u','',$last_name);
+	$address1 = preg_replace('/[^- \'\+\.\:\/\@\_0-9\p{L}]/u','',$address1);
+	$address2 = preg_replace('/[^- \'\+\.\:\/\@\_0-9\p{L}]/u','',$address2);
+	$address3 = preg_replace('/[^- \'\+\.\:\/\@\_0-9\p{L}]/u','',$address3);
+	$city = preg_replace('/[^- \'\+\.\:\/\@\_0-9\p{L}]/u','',$city);
+	$state = preg_replace('/[^- 0-9\p{L}]/u','',$state);
+	$province = preg_replace('/[^- \'\+\.\_0-9\p{L}]/u','',$province);
+	$postal_code = preg_replace('/[^- \'\+0-9\p{L}]/u','',$postal_code);
+	$alt_phone = preg_replace('/[^- \'\+\_\.0-9\p{L}]/u','',$alt_phone);
+	$email = preg_replace('/[^- \'\+\.\:\/\@\%\_0-9\p{L}]/u','',$email);
+	$security_phrase = preg_replace('/[^- \'\+\.\:\/\@\_0-9\p{L}]/u','',$security_phrase);
+	$campaign_id = preg_replace('/[^-\_0-9\p{L}]/u', '',$campaign_id);
+	$multi_alt_phones = preg_replace('/[^- \+\!\:\_0-9\p{L}]/u','',$multi_alt_phones);
+	$source = preg_replace('/[^0-9\p{L}]/u','',$source);
+	$stage = preg_replace('/[^\p{L}]/u','',$stage);
+	$owner = preg_replace('/[^- \'\+\.\:\/\@\_0-9\p{L}]/u','',$owner);
+	$custom_fields = preg_replace('/[^0-9\p{L}]/u','',$custom_fields);
+	$callback_status = preg_replace('/[^-\_0-9\p{L}]/u', '',$callback_status);
+	$callback_datetime = preg_replace('/[^- \+\.\:\/\@\_0-9\p{L}]/u','',$callback_datetime);
+	$callback_user = preg_replace('/[^-\_0-9\p{L}]/u', '',$callback_user);
+	$callback_comments = preg_replace('/[^- \+\.\:\/\@\_0-9\p{L}]/u','',$callback_comments);
+	$modify_log_status = preg_replace('/[^-\_0-9\p{L}]/u', '',$modify_log_status);
+	$modify_old_status = preg_replace('/[^-\_0-9\p{L}]/u', '',$modify_old_status);
+	$log_date = preg_replace('/[^- \+\.\:\/\@\_0-9\p{L}]/u','',$log_date);
+	$modify_log_submit = preg_replace('/[^-_0-9\p{L}]/u','',$modify_log_submit);
+	$modify_log_table = preg_replace('/[^-_0-9\p{L}]/u','',$modify_log_table);
+	$vicidial_id = preg_replace('/[^-\+\.\:\_0-9\p{L}]/u','',$vicidial_id);
 	}
+
+$first_name = preg_replace('/\+/',' ',$first_name);
+$last_name = preg_replace('/\+/',' ',$last_name);
+$address1 = preg_replace('/\+/',' ',$address1);
+$address2 = preg_replace('/\+/',' ',$address2);
+$address3 = preg_replace('/\+/',' ',$address3);
+$city = preg_replace('/\+/',' ',$city);
+$province = preg_replace('/\+/',' ',$province);
+$postal_code = preg_replace('/\+/',' ',$postal_code);
+$alt_phone = preg_replace('/\+/',' ',$alt_phone);
+$email = preg_replace('/\+/',' ',$email);
+$security_phrase = preg_replace('/\+/',' ',$security_phrase);
+$multi_alt_phones = preg_replace('/\+/',' ',$multi_alt_phones);
+$owner = preg_replace('/\+/',' ',$owner);
 
 if (strlen($phone_number)<6) {$phone_number=$old_phone;}
 
@@ -711,7 +748,8 @@ if ($enable_gdpr_download_deletion>0)
 						$HTML_header.="<tr>\n";
 						}
 					$HTML_body.="<tr>\n";
-					while (list($key, $val)=each($row)) 
+#					while (list($key, $val)=each($row)) 
+					foreach ($row as $key => $val)
 						{
 						if ($key=="entry_list_id") {$list_id=$val;}
 						if (in_array($key, $purge_field_array["$table_name"]) || (preg_match("/^custom_/", $table_name) && $key!="lead_id")) 
@@ -1496,7 +1534,14 @@ if ($end_call > 0)
 				$tomorrow = date("Y-m-d", mktime(date("H"),date("i"),date("s"),date("m"),date("d")+1,date("Y")));
 				$CLEAN_campaign_id = mysqli_real_escape_string($link, $campaign_id);
 				$CLEAN_campaign_id = preg_replace("/'|\"|\\\\|;/","",$CLEAN_campaign_id);
-				$CLEAN_campaign_id = preg_replace('/[^-_0-9a-zA-Z]/','',$CLEAN_campaign_id);
+				if ($non_latin < 1)
+					{
+					$CLEAN_campaign_id = preg_replace('/[^-_0-9a-zA-Z]/','',$CLEAN_campaign_id);
+					}
+				else
+					{
+					$CLEAN_campaign_id = preg_replace('/[^-_0-9\p{L}]/u','',$CLEAN_campaign_id);
+					}
 
 				if (strlen($CLEAN_campaign_id)<1)
 					{
@@ -1574,6 +1619,17 @@ if ($end_call > 0)
 		{
 		$messagesHTML .= _QXZ("you do not have permission to modify this lead")." $lead_id &nbsp; &nbsp; &nbsp; $list_id &nbsp; &nbsp; &nbsp; $NOW_TIME\n<BR><BR>\n";
 		}
+	echo "</script>\n";
+	echo "<link rel=\"stylesheet\" href=\"calendar.css\">\n";
+	echo "</head><BODY BGCOLOR=white marginheight=0 marginwidth=0 leftmargin=0 topmargin=0>\n";
+	echo "<span style=\"position:absolute;left:0px;top:0px;z-index:20;\" id=admin_header>";
+
+	$short_header=1;
+
+	require("admin_header.php");
+
+	echo "</span>\n";
+	echo "$messagesHTML\n";
 	}
 else
 	{
@@ -2202,6 +2258,20 @@ else
 
 	$comments = preg_replace("/!N/","\n",$comments);
 
+
+	##### grab today call count for lead #####
+	$call_count_today=0;
+	$stmt="SELECT called_count_total from vicidial_lead_call_daily_counts where lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' $LOGallowed_listsSQL";
+	$rslt=mysql_to_mysqli($stmt, $link);
+	if ($DB) {echo "$stmt\n";}
+	$counts_to_print = mysqli_num_rows($rslt);
+	if ($counts_to_print > 0)
+		{
+		$row=mysqli_fetch_row($rslt);
+		$call_count_today		= $row[0];
+		}
+
+
 	if ($lead_id == 'NEW')
 		{
 		##### create a select list of lists if a NEW lead_id #####
@@ -2250,6 +2320,7 @@ else
 	else
 		{echo "<br>"._QXZ("Lead information").": $first_name $last_name - $phone_number\n";}
 
+	if ($campaign_id=='---NONE') {$campaign_id='';}
 	echo "<br><br><form action=$PHP_SELF method=POST>\n";
 	echo "<input type=hidden name=end_call value=1>\n";
 	echo "<input type=hidden name=DB value=\"$DB\">\n";
@@ -2266,7 +2337,7 @@ else
 	echo "<input type=hidden name=FORM_LOADED id=FORM_LOADED value=\"0\" />\n";
 	echo "<table cellpadding=1 cellspacing=0>\n";
 	echo "<tr><td colspan=2>"._QXZ("Lead ID").": $lead_id &nbsp; &nbsp; "._QXZ("List ID").":  $list_id &nbsp; &nbsp; <font size=2>"._QXZ("GMT offset").": $gmt_offset_now &nbsp; &nbsp; "._QXZ("CSLR").": $called_since_last_reset</td></tr>\n";
-	echo "<tr><td colspan=2>"._QXZ("Fronter").": <A HREF=\"user_stats.php?user=$tsr\">$tsr</A> &nbsp; &nbsp; "._QXZ("Called Count").": $called_count &nbsp; &nbsp; <font size=2>"._QXZ("Last Local Call").": $last_local_call_time</td></tr>\n";
+	echo "<tr><td colspan=2>"._QXZ("Fronter").": <A HREF=\"user_stats.php?user=$tsr\">$tsr</A> &nbsp; &nbsp; "._QXZ("Called Count").": $called_count <font size=2>("._QXZ("today").": $call_count_today)</font> &nbsp; &nbsp; "._QXZ("Last Local Call").": $last_local_call_time</td></tr>\n";
 	if ($archive_search=="Yes") 
 		{
 		echo "<tr><td colspan=2 align='center'>";
@@ -3137,7 +3208,7 @@ else
 					{$bgcolor="bgcolor=\"#$SSstd_row2_background\"";} 
 				else
 					{$bgcolor="bgcolor=\"#$SSstd_row1_background\"";}
-				if (strlen($row[6])>100) {$row[6]=substr($row[6],0,100)."...";}
+				if (mb_strlen($row[6],'utf-8')>100) {$row[6]=mb_substr($row[6],0,100,'utf-8')."...";}
 				$row[8]=preg_replace('/\|/', ', ', $row[8]);
 				$row[8]=preg_replace('/,\s+$/', '', $row[8]);
 				$u++;
@@ -3223,8 +3294,8 @@ else
 					}
 				}
 
-			if (strlen($location)>30)
-				{$locat = substr($location,0,27);  $locat = "$locat...";}
+			if (mb_strlen($location,'utf-8')>30)
+				{$locat = mb_substr($location,0,27,'utf-8');  $locat = "$locat...";}
 			else
 				{$locat = $location;}
 			$play_audio='<td align=left><font size=2> </font></td>';
@@ -3318,8 +3389,8 @@ else
 					}
 				}
 
-			if (strlen($location)>30)
-				{$locat = substr($location,0,27);  $locat = "$locat...";}
+			if (mb_strlen($location,'utf-8')>30)
+				{$locat = mb_substr($location,0,27,'utf-8');  $locat = "$locat...";}
 			else
 				{$locat = $location;}
 			$play_audio='<td align=left><font size=2> </font></td>';
@@ -3438,7 +3509,6 @@ else
 			}
 		echo "\n";
 		}
-	}
 
 	if ($enable_gdpr_download_deletion > 0)
 		{
@@ -3463,6 +3533,7 @@ else
 			}
 		}
 	echo "\n";
+	}
 
 
 $ENDtime = date("U");

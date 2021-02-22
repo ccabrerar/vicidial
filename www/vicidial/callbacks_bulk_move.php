@@ -998,11 +998,11 @@ else
 	echo "<table width='650' align='center' border=0>";
 	echo "<tr>";
 	echo "<td align='center' colspan='2'>";
-	echo "<input type='submit' name='SUBMIT' value='  "._QXZ("TRANSFER TO")." '><BR/><BR/>";
+	echo "<input style='background-color:#$SSbutton_color' type='submit' name='SUBMIT' value='  "._QXZ("TRANSFER TO")." '><BR/><BR/>";
 	echo "</td>";
 	echo "</tr>";
 
-	$stmt="SELECT list_id, list_name from vicidial_lists $whereLOGadmin_viewable_groupsSQL order by list_id asc";
+	$stmt="SELECT list_id, list_name from vicidial_lists $whereLOGallowed_campaignsSQL order by list_id asc";
 	if ($DB) {echo "$stmt\n";}
 	$rslt=mysql_to_mysqli($stmt, $link);
 

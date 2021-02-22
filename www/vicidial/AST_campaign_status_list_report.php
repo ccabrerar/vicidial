@@ -552,7 +552,8 @@ while($i < $group_ct)
 				}
 
 			$d=0;
-			while (list($key, $val)=each($dispo_ary)) 
+#			while (list($key, $val)=each($dispo_ary)) 
+			foreach($dispo_ary as $key => $val)
 				{
 				$ASCII_text.="| ".sprintf("%-40s", $key.$status_ary[$key]);
 				$ASCII_text.=" | ".sprintf("%6s", $val[0]);

@@ -483,7 +483,8 @@ if ($SUBMIT && $query_date && $start_hour && $end_hour) {
 	$CSV_text.="\""._QXZ("USER GROUP")."\",\""._QXZ("AGENTS")."\"";
 	$CSV_total.="\""._QXZ("TOTALS")."\",\"$grand_total\"";
 
-	while (list($key, $val)=each($hour_array)) {	
+	# while (list($key, $val)=each($hour_array)) {	
+	foreach($hour_array as $key => $val) {
 		$ASCII_title.=" ".date("ha", strtotime("$key:00"))." to ";
 		$key1=$key+1;
 		$ASCII_title.=date("ha", strtotime("$key1:00"))." |";
@@ -512,14 +513,16 @@ if ($SUBMIT && $query_date && $start_hour && $end_hour) {
 
 	$CSV_text.="\n";
 
-	while (list($key, $val)=each($user_group_array)) {
+	#while (list($key, $val)=each($user_group_array)) {
+	foreach ($user_group_array as $key => $val) {
 		$ASCII_text.="| ".sprintf("%20s", $key)." | ".sprintf("%6s", $total_array[$key])." |";
 		$HTML_text.="<tr bgcolor='#".$SSstd_row2_background."'>";
 		$HTML_text.="<td><font size='2'>".$key."&nbsp;</font></td>";
 		$HTML_text.="<td><font size='2'>".$total_array[$key]."&nbsp;</font></td>";
 
 		$CSV_text.="\"$key\",\"".$total_array[$key]."\"";
-		while (list($key2, $val2)=each($hour_array)) {	
+		# while (list($key2, $val2)=each($hour_array)) {	
+		foreach($hour_array as $key2 => $val2) {
 			$ASCII_text.=" ".sprintf("%12s", ($hour_total_array[$key][$key2]+0))." |";
 			$HTML_text.="<td><font size='2'>".($hour_total_array[$key][$key2]+0)."</font></td>";
 			$CSV_text.=",\"".($hour_total_array[$key][$key2]+0)."\"";

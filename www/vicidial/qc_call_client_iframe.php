@@ -305,12 +305,12 @@ function is_user_logged_in($user)
 $qc_user_logged_in=is_user_logged_in($PHP_AUTH_USER);
 if ($qc_user_logged_in===true)
 	{
-    echo "<A HREF=qc_api.php?source=test&user=$PHP_AUTH_USER&pass=$PHP_AUTH_PW&agent_user=$PHP_AUTH_USER&function=external_dial_lead&value=$phone_number&phone_code=$phone_code&search=YES&preview=NO&focus=YES target='_SELF'>"._QXZ("Call Lead")."</A>";
+    echo "<A HREF=qc_api.php?source=test&user=$PHP_AUTH_USER&pass=$PHP_AUTH_PW&agent_user=$PHP_AUTH_USER&function=external_dial_lead&value=$phone_number&phone_code=$phone_code&search=YES&preview=NO&focus=YES target='_SELF'>"._QXZ("Call Lead")."</A><BR><BR>";
 	} 
 else 
 	{
-    echo "$qc_user_logged_in";
+    echo "$qc_user_logged_in<BR><BR>";
 	}
-echo "&nbsp;<A HREF=$PHP_SELF?phone_number=$phone_number&phone_code=$phone_code&lead_id=$lead_id&list_id=$CLlist_id&stage=DISPLAY&submit_button=YES&user=$PHP_AUTH_USER&pass=$PHP_AUTH_PW&bgcolor=E6E6E6>"._QXZ("Refresh")."</A>";
+echo "&nbsp;<A HREF=$PHP_SELF?lead_id=$lead_id&list_id=$CLlist_id&stage=DISPLAY&submit_button=YES&user=$PHP_AUTH_USER&pass=$PHP_AUTH_PW&bgcolor=E6E6E6>"._QXZ("Refresh")."</A>";
 
 ?>

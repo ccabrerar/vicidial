@@ -6,7 +6,7 @@
 # adjusts the auto_dial_level for vicidial adaptive-predictive campaigns. 
 # gather call stats for campaigns and in-groups
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 60823-1302 - First build from AST_VDhopper.pl
@@ -53,8 +53,11 @@
 # 190722-1004 - Added more logging and log-audit portions to Call Quotas log audit code
 # 200811-1600 - Include live agents from other campaigns if they have the campaign Drop-InGroup selected and drop sec < 0
 # 201106-2141 - Added calculation and caching of park_log stats per campaign/in-group
+# 201214-0857 - Added SHARED_ campaign agent rotation functions
+# 210207-1205 - Added more logging and debug code for SHARED agent campaigns
 #
 
+$build='210207-1205';
 # constants
 $DB=0;  # Debug flag, set to 0 for no debug messages, On an active system this will generate lots of lines of output per minute
 $US='__';
@@ -76,6 +79,7 @@ $SSofcom_uk_drop_calc=0;
 $i=0;
 $daily_stats=1;
 $drop_count_updater=0;
+$shared_agent_count_updater=0;
 $stat_it=15;
 $diff_ratio_updater=0;
 $stat_count=1;
@@ -116,6 +120,8 @@ $cwu_any_on=0;
 
 # set to 61 initially so that a baseline drop count is pulled
 $drop_count_updater=61;
+# set to 61 initially so that a baseline shared agent process is run
+$shared_agent_count_updater=61;
 
 $secT = time();
 
@@ -305,6 +311,30 @@ $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VA
 
 if ($DBX) {print "CONNECTED TO DATABASE:  $VARDB_server|$VARDB_database\n";}
 
+##### gather relevent system settings
+$stmtA = "SELECT cache_carrier_stats_realtime,ofcom_uk_drop_calc,call_quota_lead_ranking,use_non_latin,allow_shared_dial from system_settings;";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+if ($sthArows > 0)
+	{
+	@aryA = $sthA->fetchrow_array;
+	$generate_carrier_stats =		$aryA[0];
+	$SSofcom_uk_drop_calc =			$aryA[1];
+	$SScall_quota_lead_ranking =	$aryA[2];
+	$non_latin = 					$aryA[3];
+	$SSallow_shared_dial =			$aryA[4];
+	}
+$sthA->finish();
+
+if ($non_latin > 0) 
+	{
+	$stmtA = "SET NAMES 'UTF8';";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthA->finish();
+	}
+
 # make sure the vicidial_campaign_stats table has all of the campaigns.  
 # They should exist, but sometimes they get accidently removed during db moves and the like.
 $stmtA = "INSERT IGNORE into vicidial_campaign_stats (campaign_id) select campaign_id from vicidial_campaigns;";
@@ -317,18 +347,14 @@ $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthA->finish();
 
-##### gather relevent system settings
-$stmtA = "SELECT cache_carrier_stats_realtime,ofcom_uk_drop_calc,call_quota_lead_ranking from system_settings;";
+$stmtA = "INSERT IGNORE into vicidial_campaign_stats_debug SET campaign_id='--ALL--',server_ip='SHARED';";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-$sthArows=$sthA->rows;
-if ($sthArows > 0)
-	{
-	@aryA = $sthA->fetchrow_array;
-	$generate_carrier_stats =		$aryA[0];
-	$SSofcom_uk_drop_calc =			$aryA[1];
-	$SScall_quota_lead_ranking =	$aryA[2];
-	}
+$sthA->finish();
+
+$stmtA = "INSERT IGNORE into vicidial_campaign_stats_debug (campaign_id,server_ip) select campaign_id,'SHARED' from vicidial_campaigns;";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthA->finish();
 
 
@@ -531,14 +557,14 @@ while ($master_loop < $CLIloops)
 		### Find out how many agents are logged in to a specific campaign
 		# check if drop-in-group agents should be included ---NONE---
 		$drop_ingroup_SQL[$i]='';
-		if ( ($drop_call_seconds[$i] < 0) && ($drop_action[$i] =~ /IN_GROUP/i) && ($drop_inbound_group[$i] !~ /^---NONE---$/) && (length($drop_inbound_group[$i]) > 0) && ($new_agent_multicampaign > 0) ) 
+		if ( ($drop_call_seconds[$i] < 0) && ($drop_action[$i] =~ /IN_GROUP/i) && ($drop_inbound_group[$i] !~ /^---NONE---$/) && (length($drop_inbound_group[$i]) > 0) && ($new_agent_multicampaign > 0) && ($dial_method[$i] !~ /SHARED_/i) )
 			{
 			$SQL_group_id=$drop_inbound_group[$i];   $SQL_group_id =~ s/_/\\_/gi;
 			$drop_ingroup_SQL[$i] = " or ( (campaign_id!='$campaign_id[$i]') and (closer_campaigns LIKE \"% $SQL_group_id %\") )";
 			if ($DB) {print "     $campaign_id[$i] Drop In-Group agents included from:   $drop_inbound_group[$i]";}
 			$debug_camp_output .= "     $campaign_id[$i] Drop In-Group agents included from:   $drop_inbound_group[$i]\n";
 			}
-		$stmtA = "SELECT count(*) from vicidial_live_agents where ( (campaign_id='$campaign_id[$i]') $drop_ingroup_SQL[$i] ) and last_update_time > '$VDL_one';";
+		$stmtA = "SELECT count(*) from vicidial_live_agents where ( (campaign_id='$campaign_id[$i]') or (dial_campaign_id='$campaign_id[$i]') $drop_ingroup_SQL[$i] ) and last_update_time > '$VDL_one';";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;
@@ -552,7 +578,7 @@ while ($master_loop < $CLIloops)
 			}
 		$sthA->finish();
 
-		$event_string = "|$campaign_id[$i]|$hopper_level[$i]|$hopper_ready_count|$local_call_time[$i]|$diff_ratio_updater|$drop_count_updater|";
+		$event_string = "|$campaign_id[$i]|$hopper_level[$i]|$hopper_ready_count|$local_call_time[$i]|$diff_ratio_updater|$drop_count_updater|$shared_agent_count_updater|";
 		if ($DBX) {print "$i     $event_string\n";}
 		$debug_camp_output .= "$i     $event_string\n";
 		&event_logger;	
@@ -668,6 +694,12 @@ while ($master_loop < $CLIloops)
 		&launch_max_calls_gather;
 		}
 
+	### Update Drop counter every 60 seconds
+	if ($shared_agent_count_updater >= 60)
+		{
+		&shared_agent_process;
+		}
+
 	if ( (($stat_count =~ /00$|50$/) || ($stat_count==1)) )
 		{
 		$stmtA = "SELECT cache_carrier_stats_realtime,ofcom_uk_drop_calc from system_settings;";
@@ -689,8 +721,10 @@ while ($master_loop < $CLIloops)
 
 	if ($RESETdiff_ratio_updater > 0) {$RESETdiff_ratio_updater=0;   $diff_ratio_updater=0;}
 	if ($RESETdrop_count_updater > 0) {$RESETdrop_count_updater=0;   $drop_count_updater=0;}
+	if ($RESETshared_agent_count_updater > 0) {$RESETshared_agent_count_updater=0;   $shared_agent_count_updater=0;}
 	$diff_ratio_updater = ($diff_ratio_updater + $CLIdelay);
 	$drop_count_updater = ($drop_count_updater + $CLIdelay);
+	$shared_agent_count_updater = ($shared_agent_count_updater + $CLIdelay);
 
 
 
@@ -2162,7 +2196,7 @@ sub count_agents_lines
 	$total_agents_avg[$i]=0;
 	$stat_differential[$i]=0;
 
-	$stmtA = "SELECT count(*),status from vicidial_live_agents where ( (campaign_id='$campaign_id[$i]') $drop_ingroup_SQL[$i] ) and last_update_time > '$VDL_one' group by status;";
+	$stmtA = "SELECT count(*),status from vicidial_live_agents where ( (campaign_id='$campaign_id[$i]') or (dial_campaign_id='$campaign_id[$i]') $drop_ingroup_SQL[$i] ) and last_update_time > '$VDL_one' group by status;";
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 	$sthArows=$sthA->rows;
@@ -2219,7 +2253,7 @@ sub count_agents_lines
 	# LIVE CAMPAIGN CALLS RIGHT NOW
 	if ($daily_stats > 0)
 		{
-		$stmtA = "SELECT count(*) from vicidial_live_agents where ( (campaign_id='$campaign_id[$i]') $drop_ingroup_SQL[$i] ) and last_update_time > '$VDL_one' and extension LIKE \"R/%\";";
+		$stmtA = "SELECT count(*) from vicidial_live_agents where ( (campaign_id='$campaign_id[$i]') or (dial_campaign_id='$campaign_id[$i]') $drop_ingroup_SQL[$i] ) and last_update_time > '$VDL_one' and extension LIKE \"R/%\";";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;
@@ -2252,7 +2286,218 @@ sub count_agents_lines
 
 
 
+sub shared_agent_process
+	{
+	$RESETshared_agent_count_updater++;
+	$SHARED_campaigns_ct=0;
+	$SHARED_agents_ct=0;
+	@SHARED_campaigns=@MT;
+	@SHARED_campaigns_drop_ig=@MT;
+	@SHARED_campaigns_agnt_ct=@MT;
+	@SHARED_campaigns_agnt_dl=@MT;
+	@SHARED_campaigns_dial_ct=@MT;
+	@SHARED_agents=@MT;
+	@SHARED_agents_cig=@MT;
+	@SHARED_agents_dig=@MT;
+	$debug_shared_output='';
+	if ($SSallow_shared_dial > 0) 
+		{
+		$camp_SHARED_SQL='';
+		$drop_SHARED_SQL='';
+		# Get list of active SHARED_ campaigns
+		$stmtA = "SELECT campaign_id,drop_inbound_group from vicidial_campaigns where active='Y' and dial_method IN('SHARED_RATIO','SHARED_ADAPT_HARD_LIMIT','SHARED_ADAPT_TAPERED','SHARED_ADAPT_AVERAGE');";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		while ($sthArows > $SHARED_campaigns_ct)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$camp_SHARED_SQL .=	 "'$aryA[0]',";
+			$SHARED_campaigns[$SHARED_campaigns_ct] = $aryA[0];
+			$SHARED_campaigns_agnt_ct[$SHARED_campaigns_ct] = 0;
+			$SHARED_campaigns_agnt_dl[$SHARED_campaigns_ct] = 0;
+			$SHARED_campaigns_dial_ct[$SHARED_campaigns_ct] = 0;
+			if (length($aryA[1]) > 0) 
+				{
+				$SHARED_campaigns_drop_ig[$SHARED_campaigns_ct] = $aryA[1];
+				$SQL_group_id=$aryA[1];   $SQL_group_id =~ s/_/\\_/gi;
+				$temp_drop_ingroup_SQL = "(closer_campaigns LIKE \"% $SQL_group_id %\")";
+				if (length($drop_SHARED_SQL) > 10) {$drop_SHARED_SQL .=	 " or ";}
+				$drop_SHARED_SQL .=	 "$temp_drop_ingroup_SQL";
+				}
+			else {if ($DBX) {print "Empty Drop In-Group for campaign: $aryA[0]\n";}}
+			$SHARED_campaigns_ct++;
+			}
+		$sthA->finish();
+		chop($camp_SHARED_SQL);
+		if (length($camp_SHARED_SQL)<2) 
+			{$camp_SHARED_SQL="'-NONE-'";}
+		if (length($drop_SHARED_SQL)<2) 
+			{$drop_SHARED_SQL="closer_campaigns='----------'";}
+		$drop_SHARED_SQL = "and ($drop_SHARED_SQL)";
 
+		$now_epoch = time();
+		$BDtarget = ($now_epoch - 10);
+		($Bsec,$Bmin,$Bhour,$Bmday,$Bmon,$Byear,$Bwday,$Byday,$Bisdst) = localtime($BDtarget);
+		$Byear = ($Byear + 1900);
+		$Bmon++;
+		if ($Bmon < 10) {$Bmon = "0$Bmon";}
+		if ($Bmday < 10) {$Bmday = "0$Bmday";}
+		if ($Bhour < 10) {$Bhour = "0$Bhour";}
+		if ($Bmin < 10) {$Bmin = "0$Bmin";}
+		if ($Bsec < 10) {$Bsec = "0$Bsec";}
+			$BDtsSQLdate = "$Byear$Bmon$Bmday$Bhour$Bmin$Bsec";
+
+		$agent_SHARED_SQL='';
+		# Get list of active SHARED_ campaigns
+		$stmtA = "SELECT user,closer_campaigns,dial_campaign_id from vicidial_live_agents where last_update_time > '$BDtsSQLdate' $drop_SHARED_SQL;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($DBX) {print "$sthArows|$stmtA|\n";}
+		$SHARED_agents_ct=0;
+		while ($sthArows > $SHARED_agents_ct)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$SHARED_agents[$SHARED_agents_ct] = $aryA[0];
+			$SHARED_agents_cig[$SHARED_agents_ct] = $aryA[1];
+			$SHARED_agents_dig[$SHARED_agents_ct] = $aryA[2];
+			$agent_SHARED_SQL .=	 "'$aryA[0]',";
+			$SHARED_agents_ct++;
+			}
+		$sthA->finish();
+		chop($agent_SHARED_SQL);
+		if (length($agent_SHARED_SQL)<2) 
+			{$agent_SHARED_SQL="'-NONE-'";}
+
+		$event_string="SHARED CAMPAIGNS: $SHARED_campaigns_ct   $SHARED_agents_ct";
+		$DBX_string="CAMP SQL: $camp_SHARED_SQL\nDROP SQL: $drop_SHARED_SQL\nAGNT SQL: $agent_SHARED_SQL\n";
+		if ($DBX) {print "$DBX_string";}
+		if ($DB) {print "     $event_string\n";}
+		$DBX_string =~ s/'//gi;
+		$debug_shared_output .= "$event_string\n$DBX_string";
+
+		&event_logger;
+
+		# update debug output
+		$stmtA = "UPDATE vicidial_campaign_stats_debug SET entry_time='$now_date',debug_output='$debug_shared_output' where campaign_id='--ALL--' and server_ip='SHARED';";
+		$affected_rows = $dbhA->do($stmtA);
+
+		if ($SSallow_shared_dial > 1) 
+			{
+			$stmtA = "INSERT INTO vicidial_shared_log SET log_time='$now_date',total_agents='$SHARED_agents_ct',total_calls='0',debug_output='BUILD: $build\n$debug_shared_output',campaign_id='--ALL--',server_ip='SHARED';";
+			$affected_rows = $dbhA->do($stmtA);
+			}
+
+		### If there are active SHARED_ campaigns and agents set to take calls from the drop-in-groups of those campaigns, then start processing SHARED_ agents
+		if ( ($SHARED_campaigns_ct > 0) and ($SHARED_agents_ct > 0) ) 
+			{
+			$agent_shared_output="Shared Agent Rotation process last ran: $now_date \n";
+
+			$sh_ct=0;
+			while($SHARED_agents_ct > $sh_ct)
+				{
+				$cp_ct=0;
+				while($SHARED_campaigns_ct > $cp_ct)
+					{
+					$temp_drop = $SHARED_campaigns_drop_ig[$cp_ct];
+					if ( ($SHARED_agents_cig[$sh_ct] =~ / $temp_drop /) && (length($temp_drop) > 0) )
+						{
+						$SHARED_campaigns_agnt_ct[$cp_ct]++;
+						# insert/update vicidial_agent_dial_campaigns record for this agent/campaign
+						$stmtA = "INSERT IGNORE INTO vicidial_agent_dial_campaigns SET validate_time='$now_date',group_id='$temp_drop',campaign_id='$SHARED_campaigns[$cp_ct]',user='$SHARED_agents[$sh_ct]',dial_time='2020-01-01 00:00:00' ON DUPLICATE KEY UPDATE validate_time='$now_date',group_id='$temp_drop';";
+						$affected_rows_vadc_up = $dbhA->do($stmtA);
+						}
+					$cp_ct++;
+					}
+				# delete old vicidial_agent_dial_campaigns entries for this agent
+				$stmtA = "DELETE FROM vicidial_agent_dial_campaigns WHERE validate_time < \"$now_date\" and user='$SHARED_agents[$sh_ct]';";
+				$affected_rows_vadc_del = $dbhA->do($stmtA);
+
+				# gather oldest dial campaign for this agent
+				$next_dial_campaign_id='';
+				$stmtA = "SELECT campaign_id from vicidial_agent_dial_campaigns where user='$SHARED_agents[$sh_ct]' order by dial_time asc limit 1;";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArows=$sthA->rows;
+				if ($DBX) {print "$sthArows|$stmtA|\n";}
+				if ($sthArows > 0)
+					{
+					@aryA = $sthA->fetchrow_array;
+					$next_dial_campaign_id = $aryA[0];
+
+					$cp_ct=0;
+					while($SHARED_campaigns_ct > $cp_ct)
+						{
+						if ($SHARED_campaigns[$cp_ct] =~ /^$next_dial_campaign_id$/)
+							{
+							$SHARED_campaigns_agnt_dl[$cp_ct]++;
+							}
+						$cp_ct++;
+						}
+
+					}
+				$sthA->finish();
+
+				# update dial campaign for this agent vicidial_agent_dial_campaigns
+				$stmtA = "UPDATE vicidial_agent_dial_campaigns SET dial_time = \"$now_date\" where user='$SHARED_agents[$sh_ct]' and campaign_id='$next_dial_campaign_id';";
+				$affected_rows_vadc_dial = $dbhA->do($stmtA);
+
+				# update dial campaign for this agent in vicidial_live_agents
+				$stmtA = "UPDATE vicidial_live_agents SET dial_campaign_id='$next_dial_campaign_id' where user='$SHARED_agents[$sh_ct]';";
+				$affected_rows_vla_dial = $dbhA->do($stmtA);
+
+				$agent_temp = $SHARED_agents[$sh_ct];
+				$sh_ct++;
+				$agent_shared_output .= "Agent $sh_ct: $agent_temp   |$next_dial_campaign_id|$affected_rows_vadc_up|$affected_rows_vadc_del|$affected_rows_vadc_dial|$affected_rows_vla_dial|\n";
+				}
+
+			$cp_ct=0;
+			$agent_shared_output .= "\nSHARED Campaigns:\n";
+			$total_shared_calls_counter=0;
+			while($SHARED_campaigns_ct > $cp_ct)
+				{
+				$shared_camp_output="$SHARED_campaigns[$cp_ct]   Drop In-Group: $SHARED_campaigns_drop_ig[$cp_ct]   Shared Agents: $SHARED_campaigns_agnt_ct[$cp_ct] (Dial Agents: $SHARED_campaigns_agnt_dl[$cp_ct])";
+				$agent_shared_output .= "$shared_camp_output\n";
+
+				# update debug output for each campaign
+				$stmtA = "UPDATE vicidial_campaign_stats_debug SET entry_time='$now_date',adapt_output='$shared_camp_output' where campaign_id='$SHARED_campaigns[$cp_ct]' and server_ip='SHARED';";
+				$affected_rows = $dbhA->do($stmtA);
+
+				### see how many total VDAD calls are going on right now for this shared campaign
+				$temp_calls_counter=0;
+				$stmtA = "SELECT count(*) FROM vicidial_auto_calls where campaign_id IN('$SHARED_campaigns_drop_ig[$cp_ct]','$SHARED_campaigns[$cp_ct]') and status IN('SENT','RINGING','LIVE','XFER','CLOSER','IVR');";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArows=$sthA->rows;
+				if ($sthArows > 0)
+					{
+					@aryA = $sthA->fetchrow_array;
+					$temp_calls_counter = $aryA[0];
+					$total_shared_calls_counter = ($total_shared_calls_counter + $temp_calls_counter);
+					}
+				$sthA->finish();
+
+				if ($SSallow_shared_dial > 1) 
+					{
+					$stmtA = "INSERT INTO vicidial_shared_log SET log_time='$now_date',total_agents='$SHARED_campaigns_agnt_dl[$cp_ct]',total_calls='$temp_calls_counter',adapt_output='BUILD: $build\n$shared_camp_output',campaign_id='$SHARED_campaigns[$cp_ct]',server_ip='SHARED';";
+					$affected_rows = $dbhA->do($stmtA);
+					}
+				$cp_ct++;
+				}
+
+			# update debug output
+			$stmtA = "UPDATE vicidial_campaign_stats_debug SET entry_time='$now_date',adapt_output='$agent_shared_output' where campaign_id='--ALL--' and server_ip='SHARED';";
+			$affected_rows = $dbhA->do($stmtA);
+
+			if ($SSallow_shared_dial > 1) 
+				{
+				$stmtA = "INSERT INTO vicidial_shared_log SET log_time='$now_date',total_agents='$SHARED_agents_ct',total_calls='$total_shared_calls_counter',adapt_output='BUILD: $build\n$agent_shared_output',campaign_id='--ALL--',server_ip='SHARED';";
+				$affected_rows = $dbhA->do($stmtA);
+				}
+			}
+		}
+	}
 
 sub calculate_drops
 	{
@@ -5989,7 +6234,7 @@ sub calculate_dial_level
 	$adaptive_string .= "CAMPAIGN:   $campaign_id[$i]     $i\n";
 
 	# COUNTS OF STATUSES OF AGENTS IN THIS CAMPAIGN
-	$stmtA = "SELECT count(*),status from vicidial_live_agents where ( (campaign_id='$campaign_id[$i]') $drop_ingroup_SQL[$i] ) and last_update_time > '$VDL_one' group by status;";
+	$stmtA = "SELECT count(*),status from vicidial_live_agents where ( (campaign_id='$campaign_id[$i]') or (dial_campaign_id='$campaign_id[$i]') $drop_ingroup_SQL[$i] ) and last_update_time > '$VDL_one' group by status;";
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 	$sthArows=$sthA->rows;

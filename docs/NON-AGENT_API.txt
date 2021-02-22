@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2020-11-13
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2021-02-17
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -26,6 +26,7 @@ did_log_export - exports all calls inbound to a DID for one day
 agent_stats_export - exports agent statistics for set time period
 add_user - adds a user to the system
 update_user - updates some user settings in the system
+copy_user - copies an existing user in the system to a new user ID and name
 add_phone - adds a phone to the system
 update_phone - updates or deletes an existing phone record in the system
 add_phone_alias - adds a phone alias record to the system
@@ -44,6 +45,7 @@ server_refresh - forces a conf file refresh on all telco servers in the cluster
 check_phone_number - allows you to check if a phone number is valid and dialable
 logged_in_agents - list of agents that are logged in to the system
 update_campaign - updates campaign settings in the system
+add_did - adds new Inbound DID entries to the system
 update_did - updates Inbound DID information in the system
 phone_number_log - exports list of calls placed to one of more phone numbers
 ccc_lead_info - outputs lead data for cross-cluster-communication call
@@ -166,6 +168,12 @@ Changes:
 201002-1545 - Added extension as recording_lookup option, Allowed for secure sounds_web_server setting
 201106-1654 - Added campaign_id option to agent_stats_export function
 201113-0713 - Added delete_did option to update_did function
+201201-1625 - Added group_by_campaign option to agent_stats_export function
+210113-1714 - Added copy_user function
+210209-2014 - Added add_did function
+210210-1627 - Added duplicate check with more X-day options for add_lead function
+210216-1415 - Added list_exists_check option for add_lead function
+210217-1454 - Added menu_id option for add_did and update_did functions
 
 
 API Functions use the 'function' variable
@@ -539,6 +547,7 @@ stage -			the format of the exported data: csv, tab, pipe(default)
 header -		include a header(YES) or not(NO). This is optional, default is not to include a header
 time_format -		time format('H','HF','M','S') in hours, minutes or seconds: H = 1:23:45, M = 83:45, S = 5023  (default 'HF')
 				* HF will force hour format even for zero seconds time "0:00:00"
+group_by_campaign -	divide and output the agent results grouped by campaign(YES) or not(NO). This is optional, default is 'NO'
 
 NOTES- 
 There is a hard limit of 10000000 records analyzed
@@ -556,6 +565,8 @@ A SUCCESS response will not show "SUCCESS", but instead will just print the resu
 user|full_name|user_group|calls|login_time|total_talk_time|avg_talk_time|avg_wait_time|pct_of_queue|pause_time|sessions|avg_session|pauses|avg_pause_time|pause_pct|pauses_per_session|total_wait_time
 1029|test agent|ADMIN|1|0:01:52|0:00:16|0:00:16|0:00:18|16.7%|54|3|0:00:37|5|0:00:11|48.2%|2|0:00:32
 6666|Admin|ADMIN|5|0:04:11|0:01:48|0:00:22|0:00:17|83.3%|27|2|0:02:06|4|0:00:07|10.8%|2|0:00:32
+
+* if the 'group_by_campaign' option is enabled, the format above will have 'campaign_id' as the first column, and each agent's activity will be divided on separate lines by the campaigns they were logged into during the requested time period.
 
 
 
@@ -891,7 +902,7 @@ duplicate_check -	Check for duplicate records in the system, can select more tha
 				DUPNAMEPHONELIST - check for duplicate first_name, last_name and phone_number in same list
 				DUPNAMEPHONECAMP - check for duplicate first_name, last_name and phone_number in all lists for this list's campaign
 				DUPNAMEPHONESYS - check for duplicate first_name, last_name and phone_number in entire system
-				 "  90DAY - Added to one of the above duplicate checks(i.e. "DUPSYS90DAY"), only checks leads loaded in last 90 days
+				 "  30/60/90/180/360DAY - Added to one of the above duplicate checks(i.e. "DUPSYS90DAY"), only checks leads loaded in last 90 days
 usacan_prefix_check -	Y or N, default is N. Check for a valid 4th digit for USA and Canada phone numbers (cannot be 0 or 1)
 usacan_areacode_check -	Y or N, default is N. Check for a valid areacode for USA and Canada phone numbers(also checks for 10-digit length)
 nanpa_ac_prefix_check -	Y or N, default is N. Check for a valid NANPA areacode and prefix, if optional NANPA data is on the system
@@ -909,6 +920,7 @@ callback_type -		USERONLY or ANYONE, default is ANYONE
 callback_user -		User ID the USERONLY callback is assigned to
 callback_comments -	Optional comments to appear when the callback is called back
 lookup_state -		Y or N, default is N. Looks up state field from areacode list. Only works if the 'state' field is not populated.
+list_exists_check -	Y or N, default is N. If the list_id is not a defined list in the system, it will ERROR and not insert the lead.
 
 (for fields with spaces in the values, you can replace the space with a plus + sign[address, city, first_name, etc...])
 OPTIONAL FIELDS- 
@@ -986,6 +998,7 @@ ERROR: add_lead INVALID PHONE NUMBER NANPA AREACODE PREFIX - 7275551212|6666
 
 ERROR: add_lead USER DOES NOT HAVE PERMISSION TO ADD LEADS TO THE SYSTEM - 6666|0 
 ERROR: add_lead NOT AN ALLOWED LIST ID - 7275551212|98762
+ERROR: add_lead NOT A DEFINED LIST ID, LIST EXISTS CHECK ENABLED - 7275551212|12344
 
 ERROR: NO FUNCTION SPECIFIED
 
@@ -1195,6 +1208,35 @@ ERROR: add_user USER GROUP DOES NOT EXIST - 6666|ADFHR
 ERROR: add_user USER ALREADY EXISTS - 6666|6666
 SUCCESS: add_user USER HAS BEEN ADDED - 6666|1000|1234|8|Testing+Person|AGENTS
 
+
+
+
+
+
+--------------------------------------------------------------------------------
+copy_user - copies an existing user in the system to a new user ID and name
+
+NOTE: api user for this function must have user_level set to 8 or higher and "modify users" enabled
+
+REQUIRED FIELDS-
+agent_user -		2-20 characters (for auto-generated send 'AUTOGENERATED')
+agent_pass -		1-20 characters
+agent_full_name -	1-50 characters
+source_user -		2-20 characters (must be an existing user ID in the system)
+
+NOTE: This function does not work with Vtiger integration
+
+Example URL strings for API calls:
+http://server/vicidial/non_agent_api.php?source=test&function=copy_user&user=6666&pass=1234&agent_user=1000&agent_pass=9999&source_user=5555&agent_full_name=Copy+Person
+
+Example responses:
+ERROR: copy_user USER DOES NOT HAVE PERMISSION TO COPY USERS - 6666|0
+ERROR: copy_user YOU MUST USE ALL REQUIRED FIELDS - 6666|1000|5555|||
+ERROR: copy_user USER DOES NOT HAVE PERMISSION TO COPY USERS IN THIS USER LEVEL - 9|8
+ERROR: copy_user SOURCE USER DOES NOT EXIST - 6666|5555
+ERROR: copy_user USER GROUP DOES NOT EXIST - 6666|ADFHR
+ERROR: copy_user USER ALREADY EXISTS - 6666|6666
+SUCCESS: copy_user USER HAS BEEN COPIED - 6666|1000|1234|Testing+Person|5555
 
 
 
@@ -1985,6 +2027,56 @@ SUCCESS: update_campaign CAMPAIGN HAS BEEN UPDATED - 6666|1101
 
 
 
+--------------------------------------------------------------------------------
+add_did - adds new Inbound DID entries to the system in the vicidial_inbound_dids table
+
+NOTE: api user for this function must have user_level set to 8 or higher and "Modify DIDs" enabled
+
+REQUIRED FIELDS-
+did_pattern -		2-50 characters, must be a valid DID in the system
+			   NOTE: special characters in the did_pattern need to be URL encoded, for example the plus sign '+' must be sent as '%2B'
+source -		description of what originated the API call (maximum 20 characters)
+
+EDITABLE FIELDS- 
+did_description -	6-50 characters
+active -		Must be one of these: 'Y','N'
+did_route -		must be one of these: 'EXTEN','VOICEMAIL','AGENT','PHONE','IN_GROUP','CALLMENU','VMAIL_NO_INST'
+record_call -		must be one of these: 'Y','N','Y_QUEUESTOP'
+extension -		1-50 digits
+exten_context -		1-50 characters
+voicemail_ext -		1-10 digits
+phone_extension -	1-100 characters
+server_ip -		must be all numbers and dots, max 15 characters
+group -			a valid in-group group_id
+menu_id -		a valid call menu menu_id
+filter_clean_cid_number - 1-20 characters
+
+Example URL strings for API calls:
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=add_did&did_pattern=%2B1727555112&did_description=Updated+test+API+DID&active=Y
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=add_did&did_pattern=7275553331&did_description=Testing+DID&active=N&did_route=EXTEN&record_call=Y_QUEUESTOP&extension=8300&exten_context=notdefault&voicemail_ext=8301&phone_extension=55000&server_ip=192.168.198.5&group=TEST_IN2&filter_clean_cid_number=R10
+
+Example responses:
+ERROR: add_did USER DOES NOT HAVE PERMISSION TO ADD DIDS - 6666
+ERROR: add_did YOU MUST USE ALL REQUIRED FIELDS - 6666|1
+ERROR: add_did NOT AN ALLOWED DID - 98762
+ERROR: add_did DID ALREADY EXISTS - 6666|1000
+ERROR: add_did DID DESCRIPTION MUST BE FROM 6 TO 50 CHARACTERS, THIS IS AN OPTIONAL FIELD - 6666|012
+ERROR: add_did ACTIVE MUST BE Y OR N, THIS IS AN OPTIONAL FIELD - 6666|U
+ERROR: add_did DID ROUTE IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|12
+ERROR: add_did RECORD CALL MUST BE Y OR N, THIS IS AN OPTIONAL FIELD - 6666|
+ERROR: add_did EXTENSION MUST BE FROM 1 TO 50 CHARACTERS, THIS IS AN OPTIONAL FIELD - 6666|
+ERROR: add_did EXTENSION CONTEXT MUST BE FROM 1 TO 50 CHARACTERS, THIS IS AN OPTIONAL FIELD - 6666|
+ERROR: add_did VOICEMAIL EXTENSION MUST BE FROM 1 TO 10 CHARACTERS, THIS IS AN OPTIONAL FIELD - 6666|
+ERROR: add_did PHONE EXTENSION MUST BE FROM 1 TO 100 CHARACTERS, THIS IS AN OPTIONAL FIELD - 6666|
+ERROR: add_did SERVER IP MUST BE A VALID SERVER IN THE SYSTEM, THIS IS AN OPTIONAL FIELD - 6666|0.0.0.0
+ERROR: add_did GROUP ID MUST BE A VALID INBOUND GROUP IN THE SYSTEM, THIS IS AN OPTIONAL FIELD - 6666|test
+ERROR: add_did MENU ID MUST BE A VALID CALL MENU IN THE SYSTEM, THIS IS AN OPTIONAL FIELD - 6666|test_menu
+ERROR: add_did CLEAN CID NUMBER MUST BE FROM 1 TO 20 CHARACTERS, THIS IS AN OPTIONAL FIELD - 6666|
+SUCCESS: add_did DID HAS BEEN ADDED - 6666|1101
+
+
+
+
 
 --------------------------------------------------------------------------------
 update_did - updates Inbound DID information in the vicidial_inbound_dids table
@@ -2007,6 +2099,7 @@ voicemail_ext -		1-10 digits
 phone_extension -	1-100 characters
 server_ip -		must be all numbers and dots, max 15 characters
 group -			a valid in-group group_id
+menu_id -		a valid call menu menu_id
 filter_clean_cid_number - 1-20 characters
 delete_did -		Can be one of these: 'Y','N' (default is 'N')
 
@@ -2030,6 +2123,7 @@ ERROR: update_did VOICEMAIL EXTENSION MUST BE FROM 1 TO 10 CHARACTERS, THIS IS A
 ERROR: update_did PHONE EXTENSION MUST BE FROM 1 TO 100 CHARACTERS, THIS IS AN OPTIONAL FIELD - 6666|
 ERROR: update_did SERVER IP MUST BE A VALID SERVER IN THE SYSTEM, THIS IS AN OPTIONAL FIELD - 6666|0.0.0.0
 ERROR: update_did GROUP ID MUST BE A VALID INBOUND GROUP IN THE SYSTEM, THIS IS AN OPTIONAL FIELD - 6666|test
+ERROR: update_did MENU ID MUST BE A VALID CALL MENU IN THE SYSTEM, THIS IS AN OPTIONAL FIELD - 6666|test_menu
 ERROR: update_did CLEAN CID NUMBER MUST BE FROM 1 TO 20 CHARACTERS, THIS IS AN OPTIONAL FIELD - 6666|
 NOTICE: update_did NO UPDATES DEFINED - 6666|
 SUCCESS: update_did DID HAS BEEN DELETED - 6666|23|1101

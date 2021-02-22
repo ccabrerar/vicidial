@@ -139,7 +139,8 @@ $sip_response_directory = array(
 $master_sip_response_directory=array();
 $master_sip_response_verbiage_directory=array();
 $i=0;
-while (list($key, $val)=each($sip_response_directory))
+# while (list($key, $val)=each($sip_response_directory)) 
+foreach ($sip_response_directory as $key => $val)
 	{
 	$master_sip_response_directory[$i]=$key;
 	$master_sip_response_verbiage_directory[$i]=$val;
@@ -510,6 +511,7 @@ if ($SUBMIT && $query_date) {
 
 	if (!$lower_limit) {$lower_limit=1;}
 	if ($lower_limit+999>=mysqli_num_rows($rslt)) {$upper_limit=($lower_limit+mysqli_num_rows($rslt)%1000)-1;} else {$upper_limit=$lower_limit+999;}
+
 	$TEXT.="--- "._QXZ("DIAL LOG RECORDS FOR")." $query_date, $query_date_D "._QXZ("TO")." $query_date_T $server_rpt_string, $HC_rpt_string\n --- "._QXZ("RECORDS")." #$lower_limit-$upper_limit               <a href=\"$PHP_SELF?SUBMIT=$SUBMIT&DB=$DB&type=$type&query_date=$query_date&query_date_D=$query_date_D&query_date_T=$query_date_T$server_ipQS$sip_hangup_causeQS&lower_limit=$lower_limit&upper_limit=$upper_limit&file_download=1&search_archived_data=$search_archived_data\">["._QXZ("DOWNLOAD")."]</a>\n";
 	$CSV_text="\""._QXZ("CALLER CODE")."\",\""._QXZ("LEAD ID")."\",\""._QXZ("SERVER IP")."\",\""._QXZ("CALL DATE")."\",\""._QXZ("EXTENSION")."\",\""._QXZ("CHANNEL")."\",\""._QXZ("CONTEXT")."\",\""._QXZ("TIMEOUT")."\",\""._QXZ("OUTBOUND CID")."\",\""._QXZ("SIP HANGUP CAUSE")."\",\""._QXZ("UNIQUE ID")."\",\""._QXZ("SIP HANGUP REASON")."\"\n";
 

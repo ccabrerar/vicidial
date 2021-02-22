@@ -1,7 +1,7 @@
 <?php
 # vdc_form_display.php
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed display the contents of the FORM tab in the agent 
 # interface, as well as take submission of the form submission when the agent 
@@ -44,10 +44,12 @@
 # 171116-2333 - Added code for duplicate fields
 # 180503-1813 - Added code for SWITCH field type
 # 200406-1137 - Added hide_gender and gender default population
+# 201117-2056 - Changes for better compatibility with non-latin data input
+# 210211-0146 - Added SOURCESELECT field type
 #
 
-$version = '2.14-34';
-$build = '200406-1137';
+$version = '2.14-36';
+$build = '210211-0146';
 $php_script = 'vdc_form_display.php';
 
 require_once("dbconnect_mysqli.php");
@@ -233,15 +235,6 @@ $SUBMIT_only=0;
 
 $user = preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass = preg_replace("/\'|\"|\\\\|;| /","",$pass);
-$lead_id = preg_replace('/[^0-9]/', '', $lead_id);
-$list_id = preg_replace('/[^0-9]/', '', $list_id);
-$new_list_id = preg_replace('/[^0-9]/', '', $new_list_id);
-$agent_log_id = preg_replace('/[^0-9]/', '', $agent_log_id);
-$server_ip = preg_replace("/\'|\"|\\\\|;/","",$server_ip);
-$session_id = preg_replace('/[^0-9]/','',$session_id);
-$uniqueid = preg_replace('/[^-_\.0-9a-zA-Z]/','',$uniqueid);
-$campaign = preg_replace('/[^-_0-9a-zA-Z]/','',$campaign);
-$user_group = preg_replace('/[^-_0-9a-zA-Z]/','',$user_group);
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
@@ -276,12 +269,29 @@ if ($qm_conf_ct > 0)
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
+$length_in_sec = preg_replace("/[^0-9]/","",$length_in_sec);
+$phone_code = preg_replace("/[^0-9]/","",$phone_code);
+$phone_number = preg_replace("/[^0-9]/","",$phone_number);
+$lead_id = preg_replace('/[^0-9]/', '', $lead_id);
+$list_id = preg_replace('/[^0-9]/', '', $list_id);
+$new_list_id = preg_replace('/[^0-9]/', '', $new_list_id);
+$agent_log_id = preg_replace('/[^0-9]/', '', $agent_log_id);
+$server_ip = preg_replace("/\'|\"|\\\\|;/","",$server_ip);
+$session_id = preg_replace('/[^0-9]/','',$session_id);
+$call_id = preg_replace('/[^-_\.0-9a-zA-Z]/','',$call_id);
+
 if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
-	$length_in_sec = preg_replace("/[^0-9]/","",$length_in_sec);
-	$phone_code = preg_replace("/[^0-9]/","",$phone_code);
-	$phone_number = preg_replace("/[^0-9]/","",$phone_number);
+	$uniqueid = preg_replace('/[^-_\.0-9a-zA-Z]/','',$uniqueid);
+	$campaign = preg_replace('/[^-_0-9a-zA-Z]/','',$campaign);
+	$user_group = preg_replace('/[^-_0-9a-zA-Z]/','',$user_group);
+	}
+else
+	{
+	$uniqueid = preg_replace('/[^-_\.0-9\p{L}]/u','',$uniqueid);
+	$campaign = preg_replace('/[^-_0-9\p{L}]/u','',$campaign);
+	$user_group = preg_replace('/[^-_0-9\p{L}]/u','',$user_group);
 	}
 
 # default optional vars if not set

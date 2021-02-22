@@ -353,6 +353,7 @@ if ($format=='debug')
 if ($function == 'external_dial_lead')
 	{
 	$value = preg_replace("/[^0-9]/","",$value);
+	# $DB=1;
 
 	if ( (strlen($value)<1) or ( (strlen($agent_user)<2) and (strlen($alt_user)<2) ) or (strlen($search)<2) or (strlen($preview)<2) or (strlen($focus)<2) )
 		{
@@ -561,7 +562,7 @@ if ($function == 'external_dial_lead')
 					### If no errors, run the update to place the call ###
 					if ($api_manual_dial=='STANDARD')
 						{
-						$stmt="UPDATE vicidial_live_agents set external_dial='$value!$phone_code!$search!$preview!$focus!$vendor_id!$epoch!$dial_prefix!$group_alias!$caller_id_number!$vtiger_callback_id' where user='$agent_user';";
+						$stmt="UPDATE vicidial_live_agents set external_dial='$value!$phone_code!$search!$preview!$focus!$vendor_id!$epoch!$dial_prefix!$group_alias!$caller_id_number!$vtiger_callback_id!$lead_id!$alt_dial!$dial_ingroup' where user='$agent_user';";
 						if ($DB) {echo "$stmt\n";}
 						$success=1;
 						}

@@ -442,6 +442,7 @@ preview_lead_id INT(9) UNSIGNED default '0',
 external_lead_id INT(9) UNSIGNED default '0',
 last_inbound_call_time_filtered DATETIME,
 last_inbound_call_finish_filtered DATETIME,
+dial_campaign_id VARCHAR(8) default '',
 index (random_id),
 index (last_call_time),
 index (last_update_time),
@@ -796,7 +797,7 @@ closer_campaigns TEXT,
 use_internal_dnc ENUM('Y','N','AREACODE') default 'N',
 allcalls_delay SMALLINT(3) UNSIGNED default '0',
 omit_phone_code ENUM('Y','N') default 'N',
-dial_method ENUM('MANUAL','RATIO','ADAPT_HARD_LIMIT','ADAPT_TAPERED','ADAPT_AVERAGE','INBOUND_MAN') default 'MANUAL',
+dial_method ENUM('MANUAL','RATIO','ADAPT_HARD_LIMIT','ADAPT_TAPERED','ADAPT_AVERAGE','INBOUND_MAN','SHARED_RATIO','SHARED_ADAPT_HARD_LIMIT','SHARED_ADAPT_TAPERED','SHARED_ADAPT_AVERAGE') default 'MANUAL',
 available_only_ratio_tally ENUM('Y','N') default 'N',
 adaptive_dropped_percentage VARCHAR(4) default '3',
 adaptive_maximum_level VARCHAR(6) default '3.0',
@@ -1048,7 +1049,12 @@ browser_alert_sound VARCHAR(20) default '---NONE---',
 browser_alert_volume TINYINT(3) UNSIGNED default '50',
 three_way_record_stop_exception VARCHAR(40) default 'DISABLED',
 pause_max_exceptions VARCHAR(40) default '',
-hopper_drop_run_trigger VARCHAR(1) default 'N'
+hopper_drop_run_trigger VARCHAR(1) default 'N',
+daily_call_count_limit TINYINT(3) UNSIGNED default '0',
+daily_limit_manual VARCHAR(20) default 'DISABLED',
+transfer_button_launch VARCHAR(12) default 'NONE',
+shared_dial_rank TINYINT(3) default '99',
+agent_search_method VARCHAR(2) default ''
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_lists (
@@ -1340,7 +1346,8 @@ ingroup_script_two VARCHAR(20) default '',
 browser_alert_sound VARCHAR(20) default '---NONE---',
 browser_alert_volume TINYINT(3) UNSIGNED default '50',
 answer_signal ENUM('START','ROUTE','NONE') DEFAULT 'START',
-no_agent_delay SMALLINT(5) default '0'
+no_agent_delay SMALLINT(5) default '0',
+agent_search_method VARCHAR(2) default ''
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_stations (
@@ -1874,7 +1881,10 @@ queuemetrics_pausereason ENUM('STANDARD','EVERY_NEW','EVERY_NEW_ADMINCALL','EVER
 inbound_answer_config ENUM('0','1','2','3','4','5') DEFAULT '0',
 enable_international_dncs ENUM('0','1') default '0',
 web_loader_phone_strip VARCHAR(10) default 'DISABLED',
-manual_dial_phone_strip VARCHAR(10) default 'DISABLED'
+manual_dial_phone_strip VARCHAR(10) default 'DISABLED',
+daily_call_count_limit ENUM('0','1') default '0',
+allow_shared_dial ENUM('0','1','2','3','4','5','6') default '0',
+agent_search_method ENUM('0','1','2','3','4','5','6') default '0'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaigns_list_mix (
@@ -2801,7 +2811,7 @@ field_name VARCHAR(5000),
 field_description VARCHAR(100),
 field_rank SMALLINT(5),
 field_help VARCHAR(1000),
-field_type ENUM('TEXT','AREA','SELECT','MULTI','RADIO','CHECKBOX','DATE','TIME','DISPLAY','SCRIPT','HIDDEN','READONLY','HIDEBLOB','SWITCH') default 'TEXT',
+field_type ENUM('TEXT','AREA','SELECT','MULTI','RADIO','CHECKBOX','DATE','TIME','DISPLAY','SCRIPT','HIDDEN','READONLY','HIDEBLOB','SWITCH','SOURCESELECT') default 'TEXT',
 field_options VARCHAR(5000),
 field_size SMALLINT(5),
 field_max SMALLINT(5),
@@ -4345,6 +4355,62 @@ PRIMARY KEY (dnc_file_id),
 KEY vicidial_country_dnc_queue_filename_key (filename)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE vicidial_lead_call_daily_counts (
+lead_id INT(9) UNSIGNED NOT NULL,
+list_id BIGINT(14) UNSIGNED DEFAULT '0',
+called_count_total TINYINT(3) UNSIGNED default '0',
+called_count_auto TINYINT(3) UNSIGNED default '0',
+called_count_manual TINYINT(3) UNSIGNED default '0',
+modify_date DATETIME,
+unique index vlcdc_lead (lead_id),
+index(list_id)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_agent_dial_campaigns (
+campaign_id VARCHAR(8),
+group_id VARCHAR(20),
+user VARCHAR(20),
+validate_time DATETIME,
+dial_time DATETIME,
+index (user),
+index (campaign_id)
+) ENGINE=MyISAM;
+
+CREATE UNIQUE INDEX vadc_key on vicidial_agent_dial_campaigns(campaign_id, user);
+
+CREATE TABLE vicidial_shared_log (
+campaign_id VARCHAR(20) NOT NULL,
+server_ip VARCHAR(15) NOT NULL,
+log_time DATETIME,
+total_agents SMALLINT(5) default '0',
+total_calls SMALLINT(5) default '0',
+debug_output TEXT,
+adapt_output TEXT,
+index (campaign_id),
+index (log_time)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_shared_drops (
+callerid VARCHAR(20),
+server_ip VARCHAR(15) NOT NULL,
+campaign_id VARCHAR(20),
+status ENUM('SENT','RINGING','LIVE','XFER','PAUSED','CLOSER','BUSY','DISCONNECT','IVR') default 'PAUSED',
+lead_id INT(9) UNSIGNED NOT NULL,
+uniqueid VARCHAR(20),
+channel VARCHAR(100),
+phone_code VARCHAR(10),
+phone_number VARCHAR(18),
+call_time DATETIME,
+call_type ENUM('IN','OUT','OUTBALANCE') default 'OUT',
+stage VARCHAR(20) default 'START',
+last_update_time DATETIME,
+alt_dial VARCHAR(6) default 'NONE',
+drop_time DATETIME,
+index (callerid),
+index (call_time),
+index (drop_time)
+) ENGINE=MyISAM;
+
 
 ALTER TABLE vicidial_email_list MODIFY message text character set utf8;
 
@@ -4678,4 +4744,4 @@ INSERT INTO vicidial_settings_containers VALUES ('INTERNATIONAL_DNC_IMPORT','Pro
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1611',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1617',db_schema_update_date=NOW(),reload_timestamp=NOW();

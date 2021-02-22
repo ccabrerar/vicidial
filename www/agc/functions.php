@@ -4,7 +4,7 @@
 #
 # functions for agent scripts
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 #
 # CHANGES:
@@ -49,6 +49,8 @@
 # 181004-1644 - Fix for defaut field in AREA type
 # 191013-1029 - Fixes for PHP7
 # 200406-1204 - Fix for gender default field population
+# 210211-0145 - Added SOURCESELECT field type, added basic Math equations to SCRIPT custom field types
+# 210211-1916 - Disable SCRIPT custom fields Math functions on older PHP versions
 #
 
 # $mysql_queries = 26
@@ -344,6 +346,10 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 
 	require("dbconnect_mysqli.php");
 
+	$php_version = phpversion();
+	if (!preg_match("/^4|^5|^6/",$php_version))
+		{require("Evaluator.php");}
+
 	$CFoutput='';
 	$stmt="SHOW TABLES LIKE \"custom_$list_id\";";
 	if ($non_latin > 0) {$rslt=mysql_to_mysqli("SET NAMES 'UTF8'", $link);}
@@ -538,7 +544,7 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 					}
 				$field_HTML='';
 
-				if ($A_field_type[$o]=='SELECT')
+				if ( ($A_field_type[$o]=='SELECT') or ($A_field_type[$o]=='SOURCESELECT') )
 					{
 					$change_trigger='';
 					$default_field_flag=0;
@@ -553,19 +559,76 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 					{
 					$field_HTML .= "<select MULTIPLE size=$A_field_size[$o] name=$A_field_label[$o][] id=$A_field_label[$o][]>\n";
 					}
-				if ( ($A_field_type[$o]=='SELECT') or ($A_field_type[$o]=='MULTI') or ($A_field_type[$o]=='RADIO') or ($A_field_type[$o]=='CHECKBOX') or ($A_field_type[$o]=='SWITCH') )
+				if ( ($A_field_type[$o]=='SELECT') or ($A_field_type[$o]=='SOURCESELECT') or ($A_field_type[$o]=='MULTI') or ($A_field_type[$o]=='RADIO') or ($A_field_type[$o]=='CHECKBOX') or ($A_field_type[$o]=='SWITCH') )
 					{
 					$field_options_array = explode("\n",$A_field_options[$o]);
 					$field_options_count = count($field_options_array);
 					$te=0;   $te_printed=0;
+					if ($A_field_type[$o]=='SOURCESELECT')
+						{
+						$NEWfield_options_array = array();
+						$NEWfield_options_array[0] = '|no options';
+						if (!preg_match("/^source=>/i",$field_options_array[0]))
+							{echo _QXZ("ERROR: SOURCESELECT custom field is not defined properly");}
+						else
+							{
+							$sourceselect_field = preg_replace("/^source=>/i",'',trim($field_options_array[0]));
+							$sourceselect_value='';
+							##### grab the source field data from main or custom table for the lead_id
+							if (preg_match("/\|$sourceselect_field\|/i",$vicidial_list_fields))
+								{$stmt="SELECT $sourceselect_field FROM vicidial_list where lead_id='$lead_id' LIMIT 1;";}
+							else
+								{$stmt="SELECT $sourceselect_field FROM custom_$list_id where lead_id='$lead_id' LIMIT 1;";}
+							$rslt=mysql_to_mysqli($stmt, $link);
+								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'05XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+							if ($DB) {echo "$stmt\n";}
+							$sourceselect_ct = mysqli_num_rows($rslt);
+							if ($sourceselect_ct > 0)
+								{
+								$row=mysqli_fetch_row($rslt);
+								$sourceselect_value = $row[0];
+								}
+							$temp_sourcematch = "value=>$sourceselect_value";
+							if ($DB) {echo "Starting SOURCESELECT: |$sourceselect_field|$sourceselect_value|$temp_sourcematch|\n";}
+							$temp_matchfound=0;   $NFA=0;
+							while ( ($te < $field_options_count) and ($temp_matchfound < 2) )
+								{
+								if ($temp_matchfound == '1')
+									{
+									if (preg_match("/^option=>/i",trim($field_options_array[$te])))
+										{
+										$field_options_array[$te] = preg_replace("/^option=>/i",'',trim($field_options_array[$te]));
+										$NEWfield_options_array[$NFA] = trim($field_options_array[$te]);
+										$NFA++;
+										}
+									else
+										{$temp_matchfound=2;}
+									}
+								if (preg_match("/^$temp_sourcematch$/i",trim($field_options_array[$te])) )
+									{$temp_matchfound=1;}
+
+								if ($DB) {echo "SOURCESELECT 2: $te|$field_options_array[$te]|$temp_matchfound|\n";}
+
+								$te++;
+								}
+							if ($NFA < 1) {$NFA=1;}
+							$field_options_array = $NEWfield_options_array;
+							$field_options_count = $NFA;
+							if ($DB) {echo "SOURCESELECT 3: $te|$field_options_count|$field_options_array[0]|\n";}
+							}
+						}
+					$te=0;   $te_printed=0;
 					if ($DB > 0) {echo "DEBUG: |$A_field_id[$o]|$A_field_label[$o]|$A_field_name[$o]|$A_field_type[$o]|$A_field_options[$o]|$field_options_count|\n";}
 					while ($te < $field_options_count)
 						{
-						if (preg_match("/,/",$field_options_array[$te]))
+						if (preg_match("/,|\|/",$field_options_array[$te]))
 							{
 							$field_selected='';
-							$field_options_value_array = explode(",",$field_options_array[$te]);
-							if ($A_field_type[$o]=='SELECT')
+							if ($A_field_type[$o]=='SOURCESELECT')
+								{$field_options_value_array = explode('|',$field_options_array[$te]);}
+							else
+								{$field_options_value_array = explode(",",$field_options_array[$te]);}
+							if ( ($A_field_type[$o]=='SELECT') or ($A_field_type[$o]=='SOURCESELECT') )
 								{
 								if (strlen($A_field_value[$o]) > 0)
 									{
@@ -641,7 +704,7 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 						$te++;
 						}
 					}
-				if ( ($A_field_type[$o]=='SELECT') or ($A_field_type[$o]=='MULTI') )
+				if ( ($A_field_type[$o]=='SELECT') or ($A_field_type[$o]=='SOURCESELECT') or ($A_field_type[$o]=='MULTI') )
 					{
 					$field_HTML .= "</select>\n";
 					}
@@ -649,7 +712,7 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 				# If options were printed for SELECT, MULTI, RADIO or CHECKBOX and required is set, mark as a required field
 				if ($te_printed > 0)
 					{
-					if ($A_field_type[$o]=='SELECT')
+					if ( ($A_field_type[$o]=='SELECT') or ($A_field_type[$o]=='SOURCESELECT') )
 						{
 						if ( ($A_field_required[$o] == 'Y') or ( ($A_field_required[$o] == 'INBOUND_ONLY') and (preg_match("/^Y\d\d\d\d\d\d\d/",$call_id)) ) )
 							{$custom_required_fields_select .= "$A_field_label[$o]|";}
@@ -861,7 +924,7 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 
 	##### BEGIN parsing for vicidial variables #####
 	$NOTESout='';
-	if (preg_match("/--A--|--U--/",$CFoutput))
+	if (preg_match("/--A--|--U--|--M--/",$CFoutput))
 		{
 		if ( (preg_match('/--A--user_custom_|--U--user_custom_/i',$CFoutput)) or (preg_match('/--A--fullname|--U--fullname/i',$CFoutput)) )
 			{
@@ -1314,6 +1377,32 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 			$CFoutput = preg_replace("/--U--$A_field_label[$o]--V--/i",urlencode($A_field_value[$o]),$CFoutput);
 			$CFoutput = preg_replace("/--A--$A_field_label[$o]--B--/i","$A_field_value[$o]",$CFoutput);
 			$o++;
+			}
+
+		# check for Math formulas
+		if ( (preg_match("/--M--/",$CFoutput)) or (preg_match("/--N--/",$CFoutput)) )
+			{
+			if (!preg_match("/^4|^5|^6/",$php_version))
+				{
+				$DBM=0;
+				$evaluator = new \Matex\Evaluator();
+				preg_match_all("/--M--(.*?)--N--/", $CFoutput, $MathMatch);
+				$MathMatch_count = count($MathMatch[0]);
+				$Mct=0;
+				while ($MathMatch_count > $Mct)
+					{
+					$temp_MathEq = $MathMatch[0][$Mct];
+					$temp_MathEq = preg_replace("/--M--|--N--/",'',$temp_MathEq);
+					$temp_MathEq_orig = $temp_MathEq;
+					$temp_MathEq = preg_replace("/[^- \+\-\*\^\.\(\)\%\/0-9]/",'',$temp_MathEq);
+
+					$temp_MathResult = $evaluator->execute($temp_MathEq);
+					if ($DBM > 0) {$CFoutput .= "MATH DEBUG: $Mct|$temp_MathEq|$temp_MathResult|\n";}
+					$CFoutput = str_replace("--M--$temp_MathEq_orig--N--","$temp_MathResult",$CFoutput);
+
+					$Mct++;
+					}
+				}
 			}
 
 		if ($DB > 0) {echo "$CFoutput<BR>\n";}

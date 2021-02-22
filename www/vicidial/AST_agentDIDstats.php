@@ -630,13 +630,15 @@ else
 
 				$CSV_text.="\"$current_date\"\n";
 				$CSV_text.=$CSV_header;
-				while (list($key, $val)=each($user_array)) {
+				#while (list($key, $val)=each($user_array)) {
+				foreach($user_array as $key => $val) {
 					$agent_total=0;
 					$agent_info=explode("|", $key);
 					$ASCII_text.="| ".sprintf("%-20s", $agent_info[0]);
 					$ASCII_text.=" | ".sprintf("%-30s", $agent_info[1]);
 					$CSV_text.="\"$agent_info[0]\",\"$agent_info[1]\",";
-					while (list($key2, $val2)=each($did_description_array)) {
+					# while (list($key2, $val2)=each($did_description_array)) {
+					foreach($did_description_array as $key2 => $val2) {
 						$ASCII_text.=" | ".sprintf("%30s", ($user_array["$key"][$key2]+0));
 						$CSV_text.="\"".($user_array["$key"][$key2]+0)."\",";
 						$agent_total+=($user_array["$key"][$key2]+0);
@@ -676,13 +678,15 @@ else
 				$ASCII_text.=$ASCII_headerA.$ASCII_headerB.$ASCII_headerA;
 				$CSV_text.="\"Week of $sunday_array[$q] thru $saturday_array[$q]\"\n";
 				$CSV_text.=$CSV_header;
-				while (list($key, $val)=each($user_array)) {
+				#while (list($key, $val)=each($user_array)) {
+				foreach($user_array as $key => $val) {
 					$agent_total=0;
 					$agent_info=explode("|", $key);
 					$ASCII_text.="| ".sprintf("%-20s", $agent_info[0]);
 					$ASCII_text.=" | ".sprintf("%-30s", $agent_info[1]);
 					$CSV_text.="\"$agent_info[0]\",\"$agent_info[1]\",";
-					while (list($key2, $val2)=each($did_description_array)) {
+					#while (list($key2, $val2)=each($did_description_array)) {
+					foreach($did_description_array as $key2 => $val2) {
 						$ASCII_text.=" | ".sprintf("%30s", ($user_array["$key"][$key2]+0));
 						$CSV_text.="\"".($user_array["$key"][$key2]+0)."\",";
 						$agent_total+=($user_array["$key"][$key2]+0);

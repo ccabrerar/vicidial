@@ -259,7 +259,8 @@ if ($reload_chat_span) {
 		echo "<TD rowspan=3 valign='top'>";
 		echo "<select name='available_chat_agents[]' multiple size='12' style=\"width:350px\">\n";
 		if (count($user_array)==0) {echo "<option value=''>---- "._QXZ("NO LIVE AGENTS")." ----</option>";}
-		while (list($user, $full_name) = each($user_array)) {
+		#while (list($user, $full_name) = each($user_array)) {
+		foreach($user_array as $user => $full_name) {
 			echo "<option value='$user'>$user - $full_name</option>\n";
 		}
 		echo "</select>\n";
@@ -267,7 +268,8 @@ if ($reload_chat_span) {
 		echo "<TD valign='top'>";
 		echo "<select name='available_chat_campaigns[]' multiple size='5' style=\"width:350px\">\n";
 		if (count($campaign_id_array)==0) {echo "<option value=''>---- "._QXZ("NO LIVE CAMPAIGNS")." ----</option>";}
-		while (list($campaign_id, $campaign_name) = each($campaign_id_array)) {
+		#while (list($campaign_id, $campaign_name) = each($campaign_id_array)) {
+		foreach($campaign_id_array as $campaign_id => $campaign_name) {
 			echo "<option value='$campaign_id'>$campaign_id - $campaign_name</option>\n";
 		}
 		echo "</select>\n";
@@ -279,7 +281,8 @@ if ($reload_chat_span) {
 		echo "<TD valign='top'>";
 		echo "<select name='available_chat_groups[]' multiple size='5' style=\"width:350px\">\n";
 		if (count($user_group_array)==0) {echo "<option value=''>---- "._QXZ("NO LIVE USER GROUPS")." ----</option>";}
-		while (list($user_group, $group_name) = each($user_group_array)) {
+		# while (list($user_group, $group_name) = each($user_group_array)) {
+		foreach($user_group_array as $user_group => $group_name) {
 			echo "<option value='$user_group'>$user_group - $group_name</option>\n";
 		}
 		echo "</select>\n";
@@ -335,7 +338,8 @@ if ($reload_chat_span) {
 			}
 			$chat_subids_array=preg_replace("/,$/", "", $chat_subids_array);
 			$chat_subids_array.="]";
-			while (list($chat_subid, $text) = each($chat_output_header)) {
+			# while (list($chat_subid, $text) = each($chat_output_header)) {
+			foreach($chat_output_header as $chat_subid => $text) {
 				echo $chat_output_header[$chat_subid];
 				echo $chat_output_text[$chat_subid];
 				echo $chat_output_footer[$chat_subid];

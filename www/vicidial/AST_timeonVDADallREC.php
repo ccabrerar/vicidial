@@ -943,7 +943,7 @@ $talking_to_print = mysqli_num_rows($rslt);
        					while ($ii < $rec_channels)
 						{
 			 				$row=mysqli_fetch_row($rslta);
-							$pos=strpos($row[1], $Lsessionid);
+							$pos=strpos($row[1], "$Lsessionid");
 														
 							if ($pos===false)
 			  				{

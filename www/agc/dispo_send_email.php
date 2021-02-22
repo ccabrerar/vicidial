@@ -40,6 +40,7 @@
 # 190521-1715 - Added --A--dispo--B-- and --A--dispo_name--B-- to email_body
 # 191013-2113 - Fixes for PHP7
 # 200814-1829 - added email_body_html, email_body_utf8 flags
+# 201117-2104 - Changes for better compatibility with non-latin data input
 #
 
 $api_script = 'send_email';
@@ -148,33 +149,6 @@ $email_charset = 'iso-8859-1';
 # filter variables
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
-$call_id = preg_replace('/[^-_0-9a-zA-Z]/', '', $call_id);
-$lead_id = preg_replace('/[^_0-9]/', '', $lead_id);
-$container_id = preg_replace('/[^-_0-9a-zA-Z]/', '', $container_id);
-$call_notes=preg_replace("/\\\\/","",$call_notes);
-$stage = preg_replace('/[^-_0-9a-zA-Z]/', '', $stage);
-$additional_notes=preg_replace("/\\\\/","",$additional_notes);
-$email_attachment_1=preg_replace("/\\\\/","",$email_attachment_1);
-$email_attachment_2=preg_replace("/\\\\/","",$email_attachment_2);
-$email_attachment_3=preg_replace("/\\\\/","",$email_attachment_3);
-$email_attachment_4=preg_replace("/\\\\/","",$email_attachment_4);
-$email_attachment_5=preg_replace("/\\\\/","",$email_attachment_5);
-$email_attachment_6=preg_replace("/\\\\/","",$email_attachment_6);
-$email_attachment_7=preg_replace("/\\\\/","",$email_attachment_7);
-$email_attachment_8=preg_replace("/\\\\/","",$email_attachment_8);
-$email_attachment_9=preg_replace("/\\\\/","",$email_attachment_9);
-$email_attachment_10=preg_replace("/\\\\/","",$email_attachment_10);
-$email_attachment_11=preg_replace("/\\\\/","",$email_attachment_11);
-$email_attachment_12=preg_replace("/\\\\/","",$email_attachment_12);
-$email_attachment_13=preg_replace("/\\\\/","",$email_attachment_13);
-$email_attachment_14=preg_replace("/\\\\/","",$email_attachment_14);
-$email_attachment_15=preg_replace("/\\\\/","",$email_attachment_15);
-$email_attachment_16=preg_replace("/\\\\/","",$email_attachment_16);
-$email_attachment_17=preg_replace("/\\\\/","",$email_attachment_17);
-$email_attachment_18=preg_replace("/\\\\/","",$email_attachment_18);
-$email_attachment_19=preg_replace("/\\\\/","",$email_attachment_19);
-$email_attachment_20=preg_replace("/\\\\/","",$email_attachment_20);
-$email_to=preg_replace("/\\\\/","",$email_to);
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
@@ -205,9 +179,41 @@ if ($qm_conf_ct > 0)
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
+$call_id = preg_replace('/[^-_0-9a-zA-Z]/', '', $call_id);
+$lead_id = preg_replace('/[^_0-9]/', '', $lead_id);
+$call_notes=preg_replace("/\\\\/","",$call_notes);
+$stage = preg_replace('/[^-_0-9a-zA-Z]/', '', $stage);
+$additional_notes=preg_replace("/\\\\/","",$additional_notes);
+$email_attachment_1=preg_replace("/\\\\/","",$email_attachment_1);
+$email_attachment_2=preg_replace("/\\\\/","",$email_attachment_2);
+$email_attachment_3=preg_replace("/\\\\/","",$email_attachment_3);
+$email_attachment_4=preg_replace("/\\\\/","",$email_attachment_4);
+$email_attachment_5=preg_replace("/\\\\/","",$email_attachment_5);
+$email_attachment_6=preg_replace("/\\\\/","",$email_attachment_6);
+$email_attachment_7=preg_replace("/\\\\/","",$email_attachment_7);
+$email_attachment_8=preg_replace("/\\\\/","",$email_attachment_8);
+$email_attachment_9=preg_replace("/\\\\/","",$email_attachment_9);
+$email_attachment_10=preg_replace("/\\\\/","",$email_attachment_10);
+$email_attachment_11=preg_replace("/\\\\/","",$email_attachment_11);
+$email_attachment_12=preg_replace("/\\\\/","",$email_attachment_12);
+$email_attachment_13=preg_replace("/\\\\/","",$email_attachment_13);
+$email_attachment_14=preg_replace("/\\\\/","",$email_attachment_14);
+$email_attachment_15=preg_replace("/\\\\/","",$email_attachment_15);
+$email_attachment_16=preg_replace("/\\\\/","",$email_attachment_16);
+$email_attachment_17=preg_replace("/\\\\/","",$email_attachment_17);
+$email_attachment_18=preg_replace("/\\\\/","",$email_attachment_18);
+$email_attachment_19=preg_replace("/\\\\/","",$email_attachment_19);
+$email_attachment_20=preg_replace("/\\\\/","",$email_attachment_20);
+$email_to=preg_replace("/\\\\/","",$email_to);
+
 if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
+	$container_id = preg_replace('/[^-_0-9a-zA-Z]/', '', $container_id);
+	}
+else
+	{
+	$container_id = preg_replace('/[^-_0-9\p{L}]/u', '', $container_id);
 	}
 
 if ($DB>0) {echo "$lead_id|$container_id|$call_id|$sale_status|$dispo|$new_status|$called_count|$called_count_trigger|$user|$pass|$DB|$log_to_file|\n";}

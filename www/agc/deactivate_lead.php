@@ -1,7 +1,7 @@
 <?php
 # deactivate_lead.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to be used in the "Dispo URL" field of a campaign
 # or in-group. It should take in the campaign_id to check for the same source_id
@@ -31,6 +31,7 @@
 # 141118-1234 - Formatting changes for QXZ output
 # 141216-2130 - Added language settings lookups and user/pass variable standardization
 # 170526-2301 - Added additional variable filtering
+# 201117-2222 - Changes for better compatibility with non-latin data input
 #
 
 $api_script = 'deactivate';
@@ -81,10 +82,6 @@ $search_value='';
 # filter variables
 $user = preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass = preg_replace("/\'|\"|\\\\|;| /","",$pass);
-$search_field = preg_replace("/\'|\"|\\\\|;| /","",$search_field);
-$lead_id = preg_replace('/[^0-9]/','',$lead_id);
-$campaign_check = preg_replace('/[^-_0-9a-zA-Z]/','',$campaign_check);
-$new_status = preg_replace('/[^-_0-9a-zA-Z]/','',$new_status);
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
@@ -114,6 +111,22 @@ if ($qm_conf_ct > 0)
 	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$search_field = preg_replace("/\'|\"|\\\\|;| /","",$search_field);
+$lead_id = preg_replace('/[^0-9]/','',$lead_id);
+
+if ($non_latin < 1)
+	{
+	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
+	$pass=preg_replace("/[^-_0-9a-zA-Z]/","",$pass);
+	$campaign_check = preg_replace('/[^-_0-9a-zA-Z]/','',$campaign_check);
+	$new_status = preg_replace('/[^-_0-9a-zA-Z]/','',$new_status);
+	}
+else
+	{
+	$campaign_check = preg_replace('/[^-_0-9\p{L}]/u','',$campaign_check);
+	$new_status = preg_replace('/[^-_0-9\p{L}]/u','',$new_status);
+	}
 
 if ($DB>0) {echo "$lead_id|$search_field|$campaign_check|$sale_status|$dispo|$new_status|$user|$pass|$DB|$log_to_file|\n";}
 

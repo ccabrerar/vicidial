@@ -713,7 +713,7 @@ else
 
 		#########
 
-		$stmt="select count(*) as calls,sum(talk_sec) as talk,full_name,vicidial_users.user,sum(pause_sec),sum(wait_sec),sum(dispo_sec),status,sum(dead_sec), vicidial_users.user_group from vicidial_users,".$vicidial_agent_log_table." where event_time <= '$query_date $time_END' and event_time >= '$rpt_date $time_BEGIN' and vicidial_users.user=".$vicidial_agent_log_table.".user and pause_sec<65000 and wait_sec<65000 and talk_sec<65000 and dispo_sec<65000 $group_SQL $user_group_SQL $user_SQL group by user,full_name,user_group,status order by full_name,user,status desc limit 500000;";
+		$stmt="select count(*) as calls,sum(talk_sec) as talk,full_name,vicidial_users.user,sum(pause_sec),sum(wait_sec),sum(dispo_sec),status,sum(dead_sec), vicidial_users.user_group, sub_status from vicidial_users,".$vicidial_agent_log_table." where event_time <= '$query_date $time_END' and event_time >= '$rpt_date $time_BEGIN' and vicidial_users.user=".$vicidial_agent_log_table.".user and pause_sec<65000 and wait_sec<65000 and talk_sec<65000 and dispo_sec<65000 $group_SQL $user_group_SQL $user_SQL group by user,full_name,user_group,status, sub_status order by full_name,user,status, sub_status desc limit 500000;";
 		if ($DB) {print "<!-- $stmt //-->\n";}
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$rows_to_print = mysqli_num_rows($rslt);
@@ -727,12 +727,14 @@ else
 				{
 				$agent_performance_array[$row[3]][($array_offset+1)]+=$row[0]; # SALES FOR TIME RANGE
 				}
+			# if ($row[10]=="BREAK") {$row[4]=0;}
 			$agent_performance_array[$row[3]][($array_offset+4)]+=($row[4]+$row[1]+$row[6]+$row[5]); # TIME - pause, talk, disp, wait
 			$i++;
 			}
 
 		$j=0;
-		while (list($key, $val)=each($agent_performance_array)) { # CYCLE THROUGH EACH USER
+#		while (list($key, $val)=each($agent_performance_array)) { # CYCLE THROUGH EACH USER
+		foreach ($agent_performance_array as $key => $val) {
 			for ($k=0; $k<2; $k++) 
 				{
 				$agent_performance_array[$key][($array_offset+$k)]+=0; # Add zero so there are no null values;
@@ -851,7 +853,8 @@ else
 	$CSV_lines='';
 
 	# PRINT OUT RESULTS
-	while (list($key, $val)=each($agent_performance_array)) {
+	#while (list($key, $val)=each($agent_performance_array)) {
+	foreach ($agent_performance_array as $key => $val) {
 		$user=$key;
 		$full_name=$val[0];
 		$ASCII_text.="|";

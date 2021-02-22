@@ -5,7 +5,7 @@
 # This script uses the Asterisk Manager interface to update the live_channels
 # tables and verify the parked_channels table in the asterisk MySQL database
 #
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 170915-2110 - Initial version for Asterisk 13, based upon AST_update.pl
@@ -15,6 +15,7 @@
 # 181003-1728 - Fix for RINGAGENT calls
 # 190102-1509 - More fixes for RINGAGENT Calls
 # 190121-1505 - Added RA_USER_PHONE On-Hook CID to solve last RINGAGENT issues
+# 201119-2119 - Fix for time logging inserts/updates to database
 #
 
 # constants
@@ -202,7 +203,7 @@ if ($SUrec < 1)
 	{
 	&get_time_now;
 
-	$stmtU = "INSERT INTO server_updater set server_ip='$server_ip', last_update=NOW();";
+	$stmtU = "INSERT INTO server_updater set server_ip='$server_ip', last_update='$now_date';";
 	if($DB){print STDERR "\n$stmtU\n";}
 	$affected_rows = $dbhA->do($stmtU);
 	}
@@ -566,7 +567,7 @@ else
 
 		
 		# update our time in the DB
-		$stmtA = "UPDATE server_updater set last_update=NOW() where server_ip='$server_ip'";
+		$stmtA = "UPDATE server_updater set last_update='$now_date' where server_ip='$server_ip'";
 		if($DB){print STDERR "\n$stmtA\n";}
 		$dbhA->do($stmtA);
 
@@ -1000,7 +1001,7 @@ sub process_channels
 				$cid_chan_sql .= "'" . $cid_chan_hash{"$call_id"}->{'calleridname'} . "', ";
 				$cid_chan_sql .= "'" . $cid_chan_hash{"$call_id"}->{'connectedlinename'} . "', ";
 			#	$cid_chan_sql .= "'$server_ip', ";
-				$cid_chan_sql .= "NOW(), ";
+				$cid_chan_sql .= "'$now_date', ";
 				$cid_chan_sql .= "'" . $cid_chan_hash{"$call_id"}->{'channel'} . "', ";
 				$cid_chan_sql .= "'" . $cid_chan_hash{"$call_id"}->{'dest_channel'} . "', ";
 				$cid_chan_sql .= "'" . $cid_chan_hash{"$call_id"}->{'linkedid'} . "', ";
@@ -1228,7 +1229,7 @@ sub server_perf_log
 	{
 	( $dbhA, $server_ip, $channel_counts, $server_load, $mem_free, $mem_used, $num_processes, $cpu_user_percent, $cpu_sys_percent, $cpu_idle_percent, $reads, $writes ) = @_;
 
-	$stmt = "INSERT INTO server_performance (start_time, server_ip, sysload, freeram, usedram, processes, channels_total, trunks_total, clients_total, clients_zap, clients_iax, clients_local, clients_sip, live_recordings, cpu_user_percent, cpu_system_percent, cpu_idle_percent, disk_reads, disk_writes) values( NOW(), '$server_ip', '$server_load', '$mem_free', '$mem_used', '$num_processes', '$channel_counts->{'total'}', '$channel_counts->{'trunks'}', '$channel_counts->{'clients'}', '$channel_counts->{'dahdi'}', '$channel_counts->{'iax'}', '$channel_counts->{'local'}', '$channel_counts->{'sip'}', '0', '$cpu_user_percent', '$cpu_sys_percent', '$cpu_idle_percent', '$reads', '$writes')";
+	$stmt = "INSERT INTO server_performance (start_time, server_ip, sysload, freeram, usedram, processes, channels_total, trunks_total, clients_total, clients_zap, clients_iax, clients_local, clients_sip, live_recordings, cpu_user_percent, cpu_system_percent, cpu_idle_percent, disk_reads, disk_writes) values('$now_date', '$server_ip', '$server_load', '$mem_free', '$mem_used', '$num_processes', '$channel_counts->{'total'}', '$channel_counts->{'trunks'}', '$channel_counts->{'clients'}', '$channel_counts->{'dahdi'}', '$channel_counts->{'iax'}', '$channel_counts->{'local'}', '$channel_counts->{'sip'}', '0', '$cpu_user_percent', '$cpu_sys_percent', '$cpu_idle_percent', '$reads', '$writes')";
 	$dbhA->do($stmt);
 	if ($DB) 
 		{

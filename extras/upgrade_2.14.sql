@@ -624,7 +624,7 @@ ALTER TABLE vicidial_inbound_groups ADD park_file_name VARCHAR(100) default '';
 
 UPDATE system_settings SET db_schema_version='1543',db_schema_update_date=NOW() where db_schema_version < 1543;
 
-ALTER TABLE vicidial_lists_fields MODIFY field_type ENUM('TEXT','AREA','SELECT','MULTI','RADIO','CHECKBOX','DATE','TIME','DISPLAY','SCRIPT','HIDDEN','READONLY','HIDEBLOB','SWITCH') default 'TEXT';
+ALTER TABLE vicidial_lists_fields MODIFY field_type ENUM('TEXT','AREA','SELECT','MULTI','RADIO','CHECKBOX','DATE','TIME','DISPLAY','SCRIPT','HIDDEN','READONLY','HIDEBLOB','SWITCH','SOURCESELECT') default 'TEXT';
 
 UPDATE system_settings SET db_schema_version='1544',db_schema_update_date=NOW() where db_schema_version < 1544;
 
@@ -1342,3 +1342,95 @@ UPDATE system_settings SET db_schema_version='1610',db_schema_update_date=NOW() 
 ALTER TABLE vicidial_campaigns ADD hopper_drop_run_trigger VARCHAR(1) default 'N';
 
 UPDATE system_settings SET db_schema_version='1611',db_schema_update_date=NOW() where db_schema_version < 1611;
+
+ALTER TABLE system_settings ADD daily_call_count_limit ENUM('0','1') default '0';
+
+ALTER TABLE vicidial_campaigns ADD daily_call_count_limit TINYINT(3) UNSIGNED default '0';
+ALTER TABLE vicidial_campaigns ADD daily_limit_manual VARCHAR(20) default 'DISABLED';
+
+CREATE TABLE vicidial_lead_call_daily_counts (
+lead_id INT(9) UNSIGNED NOT NULL,
+list_id BIGINT(14) UNSIGNED DEFAULT '0',
+called_count_total TINYINT(3) UNSIGNED default '0',
+called_count_auto TINYINT(3) UNSIGNED default '0',
+called_count_manual TINYINT(3) UNSIGNED default '0',
+modify_date DATETIME,
+unique index vlcdc_lead (lead_id),
+index(list_id)
+) ENGINE=MyISAM;
+
+UPDATE system_settings SET db_schema_version='1612',db_schema_update_date=NOW() where db_schema_version < 1612;
+
+ALTER TABLE vicidial_campaigns ADD transfer_button_launch VARCHAR(12) default 'NONE';
+
+UPDATE system_settings SET db_schema_version='1613',db_schema_update_date=NOW() where db_schema_version < 1613;
+
+ALTER TABLE system_settings ADD allow_shared_dial ENUM('0','1','2','3','4','5','6') default '0';
+
+ALTER TABLE vicidial_campaigns ADD shared_dial_rank TINYINT(3) default '99';
+ALTER TABLE vicidial_campaigns MODIFY dial_method ENUM('MANUAL','RATIO','ADAPT_HARD_LIMIT','ADAPT_TAPERED','ADAPT_AVERAGE','INBOUND_MAN','SHARED_RATIO','SHARED_ADAPT_HARD_LIMIT','SHARED_ADAPT_TAPERED','SHARED_ADAPT_AVERAGE') default 'MANUAL';
+
+ALTER TABLE vicidial_live_agents ADD dial_campaign_id VARCHAR(8) default '';
+
+CREATE TABLE vicidial_agent_dial_campaigns (
+campaign_id VARCHAR(8),
+group_id VARCHAR(20),
+user VARCHAR(20),
+validate_time DATETIME,
+dial_time DATETIME,
+index (user),
+index (campaign_id)
+) ENGINE=MyISAM;
+
+CREATE UNIQUE INDEX vadc_key on vicidial_agent_dial_campaigns(campaign_id, user);
+
+UPDATE system_settings SET db_schema_version='1614',db_schema_update_date=NOW() where db_schema_version < 1614;
+
+ALTER TABLE system_settings ADD agent_search_method ENUM('0','1','2','3','4','5','6') default '0';
+
+ALTER TABLE vicidial_campaigns ADD agent_search_method VARCHAR(2) default '';
+
+ALTER TABLE vicidial_inbound_groups ADD agent_search_method VARCHAR(2) default '';
+
+UPDATE system_settings SET db_schema_version='1615',db_schema_update_date=NOW() where db_schema_version < 1615;
+
+ALTER TABLE system_settings MODIFY allow_shared_dial ENUM('0','1','2','3','4','5','6') default '0';
+
+CREATE TABLE vicidial_shared_log (
+campaign_id VARCHAR(20) NOT NULL,
+server_ip VARCHAR(15) NOT NULL,
+log_time DATETIME,
+total_agents SMALLINT(5) default '0',
+total_calls SMALLINT(5) default '0',
+debug_output TEXT,
+adapt_output TEXT,
+index (campaign_id),
+index (log_time)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_shared_drops (
+callerid VARCHAR(20),
+server_ip VARCHAR(15) NOT NULL,
+campaign_id VARCHAR(20),
+status ENUM('SENT','RINGING','LIVE','XFER','PAUSED','CLOSER','BUSY','DISCONNECT','IVR') default 'PAUSED',
+lead_id INT(9) UNSIGNED NOT NULL,
+uniqueid VARCHAR(20),
+channel VARCHAR(100),
+phone_code VARCHAR(10),
+phone_number VARCHAR(18),
+call_time DATETIME,
+call_type ENUM('IN','OUT','OUTBALANCE') default 'OUT',
+stage VARCHAR(20) default 'START',
+last_update_time DATETIME,
+alt_dial VARCHAR(6) default 'NONE',
+drop_time DATETIME,
+index (callerid),
+index (call_time),
+index (drop_time)
+) ENGINE=MyISAM;
+
+UPDATE system_settings SET db_schema_version='1616',db_schema_update_date=NOW() where db_schema_version < 1616;
+
+ALTER TABLE vicidial_lists_fields MODIFY field_type ENUM('TEXT','AREA','SELECT','MULTI','RADIO','CHECKBOX','DATE','TIME','DISPLAY','SCRIPT','HIDDEN','READONLY','HIDEBLOB','SWITCH','SOURCESELECT') default 'TEXT';
+
+UPDATE system_settings SET db_schema_version='1617',db_schema_update_date=NOW() where db_schema_version < 1617;

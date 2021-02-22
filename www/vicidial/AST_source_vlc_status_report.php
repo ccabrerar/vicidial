@@ -487,7 +487,8 @@ while($i < $group_ct)
 
 
 
-	while(list($key, $val)=each($count_ary)) 
+#	while(list($key, $val)=each($count_ary)) 
+	foreach($count_ary as $key => $val)
 		{
 		arsort($count_ary[$key]);
 		switch ($sort_by) 
@@ -516,7 +517,8 @@ while($i < $group_ct)
 		$CSV_text.="\""._QXZ("VENDOR LEAD CODE")."\",\""._QXZ("DISPOSITION")."\",\""._QXZ("CALLS")."\",\""._QXZ("PERCENT")."\"\n";
 
 		$j=0;
-		while(list($key2, $val2)=each($count_ary[$key])) 
+#		while(list($key2, $val2)=each($count_ary[$key])) 
+		foreach($count_ary[$key] as $key2 => $val2)
 			{
 			if ($j%2==0) 
 				{
@@ -568,7 +570,8 @@ while($i < $group_ct)
 			asort($status_totals);
 			break;
 		}
-	while(list($key, $val)=each($status_totals)) 
+#	while(list($key, $val)=each($status_totals)) 
+	foreach($status_totals as $key => $val)
 		{
 		if ($j%2==0) 
 			{

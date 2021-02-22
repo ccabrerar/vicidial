@@ -144,10 +144,11 @@
 # 190310-1202 - Added MuteRecording function
 # 191013-2114 - Fixes for PHP7
 # 201107-2228 - Added campaign/in-group logging in park_log
+# 201117-1751 - Changes for better compatibility with non-latin data input
 #
 
-$version = '2.14-91';
-$build = '201107-2228';
+$version = '2.14-92';
+$build = '201117-1751';
 $php_script = 'manager_send.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=143;
@@ -256,6 +257,26 @@ if (isset($_GET["user_group"]))				{$user_group=$_GET["user_group"];}
 if (isset($_GET["group_id"]))			{$group_id=$_GET["group_id"];}
 	elseif (isset($_POST["group_id"]))	{$group_id=$_POST["group_id"];}
 
+#############################################
+##### START SYSTEM_SETTINGS LOOKUP #####
+$stmt = "SELECT use_non_latin,allow_sipsak_messages,enable_languages,language_method,meetme_enter_login_filename,meetme_enter_leave3way_filename,agent_debug_logging FROM system_settings;";
+$rslt=mysql_to_mysqli($stmt, $link);
+	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02001',$user,$server_ip,$session_name,$one_mysql_log);}
+if ($DB) {echo "$stmt\n";}
+$qm_conf_ct = mysqli_num_rows($rslt);
+if ($qm_conf_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$non_latin =						$row[0];
+	$allow_sipsak_messages =			$row[1];
+	$SSenable_languages =				$row[2];
+	$SSlanguage_method =				$row[3];
+	$meetme_enter_login_filename =		$row[4];
+	$meetme_enter_leave3way_filename =	$row[5];
+	$SSagent_debug_logging =			$row[6];
+	}
+##### END SETTINGS LOOKUP #####
+###########################################
 
 header ("Content-type: text/html; charset=utf-8");
 header ("Cache-Control: no-cache, must-revalidate");  // HTTP/1.1
@@ -266,21 +287,14 @@ $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
 $session_name = preg_replace("/\'|\"|\\\\|;/","",$session_name);
 $server_ip = preg_replace("/\'|\"|\\\\|;/","",$server_ip);
-$campaign = preg_replace('/[^-_0-9a-zA-Z]/','',$campaign);
-$phone_number = preg_replace('/[^-_0-9a-zA-Z]/','',$phone_number);
 $lead_id = preg_replace('/[^0-9]/','',$lead_id);
 $session_id = preg_replace('/[^0-9]/','',$session_id);
-$uniqueid = preg_replace('/[^-_\.0-9a-zA-Z]/','',$uniqueid);
 $exten = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$exten);
 $extension = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$extension);
 $protocol = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$protocol);
 $ACTION = preg_replace("/\'|\"|\\\\|;/","",$ACTION);
 $CalLCID = preg_replace("/\'|\"|\\\\|;/","",$CalLCID);
 $FROMvdc = preg_replace('/[^-_0-9a-zA-Z]/','',$FROMvdc);
-$account = preg_replace('/[^-_0-9a-zA-Z]/','',$account);
-$user_group = preg_replace('/[^-_0-9a-zA-Z]/','',$user_group);
-$agent_dialed_number = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_dialed_number);
-$agent_dialed_type = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_dialed_type);
 $agent_log_id = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_log_id);
 $agentchannel = preg_replace("/\'|\"|\\\\/","",$agentchannel);
 $auto_dial_level = preg_replace('/[^-\._0-9a-zA-Z]/','',$auto_dial_level);
@@ -307,7 +321,30 @@ $queryCID = preg_replace("/\'|\"|\\\\|;/","",$queryCID);
 $secondS = preg_replace('/[^0-9]/','',$secondS);
 $stage = preg_replace("/\'|\"|\\\\|;/","",$stage);
 $usegroupalias = preg_replace('/[^0-9]/','',$usegroupalias);
-$group_id = preg_replace('/[^-_0-9a-zA-Z]/','',$group_id);
+
+if ($non_latin < 1)
+	{
+	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
+	$campaign = preg_replace('/[^-_0-9a-zA-Z]/','',$campaign);
+	$phone_number = preg_replace('/[^-_0-9a-zA-Z]/','',$phone_number);
+	$uniqueid = preg_replace('/[^-_\.0-9a-zA-Z]/','',$uniqueid);
+	$user_group = preg_replace('/[^-_0-9a-zA-Z]/','',$user_group);
+	$agent_dialed_number = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_dialed_number);
+	$agent_dialed_type = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_dialed_type);
+	$account = preg_replace('/[^-_0-9a-zA-Z]/','',$account);
+	$group_id = preg_replace('/[^-_0-9a-zA-Z]/','',$group_id);
+	}
+else
+	{
+	$campaign = preg_replace('/[^-_0-9\p{L}]/u','',$campaign);
+	$phone_number = preg_replace('/[^-_0-9\p{L}]/u','',$phone_number);
+	$uniqueid = preg_replace('/[^-_\.0-9\p{L}]/u','',$uniqueid);
+	$user_group = preg_replace('/[^-_0-9\p{L}]/u','',$user_group);
+	$agent_dialed_number = preg_replace('/[^-_0-9\p{L}]/u','',$agent_dialed_number);
+	$agent_dialed_type = preg_replace('/[^-_0-9\p{L}]/u','',$agent_dialed_type);
+	$account = preg_replace('/[^-_0-9\p{L}]/u','',$account);
+	$group_id = preg_replace('/[^-_0-9\p{L}]/u','',$group_id);
+	}
 
 # default optional vars if not set
 if (!isset($ACTION))   {$ACTION="Originate";}
@@ -335,30 +372,6 @@ if ($sl_ct > 0)
 	$VUselected_language =		$row[0];
 	}
 
-$stmt = "SELECT use_non_latin,allow_sipsak_messages,enable_languages,language_method,meetme_enter_login_filename,meetme_enter_leave3way_filename,agent_debug_logging FROM system_settings;";
-$rslt=mysql_to_mysqli($stmt, $link);
-	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02001',$user,$server_ip,$session_name,$one_mysql_log);}
-if ($DB) {echo "$stmt\n";}
-$qm_conf_ct = mysqli_num_rows($rslt);
-if ($qm_conf_ct > 0)
-	{
-	$row=mysqli_fetch_row($rslt);
-	$non_latin =						$row[0];
-	$allow_sipsak_messages =			$row[1];
-	$SSenable_languages =				$row[2];
-	$SSlanguage_method =				$row[3];
-	$meetme_enter_login_filename =		$row[4];
-	$meetme_enter_leave3way_filename =	$row[5];
-	$SSagent_debug_logging =			$row[6];
-	}
-##### END SETTINGS LOOKUP #####
-###########################################
-
-if ($non_latin < 1)
-	{
-	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
-	$secondS = preg_replace("/[^0-9]/","",$secondS);
-	}
 if (strlen($SSagent_debug_logging) > 1)
 	{
 	if ($SSagent_debug_logging == "$user")

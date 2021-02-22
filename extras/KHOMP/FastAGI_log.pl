@@ -86,6 +86,7 @@
 # 190709-2240 - Added Call Quota logging
 # 191001-1509 - Small fix for monitoring issue
 # 200210-1644 - Added KHOMP code
+# 200902-1611 - Fixed bug with khomp_end_call data
 #
 
 # defaults for PreFork
@@ -728,7 +729,7 @@ sub process_request
 				if ($AGILOG) {$agi_string = "|KHOMP $amd_type|$HVcauses|$extension|$campaign_vdad_exten"; &agi_output;}
 
 				### Add the KHOMP SIP X header to the outbound call
-				if (( $amd_type == 'KHOMP' ) && ($agi_called_ext!= $campaign_vdad_exten))
+				if (( $amd_type eq 'KHOMP' ) && ($agi_called_ext!= $campaign_vdad_exten))
 					{
 					# determin header format
 					if ($khomp_id_format eq 'CALLERCODE') 
@@ -738,7 +739,7 @@ sub process_request
 					elsif ($khomp_id_format eq 'CALLERCODE_CAMP_EXTERNIP') 
 						{ $khomp_id = $callerid . '_' . $campaign . '_' . $external_server_ip; }
 
-					$stmtA = "INSERT INTO vicidial_khomp_log SET caller_code = '$callerid', lead_id = '$lead_id', server_ip = '$VARserver_ip', khomp_header = '$khomp_header', khomp_id = '$khomp_id', khomp_id_format = '$khomp_id_format'";
+					$stmtA = "INSERT INTO vicidial_khomp_log SET caller_code = '$callerid', lead_id = '$lead_id', server_ip = '$VARserver_ip', khomp_header = '$khomp_header', khomp_id = '$khomp_id', khomp_id_format = '$khomp_id_format', start_date=NOW()";
 					if ($AGILOG) {$agi_string = "--    KHOMP Log Insert: |$stmtA|";   &agi_output;}
 					$dbhA->do($stmtA);
 
@@ -2748,8 +2749,6 @@ sub process_khomp_analytics
 		$CIDlead_id
 	) = @_;
 
-	sleep(5);
-
 	### Extra SIP Headers begin with an X
 	$khomp_header = "X-" . $khomp_header;
 
@@ -2762,9 +2761,10 @@ sub process_khomp_analytics
 		{ $khomp_id = $callerid . '_' . $campaign_id . '_' . $external_server_ip; }
 
 	my $login_token = 'TOKEN';
+	my $api_auth_time = 0;
 	if ( $khomp_api_proxied eq 'false' ) 
 		{
-		$login_token = khomp_api_login( $khomp_api_login_url, $khomp_api_user, $khomp_api_pass );
+		($login_token, $api_auth_time) = khomp_api_login( $khomp_api_login_url, $khomp_api_user, $khomp_api_pass );
 		}
 	
 	if ( $login_token ne 'login' )
@@ -2789,7 +2789,7 @@ sub process_khomp_analytics
 		$khomp_json = encode_json( $khomp_request );
 
 		# call the API
-		$result = khomp_json_api( $khomp_json, $khomp_api_url, $khomp_api_user, $khomp_api_pass );
+		($result, $api_query_time) = khomp_json_api( $khomp_json, $khomp_api_url, $khomp_api_user, $khomp_api_pass );
 
 		# check the result
 		if ( $result =~ /^ERROR/ )
@@ -2805,8 +2805,12 @@ sub process_khomp_analytics
 				my $khomp_call_data = $result->{'result'}->{'calls'}[0]->{'fields'};
 				%parsed_data = khomp_parse_call_data( $khomp_header, $khomp_id, $callerid, $CIDlead_id, $khomp_id_format, $khomp_call_data );
 
+				$parsed_data{'api_auth_time'} = $api_auth_time;
+				$parsed_data{'api_query_time'} = $api_query_time;
+
+
 				# log the khomp data in the vicidial_khomp_log
-				log_khomp_call_data( %parsed_data );
+				log_khomp_call_data( %parsed_data);
 
 				$conclusion = $parsed_data{'conclusion'};
 				$pattern = $parsed_data{'pattern'};
@@ -2944,9 +2948,9 @@ sub process_khomp_analytics
 # code to log the khomp data in vicidial_khomp_log
 sub log_khomp_call_data
 	{
-	%khomp_call_data = @_;
+	(%khomp_call_data) = @_;
 
-	$stmtA = "UPDATE vicidial_khomp_log SET caller_code = '$khomp_call_data{'caller_code'}', lead_id = '$khomp_call_data{'lead_id'}', server_ip = '$VARserver_ip', khomp_header = '$khomp_call_data{'khomp_header'}', khomp_id = '$khomp_call_data{'khomp_id'}', khomp_id_format = '$khomp_call_data{'khomp_id_format'}'";
+	$stmtA = "UPDATE vicidial_khomp_log SET caller_code = '$khomp_call_data{'caller_code'}', lead_id = '$khomp_call_data{'lead_id'}', server_ip = '$VARserver_ip', khomp_header = '$khomp_call_data{'khomp_header'}', khomp_id = '$khomp_call_data{'khomp_id'}', khomp_id_format = '$khomp_call_data{'khomp_id_format'}', hangup_auth_time = '$khomp_call_data{'api_auth_time'}', hangup_query_time = '$khomp_call_data{'api_query_time'}'";
 
 	if ( defined( $khomp_call_data{'sip_call_id'} ) ) { $stmtA .= ", sip_call_id = '$khomp_call_data{'sip_call_id'}'"; }
 	if ( defined( $khomp_call_data{'start_epoch'} ) ) { $stmtA .= ", start_date = FROM_UNIXTIME($khomp_call_data{'start_epoch'})"; }
@@ -3037,6 +3041,15 @@ sub khomp_api_login
         ) = @_;
 
         my $token = 'login';
+	my $auth_start_sec;
+	my $auth_start_usec;
+	my $auth_end_sec;
+	my $auth_end_usec;
+	my $auth_sec;
+        my $auth_usec;
+	my $api_auth_time;
+
+	($auth_start_sec, $auth_start_usec) = gettimeofday();
 
         # build JSON object
         my $login_json = {
@@ -3072,7 +3085,14 @@ sub khomp_api_login
 
         $token = $result->{'result'}->{'token'};
 
-        return $token;
+	($auth_end_sec, $auth_end_usec) = gettimeofday();
+
+	$auth_sec = $auth_end_sec - $auth_start_sec;
+	$auth_usec = $auth_end_usec - $auth_start_usec;
+
+	$api_auth_time = "$auth_sec.$auth_usec";
+ 
+	return ($token, $api_auth_time);
         }
 
 ### code for connecting to KHOMP api and passing JSON
@@ -3082,6 +3102,16 @@ sub khomp_json_api
                 $khomp_json,
                 $khomp_api_url,
         ) = @_;
+
+        my $query_start_sec;
+        my $query_start_usec;
+        my $query_end_sec;
+        my $query_end_usec;
+        my $query_sec;
+        my $query_usec;
+        my $api_query_time;
+
+        ($query_start_sec, $query_start_usec) = gettimeofday();
 
         my $curl_cmd = "$curlbin -sS --data \'$khomp_json\' $khomp_api_url";
 
@@ -3101,7 +3131,14 @@ sub khomp_json_api
         $json = JSON::PP->new->ascii->pretty->allow_nonref;
         $result = $json->decode($message);
 
-        return $result;
+	($query_end_sec, $query_end_usec) = gettimeofday();
+
+	$query_sec = $query_end_sec - $query_start_sec;
+	$query_usec = $query_end_usec - $query_start_usec;
+
+	$api_query_time = "$query_sec.$query_usec";
+
+        return ($result, $api_query_time);
         }
 
 

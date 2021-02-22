@@ -156,10 +156,12 @@
 # 201002-1545 - Added extension as recording lookup option, Allowed for secure sounds_web_server setting
 # 201106-1654 - Added campaign_id option to agent_stats_export function
 # 201113-0713 - Added delete_did option to update_did function, Issue #1242
+# 201201-1625 - Added group_by_campaign option to agent_stats_export function
+# 201214-1547 - Fixes for PHP8 compatibility
 #
 
-$version = '2.14-133';
-$build = '201113-0713';
+$version = '2.14-135';
+$build = '201214-1547';
 $api_url_log = 0;
 
 $startMS = microtime();
@@ -554,6 +556,8 @@ if (isset($_GET["on_hook_agent"]))			{$on_hook_agent=$_GET["on_hook_agent"];}
 	elseif (isset($_POST["on_hook_agent"]))	{$on_hook_agent=$_POST["on_hook_agent"];}
 if (isset($_GET["delete_did"]))				{$delete_did=$_GET["delete_did"];}
 	elseif (isset($_POST["delete_did"]))	{$delete_did=$_POST["delete_did"];}
+if (isset($_GET["group_by_campaign"]))			{$group_by_campaign=$_GET["group_by_campaign"];}
+	elseif (isset($_POST["group_by_campaign"]))	{$group_by_campaign=$_POST["group_by_campaign"];}
 
 
 header ("Content-type: text/html; charset=utf-8");
@@ -789,6 +793,7 @@ if ($non_latin < 1)
 	$template_id = preg_replace('/[^-_0-9a-zA-Z]/','',$template_id);
 	$on_hook_agent = preg_replace('/[^-_0-9a-zA-Z]/','',$on_hook_agent);
 	$delete_did = preg_replace('/[^0-9a-zA-Z]/','',$delete_did);
+	$group_by_campaign = preg_replace('/[^0-9a-zA-Z]/','',$group_by_campaign);
 	}
 else
 	{
@@ -7916,7 +7921,14 @@ if ($function == 'agent_stats_export')
 				}
 			else
 				{
-				$stmt="SELECT user,lead_id,sub_status,pause_sec,wait_sec,talk_sec,dispo_sec,dead_sec,pause_epoch from vicidial_agent_log where $search_SQL order by user,agent_log_id limit 10000000;";
+				if ($group_by_campaign == 'YES')
+					{
+					$stmt="SELECT user,lead_id,sub_status,pause_sec,wait_sec,talk_sec,dispo_sec,dead_sec,pause_epoch,campaign_id from vicidial_agent_log where $search_SQL order by campaign_id,user,agent_log_id limit 10000000;";
+					}
+				else
+					{
+					$stmt="SELECT user,lead_id,sub_status,pause_sec,wait_sec,talk_sec,dispo_sec,dead_sec,pause_epoch,campaign_id from vicidial_agent_log where $search_SQL order by user,agent_log_id limit 10000000;";
+					}
 				$rslt=mysql_to_mysqli($stmt, $link);
 				$rec_recs = mysqli_num_rows($rslt);
 				if ($DB>0) {echo "DEBUG: agent_stats_export query - $rec_recs|$stmt\n";}
@@ -7945,9 +7957,19 @@ if ($function == 'agent_stats_export')
 					if (strlen($time_format) < 1)
 						{$time_format = 'HF';}
 					if ($header == 'YES')
-						{$output .= 'user' . $DL . 'full_name' . $DL . 'user_group' . $DL . 'calls' . $DL . 'login_time' . $DL . 'total_talk_time' . $DL . 'avg_talk_time' . $DL . 'avg_wait_time' . $DL . 'pct_of_queue' . $DL . 'pause_time' . $DL . 'sessions' . $DL . 'avg_session' . $DL . 'pauses' . $DL . 'avg_pause_time' . $DL . 'pause_pct' . $DL . 'pauses_per_session' . "\n";}
+						{
+						if ($group_by_campaign == 'YES')
+							{
+							$output .= 'campaign_id' . $DL . 'user' . $DL . 'full_name' . $DL . 'user_group' . $DL . 'calls' . $DL . 'login_time' . $DL . 'total_talk_time' . $DL . 'avg_talk_time' . $DL . 'avg_wait_time' . $DL . 'pct_of_queue' . $DL . 'pause_time' . $DL . 'sessions' . $DL . 'avg_session' . $DL . 'pauses' . $DL . 'avg_pause_time' . $DL . 'pause_pct' . $DL . 'pauses_per_session' . "\n";
+							}
+						else
+							{
+							$output .= 'user' . $DL . 'full_name' . $DL . 'user_group' . $DL . 'calls' . $DL . 'login_time' . $DL . 'total_talk_time' . $DL . 'avg_talk_time' . $DL . 'avg_wait_time' . $DL . 'pct_of_queue' . $DL . 'pause_time' . $DL . 'sessions' . $DL . 'avg_session' . $DL . 'pauses' . $DL . 'avg_pause_time' . $DL . 'pause_pct' . $DL . 'pauses_per_session' . "\n";
+							}
+						}
 
 					$ASuser=array();
+					$AScampaign=array();
 					$ASstart_epoch=array();
 					$AScalls=array();
 					$ASpauses=array();
@@ -7969,6 +7991,23 @@ if ($function == 'agent_stats_export')
 						{
 						# user,lead_id,sub_status,pause_sec,wait_sec,talk_sec,dispo_sec,dead_sec
 						$row=mysqli_fetch_row($rslt);
+						if ($group_by_campaign == 'YES')
+							{
+							$temp_camp_user="$row[9] $row[0]";
+							if (!preg_match("/^$last_user$/i", $temp_camp_user))
+								{
+								$uc++;
+								$ASuser[$uc] =			$row[0];
+								$AScampaign[$uc] =		$row[9];
+								$ASstart_epoch[$uc] =	$row[8];
+								$last_user =			$temp_camp_user;
+								$AScalls[$uc] =			0;
+								$ASpauses[$uc] =		0;
+								$ASsessions[$uc] =		0;
+								}
+							}
+						else
+							{
 						if (!preg_match("/^$last_user$/i", $row[0]))
 							{
 							$uc++;
@@ -7978,6 +8017,7 @@ if ($function == 'agent_stats_export')
 							$AScalls[$uc] =			0;
 							$ASpauses[$uc] =		0;
 							$ASsessions[$uc] =		0;
+							}
 							}
 						if ($row[1] > 0)
 							{
@@ -8055,8 +8095,14 @@ if ($function == 'agent_stats_export')
 						$avg_cust_sec =		sec_convert($avg_cust_sec,$time_format);
 						$avg_wait_sec =		sec_convert($avg_wait_sec,$time_format);
 
+						if ($group_by_campaign == 'YES')
+							{
+							$output .= "$AScampaign[$k]$DL$ASuser[$k]$DL$ASfull_name[$k]$DL$ASuser_group[$k]$DL$AScalls[$k]$DL$login_sec$DL$cust_sec$DL$avg_cust_sec$DL$avg_wait_sec$DL$pct_of_queue%$DL$ASpause_sec[$k]$DL$ASsessions[$k]$DL$avg_session_sec$DL$ASpauses[$k]$DL$avg_pause_sec$DL$pct_pause%$DL$avg_pause_session$DL$wait_sec\n";
+							}
+						else
+							{
 						$output .= "$ASuser[$k]$DL$ASfull_name[$k]$DL$ASuser_group[$k]$DL$AScalls[$k]$DL$login_sec$DL$cust_sec$DL$avg_cust_sec$DL$avg_wait_sec$DL$pct_of_queue%$DL$ASpause_sec[$k]$DL$ASsessions[$k]$DL$avg_session_sec$DL$ASpauses[$k]$DL$avg_pause_sec$DL$pct_pause%$DL$avg_pause_session$DL$wait_sec\n";
-
+							}
 						$k++;
 						}
 
@@ -12851,7 +12897,8 @@ if ($function == 'call_status_stats')
 				}
 			}
 
-			while(list($key, $val)=each($outbound_array)) {
+#			while(list($key, $val)=each($outbound_array)) {
+			foreach($outbound_array as $key => $val) {
 				$hour_str="";
 				$status_str="";
 				for ($i=0; $i<24; $i++)
@@ -12866,7 +12913,8 @@ if ($function == 'call_status_stats')
 				if ($temp_ary_ct > 0)
 					{
 					ksort($temp_stat_array{"$key"});
-					while(list($statkey, $statval)=each($temp_stat_array{"$key"}))
+#					while(list($statkey, $statval)=each($temp_stat_array{"$key"})) 
+					foreach($temp_stat_array{"$key"} as $statkey => $statval)
 						{
 						$status_str.=$statkey."-".$temp_stat_array{"$key"}{"$statkey"}.",";
 						}
@@ -12876,7 +12924,8 @@ if ($function == 'call_status_stats')
 				echo $key."|".$outbound_array{$key}[0]."|".$outbound_array{$key}[1]."|".$hour_str."|".$status_str."|\n";
 			}
 
-			while(list($key, $val)=each($inbound_array)) {
+#			while(list($key, $val)=each($inbound_array)) {
+			foreach($inbound_array as $key => $val) {
 				$hour_str="";
 				$status_str="";
 				for ($i=0; $i<24; $i++)
@@ -12891,7 +12940,8 @@ if ($function == 'call_status_stats')
 				if ($temp_ary_ct > 0)
 					{
 					ksort($temp_stat_array{"$key"});
-					while(list($statkey, $statval)=each($temp_stat_array{"$key"}))
+					# while(list($statkey, $statval)=each($temp_stat_array{"$key"})) 
+					foreach($temp_stat_array{"$key"} as $statkey => $statval)
 						{
 						$status_str.=$statkey."-".$temp_stat_array{"$key"}{"$statkey"}.",";
 						}
@@ -13157,7 +13207,8 @@ if ($function == 'call_dispo_report')
 					}
 				}
 			$rpt_str.="\n";
-			while (list($key, $val)=each($outbound_ct_array))
+#			while (list($key, $val)=each($outbound_ct_array)) 
+			foreach($outbound_ct_array as $key => $val)
 				{
 				$total_calls=$outbound_ct_array{$key}{"TOTAL CALLS"};
 				$rpt_str.="$key,".$outbound_ct_array{$key}{"TOTAL CALLS"};
@@ -13169,7 +13220,8 @@ if ($function == 'call_dispo_report')
 						$outbound_ct_array{$key}{"$status_ct_array[$i]"}+=0;
 						}
 					ksort($outbound_ct_array{$key});
-					while (list($key2, $val2)=each($outbound_ct_array{$key}))
+#					while (list($key2, $val2)=each($outbound_ct_array{$key})) 
+					foreach($outbound_ct_array{$key} as $key2 => $val2)
 						{
 						$rpt_str.=",$val2";
 						if ($show_percentages)
@@ -13182,7 +13234,8 @@ if ($function == 'call_dispo_report')
 					}
 				$rpt_str.="\n";
 				}
-			while (list($key, $val)=each($inbound_ct_array))
+#			while (list($key, $val)=each($inbound_ct_array)) 
+			foreach($inbound_ct_array as $key => $val)
 				{
 				$total_calls=$inbound_ct_array{$key}{"TOTAL CALLS"};
 				$rpt_str.="$key,".$inbound_ct_array{$key}{"TOTAL CALLS"};
@@ -13194,7 +13247,8 @@ if ($function == 'call_dispo_report')
 						$inbound_ct_array{$key}{"$status_ct_array[$i]"}+=0;
 						}
 					ksort($inbound_ct_array{$key});
-					while (list($key2, $val2)=each($inbound_ct_array{$key}))
+#					while (list($key2, $val2)=each($inbound_ct_array{$key})) 
+					foreach($inbound_ct_array{$key} as $key2 => $val2)
 						{
 						$rpt_str.=",$val2";
 						if ($show_percentages)
@@ -13207,7 +13261,8 @@ if ($function == 'call_dispo_report')
 					}
 				$rpt_str.="\n";
 				}
-			while (list($key, $val)=each($did_ct_array))
+#			while (list($key, $val)=each($did_ct_array)) 
+			foreach($did_ct_array as $key => $val)
 				{
 				$total_calls=$did_ct_array{$key}{"TOTAL CALLS"};
 				$rpt_str.="$key,".$did_ct_array{$key}{"TOTAL CALLS"};
@@ -13219,7 +13274,8 @@ if ($function == 'call_dispo_report')
 						$did_ct_array{$key}{"$status_ct_array[$i]"}+=0;
 						}
 					ksort($did_ct_array{$key});
-					while (list($key2, $val2)=each($did_ct_array{$key}))
+#					while (list($key2, $val2)=each($did_ct_array{$key})) 
+					foreach($did_ct_array{$key} as $key2 => $val2)
 						{
 						$rpt_str.=",$val2";
 						if ($show_percentages)
@@ -13234,7 +13290,8 @@ if ($function == 'call_dispo_report')
 				}
 			$rpt_str.="TOTAL,$grand_total_calls";
 			ksort($grand_total_array);
-			while (list($key, $val)=each($grand_total_array))
+#			while (list($key, $val)=each($grand_total_array)) 
+			foreach($grand_total_array as $key => $val)
 				{
 				$rpt_str.=",$val";
 				if ($show_percentages)

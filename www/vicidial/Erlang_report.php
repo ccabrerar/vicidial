@@ -998,7 +998,8 @@ else
 	$bht=0;
 	$graph_stats=array();
 	$q=0;
-	while(list($key, $val)=each($erlang_array)) {
+	# while(list($key, $val)=each($erlang_array)) {
+	foreach ($erlang_array as $key => $val) {
 		if ($val[0]>$bht) {$bht=$val[0];}
 		if ($q%2==0) {$tdclass="records_list_x";} else {$tdclass="records_list_y";}
 		$average_time=round(MathZDC($val[0], $val[2]));
@@ -1256,7 +1257,8 @@ else
       ]};
 */
 		$labels="\t\tlabels:[";
-		while(list($key, $val)=each($graph_stats)) {
+#		while(list($key, $val)=each($graph_stats)) {
+		foreach($graph_stats as $key => $val) {
 			$labels.="\"".preg_replace('/ +/', ' ', $key)."\",";
 		}
 		reset($graph_stats);
@@ -1275,7 +1277,8 @@ else
 			#$graphConstantsC="\t\t\t\thoverBorderColor: [";
 		
 			# $labels.="\"".preg_replace('/ +/', ' ', $graph_stats[$d][0])."\",";
-			while(list($key, $val)=each($graph_stats)) {
+			# while(list($key, $val)=each($graph_stats)) {
+			foreach($graph_stats as $key => $val) {
 				$val[$dataset_index]=preg_replace("/N\/A/", "0", $val[$dataset_index]);
 				$data.="\"".$val[$dataset_index]."\","; 
 				$current_graph_total+=intval($val[$dataset_index]);

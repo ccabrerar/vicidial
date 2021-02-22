@@ -101,6 +101,7 @@
 # 190901-0952 - Added cid_choice option to transfer_conference function
 # 200403-1510 - Added outbound_cid option to external_dial function
 # 201112-2053 - Added vm_message function
+# 210116-1138 - Addressed session ID issue in ticket #1251
 #
 
 $version = '2.14-67';
@@ -1270,12 +1271,13 @@ if ($function == 'call_agent')
 				api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
 				}
 			}
-		$stmt = "select count(*) from vicidial_live_agents where user='$agent_user';";
+		$stmt = "select count(*), conf_exten from vicidial_live_agents where user='$agent_user';";
 		if ($DB) {echo "$stmt\n";}
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$row=mysqli_fetch_row($rslt);
 		if ($row[0] > 0)
 			{
+			$conf_exten=$row[1];
 			$stmt = "select agent_login_call from vicidial_session_data where user='$agent_user';";
 			if ($DB) {echo "$stmt\n";}
 			$rslt=mysql_to_mysqli($stmt, $link);
@@ -1287,7 +1289,8 @@ if ($function == 'call_agent')
 
 				if (strlen($agent_login_call) > 5)
 					{
-					$call_agent_string = preg_replace("/\|/","','",$agent_login_call);
+					$call_agent_conference = preg_replace("/(.+?Exten: )\d{7}(\|Priority.+)/", "$1 $conf_exten$2",$agent_login_call);
+					$call_agent_string = preg_replace("/\|/","','",$call_agent_conference);
 					$stmt="INSERT INTO vicidial_manager values('$call_agent_string');";
 						if ($format=='debug') {echo "\n<!-- $stmt -->";}
 					$rslt=mysql_to_mysqli($stmt, $link);
@@ -1882,6 +1885,7 @@ if ($function == 'external_dial')
 					if ($api_manual_dial=='STANDARD')
 						{
 						$stmt="UPDATE vicidial_live_agents set external_dial='$value!$phone_code!$search!$preview!$focus!$vendor_id!$epoch!$dial_prefix!$group_alias!$caller_id_number!$vtiger_callback_id!$lead_id!$alt_dial!$dial_ingroup' where user='$agent_user';";
+						if ($DB) {echo "$stmt\n";}
 						$success=1;
 						}
 					else

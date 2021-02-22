@@ -1,7 +1,7 @@
 <?php
 # call_log_display.php    version 2.14
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed purely to send the inbound and outbound calls for a specific phone
 # This script depends on the server_ip being sent and also needs to have a valid user/pass from the vicidial_users table
@@ -40,10 +40,11 @@
 # 150723-1714 - Added ajax logging
 # 170526-2215 - Added additional variable filtering
 # 190111-0904 - Fix for PHP7
+# 201117-2200 - Changes for better compatibility with non-latin data input
 #
 
-$version = '2.14-20';
-$build = '190111-0904';
+$version = '2.14-21';
+$build = '201117-2200';
 $php_script = 'call_log_display.php';
 $SSagent_debug_logging=0;
 $startMS = microtime();
@@ -73,6 +74,8 @@ $session_name = preg_replace("/\'|\"|\\\\|;/","",$session_name);
 $server_ip = preg_replace("/\'|\"|\\\\|;/","",$server_ip);
 $exten = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$exten);
 $protocol = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$protocol);
+$in_limit = preg_replace('/[^0-9]/','',$in_limit);
+$out_limit = preg_replace('/[^0-9]/','',$out_limit);
 
 # default optional vars if not set
 if (!isset($format))   {$format="text";}

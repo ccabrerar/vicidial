@@ -3498,7 +3498,7 @@ if ($talking_to_print > 0)
 			if ( ($report_display_type!='HTML') and ($report_display_type!='LIMITED') )
 				{
 				$extension =		sprintf("%-48s", $extension);
-				while(mb_strlen($extension, 'utf-8')>14) {$extension = mb_substr("$extension", 0, -1,'UTF8');}
+				while(mb_strlen($extension, 'utf-8')>14) {$extension = mb_substr("$extension", 0, -1,'utf-8');}
 				}
 			}
 
@@ -3639,7 +3639,7 @@ if ($talking_to_print > 0)
 				$user_group =		sprintf("%-40s", $Auser_group[$i]);
 				if ( ($report_display_type!='HTML') and ($report_display_type!='LIMITED') )
 					{
-					while(mb_strlen($user_group, 'utf-8')>12) {$user_group = mb_substr("$user_group", 0, -1,'UTF8');}
+					while(mb_strlen($user_group, 'utf-8')>12) {$user_group = mb_substr("$user_group", 0, -1,'utf-8');}
 					}
 				}
 			}
@@ -3658,7 +3658,7 @@ if ($talking_to_print > 0)
 				$user =		sprintf("%-60s", $Afull_name[$i]);
 				if ( ($report_display_type!='HTML') and ($report_display_type!='LIMITED') )
 					{
-					while(mb_strlen($user, 'utf-8')>20) {$user = mb_substr("$user", 0, -1,'UTF8');}
+					while(mb_strlen($user, 'utf-8')>20) {$user = mb_substr("$user", 0, -1,'utf-8');}
 					}
 				}
 			}

@@ -655,7 +655,8 @@ if ($SUBMIT)
 					# SELECT lead_id, count(*) as count from vicidial_log where extract(HOUR_MINUTE FROM call_date)>='900' and extract(HOUR_MINUTE FROM call_date)<='1700' and dayofweek(call_date) in (2,3,4,5,6) and lead_id in (SELECT lead_id from vicidial_list where list_id=41073) group by lead_id order by lead_id;
 
 					$shift_ary2=$shift_ary;
-					while (list($key, $val)=each($shift_ary2)) 
+#					while (list($key, $val)=each($shift_ary2)) 
+					foreach ($shift_ary2 as $key => $val)
 						{
 						$total_shift_count=0;
 						$gmt_stmt="SELECT distinct gmt_offset_now from vicidial_list where list_id='$list_id';";
@@ -818,7 +819,8 @@ if ($SUBMIT)
 			$total_dialable_count_inactive+=$Xdialable_inactive_count;
 
 			$shift_ary2=$shift_ary;
-			while (list($key, $val)=each($shift_ary2)) 
+#			while (list($key, $val)=each($shift_ary2)) 
+			foreach ($shift_ary2 as $key => $val)
 				{
 				$total_shift_count=0; 
 				$total_nofilter_shift_count=0; 

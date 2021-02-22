@@ -550,6 +550,30 @@ OTHER CHANGES:
 	be played to a customer when the agent clicks on the VM button in the
 	agent screen.
 
+156. Added Daily Called Count Limits as a campaign setting, with options to
+	count and/or restrict for manual dial calls or not.
+
+157. Added Transfer-Conf Button Launch campaign setting, allowing you to set a
+	webform window to open when an agent clicks on the Transfer-Conf button.
+
+158. Added SHARED_... campaign dial method auto-dial options, for more efficient
+	agent multi-campaign dialing. Read the AGENT_MULTI-CAMPAIGN_DIALING.txt
+	document for more information.
+
+159. Added Agent Search Method override options for campaigns and in-groups.
+
+160. Added 'copy_user' function to the Non-Agent API.
+
+161. Added 'add_did' function to the Non-Agent API.
+
+162. Added new SOURCESELECT Custom Field Type, it is a single-selection pull-
+	down menu where there are multiple sets of options available depending 
+	on the value of another field for the lead. Also added the ability to
+	perform basic Math functions within a SCRIPT Custom Field using values
+	from other fields in the equations. For more information on how both of
+	these new features work, see the Field Options help in the admin web
+	screen.
+
 
 
 

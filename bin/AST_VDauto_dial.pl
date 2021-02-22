@@ -134,6 +134,8 @@
 # 200108-1315 - Added CID Group type of NONE
 # 200122-1851 - Added code for CID Group auto-rotate feature
 # 200825-0032 - Include live agents from other campaigns if they have the campaign Drop-InGroup selected and drop sec < 0
+# 201122-0928 - Added code for dialy call count limits
+# 201218-2224 - Added code for SHARED agent campaigns
 #
 
 ### begin parsing run-time options ###
@@ -346,6 +348,31 @@ if ($run_check > 0)
 		}
 	}
 
+### Grab system_settings values from the database
+$stmtA = "SELECT use_non_latin FROM system_settings;";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+if ($sthArows > 0)
+	{
+	@aryA = $sthA->fetchrow_array;
+	$non_latin = 						$aryA[0];
+	}
+$sthA->finish();
+
+if ($non_latin > 0) 
+	{
+	$stmtA = "SET NAMES 'UTF8';";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthA->finish();
+	}
+
+$stmtA = "INSERT IGNORE into vicidial_campaign_stats_debug SET campaign_id='-SHARE-',server_ip='$VARserver_ip';";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthA->finish();
+
 
 $one_day_interval = 12;		# 1 month loops for one year
 while($one_day_interval > 0)
@@ -365,12 +392,19 @@ while($one_day_interval > 0)
 		@DBlive_user=@MT;
 		@DBlive_server_ip=@MT;
 		@DBlive_campaign=@MT;
+		@DBlive_campaign_rank=@MT;
+		@DBlive_campaign_sort=@MT;
+		@DBlive_campaign_sorted=@MT;
+		@DBlive_dial_campaign=@MT;
 		@DBlive_conf_exten=@MT;
 		@DBlive_status=@MT;
 		@DBlive_call_id=@MT;
+		@DBlive_last_call_epoch=@MT;
 		@DBcampaigns=@MT;
 		@DBIPaddress=@MT;
 		@DBIPcampaign=@MT;
+		@DBIPcampaign_sort=@MT;
+		@DBIPcampaign_sorted=@MT;
 		@DBIPactive=@MT;
 		@DBIPvdadexten=@MT;
 		@DBIPcount=@MT;
@@ -424,6 +458,8 @@ while($one_day_interval > 0)
 		@DBIPdrop_call_seconds=@MT;
 		@DBIPdrop_action=@MT;
 		@DBIPdrop_inbound_group=@MT;
+		@DBshare_camp=@MT;
+		@DBshare_camp_rank=@MT;
 		$active_line_counter=0;
 		$user_counter=0;
 		$user_campaigns = '|';
@@ -436,6 +472,7 @@ while($one_day_interval > 0)
 		$LUcount=0;
 		$campaigns_update = '';
 		$CPcount=0;
+		$shared_dial_camp_override=0;
 
 		##### Get maximum calls per second that this process can send out
 		$stmtA = "SELECT outbound_calls_per_second,vicidial_recording_limit FROM servers where server_ip='$server_ip';";
@@ -460,10 +497,9 @@ while($one_day_interval > 0)
 
 
 
-
 		#############################################
 		##### Check if auto-dialing is enabled
-		$stmtA = "SELECT outbound_autodial_active,noanswer_log,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db FROM system_settings;";
+		$stmtA = "SELECT outbound_autodial_active,noanswer_log,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,disable_auto_dial,allow_shared_dial FROM system_settings;";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;
@@ -478,12 +514,69 @@ while($one_day_interval > 0)
 			$alt_log_pass =					$aryA[5];
 			$tables_use_alt_log_db =		$aryA[6];
 			$disable_auto_dial =			$aryA[7];
+			$allow_shared_dial =			$aryA[8];
 			}
 		$sthA->finish();
 
+		#############################################
+		##### Gather SHARED campaigns info
+		$debug_shared_output='';
+		$shared_SQL='';
+		$shared_callsTOTAL=0;
+		$shared_callsSERVER=0;
+		if ($allow_shared_dial > 0) 
+			{
+			$stmtA = "SELECT campaign_id,drop_inbound_group,shared_dial_rank FROM vicidial_campaigns where active='Y' and dial_method IN('SHARED_RATIO','SHARED_ADAPT_HARD_LIMIT','SHARED_ADAPT_TAPERED','SHARED_ADAPT_AVERAGE') order by shared_dial_rank desc;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			$rec_count=0;
+			while ($sthArows > $rec_count)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$DBshare_camp[$rec_count] =			$aryA[0];
+				$DBshare_camp_rank[$rec_count] =	$aryA[2];
+				if (length($DBshare_camp_rank[$rec_count])<2) {$DBshare_camp_rank[$rec_count] = "0$DBshare_camp_rank[$rec_count]";}
+				$shared_SQL .= "'$aryA[0]','$aryA[1]',";
+				$debug_shared_output .= "$aryA[0]   Drop-In-Group: $aryA[1]   Shared-Rank: $DBshare_camp_rank[$rec_count]\n";
+				$rec_count++;
+				}
+			chop($shared_SQL);
+			if (length($shared_SQL)<2)
+				{$shared_SQL="'-NONE-'";}
+
+			$stmtA = "SELECT count(*) FROM vicidial_auto_calls where campaign_id IN($shared_SQL);";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$shared_callsTOTAL = $aryA[0];
+				}
+
+			$stmtA = "SELECT count(*) FROM vicidial_auto_calls where campaign_id IN($shared_SQL) and server_ip='$VARserver_ip';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$shared_callsSERVER = $aryA[0];
+				}
+
+			$event_string="SHARED-AGENT CAMPAIGNS ON SYSTEM: $rec_count   TOTAL CALLS: $shared_callsTOTAL   SERVER CALLS: $shared_callsSERVER";
+			&event_logger;
+
+			# update debug output
+			$stmtA = "UPDATE vicidial_campaign_stats_debug SET entry_time='$now_date',debug_output='$event_string\n$debug_shared_output' where campaign_id='-SHARE-' and server_ip='$VARserver_ip';";
+			$affected_rows = $dbhA->do($stmtA);
+			}
+		$debug_shared_output='';
+
 		##### Get a listing of the users that are active and ready to take calls
 		##### Also get a listing of the campaigns and campaigns/serverIP that will be used
-		$stmtA = "SELECT user,server_ip,campaign_id,conf_exten,status,callerid FROM vicidial_live_agents where status IN($active_agents) and outbound_autodial='Y' and server_ip='$server_ip' and last_update_time > '$BDtsSQLdate' order by last_call_time";
+		$stmtA = "SELECT user,server_ip,campaign_id,conf_exten,status,callerid,dial_campaign_id,UNIX_TIMESTAMP(last_call_time) FROM vicidial_live_agents where status IN($active_agents) and outbound_autodial='Y' and server_ip='$server_ip' and last_update_time > '$BDtsSQLdate' order by last_call_time";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;
@@ -497,7 +590,34 @@ while($one_day_interval > 0)
 			$DBlive_conf_exten[$user_counter] =	$aryA[3];
 			$DBlive_status[$user_counter] =		$aryA[4];
 			$DBlive_call_id[$user_counter] =	$aryA[5];
+			$DBlive_dial_campaign[$user_counter] =		$aryA[6];
+			$DBlive_last_call_epoch[$user_counter] =	$aryA[7];
+			$DBlive_campaign_rank[$user_counter] =		0;
+			$DBlive_campaign_sort[$user_counter] =		0;
 
+			if (length($DBlive_dial_campaign[$user_counter]) > 0)
+				{
+				if ($DBlive_dial_campaign[$user_counter] ne $DBlive_campaign[$user_counter]) 
+					{
+					$shared_dial_camp_override++;
+					if ($DBX) {print "Shared-Dial-Agent Dial-Campaign Override: $shared_dial_camp_override/$rec_count - $DBlive_user[$user_counter] ($DBlive_campaign[$user_counter] -> $DBlive_dial_campaign[$user_counter])\n";}
+					$debug_shared_output .= "Agent Dial-Campaign Override: $shared_dial_camp_override/$rec_count - $DBlive_user[$user_counter] ($DBlive_campaign[$user_counter] -> $DBlive_dial_campaign[$user_counter])\n";
+					$DBlive_campaign[$user_counter] = $DBlive_dial_campaign[$user_counter];
+					}
+				else
+					{
+					$debug_shared_output .= "Agent Dial-Campaign No-Change: $rec_count - $DBlive_user[$user_counter] ($DBlive_campaign[$user_counter] -> $DBlive_dial_campaign[$user_counter])\n";
+					}
+				}
+			$temp_ct=0;
+			foreach(@DBshare_camp)
+				{
+				if ($DBlive_campaign[$user_counter] eq $DBshare_camp[$temp_ct]) 
+					{
+					$DBlive_campaign_rank[$user_counter] = $DBshare_camp_rank[$temp_ct];
+					}
+				$temp_ct++;
+				}
 			if ($user_campaigns !~ /\|$DBlive_campaign[$user_counter]\|/i)
 				{
 				if ($campaigns_update !~ /'$DBlive_campaign[$user_counter]'/) {$campaigns_update .= "'$DBlive_campaign[$user_counter]',"; $CPcount++;}
@@ -511,8 +631,12 @@ while($one_day_interval > 0)
 				$user_campaignIP .= "$DBlive_campaign[$user_counter]__$DBlive_server_ip[$user_counter]|";
 				$DBIPcampaign[$user_CIPct] = "$DBlive_campaign[$user_counter]";
 				$DBIPaddress[$user_CIPct] = "$DBlive_server_ip[$user_counter]";
+				$DBIPcampaign_sort[$user_CIPct] = $DBlive_campaign_rank[$user_counter].'_'.$DBlive_last_call_epoch[$user_counter].'_'.$DBlive_campaign[$user_counter].'_'.$user_CIPct;
+				if ($DBX) {print "Debug agent campaign sort: $DBIPcampaign_sort[$user_CIPct]\n";}
 				$user_CIPct++;
 				}
+			$DBlive_campaign_sort[$user_counter] = $DBlive_campaign_rank[$user_counter].'_'.$DBlive_last_call_epoch[$user_counter].'_'.$DBlive_campaign[$user_counter].'_'.$user_counter;
+			if ($DBX) {print "Debug live agent sort: $DBlive_campaign_sort[$user_counter]\n";}
 			$user_counter++;
 			$rec_count++;
 			}
@@ -540,9 +664,15 @@ while($one_day_interval > 0)
 			$event_string="OLD TRUNK SHORTS CLEARED: $UVCSSaffected_rows |$user_campaignsSQL|";
 			&event_logger;
 			}
-		$user_CIPct = 0;
-		foreach(@DBIPcampaign)
+
+		### sort campaigns by shared campaign rank, then last agent call handle time
+		@DBIPcampaign_sorted = sort { $a cmp $b } @DBIPcampaign_sort;
+
+		$user_CIPct_sort = 0;
+		foreach(@DBIPcampaign_sorted)
 			{
+			@camp_sort_line = split(/_/,$DBIPcampaign_sorted[$user_CIPct_sort]);
+			$user_CIPct = $camp_sort_line[3];
 			$debug_string='';
 			$user_counter=0;
 			foreach(@DBlive_campaign)
@@ -586,7 +716,7 @@ while($one_day_interval > 0)
 				}
 
 			### get count of READY-status agents in this campaign
-			$stmtA = "SELECT count(*) FROM vicidial_live_agents where campaign_id='$DBIPcampaign[$user_CIPct]' and server_ip='$server_ip' and status='READY';";
+			$stmtA = "SELECT count(*) FROM vicidial_live_agents where ( (campaign_id='$DBIPcampaign[$user_CIPct]') or (dial_campaign_id='$DBIPcampaign[$user_CIPct]') ) and server_ip='$server_ip' and status='READY';";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
@@ -720,7 +850,7 @@ while($one_day_interval > 0)
 					}
 
 				# BEGIN check if drop-in-group agents should be included ---NONE--- #
-				if ( ($DBIPdrop_call_seconds[$user_CIPct] < 0) && ($DBIPdrop_action[$user_CIPct] =~ /IN_GROUP/i) && ($DBIPdrop_inbound_group[$user_CIPct] !~ /^---NONE---$/) && (length($DBIPdrop_inbound_group[$user_CIPct]) > 0) && ($new_agent_multicampaign > 0) ) 
+				if ( ($DBIPdrop_call_seconds[$user_CIPct] < 0) && ($DBIPdrop_action[$user_CIPct] =~ /IN_GROUP/i) && ($DBIPdrop_inbound_group[$user_CIPct] !~ /^---NONE---$/) && (length($DBIPdrop_inbound_group[$user_CIPct]) > 0) && ($new_agent_multicampaign > 0) && ($DBIPdial_method[$user_CIPct] !~ /SHARED_/i) ) 
 					{
 					if ($DBIPcount[$user_CIPct] > 0) {$DBIPcount[$user_CIPct] = ($DBIPcount[$user_CIPct] - 1);}
 					if ($DBIPACTIVEcount[$user_CIPct] > 0) {$DBIPACTIVEcount[$user_CIPct] = ($DBIPACTIVEcount[$user_CIPct] - 1);}
@@ -851,7 +981,7 @@ while($one_day_interval > 0)
 			if ($DBIPactive[$user_CIPct] =~ /N/) {$DBIPgoalcalls[$user_CIPct] = 0;}
 			$DBIPgoalcalls[$user_CIPct] = sprintf("%.0f", $DBIPgoalcalls[$user_CIPct]);
 
-			$event_string="$DBIPcampaign[$user_CIPct] $DBIPaddress[$user_CIPct]: agents: $DBIPcount[$user_CIPct] (READY: $DBIPcampaign_ready_agents[$user_CIPct])    dial_level: $DBIPadlevel[$user_CIPct]     ($DBIPACTIVEcount[$user_CIPct]|$DBIPINCALLcount[$user_CIPct]|$DBIPDEADcount[$user_CIPct])   $DBIPadaptive_dl_diff_target[$user_CIPct]";
+			$event_string="$user_CIPct_sort $user_CIPct   $DBIPcampaign[$user_CIPct] $DBIPaddress[$user_CIPct]: agents: $DBIPcount[$user_CIPct] (READY: $DBIPcampaign_ready_agents[$user_CIPct])    dial_level: $DBIPadlevel[$user_CIPct]     ($DBIPACTIVEcount[$user_CIPct]|$DBIPINCALLcount[$user_CIPct]|$DBIPDEADcount[$user_CIPct])   $DBIPadaptive_dl_diff_target[$user_CIPct]";
 			$debug_string .= "$event_string\n";
 			&event_logger;
 
@@ -1077,7 +1207,7 @@ while($one_day_interval > 0)
 			if ($DBIPmakecalls[$user_CIPct] > 0)
 				{$active_line_counter = ($DBIPmakecalls[$user_CIPct] + $active_line_counter);}
 
-			$event_string="$DBIPcampaign[$user_CIPct] $DBIPaddress[$user_CIPct]: Calls to place: $DBIPmakecalls[$user_CIPct] ($DBIPgoalcalls[$user_CIPct] - $DBIPexistcalls[$user_CIPct] [$DBIPexistcalls_IN[$user_CIPct] + $DBIPexistcalls_OUT[$user_CIPct]|$DBIPexistcalls_IN_ALL[$user_CIPct]|$DBIPexistcalls_IN_LIVE[$user_CIPct]|$DBIPexistcalls_QUEUE_LIVE[$user_CIPct]]) $active_line_counter $MVT_msg";
+			$event_string="$user_CIPct_sort $user_CIPct   $DBIPcampaign[$user_CIPct] $DBIPaddress[$user_CIPct]: Calls to place: $DBIPmakecalls[$user_CIPct] ($DBIPgoalcalls[$user_CIPct] - $DBIPexistcalls[$user_CIPct] [$DBIPexistcalls_IN[$user_CIPct] + $DBIPexistcalls_OUT[$user_CIPct]|$DBIPexistcalls_IN_ALL[$user_CIPct]|$DBIPexistcalls_IN_LIVE[$user_CIPct]|$DBIPexistcalls_QUEUE_LIVE[$user_CIPct]]) $active_line_counter $MVT_msg";
 			$debug_string .= "$event_string\n";
 			&event_logger;
 
@@ -1090,7 +1220,7 @@ while($one_day_interval > 0)
 			$waiting_calls_IN=0;
 			$waiting_calls_OUT=0;
 
-			$stmtA = "SELECT count(*),status from vicidial_live_agents where campaign_id='$DBIPcampaign[$user_CIPct]' and last_update_time > '$halfminSQLdate' group by status;";
+			$stmtA = "SELECT count(*),status from vicidial_live_agents where ( (campaign_id='$DBIPcampaign[$user_CIPct]') or (dial_campaign_id='$DBIPcampaign[$user_CIPct]') ) and last_update_time > '$halfminSQLdate' group by status;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
@@ -1243,7 +1373,7 @@ while($one_day_interval > 0)
 			$stmtA="INSERT IGNORE INTO vicidial_campaign_stats_debug SET server_ip='$server_ip',campaign_id='$DBIPcampaign[$user_CIPct]',entry_time='$now_date',debug_output='$debug_string' ON DUPLICATE KEY UPDATE entry_time='$now_date',debug_output='$debug_string';";
 			$affected_rows = $dbhA->do($stmtA);
 
-			$user_CIPct++;
+			$user_CIPct_sort++;
 			}
 
 	###############################################################################
@@ -1456,6 +1586,12 @@ while($one_day_interval > 0)
 												$stmtA = "UPDATE vicidial_list set called_since_last_reset='$CSLR', called_count='$called_count',user='VDAD',last_local_call_time='$LLCT_DATE' where lead_id=$lead_id";
 												}
 											$affected_rows = $dbhA->do($stmtA);
+
+											# update daily called counts for this lead
+											$stmtDC = "INSERT IGNORE INTO vicidial_lead_call_daily_counts SET lead_id='$lead_id',modify_date=NOW(),list_id='$list_id',called_count_total='1',called_count_auto='1' ON DUPLICATE KEY UPDATE modify_date=NOW(),list_id='$list_id',called_count_total=(called_count_total + 1),called_count_auto=(called_count_auto + 1);";
+											$affected_rowsDC = $dbhA->do($stmtDC);
+											if ($DB) {print "LEAD UPDATE: $affected_rows|$stmtA|\n";}
+											if ($DB) {print "LEAD CALL COUNT UPDATE: $affected_rowsDC|$stmtDC|\n";}
 
 											$PADlead_id = sprintf("%010s", $lead_id);	while (length($PADlead_id) > 10) {chop($PADlead_id);}
 											# VmddhhmmssLLLLLLLLLL Set the callerIDname to a unique call_id string
@@ -4479,6 +4615,10 @@ while($one_day_interval > 0)
 		$bad_grabber_counter=0;
 
 		$stat_count++;
+
+		# update debug output
+		$stmtA = "UPDATE vicidial_campaign_stats_debug SET entry_time='$now_date',adapt_output='$debug_shared_output' where campaign_id='-SHARE-' and server_ip='$VARserver_ip';";
+		$affected_rows = $dbhA->do($stmtA);
 		}
 
 

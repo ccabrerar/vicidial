@@ -50,6 +50,7 @@
 # 180421-0813 - Fix for slave db use, issue #1092
 # 191014-1316 - Fix for foreign language, issue #1187
 # 201111-1957 - Fix for side menu issue #1233
+# 201117-2353 - Changes for better compatibility with non-latin data input
 #
 
 require("dbconnect_mysqli.php");
@@ -74,8 +75,8 @@ if (isset($_GET["log_phone"]))				{$log_phone=$_GET["log_phone"];}
 	elseif (isset($_POST["log_phone"]))		{$log_phone=$_POST["log_phone"];}
 if (isset($_GET["log_lead_id"]))			{$log_lead_id=$_GET["log_lead_id"];}
 	elseif (isset($_POST["log_lead_id"]))   {$log_lead_id=$_POST["log_lead_id"];}
-if (isset($_GET["log_phone_archive"]))			  {$log_phone_archive=$_GET["log_phone_archive"];}
-	elseif (isset($_POST["log_phone_archive"]))	     {$log_phone_archive=$_POST["log_phone_archive"];}
+if (isset($_GET["log_phone_archive"]))			{$log_phone_archive=$_GET["log_phone_archive"];}
+	elseif (isset($_POST["log_phone_archive"]))	{$log_phone_archive=$_POST["log_phone_archive"];}
 if (isset($_GET["log_lead_id_archive"]))			{$log_lead_id_archive=$_GET["log_lead_id_archive"];}
 	elseif (isset($_POST["log_lead_id_archive"]))   {$log_lead_id_archive=$_POST["log_lead_id_archive"];}
 if (isset($_GET["submit"]))			     {$submit=$_GET["submit"];}
@@ -665,10 +666,12 @@ else
 			}
 
 		### LOG INSERTION Admin Log Table ###
+		$event_notes = "$DB|$SUBMIT|$alt_phone_search|$archive_search|$first_name|$last_name|$lead_id|$list_id|$log_lead_id|$log_lead_id_archive|$log_phone|$log_phone_archive|$owner|$phone|$status|$submit|$user|$vendor_id|$called_count";
+		$event_notes = preg_replace("/\"|\\\\|;/","",$event_notes);
 		$SQL_log = "$stmtA|$stmtB|$stmtC|";
 		$SQL_log = preg_replace('/;/', '', $SQL_log);
 		$SQL_log = addslashes($SQL_log);
-		$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LEADS', event_type='SEARCH', record_id='$search_lead', event_code='ADMIN SEARCH LEAD', event_sql=\"$SQL_log\", event_notes=\"$DB|$SUBMIT|$alt_phone_search|$archive_search|$first_name|$last_name|$lead_id|$list_id|$log_lead_id|$log_lead_id_archive|$log_phone|$log_phone_archive|$owner|$phone|$status|$submit|$user|$vendor_id|$called_count\";";
+		$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LEADS', event_type='SEARCH', record_id='$search_lead', event_code='ADMIN SEARCH LEAD', event_sql=\"$SQL_log\", event_notes=\"$event_notes\";";
 		if ($DB) {echo "|$stmt|\n";}
 		$rslt=mysql_to_mysqli($stmt, $link);
 
@@ -911,10 +914,12 @@ else
 			}
 
 		### LOG INSERTION Admin Log Table ###
+		$event_notes = "$DB|$SUBMIT|$alt_phone_search|$archive_search|$first_name|$last_name|$lead_id|$list_id|$log_lead_id|$log_lead_id_archive|$log_phone|$log_phone_archive|$owner|$phone|$status|$submit|$user|$vendor_id|$called_count";
+		$event_notes = preg_replace("/\"|\\\\|;/","",$event_notes);
 		$SQL_log = "$stmtA|$stmtB|$stmtC|";
 		$SQL_log = preg_replace('/;/', '', $SQL_log);
 		$SQL_log = addslashes($SQL_log);
-		$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LEADS', event_type='SEARCH', record_id='$search_lead', event_code='ADMIN SEARCH LEAD', event_sql=\"$SQL_log\", event_notes=\"ARCHIVE   $DB|$SUBMIT|$alt_phone_search|$archive_search|$first_name|$last_name|$lead_id|$list_id|$log_lead_id|$log_lead_id_archive|$log_phone|$log_phone_archive|$owner|$phone|$status|$submit|$user|$vendor_id|$called_count\";";
+		$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LEADS', event_type='SEARCH', record_id='$search_lead', event_code='ADMIN SEARCH LEAD', event_sql=\"$SQL_log\", event_notes=\"ARCHIVE   $event_notes\";";
 		if ($DB) {echo "|$stmt|\n";}
 		$rslt=mysql_to_mysqli($stmt, $link);
 

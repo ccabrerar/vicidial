@@ -1,7 +1,7 @@
 <?php
 # admin_lists_custom.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # this screen manages the custom lists fields in ViciDial
 #
@@ -53,10 +53,11 @@
 # 180502-2215 - Added new help display
 # 180504-1807 - Added new SWITCH field type
 # 191013-1014 - Fixes for PHP7
+# 210211-0032 - Added SOURCESELECT field type
 #
 
-$admin_version = '2.14-44';
-$build = '191013-1014';
+$admin_version = '2.14-45';
+$build = '210211-0032';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -179,9 +180,9 @@ if ($non_latin < 1)
 
 	$field_name = preg_replace('/[^ \.\,-\_0-9a-zA-Z]/','',$field_name);
 	$field_description = preg_replace('/[^ \.\,-\_0-9a-zA-Z]/','',$field_description);
-	$field_options = preg_replace('/[^ \'\&\.\n\,-\_0-9a-zA-Z]/', '',$field_options);
+	$field_options = preg_replace('/[^ \'\&\.\n\|\,-\_0-9a-zA-Z]/', '',$field_options);
 	if ($field_type != 'SCRIPT')
-		{$field_options = preg_replace('/[^ \.\n\,-\_0-9a-zA-Z]/', '',$field_options);}
+		{$field_options = preg_replace('/[^ \.\n\|\,-\_0-9a-zA-Z]/', '',$field_options);}
 	$field_default = preg_replace('/[^ \.\n\,-\_0-9a-zA-Z]/', '',$field_default);
 	}	# end of non_latin
 else
@@ -821,7 +822,7 @@ if ( ($action == "ADD_CUSTOM_FIELD") and ($list_id > 99) )
 			else
 				{
 				$TEST_valid_options=0;
-				if ( ($field_type=='SELECT') or ($field_type=='MULTI') or ($field_type=='RADIO') or ($field_type=='CHECKBOX') or ($field_type=='SWITCH') )
+				if ( ($field_type=='SELECT') or ($field_type=='SOURCESELECT') or ($field_type=='MULTI') or ($field_type=='RADIO') or ($field_type=='CHECKBOX') or ($field_type=='SWITCH') )
 					{
 					$TESTfield_options_array = explode("\n",$field_options);
 					$TESTfield_options_count = count($TESTfield_options_array);
@@ -829,9 +830,12 @@ if ( ($action == "ADD_CUSTOM_FIELD") and ($list_id > 99) )
 					$switch_list_self=0;
 					while ($te < $TESTfield_options_count)
 						{
-						if (preg_match("/,/",$TESTfield_options_array[$te]))
+						if (preg_match("/,|\|/",$TESTfield_options_array[$te]))
 							{
-							$TESTfield_options_value_array = explode(",",$TESTfield_options_array[$te]);
+							if ($field_type=='SOURCESELECT')
+								{$TESTfield_options_value_array = explode('|',$TESTfield_options_array[$te]);}
+							else
+								{$TESTfield_options_value_array = explode(",",$TESTfield_options_array[$te]);}
 							if ( (strlen($TESTfield_options_value_array[0]) > 0) and (strlen($TESTfield_options_value_array[1]) > 0) )
 								{$TEST_valid_options++;}
 							if ( ($field_type=='SWITCH') and ($TESTfield_options_value_array[0] == "$list_id") )
@@ -842,8 +846,8 @@ if ( ($action == "ADD_CUSTOM_FIELD") and ($list_id > 99) )
 					$field_options_ENUM = preg_replace("/.$/",'',$field_options_ENUM);
 					}
 
-				if ( ( ($field_type=='SELECT') or ($field_type=='MULTI') or ($field_type=='RADIO') or ($field_type=='CHECKBOX') ) and ( (!preg_match("/,/",$field_options)) or (!preg_match("/\n/",$field_options)) or (strlen($field_options)<6) or ($TEST_valid_options < 1) ) )
-					{echo "<B><font color=red>"._QXZ("ERROR: You must enter field options when adding a SELECT, MULTI, RADIO or CHECKBOX field type")."  - $list_id|$field_label|$field_type|$switch_list_self|$field_options</B></font>\n<BR>";}
+				if ( ( ($field_type=='SELECT') or ($field_type=='SOURCESELECT') or ($field_type=='MULTI') or ($field_type=='RADIO') or ($field_type=='CHECKBOX') ) and ( (!preg_match("/,|\|/",$field_options)) or (!preg_match("/\n/",$field_options)) or (strlen($field_options)<6) or ($TEST_valid_options < 1) ) )
+					{echo "<B><font color=red>"._QXZ("ERROR: You must enter field options when adding a SELECT, MULTI, RADIO, CHECKBOX or SOURCESELECT field type")."  - $list_id|$field_label|$field_type|$switch_list_self|$field_options</B></font>\n<BR>";}
 				else
 					{
 					if ( ($field_type=='SWITCH') and ($switch_list_self < 1) )
@@ -967,7 +971,7 @@ if ( ($action == "MODIFY_CUSTOM_FIELD_SUBMIT") and ($list_id > 99) and ($field_i
 			else
 				{
 				$TEST_valid_options=0;
-				if ( ($field_type=='SELECT') or ($field_type=='MULTI') or ($field_type=='RADIO') or ($field_type=='CHECKBOX') or ($field_type=='SWITCH') )
+				if ( ($field_type=='SELECT') or ($field_type=='SOURCESELECT') or ($field_type=='MULTI') or ($field_type=='RADIO') or ($field_type=='CHECKBOX') or ($field_type=='SWITCH') )
 					{
 					$TESTfield_options_array = explode("\n",$field_options);
 					$TESTfield_options_count = count($TESTfield_options_array);
@@ -975,9 +979,12 @@ if ( ($action == "MODIFY_CUSTOM_FIELD_SUBMIT") and ($list_id > 99) and ($field_i
 					$switch_list_self=0;
 					while ($te < $TESTfield_options_count)
 						{
-						if (preg_match("/,/",$TESTfield_options_array[$te]))
+						if (preg_match("/,|\|/",$TESTfield_options_array[$te]))
 							{
-							$TESTfield_options_value_array = explode(",",$TESTfield_options_array[$te]);
+							if ($field_type=='SOURCESELECT')
+								{$TESTfield_options_value_array = explode('|',$TESTfield_options_array[$te]);}
+							else
+								{$TESTfield_options_value_array = explode(",",$TESTfield_options_array[$te]);}
 							if ( (strlen($TESTfield_options_value_array[0]) > 0) and (strlen($TESTfield_options_value_array[1]) > 0) )
 								{$TEST_valid_options++;}
 							if ( ($field_type=='SWITCH') and ($TESTfield_options_value_array[0] == "$list_id") )
@@ -989,8 +996,8 @@ if ( ($action == "MODIFY_CUSTOM_FIELD_SUBMIT") and ($list_id > 99) and ($field_i
 					$field_options_ENUM = preg_replace("/.$/",'',$field_options_ENUM);
 					}
 
-				if ( ( ($field_type=='SELECT') or ($field_type=='MULTI') or ($field_type=='RADIO') or ($field_type=='CHECKBOX') ) and ( (!preg_match("/,/",$field_options)) or (!preg_match("/\n/",$field_options)) or (strlen($field_options)<6) or ($TEST_valid_options < 1) ) )
-					{echo "<B><font color=red>"._QXZ("ERROR: You must enter field options when updating a SELECT, MULTI, RADIO or CHECKBOX field type")."  - $list_id|$field_label|$field_type|$field_options</B></font>\n<BR>";}
+				if ( ( ($field_type=='SELECT') or ($field_type=='SOURCESELECT') or ($field_type=='MULTI') or ($field_type=='RADIO') or ($field_type=='CHECKBOX') ) and ( (!preg_match("/,|\|/",$field_options)) or (!preg_match("/\n/",$field_options)) or (strlen($field_options)<6) or ($TEST_valid_options < 1) ) )
+					{echo "<B><font color=red>"._QXZ("ERROR: You must enter field options when updating a SELECT, MULTI, RADIO, CHECKBOX or SOURCESELECT field type")."  - $list_id|$field_label|$field_type|$field_options</B></font>\n<BR>";}
 				else
 					{
 					if ( ($field_type=='SWITCH') and ($switch_list_self < 1) )
@@ -1230,7 +1237,7 @@ if ( ($action == "MODIFY_CUSTOM_FIELDS") and ($list_id > 99) )
 		$encrypt_icon='';
 		if ($A_field_encrypt[$o] == 'Y')
 			{$encrypt_icon = " <img src=\""._QXZ("../../agc/images/encrypt.gif")."\" width=16 height=20 valign=bottom alt=\""._QXZ("Encrypted Field")."\">";}
-		if ($A_field_type[$o]=='SELECT')
+		if ( ($A_field_type[$o]=='SELECT') or ($A_field_type[$o]=='SOURCESELECT') )
 			{
 			$field_HTML .= "<select size=1 name=$A_field_label[$o] id=$A_field_label[$o]>\n";
 			}
@@ -1238,21 +1245,33 @@ if ( ($action == "MODIFY_CUSTOM_FIELDS") and ($list_id > 99) )
 			{
 			$field_HTML .= "<select MULTIPLE size=$A_field_size[$o] name=$A_field_label[$o] id=$A_field_label[$o]>\n";
 			}
-		if ( ($A_field_type[$o]=='SELECT') or ($A_field_type[$o]=='MULTI') or ($A_field_type[$o]=='RADIO') or ($A_field_type[$o]=='CHECKBOX') or ($A_field_type[$o]=='SWITCH') )
+		if ( ($A_field_type[$o]=='SELECT') or ($A_field_type[$o]=='SOURCESELECT') or ($A_field_type[$o]=='MULTI') or ($A_field_type[$o]=='RADIO') or ($A_field_type[$o]=='CHECKBOX') or ($A_field_type[$o]=='SWITCH') )
 			{
 			$field_options_array = explode("\n",$A_field_options[$o]);
 			$field_options_count = count($field_options_array);
 			$te=0;
 			while ($te < $field_options_count)
 				{
-				if (preg_match("/,/",$field_options_array[$te]))
+				if (preg_match("/,|\|/",$field_options_array[$te]))
 					{
 					$field_selected='';
-					$field_options_value_array = explode(",",$field_options_array[$te]);
+					if ($A_field_type[$o]=='SOURCESELECT')
+						{$field_options_value_array = explode('|',$field_options_array[$te]);}
+					else
+						{$field_options_value_array = explode(",",$field_options_array[$te]);}
 					if ( ($A_field_type[$o]=='SELECT') or ($A_field_type[$o]=='MULTI') )
 						{
 						if ($A_field_default[$o] == "$field_options_value_array[0]") {$field_selected = 'SELECTED';}
 						$field_HTML .= "<option value=\"$field_options_value_array[0]\" $field_selected>$field_options_value_array[1]</option>\n";
+						}
+					if ($A_field_type[$o]=='SOURCESELECT')
+						{
+						if (preg_match("/^option=>/i",$field_options_value_array[0]))
+							{
+							$field_options_value_array[0] = preg_replace("/^option=>/i",'',$field_options_value_array[0]);
+							if ($A_field_default[$o] == "$field_options_value_array[0]") {$field_selected = 'SELECTED';}
+							$field_HTML .= "<option value=\"$field_options_value_array[0]\" $field_selected>$field_options_value_array[1]</option>\n";
+							}
 						}
 					if ( ($A_field_type[$o]=='RADIO') or ($A_field_type[$o]=='CHECKBOX') )
 						{
@@ -1282,7 +1301,7 @@ if ( ($action == "MODIFY_CUSTOM_FIELDS") and ($list_id > 99) )
 				$te++;
 				}
 			}
-		if ( ($A_field_type[$o]=='SELECT') or ($A_field_type[$o]=='MULTI') )
+		if ( ($A_field_type[$o]=='SELECT') or ($A_field_type[$o]=='SOURCESELECT') or ($A_field_type[$o]=='MULTI') )
 			{
 			$field_HTML .= "</select>\n";
 			}
@@ -1519,6 +1538,7 @@ if ( ($action == "MODIFY_CUSTOM_FIELDS") and ($list_id > 99) )
 		echo "<option value='HIDEBLOB'>"._QXZ("HIDEBLOB")."</option>\n";
 		echo "<option value='SWITCH'>"._QXZ("SWITCH")."</option>\n";
 		echo "<option value='READONLY'>"._QXZ("READONLY")."</option>\n";
+		echo "<option value='SOURCESELECT'>"._QXZ("SOURCESELECT")."</option>\n";
 		echo "<option value='$A_field_type[$o]' selected>"._QXZ("$A_field_type[$o]")."</option>\n";
 		echo "</select>  $NWB#lists_fields-field_type$NWE </td></tr>\n";
 		echo "<tr $bgcolor><td align=right>"._QXZ("Field Options")." $A_field_rank[$o]: </td><td align=left><textarea name=field_options ROWS=5 COLS=60>$A_field_options[$o]</textarea>  $NWB#lists_fields-field_options$NWE </td></tr>\n";
@@ -1622,6 +1642,7 @@ if ( ($action == "MODIFY_CUSTOM_FIELDS") and ($list_id > 99) )
 	echo "<option value='HIDEBLOB'>"._QXZ("HIDEBLOB")."</option>\n";
 	echo "<option value='SWITCH'>"._QXZ("SWITCH")."</option>\n";
 	echo "<option value='READONLY'>"._QXZ("READONLY")."</option>\n";
+	echo "<option value='SOURCESELECT'>"._QXZ("SOURCESELECT")."</option>\n";
 	echo "<option selected value='TEXT'>"._QXZ("TEXT")."</option>\n";
 	echo "</select>  $NWB#lists_fields-field_type$NWE </td></tr>\n";
 	echo "<tr $bgcolor><td align=right>"._QXZ("Field Options").": </td><td align=left><textarea name=field_options ROWS=5 COLS=60></textarea>  $NWB#lists_fields-field_options$NWE </td></tr>\n";
@@ -1880,16 +1901,22 @@ function add_field_function($DB,$link,$linkCUSTOM,$ip,$user,$table_exists,$field
 
 	$field_options_ENUM='';
 	$field_cost=1;
-	if ( ($field_type=='SELECT') or ($field_type=='RADIO') )
+	if ( ($field_type=='SELECT') or ($field_type=='SOURCESELECT') or ($field_type=='RADIO') )
 		{
 		$field_options_array = explode("\n",$field_options);
 		$field_options_count = count($field_options_array);
 		$te=0;
 		while ($te < $field_options_count)
 			{
-			if (preg_match("/,/",$field_options_array[$te]))
+			if (preg_match("/,|\|/",$field_options_array[$te]))
 				{
-				$field_options_value_array = explode(",",$field_options_array[$te]);
+				if ($field_type=='SOURCESELECT')
+					{
+					$field_options_value_array = explode('|',$field_options_array[$te]);
+					$field_options_value_array[0] = preg_replace("/^option=>/i",'',$field_options_value_array[0]);
+					}
+				else
+					{$field_options_value_array = explode(",",$field_options_array[$te]);}
 				$field_options_ENUM .= "'$field_options_value_array[0]',";
 				}
 			$te++;
@@ -2068,16 +2095,22 @@ function modify_field_function($DB,$link,$linkCUSTOM,$ip,$user,$table_exists,$fi
 
 	$field_options_ENUM='';
 	$field_cost=1;
-	if ( ($field_type=='SELECT') or ($field_type=='RADIO') )
+	if ( ($field_type=='SELECT') or ($field_type=='SOURCESELECT') or ($field_type=='RADIO') )
 		{
 		$field_options_array = explode("\n",$field_options);
 		$field_options_count = count($field_options_array);
 		$te=0;
 		while ($te < $field_options_count)
 			{
-			if (preg_match("/,/",$field_options_array[$te]))
+			if (preg_match("/,|\|/",$field_options_array[$te]))
 				{
-				$field_options_value_array = explode(",",$field_options_array[$te]);
+				if ($field_type=='SOURCESELECT')
+					{
+					$field_options_value_array = explode('|',$field_options_array[$te]);
+					$field_options_value_array[0] = preg_replace("/^option=>/i",'',$field_options_value_array[0]);
+					}
+				else
+					{$field_options_value_array = explode(",",$field_options_array[$te]);}
 				$field_options_ENUM .= "'$field_options_value_array[0]',";
 				}
 			$te++;

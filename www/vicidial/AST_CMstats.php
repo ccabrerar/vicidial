@@ -688,7 +688,8 @@ else
 
 		ksort($prompts_array);
 		$grand_total=0;
-		while (list($key, $val)=each($prompts_array)) 
+#		while (list($key, $val)=each($prompts_array)) 
+		foreach($prompts_array as $key => $val)
 			{
 			$val+=0;
 			$grand_total+=$val;
@@ -703,13 +704,15 @@ else
 		$CSV_text.="\""._QXZ("TOTAL POINTS")."\"\n";
 
 		ksort($calls_array);
-		while (list($key, $val)=each($calls_array)) 
+#		while (list($key, $val)=each($calls_array)) 
+		foreach($calls_array as $key => $val)
 			{
 			$CSV_text.="\"".$calls_array[$key]["phone"]."\",\"".$calls_array[$key]["start_time"]."\",";
 			$HTML_text.="<tr bgcolor='".$SSstd_row1_background."'><th>".$calls_array[$key]["phone"]."</th><th>".$calls_array[$key]["start_time"]."</th>";
 			reset($prompts_array);
 			$call_points=0;
-			while (list($key2, $val2)=each($prompts_array)) 
+#			while (list($key2, $val2)=each($prompts_array)) 
+			foreach($prompts_array as $key2 => $val2)
 				{
 				$CSV_text.="\"".($calls_array[$key][$key2]+0)."\",";
 				$HTML_text.="<th>".($calls_array[$key][$key2]+0)."</th>";
@@ -790,7 +793,8 @@ else
 		
 		ksort($prompts_array);
 		$grand_total=0;
-		while (list($key, $val)=each($prompts_array)) 
+#		while (list($key, $val)=each($prompts_array)) 
+		foreach($prompts_array as $key => $val)
 			{
 			$val+=0;
 			$grand_total+=$val;
@@ -814,12 +818,14 @@ else
 			});
 
 		$total_calls=0;
-		while (list($key, $val)=each($agent_array)) 
+#		while (list($key, $val)=each($agent_array)) 
+		foreach($agent_array as $key => $val)
 			{
 			$CSV_text.="\"".$agent_array[$key]["AGENT"]."\",";
 			$HTML_text.="<tr bgcolor='".$SSstd_row1_background."'><th>".$agent_array[$key]["AGENT"]."</th>";
 			reset($prompts_array);
-			while (list($key2, $val2)=each($prompts_array)) 
+#			while (list($key2, $val2)=each($prompts_array)) 
+			foreach($prompts_array as $key2 => $val2)
 				{
 				$CSV_text.="\"".($agent_array[$key][$key2]+0)."\",";
 				$HTML_text.="<th>".($agent_array[$key][$key2]+0)."</th>";

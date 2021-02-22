@@ -1,7 +1,7 @@
 <?php
 # vdc_script_display.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed display the contents of the SCRIPT tab in the agent interface
 #
@@ -41,10 +41,11 @@
 # 180327-1356 - Added code for LOCALFQDN conversion to browser-used server URL for script iframes
 # 191013-2145 - Fixes for PHP7
 # 191031-1158 - Added Script2 feature
+# 201117-2107 - Changes for better compatibility with non-latin data input
 #
 
-$version = '2.14-35';
-$build = '191013-2145';
+$version = '2.14-36';
+$build = '201117-2107';
 
 require_once("dbconnect_mysqli.php");
 require_once("functions.php");
@@ -291,22 +292,6 @@ $IFRAMEencode=1;
 
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
-$orig_pass = preg_replace("/\'|\"|\\\\|;| /","",$orig_pass);
-$lead_id = preg_replace('/[^0-9]/', '', $lead_id);
-$list_id = preg_replace('/[^0-9]/', '', $list_id);
-$email_row_id = preg_replace('/[^0-9]/', '', $email_row_id);
-$server_ip = preg_replace("/\'|\"|\\\\|;/","",$server_ip);
-$session_id = preg_replace('/[^0-9]/','',$session_id);
-$uniqueid = preg_replace('/[^-_\.0-9a-zA-Z]/','',$uniqueid);
-$campaign = preg_replace('/[^-_0-9a-zA-Z]/','',$campaign);
-$group = preg_replace('/[^-_0-9a-zA-Z]/','',$group);
-$session_name = preg_replace("/\'|\"|\\\\|;/","",$session_name);
-$LOGINvarONE=preg_replace("/[^-_0-9a-zA-Z]/","",$LOGINvarONE);
-$LOGINvarTWO=preg_replace("/[^-_0-9a-zA-Z]/","",$LOGINvarTWO);
-$LOGINvarTHREE=preg_replace("/[^-_0-9a-zA-Z]/","",$LOGINvarTHREE);
-$LOGINvarFOUR=preg_replace("/[^-_0-9a-zA-Z]/","",$LOGINvarFOUR);
-$LOGINvarFIVE=preg_replace("/[^-_0-9a-zA-Z]/","",$LOGINvarFIVE);
-$script_span=preg_replace("/[^-_0-9a-zA-Z]/","",$script_span);
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
@@ -341,14 +326,43 @@ if ($qm_conf_ct > 0)
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
+$orig_pass = preg_replace("/\'|\"|\\\\|;| /","",$orig_pass);
+$lead_id = preg_replace('/[^0-9]/', '', $lead_id);
+$list_id = preg_replace('/[^0-9]/', '', $list_id);
+$email_row_id = preg_replace('/[^0-9]/', '', $email_row_id);
+$server_ip = preg_replace("/\'|\"|\\\\|;/","",$server_ip);
+$session_id = preg_replace('/[^0-9]/','',$session_id);
+$uniqueid = preg_replace('/[^-_\.0-9a-zA-Z]/','',$uniqueid);
+$session_name = preg_replace("/\'|\"|\\\\|;/","",$session_name);
+$script_span=preg_replace("/[^-_0-9a-zA-Z]/","",$script_span);
+$inOUT=preg_replace("/[^-_0-9a-zA-Z]/","",$inOUT);
+$length_in_sec = preg_replace("/[^0-9]/","",$length_in_sec);
+$phone_code = preg_replace("/[^0-9]/","",$phone_code);
+$phone_number = preg_replace("/[^0-9]/","",$phone_number);
+
 if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
 	$orig_pass=preg_replace("/[^-_0-9a-zA-Z]/","",$orig_pass);
-	$length_in_sec = preg_replace("/[^0-9]/","",$length_in_sec);
-	$phone_code = preg_replace("/[^0-9]/","",$phone_code);
-	$phone_number = preg_replace("/[^0-9]/","",$phone_number);
+	$campaign = preg_replace('/[^-_0-9a-zA-Z]/','',$campaign);
+	$group = preg_replace('/[^-_0-9a-zA-Z]/','',$group);
 	$session_name=preg_replace("/[^-_0-9a-zA-Z]/","",$session_name);
+	$LOGINvarONE=preg_replace("/[^-_0-9a-zA-Z]/","",$LOGINvarONE);
+	$LOGINvarTWO=preg_replace("/[^-_0-9a-zA-Z]/","",$LOGINvarTWO);
+	$LOGINvarTHREE=preg_replace("/[^-_0-9a-zA-Z]/","",$LOGINvarTHREE);
+	$LOGINvarFOUR=preg_replace("/[^-_0-9a-zA-Z]/","",$LOGINvarFOUR);
+	$LOGINvarFIVE=preg_replace("/[^-_0-9a-zA-Z]/","",$LOGINvarFIVE);
+	}
+else
+	{
+	$campaign = preg_replace('/[^-_0-9\p{L}]/u','',$campaign);
+	$group = preg_replace('/[^-_0-9\p{L}]/u','',$group);
+	$session_name=preg_replace("/[^-_0-9\p{L}]/u","",$session_name);
+	$LOGINvarONE=preg_replace("/[^-_0-9\p{L}]/u","",$LOGINvarONE);
+	$LOGINvarTWO=preg_replace("/[^-_0-9\p{L}]/u","",$LOGINvarTWO);
+	$LOGINvarTHREE=preg_replace("/[^-_0-9\p{L}]/u","",$LOGINvarTHREE);
+	$LOGINvarFOUR=preg_replace("/[^-_0-9\p{L}]/u","",$LOGINvarFOUR);
+	$LOGINvarFIVE=preg_replace("/[^-_0-9\p{L}]/u","",$LOGINvarFIVE);
 	}
 
 # default optional vars if not set
@@ -373,7 +387,7 @@ if ($format=='debug')
 	echo "<html>\n";
 	echo "<head>\n";
 	echo "<!-- VERSION: $version     BUILD: $build    USER: $user   server_ip: $server_ip-->\n";
-	echo "<title>"._QXZ("VICIDiaL Script Display Script");
+	echo "<title>"._QXZ("VICIdial Script Display Script");
 	echo "</title>\n";
 	echo "</head>\n";
 	echo "<BODY BGCOLOR=white marginheight=0 marginwidth=0 leftmargin=0 topmargin=0>\n";

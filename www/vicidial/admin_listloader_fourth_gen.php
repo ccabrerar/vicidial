@@ -2,7 +2,7 @@
 # admin_listloader_fourth_gen.php - version 2.14
 #  (based upon - new_listloader_superL.php script)
 # 
-# Copyright (C) 2020  Matt Florell,Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell,Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # ViciDial web-based lead loader from formatted file
 # 
@@ -78,10 +78,11 @@
 # 190503-1547 - Added enable_status_mismatch_leadloader_option
 # 200812-1745 - Added international DNC scrub option
 # 200922-1013 - Added web_loader_phone_strip system setting feature
+# 210210-1602 - Added duplicate check with more X-day options
 #
 
-$version = '2.14-76';
-$build = '200922-1013';
+$version = '2.14-77';
+$build = '210210-1602';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -724,9 +725,21 @@ if ( (!$OK_to_process) or ( ($leadfile) and ($file_layout!="standard" && $file_l
 			<option value="DUPLIST"><?php echo _QXZ("CHECK FOR DUPLICATES BY PHONE IN LIST ID"); ?></option>
 			<option value="DUPCAMP"><?php echo _QXZ("CHECK FOR DUPLICATES BY PHONE IN ALL CAMPAIGN LISTS"); ?></option>
 			<option value="DUPSYS"><?php echo _QXZ("CHECK FOR DUPLICATES BY PHONE IN ENTIRE SYSTEM"); ?></option>
+			<option value="DUPLIST30DAY"><?php echo _QXZ("CHECK FOR DUPLICATES LOADED IN LAST 30 DAYS BY PHONE IN LIST ID"); ?></option>
+			<option value="DUPCAMP30DAY"><?php echo _QXZ("CHECK FOR DUPLICATES LOADED IN LAST 30 DAYS BY PHONE IN ALL CAMPAIGN LISTS"); ?></option>
+			<option value="DUPSYS30DAY"><?php echo _QXZ("CHECK FOR DUPLICATES LOADED IN LAST 30 DAYS BY PHONE IN ENTIRE SYSTEM"); ?></option>
+			<option value="DUPLIST60DAY"><?php echo _QXZ("CHECK FOR DUPLICATES LOADED IN LAST 60 DAYS BY PHONE IN LIST ID"); ?></option>
+			<option value="DUPCAMP60DAY"><?php echo _QXZ("CHECK FOR DUPLICATES LOADED IN LAST 60 DAYS BY PHONE IN ALL CAMPAIGN LISTS"); ?></option>
+			<option value="DUPSYS60DAY"><?php echo _QXZ("CHECK FOR DUPLICATES LOADED IN LAST 60 DAYS BY PHONE IN ENTIRE SYSTEM"); ?></option>
 			<option value="DUPLIST90DAY"><?php echo _QXZ("CHECK FOR DUPLICATES LOADED IN LAST 90 DAYS BY PHONE IN LIST ID"); ?></option>
 			<option value="DUPCAMP90DAY"><?php echo _QXZ("CHECK FOR DUPLICATES LOADED IN LAST 90 DAYS BY PHONE IN ALL CAMPAIGN LISTS"); ?></option>
 			<option value="DUPSYS90DAY"><?php echo _QXZ("CHECK FOR DUPLICATES LOADED IN LAST 90 DAYS BY PHONE IN ENTIRE SYSTEM"); ?></option>
+			<option value="DUPLIST180DAY"><?php echo _QXZ("CHECK FOR DUPLICATES LOADED IN LAST 180 DAYS BY PHONE IN LIST ID"); ?></option>
+			<option value="DUPCAMP180DAY"><?php echo _QXZ("CHECK FOR DUPLICATES LOADED IN LAST 180 DAYS BY PHONE IN ALL CAMPAIGN LISTS"); ?></option>
+			<option value="DUPSYS180DAY"><?php echo _QXZ("CHECK FOR DUPLICATES LOADED IN LAST 180 DAYS BY PHONE IN ENTIRE SYSTEM"); ?></option>
+			<option value="DUPLIST360DAY"><?php echo _QXZ("CHECK FOR DUPLICATES LOADED IN LAST 360 DAYS BY PHONE IN LIST ID"); ?></option>
+			<option value="DUPCAMP360DAY"><?php echo _QXZ("CHECK FOR DUPLICATES LOADED IN LAST 360 DAYS BY PHONE IN ALL CAMPAIGN LISTS"); ?></option>
+			<option value="DUPSYS360DAY"><?php echo _QXZ("CHECK FOR DUPLICATES LOADED IN LAST 360 DAYS BY PHONE IN ENTIRE SYSTEM"); ?></option>
 			<option value="DUPTITLEALTPHONELIST"><?php echo _QXZ("CHECK FOR DUPLICATES BY TITLE/ALT-PHONE IN LIST ID"); ?></option>
 			<option value="DUPTITLEALTPHONESYS"><?php echo _QXZ("CHECK FOR DUPLICATES BY TITLE/ALT-PHONE IN ENTIRE SYSTEM"); ?></option>
 			</select> <?php echo "$NWB#list_loader-duplicate_check$NWE"; ?></td>
@@ -997,14 +1010,19 @@ if ($OK_to_process)
 			{
 			print "<BR>"._QXZ("PHONE NUMBER PREFIX STRIP SYSTEM SETTING ENABLED").": $SSweb_loader_phone_strip<BR>\n";
 			}
-		$ninetydaySQL='';
-		if (preg_match("/90DAY/i",$dupcheck))
+		$multidaySQL='';
+		if (preg_match("/30DAY|60DAY|90DAY|180DAY|360DAY/i",$dupcheck))
 			{
-			$ninetyday = date("Y-m-d H:i:s", mktime(date("H"),date("i"),date("s"),date("m"),date("d")-90,date("Y")));
-			$ninetydaySQL = "and entry_date > \"$ninetyday\"";
-			if ($DB > 0) {echo "DEBUG: 90day SQL: |$ninetydaySQL|";}
+			$day_val=30;
+			if (preg_match("/30DAY/i",$dupcheck)) {$day_val=30;}
+			if (preg_match("/60DAY/i",$dupcheck)) {$day_val=60;}
+			if (preg_match("/90DAY/i",$dupcheck)) {$day_val=90;}
+			if (preg_match("/180DAY/i",$dupcheck)) {$day_val=180;}
+			if (preg_match("/360DAY/i",$dupcheck)) {$day_val=360;}
+			$multiday = date("Y-m-d H:i:s", mktime(date("H"),date("i"),date("s"),date("m"),date("d")-$day_val,date("Y")));
+			$multidaySQL = "and entry_date > \"$multiday\"";
+			if ($DB > 0) {echo "DEBUG: $day_val day SQL: |$multidaySQL|";}
 			}
-
 
 		if ($custom_fields_enabled > 0)
 			{
@@ -1249,7 +1267,7 @@ if ($OK_to_process)
 								{
 								if (preg_match('/USING CHECK/', $status_mismatch_action)) 
 									{
-									$stmt="SELECT list_id, lead_id from vicidial_list where phone_number='$phone_number' and list_id IN($dup_lists) $ninetydaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
+									$stmt="SELECT list_id, lead_id from vicidial_list where phone_number='$phone_number' and list_id IN($dup_lists) $multidaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
 									} 
 								else 
 									{
@@ -1272,7 +1290,7 @@ if ($OK_to_process)
 
 							if ($dup_lead < 1)
 								{
-								$stmt="SELECT list_id from vicidial_list where phone_number='$phone_number' and list_id IN($dup_lists) $ninetydaySQL $statuses_clause limit 1;";
+								$stmt="SELECT list_id from vicidial_list where phone_number='$phone_number' and list_id IN($dup_lists) $multidaySQL $statuses_clause limit 1;";
 								$rslt=mysql_to_mysqli($stmt, $link);
 								$pc_recs = mysqli_num_rows($rslt);
 								if ($pc_recs > 0)
@@ -1300,7 +1318,7 @@ if ($OK_to_process)
 						{
 						if (preg_match('/USING CHECK/', $status_mismatch_action)) 
 							{
-							$stmt="SELECT list_id, lead_id from vicidial_list where phone_number='$phone_number' $ninetydaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
+							$stmt="SELECT list_id, lead_id from vicidial_list where phone_number='$phone_number' $multidaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
 							} 
 						else 
 							{
@@ -1324,7 +1342,7 @@ if ($OK_to_process)
 					
 					if ($dup_lead < 1)
 						{
-						$stmt="SELECT list_id from vicidial_list where phone_number='$phone_number' $ninetydaySQL $statuses_clause;";
+						$stmt="SELECT list_id from vicidial_list where phone_number='$phone_number' $multidaySQL $statuses_clause;";
 						$rslt=mysql_to_mysqli($stmt, $link);
 						$pc_recs = mysqli_num_rows($rslt);
 						if ($pc_recs > 0)
@@ -1351,7 +1369,7 @@ if ($OK_to_process)
 						{
 						if (preg_match('/USING CHECK/', $status_mismatch_action)) 
 							{
-							$stmt="SELECT list_id, lead_id from vicidial_list where phone_number='$phone_number' and list_id='$list_id' $ninetydaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
+							$stmt="SELECT list_id, lead_id from vicidial_list where phone_number='$phone_number' and list_id='$list_id' $multidaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
 							} 
 						else 
 							{
@@ -1373,7 +1391,7 @@ if ($OK_to_process)
 
 					if ($dup_lead < 1)
 						{
-						$stmt="SELECT count(*) from vicidial_list where phone_number='$phone_number' and list_id='$list_id' $ninetydaySQL $statuses_clause;";
+						$stmt="SELECT count(*) from vicidial_list where phone_number='$phone_number' and list_id='$list_id' $multidaySQL $statuses_clause;";
 						$rslt=mysql_to_mysqli($stmt, $link);
 						$pc_recs = mysqli_num_rows($rslt);
 						if ($pc_recs > 0)
@@ -1400,7 +1418,7 @@ if ($OK_to_process)
 						{
 						if (preg_match('/USING CHECK/', $status_mismatch_action)) 
 							{
-							$stmt="SELECT list_id, lead_id from vicidial_list where title='$title' and alt_phone='$alt_phone' and list_id='$list_id' $ninetydaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
+							$stmt="SELECT list_id, lead_id from vicidial_list where title='$title' and alt_phone='$alt_phone' and list_id='$list_id' $multidaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
 							} 
 						else 
 							{
@@ -1422,7 +1440,7 @@ if ($OK_to_process)
 
 					if ($dup_lead < 1)
 						{
-						$stmt="SELECT count(*) from vicidial_list where title='$title' and alt_phone='$alt_phone' and list_id='$list_id' $ninetydaySQL $statuses_clause;";
+						$stmt="SELECT count(*) from vicidial_list where title='$title' and alt_phone='$alt_phone' and list_id='$list_id' $multidaySQL $statuses_clause;";
 						$rslt=mysql_to_mysqli($stmt, $link);
 						$pc_recs = mysqli_num_rows($rslt);
 						if ($pc_recs > 0)
@@ -1449,7 +1467,7 @@ if ($OK_to_process)
 						{
 						if (preg_match('/USING CHECK/', $status_mismatch_action)) 
 							{
-							$stmt="SELECT list_id, lead_id from vicidial_list where title='$title' and alt_phone='$alt_phone' $ninetydaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
+							$stmt="SELECT list_id, lead_id from vicidial_list where title='$title' and alt_phone='$alt_phone' $multidaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
 							} 
 						else 
 							{
@@ -1471,7 +1489,7 @@ if ($OK_to_process)
 
 					if ($dup_lead < 1)
 						{
-						$stmt="SELECT list_id from vicidial_list where title='$title' and alt_phone='$alt_phone' $ninetydaySQL $statuses_clause;";
+						$stmt="SELECT list_id from vicidial_list where title='$title' and alt_phone='$alt_phone' $multidaySQL $statuses_clause;";
 						$rslt=mysql_to_mysqli($stmt, $link);
 						$pc_recs = mysqli_num_rows($rslt);
 						if ($pc_recs > 0)
@@ -1831,12 +1849,18 @@ if (($leadfile) && ($LF_path))
 				{
 				print "<BR>"._QXZ("PHONE NUMBER PREFIX STRIP SYSTEM SETTING ENABLED").": $SSweb_loader_phone_strip<BR>\n";
 				}
-			$ninetydaySQL='';
-			if (preg_match("/90DAY/i",$dupcheck))
+			$multidaySQL='';
+			if (preg_match("/30DAY|60DAY|90DAY|180DAY|360DAY/i",$dupcheck))
 				{
-				$ninetyday = date("Y-m-d H:i:s", mktime(date("H"),date("i"),date("s"),date("m"),date("d")-90,date("Y")));
-				$ninetydaySQL = "and entry_date > \"$ninetyday\"";
-				if ($DB > 0) {echo "DEBUG: 90day SQL: |$ninetydaySQL|";}
+				$day_val=30;
+				if (preg_match("/30DAY/i",$dupcheck)) {$day_val=30;}
+				if (preg_match("/60DAY/i",$dupcheck)) {$day_val=60;}
+				if (preg_match("/90DAY/i",$dupcheck)) {$day_val=90;}
+				if (preg_match("/180DAY/i",$dupcheck)) {$day_val=180;}
+				if (preg_match("/360DAY/i",$dupcheck)) {$day_val=360;}
+				$multiday = date("Y-m-d H:i:s", mktime(date("H"),date("i"),date("s"),date("m"),date("d")-$day_val,date("Y")));
+				$multidaySQL = "and entry_date > \"$multiday\"";
+				if ($DB > 0) {echo "DEBUG: $day_val day SQL: |$multidaySQL|";}
 				}
 
 			#  If a list is being scrubbed against a country's DNC list, block the list from being dialed and purge any lead from the hopper that belongs to that list.
@@ -1989,7 +2013,7 @@ if (($leadfile) && ($LF_path))
 									{
 									if (preg_match('/USING CHECK/', $status_mismatch_action)) 
 										{
-										$stmt="SELECT list_id, lead_id from vicidial_list where phone_number='$phone_number' and list_id IN($dup_lists) $ninetydaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
+										$stmt="SELECT list_id, lead_id from vicidial_list where phone_number='$phone_number' and list_id IN($dup_lists) $multidaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
 										} 
 									else 
 										{
@@ -2011,7 +2035,7 @@ if (($leadfile) && ($LF_path))
 
 								if ($dup_lead < 1)
 									{
-									$stmt="SELECT list_id from vicidial_list where phone_number='$phone_number' and list_id IN($dup_lists) $ninetydaySQL $statuses_clause limit 1;";
+									$stmt="SELECT list_id from vicidial_list where phone_number='$phone_number' and list_id IN($dup_lists) $multidaySQL $statuses_clause limit 1;";
 									$rslt=mysql_to_mysqli($stmt, $link);
 									$pc_recs = mysqli_num_rows($rslt);
 									if ($pc_recs > 0)
@@ -2040,7 +2064,7 @@ if (($leadfile) && ($LF_path))
 							{
 							if (preg_match('/USING CHECK/', $status_mismatch_action)) 
 								{
-								$stmt="SELECT list_id, lead_id from vicidial_list where phone_number='$phone_number' and list_id IN($dup_lists) $ninetydaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
+								$stmt="SELECT list_id, lead_id from vicidial_list where phone_number='$phone_number' and list_id IN($dup_lists) $multidaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
 								} 
 							else 
 								{
@@ -2062,7 +2086,7 @@ if (($leadfile) && ($LF_path))
 
 						if ($dup_lead < 1)
 							{
-							$stmt="SELECT list_id from vicidial_list where phone_number='$phone_number' $ninetydaySQL $statuses_clause;";
+							$stmt="SELECT list_id from vicidial_list where phone_number='$phone_number' $multidaySQL $statuses_clause;";
 							$rslt=mysql_to_mysqli($stmt, $link);
 							$pc_recs = mysqli_num_rows($rslt);
 							if ($pc_recs > 0)
@@ -2089,7 +2113,7 @@ if (($leadfile) && ($LF_path))
 							{
 							if (preg_match('/USING CHECK/', $status_mismatch_action)) 
 								{
-								$stmt="SELECT list_id, lead_id from vicidial_list where phone_number='$phone_number' and list_id='$list_id' $ninetydaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
+								$stmt="SELECT list_id, lead_id from vicidial_list where phone_number='$phone_number' and list_id='$list_id' $multidaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
 								} 
 							else 
 								{
@@ -2111,7 +2135,7 @@ if (($leadfile) && ($LF_path))
 
 						if ($dup_lead < 1)
 							{
-							$stmt="SELECT count(*) from vicidial_list where phone_number='$phone_number' and list_id='$list_id' $ninetydaySQL $statuses_clause;";
+							$stmt="SELECT count(*) from vicidial_list where phone_number='$phone_number' and list_id='$list_id' $multidaySQL $statuses_clause;";
 							$rslt=mysql_to_mysqli($stmt, $link);
 							$pc_recs = mysqli_num_rows($rslt);
 							if ($pc_recs > 0)
@@ -2137,7 +2161,7 @@ if (($leadfile) && ($LF_path))
 							{
 							if (preg_match('/USING CHECK/', $status_mismatch_action)) 
 								{
-								$stmt="SELECT list_id, lead_id from vicidial_list where title='$title' and alt_phone='$alt_phone' and list_id='$list_id' $ninetydaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
+								$stmt="SELECT list_id, lead_id from vicidial_list where title='$title' and alt_phone='$alt_phone' and list_id='$list_id' $multidaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
 								} 
 							else 
 								{
@@ -2159,7 +2183,7 @@ if (($leadfile) && ($LF_path))
 
 						if ($dup_lead < 1)
 							{
-							$stmt="SELECT count(*) from vicidial_list where title='$title' and alt_phone='$alt_phone' and list_id='$list_id' $ninetydaySQL $statuses_clause;";
+							$stmt="SELECT count(*) from vicidial_list where title='$title' and alt_phone='$alt_phone' and list_id='$list_id' $multidaySQL $statuses_clause;";
 							$rslt=mysql_to_mysqli($stmt, $link);
 							$pc_recs = mysqli_num_rows($rslt);
 							if ($pc_recs > 0)
@@ -2186,7 +2210,7 @@ if (($leadfile) && ($LF_path))
 							{
 							if (preg_match('/USING CHECK/', $status_mismatch_action)) 
 								{
-								$stmt="SELECT list_id, lead_id from vicidial_list where title='$title' and alt_phone='$alt_phone' $ninetydaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
+								$stmt="SELECT list_id, lead_id from vicidial_list where title='$title' and alt_phone='$alt_phone' $multidaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
 								} 
 							else 
 								{
@@ -2208,7 +2232,7 @@ if (($leadfile) && ($LF_path))
 
 						if ($dup_lead < 1)
 							{
-							$stmt="SELECT list_id from vicidial_list where title='$title' and alt_phone='$alt_phone' $ninetydaySQL $statuses_clause;";
+							$stmt="SELECT list_id from vicidial_list where title='$title' and alt_phone='$alt_phone' $multidaySQL $statuses_clause;";
 							$rslt=mysql_to_mysqli($stmt, $link);
 							$pc_recs = mysqli_num_rows($rslt);
 							if ($pc_recs > 0)
@@ -2592,12 +2616,18 @@ if (($leadfile) && ($LF_path))
 				{
 				print "<BR>"._QXZ("PHONE NUMBER PREFIX STRIP SYSTEM SETTING ENABLED").": $SSweb_loader_phone_strip<BR>\n";
 				}
-			$ninetydaySQL='';
-			if (preg_match("/90DAY/i",$dupcheck))
+			$multidaySQL='';
+			if (preg_match("/30DAY|60DAY|90DAY|180DAY|360DAY/i",$dupcheck))
 				{
-				$ninetyday = date("Y-m-d H:i:s", mktime(date("H"),date("i"),date("s"),date("m"),date("d")-90,date("Y")));
-				$ninetydaySQL = "and entry_date > \"$ninetyday\"";
-				if ($DB > 0) {echo "DEBUG: 90day SQL: |$ninetydaySQL|";}
+				$day_val=30;
+				if (preg_match("/30DAY/i",$dupcheck)) {$day_val=30;}
+				if (preg_match("/60DAY/i",$dupcheck)) {$day_val=60;}
+				if (preg_match("/90DAY/i",$dupcheck)) {$day_val=90;}
+				if (preg_match("/180DAY/i",$dupcheck)) {$day_val=180;}
+				if (preg_match("/360DAY/i",$dupcheck)) {$day_val=360;}
+				$multiday = date("Y-m-d H:i:s", mktime(date("H"),date("i"),date("s"),date("m"),date("d")-$day_val,date("Y")));
+				$multidaySQL = "and entry_date > \"$multiday\"";
+				if ($DB > 0) {echo "DEBUG: $day_val day SQL: |$multidaySQL|";}
 				}
 
 			#  If a list is being scrubbed against a country's DNC list, block the list from being dialed and purge any lead from the hopper that belongs to that list.
@@ -2744,7 +2774,7 @@ if (($leadfile) && ($LF_path))
 									{
 									if (preg_match('/USING CHECK/', $status_mismatch_action)) 
 										{
-										$stmt="SELECT list_id, lead_id from vicidial_list where phone_number='$phone_number' and list_id IN($dup_lists) $ninetydaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
+										$stmt="SELECT list_id, lead_id from vicidial_list where phone_number='$phone_number' and list_id IN($dup_lists) $multidaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
 										} 
 									else 
 										{
@@ -2766,7 +2796,7 @@ if (($leadfile) && ($LF_path))
 
 								if ($dup_lead < 1)
 									{
-									$stmt="SELECT list_id from vicidial_list where phone_number='$phone_number' and list_id IN($dup_lists) $ninetydaySQL $statuses_clause limit 1;";
+									$stmt="SELECT list_id from vicidial_list where phone_number='$phone_number' and list_id IN($dup_lists) $multidaySQL $statuses_clause limit 1;";
 									$rslt=mysql_to_mysqli($stmt, $link);
 									$pc_recs = mysqli_num_rows($rslt);
 									if ($pc_recs > 0)
@@ -2795,7 +2825,7 @@ if (($leadfile) && ($LF_path))
 							{
 							if (preg_match('/USING CHECK/', $status_mismatch_action)) 
 								{
-								$stmt="SELECT list_id, lead_id from vicidial_list where phone_number='$phone_number' $ninetydaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
+								$stmt="SELECT list_id, lead_id from vicidial_list where phone_number='$phone_number' $multidaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
 								} 
 							else 
 								{
@@ -2817,7 +2847,7 @@ if (($leadfile) && ($LF_path))
 
 						if ($dup_lead < 1)
 							{
-							$stmt="SELECT list_id from vicidial_list where phone_number='$phone_number' $ninetydaySQL $statuses_clause;";
+							$stmt="SELECT list_id from vicidial_list where phone_number='$phone_number' $multidaySQL $statuses_clause;";
 							$rslt=mysql_to_mysqli($stmt, $link);
 							$pc_recs = mysqli_num_rows($rslt);
 							if ($pc_recs > 0)
@@ -2844,7 +2874,7 @@ if (($leadfile) && ($LF_path))
 							{
 							if (preg_match('/USING CHECK/', $status_mismatch_action)) 
 								{
-								$stmt="SELECT list_id, lead_id from vicidial_list where phone_number='$phone_number' and list_id='$list_id' $ninetydaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
+								$stmt="SELECT list_id, lead_id from vicidial_list where phone_number='$phone_number' and list_id='$list_id' $multidaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
 								} 
 							else 
 								{
@@ -2866,7 +2896,7 @@ if (($leadfile) && ($LF_path))
 
 						if ($dup_lead < 1)
 							{
-							$stmt="SELECT count(*) from vicidial_list where phone_number='$phone_number' and list_id='$list_id' $ninetydaySQL $statuses_clause;";
+							$stmt="SELECT count(*) from vicidial_list where phone_number='$phone_number' and list_id='$list_id' $multidaySQL $statuses_clause;";
 							$rslt=mysql_to_mysqli($stmt, $link);
 							$pc_recs = mysqli_num_rows($rslt);
 							if ($pc_recs > 0)
@@ -2892,7 +2922,7 @@ if (($leadfile) && ($LF_path))
 							{
 							if (preg_match('/USING CHECK/', $status_mismatch_action)) 
 								{
-								$stmt="SELECT list_id, lead_id from vicidial_list where title='$title' and alt_phone='$alt_phone' and list_id='$list_id' $ninetydaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
+								$stmt="SELECT list_id, lead_id from vicidial_list where title='$title' and alt_phone='$alt_phone' and list_id='$list_id' $multidaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
 								} 
 							else 
 								{
@@ -2914,7 +2944,7 @@ if (($leadfile) && ($LF_path))
 
 						if ($dup_lead < 1)
 							{
-							$stmt="SELECT count(*) from vicidial_list where title='$title' and alt_phone='$alt_phone' and list_id='$list_id' $ninetydaySQL $statuses_clause;";
+							$stmt="SELECT count(*) from vicidial_list where title='$title' and alt_phone='$alt_phone' and list_id='$list_id' $multidaySQL $statuses_clause;";
 							$rslt=mysql_to_mysqli($stmt, $link);
 							$pc_recs = mysqli_num_rows($rslt);
 							if ($pc_recs > 0)
@@ -2941,7 +2971,7 @@ if (($leadfile) && ($LF_path))
 							{
 							if (preg_match('/USING CHECK/', $status_mismatch_action)) 
 								{
-								$stmt="SELECT list_id, lead_id from vicidial_list where title='$title' and alt_phone='$alt_phone' $ninetydaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
+								$stmt="SELECT list_id, lead_id from vicidial_list where title='$title' and alt_phone='$alt_phone' $multidaySQL $mismatch_clause order by entry_date desc $mismatch_limit";
 								} 
 							else 
 								{
@@ -2963,7 +2993,7 @@ if (($leadfile) && ($LF_path))
 
 						if ($dup_lead < 1)
 							{
-							$stmt="SELECT list_id from vicidial_list where title='$title' and alt_phone='$alt_phone' $ninetydaySQL $statuses_clause;";
+							$stmt="SELECT list_id from vicidial_list where title='$title' and alt_phone='$alt_phone' $multidaySQL $statuses_clause;";
 							$rslt=mysql_to_mysqli($stmt, $link);
 							$pc_recs = mysqli_num_rows($rslt);
 							if ($pc_recs > 0)

@@ -1,7 +1,7 @@
 <?php
 # agc_agent_manager_chat_interface.php
 #
-# Copyright (C) 2018  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This page is for agents to chat with managers via the agent interface.
 #
@@ -15,10 +15,11 @@
 # 161217-0827 - Added code for multi-user internal chat sessions
 # 161221-0801 - Added color-coding for users in internal chat sessions
 # 180927-0624 - Fix for missing translationm issue #1125
+# 201117-2239 - Changes for better compatibility with non-latin data input
 #
 
-$admin_version = '2.14-9';
-$build = '180927-0624';
+$admin_version = '2.14-10';
+$build = '201117-2239';
 
 $sh="managerchats";
 
@@ -38,19 +39,6 @@ if (isset($_GET["user"]))						{$user=$_GET["user"];}
 if (isset($_GET["pass"]))						{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))				{$pass=$_POST["pass"];}
 if (!$user) {echo "Page should only be viewed through the agent interface."; die;}
-
-if ($non_latin < 1)
-	{
-	$user = preg_replace('/[^-\_0-9a-zA-Z]/','',$user);
-	$pass = preg_replace('/[^-\_0-9a-zA-Z]/','',$pass);
-	$manager_chat_id = preg_replace('/[^- \_\.0-9a-zA-Z]/','',$user);
-	}
-else
-	{
-	$user = preg_replace("/\'|\"|\\\\|;/","",$user);
-	$pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
-	$manager_chat_id = preg_replace("/\'|\"|\\\\|;/","",$user);
-	}
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
@@ -73,14 +61,26 @@ $VUselected_language = $SSdefault_language;
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-### Load hard coded variables and then load then from options.php
+if ($non_latin < 1)
+	{
+	$user = preg_replace('/[^-\_0-9a-zA-Z]/','',$user);
+	$pass = preg_replace('/[^-\_0-9a-zA-Z]/','',$pass);
+	$manager_chat_id = preg_replace('/[^- \_\.0-9a-zA-Z]/','',$user);
+	}
+else
+	{
+	$user = preg_replace("/\'|\"|\\\\|;/","",$user);
+	$pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
+	$manager_chat_id = preg_replace("/\'|\"|\\\\|;/","",$user);
+	}
+
+# Load hard coded variables and then load then from options.php
 $manager_chat_refresh_seconds = 1;
 
 if (file_exists('options.php'))
 	{require('options.php');}
 
 $manager_chat_refresh_miliseconds = $manager_chat_refresh_seconds * 1000;
-
 
 
 $auth=0;
@@ -180,7 +180,8 @@ asort($chat_managers_array);
 
 asort($chat_reload_id_number_array);
 $ChatReloadIDNumber="";
-while (list($key, $id_number) = each($chat_reload_id_number_array)) {
+#while (list($key, $id_number) = each($chat_reload_id_number_array)) {
+foreach($chat_reload_id_number_array as $key => $id_number) {
 	$ChatReloadIDNumber.="$id_number.";
 }
 $ChatReloadIDNumber=substr($ChatReloadIDNumber,0,-1);
@@ -747,7 +748,8 @@ echo "<div class='scrolling_chat_display' id='AllActiveChats'>\n";
 	if (empty($chat_managers_array)) {
 		echo "\t<li class='arial_bold'>"._QXZ("NO OPEN CHATS")."</li>\n";
 	} else {
-		while (list($manager_chat_id, $text) = each($chat_managers_array)) {
+#		while (list($manager_chat_id, $text) = each($chat_managers_array)) {
+		foreach($chat_managers_array as $manager_chat_id => $text) {
 			$manager_chat_subid=$chat_subid_array[$manager_chat_id];
 			if (!empty($unread_chats_array) && in_array($manager_chat_id, $unread_chats_array)) {$cclass="unreadchat";} else {$cclass="viewedchat";}
 			echo "\t<li class='".$cclass."'><a onClick=\"document.getElementById('CurrentActiveChat').value='$manager_chat_id'; document.getElementById('CurrentActiveChatSubID').value='$manager_chat_subid'; document.getElementById('AgentManagerOverride').value='".$agents_managers_array[$manager_chat_id]."'; LoadAvailableAgentsForChat('AllLiveNonChatAgents', 'agent_to_add');\">Chat #".$manager_chat_id."</a></li>\n"; # $chat_managers_array[$manager_chat_id]

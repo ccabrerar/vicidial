@@ -381,7 +381,8 @@ if ($action == "BLANK")
 	$o=0;
 	if ($lead_list['count'] > 0)
 		{
-		while (list($owner,) = each($lead_list[$since_reset]))
+#		while (list($owner,) = each($lead_list[$since_reset]))
+		foreach($lead_list[$since_reset] as $owner => $blank)
 			{
 			$owner_var = preg_replace('/ |\n|\r|\t/','',$owner);
 			if (preg_match('/1$|3$|5$|7$|9$/i', $o))
@@ -418,7 +419,7 @@ if ($action == "BLANK")
 	echo "<tr bgcolor=#$SSstd_row1_background><td align=right>"._QXZ("List Order Randomize").": </td><td align=left><select size=1 name=lead_order_randomize><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$lead_order_randomize' SELECTED>"._QXZ("$lead_order_randomize")."</option></select></td></tr>\n";
 	echo "<tr bgcolor=#$SSstd_row1_background><td align=right>"._QXZ("List Order Secondary").": </td><td align=left><select size=1 name=lead_order_secondary><option value='LEAD_ASCEND'>"._QXZ("LEAD_ASCEND")."</option><option value='LEAD_DESCEND'>"._QXZ("LEAD_DESCEND")."</option><option value='CALLTIME_ASCEND'>"._QXZ("CALLTIME_ASCEND")."</option><option value='CALLTIME_DESCEND'>"._QXZ("CALLTIME_DESCEND")."</option><option value='VENDOR_ASCEND'>"._QXZ("VENDOR_ASCEND")."</option><option value='VENDOR_DESCEND'>"._QXZ("VENDOR_DESCEND")."</option><option value='$lead_order_secondary' SELECTED>"._QXZ("$lead_order_secondary")."</option></select></td></tr>\n";
 
-	echo "<tr bgcolor=#$SSstd_row1_background><td align=center colspan=2><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
+	echo "<tr bgcolor=#$SSstd_row1_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 	echo "</TABLE></center>\n";
 	echo "</TD></TR></TABLE>\n";
 	}

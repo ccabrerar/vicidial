@@ -497,13 +497,15 @@
 # 200825-2342 - Added option for manual-only sip actions
 # 200828-1535 - Fixed issue with dispo URL statuse being sent for CBHOLD statuses
 # 201111-2139 - Fix for AGENTDIRECT selected in-groups issue #1241
+# 201117-0820 - Changes for better compatibility with non-latin data input
+# 201122-1038 - Added Daily call count limit features
 #
 
-$version = '2.14-390';
-$build = '201111-2139';
+$version = '2.14-392';
+$build = '201122-1038';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
-$mysql_log_count=839;
+$mysql_log_count=844;
 $one_mysql_log=0;
 $DB=0;
 $VD_login=0;
@@ -978,7 +980,7 @@ $sip_hangup_cause_dictionary = array(
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,timeclock_end_of_day,agentonly_callback_campaign_lock,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,qc_features_active,allow_emails,callback_time_24hour,enable_languages,language_method,agent_debug_logging,default_language,active_modules,allow_chats,default_phone_code,user_new_lead_limit,sip_event_logging,call_quota_lead_ranking FROM system_settings;";
+$stmt = "SELECT use_non_latin,timeclock_end_of_day,agentonly_callback_campaign_lock,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,qc_features_active,allow_emails,callback_time_24hour,enable_languages,language_method,agent_debug_logging,default_language,active_modules,allow_chats,default_phone_code,user_new_lead_limit,sip_event_logging,call_quota_lead_ranking,daily_call_count_limit FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00001',$user,$server_ip,$session_name,$one_mysql_log);}
 if ($DB) {echo "$stmt\n";}
@@ -1007,30 +1009,10 @@ if ($qm_conf_ct > 0)
 	$SSuser_new_lead_limit =				$row[18];
 	$SSsip_event_logging =					$row[19];
 	$SScall_quota_lead_ranking =			$row[20];
+	$SSdaily_call_count_limit =				$row[21];
 	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
-
-if ($non_latin < 1)
-	{
-	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
-	$pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
-	$orig_pass=preg_replace("/[^-_0-9a-zA-Z]/","",$orig_pass);
-	$phone_code = preg_replace("/[^0-9a-zA-Z]/","",$phone_code);
-	$phone_number = preg_replace("/[^0-9a-zA-Z]/","",$phone_number);
-	$status = preg_replace("/[^-_0-9a-zA-Z]/","",$status);
-	$MgrApr_user = preg_replace("/[^-_0-9a-zA-Z]/","",$MgrApr_user);
-	$MgrApr_pass = preg_replace("/[^-_0-9a-zA-Z]/","",$MgrApr_pass);
-	}
-else
-	{
-	$user = preg_replace("/\'|\"|\\\\|;/","",$user);
-	$pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
-	$orig_pass = preg_replace("/\'|\"|\\\\|;/","",$orig_pass);
-	$status = preg_replace("/\'|\"|\\\\|;/","",$status);
-	$MgrApr_user = preg_replace("/\'|\"|\\\\|;/","",$MgrApr_user);
-	$MgrApr_pass = preg_replace("/\'|\"|\\\\|;/","",$MgrApr_pass);
-	}
 
 $session_name = preg_replace("/\'|\"|\\\\|;/","",$session_name);
 $server_ip = preg_replace("/\'|\"|\\\\|;/","",$server_ip);
@@ -1058,16 +1040,12 @@ $agent_dialed_type = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_dialed_type);
 $agent_email = preg_replace("/\'|\"|\\\\|;/","",$agent_email);
 $agent_log = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_log);
 $agent_log_id = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_log_id);
-$agent_territories = preg_replace('/[^- _0-9a-zA-Z]/','',$agent_territories);
 $agentchannel = preg_replace("/\'|\"|\\\\/","",$agentchannel);
 $alt_dial = preg_replace('/[^-_0-9a-zA-Z]/','',$alt_dial);
-$alt_num_status = preg_replace('/[^-_0-9a-zA-Z]/','',$alt_num_status);
 $auto_dial_level = preg_replace('/[^-\._0-9a-zA-Z]/','',$auto_dial_level);
 $blind_transfer = preg_replace('/[^-_0-9a-zA-Z]/','',$blind_transfer);
 $callback_id = preg_replace('/[^-_0-9a-zA-Z]/','',$callback_id);
 $called_count = preg_replace('/[^0-9]/','',$called_count);
-$camp_script = preg_replace('/[^-_0-9a-zA-Z]/','',$camp_script);
-$campaign_cid = preg_replace('/[^-_0-9a-zA-Z]/','',$campaign_cid);
 $channel = preg_replace("/\'|\"|\\\\/","",$channel);
 $cid_lock = preg_replace('/[^0-9]/','',$cid_lock);
 $closer_blended = preg_replace('/[^-_0-9a-zA-Z]/','',$closer_blended);
@@ -1077,16 +1055,11 @@ $custom_field_names = preg_replace("/\'|\"|\\\\|;/","",$custom_field_names);
 $customer_server_ip = preg_replace("/\'|\"|\\\\|;/","",$customer_server_ip);
 $customer_zap_channel = preg_replace("/\'|\"|\\\\/","",$customer_zap_channel);
 $date = preg_replace('/[^-_0-9]/','',$date);
-$dial_ingroup = preg_replace('/[^-_0-9a-zA-Z]/','',$dial_ingroup);
-$dial_method = preg_replace('/[^-_0-9a-zA-Z]/','',$dial_method);
-$dial_prefix = preg_replace('/[^-_0-9a-zA-Z]/','',$dial_prefix);
 $dial_timeout = preg_replace('/[^0-9]/','',$dial_timeout);
 $disable_alter_custphone = preg_replace('/[^-_0-9a-zA-Z]/','',$disable_alter_custphone);
-$dispo_choice = preg_replace('/[^-_0-9a-zA-Z]/','',$dispo_choice);
 $email_enabled = preg_replace('/[^0-9]/','',$email_enabled);
 $email_row_id = preg_replace('/[^-_0-9a-zA-Z]/','',$email_row_id);
 $enable_sipsak_messages = preg_replace('/[^0-9]/','',$enable_sipsak_messages);
-$ext_context = preg_replace('/[^-_0-9a-zA-Z]/','',$ext_context);
 $ext_priority = preg_replace('/[^-_0-9a-zA-Z]/','',$ext_priority);
 $exten = preg_replace("/\'|\"|\\\\|;/","",$exten);
 $extension = preg_replace("/\'|\"|\\\\|;/","",$extension);
@@ -1096,17 +1069,13 @@ $gender = preg_replace('/[^-_0-9a-zA-Z]/','',$gender);
 $group_name = preg_replace("/\'|\"|\\\\|;/","",$group_name);
 $hangup_all_non_reserved = preg_replace('/[^0-9]/','',$hangup_all_non_reserved);
 $inOUT = preg_replace('/[^-_0-9a-zA-Z]/','',$inOUT);
-$in_script = preg_replace('/[^-_0-9a-zA-Z]/','',$in_script);
 $inbound_lead_search = preg_replace('/[^0-9]/','',$inbound_lead_search);
 $last_VDRP_stage = preg_replace('/[^-_0-9a-zA-Z]/','',$last_VDRP_stage);
 $leaving_threeway = preg_replace('/[^0-9]/','',$leaving_threeway);
 $manual_dial_call_time_check = preg_replace('/[^-_0-9a-zA-Z]/','',$manual_dial_call_time_check);
-$manual_dial_filter = preg_replace('/[^-_0-9a-zA-Z]/','',$manual_dial_filter);
-$manual_dial_search_filter = preg_replace('/[^-_0-9a-zA-Z]/','',$manual_dial_search_filter);
 $no_delete_sessions = preg_replace('/[^0-9]/','',$no_delete_sessions);
 $nocall_dial_flag = preg_replace('/[^-_0-9a-zA-Z]/','',$nocall_dial_flag);
 $nodeletevdac = preg_replace('/[^0-9]/','',$nodeletevdac);
-$old_CID = preg_replace('/[^- _0-9a-zA-Z]/','',$old_CID);
 $omit_phone_code = preg_replace('/[^-_0-9a-zA-Z]/','',$omit_phone_code);
 $original_phone_login = preg_replace("/\'|\"|\\\\|;/","",$original_phone_login);
 $parked_hangup = preg_replace('/[^-_0-9a-zA-Z]/','',$parked_hangup);
@@ -1116,16 +1085,12 @@ $phone_pass = preg_replace("/\'|\"|\\\\|;/","",$phone_pass);
 $preview = preg_replace('/[^-_0-9a-zA-Z]/','',$preview);
 $previous_agent_log_id = preg_replace('/[^-_0-9a-zA-Z]/','',$previous_agent_log_id);
 $protocol = preg_replace('/[^-_0-9a-zA-Z]/','',$protocol);
-$qm_dispo_code = preg_replace('/[^-_0-9a-zA-Z]/','',$qm_dispo_code);
 $qm_extension = preg_replace("/\'|\"|\\\\|;/","",$qm_extension);
 $qm_phone = preg_replace("/\'|\"|\\\\|;/","",$qm_phone);
-$recipient = preg_replace('/[^-_0-9a-zA-Z]/','',$recipient);
 $recording_filename = preg_replace("/\'|\"|\\\\|;/","",$recording_filename);
 $recording_id = preg_replace('/[^0-9]/','',$recording_id);
-$search = preg_replace('/[^-_0-9a-zA-Z]/','',$search);
 $stage = preg_replace("/\'|\"|\\\\|;/","",$stage);
 $start_epoch = preg_replace("/\'|\"|\\\\|;/","",$start_epoch);
-$sub_status = preg_replace('/[^-_0-9a-zA-Z]/','',$sub_status);
 $url_ids = preg_replace("/\'|\"|\\\\|;/","",$url_ids);
 $use_campaign_dnc = preg_replace('/[^-_0-9a-zA-Z]/','',$use_campaign_dnc);
 $use_internal_dnc = preg_replace('/[^-_0-9a-zA-Z]/','',$use_internal_dnc);
@@ -1134,7 +1099,6 @@ $user_abb = preg_replace("/\'|\"|\\\\|;/","",$user_abb);
 $vtiger_callback_id = preg_replace("/\'|\"|\\\\|;/","",$vtiger_callback_id);
 $wrapup = preg_replace("/\'|\"|\\\\|;/","",$wrapup);
 $url_link = preg_replace("/\'|\"|\\\\|;/","",$url_link);
-$user_group = preg_replace('/[^-_0-9a-zA-Z]/','',$user_group);
 $routing_initiated_recording = preg_replace('/[^-_0-9a-zA-Z]/','',$routing_initiated_recording);
 $dead_time = preg_replace('/[^0-9]/','',$dead_time);
 $callback_gmt_offset = preg_replace('/[^- \._0-9a-zA-Z]/','',$callback_gmt_offset);
@@ -1143,6 +1107,64 @@ $manual_dial_validation = preg_replace('/[^-_0-9a-zA-Z]/','',$manual_dial_valida
 $start_date = preg_replace('/[^-_0-9]/','',$start_date);
 $end_date = preg_replace('/[^-_0-9]/','',$end_date);
 $customer_sec = preg_replace('/[^-_0-9]/','',$customer_sec);
+
+if ($non_latin < 1)
+	{
+	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
+	$pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
+	$orig_pass=preg_replace("/[^-_0-9a-zA-Z]/","",$orig_pass);
+	$phone_code = preg_replace("/[^0-9a-zA-Z]/","",$phone_code);
+	$phone_number = preg_replace("/[^0-9a-zA-Z]/","",$phone_number);
+	$status = preg_replace("/[^-_0-9a-zA-Z]/","",$status);
+	$MgrApr_user = preg_replace("/[^-_0-9a-zA-Z]/","",$MgrApr_user);
+	$MgrApr_pass = preg_replace("/[^-_0-9a-zA-Z]/","",$MgrApr_pass);
+	$agent_territories = preg_replace('/[^- _0-9a-zA-Z]/','',$agent_territories);
+	$alt_num_status = preg_replace('/[^-_0-9a-zA-Z]/','',$alt_num_status);
+	$camp_script = preg_replace('/[^-_0-9a-zA-Z]/','',$camp_script);
+	$campaign_cid = preg_replace('/[^-_0-9a-zA-Z]/','',$campaign_cid);
+	$dial_ingroup = preg_replace('/[^-_0-9a-zA-Z]/','',$dial_ingroup);
+	$dial_method = preg_replace('/[^-_0-9a-zA-Z]/','',$dial_method);
+	$dial_prefix = preg_replace('/[^-_0-9a-zA-Z]/','',$dial_prefix);
+	$dispo_choice = preg_replace('/[^-_0-9a-zA-Z]/','',$dispo_choice);
+	$ext_context = preg_replace('/[^-_0-9a-zA-Z]/','',$ext_context);
+	$in_script = preg_replace('/[^-_0-9a-zA-Z]/','',$in_script);
+	$manual_dial_filter = preg_replace('/[^-_0-9a-zA-Z]/','',$manual_dial_filter);
+	$manual_dial_search_filter = preg_replace('/[^-_0-9a-zA-Z]/','',$manual_dial_search_filter);
+	$old_CID = preg_replace('/[^- _0-9a-zA-Z]/','',$old_CID);
+	$qm_dispo_code = preg_replace('/[^-_0-9a-zA-Z]/','',$qm_dispo_code);
+	$recipient = preg_replace('/[^-_0-9a-zA-Z]/','',$recipient);
+	$search = preg_replace('/[^-_0-9a-zA-Z]/','',$search);
+	$sub_status = preg_replace('/[^-_0-9a-zA-Z]/','',$sub_status);
+	$user_group = preg_replace('/[^-_0-9a-zA-Z]/','',$user_group);
+	}
+else
+	{
+	$user = preg_replace("/\'|\"|\\\\|;/","",$user);
+	$pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
+	$orig_pass = preg_replace("/\'|\"|\\\\|;/","",$orig_pass);
+	$status = preg_replace("/\'|\"|\\\\|;/","",$status);
+	$MgrApr_user = preg_replace("/\'|\"|\\\\|;/","",$MgrApr_user);
+	$MgrApr_pass = preg_replace("/\'|\"|\\\\|;/","",$MgrApr_pass);
+	$agent_territories = preg_replace('/[^- _0-9\p{L}]/u','',$agent_territories);
+	$alt_num_status = preg_replace('/[^-_0-9\p{L}]/u','',$alt_num_status);
+	$camp_script = preg_replace('/[^-_0-9\p{L}]/u','',$camp_script);
+	$campaign_cid = preg_replace('/[^-_0-9\p{L}]/u','',$campaign_cid);
+	$dial_ingroup = preg_replace('/[^-_0-9\p{L}]/u','',$dial_ingroup);
+	$dial_method = preg_replace('/[^-_0-9\p{L}]/u','',$dial_method);
+	$dial_prefix = preg_replace('/[^-_0-9\p{L}]/u','',$dial_prefix);
+	$dispo_choice = preg_replace('/[^-_0-9\p{L}]/u','',$dispo_choice);
+	$ext_context = preg_replace('/[^-_0-9\p{L}]/u','',$ext_context);
+	$in_script = preg_replace('/[^-_0-9\p{L}]/u','',$in_script);
+	$manual_dial_filter = preg_replace('/[^-_0-9\p{L}]/u','',$manual_dial_filter);
+	$manual_dial_search_filter = preg_replace('/[^-_0-9\p{L}]/u','',$manual_dial_search_filter);
+	$old_CID = preg_replace('/[^- _0-9\p{L}]/u','',$old_CID);
+	$qm_dispo_code = preg_replace('/[^-_0-9\p{L}]/u','',$qm_dispo_code);
+	$recipient = preg_replace('/[^-_0-9\p{L}]/u','',$recipient);
+	$search = preg_replace('/[^-_0-9\p{L}]/u','',$search);
+	$sub_status = preg_replace('/[^-_0-9\p{L}]/u','',$sub_status);
+	$user_group = preg_replace('/[^-_0-9\p{L}]/u','',$user_group);
+	}
+
 
 # default optional vars if not set
 if (!isset($format))   {$format="text";}
@@ -2543,7 +2565,7 @@ if ($ACTION == 'manDiaLnextCaLL')
 			if ($lead_id_defined < 1)
 				{
 				##### gather no hopper dialing settings from campaign
-				$stmt="SELECT no_hopper_dialing,agent_dial_owner_only,local_call_time,dial_statuses,drop_lockout_time,lead_filter_id,lead_order,lead_order_randomize,lead_order_secondary,call_count_limit,next_dial_my_callbacks,callback_list_calltime,callback_hours_block FROM vicidial_campaigns where campaign_id='$campaign';";
+				$stmt="SELECT no_hopper_dialing,agent_dial_owner_only,local_call_time,dial_statuses,drop_lockout_time,lead_filter_id,lead_order,lead_order_randomize,lead_order_secondary,call_count_limit,next_dial_my_callbacks,callback_list_calltime,callback_hours_block,daily_call_count_limit,daily_limit_manual FROM vicidial_campaigns where campaign_id='$campaign';";
 				$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00236',$user,$server_ip,$session_name,$one_mysql_log);}
 				if ($DB) {echo "$stmt\n";}
@@ -2564,6 +2586,8 @@ if ($ACTION == 'manDiaLnextCaLL')
 					$next_dial_my_callbacks =	$row[10];
 					$callback_list_calltime =	$row[11];
 					$callback_hours_block =		$row[12];
+					$daily_call_count_limit =	$row[13];
+					$daily_limit_manual =		$row[14];
 					}
 				if (preg_match("/N/i",$no_hopper_dialing))
 					{
@@ -3970,7 +3994,7 @@ if ($ACTION == 'manDiaLnextCaLL')
 
 			##### BEGIN check for postal_code and phone time zones if alert enabled
 			$post_phone_time_diff_alert_message='';
-			$stmt="SELECT post_phone_time_diff_alert,local_call_time,owner_populate,default_xfer_group FROM vicidial_campaigns where campaign_id='$campaign';";
+			$stmt="SELECT post_phone_time_diff_alert,local_call_time,owner_populate,default_xfer_group,daily_call_count_limit,daily_limit_manual FROM vicidial_campaigns where campaign_id='$campaign';";
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00414',$user,$server_ip,$session_name,$one_mysql_log);}
 			if ($DB) {echo "$stmt\n";}
@@ -3982,6 +4006,8 @@ if ($ACTION == 'manDiaLnextCaLL')
 				$local_call_time =				$row[1];
 				$owner_populate =				$row[2];
 				$default_xfer_group =			$row[3];
+				$daily_call_count_limit =		$row[4];
+				$daily_limit_manual =			$row[5];
 				}
 			if ( ($post_phone_time_diff_alert == 'ENABLED') or (preg_match("/OUTSIDE_CALLTIME/",$post_phone_time_diff_alert)) )
 				{
@@ -4067,6 +4093,8 @@ if ($ACTION == 'manDiaLnextCaLL')
 				}
 			##### END check for postal_code and phone time zones if alert enabled
 
+			### Daily call count limit check ###
+			manual_dccl_check($lead_id, $no_hopper_dialing_used, 0);
 
 			##### if lead is a callback, grab the callback comments
 			$CBentry_time =		'';
@@ -4161,6 +4189,12 @@ if ($ACTION == 'manDiaLnextCaLL')
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00030',$user,$server_ip,$session_name,$one_mysql_log);}
 
+			# update daily called counts for this lead
+			$stmtDC = "INSERT IGNORE INTO vicidial_lead_call_daily_counts SET lead_id='$lead_id',modify_date=NOW(),list_id='$list_id',called_count_total='1',called_count_manual='1' ON DUPLICATE KEY UPDATE modify_date=NOW(),list_id='$list_id',called_count_total=(called_count_total + 1),called_count_manual=(called_count_manual + 1);";
+			if ($DB) {echo "$stmtDC\n";}
+			$rslt=mysql_to_mysqli($stmtDC, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00840',$user,$server_ip,$session_name,$one_mysql_log);}
+
 			if (!$CBleadIDset)
 				{
 				### delete the lead from the hopper
@@ -4224,7 +4258,7 @@ if ($ACTION == 'manDiaLnextCaLL')
 			if ( (strlen($preview)<1) or ($preview == 'NO') or (strlen($dial_ingroup) > 1) )
 				{
 				$use_custom_cid='N';
-				$stmt = "SELECT use_custom_cid,manual_dial_hopper_check,start_call_url,manual_dial_filter,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc,cid_group_id,scheduled_callbacks_auto_reschedule,dial_timeout_lead_container,manual_dial_cid FROM vicidial_campaigns where campaign_id='$campaign';";
+				$stmt = "SELECT use_custom_cid,manual_dial_hopper_check,start_call_url,manual_dial_filter,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc,cid_group_id,scheduled_callbacks_auto_reschedule,dial_timeout_lead_container,manual_dial_cid,daily_call_count_limit,daily_limit_manual FROM vicidial_campaigns where campaign_id='$campaign';";
 				$rslt=mysql_to_mysqli($stmt, $link);
 					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00313',$user,$server_ip,$session_name,$one_mysql_log);}
 				if ($DB) {echo "$stmt\n";}
@@ -4243,6 +4277,8 @@ if ($ACTION == 'manDiaLnextCaLL')
 					$scheduled_callbacks_auto_reschedule =	$row[8];
 					$dial_timeout_lead_container =			$row[9];
 					$manual_dial_cid =						$row[10];
+					$daily_call_count_limit =				$row[11];
+					$daily_limit_manual =					$row[12];
 					}
 
 				### BEGIN check for Dial Timeout Lead Override ###
@@ -5595,6 +5631,12 @@ if ($ACTION == 'manDiaLskip')
 		$rslt=mysql_to_mysqli($stmt, $link);
 			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00042',$user,$server_ip,$session_name,$one_mysql_log);}
 
+		# update daily called counts for this lead
+		$stmtDC = "UPDATE vicidial_lead_call_daily_counts SET modify_date=NOW(),called_count_total=(called_count_total - 1),called_count_manual=(called_count_manual - 1) where lead_id='$lead_id';";
+		if ($DB) {echo "$stmtDC\n";}
+		$rslt=mysql_to_mysqli($stmtDC, $link);
+			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00841',$user,$server_ip,$session_name,$one_mysql_log);}
+
 		### log the skip event
 		$stmt = "INSERT INTO vicidial_agent_skip_log set campaign_id='$campaign', previous_status='$stage', previous_called_count='$called_count',user='$user', lead_id=$lead_id, event_date=NOW();";
 		if ($DB) {echo "$stmt\n";}
@@ -5667,7 +5709,7 @@ if ($ACTION == 'manDiaLonly')
 		### check for manual dial filter and extension append settings in campaign
 		$use_eac=0;
 		$use_custom_cid='N';
-		$stmt = "SELECT manual_dial_filter,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc,extension_appended_cidname,start_call_url,scheduled_callbacks_auto_reschedule,dial_timeout_lead_container FROM vicidial_campaigns where campaign_id='$campaign';";
+		$stmt = "SELECT manual_dial_filter,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc,extension_appended_cidname,start_call_url,scheduled_callbacks_auto_reschedule,dial_timeout_lead_container,daily_call_count_limit,daily_limit_manual FROM vicidial_campaigns where campaign_id='$campaign';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00325',$user,$server_ip,$session_name,$one_mysql_log);}
 		if ($DB) {echo "$stmt\n";}
@@ -5683,9 +5725,14 @@ if ($ACTION == 'manDiaLonly')
 			$start_call_url =						$row[5];
 			$scheduled_callbacks_auto_reschedule =	$row[6];
 			$dial_timeout_lead_container =			$row[7];
+			$daily_call_count_limit =				$row[8];
+			$daily_limit_manual =					$row[9];
 			if ($extension_appended_cidname == 'Y')
 				{$use_eac++;}
 			}
+
+		### Daily call count limit check ###
+		manual_dccl_check($lead_id, 0, 1);
 
 		### BEGIN check phone filtering for DNC or camplists if enabled ###
 		manual_dnc_check($phone_number, 0, 1);
@@ -7561,7 +7608,7 @@ if ($stage == "end")
 		if ($auto_dial_level > 0)
 			{
 			### check to see if campaign has alt_dial enabled
-			$stmt="SELECT auto_alt_dial,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc FROM vicidial_campaigns where campaign_id='$campaign';";
+			$stmt="SELECT auto_alt_dial,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc,daily_call_count_limit,daily_limit_manual FROM vicidial_campaigns where campaign_id='$campaign';";
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00064',$user,$server_ip,$session_name,$one_mysql_log);}
 			if ($DB) {echo "$stmt\n";}
@@ -7573,6 +7620,8 @@ if ($stage == "end")
 				$use_internal_dnc =			$row[1];
 				$use_campaign_dnc =			$row[2];
 				$use_other_campaign_dnc =	$row[3];
+				$daily_call_count_limit =	$row[4];
+				$daily_limit_manual =		$row[5];
 				}
 			else {$auto_alt_dial = 'NONE';}
 			if (preg_match("/(ALT_ONLY|ADDR3_ONLY|ALT_AND_ADDR3|ALT_AND_EXTENDED|ALT_AND_ADDR3_AND_EXTENDED|EXTENDED_ONLY)/i",$auto_alt_dial))
@@ -12845,7 +12894,7 @@ if ($ACTION == 'updateDISPO')
 		}
 	### END Call Notes Logging ###
 
-	$stmt="SELECT auto_alt_dial_statuses,use_internal_dnc,use_campaign_dnc,api_manual_dial,use_other_campaign_dnc,call_quota_lead_ranking from vicidial_campaigns where campaign_id='$campaign';";
+	$stmt="SELECT auto_alt_dial_statuses,use_internal_dnc,use_campaign_dnc,api_manual_dial,use_other_campaign_dnc,call_quota_lead_ranking,daily_call_count_limit,daily_limit_manual from vicidial_campaigns where campaign_id='$campaign';";
 	$rslt=mysql_to_mysqli($stmt, $link);
 		if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00155',$user,$server_ip,$session_name,$one_mysql_log);}
 	$row=mysqli_fetch_row($rslt);
@@ -12855,6 +12904,8 @@ if ($ACTION == 'updateDISPO')
 	$api_manual_dial =				$row[3];
 	$use_other_campaign_dnc =		$row[4];
 	$call_quota_lead_ranking =		$row[5];
+	$daily_call_count_limit =		$row[6];
+	$daily_limit_manual =			$row[7];
 
 
 	### BEGIN Call Quota Lead Renking logging ###
@@ -16267,7 +16318,14 @@ if ($ACTION == 'SBC_timezone_build')
 					$line_country = $cust_timezome_line[0];
 					$line_zone =	$cust_timezome_line[1];
 					$line_dst =		$cust_timezome_line[2];
-					$line_name = preg_replace('/[^-, _0-9a-zA-Z]/','',$cust_timezome_line[3]);
+					if ($non_latin < 1)
+						{
+						$line_name = preg_replace('/[^-, _0-9a-zA-Z]/','',$cust_timezome_line[3]);
+						}
+					else
+						{
+						$line_name = preg_replace('/[^-, _0-9\p{L}]/u','',$cust_timezome_line[3]);
+						}
 					$stmt = "SELECT php_tz from vicidial_phone_codes where country='$line_country' and DST='$line_dst' and tz_code='$line_zone' limit 1;";
 					if ($DB) {echo "$stmt\n";}
 					$rslt=mysql_to_mysqli($stmt, $link);
@@ -19539,7 +19597,7 @@ function status_group_gather($status_group_id,$record_type)
 ##### DNC check #####
 function manual_dnc_check($temp_phone_number, $temp_no_hopper, $temp_dial_only)
 	{
-	global $manual_dial_filter, $use_internal_dnc, $use_campaign_dnc, $campaign, $user, $link, $NOW_TIME, $mel, $server_ip, $session_name, $one_mysql_log, $SSagent_debug_logging, $startMS, $ACTION, $php_script, $stage, $lead_id;
+	global $manual_dial_filter, $use_internal_dnc, $use_campaign_dnc, $campaign, $user, $link, $NOW_TIME, $mel, $server_ip, $session_name, $one_mysql_log, $SSagent_debug_logging, $startMS, $ACTION, $php_script, $stage, $lead_id, $daily_call_count_limit, $daily_limit_manual;
 
 	$use_other_campaign_dnc='';
 	if (strlen($campaign) > 0)
@@ -19805,5 +19863,69 @@ function manual_dnc_check($temp_phone_number, $temp_no_hopper, $temp_dial_only)
 			}
 		}
 	### END DNC manual dial filtering ###
+	}
+
+
+##### Daily call count limit check #####
+function manual_dccl_check($temp_lead_id, $temp_no_hopper, $temp_dial_only)
+	{
+	global $manual_dial_filter, $use_internal_dnc, $use_campaign_dnc, $campaign, $user, $link, $NOW_TIME, $mel, $server_ip, $session_name, $one_mysql_log, $SSagent_debug_logging, $startMS, $ACTION, $php_script, $stage, $lead_id, $daily_call_count_limit, $daily_limit_manual, $SSdaily_call_count_limit;
+
+#	$fp = fopen ("./DCCLdebug_log.txt", "a");
+#	fwrite ($fp, "$NOW_TIME|1     |$lead_id|$SSdaily_call_count_limit|$daily_call_count_limit|$daily_limit_manual|\n");
+#	fclose($fp);  
+
+	### BEGIN Daily call count limit filtering ### 
+	if ( ($SSdaily_call_count_limit > 0) and ($daily_call_count_limit > 0) and (preg_match("/RESTRICT/",$daily_limit_manual)) )
+		{
+		$temp_daily_call_count_limit = $daily_call_count_limit;
+		if ($temp_dial_only > 0) {$temp_daily_call_count_limit = ($daily_call_count_limit + 1);}
+		if (preg_match("/COUNT/",$daily_limit_manual))
+			{$stmt="SELECT called_count_total FROM vicidial_lead_call_daily_counts where lead_id='$temp_lead_id';";}
+		else
+			{$stmt="SELECT called_count_auto FROM vicidial_lead_call_daily_counts where lead_id='$temp_lead_id';";}
+		$rslt=mysql_to_mysqli($stmt, $link);
+			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00842',$user,$server_ip,$session_name,$one_mysql_log);}
+		if ($DB) {echo "$stmt\n";}
+		$vlcdc_ct = mysqli_num_rows($rslt);
+		if ($vlcdc_ct > 0)
+			{
+			$row=mysqli_fetch_row($rslt);
+			if ($row[0] >= $temp_daily_call_count_limit)
+				{
+				### flag the lead as called
+				$stmt = "UPDATE vicidial_list set called_since_last_reset='Y' where lead_id='$lead_id';";
+				if ($DB) {echo "$stmt\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00843',$user,$server_ip,$session_name,$one_mysql_log);}
+
+				if ($temp_no_hopper > 0)
+					{
+					### reset agent log record
+					$stmt="UPDATE vicidial_agent_log set lead_id=NULL,comments='' where agent_log_id='$agent_log_id';";
+						if ($format=='debug') {echo "\n<!-- $stmt -->";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00844',$user,$server_ip,$session_name,$one_mysql_log);}
+
+					echo " NO-HOPPER DAILY CALL LIMIT\nTRY AGAIN\n";
+					$stage .= "|$agent_log_id|$vla_status|$agent_dialed_type|$agent_dialed_number|";
+					}
+				else
+					{
+					if ($temp_dial_only)
+						{
+						echo " CALL NOT PLACED\nDAILY CALL LIMIT\n";
+						}
+					else
+						{
+						echo "DAILY CALL LIMIT\n";
+						}
+					}
+				if ($SSagent_debug_logging > 0) {vicidial_ajax_log($NOW_TIME,$startMS,$link,$ACTION,$php_script,$user,$stage,$lead_id,$session_name,$stmt);}
+				exit;
+				}
+			}
+		}
+	### END Daily call count limit filtering ###
 	}
 ?>

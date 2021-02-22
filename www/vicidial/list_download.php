@@ -4,7 +4,7 @@
 # downloads the entire contents of a vicidial list ID to a flat text file
 # that is tab delimited
 #
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -36,6 +36,7 @@
 # 170409-1556 - Added IP List validation code
 # 180330-1414 - Added option for downloading of CID Groups
 # 190926-1015 - Fix for PHP7
+# 201208-1630 - Fix for custom fields issue when downloading list with no custom fields itself
 #
 
 $startMS = microtime();
@@ -678,6 +679,14 @@ if ( ($custom_fields_enabled > 0) and ($event_code_type=='LIST') )
 				{
 				$valid_custom_table=1;
 				}
+			}
+		if ($valid_custom_table < 1)
+			{
+			$stmt="SHOW TABLES LIKE \"custom\_%\";";
+			if ($DB>0) {echo "$stmt";}
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$tablecount_to_print = mysqli_num_rows($rslt);
+			$valid_custom_table = $tablecount_to_print;
 			}
 		}
 	if ($valid_custom_table > 0)

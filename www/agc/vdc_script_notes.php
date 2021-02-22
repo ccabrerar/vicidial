@@ -1,7 +1,7 @@
 <?php
 # vdc_script_notes.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed open in the SCRIPT tab in the agent interface through
 # an IFRAME. It will create a new record for every SUBMIT
@@ -19,10 +19,11 @@
 # 141216-2132 - Added language settings lookups and user/pass variable standardization
 # 170526-2345 - Added additional variable filtering
 # 170528-0901 - Added more variable filtering
+# 201117-2213 - Changes for better compatibility with non-latin data input
 #
 
-$version = '2.14-9';
-$build = '170528-0901';
+$version = '2.14-10';
+$build = '201117-2213';
 
 require_once("dbconnect_mysqli.php");
 require_once("functions.php");
@@ -221,15 +222,6 @@ if (strlen($call_date) < 1)
 
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
-$lead_id = preg_replace('/[^0-9]/', '', $lead_id);
-$list_id = preg_replace('/[^0-9]/', '', $list_id);
-$notesid = preg_replace('/[^0-9]/', '', $notesid);
-$server_ip = preg_replace("/\'|\"|\\\\|;/","",$server_ip);
-$session_id = preg_replace('/[^0-9]/','',$session_id);
-$uniqueid = preg_replace('/[^-_\.0-9a-zA-Z]/','',$uniqueid);
-$campaign = preg_replace('/[^-_0-9a-zA-Z]/','',$campaign);
-$group = preg_replace('/[^-_0-9a-zA-Z]/','',$group);
-$session_name = preg_replace("/\'|\"|\\\\|;/","",$session_name);
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
@@ -263,12 +255,27 @@ if ($qm_conf_ct > 0)
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
+$lead_id = preg_replace('/[^0-9]/', '', $lead_id);
+$list_id = preg_replace('/[^0-9]/', '', $list_id);
+$notesid = preg_replace('/[^0-9]/', '', $notesid);
+$server_ip = preg_replace("/\'|\"|\\\\|;/","",$server_ip);
+$session_id = preg_replace('/[^0-9]/','',$session_id);
+$uniqueid = preg_replace('/[^-_\.0-9a-zA-Z]/','',$uniqueid);
+$session_name = preg_replace("/\'|\"|\\\\|;/","",$session_name);
+$length_in_sec = preg_replace("/[^0-9]/","",$length_in_sec);
+$phone_code = preg_replace("/[^0-9]/","",$phone_code);
+$phone_number = preg_replace("/[^0-9]/","",$phone_number);
+
 if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
-	$length_in_sec = preg_replace("/[^0-9]/","",$length_in_sec);
-	$phone_code = preg_replace("/[^0-9]/","",$phone_code);
-	$phone_number = preg_replace("/[^0-9]/","",$phone_number);
+	$campaign = preg_replace('/[^-_0-9a-zA-Z]/','',$campaign);
+	$group = preg_replace('/[^-_0-9a-zA-Z]/','',$group);
+	}
+else
+	{
+	$campaign = preg_replace('/[^-_0-9\p{L}]/u','',$campaign);
+	$group = preg_replace('/[^-_0-9\p{L}]/u','',$group);
 	}
 
 if ($DB > 0)

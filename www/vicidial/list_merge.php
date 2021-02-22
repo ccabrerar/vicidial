@@ -9,6 +9,7 @@
 # 170819-1000 - Added allow_manage_active_lists option
 # 180508-2215 - Added new help display
 # 191101-1630 - Translation patch, removed function.js 
+# 201117-1350 - Translation bug fixed, Issue #1236
 #
 
 $version = '2.14-3';
@@ -64,8 +65,6 @@ if (isset($_GET["create_new_list"])) {$create_new_list=$_GET["create_new_list"];
 
 $DB = preg_replace('/[^0-9]/','',$DB);
 $retain_original_list = preg_replace('/[^NY]/i','',$retain_original_list);
-$submit = preg_replace('/[^-_0-9a-zA-Z]/','',$submit);
-$confirm = preg_replace('/[^-_0-9a-zA-Z]/','',$confirm);
 $available_lists = preg_replace('/[^0-9\|]/','',$available_lists);
 $start_dest_list_id = preg_replace('/[^0-9]/','',$start_dest_list_id);
 $destination_list_id = preg_replace('/[^0-9]/','',$destination_list_id);
@@ -368,7 +367,7 @@ else
 
 
 # confirmation page
-if ($submit == "submit" )
+if ($submit == _QXZ("submit") )
 	{
 	
 	if(count($available_lists)<1) {
@@ -390,8 +389,8 @@ if ($submit == "submit" )
 			$campaign_id=$list_row[3];
 			$active=$list_row[4];
 
-			if (!preg_match("/ $campaign_id /", $allowed_campaigns)) {
-				echo "<p>"._QXZ("Cannot move leads - access is denied to the specified list ID:")." $new_list_id</p>\n";
+			if (!preg_match("/ $campaign_id /", $allowed_campaigns) && !preg_match("/ALL\-CAMPAIGNS/i",$allowed_campaigns)) {
+				echo "<p>"._QXZ("Cannot move leads - access is denied to the specified list ID ($campaign_id - $allowed_campaigns):")." $new_list_id</p>\n";
 				echo "<p><a href='$PHP_SELF?new_list_id=$new_list_id&destination_list_id=$destination_list_id&new_campaign_id=$new_campaign_id&new_list_name=".urlencode($new_list_name)."&new_list_description=".urlencode($new_list_description)."&active=$active&retain_original_list=$retain_original_list&available_lists[]=".implode("&available_lists[]=", $available_lists)."'>"._QXZ("Click here to start over.")."</a></p>\n";
 				exit;
 			}
@@ -436,7 +435,7 @@ if ($submit == "submit" )
 	echo ""._QXZ("You are about to merge list(s) <UL><LI>%1s</UL><BR>into list ID %2s.<BR><BR><B>TOTAL LEADS TO BE MOVED: %3s",0,'',implode("<LI>", $available_lists),$destination_list_id,$orig_count)."\n";
 
 	if ($orig_count>=400000) {
-		echo "<BR><BR><redalert>*** WARNING:  Lists should not have more than 400,000 records in them!!! ***</redalert><BR><BR>";
+		echo "<BR><BR><redalert>*** "._QXZ("WARNING:  Lists should not have more than 400,000 records in them!!!")." ***</redalert><BR><BR>";
 	}
 
 	echo "<center><form action=$PHP_SELF method=POST>\n";
@@ -455,14 +454,14 @@ if ($submit == "submit" )
 	# keep debug active
 	echo "<input type=hidden name=DB value='$DB'>\n";
 	
-	echo "<input type=submit name='confirm' class='red_btn' value='CONFIRM'>\n";
+	echo "<input type=submit name='confirm' class='red_btn' value='"._QXZ("CONFIRM")."'>\n";
 	echo "</form>\n";
 	echo "<p><a href='$PHP_SELF'>"._QXZ("Click here to start over.")."</a></p></center>\n";
 	echo "</body>\n</html>\n";
 	}
 
 # actually do the merge
-if ($confirm == "CONFIRM")
+if ($confirm == _QXZ("CONFIRM"))
 	{
 	$available_lists_array=explode("|", $available_lists);
 	# Get the number of leads in the available_lists

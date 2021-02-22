@@ -106,11 +106,6 @@ $IFRAME=0;
 
 $user = preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass = preg_replace("/\'|\"|\\\\|;| /","",$pass);
-$campaign = preg_replace("/\'|\"|\\\\|;/","",$campaign);
-$attachment_id = preg_replace("/[^0-9]/","",$attachment_id);
-$lead_id = preg_replace('/[^0-9]/','',$lead_id);
-$email_row_id = preg_replace('/[^0-9]/','',$email_row_id);
-$reply_to_address = preg_replace("/\'|\"|\\\\|;/","",$reply_to_address);
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
@@ -150,6 +145,12 @@ if ($allow_emails<1)
 	echo _QXZ("Your system does not have the email setting enabled")."\n";
 	exit;
 	}
+
+$campaign = preg_replace("/\'|\"|\\\\|;/","",$campaign);
+$attachment_id = preg_replace("/[^0-9]/","",$attachment_id);
+$lead_id = preg_replace('/[^0-9]/','',$lead_id);
+$email_row_id = preg_replace('/[^0-9]/','',$email_row_id);
+$reply_to_address = preg_replace("/\'|\"|\\\\|;/","",$reply_to_address);
 
 if ($non_latin < 1)
 	{

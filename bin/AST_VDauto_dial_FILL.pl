@@ -46,6 +46,8 @@
 # 191108-1023 - Added Dial Timeout Lead override function
 # 200108-1314 - Added CID Group type of NONE
 # 200122-1850 - Added code for CID Group auto-rotate feature
+# 201122-0932 - Added code for dialy call count limits
+# 201220-1034 - Changes for shared agent campaigns
 #
 
 ### begin parsing run-time options ###
@@ -209,6 +211,26 @@ $sthA->finish();
 
 $event_string='LOGGED INTO MYSQL SERVER ON 1 CONNECTION|';
 &event_logger;
+
+### Grab system_settings values from the database
+$stmtA = "SELECT use_non_latin FROM system_settings;";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+if ($sthArows > 0)
+	{
+	@aryA = $sthA->fetchrow_array;
+	$non_latin = 						$aryA[0];
+	}
+$sthA->finish();
+
+if ($non_latin > 0) 
+	{
+	$stmtA = "SET NAMES 'UTF8';";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthA->finish();
+	}
 
 $one_day_interval = 12;		# 1 month loops for one year 
 while($one_day_interval > 0)
@@ -581,7 +603,7 @@ while($one_day_interval > 0)
 							$event_string.="     Campaign Dial Fill tally: $DBfill_tally[$camp_CIPct]/$DBfill_needed[$camp_CIPct]";
 							&event_logger;
 
-							$stmtA = "SELECT count(*) FROM vicidial_live_agents where campaign_id='$DBfill_campaign[$camp_CIPct]' and status NOT IN('PAUSED');";
+							$stmtA = "SELECT count(*) FROM vicidial_live_agents where ( (campaign_id='$DBfill_campaign[$camp_CIPct]') or (dial_campaign_id='$DBfill_campaign[$camp_CIPct]') ) and status NOT IN('PAUSED');";
 							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 							$sthArows=$sthA->rows;
@@ -890,13 +912,19 @@ while($one_day_interval > 0)
 														{
 														$stmtA = "UPDATE vicidial_list set called_since_last_reset='$CSLR', called_count='$called_count',user='VDAD',last_local_call_time='$LLCT_DATE' where lead_id=$lead_id;";
 														}
+													# update daily called counts for this lead
+													$stmtDC = "INSERT IGNORE INTO vicidial_lead_call_daily_counts SET lead_id='$lead_id',modify_date=NOW(),list_id='$PSCBlist_id',called_count_total='1',called_count_auto='1' ON DUPLICATE KEY UPDATE modify_date=NOW(),list_id='$PSCBlist_id',called_count_total=(called_count_total + 1),called_count_auto=(called_count_auto + 1);";
 													if ($staggered < 1)
 														{
 														$affected_rows = $dbhA->do($stmtA);
+														$affected_rowsDC = $dbhA->do($stmtDC);
+														if ($DB) {print "LEAD UPDATE: $affected_rows|$stmtA|\n";}
+														if ($DB) {print "LEAD CALL COUNT UPDATE: $affected_rowsDC|$stmtDC|\n";}
 														}
 													else
 														{
 														$vl_updates[$staggered_ct] = $stmtA;
+														$vdc_updates[$staggered_ct] = $stmtDC;
 														}
 
 													$PADlead_id = sprintf("%010s", $lead_id);	while (length($PADlead_id) > 10) {chop($PADlead_id);}
@@ -1225,6 +1253,7 @@ while($one_day_interval > 0)
 								$TEMP_vm_insert = $vm_inserts[$staggered_fill];
 								$TEMP_vac_insert = $vac_inserts[$staggered_fill];
 								$TEMP_vl_update = $vl_updates[$staggered_fill];
+								$TEMP_vdc_update = $vdc_updates[$staggered_fill];
 								$TEMP_st_logged = $st_logged[$staggered_fill];
 								$TEMP_vddl_inserts = $vddl_inserts[$staggered_fill];
 
@@ -1240,9 +1269,16 @@ while($one_day_interval > 0)
 								if (length($TEMP_vm_insert) > 20)
 									{
 									$affected_rows_vl = $dbhA->do($TEMP_vl_update);
+									$affected_rows_vdc = $dbhA->do($TEMP_vdc_update);
 									$affected_rows_vm = $dbhA->do($TEMP_vm_insert);
 									$affected_rows_vac = $dbhA->do($TEMP_vac_insert);
 									$affected_rows_vddl = $dbhA->do($TEMP_vddl_inserts);
+
+									if ($DB) {print "LEAD UPDATE: $affected_rows_vl|$TEMP_vl_update|\n";}
+									if ($DB) {print "LEAD CALL COUNT UPDATE: $affected_rows_vdc|$TEMP_vdc_update|\n";}
+									if ($DB) {print "VICIDIAL_MANAGER INSERT: $affected_rows_vm|$TEMP_vm_insert|\n";}
+									if ($DB) {print "VICIDIAL_AUTO_CALLS INSERT: $affected_rows_vac|$TEMP_vac_insert|\n";}
+									if ($DB) {print "VICIDIAL_DIAL_LOG INSERT: $affected_rows_vddl|$TEMP_vddl_inserts|\n";}
 									}
 
 								$event_string = "|     number call stagger dialed|$TEMP_vm_insert|$TEMP_server_ip|$staggered_fill|$staggered_ct|$affected_rows_vm|$affected_rows_vac|$affected_rows_vl|$affected_rows_vddl   $TEMP_st_logged";
@@ -1270,6 +1306,7 @@ while($one_day_interval > 0)
 					@vm_inserts=@MT;
 					@vac_inserts=@MT;
 					@vl_updates=@MT;
+					@vdc_updates=@MT;
 					@st_logged=@MT;
 					@vddl_inserts=@MT;
 					###############################################################################

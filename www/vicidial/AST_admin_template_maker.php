@@ -473,7 +473,7 @@ if (mysqli_num_rows($template_rslt)>0) {
 		<td width='25%' align="right"><font class="standard"><?php echo _QXZ("List ID template will load into"); ?>:</font></td>
 		<td width='75%'>
 			<select id='template_list_id' name='template_list_id' onChange="DisplayTemplateFields(this.value)">
-			<option value=''>--Select a list below--</option>
+			<option value=''>--<?php echo _QXZ("Select a list below"); ?>--</option>
 			<?php
 			$stmt="SELECT list_id, list_name from vicidial_lists $whereLOGallowed_campaignsSQL order by list_id;";
 			$rslt=mysql_to_mysqli($stmt, $link);
