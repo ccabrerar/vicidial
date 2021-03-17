@@ -107,8 +107,16 @@ $ip = getenv("REMOTE_ADDR");
 $browser = getenv("HTTP_USER_AGENT");
 
 $auth_message = user_authorization($PHP_AUTH_USER,$PHP_AUTH_PW,'QC',1,0);
-if ($auth_message == 'GOOD')
-	{$user_auth=1;}
+if ( ($auth_message == 'GOOD') or ($auth_message == '2FA') )
+	{
+	$user_auth=1;
+	if ($auth_message == '2FA')
+		{
+		header ("Content-type: text/html; charset=utf-8");
+		echo _QXZ("Your session is expired").". <a href=\"admin.php\">"._QXZ("Click here to log in")."</a>.\n";
+		exit;
+		}
+	}
 
 if ($user_auth > 0)
 	{

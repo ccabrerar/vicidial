@@ -1,7 +1,7 @@
 <?php
 # admin_header.php - VICIDIAL administration header
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 # 
 
 # CHANGES
@@ -85,6 +85,8 @@
 # 200409-1720 - Reorganized the Inbound section
 # 200508-1052 - Added copy_prev_cm_option() JS function
 # 201108-1232 - Added no_header option within short_header option
+# 210226-1547 - Added Copy Phone link
+# 210306-0902 - Changes for new QC module
 #
 
 $stmt="SELECT admin_home_url,enable_tts_integration,callcard_enabled,custom_fields_enabled,allow_emails,level_8_disable_add,allow_chats,enable_languages,admin_row_click,admin_screen_colors,user_new_lead_limit,user_territories_active,qc_features_active,agent_soundboards,enable_drop_lists,allow_ip_lists from system_settings;";
@@ -1997,23 +1999,53 @@ if ($subcamp_font_size < 4) {$subcamp_font_size='11';}
 	<?php
 	if (strlen($qc_hh) > 25) 
 		{
+		$campaign_sh="CLASS=\"subhead_style\"";
+		$ingroup_sh="CLASS=\"subhead_style\"";
 		$list_sh="CLASS=\"subhead_style\"";
 		$enter_sh="CLASS=\"subhead_style\"";
 		$modify_sh="CLASS=\"subhead_style\"";
+		$scorecard_sh="CLASS=\"subhead_style\"";
 
+		if($qc_display_group_type=="CAMPAIGN") {$sh="campaign";}
+		if($qc_display_group_type=="INGROUP") {$sh="ingroup";}
+		if($qc_display_group_type=="LIST") {$sh="list";}
+		#if($sh=="modify") {$sh="modify";}
+		if($qc_display_group_type=="SCORECARD") {$sh="scorecard";}
+		if(!$sh) {$sh="campaign";}
+
+		if ($sh=='campaign') {$campaign_sh="CLASS=\"subhead_style_selected\"";}
+		if ($sh=='ingroup') {$ingroup_sh="CLASS=\"subhead_style_selected\"";}
 		if ($sh=='list') {$list_sh="CLASS=\"subhead_style_selected\"";}
 		if ($sh=='enter') {$enter_sh="CLASS=\"subhead_style_selected\"";}
 		if ($sh=='modify') {$modify_sh="CLASS=\"subhead_style_selected\"";}
+		if ($sh=='scorecard') {$scorecard_sh="CLASS=\"subhead_style_selected\"";}
 
 		?>
-	<TR <?php echo $list_sh ?><?php if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='$ADMIN?ADD=100000000000000';\"";} ?>>
+	<TR <?php echo $campaign_sh ?><?php if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='$ADMIN?ADD=100000000000000&qc_display_group_type=CAMPAIGN';\"";} ?>>
 		<TD ALIGN=LEFT> &nbsp;
-			<a href="<?php echo $ADMIN ?>?ADD=100000000000000" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Show QC Campaigns"); ?> </FONT></a>
+			<a href="<?php echo $ADMIN ?>?ADD=100000000000000&qc_display_group_type=CAMPAIGN" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("QC Calls by Campaign"); ?> </FONT></a>
 		</TD>
 	</TR>
+	<TR <?php echo $list_sh ?><?php if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='$ADMIN?ADD=100000000000000&qc_display_group_type=LIST';\"";} ?>>
+		<TD ALIGN=LEFT> &nbsp;
+			<a href="<?php echo $ADMIN ?>?ADD=100000000000000&qc_display_group_type=LIST" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("QC Calls by List"); ?> </FONT></a>
+		</TD>
+	</TR>
+	<TR <?php echo $ingroup_sh ?><?php if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='$ADMIN?ADD=100000000000000&qc_display_group_type=INGROUP';\"";} ?>>
+		<TD ALIGN=LEFT> &nbsp;
+			<a href="<?php echo $ADMIN ?>?ADD=100000000000000&qc_display_group_type=INGROUP" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("QC Calls by Ingroup"); ?> </FONT></a>
+		</TD>
+	</TR>
+<!--
 	<TR <?php echo $enter_sh ?><?php if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='$ADMIN?ADD=100000000000000';\"";} ?>>
 		<TD ALIGN=LEFT> &nbsp;
 			<a href="<?php echo $ADMIN ?>?ADD=100000000000000" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Enter QC Queue"); ?> </FONT></a>
+		</TD>
+	</TR>
+//-->
+	<TR <?php echo $scorecard_sh ?><?php if ($SSadmin_row_click > 0) {echo " onclick=\"qc_scorecards.php';\"";} ?>>
+		<TD ALIGN=LEFT> &nbsp;
+			<a href="qc_scorecards.php" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Show QC Scorecards"); ?> </FONT></a>
 		</TD>
 	</TR>
 	<TR <?php echo $modify_sh ?><?php if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='$ADMIN?ADD=341111111111111';\"";} ?>>
@@ -2551,7 +2583,7 @@ if ($SSenable_languages == '1')
 		<?php } 
 	if (strlen($phones_sh) > 25) { 
 		?>
-	<TR BGCOLOR=<?php echo $phones_color ?>><TD ALIGN=LEFT COLSPAN=2> &nbsp; <a href="<?php echo $ADMIN ?>?ADD=10000000000"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Show Phones"); ?> </a>&nbsp;|<?php if ($add_copy_disabled < 1) { ?>&nbsp;<a href="<?php echo $ADMIN ?>?ADD=11111111111"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Add A New Phone"); ?> </a>&nbsp;|<?php } ?>&nbsp;<a href="<?php echo $ADMIN ?>?ADD=12000000000"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Phone Alias List"); ?> </a>&nbsp;|<?php if ($add_copy_disabled < 1) { ?>&nbsp;<a href="<?php echo $ADMIN ?>?ADD=12111111111"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Add A New Phone Alias"); ?> </a>&nbsp;|<?php } ?>&nbsp;<a href="<?php echo $ADMIN ?>?ADD=13000000000"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Group Alias List"); ?> </a>&nbsp;|<?php if ($add_copy_disabled < 1) { ?>&nbsp;<a href="<?php echo $ADMIN ?>?ADD=13111111111"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Add A New Group Alias"); ?> </a><?php } ?></TD></TR>
+	<TR BGCOLOR=<?php echo $phones_color ?>><TD ALIGN=LEFT COLSPAN=2> &nbsp; <a href="<?php echo $ADMIN ?>?ADD=10000000000"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Show Phones"); ?> </a>&nbsp;|<?php if ($add_copy_disabled < 1) { ?>&nbsp;<a href="<?php echo $ADMIN ?>?ADD=11111111111"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Add A New Phone"); ?> </a>&nbsp;|<?php } ?><?php if ($add_copy_disabled < 1) { ?>&nbsp;<a href="<?php echo $ADMIN ?>?ADD=12222222222"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Copy an Existing Phone"); ?> </a>&nbsp;|<?php } ?>&nbsp;<a href="<?php echo $ADMIN ?>?ADD=12000000000"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Phone Alias List"); ?> </a>&nbsp;|<?php if ($add_copy_disabled < 1) { ?>&nbsp;<a href="<?php echo $ADMIN ?>?ADD=12111111111"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Add A New Phone Alias"); ?> </a>&nbsp;|<?php } ?>&nbsp;<a href="<?php echo $ADMIN ?>?ADD=13000000000"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Group Alias List"); ?> </a>&nbsp;|<?php if ($add_copy_disabled < 1) { ?>&nbsp;<a href="<?php echo $ADMIN ?>?ADD=13111111111"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Add A New Group Alias"); ?> </a><?php } ?></TD></TR>
 		<?php }
 	if (strlen($conference_sh) > 25) { 
 		?>

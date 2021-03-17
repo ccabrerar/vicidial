@@ -1,7 +1,7 @@
 <?php
 # vdc_db_query.php
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to exchange information between vicidial.php and the database server for various actions
 #
@@ -499,13 +499,15 @@
 # 201111-2139 - Fix for AGENTDIRECT selected in-groups issue #1241
 # 201117-0820 - Changes for better compatibility with non-latin data input
 # 201122-1038 - Added Daily call count limit features
+# 210309-2343 - Small change to Fake-call-logging in QM for some queuemetrics_pausereason settings
+# 210315-2105 - Added CALLBACK manual dial filter option
 #
 
-$version = '2.14-392';
-$build = '201122-1038';
+$version = '2.14-394';
+$build = '210315-2105';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
-$mysql_log_count=844;
+$mysql_log_count=850;
 $one_mysql_log=0;
 $DB=0;
 $VD_login=0;
@@ -2538,6 +2540,35 @@ if ($ACTION == 'manDiaLnextCaLL')
 					$VLAEDaffected_rows = mysqli_affected_rows($link);
 
 					echo "NUMBER NOT IN SYSTEM\n";
+					if ($SSagent_debug_logging > 0) {vicidial_ajax_log($NOW_TIME,$startMS,$link,$ACTION,$php_script,$user,$stage,$lead_id,$session_name,$stmt);}
+					exit;
+					}
+				}
+			if (preg_match("/CALLBACK/",$manual_dial_filter))
+				{
+				$stmt="SELECT count(*) FROM vicidial_callbacks where lead_id='$lead_id';";
+				$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00845',$user,$server_ip,$session_name,$one_mysql_log);}
+				if ($DB) {echo "$stmt\n";}
+				$row=mysqli_fetch_row($rslt);
+				$MDF_search_flag='MAIN';
+
+				if ($row[0] < 1)
+					{
+					### purge from the dial queue and api
+					$stmt = "DELETE from vicidial_manual_dial_queue where phone_number='$phone_number' and user='$user';";
+					if ($DB) {echo "$stmt\n";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00846',$user,$server_ip,$session_name,$one_mysql_log);}
+					$VMDQaffected_rows = mysqli_affected_rows($link);
+
+					$stmt = "UPDATE vicidial_live_agents set external_dial='' where user='$user';";
+					if ($DB) {echo "$stmt\n";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00847',$user,$server_ip,$session_name,$one_mysql_log);}
+					$VLAEDaffected_rows = mysqli_affected_rows($link);
+
+					echo "NUMBER NOT A CALLBACK\n";
 					if ($SSagent_debug_logging > 0) {vicidial_ajax_log($NOW_TIME,$startMS,$link,$ACTION,$php_script,$user,$stage,$lead_id,$session_name,$stmt);}
 					exit;
 					}
@@ -5736,6 +5767,23 @@ if ($ACTION == 'manDiaLonly')
 
 		### BEGIN check phone filtering for DNC or camplists if enabled ###
 		manual_dnc_check($phone_number, 0, 1);
+
+		if (preg_match("/CALLBACK/",$manual_dial_filter))
+			{
+			$stmt="SELECT count(*) FROM vicidial_callbacks where lead_id='$lead_id';";
+			$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00848',$user,$server_ip,$session_name,$one_mysql_log);}
+			if ($DB) {echo "$stmt\n";}
+			$row=mysqli_fetch_row($rslt);
+			$MDF_search_flag='MAIN';
+
+			if ($row[0] < 1)
+				{
+				echo " CALL NOT PLACED\nNUMBER NOT A CALLBACK\n";
+				if ($SSagent_debug_logging > 0) {vicidial_ajax_log($NOW_TIME,$startMS,$link,$ACTION,$php_script,$user,$stage,$lead_id,$session_name,$stmt);}
+				exit;
+				}
+			}
 
 		if (preg_match("/CAMPLISTS/",$manual_dial_filter))
 			{
@@ -16023,7 +16071,8 @@ if ($ACTION == 'PauseCodeSubmit')
 					$pauseall_time = ($secX - 1);
 					$fake_call_id = $secX;
 						while (strlen($fake_call_id) > 9) {$fake_call_id = substr("$fake_call_id", 1);}
-					$fake_call_id = "F".$fake_call_id."0000000001";
+					$f_random = (rand(1000, 9999) + 10000);
+					$fake_call_id = "F".$fake_call_id."00".$f_random."001";
 
 					$stmt = "INSERT INTO queue_log SET `partition`='P01',time_id='$unpauseall_time',call_id='',queue='NONE',agent='Agent/$user',verb='UNPAUSEALL',serverid='$queuemetrics_log_id';";
 					if ($DB) {echo "$stmt\n";}

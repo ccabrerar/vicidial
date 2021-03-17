@@ -574,6 +574,28 @@ OTHER CHANGES:
 	these new features work, see the Field Options help in the admin web
 	screen.
 
+163. Added Phone Defaults system setting, allowing you to set many default
+	values when adding new phones through admin.php. Also added a Copy New
+	Phone admin web function.
+
+164. Redesign of QC module, with new QC scorecards, the ability to do QC by 
+	Campaign/List/In-Group, new reporting and more. See the
+	docs/QC_PROCCES.txt document for more information.
+
+165. Added the BUTTON Field Type option to Custom List Fields. Allows you to add
+	a button to the form that will commit any changes made in the form and 
+	automatically reload the form.
+
+166. Added Two-Factor Authentication(2FA) as an option for the admin web screens
+	This adds a required second step to the admin web screen login process 
+	through a method other than a password, such as: an Email, Phone Call or
+	Text-Message(SMS). This 2FA auth also lasts only a set amount of time
+	(defined in System Settings[number of hours, from 1-9999 hours]), or 
+	until the user logs out. For more information, read the
+	2FA_TWO_FACTOR_AUTHENTICATION.txt document.
+
+167. Added a page to allow Editing existing Lead Loader Templates.
+
 
 
 

@@ -51,6 +51,7 @@
 # 200406-1204 - Fix for gender default field population
 # 210211-0145 - Added SOURCESELECT field type, added basic Math equations to SCRIPT custom field types
 # 210211-1916 - Disable SCRIPT custom fields Math functions on older PHP versions
+# 210310-1322 - Added BUTTON field type
 #
 
 # $mysql_queries = 26
@@ -442,7 +443,7 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 					}
 				if ( (!preg_match("/\|$A_field_label[$o]\|/i",$vicidial_list_fields)) and (!preg_match("/\|$A_master_field[$o]\|/i",$vicidial_list_fields)) )
 					{
-					if ( ($A_field_type[$o]=='DISPLAY') or ($A_field_type[$o]=='SCRIPT') or ($A_field_type[$o]=='SWITCH') )
+					if ( ($A_field_type[$o]=='DISPLAY') or ($A_field_type[$o]=='SCRIPT') or ($A_field_type[$o]=='SWITCH') or ($A_field_type[$o]=='BUTTON') )
 						{
 						$select_SQL .= "8,";
 						$A_field_select[$o]='----EMPTY----';
@@ -808,6 +809,19 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 					{
 					if ($A_field_default[$o]=='NULL') {$A_field_default[$o]='';}
 					$field_HTML .= _QXZ("$A_field_default[$o]")."\n";
+					}
+				if ($A_field_type[$o]=='BUTTON')
+					{
+					$field_options_array = explode("\n",$A_field_options[$o]);
+					if (preg_match("/^SubmitRefresh/i",$field_options_array[0]))
+						{
+						if ($A_multi_position[$o]=='VERTICAL') 
+							{$field_HTML .= " &nbsp; ";}
+						if (strlen($A_field_default[$o]) < 1) {$A_field_default[$o] = _QXZ("Commit Changes and Refresh Form");}
+						$field_HTML .= "<button class='button_active' onclick=\"form_button_functions('SubmitRefresh');\"> "._QXZ("$A_field_default[$o]")." </button> \n";
+						if ($A_multi_position[$o]=='VERTICAL') 
+							{$field_HTML .= "<BR>\n";}
+						}
 					}
 				if ($A_field_type[$o]=='READONLY')
 					{

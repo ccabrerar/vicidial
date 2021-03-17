@@ -25,7 +25,7 @@
 # exten => h,1,DeadAGI(agi://127.0.0.1:4577/call_log--HVcauses--PRI-----NODEBUG-----${HANGUPCAUSE}-----${DIALSTATUS}-----${DIALEDTIME}-----${ANSWEREDTIME})
 # 
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG:
 # 61010-1007 - First test build
@@ -86,6 +86,7 @@
 # 190709-2240 - Added Call Quota logging
 # 191001-1509 - Small fix for monitoring issue
 # 200318-1054 - Added code for OpenSIPs CallerIDname
+# 210314-1015 - Added enhanced_disconnect_logging=2 option
 #
 
 # defaults for PreFork
@@ -1029,16 +1030,30 @@ sub process_request
 						### END - CPD Look for result for B/DC calls
 						##############################################################
 						}
-					if ( ($PRI =~ /^PRI$/) && ($callerid =~ /\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/) && ( ( ($dialstatus =~ /BUSY/) || ( ($dialstatus =~ /CHANUNAVAIL/) && ($hangup_cause =~ /^1$|^28$/) ) || ( ($enhanced_disconnect_logging > 0) && ( ($dialstatus =~ /CONGESTION/) && ($hangup_cause =~ /^1$|^19$|^21$|^34$|^38$/) ) ) ) || ($CPDfound > 0) ) && ($callerid !~ /^S\d\d\d\d\d\d\d\d\d\d\d\d/) )
+					if ( ($PRI =~ /^PRI$/) && ($callerid =~ /\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/) && ( ( ($dialstatus =~ /BUSY/) || ( ($dialstatus =~ /CHANUNAVAIL/) && ($hangup_cause =~ /^1$|^28$/) ) || ( ($enhanced_disconnect_logging > 0) && ( ( ($dialstatus =~ /CONGESTION/) && ($hangup_cause =~ /^1$|^19$|^21$|^34$|^38$|^102$/) ) || ( ($dialstatus =~ /CHANUNAVAIL/) && ($hangup_cause =~ /^18$/) ) ) )  || ($CPDfound > 0) && ($callerid !~ /^S\d\d\d\d\d\d\d\d\d\d\d\d/) ) ) )
 						{
 						if ($CPDfound < 1) 
 							{
-							if ($dialstatus =~ /BUSY/) {$VDL_status = 'AB'; $VDAC_status = 'BUSY';}
-							if ($dialstatus =~ /CHANUNAVAIL/) {$VDL_status = 'ADC'; $VDAC_status = 'DISCONNECT';}
-							if ($enhanced_disconnect_logging > 0)
+							if ($enhanced_disconnect_logging == '2') 
 								{
-								if ($dialstatus =~ /CONGESTION/ && $hangup_cause =~ /^1$/) {$VDL_status = 'ADC'; $VDAC_status = 'DISCONNECT';}
-								if ($dialstatus =~ /CONGESTION/ && $hangup_cause =~ /^19$|^21$|^34$|^38$/) {$VDL_status = 'ADCT'; $VDAC_status = 'DISCONNECT';}
+								if ($dialstatus =~ /BUSY/) {$VDL_status = 'AB'; $VDAC_status = 'BUSY';}
+								if ($dialstatus =~ /CHANUNAVAIL/) {$VDL_status = 'ADC'; $VDAC_status = 'DISCONNECT';}
+								if ($enhanced_disconnect_logging > 0)
+									{
+									if ($dialstatus =~ /CHANUNAVAIL/ && $hangup_cause =~/^18/) {$VDL_status = 'ADCT'; $VDAC_status = 'DISCONNECT';}
+									if ($dialstatus =~ /CONGESTION/ && $hangup_cause =~ /^1$/) {$VDL_status = 'ADC'; $VDAC_status = 'DISCONNECT';}
+									if (($dialstatus =~ /CONGESTION/ && $hangup_cause =~ /^21$|^34$|^38$|^102$/) || ($dialstatus =~ /BUSY/ && $hangup_cause =~ /^19$/)) {$VDL_status = 'ADCT'; $VDAC_status = 'DISCONNECT';}
+									}
+								}
+							else
+								{
+								if ($dialstatus =~ /BUSY/) {$VDL_status = 'AB'; $VDAC_status = 'BUSY';}
+								if ($dialstatus =~ /CHANUNAVAIL/) {$VDL_status = 'ADC'; $VDAC_status = 'DISCONNECT';}
+								if ($enhanced_disconnect_logging > 0)
+									{
+									if ($dialstatus =~ /CONGESTION/ && $hangup_cause =~ /^1$/) {$VDL_status = 'ADC'; $VDAC_status = 'DISCONNECT';}
+									if ($dialstatus =~ /CONGESTION/ && $hangup_cause =~ /^19$|^21$|^34$|^38$/) {$VDL_status = 'ADCT'; $VDAC_status = 'DISCONNECT';}
+									}
 								}
 							}
 

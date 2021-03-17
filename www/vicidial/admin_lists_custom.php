@@ -54,10 +54,12 @@
 # 180504-1807 - Added new SWITCH field type
 # 191013-1014 - Fixes for PHP7
 # 210211-0032 - Added SOURCESELECT field type
+# 210304-2039 - Added option to "re-rank" field ranks when adding/updating a field in the middle of the form
+# 210311-2338 - Added BUTTON field type and 2FA
 #
 
-$admin_version = '2.14-45';
-$build = '210211-0032';
+$admin_version = '2.14-47';
+$build = '210311-2338';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -117,6 +119,8 @@ if (isset($_GET["ConFiRm"]))					{$ConFiRm=$_GET["ConFiRm"];}
 	elseif (isset($_POST["ConFiRm"]))			{$ConFiRm=$_POST["ConFiRm"];}
 if (isset($_GET["SUBMIT"]))						{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))			{$SUBMIT=$_POST["SUBMIT"];}
+if (isset($_GET["field_rerank"]))				{$field_rerank=$_GET["field_rerank"];}
+	elseif (isset($_POST["field_rerank"]))		{$field_rerank=$_POST["field_rerank"];}
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
@@ -191,6 +195,8 @@ else
 	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
 	}
 
+$field_rerank = preg_replace('/[^_0-9a-zA-Z]/','',$field_rerank);
+
 $STARTtime = date("U");
 $TODAY = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
@@ -223,8 +229,16 @@ if ($sl_ct > 0)
 
 $auth=0;
 $auth_message = user_authorization($PHP_AUTH_USER,$PHP_AUTH_PW,'',1,0);
-if ($auth_message == 'GOOD')
-	{$auth=1;}
+if ( ($auth_message == 'GOOD') or ($auth_message == '2FA') )
+	{
+	$auth=1;
+	if ($auth_message == '2FA')
+		{
+		header ("Content-type: text/html; charset=utf-8");
+		echo _QXZ("Your session is expired").". <a href=\"admin.php\">"._QXZ("Click here to log in")."</a>.\n";
+		exit;
+		}
+	}
 
 if ($auth < 1)
 	{
@@ -614,7 +628,7 @@ if ( ($action == "COPY_FIELDS_SUBMIT") and ($list_id > 99) and ($source_list_id 
 							}
 
 						### add field function
-						$SQLsuccess = add_field_function($DB,$link,$linkCUSTOM,$ip,$user,$table_exists,$A_field_id[$o],$list_id,$A_field_label[$o],$A_field_name[$o],$A_field_description[$o],$A_field_rank[$o],$A_field_help[$o],$A_field_type[$o],$A_field_options[$o],$A_field_size[$o],$A_field_max[$o],$A_field_default[$o],$A_field_required[$o],$A_field_cost[$o],$A_multi_position[$o],$A_name_position[$o],$A_field_order[$o],$A_field_encrypt[$o],$A_field_show_hide[$o],$A_field_duplicate[$o],$vicidial_list_fields,$mysql_reserved_words);
+						$SQLsuccess = add_field_function($DB,$link,$linkCUSTOM,$ip,$user,$table_exists,$A_field_id[$o],$list_id,$A_field_label[$o],$A_field_name[$o],$A_field_description[$o],$A_field_rank[$o],$A_field_help[$o],$A_field_type[$o],$A_field_options[$o],$A_field_size[$o],$A_field_max[$o],$A_field_default[$o],$A_field_required[$o],$A_field_cost[$o],$A_multi_position[$o],$A_name_position[$o],$A_field_order[$o],$A_field_encrypt[$o],$A_field_show_hide[$o],$A_field_duplicate[$o],$vicidial_list_fields,$mysql_reserved_words,$field_rerank);
 
 						if ($SQLsuccess > 0)
 							{echo _QXZ("SUCCESS: Custom Field Added")." - $list_id|$A_field_label[$o]\n<BR>";}
@@ -679,7 +693,7 @@ if ( ($action == "COPY_FIELDS_SUBMIT") and ($list_id > 99) and ($source_list_id 
 							$current_field_id =	$rowx[0];
 
 							### modify field function
-							$SQLsuccess = modify_field_function($DB,$link,$linkCUSTOM,$ip,$user,$table_exists,$current_field_id,$list_id,$A_field_label[$o],$A_field_name[$o],$A_field_description[$o],$A_field_rank[$o],$A_field_help[$o],$A_field_type[$o],$A_field_options[$o],$A_field_size[$o],$A_field_max[$o],$A_field_default[$o],$A_field_required[$o],$A_field_cost[$o],$A_multi_position[$o],$A_name_position[$o],$A_field_order[$o],$A_field_encrypt[$o],$A_field_show_hide[$o],$A_field_duplicate[$o],$vicidial_list_fields);
+							$SQLsuccess = modify_field_function($DB,$link,$linkCUSTOM,$ip,$user,$table_exists,$current_field_id,$list_id,$A_field_label[$o],$A_field_name[$o],$A_field_description[$o],$A_field_rank[$o],$A_field_help[$o],$A_field_type[$o],$A_field_options[$o],$A_field_size[$o],$A_field_max[$o],$A_field_default[$o],$A_field_required[$o],$A_field_cost[$o],$A_multi_position[$o],$A_name_position[$o],$A_field_order[$o],$A_field_encrypt[$o],$A_field_show_hide[$o],$A_field_duplicate[$o],$vicidial_list_fields,$field_rerank);
 
 							if ($SQLsuccess > 0)
 								{echo _QXZ("SUCCESS: Custom Field Modified")." - $list_id|$A_field_label[$o]\n<BR>";}
@@ -903,7 +917,7 @@ if ( ($action == "ADD_CUSTOM_FIELD") and ($list_id > 99) )
 										}
 
 									### add field function
-									$SQLsuccess = add_field_function($DB,$link,$linkCUSTOM,$ip,$user,$table_exists,$field_id,$list_id,$field_label,$field_name,$field_description,$field_rank,$field_help,$field_type,$field_options,$field_size,$field_max,$field_default,$field_required,$field_cost,$multi_position,$name_position,$field_order,$field_encrypt,$field_show_hide,$field_duplicate,$vicidial_list_fields,$mysql_reserved_words);
+									$SQLsuccess = add_field_function($DB,$link,$linkCUSTOM,$ip,$user,$table_exists,$field_id,$list_id,$field_label,$field_name,$field_description,$field_rank,$field_help,$field_type,$field_options,$field_size,$field_max,$field_default,$field_required,$field_cost,$multi_position,$name_position,$field_order,$field_encrypt,$field_show_hide,$field_duplicate,$vicidial_list_fields,$mysql_reserved_words,$field_rerank);
 
 									if ($SQLsuccess > 0)
 										{echo _QXZ("SUCCESS: Custom Field Added")." - $list_id|$field_label\n<BR>";}
@@ -1005,7 +1019,7 @@ if ( ($action == "MODIFY_CUSTOM_FIELD_SUBMIT") and ($list_id > 99) and ($field_i
 					else
 						{
 						### modify field function
-						$SQLsuccess = modify_field_function($DB,$link,$linkCUSTOM,$ip,$user,$table_exists,$field_id,$list_id,$field_label,$field_name,$field_description,$field_rank,$field_help,$field_type,$field_options,$field_size,$field_max,$field_default,$field_required,$field_cost,$multi_position,$name_position,$field_order,$field_encrypt,$field_show_hide,$field_duplicate,$vicidial_list_fields);
+						$SQLsuccess = modify_field_function($DB,$link,$linkCUSTOM,$ip,$user,$table_exists,$field_id,$list_id,$field_label,$field_name,$field_description,$field_rank,$field_help,$field_type,$field_options,$field_size,$field_max,$field_default,$field_required,$field_cost,$multi_position,$name_position,$field_order,$field_encrypt,$field_show_hide,$field_duplicate,$vicidial_list_fields,$field_rerank);
 
 						if ($SQLsuccess > 0)
 							{echo _QXZ("SUCCESS: Custom Field Modified")." - $list_id|$field_label\n<BR>";}
@@ -1344,6 +1358,19 @@ if ( ($action == "MODIFY_CUSTOM_FIELDS") and ($list_id > 99) )
 			if ($A_field_default[$o]=='NULL') {$A_field_default[$o]='';}
 			$field_HTML .= "\n";
 			}
+		if ($A_field_type[$o]=='BUTTON')
+			{
+			$field_options_array = explode("\n",$A_field_options[$o]);
+			if (preg_match("/^SubmitRefresh/i",$field_options_array[0]))
+				{
+				if ($A_multi_position[$o]=='VERTICAL') 
+					{$field_HTML .= " &nbsp; ";}
+				if (strlen($A_field_default[$o]) < 1) {$A_field_default[$o] = _QXZ("Commit Changes and Refresh Form");}
+				$field_HTML .= "<button class='button_active' disabled onclick=\"form_button_functions('SubmitRefresh');\"> "._QXZ("$A_field_default[$o]")." </button> \n";
+				if ($A_multi_position[$o]=='VERTICAL') 
+					{$field_HTML .= "<BR>\n";}
+				}
+			}
 		if ($A_field_type[$o]=='READONLY')
 			{
 			if ($A_field_default[$o]=='NULL') {$A_field_default[$o]='';}
@@ -1514,7 +1541,11 @@ if ( ($action == "MODIFY_CUSTOM_FIELDS") and ($list_id > 99) )
 		echo "<option>4</option>\n";
 		echo "<option>5</option>\n";
 		echo "<option selected>$A_field_order[$o]</option>\n";
-		echo "</select> &nbsp; $NWB#lists_fields-field_order$NWE </td></tr>\n";
+		echo "</select> &nbsp; $NWB#lists_fields-field_order$NWE \n";
+		echo " &nbsp; &nbsp; &nbsp; &nbsp; "._QXZ("Re-Rank Fields Below").": <select size=1 name=field_rerank>\n";
+		echo "<option calue=\"NO\" selected>"._QXZ("NO")."</option>\n";
+		echo "<option calue=\"YES\">"._QXZ("YES")."</option>\n";
+		echo "</select> &nbsp; $NWB#lists_fields-field_rerank$NWE </td></tr>\n";
 		echo "<tr $bgcolor><td align=right>"._QXZ("Field Name")." $A_field_rank[$o]: </td><td align=left><textarea name=field_name rows=2 cols=60>$A_field_name[$o]</textarea> $NWB#lists_fields-field_name$NWE </td></tr>\n";
 		echo "<tr $bgcolor><td align=right>"._QXZ("Field Name Position")." $A_field_rank[$o]: </td><td align=left><select size=1 name=name_position>\n";
 		echo "<option value=\"LEFT\">"._QXZ("LEFT")."</option>\n";
@@ -1539,6 +1570,7 @@ if ( ($action == "MODIFY_CUSTOM_FIELDS") and ($list_id > 99) )
 		echo "<option value='SWITCH'>"._QXZ("SWITCH")."</option>\n";
 		echo "<option value='READONLY'>"._QXZ("READONLY")."</option>\n";
 		echo "<option value='SOURCESELECT'>"._QXZ("SOURCESELECT")."</option>\n";
+		echo "<option value='BUTTON'>"._QXZ("BUTTON")."</option>\n";
 		echo "<option value='$A_field_type[$o]' selected>"._QXZ("$A_field_type[$o]")."</option>\n";
 		echo "</select>  $NWB#lists_fields-field_type$NWE </td></tr>\n";
 		echo "<tr $bgcolor><td align=right>"._QXZ("Field Options")." $A_field_rank[$o]: </td><td align=left><textarea name=field_options ROWS=5 COLS=60>$A_field_options[$o]</textarea>  $NWB#lists_fields-field_options$NWE </td></tr>\n";
@@ -1618,7 +1650,11 @@ if ( ($action == "MODIFY_CUSTOM_FIELDS") and ($list_id > 99) )
 	echo "<option>3</option>\n";
 	echo "<option>4</option>\n";
 	echo "<option>5</option>\n";
-	echo "</select> &nbsp; $NWB#lists_fields-field_order$NWE </td></tr>\n";
+	echo "</select> &nbsp; $NWB#lists_fields-field_order$NWE \n";
+	echo " &nbsp; &nbsp; &nbsp; &nbsp; "._QXZ("Re-Rank Fields Below").": <select size=1 name=field_rerank>\n";
+	echo "<option calue=\"NO\" selected>"._QXZ("NO")."</option>\n";
+	echo "<option calue=\"YES\">"._QXZ("YES")."</option>\n";
+	echo "</select> &nbsp; $NWB#lists_fields-field_rerank$NWE </td></tr>\n";
 	echo "<tr $bgcolor><td align=right>"._QXZ("Field Label").": </td><td align=left><input type=text name=field_label size=20 maxlength=50> $NWB#lists_fields-field_label$NWE </td></tr>\n";
 	echo "<tr $bgcolor><td align=right>"._QXZ("Field Name").": </td><td align=left><textarea name=field_name rows=2 cols=60></textarea> $NWB#lists_fields-field_name$NWE </td></tr>\n";
 	echo "<tr $bgcolor><td align=right>"._QXZ("Field Name Position").": </td><td align=left><select size=1 name=name_position>\n";
@@ -1643,6 +1679,7 @@ if ( ($action == "MODIFY_CUSTOM_FIELDS") and ($list_id > 99) )
 	echo "<option value='SWITCH'>"._QXZ("SWITCH")."</option>\n";
 	echo "<option value='READONLY'>"._QXZ("READONLY")."</option>\n";
 	echo "<option value='SOURCESELECT'>"._QXZ("SOURCESELECT")."</option>\n";
+	echo "<option value='BUTTON'>"._QXZ("BUTTON")."</option>\n";
 	echo "<option selected value='TEXT'>"._QXZ("TEXT")."</option>\n";
 	echo "</select>  $NWB#lists_fields-field_type$NWE </td></tr>\n";
 	echo "<tr $bgcolor><td align=right>"._QXZ("Field Options").": </td><td align=left><textarea name=field_options ROWS=5 COLS=60></textarea>  $NWB#lists_fields-field_options$NWE </td></tr>\n";
@@ -1875,7 +1912,7 @@ echo "\n\n\n<br><br><br>\n<font size=1> "._QXZ("runtime").": $RUNtime "._QXZ("se
 
 ################################################################################
 ##### BEGIN add field function
-function add_field_function($DB,$link,$linkCUSTOM,$ip,$user,$table_exists,$field_id,$list_id,$field_label,$field_name,$field_description,$field_rank,$field_help,$field_type,$field_options,$field_size,$field_max,$field_default,$field_required,$field_cost,$multi_position,$name_position,$field_order,$field_encrypt,$field_show_hide,$field_duplicate,$vicidial_list_fields,$mysql_reserved_words)
+function add_field_function($DB,$link,$linkCUSTOM,$ip,$user,$table_exists,$field_id,$list_id,$field_label,$field_name,$field_description,$field_rank,$field_help,$field_type,$field_options,$field_size,$field_max,$field_default,$field_required,$field_cost,$multi_position,$name_position,$field_order,$field_encrypt,$field_show_hide,$field_duplicate,$vicidial_list_fields,$mysql_reserved_words,$field_rerank)
 	{
 	$table_exists=0;
 	$stmt="SHOW TABLES LIKE \"custom_$list_id\";";
@@ -2007,7 +2044,7 @@ function add_field_function($DB,$link,$linkCUSTOM,$ip,$user,$table_exists,$field
 
 	$SQLexecuted=0;
 
-	if ( ($field_type=='DISPLAY') or ($field_type=='SCRIPT') or ($field_type=='SWITCH') or (preg_match("/\|$field_label\|/i",$vicidial_list_fields)) or ($field_duplicate=='Y') )
+	if ( ($field_type=='DISPLAY') or ($field_type=='SCRIPT') or ($field_type=='SWITCH') or ($field_type=='BUTTON') or (preg_match("/\|$field_label\|/i",$vicidial_list_fields)) or ($field_duplicate=='Y') )
 		{
 		if ($DB) {echo "Non-DB $field_type field type, $field_label\n";}
 
@@ -2043,14 +2080,60 @@ function add_field_function($DB,$link,$linkCUSTOM,$ip,$user,$table_exists,$field
 		$stmt="INSERT INTO vicidial_lists_fields set field_label='$field_label',field_name='$field_name',field_description='$field_description',field_rank='$field_rank',field_help='$field_help',field_type='$field_type',field_options=\"$field_options\",field_size='$field_size',field_max='$field_max',field_default='$field_default',field_required='$field_required',field_cost='$field_cost',list_id='$list_id',multi_position='$multi_position',name_position='$name_position',field_order='$field_order',field_encrypt='$field_encrypt',field_show_hide='$field_show_hide',field_duplicate='$field_duplicate';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$field_update = mysqli_affected_rows($link);
+		$field_id = mysqli_insert_id($link);
 		if ($DB) {echo "$field_update|$stmt\n";}
 		if (!$rslt) {echo(_QXZ("Could not execute").': ' . mysqli_error()) . "|$stmt|";}
 
+		### BEGIN if "field_rerank" enabled, check for fields with >= field_rank and move them
+		$rerankSQL='';
+		$rerankNOTES='';
+		if ($field_rerank == 'YES')
+			{
+			$reranking_done=0;
+			$rerank_temp_rank = $field_rank;
+			$rerank_last_field_ids = "'$field_id'";
+			while ( ($reranking_done < 1) or ($rerank_temp_rank > 1000) )
+				{
+				$reranks_to_print=0;
+				$stmtRS="SELECT field_id,field_label from vicidial_lists_fields where list_id='$list_id' and field_rank='$rerank_temp_rank' and field_id NOT IN($rerank_last_field_ids) order by field_id;";
+				$rslt=mysql_to_mysqli($stmtRS, $link);
+				$reranks_to_print = mysqli_num_rows($rslt);
+				if ($DB) {echo "$stmt|$reranks_to_print\n";}
+				$R_field_id = array();
+				$R_field_label = array();
+				$o=0;
+				while ($reranks_to_print > $o) 
+					{
+					$rowx=mysqli_fetch_row($rslt);
+					$R_field_id[$o] =		$rowx[0];
+					$R_field_label[$o] =	$rowx[1];
+					$o++;
+					}
+				if ($reranks_to_print < 1) {$reranking_done++;}
+				$rerank_temp_rank++;
+				$o=0;
+				while ($reranks_to_print > $o) 
+					{
+					$stmtR="UPDATE vicidial_lists_fields set field_rank='$rerank_temp_rank' where list_id='$list_id' and field_id='$R_field_id[$o]';";
+					$rslt=mysql_to_mysqli($stmtR, $link);
+					$ranks_update = mysqli_affected_rows($link);
+					if ($DB) {echo "$ranks_update|$stmtR\n";}
+					if (!$rslt) {echo('Could not execute: ' . mysqli_error()) . "|$stmt|";}
+					$rerankSQL .= "$stmtR|";
+					$rerankNOTES .= "Field $R_field_id[$o]($R_field_label[$o]) moved to rank $rerank_temp_rank|";
+					$rerank_last_field_ids .= ",'$R_field_id[$o]'";
+
+					$o++;
+					}
+				}
+			}
+		### END if "field_rerank" enabled, check for fields with >= field_rank and move them
+
 		### LOG INSERTION Admin Log Table ###
-		$SQL_log = "$stmt|$stmtCUSTOM";
+		$SQL_log = "$stmt|$stmtCUSTOM|$rerankSQL";
 		$SQL_log = preg_replace('/;/', '', $SQL_log);
 		$SQL_log = addslashes($SQL_log);
-		$stmt="INSERT INTO vicidial_admin_log set event_date=NOW(), user='$user', ip_address='$ip', event_section='CUSTOM_FIELDS', event_type='ADD', record_id='$list_id', event_code='ADMIN ADD CUSTOM LIST FIELD', event_sql=\"$SQL_log\", event_notes='';";
+		$stmt="INSERT INTO vicidial_admin_log set event_date=NOW(), user='$user', ip_address='$ip', event_section='CUSTOM_FIELDS', event_type='ADD', record_id='$list_id', event_code='ADMIN ADD CUSTOM LIST FIELD', event_sql=\"$SQL_log\", event_notes='Rows updated: $field_update($field_id)   $rerankNOTES';";
 		if ($DB) {echo "|$stmt|\n";}
 		$rslt=mysql_to_mysqli($stmt, $link);
 		}
@@ -2065,10 +2148,10 @@ function add_field_function($DB,$link,$linkCUSTOM,$ip,$user,$table_exists,$field
 
 ################################################################################
 ##### BEGIN modify field function
-function modify_field_function($DB,$link,$linkCUSTOM,$ip,$user,$table_exists,$field_id,$list_id,$field_label,$field_name,$field_description,$field_rank,$field_help,$field_type,$field_options,$field_size,$field_max,$field_default,$field_required,$field_cost,$multi_position,$name_position,$field_order,$field_encrypt,$field_show_hide,$field_duplicate,$vicidial_list_fields)
+function modify_field_function($DB,$link,$linkCUSTOM,$ip,$user,$table_exists,$field_id,$list_id,$field_label,$field_name,$field_description,$field_rank,$field_help,$field_type,$field_options,$field_size,$field_max,$field_default,$field_required,$field_cost,$multi_position,$name_position,$field_order,$field_encrypt,$field_show_hide,$field_duplicate,$vicidial_list_fields,$field_rerank)
 	{
 	$field_db_exists=0;
-	if ( ($field_type=='DISPLAY') or ($field_type=='SCRIPT') or ($field_type=='SWITCH') or (preg_match("/\|$field_label\|/i",$vicidial_list_fields)) or ($field_duplicate=='Y') )
+	if ( ($field_type=='DISPLAY') or ($field_type=='SCRIPT') or ($field_type=='SWITCH') or ($field_type=='BUTTON') or (preg_match("/\|$field_label\|/i",$vicidial_list_fields)) or ($field_duplicate=='Y') )
 		{$field_db_exists=1;}
 	else
 		{
@@ -2199,7 +2282,7 @@ function modify_field_function($DB,$link,$linkCUSTOM,$ip,$user,$table_exists,$fi
 
 	$SQLexecuted=0;
 
-	if ( ($field_type=='DISPLAY') or ($field_type=='SCRIPT') or ($field_type=='SWITCH') or (preg_match("/\|$field_label\|/i",$vicidial_list_fields)) or ($field_duplicate=='Y') )
+	if ( ($field_type=='DISPLAY') or ($field_type=='SCRIPT') or ($field_type=='SWITCH') or ($field_type=='BUTTON') or (preg_match("/\|$field_label\|/i",$vicidial_list_fields)) or ($field_duplicate=='Y') )
 		{
 		if ($DB) {echo _QXZ("Non-DB")." $field_type "._QXZ("field type").", $field_label\n";}
 		$SQLexecuted++;
@@ -2231,11 +2314,56 @@ function modify_field_function($DB,$link,$linkCUSTOM,$ip,$user,$table_exists,$fi
 		if ($DB) {echo "$field_update|$stmt\n";}
 		if (!$rslt) {echo('Could not execute: ' . mysqli_error()) . "|$stmt|";}
 
+		### BEGIN if "field_rerank" enabled, check for fields with >= field_rank and move them
+		$rerankSQL='';
+		$rerankNOTES='';
+		if ($field_rerank == 'YES')
+			{
+			$reranking_done=0;
+			$rerank_temp_rank = $field_rank;
+			$rerank_last_field_ids = "'$field_id'";
+			while ( ($reranking_done < 1) or ($rerank_temp_rank > 1000) )
+				{
+				$reranks_to_print=0;
+				$stmtRS="SELECT field_id,field_label from vicidial_lists_fields where list_id='$list_id' and field_rank='$rerank_temp_rank' and field_id NOT IN($rerank_last_field_ids) order by field_id;";
+				$rslt=mysql_to_mysqli($stmtRS, $link);
+				$reranks_to_print = mysqli_num_rows($rslt);
+				if ($DB) {echo "$stmt|$reranks_to_print\n";}
+				$R_field_id = array();
+				$R_field_label = array();
+				$o=0;
+				while ($reranks_to_print > $o) 
+					{
+					$rowx=mysqli_fetch_row($rslt);
+					$R_field_id[$o] =		$rowx[0];
+					$R_field_label[$o] =	$rowx[1];
+					$o++;
+					}
+				if ($reranks_to_print < 1) {$reranking_done++;}
+				$rerank_temp_rank++;
+				$o=0;
+				while ($reranks_to_print > $o) 
+					{
+					$stmtR="UPDATE vicidial_lists_fields set field_rank='$rerank_temp_rank' where list_id='$list_id' and field_id='$R_field_id[$o]';";
+					$rslt=mysql_to_mysqli($stmtR, $link);
+					$ranks_update = mysqli_affected_rows($link);
+					if ($DB) {echo "$ranks_update|$stmtR\n";}
+					if (!$rslt) {echo('Could not execute: ' . mysqli_error()) . "|$stmt|";}
+					$rerankSQL .= "$stmtR|";
+					$rerankNOTES .= "Field $R_field_id[$o]($R_field_label[$o]) moved to rank $rerank_temp_rank|";
+					$rerank_last_field_ids .= ",'$R_field_id[$o]'";
+
+					$o++;
+					}
+				}
+			}
+		### END if "field_rerank" enabled, check for fields with >= field_rank and move them
+
 		### LOG INSERTION Admin Log Table ###
-		$SQL_log = "$stmt|$stmtCUSTOM";
+		$SQL_log = "$stmt|$stmtCUSTOM|$rerankSQL";
 		$SQL_log = preg_replace('/;/', '', $SQL_log);
 		$SQL_log = addslashes($SQL_log);
-		$stmt="INSERT INTO vicidial_admin_log set event_date=NOW(), user='$user', ip_address='$ip', event_section='CUSTOM_FIELDS', event_type='MODIFY', record_id='$list_id', event_code='ADMIN MODIFY CUSTOM LIST FIELD', event_sql=\"$SQL_log\", event_notes='';";
+		$stmt="INSERT INTO vicidial_admin_log set event_date=NOW(), user='$user', ip_address='$ip', event_section='CUSTOM_FIELDS', event_type='MODIFY', record_id='$list_id', event_code='ADMIN MODIFY CUSTOM LIST FIELD', event_sql=\"$SQL_log\", event_notes='Rows updated: $field_update($field_id)   $rerankNOTES';";
 		if ($DB) {echo "|$stmt|\n";}
 		$rslt=mysql_to_mysqli($stmt, $link);
 		}
@@ -2254,7 +2382,7 @@ function delete_field_function($DB,$link,$linkCUSTOM,$ip,$user,$table_exists,$fi
 	{
 	$SQLexecuted=0;
 
-	if ( ($field_type=='DISPLAY') or ($field_type=='SCRIPT') or ($field_type=='SWITCH') or (preg_match("/\|$field_label\|/i",$vicidial_list_fields)) or ($field_duplicate=='Y') )
+	if ( ($field_type=='DISPLAY') or ($field_type=='SCRIPT') or ($field_type=='SWITCH') or ($field_type=='BUTTON') or (preg_match("/\|$field_label\|/i",$vicidial_list_fields)) or ($field_duplicate=='Y') )
 		{
 		if ($DB) {echo "Non-DB $field_type field type, $field_label\n";}
 		$SQLexecuted++;

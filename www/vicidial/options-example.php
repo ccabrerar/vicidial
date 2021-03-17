@@ -1,7 +1,7 @@
 <?php
 # options.php - manually defined options for vicidial admin scripts
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # rename this file to options.php for the settings here to go into effect
 #
@@ -29,6 +29,7 @@
 # 200428-1336 - Added RS_INcolumnsHIDE, RS_report_default_format & RS_AGENTstatusTALLY options
 # 200506-1628 - Added RS_CUSTINFOdisplay & RS_CUSTINFOminUL options
 # 201107-2257 - Added RS_parkSTATS option
+# 210314-2101 - Added RS_DIDdesc option
 #
 
 # used by the realtime_report.php script
@@ -77,6 +78,7 @@ $RS_SLAinSTATS =		0;	# 0=no, 1=yes, 2=TMA
 $RS_ListenBarge =		'MONITOR|BARGE|WHISPER';	# list of listen-related features separated by pipes: "MONITOR|BARGE|WHISPER"
 $RS_agentWAIT =			3;	# 3 or 4
 $RS_INcolumnsHIDE =		0;	# 0=no, 1=yes  # whether to hide the 'HOLD' & 'IN-GROUP' columns in the agent detail section
+$RS_DIDdesc =			0;	# 0=no, 1=yes  # whether to show a 'DID DESCRIPTION' column in the agent detail section
 $RS_report_default_format = '';	# 'TEXT', 'HTML' or '': If set, this will override the System Setting for this report only
 $RS_AGENTstatusTALLY =	'';	# <any valid status>: If set, will look at the number of calls statused by the agent in this status for today
 							# WARNING!!! Using the above option may cause system lag issues, USE WITH CAUTION!

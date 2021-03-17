@@ -1,7 +1,7 @@
 <?php
 # user_stats.php
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -62,6 +62,7 @@
 # 191013-0843 - Fixes for PHP7
 # 200501-0811 - Added NVAuser option for NVA recordings user column
 # 200702-1710 - Added ANI to INBOUND/CLOSER records for NVAuser, added secondary check to find lead ID for DIDs 
+# 210317-0058 - Changed lead-modify page links to javascript because of Chrome
 #
 
 $startMS = microtime();
@@ -233,8 +234,16 @@ $auth=0;
 $reports_auth=0;
 $admin_auth=0;
 $auth_message = user_authorization($PHP_AUTH_USER,$PHP_AUTH_PW,'REPORTS',1,0);
-if ($auth_message == 'GOOD')
-	{$auth=1;}
+if ( ($auth_message == 'GOOD') or ($auth_message == '2FA') )
+	{
+	$auth=1;
+	if ($auth_message == '2FA')
+		{
+		header ("Content-type: text/html; charset=utf-8");
+		echo _QXZ("Your session is expired").". <a href=\"admin.php\">"._QXZ("Click here to log in")."</a>.\n";
+		exit;
+		}
+	}
 
 if ($auth > 0)
 	{
@@ -632,10 +641,9 @@ elseif ($park_rpt >= 1)
 			{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
 		else
 			{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
-
 		$MAIN.="<tr $bgcolor><td><font size=2>$park_row[parked_time]</td>";
 		$MAIN.="<td align=right><font size=2> $park_row[status]</td>\n";
-		$MAIN.="<td align=right><font size=2> <a href=\"admin_modify_lead.php?lead_id=$park_row[lead_id]\">$park_row[lead_id]</a></td>\n";
+		$MAIN.="<td align=right><font size=2> <A HREF=\"admin_modify_lead.php?lead_id=$park_row[lead_id]\" onclick=\"javascript:window.open('admin_modify_lead.php?lead_id=$park_row[lead_id]', '_blank');return false;\">$park_row[lead_id]</a></td>\n";
 		$MAIN.="<td align=right><font size=2> $park_row[parked_sec]</td></tr>\n";
 		$CSV_text12.="\"\",\"$park_row[parked_time]\",\"$park_row[status]\",\"$park_row[lead_id]\",\"$park_row[parked_sec]\"\n";
 
@@ -1035,7 +1043,7 @@ else
 			$MAIN.="<td align=right><font size=2> $row[3] </td>\n";
 			$MAIN.="<td align=right><font size=2> $row[14] </td>\n";
 			$MAIN.="<td align=right><font size=2> $row[2] </td>\n";
-			$MAIN.="<td align=right><font size=2> <A HREF=\"admin_modify_lead.php?lead_id=$row[1]\" target=\"_blank\">$row[1]</A> </td>\n";
+			$MAIN.="<td align=right><font size=2> <A HREF=\"admin_modify_lead.php?lead_id=$row[1]\" onclick=\"javascript:window.open('admin_modify_lead.php?lead_id=$row[1]', '_blank');return false;\">$row[1]</A> </td>\n";
 			if ($firstlastname_display_user_stats > 0)
 				{
 				$MAIN.="<td align=right><font size=2> $row[17] $row[18] </td>\n";
@@ -1093,7 +1101,7 @@ else
 				$MAIN .= "<td align=left><font size=2> &nbsp; $row[7]</td>\n";
 				$MAIN .= "<td align=left><font size=1> &nbsp; $row[5]</td>\n";
 				$MAIN .= "<td align=left><font size=1> &nbsp; $row[8] </td>\n";
-				$MAIN .= "<td align=left><font size=1> &nbsp;  <A HREF=\"admin_modify_lead.php?lead_id=$row[2]\" target=\"_blank\">$row[2]</A> </td>\n";
+				$MAIN .= "<td align=left><font size=1> &nbsp;  <A HREF=\"admin_modify_lead.php?lead_id=$row[2]\" onclick=\"javascript:window.open('admin_modify_lead.php?lead_id=$row[2]', '_blank');return false;\">$row[2]</A> </td>\n";
 				$MAIN .= "</tr>\n";
 				$MAIN .= "<tr>";
 				$MAIN .= "<td><font size=1> &nbsp; </td>\n";
@@ -1210,7 +1218,7 @@ else
 		$MAIN.="<td align=right><font size=2> $row[5] </td>\n";
 		$MAIN.="<td align=right><font size=2> $AGENTseconds </td>\n";
 		$MAIN.="<td align=right><font size=2> $row[6] </td>\n";
-		$MAIN.="<td align=right><font size=2> <A HREF=\"admin_modify_lead.php?lead_id=$row[7]\" target=\"_blank\">$row[7]</A> </td>\n";
+		$MAIN.="<td align=right><font size=2> <A HREF=\"admin_modify_lead.php?lead_id=$row[7]\" onclick=\"javascript:window.open('admin_modify_lead.php?lead_id=$row[7]', '_blank');return false;\">$row[7]</A> </td>\n";
 		if ($firstlastname_display_user_stats > 0)
 			{$MAIN.="<td align=right><font size=2> $row[10] $row[11] </td>\n";}
 		$MAIN.="<td align=right><font size=2> $row[8] </td></tr>\n";
@@ -1327,7 +1335,7 @@ else
 			$MAIN.="<td align=right><font size=2> $dead_sec </td>\n";
 			$MAIN.="<td align=right><font size=2> $customer_sec </td>\n";
 			$MAIN.="<td align=right><font size=2> $status </td>\n";
-			$MAIN.="<td align=right><font size=2> <A HREF=\"admin_modify_lead.php?lead_id=$lead_id\" target=\"_blank\">$lead_id</A> </td>\n";
+			$MAIN.="<td align=right><font size=2> <A HREF=\"admin_modify_lead.php?lead_id=$lead_id\" onclick=\"javascript:window.open('admin_modify_lead.php?lead_id=$lead_id', '_blank');return false;\">$lead_id</A> </td>\n";
 			$call_type='';
 			if (strlen($lead_id) > 0)
 				{
@@ -1510,7 +1518,7 @@ else
 			$MAIN.="<td align=right><font size=2> $agent_user &nbsp; </td>\n";
 			$NVAuser_csv_record=",\"$agent_user\"";
 			}
-		$MAIN.="<td align=left><font size=2> <A HREF=\"admin_modify_lead.php?lead_id=$row[12]\" target=\"_blank\">$row[12]</A> </td>";
+		$MAIN.="<td align=left><font size=2> <A HREF=\"admin_modify_lead.php?lead_id=$row[12]\" onclick=\"javascript:window.open('admin_modify_lead.php?lead_id=$row[12]', '_blank');return false;\">$row[12]</A> </td>";
 		if ($NVAuser > 0)
 			{
 			$MAIN.="<td align=right><font size=2> $ANI &nbsp; </td>\n";
@@ -1606,7 +1614,7 @@ else
 			$MAIN.="<td align=left><font size=2> $row[2]</td>\n";
 			$MAIN.="<td align=left><font size=2> $row[3] </td>\n";
 			$MAIN.="<td align=right><font size=2> $row[4] </td>\n";
-			$MAIN.="<td align=right><font size=2> <A HREF=\"admin_modify_lead.php?lead_id=$row[5]\" target=\"_blank\">$row[5]</A> </td>\n";
+			$MAIN.="<td align=right><font size=2> <A HREF=\"admin_modify_lead.php?lead_id=$row[5]\" onclick=\"javascript:window.open('admin_modify_lead.php?lead_id=$row[5]', '_blank');return false;\">$row[5]</A> </td>\n";
 			$MAIN.="<td align=right><font size=2> $row[6] </td>\n";
 			$MAIN.="<td align=right><font size=2> $row[7] </td>\n";
 			$MAIN.="<td align=right><font size=2> $row[8] </td>\n";
@@ -1685,7 +1693,7 @@ else
 			$MAIN.="<tr $bgcolor>";
 			$MAIN.="<td><font size=1>$u</td>";
 			$MAIN.="<td><font size=2>$row[1]</td>";
-			$MAIN.="<td align=right><font size=2> <A HREF=\"admin_modify_lead.php?lead_id=$row[2]\" target=\"_blank\">$row[2]</A> </td>\n";
+			$MAIN.="<td align=right><font size=2> <A HREF=\"admin_modify_lead.php?lead_id=$row[2]\" onclick=\"javascript:window.open('admin_modify_lead.php?lead_id=$row[2]', '_blank');return false;\">$row[2]</A> </td>\n";
 			$MAIN.="<td align=right><font size=2> $row[4] </td>\n";
 			$MAIN.="<td align=right><font size=2> $row[5] </td>\n";
 			$MAIN.="<td align=right><font size=2> $row[3] </td></tr>\n";
@@ -1717,8 +1725,8 @@ else
 			$MAIN.="<tr $bgcolor>";
 			$MAIN.="<td><font size=1>$u</td>";
 			$MAIN.="<td><font size=2>$row[0]</td>";
-			$MAIN.="<td align=center><font size=2> <A HREF=\"admin_modify_lead.php?lead_id=$row[1]\" target=\"_blank\">$row[1]</A> </td>\n";
-			$MAIN.="<td align=center><font size=2> <A HREF=\"admin_modify_lead.php?lead_id=$row[2]\" target=\"_blank\">$row[2]</A> </td>\n";
+			$MAIN.="<td align=center><font size=2> <A HREF=\"admin_modify_lead.php?lead_id=$row[1]\" onclick=\"javascript:window.open('admin_modify_lead.php?lead_id=$row[1]', '_blank');return false;\">$row[1]</A> </td>\n";
+			$MAIN.="<td align=center><font size=2> <A HREF=\"admin_modify_lead.php?lead_id=$row[2]\" onclick=\"javascript:window.open('admin_modify_lead.php?lead_id=$row[2]', '_blank');return false;\">$row[2]</A> </td>\n";
 			$MAIN.="<td><font size=2>$row[3]</td>";
 			$MAIN.="<td align=right><font size=2> $row[4] </td>\n";
 			$MAIN.="<td align=right><font size=2> $row[5] </td>\n";

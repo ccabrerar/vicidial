@@ -2,7 +2,7 @@
 # qc_api.php
 # 
 # Copyright (C) 2012  poundteam.com    LICENSE: AGPLv2
-# Copyright (C) 2014  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to allow API functions for QC applications, contributed by poundteam.com
 #
@@ -15,10 +15,11 @@
 # 141007-2120 - Finalized adding QXZ translation to all admin files
 # 141229-2015 - Added code for on-the-fly language translations display
 # 150626-2120 - Modified mysqli_error() to mysqli_connect_error() where appropriate
+# 210306-1051 - Changes for new QC module
 #
 
-$version = '2.10-7';
-$build = '150626-2120';
+$version = '2.14-8';
+$build = '210306-1051';
 
 require("dbconnect_mysqli.php");
 require("functions.php");

@@ -1,7 +1,7 @@
 <?php
 # AST_timeonVDADall.php
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # live real-time stats for the VICIDIAL Auto-Dialer all servers
 #
@@ -121,10 +121,11 @@
 # 200506-1642 - Added RS_CUSTINFOminUL options.php setting
 # 200815-0930 - Added agent-paused 10 & 15 minute indicators
 # 201107-2253 - Added display of parked calls, inbound SLA stats and LIMITED report type
+# 210314-2040 - Added optional DID Description display for inbound calls
 #
 
-$version = '2.14-106';
-$build = '201107-2253';
+$version = '2.14-107';
+$build = '210314-2040';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -289,6 +290,7 @@ if ( (strlen($slave_db_server)>5) and (preg_match("/$report_name/",$reports_use_
 $RS_ListenBarge =		'MONITOR|BARGE|WHISPER';
 $RS_agentWAIT =			3;
 $RS_INcolumnsHIDE =		0;
+$RS_DIDdesc =			0;
 
 if (file_exists('options.php'))
 	{
@@ -392,6 +394,7 @@ $epochSIXhoursAGO = ($STARTtime - 21600);
 $timeSIXhoursAGO = date("Y-m-d H:i:s",$epochSIXhoursAGO);
 $epochTWENTYFOURhoursAGO = ($STARTtime - 86400);
 $timeTWENTYFOURhoursAGO = date("Y-m-d H:i:s",$epochTWENTYFOURhoursAGO);
+$timeSIXhoursAGO = date("Y-m-d H:i:s",$epochSIXhoursAGO);
 
 if ($non_latin < 1)
 	{
@@ -418,8 +421,16 @@ $auth=0;
 $reports_auth=0;
 $admin_auth=0;
 $auth_message = user_authorization($PHP_AUTH_USER,$PHP_AUTH_PW,'REPORTS',0,0);
-if ($auth_message == 'GOOD')
-	{$auth=1;}
+if ( ($auth_message == 'GOOD') or ($auth_message == '2FA') )
+	{
+	$auth=1;
+	if ($auth_message == '2FA')
+		{
+		header ("Content-type: text/html; charset=utf-8");
+		echo _QXZ("Your session is expired").". <a href=\"admin.php\">"._QXZ("Click here to log in")."</a>.\n";
+		exit;
+		}
+	}
 
 if ($auth > 0)
 	{
@@ -2727,7 +2738,7 @@ if ( ($report_display_type=='HTML') or ($report_display_type=='WALL_2') or ($rep
 	$section_width=860;
 	echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 
-	echo "<TABLE class='realtime_table' cellpadding=3 cellspacing=0 border=0>\n";
+	echo "<TABLE class='realtime_calls_table' cellpadding=3 cellspacing=0 border=0>\n";
 	echo "<tr>";
 #	echo "<td width=5 rowspan=2> &nbsp; </td>";
 	echo "<td align='center' valign='middle' bgcolor='#015b91' rowspan=2><img src=\"images/icon_calls.png\" class='realtime_img_icon'></td>";
@@ -3025,8 +3036,13 @@ if ($report_display_type=='TEXT')
 	$HTcalls =			" "._QXZ("CALLS",5)." |";
 	$HDpause =	'';
 	$HTpause =	'';
-	$HDigcall =			"------+------------------";
+	$HDigcall =			"------+-------------------";
 	$HTigcall =			" "._QXZ("HOLD",4)." | "._QXZ("IN-GROUP",8)." ";
+	if ($RS_DIDdesc > 0)
+		{
+		$HDigcall =			"------+-----------------------------+-----------------";
+		$HTigcall =			" "._QXZ("HOLD",4)." | "._QXZ("IN-GROUP",8)."                    | "._QXZ("DID DESCRIPTION",15)." ";
+		}
 	if ($RS_INcolumnsHIDE > 0)
 		{
 		$HDigcall =			'';
@@ -3125,6 +3141,11 @@ if ( ($report_display_type=='HTML') or ($report_display_type=='LIMITED') )
 	$HTpause =	'';
 	$HDigcall =			"";
 	$HTigcall =			"<td NOWRAP><font class='top_head_key'>&nbsp; "._QXZ("HOLD")." </td><td NOWRAP><font class='top_head_key'>&nbsp; "._QXZ("IN-GROUP",8)." </td>";
+	if ($RS_DIDdesc > 0)
+		{
+		$HDigcall =			"";
+		$HTigcall =			"<td NOWRAP><font class='top_head_key'>&nbsp; "._QXZ("HOLD")." </td><td NOWRAP><font class='top_head_key'>&nbsp; "._QXZ("IN-GROUP",8)." </td><td NOWRAP><font class='top_head_key'>&nbsp; "._QXZ("DID DESCRIPTION",15)." </td>";
+		}
 	if ($RS_INcolumnsHIDE > 0)
 		{
 		$HDigcall =			'';
@@ -3832,9 +3853,10 @@ if ($talking_to_print > 0)
 			$vac_campaign='';
 			$INGRP='';
 			$INORcolor='';
+			$INuniqueid='';
 			if ($CM == 'I')
 				{
-				$stmt="SELECT vac.campaign_id,vac.stage,vig.group_name,vig.group_id from vicidial_auto_calls vac,vicidial_inbound_groups vig where vac.callerid='$Acallerid[$i]' and vac.campaign_id=vig.group_id LIMIT 1;";
+				$stmt="SELECT vac.campaign_id,vac.stage,vig.group_name,vig.group_id,uniqueid from vicidial_auto_calls vac,vicidial_inbound_groups vig where vac.callerid='$Acallerid[$i]' and vac.campaign_id=vig.group_id LIMIT 1;";
 				$rslt=mysql_to_mysqli($stmt, $link);
 				if ($DB) {echo "$stmt\n";}
 				$ING=$G; $INEG=$EG;
@@ -3847,10 +3869,11 @@ if ($talking_to_print > 0)
 						{
 						$filtered_ingroup=0;
 						}
-					$vac_campaign =	sprintf("%-20s", "$row[0] - $row[2]");
+					$vac_campaign =	sprintf("%-27s", "$row[0] - $row[2]");
 					$row[1] = preg_replace('/.*\-/i', '',$row[1]);
 					$vac_stage =	sprintf("%-4s", $row[1]);
 					$INORcolor = $row[3];
+					$INuniqueid =	$row[4];
 
 					if ( ($INGROUPcolorOVERRIDE>0) or ($INGROUPcolorOVERRIDE=='YES') )
 						{
@@ -3858,6 +3881,59 @@ if ($talking_to_print > 0)
 						}
 					}
 				$INGRP = " $ING$vac_stage$INEG | $ING$vac_campaign$INEG ";
+				if ( ($RS_DIDdesc > 0) and (strlen($INuniqueid) > 0) )
+					{
+					$did_id='';
+					$did_extension='';
+					$did_description='';
+					$stmt="SELECT did_id,extension from vicidial_did_log where uniqueid='$INuniqueid' and call_date > \"$timeSIXhoursAGO\" order by call_date asc LIMIT 1;";
+					$rslt=mysql_to_mysqli($stmt, $link);
+					if ($DB) {echo "$stmt\n";}
+					$didL_to_print = mysqli_num_rows($rslt);
+					if ($didL_to_print > 0)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$did_id =			$row[0];
+						$did_extension =	$row[1];
+						}
+					else
+						{
+						$newINuniqueid='';
+						$stmt="SELECT uniqueid from vicidial_closer_log where lead_id='$Alead_id[$j]' and uniqueid!='$INuniqueid' and call_date > \"$timeSIXhoursAGO\" order by call_date desc LIMIT 1;";
+						$rslt=mysql_to_mysqli($stmt, $link);
+						if ($DB) {echo "$stmt\n";}
+						$didL_to_print = mysqli_num_rows($rslt);
+						if ($didL_to_print > 0)
+							{
+							$row=mysqli_fetch_row($rslt);
+							$newINuniqueid =	$row[0];
+							}
+						if (strlen($newINuniqueid) > 4)
+							{
+							$stmt="SELECT did_id,extension from vicidial_did_log where uniqueid='$newINuniqueid' and call_date > \"$timeSIXhoursAGO\" order by call_date asc LIMIT 1;";
+							$rslt=mysql_to_mysqli($stmt, $link);
+							if ($DB) {echo "$stmt\n";}
+							$didL_to_print = mysqli_num_rows($rslt);
+							if ($didL_to_print > 0)
+								{
+								$row=mysqli_fetch_row($rslt);
+								$did_id =			$row[0];
+								$did_extension =	$row[1];
+								}
+							}
+						}
+					$stmt="SELECT did_description from vicidial_inbound_dids where did_id='$did_id' LIMIT 1;";
+					$rslt=mysql_to_mysqli($stmt, $link);
+					if ($DB) {echo "$stmt\n";}
+					$did_to_print = mysqli_num_rows($rslt);
+					if ($did_to_print > 0)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$did_description =	$row[0];
+						}
+
+					$INGRP = " $ING$vac_stage$INEG | $ING$vac_campaign$INEG | $ING$did_description$INEG ";
+					}
 				if ($RS_INcolumnsHIDE > 0)
 					{
 					$INGRP =			'';
@@ -3942,9 +4018,10 @@ if ($talking_to_print > 0)
 			$vac_stage='';
 			$vac_campaign='';
 			$INGRP='';
+			$INuniqueid='';
 			if ($CM == 'I')
 				{
-				$stmt="SELECT vac.campaign_id,vac.stage,vig.group_name,vig.group_id from vicidial_auto_calls vac,vicidial_inbound_groups vig where vac.callerid='$Acallerid[$i]' and vac.campaign_id=vig.group_id LIMIT 1;";
+				$stmt="SELECT vac.campaign_id,vac.stage,vig.group_name,vig.group_id,uniqueid from vicidial_auto_calls vac,vicidial_inbound_groups vig where vac.callerid='$Acallerid[$i]' and vac.campaign_id=vig.group_id LIMIT 1;";
 				$rslt=mysql_to_mysqli($stmt, $link);
 				if ($DB) {echo "$stmt\n";}
 				$ING=$G; $INEG=$EG;
@@ -3961,6 +4038,7 @@ if ($talking_to_print > 0)
 					$row[1] = preg_replace('/.*\-/i', '',$row[1]);
 					$vac_stage =	sprintf("%-4s", $row[1]);
 					$INORcolor = $row[3];
+					$INuniqueid =	$row[4];
 
 					if ( ($INGROUPcolorOVERRIDE>0) or ($INGROUPcolorOVERRIDE=='YES') )
 						{
@@ -3968,6 +4046,59 @@ if ($talking_to_print > 0)
 						}
 					}
 				$INGRP = "<td NOWRAP align=right> $ING$vac_stage$INEG </td><td NOWRAP> $ING$vac_campaign$INEG </td>";
+				if ( ($RS_DIDdesc > 0) and (strlen($INuniqueid) > 0) )
+					{
+					$did_id='';
+					$did_extension='';
+					$did_description='';
+					$stmt="SELECT did_id,extension from vicidial_did_log where uniqueid='$INuniqueid' and call_date > \"$timeSIXhoursAGO\" order by call_date asc LIMIT 1;";
+					$rslt=mysql_to_mysqli($stmt, $link);
+					if ($DB) {echo "$stmt\n";}
+					$didL_to_print = mysqli_num_rows($rslt);
+					if ($didL_to_print > 0)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$did_id =			$row[0];
+						$did_extension =	$row[1];
+						}
+					else
+						{
+						$newINuniqueid='';
+						$stmt="SELECT uniqueid from vicidial_closer_log where lead_id='$Alead_id[$j]' and uniqueid!='$INuniqueid' and call_date > \"$timeSIXhoursAGO\" order by call_date desc LIMIT 1;";
+						$rslt=mysql_to_mysqli($stmt, $link);
+						if ($DB) {echo "$stmt\n";}
+						$didL_to_print = mysqli_num_rows($rslt);
+						if ($didL_to_print > 0)
+							{
+							$row=mysqli_fetch_row($rslt);
+							$newINuniqueid =	$row[0];
+							}
+						if (strlen($newINuniqueid) > 4)
+							{
+							$stmt="SELECT did_id,extension from vicidial_did_log where uniqueid='$newINuniqueid' and call_date > \"$timeSIXhoursAGO\" order by call_date asc LIMIT 1;";
+							$rslt=mysql_to_mysqli($stmt, $link);
+							if ($DB) {echo "$stmt\n";}
+							$didL_to_print = mysqli_num_rows($rslt);
+							if ($didL_to_print > 0)
+								{
+								$row=mysqli_fetch_row($rslt);
+								$did_id =			$row[0];
+								$did_extension =	$row[1];
+								}
+							}
+						}
+					$stmt="SELECT did_description from vicidial_inbound_dids where did_id='$did_id' LIMIT 1;";
+					$rslt=mysql_to_mysqli($stmt, $link);
+					if ($DB) {echo "$stmt\n";}
+					$did_to_print = mysqli_num_rows($rslt);
+					if ($did_to_print > 0)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$did_description =	$row[0];
+						}
+
+					$INGRP = "<td NOWRAP align=right> $ING$vac_stage$INEG </td><td NOWRAP> $ING$vac_campaign$INEG </td><td NOWRAP> $ING$did_description$INEG </td>";
+					}
 				if ($RS_INcolumnsHIDE > 0)
 					{
 					$INGRP =			'';

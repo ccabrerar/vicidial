@@ -1,4 +1,119 @@
-QC(Quality Control) process flow					  2012-11-16
+QC(Quality Control) process flow				2021-03-09
+
+This document covers the QC module features as of admin.php build 210306-0840
+(svn/trunk revision 3370). For information on the previous version of the QC
+Module, see the PREVIOUS VERSIONS section further down in this document.
+
+
+
+
+Vicidial Quality Control Setup and Use Overview - 
+
+General steps (details below):
+1. Enable QC features through the System Settings.
+	1a. (optional) modify "QC Claim Limit" and "QC Expire Days"
+2. Create and modify QC status templates through the "Settings Containers" section of the Vicidial admin.
+3. Create and modify QC scorecards through the QC scorecard section under the "Quality Control" menu.
+4. Apply scorecard, webform, and status template settings to campaigns, lists, and ingroups as needed
+5. As qualifying calls are made, they appear in the QC queue and can be claimed by any agent with the appropriate privileges.
+6. Agents use the quality control interface to evaluate calls by listening to the recording associated with the call, and assigning scores to the checkpoints defined in the scorecard.
+	6a.  Additionally, agents can modify lead information through the quality control interface as well as listen to other recordings associated with the lead and view call log and quality control change logs
+	6b.  Agents can also place calls to the lead they're evaluating provided they're already logged into the agent interface in a separate browser window
+7. Admin users can use the "Quality Control Report" to review quality control calls that are in progress or finished.
+
+
+
+
+STEP 1. Admin -> System Settings
+
+No quality control features can be accessed at all unless the "QC Features enabled" System Setting is activated.  This is located in the "System Settings" page, along with the related system settings of "QC Claim Limit" and "QC Expire Days".  
+
+"QC Claim Limit" places a limit on the number of unfinished calls an individual agent can have in their queue at one time.  The purpose of this setting is both to prevent a single agent from monopolizing the calls in a queue, and also to ensure that claimed calls are handled relatively promptly.
+
+"QC Expire Days" puts a limit on the number of days a call will be available to be claimed by an agent, after which it will no longer be available for review if it stays unclaimed.  However, once a call is claimed it does not expire (unless the agent releases it from their queue after the expiration date has passed).
+
+To start funneling qualifying calls into the quality control queue, a campaign, ingroup, and/or a list must have a QC status template and a QC scorecard assigned to it.  Then there must be a call whose disposition is given in the applied status template and the call will appear in the quality control queue.
+
+
+STEP 2.  QC status templates
+A quality control status template can be created as a settings container of the type "QC_TEMPLATE".  All it needs to consist of is a comma-delimited list of dispositions.  Once created and activated, it will be available for selection anywhere the status template is set.
+
+
+STEP 3.  QC Scorecards
+A scorecard is a list of checkpoints, each assigned a point value, that an agent follows as they are reviewing a call.  A scorecard must consist of at least one checkpoint and be active in order for it to be appear as an option when applying quality control settings to entities.  To start creating a scorecard, go to the QC Scorecards page - the link can be found under the "Quality Control" menu.  
+Click "ADD NEW SCORECARD", which will bring up a simple three-field form where you give the scorecard ID, name, and whether or not the scorecard is active.  Clicking "SUBMIT NEW SCORECARD" will cause the new scorecard to appear at the top of the screen.  At this point you can de/activate the scorecard, modify it, or delete it.  Once created, scorecards can be de/activated simply by checking or unchecking the "Active" checkbox for each scorecard - no form submission is necessary.  Clicking the "DELETE" button will cause the screen to prompt you to confirm that you do want to proceed with deleting the scorecard, similar to deleting other dialer entities such as campaigns or lists.
+
+Clicking "MODIFY" by any scorecard will display the checkpoints for that scorecard below the list of created scorecards, along with an extra form for adding new checkpoints.  A checkpoint consists of the following elements:
+	- Order - this is the order in which the checkpoints will be displayed on screen.
+	- Active - much like the scorecard itself, individual checkpoints can be activated and de-activated as needed.  When a checkpoint is deactivated, if a call is assigned to it's parent scorecard, that checkpoint will not appear on the QC evaluation page.  Additionally, re-activating the checkpoint will not retroactively add the checkpoint to already-claimed calls; claimed calls must be released and re-claimed if activated checkpoints need to be shown for said calls.
+	- Checkpoint text - the text displayed to the QC agents
+	- Points - The maximum score a checkpoint is worth.  QC agents can enter any integer value that is this score or lower, with a minimum limit of zero.
+	- Instant kill - If this is activated, a checkpoint can automatically fail a quality control record regardless of the outcome of any and all other checkpoints.
+	- Admin notes - Admin notes are comments that administrators can make regarding a checkpoint.  This is never viewable to the QC agent.
+
+If the above fields are filled out in the "ADD NEW CHECKPOINT" section, clicking the green "ADD" button will add it to the scorecard. 
+
+To modify any portion of an existing checkpoint, simply make whatever change is necessary to the checkpoint - changes are automatically saved and there is no need for a submit button.
+
+
+STEP 4. Applying QC settings
+Once status templates and scorecards are defined, they can be applied to campaigns, lists, and ingroups via the "QC Statuses" and "QC scorecards" settings in each, which will only appear if the QC feature is enabled through the system setting in step 1.  For campaigns, you must view the campaign settings in "Detail" view mode, and use the "QC" link that appears in the upper right.  For lists and ingroups, the QC settings appear among their other settings.  In the event of conflicting settings, the order of priority is ingroup -> list -> campaign.
+
+
+STEP 5.  Claiming calls
+Under the new QC system, quality control is done on a per-call basis, meaning leads that may not currently have a status covered by a QC template can still be reviewed if a past call was dispositioned with a status covered by a QC_TEMPLATE settings container that was applied to a campaign/list/ingroup the call belongs to.
+
+Calls can be claimed and evaluated via three links under the "Quality Control" menu in the Admin - "QC Calls by Campaign", "QC Calls by List", and "QC Calls by Ingroup".  Clicking on one of these links will show any QC-enabled campaign/list/ingroup that is currently active along with a list of the current QC-eligible statuses assigned to it and the number of qualifying calls currently in the system available to be claimed (this count is affected not only by the statuses assigned, but also the expiration days set in the System Settings).  Additionally, the user group's QC settings will filter out any campaign/list/ingroup the user is not allowed to view.  For lists, the filtering is done using the list's current campaign against the list of allowed QC campaigns per the user group settings.
+
+When you claim a call, the dialer will assign the most appropriate scorecard for the lead at the time the lead is claimed.  This means if the same call would appear on different claim lists in the admin, the dialer will assign the scorecard associated with the higher-priority element (ingroup -> list -> campaign) regardless of which "QC calls" section it's claimed from.  For example, if a campaign shows a call to a lead as being eligible for being claimed based on the campaign QC settings, and the same call meets the QC settings assigned to a list, the scorecard for the list will be assigned to the QC session even if it is claimed from the "QC Calls by Campaign" page.  
+
+Clicking on a record here will take you to a page that will display any calls you currently have claimed and unfinished, and if you have fewer claimed calls than the "QC Claim Limit" system setting, all the available calls under the campaign/list/ingroup will be shown grouped by status and ordered by call date.  Each record displays the lead ID, name on the lead, date of the call, and the agent who made the call.  Clicking on the lead ID, name, or call date will "claim" the call and take you to the quality control interface to evaluate the call.
+
+
+STEP 6.  Using the QC display screen
+Across the top of the screen, the page will print which campaign, ingroup, or list the call fits under per your dialer's settings.  The QC display screen consists of four sections, of which one can be displayed at any time and can be toggled via the buttons across the top of the screen.
+
+The section you see by default contains the scorecard.  The header of each scorecard displays the scorecard ID and also the recording ID for that particular call.  The recording ID is matched via the uniqueid from the vicidial_agent_log table to the vicidial_id in the recording_log table.  If there is no matching recording, then the default recording becomes the one in the recording log that is closest to the date and time of the call.  Beneath the header each active checkpoint is displayed in the order designated by the scorecard's settings.  This is where each checkpoint's score can be entered, along with any comments regarding said checkpoint.  Scores and comments are automatically saved when they are entered.  Beneath the checkpoints is the link to play the recording for the call.  Underneath that are the available statuses that quality control can apply to the call when the evaluation is completed, with a button to FINISH the call.  Clicking this will mark the call as finished and take you back to the Quality Control section in the admin.  Alternatively, there is a red "RELEASE" button.  This is clicked when the call needs to be placed back into the quality control queue.  It relinquishes ownership of the call and purges any scorecard data pertaining to the call.  This can be used to re-claim the call, which can be useful if the scorecard for the call has been modified since the call was originally claimed.  Finally in this section, a list of all recordings made for this lead are displayed below the scorecard and can be listened to here, in the event another phone call needs to be checked in order to finish the scorecard.
+
+The second section is for lead information, where the agent can view the lead information for the called lead in the standard vicidial_list fields.  Additionally, if a QC webform was defined for the campaign, list, or ingroup under which the lead is being evaluated, the link to the webform will appear here as well.  If custom fields are defined for the lead, those will appear within a frame at the bottom of the screen.  Like with the scorecards, modifying the standard lead information will cause it to be automatically updated in the vicidial_list table.  Custom lead information still requires use of a submit button.  
+
+The third section pertains to callbacks for the lead.  If you are currently logged into the agent interface in a separate window, you can be given the option to dial the lead from here by clicking on the "Dial lead" link within the frame that appears at the top of the section.  Additionally, if you dial the lead and make changes to the customer information within the agent interface, the QC interface will also auto-update to match what you entered once you disposition the call. 
+
+Below the callback frame, any current callbacks for this lead are displayed.  These can be modified to change ownership to a specific user or to "ANYONE", and also the call date and time can be modified.
+
+The final section is the log section - this is a read-only section where you can view the quality control logs pertaining to the call being evaluated.  The log records will show date and time, status changes to the call (if any), who viewed the call, and also if lead information is changed on a specific log record, that log records will show the word "DETAILS" on the right and you can see specifically what was changed if you hover your mouse over that word.
+
+Beneath that are the "common" log records, showing calls to this lead (outbound), closer records for this lead (inbound), and agent log records.  
+
+
+STEP 7.  Quality Control Report
+This report shows quality control call activity within user-selected parameters.  If displayed as HTML, it will output each individual call with a header row that shows things like the call date, agent, campaign, call status, QC scorecard and QC result.  Underneath that, each checkpoint in the scorecard applied to call will be displayed as individual rows with scores and comments per checkpoint.  The report can also be downloaded as a CSV where each call will be a row in the resulting file with the checkpoint data appended to each row.  
+
+Report parameters are:
+	- CALL DATE - The date range in which the call was originally made.
+	- FINISH DATE - The date range in which the QC agent who evaluated the call marked it as finished.  This will automatically filter out unfinished calls if this is used, regardless of what QC statuses (see below) are selected.
+	- CAMPAIGNS - The campaign the original call was made under.
+	- QC STATUS - The current status of the call in the quality control system - this is NOT the call status from dialing.
+	- USERS - The agent(s) who placed the original calls.
+	- QC AGENTS - The agents who evaluated the call in the quality control system.
+	- SHOW %'s - If this box is checked, the scores given by the QC agents will be displayed as percentages instead of points.
+	- SEARCH ARCHIVED DATA - If this is checked, the archived quality control log tables will be searched if they exist.
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+                          PREVIOUS VERSIONS
+--------------------------------------------------------------------------------
 
 Thanks to the Pound Team(pounteam.com) and Affinity On-Call(affinity.co.za) for 
 contributing this functionaly QC application to the vicidial project.
@@ -167,283 +282,3 @@ Note for developers: All information for the viewed and modified records is stor
 Notes
 Testing: “QC Only” user modeled after “Reporting Only” user. Requires user level > 1, active = “Y”, and QC Enabled. 
 To QC Modify a lead that is NOT presently a QC status (whether it was in the past or not), search for and Modify the lead (under Lists->Search for a Lead), then click on “Click here to QC Modify this lead” at the bottom of the Admin Modify Lead screen (if you have QC permissions, this will be visible).
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-******************** ARCHIVED DOC BELOW, NOT APPLICABLE **********************************************
-
-******************** PLEASE IGNORE FURTHER CONTENT, IT WILL BE DELETED IN A FUTURE REVISION **********
-
-
-** THIS QC FUNCTIONALITY PROSESS IS PLANNED FOR THE 2.0.5 RELEASE AND IS CURRENTLY IN DEVELOPMENT **
-
-This will outline the process I have thought through for adding a Quality Assurance(QA) or Quality Control(QC) process to the VICIDIAL system. As the needs have changed for sponsor client and VICIDIAL has evolved since this functionality was first put into the planning stages, there have been several changes to how the QC process is going to be built. The objective is to add the following QC features to make VICIDIAL a more well-rounded product:
-- ability to define which statuses are to be able to be QCd per campaign and inbound group(queue)
-- ability to give agents permission to QC records for their allowable campaigns/inbound groups
-- ability to log all access and changes to QCd records
-- creation of some basic reports on QC activity
-
-
-
-The back-end process will work like this:
-- ADMIN_keepalive_ALL.pl script will look for the 'Q' in the keepalive definition in /etc/astguiclient.conf file. If it is set, it will trigger a script (QC_gather_records.pl) to gather the QC records every five minutes(with a 15 second delay) since the last QC gathering as defined in the system_settings table qc_last_pull_time field(which is populated with four-hours-before the START time of the last QC-pull run to make sure to catch all potential long calls that may have ended). The time interval for this might be made configurable.
-- There will also be an optional method of pulling QC records available to the QC managers that enables them to specify a date range to pull and insert records
-- Selected records from the vicidial_list table (keyed on the the vicidial_log and vicidial_closer_log tables) will be taken and inserted into the vicidial_qc_list table.
-- QC agents are then able to run their process starting with the earliest records for their selected campaign/inbound groups
-- After QC agents have PASSed, FINISHed and COMMITted the QC records, then they can be exported
-
-
-
-Agent-side scripts:
- - qc.php - the screen that agents log in to 
- - qc_query.php - the data processing script that handles most of the AJAX queries and IFRAME displays from qc.php
-
-
-The QC agent will login to the new qc.php screen within the agc web directory. They will then have a screen very similar to the vicidial.php login screen(but in a different color) that will have a user/pass to fill in. Then when they login the QC agents with level of 1-3 will see a green screen similar to the vicidial.php inbound(CLOSER-type) screen that will show them their allowable qc inbound-groups and campaigns. The agent will then choose which in-groups and campaigns that they want to QC the records for and then they will submit and they will be logged-in to the QC system. QC agents with a qc_level of 4-5 can select to review first level reccords, review all 2nd level records, review only 2nd level changed-status or review 2nd level same-status records. QC agents with 6-7 qc_level can also have the option of entering a management screen showing more information on the QC system including committing QC records and links to QC reports.
-
-Upon login, they will be able to see the count of QC-able records and they can click on a link to bring up the next record to be QCd. 
-
-Upon clicking on a link, the qc.php application will insert a record into the vicidial_qc_log to keep track of changes and other information on the qc record session. The customer and original call data will remain unaltered in the vicidial_qc_list table.
-
-The SCRIPTS tab and web form will both function exactly as they do in the vicidial.php application, with the exception that there will be added qc_web_form_address and qc_script options for both campaigns and inbound groups. There will also be an option to have any of these launched upon a new record appearing on the QC agent's screen.
-
-The qc.php user interface will be using AJAX as a method to bring up records and keep track of QC-agent activity and performance.
-
-An optional element is for a small audio frame be opened with each new customer record that will have an audio recording of the call that the QC agent can listen to. At this point in time, the best candidate for this is the Flourish Flash-based application(http://flourishplayer.sourceforge.net/) It is open source under a BSD-like license and is based on Adobe Flash, which currently seems to be much more lightweight and provides a much lower barrier to entry on most platforms than JAVA does.
-
-
-
-Each qc_user_level will have different permissions for the qc system:
-1- modify nothing
-2- modify nothing but status
-3- modify everything
-4- can check records of other QC agents
-5- can view stats on qc system and unlock locked records from first level QC agents
-6- can view finished and non-committed records and alter them and unlock locked records from first and second level QC agents
-7- Manager level (can do anything including delete QC records)
-
-The the QC agent roles:
-FIRST - first level review
-SECOND_ALL - second level review all records
-SECOND_CHANGED - second level review only changed-status records
-SECOND_PASSED - second level review only unchanged-status records
-THIRD - third level review and commit/clear
-MANAGER - manager level actions
-
-The qc_stage is a record status within QC that tells what is going on with the record:
-NEW - record has never been QCd
-LOCK_1 - a QC agent is reviewing the record
-PASS - QC agent has passed the record
-LOCK_2 - a QC agent is reviewing the record for possible finishing
-FINISH - record is ready to be processed
-COMMIT - QC record is committed to the system and cannot be modified by anyone
-DEAD - QC record is old and present for logs only, newer record has taken it's place
-
-
-The Database Changes:
-!!! IMPORTANT !!! 
-THESE ARE FOR REFERENCE ONLY, DO NOT RUN THEM!!!
-
-# This table contains the live session information for qc_agents
- CREATE TABLE qc_agent_sessions (
-qc_session_id INT(9) UNSIGNED PRIMARY KEY NOT NULL,
-user VARCHAR(20),
-qc_user_level INT(2) default '0',
-qc_role VARCHAR(20),
-status ENUM('READY','INQC','PAUSED') default 'PAUSED',
-qc_id INT(9) UNSIGNED NOT NULL,
-lead_id INT(9) UNSIGNED NOT NULL,
-selected_campaigns_groups TEXT,
-qc_records_today SMALLINT(5) UNSIGNED default '0',
-login_time DATETIME,
-last_action_time DATETIME,
-index (user),
-index (last_action_time)
-);
-
-# This table contains the stats information for qc_agents for today
- CREATE TABLE qc_agent_stats (
-user VARCHAR(20),
-campaign_group_id VARCHAR(20),
-qc_records_today SMALLINT(5) UNSIGNED default '0',
-last_record_time DATETIME,
-last_record_finish DATETIME,
-index (user),
-index (campaign_group_id)
-);
-
-# This table contains the log information for qc_agent logins
-CREATE TABLE vicidial_user_qc_log (
-user VARCHAR(20),
-event_date DATETIME,
-selected_campaigns_groups TEXT,
-index (user),
-index (event_date)
-);
-
-# For ability to restrict statuses by user_level per campaign/in-group
- CREATE TABLE qc_allowed_statuses (
-status VARCHAR(6) PRIMARY KEY NOT NULL,
-qc_user_level INT(2) default '0',
-campaign_group_id VARCHAR(20)
-);
-
-# This table contains the original lead and log information before changes
- CREATE TABLE vicidial_qc_list (
-qc_id INT(9) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
-qc_import_date DATETIME,
-qc_stage VARCHAR(6) default 'NEW',
-call_date DATETIME,
-vicidial_id VARCHAR(20) UNIQUE NOT NULL,
-campaign_group_id VARCHAR(20),
-lead_id INT(9) UNSIGNED NOT NULL,
-list_id BIGINT(14) UNSIGNED,
-length_in_sec SMALLINT(5) UNSIGNED default '0',
-status VARCHAR(6),
-call_type VARCHAR(20),
-term_reason ENUM('CALLER','AGENT','QUEUETIMEOUT','ABANDON','AFTERHOURS','NONE') default 'NONE',
-modify_date TIMESTAMP,
-qc_user VARCHAR(20),
-user VARCHAR(20),
-user_group VARCHAR(20),
-fronter VARCHAR(20),
-vendor_lead_code VARCHAR(20),
-source_id VARCHAR(50),
-phone_code VARCHAR(10),	
-phone_number VARCHAR(12),
-title VARCHAR(4),
-first_name VARCHAR(30),
-middle_initial VARCHAR(1),
-last_name VARCHAR(30),
-address1 VARCHAR(100),
-address2 VARCHAR(100),
-address3 VARCHAR(100),
-city VARCHAR(50),
-state VARCHAR(2),
-province VARCHAR(50),
-postal_code VARCHAR(10),
-country_code VARCHAR(3),
-gender ENUM('M','F','U') default 'U',
-date_of_birth DATE,
-alt_phone VARCHAR(12),
-email VARCHAR(70),
-security_phrase VARCHAR(100),
-comments VARCHAR(255),
-index (vicidial_id),
-index (lead_id),
-index (phone_number)
-);
-
-# This table contains the updated QC records
- CREATE TABLE vicidial_qc_log (
-qc_log_id INT(9) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
-qc_id INT(9) UNSIGNED NOT NULL,
-qc_stage VARCHAR(6),
-modify_date TIMESTAMP,
-qc_user VARCHAR(20),
-qc_status VARCHAR(6),
-qc_code VARCHAR(8),
-qc_date DATETIME,
-qc_length_in_sec SMALLINT(5) UNSIGNED default '0',
-qc_comments TEXT,
-qc_altered ENUM('0','1') default '0',
-status VARCHAR(6),
-vendor_lead_code VARCHAR(20),
-phone_code VARCHAR(10),	
-phone_number VARCHAR(12),
-title VARCHAR(4),
-first_name VARCHAR(30),
-middle_initial VARCHAR(1),
-last_name VARCHAR(30),
-address1 VARCHAR(100),
-address2 VARCHAR(100),
-address3 VARCHAR(100),
-city VARCHAR(50),
-state VARCHAR(2),
-province VARCHAR(50),
-postal_code VARCHAR(10),
-country_code VARCHAR(3),
-gender ENUM('M','F','U') default 'U',
-date_of_birth DATE,
-alt_phone VARCHAR(12),
-email VARCHAR(70),
-security_phrase VARCHAR(100),
-comments VARCHAR(255),
-index (qc_id),
-index (phone_number),
-index (qc_stage)
-);
-
-
-
-
-
-
-
-
-
-# Changes committed to upgrade sql file:
-
-# For the inbound groups table, some fields will need to be added to the vicidial_campaigns table:
-ALTER TABLE vicidial_inbound_groups ADD qc_enabled ENUM('Y','N') default 'N';
-ALTER TABLE vicidial_inbound_groups ADD qc_statuses TEXT;
-ALTER TABLE vicidial_inbound_groups ADD qc_shift_id VARCHAR(20) default '24HRMIDNIGHT';
-ALTER TABLE vicidial_inbound_groups ADD qc_get_record_launch ENUM('NONE','SCRIPT','WEBFORM','QCSCRIPT','QCWEBFORM') default 'NONE';
-ALTER TABLE vicidial_inbound_groups ADD qc_show_recording ENUM('Y','N') default 'Y';
-ALTER TABLE vicidial_inbound_groups ADD qc_web_form_address VARCHAR(255);
-ALTER TABLE vicidial_inbound_groups ADD qc_script VARCHAR(10);
-
-# Alter some earlier defined fields and populate with default values
-ALTER TABLE vicidial_campaigns CHANGE campaign_shift_start_time qc_shift_id VARCHAR(20) default '24HRMIDNIGHT';
-ALTER TABLE vicidial_campaigns CHANGE campaign_shift_length qc_get_record_launch ENUM('NONE','SCRIPT','WEBFORM','QCSCRIPT','QCWEBFORM') default 'NONE';
-ALTER TABLE vicidial_campaigns CHANGE campaign_day_start_time qc_show_recording ENUM('Y','N') default 'Y';
-UPDATE vicidial_campaigns SET qc_shift_id='24HRMIDNIGHT';
-UPDATE vicidial_campaigns SET qc_get_record_launch='NONE';
-UPDATE vicidial_campaigns SET qc_show_recording='Y';
-
-ALTER TABLE system_settings ADD qc_last_pull_time DATETIME;
-
-# qc codes to be used for statistics
- CREATE TABLE vicidial_qc_codes (
-code VARCHAR(8) PRIMARY KEY NOT NULL,
-code_name VARCHAR(30)
-);
-
-# For the campaigns table, some fields will need to be added to the vicidial_campaigns table:
-ALTER TABLE vicidial_campaigns ADD qc_enabled ENUM('Y','N') default 'N';
-ALTER TABLE vicidial_campaigns ADD qc_statuses TEXT;
-ALTER TABLE vicidial_campaigns ADD qc_lists TEXT;
-ALTER TABLE vicidial_campaigns ADD campaign_shift_start_time VARCHAR(4) default '0900';
-ALTER TABLE vicidial_campaigns ADD campaign_shift_length VARCHAR(5) default '16:00';
-ALTER TABLE vicidial_campaigns ADD campaign_day_start_time VARCHAR(4) default '0100';
-ALTER TABLE vicidial_campaigns ADD qc_web_form_address VARCHAR(255);
-ALTER TABLE vicidial_campaigns ADD qc_script VARCHAR(10);
-
-# For the in-groups/campaigns QC permissions, some fields will need to be added to the vicidial_user_groups table:
-ALTER TABLE vicidial_user_groups ADD qc_allowed_campaigns TEXT;
-ALTER TABLE vicidial_user_groups ADD qc_allowed_inbound_groups TEXT;
-
-# For the user QC permissions, some fields will need to be added to the vicidial_users table:
-ALTER TABLE vicidial_users ADD qc_enabled ENUM('1','0') default '0';
-ALTER TABLE vicidial_users ADD qc_user_level INT(2) default '1';
-ALTER TABLE vicidial_users ADD qc_pass ENUM('1','0') default '0';
-ALTER TABLE vicidial_users ADD qc_finish ENUM('1','0') default '0';
-ALTER TABLE vicidial_users ADD qc_commit ENUM('1','0') default '0';

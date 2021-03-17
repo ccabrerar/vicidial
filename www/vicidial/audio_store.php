@@ -197,8 +197,10 @@ if ( (!preg_match("/\|$ip\|/", $server_ips)) and ($formIPvalid < 1) )
 	$reports_auth=0;
 	$admin_auth=0;
 	$auth_message = user_authorization($PHP_AUTH_USER,$PHP_AUTH_PW,'REPORTS',1,0);
-	if ($auth_message == 'GOOD')
-		{$auth=1;}
+	if ( ($auth_message == 'GOOD') or ($auth_message == '2FA') )
+		{
+		$auth=1;
+		}
 
 	if ($auth > 0)
 		{

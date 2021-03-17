@@ -3,6 +3,7 @@
 # ADMIN_custom_table_clean.pl                version: 2.14
 #
 # This script is designed to check for "custom_" database tables from deleted lists with no leads assigned to them
+# This script can alternatively be used to remove abandoned custom lead data in "custom_" tables if the lead no longer exists
 #
 # NOTE!!! For this script to work, you must add the "DROP" database privledge to your "VARDB_custom_user" database account
 # GRANT ALTER,CREATE,DROP on asterisk.* TO custom@'%' IDENTIFIED BY 'custom1234';
@@ -10,10 +11,11 @@
 #
 # /usr/share/astguiclient/ADMIN_custom_table_clean.pl --debug
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 200728-2033 - First version
+# 210305-1604 - Added --remove-abandoned-records-only option
 #
 
 $txt = '.txt';
@@ -22,14 +24,8 @@ $MT[0] = '';
 $Q=0;
 $DB=0;
 
-$OUTcalls=0;
-$OUTtalk=0;
-$OUTtalkmin=0;
-$INcalls=0;
-$INtalk=0;
-$INtalkmin=0;
-$email_post_audio=0;
-$did_only=0;
+$remove_field_defs=0;
+$remove_abandoned_records_only=0;
 
 $secX = time();
 $time = $secX;
@@ -127,6 +123,7 @@ if (length($ARGV[0])>1)
 		print "  [--quiet] = quiet\n";
 		print "  [--test] = testing only, no deletions\n";
 		print "  [--remove-field-defs] = remove field definitions in addition to custom_ db tables\n";
+		print "  [--remove-abandoned-records-only] = remove custom_ db lead records where the lead no longer exists\n";
 		print "  [--debug] = debugging messages\n";
 		print "  [--debugX] = Super debugging messages\n";
 		print "\n";
@@ -160,6 +157,11 @@ if (length($ARGV[0])>1)
 			$remove_field_defs=1;
 			print "\n----- REMOVE FIELD DEFINITIONS -----\n\n";
 			}
+		if ($args =~ /--remove-abandoned-records-only/i)
+			{
+			$remove_abandoned_records_only=1;
+			print "\n----- REMOVE ABANDONED CUSTOM LEAD RECORDS -----\n\n";
+			}
 		}
 	}
 else
@@ -192,6 +194,152 @@ $dbhB = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VA
 
 $dbhC = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_custom_user", "$VARDB_custom_pass")
  or die "Couldn't connect to database: " . DBI->errstr;
+
+
+
+##### BEGIN remove_abandoned_records_only section #####
+if ($remove_abandoned_records_only > 0) 
+	{
+	if (!$Q)
+		{
+		print "\n\nStarting remove_abandoned_records_only process...\n";
+		}
+	$TOTAL_CUSTOM_SCANNED=0;
+	$CUSTOM_RECORDS_DELETED=0;
+	$CUSTOM_RECORDS_EMPTY=0;
+	$CUSTOM_TABLE_LEADS_FOUND=0;
+
+
+	$stmtB = "SHOW TABLES LIKE \"custom\\_\%\";";
+	$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
+	$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
+	$sthBcustrows=$sthB->rows;
+	$col_ct=0;
+	if ($DBX) {print "$sthBcustrows|$stmtB|\n";}
+	while ($sthBcustrows > $col_ct) 
+		{
+		@aryB = $sthB->fetchrow_array;
+		$custom_table =		$aryB[0];
+		$temp_table =		$aryB[0];
+		$temp_table =~ s/custom_//gi;
+		$temp_table =~ s/\D//gi;
+
+		if (length($temp_table) > 0) 
+			{
+			$temp_custom_records_count=0;
+			$stmtA = "SELECT count(*) from $custom_table;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+				if ($DB) {print "$sthArows|$stmtA|\n";}
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$temp_custom_records_count = 	$aryA[0];
+				}
+			if ($temp_custom_records_count < 1) 
+				{
+				if ($DBX) {print "CUSTOM RECORDS EMPTY: $aryB[0]|$custom_table|$temp_custom_records_count \n";}
+				$CUSTOM_RECORDS_EMPTY++;
+				}
+			else
+				{
+				if ($DBX) {print "CUSTOM TABLE RECORDS FOUND, checking for leads tied to each custom table record: $aryB[0]|$temp_table|$temp_custom_records_count \n";}
+
+				$temp_custom_leads_abandoned=0;
+				$stmtA = "SELECT lead_id from $custom_table;";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArows=$sthA->rows;
+					if ($DB) {print "$sthArows|$stmtA|\n";}
+				$o=0;
+				while ($sthArows > $o)
+					{
+					@aryA = $sthA->fetchrow_array;
+					$temp_custom_lead_ids[$o] =	$aryA[0];
+					$o++;
+					}
+				if ($o > 0) 
+					{
+					$o=0;
+					while ($sthArows > $o)
+						{
+						$temp_lead_found=0;
+						$stmtA = "SELECT count(*) from vicidial_list where lead_id='$temp_custom_lead_ids[$o]';";
+						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+						$sthArowsX=$sthA->rows;
+							if ($DB) {print "$sthArowsX|$stmtA|\n";}
+						if ($sthArowsX > 0)
+							{
+							@aryA = $sthA->fetchrow_array;
+							$temp_lead_found = 	$aryA[0];
+							}
+						if ($temp_lead_found < 1)
+							{
+							$stmtA="DELETE FROM $custom_table where lead_id='$temp_custom_lead_ids[$o]';";
+							if (!$TEST) {$Iaffected_rows = $dbhA->do($stmtA);}
+							$CUSTOM_RECORDS_DELETED = ($CUSTOM_RECORDS_DELETED + $Iaffected_rows);
+							if ($DBX) {print " - abandoned custom record removed debug: |$Iaffected_rows|$CUSTOM_RECORDS_DELETED|$stmtA|\n";}
+							}
+						else
+							{$CUSTOM_TABLE_LEADS_FOUND++;}
+						$TOTAL_CUSTOM_SCANNED++;
+						$o++;
+						}
+					if ($DBX) {print "LEADS FOUND USING THIS CUSTOM TABLE: $aryB[0]|$temp_table|$temp_leads_found \n";}
+					$CUSTOM_TABLE_LEADS_FOUND++;
+					}
+				else
+					{
+					if ($DBX) {print "NO LEADS FOUND USING CUSTOM TABLE: $aryB[0]|$temp_table|$temp_leads_found \n";}
+
+					$Caffected_rows=0;
+					$stmtC = "DROP TABLE $custom_table;";
+					if($DBX){print STDERR "\n|$stmtC|\n";}
+					if (!$TEST) 
+						{
+						$Caffected_rows = $dbhC->do($stmtC);
+						$TOTAL_DELETED++;
+						$dropped_tables .= "$custom_table|";
+
+						# remove field definitions
+						}
+					if($DB){print STDERR "\n|$custom_table table dropped $Caffected_rows|\n";}
+					}
+				}
+			}
+		else
+			{
+			if ($DBX) {print "INVALID CUSTOM TABLE: $aryB[0]|$temp_table \n";}
+			$INVALID_CUSTOM_TABLE++;
+			}
+
+		$col_ct++;
+		}
+	$sthB->finish();
+
+
+	if ($TOTAL_CUSTOM_SCANNED > 0) 
+		{
+		$stmtA="INSERT INTO vicidial_admin_log set event_date=NOW(), user='VDAD', ip_address='1.1.1.1', event_section='LISTS', event_type='OTHER', record_id='lists', event_code='CUSTOM TABLES SCANNED', event_sql=\"\", event_notes='records scanned: $TOTAL_CUSTOM_SCANNED   abandoned custom records deleted: $CUSTOM_RECORDS_DELETED   empty custom tables: $CUSTOM_RECORDS_EMPTY   total custom tables: $col_ct';";
+		if (!$TEST) {$Iaffected_rows = $dbhA->do($stmtA);}
+		if ($DBX) {print " - admin log insert debug: |$Iaffected_rows|$stmtA|\n";}
+		}
+
+	if (!$Q) 
+		{
+		print "PROCESS COMPLETE: \n";
+		print "   Total custom records scanned:  $TOTAL_CUSTOM_SCANNED ($col_ct)\n";
+		print "   Custom tables that are empty:  $CUSTOM_RECORDS_EMPTY \n";
+		print "   Custom table leads found:      $CUSTOM_TABLE_LEADS_FOUND \n";
+		print "   Custom table records deleted:  $CUSTOM_RECORDS_DELETED \n";
+		}
+
+	exit;
+	}
+##### END remove_abandoned_records_only section #####
+
 
 
 $TOTAL_CUSTOM=0;

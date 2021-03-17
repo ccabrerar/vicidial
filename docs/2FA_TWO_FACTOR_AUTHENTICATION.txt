@@ -1,0 +1,75 @@
+2FA - TWO FACTOR AUTHENTICATION				Updated: 2021-03-12
+
+This document covers the 2FA(Two-Factor-Authentication) features in VICIdial as
+of admin.php build 210312-1239(svn/trunk revision 3373).
+
+
+
+What is 2FA (Two-Factor-Authentication)?
+
+Two-Factor-Authentication adds a required second step to the admin web screen login process through a method other than a password, such as: an Email, Phone Call or Text-Message(SMS). This 2FA auth also lasts only a set amount of time(defined in System Settings[number of hours, from 1-9999 hours]), or until the user logs out. Currently, 2FA is not available or affected by agent screen logins.
+
+
+To use 2FA on your system, you will need to have at least one of the following enabled on your VICIdial system:
+1. The ability for your webserver to send email through PHP
+2. The ability to place phone calls from one of your dialers
+3. An SMS service that can send text messages by an HTTP or HTTPS API
+
+
+To enable and configure 2FA in VICIdial, there are two settings in the Admin -> System Settings web configuration page, and one override setting in the User Modify page:
+
+SYSTEM SETTINGS:
+1. 2FA Auth Expire Hours - Must be set to a number higher than 0 to enable
+2. 2FA Settings Container - Must be a valid 2FA_SETTINGS Container Type, with the following configuration options(example is below the field definitions):
+
+auth_code_expire_minutes =	The number of minutes the Authorization code will be valid for, default is 30 minutes
+auth_code_attempts =		The number of attempts a person has to enter an auth code before their account is locked for 15 minutes, default is 10
+auth_code_length =		The number of digits in the Authorization code(can be from 4 to 10), default is 6
+email_auth =			If set to YES, then "Email" is given as an option to people logging in when choosing a 2FA method, default is NO
+email_from =			The email address that the webserver will use to send Auth-code emails from
+email_subject =			The subject of the Auth-code emails
+email_message =			The message content of the Auth-code emails, default is: "Here is your VICIdial Login Authorization Code: --A--auth_code--B--"
+phone_auth =			If set to YES, then "Phone Call" is given as an option to people logging in when choosing a 2FA method, default is NO
+phone_prefix =			The dial prefix used when placing Auth-code phone calls(if using 10-digit numbers in USA-Canada, and campaign prefix is 9, then use '91')
+phone_server_ip =		The Server IP of the dialer to be used to place Auth-code phone calls
+phone_cid_number =		The callerID number to be used when placing Auth-code phone calls
+phone_message_override =	A Settings Container with alternative Call Menu ID to be used to play(your access code is "--A--auth_code--B--"), default is 2FA_say_auth_code
+sms_auth =			If set to YES, then "SMS(Text-Message)" is given as an option to people logging in when choosing a 2FA method, default is NO
+sms_cid_number =		The callerID number to be used when placing Auth-code SMS text-messages
+sms_url =			The URL used to send SMS messages, the agent Mobile Number and Auth-Code variables are "--A--mobile_number--B--" and "--A--auth_code--B--"
+
+
+EXAMPLE "2FA_SETTINGS" SETTINGS CONTAINER:
+
+auth_code_expire_minutes => 30
+auth_code_attempts => 10
+auth_code_length => 5
+email_auth => YES
+email_from => no-reply@vicidial.org
+email_subject => VICIdial Login Authentication
+email_message => Here is your VICIdial Login Authorization Code: --A--auth_code--B--
+phone_auth => YES
+phone_prefix => 91
+phone_server_ip => 10.10.10.15
+phone_cid_number => 3125551212
+phone_message_override => 
+sms_auth => YES
+sms_cid_number => 3125551212
+sms_url => https://http-api.d7networks.com/send?to=1--A--mobile_number--B--&from=17275551212&username=USERNAME_HERE&password=PASSWORD_HERE&content=Here%20is%20your%20VICIdial%20login%20authorization%20code%3A%20--A--auth_code--B--
+
+
+USER MODIFY:
+3. There is also a User option "Two Factor Auth Override" which allows an administrator to disable 2FA for a specific user account.
+
+
+
+
+
+QUICK TUTORIAL FOR HOW TO SET UP AN SMS ACCOUNT WITH D7NETWORKS.COM:
+1. Go to https://d7networks.com
+2. Click to "Login/Sign-Up" and fill out the form to set up a new account
+3. Click on the "SMS Api" link at the top, then the "HTTP API" link in the main panel
+4. Copy the Username and Password that it has generated for you and populate it in the below URL to test:
+    NOTE: Both the 'to' and 'from' assume the country code is included, so in NANPA countries(like the USA and Canada) you will need the '1' prefix before the 10-digit phone numbers.
+
+https://http-api.d7networks.com/send?to=1--A--mobile_number--B--&from=17275551212&username=USERNAME_HERE&password=PASSWORD_HERE&content=Here%20is%20your%20VICIdial%20login%20authorization%20code%3A%20--A--auth_code--B--

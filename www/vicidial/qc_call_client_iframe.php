@@ -4,7 +4,7 @@
 # ViciDial database administration modify lead in vicidial_list
 # 
 # Copyright (C) 2012  poundteam.com    LICENSE: AGPLv2
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to allow QC review and modification of leads, contributed by poundteam.com
 #
@@ -17,6 +17,7 @@
 # 141007-2156 - Finalized adding QXZ translation to all admin files
 # 141229-2013 - Added code for on-the-fly language translations display
 # 170409-1533 - Added IP List validation code
+# 210306-1052 - Changes for new QC module
 #
 
 require("dbconnect_mysqli.php");
@@ -134,7 +135,7 @@ $NOW_TIME = date("Y-m-d H:i:s");
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,custom_fields_enabled,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,custom_fields_enabled,enable_languages,language_method,qc_features_active FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
@@ -145,6 +146,7 @@ if ($qm_conf_ct > 0)
 	$custom_fields_enabled =	$row[1];
 	$SSenable_languages =		$row[2];
 	$SSlanguage_method =		$row[3];
+	$SSqc_features_active =		$row[4];
 	}
 ##### END SETTINGS LOOKUP #####
 ###########################################

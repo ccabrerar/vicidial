@@ -1,7 +1,7 @@
 <?php 
 # realtime_report.php
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # live real-time stats for the VICIDIAL Auto-Dialer all servers
 #
@@ -52,12 +52,13 @@
 # 200506-1633 - Added RS_CUSTINFOminUL options.php setting
 # 200815-0928 - Added agent-paused 10 & 15 minute indicators
 # 201107-2254 - Added optional display of parked calls stats, inbound SLA and LIMITED report type
+# 210314-2039 - Added DID Description for inbound calls
 #
 
 $startMS = microtime();
 
-$version = '2.14-39';
-$build = '201107-2254';
+$version = '2.14-40';
+$build = '210314-2039';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -385,8 +386,16 @@ $auth=0;
 $reports_auth=0;
 $admin_auth=0;
 $auth_message = user_authorization($PHP_AUTH_USER,$PHP_AUTH_PW,'REPORTS',1,0);
-if ($auth_message == 'GOOD')
-	{$auth=1;}
+if ( ($auth_message == 'GOOD') or ($auth_message == '2FA') )
+	{
+	$auth=1;
+	if ($auth_message == '2FA')
+		{
+		header ("Content-type: text/html; charset=utf-8");
+		echo _QXZ("Your session is expired").". <a href=\"admin.php\">"._QXZ("Click here to log in")."</a>.\n";
+		exit;
+		}
+	}
 
 if ($auth > 0)
 	{
@@ -1906,7 +1915,8 @@ function update_variables(task_option,task_choice,force_reload)
 
 	.realtime_img_icon {width: 42px; height: 42px;}
 	.realtime_img_text {font-family:HELVETICA; font-size:11; color:white; font-weight:bold;}
-	.realtime_table {width: 860px; max-width: 860px; }
+	.realtime_table {width: 960px; max-width: 960px; }
+	.realtime_calls_table {width: 860px; max-width: 860px; }
 	.realtime_settings_table {width: 700px; max-width: 700px; }
 
 <?php

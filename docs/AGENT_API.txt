@@ -1,4 +1,4 @@
-AGENT API DOCUMENT		Started: 2008-07-03	Updated: 2020-11-12
+AGENT API DOCUMENT		Started: 2008-07-03	Updated: 2021-02-22
 
 This document describes the functions of an API(Application Programming Interface)
 for the VICIDIAL Agent screen. This functionality will be rather limited at first
@@ -553,7 +553,7 @@ SUCCESS: st_get_agent_active_lead lead found - 6666|7275551212|123456|9987-12347
 ra_call_control - 
 
 DESCRIPTION:
-Allows for remote agent call control: hangup/transfer calls being handled by remote agents, also options for recording a disposition and call length
+Allows for remote agent call control: hangup/transfer calls being handled by remote agents, also options for logging a disposition and call length
 
 VALUES:
 value -
@@ -571,6 +571,7 @@ status -
 
 EXAMPLE URLS:
 http://server/agc/api.php?source=test&user=6666&pass=1234&agent_user=1028&function=ra_call_control&stage=INGROUPTRANSFER&ingroup_choices=DEFAULTINGROUP&value=Y0316001655000402028
+http://server/agc/api.php?source=test&user=6666&pass=1234&agent_user=9877&function=ra_call_control&stage=HANGUP&status=TEST88&value=V2221052110000798236
 
 RESPONSES:
 ERROR: ra_call_control not valid - Y0315201639000402027|6666|INGROUPTRANSFER

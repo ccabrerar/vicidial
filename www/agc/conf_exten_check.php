@@ -1,11 +1,11 @@
 <?php
 # conf_exten_check.php    version 2.14
-# 
+#
 # Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed purely to send whether the meetme conference has live channels connected and which they are
 # This script depends on the server_ip being sent and also needs to have a valid user/pass from the vicidial_users table
-# 
+#
 # required variables:
 #  - $server_ip
 #  - $session_name
@@ -19,7 +19,7 @@
 #  - $exten - ('123test',...)
 #  - $auto_dial_level - ('0','1','1.2',...)
 #  - $campagentstdisp - ('YES',...)
-# 
+#
 
 # changes
 # 50509-1054 - First build of script
@@ -398,13 +398,13 @@ if ($ACTION == 'refresh')
 
 			### see if chats/emails are enabled, and if so how many of each are waiting
 			# 03041 and 03042 are the error logs for this
-			
+
 			$chat_email_stmt="select allow_chats, allow_emails from system_settings;";
 			$chat_email_rslt=mysql_to_mysqli($chat_email_stmt, $link);
 			$chat_email_row=mysqli_fetch_row($chat_email_rslt);
 
 			# GET closer logs, in case they weren't grabbed above due to campagentstdisp!=YES
-			if ($chat_email_row[0]!=0 || $chat_email_row[1]!=0) 
+			if ($chat_email_row[0]!=0 || $chat_email_row[1]!=0)
 				{
 				$stmt="SELECT status,campaign_id,closer_campaigns,comments from vicidial_live_agents where user='$user' and server_ip='$server_ip';";
 				if ($DB) {echo "|$stmt|\n";}
@@ -424,11 +424,11 @@ if ($ACTION == 'refresh')
 					}
 				}
 
-			if ($chat_email_row[0]==0) 
+			if ($chat_email_row[0]==0)
 				{
 				$WaitinGChats="N";
-				} 
-			else 
+				}
+			else
 				{
 				$chat_stmt="select count(*) from vicidial_live_chats where status='WAITING' and ((group_id IN('$AccampSQL') and (transferring_agent is null or transferring_agent!='$user')) or (group_id='AGENTDIRECT_CHAT' and user_direct='$user')) and chat_creator!='$user'";
 				$chat_rslt=mysql_to_mysqli($chat_stmt, $link);
@@ -436,7 +436,7 @@ if ($ACTION == 'refresh')
 				$chat_row=mysqli_fetch_row($chat_rslt);
 				$WaitinGChats=$chat_row[0];
 				# Chat alert priority: waiting chats = blink, then in-chat = on, then = off
-				if ($WaitinGChats > 0) 
+				if ($WaitinGChats > 0)
 					{
 					$WaitinGChats = "Y"; # Make CHAT button blink
 					}
@@ -444,16 +444,16 @@ if ($ACTION == 'refresh')
 					{
 					$WaitinGChats = "C"; # in-chat, so make CHAT button display "ON";
 					}
-				else 
+				else
 					{
 					$WaitinGChats = "N"; # no chats waiting, not in chat, make CHAT display "OFF"
 					}
 				}
-			if ($chat_email_row[1]==0) 
+			if ($chat_email_row[1]==0)
 				{
 				$WaitinGEmails="N";
-				} 
-			else 
+				}
+			else
 				{
 #				$email_stmt="select count(*) from vicidial_email_list, vicidial_xfer_log where vicidial_email_list.status='QUEUE' and vicidial_email_list.user='$user' and vicidial_xfer_log.xfercallid=vicidial_email_list.xfercallid and direction='INBOUND' and vicidial_xfer_log.campaign_id in ('$AccampSQL') and closer='EMAIL_XFER'";
 				$email_stmt="select count(*) from vicidial_email_list, vicidial_xfer_log where vicidial_email_list.user!='$user' and vicidial_xfer_log.xfercallid=vicidial_email_list.xfercallid and direction='INBOUND' and vicidial_xfer_log.campaign_id in ('$AccampSQL') and closer='EMAIL_XFER'";
@@ -534,7 +534,7 @@ if ($ACTION == 'refresh')
 					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03019',$user,$server_ip,$session_name,$one_mysql_log);}
 						$row=mysqli_fetch_row($rslt);
 						$Aagent_log_idCOUNT=$row[0];
-						
+
 						if ($Aagent_log_idCOUNT < 1)
 							{
 							$NEWdead_epoch = date("U");
@@ -601,7 +601,7 @@ if ($ACTION == 'refresh')
 					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03030',$user,$server_ip,$session_name,$one_mysql_log);}
 						$row=mysqli_fetch_row($rslt);
 						$Aagent_log_idCOUNT=$row[0];
-						
+
 						if ($Aagent_log_idCOUNT < 1)
 							{
 							$NEWdead_epoch = date("U");
@@ -749,7 +749,7 @@ if ($ACTION == 'refresh')
 							$row=mysqli_fetch_row($rslt);
 							$external_igb_set_name =		$row[0];
 							}
-						
+
 						$NEWoutbound_autodial='N';
 						if ( ($external_blended > 0) and ($dial_method != "INBOUND_MAN") and ($dial_method != "MANUAL") )
 							{$NEWoutbound_autodial='Y';}
@@ -829,11 +829,11 @@ if ($ACTION == 'refresh')
 								}
 							if ($HHshift_end_time > 23)
 								{$HHshift_end_time = ($HHshift_end_time - 24);}
-							$HHshift_end_time = sprintf("%02s", $HHshift_end_time);	
-							$MMshift_end_time = sprintf("%02s", $MMshift_end_time);	
+							$HHshift_end_time = sprintf("%02s", $HHshift_end_time);
+							$MMshift_end_time = sprintf("%02s", $MMshift_end_time);
 							$shift_end_time = "$HHshift_end_time$MMshift_end_time";
 
-							if ( 
+							if (
 								( ($HHMM >= $shift_start_time) and ($HHMM < $shift_end_time) ) or
 								( ($HHMM < $shift_start_time) and ($HHMM < $shift_end_time) and ($shift_end_time <= $shift_start_time) ) or
 								( ($HHMM >= $shift_start_time) and ($HHMM >= $shift_end_time) and ($shift_end_time <= $shift_start_time) )
@@ -849,11 +849,11 @@ if ($ACTION == 'refresh')
 				}
 
 
-			if ( ( ($time_diff > 8) or ($time_diff < -8) or ($web_diff > 8) or ($web_diff < -8) ) and (preg_match("/0\$/i",$StarTtime)) ) 
+			if ( ( ($time_diff > 8) or ($time_diff < -8) or ($web_diff > 8) or ($web_diff < -8) ) and (preg_match("/0\$/i",$StarTtime)) )
 				{$Alogin='TIME_SYNC';}
 			if ( ($Acount < 1) or ($Scount < 1) )
 				{$Alogin='DEAD_VLA';}
-			if ($AexternalDEAD > 0) 
+			if ($AexternalDEAD > 0)
 				{$Alogin='DEAD_EXTERNAL';}
 			if ($Ashift_logout > 0)
 				{$Alogin='SHIFT_LOGOUT';}
@@ -904,23 +904,23 @@ if ($ACTION == 'refresh')
 					$dial_time = 		$row[4];
 					$time_to_progress = $row[5];
 					$time_to_ring = 	$row[6];
-					if ( ($first_180_date > 0) and ($first_180_date != 'NULL') and ($first_183_date > 0) and ($first_183_date != 'NULL')) 
+					if ( ($first_180_date > 0) and ($first_180_date != 'NULL') and ($first_183_date > 0) and ($first_183_date != 'NULL'))
 						{if ($first_180_date > $first_183_date) {$time_to_progress=$time_to_ring;}}
 
 					if ( ($dial_time > 0) and ($dial_time != 'NULL') )
 						{
-						if ( ($time_to_progress > 0) and ($time_to_progress != 'NULL') ) 
+						if ( ($time_to_progress > 0) and ($time_to_progress != 'NULL') )
 							{
-							if ( ($dial_time <= 0) or ($dial_time == 'NULL') ) 
+							if ( ($dial_time <= 0) or ($dial_time == 'NULL') )
 								{$dial_time = $time_to_progress;}
 							$invite_to_ring = $time_to_progress;
 							$ring_to_final = ($dial_time - $invite_to_ring);
 							}
 						else
 							{
-							if ( ($time_to_ring > 0) and ($time_to_ring != 'NULL') ) 
+							if ( ($time_to_ring > 0) and ($time_to_ring != 'NULL') )
 								{
-								if ( ($dial_time <= 0) or ($dial_time == 'NULL') ) 
+								if ( ($dial_time <= 0) or ($dial_time == 'NULL') )
 									{$dial_time = $time_to_ring;}
 								$invite_to_ring = $time_to_ring;
 								$ring_to_final = ($dial_time - $invite_to_ring);
@@ -950,7 +950,7 @@ if ($ACTION == 'refresh')
 							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03049',$user,$server_ip,$session_name,$one_mysql_log);}
 						$affected_rowsX = mysqli_affected_rows($link);
 
-						
+
 						### BEGIN check for SIP event log actions ###
 						$CAMPsip_event_logging='DISABLED';
 						$invite_to_final='';
@@ -1007,7 +1007,7 @@ if ($ACTION == 'refresh')
 												}
 											if (preg_match("/hangup|dispo|message/i",$itf_actions))
 												{
-											#	$call_output = "$uniqueid\n$channel\nERROR\n" . $hangup_cause_msg . "\n<br>" . $sip_hangup_cause_msg; 
+											#	$call_output = "$uniqueid\n$channel\nERROR\n" . $hangup_cause_msg . "\n<br>" . $sip_hangup_cause_msg;
 												$sip_event_action_output = "SIP ACTION-----" . $itf_actions . "-----" . $itf_dispo . "-----" . $itf_message;
 												}
 											}
@@ -1116,7 +1116,7 @@ if ($ACTION == 'register')
 ################################################################################
 ### DEBUG OUTPUT AND LOGGING
 ################################################################################
-if ($format=='debug') 
+if ($format=='debug')
 	{
 	$ENDtime = date("U");
 	$RUNtime = ($ENDtime - $StarTtime);
@@ -1124,10 +1124,10 @@ if ($format=='debug')
 	echo "\n</body>\n</html>\n";
 	}
 
-if ($SSagent_debug_logging > 0) 
+if ($SSagent_debug_logging > 0)
 	{
 	vicidial_ajax_log($NOW_TIME,$startMS,$link,$ACTION,$php_script,$user,$stage,$lead_id,$session_name,$stmt);
-	
+
 	### log the clicks that are sent from the agent screen
 	if (strlen($clicks) > 1)
 		{
@@ -1150,6 +1150,6 @@ if ($SSagent_debug_logging > 0)
 			}
 		}
 	}
-exit; 
+exit;
 
 ?>

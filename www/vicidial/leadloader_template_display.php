@@ -1,7 +1,7 @@
 <?php
 # leadloader_template_display.php - version 2.14
 # 
-# Copyright (C) 2017  Matt Florell,Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell,Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 120402-2238 - First Build
@@ -17,6 +17,7 @@
 # 150210-0619 - Fixed small display issue
 # 170409-1534 - Added IP List validation code
 # 171204-1518 - Fix for custom field duplicate issue, removed link to old lead loader
+# 210312-1700 - Added layout editing functionality
 #
 
 require("dbconnect_mysqli.php");
@@ -122,6 +123,10 @@ $rslt=mysql_to_mysqli($stmt, $link);
 $row=mysqli_fetch_row($rslt);
 $LOGload_leads = $row[0];
 
+$NWB = "<IMG SRC=\"help.png\" onClick=\"FillAndShowHelpDiv(event, '";
+$NWE = "')\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP>";
+require("screen_colors.php");
+
 if ($LOGload_leads < 1)
 	{
 	Header ("Content-type: text/html; charset=utf-8");
@@ -140,7 +145,7 @@ if ( (preg_match("/;|:|\/|\^|\[|\]|\"|\'|\*/",$LF_orig)) or (preg_match("/;|:|\/
 	exit;
 	}
 
-if ($template_id) {
+if ($template_id && $form_action!="update_template") {
 	$stmt="select * from vicidial_custom_leadloader_templates where template_id='$template_id'";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$row=mysqli_fetch_array($rslt);
@@ -231,9 +236,209 @@ else if ($list_id>=0 && $form_action=="no_template")
 		}
 	echo "</select>\n";
 	}
-else if ($form_action=="update_template") 
+else if ($form_action=="update_template" && $template_id) 
 	{
-	echo "Hi";
+	$template_stmt="select * from vicidial_custom_leadloader_templates where template_id='$template_id'";
+	$template_rslt=mysql_to_mysqli($template_stmt, $link);
+	if (mysqli_num_rows($template_rslt)!=1)
+		{
+		echo "Error: ".mysqli_num_rows($template_rslt)." templates found";
+		exit;
+		}
+	else
+		{
+		$template_row=mysqli_fetch_array($template_rslt);
+		$template_name=$template_row["template_name"];
+		$template_description=$template_row["template_description"];
+		$list_id=$template_row["list_id"];
+		$standard_variables=$template_row["standard_variables"];
+		$custom_table=$template_row["custom_table"];
+		$custom_variables=$template_row["custom_variables"];
+		$template_statuses=$template_row["template_statuses"];
+
+
+		$campaign_stmt="select campaign_id from vicidial_lists where list_id='$list_id'";
+		$campaign_rslt=mysql_to_mysqli($campaign_stmt, $link);
+		if (mysqli_num_rows($campaign_rslt)>0) 
+			{
+			$campaign_row=mysqli_fetch_row($campaign_rslt);
+			$campaign_id=$campaign_row[0];
+			}
+		$stmt="select status, status_name from vicidial_statuses UNION select status, status_name from vicidial_campaign_statuses where campaign_id='$campaign_id' order by status, status_name asc";
+		$rslt=mysql_to_mysqli($stmt, $link);
+
+		echo "<select id='template_statuses' name='template_statuses[]' size=5 multiple>\n";
+		echo "\t<option value='--ALL--' selected>--"._QXZ("ALL DISPOSITIONS")."--</option>\n";
+		while ($row=mysqli_fetch_array($rslt)) 
+			{
+			echo "\t<option value='$row[status]'>$row[status] - $row[status_name]</option>\n";
+			}
+		echo "</select>\n";
+		echo "|||";
+
+
+		$svar_array=explode("|", $standard_variables);
+		$standard_array=array();
+		for($i=0; $i<count($svar_array); $i++)
+			{
+			if (preg_match('/,/', $svar_array[$i])) 
+				{
+				$field_array=explode(",", $svar_array[$i]);
+				$standard_array["$field_array[0]"]=($field_array[1]!="" ? $field_array[1] : "-1");
+				}
+			}
+
+		$cvar_array=explode("|", $custom_variables);
+		$custom_array=array();
+		for($i=0; $i<count($cvar_array); $i++)
+			{
+			if (preg_match('/,/', $cvar_array[$i])) 
+				{
+				$field_array=explode(",", $cvar_array[$i]);
+				$standard_array["$field_array[0]"]=($field_array[1]!="" ? $field_array[1] : "-1");
+				$custom_array["$field_array[0]"]=($field_array[1]!="" ? $field_array[1] : "-1");
+				}
+			}
+		asort($custom_array);
+		asort($standard_array);
+		# print_r($standard_array);
+
+		# exit;
+/*
+*************************** 1. row ***************************
+         template_id: Dans1
+       template_name: tpDB1
+template_description: Dans first template
+             list_id: 100
+  standard_variables: vendor_lead_code,0|source_id,6|phone_code,10|phone_number,11|title,12|first_name,13|middle_initial,14|last_name,15|address1,16|address2,17|address3,18|city,19|state,20|province,20|postal_code,10|country_code,23|gender,24|date_of_birth,25|alt_phone,26|email,27|security_phrase,28|comments,29|rank,32|owner,33|
+        custom_table: custom_100
+    custom_variables: question,38|answer,39|favorite_color,40|
+   template_statuses:
+*/
+
+		$fields_stmt = "SELECT list_id, vendor_lead_code, source_id, phone_code, phone_number, title, first_name, middle_initial, last_name, address1, address2, address3, city, state, province, postal_code, country_code, gender, date_of_birth, alt_phone, email, security_phrase, comments, rank, owner from vicidial_list limit 1";
+
+		$vicidial_list_fields = '|lead_id|vendor_lead_code|source_id|list_id|gmt_offset_now|called_since_last_reset|phone_code|phone_number|title|first_name|middle_initial|last_name|address1|address2|address3|city|state|province|postal_code|country_code|gender|date_of_birth|alt_phone|email|security_phrase|comments|called_count|last_local_call_time|rank|owner|entry_list_id|';
+
+		$vl_fields_count=substr_count($vicidial_listloader_fields, "|")-1;
+
+		##### BEGIN custom fields columns list ###
+		if ($custom_fields_enabled > 0)
+			{
+			$stmt="SHOW TABLES LIKE \"custom_$list_id\";";
+			if ($DB>0) {echo "$stmt\n";}
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$tablecount_to_print = mysqli_num_rows($rslt);
+			if ($tablecount_to_print > 0) 
+				{
+				$stmt="SELECT count(*) from vicidial_lists_fields where list_id='$list_id' and field_duplicate!='Y';";
+				if ($DB>0) {echo "$stmt\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$fieldscount_to_print = mysqli_num_rows($rslt);
+				if ($fieldscount_to_print > 0) 
+					{
+					$rowx=mysqli_fetch_row($rslt);
+					$custom_records_count =	$rowx[0];
+
+					$custom_SQL='';
+					$stmt="SELECT field_id,field_label,field_name,field_description,field_rank,field_help,field_type,field_options,field_size,field_max,field_default,field_cost,field_required,multi_position,name_position,field_order from vicidial_lists_fields where list_id='$list_id' and field_duplicate!='Y' order by field_rank,field_order,field_label;";
+					if ($DB>0) {echo "$stmt\n";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+					$fields_to_print = mysqli_num_rows($rslt);
+					$fields_list='';
+					$o=0;
+					while ($fields_to_print > $o) 
+						{
+						$rowx=mysqli_fetch_row($rslt);
+						$A_field_label[$o] =	$rowx[1];
+						$A_field_type[$o] =		$rowx[6];
+
+						if ($DB>0) {echo "$A_field_label[$o]|$A_field_type[$o]\n";}
+
+						if ( ($A_field_type[$o]!='DISPLAY') and ($A_field_type[$o]!='SCRIPT') and ($A_field_type[$o]!='SWITCH') )
+							{
+							if (!preg_match("/\|$A_field_label[$o]\|/",$vicidial_list_fields))
+								{
+								$custom_SQL .= ",$A_field_label[$o]";
+								}
+							}
+						$o++;
+						}
+
+					$fields_stmt = "SELECT list_id, vendor_lead_code, source_id, phone_code, phone_number, title, first_name, middle_initial, last_name, address1, address2, address3, city, state, province, postal_code, country_code, gender, date_of_birth, alt_phone, email, security_phrase, comments, rank, owner $custom_SQL from vicidial_list, custom_$list_id limit 1";
+					}
+				}
+			}
+		##### END custom fields columns list ###
+		}
+
+		echo "<table border=0 width='100%' cellpadding=3 cellspacing=0>";
+		echo "  <tr bgcolor=\"#".$SSframe_background."\">";
+		echo "  	<td align=\"right\" width='50%' class=\"standard\"><font>"._QXZ("Template ID").":</td>";
+		echo "  	<td align=\"left\" width='50%' class=\"standard_bold\"><input type='hidden' name='template_id' value='$template_id'>$template_id</td>";
+		echo "  </tr>";
+		echo "  <tr bgcolor=\"#".$SSframe_background."\">";
+		echo "  	<td align=\"right\" width='50%'><font class=\"standard\">"._QXZ("Template Name").":</font></td>";
+		echo "  	<td align=\"left\" width='50%'><input type='text' name='template_name' value='$template_name' size='15' maxlength='30'>$NWB#template_maker-template_name$NWE</td>";
+		echo "  </tr>";
+		echo "  <tr bgcolor=\"#".$SSframe_background."\">";
+		echo "  	<td align=\"right\" width='50%'><font class=\"standard\">"._QXZ("Template Description").":</font></td>";
+		echo "  	<td align=\"left\" width='50%'><input type='text' name='template_description' value='$template_description' size='50' maxlength='255'>$NWB#template_maker-template_description$NWE</td>";
+		echo "  </tr>";
+		echo "<tr bgcolor=\"#".$SSframe_background."\">";
+		echo "	<th colspan='2'><input style='background-color:#$SSbutton_color' type='button' name='submit_edited_template' onClick=\"return checkEditedForm(this.form)\" value='"._QXZ("SUBMIT CHANGES")."'></th>";
+		echo "</tr>";
+
+		
+		echo "  <tr bgcolor='#".$SSalt_row1_background."'>\r\n";
+		echo "    <td align=right width='50%' valign='top' class='standard_bold' nowrap>CURRENT FILE LAYOUT:&nbsp;&nbsp;&nbsp;</td>";
+		echo "    <td align=left width='50%' valign='top' class='standard'>";
+		for ($i=0; $i<=end($standard_array); $i++)
+			{
+			if (in_array($i, $standard_array))
+				{
+				echo "<B>\"".implode("|", array_keys($standard_array, $i))."\"</B>";
+				}
+			else
+				{
+				echo "\"(unused)\"";
+				}
+			if ($i<end($standard_array)) {echo ",&nbsp;";}
+			}
+		echo "</font>$NWB#template_maker-current_file_layout$NWE</td>\r\n";
+		echo "  </tr>\r\n";
+		echo "</table>";
+
+		echo "<table border=0 width='100%' cellpadding=0 cellspacing=0>";
+#		echo "  <tr bgcolor='#".$SSframe_background."'>\r\n";
+#		echo "    <td align=center width=\"50%\"><font class='standard_bold'>&nbsp;</font></td>\r\n";
+#		echo "    <td align=left width=\"50%\"><font class='standard_bold'><BR><BR><BR>INDEX</font></td>\r\n";
+#		echo "  </tr>\r\n";
+		$rslt=mysql_to_mysqli("$fields_stmt", $link);
+		$custom_fields_count=mysqli_num_fields($rslt)-$vl_fields_count;
+		while ($fieldinfo=mysqli_fetch_field($rslt))
+			{
+			$rslt_field_name=$fieldinfo->name;
+			if (preg_match("/$rslt_field_name/", $vicidial_list_fields)) {$bgcolor="#".$SSframe_background;} else {$bgcolor="#".$SSalt_row1_background;}
+
+			echo "  <tr bgcolor='$bgcolor'>\r\n";
+			echo "    <td align=right nowrap width=\"50%\"><font class=standard>".strtoupper(preg_replace('/_/i', ' ', $rslt_field_name)).": </font></td>\r\n";
+			if ($rslt_field_name!="list_id") 
+				{
+				# $standard_array["$rslt_field_name"]+=0;
+				$value=($standard_array["$rslt_field_name"]>=0 ? $standard_array["$rslt_field_name"] : "");
+				echo "    <td align=left width=\"50%\"><input type='text' name='$field_prefix".$rslt_field_name."_field' id='$field_prefix".$rslt_field_name."_field' value='$value' size='2' maxlength='3' onBlur='EditTemplateStrings()'>\r\n";
+
+				echo "    </td>\r\n";
+				}
+			else 
+				{
+				echo "    <td align=left>&nbsp;<font class='standard_bold'>$list_id<input type='hidden' name='".$field_prefix.$list_id."' value='$list_id'></font></td>\r\n";
+				}
+				echo "  </tr>\r\n";
+			}
+		echo "</table>";
+
 	} 
 else
 	{
@@ -305,7 +510,7 @@ else
 
 					if ($DB>0) {echo "$A_field_label[$o]|$A_field_type[$o]\n";}
 
-					if ( ($A_field_type[$o]!='DISPLAY') and ($A_field_type[$o]!='SCRIPT') )
+					if ( ($A_field_type[$o]!='DISPLAY') and ($A_field_type[$o]!='SCRIPT') and ($A_field_type[$o]!='SWITCH') )
 						{
 						if (!preg_match("/\|$A_field_label[$o]\|/",$vicidial_list_fields))
 							{
@@ -335,7 +540,7 @@ else
 	while ($fieldinfo=mysqli_fetch_field($rslt))
 		{
 		$rslt_field_name=$fieldinfo->name;
-		if (preg_match("/$rslt_field_name/", $vicidial_list_fields)) {$bgcolor="#D9E6FE";} else {$bgcolor="#FED9D9";}
+		if (preg_match("/$rslt_field_name/", $vicidial_list_fields)) {$bgcolor="#".$SSframe_background;} else {$bgcolor="#".$SSalt_row1_background;}
 
 		echo "  <tr bgcolor='$bgcolor'>\r\n";
 		echo "    <td align=right nowrap><font class=standard>".strtoupper(preg_replace('/_/i', ' ', $rslt_field_name)).": </font></td>\r\n";
@@ -358,6 +563,6 @@ else
 			}
 			echo "  </tr>\r\n";
 		}
-		echo "</table>";
+	echo "</table>";
 }
 ?>

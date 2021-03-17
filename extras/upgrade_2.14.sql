@@ -624,7 +624,7 @@ ALTER TABLE vicidial_inbound_groups ADD park_file_name VARCHAR(100) default '';
 
 UPDATE system_settings SET db_schema_version='1543',db_schema_update_date=NOW() where db_schema_version < 1543;
 
-ALTER TABLE vicidial_lists_fields MODIFY field_type ENUM('TEXT','AREA','SELECT','MULTI','RADIO','CHECKBOX','DATE','TIME','DISPLAY','SCRIPT','HIDDEN','READONLY','HIDEBLOB','SWITCH','SOURCESELECT') default 'TEXT';
+ALTER TABLE vicidial_lists_fields MODIFY field_type ENUM('TEXT','AREA','SELECT','MULTI','RADIO','CHECKBOX','DATE','TIME','DISPLAY','SCRIPT','HIDDEN','READONLY','HIDEBLOB','SWITCH','SOURCESELECT','BUTTON') default 'TEXT';
 
 UPDATE system_settings SET db_schema_version='1544',db_schema_update_date=NOW() where db_schema_version < 1544;
 
@@ -1431,6 +1431,139 @@ index (drop_time)
 
 UPDATE system_settings SET db_schema_version='1616',db_schema_update_date=NOW() where db_schema_version < 1616;
 
-ALTER TABLE vicidial_lists_fields MODIFY field_type ENUM('TEXT','AREA','SELECT','MULTI','RADIO','CHECKBOX','DATE','TIME','DISPLAY','SCRIPT','HIDDEN','READONLY','HIDEBLOB','SWITCH','SOURCESELECT') default 'TEXT';
+ALTER TABLE vicidial_lists_fields MODIFY field_type ENUM('TEXT','AREA','SELECT','MULTI','RADIO','CHECKBOX','DATE','TIME','DISPLAY','SCRIPT','HIDDEN','READONLY','HIDEBLOB','SWITCH','SOURCESELECT','BUTTON') default 'TEXT';
 
 UPDATE system_settings SET db_schema_version='1617',db_schema_update_date=NOW() where db_schema_version < 1617;
+
+INSERT INTO vicidial_settings_containers VALUES ('PHONE_DEFAULTS','Default phone settings for preloading','PHONE_DEFAULTS','---ALL---','# Below are all phone settings recognized under the PHONE_DEFAULTS \r\n# container type and the type of data each accepts.  Any setting that\r\n# uses a default value in the database has said value pre-set below\r\n\r\n# 10 char max\r\nvoicemail_id => \r\n \r\n# 15 char max\r\nserver_ip => \r\n\r\n# 100 char max\r\npass => \r\n\r\n# 10 char max\r\nstatus => \r\n\r\n# Y/N only\r\nactive => Y\r\n\r\n# 50 char max\r\nphone_type => \r\n\r\n# \'SIP\',\'Zap\',\'IAX2\' or \'EXTERNAL\'\r\nprotocol => SIP\r\n\r\n# positive or negatier 2-decimal floating point number\r\nlocal_gmt => -5.00\r\n\r\n# 20 char max\r\nvoicemail_dump_exten => 85026666666666\r\n\r\n# 20 char max\r\noutbound_cid => \r\n\r\n# 100 char max\r\nemail => \r\n\r\n# 15 char max\r\ntemplate_id => \r\n\r\n# text, conf_override can span multiple lines, see below\r\nconf_override => \r\n# type=friend\r\n# host=dynamic\r\n# canreinvite=no\r\n# context=default1\r\n\r\n# 50 char max\r\nphone_context => default\r\n\r\n# Unsigned - max value 65536\r\nphone_ring_timeout => 60\r\n\r\n# 20 char max\r\nconf_secret => test\r\n\r\n# Y/N only\r\ndelete_vm_after_email => N\r\n\r\n# Options - Y, N, or Y_API_LAUNCH\r\nis_webphone => N\r\n\r\n# Y/N only\r\nuse_external_server_ip => N\r\n\r\n# 100 char max\r\ncodecs_list => \r\n\r\n# 0/1 only\r\ncodecs_with_template => 0\r\n\r\n# Options - Y, N, TOGGLE, or TOGGLE_OFF\r\nwebphone_dialpad => Y\r\n\r\n# Y/N only\r\non_hook_agent => N\r\n\r\n# Y/N only\r\nwebphone_auto_answer => Y\r\n\r\n# 30 char max\r\nvoicemail_timezone => eastern\r\n\r\n# 255 char max\r\nvoicemail_options => \r\n\r\n# 20 char max\r\nuser_group => ---ALL---\r\n\r\n# 100 char max\r\nvoicemail_greeting => \r\n\r\n# 20 char max\r\nvoicemail_dump_exten_no_inst => 85026666666667\r\n\r\n# Y/N only\r\nvoicemail_instructions => Y\r\n\r\n# Y/N only\r\non_login_report => N\r\n\r\n# 40 char max\r\nunavail_dialplan_fwd_exten => \r\n\r\n# 100 char max\r\nunavail_dialplan_fwd_context => \r\n\r\n# text\r\nnva_call_url => \r\n\r\n# 40 char max\r\nnva_search_method => \r\n\r\n# 255 char max\r\nnva_error_filename => \r\n\r\n# Integer, any size\r\nnva_new_list_id => 995\r\n\r\n# 10 char max\r\nnva_new_phone_code => 1\r\n\r\n# 6 char max\r\nnva_new_status => NVAINS\r\n\r\n# Y/N only\r\nwebphone_dialbox => Y\r\n\r\n# Y/N only\r\nwebphone_mute => Y\r\n\r\n# Y/N only\r\nwebphone_volume => Y\r\n\r\n# Y/N only\r\nwebphone_debug => N\r\n\r\n# 20 char max\r\noutbound_alt_cid => \r\n\r\n# Y/N only\r\nconf_qualify => Y\r\n\r\n# 255 char max\r\nwebphone_layout => \r\n');
+
+ALTER TABLE system_settings ADD phone_defaults_container VARCHAR(40) default '---DISABLED---';
+
+UPDATE system_settings SET db_schema_version='1618',db_schema_update_date=NOW() where db_schema_version < 1618;
+
+CREATE TABLE quality_control_checkpoint_log (
+qc_checkpoint_log_id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+qc_log_id INT(10) UNSIGNED DEFAULT NULL,
+campaign_id VARCHAR(8) DEFAULT NULL,
+group_id VARCHAR(20) DEFAULT NULL,
+list_id BIGINT(14) UNSIGNED DEFAULT NULL,
+qc_scorecard_id VARCHAR(20) DEFAULT NULL,
+checkpoint_row_id INT(10) UNSIGNED DEFAULT NULL,
+checkpoint_text TEXT,
+checkpoint_rank TINYINT(3) UNSIGNED DEFAULT NULL,
+checkpoint_points TINYINT(3) UNSIGNED DEFAULT NULL,
+instant_fail ENUM('Y','N') DEFAULT 'N',
+checkpoint_points_earned TINYINT(5) UNSIGNED DEFAULT NULL,
+qc_agent VARCHAR(20) DEFAULT NULL,
+checkpoint_comment_agent TEXT,
+PRIMARY KEY (qc_checkpoint_log_id)
+) ENGINE=MyISAM;
+
+CREATE TABLE quality_control_checkpoints (
+checkpoint_row_id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+qc_scorecard_id VARCHAR(20) DEFAULT NULL,
+checkpoint_text TEXT,
+checkpoint_rank INT(3) UNSIGNED DEFAULT NULL,
+checkpoint_points TINYINT(3) UNSIGNED DEFAULT NULL,
+instant_fail ENUM('Y','N') DEFAULT 'N',
+admin_notes TEXT,
+active ENUM('Y','N') DEFAULT NULL,
+campaign_ids TEXT,
+ingroups TEXT,
+list_ids TEXT,
+create_date DATETIME DEFAULT NULL,
+create_user VARCHAR(10) DEFAULT NULL,
+modify_date TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+modify_user VARCHAR(10) DEFAULT NULL,
+PRIMARY KEY (checkpoint_row_id)
+) ENGINE=MyISAM;
+
+CREATE TABLE quality_control_queue (
+qc_log_id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+qc_display_method ENUM('CALL','LEAD') DEFAULT 'CALL',
+lead_id INT(10) UNSIGNED DEFAULT NULL,
+status VARCHAR(6) DEFAULT NULL,
+call_date DATETIME DEFAULT NULL,
+agent_log_id INT(9) UNSIGNED DEFAULT NULL,
+user VARCHAR(20) DEFAULT NULL,
+user_group VARCHAR(20) DEFAULT NULL,
+campaign_id VARCHAR(8) DEFAULT NULL,
+group_id VARCHAR(20) DEFAULT NULL,
+list_id BIGINT(14) UNSIGNED DEFAULT NULL,
+scorecard_source ENUM('CAMPAIGN','INGROUP','LIST') DEFAULT 'CAMPAIGN',
+qc_web_form_address VARCHAR(255) DEFAULT NULL,
+vicidial_id VARCHAR(20) DEFAULT NULL,
+recording_id INT(10) UNSIGNED DEFAULT NULL,
+qc_scorecard_id VARCHAR(20) DEFAULT NULL,
+qc_agent VARCHAR(20) DEFAULT NULL,
+qc_user_group VARCHAR(20) DEFAULT NULL,
+qc_status VARCHAR(20) DEFAULT NULL,
+date_modified TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+date_claimed DATETIME DEFAULT NULL,
+date_completed DATETIME DEFAULT NULL,
+PRIMARY KEY (qc_log_id),
+UNIQUE KEY quality_control_queue_agent_log_id_key (agent_log_id),
+KEY quality_control_queue_lead_id_key (lead_id)
+) ENGINE=MyISAM;
+
+CREATE TABLE quality_control_scorecards (
+qc_scorecard_id VARCHAR(20) NOT NULL,
+scorecard_name VARCHAR(255) DEFAULT NULL,
+active ENUM('Y','N') DEFAULT 'Y',
+passing_score SMALLINT(5) UNSIGNED DEFAULT 0,
+last_modified TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+PRIMARY KEY (qc_scorecard_id)
+) ENGINE=MyISAM;
+
+ALTER TABLE vicidial_campaigns ADD qc_scorecard_id VARCHAR(20) DEFAULT '';
+ALTER TABLE vicidial_campaigns ADD qc_statuses_id VARCHAR(20) DEFAULT '';
+
+ALTER TABLE vicidial_lists ADD qc_scorecard_id VARCHAR(20) DEFAULT '';
+ALTER TABLE vicidial_lists ADD qc_statuses_id VARCHAR(20) DEFAULT '';
+ALTER TABLE vicidial_lists ADD qc_web_form_address VARCHAR(255) DEFAULT '';
+
+ALTER TABLE vicidial_inbound_groups ADD qc_scorecard_id VARCHAR(20) DEFAULT '';
+ALTER TABLE vicidial_inbound_groups ADD qc_statuses_id VARCHAR(20) DEFAULT '';
+
+ALTER TABLE system_settings ADD qc_claim_limit TINYINT UNSIGNED DEFAULT '3';
+ALTER TABLE system_settings ADD qc_expire_days TINYINT UNSIGNED DEFAULT '3';
+
+INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('QC_STATUS_TEMPLATE','Sample QC Status Template','QC_TEMPLATE','---ALL---','# These types of containers are simply used for creating a list of \r\n# QC-enabled statuses to apply to campaigns, lists, and ingroups.\r\n# Simply put all the statuses that this template should allow in\r\n# a comma-delimited string, as below:\r\n\r\nSALE,DNC,NI');
+
+UPDATE system_settings SET db_schema_version='1619',db_schema_update_date=NOW() where db_schema_version < 1619;
+
+ALTER TABLE vicidial_lists_fields MODIFY field_type ENUM('TEXT','AREA','SELECT','MULTI','RADIO','CHECKBOX','DATE','TIME','DISPLAY','SCRIPT','HIDDEN','READONLY','HIDEBLOB','SWITCH','SOURCESELECT','BUTTON') default 'TEXT';
+
+ALTER TABLE vicidial_users ADD mobile_number VARCHAR(20) default '';
+ALTER TABLE vicidial_users ADD two_factor_override  ENUM('NOT_ACTIVE','ENABLED','DISABLED') default 'NOT_ACTIVE';
+
+ALTER TABLE system_settings ADD two_factor_auth_hours SMALLINT(5) default '0';
+ALTER TABLE system_settings ADD two_factor_container VARCHAR(40) default '---DISABLED---';
+
+INSERT INTO vicidial_call_menu (menu_id,menu_name,menu_prompt,menu_timeout,menu_timeout_prompt,menu_invalid_prompt,menu_repeat,menu_time_check,call_time_id,track_in_vdac,custom_dialplan_entry,tracking_group,dtmf_log,dtmf_field,user_group,qualify_sql,alt_dtmf_log,question,answer_signal) values('2FA_say_auth_code','2FA_say_auth_code','sip-silence|hello|your|access-code|is|cm_speak_var.agi,say_digits---access_code---DP',1,'NONE','NONE',1,'0','24hours','1','','CALLMENU','0','NONE','---ALL---','','0',0,'Y');
+
+INSERT INTO vicidial_call_menu_options (menu_id,option_value,option_description,option_route,option_route_value,option_route_value_context) values('2FA_say_auth_code','TIMEOUT','','HANGUP','','');
+
+CREATE TABLE vicidial_two_factor_auth (
+auth_date DATETIME,
+auth_exp_date DATETIME,
+user VARCHAR(20) default '',
+auth_stage ENUM('0','1','2','3','4','5','6') default '0',
+auth_code VARCHAR(20) default '',
+auth_code_exp_date DATETIME,
+auth_method VARCHAR(20) default 'EMAIL',
+auth_attempts SMALLINT(5) default '0',
+index (user),
+index (auth_date),
+index (auth_exp_date)
+) ENGINE=MyISAM;
+
+UPDATE system_settings SET db_schema_version='1620',db_schema_update_date=NOW() where db_schema_version < 1620;
+
+ALTER TABLE system_settings MODIFY enhanced_disconnect_logging ENUM('0','1','2','3','4','5','6') default '0';
+
+UPDATE system_settings SET db_schema_version='1621',db_schema_update_date=NOW() where db_schema_version < 1621;
+
+ALTER TABLE vicidial_campaigns ADD clear_form ENUM('DISABLED','ENABLED','ACKNOWLEDGE') default 'ACKNOWLEDGE';
+
+UPDATE system_settings SET db_schema_version='1622',db_schema_update_date=NOW() where db_schema_version < 1622;

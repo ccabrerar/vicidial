@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2021-02-17
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2021-03-16
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -41,6 +41,10 @@ in_group_status - real-time status of one or more in groups
 agent_status - real-time status of one user
 callid_info - information about a call based upon the caller_code or call ID
 lead_field_info - pulls the value of one field of a lead
+lead_callback_info - outputs scheduled callback data for a specific lead
+lead_all_info - outputs all lead data for a lead(optionally including custom fields)
+lead_status_search - displays all field values of all leads that match the status and call date in request
+ccc_lead_info - outputs lead data for cross-cluster-communication call
 server_refresh - forces a conf file refresh on all telco servers in the cluster
 check_phone_number - allows you to check if a phone number is valid and dialable
 logged_in_agents - list of agents that are logged in to the system
@@ -48,11 +52,8 @@ update_campaign - updates campaign settings in the system
 add_did - adds new Inbound DID entries to the system
 update_did - updates Inbound DID information in the system
 phone_number_log - exports list of calls placed to one of more phone numbers
-ccc_lead_info - outputs lead data for cross-cluster-communication call
-lead_status_search - displays all field values of all leads that match the status and call date in request
 call_status_stats - report on number of calls made by campaign and ingroup, with hourly and status breakdowns
 call_dispo_report - call disposition breakdown report
-lead_callback_info - outputs scheduled callback data for a specific lead
 agent_campaigns - looks up allowed campaigns/in-groups for a specific user
 update_cid_group_entry - updates CID Group entries
 add_dnc_phone - adds a phone number to one of the DNC lists
@@ -174,7 +175,9 @@ Changes:
 210210-1627 - Added duplicate check with more X-day options for add_lead function
 210216-1415 - Added list_exists_check option for add_lead function
 210217-1454 - Added menu_id option for add_did and update_did functions
-
+210227-1116 - Added xferconf number options to update_campaign, add_list & update_list functions
+210303-1802 - Added list_exists_check option for update_lead function
+210316-2207 - Added lead_all_info function
 
 API Functions use the 'function' variable
 
@@ -732,6 +735,41 @@ A SUCCESS response will not show "SUCCESS", but instead will just print the valu
 
 
 --------------------------------------------------------------------------------
+lead_all_info - outputs all lead data for a lead(optionally including custom fields)
+
+NOTE: api user for this function must have user_level set to 7 or higher and "view reports" enabled and modify_leads set to 1-4
+
+REQUIRED FIELDS-
+source -		description of what originated the API call (maximum 20 characters)
+lead_id -		1-10 digits
+
+OPTIONAL FIELDS-
+custom_fields -		Y or N, default is N. If the field you want to pull is a custom field or not
+force_entry_list_id -	3-12 digits, will override the lead's assigned entry_list_id to look for custom fields data for this lead from a different list
+
+SETTINGS FIELDS-
+stage -			the format of the exported data: csv, tab, newline, pipe(default)
+header -		include a header(YES) or not(NO). This is optional, default is not to include a header
+
+Example URL strings for API calls:
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=lead_all_info&lead_id=1079425
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=lead_all_info&lead_id=1079425&header=YES&custom_fields=Y
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=lead_all_info&lead_id=1079425&header=YES&custom_fields=Y&force_entry_list_id=999880
+
+Example responses:
+ERROR: lead_all_info USER DOES NOT HAVE PERMISSION TO GET LEAD INFO - 6666|0
+ERROR: lead_all_info LIST NOT FOUND - 6666||
+ERROR: lead_all_info LEAD NOT FOUND - 6666||
+
+A SUCCESS response will not show "SUCCESS", but instead will just print the results in the following format:
+status|user|vendor_lead_code|source_id|list_id|gmt_offset_now|phone_code|phone_number|title|first_name|middle_initial|last_name|address1|address2|address3|city|state|province|postal_code|country_code|gender|date_of_birth|alt_phone|email|security_phrase|comments|called_count|last_local_call_time|rank|owner|entry_list_id
+TD|6666|554443||501|-4.00|1|9998887112|Mr|Billy'Oj|U|O'Reillyo|ad1|ad2|ad3|city next|FL|U|33777||U|0000-00-00|bobo'brien|test@test.com||2017-06-01 18:38:41|79|2017-06-09 14:53:27|0|4646|0
+
+
+
+
+
+--------------------------------------------------------------------------------
 lead_status_search - displays all field values of all leads that match the status and call date in request
 
 NOTE: api user for this function must have user_level set to 7 or higher and "modify leads" enabled
@@ -1063,6 +1101,7 @@ add_to_hopper -		Y or N, default is N
 remove_from_hopper -	Y or N, default is N
 hopper_priority -	99 to -99, the higher number the higher priority, default is 0
 hopper_local_call_time_check - Y or N, default is N. Validate the local call time and/or state call time before inserting lead in the hopper
+list_exists_check -	Y or N, default is N. If the list_id_field is not a defined list in the system, it will ERROR and not update the lead.
 
 EDITABLE FIELDS- 
 user_field -		1-20 characters, this updates the 'user' field in the vicidial_list table
@@ -1157,6 +1196,7 @@ NOTICE: update_lead NOT REMOVED FROM HOPPER, LEAD IS NOT IN THE HOPPER - 7275551
 ERROR: update_lead INVALID DATA FOR LEAD INSERTION - 6666|||
 ERROR: update_lead NO MATCHES FOUND IN THE SYSTEM - 6666|||
 ERROR: update_lead NO VALID SEARCH METHOD - 6666|SYSTEM|||
+ERROR: update_lead NOT A DEFINED LIST ID, LIST EXISTS CHECK ENABLED - 6666|139
 
 ERROR: update_lead USER DOES NOT HAVE PERMISSION TO UPDATE LEADS IN THE SYSTEM - 6666|0 
 ERROR: update_lead NOT AN ALLOWED LIST ID - 7275551212|98762
@@ -1599,6 +1639,11 @@ reset_time -		4-100 characters, must be in valid 4-digit groups of 24-hour time 
 tz_method -		one of the following: COUNTRY_AND_AREA_CODE,POSTAL_CODE,NANPA_PREFIX,OWNER_TIME_ZONE_CODE default is COUNTRY_AND_AREA_CODE
 local_call_time -	must be a valid call time ID in the system or 'campaign' which is the default
 expiration_date -	10 characters, must be in valid date format YYYY-MM-DD (i.e. 2012-11-25)
+xferconf_one -		Transfer - Conf Number Override 1: 1-50 characters
+xferconf_two -		Transfer - Conf Number Override 2: 1-50 characters
+xferconf_three -	Transfer - Conf Number Override 3: 1-50 characters
+xferconf_four -		Transfer - Conf Number Override 4: 1-50 characters
+xferconf_five -		Transfer - Conf Number Override 5: 1-50 characters
 custom_fields_copy -	A valid list ID with custom fields to be copied to this new list, 2-14 digits
 custom_copy_method -	(APPEND,UPDATE,REPLACE) method for how to perform the 'custom_fields_copy', default is APPEND
 				APPEND - the only 100% safe method, will not result in any lost existing data, only adds fields not present in the new list
@@ -1625,6 +1670,11 @@ ERROR: add_list RESET TIME IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|012
 ERROR: add_list EXPIRATION DATE IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|012
 ERROR: add_list LOCAL CALL TIME DOES NOT EXIST, THIS IS AN OPTIONAL FIELD - 6666|012
 ERROR: add_list TIME ZONE METHOD IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|012
+ERROR: add_list TRANSFER CONF OVERRIDE ONE IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|123456789012345678901234567890123456789012345678901
+ERROR: add_list TRANSFER CONF OVERRIDE TWO IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|123456789012345678901234567890123456789012345678901
+ERROR: add_list TRANSFER CONF OVERRIDE THREE IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|123456789012345678901234567890123456789012345678901
+ERROR: add_list TRANSFER CONF OVERRIDE FOUR IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|123456789012345678901234567890123456789012345678901
+ERROR: add_list TRANSFER CONF OVERRIDE FIVE IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|123456789012345678901234567890123456789012345678901
 ERROR: add_list CUSTOM FIELDS LIST ID TO COPY FROM DOES NOT EXIST, THIS IS AN OPTIONAL FIELD - 6666|1101|1102|0
 ERROR: add_list CUSTOM FIELDS LIST ID TO COPY FROM HAS NO CUSTOM FIELDS, THIS IS AN OPTIONAL FIELD - 6666|1101|1102|0
 ERROR: add_list USER DOES NOT HAVE PERMISSION TO MODIFY CUSTOM FIELDS, THIS IS AN OPTIONAL FIELD - 6666|1101|1102|0
@@ -1666,6 +1716,11 @@ reset_time -		4-100 characters, must be in valid 4-digit groups of 24-hour time 
 tz_method -		one of the following: COUNTRY_AND_AREA_CODE,POSTAL_CODE,NANPA_PREFIX,OWNER_TIME_ZONE_CODE default is COUNTRY_AND_AREA_CODE
 local_call_time -	must be a valid call time ID in the system or 'campaign' which is the default
 expiration_date -	10 characters, must be in valid date format YYYY-MM-DD (i.e. 2012-11-25)
+xferconf_one -		Transfer - Conf Number Override 1: 1-50 characters
+xferconf_two -		Transfer - Conf Number Override 2: 1-50 characters
+xferconf_three -	Transfer - Conf Number Override 3: 1-50 characters
+xferconf_four -		Transfer - Conf Number Override 4: 1-50 characters
+xferconf_five -		Transfer - Conf Number Override 5: 1-50 characters
 custom_fields_copy -	A valid list ID with custom fields to be copied to the list being updated, 2-14 digits
 custom_copy_method -	(APPEND,UPDATE,REPLACE) method for how to perform the 'custom_fields_copy', default is APPEND
 				APPEND - the only 100% safe method, will not result in any lost existing data, only adds fields not present in the destination list
@@ -1702,6 +1757,11 @@ ERROR: update_list RESET TIME IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|012
 ERROR: update_list EXPIRATION DATE IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|012
 ERROR: update_list TIME ZONE METHOD IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|012
 ERROR: update_list LOCAL CALL TIME DOES NOT EXIST, THIS IS AN OPTIONAL FIELD - 6666|012
+ERROR: update_list TRANSFER CONF OVERRIDE ONE IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|123456789012345678901234567890123456789012345678901
+ERROR: update_list TRANSFER CONF OVERRIDE TWO IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|123456789012345678901234567890123456789012345678901
+ERROR: update_list TRANSFER CONF OVERRIDE THREE IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|123456789012345678901234567890123456789012345678901
+ERROR: update_list TRANSFER CONF OVERRIDE FOUR IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|123456789012345678901234567890123456789012345678901
+ERROR: update_list TRANSFER CONF OVERRIDE FIVE IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|123456789012345678901234567890123456789012345678901
 NOTICE: update_list NO UPDATES DEFINED - 6666|
 SUCCESS: update_list LIST HAS BEEN UPDATED - 6666|1101
 NOTICE: update_list LEADS IN LIST HAVE BEEN RESET - 6666|1101|324
@@ -1997,6 +2057,11 @@ dial_method -		Must be one of these: 'MANUAL','RATIO','INBOUND_MAN','ADAPT_AVERA
 dial_timeout -		Must be from 1 to 120
 outbound_cid -		1-20 digits
 lead_filter_id -	Must be a valid Filter in the system, or '---NONE---' to not use a filter
+xferconf_one -		Transfer - Conf Number 1: 1-50 characters
+xferconf_two -		Transfer - Conf Number 2: 1-50 characters
+xferconf_three -	Transfer - Conf Number 3: 1-50 characters
+xferconf_four -		Transfer - Conf Number 4: 1-50 characters
+xferconf_five -		Transfer - Conf Number 5: 1-50 characters
 NOTES: 
  - please use no special characters like apostrophes, quotes or amphersands
 
@@ -2019,6 +2084,11 @@ ERROR: update_campaign DIAL TIMEOUT MUST BE FROM 1 TO 120, THIS IS AN OPTIONAL F
 ERROR: update_campaign CAMPAIGN NAME MUST BE FROM 6 TO 40 CHARACTERS, THIS IS AN OPTIONAL FIELD - 6666|test
 ERROR: update_campaign CAMPAIGN CID MUST BE FROM 6 TO 20 CHARACTERS, THIS IS AN OPTIONAL FIELD - 6666|test
 ERROR: update_campaign CAMPAIGN LEAD FILTER MUST BE A VALID FILTER IN THE SYSTEM, THIS IS AN OPTIONAL FIELD - 6666|test
+ERROR: update_campaign TRANSFER CONF NUMBER ONE IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|123456789012345678901234567890123456789012345678901
+ERROR: update_campaign TRANSFER CONF NUMBER TWO IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|123456789012345678901234567890123456789012345678901
+ERROR: update_campaign TRANSFER CONF NUMBER THREE IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|123456789012345678901234567890123456789012345678901
+ERROR: update_campaign TRANSFER CONF NUMBER FOUR IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|123456789012345678901234567890123456789012345678901
+ERROR: update_campaign TRANSFER CONF NUMBER FIVE IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|123456789012345678901234567890123456789012345678901
 ERROR: update_campaign ACTIVE MUST BE Y OR N, THIS IS AN OPTIONAL FIELD - 6666|U
 NOTICE: update_campaign NO UPDATES DEFINED - 6666|
 NOTICE: update_campaign HOPPER HAS BEEN RESET - 6666|1101|324

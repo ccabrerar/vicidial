@@ -1,7 +1,7 @@
 <?php
 # admin_search_lead.php   version 2.14
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # AST GUI database administration search for lead info
 # admin_modify_lead.php
@@ -51,6 +51,7 @@
 # 191014-1316 - Fix for foreign language, issue #1187
 # 201111-1957 - Fix for side menu issue #1233
 # 201117-2353 - Changes for better compatibility with non-latin data input
+# 210316-2344 - Changed lead-modify page links to javascript because of Chrome
 #
 
 require("dbconnect_mysqli.php");
@@ -163,8 +164,16 @@ if ($sl_ct > 0)
 
 $auth=0;
 $auth_message = user_authorization($PHP_AUTH_USER,$PHP_AUTH_PW,'',1,0);
-if ($auth_message == 'GOOD')
-	{$auth=1;}
+if ( ($auth_message == 'GOOD') or ($auth_message == '2FA') )
+	{
+	$auth=1;
+	if ($auth_message == '2FA')
+		{
+		header ("Content-type: text/html; charset=utf-8");
+		echo _QXZ("Your session is expired").". <a href=\"admin.php\">"._QXZ("Click here to log in")."</a>.\n";
+		exit;
+		}
+	}
 
 if ($auth < 1)
 	{
@@ -520,7 +529,7 @@ else
 					{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
 				echo "<TR $bgcolor>\n";
 				echo "<TD ALIGN=LEFT><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$o</FONT></TD>\n";
-				echo "<TD ALIGN=CENTER><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1><a href=\"admin_modify_lead.php?lead_id=$row[0]&archive_search=$archive_search\" target=\"_blank\">$row[0]</a></FONT></TD>\n";
+				echo "<TD ALIGN=CENTER><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1><A HREF=\"admin_modify_lead.php?lead_id=$row[0]&archive_search=$archive_search\" onclick=\"javascript:window.open('admin_modify_lead.php?lead_id=$row[0]&archive_search=$archive_search', '_blank');return false;\">$row[0]</A></FONT></TD>\n";
 				echo "<TD ALIGN=CENTER><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$row[1]</FONT></TD>\n";
 				echo "<TD ALIGN=CENTER><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$row[2]</FONT></TD>\n";
 				echo "<TD ALIGN=CENTER><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$row[3]</FONT></TD>\n";
@@ -585,7 +594,7 @@ else
 					{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
 				echo "<TR $bgcolor>\n";
 				echo "<TD ALIGN=LEFT><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$o</FONT></TD>\n";
-				echo "<TD ALIGN=CENTER><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1><a href=\"admin_modify_lead.php?lead_id=$row[0]&archive_search=$archive_search\" target=\"_blank\">$row[0]</a></FONT></TD>\n";
+				echo "<TD ALIGN=CENTER><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1><A HREF=\"admin_modify_lead.php?lead_id=$row[0]&archive_search=$archive_search\" onclick=\"javascript:window.open('admin_modify_lead.php?lead_id=$row[0]&archive_search=$archive_search', '_blank');return false;\">$row[0]</A></FONT></TD>\n";
 				echo "<TD ALIGN=CENTER><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$row[1]</FONT></TD>\n";
 				echo "<TD ALIGN=CENTER><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$row[2]</FONT></TD>\n";
 				echo "<TD ALIGN=CENTER><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$row[3]</FONT></TD>\n";
@@ -768,7 +777,7 @@ else
 					{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
 				echo "<TR $bgcolor>\n";
 				echo "<TD ALIGN=LEFT><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$o</FONT></TD>\n";
-				echo "<TD ALIGN=CENTER><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1><a href=\"admin_modify_lead.php?lead_id=$row[0]&archive_search=$archive_search&archive_log=$log_archive_link\" target=\"_blank\">$row[0]</a></FONT></TD>\n";
+				echo "<TD ALIGN=CENTER><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1><A HREF=\"admin_modify_lead.php?lead_id=$row[0]&archive_search=$archive_search&archive_log=$log_archive_link\" onclick=\"javascript:window.open('admin_modify_lead.php?lead_id=$row[0]&archive_search=$archive_search&archive_log=$log_archive_link', '_blank');return false;\">$row[0]</A></FONT></TD>\n";
 				echo "<TD ALIGN=CENTER><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$row[1]</FONT></TD>\n";
 				echo "<TD ALIGN=CENTER><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$row[2]</FONT></TD>\n";
 				echo "<TD ALIGN=CENTER><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$row[3]</FONT></TD>\n";
@@ -833,7 +842,7 @@ else
 					{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
 				echo "<TR $bgcolor>\n";
 				echo "<TD ALIGN=LEFT><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$o</FONT></TD>\n";
-				echo "<TD ALIGN=CENTER><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1><a href=\"admin_modify_lead.php?lead_id=$row[0]&archive_search=$archive_search&archive_log=$log_archive_link\" target=\"_blank\">$row[0]</a></FONT></TD>\n";
+				echo "<TD ALIGN=CENTER><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1><A HREF=\"admin_modify_lead.php?lead_id=$row[0]&archive_search=$archive_search&archive_log=$log_archive_link\" onclick=\"javascript:window.open('admin_modify_lead.php?lead_id=$row[0]&archive_search=$archive_search&archive_log=$log_archive_link', '_blank');return false;\">$row[0]</A></FONT></TD>\n";
 				echo "<TD ALIGN=CENTER><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$row[1]</FONT></TD>\n";
 				echo "<TD ALIGN=CENTER><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$row[2]</FONT></TD>\n";
 				echo "<TD ALIGN=CENTER><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$row[3]</FONT></TD>\n";
@@ -1190,7 +1199,7 @@ else
 				{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
 			echo "<TR $bgcolor>\n";
 			echo "<TD ALIGN=LEFT><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$o</FONT></TD>\n";
-			echo "<TD ALIGN=CENTER><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1><a href=\"admin_modify_lead.php?lead_id=$row[0]&archive_search=$archive_search&archive_log=$log_archive_link\" target=\"_blank\">$row[0]</a></FONT></TD>\n";
+			echo "<TD ALIGN=CENTER><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1><A HREF=\"admin_modify_lead.php?lead_id=$row[0]&archive_search=$archive_search&archive_log=$log_archive_link\" onclick=\"javascript:window.open('admin_modify_lead.php?lead_id=$row[0]&archive_search=$archive_search&archive_log=$log_archive_link', '_blank');return false;\">$row[0]</A></FONT></TD>\n";
 			echo "<TD ALIGN=CENTER><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$row[3]</FONT></TD>\n";
 			echo "<TD ALIGN=CENTER><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$row[5]</FONT></TD>\n";
 			echo "<TD ALIGN=CENTER><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$row[4]</FONT></TD>\n";

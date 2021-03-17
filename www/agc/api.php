@@ -1,7 +1,7 @@
 <?php
 # api.php
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed as an API(Application Programming Interface) to allow
 # other programs to interact with the VICIDIAL Agent screen
@@ -102,10 +102,11 @@
 # 200403-1510 - Added outbound_cid option to external_dial function
 # 201112-2053 - Added vm_message function
 # 210116-1138 - Addressed session ID issue in ticket #1251
+# 210222-1058 - Added call length logging to ra_call_control function
 #
 
-$version = '2.14-67';
-$build = '201112-2053';
+$version = '2.14-68';
+$build = '210222-1058';
 
 $startMS = microtime();
 
@@ -3258,11 +3259,12 @@ if ($function == 'ra_call_control')
 						{$status='RAXFER';}
 					if ($call_type=='IN')
 						{
-						$stmt = "UPDATE vicidial_closer_log SET status='$status' where uniqueid='$uniqueid' and lead_id=$lead_id and campaign_id='$campaign_id' order by closecallid desc limit 1;";
+
+						$stmt = "UPDATE vicidial_closer_log SET status='$status',length_in_sec=(UNIX_TIMESTAMP(NOW()) - start_epoch),end_epoch=UNIX_TIMESTAMP(NOW()) where uniqueid='$uniqueid' and lead_id=$lead_id and campaign_id='$campaign_id' order by closecallid desc limit 1;";
 						}
 					else
 						{
-						$stmt = "UPDATE vicidial_log SET status='$status',user='$agent_user' where uniqueid='$uniqueid' and lead_id=$lead_id order by call_date desc limit 1;";
+						$stmt = "UPDATE vicidial_log SET status='$status',user='$agent_user',length_in_sec=(UNIX_TIMESTAMP(NOW()) - start_epoch),end_epoch=UNIX_TIMESTAMP(NOW()) where uniqueid='$uniqueid' and lead_id=$lead_id order by call_date desc limit 1;";
 						}
 					if ($format=='debug') {echo "\n<!-- $stmt -->";}
 					$rslt=mysql_to_mysqli($stmt, $link);

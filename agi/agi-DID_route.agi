@@ -13,7 +13,7 @@
 # ;inbound DID catch-all:
 #exten => _X.,1,AGI(agi-DID_route.agi)
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 81007-0324 - First Build
@@ -47,6 +47,7 @@
 # 190216-0814 - Fix for user-group, in-group and campaign settings matching issues
 # 200623-2258 - Added Answer Signal options
 # 201112-0834 - Fix for AGENT routing, check for availability, issue #1211
+# 210315-1132 - Fix for multiple filter_clean_cid_number actions, added 'T' filter action, Issue #1247
 #
 
 
@@ -290,7 +291,7 @@ if ($SSdid_system_filter > 0)
 				{
 				$original_callerid = $callerid;
 				$filter_number_altered=0;
-				if ($filter_clean_cid_number =~ /^R\d/)
+				if ($filter_clean_cid_number =~ /R\d/)
 					{
 					@filter_rule = split(/R/,$filter_clean_cid_number);
 					$filter_rule[1] =~ s/ .*//gi;
@@ -299,12 +300,20 @@ if ($SSdid_system_filter > 0)
 					if (length($callerid) != length($original_callerid))
 						{$filter_number_altered++;}
 					}
-				if ($filter_clean_cid_number =~ /^L\d/)
+				if ($filter_clean_cid_number =~ /L\d/)
 					{
 					@filter_rule = split(/L/,$filter_clean_cid_number);
 					$filter_rule[1] =~ s/ .*//gi;
 					$filter_rule_reg = $filter_rule[1];
 					$callerid =~ s/^$filter_rule_reg//gi;
+					if (length($callerid) != length($original_callerid))
+						{$filter_number_altered++;}
+					}
+				if ($filter_clean_cid_number =~ /T\d/)
+					{
+					@filter_rule = split(/T/,$filter_clean_cid_number);
+					$filter_rule[1] =~ s/ .*//gi;
+					$callerid = substr($callerid, 0, $filter_rule[1]);
 					if (length($callerid) != length($original_callerid))
 						{$filter_number_altered++;}
 					}
@@ -904,7 +913,7 @@ if (length($filter_clean_cid_number) > 1)
 	{
 	$original_callerid = $callerid;
 	$filter_number_altered=0;
-	if ($filter_clean_cid_number =~ /^R\d/)
+	if ($filter_clean_cid_number =~ /R\d/)
 		{
 		@filter_rule = split(/R/,$filter_clean_cid_number);
 		$filter_rule[1] =~ s/ .*//gi;
@@ -913,12 +922,20 @@ if (length($filter_clean_cid_number) > 1)
 		if (length($callerid) != length($original_callerid))
 			{$filter_number_altered++;}
 		}
-	if ($filter_clean_cid_number =~ /^L\d/)
+	if ($filter_clean_cid_number =~ /L\d/)
 		{
 		@filter_rule = split(/L/,$filter_clean_cid_number);
 		$filter_rule[1] =~ s/ .*//gi;
 		$filter_rule_reg = $filter_rule[1];
 		$callerid =~ s/^$filter_rule_reg//gi;
+		if (length($callerid) != length($original_callerid))
+			{$filter_number_altered++;}
+		}
+	if ($filter_clean_cid_number =~ /T\d/)
+		{
+		@filter_rule = split(/T/,$filter_clean_cid_number);
+		$filter_rule[1] =~ s/ .*//gi;
+		$callerid = substr($callerid, 0, $filter_rule[1]);
 		if (length($callerid) != length($original_callerid))
 			{$filter_number_altered++;}
 		}

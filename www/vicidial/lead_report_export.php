@@ -5,7 +5,7 @@
 # vicidial_log and/or vicidial_closer_log information by status, list_id and 
 # date range. downloads to a flat text file that is tab delimited
 #
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -34,6 +34,7 @@
 # 180610-1634 - Added option to allow --ALL-- as a campaign value
 # 190610-2036 - Fixed admin hide phone issue
 # 190926-0926 - Fixes for PHP7
+# 210302-0839 - Added exclude_call_log_data option
 #
 
 $startMS = microtime();
@@ -92,6 +93,9 @@ if (isset($_GET["vicidial_list_archive_only"]))				{$vicidial_list_archive_only=
 	elseif (isset($_POST["vicidial_list_archive_only"]))	{$vicidial_list_archive_only=$_POST["vicidial_list_archive_only"];}
 if (isset($_GET["VLC_enabled"]))			{$VLC_enabled=$_GET["VLC_enabled"];}
 	elseif (isset($_POST["VLC_enabled"]))	{$VLC_enabled=$_POST["VLC_enabled"];}
+if (isset($_GET["exclude_call_log_data"]))			{$exclude_call_log_data=$_GET["exclude_call_log_data"];}
+	elseif (isset($_POST["exclude_call_log_data"]))	{$exclude_call_log_data=$_POST["exclude_call_log_data"];}
+
 
 if (strlen($shift)<2) {$shift='ALL';}
 
@@ -581,6 +585,10 @@ if ($run_export > 0)
 	if ($RUNcampaign > 0)
 		{
 		$stmt = "SELECT vl.call_date,vl.phone_number,vi.status,vl.user,vu.full_name,vl.campaign_id,vi.vendor_lead_code,vi.source_id,vi.list_id,vi.gmt_offset_now,vi.phone_code,vi.phone_number,vi.title,vi.first_name,vi.middle_initial,vi.last_name,vi.address1,vi.address2,vi.address3,vi.city,vi.state,vi.province,vi.postal_code,vi.country_code,vi.gender,vi.date_of_birth,vi.alt_phone,vi.email,vi.security_phrase,vi.comments,vl.length_in_sec,vl.user_group,vl.alt_dial,vi.rank,vi.owner,vi.lead_id,vl.uniqueid,vi.entry_list_id,UNIX_TIMESTAMP(vl.call_date)$export_fields_SQL from vicidial_users vu,".$vicidial_log_table." vl,".$vicidial_list_table." vi where ".$date_field." >= '$query_date 00:00:00' and ".$date_field." <= '$end_date 23:59:59' and vu.user=vl.user and vi.lead_id=vl.lead_id $list_SQL $campaign_SQL $user_group_SQL $status_SQL $vlc_SQL order by ".$date_field." desc limit 500000;";
+		if ($exclude_call_log_data == 'YES')
+			{
+			$stmt = "SELECT '0000-00-00 00:00:00',vi.phone_number,vi.status,vi.user,'','',vi.vendor_lead_code,vi.source_id,vi.list_id,vi.gmt_offset_now,vi.phone_code,vi.phone_number,vi.title,vi.first_name,vi.middle_initial,vi.last_name,vi.address1,vi.address2,vi.address3,vi.city,vi.state,vi.province,vi.postal_code,vi.country_code,vi.gender,vi.date_of_birth,vi.alt_phone,vi.email,vi.security_phrase,vi.comments,'0','','',vi.rank,vi.owner,vi.lead_id,'',vi.entry_list_id,''$export_fields_SQL from ".$vicidial_list_table." vi where ".$date_field." >= '$query_date 00:00:00' and ".$date_field." <= '$end_date 23:59:59' $list_SQL $status_SQL $vlc_SQL order by ".$date_field." desc limit 500000;";
+			}
 		$rslt=mysql_to_mysqli($stmt, $link);
 		if ($DB) {echo "****$stmt****\n";}
 		$outbound_to_print = mysqli_num_rows($rslt);
@@ -1428,7 +1436,11 @@ else
 	echo "<HTML><HEAD>\n";
 
 	echo "<script language=\"JavaScript\" src=\"calendar_db.js\"></script>\n";
+	echo "<script language=\"JavaScript\" src=\"help.js\"></script>\n";
 	echo "<link rel=\"stylesheet\" href=\"calendar.css\">\n";
+	echo "<link rel=\"stylesheet\" type=\"text/css\" href=\"vicidial_stylesheet.php\">\n";
+
+	echo "<div id='HelpDisplayDiv' class='help_info' style='display:none;'></div>";
 
 	echo "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=utf-8\">\n";
 	echo "<TITLE>"._QXZ("ADMINISTRATION").": "._QXZ("$report_name");
@@ -1451,9 +1463,10 @@ else
 	$lists_color =		'#E6E6E6';
 	$subcamp_color =	'#C6C6C6';
 	##### END Set variables to make header show properly #####
+	$NWB = "<IMG SRC=\"help.png\" onClick=\"FillAndShowHelpDiv(event, '";
+	$NWE = "')\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP>";
 
 	require("admin_header.php");
-
 
 	echo "<CENTER><BR>\n";
 	echo "<FONT SIZE=3 FACE=\"Arial,Helvetica\"><B>"._QXZ("Export Leads Report")."</B></FONT><BR>\n";
@@ -1462,7 +1475,7 @@ else
 	echo "<INPUT TYPE=HIDDEN NAME=DB VALUE=\"$DB\">";
 	echo "<INPUT TYPE=HIDDEN NAME=run_export VALUE=\"1\">";
 	echo "<INPUT TYPE=HIDDEN NAME=VLC_enabled VALUE=\"$VLC_enabled\">";
-	echo "<TABLE BORDER=0 CELLSPACING=8><TR><TD ALIGN=LEFT VALIGN=TOP ROWSPAN=3>\n";
+	echo "<TABLE BORDER=0 CELLSPACING=8><TR><TD ALIGN=CENTER VALIGN=TOP ROWSPAN=3 WIDTH=200>\n";
 
 	echo "<font class=\"select_bold\"><B>"._QXZ("Date Range").":</B></font><BR><CENTER>\n";
 	echo "<INPUT TYPE=TEXT NAME=query_date SIZE=8 MAXLENGTH=10 VALUE=\"$query_date\">";
@@ -1498,18 +1511,18 @@ else
 
 	echo "<BR><BR>\n";
 
-	echo "<B>"._QXZ("Date Field").":</B><BR>\n";
+	echo "<B>"._QXZ("Date Field").":</B> $NWB#lead_export_report-date_field$NWE<BR>\n";
 	echo "<select size=1 name=date_field><option selected value=\"call_date\">"._QXZ("Call date")."</option><option value=\"entry_date\">"._QXZ("Entry date")."</option></select>\n";
 
 	
 	echo "<BR><BR>\n";
 
-	echo "<B>"._QXZ("Header Row").":</B><BR>\n";
+	echo "<B>"._QXZ("Header Row").":</B> $NWB#lead_export_report-header_row$NWE<BR>\n";
 	echo "<select size=1 name=header_row><option selected value=\"YES\">"._QXZ("YES")."</option><option value=\"NO\">"._QXZ("NO")."</option></select>\n";
 
 	echo "<BR><BR>\n";
 
-	echo "<B>"._QXZ("Recording Fields").":</B><BR>\n";
+	echo "<B>"._QXZ("Recording Fields").":</B> $NWB#lead_export_report-rec_fields$NWE<BR>\n";
 	echo "<select size=1 name=rec_fields>";
 	echo "<option value='ID'>"._QXZ("ID")."</option>";
 	echo "<option value='FILENAME'>"._QXZ("FILENAME")."</option>";
@@ -1522,18 +1535,18 @@ else
 		{
 		echo "<BR><BR>\n";
 
-		echo "<B>"._QXZ("Custom Fields").":</B><BR>\n";
+		echo "<B>"._QXZ("Custom Fields").":</B> $NWB#lead_export_report-custom_fields$NWE<BR>\n";
 		echo "<select size=1 name=custom_fields><option value='YES'>"._QXZ("YES")."</option><option value='NO' selected>"._QXZ("NO")."</option></select>\n";
 		}
 
 	echo "<BR><BR>\n";
 
-	echo "<B>"._QXZ("Per Call Notes").":</B><BR>\n";
+	echo "<B>"._QXZ("Per Call Notes").":</B> $NWB#lead_export_report-call_notes$NWE<BR>\n";
 	echo "<select size=1 name=call_notes><option value='YES'>"._QXZ("YES")."</option><option value='NO' selected>"._QXZ("NO")."</option></select>\n";
 
 	echo "<BR><BR>\n";
 
-	echo "<B>"._QXZ("Use DID filter").":</B><BR>\n";
+	echo "<B>"._QXZ("Use DID filter").":</B> $NWB#lead_export_report-did_filter$NWE<BR>\n";
 	echo "<select size=1 name=did_filter onChange=\"if (this.value=='YES') {document.getElementById('did_span').style.display='block';} else {document.getElementById('did_span').style.display='none';}\">";
 	if ($did_filter) {echo "<option value='$did_filter' selected>$did_filter</option>";}
 	echo "<option value='NO'>"._QXZ("NO")."</option><option value='YES'>"._QXZ("YES")."</option></select>\n";
@@ -1542,7 +1555,7 @@ else
 
 	if ($VLC_enabled == 'Y')
 		{
-		echo "<B>"._QXZ("Use VLC filter").":</B><BR>\n";
+		echo "<B>"._QXZ("Use VLC filter").":</B> $NWB#lead_export_report-vlc_filter$NWE<BR>\n";
 		echo "<select size=1 name=vlc_filter onChange=\"if (this.value=='YES') {document.getElementById('vlc_span').style.display='block';} else {document.getElementById('vlc_span').style.display='none';}\">";
 		if ($vlc_filter) {echo "<option value='$vlc_filter' selected>$vlc_filter</option>";}
 		echo "<option value='NO'>"._QXZ("NO")."</option><option value='YES'>"._QXZ("YES")."</option></select>\n";
@@ -1550,19 +1563,24 @@ else
 		echo "<BR><BR>\n";
 		}
 
-	echo "<B>"._QXZ("Export Fields").":</B><BR>\n";
+	echo "<B>"._QXZ("Export Fields").":</B> $NWB#lead_export_report-export_fields$NWE<BR>\n";
 	echo "<select size=1 name=export_fields><option value='STANDARD' selected>"._QXZ("STANDARD")."</option><option value='EXTENDED'>"._QXZ("EXTENDED")."</option></select>\n";
 
+	echo "<BR><BR>\n";
+
+	echo "<B>"._QXZ("Exclude Call Log Data").":</B> $NWB#lead_export_report-exclude_call_log_data$NWE<BR>\n";
+	echo "<select size=1 name=exclude_call_log_data><option value='YES'>"._QXZ("YES")."</option><option value='NO' selected>"._QXZ("NO")."</option></select>\n";
+
 	if ($archives_available=="Y") 
-	{
-	echo "<BR><BR><B>"._QXZ("Search archived data").":</B><BR>\n";
-	echo "<select size=1 name='search_archived_data'>";
-	echo "<option value='' selected>"._QXZ("NO")."</option>";
-	echo "<option value='LOGS_ONLY'>"._QXZ("LOGS ONLY")."</option>";
-	echo "<option value='VLIST_ONLY'>"._QXZ("VICIDIAL_LIST")."</option>";
-	echo "<option value='VLIST_LOGS'>"._QXZ("ALL ARCHIVES")."</option>";
-	echo "</select>\n";
-	}
+		{
+		echo "<BR><BR><B>"._QXZ("Search archived data").":</B> $NWB#lead_export_report-search_archived_data$NWE<BR>\n";
+		echo "<select size=1 name='search_archived_data'>";
+		echo "<option value='' selected>"._QXZ("NO")."</option>";
+		echo "<option value='LOGS_ONLY'>"._QXZ("LOGS ONLY")."</option>";
+		echo "<option value='VLIST_ONLY'>"._QXZ("VICIDIAL_LIST")."</option>";
+		echo "<option value='VLIST_LOGS'>"._QXZ("ALL ARCHIVES")."</option>";
+		echo "</select>\n";
+		}
 
 	### bottom of first column
 

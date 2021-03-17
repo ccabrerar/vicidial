@@ -1,7 +1,7 @@
 <?php
 # AST_admin_template_maker.php - version 2.14
 # 
-# Copyright (C) 2018  Matt Florell,Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell,Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 120402-2132 - First Build
@@ -17,6 +17,7 @@
 # 180324-0942 - Enforce User Group campaign permissions for templates based on list_id
 # 180503-2215 - Added new help display
 # 180927-0633 - Fix for deleted template function in alternate language, issue #1127
+# 210312-1700 - Added layout editing functionality
 #
 
 require("dbconnect_mysqli.php");
@@ -48,6 +49,12 @@ if (isset($_GET["custom_fields_layout"]))				{$custom_fields_layout=$_GET["custo
 	elseif (isset($_POST["custom_fields_layout"]))		{$custom_fields_layout=$_POST["custom_fields_layout"];}
 if (isset($_GET["submit_template"]))				{$submit_template=$_GET["submit_template"];}
 	elseif (isset($_POST["submit_template"]))		{$submit_template=$_POST["submit_template"];}
+if (isset($_GET["submit_edited_template"]))				{$submit_edited_template=$_GET["submit_edited_template"];}
+	elseif (isset($_POST["submit_edited_template"]))		{$submit_edited_template=$_POST["submit_edited_template"];}
+if (isset($_GET["edit_standard_fields_layout"]))				{$edit_standard_fields_layout=$_GET["edit_standard_fields_layout"];}
+	elseif (isset($_POST["edit_standard_fields_layout"]))	{$edit_standard_fields_layout=$_POST["edit_standard_fields_layout"];}
+if (isset($_GET["edit_custom_fields_layout"]))				{$edit_custom_fields_layout=$_GET["edit_custom_fields_layout"];}
+	elseif (isset($_POST["edit_custom_fields_layout"]))		{$edit_custom_fields_layout=$_POST["edit_custom_fields_layout"];}
 if (isset($_GET["delete_template"]))				{$delete_template=$_GET["delete_template"];}
 	elseif (isset($_POST["delete_template"]))		{$delete_template=$_POST["delete_template"];}
 
@@ -98,6 +105,30 @@ $template_description = preg_replace("/'|\"|\\\\|;/","",$template_description);
 $standard_fields_layout = preg_replace("/'|\"|\\\\|;/","",$standard_fields_layout);
 $custom_table = preg_replace("/'|\"|\\\\|;/","",$custom_table);
 $custom_fields_layout = preg_replace("/'|\"|\\\\|;/","",$custom_fields_layout);
+$edit_standard_fields_layout = preg_replace("/'|\"|\\\\|;/","",$edit_standard_fields_layout);
+$edit_custom_fields_layout = preg_replace("/'|\"|\\\\|;/","",$edit_custom_fields_layout);
+
+if ($submit_edited_template)
+	{
+	$upd_stmt="update vicidial_custom_leadloader_templates set template_name='$template_name', template_description='$template_description', standard_variables='$edit_standard_fields_layout', custom_variables='$edit_custom_fields_layout' where template_id='$template_id' limit 1";
+	$upd_rslt=mysql_to_mysqli($upd_stmt, $link);
+	if (mysqli_affected_rows($link)>0) 
+		{
+		$success_msg=_QXZ("TEMPLATE UPDATED");
+		if (!$edit_custom_fields_layout) 
+			{
+			$success_msg.="<BR/>**"._QXZ("NO CUSTOM FIELDS ASSIGNED")."**";
+			}
+		}
+	else 
+		{
+		$errno = mysqli_errno($link);
+		if ($errno > 0)
+			{$error = mysqli_error($link);}
+		$error_msg=_QXZ("TEMPLATE UPDATE FAILED")."<br>\n$errno - $error<br>\n[$upd_stmt]";
+		}
+	}
+
 
 $STARTtime = date("U");
 $TODAY = date("Y-m-d");
@@ -311,6 +342,77 @@ function DisplayTemplateFields(list_id) {
 
 }
 
+function EditTemplate(template_id) {
+	if (!template_id || template_id=="")
+		{
+		return false;
+		}
+	var xmlhttp=false;
+	try {
+		xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
+	} catch (e) {
+		try {
+			xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+		} catch (E) {
+			xmlhttp = false;
+		}
+	}
+	if (!xmlhttp && typeof XMLHttpRequest!='undefined') {
+		xmlhttp = new XMLHttpRequest();
+	}
+	if (xmlhttp) { 
+		var vs_query = "&template_id="+template_id+"&form_action=update_template";
+		// alert(vs_query);
+		xmlhttp.open('POST', 'leadloader_template_display.php'); 
+		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
+		xmlhttp.send(vs_query); 
+		xmlhttp.onreadystatechange = function() { 
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+				var StatSpanText = null;
+				StatSpanText = xmlhttp.responseText;
+				// alert(StatSpanText);
+				var output_array=StatSpanText.split("\|\|\|");
+				document.getElementById("statuses_display").innerHTML = output_array[0];
+				document.getElementById("field_display").innerHTML = output_array[1];
+
+				if (output_array[1]=="") {
+					document.getElementById('edit_data_display').style.display = 'none'; 
+					document.getElementById('edit_data_display').style.visibility = 'hidden';
+				} else {
+					document.getElementById('list_data_display').style.display = 'none'; 
+					document.getElementById('list_data_display').style.visibility = 'hidden';
+					document.getElementById('edit_data_display').style.display = 'block'; 
+					document.getElementById('edit_data_display').style.visibility = 'visible';
+				}
+			}
+		}
+		delete xmlhttp;
+	}
+}
+function EditTemplateStrings() {
+	var vicidial_string="<?php echo $vicidial_listloader_fields; ?>";
+    var standard_string = '';
+    var custom_string = '';
+    for (var i = 0; i<document.listloader_template_edit_form.elements.length; i++) {
+		if (document.listloader_template_edit_form.elements[i].type == 'text' && document.listloader_template_edit_form.elements[i].value!="" && document.listloader_template_edit_form.elements[i].name!="template_list_id" && document.listloader_template_edit_form.elements[i].name!="template_id" && document.listloader_template_edit_form.elements[i].name!="template_name" && document.listloader_template_edit_form.elements[i].name!="template_description" && document.listloader_template_edit_form.elements[i].name!="edit_standard_fields_layout" && document.listloader_template_edit_form.elements[i].name!="edit_custom_fields_layout") 
+			{
+			var field_name=document.listloader_template_edit_form.elements[i].name.replace("_field", "");
+			var field_value=document.listloader_template_edit_form.elements[i].value.replace(/\D/g,'');
+			var ptn="/\|"+field_name+"\|/gi";
+			if (vicidial_string.match(ptn)) 
+				{
+				standard_string += field_name +","+ field_value + '|';
+				} 
+			else 
+				{
+				custom_string += field_name +","+ field_value + '|';
+				}
+			}
+	}
+	document.getElementById("edit_standard_fields_layout").value=standard_string;
+	document.getElementById("edit_custom_fields_layout").value=custom_string;
+}
+
 function DrawTemplateStrings() {
 	var vicidial_string="<?php echo $vicidial_listloader_fields; ?>";
     var standard_string = '';
@@ -342,6 +444,8 @@ function loadIFrame(form_action, field_value) {
 	} else {
 		document.getElementById('list_data_display').style.display = 'block'; 
 		document.getElementById('list_data_display').style.visibility = 'visible';
+		document.getElementById('edit_data_display').style.display = 'none'; 
+		document.getElementById('edit_data_display').style.visibility = 'hidden';
 	}
 	document.forms[0].action="leadloader_template_display.php?form_action="+form_action;
 }
@@ -352,8 +456,18 @@ function checkForm(form_name) {
 	if (form_name.template_name.value=="") {error_msg += " - <?php echo _QXZ("Template name is missing"); ?>\n";}
 	if (form_name.template_list_id.value=="") {error_msg += " - <?php echo _QXZ("List ID is missing"); ?>\n";}
 	if (form_name.standard_fields_layout.value=="" && form_name.custom_fields_layout.value=="") {error_msg += " - <?php echo _QXZ("There does not seem to be a layout"); ?>\n";}
+return false;
 	if (error_msg.length>=80) {alert(error_msg); return false;} else {return true;}
 }
+function checkEditedForm(form_name) {
+	var error_msg = "";
+	if (form_name.template_id.value=="") {error_msg += " - <?php echo _QXZ("Template ID is missing"); ?>\n";}
+	else if (form_name.template_id.value.length<2) {error_msg += " - <?php echo _QXZ("Template ID needs to be at least 2 characters long"); ?>\n";}
+	if (form_name.template_name.value=="") {error_msg += " - <?php echo _QXZ("Template name is missing"); ?>\n";}
+	if (form_name.edit_standard_fields_layout.value=="" && form_name.edit_custom_fields_layout.value=="") {error_msg += " - <?php echo _QXZ("There does not seem to be a layout"); ?>\n";}
+	if (error_msg.length>0) {alert("<?php echo _QXZ("The form cannot be submitted for the following reasons"); ?>: \n"+error_msg); return false;} else {form_name.submit();}
+}
+</script>
 </script>
 <?php
 
@@ -400,7 +514,7 @@ $short_header=1;
 require("admin_header.php");
 ?>
 <BR/>
-<table border="2" bordercolor="#<?php echo $SSmenu_background; ?>" cellpadding="10" width="800" align="left">
+<table border="2" bordercolor="#<?php echo $SSmenu_background; ?>" cellpadding="10" width="900" align="left">
 <tr height="20"><th bgcolor="#<?php echo $SSmenu_background; ?>"><font class="standard_bold" color="#FFFFFF"><?php echo _QXZ("Listloader Custom Template Maker"); ?><?php echo "$NWB#vicidial_template_maker$NWE"; ?></font></th></tr>
 <tr><td align="center" bgcolor="#<?php echo $SSstd_row4_background; ?>">
 <table border=0 cellpadding=15 cellspacing=0 width="90%" align="center" bgcolor="#<?php echo $SSframe_background; ?>">
@@ -420,14 +534,14 @@ if ($success_msg)
 ?>
 	<tr>
 		<th width="50%"><font class="standard_bold"><?php echo _QXZ("Create a new template"); ?></font></th>
-		<th width="50%"><font class="standard_bold"><?php echo _QXZ("Delete an existing template"); ?></font></th>
+		<th width="50%"><font class="standard_bold"><?php echo _QXZ("Edit / delete an existing template"); ?></font></th>
 	<tr valign="top">
 		<td align="left" width='50%'>
 		<form id="listloader_file_primer" action="leadloader_template_display.php?form_action=prime_file" method="post" enctype="multipart/form-data" target="file_holder">
 			<font class="standard"><?php echo _QXZ("Sample file fitting template"); ?>:<BR><font size="-2">(<?php echo _QXZ("needed for field assignation"); ?>)</font></font><?php echo "$NWB#template_maker-create_template$NWE"; ?><BR><BR><input type=file name="sample_template_file" value="<?php echo $sample_template_file; ?>" onChange="loadIFrame('prime_file', this.value); this.form.submit();">
 		</form>
 		</td>
-		<td align="left" width='50%'><form action="<?php echo $PHP_SELF; ?>" method="post"><font class="standard"><?php echo _QXZ("Select template to delete"); ?>:</font><?php echo "$NWB#template_maker-delete_template$NWE"; ?><BR><select name="template_id" onChange="loadIFrame('hide_new_template_form', '')">
+		<td align="left" width='50%'><form action="<?php echo $PHP_SELF; ?>" method="post"><font class="standard"><?php echo _QXZ("Select template to edit/delete"); ?>:</font><?php echo "$NWB#template_maker-delete_template$NWE"; ?><BR><select name="template_id" onChange="loadIFrame('hide_new_template_form', '')">
 <?php
 $template_stmt="SELECT template_id, template_name FROM vicidial_custom_leadloader_templates WHERE list_id IN (SELECT list_id FROM vicidial_lists $whereLOGallowed_campaignsSQL) ORDER BY template_id asc;";
 $template_rslt=mysql_to_mysqli($template_stmt, $link);
@@ -440,7 +554,7 @@ if (mysqli_num_rows($template_rslt)>0) {
 	echo "<option value='' selected>--"._QXZ("No templates exist")."--</option>\n";
 }
 ?>
-		</select><BR/><BR/><input type="submit" value="<?php echo _QXZ("DELETE TEMPLATE"); ?>" class="red_btn" name="delete_template">
+		</select><BR/><BR/><input type="button" value="<?php echo _QXZ("EDIT TEMPLATE"); ?>" style='background-color:#<?php echo $SSbutton_color; ?>' name="edit_template" style="align:right; width: 150px" onClick="EditTemplate(this.form.template_id.value)">&nbsp;&nbsp;<input type="submit" value="<?php echo _QXZ("DELETE TEMPLATE"); ?>" style='background-color:#<?php echo $SSbutton_color; ?>' name="delete_template" style="align:center; width: 150px">
 		</form></td>
 	</tr>
 	<tr>
@@ -451,11 +565,34 @@ if (mysqli_num_rows($template_rslt)>0) {
 </form>
 <BR/>
 <iframe id="file_holder" style="visibility:hidden;display:none" name="file_holder"></iframe>
+<span id="edit_data_display" style="visibility:hidden;display:none">
+<form id="listloader_template_edit_form" name="listloader_template_edit_form" action="<?php echo $PHP_SELF; ?>" onSubmit="return false;" method="post" enctype="multipart/form-data">
+<table border=0 cellpadding=3 cellspacing=0 width="100%" align="center">
+	<tr>
+		<th colspan="2" bgcolor="#<?php echo $SSmenu_background; ?>"><font class="standard" color="white"><?php echo _QXZ("Edit template form"); ?></font><?php echo "$NWB#template_maker-editing_columns$NWE"; ?>
+</th>
+	</tr>
+	<tr valign="top">
+		<td border="1" align="center" bgcolor="#<?php echo $SSframe_background; ?>" width="50%"><font class="standard"><?php echo _QXZ("Standard Field"); ?></font></td>
+		<td border="0" align="center" bgcolor="#<?php echo $SSalt_row1_background; ?>" width="50%"><font class="standard"><?php echo _QXZ("Custom Field"); ?></font></td>
+	</tr>
+	<tr valign="top">
+		<td colspan="2" align="center">
+		<span id="field_display" name="field_display"><font class="standard_bold" color='red'>**<?php echo _QXZ("Select a template from the drop down menu above to show columns"); ?>**</font></span>
+		</td>
+	</tr>
+</table>
+<input type="hidden" id="edit_standard_fields_layout" name="edit_standard_fields_layout">
+<input type="hidden" id="edit_custom_fields_layout" name="edit_custom_fields_layout">
+<input type="hidden" id="submit_edited_template" name="submit_edited_template" value="1">
+</form>
+</span>
+
 <span id="list_data_display" style="visibility:hidden;display:none">
 <form id="listloader_template_form" name="listloader_template_form" action="<?php echo $PHP_SELF; ?>" method="post" enctype="multipart/form-data">
 <table border=0 cellpadding=3 cellspacing=0 width="100%" align="center">
 	<tr>
-		<th colspan="2" bgcolor="#330099"><font class="standard" color="white"><?php echo _QXZ("New template form"); ?></font></th>
+		<th colspan="2" bgcolor="#<?php echo $SSmenu_background; ?>"><font class="standard" color="white"><?php echo _QXZ("New template form"); ?></font></th>
 	</tr>
 	<tr bgcolor="#<?php echo $SSframe_background; ?>">
 		<td align="right" width='25%'><font class="standard"><?php echo _QXZ("Template ID"); ?>:</font></td>
@@ -519,11 +656,11 @@ if (mysqli_num_rows($template_rslt)>0) {
 <tr bgcolor="#<?php echo $SSframe_background; ?>"><td align="center" colspan=2>
 <table border=0 cellpadding=3 cellspacing=1 width="100%" align="center">
 	<tr>
-		<th colspan="2" bgcolor="#330099"><font class="standard" color="white"><?php echo _QXZ("Assign columns to file fields"); ?><BR/><font size='-2'>(<?php echo _QXZ("selecting a different list will reset columns"); ?>)</font></font><?php echo "$NWB#template_maker-assign_columns$NWE"; ?></th>
+		<th colspan="2" bgcolor="#<?php echo $SSmenu_background; ?>"><font class="standard" color="white"><?php echo _QXZ("Assign columns to file fields"); ?><BR/><font size='-2'>(<?php echo _QXZ("selecting a different list will reset columns"); ?>)</font></font><?php echo "$NWB#template_maker-assign_columns$NWE"; ?></th>
 	</tr>
 	<tr valign="top">
 		<td border="1" align="center" bgcolor="#<?php echo $SSframe_background; ?>" width="50%"><font class="standard"><?php echo _QXZ("Standard Field"); ?></font></td>
-		<td border="0" align="center" bgcolor="#FED9D9" width="50%"><font class="standard"><?php echo _QXZ("Custom Field"); ?></font></td>
+		<td border="0" align="center" bgcolor="#<?php echo $SSalt_row1_background; ?>" width="50%"><font class="standard"><?php echo _QXZ("Custom Field"); ?></font></td>
 	</tr>
 	<tr valign="top">
 		<td colspan="2" align="center">

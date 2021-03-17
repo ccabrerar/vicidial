@@ -685,7 +685,9 @@ max_inbound_filter_enabled ENUM('0','1') default '0',
 max_inbound_filter_statuses TEXT,
 max_inbound_filter_ingroups TEXT,
 max_inbound_filter_min_sec SMALLINT(5) default '-1',
-status_group_id VARCHAR(20) default ''
+status_group_id VARCHAR(20) default '',
+mobile_number VARCHAR(20) default '',
+two_factor_override  ENUM('NOT_ACTIVE','ENABLED','DISABLED') default 'NOT_ACTIVE'
 ) ENGINE=MyISAM;
 
 CREATE UNIQUE INDEX user ON vicidial_users (user);
@@ -1054,7 +1056,10 @@ daily_call_count_limit TINYINT(3) UNSIGNED default '0',
 daily_limit_manual VARCHAR(20) default 'DISABLED',
 transfer_button_launch VARCHAR(12) default 'NONE',
 shared_dial_rank TINYINT(3) default '99',
-agent_search_method VARCHAR(2) default ''
+agent_search_method VARCHAR(2) default '',
+qc_scorecard_id VARCHAR(20) DEFAULT '',
+qc_statuses_id VARCHAR(20) DEFAULT '',
+clear_form ENUM('DISABLED','ENABLED','ACKNOWLEDGE') default 'ACKNOWLEDGE'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_lists (
@@ -1095,7 +1100,10 @@ cache_count_new INT(9) UNSIGNED default '0',
 cache_count_dialable_new INT(9) UNSIGNED default '0',
 cache_date DATETIME,
 inbound_drop_voicemail VARCHAR(20),
-inbound_after_hours_voicemail VARCHAR(20)
+inbound_after_hours_voicemail VARCHAR(20),
+qc_scorecard_id VARCHAR(20) DEFAULT '',
+qc_statuses_id VARCHAR(20) DEFAULT '',
+qc_web_form_address VARCHAR(255) DEFAULT ''
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_statuses (
@@ -1347,7 +1355,9 @@ browser_alert_sound VARCHAR(20) default '---NONE---',
 browser_alert_volume TINYINT(3) UNSIGNED default '50',
 answer_signal ENUM('START','ROUTE','NONE') DEFAULT 'START',
 no_agent_delay SMALLINT(5) default '0',
-agent_search_method VARCHAR(2) default ''
+agent_search_method VARCHAR(2) default '',
+qc_scorecard_id VARCHAR(20) DEFAULT '',
+qc_statuses_id VARCHAR(20) DEFAULT ''
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_stations (
@@ -1798,7 +1808,7 @@ audio_store_purge TEXT,
 svn_revision INT(9) default '0',
 queuemetrics_socket VARCHAR(20) default 'NONE',
 queuemetrics_socket_url TEXT,
-enhanced_disconnect_logging ENUM('0','1') default '0',
+enhanced_disconnect_logging ENUM('0','1','2','3','4','5','6') default '0',
 allow_emails ENUM('0','1') default '0',
 level_8_disable_add ENUM('0','1') default '0',
 pass_hash_enabled ENUM('0','1') default '0',
@@ -1884,7 +1894,12 @@ web_loader_phone_strip VARCHAR(10) default 'DISABLED',
 manual_dial_phone_strip VARCHAR(10) default 'DISABLED',
 daily_call_count_limit ENUM('0','1') default '0',
 allow_shared_dial ENUM('0','1','2','3','4','5','6') default '0',
-agent_search_method ENUM('0','1','2','3','4','5','6') default '0'
+agent_search_method ENUM('0','1','2','3','4','5','6') default '0',
+phone_defaults_container VARCHAR(40) default '---DISABLED---',
+qc_claim_limit TINYINT UNSIGNED DEFAULT '3',
+qc_expire_days TINYINT UNSIGNED DEFAULT '3',
+two_factor_auth_hours SMALLINT(5) default '0',
+two_factor_container VARCHAR(40) default '---DISABLED---'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaigns_list_mix (
@@ -2811,7 +2826,7 @@ field_name VARCHAR(5000),
 field_description VARCHAR(100),
 field_rank SMALLINT(5),
 field_help VARCHAR(1000),
-field_type ENUM('TEXT','AREA','SELECT','MULTI','RADIO','CHECKBOX','DATE','TIME','DISPLAY','SCRIPT','HIDDEN','READONLY','HIDEBLOB','SWITCH','SOURCESELECT') default 'TEXT',
+field_type ENUM('TEXT','AREA','SELECT','MULTI','RADIO','CHECKBOX','DATE','TIME','DISPLAY','SCRIPT','HIDDEN','READONLY','HIDEBLOB','SWITCH','SOURCESELECT','BUTTON') default 'TEXT',
 field_options VARCHAR(5000),
 field_size SMALLINT(5),
 field_max SMALLINT(5),
@@ -4411,6 +4426,94 @@ index (call_time),
 index (drop_time)
 ) ENGINE=MyISAM;
 
+CREATE TABLE quality_control_checkpoint_log (
+qc_checkpoint_log_id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+qc_log_id INT(10) UNSIGNED DEFAULT NULL,
+campaign_id VARCHAR(8) DEFAULT NULL,
+group_id VARCHAR(20) DEFAULT NULL,
+list_id BIGINT(14) UNSIGNED DEFAULT NULL,
+qc_scorecard_id VARCHAR(20) DEFAULT NULL,
+checkpoint_row_id INT(10) UNSIGNED DEFAULT NULL,
+checkpoint_text TEXT,
+checkpoint_rank TINYINT(3) UNSIGNED DEFAULT NULL,
+checkpoint_points TINYINT(3) UNSIGNED DEFAULT NULL,
+instant_fail ENUM('Y','N') DEFAULT 'N',
+checkpoint_points_earned TINYINT(5) UNSIGNED DEFAULT NULL,
+qc_agent VARCHAR(20) DEFAULT NULL,
+checkpoint_comment_agent TEXT,
+PRIMARY KEY (qc_checkpoint_log_id)
+) ENGINE=MyISAM;
+
+CREATE TABLE quality_control_checkpoints (
+checkpoint_row_id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+qc_scorecard_id VARCHAR(20) DEFAULT NULL,
+checkpoint_text TEXT,
+checkpoint_rank INT(3) UNSIGNED DEFAULT NULL,
+checkpoint_points TINYINT(3) UNSIGNED DEFAULT NULL,
+instant_fail ENUM('Y','N') DEFAULT 'N',
+admin_notes TEXT,
+active ENUM('Y','N') DEFAULT NULL,
+campaign_ids TEXT,
+ingroups TEXT,
+list_ids TEXT,
+create_date DATETIME DEFAULT NULL,
+create_user VARCHAR(10) DEFAULT NULL,
+modify_date TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+modify_user VARCHAR(10) DEFAULT NULL,
+PRIMARY KEY (checkpoint_row_id)
+) ENGINE=MyISAM;
+
+CREATE TABLE quality_control_queue (
+qc_log_id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+qc_display_method ENUM('CALL','LEAD') DEFAULT 'CALL',
+lead_id INT(10) UNSIGNED DEFAULT NULL,
+status VARCHAR(6) DEFAULT NULL,
+call_date DATETIME DEFAULT NULL,
+agent_log_id INT(9) UNSIGNED DEFAULT NULL,
+user VARCHAR(20) DEFAULT NULL,
+user_group VARCHAR(20) DEFAULT NULL,
+campaign_id VARCHAR(8) DEFAULT NULL,
+group_id VARCHAR(20) DEFAULT NULL,
+list_id BIGINT(14) UNSIGNED DEFAULT NULL,
+scorecard_source ENUM('CAMPAIGN','INGROUP','LIST') DEFAULT 'CAMPAIGN',
+qc_web_form_address VARCHAR(255) DEFAULT NULL,
+vicidial_id VARCHAR(20) DEFAULT NULL,
+recording_id INT(10) UNSIGNED DEFAULT NULL,
+qc_scorecard_id VARCHAR(20) DEFAULT NULL,
+qc_agent VARCHAR(20) DEFAULT NULL,
+qc_user_group VARCHAR(20) DEFAULT NULL,
+qc_status VARCHAR(20) DEFAULT NULL,
+date_modified TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+date_claimed DATETIME DEFAULT NULL,
+date_completed DATETIME DEFAULT NULL,
+PRIMARY KEY (qc_log_id),
+UNIQUE KEY quality_control_queue_agent_log_id_key (agent_log_id),
+KEY quality_control_queue_lead_id_key (lead_id)
+) ENGINE=MyISAM;
+
+CREATE TABLE quality_control_scorecards (
+qc_scorecard_id VARCHAR(20) NOT NULL,
+scorecard_name VARCHAR(255) DEFAULT NULL,
+active ENUM('Y','N') DEFAULT 'Y',
+passing_score SMALLINT(5) UNSIGNED DEFAULT 0,
+last_modified TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+PRIMARY KEY (qc_scorecard_id)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_two_factor_auth (
+auth_date DATETIME,
+auth_exp_date DATETIME,
+user VARCHAR(20) default '',
+auth_stage ENUM('0','1','2','3','4','5','6') default '0',
+auth_code VARCHAR(20) default '',
+auth_code_exp_date DATETIME,
+auth_method VARCHAR(20) default 'EMAIL',
+auth_attempts SMALLINT(5) default '0',
+index (user),
+index (auth_date),
+index (auth_exp_date)
+) ENGINE=MyISAM;
+
 
 ALTER TABLE vicidial_email_list MODIFY message text character set utf8;
 
@@ -4515,9 +4618,11 @@ INSERT INTO vicidial_process_triggers SET trigger_id='LOAD_LEADS',server_ip='10.
 
 INSERT INTO vicidial_call_menu SET menu_id='defaultlog',menu_name='logging of all outbound calls from agent phones',menu_prompt='sip-silence',menu_timeout='20',menu_timeout_prompt='NONE',menu_invalid_prompt='NONE',menu_repeat='0',menu_time_check='0',call_time_id='',track_in_vdac='0',custom_dialplan_entry='exten => _X.,1,AGI(agi-NVA_recording.agi,BOTH------Y---Y---Y)\nexten => _X.,n,Goto(default,${EXTEN},1)',tracking_group='';
 INSERT INTO vicidial_call_menu SET menu_id='default---agent',menu_name='agent phones restricted to only internal extensions',menu_prompt='sip-silence',menu_timeout='20',menu_timeout_prompt='NONE',menu_invalid_prompt='NONE',menu_repeat='0',menu_time_check='0',call_time_id='',track_in_vdac='0',custom_dialplan_entry='include => vicidial-auto-internal\ninclude => vicidial-auto-phones\n',tracking_group='';
+INSERT INTO vicidial_call_menu (menu_id,menu_name,menu_prompt,menu_timeout,menu_timeout_prompt,menu_invalid_prompt,menu_repeat,menu_time_check,call_time_id,track_in_vdac,custom_dialplan_entry,tracking_group,dtmf_log,dtmf_field,user_group,qualify_sql,alt_dtmf_log,question,answer_signal) values('2FA_say_auth_code','2FA_say_auth_code','sip-silence|hello|your|access-code|is|cm_speak_var.agi,say_digits---access_code---DP',1,'NONE','NONE',1,'0','24hours','1','','CALLMENU','0','NONE','---ALL---','','0',0,'Y');
 
 INSERT INTO vicidial_call_menu_options SET menu_id='defaultlog',option_value='TIMEOUT',option_description='hangup',option_route='HANGUP',option_route_value='vm-goodbye',option_route_value_context='';
 INSERT INTO vicidial_call_menu_options SET menu_id='default---agent',option_value='TIMEOUT',option_description='hangup',option_route='HANGUP',option_route_value='vm-goodbye',option_route_value_context='';
+INSERT INTO vicidial_call_menu_options (menu_id,option_value,option_description,option_route,option_route_value,option_route_value_context) values('2FA_say_auth_code','TIMEOUT','','HANGUP','','');
 
 INSERT INTO vicidial_scripts (script_id,script_name,script_comments,active,script_text) values('CALLNOTES','Call Notes and Appointment Setting','','Y','<iframe src=\"../agc/vdc_script_notes.php?lead_id=--A--lead_id--B--&vendor_id=--A--vendor_lead_code--B--&list_id=--A--list_id--B--&gmt_offset_now=--A--gmt_offset_now--B--&phone_code=--A--phone_code--B--&phone_number=--A--phone_number--B--&title=--A--title--B--&first_name=--A--first_name--B--&middle_initial=--A--middle_initial--B--&last_name=--A--last_name--B--&address1=--A--address1--B--&address2=--A--address2--B--&address3=--A--address3--B--&city=--A--city--B--&state=--A--state--B--&province=--A--province--B--&postal_code=--A--postal_code--B--&country_code=--A--country_code--B--&gender=--A--gender--B--&date_of_birth=--A--date_of_birth--B--&alt_phone=--A--alt_phone--B--&email=--A--email--B--&security_phrase=--A--security_phrase--B--&comments=--A--comments--B--&user=--A--user--B--&pass=--A--pass--B--&campaign=--A--campaign--B--&phone_login=--A--phone_login--B--&fronter=--A--fronter--B--&closer=--A--user--B--&group=--A--group--B--&channel_group=--A--group--B--&SQLdate=--A--SQLdate--B--&epoch=--A--epoch--B--&uniqueid=--A--uniqueid--B--&rank=--A--rank--B--&owner=--A--owner--B--&customer_zap_channel=--A--customer_zap_channel--B--&server_ip=--A--server_ip--B--&SIPexten=--A--SIPexten--B--&session_id=--A--session_id--B--\" style=\"background-color:transparent;\" scrolling=\"auto\" frameborder=\"0\" allowtransparency=\"true\" id=\"popupFrame\" name=\"popupFrame\"  width=\"--A--script_width--B--\" height=\"--A--script_height--B--\" STYLE=\"z-index:17\"> </iframe>');
 
@@ -4739,9 +4844,10 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('TIMEZONES_USA','USA Timezone List','TIMEZONE_LIST','---ALL---','USA,AST,N,Atlantic Time Zone\nUSA,EST,Y,Eastern Time Zone\nUSA,CST,Y,Central Time Zone\nUSA,MST,Y,Mountain Time Zone\nUSA,MST,N,Arizona Time Zone\nUSA,PST,Y,Pacific Time Zone\nUSA,AKST,Y,Alaska Time Zone\nUSA,HST,N,Hawaii Time Zone\n');
 INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('TIMEZONES_CANADA','Canadian Timezone List','TIMEZONE_LIST','---ALL---','CAN,NST,Y,Newfoundland Time Zone\nCAN,AST,Y,Atlantic Time Zone\nCAN,EST,Y,Eastern Time Zone\nCAN,CST,Y,Central Time Zone\nCAN,CST,N,Saskatchewan Time Zone\nCAN,MST,Y,Mountain Time Zone\nCAN,PST,Y,Pacific Time Zone\n');
 INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('TIMEZONES_AUSTRALIA','Australian Timezone List','TIMEZONE_LIST','---ALL---','AUS,AEST,Y,Eastern Australia Time Zone\nAUS,AEST,N,Queensland Time Zone\nAUS,ACST,Y,Central Australia Time Zone\nAUS,ACST,N,Northern Territory Time Zone\nAUS,AWST,N,Western Australia Time Zone\n');
-
-INSERT INTO vicidial_settings_containers VALUES ('INTERNATIONAL_DNC_IMPORT','Process DNC lists of various countries from FTP site','PERL_CLI','---ALL---','# This setting container is used for the international DNC system. \r\n# The below two settings are mandatory for importing suppression lists\r\n# and tell the import process where to look for new files and where to\r\n# move them when handled.  These settings cannot have the same value. \r\n--file-dir=/root/ftp\r\n--file-destination=/root/ftp/DONE\r\n\r\n# Uncomment below and set the status to whatever custom disposition you \r\n# would like already-loaded leads to be set to when they dedupe against\r\n# a country\'s DNC list (default is \"DNCI\")\r\n# --dnc-status-override=BMNR\r\n\r\n# The below settings are optional for when files are stored on a remote\r\n# server.  It is strongly recommended these settings are not used and\r\n# that the processing scripts and files are stored locally on the same\r\n# server. \r\n# --ftp-host=localhost\r\n# --ftp-user=user\r\n# --ftp-pwd=pwd\r\n# --ftp-port=21\r\n# --ftp-passive=1\r\n'),('DNC_IMPORT_FORMATS','Import formats for DNC files','OTHER','---ALL---','# This setting container is used for storing file formats used when \r\n# loading DNC suppression lists into the dialer. \r\n#\r\n# import template => (delimited|fixed),delimiter,phone1(,phone2,phone3)\r\n#\r\n# For delimited files, the phone1 value should be the index value of\r\n# the field where the phone appears.  The first array index is 0 and\r\n# indexes continue through the natural numbers.\r\n\r\n# In delimited files, acceptable values for the \"delimiter\" field are:\r\n# - \"tab\", \"pipe\", \"comma\", \"quote-comma\"\r\nBASIC_DELIMITED_FORMAT => delimited,pipe,0\r\n\r\n# If the phone number is split into multiple fields (ex: area code in\r\n# one field, rest of the number in another), simply list additional \r\n# indices of the phone number fields separated by commas in the order \r\n# in which the data should be combined to make the complete phone \r\n# number \r\nDELIMITED_WITH_AC_AND_EXCHANGE_SPLIT => delimited,tab,0,1\r\n\r\n# For fixed-length files, the phone field values should be of the type:\r\n# - \"starting_position|length\"\r\nBASIC_FIXED_FORMAT => fixed,,0|10\r\n\r\n# (delimited|fixed) is not used for CSV/Excel files, so all that needs \r\n# providing for those is the index field value(s) of the phone number\r\nBASIC_CSV_OR_EXCEL_FORMAT => ,,0'),('DNC_CURRENT_BLOCKED_LISTS','Lists currently blocked due to pending DNC scrub','READ_ONLY','---ALL---','');
+INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('PHONE_DEFAULTS','Default phone settings for preloading','PHONE_DEFAULTS','---ALL---','# Below are all phone settings recognized under the PHONE_DEFAULTS \r\n# container type and the type of data each accepts.  Any setting that\r\n# uses a default value in the database has said value pre-set below\r\n\r\n# 10 char max\r\nvoicemail_id => \r\n \r\n# 15 char max\r\nserver_ip => \r\n\r\n# 100 char max\r\npass => \r\n\r\n# 10 char max\r\nstatus => \r\n\r\n# Y/N only\r\nactive => Y\r\n\r\n# 50 char max\r\nphone_type => \r\n\r\n# \'SIP\',\'Zap\',\'IAX2\' or \'EXTERNAL\'\r\nprotocol => SIP\r\n\r\n# positive or negatier 2-decimal floating point number\r\nlocal_gmt => -5.00\r\n\r\n# 20 char max\r\nvoicemail_dump_exten => 85026666666666\r\n\r\n# 20 char max\r\noutbound_cid => \r\n\r\n# 100 char max\r\nemail => \r\n\r\n# 15 char max\r\ntemplate_id => \r\n\r\n# text, conf_override can span multiple lines, see below\r\nconf_override => \r\n# type=friend\r\n# host=dynamic\r\n# canreinvite=no\r\n# context=default1\r\n\r\n# 50 char max\r\nphone_context => default\r\n\r\n# Unsigned - max value 65536\r\nphone_ring_timeout => 60\r\n\r\n# 20 char max\r\nconf_secret => test\r\n\r\n# Y/N only\r\ndelete_vm_after_email => N\r\n\r\n# Options - Y, N, or Y_API_LAUNCH\r\nis_webphone => N\r\n\r\n# Y/N only\r\nuse_external_server_ip => N\r\n\r\n# 100 char max\r\ncodecs_list => \r\n\r\n# 0/1 only\r\ncodecs_with_template => 0\r\n\r\n# Options - Y, N, TOGGLE, or TOGGLE_OFF\r\nwebphone_dialpad => Y\r\n\r\n# Y/N only\r\non_hook_agent => N\r\n\r\n# Y/N only\r\nwebphone_auto_answer => Y\r\n\r\n# 30 char max\r\nvoicemail_timezone => eastern\r\n\r\n# 255 char max\r\nvoicemail_options => \r\n\r\n# 20 char max\r\nuser_group => ---ALL---\r\n\r\n# 100 char max\r\nvoicemail_greeting => \r\n\r\n# 20 char max\r\nvoicemail_dump_exten_no_inst => 85026666666667\r\n\r\n# Y/N only\r\nvoicemail_instructions => Y\r\n\r\n# Y/N only\r\non_login_report => N\r\n\r\n# 40 char max\r\nunavail_dialplan_fwd_exten => \r\n\r\n# 100 char max\r\nunavail_dialplan_fwd_context => \r\n\r\n# text\r\nnva_call_url => \r\n\r\n# 40 char max\r\nnva_search_method => \r\n\r\n# 255 char max\r\nnva_error_filename => \r\n\r\n# Integer, any size\r\nnva_new_list_id => 995\r\n\r\n# 10 char max\r\nnva_new_phone_code => 1\r\n\r\n# 6 char max\r\nnva_new_status => NVAINS\r\n\r\n# Y/N only\r\nwebphone_dialbox => Y\r\n\r\n# Y/N only\r\nwebphone_mute => Y\r\n\r\n# Y/N only\r\nwebphone_volume => Y\r\n\r\n# Y/N only\r\nwebphone_debug => N\r\n\r\n# 20 char max\r\noutbound_alt_cid => \r\n\r\n# Y/N only\r\nconf_qualify => Y\r\n\r\n# 255 char max\r\nwebphone_layout => \r\n');
+INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('QC_STATUS_TEMPLATE','Sample QC Status Template','QC_TEMPLATE','---ALL---','# These types of containers are simply used for creating a list of \r\n# QC-enabled statuses to apply to campaigns, lists, and ingroups.\r\n# Simply put all the statuses that this template should allow in\r\n# a comma-delimited string, as below:\r\n\r\nSALE,DNC,NI');
+INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('INTERNATIONAL_DNC_IMPORT','Process DNC lists of various countries from FTP site','PERL_CLI','---ALL---','# This setting container is used for the international DNC system. \r\n# The below two settings are mandatory for importing suppression lists\r\n# and tell the import process where to look for new files and where to\r\n# move them when handled.  These settings cannot have the same value. \r\n--file-dir=/root/ftp\r\n--file-destination=/root/ftp/DONE\r\n\r\n# Uncomment below and set the status to whatever custom disposition you \r\n# would like already-loaded leads to be set to when they dedupe against\r\n# a country\'s DNC list (default is \"DNCI\")\r\n# --dnc-status-override=BMNR\r\n\r\n# The below settings are optional for when files are stored on a remote\r\n# server.  It is strongly recommended these settings are not used and\r\n# that the processing scripts and files are stored locally on the same\r\n# server. \r\n# --ftp-host=localhost\r\n# --ftp-user=user\r\n# --ftp-pwd=pwd\r\n# --ftp-port=21\r\n# --ftp-passive=1\r\n'),('DNC_IMPORT_FORMATS','Import formats for DNC files','OTHER','---ALL---','# This setting container is used for storing file formats used when \r\n# loading DNC suppression lists into the dialer. \r\n#\r\n# import template => (delimited|fixed),delimiter,phone1(,phone2,phone3)\r\n#\r\n# For delimited files, the phone1 value should be the index value of\r\n# the field where the phone appears.  The first array index is 0 and\r\n# indexes continue through the natural numbers.\r\n\r\n# In delimited files, acceptable values for the \"delimiter\" field are:\r\n# - \"tab\", \"pipe\", \"comma\", \"quote-comma\"\r\nBASIC_DELIMITED_FORMAT => delimited,pipe,0\r\n\r\n# If the phone number is split into multiple fields (ex: area code in\r\n# one field, rest of the number in another), simply list additional \r\n# indices of the phone number fields separated by commas in the order \r\n# in which the data should be combined to make the complete phone \r\n# number \r\nDELIMITED_WITH_AC_AND_EXCHANGE_SPLIT => delimited,tab,0,1\r\n\r\n# For fixed-length files, the phone field values should be of the type:\r\n# - \"starting_position|length\"\r\nBASIC_FIXED_FORMAT => fixed,,0|10\r\n\r\n# (delimited|fixed) is not used for CSV/Excel files, so all that needs \r\n# providing for those is the index field value(s) of the phone number\r\nBASIC_CSV_OR_EXCEL_FORMAT => ,,0'),('DNC_CURRENT_BLOCKED_LISTS','Lists currently blocked due to pending DNC scrub','READ_ONLY','---ALL---','');
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1617',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1622',db_schema_update_date=NOW(),reload_timestamp=NOW();

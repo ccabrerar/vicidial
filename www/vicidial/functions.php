@@ -4,7 +4,7 @@
 #
 # functions for administrative scripts and reports
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 #
 # CHANGES:
@@ -35,17 +35,19 @@
 # 180508-2215 - Added new help display
 # 191013-0901 - Fixes for PHP7
 # 200401-1920 - Added TimeToText function to convert integers to strings
+# 210311-2316 - Added 2FA check in user_authorization function
+# 210316-0924 - Small fix for 2FA consistency
 #
 
 ##### BEGIN validate user login credentials, check for failed lock out #####
 function user_authorization($user,$pass,$user_option,$user_update,$api_call)
 	{
-	global $link;
+	global $link,$php_script;
 #	require("dbconnect_mysqli.php");
 
 	#############################################
 	##### START SYSTEM_SETTINGS LOOKUP #####
-	$stmt = "SELECT use_non_latin,webroot_writable,pass_hash_enabled,pass_key,pass_cost,allow_ip_lists,system_ip_blacklist FROM system_settings;";
+	$stmt = "SELECT use_non_latin,webroot_writable,pass_hash_enabled,pass_key,pass_cost,allow_ip_lists,system_ip_blacklist,two_factor_auth_hours,two_factor_container FROM system_settings;";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	if ($DB) {echo "$stmt\n";}
 	$qm_conf_ct = mysqli_num_rows($rslt);
@@ -59,6 +61,8 @@ function user_authorization($user,$pass,$user_option,$user_update,$api_call)
 		$SSpass_cost =					$row[4];
 		$SSallow_ip_lists =				$row[5];
 		$SSsystem_ip_blacklist =		$row[6];
+		$SStwo_factor_auth_hours =		$row[7];
+		$SStwo_factor_container =		$row[8];
 		}
 	##### END SETTINGS LOOKUP #####
 	###########################################
@@ -215,6 +219,40 @@ function user_authorization($user,$pass,$user_option,$user_update,$api_call)
 				$rslt=mysql_to_mysqli($stmt, $link);
 				}
 			$auth_key='GOOD';
+
+			if ( ($SStwo_factor_auth_hours > 0) and ($SStwo_factor_container != '') and ($SStwo_factor_container != '---DISABLED---') and ($php_script != 'admin.php') )
+				{
+				$VUtwo_factor_override='';
+				$stmt="SELECT two_factor_override from vicidial_users where user='$user';";
+				if ($non_latin > 0) {$rslt=mysql_to_mysqli("SET NAMES 'UTF8'", $link);}
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$two_factor_user_ct = mysqli_num_rows($rslt);
+				if ($two_factor_user_ct > 0)
+					{
+					$row=mysqli_fetch_row($rslt);
+					$VUtwo_factor_override = $row[0];
+					}
+				if ($VUtwo_factor_override != 'DISABLED')
+					{
+					$VALID_2FA=1;
+					# check for 2FA being active, and if so, see if there is a non-expired 2FA auth
+					$stmt="SELECT count(*) from vicidial_two_factor_auth where user='$user' and auth_stage='1' and auth_exp_date > NOW();";
+					$rslt=mysql_to_mysqli($stmt, $link);
+					if ($DB) {echo "$stmt\n";}
+					$auth_check_to_print = mysqli_num_rows($rslt);
+					if ($auth_check_to_print < 1)
+						{$VALID_2FA=0;}
+					else
+						{
+						$row=mysqli_fetch_row($rslt);
+						$VALID_2FA = $row[0];
+						}
+					if ($VALID_2FA < 1)
+						{
+						$auth_key='2FA';
+						}
+					}
+				}
 			}
 		}
 	return $auth_key;

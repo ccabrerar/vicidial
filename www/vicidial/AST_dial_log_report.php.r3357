@@ -1,6 +1,6 @@
-<?php
+<?php 
 # AST_dial_log_report.php
-#
+# 
 # Copyright (C) 2021  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
@@ -58,7 +58,6 @@ if (isset($_GET["report_display_type"]))			{$report_display_type=$_GET["report_d
 	elseif (isset($_POST["report_display_type"]))	{$report_display_type=$_POST["report_display_type"];}
 if (isset($_GET["search_archived_data"]))			{$search_archived_data=$_GET["search_archived_data"];}
 	elseif (isset($_POST["search_archived_data"]))	{$search_archived_data=$_POST["search_archived_data"];}
-
 
 #### SIP response code directory
 $sip_response_directory = array(
@@ -401,11 +400,11 @@ while($i < $sip_hangup_cause_ct)
 
 $sip_hangup_causes_string='|';
 
-$i=0;
+$i=0; 
 $sip_hangup_cause_SQL="";
 while($i < $sip_hangup_cause_ct)
 	{
-	if ( (strlen($sip_hangup_cause[$i]) > 0) and (preg_match("/\|$sip_hangup_cause[$i]\|/",$sip_hangup_cause_string)) )
+	if ( (strlen($sip_hangup_cause[$i]) > 0) and (preg_match("/\|$sip_hangup_cause[$i]\|/",$sip_hangup_cause_string)) ) 
 		{
 		$sip_hangup_causes_string .= "$sip_hangup_cause[$i]|";
 		$sip_hangup_causeQS .= "&sip_hangup_cause[]=$sip_hangup_cause[$i]";
@@ -417,7 +416,7 @@ while($i < $sip_hangup_cause_ct)
 if ( (preg_match('/\-\-ALL\-\-/',$sip_hangup_cause_string) ) or ($sip_hangup_cause_ct < 1) )
 	{
 	$HC_rpt_string="- "._QXZ("ALL SIP hangup causes")." ";
-	if (preg_match('/\-\-ALL\-\-/',$sip_hangup_cause_string))
+	if (preg_match('/\-\-ALL\-\-/',$sip_hangup_cause_string)) 
 		{
 		$sip_hangup_causeQS="&sip_hangup_cause[]=--ALL--";
 		$sip_hangup_cause_SQL="";
@@ -484,7 +483,7 @@ else
 $o=0;
 while ($servers_to_print > $o)
 	{
-	if (preg_match("/\|$LISTserverIPs[$o]\|/",$server_ip_string))
+	if (preg_match("/\|$LISTserverIPs[$o]\|/",$server_ip_string)) 
 		{$MAIN.="<option selected value=\"$LISTserverIPs[$o]\">$LISTserverIPs[$o] - $LISTserver_names[$o]</option>\n";}
 	else
 		{$MAIN.="<option value=\"$LISTserverIPs[$o]\">$LISTserverIPs[$o] - $LISTserver_names[$o]</option>\n";}
@@ -502,7 +501,7 @@ else
 $o=0;
 while ($sip_responses_to_print > $o)
 	{
-	if (preg_match("/\|$master_sip_response_directory[$o]\|/",$sip_hangup_causes_string))
+	if (preg_match("/\|$master_sip_response_directory[$o]\|/",$sip_hangup_causes_string)) 
 		{$MAIN.="<option selected value=\"$master_sip_response_directory[$o]\">$master_sip_response_directory[$o] - $master_sip_response_verbiage_directory[$o]</option>\n";}
 	else
 		{$MAIN.="<option value=\"$master_sip_response_directory[$o]\">$master_sip_response_directory[$o] - $master_sip_response_verbiage_directory[$o]</option>\n";}
@@ -522,34 +521,17 @@ if ($archives_available=="Y")
 	$MAIN.="<input type='checkbox' name='search_archived_data' value='checked' $search_archived_data>"._QXZ("Search archived data")."<BR><BR>\n";
 	}
 
-$MAIN.="<input type='checkbox' name='search_archived_data' value='checked' $search_archived_data>"._QXZ("Search archived data")."\n<BR><BR>";
 $MAIN.="<INPUT TYPE=submit NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'><BR/><BR/>\n";
 $MAIN.="</TD></TR></TABLE>\n";
 $TEXT.="<PRE><font size=2>\n";
 
 if ($SUBMIT && $query_date) {
-<<<<<<< .mine
-	$vicidial_dial_log_table = "vicidial_dial_log";
-	if ($search_archived_data == 'checked') {
-		$vicidial_dial_log_table = use_archive_table($vicidial_dial_log_table);
-	}
-
-
-	$stmt="SELECT * From $vicidial_dial_log_table where call_date>='$query_date $query_date_D' and call_date<='$query_date $query_date_T' $server_ip_SQL $sip_hangup_cause_SQL order by call_date asc";
-
-=======
 	$stmt="SELECT * From ".$vicidial_dial_log_table." where call_date>='$query_date $query_date_D' and call_date<='$query_date $query_date_T' $server_ip_SQL $sip_hangup_cause_SQL order by call_date asc";
->>>>>>> .r3357
 	$rslt=mysql_to_mysqli($stmt, $link);
 
 	if (!$lower_limit) {$lower_limit=1;}
 	if ($lower_limit+999>=mysqli_num_rows($rslt)) {$upper_limit=($lower_limit+mysqli_num_rows($rslt)%1000)-1;} else {$upper_limit=$lower_limit+999;}
-<<<<<<< .mine
-
 	$TEXT.="--- "._QXZ("DIAL LOG RECORDS FOR")." $query_date, $query_date_D "._QXZ("TO")." $query_date_T $server_rpt_string, $HC_rpt_string\n --- "._QXZ("RECORDS")." #$lower_limit-$upper_limit               <a href=\"$PHP_SELF?SUBMIT=$SUBMIT&DB=$DB&type=$type&query_date=$query_date&query_date_D=$query_date_D&query_date_T=$query_date_T$server_ipQS$sip_hangup_causeQS&lower_limit=$lower_limit&upper_limit=$upper_limit&file_download=1&search_archived_data=$search_archived_data\">["._QXZ("DOWNLOAD")."]</a>\n";
-=======
-	$TEXT.="--- "._QXZ("DIAL LOG RECORDS FOR")." $query_date, $query_date_D "._QXZ("TO")." $query_date_T $server_rpt_string, $HC_rpt_string\n --- "._QXZ("RECORDS")." #$lower_limit-$upper_limit               <a href=\"$PHP_SELF?SUBMIT=$SUBMIT&DB=$DB&type=$type&query_date=$query_date&query_date_D=$query_date_D&query_date_T=$query_date_T$server_ipQS$sip_hangup_causeQS&lower_limit=$lower_limit&upper_limit=$upper_limit&file_download=1&search_archived_data=$search_archived_data\">["._QXZ("DOWNLOAD")."]</a>\n";
->>>>>>> .r3357
 	$CSV_text="\""._QXZ("CALLER CODE")."\",\""._QXZ("LEAD ID")."\",\""._QXZ("SERVER IP")."\",\""._QXZ("CALL DATE")."\",\""._QXZ("EXTENSION")."\",\""._QXZ("CHANNEL")."\",\""._QXZ("CONTEXT")."\",\""._QXZ("TIMEOUT")."\",\""._QXZ("OUTBOUND CID")."\",\""._QXZ("SIP HANGUP CAUSE")."\",\""._QXZ("UNIQUE ID")."\",\""._QXZ("SIP HANGUP REASON")."\"\n";
 
 	$HTML.="<BR><table border='0' cellpadding='3' cellspacing='1'>";
@@ -676,7 +658,7 @@ if ($SUBMIT && $query_date) {
 	}
 	$dial_log_rpt_hf.="\n";
 	$TEXT.=$dial_log_rpt_hf.$dial_log_rpt.$dial_log_rpt_hf;
-
+	
 	$TEXT.="</PRE>\n";
 	$HTML.="</tr></table>";
 

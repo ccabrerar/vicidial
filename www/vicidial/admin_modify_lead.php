@@ -8,7 +8,7 @@
 # just needs to enter the leadID and then they can view and modify the 
 # information in the record for that lead
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -103,6 +103,7 @@
 # 201117-0807 - Changes for better compatibility with non-latin data input
 # 201109-1725 - Fix for blank page after certain updates submitted
 # 201123-1704 - Added today called count display
+# 210304-1509 - Added option '5' for modify_lead for this page to work as read-only
 #
 
 require("dbconnect_mysqli.php");
@@ -409,8 +410,16 @@ if (strlen($phone_number)<6) {$phone_number=$old_phone;}
 
 $auth=0;
 $auth_message = user_authorization($PHP_AUTH_USER,$PHP_AUTH_PW,'',1,0);
-if ($auth_message == 'GOOD')
-	{$auth=1;}
+if ( ($auth_message == 'GOOD') or ($auth_message == '2FA') )
+	{
+	$auth=1;
+	if ($auth_message == '2FA')
+		{
+		header ("Content-type: text/html; charset=utf-8");
+		echo _QXZ("Your session is expired").". <a href=\"admin.php\">"._QXZ("Click here to log in")."</a>.\n";
+		exit;
+		}
+	}
 
 if ($auth < 1)
 	{
@@ -1399,7 +1408,7 @@ if ($lead_id == 'NEW')
 		$list_valid = $rowx[0];
 		}
 
-	if ( ($list_valid > 0) or (preg_match('/\-ALL/i', $LOGallowed_campaigns)) )
+	if ( ( ($list_valid > 0) or (preg_match('/\-ALL/i', $LOGallowed_campaigns)) ) and ($LOGmodify_leads != '5') )
 		{
 		$source_idSQL='';
 		if ($SSsource_id_display > 0)
@@ -1438,7 +1447,17 @@ else
 	$lead_count =	$row[0];
 	if ( ($lead_exists > 0) and ($lead_count < 1) )
 		{
-		echo _QXZ("lead does not exist")."\n";
+		echo "</script>\n";
+		echo "<link rel=\"stylesheet\" href=\"calendar.css\">\n";
+		echo "</head><BODY BGCOLOR=white marginheight=0 marginwidth=0 leftmargin=0 topmargin=0>\n";
+		echo "<span style=\"position:absolute;left:0px;top:0px;z-index:20;\" id=admin_header>";
+
+		$short_header=1;
+
+		require("admin_header.php");
+
+		echo "</span>\n";
+		echo "<BR><BR><b>"._QXZ("lead does not exist")."</b><BR>\n";
 		exit;
 		}
 	}
@@ -1461,7 +1480,7 @@ if ($end_call > 0)
 		$list_valid = $rowx[0];
 		}
 
-	if ( ($list_valid > 0) or (preg_match('/\-ALL/i', $LOGallowed_campaigns)) )
+	if ( ( ($list_valid > 0) or (preg_match('/\-ALL/i', $LOGallowed_campaigns)) ) and ($LOGmodify_leads != '5') )
 		{
 		$diff_orig=''; $diff_new='';
 		# gather existing lead data to store for admin log diff
@@ -1633,6 +1652,11 @@ if ($end_call > 0)
 	}
 else
 	{
+	if ( ($LOGmodify_leads == '5') and ( ($CBchangeUSERtoANY == 'YES') or ($CBchangeANYtoUSER == 'YES') or ($CBchangeDATE == 'YES') ) )
+		{
+		echo "ERROR: "._QXZ("You do not have permission to modify leads").": $LOGmodify_leads \n";
+		exit;
+		}
 	if ($CBchangeUSERtoANY == 'YES')
 		{
 		### set vicidial_callbacks record to an ANYONE callback for this lead 
@@ -2316,7 +2340,14 @@ else
 
 
 	if ($lead_id == 'NEW')
-		{echo "<br><b>"._QXZ("Add A New Lead")."</B>\n";}
+		{
+		if ($LOGmodify_leads == '5')
+			{
+			echo "ERROR: "._QXZ("You do not have permission to add new leads").": $LOGmodify_leads \n";
+			exit;
+			}
+		echo "<br><b>"._QXZ("Add A New Lead")."</B>\n";
+		}
 	else
 		{echo "<br>"._QXZ("Lead information").": $first_name $last_name - $phone_number\n";}
 
@@ -2947,9 +2978,11 @@ else
 					{
 					$rowx=mysqli_fetch_row($rslt);
 					$custom_records_count =	$rowx[0];
+					$submit_buttonURL = '&submit_button=YES';
+					if ($LOGmodify_leads == '5') {$submit_buttonURL = '&submit_button=READONLY';}
 
 					echo "<B>"._QXZ("CUSTOM FIELDS FOR THIS LEAD").":</B><BR>\n";
-					echo "<iframe src=\"../agc/$vdc_form_display?lead_id=$lead_id&list_id=$CLlist_id&stage=DISPLAY&submit_button=YES&user=$PHP_AUTH_USER&pass=$PHP_AUTH_PW&bcrypt=OFF&bgcolor=E6E6E6\" style=\"background-color:transparent;\" scrolling=\"auto\" frameborder=\"2\" allowtransparency=\"true\" id=\"vcFormIFrame\" name=\"vcFormIFrame\" width=\"740\" height=\"300\" STYLE=\"z-index:18\"> </iframe>\n";
+					echo "<iframe src=\"../agc/$vdc_form_display?lead_id=$lead_id&list_id=$CLlist_id&stage=DISPLAY$submit_buttonURL&user=$PHP_AUTH_USER&pass=$PHP_AUTH_PW&bcrypt=OFF&bgcolor=E6E6E6\" style=\"background-color:transparent;\" scrolling=\"auto\" frameborder=\"2\" allowtransparency=\"true\" id=\"vcFormIFrame\" name=\"vcFormIFrame\" width=\"740\" height=\"300\" STYLE=\"z-index:18\"> </iframe>\n";
 					echo "<BR><BR>";
 					}
 				}

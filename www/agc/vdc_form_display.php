@@ -46,10 +46,13 @@
 # 200406-1137 - Added hide_gender and gender default population
 # 201117-2056 - Changes for better compatibility with non-latin data input
 # 210211-0146 - Added SOURCESELECT field type
+# 210304-1612 - Added READONLY submit_button option
+# 210310-1115 - Added BUTTON field type with SubmitRefresh function
+# 210315-1747 - Added campaign setting for clear_form
 #
 
-$version = '2.14-36';
-$build = '210211-0146';
+$version = '2.14-39';
+$build = '210315-1747';
 $php_script = 'vdc_form_display.php';
 
 require_once("dbconnect_mysqli.php");
@@ -202,6 +205,10 @@ if (isset($_GET["did_custom_five"]))			{$did_custom_five=$_GET["did_custom_five"
 	elseif (isset($_POST["did_custom_five"]))	{$did_custom_five=$_POST["did_custom_five"];}
 if (isset($_GET["hide_gender"]))			{$hide_gender=$_GET["hide_gender"];}
 	elseif (isset($_POST["hide_gender"]))	{$hide_gender=$_POST["hide_gender"];}
+if (isset($_GET["button_action"]))			{$button_action=$_GET["button_action"];}
+	elseif (isset($_POST["button_action"]))	{$button_action=$_POST["button_action"];}
+if (isset($_GET["orig_URL"]))			{$orig_URL=$_GET["orig_URL"];}
+	elseif (isset($_POST["orig_URL"]))	{$orig_URL=$_POST["orig_URL"];}
 if (isset($_GET["DB"]))				{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))	{$DB=$_POST["DB"];}
 
@@ -227,6 +234,30 @@ $agents='@agents';
 $script_height = ($script_height - 20);
 if (strlen($bgcolor) < 6) {$bgcolor='FFFFFF';}
 $startMS = microtime();
+$ip = getenv("REMOTE_ADDR");
+$query_string = getenv("QUERY_STRING");
+$REQUEST_URI = getenv("REQUEST_URI");
+$POST_URI = '';
+foreach($_POST as $key=>$value)
+	{$POST_URI .= '&'.$key.'='.$value;}
+if (strlen($POST_URI)>1)
+	{$POST_URI = preg_replace("/^&/",'',$POST_URI);}
+$REQUEST_URI = preg_replace("/'|\"|\\\\|;/","",$REQUEST_URI);
+$POST_URI = preg_replace("/'|\"|\\\\|;/","",$POST_URI);
+if ( (strlen($query_string) < 1) and (strlen($POST_URI) > 2) )
+	{$query_string = $POST_URI;}
+if ( (strlen($query_string) > 0) and (strlen($POST_URI) > 2) )
+	{$query_string .= "&GET-AND-POST=Y&".$POST_URI;}
+$CL=':';
+$script_name = getenv("SCRIPT_NAME");
+$server_name = getenv("SERVER_NAME");
+$server_port = getenv("SERVER_PORT");
+if (preg_match("/443/i",$server_port)) {$HTTPprotocol = 'https://';}
+  else {$HTTPprotocol = 'http://';}
+if (($server_port == '80') or ($server_port == '443') ) {$server_port='';}
+else {$server_port = "$CL$server_port";}
+$vdcPAGE = "$HTTPprotocol$server_name$server_port$script_name";
+$vdcURL = $vdcPAGE . '?' . $query_string;
 
 $vicidial_list_fields = '|lead_id|entry_date|vendor_lead_code|source_id|list_id|gmt_offset_now|called_since_last_reset|phone_code|phone_number|title|first_name|middle_initial|last_name|address1|address2|address3|city|state|province|postal_code|country_code|gender|date_of_birth|alt_phone|email|security_phrase|comments|called_count|last_local_call_time|rank|owner|';
 
@@ -279,6 +310,7 @@ $agent_log_id = preg_replace('/[^0-9]/', '', $agent_log_id);
 $server_ip = preg_replace("/\'|\"|\\\\|;/","",$server_ip);
 $session_id = preg_replace('/[^0-9]/','',$session_id);
 $call_id = preg_replace('/[^-_\.0-9a-zA-Z]/','',$call_id);
+$button_action = preg_replace('/[^-_0-9a-zA-Z]/','',$button_action);
 
 if ($non_latin < 1)
 	{
@@ -308,7 +340,7 @@ if (strlen($SSagent_debug_logging) > 1)
 	}
 
 $auth_api_flag = 0;
-if ( ($submit_button=='YES') or ($admin_submit=='YES') )
+if ( ($submit_button=='YES') or ($submit_button=='READONLY') or ($admin_submit=='YES') )
 	{$auth_api_flag = 1;}
 
 $auth=0;
@@ -354,6 +386,11 @@ else
 ### BEGIN parse submission of the custom fields form ###
 if ($stage=='SUBMIT')
 	{
+	if ($submit_button=='READONLY')
+		{
+		echo  _QXZ("You do not have permission to modify leads").": $submit_button\n<BR>\n";
+		exit;
+		}
 	$SUBMIT_only=1;
 	if ($SSagent_debug_logging > 0) 
 		{
@@ -432,9 +469,9 @@ if ($stage=='SUBMIT')
 
 			$A_field_value[$o] = $form_field_value;
 
-			if ( ($A_field_type[$o]=='DISPLAY') or ($A_field_type[$o]=='SCRIPT') or ($A_field_type[$o]=='SWITCH') or ($A_field_type[$o]=='HIDDEN') or ($A_field_type[$o]=='HIDEBLOB') or ($A_field_type[$o]=='READONLY') )
+			if ( ($A_field_type[$o]=='DISPLAY') or ($A_field_type[$o]=='SCRIPT') or ($A_field_type[$o]=='SWITCH') or ($A_field_type[$o]=='HIDDEN') or ($A_field_type[$o]=='HIDEBLOB') or ($A_field_type[$o]=='READONLY') or ($A_field_type[$o]=='BUTTON') )
 				{
-                if (($A_field_type[$o]=='DISPLAY') or ($A_field_type[$o]=='SCRIPT') or ($A_field_type[$o]=='SWITCH') or ($A_field_type[$o]=='READONLY'))
+                if (($A_field_type[$o]=='DISPLAY') or ($A_field_type[$o]=='SCRIPT') or ($A_field_type[$o]=='SWITCH') or ($A_field_type[$o]=='READONLY') or ($A_field_type[$o]=='BUTTON'))
 					{
 					$SUBMIT_output .= "<b>$A_field_name[$o]:</b> $A_field_value[$o]<BR>";
 					}
@@ -556,14 +593,47 @@ if ($stage=='SUBMIT')
 		}
 	else
 		{
-		echo  _QXZ("Custom Form Output:")."\n<BR>\n";
-
-		echo "$SUBMIT_output";
+		if ( (strlen($orig_URL)> 10) and ($button_action == 'SubmitRefresh') )
+			{
+			echo "<HTML><HEAD>\n";
+			echo "<META HTTP-EQUIV=\"REFRESH\" CONTENT=\"1;URL=$orig_URL\">\n";
+			echo "</HEAD><BODY>\n";
+			echo "<b>"._QXZ("Committing changes and reloading form")."...</b>\n<BR><BR>\n";
+			echo "<a href=\"$orig_URL\">"._QXZ("click here if form is not reloading")."</a>\n";
+			}
+		else
+			{
+			$clear_form='';
+			$stmt="SELECT clear_form from vicidial_campaigns where campaign_id='$campaign';";
+			if ($DB>0) {echo "$stmt";}
+			$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'06XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+			$camps_to_print = mysqli_num_rows($rslt);
+			if ($camps_to_print > 0) 
+				{
+				$rowx=mysqli_fetch_row($rslt);
+				$clear_form =	$rowx[0];
+				}
+			if ($clear_form == 'ACKNOWLEDGE')
+				{
+				echo  _QXZ("Custom Form Data Submitted")."\n<BR>\n";
+				}
+			if ($clear_form == 'ENABLED')
+				{
+				echo "\n<BR>\n";
+				}
+			if ($clear_form == 'DISABLED')
+				{
+				echo  _QXZ("Custom Form Output:")."\n<BR>\n";
+				echo "$SUBMIT_output";
+				}
+			}
 
 		echo "<form action=./vdc_form_display.php method=POST name=form_custom_fields id=form_custom_fields>\n";
 		echo "<input type=hidden name=user id=user value=\"$user\">\n";
 		echo "<input type=hidden name=pass id=pass value=\"$pass\">\n";
 		echo "</form>\n";
+
 		}
 	}
 ### END parse submission of the custom fields form ###
@@ -583,6 +653,7 @@ if ($SUBMIT_only < 1)
 	echo "	<link rel=\"stylesheet\" href=\"calendar.css\">\n";
 	echo "	<link rel=\"stylesheet\" href=\"./css/vicidial_stylesheet.css\">\n";
 	echo "	<script language=\"Javascript\">\n";
+	echo "  var orig_URL = '$vdcURL';\n";
 	echo "	function open_help(taskspan,taskhelp) \n";
 	echo "		{\n";
 	echo "		document.getElementById(\"P_\" + taskspan).innerHTML = \" &nbsp; <a href=\\\"javascript:close_help('\" + taskspan + \"','\" + taskhelp + \"');\\\">help-</a><BR> &nbsp; \";\n";
@@ -649,6 +720,15 @@ if ($SUBMIT_only < 1)
 	echo "			document.form_custom_fields.submit();\n";
 	echo "			}\n";
 	echo "		}\n";
+	echo "	function form_button_functions(temp_button_action)\n";
+	echo "		{\n";
+#	echo "		alert('button action:'+ temp_button_action);\n";
+	echo "		if (temp_button_action == 'SubmitRefresh')\n";
+	echo "			{\n";
+	echo "			document.getElementById('button_action').value = temp_button_action;\n";
+	echo "			document.form_custom_fields.submit();\n";
+	echo "			}\n";
+	echo "		}\n";
 	echo "	function nothing()\n";
 	echo "		{}\n";
 	echo "	</script>\n";
@@ -660,6 +740,7 @@ if ($SUBMIT_only < 1)
 	echo "<input type=hidden name=lead_id id=lead_id value=\"$lead_id\">\n";
 	echo "<input type=hidden name=list_id id=list_id value=\"$list_id\">\n";
 	echo "<input type=hidden name=new_list_id id=new_list_id value=''>\n";
+	echo "<input type=hidden name=button_action id=button_action value=''>\n";
 	echo "<input type=hidden name=user id=user value=\"$user\">\n";
 	echo "<input type=hidden name=pass id=pass value=\"$pass\">\n";
 	echo "<input type=hidden name=call_id id=call_id value=\"$call_id\">\n";
@@ -667,7 +748,12 @@ if ($SUBMIT_only < 1)
 	echo "<input type=hidden name=campaign id=campaign value=\"$campaign\">\n";
 	echo "<input type=hidden name=user_group id=user_group value=\"$user_group\">\n";
 	echo "<input type=hidden name=uniqueid id=uniqueid value=\"$uniqueid\">\n";
+	echo "<input type=hidden name=orig_URL id=orig_URL value=\"$vdcURL\">\n";
 	echo "\n";
+	if ($submit_button=='READONLY')
+		{
+		echo "<input type=hidden name=submit_button id=submit_button value=\"READONLY\">\n";
+		}
 
 
 	require_once("functions.php");

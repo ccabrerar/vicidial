@@ -145,9 +145,10 @@
 # 201123-1651 - Added reset of vicidial_lead_call_daily_counts table
 # 201218-2054 - Added reset of vicidial_agent_dial_campaigns table
 # 210207-1200 - Added purging of vicidial_shared_log log entries
+# 210311-2229 - Added purging of old records from vicidial_two_factor_auth
 #
 
-$build = '210207-1200';
+$build = '210311-2229';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -1935,6 +1936,24 @@ if ($timeclock_end_of_day_NOW > 0)
 		##### END vicidial_shared_log end of day process removing records older than 7 days #####
 
 
+		##### BEGIN vicidial_two_factor_auth end of day process removing expired and older records #####
+		$stmtA = "DELETE from vicidial_two_factor_auth where (auth_exp_date < NOW()) or ( (auth_code_exp_date < NOW()) and (auth_stage != '1') );";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$affected_rows = $dbhA->do($stmtA);
+		if($DB){print STDERR "\n|$affected_rows vicidial_two_factor_auth expired or older records purged|\n";}
+		if ($teodDB) {$event_string = "vicidial_two_factor_auth expired or older records purged: |$stmtA|$affected_rows|";   &teod_logger;}
+
+		$stmtA = "optimize table vicidial_two_factor_auth;";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		@aryA = $sthA->fetchrow_array;
+		if ($DB) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+		$sthA->finish();
+		##### END vicidial_two_factor_auth end of day process removing records older than 7 days #####
+
+		
 		##### BEGIN vicidial_lead_messages end of day process removing records older than 1 day #####
 		$stmtA = "DELETE FROM vicidial_lead_messages WHERE call_date < \"$RMSQLdate\";";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;

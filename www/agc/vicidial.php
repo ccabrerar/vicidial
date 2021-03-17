@@ -1,7 +1,7 @@
 <?php
 # vicidial.php - the web-based version of the astVICIDIAL client application
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # Other scripts that this application depends on:
 # - vdc_db_query.php: Updates information in the database
@@ -653,12 +653,16 @@
 # 201117-0818 - Changes for better compatibility with non-latin data input
 # 201123-1436 - Added Daily call count limit features
 # 201201-2015 - Added transfer_button_launch feature
+# 210222-0819 - Fixes for manual dial agent-state issues and a translation issue
+# 210312-1520 - Force clearing of webphone panel upon logout
+# 210315-2102 - Added CALLBACK manual dial filter option, Issue #1139
+# 210317-1207 - Fixes for better consistency in password change process, Issue #1261
 #
 
-$version = '2.14-621c';
-$build = '201201-2015';
+$version = '2.14-625c';
+$build = '210317-1207';
 $mel=1;					# Mysql Error Log enabled = 1
-$mysql_log_count=92;
+$mysql_log_count=95;
 $one_mysql_log=0;
 $DB=0;
 
@@ -845,6 +849,8 @@ if ($non_latin < 1)
 	{
 	$VD_login=preg_replace("/[^-_0-9a-zA-Z]/","",$VD_login);
 	$VD_pass=preg_replace("/[^-_0-9a-zA-Z]/","",$VD_pass);
+	$new_pass1=preg_replace("/[^-_0-9a-zA-Z]/","",$new_pass1);
+	$new_pass2=preg_replace("/[^-_0-9a-zA-Z]/","",$new_pass2);
 	$phone_login=preg_replace("/[^\,0-9a-zA-Z]/","",$phone_login);
 	$phone_pass=preg_replace("/[^-_0-9a-zA-Z]/","",$phone_pass);
 	$VD_campaign = preg_replace("/[^-_0-9a-zA-Z]/","",$VD_campaign);
@@ -860,6 +866,8 @@ else
 	{
 	$VD_login = preg_replace("/\'|\"|\\\\|;/","",$VD_login);
 	$VD_pass=preg_replace("/\'|\"|\\\\|;| /","",$VD_pass);
+	$new_pass1=preg_replace("/[^-_0-9\p{L}]/u","",$new_pass1);
+	$new_pass2=preg_replace("/[^-_0-9\p{L}]/u","",$new_pass2);
 	$phone_login=preg_replace("/[^\,0-9\p{L}]/u","",$phone_login);
 	$phone_pass=preg_replace("/[^-_0-9\p{L}]/u","",$phone_pass);
 	$VD_campaign = preg_replace("/[^-_0-9\p{L}]/u","",$VD_campaign);
@@ -1559,6 +1567,7 @@ else
 						{
 						$pass_hash='';
 						$pass_hashSQL='';
+						$pass_querySQL="and pass='$new_pass1'";
 						if ($SSpass_hash_enabled > 0)
 							{
 							if (strlen($new_pass1) > 1)
@@ -1567,14 +1576,30 @@ else
 								$pass_hash = exec("../agc/bp.pl --pass=$pass");
 								$pass_hash = preg_replace("/PHASH: |\n|\r|\t| /",'',$pass_hash);
 								$pass_hashSQL = ",pass_hash='$pass_hash'";
+								$pass_querySQL = "and pass_hash='$pass_hash'";
 								}
 							$new_pass1='';
 							}
+						$stmt="SELECT count(*) from vicidial_users where user='$VD_login' $pass_querySQL;";
+						if ($DB) {echo "|$stmt|\n";}
+						$rslt=mysql_to_mysqli($stmt, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01093',$VD_login,$server_ip,$session_name,$one_mysql_log);}
+						$row=mysqli_fetch_row($rslt);
+						$dup_password=$row[0];
 
+						if ($dup_password > 0)
+							{
+							$set_pass_message = _QXZ("You cannot use the same password as your last password");
+							$set_pass=1;
+							}
+						}
+
+					if ($set_pass == '2')
+						{
 						$stmt="UPDATE vicidial_users SET force_change_password='N',pass='$new_pass1' $pass_hashSQL where user='$VD_login';";
 						if ($DB) {echo "$stmt\n";}
 						$rslt=mysql_to_mysqli($stmt, $link);
-								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01XXX',$VD_login,$server_ip,$session_name,$one_mysql_log);}
+								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01094',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 						$VUpassword_affected_rows = mysqli_affected_rows($link);
 
 						echo "<title>"._QXZ("Agent web client: Change Password")."</title>\n";
@@ -1650,10 +1675,11 @@ else
 				echo "<td align=\"left\" valign=\"bottom\" bgcolor=\"#$SSmenu_background\" width=\"170\"><img src=\"$selected_logo\" border=\"0\" height=\"45\" width=\"170\" alt=\"Agent Screen\" /></td>";
 				echo "<td align=\"center\" valign=\"middle\" bgcolor=\"#$SSmenu_background\"> <font class=\"sh_text_white\">$set_pass_message</font> </td>";
 				echo "</tr>\n";
+				echo "<tr><td colspan=2 align=\"center\"><font class=\"sk_text\"><BR>"._QXZ("Note: Passwords may be up to 100 characters in length, and you may only use letters and numbers in your password").". <BR> &nbsp; </font></td></tr>";
 				echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("New Password").": </font> </td>";
-				echo "<td align=\"left\"><input type=\"password\" name=\"new_pass1\" id=\"new_pass1\" size=\"40\" maxlength=\"100\" onkeyup=\"return pwdChanged('new_pass1','pass_length1');\" /> &nbsp; <font size=1 face=\"Arial,Helvetica\"><span id=\"pass_length1\"></font></td></tr>\n";
+				echo "<td align=\"left\"><input type=\"password\" name=\"new_pass1\" id=\"new_pass1\" size=\"60\" maxlength=\"100\" onkeyup=\"return pwdChanged('new_pass1','pass_length1');\" /> &nbsp; <font size=1 face=\"Arial,Helvetica\"><span id=\"pass_length1\"></font></td></tr>\n";
 				echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("Confirm New Password").":  </font> </td>";
-				echo "<td align=\"left\"><input type=\"password\" name=\"new_pass2\" id=\"new_pass2\" size=\"40\" maxlength=\"100\" onkeyup=\"return pwdChanged('new_pass2','pass_length2');\" /> &nbsp; <font size=1 face=\"Arial,Helvetica\"><span id=\"pass_length2\"></font></td></tr>\n";
+				echo "<td align=\"left\"><input type=\"password\" name=\"new_pass2\" id=\"new_pass2\" size=\"60\" maxlength=\"100\" onkeyup=\"return pwdChanged('new_pass2','pass_length2');\" /> &nbsp; <font size=1 face=\"Arial,Helvetica\"><span id=\"pass_length2\"></font></td></tr>\n";
 				echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";
 				echo "<span id=\"LogiNReseT\"></span></td></tr>\n";
 				echo "<tr><td align=\"left\" colspan=\"2\"><font class=\"body_tiny\"><br />"._QXZ("VERSION:")." $version &nbsp; &nbsp; &nbsp; "._QXZ("BUILD:")." $build</font></td></tr>\n";
@@ -2445,7 +2471,7 @@ else
 					# Gather details on Pause Codes Max Exceptions settings container
 					$stmt = "SELECT container_entry FROM vicidial_settings_containers where container_id='$pause_max_exceptions';";
 					$rslt=mysql_to_mysqli($stmt, $link);
-						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01095',$user,$server_ip,$session_name,$one_mysql_log);}
 					if ($DB) {echo "$stmt\n";}
 					$SCinfo_ct = mysqli_num_rows($rslt);
 					if ($SCinfo_ct > 0)
@@ -4806,6 +4832,7 @@ if ($enable_fast_refresh < 1) {echo "\tvar refresh_interval = 1000;\n";}
 	var lastxferchannel='';
 	var custchannellive=0;
 	var xferchannellive=0;
+	var manual_call_live=0;
 	var nochannelinsession=0;
 	var agc_dial_prefix = '91';
 	var dtmf_silent_prefix = '<?php echo $dtmf_silent_prefix ?>';
@@ -6494,6 +6521,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 							if (api_transferconf_ID == api_transferconf_values_array[7])
 								{
 							//	alert("TRANSFERCONF COMMAND ALREADY RECEIVED: " + api_transferconf_function + "|" + api_transferconf_ID + "|" + api_transferconf_values_array[7] + "|" + external_transferconf_count);
+								button_click_log = button_click_log + "" + SQLdate + "-----TRANSFERCONF_API_DUP---" + api_transferconf_function + " " + api_transferconf_ID + " " + api_transferconf_values_array[7] + " " + external_transferconf_count + " " + "|";	
 								Clear_API_Field('external_transferconf');
 								}
 							else
@@ -8356,7 +8384,15 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 		if (MEdial=='YES')
 			{manual_entry_dial=1;}
 		var move_on=1;
-		if ( (starting_dial_level != 0) && (dial_next_failed < 1) && ( (AutoDialWaiting == 1) || (VD_live_customer_call==1) || (alt_dial_active==1) || (MD_channel_look==1) || (in_lead_preview_state==1) ) )
+		// JCJ
+		// alert("Both move_ons must be true plus at least one of the last 5 variables must be '1' to check.  Then all 7 non-move_on must be true to manual dial.:\nmove_on - starting_dial_level != 0 ("+starting_dial_level+")\nmove_on - dial_next_failed < 1 ("+dial_next_failed+")\n(N/A)dial_method = "+dial_method+"\n(N/A)custchanellive = "+custchannellive+"\nauto_pause_precall == 'Y' ("+auto_pause_precall+")\nagent_pause_codes_active=='Y' OR 'FORCE' ("+agent_pause_codes_active+")\nAutoDialWaiting == 1 ("+AutoDialWaiting+")\nVD_live_customer_call != 1 ("+VD_live_customer_call+")\nalt_dial_active != 1 ("+alt_dial_active+")\nMD_channel_look != 1 ("+MD_channel_look+")\nin_lead_preview_state != 1 ("+in_lead_preview_state+")");
+		// JCJ Check if in live call in MANUAL dial method so person can't place manual calls
+		if (dial_method == 'MANUAL' && (lastcustchannel.length > 0 || manual_call_live > 0))
+			{
+			move_on=0;
+			alert_box("<?php echo _QXZ("MANUAL DIAL IS NOT ALLOWED WHILE INCALL"); ?>");
+			}
+		else if ( (starting_dial_level != 0) && (dial_next_failed < 1) && ( (AutoDialWaiting == 1) || (VD_live_customer_call==1) || (alt_dial_active==1) || (MD_channel_look==1) || (in_lead_preview_state==1) ) )
 			{
 			if ((auto_pause_precall == 'Y') && ( (agent_pause_codes_active=='Y') || (agent_pause_codes_active=='FORCE') ) && (AutoDialWaiting == 1) && (VD_live_customer_call!=1) && (alt_dial_active!=1) && (MD_channel_look!=1) && (in_lead_preview_state!=1) )
 				{
@@ -10092,8 +10128,9 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 							var regMNHDCCLvar = new RegExp("NO-HOPPER DAILY CALL LIMIT","ig");
 							var regMDFvarCAMP = new RegExp("CAMPLISTS","ig");
 							var regMDFvarSYS = new RegExp("SYSTEM","ig");
+							var regMDFvarCB = new RegExp("CALLBACK","ig");
 							var regMDFvarTIME = new RegExp("OUTSIDE","ig");
-							if ( (MDnextCID.match(regMNCvar)) || (MDnextCID.match(regMDFvarDNC)) || (MDnextCID.match(regMDFvarDCCL)) || (MDnextCID.match(regMDFvarCAMP)) || (MDnextCID.match(regMDFvarSYS)) || (MDnextCID.match(regMDFvarTIME)) )
+							if ( (MDnextCID.match(regMNCvar)) || (MDnextCID.match(regMDFvarDNC)) || (MDnextCID.match(regMDFvarDCCL)) || (MDnextCID.match(regMDFvarCAMP)) || (MDnextCID.match(regMDFvarSYS)) ||(MDnextCID.match(regMDFvarCB)) || (MDnextCID.match(regMDFvarTIME)) )
 								{
 								button_click_log = button_click_log + "" + SQLdate + "-----DialNextFailed---" + MDnextCID + " " + "|";
 
@@ -10107,7 +10144,11 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								InternalChatsCheck();
 
 								if (MDnextCID.match(regMNCvar))
-									{alert_box("<?php echo _QXZ("No more leads in the hopper for campaign:"); ?>\n" + campaign);   alert_displayed=1;}
+									{
+									alert_box("<?php echo _QXZ("No more leads in the hopper for campaign:"); ?>\n" + campaign);   
+									alert_displayed=1;
+									in_lead_preview_state=0; // JCJ - This needs to be reset here otherwise the variable stays at 1 and thus manual dials can't be made even if the agent is paused.
+									}
 								if (MDnextCID.match(regMDFvarDNC))
 									{alert_box("<?php echo _QXZ("This phone number is in the DNC list:"); ?>\n" + mdnPhonENumbeR);   alert_displayed=1;}
 								if (MDnextCID.match(regMDFvarDCCL))
@@ -10116,6 +10157,8 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 									{alert_box("<?php echo _QXZ("This phone number is not in the campaign lists:"); ?>\n" + mdnPhonENumbeR);   alert_displayed=1;}
 								if (MDnextCID.match(regMDFvarSYS))
 									{alert_box("<?php echo _QXZ("This phone number is not in the system lists:"); ?>\n" + mdnPhonENumbeR);   alert_displayed=1;}
+								if (MDnextCID.match(regMDFvarCB))
+									{alert_box("<?php echo _QXZ("This phone number is not a callback:"); ?>\n" + mdnPhonENumbeR);   alert_displayed=1;}
 								if (MDnextCID.match(regMDFvarTIME))
 									{alert_box("<?php echo _QXZ("This phone number is outside of the local call time:"); ?>\n" + mdnPhonENumbeR);   alert_displayed=1;}
 
@@ -10150,6 +10193,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 							else
 								{
 								fronter = user;
+								manual_call_live=1;
 								LasTCID											= MDnextResponse_array[0];
 								document.vicidial_form.lead_id.value			= MDnextResponse_array[1];
 								LeaDPreVDispO									= MDnextResponse_array[2];
@@ -10825,6 +10869,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 				prefix_choice='';
 				agent_dialed_number='';
 				agent_dialed_type='';
+				manual_call_live=0;
 			//	CalL_ScripT_id='';
 			//	CalL_ScripT_color='';
 				dial_next_failed=0;
@@ -11048,6 +11093,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 							LasTCID =	MDOnextResponse_array[0];
 							MD_channel_look=1;
 							custchannellive=1;
+							manual_call_live=1;
 
 							var dispnum = manDiaLonly_num;
 							var status_display_number = phone_number_format(dispnum);
@@ -11217,6 +11263,10 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 					if (dial_method == "INBOUND_MAN")
 						{
 						auto_dial_level=starting_dial_level;
+						// JCJ - reset dial_next_failed to zero here. Currently if hopper is empty, agent is auto paused and dial_next_failed=1
+						// However it remains 1 if you click to be active which causes the move_on check to be skipped allowing active
+						// agents to manual dial.						
+						dial_next_failed=0;
 
 						document.getElementById("DiaLControl").innerHTML = "<a href=\"#\" onclick=\"AutoDial_ReSume_PauSe('VDADpause','','','','','','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_active.gif"); ?>\" border=\"0\" alt=\"You are active\" /></a><br /><a href=\"#\" onclick=\"ManualDialNext('','','','','','0','','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_dialnextnumber.gif"); ?>\" border=\"0\" alt=\"Dial Next Number\" /></a>";
 						}
@@ -13726,6 +13776,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 				lastcustchannel='';
 				lastcustserverip='';
 				MDchannel='';
+				manual_call_live=0;
 				if (post_phone_time_diff_alert_message.length > 10)
 					{
 					document.getElementById("post_phone_time_diff_span_contents").innerHTML = "";
@@ -16363,6 +16414,8 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
                         {logout_content="<?php echo _QXZ("You have been paused for too long, you have been logged out of your session"); ?><br /><br />";}
 					if (tempreason=='READY_TIMEOUT')
                         {logout_content="<?php echo _QXZ("You have been ready for too long, you have been logged out of your session"); ?><br /><br />";}
+					if (is_webphone=='Y')
+						{document.getElementById('webphone').src = './images/blank.gif';}
 
 					if (agent_logout_link > 0)
 						{
@@ -17836,7 +17889,7 @@ function phone_number_format(formatphone) {
 					{
 					var temp_response = xmlhttp.responseText;
 				//	alert(xmlhttp.responseText);
-					var regCDS = new RegExp("ERROR: no","ig");
+					var regCDS = new RegExp("ERROR","ig");
 					if (temp_response.match(regCDS))
 						{
 					//	alert_box(temp_response);
@@ -19284,7 +19337,7 @@ function phone_number_format(formatphone) {
 			if (logout_stop_timeouts==1)	{WaitingForNextStep=1;}
 			if ( (custchannellive < customer_gone_seconds) && (lastcustchannel.length > 3) && (no_empty_session_warnings < 1) && (document.vicidial_form.lead_id.value != '') && (currently_in_email_or_chat==0) )
 				{CustomerChanneLGone();}
-		//	document.getElementById("debugbottomspan").innerHTML = "custchannellive: " + custchannellive + " lastcustchannel.length: " + lastcustchannel.length + " no_empty_session_warnings: " + no_empty_session_warnings + " lead_id: |" + document.vicidial_form.lead_id.value + "|";
+		//	document.getElementById("debugbottomspan").innerHTML = "custchannellive: " + custchannellive + " customer_gone_seconds: " + customer_gone_seconds + ", lastcustchannel.length: " + lastcustchannel.length + " no_empty_session_warnings: " + no_empty_session_warnings + " lead_id: |" + document.vicidial_form.lead_id.value + "|" + " currently_in_email_or_chat: " + currently_in_email_or_chat; //JCJ
 			if ( (custchannellive < -10) && (lastcustchannel.length > 3) ) {ReChecKCustoMerChaN();}
 			if ( (nochannelinsession > 16) && (check_n > 15) && (no_empty_session_warnings < 1) ) {NoneInSession();}
 			if (external_transferconf_count > 0) {external_transferconf_count = (external_transferconf_count - 1);}
