@@ -1567,3 +1567,23 @@ UPDATE system_settings SET db_schema_version='1621',db_schema_update_date=NOW() 
 ALTER TABLE vicidial_campaigns ADD clear_form ENUM('DISABLED','ENABLED','ACKNOWLEDGE') default 'ACKNOWLEDGE';
 
 UPDATE system_settings SET db_schema_version='1622',db_schema_update_date=NOW() where db_schema_version < 1622;
+
+CREATE TABLE vicidial_agent_visibility_log (
+db_time DATETIME NOT NULL,
+event_start_epoch INT(10) UNSIGNED,
+event_end_epoch INT(10) UNSIGNED,
+user VARCHAR(20),
+length_in_sec INT(10),
+visibility  ENUM('VISIBLE','HIDDEN','LOGIN','NONE') default 'NONE',
+agent_log_id INT(9) UNSIGNED,
+index (db_time),
+unique index visibleuser (user, visibility, event_end_epoch)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_agent_visibility_log_archive LIKE vicidial_agent_visibility_log;
+
+ALTER TABLE system_settings ADD agent_hidden_sound VARCHAR(20) default 'click_quiet';
+ALTER TABLE system_settings ADD agent_hidden_sound_volume TINYINT(3) UNSIGNED default '25';
+ALTER TABLE system_settings ADD agent_hidden_sound_seconds TINYINT(3) UNSIGNED default '0';
+
+UPDATE system_settings SET db_schema_version='1623',db_schema_update_date=NOW() where db_schema_version < 1623;

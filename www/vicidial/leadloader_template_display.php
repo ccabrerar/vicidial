@@ -301,20 +301,6 @@ else if ($form_action=="update_template" && $template_id)
 			}
 		asort($custom_array);
 		asort($standard_array);
-		# print_r($standard_array);
-
-		# exit;
-/*
-*************************** 1. row ***************************
-         template_id: Dans1
-       template_name: tpDB1
-template_description: Dans first template
-             list_id: 100
-  standard_variables: vendor_lead_code,0|source_id,6|phone_code,10|phone_number,11|title,12|first_name,13|middle_initial,14|last_name,15|address1,16|address2,17|address3,18|city,19|state,20|province,20|postal_code,10|country_code,23|gender,24|date_of_birth,25|alt_phone,26|email,27|security_phrase,28|comments,29|rank,32|owner,33|
-        custom_table: custom_100
-    custom_variables: question,38|answer,39|favorite_color,40|
-   template_statuses:
-*/
 
 		$fields_stmt = "SELECT list_id, vendor_lead_code, source_id, phone_code, phone_number, title, first_name, middle_initial, last_name, address1, address2, address3, city, state, province, postal_code, country_code, gender, date_of_birth, alt_phone, email, security_phrase, comments, rank, owner from vicidial_list limit 1";
 

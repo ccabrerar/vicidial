@@ -1,7 +1,7 @@
 <?php
 # conf_exten_check.php    version 2.14
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed purely to send whether the meetme conference has live channels connected and which they are
 # This script depends on the server_ip being sent and also needs to have a valid user/pass from the vicidial_users table
@@ -85,10 +85,11 @@
 # 191013-2105 - Fixes for PHP7
 # 200825-2343 - Added option for manual-only sip actions
 # 201111-2140 - Fix for AGENTDIRECT selected in-groups issue #1241
+# 210317-1935 - Added visibility logging
 #
 
-$version = '2.14-59';
-$build = '201111-2140';
+$version = '2.14-60';
+$build = '210317-1935';
 $php_script = 'conf_exten_check.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=51;
@@ -146,7 +147,8 @@ if (isset($_GET["campaign"]))				{$campaign=$_GET["campaign"];}
 	elseif (isset($_POST["campaign"]))		{$campaign=$_POST["campaign"];}
 if (isset($_GET["phone_number"]))			{$phone_number=$_GET["phone_number"];}
 	elseif (isset($_POST["phone_number"]))	{$phone_number=$_POST["phone_number"];}
-
+if (isset($_GET["visibility"]))				{$visibility=$_GET["visibility"];}
+	elseif (isset($_POST["visibility"]))	{$visibility=$_POST["visibility"];}
 
 if ($bcrypt == 'OFF')
 	{$bcrypt=0;}
@@ -200,6 +202,7 @@ $conf_exten = preg_replace("/[^-_0-9a-zA-Z]/","",$conf_exten);
 $exten = preg_replace("/\'|\"|\\\\|;/","",$exten);
 $clicks = preg_replace("/\'|\"|\\\\|;/","",$clicks);
 $customer_chat_id = preg_replace("/[^0-9a-zA-Z]/","",$customer_chat_id);
+$visibility = preg_replace("/\'|\"|\\\\|;/","",$visibility);
 
 # default optional vars if not set
 if (!isset($format))   {$format="text";}
@@ -1122,6 +1125,32 @@ if ($format=='debug')
 	$RUNtime = ($ENDtime - $StarTtime);
 	echo "\n<!-- script runtime: $RUNtime seconds -->";
 	echo "\n</body>\n</html>\n";
+	}
+
+### log the visibility changes sent from the agent screen
+if (strlen($visibility) > 1)
+	{
+	$vc=0;
+	$visibility_details = explode('|',$visibility);
+	$visibility_details_ct = count($visibility_details);
+	while($vc < $visibility_details_ct)
+		{
+		$visibility_data = explode(' ',$visibility_details[$vc]);
+		$visibility_type = $visibility_data[0];
+		$visibility_length = $visibility_data[1];
+		$visibility_start_epoch = $visibility_data[2];
+		$visibility_end_epoch = $visibility_data[3];
+		#$visibility_length = ($StarTtime - $visibility_data[2]);
+		$agent_log_id = $visibility_data[4];
+
+		if (strlen($visibility_type) > 1)
+			{
+			$stmtA="INSERT INTO vicidial_agent_visibility_log set db_time=NOW(),event_start_epoch='$visibility_start_epoch',event_end_epoch='$visibility_end_epoch',user='$user',length_in_sec='$visibility_length',visibility='$visibility_type',agent_log_id='$agent_log_id';";
+			$rslt=mysql_to_mysqli($stmtA, $link);
+			}
+
+		$vc++;
+		}
 	}
 
 if ($SSagent_debug_logging > 0)

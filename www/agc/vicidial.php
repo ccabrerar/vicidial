@@ -657,10 +657,11 @@
 # 210312-1520 - Force clearing of webphone panel upon logout
 # 210315-2102 - Added CALLBACK manual dial filter option, Issue #1139
 # 210317-1207 - Fixes for better consistency in password change process, Issue #1261
+# 210318-0236 - Added agent browser visibility logging and Agent Hidden Browser Sounds
 #
 
-$version = '2.14-625c';
-$build = '210317-1207';
+$version = '2.14-626c';
+$build = '210318-0236';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=95;
 $one_mysql_log=0;
@@ -782,7 +783,7 @@ if ($sl_ct > 0)
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,vdc_header_date_format,vdc_customer_date_format,vdc_header_phone_format,webroot_writable,timeclock_end_of_day,vtiger_url,enable_vtiger_integration,outbound_autodial_active,enable_second_webform,user_territories_active,static_agent_url,custom_fields_enabled,pllb_grouping_limit,qc_features_active,allow_emails,callback_time_24hour,enable_languages,language_method,meetme_enter_login_filename,meetme_enter_leave3way_filename,enable_third_webform,default_language,active_modules,allow_chats,chat_url,default_phone_code,agent_screen_colors,manual_auto_next,agent_xfer_park_3way,admin_web_directory,agent_script,agent_push_events,agent_push_url,agent_logout_link,agentonly_callback_campaign_lock,manual_dial_validation,mute_recordings,enable_second_script,enable_first_webform,recording_buttons,outbound_cid_any,browser_call_alerts,manual_dial_phone_strip,require_password_length,pass_hash_enabled FROM system_settings;";
+$stmt = "SELECT use_non_latin,vdc_header_date_format,vdc_customer_date_format,vdc_header_phone_format,webroot_writable,timeclock_end_of_day,vtiger_url,enable_vtiger_integration,outbound_autodial_active,enable_second_webform,user_territories_active,static_agent_url,custom_fields_enabled,pllb_grouping_limit,qc_features_active,allow_emails,callback_time_24hour,enable_languages,language_method,meetme_enter_login_filename,meetme_enter_leave3way_filename,enable_third_webform,default_language,active_modules,allow_chats,chat_url,default_phone_code,agent_screen_colors,manual_auto_next,agent_xfer_park_3way,admin_web_directory,agent_script,agent_push_events,agent_push_url,agent_logout_link,agentonly_callback_campaign_lock,manual_dial_validation,mute_recordings,enable_second_script,enable_first_webform,recording_buttons,outbound_cid_any,browser_call_alerts,manual_dial_phone_strip,require_password_length,pass_hash_enabled,agent_hidden_sound_seconds,agent_hidden_sound,agent_hidden_sound_volume FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01001',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 if ($DB) {echo "$stmt\n";}
@@ -836,6 +837,10 @@ if ($qm_conf_ct > 0)
 	$SSmanual_dial_phone_strip =		$row[43];
 	$SSrequire_password_length =		$row[44];
 	$SSpass_hash_enabled =				$row[45];
+	$SSagent_hidden_sound_seconds =		$row[46];
+	$SSagent_hidden_sound =				$row[47];
+	$SSagent_hidden_sound_volume =		$row[48];
+	if ( ($SSagent_hidden_sound == '---NONE---') or ($SSagent_hidden_sound == '') ) {$SSagent_hidden_sound_seconds=0;}
 	}
 else
 	{
@@ -971,7 +976,7 @@ $SSalt_row1_background='BDFFBD';
 $SSalt_row2_background='99FF99';
 $SSalt_row3_background='CCFFCC';
 
-$browser_alert_sounds_list = 'bark_dog,beep_double,beep_five,beep_up,bell_double,bell_school,bird,blaster1,blaster2,buzz1,buzz2,cash_register,chat_alert,close_encounter,confirmation,ding,droplet,droplet_double,elephant,email_alert,hold_tone,horn_bike,horn_car,horn_car_triple,horn_clown,horn_double,horn_train,meow_cat,scream_wilhelm,silence_quick,siren,slide_down,slide_up,swish,teleport1,teleport2,whip,whoosh,xylophone1,xylophone2,xylophone3,xylophone4';
+$browser_alert_sounds_list = 'bark_dog,beep_double,beep_five,beep_up,bell_double,bell_school,bird,blaster1,blaster2,buzz1,buzz2,cash_register,chat_alert,click_single,click_double,click_quiet,close_encounter,confirmation,ding,droplet,droplet_double,elephant,email_alert,hold_tone,horn_bike,horn_car,horn_car_triple,horn_clown,horn_double,horn_train,meow_cat,scream_wilhelm,silence_quick,siren,slide_down,slide_up,swish,teleport1,teleport2,ticking_two,ticking_four,ticking_six,whip,whistle_up,whistle_two,whistle_three,whoosh,xylophone1,xylophone2,xylophone3,xylophone4';
 
 if ($agent_screen_colors != 'default')
 	{
@@ -4576,6 +4581,8 @@ $CCAL_OUT .= "</table>";
 	var UnixTime = '<?php echo $StarTtimE ?>';
 	var UnixTimeMS = 0;
 	var JSseedTIME = <?php echo $JS_date  ?>;
+	var BrowserEpoch = Math.round(Date.now() / 1000);
+	var BrowserServerEpochDiff = (BrowserEpoch - UnixTime);
 	var t = new Date();
 	t.setTime(JSseedTIME);
 	var c = new Date();
@@ -5238,6 +5245,7 @@ if ($enable_fast_refresh < 1) {echo "\tvar refresh_interval = 1000;\n";}
 	var customer_gone_seconds='<?php echo $customer_gone_seconds_negative ?>';
 	var updatedispo_resume_trigger='0';
 	var button_click_log='<?php echo $NOW_TIME ?>-----LOGIN---<?php echo $version ?> <?php echo $build ?> <?php echo $script_name ?>|';
+	var visibility_log='LOGIN 0 <?php echo "$StarTtimE $StarTtimE $agent_log_id" ?>';
 	var agent_display_fields='<?php echo $agent_display_fields ?>';
 	var customer_sec='0';
 	var allow_required_fields='<?php echo $allow_required_fields ?>';
@@ -5317,6 +5325,10 @@ if ($enable_fast_refresh < 1) {echo "\tvar refresh_interval = 1000;\n";}
 	var browser_alert_sound='<?php echo $browser_alert_sound ?>';
 	var browser_alert_volume='<?php echo $browser_alert_volume ?>';
 	var transfer_button_launch='<?php echo $transfer_button_launch ?>';
+	var SSagent_hidden_sound_seconds='<?php echo $SSagent_hidden_sound_seconds ?>';
+	var SSagent_hidden_sound='<?php echo $SSagent_hidden_sound ?>';
+	var SSagent_hidden_sound_volume='<?php echo $SSagent_hidden_sound_volume ?>';
+	var last_hidden_sound_UnixTime = '<?php echo $StarTtimE ?>';
 	var DiaLControl_auto_HTML = "<a href=\"#\" onclick=\"AutoDial_ReSume_PauSe('VDADready','','','','','','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_paused.gif") ?>\" border=\"0\" alt=\"You are paused\" /></a>";
 	var DiaLControl_auto_HTML_ready = "<a href=\"#\" onclick=\"AutoDial_ReSume_PauSe('VDADpause','','','','','','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_active.gif") ?>\" border=\"0\" alt=\"You are active\" /></a>";
 	var DiaLControl_auto_HTML_OFF = "<img src=\"./images/<?php echo _QXZ("vdc_LB_blank_OFF.gif") ?>\" border=\"0\" alt=\"pause button disabled\" />";
@@ -5451,6 +5463,134 @@ if ($enable_fast_refresh < 1) {echo "\tvar refresh_interval = 1000;\n";}
 <?php	echo $INSERT_head_js; ?>
 
 // ################################################################################
+// BEGIN Browser window visibility functions, for agent visibility logging and hidden alert sounds
+
+var last_UnixTime = UnixTime;
+var visibility_state = 'WENT VISIBLE';
+var browserPrefixes = ['moz', 'ms', 'o', 'webkit'],
+isVisible = true; // internal flag, defaults to true
+
+// get the correct attribute name
+function getHiddenPropertyName(prefix) 
+	{
+	return (prefix ? prefix + 'Hidden' : 'hidden');
+	}
+
+// get the correct event name
+function getVisibilityEvent(prefix) 
+	{
+	return (prefix ? prefix : '') + 'visibilitychange';
+	}
+
+// get current browser vendor prefix
+function getBrowserPrefix() 
+	{
+	for (var i = 0; i < browserPrefixes.length; i++) 
+		{
+		if(getHiddenPropertyName(browserPrefixes[i]) in document) 
+			{
+			// return vendor prefix
+			return browserPrefixes[i];
+			}
+		}
+	// no vendor prefix needed
+	return null;
+	}
+
+// bind and handle events
+var browserPrefix = getBrowserPrefix(),
+hiddenPropertyName = getHiddenPropertyName(browserPrefix),
+visibilityEventName = getVisibilityEvent(browserPrefix);
+
+function onVisible(temp_force_visible) 
+	{
+	// prevent double execution
+	if ( (isVisible) && (temp_force_visible == '0') )
+		{
+		return;
+		}
+	// change flag value
+	BrowserEpoch = Math.round(Date.now() / 1000);
+	var ServerEpochNow = (BrowserEpoch - BrowserServerEpochDiff);
+	if (UnixTime > ServerEpochNow) {ServerEpochNow = UnixTime;}
+	isVisible = true;
+	visibility_state = 'WENT VISIBLE';
+	var temp_seconds = (ServerEpochNow - last_UnixTime);
+	//console.log(visibility_state + ' ' + temp_seconds);
+	visibility_log = visibility_log + 'HIDDEN' + " " + temp_seconds + " " + last_UnixTime + " " + ServerEpochNow + " " + agent_log_id + "|";
+	last_UnixTime = ServerEpochNow;
+	last_hidden_sound_UnixTime = ServerEpochNow;
+	button_click_log = button_click_log + "" + SQLdate + "-----Browser_Visibility---" + visibility_state + " " + temp_seconds + " " + UnixTime + "|";
+	}
+
+function onHidden(temp_force_hidden) 
+	{
+	// prevent double execution
+	if ( (!isVisible) && (temp_force_hidden == '0') )
+		{
+		return;
+		}
+	// change flag value
+	BrowserEpoch = Math.round(Date.now() / 1000);
+	var ServerEpochNow = (BrowserEpoch - BrowserServerEpochDiff);
+	if (UnixTime > ServerEpochNow) {ServerEpochNow = UnixTime;}
+	isVisible = false;
+	visibility_state = 'WENT HIDDEN';
+	var temp_seconds = (ServerEpochNow - last_UnixTime);
+	//console.log(visibility_state + ' ' + temp_seconds);
+	visibility_log = visibility_log + 'VISIBLE' + " " + temp_seconds + " " + last_UnixTime + " " + ServerEpochNow + " " + agent_log_id + "|";
+	last_UnixTime = ServerEpochNow;
+	last_hidden_sound_UnixTime = ServerEpochNow;
+	button_click_log = button_click_log + "" + SQLdate + "-----Browser_Visibility---" + visibility_state + " " + temp_seconds + " " + UnixTime + "|";
+	}
+
+function handleVisibilityChange(forcedFlag) 
+	{
+	// forcedFlag is a boolean when this event handler is triggered by a
+	// focus or blur eventotherwise it's an Event object
+	if(typeof forcedFlag === "boolean") 
+		{
+		if(forcedFlag) 
+			{
+			return onVisible('0');
+			}
+		return onHidden('0');
+		}
+	if(document[hiddenPropertyName]) 
+		{
+		return onHidden('0');
+		}
+	return onVisible('0');
+	}
+
+document.addEventListener(visibilityEventName, handleVisibilityChange, false);
+
+// extra event listeners for better behaviour
+document.addEventListener('focus', function() 
+	{
+	handleVisibilityChange(true);
+	}, false);
+
+document.addEventListener('blur', function() 
+	{
+	handleVisibilityChange(false);
+	}, false);
+
+window.addEventListener('focus', function() 
+	{
+	handleVisibilityChange(true);
+	}, false);
+
+window.addEventListener('blur', function() 
+	{
+	handleVisibilityChange(false);
+	}, false);
+
+// END Browser window visibility functions, for agent debug logging
+// ################################################################################
+
+
+// ################################################################################
 // Send Hangup command for Live call connected to phone now to Manager
 	function livehangup_send_hangup(taskvar)
 		{
@@ -5497,7 +5637,7 @@ if ($enable_fast_refresh < 1) {echo "\tvar refresh_interval = 1000;\n";}
 		}
 
 // ################################################################################
-// Play MP3 audio file upon call arriving in agent screen, if enabled in system settings and campaign/in-group
+// Play MP3 audio file upon call arriving in agent screen or agent hiding screen, if enabled in system settings and campaign/in-group
 	function play_browser_sound(temp_sound,temp_volume)
 		{
 		if ( (temp_sound != '---NONE---') && (temp_sound != '---DISABLED---') && (temp_sound != '') )
@@ -6261,8 +6401,9 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 				}
 			if (xmlhttprequestcheckconf)
 				{
-				checkconf_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&user=" + user + "&pass=" + pass + "&client=vdc&conf_exten=" + taskconfnum + "&auto_dial_level=" + auto_dial_level + "&campagentstdisp=" + campagentstdisp + "&customer_chat_id=" + document.vicidial_form.customer_chat_id.value + "&live_call_seconds=" + VD_live_call_secondS + "&xferchannel=" + document.vicidial_form.xferchannel.value + "&check_for_answer=" + MDcheck_for_answer + "&MDnextCID=" + MDnextCID + "&campaign=" + campaign + "&phone_number=" + dialed_number + "&clicks=" + button_click_log;
+				checkconf_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&user=" + user + "&pass=" + pass + "&client=vdc&conf_exten=" + taskconfnum + "&auto_dial_level=" + auto_dial_level + "&campagentstdisp=" + campagentstdisp + "&customer_chat_id=" + document.vicidial_form.customer_chat_id.value + "&live_call_seconds=" + VD_live_call_secondS + "&xferchannel=" + document.vicidial_form.xferchannel.value + "&check_for_answer=" + MDcheck_for_answer + "&MDnextCID=" + MDnextCID + "&campaign=" + campaign + "&phone_number=" + dialed_number + "&visibility=" + visibility_log + "&clicks=" + button_click_log;
 				button_click_log='';
+				visibility_log='';
 				xmlhttprequestcheckconf.open('POST', 'conf_exten_check.php');
 				xmlhttprequestcheckconf.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
 				xmlhttprequestcheckconf.send(checkconf_query);
@@ -16341,6 +16482,10 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 	function LogouT(tempreason,temppause)
 		{
 		button_click_log = button_click_log + "" + SQLdate + "-----LogouT---" + tempreason + " " + temppause + "|";
+		onHidden('1');
+		onVisible('1');
+		check_for_conf_calls(session_id, '0');
+
 		if (MD_channel_look==1)
 			{alert("<?php echo _QXZ("You cannot log out during a Dial attempt. Wait 50 seconds for the dial to fail out if it is not answered"); ?>");}
 		else
@@ -16421,11 +16566,11 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 						{
 						if (agent_logout_link == '1')
 							{
-							document.getElementById("LogouTBoxLink").innerHTML = logout_content + "<font class=\"loading_text\"><a href=\"" + agcPAGE + "?relogin=YES&session_epoch=" + epoch_sec + "&session_id=" + session_id + "&session_name=" + session_name + "&VD_login=" + user + "&VD_campaign=" + campaign + "&phone_login=" + original_phone_login + "&phone_pass=" + phone_pass + "&VD_pass=" + orig_pass + "&LOGINvarONE=" + LOGINvarONE + "&LOGINvarTWO=" + LOGINvarTWO + "&LOGINvarTHREE=" + LOGINvarTHREE + "&LOGINvarFOUR=" + LOGINvarFOUR + "&LOGINvarFIVE=" + LOGINvarFIVE + "&hide_relogin_fields=" + hide_relogin_fields + "\" onclick=\"needToConfirmExit = false;\"><?php echo _QXZ("CLICK HERE TO LOG IN AGAIN"); ?></a></font>\n";
+							document.getElementById("LogouTBoxLink").innerHTML = logout_content + "<font class=\"loading_text\"><a href=\"" + agcPAGE + "?relogin=YES&session_epoch=" + UnixTime + "&session_id=" + session_id + "&session_name=" + session_name + "&VD_login=" + user + "&VD_campaign=" + campaign + "&phone_login=" + original_phone_login + "&phone_pass=" + phone_pass + "&VD_pass=" + orig_pass + "&LOGINvarONE=" + LOGINvarONE + "&LOGINvarTWO=" + LOGINvarTWO + "&LOGINvarTHREE=" + LOGINvarTHREE + "&LOGINvarFOUR=" + LOGINvarFOUR + "&LOGINvarFIVE=" + LOGINvarFIVE + "&hide_relogin_fields=" + hide_relogin_fields + "\" onclick=\"needToConfirmExit = false;\"><?php echo _QXZ("CLICK HERE TO LOG IN AGAIN"); ?></a></font>\n";
 							}
 						else if (agent_logout_link == '2')
 							{
-							document.getElementById("LogouTBoxLink").innerHTML = logout_content + "<font class=\"loading_text\"><a href=\"" + agcPAGE + "?relogin=YES&session_epoch=" + epoch_sec + "&session_id=" + session_id + "&session_name=" + session_name + "&VD_login=" + user + "&VD_campaign=" + campaign + "&phone_login=" + original_phone_login + "&LOGINvarONE=" + LOGINvarONE + "&LOGINvarTWO=" + LOGINvarTWO + "&LOGINvarTHREE=" + LOGINvarTHREE + "&LOGINvarFOUR=" + LOGINvarFOUR + "&LOGINvarFIVE=" + LOGINvarFIVE + "&hide_relogin_fields=" + hide_relogin_fields + "\" onclick=\"needToConfirmExit = false;\"><?php echo _QXZ("CLICK HERE TO LOG IN AGAIN"); ?></a></font>\n";
+							document.getElementById("LogouTBoxLink").innerHTML = logout_content + "<font class=\"loading_text\"><a href=\"" + agcPAGE + "?relogin=YES&session_epoch=" + UnixTime + "&session_id=" + session_id + "&session_name=" + session_name + "&VD_login=" + user + "&VD_campaign=" + campaign + "&phone_login=" + original_phone_login + "&LOGINvarONE=" + LOGINvarONE + "&LOGINvarTWO=" + LOGINvarTWO + "&LOGINvarTHREE=" + LOGINvarTHREE + "&LOGINvarFOUR=" + LOGINvarFOUR + "&LOGINvarFIVE=" + LOGINvarFIVE + "&hide_relogin_fields=" + hide_relogin_fields + "\" onclick=\"needToConfirmExit = false;\"><?php echo _QXZ("CLICK HERE TO LOG IN AGAIN"); ?></a></font>\n";
 							}
 						else
 							{
@@ -19778,6 +19923,7 @@ function phone_number_format(formatphone) {
 		}
 	function all_refresh()
 		{
+		UnixTime++;
 		epoch_sec++;
 		check_n++;
 		even++;
@@ -20005,6 +20151,21 @@ function phone_number_format(formatphone) {
 
 				agent_events('login_invalid', '<?php echo _QXZ("This agent screen was not opened properly."); ?>', aec);   aec++;
 				}
+			}
+
+		if ( (!isVisible) && (SSagent_hidden_sound_seconds >= 5) && (SSagent_hidden_sound_volume > 0) )
+			{
+			BrowserEpoch = Math.round(Date.now() / 1000);
+			var ServerEpochNow = (BrowserEpoch - BrowserServerEpochDiff);
+			var temp_agent_hidden_counter = (ServerEpochNow - last_hidden_sound_UnixTime);
+
+			if (temp_agent_hidden_counter > SSagent_hidden_sound_seconds)
+				{
+				var temp_seconds = (ServerEpochNow - last_UnixTime);
+				last_hidden_sound_UnixTime = ServerEpochNow;
+				button_click_log = button_click_log + "" + SQLdate + "-----agent_hidden_alert---" + temp_agent_hidden_counter + " " + SSagent_hidden_sound_seconds + " " + temp_seconds + " " + SSagent_hidden_sound + " " + SSagent_hidden_sound_volume + "|";
+				play_browser_sound(SSagent_hidden_sound,SSagent_hidden_sound_volume);
+		}
 			}
 		}
 	function pause()	// Pauses the refreshing of the lists

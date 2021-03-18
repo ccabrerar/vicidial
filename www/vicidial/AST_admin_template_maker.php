@@ -372,8 +372,8 @@ function EditTemplate(template_id) {
 				StatSpanText = xmlhttp.responseText;
 				// alert(StatSpanText);
 				var output_array=StatSpanText.split("\|\|\|");
-				document.getElementById("statuses_display").innerHTML = output_array[0];
-				document.getElementById("field_display").innerHTML = output_array[1];
+				// document.getElementById("statuses_display").innerHTML = output_array[0];
+				document.getElementById("field_display_edit").innerHTML = output_array[1];
 
 				if (output_array[1]=="") {
 					document.getElementById('edit_data_display').style.display = 'none'; 
@@ -578,7 +578,7 @@ if (mysqli_num_rows($template_rslt)>0) {
 	</tr>
 	<tr valign="top">
 		<td colspan="2" align="center">
-		<span id="field_display" name="field_display"><font class="standard_bold" color='red'>**<?php echo _QXZ("Select a template from the drop down menu above to show columns"); ?>**</font></span>
+		<span id="field_display_edit" name="field_display_edit"><font class="standard_bold" color='red'>**<?php echo _QXZ("Select a template from the drop down menu above to show columns"); ?>**</font></span>
 		</td>
 	</tr>
 </table>

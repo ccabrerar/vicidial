@@ -596,6 +596,12 @@ OTHER CHANGES:
 
 167. Added a page to allow Editing existing Lead Loader Templates.
 
+168. Added System Settings for "Agent Hidden Browser Sound" to repeatedly play
+	a selected sound at a set interval to an agent when their Agent Screen 
+	is hidden from view. Can be used to disable web browser javascript 
+	throttling if set to an	audible sound at a 20 second interval. Tested 
+	with the 'click_quiet' sound file at a volume of '25'.
+
 
 
 

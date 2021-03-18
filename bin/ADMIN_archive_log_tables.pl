@@ -20,7 +20,7 @@
 # Based on perl scripts in ViciDial from Matt Florell and post:
 # http://www.vicidial.org/VICIDIALforum/viewtopic.php?p=22506&sid=ca5347cffa6f6382f56ce3db9fb3d068#22506
 #
-# Copyright (C) 2020  I. Taushanov, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  I. Taushanov, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 90615-1701 - First version
@@ -59,6 +59,7 @@
 # 190926-0005 - Added vicidial_sip_action_log archiving
 # 200102-0846 - Added vicidial_vmm_counts archiving
 # 201107-2206 - Added optional park_log archiving
+# 210317-2104 - Added vicidial_agent_visibility_log archiving
 #
 
 $CALC_TEST=0;
@@ -797,6 +798,35 @@ if (!$T)
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 				}
 			##### END vicidial_agent_log_archive trim processing #####
+
+			##### BEGIN vicidial_agent_visibility_log_archive trim processing #####
+			$stmtA = "SELECT count(*) from vicidial_agent_visibility_log_archive;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$vicidial_agent_visibility_log_archive_count =	$aryA[0];
+				}
+			$sthA->finish();
+
+			if (!$Q) {print "Trimming vicidial_agent_visibility_log_archive table...  ($vicidial_agent_visibility_log_archive_count)\n";}
+			
+			$rv = $sthA->err();
+			if (!$rv) 
+				{
+				$stmtA = "DELETE FROM vicidial_agent_visibility_log_archive WHERE db_time < '$del_time';";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArows = $sthA->rows;
+				if (!$Q) {print "$sthArows rows deleted from vicidial_agent_visibility_log_archive table \n";}
+
+				$stmtA = "optimize table vicidial_agent_visibility_log_archive;";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				}
+			##### END vicidial_agent_visibility_log_archive trim processing #####
 
 			##### BEGIN vicidial_closer_log_archive trim processing #####
 			$stmtA = "SELECT count(*) from vicidial_closer_log_archive;";
@@ -2494,6 +2524,58 @@ if (!$T)
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 
 		$stmtA = "optimize table vicidial_agent_log_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		}
+
+
+	##### vicidial_agent_visibility_log
+	$stmtA = "SELECT count(*) from vicidial_agent_visibility_log;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$vicidial_agent_visibility_log_count =	$aryA[0];
+		}
+	$sthA->finish();
+
+	$stmtA = "SELECT count(*) from vicidial_agent_visibility_log_archive;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$vicidial_agent_visibility_log_archive_count =	$aryA[0];
+		}
+	$sthA->finish();
+
+	if (!$Q) {print "\nProcessing vicidial_agent table...  ($vicidial_agent_visibility_log_count|$vicidial_agent_visibility_log_archive_count)\n";}
+	$stmtA = "INSERT IGNORE INTO vicidial_agent_visibility_log_archive SELECT * from vicidial_agent_visibility_log;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows = $sthA->rows;
+	if (!$Q) {print "$sthArows rows inserted into vicidial_agent_visibility_log_archive table \n";}
+	
+	$rv = $sthA->err();
+	if (!$rv) 
+		{
+		if ($wipe_all > 0)
+			{$stmtA = "DELETE FROM vicidial_agent_visibility_log;";}
+		else
+			{$stmtA = "DELETE FROM vicidial_agent_visibility_log WHERE db_time < '$del_time';";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows deleted from vicidial_agent_visibility_log table \n";}
+
+		$stmtA = "optimize table vicidial_agent_visibility_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+
+		$stmtA = "optimize table vicidial_agent_visibility_log_archive;";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		}

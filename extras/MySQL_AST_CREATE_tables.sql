@@ -1899,7 +1899,10 @@ phone_defaults_container VARCHAR(40) default '---DISABLED---',
 qc_claim_limit TINYINT UNSIGNED DEFAULT '3',
 qc_expire_days TINYINT UNSIGNED DEFAULT '3',
 two_factor_auth_hours SMALLINT(5) default '0',
-two_factor_container VARCHAR(40) default '---DISABLED---'
+two_factor_container VARCHAR(40) default '---DISABLED---',
+agent_hidden_sound VARCHAR(20) default 'click_quiet',
+agent_hidden_sound_volume TINYINT(3) UNSIGNED default '25',
+agent_hidden_sound_seconds TINYINT(3) UNSIGNED default '0'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaigns_list_mix (
@@ -3151,7 +3154,6 @@ index (caller_code),
 index (lead_id),
 index (call_date)
 ) ENGINE=MyISAM;
-
 
 CREATE TABLE vicidial_qc_agent_log (
 qc_agent_log_id INT(9) unsigned NOT NULL AUTO_INCREMENT,
@@ -4514,6 +4516,18 @@ index (auth_date),
 index (auth_exp_date)
 ) ENGINE=MyISAM;
 
+CREATE TABLE vicidial_agent_visibility_log (
+db_time DATETIME NOT NULL,
+event_start_epoch INT(10) UNSIGNED,
+event_end_epoch INT(10) UNSIGNED,
+user VARCHAR(20),
+length_in_sec INT(10),
+visibility  ENUM('VISIBLE','HIDDEN','LOGIN','NONE') default 'NONE',
+agent_log_id INT(9) UNSIGNED,
+index (db_time),
+unique index visibleuser (user, visibility, event_end_epoch)
+) ENGINE=MyISAM;
+
 
 ALTER TABLE vicidial_email_list MODIFY message text character set utf8;
 
@@ -4767,6 +4781,8 @@ CREATE TABLE vicidial_vmm_counts_archive LIKE vicidial_vmm_counts;
 CREATE TABLE park_log_archive LIKE park_log;
 CREATE UNIQUE INDEX uniqueidtime_park on park_log_archive (uniqueid,parked_time);
 
+CREATE TABLE vicidial_agent_visibility_log_archive LIKE vicidial_agent_visibility_log;
+
 GRANT RELOAD ON *.* TO cron@'%';
 GRANT RELOAD ON *.* TO cron@localhost;
 
@@ -4850,4 +4866,4 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1622',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1623',db_schema_update_date=NOW(),reload_timestamp=NOW();
