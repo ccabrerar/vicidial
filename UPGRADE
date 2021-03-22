@@ -602,6 +602,9 @@ OTHER CHANGES:
 	throttling if set to an	audible sound at a 20 second interval. Tested 
 	with the 'click_quiet' sound file at a volume of '25'.
 
+169. Added WAV audio file validation for Audio Store, and display of badly
+	formatted WAV files in the audio chooser in admin.php
+
 
 
 

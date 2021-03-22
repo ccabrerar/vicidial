@@ -187,6 +187,7 @@ if ($non_latin < 1)
 	$field_options = preg_replace('/[^ \'\&\.\n\|\,-\_0-9a-zA-Z]/', '',$field_options);
 	if ($field_type != 'SCRIPT')
 		{$field_options = preg_replace('/[^ \.\n\|\,-\_0-9a-zA-Z]/', '',$field_options);}
+	$field_help = preg_replace('/[^ \'\&\.\n\|\,-\_0-9a-zA-Z]/', '',$field_help);
 	$field_default = preg_replace('/[^ \.\n\,-\_0-9a-zA-Z]/', '',$field_default);
 	}	# end of non_latin
 else

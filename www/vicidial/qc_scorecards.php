@@ -546,13 +546,16 @@ function AddCheckpoint(scorecard_id) {
 	var qtext = document.getElementById("new_checkpoint_text");
 	var checkpoint_text=encodeURIComponent(qtext.value);
 
+	var qtext_presets = document.getElementById("new_checkpoint_text_presets");
+	var checkpoint_text_presets=encodeURIComponent(qtext_presets.value);
+
 	var qpts = document.getElementById("new_checkpoint_points");
 	var checkpoint_points=encodeURIComponent(qpts.value);
 
 	var qadmin = document.getElementById("new_admin_notes");
 	var admin_notes=encodeURIComponent(qadmin.value);
 
-	var add_query = "&qc_action=add_checkpoint&scorecard_id="+scorecard_id+"&new_checkpoint_rank="+checkpoint_rank+"&new_active="+active+"&new_checkpoint_text="+checkpoint_text+"&new_admin_notes="+admin_notes+"&new_checkpoint_points="+checkpoint_points+"&new_instant_fail="+instant_fail+"&new_commission_loss="+comm_loss;
+	var add_query = "&qc_action=add_checkpoint&scorecard_id="+scorecard_id+"&new_checkpoint_rank="+checkpoint_rank+"&new_active="+active+"&new_checkpoint_text="+checkpoint_text+"&new_checkpoint_text_presets="+checkpoint_text_presets+"&new_admin_notes="+admin_notes+"&new_checkpoint_points="+checkpoint_points+"&new_instant_fail="+instant_fail+"&new_commission_loss="+comm_loss;
 
 	var xmlhttp=false;
 	try {
@@ -614,7 +617,7 @@ function ChangeCheckpoint(checkpoint_row_id, scorecard_id, q_action, parameter, 
 			{
 			if (e.checked) {parameter_value="Y";} else {parameter_value="N";}
 			} 
-		else if (parameter=="checkpoint_text" || parameter=="checkpoint_points" || parameter=="admin_notes") 
+		else if (parameter=="checkpoint_text" || parameter=="checkpoint_text_presets" || parameter=="checkpoint_points" || parameter=="admin_notes") 
 			{
 			parameter_value=encodeURIComponent(e.value);
 			}

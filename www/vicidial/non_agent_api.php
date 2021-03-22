@@ -15,7 +15,7 @@
 # optional callback variables for add_lead/update_lead
 #  - $callback -	('Y,'N','REMOVE')
 #  - $callback_status -	('CALLBK','CBXYZ',...)
-#  - $callback_datetime -	('YYYY-MM-DD+HH:MM:SS','NOW')
+#  - $callback_datetime -	('YYYY-MM-DD+HH:MM:SS','NOW','273DAYS')
 #  - $callback_type -	('USERONLY','ANYONE')
 #  - $callback_user -	('6666','1001',...)
 #  - $callback_comments - ('Comments go here',...)
@@ -166,10 +166,13 @@
 # 210227-1116 - Added xferconf number options to update_campaign, add_list & update_list functions
 # 210303-1802 - Added list_exists_check option for update_lead function
 # 210316-2207 - Added lead_all_info function
+# 210319-1720 - Added special 'xDAYS' value option for callback_datetime
+# 210320-2127 - Added 'custom_fields_add' option for update_list function
+# 210322-1218 - Added display of bad wav file formats on sounds_list function
 #
 
-$version = '2.14-143';
-$build = '210316-2207';
+$version = '2.14-146';
+$build = '210322-1218';
 $api_url_log = 0;
 
 $startMS = microtime();
@@ -582,6 +585,48 @@ if (isset($_GET["xferconf_four"]))			{$xferconf_four=$_GET["xferconf_four"];}
 	elseif (isset($_POST["xferconf_four"]))	{$xferconf_four=$_POST["xferconf_four"];}
 if (isset($_GET["xferconf_five"]))			{$xferconf_five=$_GET["xferconf_five"];}
 	elseif (isset($_POST["xferconf_five"]))	{$xferconf_five=$_POST["xferconf_five"];}
+if (isset($_GET["use_internal_webserver"]))				{$use_internal_webserver=$_GET["use_internal_webserver"];}
+	elseif (isset($_POST["use_internal_webserver"]))	{$use_internal_webserver=$_POST["use_internal_webserver"];}
+if (isset($_GET["field_label"]))				{$field_label=$_GET["field_label"];}
+	elseif (isset($_POST["field_label"]))		{$field_label=$_POST["field_label"];}
+if (isset($_GET["field_name"]))					{$field_name=$_GET["field_name"];}
+	elseif (isset($_POST["field_name"]))		{$field_name=$_POST["field_name"];}
+if (isset($_GET["field_description"]))			{$field_description=$_GET["field_description"];}
+	elseif (isset($_POST["field_description"]))	{$field_description=$_POST["field_description"];}
+if (isset($_GET["field_rank"]))					{$field_rank=$_GET["field_rank"];}
+	elseif (isset($_POST["field_rank"]))		{$field_rank=$_POST["field_rank"];}
+if (isset($_GET["field_help"]))					{$field_help=$_GET["field_help"];}
+	elseif (isset($_POST["field_help"]))		{$field_help=$_POST["field_help"];}
+if (isset($_GET["field_type"]))					{$field_type=$_GET["field_type"];}
+	elseif (isset($_POST["field_type"]))		{$field_type=$_POST["field_type"];}
+if (isset($_GET["field_options"]))				{$field_options=$_GET["field_options"];}
+	elseif (isset($_POST["field_options"]))		{$field_options=$_POST["field_options"];}
+if (isset($_GET["field_size"]))					{$field_size=$_GET["field_size"];}
+	elseif (isset($_POST["field_size"]))		{$field_size=$_POST["field_size"];}
+if (isset($_GET["field_max"]))					{$field_max=$_GET["field_max"];}
+	elseif (isset($_POST["field_max"]))			{$field_max=$_POST["field_max"];}
+if (isset($_GET["field_default"]))				{$field_default=$_GET["field_default"];}
+	elseif (isset($_POST["field_default"]))		{$field_default=$_POST["field_default"];}
+if (isset($_GET["field_cost"]))					{$field_cost=$_GET["field_cost"];}
+	elseif (isset($_POST["field_cost"]))		{$field_cost=$_POST["field_cost"];}
+if (isset($_GET["field_required"]))				{$field_required=$_GET["field_required"];}
+	elseif (isset($_POST["field_required"]))	{$field_required=$_POST["field_required"];}
+if (isset($_GET["name_position"]))				{$name_position=$_GET["name_position"];}
+	elseif (isset($_POST["name_position"]))		{$name_position=$_POST["name_position"];}
+if (isset($_GET["multi_position"]))				{$multi_position=$_GET["multi_position"];}
+	elseif (isset($_POST["multi_position"]))	{$multi_position=$_POST["multi_position"];}
+if (isset($_GET["field_order"]))				{$field_order=$_GET["field_order"];}
+	elseif (isset($_POST["field_order"]))		{$field_order=$_POST["field_order"];}
+if (isset($_GET["field_encrypt"]))				{$field_encrypt=$_GET["field_encrypt"];}
+	elseif (isset($_POST["field_encrypt"]))		{$field_encrypt=$_POST["field_encrypt"];}
+if (isset($_GET["field_show_hide"]))			{$field_show_hide=$_GET["field_show_hide"];}
+	elseif (isset($_POST["field_show_hide"]))	{$field_show_hide=$_POST["field_show_hide"];}
+if (isset($_GET["field_duplicate"]))			{$field_duplicate=$_GET["field_duplicate"];}
+	elseif (isset($_POST["field_duplicate"]))	{$field_duplicate=$_POST["field_duplicate"];}
+if (isset($_GET["field_rerank"]))				{$field_rerank=$_GET["field_rerank"];}
+	elseif (isset($_POST["field_rerank"]))		{$field_rerank=$_POST["field_rerank"];}
+if (isset($_GET["custom_fields_add"]))				{$custom_fields_add=$_GET["custom_fields_add"];}
+	elseif (isset($_POST["custom_fields_add"]))		{$custom_fields_add=$_POST["custom_fields_add"];}
 
 
 header ("Content-type: text/html; charset=utf-8");
@@ -590,7 +635,7 @@ header ("Pragma: no-cache");                          // HTTP/1.0
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,custom_fields_enabled,pass_hash_enabled,agent_whisper_enabled,active_modules,auto_dial_limit,enable_languages,language_method,admin_web_directory FROM system_settings;";
+$stmt = "SELECT use_non_latin,custom_fields_enabled,pass_hash_enabled,agent_whisper_enabled,active_modules,auto_dial_limit,enable_languages,language_method,admin_web_directory,sounds_web_server FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
@@ -607,6 +652,7 @@ if ($qm_conf_ct > 0)
 	$SSenable_languages =		$row[6];
 	$SSlanguage_method =		$row[7];
 	$SSadmin_web_directory =	$row[8];
+	$SSsounds_web_server =		$row[9];
 	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
@@ -825,6 +871,25 @@ if ($non_latin < 1)
 	$xferconf_three=preg_replace('/[^-_0-9a-zA-Z]/','',$xferconf_three);
 	$xferconf_four=preg_replace('/[^-_0-9a-zA-Z]/','',$xferconf_four);
 	$xferconf_five=preg_replace('/[^-_0-9a-zA-Z]/','',$xferconf_five);
+	$field_rank = preg_replace('/[^0-9]/','',$field_rank);
+	$field_size = preg_replace('/[^0-9]/','',$field_size);
+	$field_max = preg_replace('/[^0-9]/','',$field_max);
+	$field_order = preg_replace('/[^0-9]/','',$field_order);
+	$field_required = preg_replace('/[^_A-Z]/','',$field_required);
+	$field_encrypt = preg_replace('/[^NY]/','',$field_encrypt);
+	$field_duplicate = preg_replace('/[^_A-Z]/','',$field_duplicate);
+	$field_type = preg_replace('/[^0-9a-zA-Z]/','',$field_type);
+	$name_position = preg_replace('/[^0-9a-zA-Z]/','',$name_position);
+	$multi_position = preg_replace('/[^0-9a-zA-Z]/','',$multi_position);
+	$field_label = preg_replace('/[^_0-9a-zA-Z]/','',$field_label);
+	$field_show_hide = preg_replace('/[^_0-9a-zA-Z]/','',$field_show_hide);
+	$field_name = preg_replace('/[^ \.\,-\_0-9a-zA-Z]/','',$field_name);
+	$field_description = preg_replace('/[^ \.\,-\_0-9a-zA-Z]/','',$field_description);
+	$field_options = preg_replace('/[^ \'\&\.\n\|\,-\_0-9a-zA-Z]/', '',$field_options);
+	if ($field_type != 'SCRIPT')
+		{$field_options = preg_replace('/[^ \.\n\|\,-\_0-9a-zA-Z]/', '',$field_options);}
+	$field_help = preg_replace('/[^ \'\&\.\n\|\,-\_0-9a-zA-Z]/', '',$field_help);
+	$field_default = preg_replace('/[^ \.\n\,-\_0-9a-zA-Z]/', '',$field_default);
 	}
 else
 	{
@@ -835,6 +900,9 @@ else
 	$menu_id = preg_replace("/'|\"|\\\\|;|#/",'',$menu_id);
 	}
 $list_exists_check = preg_replace('/[^0-9a-zA-Z]/','',$list_exists_check);
+$use_internal_webserver = preg_replace('/[^0-9a-zA-Z]/','',$use_internal_webserver);
+$field_rerank = preg_replace('/[^_0-9a-zA-Z]/','',$field_rerank);
+$custom_fields_add = preg_replace('/[^_0-9a-zA-Z]/','',$custom_fields_add);
 
 $USarea = 			substr($phone_number, 0, 3);
 $USprefix = 		substr($phone_number, 3, 3);
@@ -1137,6 +1205,18 @@ if ($function == 'sounds_list')
 				exit;
 				}
 
+			$bad_wavs='|';
+			$stmt="SELECT audio_filename from audio_store_details where wav_asterisk_valid='BAD';";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$bw_ct = mysqli_num_rows($rslt);
+			$bw=0;
+			while ($bw_ct > $bw)
+				{
+				$row=mysqli_fetch_row($rslt);
+				$bad_wavs .= "$row[0]|";
+				$bw++;
+				}
+
 			$dh = opendir($dirpath);
 			if ($DB>0) {echo "DEBUG: sounds_list variables - $dirpath|$stage|$format\n";}
 
@@ -1232,8 +1312,18 @@ if ($function == 'sounds_list')
 							echo "</tr>\n";
 							}
 						$sf++;
+						$BWB='';   $BWE='';
+						if ( (preg_match('/\.wav$/', $file_names[$m])) and (strlen($bad_wavs) > 2) )
+							{
+							$temp_filename = $file_names[$m];
+							if (preg_match("/\|$temp_filename\|/",$bad_wavs))
+								{
+								$BWB='<font color=red><b>';
+								$BWE=" &nbsp; &nbsp; "._QXZ("BAD WAV FORMAT")."</b></font>";
+								}
+							}
 						echo "<tr><td><font size=1 face=\"Arial,Helvetica\">$sf</td>\n";
-						echo "<td><a href=\"javascript:choose_file('$file_namesPROMPT[$m]','$comments');\"><font size=1 face=\"Arial,Helvetica\">$file_names[$m]</a></td>\n";
+						echo "<td><a href=\"javascript:choose_file('$file_namesPROMPT[$m]','$comments');\"><font size=1 face=\"Arial,Helvetica\">$BWB$file_names[$m]$BWE</a></td>\n";
 						echo "<td><font size=1 face=\"Arial,Helvetica\">$file_dates[$m]</td>\n";
 						echo "<td><font size=1 face=\"Arial,Helvetica\">$file_sizes[$m]</td>\n";
 						echo "<td><a href=\"$admDIR/$admin_web_dir$sounds_web_directory/$file_names[$m]\" target=\"_blank\"><font size=1 face=\"Arial,Helvetica\">"._QXZ("PLAY")."</a></td></tr>\n";
@@ -5160,7 +5250,7 @@ if ($function == 'update_list')
 				$rslt=mysql_to_mysqli($stmt, $link);
 				$row=mysqli_fetch_row($rslt);
 				$list_exists=$row[0];
-				if ($list_exists < 1)
+				if ( ($list_exists < 1) and ($custom_fields_add != 'Y') )
 					{
 					if ($insert_if_not_found == 'Y')
 						{
@@ -5184,6 +5274,111 @@ if ($function == 'update_list')
 					}
 				else
 					{
+					### BEGIN 'custom_fields_add' section
+					if ($custom_fields_add == 'Y')
+						{
+						$add_custom_fields_trigger=0;
+
+						if ($list_exists < 1)
+							{
+							$stmt="SELECT count(*) from vicidial_lists_fields where list_id='$list_id';";
+							$rslt=mysql_to_mysqli($stmt, $link);
+							$row=mysqli_fetch_row($rslt);
+							$list_exists=$row[0];
+							if ($DB>0) {echo "$list_exists|$stmt|\n";}
+							if ($list_exists < 1)
+								{
+								$result = 'NOTICE';
+								$result_reason = "update_list CUSTOM FIELDS LIST ID TO ADD TO HAS NO CUSTOM FIELDS, THIS IS AN OPTIONAL FIELD";
+								$data = "$list_id|$list_exists";
+								echo "$result: $result_reason: |$user|$data\n";
+								api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+								}
+							}
+						if ($list_exists > 0)
+							{
+							$stmt="SELECT count(*) from vicidial_users where user='$user' and custom_fields_modify='1';";
+							$rslt=mysql_to_mysqli($stmt, $link);
+							$row=mysqli_fetch_row($rslt);
+							$custom_fields_modify_exists=$row[0];
+							if ($DB>0) {echo "$custom_fields_modify_exists|$stmt|\n";}
+							if ($custom_fields_modify_exists < 1)
+								{
+								$result = 'NOTICE';
+								$result_reason = "update_list USER DOES NOT HAVE PERMISSION TO MODIFY CUSTOM FIELDS, THIS IS AN OPTIONAL FIELD";
+								$data = "$list_id|$custom_fields_copy|$custom_fields_modify_exists";
+								echo "$result: $result_reason: |$user|$data\n";
+								api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+								}
+							else
+								{
+								if ($DB>0) {echo "Add custom field triggered|$add_custom_fields_trigger|\n";}
+								$add_custom_fields_trigger++;
+								}
+							}
+
+						if ( ($add_custom_fields_trigger > 0) and (strlen($list_id) > 1) )
+							{
+							if ( (strlen($field_label) < 1) or (strlen($field_name) < 1) or (strlen($field_size) < 1) or (strlen($field_type) < 1) or (strlen($field_rank) < 1) )
+								{
+								$result = 'NOTICE';
+								$result_reason = "update_list REQUIRED CUSTOM FIELDS VARIABLES ARE MISSING, FIELD NOT ADDED, THIS IS AN OPTIONAL FIELD";
+								$data = "$list_id|$field_label|$field_name|$field_size|$field_type|$field_rank|";
+								echo "$result: $result_reason: |$user|$data\n";
+								api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+								}
+							else
+								{
+								### BEGIN add custom fields ###
+								$admin_lists_custom = 'admin_lists_custom.php';
+								if (!preg_match("/^Y$|^N$/",$field_encrypt)) {$field_encrypt = 'N';}
+								if (!preg_match("/^DISABLED$|^X_OUT_ALL$|LAST_1|LAST_2|LAST_3|LAST_4|FIRST_1_LAST_4/",$field_show_hide)) {$field_show_hide = 'DISABLED';}
+								if (!preg_match("/^TOP$|^LEFT$/",$name_position)) {$name_position = 'LEFT';}
+								if (!preg_match("/^HORIZONTAL$|^VERTICAL$/",$multi_position)) {$multi_position = 'HORIZONTAL';}
+								if (!preg_match("/^Y$|^N$/",$field_required)) {$field_required = 'N';}
+								if (!preg_match("/^Y$|^N$/",$field_duplicate)) {$field_duplicate = 'N';}
+								if (!preg_match("/^YES$|^NO$/",$field_rerank)) {$field_rerank = 'NO';}
+								if (strlen($field_order) < 1) {$field_order = '1';}
+								$temp_webserver = (isset($_SERVER['HTTPS']) ? 's' : '') . "://$_SERVER[HTTP_HOST]";
+								if ($use_internal_webserver == 'Y') {$temp_webserver = "://$SSsounds_web_server";}
+
+								$url = "http$temp_webserver/$SSadmin_web_directory/" . $admin_lists_custom;
+								$url_post_fields = "action=ADD_CUSTOM_FIELD&list_id=$list_id&field_label=$field_label&field_name=$field_name&field_size=$field_size&field_type=$field_type&field_rank=$field_rank&field_order=$field_order&field_rerank=$field_rerank&field_max=$field_max&field_default=$field_default&field_options=$field_options&field_duplicate=$field_duplicate&field_description=$field_description&field_help=$field_help&field_required=$field_required&multi_position=$multi_position&name_position=$name_position&field_encrypt=$field_encrypt&field_show_hide=$field_show_hide";
+
+								if ($DB>0) {echo "Add custom fields url|$url|$url_post_fields|\n";}
+								# use cURL to call the copy custom fields code
+								$curl = curl_init();
+								
+								# Set some options - we are passing in a useragent too here
+								curl_setopt_array($curl, array(
+									CURLOPT_RETURNTRANSFER => 1,
+									CURLOPT_URL => $url,
+									CURLOPT_USERPWD => "$user:$pass",
+									CURLOPT_USERAGENT => 'non_agent_api.php',
+									CURLOPT_POST => 1,
+									CURLOPT_POSTFIELDS => "$url_post_fields"
+								));
+								
+								# Send the request & save response to $resp
+								$resp = curl_exec($curl);
+								$temp_response = 'NONE';
+								if (preg_match('/ERROR:/',$resp)) {$temp_response = 'ERROR: Field not added';}
+								if (preg_match('/SUCCESS:/',$resp)) {$temp_response = 'SUCCESS: Field added';}
+								
+								# Close request to clear up some resources
+								curl_close($curl);
+								### END copy custom fields ###
+
+								$result = 'NOTICE';
+								$result_reason = "update_list ADD CUSTOM FIELD COMMAND SENT";
+								$data = "$list_id|$field_label|$field_type|$temp_response|";
+								echo "$result: $result_reason - $user|$data\n";
+								api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+								}
+							}
+						}
+					### END 'custom_fields_add' section
+
 					$campaignSQL='';
 					$scriptSQL='';
 					$dropingroupSQL='';
@@ -5778,8 +5973,10 @@ if ($function == 'update_list')
 							$admin_lists_custom = 'admin_lists_custom.php';
 							if (!preg_match("/^APPEND$|^UPDATE$|^REPLACE$/",$custom_copy_method))
 								{$custom_copy_method = 'APPEND';}
+							$temp_webserver = (isset($_SERVER['HTTPS']) ? 's' : '') . "://$_SERVER[HTTP_HOST]";
+							if ($use_internal_webserver == 'Y') {$temp_webserver = "://$SSsounds_web_server";}
 
-							$url = "http" . (isset($_SERVER['HTTPS']) ? 's' : '') . "://$_SERVER[HTTP_HOST]/$SSadmin_web_directory/" . $admin_lists_custom . "?copy_option=" . $custom_copy_method . "&action=COPY_FIELDS_SUBMIT&list_id=$list_id&source_list_id=$custom_fields_copy";
+							$url = "http$temp_webserver/$SSadmin_web_directory/" . $admin_lists_custom . "?copy_option=" . $custom_copy_method . "&action=COPY_FIELDS_SUBMIT&list_id=$list_id&source_list_id=$custom_fields_copy";
 
 							if ($DB>0) {echo "Copy custom fields url|$url|\n";}
 							# use cURL to call the copy custom fields code
@@ -5795,6 +5992,9 @@ if ($function == 'update_list')
 
 							# Send the request & save response to $resp
 							$resp = curl_exec($curl);
+							$temp_response = 'NONE';
+							if (preg_match('/ERROR:/',$resp)) {$temp_response = 'ERROR: Fields not copied';}
+							if (preg_match('/SUCCESS:/',$resp)) {$temp_response = 'SUCCESS: Fields copied';}
 
 							# Close request to clear up some resources
 							curl_close($curl);
@@ -5802,7 +6002,7 @@ if ($function == 'update_list')
 
 							$result = 'NOTICE';
 							$result_reason = "update_list COPY CUSTOM FIELDS COMMAND SENT";
-							$data = "$list_id|$custom_fields_copy|$custom_copy_method|";
+							$data = "$list_id|$custom_fields_copy|$custom_copy_method|$temp_response|";
 							echo "$result: $result_reason - $user|$data\n";
 							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
 							}
@@ -6590,8 +6790,10 @@ if ($function == 'add_list')
 								$admin_lists_custom = 'admin_lists_custom.php';
 								if (!preg_match("/^APPEND$|^UPDATE$|^REPLACE$/",$custom_copy_method))
 									{$custom_copy_method = 'APPEND';}
+								$temp_webserver = (isset($_SERVER['HTTPS']) ? 's' : '') . "://$_SERVER[HTTP_HOST]";
+								if ($use_internal_webserver == 'Y') {$temp_webserver = "://$SSsounds_web_server";}
 
-								$url = "http" . (isset($_SERVER['HTTPS']) ? 's' : '') . "://$_SERVER[HTTP_HOST]/$SSadmin_web_directory/" . $admin_lists_custom . "?copy_option=" . $custom_copy_method . "&action=COPY_FIELDS_SUBMIT&list_id=$list_id&source_list_id=$custom_fields_copy";
+								$url = "http$temp_webserver/$SSadmin_web_directory/" . $admin_lists_custom . "?copy_option=" . $custom_copy_method . "&action=COPY_FIELDS_SUBMIT&list_id=$list_id&source_list_id=$custom_fields_copy";
 
 								if ($DB>0) {echo "Copy custom fields url|$url|\n";}
 								# use cURL to call the copy custom fields code
@@ -6607,6 +6809,9 @@ if ($function == 'add_list')
 
 								# Send the request & save response to $resp
 								$resp = curl_exec($curl);
+								$temp_response = 'NONE';
+								if (preg_match('/ERROR:/',$resp)) {$temp_response = 'ERROR: Fields not copied';}
+								if (preg_match('/SUCCESS:/',$resp)) {$temp_response = 'SUCCESS: Fields copied';}
 
 								# Close request to clear up some resources
 								curl_close($curl);
@@ -6617,7 +6822,7 @@ if ($function == 'add_list')
 							$SQL_log = "$stmt|";
 							$SQL_log = preg_replace('/;/', '', $SQL_log);
 							$SQL_log = addslashes($SQL_log);
-							$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$user', ip_address='$ip', event_section='LISTS', event_type='ADD', record_id='$list_id', event_code='ADMIN API ADD LIST', event_sql=\"$SQL_log\", event_notes='list: $list_id|$campaign_id|$custom_fields_copy';";
+							$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$user', ip_address='$ip', event_section='LISTS', event_type='ADD', record_id='$list_id', event_code='ADMIN API ADD LIST', event_sql=\"$SQL_log\", event_notes='list: $list_id|$campaign_id|$custom_fields_copy|$temp_response';";
 							if ($DB) {echo "|$stmt|\n";}
 							$rslt=mysql_to_mysqli($stmt, $link);
 
@@ -10885,11 +11090,11 @@ if ($function == 'lead_all_info')
 									$rc++;
 									}
 								}
+							}
 							if ($header == 'YES')
 								{
 								$output .= 'status' . $DL . 'user' . $DL . 'vendor_lead_code' . $DL . 'source_id' . $DL . 'list_id' . $DL . 'gmt_offset_now' . $DL . 'phone_code' . $DL . 'phone_number' . $DL . 'title' . $DL . 'first_name' . $DL . 'middle_initial' . $DL . 'last_name' . $DL . 'address1' . $DL . 'address2' . $DL . 'address3' . $DL . 'city' . $DL . 'state' . $DL . 'province' . $DL . 'postal_code' . $DL . 'country_code' . $DL . 'gender' . $DL . 'date_of_birth' . $DL . 'alt_phone' . $DL . 'email' . $DL . 'security_phrase' . $DL . 'comments' . $DL . 'called_count' . $DL . 'last_local_call_time' . $DL . 'rank' . $DL . 'owner' . $DL . 'entry_list_id' . $CF_header_output . "\n";
 								}
-							}
 
 						$stmt="SELECT status,user,vendor_lead_code,source_id,list_id,gmt_offset_now,phone_code,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner,entry_list_id from vicidial_list where lead_id='$lead_id';";
 						$rslt=mysql_to_mysqli($stmt, $link);
@@ -12324,6 +12529,11 @@ if ($function == 'add_lead')
 								{
 								if ($callback_datetime == 'NOW')
 									{$callback_datetime=$NOW_TIME;}
+								if (preg_match("/\dDAYS$/i",$callback_datetime)) 
+									{
+									$callback_days = preg_replace('/[^0-9]/','',$callback_datetime);
+									$callback_datetime = date("Y-m-d H:i:s", mktime(date("H"),date("i"),date("s"),date("m"),date("d")+$callback_days,date("Y")));
+									}
 								if (strlen($callback_status)<1)
 									{$callback_status='CALLBK';}
 
@@ -12713,6 +12923,11 @@ if ($function == 'update_lead')
 										{
 										if ($callback_datetime == 'NOW')
 											{$callback_datetime=$NOW_TIME;}
+										if (preg_match("/\dDAYS$/i",$callback_datetime)) 
+											{
+											$callback_days = preg_replace('/[^0-9]/','',$callback_datetime);
+											$callback_datetime = date("Y-m-d H:i:s", mktime(date("H"),date("i"),date("s"),date("m"),date("d")+$callback_days,date("Y")));
+											}
 										$callback_datetimeSQL=",callback_time='$callback_datetime'";
 										}
 									if (strlen($campaign_id)>0)
@@ -12765,7 +12980,6 @@ if ($function == 'update_lead')
 										}
 									if ($camp_count > 0)
 										{
-
 										$valid_callback=0;
 										$user_group='';
 										if ($callback_type == 'USERONLY')
@@ -12798,6 +13012,11 @@ if ($function == 'update_lead')
 											{
 											if ($callback_datetime == 'NOW')
 												{$callback_datetime=$NOW_TIME;}
+											if (preg_match("/\dDAYS$/i",$callback_datetime)) 
+												{
+												$callback_days = preg_replace('/[^0-9]/','',$callback_datetime);
+												$callback_datetime = date("Y-m-d H:i:s", mktime(date("H"),date("i"),date("s"),date("m"),date("d")+$callback_days,date("Y")));
+												}
 											if (strlen($callback_status)<1)
 												{$callback_status='CALLBK';}
 

@@ -449,7 +449,7 @@ if ($claim_QC && $auth==1)
 		$checkpoint_log_rslt=mysql_to_mysqli($checkpoint_log_stmt, $link);
 		while ($checkpoint_row=mysqli_fetch_array($checkpoint_log_rslt))
 			{
-			$checkpoint_ins_stmt="insert into quality_control_checkpoint_log(qc_log_id, campaign_id, group_id, list_id, qc_scorecard_id, checkpoint_row_id, checkpoint_text, checkpoint_rank, checkpoint_points, checkpoint_points_earned) VALUES ('$qc_log_id', '$campaign_id', '$group_id', '$list_id', '$qc_scorecard_id', '$checkpoint_row[checkpoint_row_id]', '$checkpoint_row[checkpoint_text]', '$checkpoint_row[checkpoint_rank]', '$checkpoint_row[checkpoint_points]', '$checkpoint_row[checkpoint_points]')";
+			$checkpoint_ins_stmt="insert into quality_control_checkpoint_log(qc_log_id, campaign_id, group_id, list_id, qc_scorecard_id, checkpoint_row_id, checkpoint_text, checkpoint_text_presets, checkpoint_rank, checkpoint_points, checkpoint_points_earned, instant_fail) VALUES ('$qc_log_id', '$campaign_id', '$group_id', '$list_id', '$qc_scorecard_id', '$checkpoint_row[checkpoint_row_id]', '$checkpoint_row[checkpoint_text]', '$checkpoint_row[checkpoint_text_presets]', '$checkpoint_row[checkpoint_rank]', '$checkpoint_row[checkpoint_points]', '$checkpoint_row[checkpoint_points]', '$checkpoint_row[instant_fail]')";
 			$checkpoint_ins_rslt=mysql_to_mysqli($checkpoint_ins_stmt, $link);
 #			echo $checkpoint_ins_stmt."<BR>";
 			}
@@ -854,13 +854,61 @@ function FinishQCRecord(qc_row_id, qc_process_status, active_form) {
 	active_form.submit();
 }
 
+function AddToComments(qc_log_row_id, level)
+	{
+	var checkpoint_comment_field_ID="checkpoint_comment_agent"+qc_log_row_id;
+	if (document.getElementById(checkpoint_comment_field_ID).value.length>0)
+		{
+		document.getElementById(checkpoint_comment_field_ID).value+="\n";
+		}
+	if (level>0)
+		{
+		var RecordingPos=document.getElementById("main_QC_recording").currentTime;
+		var strPos=11;
+		var strLen=8;
+		if (RecordingPos<600)
+			{
+			strPos=15; strLen=4;
+			}
+		else if (RecordingPos<3600)
+			{
+			strPos=14; strLen=5;
+			}
+		else if (RecordingPos<36000)
+			{
+			strPos=12; strLen=7;
+			}
+		
+		var currentTimestamp=new Date(RecordingPos * 1000).toISOString().substr(strPos, strLen);
+		if (document.getElementById(checkpoint_comment_field_ID))
+			{
+			document.getElementById(checkpoint_comment_field_ID).value+=currentTimestamp+" - ";
+			}
+		}
+	if (level%2==0)
+		{
+		var checkpoint_comment_preset_ID="checkpoint_text_presets"+qc_log_row_id;
+		if (document.getElementById(checkpoint_comment_field_ID))
+			{
+			var preset_field = document.getElementById(checkpoint_comment_preset_ID);
+			var preset_field_value = preset_field.options[preset_field.selectedIndex].value;	
+			document.getElementById(checkpoint_comment_field_ID).value+=preset_field_value;
+			}
+		}
+	LogQCData(qc_log_row_id);
+
+	}
+
 function LogQCData(qc_log_row_id)
 	{
 	var xmlhttp=false;
-	if (eval("document.qc_form.checkpoint_comment_agent"+qc_log_row_id)) 
+	var checkpoint_comment_field_ID="checkpoint_comment_agent"+qc_log_row_id;
+	var instant_fail_field_ID="instant_fail_value"+qc_log_row_id;
+	var checkpoint_points_field_ID="checkpoint_points_earned"+qc_log_row_id;
+
+	if (document.getElementById(checkpoint_comment_field_ID))
 		{
-		var qc_agent_comments_field=eval("document.qc_form.checkpoint_comment_agent"+qc_log_row_id);
-		var qc_ac=qc_agent_comments_field.value;
+		var qc_ac=document.getElementById(checkpoint_comment_field_ID).value;
 		var qc_agent_comments=qc_ac.replace("&", "and"); 
 		} 
 	else 
@@ -869,20 +917,25 @@ function LogQCData(qc_log_row_id)
 		}
 	var encoded_qc_agent_comments=encodeURIComponent(qc_agent_comments);
 
-	if (eval("document.qc_form.instant_fail"+qc_log_row_id)) 
+	if (document.getElementById(instant_fail_field_ID))
 		{
-		var instant_fail_field=eval("document.qc_form.instant_fail"+qc_log_row_id);
-		var instant_fail=instant_fail_field.value;
+		if (document.getElementById(instant_fail_field_ID).checked)
+			{
+			var instant_fail_value=document.getElementById(instant_fail_field_ID).value;
+			}
+		else
+			{
+			var instant_fail_value="N";
+			}
 		}
 	else
 		{
-		var instant_fail="N";
+		var instant_fail_value="N";
 		}
 
-	if (eval("document.qc_form.checkpoint_points_earned"+qc_log_row_id)) 
+	if (document.getElementById(checkpoint_points_field_ID))
 		{
-		var checkpoint_points_earned_field=eval("document.qc_form.checkpoint_points_earned"+qc_log_row_id);
-		var checkpoint_points_earned=checkpoint_points_earned_field.value;
+		var checkpoint_points_earned=document.getElementById(checkpoint_points_field_ID).value;
 		}
 	else
 		{
@@ -902,7 +955,7 @@ function LogQCData(qc_log_row_id)
 	if (!xmlhttp && typeof XMLHttpRequest!='undefined') 
 		{
 		xmlhttp = new XMLHttpRequest();
-		var update_query = "&view_epoch="+timestamp+"&qc_log_id="+qc_log_id+"&qc_checkpoint_log_id="+qc_log_row_id+"&checkpoint_comment_agent="+encoded_qc_agent_comments+"&instant_fail="+instant_fail+"&checkpoint_points_earned="+checkpoint_points_earned+"&qc_action=upd_customer";
+		var update_query = "&view_epoch="+timestamp+"&qc_log_id="+qc_log_id+"&qc_checkpoint_log_id="+qc_log_row_id+"&checkpoint_comment_agent="+encoded_qc_agent_comments+"&instant_fail_value="+instant_fail_value+"&checkpoint_points_earned="+checkpoint_points_earned+"&qc_action=upd_customer";
 		xmlhttp.open('POST', 'qc_module_actions.php'); 
 		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
 		xmlhttp.send(update_query); 
@@ -2079,7 +2132,7 @@ else
 		{
 				if ($log_recording_access<1) 
 			{
-					$play_audio = "<audio controls preload=\"none\"> <source src ='$location' type='audio/wav' > <source src ='$location' type='audio/mpeg' >"._QXZ("No browser audio playback support")."</audio>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
+					$play_audio = "<audio id='main_QC_recording' controls preload=\"none\"> <source src ='$location' type='audio/wav' > <source src ='$location' type='audio/mpeg' >"._QXZ("No browser audio playback support")."</audio>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
 					$location = "<a href=\"$location\">$locat</a>";
 			}
 				else
@@ -2093,21 +2146,23 @@ else
 			echo "<TABLE width='95%' cellspacing=0 cellpadding=3>\n";
 			echo "<tr bgcolor='#000'>";
 			echo "<td align='left' colspan='2'><font class='standard_bold white_text'>"._QXZ("SCORECARD ID").":</font> <font class='standard_bold' color='#F00'>$qc_scorecard_id</font></td>";
-			echo "<td align='right' colspan='3'><font class='standard_bold white_text'>"._QXZ("RECORDING ID").": <input type='text' class='cust_form' name='recording_id".$qccl_id."' size='8' maxlength='10' value='$qc_recording_id'></font></td>";
+			echo "<td align='right' colspan='4'><font class='standard_bold white_text'>"._QXZ("RECORDING ID").": <input type='text' class='cust_form' name='recording_id".$qccl_id."' size='8' maxlength='10' value='$qc_recording_id'></font></td>";
 			echo "</tr>\n";
 
 			echo "<tr bgcolor='#000'>";
 			echo "<td align='left'>&nbsp;</td>";
-			echo "<td align='left'><font class='standard_bold white_text'>"._QXZ("Checkpoint")."</font></td>";
+			echo "<td align='left'><font class='standard_bold white_text' width='*'>"._QXZ("Checkpoint")."</font></td>";
 			echo "<td align='left'><font class='standard_bold white_text'>"._QXZ("Fail")."?</font></td>";
-			echo "<td align='left'><font class='standard_bold white_text'>"._QXZ("Points")."</font>/td>";
-			echo "<td align='left'><font class='standard_bold white_text'>"._QXZ("Comments")."</font></td>";
+			echo "<th><font class='standard_bold white_text'>"._QXZ("Points")."</font>/th>";
+			echo "<td align='center'><font class='standard_bold white_text'>"._QXZ("Comments")."</font></td>";
+			echo "<td align='left'>&nbsp;</td>";
 			echo "</tr>\n";
 			$i=1;
 			while ($checkpoint_row=mysqli_fetch_array($checkpoint_rslt))
 				{
 				$qccl_id=$checkpoint_row["qc_checkpoint_log_id"];
-				$instant_fail=$checkpoint_row["instant_fail"];
+				$instant_fail_active=$checkpoint_row["instant_fail"];
+				$instant_fail_value=$checkpoint_row["instant_fail_value"];
 				if (preg_match("/1$|3$|5$|7$|9$/i", $i))
 					{$bgcolor="bgcolor='#".$SSstd_row3_background."'";}
 				else
@@ -2115,29 +2170,56 @@ else
 
 				echo "<tr $bgcolor>";
 				echo "<td align='left'><font class='standard'>$i</font></td>";
-				echo "<td align='left'><font class='standard'>$checkpoint_row[checkpoint_text]</font></td>";
-				if ($checkpoint_row["instant_fail"]=="Y")
+				echo "<td align='left' width='*'><font class='small_standard'>$checkpoint_row[checkpoint_text]</font></td>";
+				if ($instant_fail_active=="Y")
 		{
-					echo "<td><input type='checkbox' onClick=\"LogQCData('".$qccl_id."')\" name='instant_fail".$qccl_id."' value='Y' ".($instant_fail=="Y" ? "checked" : "")."></td>";
+					echo "<td><input type='checkbox' onClick=\"LogQCData('".$qccl_id."')\" id='instant_fail_value".$qccl_id."' name='instant_fail_value".$qccl_id."' value='Y' ".($instant_fail_value=="Y" ? "checked" : "")."></td>";
 					}
 				else
 			{
 					echo "<td>&nbsp;</td>";
 			}
-				echo "<td align='left'><font class='standard'><input type='text' onBlur=\"LogQCData('".$qccl_id."')\" size=3 maxlength=6 class='cust_form' name='checkpoint_points_earned".$qccl_id."' value='$checkpoint_row[checkpoint_points_earned]'> / $checkpoint_row[checkpoint_points]</font></td>";
-				echo "<td><textarea onBlur=\"LogQCData('".$qccl_id."')\" class='cust_form' name='checkpoint_comment_agent".$qccl_id."' rows='2' cols='40'>$checkpoint_row[checkpoint_comment_agent]</textarea></td>";
+				echo "<td align='center' nowrap><font class='standard'><input type='text' onBlur=\"LogQCData('".$qccl_id."')\" size=2 maxlength=6 class='cust_form' name='checkpoint_points_earned".$qccl_id."' id='checkpoint_points_earned".$qccl_id."' value='$checkpoint_row[checkpoint_points_earned]'> / $checkpoint_row[checkpoint_points]</font></td>";
+				echo "<td align='center'>";
+				echo "<textarea onBlur=\"LogQCData('".$qccl_id."')\" class='cust_form' name='checkpoint_comment_agent".$qccl_id."' id='checkpoint_comment_agent".$qccl_id."' rows='4' cols='40'>$checkpoint_row[checkpoint_comment_agent]</textarea>";
+				echo "<BR><input type='button'  style='margin:3px;background-color:#".$SSbutton_color.";font-size:8px;font-weight:bold;width:100px' value='ADD REC TIMESTAMP' onClick=\"AddToComments('".$qccl_id."', 1)\">";
+				echo "</td>";
+				
+				echo "<td align='center'><font class='small_standard'>";
+
+				if (strlen($checkpoint_row["checkpoint_text_presets"])>0)
+					{
+					echo "Presets: <select class='cust_form' name='checkpoint_text_presets".$qccl_id."' id='checkpoint_text_presets".$qccl_id."'>\n";
+					$presets_array=explode("\n", $checkpoint_row["checkpoint_text_presets"]);
+					for ($j=0; $j<count($presets_array); $j++) 
+						{
+						# $preset_keyvals=explode(",", $presets_array[$j]);
+						# $pi=count($preset_keyvals)-1;
+#						echo "<option value='$preset_keyvals[0]'>".$preset_keyvals[$pi]."</option>\n";
+						echo "<option value='$presets_array[$j]'>".(strlen($presets_array[$j])>20 ? substr($presets_array[$j], 0, 20)."..." : $presets_array[$j])."</option>\n";
+						}
+					echo "</select><BR>\n";
+					echo "<input type='button' style='margin:3px;background-color:#".$SSbutton_color.";font-size:8px;font-weight:bold;width:100px' value='ADD TO COMMENTS' onClick=\"AddToComments('".$qccl_id."', 0)\"><BR>";
+					echo "<input type='button' style='margin:3px;background-color:#".$SSbutton_color.";font-size:8px;font-weight:bold;width:100px' value='TIMESTAMP & ADD' onClick=\"AddToComments('".$qccl_id."', 2)\">";
+					} 
+				else 
+					{
+					echo "&nbsp;";
+					}
+				echo "</font></td>";
+
 				echo "</tr>";
 				$i++;
 		}
 			echo "<tr bgcolor='#".$SSstd_row4_background."'>";
 			echo "<td align='right' colspan='3'>$play_audio &nbsp;</td>";
-			echo "<td align='left' colspan='2'><font class='standard_bold'>$location</font></td>";
+			echo "<td align='left' colspan='3'><font class='standard_bold'>$location</font></td>";
 			echo "</tr>\n";
 			echo "<tr bgcolor='#000'>";
 			echo "<td align='left'><font class='standard_bold white_text'>"._QXZ("FINISH QC").": </font></td>";
 
 			# echo "<tr bgcolor=#".$SSstd_row4_background."><td align=right>"._QXZ("QC Result").": </td>";
-			echo "<td align=left colspan='2'><select size=1 name=status class='cust_form'>\n";
+			echo "<td align=left colspan='3'><select size=1 name=status class='cust_form'>\n";
 
 		//This section reserved for future expansion (when each campaign will have its own list of QC Result Codes instead of using the the entire master set)
 		//	$list_campaign='';

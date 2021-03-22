@@ -1,4 +1,4 @@
-AGENT API DOCUMENT		Started: 2008-07-03	Updated: 2021-02-22
+AGENT API DOCUMENT		Started: 2008-07-03	Updated: 2021-03-20
 
 This document describes the functions of an API(Application Programming Interface)
 for the VICIDIAL Agent screen. This functionality will be rather limited at first
@@ -450,12 +450,20 @@ LEAD DATA (must populate at least one)
 	vendor_lead_code
 	rank
 	owner
+OPTIONAL NON-LEAD TRIGGERS - 
+	formreload
+	scriptreload
+	script2reload
+	emailreload
+	chatreload
+
 
 NOTES:
 	- most special characters are not allowed, but single quotes are
 
 EXAMPLE URLS:
 http://server/agc/api.php?source=test&user=6666&pass=1234&function=update_fields&agent_user=6666&vendor_lead_code=1234567&address1=
+http://server/agc/api.php?source=test&user=6666&pass=1234&function=update_fields&agent_user=6666&formreload=1
 
 RESPONSES:
 ERROR: update_fields not valid - 6666

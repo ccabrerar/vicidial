@@ -5549,12 +5549,13 @@ else
 # 210317-1211 - Fixes for better consistency in password change process, Issue #1261
 # 210317-1736 - Added the ability to see orphan Remote Agent entries(with no valid User account)
 # 210317-2329 - Added system settings for agent_hidden_sound and added more browser_alert_sounds
+# 210321-0120 - Added classAudioFile PHP library
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-804a';
-$build = '210317-2329';
+$admin_version = '2.14-805a';
+$build = '210321-0120';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -46766,6 +46767,14 @@ if ($ADD==999995)
 	echo "<td align=right valign=top><B><font size=2>"._QXZ("Copyright").": </B></td><td align=left><font size=1> &nbsp; "._QXZ("The Chart.js javascript library was written by Chart.js Contributors").", &copy; 2018</td></tr>\n";
 	echo "<tr bgcolor=#$SSstd_row4_background><td align=right valign=top><B><font size=2>"._QXZ("License").": </B></td><td align=left><font size=1> &nbsp; "._QXZ("Chart.js is licensed under the")." <a href=\"https://github.com/chartjs/Chart.js/blob/master/LICENSE.md\" target=\"_blank\">MIT "._QXZ("open source license")."</a></td></tr>\n";
 	echo "<tr bgcolor=#$SSstd_row4_background><td align=right valign=top nowrap><B><font size=2>"._QXZ("Source Code").": </B></td><td align=left><font size=1> &nbsp; "._QXZ("Chart.js original source code is available at")." <a href=\"https://github.com/chartjs/Chart.js\" target=\"_blank\">"._QXZ("this link")."</a>.</td></tr>\n";
+
+	echo "<tr><td colspan=3> &nbsp; </tr>";
+
+	echo "<tr bgcolor=#$SSstd_row4_background><td align=right valign=middle rowspan=3 nowrap><B><font size=3>"._QXZ("classAudioFile").": </B></td>";
+	echo "<td align=right valign=top><B><font size=2>"._QXZ("Copyright").": </B></td><td align=left><font size=1> &nbsp; "._QXZ("The classAudioFile PHP library was written by Michael Kamleitner").", &copy; 2003</td></tr>\n";
+	echo "<tr bgcolor=#$SSstd_row4_background><td align=right valign=top><B><font size=2>"._QXZ("License").": </B></td><td align=left><font size=1> &nbsp; "._QXZ("classAudioFile is licensed under the")." <a href=\"http://www.opensource.org/licenses/gpl-license.html\" target=\"_blank\">GPL "._QXZ("open source license")."</a></td></tr>\n";
+	echo "<tr bgcolor=#$SSstd_row4_background><td align=right valign=top nowrap><B><font size=2>"._QXZ("Source Code").": </B></td><td align=left><font size=1> &nbsp; "._QXZ("classAudioFile original source code is available at")." <a href=\"https://www.phpclasses.org/audiofile\" target=\"_blank\">"._QXZ("this link")."</a>.</td></tr>\n";
+
 	echo "</TABLE></center>\n";
 	}
 ##### END copyright trademark license page #####

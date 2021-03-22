@@ -1587,3 +1587,15 @@ ALTER TABLE system_settings ADD agent_hidden_sound_volume TINYINT(3) UNSIGNED de
 ALTER TABLE system_settings ADD agent_hidden_sound_seconds TINYINT(3) UNSIGNED default '0';
 
 UPDATE system_settings SET db_schema_version='1623',db_schema_update_date=NOW() where db_schema_version < 1623;
+
+ALTER TABLE quality_control_checkpoint_log ADD instant_fail_value ENUM('Y', 'N') default 'N' AFTER instant_fail;
+ALTER TABLE quality_control_checkpoint_log ADD checkpoint_text_presets TEXT AFTER checkpoint_text;
+
+ALTER TABLE quality_control_checkpoints ADD checkpoint_text_presets TEXT AFTER checkpoint_text;
+
+UPDATE system_settings SET db_schema_version='1624',db_schema_update_date=NOW() where db_schema_version < 1624;
+
+ALTER TABLE audio_store_details ADD wav_format_details VARCHAR(255) default '';
+ALTER TABLE audio_store_details ADD wav_asterisk_valid ENUM('','GOOD','BAD','NA') default '';
+
+UPDATE system_settings SET db_schema_version='1625',db_schema_update_date=NOW() where db_schema_version < 1625;

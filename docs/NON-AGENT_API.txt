@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2021-03-16
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2021-03-22
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -178,6 +178,9 @@ Changes:
 210227-1116 - Added xferconf number options to update_campaign, add_list & update_list functions
 210303-1802 - Added list_exists_check option for update_lead function
 210316-2207 - Added lead_all_info function
+210319-1720 - Added special 'xDAYS' value option for callback_datetime
+210320-2127 - Added 'custom_fields_add' option for update_list function
+210322-1218 - Added display of bad wav file formats on sounds_list function
 
 API Functions use the 'function' variable
 
@@ -953,7 +956,8 @@ tz_method -		<empty>, POSTAL, TZCODE or NANPA, default is <empty> which will use
 				NANPA relies on the optional NANPA areacode prefix data being loaded on your system
 callback -		Y or N, default is N. Set this lead as a scheduled callback. campaign_id field is REQUIRED for callbacks
 callback_status -	1-6 Character, callback status to use, default is CALLBK (vicidial_list status will be set to CBHOLD to lock)
-callback_datetime -	YYYY-MM-DD+HH:MM:SS, date and time of scheduled callback. REQUIRED if callback is set. NOW can be used for current datetime.
+callback_datetime -	YYYY-MM-DD+HH:MM:SS, date and time of scheduled callback. REQUIRED if callback is set.
+                        'NOW' can be used for current datetime. 'xDAYS' can also be used where 'x' is replaced with a number of days in the future
 callback_type -		USERONLY or ANYONE, default is ANYONE
 callback_user -		User ID the USERONLY callback is assigned to
 callback_comments -	Optional comments to appear when the callback is called back
@@ -1092,7 +1096,8 @@ delete_lead -		Y or N, Setting this to Y will delete the lead from the vicidial_
 reset_lead -		Y or N, Setting this to Y will reset the called-since-last-reset flag of the lead, default is N.
 callback -		Y, N or REMOVE, default is N. Set this lead as a scheduled callback. REMOVE will delete the scheduled callback entry
 callback_status -	1-6 Character, callback status to use, default is CALLBK (vicidial_list status will be set to CBHOLD to lock)
-callback_datetime -	YYYY-MM-DD+HH:MM:SS, date and time of scheduled callback. REQUIRED if callback is set. NOW can be used for current datetime.
+callback_datetime -	YYYY-MM-DD+HH:MM:SS, date and time of scheduled callback. REQUIRED if callback is set.
+                        'NOW' can be used for current datetime. 'xDAYS' can also be used where 'x' is replaced with a number of days in the future
 callback_type -		USERONLY or ANYONE, default is ANYONE
 callback_user -		User ID the USERONLY callback is assigned to
 callback_comments -	Optional comments to appear when the callback is called back
@@ -1726,6 +1731,26 @@ custom_copy_method -	(APPEND,UPDATE,REPLACE) method for how to perform the 'cust
 				APPEND - the only 100% safe method, will not result in any lost existing data, only adds fields not present in the destination list
 				UPDATE - will only update existing custom fields definitions to match the source list, will not add new fields
 				REPLACE - will delete all existing custom field lead data in destination list and start clean with new fields
+custom_fields_add -	Must be one of these: 'Y','N', will default to 'N'. The fields below marked with a star(*) are required for this to work:
+	field_label* - 		The label to use in the database for this custom field(only letters, numbers and underscore allowed)
+	field_name* -		The visible name of the field in the form
+	field_size* -		The size of the form field
+	field_type* -		The type of field: TEXT, SELECT, AREA, etc... (see the Custom List Fields adminn web page HELP for more info)
+	field_rank* -		The order from top to bottom of where this field will appear in the form
+	field_order -		The horizontal order of the field, if there is more than one of the same rank
+	field_rerank -		If there is an existing field of the same rank, move the existing ones down the list, 'YES','NO' default is 'NO'
+	field_max -		The maximum size of data allowed in the field
+	field_default -		The default value of the field
+	field_options -		The field options for this field
+	field_duplicate -	If this is a duplicate of another existing field for this list ID: 'Y','N' default is 'N'
+	field_description -	Description of the field
+	field_help -		The help text for this field as it appears to the agent in the custom form
+	field_required -	If this field is considered Required: 'Y','N' default is 'N'
+	multi_position -	The position of the field element: 'HORIZONTAL','VERTICAL' default is 'HORIZONTAL'
+	name_position -		The position of the name of the field: 'TOP','LEFT' default is 'LEFT'
+	field_encrypt -		If this is to be an encrypted field(a VICIhost-only feature, if enabled): 'Y','N' default is 'N'
+	field_show_hide -	If the field is to be hidden(a VICIhost-only feature, if enabled): 'DISABLED','X_OUT_ALL','LAST_1','LAST_2','LAST_3','LAST_4','FIRST_1_LAST_4'
+
 NOTES: 
  - in order to set a field to empty('') set it equal to --BLANK--, i.e. "&drop_inbound_group=--BLANK--"
  - please use no special characters like apostrophes, quotes or amphersands
@@ -1739,6 +1764,8 @@ http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&functio
 http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_list&list_id=1102&reset_list=Y
 http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_list&list_id=1102&delete_list=Y&delete_leads=Y
 http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_list&list_id=1102&campaign_id=ASTRICON
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_list&list_id=99883&custom_copy_method=APPEND&custom_fields_copy=9988
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_list&list_id=9988&custom_fields_add=Y&field_label=new_api_field4&field_name=new+API+field4&field_size=20&field_type=TEXT&field_rank=16
 
 Example responses:
 ERROR: update_list USER DOES NOT HAVE PERMISSION TO UPDATE LISTS - 6666
@@ -1773,7 +1800,12 @@ NOTICE: update_list LEADS IN LIST HAVE BEEN DELETED - 6666|1101|324
 NOTICE: update_list CUSTOM FIELDS LIST ID TO COPY FROM DOES NOT EXIST, THIS IS AN OPTIONAL FIELD - 6666|1101|1102|0
 NOTICE: update_list CUSTOM FIELDS LIST ID TO COPY FROM HAS NO CUSTOM FIELDS, THIS IS AN OPTIONAL FIELD - 6666|1101|1102|0
 NOTICE: update_list USER DOES NOT HAVE PERMISSION TO MODIFY CUSTOM FIELDS, THIS IS AN OPTIONAL FIELD - 6666|1101|1102|0
-NOTICE: update_list COPY CUSTOM FIELDS COMMAND SENT - 6666|1101|APPEND
+NOTICE: update_list COPY CUSTOM FIELDS COMMAND SENT - 6666|1101|APPEND|ERROR: Fields not copied|
+NOTICE: update_list COPY CUSTOM FIELDS COMMAND SENT - 6666|1101|APPEND|SUCCESS: Fields copied|
+NOTICE: update_list CUSTOM FIELDS LIST ID TO ADD TO HAS NO CUSTOM FIELDS, THIS IS AN OPTIONAL FIELD - 6666|1101
+NOTICE: update_list REQUIRED CUSTOM FIELDS VARIABLES ARE MISSING, FIELD NOT ADDED, THIS IS AN OPTIONAL FIELD - 6666|1101||||||
+NOTICE: update_list ADD CUSTOM FIELD COMMAND SENT - 6666|1101|new_field|TEXT|ERROR: Field not added|
+NOTICE: update_list ADD CUSTOM FIELD COMMAND SENT - 6666|1101|new_field|TEXT|SUCCESS: Field added|
 
 
 

@@ -658,10 +658,13 @@
 # 210315-2102 - Added CALLBACK manual dial filter option, Issue #1139
 # 210317-1207 - Fixes for better consistency in password change process, Issue #1261
 # 210318-0236 - Added agent browser visibility logging and Agent Hidden Browser Sounds
+# 210319-1500 - Small change for agent screen visibility logging on logout
+# 210320-2348 - Added additional update_fields options: scriptreload,script2reload
+# 210322-1301 - Fixed issue with agent_hidden_sound
 #
 
-$version = '2.14-626c';
-$build = '210318-0236';
+$version = '2.14-629c';
+$build = '210322-1301';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=95;
 $one_mysql_log=0;
@@ -10005,6 +10008,18 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 							FormContentsLoad();
 							event_data = event_data + '--- formreload ';
 							}
+						var regUDscriptreload = new RegExp("scriptreload,","ig");
+						if (fields_list.match(regUDscriptreload))
+							{
+							RefresHScript('','YES');
+							event_data = event_data + '--- scriptreload ';
+							}
+						var regUDscript2reload = new RegExp("script2reload,","ig");
+						if (fields_list.match(regUDscript2reload))
+							{
+							RefresHScript2('','YES');
+							event_data = event_data + '--- script2reload ';
+							}
 
 						// JOEJ 082812 - new for email feature
 						var regUDemailreload = new RegExp("emailreload,","ig");
@@ -16482,8 +16497,16 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 	function LogouT(tempreason,temppause)
 		{
 		button_click_log = button_click_log + "" + SQLdate + "-----LogouT---" + tempreason + " " + temppause + "|";
-		onHidden('1');
-		onVisible('1');
+		if (isVisible)
+			{
+			onHidden('1');
+			onVisible('1');
+			}
+		else
+			{
+			onVisible('1');
+			onHidden('1');
+			}
 		check_for_conf_calls(session_id, '0');
 
 		if (MD_channel_look==1)
@@ -22546,7 +22569,7 @@ if ($agent_display_dialable_leads > 0)
 <audio id='EmailAudioAlertFile'><source src="sounds/email_alert.mp3" type="audio/mpeg"></audio>
 
 <?php
-if ($SSbrowser_call_alerts > 0)
+if ( ($SSbrowser_call_alerts > 0) or ($SSagent_hidden_sound_seconds > 0) )
 	{
 	$bas=0;   $bas_embed_output='';
 	$browser_alert_sounds_listARY = explode(',',$browser_alert_sounds_list);

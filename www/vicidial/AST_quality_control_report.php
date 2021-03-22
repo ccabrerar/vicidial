@@ -818,19 +818,19 @@ if ($SUBMIT && ($QCuser_ct>0 || $user_ct>0 || $group_ct>0 || $QCstatus_ct>0 || (
 
 	if(mysqli_num_rows($qc_rslt)>0)
 		{
-		$HTML_text.="<table border=0 width='1000' cellpadding=2 cellspacing=0>";
+		$HTML_text.="<table border=0 width='1000' cellpadding=2 cellspacing=1>";
 		$HTML_text.="<tr><td align='right' colspan='12' class='small_standard_bold'><a href='$LINKbase'>[DOWNLOAD]</a></td></tr>";
 		$HTML_text.="<tr bgcolor='#000' nowrap>";
 		$HTML_text.="<th class='small_standard_bold white_text'>Call date</th>";
-		$HTML_text.="<th class='small_standard_bold white_text'>Call agent</th>";
+		$HTML_text.="<th class='small_standard_bold white_text' nowrap>Call agent</th>";
 		$HTML_text.="<th class='small_standard_bold white_text'>Lead ID</th>";
 		$HTML_text.="<th class='small_standard_bold white_text'>Campaign ID</th>";
 		$HTML_text.="<th class='small_standard_bold white_text'>Status</th>";
 		$HTML_text.="<th class='small_standard_bold white_text'>Scorecard</th>";
-		$HTML_text.="<th class='small_standard_bold white_text'>QC agent</th>";
-		$HTML_text.="<th class='small_standard_bold white_text'>Claim date</th>";
-		$HTML_text.="<th class='small_standard_bold white_text'>Finish date</th>";
-		$HTML_text.="<th class='small_standard_bold white_text'>Score</th>";
+		$HTML_text.="<th class='small_standard_bold white_text' nowrap>QC agent</th>";
+		$HTML_text.="<th class='small_standard_bold white_text' nowrap>Claim date</th>";
+		$HTML_text.="<th class='small_standard_bold white_text' nowrap>Finish date</th>";
+		$HTML_text.="<th class='small_standard_bold white_text' nowrap>Score</th>";
 		$HTML_text.="<th class='small_standard_bold white_text'>Instant fail</th>";
 		$HTML_text.="<th class='small_standard_bold white_text'>Result</th>";
 		$HTML_text.="<th class='small_standard_bold white_text'>QC status</th>";
@@ -846,15 +846,15 @@ if ($SUBMIT && ($QCuser_ct>0 || $user_ct>0 || $group_ct>0 || $QCstatus_ct>0 || (
 			if ($x%2==0) {$bgcolor=$SSstd_row2_background;} else {$bgcolor=$SSstd_row1_background;}
 			$HTML_text.="<tr bgcolor='$bgcolor'>";
 			$HTML_text.="<td class='small_standard_bold'>".$qc_row["call_date"]."</td>";
-			$HTML_text.="<td class='small_standard_bold'>".GetFullName($qc_row["user"])."</td>";
+			$HTML_text.="<td class='small_standard_bold' nowrap>".GetFullName($qc_row["user"])."</td>";
 			$HTML_text.="<td class='small_standard_bold'>".$qc_row["lead_id"]."</td>";
 			$HTML_text.="<td class='small_standard_bold'>".$qc_row["campaign_id"]."</td>";
 			$HTML_text.="<td class='small_standard_bold'>".$qc_row["status"]."</td>";
 			$HTML_text.="<td class='small_standard_bold'>".$qc_row["qc_scorecard_id"]."</td>";
-			$HTML_text.="<td class='small_standard_bold'>".GetFullName($qc_row["qc_agent"])."</td>";
-			$HTML_text.="<td class='small_standard_bold'>".$qc_row["date_claimed"]."</td>";
-			$HTML_text.="<td class='small_standard_bold'>".$qc_row["date_completed"]."</td>";
-			$HTML_text.="<td class='small_standard_bold'>".GetScore($qc_row["qc_log_id"], "")."</td>";
+			$HTML_text.="<td class='small_standard_bold' nowrap>".GetFullName($qc_row["qc_agent"])."</td>";
+			$HTML_text.="<td class='small_standard_bold' nowrap>".$qc_row["date_claimed"]."</td>";
+			$HTML_text.="<td class='small_standard_bold' nowrap>".$qc_row["date_completed"]."</td>";
+			$HTML_text.="<td class='small_standard_bold' nowrap>".GetScore($qc_row["qc_log_id"], "")."</td>";
 			$instant_fail=GetFail($qc_row["qc_log_id"]);
 			$HTML_text.="<td class='small_standard_bold' align='center'>".$instant_fail."</td>";
 			$HTML_text.="<td class='small_standard_bold' align='center'>".($instant_fail=="Y" ? "FAILED" : GetResult($qc_row["qc_log_id"]))."</td>";
@@ -873,11 +873,11 @@ if ($SUBMIT && ($QCuser_ct>0 || $user_ct>0 || $group_ct>0 || $QCstatus_ct>0 || (
 				$HTML_text.="<tr bgcolor='$bgcolor'>";
 				$HTML_text.="<td class='small_standard' align='left' colspan='4' nowrap>&nbsp;&nbsp;&nbsp;&nbsp;".$crow["checkpoint_rank"].") ".$crow["checkpoint_text"]."</td>";
 				$HTML_text.="<td class='small_standard' align='left' colspan='5' nowrap>".$crow["checkpoint_comment_agent"]."</td>";
-				$HTML_text.="<td class='small_standard'>".GetScore($qc_row["qc_log_id"], $crow["qc_checkpoint_log_id"])."</td>";
-				$HTML_text.="<td class='small_standard' align='center'>".$crow["instant_fail"]."</td>";
+				$HTML_text.="<td class='small_standard' nowrap>".GetScore($qc_row["qc_log_id"], $crow["qc_checkpoint_log_id"])."</td>";
+				$HTML_text.="<td class='small_standard' align='center'>".$crow["instant_fail_value"]."</td>";
 				$HTML_text.="<td class='small_standard' colspan='2'>&nbsp;</td>";
 				$HTML_text.="<tr>";
-				$CSV_text.=",\"".$crow["checkpoint_rank"].") ".$crow["checkpoint_text"]."\",\"".$crow["checkpoint_comment_agent"]."\",\"".GetScore($qc_row["qc_log_id"], $crow["qc_checkpoint_log_id"])."\",\"".$crow["instant_fail"]."\"";
+				$CSV_text.=",\"".$crow["checkpoint_rank"].") ".$crow["checkpoint_text"]."\",\"".$crow["checkpoint_comment_agent"]."\",\"".GetScore($qc_row["qc_log_id"], $crow["qc_checkpoint_log_id"])."\",\"".$crow["instant_fail_value"]."\"";
 				}
 			$CSV_text.="\n";
 
@@ -976,7 +976,7 @@ function GetFullName($full_name)
 function GetFail($QCID)
 	{
 	global $link, $DB;
-	$fail_stmt="select count(*) From quality_control_checkpoint_log where qc_log_id='$QCID' and instant_fail='Y'";
+	$fail_stmt="select count(*) From quality_control_checkpoint_log where qc_log_id='$QCID' and instant_fail_value='Y'";
 	$fail_rslt=mysql_to_mysqli($fail_stmt, $link);
 	while ($fail_row=mysqli_fetch_row($fail_rslt))
 		{

@@ -103,10 +103,11 @@
 # 201112-2053 - Added vm_message function
 # 210116-1138 - Addressed session ID issue in ticket #1251
 # 210222-1058 - Added call length logging to ra_call_control function
+# 210320-2335 - Added additional update_fields options: scriptreload,script2reload,formreload,emailreload,chatreload
 #
 
-$version = '2.14-68';
-$build = '210222-1058';
+$version = '2.14-69';
+$build = '210320-2335';
 
 $startMS = microtime();
 
@@ -2617,12 +2618,14 @@ if ($function == 'update_fields')
 					$fieldsSQL='';
 					$fieldsLISTS='';
 					$field_set=0;
+					$agent_update=0;
 					if (preg_match('/phone_code/',$query_string))
 						{
 						if ($DB) {echo _QXZ("phone_code set to")." $phone_code\n";}
 						$fieldsSQL .= "phone_code=\"$phone_code\",";
 						$fieldsLIST .= "phone_code,";
 						$field_set++;
+						$agent_update++;
 						}
 					if (preg_match('/address1/',$query_string))
 						{
@@ -2630,6 +2633,7 @@ if ($function == 'update_fields')
 						$fieldsSQL .= "address1=\"$address1\",";
 						$fieldsLIST .= "address1,";
 						$field_set++;
+						$agent_update++;
 						}
 					if (preg_match('/address2/',$query_string))
 						{
@@ -2637,6 +2641,7 @@ if ($function == 'update_fields')
 						$fieldsSQL .= "address2=\"$address2\",";
 						$fieldsLIST .= "address2,";
 						$field_set++;
+						$agent_update++;
 						}
 					if (preg_match('/address3/',$query_string))
 						{
@@ -2644,6 +2649,7 @@ if ($function == 'update_fields')
 						$fieldsSQL .= "address3=\"$address3\",";
 						$fieldsLIST .= "address3,";
 						$field_set++;
+						$agent_update++;
 						}
 					if (preg_match('/alt_phone/',$query_string))
 						{
@@ -2651,6 +2657,7 @@ if ($function == 'update_fields')
 						$fieldsSQL .= "alt_phone=\"$alt_phone\",";
 						$fieldsLIST .= "alt_phone,";
 						$field_set++;
+						$agent_update++;
 						}
 					if (preg_match('/city/',$query_string))
 						{
@@ -2658,6 +2665,7 @@ if ($function == 'update_fields')
 						$fieldsSQL .= "city=\"$city\",";
 						$fieldsLIST .= "city,";
 						$field_set++;
+						$agent_update++;
 						}
 					if (preg_match('/comments/',$query_string))
 						{
@@ -2665,6 +2673,7 @@ if ($function == 'update_fields')
 						$fieldsSQL .= "comments=\"$comments\",";
 						$fieldsLIST .= "comments,";
 						$field_set++;
+						$agent_update++;
 						}
 					if (preg_match('/country_code/',$query_string))
 						{
@@ -2672,6 +2681,7 @@ if ($function == 'update_fields')
 						$fieldsSQL .= "country_code=\"$country_code\",";
 						$fieldsLIST .= "country_code,";
 						$field_set++;
+						$agent_update++;
 						}
 					if (preg_match('/date_of_birth/',$query_string))
 						{
@@ -2679,6 +2689,7 @@ if ($function == 'update_fields')
 						$fieldsSQL .= "date_of_birth=\"$date_of_birth\",";
 						$fieldsLIST .= "date_of_birth,";
 						$field_set++;
+						$agent_update++;
 						}
 					if (preg_match('/email/',$query_string))
 						{
@@ -2686,6 +2697,7 @@ if ($function == 'update_fields')
 						$fieldsSQL .= "email=\"$email\",";
 						$fieldsLIST .= "email,";
 						$field_set++;
+						$agent_update++;
 						}
 					if (preg_match('/first_name/',$query_string))
 						{
@@ -2693,6 +2705,7 @@ if ($function == 'update_fields')
 						$fieldsSQL .= "first_name=\"$first_name\",";
 						$fieldsLIST .= "first_name,";
 						$field_set++;
+						$agent_update++;
 						}
 					if (preg_match('/gender/',$query_string))
 						{
@@ -2700,6 +2713,7 @@ if ($function == 'update_fields')
 						$fieldsSQL .= "gender=\"$gender\",";
 						$fieldsLIST .= "gender,";
 						$field_set++;
+						$agent_update++;
 						}
 					if (preg_match('/gmt_offset_now/',$query_string))
 						{
@@ -2707,6 +2721,7 @@ if ($function == 'update_fields')
 						$fieldsSQL .= "gmt_offset_now=\"$gmt_offset_now\",";
 						$fieldsLIST .= "gmt_offset_now,";
 						$field_set++;
+						$agent_update++;
 						}
 					if (preg_match('/last_name/',$query_string))
 						{
@@ -2714,6 +2729,7 @@ if ($function == 'update_fields')
 						$fieldsSQL .= "last_name=\"$last_name\",";
 						$fieldsLIST .= "last_name,";
 						$field_set++;
+						$agent_update++;
 						}
 					if (preg_match('/middle_initial/',$query_string))
 						{
@@ -2721,6 +2737,7 @@ if ($function == 'update_fields')
 						$fieldsSQL .= "middle_initial=\"$middle_initial\",";
 						$fieldsLIST .= "middle_initial,";
 						$field_set++;
+						$agent_update++;
 						}
 					if (preg_match('/phone_number/',$query_string))
 						{
@@ -2728,6 +2745,7 @@ if ($function == 'update_fields')
 						$fieldsSQL .= "phone_number=\"$phone_number\",";
 						$fieldsLIST .= "phone_number,";
 						$field_set++;
+						$agent_update++;
 						}
 					if (preg_match('/postal_code/i',$query_string))
 						{
@@ -2735,6 +2753,7 @@ if ($function == 'update_fields')
 						$fieldsSQL .= "postal_code=\"$postal_code\",";
 						$fieldsLIST .= "postal_code,";
 						$field_set++;
+						$agent_update++;
 						}
 					if (preg_match('/province/i',$query_string))
 						{
@@ -2742,6 +2761,7 @@ if ($function == 'update_fields')
 						$fieldsSQL .= "province=\"$province\",";
 						$fieldsLIST .= "province,";
 						$field_set++;
+						$agent_update++;
 						}
 					if (preg_match('/security_phrase/i',$query_string))
 						{
@@ -2749,6 +2769,7 @@ if ($function == 'update_fields')
 						$fieldsSQL .= "security_phrase=\"$security_phrase\",";
 						$fieldsLIST .= "security_phrase,";
 						$field_set++;
+						$agent_update++;
 						}
 					if (preg_match('/source_id/i',$query_string))
 						{
@@ -2756,6 +2777,7 @@ if ($function == 'update_fields')
 						$fieldsSQL .= "source_id=\"$source_id\",";
 						$fieldsLIST .= "source_id,";
 						$field_set++;
+						$agent_update++;
 						}
 					if (preg_match('/state/i',$query_string))
 						{
@@ -2763,6 +2785,7 @@ if ($function == 'update_fields')
 						$fieldsSQL .= "state=\"$state\",";
 						$fieldsLIST .= "state,";
 						$field_set++;
+						$agent_update++;
 						}
 					if (preg_match('/title/i',$query_string))
 						{
@@ -2770,6 +2793,7 @@ if ($function == 'update_fields')
 						$fieldsSQL .= "title=\"$title\",";
 						$fieldsLIST .= "title,";
 						$field_set++;
+						$agent_update++;
 						}
 					if (preg_match('/vendor_lead_code/i',$query_string))
 						{
@@ -2777,6 +2801,7 @@ if ($function == 'update_fields')
 						$fieldsSQL .= "vendor_lead_code=\"$vendor_lead_code\",";
 						$fieldsLIST .= "vendor_lead_code,";
 						$field_set++;
+						$agent_update++;
 						}
 					if (preg_match('/rank/i',$query_string))
 						{
@@ -2784,6 +2809,7 @@ if ($function == 'update_fields')
 						$fieldsSQL .= "rank=\"$rank\",";
 						$fieldsLIST .= "rank,";
 						$field_set++;
+						$agent_update++;
 						}
 					if (preg_match('/owner/i',$query_string))
 						{
@@ -2791,23 +2817,62 @@ if ($function == 'update_fields')
 						$fieldsSQL .= "owner=\"$owner\",";
 						$fieldsLIST .= "owner,";
 						$field_set++;
+						$agent_update++;
 						}
-					if ($field_set > 0)
+					if (preg_match('/formreload/i',$query_string))
+						{
+						if ($DB) {echo _QXZ("form reload triggered")."\n";}
+						$fieldsLIST .= "formreload,";
+						$agent_update++;
+						}
+					if (preg_match('/scriptreload/i',$query_string))
+						{
+						if ($DB) {echo _QXZ("script reload triggered")."\n";}
+						$fieldsLIST .= "scriptreload,";
+						$agent_update++;
+						}
+					if (preg_match('/script2reload/i',$query_string))
+						{
+						if ($DB) {echo _QXZ("script 2 reload triggered")."\n";}
+						$fieldsLIST .= "script2reload,";
+						$agent_update++;
+						}
+					if (preg_match('/emailreload/i',$query_string))
+						{
+						if ($DB) {echo _QXZ("email reload triggered")."\n";}
+						$fieldsLIST .= "emailreload,";
+						$agent_update++;
+						}
+					if (preg_match('/chatreload/i',$query_string))
+						{
+						if ($DB) {echo _QXZ("chat reload triggered")."\n";}
+						$fieldsLIST .= "chatreload,";
+						$agent_update++;
+						}
+					if ( ($field_set > 0) or ($agent_update > 0) )
 						{
 						$fieldsSQL = preg_replace("/,$/","",$fieldsSQL);
 						$fieldsLIST = preg_replace("/,$/","",$fieldsLIST);
 
 						$stmt="UPDATE vicidial_list set $fieldsSQL where lead_id=$lead_id;";
+						$affected_rowsVL=0;
+						if ($field_set > 0)
+							{
+							$stmt="UPDATE vicidial_list set $fieldsSQL where lead_id=$lead_id;";
 							if ($format=='debug') {echo "\n<!-- $stmt -->";}
 						$rslt=mysql_to_mysqli($stmt, $link);
+							$affected_rowsVL = mysqli_affected_rows($link);
+							}
 
+						$affected_rowsVLA=0;
 						$stmt="UPDATE vicidial_live_agents set external_update_fields='1',external_update_fields_data='$fieldsLIST' where user='$agent_user';";
 							if ($format=='debug') {echo "\n<!-- $stmt -->";}
 						$rslt=mysql_to_mysqli($stmt, $link);
+						$affected_rowsVLA = mysqli_affected_rows($link);
 
 						$result = _QXZ("SUCCESS");
 						$result_reason = _QXZ("update_fields lead updated");
-						$data = "$user|$agent_user|$lead_id|$fieldsSQL";
+						$data = "$user|$agent_user|$lead_id|$affected_rowsVL|$affected_rowsVLA|$fieldsLIST|$fieldsSQL|";
 						echo "$result: $result_reason - $data\n";
 						api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
 						}

@@ -118,6 +118,8 @@ if (isset($_GET["new_admin_notes"]))	{$new_admin_notes=$_GET["new_admin_notes"];
 	elseif (isset($_POST["new_admin_notes"]))	{$new_admin_notes=$_POST["new_admin_notes"];}
 if (isset($_GET["new_checkpoint_text"]))	{$new_checkpoint_text=$_GET["new_checkpoint_text"];}
 	elseif (isset($_POST["new_checkpoint_text"]))	{$new_checkpoint_text=$_POST["new_checkpoint_text"];}
+if (isset($_GET["new_checkpoint_text_presets"]))	{$new_checkpoint_text_presets=$_GET["new_checkpoint_text_presets"];}
+	elseif (isset($_POST["new_checkpoint_text_presets"]))	{$new_checkpoint_text_presets=$_POST["new_checkpoint_text_presets"];}
 if (isset($_GET["checkpoint_row_id"]))	{$checkpoint_row_id=$_GET["checkpoint_row_id"];}
 	elseif (isset($_POST["checkpoint_row_id"]))	{$checkpoint_row_id=$_POST["checkpoint_row_id"];}
 if (isset($_GET["checkpoint_comment_agent"]))	{$checkpoint_comment_agent=$_GET["checkpoint_comment_agent"];}
@@ -126,6 +128,8 @@ if (isset($_GET["checkpoint_answer"]))	{$checkpoint_answer=$_GET["checkpoint_ans
 	elseif (isset($_POST["checkpoint_answer"]))	{$checkpoint_answer=$_POST["checkpoint_answer"];}
 if (isset($_GET["instant_fail"]))	{$instant_fail=$_GET["instant_fail"];}
 	elseif (isset($_POST["instant_fail"]))	{$instant_fail=$_POST["instant_fail"];}
+if (isset($_GET["instant_fail_value"]))	{$instant_fail_value=$_GET["instant_fail_value"];}
+	elseif (isset($_POST["instant_fail_value"]))	{$instant_fail_value=$_POST["instant_fail_value"];}
 if (isset($_GET["admin_notes"]))	{$admin_notes=$_GET["admin_notes"];}
 	elseif (isset($_POST["admin_notes"]))	{$admin_notes=$_POST["admin_notes"];}
 if (isset($_GET["commission_loss"]))	{$commission_loss=$_GET["commission_loss"];}
@@ -246,7 +250,7 @@ $NWB = "<IMG SRC=\"help.png\" onClick=\"FillAndShowHelpDiv(event, '";
 $NWE = "')\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP>";
 
 if ($qc_checkpoint_log_id && $qc_action=="upd_customer") {
-	$upd_stmt="update quality_control_checkpoint_log set checkpoint_comment_agent='".mysqli_escape_string($link, $checkpoint_comment_agent)."', instant_fail='".mysqli_escape_string($link, $instant_fail)."', checkpoint_points_earned='".mysqli_escape_string($link, $checkpoint_points_earned)."' where qc_checkpoint_log_id='$qc_checkpoint_log_id'";
+	$upd_stmt="update quality_control_checkpoint_log set checkpoint_comment_agent='".mysqli_escape_string($link, $checkpoint_comment_agent)."', instant_fail_value='".mysqli_escape_string($link, $instant_fail_value)."', checkpoint_points_earned='".mysqli_escape_string($link, $checkpoint_points_earned)."' where qc_checkpoint_log_id='$qc_checkpoint_log_id'";
 	$upd_rslt=mysqli_query($link, $upd_stmt);
 	#echo mysqli_affected_rows($link);
 	if ($DB) {echo "|$upd_stmt|\n";}
@@ -398,11 +402,11 @@ if ($qc_action=="save_comments" && $qc_checkpoint_log_id && $checkpoint_comment_
 	echo mysqli_affected_rows($link);
 }
 
-if ($scorecard_id && $qc_action=="add_checkpoint" && $new_checkpoint_rank && $new_checkpoint_text && $new_active) {
+if ($scorecard_id && $qc_action=="add_checkpoint" && $new_checkpoint_rank && ($new_checkpoint_text || $new_checkpoint_text_presets) && $new_active) {
 	$upd_stmt="update quality_control_checkpoints set checkpoint_rank=checkpoint_rank+1, modify_user='$PHP_AUTH_USER' where qc_scorecard_id='$scorecard_id' and checkpoint_rank>=$new_checkpoint_rank";
 	$upd_rslt=mysqli_query($link, $upd_stmt);
 
-	$ins_stmt="insert into quality_control_checkpoints(qc_scorecard_id, checkpoint_rank, checkpoint_text, checkpoint_points, active, instant_fail, admin_notes, create_date, create_user) VALUES('".mysqli_real_escape_string($link, $scorecard_id)."', '".mysqli_real_escape_string($link, $new_checkpoint_rank)."', '".mysqli_real_escape_string($link, $new_checkpoint_text)."', '".mysqli_real_escape_string($link, $new_checkpoint_points)."', '".mysqli_real_escape_string($link, $new_active)."', '".mysqli_real_escape_string($link, $new_instant_fail)."', '".mysqli_real_escape_string($link, $new_admin_notes)."', now(), '".mysqli_real_escape_string($link, $PHP_AUTH_USER)."')";
+	$ins_stmt="insert into quality_control_checkpoints(qc_scorecard_id, checkpoint_rank, checkpoint_text, checkpoint_text_presets, checkpoint_points, active, instant_fail, admin_notes, create_date, create_user) VALUES('".mysqli_real_escape_string($link, $scorecard_id)."', '".mysqli_real_escape_string($link, $new_checkpoint_rank)."', '".mysqli_real_escape_string($link, $new_checkpoint_text)."', '".mysqli_real_escape_string($link, $new_checkpoint_text_presets)."', '".mysqli_real_escape_string($link, $new_checkpoint_points)."', '".mysqli_real_escape_string($link, $new_active)."', '".mysqli_real_escape_string($link, $new_instant_fail)."', '".mysqli_real_escape_string($link, $new_admin_notes)."', now(), '".mysqli_real_escape_string($link, $PHP_AUTH_USER)."')";
 	echo $ins_stmt;
 	$ins_rslt=mysqli_query($link, $ins_stmt);
 
@@ -501,20 +505,21 @@ if ($scorecard_id && $qc_action=="load_checkpoints") {
 	$rslt=mysqli_query($link, $stmt);
 	if (mysqli_num_rows($rslt)>0) {
 		echo "<tr>";
-		echo "<th colspan='7' class='display_header'>"._QXZ("MODIFY QC SCORECARD")." $scorecard_id $NWB#qc_scorecards-modify$NWE</th>";
+		echo "<th colspan='8' class='display_header'>"._QXZ("MODIFY QC SCORECARD")." $scorecard_id $NWB#qc_scorecards-modify$NWE</th>";
 		echo "</tr>";
 		echo "<tr>";
-		echo "<th colspan='7' class='small_display_header'>"._QXZ("NAME").": <input type='text' size='20' maxlength='255' id='scorecard_name".$scorecard_id."' name='scorecard_name".$scorecard_id." onBlur=\"ChangeCheckpoint('0', '$scorecard_id', 'update_scorecard', 'scorecard_name')\" value='$scorecard_name'></th>";
+		echo "<th colspan='8' class='small_display_header'>"._QXZ("NAME").": <input type='text' size='20' maxlength='255' id='scorecard_name".$scorecard_id."' name='scorecard_name".$scorecard_id." onBlur=\"ChangeCheckpoint('0', '$scorecard_id', 'update_scorecard', 'scorecard_name')\" value='$scorecard_name'></th>";
 		echo "</tr>";
 		$i++;
 		if ($i%2==0) {$bgcolor=$SSstd_row1_background;} else {$bgcolor=$SSstd_row2_background;}
 		echo "<tr bgcolor='".$bgcolor."'>\n";
-		echo "<th class='small_display_header'>"._QXZ("Order")."$NWB#qc_scorecards-order$NWE</th>";
-		echo "<th class='small_display_header'>"._QXZ("Active")."$NWB#qc_scorecards-active_checkpoint$NWE</th>";
-		echo "<th class='small_display_header'>"._QXZ("Checkpoint Text")."$NWB#qc_scorecards-checkpoint_text$NWE</th>";
-		echo "<th class='small_display_header'>"._QXZ("Points")."$NWB#qc_scorecards-points$NWE</th>";
-		echo "<th class='small_display_header'>"._QXZ("Instant Fail")."$NWB#qc_scorecards-instant_kill$NWE</th>";
-		echo "<th class='small_display_header'>"._QXZ("Admin Notes")."$NWB#qc_scorecards-admin_notes$NWE</th>";
+		echo "<th class='small_display_header' nowrap>"._QXZ("Order")."$NWB#qc_scorecards-order$NWE</th>";
+		echo "<th class='small_display_header' nowrap>"._QXZ("Active")."$NWB#qc_scorecards-active_checkpoint$NWE</th>";
+		echo "<th class='small_display_header' nowrap>"._QXZ("Checkpoint Text")."$NWB#qc_scorecards-checkpoint_text$NWE</th>";
+		echo "<th class='small_display_header' nowrap>"._QXZ("Preset comments")."$NWB#qc_scorecards-preset_comments$NWE</th>";
+		echo "<th class='small_display_header' nowrap>"._QXZ("Points")."$NWB#qc_scorecards-points$NWE</th>";
+		echo "<th class='small_display_header' nowrap>"._QXZ("Instant Fail")."$NWB#qc_scorecards-instant_fail$NWE</th>";
+		echo "<th class='small_display_header' nowrap>"._QXZ("Admin Notes")."$NWB#qc_scorecards-admin_notes$NWE</th>";
 		# echo "<th class='small_display_header'>Commission Loss</th>";
 		echo "<th class='small_display_header'>&nbsp;</th>";
 		echo "</tr>";
@@ -534,7 +539,14 @@ if ($scorecard_id && $qc_action=="load_checkpoints") {
 			echo "<td align='center'>";
 			echo "<input onClick=\"ChangeCheckpoint('".$row["checkpoint_row_id"]."', '$scorecard_id', 'update_checkpoint', 'active')\" type='checkbox' name='active".$row["checkpoint_row_id"]."' id='active".$row["checkpoint_row_id"]."'".(($row["active"]=="Y") ? " checked" : "")." value='Y'>";
 			echo "</td>";
-			echo "<td align='center'><textarea class='notes_box' rows='2' cols='50' onBlur=\"ChangeCheckpoint('".$row["checkpoint_row_id"]."', '$scorecard_id', 'update_checkpoint', 'checkpoint_text')\" id='checkpoint_text".$row["checkpoint_row_id"]."' name='checkpoint_text".$row["checkpoint_row_id"]."'>".$row["checkpoint_text"]."</textarea></td>\n";
+
+			echo "<td align='center'>";
+			echo "<textarea class='notes_box' rows='4' cols='40' onBlur=\"ChangeCheckpoint('".$row["checkpoint_row_id"]."', '$scorecard_id', 'update_checkpoint', 'checkpoint_text')\" id='checkpoint_text".$row["checkpoint_row_id"]."' name='checkpoint_text".$row["checkpoint_row_id"]."'>".$row["checkpoint_text"]."</textarea>";
+			echo "</td>\n";
+			echo "<td align='center'>";
+			echo "<textarea class='notes_box' rows='4' cols='20' onBlur=\"ChangeCheckpoint('".$row["checkpoint_row_id"]."', '$scorecard_id', 'update_checkpoint', 'checkpoint_text_presets')\" id='checkpoint_text_presets".$row["checkpoint_row_id"]."' name='checkpoint_text_presets".$row["checkpoint_row_id"]."'>".$row["checkpoint_text_presets"]."</textarea>";
+			echo "</td>\n";
+
 			echo "<td align='center'><input type='text' onBlur=\"ChangeCheckpoint('".$row["checkpoint_row_id"]."', '$scorecard_id', 'update_checkpoint', 'checkpoint_points')\" id='checkpoint_points".$row["checkpoint_row_id"]."' name='checkpoint_points".$row["checkpoint_row_id"]."' value='".$row["checkpoint_points"]."' size='2' maxlength='3'></td>\n";
 			echo "<td align='center'>";
 			echo "<input onClick=\"ChangeCheckpoint('".$row["checkpoint_row_id"]."', '$scorecard_id', 'update_checkpoint', 'instant_fail')\" type='checkbox' name='instant_fail".$row["checkpoint_row_id"]."' id='instant_fail".$row["checkpoint_row_id"]."'".(($row["instant_fail"]=="Y") ? " checked" : "")." value='Y'>";
@@ -546,26 +558,27 @@ if ($scorecard_id && $qc_action=="load_checkpoints") {
 			echo "<td align='center'><input type='button' class='tiny_red_btn' onClick=\"ChangeCheckpoint('".$row["checkpoint_row_id"]."', '$scorecard_id', 'delete_checkpoint')\" value='"._QXZ("DELETE")."'></td>";
 			echo "</tr>";
 		}
-		echo "<tr><td colspan='3' class='small_display_header' align='right'>"._QXZ("PASSING SCORE").":</td><td align='center'><input type='text' size='2' maxlength='3' id='passing_score".$scorecard_id."' name='passing_score".$scorecard_id."' onBlur=\"ChangeCheckpoint('0', '$scorecard_id', 'update_scorecard', 'passing_score')\" value='$passing_score'></td><td align='left' class='small_display_header'>/ $max_score</td><td colspan='2'>&nbsp;</td></tr>";
+		echo "<tr><td colspan='3' class='small_display_header' align='right'>"._QXZ("PASSING SCORE").":</td><td align='center'><input type='text' size='2' maxlength='3' id='passing_score".$scorecard_id."' name='passing_score".$scorecard_id."' onBlur=\"ChangeCheckpoint('0', '$scorecard_id', 'update_scorecard', 'passing_score')\" value='$passing_score'></td><td align='left' class='small_display_header'>/ $max_score</td><td colspan='3'>&nbsp;</td></tr>";
 	} else {
-		echo "<tr><th colspan='7' class='small_display_header'>** "._QXZ("CURRENTLY NO CHECKPOINTS FOR SCORECARD")." $scorecard_id **</td></tr>\n";
+		echo "<tr><th colspan='8' class='small_display_header'>** "._QXZ("CURRENTLY NO CHECKPOINTS FOR SCORECARD")." $scorecard_id **</td></tr>\n";
 		echo "<tr>";
-		echo "<th colspan='7' class='small_display_header'>"._QXZ("NAME").": <input type='text' size='20' maxlength='255' id='scorecard_name".$scorecard_id."' name='scorecard_name".$scorecard_id."' onBlur=\"ChangeCheckpoint('0', '$scorecard_id', 'update_scorecard', 'scorecard_name')\" value='$scorecard_name'></th>";
+		echo "<th colspan='8' class='small_display_header'>"._QXZ("NAME").": <input type='text' size='20' maxlength='255' id='scorecard_name".$scorecard_id."' name='scorecard_name".$scorecard_id."' onBlur=\"ChangeCheckpoint('0', '$scorecard_id', 'update_scorecard', 'scorecard_name')\" value='$scorecard_name'></th>";
 		echo "</tr>";
 	}
 	
-	echo "<tr height='20'><th colspan='7'>&nbsp;</th></tr>\n";
+	echo "<tr height='20'><th colspan='8'>&nbsp;</th></tr>\n";
 
 	echo "<tr>";
-	echo "<th colspan='7' class='display_white_header'>"._QXZ("ADD NEW CHECKPOINT FOR SCORECARD")." $scorecard_id</th>";
+	echo "<th colspan='8' class='display_white_header'>"._QXZ("ADD NEW CHECKPOINT FOR SCORECARD")." $scorecard_id</th>";
 	echo "</tr>";
 	echo "<tr>";
-	echo "<th class='small_display_header'>"._QXZ("Order")."$NWB#qc_scorecards-order$NWE</th>";
-	echo "<th class='small_display_header'>"._QXZ("Active")."$NWB#qc_scorecards-active_checkpoint$NWE</th>";
-	echo "<th class='small_display_header'>"._QXZ("Checkpoint Text")."$NWB#qc_scorecards-checkpoint_text$NWE</th>";
-	echo "<th class='small_display_header'>"._QXZ("Points")."$NWB#qc_scorecards-points$NWE</th>";
-	echo "<th class='small_display_header'>"._QXZ("Instant Kill")."$NWB#qc_scorecards-instant_kill$NWE</th>";
-	echo "<th class='small_display_header'>"._QXZ("Admin Notes")."$NWB#qc_scorecards-admin_notes$NWE</th>";
+	echo "<th class='small_display_header' nowrap>"._QXZ("Order")."$NWB#qc_scorecards-order$NWE</th>";
+	echo "<th class='small_display_header' nowrap>"._QXZ("Active")."$NWB#qc_scorecards-active_checkpoint$NWE</th>";
+	echo "<th class='small_display_header' nowrap>"._QXZ("Checkpoint Text")."$NWB#qc_scorecards-checkpoint_text$NWE</th>";
+	echo "<th class='small_display_header' nowrap>"._QXZ("Preset comments")."$NWB#qc_scorecards-preset_comments$NWE</th>";
+	echo "<th class='small_display_header' nowrap>"._QXZ("Points")."$NWB#qc_scorecards-points$NWE</th>";
+	echo "<th class='small_display_header' nowrap>"._QXZ("Instant Fail")."$NWB#qc_scorecards-instant_fail$NWE</th>";
+	echo "<th class='small_display_header' nowrap>"._QXZ("Admin Notes")."$NWB#qc_scorecards-admin_notes$NWE</th>";
 	#echo "<th class='small_display_header'>Commission loss</th>";
 	echo "<th class='small_display_header'>&nbsp;</th>";
 	echo "</tr>";
@@ -580,7 +593,12 @@ if ($scorecard_id && $qc_action=="load_checkpoints") {
 	echo "<td align='center'>";
 	echo "<input type='checkbox' name='new_active' id='new_active' value='Y' checked>";
 	echo "</td>";
-	echo "<td align='center'><textarea class='notes_box' rows=\"2\" cols=\"50\" id=\"new_checkpoint_text\" name=\"new_checkpoint_text\">**"._QXZ("Enter display text here")."**</textarea></td>\n";
+	echo "<td align='center'>";
+	echo "<textarea class='notes_box' rows=\"4\" cols=\"40\" id=\"new_checkpoint_text\" name=\"new_checkpoint_text\">**"._QXZ("Enter display text here")."**</textarea>";
+	echo "</td>\n";
+	echo "<td align='center'>";
+	echo "<textarea class='notes_box' rows=\"4\" cols=\"20\" id=\"new_checkpoint_text_presets\" name=\"new_checkpoint_text_presets\"></textarea>";
+	echo "</td>\n";
 	echo "<td align='center'>";
 	echo "<input type='text' name='new_checkpoint_points' id='new_checkpoint_points' size='2' maxlength='3' value='0'>";
 	echo "</td>";
