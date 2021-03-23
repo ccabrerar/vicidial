@@ -326,9 +326,11 @@ if ($action == "LIST")
 $stmt = "SELECT count(*) FROM audio_store_details where audio_format='wav' and wav_asterisk_valid='';";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
-$wuv_ct = mysqli_num_rows($rslt);
+$row=mysqli_fetch_row($rslt);
+$wuv_ct = $row[0];
 if ( ($wuv_ct > 0) or ($action == "ALL_WAV_VALIDATION") )
 	{
+	if ($DB) {echo "Starting WAV file validation process...\n";}
 	$i=0;
 	$filename_sort=$MT;
 	$dirpath = "$WeBServeRRooT/$sounds_web_directory";
