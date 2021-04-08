@@ -86,10 +86,11 @@
 # 200825-2343 - Added option for manual-only sip actions
 # 201111-2140 - Fix for AGENTDIRECT selected in-groups issue #1241
 # 210317-1935 - Added visibility logging
+# 210328-1013 - Fix for emails-in-queue count query, Issue #1170
 #
 
-$version = '2.14-60';
-$build = '210317-1935';
+$version = '2.14-61';
+$build = '210328-1013';
 $php_script = 'conf_exten_check.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=51;
@@ -459,7 +460,7 @@ if ($ACTION == 'refresh')
 			else
 				{
 #				$email_stmt="select count(*) from vicidial_email_list, vicidial_xfer_log where vicidial_email_list.status='QUEUE' and vicidial_email_list.user='$user' and vicidial_xfer_log.xfercallid=vicidial_email_list.xfercallid and direction='INBOUND' and vicidial_xfer_log.campaign_id in ('$AccampSQL') and closer='EMAIL_XFER'";
-				$email_stmt="select count(*) from vicidial_email_list, vicidial_xfer_log where vicidial_email_list.user!='$user' and vicidial_xfer_log.xfercallid=vicidial_email_list.xfercallid and direction='INBOUND' and vicidial_xfer_log.campaign_id in ('$AccampSQL') and closer='EMAIL_XFER'";
+				$email_stmt="select count(*) from vicidial_email_list, vicidial_xfer_log where vicidial_email_list.user!='$user' and NOT ISNULL(vicidial_email_list.xfercallid) and vicidial_xfer_log.xfercallid=vicidial_email_list.xfercallid and direction='INBOUND' and vicidial_xfer_log.campaign_id in ('$AccampSQL') and closer='EMAIL_XFER';";
 				$email_rslt=mysql_to_mysqli($email_stmt, $link);
 		if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$email_stmt,'03042',$user,$server_ip,$session_name,$one_mysql_log);}
 				$email_row=mysqli_fetch_row($email_rslt);

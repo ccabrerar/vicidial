@@ -68,7 +68,7 @@ $report_display_type="HTML";
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,report_default_format,qc_features_active FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,report_default_format,qc_features_active,log_recording_access FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$HTML_text.="$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
@@ -83,6 +83,7 @@ if ($qm_conf_ct > 0)
 	$SSlanguage_method =			$row[5];
 	$SSreport_default_format =		$row[6];
 	$SSqc_features_active =			$row[7];
+	$log_recording_access =			$row[8];
 	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
@@ -590,6 +591,68 @@ $HTML_head.="   .purple {color: white; background-color: purple}\n";
 $HTML_head.="-->\n";
 $HTML_head.=" </STYLE>\n";
 
+$HTML_text.="<script language=\"JavaScript\">\n";
+$HTML_text.="function GoToRecordingTimestamp(qc_log_id, timestamp, recording_id, lead_id)\n";
+$HTML_text.="	{\n";
+$HTML_text.="	var timestamp_sec=hmsToSecondsOnly(timestamp);\n";
+# $HTML_text.="	alert(timestamp_sec); return false;\n";
+$HTML_text.="	var recording_object_ID=\"QC_recording_id_\"+qc_log_id;\n";
+$HTML_text.="	document.getElementById(recording_object_ID).currentTime=timestamp_sec;\n";
+$HTML_text.="	document.getElementById(recording_object_ID).play();\n";
+# $HTML_text.="	LogAudioRecordingAccess($log_recording_access, recording_id, lead_id, recording_object_ID);\n";
+$HTML_text.="	}\n";
+$HTML_text.="function hmsToSecondsOnly(str) {\n";
+$HTML_text.="    var p = str.split(':'),\n";
+$HTML_text.="        s = 0, m = 1;\n";
+$HTML_text.="\n";
+$HTML_text.="    while (p.length > 0) {\n";
+$HTML_text.="        s += m * parseInt(p.pop(), 10);\n";
+$HTML_text.="        m *= 60;\n";
+$HTML_text.="    }\n";
+$HTML_text.="\n";
+$HTML_text.="    return s;\n";
+$HTML_text.="}\n";
+
+$HTML_text.="function LogAudioRecordingAccess(log_active, recording_id, lead_id, recording_object_ID)\n";
+$HTML_text.="		{\n";
+$HTML_text.="		if (log_active)\n";
+$HTML_text.="			{\n";
+$HTML_text.="			var xmlhttp=false;\n";
+$HTML_text.="			try {\n";
+$HTML_text.="				xmlhttp = new ActiveXObject(\"Msxml2.XMLHTTP\");\n";
+$HTML_text.="			} catch (e) {\n";
+$HTML_text.="				try {\n";
+$HTML_text.="					xmlhttp = new ActiveXObject(\"Microsoft.XMLHTTP\");\n";
+$HTML_text.="				} catch (E) {\n";
+$HTML_text.="					xmlhttp = false;\n";
+$HTML_text.="				}\n";
+$HTML_text.="			}\n";
+$HTML_text.="			if (!xmlhttp && typeof XMLHttpRequest!='undefined') {\n";
+$HTML_text.="				xmlhttp = new XMLHttpRequest();\n";
+$HTML_text.="			}\n";
+$HTML_text.="			if (xmlhttp) { \n";
+$HTML_text.="				var log_query = \"&no_redirect=1&recording_id=\"+recording_id+\"&lead_id=\"+lead_id;\n";
+# $HTML_text.="				alert(log_query);\n";
+$HTML_text.="				xmlhttp.open('POST', 'recording_log_redirect.php'); \n";
+$HTML_text.="				xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');\n";
+$HTML_text.="				xmlhttp.send(log_query); \n";
+$HTML_text.="				xmlhttp.onreadystatechange = function() { \n";
+$HTML_text.="					if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {\n";
+$HTML_text.="						var response = xmlhttp.responseText;\n";
+$HTML_text.="						if (response!=\"OK\")\n";
+$HTML_text.="							{\n";
+$HTML_text.="							document.getElementById(recording_object_ID).pause();\n";
+$HTML_text.="							alert(response);\n";
+$HTML_text.="							}\n";
+$HTML_text.="					}\n";
+$HTML_text.="				}\n";
+$HTML_text.="				delete xmlhttp;\n";
+$HTML_text.="			}\n";
+$HTML_text.="			}\n";
+# $HTML_text.="		document.getElementById(recording_object_ID).play();\n";
+$HTML_text.="		}\n";
+
+$HTML_text.="</script>\n";
 
 $HTML_head.="<script language=\"JavaScript\" src=\"calendar_db.js\"></script>\n";
 $HTML_head.="<script language=\"JavaScript\" src=\"help.js\"></script>\n";
@@ -843,9 +906,10 @@ if ($SUBMIT && ($QCuser_ct>0 || $user_ct>0 || $group_ct>0 || $QCstatus_ct>0 || (
 		$max_questions=0;
 		while ($qc_row=mysqli_fetch_array($qc_rslt))
 			{
+			$qc_recording_id=$qc_row["recording_id"];
 			if ($x%2==0) {$bgcolor=$SSstd_row2_background;} else {$bgcolor=$SSstd_row1_background;}
 			$HTML_text.="<tr bgcolor='$bgcolor'>";
-			$HTML_text.="<td class='small_standard_bold'>".$qc_row["call_date"]."</td>";
+			$HTML_text.="<td class='small_standard_bold'><A name='QC_anchor_".$qc_row["qc_log_id"]."'/>".$qc_row["call_date"]."</td>";
 			$HTML_text.="<td class='small_standard_bold' nowrap>".GetFullName($qc_row["user"])."</td>";
 			$HTML_text.="<td class='small_standard_bold'>".$qc_row["lead_id"]."</td>";
 			$HTML_text.="<td class='small_standard_bold'>".$qc_row["campaign_id"]."</td>";
@@ -870,15 +934,69 @@ if ($SUBMIT && ($QCuser_ct>0 || $user_ct>0 || $group_ct>0 || $QCstatus_ct>0 || (
 			if ($question_count>$max_questions) {$max_questions=$question_count;}
 			while($crow=mysqli_fetch_array($checkpoint_rslt))
 				{
+				$checkpoint_comment=preg_replace("/((\d{1,2})?\:?\d?\d\:\d{2})/", "<a href='#QC_anchor_$qc_row[qc_log_id]' onClick=\"GoToRecordingTimestamp('$qc_row[qc_log_id]', '$1', $qc_recording_id, ".$qc_row["lead_id"].")\">$1</a>", $crow["checkpoint_comment_agent"]);
 				$HTML_text.="<tr bgcolor='$bgcolor'>";
 				$HTML_text.="<td class='small_standard' align='left' colspan='4' nowrap>&nbsp;&nbsp;&nbsp;&nbsp;".$crow["checkpoint_rank"].") ".$crow["checkpoint_text"]."</td>";
-				$HTML_text.="<td class='small_standard' align='left' colspan='5' nowrap>".$crow["checkpoint_comment_agent"]."</td>";
+				$HTML_text.="<td class='small_standard' align='left' colspan='5' nowrap>".$checkpoint_comment."</td>";
 				$HTML_text.="<td class='small_standard' nowrap>".GetScore($qc_row["qc_log_id"], $crow["qc_checkpoint_log_id"])."</td>";
 				$HTML_text.="<td class='small_standard' align='center'>".$crow["instant_fail_value"]."</td>";
 				$HTML_text.="<td class='small_standard' colspan='2'>&nbsp;</td>";
 				$HTML_text.="<tr>";
 				$CSV_text.=",\"".$crow["checkpoint_rank"].") ".$crow["checkpoint_text"]."\",\"".$crow["checkpoint_comment_agent"]."\",\"".GetScore($qc_row["qc_log_id"], $crow["qc_checkpoint_log_id"])."\",\"".$crow["instant_fail_value"]."\"";
 				}
+
+			# RECORDING
+			$rec_stmt="select location from recording_log where recording_id='" . mysqli_real_escape_string($link, $qc_recording_id) . "' order by recording_id desc limit 500;";
+			$rec_rslt=mysql_to_mysqli($rec_stmt, $link);
+			$rec_row=mysqli_fetch_row($rec_rslt);
+				
+			$location = $rec_row[0];
+
+			if (strlen($location)>2)
+				{
+				$URLserver_ip = $location;
+				$URLserver_ip = preg_replace('/http:\/\//i', '',$URLserver_ip);
+				$URLserver_ip = preg_replace('/https:\/\//i', '',$URLserver_ip);
+				$URLserver_ip = preg_replace('/\/.*/i', '',$URLserver_ip);
+				$stmt="select count(*) from servers where server_ip='$URLserver_ip';";
+				$rsltx=mysql_to_mysqli($stmt, $link);
+				$rowx=mysqli_fetch_row($rsltx);
+
+				if ($rowx[0] > 0)
+					{
+					$stmt="select recording_web_link,alt_server_ip,external_server_ip from servers where server_ip='$URLserver_ip';";
+					$rsltx=mysql_to_mysqli($stmt, $link);
+					$rowx=mysqli_fetch_row($rsltx);
+
+					if (preg_match("/ALT_IP/i",$rowx[0]))
+						{
+						$location = preg_replace("/$URLserver_ip/i", "$rowx[1]", $location);
+						}
+					if (preg_match("/EXTERNAL_IP/i",$rowx[0]))
+						{
+						$location = preg_replace("/$URLserver_ip/i", "$rowx[2]", $location);
+						}
+					}
+				}
+
+			if (strlen($location)>30)
+				{$locat = substr($location,0,27);  $locat = "$locat...";}
+			else
+				{$locat = $location;}
+			$play_audio='';
+			if ( (preg_match('/ftp/i',$location)) or (preg_match('/http/i',$location)) )
+				{
+				$play_audio = "<audio id='QC_recording_id_".$qc_row["qc_log_id"]."' controls preload=\"none\" onplay='LogAudioRecordingAccess($log_recording_access, $qc_recording_id, ".$qc_row["lead_id"].", this.id)'> <source src ='$location' type='audio/wav' > <source src ='$location' type='audio/mpeg' >"._QXZ("No browser audio playback support")."</audio>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
+				$location = "<a href=\"recording_log_redirect.php?recording_id=".$qc_recording_id."&lead_id=".$qc_row["lead_id"]."&search_archived_data=0\">$locat</a>";
+				}
+			else
+				{$location = $locat;}
+			$HTML_text.="<tr bgcolor='$bgcolor' valign='middle'>";
+			$HTML_text.="<td class='small_standard_bold' align='right' colspan='4' nowrap>"._QXZ("RECORDING").":</td>";
+			$HTML_text.="<td class='small_standard_bold' align='left' colspan='9' nowrap>$play_audio &nbsp; $location</td>";
+			$HTML_text.="<tr>";
+			###########
+
 			$CSV_text.="\n";
 
 			$x++;

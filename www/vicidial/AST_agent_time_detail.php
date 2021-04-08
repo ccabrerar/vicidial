@@ -56,6 +56,7 @@
 # 180502-2215 - Added new help display, added CONNECTED column
 # 191013-0846 - Fixes for PHP7
 # 210318-1558 - Added agent screen visibility stats
+# 210324-2010 - Added agent visibility stats to HTML graphs
 #
 
 $startMS = microtime();
@@ -1023,7 +1024,7 @@ else
 					if ($PCpause_sec[$i]>$$max_varname) {$$max_varname=$PCpause_sec[$i];}
 					$graph_stats_sub[$m][$n]=$PCpause_sec[$i];					
 
-					$n1=($n+19); # THIS IS FOR THE GRAPHING FURTHER DOWN; COULDN'T THINK OF A BETTER WAY TO DO THIS.
+					$n1=($n+21); # THIS IS FOR THE GRAPHING FURTHER DOWN; COULDN'T THINK OF A BETTER WAY TO DO THIS.
 					$graph_stats[$m][$n1]=$PCpause_sec[$i];					
 
 					$SstatusTXT = sprintf("%10s", $pfUSERcodePAUSE_MS);
@@ -1105,7 +1106,8 @@ else
 		$graph_stats[$m][17]=trim($park_array[$Suser[$m]][1]+0);
 		$graph_stats[$m][18]=trim(round(MathZDC(($park_array[$Suser[$m]][1]+0), $user_holds)));
 		$graph_stats[$m][19]=trim($user_hpc);
-
+		$graph_stats[$m][20]=trim($VISIBLE_sec);
+		$graph_stats[$m][21]=trim($HIDDEN_sec);
 
 		if ($file_download<1) 
 			{
@@ -1372,14 +1374,14 @@ else
 			{
 			array_push($graph_array, "ATD_PARKSdata|16|PARKS|integer|", "ATD_PARKTIMEdata|17|PARKTIME|time|", "ATD_AVGPARKdata|18|AVGPARK|time|", "ATD_PARKSCALLdata|19|PARKS/CALL|decimal|");
 			}
-		array_push($graph_array, "ATD_WAITdata|4|WAIT|time|", "ATD_WAITPCTdata|15|WAIT %|percent|", "ATD_TALKdata|5|TALK|time|", "ATD_TALKTIMEPCTdata|11|TALKTIME%|percent|", "ATD_DISPOdata|6|DISPO|time|", "ATD_DISPOTIMEPCTdata|12|DISPOTIME%|percent|", "ATD_PAUSEdata|7|PAUSE|time|", "ATD_PAUSETIMEPCTdata|13|PAUSETIME%|percent|", "ATD_DEADdata|8|DEAD|time|", "ATD_DEADTIMEPCTdata|14|DEADTIME%|percent|", "ATD_CUSTOMERdata|9|CUSTOMER|time|", "ATD_CONNECTEDdata|10|CONNECTED|time|");
+		array_push($graph_array, "ATD_WAITdata|4|WAIT|time|", "ATD_WAITPCTdata|15|WAIT %|percent|", "ATD_TALKdata|5|TALK|time|", "ATD_TALKTIMEPCTdata|11|TALKTIME%|percent|", "ATD_DISPOdata|6|DISPO|time|", "ATD_DISPOTIMEPCTdata|12|DISPOTIME%|percent|", "ATD_PAUSEdata|7|PAUSE|time|", "ATD_PAUSETIMEPCTdata|13|PAUSETIME%|percent|", "ATD_DEADdata|8|DEAD|time|", "ATD_DEADTIMEPCTdata|14|DEADTIME%|percent|", "ATD_CUSTOMERdata|9|CUSTOMER|time|", "ATD_CONNECTEDdata|10|CONNECTED|time|", "ATD_USERVISIBLEdata|20|VISIBLE|time|", "ATD_USERHIDDENdata|21|HIDDEN|time|");
 
 		for ($e=0; $e<count($sub_statusesARY); $e++) 
 			{
 			$Sstatus=$sub_statusesARY[$e];
 			$SstatusTXT=$Sstatus;
 			if ($Sstatus=="") {$SstatusTXT="(blank)";}
-			array_push($graph_array, "ATD_SUBSTATUS".$e."data|".($e+19)."|".$SstatusTXT."|time|");
+			array_push($graph_array, "ATD_SUBSTATUS".$e."data|".($e+21)."|".$SstatusTXT."|time|");
 			}
 
 		$default_graph="bar"; # Graph that is initally displayed when page loads

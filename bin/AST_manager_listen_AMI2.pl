@@ -17,14 +17,14 @@
 # the ADMIN_keepalive_ALL.pl script, which makes sure it is always running in a
 # screen, provided that the astguiclient.conf keepalive setting "2" is set.
 #
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 170915-2106 - Initial version based off the orginal AST_manager_listen.pl script
 # 170920-1418 - Fix for issue with recordings beginning with CALLID variable
 # 170930-0923 - Commented out handle_sip_event and handle_cpd_event functions, not needed anymore, to be deleted later
 # 190121-1505 - Added RA_USER_PHONE On-Hook CID to solve last RINGAGENT issues
-#
+# 210407-2009 - Added Event handlers for new manager events
 
 # constants
 $DB=0;  # Debug flag, set to 0 for no debug messages, lots of output
@@ -542,12 +542,6 @@ sub handle_event
 		case "DTMFBegin" { return handle_dtmf_begin_event( %event_hash ); }
 		case "DTMFEnd" { return handle_dtmf_end_event( %event_hash ); }		
 
-		# CPD-Result event
-	#	case "CPD-Result" { return handle_cpd_event( %event_hash ); }
-
-		# SIP-Hangup-Cause event
-	#	case "SIP-Hangup-Cause" { return handle_sip_event( %event_hash ); }
-
 		# NewCallerid event
 		case "NewCallerid" { return handle_newcid_event( %event_hash ); }
 
@@ -557,11 +551,154 @@ sub handle_event
 		# Hangup event
 		case "Hangup" { return handle_hangup_event( %event_hash ); }
 
+		# SIPCriticalTimeout event
+		case "SIPCriticalTimeout" { return handle_sip_crit_timeout_event( %event_hash ); }
+
+		# PeerRegistered event
+		case "PeerRegistered" { return handle_peer_registered_event( %event_hash ); }
+
+		# SIPRTPDisconnect evett
+		case "SIPRTPDisconnect" { return handle_sip_rtp_disconnect_event( %event_hash ); }
+
+		# PeerStatus event
+		case "PeerStatus" { return handle_peer_status_event( %event_hash ); }
+
+
 		#case "" { return handle__event( %event_hash ); }
 
 		else { return 2; }
 		}
 
+	}
+
+sub handle_sip_crit_timeout_event
+	{
+	my %event_hash = @_;
+
+	if (
+		( exists $event_hash{'Type'} ) &&
+		( exists $event_hash{'CallID'} ) &&
+		( exists $event_hash{'SeqNo'} ) &&
+		( exists $event_hash{'Host'} ) &&
+		( exists $event_hash{'Timeout'} )
+	)
+		{
+		my ($ip,$port) = split( ':', $event_hash{'Host'});
+
+		$stmtA = "INSERT INTO vicidial_peer_event_log SET event_date=NOW(), event_type='CRITICALTIMEOUT', server_ip='$server_ip', host_ip='$ip', port='$port', channel_type='SIP', data='|Type=$event_hash{'Type'}|CallID=$event_hash{'CallID'}|SeqNo=$event_hash{'SeqNo'}|Timeout=$event_hash{'Timeout'}|'";
+                if($DB){print STDERR "|$stmtA|";}
+                my $affected_rows = $dbhA->do($stmtA);
+		if($DB){print STDERR "$affected_rows|\n";}
+
+		return 1;
+		}
+	else
+		{
+		print STDERR "SIPCriticalTimeout event does not have a Type, CallID, SeqNo, Host, or Timeout ?!!!\n";
+		return 3;
+		}
+
+	}
+
+sub handle_peer_registered_event
+	{
+	my %event_hash = @_;
+
+	if (
+		( exists $event_hash{'ChannelType'} ) &&
+		( exists $event_hash{'Peer'} ) &&
+		( exists $event_hash{'Host'} )
+	)
+		{
+
+		my ($ip,$port) = split( ':', $event_hash{'Host'});
+		my ($type,$phone_extension) = split( '/', $event_hash{'Peer'});
+
+		$stmtA = "INSERT INTO vicidial_peer_event_log SET event_date=NOW(6), event_type='REGISTERED', server_ip='$server_ip', host_ip='$ip', port='$port', channel_type='$event_hash{'ChannelType'}', peer='$event_hash{'Peer'}'";
+                if($DB){print STDERR "|$stmtA|";}
+                my $affected_rows = $dbhA->do($stmtA);
+                if($DB){print STDERR "$affected_rows|\n";}
+
+		$stmtA = "UPDATE phones set phone_ip='$ip' where server_ip='$server_ip' and extension='$phone_extension' and protocol='$event_hash{'ChannelType'}';";
+		if($DB){print STDERR "|$stmtA|\n";}
+		my $affected_rows = $dbhA->do($stmtA);
+		if($DB){print "|$affected_rows phones updated|\n";}
+                return 1;
+		}
+	else
+		{
+		print STDERR "PeerRegistered event does not have a ChannelType, Peer, or Host ?!!!\n";
+		return 3;
+		}
+	}
+
+sub handle_sip_rtp_disconnect_event
+	{
+	my %event_hash = @_;
+
+	if (
+		( exists $event_hash{'Channel'} ) &&
+		( exists $event_hash{'RTPLastRX'} ) 
+	)
+		{
+
+		my ($type,$phone_extension) = split( '/', $event_hash{'Channel'});
+		
+		$stmtA = "INSERT INTO vicidial_peer_event_log SET event_date=NOW(6), event_type='RTPDISCONNECT', server_ip='$server_ip', channel_type='$type', channel='$event_hash{'Channel'}', data='|RTPLastRX=$event_hash{'RTPLastRX'}|'";
+                if($DB){print STDERR "|$stmtA|";}
+                my $affected_rows = $dbhA->do($stmtA);
+                if($DB){print STDERR "$affected_rows|\n";}
+
+		return 1;
+		}
+	else
+		{
+		print STDERR "SIPRTPDisconnect event does not have a Channel or RTPLastRX ?!!!\n";
+		return 3;
+		}
+	}
+
+sub handle_peer_status_event
+	{
+	my %event_hash = @_;
+
+	if (
+		( exists $event_hash{'ChannelType'} ) &&
+		( exists $event_hash{'PeerStatus'} ) &&
+		( exists $event_hash{'Peer'} )
+	)
+		{
+		my ($type,$phone_extension) = split( '/', $event_hash{'Peer'});
+
+		my $data = '|';
+		if ( exists( $event_hash{'PingTime'} )) { $data .= "PingTime=$event_hash{'PingTime'}|";}
+		if ( exists( $event_hash{'Time'} )) { $data .= "Time=$event_hash{'Time'}|";}
+		if ( exists( $event_hash{'MaxPing'} )) { $data .= "MaxPing=$event_hash{'MaxPing'}|";}
+
+		$stmtA = "INSERT INTO vicidial_peer_event_log SET event_date=NOW(6), event_type='$event_hash{'PeerStatus'}', server_ip='$server_ip', channel_type='$event_hash{'ChannelType'}', peer='$event_hash{'Peer'}', data='$data'";
+                if($DB){print STDERR "|$stmtA|";}
+                my $affected_rows = $dbhA->do($stmtA);
+                if($DB){print STDERR "$affected_rows|\n";}
+
+
+		if ( exists( $event_hash{'PingTime'} )) 
+			{
+			$stmtA = "UPDATE phones set peer_status = '$event_hash{'PeerStatus'}', ping_time = '$event_hash{'PingTime'}' where server_ip='$server_ip' and extension='$phone_extension' and protocol='$event_hash{'ChannelType'}';";
+			}
+		else
+			{
+			$stmtA = "UPDATE phones set peer_status = '$event_hash{'PeerStatus'}' where server_ip='$server_ip' and extension='$phone_extension' and protocol='$event_hash{'ChannelType'}';";
+			}
+                if($DB){print STDERR "|$stmtA|\n";}
+                my $affected_rows = $dbhA->do($stmtA);
+                if($DB){print "|$affected_rows phones updated|\n";}
+                return 1;
+		}
+	else
+		{
+		print STDERR "PeerStatus event does not have a ChannelType, PeerStatus, Peer, or Time ?!!!\n";
+		return 3;
+		}
 	}
 
 sub handle_hangup_event
@@ -786,119 +923,6 @@ sub handle_dtmf_end_event
 		return 3;
 		}
 	}
-
-
-#sub handle_cpd_event
-#	{
-#	my %event_hash = @_;
-#
-#	if (
-#		( exists $event_hash{'Channel'} ) &&
-#		( exists $event_hash{'Uniqueid'} ) &&
-#		( exists $event_hash{'CallerIDName'} ) &&
-#		( exists $event_hash{'ConnectedLineName'} ) &&
-#		( exists $event_hash{'CPDResult'} )
-#	)
-#		{
-#
-#		# get the valid Vicidial Call ID
-#		$call_id = get_valid_callid( $event_hash{'CallerIDName'}, $event_hash{'ConnectedLineName'} );
-#
-#		&get_time_now;
-#
-#		if($DB){print STDERR "|cpd_result = $event_hash{'CPDResult'}|cpd_detailed_result = $event_hash{'CPDDetailedResult'}|cpd_call_id = $event_hash{'CPDCallID'}|cpd_ref_id = $event_hash{'CPDReferenceID'}|cpd_camp_name = $event_hash{'CPDCampaignName'}|\n";}
-#
-#		if (length($event_hash{'CPDResult'})>0)
-#			{
-#			$lead_id = substr($call_id, 10, 10);
-#			$lead_id = ($lead_id + 0);
-#	
-#			# TODO change the cpd log and this insert to include the new SIP Headers for 2.0 CPD
-#			$stmtA = "INSERT INTO vicidial_cpd_log set channel='$event_hash{'Channel'}', uniqueid='$event_hash{'Uniqueid'}', callerid='$call_id', server_ip='$event_hash{'ServerIP'}', lead_id=$lead_id, event_date='$now_date', result='$event_hash{'CPDResult'}';";
-#			if($DB){print STDERR "|$stmtA|\n";}
-#			my $affected_rows = $dbhA->do($stmtA);
-#			if($DB){print "|$affected_rows CPD_log inserted|$now_date|\n";}
-#			}
-#
-#		return 1;
-#		}
-#	else
-#		{
-#		print STDERR "CPD-Result event does not have a Channel, Uniqueid, CPDResult, ConnectedLineName, or CallerIDName ?!!!\n";
-#		return 3;
-#		}
-#	}
-
-
-#sub handle_sip_event
-#	{
-#	my %event_hash = @_;
-#
-#	if (
-#		( exists $event_hash{'Channel'} ) &&
-#		( exists $event_hash{'Uniqueid'} ) &&
-#		( exists $event_hash{'CallerIDName'} ) &&
-#		( exists $event_hash{'ConnectedLineName'} ) &&
-#		( exists $event_hash{'Result'} )
-#	)
-#		{
-#
-#		# get the valid Vicidial Call ID
-#		$call_id = get_valid_callid( $event_hash{'CallerIDName'}, $event_hash{'ConnectedLineName'} );
-#
-#		&get_time_now;
-#
-#		@result_details=split(/\|/, $event_hash{'Result'});
-#	
-#		if ( (length($event_hash{'Result'})>0) && ($result_details[0] !~ /^407/) )
-#			{
-#			$lead_id = substr($call_id, 10, 10);
-#			$lead_id = ($lead_id + 0);
-#			$beginUNIQUEID = $event_hash{'Uniqueid'};
-#			$beginUNIQUEID =~ s/\..*//gi;
-#			$stmtA = "UPDATE vicidial_dial_log SET sip_hangup_cause='$result_details[0]',sip_hangup_reason='$result_details[1]',uniqueid='$event_hash{'Uniqueid'}' where caller_code='$call_id' and server_ip='$event_hash{'ServerIP'}' and lead_id=$lead_id;";
-#			if($DB){print STDERR "|$stmtA|\n";}
-#			my $affected_rows = $dbhA->do($stmtA);
-#			if($DB){print "|$affected_rows dial_log updated|$call_id|$event_hash{'ServerIP'}|$event_hash{'Result'}|\n";}
-#			$vddl_update = ($vddl_update + $affected_rows);
-#
-#			$preCtarget = ($beginUNIQUEID - 180);   # 180 seconds before call start
-#			($preCsec,$preCmin,$preChour,$preCmday,$preCmon,$preCyear,$preCwday,$preCyday,$preCisdst) = localtime($preCtarget);
-#			$preCyear = ($preCyear + 1900);
-#			$preCmon++;
-#			if ($preCmon < 10) {$preCmon = "0$preCmon";}
-#			if ($preCmday < 10) {$preCmday = "0$preCmday";}
-#			if ($preChour < 10) {$preChour = "0$preChour";}
-#			if ($preCmin < 10) {$preCmin = "0$preCmin";}
-#			if ($preCsec < 10) {$preCsec = "0$preCsec";}
-#			$preCSQLdate = "$preCyear-$preCmon-$preCmday $preChour:$preCmin:$preCsec";
-#
-#			$postCtarget = ($beginUNIQUEID + 10);   # 10 seconds after call start
-#			($postCsec,$postCmin,$postChour,$postCmday,$postCmon,$postCyear,$postCwday,$postCyday,$postCisdst) = localtime($postCtarget);
-#			$postCyear = ($postCyear + 1900);
-#			$postCmon++;
-#			if ($postCmon < 10) {$postCmon = "0$postCmon";}
-#			if ($postCmday < 10) {$postCmday = "0$postCmday";}
-#			if ($postChour < 10) {$postChour = "0$postChour";}
-#			if ($postCmin < 10) {$postCmin = "0$postCmin";}
-#			if ($postCsec < 10) {$postCsec = "0$postCsec";}
-#			$postCSQLdate = "$postCyear-$postCmon-$postCmday $postChour:$postCmin:$postCsec";
-#	
-#			$stmtA = "UPDATE vicidial_carrier_log SET sip_hangup_cause='$result_details[0]',sip_hangup_reason='$result_details[1]' where server_ip='$event_hash{'ServerIP'}' and caller_code='$call_id' and lead_id=$lead_id and call_date > \"$preCSQLdate\" and call_date < \"$postCSQLdate\" order by call_date desc limit 1;";
-#			if($DB){print STDERR "|$stmtA|\n";}
-#			my $affected_rows = $dbhA->do($stmtA);
-#			if($DB){print "|$affected_rows carrier_log updated|$call_id|$event_hash{'ServerIP'}|$event_hash{'Uniqueid'}|$result_details[0]|$result_details[1]|\n";}
-#			}				
-#
-#		return 1;
-#		}
-#	else
-#		{
-#		print STDERR "SIP-Hangup-Cause event does not have a Channel, Uniqueid, Result, ConnectedLineName, or CallerIDName ?!!!\n";
-#		return 3;
-#		}
-#	}
-
 
 
 sub get_time_now	#get the current date and time and epoch for logging call lengths and datetimes

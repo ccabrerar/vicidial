@@ -501,10 +501,13 @@
 # 201122-1038 - Added Daily call count limit features
 # 210309-2343 - Small change to Fake-call-logging in QM for some queuemetrics_pausereason settings
 # 210315-2105 - Added CALLBACK manual dial filter option
+# 210324-1606 - Added leave_3way_start_recording campaign options
+# 210329-1515 - Fix for issue on transfer list user fullname having an underscore
+# 210330-2255 - Fixed issues with dashes as custom fields values throwing off delimiters
 #
 
-$version = '2.14-394';
-$build = '210315-2105';
+$version = '2.14-397';
+$build = '210330-2255';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=850;
@@ -809,7 +812,12 @@ if (isset($_GET["end_date"]))			{$end_date=$_GET["end_date"];}
 	elseif (isset($_POST["end_date"]))	{$end_date=$_POST["end_date"];}
 if (isset($_GET["customer_sec"]))			{$customer_sec=$_GET["customer_sec"];}
 	elseif (isset($_POST["customer_sec"]))	{$customer_sec=$_POST["customer_sec"];}
-
+if (isset($_GET["leave_3way_start_recording_trigger"]))				{$leave_3way_start_recording_trigger=$_GET["leave_3way_start_recording_trigger"];}
+	elseif (isset($_POST["leave_3way_start_recording_trigger"]))	{$leave_3way_start_recording_trigger=$_POST["leave_3way_start_recording_trigger"];}
+if (isset($_GET["leave_3way_start_recording_filename"]))			{$leave_3way_start_recording_filename=$_GET["leave_3way_start_recording_filename"];}
+	elseif (isset($_POST["leave_3way_start_recording_filename"]))	{$leave_3way_start_recording_filename=$_POST["leave_3way_start_recording_filename"];}
+if (isset($_GET["channelrec"]))				{$channelrec=$_GET["channelrec"];}
+	elseif (isset($_POST["channelrec"]))	{$channelrec=$_POST["channelrec"];}
 
 header ("Content-type: text/html; charset=utf-8");
 header ("Cache-Control: no-cache, must-revalidate");  // HTTP/1.1
@@ -1109,6 +1117,9 @@ $manual_dial_validation = preg_replace('/[^-_0-9a-zA-Z]/','',$manual_dial_valida
 $start_date = preg_replace('/[^-_0-9]/','',$start_date);
 $end_date = preg_replace('/[^-_0-9]/','',$end_date);
 $customer_sec = preg_replace('/[^-_0-9]/','',$customer_sec);
+$leave_3way_start_recording_trigger = preg_replace('/[^0-9]/','',$leave_3way_start_recording_trigger);
+$leave_3way_start_recording_filename = preg_replace('/[^-_0-9a-zA-Z]/','',$leave_3way_start_recording_filename);
+$channelrec = preg_replace("/\'|\"|\\\\|;/","",$channelrec);
 
 if ($non_latin < 1)
 	{
@@ -1929,10 +1940,10 @@ if ($ACTION == 'UpdateFields')
 				{
 				$custom_field_names='|';
 				$custom_field_names_SQL='';
-				$custom_field_values='----------';
+				$custom_field_values='q--------q';
 				$custom_field_types='|';
 				### find the names of all custom fields, if any
-				$stmt = "SELECT field_label,field_type FROM vicidial_lists_fields where list_id='$entry_list_id' and field_type NOT IN('SCRIPT','DISPLAY','SWITCH') and field_label NOT IN('entry_date','vendor_lead_code','source_id','list_id','gmt_offset_now','called_since_last_reset','phone_code','phone_number','title','first_name','middle_initial','last_name','address1','address2','address3','city','state','province','postal_code','country_code','gender','date_of_birth','alt_phone','email','security_phrase','comments','called_count','last_local_call_time','rank','owner') and field_label NOT LIKE \"%_DUPLICATE_%\";";
+				$stmt = "SELECT field_label,field_type FROM vicidial_lists_fields where list_id='$entry_list_id' and field_type NOT IN('SCRIPT','DISPLAY','SWITCH','BUTTON') and field_label NOT IN('entry_date','vendor_lead_code','source_id','list_id','gmt_offset_now','called_since_last_reset','phone_code','phone_number','title','first_name','middle_initial','last_name','address1','address2','address3','city','state','province','postal_code','country_code','gender','date_of_birth','alt_phone','email','security_phrase','comments','called_count','last_local_call_time','rank','owner') and field_label NOT LIKE \"%_DUPLICATE_%\";";
 				$rslt=mysql_to_mysqli($stmt, $link);
 					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00720',$user,$server_ip,$session_name,$one_mysql_log);}
 				if ($DB) {echo "$stmt\n";}
@@ -1944,7 +1955,7 @@ if ($ACTION == 'UpdateFields')
 					$custom_field_names .=	"$row[0]|";
 					$custom_field_names_SQL .=	"$row[0],";
 					$custom_field_types .=	"$row[1]|";
-					$custom_field_values .=	"----------";
+					$custom_field_values .=	"q--------q";
 					$d++;
 					}
 				if ($cffn_ct > 0)
@@ -1958,12 +1969,12 @@ if ($ACTION == 'UpdateFields')
 					$cffv_ct = mysqli_num_rows($rslt);
 					if ($cffv_ct > 0)
 						{
-						$custom_field_values='----------';
+						$custom_field_values='q--------q';
 						$row=mysqli_fetch_row($rslt);
 						$d=0;
 						while ($cffn_ct > $d)
 							{
-							$custom_field_values .=	"$row[$d]----------";
+							$custom_field_values .=	"$row[$d]q--------q";
 							$d++;
 							}
 						$custom_field_values = preg_replace("/\n/"," ",$custom_field_values);
@@ -5412,10 +5423,10 @@ if ($ACTION == 'manDiaLnextCaLL')
 
 				$custom_field_names='|';
 				$custom_field_names_SQL='';
-				$custom_field_values='----------';
+				$custom_field_values='q--------q';
 				$custom_field_types='|';
 				### find the names of all custom fields, if any
-				$stmt = "SELECT field_label,field_type FROM vicidial_lists_fields where list_id='$entry_list_id' and field_type NOT IN('SCRIPT','DISPLAY','SWITCH') and field_label NOT IN('entry_date','vendor_lead_code','source_id','list_id','gmt_offset_now','called_since_last_reset','phone_code','phone_number','title','first_name','middle_initial','last_name','address1','address2','address3','city','state','province','postal_code','country_code','gender','date_of_birth','alt_phone','email','security_phrase','comments','called_count','last_local_call_time','rank','owner') and field_label NOT LIKE \"%_DUPLICATE_%\";";
+				$stmt = "SELECT field_label,field_type FROM vicidial_lists_fields where list_id='$entry_list_id' and field_type NOT IN('SCRIPT','DISPLAY','SWITCH','BUTTON') and field_label NOT IN('entry_date','vendor_lead_code','source_id','list_id','gmt_offset_now','called_since_last_reset','phone_code','phone_number','title','first_name','middle_initial','last_name','address1','address2','address3','city','state','province','postal_code','country_code','gender','date_of_birth','alt_phone','email','security_phrase','comments','called_count','last_local_call_time','rank','owner') and field_label NOT LIKE \"%_DUPLICATE_%\";";
 				$rslt=mysql_to_mysqli($stmt, $link);
 					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00334',$user,$server_ip,$session_name,$one_mysql_log);}
 				if ($DB) {echo "$stmt\n";}
@@ -5427,7 +5438,7 @@ if ($ACTION == 'manDiaLnextCaLL')
 					$custom_field_names .=	"$row[0]|";
 					$custom_field_names_SQL .=	"$row[0],";
 					$custom_field_types .=	"$row[1]|";
-					$custom_field_values .=	"----------";
+					$custom_field_values .=	"q--------q";
 					$d++;
 					}
 				if ($cffn_ct > 0)
@@ -5441,12 +5452,12 @@ if ($ACTION == 'manDiaLnextCaLL')
 					$cffv_ct = mysqli_num_rows($rslt);
 					if ($cffv_ct > 0)
 						{
-						$custom_field_values='----------';
+						$custom_field_values='q--------q';
 						$row=mysqli_fetch_row($rslt);
 						$d=0;
 						while ($cffn_ct > $d)
 							{
-							$custom_field_values .=	"$row[$d]----------";
+							$custom_field_values .=	"$row[$d]q--------q";
 							$d++;
 							}
 						$custom_field_values = preg_replace("/\n/"," ",$custom_field_values);
@@ -8643,6 +8654,61 @@ if ($stage == "end")
 			}
 		}
 
+	##### BEGIN leave_3way_start_recording if triggered #####  $ACTION == 'manDiaLlogCaLL' and $stage == "end" leave_3way_start_recording_trigger
+	if ( ($leave_3way_start_recording_trigger > 0) and (strlen($leave_3way_start_recording_filename) > 3) )
+		{
+		$recFULLDATE = date("Ymd-His");
+		$recTINYDATE = date("ymdHis");
+		$leave_3way_start_recording_filename = preg_replace("/FULLDATE/","$recFULLDATE",$leave_3way_start_recording_filename);
+		$leave_3way_start_recording_filename = preg_replace("/TINYDATE/","$recTINYDATE",$leave_3way_start_recording_filename);
+		$leave_3way_start_recording_filename = preg_replace("/EPOCH/","$StarTtime",$leave_3way_start_recording_filename);
+		$leave_3way_start_recording_filename = preg_replace("/\"|\'/",'',$leave_3way_start_recording_filename);
+		if (preg_match("/RECID/",$leave_3way_start_recording_filename) )
+			{
+			$stmt = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id,length_in_sec) values('$channel','$server_ip','$exten','$NOW_TIME','$StarTtime','$leave_3way_start_recording_filename','$lead_id','$user','$uniqueid','0')";
+				if ($format=='debug') {echo "\n<!-- $stmt -->";}
+			$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+			$RLaffected_rows = mysqli_affected_rows($link);
+			if ($RLaffected_rows > 0)
+				{
+				$recording_id = mysqli_insert_id($link);
+				}
+
+			$leave_3way_start_recording_filename = preg_replace("/RECID/","$recording_id",$leave_3way_start_recording_filename);
+
+			$stmt = "UPDATE recording_log SET filename='$leave_3way_start_recording_filename' where recording_id='$recording_id';";
+				if ($format=='debug') {echo "\n<!-- $stmt -->";}
+			$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+
+			$vmgr_callerid = substr($leave_3way_start_recording_filename, 0, 17) . '...';
+			$stmt="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$server_ip','','Originate','$vmgr_callerid','Channel: $channelrec','Context: $ext_context','Exten: $exten','Priority: 1','Callerid: $leave_3way_start_recording_filename','','','','','');";
+				if ($format=='debug') {echo "\n<!-- $stmt -->";}
+			$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+			}
+		else
+			{
+			$vmgr_callerid = substr($leave_3way_start_recording_filename, 0, 17) . '...';
+			$stmt="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$server_ip','','Originate','$vmgr_callerid','Channel: $channelrec','Context: $ext_context','Exten: $exten','Priority: 1','Callerid: $leave_3way_start_recording_filename','','','','','');";
+				if ($format=='debug') {echo "\n<!-- $stmt -->";}
+			$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+
+			$stmt = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id,length_in_sec) values('$channel','$server_ip','$exten','$NOW_TIME','$StarTtime','$leave_3way_start_recording_filename','$lead_id','$user','$uniqueid','0')";
+				if ($format=='debug') {echo "\n<!-- $stmt -->";}
+			$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+			$RLaffected_rows = mysqli_affected_rows($link);
+			if ($RLaffected_rows > 0)
+				{
+				$recording_id = mysqli_insert_id($link);
+				}
+			}
+		}
+	##### END leave_3way_start_recording if triggered #####
+
 	if ($log_no_enter > 0)
 		{
 		$fp = fopen ("./vicidial_debug.txt", "a");
@@ -9693,10 +9759,10 @@ if ($ACTION == 'VDADcheckINCOMING')
 
 			$custom_field_names='|';
 			$custom_field_names_SQL='';
-			$custom_field_values='----------';
+			$custom_field_values='q--------q';
 			$custom_field_types='|';
 			### find the names of all custom fields, if any
-			$stmt = "SELECT field_label,field_type FROM vicidial_lists_fields where list_id='$entry_list_id' and field_type NOT IN('SCRIPT','DISPLAY','SWITCH') and field_label NOT IN('entry_date','vendor_lead_code','source_id','list_id','gmt_offset_now','called_since_last_reset','phone_code','phone_number','title','first_name','middle_initial','last_name','address1','address2','address3','city','state','province','postal_code','country_code','gender','date_of_birth','alt_phone','email','security_phrase','comments','called_count','last_local_call_time','rank','owner') and field_label NOT LIKE \"%_DUPLICATE_%\";";
+			$stmt = "SELECT field_label,field_type FROM vicidial_lists_fields where list_id='$entry_list_id' and field_type NOT IN('SCRIPT','DISPLAY','SWITCH','BUTTON') and field_label NOT IN('entry_date','vendor_lead_code','source_id','list_id','gmt_offset_now','called_since_last_reset','phone_code','phone_number','title','first_name','middle_initial','last_name','address1','address2','address3','city','state','province','postal_code','country_code','gender','date_of_birth','alt_phone','email','security_phrase','comments','called_count','last_local_call_time','rank','owner') and field_label NOT LIKE \"%_DUPLICATE_%\";";
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00339',$user,$server_ip,$session_name,$one_mysql_log);}
 			if ($DB) {echo "$stmt\n";}
@@ -9708,7 +9774,7 @@ if ($ACTION == 'VDADcheckINCOMING')
 				$custom_field_names .=	"$row[0]|";
 				$custom_field_names_SQL .=	"$row[0],";
 				$custom_field_types .=	"$row[1]|";
-				$custom_field_values .=	"----------";
+				$custom_field_values .=	"q--------q";
 				$d++;
 				}
 			if ($cffn_ct > 0)
@@ -9722,12 +9788,12 @@ if ($ACTION == 'VDADcheckINCOMING')
 				$cffv_ct = mysqli_num_rows($rslt);
 				if ($cffv_ct > 0)
 					{
-					$custom_field_values='----------';
+					$custom_field_values='q--------q';
 					$row=mysqli_fetch_row($rslt);
 					$d=0;
 					while ($cffn_ct > $d)
 						{
-						$custom_field_values .=	"$row[$d]----------";
+						$custom_field_values .=	"$row[$d]q--------q";
 						$d++;
 						}
 					$custom_field_values = preg_replace("/\n/"," ",$custom_field_values);
@@ -11029,10 +11095,10 @@ if ($ACTION == 'VDADcheckINCOMINGother')
 
 			$custom_field_names='|';
 			$custom_field_names_SQL='';
-			$custom_field_values='----------';
+			$custom_field_values='q--------q';
 			$custom_field_types='|';
 			### find the names of all custom fields, if any
-			$stmt = "SELECT field_label,field_type FROM vicidial_lists_fields where list_id='$entry_list_id' and field_type NOT IN('SCRIPT','DISPLAY','SWITCH') and field_label NOT IN('entry_date','vendor_lead_code','source_id','list_id','gmt_offset_now','called_since_last_reset','phone_code','phone_number','title','first_name','middle_initial','last_name','address1','address2','address3','city','state','province','postal_code','country_code','gender','date_of_birth','alt_phone','email','security_phrase','comments','called_count','last_local_call_time','rank','owner') and field_label NOT LIKE \"%_DUPLICATE_%\";";
+			$stmt = "SELECT field_label,field_type FROM vicidial_lists_fields where list_id='$entry_list_id' and field_type NOT IN('SCRIPT','DISPLAY','SWITCH','BUTTON') and field_label NOT IN('entry_date','vendor_lead_code','source_id','list_id','gmt_offset_now','called_since_last_reset','phone_code','phone_number','title','first_name','middle_initial','last_name','address1','address2','address3','city','state','province','postal_code','country_code','gender','date_of_birth','alt_phone','email','security_phrase','comments','called_count','last_local_call_time','rank','owner') and field_label NOT LIKE \"%_DUPLICATE_%\";";
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00512',$user,$server_ip,$session_name,$one_mysql_log);}
 			if ($DB) {echo "$stmt\n";}
@@ -11044,7 +11110,7 @@ if ($ACTION == 'VDADcheckINCOMINGother')
 				$custom_field_names .=	"$row[0]|";
 				$custom_field_names_SQL .=	"$row[0],";
 				$custom_field_types .=	"$row[1]|";
-				$custom_field_values .=	"----------";
+				$custom_field_values .=	"q--------q";
 				$d++;
 				}
 			if ($cffn_ct > 0)
@@ -11058,12 +11124,12 @@ if ($ACTION == 'VDADcheckINCOMINGother')
 				$cffv_ct = mysqli_num_rows($rslt);
 				if ($cffv_ct > 0)
 					{
-					$custom_field_values='----------';
+					$custom_field_values='q--------q';
 					$row=mysqli_fetch_row($rslt);
 					$d=0;
 					while ($cffn_ct > $d)
 						{
-						$custom_field_values .=	"$row[$d]----------";
+						$custom_field_values .=	"$row[$d]q--------q";
 						$d++;
 						}
 					$custom_field_values = preg_replace("/\n/"," ",$custom_field_values);
@@ -12151,10 +12217,10 @@ if ($ACTION == 'LeaDSearcHSelecTUpdatE')
 
 			$custom_field_names='|';
 			$custom_field_names_SQL='';
-			$custom_field_values='----------';
+			$custom_field_values='q--------q';
 			$custom_field_types='|';
 			### find the names of all custom fields, if any
-			$stmt = "SELECT field_label,field_type FROM vicidial_lists_fields where list_id='$entry_list_id' and field_type NOT IN('SCRIPT','DISPLAY','SWITCH') and field_label NOT IN('entry_date','vendor_lead_code','source_id','list_id','gmt_offset_now','called_since_last_reset','phone_code','phone_number','title','first_name','middle_initial','last_name','address1','address2','address3','city','state','province','postal_code','country_code','gender','date_of_birth','alt_phone','email','security_phrase','comments','called_count','last_local_call_time','rank','owner') and field_label NOT LIKE \"%_DUPLICATE_%\";";
+			$stmt = "SELECT field_label,field_type FROM vicidial_lists_fields where list_id='$entry_list_id' and field_type NOT IN('SCRIPT','DISPLAY','SWITCH','BUTTON') and field_label NOT IN('entry_date','vendor_lead_code','source_id','list_id','gmt_offset_now','called_since_last_reset','phone_code','phone_number','title','first_name','middle_initial','last_name','address1','address2','address3','city','state','province','postal_code','country_code','gender','date_of_birth','alt_phone','email','security_phrase','comments','called_count','last_local_call_time','rank','owner') and field_label NOT LIKE \"%_DUPLICATE_%\";";
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00479',$user,$server_ip,$session_name,$one_mysql_log);}
 			if ($DB) {echo "$stmt\n";}
@@ -12166,7 +12232,7 @@ if ($ACTION == 'LeaDSearcHSelecTUpdatE')
 				$custom_field_names .=	"$row[0]|";
 				$custom_field_names_SQL .=	"$row[0],";
 				$custom_field_types .=	"$row[1]|";
-				$custom_field_values .=	"----------";
+				$custom_field_values .=	"q--------q";
 				$d++;
 				}
 			if ($cffn_ct > 0)
@@ -12180,12 +12246,12 @@ if ($ACTION == 'LeaDSearcHSelecTUpdatE')
 				$cffv_ct = mysqli_num_rows($rslt);
 				if ($cffv_ct > 0)
 					{
-					$custom_field_values='----------';
+					$custom_field_values='q--------q';
 					$row=mysqli_fetch_row($rslt);
 					$d=0;
 					while ($cffn_ct > $d)
 						{
-						$custom_field_values .=	"$row[$d]----------";
+						$custom_field_values .=	"$row[$d]q--------q";
 						$d++;
 						}
 					$custom_field_values = preg_replace("/\n/"," ",$custom_field_values);
@@ -16533,7 +16599,7 @@ if ($ACTION == 'AGENTSview')
 
 		if ($comments=='AgentXferViewSelect')
 			{
-			$AXVSuserORDER[$j] =	"$full_name$US$j";
+			$AXVSuserORDER[$j] =	$full_name.'____________________'.$j;
 			$AXVSuser[$j] =			$user;
 			$AXVSfull_name[$j] =	$full_name;
 			$AXVScall_time[$j] =	$call_time;
@@ -16570,7 +16636,7 @@ if ($ACTION == 'AGENTSview')
 
 			if ($comments=='AgentXferViewSelect')
 				{
-				$AXVSuserORDER[$j] =	"$full_name$US$j";
+				$AXVSuserORDER[$j] =	$full_name.'____________________'.$j;
 				$AXVSuser[$j] =			$user;
 				$AXVSfull_name[$j] =	$full_name;
 				$AXVScall_time[$j] =	'0:00';
@@ -16610,7 +16676,7 @@ if ($ACTION == 'AGENTSview')
 		sort($AXVSuserORDER);
 		while ($j > $k)
 			{
-			$order_split = explode("_",$AXVSuserORDER[$k]);
+			$order_split = explode('____________________',$AXVSuserORDER[$k]);
 			$i = $order_split[1];
 
 			echo "<TR BGCOLOR=\"$AXVSstatuscolor[$i]\"><TD><font style=\"font-size: $AXVSfontsize; font-family: sans-serif;\"> &nbsp; <a href=\"#\" onclick=\"AgentsXferSelect('$AXVSuser[$i]','AgentXferViewSelect');return false;\">$AXVSuser[$i] - $AXVSfull_name[$i]</a>&nbsp;</font></TD>";

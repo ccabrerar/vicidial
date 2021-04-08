@@ -621,12 +621,13 @@ if ($SUBMIT)
 					if (strlen($list_description)>0) {$list_info=$list_description;} else {$list_info=$list_name;}
 
 					$list_start_inv=0;
+					$only_return=1;
 					GetListCount($list_id, $inventory_ptnstr);
 					$average_calls=sprintf("%.1f", MathZDC($total_calls, $list_start_inv));
-					$Xdialable_count_nofilter = dialable_leads($DB,$link,$local_call_time,"$dial_statuses",$list_id,$drop_lockout_time,$call_count_limit,$single_status,"");
+					$Xdialable_count_nofilter = dialable_leads($DB,$link,$local_call_time,"$dial_statuses",$list_id,$drop_lockout_time,$call_count_limit,$single_status,"",$only_return);
 					if (strlen($inactive_dial_statuses)>1) 
 						{
-						$Xdialable_inactive_count = dialable_leads($DB,$link,$local_call_time,"$inactive_dial_statuses",$list_id,$drop_lockout_time,$call_count_limit,$single_status,"$filter_SQL");
+						$Xdialable_inactive_count = dialable_leads($DB,$link,$local_call_time,"$inactive_dial_statuses",$list_id,$drop_lockout_time,$call_count_limit,$single_status,"$filter_SQL",$only_return);
 						} 
 					else 
 						{
@@ -634,10 +635,10 @@ if ($SUBMIT)
 						}
 
 					$oneoff_SQL=$filter_SQL." and (called_count < $call_count_limit-1) ";
-					$oneoff_count = dialable_leads($DB,$link,$local_call_time,"$dial_statuses",$list_id,$drop_lockout_time,$call_count_limit,$single_status,"$oneoff_SQL");
+					$oneoff_count = dialable_leads($DB,$link,$local_call_time,"$dial_statuses",$list_id,$drop_lockout_time,$call_count_limit,$single_status,"$oneoff_SQL",$only_return);
 
 					$full_dialable_SQL="";
-					$Xdialable_count = dialable_leads($DB,$link,$local_call_time,"$dial_statuses",$list_id,$drop_lockout_time,$call_count_limit,$single_status,"$filter_SQL");
+					$Xdialable_count = dialable_leads($DB,$link,$local_call_time,"$dial_statuses",$list_id,$drop_lockout_time,$call_count_limit,$single_status,"$filter_SQL",$only_return);
 
 					$penetration=sprintf("%.2f", (MathZDC(100*($list_start_inv-$Xdialable_count), $list_start_inv)));
 
@@ -788,11 +789,12 @@ if ($SUBMIT)
 
 				### For TOTAL counts, needs to be here instead of with other "total" variables further down in this particular report
 				$total_total_calls+=$total_calls;
+				$only_return=1;
 
-				$Xdialable_count_nofilter = dialable_leads($DB,$link,$local_call_time,"$dial_statuses",$selected_list,$drop_lockout_time,$call_count_limit,$single_status,"");
+				$Xdialable_count_nofilter = dialable_leads($DB,$link,$local_call_time,"$dial_statuses",$selected_list,$drop_lockout_time,$call_count_limit,$single_status,"",$only_return);
 				if (strlen($inactive_dial_statuses)>1) 
 					{
-					$Xdialable_inactive_count = dialable_leads($DB,$link,$local_call_time,"$inactive_dial_statuses",$selected_list,$drop_lockout_time,$call_count_limit,$single_status,"$filter_SQL");
+					$Xdialable_inactive_count = dialable_leads($DB,$link,$local_call_time,"$inactive_dial_statuses",$selected_list,$drop_lockout_time,$call_count_limit,$single_status,"$filter_SQL",$only_return);
 					} 
 				else 
 					{
@@ -800,10 +802,10 @@ if ($SUBMIT)
 					}
 
 				$oneoff_SQL=$filter_SQL." and (called_count < $call_count_limit-1) ";
-				$oneoff_count = dialable_leads($DB,$link,$local_call_time,"$dial_statuses",$selected_list,$drop_lockout_time,$call_count_limit,$single_status,"$oneoff_SQL");
+				$oneoff_count = dialable_leads($DB,$link,$local_call_time,"$dial_statuses",$selected_list,$drop_lockout_time,$call_count_limit,$single_status,"$oneoff_SQL",$only_return);
 
 				$full_dialable_SQL="";
-				$Xdialable_count = dialable_leads($DB,$link,$local_call_time,"$dial_statuses",$selected_list,$drop_lockout_time,$call_count_limit,$single_status,"$filter_SQL");
+				$Xdialable_count = dialable_leads($DB,$link,$local_call_time,"$dial_statuses",$selected_list,$drop_lockout_time,$call_count_limit,$single_status,"$filter_SQL",$only_return);
 				if ($DB > 0) {echo _QXZ("FULL DIALABLE SQL").": |$full_dialable_SQL|";}
 				}
 

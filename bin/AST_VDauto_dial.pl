@@ -1093,15 +1093,11 @@ while($one_day_interval > 0)
 				{$DBIPcount[$user_CIPct]=0;}
 
 			$DBIPgoalcalls[$user_CIPct] = ($DBIPadlevel[$user_CIPct] * $DBIPcount[$user_CIPct]);
-<<<<<<< .mine
-			if ($active_only > 0)
-=======
 			$tally_xfer_line_counter=0;
 			$temp_drop_IG='';
 			if ($DBIPdrop_action[$user_CIPct] =~ /IN_GROUP/i) 
 				{$temp_drop_IG=",'$DBIPdrop_inbound_group[$user_CIPct]'";}
 			if ($active_only > 0) 
->>>>>>> .r3357
 				{
 				### see how many VDAD calls are live as XFERs to agents
 				$stmtA = "SELECT count(*) FROM vicidial_auto_calls where server_ip='$DBIPaddress[$user_CIPct]' and campaign_id IN('$DBIPcampaign[$user_CIPct]'$temp_drop_IG) and status IN('XFER','CLOSER');";

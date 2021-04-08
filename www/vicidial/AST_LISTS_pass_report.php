@@ -1,7 +1,7 @@
 <?php 
 # AST_LISTS_pass_report.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This is a list inventory report, not a calling report. This report will show
 # statistics for all of the lists in the selected campaigns
@@ -24,6 +24,7 @@
 # 171012-2015 - Fixed javascript/apache errors with graphs
 # 180507-2315 - Added new help display
 # 191013-0828 - Fixes for PHP7
+# 210330-1659 - Added extra warnings and forced confirmation before running report
 #
 
 $startMS = microtime();
@@ -40,6 +41,8 @@ if (isset($_GET["group"]))				{$group=$_GET["group"];}
 	elseif (isset($_POST["group"]))		{$group=$_POST["group"];}
 if (isset($_GET["DB"]))					{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))		{$DB=$_POST["DB"];}
+if (isset($_GET["confirm_run"]))					{$confirm_run=$_GET["confirm_run"];}
+	elseif (isset($_POST["confirm_run"]))		{$confirm_run=$_POST["confirm_run"];}
 if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
 	elseif (isset($_POST["submit"]))	{$submit=$_POST["submit"];}
 if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
@@ -474,13 +477,15 @@ $MAIN.="<b>"._QXZ("$report_name")."</b> $NWB#LISTS_pass_report$NWE\n";
 $MAIN.="<TABLE CELLPADDING=3 CELLSPACING=0><TR><TD>";
 
 $MAIN.="<FORM ACTION=\"$PHP_SELF\" METHOD=GET name=vicidial_report id=vicidial_report>\n";
-$MAIN.="<TABLE CELLPADDING=3 CELLSPACING=0 BGCOLOR=\"#".$SSframe_background."\"><TR><TD VALIGN=TOP>";
+$MAIN.="<TABLE CELLPADDING=3 CELLSPACING=0 BGCOLOR=\"#".$SSframe_background."\">";
+$MAIN.="<TR><TD colspan='4' class='small_standard'>** Due to the complexity of this report, it is strongly recommended that it not be run during production as it can interfere with dialing. **</td>";
+$MAIN.="<TR><TD VALIGN=TOP>";
 $MAIN.="<INPUT TYPE=HIDDEN NAME=DB VALUE=\"$DB\">\n";
 $MAIN.="<INPUT TYPE=HIDDEN NAME=use_lists VALUE=\"$use_lists\">\n";
 
 if ($use_lists > 0)
 	{
-	$MAIN.="</TD><TD VALIGN=TOP> "._QXZ("Lists").":<BR>";
+	$MAIN.="</TD><TD VALIGN=TOP class='standard'> "._QXZ("Lists").":<BR>";
 	$MAIN.="<SELECT SIZE=5 NAME=group[] multiple>\n";
 	if  (preg_match('/\-\-ALL\-\-/',$group_string))
 		{$MAIN.="<option value=\"--ALL--\" selected>-- "._QXZ("ALL LISTS")." --</option>\n";}
@@ -498,7 +503,7 @@ if ($use_lists > 0)
 	}
 else
 	{
-	$MAIN.="</TD><TD VALIGN=TOP> "._QXZ("Campaigns").":<BR>";
+	$MAIN.="</TD><TD VALIGN=TOP class='standard'> "._QXZ("Campaigns").":<BR>";
 	$MAIN.="<SELECT SIZE=5 NAME=group[] multiple>\n";
 	if  (preg_match('/\-\-ALL\-\-/',$group_string))
 		{$MAIN.="<option value=\"--ALL--\" selected>-- "._QXZ("ALL CAMPAIGNS")." --</option>\n";}
@@ -514,7 +519,7 @@ else
 	$MAIN.="</SELECT>\n<BR>\n";
 	$MAIN.="<a href=\"$PHP_SELF?use_lists=1&DB=$DB\">"._QXZ("SWITCH TO LISTS")."</a>";
 	}
-$MAIN.="</TD><TD VALIGN=TOP>";
+$MAIN.="</TD><TD VALIGN=TOP class='standard'>";
 $MAIN.=_QXZ("Display as").":<BR/>";
 $MAIN.="<select name='report_display_type'>";
 if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
@@ -525,19 +530,18 @@ if ($archives_available=="Y")
 	}
 $MAIN.="<BR><BR>\n";
 $MAIN.="<INPUT style='background-color:#$SSbutton_color' type=submit NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>\n";
-$MAIN.="</TD><TD VALIGN=TOP> &nbsp; &nbsp; &nbsp; &nbsp; ";
-$MAIN.="<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
+$MAIN.="</TD><TD VALIGN=TOP class='standard'> &nbsp; &nbsp; &nbsp; &nbsp; ";
 if ($use_lists > 0)
 	{
 	if (strlen($group[0]) > 1)
 		{
 		$MAIN.=" <a href=\"./admin.php?ADD=311&list_id=$group[0]\">"._QXZ("MODIFY")."</a> | \n";
-		$MAIN.=" <a href=\"./admin.php?ADD=999999\">"._QXZ("REPORTS")."</a> </FONT>\n";
+		$MAIN.=" <a href=\"./admin.php?ADD=999999\">"._QXZ("REPORTS")."</a>\n";
 		}
 	else
 		{
 		$MAIN.=" <a href=\"./admin.php?ADD=100\">"._QXZ("LISTS")."</a> | \n";
-		$MAIN.=" <a href=\"./admin.php?ADD=999999\">"._QXZ("REPORTS")."</a> </FONT>\n";
+		$MAIN.=" <a href=\"./admin.php?ADD=999999\">"._QXZ("REPORTS")."</a>\n";
 		}
 	}
 else
@@ -545,12 +549,12 @@ else
 	if (strlen($group[0]) > 1)
 		{
 		$MAIN.=" <a href=\"./admin.php?ADD=34&campaign_id=$group[0]\">"._QXZ("MODIFY")."</a> | \n";
-		$MAIN.=" <a href=\"./admin.php?ADD=999999\">"._QXZ("REPORTS")."</a> </FONT>\n";
+		$MAIN.=" <a href=\"./admin.php?ADD=999999\">"._QXZ("REPORTS")."</a>\n";
 		}
 	else
 		{
 		$MAIN.=" <a href=\"./admin.php?ADD=10\">"._QXZ("CAMPAIGNS")."</a> | \n";
-		$MAIN.=" <a href=\"./admin.php?ADD=999999\">"._QXZ("REPORTS")."</a> </FONT>\n";
+		$MAIN.=" <a href=\"./admin.php?ADD=999999\">"._QXZ("REPORTS")."</a>\n";
 		}
 	}
 $MAIN.="</TD></TR></TABLE>";
@@ -564,7 +568,10 @@ if (strlen($group[0]) < 1)
 	$MAIN.="\n\n";
 	$MAIN.=_QXZ("PLEASE SELECT A CAMPAIGN ABOVE AND CLICK SUBMIT")."\n";
 	}
-
+else if (strlen($group[0]) >= 1 && !$confirm_run)
+	{
+	$MAIN.="<font color='#900' size='3'><B>"._QXZ("REMINDER - THIS REPORT CAN TAKE A LONG TIME TO RUN AND WILL INTERFERE WITH DIALING IF EXECUTED DURING PRODUCTION.")."<BR>"._QXZ("IF YOU ARE SURE YOU WOULD LIKE TO RUN THE REPORT AT THIS TIME")." <a href=\"$PHP_SELF?DB=$DB$groupQS&SUBMIT=$SUBMIT&confirm_run=1&search_archived_data=$search_archived_data\">"._QXZ("CLICK HERE")."</a></B></font>";
+	}
 else
 	{
 	$OUToutput = '';
@@ -878,13 +885,13 @@ else
 		$SA_three_results = mysqli_num_rows($rslt);
 		if ($SA_three_results > 0)
 			{$row=mysqli_fetch_row($rslt); $SA_three_count = $row[0];}
-		$stmt="select count(*) from ".$vicidial_log_table." where called_count='4' and status IN($sale_statuses) and list_id='$LISTIDlists[$i]';";
+		$stmt="select count(*) from ".$vicidial_log_table." where called_count=4 and status IN($sale_statuses) and list_id='$LISTIDlists[$i]';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		if ($DB) {$MAIN.="$stmt\n";}
 		$SA_four_results = mysqli_num_rows($rslt);
 		if ($SA_four_results > 0)
 			{$row=mysqli_fetch_row($rslt); $SA_four_count = $row[0];}
-		$stmt="select count(*) from ".$vicidial_log_table." where called_count='5' and status IN($sale_statuses) and list_id='$LISTIDlists[$i]';";
+		$stmt="select count(*) from ".$vicidial_log_table." where called_count=5 and status IN($sale_statuses) and list_id='$LISTIDlists[$i]';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		if ($DB) {$MAIN.="$stmt\n";}
 		$SA_five_results = mysqli_num_rows($rslt);
@@ -987,13 +994,13 @@ else
 		$DN_three_results = mysqli_num_rows($rslt);
 		if ($DN_three_results > 0)
 			{$row=mysqli_fetch_row($rslt); $DN_three_count = $row[0];}
-		$stmt="select count(*) from ".$vicidial_log_table." where called_count='4' and status IN($dnc_statuses) and list_id='$LISTIDlists[$i]';";
+		$stmt="select count(*) from ".$vicidial_log_table." where called_count=4 and status IN($dnc_statuses) and list_id='$LISTIDlists[$i]';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		if ($DB) {$MAIN.="$stmt\n";}
 		$DN_four_results = mysqli_num_rows($rslt);
 		if ($DN_four_results > 0)
 			{$row=mysqli_fetch_row($rslt); $DN_four_count = $row[0];}
-		$stmt="select count(*) from ".$vicidial_log_table." where called_count='5' and status IN($dnc_statuses) and list_id='$LISTIDlists[$i]';";
+		$stmt="select count(*) from ".$vicidial_log_table." where called_count=5 and status IN($dnc_statuses) and list_id='$LISTIDlists[$i]';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		if ($DB) {$MAIN.="$stmt\n";}
 		$DN_five_results = mysqli_num_rows($rslt);
@@ -1096,13 +1103,13 @@ else
 		$CC_three_results = mysqli_num_rows($rslt);
 		if ($CC_three_results > 0)
 			{$row=mysqli_fetch_row($rslt); $CC_three_count = $row[0];}
-		$stmt="select count(*) from ".$vicidial_log_table." where called_count='4' and status IN($customer_contact_statuses) and list_id='$LISTIDlists[$i]';";
+		$stmt="select count(*) from ".$vicidial_log_table." where called_count=4 and status IN($customer_contact_statuses) and list_id='$LISTIDlists[$i]';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		if ($DB) {$MAIN.="$stmt\n";}
 		$CC_four_results = mysqli_num_rows($rslt);
 		if ($CC_four_results > 0)
 			{$row=mysqli_fetch_row($rslt); $CC_four_count = $row[0];}
-		$stmt="select count(*) from ".$vicidial_log_table." where called_count='5' and status IN($customer_contact_statuses) and list_id='$LISTIDlists[$i]';";
+		$stmt="select count(*) from ".$vicidial_log_table." where called_count=5 and status IN($customer_contact_statuses) and list_id='$LISTIDlists[$i]';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		if ($DB) {$MAIN.="$stmt\n";}
 		$CC_five_results = mysqli_num_rows($rslt);
@@ -1205,13 +1212,13 @@ else
 		$UW_three_results = mysqli_num_rows($rslt);
 		if ($UW_three_results > 0)
 			{$row=mysqli_fetch_row($rslt); $UW_three_count = $row[0];}
-		$stmt="select count(*) from ".$vicidial_log_table." where called_count='4' and status IN($unworkable_statuses) and list_id='$LISTIDlists[$i]';";
+		$stmt="select count(*) from ".$vicidial_log_table." where called_count=4 and status IN($unworkable_statuses) and list_id='$LISTIDlists[$i]';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		if ($DB) {$MAIN.="$stmt\n";}
 		$UW_four_results = mysqli_num_rows($rslt);
 		if ($UW_four_results > 0)
 			{$row=mysqli_fetch_row($rslt); $UW_four_count = $row[0];}
-		$stmt="select count(*) from ".$vicidial_log_table." where called_count='5' and status IN($unworkable_statuses) and list_id='$LISTIDlists[$i]';";
+		$stmt="select count(*) from ".$vicidial_log_table." where called_count=5 and status IN($unworkable_statuses) and list_id='$LISTIDlists[$i]';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		if ($DB) {$MAIN.="$stmt\n";}
 		$UW_five_results = mysqli_num_rows($rslt);
@@ -1314,13 +1321,13 @@ else
 		$BA_three_results = mysqli_num_rows($rslt);
 		if ($BA_three_results > 0)
 			{$row=mysqli_fetch_row($rslt); $BA_three_count = $row[0];}
-		$stmt="select count(*) from ".$vicidial_log_table." where called_count='4' and status IN($scheduled_callback_statuses) and list_id='$LISTIDlists[$i]';";
+		$stmt="select count(*) from ".$vicidial_log_table." where called_count=4 and status IN($scheduled_callback_statuses) and list_id='$LISTIDlists[$i]';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		if ($DB) {$MAIN.="$stmt\n";}
 		$BA_four_results = mysqli_num_rows($rslt);
 		if ($BA_four_results > 0)
 			{$row=mysqli_fetch_row($rslt); $BA_four_count = $row[0];}
-		$stmt="select count(*) from ".$vicidial_log_table." where called_count='5' and status IN($scheduled_callback_statuses) and list_id='$LISTIDlists[$i]';";
+		$stmt="select count(*) from ".$vicidial_log_table." where called_count=5 and status IN($scheduled_callback_statuses) and list_id='$LISTIDlists[$i]';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		if ($DB) {$MAIN.="$stmt\n";}
 		$BA_five_results = mysqli_num_rows($rslt);
@@ -1423,13 +1430,13 @@ else
 		$MP_three_results = mysqli_num_rows($rslt);
 		if ($MP_three_results > 0)
 			{$row=mysqli_fetch_row($rslt); $MP_three_count = $row[0];}
-		$stmt="select count(*) from ".$vicidial_log_table." where called_count='4' and status IN($completed_statuses) and list_id='$LISTIDlists[$i]';";
+		$stmt="select count(*) from ".$vicidial_log_table." where called_count=4 and status IN($completed_statuses) and list_id='$LISTIDlists[$i]';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		if ($DB) {$MAIN.="$stmt\n";}
 		$MP_four_results = mysqli_num_rows($rslt);
 		if ($MP_four_results > 0)
 			{$row=mysqli_fetch_row($rslt); $MP_four_count = $row[0];}
-		$stmt="select count(*) from ".$vicidial_log_table." where called_count='5' and status IN($completed_statuses) and list_id='$LISTIDlists[$i]';";
+		$stmt="select count(*) from ".$vicidial_log_table." where called_count=5 and status IN($completed_statuses) and list_id='$LISTIDlists[$i]';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		if ($DB) {$MAIN.="$stmt\n";}
 		$MP_five_results = mysqli_num_rows($rslt);

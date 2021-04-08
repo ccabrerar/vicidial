@@ -30,6 +30,11 @@ eventfilter=Event: Newstate
 eventfilter=Event: Hangup
 eventfilter=!Event: HangupRequest
 
+; Optional
+eventfilter=Event: PeerStatus
+eventfilter=Event: SIPRTPDisconnect
+eventfilter=Event: PeerRegistered
+eventfilter=Event: SIPCriticalTimeout
 
 [sendcron]
 secret = 1234

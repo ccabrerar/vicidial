@@ -6,6 +6,7 @@
 # CHANGELOG
 # 160116-1349 - First Build
 # 170409-1538 - Added IP List validation code
+# 210401-1625 - Added no_redirect for logging when playing a Javascript audio object
 #
  
 require("dbconnect_mysqli.php");
@@ -19,6 +20,8 @@ if (isset($_GET["recording_id"]))			{$recording_id=$_GET["recording_id"];}
 	elseif (isset($_POST["recording_id"]))	{$recording_id=$_POST["recording_id"];}
 if (isset($_GET["lead_id"]))				{$lead_id=$_GET["lead_id"];}
 	elseif (isset($_POST["lead_id"]))		{$lead_id=$_POST["lead_id"];}
+if (isset($_GET["no_redirect"]))				{$no_redirect=$_GET["no_redirect"];}
+	elseif (isset($_POST["no_redirect"]))		{$no_redirect=$_POST["no_redirect"];}
 if (isset($_GET["search_archived_data"]))			{$search_archived_data=$_GET["search_archived_data"];}
 	elseif (isset($_POST["search_archived_data"]))	{$search_archived_data=$_POST["search_archived_data"];}
 
@@ -173,5 +176,13 @@ else
 $log_stmt="insert into vicidial_recording_access_log(recording_id, lead_id, user, access_datetime, access_result, ip) VALUES('$recording_id', $lead_id, '$PHP_AUTH_USER', now(), 'ACCESSED', '$ip')";
 $log_rslt=mysql_to_mysqli($log_stmt, $link);
 
-header("Location: $location");
+if (!$no_redirect)
+	{
+	header("Location: $location");
+	}
+else
+	{
+	echo "OK"; // DO NOT TRANSLATE THIS - IT'S A FLAG FOR JAVASCRIPT
+	exit;
+	}
 ?>

@@ -1,10 +1,10 @@
-WEBSOCKETS DOC	Started: 2018-02-23	Updated: 2020-08-26
+WEBSOCKETS DOC			Started: 2018-02-23	Updated: 2021-03-27
 
 
 
 This document will go over how we have helped clients integrate with WebSockets-based applications through the VICIdial agent screen.
 
-Support for WebSocket applications was added to the agent screen on 2018-04-25(svn/trunk revision 2974) with the addition of the following variables to the "agc/options.php" file:
+Support for WebSocket applications was added to the agent screen on 2018-04-25(svn/trunk revision 2974) with the addition of the following variables to the "agc/options.php" file on your webserver:
 
 $INSERT_head_script	= '';	# inserted right above the <script language="Javascript"> line after logging in
 $INSERT_head_js		= '';	# inserted after first javascript function
@@ -40,3 +40,10 @@ NOTES:
 
 There are multiple platforms that you can develop a WebSocket-compatible application on, one of them that our clients have used that is open-source based is Qt:
 https://www.qt.io/
+
+
+
+NOTES:
+- If your network uses a proxy to connect to a server using WebSockets(or other SSE), or you are on an older network, you may have issues with WebSockets that are not a problem with old HTTP polling technologies like AJAX(XMLHttpRequest).
+- WebSockets and other SSE technologies don't offer any easy way of monitoring the time it takes to deliver messages, or in some cases even if the message has been delivered.
+- WebSockets and other SSE technologies tie up persisten connections, which may cause load issues on larger implementations.

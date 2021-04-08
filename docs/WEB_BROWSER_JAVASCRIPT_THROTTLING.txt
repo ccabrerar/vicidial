@@ -1,0 +1,109 @@
+WEB BROWSER JAVASCRIPT THROTTLING	Started: 2021-03-25	Updated: 2021-03-27
+
+
+
+This document will go over issues related to Javascript timer action throttling in web browsers and how this affects the VICIdial Agent Screen.
+
+
+
+
+
+WHAT IS JAVASCRIPT THROTTLING AND HOW DOES IT AFFECT THE VICIDIAL AGENT SCREEN?
+
+Prior to 2017, most web browsers limited the frequency of Javascript timers to once-per-second in all tabs and windows. This does not affect VICIdial operations because none of our timers need to run more frequently than once a second.
+
+In 2017, the Google Chrome development team announced that, in an effort to reduce power usage, they would begin "throttling" Javascript past the previous once-per-second standard for tabs in the "background" that use more than 1% of CPU cycles on your computer. This change went into effect in Chrome build 57 in March of 2017.
+
+In early 2021, Google Chrome build 88 changed this behavior by default and enabled what they call "Intensive Javascript Throttling" which would only affect hidden tabs starting at 5 minutes being hidden, with no audio having played for 30 seconds and no Web RTC connections on the page(like VICIphone). This "Intensive" throttling actually begins as soon as the VICIdial Agent Screen is hidden from view by only allowing it to refresh every 2 seconds, instead of the standard every 1 second that happens when the agent screen is visible. Then after 5 minutes of being hidden, the refresh rate is limited to once every minute(usually at a set number of seconds past the minute, like :02, :22, etc...). At this point, the VICIdial Agent Screen will become unusable unless you make it visible right away, and the agent session will pause automatically.
+
+NOTE: Any web browser that is based on the Chromium Open-Source codebase, like Google Chrome and Microsoft Edge, might be affected by this issue.
+
+
+
+
+HOW TO PREVENT JAVASCRIPT THROTTLING FROM ACTIVATING IN THE VICIDIAL AGENT SCREEN:
+
+Below are the ways you can prevent Chrome's Intensive Javascript Throttling from activating on your VICIdial Agent Screens, with more in-depth explanations of each method following below that. Any of these methods will work by themselves.
+
+1. Switch to Firefox
+2. Manually disable the Chrome throttling flag on each of your agent's web browsers
+3. Use a WebRTC phone for your agent phone connection(like VICIphone)
+4. Enable the VICIdial System Settings for "Agent Hidden Browser Sound"
+5. Switch the VICIdial System Setting for "Agent Screen Timer" to 'EventSource'
+
+
+More information on each of the above...
+
+
+1. SWITCH YOUR AGENTS TO THE FIREFOX WEB BROWSER
+
+While this may not be the best long-term solution, Firefox has not yet enabled the same kind of Intensive throttling that is now in the Chrome web browser by default, so simply switching to a Firefox web browser will remove the chance that your hidden agent screens will go paused because of this new "feature" in Chrome. You can download the Firefox web browser here: https://www.mozilla.org/en-US/firefox/new/
+
+
+
+2. MANUALLY DISABLE THE CHROME THROTTLING FLAG ON EACH OF YOUR AGENT'S WEB BROWSERS
+
+The following steps must be done on every computer that you want to disable the Chrome browser Intensive Javascript Throttling on:
+
+- Open your Chrome Web Browser
+- in the Address bar at the top, put the following(without quotes), then press the "Enter" key: "chrome://flags/#intensive-wake-up-throttling"
+- You will see "Throttle Javascript timers in background" highlighted with a pull-down menu on the right side of the screen
+- Select the "Disabled" option from the pull-down menu
+- You will see a message at the bottom of your screen: "Your changes will take effect the next time you relaunch Google Chrome." with a button to "Relaunch"
+- Click on the "Relaunch" button and the Throttling feature will now be disabled in Chrome on this computer
+
+
+
+3. USE A WEBRTC PHONE FOR YOUR AGENT PHONE CONNECTION(LIKE VICIPHONE)
+
+Having a WebRTC connection active on a Chrome tab will automatically disable Intensive Javascript Throttling. If you already use it for your agent phone connections, then your're set! If not, then I would suggest taking a look at our VICIphone website(it's also free and open-source, just like VICIdial is):
+https://viciphone.com/
+
+
+
+4. ENABLE THE VICIDIAL SYSTEM SETTINGS FOR "AGENT HIDDEN BROWSER SOUND"
+
+Since we wanted to create an option for clients that did not want to have to manually disable throttling on all of their agent workstations(made especially difficult for at-home agents), we added a new feature to VICIdial that you can use if you are running the svn/trunk revision 3399 or higher(that's vicidial.php version '2.14-629c', build '210322-1301' or higher).
+
+This new feature will play a barely-audible sound through the agent screen every X seconds(must be less than 30 and more than 0) only when the agent screen is hidden from view, that will prevent Intensive Javascript Throttling in Chrome 88 from activating.
+
+The new feature is activated in System Settings, using the "Agent Hidden Browser Sound/volume" and "Agent Hidden Browser Sound Seconds" settings.
+
+We have tested the following settings and found them to be effective on all client systems we have used them on:
+- Set "Agent Hidden Browser Sound" to 'click_quiet'
+- Set "volume" to '25'
+- Set "Agent Hidden Browser Sound Seconds" to '20'
+
+Adding this new feature also required us to add Agent Screen Visibility Logging to VICIdial, so you can now also view statistics of how long your agents' screens were visible to them in the Agent Time Detail report and the User Stats report.
+
+
+
+5. SWITCH THE VICIDIAL SYSTEM SETTING FOR "AGENT SCREEN TIMER" TO 'EventSource'
+
+Thanks to 'fperdomo' on the VICIdial Forums for posting a simple method using SSE to work-around the Chrome JavasScript Throttling issue by replacing the JavaScript "setTimeout()" with an "EventSource()" that runs once a second. After some fine-tuning and testing in different web browsers, we committed this as an optional System Setting called "Agent Screen Timer" to the VICIdial codebase in svn/trunk revision 3407. Since EventSource SSE uses open connection streaming over HTTP, some older networks and proxy servers may have problems handling the open connections, so be sure to test on your network before enabling during production times.
+
+
+
+
+
+THE FUTURE
+
+It looks like the maintainers of Chrome have every intention of increasing Javascript Throttling in the future, but hopefully they will leave the above methods for disabling it in place.
+
+
+Why not switch the VICIdial Agent Screen from AJAX(Polling) to using streaming server connections (SSE, Server-Sent-Events) like EventSource or WebSockets?
+
+First of all, switching to SSE would take a tremendous amount of development and testing time since none of the code is set to work like that currently.
+
+Second, this would require moving some of the data processing to the server, and it would require presistent connections to web services, which could greatly reduce webserver capacity.
+
+Third, some older networks and proxy servers do not support perpetual connections like SSE uses, which will cause the network to fail to transmit all data to the client workstation, so it is not a one-size-fits-all solution like AJAX has been for the last 16 years.
+
+
+
+
+
+FOR MORE INFORMATION
+
+Here is the Chrome maintainers post on how Javascript Throttling works, starting in Chromer 88:
+https://developer.chrome.com/blog/timer-throttling-in-chrome-88/

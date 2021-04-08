@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2021-03-22
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2021-04-06
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -181,6 +181,11 @@ Changes:
 210319-1720 - Added special 'xDAYS' value option for callback_datetime
 210320-2127 - Added 'custom_fields_add' option for update_list function
 210322-1218 - Added display of bad wav file formats on sounds_list function
+210325-2042 - Added more data output fields to agent_stats_export function
+210330-1633 - Added ability to use custom_fields_copy on update_list on a deleted list_id
+210401-1058 - Added 'custom_fields_update' option for update_list function
+210402-1102 - Added 'custom_fields_delete' option for update_list function
+210406-1047 - Added 'dialable_count' option to list_info function
 
 API Functions use the 'function' variable
 
@@ -568,9 +573,9 @@ ERROR: agent_stats_export INVALID SEARCH PARAMETERS - 6666||2010-12-03 00:00:00|
 ERROR: agent_stats_export NO RECORDS FOUND - 1255||2010-12-03 00:00:00|2010-12-03 00:00:01|
 
 A SUCCESS response will not show "SUCCESS", but instead will just print the results in the following format:
-user|full_name|user_group|calls|login_time|total_talk_time|avg_talk_time|avg_wait_time|pct_of_queue|pause_time|sessions|avg_session|pauses|avg_pause_time|pause_pct|pauses_per_session|total_wait_time
-1029|test agent|ADMIN|1|0:01:52|0:00:16|0:00:16|0:00:18|16.7%|54|3|0:00:37|5|0:00:11|48.2%|2|0:00:32
-6666|Admin|ADMIN|5|0:04:11|0:01:48|0:00:22|0:00:17|83.3%|27|2|0:02:06|4|0:00:07|10.8%|2|0:00:32
+user|full_name|user_group|calls|login_time|total_talk_time|avg_talk_time|avg_wait_time|pct_of_queue|pause_time|sessions|avg_session|pauses|avg_pause_time|pause_pct|pauses_per_session|wait_time|talk_time|dispo_time|dead_time
+1029|test agent|ADMIN|1|0:01:52|0:00:16|0:00:16|0:00:18|16.7%|54|3|0:00:37|5|0:00:11|48.2%|2|0:00:32|0:07:54|0:01:22|0:00:00
+6666|Admin user|ADMIN|16|0:34:31|0:07:54|0:00:00|0:00:07|100%|1411|13|0:02:39|42|0:00:34|68.1%|3|0:01:44|0:07:54|0:01:22|0:00:00
 
 * if the 'group_by_campaign' option is enabled, the format above will have 'campaign_id' as the first column, and each agent's activity will be divided on separate lines by the campaigns they were logged into during the requested time period.
 
@@ -1741,7 +1746,7 @@ custom_fields_add -	Must be one of these: 'Y','N', will default to 'N'. The fiel
 	field_rerank -		If there is an existing field of the same rank, move the existing ones down the list, 'YES','NO' default is 'NO'
 	field_max -		The maximum size of data allowed in the field
 	field_default -		The default value of the field
-	field_options -		The field options for this field
+	field_options -		The field options for this field, If not POSTing variables, to start a new line, use '%0A', for a pipe '|' use '%7C'
 	field_duplicate -	If this is a duplicate of another existing field for this list ID: 'Y','N' default is 'N'
 	field_description -	Description of the field
 	field_help -		The help text for this field as it appears to the agent in the custom form
@@ -1750,6 +1755,10 @@ custom_fields_add -	Must be one of these: 'Y','N', will default to 'N'. The fiel
 	name_position -		The position of the name of the field: 'TOP','LEFT' default is 'LEFT'
 	field_encrypt -		If this is to be an encrypted field(a VICIhost-only feature, if enabled): 'Y','N' default is 'N'
 	field_show_hide -	If the field is to be hidden(a VICIhost-only feature, if enabled): 'DISABLED','X_OUT_ALL','LAST_1','LAST_2','LAST_3','LAST_4','FIRST_1_LAST_4'
+custom_fields_update -	Must be one of these: 'Y','N', will default to 'N'. The fields shown above are all optional except for 'field_label' which is required for this to work
+	* For 'custom_fields_update' only, you can set the following fields to '--BLANK--' to have them changed to an empty '' value:
+		field_description, $field_help, $field_options, $field_default
+custom_fields_delete -	Must be one of these: 'Y','N', will default to 'N'. The 'field_label' field is required for this to work
 
 NOTES: 
  - in order to set a field to empty('') set it equal to --BLANK--, i.e. "&drop_inbound_group=--BLANK--"
@@ -1766,6 +1775,9 @@ http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&functio
 http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_list&list_id=1102&campaign_id=ASTRICON
 http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_list&list_id=99883&custom_copy_method=APPEND&custom_fields_copy=9988
 http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_list&list_id=9988&custom_fields_add=Y&field_label=new_api_field4&field_name=new+API+field4&field_size=20&field_type=TEXT&field_rank=16
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_list&list_id=9988&custom_fields_update=Y&field_label=Utility&field_options=1,1_1_hello%0A2,2_2_hello%0A3,3_3_hello
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_list&list_id=9988&custom_fields_update=Y&field_label=bill_period3&field_options=source=%3Ebill_start_month3%0Avalue=%3ESeptember%0Aoption=%3E%7Cselect%20bill-period-1%0Aoption=%3E1_month%7C1%20Month%0Aoption=%3E2_months%7C2%20Months%0Aoption=%3E3_months%7C3%20Months%0Avalue=%3E%0Aoption=%3E%7Cno%20match
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_list&list_id=5040379&custom_fields_delete=Y&field_label=new_api_field6
 
 Example responses:
 ERROR: update_list USER DOES NOT HAVE PERMISSION TO UPDATE LISTS - 6666
@@ -1804,8 +1816,18 @@ NOTICE: update_list COPY CUSTOM FIELDS COMMAND SENT - 6666|1101|APPEND|ERROR: Fi
 NOTICE: update_list COPY CUSTOM FIELDS COMMAND SENT - 6666|1101|APPEND|SUCCESS: Fields copied|
 NOTICE: update_list CUSTOM FIELDS LIST ID TO ADD TO HAS NO CUSTOM FIELDS, THIS IS AN OPTIONAL FIELD - 6666|1101
 NOTICE: update_list REQUIRED CUSTOM FIELDS VARIABLES ARE MISSING, FIELD NOT ADDED, THIS IS AN OPTIONAL FIELD - 6666|1101||||||
+NOTICE: update_list CUSTOM FIELDS LIST ID TO UPDATE TO HAS NO CUSTOM FIELDS, THIS IS AN OPTIONAL FIELD - 6666|1101||||||
+NOTICE: update_list REQUIRED CUSTOM FIELDS VARIABLES ARE MISSING, FIELD NOT UPDATED, THIS IS AN OPTIONAL FIELD - 6666|1101|||
+NOTICE: update_list FIELD DOES NOT EXIST, FIELD NOT UPDATED, THIS IS AN OPTIONAL FIELD - 6666|1101|abc|||||
+NOTICE: update_list CUSTOM FIELDS LIST ID TO DELETE TO HAS NO CUSTOM FIELDS, THIS IS AN OPTIONAL FIELD - 6666|1101|
+NOTICE: update_list REQUIRED CUSTOM FIELDS VARIABLES ARE MISSING, FIELD NOT DELETED, THIS IS AN OPTIONAL FIELD - 6666|1101|||
+NOTICE: update_list FIELD DOES NOT EXIST, FIELD NOT DELETED, THIS IS AN OPTIONAL FIELD - 6666|1101|abc|
 NOTICE: update_list ADD CUSTOM FIELD COMMAND SENT - 6666|1101|new_field|TEXT|ERROR: Field not added|
 NOTICE: update_list ADD CUSTOM FIELD COMMAND SENT - 6666|1101|new_field|TEXT|SUCCESS: Field added|
+NOTICE: update_list UPDATE CUSTOM FIELD COMMAND SENT - 6666|1101|new_field|TEXT|ERROR: Field not updated|
+NOTICE: update_list UPDATE CUSTOM FIELD COMMAND SENT - 6666|1101|new_field|TEXT|SUCCESS: Field updated|
+NOTICE: update_list DELETE CUSTOM FIELD COMMAND SENT - 6666|1101|new_field|TEXT|ERROR: Field not deleted|
+NOTICE: update_list DELETE CUSTOM FIELD COMMAND SENT - 6666|1101|new_field|TEXT|SUCCESS: Field deleted|
 
 
 
@@ -1822,6 +1844,7 @@ source -		description of what originated the API call (maximum 20 characters)
 
 SETTINGS FIELDS- (optional)
 leads_counts -		Y or N, will include the counts of all leads and NEW status leads in the response, default is 'N'
+dialable_count -	Y or N, will use the list's campaign settings to provide a count of how many are dialable right now, default is 'N'
 stage -			the format of the exported data: csv, tab, pipe(default)
 header -		include a header(YES) or not(NO). This is optional, default is not to include a header
 
@@ -2038,9 +2061,9 @@ file_download -		[0,1] Download as a CSV file, default 0
 
 Example URL strings for API calls:
 http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=call_dispo_report&ingroups=TEST_IN3-TEST_IN2&query_date=2018-02-05&end_date=2018-02-07
-http://svn.eflo.net:40080/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=call_dispo_report&ingroups=TEST_IN3-TEST_IN2&query_date=2018-02-05&end_date=2018-02-07&status_breakdown=1
-http://svn.eflo.net:40080/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=call_dispo_report&did_patterns=7275551113&query_date=2018-02-05&end_date=2018-02-07&status_breakdown=1
-http://svn.eflo.net:40080/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=call_dispo_report&ingroups=TEST_IN3-TEST_IN2&query_date=2018-02-05&end_date=2018-02-07&status_breakdown=1&show_percentages=1
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=call_dispo_report&ingroups=TEST_IN3-TEST_IN2&query_date=2018-02-05&end_date=2018-02-07&status_breakdown=1
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=call_dispo_report&did_patterns=7275551113&query_date=2018-02-05&end_date=2018-02-07&status_breakdown=1
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=call_dispo_report&ingroups=TEST_IN3-TEST_IN2&query_date=2018-02-05&end_date=2018-02-07&status_breakdown=1&show_percentages=1
 
 Example responses:
 ERROR: call_dispo_report INVALID OR MISSING CAMPAIGNS, INGROUPS, OR DIDS

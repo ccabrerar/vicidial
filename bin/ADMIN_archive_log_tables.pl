@@ -60,6 +60,7 @@
 # 200102-0846 - Added vicidial_vmm_counts archiving
 # 201107-2206 - Added optional park_log archiving
 # 210317-2104 - Added vicidial_agent_visibility_log archiving
+# 210407-2023 - Added vicidial_peer_event_log archiving
 #
 
 $CALC_TEST=0;
@@ -2133,6 +2134,60 @@ if (!$T)
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		}
 
+
+	##### vicidial_peer_event_log
+	$vicidial_peer_event_log_count_mil=0;
+	$stmtA = "SELECT count(*) from vicidial_peer_event_log;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$vicidial_peer_event_log_count =	$aryA[0];
+		}
+	$sthA->finish();
+	$vicidial_peer_event_log_count_mil = ($vicidial_peer_event_log_count - 1000000);
+
+	$stmtA = "SELECT count(*) from vicidial_peer_event_log_archive;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$vicidial_peer_event_log_archive_count =	$aryA[0];
+		}
+	$sthA->finish();
+
+	if (!$Q) {print "\nProcessing vicidial_peer_event_log table...  ($vicidial_peer_event_log_count|$vicidial_peer_event_log_archive_count)\n";}
+	$stmtA = "INSERT IGNORE INTO vicidial_peer_event_log_archive SELECT * from vicidial_peer_event_log;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	
+	$sthArows = $sthA->rows;
+	if (!$Q) {print "$sthArows rows inserted into vicidial_peer_event_log_archive table \n";}
+	
+	$rv = $sthA->err();
+	if ( (!$rv) && ($vicidial_peer_event_log_count_mil > 0) )
+		{
+		if ($wipe_all > 0)
+			{$stmtA = "DELETE FROM vicidial_peer_event_log;";}
+		else
+			{$stmtA = "DELETE FROM vicidial_peer_event_log WHERE event_date < '$del_time' order by peer_event_id limit $vicidial_peer_event_log_count_mil;";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows deleted from vicidial_peer_event_log table \n";}
+
+		$stmtA = "optimize table vicidial_peer_event_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+
+		$stmtA = "optimize table vicidial_peer_event_log_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		}
 
 
 	##### vicidial_inbound_survey_log

@@ -52,6 +52,8 @@
 # 210211-0145 - Added SOURCESELECT field type, added basic Math equations to SCRIPT custom field types
 # 210211-1916 - Disable SCRIPT custom fields Math functions on older PHP versions
 # 210310-1322 - Added BUTTON field type
+# 210401-2132 - Fixed issue #1271, security_phrase field not populating in custom fields form
+# 210404-0902 - Added function to refresh a single field
 #
 
 # $mysql_queries = 26
@@ -325,7 +327,7 @@ function user_authorization($user,$pass,$user_option,$user_update,$bcrypt,$retur
 
 
 ##### BEGIN custom_list_fields_values - gather values for display of custom list fields for a lead #####
-function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_id,$did_id,$did_extension,$did_pattern,$did_description,$dialed_number,$dialed_label)
+function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_id,$did_id,$did_extension,$did_pattern,$did_description,$dialed_number,$dialed_label,$only_field,$source_field,$source_field_value)
 	{
 	$STARTtime = date("U");
 	$TODAY = date("Y-m-d");
@@ -344,6 +346,7 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 	$custom_required_fields_radio='|';
 	$custom_required_fields_select='|';
 	$custom_required_fields_multi='|';
+	$custom_refresh_fields='|';
 
 	require("dbconnect_mysqli.php");
 
@@ -369,9 +372,14 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 			{
 			$rowx=mysqli_fetch_row($rslt);
 			$custom_records_count =	$rowx[0];
-
+			
+			$only_fieldSQL='';
+			if (strlen($only_field) > 0)
+				{
+				$only_fieldSQL = "and field_label='$only_field'";
+				}
 			$select_SQL='';
-			$stmt="SELECT field_id,field_label,field_name,field_description,field_rank,field_help,field_type,field_options,field_size,field_max,field_default,field_cost,field_required,multi_position,name_position,field_order,field_duplicate from vicidial_lists_fields where list_id='$list_id' order by field_rank,field_order,field_label;";
+			$stmt="SELECT field_id,field_label,field_name,field_description,field_rank,field_help,field_type,field_options,field_size,field_max,field_default,field_cost,field_required,multi_position,name_position,field_order,field_duplicate from vicidial_lists_fields where list_id='$list_id' $only_fieldSQL order by field_rank,field_order,field_label;";
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'05004',$user,$server_ip,$session_name,$one_mysql_log);}
 			$fields_to_print = mysqli_num_rows($rslt);
@@ -508,42 +516,54 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 			##### END grab the data from custom table for the lead_id
 
 
-			$CFoutput .= "<input type=hidden name=stage id=stage value=\"SUBMIT\">\n";
-			$CFoutput .= "<center><TABLE cellspacing=2 cellpadding=2>\n";
-			if ($fields_to_print < 1) 
-				{$CFoutput .= "<tr bgcolor=white align=center><td colspan=4><font size=1>"._QXZ("There are no custom fields for this list")."</td></tr>";}
+			if (strlen($only_field) < 1)
+				{
+				$CFoutput .= "<input type=hidden name=stage id=stage value=\"SUBMIT\">\n";
+				$CFoutput .= "<center><TABLE cellspacing=2 cellpadding=2>\n";
+				if ($fields_to_print < 1) 
+					{$CFoutput .= "<tr bgcolor=white align=center><td colspan=4><font size=1>"._QXZ("There are no custom fields for this list")."</td></tr>";}
+				}
 
 			$o=0;
 			$last_field_rank=0;
 			while ($fields_to_print > $o) 
 				{
 				$helpHTML='';
-				if (strlen($A_field_help[$o])>0)
+				if ( (strlen($A_field_help[$o])>0) and (strlen($only_field) < 1) )
 					{$helpHTML="&nbsp; <a href=\"javascript:open_help('HELP_$A_field_label[$o]','$A_field_help[$o]');\">"._QXZ("help")."+</a>";}
-				if ($last_field_rank=="$A_field_rank[$o]")
+				if ( ($last_field_rank=="$A_field_rank[$o]") and (strlen($only_field) < 1) )
 					{$CFoutput .= " &nbsp; &nbsp; &nbsp; &nbsp; ";}
 				else
 					{
-					$CFoutput .= "</td></tr>\n";
-					$CFoutput .= "<tr bgcolor=white><td align=";
-					if ( ($A_name_position[$o]=='TOP') or ($A_field_type[$o]=='SCRIPT') )
-						{$CFoutput .= "left colspan=2";}
-					else
-						{$CFoutput .= "right";}
-					$CFoutput .= "><font size=2>";
+					if (strlen($only_field) < 1)
+						{
+						$CFoutput .= "</td></tr>\n";
+						$CFoutput .= "<tr bgcolor=white><td align=";
+						if ( ($A_name_position[$o]=='TOP') or ($A_field_type[$o]=='SCRIPT') )
+							{$CFoutput .= "left colspan=2";}
+						else
+							{$CFoutput .= "right";}
+						$CFoutput .= "><font size=2>";
+						}
 					}
-				if ( ($A_field_type[$o]!='SCRIPT') and ($A_field_type[$o]!='HIDDEN') and ($A_field_type[$o]!='HIDEBLOB') )
+				if ( ($A_field_type[$o]!='SCRIPT') and ($A_field_type[$o]!='HIDDEN') and ($A_field_type[$o]!='HIDEBLOB') and (strlen($only_field) < 1) )
 					{$CFoutput .= "<B>$A_field_name[$o]</B>";}
-				if ( ($A_name_position[$o]=='TOP') or ($A_field_type[$o]=='SCRIPT') )
+				if ( ( ($A_name_position[$o]=='TOP') or ($A_field_type[$o]=='SCRIPT') ) and (strlen($only_field) < 1) )
 					{$CFoutput .= " &nbsp; <span style=\"position:static;\" id=P_HELP_$A_field_label[$o]></span><span style=\"position:static;background:white;\" id=HELP_$A_field_label[$o]> $helpHTML</span><BR>";}
 				else
 					{
-					if ($last_field_rank=="$A_field_rank[$o]")
-						{$CFoutput .= " &nbsp;";}
-					else
-						{$CFoutput .= "</td><td align=left><font size=2>";}
+					if (strlen($only_field) < 1)
+						{
+						if ($last_field_rank=="$A_field_rank[$o]")
+							{$CFoutput .= " &nbsp;";}
+						else
+							{$CFoutput .= "</td><td align=left><font size=2>";}
+						}
 					}
-				$field_HTML='';
+				if (strlen($only_field) < 1)
+					{
+					$field_HTML="<span id='field_content_$A_field_label[$o]'>";
+					}
 
 				if ( ($A_field_type[$o]=='SELECT') or ($A_field_type[$o]=='SOURCESELECT') )
 					{
@@ -553,6 +573,10 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 						{
 						$change_trigger="onchange=\"update_default_vd_select('$A_field_label[$o]');\"";
 						$default_field_flag++;
+						}
+					if (strlen($change_trigger) < 1)
+						{
+						$change_trigger="onchange=\"catchall_field_change('$A_field_label[$o]');\"";
 						}
 					$field_HTML .= "<select size=1 name=$A_field_label[$o] id=$A_field_label[$o] $change_trigger>\n";
 					}
@@ -575,11 +599,48 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 							{
 							$sourceselect_field = preg_replace("/^source=>/i",'',trim($field_options_array[0]));
 							$sourceselect_value='';
+							$sourceselect_type='';
+							$sourceselect_default=0;
 							##### grab the source field data from main or custom table for the lead_id
 							if (preg_match("/\|$sourceselect_field\|/i",$vicidial_list_fields))
-								{$stmt="SELECT $sourceselect_field FROM vicidial_list where lead_id='$lead_id' LIMIT 1;";}
+								{
+								$sourceselect_default=1;
+								$sourceselect_type='TEXT';
+								if (preg_match("/^gender$/i",$sourceselect_field)) {$sourceselect_type='SELECT';}
+								$stmt="SELECT $sourceselect_field FROM vicidial_list where lead_id='$lead_id' LIMIT 1;";
+								}
 							else
-								{$stmt="SELECT $sourceselect_field FROM custom_$list_id where lead_id='$lead_id' LIMIT 1;";}
+								{
+								$stmt="SELECT field_type FROM vicidial_lists_fields where list_id='$list_id' and field_label='$sourceselect_field' LIMIT 1;";
+								$rslt=mysql_to_mysqli($stmt, $link);
+									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'05XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+								if ($DB) {echo "$stmt\n";}
+								$sourcetype_ct = mysqli_num_rows($rslt);
+								if ($sourcetype_ct > 0)
+									{
+									$row=mysqli_fetch_row($rslt);
+									$sourceselect_type = $row[0];
+									}
+								$stmt="SELECT $sourceselect_field FROM custom_$list_id where lead_id='$lead_id' LIMIT 1;";
+								}
+							if ( (strlen($only_field) > 0) and (strlen($source_field_value) > 0) and (preg_match("/^$sourceselect_field$/i",$source_field)) )
+								{
+								$sourceselect_value = $source_field_value;
+								if ($DB) {echo "Using form field value: |$only_field|$source_field_value|$source_field|\n";}
+								if ($sourceselect_value == '--BLANK--') {$sourceselect_value='';}
+								}
+							else
+								{
+								$rslt=mysql_to_mysqli($stmt, $link);
+									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'05XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+								if ($DB) {echo "$stmt\n";}
+								$sourceselect_ct = mysqli_num_rows($rslt);
+								if ($sourceselect_ct > 0)
+									{
+									$row=mysqli_fetch_row($rslt);
+									$sourceselect_value = $row[0];
+									}
+								}
 							$rslt=mysql_to_mysqli($stmt, $link);
 								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'05XXX',$user,$server_ip,$session_name,$one_mysql_log);}
 							if ($DB) {echo "$stmt\n";}
@@ -589,7 +650,9 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 								$row=mysqli_fetch_row($rslt);
 								$sourceselect_value = $row[0];
 								}
+							$custom_refresh_fields .= "$sourceselect_field $sourceselect_type $sourceselect_default $A_field_label[$o] $A_field_type[$o]|";
 							$temp_sourcematch = "value=>$sourceselect_value";
+							if ($DB) {echo "Starting SOURCESELECT: |$sourceselect_field|$sourceselect_value|$temp_sourcematch|   |$only_field|$source_field_value|$source_field|\n";}
 							if ($DB) {echo "Starting SOURCESELECT: |$sourceselect_field|$sourceselect_value|$temp_sourcematch|\n";}
 							$temp_matchfound=0;   $NFA=0;
 							while ( ($te < $field_options_count) and ($temp_matchfound < 2) )
@@ -744,7 +807,11 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 						$change_trigger="onchange=\"update_default_vd_field('$A_field_label[$o]');\"";
 						$default_field_flag++;
 						}
-					
+					if (strlen($change_trigger) < 1)
+						{
+						$change_trigger="onchange=\"catchall_field_change('$A_field_label[$o]');\"";
+						}
+
 					if ( ($duplicates_count > 0) and ( (preg_match("/\|$A_field_label[$o]\|/i",$duplicates_master_list)) or (preg_match("/\|$A_field_label[$o]\|/i",$duplicates_list)) ) )
 						{
 						$update_dup_fields='';
@@ -786,7 +853,7 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 
 					if ($A_field_default[$o]=='NULL') {$A_field_default[$o]='';}
 					if (strlen($A_field_value[$o]) < 1) {$A_field_value[$o] = $A_field_default[$o];}
-					$field_HTML .= "<input type=text size=$A_field_size[$o] maxlength=$A_field_max[$o] name=$A_field_label[$o] id=$A_field_label[$o] value=\""._QXZ("$A_field_value[$o]")."\" $change_trigger>\n";
+					$field_HTML .= "<input type=text size=$A_field_size[$o] maxlength=$A_field_max[$o] name=$A_field_label[$o] id=$A_field_label[$o] value=\"$A_field_value[$o]\" $change_trigger>\n";
 					if ( ($A_field_required[$o] == 'Y') or ( ($A_field_required[$o] == 'INBOUND_ONLY') and (preg_match("/^Y\d\d\d\d\d\d\d/",$call_id)) ) )
 						{$custom_required_fields .= "$A_field_label[$o]|";}
 					}
@@ -798,6 +865,10 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 						{
 						$change_trigger="onchange=\"update_default_vd_field('$A_field_label[$o]');\"";
 						$default_field_flag++;
+						}
+					if (strlen($change_trigger) < 1)
+						{
+						$change_trigger="onchange=\"catchall_field_change('$A_field_label[$o]');\"";
 						}
 					if ($A_field_default[$o]=='NULL') {$A_field_default[$o]='';}
 					if (strlen($A_field_value[$o]) < 1) {$A_field_value[$o] = $A_field_default[$o];}
@@ -915,7 +986,12 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 					$field_HTML .= "</SELECT>";
 					}
 
-				if ( ($A_name_position[$o]=='LEFT') and ($A_field_type[$o]!='SCRIPT') and ($A_field_type[$o]!='HIDDEN') and ($A_field_type[$o]!='HIDEBLOB') )
+				if (strlen($only_field) < 1)
+					{
+					$field_HTML .= "</span>";
+					}
+
+				if ( ($A_name_position[$o]=='LEFT') and ($A_field_type[$o]!='SCRIPT') and ($A_field_type[$o]!='HIDDEN') and ($A_field_type[$o]!='HIDEBLOB') and (strlen($only_field) < 1) )
 					{
 					$CFoutput .= " $field_HTML <span style=\"position:static;\" id=P_HELP_$A_field_label[$o]></span><span style=\"position:static;background:white;\" id=HELP_$A_field_label[$o]> $helpHTML</span>";
 					}
@@ -927,7 +1003,17 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 				$last_field_rank=$A_field_rank[$o];
 				$o++;
 				}
-			$CFoutput .= "</td></tr></table>\n";
+
+			$CFoutput_prefix='';
+			if (strlen($only_field) < 1)
+				{
+				$CFoutput .= "</td></tr></table>\n";
+				$CFoutput_prefix .= "	<script language=\"Javascript\">\n";
+				$CFoutput_prefix .= "   var custom_refresh_fields = '$custom_refresh_fields';\n";
+				$CFoutput_prefix .= "	</script>\n";
+				}
+
+			$CFoutput = "$CFoutput_prefix$CFoutput";
 			}
 		else
 			{$CFoutput .= _QXZ("ERROR: no custom list fields")."\n";}
@@ -1191,7 +1277,7 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 			$date_of_birth		= trim($row[25]);
 			$alt_phone			= trim($row[26]);
 			$email				= trim($row[27]);
-			$security			= trim($row[28]);
+			$security_phrase	= trim($row[28]);
 			$comments			= trim($row[29]);
 			$called_count		= trim($row[30]);
 			$rank				= trim($row[32]);
@@ -1422,11 +1508,14 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 		if ($DB > 0) {echo "$CFoutput<BR>\n";}
 		}
 	##### END parsing for vicidial variables #####
-	echo "<input type=hidden name=custom_required id=custom_required value=\"$custom_required_fields\">\n";
-	echo "<input type=hidden name=custom_required_check id=custom_required_check value=\"$custom_required_fields_check\">\n";
-	echo "<input type=hidden name=custom_required_radio id=custom_required_radio value=\"$custom_required_fields_radio\">\n";
-	echo "<input type=hidden name=custom_required_select id=custom_required_select value=\"$custom_required_fields_select\">\n";
-	echo "<input type=hidden name=custom_required_multi id=custom_required_multi value=\"$custom_required_fields_multi\">\n";
+	if (strlen($only_field) < 1)
+		{
+		echo "<input type=hidden name=custom_required id=custom_required value=\"$custom_required_fields\">\n";
+		echo "<input type=hidden name=custom_required_check id=custom_required_check value=\"$custom_required_fields_check\">\n";
+		echo "<input type=hidden name=custom_required_radio id=custom_required_radio value=\"$custom_required_fields_radio\">\n";
+		echo "<input type=hidden name=custom_required_select id=custom_required_select value=\"$custom_required_fields_select\">\n";
+		echo "<input type=hidden name=custom_required_multi id=custom_required_multi value=\"$custom_required_fields_multi\">\n";
+		}
 
 	return $CFoutput;
 	}

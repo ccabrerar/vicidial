@@ -1,4 +1,4 @@
-EMAIL HANDLING DOC		Started: 2012-12-23	Updated: 2020-02-10
+EMAIL HANDLING DOC		Started: 2012-12-23	Updated: 2021-03-28
 
 (example of how to set up an email account with Gmail is at the bottom)
 
@@ -223,7 +223,10 @@ for when you set up the email account in Vicidial.
 
 With Gmail, the recommended email account protocol is IMAP and the email account 
 server for this is "imap.gmail.com" – this information will also be used during 
-the account setup in Vicidial.
+the account setup in Vicidial. Gmail has more recently set a maximum email 
+frequency checking limit by outside applications of no more than once per 10 
+minutes, so you may want to confirm that your VICIdial Email Accounts "Frequency
+Check Rate" setting is set to 10 or higher.
 
 You can also use POP3 protocol with Gmail.  For that, the email account server 
 is pop.gmail.com.  However, when the POP3 protocol is being used on an account, 
@@ -237,6 +240,10 @@ that you may need to modify to ensure that VICIdial has access to your mailbox.
 
 You may need to go into your Google Account "Security "settings and enable the
 "Less secure app access" setting in order to use the IMAP connection for email.
+
+You may also need to manually verify access a second time through Google logging
+in as the user through a web browser to get VICIdial to be able to log in 
+successfully.
 
 
 NOTES:

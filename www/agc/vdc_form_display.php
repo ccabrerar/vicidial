@@ -49,10 +49,12 @@
 # 210304-1612 - Added READONLY submit_button option
 # 210310-1115 - Added BUTTON field type with SubmitRefresh function
 # 210315-1747 - Added campaign setting for clear_form
+# 210329-2025 - Fixed for consistent custom fields values filtering
+# 210404-1522 - Added only_field option for refresh of already-loaded custom form SOURCESELECT element
 #
 
-$version = '2.14-39';
-$build = '210315-1747';
+$version = '2.14-41';
+$build = '210404-1522';
 $php_script = 'vdc_form_display.php';
 
 require_once("dbconnect_mysqli.php");
@@ -207,6 +209,12 @@ if (isset($_GET["hide_gender"]))			{$hide_gender=$_GET["hide_gender"];}
 	elseif (isset($_POST["hide_gender"]))	{$hide_gender=$_POST["hide_gender"];}
 if (isset($_GET["button_action"]))			{$button_action=$_GET["button_action"];}
 	elseif (isset($_POST["button_action"]))	{$button_action=$_POST["button_action"];}
+if (isset($_GET["only_field"]))				{$only_field=$_GET["only_field"];}
+	elseif (isset($_POST["only_field"]))	{$only_field=$_POST["only_field"];}
+if (isset($_GET["source_field"]))			{$source_field=$_GET["source_field"];}
+	elseif (isset($_POST["source_field"]))	{$source_field=$_POST["source_field"];}
+if (isset($_GET["source_field_value"]))				{$source_field_value=$_GET["source_field_value"];}
+	elseif (isset($_POST["source_field_value"]))	{$source_field_value=$_POST["source_field_value"];}
 if (isset($_GET["orig_URL"]))			{$orig_URL=$_GET["orig_URL"];}
 	elseif (isset($_POST["orig_URL"]))	{$orig_URL=$_POST["orig_URL"];}
 if (isset($_GET["DB"]))				{$DB=$_GET["DB"];}
@@ -311,6 +319,9 @@ $server_ip = preg_replace("/\'|\"|\\\\|;/","",$server_ip);
 $session_id = preg_replace('/[^0-9]/','',$session_id);
 $call_id = preg_replace('/[^-_\.0-9a-zA-Z]/','',$call_id);
 $button_action = preg_replace('/[^-_0-9a-zA-Z]/','',$button_action);
+$only_field = preg_replace('/[^-_0-9a-zA-Z]/','',$only_field);
+$source_field = preg_replace('/[^-_0-9a-zA-Z]/','',$source_field);
+$source_field_value = preg_replace("/\'|\"|\\\\|;/",'',$source_field_value);
 
 if ($non_latin < 1)
 	{
@@ -382,6 +393,25 @@ else
 	# do nothing for now
 	}
 
+### BEGIN refresh single field ###
+if ( ($stage=='REFRESH_SINGLE_FIELD') and (strlen($only_field) > 0) )
+	{
+	require_once("functions.php");
+
+	$CFoutput = custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_id,$did_id,$did_extension,$did_pattern,$did_description,$dialed_number,$dialed_label,$only_field,$source_field,$source_field_value);
+
+	echo "$CFoutput";
+
+	if ($SSagent_debug_logging > 0) 
+		{
+		$stage .= " $only_field";
+		vicidial_ajax_log($NOW_TIME,$startMS,$link,$ACTION,$php_script,$user,$stage,$lead_id,$session_name,$stmt);
+		}
+
+	exit;
+	}
+### END refresh single field ###
+
 
 ### BEGIN parse submission of the custom fields form ###
 if ($stage=='SUBMIT')
@@ -442,7 +472,8 @@ if ($stage=='SUBMIT')
 			if (isset($_GET["$field_name_id"]))				{$form_field_value=$_GET["$field_name_id"];}
 				elseif (isset($_POST["$field_name_id"]))	{$form_field_value=$_POST["$field_name_id"];}
 			$form_field_value = preg_replace("/\"/","",$form_field_value);	// remove double-quote
-			$form_field_value = preg_replace("/\\b/","",$form_field_value);	// remove backslashes
+			$form_field_value = preg_replace("/\\b/","",$form_field_value);	// remove backspaces
+			$form_field_value = preg_replace("/\\\\$/","",$form_field_value);	// remove end backslashes
 
 			if ( ($A_field_type[$o]=='MULTI') or ($A_field_type[$o]=='CHECKBOX') or ($A_field_type[$o]=='RADIO') )
 				{
@@ -464,6 +495,8 @@ if ($stage=='SUBMIT')
 					elseif (isset($_POST["MINUTE_$field_name_id"]))	{$form_field_valueM=$_POST["MINUTE_$field_name_id"];}
 				if (isset($_GET["HOUR_$field_name_id"]))			{$form_field_valueH=$_GET["HOUR_$field_name_id"];}
 					elseif (isset($_POST["HOUR_$field_name_id"]))	{$form_field_valueH=$_POST["HOUR_$field_name_id"];}
+				$form_field_valueH = preg_replace('/[^0-9]/','',$form_field_valueH);
+				$form_field_valueM = preg_replace('/[^0-9]/','',$form_field_valueM);
 				$form_field_value = "$form_field_valueH:$form_field_valueM:00";
 				}
 
@@ -654,6 +687,8 @@ if ($SUBMIT_only < 1)
 	echo "	<link rel=\"stylesheet\" href=\"./css/vicidial_stylesheet.css\">\n";
 	echo "	<script language=\"Javascript\">\n";
 	echo "  var orig_URL = '$vdcURL';\n";
+	echo "	var ajax_timeout=0;\n";
+	echo "	var debug_append='';\n";
 	echo "	function open_help(taskspan,taskhelp) \n";
 	echo "		{\n";
 	echo "		document.getElementById(\"P_\" + taskspan).innerHTML = \" &nbsp; <a href=\\\"javascript:close_help('\" + taskspan + \"','\" + taskhelp + \"');\\\">help-</a><BR> &nbsp; \";\n";
@@ -670,6 +705,12 @@ if ($SUBMIT_only < 1)
 	echo "		{\n";
 	echo "		var tempvalue = document.getElementById(taskfield).value;\n";
 	echo "		parent.document.getElementById(taskfield).value = tempvalue;\n";
+#	echo "		alert('chech refresh:'+ taskfield + ' ' + custom_refresh_fields);\n";
+	echo "		var REFRESHfieldREG = new RegExp('|' + taskfield + ' ',\"g\");\n";
+	echo "		if (custom_refresh_fields.match(REFRESHfieldREG))\n";
+	echo "			{\n";
+	echo "			field_refresh(taskfield);\n";
+	echo "			}\n";
 	echo "		}\n";
 	if ($hide_gender > 0)
 		{
@@ -678,6 +719,11 @@ if ($SUBMIT_only < 1)
 		echo "		var taskIndex = document.getElementById(taskfield).selectedIndex;\n";
 		echo "		var taskValue = document.getElementById(taskfield).options[taskIndex].value;\n";
 		echo "		parent.document.getElementById(taskfield).value = taskValue;\n";
+		echo "		var REFRESHfieldREG = new RegExp('|' + taskfield + ' ',\"g\");\n";
+		echo "		if (custom_refresh_fields.match(REFRESHfieldREG))\n";
+		echo "			{\n";
+		echo "			field_refresh(taskfield);\n";
+		echo "			}\n";
 		echo "		}\n";
 		}
 	else
@@ -694,6 +740,11 @@ if ($SUBMIT_only < 1)
 		echo "		var genderIndex = parent.document.getElementById('gender_list').selectedIndex;\n";
 		echo "		var genderValue = parent.document.getElementById('gender_list').options[genderIndex].value;\n";
 		echo "		parent.document.getElementById('gender').value = genderValue;\n";
+		echo "		var REFRESHfieldREG = new RegExp('|' + taskfield + ' ',\"g\");\n";
+		echo "		if (custom_refresh_fields.match(REFRESHfieldREG))\n";
+		echo "			{\n";
+		echo "			field_refresh(taskfield);\n";
+		echo "			}\n";
 		echo "		}\n";
 		}
 	echo "	function update_dup_field(taskmasterfield,taskupdatefields,taskupdatecount,taskdefaultflag,taskdefaultfield) \n";
@@ -710,6 +761,11 @@ if ($SUBMIT_only < 1)
 	echo "			}\n";
 	echo "      if (taskdefaultflag=='1')\n";
 	echo "			{parent.document.getElementById(taskdefaultfield).value = tempmastervalue;}\n";
+	echo "		var REFRESHfieldREG = new RegExp('|' + taskmasterfield + ' ',\"g\");\n";
+	echo "		if (custom_refresh_fields.match(REFRESHfieldREG))\n";
+	echo "			{\n";
+	echo "			field_refresh(taskmasterfield);\n";
+	echo "			}\n";
 	echo "		}\n";
 	echo "	function switch_list(temp_new_list_id)\n";
 	echo "		{\n";
@@ -729,6 +785,150 @@ if ($SUBMIT_only < 1)
 	echo "			document.form_custom_fields.submit();\n";
 	echo "			}\n";
 	echo "		}\n";
+	echo "	function catchall_field_change(taskfield) \n";
+	echo "		{\n";
+#	echo "		alert('chech refresh:'+ taskfield + ' ' + custom_refresh_fields);\n";
+	echo "		var REFRESHfieldREG = new RegExp('|' + taskfield + ' ',\"g\");\n";
+	echo "		if (custom_refresh_fields.match(REFRESHfieldREG))\n";
+	echo "			{\n";
+	echo "			field_refresh(taskfield);\n";
+	echo "			}\n";
+	echo "		}\n";
+
+	$only_field_query = "DB=$DB&SIPexten=$SIPexten&SQLdate=$SQLdate&admin_submit=$admin_submit&agent_email=$agent_email&agent_log_id=$agent_log_id&bcrypt=$bcrypt&bgcolor=$bgcolor&button_action=$button_action&call_id=$call_id&called_count=$called_count&camp_script=$camp_script&campaign=$campaign&channel_group=$channel_group&closecallid=$closecallid&closer=$closer&customer_server_ip=$customer_server_ip&customer_zap_channel=$customer_zap_channel&dialed_label=$dialed_label&dialed_number=$dialed_number&did_custom_five=$did_custom_five&did_custom_four=$did_custom_four&did_custom_one=$did_custom_one&did_custom_three=$did_custom_three&did_custom_two=$did_custom_two&did_description=$did_description&did_extension=$did_extension&did_id=$did_id&did_pattern=$did_pattern&epoch=$epoch&fronter=$fronter&fullname=$fullname&group=$group&hide_gender=$hide_gender&in_script=$in_script&lead_id=$lead_id&list_description=$list_description&list_id=$list_id&list_name=$list_name&new_list_id=$new_list_id&original_phone_login=$original_phone_login&parked_by=$parked_by&pass=$pass&phone=$phone&phone_login=$phone_login&phone_pass=$phone_pass&preset_dtmf_a=$preset_dtmf_a&preset_dtmf_b=$preset_dtmf_b&preset_number_a=$preset_number_a&preset_number_b=$preset_number_b&preset_number_c=$preset_number_c&preset_number_d=$preset_number_d&preset_number_e=$preset_number_e&preset_number_f=$preset_number_f&recording_filename=$recording_filename&recording_id=$recording_id&script_height=$script_height&script_width=$script_width&server_ip=$server_ip&server_ip=$server_ip&session_id=$session_id&session_id=$session_id&submit_button=$submit_button&uniqueid=$uniqueid&user=$user&user_custom_five=$user_custom_five&user_custom_four=$user_custom_four&user_custom_one=$user_custom_one&user_custom_three=$user_custom_three&user_custom_two=$user_custom_two&user_group=$user_group&xfercallid=$xfercallid&web_vars=$web_vars&orig_URL=$orig_URL";
+	?>
+
+// ################################################################################
+// Trigger a refresh of a single custom field
+	function field_refresh(temp_field)
+		{
+		if (temp_field.length > 0)
+			{
+			var source_field=temp_field;
+			var source_field_value='';
+			var only_field='';
+
+			//alert('Starting field refresh: '+ temp_field + ' ' + custom_refresh_fields);
+			//$custom_refresh_fields .= "$sourceselect_field $sourceselect_type $sourceselect_default $A_field_label[$o] $A_field_type[$o]|";
+			var REFRESHfieldREG = new RegExp('|' + temp_field + ' ',"g");
+			if (custom_refresh_fields.match(REFRESHfieldREG))
+				{
+				var CRF_array=custom_refresh_fields.split("|");
+				var CRF_count=CRF_array.length;
+				var CRF_tick=0;
+				while (CRF_tick < CRF_count)
+					{
+					var temp_CRF_value='';
+					var CRF_field = CRF_array[CRF_tick];
+					if (CRF_field.length > 0)
+						{
+						var temp_CRF_field=CRF_field.split(' ');
+						if (temp_CRF_field[0] == temp_field)
+							{
+							if (temp_CRF_field[2] == '1')
+								{
+								// it is a default field, check type and grab value
+								if (temp_CRF_field[1] == 'TEXT')
+									{
+									temp_CRF_value = parent.document.getElementById(temp_field).value;
+									if (temp_CRF_value == '') {temp_CRF_value='--BLANK--';}
+									}
+								if (temp_CRF_field[1] == 'SELECT')
+									{
+									var taskIndex = parent.document.getElementById('gender_list').selectedIndex;
+									temp_CRF_value = parent.document.getElementById('gender_list').options[taskIndex].value;
+									if (temp_CRF_value == '') {temp_CRF_value='--BLANK--';}
+									}
+								}
+							else
+								{
+								// it is a custom field, check type and grab value
+								if (temp_CRF_field[1] == 'TEXT')
+									{
+									temp_CRF_value = document.getElementById(temp_field).value;
+									if (temp_CRF_value == '') {temp_CRF_value='--BLANK--';}
+									}
+								if ( (temp_CRF_field[1] == 'SELECT') || (temp_CRF_field[1] == 'SOURCESELECT') )
+									{
+									var taskIndex = document.getElementById(temp_field).selectedIndex;
+									temp_CRF_value = document.getElementById(temp_field).options[taskIndex].value;
+									if (temp_CRF_value == '') {temp_CRF_value='--BLANK--';}
+									}
+								}
+
+							// update the target field now that we know the source field, type and value it is linked to
+							if (temp_CRF_value != '')
+								{
+								var temp_ajax_timeout = (ajax_timeout + 10);
+								setTimeout(field_refresh_ajax, temp_ajax_timeout, temp_CRF_field[3],temp_CRF_field[0],temp_CRF_value,temp_ajax_timeout);
+								ajax_timeout = (ajax_timeout + 100);
+								}
+							}
+						}
+					CRF_tick++;
+					}
+				ajax_timeout=0;
+				}
+			}
+		}
+
+// ################################################################################
+// Trigger a refresh of a single custom field
+	function field_refresh_ajax(temp_field,temp_source,temp_source_value,task_timeout)
+		{
+		var field_content_span = 'field_content_' + temp_field;
+		var loading_select = '<select size=1 name=' + temp_field + ' id=' + temp_field + "><option value='' SELECTED><?php echo _QXZ("Refreshing..."); ?></option></select>\n";
+
+		//alert('field refresh: '+ field_content_span + ' ' + temp_source + ' ' + temp_source_value);
+		document.getElementById(field_content_span).innerHTML = loading_select;
+
+		var xmlhttp=false;
+		/*@cc_on @*/
+		/*@if (@_jscript_version >= 5)
+		// JScript gives us Conditional compilation, we can cope with old IE versions.
+		// and security blocked creation of the objects.
+		 try {
+		  xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
+		 } catch (e) {
+		  try {
+		   xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+		  } catch (E) {
+		   xmlhttp = false;
+		  }
+		 }
+		@end @*/
+		if (!xmlhttp && typeof XMLHttpRequest!='undefined')
+			{
+			xmlhttp = new XMLHttpRequest();
+			}
+		if (xmlhttp)
+			{ 
+			LSview_query = "only_field=" + temp_field + "&source_field=" + temp_source + "&source_field_value=" + temp_source_value + "&stage=REFRESH_SINGLE_FIELD&<?php echo $only_field_query ?>";
+			//document.getElementById("debugbottomspan2").innerHTML = LSview_query;
+			xmlhttp.open('POST', 'vdc_form_display_encrypt.php'); 
+			xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
+			xmlhttp.send(LSview_query); 
+			xmlhttp.onreadystatechange = function() 
+				{ 
+				if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
+					{
+					//alert(xmlhttp.responseText);
+					document.getElementById(field_content_span).innerHTML = xmlhttp.responseText + "\n";
+
+					var REFRESHfieldREG = new RegExp('|' + temp_field + ' ',"g");
+					if (custom_refresh_fields.match(REFRESHfieldREG))
+						{
+						//debug_append = debug_append + "\n" + temp_field + ' timeout: ' + task_timeout;
+						document.getElementById("debugbottomspan2").insertAdjacentHTML('beforeend',debug_append);
+						setTimeout(field_refresh, 100, temp_field);
+						}
+					}
+				}
+			delete xmlhttp;
+			}
+		}
+
+	<?php
 	echo "	function nothing()\n";
 	echo "		{}\n";
 	echo "	</script>\n";
@@ -755,10 +955,11 @@ if ($SUBMIT_only < 1)
 		echo "<input type=hidden name=submit_button id=submit_button value=\"READONLY\">\n";
 		}
 
+	$only_field='';
 
 	require_once("functions.php");
 
-	$CFoutput = custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_id,$did_id,$did_extension,$did_pattern,$did_description,$dialed_number,$dialed_label);
+	$CFoutput = custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_id,$did_id,$did_extension,$did_pattern,$did_description,$dialed_number,$dialed_label,$only_field,$source_field,$source_field_value);
 
 	echo "$CFoutput";
 
@@ -770,6 +971,7 @@ if ($SUBMIT_only < 1)
 		echo "<BR><BR><input type=submit name=VCformSubmit id=VCformSubmit value=submit>\n";
 		}
 	echo "</form></center><BR><BR>\n";
+	echo "<br><span id=debugbottomspan2></span>\n";
 	echo "</BODY></HTML>\n";
 	}
 

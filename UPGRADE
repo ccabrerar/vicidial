@@ -605,6 +605,18 @@ OTHER CHANGES:
 169. Added WAV audio file validation for Audio Store, and display of badly
 	formatted WAV files in the audio chooser in admin.php
 
+170. Added "Leave 3-Way Start Recording" campaign feature that will start a new
+	recording after the agent clicks on the LEAVE 3WAY button and leaves the
+	call. Also includes an "Exception" option to disable/enable only for 
+	specific 3-way call numbers.
+
+171. Added "Populate Lead Comments" In-Group option, allowing configuration of
+	how the 'comments' lead field is filled-in when a new lead is inserted
+	because of an inbound phone call.
+
+172. Added options to add/update/delete custom fields within the 'update_list'
+	function of the Non-Agent API.
+
 
 
 

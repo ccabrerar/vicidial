@@ -186,7 +186,7 @@ switch($referring_section) # was $scorecard_source
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,custom_fields_enabled,enable_languages,language_method,active_modules FROM system_settings;";
+$stmt = "SELECT use_non_latin,custom_fields_enabled,enable_languages,language_method,active_modules,log_recording_access FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
@@ -198,6 +198,7 @@ if ($qm_conf_ct > 0)
 	$SSenable_languages =		$row[2];
 	$SSlanguage_method =		$row[3];
 	$active_modules =			$row[4];
+	$log_recording_access =			$row[5];
 	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
@@ -1073,6 +1074,43 @@ function ChangeCallbackDateTime(callback_id)
 		}
 
 	}
+
+function LogAudioRecordingAccess(log_active, recording_id, lead_id, recording_object_ID)
+		{
+		if (log_active)
+			{
+			var xmlhttp=false;
+			try {
+				xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
+			} catch (e) {
+				try {
+					xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+				} catch (E) {
+					xmlhttp = false;
+				}
+			}
+			if (!xmlhttp && typeof XMLHttpRequest!='undefined') {
+				xmlhttp = new XMLHttpRequest();
+			}
+			if (xmlhttp) {
+				var log_query = "&no_redirect=1&recording_id="+recording_id+"&lead_id="+lead_id;
+				xmlhttp.open('POST', 'recording_log_redirect.php'); 
+				xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
+				xmlhttp.send(log_query); 
+				xmlhttp.onreadystatechange = function() { 
+					if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+						var response = xmlhttp.responseText;
+						if (response!="OK")
+							{
+							document.getElementById(recording_object_ID).pause();
+							alert(response);
+							}
+					}
+				}
+				delete xmlhttp;
+			}
+			}
+		}
 
 </script>
 <link rel="stylesheet" href="calendar.css">
@@ -2130,9 +2168,9 @@ else
 			$play_audio='';
 			if ( (preg_match('/ftp/i',$location)) or (preg_match('/http/i',$location)) )
 		{
+				$play_audio = "<audio id='main_QC_recording' controls preload=\"none\" onplay='LogAudioRecordingAccess($log_recording_access, $row[0], $row[12], this.id)'> <source src ='$location' type='audio/wav' > <source src ='$location' type='audio/mpeg' >"._QXZ("No browser audio playback support")."</audio>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
 				if ($log_recording_access<1) 
 			{
-					$play_audio = "<audio id='main_QC_recording' controls preload=\"none\"> <source src ='$location' type='audio/wav' > <source src ='$location' type='audio/mpeg' >"._QXZ("No browser audio playback support")."</audio>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
 					$location = "<a href=\"$location\">$locat</a>";
 			}
 				else
@@ -2212,7 +2250,7 @@ else
 				$i++;
 		}
 			echo "<tr bgcolor='#".$SSstd_row4_background."'>";
-			echo "<td align='right' colspan='3'>$play_audio &nbsp;</td>";
+			echo "<td align='right' colspan='3'>$play_audio &nbsp;</font></td>";
 			echo "<td align='left' colspan='3'><font class='standard_bold'>$location</font></td>";
 			echo "</tr>\n";
 			echo "<tr bgcolor='#000'>";
@@ -2349,9 +2387,9 @@ else
 		$play_audio='<td align=left>&nbsp; </font></td>';
 		if ( (preg_match('/ftp/i',$location)) or (preg_match('/http/i',$location)) )
 			{
+			$play_audio = "<td align=left> <audio id='QC_recording_id_".$row[0]."' controls preload=\"none\" onplay='LogAudioRecordingAccess($log_recording_access, $row[0], $row[12], this.id)'> <source src ='$location' type='audio/wav' > <source src ='$location' type='audio/mpeg' >"._QXZ("No browser audio playback support")."</audio> </td>\n";
 			if ($log_recording_access<1) 
 				{
-				$play_audio = "<td align=left> <audio controls preload=\"none\"> <source src ='$location' type='audio/wav' > <source src ='$location' type='audio/mpeg' >"._QXZ("No browser audio playback support")."</audio> </td>\n";
 				$location = "<a href=\"$location\">$locat</a>";
 				}
 			else
