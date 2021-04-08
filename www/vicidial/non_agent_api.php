@@ -9409,7 +9409,6 @@ if ($function == 'agent_stats_export')
 								$ASsessions[$uc] =		0;
 								}
 							}
-							}
 						if ($row[1] > 0)
 							{
 							$AScalls[$uc]++;
