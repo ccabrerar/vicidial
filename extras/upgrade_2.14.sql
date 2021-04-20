@@ -1635,3 +1635,8 @@ CREATE TABLE vicidial_peer_event_log_archive LIKE vicidial_peer_event_log;
 ALTER TABLE vicidial_peer_event_log_archive MODIFY peer_event_id INT(9) UNSIGNED NOT NULL;
 
 UPDATE system_settings SET db_schema_version='1629',db_schema_update_date=NOW() where db_schema_version < 1629;
+
+ALTER TABLE vicidial_campaigns ADD calls_waiting_vl_one VARCHAR(25) default 'DISABLED';
+ALTER TABLE vicidial_campaigns ADD calls_waiting_vl_two VARCHAR(25) default 'DISABLED';
+
+UPDATE system_settings SET db_schema_version='1630',db_schema_update_date=NOW() where db_schema_version < 1630;

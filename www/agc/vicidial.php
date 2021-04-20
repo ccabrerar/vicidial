@@ -664,10 +664,11 @@
 # 210324-1604 - Added leave_3way_start_recording campaign options
 # 210327-2058 - Added system setting(agent_screen_timer) for selection of JavaScript timer: setTimeout or EventSource
 # 210330-2254 - Fixed issues with dashes as custom fields values throwing off delimiters
+# 210417-1109 - Added calls_waiting_vl_ campaign options
 #
 
-$version = '2.14-632c';
-$build = '210330-2254';
+$version = '2.14-633c';
+$build = '210417-1109';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=95;
 $one_mysql_log=0;
@@ -2228,7 +2229,7 @@ else
 				$HKstatusnames = substr("$HKstatusnames", 0, -1);
 
 				##### grab the campaign settings
-				$stmt="SELECT park_ext,park_file_name,web_form_address,allow_closers,auto_dial_level,dial_timeout,dial_prefix,campaign_cid,campaign_vdad_exten,campaign_rec_exten,campaign_recording,campaign_rec_filename,campaign_script,get_call_launch,am_message_exten,xferconf_a_dtmf,xferconf_a_number,xferconf_b_dtmf,xferconf_b_number,alt_number_dialing,scheduled_callbacks,wrapup_seconds,wrapup_message,closer_campaigns,use_internal_dnc,allcalls_delay,omit_phone_code,agent_pause_codes_active,no_hopper_leads_logins,campaign_allow_inbound,manual_dial_list_id,default_xfer_group,xfer_groups,disable_alter_custphone,display_queue_count,manual_dial_filter,agent_clipboard_copy,use_campaign_dnc,three_way_call_cid,dial_method,three_way_dial_prefix,web_form_target,vtiger_screen_login,agent_allow_group_alias,default_group_alias,quick_transfer_button,prepopulate_transfer_preset,view_calls_in_queue,view_calls_in_queue_launch,call_requeue_button,pause_after_each_call,no_hopper_dialing,agent_dial_owner_only,agent_display_dialable_leads,web_form_address_two,agent_select_territories,crm_popup_login,crm_login_address,timer_action,timer_action_message,timer_action_seconds,start_call_url,dispo_call_url,xferconf_c_number,xferconf_d_number,xferconf_e_number,use_custom_cid,scheduled_callbacks_alert,scheduled_callbacks_count,manual_dial_override,blind_monitor_warning,blind_monitor_message,blind_monitor_filename,timer_action_destination,enable_xfer_presets,hide_xfer_number_to_dial,manual_dial_prefix,customer_3way_hangup_logging,customer_3way_hangup_seconds,customer_3way_hangup_action,ivr_park_call,manual_preview_dial,api_manual_dial,manual_dial_call_time_check,my_callback_option,per_call_notes,agent_lead_search,agent_lead_search_method,queuemetrics_phone_environment,auto_pause_precall,auto_pause_precall_code,auto_resume_precall,manual_dial_cid,custom_3way_button_transfer,callback_days_limit,disable_dispo_screen,disable_dispo_status,screen_labels,status_display_fields,pllb_grouping,pllb_grouping_limit,in_group_dial,in_group_dial_select,pause_after_next_call,owner_populate,manual_dial_lead_id,dead_max,dispo_max,pause_max,dead_max_dispo,dispo_max_dispo,max_inbound_calls,manual_dial_search_checkbox,hide_call_log_info,timer_alt_seconds,wrapup_bypass,wrapup_after_hotkey,callback_active_limit,callback_active_limit_override,comments_all_tabs,comments_dispo_screen,comments_callback_screen,qc_comment_history,show_previous_callback,clear_script,manual_dial_search_filter,web_form_address_three,manual_dial_override_field,status_display_ingroup,customer_gone_seconds,agent_display_fields,manual_dial_timeout,manual_auto_next,manual_auto_show,allow_required_fields,dead_to_dispo,agent_xfer_validation,ready_max_logout,callback_display_days,three_way_record_stop,hangup_xfer_record_start,max_inbound_calls_outcome,manual_auto_next_options,agent_screen_time_display,pause_max_dispo,script_top_dispo,routing_initiated_recordings,dead_trigger_seconds,dead_trigger_action,dead_trigger_repeat,dead_trigger_filename,scheduled_callbacks_force_dial,callback_hours_block,callback_display_days,scheduled_callbacks_timezones_container,three_way_volume_buttons,manual_dial_validation,mute_recordings,leave_vm_no_dispo,leave_vm_message_group_id,campaign_script_two,browser_alert_sound,browser_alert_volume,three_way_record_stop_exception,pause_max_exceptions,transfer_button_launch,leave_3way_start_recording,leave_3way_start_recording_exception,allow_chats FROM vicidial_campaigns where campaign_id = '$VD_campaign';";
+				$stmt="SELECT park_ext,park_file_name,web_form_address,allow_closers,auto_dial_level,dial_timeout,dial_prefix,campaign_cid,campaign_vdad_exten,campaign_rec_exten,campaign_recording,campaign_rec_filename,campaign_script,get_call_launch,am_message_exten,xferconf_a_dtmf,xferconf_a_number,xferconf_b_dtmf,xferconf_b_number,alt_number_dialing,scheduled_callbacks,wrapup_seconds,wrapup_message,closer_campaigns,use_internal_dnc,allcalls_delay,omit_phone_code,agent_pause_codes_active,no_hopper_leads_logins,campaign_allow_inbound,manual_dial_list_id,default_xfer_group,xfer_groups,disable_alter_custphone,display_queue_count,manual_dial_filter,agent_clipboard_copy,use_campaign_dnc,three_way_call_cid,dial_method,three_way_dial_prefix,web_form_target,vtiger_screen_login,agent_allow_group_alias,default_group_alias,quick_transfer_button,prepopulate_transfer_preset,view_calls_in_queue,view_calls_in_queue_launch,call_requeue_button,pause_after_each_call,no_hopper_dialing,agent_dial_owner_only,agent_display_dialable_leads,web_form_address_two,agent_select_territories,crm_popup_login,crm_login_address,timer_action,timer_action_message,timer_action_seconds,start_call_url,dispo_call_url,xferconf_c_number,xferconf_d_number,xferconf_e_number,use_custom_cid,scheduled_callbacks_alert,scheduled_callbacks_count,manual_dial_override,blind_monitor_warning,blind_monitor_message,blind_monitor_filename,timer_action_destination,enable_xfer_presets,hide_xfer_number_to_dial,manual_dial_prefix,customer_3way_hangup_logging,customer_3way_hangup_seconds,customer_3way_hangup_action,ivr_park_call,manual_preview_dial,api_manual_dial,manual_dial_call_time_check,my_callback_option,per_call_notes,agent_lead_search,agent_lead_search_method,queuemetrics_phone_environment,auto_pause_precall,auto_pause_precall_code,auto_resume_precall,manual_dial_cid,custom_3way_button_transfer,callback_days_limit,disable_dispo_screen,disable_dispo_status,screen_labels,status_display_fields,pllb_grouping,pllb_grouping_limit,in_group_dial,in_group_dial_select,pause_after_next_call,owner_populate,manual_dial_lead_id,dead_max,dispo_max,pause_max,dead_max_dispo,dispo_max_dispo,max_inbound_calls,manual_dial_search_checkbox,hide_call_log_info,timer_alt_seconds,wrapup_bypass,wrapup_after_hotkey,callback_active_limit,callback_active_limit_override,comments_all_tabs,comments_dispo_screen,comments_callback_screen,qc_comment_history,show_previous_callback,clear_script,manual_dial_search_filter,web_form_address_three,manual_dial_override_field,status_display_ingroup,customer_gone_seconds,agent_display_fields,manual_dial_timeout,manual_auto_next,manual_auto_show,allow_required_fields,dead_to_dispo,agent_xfer_validation,ready_max_logout,callback_display_days,three_way_record_stop,hangup_xfer_record_start,max_inbound_calls_outcome,manual_auto_next_options,agent_screen_time_display,pause_max_dispo,script_top_dispo,routing_initiated_recordings,dead_trigger_seconds,dead_trigger_action,dead_trigger_repeat,dead_trigger_filename,scheduled_callbacks_force_dial,callback_hours_block,callback_display_days,scheduled_callbacks_timezones_container,three_way_volume_buttons,manual_dial_validation,mute_recordings,leave_vm_no_dispo,leave_vm_message_group_id,campaign_script_two,browser_alert_sound,browser_alert_volume,three_way_record_stop_exception,pause_max_exceptions,transfer_button_launch,leave_3way_start_recording,leave_3way_start_recording_exception,calls_waiting_vl_one,calls_waiting_vl_two,allow_chats FROM vicidial_campaigns where campaign_id = '$VD_campaign';";
 				$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01013',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 				if ($DB) {echo "$stmt\n";}
@@ -2401,12 +2402,12 @@ else
 				$transfer_button_launch =	$row[165];
 				$leave_3way_start_recording = $row[166];
 				$leave_3way_start_recording_exception = $row[167];
-				$allow_chats = 				$row[168];
+				$calls_waiting_vl_one = $row[168];
+				$calls_waiting_vl_two = $row[169];				$allow_chats 			= $row[170];
 				if (($chat_enabled > 0) && ($allow_chats == 'Y'))
 					{$chat_enabled = 1;}
 				else
 					{$chat_enabled = 0;}
-
 				$LTWSRcontainer_entry='';
 				if ( (strlen($leave_3way_start_recording_exception) > 1) and ($leave_3way_start_recording_exception != 'DISABLED') )
 					{
@@ -4598,6 +4599,57 @@ $CCAL_OUT .= "</table>";
 ################################################################
 ### END - build the callback calendar (12 months)            ###
 ################################################################
+
+$calls_waiting_vl_oneLABEL='';
+$calls_waiting_vl_twoLABEL='';
+if ( ($calls_waiting_vl_one != 'DISABLED') and (strlen($calls_waiting_vl_one) > 2) )
+	{
+	$calls_waiting_vl_oneLABEL = $calls_waiting_vl_one;
+	if ($calls_waiting_vl_one == 'title') {$calls_waiting_vl_oneLABEL = $label_title;}
+	if ($calls_waiting_vl_one == 'first_name') {$calls_waiting_vl_oneLABEL = $label_first_name;}
+	if ($calls_waiting_vl_one == 'middle_initial') {$calls_waiting_vl_oneLABEL = $label_middle_initial;}
+	if ($calls_waiting_vl_one == 'last_name') {$calls_waiting_vl_oneLABEL = $label_last_name;}
+	if ($calls_waiting_vl_one == 'address1') {$calls_waiting_vl_oneLABEL = $label_address1;}
+	if ($calls_waiting_vl_one == 'address2') {$calls_waiting_vl_oneLABEL = $label_address2;}
+	if ($calls_waiting_vl_one == 'address3') {$calls_waiting_vl_oneLABEL = $label_address3;}
+	if ($calls_waiting_vl_one == 'city') {$calls_waiting_vl_oneLABEL = $label_city;}
+	if ($calls_waiting_vl_one == 'state') {$calls_waiting_vl_oneLABEL = $label_state;}
+	if ($calls_waiting_vl_one == 'province') {$calls_waiting_vl_oneLABEL = $label_province;}
+	if ($calls_waiting_vl_one == 'postal_code') {$calls_waiting_vl_oneLABEL = $label_postal_code;}
+	if ($calls_waiting_vl_one == 'vendor_lead_code') {$calls_waiting_vl_oneLABEL = $label_vendor_lead_code;}
+	if ($calls_waiting_vl_one == 'gender') {$calls_waiting_vl_oneLABEL = $label_gender;}
+	if ($calls_waiting_vl_one == 'phone_number') {$calls_waiting_vl_oneLABEL = $label_phone_number;}
+	if ($calls_waiting_vl_one == 'phone_code') {$calls_waiting_vl_oneLABEL = $label_phone_code;}
+	if ($calls_waiting_vl_one == 'alt_phone') {$calls_waiting_vl_oneLABEL = $label_alt_phone;}
+	if ($calls_waiting_vl_one == 'security_phrase') {$calls_waiting_vl_oneLABEL = $label_security_phrase;}
+	if ($calls_waiting_vl_one == 'email') {$calls_waiting_vl_oneLABEL = $label_email;}
+	if ($calls_waiting_vl_one == 'comments') {$calls_waiting_vl_oneLABEL = $label_comments;}
+	$calls_waiting_vl_oneLABEL = strtoupper($calls_waiting_vl_oneLABEL);
+	}
+if ( ($calls_waiting_vl_two != 'DISABLED') and (strlen($calls_waiting_vl_two) > 2) )
+	{
+	$calls_waiting_vl_twoLABEL = $calls_waiting_vl_two;
+	if ($calls_waiting_vl_two == 'title') {$calls_waiting_vl_twoLABEL = $label_title;}
+	if ($calls_waiting_vl_two == 'first_name') {$calls_waiting_vl_twoLABEL = $label_first_name;}
+	if ($calls_waiting_vl_two == 'middle_initial') {$calls_waiting_vl_twoLABEL = $label_middle_initial;}
+	if ($calls_waiting_vl_two == 'last_name') {$calls_waiting_vl_twoLABEL = $label_last_name;}
+	if ($calls_waiting_vl_two == 'address1') {$calls_waiting_vl_twoLABEL = $label_address1;}
+	if ($calls_waiting_vl_two == 'address2') {$calls_waiting_vl_twoLABEL = $label_address2;}
+	if ($calls_waiting_vl_two == 'address3') {$calls_waiting_vl_twoLABEL = $label_address3;}
+	if ($calls_waiting_vl_two == 'city') {$calls_waiting_vl_twoLABEL = $label_city;}
+	if ($calls_waiting_vl_two == 'state') {$calls_waiting_vl_twoLABEL = $label_state;}
+	if ($calls_waiting_vl_two == 'province') {$calls_waiting_vl_twoLABEL = $label_province;}
+	if ($calls_waiting_vl_two == 'postal_code') {$calls_waiting_vl_twoLABEL = $label_postal_code;}
+	if ($calls_waiting_vl_two == 'vendor_lead_code') {$calls_waiting_vl_twoLABEL = $label_vendor_lead_code;}
+	if ($calls_waiting_vl_two == 'gender') {$calls_waiting_vl_twoLABEL = $label_gender;}
+	if ($calls_waiting_vl_two == 'phone_number') {$calls_waiting_vl_twoLABEL = $label_phone_number;}
+	if ($calls_waiting_vl_two == 'phone_code') {$calls_waiting_vl_twoLABEL = $label_phone_code;}
+	if ($calls_waiting_vl_two == 'alt_phone') {$calls_waiting_vl_twoLABEL = $label_alt_phone;}
+	if ($calls_waiting_vl_two == 'security_phrase') {$calls_waiting_vl_twoLABEL = $label_security_phrase;}
+	if ($calls_waiting_vl_two == 'email') {$calls_waiting_vl_twoLABEL = $label_email;}
+	if ($calls_waiting_vl_two == 'comments') {$calls_waiting_vl_twoLABEL = $label_comments;}
+	$calls_waiting_vl_twoLABEL = strtoupper($calls_waiting_vl_twoLABEL);
+	}
 
 	echo $INSERT_head_script;
 ?>
@@ -17896,7 +17948,7 @@ function phone_number_format(formatphone) {
 					}
 				if (xmlhttp)
 					{
-					RAview_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&ACTION=CALLSINQUEUEview&format=text&user=" + user + "&pass=" + pass + "&conf_exten=" + session_id + "&extension=" + extension + "&protocol=" + protocol + "&campaign=" + campaign + "&stage=<?php echo $CQwidth ?>";
+					RAview_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&ACTION=CALLSINQUEUEview&format=text&user=" + user + "&pass=" + pass + "&conf_exten=" + session_id + "&extension=" + extension + "&protocol=" + protocol + "&campaign=" + campaign + "&stage=<?php echo $CQwidth ?>&calls_waiting_vl_oneLABEL=<?php echo $calls_waiting_vl_oneLABEL ?>&calls_waiting_vl_twoLABEL=<?php echo $calls_waiting_vl_twoLABEL ?>";
 					xmlhttp.open('POST', 'vdc_db_query.php');
 					xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
 					xmlhttp.send(RAview_query);

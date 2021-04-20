@@ -5345,7 +5345,9 @@ sub process_khomp_analytics
 					( $action eq 'status' )
 				)
 					{
-					khomp_end_call( %parsed_data, $action, $status );
+					$parsed_data{'vdad_action'} = $action;
+					$parsed_data{'vdad_result'} = $status;
+					khomp_end_call( %parsed_data );
 					}
 				if ( $action eq 'route' )
 					{
@@ -5399,7 +5401,9 @@ sub log_khomp_call_data
 
 sub khomp_end_call
 	{
-	%khomp_call_data, $vdad_action, $vdad_result = @_;
+	%khomp_call_data = @_;
+	$vdad_action = $khomp_call_data{'vdad_action'};
+	$vdad_result = $khomp_call_data{'vdad_result'};
 
 	if ($AGILOG) {$agi_string = "--    VDAD KHOMP End Call |a:$vdad_action|s:$vdad_result|";   &agi_output;}	
 	

@@ -504,10 +504,11 @@
 # 210324-1606 - Added leave_3way_start_recording campaign options
 # 210329-1515 - Fix for issue on transfer list user fullname having an underscore
 # 210330-2255 - Fixed issues with dashes as custom fields values throwing off delimiters
+# 210417-1109 - Added calls_waiting_vl_ options
 #
 
-$version = '2.14-397';
-$build = '210330-2255';
+$version = '2.14-398';
+$build = '210417-1109';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=850;
@@ -818,6 +819,10 @@ if (isset($_GET["leave_3way_start_recording_filename"]))			{$leave_3way_start_re
 	elseif (isset($_POST["leave_3way_start_recording_filename"]))	{$leave_3way_start_recording_filename=$_POST["leave_3way_start_recording_filename"];}
 if (isset($_GET["channelrec"]))				{$channelrec=$_GET["channelrec"];}
 	elseif (isset($_POST["channelrec"]))	{$channelrec=$_POST["channelrec"];}
+if (isset($_GET["calls_waiting_vl_oneLABEL"]))			{$calls_waiting_vl_oneLABEL=$_GET["calls_waiting_vl_oneLABEL"];}
+	elseif (isset($_POST["calls_waiting_vl_oneLABEL"]))	{$calls_waiting_vl_oneLABEL=$_POST["calls_waiting_vl_oneLABEL"];}
+if (isset($_GET["calls_waiting_vl_twoLABEL"]))			{$calls_waiting_vl_twoLABEL=$_GET["calls_waiting_vl_twoLABEL"];}
+	elseif (isset($_POST["calls_waiting_vl_twoLABEL"]))	{$calls_waiting_vl_twoLABEL=$_POST["calls_waiting_vl_twoLABEL"];}
 
 header ("Content-type: text/html; charset=utf-8");
 header ("Cache-Control: no-cache, must-revalidate");  // HTTP/1.1
@@ -1149,6 +1154,8 @@ if ($non_latin < 1)
 	$search = preg_replace('/[^-_0-9a-zA-Z]/','',$search);
 	$sub_status = preg_replace('/[^-_0-9a-zA-Z]/','',$sub_status);
 	$user_group = preg_replace('/[^-_0-9a-zA-Z]/','',$user_group);
+	$calls_waiting_vl_oneLABEL = preg_replace('/[^-, _0-9a-zA-Z]/','',$calls_waiting_vl_oneLABEL);
+	$calls_waiting_vl_twoLABEL = preg_replace('/[^-, _0-9a-zA-Z]/','',$calls_waiting_vl_twoLABEL);
 	}
 else
 	{
@@ -1176,6 +1183,8 @@ else
 	$search = preg_replace('/[^-_0-9\p{L}]/u','',$search);
 	$sub_status = preg_replace('/[^-_0-9\p{L}]/u','',$sub_status);
 	$user_group = preg_replace('/[^-_0-9\p{L}]/u','',$user_group);
+	$calls_waiting_vl_oneLABEL = preg_replace('/[^-, _0-9\p{L}]/u','',$calls_waiting_vl_oneLABEL);
+	$calls_waiting_vl_twoLABEL = preg_replace('/[^-, _0-9\p{L}]/u','',$calls_waiting_vl_twoLABEL);
 	}
 
 
@@ -16710,13 +16719,15 @@ if ($ACTION == 'AGENTSview')
 ################################################################################
 if ($ACTION == 'CALLSINQUEUEview')
 	{
-	$stmt="SELECT view_calls_in_queue,grab_calls_in_queue from vicidial_campaigns where campaign_id='$campaign'";
+	$stmt="SELECT view_calls_in_queue,grab_calls_in_queue,calls_waiting_vl_one,calls_waiting_vl_two from vicidial_campaigns where campaign_id='$campaign'";
 	if ($non_latin > 0) {$rslt=mysql_to_mysqli("SET NAMES 'UTF8'", $link);}
 	$rslt=mysql_to_mysqli($stmt, $link);
 		if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00228',$user,$server_ip,$session_name,$one_mysql_log);}
 	$row=mysqli_fetch_row($rslt);
 	$view_calls_in_queue =	$row[0];
 	$grab_calls_in_queue =	$row[1];
+	$calls_waiting_vl_one =	$row[2];
+	$calls_waiting_vl_two =	$row[3];
 
 	if (preg_match('/NONE/i',$view_calls_in_queue))
 		{
@@ -16807,12 +16818,28 @@ if ($ACTION == 'CALLSINQUEUEview')
 				}
 			$loop_count++;
 			}
+		$calls_waiting_vl_oneSQL='';
+		$calls_waiting_vl_twoSQL='';
+		if ( ($calls_waiting_vl_one != 'DISABLED') and (strlen($calls_waiting_vl_one) > 2) ) 
+			{
+			$calls_waiting_vl_oneSQL = ",$calls_waiting_vl_one";
+			if (strlen($calls_waiting_vl_oneLABEL) < 1) {$calls_waiting_vl_oneLABEL = $calls_waiting_vl_one;}
+			}
+		if ( ($calls_waiting_vl_two != 'DISABLED') and (strlen($calls_waiting_vl_two) > 2) ) 
+			{
+			$calls_waiting_vl_twoSQL = ",$calls_waiting_vl_two";
+			if (strlen($calls_waiting_vl_twoLABEL) < 1) {$calls_waiting_vl_twoLABEL = $calls_waiting_vl_two;}
+			}
 
 		echo "<TABLE CELLPADDING=0 CELLSPACING=1 BORDER=0 WIDTH=$stage>";
 		echo "<TR>";
 		echo "<TD> &nbsp; </TD>";
 		echo "<TD BGCOLOR=\"#CCCCCC\"><font style=\"font-size:11px;font-family:sans-serif;\"><B> &nbsp; "._QXZ("PHONE")." &nbsp; </font></TD>";
 		echo "<TD BGCOLOR=\"#CCCCCC\"><font style=\"font-size:11px;font-family:sans-serif;\"><B> &nbsp; "._QXZ("FULL NAME")." &nbsp; </font></TD>";
+		if (strlen($calls_waiting_vl_oneSQL) > 2) 
+			{echo "<TD BGCOLOR=\"#CCCCCC\"><font style=\"font-size:11px;font-family:sans-serif;\"><B> &nbsp; "._QXZ("$calls_waiting_vl_oneLABEL")." &nbsp; </font></TD>";}
+		if (strlen($calls_waiting_vl_twoSQL) > 2) 
+			{echo "<TD BGCOLOR=\"#CCCCCC\"><font style=\"font-size:11px;font-family:sans-serif;\"><B> &nbsp; "._QXZ("$calls_waiting_vl_twoLABEL")." &nbsp; </font></TD>";}
 		echo "<TD BGCOLOR=\"#CCCCCC\"><font style=\"font-size:11px;font-family:sans-serif;\"><B> &nbsp; "._QXZ("WAIT")." &nbsp; </font></TD>";
 		echo "<TD BGCOLOR=\"#CCCCCC\"><font style=\"font-size:11px;font-family:sans-serif;\"><B> &nbsp; "._QXZ("AGENT")." &nbsp; </font></TD>";
 		echo "<TD BGCOLOR=\"#CCCCCC\"><font style=\"font-size:11px;font-family:sans-serif;\"> &nbsp; &nbsp; &nbsp; </font></TD>";
@@ -16834,6 +16861,8 @@ if ($ACTION == 'CALLSINQUEUEview')
 			if ($Fminutes_S < 10) {$Fminutes_S = "0$Fminutes_S";}
 			$call_time = "$Fminutes_M_int:$Fminutes_S";
 			$call_handle_method='';
+			$calls_waiting_vl_oneVAL='';
+			$calls_waiting_vl_twoVAL='';
 
 			if ($OQcall_type[$loop_count]=='IN')
 				{
@@ -16844,7 +16873,7 @@ if ($ACTION == 'CALLSINQUEUEview')
 				$group_name =			$row[0];
 				$group_color =			$row[1];
 				}
-			$stmt="SELECT comments,user,first_name,last_name from vicidial_list where lead_id='$OQlead_id[$loop_count]'";
+			$stmt="SELECT comments,user,first_name,last_name $calls_waiting_vl_oneSQL $calls_waiting_vl_twoSQL from vicidial_list where lead_id='$OQlead_id[$loop_count]'";
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00232',$user,$server_ip,$session_name,$one_mysql_log);}
 			$row=mysqli_fetch_row($rslt);
@@ -16852,6 +16881,15 @@ if ($ACTION == 'CALLSINQUEUEview')
 			$agent =		$row[1];
 			$first_last_name =	"$row[2] $row[3]";
 			$caller_name =	$first_last_name;
+			if (strlen($calls_waiting_vl_oneSQL) > 2) 
+				{
+				$calls_waiting_vl_oneVAL = $row[4];
+				if (strlen($calls_waiting_vl_twoSQL) > 2) {$calls_waiting_vl_twoVAL = $row[5];}
+				}
+			else
+				{
+				if (strlen($calls_waiting_vl_twoSQL) > 2) {$calls_waiting_vl_twoVAL = $row[4];}
+				}
 
 			$stmt="SELECT full_name from vicidial_users where user='$agent'";
 			$rslt=mysql_to_mysqli($stmt, $link);
@@ -16878,6 +16916,10 @@ if ($ACTION == 'CALLSINQUEUEview')
 				echo "<TD> <a href=\"#\" onclick=\"callinqueuegrab('$OQauto_call_id[$loop_count]');return false;\"><font style=\"font-size: 11px; font-family: sans-serif;\">"._QXZ("TAKE CALL")."</a> &nbsp; </TD>";
 				echo "<TD><font style=\"font-size: 11px; font-family: sans-serif;\"> &nbsp; $OQphone_number[$loop_count] &nbsp; </font></TD>";
 				echo "<TD><font style=\"font-size: 11px; font-family: sans-serif;\"> &nbsp; $caller_name &nbsp; </font></TD>";
+				if (strlen($calls_waiting_vl_oneSQL) > 2) 
+					{echo "<TD><font style=\"font-size: 11px; font-family: sans-serif;\"> &nbsp; $calls_waiting_vl_oneVAL &nbsp; </font></TD>";}
+				if (strlen($calls_waiting_vl_twoSQL) > 2) 
+					{echo "<TD><font style=\"font-size: 11px; font-family: sans-serif;\"> &nbsp; $calls_waiting_vl_twoVAL &nbsp; </font></TD>";}
 				echo "<TD><font style=\"font-size: 11px; font-family: sans-serif;\"> &nbsp; $call_time &nbsp; </font></TD>";
 				echo "<TD><font style=\"font-size: 11px; font-family: sans-serif;\"> &nbsp; $agent - $agent_name &nbsp; </font></TD>";
 				echo "<TD bgcolor=\"$group_color\"><font style=\"font-size: 11px; font-family: sans-serif;\"> &nbsp; &nbsp; &nbsp; </font></TD>";
@@ -16891,6 +16933,10 @@ if ($ACTION == 'CALLSINQUEUEview')
 				echo "<TD> &nbsp; </TD>";
 				echo "<TD><font style=\"font-size: 11px; font-family: sans-serif;\"> &nbsp; $OQphone_number[$loop_count] &nbsp; </font></TD>";
 				echo "<TD><font style=\"font-size: 11px; font-family: sans-serif;\"> &nbsp; $caller_name &nbsp; </font></TD>";
+				if (strlen($calls_waiting_vl_oneSQL) > 2) 
+					{echo "<TD><font style=\"font-size: 11px; font-family: sans-serif;\"> &nbsp; $calls_waiting_vl_oneVAL &nbsp; </font></TD>";}
+				if (strlen($calls_waiting_vl_twoSQL) > 2) 
+					{echo "<TD><font style=\"font-size: 11px; font-family: sans-serif;\"> &nbsp; $calls_waiting_vl_twoVAL &nbsp; </font></TD>";}
 				echo "<TD><font style=\"font-size: 11px; font-family: sans-serif;\"> &nbsp; $call_time &nbsp; </font></TD>";
 				echo "<TD><font style=\"font-size: 11px; font-family: sans-serif;\"> &nbsp; $agent - $agent_name &nbsp; </font></TD>";
 				echo "<TD bgcolor=\"$group_color\"><font style=\"font-size: 11px; font-family: sans-serif;\"> &nbsp; &nbsp; &nbsp; </font></TD>";
