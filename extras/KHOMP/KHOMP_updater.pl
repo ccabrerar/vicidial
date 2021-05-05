@@ -244,6 +244,7 @@ $khomp_rslt->finish();
 if ($DBX) {foreach (@khomps_array) {print "$_\n";}}
 
 my $new_khomps_str = join ' => \r\n', @new_khomps;
+if ($new_khomps_str!~/\s\=\>\s$/) {$new_khomps_str.=" => ";}
 $container_entry.="\r\n$new_khomps_str";
 $container_entry=~s/\\r\\n/\r\n/gi;
 

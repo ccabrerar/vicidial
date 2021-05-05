@@ -1,4 +1,4 @@
-CRM EXAMPLE SKIN DOCUMENT	Started: 2015-12-27	Updated: 2020-08-28
+CRM EXAMPLE SKIN DOCUMENT	Started: 2015-12-27	Updated: 2021-04-26
 
 This document describes one method of integrating with the agent screen using 
 a basic skin. This method could be used as a guide to integrate a CRM web system
@@ -63,3 +63,4 @@ Additional enhancements:
 http://server/agc/alt_display.php?user=6666&ACTION=top_panel
 http://server/agc/alt_display.php?user=6666&ACTION=top_panel_realtime
 http://server/agc/alt_display.php?user=6666&ACTION=agent_status
+http://server/agc/alt_display.php?user=6666&ACTION=top_panel_realtime&calls_in_queue_option=CAMPAIGN&calls_in_queue_display=STACKED

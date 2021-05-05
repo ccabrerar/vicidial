@@ -1,7 +1,7 @@
 <?php
 # list_split.php - split one big list into smaller lists. Part of Admin Utilities.
 #
-# Copyright (C) 2019  Matt Florell,Michael Cargile <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell,Michael Cargile <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 140916-1215 - Initial Build
@@ -12,10 +12,11 @@
 # 170409-1542 - Added IP List validation code
 # 170819-1001 - Added allow_manage_active_lists option
 # 190703-0925 - Added use of admin_web_directory system setting
+# 210427-1741 - Added more list count options
 #
 
-$version = '2.14-8';
-$build = '190703-0925';
+$version = '2.14-9';
+$build = '210427-1741';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -626,14 +627,24 @@ if (($submit != _QXZ("submit") ) && ($confirm != "confirm"))
 	# Number of leads per list
 	echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Number of Leads Per List")."</td><td align=left>\n";
 	echo "<select size=1 name=num_leads>\n";
-	echo "<option value='10000'>10000</option>\n";
-	echo "<option value='20000'>20000</option>\n";
-	echo "<option value='30000'>30000</option>\n";
-	echo "<option value='40000'>40000</option>\n";
-	echo "<option value='50000'>50000</option>\n";
 	echo "<option value='60000'>60000</option>\n";
+	echo "<option value='50000'>50000</option>\n";
+	echo "<option value='40000'>40000</option>\n";
+	echo "<option value='30000'>30000</option>\n";
+	echo "<option value='20000'>20000</option>\n";
+	echo "<option value='10000'>10000</option>\n";
+	echo "<option value='9000'>9000</option>\n";
+	echo "<option value='8000'>8000</option>\n";
+	echo "<option value='7000'>7000</option>\n";
+	echo "<option value='6000'>6000</option>\n";
+	echo "<option value='5000'>5000</option>\n";
+	echo "<option value='4000'>4000</option>\n";
+	echo "<option value='3000'>3000</option>\n";
+	echo "<option value='2000'>2000</option>\n";
 	echo "<option value='1000'>1000</option>\n";
+	echo "<option value='500'>500</option>\n";
 	echo "<option value='100'>100</option>\n";
+	echo "<option value='50'>50</option>\n";
 	echo "<option value='10'>10</option>\n";
 	echo "</select></td></tr>\n";
 

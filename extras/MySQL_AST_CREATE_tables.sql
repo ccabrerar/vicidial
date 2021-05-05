@@ -102,6 +102,7 @@ webphone_debug ENUM('Y','N') default 'N',
 outbound_alt_cid VARCHAR(20) default '',
 conf_qualify ENUM('Y','N') default 'Y',
 webphone_layout VARCHAR(255) default '',
+mohsuggest VARCHAR(100) default '',
 index (server_ip),
 index (voicemail_id),
 index (dialplan_number),
@@ -1063,7 +1064,9 @@ clear_form ENUM('DISABLED','ENABLED','ACKNOWLEDGE') default 'ACKNOWLEDGE',
 leave_3way_start_recording ENUM('DISABLED','ALL_CALLS','ALL_BUT_EXCEPTIONS','ONLY_EXCEPTIONS') default 'DISABLED',
 leave_3way_start_recording_exception VARCHAR(40) default 'DISABLED',
 calls_waiting_vl_one VARCHAR(25) default 'DISABLED',
-calls_waiting_vl_two VARCHAR(25) default 'DISABLED'
+calls_waiting_vl_two VARCHAR(25) default 'DISABLED',
+calls_inqueue_count_one VARCHAR(40) default 'DISABLED',
+calls_inqueue_count_two VARCHAR(40) default 'DISABLED'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_lists (
@@ -1908,7 +1911,22 @@ two_factor_container VARCHAR(40) default '---DISABLED---',
 agent_hidden_sound VARCHAR(20) default 'click_quiet',
 agent_hidden_sound_volume TINYINT(3) UNSIGNED default '25',
 agent_hidden_sound_seconds TINYINT(3) UNSIGNED default '0',
-agent_screen_timer VARCHAR(20) default 'setTimeout'
+agent_screen_timer VARCHAR(20) default 'setTimeout',
+label_lead_id VARCHAR(60) default '',
+label_list_id VARCHAR(60) default '',
+label_entry_date VARCHAR(60) default '',
+label_gmt_offset_now VARCHAR(60) default '',
+label_source_id VARCHAR(60) default '',
+label_called_since_last_reset VARCHAR(60) default '',
+label_status VARCHAR(60) default '',
+label_user VARCHAR(60) default '',
+label_date_of_birth VARCHAR(60) default '',
+label_country_code VARCHAR(60) default '',
+label_last_local_call_time VARCHAR(60) default '',
+label_called_count VARCHAR(60) default '',
+label_rank VARCHAR(60) default '',
+label_owner VARCHAR(60) default '',
+label_entry_list_id VARCHAR(60) default ''
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaigns_list_mix (
@@ -2954,7 +2972,22 @@ label_alt_phone VARCHAR(60) default '',
 label_security_phrase VARCHAR(60) default '',
 label_email VARCHAR(60) default '',
 label_comments VARCHAR(60) default '',
-user_group VARCHAR(20) default '---ALL---'
+user_group VARCHAR(20) default '---ALL---',
+label_lead_id VARCHAR(60) default '',
+label_list_id VARCHAR(60) default '',
+label_entry_date VARCHAR(60) default '',
+label_gmt_offset_now VARCHAR(60) default '',
+label_source_id VARCHAR(60) default '',
+label_called_since_last_reset VARCHAR(60) default '',
+label_status VARCHAR(60) default '',
+label_user VARCHAR(60) default '',
+label_date_of_birth VARCHAR(60) default '',
+label_country_code VARCHAR(60) default '',
+label_last_local_call_time VARCHAR(60) default '',
+label_called_count VARCHAR(60) default '',
+label_rank VARCHAR(60) default '',
+label_owner VARCHAR(60) default '',
+label_entry_list_id VARCHAR(60) default ''
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_agent_skip_log (
@@ -4898,4 +4931,4 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1630',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1633',db_schema_update_date=NOW(),reload_timestamp=NOW();

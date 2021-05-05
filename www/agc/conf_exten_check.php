@@ -87,10 +87,11 @@
 # 201111-2140 - Fix for AGENTDIRECT selected in-groups issue #1241
 # 210317-1935 - Added visibility logging
 # 210328-1013 - Fix for emails-in-queue count query, Issue #1170
+# 210425-2357 - Added calls_inqueue_count_ calculation
 #
 
-$version = '2.14-61';
-$build = '210328-1013';
+$version = '2.14-62';
+$build = '210425-2357';
 $php_script = 'conf_exten_check.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=51;
@@ -335,17 +336,22 @@ if ($ACTION == 'refresh')
 				$Acampaign_id =		$row[3];
 				$Alead_id =			$row[4];
 				$Acomments =		$row[5];
-
-				$api_manual_dial='STANDARD';
-				$stmt = "SELECT api_manual_dial FROM vicidial_campaigns where campaign_id='$Acampaign_id';";
-				$rslt=mysql_to_mysqli($stmt, $link);
-				$vcc_conf_ct = mysqli_num_rows($rslt);
-				if ($vcc_conf_ct > 0)
-					{
-					$row=mysqli_fetch_row($rslt);
-					$api_manual_dial =	$row[0];
-					}
 				}
+
+			$api_manual_dial='STANDARD';
+			$calls_inqueue_count_one='';
+			$calls_inqueue_count_two='';
+			$stmt = "SELECT api_manual_dial,calls_inqueue_count_one,calls_inqueue_count_two FROM vicidial_campaigns where campaign_id='$Acampaign_id';";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$vcc_conf_ct = mysqli_num_rows($rslt);
+			if ($vcc_conf_ct > 0)
+				{
+				$row=mysqli_fetch_row($rslt);
+				$api_manual_dial =			$row[0];
+				$calls_inqueue_count_one =	$row[1];
+				$calls_inqueue_count_two =	$row[2];
+				}
+
 		#	### find out if external table shows agent should be disabled
 		#	$stmt="SELECT count(*) from another_table where user='$user' and status='DEAD';";
 		#	if ($DB) {echo "|$stmt|\n";}
@@ -391,6 +397,302 @@ if ($ACTION == 'refresh')
 		if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03008',$user,$server_ip,$session_name,$one_mysql_log);}
 				$row=mysqli_fetch_row($rslt);
 				$DiaLCalls=$row[0];
+
+				### BEGIN check for calls_inqueue_count_ settings containers and calculate calls in queue ###
+				if ( ( ($calls_inqueue_count_one != '') and ($calls_inqueue_count_one != 'DISABLED') ) or ( ($calls_inqueue_count_two != '') and ($calls_inqueue_count_two != 'DISABLED') ) )
+					{
+					$RingCallsOne='';
+					$RingCallsTwo='';
+					# gather calls_inqueue_count_one settings container
+					$stmt = "SELECT container_entry FROM vicidial_settings_containers where container_id='$calls_inqueue_count_one';";
+					$rslt=mysql_to_mysqli($stmt, $link);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+					if ($DB) {echo "$stmt\n";}
+					$SCinfo_ct = mysqli_num_rows($rslt);
+					if ($SCinfo_ct > 0)
+						{
+						$calls_inqueue_count_one_heading='';
+						$row=mysqli_fetch_row($rslt);
+						$SAcontainer_entry =	$row[0];
+						$SAcontainer_entry = preg_replace("/\r|\t|\'|\"/",'',$SAcontainer_entry);
+						$calls_inqueue_count_one_settings = explode("\n",$SAcontainer_entry);
+						$calls_inqueue_count_one_settings_ct = count($calls_inqueue_count_one_settings);
+						$calls_inqueue_count_one_output='';
+						$calls_inqueue_count_one_groups_SQL='';
+						$except_container_id_output='';
+						$cic_excpt_stmt='';
+						$sea=0;
+						while ($calls_inqueue_count_one_settings_ct >= $sea)
+							{
+							if (preg_match("/^HEADING => |^HEADING=>/",$calls_inqueue_count_one_settings[$sea]))
+								{
+								$calls_inqueue_count_one_heading = preg_replace("/^HEADING => |^HEADING=>/i",'',$calls_inqueue_count_one_settings[$sea]);
+								}
+							else
+								{
+								if ( (!preg_match("/^;/",$calls_inqueue_count_one_settings[$sea])) and (strlen($calls_inqueue_count_one_settings[$sea]) > 0) )
+									{
+									if ($calls_inqueue_count_one_settings[$sea] == '--ALL-CALLS--')
+										{
+										if ($RingCalls > 0) {$calls_inqueue_count_one_output = "<font class=\"queue_text_red\">$calls_inqueue_count_one_heading: $RingCalls</font>";}
+										else {$calls_inqueue_count_one_output = "<font class=\"queue_text\">$calls_inqueue_count_one_heading: $RingCalls</font>";}
+										}
+									else
+										{
+										$cic_one_stmt='';
+										if (preg_match("/^--ALL-IN-GROUP-CALLS-/",$calls_inqueue_count_one_settings[$sea]))
+											{
+											$cic_one_stmt="SELECT count(*) from vicidial_auto_calls where status IN('LIVE') and ( (campaign_id IN('$AccampSQL')) $ADsql)";
+											}
+										if (preg_match("/^--ALL-CAMPAIGN-CALLS-/",$calls_inqueue_count_one_settings[$sea]))
+											{
+											$cic_one_stmt="SELECT count(*) from vicidial_auto_calls where status IN('LIVE') and (campaign_id='$Acampaign')";
+											}
+										if (preg_match("/^--ALL-CALLS-/",$calls_inqueue_count_one_settings[$sea]))
+											{
+											$cic_one_stmt="SELECT count(*) from vicidial_auto_calls where status IN('LIVE') and ( (campaign_id='$Acampaign') or (campaign_id IN('$AccampSQL')) $ADsql)";
+											}
+										if (preg_match("/-CALLS-EXCEPT=/",$calls_inqueue_count_one_settings[$sea]))
+											{
+											$except_container_id = preg_replace("/.*-CALLS-EXCEPT=/",'',$calls_inqueue_count_one_settings[$sea]);
+
+											# BEGIN gather EXCEPTION settings container
+											$stmt = "SELECT container_entry FROM vicidial_settings_containers where container_id='$except_container_id';";
+											$rslt=mysql_to_mysqli($stmt, $link);
+												if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+											if ($DB) {echo "EX|$stmt\n";}
+											$SCinfo_ct = mysqli_num_rows($rslt);
+											if ($SCinfo_ct > 0)
+												{
+												$row=mysqli_fetch_row($rslt);
+												$SAcontainer_entry =	$row[0];
+												$SAcontainer_entry = preg_replace("/\r|\t|\'|\"/",'',$SAcontainer_entry);
+												$except_container_id_settings = explode("\n",$SAcontainer_entry);
+												$except_container_id_settings_ct = count($except_container_id_settings);
+												$except_container_id_groups_SQL='';
+												$seaEX=0;
+												while ($except_container_id_settings_ct >= $seaEX)
+													{
+													if ( (!preg_match("/^;|^HEADING => |^HEADING=>/i",$except_container_id_settings[$seaEX])) and (strlen($except_container_id_settings[$seaEX]) > 0) )
+														{
+														if ($except_container_id_settings[$seaEX] == '--ALL-CALLS--')
+															{
+															$cic_excpt_stmt=" and (campaign_id!='$Acampaign') and (campaign_id NOT IN('$AccampSQL'))";
+															}
+														else
+															{
+															if (preg_match("/^--ALL-IN-GROUP-CALLS-/",$except_container_id_settings[$seaEX]))
+																{
+																$cic_excpt_stmt=" and (campaign_id NOT IN('$AccampSQL'))";
+																}
+															if (preg_match("/^--ALL-CAMPAIGN-CALLS-/",$except_container_id_settings[$seaEX]))
+																{
+																$cic_excpt_stmt=" and (campaign_id!='$Acampaign')";
+																}
+															if (preg_match("/^--ALL-CALLS-/",$except_container_id_settings[$seaEX]))
+																{
+																$cic_excpt_stmt=" and (campaign_id!='$Acampaign') and (campaign_id NOT IN('$AccampSQL'))";
+																}
+															if (strlen($cic_excpt_stmt) < 10)
+																{
+																$except_container_id_settings[$seaEX] = preg_replace('/[^-_0-9\p{L}]/u','',$except_container_id_settings[$seaEX]);
+																if (strlen($except_container_id_settings[$seaEX]) > 0)
+																	{
+																	if (strlen($except_container_id_groups_SQL) > 1) {$except_container_id_groups_SQL .= ",";}
+																	$except_container_id_groups_SQL .= "'$except_container_id_settings[$seaEX]'";
+																	}
+																}
+															}
+														}
+													$seaEX++;
+													}
+												if ( (strlen($cic_excpt_stmt) < 10) and (strlen($except_container_id_groups_SQL) > 2) )
+													{
+													$cic_excpt_stmt="and (campaign_id NOT IN($except_container_id_groups_SQL))";
+													}
+												}
+											# END gather EXCEPTION settings container
+											}
+										if (strlen($cic_one_stmt) < 10)
+											{
+											$calls_inqueue_count_one_settings[$sea] = preg_replace('/[^-_0-9\p{L}]/u','',$calls_inqueue_count_one_settings[$sea]);
+											if (strlen($calls_inqueue_count_one_settings[$sea]) > 0)
+												{
+												if (strlen($calls_inqueue_count_one_groups_SQL) > 1) {$calls_inqueue_count_one_groups_SQL .= ",";}
+												$calls_inqueue_count_one_groups_SQL .= "'$calls_inqueue_count_one_settings[$sea]'";
+												}
+											}
+										}
+									}
+								}
+							$sea++;
+							}
+						if ( (strlen($cic_one_stmt) < 10) and (strlen($calls_inqueue_count_one_groups_SQL) > 2) )
+							{
+							$cic_one_stmt="SELECT count(*) from vicidial_auto_calls where status IN('LIVE') and ( (campaign_id IN($calls_inqueue_count_one_groups_SQL)) $ADsql)";
+							}
+						if (strlen($cic_one_stmt) > 10)
+							{
+							$cic_one_stmt .= " $cic_excpt_stmt;";
+							if ($DB) {echo "CIC ONE|$cic_one_stmt|\n";}
+							$rslt=mysql_to_mysqli($cic_one_stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$cic_one_stmt,'03XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+							$row=mysqli_fetch_row($rslt);
+							$RingCallsOne=$row[0];
+							if ($RingCallsOne > 0) {$RingCallsOne = "<font class=\"queue_text_red\">$calls_inqueue_count_one_heading: $RingCallsOne</font>";}
+							else {$RingCallsOne = "<font class=\"queue_text\">$calls_inqueue_count_one_heading: $RingCallsOne</font>";}
+							}
+						}
+
+					# gather calls_inqueue_count_two settings container
+					$stmt = "SELECT container_entry FROM vicidial_settings_containers where container_id='$calls_inqueue_count_two';";
+					$rslt=mysql_to_mysqli($stmt, $link);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03XXX',$user,$server_ip,$session_name,$two_mysql_log);}
+					if ($DB) {echo "$stmt\n";}
+					$SCinfo_ct = mysqli_num_rows($rslt);
+					if ($SCinfo_ct > 0)
+						{
+						$calls_inqueue_count_two_heading='';
+						$row=mysqli_fetch_row($rslt);
+						$SAcontainer_entry =	$row[0];
+						$SAcontainer_entry = preg_replace("/\r|\t|\'|\"/",'',$SAcontainer_entry);
+						$calls_inqueue_count_two_settings = explode("\n",$SAcontainer_entry);
+						$calls_inqueue_count_two_settings_ct = count($calls_inqueue_count_two_settings);
+						$calls_inqueue_count_two_output='';
+						$calls_inqueue_count_two_groups_SQL='';
+						$except_container_id_output='';
+						$cic_excpt_stmt='';
+						$sea=0;
+						while ($calls_inqueue_count_two_settings_ct >= $sea)
+							{
+							if (preg_match("/^HEADING => |^HEADING=>/",$calls_inqueue_count_two_settings[$sea]))
+								{
+								$calls_inqueue_count_two_heading = preg_replace("/^HEADING => |^HEADING=>/i",'',$calls_inqueue_count_two_settings[$sea]);
+								}
+							else
+								{
+								if ( (!preg_match("/^;/",$calls_inqueue_count_two_settings[$sea])) and (strlen($calls_inqueue_count_two_settings[$sea]) > 0) )
+									{
+									if ($calls_inqueue_count_two_settings[$sea] == '--ALL-CALLS--')
+										{
+										if ($RingCalls > 0) {$calls_inqueue_count_two_output = "<font class=\"queue_text_red\">$calls_inqueue_count_two_heading: $RingCalls</font>";}
+										else {$calls_inqueue_count_two_output = "<font class=\"queue_text\">$calls_inqueue_count_two_heading: $RingCalls</font>";}
+										}
+									else
+										{
+										$cic_two_stmt='';
+										if (preg_match("/^--ALL-IN-GROUP-CALLS-/",$calls_inqueue_count_two_settings[$sea]))
+											{
+											$cic_two_stmt="SELECT count(*) from vicidial_auto_calls where status IN('LIVE') and ( (campaign_id IN('$AccampSQL')) $ADsql)";
+											}
+										if (preg_match("/^--ALL-CAMPAIGN-CALLS-/",$calls_inqueue_count_two_settings[$sea]))
+											{
+											$cic_two_stmt="SELECT count(*) from vicidial_auto_calls where status IN('LIVE') and (campaign_id='$Acampaign')";
+											}
+										if (preg_match("/^--ALL-CALLS-/",$calls_inqueue_count_two_settings[$sea]))
+											{
+											$cic_two_stmt="SELECT count(*) from vicidial_auto_calls where status IN('LIVE') and ( (campaign_id='$Acampaign') or (campaign_id IN('$AccampSQL')) $ADsql)";
+											}
+										if (preg_match("/-CALLS-EXCEPT=/",$calls_inqueue_count_two_settings[$sea]))
+											{
+											$except_container_id = preg_replace("/.*-CALLS-EXCEPT=/",'',$calls_inqueue_count_two_settings[$sea]);
+
+											# BEGIN gather EXCEPTION settings container
+											$stmt = "SELECT container_entry FROM vicidial_settings_containers where container_id='$except_container_id';";
+											$rslt=mysql_to_mysqli($stmt, $link);
+												if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03XXX',$user,$server_ip,$session_name,$two_mysql_log);}
+											if ($DB) {echo "EX|$stmt\n";}
+											$SCinfo_ct = mysqli_num_rows($rslt);
+											if ($SCinfo_ct > 0)
+												{
+												$row=mysqli_fetch_row($rslt);
+												$SAcontainer_entry =	$row[0];
+												$SAcontainer_entry = preg_replace("/\r|\t|\'|\"/",'',$SAcontainer_entry);
+												$except_container_id_settings = explode("\n",$SAcontainer_entry);
+												$except_container_id_settings_ct = count($except_container_id_settings);
+												$except_container_id_groups_SQL='';
+												$seaEX=0;
+												while ($except_container_id_settings_ct >= $seaEX)
+													{
+													if ( (!preg_match("/^;|^HEADING => |^HEADING=>/i",$except_container_id_settings[$seaEX])) and (strlen($except_container_id_settings[$seaEX]) > 0) )
+														{
+														if ($except_container_id_settings[$seaEX] == '--ALL-CALLS--')
+															{
+															$cic_excpt_stmt=" and (campaign_id!='$Acampaign') and (campaign_id NOT IN('$AccampSQL'))";
+															}
+														else
+															{
+															if (preg_match("/^--ALL-IN-GROUP-CALLS-/",$except_container_id_settings[$seaEX]))
+																{
+																$cic_excpt_stmt=" and (campaign_id NOT IN('$AccampSQL'))";
+																}
+															if (preg_match("/^--ALL-CAMPAIGN-CALLS-/",$except_container_id_settings[$seaEX]))
+																{
+																$cic_excpt_stmt=" and (campaign_id!='$Acampaign')";
+																}
+															if (preg_match("/^--ALL-CALLS-/",$except_container_id_settings[$seaEX]))
+																{
+																$cic_excpt_stmt=" and (campaign_id!='$Acampaign') and (campaign_id NOT IN('$AccampSQL'))";
+																}
+															if (strlen($cic_excpt_stmt) < 10)
+																{
+																$except_container_id_settings[$seaEX] = preg_replace('/[^-_0-9\p{L}]/u','',$except_container_id_settings[$seaEX]);
+																if (strlen($except_container_id_settings[$seaEX]) > 0)
+																	{
+																	if (strlen($except_container_id_groups_SQL) > 1) {$except_container_id_groups_SQL .= ",";}
+																	$except_container_id_groups_SQL .= "'$except_container_id_settings[$seaEX]'";
+																	}
+																}
+															}
+														}
+													$seaEX++;
+													}
+												if ( (strlen($cic_excpt_stmt) < 10) and (strlen($except_container_id_groups_SQL) > 2) )
+													{
+													$cic_excpt_stmt="and (campaign_id NOT IN($except_container_id_groups_SQL))";
+													}
+												}
+											# END gather EXCEPTION settings container
+											}
+										if (strlen($cic_two_stmt) < 10)
+											{
+											$calls_inqueue_count_two_settings[$sea] = preg_replace('/[^-_0-9\p{L}]/u','',$calls_inqueue_count_two_settings[$sea]);
+											if (strlen($calls_inqueue_count_two_settings[$sea]) > 0)
+												{
+												if (strlen($calls_inqueue_count_two_groups_SQL) > 1) {$calls_inqueue_count_two_groups_SQL .= ",";}
+												$calls_inqueue_count_two_groups_SQL .= "'$calls_inqueue_count_two_settings[$sea]'";
+												}
+											}
+										}
+									}
+								}
+							$sea++;
+							}
+						if ( (strlen($cic_two_stmt) < 10) and (strlen($calls_inqueue_count_two_groups_SQL) > 2) )
+							{
+							$cic_two_stmt="SELECT count(*) from vicidial_auto_calls where status IN('LIVE') and ( (campaign_id IN($calls_inqueue_count_two_groups_SQL)) $ADsql)";
+							}
+						if (strlen($cic_two_stmt) > 10)
+							{
+							$cic_two_stmt .= " $cic_excpt_stmt;";
+							if ($DB) {echo "CIC TWO|$cic_two_stmt|\n";}
+							$rslt=mysql_to_mysqli($cic_two_stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$cic_two_stmt,'03XXX',$user,$server_ip,$session_name,$two_mysql_log);}
+							$row=mysqli_fetch_row($rslt);
+							$RingCallsTwo=$row[0];
+							if ($RingCallsTwo > 0) {$RingCallsTwo = "<font class=\"queue_text_red\">$calls_inqueue_count_two_heading: $RingCallsTwo</font>";}
+							else {$RingCallsTwo = "<font class=\"queue_text\">$calls_inqueue_count_two_heading: $RingCallsTwo</font>";}
+							}
+						}
+					if ( (strlen($RingCallsOne) > 10) or (strlen($RingCallsTwo) > 10) )
+						{
+						if ( (strlen($RingCallsOne) > 10) and (strlen($RingCallsTwo) > 10) )
+							{$RingCalls = "$RingCallsOne &nbsp; &nbsp; $RingCallsTwo";}
+						else
+							{$RingCalls = "$RingCallsOne$RingCallsTwo";}
+						}
+					}
+				### END check for calls_inqueue_count_ settings containers and calculate calls in queue ###
 				}
 			else
 				{
@@ -423,7 +725,6 @@ if ($ACTION == 'refresh')
 				$AccampSQL = preg_replace('/\s/',"','", $AccampSQL);
 				if (preg_match('/AGENTDIRECT/i', $AccampSQL))
 					{
-					$ADsql = "or ( (campaign_id IN('$AccampSQL')) and (agent_only='$user') )";
 					$AccampSQL = preg_replace('/AGENTDIRECT/i','', $AccampSQL);
 					}
 				}

@@ -104,6 +104,7 @@
 # 201109-1725 - Fix for blank page after certain updates submitted
 # 201123-1704 - Added today called count display
 # 210304-1509 - Added option '5' for modify_lead for this page to work as read-only
+# 210421-2120 - Added more screen labels
 #
 
 require("dbconnect_mysqli.php");
@@ -913,9 +914,24 @@ $label_alt_phone =			_QXZ("Alt. Phone");
 $label_security_phrase =	_QXZ("Show");
 $label_email =				_QXZ("Email");
 $label_comments =			_QXZ("Comments");
+$label_lead_id =			_QXZ("Lead ID");
+$label_list_id =			_QXZ("List ID");
+$label_entry_date =			_QXZ("Entry Date");
+$label_gmt_offset_now =		_QXZ("Timezone");
+$label_source_id =			_QXZ("Source ID");
+$label_called_since_last_reset = _QXZ("Reset Code");
+$label_status =				_QXZ("Status");
+$label_user =				_QXZ("User");
+$label_date_of_birth =		_QXZ("Date of Birth");
+$label_country_code =		_QXZ("Country");
+$label_last_local_call_time =	_QXZ("Last Call");
+$label_called_count =		_QXZ("Called Count");
+$label_rank =				_QXZ("Rank");
+$label_owner =				_QXZ("Owner");
+$label_entry_list_id =		_QXZ("Entry List ID");
 
 ### find any custom field labels
-$stmt="SELECT label_title,label_first_name,label_middle_initial,label_last_name,label_address1,label_address2,label_address3,label_city,label_state,label_province,label_postal_code,label_vendor_lead_code,label_gender,label_phone_number,label_phone_code,label_alt_phone,label_security_phrase,label_email,label_comments from system_settings;";
+$stmt="SELECT label_title,label_first_name,label_middle_initial,label_last_name,label_address1,label_address2,label_address3,label_city,label_state,label_province,label_postal_code,label_vendor_lead_code,label_gender,label_phone_number,label_phone_code,label_alt_phone,label_security_phrase,label_email,label_comments,label_lead_id,label_list_id,label_entry_date,label_gmt_offset_now,label_source_id,label_called_since_last_reset,label_status,label_user,label_date_of_birth,label_country_code,label_last_local_call_time,label_called_count,label_rank,label_owner,label_entry_list_id from system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 $row=mysqli_fetch_row($rslt);
 if (strlen($row[0])>0)	{$label_title =				$row[0];}
@@ -937,6 +953,21 @@ if (strlen($row[15])>0) {$label_alt_phone =			$row[15];}
 if (strlen($row[16])>0) {$label_security_phrase =	$row[16];}
 if (strlen($row[17])>0) {$label_email =				$row[17];}
 if (strlen($row[18])>0) {$label_comments =			$row[18];}
+if (strlen($row[19])>0) {$label_lead_id =			$row[19];}
+if (strlen($row[20])>0) {$label_list_id =			$row[20];}
+if (strlen($row[21])>0) {$label_entry_date =		$row[21];}
+if (strlen($row[22])>0) {$label_gmt_offset_now =	$row[22];}
+if (strlen($row[23])>0) {$label_source_id =			$row[23];}
+if (strlen($row[24])>0) {$label_called_since_last_reset = $row[24];}
+if (strlen($row[25])>0) {$label_status =			$row[25];}
+if (strlen($row[26])>0) {$label_user =				$row[26];}
+if (strlen($row[27])>0) {$label_date_of_birth =		$row[27];}
+if (strlen($row[28])>0) {$label_country_code =		$row[28];}
+if (strlen($row[29])>0) {$label_last_local_call_time =	$row[29];}
+if (strlen($row[30])>0) {$label_called_count =		$row[30];}
+if (strlen($row[31])>0) {$label_rank =				$row[31];}
+if (strlen($row[32])>0) {$label_owner =				$row[32];}
+if (strlen($row[33])>0) {$label_entry_list_id =		$row[33];}
 
 
 ##### BEGIN vicidial_list FIELD LENGTH LOOKUP #####
@@ -1771,7 +1802,7 @@ else
 		if ( ($LOGmodify_leads == '3') or ($LOGmodify_leads == '4') )
 			{
 			$call_log .= "<td align=left><font size=2><font color=blue><u><span id=\"vicidial_log_status_$u\" onClick=\"ModifyLogDisplayShow(event, $u,'vicidial_log','$row[0]','$row[1]','$row[4]','$row[8]','$row[11]')\">$row[8]</span></u></font></td>\n";
-			$HTML_inline_script .= "vicidial_log_mod[$u] = \"Call Date: $row[4]<br>Lead ID: $row[1]<br>Current Status: $row[8]<br>\";\n";
+			$HTML_inline_script .= "vicidial_log_mod[$u] = \"Call Date: $row[4]<br>$label_lead_id: $row[1]<br>Current Status: $row[8]<br>\";\n";
 			}
 		else
 			{$call_log .= "<td align=left><font size=2> $row[8]</td>\n";}
@@ -1877,7 +1908,7 @@ else
 		if ( ($LOGmodify_leads == '3') or ($LOGmodify_leads == '4') )
 			{
 			$agent_log .= "<td align=left><font size=2> &nbsp; <font color=blue><u><span id=\"vicidial_agent_log_status_$y\" onClick=\"ModifyLogDisplayShow(event, $y,'vicidial_agent_log','$row[0]','$row[4]','$row[3]','$row[14]','$row[1]')\">$row[14]</span></u></font></td>\n";
-			$HTML_inline_script .= "vicidial_agent_log_mod[$y] = \"Event Date: $row[3]<br>Lead ID: $row[4]<br>Current Status: $row[14]<br>\";\n";
+			$HTML_inline_script .= "vicidial_agent_log_mod[$y] = \"Event Date: $row[3]<br>$label_lead_id: $row[4]<br>Current Status: $row[14]<br>\";\n";
 			}
 		else
 			{$agent_log .= "<td align=left><font size=2> $row[14]</td>\n";}
@@ -1913,7 +1944,7 @@ else
 		if ( ($LOGmodify_leads == '3') or ($LOGmodify_leads == '4') )
 			{
 			$closer_log .= "<td align=left><font size=2><font color=blue><u><span id=\"vicidial_closer_log_status_$y\" onClick=\"ModifyLogDisplayShow(event, $y,'vicidial_closer_log','$row[0]','$row[1]','$row[4]','$row[8]','$row[11]')\">$row[8]</span></u></font></td>\n";
-			$HTML_inline_script .= "vicidial_closer_log_mod[$y] = \"Call Date: $row[4]<br>Lead ID: $row[1]<br>Current Status: $row[8]<br>\";\n";
+			$HTML_inline_script .= "vicidial_closer_log_mod[$y] = \"Call Date: $row[4]<br>$label_lead_id: $row[1]<br>Current Status: $row[8]<br>\";\n";
 			}
 		else
 			{$closer_log .= "<td align=left><font size=2> $row[8]</td>\n";}
@@ -1998,7 +2029,7 @@ else
 			if ( ($LOGmodify_leads == '3') or ($LOGmodify_leads == '4') )
 				{
 				$call_log .= "<td align=left><font size=2><font color=blue><u><span id=\"vicidial_log_archive_status_$u\" onClick=\"ModifyLogDisplayShow(event, $u,'vicidial_log_archive','$row[0]','$row[1]','$row[4]','$row[8]','$row[11]')\">$row[8]</span></u></font></td>\n";
-				$HTML_inline_script .= "vicidial_log_archive_mod[$u] = \"Call Date: $row[4]<br>Lead ID: $row[1]<br>Current Status: $row[8]<br>\";\n";
+				$HTML_inline_script .= "vicidial_log_archive_mod[$u] = \"Call Date: $row[4]<br>$label_lead_id: $row[1]<br>Current Status: $row[8]<br>\";\n";
 				}
 			else
 				{$call_log .= "<td align=left><font size=2> $row[8]</td>\n";}
@@ -2092,7 +2123,7 @@ else
 			if ( ($LOGmodify_leads == '3') or ($LOGmodify_leads == '4') )
 				{
 				$agent_log .= "<td align=left><font size=2> &nbsp; <font color=blue><u><span id=\"vicidial_agent_log_archive_status_$y\" onClick=\"ModifyLogDisplayShow(event, $y,'vicidial_agent_log_archive','$row[0]','$row[4]','$row[3]','$row[14]','$row[1]')\">$row[14]</span></u></font></td>\n";
-				$HTML_inline_script .= "vicidial_agent_log_archive_mod[$y] = \"Event Date: $row[3]<br>Lead ID: $row[4]<br>Current Status: $row[14]<br>\";\n";
+				$HTML_inline_script .= "vicidial_agent_log_archive_mod[$y] = \"Event Date: $row[3]<br>$label_lead_id: $row[4]<br>Current Status: $row[14]<br>\";\n";
 				}
 			else
 				{$agent_log .= "<td align=left><font size=2> $row[14]</td>\n";}
@@ -2128,7 +2159,7 @@ else
 			if ( ($LOGmodify_leads == '3') or ($LOGmodify_leads == '4') )
 				{
 				$closer_log .= "<td align=left><font size=2><font color=blue><u><span id=\"vicidial_closer_log_archive_status_$y\" onClick=\"ModifyLogDisplayShow(event, $y,'vicidial_closer_log_archive','$row[0]','$row[1]','$row[4]','$row[8]','$row[11]')\">$row[8]</span></u></font></td>\n";
-				$HTML_inline_script .= "vicidial_closer_log_archive_mod[$y] = \"Call Date: $row[4]<br>Lead ID: $row[1]<br>Current Status: $row[8]<br>\";\n";
+				$HTML_inline_script .= "vicidial_closer_log_archive_mod[$y] = \"Call Date: $row[4]<br>$label_lead_id: $row[1]<br>Current Status: $row[8]<br>\";\n";
 				}
 			else
 				{$closer_log .= "<td align=left><font size=2> $row[8]</td>\n";}
@@ -2367,8 +2398,8 @@ else
 	echo "<input type=hidden name=parked_time value=\"$parked_time\">\n";
 	echo "<input type=hidden name=FORM_LOADED id=FORM_LOADED value=\"0\" />\n";
 	echo "<table cellpadding=1 cellspacing=0>\n";
-	echo "<tr><td colspan=2>"._QXZ("Lead ID").": $lead_id &nbsp; &nbsp; "._QXZ("List ID").":  $list_id &nbsp; &nbsp; <font size=2>"._QXZ("GMT offset").": $gmt_offset_now &nbsp; &nbsp; "._QXZ("CSLR").": $called_since_last_reset</td></tr>\n";
-	echo "<tr><td colspan=2>"._QXZ("Fronter").": <A HREF=\"user_stats.php?user=$tsr\">$tsr</A> &nbsp; &nbsp; "._QXZ("Called Count").": $called_count <font size=2>("._QXZ("today").": $call_count_today)</font> &nbsp; &nbsp; "._QXZ("Last Local Call").": $last_local_call_time</td></tr>\n";
+	echo "<tr><td colspan=2>$label_lead_id: $lead_id &nbsp; &nbsp; $label_list_id:  $list_id &nbsp; &nbsp; <font size=2>$label_gmt_offset_now: $gmt_offset_now &nbsp; &nbsp; $label_called_since_last_reset: $called_since_last_reset</td></tr>\n";
+	echo "<tr><td colspan=2>$label_user: <A HREF=\"user_stats.php?user=$tsr\">$tsr</A> &nbsp; &nbsp; $label_called_count: $called_count <font size=2>("._QXZ("today").": $call_count_today)</font> &nbsp; &nbsp; $label_last_local_call_time: $last_local_call_time</td></tr>\n";
 	if ($archive_search=="Yes") 
 		{
 		echo "<tr><td colspan=2 align='center'>";
@@ -2407,8 +2438,8 @@ else
 		echo " $label_postal_code: $postal_code </td></tr>\n";
 
 		echo "<tr><td align=right>$label_province : </td><td align=left>$province</td></tr>\n";
-		echo "<tr><td align=right>"._QXZ("Country")." : </td><td align=left>$country_code &nbsp; \n";
-		echo " "._QXZ("Date of Birth").": $date_of_birth </td></tr>\n";
+		echo "<tr><td align=right>$label_country_code : </td><td align=left>$country_code &nbsp; \n";
+		echo " $label_date_of_birth: $date_of_birth </td></tr>\n";
 		echo "<tr><td align=right>$label_phone_number : </td><td align=left>$phone_number</td></tr>\n";
 		echo "<tr><td align=right>$label_phone_code : </td><td align=left>$phone_code</td></tr>\n";
 		echo "<tr><td align=right>$label_alt_phone : </td><td align=left>$alt_phone</td></tr>\n";
@@ -2417,8 +2448,8 @@ else
 		echo "<tr><td align=right>$label_vendor_lead_code : </td><td align=left>$vendor_id></td></tr>\n";
 		if ($SSsource_id_display > 0)
 			{echo "<tr><td align=right>$label_source_id : </td><td align=left>$source_id></td></tr>\n";}
-		echo "<tr><td align=right>"._QXZ("Rank")." : </td><td align=left>$rank</td></tr>\n";
-		echo "<tr><td align=right>"._QXZ("Owner")." : </td><td align=left>$owner</td></tr>\n";
+		echo "<tr><td align=right>$label_rank : </td><td align=left>$rank</td></tr>\n";
+		echo "<tr><td align=right>$label_owner : </td><td align=left>$owner</td></tr>\n";
 		echo "<tr><td align=right>$label_comments : </td><td align=left>$comments</td></tr>\n";
 		}
 	else
@@ -2435,8 +2466,8 @@ else
 		echo " $label_postal_code: <input type=text name=postal_code id=postal_code size=10 maxlength=$MAXpostal_code value=\"".htmlparse($postal_code)."\"> </td></tr>\n";
 
 		echo "<tr><td align=right>$label_province : </td><td align=left><input type=text name=province id=province size=40 maxlength=$MAXprovince value=\"".htmlparse($province)."\"></td></tr>\n";
-		echo "<tr><td align=right>"._QXZ("Country")." : </td><td align=left><input type=text name=country_code id=country_code size=3 maxlength=$MAXcountry_code value=\"".htmlparse($country_code)."\"> &nbsp; \n";
-		echo " "._QXZ("Date of Birth").": <input type=text name=date_of_birth id=date_of_birth size=12 maxlength=10 value=\"".htmlparse($date_of_birth)."\"></td></tr>\n";
+		echo "<tr><td align=right>$label_country_code : </td><td align=left><input type=text name=country_code id=country_code size=3 maxlength=$MAXcountry_code value=\"".htmlparse($country_code)."\"> &nbsp; \n";
+		echo " $label_date_of_birth: <input type=text name=date_of_birth id=date_of_birth size=12 maxlength=10 value=\"".htmlparse($date_of_birth)."\"></td></tr>\n";
 
 		if ( ($LOGmodify_leads == '1') or ($LOGmodify_leads == '3') or ($lead_id == 'NEW') )
 			{
@@ -2456,8 +2487,8 @@ else
 		echo "<tr><td align=right>$label_vendor_lead_code : </td><td align=left><input type=text name=vendor_id id=vendor_lead_code size=30 maxlength=$MAXvendor_lead_code value=\"".htmlparse($vendor_id)."\"></td></tr>\n";
 		if ($SSsource_id_display > 0)
 			{echo "<tr><td align=right>$label_source_id : </td><td align=left><input type=text name=source_id id=source_id size=30 maxlength=$MAXsource_id value=\"".htmlparse($source_id)."\"></td></tr>\n";}
-		echo "<tr><td align=right>"._QXZ("Rank")." : </td><td align=left><input type=text name=rank id=rank size=7 maxlength=5 value=\"".htmlparse($rank)."\"></td></tr>\n";
-		echo "<tr><td align=right>"._QXZ("Owner")." : </td><td align=left><input type=text name=owner id=owner size=22 maxlength=$MAXowner value=\"".htmlparse($owner)."\"></td></tr>\n";
+		echo "<tr><td align=right>$label_rank : </td><td align=left><input type=text name=rank id=rank size=7 maxlength=5 value=\"".htmlparse($rank)."\"></td></tr>\n";
+		echo "<tr><td align=right>$label_owner : </td><td align=left><input type=text name=owner id=owner size=22 maxlength=$MAXowner value=\"".htmlparse($owner)."\"></td></tr>\n";
 		echo "<tr><td align=right>$label_comments : </td><td align=left><TEXTAREA name=comments id=comments ROWS=3 COLS=65>".htmlparse($comments)."</TEXTAREA></td></tr>\n";
 		}
 

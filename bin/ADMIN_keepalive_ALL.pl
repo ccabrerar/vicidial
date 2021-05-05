@@ -147,9 +147,10 @@
 # 210207-1200 - Added purging of vicidial_shared_log log entries
 # 210311-2229 - Added purging of old records from vicidial_two_factor_auth
 # 210325-2145 - Fix for -adfill-delay= CLI flag, Issue #1266
+# 210429-1644 - Added mohsuggest config for SIP and IAX phones
 #
 
-$build = '210325-2145';
+$build = '210429-1644';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -2996,7 +2997,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 
 
 	##### BEGIN Generate the IAX phone entries #####
-	$stmtA = "SELECT extension,dialplan_number,voicemail_id,pass,template_id,conf_override,email,template_id,conf_override,outbound_cid,fullname,phone_context,phone_ring_timeout,conf_secret,delete_vm_after_email,codecs_list,codecs_with_template,voicemail_timezone,voicemail_options,voicemail_instructions,unavail_dialplan_fwd_exten,unavail_dialplan_fwd_context,conf_qualify FROM phones where server_ip='$server_ip' and protocol='IAX2' and active='Y' order by extension;";
+	$stmtA = "SELECT extension,dialplan_number,voicemail_id,pass,template_id,conf_override,email,template_id,conf_override,outbound_cid,fullname,phone_context,phone_ring_timeout,conf_secret,delete_vm_after_email,codecs_list,codecs_with_template,voicemail_timezone,voicemail_options,voicemail_instructions,unavail_dialplan_fwd_exten,unavail_dialplan_fwd_context,conf_qualify,mohsuggest FROM phones where server_ip='$server_ip' and protocol='IAX2' and active='Y' order by extension;";
 	#	print "$stmtA\n";
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -3028,6 +3029,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		$unavail_dialplan_fwd_exten[$i] =	$aryA[20];
 		$unavail_dialplan_fwd_context[$i] =	$aryA[21];
 		$conf_qualify[$i] =				$aryA[22];
+		$mohsuggest[$i] =				$aryA[23];
 		if ( (length($SSdefault_codecs) > 2) && (length($codecs_list[$i]) < 3) )
 			{$codecs_list[$i] = $SSdefault_codecs;}
 		$active_dialplan_numbers .= "'$aryA[1]',";
@@ -3087,6 +3089,8 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 					{$Piax .= "qualify=yes\n";}
 				if ($codecs_with_template[$i] > 0)
 					{$Piax .= "$Pcodec";}
+				if (length($mohsuggest[$i]) > 0)
+					{$Piax .= "mohsuggest=$mohsuggest[$i]\n";}
 				$Piax .= "$template_contents[$i]\n";
 
 				$conf_entry_written++;
@@ -3119,6 +3123,8 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 			$Piax .= "host=dynamic\n";
 			if ($conf_qualify[$i] =~ /Y/)
 				{$Piax .= "qualify=yes\n";}
+			if (length($mohsuggest[$i]) > 0)
+				{$Piax .= "mohsuggest=$mohsuggest[$i]\n";}
 			}
 		%ast_ver_str = parse_asterisk_version($asterisk_version);
 		if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6))
@@ -3163,7 +3169,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 
 
 	##### BEGIN Generate the SIP phone entries #####
-	$stmtA = "SELECT extension,dialplan_number,voicemail_id,pass,template_id,conf_override,email,template_id,conf_override,outbound_cid,fullname,phone_context,phone_ring_timeout,conf_secret,delete_vm_after_email,codecs_list,codecs_with_template,voicemail_timezone,voicemail_options,voicemail_instructions,unavail_dialplan_fwd_exten,unavail_dialplan_fwd_context FROM phones where server_ip='$server_ip' and protocol='SIP' and active='Y' order by extension;";
+	$stmtA = "SELECT extension,dialplan_number,voicemail_id,pass,template_id,conf_override,email,template_id,conf_override,outbound_cid,fullname,phone_context,phone_ring_timeout,conf_secret,delete_vm_after_email,codecs_list,codecs_with_template,voicemail_timezone,voicemail_options,voicemail_instructions,unavail_dialplan_fwd_exten,unavail_dialplan_fwd_context,mohsuggest FROM phones where server_ip='$server_ip' and protocol='SIP' and active='Y' order by extension;";
 	#	print "$stmtA\n";
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -3194,6 +3200,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		$voicemail_instructions[$i] =	$aryA[19];
 		$unavail_dialplan_fwd_exten[$i] =	$aryA[20];
 		$unavail_dialplan_fwd_context[$i] =	$aryA[21];
+		$mohsuggest[$i] =					$aryA[22];
 		if ( (length($SSdefault_codecs) > 2) && (length($codecs_list[$i]) < 3) )
 			{$codecs_list[$i] = $SSdefault_codecs;}
 		$active_dialplan_numbers .= "'$aryA[1]',";
@@ -3251,6 +3258,8 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 				$Psip .= "mailbox=$voicemail[$i]\n";
 				if ($codecs_with_template[$i] > 0)
 					{$Psip .= "$Pcodec";}
+				if (length($mohsuggest[$i]) > 0)
+					{$Psip .= "mohsuggest=$mohsuggest[$i]\n";}
 				$Psip .= "$template_contents[$i]\n";
 
 				$conf_entry_written++;
@@ -3279,6 +3288,8 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 			$Psip .= "$Pcodec";
 			$Psip .= "type=friend\n";
 			$Psip .= "host=dynamic\n";
+			if (length($mohsuggest[$i]) > 0)
+				{$Psip .= "mohsuggest=$mohsuggest[$i]\n";}
 			}
 		%ast_ver_str = parse_asterisk_version($asterisk_version);
 		if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6))

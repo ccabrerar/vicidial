@@ -1,4 +1,4 @@
-AGENT API DOCUMENT		Started: 2008-07-03	Updated: 2021-03-20
+AGENT API DOCUMENT		Started: 2008-07-03	Updated: 2021-05-03
 
 This document describes the functions of an API(Application Programming Interface)
 for the VICIDIAL Agent screen. This functionality will be rather limited at first
@@ -481,7 +481,7 @@ SUCCESS: update_fields lead updated - 6666|1234|87498|vendor_lead_code='1234567'
 set_timer_action - 
 
 DESCRIPTION:
-Updates the fields that are specified with the values. This will update the data that is on the agent's screen in the customer information section.
+Triggers specific agent screen actions after a set number of seconds, like the Webform, a Transfer-Conf Preset call or a message to be displayed on the agent screen.
 
 VALUES:
 agent_user -

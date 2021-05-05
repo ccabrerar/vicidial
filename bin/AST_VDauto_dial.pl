@@ -137,9 +137,10 @@
 # 201122-0928 - Added code for dialy call count limits
 # 201218-2224 - Added code for SHARED agent campaigns
 # 210207-0952 - Added more logging, debug code and fixes for SHARED agent campaigns
+# 210423-2241 - Fix for campaign ID underscore issue #1265
 #
 
-$build='210207-0952';
+$build='210423-2241';
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
 	{
@@ -693,7 +694,7 @@ while($one_day_interval > 0)
 				$user_campaignIP .= "$DBlive_campaign[$user_counter]__$DBlive_server_ip[$user_counter]|";
 				$DBIPcampaign[$user_CIPct] = "$DBlive_campaign[$user_counter]";
 				$DBIPaddress[$user_CIPct] = "$DBlive_server_ip[$user_counter]";
-				$DBIPcampaign_sort[$user_CIPct] = $DBlive_campaign_rank[$user_counter].'_'.$DBlive_last_call_epoch[$user_counter].'_'.$DBlive_campaign[$user_counter].'_'.$user_CIPct;
+				$DBIPcampaign_sort[$user_CIPct] = $DBlive_campaign_rank[$user_counter].'---'.$DBlive_last_call_epoch[$user_counter].'---'.$DBlive_campaign[$user_counter].'---'.$user_CIPct;
 				if ($DBX) {print "Debug agent campaign sort: $DBIPcampaign_sort[$user_CIPct]\n";}
 				$user_CIPct++;
 				}
@@ -803,7 +804,7 @@ while($one_day_interval > 0)
 		$user_CIPct_sort = 0;
 		foreach(@DBIPcampaign_sorted)
 			{
-			@camp_sort_line = split(/_/,$DBIPcampaign_sorted[$user_CIPct_sort]);
+			@camp_sort_line = split(/---/,$DBIPcampaign_sorted[$user_CIPct_sort]);
 			$user_CIPct = $camp_sort_line[3];
 			$debug_string='';
 			$user_counter=0;

@@ -1,4 +1,4 @@
-WEB BROWSER JAVASCRIPT THROTTLING	Started: 2021-03-25	Updated: 2021-03-27
+WEB BROWSER JAVASCRIPT THROTTLING	Started: 2021-03-25	Updated: 2021-04-27
 
 
 
@@ -26,7 +26,7 @@ HOW TO PREVENT JAVASCRIPT THROTTLING FROM ACTIVATING IN THE VICIDIAL AGENT SCREE
 Below are the ways you can prevent Chrome's Intensive Javascript Throttling from activating on your VICIdial Agent Screens, with more in-depth explanations of each method following below that. Any of these methods will work by themselves.
 
 1. Switch to Firefox
-2. Manually disable the Chrome throttling flag on each of your agent's web browsers
+2. Manually disable the Chrome throttling flag, or registry entry, on each of your agent's web browsers
 3. Use a WebRTC phone for your agent phone connection(like VICIphone)
 4. Enable the VICIdial System Settings for "Agent Hidden Browser Sound"
 5. Switch the VICIdial System Setting for "Agent Screen Timer" to 'EventSource'
@@ -41,9 +41,34 @@ While this may not be the best long-term solution, Firefox has not yet enabled t
 
 
 
-2. MANUALLY DISABLE THE CHROME THROTTLING FLAG ON EACH OF YOUR AGENT'S WEB BROWSERS
+2. MANUALLY DISABLE THE CHROME THROTTLING FLAG, OR REGISTRY ENTRY, ON EACH OF YOUR AGENT'S WEB BROWSERS
 
-The following steps must be done on every computer that you want to disable the Chrome browser Intensive Javascript Throttling on:
+NOTE: The following steps must be done on every computer that you want to disable the Chrome browser Intensive Javascript Throttling on:
+NOTE: There are different instructions for this depending on the version of Chrome web browser you are using.
+
+AFTER CHROME 90 INSTRUCTIONS(after April 26th, 2021 builds):
+
+You will first need to enable enable "temporary-unexpire-flags-m88" or "temporary-unexpire-flags-m89", relaunch your Chrome browser, then follow the instructions for "BEFORE CHROME 90" below.
+- Open your Chrome Web Browser
+- in the Address bar at the top, put the following(without quotes), then press the "Enter" key: "chrome://flags/#temporary-unexpire-flags-m88"
+- You will see "Temporarily unexpire M89 flags" highlighted with a pull-down menu on the right side of the screen
+- Select the "Enabled" option from the pull-down menu
+- You will see a message at the bottom of your screen: "Your changes will take effect the next time you relaunch Google Chrome." with a button to "Relaunch"
+- Click on the "Relaunch" button and the old flags will now be visible in Chrome on this computer
+
+OR, an alternative option which will require Administrative rights on the computer, is to disable the "IntensiveWakeUpThrottlingEnabled" policy on your computer,
+https://chromeenterprise.google/policies/#IntensiveWakeUpThrottlingEnabled
+
+For Windows workstations, this means adding a new DWORD Registry entry:
+- Open RegEdit(Registry Editor) on your Windows computer
+- Go to "HKEY_LOCAL_MACHINE/SOFTWARE/Policies/Google/Chrome" 
+	NOTE: You may need to create the "Google" and then "Chrome" Keys yourself
+- Create a new DWORD entry from the highlighted "Chrome" Key, with a Name of "IntensiveWakeUpThrottlingEnabled"
+	NOTE: this new DWORD should automatically be set with a value of '0' (disabled) after you create it
+- Close out all Chrome web browser windows and then open Chrome again and test that it is working
+
+
+BEFORE CHROME 90 INSTRUCTIONS:
 
 - Open your Chrome Web Browser
 - in the Address bar at the top, put the following(without quotes), then press the "Enter" key: "chrome://flags/#intensive-wake-up-throttling"
@@ -51,6 +76,9 @@ The following steps must be done on every computer that you want to disable the 
 - Select the "Disabled" option from the pull-down menu
 - You will see a message at the bottom of your screen: "Your changes will take effect the next time you relaunch Google Chrome." with a button to "Relaunch"
 - Click on the "Relaunch" button and the Throttling feature will now be disabled in Chrome on this computer
+
+NOTE: An alternate option for this method would be to create a new shortcut for the chrome browser using the --disable-background-timer-throttling flag, for example here is what it would look like in Windows:
+"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" --disable-background-timer-throttling
 
 
 
@@ -88,7 +116,7 @@ Thanks to 'fperdomo' on the VICIdial Forums for posting a simple method using SS
 
 THE FUTURE
 
-It looks like the maintainers of Chrome have every intention of increasing Javascript Throttling in the future, but hopefully they will leave the above methods for disabling it in place.
+It looks like the maintainers of Chrome have every intention of increasing Javascript Throttling in the future, even removing the flag they created to disable it just 4 months after creating it, but hopefully they will leave at least one of the above methods for disabling it in place.
 
 
 Why not switch the VICIdial Agent Screen from AJAX(Polling) to using streaming server connections (SSE, Server-Sent-Events) like EventSource or WebSockets?
@@ -105,5 +133,8 @@ Third, some older networks and proxy servers do not support perpetual connection
 
 FOR MORE INFORMATION
 
-Here is the Chrome maintainers post on how Javascript Throttling works, starting in Chromer 88:
+Here is the Chrome maintainers post on how Javascript Throttling works, starting in Chrome 88:
 https://developer.chrome.com/blog/timer-throttling-in-chrome-88/
+
+
+

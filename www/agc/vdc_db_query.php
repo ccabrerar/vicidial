@@ -505,10 +505,11 @@
 # 210329-1515 - Fix for issue on transfer list user fullname having an underscore
 # 210330-2255 - Fixed issues with dashes as custom fields values throwing off delimiters
 # 210417-1109 - Added calls_waiting_vl_ options
+# 210421-2111 - Added more screen labels
 #
 
-$version = '2.14-398';
-$build = '210417-1109';
+$version = '2.14-399';
+$build = '210421-2111';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=850;
@@ -17171,8 +17172,23 @@ if ($ACTION == 'SEARCHRESULTSview')
 	$label_security_phrase =	_QXZ("Show");
 	$label_email =				_QXZ(" Email");
 	$label_comments =			_QXZ(" Comments");
+	$label_lead_id =			_QXZ("Lead ID");
+	$label_list_id =			_QXZ("List ID");
+	$label_entry_date =			_QXZ("Entry Date");
+	$label_gmt_offset_now =		_QXZ("Timezone");
+	$label_source_id =			_QXZ("Source ID");
+	$label_called_since_last_reset = _QXZ("Reset Code");
+	$label_status =				_QXZ("Status");
+	$label_user =				_QXZ("User");
+	$label_date_of_birth =		_QXZ("Date of Birth");
+	$label_country_code =		_QXZ("Country");
+	$label_last_local_call_time =	_QXZ("Last Call");
+	$label_called_count =		_QXZ("Called Count");
+	$label_rank =				_QXZ("Rank");
+	$label_owner =				_QXZ("Owner");
+	$label_entry_list_id =		_QXZ("Entry List ID");
 
-	$stmt="SELECT label_title,label_first_name,label_middle_initial,label_last_name,label_address1,label_address2,label_address3,label_city,label_state,label_province,label_postal_code,label_vendor_lead_code,label_gender,label_phone_number,label_phone_code,label_alt_phone,label_security_phrase,label_email,label_comments,label_hide_field_logs from system_settings;";
+	$stmt="SELECT label_title,label_first_name,label_middle_initial,label_last_name,label_address1,label_address2,label_address3,label_city,label_state,label_province,label_postal_code,label_vendor_lead_code,label_gender,label_phone_number,label_phone_code,label_alt_phone,label_security_phrase,label_email,label_comments,label_lead_id,label_list_id,label_entry_date,label_gmt_offset_now,label_source_id,label_called_since_last_reset,label_status,label_user,label_date_of_birth,label_country_code,label_last_local_call_time,label_called_count,label_rank,label_owner,label_entry_list_id,label_hide_field_logs from system_settings;";
 	$rslt=mysql_to_mysqli($stmt, $link);
 		if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00725',$user,$server_ip,$session_name,$one_mysql_log);}
 	$row=mysqli_fetch_row($rslt);
@@ -17195,11 +17211,26 @@ if ($ACTION == 'SEARCHRESULTSview')
 	if (strlen($row[16])>0) {$label_security_phrase =	$row[16];}
 	if (strlen($row[17])>0) {$label_email =				$row[17];}
 	if (strlen($row[18])>0) {$label_comments =			$row[18];}
-	$label_hide_field_logs =	$row[19];
+	if (strlen($row[19])>0) {$label_lead_id =			$row[19];}
+	if (strlen($row[20])>0) {$label_list_id =			$row[20];}
+	if (strlen($row[21])>0) {$label_entry_date =		$row[21];}
+	if (strlen($row[22])>0) {$label_gmt_offset_now =	$row[22];}
+	if (strlen($row[23])>0) {$label_source_id =			$row[23];}
+	if (strlen($row[24])>0) {$label_called_since_last_reset = $row[24];}
+	if (strlen($row[25])>0) {$label_status =			$row[25];}
+	if (strlen($row[26])>0) {$label_user =				$row[26];}
+	if (strlen($row[27])>0) {$label_date_of_birth =		$row[27];}
+	if (strlen($row[28])>0) {$label_country_code =		$row[28];}
+	if (strlen($row[29])>0) {$label_last_local_call_time =	$row[29];}
+	if (strlen($row[30])>0) {$label_called_count =		$row[30];}
+	if (strlen($row[31])>0) {$label_rank =				$row[31];}
+	if (strlen($row[32])>0) {$label_owner =				$row[32];}
+	if (strlen($row[33])>0) {$label_entry_list_id =		$row[33];}
+	$label_hide_field_logs =	$row[34];
 
 	if ( ($screen_labels != '--SYSTEM-SETTINGS--') and (strlen($screen_labels)>1) )
 		{
-		$stmt="SELECT label_title,label_first_name,label_middle_initial,label_last_name,label_address1,label_address2,label_address3,label_city,label_state,label_province,label_postal_code,label_vendor_lead_code,label_gender,label_phone_number,label_phone_code,label_alt_phone,label_security_phrase,label_email,label_comments,label_hide_field_logs from vicidial_screen_labels where label_id='$screen_labels' and active='Y' limit 1;";
+		$stmt="SELECT label_title,label_first_name,label_middle_initial,label_last_name,label_address1,label_address2,label_address3,label_city,label_state,label_province,label_postal_code,label_vendor_lead_code,label_gender,label_phone_number,label_phone_code,label_alt_phone,label_security_phrase,label_email,label_comments,label_lead_id,label_list_id,label_entry_date,label_gmt_offset_now,label_source_id,label_called_since_last_reset,label_status,label_user,label_date_of_birth,label_country_code,label_last_local_call_time,label_called_count,label_rank,label_owner,label_entry_list_id,label_hide_field_logs from vicidial_screen_labels where label_id='$screen_labels' and active='Y' limit 1;";
 		$rslt=mysql_to_mysqli($stmt, $link);
 			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00726',$user,$server_ip,$session_name,$one_mysql_log);}
 		$screenlabels_count = mysqli_num_rows($rslt);
@@ -17225,7 +17256,22 @@ if ($ACTION == 'SEARCHRESULTSview')
 			if (strlen($row[16])>0) {$label_security_phrase =	$row[16];}
 			if (strlen($row[17])>0) {$label_email =				$row[17];}
 			if (strlen($row[18])>0) {$label_comments =			$row[18];}
-			$label_hide_field_logs =	$row[19];
+			if (strlen($row[19])>0) {$label_lead_id =			$row[19];}
+			if (strlen($row[20])>0) {$label_list_id =			$row[20];}
+			if (strlen($row[21])>0) {$label_entry_date =		$row[21];}
+			if (strlen($row[22])>0) {$label_gmt_offset_now =	$row[22];}
+			if (strlen($row[23])>0) {$label_source_id =			$row[23];}
+			if (strlen($row[24])>0) {$label_called_since_last_reset = $row[24];}
+			if (strlen($row[25])>0) {$label_status =			$row[25];}
+			if (strlen($row[26])>0) {$label_user =				$row[26];}
+			if (strlen($row[27])>0) {$label_date_of_birth =		$row[27];}
+			if (strlen($row[28])>0) {$label_country_code =		$row[28];}
+			if (strlen($row[29])>0) {$label_last_local_call_time =	$row[29];}
+			if (strlen($row[30])>0) {$label_called_count =		$row[30];}
+			if (strlen($row[31])>0) {$label_rank =				$row[31];}
+			if (strlen($row[32])>0) {$label_owner =				$row[32];}
+			if (strlen($row[33])>0) {$label_entry_list_id =		$row[33];}
+			$label_hide_field_logs =	$row[34];
 			### END find any custom field labels ###
 			$hide_gender=0;
 			if ($label_gender == '---HIDE---')
@@ -18103,8 +18149,23 @@ if ($ACTION == 'LEADINFOview')
 		$label_security_phrase =	_QXZ("Show");
 		$label_email =				_QXZ(" Email");
 		$label_comments =			_QXZ(" Comments");
+		$label_lead_id =			_QXZ("Lead ID");
+		$label_list_id =			_QXZ("List ID");
+		$label_entry_date =			_QXZ("Entry Date");
+		$label_gmt_offset_now =		_QXZ("Timezone");
+		$label_source_id =			_QXZ("Source ID");
+		$label_called_since_last_reset = _QXZ("Reset Code");
+		$label_status =				_QXZ("Status");
+		$label_user =				_QXZ("User");
+		$label_date_of_birth =		_QXZ("Date of Birth");
+		$label_country_code =		_QXZ("Country");
+		$label_last_local_call_time =	_QXZ("Last Call");
+		$label_called_count =		_QXZ("Called Count");
+		$label_rank =				_QXZ("Rank");
+		$label_owner =				_QXZ("Owner");
+		$label_entry_list_id =		_QXZ("Entry List ID");
 
-		$stmt="SELECT label_title,label_first_name,label_middle_initial,label_last_name,label_address1,label_address2,label_address3,label_city,label_state,label_province,label_postal_code,label_vendor_lead_code,label_gender,label_phone_number,label_phone_code,label_alt_phone,label_security_phrase,label_email,label_comments,label_hide_field_logs from system_settings;";
+		$stmt="SELECT label_title,label_first_name,label_middle_initial,label_last_name,label_address1,label_address2,label_address3,label_city,label_state,label_province,label_postal_code,label_vendor_lead_code,label_gender,label_phone_number,label_phone_code,label_alt_phone,label_security_phrase,label_email,label_comments,label_lead_id,label_list_id,label_entry_date,label_gmt_offset_now,label_source_id,label_called_since_last_reset,label_status,label_user,label_date_of_birth,label_country_code,label_last_local_call_time,label_called_count,label_rank,label_owner,label_entry_list_id,label_hide_field_logs from system_settings;";
 		$rslt=mysql_to_mysqli($stmt, $link);
 			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00417',$user,$server_ip,$session_name,$one_mysql_log);}
 		$row=mysqli_fetch_row($rslt);
@@ -18127,11 +18188,26 @@ if ($ACTION == 'LEADINFOview')
 		if (strlen($row[16])>0) {$label_security_phrase =	$row[16];}
 		if (strlen($row[17])>0) {$label_email =				$row[17];}
 		if (strlen($row[18])>0) {$label_comments =			$row[18];}
-		$label_hide_field_logs =	$row[19];
+		if (strlen($row[19])>0) {$label_lead_id =			$row[19];}
+		if (strlen($row[20])>0) {$label_list_id =			$row[20];}
+		if (strlen($row[21])>0) {$label_entry_date =		$row[21];}
+		if (strlen($row[22])>0) {$label_gmt_offset_now =	$row[22];}
+		if (strlen($row[23])>0) {$label_source_id =			$row[23];}
+		if (strlen($row[24])>0) {$label_called_since_last_reset = $row[24];}
+		if (strlen($row[25])>0) {$label_status =			$row[25];}
+		if (strlen($row[26])>0) {$label_user =				$row[26];}
+		if (strlen($row[27])>0) {$label_date_of_birth =		$row[27];}
+		if (strlen($row[28])>0) {$label_country_code =		$row[28];}
+		if (strlen($row[29])>0) {$label_last_local_call_time =	$row[29];}
+		if (strlen($row[30])>0) {$label_called_count =		$row[30];}
+		if (strlen($row[31])>0) {$label_rank =				$row[31];}
+		if (strlen($row[32])>0) {$label_owner =				$row[32];}
+		if (strlen($row[33])>0) {$label_entry_list_id =		$row[33];}
+		$label_hide_field_logs =	$row[34];
 
 		if ( ($screen_labels != '--SYSTEM-SETTINGS--') and (strlen($screen_labels)>1) )
 			{
-			$stmt="SELECT label_title,label_first_name,label_middle_initial,label_last_name,label_address1,label_address2,label_address3,label_city,label_state,label_province,label_postal_code,label_vendor_lead_code,label_gender,label_phone_number,label_phone_code,label_alt_phone,label_security_phrase,label_email,label_comments,label_hide_field_logs from vicidial_screen_labels where label_id='$screen_labels' and active='Y' limit 1;";
+			$stmt="SELECT label_title,label_first_name,label_middle_initial,label_last_name,label_address1,label_address2,label_address3,label_city,label_state,label_province,label_postal_code,label_vendor_lead_code,label_gender,label_phone_number,label_phone_code,label_alt_phone,label_security_phrase,label_email,label_comments,label_lead_id,label_list_id,label_entry_date,label_gmt_offset_now,label_source_id,label_called_since_last_reset,label_status,label_user,label_date_of_birth,label_country_code,label_last_local_call_time,label_called_count,label_rank,label_owner,label_entry_list_id,label_hide_field_logs from vicidial_screen_labels where label_id='$screen_labels' and active='Y' limit 1;";
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00418',$user,$server_ip,$session_name,$one_mysql_log);}
 			$screenlabels_count = mysqli_num_rows($rslt);
@@ -18157,7 +18233,22 @@ if ($ACTION == 'LEADINFOview')
 				if (strlen($row[16])>0) {$label_security_phrase =	$row[16];}
 				if (strlen($row[17])>0) {$label_email =				$row[17];}
 				if (strlen($row[18])>0) {$label_comments =			$row[18];}
-				$label_hide_field_logs =	$row[19];
+				if (strlen($row[19])>0) {$label_lead_id =			$row[19];}
+				if (strlen($row[20])>0) {$label_list_id =			$row[20];}
+				if (strlen($row[21])>0) {$label_entry_date =		$row[21];}
+				if (strlen($row[22])>0) {$label_gmt_offset_now =	$row[22];}
+				if (strlen($row[23])>0) {$label_source_id =			$row[23];}
+				if (strlen($row[24])>0) {$label_called_since_last_reset = $row[24];}
+				if (strlen($row[25])>0) {$label_status =			$row[25];}
+				if (strlen($row[26])>0) {$label_user =				$row[26];}
+				if (strlen($row[27])>0) {$label_date_of_birth =		$row[27];}
+				if (strlen($row[28])>0) {$label_country_code =		$row[28];}
+				if (strlen($row[29])>0) {$label_last_local_call_time =	$row[29];}
+				if (strlen($row[30])>0) {$label_called_count =		$row[30];}
+				if (strlen($row[31])>0) {$label_rank =				$row[31];}
+				if (strlen($row[32])>0) {$label_owner =				$row[32];}
+				if (strlen($row[33])>0) {$label_entry_list_id =		$row[33];}
+				$label_hide_field_logs =	$row[34];
 				### END find any custom field labels ###
 				$hide_gender=0;
 				if ($label_gender == '---HIDE---')
@@ -18287,12 +18378,12 @@ if ($ACTION == 'LEADINFOview')
 				}
 			##### END check for postal_code and phone time zones if alert enabled
 
-			$INFOout .= "<tr bgcolor=white><td ALIGN=right><font class='sb_text'>"._QXZ("Status:")." &nbsp; </td><td ALIGN=left><font class='sb_text'>$row[0]</td></tr>";
+			$INFOout .= "<tr bgcolor=white><td ALIGN=right><font class='sb_text'>$label_status &nbsp; </td><td ALIGN=left><font class='sb_text'>$row[0]</td></tr>";
 			if ( ($label_vendor_lead_code!='---HIDE---') or ($label_hide_field_logs=='N') )
 				{$INFOout .= "<tr bgcolor=white><td ALIGN=right><font class='sb_text'>$label_vendor_lead_code: &nbsp; </td><td ALIGN=left><font class='sb_text'>$row[1]</td></tr>";}
-			$INFOout .= "<tr bgcolor=white><td ALIGN=right><font class='sb_text'>"._QXZ("List ID:")." &nbsp; </td><td ALIGN=left><font class='sb_text'>$row[2]</td></tr>";
-			$INFOout .= "<tr bgcolor=white><td ALIGN=right><font class='sb_text'>"._QXZ("Timezone:")." &nbsp; </td><td ALIGN=left><font class='sb_text'>$row[3]</td></tr>";
-			$INFOout .= "<tr bgcolor=white><td ALIGN=right><font class='sb_text'>"._QXZ("Called Since Last Reset:")." &nbsp; </td><td ALIGN=left><font class='sb_text'>$row[4]</td></tr>";
+			$INFOout .= "<tr bgcolor=white><td ALIGN=right><font class='sb_text'>$label_list_id &nbsp; </td><td ALIGN=left><font class='sb_text'>$row[2]</td></tr>";
+			$INFOout .= "<tr bgcolor=white><td ALIGN=right><font class='sb_text'>$label_gmt_offset_now &nbsp; </td><td ALIGN=left><font class='sb_text'>$row[3]</td></tr>";
+			$INFOout .= "<tr bgcolor=white><td ALIGN=right><font class='sb_text'>$label_called_since_last_reset &nbsp; </td><td ALIGN=left><font class='sb_text'>$row[4]</td></tr>";
 			if ( ($label_phone_code!='---HIDE---') or ($label_hide_field_logs=='N') )
 				{$INFOout .= "<tr bgcolor=white><td ALIGN=right><font class='sb_text'>$label_phone_code: &nbsp; </td><td ALIGN=left><font class='sb_text'>$row[5]</td></tr>";}
 			if ( ($label_phone_number!='---HIDE---') or ($label_hide_field_logs=='N') )
@@ -18356,7 +18447,7 @@ if ($ACTION == 'LEADINFOview')
 				{$INFOout .= "<tr bgcolor=white><td ALIGN=right><font class='sb_text'>$label_province: &nbsp; </td><td ALIGN=left><font class='sb_text'>$row[16]</td></tr>";}
 			if ( ($label_postal_code!='---HIDE---') or ($label_hide_field_logs=='N') )
 				{$INFOout .= "<tr bgcolor=white><td ALIGN=right><font class='sb_text'>$label_postal_code: &nbsp; </td><td ALIGN=left><font class='sb_text'>$row[17]</td></tr>";}
-			$INFOout .= "<tr bgcolor=white><td ALIGN=right><font class='sb_text'>Country: &nbsp; </td><td ALIGN=left><font class='sb_text'>$row[18]</td></tr>";
+			$INFOout .= "<tr bgcolor=white><td ALIGN=right><font class='sb_text'>$label_country_code: &nbsp; </td><td ALIGN=left><font class='sb_text'>$row[18]</td></tr>";
 			if ( ($label_gender!='---HIDE---') or ($label_hide_field_logs=='N') )
 				{$INFOout .= "<tr bgcolor=white><td ALIGN=right><font class='sb_text'>$label_gender: &nbsp; </td><td ALIGN=left><font class='sb_text'>$row[19]</td></tr>";}
 			if ( ($label_alt_phone!='---HIDE---') or ($label_hide_field_logs=='N') )
@@ -18387,8 +18478,8 @@ if ($ACTION == 'LEADINFOview')
 			if ( ($label_comments!='---HIDE---') or ($label_hide_field_logs=='N') )
 				{$INFOout .= "<tr bgcolor=white><td ALIGN=right><font class='sb_text'>$label_comments: &nbsp; </td><td ALIGN=left><font class='sb_text'>$row[23]</td></tr>";}
 			if ($hide_call_log_info=='N')
-				{$INFOout .= "<tr bgcolor=white><td ALIGN=right><font class='sb_text'>"._QXZ("Called Count:")." &nbsp; </td><td ALIGN=left><font class='sb_text'>$row[24]</td></tr>";}
-			$INFOout .= "<tr bgcolor=white><td ALIGN=right><font class='sb_text'>"._QXZ("Last Local Call Time:")." &nbsp; </td><td ALIGN=left><font class='sb_text'>$row[25]</td></tr>";
+				{$INFOout .= "<tr bgcolor=white><td ALIGN=right><font class='sb_text'>$label_called_count &nbsp; </td><td ALIGN=left><font class='sb_text'>$row[24]</td></tr>";}
+			$INFOout .= "<tr bgcolor=white><td ALIGN=right><font class='sb_text'>$label_last_local_call_time &nbsp; </td><td ALIGN=left><font class='sb_text'>$row[25]</td></tr>";
 	#		$INFOout .= "<tr bgcolor=white><td ALIGN=right><font class='sb_text'>Rank: &nbsp; </td><td ALIGN=left><font class='sb_text'>$row[26]</td></tr>";
 	#		$INFOout .= "<tr bgcolor=white><td ALIGN=right><font class='sb_text'>Owner: &nbsp; </td><td ALIGN=left><font class='sb_text'>$row[27]</td></tr>";
 	#		$INFOout .= "<tr bgcolor=white><td ALIGN=right><font class='sb_text'>Entry List ID: &nbsp; </td><td ALIGN=left><font class='sb_text'>$row[28]</td></tr>";

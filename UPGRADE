@@ -617,6 +617,22 @@ OTHER CHANGES:
 172. Added options to add/update/delete custom fields within the 'update_list'
 	function of the Non-Agent API.
 
+173. Added Settings Compare Utility page to Admin Utilities to allow you to 
+	compare the settings from two records in your system and see what
+	settings are different between the two.
+
+174. Added campaign options to add extra lead-field columns to the "Calls In
+	Queue" panel in the agent screen.
+
+175. Added Calls In Queue Count Display campaign options, allowing for two 
+	separate Calls Waiting counters at the top of the agent screen, each
+	with separate configurable labels and in-group/campaign parameters.
+	Also, this can be used with the alt_display.php script.
+
+176. Added new "Music on Hold Suggest" Phones setting for SIP and IAX phones.
+	It will define the Hold music played to a customer when the phone user
+	puts them on hold through the phone.
+
 
 
 

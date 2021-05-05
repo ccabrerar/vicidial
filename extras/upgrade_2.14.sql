@@ -1640,3 +1640,46 @@ ALTER TABLE vicidial_campaigns ADD calls_waiting_vl_one VARCHAR(25) default 'DIS
 ALTER TABLE vicidial_campaigns ADD calls_waiting_vl_two VARCHAR(25) default 'DISABLED';
 
 UPDATE system_settings SET db_schema_version='1630',db_schema_update_date=NOW() where db_schema_version < 1630;
+
+ALTER TABLE system_settings ADD label_lead_id VARCHAR(60) default '';
+ALTER TABLE system_settings ADD label_list_id VARCHAR(60) default '';
+ALTER TABLE system_settings ADD label_entry_date VARCHAR(60) default '';
+ALTER TABLE system_settings ADD label_gmt_offset_now VARCHAR(60) default '';
+ALTER TABLE system_settings ADD label_source_id VARCHAR(60) default '';
+ALTER TABLE system_settings ADD label_called_since_last_reset VARCHAR(60) default '';
+ALTER TABLE system_settings ADD label_status VARCHAR(60) default '';
+ALTER TABLE system_settings ADD label_user VARCHAR(60) default '';
+ALTER TABLE system_settings ADD label_date_of_birth VARCHAR(60) default '';
+ALTER TABLE system_settings ADD label_country_code VARCHAR(60) default '';
+ALTER TABLE system_settings ADD label_last_local_call_time VARCHAR(60) default '';
+ALTER TABLE system_settings ADD label_called_count VARCHAR(60) default '';
+ALTER TABLE system_settings ADD label_rank VARCHAR(60) default '';
+ALTER TABLE system_settings ADD label_owner VARCHAR(60) default '';
+ALTER TABLE system_settings ADD label_entry_list_id VARCHAR(60) default '';
+
+ALTER TABLE vicidial_screen_labels ADD label_lead_id VARCHAR(60) default '';
+ALTER TABLE vicidial_screen_labels ADD label_list_id VARCHAR(60) default '';
+ALTER TABLE vicidial_screen_labels ADD label_entry_date VARCHAR(60) default '';
+ALTER TABLE vicidial_screen_labels ADD label_gmt_offset_now VARCHAR(60) default '';
+ALTER TABLE vicidial_screen_labels ADD label_source_id VARCHAR(60) default '';
+ALTER TABLE vicidial_screen_labels ADD label_called_since_last_reset VARCHAR(60) default '';
+ALTER TABLE vicidial_screen_labels ADD label_status VARCHAR(60) default '';
+ALTER TABLE vicidial_screen_labels ADD label_user VARCHAR(60) default '';
+ALTER TABLE vicidial_screen_labels ADD label_date_of_birth VARCHAR(60) default '';
+ALTER TABLE vicidial_screen_labels ADD label_country_code VARCHAR(60) default '';
+ALTER TABLE vicidial_screen_labels ADD label_last_local_call_time VARCHAR(60) default '';
+ALTER TABLE vicidial_screen_labels ADD label_called_count VARCHAR(60) default '';
+ALTER TABLE vicidial_screen_labels ADD label_rank VARCHAR(60) default '';
+ALTER TABLE vicidial_screen_labels ADD label_owner VARCHAR(60) default '';
+ALTER TABLE vicidial_screen_labels ADD label_entry_list_id VARCHAR(60) default '';
+
+UPDATE system_settings SET db_schema_version='1631',db_schema_update_date=NOW() where db_schema_version < 1631;
+
+ALTER TABLE vicidial_campaigns ADD calls_inqueue_count_one VARCHAR(40) default 'DISABLED';
+ALTER TABLE vicidial_campaigns ADD calls_inqueue_count_two VARCHAR(40) default 'DISABLED';
+
+UPDATE system_settings SET db_schema_version='1632',db_schema_update_date=NOW() where db_schema_version < 1632;
+
+ALTER TABLE phones ADD mohsuggest VARCHAR(100) default '';
+
+UPDATE system_settings SET db_schema_version='1633',db_schema_update_date=NOW() where db_schema_version < 1633;
