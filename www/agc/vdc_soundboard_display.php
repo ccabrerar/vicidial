@@ -1,7 +1,7 @@
 <?php
 # vdc_soundboard_display.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed display the contents of an audio soundboard in the system
 #
@@ -13,10 +13,12 @@
 # 161103-1656 - Added Agent Debug Logging
 # 161111-1647 - Added HIDENUMBERS display option, Font size, button type and layout options
 # 191013-2122 - Fixes for PHP7
+# 210616-2032 - Added optional CORS support, see options.php for details
 #
 
-$version = '2.12-7';
-$build = '191013-2122';
+$version = '2.14-8';
+$build = '210616-2032';
+$php_script = 'vdc_soundboard_display.php';
 
 require_once("dbconnect_mysqli.php");
 require_once("functions.php");
@@ -54,6 +56,13 @@ if (isset($_GET["bcrypt"]))				{$bcrypt=$_GET["bcrypt"];}
 if ($bcrypt == 'OFF')
 	{$bcrypt=0;}
 
+# if options file exists, use the override values for the above variables
+#   see the options-example.php file for more information
+if (file_exists('options.php'))
+	{
+	require_once('options.php');
+	}
+
 header ("Content-type: text/html; charset=utf-8");
 header ("Cache-Control: no-cache, must-revalidate");  // HTTP/1.1
 header ("Pragma: no-cache");                          // HTTP/1.0
@@ -75,6 +84,9 @@ $gsm='.gsm';
 
 $user = preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass = preg_replace("/\'|\"|\\\\|;| /","",$pass);
+
+$PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####

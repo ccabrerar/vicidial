@@ -1,7 +1,7 @@
 <?php
 # log_test.php
 # 
-# Copyright (C) 2009  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 
 
@@ -15,19 +15,16 @@ if (!isset($begin_date)) {$begin_date = $TODAY;}
 if (!isset($end_date)) {$end_date = $TODAY;}
 
 
-$fp = fopen ("./closer_SQL_updates.txt", "a");
+$fp = fopen ("./closer_SQL_updates.txt", "w");
 $date = date("r");
 $ip = getenv("REMOTE_ADDR");
 $browser = getenv("HTTP_USER_AGENT");
 
-		fwrite ($fp, "CLOSER SQL UPDATE|$date|$PHP_AUTH_USER|$PHP_AUTH_PW|$ip|$browser|$LOGfullname|\n");
-		fclose($fp);
+fwrite ($fp, "CLOSER SQL UPDATE|$date|\n");
+fclose($fp);
 
 
-	
 exit; 
-
-
 
 ?>
 

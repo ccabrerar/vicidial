@@ -45,6 +45,7 @@ require("functions.php");
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["query_date"]))				{$query_date=$_GET["query_date"];}
 	elseif (isset($_POST["query_date"]))	{$query_date=$_POST["query_date"];}
 if (isset($_GET["date_field"]))				{$date_field=$_GET["date_field"];}
@@ -1436,6 +1437,7 @@ else
 	echo "<HTML><HEAD>\n";
 
 	echo "<script language=\"JavaScript\" src=\"calendar_db.js\"></script>\n";
+	echo "<link rel=\"stylesheet\" type=\"text/css\" href=\"vicidial_stylesheet.php\">\n";
 	echo "<script language=\"JavaScript\" src=\"help.js\"></script>\n";
 	echo "<link rel=\"stylesheet\" href=\"calendar.css\">\n";
 	echo "<link rel=\"stylesheet\" type=\"text/css\" href=\"vicidial_stylesheet.php\">\n";
@@ -1469,7 +1471,7 @@ else
 	require("admin_header.php");
 
 	echo "<CENTER><BR>\n";
-	echo "<FONT SIZE=3 FACE=\"Arial,Helvetica\"><B>"._QXZ("Export Leads Report")."</B></FONT><BR>\n";
+	echo "<FONT SIZE=3 FACE=\"Arial,Helvetica\"><B>"._QXZ("Export Leads Report")."</B></FONT> $NWB#lead_export_report$NWE<BR>\n";
 	echo "<FONT SIZE=2 FACE=\"Arial,Helvetica\">"._QXZ("This report pulls lead information for calls dialed in the selected date range. A lead is only exported once no matter how many calls were handled. The current lead status is used.")."</FONT><BR><BR>\n";
 	echo "<FORM ACTION=\"$PHP_SELF\" METHOD=GET name=vicidial_report id=vicidial_report>\n";
 	echo "<INPUT TYPE=HIDDEN NAME=DB VALUE=\"$DB\">";
@@ -1514,7 +1516,6 @@ else
 	echo "<B>"._QXZ("Date Field").":</B> $NWB#lead_export_report-date_field$NWE<BR>\n";
 	echo "<select size=1 name=date_field><option selected value=\"call_date\">"._QXZ("Call date")."</option><option value=\"entry_date\">"._QXZ("Entry date")."</option></select>\n";
 
-	
 	echo "<BR><BR>\n";
 
 	echo "<B>"._QXZ("Header Row").":</B> $NWB#lead_export_report-header_row$NWE<BR>\n";

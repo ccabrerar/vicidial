@@ -1,7 +1,7 @@
 <?php
 # vdc_email_display.php - VICIDIAL agent email display script
 #
-# Copyright (C) 2017  Matt Florell, Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell, Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This page displays any incoming emails in the Vicidial user interface.  It 
 # also allows the user to download and view any attachments sent in the email,
@@ -23,10 +23,12 @@
 # 150603-1541 - Fixed email attachments issue
 # 170526-2330 - Added additional variable filtering
 # 171126-1406 - Added fault tolerance and extra debug
+# 210616-2038 - Added optional CORS support, see options.php for details
 #
 
-$version = '2.14-13';
-$build = '171126-1406';
+$version = '2.14-14';
+$build = '210616-2038';
+$php_script = 'vdc_email_display.php';
 
 require_once("dbconnect_mysqli.php");
 require_once("functions.php");
@@ -62,6 +64,15 @@ if (isset($_GET["REPLY"]))	{$REPLY=$_GET["REPLY"];}
 if (isset($_GET["agent_email"]))	{$agent_email=$_GET["agent_email"];}
 	elseif (isset($_POST["agent_email"]))	{$agent_email=$_POST["agent_email"];}
 
+$PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
+
+# if options file exists, use the override values for the above variables
+#   see the options-example.php file for more information
+if (file_exists('options.php'))
+	{
+	require_once('options.php');
+	}
 
 $attachment1=$_FILES["attachment1"];
 	$A1_orig = $_FILES['attachment1']['name'];
@@ -297,7 +308,7 @@ if ( ($lead_id) or (strlen($email_row_id)>0) )
 		if (mysqli_num_rows($att_rslt)>0) {
 			$EMAIL_form.="<tr bgcolor=white><td align='right' valign='top' width='150'>"._QXZ("Attachments:")."</td><td align='left' valign='top' width='*'><pre>";
 			while($att_row=mysqli_fetch_array($att_rslt)) {
-				$EMAIL_form.="<LI><a href='$_SERVER[PHP_SELF]?attachment_id=$att_row[attachment_id]&lead_id=$lead_id&user=$user&pass=$pass'>$att_row[filename]</a>\n";
+				$EMAIL_form.="<LI><a href='$PHP_SELF?attachment_id=$att_row[attachment_id]&lead_id=$lead_id&user=$user&pass=$pass'>$att_row[filename]</a>\n";
 			}
 			$EMAIL_form.="</pre></td></tr>";
 		}
@@ -397,7 +408,7 @@ if ( ($lead_id) or (strlen($email_row_id)>0) )
 	pre { white-space: pre-wrap; }
 	</style>
 	<body>
-	<form action='<?php echo $_SERVER['PHP_SELF']; ?>' method='post' name="email_display_form" id="email_display_form" onSubmit="if (this.submitted) return false; this.submitted=true" enctype="multipart/form-data">
+	<form action='<?php echo $PHP_SELF ?>' method='post' name="email_display_form" id="email_display_form" onSubmit="if (this.submitted) return false; this.submitted=true" enctype="multipart/form-data">
 	<?php echo $EMAIL_form; ?>
 	</form>
 	</body>

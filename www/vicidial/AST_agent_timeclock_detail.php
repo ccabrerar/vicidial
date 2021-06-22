@@ -39,6 +39,7 @@ require("functions.php");
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["query_date"]))				{$query_date=$_GET["query_date"];}
 	elseif (isset($_POST["query_date"]))	{$query_date=$_POST["query_date"];}
 if (isset($_GET["end_date"]))				{$end_date=$_GET["end_date"];}
@@ -378,8 +379,8 @@ while ($i < $statha_to_print)
 
 $LINKbase = "$PHP_SELF?query_date=$query_dateURL&end_date=$end_dateURL$groupQS$user_groupQS&shift=$shift&DB=$DB";
 
-$NWB = " &nbsp; <a href=\"javascript:openNewWindow('help.php?ADD=99999";
-$NWE = "')\"><IMG SRC=\"help.gif\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP></A>";
+$NWB = "<IMG SRC=\"help.png\" onClick=\"FillAndShowHelpDiv(event, '";
+$NWE = "')\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP>";
 
 if ($file_download < 1)
 	{
@@ -397,6 +398,8 @@ if ($file_download < 1)
 	 </STYLE>
 
 	<script language="JavaScript" src="calendar_db.js"></script>
+	<link rel="stylesheet" type="text/css" href="vicidial_stylesheet.php">
+	<script language="JavaScript" src="help.js"></script>
 	<link rel="stylesheet" href="calendar.css">
 	<link rel="stylesheet" href="horizontalbargraph.css">
 	<?php require("chart_button.php"); ?>
@@ -412,6 +415,7 @@ window.open(url,"",'width=620,height=300,scrollbars=yes,menubar=yes,address=yes'
 	<?php
 	echo "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=utf-8\">\n";
 	echo "<TITLE>"._QXZ("$report_name")."</TITLE></HEAD><BODY BGCOLOR=white marginheight=0 marginwidth=0 leftmargin=0 topmargin=0>\n";
+	echo "<div id='HelpDisplayDiv' class='help_info' style='display:none;z-index:21;'></div>";
 	echo "<span style=\"position:absolute;left:0px;top:0px;z-index:20;\" id=admin_header>";
 
 	$short_header=1;

@@ -1,7 +1,7 @@
 <?php
 # dispo_add_FPG.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to be used in the "Dispo URL" field of a campaign
 # or in-group. It adds the phone_number of the call to a designated inbound 
@@ -21,11 +21,12 @@
 # CHANGES
 # 150724-1657 - First Build
 # 170526-2305 - Added additional variable filtering
+# 210615-1039 - Default security fixes, CVE-2021-28854
+# 210616-2049 - Added optional CORS support, see options.php for details
 #
 
 $api_script = 'add_FPG';
-
-header ("Content-type: text/html; charset=utf-8");
+$php_script = 'dispo_add_FPG.php';
 
 require_once("dbconnect_mysqli.php");
 require_once("functions.php");
@@ -37,7 +38,6 @@ $BR = getenv ("HTTP_USER_AGENT");
 
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
-$PHP_SELF=$_SERVER['PHP_SELF'];
 if (isset($_GET["phone_number"]))			{$phone_number=$_GET["phone_number"];}
 	elseif (isset($_POST["phone_number"]))	{$phone_number=$_POST["phone_number"];}
 if (isset($_GET["lead_id"]))				{$lead_id=$_GET["lead_id"];}
@@ -74,6 +74,15 @@ $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
 $phone_number = preg_replace('/[^-_0-9a-zA-Z]/','',$phone_number);
 $FPG_id = preg_replace("/\'|\"|\\\\|;| /","",$FPG_id);
 $lead_id = preg_replace('/[^0-9]/','',$lead_id);
+
+# if options file exists, use the override values for the above variables
+#   see the options-example.php file for more information
+if (file_exists('options.php'))
+	{
+	require_once('options.php');
+	}
+
+header ("Content-type: text/html; charset=utf-8");
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
@@ -219,7 +228,8 @@ else
 
 if ($log_to_file > 0)
 	{
-	$fp = fopen ("./add_FPG.txt", "a");
-	fwrite ($fp, "$NOW_TIME|$k|$phone_number|$FPG_id|$sale_status|$dispo|$user|XXXX|$DB|$log_to_file|$MESSAGE|\n");
+	$fp = fopen ("./add_FPG.txt", "w");
+#	fwrite ($fp, "$NOW_TIME|$k|$phone_number|$FPG_id|$sale_status|$dispo|$user|XXXX|$DB|$log_to_file|$MESSAGE|\n");
+	fwrite ($fp, "$NOW_TIME|\n");
 	fclose($fp);
 	}

@@ -138,9 +138,10 @@
 # 201218-2224 - Added code for SHARED agent campaigns
 # 210207-0952 - Added more logging, debug code and fixes for SHARED agent campaigns
 # 210423-2241 - Fix for campaign ID underscore issue #1265
+# 210606-1006 - Added TILTX features for pre-carrier call filtering
 #
 
-$build='210423-2241';
+$build='210606-1006';
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
 	{
@@ -2332,8 +2333,11 @@ while($one_day_interval > 0)
 							if ($CLstatus =~ /BUSY/) {$CLnew_status = 'B';}
 							else
 								{
-								if ($CLstatus =~ /DISCONNECT/) {$CLnew_status = 'ADC';}
-								else {$CLnew_status = 'NA';}
+								$new_status_set=0;
+								if ($CLstatus =~ /DISCONNECT/) {$CLnew_status = 'ADC';   $new_status_set=1;}
+								if ($CLstatus =~ /ADCCAR/) {$CLnew_status = 'ADCCAR';   $new_status_set=1;}
+								if ($CLstatus =~ /DNCCAR/) {$CLnew_status = 'DNCCAR';   $new_status_set=1;}
+								if ($new_status_set < 1) {$CLnew_status = 'NA';}
 								}
 							if ($CLstatus =~ /LIVE/) {$CLnew_status = 'DROP';}
 							else

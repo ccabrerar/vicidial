@@ -1,0 +1,84 @@
+CORS DOC(Cross-Origin Resource Sharing)		Started: 2021-06-17	Updated: 2021-06-18
+
+
+
+This document will go over how to configure CORS (Cross-Origin Resource Sharing) with the scripts associated with the VICIdial agent and admin screen PHP scripts.
+
+
+
+What is CORS exactly?
+
+Cross-Origin Resource Sharing (CORS) is an HTTP-header based mechanism that allows a server to indicate any other origins (domain, scheme, and/or port) than its own from which a browser should permit loading of resources. CORS also relies on a mechanism by which browsers make a “preflight” request to the server hosting the cross-origin resource, in order to check that the server will permit the actual request. In that preflight, the browser sends headers that indicate the HTTP method and headers that will be used in the actual request.
+
+For an example of how this might work, let's say you have a CRM system on a separate webserver from your VICIdial webserver, and you want to use a Javascript AJAX call on that CRM to trigger a VICIdial Agent API command. That functionality would not work without configuring CORS on your VICIdial agent folder because they both have different origins.
+
+
+For more details on how CORS works, and all of the options that are available within it:
+https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
+
+For more details on how X-Frame-Options works:
+https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options
+
+
+
+VICIDIAL AGENT WEB SCREEN SCRIPTS SUPPORT:
+
+Support for CORS configuration for almost all of the PHP scripts in the "agc" web directory was added on 2021-06-17(svn/trunk revision 3461) with the addition of the "agentCORS.php" file and the addition of the following configurable variables to the "agc/options.php" file on your webserver:
+     (NOTE: If you have never set up an "agc/options.php" file on your webserver before, just use a copy the file "agc/options-example.php")
+
+
+# CORS settings: (to enable, uncomment and customize the variables below, and uncomment the "require_once('agentCORS.php');" line at the bottom)
+# (NOTE: The first 3 variables must be set for these features to be active)
+$CORS_allowed_origin		= '';	# if multiple origins allowed, separate them by a pipe (also allows PHP preg syntax)
+					# examples: 'https://acme.org|http://internal.acme.org' or "https?:\/\/(.*\\.?example\\.com|localhost):?[0-9]*|null"
+$CORS_allowed_methods		= '';	# if multiple methods allowed, separate them by a comma 
+					# example: 'GET,POST,OPTIONS,HEAD'
+$CORS_affected_scripts		= '';	# use '--ALL--' for all agc scripts. If multiple(but less than all) scripts affected, separate them by a space 
+					# examples: 'api.php alt_display.php' or '--ALL--'
+$CORS_allowed_headers		= '';	# passed in Access-Control-Allow-Headers http response header, 
+					# examples: X-Requested-With, X-Forwarded-For, X-Forwarded-Proto, Authorization, Cookie, Content-Type
+$CORS_allowed_credentials	= 'N';	# 'Y' or 'N', whether to send credentials to browser or not
+$Xframe_options			= 'N';	# Not part of CORS, but can prevent Iframe/embed/etc... use by foreign website, will populate for all affected scripts
+					# examples: 'N', 'SAMEORIGIN', 'DENY'   NOTE: using 'DENY' may break some agent screen functionality
+$CORS_debug			= 0;	# 0 = no, 1 = yes (default is no) If enabled, this will generate a lot of log entries in a CORSdebug_log.txt file
+#	require_once('agentCORS.php');
+
+
+NOTES:
+- It is STRONGLY recommended that you do not set the $CORS_allowed_origin variable to '*', this creates a very insecure situation where any website anywhere can use the resources on your webserver within any browser window, iframe or hidden span.
+
+
+
+
+VICIDIAL ADMIN WEB SCREEN SCRIPTS SUPPORT:
+
+The implementation of CORS on tha admin side is very similar to the agent side, except only a limited number of admin PHP scripts are CORS-enabled at this time, and there is no '--ALL--' option for the $CORS_affected_scripts variable, so you must include every script you want to have CORS enabled on for the admin side in that variable. Support for CORS configuration for these limited admin "vicidial" web directory PHP scripts was added on 2021-06-18(svn/trunk revision 3461) with the addition of the "adminCORS.php" file and the addition of the following configurable variables to the "vicidial/options.php" file on your webserver:
+     (NOTE: If you have never set up an "vicidial/options.php" file on your webserver before, just use a copy the file "vicidial/options-example.php")
+
+List of CORS-enabled admin("vicidial") PHP scripts:
+- non_agent_api.php
+- vdremote.php
+- AST_timeonVDADall.php
+- nanpa_type.php
+
+
+# CORS settings: (to enable, customize the variables below, and uncomment the "require_once('adminCORS.php');" line at the bottom)
+# (NOTE: The first 3 variables must be set for these features to be active)
+$CORS_allowed_origin		= '';	# if multiple origins allowed, separate them by a pipe (also allows PHP preg syntax)
+					# examples: 'https://acme.org|https://internal.acme.org' or "https?:\/\/(.*\\.?example\\.com|localhost):?[0-9]*|null"
+$CORS_allowed_methods		= '';	# if multiple methods allowed, separate them by a comma 
+					# example: 'GET,POST,OPTIONS,HEAD'
+$CORS_affected_scripts		= '';	# If multiple(but less than all) scripts affected, separate them by a space (see CORS_SUPPORT.txt doc for list of files)
+					# examples: 'non_agent_api.php vdremote.php' or 'non_agent_api.php'
+$CORS_allowed_headers		= '';	# passed in Access-Control-Allow-Headers http response header, 
+					# examples: X-Requested-With, X-Forwarded-For, X-Forwarded-Proto, Authorization, Cookie, Content-Type
+$CORS_allowed_credentials	= 'N';	# 'Y' or 'N', whether to send credentials to browser or not
+$Xframe_options			= 'N';	# Not part of CORS, but can prevent Iframe/embed/etc... use by foreign website, will populate for all affected scripts
+					# examples: 'N', 'SAMEORIGIN', 'DENY'   NOTE: using 'DENY' may break some admin screen functionality
+$CORS_debug			= 0;	# 0 = no, 1 = yes (default is no) This will generate a lot of log entries in a CORSdebug_log.txt file
+#	require_once('adminCORS.php');
+
+
+NOTES:
+- It is STRONGLY recommended that you do not set the $CORS_allowed_origin variable to '*', this creates a very insecure situation where any website anywhere can use the resources on your webserver within any browser window, iframe or hidden span.
+

@@ -26,7 +26,7 @@ require("functions.php");
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
-
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["api_date_D"]))			{$api_date_D=$_GET["api_date_D"];}
 	elseif (isset($_POST["api_date_D"]))	{$api_date_D=$_POST["api_date_D"];}
 if (isset($_GET["api_date_end_D"]))			{$api_date_end_D=$_GET["api_date_end_D"];}

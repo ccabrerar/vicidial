@@ -1,7 +1,7 @@
 <?php
 # vdc_script_dispo_example.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to be used in the SCRIPT tab in an IFRAME and will not submit unless a specific field is filled in
 #
@@ -22,10 +22,12 @@
 # 170526-2345 - Added additional variable filtering
 # 170528-0902 - Added more variable filtering
 # 190111-0910 - Fix for PHP7
+# 210616-2035 - Added optional CORS support, see options.php for details
 #
 
-$version = '2.14-10';
-$build = '190111-0910';
+$version = '2.14-11';
+$build = '210616-2035';
+$php_script = 'vdc_script_dispo_example.php';
 
 require_once("dbconnect_mysqli.php");
 require_once("functions.php");
@@ -235,6 +237,12 @@ $appointment_hour = $appointment_timeARRAY[0];
 $appointment_min = $appointment_timeARRAY[1];
 ##### END Put custom fields here #####
 
+# if options file exists, use the override values for the above variables
+#   see the options-example.php file for more information
+if (file_exists('options.php'))
+	{
+	require_once('options.php');
+	}
 
 header ("Content-type: text/html; charset=utf-8");
 header ("Cache-Control: no-cache, must-revalidate");  // HTTP/1.1
@@ -266,6 +274,9 @@ $session_name = preg_replace("/\'|\"|\\\\|;/","",$session_name);
 $question = preg_replace("/\'|\"|\\\\|;/","",$question);
 $answer = preg_replace("/\'|\"|\\\\|;/","",$answer);
 $status = preg_replace("/\'|\"|\\\\|;/","",$status);
+
+$PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####

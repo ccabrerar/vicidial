@@ -53,7 +53,8 @@ if (isset($_GET["status_link"]))			{$status_link=$_GET["status_link"];}
 	elseif (isset($_POST["status_link"]))	{$status_link=$_POST["status_link"];}
 if (isset($_GET["show_email"]))				{$show_email=$_GET["show_email"];}
 	elseif (isset($_POST["show_email"]))	{$show_email=$_POST["show_email"];}
-$PHP_SELF=$_SERVER["PHP_SELF"];
+$PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 
 $lead_id = preg_replace("/[^0-9]/","",$lead_id);
 $chat_id = preg_replace('/[^- \_\.0-9a-zA-Z]/','',$chat_id);

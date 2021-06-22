@@ -88,10 +88,11 @@
 # 210317-1935 - Added visibility logging
 # 210328-1013 - Fix for emails-in-queue count query, Issue #1170
 # 210425-2357 - Added calls_inqueue_count_ calculation
+# 210616-1905 - Added optional CORS support, see options.php for details
 #
 
-$version = '2.14-62';
-$build = '210425-2357';
+$version = '2.14-63';
+$build = '210616-1905';
 $php_script = 'conf_exten_check.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=51;
@@ -154,6 +155,13 @@ if (isset($_GET["visibility"]))				{$visibility=$_GET["visibility"];}
 
 if ($bcrypt == 'OFF')
 	{$bcrypt=0;}
+
+# if options file exists, use the override values for the above variables
+#   see the options-example.php file for more information
+if (file_exists('options.php'))
+	{
+	require_once('options.php');
+	}
 
 header ("Content-type: text/html; charset=utf-8");
 header ("Cache-Control: no-cache, must-revalidate");  // HTTP/1.1

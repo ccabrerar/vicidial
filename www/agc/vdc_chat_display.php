@@ -1,7 +1,7 @@
 <?php
 # vdc_chat_display.php
 #
-# Copyright (C) 2020  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This is the interface for agents to chat with customers and each other.  It's separate from the manager-to-agent
 # chat interface out of necessity and calls the chat_db_query.php page to send information and display it.  It will
@@ -19,10 +19,13 @@
 # 170528-1001 - Added variable filtering
 # 190902-0914 - Fix for PHP 7.2
 # 201117-2207 - Changes for better compatibility with non-latin data input
+# 210616-2040 - Added optional CORS support, see options.php for details
 #
 
 require("dbconnect_mysqli.php");
 require("functions.php");
+
+$php_script = 'vdc_chat_display.php';
 
 $MT[0]='';
 $chat_group_ids=$MT;
@@ -61,6 +64,9 @@ if (isset($_GET["clickmute"]))						{$clickmute=$_GET["clickmute"];}
 	elseif (isset($_POST["clickmute"]))				{$clickmute=$_POST["clickmute"];}
 if (isset($_GET["stage"]))							{$stage=$_GET["stage"];}
 	elseif (isset($_POST["stage"]))					{$stage=$_POST["stage"];}
+
+$PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####

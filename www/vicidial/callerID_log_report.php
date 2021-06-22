@@ -22,6 +22,7 @@ require("functions.php");
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["query_date"]))				{$query_date=$_GET["query_date"];}
 	elseif (isset($_POST["query_date"]))	{$query_date=$_POST["query_date"];}
 if (isset($_GET["end_date"]))				{$end_date=$_GET["end_date"];}
@@ -614,11 +615,10 @@ if ($file_exported < 1)
 
 
 	echo "<CENTER><BR>\n";
-	echo "<FONT SIZE=3 FACE=\"Arial,Helvetica\"><B>"._QXZ("Caller ID Log Report");
+	echo "<FONT SIZE=3 FACE=\"Arial,Helvetica\"><B>"._QXZ("$report_name");
 	if ($ivr_export == 'YES')
 		{echo " IVR";}
-	echo "</B></FONT><BR>\n";
-	echo "<FONT SIZE=3 FACE=\"Arial,Helvetica\">"._QXZ("This report will provide a breakdown by caller ID of calls from specified campaigns and specified statuses within a date range.  Its primary purpose is to show if particular caller IDs have been flagged by carriers as being scam numbers.")."</FONT><BR><BR>\n";
+	echo "</B></FONT> $NWB#cid_log_report$NWE<BR>\n";
 	echo "<FORM ACTION=\"$PHP_SELF\" METHOD=GET name=vicidial_report id=vicidial_report>\n";
 	echo "<INPUT TYPE=HIDDEN NAME=DB VALUE=\"$DB\">";
 	echo "<INPUT TYPE=HIDDEN NAME=run_export VALUE=\"1\">";

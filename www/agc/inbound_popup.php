@@ -1,7 +1,7 @@
 <?php
 # inbound_popup.php    version 2.14
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to open up when a live_inbound call comes in giving the user
 #   options of what to do with the call or options to lookup the callerID on various web sites
@@ -38,10 +38,12 @@
 # 141216-2120 - Added language settings lookups and user/pass variable standardization
 # 170526-2231 - Added additional variable filtering
 # 190111-0905 - Fix for PHP7
+# 210616-2106 - Added optional CORS support, see options.php for details
 #
 
-$version = '2.14-14';
-$build = '190111-0905';
+$version = '2.14-15';
+$build = '210616-2106';
+$php_script = 'inbound_popup.php';
 
 require_once("dbconnect_mysqli.php");
 require_once("functions.php");
@@ -92,6 +94,13 @@ $NOW_TIME = date("Y-m-d H:i:s");
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 $DO = '-1';
 if ( (preg_match("/^Zap/i",$channel)) and (!preg_match("/-/i",$channel)) ) {$channel = "$channel$DO";}
+
+# if options file exists, use the override values for the above variables
+#   see the options-example.php file for more information
+if (file_exists('options.php'))
+	{
+	require_once('options.php');
+	}
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####

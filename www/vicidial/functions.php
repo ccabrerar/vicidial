@@ -38,6 +38,7 @@
 # 210311-2316 - Added 2FA check in user_authorization function
 # 210316-0924 - Small fix for 2FA consistency
 # 210406-1740 - Moved 'dialable_leads' function to this script
+# 210615-0952 - Default security fix, CVE-2021-28854
 #
 
 ##### BEGIN validate user login credentials, check for failed lock out #####
@@ -135,8 +136,8 @@ function user_authorization($user,$pass,$user_option,$user_update,$api_call)
 			}
 		if ($SSwebroot_writable > 0)
 			{
-			$fp = fopen ("./project_auth_entries.txt", "a");
-			fwrite ($fp, "ADMIN|FAIL|$NOW_TIME|X|$auth_key|$ip|$browser|\n");
+			$fp = fopen ("./project_auth_entries.txt", "w");
+			fwrite ($fp, "ADMIN|FAIL|$NOW_TIME|$browser|\n");
 			fclose($fp);
 			}
 		}

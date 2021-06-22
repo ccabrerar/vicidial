@@ -30,6 +30,7 @@
 # 200506-1628 - Added RS_CUSTINFOdisplay & RS_CUSTINFOminUL options
 # 201107-2257 - Added RS_parkSTATS option
 # 210314-2101 - Added RS_DIDdesc option
+# 210618-0937 - Added CORS support
 #
 
 # used by the realtime_report.php script
@@ -127,5 +128,22 @@ $enable_status_mismatch_leadloader_option=0;
 
 # call report export ALTERNATE_2 header
 $call_export_report_ALTERNATE_2_header="address3\tfirst_name\tlast_name\tphone_number\tstatus_name\tstatus_date\r\n";
+
+
+# CORS settings: (to enable, customize the variables below, and uncomment the "require_once('adminCORS.php');" line at the bottom)
+# (NOTE: The first 3 variables must be set for these features to be active)
+$CORS_allowed_origin		= '';	# if multiple origins allowed, separate them by a pipe (also allows PHP preg syntax)
+									# examples: 'https://acme.org|https://internal.acme.org' or "https?:\/\/(.*\\.?example\\.com|localhost):?[0-9]*|null"
+$CORS_allowed_methods		= '';	# if multiple methods allowed, separate them by a comma 
+									# example: 'GET,POST,OPTIONS,HEAD'
+$CORS_affected_scripts		= '';	# If multiple(but less than all) scripts affected, separate them by a space (see CORS_SUPPORT.txt doc for list of files)
+									# examples: 'non_agent_api.php vdremote.php' or 'non_agent_api.php'
+$CORS_allowed_headers		= '';	# passed in Access-Control-Allow-Headers http response header, 
+									# examples: X-Requested-With, X-Forwarded-For, X-Forwarded-Proto, Authorization, Cookie, Content-Type
+$CORS_allowed_credentials	= 'N';	# 'Y' or 'N', whether to send credentials to browser or not
+$Xframe_options				= 'N';	# Not part of CORS, but can prevent Iframe/embed/etc... use by foreign website, will populate for all affected scripts
+									# examples: 'N', 'SAMEORIGIN', 'DENY'   NOTE: using 'DENY' may break some admin screen functionality
+$CORS_debug					= 0;	# 0 = no, 1 = yes (default is no) This will generate a lot of log entries in a CORSdebug_log.txt file
+#	require_once('adminCORS.php');
 
 ?>

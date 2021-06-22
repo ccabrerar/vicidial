@@ -1,7 +1,7 @@
 <?php
 # nanpa_type.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to work with the NANPA exchange(NPA-NXX-X) data and
 # the wireless-to-wired and wired-to-wireless number portability data from
@@ -30,10 +30,12 @@
 # 130822-1433 - First build of script
 # 140702-2251 - Added prefix phone type of V as landline
 # 170409-1531 - Added IP List validation code
+# 210618-1012 - Added CORS support
 #
 
-$version = '2.14-3';
-$build = '170409-1531';
+$version = '2.14-4';
+$build = '210618-1012';
+$php_script='nanpa_type.php';
 
 $startMS = microtime();
 
@@ -52,6 +54,8 @@ if (isset($_GET["phone_number"]))				{$phone_number=$_GET["phone_number"];}
 if (isset($_GET["DB"]))							{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))				{$DB=$_POST["DB"];}
 
+if (file_exists('options.php'))
+	{require('options.php');}
 
 header ("Content-type: text/html; charset=utf-8");
 header ("Cache-Control: no-cache, must-revalidate");  // HTTP/1.1

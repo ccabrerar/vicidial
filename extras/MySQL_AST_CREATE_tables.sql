@@ -103,6 +103,8 @@ outbound_alt_cid VARCHAR(20) default '',
 conf_qualify ENUM('Y','N') default 'Y',
 webphone_layout VARCHAR(255) default '',
 mohsuggest VARCHAR(100) default '',
+peer_status ENUM('UNKNOWN','REGISTERED','UNREGISTERED','REACHABLE','LAGGED','UNREACHABLE') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'UNKNOWN',
+ping_time SMALLINT(6) DEFAULT NULL,
 index (server_ip),
 index (voicemail_id),
 index (dialplan_number),
@@ -1066,7 +1068,9 @@ leave_3way_start_recording_exception VARCHAR(40) default 'DISABLED',
 calls_waiting_vl_one VARCHAR(25) default 'DISABLED',
 calls_waiting_vl_two VARCHAR(25) default 'DISABLED',
 calls_inqueue_count_one VARCHAR(40) default 'DISABLED',
-calls_inqueue_count_two VARCHAR(40) default 'DISABLED'
+calls_inqueue_count_two VARCHAR(40) default 'DISABLED',
+in_man_dial_next_ready_seconds SMALLINT(5) UNSIGNED default '0',
+in_man_dial_next_ready_seconds_override VARCHAR(40) default 'DISABLED'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_lists (
@@ -1365,7 +1369,8 @@ no_agent_delay SMALLINT(5) default '0',
 agent_search_method VARCHAR(2) default '',
 qc_scorecard_id VARCHAR(20) DEFAULT '',
 qc_statuses_id VARCHAR(20) DEFAULT '',
-populate_lead_comments VARCHAR(40) default 'CALLERID_NAME'
+populate_lead_comments VARCHAR(40) default 'CALLERID_NAME',
+drop_call_seconds_override VARCHAR(40) default 'DISABLED'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_stations (
@@ -4590,6 +4595,22 @@ KEY `channel` (`channel`)
 ) ENGINE=MyISAM AUTO_INCREMENT=630320 DEFAULT CHARSET=utf8 
 COLLATE=utf8_unicode_ci;
 
+CREATE TABLE vicidial_tiltx_shaken_log (
+db_time DATETIME NOT NULL,
+server_ip VARCHAR(15) NOT NULL,
+url_log_id INT(9) UNSIGNED NOT NULL,
+caller_code VARCHAR(20),
+phone_number VARCHAR(19) default '',
+CIDnumber VARCHAR(19) default '',
+CallerIDToUse VARCHAR(19) default '',
+IsDNC TINYINT(1) default '0',
+IsDisconnected TINYINT(1) default '0',
+TILTXID VARCHAR(50),
+Identity TEXT,
+CAID VARCHAR(50),
+index (db_time)
+) ENGINE=MyISAM;
+
 
 ALTER TABLE vicidial_email_list MODIFY message text character set utf8;
 
@@ -4931,4 +4952,4 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1633',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1636',db_schema_update_date=NOW(),reload_timestamp=NOW();

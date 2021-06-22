@@ -1,0 +1,646 @@
+#!/usr/bin/perl
+#
+# agi-TILTX_SHAKEN.agi version 2.14
+#
+# Runs before a call goes to a carrier for optional DNC/Disconnect check as well
+# as CID check and STIR/SHAKEN SIP call Identity tagging through TILTX service
+#
+# You need to put lines similar to those below in your VICIdial carrier dialplan entry:
+# 
+# exten => _91NXXNXXXXXX,n,AGI(/var/lib/asterisk/agi-bin/agi-TILTX_SHAKEN.agi,${EXTEN:-10}-----${CALLERID(num)}-----YES-----)
+# 
+# CLI FLAG OPTIONS:
+# 1. Phone number being called
+# 2. CallerID number being sent with call
+# 3. (YES/NO) whether to speak error messages or not, default 'NO'
+# 4. Settings Container ID to use for TILTX API settings, default 'TILTX_SHAKEN_API_KEY'
+#
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+#
+# changes:
+# 210605-0936 - first build
+#
+
+$script = 'agi-TILTX_SHAKEN.agi';
+
+$A = 1;		# set to 1 for AMD output messages mode
+$AMD_LOG = 3;	# set to 1 for logfile and 2 forDB log, 3 for both
+$wav='.wav';
+$US='_';
+
+$secX = time(); #Start time
+($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+$year = ($year + 1900);
+$mon++;
+if ($mon < 10) {$mon = "0$mon";}
+if ($mday < 10) {$mday = "0$mday";}
+if ($hour < 10) {$hour = "0$hour";}
+if ($min < 10) {$min = "0$min";}
+if ($sec < 10) {$sec = "0$sec";}
+
+$now_date_epoch = time();
+$now_date = "$year-$mon-$mday $hour:$min:$sec";
+$file_day = "$year$mon$mday";
+$SQL_day = "$year-$mon-$mday";
+
+# default path to astguiclient configuration file:
+$PATHconf =		'/etc/astguiclient.conf';
+
+open(conf, "$PATHconf") || die "can't open $PATHconf: $!\n";
+@conf = <conf>;
+close(conf);
+$i=0;
+foreach(@conf)
+	{
+	$line = $conf[$i];
+	$line =~ s/ |>|\n|\r|\t|\#.*|;.*//gi;
+	if ( ($line =~ /^PATHhome/) && ($CLIhome < 1) )
+		{$PATHhome = $line;   $PATHhome =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHlogs/) && ($CLIlogs < 1) )
+		{$PATHlogs = $line;   $PATHlogs =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHagi/) && ($CLIagi < 1) )
+		{$PATHagi = $line;   $PATHagi =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHweb/) && ($CLIweb < 1) )
+		{$PATHweb = $line;   $PATHweb =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHsounds/) && ($CLIsounds < 1) )
+		{$PATHsounds = $line;   $PATHsounds =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHmonitor/) && ($CLImonitor < 1) )
+		{$PATHmonitor = $line;   $PATHmonitor =~ s/.*=//gi;}
+	if ( ($line =~ /^VARserver_ip/) && ($CLIserver_ip < 1) )
+		{$VARserver_ip = $line;   $VARserver_ip =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_server/) && ($CLIDB_server < 1) )
+		{$VARDB_server = $line;   $VARDB_server =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_database/) && ($CLIDB_database < 1) )
+		{$VARDB_database = $line;   $VARDB_database =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_user/) && ($CLIDB_user < 1) )
+		{$VARDB_user = $line;   $VARDB_user =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_pass/) && ($CLIDB_pass < 1) )
+		{$VARDB_pass = $line;   $VARDB_pass =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_port/) && ($CLIDB_port < 1) )
+		{$VARDB_port = $line;   $VARDB_port =~ s/.*=//gi;}
+	$i++;
+	}
+
+if (!$VARDB_port)	{$VARDB_port='3306';}
+if (!$AGILOGfile)	{$AGILOGfile = "$PATHlogs/agiout.$year-$mon-$mday";}
+if (!$CEPLOGfile)	{$CEPLOGfile = "$PATHlogs/Cepstral.$year-$mon-$mday";}
+
+use DBI;
+use Time::Local;
+use Asterisk::AGI;
+$AGI = new Asterisk::AGI;
+
+  
+$dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
+    or die "Couldn't connect to database: " . DBI->errstr;
+
+#############################################
+##### Gather system_settings #####
+$stmtA = "SELECT sip_event_logging,call_quota_lead_ranking FROM system_settings;";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+if ($sthArows > 0)
+	{
+	@aryA = $sthA->fetchrow_array;
+	$SSsip_event_logging =			$aryA[0];
+	$SScall_quota_lead_ranking =	$aryA[1];
+	}
+$sthA->finish();
+###########################################
+
+### Grab Server values from the database
+$stmtA = "SELECT agi_output,asterisk_version,ext_context FROM servers where server_ip = '$VARserver_ip';";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+if ($sthArows > 0)
+	{
+	$AGILOG = '0';
+	@aryA = $sthA->fetchrow_array;
+	$DBagi_output =			$aryA[0];
+	$asterisk_version =		$aryA[1];
+	$DBext_context =		$aryA[2];
+	if ($DBext_context)		{$ext_context = $DBext_context;}
+	if ($DBagi_output =~ /STDERR/)	{$AGILOG = '1';}
+	if ($DBagi_output =~ /FILE/)	{$AGILOG = '2';}
+	if ($DBagi_output =~ /BOTH/)	{$AGILOG = '3';}
+	}
+$sthA->finish();
+
+### begin parsing run-time options ###
+if (length($ARGV[0])>1)
+	{
+	if ($AGILOG) 
+		{$agi_string = "Perl Environment Dump:";   &agi_output;}
+	$i=0;
+	while ($#ARGV >= $i)
+		{
+		$args = "$args $ARGV[$i]";
+		if ($AGILOG) {$agi_string = "$i|$ARGV[$i]";   &agi_output;}
+		$i++;
+		}
+	
+	### list of command-line array arguments:
+	@ARGV_vars = split(/-----/, $ARGV[0]);
+	$phone_number =		$ARGV_vars[0];
+	$CIDnumber = 		$ARGV_vars[1];
+	$audio_errors = 	$ARGV_vars[2];
+	$TILTX_container = 	$ARGV_vars[3];
+	}
+if ( ($audio_errors != 'YES') && ($audio_errors != 'NO') )
+	{$audio_errors='NO';}
+if (length($TILTX_container) < 1)
+	{$TILTX_container='TILTX_SHAKEN_API_KEY';}
+
+if ($AGILOG) {$agi_string = "CLI Variables: |$phone_number|$CIDnumber|$audio_errors|$TILTX_container|";   &agi_output;}
+
+### gather Asterisk channel variables
+$|=1;
+while(<STDIN>) 
+	{
+	chomp;
+	last unless length($_);
+	if ($AGILOG)
+		{
+		if (/^agi_(\w+)\:\s+(.*)$/)
+			{
+			$AGI{$1} = $2;
+			}
+		}
+
+	if (/^agi_uniqueid\:\s+(.*)$/)		{$unique_id = $1; $uniqueid = $unique_id;}
+	if (/^agi_priority\:\s+(.*)$/)		{$priority = $1;}
+	if (/^agi_channel\:\s+(.*)$/)		{$channel = $1;}
+	if (/^agi_extension\:\s+(.*)$/)		{$extension = $1;}
+	if (/^agi_type\:\s+(.*)$/)			{$type = $1;}
+	if (/^agi_callerid\:\s+(.*)$/)		{$callerid = $1;   $calleridnum = $callerid;}
+	if (/^agi_calleridname\:\s+(.*)$/)	{$calleridname = $1;}
+	}
+
+
+if ( (length($callerid)>20) && ($callerid =~ /\"\S\S\S\S\S\S\S\S\S\S\S\S\S\S\S\S\S\S/) )
+	{
+	$callerid =~ s/^\"//gi;
+	$callerid =~ s/\".*$//gi;
+#	### set the callerid to the ACQS value(calleridname)
+#	print "SET CALLERID $callerid\n";
+#	checkresult($result);
+#	print STDERR "callerID changed: $callerid\n";
+	}
+if ( (
+(length($calleridname)>5) && ( (!$callerid) or ($callerid =~ /unknown|private|00000000/i) or ($callerid =~ /5551212/) )
+) or ( (length($calleridname)>17) && ($calleridname =~ /\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/) ) )
+	{
+	$callerid = $calleridname;
+#	### set the callerid to the ACQS value(calleridname)
+#	print "SET CALLERID $callerid\n";
+#	checkresult($result);
+#	print STDERR "callerID changed: $callerid\n";
+	}
+
+if ($AGILOG) {$agi_string = "AGI Environment Dump:";   &agi_output;}
+
+foreach $i (sort keys %AGI) 
+	{
+	if ($AGILOG) {$agi_string = " -- $i = $AGI{$i}";   &agi_output;}
+	}
+
+if ($AGILOG) {$agi_string = "AGI Variables: |$unique_id|$channel|$extension|$type|$callerid|";   &agi_output;}
+
+
+$VDADcampaign='';
+$VDADphone='';
+$VDADphone_code='';
+
+$callerid =~ s/\"//gi;
+$callerid =~ s/ .*//gi;
+$CIDlead_id = $callerid;
+$CIDlead_id = substr($CIDlead_id, 10, 10);
+$CIDlead_id = ($CIDlead_id + 0);
+if ( ($CLIlead_id > 0) && ($CIDlead_id < 1) ) {$CIDlead_id = $CLIlead_id;}
+$VD_lead_id = $CIDlead_id;
+
+if ($AGILOG) {$agi_string = "+++++ VD TILTX SHAKEN START : |$CIDlead_id|$now_date|";   &agi_output;}
+
+
+##### BEGIN GATHER TILTX AHAKEN API KEY data from settings container record #####
+$TILTX_api_key='';
+$TILTX_api_url='https://api.shaper.tiltx.com/Calls/shaper';
+
+$stmtA = "SELECT container_entry FROM vicidial_settings_containers where container_id='$TILTX_container' limit 1;";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArowsTILTX=$sthA->rows;
+if ($AGILOG) {$agi_string = "$sthArowsTILTX|$stmtA|";   &agi_output;}
+if ($sthArowsTILTX > 0)
+	{
+	@aryA = $sthA->fetchrow_array;
+	$TILTXcontainer_entry =	$aryA[0];
+	$sthA->finish();
+	}
+if (length($TILTXcontainer_entry) > 3) 
+	{
+	@TILTXcontainer_lines = split(/\n/,$TILTXcontainer_entry);
+	$c=0;
+	foreach(@TILTXcontainer_lines)
+		{
+		$TILTXcontainer_lines[$c] =~ s/;.*|\r|\t| //gi;
+		if (length($TILTXcontainer_lines[$c]) > 3)
+			{
+			if ($TILTXcontainer_lines[$c] =~ /^URL=>/) 
+				{
+				$TILTX_api_url = $TILTXcontainer_lines[$c];
+				$TILTX_api_url =~ s/^URL=>//gi;
+				if ($AGILOG) {$agi_string = "+++++ TILTX SHAKEN API URL OVERRIDDEN!   |$TILTX_api_url|";   &agi_output;}
+				}
+			else
+				{
+				$TILTX_api_key = $TILTXcontainer_lines[$c];
+				}
+			}
+		$c++;
+		}
+	}
+##### END GATHER TILTX AHAKEN API KEY data from settings container record #####
+
+if (length($TILTX_api_key) < 4) 
+	{
+	if ($AGILOG) {$agi_string = "+++++ TILTX SHAKEN API KEY NOT SET!   exiting...   |$TILTX_api_key|";   &agi_output;}
+
+	if ($audio_errors =~ /YES/i) 
+		{
+		$AGI->stream_file('sip-silence');
+		$AGI->stream_file('sip-silence');
+		$AGI->stream_file('an-error-has-occurred');
+		$AGI->stream_file('error-number');
+		$AGI->stream_file('1');
+		$AGI->stream_file('silence');
+		$AGI->stream_file('key');
+		$AGI->stream_file('is-not-set');
+		$AGI->stream_file('silence');
+		$AGI->stream_file('vm-goodbye');
+		$AGI->stream_file('silence');
+		}
+
+	$dbhA->disconnect();
+
+	$AGI->hangup($channel);
+
+	exit;
+	}
+
+
+
+
+##### BEGIN Gather and process TILTX Results #####
+$wgetbin = '';
+if ( -e ('/bin/wget')) {$wgetbin = '/bin/wget';}
+else
+	{
+	if ( -e ('/usr/bin/wget')) {$wgetbin = '/usr/bin/wget';}
+	else
+		{
+		if ( -e ('/usr/local/bin/wget')) {$wgetbin = '/usr/local/bin/wget';}
+		else
+			{
+			if ($AGILOG) {$agi_string = "+++++ TILTX SHAKEN CANNOT FIND WGET!   exiting...   |$wgetbin|";   &agi_output;}
+
+			if ($audio_errors =~ /YES/i) 
+				{
+				$AGI->stream_file('sip-silence');
+				$AGI->stream_file('sip-silence');
+				$AGI->stream_file('an-error-has-occurred');
+				$AGI->stream_file('error-number');
+				$AGI->stream_file('2');
+				$AGI->stream_file('silence');
+				$AGI->stream_file('wget');
+				$AGI->stream_file('was-not-found');
+				$AGI->stream_file('silence');
+				$AGI->stream_file('vm-goodbye');
+				$AGI->stream_file('silence');
+				}
+
+			$dbhA->disconnect();
+
+			$AGI->hangup($channel);
+
+			exit;
+			}
+		}
+	}
+
+# append number to dial and CID number to URL
+$TILTX_api_url .= '?ToNumber='.$phone_number.'\&FromNumber='.$CIDnumber;
+
+### insert a new url log entry
+$SQL_log = "$TILTX_api_url";
+$SQL_log =~ s/;|\||\\//gi;
+$stmtA = "INSERT INTO vicidial_url_log SET uniqueid='$uniqueid',url_date='$now_date',url_type='TILTX_SHAKEN',url='$SQL_log',url_response='';";
+$affected_rows = $dbhA->do($stmtA);
+$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
+$sthA = $dbhA->prepare($stmtB) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+if ($sthArows > 0)
+	{
+	@aryA = $sthA->fetchrow_array;
+	$url_id = $aryA[0];
+	}
+$sthA->finish();
+
+$url = $TILTX_api_url;
+$url =~ s/'/\\'/gi;
+$url =~ s/"/\\"/gi;
+
+my $secW = time();
+
+# disconnect from the database to free up the DB connection
+$dbhA->disconnect();
+
+# Test wget command
+# /usr/bin/wget --no-check-certificate --output-document=/tmp/TILTXtmpD_1 --output-file=/tmp/TILTXtmpF_2 --header="x-api-key: XXXXXXXXXX" --header="Content-Type: application/json" https://api.shaper.tiltx.com/Calls/shaper?ToNumber=6155551212\&FromNumber=8635551212
+
+# request the TILTX web URL
+`$wgetbin --no-check-certificate --output-document=/tmp/TILTXtmpD$US$phone_number$US$secX --output-file=/tmp/TILTXtmpF$US$phone_number$US$secX --header="x-api-key: $TILTX_api_key" --header="Content-Type: application/json" $url `;
+
+# reconnect to the database to log response and response time
+$dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
+ or die "Couldn't connect to database: " . DBI->errstr;
+
+my $secY = time();
+my $response_sec = ($secY - $secW);
+
+# initialize TILTX SHAKEN response variables
+$IsDNC = 0;
+$IsDisconnected = 0;
+$TILTXID='';
+$Identity='';
+$CAID='';
+$CallerIDToUse=$CIDnumber;
+
+open(Wdoc, "/tmp/TILTXtmpD$US$phone_number$US$secX") || die "can't open /tmp/TILTXtmpD$US$phone_number$US$secX: $!\n";
+@Wdoc = <Wdoc>;
+close(Wdoc);
+$i=0;
+$Wdocline_cat='';
+foreach(@Wdoc)
+	{
+	if ($Wdoc[$i] =~ /"IsDNC":"true"/i) {$IsDNC = 1;}
+	if ($Wdoc[$i] =~ /"IsDisconnected":"true"/i) {$IsDisconnected = 1;}
+	if ($Wdoc[$i] =~ /"TILTXID":"[a-zA-Z0-9-_]+/i) 
+		{
+		$TILTXID = $Wdoc[$i];
+		$TILTXID =~ s/.*"TILTXID":"//;
+		$TILTXID =~ s/".*//;
+		}
+	if ($Wdoc[$i] =~ /"Identity":".*"/i) 
+		{
+		$Identity = $Wdoc[$i];
+		$Identity =~ s/.*"Identity":"//;
+		$Identity =~ s/".*//;
+		}
+	if ($Wdoc[$i] =~ /"CAID":".*"/i)
+		{
+		$CAID = $Wdoc[$i];
+		$CAID =~ s/.*"CAID":"//;
+		$CAID =~ s/".*//;
+		}
+	if ($Wdoc[$i] =~ /"CallerIDToUse":".*"/i)
+		{
+		$CallerIDToUse = $Wdoc[$i];
+		$CallerIDToUse =~ s/.*"CallerIDToUse":"//;
+		$CallerIDToUse =~ s/".*//;
+		}
+	# log all response data as a single string together
+	$Wdocline = $Wdoc[$i];
+	$Wdocline =~ s/\n|\r/!/gi;
+	$Wdocline =~ s/\t|\'|\`//gi;
+	$Wdocline_cat .= "$Wdocline";
+	$i++;
+	}
+if (length($Wdocline_cat)<1) 
+	{$Wdocline_cat='<RESPONSE EMPTY>';}
+
+open(Wfile, "/tmp/TILTXtmpF$US$phone_number$US$secX") || die "can't open /tmp/TILTXtmpF$US$phone_number$US$secX: $!\n";
+@Wfile = <Wfile>;
+close(Wfile);
+$i=0;
+$Wfileline_cat='';
+foreach(@Wfile)
+	{
+	$Wfileline = $Wfile[$i];
+	$Wfileline =~ s/\n|\r/!/gi;
+	$Wfileline =~ s/\t|\'|\`//gi;
+	$Wfileline_cat .= "$Wfileline";
+	$i++;
+	}
+if (length($Wfileline_cat)<1) 
+	{$Wfileline_cat='<HEADER EMPTY>';}
+
+
+### update url log entry
+$stmtA = "UPDATE vicidial_url_log SET url_response='$Wdocline_cat|$Wfileline_cat',response_sec='$response_sec' where url_log_id='$url_id';";
+$affected_rows = $dbhA->do($stmtA);
+if ($DB) {print "$affected_rows|$stmtA\n";}
+
+$stmtA = "INSERT INTO vicidial_tiltx_shaken_log SET db_time=NOW(),server_ip='$VARserver_ip',url_log_id='$url_id',caller_code='$calleridname',phone_number='$phone_number',CIDnumber='$CIDnumber',CallerIDToUse='$CallerIDToUse',IsDNC='$IsDNC',IsDisconnected='$IsDisconnected',TILTXID='$TILTXID',Identity='$Identity',CAID='$CAID';";
+	if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+$affected_rows = $dbhA->do($stmtA);
+if ($AGILOG) {$agi_string = "TILTX SHAKEN logging result to DB: $affected_rows $calleridname $CIDnumber $phone_number $VD_lead_id";   &agi_output;}
+
+### Check for DNC, if true then exit
+if ($IsDNC > 0) 
+	{
+	if ($AGILOG) {$agi_string = "+++++ TILTX SHAKEN DNC NUMBER!   exiting...   |$IsDNC|";   &agi_output;}
+	#$AGI->answer();
+
+	$stmtA = "INSERT IGNORE INTO vicidial_carrier_log SET uniqueid='$uniqueid',call_date=NOW(),server_ip='$VARserver_ip',lead_id='$CIDlead_id',hangup_cause='34',dialstatus='DNC',channel='$channel',dial_time='0',answered_time='0',sip_hangup_cause='503',sip_hangup_reason='TILTX National DNC',caller_code='$calleridname';";
+		if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+	$affected_rows = $dbhA->do($stmtA);
+	if ($AGILOG) {$agi_string = "TILTX SHAKEN adding carrier log entry: $affected_rows $calleridname $CIDnumber $phone_number $CIDlead_id";   &agi_output;}
+
+	if ($audio_errors =~ /YES/i) 
+		{
+		$AGI->stream_file('sip-silence');
+		$AGI->stream_file('sip-silence');
+		$AGI->stream_file('do-not-call');
+		$AGI->stream_file('number');
+		$AGI->stream_file('silence');
+		$AGI->stream_file('vm-goodbye');
+		$AGI->stream_file('silence');
+		}
+
+	$AGI->exec('Set',"DIALSTATUS=DNC");
+	$AGI->exec('Set',"HANGUPCAUSE=34");
+
+	$dbhA->disconnect();
+
+	$AGI->hangup($channel);
+
+	exit;
+	}
+
+# Check for Disconnected number, if true then exit
+if ($IsDisconnected > 0) 
+	{
+	if ($AGILOG) {$agi_string = "+++++ TILTX SHAKEN DISCONNECTED NUMBER!   exiting...   |$IsDisconnected|";   &agi_output;}
+	#$AGI->answer();
+
+	$stmtA = "INSERT IGNORE INTO vicidial_carrier_log SET uniqueid='$uniqueid',call_date=NOW(),server_ip='$VARserver_ip',lead_id='$CIDlead_id',hangup_cause='21',dialstatus='DISCONNECT',channel='$channel',dial_time='0',answered_time='0',sip_hangup_cause='404',sip_hangup_reason='TILTX Disconnect',caller_code='$calleridname';";
+		if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+	$affected_rows = $dbhA->do($stmtA);
+	if ($AGILOG) {$agi_string = "TILTX SHAKEN adding carrier log entry: $affected_rows $calleridname $CIDnumber $phone_number $CIDlead_id";   &agi_output;}
+
+	if ($audio_errors =~ /YES/i) 
+		{
+		$AGI->stream_file('sip-silence');
+		$AGI->stream_file('sip-silence');
+		$AGI->stream_file('disconnected');
+		$AGI->stream_file('number');
+		$AGI->stream_file('silence');
+		$AGI->stream_file('vm-goodbye');
+		$AGI->stream_file('silence');
+		}
+
+	$AGI->exec('Set',"DIALSTATUS=DISCONNECT");
+	$AGI->exec('Set',"HANGUPCAUSE=21");
+
+	$dbhA->disconnect();
+
+	$AGI->hangup($channel);
+
+	exit;
+	}
+
+# Check for change in CIDnumber, if true, then modify CIDnum
+if ($CallerIDToUse ne $CIDnumber) 
+	{
+	if ($AGILOG) {$agi_string = "+++++ TILTX SHAKEN CIDNUMBER CHANGE!   |$CIDnumber -> $CallerIDToUse|";   &agi_output;}
+
+	$AGI->exec('Set',"CALLERID(num)=" . $CallerIDToUse);
+	}
+
+# Check for TILTXID, if populated, set as a SIP Header
+if (length($TILTXID) > 3) 
+	{
+	if ($AGILOG) {$agi_string = "+++++ TILTX SHAKEN TILTXID variable set!   |$TILTXID|";   &agi_output;}
+
+	$AGI->exec('SIPAddHeader', "X-TILTX-ID:" . $TILTXID);
+	}
+
+# Check for Identity, if populated, set as a SIP Header
+if (length($Identity) > 3) 
+	{
+	if ($AGILOG) {$agi_string = "+++++ TILTX SHAKEN Identity variable set!   |$Identity|";   &agi_output;}
+
+	$AGI->exec('SIPAddHeader', "Identity:" . $Identity);
+	}
+
+# Check for CAID, if populated, set as a SIP Header
+if ( (length($CAID) > 3) && ($CAID ne '00000000-0000-0000-0000-000000000000') )
+	{
+	if ($AGILOG) {$agi_string = "+++++ TILTX SHAKEN CAID variable set!   |$CAID|";   &agi_output;}
+
+	$AGI->exec('SIPAddHeader', "CAID:" . $CAID);
+	}
+
+my $secZ = time();
+my $script_time = ($secZ - $secX);
+if ($DB) {print "DONE execute time: $script_time seconds\n";}
+
+##### END Gather and process TILTX Results #####
+exit 0;
+
+
+
+
+
+
+########## SUBROUTINES ##########
+sub checkresult 
+	{
+	my ($res) = @_;
+	my $retval;
+	$tests++;
+	chomp $res;
+	if ($res =~ /^200/) 
+		{
+		$res =~ /result=(-?\d+)/;
+		if (!length($1)) 
+			{
+		#	print STDERR "FAIL ($res)\n";
+			$fail++;
+			} 
+		else 
+			{
+		#	print STDERR "PASS ($1)\n";
+			$pass++;
+			}
+		}
+	else
+		{
+	#	print STDERR "FAIL (unexpected result '$res')\n";
+		$fail++;
+		}
+	}
+
+
+sub agi_output
+	{
+	if ($AGILOG >=2)
+		{
+		### open the log file for writing ###
+		open(Lout, ">>$AGILOGfile")
+				|| die "Can't open $AGILOGfile: $!\n";
+		print Lout "$now_date|$script|$agi_string\n";
+		close(Lout);
+		}
+		### send to STDERR writing ###
+	if ( ($AGILOG == '1') || ($AGILOG == '3') )
+		{print STDERR "$now_date|$script|$agi_string\n";}
+	$agi_string='';
+	}
+
+# subroutine to parse the asterisk version
+# and return a hash with the various part
+sub parse_asterisk_version
+	{
+	# grab the arguments
+	my $ast_ver_str = $_[0];
+
+	# get everything after the - and put it in $ast_ver_postfix
+	my @hyphen_parts = split( /-/ , $ast_ver_str );
+
+	my $ast_ver_postfix = $hyphen_parts[1];
+
+	# now split everything before the - up by the .
+	my @dot_parts = split( /\./ , $hyphen_parts[0] );
+
+	my %ast_ver_hash;
+
+	if ( $dot_parts[0] <= 1 )
+		{
+			%ast_ver_hash = (
+				"major" => $dot_parts[0],
+				"minor" => $dot_parts[1],
+				"build" => $dot_parts[2],
+				"revision" => $dot_parts[3],
+				"postfix" => $ast_ver_postfix
+			);
+		}
+
+	# digium dropped the 1 from asterisk 10 but we still need it
+	if ( $dot_parts[0] > 1 )
+		{
+			%ast_ver_hash = (
+				"major" => 1,
+				"minor" => $dot_parts[0],
+				"build" => $dot_parts[1],
+				"revision" => $dot_parts[2],
+				"postfix" => $ast_ver_postfix
+			);
+		}
+
+	return ( %ast_ver_hash );
+	}

@@ -23,6 +23,7 @@ require("functions.php");
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["old_user"]))			{$old_user=$_GET["old_user"];}
 	elseif (isset($_POST["old_user"]))	{$old_user=$_POST["old_user"];}
 if (isset($_GET["new_user"]))			{$new_user=$_GET["new_user"];}

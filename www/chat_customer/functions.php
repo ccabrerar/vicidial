@@ -4,11 +4,12 @@
 #
 # functions for agent scripts
 #
-# Copyright (C) 2015  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 #
 # CHANGES:
 # 151212-0826 - First Build for customer chat, based on agc/functions.php
+# 210615-1044 - Default security fixes, CVE-2021-28854
 #
 
 # $mysql_queries = 20
@@ -107,8 +108,8 @@ function user_authorization($user,$pass,$user_option,$user_update,$bcrypt,$retur
 			}
 		if ($SSwebroot_writable > 0)
 			{
-			$fp = fopen ("./project_auth_entries.txt", "a");
-			fwrite ($fp, "AGENT|FAIL|$NOW_TIME|$user|$auth_key|$ip|$browser|\n");
+			$fp = fopen ("./project_auth_entries.txt", "w");
+			fwrite ($fp, "AGENT|FAIL|$NOW_TIME|\n");
 			fclose($fp);
 			}
 		}
@@ -2050,8 +2051,9 @@ function mysql_error_logging($NOW_TIME,$link,$mel,$stmt,$query_id,$user,$server_
 		if ( ($errno > 0) or ($mel > 1) or ($one_mysql_log > 0) )
 			{
 			$error = mysqli_error($link);
-			$efp = fopen ("./vicidial_mysqli_errors.txt", "a");
-			fwrite ($efp, "$NOW_TIME|vdc_db_query|$query_id|$errno|$error|$stmt|$user|$server_ip|$session_name|\n");
+			$efp = fopen ("./vicidial_mysqli_errors.txt", "w");
+		#	fwrite ($efp, "$NOW_TIME|customer_chat|$query_id|$errno|$error|$stmt|$user|$server_ip|$session_name|\n");
+			fwrite ($efp, "$NOW_TIME|customer_chat|$query_id|\n");
 			fclose($efp);
 			}
 		}

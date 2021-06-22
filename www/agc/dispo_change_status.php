@@ -1,7 +1,7 @@
 <?php
 # dispo_change_status.php
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to be used in the "Dispo URL" field of a campaign
 # or in-group. It can update the status of a lead to a new status if the lead 
@@ -25,11 +25,12 @@
 # CHANGES
 # 171127-1736 - First Build
 # 201117-2217 - Changes for better compatibility with non-latin data input
+# 210615-1035 - Default security fixes, CVE-2021-28854
+# 210616-2047 - Added optional CORS support, see options.php for details
 #
 
 $api_script = 'dispo_change_status';
-
-header ("Content-type: text/html; charset=utf-8");
+$php_script = 'dispo_change_status.php';
 
 require_once("dbconnect_mysqli.php");
 require_once("functions.php");
@@ -41,7 +42,6 @@ $BR = getenv ("HTTP_USER_AGENT");
 
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
-$PHP_SELF=$_SERVER['PHP_SELF'];
 if (isset($_GET["logged_status"]))			{$logged_status=$_GET["logged_status"];}
 	elseif (isset($_POST["logged_status"]))	{$logged_status=$_POST["logged_status"];}
 if (isset($_GET["logged_count"]))			{$logged_count=$_GET["logged_count"];}
@@ -89,6 +89,15 @@ if ( ($archive_search != 'Y') and ($archive_search != 'N') )
 	{$archive_search = 'N';}
 if ( ($in_out_search != 'IN') and ($in_out_search != 'OUT') and ($in_out_search != 'BOTH') )
 	{$in_out_search = 'BOTH';}
+
+# if options file exists, use the override values for the above variables
+#   see the options-example.php file for more information
+if (file_exists('options.php'))
+	{
+	require_once('options.php');
+	}
+
+header ("Content-type: text/html; charset=utf-8");
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
@@ -290,7 +299,8 @@ else
 
 if ($log_to_file > 0)
 	{
-	$fp = fopen ("./$api_script.txt", "a");
-	fwrite ($fp, "$NOW_TIME|$k|$lead_id|$dispo|$logged_status|$logged_count($search_count)|$new_status|$days_search($days_search_date)|$archive_search|$in_out_search|$user|XXXX|$DB|$log_to_file|$MESSAGE|\n");
+	$fp = fopen ("./$api_script.txt", "w");
+#	fwrite ($fp, "$NOW_TIME|$k|$lead_id|$dispo|$logged_status|$logged_count($search_count)|$new_status|$days_search($days_search_date)|$archive_search|$in_out_search|$user|XXXX|$DB|$log_to_file|$MESSAGE|\n");
+	fwrite ($fp, "$NOW_TIME|\n");
 	fclose($fp);
 	}

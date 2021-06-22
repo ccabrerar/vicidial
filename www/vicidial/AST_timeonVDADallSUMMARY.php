@@ -39,6 +39,7 @@ require("functions.php");
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["RR"]))					{$RR=$_GET["RR"];}
 	elseif (isset($_POST["RR"]))		{$RR=$_POST["RR"];}
 if (isset($_GET["DB"]))					{$DB=$_GET["DB"];}
@@ -224,8 +225,13 @@ if (!isset($RR))   {$RR=4;}
 
 require("screen_colors.php");
 
+$NWB = "<IMG SRC=\"help.png\" onClick=\"FillAndShowHelpDiv(event, '";
+$NWE = "')\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP>";
+
 $HEADER.="<HTML>\n";
 $HEADER.="<HEAD>\n";
+$HEADER.="<link rel=\"stylesheet\" type=\"text/css\" href=\"vicidial_stylesheet.php\">\n";
+$HEADER.="<script language=\"JavaScript\" src=\"help.js\"></script>\n";
 $HEADER.="<STYLE type=\"text/css\">\n";
 $HEADER.="<!--\n";
 $HEADER.="	.green {color: white; background-color: green}\n";
@@ -255,6 +261,7 @@ $HEADER.=" </STYLE>\n";
 
 $HEADER.="<META HTTP-EQUIV=Refresh CONTENT=\"$RR; URL=$PHP_SELF?RR=$RR&DB=$DB&adastats=$adastats&types=$types\">\n";
 $HEADER.="<TITLE>"._QXZ("$report_name")."</TITLE></HEAD><BODY BGCOLOR=WHITE marginheight=0 marginwidth=0 leftmargin=0 topmargin=0>\n";
+$HEADER.="<div id='HelpDisplayDiv' class='help_info' style='display:none;'></div>";
 
 	$short_header=1;
 
@@ -262,7 +269,7 @@ $HEADER.="<TITLE>"._QXZ("$report_name")."</TITLE></HEAD><BODY BGCOLOR=WHITE marg
 
 $MAIN.="<FORM action=$PHP_SELF method=POST><TABLE CELLPADDING=4 CELLSPACING=0><TR><TD>";
 
-$MAIN.="<b>"._QXZ("$report_name")."</b> &nbsp; &nbsp; &nbsp; \n";
+$MAIN.="<b>"._QXZ("$report_name")."</b> $NWB#CampaignSUMMARY$NWE &nbsp; \n";
 $MAIN.="<a href=\"$PHP_SELF?group=$group&RR=4000&DB=$DB&adastats=$adastats&types=$types\">"._QXZ("STOP")."</a> | ";
 $MAIN.="<a href=\"$PHP_SELF?group=$group&RR=40&DB=$DB&adastats=$adastats&types=$types\">"._QXZ("SLOW")."</a> | ";
 $MAIN.="<a href=\"$PHP_SELF?group=$group&RR=4&DB=$DB&adastats=$adastats&types=$types\">"._QXZ("GO")."</a> ";

@@ -1,4 +1,4 @@
-VICIDIAL and QueueMetrics				UPDATED: 2020-05-18
+VICIDIAL and QueueMetrics				UPDATED: 2020-05-24
 
 queue_log logging was added to VICIDIAL outbound auto calling as an option in the 2.0.3 release, and for inbound in the 2.0.4 release.
 
@@ -22,6 +22,8 @@ As of 2009-05-30, live montoring and playback of archived recordings through the
 As of 2009-11-23, DID and IVR logging through QueueMetrics queue_log is now part of the code. DID entries for the queue will be counted only for calls that actually enter the queue or are sent to an agent through a ViciDial in-group. For IVR entries, only the last Call Menu will be counted in the QueueMetrics reports.
 
 As of 2010-03-09, queuemetrics_loginout system settings option was added to allow for slightly different logging of logins and logouts. STANDARD will use standard AGENTLOGIN AGENTLOGOFF, CALLBACK will use AGENTCALLBACKLOGIN and AGENTCALLBACKLOGOFF that QM will parse differently.
+
+As of 2021-05-24, We added a "-qm-qa-duplicate-check" flag to the AST_cleanup_agent_log.pl script to check for and remove qa_data duplicate entries
 
 NOTE: having a large number of calls in queue can lead to significant load issues on the QM database server
 
@@ -95,9 +97,9 @@ If it did, then you want to add the following lines to your /etc/rc.d/rc.local f
 
 cd /usr/local
 *** download QueueMetrics and place it in /usr/local ***
-wget https://downloads.loway.ch/qm/QueueMetrics-19.10.17.tar.gz
-tar xvfz QueueMetrics-19.10.17.tar.gz
-mv queuemetrics-19.10.17 /usr/local/tomcat/webapps/qm
+wget https://downloads.loway.ch/qm/QueueMetrics-21.04.1.tar.gz
+tar xvfz QueueMetrics-21.04.1.tar.gz
+mv queuemetrics-21.04.1 /usr/local/tomcat/webapps/qm
 cd /usr/local/tomcat/webapps/qm/WEB_INF
 wget ftp://mirrors.easynews.com/mysql/Downloads/Connector-J/mysql-connector-java-3.0.10-stable.tar.gz
 gunzip mysql-connector-java-3.0.10-stable.tar.gz

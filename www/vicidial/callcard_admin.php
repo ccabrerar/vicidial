@@ -34,6 +34,7 @@ require("dbconnect_mysqli.php");
 require("functions.php");
 
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["action"]))					{$action=$_GET["action"];}
 	elseif (isset($_POST["action"]))		{$action=$_POST["action"];}
 if (isset($_GET["DB"]))						{$DB=$_GET["DB"];}

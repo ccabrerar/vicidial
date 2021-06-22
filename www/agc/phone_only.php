@@ -1,7 +1,7 @@
 <?php
 # phone_only.php - the web-based web-phone-only client application
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 110511-1336 - First Build
@@ -19,10 +19,13 @@
 # 170511-1107 - Added code for WebRTC phones
 # 181003-1736 - Added external_web_socket_url option
 # 200123-1639 - Added Webphone options
+# 210615-1028 - Default security fixes, CVE-2021-28854
+# 210616-2043 - Added optional CORS support, see options.php for details
 #
 
-$version = '2.14-15p';
-$build = '200123-1639';
+$version = '2.14-17p';
+$build = '210616-2043';
+$php_script = 'phone_only.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=74;
 $one_mysql_log=0;
@@ -87,7 +90,6 @@ $minutes_old = mktime(date("H"), date("i")-2, date("s"), date("m"), date("d"),  
 $past_minutes_date = date("Y-m-d H:i:s",$minutes_old);
 $webphone_width = 460;
 $webphone_height = 500;
-$PHP_SELF=$_SERVER['PHP_SELF'];
 
 $random = (rand(1000000, 9999999) + 10000000);
 
@@ -178,6 +180,8 @@ $browser=preg_replace("/\'|\"|\\\\/","",$browser);
 $script_name = getenv("SCRIPT_NAME");
 $server_name = getenv("SERVER_NAME");
 $server_port = getenv("SERVER_PORT");
+$PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (preg_match("/443/i",$server_port)) {$HTTPprotocol = 'https://';}
   else {$HTTPprotocol = 'http://';}
 if (($server_port == '80') or ($server_port == '443') ) {$server_port='';}
@@ -356,7 +360,7 @@ if ( (strlen($phone_login) < 1) or (strlen($phone_pass) < 1) )
 else
 	{
 	if ($WeBRooTWritablE > 0)
-		{$fp = fopen ("./vicidial_auth_entries.txt", "a");}
+		{$fp = fopen ("./vicidial_auth_entries.txt", "w");}
 	$VDloginDISPLAY=0;
 
 	if ( (strlen($VD_login)<2) or (strlen($VD_pass)<2) )
@@ -396,7 +400,7 @@ else
 
 			if ($WeBRooTWritablE > 0)
 				{
-				fwrite ($fp, "vdweb|GOOD|$date|$VD_login|XXXX|$ip|$browser|$LOGfullname|\n");
+				fwrite ($fp, "vdweb|GOOD|$date|\n");
 				fclose($fp);
 				}
 			$user_abb = "$VD_login$VD_login$VD_login$VD_login";
@@ -408,7 +412,7 @@ else
 			{
 			if ($WeBRooTWritablE > 0)
 				{
-				fwrite ($fp, "vdweb|FAIL|$date|$VD_login|XXXX|$ip|$browser|\n");
+				fwrite ($fp, "vdweb|FAIL|$date|\n");
 				fclose($fp);
 				}
 			$VDloginDISPLAY=1;

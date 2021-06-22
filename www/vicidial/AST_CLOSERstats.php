@@ -64,6 +64,7 @@
 # 190508-1900 - Streamlined DID check to optimize page load
 # 190930-1345 - Fixed PHP7 array issue
 # 200924-0917 - Added two new drop calculations
+# 210525-1715 - Fixed help display, modification for more call details
 #
 
 $startMS = microtime();
@@ -74,6 +75,7 @@ require("functions.php");
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["group"]))				{$group=$_GET["group"];}
 	elseif (isset($_POST["group"]))		{$group=$_POST["group"];}
 if (isset($_GET["query_date"]))				{$query_date=$_GET["query_date"];}
@@ -426,8 +428,8 @@ while ($i < $statcats_to_print)
 	$i++;
 	}
 
-$NWB = " &nbsp; <a href=\"javascript:openNewWindow('help.php?ADD=99999";
-$NWE = "')\"><IMG SRC=\"help.gif\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP></A>";
+$NWB = "<IMG SRC=\"help.png\" onClick=\"FillAndShowHelpDiv(event, '";
+$NWE = "')\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP>";
 
 $HEADER.="<HTML>\n";
 $HEADER.="<HEAD>\n";
@@ -443,6 +445,8 @@ $HEADER.=" </STYLE>\n";
 
 $HEADER.="<script language=\"JavaScript\" src=\"calendar_db.js\"></script>\n";
 $HEADER.="<link rel=\"stylesheet\" href=\"calendar.css\">\n";
+$HEADER.="<link rel=\"stylesheet\" type=\"text/css\" href=\"vicidial_stylesheet.php\">\n";
+$HEADER.="<script language=\"JavaScript\" src=\"help.js\"></script>\n";
 $HEADER.="<link rel=\"stylesheet\" href=\"horizontalbargraph.css\">\n";
 $HEADER.="<link rel=\"stylesheet\" href=\"verticalbargraph.css\">\n";
 $HEADER.="<script language=\"JavaScript\" src=\"wz_jsgraphics.js\"></script>\n";
@@ -452,6 +456,7 @@ $HEADER.="<script src='chart/Chart.js'></script>\n";
 $HEADER.="<script language=\"JavaScript\" src=\"vicidial_chart_functions.js\"></script>\n";
 $HEADER.="<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=utf-8\">\n";
 $HEADER.="<TITLE>"._QXZ("$report_name")."</TITLE></HEAD><BODY BGCOLOR=WHITE marginheight=0 marginwidth=0 leftmargin=0 topmargin=0>\n";
+$HEADER.="<div id='HelpDisplayDiv' class='help_info' style='display:none;'></div>";
 
 $JS_text="<script language=\"JavaScript\">\n";
 
@@ -626,6 +631,7 @@ else
 
 
 $did_id=array();
+$did_calls=array();
 if ($DID=='Y')
 	{
 	$stmt="select did_id from vicidial_inbound_dids where did_pattern IN($group_SQL) $LOGadmin_viewable_groupsSQL;";
@@ -645,7 +651,7 @@ if ($DID=='Y')
 
 	if ($dids_to_print>0) 
 		{
-		$stmt="select uniqueid from ".$vicidial_did_log_table." where did_id IN($did_SQL);";
+		$stmt="select uniqueid, did_route from ".$vicidial_did_log_table." where call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' and did_id IN($did_SQL);";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		if ($DB) {$MAIN.="$stmt\n";}
 		$unids_to_print = mysqli_num_rows($rslt);
@@ -655,6 +661,7 @@ if ($DID=='Y')
 			$row=mysqli_fetch_row($rslt);
 			$unid_SQL .= "'$row[0]',";
 			$i++;
+			$did_calls["$row[0]"]="$row[1]";
 			}
 		}
 
@@ -667,6 +674,10 @@ if ($DID=='Y')
 	}
 
 $graph_data_ary=array();
+$CALLStoDID=count($did_calls);
+
+$TOTALsec=0;
+
 if ($group_ct > 1)
 	{
 	$ASCII_text.="\n";
@@ -737,14 +748,32 @@ if ($group_ct > 1)
 		if ($DB) {$ASCII_text.="$stmt\n";}
 		$row=mysqli_fetch_row($rslt);
 
-		$stmt="select count(*) from ".$live_inbound_log_table." where start_time >= '$query_date_BEGIN' and start_time <= '$query_date_END' and comment_a='$group[$i]' and comment_b='START';";
+		$stmt="select uniqueid, length_in_sec from ".$vicidial_closer_log_table." where call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' and campaign_id='$group[$i]';";
 		if ($DID=='Y')
 			{
-			$stmt="select count(*) from ".$live_inbound_log_table." where start_time >= '$query_date_BEGIN' and start_time <= '$query_date_END' and uniqueid IN($DIDunid_SQL);";
+			$stmt="select uniqueid, length_in_sec from ".$vicidial_closer_log_table." where call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' and uniqueid IN($DIDunid_SQL);";
 			}
 		$rslt=mysql_to_mysqli($stmt, $link);
 		if ($DB) {$ASCII_text.="$stmt\n";}
-		$rowx=mysqli_fetch_row($rslt);
+		$TOTALcalls=mysqli_num_rows($rslt);
+		while ($row=mysqli_fetch_row($rslt))
+			{
+			unset($did_calls["$row[0]"]);
+			$TOTALsec+=$row[1];
+			}
+
+		$stmt="select distinct uniqueid from ".$live_inbound_log_table." where start_time >= '$query_date_BEGIN' and start_time <= '$query_date_END' and comment_a='$group[$i]' and comment_b='START';";
+		if ($DID=='Y')
+			{
+			$stmt="select distinct uniqueid from ".$live_inbound_log_table." where start_time >= '$query_date_BEGIN' and start_time <= '$query_date_END' and uniqueid IN($DIDunid_SQL);";
+			}
+		$rslt=mysql_to_mysqli($stmt, $link);
+		if ($DB) {$ASCII_text.="6 $stmt\n";}
+		$TOTALivrs=mysqli_num_rows($rslt);
+		while ($rowx=mysqli_fetch_row($rslt))
+			{
+			unset($did_calls["$rowx[0]"]);
+			}
 
 		$stmt="select count(*),sum(length_in_sec) from ".$vicidial_closer_log_table." where call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' and campaign_id='$group[$i]' and status IN('DROP','XDROP') and (length_in_sec <= 49999 or length_in_sec is null);";
 		if ($DID=='Y')
@@ -754,11 +783,11 @@ if ($group_ct > 1)
 		$rslt=mysql_to_mysqli($stmt, $link);
 		if ($DB) {$ASCII_text.="$stmt\n";}
 		$rowy=mysqli_fetch_row($rslt);
-		if ($row[0]>$max_value) {$max_value=$row[0];}
+		if ($TOTALcalls>$max_value) {$max_value=$TOTALcalls;}
 
 		$groupDISPLAY =	sprintf("%20s", $group[$i]);
-		$gTOTALcalls =	sprintf("%7s", $row[0]);
-		$gIVRcalls =	sprintf("%7s", $rowx[0]);
+ 		$gTOTALcalls =	sprintf("%7s", $TOTALcalls);
+		$gIVRcalls =	sprintf("%7s", $TOTALivrs);
 		$gDROPcalls =	sprintf("%7s", $rowy[0]);
 		$gDROPpercent = (MathZDC($gDROPcalls, $gTOTALcalls) * 100);
 		$gDROPpercent = round($gDROPpercent, 2);
@@ -856,7 +885,9 @@ $rowx=mysqli_fetch_row($rslt);
 
 $TOTALcalls =	sprintf("%10s", $row[0]);
 $IVRcalls =	sprintf("%10s", $rowx[0]);
-$TOTALsec =		$row[1];
+
+$UNSENTcalls=count($did_calls);
+$ROUTEcounts=array_count_values($did_calls);
 
 $average_call_seconds = MathZDC($TOTALsec, $row[0]);
 $average_call_seconds = round($average_call_seconds, 0);
@@ -887,17 +918,53 @@ if ($EMAIL=='Y')
 	}
 else
 	{
-	$MAIN.=_QXZ("Total calls taken in to this In-Group:",47)."$TOTALcalls\n";
-	$MAIN.=_QXZ("Average Call Length for all Calls:",47)."$average_call_seconds "._QXZ("seconds")."\n";
+	if ($DID=='Y')
+		{
+		$CALLStoDID=sprintf("%10s", $CALLStoDID);
+		$UNSENTcalls=sprintf("%10s", $UNSENTcalls);
+		$MAIN.=_QXZ("Total calls to DIDs:",47)."$CALLStoDID\n";
+		$MAIN.=_QXZ("Calls transferred or lost before routing:",47)."$UNSENTcalls\n";
+		$CSV_text1.="\""._QXZ("Total calls to DIDs").":\",\"$CALLStoDID\"\n";
+		$CSV_text1.="\""._QXZ("Calls transferred or lost before routing").":\",\"$CALLStoDID\"\n";
+
+		if ($UNSENTcalls>0)
+			{
+			foreach ($ROUTEcounts as $route => $calls_to_route)
+				{
+				$calls_to_route=sprintf("%10s", $calls_to_route);
+				$MAIN.=" - "._QXZ("Before reaching $route:",44)."$calls_to_route\n";
+				$CSV_text1.="\" - "._QXZ("Calls transferred or lost before reaching $route").":\",\"$calls_to_route\"\n";
+				}		
+			$call_logUIDSQL="";
+			foreach($did_calls as $uniqueid => $route)
+				{
+				$call_logUIDSQL.="'$uniqueid',";
+				}
+			$call_logUIDSQL=preg_replace('/,$/', '', $call_logUIDSQL);
+			$call_log_stmt="select sum(length_in_sec), avg(length_in_sec) from call_log where uniqueid in ($call_logUIDSQL)";
+			$call_log_rslt=mysql_to_mysqli($call_log_stmt, $link);
+			if ($DB) {$MAIN.="8b $call_log_stmt\n";}
+			$call_log_row=mysqli_fetch_row($call_log_rslt);
+			$avg_lost_secs=round($call_log_row[1], 2);
+			$avg_lost_secs=sprintf("%10s", $avg_lost_secs);
+			$MAIN.=_QXZ("Average length of lost calls:",47)."$avg_lost_secs "._QXZ("seconds")."\n";
+			$CSV_text1.="\""._QXZ("Average length of lost calls").":\",\"$avg_lost_secs "._QXZ("seconds")."\"\n";
+			}
+		$MAIN.="\n";
+		$CSV_text1.="\n";
+		}
+
+	$MAIN.=_QXZ("Total calls routed:",47)."$TOTALcalls\n";
+	$MAIN.=_QXZ("Average Call Length for routed Calls:",47)."$average_call_seconds "._QXZ("seconds")."\n";
 	$MAIN.=_QXZ("Answered Calls:",47)."$ANSWEREDcalls  $ANSWEREDpercent%\n";
 	$MAIN.=_QXZ("Average queue time for Answered Calls:",47)."$average_answer_seconds "._QXZ("seconds")."\n";
-	$MAIN.=_QXZ("Calls taken into the IVR for this In-Group:",47)."$IVRcalls\n";
+	$MAIN.=_QXZ("Calls taken into the IVR:",47)."$IVRcalls\n";
 
-	$CSV_text1.="\""._QXZ("Total calls taken in to this In-Group").":\",\"$TOTALcalls\"\n";
-	$CSV_text1.="\""._QXZ("Average Call Length for all Calls").":\",\"$average_call_seconds "._QXZ("seconds")."\"\n";
+	$CSV_text1.="\""._QXZ("Total calls routed").":\",\"$TOTALcalls\"\n";
+	$CSV_text1.="\""._QXZ("Average Call Length for routed Calls").":\",\"$average_call_seconds "._QXZ("seconds")."\"\n";
 	$CSV_text1.="\""._QXZ("Answered Calls").":\",\"$ANSWEREDcalls\",\"$ANSWEREDpercent%\"\n";
 	$CSV_text1.="\""._QXZ("Average queue time for Answered Calls").":\",\"$average_answer_seconds "._QXZ("seconds")."\"\n";
-	$CSV_text1.="\""._QXZ("Calls taken into the IVR for this In-Group").":\",\"$IVRcalls\"\n";
+	$CSV_text1.="\""._QXZ("Calls taken into the IVR").":\",\"$IVRcalls\"\n";
 	}
 
 $MAIN.="\n";

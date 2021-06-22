@@ -4,7 +4,7 @@
 # make sure you have added a user to the vicidial_users MySQL table with at 
 # least user_level 4 to access this page the first time
 #
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # Changes
 # 50307-1721 - First version
@@ -21,10 +21,12 @@
 # 141007-2123 - Finalized adding QXZ translation to all admin files
 # 141229-1847 - Added code for on-the-fly language translations display
 # 170217-1213 - Fixed non-latin auth issue #995
+# 210618-1001 - Added CORS support
 #
 
-$version = '2.14-13';
-$build = '170217-1213';
+$version = '2.14-14';
+$build = '210618-1001';
+$php_script='vdremote.php';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -32,6 +34,7 @@ require("functions.php");
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["ADD"]))				{$ADD=$_GET["ADD"];}
 	elseif (isset($_POST["ADD"]))		{$ADD=$_POST["ADD"];}
 if (isset($_GET["DB"]))				{$DB=$_GET["DB"];}
@@ -64,6 +67,9 @@ if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))		{$SUBMIT=$_POST["SUBMIT"];}
 
 if (!isset($force_logout)) {$force_logout = 0;}
+
+if (file_exists('options.php'))
+	{require('options.php');}
 
 if ($force_logout)
 	{

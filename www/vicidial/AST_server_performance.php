@@ -39,6 +39,7 @@ require("functions.php");
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["begin_query_time"]))			{$begin_query_time=$_GET["begin_query_time"];}
 	elseif (isset($_POST["begin_query_time"]))	{$begin_query_time=$_POST["begin_query_time"];}
 if (isset($_GET["end_query_time"]))				{$end_query_time=$_GET["end_query_time"];}
@@ -260,6 +261,10 @@ while ($i < $servers_to_print)
 	$groups[$i] =$row[0];
 	$i++;
 	}
+
+$NWB = "<IMG SRC=\"help.png\" onClick=\"FillAndShowHelpDiv(event, '";
+$NWE = "')\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP>";
+
 ?>
 
 <HTML>
@@ -275,11 +280,18 @@ while ($i < $servers_to_print)
 
 <?php 
 echo "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=utf-8\">\n";
-echo "<TITLE>"._QXZ("$report_name")."</TITLE></HEAD><BODY BGCOLOR=WHITE marginheight=0 marginwidth=0 leftmargin=0 topmargin=0>\n";
+echo "<TITLE>"._QXZ("$report_name")."</TITLE></HEAD><BODY BGCOLOR=WHITE marginheight=0 marginwidth=0 leftmargin=0 topmargin=0></TITLE>\n";
+echo "<link rel=\"stylesheet\" type=\"text/css\" href=\"vicidial_stylesheet.php\">\n";
+echo "<script language=\"JavaScript\" src=\"help.js\"></script>\n";
+
+echo "<div id='HelpDisplayDiv' class='help_info' style='display:none;'></div>";
+echo "</head>";
 
 	$short_header=1;
 
 	require("admin_header.php");
+
+echo "<b>"._QXZ("$report_name")."</b> $NWB#serverperformance$NWE\n";
 
 echo "<TABLE CELLPADDING=4 CELLSPACING=0><TR><TD>";
 

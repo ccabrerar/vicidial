@@ -46,6 +46,7 @@ require ('classAudioFile.php');
 
 $server_name = getenv("SERVER_NAME");
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 $audiofile=$_FILES["audiofile"];
 	$AF_orig = $_FILES['audiofile']['name'];
 	$AF_path = $_FILES['audiofile']['tmp_name'];

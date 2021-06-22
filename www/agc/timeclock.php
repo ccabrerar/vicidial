@@ -1,7 +1,7 @@
 <?php
 # timeclock.php - VICIDIAL system user timeclock
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 80523-0134 - First Build 
@@ -24,10 +24,12 @@
 # 161106-2112 - Added screen colors, fixed formatting
 # 190111-0901 - Fix for PHP7
 # 201117-2117 - Changes for better compatibility with non-latin data input
+# 210616-2101 - Added optional CORS support, see options.php for details
 #
 
-$version = '2.12-19';
-$build = '201117-2117';
+$version = '2.14-20';
+$build = '210616-2101';
+$php_script = 'timeclock.php';
 
 $StarTtimE = date("U");
 $NOW_TIME = date("Y-m-d H:i:s");
@@ -93,6 +95,13 @@ $VD_pass=preg_replace("/\'|\"|\\\\|;| /","",$VD_pass);
 
 require_once("dbconnect_mysqli.php");
 require_once("functions.php");
+
+# if options file exists, use the override values for the above variables
+#   see the options-example.php file for more information
+if (file_exists('options.php'))
+	{
+	require_once('options.php');
+	}
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####

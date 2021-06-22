@@ -1,0 +1,79 @@
+TILTX STIR/SHAKEN API (Call Shaper) INTEGRATION		Updated: 2021-06-05
+
+This document covers the TILTX SHAKEN (Call Shaper) API service features and how they integrate into VICIdial.
+
+NOTE: you will need to use the VICIdial svn/trunk revision 3449 or higher on all servers in your cluster to use this feature.
+
+
+
+What is the TILTX SHAKEN (Call Shaper) API service?
+
+This service requires an AGI script to be run before each call is placed through your dialer(agi-TILTX_SHAKEN.agi). It will tag the call with SIP Headers with the "X-TILTX-ID", "Identity" and "CAID" values that TILTX returns so your carrier can route the call properly. There are also optional service features that allow for a National Do-Not-Call(DNC) list check and a Disconnected-number check, as well as CallerID Number validation/replacement "NumberRisk" service.
+
+Reference TILTX URLs:
+https://tiltx.zendesk.com/hc/en-us/articles/360060683571-TILTX-Call-Shaper-Module
+https://tiltx.zendesk.com/hc/en-us/articles/4402421951885
+
+
+
+How to set up TILTX Call Shaper on your VICIdial system:
+
+REQUIREMENT 1: To use this feature, you will have to get a valid API Key from TILTX and create a new VICIdial Settings Container entry with the Container ID of "TILTX_SHAKEN_API_KEY", and place only the TILTX API key into the Container Entry.
+
+REQUIREMENT 2: You will need to have the VICIdial svn/trunk revision 3449 or higher installed on all servers in your VICIdial cluster.
+
+REQUIREMENT 3: You will need to put a similar dialplan entry into your Carrier Dialplan BEFORE the line where the call is placed out through your carrier:
+			exten => _91NXXNXXXXXX,n,AGI(/var/lib/asterisk/agi-bin/agi-TILTX_SHAKEN.agi,${EXTEN:-10}-----${CALLERID(num)}-----YES-----)
+
+		NOTE: Here are the configurable CLI flags for the above AGI script:
+		  1. Phone number being called (USE DIALPLAN VARIABLE like '${EXTEN:-10}')
+		  2. CallerID number being sent with call (USE DIALPLAN VARIABLE like '${CALLERID(num)}')
+		  3. (YES/NO) whether to speak error messages or not, default 'NO'
+		  4. Settings Container ID(override) to use for TILTX API settings, default 'TILTX_SHAKEN_API_KEY' if empty
+
+
+New VICIdial statuses used: (if you are these subscribed to TILTX services)
+ADCCAR - Disconnect Carrier-Defined
+DNCCAR - DNC Carrier-Defined
+
+
+
+
+Advanced Options:
+
+You can override the hard-coded TILTX Call Shaper API "https://api.shaper.tiltx.com/Calls/shaper" by adding a second line to the Settings Container that looks like the following:
+
+URL=>https://api.shaper.tiltx.com/Calls/shaper
+
+
+
+Advanced Debug:
+
+To see that the SIP Headers are being set properly, add the following line to your dialplan(extensions.conf after the 8368 "Playback" line), then reload your Asterisk dialplan and place a test call through the campaign detail screen:
+
+exten => 8368,n,Verbose("X-CIDNAME:${SIP_HEADER(X-CIDNAME)}, X-TILTX-ID:${SIP_HEADER(X-TILTX-ID)}, Identity:${SIP_HEADER(Identity)}, CAID:${SIP_HEADER(CAID)}")
+
+
+
+
+
+
+-------------- FOR DOCUMENTATION PURPOSES ONLY, DO NOT EXECUTE!!! --------------
+
+Database changes:
+
+CREATE TABLE vicidial_tiltx_shaken_log (
+db_time DATETIME NOT NULL,
+server_ip VARCHAR(15) NOT NULL,
+url_log_id INT(9) UNSIGNED NOT NULL,
+caller_code VARCHAR(20),
+phone_number VARCHAR(19) default '',
+CIDnumber VARCHAR(19) default '',
+CallerIDToUse VARCHAR(19) default '',
+IsDNC TINYINT(1) default '0',
+IsDisconnected TINYINT(1) default '0',
+TILTXID VARCHAR(50),
+Identity TEXT,
+CAID VARCHAR(50),
+index (db_time)
+) ENGINE=MyISAM;

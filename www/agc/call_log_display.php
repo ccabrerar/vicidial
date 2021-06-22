@@ -1,7 +1,7 @@
 <?php
 # call_log_display.php    version 2.14
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed purely to send the inbound and outbound calls for a specific phone
 # This script depends on the server_ip being sent and also needs to have a valid user/pass from the vicidial_users table
@@ -41,10 +41,11 @@
 # 170526-2215 - Added additional variable filtering
 # 190111-0904 - Fix for PHP7
 # 201117-2200 - Changes for better compatibility with non-latin data input
+# 210616-2102 - Added optional CORS support, see options.php for details
 #
 
-$version = '2.14-21';
-$build = '201117-2200';
+$version = '2.14-22';
+$build = '210616-2102';
 $php_script = 'call_log_display.php';
 $SSagent_debug_logging=0;
 $startMS = microtime();
@@ -89,6 +90,12 @@ $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 
+# if options file exists, use the override values for the above variables
+#   see the options-example.php file for more information
+if (file_exists('options.php'))
+	{
+	require_once('options.php');
+	}
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####

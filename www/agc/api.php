@@ -104,10 +104,12 @@
 # 210116-1138 - Addressed session ID issue in ticket #1251
 # 210222-1058 - Added call length logging to ra_call_control function
 # 210320-2335 - Added additional update_fields options: scriptreload,script2reload,formreload,emailreload,chatreload
+# 210616-2057 - Added optional CORS support, see options.php for details
 #
 
-$version = '2.14-69';
-$build = '210320-2335';
+$version = '2.14-70';
+$build = '210616-2057';
+$php_script = 'api.php';
 
 $startMS = microtime();
 
@@ -254,6 +256,13 @@ if (isset($_GET["cid_choice"]))				{$cid_choice=$_GET["cid_choice"];}
 	elseif (isset($_POST["cid_choice"]))	{$cid_choice=$_POST["cid_choice"];}
 if (isset($_GET["outbound_cid"]))			{$outbound_cid=$_GET["outbound_cid"];}
 	elseif (isset($_POST["outbound_cid"]))	{$outbound_cid=$_POST["outbound_cid"];}
+
+# if options file exists, use the override values for the above variables
+#   see the options-example.php file for more information
+if (file_exists('options.php'))
+	{
+	require_once('options.php');
+	}
 
 header ("Content-type: text/html; charset=utf-8");
 header ("Cache-Control: no-cache, must-revalidate");  // HTTP/1.1

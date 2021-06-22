@@ -51,10 +51,12 @@
 # 210315-1747 - Added campaign setting for clear_form
 # 210329-2025 - Fixed for consistent custom fields values filtering
 # 210404-1522 - Added only_field option for refresh of already-loaded custom form SOURCESELECT element
+# 210506-1825 - Fix for SELECTSOURCE reloading issue
+# 210616-2037 - Added optional CORS support, see options.php for details
 #
 
-$version = '2.14-41';
-$build = '210404-1522';
+$version = '2.14-43';
+$build = '210616-2037';
 $php_script = 'vdc_form_display.php';
 
 require_once("dbconnect_mysqli.php");
@@ -220,9 +222,15 @@ if (isset($_GET["orig_URL"]))			{$orig_URL=$_GET["orig_URL"];}
 if (isset($_GET["DB"]))				{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))	{$DB=$_POST["DB"];}
 
-
 if ($bcrypt == 'OFF')
 	{$bcrypt=0;}
+
+# if options file exists, use the override values for the above variables
+#   see the options-example.php file for more information
+if (file_exists('options.php'))
+	{
+	require_once('options.php');
+	}
 
 header ("Content-type: text/html; charset=utf-8");
 header ("Cache-Control: no-cache, must-revalidate");  // HTTP/1.1
@@ -905,7 +913,7 @@ if ($SUBMIT_only < 1)
 			{ 
 			LSview_query = "only_field=" + temp_field + "&source_field=" + temp_source + "&source_field_value=" + temp_source_value + "&stage=REFRESH_SINGLE_FIELD&<?php echo $only_field_query ?>";
 			//document.getElementById("debugbottomspan2").innerHTML = LSview_query;
-			xmlhttp.open('POST', 'vdc_form_display_encrypt.php'); 
+			xmlhttp.open('POST', 'vdc_form_display.php'); 
 			xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
 			xmlhttp.send(LSview_query); 
 			xmlhttp.onreadystatechange = function() 
@@ -919,7 +927,7 @@ if ($SUBMIT_only < 1)
 					if (custom_refresh_fields.match(REFRESHfieldREG))
 						{
 						//debug_append = debug_append + "\n" + temp_field + ' timeout: ' + task_timeout;
-						document.getElementById("debugbottomspan2").insertAdjacentHTML('beforeend',debug_append);
+						//document.getElementById("debugbottomspan2").insertAdjacentHTML('beforeend',debug_append);
 						setTimeout(field_refresh, 100, temp_field);
 						}
 					}

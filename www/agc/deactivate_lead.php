@@ -1,7 +1,7 @@
 <?php
 # deactivate_lead.php
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to be used in the "Dispo URL" field of a campaign
 # or in-group. It should take in the campaign_id to check for the same source_id
@@ -32,11 +32,12 @@
 # 141216-2130 - Added language settings lookups and user/pass variable standardization
 # 170526-2301 - Added additional variable filtering
 # 201117-2222 - Changes for better compatibility with non-latin data input
+# 210615-1036 - Default security fixes, CVE-2021-28854
+# 210616-2050 - Added optional CORS support, see options.php for details
 #
 
 $api_script = 'deactivate';
-
-header ("Content-type: text/html; charset=utf-8");
+$php_script = 'deactivate_lead.php';
 
 require_once("dbconnect_mysqli.php");
 require_once("functions.php");
@@ -48,7 +49,6 @@ $BR = getenv ("HTTP_USER_AGENT");
 
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
-$PHP_SELF=$_SERVER['PHP_SELF'];
 if (isset($_GET["lead_id"]))				{$lead_id=$_GET["lead_id"];}
 	elseif (isset($_POST["lead_id"]))		{$lead_id=$_POST["lead_id"];}
 if (isset($_GET["search_field"]))			{$search_field=$_GET["search_field"];}
@@ -82,6 +82,15 @@ $search_value='';
 # filter variables
 $user = preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass = preg_replace("/\'|\"|\\\\|;| /","",$pass);
+
+# if options file exists, use the override values for the above variables
+#   see the options-example.php file for more information
+if (file_exists('options.php'))
+	{
+	require_once('options.php');
+	}
+
+header ("Content-type: text/html; charset=utf-8");
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
@@ -231,7 +240,8 @@ else
 
 if ($log_to_file > 0)
 	{
-	$fp = fopen ("./deactivate_lead.txt", "a");
-	fwrite ($fp, "$NOW_TIME|$lead_id|$search_field|$search_value|$campaign_check|$sale_status|$dispo|$new_status|$user|XXXX|$DB|$log_to_file|$MESSAGE|\n");
+	$fp = fopen ("./deactivate_lead.txt", "w");
+#	fwrite ($fp, "$NOW_TIME|$lead_id|$search_field|$search_value|$campaign_check|$sale_status|$dispo|$new_status|$user|XXXX|$DB|$log_to_file|$MESSAGE|\n");
+	fwrite ($fp, "$NOW_TIME|\n");
 	fclose($fp);
 	}

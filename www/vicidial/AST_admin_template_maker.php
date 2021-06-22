@@ -61,6 +61,7 @@ if (isset($_GET["delete_template"]))				{$delete_template=$_GET["delete_template
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 
 #$vicidial_list_fields = '|lead_id|vendor_lead_code|source_id|list_id|gmt_offset_now|called_since_last_reset|phone_code|phone_number|title|first_name|middle_initial|last_name|address1|address2|address3|city|state|province|postal_code|country_code|gender|date_of_birth|alt_phone|email|security_phrase|comments|called_count|last_local_call_time|rank|owner|entry_list_id|';
 $vicidial_listloader_fields = '|vendor_lead_code|source_id|phone_code|phone_number|title|first_name|middle_initial|last_name|address1|address2|address3|city|state|province|postal_code|country_code|gender|date_of_birth|alt_phone|email|security_phrase|comments|rank|owner|';
@@ -456,7 +457,6 @@ function checkForm(form_name) {
 	if (form_name.template_name.value=="") {error_msg += " - <?php echo _QXZ("Template name is missing"); ?>\n";}
 	if (form_name.template_list_id.value=="") {error_msg += " - <?php echo _QXZ("List ID is missing"); ?>\n";}
 	if (form_name.standard_fields_layout.value=="" && form_name.custom_fields_layout.value=="") {error_msg += " - <?php echo _QXZ("There does not seem to be a layout"); ?>\n";}
-return false;
 	if (error_msg.length>=80) {alert(error_msg); return false;} else {return true;}
 }
 function checkEditedForm(form_name) {

@@ -243,6 +243,7 @@
 # 201106-2146 - Added EXITEMPTY and CALLSTATUS queue_log entry for NANQUE calls
 # 210103-1024 - Added agent_search_method override
 # 210325-2200 - Added populate_lead_comments option
+# 210609-0941 - Added drop_call_seconds_override option
 #
 
 $script = 'agi-VDAD_ALL_inbound.agi';
@@ -287,6 +288,14 @@ $SQLdate = "$year-$mon-$mday $hour:$min:$sec";
 $SQLdateBEGIN = $SQLdate;
 $ORIGINAL_call_time = $SQLdate;
 	while (length($CIDdate) > 9) {$CIDdate =~ s/^.//gi;} # 0902235959 changed to 902235959
+
+if ($wday == '0') {$now_weekday = 'SUNDAY';}
+if ($wday == '1') {$now_weekday = 'MONDAY';}
+if ($wday == '2') {$now_weekday = 'TUESDAY';}
+if ($wday == '3') {$now_weekday = 'WEDNESDAY';}
+if ($wday == '4') {$now_weekday = 'THURSDAY';}
+if ($wday == '5') {$now_weekday = 'FRIDAY';}
+if ($wday == '6') {$now_weekday = 'SATURDAY';}
 
 $BDtarget = ($now_date_epoch - 7);
 ($Bsec,$Bmin,$Bhour,$Bmday,$Bmon,$Byear,$Bwday,$Byday,$Bisdst) = localtime($BDtarget);
@@ -807,7 +816,7 @@ $affected_rows = $dbhA->do($stmtA);
 
 ### Grab inbound groups values from the database
 $cbc=0;
-$stmtA = "SELECT call_time_id,after_hours_action,after_hours_message_filename,after_hours_exten,after_hours_voicemail,welcome_message_filename,moh_context,onhold_prompt_filename,prompt_interval,agent_alert_exten,agent_alert_delay,drop_call_seconds,drop_action,drop_exten,next_agent_call,voicemail_ext,queue_priority,drop_inbound_group,afterhours_xfer_group,play_place_in_line,play_estimate_hold_time,hold_time_option,hold_time_option_seconds,hold_time_option_exten,hold_time_option_voicemail,hold_time_option_xfer_group,hold_time_option_callback_filename,hold_time_option_callback_list_id,hold_recall_xfer_group,no_delay_call_route,play_welcome_message,no_agent_no_queue,no_agent_action,no_agent_action_value,extension_appended_cidname,uniqueid_status_display,uniqueid_status_prefix,hold_time_option_minimum,hold_time_option_press_filename,hold_time_option_callmenu,onhold_prompt_no_block,onhold_prompt_seconds,hold_time_option_no_block,hold_time_option_prompt_seconds,hold_time_second_option,hold_time_third_option,wait_hold_option_priority,wait_time_option,wait_time_second_option,wait_time_third_option,wait_time_option_seconds,wait_time_option_exten,wait_time_option_voicemail,wait_time_option_xfer_group,wait_time_option_callmenu,wait_time_option_callback_filename,wait_time_option_callback_list_id,wait_time_option_press_filename,wait_time_option_no_block,wait_time_option_prompt_seconds,active,calculate_estimated_hold_seconds,add_lead_url,eht_minimum_prompt_filename,eht_minimum_prompt_no_block,eht_minimum_prompt_seconds,on_hook_ring_time,ingroup_recording_override,ingroup_rec_filename,on_hook_cid,action_xfer_cid,drop_callmenu,after_hours_callmenu,max_calls_method,max_calls_count,max_calls_action,populate_lead_ingroup,na_call_url,drop_lead_reset,after_hours_lead_reset,nanq_lead_reset,wait_time_lead_reset,hold_time_lead_reset,routing_initiated_recordings,on_hook_cid_number,populate_lead_province,areacode_filter,areacode_filter_seconds,areacode_filter_action,areacode_filter_action_value,populate_state_areacode,inbound_survey,inbound_survey_filename,inbound_survey_accept_digit,closing_time_action,closing_time_now_trigger,closing_time_filename,closing_time_end_filename,closing_time_lead_reset,closing_time_option_exten,closing_time_option_callmenu,closing_time_option_voicemail,closing_time_option_xfer_group,closing_time_option_callback_list_id,add_lead_timezone,populate_lead_source,populate_lead_vendor,enter_ingroup_url,cid_cb_confirm_number,cid_cb_invalid_filter_phone_group,cid_cb_valid_length,cid_cb_valid_filename,cid_cb_confirmed_filename,cid_cb_enter_filename,cid_cb_you_entered_filename,cid_cb_press_to_confirm_filename,cid_cb_invalid_filename,cid_cb_reenter_filename,cid_cb_error_filename,place_in_line_caller_number_filename,place_in_line_you_next_filename,answer_signal,no_agent_delay,agent_search_method,populate_lead_comments FROM vicidial_inbound_groups where group_id = '$channel_group';";
+$stmtA = "SELECT call_time_id,after_hours_action,after_hours_message_filename,after_hours_exten,after_hours_voicemail,welcome_message_filename,moh_context,onhold_prompt_filename,prompt_interval,agent_alert_exten,agent_alert_delay,drop_call_seconds,drop_action,drop_exten,next_agent_call,voicemail_ext,queue_priority,drop_inbound_group,afterhours_xfer_group,play_place_in_line,play_estimate_hold_time,hold_time_option,hold_time_option_seconds,hold_time_option_exten,hold_time_option_voicemail,hold_time_option_xfer_group,hold_time_option_callback_filename,hold_time_option_callback_list_id,hold_recall_xfer_group,no_delay_call_route,play_welcome_message,no_agent_no_queue,no_agent_action,no_agent_action_value,extension_appended_cidname,uniqueid_status_display,uniqueid_status_prefix,hold_time_option_minimum,hold_time_option_press_filename,hold_time_option_callmenu,onhold_prompt_no_block,onhold_prompt_seconds,hold_time_option_no_block,hold_time_option_prompt_seconds,hold_time_second_option,hold_time_third_option,wait_hold_option_priority,wait_time_option,wait_time_second_option,wait_time_third_option,wait_time_option_seconds,wait_time_option_exten,wait_time_option_voicemail,wait_time_option_xfer_group,wait_time_option_callmenu,wait_time_option_callback_filename,wait_time_option_callback_list_id,wait_time_option_press_filename,wait_time_option_no_block,wait_time_option_prompt_seconds,active,calculate_estimated_hold_seconds,add_lead_url,eht_minimum_prompt_filename,eht_minimum_prompt_no_block,eht_minimum_prompt_seconds,on_hook_ring_time,ingroup_recording_override,ingroup_rec_filename,on_hook_cid,action_xfer_cid,drop_callmenu,after_hours_callmenu,max_calls_method,max_calls_count,max_calls_action,populate_lead_ingroup,na_call_url,drop_lead_reset,after_hours_lead_reset,nanq_lead_reset,wait_time_lead_reset,hold_time_lead_reset,routing_initiated_recordings,on_hook_cid_number,populate_lead_province,areacode_filter,areacode_filter_seconds,areacode_filter_action,areacode_filter_action_value,populate_state_areacode,inbound_survey,inbound_survey_filename,inbound_survey_accept_digit,closing_time_action,closing_time_now_trigger,closing_time_filename,closing_time_end_filename,closing_time_lead_reset,closing_time_option_exten,closing_time_option_callmenu,closing_time_option_voicemail,closing_time_option_xfer_group,closing_time_option_callback_list_id,add_lead_timezone,populate_lead_source,populate_lead_vendor,enter_ingroup_url,cid_cb_confirm_number,cid_cb_invalid_filter_phone_group,cid_cb_valid_length,cid_cb_valid_filename,cid_cb_confirmed_filename,cid_cb_enter_filename,cid_cb_you_entered_filename,cid_cb_press_to_confirm_filename,cid_cb_invalid_filename,cid_cb_reenter_filename,cid_cb_error_filename,place_in_line_caller_number_filename,place_in_line_you_next_filename,answer_signal,no_agent_delay,agent_search_method,populate_lead_comments,drop_call_seconds_override FROM vicidial_inbound_groups where group_id = '$channel_group';";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -947,6 +956,7 @@ if ($sthArows > 0)
 	$no_agent_delay =					$aryA[122];
 	$agent_search_method_OVERRIDE = 	$aryA[123];
 	$populate_lead_comments = 			$aryA[124];
+	$drop_call_seconds_override = 		$aryA[125];
 
 	if ( (length($place_in_line_caller_number_filename) < 1) || ($place_in_line_caller_number_filename =~ /^NULL$/i) ) 
 		{$place_in_line_caller_number_filename='queue-thereare';}
@@ -1023,6 +1033,45 @@ if ($wday==6)
 	{
 	$daySQL=',ct_saturday_start,ct_saturday_stop,saturday_afterhours_filename_override';
 	$yestSQL=',ct_friday_start,ct_friday_stop';
+	}
+
+### Check for drop_call_seconds_override settings container
+if ( ($drop_call_seconds_override !~ /DISABLED/i) && (length($drop_call_seconds_override)>0) ) 
+	{
+	if ($AGILOG) {$agi_string = "Checking for Drop Call Seconds Override |$drop_call_seconds_override|$callerid|$channel_group|   Current drop sec: |$DROP_TIME|";   &agi_output;}
+	# example entry: "ALLDAYS,1200,1300,600", day-of-week,start-time,end-time,drop-seconds-override
+	$stmtA = "SELECT container_entry FROM vicidial_settings_containers where container_id='$drop_call_seconds_override';";
+	if ($DBX) {print "   |$stmtA|\n";}
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$DCScontainer_entry =	$aryA[0];
+		$DCScontainer_entry =~ s/\r|\t|\'|\"//gi;
+		@DCScontainer_array = split(/\n/,$DCScontainer_entry);
+		$DCSc=0;
+		foreach(@DCScontainer_array)
+			{
+			if ( ($DCScontainer_array[$DCSc] !~ /^;/) && (length($DCScontainer_array[$DCSc]) > 10) )
+				{
+				$DCScontainer_array[$DCSc] =~ s/[^,0-9a-zA-Z]//gi;
+				@DCScontainer_line = split(/,/,$DCScontainer_array[$DCSc]);
+				$temp_weekday =	$DCScontainer_line[0];
+				$temp_begin =	($DCScontainer_line[1] + 0);
+				$temp_end =		($DCScontainer_line[2] + 0);
+				$temp_sec =		($DCScontainer_line[3] + 0);   if ($temp_sec > 9999) {$temp_sec=9999;}
+				if ( ( ($temp_begin <= $hm) && ($temp_end >= $hm) ) && ( ($temp_weekday eq 'ALLDAYS') || ($temp_weekday eq $now_weekday) ) )
+					{
+					$drop_call_seconds = $temp_sec;   $DROP_TIME = $drop_call_seconds;
+					if ($AGILOG) {$agi_string = "Drop Call Seconds Override found!    |$DCSc|$drop_call_seconds_override|$callerid|$channel_group|$DCScontainer_array[$DCSc]|$temp_weekday|$temp_begin($hm)|$temp_end($hm)|$temp_sec|$DROP_TIME|";   &agi_output;}
+					}
+				}
+			$DCSc++;
+			}
+		}
+	$sthA->finish();
 	}
 
 ### Grab call_times values from the database

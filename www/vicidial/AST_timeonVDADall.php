@@ -122,12 +122,13 @@
 # 200815-0930 - Added agent-paused 10 & 15 minute indicators
 # 201107-2253 - Added display of parked calls, inbound SLA stats and LIMITED report type
 # 210314-2040 - Added optional DID Description display for inbound calls
+# 210615-2241 - Fix for issue #1314
+# 210618-1011 - Added CORS support
 #
 
-$version = '2.14-107';
-$build = '210314-2040';
-
-header ("Content-type: text/html; charset=utf-8");
+$version = '2.14-109';
+$build = '210618-1011';
+$php_script='AST_timeonVDADall.php';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -168,6 +169,7 @@ while ($crow=mysqli_fetch_row($container_rslt))
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["server_ip"]))			{$server_ip=$_GET["server_ip"];}
 	elseif (isset($_POST["server_ip"]))	{$server_ip=$_POST["server_ip"];}
 if (isset($_GET["RR"]))					{$RR=$_GET["RR"];}
@@ -249,6 +251,12 @@ if (isset($_GET["parkSTATS"]))			{$parkSTATS=$_GET["parkSTATS"];}
 if (isset($_GET["SLAinSTATS"]))				{$SLAinSTATS=$_GET["SLAinSTATS"];}
 	elseif (isset($_POST["SLAinSTATS"]))	{$SLAinSTATS=$_POST["SLAinSTATS"];}
 
+if (file_exists('options.php'))
+	{
+	require('options.php');
+	}
+
+header ("Content-type: text/html; charset=utf-8");
 
 $report_name = 'Real-Time Main Report';
 $db_source = 'M';
@@ -291,11 +299,6 @@ $RS_ListenBarge =		'MONITOR|BARGE|WHISPER';
 $RS_agentWAIT =			3;
 $RS_INcolumnsHIDE =		0;
 $RS_DIDdesc =			0;
-
-if (file_exists('options.php'))
-	{
-	require('options.php');
-	}
 
 if (strlen($RS_report_default_format) > 3) {$SSreport_default_format = $RS_report_default_format;}
 if (strlen($report_display_type)<2) {$report_display_type = $SSreport_default_format;}
@@ -3483,6 +3486,9 @@ if ($talking_to_print > 0)
 		{
 		$n=0;
 		$custphone='';
+		$cust_state='';
+		$cust_entrydate='';
+		$cust_source='';
 		while ($n < $calls_to_list)
 			{
 			if ( (preg_match("/$VAClead_ids[$n]/", $Alead_id[$j])) and (strlen($VAClead_ids[$n]) == strlen($Alead_id[$j])) and (strlen($VAClead_ids[$n] > 1)) )

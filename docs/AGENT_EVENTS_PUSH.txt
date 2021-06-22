@@ -1,4 +1,4 @@
-Agent Events Push		Started: 2017-05-31	Updated: 2017-09-13
+Agent Events Push		Started: 2017-05-31	Updated: 2021-05-05
 
 
 This feature allows for selected events in the VICIdial agent screen to push out event triggers through HTTP requests sent to a URL as defined in the System Settings.
@@ -46,6 +46,12 @@ call_dead - This indicates that the customer line has hung up before the agent c
 
 call_script - Triggered when the script tab has loaded
 
+dead_trigger_audio - Triggered if audio has been played to the agent based on the Dead Call Trigger Audio campaign settings
+
+dead_trigger_url - Triggered if URL request has been started based on the Dead Call Trigger URL campaign settings
+
+dead_trigger_url_sent - Triggered if URL request has been confirmed received based on the Dead Call Trigger URL campaign settings
+
 other_answered - Triggers if EMAIL or CHAT is received by the agent, type will be attached to event
 
 agent_hangup - This is when the agent hangs up the call
@@ -53,6 +59,8 @@ agent_hangup - This is when the agent hangs up the call
 dispo_screen_open - The dispo screen has been opened and is awaiting the agent action to set a disposition
 
 dispo_set - This is when the agent submits a disposition for the call they jsut finished, a message containing the selected disposition will be attached to this event
+
+dispo_set_twice - If the Dispo is somehow sent a second time for the same call, this will trigger
 
 3way_start - This indicates that the agent has started a 3way call, where the call is going will be attached to this event
 
@@ -65,6 +73,8 @@ dispo_set - This is when the agent submits a disposition for the call they jsut 
 transfer_local_closer - The agent has transferred a call to an In-Group using Local Closer, the in-group transferred to will be attached to the event
 
 transfer_blind - The agent has blind transferred a call, the destination transferred to will be attached to the event
+
+transfer_vmail - The agent has transferred a call to the voicemail message process
 
 park_started - This indicates that the agent has sent the customer to a park
 
@@ -129,6 +139,7 @@ logged_out_complete
 call_answered
 call_dead
 call_script
+dead_trigger_url_sent
 other_answered
 agent_hangup
 dispo_set
@@ -148,7 +159,10 @@ logged_out
 state_ready
 state_paused
 call_dialed
+dead_trigger_audio
+dead_trigger_url
 dispo_screen_open
+dispo_set_twice
 3way_start
 3way_agent_leave
 transfer_local_closer
@@ -162,6 +176,7 @@ manual_dial_open
 callback_select_open
 transfer_panel_open
 transfer_panel_closed
+transfer_vmail
 ingroup_screen_open
 ingroup_screen_closed
 territory_screen_open
@@ -175,3 +190,7 @@ MULTI-PURPOSE EVENTS THAT HAVE VARIOUS TRIGGERS:
 agent_alert
 session_disabled
 none_in_session
+
+
+
+NOTE: For information on using these Agent Events with your own custom WebSocket applications, please read the WEBSOCKETS_SUPPORT.txt document also in this directory.

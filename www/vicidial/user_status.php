@@ -57,6 +57,7 @@ require("functions.php");
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["begin_date"]))				{$begin_date=$_GET["begin_date"];}
 	elseif (isset($_POST["begin_date"]))	{$begin_date=$_POST["begin_date"];}
 if (isset($_GET["end_date"]))				{$end_date=$_GET["end_date"];}

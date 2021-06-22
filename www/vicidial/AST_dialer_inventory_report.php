@@ -38,6 +38,7 @@ require("functions.php");
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["group"]))					{$group=$_GET["group"];}
 	elseif (isset($_POST["group"]))			{$group=$_POST["group"];}
 if (isset($_GET["report_type"]))			{$report_type=$_GET["report_type"];}
@@ -369,11 +370,13 @@ $snapshot_span_txt.="</SELECT>\n";
 
 require("screen_colors.php");
 
-$NWB = " &nbsp; <a href=\"javascript:openNewWindow('help.php?ADD=99999";
-$NWE = "')\"><IMG SRC=\"help.gif\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP></A>";
+$NWB = "<IMG SRC=\"help.png\" onClick=\"FillAndShowHelpDiv(event, '";
+$NWE = "')\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP>";
 
 $HTML_header.="<HTML>\n";
 $HTML_header.="<HEAD>\n";
+$HTML_header.="<link rel=\"stylesheet\" type=\"text/css\" href=\"vicidial_stylesheet.php\">\n";
+$HTML_header.="<script language=\"JavaScript\" src=\"help.js\"></script>\n";
 $HTML_header.="<STYLE type='text/css'>\n";
 $HTML_header.="<!--\n";
 $HTML_header.="   .green {color: white; background-color: green}\n";
@@ -399,6 +402,7 @@ $HTML_header.="</script>\n";
 $HTML_header.="\n";
 $HTML_header.="<META HTTP-EQUIV='Content-Type' CONTENT='text/html; charset=utf-8'>\n";
 $HTML_header.="<TITLE>"._QXZ("$report_name")."</TITLE></HEAD><BODY $onload BGCOLOR=WHITE marginheight=0 marginwidth=0 leftmargin=0 topmargin=0>\n";
+$HTML_header.="<div id='HelpDisplayDiv' class='help_info' style='display:none;'></div>";
 $HTML_header.="<PRE>\n";
 
 $rpt_header="";

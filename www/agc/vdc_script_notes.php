@@ -1,7 +1,7 @@
 <?php
 # vdc_script_notes.php
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed open in the SCRIPT tab in the agent interface through
 # an IFRAME. It will create a new record for every SUBMIT
@@ -20,10 +20,12 @@
 # 170526-2345 - Added additional variable filtering
 # 170528-0901 - Added more variable filtering
 # 201117-2213 - Changes for better compatibility with non-latin data input
+# 210616-2034 - Added optional CORS support, see options.php for details
 #
 
-$version = '2.14-10';
-$build = '201117-2213';
+$version = '2.14-11';
+$build = '210616-2034';
+$php_script = 'vdc_script_notes.php';
 
 require_once("dbconnect_mysqli.php");
 require_once("functions.php");
@@ -204,6 +206,13 @@ $appointment_timeARRAY = explode(":",$appointment_time);
 $appointment_hour = $appointment_timeARRAY[0];
 $appointment_min = $appointment_timeARRAY[1];
 
+# if options file exists, use the override values for the above variables
+#   see the options-example.php file for more information
+if (file_exists('options.php'))
+	{
+	require_once('options.php');
+	}
+
 header ("Content-type: text/html; charset=utf-8");
 header ("Cache-Control: no-cache, must-revalidate");  // HTTP/1.1
 header ("Pragma: no-cache");                          // HTTP/1.0
@@ -222,6 +231,9 @@ if (strlen($call_date) < 1)
 
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
+
+$PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####

@@ -29,6 +29,7 @@ require("functions.php");
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["oldLOGINepoch"]))				{$oldLOGINepoch=$_GET["oldLOGINepoch"];}
 	elseif (isset($_POST["oldLOGINepoch"]))		{$oldLOGINepoch=$_POST["oldLOGINepoch"];}
 if (isset($_GET["oldLOGOUTepoch"]))				{$oldLOGOUTepoch=$_GET["oldLOGOUTepoch"];}

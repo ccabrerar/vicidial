@@ -37,6 +37,7 @@
 # 170829-0040 - Added screen color settings
 # 171012-2015 - Fixed javascript/apache errors with graphs
 # 191013-0904 - Fixes for PHP7
+# 200605-1100 - user_group bug fix
 #
 
 $startMS = microtime();
@@ -47,6 +48,7 @@ require("functions.php");
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["query_date"]))				{$query_date=$_GET["query_date"];}
 	elseif (isset($_POST["query_date"]))	{$query_date=$_POST["query_date"];}
 if (isset($_GET["end_date"]))				{$end_date=$_GET["end_date"];}
@@ -321,11 +323,11 @@ $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $user_groups_to_print = mysqli_num_rows($rslt);
 $i=0;
-$user_groups=array();
+$allowed_user_groups=array();
 while ($i < $user_groups_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
-	$user_groups[$i] =$row[0];
+	$allowed_user_groups[$i] =$row[0];
 	if ($all_user_groups) {$user_group[$i]=$row[0];}
 	$i++;
 	}
@@ -362,9 +364,18 @@ while($i < $user_group_ct)
 	$i++;
 	}
 if ( (preg_match('/\-\-ALL\-\-/',$user_group_string) ) or ($user_group_ct < 1) )
-	{$user_group_SQL = "";}
-else
 	{
+	$i=0;
+	$user_group_SQL = "";
+	$user_groupQS = "";
+	$user_groups_ct = count($allowed_user_groups);
+	while($i < $user_groups_ct)
+		{
+		# $user_group_string .= "$user_groups[$i]|";
+		$user_group_SQL .= "'$allowed_user_groups[$i]',";
+		$user_groupQS .= "&user_group[]=$allowed_user_groups[$i]";
+		$i++;
+		}
 	$user_group_SQL = preg_replace('/,$/i', '',$user_group_SQL);
 	$user_group_SQL = "and ".$agent_log_table.".user_group IN($user_group_SQL)";
 	}
@@ -420,8 +431,8 @@ if (strlen($customer_interactive_statuses)>0)
 
 $LINKbase = "$PHP_SELF?query_date=$query_date&end_date=$end_date$groupQS$user_groupQS&shift=$shift&search_archived_data=$search_archived_data&show_defunct_users=$show_defunct_users&report_display_type=$report_display_type&DB=$DB";
 
-$NWB = " &nbsp; <a href=\"javascript:openNewWindow('help.php?ADD=99999";
-$NWE = "')\"><IMG SRC=\"help.gif\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP></A>";
+$NWB = "<IMG SRC=\"help.png\" onClick=\"FillAndShowHelpDiv(event, '";
+$NWE = "')\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP>";
 
 if ($file_download < 1)
 	{
@@ -441,6 +452,8 @@ if ($file_download < 1)
 	<?php
 
 	echo "<script language=\"JavaScript\" src=\"calendar_db.js\"></script>\n";
+	echo "<link rel=\"stylesheet\" type=\"text/css\" href=\"vicidial_stylesheet.php\">\n";
+	echo "<script language=\"JavaScript\" src=\"help.js\"></script>\n";
 	echo "<link rel=\"stylesheet\" href=\"calendar.css\">\n";
 	echo "<link rel=\"stylesheet\" href=\"horizontalbargraph.css\">\n";
 	require("chart_button.php");
@@ -449,6 +462,7 @@ if ($file_download < 1)
 
 	echo "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=utf-8\">\n";
 	echo "<TITLE>"._QXZ("$report_name")."</TITLE></HEAD><BODY BGCOLOR=white marginheight=0 marginwidth=0 leftmargin=0 topmargin=0>\n";
+	echo "<div id='HelpDisplayDiv' class='help_info' style='display:none;z-index:21;'></div>";
 	echo "<span style=\"position:absolute;left:0px;top:0px;z-index:20;\" id=admin_header>";
 
 	$short_header=1;
@@ -1125,8 +1139,8 @@ else
 $o=0;
 while ($user_groups_to_print > $o)
 	{
-	if  (preg_match("/$user_groups[$o]\|/i",$user_group_string)) {echo "<option selected value=\"$user_groups[$o]\">$user_groups[$o]</option>\n";}
-	  else {echo "<option value=\"$user_groups[$o]\">$user_groups[$o]</option>\n";}
+	if  (preg_match("/$allowed_user_groups[$o]\|/i",$user_group_string)) {echo "<option selected value=\"$allowed_user_groups[$o]\">$allowed_user_groups[$o]</option>\n";}
+	  else {echo "<option value=\"$allowed_user_groups[$o]\">$allowed_user_groups[$o]</option>\n";}
 	$o++;
 	}
 echo "</SELECT>\n";

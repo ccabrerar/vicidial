@@ -1,7 +1,7 @@
 <?php
 # lead_tools_advanced.php - Various tools for lead basic lead management, advanced version.
 #
-# Copyright (C) 2019  Matt Florell,Michael Cargile <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell,Michael Cargile <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 131016-1948 - Initial Build based upon lead_tools.php
@@ -15,10 +15,11 @@
 # 170711-1104 - Added screen colors
 # 170819-1003 - Added allow_manage_active_lists option, Changed list selection to multi
 # 191119-1817 - Fixes for translations compatibility, issue #1142
+# 210607-0923 - Added option to reset called_count to 0
 #
 
-$version = '2.14-11';
-$build = '191119-1817';
+$version = '2.14-12';
+$build = '210607-0923';
 
 # This limit is to prevent data inconsistancies.
 # If there are too many leads in a list this
@@ -34,6 +35,7 @@ require("functions.php");
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 $ip = getenv("REMOTE_ADDR");
 $SQLdate = date("Y-m-d H:i:s");
 
@@ -41,10 +43,12 @@ $DB=0;
 $move_submit="";
 $update_submit="";
 $delete_submit="";
+$reset_called_count_submit="";
 $callback_submit="";
 $confirm_move="";
 $confirm_update="";
 $confirm_delete="";
+$confirm_reset_called_count="";
 $confirm_callback="";
 
 if (isset($_GET["DB"])) {$DB=$_GET["DB"];}
@@ -55,6 +59,8 @@ if (isset($_GET["update_submit"])) {$update_submit=$_GET["update_submit"];}
 	elseif (isset($_POST["update_submit"])) {$update_submit=$_POST["update_submit"];}
 if (isset($_GET["delete_submit"])) {$delete_submit=$_GET["delete_submit"];}
 	elseif (isset($_POST["delete_submit"])) {$delete_submit=$_POST["delete_submit"];}
+if (isset($_GET["reset_called_count_submit"])) {$reset_called_count_submit=$_GET["reset_called_count_submit"];}
+	elseif (isset($_POST["reset_called_count_submit"])) {$reset_called_count_submit=$_POST["reset_called_count_submit"];}
 if (isset($_GET["callback_submit"])) {$callback_submit=$_GET["callback_submit"];}
 	elseif (isset($_POST["callback_submit"])) {$callback_submit=$_POST["callback_submit"];}
 if (isset($_GET["confirm_move"])) {$confirm_move=$_GET["confirm_move"];}
@@ -63,6 +69,8 @@ if (isset($_GET["confirm_update"])) {$confirm_move=$_GET["confirm_update"];}
 	elseif (isset($_POST["confirm_update"])) {$confirm_update=$_POST["confirm_update"];}
 if (isset($_GET["confirm_delete"])) {$confirm_delete=$_GET["confirm_delete"];}
 	elseif (isset($_POST["confirm_delete"])) {$confirm_delete=$_POST["confirm_delete"];}
+if (isset($_GET["confirm_reset_called_count"])) {$confirm_reset_called_count=$_GET["confirm_reset_called_count"];}
+	elseif (isset($_POST["confirm_reset_called_count"])) {$confirm_reset_called_count=$_POST["confirm_reset_called_count"];}
 if (isset($_GET["confirm_callback"])) {$confirm_callback=$_GET["confirm_callback"];}
 	elseif (isset($_POST["confirm_callback"])) {$confirm_callback=$_POST["confirm_callback"];}
 
@@ -70,18 +78,21 @@ $DB = preg_replace('/[^0-9]/','',$DB);
 $move_submit = preg_replace('/[^-_0-9a-zA-Z]/','',$move_submit);
 $update_submit = preg_replace('/[^-_0-9a-zA-Z]/','',$update_submit);
 $delete_submit = preg_replace('/[^-_0-9a-zA-Z]/','',$delete_submit);
+$reset_called_count_submit = preg_replace('/[^- _0-9a-zA-Z]/','',$reset_called_count_submit);
 $callback_submit = preg_replace('/[^-_0-9a-zA-Z]/','',$callback_submit);
 $confirm_move = preg_replace('/[^-_0-9a-zA-Z]/','',$confirm_move);
 $confirm_update = preg_replace('/[^-_0-9a-zA-Z]/','',$confirm_update);
 $confirm_delete = preg_replace('/[^-_0-9a-zA-Z]/','',$confirm_delete);
+$confirm_reset_called_count = preg_replace('/[^-_0-9a-zA-Z]/','',$confirm_reset_called_count);
 $confirm_callback = preg_replace('/[^-_0-9a-zA-Z]/','',$confirm_callback);
 $delete_status = preg_replace('/[^-_0-9a-zA-Z]/','',$delete_status);
+$reset_called_count_status = preg_replace('/[^-_0-9a-zA-Z]/','',$reset_called_count_status);
 
 $DBlink='';
 if ($DB)
 	{
 	$DBlink="?DB=$DB";
-	echo "<p>DB = $DB | "._QXZ("move_submit")." = $move_submit | "._QXZ("update_submit")." = $update_submit | "._QXZ("delete_submit")." = $delete_submit | "._QXZ("callback_submit")." = $callback_submit | "._QXZ("confirm_move")." = $confirm_move | "._QXZ("confirm_update")." = $confirm_update | "._QXZ("confirm_delete")." = $confirm_delete | "._QXZ("confirm_callback")." = $confirm_callback</p>";
+	echo "<p>DB = $DB | "._QXZ("move_submit")." = $move_submit | "._QXZ("update_submit")." = $update_submit | "._QXZ("delete_submit")." = $delete_submit | "._QXZ("reset_called_count_submit")." = $reset_called_count_submit | "._QXZ("callback_submit")." = $callback_submit | "._QXZ("confirm_move")." = $confirm_move | "._QXZ("confirm_update")." = $confirm_update | "._QXZ("confirm_delete")." = $confirm_delete | "._QXZ("confirm_reset_called_count")." = $confirm_reset_called_count | "._QXZ("confirm_callback")." = $confirm_callback</p>";
 	}
 
 
@@ -304,6 +315,18 @@ window.onload = function()
 	document.getElementById("enable_delete_modify_date").onclick = enableDeleteModifyDate;
 	document.getElementById("enable_delete_security_phrase").onclick = enableDeleteSecurityPhrase;
 	document.getElementById("enable_delete_lead_id").onclick = enableDeleteLeadId;
+
+	// reset called count functions initialization
+	document.getElementById("enable_reset_called_count_count").onclick = enableResetCallCountCount;
+	document.getElementById("enable_reset_called_count_country_code").onclick = enableResetCallCountCountryCode;
+	document.getElementById("enable_reset_called_count_vendor_lead_code").onclick = enableResetCallCountVendorLeadCode;
+	document.getElementById("enable_reset_called_count_source_id").onclick = enableResetCallCountCountrySourceId;
+	document.getElementById("enable_reset_called_count_owner").onclick = enableResetCallCountOwner;
+	document.getElementById("enable_reset_called_count_state").onclick = enableResetCallCountState;
+	document.getElementById("enable_reset_called_count_entry_date").onclick = enableResetCallCountEntryDate;
+	document.getElementById("enable_reset_called_count_modify_date").onclick = enableResetCallCountModifyDate;
+	document.getElementById("enable_reset_called_count_security_phrase").onclick = enableResetCallCountSecurityPhrase;
+	document.getElementById("enable_reset_called_count_lead_id").onclick = enableResetCallCountLeadId;
 
 	// callback functions initialization
 	document.getElementById("enable_callback_entry_date").onclick = enableCallbackEntryDate;
@@ -672,6 +695,128 @@ function enableDeleteLeadId()
 	else
 		{
 		document.getElementById("delete_lead_id").disabled = true;
+		}
+	}
+
+// reset called count functions
+function enableResetCallCountCount()
+	{
+	if (document.getElementById("enable_reset_called_count_count").checked)
+		{
+		document.getElementById("reset_called_count_count_op").disabled = false;
+		document.getElementById("reset_called_count_count_num").disabled = false;
+		}
+	else
+		{
+		document.getElementById("reset_called_count_count_op").disabled = true;
+		document.getElementById("reset_called_count_count_num").disabled = true;
+		}
+	}
+function enableResetCallCountCountryCode()
+	{
+	if (document.getElementById("enable_reset_called_count_country_code").checked)
+		{
+		document.getElementById("reset_called_count_country_code").disabled = false;
+		}
+	else
+		{
+		document.getElementById("reset_called_count_country_code").disabled = true;
+		}
+	}
+function enableResetCallCountVendorLeadCode()
+	{
+	if (document.getElementById("enable_reset_called_count_vendor_lead_code").checked)
+		{
+		document.getElementById("reset_called_count_vendor_lead_code").disabled = false;
+		}
+	else
+		{
+		document.getElementById("reset_called_count_vendor_lead_code").disabled = true;
+		}
+	}
+function enableResetCallCountCountrySourceId()
+	{
+    if (document.getElementById("enable_reset_called_count_source_id").checked)
+		{
+		document.getElementById("reset_called_count_source_id").disabled = false;
+		}
+	else
+		{
+		document.getElementById("reset_called_count_source_id").disabled = true;
+		}
+	}
+function enableResetCallCountOwner()
+	{
+	if (document.getElementById("enable_reset_called_count_owner").checked)
+		{
+		document.getElementById("reset_called_count_owner").disabled = false;
+		}
+	else
+		{
+		document.getElementById("reset_called_count_owner").disabled = true;
+		}
+	}
+function enableResetCallCountState()
+	{
+	if (document.getElementById("enable_reset_called_count_state").checked)
+		{
+		document.getElementById("reset_called_count_state").disabled = false;
+		}
+	else
+		{
+		document.getElementById("reset_called_count_state").disabled = true;
+		}
+	}
+function enableResetCallCountEntryDate()
+	{
+	if (document.getElementById("enable_reset_called_count_entry_date").checked)
+		{
+		document.getElementById("reset_called_count_entry_date").disabled = false;
+		document.getElementById("reset_called_count_entry_date_end").disabled = false;
+		document.getElementById("reset_called_count_entry_date_op").disabled = false;
+		}
+	else
+		{
+		document.getElementById("reset_called_count_entry_date").disabled = true;
+		document.getElementById("reset_called_count_entry_date_end").disabled = true;
+		document.getElementById("reset_called_count_entry_date_op").disabled = true;
+		}
+	}
+function enableResetCallCountModifyDate()
+	{
+	if (document.getElementById("enable_reset_called_count_modify_date").checked)
+		{
+		document.getElementById("reset_called_count_modify_date").disabled = false;
+		document.getElementById("reset_called_count_modify_date_end").disabled = false;
+		document.getElementById("reset_called_count_modify_date_op").disabled = false;
+		}
+	else
+		{
+		document.getElementById("reset_called_count_modify_date").disabled = true;
+		document.getElementById("reset_called_count_modify_date_end").disabled = true;
+		document.getElementById("reset_called_count_modify_date_op").disabled = true;
+		}
+	}
+function enableResetCallCountSecurityPhrase()
+	{
+	if (document.getElementById("enable_reset_called_count_security_phrase").checked)
+		{
+		document.getElementById("reset_called_count_security_phrase").disabled = false;
+		}
+	else
+		{
+		document.getElementById("reset_called_count_security_phrase").disabled = true;
+		}
+	}
+function enableResetCallCountLeadId()
+	{
+	if (document.getElementById("enable_reset_called_count_lead_id").checked)
+		{
+		document.getElementById("reset_called_count_lead_id").disabled = false;
+		}
+	else
+		{
+		document.getElementById("reset_called_count_lead_id").disabled = true;
 		}
 	}
 
@@ -1133,7 +1278,7 @@ if ($move_submit == _QXZ("move") )
 		}
 	else
 		{
-		echo "<p>"._QXZ("You are about to move")." $move_lead_count "._QXZ("leads from list")." ".implode(",", $move_from_list)." "._QXZ("to")." $move_to_list "._QXZ("with the following parameters").":<br /><br />$move_parm <br />"._QXZ("Please press confirm to continue").".</p>\n";
+		echo "<p>"._QXZ("You are about to move")." <B>$move_lead_count</B> "._QXZ("leads from list")." ".implode(",", $move_from_list)." "._QXZ("to")." $move_to_list "._QXZ("with the following parameters").":<br /><br />$move_parm <br />"._QXZ("Please press confirm to continue").".</p>\n";
 		echo "<center><form action=$PHP_SELF method=POST>\n";
 		echo "<input type=hidden name=enable_move_status value='$enable_move_status'>\n";
 		echo "<input type=hidden name=enable_move_country_code value='$enable_move_country_code'>\n";
@@ -1521,7 +1666,7 @@ if ($confirm_move == _QXZ("confirm"))
 	$move_lead_rslt = mysql_to_mysqli($move_lead_stmt, $link);
 	$move_lead_count = mysqli_affected_rows($link);
 
-	$move_sentence = "$move_lead_count "._QXZ("leads have been moved from list")." $move_from_list "._QXZ("to")." $move_to_list "._QXZ("with the following parameters").":<br /><br />$move_parm <br />";
+	$move_sentence = "<B>$move_lead_count</B> "._QXZ("leads have been moved from list")." $move_from_list "._QXZ("to")." $move_to_list "._QXZ("with the following parameters").":<br /><br />$move_parm <br />";
 
 	$SQL_log = "$move_lead_stmt|";
 	$SQL_log = preg_replace('/;/', '', $SQL_log);
@@ -1900,7 +2045,7 @@ if ($update_submit == _QXZ("update") )
 	$update_lead_count_row = mysqli_fetch_row($update_lead_count_rslt);
 	$update_lead_count = $update_lead_count_row[0];
 
-	echo "<p>"._QXZ("You are about to update")." $update_lead_count "._QXZ("leads in list")." ".implode(",", $update_list)." "._QXZ("to the status")." $update_to_status "._QXZ("with the following parameters").":<br /><br />$update_parm<br />"._QXZ("Please press confirm to continue").".</p>\n";
+	echo "<p>"._QXZ("You are about to update")." <B>$update_lead_count</B> "._QXZ("leads in list")." ".implode(",", $update_list)." "._QXZ("to the status")." $update_to_status "._QXZ("with the following parameters").":<br /><br />$update_parm<br />"._QXZ("Please press confirm to continue").".</p>\n";
 	echo "<center><form action=$PHP_SELF method=POST>\n";
 	echo "<input type=hidden name=enable_update_from_status value='$enable_update_from_status'>\n";
 	echo "<input type=hidden name=enable_update_country_code value='$enable_update_country_code'>\n";
@@ -2292,7 +2437,7 @@ if ($confirm_update == _QXZ("confirm"))
 	$update_lead_rslt = mysql_to_mysqli($update_lead_stmt, $link);
 	$update_lead_count = mysqli_affected_rows($link);
 
-	$update_sentence = "$update_lead_count "._QXZ("leads in list")." $update_list "._QXZ("had their status changed to")." $update_to_status "._QXZ("with the following parameters").":<br /><br />$update_parm";
+	$update_sentence = "<B>$update_lead_count</B> "._QXZ("leads in list")." $update_list "._QXZ("had their status changed to")." $update_to_status "._QXZ("with the following parameters").":<br /><br />$update_parm";
 
 	$SQL_log = "$update_lead_stmt|";
 	$SQL_log = preg_replace('/;/', '', $SQL_log);
@@ -2675,7 +2820,7 @@ if ( ( $delete_submit == _QXZ("delete") ) && ( $delete_lists > 0 ) )
 	$delete_lead_count_row = mysqli_fetch_row($delete_lead_count_rslt);
 	$delete_lead_count = $delete_lead_count_row[0];
 
-	echo "<p>"._QXZ("You are about to delete")." $delete_lead_count "._QXZ("leads in list")." ".implode(",", $delete_list)." "._QXZ("with the following parameters").":<br /><br />$delete_parm<br />"._QXZ("Please press confirm to continue").".</p>\n";
+	echo "<p>"._QXZ("You are about to delete")." <B>$delete_lead_count</B> "._QXZ("leads in list")." ".implode(",", $delete_list)." "._QXZ("with the following parameters").":<br /><br />$delete_parm<br />"._QXZ("Please press confirm to continue").".</p>\n";
 	echo "<center><form action=$PHP_SELF method=POST>\n";
 	echo "<input type=hidden name=enable_delete_lead_id value='$enable_delete_lead_id'>\n";
 	echo "<input type=hidden name=enable_delete_country_code value='$enable_delete_country_code'>\n";
@@ -3069,7 +3214,7 @@ if ( ( $confirm_delete == _QXZ("confirm") ) && ( $delete_lists > 0 ) )
 	$delete_lead_rslt = mysql_to_mysqli($delete_lead_stmt, $link);
 	$delete_lead_count = mysqli_affected_rows($link);
 
-	$delete_sentence = "$delete_lead_count leads delete from list $delete_list with the following parameters:<br /><br />$delete_parm<br />";
+	$delete_sentence = "<B>$delete_lead_count</B> leads delete from list $delete_list with the following parameters:<br /><br />$delete_parm<br />";
 
 	$SQL_log = "$delete_lead_stmt|";
 	$SQL_log = preg_replace('/;/', '', $SQL_log);
@@ -3082,6 +3227,784 @@ if ( ( $confirm_delete == _QXZ("confirm") ) && ( $delete_lists > 0 ) )
 	echo "<p><a href='$PHP_SELF$DBlink'>"._QXZ("Click here to start over").".</a></p>\n";
 	}
 ##### END delete process #####
+
+
+##### BEGIN reset called count process #####
+# reset called count confirmation page
+if ( ( $reset_called_count_submit == _QXZ("reset called count") ) && ( $modify_leads > 0 ) )
+	{
+	# get the variables
+	$enable_reset_called_count_lead_id="";
+	$enable_reset_called_count_country_code="";
+	$enable_reset_called_count_vendor_lead_code="";
+	$enable_reset_called_count_source_id="";
+	$enable_reset_called_count_owner="";
+	$enable_reset_called_count_state="";
+	$enable_reset_called_count_entry_date="";
+	$enable_reset_called_count_modify_date="";
+	$enable_reset_called_count_security_phrase="";
+	$enable_reset_called_count_count="";
+	$reset_called_count_country_code="";
+	$reset_called_count_vendor_lead_code="";
+	$reset_called_count_source_id="";
+	$reset_called_count_owner="";
+	$reset_called_count_state="";
+	$reset_called_count_entry_date="";
+	$reset_called_count_entry_date_end="";
+	$reset_called_count_entry_date_op="";
+	$reset_called_count_modify_date="";
+	$reset_called_count_modify_date_end="";
+	$reset_called_count_modify_date_op="";
+	$reset_called_count_security_phrase="";
+	$reset_called_count_list="";
+	$reset_called_count_status="";
+	$reset_called_count_count_op="";
+	$reset_called_count_count_num="";
+	$reset_called_count_lead_id="";
+
+	# check the get / post data for the variables
+	if (isset($_GET["enable_reset_called_count_lead_id"])) {$enable_reset_called_count_lead_id=$_GET["enable_reset_called_count_lead_id"];}
+		elseif (isset($_POST["enable_reset_called_count_lead_id"])) {$enable_reset_called_count_lead_id=$_POST["enable_reset_called_count_lead_id"];}
+	if (isset($_GET["enable_reset_called_count_country_code"])) {$enable_reset_called_count_country_code=$_GET["enable_reset_called_count_country_code"];}
+		elseif (isset($_POST["enable_reset_called_count_country_code"])) {$enable_reset_called_count_country_code=$_POST["enable_reset_called_count_country_code"];}
+	if (isset($_GET["enable_reset_called_count_vendor_lead_code"])) {$enable_reset_called_count_vendor_lead_code=$_GET["enable_reset_called_count_vendor_lead_code"];}
+		elseif (isset($_POST["enable_reset_called_count_vendor_lead_code"])) {$enable_reset_called_count_vendor_lead_code=$_POST["enable_reset_called_count_vendor_lead_code"];}
+	if (isset($_GET["enable_reset_called_count_source_id"])) {$enable_reset_called_count_source_id=$_GET["enable_reset_called_count_source_id"];}
+		elseif (isset($_POST["enable_reset_called_count_source_id"])) {$enable_reset_called_count_source_id=$_POST["enable_reset_called_count_source_id"];}
+	if (isset($_GET["enable_reset_called_count_owner"])) {$enable_reset_called_count_owner=$_GET["enable_reset_called_count_owner"];}
+		elseif (isset($_POST["enable_reset_called_count_owner"])) {$enable_reset_called_count_owner=$_POST["enable_reset_called_count_owner"];}
+	if (isset($_GET["enable_reset_called_count_state"])) {$enable_reset_called_count_state=$_GET["enable_reset_called_count_state"];}
+		elseif (isset($_POST["enable_reset_called_count_state"])) {$enable_reset_called_count_state=$_POST["enable_reset_called_count_state"];}
+	if (isset($_GET["enable_reset_called_count_entry_date"])) {$enable_reset_called_count_entry_date=$_GET["enable_reset_called_count_entry_date"];}
+		elseif (isset($_POST["enable_reset_called_count_entry_date"])) {$enable_reset_called_count_entry_date=$_POST["enable_reset_called_count_entry_date"];}
+	if (isset($_GET["enable_reset_called_count_modify_date"])) {$enable_reset_called_count_modify_date=$_GET["enable_reset_called_count_modify_date"];}
+		elseif (isset($_POST["enable_reset_called_count_modify_date"])) {$enable_reset_called_count_modify_date=$_POST["enable_reset_called_count_modify_date"];}
+	if (isset($_GET["enable_reset_called_count_security_phrase"])) {$enable_reset_called_count_security_phrase=$_GET["enable_reset_called_count_security_phrase"];}
+		elseif (isset($_POST["enable_reset_called_count_security_phrase"])) {$enable_reset_called_count_security_phrase=$_POST["enable_reset_called_count_security_phrase"];}
+	if (isset($_GET["enable_reset_called_count_count"])) {$enable_reset_called_count_count=$_GET["enable_reset_called_count_count"];}
+		elseif (isset($_POST["enable_reset_called_count_count"])) {$enable_reset_called_count_count=$_POST["enable_reset_called_count_count"];}
+	if (isset($_GET["reset_called_count_country_code"])) {$reset_called_count_country_code=$_GET["reset_called_count_country_code"];}
+		elseif (isset($_POST["reset_called_count_country_code"])) {$reset_called_count_country_code=$_POST["reset_called_count_country_code"];}
+	if (isset($_GET["reset_called_count_vendor_lead_code"])) {$reset_called_count_vendor_lead_code=$_GET["reset_called_count_vendor_lead_code"];}
+		elseif (isset($_POST["reset_called_count_vendor_lead_code"])) {$reset_called_count_vendor_lead_code=$_POST["reset_called_count_vendor_lead_code"];}
+	if (isset($_GET["reset_called_count_source_id"])) {$reset_called_count_source_id=$_GET["reset_called_count_source_id"];}
+		elseif (isset($_POST["reset_called_count_source_id"])) {$reset_called_count_source_id=$_POST["reset_called_count_source_id"];}
+	if (isset($_GET["reset_called_count_owner"])) {$reset_called_count_owner=$_GET["reset_called_count_owner"];}
+		elseif (isset($_POST["reset_called_count_owner"])) {$reset_called_count_owner=$_POST["reset_called_count_owner"];}
+	if (isset($_GET["reset_called_count_state"])) {$reset_called_count_state=$_GET["reset_called_count_state"];}
+		elseif (isset($_POST["reset_called_count_state"])) {$reset_called_count_state=$_POST["reset_called_count_state"];}
+	if (isset($_GET["reset_called_count_entry_date"])) {$reset_called_count_entry_date=$_GET["reset_called_count_entry_date"];}
+		elseif (isset($_POST["reset_called_count_entry_date"])) {$reset_called_count_entry_date=$_POST["reset_called_count_entry_date"];}
+	if (isset($_GET["reset_called_count_entry_date_end"])) {$reset_called_count_entry_date_end=$_GET["reset_called_count_entry_date_end"];}
+		elseif (isset($_POST["reset_called_count_entry_date_end"])) {$reset_called_count_entry_date_end=$_POST["reset_called_count_entry_date_end"];}
+	if (isset($_GET["reset_called_count_entry_date_op"])) {$reset_called_count_entry_date_op=$_GET["reset_called_count_entry_date_op"];}
+		elseif (isset($_POST["reset_called_count_entry_date_op"])) {$reset_called_count_entry_date_op=$_POST["reset_called_count_entry_date_op"];}
+	if (isset($_GET["reset_called_count_modify_date"])) {$reset_called_count_modify_date=$_GET["reset_called_count_modify_date"];}
+		elseif (isset($_POST["reset_called_count_modify_date"])) {$reset_called_count_modify_date=$_POST["reset_called_count_modify_date"];}
+	if (isset($_GET["reset_called_count_modify_date_end"])) {$reset_called_count_modify_date_end=$_GET["reset_called_count_modify_date_end"];}
+		elseif (isset($_POST["reset_called_count_modify_date_end"])) {$reset_called_count_modify_date_end=$_POST["reset_called_count_modify_date_end"];}
+	if (isset($_GET["reset_called_count_modify_date_op"])) {$reset_called_count_modify_date_op=$_GET["reset_called_count_modify_date_op"];}
+		elseif (isset($_POST["reset_called_count_modify_date_op"])) {$reset_called_count_modify_date_op=$_POST["reset_called_count_modify_date_op"];}
+	if (isset($_GET["reset_called_count_security_phrase"])) {$reset_called_count_security_phrase=$_GET["reset_called_count_security_phrase"];}
+		elseif (isset($_POST["reset_called_count_security_phrase"])) {$reset_called_count_security_phrase=$_POST["reset_called_count_security_phrase"];}
+	if (isset($_GET["reset_called_count_list"])) {$reset_called_count_list=$_GET["reset_called_count_list"];}
+		elseif (isset($_POST["reset_called_count_list"])) {$reset_called_count_list=$_POST["reset_called_count_list"];}
+	if (isset($_GET["reset_called_count_status"])) {$reset_called_count_status=$_GET["reset_called_count_status"];}
+		elseif (isset($_POST["reset_called_count_status"])) {$reset_called_count_status=$_POST["reset_called_count_status"];}
+	if (isset($_GET["reset_called_count_lead_id"])) {$reset_called_count_lead_id=$_GET["reset_called_count_lead_id"];}
+		elseif (isset($_POST["reset_called_count_lead_id"])) {$reset_called_count_lead_id=$_POST["reset_called_count_lead_id"];}
+	if (isset($_GET["reset_called_count_count_op"])) {$reset_called_count_count_op=$_GET["reset_called_count_count_op"];}
+		elseif (isset($_POST["reset_called_count_count_op"])) {$reset_called_count_count_op=$_POST["reset_called_count_count_op"];}
+	if (isset($_GET["reset_called_count_count_num"])) {$reset_called_count_count_num=$_GET["reset_called_count_count_num"];}
+		elseif (isset($_POST["reset_called_count_count_num"])) {$reset_called_count_count_num=$_POST["reset_called_count_count_num"];}
+
+	if ($DB)
+		{
+		echo "<p>"._QXZ("enable_reset_called_count_country_code")." = $enable_reset_called_count_country_code | "._QXZ("enable_reset_called_count_vendor_lead_code")." = $enable_reset_called_count_vendor_lead_code | "._QXZ("enable_reset_called_count_source_id")." = $enable_reset_called_count_source_id | "._QXZ("enable_reset_called_count_owner")." = $enable_reset_called_count_owner | "._QXZ("enable_reset_called_count_state")." = $enable_reset_called_count_state | "._QXZ("enable_reset_called_count_entry_date")." = $enable_reset_called_count_entry_date | "._QXZ("enable_reset_called_count_modify_date")." = $enable_reset_called_count_modify_date | "._QXZ("enable_reset_called_count_security_phrase")." = $enable_reset_called_count_security_phrase | "._QXZ("enable_reset_called_count_count")." = $enable_reset_called_count_count | "._QXZ("reset_called_count_country_code")." = $reset_called_count_country_code | "._QXZ("reset_called_count_vendor_lead_code")." = $reset_called_count_vendor_lead_code | "._QXZ("reset_called_count_source_id")." = $reset_called_count_source_id | "._QXZ("reset_called_count_owner")." = $reset_called_count_owner | "._QXZ("reset_called_count_state")." = $reset_called_count_state | "._QXZ("reset_called_count_entry_date")." = $reset_called_count_entry_date | "._QXZ("reset_called_count_entry_date_end")." = $reset_called_count_entry_date_end | "._QXZ("reset_called_count_entry_date_op")." = $reset_called_count_entry_date_op | "._QXZ("reset_called_count_modify_date")." = $reset_called_count_modify_date | "._QXZ("reset_called_count_modify_date_end")." = $reset_called_count_modify_date_end | "._QXZ("reset_called_count_modify_date_op")." = $reset_called_count_modify_date_op | "._QXZ("reset_called_count_security_phrase")." = $reset_called_count_security_phrase | "._QXZ("reset_called_count_list")." = $reset_called_count_list | "._QXZ("reset_called_count_status")." = $reset_called_count_status | "._QXZ("reset_called_count_count_op")." = $reset_called_count_count_op | "._QXZ("reset_called_count_count_num")." = $reset_called_count_count_num | "._QXZ("reset_called_count_lead_id")." = $reset_called_count_lead_id</p>";
+		}
+
+	# filter out anything bad
+	$enable_reset_called_count_status = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_status);
+	$enable_reset_called_count_country_code = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_country_code);
+	$enable_reset_called_count_vendor_lead_code = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_vendor_lead_code);
+	$enable_reset_called_count_source_id = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_source_id);
+	$enable_reset_called_count_owner = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_owner);
+	$enable_reset_called_count_state = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_state);
+	$enable_reset_called_count_entry_date = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_entry_date);
+	$enable_reset_called_count_modify_date = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_modify_date);
+	$enable_reset_called_count_security_phrase = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_security_phrase);
+	$enable_reset_called_count_count = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_count);
+	$reset_called_count_country_code = preg_replace('/[^-_%a-zA-Z0-9]/','',$reset_called_count_country_code);
+	$reset_called_count_vendor_lead_code = preg_replace('/[^- _\'%0-9a-zA-Z]/','',$reset_called_count_vendor_lead_code);
+	$reset_called_count_source_id = preg_replace('/[^- _\'%0-9a-zA-Z]/','',$reset_called_count_source_id);
+	$reset_called_count_owner = preg_replace('/[^- _\'%0-9a-zA-Z]/','',$reset_called_count_owner);
+	$reset_called_count_state = preg_replace('/[^-_%0-9a-zA-Z]/','',$reset_called_count_state);
+	$reset_called_count_entry_date = preg_replace('/[^- \:_%0-9a-zA-Z]/','',$reset_called_count_entry_date);
+	$reset_called_count_entry_date_end = preg_replace('/[^- \:_%0-9a-zA-Z]/','',$reset_called_count_entry_date_end);
+	$reset_called_count_entry_date_op = preg_replace('/[^<>=_0-9a-zA-Z]/','',$reset_called_count_entry_date_op);
+	$reset_called_count_modify_date = preg_replace('/[^- \:_%0-9a-zA-Z]/','',$reset_called_count_modify_date);
+	$reset_called_count_modify_date_end = preg_replace('/[^- \:_%0-9a-zA-Z]/','',$reset_called_count_modify_date_end);
+	$reset_called_count_modify_date_op = preg_replace('/[^<>=_0-9a-zA-Z]/','',$reset_called_count_modify_date_op);
+	$reset_called_count_security_phrase = preg_replace('/[^- _\'%0-9a-zA-Z]/','',$reset_called_count_security_phrase);
+	$reset_called_count_status = preg_replace('/[^-_%0-9a-zA-Z\|]/','',$reset_called_count_status);
+	$reset_called_count_lead_id = preg_replace('/[^0-9]/','',$reset_called_count_lead_id);
+	$reset_called_count_list = preg_replace('/[^0-9\|]/','',$reset_called_count_list);
+	$reset_called_count_count_num = preg_replace('/[^0-9]/','',$reset_called_count_count_num);
+	$reset_called_count_count_op = preg_replace('/[^<>=]/','',$reset_called_count_count_op);
+
+	$reset_called_count_count_op_phrase="";
+	if ( $reset_called_count_count_op == "<" )
+		{
+		$reset_called_count_count_op_phrase= _QXZ("less than")." ";
+		}
+	elseif ( $reset_called_count_count_op == "<=" )
+		{
+		$reset_called_count_count_op_phrase= _QXZ("less than or equal to")." ";
+		}
+	elseif ( $reset_called_count_count_op == ">" )
+		{
+		$reset_called_count_count_op_phrase= _QXZ("greater than")." ";
+		}
+	elseif ( $reset_called_count_count_op == ">=" )
+		{
+		$reset_called_count_count_op_phrase= _QXZ("greater than or equal to")." ";
+		}
+
+	# build the reset_called_count_entry_date operation phrase
+	$reset_called_count_entry_date_op_phrase="";
+	$reset_called_count_entry_operator_a = '>=';   $reset_called_count_entry_operator_b = '<=';
+	if ( $reset_called_count_entry_date_op == "<" )
+		{
+		$reset_called_count_entry_operator_a = '>=';   $reset_called_count_entry_operator_b = '<';
+		$reset_called_count_entry_date_end = $reset_called_count_entry_date;
+		$reset_called_count_entry_date = '0000-00-00 00:00:00';
+		$reset_called_count_entry_date_op_phrase= _QXZ("less than")." $reset_called_count_entry_date_end";
+		}
+	elseif ( $reset_called_count_entry_date_op == "<=" )
+		{
+		$reset_called_count_entry_date_end = $reset_called_count_entry_date;
+		$reset_called_count_entry_date = '0000-00-00 00:00:00';
+		$reset_called_count_entry_date_op_phrase= _QXZ("less than or equal to")." $reset_called_count_entry_date_end";
+		}
+	elseif ( $reset_called_count_entry_date_op == ">" )
+		{
+		$reset_called_count_entry_operator_a = '>';   $reset_called_count_entry_operator_b = '<';
+		$reset_called_count_entry_date_end = '2100-00-00 00:00:00';
+		$reset_called_count_entry_date_op_phrase= _QXZ("greater than")." $reset_called_count_entry_date";
+		}
+	elseif ( $reset_called_count_entry_date_op == ">=" )
+		{
+		$reset_called_count_entry_date_end = '2100-00-00 00:00:00';
+		$reset_called_count_entry_date_op_phrase= _QXZ("greater than or equal to")." $reset_called_count_entry_date";
+		}
+	elseif ( $reset_called_count_entry_date_op == "range" )
+		{
+		$reset_called_count_entry_date_op_phrase= _QXZ("range")." $reset_called_count_entry_date - $reset_called_count_entry_date_end";
+		}
+	elseif ( $reset_called_count_entry_date_op == "=" )
+		{
+		$reset_called_count_entry_date_end = $reset_called_count_entry_date;
+		$reset_called_count_entry_date_op_phrase= _QXZ("equal to")." $reset_called_count_entry_date";
+		}
+
+	# build the reset_called_count_modify_date operation phrase
+	$reset_called_count_modify_date_op_phrase="";
+	$reset_called_count_modify_operator_a = '>=';   $reset_called_count_modify_operator_b = '<=';
+	if ( $reset_called_count_modify_date_op == "<" )
+		{
+		$reset_called_count_modify_operator_a = '>=';   $reset_called_count_modify_operator_b = '<';
+		$reset_called_count_modify_date_end = $reset_called_count_modify_date;
+		$reset_called_count_modify_date = '0000-00-00 00:00:00';
+		$reset_called_count_modify_date_op_phrase= _QXZ("less than")." $reset_called_count_modify_date_end";
+		}
+	elseif ( $reset_called_count_modify_date_op == "<=" )
+		{
+		$reset_called_count_modify_date_end = $reset_called_count_modify_date;
+		$reset_called_count_modify_date = '0000-00-00 00:00:00';
+		$reset_called_count_modify_date_op_phrase= _QXZ("less than or equal to")." $reset_called_count_modify_date_end";
+		}
+	elseif ( $reset_called_count_modify_date_op == ">" )
+		{
+		$reset_called_count_modify_operator_a = '>';   $reset_called_count_modify_operator_b = '<';
+		$reset_called_count_modify_date_end = '2100-00-00 00:00:00';
+		$reset_called_count_modify_date_op_phrase= _QXZ("greater than")." $reset_called_count_modify_date";
+		}
+	elseif ( $reset_called_count_modify_date_op == ">=" )
+		{
+		$reset_called_count_modify_date_end = '2100-00-00 00:00:00';
+		$reset_called_count_modify_date_op_phrase= _QXZ("greater than or equal to")." $reset_called_count_modify_date";
+		}
+	elseif ( $reset_called_count_modify_date_op == "range" )
+		{
+		$reset_called_count_modify_date_op_phrase= _QXZ("range")." $reset_called_count_modify_date - $reset_called_count_modify_date_end";
+		}
+	elseif ( $reset_called_count_modify_date_op == "=" )
+		{
+		$reset_called_count_modify_date_end = $reset_called_count_modify_date;
+		$reset_called_count_modify_date_op_phrase= _QXZ("equal to")." $reset_called_count_modify_date";
+		}
+
+	if (strlen($reset_called_count_entry_date) == 10) {$reset_called_count_entry_date .= " 00:00:00";}
+	if (strlen($reset_called_count_entry_date_end) == 10) {$reset_called_count_entry_date_end .= " 23:59:59";}
+	if (strlen($reset_called_count_modify_date) == 10) {$reset_called_count_modify_date .= " 00:00:00";}
+	if (strlen($reset_called_count_modify_date_end) == 10) {$reset_called_count_modify_date_end .= " 23:59:59";}
+
+	if ($DB)
+		{
+		echo "<p>"._QXZ("enable_reset_called_count_country_code")." = $enable_reset_called_count_country_code | "._QXZ("enable_reset_called_count_vendor_lead_code")." = $enable_reset_called_count_vendor_lead_code | "._QXZ("enable_reset_called_count_source_id")." = $enable_reset_called_count_source_id | "._QXZ("enable_reset_called_count_owner")." = $enable_reset_called_count_owner | "._QXZ("enable_reset_called_count_state")." = $enable_reset_called_count_state | "._QXZ("enable_reset_called_count_entry_date")." = $enable_reset_called_count_entry_date | "._QXZ("enable_reset_called_count_modify_date")." = $enable_reset_called_count_modify_date | "._QXZ("enable_reset_called_count_security_phrase")." = $enable_reset_called_count_security_phrase | "._QXZ("enable_reset_called_count_count")." = $enable_reset_called_count_count | "._QXZ("reset_called_count_country_code")." = $reset_called_count_country_code | "._QXZ("reset_called_count_vendor_lead_code")." = $reset_called_count_vendor_lead_code | "._QXZ("reset_called_count_source_id")." = $reset_called_count_source_id | "._QXZ("reset_called_count_owner")." = $reset_called_count_owner | "._QXZ("reset_called_count_state")." = $reset_called_count_state | "._QXZ("reset_called_count_entry_date")." = $reset_called_count_entry_date | "._QXZ("reset_called_count_entry_date_end")." = $reset_called_count_entry_date_end | "._QXZ("reset_called_count_entry_date_op")." = $reset_called_count_entry_date_op | "._QXZ("reset_called_count_modify_date")." = $reset_called_count_modify_date | "._QXZ("reset_called_count_modify_date_end")." = $reset_called_count_modify_date_end | "._QXZ("reset_called_count_modify_date_op")." = $reset_called_count_modify_date_op | "._QXZ("reset_called_count_security_phrase")." = $reset_called_count_security_phrase | "._QXZ("reset_called_count_list")." = $reset_called_count_list | "._QXZ("reset_called_count_status")." = $reset_called_count_status | "._QXZ("reset_called_count_count_op")." = $reset_called_count_count_op | "._QXZ("reset_called_count_count_num")." = $reset_called_count_count_num | "._QXZ("reset_called_count_lead_id")." = $reset_called_count_lead_id</p>";
+		}
+
+	# make sure the required fields are set
+	if ($reset_called_count_status == '') { missing_required_field('Status'); }
+	if ($reset_called_count_list == '') { missing_required_field('List ID'); }
+
+	# build the sql query's where phrase and the reset called count phrase
+	$sql_where = "";
+	if ($reset_called_count_status != '---ALL---')
+		{$sql_where = $sql_where . " and status IN('".implode("', '", $reset_called_count_status)."') ";}
+	$reset_called_count_parm = "";
+	$reset_called_count_parm = $reset_called_count_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("status is like")." ".implode(" ", $reset_called_count_status)." <br />";
+	if (($enable_reset_called_count_lead_id == "enabled") && ($reset_called_count_lead_id != ''))
+		{
+		if ($reset_called_count_lead_id == '---BLANK---') {$reset_called_count_lead_id = '';}
+		$sql_where = $sql_where . " and lead_id like '$reset_called_count_lead_id' ";
+		$reset_called_count_parm = $reset_called_count_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("lead ID is like")." $reset_called_count_lead_id<br />";
+		if ($reset_called_count_lead_id == '') {$reset_called_count_lead_id = '---BLANK---';}
+		}
+	elseif ($enable_reset_called_count_lead_id == "enabled")
+		{
+		blank_field('Lead ID',true);
+		}
+	if (($enable_reset_called_count_country_code == "enabled") && ($reset_called_count_country_code != ''))
+		{
+		if ($reset_called_count_country_code == '---BLANK---') {$reset_called_count_country_code = '';}
+		$sql_where = $sql_where . " and country_code like \"$reset_called_count_country_code\" ";
+		$reset_called_count_parm = $reset_called_count_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("country code is like")." $reset_called_count_country_code<br />";
+		if ($reset_called_count_country_code == '') {$reset_called_count_country_code = '---BLANK---';}
+		}
+	elseif ($enable_reset_called_count_country_code == "enabled")
+		{
+		blank_field('Country Code',true);
+		}
+	if (($enable_reset_called_count_vendor_lead_code == "enabled") && ($reset_called_count_vendor_lead_code != ''))
+		{
+		if ($reset_called_count_vendor_lead_code == '---BLANK---') {$reset_called_count_vendor_lead_code = '';}
+		$sql_where = $sql_where . " and vendor_lead_code like \"$reset_called_count_vendor_lead_code\" ";
+		$reset_called_count_parm = $reset_called_count_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("vendor lead code is like")." $reset_called_count_vendor_lead_code<br />";
+		if ($reset_called_count_vendor_lead_code == '') {$reset_called_count_vendor_lead_code = '---BLANK---';}
+		}
+	elseif ($enable_reset_called_count_vendor_lead_code == "enabled")
+		{
+		blank_field('Vendor Lead Code',true);
+		}
+	if (($enable_reset_called_count_source_id == "enabled") && ($reset_called_count_source_id != ''))
+		{
+		if ($reset_called_count_source_id == '---BLANK---') {$reset_called_count_source_id = '';}
+		$sql_where = $sql_where . " and source_id like \"$reset_called_count_source_id\" ";
+		$reset_called_count_parm = $reset_called_count_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("source id code is like")." $reset_called_count_source_id<br />";
+		if ($reset_called_count_source_id == '') {$reset_called_count_source_id = '---BLANK---';}
+		}
+	elseif ($enable_reset_called_count_source_id == "enabled")
+		{
+		blank_field('Source ID',true);
+		}
+	if (($enable_reset_called_count_security_phrase == "enabled") && ($reset_called_count_security_phrase != ''))
+		{
+		if ($reset_called_count_security_phrase == '---BLANK---') {$reset_called_count_security_phrase = '';}
+		$sql_where = $sql_where . " and security_phrase like \"$reset_called_count_security_phrase\" ";
+		$reset_called_count_parm = $reset_called_count_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("security phrase is like")." $reset_called_count_security_phrase<br />";
+		if ($reset_called_count_security_phrase == '') {$reset_called_count_security_phrase = '---BLANK---';}
+		}
+	elseif ($enable_reset_called_count_security_phrase == "enabled")
+		{
+		blank_field('Security Phrase',true);
+		}
+	if (($enable_reset_called_count_owner == "enabled") && ($reset_called_count_owner != ''))
+		{
+		if ($reset_called_count_owner == '---BLANK---') {$reset_called_count_owner = '';}
+		$sql_where = $sql_where . " and owner like \"$reset_called_count_owner\" ";
+		$reset_called_count_parm = $reset_called_count_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("owner is like")." $reset_called_count_owner<br />";
+		if ($reset_called_count_owner == '') {$reset_called_count_owner = '---BLANK---';}
+		}
+	elseif ($enable_reset_called_count_owner == "enabled")
+		{
+		blank_field('Owner',true);
+		}
+	if (($enable_reset_called_count_state == "enabled") && ($reset_called_count_state != ''))
+		{
+		if ($reset_called_count_state == '---BLANK---') {$reset_called_count_state = '';}
+		$sql_where = $sql_where . " and state like \"$reset_called_count_state\" ";
+		$reset_called_count_parm = $reset_called_count_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("state is like")." $reset_called_count_state<br />";
+		if ($reset_called_count_state == '') {$reset_called_count_state = '---BLANK---';}
+		}
+	elseif ($enable_reset_called_count_state == "enabled")
+		{
+		blank_field('State',true);
+		}
+	if (($enable_reset_called_count_entry_date == "enabled") && ($reset_called_count_entry_date != ''))
+		{
+		if ($reset_called_count_entry_date == '---BLANK---')
+			{
+			$sql_where = $sql_where . " and entry_date == '' ";
+			$reset_called_count_parm = $reset_called_count_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("entry date is blank")."<br />";
+			}
+		else
+			{
+			$sql_where = $sql_where . " and entry_date $reset_called_count_entry_operator_a '$reset_called_count_entry_date' and entry_date $reset_called_count_entry_operator_b '$reset_called_count_entry_date_end' ";
+			$reset_called_count_parm = $reset_called_count_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("entry date was")." $reset_called_count_entry_date_op_phrase<br />";
+			}
+		}
+	elseif ($enable_reset_called_count_entry_date == "enabled")
+		{
+		blank_field('Entry Date',true);
+		}
+	if (($enable_reset_called_count_modify_date == "enabled") && ($reset_called_count_modify_date != ''))
+		{
+		if ($reset_called_count_modify_date == '---BLANK---')
+			{
+			$sql_where = $sql_where . " and modify_date == '' ";
+			$reset_called_count_parm = $reset_called_count_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("modify date is blank")."<br />";
+			}
+		else
+			{
+			$sql_where = $sql_where . " and modify_date $reset_called_count_modify_operator_a '$reset_called_count_modify_date' and modify_date $reset_called_count_modify_operator_b '$reset_called_count_modify_date_end' ";
+			$reset_called_count_parm = $reset_called_count_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("last modify date was")." $reset_called_count_modify_date_op_phrase<br />";
+			}
+		}
+	elseif ($enable_reset_called_count_modify_date == "enabled")
+		{
+		blank_field('Modify Date',true);
+		}
+	if (($enable_reset_called_count_count == "enabled") && ($reset_called_count_count_op != '') && ($reset_called_count_count_num != ''))
+		{
+		if ($reset_called_count_count_op == '---BLANK---') {$reset_called_count_count_op = '';}
+		if ($reset_called_count_count_num == '---BLANK---') {$reset_called_count_count_num = '';}
+		$sql_where = $sql_where . " and called_count $reset_called_count_count_op $reset_called_count_count_num";
+		$reset_called_count_parm = $reset_called_count_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("called count is")." $reset_called_count_count_op_phrase $reset_called_count_count_num<br />";
+		if ($reset_called_count_count_op == '') {$reset_called_count_count_op = '---BLANK---';}
+		if ($reset_called_count_count_num == '') {$reset_called_count_count_num = '---BLANK---';}
+		}
+	elseif ($enable_reset_called_count_count == "enabled")
+		{
+		blank_field('Move Count',true);
+		}
+
+	# get the number of leads this action will move
+	$reset_called_count_lead_count=0;
+	$reset_called_count_lead_count_stmt = "SELECT count(1) FROM vicidial_list WHERE list_id IN('".implode("','", $reset_called_count_list)."') $sql_where";
+	if ($DB) { echo "|$reset_called_count_lead_count_stmt|\n"; }
+	$reset_called_count_lead_count_rslt = mysql_to_mysqli($reset_called_count_lead_count_stmt, $link);
+	$reset_called_count_lead_count_row = mysqli_fetch_row($reset_called_count_lead_count_rslt);
+	$reset_called_count_lead_count = $reset_called_count_lead_count_row[0];
+
+	echo "<p>"._QXZ("You are about to reset to a called_count of zero -0-").", <B>$reset_called_count_lead_count</B> "._QXZ("leads in list")." ".implode(",", $reset_called_count_list)." "._QXZ("with the following parameters").":<br /><br />$reset_called_count_parm<br />"._QXZ("Please press confirm to continue").".</p>\n";
+	echo "<center><form action=$PHP_SELF method=POST>\n";
+	echo "<input type=hidden name=enable_reset_called_count_lead_id value='$enable_reset_called_count_lead_id'>\n";
+	echo "<input type=hidden name=enable_reset_called_count_country_code value='$enable_reset_called_count_country_code'>\n";
+	echo "<input type=hidden name=enable_reset_called_count_vendor_lead_code value='$enable_reset_called_count_vendor_lead_code'>\n";
+	echo "<input type=hidden name=enable_reset_called_count_source_id value='$enable_reset_called_count_source_id'>\n";
+	echo "<input type=hidden name=enable_reset_called_count_owner value='$enable_reset_called_count_owner'>\n";
+	echo "<input type=hidden name=enable_reset_called_count_state value='$enable_reset_called_count_state'>\n";
+	echo "<input type=hidden name=enable_reset_called_count_entry_date value='$enable_reset_called_count_entry_date'>\n";
+	echo "<input type=hidden name=enable_reset_called_count_modify_date value='$enable_reset_called_count_modify_date'>\n";
+	echo "<input type=hidden name=enable_reset_called_count_security_phrase value='$enable_reset_called_count_security_phrase'>\n";
+	echo "<input type=hidden name=enable_reset_called_count_count value='$enable_reset_called_count_count'>\n";
+	echo "<input type=hidden name=reset_called_count_country_code value=\"$reset_called_count_country_code\">\n";
+	echo "<input type=hidden name=reset_called_count_vendor_lead_code value=\"$reset_called_count_vendor_lead_code\">\n";
+	echo "<input type=hidden name=reset_called_count_source_id value=\"$reset_called_count_source_id\">\n";
+	echo "<input type=hidden name=reset_called_count_owner value=\"$reset_called_count_owner\">\n";
+	echo "<input type=hidden name=reset_called_count_state value=\"$reset_called_count_state\">\n";
+	echo "<input type=hidden name=reset_called_count_entry_date value=\"$reset_called_count_entry_date\">\n";
+	echo "<input type=hidden name=reset_called_count_entry_date_end value=\"$reset_called_count_entry_date_end\">\n";
+	echo "<input type=hidden name=reset_called_count_entry_date_op value=\"$reset_called_count_entry_date_op\">\n";
+	echo "<input type=hidden name=reset_called_count_modify_date value=\"$reset_called_count_modify_date\">\n";
+	echo "<input type=hidden name=reset_called_count_modify_date_end value=\"$reset_called_count_modify_date_end\">\n";
+	echo "<input type=hidden name=reset_called_count_modify_date_op value=\"$reset_called_count_modify_date_op\">\n";
+	echo "<input type=hidden name=reset_called_count_security_phrase value=\"$reset_called_count_security_phrase\">\n";
+	echo "<input type=hidden name=reset_called_count_list value='".implode("|", $reset_called_count_list)."'>\n";
+	echo "<input type=hidden name=reset_called_count_status value=\"".implode("|", $reset_called_count_status)."\">\n";
+	echo "<input type=hidden name=reset_called_count_count_op value=\"$reset_called_count_count_op\">\n";
+	echo "<input type=hidden name=reset_called_count_count_num value=\"$reset_called_count_count_num\">\n";
+	echo "<input type=hidden name=reset_called_count_lead_id value=\"$reset_called_count_lead_id\">\n";
+	echo "<input type=hidden name=DB value='$DB'>\n";
+	echo "<input style='background-color:#$SSbutton_color' type=submit name=confirm_reset_called_count value='"._QXZ("confirm")."'>\n";
+	echo "</form></center>\n";
+	echo "<p><a href='$PHP_SELF$DBlink'>"._QXZ("Click here to start over").".</a></p>\n";
+	echo "</body>\n</html>\n";
+	}
+
+# actually do the reset called count
+if ( ( $confirm_reset_called_count == _QXZ("confirm") ) && ( $modify_leads > 0 ) )
+	{
+	# get the variables
+	$enable_reset_called_count_lead_id="";
+	$enable_reset_called_count_country_code="";
+	$enable_reset_called_count_vendor_lead_code="";
+	$enable_reset_called_count_source_id="";
+	$enable_reset_called_count_owner="";
+	$enable_reset_called_count_state="";
+	$enable_reset_called_count_entry_date="";
+	$enable_reset_called_count_modify_date="";
+	$enable_reset_called_count_security_phrase="";
+	$enable_reset_called_count_count="";
+	$reset_called_count_country_code="";
+	$reset_called_count_vendor_lead_code="";
+	$reset_called_count_source_id="";
+	$reset_called_count_owner="";
+	$reset_called_count_state="";
+	$reset_called_count_entry_date="";
+	$reset_called_count_entry_date_end="";
+	$reset_called_count_entry_date_op="";
+	$reset_called_count_modify_date="";
+	$reset_called_count_modify_date_end="";
+	$reset_called_count_modify_date_op="";
+	$reset_called_count_security_phrase="";
+	$reset_called_count_list="";
+	$reset_called_count_status="";
+	$reset_called_count_count_op="";
+	$reset_called_count_count_num="";
+	$reset_called_count_lead_id="";
+
+	# check the get / post data for the variables
+	if (isset($_GET["enable_reset_called_count_lead_id"])) {$enable_reset_called_count_lead_id=$_GET["enable_reset_called_count_lead_id"];}
+		elseif (isset($_POST["enable_reset_called_count_lead_id"])) {$enable_reset_called_count_lead_id=$_POST["enable_reset_called_count_lead_id"];}
+	if (isset($_GET["enable_reset_called_count_country_code"])) {$enable_reset_called_count_country_code=$_GET["enable_reset_called_count_country_code"];}
+		elseif (isset($_POST["enable_reset_called_count_country_code"])) {$enable_reset_called_count_country_code=$_POST["enable_reset_called_count_country_code"];}
+	if (isset($_GET["enable_reset_called_count_vendor_lead_code"])) {$enable_reset_called_count_vendor_lead_code=$_GET["enable_reset_called_count_vendor_lead_code"];}
+		elseif (isset($_POST["enable_reset_called_count_vendor_lead_code"])) {$enable_reset_called_count_vendor_lead_code=$_POST["enable_reset_called_count_vendor_lead_code"];}
+	if (isset($_GET["enable_reset_called_count_source_id"])) {$enable_reset_called_count_source_id=$_GET["enable_reset_called_count_source_id"];}
+		elseif (isset($_POST["enable_reset_called_count_source_id"])) {$enable_reset_called_count_source_id=$_POST["enable_reset_called_count_source_id"];}
+	if (isset($_GET["enable_reset_called_count_owner"])) {$enable_reset_called_count_owner=$_GET["enable_reset_called_count_owner"];}
+		elseif (isset($_POST["enable_reset_called_count_owner"])) {$enable_reset_called_count_owner=$_POST["enable_reset_called_count_owner"];}
+	if (isset($_GET["enable_reset_called_count_state"])) {$enable_reset_called_count_state=$_GET["enable_reset_called_count_state"];}
+		elseif (isset($_POST["enable_reset_called_count_state"])) {$enable_reset_called_count_state=$_POST["enable_reset_called_count_state"];}
+	if (isset($_GET["enable_reset_called_count_entry_date"])) {$enable_reset_called_count_entry_date=$_GET["enable_reset_called_count_entry_date"];}
+		elseif (isset($_POST["enable_reset_called_count_entry_date"])) {$enable_reset_called_count_entry_date=$_POST["enable_reset_called_count_entry_date"];}
+	if (isset($_GET["enable_reset_called_count_modify_date"])) {$enable_reset_called_count_modify_date=$_GET["enable_reset_called_count_modify_date"];}
+		elseif (isset($_POST["enable_reset_called_count_modify_date"])) {$enable_reset_called_count_modify_date=$_POST["enable_reset_called_count_modify_date"];}
+	if (isset($_GET["enable_reset_called_count_security_phrase"])) {$enable_reset_called_count_security_phrase=$_GET["enable_reset_called_count_security_phrase"];}
+		elseif (isset($_POST["enable_reset_called_count_security_phrase"])) {$enable_reset_called_count_security_phrase=$_POST["enable_reset_called_count_security_phrase"];}
+	if (isset($_GET["enable_reset_called_count_count"])) {$enable_reset_called_count_count=$_GET["enable_reset_called_count_count"];}
+		elseif (isset($_POST["enable_reset_called_count_count"])) {$enable_reset_called_count_count=$_POST["enable_reset_called_count_count"];}
+	if (isset($_GET["reset_called_count_country_code"])) {$reset_called_count_country_code=$_GET["reset_called_count_country_code"];}
+		elseif (isset($_POST["reset_called_count_country_code"])) {$reset_called_count_country_code=$_POST["reset_called_count_country_code"];}
+	if (isset($_GET["reset_called_count_vendor_lead_code"])) {$reset_called_count_vendor_lead_code=$_GET["reset_called_count_vendor_lead_code"];}
+		elseif (isset($_POST["reset_called_count_vendor_lead_code"])) {$reset_called_count_vendor_lead_code=$_POST["reset_called_count_vendor_lead_code"];}
+	if (isset($_GET["reset_called_count_source_id"])) {$reset_called_count_source_id=$_GET["reset_called_count_source_id"];}
+		elseif (isset($_POST["reset_called_count_source_id"])) {$reset_called_count_source_id=$_POST["reset_called_count_source_id"];}
+	if (isset($_GET["reset_called_count_owner"])) {$reset_called_count_owner=$_GET["reset_called_count_owner"];}
+		elseif (isset($_POST["reset_called_count_owner"])) {$reset_called_count_owner=$_POST["reset_called_count_owner"];}
+	if (isset($_GET["reset_called_count_state"])) {$reset_called_count_state=$_GET["reset_called_count_state"];}
+		elseif (isset($_POST["reset_called_count_state"])) {$reset_called_count_state=$_POST["reset_called_count_state"];}
+	if (isset($_GET["reset_called_count_entry_date"])) {$reset_called_count_entry_date=$_GET["reset_called_count_entry_date"];}
+		elseif (isset($_POST["reset_called_count_entry_date"])) {$reset_called_count_entry_date=$_POST["reset_called_count_entry_date"];}
+	if (isset($_GET["reset_called_count_entry_date_end"])) {$reset_called_count_entry_date_end=$_GET["reset_called_count_entry_date_end"];}
+		elseif (isset($_POST["reset_called_count_entry_date_end"])) {$reset_called_count_entry_date_end=$_POST["reset_called_count_entry_date_end"];}
+	if (isset($_GET["reset_called_count_entry_date_op"])) {$reset_called_count_entry_date_op=$_GET["reset_called_count_entry_date_op"];}
+		elseif (isset($_POST["reset_called_count_entry_date_op"])) {$reset_called_count_entry_date_op=$_POST["reset_called_count_entry_date_op"];}
+	if (isset($_GET["reset_called_count_modify_date"])) {$reset_called_count_modify_date=$_GET["reset_called_count_modify_date"];}
+		elseif (isset($_POST["reset_called_count_modify_date"])) {$reset_called_count_modify_date=$_POST["reset_called_count_modify_date"];}
+	if (isset($_GET["reset_called_count_modify_date_end"])) {$reset_called_count_modify_date_end=$_GET["reset_called_count_modify_date_end"];}
+		elseif (isset($_POST["reset_called_count_modify_date_end"])) {$reset_called_count_modify_date_end=$_POST["reset_called_count_modify_date_end"];}
+	if (isset($_GET["reset_called_count_modify_date_op"])) {$reset_called_count_modify_date_op=$_GET["reset_called_count_modify_date_op"];}
+		elseif (isset($_POST["reset_called_count_modify_date_op"])) {$reset_called_count_modify_date_op=$_POST["reset_called_count_modify_date_op"];}
+	if (isset($_GET["reset_called_count_security_phrase"])) {$reset_called_count_security_phrase=$_GET["reset_called_count_security_phrase"];}
+		elseif (isset($_POST["reset_called_count_security_phrase"])) {$reset_called_count_security_phrase=$_POST["reset_called_count_security_phrase"];}
+	if (isset($_GET["reset_called_count_list"])) {$reset_called_count_list=$_GET["reset_called_count_list"];}
+		elseif (isset($_POST["reset_called_count_list"])) {$reset_called_count_list=$_POST["reset_called_count_list"];}
+	if (isset($_GET["reset_called_count_status"])) {$reset_called_count_status=$_GET["reset_called_count_status"];}
+		elseif (isset($_POST["reset_called_count_status"])) {$reset_called_count_status=$_POST["reset_called_count_status"];}
+	if (isset($_GET["reset_called_count_lead_id"])) {$reset_called_count_lead_id=$_GET["reset_called_count_lead_id"];}
+		elseif (isset($_POST["reset_called_count_lead_id"])) {$reset_called_count_lead_id=$_POST["reset_called_count_lead_id"];}
+	if (isset($_GET["reset_called_count_count_op"])) {$reset_called_count_count_op=$_GET["reset_called_count_count_op"];}
+		elseif (isset($_POST["reset_called_count_count_op"])) {$reset_called_count_count_op=$_POST["reset_called_count_count_op"];}
+	if (isset($_GET["reset_called_count_count_num"])) {$reset_called_count_count_num=$_GET["reset_called_count_count_num"];}
+		elseif (isset($_POST["reset_called_count_count_num"])) {$reset_called_count_count_num=$_POST["reset_called_count_count_num"];}
+
+	if ($DB)
+		{
+		echo "<p>"._QXZ("enable_reset_called_count_country_code")." = $enable_reset_called_count_country_code | "._QXZ("enable_reset_called_count_vendor_lead_code")." = $enable_reset_called_count_vendor_lead_code | "._QXZ("enable_reset_called_count_source_id")." = $enable_reset_called_count_source_id | "._QXZ("enable_reset_called_count_owner")." = $enable_reset_called_count_owner | "._QXZ("enable_reset_called_count_state")." = $enable_reset_called_count_state | "._QXZ("enable_reset_called_count_entry_date")." = $enable_reset_called_count_entry_date | "._QXZ("enable_reset_called_count_modify_date")." = $enable_reset_called_count_modify_date | "._QXZ("enable_reset_called_count_security_phrase")." = $enable_reset_called_count_security_phrase | "._QXZ("enable_reset_called_count_count")." = $enable_reset_called_count_count | "._QXZ("reset_called_count_country_code")." = $reset_called_count_country_code | "._QXZ("reset_called_count_vendor_lead_code")." = $reset_called_count_vendor_lead_code | "._QXZ("reset_called_count_source_id")." = $reset_called_count_source_id | "._QXZ("reset_called_count_owner")." = $reset_called_count_owner | "._QXZ("reset_called_count_state")." = $reset_called_count_state | "._QXZ("reset_called_count_entry_date")." = $reset_called_count_entry_date | "._QXZ("reset_called_count_entry_date_end")." = $reset_called_count_entry_date_end | "._QXZ("reset_called_count_entry_date_op")." = $reset_called_count_entry_date_op | "._QXZ("reset_called_count_modify_date")." = $reset_called_count_modify_date | "._QXZ("reset_called_count_modify_date_end")." = $reset_called_count_modify_date_end | "._QXZ("reset_called_count_modify_date_op")." = $reset_called_count_modify_date_op | "._QXZ("reset_called_count_security_phrase")." = $reset_called_count_security_phrase | "._QXZ("reset_called_count_list")." = $reset_called_count_list | "._QXZ("reset_called_count_status")." = $reset_called_count_status | "._QXZ("reset_called_count_count_op")." = $reset_called_count_count_op | "._QXZ("reset_called_count_count_num")." = $reset_called_count_count_num | "._QXZ("reset_called_count_lead_id")." = $reset_called_count_lead_id</p>";
+		}
+
+	# filter out anything bad
+	$enable_reset_called_count_status = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_status);
+	$enable_reset_called_count_country_code = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_country_code);
+	$enable_reset_called_count_vendor_lead_code = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_vendor_lead_code);
+	$enable_reset_called_count_source_id = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_source_id);
+	$enable_reset_called_count_owner = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_owner);
+	$enable_reset_called_count_state = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_state);
+	$enable_reset_called_count_entry_date = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_entry_date);
+	$enable_reset_called_count_modify_date = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_modify_date);
+	$enable_reset_called_count_security_phrase = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_security_phrase);
+	$enable_reset_called_count_count = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_count);
+	$reset_called_count_country_code = preg_replace('/[^-_%a-zA-Z0-9]/','',$reset_called_count_country_code);
+	$reset_called_count_vendor_lead_code = preg_replace('/[^- _\'%0-9a-zA-Z]/','',$reset_called_count_vendor_lead_code);
+	$reset_called_count_source_id = preg_replace('/[^- _\'%0-9a-zA-Z]/','',$reset_called_count_source_id);
+	$reset_called_count_owner = preg_replace('/[^- _\'%0-9a-zA-Z]/','',$reset_called_count_owner);
+	$reset_called_count_state = preg_replace('/[^-_%0-9a-zA-Z]/','',$reset_called_count_state);
+	$reset_called_count_entry_date = preg_replace('/[^- \:_%0-9a-zA-Z]/','',$reset_called_count_entry_date);
+	$reset_called_count_entry_date_end = preg_replace('/[^- \:_%0-9a-zA-Z]/','',$reset_called_count_entry_date_end);
+	$reset_called_count_entry_date_op = preg_replace('/[^<>=_0-9a-zA-Z]/','',$reset_called_count_entry_date_op);
+	$reset_called_count_modify_date = preg_replace('/[^- \:_%0-9a-zA-Z]/','',$reset_called_count_modify_date);
+	$reset_called_count_modify_date_end = preg_replace('/[^- \:_%0-9a-zA-Z]/','',$reset_called_count_modify_date_end);
+	$reset_called_count_modify_date_op = preg_replace('/[^<>=_0-9a-zA-Z]/','',$reset_called_count_modify_date_op);
+	$reset_called_count_security_phrase = preg_replace('/[^- _\'%0-9a-zA-Z]/','',$reset_called_count_security_phrase);
+	$reset_called_count_status = preg_replace('/[^-_%0-9a-zA-Z\|]/','',$reset_called_count_status);
+	$reset_called_count_lead_id = preg_replace('/[^0-9]/','',$reset_called_count_lead_id);
+	$reset_called_count_list = preg_replace('/[^0-9\|]/','',$reset_called_count_list);
+	$reset_called_count_count_num = preg_replace('/[^0-9]/','',$reset_called_count_count_num);
+	$reset_called_count_count_op = preg_replace('/[^<>=]/','',$reset_called_count_count_op);
+
+	$reset_called_count_count_op_phrase="";
+	if ( $reset_called_count_count_op == "<" )
+		{
+		$reset_called_count_count_op_phrase= _QXZ("less than")." ";
+		}
+	elseif ( $reset_called_count_count_op == "<=" )
+		{
+		$reset_called_count_count_op_phrase= _QXZ("less than or equal to")." ";
+		}
+	elseif ( $reset_called_count_count_op == ">" )
+		{
+		$reset_called_count_count_op_phrase= _QXZ("greater than")." ";
+		}
+	elseif ( $reset_called_count_count_op == ">=" )
+		{
+		$reset_called_count_count_op_phrase= _QXZ("greater than or equal to")." ";
+		}
+
+	# build the reset_called_count_entry_date operation phrase
+	$reset_called_count_entry_date_op_phrase="";
+	$reset_called_count_entry_operator_a = '>=';   $reset_called_count_entry_operator_b = '<=';
+	if ( $reset_called_count_entry_date_op == "<" )
+		{
+		$reset_called_count_entry_operator_a = '>=';   $reset_called_count_entry_operator_b = '<';
+		$reset_called_count_entry_date_op_phrase= _QXZ("less than")." $reset_called_count_entry_date_end";
+		}
+	elseif ( $reset_called_count_entry_date_op == "<=" )
+		{
+		$reset_called_count_entry_date_op_phrase= _QXZ("less than or equal to")." $reset_called_count_entry_date_end";
+		}
+	elseif ( $reset_called_count_entry_date_op == ">" )
+		{
+		$reset_called_count_entry_operator_a = '>';   $reset_called_count_entry_operator_b = '<';
+		$reset_called_count_entry_date_op_phrase= _QXZ("greater than")." $reset_called_count_entry_date";
+		}
+	elseif ( $reset_called_count_entry_date_op == ">=" )
+		{
+		$reset_called_count_entry_date_op_phrase= _QXZ("greater than or equal to")." $reset_called_count_entry_date";
+		}
+	elseif ( $reset_called_count_entry_date_op == "range" )
+		{
+		$reset_called_count_entry_date_op_phrase= _QXZ("range")." $reset_called_count_entry_date - $reset_called_count_entry_date_end";
+		}
+	elseif ( $reset_called_count_entry_date_op == "=" )
+		{
+		$reset_called_count_entry_date_op_phrase= _QXZ("equal to")." $reset_called_count_entry_date_end";
+		}
+
+	# build the reset_called_count_modify_date operation phrase
+	$reset_called_count_modify_date_op_phrase="";
+	$reset_called_count_modify_operator_a = '>=';   $reset_called_count_modify_operator_b = '<=';
+	if ( $reset_called_count_modify_date_op == "<" )
+		{
+		$reset_called_count_modify_operator_a = '>=';   $reset_called_count_modify_operator_b = '<';
+		$reset_called_count_modify_date_end = $reset_called_count_modify_date;
+		$reset_called_count_modify_date = '0000-00-00 00:00:00';
+		$reset_called_count_modify_date_op_phrase= _QXZ("less than")." $reset_called_count_modify_date_end";
+		}
+	elseif ( $reset_called_count_modify_date_op == "<=" )
+		{
+		$reset_called_count_modify_date_end = $reset_called_count_modify_date;
+		$reset_called_count_modify_date = '0000-00-00 00:00:00';
+		$reset_called_count_modify_date_op_phrase= _QXZ("less than or equal to")." $reset_called_count_modify_date_end";
+		}
+	elseif ( $reset_called_count_modify_date_op == ">" )
+		{
+		$reset_called_count_modify_operator_a = '>';   $reset_called_count_modify_operator_b = '<';
+		$reset_called_count_modify_date_end = '2100-00-00 00:00:00';
+		$reset_called_count_modify_date_op_phrase= _QXZ("greater than")." $reset_called_count_modify_date";
+		}
+	elseif ( $reset_called_count_modify_date_op == ">=" )
+		{
+		$reset_called_count_modify_date_end = '2100-00-00 00:00:00';
+		$reset_called_count_modify_date_op_phrase= _QXZ("greater than or equal to")." $reset_called_count_modify_date";
+		}
+	elseif ( $reset_called_count_modify_date_op == "range" )
+		{
+		$reset_called_count_modify_date_op_phrase= _QXZ("range")." $reset_called_count_modify_date - $reset_called_count_modify_date_end";
+		}
+	elseif ( $reset_called_count_modify_date_op == "=" )
+		{
+		$reset_called_count_modify_date_end = $reset_called_count_modify_date;
+		$reset_called_count_modify_date_op_phrase= _QXZ("equal to")." $reset_called_count_modify_date";
+		}
+
+	if (strlen($reset_called_count_entry_date) == 10) {$reset_called_count_entry_date .= " 00:00:00";}
+	if (strlen($reset_called_count_entry_date_end) == 10) {$reset_called_count_entry_date_end .= " 23:59:59";}
+	if (strlen($reset_called_count_modify_date) == 10) {$reset_called_count_modify_date .= " 00:00:00";}
+	if (strlen($reset_called_count_modify_date_end) == 10) {$reset_called_count_modify_date_end .= " 23:59:59";}
+
+	if ($DB)
+		{
+		echo "<p>"._QXZ("enable_reset_called_count_country_code")." = $enable_reset_called_count_country_code | "._QXZ("enable_reset_called_count_vendor_lead_code")." = $enable_reset_called_count_vendor_lead_code | "._QXZ("enable_reset_called_count_source_id")." = $enable_reset_called_count_source_id | "._QXZ("enable_reset_called_count_owner")." = $enable_reset_called_count_owner | "._QXZ("enable_reset_called_count_state")." = $enable_reset_called_count_state | "._QXZ("enable_reset_called_count_entry_date")." = $enable_reset_called_count_entry_date | "._QXZ("enable_reset_called_count_modify_date")." = $enable_reset_called_count_modify_date | "._QXZ("enable_reset_called_count_security_phrase")." = $enable_reset_called_count_security_phrase | "._QXZ("enable_reset_called_count_count")." = $enable_reset_called_count_count | "._QXZ("reset_called_count_country_code")." = $reset_called_count_country_code | "._QXZ("reset_called_count_vendor_lead_code")." = $reset_called_count_vendor_lead_code | "._QXZ("reset_called_count_source_id")." = $reset_called_count_source_id | "._QXZ("reset_called_count_owner")." = $reset_called_count_owner | "._QXZ("reset_called_count_state")." = $reset_called_count_state | "._QXZ("reset_called_count_entry_date")." = $reset_called_count_entry_date | "._QXZ("reset_called_count_entry_date_end")." = $reset_called_count_entry_date_end | "._QXZ("reset_called_count_entry_date_op")." = $reset_called_count_entry_date_op | "._QXZ("reset_called_count_modify_date")." = $reset_called_count_modify_date | "._QXZ("reset_called_count_modify_date_end")." = $reset_called_count_modify_date_end | "._QXZ("reset_called_count_modify_date_op")." = $reset_called_count_modify_date_op | "._QXZ("reset_called_count_security_phrase")." = $reset_called_count_security_phrase | "._QXZ("reset_called_count_list")." = $reset_called_count_list | "._QXZ("reset_called_count_status")." = $reset_called_count_status | "._QXZ("reset_called_count_count_op")." = $reset_called_count_count_op | "._QXZ("reset_called_count_count_num")." = $reset_called_count_count_num | "._QXZ("reset_called_count_lead_id")." = $reset_called_count_lead_id</p>";
+		}
+
+	# make sure the required fields are set
+	if ($reset_called_count_status == '') { missing_required_field('Status'); }
+	if ($reset_called_count_list == '') { missing_required_field('List ID'); }
+
+	# build the sql query's where phrase and the reset called count phrase
+	$sql_where = "";
+	$reset_called_count_status_array=explode("|", $reset_called_count_status);
+	if ($reset_called_count_status != '---ALL---')
+		{$sql_where = $sql_where . " and status IN('".implode("', '", $reset_called_count_status_array)."') ";}
+	$reset_called_count_parm = "";
+	$reset_called_count_parm = $reset_called_count_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("status is like")." ".implode(" ", $reset_called_count_status_array)." <br />";
+	if (($enable_reset_called_count_lead_id == "enabled") && ($reset_called_count_lead_id != ''))
+		{
+		if ($reset_called_count_lead_id == '---BLANK---') {$reset_called_count_lead_id = '';}
+		$sql_where = $sql_where . " and lead_id like '$reset_called_count_lead_id' ";
+		$reset_called_count_parm = $reset_called_count_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("lead ID is like")." $reset_called_count_lead_id<br />";
+		if ($reset_called_count_lead_id == '') {$reset_called_count_lead_id = '---BLANK---';}
+		}
+	elseif ($enable_reset_called_count_lead_id == "enabled")
+		{
+		blank_field('Lead ID',true);
+		}
+	if (($enable_reset_called_count_country_code == "enabled") && ($reset_called_count_country_code != ''))
+		{
+		if ($reset_called_count_country_code == '---BLANK---') {$reset_called_count_country_code = '';}
+		$sql_where = $sql_where . " and country_code like \"$reset_called_count_country_code\" ";
+		$reset_called_count_parm = $reset_called_count_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("country code is like")." $reset_called_count_country_code<br />";
+		if ($reset_called_count_country_code == '') {$reset_called_count_country_code = '---BLANK---';}
+		}
+	elseif ($enable_reset_called_count_country_code == "enabled")
+		{
+		blank_field('Country Code',true);
+		}
+	if (($enable_reset_called_count_vendor_lead_code == "enabled") && ($reset_called_count_vendor_lead_code != ''))
+		{
+		if ($reset_called_count_vendor_lead_code == '---BLANK---') {$reset_called_count_vendor_lead_code = '';}
+		$sql_where = $sql_where . " and vendor_lead_code like \"$reset_called_count_vendor_lead_code\" ";
+		$reset_called_count_parm = $reset_called_count_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("vendor lead code is like")." $reset_called_count_vendor_lead_code<br />";
+		if ($reset_called_count_vendor_lead_code == '') {$reset_called_count_vendor_lead_code = '---BLANK---';}
+		}
+	elseif ($enable_reset_called_count_vendor_lead_code == "enabled")
+		{
+		blank_field('Vendor Lead Code',true);
+		}
+	if (($enable_reset_called_count_source_id == "enabled") && ($reset_called_count_source_id != ''))
+		{
+		if ($reset_called_count_source_id == '---BLANK---') {$reset_called_count_source_id = '';}
+		$sql_where = $sql_where . " and source_id like \"$reset_called_count_source_id\" ";
+		$reset_called_count_parm = $reset_called_count_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("source id code is like")." $reset_called_count_source_id<br />";
+		if ($reset_called_count_source_id == '') {$reset_called_count_source_id = '---BLANK---';}
+		}
+	elseif ($enable_reset_called_count_source_id == "enabled")
+		{
+		blank_field('Source ID',true);
+		}
+	if (($enable_reset_called_count_security_phrase == "enabled") && ($reset_called_count_security_phrase != ''))
+		{
+		if ($reset_called_count_security_phrase == '---BLANK---') {$reset_called_count_security_phrase = '';}
+		$sql_where = $sql_where . " and security_phrase like \"$reset_called_count_security_phrase\" ";
+		$reset_called_count_parm = $reset_called_count_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("security phrase is like")." $reset_called_count_security_phrase<br />";
+		if ($reset_called_count_security_phrase == '') {$reset_called_count_security_phrase = '---BLANK---';}
+		}
+	elseif ($enable_reset_called_count_security_phrase == "enabled")
+		{
+		blank_field('Security Phrase',true);
+		}
+	if (($enable_reset_called_count_owner == "enabled") && ($reset_called_count_owner != ''))
+		{
+		if ($reset_called_count_owner == '---BLANK---') {$reset_called_count_owner = '';}
+		$sql_where = $sql_where . " and owner like \"$reset_called_count_owner\" ";
+		$reset_called_count_parm = $reset_called_count_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("owner is like")." $reset_called_count_owner<br />";
+		if ($reset_called_count_owner == '') {$reset_called_count_owner = '---BLANK---';}
+		}
+	elseif ($enable_reset_called_count_owner == "enabled")
+		{
+		blank_field('Owner',true);
+		}
+	if (($enable_reset_called_count_state == "enabled") && ($reset_called_count_state != ''))
+		{
+		if ($reset_called_count_state == '---BLANK---') {$reset_called_count_state = '';}
+		$sql_where = $sql_where . " and state like \"$reset_called_count_state\" ";
+		$reset_called_count_parm = $reset_called_count_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("state is like")." $reset_called_count_state<br />";
+		if ($reset_called_count_state == '') {$reset_called_count_state = '---BLANK---';}
+		}
+	elseif ($enable_reset_called_count_state == "enabled")
+		{
+		blank_field('State',true);
+		}
+	if (($enable_reset_called_count_entry_date == "enabled") && ($reset_called_count_entry_date != ''))
+		{
+		if ($reset_called_count_entry_date == '---BLANK---')
+			{
+			$sql_where = $sql_where . " and entry_date == '' ";
+			$reset_called_count_parm = $reset_called_count_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("entry date is blank")."<br />";
+			}
+		else
+			{
+			$sql_where = $sql_where . " and entry_date $reset_called_count_entry_operator_a '$reset_called_count_entry_date' and entry_date $reset_called_count_entry_operator_b '$reset_called_count_entry_date_end' ";
+			$reset_called_count_parm = $reset_called_count_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("entry date was")." $reset_called_count_entry_date_op_phrase<br />";
+			}
+		}
+	elseif ($enable_reset_called_count_entry_date == "enabled")
+		{
+		blank_field('Entry Date',true);
+		}
+	if (($enable_reset_called_count_modify_date == "enabled") && ($reset_called_count_modify_date != ''))
+		{
+		if ($reset_called_count_modify_date == '---BLANK---')
+			{
+			$sql_where = $sql_where . " and modify_date == '' ";
+			$reset_called_count_parm = $reset_called_count_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("modify date is blank")."<br />";
+			}
+		else
+			{
+			$sql_where = $sql_where . " and modify_date $reset_called_count_modify_operator_a '$reset_called_count_modify_date' and modify_date $reset_called_count_modify_operator_b '$reset_called_count_modify_date_end' ";
+			$reset_called_count_parm = $reset_called_count_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("last modify date was")." $reset_called_count_modify_date_op_phrase<br />";
+			}
+		}
+	elseif ($enable_reset_called_count_modify_date == "enabled")
+		{
+		blank_field('Modify Date',true);
+		}
+	if (($enable_reset_called_count_count == "enabled") && ($reset_called_count_count_op != '') && ($reset_called_count_count_num != ''))
+		{
+		if ($reset_called_count_count_op == '---BLANK---') {$reset_called_count_count_op = '';}
+		if ($reset_called_count_count_num == '---BLANK---') {$reset_called_count_count_num = '';}
+		$sql_where = $sql_where . " and called_count $reset_called_count_count_op $reset_called_count_count_num";
+		$reset_called_count_parm = $reset_called_count_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("called count is")." $reset_called_count_count_op_phrase $reset_called_count_count_num<br />";
+		if ($reset_called_count_count_op == '') {$reset_called_count_count_op = '---BLANK---';}
+		if ($reset_called_count_count_num == '') {$reset_called_count_count_num = '---BLANK---';}
+		}
+	elseif ($enable_reset_called_count_count == "enabled")
+		{
+		blank_field('Move Count',true);
+		}
+
+	$reset_called_count_list_array=explode("|", $reset_called_count_list);
+	$reset_called_count_lead_stmt = "UPDATE vicidial_list SET called_count=0 WHERE list_id IN('".implode("', '", $reset_called_count_list_array)."') $sql_where";
+	if ($DB) { echo "|$reset_called_count_lead_stmt|\n"; }
+	$reset_called_count_lead_rslt = mysql_to_mysqli($reset_called_count_lead_stmt, $link);
+	$reset_called_count_lead_count = mysqli_affected_rows($link);
+
+	$reset_called_count_sentence = "<B>$reset_called_count_lead_count</B> leads reset to a called_count of zero -0- from list $reset_called_count_list with the following parameters:<br /><br />$reset_called_count_parm<br />";
+
+	$SQL_log = "$reset_called_count_lead_stmt|";
+	$SQL_log = preg_replace('/;/', '', $SQL_log);
+	$SQL_log = preg_replace('/\"/', "'", $SQL_log);
+	$admin_log_stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LISTS', event_type='MODIFY', record_id='$reset_called_count_list', event_code='ADMIN RESET CALLED COUNT LEADS', event_sql=\"$SQL_log\", event_notes=\"$reset_called_count_sentence\";";
+	if ($DB) {echo "|$admin_log_stmt|\n";}
+	$admin_log_rslt=mysql_to_mysqli($admin_log_stmt, $link);
+
+	echo "<p>$reset_called_count_sentence</p>";
+	echo "<p><a href='$PHP_SELF$DBlink'>"._QXZ("Click here to start over").".</a></p>\n";
+	}
+##### END reset called count process #####
 
 
 ##### BEGIN callback process #####
@@ -3190,7 +4113,7 @@ if ($callback_submit == _QXZ("switchcallbacks") )
 	$callback_lead_count_row = mysqli_fetch_row($callback_lead_count_rslt);
 	$callback_lead_count = $callback_lead_count_row[0];
 
-		echo "<p>"._QXZ("You are about to switch")." $callback_lead_count "._QXZ("call backs in list")." ".implode(",", $callback_list)." "._QXZ("from USERONLY callbacks to EVERYONE callbacks with these parameters").":<br /><br />$callback_parm <br />"._QXZ("Please press confirm to continue").".</p>\n";
+		echo "<p>"._QXZ("You are about to switch")." <B>$callback_lead_count</B> "._QXZ("call backs in list")." ".implode(",", $callback_list)." "._QXZ("from USERONLY callbacks to EVERYONE callbacks with these parameters").":<br /><br />$callback_parm <br />"._QXZ("Please press confirm to continue").".</p>\n";
 		echo "<center><form action=$PHP_SELF method=POST>\n";
 		echo "<input type=hidden name=enable_callback_entry_date value='$enable_callback_entry_date'>\n";
 		echo "<input type=hidden name=enable_callback_callback_date value='$enable_callback_callback_date'>\n";
@@ -3308,7 +4231,7 @@ if ($confirm_callback == _QXZ("confirm"))
 	$callback_lead_rslt = mysql_to_mysqli($callback_lead_stmt, $link);
 	$callback_lead_count = mysqli_affected_rows($link);
 
-	$callback_sentence = "$callback_lead_count "._QXZ("leads have been set to ANYONE callbacks from list")." $callback_list "._QXZ("with the following parameters").":<br /><br />$callback_parm <br />";
+	$callback_sentence = "<B>$callback_lead_count</B> "._QXZ("leads have been set to ANYONE callbacks from list")." $callback_list "._QXZ("with the following parameters").":<br /><br />$callback_parm <br />";
 
 	$SQL_log = "$callback_lead_stmt|";
 	$SQL_log = preg_replace('/;/', '', $SQL_log);
@@ -3328,8 +4251,8 @@ if ($confirm_callback == _QXZ("confirm"))
 ##### BEGIN main page display #####
 # main page display
 if (
-		($move_submit != _QXZ("move") ) && ($update_submit != _QXZ("update")) && ($delete_submit != _QXZ("delete")) && ($callback_submit != _QXZ("switchcallbacks")) &&
-		($confirm_move != _QXZ("confirm")) && ($confirm_update != _QXZ("confirm")) && ($confirm_delete != _QXZ("confirm")) && ($confirm_callback != _QXZ("confirm"))
+		($move_submit != _QXZ("move") ) && ($update_submit != _QXZ("update")) && ($delete_submit != _QXZ("delete")) && ($reset_called_count_submit != _QXZ("reset called count")) && ($callback_submit != _QXZ("switchcallbacks")) &&
+		($confirm_move != _QXZ("confirm")) && ($confirm_update != _QXZ("confirm")) && ($confirm_delete != _QXZ("confirm")) && ($confirm_reset_called_count != _QXZ("confirm")) && ($confirm_callback != _QXZ("confirm"))
 	)
 	{
 	# figure out which campaigns this user is allowed to work on
@@ -3772,6 +4695,111 @@ if (
 		# END Delete Leads
 		}
 
+	if ( $modify_leads > 0 )
+		{
+		# BEGIN Reset Leads called_count
+		echo "</table></center>\n";
+		echo "<br /><center><table width=$section_width cellspacing=3>\n";
+		echo "<tr bgcolor=#$SSmenu_background><td colspan=2 align=center><font color=white><b>"._QXZ("Reset Leads Called Count to Zero")."</b></font></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("List")."</td><td align=left>\n";
+		echo "<select size=8 name=reset_called_count_list[] id='reset_called_count_list' multiple>\n";
+		# echo "<option value='-'>"._QXZ("Select A List")."</option>\n";
+
+		$i = 0;
+		while ( $i < $allowed_lists_count )
+			{
+			echo "<option value='$list_ary[$i]'>$list_ary[$i] - $list_name_ary[$i] ($list_lead_count_ary[$i] "._QXZ("leads").")</option>\n";
+			$i++;
+			}
+
+		echo "</select></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Status")."</td><td align=left>\n";
+		echo "<select size=8 name=reset_called_count_status[] id='reset_called_count_status' multiple>\n";
+		#echo "<option value='-'>"._QXZ("Select A Status")."</option>\n";
+
+		$i = 0;
+		while ( $i < $status_count )
+			{
+			echo "<option value='$statuses[$i]'>$statuses[$i]</option>\n";
+			$i++;
+			}
+
+		#echo "<option value='---ALL---'>"._QXZ("-- ALL STATUSES --")."</option>\n";
+		echo "</select></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Country Code")."</td></td><td align=left>\n";
+		echo "<input type='checkbox' name='enable_reset_called_count_country_code' id='enable_reset_called_count_country_code' value='enabled'>\n";
+		echo "<input type='text' name='reset_called_count_country_code' id='reset_called_count_country_code' value='' disabled=true>\n";
+		echo "</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Vendor Lead Code")."</td></td><td align=left>\n";
+		echo "<input type='checkbox' name='enable_reset_called_count_vendor_lead_code' id='enable_reset_called_count_vendor_lead_code' value='enabled'>\n";
+		echo "<input type='text' name='reset_called_count_vendor_lead_code' id='reset_called_count_vendor_lead_code' value='' disabled=true>\n";
+		echo "</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Source ID")."</td></td><td align=left>\n";
+		echo "<input type='checkbox' name='enable_reset_called_count_source_id' id='enable_reset_called_count_source_id' value='enabled'>\n";
+		echo "<input type='text' name='reset_called_count_source_id' id='reset_called_count_source_id' value='' disabled=true>\n";
+		echo "</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Owner")."</td></td><td align=left>\n";
+		echo "<input type='checkbox' name='enable_reset_called_count_owner' id='enable_reset_called_count_owner' value='enabled'>\n";
+		echo "<input type='text' name='reset_called_count_owner' id='reset_called_count_owner' value='' disabled=true>\n";
+		echo "</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("State")."</td></td><td align=left>\n";
+		echo "<input type='checkbox' name='enable_reset_called_count_state' id='enable_reset_called_count_state' value='enabled'>\n";
+		echo "<input type='text' name='reset_called_count_state' id='reset_called_count_state' value='' disabled=true>\n";
+		echo "</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Entry Date")."</td></td><td align=left>\n";
+		echo "<input type='checkbox' name='enable_reset_called_count_entry_date' id='enable_reset_called_count_entry_date' value='enabled'>\n";
+		echo "<select size=1 name=reset_called_count_entry_date_op id='reset_called_count_entry_date_op' disabled=true>\n";
+		echo "<option value='<'><</option>\n";
+		echo "<option value='<='><=</option>\n";
+		echo "<option value='>'>></option>\n";
+		echo "<option value='>='>>=</option>\n";
+		echo "<option value='range'>range</option>\n";
+		echo "<option value='=' SELECTED>=</option>\n";
+		echo "</select>\n";
+		echo "<input type='text' name='reset_called_count_entry_date' id='reset_called_count_entry_date' value='' disabled=true length=20 maxlength=19> "._QXZ("to")." <input type='text' name='reset_called_count_entry_date_end' id='reset_called_count_entry_date_end' value='' disabled=true length=20 maxlength=19> <font size=1>(YYYY-MM-DD) "._QXZ("or")." (YYYY-MM-DD HH:MM:SS)</font>\n";
+		echo "</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Modify Date")."</td></td><td align=left>\n";
+		echo "<input type='checkbox' name='enable_reset_called_count_modify_date' id='enable_reset_called_count_modify_date' value='enabled'>\n";
+		echo "<select size=1 name=reset_called_count_modify_date_op id='reset_called_count_modify_date_op' disabled=true>\n";
+		echo "<option value='<'><</option>\n";
+		echo "<option value='<='><=</option>\n";
+		echo "<option value='>'>></option>\n";
+		echo "<option value='>='>>=</option>\n";
+		echo "<option value='range'>range</option>\n";
+		echo "<option value='=' SELECTED>=</option>\n";
+		echo "</select>\n";
+		echo "<input type='text' name='reset_called_count_modify_date' id='reset_called_count_modify_date' value='' disabled=true length=20 maxlength=19> "._QXZ("to")." <input type='text' name='reset_called_count_modify_date_end' id='reset_called_count_modify_date_end' value='' disabled=true length=20 maxlength=19> <font size=1>(YYYY-MM-DD) "._QXZ("or")." (YYYY-MM-DD HH:MM:SS)</font>\n";
+		echo "</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Security Phrase")."</td></td><td align=left>\n";
+		echo "<input type='checkbox' name='enable_reset_called_count_security_phrase' id='enable_reset_called_count_security_phrase' value='enabled'>\n";
+		echo "<input type='text' name='reset_called_count_security_phrase' id='reset_called_count_security_phrase' value='' disabled=true>\n";
+		echo "</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Lead ID")."</td></td><td align=left>\n";
+		echo "<input type='checkbox' name='enable_reset_called_count_lead_id' id='enable_reset_called_count_lead_id' value='enabled'>\n";
+		echo "<input type='text' name='reset_called_count_lead_id' id='reset_called_count_lead_id' value='' disabled=true>\n";
+		echo "</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Called Count")."</td><td align=left>\n";
+		echo "<input type='checkbox' name='enable_reset_called_count_count' id='enable_reset_called_count_count' value='enabled'>\n";
+		echo "<select size=1 name='reset_called_count_count_op' id='reset_called_count_count_op' disabled=true>\n";
+		echo "<option value='<'><</option>\n";
+		echo "<option value='<='><=</option>\n";
+		echo "<option value='>'>></option>\n";
+		echo "<option value='>='>>=</option>\n";
+		echo "<option value='='>=</option>\n";
+		echo "</select>\n";
+		echo "<input type=hidden name=DB value='$DB'>\n";
+		echo "<select size=1 name='reset_called_count_count_num' id='reset_called_count_count_num' disabled=true>\n";
+		$i=0;
+		while ( $i <= $max_count )
+			{
+			echo "<option value='$i'>$i</option>\n";
+			$i++;
+			}
+		echo "</select></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row3_background><td colspan=2 align=center><input style='background-color:#$SSbutton_color' type=submit name=reset_called_count_submit value='"._QXZ("reset called count")."'></td></tr>\n";
+		# END Reset Leads called_count
+		}
+
 	# BEGIN Callback Convert
 	echo "</table></center>\n";
 	echo "<br /><center><table width=$section_width cellspacing=3>\n";
@@ -3808,6 +4836,10 @@ if (
 	}
 
 echo "</td></tr></table>\n";
+echo "<br><center><FONT STYLE=\"font-family:HELVETICA;font-size:9;color:black;\"><br><br><!-- RUNTIME: $RUNtime seconds<BR> -->";
+echo _QXZ("VERSION").": $version &nbsp; &nbsp; ";
+echo _QXZ("BUILD").": $build\n";
+echo "</FONT></center>";
 ##### END main page display #####
 
 

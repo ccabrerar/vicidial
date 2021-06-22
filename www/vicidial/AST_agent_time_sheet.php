@@ -40,6 +40,7 @@ $db_source = 'M';
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["agent"]))				{$agent=$_GET["agent"];}
 	elseif (isset($_POST["agent"]))		{$agent=$_POST["agent"];}
 if (isset($_GET["query_date"]))				{$query_date=$_GET["query_date"];}

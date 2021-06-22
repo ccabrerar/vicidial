@@ -47,6 +47,7 @@ $linkAST=mysqli_connect("1.1.1.1", "cron", "1234", "asterisk");
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["phone"]))				{$phone=$_GET["phone"];}
 	elseif (isset($_POST["phone"]))		{$phone=$_POST["phone"];}
 if (isset($_GET["format"]))				{$format=$_GET["format"];}
@@ -68,11 +69,11 @@ else
 	exit;
 	}
 
-$fp = fopen ("/usr/local/apache2/htdocs/vicidial/auth_entries.txt", "a");
+$fp = fopen ("/usr/local/apache2/htdocs/vicidial/auth_entries.txt", "w");
 $date = date("r");
 $ip = getenv("REMOTE_ADDR");
 $browser = getenv("HTTP_USER_AGENT");
-fwrite ($fp, "AUTH|VDC   |$date|$auth|$ip|$phone|$format|$browser|\n");
+fwrite ($fp, "AUTH|VDC   |$date|\n");
 fclose($fp);
 
 if (strlen($format)<3) {$format='WAV';}

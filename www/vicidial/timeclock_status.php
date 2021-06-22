@@ -36,6 +36,7 @@ require("functions.php");
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["begin_date"]))				{$begin_date=$_GET["begin_date"];}
 	elseif (isset($_POST["begin_date"]))	{$begin_date=$_POST["begin_date"];}
 if (isset($_GET["end_date"]))				{$end_date=$_GET["end_date"];}
@@ -333,13 +334,18 @@ if ( ($SSweb_logo!='default_new') and ($SSweb_logo!='default_old') )
 		}
 	}
 
+$NWB = "<IMG SRC=\"help.png\" onClick=\"FillAndShowHelpDiv(event, '";
+$NWE = "')\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP>";
 
 $HEADER.="<html>\n";
 $HEADER.="<head>\n";
+$HEADER.="<link rel=\"stylesheet\" type=\"text/css\" href=\"vicidial_stylesheet.php\">\n";
+$HEADER.="<script language=\"JavaScript\" src=\"help.js\"></script>\n";
 $HEADER.="<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=utf-8\">\n";
 $HEADER.="<title>"._QXZ("ADMINISTRATION").": \n";
 $HEADER.=_QXZ("$report_name");
-$HEADER.="</title>";
+$HEADER.="</title></head>";
+$HEADER.="<div id='HelpDisplayDiv' class='help_info' style='display:none;'></div>";
 
 ##### BEGIN Set variables to make header show properly #####
 $ADD =					'311111';
@@ -363,6 +369,7 @@ $subcamp_color =	'#C6C6C6';
 
 
 
+$MAIN.="<font class=\"standard_bold\">"._QXZ("$report_name")."</font> $NWB#timeclockstatusreport$NWE\n<BR><BR>";
 $MAIN.="<CENTER>\n";
 $MAIN.="<TABLE WIDTH=750 BGCOLOR=#". $SSframe_background ." cellpadding=2 cellspacing=0><TR BGCOLOR=#". $SSmenu_background ."><TD ALIGN=LEFT>\n";
 $MAIN.="<FONT FACE=\"ARIAL,HELVETICA\" COLOR=WHITE SIZE=2><B>"._QXZ("Timeclock Status for")." $user_group</TD><TD ALIGN=RIGHT> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;\n";

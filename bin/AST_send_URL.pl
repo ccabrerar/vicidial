@@ -8,7 +8,7 @@
 # This script is also used for the Add-Lead-URL feature in In-groups and for
 # QM socket-send as well as from call menus using a settings container.
 #
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 100622-0929 - First Build
@@ -28,6 +28,7 @@
 # 180519-1741 - Added INGROUP_WCU_ON & INGROUP_WCU_OFF functions
 # 180520-2002 - Added ENTER_INGROUP_URL function
 # 180601-0929 - Added full_name and launch_user variable options
+# 210519-2208 - Added DB disconnect and reconnect to save DB connections on long response time URLs
 #
 
 $|++;
@@ -1231,7 +1232,15 @@ if (length($lead_id) > 0)
 
 	my $secW = time();
 
+	# disconnect from the database to free up the DB connection
+	$dbhA->disconnect();
+
+	# request the web URL
 	`$wgetbin --no-check-certificate --output-document=/tmp/ASUBtmpD$US$url_id$US$secX --output-file=/tmp/ASUBtmpF$US$url_id$US$secX $url `;
+
+	# reconnect to the database to log response and response time
+	$dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
+	 or die "Couldn't connect to database: " . DBI->errstr;
 
 	$event_string="$function|$wgetbin --no-check-certificate --output-document=/tmp/ASUBtmpD$US$url_id$US$secX --output-file=/tmp/ASUBtmpF$US$url_id$US$secX $url|";
 	&event_logger;

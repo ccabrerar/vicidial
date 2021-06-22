@@ -633,6 +633,22 @@ OTHER CHANGES:
 	It will define the Hold music played to a customer when the phone user
 	puts them on hold through the phone.
 
+177. Added compatibility with TILTX STIR/SHAKEN Call Shaper pre-carrier call
+	filtering service. Read the TILTX_SHAKEN_API.txt doc for more info.
+
+178. Added In-Group Drop Seconds Override Container, allowing for overriding of
+	the Drop Seconds setting based upon the day of the week and time of day.
+
+179. Added Inbound Manual Dial Agent Forced Ready features allowing for forcing
+	agents in INBOUND_MAN dial method campaigns to be in the READY state
+	(able to take inbound calls) for a set amount of time before they are 
+	able to click on the DIAL NEXT NUMBER button each time. Also allows for 
+	an override setting based upon the day of the week and time of day.
+
+180. Added CORS(Cross-Origin Resource Sharing) support for the VICIdial agent
+	PHP scripts and select admin PHP scripts. see the CORS_SUPPORT.txt doc
+	for more information.
+
 
 
 

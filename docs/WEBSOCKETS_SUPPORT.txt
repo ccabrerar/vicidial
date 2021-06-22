@@ -1,4 +1,4 @@
-WEBSOCKETS DOC			Started: 2018-02-23	Updated: 2021-03-27
+WEBSOCKETS DOC			Started: 2018-02-23	Updated: 2021-05-05
 
 
 
@@ -47,3 +47,4 @@ NOTES:
 - If your network uses a proxy to connect to a server using WebSockets(or other SSE), or you are on an older network, you may have issues with WebSockets that are not a problem with old HTTP polling technologies like AJAX(XMLHttpRequest).
 - WebSockets and other SSE technologies don't offer any easy way of monitoring the time it takes to deliver messages, or in some cases even if the message has been delivered.
 - WebSockets and other SSE technologies tie up persisten connections, which may cause load issues on larger implementations.
+- For information on the events that are sent with the 'agent_events' function, please read the AGENT_EVENTS_PUSH.txt document also in this directory.

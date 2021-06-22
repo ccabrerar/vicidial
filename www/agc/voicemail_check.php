@@ -1,7 +1,7 @@
 <?php
 # voicemail_check.php    version 2.14
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed purely to check whether the voicemail box on the server defined has new and old messages
 # This script depends on the server_ip being sent and also needs to have a valid user/pass from the vicidial_users table
@@ -31,10 +31,11 @@
 # 141216-1902 - Added language settings lookups and user/pass variable standardization
 # 150723-1711 - Added ajax logging
 # 170526-2351 - Added additional variable filtering
+# 210616-2109 - Added optional CORS support, see options.php for details
 #
 
-$version = '2.14-14';
-$build = '170526-2351';
+$version = '2.14-15';
+$build = '210616-2109';
 $php_script = 'voicemail_check.php';
 $SSagent_debug_logging=0;
 $startMS = microtime();
@@ -70,6 +71,12 @@ $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 
+# if options file exists, use the override values for the above variables
+#   see the options-example.php file for more information
+if (file_exists('options.php'))
+	{
+	require_once('options.php');
+	}
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####

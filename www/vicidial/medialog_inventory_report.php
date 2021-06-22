@@ -24,9 +24,9 @@ require("screen_colors.php");
 
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
-$PHP_SELF=$_SERVER['PHP_SELF'];
 $QUERY_STRING=$_SERVER['QUERY_STRING'];
-
+$PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["list_ids"]))				{$list_ids=$_GET["list_ids"];}
 	elseif (isset($_POST["list_ids"]))		{$list_ids=$_POST["list_ids"];}
 if (isset($_GET["override_date"]))				{$override_date=$_GET["override_date"];}

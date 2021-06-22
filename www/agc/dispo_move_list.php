@@ -1,7 +1,7 @@
 <?php
 # dispo_move_list.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to be used in the "Dispo URL" field of a campaign
 # or in-group (although it can also be used in the "No Agent Call URL" field). 
@@ -65,11 +65,12 @@
 # 170402-0906 - Added list_id_trigger option, cleaned up outputs
 # 170526-2310 - Added additional variable filtering
 # 180419-2257 - Added multi_trigger option
+# 210615-1038 - Default security fixes, CVE-2021-28854
+# 210616-2046 - Added optional CORS support, see options.php for details
 #
 
 $api_script = 'movelist';
-
-header ("Content-type: text/html; charset=utf-8");
+$php_script = 'dispo_move_list.php';
 
 require_once("dbconnect_mysqli.php");
 require_once("functions.php");
@@ -81,7 +82,6 @@ $BR = getenv ("HTTP_USER_AGENT");
 
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
-$PHP_SELF=$_SERVER['PHP_SELF'];
 if (isset($_GET["lead_id"]))				{$lead_id=$_GET["lead_id"];}
 	elseif (isset($_POST["lead_id"]))		{$lead_id=$_POST["lead_id"];}
 if (isset($_GET["sale_status"]))			{$sale_status=$_GET["sale_status"];}
@@ -148,6 +148,15 @@ $list_id = preg_replace('/[^_0-9]/', '', $list_id);
 $new_list_id = preg_replace('/[^_0-9]/', '', $new_list_id);
 $list_id_trigger = preg_replace('/[^_0-9]/', '', $list_id_trigger);
 $multi_trigger=preg_replace("/\'|\"|\\\\|;| /","",$multi_trigger);
+
+# if options file exists, use the override values for the above variables
+#   see the options-example.php file for more information
+if (file_exists('options.php'))
+	{
+	require_once('options.php');
+	}
+
+header ("Content-type: text/html; charset=utf-8");
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
@@ -504,7 +513,8 @@ else
 
 if ($log_to_file > 0)
 	{
-	$fp = fopen ("./dispo_move_list.txt", "a");
-	fwrite ($fp, "$NOW_TIME|$k|$lead_id|$dispo|$user|XXXX|$DB|$log_to_file|$talk_time|$called_count|$first_pass_vars|$new_list_id|$original_sale_status|$talk_time_trigger|$exclude_status|$called_count_trigger|$list_id|$list_id_trigger|$multi_trigger|$MESSAGE|\n");
+	$fp = fopen ("./dispo_move_list.txt", "w");
+#	fwrite ($fp, "$NOW_TIME|$k|$lead_id|$dispo|$user|XXXX|$DB|$log_to_file|$talk_time|$called_count|$first_pass_vars|$new_list_id|$original_sale_status|$talk_time_trigger|$exclude_status|$called_count_trigger|$list_id|$list_id_trigger|$multi_trigger|$MESSAGE|\n");
+	fwrite ($fp, "$NOW_TIME|\n");
 	fclose($fp);
 	}

@@ -30,6 +30,7 @@ require("functions.php");
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["old_group"]))			{$old_group=$_GET["old_group"];}
 	elseif (isset($_POST["old_group"]))	{$old_group=$_POST["old_group"];}
 if (isset($_GET["group"]))				{$group=$_GET["group"];}

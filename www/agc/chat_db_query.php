@@ -1,7 +1,7 @@
 <?php
 # chat_db_query.php
 #
-# Copyright (C) 2020  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # Called by vdc_chat_display.php and vicidial_chat_agent.js.  This contains all actions taken by the
 # agent's interface when chatting with customers, other agents, and managers, through 
@@ -24,7 +24,10 @@
 # 170526-2257 - Added additional variable filtering
 # 170528-1028 - Added more variable filtering
 # 201117-2238 - Changes for better compatibility with non-latin data input
+# 210616-2055 - Added optional CORS support, see options.php for details
 #
+
+$php_script = 'chat_db_query.php';
 
 require("dbconnect_mysqli.php");
 require("functions.php");

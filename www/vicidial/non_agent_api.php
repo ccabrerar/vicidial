@@ -176,10 +176,14 @@
 # 210401-1058 - Added 'custom_fields_update' option for update_list function
 # 210402-1102 - Added 'custom_fields_delete' option for update_list function
 # 210406-1047 - Added 'dialable_count' option to list_info function
+# 210517-1850 - Added phone_code as modifiable field in update_lead function
+# 210611-1610 - Added more variables for add_did/update_did functions
+# 210618-1000 - Added CORS support
 #
 
-$version = '2.14-153';
-$build = '210406-1047';
+$version = '2.14-156';
+$build = '210618-1000';
+$php_script='non_agent_api.php';
 $api_url_log = 0;
 
 $startMS = microtime();
@@ -640,6 +644,13 @@ if (isset($_GET["custom_fields_delete"]))			{$custom_fields_delete=$_GET["custom
 	elseif (isset($_POST["custom_fields_delete"]))	{$custom_fields_delete=$_POST["custom_fields_delete"];}
 if (isset($_GET["dialable_count"]))				{$dialable_count=$_GET["dialable_count"];}
 	elseif (isset($_POST["dialable_count"]))	{$dialable_count=$_POST["dialable_count"];}
+if (isset($_GET["call_handle_method"]))				{$call_handle_method=$_GET["call_handle_method"];}
+	elseif (isset($_POST["call_handle_method"]))	{$call_handle_method=$_POST["call_handle_method"];}
+if (isset($_GET["agent_search_method"]))			{$agent_search_method=$_GET["agent_search_method"];}
+	elseif (isset($_POST["agent_search_method"]))	{$agent_search_method=$_POST["agent_search_method"];}
+
+if (file_exists('options.php'))
+	{require('options.php');}
 
 header ("Content-type: text/html; charset=utf-8");
 header ("Cache-Control: no-cache, must-revalidate");  // HTTP/1.1
@@ -918,6 +929,8 @@ $custom_fields_add = preg_replace('/[^_0-9a-zA-Z]/','',$custom_fields_add);
 $custom_fields_update = preg_replace('/[^_0-9a-zA-Z]/','',$custom_fields_update);
 $custom_fields_delete = preg_replace('/[^_0-9a-zA-Z]/','',$custom_fields_delete);
 $dialable_count = preg_replace('/[^_0-9a-zA-Z]/','',$dialable_count);
+$call_handle_method = preg_replace('/[^_0-9a-zA-Z]/','',$call_handle_method);
+$agent_search_method = preg_replace('/[^_0-9a-zA-Z]/','',$agent_search_method);
 
 $USarea = 			substr($phone_number, 0, 3);
 $USprefix = 		substr($phone_number, 3, 3);
@@ -932,6 +945,8 @@ $NOW_TIME = date("Y-m-d H:i:s");
 $CIDdate = date("mdHis");
 $ENTRYdate = date("YmdHis");
 $ip = getenv("REMOTE_ADDR");
+$PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 $query_string = getenv("QUERY_STRING");
 $REQUEST_URI = getenv("REQUEST_URI");
 $POST_URI = '';
@@ -2783,11 +2798,6 @@ if ($function == 'blind_monitor')
 
 
 ### BEGIN optional logging to vicidial_url_log for non-interface URL calls ###
-if (file_exists('options.php'))
-	{
-	require('options.php');
-	}
-
 if ($api_url_log > 0)
 	{
 	$ip = getenv("REMOTE_ADDR");
@@ -7682,7 +7692,13 @@ if ($function == 'add_did')
 					$groupSQL='';
 					$menu_idSQL='';
 					$filter_clean_cid_numberSQL='';
-						
+					$call_handle_methodSQL='';
+					$agent_search_methodSQL='';
+					$list_idSQL='';
+					$entry_list_idSQL='';
+					$campaign_idSQL='';
+					$phone_codeSQL='';
+
 					if (strlen($did_description) > 0)
 						{
 						if ( (strlen($did_description) > 50) or (strlen($did_description) < 6) )
@@ -7863,8 +7879,92 @@ if ($function == 'add_did')
 						else
 							{$filter_clean_cid_numberSQL = " ,filter_clean_cid_number='$filter_clean_cid_number'";}
 						}
+					if (strlen($call_handle_method) > 0)
+						{
+						if ( (strlen($call_handle_method) > 20) or (strlen($call_handle_method) < 3) )
+							{
+							$result = 'ERROR';
+							$result_reason = "add_did CALL HANDLE METHOD MUST BE FROM 3 TO 20 CHARACTERS, THIS IS AN OPTIONAL FIELD";
+							$data = "$call_handle_method";
+							echo "$result: $result_reason: |$user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							exit;
+							}
+						else
+							{$call_handle_methodSQL = " ,call_handle_method='$call_handle_method'";}
+						}
+					if (strlen($agent_search_method) > 0)
+						{
+						if ( (strlen($agent_search_method) > 2) or (strlen($agent_search_method) < 2) )
+							{
+							$result = 'ERROR';
+							$result_reason = "add_did AGENT SEARCH METHOD MUST BE 2 CHARACTERS, THIS IS AN OPTIONAL FIELD";
+							$data = "$agent_search_method";
+							echo "$result: $result_reason: |$user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							exit;
+							}
+						else
+							{$agent_search_methodSQL = " ,agent_search_method='$agent_search_method'";}
+						}
+					if (strlen($list_id) > 0)
+						{
+						if ( (strlen($list_id) > 14) or (strlen($list_id) < 3) )
+							{
+							$result = 'ERROR';
+							$result_reason = "add_did LIST ID MUST BE FROM 3 TO 14 DIGITS, THIS IS AN OPTIONAL FIELD";
+							$data = "$list_id";
+							echo "$result: $result_reason: |$user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							exit;
+							}
+						else
+							{$list_idSQL = " ,list_id='$list_id'";}
+						}
+					if (strlen($entry_list_id) > 0)
+						{
+						if ( (strlen($entry_list_id) > 14) or (strlen($entry_list_id) < 1) )
+							{
+							$result = 'ERROR';
+							$result_reason = "add_did ENTRY LIST ID MUST BE FROM 1 TO 14 DIGITS, THIS IS AN OPTIONAL FIELD";
+							$data = "$entry_list_id";
+							echo "$result: $result_reason: |$user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							exit;
+							}
+						else
+							{$entry_list_idSQL = " ,entry_list_id='$entry_list_id'";}
+						}
+					if (strlen($campaign_id) > 0)
+						{
+						if ( (strlen($campaign_id) > 8) or (strlen($campaign_id) < 1) )
+							{
+							$result = 'ERROR';
+							$result_reason = "add_did CAMPAIGN MUST BE FROM 1 TO 8 CHARACTERS, THIS IS AN OPTIONAL FIELD";
+							$data = "$campaign_id";
+							echo "$result: $result_reason: |$user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							exit;
+							}
+						else
+							{$campaign_idSQL = " ,campaign_id='$campaign_id'";}
+						}
+					if (strlen($phone_code) > 0)
+						{
+						if ( (strlen($phone_code) > 10) or (strlen($phone_code) < 1) )
+							{
+							$result = 'ERROR';
+							$result_reason = "add_did PHONE CODE MUST BE FROM 1 TO 10 CHARACTERS, THIS IS AN OPTIONAL FIELD";
+							$data = "$phone_code";
+							echo "$result: $result_reason: |$user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							exit;
+							}
+						else
+							{$phone_codeSQL = " ,phone_code='$phone_code'";}
+						}
 
-					$addSQL = "$did_patternSQL$did_descriptionSQL$activeSQL$did_routeSQL$record_callSQL$extensionSQL$exten_contextSQL$voicemail_extSQL$phone_extensionSQL$server_ipSQL$groupSQL$menu_idSQL$filter_clean_cid_numberSQL";
+					$addSQL = "$did_patternSQL$did_descriptionSQL$activeSQL$did_routeSQL$record_callSQL$extensionSQL$exten_contextSQL$voicemail_extSQL$phone_extensionSQL$server_ipSQL$groupSQL$menu_idSQL$filter_clean_cid_numberSQL$call_handle_methodSQL$agent_search_methodSQL$list_idSQL$entry_list_idSQL$campaign_idSQL$phone_codeSQL";
 
 					$addSQL = preg_replace("/^ ,/",'',$addSQL);
 					$stmt="INSERT INTO vicidial_inbound_dids SET $addSQL;";
@@ -8001,6 +8101,12 @@ if ($function == 'update_did')
 					$groupSQL='';
 					$menu_idSQL='';
 					$filter_clean_cid_numberSQL='';
+					$call_handle_methodSQL='';
+					$agent_search_methodSQL='';
+					$list_idSQL='';
+					$entry_list_idSQL='';
+					$campaign_idSQL='';
+					$phone_codeSQL='';
 
 					if ($delete_did == 'Y')
 						{
@@ -8217,10 +8323,92 @@ if ($function == 'update_did')
 						else
 							{$filter_clean_cid_numberSQL = " ,filter_clean_cid_number='$filter_clean_cid_number'";}
 						}
+					if (strlen($call_handle_method) > 0)
+						{
+						if ( (strlen($call_handle_method) > 20) or (strlen($call_handle_method) < 3) )
+							{
+							$result = 'ERROR';
+							$result_reason = "update_did CALL HANDLE METHOD MUST BE FROM 3 TO 20 CHARACTERS, THIS IS AN OPTIONAL FIELD";
+							$data = "$call_handle_method";
+							echo "$result: $result_reason: |$user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							exit;
+							}
+						else
+							{$call_handle_methodSQL = " ,call_handle_method='$call_handle_method'";}
+						}
+					if (strlen($agent_search_method) > 0)
+						{
+						if ( (strlen($agent_search_method) > 2) or (strlen($agent_search_method) < 2) )
+							{
+							$result = 'ERROR';
+							$result_reason = "update_did AGENT SEARCH METHOD MUST BE 2 CHARACTERS, THIS IS AN OPTIONAL FIELD";
+							$data = "$agent_search_method";
+							echo "$result: $result_reason: |$user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							exit;
+							}
+						else
+							{$agent_search_methodSQL = " ,agent_search_method='$agent_search_method'";}
+						}
+					if (strlen($list_id) > 0)
+						{
+						if ( (strlen($list_id) > 14) or (strlen($list_id) < 3) )
+							{
+							$result = 'ERROR';
+							$result_reason = "update_did LIST ID MUST BE FROM 3 TO 14 DIGITS, THIS IS AN OPTIONAL FIELD";
+							$data = "$list_id";
+							echo "$result: $result_reason: |$user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							exit;
+							}
+						else
+							{$list_idSQL = " ,list_id='$list_id'";}
+						}
+					if (strlen($entry_list_id) > 0)
+						{
+						if ( (strlen($entry_list_id) > 14) or (strlen($entry_list_id) < 1) )
+							{
+							$result = 'ERROR';
+							$result_reason = "update_did ENTRY LIST ID MUST BE FROM 1 TO 14 DIGITS, THIS IS AN OPTIONAL FIELD";
+							$data = "$entry_list_id";
+							echo "$result: $result_reason: |$user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							exit;
+							}
+						else
+							{$entry_list_idSQL = " ,entry_list_id='$entry_list_id'";}
+						}
+					if (strlen($campaign_id) > 0)
+						{
+						if ( (strlen($campaign_id) > 8) or (strlen($campaign_id) < 1) )
+							{
+							$result = 'ERROR';
+							$result_reason = "update_did CAMPAIGN MUST BE FROM 1 TO 8 CHARACTERS, THIS IS AN OPTIONAL FIELD";
+							$data = "$campaign_id";
+							echo "$result: $result_reason: |$user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							exit;
+							}
+						else
+							{$campaign_idSQL = " ,campaign_id='$campaign_id'";}
+						}
+					if (strlen($phone_code) > 0)
+						{
+						if ( (strlen($phone_code) > 10) or (strlen($phone_code) < 1) )
+							{
+							$result = 'ERROR';
+							$result_reason = "update_did PHONE CODE MUST BE FROM 1 TO 10 CHARACTERS, THIS IS AN OPTIONAL FIELD";
+							$data = "$phone_code";
+							echo "$result: $result_reason: |$user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							exit;
+							}
+						else
+							{$phone_codeSQL = " ,phone_code='$phone_code'";}
+						}
 
-
-					$updateSQL = "$did_descriptionSQL$activeSQL$did_routeSQL$record_callSQL$extensionSQL$exten_contextSQL$voicemail_extSQL$phone_extensionSQL$server_ipSQL$groupSQL$menu_idSQL$filter_clean_cid_numberSQL";
-
+					$updateSQL = "$did_descriptionSQL$activeSQL$did_routeSQL$record_callSQL$extensionSQL$exten_contextSQL$voicemail_extSQL$phone_extensionSQL$server_ipSQL$groupSQL$menu_idSQL$filter_clean_cid_numberSQL$call_handle_methodSQL$agent_search_methodSQL$list_idSQL$entry_list_idSQL$campaign_idSQL$phone_codeSQL";
 
 					if (strlen($updateSQL)< 3)
 						{
@@ -13191,6 +13379,7 @@ if ($function == 'update_lead')
 						if (strlen($rank)>0)				{$VL_update_SQL .= "rank=\"$rank\",";}
 						if (strlen($owner)>0)				{$VL_update_SQL .= "owner=\"$owner\",";}
 						if (strlen($called_count)>0)		{$VL_update_SQL .= "called_count=\"$called_count\",";}
+						if (strlen($phone_code)>0)			{$VL_update_SQL .= "phone_code=\"$phone_code\",";}
 						if ( (strlen($reset_lead) > 0 && $reset_lead == 'Y') )	{$VL_update_SQL .= "called_since_last_reset='N',";}
                         if ( (strlen($update_phone_number)>0 && $update_phone_number=='Y' && strlen($phone_number)>0) ) {$VL_update_SQL .= "phone_number='$phone_number',";}
 						if ( (strlen($entry_list_id)>0) and ($custom_fields!='Y') )	{$VL_update_SQL .= "entry_list_id=\"$entry_list_id\",";}

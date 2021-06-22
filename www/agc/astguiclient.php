@@ -1,7 +1,7 @@
 <?php
 # astguiclient.php - the web-based version of the astGUIclient client application
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # make sure you have added a user to the vicidial_users MySQL table with at least
 # user_level 1 or greater to access this page. Also you need to have the login
@@ -70,10 +70,13 @@
 # 150727-0915 - Added default_language
 # 190111-0902 - Fix for PHP7
 # 200319-1532 - Small fixes for conference tab issues
+# 210615-1037 - Default security fixes, CVE-2021-28854
+# 210616-2053 - Added optional CORS support, see options.php for details
 #
 
-$version = '2.2.6-3';
-$build = '200319-1532';
+$version = '2.2.6-5';
+$build = '210616-2053';
+$php_script = 'astguiclient.php';
 
 require_once("dbconnect_mysqli.php");
 require_once("functions.php");
@@ -112,6 +115,12 @@ $phone_pass=preg_replace("/[^-_0-9a-zA-Z]/","",$phone_pass);
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
 
+# if options file exists, use the override values for the above variables
+#   see the options-example.php file for more information
+if (file_exists('options.php'))
+	{
+	require_once('options.php');
+	}
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
@@ -180,7 +189,7 @@ if (preg_match("/^GOOD/",$auth_message))
 $US='_';
 $CL=':';
 if ($WeBRooTWritablE > 0)
-	{$fp = fopen ("./astguiclient_auth_entries.txt", "a");}
+	{$fp = fopen ("./astguiclient_auth_entries.txt", "w");}
 $date = date("r");
 $ip = getenv("REMOTE_ADDR");
 $browser = getenv("HTTP_USER_AGENT");
@@ -238,7 +247,7 @@ else
 		$LOGfullname=$row[0];
 		if ($WeBRooTWritablE > 0)
 			{
-			fwrite ($fp, "VICIDIAL|GOOD|$date|$user|XXXX|$ip|$browser|$LOGfullname|\n");
+			fwrite ($fp, "VICIDIAL|GOOD|$date|\n");
 			fclose($fp);
 			}
 		}
@@ -246,7 +255,7 @@ else
 		{
 		if ($WeBRooTWritablE > 0)
 			{
-			fwrite ($fp, "VICIDIAL|FAIL|$date|$user|XXXX|$ip|$browser|$LOGfullname|\n");
+			fwrite ($fp, "VICIDIAL|FAIL|$date|\n");
 			fclose($fp);
 			}
 		}

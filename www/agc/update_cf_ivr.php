@@ -1,7 +1,7 @@
 <?php
 # update_cf_ivr.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is part of the API group and any modifications of data are
 # logged to the vicidial_api_log table.
@@ -11,9 +11,12 @@
 # CHANGES
 # 150814-1441 - First Build
 # 170526-2319 - Added additional variable filtering
+# 210615-1030 - Default security fixes, CVE-2021-28854
+# 210616-2041 - Added optional CORS support, see options.php for details
 #
 
 $api_script = 'update_cf_ivr';
+$php_script = 'update_cf_ivr.php';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -27,7 +30,6 @@ $BR = getenv ("HTTP_USER_AGENT");
 
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
-$PHP_SELF=$_SERVER['PHP_SELF'];
 if (isset($_GET["caller_id"]))				{$caller_id=$_GET["caller_id"];}
 	elseif (isset($_POST["caller_id"]))		{$caller_id=$_POST["caller_id"];}
 if (isset($_GET["lead_id"]))				{$lead_id=$_GET["lead_id"];}
@@ -98,6 +100,13 @@ if ($qm_conf_ct > 0)
 if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
+	}
+
+# if options file exists, use the override values for the above variables
+#   see the options-example.php file for more information
+if (file_exists('options.php'))
+	{
+	require_once('options.php');
 	}
 
 if ($DB>0) {echo "$lead_id|$caller_id|$list_id|$field|$value|$user|$DB|$log_to_file|\n";}
@@ -192,7 +201,7 @@ else
 
 if ($log_to_file > 0)
 	{
-	$fp = fopen ("./update_cf.txt", "a");
-	fwrite ($fp, "$NOW_TIME|$k|$lead_id|$caller_id|$list_id|$field|$value|$user|XXXX|$DB|$log_to_file|$MESSAGE|\n");
+	$fp = fopen ("./update_cf.txt", "w");
+#	fwrite ($fp, "$NOW_TIME|$k|$lead_id|$caller_id|$list_id|$field|$value|$user|XXXX|$DB|$log_to_file|$MESSAGE|\n");
 	fclose($fp);
 	}

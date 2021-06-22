@@ -69,6 +69,7 @@ require("functions.php");
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["print_calls"]))			{$print_calls=$_GET["print_calls"];}
 	elseif (isset($_POST["print_calls"]))	{$print_calls=$_POST["print_calls"];}
 if (isset($_GET["outbound_rate"]))			{$outbound_rate=$_GET["outbound_rate"];}

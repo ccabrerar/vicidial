@@ -24,6 +24,7 @@ require("functions.php");
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["output_codes_to_display"]))			{$output_codes_to_display=$_GET["output_codes_to_display"];}
 	elseif (isset($_POST["output_codes_to_display"]))	{$output_codes_to_display=$_POST["output_codes_to_display"];}
 if (isset($_GET["show_history"]))			{$show_history=$_GET["show_history"];}

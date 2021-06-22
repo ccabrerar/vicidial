@@ -10,7 +10,7 @@
 #
 # This program only needs to be run by one server
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 60711-0945 - Changed to DBI by Marin Blu
@@ -45,6 +45,7 @@
 # 200422-1621 - Added optional check for duplicate vicidial_agent_log entries
 # 200606-1802 - Added optional queue_log cleanup for multiple PAUSEREASON records in the same PAUSE session
 # 201106-2146 - Added EXITEMPTY verb for queue_log cleanup section
+# 210523-2321 - Added optional check for qa_data duplicates, -qm-qa-duplicate-check
 #
 
 # constants
@@ -79,12 +80,13 @@ if (length($ARGV[0])>1)
 		print "  [-only-check-agent-login-lags] = will only fix queue_log missing PAUSEREASON records\n";
 		print "  [-only-qm-live-call-check] = will only check the queue_log calls that report as live, in ViciDial\n";
 		print "  [-qm-pausereason-check] = will check/fix the queue_log for multiple PAUSEREASON entries in same pause session\n";
+		print "  [-qm-qa-duplicate-check] = will check/fix the qa_data table for duplicates\n";
 		print "  [-only-fix-old-lagged] = will go through old lagged entries and add a new entry after\n";
 		print "  [-only-dedupe-vicidial-log] = will look for duplicate vicidial_log and extended entries\n";
 		print "  [-only-check-vicidial-log-agent] = will check for missing agent log entries\n";
 		print "  [-only-hold-cleanup] = will look for hold entries and correct agent log wait/talk times\n";
 		print "  [-run-check] = concurrency check, die if another instance is running\n";
-		print "  [-q] = quiet, no output\n";
+		print "  [-quiet] = quiet, no output\n";
 		print "  [-test] = test\n";
 		print "  [-debug] = verbose debug messages\n";
 		print "  [-debugX] = Extra-verbose debug messages\n\n";
@@ -92,7 +94,7 @@ if (length($ARGV[0])>1)
 		}
 	else
 		{
-		if ($args =~ /-q/i)
+		if ($args =~ /-quiet/i)
 			{
 			$Q=1; # quiet
 			}
@@ -132,7 +134,12 @@ if (length($ARGV[0])>1)
 			{
 			$qm_pausereason_check=1;
 			if ($Q < 1) {print "\n----- QM PAUSEREASON CHECK -----\n\n";}
-			}	
+			}
+		if ($args =~ /-qm-qa-duplicate-check/i)
+			{
+			$qm_qa_duplicate_check=1;
+			if ($Q < 1) {print "\n----- QM QA DUPLICATE CHECK -----\n\n";}
+			}
 		if ($args =~ /-only-dedupe-vicidial-log/i)
 			{
 			$vl_dup_check=1;
@@ -975,6 +982,55 @@ if ($enable_queuemetrics_logging > 0)
 		@agent=@MT;
 
 		if ($DB) {print "PAUSEREASON cleanup done, records deleted: $PRdeleted ($PRsecondchoice) \n";}
+		}
+
+	if ($qm_qa_duplicate_check > 0) 
+		{
+		$QAdeleted=0;
+		##############################################################
+		##### grab top 1000 qa_data records ordered by duplicates first
+		$stmtB = "SELECT count(*) as tally,call_id,sys_dt_creazione,sys_user_creazione FROM qa_data group by call_id,sys_dt_creazione,sys_dt_creazione order by tally desc limit 1000;";
+		$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
+		$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
+		$P_qa_records=$sthB->rows;
+		if ($DB) {print "TOTAL QA duplicate check Records: $P_qa_records|$stmtB|\n";}
+		$h=0;   $qa_dup_ct=0;
+		while ($P_qa_records > $h)
+			{
+			@aryB = $sthB->fetchrow_array;
+			if ($aryB[0] > 1) 
+				{
+				$call_id[$qa_dup_ct] =	$aryB[1];
+				$qa_date[$qa_dup_ct] =	$aryB[2];
+				$agent[$qa_dup_ct] =	$aryB[3];
+				$qa_dup_ct++;
+				}
+			$h++;
+			}
+		$sthB->finish();
+
+		$h=0;
+		while ($qa_dup_ct > $h)
+			{
+			##### find the most recent qa_data duplicate record and delete it
+			$stmtB = "DELETE FROM qa_data where call_id='$call_id[$h]' and sys_dt_creazione='$qa_date[$h]' and sys_user_creazione='$agent[$h]' order by qadata_id desc limit 1;";
+
+			if ($TEST < 1)
+				{$Baffected_rows = $dbhB->do($stmtB);}
+			if ($DB) {print "     extra qa_data record deleted: $Baffected_rows|$stmtB|\n";}
+			$QAdeleted++;
+
+			$event_string = "extra qa_data record deleted: $Baffected_rows|$h|$call_id[$h]|$qa_date[$h]|$agent[$h]|";
+			&event_logger;
+
+			$h++;
+			}
+
+		@call_id=@MT;
+		@qa_date=@MT;
+		@agent=@MT;
+
+		if ($DB) {print "QA DUPLICATE check done, records deleted: $QAdeleted \n";}
 		}
 
 	if ($DB) {print " - Checking queue_log in-queue calls in ViciDial\n";}

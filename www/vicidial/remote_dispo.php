@@ -25,6 +25,7 @@ require("functions.php");
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["address1"]))				{$address1=$_GET["address1"];}
 	elseif (isset($_POST["address1"]))		{$address1=$_POST["address1"];}
 if (isset($_GET["address2"]))				{$address2=$_GET["address2"];}

@@ -43,6 +43,7 @@ require("functions.php");
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["query_date"]))				{$query_date=$_GET["query_date"];}
 	elseif (isset($_POST["query_date"]))	{$query_date=$_POST["query_date"];}
 if (isset($_GET["end_date"]))				{$end_date=$_GET["end_date"];}
@@ -371,6 +372,8 @@ if ( ($SSweb_logo!='default_new') and ($SSweb_logo!='default_old') )
 		}
 	}
 
+$NWB = "<IMG SRC=\"help.png\" onClick=\"FillAndShowHelpDiv(event, '";
+$NWE = "')\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP>";
 
 ##### START HTML #####
 
@@ -408,6 +411,8 @@ $HEADER.="-->\n";
 $HEADER.="</style>\n";
 $HEADER.="<script language=\"JavaScript\" src=\"calendar_db.js\"></script>\n";
 $HEADER.="<link rel=\"stylesheet\" href=\"calendar.css\">\n";
+$HEADER.="<link rel=\"stylesheet\" type=\"text/css\" href=\"vicidial_stylesheet.php\">\n";
+$HEADER.="<script language=\"JavaScript\" src=\"help.js\"></script>\n";
 $HEADER.="<link rel=\"stylesheet\" href=\"horizontalbargraph.css\">\n";
 require("chart_button.php");
 $HEADER.="<script src='chart/Chart.js'></script>\n"; 
@@ -418,6 +423,7 @@ $HEADER.="<TITLE>\n";
 
 $HEADER.= _QXZ("$report_name");
 $HEADER.="</TITLE>\n";
+$HEADER.="<div id='HelpDisplayDiv' class='help_info' style='display:none;'></div>";
 
 ##### BEGIN Set variables to make header show properly #####
 $ADD =					'311111';
@@ -469,10 +475,11 @@ if ($DB > 0)
 	$MAIN.="<BR>\n";
 	}
 
+$MAIN.="<font class=\"select_bold\">"._QXZ("$report_name")."</font> $NWB#usertimeclockreport$NWE\n<BR><BR>";
 $MAIN.="<CENTER>\n";
 $MAIN.="<FORM ACTION=\"$PHP_SELF\" METHOD=GET name=vicidial_report id=vicidial_report>\n";
 $MAIN.="<INPUT TYPE=HIDDEN NAME=DB VALUE=\"$DB\">";
-$MAIN.="<TABLE BORDER=0 CELLSPACING=6><TR><TD ALIGN=LEFT VALIGN=TOP>\n";
+$MAIN.="<TABLE BORDER=0 CELLSPACING=4><TR><TD ALIGN=LEFT VALIGN=TOP nowrap>\n";
 
 $MAIN.="<font class=\"select_bold\"><B>"._QXZ("Date Range").":</B></font><BR><CENTER>\n";
 $MAIN.="<INPUT TYPE=TEXT NAME=query_date SIZE=10 MAXLENGTH=10 VALUE=\"$query_date\">";
@@ -502,7 +509,7 @@ $MAIN.="o_cal.a_tpl.yearscroll = false;\n";
 $MAIN.="// o_cal.a_tpl.weekstart = 1; // Monday week start\n";
 $MAIN.="</script>\n";
 
-$MAIN.="</TD><TD ALIGN=LEFT VALIGN=TOP>\n";
+$MAIN.="</TD><TD ALIGN=LEFT VALIGN=TOP nowrap>\n";
 $MAIN.="<font class=\"select_bold\"><B>"._QXZ("User Groups").":</B></font><BR><CENTER>\n";
 $MAIN.="<SELECT SIZE=5 NAME=user_group[] multiple>\n";
 	$o=0;
@@ -516,7 +523,7 @@ $MAIN.="<SELECT SIZE=5 NAME=user_group[] multiple>\n";
 	}
 $MAIN.="</SELECT>\n";
 
-$MAIN.="</TD></TD><TD ALIGN=LEFT VALIGN=TOP><font class=\"select_bold\">";
+$MAIN.="</TD></TD><TD ALIGN=LEFT VALIGN=TOP nowrap><font class=\"select_bold\">";
 $MAIN.=_QXZ("Display as").":<BR>";
 $MAIN.="<select name='report_display_type'>";
 if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>"._QXZ("$report_display_type")."</option>";}
@@ -544,8 +551,8 @@ $MAIN.="<INPUT TYPE=text NAME=user SIZE=7 MAXLENGTH=20 VALUE=\"$user\">\n";
 
 $MAIN.="<BR><BR><INPUT TYPE=SUBMIT NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'\n";
 $MAIN.="</TD></TD><TD ALIGN=LEFT VALIGN=TOP>\n";
-$MAIN.="</TD><TD ALIGN=CENTER VALIGN=TOP ROWSPAN=3>\n";	
-$MAIN.="<FONT class=\"select_bold\" COLOR=BLACK SIZE=2> &nbsp; &nbsp; <a href=\"$PHP_SELF?DB=$DB$user_groupQS&query_date=$query_date&end_date=$end_date&order=$order&user=$user&SUBMIT=$SUBMIT&file_download=1\">"._QXZ("DOWNLOAD")."</a><FONT class=\"select_bold\" COLOR=BLACK SIZE=2> &nbsp; | &nbsp; <a href=\"./admin.php?ADD=999999\">"._QXZ("REPORTS")."</a> </FONT>\n";
+$MAIN.="</TD><TD ALIGN=CENTER VALIGN=TOP ROWSPAN=3 nowrap>\n";	
+$MAIN.="<FONT class=\"standard\" COLOR=BLACK SIZE=2> &nbsp; &nbsp; <a href=\"$PHP_SELF?DB=$DB$user_groupQS&query_date=$query_date&end_date=$end_date&order=$order&user=$user&SUBMIT=$SUBMIT&file_download=1\">"._QXZ("DOWNLOAD")."</a><FONT class=\"standard\" COLOR=BLACK SIZE=2> &nbsp; | &nbsp; <a href=\"./admin.php?ADD=999999\">"._QXZ("REPORTS")."</a> </FONT>\n";
 
 $MAIN.="</TD></TR></TABLE>\n";
 $MAIN.="</FORM>\n\n";

@@ -1,7 +1,7 @@
 <?php
 # get2post.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to take a url as part of the query string and convert 
 # it to a POST HTTP request and log to the url log table. uniqueid is required!
@@ -22,10 +22,11 @@
 # 170324-1218 - Added headers options
 # 170418-1257 - Added ability to use some special characters in headers
 # 170531-0925 - Added ability to accept POST query string
+# 210615-1042 - Default security fixes, CVE-2021-28854
 #
 
-$version = '2.14-4';
-$build = '170531-0925';
+$version = '2.14-5';
+$build = '210615-1042';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -207,8 +208,9 @@ if (strlen($resp) > 0)
 
 if ($webroot_writable > 0)
 	{
-	$fp = fopen ("./get2post.txt", "a");
-	fwrite ($fp, "$output|$query_string\n");
+	$fp = fopen ("./get2post.txt", "w");
+#	fwrite ($fp, "$output|$query_string\n");
+	fwrite ($fp, "$NOW_TIME|\n");
 	fclose($fp);
 	}
 

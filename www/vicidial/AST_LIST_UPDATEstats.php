@@ -28,6 +28,7 @@ require("functions.php");
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["query_date"]))				{$query_date=$_GET["query_date"];}
 	elseif (isset($_POST["query_date"]))	{$query_date=$_POST["query_date"];}
 if (isset($_GET["end_date"]))				{$end_date=$_GET["end_date"];}
@@ -223,6 +224,8 @@ $STARTtime = date("U");
 if (!isset($query_date)) {$query_date = "$NOW_DATE 00:00:00";}
 if (!isset($end_date)) {$end_date = "$NOW_DATE 23:59:59";}
 
+$NWB = "<IMG SRC=\"help.png\" onClick=\"FillAndShowHelpDiv(event, '";
+$NWE = "')\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP>";
 
 ?>
 
@@ -238,7 +241,10 @@ if (!isset($end_date)) {$end_date = "$NOW_DATE 23:59:59";}
 
 <?php 
 echo "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=utf-8\">\n";
+echo "<link rel=\"stylesheet\" type=\"text/css\" href=\"vicidial_stylesheet.php\">\n";
+echo "<script language=\"JavaScript\" src=\"help.js\"></script>\n";
 echo "<TITLE>"._QXZ("$report_name")."</TITLE></HEAD><BODY BGCOLOR=WHITE marginheight=0 marginwidth=0 leftmargin=0 topmargin=0>\n";
+echo "<div id='HelpDisplayDiv' class='help_info' style='display:none;'></div>";
 
 	$short_header=1;
 
@@ -251,6 +257,7 @@ if ($DB > 0)
 	echo "<BR>\n";
 	}
 
+echo "<b>"._QXZ("$report_name")."</b> $NWB#LISTUPDATE_stats$NWE\n";
 echo "<TABLE CELLPADDING=4 CELLSPACING=0><TR><TD>";
 
 echo "<FORM ACTION=\"$PHP_SELF\" METHOD=GET>\n";

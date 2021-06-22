@@ -87,6 +87,7 @@
 # 191001-1509 - Small fix for monitoring issue
 # 200318-1054 - Added code for OpenSIPs CallerIDname
 # 210314-1015 - Added enhanced_disconnect_logging=2 option
+# 210606-1007 - Added TILTX features for pre-carrier call filtering
 #
 
 # defaults for PreFork
@@ -1030,7 +1031,7 @@ sub process_request
 						### END - CPD Look for result for B/DC calls
 						##############################################################
 						}
-					if ( ($PRI =~ /^PRI$/) && ($callerid =~ /\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/) && ( ( ($dialstatus =~ /BUSY/) || ( ($dialstatus =~ /CHANUNAVAIL/) && ($hangup_cause =~ /^1$|^28$/) ) || ( ($enhanced_disconnect_logging > 0) && ( ( ($dialstatus =~ /CONGESTION/) && ($hangup_cause =~ /^1$|^19$|^21$|^34$|^38$|^102$/) ) || ( ($dialstatus =~ /CHANUNAVAIL/) && ($hangup_cause =~ /^18$/) ) ) )  || ($CPDfound > 0) && ($callerid !~ /^S\d\d\d\d\d\d\d\d\d\d\d\d/) ) ) )
+					if ( ($PRI =~ /^PRI$/) && ($callerid =~ /\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/) && ( ( ($dialstatus =~ /BUSY/) || ( ($dialstatus =~ /CHANUNAVAIL/) && ($hangup_cause =~ /^1$|^28$/) ) || ( ($enhanced_disconnect_logging > 0) && ( ( ($dialstatus =~ /CONGESTION/) && ($hangup_cause =~ /^1$|^19$|^21$|^34$|^38$|^102$/) ) || ( ($dialstatus =~ /CHANUNAVAIL/) && ($hangup_cause =~ /^18$/) ) || ($dialstatus =~ /DNC|DISCONNECT/) ) )  || ($CPDfound > 0) && ($callerid !~ /^S\d\d\d\d\d\d\d\d\d\d\d\d/) ) ) )
 						{
 						if ($CPDfound < 1) 
 							{
@@ -1043,6 +1044,8 @@ sub process_request
 									if ($dialstatus =~ /CHANUNAVAIL/ && $hangup_cause =~/^18/) {$VDL_status = 'ADCT'; $VDAC_status = 'DISCONNECT';}
 									if ($dialstatus =~ /CONGESTION/ && $hangup_cause =~ /^1$/) {$VDL_status = 'ADC'; $VDAC_status = 'DISCONNECT';}
 									if (($dialstatus =~ /CONGESTION/ && $hangup_cause =~ /^21$|^34$|^38$|^102$/) || ($dialstatus =~ /BUSY/ && $hangup_cause =~ /^19$/)) {$VDL_status = 'ADCT'; $VDAC_status = 'DISCONNECT';}
+									if ($dialstatus =~ /DISCONNECT/) {$VDL_status = 'ADCCAR'; $VDAC_status = 'ADCCAR';} # pre-carrier disconnect filter
+									if ($dialstatus =~ /DNC/) {$VDL_status = 'DNCCAR'; $VDAC_status = 'DNCCAR';} # pre-carrier DNC filter
 									}
 								}
 							else
@@ -1053,6 +1056,8 @@ sub process_request
 									{
 									if ($dialstatus =~ /CONGESTION/ && $hangup_cause =~ /^1$/) {$VDL_status = 'ADC'; $VDAC_status = 'DISCONNECT';}
 									if ($dialstatus =~ /CONGESTION/ && $hangup_cause =~ /^19$|^21$|^34$|^38$/) {$VDL_status = 'ADCT'; $VDAC_status = 'DISCONNECT';}
+									if ($dialstatus =~ /DISCONNECT/) {$VDL_status = 'ADCCAR'; $VDAC_status = 'ADCCAR';} # pre-carrier disconnect filter
+									if ($dialstatus =~ /DNC/) {$VDL_status = 'DNCCAR'; $VDAC_status = 'DNCCAR';} # pre-carrier DNC filter
 									}
 								}
 							}

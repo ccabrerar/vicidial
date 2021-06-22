@@ -1,7 +1,7 @@
 <?php
 # vdc_script_display.php
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed display the contents of the SCRIPT tab in the agent interface
 #
@@ -42,10 +42,12 @@
 # 191013-2145 - Fixes for PHP7
 # 191031-1158 - Added Script2 feature
 # 201117-2107 - Changes for better compatibility with non-latin data input
+# 210616-2100 - Added optional CORS support, see options.php for details
 #
 
-$version = '2.14-36';
-$build = '201117-2107';
+$version = '2.14-37';
+$build = '210616-2100';
+$php_script = 'vdc_script_display.php';
 
 require_once("dbconnect_mysqli.php");
 require_once("functions.php");
@@ -264,6 +266,12 @@ if (isset($_GET["LOGINvarFIVE"]))			{$LOGINvarFIVE=$_GET["LOGINvarFIVE"];}
 if (isset($_GET["script_span"]))			{$script_span=$_GET["script_span"];}
 	elseif (isset($_POST["script_span"]))	{$script_span=$_POST["script_span"];}
 
+# if options file exists, use the override values for the above variables
+#   see the options-example.php file for more information
+if (file_exists('options.php'))
+	{
+	require_once('options.php');
+	}
 
 header ("Content-type: text/html; charset=utf-8");
 header ("Cache-Control: no-cache, must-revalidate");  // HTTP/1.1

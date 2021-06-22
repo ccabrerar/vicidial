@@ -1,7 +1,7 @@
 <?php
 # agc_agent_manager_chat_interface.php
 #
-# Copyright (C) 2020  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This page is for agents to chat with managers via the agent interface.
 #
@@ -16,10 +16,12 @@
 # 161221-0801 - Added color-coding for users in internal chat sessions
 # 180927-0624 - Fix for missing translationm issue #1125
 # 201117-2239 - Changes for better compatibility with non-latin data input
+# 210616-2056 - Added optional CORS support, see options.php for details
 #
 
-$admin_version = '2.14-10';
-$build = '201117-2239';
+$admin_version = '2.14-11';
+$build = '210616-2056';
+$php_script = 'agc_agent_manager_chat_interface.php';
 
 $sh="managerchats";
 

@@ -1,7 +1,7 @@
 <?php 
 # AST_VICIDIAL_hopperlist.php
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -28,6 +28,7 @@
 # 180310-2250 - Added optional source_id display
 # 190716-2119 - Added rank
 # 201111-1435 - Added Campaign Drop-Run load
+# 210514-1615 - Added owner to DB=1 output
 #
 
 $startMS = microtime();
@@ -40,6 +41,7 @@ require("functions.php");
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["DB"]))					{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))		{$DB=$_POST["DB"];}
 if (isset($_GET["group"]))				{$group=$_GET["group"];}
@@ -348,21 +350,29 @@ else
 	echo "\n";
 	echo "---------- "._QXZ("LEADS IN HOPPER")."\n";
 	echo "+------+--------+-----------+------------+-------------+---------+-------+--------+-------+--------+--------+-------+-------+----------------------$SIDhead+----------+-----------+\n";
-	echo "|"._QXZ("ORDER",5)." |"._QXZ("PRIORITY",8)."| "._QXZ("LEAD ID",9)." | "._QXZ("LIST ID",10)." | "._QXZ("PHONE NUM",11)." | "._QXZ("PH CODE",7)." | "._QXZ("STATE",5)." | "._QXZ("STATUS",6)." | "._QXZ("COUNT",5)." | "._QXZ("GMT",6)." | "._QXZ("RANK",6)." | "._QXZ("ALT",5)." | "._QXZ("SOURCE",6)."| "._QXZ("VENDOR LEAD CODE",20)." $SIDline| "._QXZ("AGE DAYS",8)." | "._QXZ("LAST CALL",9)." |\n";
+	if ($DB) 
+		{
+		echo "|"._QXZ("ORDER",5)." |"._QXZ("PRIORITY",8)."| "._QXZ("LEAD ID",9)." | "._QXZ("LIST ID",10)." | "._QXZ("PHONE NUM",11)." | "._QXZ("PH CODE",7)." | "._QXZ("STATE",5)." | "._QXZ("STATUS",6)." | "._QXZ("COUNT",5)." | "._QXZ("GMT",6)." | "._QXZ("RANK",6)." | "._QXZ("ALT",5)." | "._QXZ("SOURCE",6)."| "._QXZ("VENDOR LEAD CODE",20)." $SIDline| "._QXZ("AGE DAYS",8)." | "._QXZ("LAST CALL",9)." | "._QXZ("HOPPER ID",10)." | "._QXZ("OWNER",10)."\n";
+		}
+	else
+		{
+		echo "|"._QXZ("ORDER",5)." |"._QXZ("PRIORITY",8)."| "._QXZ("LEAD ID",9)." | "._QXZ("LIST ID",10)." | "._QXZ("PHONE NUM",11)." | "._QXZ("PH CODE",7)." | "._QXZ("STATE",5)." | "._QXZ("STATUS",6)." | "._QXZ("COUNT",5)." | "._QXZ("GMT",6)." | "._QXZ("RANK",6)." | "._QXZ("ALT",5)." | "._QXZ("SOURCE",6)."| "._QXZ("VENDOR LEAD CODE",20)." $SIDline| "._QXZ("AGE DAYS",8)." | "._QXZ("LAST CALL",9)." |\n";
+		}
 	echo "+------+--------+-----------+------------+-------------+---------+-------+--------+-------+--------+--------+-------+-------+----------------------$SIDhead+----------+-----------+\n";
 
-	$stmt="select vicidial_hopper.lead_id,phone_number,vicidial_hopper.state,vicidial_list.status,called_count,vicidial_hopper.gmt_offset_now,hopper_id,alt_dial,vicidial_hopper.list_id,vicidial_hopper.priority,vicidial_hopper.source,vicidial_hopper.vendor_lead_code, phone_code,UNIX_TIMESTAMP(entry_date),UNIX_TIMESTAMP(last_local_call_time),source_id,vicidial_list.rank from vicidial_hopper,vicidial_list where vicidial_hopper.campaign_id='" . mysqli_real_escape_string($link, $group) . "' and vicidial_hopper.status='READY' and vicidial_hopper.lead_id=vicidial_list.lead_id $LOGallowed_campaignsSQL order by priority desc,hopper_id limit 5000;";
+	$stmt="select vicidial_hopper.lead_id,phone_number,vicidial_hopper.state,vicidial_list.status,called_count,vicidial_hopper.gmt_offset_now,hopper_id,alt_dial,vicidial_hopper.list_id,vicidial_hopper.priority,vicidial_hopper.source,vicidial_hopper.vendor_lead_code, phone_code,UNIX_TIMESTAMP(entry_date),UNIX_TIMESTAMP(last_local_call_time),source_id,vicidial_list.rank,vicidial_list.owner from vicidial_hopper,vicidial_list where vicidial_hopper.campaign_id='" . mysqli_real_escape_string($link, $group) . "' and vicidial_hopper.status='READY' and vicidial_hopper.lead_id=vicidial_list.lead_id $LOGallowed_campaignsSQL order by priority desc,hopper_id limit 5000;";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	if ($DB) {echo "$stmt\n";}
 	$users_to_print = mysqli_num_rows($rslt);
 	$i=0;
 	while ($i < $users_to_print)
 		{
+		$DBdata='';
 		$row=mysqli_fetch_row($rslt);
 
 		if ($LOGadmin_hide_phone_data != '0')
 			{
-			if ($DB > 0) {echo "HIDEPHONEDATA|$row[1]|$LOGadmin_hide_phone_data|\n";}
+			if ($DB > 0) {$DBdata .= "HIDEPHONEDATA|$row[1]|$LOGadmin_hide_phone_data|   ";}
 			$phone_temp = $row[1];
 			if (strlen($phone_temp) > 0)
 				{
@@ -378,7 +388,7 @@ else
 			}
 		if ($LOGadmin_hide_lead_data != '0')
 			{
-			if ($DB > 0) {echo "HIDELEADDATA|$row[2]|$LOGadmin_hide_lead_data|\n";}
+			if ($DB > 0) {$DBdata .= "HIDELEADDATA|$row[2]|$LOGadmin_hide_lead_data|   ";}
 			if (strlen($row[2]) > 0)
 				{$state_temp = $row[2];   $row[2] = preg_replace("/./",'X',$state_temp);}
 			if (strlen($row[11]) > 0)
@@ -393,7 +403,7 @@ else
 		$status =		sprintf("%-6s", $row[3]);
 		$count =		sprintf("%-5s", $row[4]);
 		$gmt =			sprintf("%-6s", $row[5]);
-		$hopper_id =	sprintf("%-6s", $row[6]);
+		$hopper_id =	sprintf("%-10s", $row[6]);
 		$alt_dial =		sprintf("%-5s", $row[7]);
 		$list_id =		sprintf("%-10s", $row[8]);
 		$list_id_ns =		$row[8];
@@ -405,6 +415,7 @@ else
 		$last_call_epoch =	$row[14];
 		$source_id_TEXT =	"| ".sprintf("%-20s", $row[15])." ";
 		$rank =			sprintf("%-6s", $row[16]);
+		$owner =		sprintf("%-10s", $row[17]);
 
 		$lead_age = intval(($STARTtime - $entry_epoch) / 86400);
 		$lead_age =		sprintf("%-8s", $lead_age);
@@ -414,7 +425,7 @@ else
 			{$lead_offset = ($lead_offset * 3600);}
 		$last_call_epoch = ($last_call_epoch + $lead_offset);
 		$last_call_age = intval(($STARTtime - $last_call_epoch) / 3600);
-		if ($DB > 0) {echo "GMT: $lead_offset($gmt|$SERVER_GMT)|LC: $last_call_epoch($row[14])|$last_call_age|\n";}
+		if ($DB > 0) {$DBdata .= "GMT: $lead_offset($gmt|$SERVER_GMT)|LC: $last_call_epoch($row[14])|$last_call_age|   ";}
 		if ($last_call_age < 24)
 			{
 			$last_call_age_TEXT = $last_call_age." "._QXZ("HOURS",6);
@@ -447,7 +458,7 @@ else
 		if ($SSsource_id_display < 1)
 			{$source_id_TEXT='';}
 
-		if ($DB) {echo "| $FMT_i | $priority | <a href='./admin_modify_lead.php?lead_id=$lead_id_ns&archive_search=No&archive_log=0'>$lead_id</a> | <a href='./admin.php?ADD=311&list_id=$list_id_ns'>$list_id</a> | $phone_number  $phone_code || $state | $status | $count | $gmt | $rank | $alt_dial | $source | $vendor_lead_code | $lead_age | $last_call_age_TEXT | $hopper_id |\n";}
+		if ($DB) {echo "| $FMT_i | $priority | <a href='./admin_modify_lead.php?lead_id=$lead_id_ns&archive_search=No&archive_log=0'>$lead_id</a> | <a href='./admin.php?ADD=311&list_id=$list_id_ns'>$list_id</a> | $phone_number  $phone_code || $state | $status | $count | $gmt | $rank | $alt_dial | $source | $vendor_lead_code | $lead_age | $last_call_age_TEXT | $hopper_id | $owner | $DBdata\n";}
 		else {echo "| $FMT_i | $priority | <a href='./admin_modify_lead.php?lead_id=$lead_id_ns&archive_search=No&archive_log=0'>$lead_id</a> | <a href='./admin.php?ADD=311&list_id=$list_id_ns'>$list_id</a> | $phone_number | $phone_code | $state | $status | $count | $gmt | $rank | $alt_dial | $source | $vendor_lead_code $source_id_TEXT| $lead_age | $last_call_age_TEXT |\n";}
 
 		$i++;

@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2021-04-06
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2021-06-11
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -186,6 +186,9 @@ Changes:
 210401-1058 - Added 'custom_fields_update' option for update_list function
 210402-1102 - Added 'custom_fields_delete' option for update_list function
 210406-1047 - Added 'dialable_count' option to list_info function
+210517-1850 - Added phone_code as modifiable field in update_lead function
+210611-1610 - Added more variables for add_did/update_did functions
+
 
 API Functions use the 'function' variable
 
@@ -1141,6 +1144,7 @@ comments -		1-255 characters
 rank -			1-5 digits
 owner -			1-20 characters (user ID, Territory or user group)
 called_count -		digits only, the number of attempts dialing the lead
+phone_code -		digits only, can be 1-4 digits
 entry_list_id -		WARNING! ONLY USE IF YOU KNOW WHAT YOU ARE DOING, CAN BREAK CUSTOM FIELDS! (must be all numbers, 3-12 digits, will not work if custom_fields is set to Y)
 force_entry_list_id -	WARNING! ONLY USE IF YOU KNOW WHAT YOU ARE DOING, CAN BREAK CUSTOM FIELDS! (must be all numbers, 3-12 digits, will override entry_list_id to this value in all custom fields queries executed by this command)
 NOTES: 
@@ -2175,6 +2179,12 @@ server_ip -		must be all numbers and dots, max 15 characters
 group -			a valid in-group group_id
 menu_id -		a valid call menu menu_id
 filter_clean_cid_number - 1-20 characters
+call_handle_method - 	If the route is IN_GROUP, this is the call handle method(CID, CIDLOOKUP, CLOSER, etc...), default 'CID'
+agent_search_method - 	If the route is IN_GROUP, this is the agent search method(LO = Load-Balanced-Overflow, LB = Load-Balanced, SO = Server-Only), default 'LB'
+list_id	- 		If the route is IN_GROUP, this is the list ID(3-12 digits), default '999'
+entry_list_id - 	If the route is IN_GROUP, this is the entry list ID(1-12 digits), default '0'
+campaign_id - 		If the route is IN_GROUP, this is the campaign ID, default ''
+phone_code - 		If the route is IN_GROUP, this is the phone code, default '1'
 
 Example URL strings for API calls:
 http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=add_did&did_pattern=%2B1727555112&did_description=Updated+test+API+DID&active=Y
@@ -2197,6 +2207,12 @@ ERROR: add_did SERVER IP MUST BE A VALID SERVER IN THE SYSTEM, THIS IS AN OPTION
 ERROR: add_did GROUP ID MUST BE A VALID INBOUND GROUP IN THE SYSTEM, THIS IS AN OPTIONAL FIELD - 6666|test
 ERROR: add_did MENU ID MUST BE A VALID CALL MENU IN THE SYSTEM, THIS IS AN OPTIONAL FIELD - 6666|test_menu
 ERROR: add_did CLEAN CID NUMBER MUST BE FROM 1 TO 20 CHARACTERS, THIS IS AN OPTIONAL FIELD - 6666|
+ERROR: add_did CALL HANDLE METHOD MUST BE FROM 3 TO 20 CHARACTERS, THIS IS AN OPTIONAL FIELD - 6666|1
+ERROR: add_did AGENT SEARCH METHOD MUST BE 2 CHARACTERS, THIS IS AN OPTIONAL FIELD - 6666|1
+ERROR: add_did LIST ID MUST BE FROM 3 TO 14 DIGITS, THIS IS AN OPTIONAL FIELD - 6666|1
+ERROR: add_did ENTRY LIST ID MUST BE FROM 1 TO 14 DIGITS, THIS IS AN OPTIONAL FIELD - 6666|999999999999999
+ERROR: add_did CAMPAIGN MUST BE FROM 1 TO 8 CHARACTERS, THIS IS AN OPTIONAL FIELD - 6666|TESTCAMPS
+ERROR: add_did PHONE CODE MUST BE FROM 1 TO 10 CHARACTERS, THIS IS AN OPTIONAL FIELD - 6666|99999999999
 SUCCESS: add_did DID HAS BEEN ADDED - 6666|1101
 
 
@@ -2226,6 +2242,12 @@ server_ip -		must be all numbers and dots, max 15 characters
 group -			a valid in-group group_id
 menu_id -		a valid call menu menu_id
 filter_clean_cid_number - 1-20 characters
+call_handle_method - 	If the route is IN_GROUP, this is the call handle method(CID, CIDLOOKUP, CLOSER, etc...), default 'CID'
+agent_search_method - 	If the route is IN_GROUP, this is the agent search method(LO = Load-Balanced-Overflow, LB = Load-Balanced, SO = Server-Only), default 'LB'
+list_id	- 		If the route is IN_GROUP, this is the list ID(3-12 digits), default '999'
+entry_list_id - 	If the route is IN_GROUP, this is the entry list ID(1-12 digits), default '0'
+campaign_id - 		If the route is IN_GROUP, this is the campaign ID, default ''
+phone_code - 		If the route is IN_GROUP, this is the phone code, default '1'
 delete_did -		Can be one of these: 'Y','N' (default is 'N')
 
 Example URL strings for API calls:
@@ -2250,6 +2272,12 @@ ERROR: update_did SERVER IP MUST BE A VALID SERVER IN THE SYSTEM, THIS IS AN OPT
 ERROR: update_did GROUP ID MUST BE A VALID INBOUND GROUP IN THE SYSTEM, THIS IS AN OPTIONAL FIELD - 6666|test
 ERROR: update_did MENU ID MUST BE A VALID CALL MENU IN THE SYSTEM, THIS IS AN OPTIONAL FIELD - 6666|test_menu
 ERROR: update_did CLEAN CID NUMBER MUST BE FROM 1 TO 20 CHARACTERS, THIS IS AN OPTIONAL FIELD - 6666|
+ERROR: update_did CALL HANDLE METHOD MUST BE FROM 3 TO 20 CHARACTERS, THIS IS AN OPTIONAL FIELD - 6666|1
+ERROR: update_did AGENT SEARCH METHOD MUST BE 2 CHARACTERS, THIS IS AN OPTIONAL FIELD - 6666|1
+ERROR: update_did LIST ID MUST BE FROM 3 TO 14 DIGITS, THIS IS AN OPTIONAL FIELD - 6666|1
+ERROR: update_did ENTRY LIST ID MUST BE FROM 1 TO 14 DIGITS, THIS IS AN OPTIONAL FIELD - 6666|999999999999999
+ERROR: update_did CAMPAIGN MUST BE FROM 1 TO 8 CHARACTERS, THIS IS AN OPTIONAL FIELD - 6666|TESTCAMPS
+ERROR: update_did PHONE CODE MUST BE FROM 1 TO 10 CHARACTERS, THIS IS AN OPTIONAL FIELD - 6666|99999999999
 NOTICE: update_did NO UPDATES DEFINED - 6666|
 SUCCESS: update_did DID HAS BEEN DELETED - 6666|23|1101
 SUCCESS: update_did DID HAS BEEN UPDATED - 6666|1101

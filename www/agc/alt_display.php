@@ -20,10 +20,11 @@
 # 201026-1504 - Fix for LIVE call issue in top_panel
 # 210426-0138 - Added calls_inqueue_count_ campaign settings options, and calls_in_queue_option=CAMPAIGN setting
 # 210428-2156 - Added calls_in_queue_display setting
+# 210616-1907 - Added optional CORS support, see options.php for details
 #
 
-$version = '2.14-5';
-$build = '210428-2156';
+$version = '2.14-6';
+$build = '210616-1907';
 $php_script = 'alt_display.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=11;
@@ -58,6 +59,8 @@ $ACTION = preg_replace('/[^-_0-9a-zA-Z]/','',$ACTION);
 $calls_in_queue_option = preg_replace('/[^-_0-9a-zA-Z]/','',$calls_in_queue_option);
 $calls_in_queue_display = preg_replace('/[^-_0-9a-zA-Z]/','',$calls_in_queue_display);
 $DB = preg_replace('/[^-_0-9a-zA-Z]/','',$DB);
+$PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 
 # default optional vars if not set
 if (!isset($stage))   {$stage="default";}

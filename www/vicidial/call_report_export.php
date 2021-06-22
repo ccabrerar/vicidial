@@ -70,6 +70,7 @@ require("functions.php");
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
+$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["query_date"]))				{$query_date=$_GET["query_date"];}
 	elseif (isset($_POST["query_date"]))	{$query_date=$_POST["query_date"];}
 if (isset($_GET["date_field"]))				{$date_field=$_GET["date_field"];}
@@ -1520,7 +1521,11 @@ else
 	echo "<HTML><HEAD>\n";
 
 	echo "<script language=\"JavaScript\" src=\"calendar_db.js\"></script>\n";
+	echo "<link rel=\"stylesheet\" type=\"text/css\" href=\"vicidial_stylesheet.php\">\n";
+	echo "<script language=\"JavaScript\" src=\"help.js\"></script>\n";
 	echo "<link rel=\"stylesheet\" href=\"calendar.css\">\n";
+
+	echo "<div id='HelpDisplayDiv' class='help_info' style='display:none;'></div>";
 
 	echo "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=utf-8\">\n";
 	echo "<TITLE>"._QXZ("ADMINISTRATION").": "._QXZ("$report_name");
@@ -1545,6 +1550,8 @@ else
 	$lists_color =		'#E6E6E6';
 	$subcamp_color =	'#C6C6C6';
 	##### END Set variables to make header show properly #####
+	$NWB = "<IMG SRC=\"help.png\" onClick=\"FillAndShowHelpDiv(event, '";
+	$NWE = "')\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP>";
 
 	require("admin_header.php");
 
@@ -1553,7 +1560,7 @@ else
 	echo "<FONT SIZE=3 FACE=\"Arial,Helvetica\"><B>"._QXZ("Export Calls Report");
 	if ($ivr_export == 'YES')
 		{echo " "._QXZ("IVR");}
-	echo "</B></FONT><BR><BR>\n";
+	echo "</B></FONT> $NWB#call_export_report$NWE<BR><BR>\n";
 	echo "<FORM ACTION=\"$PHP_SELF\" METHOD=GET name=vicidial_report id=vicidial_report>\n";
 	echo "<INPUT TYPE=HIDDEN NAME=DB VALUE=\"$DB\">";
 	echo "<INPUT TYPE=HIDDEN NAME=run_export VALUE=\"1\">";
@@ -1594,17 +1601,17 @@ else
 
 	echo "<BR><BR>\n";
 
-	echo "<B>"._QXZ("Date Field").":</B><BR>\n";
+	echo "<B>"._QXZ("Date Field").":</B> $NWB#call_export_report-date_field$NWE<BR>\n";
 	echo "<select size=1 name=date_field><option selected value=\"call_date\">"._QXZ("Call date")."</option><option value=\"entry_date\">"._QXZ("Entry date")."</option></select>\n";
 
 	echo "<BR><BR>\n";
 
-	echo "<B>"._QXZ("Header Row").":</B><BR>\n";
+	echo "<B>"._QXZ("Header Row").":</B> $NWB#call_export_report-header_row$NWE<BR>\n";
 	echo "<select size=1 name=header_row><option selected value=\"YES\">"._QXZ("YES")."</option><option value=\"NO\">"._QXZ("NO")."</option></select>\n";
 
 	echo "<BR><BR>\n";
 
-	echo "<B>"._QXZ("Recording Fields").":</B><BR>\n";
+	echo "<B>"._QXZ("Recording Fields").":</B> $NWB#call_export_report-rec_fields$NWE<BR>\n";
 	echo "<select size=1 name=rec_fields>";
 	echo "<option value=\"ID\">"._QXZ("ID")."</option>";
 	echo "<option value=\"FILENAME\">"._QXZ("FILENAME")."</option>";
@@ -1617,24 +1624,24 @@ else
 		{
 		echo "<BR><BR>\n";
 
-		echo "<B>"._QXZ("Custom Fields").":</B><BR>\n";
+		echo "<B>"._QXZ("Custom Fields").":</B> $NWB#call_export_report-custom_fields$NWE<BR>\n";
 		echo "<select size=1 name=custom_fields><option value=\"YES\">"._QXZ("YES")."</option><option selected value=\"NO\">"._QXZ("NO")."</option></select>\n";
 		}
 
 	echo "<BR><BR>\n";
 
-	echo "<B>"._QXZ("Per Call Notes").":</B><BR>\n";
+	echo "<B>"._QXZ("Per Call Notes").":</B> $NWB#call_export_report-call_notes$NWE<BR>\n";
 	echo "<select size=1 name=call_notes><option value=\"YES\">"._QXZ("YES")."</option><option selected value=\"NO\">"._QXZ("NO")."</option></select>\n";
 
 	echo "<BR><BR>\n";
 
-	echo "<B>"._QXZ("Export Fields").":</B><BR>\n";
+	echo "<B>"._QXZ("Export Fields").":</B> $NWB#call_export_report-export_fields$NWE<BR>\n";
 	echo "<select size=1 name=export_fields><option selected value=\"STANDARD\">"._QXZ("STANDARD")."</option><option value=\"EXTENDED\">"._QXZ("EXTENDED")."</option><option value=\"EXTENDED_2\">"._QXZ("EXTENDED_2")."</option><option value=\"EXTENDED_3\">"._QXZ("EXTENDED_3")."</option><option value=\"EXTENDED_4\">"._QXZ("EXTENDED_4")."</option><option value=\"ALTERNATE_1\">ALTERNATE_1</option><option value=\"ALTERNATE_2\">ALTERNATE_2</option></select>\n";
 
 
 	if ($archives_available=="Y")
 	{
-	echo "<BR><BR><input type='checkbox' name='search_archived_data' value='checked' $search_archived_data><B>"._QXZ("Search archived data")."</B><BR>\n";
+	echo "<BR><BR><input type='checkbox' name='search_archived_data' value='checked' $search_archived_data><B>"._QXZ("Search archived data")."</B> $NWB#call_export_report-search_archived_data$NWE<BR>\n";
 	}
 
 	### bottom of first column

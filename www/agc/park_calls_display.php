@@ -1,7 +1,7 @@
 <?php
 # park_calls_display.php    version 2.14
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed purely to send the details on the parked calls on the server
 # This script depends on the server_ip being sent and also needs to have a valid user/pass from the vicidial_users table
@@ -32,10 +32,11 @@
 # 150723-1712 - Added ajax logging
 # 170526-2244 - Added additional variable filtering
 # 190111-0907 - Fix for PHP7
+# 210616-2104 - Added optional CORS support, see options.php for details
 # 
 
-$version = '2.14-14';
-$build = '190111-0907';
+$version = '2.14-15';
+$build = '210616-2104';
 $php_script = 'park_calls_display.php';
 $SSagent_debug_logging=0;
 $startMS = microtime();
@@ -76,6 +77,12 @@ $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 
+# if options file exists, use the override values for the above variables
+#   see the options-example.php file for more information
+if (file_exists('options.php'))
+	{
+	require_once('options.php');
+	}
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
