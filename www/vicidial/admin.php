@@ -3430,6 +3430,13 @@ if ($non_latin < 1)
 	$leave_vm_no_dispo = preg_replace('/[^0-9a-zA-Z]/','',$leave_vm_no_dispo);
 	$amd_agent_route_options = preg_replace('/[^0-9a-zA-Z]/','',$amd_agent_route_options);
 
+	### ALPHA-NUMERIC dash, underscore and dot
+	$PHP_AUTH_PW = preg_replace('/[^-\._0-9a-zA-Z]/','',$PHP_AUTH_PW);
+	$PHP_AUTH_USER = preg_replace('/[^-\._0-9a-zA-Z]/','',$PHP_AUTH_USER);
+	$user = preg_replace('/[^-\._0-9a-zA-Z]/','',$user);
+	$pass = preg_replace('/[^-\._0-9a-zA-Z]/','',$pass);
+
+
 	### ALPHA-NUMERIC and spaces and hash and star and comma
 	$xferconf_a_dtmf = preg_replace('/[^ \,\*\#0-9a-zA-Z]/','',trim($xferconf_a_dtmf));
 	$xferconf_b_dtmf = preg_replace('/[^ \,\*\#0-9a-zA-Z]/','',trim($xferconf_b_dtmf));
@@ -3479,19 +3486,15 @@ if ($non_latin < 1)
 	$old_server_id = preg_replace('/[^-_0-9a-zA-Z]/','',$old_server_id);
 	$OLDuser_group = preg_replace('/[^-_0-9a-zA-Z]/','',$OLDuser_group);
 	$park_file_name = preg_replace('/[^-_0-9a-zA-Z]/','',$park_file_name);
-	$pass = preg_replace('/[^-_0-9a-zA-Z]/','',$pass);
 	$phone_login = preg_replace('/[^-_0-9a-zA-Z]/','',$phone_login);
 	$phone_pass = preg_replace('/[^-_0-9a-zA-Z]/','',$phone_pass);
-	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/','',$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/','',$PHP_AUTH_USER);
 	$protocol = preg_replace('/[^-_0-9a-zA-Z]/','',$protocol);
 	$server_id = preg_replace('/[^-_0-9a-zA-Z]/','',$server_id);
 	$stage = preg_replace('/[^-_0-9a-zA-Z]/','',$stage);
 	$state_rule = preg_replace('/[^-_0-9a-zA-Z]/','',$state_rule);
 	$holiday_rule = preg_replace('/[^-_0-9a-zA-Z]/','',$holiday_rule);
 	$trunk_restriction = preg_replace('/[^-_0-9a-zA-Z]/','',$trunk_restriction);
-	$user = preg_replace('/[^-_0-9a-zA-Z]/','',$user);
-	$user_group = preg_replace('/[^-_0-9a-zA-Z]/','',$user_group);
+	$user_group = preg_replace('/[^-_0-9a-zA-Z\.]/','',$user_group);
 	$VICIDIAL_park_on_filename = preg_replace('/[^-_0-9a-zA-Z]/','',$VICIDIAL_park_on_filename);
 	$auto_alt_dial = preg_replace('/[^-_0-9a-zA-Z]/','',$auto_alt_dial);
 	$dial_status = preg_replace('/[^-_0-9a-zA-Z]/','',$dial_status);
@@ -3755,10 +3758,10 @@ if ($non_latin < 1)
 	$call_limit_24hour_scope = preg_replace('/[^-_0-9a-zA-Z]/','',$call_limit_24hour_scope);
 	$call_limit_24hour_override = preg_replace('/[^-_0-9a-zA-Z]/','',$call_limit_24hour_override);
 
-	### ALPHA-NUMERIC and underscore 
+	### ALPHA-NUMERIC and underscore
 	$qc_statuses_id = preg_replace('/[^_0-9a-zA-Z]/','',$qc_statuses_id);
 
-### ALPHA-NUMERIC and underscore and dash and slash and dot
+	### ALPHA-NUMERIC and underscore and dash and slash and dot
 	$menu_timeout_prompt = preg_replace('/[^-\/\|\._0-9a-zA-Z]/','',$menu_timeout_prompt);
 	$menu_invalid_prompt = preg_replace('/[^-\/\|\._0-9a-zA-Z]/','',$menu_invalid_prompt);
 	$after_hours_message_filename = preg_replace('/[^-\/\|\._0-9a-zA-Z]/','',$after_hours_message_filename);
@@ -4140,6 +4143,12 @@ else
 	$leave_vm_no_dispo = preg_replace('/[^0-9\p{L}]/u','',$leave_vm_no_dispo);
 	$amd_agent_route_options = preg_replace('/[^0-9\p{L}]/u','',$amd_agent_route_options);
 
+	### ALPHA-NUMERIC dash, underscore and dot
+	$PHP_AUTH_PW = preg_replace('/[^-\._0-9\p{L}]/u','',$PHP_AUTH_PW);
+	$PHP_AUTH_USER = preg_replace('/[^-\._0-9\p{L}]/u','',$PHP_AUTH_USER);
+	$user = preg_replace('/[^-\._0-9\p{L}]/','',$user);
+	$pass = preg_replace('/[^-\._0-9\p{L}]/','',$pass);
+
 	### ALPHA-NUMERIC and spaces and hash and star and comma
 	$xferconf_a_dtmf = preg_replace('/[^ \,\*\#0-9\p{L}]/u','',trim($xferconf_a_dtmf));
 	$xferconf_b_dtmf = preg_replace('/[^ \,\*\#0-9\p{L}]/u','',trim($xferconf_b_dtmf));
@@ -4189,18 +4198,14 @@ else
 	$old_server_id = preg_replace('/[^-_0-9\p{L}]/u','',$old_server_id);
 	$OLDuser_group = preg_replace('/[^-_0-9\p{L}]/u','',$OLDuser_group);
 	$park_file_name = preg_replace('/[^-_0-9\p{L}]/u','',$park_file_name);
-	$pass = preg_replace('/[^-_0-9\p{L}]/u','',$pass);
 	$phone_login = preg_replace('/[^-_0-9\p{L}]/u','',$phone_login);
 	$phone_pass = preg_replace('/[^-_0-9\p{L}]/u','',$phone_pass);
-	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u','',$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u','',$PHP_AUTH_USER);
 	$protocol = preg_replace('/[^-_0-9\p{L}]/u','',$protocol);
 	$server_id = preg_replace('/[^-_0-9\p{L}]/u','',$server_id);
 	$stage = preg_replace('/[^-_0-9\p{L}]/u','',$stage);
 	$state_rule = preg_replace('/[^-_0-9\p{L}]/u','',$state_rule);
 	$holiday_rule = preg_replace('/[^-_0-9\p{L}]/u','',$holiday_rule);
 	$trunk_restriction = preg_replace('/[^-_0-9\p{L}]/u','',$trunk_restriction);
-	$user = preg_replace('/[^-_0-9\p{L}]/u','',$user);
 	$user_group = preg_replace('/[^-_0-9\p{L}]/u','',$user_group);
 	$VICIDIAL_park_on_filename = preg_replace('/[^-_0-9\p{L}]/u','',$VICIDIAL_park_on_filename);
 	$auto_alt_dial = preg_replace('/[^-_0-9\p{L}]/u','',$auto_alt_dial);
@@ -4753,7 +4758,7 @@ else
 	$ip_address = preg_replace('/[^\n\.\:\0-9\p{L}]/u', '',$ip_address);
 	}
 
-### remove semi-colons and other special characters ###
+	### remove semi-colons and other special characters ###
 	$lead_filter_sql = preg_replace('/;/','',$lead_filter_sql);
 	$list_mix_container = preg_replace('/;/','',$list_mix_container);
 	$survey_response_digit_map = preg_replace('/;/','',$survey_response_digit_map);
@@ -5776,7 +5781,7 @@ if ($force_logout)
 		?>
 		<script type="text/javascript">
 
-		function ajax_logout_now() 
+		function ajax_logout_now()
 			{
 			var xmlhttp=false;
 			/*@cc_on @*/
@@ -5797,15 +5802,15 @@ if ($force_logout)
 				{
 				xmlhttp = new XMLHttpRequest();
 				}
-			if (xmlhttp) 
-				{ 
+			if (xmlhttp)
+				{
 				logout_query = "ADD=999999";
-				xmlhttp.open('POST', 'admin.php',false,'AJAXviciLOGOUT','1234'); 
+				xmlhttp.open('POST', 'admin.php',false,'AJAXviciLOGOUT','1234');
 				xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
-				xmlhttp.send(logout_query); 
+				xmlhttp.send(logout_query);
 				xmlhttp.onreadystatechange = function()
-					{ 
-					if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
+					{
+					if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
 						{
 						var check_logout = null;
 						check_logout = xmlhttp.responseText;
@@ -10116,7 +10121,7 @@ if ($ADD==11111111111)
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Login Password").": </td><td align=left><input type=text name=pass size=40 maxlength=100 value=\"$SSdefault_phone_login_password\">$NWB#phones-pass$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Registration Password").": </td><td align=left style=\"display:table-cell; vertical-align:middle;\" NOWRAP><input type=text id=reg_pass name=conf_secret size=40 maxlength=100 value=\"$SSdefault_phone_registration_password\" onkeyup=\"return pwdChanged('reg_pass','reg_pass_img','pass_length','$SSrequire_password_length');\">$NWB#phones-conf_secret$NWE &nbsp; &nbsp; <font size=1>"._QXZ("Strength").":</font> <IMG id=reg_pass_img src='images/pixel.gif' style=\"vertical-align:middle;\" onLoad=\"return pwdChanged('reg_pass','reg_pass_img','pass_length','$SSrequire_password_length');\"> &nbsp; <font size=1> "._QXZ("Length").": <span id=pass_length name=pass_length>0</span></font></td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Status").": </td><td align=left><select size=1 name=status>";
-		
+
 		if ($dps["status"])
 			{
 			echo "<option value='".$dps["status"]."' SELECTED>".$dps["status"]."</option>";
@@ -10128,7 +10133,7 @@ if ($ADD==11111111111)
 			}
 		echo "<option value='SUSPENDED'>"._QXZ("SUSPENDED")."</option><option value='CLOSED'>"._QXZ("CLOSED")."</option><option value='PENDING'>"._QXZ("PENDING")."</option><option value='ADMIN'>"._QXZ("ADMIN")."</option></select>$NWB#phones-status$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active Account").": </td><td align=left><select size=1 name=active>";
-		
+
 		echo "<option value='Y' ".($dps["active"]!="N" ? "selected" : "").">"._QXZ("Y")."</option><option value='N' ".($dps["active"]=="N" ? "selected" : "").">"._QXZ("N")."</option></select>$NWB#phones-active$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Phone Type").": </td><td align=left><input type=text name=phone_type size=20 maxlength=50 value='".$dps["phone_type"]."'>$NWB#phones-phone_type$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Full Name").": </td><td align=left><input type=text name=fullname size=20 maxlength=50>$NWB#phones-fullname$NWE</td></tr>\n";
@@ -10314,7 +10319,7 @@ if ($ADD==12222222222)
 		$phones_list='';
 		$phone_selected=0;
 		$o=0;
-		while ($phones_to_print > $o) 
+		while ($phones_to_print > $o)
 			{
 			$rowx=mysqli_fetch_row($rslt);
 			if ($source_phone=="$rowx[0]|$rowx[1]") {$s=" selected";   $phone_selected++;} else {$s="";}
@@ -10325,7 +10330,7 @@ if ($ADD==12222222222)
 			{echo "<option value=\"\" selected>-- Select a Phone (Extension, Server) --</option>\n";}
 		echo "$phones_list";
 		echo "</select>$NWB#campaigns-campaign_id$NWE</td></tr>\n";
-		
+
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2>"._QXZ("NOTE: Copying a phone will copy all the settings from the selected source phone, except for the settings entered above.")."</td></tr>\n";
 		echo "</TABLE></center>\n";
@@ -14120,7 +14125,7 @@ if ($ADD==21111111111)
 												{
 												$conf_override_str.="\n".trim($container_line);
 												}
-											} 
+											}
 										else
 											{
 											if ($conf_override_on==1)
@@ -14131,7 +14136,7 @@ if ($ADD==21111111111)
 											}
 										}
 									}
-								
+
 								# Compile additional SQL to insert into phones
 								foreach($dps as $field_name => $field_val)
 									{
@@ -19700,7 +19705,7 @@ if ($ADD==496111111111)
 				$stmt="SELECT count(*) from vicidial_campaigns where cid_group_id='$cid_group_id' $notLOGallowed_campaignsSQL;";
 				$rslt=mysql_to_mysqli($stmt, $link);
 				$accidsX_to_print = mysqli_num_rows($rslt);
-				if ($accidsX_to_print > 0) 
+				if ($accidsX_to_print > 0)
 					{
 					$rowx=mysqli_fetch_row($rslt);
 					$not_allowed_campaigns_ct = $rowx[0];
@@ -19740,7 +19745,7 @@ if ($ADD==496111111111)
 				$stmt="SELECT count(*) from vicidial_campaigns where cid_group_id='$cid_group_id' $notLOGallowed_campaignsSQL;";
 				$rslt=mysql_to_mysqli($stmt, $link);
 				$accidsX_to_print = mysqli_num_rows($rslt);
-				if ($accidsX_to_print > 0) 
+				if ($accidsX_to_print > 0)
 					{
 					$rowx=mysqli_fetch_row($rslt);
 					$not_allowed_campaigns_ct = $rowx[0];
@@ -19754,7 +19759,7 @@ if ($ADD==496111111111)
 					$rslt=mysql_to_mysqli($stmt, $link);
 				$accids_to_print = mysqli_num_rows($rslt);
 				$o=0;
-					while ($accids_to_print > $o) 
+					while ($accids_to_print > $o)
 					{
 					$rowx=mysqli_fetch_row($rslt);
 					$Xareacode[$o] =			$rowx[0];
@@ -19769,7 +19774,7 @@ if ($ADD==496111111111)
 				$stmt_log='';
 				$accid_log='';
 				$o=0;
-					while ($accids_to_print > $o) 
+					while ($accids_to_print > $o)
 					{
 					$Factive_value='';
 					$Fcid_description_value='';
@@ -22082,7 +22087,7 @@ if ($ADD==612)
 
 			# If custom fields are enabled, go through each lead looking for custom data to delete before deleting all standard lead data in this list
 			$custom_records_deleted=0;
-			if ($SScustom_fields_enabled > 0) 
+			if ($SScustom_fields_enabled > 0)
 				{
 				echo "<br>"._QXZ("REMOVING LEADS CUSTOM FIELDS RECORDS")."\n";
 				$cld_lead_id=array();
@@ -22091,7 +22096,7 @@ if ($ADD==612)
 				$rslt=mysql_to_mysqli($stmt, $link);
 				$cld_to_print = mysqli_num_rows($rslt);
 				$o=0;
-				while ($cld_to_print > $o) 
+				while ($cld_to_print > $o)
 					{
 					$rowx=mysqli_fetch_row($rslt);
 					$cld_lead_id[$o] =			$rowx[0];
@@ -22100,7 +22105,7 @@ if ($ADD==612)
 					$o++;
 					}
 				$o=0;
-				while ($cld_to_print > $o) 
+				while ($cld_to_print > $o)
 					{
 					if (strlen($cld_entry_list_id[$o]) > 0)
 						{
@@ -22108,7 +22113,7 @@ if ($ADD==612)
 						if ($DB>0) {echo "$stmt";}
 						$rsltC=mysql_to_mysqli($stmtC, $link);
 						$tablecount_to_print = mysqli_num_rows($rsltC);
-						if ($tablecount_to_print > 0) 
+						if ($tablecount_to_print > 0)
 							{
 							$stmtC="DELETE from custom_$cld_entry_list_id[$o] where lead_id='$cld_lead_id[$o]';";
 							$rsltC=mysql_to_mysqli($stmtC, $link);
@@ -25736,13 +25741,13 @@ if ($ADD==31)
 				$call_limit_24hour_override_container_menu='';
 				$clo_selected=0;
 				$o=0;
-				while ($clo_to_print > $o) 
+				while ($clo_to_print > $o)
 					{
 					$rowx=mysqli_fetch_row($rslt);
 					if (mb_strlen($rowx[1],'utf-8')>40)
 						{$rowx[1] = mb_substr($rowx[1],0,40,'utf-8') . '...';}
 					$call_limit_24hour_override_container_menu .= "<option ";
-					if ($call_limit_24hour_override == "$rowx[0]") 
+					if ($call_limit_24hour_override == "$rowx[0]")
 						{
 						$call_limit_24hour_override_container_menu .= "SELECTED ";
 						$clo_selected++;
@@ -25928,7 +25933,7 @@ if ($ADD==31)
 				$n=0;
 				while ($n <= 99)
 					{
-					if ($n == $shared_dial_rank) 
+					if ($n == $shared_dial_rank)
 						{echo "<option SELECTED value=\"$n\">$n</option>\n";}
 					else
 						{echo "<option value=\"$n\">$n</option>\n";}
@@ -26442,13 +26447,13 @@ if ($ADD==31)
 		$leave_3way_start_recording_exception_menu='';
 		$twrse_selected=0;
 		$o=0;
-		while ($twrse_to_print > $o) 
+		while ($twrse_to_print > $o)
 			{
 			$rowx=mysqli_fetch_row($rslt);
 			if (mb_strlen($rowx[1],'utf-8')>40)
 				{$rowx[1] = mb_substr($rowx[1],0,40,'utf-8') . '...';}
 			$leave_3way_start_recording_exception_menu .= "<option ";
-			if ($leave_3way_start_recording_exception == "$rowx[0]") 
+			if ($leave_3way_start_recording_exception == "$rowx[0]")
 				{
 				$leave_3way_start_recording_exception_menu .= "SELECTED ";
 				$twrse_selected++;
@@ -26633,13 +26638,13 @@ if ($ADD==31)
 		$pause_max_exceptions_container_menu='';
 		$csea_selected=0;
 		$o=0;
-		while ($csea_to_print > $o) 
+		while ($csea_to_print > $o)
 			{
 			$rowx=mysqli_fetch_row($rslt);
 			if (mb_strlen($rowx[1],'utf-8')>40)
 				{$rowx[1] = mb_substr($rowx[1],0,40,'utf-8') . '...';}
 			$pause_max_exceptions_container_menu .= "<option ";
-			if ($pause_max_exceptions == "$rowx[0]") 
+			if ($pause_max_exceptions == "$rowx[0]")
 				{
 				$pause_max_exceptions_container_menu .= "SELECTED ";
 				$csea_selected++;
@@ -26668,13 +26673,13 @@ if ($ADD==31)
 		$in_man_dial_next_ready_seconds_override_menu='';
 		$dtlc_selected=0;
 		$o=0;
-		while ($dtlc_to_print > $o) 
+		while ($dtlc_to_print > $o)
 			{
 			$rowx=mysqli_fetch_row($rslt);
 			if (mb_strlen($rowx[1],'utf-8')>40)
 				{$rowx[1] = mb_substr($rowx[1],0,40,'utf-8') . '...';}
 			$in_man_dial_next_ready_seconds_override_menu .= "<option ";
-			if ($in_man_dial_next_ready_seconds_override == "$rowx[0]") 
+			if ($in_man_dial_next_ready_seconds_override == "$rowx[0]")
 				{
 				$in_man_dial_next_ready_seconds_override_menu .= "SELECTED ";
 				$dtlc_selected++;
@@ -26794,19 +26799,19 @@ if ($ADD==31)
 		$csea_selected_one=0;
 		$csea_selected_two=0;
 		$o=0;
-		while ($csea_to_print > $o) 
+		while ($csea_to_print > $o)
 			{
 			$rowx=mysqli_fetch_row($rslt);
 			if (mb_strlen($rowx[1],'utf-8')>40)
 				{$rowx[1] = mb_substr($rowx[1],0,40,'utf-8') . '...';}
 			$calls_inqueue_count_one_container_menu .= "<option ";
 			$calls_inqueue_count_two_container_menu .= "<option ";
-			if ($calls_inqueue_count_one == "$rowx[0]") 
+			if ($calls_inqueue_count_one == "$rowx[0]")
 				{
 				$calls_inqueue_count_one_container_menu .= "SELECTED ";
 				$csea_selected_one++;
 				}
-			if ($calls_inqueue_count_two == "$rowx[0]") 
+			if ($calls_inqueue_count_two == "$rowx[0]")
 				{
 				$calls_inqueue_count_two_container_menu .= "SELECTED ";
 				$csea_selected_two++;
@@ -26818,11 +26823,11 @@ if ($ADD==31)
 
 		$calls_inqueue_count_one_container_menu .= "<option ";
 		$calls_inqueue_count_two_container_menu .= "<option ";
-		if ($calls_inqueue_count_one == "DISABLED") 
+		if ($calls_inqueue_count_one == "DISABLED")
 			{
 			$calls_inqueue_count_one_container_menu .= "SELECTED ";
 			}
-		if ($calls_inqueue_count_two == "DISABLED") 
+		if ($calls_inqueue_count_two == "DISABLED")
 			{
 			$calls_inqueue_count_two_container_menu .= "SELECTED ";
 			}
@@ -30993,10 +30998,10 @@ if ($ADD==311)
 			$rslt=mysql_to_mysqli($stmt, $link);
 			$counts_to_print = mysqli_num_rows($rslt);
 			$o=0;
-			while ($counts_to_print > $o) 
+			while ($counts_to_print > $o)
 				{
 				if (preg_match('/1$|3$|5$|7$|9$/i', $o))
-					{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
+					{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';}
 				else
 					{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
 
@@ -31027,10 +31032,10 @@ if ($ADD==311)
 			$rslt=mysql_to_mysqli($stmt, $link);
 			$counts_to_print = mysqli_num_rows($rslt);
 			$o=0;
-			while ($counts_to_print > $o) 
+			while ($counts_to_print > $o)
 				{
 				if (preg_match('/1$|3$|5$|7$|9$/i', $o))
-					{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';} 
+					{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
 				else
 					{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';}
 
@@ -32058,13 +32063,13 @@ if ($ADD==3111)
 		$drop_call_seconds_override_menu='';
 		$dtlc_selected=0;
 		$o=0;
-		while ($dtlc_to_print > $o) 
+		while ($dtlc_to_print > $o)
 			{
 			$rowx=mysqli_fetch_row($rslt);
 			if (mb_strlen($rowx[1],'utf-8')>40)
 				{$rowx[1] = mb_substr($rowx[1],0,40,'utf-8') . '...';}
 			$drop_call_seconds_override_menu .= "<option ";
-			if ($drop_call_seconds_override == "$rowx[0]") 
+			if ($drop_call_seconds_override == "$rowx[0]")
 				{
 				$drop_call_seconds_override_menu .= "SELECTED ";
 				$dtlc_selected++;
@@ -32763,7 +32768,7 @@ if ($ADD==3111)
 
 			echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("QC Get Record Launch").": </td><td><select size=1 name=qc_get_record_launch><option value='NONE'>"._QXZ("NONE")."</option><option value='SCRIPT'>"._QXZ("SCRIPT")."</option><option value='WEBFORM'>"._QXZ("WEBFORM")."</option><option value='QCSCRIPT'>"._QXZ("QCSCRIPT")."</option><option value='QCWEBFORM'>"._QXZ("QCWEBFORM")."</option><option value='$qc_get_record_launch' SELECTED>"._QXZ("$qc_get_record_launch")."</option></select> $NWB#inbound_groups-qc_get_record_launch$NWE</td></tr>\n";
 			echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("QC Show Recording").": </td><td><select size=1 name=qc_show_recording><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$qc_show_recording' SELECTED>"._QXZ("$qc_show_recording")."</option></select> $NWB#inbound_groups-qc_show_recording$NWE</td></tr>\n";
-	
+
 			echo "<tr bgcolor=#$SSstd_row2_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'></td></tr>\n";
 */
 			}
@@ -39771,7 +39776,7 @@ if ($ADD==392111111111)
 			$rslt=mysql_to_mysqli($stmt, $link);
 			$ig_to_print = mysqli_num_rows($rslt);
 			$o=0;
-			while ($ig_to_print > $o) 
+			while ($ig_to_print > $o)
 				{
 				$row=mysqli_fetch_row($rslt);
 				echo "<TR><TD><a href=\"$PHP_SELF?ADD=31&campaign_id=$row[0]\">$row[0] </a></TD><TD> $row[1]<BR></TD></TR>\n";
@@ -39787,7 +39792,7 @@ if ($ADD==392111111111)
 			$rslt=mysql_to_mysqli($stmt, $link);
 			$ig_to_print = mysqli_num_rows($rslt);
 			$o=0;
-			while ($ig_to_print > $o) 
+			while ($ig_to_print > $o)
 				{
 				$row=mysqli_fetch_row($rslt);
 				echo "<TR><TD><a href=\"$PHP_SELF?ADD=3111&group_id=$row[0]\">$row[0] </a></TD><TD> $row[1]<BR></TD></TR>\n";
@@ -40399,7 +40404,7 @@ if ($ADD==396111111111)
 		$stmt="SELECT count(*) from vicidial_campaigns where cid_group_id='$cid_group_id' $notLOGallowed_campaignsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$accidsX_to_print = mysqli_num_rows($rslt);
-		if ($accidsX_to_print > 0) 
+		if ($accidsX_to_print > 0)
 			{
 			$rowx=mysqli_fetch_row($rslt);
 			$not_allowed_campaigns_ct = $rowx[0];
@@ -43493,11 +43498,11 @@ if ($ADD==10000)
 		$OTHERremoteagents_to_print = mysqli_num_rows($rslt);
 
 		$o=0;
-		while ($OTHERremoteagents_to_print > $o) 
+		while ($OTHERremoteagents_to_print > $o)
 			{
 			$row=mysqli_fetch_row($rslt);
 			if (preg_match('/1$|3$|5$|7$|9$/i', $o))
-				{$bgcolor='class="records_list_x"';} 
+				{$bgcolor='class="records_list_x"';}
 			else
 				{$bgcolor='class="records_list_y"';}
 			echo "<tr $bgcolor"; if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='$PHP_SELF?ADD=31111&remote_agent_id=$row[0]'\"";} echo "><td><a href=\"$PHP_SELF?ADD=31111&remote_agent_id=$row[0]\"><font size=1 color=red><b>($row[1])</a></td>";
@@ -44978,7 +44983,7 @@ if (($ADD==100000000000000) && ($qc_auth=='1'))
 
 		$count_column="campaign_id";
 		}
-	else if ($qc_display_group_type=="INGROUP") 
+	else if ($qc_display_group_type=="INGROUP")
 		{
 		$stmt="SELECT group_id,group_name,qc_statuses_id from vicidial_inbound_groups where active = 'Y' and qc_statuses_id!='' and qc_scorecard_id!='' $LOGqc_allowed_campaignsSQL order by group_id";
 		$rslt=mysql_to_mysqli($stmt, $link);
@@ -44994,7 +44999,7 @@ if (($ADD==100000000000000) && ($qc_auth=='1'))
 
 		$count_column="group_id";
 		}
-	else if ($qc_display_group_type=="LIST") 
+	else if ($qc_display_group_type=="LIST")
 		{
 	    $stmt="SELECT list_id,list_name,qc_statuses_id from vicidial_lists where active = 'Y' and qc_statuses_id!='' and qc_scorecard_id!='' $LOGqc_allowed_campaignsSQL order by list_id";
 	    $rslt=mysql_to_mysqli($stmt, $link);
@@ -45012,7 +45017,7 @@ if (($ADD==100000000000000) && ($qc_auth=='1'))
 		$count_column="list_id";
 		}
 
-	if ($vicidialconf_to_print==0) 
+	if ($vicidialconf_to_print==0)
 		{
 		echo "<tr><td align='center' colspan='5'><font size=1><B>*** "._QXZ("NO ".$qc_display_group_type."S CONFIGURED FOR QC")." ***</B></font></td></tr>";
 		}
@@ -45045,19 +45050,19 @@ if (($ADD==100000000000000) && ($qc_auth=='1'))
 				$line=trim($container_text[$q]);
 				if (!preg_match('/^[\#|\;]/', $line) && strlen($line)>0)
 					{
-					$qc_status_list=preg_split('/,/', $line); 
+					$qc_status_list=preg_split('/,/', $line);
 					break;
 					}
 				}
 			}
 
-#		$qc_ct_stmt="select count(*) from vicidial_list inner join vicidial_lists on vicidial_list.list_id=vicidial_lists.list_id and status in ('".implode("','", $qc_statuses)."') where campaign_id='$row[0]'"; 
+#		$qc_ct_stmt="select count(*) from vicidial_list inner join vicidial_lists on vicidial_list.list_id=vicidial_lists.list_id and status in ('".implode("','", $qc_statuses)."') where campaign_id='$row[0]'";
 
 		$total_qc_count=0;
 		# Campaign
 		if ($qc_display_group_type=="CAMPAIGN")
 			{
-			$qc_ct_stmt="select count(*) From vicidial_agent_log where campaign_id='$row[0]' and status in ('".implode("','", $qc_status_list)."') and event_time+INTERVAL (pause_sec+wait_sec) SECOND>=now()-INTERVAL $SSqc_expire_days DAY"; 
+			$qc_ct_stmt="select count(*) From vicidial_agent_log where campaign_id='$row[0]' and status in ('".implode("','", $qc_status_list)."') and event_time+INTERVAL (pause_sec+wait_sec) SECOND>=now()-INTERVAL $SSqc_expire_days DAY";
 			if ($DB) {echo "|$qc_ct_stmt|<BR>\n";}
 			$qc_ct_rslt=mysql_to_mysqli($qc_ct_stmt, $link);
 			$qc_ct_row=mysqli_fetch_row($qc_ct_rslt);
@@ -45067,7 +45072,7 @@ if (($ADD==100000000000000) && ($qc_auth=='1'))
 		# List
 		if ($qc_display_group_type=="LIST")
 			{
-			$agent_log_stmt="select lead_id From vicidial_agent_log where status in ('".implode("','", $qc_status_list)."') and event_time+INTERVAL (pause_sec+wait_sec) SECOND>=now()-INTERVAL $SSqc_expire_days DAY"; 
+			$agent_log_stmt="select lead_id From vicidial_agent_log where status in ('".implode("','", $qc_status_list)."') and event_time+INTERVAL (pause_sec+wait_sec) SECOND>=now()-INTERVAL $SSqc_expire_days DAY";
 			if ($DB) {echo "|$agent_log_stmt|<BR>\n";}
 			$agent_log_rslt=mysql_to_mysqli($agent_log_stmt, $link);
 			while ($agent_log_row=mysqli_fetch_array($agent_log_rslt))
@@ -45084,7 +45089,7 @@ if (($ADD==100000000000000) && ($qc_auth=='1'))
 		# Ingroup
 		if ($qc_display_group_type=="INGROUP")
 			{
-			$qc_ct_stmt="select count(*) From vicidial_closer_log where campaign_id='$row[0]' and status in ('".implode("','", $qc_status_list)."') and call_date>=now()-INTERVAL $SSqc_expire_days DAY"; 
+			$qc_ct_stmt="select count(*) From vicidial_closer_log where campaign_id='$row[0]' and status in ('".implode("','", $qc_status_list)."') and call_date>=now()-INTERVAL $SSqc_expire_days DAY";
 			if ($DB) {echo "|$qc_ct_stmt|<BR>\n";}
 			$qc_ct_rslt=mysql_to_mysqli($qc_ct_stmt, $link);
 			$qc_ct_row=mysqli_fetch_row($qc_ct_rslt);
@@ -45117,7 +45122,7 @@ if (($ADD==881) && ($qc_auth=='1'))
 	if (!$qc_display_group_type) {$qc_display_group_type=="CAMPAIGN";}
 
 	$referring_URL_string="&referring_section=$qc_display_group_type";
-	switch($qc_display_group_type)	
+	switch($qc_display_group_type)
 		{
 		case "CAMPAIGN":
 			$referring_URL_string.="&referring_element=$campaign_id";
@@ -45137,7 +45142,7 @@ if (($ADD==881) && ($qc_auth=='1'))
 
     echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 	# echo "<TABLE>\n";
-	
+
 	echo "<center><TABLE width=$section_width cellspacing=0 cellpadding=1>\n";
 
 	if ($queue_ct_row[0]>0)
@@ -45155,7 +45160,7 @@ if (($ADD==881) && ($qc_auth=='1'))
 		if ($DB) {echo $queue_stmt."<BR>\n";}
 		$queue_rslt=mysql_to_mysqli($queue_stmt, $link);
 		$q=0;
-		while ($queue_row=mysqli_fetch_array($queue_rslt)) 
+		while ($queue_row=mysqli_fetch_array($queue_rslt))
 			{
 			$qc_id=$queue_row["qc_log_id"];
 			$lead_id=$queue_row["lead_id"];
@@ -45191,7 +45196,7 @@ if (($ADD==881) && ($qc_auth=='1'))
 	if ($queue_ct_row[0]<$SSqc_claim_limit)
 		{
 
-		if ($qc_display_group_type=="CAMPAIGN") 
+		if ($qc_display_group_type=="CAMPAIGN")
 			{
 			$stmt="SELECT campaign_id,campaign_name, qc_statuses_id, 'CALL' as qc_display_method, qc_scorecard_id from vicidial_campaigns where active='Y' and qc_statuses_id!='' and qc_scorecard_id!='' and campaign_id='$campaign_id'";
 			$campaign_clause=" and campaign_id='$campaign_id'"; # Used further down
@@ -45215,7 +45220,7 @@ if (($ADD==881) && ($qc_auth=='1'))
 		if ($DB) {echo $stmt."<BR>\n";}
     $rslt=mysql_to_mysqli($stmt, $link);
     $vicidialconf_to_print = mysqli_num_rows($rslt);
-		if ($vicidialconf_to_print > 0) 
+		if ($vicidialconf_to_print > 0)
 		{
         $row=mysqli_fetch_row($rslt);
 			# $qc_status_list=substr($row[2],0,strlen($row[2])-2);
@@ -45233,7 +45238,7 @@ if (($ADD==881) && ($qc_auth=='1'))
 					$line=trim($container_text[$q]);
 					if (!preg_match('/^[\#|\;]/', $line) && strlen($line)>0)
 						{
-						$qc_status_list=preg_split('/,/', $line); 
+						$qc_status_list=preg_split('/,/', $line);
 						break;
 						}
 					}
@@ -45241,7 +45246,7 @@ if (($ADD==881) && ($qc_auth=='1'))
 
 			echo "<br><B>"._QXZ("$qc_display_group_type")." $row[0] - "._QXZ("Quality Control Queue")."<br>"._QXZ("QC statuses").": ".implode(", ", $qc_status_list)."</B><BR><BR>\n";
 
-			switch ($qc_sort_method) 
+			switch ($qc_sort_method)
 			{
 				case "STATUS":
 					$sort_clause_call="order by status, call_date";
@@ -45262,9 +45267,9 @@ if (($ADD==881) && ($qc_auth=='1'))
 				}
 
 			sort($qc_status_list);
-			foreach ( $qc_status_list as $qc_status ) 
+			foreach ( $qc_status_list as $qc_status )
 				{
-				#if ($qc_display_method=="CALL") 
+				#if ($qc_display_method=="CALL")
 				#	{
 				$stmt="select lead_id, agent_log_id, event_time+INTERVAL (wait_sec+pause_sec) SECOND as call_date, user, status, uniqueid from vicidial_agent_log where lead_id is not null and status='$qc_status' and event_time+INTERVAL (wait_sec+pause_sec) SECOND>=now()-INTERVAL $SSqc_expire_days DAY $campaign_clause $sort_clause_call";
 				if ($DB) {echo $stmt."<BR>\n";}
@@ -45277,7 +45282,7 @@ if (($ADD==881) && ($qc_auth=='1'))
 			$vicidialconf_to_print = mysqli_num_rows($rslt);
 				$o=0; $q=0;
 				$prev_status="";
-				while ($vicidialconf_to_print > $o) 
+				while ($vicidialconf_to_print > $o)
 				{
 					$row=mysqli_fetch_array($rslt);
 					$current_status=$row["status"];
@@ -46981,16 +46986,16 @@ if ($ADD==99999701)
 		if ($stage == 'EMAIL')
 			{
 			$email_message = preg_replace('/--A--auth_code--B--/i',"$NEWauth_code",$email_message);
-		
+
 			// To send HTML mail, the Content-type header must be set
 			$headers  = 'MIME-Version: 1.0' . "\r\n";
 			$headers .= 'Content-type: text/html; charset=iso-8859-1' . "\r\n";
-	 
+
 			// Create email headers
 			$headers .= 'From: ' . $email_from . "\r\n" . 'Reply-To: ' . $email_from . "\r\n" . 'X-Mailer: PHP/' . phpversion();
 
 			$body = "<html><body>" . $email_message . "</body></html>";
-		
+
 			$success = mail($LOGemail, $email_subject, $body, $headers );
 			if ($success)
 				{
@@ -47907,7 +47912,7 @@ if ($ADD==999990)
 			}
 		// End new voicemail box code
 
-		if ($SSqc_features_active>0) 
+		if ($SSqc_features_active>0)
 			{
 			echo "<tr>";
 			echo "<td align='left' colspan='4'>&nbsp;</td>";  # Padding
@@ -47927,15 +47932,15 @@ if ($ADD==999990)
 		if ($DB) {echo "|$stmt|\n";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 			$vicidialconf_to_print = mysqli_num_rows($rslt);
-			if ($vicidialconf_to_print > 0) 
+			if ($vicidialconf_to_print > 0)
 				{
-				while ($row=mysqli_fetch_array($rslt)) 
+				while ($row=mysqli_fetch_array($rslt))
 					{
 					$campaign_id=$row[0];
 					$qc_status_list=substr($row[1],0,strlen($row[1])-2);
 					$qc_statuses=explode(' ',$qc_status_list);
 
-					$qc_ct_stmt="select count(*) from vicidial_list inner join vicidial_lists on vicidial_list.list_id=vicidial_lists.list_id and status in ('".implode("','", $qc_statuses)."') where campaign_id='$campaign_id'"; 
+					$qc_ct_stmt="select count(*) from vicidial_list inner join vicidial_lists on vicidial_list.list_id=vicidial_lists.list_id and status in ('".implode("','", $qc_statuses)."') where campaign_id='$campaign_id'";
 		if ($DB) {echo "|$qc_ct_stmt|\n";}
 					$qc_ct_rslt=mysql_to_mysqli($qc_ct_stmt, $link);
 					$qc_ct_row=mysqli_fetch_row($qc_ct_rslt);
@@ -47960,8 +47965,8 @@ if ($ADD==999990)
 					echo "<td align='center'><font style=\"font-family:HELVETICA;font-size:14;\">".($today_finish_count+0)."</font></td>";
 					echo "</tr>";
 					}
-				} 
-			else 
+				}
+			else
 				{
 				echo "<tr bgcolor='#$SSstd_row2_background'>";
 				echo "<td align='center' colspan='4'><font size=1>*** "._QXZ("NO ACTIVITY FOR")." $today ***</font></td>";
@@ -48405,7 +48410,7 @@ if ($ADD==999987)
 		$PCfilterSQL = "and country_code='$PSstage[0]' and state='$PSstage[1]'";
 		$PCfilterTEXT = " ("._QXZ("Country Code").": $PSstage[0] &nbsp; "._QXZ("State").": $PSstage[1]) &nbsp; <a href=\"$PHP_SELF?ADD=999987\">"._QXZ("reset")."</a> ";
 		}
-	
+
 	echo "<TABLE><TR><TD>\n";
 	echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 
@@ -48431,7 +48436,7 @@ if ($ADD==999987)
 
 	$o=0;
 	$row_color=0;   $last_country='';
-	while ($zones_to_print > $o) 
+	while ($zones_to_print > $o)
 		{
 		$rowx=mysqli_fetch_row($rslt);
 		date_default_timezone_set($rowx[10]);
@@ -48439,7 +48444,7 @@ if ($ADD==999987)
 
 		if ($rowx[3] != "$last_country") {$row_color++;   $last_country = $rowx[3];}
 		if (preg_match('/1$|3$|5$|7$|9$/i', $row_color))
-			{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
+			{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';}
 		else
 			{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
 		echo "<tr $bgcolor>\n";
@@ -48484,11 +48489,11 @@ if ($ADD==999986)
 		if (strlen($start_count) < 1) {$start_count=0;}
 		$next_count = ($start_count + $PCentries_per_page);
 		$nextnext_count = ($next_count + $PCentries_per_page);
-		if ($next_count > $pc_count) 
+		if ($next_count > $pc_count)
 			{$next_count = $pc_count;}
 		else
 			{
-			if ($nextnext_count > $pc_count) 
+			if ($nextnext_count > $pc_count)
 				{
 				$next_temp = ($pc_count - $next_count);
 				$nextHTML = "<a href=\"$PHP_SELF?ADD=999986&start_count=$next_count&stage=$stage\">"._QXZ("NEXT")." $next_temp</a> &nbsp; ";
@@ -48528,7 +48533,7 @@ if ($ADD==999986)
 	$zones_to_print = mysqli_num_rows($rslt);
 	$o=0;
 	$row_color=0;   $last_country='';
-	while ($zones_to_print > $o) 
+	while ($zones_to_print > $o)
 		{
 		$rowx=mysqli_fetch_row($rslt);
 		$temp_postal_gmt_offset = $rowx[1];
@@ -48538,7 +48543,7 @@ if ($ADD==999986)
 
 		if ($rowx[3] != "$last_country") {$row_color++;   $last_country = $rowx[3];}
 		if (preg_match('/1$|3$|5$|7$|9$/i', $row_color))
-			{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
+			{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';}
 		else
 			{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
 		echo "<tr $bgcolor>\n";
