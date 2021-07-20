@@ -730,7 +730,7 @@ if (isset($_GET["new_pass1"]))					{$new_pass1=$_GET["new_pass1"];}
 if (isset($_GET["new_pass2"]))					{$new_pass2=$_GET["new_pass2"];}
         elseif (isset($_POST["new_pass2"]))		{$new_pass2=$_POST["new_pass2"];}
 
-if (!isset($phone_login)) 
+if (!isset($phone_login))
 	{
 	if (isset($_GET["pl"]))            {$phone_login=$_GET["pl"];}
 		elseif (isset($_POST["pl"]))   {$phone_login=$_POST["pl"];}
@@ -869,10 +869,10 @@ else
 
 if ($non_latin < 1)
 	{
-	$VD_login=preg_replace("/[^-_0-9a-zA-Z]/","",$VD_login);
-	$VD_pass=preg_replace("/[^-_0-9a-zA-Z]/","",$VD_pass);
-	$new_pass1=preg_replace("/[^-_0-9a-zA-Z]/","",$new_pass1);
-	$new_pass2=preg_replace("/[^-_0-9a-zA-Z]/","",$new_pass2);
+	$VD_login=preg_replace("/[^-\._0-9a-zA-Z]/","",$VD_login);
+	$VD_pass=preg_replace("/[^-\._0-9a-zA-Z]/","",$VD_pass);
+	$new_pass1=preg_replace("/[^-\._0-9a-zA-Z]/","",$new_pass1);
+	$new_pass2=preg_replace("/[^-\._0-9a-zA-Z]/","",$new_pass2);
 	$phone_login=preg_replace("/[^\,0-9a-zA-Z]/","",$phone_login);
 	$phone_pass=preg_replace("/[^-_0-9a-zA-Z]/","",$phone_pass);
 	$VD_campaign = preg_replace("/[^-_0-9a-zA-Z]/","",$VD_campaign);
@@ -5671,23 +5671,23 @@ var browserPrefixes = ['moz', 'ms', 'o', 'webkit'],
 isVisible = true; // internal flag, defaults to true
 
 // get the correct attribute name
-function getHiddenPropertyName(prefix) 
+function getHiddenPropertyName(prefix)
 	{
 	return (prefix ? prefix + 'Hidden' : 'hidden');
 	}
 
 // get the correct event name
-function getVisibilityEvent(prefix) 
+function getVisibilityEvent(prefix)
 	{
 	return (prefix ? prefix : '') + 'visibilitychange';
 	}
 
 // get current browser vendor prefix
-function getBrowserPrefix() 
+function getBrowserPrefix()
 	{
-	for (var i = 0; i < browserPrefixes.length; i++) 
+	for (var i = 0; i < browserPrefixes.length; i++)
 		{
-		if(getHiddenPropertyName(browserPrefixes[i]) in document) 
+		if(getHiddenPropertyName(browserPrefixes[i]) in document)
 			{
 			// return vendor prefix
 			return browserPrefixes[i];
@@ -5702,7 +5702,7 @@ var browserPrefix = getBrowserPrefix(),
 hiddenPropertyName = getHiddenPropertyName(browserPrefix),
 visibilityEventName = getVisibilityEvent(browserPrefix);
 
-function onVisible(temp_force_visible) 
+function onVisible(temp_force_visible)
 	{
 	// prevent double execution
 	if ( (isVisible) && (temp_force_visible == '0') )
@@ -5723,7 +5723,7 @@ function onVisible(temp_force_visible)
 	button_click_log = button_click_log + "" + SQLdate + "-----Browser_Visibility---" + visibility_state + " " + temp_seconds + " " + UnixTime + "|";
 	}
 
-function onHidden(temp_force_hidden) 
+function onHidden(temp_force_hidden)
 	{
 	// prevent double execution
 	if ( (!isVisible) && (temp_force_hidden == '0') )
@@ -5744,19 +5744,19 @@ function onHidden(temp_force_hidden)
 	button_click_log = button_click_log + "" + SQLdate + "-----Browser_Visibility---" + visibility_state + " " + temp_seconds + " " + UnixTime + "|";
 	}
 
-function handleVisibilityChange(forcedFlag) 
+function handleVisibilityChange(forcedFlag)
 	{
 	// forcedFlag is a boolean when this event handler is triggered by a
 	// focus or blur eventotherwise it's an Event object
-	if(typeof forcedFlag === "boolean") 
+	if(typeof forcedFlag === "boolean")
 		{
-		if(forcedFlag) 
+		if(forcedFlag)
 			{
 			return onVisible('0');
 			}
 		return onHidden('0');
 		}
-	if(document[hiddenPropertyName]) 
+	if(document[hiddenPropertyName])
 		{
 		return onHidden('0');
 		}
@@ -5766,22 +5766,22 @@ function handleVisibilityChange(forcedFlag)
 document.addEventListener(visibilityEventName, handleVisibilityChange, false);
 
 // extra event listeners for better behaviour
-document.addEventListener('focus', function() 
+document.addEventListener('focus', function()
 	{
 	handleVisibilityChange(true);
 	}, false);
 
-document.addEventListener('blur', function() 
+document.addEventListener('blur', function()
 	{
 	handleVisibilityChange(false);
 	}, false);
 
-window.addEventListener('focus', function() 
+window.addEventListener('focus', function()
 	{
 	handleVisibilityChange(true);
 	}, false);
 
-window.addEventListener('blur', function() 
+window.addEventListener('blur', function()
 	{
 	handleVisibilityChange(false);
 	}, false);
@@ -6915,7 +6915,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 							if (api_transferconf_ID == api_transferconf_values_array[7])
 								{
 							//	alert("TRANSFERCONF COMMAND ALREADY RECEIVED: " + api_transferconf_function + "|" + api_transferconf_ID + "|" + api_transferconf_values_array[7] + "|" + external_transferconf_count);
-								button_click_log = button_click_log + "" + SQLdate + "-----TRANSFERCONF_API_DUP---" + api_transferconf_function + " " + api_transferconf_ID + " " + api_transferconf_values_array[7] + " " + external_transferconf_count + " " + "|";	
+								button_click_log = button_click_log + "" + SQLdate + "-----TRANSFERCONF_API_DUP---" + api_transferconf_function + " " + api_transferconf_ID + " " + api_transferconf_values_array[7] + " " + external_transferconf_count + " " + "|";
 								Clear_API_Field('external_transferconf');
 								}
 							else
@@ -7354,7 +7354,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 												}
 											}
 										}
-									else							
+									else
 											{
 											if (agentchannel.length < 3)
 												{
@@ -8253,12 +8253,12 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 		if (xmlhttp)
 			{
 			var channelrec = "Local/" + conf_silent_prefix + '' + session_id + "@" + ext_context;
-			manDiaLlog_query = "format=text&server_ip=" + server_ip + "&session_name=" + session_name + "&ACTION=manDiaLlogCaLL&stage=" + taskMDstage + "&uniqueid=" + document.vicidial_form.uniqueid.value + 
-			"&user=" + user + "&pass=" + pass + "&campaign=" + campaign + 
-			"&lead_id=" + document.vicidial_form.lead_id.value + 
-			"&list_id=" + document.vicidial_form.list_id.value + 
-			"&length_in_sec=0&phone_code=" + document.vicidial_form.phone_code.value + 
-			"&phone_number=" + lead_dial_number + 
+			manDiaLlog_query = "format=text&server_ip=" + server_ip + "&session_name=" + session_name + "&ACTION=manDiaLlogCaLL&stage=" + taskMDstage + "&uniqueid=" + document.vicidial_form.uniqueid.value +
+			"&user=" + user + "&pass=" + pass + "&campaign=" + campaign +
+			"&lead_id=" + document.vicidial_form.lead_id.value +
+			"&list_id=" + document.vicidial_form.list_id.value +
+			"&length_in_sec=0&phone_code=" + document.vicidial_form.phone_code.value +
+			"&phone_number=" + lead_dial_number +
 			"&exten=" + recording_exten + "&channel=" + lastcustchannel + "&start_epoch=" + MDlogEPOCH + "&auto_dial_level=" + auto_dial_level + "&VDstop_rec_after_each_call=" + VDstop_rec_after_each_call + "&conf_silent_prefix=" + conf_silent_prefix + "&protocol=" + protocol + "&extension=" + extension + "&ext_context=" + ext_context + "&conf_exten=" + session_id + "&user_abb=" + user_abb + "&agent_log_id=" + agent_log_id + "&MDnextCID=" + LasTCID + "&inOUT=" + inOUT + "&alt_dial=" + dialed_label + "&DB=0" + "&agentchannel=" + agentchannel + "&conf_dialed=" + conf_dialed + "&leaving_threeway=" + leaving_threeway + "&hangup_all_non_reserved=" + hangup_all_non_reserved + "&blind_transfer=" + blind_transfer + "&dial_method=" + dial_method + "&nodeletevdac=" + nodeletevdac + "&alt_num_status=" + alt_num_status + "&qm_extension=" + qm_extension + "&called_count=" + document.vicidial_form.called_count.value + "&leave_3way_start_recording_trigger=" + leave_3way_start_recording_triggerCALL + "&leave_3way_start_recording_filename=" + leave_3way_start_recording_filename + "&channelrec=" + channelrec;
 			xmlhttp.open('POST', 'vdc_db_query.php');
 			xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
@@ -10576,7 +10576,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 
 								if (MDnextCID.match(regMNCvar))
 									{
-									alert_box("<?php echo _QXZ("No more leads in the hopper for campaign:"); ?>\n" + campaign);   
+									alert_box("<?php echo _QXZ("No more leads in the hopper for campaign:"); ?>\n" + campaign);
 									alert_displayed=1;
 									in_lead_preview_state=0; // JCJ - This needs to be reset here otherwise the variable stays at 1 and thus manual dials can't be made even if the agent is paused.
 									}
@@ -11718,7 +11718,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 						auto_dial_level=starting_dial_level;
 						// JCJ - reset dial_next_failed to zero here. Currently if hopper is empty, agent is auto paused and dial_next_failed=1
 						// However it remains 1 if you click to be active which causes the move_on check to be skipped allowing active
-						// agents to manual dial.						
+						// agents to manual dial.
 						dial_next_failed=0;
 
 						if ( (in_man_dial_next_ready_seconds > 0) && (in_man_dial_next_ready_count < in_man_dial_next_ready_seconds) )
@@ -14529,16 +14529,16 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 			{
 			xmlhttp = new XMLHttpRequest();
 			}
-			if (xmlhttp) 
-				{ 
+			if (xmlhttp)
+				{
 				var queryCID = "HTvdcW" + epoch_sec + user_abb;
 				custhangup_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&ACTION=HangupConfDial&format=text&user=" + user + "&pass=" + pass + "&exten=" + session_id + "&ext_context=" + ext_context + "&queryCID=" + queryCID + "&log_campaign=" + campaign + "&qm_extension=" + qm_extension;
-				xmlhttp.open('POST', 'manager_send.php'); 
+				xmlhttp.open('POST', 'manager_send.php');
 				xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
-				xmlhttp.send(custhangup_query); 
-				xmlhttp.onreadystatechange = function() 
-					{ 
-					if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
+				xmlhttp.send(custhangup_query);
+				xmlhttp.onreadystatechange = function()
+					{
+					if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
 					{
 					Nactiveext = null;
 					Nactiveext = xmlhttp.responseText;
@@ -20286,14 +20286,14 @@ function phone_number_format(formatphone) {
 			{
 		?>
 
-		if(typeof(EventSource) !== "undefined") 
+		if(typeof(EventSource) !== "undefined")
 			{
-			if (!source) 
+			if (!source)
 				{
 				if (refresh_interval < 7300000)
 					{
 					source = new EventSource("sse.php?refresh_interval=" + refresh_interval);
-					source.onmessage = function(event) 
+					source.onmessage = function(event)
 						{
 						if (refresh_interval < 7300000)
 							{
@@ -20313,11 +20313,11 @@ function phone_number_format(formatphone) {
 					}
 				}
 			}
-		else 
+		else
 			{
 			setTimeout("all_refresh()", refresh_interval);
 			}
-		<?php 
+		<?php
 			}
 		else
 			{
@@ -21757,7 +21757,7 @@ $zi=2;
 <span style="position:absolute;left:0px;top:<?php echo $DBheight ?>px;z-index:<?php $zi++; echo $zi ?>;" id="debugbottomspan"></span>
 
 <span style="position:absolute;left:300px;top:<?php echo $MBheight ?>px;z-index:<?php $zi++; echo $zi ?>;" id="DiaLlOgButtonspan">
-<span id="ManuaLDiaLButtons"><font class="body_text"><span id="MDstatusSpan"><a href="#" onclick="NeWManuaLDiaLCalL('NO','','','','','YES','YES');return false;"><?php echo _QXZ("MANUAL DIAL"); ?></a></span>&nbsp; &nbsp; 
+<span id="ManuaLDiaLButtons"><font class="body_text"><span id="MDstatusSpan"><a href="#" onclick="NeWManuaLDiaLCalL('NO','','','','','YES','YES');return false;"><?php echo _QXZ("MANUAL DIAL"); ?></a></span>&nbsp; &nbsp;
 <?php if ($agentcall_manual == '1') { ?>
 <a href="#" onclick="NeWManuaLDiaLCalL('FAST','','','','','YES','YES');return false;"><?php echo _QXZ("FAST DIAL"); ?></a>
 <?php } ?>
