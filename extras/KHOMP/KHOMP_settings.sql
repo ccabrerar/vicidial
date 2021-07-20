@@ -44,6 +44,8 @@ CREATE TABLE `vicidial_khomp_log` (
    `hangup_query_time` varchar(20) COLLATE utf8_unicode_ci DEFAULT '0',
    `route_auth_time` varchar(20) COLLATE utf8_unicode_ci DEFAULT '0',
    `route_query_time` varchar(20) COLLATE utf8_unicode_ci DEFAULT '0',
+   `vici_action` varchar(10) COLLATE utf8_unicode_ci DEFAULT NULL,
+   `vici_status` varchar(6) COLLATE utf8_unicode_ci DEFAULT NULL,
    PRIMARY KEY (`khomp_log_id`),
    KEY `caller_code` (`caller_code`),
    KEY `start_date` (`start_date`),

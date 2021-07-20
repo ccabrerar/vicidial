@@ -63,6 +63,7 @@ These are the extra variables you can use with this specific function:
 - 'callback_lead_status' is the agent-selected status when a scheduled callback 
 	status has been selected by the agent
 - 'callback_datetime' is the agent selected date and time for a callback
+- 'term_reason' is how the call was ended
 
 With Dispo Call URLs you can also use a DISPO_FILTER Settings Container to 
 define replacements for specific field values before they are sent out. For

@@ -86,7 +86,6 @@
 # 190709-2240 - Added Call Quota logging
 # 191001-1509 - Small fix for monitoring issue
 # 200210-1644 - Added KHOMP code
-# 200902-1611 - Fixed bug with khomp_end_call data
 #
 
 # defaults for PreFork
@@ -185,7 +184,7 @@ use Net::Server;
 use vars qw(@ISA);
 use Net::Server::PreFork; # any personality will do
 @ISA = qw(Net::Server::PreFork);
-use Time::HiRes ('gettimeofday','usleep','sleep');  # necessary to have perl sleep command of less than one second
+use Time::HiRes ('tv_interval','gettimeofday','usleep','sleep');  # necessary to have perl sleep command of less than one second
 use Time::Local;
 
 # Needed for Khomp Integration
@@ -349,6 +348,8 @@ sub process_request
 				if ( $key eq 'khomp_id_format' )		{ $khomp_id_format = $value; }
 				if ( $key eq 'khomp_api_login_url' )	{ $khomp_api_login_url = $value; }
 				if ( $key eq 'khomp_sub_account_header' )	{ $khomp_sub_account_header = $value; }
+				if ( $key eq 'khomp_api_token' )                { $khomp_api_token = $value; }
+				if ( $key eq 'khomp_api_token_expire' )         { $khomp_api_token_expire = $value; }
 				}
 
 			}
@@ -2760,21 +2761,57 @@ sub process_khomp_analytics
 	elsif ($khomp_id_format eq 'CALLERCODE_CAMP_EXTERNIP')
 		{ $khomp_id = $callerid . '_' . $campaign_id . '_' . $external_server_ip; }
 
-	my $login_token = 'TOKEN';
 	my $api_auth_time = 0;
-	if ( $khomp_api_proxied eq 'false' ) 
+	if ( ($khomp_api_token_expire < time() ) or ( $khomp_api_token eq 'TOKENTOKENTOKEN' ))
 		{
-		($login_token, $api_auth_time) = khomp_api_login( $khomp_api_login_url, $khomp_api_user, $khomp_api_pass );
+		if ($AGILOG) {$agi_string = "--    KHOMP API Token $khomp_api_token has expired at $khomp_api_token_expire";   &agi_output;}
+
+		# get a new API token
+		my $new_khomp_api_token = '';
+		if ( $khomp_api_proxied eq 'false' )
+			{
+			($new_khomp_api_token, $api_auth_time) = khomp_api_login( $khomp_api_login_url, $khomp_api_user, $khomp_api_pass );
+			}
+
+		# update the settings container
+		my $old_token_string = "khomp_api_token => $khomp_api_token";
+		my $new_token_string = "khomp_api_token => $new_khomp_api_token";
+		my $new_token_expire_time = time() + 3600;
+		my $old_token_expire_string = "khomp_api_token_expire => $khomp_api_token_expire";
+		my $new_token_expire_string = "khomp_api_token_expire => $new_token_expire_time";
+
+		# LOCK vicidial_settings_containers
+		$stmtA = "LOCK TABLES vicidial_settings_containers WRITE";
+		$dbhA->do($stmtA);
+		# UPDATE the Token
+		$stmtToken = "UPDATE vicidial_settings_containers SET container_entry = REGEXP_REPLACE(container_entry, '$old_token_string', '$new_token_string') WHERE container_id = 'KHOMPSETTINGS';";
+		$affected_rows = $dbhA->do($stmtToken);
+		# UPDATE the Expire time
+		$stmtExpire = "UPDATE vicidial_settings_containers SET container_entry = REGEXP_REPLACE(container_entry, '$old_token_expire_string', '$new_token_expire_string') WHERE container_id = 'KHOMPSETTINGS';";
+		$affected_rows = $dbhA->do($stmtExpire);
+		# Unlock vicidial_settings_containers
+		$stmtA = "UNLOCK TABLES";
+		$dbhA->do($stmtA);
+
+		if ($AGILOG) {$agi_string = "--    KHOMP SC TOKEN UPDATE|$affected_rows|$stmtToken|";   &agi_output;}
+		if ($AGILOG) {$agi_string = "--    KHOMP SC TOKEN EXPIRE UPDATE|$affected_rows|$stmtExpire|";   &agi_output;}
+
+		# over write the old with the new
+		$khomp_api_token = $new_khomp_api_token;
+		}
+	else
+		{
+		if ($AGILOG) {$agi_string = "--    KHOMP API Token $khomp_api_token still valid till $khomp_api_token_expire";   &agi_output;}
 		}
 	
-	if ( $login_token ne 'login' )
+	if ( $khomp_api_token ne 'TOKENTOKENTOKEN' )
 		{
 		# build JSON object
 		my $khomp_request = {
 			'id' => 0,
 			'method' => 'CallList',
 			'params' => {
-				'token' => "$login_token",
+				'token' => "$khomp_api_token",
 				'query' => {
 					'type' => "eq",
 					'field' => "sip_header:$khomp_header",
@@ -2789,7 +2826,7 @@ sub process_khomp_analytics
 		$khomp_json = encode_json( $khomp_request );
 
 		# call the API
-		($result, $api_query_time) = khomp_json_api( $khomp_json, $khomp_api_url, $khomp_api_user, $khomp_api_pass );
+		($result, $api_query_time) = khomp_json_api( $khomp_json, $khomp_api_url );
 
 		# check the result
 		if ( $result =~ /^ERROR/ )
@@ -2808,10 +2845,6 @@ sub process_khomp_analytics
 				$parsed_data{'api_auth_time'} = $api_auth_time;
 				$parsed_data{'api_query_time'} = $api_query_time;
 
-
-				# log the khomp data in the vicidial_khomp_log
-				log_khomp_call_data( %parsed_data);
-
 				$conclusion = $parsed_data{'conclusion'};
 				$pattern = $parsed_data{'pattern'};
 
@@ -2823,26 +2856,26 @@ sub process_khomp_analytics
 					{
 					# we got a conclusion
 					if ( defined ( $conclusion_map{"$conclusion"}{"$pattern"}{'status'} ) )
-	                                        {
+						{
 						# see if there is a conclusion and pattern for it
 						$khomp_action = $conclusion_map{"$conclusion"}{"$pattern"}{'action'};
-	                                        $khomp_VDL_status = $conclusion_map{"$conclusion"}{"$pattern"}{'status'};
+						$khomp_VDL_status = $conclusion_map{"$conclusion"}{"$pattern"}{'status'};
 						$khomp_VDAC_status = $conclusion_map{"$conclusion"}{"$pattern"}{'dial_status'};
-	                                        }
-	                                elsif ( defined( $conclusion_map{"$conclusion"}{''}{'status'} ) )
-	                                        {
+						}
+					elsif ( defined( $conclusion_map{"$conclusion"}{''}{'status'} ) )
+						{
 						# there is no known pattern for it
 						$khomp_action = $conclusion_map{"$conclusion"}{""}{'action'};
 						$khomp_VDL_status = $conclusion_map{"$conclusion"}{''}{'status'};
 						$khomp_VDAC_status = $conclusion_map{"$conclusion"}{""}{'dial_status'};
-	                                        }
-	                                else
-	                                        {
+						}
+					else
+						{
 						# there isnt even a known conclusion for it
 						$khomp_action = 'error';
-	                                        $khomp_VDL_status = 'KPEROR';
+						$khomp_VDL_status = 'KPEROR';
 						$khomp_VDAC_status = 'NA';
-	                                        }
+						}
 					}
 				else
 					{
@@ -2880,12 +2913,12 @@ sub process_khomp_analytics
 							( $parsed_data{'hangup_cause_recv'} eq '487' ) &&
 							( $parsed_data{'answer_epoch'} > 0 )
 							)				
-                                                        {
-                                                        # Call hung up before Khomp had a conclusion
-                                                        $khomp_action = 'status';
-                                                        $khomp_VDL_status = 'KPDROP';
-                                                        $khomp_VDAC_status = 'ANSWER';
-                                                        }
+							{
+							# Call hung up before Khomp had a conclusion
+							$khomp_action = 'status';
+							$khomp_VDL_status = 'KPDROP';
+							$khomp_VDAC_status = 'ANSWER';
+							}
 						elsif ( $parsed_data{'hangup_cause_recv'} eq '488' )
 							{
 							# Carrier returned "Not Acceptable Here"
@@ -2895,35 +2928,40 @@ sub process_khomp_analytics
 							$khomp_VDAC_status = 'CONGESTION';
 							}
 						elsif ( $parsed_data{'hangup_cause_recv'} eq '500' )
-                                                        {
-                                                        # Carrier returned "Internal Server Error"
+							{
+							# Carrier returned "Internal Server Error"
 							$khomp_action = 'status';
-                                                        $khomp_VDL_status = 'KPCONG';
-                                                        $khomp_VDAC_status = 'CONGESTION';
+							$khomp_VDL_status = 'KPCONG';
+							$khomp_VDAC_status = 'CONGESTION';
 							}
 						elsif ( $parsed_data{'hangup_cause_recv'} eq '503' )
-                                                        {
-                                                        # Carrier returned "Service Unavailable"
+							{
+							# Carrier returned "Service Unavailable"
 							$khomp_action = 'status';
-                                                        $khomp_VDL_status = 'KPCONG';
-                                                        $khomp_VDAC_status = 'CONGESTION';
-                                                        }
+							$khomp_VDL_status = 'KPCONG';
+							$khomp_VDAC_status = 'CONGESTION';
+							}
 						elsif ( $parsed_data{'hangup_cause_recv'} eq '603' )
-                                                        {
-                                                        # Carrier returned "Decline"
+							{
+							# Carrier returned "Decline"
 							$khomp_action = 'status';
-                                                        $khomp_VDL_status = 'KPCONG';
-                                                        $khomp_VDAC_status = 'CONGESTION';
-                                                        }
+							$khomp_VDL_status = 'KPCONG';
+							$khomp_VDAC_status = 'CONGESTION';
+							}
 						else	
 							{
 							$khomp_action = 'error';
 							$khomp_VDL_status = 'KPEROR';
-	                                                $khomp_VDAC_status = 'NA';
+							$khomp_VDAC_status = 'NA';
 							}
 						}
 					}
+					
+				if ( $khomp_action ne '' )		{ $parsed_data{'vici_action'} = "$khomp_action"; }
+				if ( $khomp_VDL_status ne '' )	{ $parsed_data{'vici_status'} = "$khomp_VDL_status"; }
 
+				# log the khomp data in the vicidial_khomp_log
+				log_khomp_call_data( %parsed_data);
 
 				if ($AGILOG) { $agi_string = "--KHOMP: conclusion = $conclusion|pattern = $pattern|status = $khomp_VDL_status"; &agi_output; }
 
@@ -2964,6 +3002,8 @@ sub log_khomp_call_data
 	if ( defined( $khomp_call_data{'hangup_origin'} ) ) { $stmtA .= ", hangup_origin = '$khomp_call_data{'hangup_origin'}'"; }
 	if ( defined( $khomp_call_data{'hangup_cause_recv'} ) ) { $stmtA .= ", hangup_cause_recv = '$khomp_call_data{'hangup_cause_recv'}'"; }
 	if ( defined( $khomp_call_data{'hangup_cause_sent'} ) ) { $stmtA .= ", hangup_cause_sent = '$khomp_call_data{'hangup_cause_sent'}'"; }
+	if ( defined( $khomp_call_data{'vici_action'} ) ) { $stmtA .= ", vici_action = '$khomp_call_data{'vici_action'}'"; }
+	if ( defined( $khomp_call_data{'vici_status'} ) ) { $stmtA .= ", vici_status = '$khomp_call_data{'vici_status'}'"; }
 
 	$stmtA .= " WHERE khomp_id = '$khomp_call_data{'khomp_id'}'";
 
@@ -3033,112 +3073,101 @@ sub khomp_parse_call_data
 
 ### code for logging into KHOMP api
 sub khomp_api_login
-        {
-        (
-        $khomp_api_login_url,
-        $khomp_api_user,
-        $khomp_api_pass
-        ) = @_;
+	{
+	( 
+	$khomp_api_login_url,
+	$khomp_api_user,
+	$khomp_api_pass
+	) = @_;
 
-        my $token = 'login';
+	my $token = 'login';
 	my $auth_start_sec;
 	my $auth_start_usec;
 	my $auth_end_sec;
 	my $auth_end_usec;
 	my $auth_sec;
-        my $auth_usec;
+	my $auth_usec;
 	my $api_auth_time;
 
 	($auth_start_sec, $auth_start_usec) = gettimeofday();
 
-        # build JSON object
-        my $login_json = {
-                'id' => 0,
-                'method' => 'SessionLogin',
-                'params' => {
-                        'username' => "$khomp_api_user",
-                        'password' => "$khomp_api_pass",
-                },
-                'jsonrpc' => '2.0',
-        };
+	# build JSON object
+	my $login_json = {
+		'id' => 0,
+		'method' => 'SessionLogin',
+		'params' => {
+			'username' => "$khomp_api_user",
+			'password' => "$khomp_api_pass",
+		},
+		'jsonrpc' => '2.0',
+	};
 
-        # encode it as JSON
-        $login_json = encode_json( $login_json );
+	# encode it as JSON
+	$login_json = encode_json( $login_json );
 
-        my $curl_cmd = "$curlbin -sS --data \'$login_json\' $khomp_api_login_url";
+	my $curl_cmd = "$curlbin -sS --data \'$login_json\' $khomp_api_login_url";
 
-        $agi_string = "--    KHOMP CURL COMMAND: $curl_cmd";   &agi_output;
+	$agi_string = "--    KHOMP CURL COMMAND: $curl_cmd";   &agi_output;
 
-        $message = `$curl_cmd`;
+	$message = `$curl_cmd`;
 
-        chomp($message);
+	chomp($message);
 
-        if ($AGILOG)
-                {
-                $agi_string = "--    KHOMP LOGIN URL: |$khomp_api_login_url|";   &agi_output;
-                $agi_string = "--    KHOMP LOGIN JSON : |$login_json|";   &agi_output;
-                $agi_string = "--    KHOMP LOGIN RESPONSE JSON: |$message|";   &agi_output;
-                }
+	if ($AGILOG)
+		{
+		$agi_string = "--    KHOMP LOGIN URL: |$khomp_api_login_url|";   &agi_output;
+		$agi_string = "--    KHOMP LOGIN JSON : |$login_json|";   &agi_output;
+		$agi_string = "--    KHOMP LOGIN RESPONSE JSON: |$message|";   &agi_output;
+		}
 
-        $json = JSON::PP->new->ascii->pretty->allow_nonref;
-        $result = $json->decode($message);
+	$json = JSON::PP->new->ascii->pretty->allow_nonref;
+	$result = $json->decode($message);
 
-        $token = $result->{'result'}->{'token'};
+	$token = $result->{'result'}->{'token'};
 
 	($auth_end_sec, $auth_end_usec) = gettimeofday();
 
-	$auth_sec = $auth_end_sec - $auth_start_sec;
-	$auth_usec = $auth_end_usec - $auth_start_usec;
+	$api_auth_time = tv_interval ( [$auth_start_sec, $auth_start_usec], [$auth_end_sec, $auth_end_usec]);
 
-	$api_auth_time = "$auth_sec.$auth_usec";
- 
 	return ($token, $api_auth_time);
-        }
+	}
 
 ### code for connecting to KHOMP api and passing JSON
 sub khomp_json_api
-        {
-        (
-                $khomp_json,
-                $khomp_api_url,
-        ) = @_;
+	{
+	( $khomp_json, $khomp_api_url ) = @_;
 
-        my $query_start_sec;
-        my $query_start_usec;
-        my $query_end_sec;
-        my $query_end_usec;
-        my $query_sec;
-        my $query_usec;
-        my $api_query_time;
+	my $query_start_sec;
+	my $query_start_usec;
+	my $query_end_sec;
+	my $query_end_usec;
+	my $query_sec;
+	my $query_usec;
+	my $api_query_time;
 
-        ($query_start_sec, $query_start_usec) = gettimeofday();
+	($query_start_sec, $query_start_usec) = gettimeofday();
 
-        my $curl_cmd = "$curlbin -sS --data \'$khomp_json\' $khomp_api_url";
+	my $curl_cmd = "$curlbin -sS --data \'$khomp_json\' $khomp_api_url";
 
-        $agi_string = "--    KHOMP CURL COMMAND: $curl_cmd";   &agi_output;
+	$agi_string = "--    KHOMP CURL COMMAND: $curl_cmd";   &agi_output;
 
-        $message = `$curl_cmd`;
+	$message = `$curl_cmd`;
 
-        chomp($message);
+	chomp($message);
 
-        if ($AGILOG)
-                {
-                $agi_string = "--    KHOMP URL: |$khomp_api_url|";   &agi_output;
-                $agi_string = "--    KHOMP JSON : |$khomp_json|";   &agi_output;
-                $agi_string = "--    KHOMP RESPONSE JSON: |$message|";   &agi_output;
-                }
+	if ($AGILOG)
+		{
+		$agi_string = "--    KHOMP URL: |$khomp_api_url|";   &agi_output;
+		$agi_string = "--    KHOMP JSON : |$khomp_json|";   &agi_output;
+		$agi_string = "--    KHOMP RESPONSE JSON: |$message|";   &agi_output;
+		}
 
-        $json = JSON::PP->new->ascii->pretty->allow_nonref;
-        $result = $json->decode($message);
+	$json = JSON::PP->new->ascii->pretty->allow_nonref;
+	$result = $json->decode($message);
 
 	($query_end_sec, $query_end_usec) = gettimeofday();
 
-	$query_sec = $query_end_sec - $query_start_sec;
-	$query_usec = $query_end_usec - $query_start_usec;
+	$api_query_time = tv_interval ( [$query_start_sec, $query_start_usec], [$query_end_sec, $query_end_usec]);
 
-	$api_query_time = "$query_sec.$query_usec";
-
-        return ($result, $api_query_time);
-        }
-
-
+	return ($result, $api_query_time);
+	}

@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2021-06-11
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2021-07-01
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -188,6 +188,9 @@ Changes:
 210406-1047 - Added 'dialable_count' option to list_info function
 210517-1850 - Added phone_code as modifiable field in update_lead function
 210611-1610 - Added more variables for add_did/update_did functions
+210618-1000 - Added CORS support
+210625-1421 - Added BARGESWAP option to blind_monitor function
+210701-2050 - Added ingroup_rank/ingroup_grade options to the update_user function
 
 
 API Functions use the 'function' variable
@@ -296,7 +299,7 @@ phone_login -		alpha-numeric, no spaces or special characters allowed
 session_id -		must be all numbers, 7 digits
 server_ip -		must be all numbers and dots, max 15 characters
 source -		description of what originated the API call (maximum 20 characters)
-stage -			MONITOR, BARGE or HIJACK, default is MONITOR
+stage -			MONITOR, BARGE(or BARGESWAP) or HIJACK, default is MONITOR
 			 (HIJACK option is not currently functional)
 
 
@@ -1323,14 +1326,19 @@ active -		'Y' or 'N'
 wrapup_seconds_override - number from -1 to 9999
 campaign_rank -		from -9 to 9, this will change the campaign rank for this user on all campaigns
 campaign_grade -	from 1 to 10, this will change the campaign grade for this user on all campaigns
+ingroup_rank -		from -9 to 9, this will change the in-group rank for this user on all in-groups
+ingroup_grade -		from 1 to 10, this will change the in-group grade for this user on all in-groups
 camp_rg_only -		0 or 1, this will set only one campaign rank/grade for this user, requires campaign_id to be set
 campaign_id -		only required for use with camp_rg_only
+ingrp_rg_only -		0 or 1, this will set only one inbound group rank/grade for this user, requires group_id to be set
+group_id -		only required for use with ingrp_rg_only
 
 Example URL strings for API calls:
 http://server/vicidial/non_agent_api.php?source=test&function=update_user&user=6666&pass=1234&agent_user=2424&agent_pass=9876
 http://server/vicidial/non_agent_api.php?source=test&function=update_user&user=6666&pass=1234&agent_user=2424&agent_user_level=3
 http://server/vicidial/non_agent_api.php?source=test&function=update_user&user=6666&pass=1234&agent_user=2424&agent_full_name=Testing&hotkeys_active=1&active=Y
 http://server/vicidial/non_agent_api.php?source=test&function=update_user&user=6666&pass=1234&agent_user=2424&campaign_rank=3&campaign_grade=4
+http://server/vicidial/non_agent_api.php?source=test&function=update_user&user=6666&pass=1234&agent_user=2424&ingroup_rank=3&ingroup_grade=4&ingrp_rg_only=1&group_id=TEST_IN
 
 Example responses:
 ERROR: update_user USER DOES NOT HAVE PERMISSION TO UPDATE USERS - 6666|0
@@ -1355,9 +1363,11 @@ ERROR: update_user ACTIVE MUST BE Y OR N, THIS IS AN OPTIONAL FIELD - 6666
 ERROR: update_user wrapup_seconds_override MUST BE A VALID DIGIT BETWEEN -1 AND 9999, THIS IS AN OPTIONAL FIELD - 6666|-2
 ERROR: update_user YOU MUST USE A VALID CAMPAIGN RANK, THIS IS AN OPTIONAL FIELD - 6666|0
 ERROR: update_user YOU MUST USE A VALID CAMPAIGN GRADE, THIS IS AN OPTIONAL FIELD - 6666|0
+ERROR: update_user YOU MUST USE A VALID IN-GROUP RANK, THIS IS AN OPTIONAL FIELD - 6666|0
+ERROR: update_user YOU MUST USE A VALID IN-GROUP GRADE, THIS IS AN OPTIONAL FIELD - 6666|0
 ERROR: update_user NO UPDATES DEFINED - 6666|0
-NOTICE: update_user USER CAMPAIGN RANKS HAVE BEEN UPDATED - 6666|9|10
-NOTICE: update_user USER CAMPAIGN RANKS HAVE BEEN UPDATED - 6666|9|10|TESTCAMP|1
+NOTICE: update_user USER CAMPAIGN RANKS/GRADES HAVE BEEN UPDATED - 6666|9|10|TESTCAMP|1
+NOTICE: update_user USER IN-GROUP RANKS/GRADES HAVE BEEN UPDATED - 6666|9|10|TEST_IN|1
 SUCCESS: update_user USER HAS BEEN UPDATED - 6666|7878
 SUCCESS: update_user USER HAS BEEN DELETED - 6666|7878
 

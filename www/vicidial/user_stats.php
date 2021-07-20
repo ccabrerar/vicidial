@@ -1559,7 +1559,7 @@ else
 				}
 
 			$ANI='';
-			$ANI_stmt="SELECT caller_code from call_log where uniqueid='$vicidial_id' order by event_time;";
+			$ANI_stmt="SELECT caller_code from call_log where uniqueid='$vicidial_id' order by start_time;";
 			$ANI_rslt=mysql_to_mysqli($ANI_stmt, $link);
 			$ANI_logs_to_print = mysqli_num_rows($ANI_rslt);
 			if ($ANI_logs_to_print > 0) 

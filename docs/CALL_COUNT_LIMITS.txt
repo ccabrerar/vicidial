@@ -1,0 +1,139 @@
+CALL COUNT LIMITS		Started: 2020-11-22	Updated: 2021-07-19
+
+
+
+This document will go over the various "Call Count Limit" features available within VICIdial, including:
+- Lifetime Lead Call Count Limits
+- Daily Call Count Limits
+- 24-Hour Call Count Limits (added at svn/trunk revision 3484)
+
+
+
+What are "Call Count Limits" exactly?
+
+Call Count Limits are restrictions placed on the number of times a lead(or phone number in some cases) can be called by the system. They are configurable on a per-Campaign basis. There are currently three types of Call Count Limits offered as options within VICIdial: Lifetime Lead Call Count Limits, Daily Call Count Limits, 24-Hour Call Count Limits. Below is more detail on how each of these are configured and how they work.
+
+
+
+
+LIFETIME LEAD CALL COUNT LIMITS
+
+Lifetime Lead Call Count Limits are a default feature within VICIdial, meaning you do not have to enable anything in "Admin -> System Settings" to be able to use it. You can find the setting to enable this feature on the "Modify Campaign -> Detail" page listed as "Call Count Limit", and if this setting is set to '0', there will be no limit on the number of times a lead can be called in this campaign.
+
+NOTE: A lead may go over this limit slightly if Lead Recycling or Auto-Alt-Dialing is enabled.
+
+
+
+
+DAILY CALL COUNT LIMITS
+
+Daily Call Count Limits must be enabled on the "Admin -> System Settings" page(Enable Daily Called Count Limits) before you can configure them on a "Modify Campaign -> Detail" page. This setting will limit the number of calls that can be placed to a lead on a per-day basis, with each "day" beginning at midnight server-time, and if this setting is set to '0', there will be no limit on the number of times a lead can be called each day within this campaign. Once a lead has reached this set limit, if the lead is selected to be dialed again, the called-since-last-reset flag on the lead will be changed to 'Y' and the call will not be dialed. If you want to raise this daily limit during the day, you might need to reset your lists to be able to dial the leads that hit the previous limit earlier in the day. 
+
+There is also another setting on the campaign detail page related to this Daily Call Count Limit feature: Daily Call Limit Manual. If the Daily Call Count Limit is enabled, this setting will determine if manual dial calls will be counted and or restricted in the daily call count limit. The DISABLED option will not count manual dial calls or restrict them as part of the daily call count limits, only auto-dial calls would be counted restricted. If one of the COUNT options is used, then manual dial calls would be included in the daily call counts. If one of the RESTRICT options is used, then manual dial calls would be restricted as part of the daily call count limit. Default of this setting is DISABLED.
+
+NOTE: This feature may conflict with Auto-Alt-Dial features if they are enabled on a campaign.
+NOTE: This feature may conflict with Lead Recycling features if they are enabled on a campaign.
+NOTE: This feature will not affect ANYONE Scheduled Callbacks, they can be auto-dialed even if the resulting call will go beyond the daily call count limit.
+
+
+
+24-HOUR CALL COUNT LIMITS (added at svn/trunk revision 3484)
+
+24-Hour Call Count Limits must be enabled on the "Admin -> System Settings" page(Enable 24-Hour Called Count Limits) before you can configure them on a "Modify Campaign -> Detail" page. This setting will limit the number of calls that can be placed to a lead or a phone number within the last 24 hour, with the time being based on the database server-time. 
+
+This setting is enabled by setting the "24-Hour Called Count Limit Method" option to either PHONE_NUMBER or LEAD. If set to PHONE_NUMBER, then before each call is placed, the system will look to see if the count of call attempts to that specific phone number is at or above the set maximum number of attempts, regardless of what lead the phone number is tied to. If set to LEAD, the system will only check to see if the lead is at or above the set maximum number of attempts.
+
+The next setting on the campaign detail page related to this 24-Hour Call Count Limits is "24-Hour Called Count Limit Scope", which can be set to either SYSTEM_WIDE or CAMPAIGN_LISTS. If set to SYSTEM_WIDE, then before each call is placed, the system will look to at all calls placed in the whole system to gather its count of the number of call attempts in the last 24 hours. If set to CAMPAIGN_LISTS, the system will only gather the number of attempts made within the leads tied to the lists set to this specific campaign.
+
+Another setting on the campaign detail page related to this 24-Hour Call Count Limits is "24-Hour Called Count Limit", which can be set to any number 0 or higher. This setting determines the number of calls that can be placed within 24 hours. For example, if this option is set to '1' and a call is placed to a lead at 11:01, then the next time that lead could be called is after 11:01 the next day. The default for this setting is '0'.
+
+The last setting on the campaign detail page related to this 24-Hour Call Count Limits is "24-Hour Called Count Limit Override", where you can create a Settings Container of the "CALL_LIMITS_OVERRIDE" container type that will allow you to override the 24-Hour Called Count Limit for calls to specific states, based upon the area-code of the phone number being dialed. The area-code-to-state relationship is defined in the internal database which you can access by going to "Admin => System Settings => Phone Codes => Phone Codes". Default for this setting is DISABLED.
+
+Here is an example CALL_LIMITS_OVERRIDE Container Entry that will work with this setting:
+; Select one of the four methods below for how the state is determined:
+; 'state_areacode' will look only at the phone_code(country code) and the area-code of the phone number to determine the state
+; 'state_areacode_postcode' will do the same as above, but it will also check to see if the postal code mathes this state
+; 'state_areacode_postcode_state' will do the same as above, but it will also check to see if the lead's "state" field mathes this state
+; 'state_areacode_state' will do the same as the first option, but it will also check to see if the lead's "state" field mathes this state
+; NOTE: for the last three options, if ANY of the selected criteria matches a state defined below, it will use that 24-hour call count limit. 
+;       If more than one entry matches, the lowest call count limit of the matching entries will be used.
+method => state_areacode
+; One line per state, with fields separated by commas: the country abbreviation, state abbreviation and the 24-hour call limit for that state
+state => USA,FL,3
+state => USA,GA,4
+
+
+NOTE: There is no manual dial override for this feature, it will affect all normal customer calls placed within this campaign.
+NOTE: If you use this feature with Lead Recycling enabled and the 24-Hour call limit is reached for a recycled lead, the recycling count for that lead will reset to 0 after the 24-Hour call count limit time expires.
+NOTE: If you use this feature with standard Auto-Alt-Dialing, you can add "TFHCCL" to the list of Auto-Alt-Dial statuses in your campaign if you want a rejected alternate phone number dials to trigger the dialing of the next alternate number(if available for the lead).
+
+
+Why was the "24-Hour Call Count Limits" feature created?
+
+The short answer is "because of Florida". The long answer is, that in its 2021 legislative session, the Florida Legislature unanimously approved an extension of the existing Telemarketing Regulation law to include several new provisions:
+- Reducing call times from 8am-9pm to 8am-8pm
+- Limiting the number of call attempts to three(3) per 24-hours
+- Requiring "Express Consent" of the people being called by auto-dialers or using recorded messages
+- Increased penalties for violations
+- Some other small changes
+
+NOTE: There are dozens of exemptions for some of the above changes. For more information, consult a lawyer that specializes in telecom law.
+You can read the actual text of the law at the following link:
+https://flsenate.gov/Session/Bill/2021/1120/BillText/er/HTML
+
+In summary, as of July 1, 2021, anyone calling consumers within Florida on Native Florida Areacode Phone-Numbers(more about that part later) will now need to follow the restrictions of placing no more than three(3) calls to any single phone number for the same issue within any 24-hour period. In our research into this new restriction, we could not find any other governmental body who used the "24-hour" wording for a call attempt limit. The UK has a 72-hour ban on dropped auto-dialed calls for being re-attempted, but that is not an overall attempt limit, and was rather simple to program. But since the "24-hour" wording was used, we could not simply have affected clients use the existing "Daily Call Count Limit" features, since there would be the possibility of running over the three(3) calls per-24-hours limit. So we had to create a whole new set of features to handle this(detailed above).
+
+Now what about that "Native Florida Areacode Phone-Numbers" part? The law uses the wording "any area code in this state"('this state' meaning Florida) which at the time we're writing this document means the 21 area-codes assigned to the state of Florida by NANPA. Based upon our analysis, this actually leaves out the roughly 15% of Florida citizens who have phone numbers originating in other area-codes. But, this does make the determination of whether you are calling someone affected by this law to be much simpler, since we can just use the existing areacode database within VICIdial(mentioned above) to look up what state the areacode of the phone numbers you are calling belongs to.
+
+The conclusion of all of this is: If you place sales calls, and you call people at Florida phone numbers, you should set up your system to use the new 24-Hour Call Count Limit feature. At the very least, you should set up a "24-Hour Called Count Limit Override" with one of the "state" entries being "state => USA,FL,3" so that you are not calling any of those phone numbers more than three(3) times in a 24-hour time period.
+
+
+
+
+
+
+
+
+
+-------------- FOR DOCUMENTATION PURPOSES ONLY, DO NOT EXECUTE!!! --------------
+
+Database changes:
+
+ALTER TABLE system_settings ADD daily_call_count_limit ENUM('0','1') default '0';
+
+ALTER TABLE vicidial_campaigns ADD daily_call_count_limit TINYINT(3) UNSIGNED default '0';
+ALTER TABLE vicidial_campaigns ADD daily_limit_manual VARCHAR(20) default 'DISABLED';
+
+CREATE TABLE vicidial_lead_call_daily_counts (
+lead_id INT(9) UNSIGNED NOT NULL,
+list_id BIGINT(14) UNSIGNED DEFAULT '0',
+called_count_total TINYINT(3) UNSIGNED default '0',
+called_count_auto TINYINT(3) UNSIGNED default '0',
+called_count_manual TINYINT(3) UNSIGNED default '0',
+modify_date DATETIME,
+unique index vlcdc_lead (lead_id),
+index(list_id)
+) ENGINE=MyISAM;
+
+ALTER TABLE vicidial_list MODIFY called_since_last_reset ENUM('Y','N','Y1','Y2','Y3','Y4','Y5','Y6','Y7','Y8','Y9','Y10','D') default 'N';
+
+CREATE TABLE vicidial_lead_24hour_calls (
+lead_id INT(9) UNSIGNED NOT NULL,
+list_id BIGINT(14) UNSIGNED DEFAULT '0',
+call_date DATETIME,
+phone_number VARCHAR(18),
+state VARCHAR(2),
+call_type ENUM('MANUAL','AUTO','') default '',
+index(lead_id),
+index(call_date),
+index(phone_number)
+) ENGINE=MyISAM;
+
+ALTER TABLE vicidial_campaigns ADD call_limit_24hour_method ENUM('DISABLED','PHONE_NUMBER','LEAD') default 'DISABLED';
+ALTER TABLE vicidial_campaigns ADD call_limit_24hour_scope ENUM('SYSTEM_WIDE','CAMPAIGN_LISTS') default 'SYSTEM_WIDE';
+ALTER TABLE vicidial_campaigns ADD call_limit_24hour TINYINT(3) UNSIGNED default '0';
+ALTER TABLE vicidial_campaigns ADD call_limit_24hour_override VARCHAR(40) default 'DISABLED';
+
+ALTER TABLE system_settings ADD call_limit_24hour ENUM('0','1') default '0';
+ALTER TABLE system_settings ADD call_limit_24hour_reset DATETIME default '2000-01-01 00:00:01';
+

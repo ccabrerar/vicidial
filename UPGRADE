@@ -649,6 +649,29 @@ OTHER CHANGES:
 	PHP scripts and select admin PHP scripts. see the CORS_SUPPORT.txt doc
 	for more information.
 
+181. Added Transfer No Dispo campaign setting, allowing for transferred calls
+	to not immediately show the disposition panel on the agent screen.
+
+182. Added User override setting for campaign Manual Dial Filter option.
+
+183. Added display of active Call Time Holidays in the agent screen Scheduled 
+	Callbacks calendar panel.
+
+184. SECURITY NOTE: For agent screen Webform buttons, we have changed the 
+	default behavior to not include user credentials in non-custom URL
+	strings unless you set the new agc/options.php settings to do so:
+	"$user_pass_webform and "$phone_login_webform"
+	See the "agc/options-example.php" file for more information.
+	*This will not affect custom webform query strings that start with "VAR"
+
+185. Added display of the Phone Codes and Postal Codes that are loaded into the
+	system. Linked from the System Settings page.
+
+186. Added 24-Hour Called Count Limit campaign feature, allows you to limit the
+	number of calls to be placed to a phone number or lead in a 24-hour time
+	period. Also allows for state-based override settings. For more 
+	information, read the CALL_COUNT_LIMITS.txt doc.
+
 
 
 

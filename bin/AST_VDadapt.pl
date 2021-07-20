@@ -55,9 +55,10 @@
 # 201106-2141 - Added calculation and caching of park_log stats per campaign/in-group
 # 201214-0857 - Added SHARED_ campaign agent rotation functions
 # 210207-1205 - Added more logging and debug code for SHARED agent campaigns
+# 210707-2215 - Fixes for several rare logging and stats issues
 #
 
-$build='210207-1205';
+$build='210707-2215';
 # constants
 $DB=0;  # Debug flag, set to 0 for no debug messages, On an active system this will generate lots of lines of output per minute
 $US='__';
@@ -308,6 +309,8 @@ use DBI;
 
 $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
  or die "Couldn't connect to database: " . DBI->errstr;
+$dbhB = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
+ or die "Couldn't connect to database: " . DBI->errstr;
 
 if ($DBX) {print "CONNECTED TO DATABASE:  $VARDB_server|$VARDB_database\n";}
 
@@ -531,6 +534,7 @@ while ($master_loop < $CLIloops)
 
 	$five_min_ago = time();
 	$five_min_ago = ($five_min_ago - 300);
+	$ten_min_ago = ($five_min_ago - 3600*6);
 
 	##### LOOP THROUGH EACH CAMPAIGN AND PROCESS THE DATA #####
 	$i=0;
@@ -578,7 +582,20 @@ while ($master_loop < $CLIloops)
 			}
 		$sthA->finish();
 
-		$event_string = "|$campaign_id[$i]|$hopper_level[$i]|$hopper_ready_count|$local_call_time[$i]|$diff_ratio_updater|$drop_count_updater|$shared_agent_count_updater|";
+		$stat_stmt = "select count(*) From vicidial_campaign_hour_counts where type='CALLS' and calls>0 and campaign_id='$campaign_id[$i]' and last_update>='$ten_min_ago'";
+		$sthA = $dbhA->prepare($stat_stmt) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$recently_dialed_campaign = $aryA[0];
+			if ($DB) {print "     $campaign_id[$i] recently dialed:   $recently_dialed_campaign";}
+			$debug_camp_output .= "     $campaign_id[$i] recently dialed:   $recently_dialed_campaign\n";
+			if ($DBXXX) {print "     |$stat_stmt|\n";}
+			}
+
+		$event_string = "|$campaign_id[$i]|$hopper_level[$i]|$hopper_ready_count|$local_call_time[$i]|$diff_ratio_updater|$drop_count_updater|$shared_agent_count_updater|$agents_loggedin_count|$recently_dialed_campaign";
 		if ($DBX) {print "$i     $event_string\n";}
 		$debug_camp_output .= "$i     $event_string\n";
 		&event_logger;	
@@ -586,8 +603,11 @@ while ($master_loop < $CLIloops)
 		if ($DBX) {print "     TIME CALL CHECK: $five_min_ago/$campaign_calldate_epoch[$i]\n";}
 		$debug_camp_output .= "     TIME CALL CHECK: $five_min_ago/$campaign_calldate_epoch[$i]\n";
 
+		if ($DBX) {print "     TIME NO-AGENT OVERRIDE CALL CHECK: $ten_min_ago/$recently_dialed_campaign\n";}
+		$debug_camp_output .= "     TIME NO-AGENT OVERRIDE CALL CHECK: $ten_min_ago/$recently_dialed_campaign\n";
+
 		##### IF THERE ARE NO LEADS IN THE HOPPER OR AGENTS LOGGED-IN FOR THE CAMPAIGN WE DO NOT WANT TO ADJUST THE DIAL_LEVEL
-		if ( ($hopper_ready_count > 0) || ($agents_loggedin_count > 0) )
+		if ( ($hopper_ready_count > 0) || ($agents_loggedin_count > 0) || ($agents_loggedin_count==0 && $recently_dialed_campaign>0))
 			{
 			### BEGIN - GATHER STATS FOR THE vicidial_campaign_stats TABLE ###
 			$differential_onemin[$i]=0;
@@ -607,6 +627,17 @@ while ($master_loop < $CLIloops)
 				if ($diff_ratio_updater >= 15)
 					{
 					&calculate_dial_level;
+					}
+				}
+			elsif ($agents_loggedin_count==0 && $recently_dialed_campaign>0)
+				{
+				if ($drop_count_updater >= 60)
+					{
+					if ($DB) {print "     NO-AGENT RECENCY OVERRIDE: $campaign_id[$i]\n";}
+					$debug_camp_output .= "     NO-AGENT RECENCY OVERRIDE: $campaign_id[$i]\n";
+					&calculate_drops;
+					
+					$RESETdrop_count_updater++;
 					}
 				}
 			else
@@ -2660,15 +2691,25 @@ sub calculate_drops
 		{
 		$secH = time();
 		($HRsec,$HRmin,$HRhour,$HRmday,$HRmon,$HRyear,$HRwday,$HRyday,$HRisdst) = localtime(time);
+		($HRsec_prev,$HRmin_prev,$HRhour_prev,$HRmday_prev,$HRmon_prev,$HRyear_prev,$HRwday_prev,$HRyday_prev,$HRisdst_prev) = localtime(time-3600);
 		$HRyear = ($HRyear + 1900);
 		$HRmon++;
 		$HRhour_test = $HRhour;
 		if ($HRmon < 10) {$HRmon = "0$HRmon";}
 		if ($HRmday < 10) {$HRmday = "0$HRmday";}
 		if ($HRhour < 10) {$HRhour = "0$HRhour";}
+
+		$HRyear_prev = ($HRyear_prev + 1900);
+		$HRmon_prev++;
+		if ($HRmon_prev < 10) {$HRmon_prev = "0$HRmon_prev";}
+		if ($HRmday_prev < 10) {$HRmday_prev = "0$HRmday_prev";}
+		if ($HRhour_prev < 10) {$HRhour_prev = "0$HRhour_prev";}
+
 		$VL_today = "$HRyear-$HRmon-$HRmday";
 		$VL_current_hour_date = "$HRyear-$HRmon-$HRmday $HRhour:00:00";
+		$VL_previous_hour_date = "$HRyear_prev-$HRmon_prev-$HRmday_prev $HRhour_prev:00:00";
 		$VL_day_start_date = "$HRyear-$HRmon-$HRmday 00:00:00";
+		$VL_prev_day_start_date = "$HRyear_prev-$HRmon_prev-$HRmday_prev 00:00:00";
 		$VL_current_hour_calls=0;
 
 		### get date-time of start of next hour ###
@@ -2763,7 +2804,7 @@ sub calculate_drops
 					$cache_hour_found=0;
 					while ($sthArows_hr > $k)
 						{
-						if ( ($VCHC_hour[$k] == $j) || ($VCHC_hour[$j] eq "$j") ) 
+						if ( ($VCHC_hour[$k] == $j) && ($VCHC_hour[$j] eq "$j") ) # JCJ changed || to &&
 							{
 							$VCScalls_today[$i] = ($VCScalls_today[$i] + $VCHC_calls[$k]);
 							$cache_hour_found++;
@@ -2827,27 +2868,34 @@ sub calculate_drops
 		if ($VLhour_counts > 0) 
 			{
 			$VL_current_hour_calls=0;
-			$stmtA = "SELECT count(*) from $vicidial_log where campaign_id='$campaign_id[$i]' and call_date >= '$VL_current_hour_date' and status IN($camp_ANS_STAT_SQL);";
+			# $stmtA = "SELECT count(*) from $vicidial_log where campaign_id='$campaign_id[$i]' and call_date >= '$VL_previous_hour_date' and status IN($camp_ANS_STAT_SQL);";
+			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, count(*), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_log where campaign_id='$campaign_id[$i]' and call_date >= '$VL_previous_hour_date' and status IN($camp_ANS_STAT_SQL) group by hour_int, next_hour order by hour_int;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
 			if ($sthArows > 0)
 				{
-				@aryA = $sthA->fetchrow_array;
-				$VL_current_hour_calls =	$aryA[0];
+				$q=0;
+				while (@aryA = $sthA->fetchrow_array) 
+					{
+					$VL_current_hour_date_int =	$aryA[0];
+					$current_hr=substr($VL_current_hour_date_int, 11, 2);
+					$VL_current_hour_calls =	$aryA[1];
+					$VL_next_hour_date_int =	$aryA[2];
+					if ($DBX) {print "VCHC CURRENT HOUR CALLS ANSWERS: |$sthArows|$VL_current_hour_date_int|$VL_current_hour_calls|$stmtA|\n";}
+
+					$stmtB="INSERT IGNORE INTO vicidial_campaign_hour_counts SET campaign_id='$campaign_id[$i]',date_hour='$VL_current_hour_date_int',type='ANSWERS',next_hour='$VL_next_hour_date_int',last_update=NOW(),calls='$VL_current_hour_calls',hr='$current_hr' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VL_current_hour_calls';";
+					$affected_rows = $dbhB->do($stmtB);
+					if ($DBX) {print "VCHC STATS INSERT/UPDATE    TOTAL|$affected_rows|$stmtB|\n";}
+					}				
 				}
 			$sthA->finish();
-			if ($DBX) {print "VCHC CURRENT HOUR CALLS ANSWERS: |$sthArows|$VL_current_hour_calls|$stmtA|\n";}
-
-			$stmtA="INSERT IGNORE INTO vicidial_campaign_hour_counts SET campaign_id='$campaign_id[$i]',date_hour='$VL_current_hour_date',type='ANSWERS',next_hour='$VL_next_hour_date',last_update=NOW(),calls='$VL_current_hour_calls',hr='$HRhour_test' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VL_current_hour_calls';";
-			$affected_rows = $dbhA->do($stmtA);
-			if ($DBX) {print "VCHC STATS INSERT/UPDATE    TOTAL|$affected_rows|$stmtA|\n";}
 
 			if ($HRhour_test > 0)
 				{
 				# check to see if cached hour totals already exist
 				$VCHC_entry_count=0;
-				$stmtA = "SELECT count(*) from vicidial_campaign_hour_counts where campaign_id='$campaign_id[$i]' and type='ANSWERS' and date_hour >= '$VL_day_start_date' and date_hour < '$VL_current_hour_date' and last_update > next_hour;";
+				$stmtA = "SELECT count(*) from vicidial_campaign_hour_counts where campaign_id='$campaign_id[$i]' and type='ANSWERS' and date_hour >= '$VL_day_start_date' and date_hour < '$VL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR;";
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 				$sthArows=$sthA->rows;
@@ -2863,7 +2911,7 @@ sub calculate_drops
 				if ($VCHC_entry_count >= $HRhour_test) 
 					{
 					$VCHC_cache_calls=0;
-					$stmtA = "SELECT sum(calls) from vicidial_campaign_hour_counts where campaign_id='$campaign_id[$i]' and type='ANSWERS' and date_hour >= '$VL_day_start_date' and date_hour < '$VL_current_hour_date' and last_update > next_hour;";
+					$stmtA = "SELECT sum(calls) from vicidial_campaign_hour_counts where campaign_id='$campaign_id[$i]' and type='ANSWERS' and date_hour >= '$VL_day_start_date' and date_hour < '$VL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR;";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows=$sthA->rows;
@@ -2883,7 +2931,7 @@ sub calculate_drops
 					@VCHC_next_hour=@MT;
 					@VCHC_last_update=@MT;
 					@VCHC_calls=@MT;
-					$stmtA = "SELECT hr,date_hour,next_hour,last_update,calls from vicidial_campaign_hour_counts where campaign_id='$campaign_id[$i]' and type='ANSWERS' and date_hour >= '$VL_day_start_date' and date_hour < '$VL_current_hour_date' and last_update > next_hour order by hr;";
+					$stmtA = "SELECT hr,date_hour,next_hour,last_update,calls from vicidial_campaign_hour_counts where campaign_id='$campaign_id[$i]' and type='ANSWERS' and date_hour >= '$VL_day_start_date' and date_hour < '$VL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR order by hr;";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows_hr=$sthA->rows;
@@ -2908,7 +2956,7 @@ sub calculate_drops
 						$cache_hour_found=0;
 						while ($sthArows_hr > $k)
 							{
-							if ( ($VCHC_hour[$k] == $j) || ($VCHC_hour[$j] eq "$j") ) 
+							if ( ($VCHC_hour[$k] == $j) && ($VCHC_hour[$j] eq "$j") ) # changed || to &&
 								{
 								$VCSanswers_today[$i] = ($VCSanswers_today[$i] + $VCHC_calls[$k]);
 								$cache_hour_found++;
@@ -2969,27 +3017,34 @@ sub calculate_drops
 		if ($VLhour_counts > 0) 
 			{
 			$VL_current_hour_calls=0;
-			$stmtA = "SELECT count(*) from $vicidial_log where campaign_id='$campaign_id[$i]' and call_date >= '$VL_current_hour_date' and status IN($camp_AM_STAT_SQL) and user != 'VDAD';";
+			# $stmtA = "SELECT count(*) from $vicidial_log where campaign_id='$campaign_id[$i]' and call_date >= '$VL_current_hour_date' and status IN($camp_AM_STAT_SQL) and user != 'VDAD';";
+			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, count(*), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_log where campaign_id='$campaign_id[$i]' and call_date >= '$VL_previous_hour_date' and status IN($camp_AM_STAT_SQL) and user != 'VDAD' group by hour_int, next_hour order by hour_int;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
 			if ($sthArows > 0)
 				{
-				@aryA = $sthA->fetchrow_array;
-				$VL_current_hour_calls =	$aryA[0];
+				$q=0;
+				while (@aryA = $sthA->fetchrow_array) 
+					{
+					$VL_current_hour_date_int =	$aryA[0];
+					$current_hr=substr($VL_current_hour_date_int, 11, 2);
+					$VL_current_hour_calls =	$aryA[1];
+					$VL_next_hour_date_int =	$aryA[2];
+					if ($DBX) {print "VCHC CURRENT HOUR CALLS ANSWERS: |$sthArows|$VL_current_hour_date_int|$VL_current_hour_calls|$stmtA|\n";}
+
+					$stmtB="INSERT IGNORE INTO vicidial_campaign_hour_counts SET campaign_id='$campaign_id[$i]',date_hour='$VL_current_hour_date_int',type='MACHINES',next_hour='$VL_next_hour_date_int',last_update=NOW(),calls='$VL_current_hour_calls',hr='$current_hr' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VL_current_hour_calls';";
+					$affected_rows = $dbhB->do($stmtB);
+					if ($DBX) {print "VCHC STATS INSERT/UPDATE    TOTAL|$affected_rows|$stmtB|\n";}
+					}				
 				}
 			$sthA->finish();
-			if ($DBX) {print "VCHC CURRENT HOUR CALLS MACHINES: |$sthArows|$VL_current_hour_calls|$stmtA|\n";}
-
-			$stmtA="INSERT IGNORE INTO vicidial_campaign_hour_counts SET campaign_id='$campaign_id[$i]',date_hour='$VL_current_hour_date',type='MACHINES',next_hour='$VL_next_hour_date',last_update=NOW(),calls='$VL_current_hour_calls',hr='$HRhour_test' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VL_current_hour_calls';";
-			$affected_rows = $dbhA->do($stmtA);
-			if ($DBX) {print "VCHC STATS INSERT/UPDATE    TOTAL|$affected_rows|$stmtA|\n";}
 
 			if ($HRhour_test > 0)
 				{
 				# check to see if cached hour totals already exist
 				$VCHC_entry_count=0;
-				$stmtA = "SELECT count(*) from vicidial_campaign_hour_counts where campaign_id='$campaign_id[$i]' and type='MACHINES' and date_hour >= '$VL_day_start_date' and date_hour < '$VL_current_hour_date' and last_update > next_hour;";
+				$stmtA = "SELECT count(*) from vicidial_campaign_hour_counts where campaign_id='$campaign_id[$i]' and type='MACHINES' and date_hour >= '$VL_day_start_date' and date_hour < '$VL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR;";
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 				$sthArows=$sthA->rows;
@@ -3005,7 +3060,7 @@ sub calculate_drops
 				if ($VCHC_entry_count >= $HRhour_test) 
 					{
 					$VCHC_cache_calls=0;
-					$stmtA = "SELECT sum(calls) from vicidial_campaign_hour_counts where campaign_id='$campaign_id[$i]' and type='MACHINES' and date_hour >= '$VL_day_start_date' and date_hour < '$VL_current_hour_date' and last_update > next_hour;";
+					$stmtA = "SELECT sum(calls) from vicidial_campaign_hour_counts where campaign_id='$campaign_id[$i]' and type='MACHINES' and date_hour >= '$VL_day_start_date' and date_hour < '$VL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR;";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows=$sthA->rows;
@@ -3025,7 +3080,7 @@ sub calculate_drops
 					@VCHC_next_hour=@MT;
 					@VCHC_last_update=@MT;
 					@VCHC_calls=@MT;
-					$stmtA = "SELECT hr,date_hour,next_hour,last_update,calls from vicidial_campaign_hour_counts where campaign_id='$campaign_id[$i]' and type='MACHINES' and date_hour >= '$VL_day_start_date' and date_hour < '$VL_current_hour_date' and last_update > next_hour order by hr;";
+					$stmtA = "SELECT hr,date_hour,next_hour,last_update,calls from vicidial_campaign_hour_counts where campaign_id='$campaign_id[$i]' and type='MACHINES' and date_hour >= '$VL_day_start_date' and date_hour < '$VL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR order by hr;";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows_hr=$sthA->rows;
@@ -3050,7 +3105,7 @@ sub calculate_drops
 						$cache_hour_found=0;
 						while ($sthArows_hr > $k)
 							{
-							if ( ($VCHC_hour[$k] == $j) || ($VCHC_hour[$j] eq "$j") ) 
+							if ( ($VCHC_hour[$k] == $j) && ($VCHC_hour[$j] eq "$j") ) # changed || to &&
 								{
 								$VCSam_today[$i] = ($VCSam_today[$i] + $VCHC_calls[$k]);
 								$cache_hour_found++;
@@ -3111,21 +3166,28 @@ sub calculate_drops
 		if ($VLhour_counts > 0) 
 			{
 			$VL_current_hour_calls=0;
-			$stmtA = "SELECT count(*) from $vicidial_log where campaign_id='$campaign_id[$i]' and call_date >= '$VL_current_hour_date' and status IN($camp_ANS_STAT_SQL) and user != 'VDAD';";
+			# $stmtA = "SELECT count(*) from $vicidial_log where campaign_id='$campaign_id[$i]' and call_date >= '$VL_current_hour_date' and status IN($camp_ANS_STAT_SQL) and user != 'VDAD';";
+			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, count(*), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_log where campaign_id='$campaign_id[$i]' and call_date >= '$VL_previous_hour_date' and status IN($camp_ANS_STAT_SQL) and user != 'VDAD' group by hour_int, next_hour order by hour_int;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
 			if ($sthArows > 0)
 				{
-				@aryA = $sthA->fetchrow_array;
-				$VL_current_hour_calls =	$aryA[0];
+				$q=0;
+				while (@aryA = $sthA->fetchrow_array) 
+					{
+					$VL_current_hour_date_int =	$aryA[0];
+					$current_hr=substr($VL_current_hour_date_int, 11, 2);
+					$VL_current_hour_calls =	$aryA[1];
+					$VL_next_hour_date_int =	$aryA[2];
+					if ($DBX) {print "VCHC CURRENT HOUR CALLS ANSWERS: |$sthArows|$VL_current_hour_date_int|$VL_current_hour_calls|$stmtA|\n";}
+
+					$stmtB="INSERT IGNORE INTO vicidial_campaign_hour_counts SET campaign_id='$campaign_id[$i]',date_hour='$VL_current_hour_date_int',type='AGENTS',next_hour='$VL_next_hour_date_int',last_update=NOW(),calls='$VL_current_hour_calls',hr='$current_hr' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VL_current_hour_calls';";
+					$affected_rows = $dbhB->do($stmtB);
+					if ($DBX) {print "VCHC STATS INSERT/UPDATE    TOTAL|$affected_rows|$stmtB|\n";}
+					}				
 				}
 			$sthA->finish();
-			if ($DBX) {print "VCHC CURRENT HOUR CALLS AGENTS: |$sthArows|$VL_current_hour_calls|$stmtA|\n";}
-
-			$stmtA="INSERT IGNORE INTO vicidial_campaign_hour_counts SET campaign_id='$campaign_id[$i]',date_hour='$VL_current_hour_date',type='AGENTS',next_hour='$VL_next_hour_date',last_update=NOW(),calls='$VL_current_hour_calls',hr='$HRhour_test' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VL_current_hour_calls';";
-			$affected_rows = $dbhA->do($stmtA);
-			if ($DBX) {print "VCHC STATS INSERT/UPDATE    TOTAL|$affected_rows|$stmtA|\n";}
 
 			if ($HRhour_test > 0)
 				{
@@ -3147,7 +3209,7 @@ sub calculate_drops
 				if ($VCHC_entry_count >= $HRhour_test) 
 					{
 					$VCHC_cache_calls=0;
-					$stmtA = "SELECT sum(calls) from vicidial_campaign_hour_counts where campaign_id='$campaign_id[$i]' and type='AGENTS' and date_hour >= '$VL_day_start_date' and date_hour < '$VL_current_hour_date' and last_update > next_hour;";
+					$stmtA = "SELECT sum(calls) from vicidial_campaign_hour_counts where campaign_id='$campaign_id[$i]' and type='AGENTS' and date_hour >= '$VL_day_start_date' and date_hour < '$VL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR;";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows=$sthA->rows;
@@ -3167,7 +3229,7 @@ sub calculate_drops
 					@VCHC_next_hour=@MT;
 					@VCHC_last_update=@MT;
 					@VCHC_calls=@MT;
-					$stmtA = "SELECT hr,date_hour,next_hour,last_update,calls from vicidial_campaign_hour_counts where campaign_id='$campaign_id[$i]' and type='AGENTS' and date_hour >= '$VL_day_start_date' and date_hour < '$VL_current_hour_date' and last_update > next_hour order by hr;";
+					$stmtA = "SELECT hr,date_hour,next_hour,last_update,calls from vicidial_campaign_hour_counts where campaign_id='$campaign_id[$i]' and type='AGENTS' and date_hour >= '$VL_day_start_date' and date_hour < '$VL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR order by hr;";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows_hr=$sthA->rows;
@@ -3192,7 +3254,7 @@ sub calculate_drops
 						$cache_hour_found=0;
 						while ($sthArows_hr > $k)
 							{
-							if ( ($VCHC_hour[$k] == $j) || ($VCHC_hour[$j] eq "$j") ) 
+							if ( ($VCHC_hour[$k] == $j) && ($VCHC_hour[$j] eq "$j") ) # changed || to &&
 								{
 								$VCSagenthandled_today[$i] = ($VCSagenthandled_today[$i] + $VCHC_calls[$k]);
 								$cache_hour_found++;
@@ -3253,27 +3315,34 @@ sub calculate_drops
 		if ($VLhour_counts > 0) 
 			{
 			$VL_current_hour_calls=0;
-			$stmtA = "SELECT count(*) from $vicidial_log where campaign_id='$campaign_id[$i]' and call_date >= '$VL_current_hour_date' and status IN('DROP','XDROP');";
+			# $stmtA = "SELECT count(*) from $vicidial_log where campaign_id='$campaign_id[$i]' and call_date >= '$VL_current_hour_date' and status IN('DROP','XDROP');";
+			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, count(*), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_log where campaign_id='$campaign_id[$i]' and call_date >= '$VL_previous_hour_date' and status IN('DROP','XDROP') group by hour_int, next_hour order by hour_int;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
 			if ($sthArows > 0)
 				{
-				@aryA = $sthA->fetchrow_array;
-				$VL_current_hour_calls =	$aryA[0];
+				$q=0;
+				while (@aryA = $sthA->fetchrow_array) 
+					{
+					$VL_current_hour_date_int =	$aryA[0];
+					$current_hr=substr($VL_current_hour_date_int, 11, 2);
+					$VL_current_hour_calls =	$aryA[1];
+					$VL_next_hour_date_int =	$aryA[2];
+					if ($DBX) {print "VCHC CURRENT HOUR CALLS ANSWERS: |$sthArows|$VL_current_hour_date_int|$VL_current_hour_calls|$stmtA|\n";}
+
+					$stmtB="INSERT IGNORE INTO vicidial_campaign_hour_counts SET campaign_id='$campaign_id[$i]',date_hour='$VL_current_hour_date_int',type='DROPS',next_hour='$VL_next_hour_date_int',last_update=NOW(),calls='$VL_current_hour_calls',hr='$current_hr' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VL_current_hour_calls';";
+					$affected_rows = $dbhB->do($stmtB);
+					if ($DBX) {print "VCHC STATS INSERT/UPDATE    TOTAL|$affected_rows|$stmtB|\n";}
+					}				
 				}
 			$sthA->finish();
-			if ($DBX) {print "VCHC CURRENT HOUR CALLS DROPS: |$sthArows|$VL_current_hour_calls|$stmtA|\n";}
-
-			$stmtA="INSERT IGNORE INTO vicidial_campaign_hour_counts SET campaign_id='$campaign_id[$i]',date_hour='$VL_current_hour_date',type='DROPS',next_hour='$VL_next_hour_date',last_update=NOW(),calls='$VL_current_hour_calls',hr='$HRhour_test' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VL_current_hour_calls';";
-			$affected_rows = $dbhA->do($stmtA);
-			if ($DBX) {print "VCHC STATS INSERT/UPDATE    TOTAL|$affected_rows|$stmtA|\n";}
 
 			if ($HRhour_test > 0)
 				{
 				# check to see if cached hour totals already exist
 				$VCHC_entry_count=0;
-				$stmtA = "SELECT count(*) from vicidial_campaign_hour_counts where campaign_id='$campaign_id[$i]' and type='DROPS' and date_hour >= '$VL_day_start_date' and date_hour < '$VL_current_hour_date' and last_update > next_hour;";
+				$stmtA = "SELECT count(*) from vicidial_campaign_hour_counts where campaign_id='$campaign_id[$i]' and type='DROPS' and date_hour >= '$VL_day_start_date' and date_hour < '$VL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR;";
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 				$sthArows=$sthA->rows;
@@ -3289,7 +3358,7 @@ sub calculate_drops
 				if ($VCHC_entry_count >= $HRhour_test) 
 					{
 					$VCHC_cache_calls=0;
-					$stmtA = "SELECT sum(calls) from vicidial_campaign_hour_counts where campaign_id='$campaign_id[$i]' and type='DROPS' and date_hour >= '$VL_day_start_date' and date_hour < '$VL_current_hour_date' and last_update > next_hour;";
+					$stmtA = "SELECT sum(calls) from vicidial_campaign_hour_counts where campaign_id='$campaign_id[$i]' and type='DROPS' and date_hour >= '$VL_day_start_date' and date_hour < '$VL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR;";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows=$sthA->rows;
@@ -3309,7 +3378,7 @@ sub calculate_drops
 					@VCHC_next_hour=@MT;
 					@VCHC_last_update=@MT;
 					@VCHC_calls=@MT;
-					$stmtA = "SELECT hr,date_hour,next_hour,last_update,calls from vicidial_campaign_hour_counts where campaign_id='$campaign_id[$i]' and type='DROPS' and date_hour >= '$VL_day_start_date' and date_hour < '$VL_current_hour_date' and last_update > next_hour order by hr;";
+					$stmtA = "SELECT hr,date_hour,next_hour,last_update,calls from vicidial_campaign_hour_counts where campaign_id='$campaign_id[$i]' and type='DROPS' and date_hour >= '$VL_day_start_date' and date_hour < '$VL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR order by hr;";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows_hr=$sthA->rows;
@@ -3334,7 +3403,7 @@ sub calculate_drops
 						$cache_hour_found=0;
 						while ($sthArows_hr > $k)
 							{
-							if ( ($VCHC_hour[$k] == $j) || ($VCHC_hour[$j] eq "$j") ) 
+							if ( ($VCHC_hour[$k] == $j) && ($VCHC_hour[$j] eq "$j") ) # changed || to &&
 								{
 								$VCSdrops_today[$i] = ($VCSdrops_today[$i] + $VCHC_calls[$k]);
 								$cache_hour_found++;
@@ -4745,15 +4814,25 @@ sub calculate_drops_inbound
 		{
 		$secH = time();
 		($HRsec,$HRmin,$HRhour,$HRmday,$HRmon,$HRyear,$HRwday,$HRyday,$HRisdst) = localtime(time);
+		($HRsec_prev,$HRmin_prev,$HRhour_prev,$HRmday_prev,$HRmon_prev,$HRyear_prev,$HRwday_prev,$HRyday_prev,$HRisdst_prev) = localtime(time-3600);
 		$HRyear = ($HRyear + 1900);
 		$HRmon++;
 		$HRhour_test = $HRhour;
 		if ($HRmon < 10) {$HRmon = "0$HRmon";}
 		if ($HRmday < 10) {$HRmday = "0$HRmday";}
 		if ($HRhour < 10) {$HRhour = "0$HRhour";}
+
+		$HRyear_prev = ($HRyear_prev + 1900);
+		$HRmon_prev++;
+		if ($HRmon_prev < 10) {$HRmon_prev = "0$HRmon_prev";}
+		if ($HRmday_prev < 10) {$HRmday_prev = "0$HRmday_prev";}
+		if ($HRhour_prev < 10) {$HRhour_prev = "0$HRhour_prev";}
+
 		$VCL_today = "$HRyear-$HRmon-$HRmday";
 		$VCL_current_hour_date = "$HRyear-$HRmon-$HRmday $HRhour:00:00";
+		$VCL_previous_hour_date = "$HRyear_prev-$HRmon_prev-$HRmday_prev $HRhour_prev:00:00";
 		$VCL_day_start_date = "$HRyear-$HRmon-$HRmday 00:00:00";
+		$VCL_prev_day_start_date = "$HRyear_prev-$HRmon_prev-$HRmday_prev 00:00:00";
 		$VCL_current_hour_calls=0;
 
 		### get date-time of start of next hour ###
@@ -4848,7 +4927,7 @@ sub calculate_drops_inbound
 					$cache_hour_found=0;
 					while ($sthArows_hr > $k)
 						{
-						if ( ($VCHC_hour[$k] == $j) || ($VCHC_hour[$j] eq "$j") ) 
+						if ( ($VCHC_hour[$k] == $j) && ($VCHC_hour[$j] eq "$j") ) # changed || to &&
 							{
 							$iVCScalls_today[$p] = ($iVCScalls_today[$p] + $VCHC_calls[$k]);
 							$cache_hour_found++;
@@ -4911,27 +4990,34 @@ sub calculate_drops_inbound
 		if ($VCLhour_counts > 0) 
 			{
 			$VCL_current_hour_calls=0;
-			$stmtA = "SELECT count(*) from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date' and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','INBND','MAXCAL');";
+			# $stmtA = "SELECT count(*) from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date' and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','INBND','MAXCAL');";
+			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, count(*), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_previous_hour_date' and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','INBND','MAXCAL') group by hour_int, next_hour order by hour_int;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
 			if ($sthArows > 0)
 				{
-				@aryA = $sthA->fetchrow_array;
-				$VCL_current_hour_calls =	$aryA[0];
+				$q=0;
+				while (@aryA = $sthA->fetchrow_array) 
+					{
+					$VCL_current_hour_date_int =	$aryA[0];
+					$current_hr=substr($VL_current_hour_date_int, 11, 2);
+					$VCL_current_hour_calls =	$aryA[1];
+					$VCL_next_hour_date_int =	$aryA[2];
+					if ($DBX) {print "VCHC CURRENT HOUR CALLS ANSWERS: |$sthArows|$VL_current_hour_date_int|$VL_current_hour_calls|$stmtA|\n";}
+
+					$stmtB="INSERT IGNORE INTO vicidial_ingroup_hour_counts SET group_id='$group_id[$p]',date_hour='$VCL_current_hour_date_int',type='ANSWERS',next_hour='$VCL_next_hour_date_int',last_update=NOW(),calls='$VCL_current_hour_calls',hr='$current_hr' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VCL_current_hour_calls';";
+					$affected_rows = $dbhB->do($stmtB);
+					if ($DBX) {print "VCHC STATS INSERT/UPDATE    TOTAL|$affected_rows|$stmtB|\n";}
+					}				
 				}
 			$sthA->finish();
-			if ($DBX) {print "VCLHC CURRENT HOUR CALLS ANSWERS: |$sthArows|$VCL_current_hour_calls|$stmtA|\n";}
-
-			$stmtA="INSERT IGNORE INTO vicidial_ingroup_hour_counts SET group_id='$group_id[$p]',date_hour='$VCL_current_hour_date',type='ANSWERS',next_hour='$VCL_next_hour_date',last_update=NOW(),calls='$VCL_current_hour_calls',hr='$HRhour_test' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VCL_current_hour_calls';";
-			$affected_rows = $dbhA->do($stmtA);
-			if ($DBX) {print "VCLHC STATS INSERT/UPDATE    TOTAL|$affected_rows|$stmtA|\n";}
 
 			if ($HRhour_test > 0)
 				{
 				# check to see if cached hour totals already exist
 				$VCHC_entry_count=0;
-				$stmtA = "SELECT count(*) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='ANSWERS' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour;";
+				$stmtA = "SELECT count(*) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='ANSWERS' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR;";
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 				$sthArows=$sthA->rows;
@@ -4947,7 +5033,7 @@ sub calculate_drops_inbound
 				if ($VCHC_entry_count >= $HRhour_test) 
 					{
 					$VCHC_cache_calls=0;
-					$stmtA = "SELECT sum(calls) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='ANSWERS' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour;";
+					$stmtA = "SELECT sum(calls) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='ANSWERS' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR;";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows=$sthA->rows;
@@ -4967,7 +5053,7 @@ sub calculate_drops_inbound
 					@VCHC_next_hour=@MT;
 					@VCHC_last_update=@MT;
 					@VCHC_calls=@MT;
-					$stmtA = "SELECT hr,date_hour,next_hour,last_update,calls from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='ANSWERS' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour order by hr;";
+					$stmtA = "SELECT hr,date_hour,next_hour,last_update,calls from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='ANSWERS' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR order by hr;";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows_hr=$sthA->rows;
@@ -4992,7 +5078,7 @@ sub calculate_drops_inbound
 						$cache_hour_found=0;
 						while ($sthArows_hr > $k)
 							{
-							if ( ($VCHC_hour[$k] == $j) || ($VCHC_hour[$j] eq "$j") ) 
+							if ( ($VCHC_hour[$k] == $j) && ($VCHC_hour[$j] eq "$j") ) # changed || to &&
 								{
 								$iVCSanswers_today[$p] = ($iVCSanswers_today[$p] + $VCHC_calls[$k]);
 								$cache_hour_found++;
@@ -5053,27 +5139,34 @@ sub calculate_drops_inbound
 		if ($VCLhour_counts > 0) 
 			{
 			$VCL_current_hour_calls=0;
-			$stmtA = "SELECT count(*) from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date' and status IN('DROP','XDROP');";
+			# $stmtA = "SELECT count(*) from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date' and status IN('DROP','XDROP');";
+			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, count(*), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_previous_hour_date'  and status IN('DROP','XDROP') group by hour_int, next_hour order by hour_int;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
 			if ($sthArows > 0)
 				{
-				@aryA = $sthA->fetchrow_array;
-				$VCL_current_hour_calls =	$aryA[0];
+				$q=0;
+				while (@aryA = $sthA->fetchrow_array) 
+					{
+					$VCL_current_hour_date_int =	$aryA[0];
+					$current_hr=substr($VL_current_hour_date_int, 11, 2);
+					$VCL_current_hour_calls =	$aryA[1];
+					$VCL_next_hour_date_int =	$aryA[2];
+					if ($DBX) {print "VCLHC CURRENT HOUR CALLS DROPS: |$sthArows|$VCL_current_hour_calls|$stmtA|\n";}
+
+					$stmtB="INSERT IGNORE INTO vicidial_ingroup_hour_counts SET group_id='$group_id[$p]',date_hour='$VCL_current_hour_date_int',type='DROPS',next_hour='$VCL_next_hour_date_int',last_update=NOW(),calls='$VCL_current_hour_calls',hr='$current_hr' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VCL_current_hour_calls';";
+					$affected_rows = $dbhB->do($stmtB);
+					if ($DBX) {print "VCLHC STATS INSERT/UPDATE    TOTAL|$affected_rows|$stmtB|\n";}
+					}				
 				}
 			$sthA->finish();
-			if ($DBX) {print "VCLHC CURRENT HOUR CALLS DROPS: |$sthArows|$VCL_current_hour_calls|$stmtA|\n";}
-
-			$stmtA="INSERT IGNORE INTO vicidial_ingroup_hour_counts SET group_id='$group_id[$p]',date_hour='$VCL_current_hour_date',type='DROPS',next_hour='$VCL_next_hour_date',last_update=NOW(),calls='$VCL_current_hour_calls',hr='$HRhour_test' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VCL_current_hour_calls';";
-			$affected_rows = $dbhA->do($stmtA);
-			if ($DBX) {print "VCLHC STATS INSERT/UPDATE    TOTAL|$affected_rows|$stmtA|\n";}
 
 			if ($HRhour_test > 0)
 				{
 				# check to see if cached hour totals already exist
 				$VCHC_entry_count=0;
-				$stmtA = "SELECT count(*) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='DROPS' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour;";
+				$stmtA = "SELECT count(*) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='DROPS' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR;";
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 				$sthArows=$sthA->rows;
@@ -5089,7 +5182,7 @@ sub calculate_drops_inbound
 				if ($VCHC_entry_count >= $HRhour_test) 
 					{
 					$VCHC_cache_calls=0;
-					$stmtA = "SELECT sum(calls) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='DROPS' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour;";
+					$stmtA = "SELECT sum(calls) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='DROPS' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR;";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows=$sthA->rows;
@@ -5109,7 +5202,7 @@ sub calculate_drops_inbound
 					@VCHC_next_hour=@MT;
 					@VCHC_last_update=@MT;
 					@VCHC_calls=@MT;
-					$stmtA = "SELECT hr,date_hour,next_hour,last_update,calls from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='DROPS' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour order by hr;";
+					$stmtA = "SELECT hr,date_hour,next_hour,last_update,calls from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='DROPS' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR order by hr;";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows_hr=$sthA->rows;
@@ -5134,7 +5227,7 @@ sub calculate_drops_inbound
 						$cache_hour_found=0;
 						while ($sthArows_hr > $k)
 							{
-							if ( ($VCHC_hour[$k] == $j) || ($VCHC_hour[$j] eq "$j") ) 
+							if ( ($VCHC_hour[$k] == $j) && ($VCHC_hour[$j] eq "$j") ) # changed || to &&
 								{
 								$iVCSdrops_today[$p] = ($iVCSdrops_today[$p] + $VCHC_calls[$k]);
 								$cache_hour_found++;
@@ -5205,27 +5298,33 @@ sub calculate_drops_inbound
 		if ($VCLhour_counts > 0) 
 			{
 			$VCL_current_hour_calls=0;
-			$stmtA = "SELECT count(*) from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date' and queue_seconds <= $answer_sec_pct_rt_stat_one and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','INBND','MAXCAL');";
+			# $stmtA = "SELECT count(*) from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date' and queue_seconds <= $answer_sec_pct_rt_stat_one and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','INBND','MAXCAL');";
+			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, count(*), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_previous_hour_date' and queue_seconds <= $answer_sec_pct_rt_stat_one and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','INBND','MAXCAL') group by hour_int, next_hour order by hour_int;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
 			if ($sthArows > 0)
 				{
-				@aryA = $sthA->fetchrow_array;
-				$VCL_current_hour_calls =	$aryA[0];
+				$q=0;
+				while (@aryA = $sthA->fetchrow_array) 
+					{
+					$VCL_current_hour_date_int =	$aryA[0];
+					$VCL_current_hour_calls =	$aryA[1];
+					$VCL_next_hour_date_int =	$aryA[2];
+					if ($DBX) {print "VCLHC CURRENT HOUR CALLS HOLD SECONDS 1: |$sthArows|$VCL_current_hour_calls|$stmtA|\n";}
+
+					$stmtB="INSERT IGNORE INTO vicidial_ingroup_hour_counts SET group_id='$group_id[$p]',date_hour='$VCL_current_hour_date_int',type='HOLDSEC1',next_hour='$VCL_next_hour_date_int',last_update=NOW(),calls='$VCL_current_hour_calls',hr='$HRhour_test' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VL_current_hour_calls';";
+					$affected_rows = $dbhB->do($stmtB);
+					if ($DBX) {print "VCHC STATS INSERT/UPDATE    TOTAL|$affected_rows|$stmtB|\n";}
+					}				
 				}
 			$sthA->finish();
-			if ($DBX) {print "VCLHC CURRENT HOUR CALLS HOLD SECONDS 1: |$sthArows|$VCL_current_hour_calls|$stmtA|\n";}
-
-			$stmtA="INSERT IGNORE INTO vicidial_ingroup_hour_counts SET group_id='$group_id[$p]',date_hour='$VCL_current_hour_date',type='HOLDSEC1',next_hour='$VCL_next_hour_date',last_update=NOW(),calls='$VCL_current_hour_calls',hr='$HRhour_test' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VCL_current_hour_calls';";
-			$affected_rows = $dbhA->do($stmtA);
-			if ($DBX) {print "VCLHC STATS INSERT/UPDATE    TOTAL|$affected_rows|$stmtA|\n";}
 
 			if ($HRhour_test > 0)
 				{
 				# check to see if cached hour totals already exist
 				$VCHC_entry_count=0;
-				$stmtA = "SELECT count(*) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HOLDSEC1' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour;";
+				$stmtA = "SELECT count(*) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HOLDSEC1' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR;";
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 				$sthArows=$sthA->rows;
@@ -5241,7 +5340,7 @@ sub calculate_drops_inbound
 				if ($VCHC_entry_count >= $HRhour_test) 
 					{
 					$VCHC_cache_calls=0;
-					$stmtA = "SELECT sum(calls) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HOLDSEC1' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour;";
+					$stmtA = "SELECT sum(calls) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HOLDSEC1' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR;";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows=$sthA->rows;
@@ -5261,7 +5360,7 @@ sub calculate_drops_inbound
 					@VCHC_next_hour=@MT;
 					@VCHC_last_update=@MT;
 					@VCHC_calls=@MT;
-					$stmtA = "SELECT hr,date_hour,next_hour,last_update,calls from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HOLDSEC1' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour order by hr;";
+					$stmtA = "SELECT hr,date_hour,next_hour,last_update,calls from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HOLDSEC1' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR order by hr;";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows_hr=$sthA->rows;
@@ -5286,7 +5385,7 @@ sub calculate_drops_inbound
 						$cache_hour_found=0;
 						while ($sthArows_hr > $k)
 							{
-							if ( ($VCHC_hour[$k] == $j) || ($VCHC_hour[$j] eq "$j") ) 
+							if ( ($VCHC_hour[$k] == $j) && ($VCHC_hour[$j] eq "$j") ) # changed || to &&
 								{
 								$answer_sec_pct_rt_stat_one_PCT[$p] = ($answer_sec_pct_rt_stat_one_PCT[$p] + $VCHC_calls[$k]);
 								$cache_hour_found++;
@@ -5346,27 +5445,33 @@ sub calculate_drops_inbound
 		if ($VCLhour_counts > 0) 
 			{
 			$VCL_current_hour_calls=0;
-			$stmtA = "SELECT count(*) from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date' and queue_seconds <= $answer_sec_pct_rt_stat_two and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','INBND','MAXCAL');";
+			# $stmtA = "SELECT count(*) from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date' and queue_seconds <= $answer_sec_pct_rt_stat_two and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','INBND','MAXCAL');";
+			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, count(*), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_previous_hour_date' and queue_seconds <= $answer_sec_pct_rt_stat_two and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','INBND','MAXCAL') group by hour_int, next_hour order by hour_int;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
 			if ($sthArows > 0)
 				{
-				@aryA = $sthA->fetchrow_array;
-				$VCL_current_hour_calls =	$aryA[0];
+				$q=0;
+				while (@aryA = $sthA->fetchrow_array) 
+					{
+					$VCL_current_hour_date_int =	$aryA[0];
+					$VCL_current_hour_calls =	$aryA[1];
+					$VCL_next_hour_date_int =	$aryA[2];
+					if ($DBX) {print "VCLHC CURRENT HOUR CALLS HOLD SECONDS 2: |$sthArows|$VCL_current_hour_calls|$stmtA|\n";}
+
+					$stmtB="INSERT IGNORE INTO vicidial_ingroup_hour_counts SET group_id='$group_id[$p]',date_hour='$VCL_current_hour_date_int',type='ANSWERS',next_hour='$VCL_next_hour_date_int',last_update=NOW(),calls='$VCL_current_hour_calls',hr='$HRhour_test' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VCL_current_hour_calls';";
+					$affected_rows = $dbhB->do($stmtB);
+					if ($DBX) {print "VCHC STATS INSERT/UPDATE    TOTAL|$affected_rows|$stmtB|\n";}
+					}				
 				}
 			$sthA->finish();
-			if ($DBX) {print "VCLHC CURRENT HOUR CALLS HOLD SECONDS 2: |$sthArows|$VCL_current_hour_calls|$stmtA|\n";}
-
-			$stmtA="INSERT IGNORE INTO vicidial_ingroup_hour_counts SET group_id='$group_id[$p]',date_hour='$VCL_current_hour_date',type='HOLDSEC2',next_hour='$VCL_next_hour_date',last_update=NOW(),calls='$VCL_current_hour_calls',hr='$HRhour_test' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VCL_current_hour_calls';";
-			$affected_rows = $dbhA->do($stmtA);
-			if ($DBX) {print "VCLHC STATS INSERT/UPDATE    TOTAL|$affected_rows|$stmtA|\n";}
 
 			if ($HRhour_test > 0)
 				{
 				# check to see if cached hour totals already exist
 				$VCHC_entry_count=0;
-				$stmtA = "SELECT count(*) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HOLDSEC2' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour;";
+				$stmtA = "SELECT count(*) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HOLDSEC2' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR;";
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 				$sthArows=$sthA->rows;
@@ -5382,7 +5487,7 @@ sub calculate_drops_inbound
 				if ($VCHC_entry_count >= $HRhour_test) 
 					{
 					$VCHC_cache_calls=0;
-					$stmtA = "SELECT sum(calls) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HOLDSEC2' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour;";
+					$stmtA = "SELECT sum(calls) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HOLDSEC2' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR;";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows=$sthA->rows;
@@ -5402,7 +5507,7 @@ sub calculate_drops_inbound
 					@VCHC_next_hour=@MT;
 					@VCHC_last_update=@MT;
 					@VCHC_calls=@MT;
-					$stmtA = "SELECT hr,date_hour,next_hour,last_update,calls from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HOLDSEC2' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour order by hr;";
+					$stmtA = "SELECT hr,date_hour,next_hour,last_update,calls from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HOLDSEC2' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR order by hr;";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows_hr=$sthA->rows;
@@ -5427,7 +5532,7 @@ sub calculate_drops_inbound
 						$cache_hour_found=0;
 						while ($sthArows_hr > $k)
 							{
-							if ( ($VCHC_hour[$k] == $j) || ($VCHC_hour[$j] eq "$j") ) 
+							if ( ($VCHC_hour[$k] == $j) && ($VCHC_hour[$j] eq "$j") ) # changed || to &&
 								{
 								$answer_sec_pct_rt_stat_two_PCT[$p] = ($answer_sec_pct_rt_stat_two_PCT[$p] + $VCHC_calls[$k]);
 								$cache_hour_found++;
@@ -5488,27 +5593,33 @@ sub calculate_drops_inbound
 		if ($VCLhour_counts > 0) 
 			{
 			$VCL_current_hour_calls=0;
-			$stmtA = "SELECT sum(queue_seconds) from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date' and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','INBND','MAXCAL');";
+			# $stmtA = "SELECT sum(queue_seconds) from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date' and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','INBND','MAXCAL');";
+			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, sum(queue_seconds), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_previous_hour_date' and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','INBND','MAXCAL') group by hour_int, next_hour order by hour_int;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
 			if ($sthArows > 0)
 				{
-				@aryA = $sthA->fetchrow_array;
-				$VCL_current_hour_calls =	$aryA[0];
+				$q=0;
+				while (@aryA = $sthA->fetchrow_array) 
+					{
+					$VCL_current_hour_date_int =	$aryA[0];
+					$VCL_current_hour_calls =	$aryA[1];
+					$VCL_next_hour_date_int =	$aryA[2];
+					if ($DBX) {print "VCLHC CURRENT HOUR CALLS HOLD SECONDS OF ANSWERED CALLS: |$sthArows|$VCL_current_hour_calls|$stmtA|\n";}
+
+					$stmtB="INSERT IGNORE INTO vicidial_ingroup_hour_counts SET group_id='$group_id[$p]',date_hour='$VCL_current_hour_date_int',type='HDSECANS',next_hour='$VCL_next_hour_date_int',last_update=NOW(),calls='$VCL_current_hour_calls',hr='$HRhour_test' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VCL_current_hour_calls';";
+					$affected_rows = $dbhB->do($stmtB);
+					if ($DBX) {print "VCHC STATS INSERT/UPDATE    TOTAL|$affected_rows|$stmtB|\n";}
+					}				
 				}
 			$sthA->finish();
-			if ($DBX) {print "VCLHC CURRENT HOUR CALLS HOLD SECONDS OF ANSWERED CALLS: |$sthArows|$VCL_current_hour_calls|$stmtA|\n";}
-
-			$stmtA="INSERT IGNORE INTO vicidial_ingroup_hour_counts SET group_id='$group_id[$p]',date_hour='$VCL_current_hour_date',type='HDSECANS',next_hour='$VCL_next_hour_date',last_update=NOW(),calls='$VCL_current_hour_calls',hr='$HRhour_test' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VCL_current_hour_calls';";
-			$affected_rows = $dbhA->do($stmtA);
-			if ($DBX) {print "VCLHC STATS INSERT/UPDATE    TOTAL|$affected_rows|$stmtA|\n";}
 
 			if ($HRhour_test > 0)
 				{
 				# check to see if cached hour totals already exist
 				$VCHC_entry_count=0;
-				$stmtA = "SELECT sum(calls) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HDSECANS' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour;";
+				$stmtA = "SELECT sum(calls) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HDSECANS' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR;";
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 				$sthArows=$sthA->rows;
@@ -5524,7 +5635,7 @@ sub calculate_drops_inbound
 				if ($VCHC_entry_count >= $HRhour_test) 
 					{
 					$VCHC_cache_calls=0;
-					$stmtA = "SELECT sum(calls) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HDSECANS' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour;";
+					$stmtA = "SELECT sum(calls) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HDSECANS' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR;";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows=$sthA->rows;
@@ -5544,7 +5655,7 @@ sub calculate_drops_inbound
 					@VCHC_next_hour=@MT;
 					@VCHC_last_update=@MT;
 					@VCHC_calls=@MT;
-					$stmtA = "SELECT hr,date_hour,next_hour,last_update,calls from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HDSECANS' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour order by hr;";
+					$stmtA = "SELECT hr,date_hour,next_hour,last_update,calls from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HDSECANS' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR order by hr;";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows_hr=$sthA->rows;
@@ -5569,7 +5680,7 @@ sub calculate_drops_inbound
 						$cache_hour_found=0;
 						while ($sthArows_hr > $k)
 							{
-							if ( ($VCHC_hour[$k] == $j) || ($VCHC_hour[$j] eq "$j") ) 
+							if ( ($VCHC_hour[$k] == $j) && ($VCHC_hour[$j] eq "$j") ) # changed || to &&
 								{
 								$hold_sec_answer_calls[$p] = ($hold_sec_answer_calls[$p] + $VCHC_calls[$k]);
 								$cache_hour_found++;
@@ -5631,27 +5742,33 @@ sub calculate_drops_inbound
 		if ($VCLhour_counts > 0) 
 			{
 			$VCL_current_hour_calls=0;
-			$stmtA = "SELECT sum(queue_seconds) from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date' and status IN('DROP','XDROP');";
+			# $stmtA = "SELECT sum(queue_seconds) from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date' and status IN('DROP','XDROP');";
+			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, sum(queue_seconds), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_previous_hour_date' and status IN('DROP','XDROP') group by hour_int, next_hour order by hour_int;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
 			if ($sthArows > 0)
 				{
-				@aryA = $sthA->fetchrow_array;
-				$VCL_current_hour_calls =	$aryA[0];
+				$q=0;
+				while (@aryA = $sthA->fetchrow_array) 
+					{
+					$VCL_current_hour_date_int =	$aryA[0];
+					$VCL_current_hour_calls =	$aryA[1];
+					$VCL_next_hour_date_int =	$aryA[2];
+					if ($DBX) {print "VCLHC CURRENT HOUR CALLS HOLD SECONDS OF DROPPED CALLS: |$sthArows|$VCL_current_hour_calls|$stmtA|\n";}
+
+					$stmtB="INSERT IGNORE INTO vicidial_ingroup_hour_counts SET group_id='$group_id[$p]',date_hour='$VCL_current_hour_date_int',type='HDSECDRP',next_hour='$VCL_next_hour_date_int',last_update=NOW(),calls='$VCL_current_hour_calls',hr='$HRhour_test' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VCL_current_hour_calls';";
+					$affected_rows = $dbhB->do($stmtB);
+					if ($DBX) {print "VCHC STATS INSERT/UPDATE    TOTAL|$affected_rows|$stmtB|\n";}
+					}				
 				}
 			$sthA->finish();
-			if ($DBX) {print "VCLHC CURRENT HOUR CALLS HOLD SECONDS OF DROPPED CALLS: |$sthArows|$VCL_current_hour_calls|$stmtA|\n";}
-
-			$stmtA="INSERT IGNORE INTO vicidial_ingroup_hour_counts SET group_id='$group_id[$p]',date_hour='$VCL_current_hour_date',type='HDSECDRP',next_hour='$VCL_next_hour_date',last_update=NOW(),calls='$VCL_current_hour_calls',hr='$HRhour_test' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VCL_current_hour_calls';";
-			$affected_rows = $dbhA->do($stmtA);
-			if ($DBX) {print "VCLHC STATS INSERT/UPDATE    TOTAL|$affected_rows|$stmtA|\n";}
 
 			if ($HRhour_test > 0)
 				{
 				# check to see if cached hour totals already exist
 				$VCHC_entry_count=0;
-				$stmtA = "SELECT sum(calls) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HDSECDRP' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour;";
+				$stmtA = "SELECT sum(calls) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HDSECDRP' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR;";
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 				$sthArows=$sthA->rows;
@@ -5667,7 +5784,7 @@ sub calculate_drops_inbound
 				if ($VCHC_entry_count >= $HRhour_test) 
 					{
 					$VCHC_cache_calls=0;
-					$stmtA = "SELECT sum(calls) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HDSECDRP' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour;";
+					$stmtA = "SELECT sum(calls) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HDSECDRP' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR;";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows=$sthA->rows;
@@ -5687,7 +5804,7 @@ sub calculate_drops_inbound
 					@VCHC_next_hour=@MT;
 					@VCHC_last_update=@MT;
 					@VCHC_calls=@MT;
-					$stmtA = "SELECT hr,date_hour,next_hour,last_update,calls from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HDSECDRP' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour order by hr;";
+					$stmtA = "SELECT hr,date_hour,next_hour,last_update,calls from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HDSECDRP' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR order by hr;";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows_hr=$sthA->rows;
@@ -5712,7 +5829,7 @@ sub calculate_drops_inbound
 						$cache_hour_found=0;
 						while ($sthArows_hr > $k)
 							{
-							if ( ($VCHC_hour[$k] == $j) || ($VCHC_hour[$j] eq "$j") ) 
+							if ( ($VCHC_hour[$k] == $j) && ($VCHC_hour[$j] eq "$j") ) # changed || to &&
 								{
 								$hold_sec_drop_calls[$p] = ($hold_sec_drop_calls[$p] + $VCHC_calls[$k]);
 								$cache_hour_found++;
@@ -5774,27 +5891,33 @@ sub calculate_drops_inbound
 		if ($VCLhour_counts > 0) 
 			{
 			$VCL_current_hour_calls=0;
-			$stmtA = "SELECT sum(queue_seconds) from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date';";
+			# $stmtA = "SELECT sum(queue_seconds) from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date';";
+			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, sum(queue_seconds), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_previous_hour_date' group by hour_int, next_hour order by hour_int;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
 			if ($sthArows > 0)
 				{
-				@aryA = $sthA->fetchrow_array;
-				$VCL_current_hour_calls =	$aryA[0];
+				$q=0;
+				while (@aryA = $sthA->fetchrow_array) 
+					{
+					$VCL_current_hour_date_int =	$aryA[0];
+					$VCL_current_hour_calls =	$aryA[1];
+					$VCL_next_hour_date_int =	$aryA[2];
+					if ($DBX) {print "VCLHC CURRENT HOUR CALLS HOLD SECONDS OF ALL CALLS: |$sthArows|$VCL_current_hour_calls|$stmtA|\n";}
+
+					$stmtB="INSERT IGNORE INTO vicidial_ingroup_hour_counts SET group_id='$group_id[$p]',date_hour='$VCL_current_hour_date_int',type='HDSECALL',next_hour='$VCL_next_hour_date_int',last_update=NOW(),calls='$VCL_current_hour_calls',hr='$HRhour_test' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VCL_current_hour_calls';";
+					$affected_rows = $dbhB->do($stmtB);
+					if ($DBX) {print "VCHC STATS INSERT/UPDATE    TOTAL|$affected_rows|$stmtB|\n";}
+					}				
 				}
 			$sthA->finish();
-			if ($DBX) {print "VCLHC CURRENT HOUR CALLS HOLD SECONDS OF ALL CALLS: |$sthArows|$VCL_current_hour_calls|$stmtA|\n";}
-
-			$stmtA="INSERT IGNORE INTO vicidial_ingroup_hour_counts SET group_id='$group_id[$p]',date_hour='$VCL_current_hour_date',type='HDSECALL',next_hour='$VCL_next_hour_date',last_update=NOW(),calls='$VCL_current_hour_calls',hr='$HRhour_test' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VCL_current_hour_calls';";
-			$affected_rows = $dbhA->do($stmtA);
-			if ($DBX) {print "VCLHC STATS INSERT/UPDATE    TOTAL|$affected_rows|$stmtA|\n";}
 
 			if ($HRhour_test > 0)
 				{
 				# check to see if cached hour totals already exist
 				$VCHC_entry_count=0;
-				$stmtA = "SELECT sum(calls) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HDSECALL' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour;";
+				$stmtA = "SELECT sum(calls) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HDSECALL' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR;";
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 				$sthArows=$sthA->rows;
@@ -5810,7 +5933,7 @@ sub calculate_drops_inbound
 				if ($VCHC_entry_count >= $HRhour_test) 
 					{
 					$VCHC_cache_calls=0;
-					$stmtA = "SELECT sum(calls) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HDSECALL' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour;";
+					$stmtA = "SELECT sum(calls) from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HDSECALL' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR;";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows=$sthA->rows;
@@ -5830,7 +5953,7 @@ sub calculate_drops_inbound
 					@VCHC_next_hour=@MT;
 					@VCHC_last_update=@MT;
 					@VCHC_calls=@MT;
-					$stmtA = "SELECT hr,date_hour,next_hour,last_update,calls from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HDSECALL' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour order by hr;";
+					$stmtA = "SELECT hr,date_hour,next_hour,last_update,calls from vicidial_ingroup_hour_counts where group_id='$group_id[$p]' and type='HDSECALL' and date_hour >= '$VCL_day_start_date' and date_hour < '$VCL_current_hour_date' and last_update > next_hour+INTERVAL 1 HOUR order by hr;";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows_hr=$sthA->rows;
@@ -5855,7 +5978,7 @@ sub calculate_drops_inbound
 						$cache_hour_found=0;
 						while ($sthArows_hr > $k)
 							{
-							if ( ($VCHC_hour[$k] == $j) || ($VCHC_hour[$j] eq "$j") ) 
+							if ( ($VCHC_hour[$k] == $j) && ($VCHC_hour[$j] eq "$j") ) # changed || to &&
 								{
 								$hold_sec_queue_calls[$p] = ($hold_sec_queue_calls[$p] + $VCHC_calls[$k]);
 								$cache_hour_found++;
@@ -6066,7 +6189,7 @@ sub calculate_drops_inbound
 							$cache_hour_found=0;
 							while ($sthArows_hr > $k)
 								{
-								if ( ($VCHC_hour[$k] == $j) || ($VCHC_hour[$j] eq "$j") ) 
+								if ( ($VCHC_hour[$k] == $j) && ($VCHC_hour[$j] eq "$j") ) # changed || to &&
 									{
 									$VSCtally = ($VSCtally + $VCHC_calls[$k]);
 									$cache_hour_found++;

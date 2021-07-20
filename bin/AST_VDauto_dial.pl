@@ -139,9 +139,13 @@
 # 210207-0952 - Added more logging, debug code and fixes for SHARED agent campaigns
 # 210423-2241 - Fix for campaign ID underscore issue #1265
 # 210606-1006 - Added TILTX features for pre-carrier call filtering
+# 210713-1322 - Added call_limit_24hour feature support
+# 210718-0359 - Fixes for 24-Hour Call Count Limits with standard Auto-Alt-Dialing
+# 210719-1520 - Added additional state override methods for call_limit_24hour
 #
 
-$build='210606-1006';
+$build='210719-1520';
+$script='AST_VDauto_dial';
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
 	{
@@ -256,6 +260,7 @@ if (!$VARDB_port) {$VARDB_port='3306';}
 
 if (!$VDADLOGfile) {$VDADLOGfile = "$PATHlogs/vdautodial.$year-$mon-$mday";}
 if (!$JAMdebugFILE) {$JAMdebugFILE = "$PATHlogs/vdad-JAM.$year-$mon-$mday";}
+if (!$AADLOGfile) {$AADLOGfile = "$PATHlogs/auto-alt-dial.$year-$mon-$mday";}
 
 use Time::HiRes ('gettimeofday','usleep','sleep');  # necessary to have perl sleep command of less than one second
 use Time::Local;
@@ -313,7 +318,7 @@ $event_string='LOGGED INTO MYSQL SERVER ON 1 CONNECTION|';
 
 #############################################
 ##### START QUEUEMETRICS LOGGING LOOKUP #####
-$stmtA = "SELECT enable_queuemetrics_logging,queuemetrics_server_ip,queuemetrics_dbname,queuemetrics_login,queuemetrics_pass,queuemetrics_log_id,outbound_autodial_active,queuemetrics_loginout,queuemetrics_addmember_enabled,queuemetrics_pause_type,enable_drop_lists,call_quota_lead_ranking,timeclock_end_of_day,allow_shared_dial FROM system_settings;";
+$stmtA = "SELECT enable_queuemetrics_logging,queuemetrics_server_ip,queuemetrics_dbname,queuemetrics_login,queuemetrics_pass,queuemetrics_log_id,outbound_autodial_active,queuemetrics_loginout,queuemetrics_addmember_enabled,queuemetrics_pause_type,enable_drop_lists,call_quota_lead_ranking,timeclock_end_of_day,allow_shared_dial,call_limit_24hour FROM system_settings;";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -334,6 +339,7 @@ if ($sthArows > 0)
 	$SScall_quota_lead_ranking =		$aryA[11];
 	$timeclock_end_of_day =				$aryA[12];
 	$allow_shared_dial =				$aryA[13];
+	$SScall_limit_24hour =				$aryA[14];
 	}
 $sthA->finish();
 ##### END QUEUEMETRICS LOGGING LOOKUP #####
@@ -922,7 +928,7 @@ while($one_day_interval > 0)
 
 			### grab the dial_level and multiply by active agents to get your goalcalls
 			$DBIPadlevel[$user_CIPct]=0;
-			$stmtA = "SELECT auto_dial_level,local_call_time,dial_timeout,dial_prefix,campaign_cid,active,campaign_vdad_exten,closer_campaigns,omit_phone_code,available_only_ratio_tally,auto_alt_dial,campaign_allow_inbound,queue_priority,dial_method,use_custom_cid,inbound_queue_no_dial,available_only_tally_threshold,available_only_tally_threshold_agents,dial_level_threshold,dial_level_threshold_agents,adaptive_dl_diff_target,dl_diff_target_method,inbound_no_agents_no_dial_container,inbound_no_agents_no_dial_threshold,cid_group_id,scheduled_callbacks_auto_reschedule,call_quota_lead_ranking,dial_timeout_lead_container,drop_call_seconds,drop_action,drop_inbound_group FROM vicidial_campaigns where campaign_id='$DBIPcampaign[$user_CIPct]'";
+			$stmtA = "SELECT auto_dial_level,local_call_time,dial_timeout,dial_prefix,campaign_cid,active,campaign_vdad_exten,closer_campaigns,omit_phone_code,available_only_ratio_tally,auto_alt_dial,campaign_allow_inbound,queue_priority,dial_method,use_custom_cid,inbound_queue_no_dial,available_only_tally_threshold,available_only_tally_threshold_agents,dial_level_threshold,dial_level_threshold_agents,adaptive_dl_diff_target,dl_diff_target_method,inbound_no_agents_no_dial_container,inbound_no_agents_no_dial_threshold,cid_group_id,scheduled_callbacks_auto_reschedule,call_quota_lead_ranking,dial_timeout_lead_container,drop_call_seconds,drop_action,drop_inbound_group,call_limit_24hour_method,call_limit_24hour_scope,call_limit_24hour,call_limit_24hour_override FROM vicidial_campaigns where campaign_id='$DBIPcampaign[$user_CIPct]'";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
@@ -965,6 +971,10 @@ while($one_day_interval > 0)
 				$DBIPdrop_call_seconds[$user_CIPct] =	$aryA[28];
 				$DBIPdrop_action[$user_CIPct] =			$aryA[29];
 				$DBIPdrop_inbound_group[$user_CIPct] =	$aryA[30];
+				$DBIPcall_limit_24hour_method[$user_CIPct] =	$aryA[31];
+				$DBIPcall_limit_24hour_scope[$user_CIPct] =		$aryA[32];
+				$DBIPcall_limit_24hour[$user_CIPct] =			$aryA[33];
+				$DBIPcall_limit_24hour_override[$user_CIPct] =	$aryA[34];
 
 				# check for Dial Timeout Lead override
 				if ( (length($DBIPdial_timeout_lead_container[$user_CIPct]) > 1) && ($DBIPdial_timeout_lead_container[$user_CIPct] !~ /^DISABLED$/i) )
@@ -2084,6 +2094,23 @@ while($one_day_interval > 0)
 
 											if (length($alt_dial)<1) {$alt_dial='MAIN';}
 
+											$TFhourSTATE='';
+											if ($SScall_limit_24hour > 0) 
+												{
+												$TFH_areacode = substr($phone_number, 0, 3);
+												$stmtY = "SELECT state,country FROM vicidial_phone_codes where country_code='$phone_code' and areacode='$TFH_areacode';";
+												$sthY = $dbhA->prepare($stmtY) or die "preparing: ",$dbhA->errstr;
+												$sthY->execute or die "executing: $stmtY", $dbhA->errstr;
+												$sthYrows=$sthY->rows;
+												if ($sthYrows > 0)
+													{
+													@aryY = $sthY->fetchrow_array;
+													$TFhourSTATE =		$aryY[0];
+													$TFhourCOUNTRY =	$aryY[1];
+													}
+												$sthA->finish();
+												}
+
 											### whether to omit phone_code or not
 											if ($DBIPomitcode[$user_CIPct] > 0)
 												{$Ndialstring = "$Local_out_prefix$phone_number";}
@@ -2107,7 +2134,11 @@ while($one_day_interval > 0)
 											$stmtC = "INSERT INTO vicidial_dial_log SET caller_code='$VqueryCID',lead_id=$lead_id,server_ip='$DBIPaddress[$user_CIPct]',call_date='$SQLdate',extension='$VDAD_dial_exten',channel='$local_DEF$Ndialstring$local_AMP$ext_context',timeout='$Local_dial_timeout',outbound_cid='$CIDstring',context='$ext_context';";
 											$affected_rowsC = $dbhA->do($stmtC);
 
-											$event_string = "|     number call dialed|$DBIPcampaign[$user_CIPct]|$VqueryCID|$affected_rowsA|$stmtA|$gmt_offset_now|$alt_dial|$affected_rowsB|$affected_rowsC|";
+										### insert log record into vicidial_lead_24hour_calls table 
+											$stmtD = "INSERT INTO vicidial_lead_24hour_calls SET lead_id='$lead_id',list_id='$list_id',call_date=NOW(),phone_number='$phone_number',phone_code='$phone_code',state='$TFhourSTATE',call_type='AUTO';";
+											$affected_rowsD = $dbhA->do($stmtD);
+
+											$event_string = "|     number call dialed|$DBIPcampaign[$user_CIPct]|$VqueryCID|$affected_rowsA|$stmtA|$gmt_offset_now|$alt_dial|$affected_rowsB|$affected_rowsC|$affected_rowsD|";
 											 &event_logger;
 
 											### sleep for a five hundredths of a second to not flood the server with new calls
@@ -2550,7 +2581,7 @@ while($one_day_interval > 0)
 							$VD_auto_alt_dial = 'NONE';
 							$VD_auto_alt_dial_statuses='';
 							$VD_call_quota_lead_ranking='DISABLED';
-							$stmtA="SELECT auto_alt_dial,auto_alt_dial_statuses,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc,call_quota_lead_ranking FROM vicidial_campaigns where campaign_id='$CLcampaign_id';";
+							$stmtA="SELECT auto_alt_dial,auto_alt_dial_statuses,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc,call_quota_lead_ranking,call_limit_24hour_method,call_limit_24hour_scope,call_limit_24hour,call_limit_24hour_override FROM vicidial_campaigns where campaign_id='$CLcampaign_id';";
 							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 							$sthArows=$sthA->rows;
@@ -2563,6 +2594,10 @@ while($one_day_interval > 0)
 								$VD_use_campaign_dnc =			$aryA[3];
 								$VD_use_other_campaign_dnc =	$aryA[4];
 								$VD_call_quota_lead_ranking =	$aryA[5];
+								$VD_call_limit_24hour_method =		$aryA[6];
+								$VD_call_limit_24hour_scope =		$aryA[7];
+								$VD_call_limit_24hour =				$aryA[8];
+								$VD_call_limit_24hour_override =	$aryA[9];
 								}
 							$sthA->finish();
 
@@ -2886,11 +2921,15 @@ while($one_day_interval > 0)
 								$event_string = "|$stmtA|$VD_auto_alt_dial|$VD_auto_alt_dial_statuses|$CLnew_status|$CLlead_id|$CLalt_dial";   &event_logger;
 							if ( ($VD_auto_alt_dial_statuses =~ / $CLnew_status /) && ($CLlead_id > 0) )
 								{
+								$alt_skip_reason='';   $addr3_skip_reason='';
 								if ( ($VD_auto_alt_dial =~ /ALT_ONLY|ALT_AND_ADDR3|ALT_AND_EXTENDED/) && ($CLalt_dial =~ /NONE|MAIN/) )
 									{
 									$alt_dial_skip=0;
 									$VD_alt_phone='';
-									$stmtA="SELECT alt_phone,gmt_offset_now,state,list_id FROM vicidial_list where lead_id='$CLlead_id';";
+									$VD_phone_code='';
+									$temp_24hour_phone='';
+									$temp_24hour_phone_code='';
+									$stmtA="SELECT alt_phone,gmt_offset_now,state,list_id,phone_code,postal_code FROM vicidial_list where lead_id='$CLlead_id';";
 									$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 									$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 									$sthArows=$sthA->rows;
@@ -2902,6 +2941,8 @@ while($one_day_interval > 0)
 										$VD_gmt_offset_now =	$aryA[1];
 										$VD_state =				$aryA[2];
 										$VD_list_id =			$aryA[3];
+										$VD_phone_code =		$aryA[4];
+										$VD_postal_code =		$aryA[5];
 										}
 									$sthA->finish();
 										$event_string = "|$stmtA|$VD_alt_phone|";   &event_logger;
@@ -2954,23 +2995,42 @@ while($one_day_interval > 0)
 											}
 										if ($VD_alt_dnc_count < 1)
 											{
+											$passed_24hour_call_count=1;
+											if ( ($SScall_limit_24hour > 0) && ($VD_call_limit_24hour_method =~ /PHONE_NUMBER|LEAD/) )
+												{
+												$temp_24hour_phone =		$VD_alt_phone;
+												$temp_24hour_phone_code =	$VD_phone_code;
+												$temp_24hour_state =		$VD_state;
+												$temp_24hour_postal_code =	$VD_postal_code;
+												if ($DB > 0) {print "24-Hour Call Count Check: $SScall_limit_24hour|$VD_call_limit_24hour_method|$CLlead_id|\n";}
+												&check_24hour_call_count;
+												}
+											if ($passed_24hour_call_count > 0) 
+												{
 											$stmtA = "INSERT INTO vicidial_hopper SET lead_id='$CLlead_id',campaign_id='$CLcampaign_id',status='READY',list_id='$VD_list_id',gmt_offset_now='$VD_gmt_offset_now',state='$VD_state',alt_dial='ALT',user='',priority='25',source='A';";
 											$affected_rows = $dbhA->do($stmtA);
 											$event_string = "--    VDH record inserted: |$affected_rows|   |$stmtA|";   &event_logger;
+												$aad_string = "$CLlead_id|$VD_alt_phone|$CLcampaign_id|ALT|25|hopper insert|";   &aad_output;
 											}
 										else
-											{$alt_dial_skip=1;}
+												{$alt_dial_skip=1;   $alt_skip_reason='24-hour call count limit failed';}
 										}
 									else
-										{$alt_dial_skip=1;}
+											{$alt_dial_skip=1;   $alt_skip_reason='DNC check failed';}
+										}
+									else
+										{$alt_dial_skip=1;   $alt_skip_reason='ALT phone invalid';}
 									if ($alt_dial_skip > 0)
-										{$CLalt_dial='ALT';}
+										{
+										$CLalt_dial='ALT';
+										$aad_string = "$CLlead_id|$VD_alt_phone|$CLcampaign_id|ALT|0|hopper skip|$alt_skip_reason|";   &aad_output;
+									}
 									}
 								if ( ( ($VD_auto_alt_dial =~ /ADDR3_ONLY/) && ($CLalt_dial =~ /NONE|MAIN/) ) || ( ($VD_auto_alt_dial =~ /ALT_AND_ADDR3/) && ($CLalt_dial =~ /ALT/) ) )
 									{
 									$addr3_dial_skip=0;
 									$VD_address3='';
-									$stmtA="SELECT address3,gmt_offset_now,state,list_id FROM vicidial_list where lead_id='$CLlead_id';";
+									$stmtA="SELECT address3,gmt_offset_now,state,list_id,phone_code,postal_code FROM vicidial_list where lead_id='$CLlead_id';";
 									$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 									$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 									$sthArows=$sthA->rows;
@@ -2982,6 +3042,8 @@ while($one_day_interval > 0)
 										$VD_gmt_offset_now =	$aryA[1];
 										$VD_state =				$aryA[2];
 										$VD_list_id =			$aryA[3];
+										$VD_phone_code =		$aryA[4];
+										$VD_postal_code =		$aryA[5];
 										}
 									$sthA->finish();
 										$event_string = "|$stmtA|$VD_address3|";   &event_logger;
@@ -3034,17 +3096,36 @@ while($one_day_interval > 0)
 											}
 										if ($VD_alt_dnc_count < 1)
 											{
+											$passed_24hour_call_count=1;
+											if ( ($SScall_limit_24hour > 0) && ($VD_call_limit_24hour_method =~ /PHONE_NUMBER|LEAD/) )
+												{
+												$temp_24hour_phone =		$VD_address3;
+												$temp_24hour_phone_code =	$VD_phone_code;
+												$temp_24hour_state =		$VD_state;
+												$temp_24hour_postal_code =	$VD_postal_code;
+												if ($DB > 0) {print "24-Hour Call Count Check: $SScall_limit_24hour|$VD_call_limit_24hour_method|$CLlead_id|\n";}
+												&check_24hour_call_count;
+												}
+											if ($passed_24hour_call_count > 0) 
+												{
 											$stmtA = "INSERT INTO vicidial_hopper SET lead_id='$CLlead_id',campaign_id='$CLcampaign_id',status='READY',list_id='$VD_list_id',gmt_offset_now='$VD_gmt_offset_now',state='$VD_state',alt_dial='ADDR3',user='',priority='20',source='A';";
 											$affected_rows = $dbhA->do($stmtA);
 											$event_string = "--    VDH record inserted: |$affected_rows|   |$stmtA|";   &event_logger;
+												$aad_string = "$CLlead_id|$VD_address3|$CLcampaign_id|ADDR3|20|hopper insert|";   &aad_output;
 											}
 										else
-											{$addr3_dial_skip=1;}
+												{$addr3_dial_skip=1;   $addr3_skip_reason='24-hour call count limit failed';}
 										}
 									else
-										{$addr3_dial_skip=1;}
+											{$addr3_dial_skip=1;   $addr3_skip_reason='DNC check failed';}
+										}
+									else
+										{$addr3_dial_skip=1;   $addr3_skip_reason='ADDR3 phone invalid';}
 									if ($addr3_dial_skip > 0)
-										{$CLalt_dial='ADDR3';}
+										{
+										$CLalt_dial='ADDR3';
+										if ($AGILOG) {$aad_string = "$CLlead_id|$VD_address3|$CLcampaign_id|ADDR3|0|hopper skip|$addr3_skip_reason|";   &aad_output;}
+									}
 									}
 								if ( ( ($VD_auto_alt_dial =~ /EXTENDED_ONLY/) && ($CLalt_dial =~ /NONE|MAIN/) ) || ( ($VD_auto_alt_dial =~ /ALT_AND_EXTENDED/) && ($CLalt_dial =~ /ALT/) ) || ( ($VD_auto_alt_dial =~ /ADDR3_AND_EXTENDED|ALT_AND_ADDR3_AND_EXTENDED/) && ($CLalt_dial =~ /ADDR3/) ) || ( ($VD_auto_alt_dial =~ /EXTENDED/) && ($CLalt_dial =~ /^X/) && ($CLalt_dial !~ /XLAST/) ) )
 									{
@@ -3055,7 +3136,7 @@ while($one_day_interval > 0)
 									if (length($Xlast)<1)
 										{$Xlast=0;}
 									$VD_altdialx='';
-									$stmtA="SELECT gmt_offset_now,state,list_id FROM vicidial_list where lead_id='$CLlead_id';";
+									$stmtA="SELECT gmt_offset_now,state,list_id,postal_code FROM vicidial_list where lead_id='$CLlead_id';";
 									$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 									$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 									$sthArows=$sthA->rows;
@@ -3065,6 +3146,7 @@ while($one_day_interval > 0)
 										$VD_gmt_offset_now =	$aryA[0];
 										$VD_state =				$aryA[1];
 										$VD_list_id =			$aryA[2];
+										$VD_postal_code =		$aryA[3];
 										}
 									$sthA->finish();
 
@@ -3084,7 +3166,7 @@ while($one_day_interval > 0)
 									while ( ($alt_dial_phones_count > 0) && ($alt_dial_phones_count > $Xlast) )
 										{
 										$Xlast++;
-										$stmtA="SELECT alt_phone_id,phone_number,active FROM vicidial_list_alt_phones where lead_id='$CLlead_id' and alt_phone_count='$Xlast';";
+										$stmtA="SELECT alt_phone_id,phone_number,active,phone_code FROM vicidial_list_alt_phones where lead_id='$CLlead_id' and alt_phone_count='$Xlast';";
 										$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 										$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 										$sthArows=$sthA->rows;
@@ -3094,6 +3176,7 @@ while($one_day_interval > 0)
 											$VD_altdial_id =		$aryA[0];
 											$VD_altdial_phone = 	$aryA[1];
 											$VD_altdial_active = 	$aryA[2];
+											$VD_phone_code = 		$aryA[3];
 											}
 										else
 											{$Xlast=9999999999;}
@@ -3155,25 +3238,45 @@ while($one_day_interval > 0)
 												{
 												if ($alt_dial_phones_count == $Xlast)
 													{$Xlast = 'LAST';}
+												$passed_24hour_call_count=1;
+												if ( ($SScall_limit_24hour > 0) && ($VD_call_limit_24hour_method =~ /PHONE_NUMBER|LEAD/) )
+													{
+													$temp_24hour_phone =		$VD_altdial_phone;
+													$temp_24hour_phone_code =	$VD_phone_code;
+													$temp_24hour_state =		$VD_state;
+													$temp_24hour_postal_code =	$VD_postal_code;
+													if ($DB > 0) {print "24-Hour Call Count Check: $SScall_limit_24hour|$VD_call_limit_24hour_method|$CLlead_id|\n";}
+													&check_24hour_call_count;
+													}
+												if ($passed_24hour_call_count > 0) 
+													{
 												$stmtA = "INSERT INTO vicidial_hopper SET lead_id='$CLlead_id',campaign_id='$CLcampaign_id',status='READY',list_id='$VD_list_id',gmt_offset_now='$VD_gmt_offset_now',state='$VD_state',alt_dial='X$Xlast',user='',priority='15',source='A';";
 												$affected_rows = $dbhA->do($stmtA);
 												$event_string = "--    VDH record inserted: |$affected_rows|   |$stmtA|X$Xlast|$VD_altdial_id|";   &event_logger;
-												$Xlast=9999999999;
+													$aad_string = "$CLlead_id|$VD_altdial_phone|$CLcampaign_id|X$Xlast|15|hopper insert|";   &aad_output;
+													$DNC_hopper_trigger=0;
 												}
 											else
+													{$DNC_hopper_trigger=1;}
+												}
+											else
+												{$DNC_hopper_trigger=1;}
+											if ($DNC_hopper_trigger > 0)
 												{
-												if ( ( ($VD_auto_alt_dial_statuses =~ / DNCC /) && ($DNCC > 0) ) || ( ($VD_auto_alt_dial_statuses =~ / DNCL /) && ($DNCL > 0) ) )
+												if ( ( ($VD_auto_alt_dial_statuses =~ / DNCC /) && ($DNCC > 0) ) || ( ($VD_auto_alt_dial_statuses =~ / DNCL /) && ($DNCL > 0) ) || ( ($auto_alt_dial_statuses[$i] =~ / TFHCCL /) && ($TFHCCL > 0) ) )
 													{
 													if ($alt_dial_phones_count == $Xlast)
 														{$Xlast = 'LAST';}
 													$stmtA = "INSERT INTO vicidial_hopper SET lead_id='$CLlead_id',campaign_id='$CLcampaign_id',status='DNC',list_id='$VD_list_id',gmt_offset_now='$VD_gmt_offset_now',state='$VD_state',alt_dial='X$Xlast',user='',priority='15',source='A';";
 													$affected_rows = $dbhA->do($stmtA);
 													$event_string = "--    VDH record DNC inserted: |$affected_rows|   |$stmtA|X$Xlast|$VD_altdial_id|";   &event_logger;
+													$aad_string = "$CLlead_id|$VD_altdial_phone|$CLcampaign_id|X$Xlast|15|hopper DNC insert|";   &aad_output;
 													$Xlast=9999999999;
 													}
 												else
 													{
 													$event_string = "--    VDH record DNC not-inserted: |$affected_rows|   |$stmtA|X$Xlast|$VD_altdial_id|";   &event_logger;
+													$aad_string = "$CLlead_id|$VD_altdial_phone|$CLcampaign_id|X$Xlast|15|hopper DNC skip|";   &aad_output;
 													}
 												}
 											}
@@ -5240,6 +5343,186 @@ sub temp_time_dialable_check
 	}
 
 
+sub check_24hour_call_count
+	{
+	$passed_24hour_call_count=0;
+	$limit_scopeSQL='';
+	if ($VD_call_limit_24hour_scope =~ /CAMPAIGN_LISTS/) 
+		{
+		$limit_scopeCAMP='';
+		$stmtY = "SELECT list_id FROM vicidial_lists where campaign_id='$CLcampaign_id';";
+		$sthY = $dbhA->prepare($stmtY) or die "preparing: ",$dbhA->errstr;
+		$sthY->execute or die "executing: $stmtY", $dbhA->errstr;
+		$sthYrows=$sthY->rows;
+		$rec_campLISTS=0;
+		while ($sthYrows > $rec_campLISTS)
+			{
+			@aryY = $sthY->fetchrow_array;
+			$limit_scopeCAMP .= "'$aryY[0]',";
+			$rec_campLISTS++;
+			}
+		if (length($limit_scopeCAMP) < 2) {$limit_scopeCAMP="'1'";}
+		else {chop($limit_scopeCAMP);}
+		$limit_scopeSQL = "and list_id IN($limit_scopeCAMP)";
+		}
+	if ($VD_call_limit_24hour_method =~ /PHONE_NUMBER/)
+		{
+		$stmtA="SELECT count(*) FROM vicidial_lead_24hour_calls where phone_number='$temp_24hour_phone' and phone_code='$temp_24hour_phone_code' and (call_date >= NOW() - INTERVAL 1 DAY) $limit_scopeSQL;";
+		}
+	else
+		{
+		$stmtA="SELECT count(*) FROM vicidial_lead_24hour_calls where lead_id='$CLlead_id' and (call_date >= NOW() - INTERVAL 1 DAY) $limit_scopeSQL;";
+		}
+	if ($DB) {print "     Doing 24-Hour Call Count Check: $CLlead_id|$temp_24hour_phone_code|$temp_24hour_phone|$temp_24hour_state|$temp_24hour_postal_code - $VD_call_limit_24hour_method|$VD_call_limit_24hour_scope|$VD_call_limit_24hour\n";}
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	$TFhourCOUNT=0;
+	$TFhourSTATE='';
+	$TFhourCOUNTRY='';
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$TFhourCOUNT =		($TFhourCOUNT + $aryA[0]);
+		}
+	$sthA->finish();
+	$TEMPcall_limit_24hour = $VD_call_limit_24hour;
+	if ($DBX) {print "     24-Hour Call Limit Count DEBUG:     $TFhourCOUNT|$stmtA|\n";}
+
+	if ( ($VD_call_limit_24hour_override !~ /^DISABLED$/) && (length($VD_call_limit_24hour_override) > 0) ) 
+		{
+		$TFH_areacode = substr($temp_24hour_phone, 0, 3);
+		$stmtY = "SELECT state,country FROM vicidial_phone_codes where country_code='$temp_24hour_phone_code' and areacode='$TFH_areacode';";
+		$sthY = $dbhA->prepare($stmtY) or die "preparing: ",$dbhA->errstr;
+		$sthY->execute or die "executing: $stmtY", $dbhA->errstr;
+		$sthYrows=$sthY->rows;
+		if ($sthYrows > 0)
+			{
+			@aryY = $sthY->fetchrow_array;
+			$TFhourSTATE =		$aryY[0];
+			$TFhourCOUNTRY =	$aryY[1];
+			}
+		$sthA->finish();
+
+		$TEMP_TFhour_OR_entry='';
+		$TFH_OR_method='state_areacode';
+		$TFH_OR_postcode_field_match=0;
+		$TFH_OR_state_field_match=0;
+		$TFH_OR_postcode_state='';
+		$stmtA = "SELECT container_entry FROM vicidial_settings_containers where container_id='$VD_call_limit_24hour_override';";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($DBX) {print "$sthArows|$stmtA\n";}
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$TEMP_TFhour_OR_entry = $aryA[0];
+			}
+		$sthA->finish();
+
+		if (length($TEMP_TFhour_OR_entry) > 2) 
+			{
+			@container_lines = split(/\n/,$TEMP_TFhour_OR_entry);
+			$c=0;
+			foreach(@container_lines)
+				{
+				$container_lines[$c] =~ s/;.*|\r|\t//gi;
+				$container_lines[$c] =~ s/ => |=> | =>/=>/gi;
+				if (length($container_lines[$c]) > 3)
+					{
+					# define core settings
+					if ($container_lines[$c] =~ /^method/i)
+						{
+						#$container_lines[$c] =~ s/method=>//gi;
+						$TFH_OR_method = $container_lines[$c];
+						if ( ($TFH_OR_method =~ /state$/) && ($TFhourSTATE ne $temp_24hour_state) )
+							{
+							$TFH_OR_state_field_match=1;
+							}
+						if ( ($TFH_OR_method =~ /postcode/) && (length($temp_24hour_postal_code) > 0) )
+							{
+							if ($TFhourCOUNTRY == 'USA') 
+								{
+								$temp_24hour_postal_code =~ s/\D//gi;
+								$temp_24hour_postal_code = substr($temp_24hour_postal_code,0,5);
+								}
+							if ($TFhourCOUNTRY == 'CAN') 
+								{
+								$temp_24hour_postal_code =~ s/[^a-zA-Z0-9]//gi;
+								$temp_24hour_postal_code = substr($temp_24hour_postal_code,0,6);
+								}
+							$stmtA = "SELECT state FROM vicidial_postal_codes where postal_code='$temp_24hour_postal_code';";
+							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+							$sthArows=$sthA->rows;
+							if ($DBX) {print "$sthArows|$stmtA\n";}
+							if ($sthArows > 0)
+								{
+								@aryA = $sthA->fetchrow_array;
+								$TFH_OR_postcode_state =		$aryA[0];
+								$TFH_OR_postcode_field_match=1;
+								}
+							$sthA->finish();
+							}
+						}
+					else
+						{
+						if ($container_lines[$c] =~ /^state/i)
+							{
+							$container_lines[$c] =~ s/state=>//gi;	# USA,GA,4
+							@TEMP_state_ARY = split(/,/,$container_lines[$c]);
+							
+							if ($TFhourCOUNTRY eq $TEMP_state_ARY[0]) 
+								{
+								$TEMP_state_ARY[2] =~ s/\D//gi;
+								if ( ($TFhourSTATE eq $TEMP_state_ARY[1]) && (length($TEMP_state_ARY[2]) > 0) )
+									{
+									if ($DB) {print "     24-Hour Call Count State Override Triggered: $TEMPcall_limit_24hour|$container_lines[$c]\n";}
+									$TEMPcall_limit_24hour = $TEMP_state_ARY[2];
+									}
+								if ( ($TFH_OR_postcode_state eq $TEMP_state_ARY[1]) && (length($TEMP_state_ARY[2]) > 0) && ($TFH_OR_postcode_field_match > 0) )
+									{
+									if ($DBX) {print "     24-Hour Call Count State Override Match(postcode $TFH_OR_postcode_state): $TEMPcall_limit_24hour|$container_lines[$c]\n";}
+									if ($TEMP_state_ARY[2] < $TEMPcall_limit_24hour)
+										{
+										if ($DBX) {print "          POSTCODE field override of override triggered: ($TEMP_state_ARY[2] < $TEMPcall_limit_24hour)\n";}
+										$TEMPcall_limit_24hour = $TEMP_state_ARY[2];
+										}
+									}
+								if ( ($temp_24hour_state eq $TEMP_state_ARY[1]) && (length($TEMP_state_ARY[2]) > 0) && ($TFH_OR_state_field_match > 0) )
+									{
+									if ($DBX) {print "     24-Hour Call Count State Override Match(state $temp_24hour_state): $TEMPcall_limit_24hour|$container_lines[$c]\n";}
+									if ($TEMP_state_ARY[2] < $TEMPcall_limit_24hour)
+										{
+										if ($DBX) {print "          STATE field override of override triggered: ($TEMP_state_ARY[2] < $TEMPcall_limit_24hour)\n";}
+										$TEMPcall_limit_24hour = $TEMP_state_ARY[2];
+										}
+									}
+								}
+							}
+						}
+					}
+				if ($DBX) {print "     24-Hour Call Count State Override DEBUG: |$container_lines[$c]|\n";}
+				$c++;
+				}
+			}
+		}
+
+	if ( ($TFhourCOUNT > 0) && ($TFhourCOUNT >= $TEMPcall_limit_24hour) )
+		{
+		$TFHCCLlead=1;
+		$TFHCCL++;
+		$passed_24hour_call_count=0;
+		if ($DBX) {print "Flagging 24-Hour Call Limit lead:     $CLlead_id ($TFhourCOUNT >= $TEMPcall_limit_24hour) $passed_24hour_call_count\n";}
+		}
+	else
+		{
+		$passed_24hour_call_count=1;
+		if ($DBX) {print "     24-Hour Call Limit check passed:     $CLlead_id ($TFhourCOUNT < $TEMPcall_limit_24hour) $passed_24hour_call_count\n";}
+		}
+	}
+
 sub event_logger
 	{
 	if ($DB) {print "$now_date|$event_string|\n";}
@@ -5266,6 +5549,18 @@ sub jam_event_logger
 		close(Jout);
 		}
 	$jam_string='';
+	}
+
+sub aad_output
+	{
+	if ($SYSLOG > 0)
+		{
+		### open the log file for writing ###
+		open(Aout, ">>$AADLOGfile") || die "Can't open $AADLOGfile: $!\n";
+		print Aout "$now_date|$script|$aad_string\n";
+		close(Aout);
+		}
+	$aad_string='';
 	}
 
 

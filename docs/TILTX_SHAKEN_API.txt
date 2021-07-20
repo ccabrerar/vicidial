@@ -1,4 +1,4 @@
-TILTX STIR/SHAKEN API (Call Shaper) INTEGRATION		Updated: 2021-06-05
+TILTX STIR/SHAKEN API (Call Shaper) INTEGRATION		Updated: 2021-07-17
 
 This document covers the TILTX SHAKEN (Call Shaper) API service features and how they integrate into VICIdial.
 
@@ -18,7 +18,7 @@ https://tiltx.zendesk.com/hc/en-us/articles/4402421951885
 
 How to set up TILTX Call Shaper on your VICIdial system:
 
-REQUIREMENT 1: To use this feature, you will have to get a valid API Key from TILTX and create a new VICIdial Settings Container entry with the Container ID of "TILTX_SHAKEN_API_KEY", and place only the TILTX API key into the Container Entry.
+REQUIREMENT 1: To use this feature, you will have to get a valid API Key from TILTX and create a new VICIdial Settings Container entry with the Container ID of "TILTX_SHAKEN_API_KEY"(Container Type: OTHER), and place only the TILTX API key into the Container Entry.
 
 REQUIREMENT 2: You will need to have the VICIdial svn/trunk revision 3449 or higher installed on all servers in your VICIdial cluster.
 
@@ -31,8 +31,11 @@ REQUIREMENT 3: You will need to put a similar dialplan entry into your Carrier D
 		  3. (YES/NO) whether to speak error messages or not, default 'NO'
 		  4. Settings Container ID(override) to use for TILTX API settings, default 'TILTX_SHAKEN_API_KEY' if empty
 
+NOTE: We suggest also adding a crontab entry(similar to the one below) to remove the /tmp files that are created by the TILTX API requests and responses:
+0 6 * * * /usr/bin/find /tmp -maxdepth 1 -type f -mtime +0 -print | xargs rm -f
 
-New VICIdial statuses used: (if you are these subscribed to TILTX services)
+
+New VICIdial statuses used: (if you are subscribed to these TILTX services, which you have to pay extra for)
 ADCCAR - Disconnect Carrier-Defined
 DNCCAR - DNC Carrier-Defined
 

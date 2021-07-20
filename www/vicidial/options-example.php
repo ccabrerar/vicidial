@@ -31,6 +31,7 @@
 # 201107-2257 - Added RS_parkSTATS option
 # 210314-2101 - Added RS_DIDdesc option
 # 210618-0937 - Added CORS support
+# 210625-1425 - Added RS_BargeSwap option for blind monitoring
 #
 
 # used by the realtime_report.php script
@@ -77,6 +78,7 @@ $RS_logoutLINK =		0;	# 0=no, 1=yes
 $RS_parkSTATS =			0;	# 0=no, 1=yes, 2=limited
 $RS_SLAinSTATS =		0;	# 0=no, 1=yes, 2=TMA
 $RS_ListenBarge =		'MONITOR|BARGE|WHISPER';	# list of listen-related features separated by pipes: "MONITOR|BARGE|WHISPER"
+$RS_BargeSwap =			0;	# 0=no, 1=yes   reverse the order of who is called first on barge calls
 $RS_agentWAIT =			3;	# 3 or 4
 $RS_INcolumnsHIDE =		0;	# 0=no, 1=yes  # whether to hide the 'HOLD' & 'IN-GROUP' columns in the agent detail section
 $RS_DIDdesc =			0;	# 0=no, 1=yes  # whether to show a 'DID DESCRIPTION' column in the agent detail section

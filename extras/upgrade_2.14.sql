@@ -1713,3 +1713,68 @@ ALTER TABLE phones ADD peer_status ENUM('UNKNOWN','REGISTERED','UNREGISTERED','R
 ALTER TABLE phones ADD ping_time SMALLINT(6) DEFAULT NULL;
 
 UPDATE system_settings SET db_schema_version='1636',db_schema_update_date=NOW() where db_schema_version < 1636;
+
+ALTER TABLE vicidial_campaigns ADD transfer_no_dispo ENUM('DISABLED','EXTERNAL_ONLY','LOCAL_ONLY','LEAVE3WAY_ONLY','LOCAL_AND_EXTERNAL','LOCAL_AND_LEAVE3WAY','LEAVE3WAY_AND_EXTERNAL','LOCAL_AND_EXTERNAL_AND_LEAVE3WAY') default 'DISABLED';
+
+UPDATE system_settings SET db_schema_version='1637',db_schema_update_date=NOW() where db_schema_version < 1637;
+
+ALTER TABLE vicidial_users ADD manual_dial_filter VARCHAR(50) default 'DISABLED';
+
+UPDATE system_settings SET db_schema_version='1638',db_schema_update_date=NOW() where db_schema_version < 1638;
+
+ALTER TABLE vicidial_list MODIFY called_since_last_reset ENUM('Y','N','Y1','Y2','Y3','Y4','Y5','Y6','Y7','Y8','Y9','Y10','D') default 'N';
+
+CREATE TABLE `vicidial_khomp_log` (
+`khomp_log_id` int(9) unsigned NOT NULL AUTO_INCREMENT,
+`caller_code` varchar(30) COLLATE utf8_unicode_ci NOT NULL,
+`lead_id` int(10) unsigned DEFAULT 0,
+`server_ip` varchar(15) COLLATE utf8_unicode_ci NOT NULL,
+`khomp_header` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+`khomp_id` varchar(256) COLLATE utf8_unicode_ci DEFAULT NULL,
+`khomp_id_format` enum('CALLERCODE','CALLERCODE_EXTERNIP','CALLERCODE_CAMP_EXTERNIP') COLLATE utf8_unicode_ci DEFAULT NULL,
+`sip_call_id` varchar(256) COLLATE utf8_unicode_ci DEFAULT NULL,
+`start_date` datetime(6) DEFAULT NULL,
+`audio_date` datetime(6) DEFAULT NULL,
+`answer_date` datetime(6) DEFAULT NULL,
+`end_date` datetime(6) DEFAULT NULL,
+`analyzer_date` datetime(6) DEFAULT NULL,
+`conclusion` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+`pattern` varchar(256) COLLATE utf8_unicode_ci DEFAULT NULL,
+`action` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+`hangup_origin` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+`hangup_cause_recv` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+`hangup_cause_sent` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+`hangup_auth_time` varchar(20) COLLATE utf8_unicode_ci DEFAULT '0',
+`hangup_query_time` varchar(20) COLLATE utf8_unicode_ci DEFAULT '0',
+`route_auth_time` varchar(20) COLLATE utf8_unicode_ci DEFAULT '0',
+`route_query_time` varchar(20) COLLATE utf8_unicode_ci DEFAULT '0',
+`vici_action` varchar(10) COLLATE utf8_unicode_ci DEFAULT NULL,
+`vici_status` varchar(6) COLLATE utf8_unicode_ci DEFAULT NULL,
+PRIMARY KEY (`khomp_log_id`),
+KEY `caller_code` (`caller_code`),
+KEY `start_date` (`start_date`),
+KEY `khomp_id` (`khomp_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE TABLE vicidial_lead_24hour_calls (
+lead_id INT(9) UNSIGNED NOT NULL,
+list_id BIGINT(14) UNSIGNED DEFAULT '0',
+call_date DATETIME,
+phone_number VARCHAR(18),
+phone_code VARCHAR(10),
+state VARCHAR(2),
+call_type ENUM('MANUAL','AUTO','') default '',
+index(lead_id),
+index(call_date),
+index(phone_number)
+) ENGINE=MyISAM;
+
+ALTER TABLE vicidial_campaigns ADD call_limit_24hour_method ENUM('DISABLED','PHONE_NUMBER','LEAD') default 'DISABLED';
+ALTER TABLE vicidial_campaigns ADD call_limit_24hour_scope ENUM('SYSTEM_WIDE','CAMPAIGN_LISTS') default 'SYSTEM_WIDE';
+ALTER TABLE vicidial_campaigns ADD call_limit_24hour TINYINT(3) UNSIGNED default '0';
+ALTER TABLE vicidial_campaigns ADD call_limit_24hour_override VARCHAR(40) default 'DISABLED';
+
+ALTER TABLE system_settings ADD call_limit_24hour ENUM('0','1') default '0';
+ALTER TABLE system_settings ADD call_limit_24hour_reset DATETIME default '2000-01-01 00:00:01';
+
+UPDATE system_settings SET db_schema_version='1639',db_schema_update_date=NOW() where db_schema_version < 1639;

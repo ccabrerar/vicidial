@@ -376,9 +376,10 @@ if ( (preg_match('/\-\-ALL\-\-/',$user_group_string) ) or ($user_group_ct < 1) )
 		$user_groupQS .= "&user_group[]=$allowed_user_groups[$i]";
 		$i++;
 		}
-	$user_group_SQL = preg_replace('/,$/i', '',$user_group_SQL);
-	$user_group_SQL = "and ".$agent_log_table.".user_group IN($user_group_SQL)";
 	}
+
+$user_group_SQL = preg_replace('/,$/i', '',$user_group_SQL);
+$user_group_SQL = "and ".$agent_log_table.".user_group IN($user_group_SQL)";
 
 if ($DB) {echo "$user_group_string|$user_group_ct|$user_groupQS|$i<BR>";}
 # |5| | 1 | &user_group[]=5 | 1

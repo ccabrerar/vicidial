@@ -124,10 +124,11 @@
 # 210314-2040 - Added optional DID Description display for inbound calls
 # 210615-2241 - Fix for issue #1314
 # 210618-1011 - Added CORS support
+# 210625-1432 - Added options.php RS_BargeSwap variable
 #
 
-$version = '2.14-109';
-$build = '210618-1011';
+$version = '2.14-110';
+$build = '210625-1432';
 $php_script='AST_timeonVDADall.php';
 
 require("dbconnect_mysqli.php");
@@ -250,6 +251,9 @@ if (isset($_GET["parkSTATS"]))			{$parkSTATS=$_GET["parkSTATS"];}
 	elseif (isset($_POST["parkSTATS"]))	{$parkSTATS=$_POST["parkSTATS"];}
 if (isset($_GET["SLAinSTATS"]))				{$SLAinSTATS=$_GET["SLAinSTATS"];}
 	elseif (isset($_POST["SLAinSTATS"]))	{$SLAinSTATS=$_POST["SLAinSTATS"];}
+
+# defaults
+$RS_BargeSwap=0;
 
 if (file_exists('options.php'))
 	{
@@ -3834,7 +3838,11 @@ if ($talking_to_print > 0)
 			if ( (strlen($monitor_phone)>1) and (preg_match("/MONITOR|BARGE|WHISPER/",$monitor_active) ) and (preg_match("/MONITOR/",$RS_ListenBarge) ) )
 				{$L=" | <a href=\"javascript:send_monitor('$Lsessionid','$Lserver_ip','MONITOR');\">"._QXZ("LISTEN",6)."</a>";   $R='';}
 			if ( (strlen($monitor_phone)>1) and (preg_match("/BARGE|WHISPER/",$monitor_active) ) and (preg_match("/BARGE/",$RS_ListenBarge) ) )
-				{$R=" | <a href=\"javascript:send_monitor('$Lsessionid','$Lserver_ip','BARGE');\">"._QXZ("BARGE",5)."</a>";}
+				{
+				$BARGEstage = 'BARGE';
+				if ($RS_BargeSwap > 0) {$BARGEstage = 'BARGESWAP';}
+				$R=" | <a href=\"javascript:send_monitor('$Lsessionid','$Lserver_ip','$BARGEstage');\">"._QXZ("BARGE",5)."</a>";
+				}
 			if ($SIPmonitorLINK>1) {$R=" | <a href=\"sip:47378218$Lsessionid@$server_ip\">WHISPER</a>";}
 			if ($IAXmonitorLINK>1) {$R=" | <a href=\"iax:47378218$Lsessionid@$server_ip\">WHISPER</a>";}
 			if ( (strlen($monitor_phone)>1) and (preg_match("/WHISPER/",$monitor_active) ) and (preg_match("/WHISPER/",$RS_ListenBarge) ) )
@@ -3997,7 +4005,11 @@ if ($talking_to_print > 0)
 			if ( (strlen($monitor_phone)>1) and (preg_match("/MONITOR|BARGE|WHISPER/",$monitor_active) ) and (preg_match("/MONITOR/",$RS_ListenBarge) ) )
 				{$L="<td NOWRAP align=center> <a href=\"javascript:send_monitor('$Lsessionid','$Lserver_ip','MONITOR');\">"._QXZ("LISTEN")."</a></td>";   $R='';}
 			if ( (strlen($monitor_phone)>1) and (preg_match("/BARGE|WHISPER/",$monitor_active) ) and (preg_match("/BARGE/",$RS_ListenBarge) ) )
-				{$R=" <td NOWRAP align=center> <a href=\"javascript:send_monitor('$Lsessionid','$Lserver_ip','BARGE');\">"._QXZ("BARGE")."</a></td>";}
+				{
+				$BARGEstage = 'BARGE';
+				if ($RS_BargeSwap > 0) {$BARGEstage = 'BARGESWAP';}
+				$R=" <td NOWRAP align=center> <a href=\"javascript:send_monitor('$Lsessionid','$Lserver_ip','$BARGEstage');\">"._QXZ("BARGE")."</a></td>";
+				}
 			if ($SIPmonitorLINK>1) {$R=" </td><td NOWRAP align=center> <a href=\"sip:47378218$Lsessionid@$server_ip\">WHISPER</a></td>";}
 			if ($IAXmonitorLINK>1) {$R=" </td><td NOWRAP align=center> <a href=\"iax:47378218$Lsessionid@$server_ip\">WHISPER</a></td>";}
 			if ( (strlen($monitor_phone)>1) and (preg_match("/WHISPER/",$monitor_active) ) and (preg_match("/WHISPER/",$RS_ListenBarge) ) )

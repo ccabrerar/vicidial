@@ -12,7 +12,7 @@
 #
 # Should only be run on one server in a multi-server Asterisk/VICIDIAL cluster
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG:
 # 61115-1246 - First build, framework setup, non-functional
@@ -48,6 +48,7 @@
 # 200122-1850 - Added code for CID Group auto-rotate feature
 # 201122-0932 - Added code for dialy call count limits
 # 201220-1034 - Changes for shared agent campaigns
+# 210715-1335 - Added call_limit_24hour feature support, also fix for variable issue
 #
 
 ### begin parsing run-time options ###
@@ -213,7 +214,7 @@ $event_string='LOGGED INTO MYSQL SERVER ON 1 CONNECTION|';
 &event_logger;
 
 ### Grab system_settings values from the database
-$stmtA = "SELECT use_non_latin FROM system_settings;";
+$stmtA = "SELECT use_non_latin,call_limit_24hour FROM system_settings;";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -221,6 +222,7 @@ if ($sthArows > 0)
 	{
 	@aryA = $sthA->fetchrow_array;
 	$non_latin = 						$aryA[0];
+	$SScall_limit_24hour =				$aryA[1];
 	}
 $sthA->finish();
 
@@ -725,7 +727,7 @@ while($one_day_interval > 0)
 													if ( (length($DBIPdial_timeout_lead_container[$camp_CIPct]) > 1) && ($DBIPdial_timeout_lead_container[$camp_CIPct] !~ /^DISABLED$/i) )
 														{
 														# Gather settings container for Call Quota Lead Ranking
-														$stmtA = "SELECT container_entry FROM vicidial_settings_containers where container_id='$DBIPdial_timeout_lead_container[$user_CIPct]';";
+														$stmtA = "SELECT container_entry FROM vicidial_settings_containers where container_id='$DBIPdial_timeout_lead_container[$camp_CIPct]';";
 														$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 														$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 														$sthArows=$sthA->rows;
@@ -869,19 +871,19 @@ while($one_day_interval > 0)
 													if ($Lsec < 10) {$Lsec = "0$Lsec";}
 													$LLCT_DATE = "$Lyear-$Lmon-$Lmday $Lhour:$Lmin:$Lsec";
 
-													if ( ($alt_dial =~ /ALT|ADDR3|X/) && ($DBIPautoaltdial[$user_CIPct] =~ /ALT|ADDR|X/) )
+													if ( ($alt_dial =~ /ALT|ADDR3|X/) && ($DBIPautoaltdial[$camp_CIPct] =~ /ALT|ADDR|X/) )
 														{
-														if ( ($alt_dial =~ /ALT/) && ($DBIPautoaltdial[$user_CIPct] =~ /ALT/) )
+														if ( ($alt_dial =~ /ALT/) && ($DBIPautoaltdial[$camp_CIPct] =~ /ALT/) )
 															{
 															$alt_phone =~ s/\D//gi;
 															$phone_number = $alt_phone;
 															}
-														if ( ($alt_dial =~ /ADDR3/) && ($DBIPautoaltdial[$user_CIPct] =~ /ADDR3/) )
+														if ( ($alt_dial =~ /ADDR3/) && ($DBIPautoaltdial[$camp_CIPct] =~ /ADDR3/) )
 															{
 															$address3 =~ s/\D//gi;
 															$phone_number = $address3;
 															}
-														if  ( ($alt_dial =~ /^X/) && ($DBIPautoaltdial[$user_CIPct] =~ /^X/) )
+														if  ( ($alt_dial =~ /^X/) && ($DBIPautoaltdial[$camp_CIPct] =~ /^X/) )
 															{
 															if ($alt_dial =~ /LAST/) 
 																{
@@ -1100,6 +1102,23 @@ while($one_day_interval > 0)
 													else
 														{$Ndialstring = "$Local_out_prefix$phone_code$phone_number";}
 
+													$TFhourSTATE='';
+													if ($SScall_limit_24hour > 0) 
+														{
+														$TFH_areacode = substr($phone_number, 0, 3);
+														$stmtY = "SELECT state,country FROM vicidial_phone_codes where country_code='$phone_code' and areacode='$TFH_areacode';";
+														$sthY = $dbhA->prepare($stmtY) or die "preparing: ",$dbhA->errstr;
+														$sthY->execute or die "executing: $stmtY", $dbhA->errstr;
+														$sthYrows=$sthY->rows;
+														if ($sthYrows > 0)
+															{
+															@aryY = $sthY->fetchrow_array;
+															$TFhourSTATE =		$aryY[0];
+															$TFhourCOUNTRY =	$aryY[1];
+															}
+														$sthA->finish();
+														}
+
 													if (length($ext_context) < 1) {$ext_context='default';}
 													### use manager middleware-app to connect the next call to the meetme room
 													if ($CCID_on) {$CIDstring = "\"$VqueryCID\" <$CCID>";}
@@ -1130,6 +1149,10 @@ while($one_day_interval > 0)
 													### insert log record into vicidial_dial_log table 
 														$stmtA = "INSERT INTO vicidial_dial_log SET caller_code='$VqueryCID',lead_id=$lead_id,server_ip='$DB_camp_server_server_ip[$server_CIPct]',call_date='$SQLdate',extension='$VDAD_dial_exten',channel='$local_DEF$Ndialstring$local_AMP$ext_context',timeout='$Local_dial_timeout',outbound_cid='$CIDstring',context='$ext_context';";
 														$affected_rows = $dbhA->do($stmtA);
+
+													### insert log record into vicidial_lead_24hour_calls table 
+														$stmtD = "INSERT INTO vicidial_lead_24hour_calls SET lead_id='$lead_id',list_id='$list_id',call_date=NOW(),phone_number='$phone_number',phone_code='$phone_code',state='$TFhourSTATE',call_type='AUTO';";
+														$affected_rowsD = $dbhA->do($stmtD);
 														}
 													else
 														{
@@ -1141,6 +1164,8 @@ while($one_day_interval > 0)
 														$st_logged[$staggered_ct] = "$phone_number|$DBfill_campaign[$camp_CIPct]|$VqueryCID|$gmt_offset_now|$alt_dial|";
 
 														$vddl_inserts[$staggered_ct] = "INSERT INTO vicidial_dial_log SET caller_code='$VqueryCID',lead_id=$lead_id,server_ip='XXXXXXXXXXXXXXX',call_date='$SQLdate',extension='$VDAD_dial_exten',channel='$local_DEF$Ndialstring$local_AMP$ext_context',timeout='$Local_dial_timeout',outbound_cid='$CIDstring',context='$ext_context';";
+
+														$vltfh_inserts[$staggered_ct] = "INSERT INTO vicidial_lead_24hour_calls SET lead_id='$lead_id',list_id='$list_id',call_date=NOW(),phone_number='$phone_number',phone_code='$phone_code',state='$TFhourSTATE',call_type='AUTO';";
 
 														$DB_camp_servers_calls_placed++;
 														$calls_placed++;
@@ -1240,6 +1265,7 @@ while($one_day_interval > 0)
 							$TEMP_vl_update = '';
 							$TEMP_st_logged = '';
 							$TEMP_vddl_inserts = '';
+							$TEMP_vltfh_inserts = '';
 							$TEMP_vm_insert = '';
 							$TEMP_vac_insert = '';
 							$TEMP_vddl_inserts = '';
@@ -1256,6 +1282,7 @@ while($one_day_interval > 0)
 								$TEMP_vdc_update = $vdc_updates[$staggered_fill];
 								$TEMP_st_logged = $st_logged[$staggered_fill];
 								$TEMP_vddl_inserts = $vddl_inserts[$staggered_fill];
+								$TEMP_vltfh_inserts = $vltfh_inserts[$staggered_fill];
 
 								$TEMP_vm_insert =~ s/XXXXXXXXXXXXXXX/$TEMP_server_ip/gi;
 								$TEMP_vac_insert =~ s/XXXXXXXXXXXXXXX/$TEMP_server_ip/gi;
@@ -1273,12 +1300,14 @@ while($one_day_interval > 0)
 									$affected_rows_vm = $dbhA->do($TEMP_vm_insert);
 									$affected_rows_vac = $dbhA->do($TEMP_vac_insert);
 									$affected_rows_vddl = $dbhA->do($TEMP_vddl_inserts);
+									$affected_rows_vltfh = $dbhA->do($TEMP_vltfh_inserts);
 
 									if ($DB) {print "LEAD UPDATE: $affected_rows_vl|$TEMP_vl_update|\n";}
 									if ($DB) {print "LEAD CALL COUNT UPDATE: $affected_rows_vdc|$TEMP_vdc_update|\n";}
 									if ($DB) {print "VICIDIAL_MANAGER INSERT: $affected_rows_vm|$TEMP_vm_insert|\n";}
 									if ($DB) {print "VICIDIAL_AUTO_CALLS INSERT: $affected_rows_vac|$TEMP_vac_insert|\n";}
 									if ($DB) {print "VICIDIAL_DIAL_LOG INSERT: $affected_rows_vddl|$TEMP_vddl_inserts|\n";}
+									if ($DB) {print "VICIDIAL_LEAD_24HOUR_CALLS INSERT: $affected_rows_vltfh|$TEMP_vltfh_inserts|\n";}
 									}
 
 								$event_string = "|     number call stagger dialed|$TEMP_vm_insert|$TEMP_server_ip|$staggered_fill|$staggered_ct|$affected_rows_vm|$affected_rows_vac|$affected_rows_vl|$affected_rows_vddl   $TEMP_st_logged";

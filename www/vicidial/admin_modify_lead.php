@@ -105,6 +105,8 @@
 # 201123-1704 - Added today called count display
 # 210304-1509 - Added option '5' for modify_lead for this page to work as read-only
 # 210421-2120 - Added more screen labels
+# 210629-1545 - Added KHOMP stats display
+# 210630-0838 - Added display of vicidial_vmm_counts data, if $CIDdisplay=="Yes"
 #
 
 require("dbconnect_mysqli.php");
@@ -288,6 +290,11 @@ if ($qm_conf_ct > 0)
 	$SSsip_event_logging =		$row[12];
 	}
 ##### END SETTINGS LOOKUP #####
+### See if KHOMP is set up
+$stmt = "SELECT container_id FROM vicidial_settings_containers where container_id IN('KHOMPSETTINGS','KHOMPSTATUSMAP');";
+$rslt=mysql_to_mysqli($stmt, $link);
+if ($DB) {echo "$stmt\n";}
+$kh_conf_ct = mysqli_num_rows($rslt);
 ###########################################
 
 $DB=preg_replace('/[^0-9]/','',$DB);
@@ -1860,6 +1867,32 @@ else
 			}
 		$call_log .= "</tr>\n";
 
+		if ( ($CIDdisplay=="Yes") and ($kh_conf_ct >= 2) )
+			{
+			$stmtA="SELECT start_date,conclusion,pattern,UNIX_TIMESTAMP(answer_date),UNIX_TIMESTAMP(analyzer_date),hangup_auth_time,hangup_query_time,route_auth_time,route_query_time FROM vicidial_khomp_log WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and caller_code='$caller_code';";
+			$rsltA=mysql_to_mysqli($stmtA, $link);
+			$kh_to_print = mysqli_num_rows($rslt);
+			if ($kh_to_print > 0)
+				{
+				$rowA=mysqli_fetch_row($rsltA);
+				$KHstart_date =	$rowA[0];
+				$KHconclusion =	$rowA[1];
+				$KHpattern =	$rowA[2];
+				$KHanswer =		$rowA[3];
+				$KHanalyzer =	$rowA[4];
+				$KHproctime =	($KHanalyzer - $KHanswer);
+				$KHproctime =	sprintf("%.3f", $KHproctime);
+				if (strlen($rowA[0]) > 0)
+					{
+					$call_log .= "<TR>";
+					$call_log .= "<td></td>";
+					$call_log .= "<TD $bgcolor COLSPAN=12><font style=\"font-size:11px;font-family:sans-serif;\"> "._QXZ("KHOMP Start Date").": $KHstart_date &nbsp; &nbsp;  "._QXZ("Conclusion").": $KHconclusion &nbsp; &nbsp; "._QXZ("Pattern").": $KHpattern &nbsp; &nbsp; "._QXZ("Processing Time").": $KHproctime "._QXZ("sec")." &nbsp; &nbsp; "._QXZ("API Times").": $rowA[5] / $rowA[6] / $rowA[7] / $rowA[8] &nbsp; </font></TD>";
+					$call_log .= "</TR>";
+					$KHcount++;
+					}
+				}
+			}
+
 		$stmtA="SELECT call_notes FROM vicidial_call_notes WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and vicidial_id='$row[0]';";
 		$rsltA=mysql_to_mysqli($stmtA, $link);
 		$out_notes_to_print = mysqli_num_rows($rslt);
@@ -3136,6 +3169,65 @@ else
 			}
 
 		echo "</TABLE><BR><BR>\n";
+
+
+		if ($CIDdisplay=="Yes")
+			{
+			echo "<B>"._QXZ("VOICEMAIL MESSAGE DAILY COUNT LOGS FOR THIS LEAD").":</B>\n";
+			echo "<TABLE width=750 cellspacing=1 cellpadding=1>\n";
+			echo "<tr><td><font size=1># </td><td align=left><font size=2>"._QXZ("DATE")." </td><td align=left><font size=2>"._QXZ("MESSAGE STARTED COUNT")." </td><td align=left><font size=2> &nbsp; "._QXZ("MESSAGE COMPLETED COUNT")."</td></tr>\n";
+
+			$stmt="SELECT call_date,vmm_count,vmm_played from vicidial_vmm_counts where lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' order by call_date desc limit 500;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$logs_to_print = mysqli_num_rows($rslt);
+			if ($DB) {echo "$logs_to_print|$stmt|\n";}
+
+			$u=0;
+			while ($logs_to_print > $u) 
+				{
+				$row=mysqli_fetch_row($rslt);
+				if (preg_match("/1$|3$|5$|7$|9$/i", $u))
+					{$bgcolor="bgcolor=\"#$SSstd_row2_background\"";} 
+				else
+					{$bgcolor="bgcolor=\"#$SSstd_row1_background\"";}
+
+				$u++;
+				echo "<tr $bgcolor>";
+				echo "<td><font size=1>$u</td>";
+				echo "<td align=left><font size=2> $row[0] </td>";
+				echo "<td align=left><font size=2> $row[1] </td>\n";
+				echo "<td align=left><font size=2> $row[2] &nbsp; </td>\n";
+				echo "</tr>\n";
+				}
+
+			if ($archive_log=="Yes") 
+				{
+				$stmt="SELECT call_date,vmm_count,vmm_played from vicidial_vmm_counts_archive where lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' order by call_date desc limit 500;";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$logs_to_print = mysqli_num_rows($rslt);
+				if ($DB) {echo "$logs_to_print|$stmt|\n";}
+
+				$u=0;
+				while ($logs_to_print > $u) 
+					{
+					$row=mysqli_fetch_row($rslt);
+					if (preg_match("/1$|3$|5$|7$|9$/i", $u))
+						{$bgcolor="bgcolor=\"#$SSstd_row2_background\"";} 
+					else
+						{$bgcolor="bgcolor=\"#$SSstd_row1_background\"";}
+
+					$u++;
+					echo "<tr $bgcolor>";
+					echo "<td><font size=1>$u</td>";
+					echo "<td align=left><font size=2 color='#FF0000'> $row[0] </td>";
+					echo "<td align=left><font size=2> $row[1] </td>\n";
+					echo "<td align=left><font size=2> $row[2] &nbsp; </td>\n";
+					echo "</tr>\n";
+					}
+				}
+
+			echo "</TABLE><BR><BR>\n";
+			}
 
 
 	##### BEGIN switch lead log entries #####

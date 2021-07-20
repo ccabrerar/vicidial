@@ -334,7 +334,7 @@ vendor_lead_code VARCHAR(20),
 source_id VARCHAR(50),
 list_id BIGINT(14) UNSIGNED NOT NULL DEFAULT '0',
 gmt_offset_now DECIMAL(4,2) DEFAULT '0.00',
-called_since_last_reset ENUM('Y','N','Y1','Y2','Y3','Y4','Y5','Y6','Y7','Y8','Y9','Y10') default 'N',
+called_since_last_reset ENUM('Y','N','Y1','Y2','Y3','Y4','Y5','Y6','Y7','Y8','Y9','Y10','D') default 'N',
 phone_code VARCHAR(10),
 phone_number VARCHAR(18) NOT NULL,
 title VARCHAR(4),
@@ -690,7 +690,8 @@ max_inbound_filter_ingroups TEXT,
 max_inbound_filter_min_sec SMALLINT(5) default '-1',
 status_group_id VARCHAR(20) default '',
 mobile_number VARCHAR(20) default '',
-two_factor_override  ENUM('NOT_ACTIVE','ENABLED','DISABLED') default 'NOT_ACTIVE'
+two_factor_override  ENUM('NOT_ACTIVE','ENABLED','DISABLED') default 'NOT_ACTIVE',
+manual_dial_filter VARCHAR(50) default 'DISABLED'
 ) ENGINE=MyISAM;
 
 CREATE UNIQUE INDEX user ON vicidial_users (user);
@@ -1070,7 +1071,12 @@ calls_waiting_vl_two VARCHAR(25) default 'DISABLED',
 calls_inqueue_count_one VARCHAR(40) default 'DISABLED',
 calls_inqueue_count_two VARCHAR(40) default 'DISABLED',
 in_man_dial_next_ready_seconds SMALLINT(5) UNSIGNED default '0',
-in_man_dial_next_ready_seconds_override VARCHAR(40) default 'DISABLED'
+in_man_dial_next_ready_seconds_override VARCHAR(40) default 'DISABLED',
+transfer_no_dispo ENUM('DISABLED','EXTERNAL_ONLY','LOCAL_ONLY','LEAVE3WAY_ONLY','LOCAL_AND_EXTERNAL','LOCAL_AND_LEAVE3WAY','LEAVE3WAY_AND_EXTERNAL','LOCAL_AND_EXTERNAL_AND_LEAVE3WAY') default 'DISABLED',
+call_limit_24hour_method ENUM('DISABLED','PHONE_NUMBER','LEAD') default 'DISABLED',
+call_limit_24hour_scope ENUM('SYSTEM_WIDE','CAMPAIGN_LISTS') default 'SYSTEM_WIDE',
+call_limit_24hour TINYINT(3) UNSIGNED default '0',
+call_limit_24hour_override VARCHAR(40) default 'DISABLED'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_lists (
@@ -1931,7 +1937,9 @@ label_last_local_call_time VARCHAR(60) default '',
 label_called_count VARCHAR(60) default '',
 label_rank VARCHAR(60) default '',
 label_owner VARCHAR(60) default '',
-label_entry_list_id VARCHAR(60) default ''
+label_entry_list_id VARCHAR(60) default '',
+call_limit_24hour ENUM('0','1') default '0',
+call_limit_24hour_reset DATETIME default '2000-01-01 00:00:01'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaigns_list_mix (
@@ -4611,6 +4619,51 @@ CAID VARCHAR(50),
 index (db_time)
 ) ENGINE=MyISAM;
 
+CREATE TABLE vicidial_lead_24hour_calls (
+lead_id INT(9) UNSIGNED NOT NULL,
+list_id BIGINT(14) UNSIGNED DEFAULT '0',
+call_date DATETIME,
+phone_number VARCHAR(18),
+phone_code VARCHAR(10),
+state VARCHAR(2),
+call_type ENUM('MANUAL','AUTO','') default '',
+index(lead_id),
+index(call_date),
+index(phone_number)
+) ENGINE=MyISAM;
+
+CREATE TABLE `vicidial_khomp_log` (
+`khomp_log_id` int(9) unsigned NOT NULL AUTO_INCREMENT,
+`caller_code` varchar(30) COLLATE utf8_unicode_ci NOT NULL,
+`lead_id` int(10) unsigned DEFAULT 0,
+`server_ip` varchar(15) COLLATE utf8_unicode_ci NOT NULL,
+`khomp_header` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+`khomp_id` varchar(256) COLLATE utf8_unicode_ci DEFAULT NULL,
+`khomp_id_format` enum('CALLERCODE','CALLERCODE_EXTERNIP','CALLERCODE_CAMP_EXTERNIP') COLLATE utf8_unicode_ci DEFAULT NULL,
+`sip_call_id` varchar(256) COLLATE utf8_unicode_ci DEFAULT NULL,
+`start_date` datetime(6) DEFAULT NULL,
+`audio_date` datetime(6) DEFAULT NULL,
+`answer_date` datetime(6) DEFAULT NULL,
+`end_date` datetime(6) DEFAULT NULL,
+`analyzer_date` datetime(6) DEFAULT NULL,
+`conclusion` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+`pattern` varchar(256) COLLATE utf8_unicode_ci DEFAULT NULL,
+`action` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+`hangup_origin` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+`hangup_cause_recv` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+`hangup_cause_sent` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+`hangup_auth_time` varchar(20) COLLATE utf8_unicode_ci DEFAULT '0',
+`hangup_query_time` varchar(20) COLLATE utf8_unicode_ci DEFAULT '0',
+`route_auth_time` varchar(20) COLLATE utf8_unicode_ci DEFAULT '0',
+`route_query_time` varchar(20) COLLATE utf8_unicode_ci DEFAULT '0',
+`vici_action` varchar(10) COLLATE utf8_unicode_ci DEFAULT NULL,
+`vici_status` varchar(6) COLLATE utf8_unicode_ci DEFAULT NULL,
+PRIMARY KEY (`khomp_log_id`),
+KEY `caller_code` (`caller_code`),
+KEY `start_date` (`start_date`),
+KEY `khomp_id` (`khomp_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
 
 ALTER TABLE vicidial_email_list MODIFY message text character set utf8;
 
@@ -4944,7 +4997,7 @@ UPDATE vicidial_configuration set value='1766' where name='qc_database_version';
 
 INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('AGENT_CALLBACK_EMAIL ','Scheduled callback email alert settings','OTHER','---ALL---','; sending email address\r\nemail_from => vicidial@local.server\r\n\r\n; subject of the email\r\nemail_subject => Scheduled callback alert for --A--agent_name--B--\r\n\r\nemail_body_begin => \r\nThis is a reminder that you have a scheduled callback right now for the following lead:\r\n\r\nName: --A--first_name--B-- --A--last_name--B--\r\nPhone: --A--phone_number--B--\r\nAlt. phone: --A--alt_phone--B--\r\nEmail: --A--email--B--\r\nCB Comments: --A--callback_comments--B--\r\nLead Comments: --A--comments--B--\r\n\r\nPlease don\'t respond to this, fool.\r\n\r\nemail_body_end');
 INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('TIMEZONES_USA','USA Timezone List','TIMEZONE_LIST','---ALL---','USA,AST,N,Atlantic Time Zone\nUSA,EST,Y,Eastern Time Zone\nUSA,CST,Y,Central Time Zone\nUSA,MST,Y,Mountain Time Zone\nUSA,MST,N,Arizona Time Zone\nUSA,PST,Y,Pacific Time Zone\nUSA,AKST,Y,Alaska Time Zone\nUSA,HST,N,Hawaii Time Zone\n');
-INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('TIMEZONES_CANADA','Canadian Timezone List','TIMEZONE_LIST','---ALL---','CAN,NST,Y,Newfoundland Time Zone\nCAN,AST,Y,Atlantic Time Zone\nCAN,EST,Y,Eastern Time Zone\nCAN,CST,Y,Central Time Zone\nCAN,CST,N,Saskatchewan Time Zone\nCAN,MST,Y,Mountain Time Zone\nCAN,PST,Y,Pacific Time Zone\n');
+INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('TIMEZONES_CANADA','Canadian Timezone List','TIMEZONE_LIST','---ALL---','CAN,NST,Y,Newfoundland Time Zone\nCAN,AST,Y,Atlantic Time Zone\nCAN,EST,Y,Eastern Time Zone\nCAN,CST,Y,Central Time Zone\nCAN,CST,N,Saskatchewan Time Zone\nCAN,MST,Y,Mountain Time Zone\nCAN,MST,N,Yukon Time Zone\nCAN,PST,Y,Pacific Time Zone\n');
 INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('TIMEZONES_AUSTRALIA','Australian Timezone List','TIMEZONE_LIST','---ALL---','AUS,AEST,Y,Eastern Australia Time Zone\nAUS,AEST,N,Queensland Time Zone\nAUS,ACST,Y,Central Australia Time Zone\nAUS,ACST,N,Northern Territory Time Zone\nAUS,AWST,N,Western Australia Time Zone\n');
 INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('PHONE_DEFAULTS','Default phone settings for preloading','PHONE_DEFAULTS','---ALL---','# Below are all phone settings recognized under the PHONE_DEFAULTS \r\n# container type and the type of data each accepts.  Any setting that\r\n# uses a default value in the database has said value pre-set below\r\n\r\n# 10 char max\r\nvoicemail_id => \r\n \r\n# 15 char max\r\nserver_ip => \r\n\r\n# 100 char max\r\npass => \r\n\r\n# 10 char max\r\nstatus => \r\n\r\n# Y/N only\r\nactive => Y\r\n\r\n# 50 char max\r\nphone_type => \r\n\r\n# \'SIP\',\'Zap\',\'IAX2\' or \'EXTERNAL\'\r\nprotocol => SIP\r\n\r\n# positive or negatier 2-decimal floating point number\r\nlocal_gmt => -5.00\r\n\r\n# 20 char max\r\nvoicemail_dump_exten => 85026666666666\r\n\r\n# 20 char max\r\noutbound_cid => \r\n\r\n# 100 char max\r\nemail => \r\n\r\n# 15 char max\r\ntemplate_id => \r\n\r\n# text, conf_override can span multiple lines, see below\r\nconf_override => \r\n# type=friend\r\n# host=dynamic\r\n# canreinvite=no\r\n# context=default1\r\n\r\n# 50 char max\r\nphone_context => default\r\n\r\n# Unsigned - max value 65536\r\nphone_ring_timeout => 60\r\n\r\n# 20 char max\r\nconf_secret => test\r\n\r\n# Y/N only\r\ndelete_vm_after_email => N\r\n\r\n# Options - Y, N, or Y_API_LAUNCH\r\nis_webphone => N\r\n\r\n# Y/N only\r\nuse_external_server_ip => N\r\n\r\n# 100 char max\r\ncodecs_list => \r\n\r\n# 0/1 only\r\ncodecs_with_template => 0\r\n\r\n# Options - Y, N, TOGGLE, or TOGGLE_OFF\r\nwebphone_dialpad => Y\r\n\r\n# Y/N only\r\non_hook_agent => N\r\n\r\n# Y/N only\r\nwebphone_auto_answer => Y\r\n\r\n# 30 char max\r\nvoicemail_timezone => eastern\r\n\r\n# 255 char max\r\nvoicemail_options => \r\n\r\n# 20 char max\r\nuser_group => ---ALL---\r\n\r\n# 100 char max\r\nvoicemail_greeting => \r\n\r\n# 20 char max\r\nvoicemail_dump_exten_no_inst => 85026666666667\r\n\r\n# Y/N only\r\nvoicemail_instructions => Y\r\n\r\n# Y/N only\r\non_login_report => N\r\n\r\n# 40 char max\r\nunavail_dialplan_fwd_exten => \r\n\r\n# 100 char max\r\nunavail_dialplan_fwd_context => \r\n\r\n# text\r\nnva_call_url => \r\n\r\n# 40 char max\r\nnva_search_method => \r\n\r\n# 255 char max\r\nnva_error_filename => \r\n\r\n# Integer, any size\r\nnva_new_list_id => 995\r\n\r\n# 10 char max\r\nnva_new_phone_code => 1\r\n\r\n# 6 char max\r\nnva_new_status => NVAINS\r\n\r\n# Y/N only\r\nwebphone_dialbox => Y\r\n\r\n# Y/N only\r\nwebphone_mute => Y\r\n\r\n# Y/N only\r\nwebphone_volume => Y\r\n\r\n# Y/N only\r\nwebphone_debug => N\r\n\r\n# 20 char max\r\noutbound_alt_cid => \r\n\r\n# Y/N only\r\nconf_qualify => Y\r\n\r\n# 255 char max\r\nwebphone_layout => \r\n');
 INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('QC_STATUS_TEMPLATE','Sample QC Status Template','QC_TEMPLATE','---ALL---','# These types of containers are simply used for creating a list of \r\n# QC-enabled statuses to apply to campaigns, lists, and ingroups.\r\n# Simply put all the statuses that this template should allow in\r\n# a comma-delimited string, as below:\r\n\r\nSALE,DNC,NI');
@@ -4952,4 +5005,4 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1636',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1639',db_schema_update_date=NOW(),reload_timestamp=NOW();
