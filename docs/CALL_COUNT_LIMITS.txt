@@ -1,4 +1,4 @@
-CALL COUNT LIMITS		Started: 2020-11-22	Updated: 2021-07-19
+CALL COUNT LIMITS		Started: 2020-11-22	Updated: 2021-07-20
 
 
 
@@ -52,9 +52,9 @@ The last setting on the campaign detail page related to this 24-Hour Call Count 
 Here is an example CALL_LIMITS_OVERRIDE Container Entry that will work with this setting:
 ; Select one of the four methods below for how the state is determined:
 ; 'state_areacode' will look only at the phone_code(country code) and the area-code of the phone number to determine the state
-; 'state_areacode_postcode' will do the same as above, but it will also check to see if the postal code mathes this state
-; 'state_areacode_postcode_state' will do the same as above, but it will also check to see if the lead's "state" field mathes this state
-; 'state_areacode_state' will do the same as the first option, but it will also check to see if the lead's "state" field mathes this state
+; 'state_areacode_postcode' will do the same as above, but it will also check to see if the postal code matches this state
+; 'state_areacode_postcode_state' will do the same as above, but it will also check to see if the lead's "state" field matches this state
+; 'state_areacode_state' will do the same as the first option, but it will also check to see if the lead's "state" field matches this state
 ; NOTE: for the last three options, if ANY of the selected criteria matches a state defined below, it will use that 24-hour call count limit. 
 ;       If more than one entry matches, the lowest call count limit of the matching entries will be used.
 method => state_areacode
@@ -83,9 +83,9 @@ https://flsenate.gov/Session/Bill/2021/1120/BillText/er/HTML
 
 In summary, as of July 1, 2021, anyone calling consumers within Florida on Native Florida Areacode Phone-Numbers(more about that part later) will now need to follow the restrictions of placing no more than three(3) calls to any single phone number for the same issue within any 24-hour period. In our research into this new restriction, we could not find any other governmental body who used the "24-hour" wording for a call attempt limit. The UK has a 72-hour ban on dropped auto-dialed calls for being re-attempted, but that is not an overall attempt limit, and was rather simple to program. But since the "24-hour" wording was used, we could not simply have affected clients use the existing "Daily Call Count Limit" features, since there would be the possibility of running over the three(3) calls per-24-hours limit. So we had to create a whole new set of features to handle this(detailed above).
 
-Now what about that "Native Florida Areacode Phone-Numbers" part? The law uses the wording "any area code in this state"('this state' meaning Florida) which at the time we're writing this document means the 21 area-codes assigned to the state of Florida by NANPA. Based upon our analysis, this actually leaves out the roughly 15% of Florida citizens who have phone numbers originating in other area-codes. But, this does make the determination of whether you are calling someone affected by this law to be much simpler, since we can just use the existing areacode database within VICIdial(mentioned above) to look up what state the areacode of the phone numbers you are calling belongs to.
+Now what about that "Native Florida Areacode Phone-Numbers" part? The law uses the wording "any area code in this state"('this state' meaning Florida) which at the time we're writing this document means the 21 area-codes assigned to the state of Florida by NANPA. Based upon our analysis, this actually leaves out the roughly 15% of Florida citizens who have phone numbers originating in other area-codes. But, this does make the determination of whether you are calling someone affected by this law to be much simpler, since we can just use the existing areacode database within VICIdial(mentioned above) to look up what state the areacode of the phone numbers you are calling belongs to. Since there is some debate as to whether the phone number's area-code is the only way to determine if you are calling a Floridian, we did add some features to the "24-Hour Called Count Limit Override" to allow it to also include whether a Florida zipcode or state is defined in the lead's record to have it also follow a state rule for Florida.
 
-The conclusion of all of this is: If you place sales calls, and you call people at Florida phone numbers, you should set up your system to use the new 24-Hour Call Count Limit feature. At the very least, you should set up a "24-Hour Called Count Limit Override" with one of the "state" entries being "state => USA,FL,3" so that you are not calling any of those phone numbers more than three(3) times in a 24-hour time period.
+The conclusion of all of this is: If you place sales calls, and you call people in Florida, you should set up your system to use the new 24-Hour Call Count Limit feature. At the very least, you should set up a "24-Hour Called Count Limit Override" with one of the "state" entries being "state => USA,FL,3" so that you are not calling any of those phone numbers more than three(3) times in a 24-hour time period.
 
 
 

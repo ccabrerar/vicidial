@@ -61,6 +61,7 @@
 # 201107-2206 - Added optional park_log archiving
 # 210317-2104 - Added vicidial_agent_visibility_log archiving
 # 210407-2023 - Added vicidial_peer_event_log archiving
+# 210819-0826 - Added vicidial_inbound_caller_codes archiving
 #
 
 $CALC_TEST=0;
@@ -886,6 +887,35 @@ if (!$T)
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 				}
 			##### END vicidial_xfer_log_archive trim processing #####
+
+			##### BEGIN vicidial_inbound_caller_codes_archive trim processing #####
+			$stmtA = "SELECT count(*) from vicidial_inbound_caller_codes_archive;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$vicidial_inbound_caller_codes_archive_count =	$aryA[0];
+				}
+			$sthA->finish();
+
+			if (!$Q) {print "Trimming vicidial_inbound_caller_codes_archive table...  ($vicidial_inbound_caller_codes_archive_count)\n";}
+			
+			$rv = $sthA->err();
+			if (!$rv) 
+				{
+				$stmtA = "DELETE FROM vicidial_inbound_caller_codes_archive WHERE call_date < '$del_time';";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArows = $sthA->rows;
+				if (!$Q) {print "$sthArows rows deleted from vicidial_inbound_caller_codes_archive table \n";}
+
+				$stmtA = "optimize table vicidial_inbound_caller_codes_archive;";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				}
+			##### END vicidial_inbound_caller_codes_archive trim processing #####
 			}
 
 		if (!$Q) {print "Trim process complete, exiting...\n";}
@@ -1700,6 +1730,59 @@ if (!$T)
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 
 		$stmtA = "optimize table vicidial_xfer_log_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		}
+
+
+	##### vicidial_inbound_caller_codes
+	$stmtA = "SELECT count(*) from vicidial_inbound_caller_codes;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$vicidial_inbound_caller_codes_count =	$aryA[0];
+		}
+	$sthA->finish();
+
+	$stmtA = "SELECT count(*) from vicidial_inbound_caller_codes_archive;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$vicidial_inbound_caller_codes_archive_count =	$aryA[0];
+		}
+	$sthA->finish();
+
+	if (!$Q) {print "\nProcessing vicidial_inbound_caller_codes table...  ($vicidial_inbound_caller_codes_count|$vicidial_inbound_caller_codes_archive_count)\n";}
+	$stmtA = "INSERT IGNORE INTO vicidial_inbound_caller_codes_archive SELECT * from vicidial_inbound_caller_codes;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	
+	$sthArows = $sthA->rows;
+	if (!$Q) {print "$sthArows rows inserted into vicidial_inbound_caller_codes_archive table \n";}
+	
+	$rv = $sthA->err();
+	if (!$rv) 
+		{	
+		if ($wipe_all > 0)
+			{$stmtA = "DELETE FROM vicidial_inbound_caller_codes;";}
+		else
+			{$stmtA = "DELETE FROM vicidial_inbound_caller_codes WHERE call_date < '$del_time';";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows deleted from vicidial_inbound_caller_codes table \n";}
+
+		$stmtA = "optimize table vicidial_inbound_caller_codes;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+
+		$stmtA = "optimize table vicidial_inbound_caller_codes_archive;";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		}

@@ -392,6 +392,7 @@ if ($SUBMIT)
 		$call_date=$row[1];
 		$status=$row[2];
 		$stmt2="select call_date, channel, outbound_cid from ".$vicidial_dial_log_table." where lead_id='$lead_id' and call_date>='$call_date'-INTERVAL $interval SECOND and call_date<='$call_date'+INTERVAL $interval SECOND";
+		#print $stmt2."<BR>\n";
 		$rslt2=mysql_to_mysqli($stmt2, $link);
 		while($row2=mysqli_fetch_row($rslt2)) 
 			{
@@ -404,6 +405,7 @@ if ($SUBMIT)
 				$CID["$caller_id"][1]++;
 				$log_calls++;
 				}
+			else {print "$status not in $status_string<BR>\n";}
 			}
 		}
 

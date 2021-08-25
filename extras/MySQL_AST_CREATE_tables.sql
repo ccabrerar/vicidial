@@ -1076,7 +1076,8 @@ transfer_no_dispo ENUM('DISABLED','EXTERNAL_ONLY','LOCAL_ONLY','LEAVE3WAY_ONLY',
 call_limit_24hour_method ENUM('DISABLED','PHONE_NUMBER','LEAD') default 'DISABLED',
 call_limit_24hour_scope ENUM('SYSTEM_WIDE','CAMPAIGN_LISTS') default 'SYSTEM_WIDE',
 call_limit_24hour TINYINT(3) UNSIGNED default '0',
-call_limit_24hour_override VARCHAR(40) default 'DISABLED'
+call_limit_24hour_override VARCHAR(40) default 'DISABLED',
+cid_group_id_two VARCHAR(20) default '---DISABLED---'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_lists (
@@ -4664,6 +4665,19 @@ KEY `start_date` (`start_date`),
 KEY `khomp_id` (`khomp_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
+CREATE TABLE vicidial_inbound_caller_codes (
+uniqueid VARCHAR(50) NOT NULL,
+server_ip VARCHAR(15),
+call_date DATETIME,
+group_id VARCHAR(20) NOT NULL,
+lead_id INT(9) UNSIGNED,
+caller_code VARCHAR(30) NOT NULL,
+prev_caller_code VARCHAR(40) NOT NULL,
+index (uniqueid),
+index (call_date),
+unique index cicc_cd (caller_code, uniqueid)
+) ENGINE=MyISAM;
+
 
 ALTER TABLE vicidial_email_list MODIFY message text character set utf8;
 
@@ -4922,6 +4936,8 @@ CREATE TABLE vicidial_agent_visibility_log_archive LIKE vicidial_agent_visibilit
 CREATE TABLE vicidial_peer_event_log_archive LIKE vicidial_peer_event_log;
 ALTER TABLE vicidial_peer_event_log_archive MODIFY peer_event_id INT(9) UNSIGNED NOT NULL;
 
+CREATE TABLE vicidial_inbound_caller_codes_archive LIKE vicidial_inbound_caller_codes;
+
 GRANT RELOAD ON *.* TO cron@'%';
 GRANT RELOAD ON *.* TO cron@localhost;
 
@@ -5005,4 +5021,4 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1639',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1641',db_schema_update_date=NOW(),reload_timestamp=NOW();

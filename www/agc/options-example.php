@@ -21,6 +21,7 @@
 # 200827-1230 - Added alt_display_enabled option
 # 210616-0959 - Added CORS support
 # 210705-1624 - Added user_pass_webform and phone_login_webform options
+# 210823-1633 - Added email_attachment_path option for dispo_send_email.php script
 #
 
 $conf_silent_prefix		= '5';	# vicidial_conferences prefix to enter silently and muted for recording
@@ -64,6 +65,7 @@ $webphone_call_seconds	= '0';	# set to 1 or higher to have the agent phone(if se
 $user_pass_webform		= '0';	# set to 1 or 2 to return to default of including the 'user'(1) and 'pass'(2) by default in webform URLs
 $phone_login_webform	= '0';	# set to 1 or 2 to return to default of including the 'phone_login'(1) and 'phone_pass'(2) by default in webform URLs
 $alt_display_enabled	= '0';	# set to 1 to allow the alt_display.php script to be used
+$email_attachment_path	= './attachments';	# set to the absolute path from where all of the dispo_send_email.php script attachemnts will be located
 $customer_chat_refresh_seconds	= 1;	# How often (in seconds) to refresh customer ang agent chat window
 $manager_chat_refresh_seconds	= 1;	# How often (in seconds) to refresh manager chat window
 

@@ -1,4 +1,4 @@
-Sending email after agent dispositions a call		Started: 2015-08-06	Updated: 2020-08-14
+Sending email after agent dispositions a call		Started: 2015-08-06	Updated: 2021-08-23
 
 These instructions will show you how to set up automatic emails to be sent out when an agent dispositions a call with a specific defined "sale status".
 
@@ -13,10 +13,12 @@ Forth, you will find an example below of how to configure the Dispo Call URL ent
 
 UPDATE! 2017-11-20 - Added ALL-STATUSES option and called_count_trigger option
 
-UPDATE! 2017-11-21 - Added options to allow for up to 5 attachments to be sent(local files) defined in the URL
+UPDATE! 2017-11-21 - Added options to allow for up to 20 attachments to be sent(local files) defined in the URL
 
 UPDATE! 2020-08-14 - Added "email_body_html" flag so the email is sent as an HTML email and not plain text
                      Added "email_body_utf8" flag so the email is sent with a 'utf-8' charset and not 'iso-8859-1'
+
+UPDATE! 2021-08-23 - Changed email attachments so they must be placed in the "agc/attachments/" web directory, or a subdirectory. There is an options.php override for this with the "$email_attachment_path" setting.
 
 
 
@@ -27,7 +29,7 @@ HERE IS AN EXAMPLE DISPO CALL URL ENTRY FOR THIS FEATURE:
 VARhttp://192.168.1.1/agc/dispo_send_email.php?container_id=TEST_CONTAINER&lead_id=--A--lead_id--B--&call_id=--A--call_id--B--&dispo=--A--dispo--B--&user=--A--user--B--&pass=--A--pass--B--&sale_status=SALE---SSALE---XSALE&log_to_file=1&call_notes=--A--call_notes--B--
 
 
-	(in this example, only calls that are set by the agent as SALE status would have an email sent out, and the email would use the TEST_CONTAINER settings container as the email's template, and an attachment of the file "test.csv"[which is located in the "agc" web directory] would be sent along with the email)
+	(in this example, only calls that are set by the agent as SALE status would have an email sent out, and the email would use the TEST_CONTAINER settings container as the email's template, and an attachment of the file "test.csv"[which is located in the "agc/attachments/" web directory] would be sent along with the email)
 
 VARhttp://192.168.1.1/agc/dispo_send_email.php?container_id=TEST_CONTAINER&lead_id=--A--lead_id--B--&call_id=--A--call_id--B--&dispo=--A--dispo--B--&user=--A--user--B--&pass=--A--pass--B--&sale_status=SALE&email_attachment_1=test.csv&log_to_file=1&call_notes=--A--call_notes--B--
 

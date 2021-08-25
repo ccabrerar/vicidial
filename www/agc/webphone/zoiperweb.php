@@ -1,7 +1,7 @@
 <?php
 # zoiperweb.php - the web-based Zoiper softphone 
 # 
-# Copyright (C) 2011  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # variables sent to this script:
 # $phone_login - phone login
@@ -19,6 +19,7 @@
 # 100827-1417 - Added system_key variable
 # 101227-1313 - Added DIALPLAN_OFF_TOGGLE option
 # 110526-1726 - Added AUTOANSWER option
+# 210823-0959 - Fix for security issue
 #
 
 if (isset($_GET["DB"]))							{$DB=$_GET["DB"];}
@@ -50,6 +51,16 @@ $b64_options =			base64_decode($options);
 $b64_system_key =		base64_decode($system_key);
 if ($b64_protocol != 'SIP')
 	{$b64_protocol = 'IAX';}
+
+$b64_phone_login = preg_replace('/[^-\*\#\.\:\/\@\_0-9\p{L}]/u','',$b64_phone_login);
+$b64_phone_pass = preg_replace('/[^-\*\#\.\:\/\@\_0-9\p{L}]/u','',$b64_phone_pass);
+$b64_server_ip = preg_replace('/[^-\*\#\.\:\/\@\_0-9\p{L}]/u','',$b64_server_ip);
+$b64_callerid = preg_replace('/[^-\*\#\.\:\/\@\_0-9\p{L}]/u','',$b64_callerid);
+$b64_protocol = preg_replace('/[^-\*\#\.\:\/\@\_0-9\p{L}]/u','',$b64_protocol);
+$b64_codecs = preg_replace('/[^-\*\#\.\:\/\@\_0-9\p{L}]/u','',$b64_codecs);
+$b64_options = preg_replace('/[^-\*\#\.\:\/\@\_0-9\p{L}]/u','',$b64_options);
+$b64_system_key = preg_replace('/[^-\*\#\.\:\/\@\_0-9\p{L}]/u','',$b64_system_key);
+
 
 ?>
 

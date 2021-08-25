@@ -1,7 +1,7 @@
 <?php 
 # AST_CLOSERstats_v2.php
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES:
 # 60619-1714 - Added variable filtering to eliminate SQL injection attack threat
@@ -68,6 +68,7 @@
 # 190508-1901 - Streamlined DID check to optimize page load
 # 190930-1345 - Fixed PHP7 array issue
 # 200924-0918 - Added two new drop calculations
+# 210821-1520 - Added AHT to CUSTOM INDICATOR section
 #
 
 $startMS = microtime();
@@ -138,7 +139,7 @@ if (strlen($report_display_type)<2) {$report_display_type = $SSreport_default_fo
 
 ### ARCHIVED DATA CHECK CONFIGURATION
 $archives_available="N";
-$log_tables_array=array("vicidial_did_log", "vicidial_closer_log", "live_inbound_log");
+$log_tables_array=array("vicidial_did_log", "vicidial_closer_log", "live_inbound_log", "vicidial_agent_log");
 for ($t=0; $t<count($log_tables_array); $t++) 
 	{
 	$table_name=$log_tables_array[$t];
@@ -151,12 +152,14 @@ if ($search_archived_data)
 	$vicidial_did_log_table=use_archive_table("vicidial_did_log");
 	$vicidial_closer_log_table=use_archive_table("vicidial_closer_log");
 	$live_inbound_log_table=use_archive_table("live_inbound_log");
+	$vicidial_agent_log_table=use_archive_table("vicidial_agent_log");
 	}
 else
 	{
 	$vicidial_did_log_table="vicidial_did_log";
 	$vicidial_closer_log_table="vicidial_closer_log";
 	$live_inbound_log_table="live_inbound_log";
+	$vicidial_agent_log_table="vicidial_agent_log";
 	}
 #############
 
@@ -891,6 +894,7 @@ $orig_call_time_clause=preg_replace('/ OR $/', '', $orig_call_time_clause);
 $orig_call_time_clause.=" )";
 $calldate_call_time_clause=preg_replace('/<DATE_COLUMN>/', 'call_date', $orig_call_time_clause);
 $starttime_call_time_clause=preg_replace('/<DATE_COLUMN>/', 'start_time', $orig_call_time_clause);
+$eventtime_call_time_clause=preg_replace('/<DATE_COLUMN>/', 'event_time', $orig_call_time_clause);
 
 
 # Calculate first record in interval and last
@@ -1331,6 +1335,30 @@ if (strlen($group_SQL)>3)
 		$PCTanswer_sec_pct_rt_stat_two = (MathZDC($answer_sec_pct_rt_stat_two, $ANSWEREDcalls) * 100);
 		$PCTanswer_sec_pct_rt_stat_two = round($PCTanswer_sec_pct_rt_stat_two, 0);
 		#$PCTanswer_sec_pct_rt_stat_two = sprintf("%10s", $PCTanswer_sec_pct_rt_stat_two);
+
+		$stmt="SELECT uniqueid from ".$vicidial_closer_log_table." where campaign_id IN($group_SQL) and call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' $calldate_call_time_clause and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','INBND','MAXCAL') and uniqueid!='';";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$uniqueids_to_print = mysqli_num_rows($rslt);
+		if ($DB) {$MAIN.="$uniqueids_to_print|$stmt\n";}
+		$uip=0;   $uniqueidSQL='';
+		while ($uip < $uniqueids_to_print)
+			{
+			$row=mysqli_fetch_row($rslt);
+			if ($uip > 0) {$uniqueidSQL .= ",";}
+			$uniqueidSQL .= "'$row[0]'";
+			$uip++;
+			}
+		if (strlen($uniqueidSQL) < 2) {$uniqueidSQL="'X'";}
+
+		$stmt = "SELECT count(*),sum(talk_sec + dispo_sec) from ".$vicidial_agent_log_table." where uniqueid IN($uniqueidSQL) and event_time >= '$query_date_BEGIN' and event_time <= '$query_date_END' and talk_sec < 65000 and dispo_sec < 65000;";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		if ($DB) {$MAIN.="$stmt\n";}
+		$row=mysqli_fetch_row($rslt);
+		$AHTcalls = $row[0];
+		$AHTtime = $row[1];
+
+		$AHTaverage = (MathZDC($AHTtime, $AHTcalls));
+		$TALK_DISPO_HOLDseconds = round($AHTaverage, 0);
 		}
 	}
 
@@ -1340,10 +1368,12 @@ if ($CHAT=='Y')
 	$MAIN.="---------- "._QXZ("CUSTOM INDICATORS")."\n";
 	$MAIN.="GDE "._QXZ("(Answered/Total chats taken in to this In-Group)",50).":  $ANSWEREDpercent%\n";
 	$MAIN.="ACR "._QXZ("(Dropped/Answered)",50).":  $DROP_ANSWEREDpercent%\n";
+	$MAIN.="AHT "._QXZ("(Agent-Answered chats / Talk+Hold+Dead+Dispo sec)",50).":  $TALK_DISPO_HOLDseconds sec\n";
 
 	$CSV_text1.="\n\""._QXZ("CUSTOM INDICATORS")."\"\n";
 	$CSV_text1.="\"GDE "._QXZ("(Answered/Total chats taken in to this In-Group)").":\",\"$ANSWEREDpercent%\"\n";
 	$CSV_text1.="\"ACR "._QXZ("(Dropped/Answered)").":\",\"$DROP_ANSWEREDpercent%\"\n";
+	$CSV_text1.="\"AHT "._QXZ("(Agent-Answered chats / Talk+Hold+Dead+Dispo sec)").":\",\"$TALK_DISPO_HOLDseconds sec\"\n";
 	}
 elseif ($EMAIL=='Y')
 	{
@@ -1351,10 +1381,12 @@ elseif ($EMAIL=='Y')
 	$MAIN.="---------- "._QXZ("CUSTOM INDICATORS")."\n";
 	$MAIN.="GDE "._QXZ("(Answered/Total emails taken in to this In-Group)",50).":  $ANSWEREDpercent%\n";
 	$MAIN.="ACR "._QXZ("(Dropped/Answered)",50).":  $DROP_ANSWEREDpercent%\n";
+	$MAIN.="AHT "._QXZ("(Agent-Answered emails / Talk+Hold+Dead+Dispo sec)",50).":  $TALK_DISPO_HOLDseconds sec\n";
 
 	$CSV_text1.="\n\""._QXZ("CUSTOM INDICATORS")."\"\n";
 	$CSV_text1.="\"GDE "._QXZ("(Answered/Total emails taken in to this In-Group)").":\",\"$ANSWEREDpercent%\"\n";
 	$CSV_text1.="\"ACR "._QXZ("(Dropped/Answered)").":\",\"$DROP_ANSWEREDpercent%\"\n";
+	$CSV_text1.="\"AHT "._QXZ("(Agent-Answered emails / Talk+Hold+Dead+Dispo sec)").":\",\"$TALK_DISPO_HOLDseconds sec\"\n";
 	}
 else
 	{
@@ -1362,10 +1394,12 @@ else
 	$MAIN.="---------- "._QXZ("CUSTOM INDICATORS")."\n";
 	$MAIN.="GDE "._QXZ("(Answered/Total calls taken in to this In-Group)",50).":  $ANSWEREDpercent%\n";
 	$MAIN.="ACR "._QXZ("(Dropped/Answered)",50).":  $DROP_ANSWEREDpercent%\n";
+	$MAIN.="AHT "._QXZ("(Agent-Answered calls / Talk+Hold+Dead+Dispo sec)",50).":  $TALK_DISPO_HOLDseconds sec\n";
 
 	$CSV_text1.="\n\""._QXZ("CUSTOM INDICATORS")."\"\n";
 	$CSV_text1.="\"GDE "._QXZ("(Answered/Total calls taken in to this In-Group)").":\",\"$ANSWEREDpercent%\"\n";
 	$CSV_text1.="\"ACR "._QXZ("(Dropped/Answered)").":\",\"$DROP_ANSWEREDpercent%\"\n";
+	$CSV_text1.="\"AHT "._QXZ("(Agent-Answered calls / Talk+Hold+Dead+Dispo sec)").":\",\"$TALK_DISPO_HOLDseconds sec\"\n";
 	}
 
 if ($DID!='Y')

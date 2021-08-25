@@ -1,13 +1,14 @@
 <?php
 # whiteboard_reports.php
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # A PHP file that is for generating the stats that are displayed in the whiteboard report.  Returns values.
 #
 # 171027-2352 - First build
 # 190302-1707 - Added code to exclude active calls from being counted with some stats
 # 200427-2225 - Added use of slave database, if activated, fixes Issue #1207
+# 210823-0948 - Fix for security issue
 #
 
 require("dbconnect_mysqli.php");
@@ -108,11 +109,22 @@ $rpt_string="";
 $exclude_statuses=array("INCALL", "DISPO", "QUEUE", "DONEM");
 $exc_status_SQL=" and status not in ('".implode("','", $exclude_statuses)."') ";
 
-
 $query_date=preg_replace("/[^0-9\-]/", "", $query_date);
 $end_date=preg_replace("/[^0-9\-]/", "", $end_date);
 $query_time=preg_replace("/[^0-9\:]/", "", $query_time);
 $end_time=preg_replace("/[^0-9\:]/", "", $end_time);
+$rpt_type=preg_replace('/[^-_0-9\p{L}]/u', "", $rpt_type);
+$hourly_display=preg_replace("/[^0-9]/", "", $hourly_display);
+$target_gross=preg_replace("/[^0-9]/", "", $target_gross);
+$target_per_agent=preg_replace("/[^0-9]/", "", $target_per_agent);
+$target_per_team=preg_replace("/[^0-9]/", "", $target_per_team);
+$commission_rates = preg_replace('/[^-\._0-9\p{L}]/u',"",$commission_rates);
+$campaigns=preg_replace('/[^-_0-9\p{L}]/u','',$campaigns);
+$users=preg_replace('/[^-_0-9\p{L}]/u','',$users);
+$user_groups=preg_replace('/[^-_0-9\p{L}]/u','',$user_groups);
+$groups=preg_replace('/[^-_0-9\p{L}]/u','',$groups);
+$dids=preg_replace('/[^-_0-9\p{L}]/u','',$dids);
+$status_flags=preg_replace('/[^-_0-9\p{L}]/u','',$status_flags);
 
 if (preg_match("/status_performance/", $rpt_type)) {
 	if (!$campaigns || in_array("--ALL--", $campaigns)) {

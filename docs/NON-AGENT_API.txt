@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2021-07-01
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2021-08-12
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -191,6 +191,7 @@ Changes:
 210618-1000 - Added CORS support
 210625-1421 - Added BARGESWAP option to blind_monitor function
 210701-2050 - Added ingroup_rank/ingroup_grade options to the update_user function
+210812-2640 - Added update of live agent records for ingroup_rank/ingroup_grade in the update_user function
 
 
 API Functions use the 'function' variable
@@ -530,6 +531,7 @@ type -			(IN)inbound, (OUT)outbound or (ALL) calls. defauls is (OUT) calls
 
 NOTES- 
 There is a hard limit of 100000 results
+The 'phone_number' field is not indexed by default. If you plan to use this function you may want to have your system admin add indexes on that field in the vicidial_log and vicidial_closer_log tables.
 
 Example URL strings for API calls:
 http://server/vicidial/non_agent_api.php?source=test&function=phone_number_log&stage=pipe&user=6666&pass=1234&phone_number=3125551212,9998887112

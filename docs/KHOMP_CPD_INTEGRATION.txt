@@ -1,0 +1,39 @@
+KHOMP Answering Machine Detection	Started: 2018-09-29	Update: 2021-07-20
+
+
+The KHOMP Analytics Integration code, installation and configuration information
+can be found in the "extras/KHOMP/" directory of the VICIdial codebase.
+
+The "KHOMP_Documentation.pdf" document in that directory includes step-by-step 
+documentation and screenshots for setting up and configuring KHOMP with your 
+VICIdial system.
+
+
+
+
+Additional KHOMP Troubleshooting Tips(for use after everything is already configured and running):
+
+Here are a few basic things to check with KHOMP if you are experiencing issues, before escalating to the VICIdial or KHOMP support teams.
+
+1. Basic Campaign Config:
+        a. Go to "Admin -> Carriers" and find the dial prefix that routes the calls through the KHOMP Flow server.
+        b. Make sure that the campaign is configured to use the above "Dial Prefix".
+        c. Make sure campaign's "AMD Type" is set to 'KHOMP'
+        d. Make sure the campaign's "Routing Extension" is set to '8368'.
+        e. If you want to leave answering machine messages make sure the "CPD AMD Action" and "CPD Unknown Actions" are setup to do so.
+2. "Why did this call do this thing?"
+        a. Do a lead search for the phone number.
+        b. Bring up the lead.
+        c. Click the "Caller ID" link on the outbound calls table.
+        d. If you are running a recent version of VICIdial there should be a section below the call that displays what KHOMP returned.
+        e. Note the 'Conclusion' and 'Pattern' KHOMP returned.
+        f. Go to "Reports -> Admin Utilities -> Dialer KHOMP Admin Tool".
+        g. Search for the Conclusion / Pattern in the list and verify that it is configured to do what you expect.
+3. "Something is clearly wrong. Every call is coming back as *SOME WEIRD CONCLUSION*"
+        a. Recommend they reboot the KHOMP server.
+        b. Disable KHOMP in the campaign.
+                I. Set the campaign "Dial Prefix" back to their normal non-khomp carrier prefix.
+                II. Set the "AMD Type" to 'Asterisk AMD'
+                III. If they want to use Asterisk AMD set the "Campaign Routing Extension" appropriately.
+        c. Have the manager wait until all their existing calls from before the change have ended.
+        d. Reboot the Khomp Server by going into Administration -> "Reboot The Gateway" in the Khomp interface.

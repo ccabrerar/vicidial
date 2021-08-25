@@ -20,14 +20,21 @@
 #	## 4:15PM on Saturday
 #	15 16 * * 6 /usr/share/astguiclient/AST_agent_logout.pl --debugX
 #
+#	## Every minute between 9:15AM and 10:15PM Monday-Friday with settings container defined
+#	* 9,10,11,12,13,14,15,16,17,18,19,20,21,22 * * 1,2,3,4,5 /usr/share/astguiclient/AST_agent_logout.pl --container=XXX
 #
-# Copyright (C) 2014  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# EXAMPLE Settings Container Entry:
+#   dial_prefix => 444
+#   user_code => backoffice_agent
+#
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 80112-0330 - First Build
 # 91129-2138 - Replace SELECT STAR in SQL statement, fixed other formatting
 # 140426-1950 - Added pause_type
 # 200412-1037 - Updated to match web emergency logout, with QM logging
+# 210811-1630 - Added option to logout agents only within campaigns/users with a specific dial_prefix/user_code
 #
 
 # constants
@@ -68,6 +75,7 @@ if (length($ARGV[0])>1)
 		print "  [--debugX] = super debug\n";
 		print "  [--test] = test\n";
 		print "  [--campaign=XXX] = run for campaign XXX only\n";
+		print "  [--container=XXX] = optional, the ID of the settings container to run from the system\n";
 		print "\n";
 		exit;
 		}
@@ -82,6 +90,15 @@ if (length($ARGV[0])>1)
 			}
 		else
 			{$CLIcampaign = '';}
+		if ($args =~ /--container=/i)
+			{
+			@data_in = split(/--container=/,$args);
+			$container = $data_in[1];
+			$container =~ s/ .*$//gi;
+			if ($DB > 0) {print "\n----- SETTINGS CONTAINER: $container -----\n\n";}
+			}
+		else
+			{$container = '';}
 		if ($args =~ /--debug/i)
 			{
 			$DB=1;
@@ -169,19 +186,167 @@ $sthA->finish();
 
 
 
+### Grab container content from the database
+$container_sql='';
+$CAMP_sql='';
+$USER_sql='';
+if (length($container) > 0) 
+	{
+	$stmtA = "SELECT container_entry FROM vicidial_settings_containers where container_id = '$container';";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$container_sql = $aryA[0];
+		}
+	$sthA->finish();
+
+	if (length($container_sql)>5) 
+		{
+		@container_lines = split(/\n/,$container_sql);
+		$i=0;
+		foreach(@container_lines)
+			{
+			$container_lines[$i] =~ s/;.*|\r|\t//gi;
+			$container_lines[$i] =~ s/ => |=> | =>/=>/gi;
+			if (length($container_lines[$i])>5)
+				{
+				if ($container_lines[$i] =~ /^dial_prefix|^manual_dial_prefix|^campaign_description|^user_code|^custom_1|^custom_2|^custom_3|^custom_4|^custom_5/i)
+					{
+					if ($container_lines[$i] =~ /^dial_prefix/i)
+						{
+						$container_lines[$i] =~ s/^dial_prefix=>//gi;
+						if (length($CAMP_sql) > 10) {$CAMP_sql .= " or "}
+						$CAMP_sql .= "(dial_prefix='$container_lines[$i]')";
+						if ($DBX) {print "DEBUG 1: |dial_prefix|$container_lines[$i]|$CAMP_sql|\n";}
+						}
+					if ($container_lines[$i] =~ /^manual_dial_prefix/i)
+						{
+						$container_lines[$i] =~ s/^manual_dial_prefix=>//gi;
+						if (length($CAMP_sql) > 10) {$CAMP_sql .= " or "}
+						$CAMP_sql .= "(manual_dial_prefix='$container_lines[$i]')";
+						if ($DBX) {print "DEBUG 1: |manual_dial_prefix|$container_lines[$i]|$CAMP_sql|\n";}
+						}
+					if ($container_lines[$i] =~ /^campaign_description/i)
+						{
+						$container_lines[$i] =~ s/^campaign_description=>//gi;
+						if (length($CAMP_sql) > 10) {$CAMP_sql .= " or "}
+						$CAMP_sql .= "(campaign_description='$container_lines[$i]')";
+						if ($DBX) {print "DEBUG 1: |campaign_description|$container_lines[$i]|$CAMP_sql|\n";}
+						}
+					if ($container_lines[$i] =~ /^user_code/i)
+						{
+						$container_lines[$i] =~ s/^user_code=>//gi;
+						if (length($USER_sql) > 10) {$USER_sql .= " or "}
+						$USER_sql .= "(user_code='$container_lines[$i]')";
+						if ($DBX) {print "DEBUG 1: |user_code|$container_lines[$i]|$USER_sql|\n";}
+						}
+					if ($container_lines[$i] =~ /^custom_1/i)
+						{
+						$container_lines[$i] =~ s/^custom_1=>//gi;
+						if (length($USER_sql) > 10) {$USER_sql .= " or "}
+						$USER_sql .= "(custom_one='$container_lines[$i]')";
+						if ($DBX) {print "DEBUG 1: |custom_1|$container_lines[$i]|$USER_sql|\n";}
+						}
+					if ($container_lines[$i] =~ /^custom_2/i)
+						{
+						$container_lines[$i] =~ s/^custom_2=>//gi;
+						if (length($USER_sql) > 10) {$USER_sql .= " or "}
+						$USER_sql .= "(custom_two='$container_lines[$i]')";
+						if ($DBX) {print "DEBUG 1: |custom_2|$container_lines[$i]|$USER_sql|\n";}
+						}
+					if ($container_lines[$i] =~ /^custom_3/i)
+						{
+						$container_lines[$i] =~ s/^custom_3=>//gi;
+						if (length($USER_sql) > 10) {$USER_sql .= " or "}
+						$USER_sql .= "(custom_three='$container_lines[$i]')";
+						if ($DBX) {print "DEBUG 1: |custom_3|$container_lines[$i]|$USER_sql|\n";}
+						}
+					if ($container_lines[$i] =~ /^custom_4/i)
+						{
+						$container_lines[$i] =~ s/^custom_4=>//gi;
+						if (length($USER_sql) > 10) {$USER_sql .= " or "}
+						$USER_sql .= "(custom_four='$container_lines[$i]')";
+						if ($DBX) {print "DEBUG 1: |custom_4|$container_lines[$i]|$USER_sql|\n";}
+						}
+					if ($container_lines[$i] =~ /^custom_5/i)
+						{
+						$container_lines[$i] =~ s/^custom_5=>//gi;
+						if (length($USER_sql) > 10) {$USER_sql .= " or "}
+						$USER_sql .= "(custom_five='$container_lines[$i]')";
+						if ($DBX) {print "DEBUG 1: |custom_5|$container_lines[$i]|$USER_sql|\n";}
+						}
+					}
+				else
+					{if ($DBX > 0) {print "     not allowed config: $i|$container_lines[$i]|\n";}}
+				}
+			else
+				{if ($DBX > 0) {print "     blank line: $i|$container_lines[$i]|\n";}}
+			$i++;
+			}
+		}
+	else
+		{
+		if ($Q < 1)
+			{print "ERROR: SETTINGS CONTAINER EMPTY: $container $container_sql\n";}
+		}
+
+	$camp_select_sql='';
+	if (length($CAMP_sql) > 5) 
+		{
+		$stmtA = "SELECT campaign_id from vicidial_campaigns where $CAMP_sql order by campaign_id desc LIMIT 1000;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		$cct=0;
+		while ($sthArows > $cct)
+			{
+			@aryA = $sthA->fetchrow_array;
+			if ($cct > 0) {$camp_select_sql .= ",";}
+			$camp_select_sql .=		"'$aryA[0]'";
+			$cct++;
+			}
+		$sthA->finish();
+		if ($cct > 0) {$camp_select_sql = "and campaign_id IN($camp_select_sql)";}
+		}
+
+	$user_select_sql='';
+	if (length($USER_sql) > 5) 
+		{
+		$stmtA = "SELECT user from vicidial_users where $USER_sql order by user desc LIMIT 100000;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		$cct=0;
+		while ($sthArows > $cct)
+			{
+			@aryA = $sthA->fetchrow_array;
+			if ($cct > 0) {$user_select_sql .= ",";}
+			$user_select_sql .=		"'$aryA[0]'";
+			$cct++;
+			}
+		$sthA->finish();
+		if ($cct > 0) {$user_select_sql = "and user IN($user_select_sql)";}
+		}
+	}
+
+
 @user=@MT; 
 
 if ($CLIcampaign)
 	{
-	$stmtA = "SELECT user,server_ip,status,lead_id,campaign_id,uniqueid,callerid,channel,last_call_time,UNIX_TIMESTAMP(last_update_time),last_call_finish,closer_campaigns,call_server_ip,conf_exten from vicidial_live_agents where campaign_id='$CLIcampaign'";
+	$stmtA = "SELECT user,server_ip,status,lead_id,campaign_id,uniqueid,callerid,channel,last_call_time,UNIX_TIMESTAMP(last_update_time),last_call_finish,closer_campaigns,call_server_ip,conf_exten from vicidial_live_agents where user!='' and campaign_id='$CLIcampaign' $camp_select_sql $user_select_sql;";
 	}
 else
 	{
-	$stmtA = "SELECT user,server_ip,status,lead_id,campaign_id,uniqueid,callerid,channel,last_call_time,UNIX_TIMESTAMP(last_update_time),last_call_finish,closer_campaigns,call_server_ip,conf_exten from vicidial_live_agents";
+	$stmtA = "SELECT user,server_ip,status,lead_id,campaign_id,uniqueid,callerid,channel,last_call_time,UNIX_TIMESTAMP(last_update_time),last_call_finish,closer_campaigns,call_server_ip,conf_exten from vicidial_live_agents where user!='' $camp_select_sql $user_select_sql;";
 	}
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
+if ($DBX) {print "DEBUG2, AGENTS SELECT SQL:  $sthArows|$stmtA|\n";}
 $rec_count=0;
 while ($sthArows > $rec_count)
 	{
@@ -239,7 +404,7 @@ while($rec_count > $i)
 		if ( ($wait_epoch[$i] < 1) || ( ($status[$i] =~ /PAUSE/) && ($dispo_epoch[$i] < 1) ) )
 			{
 			$pause_sec = ( ($now_date_epoch - $pause_epoch[$i]) + $pause_sec[$i]);
-			$stmtA = "UPDATE vicidial_agent_log SET wait_epoch='$now_date_epoch', pause_sec='$pause_sec' where agent_log_id='$agent_log_id[$i]',pause_type='SYSTEM';";
+			$stmtA = "UPDATE vicidial_agent_log SET wait_epoch='$now_date_epoch', pause_sec='$pause_sec', pause_type='SYSTEM' where agent_log_id='$agent_log_id[$i]';";
 			}
 		else
 			{

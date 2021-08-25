@@ -147,10 +147,11 @@
 # 201117-1751 - Changes for better compatibility with non-latin data input
 # 210615-1016 - Default security fixes, CVE-2021-28854
 # 210616-2051 - Added optional CORS support, see options.php for details
+# 210823-0916 - Fix for security issue
 #
 
-$version = '2.14-94';
-$build = '210616-2051';
+$version = '2.14-95';
+$build = '210823-0916';
 $php_script = 'manager_send.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=143;
@@ -555,9 +556,9 @@ if ($ACTION=="OriginateVDRelogin")
 		$CIDdate = date("ymdHis");
 		$DS='-';
 		$SIPSAK_prefix = 'LIN-';
-		$campaign = preg_replace("/\'|\"|\\\\|;/","",$campaign);
-		$extension = preg_replace("/\'|\"|\\\\|;/","",$extension);
-		$phone_ip = preg_replace("/\'|\"|\\\\|;/","",$phone_ip);
+		$campaign = preg_replace('/[^-\._0-9\p{L}]/u',"",$campaign);
+		$extension = preg_replace('/[^-\._0-9\p{L}]/u',"",$extension);
+		$phone_ip = preg_replace('/[^-\._0-9\p{L}]/u',"",$phone_ip);
 
 		print "<!-- sending login sipsak message: $SIPSAK_prefix$campaign -->\n";
 		passthru("/usr/local/bin/sipsak -M -O desktop -B \"$SIPSAK_prefix$campaign\" -r 5060 -s sip:$extension@$phone_ip > /dev/null");

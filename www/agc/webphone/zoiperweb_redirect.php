@@ -1,10 +1,11 @@
 <?php
 # zoiperweb_redirect.php - used for load balance forwarding with variables
 # 
-# Copyright (C) 2010  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 100827-1419 - First Build 
+# 210823-1010 - Fix for security issue
 #
 
 if (isset($_GET["DB"]))							{$DB=$_GET["DB"];}
@@ -25,6 +26,16 @@ if (isset($_GET["options"]))					{$options=$_GET["options"];}
         elseif (isset($_POST["options"]))		{$options=$_POST["options"];}
 if (isset($_GET["system_key"]))					{$system_key=$_GET["system_key"];}
         elseif (isset($_POST["system_key"]))	{$system_key=$_POST["system_key"];}
+
+$DB = preg_replace('/[^-\._0-9\p{L}]/u',"",$DB);
+$phone_login = preg_replace('/[^-\._0-9\p{L}]/u',"",$phone_login);
+$phone_pass = preg_replace('/[^-\._0-9\p{L}]/u',"",$phone_pass);
+$server_ip = preg_replace('/[^-\*\#\.\:\/\@\_0-9\p{L}]/u','',$server_ip);
+$callerid = preg_replace('/[^-\*\#\.\:\/\@\_0-9\p{L}]/u','',$callerid);
+$protocol = preg_replace('/[^-\*\#\.\:\/\@\_0-9\p{L}]/u','',$protocol);
+$codecs = preg_replace('/[^-\*\#\.\:\/\@\_0-9\p{L}]/u','',$codecs);
+$options = preg_replace('/[^-\*\#\.\:\/\@\_0-9\p{L}]/u','',$options);
+$system_key = preg_replace('/[^-\*\#\.\:\/\@\_0-9\p{L}]/u','',$system_key);
 
 $query_string = "/agc/webphone/zoiperweb.php?DB=$DB&phone_login=$phone_login&phone_pass=$phone_pass&server_ip=$server_ip&callerid=$callerid&protocol=$protocol&codecs=$codecs&options=$options&system_key=$system_key";
 

@@ -105,10 +105,11 @@
 # 210222-1058 - Added call length logging to ra_call_control function
 # 210320-2335 - Added additional update_fields options: scriptreload,script2reload,formreload,emailreload,chatreload
 # 210616-2057 - Added optional CORS support, see options.php for details
+# 210819-0902 - Updated change_ingroups for changes in vicidial_live_inbound_agents insert/update
 #
 
-$version = '2.14-70';
-$build = '210616-2057';
+$version = '2.14-71';
+$build = '210819-0902';
 $php_script = 'api.php';
 
 $startMS = microtime();
@@ -2351,6 +2352,13 @@ if ($function == 'change_ingroups')
 							exit;
 							}
 						}
+					# gather what the user's closer_campaigns is currently set to
+					$stmt = "select closer_campaigns from vicidial_live_agents where user='$agent_user';";
+					if ($DB) {echo "$stmt\n";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+					$row=mysqli_fetch_row($rslt);
+					$orig_closer_groups_list = $row[0];
+
 					if (strlen($ingroup_choices)>0)
 						{
 						$in_groups_pre = preg_replace('/-$/','',$ingroup_choices);
@@ -2394,6 +2402,7 @@ if ($function == 'change_ingroups')
 						if ($DB) {echo "$stmt\n";}
 						$rslt=mysql_to_mysqli($stmt, $link);
 						$row=mysqli_fetch_row($rslt);
+						$orig_closer_groups_list = $row[0];
 						$closer_groups_pre = preg_replace('/-$/','',$row[0]);
 						$closer_groups = explode(" ",$closer_groups_pre);
 						$closer_groups_ct = count($closer_groups);
@@ -2447,6 +2456,7 @@ if ($function == 'change_ingroups')
 						$rslt=mysql_to_mysqli($stmt, $link);
 						$row=mysqli_fetch_row($rslt);
 						$closer_groups_list = $row[0];
+						$orig_closer_groups_list = $row[0];
 						$closer_groups_pre = preg_replace('/-$/','',$row[0]);
 						$closer_groups = explode(" ",$closer_groups_pre);
 						$closer_groups_ct = count($closer_groups);
@@ -2490,10 +2500,11 @@ if ($function == 'change_ingroups')
 						if ($format=='debug') {echo "\n<!-- $stmt -->";}
 					$rslt=mysql_to_mysqli($stmt, $link);
 
-					$stmtA="DELETE FROM vicidial_live_inbound_agents where user='$agent_user';";
-						if ($format=='debug') {echo "\n<!-- $stmtA -->";}
-					$rslt=mysql_to_mysqli($stmtA, $link);
+				#	$stmtA="DELETE FROM vicidial_live_inbound_agents where user='$agent_user';";
+				#		if ($format=='debug') {echo "\n<!-- $stmtA -->";}
+				#	$rslt=mysql_to_mysqli($stmtA, $link);
 
+					# insert/update selected closer in-groups into the vicidial_live_inbound_agents table
 					$in_groups_pre = preg_replace('/-$/','',$ingroup_choices);
 					$in_groups = explode(" ",$in_groups_pre);
 					$in_groups_ct = count($in_groups);
@@ -2502,7 +2513,7 @@ if ($function == 'change_ingroups')
 						{
 						if (strlen($in_groups[$k])>1)
 							{
-							$stmtB="SELECT group_weight,calls_today FROM vicidial_inbound_group_agents where user='$agent_user' and group_id='$in_groups[$k]';";
+							$stmtB="SELECT group_weight,calls_today,group_grade,calls_today_filtered FROM vicidial_inbound_group_agents where user='$agent_user' and group_id='$in_groups[$k]';";
 							$rslt=mysql_to_mysqli($stmtB, $link);
 							if ($DB) {echo "$stmtB\n";}
 							$viga_ct = mysqli_num_rows($rslt);
@@ -2511,13 +2522,36 @@ if ($function == 'change_ingroups')
 								$row=mysqli_fetch_row($rslt);
 								$group_weight = $row[0];
 								$calls_today =	$row[1];
+								$group_grade =	$row[2];
+								$calls_today_filtered =	$row[3];
 								}
 							else
 								{
 								$group_weight = 0;
 								$calls_today =	0;
+								$group_grade =	0;
+								$calls_today_filtered =	0;
 								}
-							$stmtB="INSERT INTO vicidial_live_inbound_agents set user='$agent_user',group_id='$in_groups[$k]',group_weight='$group_weight',calls_today='$calls_today',last_call_time='$NOW_TIME',last_call_finish='$NOW_TIME';";
+							$stmtB="INSERT IGNORE INTO vicidial_live_inbound_agents set user='$agent_user',group_id='$in_groups[$k]',group_weight='$group_weight',group_grade='$group_grade',calls_today='$calls_today',calls_today_filtered='$calls_today_filtered',last_call_time='$NOW_TIME',last_call_finish='$NOW_TIME',last_call_time_filtered='$NOW_TIME',last_call_finish_filtered='$NOW_TIME' ON DUPLICATE KEY UPDATE group_weight='$group_weight',group_grade='$group_grade',calls_today='$calls_today',calls_today_filtered='$calls_today_filtered';";
+							$stmtBlog .= "$stmtB|";
+								if ($format=='debug') {echo "\n<!-- $stmtB -->";}
+							$rslt=mysql_to_mysqli($stmtB, $link);
+
+							$orig_closer_groups_list = preg_replace("/ $in_groups[$k] /",' ',$orig_closer_groups_list);
+							}
+						$k++;
+						}
+
+					# remove de-selected closer groups
+					$in_groups_pre = preg_replace('/-$/','',$orig_closer_groups_list);
+					$in_groups = explode(" ",$in_groups_pre);
+					$in_groups_ct = count($in_groups);
+					$k=1;
+					while ($k < $in_groups_ct)
+						{
+						if (strlen($in_groups[$k])>1)
+							{
+							$stmtB="DELETE FROM vicidial_live_inbound_agents WHERE user='$agent_user' and group_id='$in_groups[$k]';";
 							$stmtBlog .= "$stmtB|";
 								if ($format=='debug') {echo "\n<!-- $stmtB -->";}
 							$rslt=mysql_to_mysqli($stmtB, $link);

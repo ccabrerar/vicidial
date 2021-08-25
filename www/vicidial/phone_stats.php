@@ -1,7 +1,7 @@
 <?php
 # phone_stats.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # 
 # changes:
@@ -18,7 +18,10 @@
 # 141128-0903 - Code cleanup for QXZ functions
 # 141230-0911 - Added code for on-the-fly language translations display
 # 170409-1534 - Added IP List validation code
+# 210812-1614 - Added slave DB and user group allowed reports permissions code, and report log logging
 #
+
+$startMS = microtime();
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -48,9 +51,12 @@ if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
 if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))	{$SUBMIT=$_POST["SUBMIT"];}
 
+$report_name = 'Phone Stats';
+$db_source = 'M';
+
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,user_territories_active,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,user_territories_active,enable_languages,language_method,slave_db_server,reports_use_slave_db FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
@@ -63,6 +69,8 @@ if ($qm_conf_ct > 0)
 	$user_territories_active =		$row[3];
 	$SSenable_languages =			$row[4];
 	$SSlanguage_method =			$row[5];
+	$slave_db_server =				$row[6];
+	$reports_use_slave_db =			$row[7];
 	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
@@ -159,10 +167,85 @@ else
 	exit;
 	}
 
-$stmt="SELECT full_name from vicidial_users where user='$PHP_AUTH_USER';";
+##### BEGIN log visit to the vicidial_report_log table #####
+$LOGip = getenv("REMOTE_ADDR");
+$LOGbrowser = getenv("HTTP_USER_AGENT");
+$LOGscript_name = getenv("SCRIPT_NAME");
+$LOGserver_name = getenv("SERVER_NAME");
+$LOGserver_port = getenv("SERVER_PORT");
+$LOGrequest_uri = getenv("REQUEST_URI");
+$LOGhttp_referer = getenv("HTTP_REFERER");
+$LOGbrowser=preg_replace("/\'|\"|\\\\/","",$LOGbrowser);
+$LOGrequest_uri=preg_replace("/\'|\"|\\\\/","",$LOGrequest_uri);
+$LOGhttp_referer=preg_replace("/\'|\"|\\\\/","",$LOGhttp_referer);
+if (preg_match("/443/i",$LOGserver_port)) {$HTTPprotocol = 'https://';}
+  else {$HTTPprotocol = 'http://';}
+if (($LOGserver_port == '80') or ($LOGserver_port == '443') ) {$LOGserver_port='';}
+else {$LOGserver_port = ":$LOGserver_port";}
+$LOGfull_url = "$HTTPprotocol$LOGserver_name$LOGserver_port$LOGrequest_uri";
+
+$LOGhostname = php_uname('n');
+if (strlen($LOGhostname)<1) {$LOGhostname='X';}
+if (strlen($LOGserver_name)<1) {$LOGserver_name='X';}
+
+$stmt="SELECT webserver_id FROM vicidial_webservers where webserver='$LOGserver_name' and hostname='$LOGhostname' LIMIT 1;";
+$rslt=mysql_to_mysqli($stmt, $link);
+if ($DB) {echo "$stmt\n";}
+$webserver_id_ct = mysqli_num_rows($rslt);
+if ($webserver_id_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$webserver_id = $row[0];
+	}
+else
+	{
+	##### insert webserver entry
+	$stmt="INSERT INTO vicidial_webservers (webserver,hostname) values('$LOGserver_name','$LOGhostname');";
+	if ($DB) {echo "$stmt\n";}
+	$rslt=mysql_to_mysqli($stmt, $link);
+	$affected_rows = mysqli_affected_rows($link);
+	$webserver_id = mysqli_insert_id($link);
+	}
+
+$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$group[0], $query_date, $end_date, $shift, $file_download, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
+if ($DB) {echo "|$stmt|\n";}
+$rslt=mysql_to_mysqli($stmt, $link);
+$report_log_id = mysqli_insert_id($link);
+##### END log visit to the vicidial_report_log table #####
+
+if ( (strlen($slave_db_server)>5) and (preg_match("/$report_name/",$reports_use_slave_db)) )
+	{
+	mysqli_close($link);
+	$use_slave_server=1;
+	$db_source = 'S';
+	require("dbconnect_mysqli.php");
+#	echo "<!-- Using slave server $slave_db_server $db_source -->\n";
+	}
+
+$stmt="SELECT user_group,full_name from vicidial_users where user='$PHP_AUTH_USER';";
+if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $row=mysqli_fetch_row($rslt);
-$LOGfullname=$row[0];
+$LOGuser_group =	$row[0];
+$LOGfullname =		$row[1];
+
+$stmt="SELECT allowed_campaigns,allowed_reports,admin_viewable_groups,admin_viewable_call_times from vicidial_user_groups where user_group='$LOGuser_group';";
+if ($DB) {echo "|$stmt|\n";}
+$rslt=mysql_to_mysqli($stmt, $link);
+$row=mysqli_fetch_row($rslt);
+$LOGallowed_campaigns =			$row[0];
+$LOGallowed_reports =			$row[1];
+$LOGadmin_viewable_groups =		$row[2];
+$LOGadmin_viewable_call_times =	$row[3];
+
+if ( (!preg_match("/$report_name/",$LOGallowed_reports)) and (!preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
+	{
+    Header("WWW-Authenticate: Basic realm=\"CONTACT-CENTER-ADMIN\"");
+    Header("HTTP/1.0 401 Unauthorized");
+    echo "You are not allowed to view this report: |$PHP_AUTH_USER|$report_name|\n";
+    exit;
+	}
+
 
 ##### get server listing for dynamic pulldown
 $stmt="SELECT fullname from phones where server_ip='$server_ip' and extension='$extension';";
@@ -307,7 +390,27 @@ echo "<font size=0>\n\n\n<br><br><br>\n"._QXZ("script runtime").": $RUNtime "._Q
 </html>
 
 <?php
-	
+
+
+if ($db_source == 'S')
+	{
+	mysqli_close($link);
+	$use_slave_server=0;
+	$db_source = 'M';
+	require("dbconnect_mysqli.php");
+	}
+
+$endMS = microtime();
+$startMSary = explode(" ",$startMS);
+$endMSary = explode(" ",$endMS);
+$runS = ($endMSary[0] - $startMSary[0]);
+$runM = ($endMSary[1] - $startMSary[1]);
+$TOTALrun = ($runS + $runM);
+
+$stmt="UPDATE vicidial_report_log set run_time='$TOTALrun' where report_log_id='$report_log_id';";
+if ($DB) {echo "|$stmt|\n";}
+$rslt=mysql_to_mysqli($stmt, $link);
+
 exit; 
 
 ?>
