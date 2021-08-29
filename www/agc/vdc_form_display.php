@@ -53,10 +53,11 @@
 # 210404-1522 - Added only_field option for refresh of already-loaded custom form SOURCESELECT element
 # 210506-1825 - Fix for SELECTSOURCE reloading issue
 # 210616-2037 - Added optional CORS support, see options.php for details
+# 210825-0902 - Fix for XSS security issue
 #
 
-$version = '2.14-43';
-$build = '210616-2037';
+$version = '2.14-44';
+$build = '210825-0902';
 $php_script = 'vdc_form_display.php';
 
 require_once("dbconnect_mysqli.php");
@@ -323,7 +324,7 @@ $lead_id = preg_replace('/[^0-9]/', '', $lead_id);
 $list_id = preg_replace('/[^0-9]/', '', $list_id);
 $new_list_id = preg_replace('/[^0-9]/', '', $new_list_id);
 $agent_log_id = preg_replace('/[^0-9]/', '', $agent_log_id);
-$server_ip = preg_replace("/\'|\"|\\\\|;/","",$server_ip);
+$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
 $session_id = preg_replace('/[^0-9]/','',$session_id);
 $call_id = preg_replace('/[^-_\.0-9a-zA-Z]/','',$call_id);
 $button_action = preg_replace('/[^-_0-9a-zA-Z]/','',$button_action);

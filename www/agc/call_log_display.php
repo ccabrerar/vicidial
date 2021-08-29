@@ -42,10 +42,11 @@
 # 190111-0904 - Fix for PHP7
 # 201117-2200 - Changes for better compatibility with non-latin data input
 # 210616-2102 - Added optional CORS support, see options.php for details
+# 210825-0903 - Fix for XSS security issue
 #
 
-$version = '2.14-22';
-$build = '210616-2102';
+$version = '2.14-23';
+$build = '210825-0903';
 $php_script = 'call_log_display.php';
 $SSagent_debug_logging=0;
 $startMS = microtime();
@@ -71,8 +72,8 @@ if (isset($_GET["protocol"]))			{$protocol=$_GET["protocol"];}
 
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
-$session_name = preg_replace("/\'|\"|\\\\|;/","",$session_name);
-$server_ip = preg_replace("/\'|\"|\\\\|;/","",$server_ip);
+$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
 $exten = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$exten);
 $protocol = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$protocol);
 $in_limit = preg_replace('/[^0-9]/','',$in_limit);

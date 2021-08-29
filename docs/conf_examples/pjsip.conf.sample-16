@@ -1,0 +1,45 @@
+[global]
+type                                            = global
+contact_expiration_check_interval               = 30
+debug                                           = no
+default_from_user                               = Asterisk
+default_outbound_endpoint                       = default_outbound_endpoint
+default_realm                                   = Asterisk
+default_voicemail_extension                     = 8500
+disable_multi_domain                            = false
+endpoint_identifier_order                       = ip,username,anonymous
+ignore_uri_user_options                         = false
+keep_alive_interval                             = 90
+max_forwards                                    = 70
+max_initial_qualify_time                        = 0
+mwi_disable_initial_unsolicited                 = false
+mwi_tps_queue_high                              = 500
+mwi_tps_queue_low                               = -1
+norefersub                                      = yes
+;regcontext                                     = myregs
+send_contact_status_on_update_registration      = yes
+taskprocessor_overload_trigger                  = global
+unidentified_request_count                      = 5
+unidentified_request_period                     = 5
+unidentified_request_prune_interval             = 30
+use_callerid_contact                            = no
+user_agent                                      = Asterisk
+
+[transport-udp]
+type                            = transport
+protocol                        = udp
+bind                            = 0.0.0.0:5061
+external_media_address          = 190.124.44.160
+external_signaling_address      = 190.124.44.160
+local_net                       = 192.168.0.0/255.255.0.0
+local_net                       = 10.0.0.0/255.0.0.0
+local_net                       = 172.16.0.0/12
+local_net                       = 169.254.0.0/255.255.0.0
+tos                             = cs3
+
+[transport-wss]
+type                            = transport
+protocol                        = wss
+bind                            = 0.0.0.0
+
+#include "pjsip-vicidial.conf"

@@ -23,10 +23,11 @@
 # 170528-0902 - Added more variable filtering
 # 190111-0910 - Fix for PHP7
 # 210616-2035 - Added optional CORS support, see options.php for details
+# 210825-0838 - Fix for security issue
 #
 
-$version = '2.14-11';
-$build = '210616-2035';
+$version = '2.14-12';
+$build = '210825-0838';
 $php_script = 'vdc_script_dispo_example.php';
 
 require_once("dbconnect_mysqli.php");
@@ -265,7 +266,7 @@ $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
 $lead_id = preg_replace('/[^0-9]/', '', $lead_id);
 $list_id = preg_replace('/[^0-9]/', '', $list_id);
 $notesid = preg_replace('/[^0-9]/', '', $notesid);
-$server_ip = preg_replace("/\'|\"|\\\\|;/","",$server_ip);
+$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
 $session_id = preg_replace('/[^0-9]/','',$session_id);
 $uniqueid = preg_replace('/[^-_\.0-9a-zA-Z]/','',$uniqueid);
 $campaign = preg_replace('/[^-_0-9a-zA-Z]/','',$campaign);
@@ -313,6 +314,7 @@ if ($qm_conf_ct > 0)
 if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
+	$pass=preg_replace("/[^-_0-9a-zA-Z]/","",$pass);
 	$length_in_sec = preg_replace("/[^0-9]/","",$length_in_sec);
 	$phone_code = preg_replace("/[^0-9]/","",$phone_code);
 	$phone_number = preg_replace("/[^0-9]/","",$phone_number);

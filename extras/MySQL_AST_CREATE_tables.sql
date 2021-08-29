@@ -15,7 +15,7 @@ company VARCHAR(10),
 picture VARCHAR(19),
 messages INT(4),
 old_messages INT(4),
-protocol ENUM('SIP','Zap','IAX2','EXTERNAL') default 'SIP',
+protocol ENUM('SIP','PJSIP','Zap','IAX2','EXTERNAL') default 'SIP',
 local_gmt VARCHAR(6) default '-5.00',
 ASTmgrUSERNAME VARCHAR(20) default 'cron',
 ASTmgrSECRET VARCHAR(20) default '1234',
@@ -1940,7 +1940,8 @@ label_rank VARCHAR(60) default '',
 label_owner VARCHAR(60) default '',
 label_entry_list_id VARCHAR(60) default '',
 call_limit_24hour ENUM('0','1') default '0',
-call_limit_24hour_reset DATETIME default '2000-01-01 00:00:01'
+call_limit_24hour_reset DATETIME default '2000-01-01 00:00:01',
+allowed_sip_stacks ENUM('SIP','PJSIP','SIP_and_PJSIP') default 'SIP'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaigns_list_mix (
@@ -2345,7 +2346,7 @@ carrier_name VARCHAR(50) NOT NULL,
 registration_string VARCHAR(255),
 template_id VARCHAR(15) NOT NULL,
 account_entry TEXT,
-protocol ENUM('SIP','Zap','IAX2','EXTERNAL') default 'SIP',
+protocol ENUM('SIP','PJSIP','PJSIP_WIZ','Zap','IAX2','EXTERNAL') default 'SIP',
 globals_string VARCHAR(255),
 dialplan_entry TEXT,
 server_ip VARCHAR(15) NOT NULL,
@@ -4594,7 +4595,7 @@ CREATE TABLE vicidial_peer_event_log (
 `server_ip` VARCHAR(15) COLLATE utf8_unicode_ci NOT NULL,
 `host_ip` VARCHAR(15) COLLATE utf8_unicode_ci DEFAULT '',
 `port` SMALLINT(6) DEFAULT NULL,
-`channel_type` ENUM('IAX2','SIP') COLLATE utf8_unicode_ci DEFAULT NULL,
+`channel_type` ENUM('IAX2','SIP','PJSIP') COLLATE utf8_unicode_ci DEFAULT NULL,
 `peer` VARCHAR(100) COLLATE utf8_unicode_ci DEFAULT '',
 `data` VARCHAR(255) COLLATE utf8_unicode_ci DEFAULT '',
 PRIMARY KEY (`peer_event_id`),
@@ -5021,4 +5022,4 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1641',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1642',db_schema_update_date=NOW(),reload_timestamp=NOW();

@@ -148,10 +148,11 @@
 # 210615-1016 - Default security fixes, CVE-2021-28854
 # 210616-2051 - Added optional CORS support, see options.php for details
 # 210823-0916 - Fix for security issue
+# 210825-0911 - Fix for XSS security issue
 #
 
-$version = '2.14-95';
-$build = '210823-0916';
+$version = '2.14-96';
+$build = '210825-0911';
 $php_script = 'manager_send.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=143;
@@ -295,8 +296,8 @@ header ("Pragma: no-cache");                          // HTTP/1.0
 # filter variables
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
-$session_name = preg_replace("/\'|\"|\\\\|;/","",$session_name);
-$server_ip = preg_replace("/\'|\"|\\\\|;/","",$server_ip);
+$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
 $lead_id = preg_replace('/[^0-9]/','',$lead_id);
 $session_id = preg_replace('/[^0-9]/','',$session_id);
 $exten = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$exten);

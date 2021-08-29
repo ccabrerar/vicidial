@@ -90,6 +90,7 @@
 # 210606-1007 - Added TILTX features for pre-carrier call filtering
 # 210718-0358 - Fixes for 24-Hour Call Count Limits with standard Auto-Alt-Dialing
 # 210719-1521 - Added additional state override methods for call_limit_24hour
+# 210827-0936 - Added PJSIP compatibility
 #
 
 # defaults for PreFork
@@ -440,7 +441,7 @@ sub process_request
 
 			if ($AGILOG) {$agi_string = "+++++ CALL LOG START : $now_date";   &agi_output;}
 
-			if ($channel =~ /^SIP/) {$channel =~ s/-.*//gi;}
+			if ($channel =~ /^SIP|^PJSIP/) {$channel =~ s/-.*//gi;}
 			if ($channel =~ /^IAX2/) {$channel =~ s/\/\d+$//gi;}
 			if ($channel =~ /^Zap\/|^DAHDI\//)
 				{
@@ -491,7 +492,7 @@ sub process_request
 				if ($AGILOG) {$agi_string = $channel_group . ": $aryA[0]|$channel_line|";   &agi_output;}
 				}
 			### This section breaks the outbound dialed number down(or builds it up) to a 10 digit number and gives it a description
-			if ( ($channel =~ /^SIP|^IAX2/) || ( ($is_client_phone > 0) && (length($channel_group) < 1) ) )
+			if ( ($channel =~ /^SIP|^PJSIP|^IAX2/) || ( ($is_client_phone > 0) && (length($channel_group) < 1) ) )
 				{
 				if ( ($extension =~ /^901144/) && (length($extension)==16) )  #test 207 608 6400 
 					{$extension =~ s/^9//gi;	$channel_group = 'Outbound Intl UK';}
@@ -508,7 +509,7 @@ sub process_request
 				if ($is_client_phone > 0)
 					{$channel_group = 'Client Phone';}
 				
-				$SIP_ext = $channel;	$SIP_ext =~ s/SIP\/|IAX2\/|Zap\/|DAHDI\/|Local\///gi;
+				$SIP_ext = $channel;	$SIP_ext =~ s/PJSIP\/|SIP\/|IAX2\/|Zap\/|DAHDI\/|Local\///gi;
 
 				$number_dialed = $extension;
 				$extension = $SIP_ext;

@@ -48,10 +48,11 @@
 # 150723-1715 - Added ajax logging
 # 190111-0903 - Fix for PHP7
 # 210616-2108 - Added optional CORS support, see options.php for details
+# 210825-0908 - Fix for XSS security issue
 # 
 
-$version = '0.0.19';
-$build = '210616-2108';
+$version = '0.0.20';
+$build = '210825-0908';
 $php_script = 'active_list_refresh.php';
 $SSagent_debug_logging=0;
 $startMS = microtime();
@@ -114,8 +115,8 @@ $selectedlocal=preg_replace("/[^ \#\*\:\/\@\.\-\_0-9a-zA-Z]/","",$selectedlocal)
 $textareaheight=preg_replace("/[^0-9a-zA-Z]/","",$textareaheight);
 $textareawidth=preg_replace("/[^0-9a-zA-Z]/","",$textareawidth);
 $field_name=preg_replace("/[^ \#\*\:\/\@\.\-\_0-9a-zA-Z]/","",$field_name);
-$session_name = preg_replace("/\'|\"|\\\\|;/","",$session_name);
-$server_ip = preg_replace("/\'|\"|\\\\|;/","",$server_ip);
+$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
 
 # default optional vars if not set
 if (!isset($ADD))				{$ADD="1";}

@@ -89,10 +89,11 @@
 # 210328-1013 - Fix for emails-in-queue count query, Issue #1170
 # 210425-2357 - Added calls_inqueue_count_ calculation
 # 210616-1905 - Added optional CORS support, see options.php for details
+# 210825-0907 - Fix for XSS security issue
 #
 
-$version = '2.14-63';
-$build = '210616-1905';
+$version = '2.14-64';
+$build = '210825-0907';
 $php_script = 'conf_exten_check.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=51;
@@ -206,8 +207,8 @@ if ($non_latin < 1)
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
 	}
 
-$session_name = preg_replace("/\'|\"|\\\\|;/","",$session_name);
-$server_ip = preg_replace("/\'|\"|\\\\|;/","",$server_ip);
+$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
 $conf_exten = preg_replace("/[^-_0-9a-zA-Z]/","",$conf_exten);
 $exten = preg_replace("/\'|\"|\\\\|;/","",$exten);
 $clicks = preg_replace("/\'|\"|\\\\|;/","",$clicks);

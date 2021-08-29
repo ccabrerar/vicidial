@@ -290,7 +290,8 @@ $PRESETstats = preg_replace('/[^-_0-9a-zA-Z]/', '', $PRESETstats);
 $AGENTtimeSTATS = preg_replace('/[^-_0-9a-zA-Z]/', '', $AGENTtimeSTATS);
 $INGROUPcolorOVERRIDE = preg_replace('/[^-_0-9a-zA-Z]/', '', $INGROUPcolorOVERRIDE);
 $droppedOFtotal = preg_replace('/[^-_0-9a-zA-Z]/', '', $droppedOFtotal);
-
+$server_ip=preg_replace("/[^0-9\.]/", "", $server_ip);
+$user_group_filter=preg_replace('/[^-_0-9\p{L}]/u','',$user_group_filter);
 $TOTALdisplay+=$ALLINGROUPstats;
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";

@@ -21,10 +21,11 @@
 # 170528-0901 - Added more variable filtering
 # 201117-2213 - Changes for better compatibility with non-latin data input
 # 210616-2034 - Added optional CORS support, see options.php for details
+# 210825-0901 - Fix for XSS security issue
 #
 
-$version = '2.14-11';
-$build = '210616-2034';
+$version = '2.14-12';
+$build = '210825-0901';
 $php_script = 'vdc_script_notes.php';
 
 require_once("dbconnect_mysqli.php");
@@ -270,7 +271,7 @@ if ($qm_conf_ct > 0)
 $lead_id = preg_replace('/[^0-9]/', '', $lead_id);
 $list_id = preg_replace('/[^0-9]/', '', $list_id);
 $notesid = preg_replace('/[^0-9]/', '', $notesid);
-$server_ip = preg_replace("/\'|\"|\\\\|;/","",$server_ip);
+$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
 $session_id = preg_replace('/[^0-9]/','',$session_id);
 $uniqueid = preg_replace('/[^-_\.0-9a-zA-Z]/','',$uniqueid);
 $session_name = preg_replace("/\'|\"|\\\\|;/","",$session_name);

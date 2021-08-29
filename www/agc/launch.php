@@ -1,7 +1,7 @@
 <?php
 # launch.php - launches vicidial.php in restricted window
 # 
-# Copyright (C) 2014  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # For launch validation to work, the options.php file must have
 # window_validation = 1 and win_valid_name set to window_name below
@@ -10,6 +10,7 @@
 # 130903-2055 - First Build
 # 140811-0800 - Changed to use QXZ function for echoing text
 # 141216-2134 - Added language settings lookups and user/pass variable standardization
+# 210825-0909 - Fix for XSS security issue
 #
 
 $window_name = 'subwindow_launch';
@@ -62,11 +63,11 @@ if (!isset($flag_channels))
 
 ### security strip all non-alphanumeric characters out of the variables ###
 $DB=preg_replace("/[^0-9a-z]/","",$DB);
-$phone_login=preg_replace("/[^\,0-9a-zA-Z]/","",$phone_login);
-$phone_pass=preg_replace("/[^-_0-9a-zA-Z]/","",$phone_pass);
-$VD_login=preg_replace("/\'|\"|\\\\|;| /","",$VD_login);
-$VD_pass=preg_replace("/\'|\"|\\\\|;| /","",$VD_pass);
-$VD_campaign = preg_replace("/[^-_0-9a-zA-Z]/","",$VD_campaign);
+$phone_login=preg_replace('/[^-_0-9\p{L}]/u',"",$phone_login);
+$phone_pass=preg_replace('/[^-_0-9\p{L}]/u',"",$phone_pass);
+$VD_login=preg_replace('/[^-_0-9\p{L}]/u',"",$VD_login);
+$VD_pass=preg_replace('/[^-_0-9\p{L}]/u',"",$VD_pass);
+$VD_campaign = preg_replace('/[^-_0-9\p{L}]/u',"",$VD_campaign);
 
 $login_string='';
 

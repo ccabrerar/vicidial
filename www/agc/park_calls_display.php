@@ -33,10 +33,11 @@
 # 170526-2244 - Added additional variable filtering
 # 190111-0907 - Fix for PHP7
 # 210616-2104 - Added optional CORS support, see options.php for details
+# 210825-0904 - Fix for XSS security issue
 # 
 
-$version = '2.14-15';
-$build = '210616-2104';
+$version = '2.14-16';
+$build = '210825-0904';
 $php_script = 'park_calls_display.php';
 $SSagent_debug_logging=0;
 $startMS = microtime();
@@ -63,8 +64,8 @@ if (isset($_GET["protocol"]))				{$protocol=$_GET["protocol"];}
 # variable filtering
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
-$session_name = preg_replace("/\'|\"|\\\\|;/","",$session_name);
-$server_ip = preg_replace("/\'|\"|\\\\|;/","",$server_ip);
+$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
 $exten = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$exten);
 $protocol = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$protocol);
 

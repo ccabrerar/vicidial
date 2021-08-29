@@ -682,6 +682,8 @@ OTHER CHANGES:
 189. Changed agc/dispo_send_email.php to only allow attachments in the new 
 	"agc/attachments" web directory.
 
+190. Added Asterisk 16 "PJSIP" compatibility
+
 
 
 

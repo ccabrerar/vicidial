@@ -84,10 +84,14 @@ if (isset($_GET["confirm_deletion"]))	{$confirm_deletion=$_GET["confirm_deletion
 if (isset($_GET["scorecard_id"]))	{$scorecard_id=$_GET["scorecard_id"];}
 	elseif (isset($_POST["scorecard_id"]))	{$scorecard_id=$_POST["scorecard_id"];}
 
+$submit=preg_replace('/[^-0-9\p{L}]/u','',$submit);
 $new_scorecard_id = preg_replace('/[^-_0-9a-zA-Z]/','',$new_scorecard_id);
 $new_scorecard_name = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$new_scorecard_name);
 $new_active = preg_replace('/[^NY]/','',$new_active);
 $active = preg_replace('/[^NY]/','',$active);
+$action = preg_replace('/[^-_0-9a-zA-Z]/','',$action);
+$confirm_deletion = preg_replace('/[^Y]/','',$confirm_deletion);
+$scorecard_id = preg_replace('/[^-_0-9a-zA-Z]/','',$scorecard_id);
 
 
 $SSmenu_background='015B91';

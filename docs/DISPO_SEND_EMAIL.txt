@@ -1,4 +1,4 @@
-Sending email after agent dispositions a call		Started: 2015-08-06	Updated: 2021-08-23
+Sending email after agent dispositions a call		Started: 2015-08-06	Updated: 2021-08-25
 
 These instructions will show you how to set up automatic emails to be sent out when an agent dispositions a call with a specific defined "sale status".
 
@@ -132,5 +132,58 @@ We hope you enjoy your stuff, and happy roadrunner chasing!
 ACME Support Department
 312-555-1212
 
+email_body_end
 
+
+
+
+
+HERE IS AN EXAMPLE NO AGENT CALL URL ENTRY FROM AN IN-GROUP FOR THIS FEATURE:
+
+VARhttp://server/agc/dispo_send_email.php?container_id=INGROUP_NA_EMAIL-test&lead_id=--A--lead_id--B--&call_id=--A--call_id--B--&dispo=--A--dispo--B--&user=NOAGENTURL&pass=--A--call_id--B--&sale_status=TIMEOT---NANQUE---DROP---AFTHRS&log_to_file=1
+
+
+
+HERE IS AN EXAMPLE SETTINGS CONTAINER TO SEND OUT AN EMAIL FROM THE ABOVE EXAMPLE:
+
+; destination email
+email_to => vicidialemailtesting@gmail.com
+
+; sending email address 
+email_from => customertesting@vicidial.com
+
+; subject of the email
+email_subject => --A--dispo--B-- - 001 - --A--phone_number--B--
+
+; body of the email
+email_body_begin => 
+Hello, 
+
+This email is to let you know a call from --A--phone_number--B-- has gone unanswered from in-group test.
+
+Here is a summary call information:
+
+In group: test In-Group
+phone_number: --A--phone_number--B--
+lead_id: --A--lead_id--B--
+list_id: --A--list_id--B--
+list_name: --A--list_name--B--
+first_name: --A--first_name--B--
+last_name: --A--last_name--B--
+address1: --A--address1--B--
+address2: --A--address2--B--
+city: --A--city--B--
+state: --A--state--B--
+postal_code: --A--postal_code--B--
+gender: --A--gender--B--
+date_of_birth: --A--date_of_birth--B--
+alt_phone: --A--alt_phone--B--
+email: --A--email--B--
+comments: --A--comments--B--
+user: --A--user--B--
+closer: --A--user--B--
+call_id: --A--call_id--B--
+
+
+ACME Call Center
 email_body_end

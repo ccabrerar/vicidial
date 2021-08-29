@@ -517,10 +517,12 @@
 # 210719-1120 - Added new state override options for 24-Hour Call Count Limits
 # 210729-2136 - Added cid_group_id_two campaign setting
 # 210822-2111 - Fix for manual dial lead search with phone_code, Issue #1322
+# 210825-0912 - Fix for XSS security issue
+# 210827-0749 - Added PJSIP compatibility
 #
 
-$version = '2.14-410';
-$build = '210822-2111';
+$version = '2.14-412';
+$build = '210827-0749';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=865;
@@ -1058,8 +1060,8 @@ if ($qm_conf_ct > 0)
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-$session_name = preg_replace("/\'|\"|\\\\|;/","",$session_name);
-$server_ip = preg_replace("/\'|\"|\\\\|;/","",$server_ip);
+$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
 $alt_phone = preg_replace("/\s/","",$alt_phone);
 $phone_code = preg_replace("/\s/","",$phone_code);
 $phone_number = preg_replace("/\s/","",$phone_number);
@@ -4785,7 +4787,7 @@ if ($ACTION == 'manDiaLnextCaLL')
 				$EAC='';
 				if ($use_eac > 0)
 					{
-					$eac_extension = preg_replace("/SIP\/|IAX2\/|Zap\/|DAHDI\/|Local\//",'',$eac_phone);
+					$eac_extension = preg_replace("/PJSIP\/|SIP\/|IAX2\/|Zap\/|DAHDI\/|Local\//",'',$eac_phone);
 					$EAC=" $eac_extension";
 					}
 
@@ -6571,7 +6573,7 @@ if ($ACTION == 'manDiaLonly')
 		$EAC='';
 		if ($use_eac > 0)
 			{
-			$eac_extension = preg_replace("/SIP\/|IAX2\/|Zap\/|DAHDI\/|Local\//",'',$eac_phone);
+			$eac_extension = preg_replace("/PJSIP\/|SIP\/|IAX2\/|Zap\/|DAHDI\/|Local\//",'',$eac_phone);
 			$EAC=" $eac_extension";
 			}
 		if ($CCID_on) {$CIDstring = "\"$MqueryCID$EAC\" <$CCID>";}

@@ -32,10 +32,11 @@
 # 150723-1711 - Added ajax logging
 # 170526-2351 - Added additional variable filtering
 # 210616-2109 - Added optional CORS support, see options.php for details
+# 210825-0910 - Fix for XSS security issue
 #
 
-$version = '2.14-15';
-$build = '210616-2109';
+$version = '2.14-16';
+$build = '210825-0910';
 $php_script = 'voicemail_check.php';
 $SSagent_debug_logging=0;
 $startMS = microtime();
@@ -59,9 +60,9 @@ if (isset($_GET["vmail_box"]))				{$vmail_box=$_GET["vmail_box"];}
 
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
-$session_name = preg_replace("/\'|\"|\\\\|;/","",$session_name);
-$server_ip = preg_replace("/\'|\"|\\\\|;/","",$server_ip);
-$vmail_box = preg_replace("/\'|\"|\\\\|;/","",$vmail_box);
+$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
+$vmail_box = preg_replace('/[^-_0-9\p{L}]/u',"",$vmail_box);
 
 # default optional vars if not set
 if (!isset($format))   {$format="text";}

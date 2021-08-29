@@ -151,9 +151,10 @@
 # 210605-1407 - Added purging of vicidial_tiltx_shaken_log log entries
 # 210630-1630 - Remove commas from mailbox name before writing to conf file, use "Full Name" for a phone's mailbox name, if set
 # 210712-2312 - Added purging of vicidial_lead_24hour_calls table
+# 210827-0939 - Added PJSIP compatibility
 #
 
-$build = '210712-2312';
+$build = '210827-0939';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -3025,7 +3026,122 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 
 		$i++;
 		}
-	##### BEGIN Generate the SIP carriers for this server_ip #####
+	##### END Generate the SIP carriers for this server_ip #####
+
+
+	##### BEGIN Generate the PJSIP_WIZ carriers for this server_ip #####
+	$stmtA = "SELECT carrier_id,carrier_name,registration_string,template_id,account_entry,globals_string,dialplan_entry,carrier_description FROM vicidial_server_carriers where server_ip IN('$server_ip','0.0.0.0') and active='Y' and protocol='PJSIP_WIZ' order by carrier_id;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	$i=0;
+	while ($sthArows > $i)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$carrier_id[$i]	=			$aryA[0];
+		$carrier_name[$i]	=		$aryA[1];
+		$registration_string[$i] =	$aryA[2];
+		$template_id[$i] =			$aryA[3];
+		$account_entry[$i] =		$aryA[4];
+		$globals_string[$i] =		$aryA[5];
+		$dialplan_entry[$i] =		$aryA[6];
+		$carrier_description[$i] =	$aryA[7];
+		$i++;
+		}
+	$sthA->finish();
+
+	$i=0;
+	while ($sthArows > $i)
+		{
+		$template_contents[$i]='';
+		if ( (length($template_id[$i]) > 1) && ($template_id[$i] !~ /--NONE--/) ) 
+			{
+			$stmtA = "SELECT template_contents FROM vicidial_conf_templates where template_id='$template_id[$i]';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthBrows=$sthA->rows;
+			if ($sthBrows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$template_contents[$i]	=	"$aryA[0]";
+				}
+			$sthA->finish();
+			}
+		$ext  .= "$globals_string[$i]\n";
+
+		# PJSIP doesnt use registration strings
+		# Registrion is defined in the account entry
+		# $pjsip  .= "$registration_string[$i]\n";
+
+		$Lext .= "; VICIDIAL Carrier: $carrier_id[$i] - $carrier_name[$i]\n";
+		if (length($carrier_description[$i]) > 0) {$Lext .= "; $carrier_description[$i]\n";}
+		$Lext .= "$dialplan_entry[$i]\n";
+
+		$Lpjsipw .= "; VICIDIAL Carrier: $carrier_id[$i] - $carrier_name[$i]\n";
+		if (length($carrier_description[$i]) > 0) {$Lpjsipw .= "; $carrier_description[$i]\n";}
+		$Lpjsipw .= "$account_entry[$i]\n";
+		$Lpjsipw .= "$template_contents[$i]\n";
+
+		$i++;
+		}
+	##### END Generate the PJSIP_WIZ carriers for this server_ip #####
+	
+	##### BEGIN Generate the PJSIP carriers for this server_ip #####
+	$stmtA = "SELECT carrier_id,carrier_name,registration_string,template_id,account_entry,globals_string,dialplan_entry,carrier_description FROM vicidial_server_carriers where server_ip IN('$server_ip','0.0.0.0') and active='Y' and protocol='PJSIP' order by carrier_id;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	$i=0;
+	while ($sthArows > $i)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$carrier_id[$i]	=			$aryA[0];
+		$carrier_name[$i]	=		$aryA[1];
+		$registration_string[$i] =	$aryA[2];
+		$template_id[$i] =			$aryA[3];
+		$account_entry[$i] =		$aryA[4];
+		$globals_string[$i] =		$aryA[5];
+		$dialplan_entry[$i] =		$aryA[6];
+		$carrier_description[$i] =	$aryA[7];
+		$i++;
+		}
+	$sthA->finish();
+
+	$i=0;
+	while ($sthArows > $i)
+		{
+		$template_contents[$i]='';
+		if ( (length($template_id[$i]) > 1) && ($template_id[$i] !~ /--NONE--/) ) 
+			{
+			$stmtA = "SELECT template_contents FROM vicidial_conf_templates where template_id='$template_id[$i]';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthBrows=$sthA->rows;
+			if ($sthBrows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$template_contents[$i]	=	"$aryA[0]";
+				}
+			$sthA->finish();
+			}
+		$ext  .= "$globals_string[$i]\n";
+
+		# PJSIP doesnt use registration strings
+		# Registrion is defined in the account entry
+		# $pjsip  .= "$registration_string[$i]\n";
+
+		$Lext .= "; VICIDIAL Carrier: $carrier_id[$i] - $carrier_name[$i]\n";
+		if (length($carrier_description[$i]) > 0) {$Lext .= "; $carrier_description[$i]\n";}
+		$Lext .= "$dialplan_entry[$i]\n";
+
+		$Lpjsip .= "; VICIDIAL Carrier: $carrier_id[$i] - $carrier_name[$i]\n";
+		if (length($carrier_description[$i]) > 0) {$Lpjsip .= "; $carrier_description[$i]\n";}
+		$Lpjsip .= "$account_entry[$i]\n";
+		$Lpjsip .= "$template_contents[$i]\n";
+
+		$i++;
+		}
+	##### END Generate the PJSIP carriers for this server_ip #####
 
 
 	$Pext .= "\n";
@@ -3366,6 +3482,199 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		$i++;
 		}
 	##### END Generate the SIP phone entries #####
+
+
+	##### BEGIN Generate the PJSIP phone entries #####
+	$stmtA = "SELECT extension,dialplan_number,voicemail_id,pass,template_id,conf_override,email,template_id,conf_override,outbound_cid,fullname,phone_context,phone_ring_timeout,conf_secret,delete_vm_after_email,codecs_list,codecs_with_template,voicemail_timezone,voicemail_options,voicemail_instructions,unavail_dialplan_fwd_exten,unavail_dialplan_fwd_context FROM phones where server_ip='$server_ip' and protocol='PJSIP' and active='Y' order by extension;";
+	#	print "$stmtA\n";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	$i=0;
+	while ($sthArows > $i)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$extension[$i] =				$aryA[0];
+		$dialplan[$i] =					$aryA[1];
+		$voicemail[$i] =				$aryA[2];
+		$pass[$i] =						$aryA[3];
+		$template_id[$i] =				$aryA[4];
+		$conf_override[$i] =			$aryA[5];
+		$email[$i] =					$aryA[6];
+		$template_id[$i] =				$aryA[7];
+		$conf_override[$i] =			$aryA[8];
+		$outbound_cid[$i] =				$aryA[9];
+		$fullname[$i] =					$aryA[10];
+		$phone_context[$i] =			$aryA[11];
+		$phone_ring_timeout[$i] =		$aryA[12];
+		$conf_secret[$i] =				$aryA[13];
+		$delete_vm_after_email[$i] =	$aryA[14];
+		$codecs_list[$i] =				$aryA[15];
+		$codecs_with_template[$i] =		$aryA[16];
+		$voicemail_timezone[$i] =		$aryA[17];
+		$voicemail_options[$i] =		$aryA[18];
+		$voicemail_instructions[$i] =	$aryA[19];
+		$unavail_dialplan_fwd_exten[$i] =	$aryA[20];
+		$unavail_dialplan_fwd_context[$i] =	$aryA[21];
+		if ( (length($SSdefault_codecs) > 2) && (length($codecs_list[$i]) < 3) )
+			{$codecs_list[$i] = $SSdefault_codecs;}
+		$active_dialplan_numbers .= "'$aryA[1]',";
+
+		$i++;
+		}
+	$sthA->finish();
+
+	$i=0;
+	while ($sthArows > $i)
+		{
+		$conf_entry_written=0;
+		$template_contents[$i]='';
+		$Pcodec='';
+		if (length($codecs_list[$i]) > 2)
+			{
+			if ($codecs_list[$i] =~ /gsm/i)					{$Pcodec .= "endpoint/allow=gsm\n";}
+			if ($codecs_list[$i] =~ /ulaw|u-law/i)			{$Pcodec .= "endpoint/allow=ulaw\n";}
+			if ($codecs_list[$i] =~ /alaw|a-law/i)			{$Pcodec .= "endpoint/allow=alaw\n";}
+			if ($codecs_list[$i] =~ /g719|g\.719/i)			{$Pcodec .= "endpoint/allow=g719\n";}
+			if ($codecs_list[$i] =~ /g722|g\.722/i)			{$Pcodec .= "endpoint/allow=g722\n";}
+			if ($codecs_list[$i] =~ /g723|g\.723|g723\.1/i)	{$Pcodec .= "endpoint/allow=g723\n";}
+			if ($codecs_list[$i] =~ /g726|g\.726/i)			{$Pcodec .= "endpoint/allow=g726\n";}
+			if ($codecs_list[$i] =~ /g729|g\.729|g729a/i)	{$Pcodec .= "endpoint/allow=g729\n";}
+			if ($codecs_list[$i] =~ /ilbc/i)				{$Pcodec .= "endpoint/allow=ilbc\n";}
+			if ($codecs_list[$i] =~ /lpc10/i)				{$Pcodec .= "endpoint/allow=lpc10\n";}
+			if ($codecs_list[$i] =~ /speex/i)				{$Pcodec .= "endpoint/allow=speex\n";}
+			if ($codecs_list[$i] =~ /adpcm/i)				{$Pcodec .= "endpoint/allow=adpcm\n";}
+			if ($codecs_list[$i] =~ /opus/i)				{$Pcodec .= "endpoint/allow=opus\n";}
+			if ($codecs_list[$i] =~ /slin/i)				{$Pcodec .= "endpoint/allow=slin\n";}
+			if (length($Pcodec) > 2)
+				{$Pcodec = "endpoint/disallow=all\n$Pcodec";}
+			}
+		else
+			{
+			$Pcodec .= "endpoint/disallow=all\n";
+			$Pcodec .= "endpoint/allow=gsm\n";
+			$Pcodec .= "endpoint/allow=ulaw\n";
+			}
+		if ($DBXXX > 0) {print "PJSIP|$extension[$i]|$codecs_list[$i]|$Pcodec\n";}
+
+		### If Phone has a template defined :
+		if ( (length($template_id[$i]) > 1) && ($template_id[$i] !~ /--NONE--/) ) 
+			{
+			$stmtA = "SELECT template_contents FROM vicidial_conf_templates where template_id='$template_id[$i]';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthBrows=$sthA->rows;
+			if ($sthBrows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$template_contents[$i]	=	"$aryA[0]";
+				$template_contents[$i]  =~	s/\r//g;
+
+				$Ppjsipw .= "\n\[$extension[$i]\]\n";
+				$Ppjsipw .= "type=wizard\n";
+				$Ppjsipw .= "accepts_auth=yes\n";
+				$Ppjsipw .= "accepts_registrations=yes\n";
+				$Ppjsipw .= "inbound_auth/username=$extension[$i]\n";
+				$Ppjsipw .= "inbound_auth/password=$conf_secret[$i]\n";
+				if ( (length($fullname[$i])>0) || (length($outbound_cid[$i])>0) ) 
+					{
+					$Ppjsipw .= "endpoint/callerid=\"$fullname[$i]\" <$outbound_cid[$i]>\n";
+					}
+				$Ppjsipw .= "endpoint/mailboxes=$voicemail[$i]\n";
+				if (($codecs_with_template[$i] > 0) || (!($template_contents[$i] =~ /allow=/i)))
+					{$Ppjsipw .= "$Pcodec";}
+				$Ppjsipw .= "$template_contents[$i]\n";
+				
+				$conf_entry_written++;
+				}
+			$sthA->finish();
+			}
+			
+		### If Phone has a Conf Override defined :
+		if (length($conf_override[$i]) > 10)
+			{
+			if ($conf_entry_written < 1) 
+				{$Ppjsipw .= "\n\[$extension[$i]\]\n";}
+			$Ppjsipw .= "$conf_override[$i]\n";
+			$conf_entry_written++;
+			}
+			
+		### If Phone does not have a Conf Override or Template defined :
+		if ($conf_entry_written < 1)
+			{
+			$Ppjsipw .= "\n\[$extension[$i]\]\n";
+			$Ppjsipw .= "type=wizard\n";
+			$Ppjsipw .= "accepts_auth=yes\n";
+			$Ppjsipw .= "accepts_registrations=yes\n";
+			$Ppjsipw .= "inbound_auth/username=$extension[$i]\n";
+			$Ppjsipw .= "inbound_auth/password=$conf_secret[$i]\n";
+			$Ppjsipw .= "aor/max_contacts = 1\n";
+			$Ppjsipw .= "aor/maximum_expiration = 3600\n";
+			$Ppjsipw .= "aor/minimum_expiration = 60\n";
+			$Ppjsipw .= "aor/default_expiration = 120\n";
+			$Ppjsipw .= "aor/qualify_frequency = 15\n";
+			$Ppjsipw .= "endpoint/context=$phone_context[$i]\n";
+			if ( (length($fullname[$i])>0) || (length($outbound_cid[$i])>0) ) 
+				{
+				$Ppjsipw .= "endpoint/callerid=\"$fullname[$i]\" <$outbound_cid[$i]>\n";
+				}
+			$Ppjsipw .= "endpoint/mailboxes=$voicemail[$i]\n";
+			$Ppjsipw .= "$Pcodec";
+			$Ppjsipw .= "endpoint/dtmf_mode = rfc4733\n";
+			$Ppjsipw .= "endpoint/trust_id_inbound = no\n";
+			$Ppjsipw .= "endpoint/send_rpid = yes\n";
+			$Ppjsipw .= "endpoint/inband_progress = no\n";
+			$Ppjsipw .= "endpoint/tos_audio = ef\n";
+			$Ppjsipw .= "endpoint/language = en\n";
+			$Ppjsipw .= "endpoint/rtp_symmetric = yes\n";
+			$Ppjsipw .= "endpoint/rewrite_contact = yes\n";
+			$Ppjsipw .= "endpoint/rtp_timeout = 60\n";
+			$Ppjsipw .= "endpoint/use_ptime = yes\n";
+			$Ppjsipw .= "endpoint/moh_suggest = default\n";
+			$Ppjsipw .= "endpoint/direct_media = no\n\n";
+			}
+			
+		### Dialplan generation :
+		%ast_ver_str = parse_asterisk_version($asterisk_version);
+		if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6))
+			{
+			$Pext .= "exten => $dialplan[$i],1,Dial(PJSIP/$extension[$i]|$phone_ring_timeout[$i]|)\n";
+			}
+		else
+			{
+			$Pext .= "exten => $dialplan[$i],1,Dial(PJSIP/$extension[$i],$phone_ring_timeout[$i],)\n";
+			}
+		if (length($unavail_dialplan_fwd_exten[$i]) > 0) 
+			{
+			if (length($unavail_dialplan_fwd_context[$i]) < 1) 
+				{$unavail_dialplan_fwd_context[$i] = 'default';}
+			$Pext .= "exten => $dialplan[$i],2,Goto($unavail_dialplan_fwd_context[$i],$unavail_dialplan_fwd_exten[$i],1)\n";
+			}
+		else
+			{
+			if ($voicemail_instructions[$i] =~ /Y/)
+				{
+				$Pext .= "exten => $dialplan[$i],2,Goto(default,85026666666666$voicemail[$i],1)\n";
+				}
+			else
+				{
+				$Pext .= "exten => $dialplan[$i],2,Goto(default,85026666666667$voicemail[$i],1)\n";
+				}
+			}
+		if (!(( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6)))
+			{
+			$Pext .= "exten => $dialplan[$i],3,Hangup()\n";
+			}
+
+		### VM generation
+		if ($delete_vm_after_email[$i] =~ /Y/)
+			{$vm  .= "$voicemail[$i] => $pass[$i],$extension[$i] Mailbox,$email[$i],,|delete=yes|tz=$voicemail_timezone[$i]|$voicemail_options[$i]\n";}
+		else
+			{$vm  .= "$voicemail[$i] => $pass[$i],$extension[$i] Mailbox,$email[$i],,|delete=no|tz=$voicemail_timezone[$i]|$voicemail_options[$i]\n";}
+
+		$i++;
+		}
+	##### END Generate the PJSIP phone entries #####
 
 
 
@@ -4157,6 +4466,8 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	open(ext, ">/etc/asterisk/BUILDextensions-vicidial.conf") || die "can't open /etc/asterisk/BUILDextensions-vicidial.conf: $!\n";
 	open(iax, ">/etc/asterisk/BUILDiax-vicidial.conf") || die "can't open /etc/asterisk/BUILDiax-vicidial.conf: $!\n";
 	open(sip, ">/etc/asterisk/BUILDsip-vicidial.conf") || die "can't open /etc/asterisk/BUILDsip-vicidial.conf: $!\n";
+	open(pjsip,">/etc/asterisk/BUILDpjsip-vicidial.conf") || die "can't open /etc/asterisk/BUILDpjsip-vicidial.conf: $!\n";
+	open(pjsipw,">/etc/asterisk/BUILDpjsip_wizard-vicidial.conf") || die "can't open /etc/asterisk/BUILDpjsip_wizard-vicidial.conf: $!\n";
 	open(vm, ">/etc/asterisk/BUILDvoicemail-vicidial.conf") || die "can't open /etc/asterisk/BUILDvoicemail-vicidial.conf: $!\n";
 	open(moh, ">/etc/asterisk/BUILDmusiconhold-vicidial.conf") || die "can't open /etc/asterisk/BUILDmusiconhold-vicidial.conf: $!\n";
 	open(mm, ">/etc/asterisk/BUILDmeetme-vicidial.conf") || die "can't open /etc/asterisk/BUILDmeetme-vicidial.conf: $!\n";
@@ -4222,6 +4533,22 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	print sip "$Psip\n";
 	print sip "\n; END OF FILE    Last Forced System Reload: $SSreload_timestamp\n";
 
+	print pjsip "; WARNING- THIS FILE IS AUTO-GENERATED BY VICIDIAL, ANY EDITS YOU MAKE WILL BE LOST\n";
+	print pjsip "\n; PJSIP General Settings: \n\n";
+	print pjsip "$pjsip\n";
+	print pjsip "\n; PJSIP Carrier Settings: \n\n";
+	print pjsip "$Lpjsip\n";
+	print pjsip "\n; END OF FILE    Last Forced System Reload: $SSreload_timestamp\n";
+
+	print pjsipw "; WARNING- THIS FILE IS AUTO-GENERATED BY VICIDIAL, ANY EDITS YOU MAKE WILL BE LOST\n";
+	print pjsipw "\n; PJSIP_WIZ General Settings: \n\n";
+	print pjsipw "$pjsipw\n";
+	print pjsipw "\n; PJSIP_WIZ Carrier Settings: \n\n";
+	print pjsipw "$Lpjsipw\n";
+	print pjsipw "\n; PJSIP_WIZ Phone Settings: \n\n";
+	print pjsipw "$Ppjsipw\n";
+	print pjsipw "\n; END OF FILE    Last Forced System Reload: $SSreload_timestamp\n";
+
 #	print vm "; WARNING- THIS FILE IS AUTO-GENERATED BY VICIDIAL, ANY EDITS YOU MAKE WILL BE LOST\n";
 	print vm "$vm_header_content\n";
 	print vm "$vm\n";
@@ -4238,6 +4565,8 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	close(ext);
 	close(iax);
 	close(sip);
+	close(pjsip);
+	close(pjsipw);
 	close(vm);
 	close(moh);
 	close(mm);
@@ -4268,6 +4597,12 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	if ( !-e ('/etc/asterisk/sip-vicidial.conf'))
 		{`echo -e \"; END OF FILE\n\" > /etc/asterisk/sip-vicidial.conf`;}
 
+	if ( !-e ('/etc/asterisk/pjsip-vicidial.conf'))
+		{`echo -e \"; END OF FILE\n\" > /etc/asterisk/pjsip-vicidial.conf`;}
+
+	if ( !-e ('/etc/asterisk/pjsip_wizard-vicidial.conf'))
+		{`echo -e \"; END OF FILE\n\" > /etc/asterisk/pjsip_wizard-vicidial.conf`;}
+
 	if ( !-e ('/etc/asterisk/voicemail.conf'))
 		{`echo -e \"; END OF FILE\n\" > /etc/asterisk/voicemail.conf`;}
 
@@ -4282,6 +4617,8 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	$extCMP = compare("/etc/asterisk/BUILDextensions-vicidial.conf","/etc/asterisk/extensions-vicidial.conf");
 	$iaxCMP = compare("/etc/asterisk/BUILDiax-vicidial.conf","/etc/asterisk/iax-vicidial.conf");
 	$sipCMP = compare("/etc/asterisk/BUILDsip-vicidial.conf","/etc/asterisk/sip-vicidial.conf");
+	$pjsipCMP = compare("/etc/asterisk/BUILDpjsip-vicidial.conf","/etc/asterisk/pjsip-vicidial.conf");
+	$pjsipwCMP = compare("/etc/asterisk/BUILDpjsip_wizard-vicidial.conf","/etc/asterisk/pjsip_wizard-vicidial.conf");
 	$vmCMP =  compare("/etc/asterisk/BUILDvoicemail-vicidial.conf","/etc/asterisk/voicemail.conf");
 	$mohCMP = compare("/etc/asterisk/BUILDmusiconhold-vicidial.conf","/etc/asterisk/musiconhold-vicidial.conf");
 	$mmCMP =  compare("/etc/asterisk/BUILDmeetme-vicidial.conf","/etc/asterisk/meetme-vicidial.conf");
@@ -4351,6 +4688,20 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 			if ($DB) {print "sip reload\n";}
 			sleep(1);
 			}
+		if ($pjsipCMP > 0)
+			{
+			`cp -f /etc/asterisk/BUILDpjsip-vicidial.conf /etc/asterisk/pjsip-vicidial.conf`;
+			`screen -XS asterisk eval 'stuff "pjsip reload\015"'`;
+			if ($DB) {print "pjsip reload\n";}
+			sleep(1);
+			}
+		if ($pjsipwCMP > 0)
+			{
+			`cp -f /etc/asterisk/BUILDpjsip_wizard-vicidial.conf /etc/asterisk/pjsip_wizard-vicidial.conf`;
+			`screen -XS asterisk eval 'stuff "pjsip reload\015"'`;
+			if ($DB) {print "pjsip reload\n";}
+			sleep(1);
+			}
 		if ($iaxCMP > 0)
 			{
 			`cp -f /etc/asterisk/BUILDiax-vicidial.conf /etc/asterisk/iax-vicidial.conf`;
@@ -4384,10 +4735,11 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	`rm -f /etc/asterisk/BUILDextensions-vicidial.conf`;
 	`rm -f /etc/asterisk/BUILDiax-vicidial.conf`;
 	`rm -f /etc/asterisk/BUILDsip-vicidial.conf`;
+	`rm -f /etc/asterisk/BUILDpjsip-vicidial.conf`;
+	`rm -f /etc/asterisk/BUILDpjsip_wizard-vicidial.conf`;
 #	`rm -f /etc/asterisk/BUILDvoicemail-vicidial.conf`;
 	`rm -f /etc/asterisk/BUILDmusiconhold-vicidial.conf`;
 	`rm -f /etc/asterisk/BUILDmeetme-vicidial.conf`;
-
 	}
 ################################################################################
 #####  END Creation of auto-generated conf files

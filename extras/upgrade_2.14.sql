@@ -1799,3 +1799,13 @@ unique index cicc_cd (caller_code, uniqueid)
 CREATE TABLE vicidial_inbound_caller_codes_archive LIKE vicidial_inbound_caller_codes;
 
 UPDATE system_settings SET db_schema_version='1641',db_schema_update_date=NOW() where db_schema_version < 1641;
+
+ALTER TABLE phones MODIFY protocol ENUM('SIP','PJSIP','Zap','IAX2','EXTERNAL') default 'SIP';
+
+ALTER TABLE vicidial_server_carriers MODIFY protocol ENUM('SIP','PJSIP','PJSIP_WIZ','Zap','IAX2','EXTERNAL') default 'SIP';
+
+ALTER TABLE vicidial_peer_event_log MODIFY channel_type ENUM('IAX2','SIP','PJSIP') COLLATE utf8_unicode_ci DEFAULT NULL;
+
+ALTER TABLE system_settings ADD allowed_sip_stacks ENUM('SIP','PJSIP','SIP_and_PJSIP') default 'SIP';
+
+UPDATE system_settings SET db_schema_version='1642',db_schema_update_date=NOW() where db_schema_version < 1642;

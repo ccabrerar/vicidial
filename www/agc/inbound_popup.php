@@ -39,10 +39,11 @@
 # 170526-2231 - Added additional variable filtering
 # 190111-0905 - Fix for PHP7
 # 210616-2106 - Added optional CORS support, see options.php for details
+# 210825-0906 - Fix for XSS security issue
 #
 
-$version = '2.14-15';
-$build = '210616-2106';
+$version = '2.14-16';
+$build = '210825-0906';
 $php_script = 'inbound_popup.php';
 
 require_once("dbconnect_mysqli.php");
@@ -79,8 +80,8 @@ if (isset($_GET["local_web_callerID_URL_enc"]))			{$local_web_callerID_URL = raw
 # variable filtering
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
-$session_name = preg_replace("/\'|\"|\\\\|;/","",$session_name);
-$server_ip = preg_replace("/\'|\"|\\\\|;/","",$server_ip);
+$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
 $uniqueid = preg_replace('/[^-_\.0-9a-zA-Z]/','',$uniqueid);
 $exten = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$exten);
 $vmail_box = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$vmail_box);

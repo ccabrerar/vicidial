@@ -42,10 +42,11 @@
 # 170526-2234 - Added additional variable filtering
 # 190111-0906 - Fix for PHP7
 # 210616-2105 - Added optional CORS support, see options.php for details
+# 210825-0905 - Fix for XSS security issue
 #
 
-$version = '2.14-18';
-$build = '190111-0906';
+$version = '2.14-19';
+$build = '210825-0905';
 $php_script = 'live_exten_check.php';
 $SSagent_debug_logging=0;
 $startMS = microtime();
@@ -76,8 +77,8 @@ if (isset($_GET["favorites_list"]))				{$favorites_list=$_GET["favorites_list"];
 # variable filtering
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
-$session_name = preg_replace("/\'|\"|\\\\|;/","",$session_name);
-$server_ip = preg_replace("/\'|\"|\\\\|;/","",$server_ip);
+$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
 $exten = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$exten);
 $protocol = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$protocol);
 $favorites_list = preg_replace("/\'|\"|\\\\|;| /","",$favorites_list);
