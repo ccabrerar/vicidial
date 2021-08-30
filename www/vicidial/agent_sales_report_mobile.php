@@ -32,8 +32,6 @@ if (isset($_GET["call_status"]))			{$call_status=$_GET["call_status"];}
 	elseif (isset($_POST["call_status"]))	{$call_status=$_POST["call_status"];}
 if (isset($_GET["user_group"]))				{$user_group=$_GET["user_group"];}
 	elseif (isset($_POST["user_group"]))	{$user_group=$_POST["user_group"];}
-if (isset($_GET["file_download"]))			{$file_download=$_GET["file_download"];}
-	elseif (isset($_POST["file_download"]))	{$file_download=$_POST["file_download"];}
 if (isset($_GET["DB"]))						{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))			{$DB=$_POST["DB"];}
 if (isset($_GET["SUBMIT"]))					{$SUBMIT=$_GET["SUBMIT"];}
@@ -48,6 +46,19 @@ if (isset($_GET["report_display_type"]))			{$report_display_type=$_GET["report_d
 	elseif (isset($_POST["report_display_type"]))	{$report_display_type=$_POST["report_display_type"];}
 if (isset($_GET["refresh_rate"]))			{$refresh_rate=$_GET["refresh_rate"];}
 	elseif (isset($_POST["refresh_rate"]))	{$refresh_rate=$_POST["refresh_rate"];}
+
+
+$DB = preg_replace('/[^0-9]/','',$DB);
+$end_date_D = preg_replace('/[^-0-9]/','',$end_date_D);
+$end_date_T = preg_replace('/[^0-9\:]/','',$end_date_T);
+$query_date_D = preg_replace('/[^-0-9]/','',$query_date_D);
+$query_date_T = preg_replace('/[^0-9\:]/','',$query_date_T);
+$refresh_rate = preg_replace('/[^0-9]/','',$refresh_rate);
+$top_agents = preg_replace('/[^0-9]/','',$top_agents);
+$graph_type=preg_replace('/[^_0-9\p{L}]/u','',$graph_type);
+$report_display_type=preg_replace('/[^_\p{L}]/u','',$report_display_type);
+$sort_by=preg_replace('/[^\p{L}]/u','',$sort_by);
+$SUBMIT=preg_replace('/[^\p{L}]/u','',$SUBMIT);
 
 
 $report_name = 'Agent Sales Report';
@@ -202,7 +213,7 @@ else
 	$webserver_id = mysqli_insert_id($link);
 	}
 
-$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$group[0], $query_date, $end_date, $shift, $file_download, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
+$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$group[0], $query_date, $end_date, $shift, 0, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $report_log_id = mysqli_insert_id($link);
@@ -268,7 +279,7 @@ $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 $STARTtime = date("U");
 if (!isset($group)) {$group = array();}
-if (!isset($user_group)) {$group = array();}
+if (!isset($user_group)) {$user_group = array();}
 if (!isset($query_date_D)) {$query_date_D=$NOW_DATE;}
 if (!isset($query_date_T)) {$query_date_T="00:00:00";}
 if (!isset($refresh_rate)) {$refresh_rate="1000000";}

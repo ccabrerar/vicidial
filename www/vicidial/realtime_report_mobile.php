@@ -14,6 +14,7 @@
 # 190206-1616 - First Build
 # 190228-1535 - Minor pre-release changes
 # 200309-1819 - Modifications for display formatting
+# 210827-1818 - Fix for security issue
 #
 
 $startMS = microtime();

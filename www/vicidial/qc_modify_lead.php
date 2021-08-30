@@ -30,6 +30,7 @@
 # 171001-1110 - Added in-browser audio control, if recording access control is disabled
 # 210304-1650 - Added modify_leads=5 read-only option
 # 210306-0854 - Redesign of QC module
+# 210827-1818 - Fix for security issue
 #
 
 require("dbconnect_mysqli.php");

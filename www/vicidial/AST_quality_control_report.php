@@ -7,6 +7,7 @@
 #
 # changes:
 # 210306-1556 - First Build
+# 210827-1818 - Fix for security issue
 #
 
 $admin_version = '2.14-1';
@@ -60,6 +61,8 @@ if (isset($_GET["SUBMIT"]))					{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))		{$SUBMIT=$_POST["SUBMIT"];}
 if (isset($_GET["show_percentages"]))					{$show_percentages=$_GET["show_percentages"];}
 	elseif (isset($_POST["show_percentages"]))			{$show_percentages=$_POST["show_percentages"];}
+if (isset($_GET["search_archived_data"]))					{$search_archived_data=$_GET["search_archived_data"];}
+	elseif (isset($_POST["search_archived_data"]))			{$search_archived_data=$_POST["search_archived_data"];}
 if (isset($_GET["file_download"]))			{$file_download=$_GET["file_download"];}
 	elseif (isset($_POST["file_download"]))	{$file_download=$_POST["file_download"];}
 
@@ -298,13 +301,13 @@ $MT[0]='';
 $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 $STARTtime = date("U");
-if (!isset($group)) {$group = array();}
-if (!isset($statuses)) {$statuses = array();}
-if (!isset($users)) {$users = array();}
-if (!isset($user_groups)) {$user_groups = array();}
-if (!isset($QCusers)) {$QCusers = array();}
-if (!isset($QCstatuses)) {$QCstatuses = array();}
-if (!isset($QCuser_groups)) {$QCuser_groups = array();}
+if (!isset($group) || !is_array($group)) {$group = array();}
+if (!isset($statuses) || !is_array($statuses)) {$statuses = array();}
+if (!isset($users) || !is_array($users)) {$users = array();}
+if (!isset($user_groups) || !is_array($user_groups)) {$user_groups = array();}
+if (!isset($QCusers) || !is_array($QCusers)) {$QCusers = array();}
+if (!isset($QCstatuses) || !is_array($QCstatuses)) {$QCstatuses = array();}
+if (!isset($QCuser_groups) || !is_array($QCuser_groups)) {$QCuser_groups = array();}
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (!isset($end_date)) {$end_date = $NOW_DATE;}
 if (!isset($query_time)) {$query_time = "00:00:00";}
@@ -315,6 +318,29 @@ if (!isset($end_time)) {$end_time = "23:59:59";}
 #if (!isset($qc_finish_end_time)) {$qc_finish_end_time = "23:59:59";}
 $all_QC_statuses=array("CLAIMED", "FINISHED");
 $QC_statuses_to_print=count($all_QC_statuses);
+
+$group=preg_replace('/[^-_0-9\p{L}]/u','',$group);
+$campaign=preg_replace('/[^-_0-9\p{L}]/u','',$campaign);
+$query_date = preg_replace('/[^-0-9]/','',$query_date);
+$end_date = preg_replace('/[^-0-9]/','',$end_date);
+$query_time=preg_replace("/[^0-9\:]/", "", $query_time);
+$end_time=preg_replace("/[^0-9\:]/", "", $end_time);
+$qc_finish_start_date = preg_replace('/[^-0-9]/','',$qc_finish_start_date);
+$qc_finish_end_date = preg_replace('/[^-0-9]/','',$qc_finish_end_date);
+$qc_finish_start_time=preg_replace("/[^0-9\:]/", "", $qc_finish_start_time);
+$qc_finish_end_time=preg_replace("/[^0-9\:]/", "", $qc_finish_end_time);
+
+$users=preg_replace('/[^-_0-9\p{L}]/u','',$users);
+$user_groups=preg_replace('/[^-_0-9\p{L}]/u','',$user_groups);
+$statuses=preg_replace('/[^-_0-9\p{L}]/u','',$statuses);
+$QCusers=preg_replace('/[^-_0-9\p{L}]/u','',$QCusers);
+$QCuser_groups=preg_replace('/[^-_0-9\p{L}]/u','',$QCuser_groups);
+$QCstatuses=preg_replace('/[^-_0-9\p{L}]/u','',$QCstatuses);
+$DB = preg_replace('/[^0-9]/','',$DB);
+$SUBMIT=preg_replace('/[^-_0-9\p{L}]/u','',$SUBMIT);
+$show_percentages=preg_replace('/[^-_0-9\p{L}]/u','',$show_percentages);
+$file_download = preg_replace('/[^0-9]/','',$file_download);
+
 
 $i=0;
 $campaign_string='|';

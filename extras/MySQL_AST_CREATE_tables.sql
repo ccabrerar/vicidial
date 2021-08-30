@@ -4584,6 +4584,7 @@ length_in_sec INT(10),
 visibility  ENUM('VISIBLE','HIDDEN','LOGIN','NONE') default 'NONE',
 agent_log_id INT(9) UNSIGNED,
 index (db_time),
+index (agent_log_id),
 unique index visibleuser (user, visibility, event_end_epoch)
 ) ENGINE=MyISAM;
 
@@ -5022,4 +5023,4 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1642',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1643',db_schema_update_date=NOW(),reload_timestamp=NOW();

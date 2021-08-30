@@ -1809,3 +1809,7 @@ ALTER TABLE vicidial_peer_event_log MODIFY channel_type ENUM('IAX2','SIP','PJSIP
 ALTER TABLE system_settings ADD allowed_sip_stacks ENUM('SIP','PJSIP','SIP_and_PJSIP') default 'SIP';
 
 UPDATE system_settings SET db_schema_version='1642',db_schema_update_date=NOW() where db_schema_version < 1642;
+
+CREATE INDEX vavl_agent_log_id on vicidial_agent_visibility_log (agent_log_id);
+
+UPDATE system_settings SET db_schema_version='1643',db_schema_update_date=NOW() where db_schema_version < 1643;

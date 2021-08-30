@@ -7,6 +7,7 @@
 #
 # changes:
 # 210306-1532 - First Build
+# 210827-1818 - Fix for security issue
 #
 
 $admin_version = '2.14-1';

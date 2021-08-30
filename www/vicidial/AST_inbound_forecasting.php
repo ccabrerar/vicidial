@@ -12,6 +12,7 @@
 # 180507-2315 - Added new help display
 # 180712-1508 - Fix for rare allowed reports issue
 # 191013-0856 - Fixes for PHP7
+# 210823-0948 - Fix for security issue, added NONE option for campaigns
 #
 
 $startMS = microtime();
@@ -404,11 +405,29 @@ $MT[0]='';
 $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 $STARTtime = date("U");
-if (!isset($group)) {$group = array();}
+if (!isset($group) || !is_array($group)) {$group = array();}
 if (!isset($drop_percent)) {$drop_percent = '3';}
-if (!isset($campaign)) {$campaign = array();}
+if (!isset($campaign) || !is_array($campaign)) {$campaign = array();}
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (!isset($end_date)) {$end_date = $NOW_DATE;}
+
+$group=preg_replace('/[^-_0-9\p{L}]/u','',$group);
+$campaign=preg_replace('/[^-_0-9\p{L}]/u','',$campaign);
+$query_date = preg_replace('/[^-0-9]/','',$query_date);
+$end_date = preg_replace('/[^-0-9]/','',$end_date);
+$shift=preg_replace('/[^\p{L}]/u', '', $shift);
+$erlang_type=preg_replace('/[^\p{L}]/u', '', $erlang_type);
+$actual_agents=preg_replace("/[^0-9.]/", "", $actual_agents);
+$hourly_pay=preg_replace("/[^0-9.]/", "", $hourly_pay);
+$revenue_per_sale=preg_replace("/[^0-9.]/", "", $revenue_per_sale);
+$sale_chance=preg_replace("/[^0-9.]/", "", $sale_chance);
+$retry_rate=preg_replace("/[^0-9.]/", "", $retry_rate);
+$target_pqueue=preg_replace("/[^0-9.]/", "", $target_pqueue);
+$DB = preg_replace('/[^0-9]/','',$DB);
+$submit=preg_replace('/[^-_0-9\p{L}]/u','',$submit);
+$SUBMIT=preg_replace('/[^-_0-9\p{L}]/u','',$SUBMIT);
+$file_download = preg_replace('/[^0-9]/','',$file_download);
+$report_display_type=preg_replace('/[^_\p{L}]/u','',$report_display_type);
 
 $drop_percent=preg_replace("/[^\.0-9]/", "", $drop_percent);
 if ($drop_percent>100) {$drop_percent=100;}
@@ -434,7 +453,7 @@ while($i < $group_ct)
 		}
 	$i++;
 	}
-if ( (preg_match('/\s\-\-NONE\-\-\s/',$group_string) ) or ($group_ct < 1) )
+if ( (preg_match('/\-\-NONE\-\-/',$group_string) ) or ($group_ct < 1) )
 	{
 	$group_SQL = "''";
 	}
@@ -463,7 +482,7 @@ while($i < $campaign_ct)
 		}
 	$i++;
 	}
-if ( (preg_match('/\s\-\-NONE\-\-\s/',$campaign_string) ) or ($campaign_ct < 1) )
+if ( (preg_match('/\-\-NONE\-\-/',$campaign_string) ) or ($campaign_ct < 1) )
 	{
 	$campaign_SQL = "''";
 	}
@@ -581,6 +600,7 @@ $MAIN.="<SELECT SIZE=5 NAME=campaign[] multiple>\n";
 #else
 #	{$MAIN.="<option value=\"--ALL--\">-- "._QXZ("ALL CAMPAIGNS")." --</option>\n";}
 $MAIN.="<option value=\"--ALL--\"".(in_array("--ALL--", $campaign) ? " selected" : "").">-- "._QXZ("ALL CAMPAIGNS")." --</option>\n";
+$MAIN.="<option value=\"--NONE--\"".(in_array("--NONE--", $campaign) ? " selected" : "").">-- "._QXZ("NONE")." --</option>\n";
 $o=0;
 $campaign_SQL="";
 while ($campaigns_to_print > $o)
@@ -601,6 +621,7 @@ $MAIN.="</TD>\n";
 
 $MAIN.="<TD VALIGN=TOP> <B>"._QXZ("In-groups").":</B><BR><SELECT SIZE=5 NAME=group[] multiple>\n";
 $MAIN.="<option value=\"--ALL--\"".(in_array("--ALL--", $group) ? " selected" : "").">--"._QXZ("ALL INGROUPS")."--</option>\n";
+$MAIN.="<option value=\"--NONE--\"".(in_array("--NONE--", $group) ? " selected" : "").">-- "._QXZ("NONE")." --</option>\n";
 
 $o=0;
 while ($groups_to_print > $o)
@@ -676,12 +697,12 @@ else
 
 	$campaign_string=preg_replace("/^\||\|$/", "", $campaign_string);
 	$group_string=preg_replace("/^\||\|$/", "", $group_string);
-	$ASCII_text =" Date range :  $query_date to $end_date\n";
+	$ASCII_text =" Date range :  $query_date to $end_date ($groups_selected==0 && $campaigns_selected==0)\n";
 	$ASCII_text.=" Campaigns  :  ".preg_replace("/\|/", ", ", $campaign_string)."\n";
 	$ASCII_text.=" In-groups  :  ".preg_replace("/\|/", ", ", $group_string)."\n\n";
 # 	$ASCII_text.=" Report type:  $erlang_type\n\n";
 
-	$HTML_text.=" Date range :  $query_date to $end_date\n";
+	$HTML_text.=" Date range :  $query_date to $end_date ($groups_selected==0 && $campaigns_selected==0)\n";
 	$HTML_text.=" Campaigns  :  ".preg_replace("/\|/", ", ", $campaign_string)."\n";
 	$HTML_text.=" In-groups  :  ".preg_replace("/\|/", ", ", $group_string)."";
 # 	$HTML_text.=" Report type:  $erlang_type\n\n";

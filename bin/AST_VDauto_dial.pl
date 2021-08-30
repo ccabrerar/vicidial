@@ -143,9 +143,10 @@
 # 210718-0359 - Fixes for 24-Hour Call Count Limits with standard Auto-Alt-Dialing
 # 210719-1520 - Added additional state override methods for call_limit_24hour
 # 210731-0952 - Added cid_group_id_two campaign option
+# 210827-1044 - Fix for Extended auto-alt-dialing issue #1323
 #
 
-$build='210731-0952';
+$build='210827-1044';
 $script='AST_VDauto_dial';
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -3196,7 +3197,10 @@ while($one_day_interval > 0)
 									{
 									if ($CLalt_dial =~ /ADDR3/) {$Xlast=0;}
 									else
-										{$Xlast = $CLalt_dial;}
+										{
+										$Xlast = $CLalt_dial;
+										if ($CLalt_dial =~ /LAST/) {$Xlast=66000;}
+										}
 									$Xlast =~ s/\D//gi;
 									if (length($Xlast)<1)
 										{$Xlast=0;}

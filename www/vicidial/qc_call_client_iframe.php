@@ -18,6 +18,8 @@
 # 141229-2013 - Added code for on-the-fly language translations display
 # 170409-1533 - Added IP List validation code
 # 210306-1052 - Changes for new QC module
+# 210825-0937 - Removed custom fields, unused here.
+# 210827-1818 - Fix for security issue
 #
 
 require("dbconnect_mysqli.php");
@@ -160,16 +162,18 @@ if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/','',$PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/','',$PHP_AUTH_PW);
-
-	$old_phone = preg_replace('/[^0-9]/','',$old_phone);
-	$phone_number = preg_replace('/[^0-9]/','',$phone_number);
-	$alt_phone = preg_replace('/[^0-9]/','',$alt_phone);
 	}	# end of non_latin
 else
 	{
 	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
 	}
+
+$old_phone = preg_replace('/[^0-9]/','',$old_phone);
+$phone_number = preg_replace('/[^0-9]/','',$phone_number);
+$alt_phone = preg_replace('/[^0-9]/','',$alt_phone);
+$lead_id = preg_replace('/[^0-9]/','',$lead_id);
+$list_id = preg_replace('/[^0-9]/','',$list_id);
 
 if (strlen($phone_number)<6) {$phone_number=$old_phone;}
 
@@ -231,50 +235,6 @@ if ( $qc_user_level < 1 )
 	echo _QXZ("QC user level is too low")."\n";
 	exit;
 	}
-
-$label_title =				_QXZ("Title");
-$label_first_name =			_QXZ("First");
-$label_middle_initial =		_QXZ("MI");
-$label_last_name =			_QXZ("Last");
-$label_address1 =			_QXZ("Address1");
-$label_address2 =			_QXZ("Address2");
-$label_address3 =			_QXZ("Address3");
-$label_city =				_QXZ("City");
-$label_state =				_QXZ("State");
-$label_province =			_QXZ("Province");
-$label_postal_code =		_QXZ("Postal Code");
-$label_vendor_lead_code =	_QXZ("Vendor ID");
-$label_gender =				_QXZ("Gender");
-$label_phone_number =		_QXZ("Phone");
-$label_phone_code =			_QXZ("DialCode");
-$label_alt_phone =			_QXZ("Alt. Phone");
-$label_security_phrase =	_QXZ("Show");
-$label_email =				_QXZ("Email");
-$label_comments =			_QXZ("Comments");
-
-### find any custom field labels
-$stmt="SELECT label_title,label_first_name,label_middle_initial,label_last_name,label_address1,label_address2,label_address3,label_city,label_state,label_province,label_postal_code,label_vendor_lead_code,label_gender,label_phone_number,label_phone_code,label_alt_phone,label_security_phrase,label_email,label_comments from system_settings;";
-$rslt=mysql_to_mysqli($stmt, $link);
-$row=mysqli_fetch_row($rslt);
-if (strlen($row[0])>0)	{$label_title =				$row[0];}
-if (strlen($row[1])>0)	{$label_first_name =		$row[1];}
-if (strlen($row[2])>0)	{$label_middle_initial =	$row[2];}
-if (strlen($row[3])>0)	{$label_last_name =			$row[3];}
-if (strlen($row[4])>0)	{$label_address1 =			$row[4];}
-if (strlen($row[5])>0)	{$label_address2 =			$row[5];}
-if (strlen($row[6])>0)	{$label_address3 =			$row[6];}
-if (strlen($row[7])>0)	{$label_city =				$row[7];}
-if (strlen($row[8])>0)	{$label_state =				$row[8];}
-if (strlen($row[9])>0)	{$label_province =			$row[9];}
-if (strlen($row[10])>0) {$label_postal_code =		$row[10];}
-if (strlen($row[11])>0) {$label_vendor_lead_code =	$row[11];}
-if (strlen($row[12])>0) {$label_gender =			$row[12];}
-if (strlen($row[13])>0) {$label_phone_number =		$row[13];}
-if (strlen($row[14])>0) {$label_phone_code =		$row[14];}
-if (strlen($row[15])>0) {$label_alt_phone =			$row[15];}
-if (strlen($row[16])>0) {$label_security_phrase =	$row[16];}
-if (strlen($row[17])>0) {$label_email =				$row[17];}
-if (strlen($row[18])>0) {$label_comments =			$row[18];}
 
 //Is logged in admin user also logged in as an agent?
 function is_user_logged_in($user)

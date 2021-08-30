@@ -7,6 +7,7 @@
 #
 # 190227-1259 - Initial build
 # 200309-1819 - Modifications for display formatting
+# 210827-1818 - Fix for security issue
 #
 
 $startMS = microtime();
@@ -51,6 +52,21 @@ if (isset($_GET["DB"]))				{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))	{$DB=$_POST["DB"];}
 if (isset($_GET["report_display_type"]))			{$report_display_type=$_GET["report_display_type"];}
 	elseif (isset($_POST["report_display_type"]))	{$report_display_type=$_POST["report_display_type"];}
+
+$query_date = preg_replace('/[^-0-9]/','',$query_date);
+$end_date = preg_replace('/[^-0-9]/','',$end_date);
+$query_time=preg_replace("/[^0-9\:]/", "", $query_time);
+$end_time=preg_replace("/[^0-9\:]/", "", $end_time);
+$campaigns=preg_replace('/[^-_0-9\p{L}]/u','',$campaigns);
+$users=preg_replace('/[^-_0-9\p{L}]/u','',$users);
+$user_groups=preg_replace('/[^-_0-9\p{L}]/u','',$user_groups);
+$groups=preg_replace('/[^-_0-9\p{L}]/u','',$groups);
+$dids=preg_replace('/[^-_0-9\p{L}]/u','',$dids);
+$file_download = preg_replace('/[^0-9]/','',$file_download);
+$submit=preg_replace('/[^-_0-9\p{L}]/u','',$submit);
+$SUBMIT=preg_replace('/[^-_0-9\p{L}]/u','',$SUBMIT);
+$DB = preg_replace('/[^0-9]/','',$DB);
+$report_display_type=preg_replace('/[^_\p{L}]/u','',$report_display_type);
 
 if (!$query_date) {$query_date=date("Y-m-d");}
 if (!$end_date) {$end_date=date("Y-m-d");}
@@ -218,7 +234,7 @@ if ( (!preg_match('/\-\-ALL\-\-/i', $LOGadmin_viewable_call_times)) and (strlen(
 $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 $STARTtime = date("U");
-if (!isset($groups)) {$groups = array();}
+if (!isset($groups) || !is_array($groups)) {$groups = array();}
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (!isset($end_date)) {$end_date = $NOW_DATE;}
 
