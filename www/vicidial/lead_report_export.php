@@ -35,9 +35,12 @@
 # 190610-2036 - Fixed admin hide phone issue
 # 190926-0926 - Fixes for PHP7
 # 210302-0839 - Added exclude_call_log_data option
+# 210911-1906 - Fix for --ALL-- selection user-group permission issue
 #
 
 $startMS = microtime();
+
+$vlcs[0]='';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -399,6 +402,19 @@ if ($run_export > 0)
 	$list_string='|';
 	$status_string='|';
 	$did_string='|';
+	# Get campaigns for "ALL"
+	$stmt="select campaign_id from vicidial_campaigns $whereLOGallowed_campaignsSQL order by campaign_id;";
+	$rslt=mysql_to_mysqli($stmt, $link);
+	if ($DB) {echo "$stmt\n";}
+	$ALL_available_campaigns = mysqli_num_rows($rslt);
+	$h=0;
+	$ALL_campaign_SQL="";
+	while ($h < $ALL_available_campaigns)
+		{
+		$row=mysqli_fetch_row($rslt);
+		$ALL_campaign_SQL .= "'$row[0]',";
+		$h++;
+		}
 
 	$i=0;
 	while($i < $campaign_ct)
@@ -407,6 +423,11 @@ if ($run_export > 0)
 			{
 			$campaign_string .= "$campaign[$i]|";
 			$campaign_SQL .= "'$campaign[$i]',";
+			}
+		# Need this for next few lines
+		if (preg_match("/\-\-ALL\-\-/",$campaign[$i]) && !preg_match("/\-\-ALL\-\-/",$campaign_string))
+			{
+			$campaign_string .= "$campaign[$i]|";
 			}
 		$i++;
 		}
@@ -417,7 +438,8 @@ if ($run_export > 0)
 		}
 	else if ( preg_match('/\-\-ALL\-\-/',$campaign_string) )
 		{
-		$campaign_SQL = "";
+		$campaign_SQL = preg_replace('/,$/i', '',$ALL_campaign_SQL);
+		$campaign_SQL = "and vl.campaign_id IN($campaign_SQL)";
 		$RUNcampaign=$campaign_ct;
 		}
 	else
@@ -427,6 +449,21 @@ if ($run_export > 0)
 		$RUNcampaign++;
 		}
 
+
+	# Get inbound groups for "ALL"
+	$stmt="select group_id from vicidial_inbound_groups $whereLOGadmin_viewable_groupsSQL order by group_id;";
+	$rslt=mysql_to_mysqli($stmt, $link);
+	if ($DB) {echo "$stmt\n";}
+	$ALL_available_groups = mysqli_num_rows($rslt);
+	$h=0;
+	$ALL_group_SQL="";
+	while($h < $ALL_available_groups)
+		{
+		$row=mysqli_fetch_row($rslt);
+		$ALL_group_SQL .= "'$row[0]',";
+		$h++;
+		}
+	
 	$i=0;
 	while($i < $group_ct)
 		{
@@ -442,9 +479,18 @@ if ($run_export > 0)
 		}
 	else
 		{
-		$group_SQL = preg_replace('/,$/i', '',$group_SQL);
-		$group_SQL = "and vl.campaign_id IN($group_SQL)";
-		$RUNgroup++;
+		if ( (preg_match("/\-\-ALL\-\-/",$group_string) ) or ($group_ct < 1) )
+			{
+			$group_SQL = preg_replace('/,$/i', '',$ALL_group_SQL);
+			$group_SQL = "and vl.campaign_id IN($group_SQL)";
+			$RUNgroup++;
+			}
+		else
+			{
+			$group_SQL = preg_replace('/,$/i', '',$group_SQL);
+			$group_SQL = "and vl.campaign_id IN($group_SQL)";
+			$RUNgroup++;
+			}
 		}
 
 	$i=0;
@@ -488,6 +534,20 @@ if ($run_export > 0)
 		$RUNvlc++;
 		}
 	if ( ($vlc_filter=="NO") or ($VLC_enabled != 'Y') ) {$vlc_SQL=""; $RUNvlc=0;}
+	
+	# Get user groups for "ALL"
+	$stmt="select user_group from vicidial_user_groups $whereLOGadmin_viewable_groupsSQL order by user_group;";
+	$rslt=mysql_to_mysqli($stmt, $link);
+	if ($DB) {echo "$stmt\n";}
+	$ALL_available_user_groups = mysqli_num_rows($rslt);
+	$h=0;
+	$ALL_user_group_SQL="";
+	while ($h < $ALL_available_user_groups)
+		{
+		$row=mysqli_fetch_row($rslt);
+		$ALL_user_group_SQL .= "'$row[0]',";
+		$h++;
+		}
 
 	$i=0;
 	while($i < $user_group_ct)
@@ -498,12 +558,29 @@ if ($run_export > 0)
 		}
 	if ( (preg_match('/\-\-ALL\-\-/',$user_group_string) ) or ($user_group_ct < 1) )
 		{
-		$user_group_SQL = "";
+		$user_group_SQL = preg_replace('/,$/i', '',$ALL_user_group_SQL);
+		$user_group_SQL = "and (vl.user_group IN($user_group_SQL) or vl.user_group is null)";
 		}
 	else
 		{
 		$user_group_SQL = preg_replace('/,$/i', '',$user_group_SQL);
 		$user_group_SQL = "and vl.user_group IN($user_group_SQL)";
+		}
+
+
+
+	# Get lists for "ALL"
+	$stmt="select list_id from vicidial_lists $whereLOGallowed_campaignsSQL order by list_id;";
+	$rslt=mysql_to_mysqli($stmt, $link);
+	if ($DB) {echo "$stmt\n";}
+	$ALL_available_lists = mysqli_num_rows($rslt);
+	$h=0;
+	$ALL_list_SQL="";
+	while ($h < $ALL_available_lists)
+		{
+		$row=mysqli_fetch_row($rslt);
+		$ALL_list_SQL .= "'$row[0]',";
+		$h++;
 		}
 
 	$i=0;
@@ -515,13 +592,42 @@ if ($run_export > 0)
 		}
 	if ( (preg_match('/\-\-ALL\-\-/',$list_string) ) or ($list_ct < 1) )
 		{
-		$list_SQL = "";
+		$list_SQL = preg_replace('/,$/i', '',$ALL_list_SQL);
+		$list_SQL = "and vl.list_id IN($list_SQL)";
 		}
 	else
 		{
 		$list_SQL = preg_replace('/,$/i', '',$list_SQL);
 		$list_SQL = "and vi.list_id IN($list_SQL)";
 		}
+
+
+
+	$stmt="select status from vicidial_statuses order by status;";
+	$rslt=mysql_to_mysqli($stmt, $link);
+	if ($DB) {echo "$stmt\n";}
+	$ALL_available_statuses = mysqli_num_rows($rslt);
+	$h=0;
+	$ALL_status_SQL="";
+	while ($h < $ALL_available_statuses)
+		{
+		$row=mysqli_fetch_row($rslt);
+		$ALL_status_SQL .= "'$row[0]',";
+		$h++;
+		}
+
+	$stmt="select distinct status from vicidial_campaign_statuses $whereLOGallowed_campaignsSQL order by status;";
+	$rslt=mysql_to_mysqli($stmt, $link);
+	if ($DB) {echo "$stmt\n";}
+	$ALL_available_Cstatuses = mysqli_num_rows($rslt);
+	$j=0;
+	while ($j < $ALL_available_Cstatuses)
+		{
+		$row=mysqli_fetch_row($rslt);
+		$ALL_status_SQL .= "'$row[0]',";
+		$j++;
+		}
+
 
 	$i=0;
 	while($i < $status_ct)
@@ -532,7 +638,8 @@ if ($run_export > 0)
 		}
 	if ( (preg_match('/\-\-ALL\-\-/',$status_string) ) or ($status_ct < 1) )
 		{
-		$status_SQL = "";
+		$status_SQL = preg_replace('/,$/i', '',$ALL_status_SQL);
+		$status_SQL = "and vi.status IN($status_SQL)";
 		}
 	else
 		{

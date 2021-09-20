@@ -114,7 +114,7 @@ for ($t=0; $t<count($log_tables_array); $t++)
 if ($search_archived_data) 
 	{
 	$vicidial_api_log_table=use_archive_table("vicidial_api_log");
-	$vicidial_api_log_table=use_archive_table("vicidial_api_urls");
+	$vicidial_api_urls_table=use_archive_table("vicidial_api_urls");
 	}
 else
 	{

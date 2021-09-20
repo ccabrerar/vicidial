@@ -1813,3 +1813,12 @@ UPDATE system_settings SET db_schema_version='1642',db_schema_update_date=NOW() 
 CREATE INDEX vavl_agent_log_id on vicidial_agent_visibility_log (agent_log_id);
 
 UPDATE system_settings SET db_schema_version='1643',db_schema_update_date=NOW() where db_schema_version < 1643;
+
+ALTER TABLE vicidial_inbound_dids MODIFY call_handle_method VARCHAR(40) default 'CID';
+ALTER TABLE vicidial_inbound_dids MODIFY filter_call_handle_method VARCHAR(40) default 'CID';
+
+UPDATE system_settings SET db_schema_version='1644',db_schema_update_date=NOW() where db_schema_version < 1644;
+
+ALTER TABLE vicidial_inbound_groups ADD populate_lead_owner VARCHAR(20) default 'DISABLED';
+
+UPDATE system_settings SET db_schema_version='1645',db_schema_update_date=NOW() where db_schema_version < 1645;

@@ -19,6 +19,7 @@
 #
 # changes:
 # 210605-0936 - first build
+# 210908-1722 - Fix to remove backslash-canceled-out double-quotes
 #
 
 $script = 'agi-TILTX_SHAKEN.agi';
@@ -392,24 +393,28 @@ foreach(@Wdoc)
 		{
 		$TILTXID = $Wdoc[$i];
 		$TILTXID =~ s/.*"TILTXID":"//;
+		$TILTXID =~ s/\\"//g;
 		$TILTXID =~ s/".*//;
 		}
 	if ($Wdoc[$i] =~ /"Identity":".*"/i) 
 		{
 		$Identity = $Wdoc[$i];
 		$Identity =~ s/.*"Identity":"//;
+		$Identity =~ s/\\"//g;
 		$Identity =~ s/".*//;
 		}
 	if ($Wdoc[$i] =~ /"CAID":".*"/i)
 		{
 		$CAID = $Wdoc[$i];
 		$CAID =~ s/.*"CAID":"//;
+		$CAID =~ s/\\"//g;
 		$CAID =~ s/".*//;
 		}
 	if ($Wdoc[$i] =~ /"CallerIDToUse":".*"/i)
 		{
 		$CallerIDToUse = $Wdoc[$i];
 		$CallerIDToUse =~ s/.*"CallerIDToUse":"//;
+		$CallerIDToUse =~ s/\\"//g;
 		$CallerIDToUse =~ s/".*//;
 		}
 	# log all response data as a single string together

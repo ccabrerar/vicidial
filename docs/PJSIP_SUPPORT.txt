@@ -1,0 +1,104 @@
+PJSIP SUPPORT IN ASTERISK		Started: 2021-01-12	Updated: 2021-08-31
+
+* NOTE: Full PJSIP support was added to VICIdial in svn/trunk revision 3511.
+
+
+This document will go over how to enable support for PJSIP within Asterisk 16 on a VICIbox 10 system.
+
+
+
+What is PJSIP exactly?
+
+PJSIP is a software library that is it's own Open-Source project, separate from the Asterisk Open-Source project. Beta support for PJSIP was added into Asterisk in the version 12 branch in 2012, based upon the PJSIP project's codebase. The original Asterisk SIP library(chan_sip) was developed back in 2002, and was not built to handle many of the changes made to the SIP standard since then. The PJSIP architecture is more flexible and is the chosen path forward for the Asterisk project for future SIP channel development. Eventually, the original Asterisk chan_sip libraries will be depricated, although a firm date for that has not yet been set.
+
+
+What is the PJSIP Wizard?
+
+Added to Asterisk in version 13.2, the PJSIP Wizard is a more simplified option for setting up PJSIP accounts. In VICIdial, we actually use this format on the back-end to set up Phones that are set to the PJSIP protocol. More information on how PJSIP-Wizard works, and examples of configurations using it and regular PJSIP are available here:
+https://wiki.asterisk.org/wiki/display/AST/PJSIP+Configuration+Wizard
+
+
+
+For more details on how how PJSIP was added to Asterisk:
+https://www.sangoma.com/articles/asterisk-12-part-iv-sip-stack-future/
+
+The PJSIP Open-Source project:
+https://www.pjsip.org/
+
+
+
+
+STEPS TO ACTIVATE PJSIP ON YOUR VICIBOX 10 INSTALL, WITH ASTEIRSK 16:
+
+1. Go into /etc/asterisk/sip.conf and change: 
+     bindport=5060 
+     to 
+     bindport=5061 
+      
+and  
+     websocket_enabled=true 
+     to 
+     websocket_enabled=false 
+If websocket_enabled is not there add it and set it to false 
+ 
+2. Go into pjsip.conf and change: 
+     bind		= 0.0.0.0:5061 
+     to 
+     bind		= 0.0.0.0:5060 
+      
+3. Reboot the dialer
+4. Go to Admin -> System Settings and change Allowed SIP Stacks from: 
+     "SIP" 
+     to either 
+     "PJSIP" 
+     or 
+     "SIP_and_PJSIP" to allow both SIP and PJSIP configurations on the dialers in your cluster
+5. Phones and carriers will need to be manually changed if you want to switch them to PJSIP
+
+
+
+
+EXAMPLE PJSIP CARRIER CONFIGURATION:
+
+ACCOUNT ENTRY:
+
+[PJSIPCARRIER] 
+type = aor 
+contact = sip:10.10.10.17 
+qualify_frequency = 15 
+maximum_expiration = 3600 
+minimum_expiration = 60 
+default_expiration = 120 
+ 
+[PJSIPCARRIER] 
+type = identify 
+endpoint = PJSIPCARRIER 
+match = 10.10.10.17 
+ 
+[PJSIPCARRIER] 
+type = endpoint 
+context = trunkinbound 
+dtmf_mode = none 
+disallow = all 
+allow = ulaw 
+rtp_symmetric = yes 
+rewrite_contact = yes 
+rtp_timeout = 60 
+use_ptime = yes 
+moh_suggest = default 
+direct_media = no 
+trust_id_inbound = yes 
+send_rpid = yes 
+inband_progress = no 
+tos_audio = ef 
+language = en 
+aors = PJSIPCARRIER 
+
+
+
+DIALPLAN ENTRY:
+
+exten => _91NXXNXXXXXX,1,AGI(agi://127.0.0.1:4577/call_log) 
+exten => _91NXXNXXXXXX,n,Dial(PJSIP/${EXTEN:1}@PJSIPCARRIER,,To) 
+exten => _91NXXNXXXXXX,n,Hangup()  
+

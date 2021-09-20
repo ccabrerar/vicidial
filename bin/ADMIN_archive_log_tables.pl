@@ -62,6 +62,7 @@
 # 210317-2104 - Added vicidial_agent_visibility_log archiving
 # 210407-2023 - Added vicidial_peer_event_log archiving
 # 210819-0826 - Added vicidial_inbound_caller_codes archiving
+# 210912-1546 - Added --api-log-days=X and --api-only flags
 #
 
 $CALC_TEST=0;
@@ -71,6 +72,7 @@ $recording_log_archive=0;
 $did_log_archive=0;
 $park_log_archive=0;
 $wipe_closer_log=0;
+$api_log_only=0;
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -101,6 +103,8 @@ if (length($ARGV[0])>1)
 		print "  [--recording-log-days=XX] = OPTIONAL, number of days to archive recording_log table only past\n";
 		print "  [--did-log-days=XX] = OPTIONAL, number of days to archive vicidial_did_log table only past\n";
 		print "  [--park-log-days=XX] = OPTIONAL, number of days to archive park_log table only past\n";
+		print "  [--api-only] = OPTIONAL, only archive vicidial_api_log table then exit\n";
+		print "       [--api-log-days=XX] = REQUIRED FOR --api-only, number of days to archive vicidial_api_log table only past\n";
 		print "  [--cpd-log-purge-days=XX] = OPTIONAL, number of days to purge vicidial_cpd_log table only past\n";
 		print "  [--wipe-closer-log] = OPTIONAL, deletes all records from vicidial_closer_log after archiving\n";
 		print "  [--wipe-all-being-archived] = OPTIONAL, deletes all records from most tables after archiving\n";
@@ -235,6 +239,25 @@ if (length($ARGV[0])>1)
 			if ($Q < 1) 
 				{print "\n----- PARK LOG ARCHIVE ACTIVE, DAYS: $parkdays -----\n\n";}
 			}
+		if ($args =~ /--api-only/i)
+			{
+			$api_log_only++;
+			if ($Q < 1) 
+				{print "\n----- API LOG ARCHIVE ONLY -----\n\n";}
+			}
+		if ($args =~ /--api-log-days=/i)
+			{
+			$api_log_archive++;
+			@data_in = split(/--api-log-days=/,$args);
+			$apidays = $data_in[1];
+			$apidays =~ s/ .*$//gi;
+			$apidays =~ s/\D//gi;
+			if ($apidays > 999999)
+				{$apidays=1825;}
+			if ($Q < 1) 
+				{print "\n----- API LOG ARCHIVE ACTIVE, DAYS: $apidays -----\n\n";}
+			}
+
 		if ($args =~ /--cpd-log-purge-days=/i)
 			{
 			$cpd_log_purge++;
@@ -333,6 +356,20 @@ if ($park_log_archive > 0)
 	if ($PARKsec < 10) {$PARKsec = "0$PARKsec";}
 	$PARKdel_time = "$PARKyear-$PARKmon-$PARKmday $PARKhour:$PARKmin:$PARKsec";
 	}
+if ($api_log_archive > 0) 
+	{
+	$APIdel_epoch = ($secX - (86400 * $apidays));   # X days ago
+	($APIsec,$APImin,$APIhour,$APImday,$APImon,$APIyear,$APIwday,$APIyday,$APIisdst) = localtime($APIdel_epoch);
+	$APIyear = ($APIyear + 1900);
+	$APImon++;
+	if ($APImon < 10) {$APImon = "0$APImon";}
+	if ($APImday < 10) {$APImday = "0$APImday";}
+	if ($APIhour < 10) {$APIhour = "0$APIhour";}
+	if ($APImin < 10) {$APImin = "0$APImin";}
+	if ($APIsec < 10) {$APIsec = "0$APIsec";}
+	$APIdel_time = "$APIyear-$APImon-$APImday $APIhour:$APImin:$APIsec";
+	}
+
 if ($cpd_log_purge > 0)
 	{
 	$CPDdel_epoch = ($secX - (86400 * $CPDdays));   # X days ago
@@ -357,6 +394,7 @@ if (!$Q) {print "$CLIdays days ( $del_time [$del_date]|$del_epoch ) from current
 if ( (!$Q) && ($recording_log_archive > 0) ) {print "REC $RECORDINGdays days ( $RECdel_time|$RECdel_epoch ) from current date \n\n";}
 if ( (!$Q) && ($did_log_archive > 0) ) {print "DID $diddays days ( $DIDdel_time|$DIDdel_epoch ) from current date \n\n";}
 if ( (!$Q) && ($park_log_archive > 0) ) {print "PARK $parkdays days ( $PARKdel_time|$PARKdel_epoch ) from current date \n\n";}
+if ( (!$Q) && ($api_log_archive > 0) ) {print "API $apidays days ( $APIdel_time|$APIdel_epoch ) from current date \n\n";}
 if ( (!$Q) && ($cpd_log_purge > 0) ) {print "CPD $CPDdays days ( $CPDdel_time|$CPDdel_epoch ) from current date \n\n";}
 
 if ($CALC_TEST > 0)
@@ -1441,6 +1479,114 @@ if (!$T)
 	########## END of --daily flag processing ##########
 
 
+	########## BEGIN --api-log-only flag processing ##########
+	if ($api_log_only > 0)
+		{
+		##### vicidial_api_log
+		$stmtA = "SELECT count(*) from vicidial_api_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$vicidial_api_log_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		$stmtA = "SELECT count(*) from vicidial_api_log_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$vicidial_api_log_archive_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		if (!$Q) {print "\nProcessing vicidial_api_log table...  ($vicidial_api_log_count|$vicidial_api_log_archive_count)\n";}
+		$stmtA = "INSERT IGNORE INTO vicidial_api_log_archive SELECT * from vicidial_api_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows inserted into vicidial_api_log_archive table \n";}
+		
+		$rv = $sthA->err();
+		if (!$rv) 
+			{
+			if ($wipe_all > 0)
+				{$stmtA = "DELETE FROM vicidial_api_log;";}
+			else
+				{$stmtA = "DELETE FROM vicidial_api_log WHERE api_date < '$APIdel_time';";}
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			if (!$Q) {print "$sthArows rows deleted from vicidial_api_log table \n";}
+
+			$stmtA = "optimize table vicidial_api_log;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+
+			$stmtA = "optimize table vicidial_api_log_archive;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			}
+
+		##### vicidial_api_urls
+		$stmtA = "SELECT count(*) from vicidial_api_urls;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$vicidial_api_urls_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		$stmtA = "SELECT count(*) from vicidial_api_urls_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$vicidial_api_urls_archive_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		if (!$Q) {print "\nProcessing vicidial_api_urls table...  ($vicidial_api_urls_count|$vicidial_api_urls_archive_count)\n";}
+		$stmtA = "INSERT IGNORE INTO vicidial_api_urls_archive SELECT * from vicidial_api_urls;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows inserted into vicidial_api_urls_archive table \n";}
+		
+		$rv = $sthA->err();
+		if (!$rv) 
+			{
+			if ($wipe_all > 0)
+				{$stmtA = "DELETE FROM vicidial_api_urls;";}
+			else
+				{$stmtA = "DELETE FROM vicidial_api_urls WHERE api_date < '$APIdel_time';";}
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			if (!$Q) {print "$sthArows rows deleted from vicidial_api_urls table \n";}
+
+			$stmtA = "optimize table vicidial_api_urls;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+
+			$stmtA = "optimize table vicidial_api_urls_archive;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			}
+		exit;
+		}
 
 	if ($queue_log > 0)
 		{
@@ -3176,7 +3322,7 @@ if (!$T)
 		$rv = $sthA->err();
 		if (!$rv) 
 			{	
-			$stmtA = "DELETE FROM park_log WHERE parked_time < '$DIDdel_time';";
+			$stmtA = "DELETE FROM park_log WHERE parked_time < '$PARKdel_time';";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows = $sthA->rows;

@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2021-08-12
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2021-09-17
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -20,6 +20,7 @@ vm_list - outputs a list of voicemail boxes in the system
 blind_monitor - calls user-defined phone and places them in session as blind monitor
 add_lead - adds a new lead to the vicidial_list table with several fields and options
 update_lead - updates lead information in vicidial_list and associated custom table
+batch_update_lead - updates multiple leads in vicidial_list with single set of field values (limited field options)
 agent_ingroup_info - shows in-group and outbound auto-dial info for logged-in agent
 recording_lookup - looks up recordings based upon user and date or lead_id
 did_log_export - exports all calls inbound to a DID for one day
@@ -192,6 +193,7 @@ Changes:
 210625-1421 - Added BARGESWAP option to blind_monitor function
 210701-2050 - Added ingroup_rank/ingroup_grade options to the update_user function
 210812-2640 - Added update of live agent records for ingroup_rank/ingroup_grade in the update_user function
+210917-1615 - Added batch_update_lead function
 
 
 API Functions use the 'function' variable
@@ -1219,6 +1221,66 @@ ERROR: update_lead NOT A DEFINED LIST ID, LIST EXISTS CHECK ENABLED - 6666|139
 
 ERROR: update_lead USER DOES NOT HAVE PERMISSION TO UPDATE LEADS IN THE SYSTEM - 6666|0 
 ERROR: update_lead NOT AN ALLOWED LIST ID - 7275551212|98762
+
+
+
+
+
+--------------------------------------------------------------------------------
+batch_update_lead - updates multiple leads in vicidial_list with single set of field values (limited field options)
+
+NOTE: api user for this function must have modify_leads set to 1 and user_level must be set to 8 or higher
+NOTE: This function will first find which leads exist and then update them all at once. As such, there will not be admin log entries associated with each individual lead modified
+
+REQUIRED FIELDS-
+lead_ids -		must be all numbers and commas, 1-9 digit numbers separate by a comma
+source -		description of what originated the API call (maximum 20 characters)
+
+SETTINGS FIELDS-
+list_exists_check -	Y or N, default is N. If the list_id_field is not a defined list in the system, it will ERROR and not update the leads.
+reset_lead -		Y or N, Setting this to Y will reset the called-since-last-reset flag of the lead, default is N.
+records -		maximum number of records to update (defaults to '100'[most recently created leads])
+
+EDITABLE FIELDS- 
+user_field -		1-20 characters, this updates the 'user' field in the vicidial_list table
+list_id_field -		3-12 digits, this updates the 'list_id' field in the vicidial_list table
+status -		1-6 characters, not punctuation or spaces
+vendor_lead_code -	1-20 characters
+source_id  -		1-50 characters
+gmt_offset_now -	overridden by auto-lookup of phone_code and area_code portion of phone number if applicable
+title -			1-4 characters
+first_name -		1-30 characters
+middle_initial -	1 character
+last_name -		1-30 characters
+address1 -		1-100 characters
+address2 -		1-100 characters
+address3 -		1-100 characters
+city -			1-50 characters
+state -			2 characters
+province -		1-50 characters
+postal_code -		1-10 characters
+country_code -		3 characters
+gender -		U, M, F (Undefined, Male, Female) - defaults to 'U'
+date_of_birth -		YYYY-MM-DD
+alt_phone -		1-12 characters
+email -			1-70 characters
+security_phrase -	1-100 characters
+comments -		1-255 characters
+rank -			1-5 digits
+owner -			1-20 characters (user ID, Territory or user group)
+called_count -		digits only, the number of attempts dialing the lead
+phone_code -		digits only, can be 1-4 digits
+
+Example URL strings for API calls:
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=batch_update_lead&lead_ids=2345,2346&list_id_field=138
+
+Example responses:
+SUCCESS: batch_update_lead LEADS HAVE BEEN UPDATED - 6666|2|2345,2346
+ERROR: batch_update_lead USER DOES NOT HAVE PERMISSION TO UPDATE LEADS IN THE SYSTEM - 6666|0|
+ERROR: batch_update_lead NO LEADS DEFINED - 6666|
+ERROR: batch_update_lead NOT AN ALLOWED LIST ID - 6666|138
+ERROR: batch_update_lead NOT A DEFINED LIST ID, LIST EXISTS CHECK ENABLED - 6666|138
+ERROR: batch_update_lead NO LEADS FOUND - 6666|0|2345,2346
 
 
 

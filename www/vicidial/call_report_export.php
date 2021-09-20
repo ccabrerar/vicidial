@@ -5,7 +5,7 @@
 # and/or vicidial_closer_log information by status, list_id and date range.
 # downloads to a flat text file that is tab delimited
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -60,6 +60,7 @@
 # 191119-1731 - Fix for alternate server url for recordings, issue #1175
 # 200115-1151 - Added ALTERNATE_2 export option with alternate header option in options.php
 # 200709-2106 - Added EXTENDED_4 export option with logged list_id from time of call
+# 210911-1907 - Fix for --ALL-- selection user-group permission issue
 #
 
 $startMS = microtime();
@@ -423,6 +424,20 @@ if ($run_export > 0)
 			}
 		}
 
+	# Get campaigns for "ALL"
+	$stmt="select campaign_id from vicidial_campaigns $whereLOGallowed_campaignsSQL order by campaign_id;";
+	$rslt=mysql_to_mysqli($stmt, $link);
+	if ($DB) {echo "$stmt\n";}
+	$ALL_available_campaigns = mysqli_num_rows($rslt);
+	$h=0;
+	$ALL_campaign_SQL="";
+	while ($h < $ALL_available_campaigns)
+		{
+		$row=mysqli_fetch_row($rslt);
+		$ALL_campaign_SQL .= "'$row[0]',";
+		$h++;
+		}
+
 	$i=0;
 	while($i < $campaign_ct)
 		{
@@ -430,6 +445,11 @@ if ($run_export > 0)
 			{
 			$campaign_string .= "$campaign[$i]|";
 			$campaign_SQL .= "'$campaign[$i]',";
+			}
+		# Need this for next few lines
+		if (preg_match("/\-\-ALL\-\-/",$campaign[$i]) && !preg_match("/\-\-ALL\-\-/",$campaign_string))
+			{
+			$campaign_string .= "$campaign[$i]|";
 			}
 		$i++;
 		}
@@ -442,7 +462,8 @@ if ($run_export > 0)
 		{
 		if (preg_match("/\-\-ALL\-\-/",$campaign_string) )
 			{
-			$campaign_SQL = "";
+			$campaign_SQL = preg_replace('/,$/i', '',$ALL_campaign_SQL);
+			$campaign_SQL = "and vl.campaign_id IN($campaign_SQL)";
 			$RUNcampaign++;
 			}
 		else
@@ -452,7 +473,23 @@ if ($run_export > 0)
 			$RUNcampaign++;
 			}
 		}
+	if ($DB) {echo "** $regexLOGallowed_campaigns --- $LOGallowed_campaigns --- $campaign_string **\n";}
 
+
+	# Get inbound groups for "ALL"
+	$stmt="select group_id from vicidial_inbound_groups $whereLOGadmin_viewable_groupsSQL order by group_id;";
+	$rslt=mysql_to_mysqli($stmt, $link);
+	if ($DB) {echo "$stmt\n";}
+	$ALL_available_groups = mysqli_num_rows($rslt);
+	$h=0;
+	$ALL_group_SQL="";
+	while($h < $ALL_available_groups)
+		{
+		$row=mysqli_fetch_row($rslt);
+		$ALL_group_SQL .= "'$row[0]',";
+		$h++;
+		}
+	
 	$i=0;
 	while($i < $group_ct)
 		{
@@ -470,7 +507,8 @@ if ($run_export > 0)
 		{
 		if ( (preg_match("/\-\-ALL\-\-/",$group_string) ) or ($group_ct < 1) )
 			{
-			$group_SQL = "";
+			$group_SQL = preg_replace('/,$/i', '',$ALL_group_SQL);
+			$group_SQL = "and vl.campaign_id IN($group_SQL)";
 			$RUNgroup++;
 			}
 		else
@@ -479,6 +517,20 @@ if ($run_export > 0)
 			$group_SQL = "and vl.campaign_id IN($group_SQL)";
 			$RUNgroup++;
 			}
+		}
+	
+	# Get user groups for "ALL"
+	$stmt="select user_group from vicidial_user_groups $whereLOGadmin_viewable_groupsSQL order by user_group;";
+	$rslt=mysql_to_mysqli($stmt, $link);
+	if ($DB) {echo "$stmt\n";}
+	$ALL_available_user_groups = mysqli_num_rows($rslt);
+	$h=0;
+	$ALL_user_group_SQL="";
+	while ($h < $ALL_available_user_groups)
+		{
+		$row=mysqli_fetch_row($rslt);
+		$ALL_user_group_SQL .= "'$row[0]',";
+		$h++;
 		}
 
 	$i=0;
@@ -490,12 +542,29 @@ if ($run_export > 0)
 		}
 	if ( (preg_match('/\-\-ALL\-\-/',$user_group_string) ) or ($user_group_ct < 1) )
 		{
-		$user_group_SQL = "";
+		$user_group_SQL = preg_replace('/,$/i', '',$ALL_user_group_SQL);
+		$user_group_SQL = "and (vl.user_group IN($user_group_SQL) or vl.user_group is null)";
 		}
 	else
 		{
 		$user_group_SQL = preg_replace('/,$/i', '',$user_group_SQL);
 		$user_group_SQL = "and vl.user_group IN($user_group_SQL)";
+		}
+
+
+
+	# Get lists for "ALL"
+	$stmt="select list_id from vicidial_lists $whereLOGallowed_campaignsSQL order by list_id;";
+	$rslt=mysql_to_mysqli($stmt, $link);
+	if ($DB) {echo "$stmt\n";}
+	$ALL_available_lists = mysqli_num_rows($rslt);
+	$h=0;
+	$ALL_list_SQL="";
+	while ($h < $ALL_available_lists)
+		{
+		$row=mysqli_fetch_row($rslt);
+		$ALL_list_SQL .= "'$row[0]',";
+		$h++;
 		}
 
 	$i=0;
@@ -507,13 +576,42 @@ if ($run_export > 0)
 		}
 	if ( (preg_match('/\-\-ALL\-\-/',$list_string) ) or ($list_ct < 1) )
 		{
-		$list_SQL = "";
+		$list_SQL = preg_replace('/,$/i', '',$ALL_list_SQL);
+		$list_SQL = "and vl.list_id IN($list_SQL)";
 		}
 	else
 		{
 		$list_SQL = preg_replace('/,$/i', '',$list_SQL);
 		$list_SQL = "and vi.list_id IN($list_SQL)";
 		}
+
+
+
+	$stmt="select status from vicidial_statuses order by status;";
+	$rslt=mysql_to_mysqli($stmt, $link);
+	if ($DB) {echo "$stmt\n";}
+	$ALL_available_statuses = mysqli_num_rows($rslt);
+	$h=0;
+	$ALL_status_SQL="";
+	while ($h < $ALL_available_statuses)
+		{
+		$row=mysqli_fetch_row($rslt);
+		$ALL_status_SQL .= "'$row[0]',";
+		$h++;
+		}
+
+	$stmt="select distinct status from vicidial_campaign_statuses $whereLOGallowed_campaignsSQL order by status;";
+	$rslt=mysql_to_mysqli($stmt, $link);
+	if ($DB) {echo "$stmt\n";}
+	$ALL_available_Cstatuses = mysqli_num_rows($rslt);
+	$j=0;
+	while ($j < $ALL_available_Cstatuses)
+		{
+		$row=mysqli_fetch_row($rslt);
+		$ALL_status_SQL .= "'$row[0]',";
+		$j++;
+		}
+
 
 	$i=0;
 	while($i < $status_ct)
@@ -524,7 +622,8 @@ if ($run_export > 0)
 		}
 	if ( (preg_match('/\-\-ALL\-\-/',$status_string) ) or ($status_ct < 1) )
 		{
-		$status_SQL = "";
+		$status_SQL = preg_replace('/,$/i', '',$ALL_status_SQL);
+		$status_SQL = "and vl.status IN($status_SQL)";
 		}
 	else
 		{
@@ -743,12 +842,12 @@ if ($run_export > 0)
 			$stmtA = "SELECT vl.call_date,vl.phone_number,vl.status,vl.user,vu.full_name,vl.campaign_id,vi.vendor_lead_code,vi.source_id,vi.list_id,vi.gmt_offset_now,vi.phone_code,vi.phone_number,vi.title,vi.first_name,vi.middle_initial,vi.last_name,vi.address1,vi.address2,vi.address3,vi.city,vi.state,vi.province,vi.postal_code,vi.country_code,vi.gender,vi.date_of_birth,vi.alt_phone,vi.email,vi.security_phrase,vi.comments,vl.length_in_sec,vl.user_group,vl.queue_seconds,vi.rank,vi.owner,vi.lead_id,vl.closecallid,vi.entry_list_id,vl.uniqueid$export_fields_SQL from vicidial_users vu,".$vicidial_closer_log_table." vl,vicidial_list vi where ".$date_field." >= '$query_date 00:00:00' and ".$date_field." <= '$end_date 23:59:59' and vu.user=vl.user and vi.lead_id=vl.lead_id $list_SQL $group_SQL $user_group_SQL $status_SQL order by ".$date_field." limit 1000000;";
 			}
 		$rslt=mysql_to_mysqli($stmtA, $link);
-		if ($DB) {$DBout .= "$stmt\n";}
+		if ($DB) {$DBout .= "$stmtA\n";}
 		$inbound_to_print = mysqli_num_rows($rslt);
 		if ( ($inbound_to_print < 1) and ($outbound_calls < 1) )
 			{
 			echo _QXZ("There are no inbound calls during this time period for these parameters")."\n";
-			if ($DB) {echo "$stmt\n";}
+			if ($DB) {echo "$stmtA\n";}
 			exit;
 			}
 		else

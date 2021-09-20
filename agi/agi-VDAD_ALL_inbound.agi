@@ -246,6 +246,8 @@
 # 210609-0941 - Added drop_call_seconds_override option
 # 210804-0711 - Fix for closing time action issue #1321
 # 210819-0029 - Added vicidial_inbound_caller_codes logging
+# 210908-0851 - Added OWNERCUSTOMx options for call_handle_method
+# 210911-2008 - Added populate_lead_owner in-group option
 #
 
 $script = 'agi-VDAD_ALL_inbound.agi';
@@ -526,11 +528,11 @@ if ($extension =~ /^999\d\d\*|^998\d\d\*/)
 	### Grab DID values from the database
 	if ($route_type =~ /FILTER/) 
 		{
-		$stmtA = "SELECT filter_call_handle_method,filter_agent_search_method,filter_group_id,did_pattern,filter_list_id,filter_phone_code,filter_campaign_id,filter_user,filter_user_unavailable_action,filter_user_route_settings_ingroup,filter_action,filter_voicemail_ext,filter_extension,filter_exten_context,filter_phone,filter_server_ip,filter_entry_list_id FROM vicidial_inbound_dids where did_id = '$did_id';";
+		$stmtA = "SELECT filter_call_handle_method,filter_agent_search_method,filter_group_id,did_pattern,filter_list_id,filter_phone_code,filter_campaign_id,filter_user,filter_user_unavailable_action,filter_user_route_settings_ingroup,filter_action,filter_voicemail_ext,filter_extension,filter_exten_context,filter_phone,filter_server_ip,filter_entry_list_id,custom_one,custom_two,custom_three,custom_four,custom_five FROM vicidial_inbound_dids where did_id = '$did_id';";
 		}
 	else
 		{
-		$stmtA = "SELECT call_handle_method,agent_search_method,group_id,did_pattern,list_id,phone_code,campaign_id,user,user_unavailable_action,user_route_settings_ingroup,did_route,voicemail_ext,extension,exten_context,phone,server_ip,entry_list_id FROM vicidial_inbound_dids where did_id = '$did_id';";
+		$stmtA = "SELECT call_handle_method,agent_search_method,group_id,did_pattern,list_id,phone_code,campaign_id,user,user_unavailable_action,user_route_settings_ingroup,did_route,voicemail_ext,extension,exten_context,phone,server_ip,entry_list_id,custom_one,custom_two,custom_three,custom_four,custom_five FROM vicidial_inbound_dids where did_id = '$did_id';";
 		}
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -556,6 +558,11 @@ if ($extension =~ /^999\d\d\*|^998\d\d\*/)
 		$did_phone =					$aryA[14];
 		$did_phone_server_ip =			$aryA[15];
 		$entry_list_id =				$aryA[16];
+		$custom_one =					$aryA[17];
+		$custom_two =					$aryA[18];
+		$custom_three =					$aryA[19];
+		$custom_four =					$aryA[20];
+		$custom_five =					$aryA[21];
 		if ($did_route =~ /AGENT/)
 			{$channel_group = $user_route_settings_ingroup;}
 		else
@@ -821,7 +828,7 @@ $affected_rows = $dbhA->do($stmtA);
 
 ### Grab inbound groups values from the database
 $cbc=0;
-$stmtA = "SELECT call_time_id,after_hours_action,after_hours_message_filename,after_hours_exten,after_hours_voicemail,welcome_message_filename,moh_context,onhold_prompt_filename,prompt_interval,agent_alert_exten,agent_alert_delay,drop_call_seconds,drop_action,drop_exten,next_agent_call,voicemail_ext,queue_priority,drop_inbound_group,afterhours_xfer_group,play_place_in_line,play_estimate_hold_time,hold_time_option,hold_time_option_seconds,hold_time_option_exten,hold_time_option_voicemail,hold_time_option_xfer_group,hold_time_option_callback_filename,hold_time_option_callback_list_id,hold_recall_xfer_group,no_delay_call_route,play_welcome_message,no_agent_no_queue,no_agent_action,no_agent_action_value,extension_appended_cidname,uniqueid_status_display,uniqueid_status_prefix,hold_time_option_minimum,hold_time_option_press_filename,hold_time_option_callmenu,onhold_prompt_no_block,onhold_prompt_seconds,hold_time_option_no_block,hold_time_option_prompt_seconds,hold_time_second_option,hold_time_third_option,wait_hold_option_priority,wait_time_option,wait_time_second_option,wait_time_third_option,wait_time_option_seconds,wait_time_option_exten,wait_time_option_voicemail,wait_time_option_xfer_group,wait_time_option_callmenu,wait_time_option_callback_filename,wait_time_option_callback_list_id,wait_time_option_press_filename,wait_time_option_no_block,wait_time_option_prompt_seconds,active,calculate_estimated_hold_seconds,add_lead_url,eht_minimum_prompt_filename,eht_minimum_prompt_no_block,eht_minimum_prompt_seconds,on_hook_ring_time,ingroup_recording_override,ingroup_rec_filename,on_hook_cid,action_xfer_cid,drop_callmenu,after_hours_callmenu,max_calls_method,max_calls_count,max_calls_action,populate_lead_ingroup,na_call_url,drop_lead_reset,after_hours_lead_reset,nanq_lead_reset,wait_time_lead_reset,hold_time_lead_reset,routing_initiated_recordings,on_hook_cid_number,populate_lead_province,areacode_filter,areacode_filter_seconds,areacode_filter_action,areacode_filter_action_value,populate_state_areacode,inbound_survey,inbound_survey_filename,inbound_survey_accept_digit,closing_time_action,closing_time_now_trigger,closing_time_filename,closing_time_end_filename,closing_time_lead_reset,closing_time_option_exten,closing_time_option_callmenu,closing_time_option_voicemail,closing_time_option_xfer_group,closing_time_option_callback_list_id,add_lead_timezone,populate_lead_source,populate_lead_vendor,enter_ingroup_url,cid_cb_confirm_number,cid_cb_invalid_filter_phone_group,cid_cb_valid_length,cid_cb_valid_filename,cid_cb_confirmed_filename,cid_cb_enter_filename,cid_cb_you_entered_filename,cid_cb_press_to_confirm_filename,cid_cb_invalid_filename,cid_cb_reenter_filename,cid_cb_error_filename,place_in_line_caller_number_filename,place_in_line_you_next_filename,answer_signal,no_agent_delay,agent_search_method,populate_lead_comments,drop_call_seconds_override FROM vicidial_inbound_groups where group_id = '$channel_group';";
+$stmtA = "SELECT call_time_id,after_hours_action,after_hours_message_filename,after_hours_exten,after_hours_voicemail,welcome_message_filename,moh_context,onhold_prompt_filename,prompt_interval,agent_alert_exten,agent_alert_delay,drop_call_seconds,drop_action,drop_exten,next_agent_call,voicemail_ext,queue_priority,drop_inbound_group,afterhours_xfer_group,play_place_in_line,play_estimate_hold_time,hold_time_option,hold_time_option_seconds,hold_time_option_exten,hold_time_option_voicemail,hold_time_option_xfer_group,hold_time_option_callback_filename,hold_time_option_callback_list_id,hold_recall_xfer_group,no_delay_call_route,play_welcome_message,no_agent_no_queue,no_agent_action,no_agent_action_value,extension_appended_cidname,uniqueid_status_display,uniqueid_status_prefix,hold_time_option_minimum,hold_time_option_press_filename,hold_time_option_callmenu,onhold_prompt_no_block,onhold_prompt_seconds,hold_time_option_no_block,hold_time_option_prompt_seconds,hold_time_second_option,hold_time_third_option,wait_hold_option_priority,wait_time_option,wait_time_second_option,wait_time_third_option,wait_time_option_seconds,wait_time_option_exten,wait_time_option_voicemail,wait_time_option_xfer_group,wait_time_option_callmenu,wait_time_option_callback_filename,wait_time_option_callback_list_id,wait_time_option_press_filename,wait_time_option_no_block,wait_time_option_prompt_seconds,active,calculate_estimated_hold_seconds,add_lead_url,eht_minimum_prompt_filename,eht_minimum_prompt_no_block,eht_minimum_prompt_seconds,on_hook_ring_time,ingroup_recording_override,ingroup_rec_filename,on_hook_cid,action_xfer_cid,drop_callmenu,after_hours_callmenu,max_calls_method,max_calls_count,max_calls_action,populate_lead_ingroup,na_call_url,drop_lead_reset,after_hours_lead_reset,nanq_lead_reset,wait_time_lead_reset,hold_time_lead_reset,routing_initiated_recordings,on_hook_cid_number,populate_lead_province,areacode_filter,areacode_filter_seconds,areacode_filter_action,areacode_filter_action_value,populate_state_areacode,inbound_survey,inbound_survey_filename,inbound_survey_accept_digit,closing_time_action,closing_time_now_trigger,closing_time_filename,closing_time_end_filename,closing_time_lead_reset,closing_time_option_exten,closing_time_option_callmenu,closing_time_option_voicemail,closing_time_option_xfer_group,closing_time_option_callback_list_id,add_lead_timezone,populate_lead_source,populate_lead_vendor,enter_ingroup_url,cid_cb_confirm_number,cid_cb_invalid_filter_phone_group,cid_cb_valid_length,cid_cb_valid_filename,cid_cb_confirmed_filename,cid_cb_enter_filename,cid_cb_you_entered_filename,cid_cb_press_to_confirm_filename,cid_cb_invalid_filename,cid_cb_reenter_filename,cid_cb_error_filename,place_in_line_caller_number_filename,place_in_line_you_next_filename,answer_signal,no_agent_delay,agent_search_method,populate_lead_comments,drop_call_seconds_override,populate_lead_owner FROM vicidial_inbound_groups where group_id = '$channel_group';";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -962,6 +969,7 @@ if ($sthArows > 0)
 	$agent_search_method_OVERRIDE = 	$aryA[123];
 	$populate_lead_comments = 			$aryA[124];
 	$drop_call_seconds_override = 		$aryA[125];
+	$populate_lead_owner =				$aryA[126];
 
 	if ( (length($place_in_line_caller_number_filename) < 1) || ($place_in_line_caller_number_filename =~ /^NULL$/i) ) 
 		{$place_in_line_caller_number_filename='queue-thereare';}
@@ -1288,8 +1296,24 @@ if ($call_handle_method =~ /LOOKUP/)
 			{&populate_lead_province_process;}
 		if ($add_lead_timezone =~ /PHONE_CODE_AREACODE/) 
 			{&lead_timezone_process;}
+		# populate owner field match requirements, if any
+		$ownerSQL='';
+		$temp_owner = '';
+		if ($call_handle_method =~ /OWNERCUSTOM/)
+			{
+			if ($call_handle_method =~ /OWNERCUSTOM1/) {$temp_owner = $custom_one;}
+			if ($call_handle_method =~ /OWNERCUSTOM2/) {$temp_owner = $custom_two;}
+			if ($call_handle_method =~ /OWNERCUSTOM3/) {$temp_owner = $custom_three;}
+			if ($call_handle_method =~ /OWNERCUSTOM4/) {$temp_owner = $custom_four;}
+			if ($call_handle_method =~ /OWNERCUSTOM5/) {$temp_owner = $custom_five;}
+			if ($call_handle_method =~ /OWNERCUSTOMX/) {$temp_owner = $vid_enter_filename;}
+			$ownerSQL = "and owner='$temp_owner'";
+			}
+		$populate_ownerA='';   $populate_ownerB='';
+		if ($populate_lead_owner =~ /did|OWNERCUSTOM/) 
+			{&populate_lead_owner_process;}
 		### insert a record into the vicidial_list table 
-		$stmtA = "INSERT INTO vicidial_list (entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,called_since_last_reset,phone_code,phone_number,security_phrase,called_count,gmt_offset_now,comments$entry_list_idSQLa$INSERTstateSQLa$INSERTpostal_codeSQLa$populate_provinceA) values('$SQLdate','$tsSQLdate','INBND','$fronter','$vendor_id','$source_id','$list_id','Y','$phone_code','$phone_number','$ingroup_insert','$called_count','$local_gmt','$VLcomments'$entry_list_idSQLb$INSERTstateSQLb$INSERTpostal_codeSQLb$populate_provinceB);";
+		$stmtA = "INSERT INTO vicidial_list (entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,called_since_last_reset,phone_code,phone_number,security_phrase,called_count,gmt_offset_now,comments$entry_list_idSQLa$INSERTstateSQLa$INSERTpostal_codeSQLa$populate_provinceA$populate_ownerA) values('$SQLdate','$tsSQLdate','INBND','$fronter','$vendor_id','$source_id','$list_id','Y','$phone_code','$phone_number','$ingroup_insert','$called_count','$local_gmt','$VLcomments'$entry_list_idSQLb$INSERTstateSQLb$INSERTpostal_codeSQLb$populate_provinceB$populate_ownerB);";
 		$affected_rows = $dbhA->do($stmtA);
 			$dbhP=$dbhA;   $mysql_count='02007';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 		$cbc=0;
@@ -1364,14 +1388,28 @@ if ($call_handle_method =~ /LOOKUP/)
 				}
 			}
 
+		# populate owner field match requirements, if any
+		$ownerSQL='';
+		$temp_owner = '';
+		if ($call_handle_method =~ /OWNERCUSTOM/)
+			{
+			if ($call_handle_method =~ /OWNERCUSTOM1/) {$temp_owner = $custom_one;}
+			if ($call_handle_method =~ /OWNERCUSTOM2/) {$temp_owner = $custom_two;}
+			if ($call_handle_method =~ /OWNERCUSTOM3/) {$temp_owner = $custom_three;}
+			if ($call_handle_method =~ /OWNERCUSTOM4/) {$temp_owner = $custom_four;}
+			if ($call_handle_method =~ /OWNERCUSTOM5/) {$temp_owner = $custom_five;}
+			if ($call_handle_method =~ /OWNERCUSTOMX/) {$temp_owner = $vid_enter_filename;}
+			$ownerSQL = "and owner='$temp_owner'";
+			}
+
 		$cbc=0;
 		if ($call_handle_method =~ /^VID/) 
 			{
-			$stmtA= "SELECT lead_id,called_count,list_id from vicidial_list where vendor_lead_code='$vendor_id' $listSQL order by last_local_call_time desc limit 1;";
+			$stmtA= "SELECT lead_id,called_count,list_id from vicidial_list where vendor_lead_code='$vendor_id' $listSQL $ownerSQL order by last_local_call_time desc limit 1;";
 			}
 		else 
 			{
-			$stmtA= "SELECT lead_id,called_count,list_id from vicidial_list where phone_number='$phone_number' $listSQL order by last_local_call_time desc limit 1;";
+			$stmtA= "SELECT lead_id,called_count,list_id from vicidial_list where phone_number='$phone_number' $listSQL $ownerSQL order by last_local_call_time desc limit 1;";
 			}
 		if ($AGILOG) {$agi_string = "VDAD vicidial_list search |$phone_number|$stmtA|";   &agi_output;}
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
@@ -1397,7 +1435,7 @@ if ($call_handle_method =~ /LOOKUP/)
 			$VLfound=0;
 			if ($call_handle_method =~ /ALT/) 
 				{
-				$stmtA= "SELECT lead_id,called_count,list_id from vicidial_list where alt_phone='$phone_number' $listSQL order by last_local_call_time desc limit 1;";
+				$stmtA= "SELECT lead_id,called_count,list_id from vicidial_list where alt_phone='$phone_number' $listSQL $ownerSQL order by last_local_call_time desc limit 1;";
 					if ($AGILOG) {$agi_string = "VDAD vicidial_list ALT search |$phone_number|$stmtA|";   &agi_output;}
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -1416,7 +1454,7 @@ if ($call_handle_method =~ /LOOKUP/)
 				}
 			if ( ($call_handle_method =~ /ADDR3/) && ($VLfound < 1) )
 				{
-				$stmtA= "SELECT lead_id,called_count,list_id from vicidial_list where address3='$phone_number' $listSQL order by last_local_call_time desc limit 1;";
+				$stmtA= "SELECT lead_id,called_count,list_id from vicidial_list where address3='$phone_number' $listSQL $ownerSQL order by last_local_call_time desc limit 1;";
 					if ($AGILOG) {$agi_string = "VDAD vicidial_list ADDR3 search |$phone_number|$stmtA|";   &agi_output;}
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -1448,8 +1486,11 @@ if ($call_handle_method =~ /LOOKUP/)
 					{&populate_lead_province_process;}
 				if ($add_lead_timezone =~ /PHONE_CODE_AREACODE/) 
 					{&lead_timezone_process;}
+				$populate_ownerA='';   $populate_ownerB='';
+				if ($populate_lead_owner =~ /did|OWNERCUSTOM/) 
+					{&populate_lead_owner_process;}
 				### insert a record into the vicidial_list table 
-				$stmtA = "INSERT INTO vicidial_list (entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,called_since_last_reset,phone_code,phone_number,security_phrase,called_count,gmt_offset_now,comments$entry_list_idSQLa$INSERTstateSQLa$INSERTpostal_codeSQLa$populate_provinceA) values('$SQLdate','$tsSQLdate','INBND','$fronter','$vendor_id','$source_id','$list_id','Y','$phone_code','$phone_number','$ingroup_insert','$called_count','$local_gmt','$VLcomments'$entry_list_idSQLb$INSERTstateSQLb$INSERTpostal_codeSQLb$populate_provinceB);";
+				$stmtA = "INSERT INTO vicidial_list (entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,called_since_last_reset,phone_code,phone_number,security_phrase,called_count,gmt_offset_now,comments$entry_list_idSQLa$INSERTstateSQLa$INSERTpostal_codeSQLa$populate_provinceA$populate_ownerA) values('$SQLdate','$tsSQLdate','INBND','$fronter','$vendor_id','$source_id','$list_id','Y','$phone_code','$phone_number','$ingroup_insert','$called_count','$local_gmt','$VLcomments'$entry_list_idSQLb$INSERTstateSQLb$INSERTpostal_codeSQLb$populate_provinceB$populate_ownerB);";
 				$affected_rows = $dbhA->do($stmtA);
 					$dbhP=$dbhA;   $mysql_count='02011';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 				$cbc=0;
@@ -1540,8 +1581,11 @@ else
 			{&populate_lead_province_process;}
 		if ($add_lead_timezone =~ /PHONE_CODE_AREACODE/) 
 			{&lead_timezone_process;}
+		$populate_ownerA='';   $populate_ownerB='';
+		if ($populate_lead_owner =~ /did|OWNERCUSTOM/i) 
+			{&populate_lead_owner_process;}
  		### insert a record into the vicidial_list table if no record was found above
-		$stmtA = "INSERT INTO vicidial_list (entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,called_since_last_reset,phone_code,phone_number,security_phrase,called_count,gmt_offset_now,comments$entry_list_idSQLa$INSERTstateSQLa$INSERTpostal_codeSQLa$populate_provinceA) values('$SQLdate','$tsSQLdate','INBND','$fronter','$vendor_id','$source_id','$list_id','Y','$phone_code','$phone_number','$ingroup_insert','$called_count','$local_gmt','$VLcomments'$entry_list_idSQLb$INSERTstateSQLb$INSERTpostal_codeSQLb$populate_provinceB);";
+		$stmtA = "INSERT INTO vicidial_list (entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,called_since_last_reset,phone_code,phone_number,security_phrase,called_count,gmt_offset_now,comments$entry_list_idSQLa$INSERTstateSQLa$INSERTpostal_codeSQLa$populate_provinceA$populate_ownerA) values('$SQLdate','$tsSQLdate','INBND','$fronter','$vendor_id','$source_id','$list_id','Y','$phone_code','$phone_number','$ingroup_insert','$called_count','$local_gmt','$VLcomments'$entry_list_idSQLb$INSERTstateSQLb$INSERTpostal_codeSQLb$populate_provinceB$populate_ownerB);";
  		$affected_rows = $dbhA->do($stmtA);
 			$dbhP=$dbhA;   $mysql_count='02014';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 		$cbc=0;
@@ -1797,7 +1841,10 @@ if ( ( ( ( ($hm < $ct_default_start) || ($hm > $ct_default_stop) ) && ($hm >= $c
 	$populate_provinceUPDATE='';
 	if ($populate_lead_province =~ /OW_did/i) 
 		{&populate_lead_province_process;}
-	$stmtA = "UPDATE vicidial_list set status='$AHstatus' $populate_provinceUPDATE $UPDATEstateSQL $called_since_last_resetSQL where lead_id = '$insert_lead_id';";
+	$populate_ownerUPDATE='';
+	if ($populate_lead_owner =~ /OW_did/i) 
+		{&populate_lead_owner_process;}
+	$stmtA = "UPDATE vicidial_list set status='$AHstatus' $populate_provinceUPDATE $populate_ownerUPDATE $UPDATEstateSQL $called_since_last_resetSQL where lead_id = '$insert_lead_id';";
 	$affected_rows = $dbhA->do($stmtA);
 		$dbhP=$dbhA;   $mysql_count='02018';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 	if ($AGILOG) {$agi_string = "--  AH VDCL vl update: |$affected_rows|$insert_lead_id|\n|$stmtA|";   &agi_output;}
@@ -4262,7 +4309,10 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 			$populate_provinceUPDATE='';
 			if ($populate_lead_province =~ /OW_did/i) 
 				{&populate_lead_province_process;}
-			$stmtA = "UPDATE vicidial_list set status='HXFER' $populate_provinceUPDATE $UPDATEstateSQL where lead_id = '$insert_lead_id';";
+			$populate_ownerUPDATE='';
+			if ($populate_lead_owner =~ /OW_did/i) 
+				{&populate_lead_owner_process;}
+			$stmtA = "UPDATE vicidial_list set status='HXFER' $populate_provinceUPDATE $populate_ownerUPDATE $UPDATEstateSQL where lead_id = '$insert_lead_id';";
 			$affected_rows = $dbhA->do($stmtA);
 				$dbhP=$dbhA;   $mysql_count='02077';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 			if ($AGILOG) {$agi_string = "--    VDCL vl update: |$affected_rows|$insert_lead_id|\n|$stmtA|";   &agi_output;}
@@ -4765,7 +4815,10 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 			$populate_provinceUPDATE='';
 			if ($populate_lead_province =~ /OW_did/i) 
 				{&populate_lead_province_process;}
-			$stmtA = "UPDATE vicidial_list set status='$NQstatus' $populate_provinceUPDATE $UPDATEstateSQL $called_since_last_resetSQL where lead_id = '$insert_lead_id';";
+			$populate_ownerUPDATE='';
+			if ($populate_lead_owner =~ /OW_did/i) 
+				{&populate_lead_owner_process;}
+			$stmtA = "UPDATE vicidial_list set status='$NQstatus' $populate_provinceUPDATE $populate_ownerUPDATE $UPDATEstateSQL $called_since_last_resetSQL where lead_id = '$insert_lead_id';";
 			$affected_rows = $dbhA->do($stmtA);
 				$dbhP=$dbhA;   $mysql_count='02106';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 			if ($AGILOG) {$agi_string = "--  ACF VDCL vl update: |$affected_rows|$insert_lead_id|\n|$stmtA|";   &agi_output;}
@@ -5248,8 +5301,11 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 					{&populate_lead_province_process;}
 				if ($add_lead_timezone =~ /PHONE_CODE_AREACODE/) 
 					{&lead_timezone_process;}
+				$populate_ownerA='';   $populate_ownerB='';
+				if ($populate_lead_owner =~ /did|OWNERCUSTOM/i) 
+					{&populate_lead_owner_process;}
 				### insert a record into the vicidial_list table 
-				$stmtA = "INSERT INTO vicidial_list (entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,called_since_last_reset,phone_code,phone_number,security_phrase,called_count,gmt_offset_now,comments$entry_list_idSQLa$INSERTstateSQLa$INSERTpostal_codeSQLa$populate_provinceA) values('$SQLdate','$tsSQLdate','INBND','$fronter','$vendor_id','$source_id','$wait_time_option_callback_list_id','N','$phone_code','$cid_cb_number','$ingroup_insert','$called_count','$local_gmt','$VLcomments'$entry_list_idSQLb$INSERTstateSQLb$INSERTpostal_codeSQLb$populate_provinceB);";
+				$stmtA = "INSERT INTO vicidial_list (entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,called_since_last_reset,phone_code,phone_number,security_phrase,called_count,gmt_offset_now,comments$entry_list_idSQLa$INSERTstateSQLa$INSERTpostal_codeSQLa$populate_provinceA$populate_ownerA) values('$SQLdate','$tsSQLdate','INBND','$fronter','$vendor_id','$source_id','$wait_time_option_callback_list_id','N','$phone_code','$cid_cb_number','$ingroup_insert','$called_count','$local_gmt','$VLcomments'$entry_list_idSQLb$INSERTstateSQLb$INSERTpostal_codeSQLb$populate_provinceB$populate_ownerB);";
 				$affected_rows = $dbhA->do($stmtA);
 					$dbhP=$dbhA;   $mysql_count='02089';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 				$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -5396,7 +5452,10 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 				$populate_provinceUPDATE='';
 				if ($populate_lead_province =~ /OW_did/i) 
 					{&populate_lead_province_process;}
-				$stmtA = "UPDATE vicidial_list set status='WAITTO' $populate_provinceUPDATE $UPDATEstateSQL $called_since_last_resetSQL where lead_id = '$insert_lead_id';";
+				$populate_ownerUPDATE='';
+				if ($populate_lead_owner =~ /OW_did/i) 
+					{&populate_lead_owner_process;}
+				$stmtA = "UPDATE vicidial_list set status='WAITTO' $populate_provinceUPDATE $populate_ownerUPDATE $UPDATEstateSQL $called_since_last_resetSQL where lead_id = '$insert_lead_id';";
 				$affected_rows = $dbhA->do($stmtA);
 					$dbhP=$dbhA;   $mysql_count='02092';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 				if ($AGILOG) {$agi_string = "--    VDCL vl update: |$affected_rows|$insert_lead_id|\n|$stmtA|";   &agi_output;}
@@ -5798,8 +5857,11 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 							{&populate_lead_province_process;}
 						if ($add_lead_timezone =~ /PHONE_CODE_AREACODE/) 
 							{&lead_timezone_process;}
+						$populate_ownerA='';   $populate_ownerB='';
+						if ($populate_lead_owner =~ /did|OWNERCUSTOM/i) 
+							{&populate_lead_owner_process;}
 						### insert a record into the vicidial_list table 
-						$stmtA = "INSERT INTO vicidial_list (entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,called_since_last_reset,phone_code,phone_number,security_phrase,called_count,gmt_offset_now,comments$entry_list_idSQLa$INSERTstateSQLa$INSERTpostal_codeSQLa$populate_provinceA) values('$SQLdate','$tsSQLdate','INBND','$fronter','$vendor_id','$source_id','$hold_time_option_callback_list_id','N','$phone_code','$cid_cb_number','$ingroup_insert','$called_count','$local_gmt','$VLcomments'$entry_list_idSQLb$INSERTstateSQLb$INSERTpostal_codeSQLb$populate_provinceB);";
+						$stmtA = "INSERT INTO vicidial_list (entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,called_since_last_reset,phone_code,phone_number,security_phrase,called_count,gmt_offset_now,comments$entry_list_idSQLa$INSERTstateSQLa$INSERTpostal_codeSQLa$populate_provinceA$populate_ownerA) values('$SQLdate','$tsSQLdate','INBND','$fronter','$vendor_id','$source_id','$hold_time_option_callback_list_id','N','$phone_code','$cid_cb_number','$ingroup_insert','$called_count','$local_gmt','$VLcomments'$entry_list_idSQLb$INSERTstateSQLb$INSERTpostal_codeSQLb$populate_provinceB$populate_ownerB);";
 						$affected_rows = $dbhA->do($stmtA);
 							$dbhP=$dbhA;   $mysql_count='02089';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 						$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -5946,7 +6008,10 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 						$populate_provinceUPDATE='';
 						if ($populate_lead_province =~ /OW_did/i) 
 							{&populate_lead_province_process;}
-						$stmtA = "UPDATE vicidial_list set status='HOLDTO' $populate_provinceUPDATE $UPDATEstateSQL $called_since_last_resetSQL where lead_id = '$insert_lead_id';";
+						$populate_ownerUPDATE='';
+						if ($populate_lead_owner =~ /OW_did/i) 
+							{&populate_lead_owner_process;}
+						$stmtA = "UPDATE vicidial_list set status='HOLDTO' $populate_provinceUPDATE $populate_ownerUPDATE $UPDATEstateSQL $called_since_last_resetSQL where lead_id = '$insert_lead_id';";
 						$affected_rows = $dbhA->do($stmtA);
 							$dbhP=$dbhA;   $mysql_count='02092';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 						if ($AGILOG) {$agi_string = "--    VDCL vl update: |$affected_rows|$insert_lead_id|\n|$stmtA|";   &agi_output;}
@@ -6376,8 +6441,11 @@ if ($closing_check > 0)
 				{&populate_lead_province_process;}
 			if ($add_lead_timezone =~ /PHONE_CODE_AREACODE/) 
 				{&lead_timezone_process;}
+			$populate_ownerA='';   $populate_ownerB='';
+			if ($populate_lead_owner =~ /did|OWNERCUSTOM/i) 
+				{&populate_lead_owner_process;}
 			### insert a record into the vicidial_list table 
-			$stmtA = "INSERT INTO vicidial_list (entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,called_since_last_reset,phone_code,phone_number,security_phrase,called_count,gmt_offset_now,comments$entry_list_idSQLa$INSERTstateSQLa$INSERTpostal_codeSQLa$populate_provinceA) values('$SQLdate','$tsSQLdate','INBND','$fronter','$vendor_id','$source_id','$closing_time_option_callback_list_id','N','$phone_code','$cid_cb_number','$ingroup_insert','$called_count','$local_gmt','$VLcomments'$entry_list_idSQLb$INSERTstateSQLb$INSERTpostal_codeSQLb$populate_provinceB);";
+			$stmtA = "INSERT INTO vicidial_list (entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,called_since_last_reset,phone_code,phone_number,security_phrase,called_count,gmt_offset_now,comments$entry_list_idSQLa$INSERTstateSQLa$INSERTpostal_codeSQLa$populate_provinceA$populate_ownerA) values('$SQLdate','$tsSQLdate','INBND','$fronter','$vendor_id','$source_id','$closing_time_option_callback_list_id','N','$phone_code','$cid_cb_number','$ingroup_insert','$called_count','$local_gmt','$VLcomments'$entry_list_idSQLb$INSERTstateSQLb$INSERTpostal_codeSQLb$populate_provinceB$populate_ownerB);";
 			$affected_rows = $dbhA->do($stmtA);
 				$dbhP=$dbhA;   $mysql_count='02237';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 			$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -6502,7 +6570,10 @@ if ($closing_check > 0)
 		$populate_provinceUPDATE='';
 		if ($populate_lead_province =~ /OW_did/i) 
 			{&populate_lead_province_process;}
-		$stmtA = "UPDATE vicidial_list set status='CLOSOP' $populate_provinceUPDATE $UPDATEstateSQL $called_since_last_resetSQL where lead_id = '$insert_lead_id';";
+		$populate_ownerUPDATE='';
+		if ($populate_lead_owner =~ /OW_did/i) 
+			{&populate_lead_owner_process;}
+		$stmtA = "UPDATE vicidial_list set status='CLOSOP' $populate_provinceUPDATE $populate_ownerUPDATE $UPDATEstateSQL $called_since_last_resetSQL where lead_id = '$insert_lead_id';";
 		$affected_rows = $dbhA->do($stmtA);
 			$dbhP=$dbhA;   $mysql_count='02242';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 		if ($AGILOG) {$agi_string = "--    VDCL vl update: |$affected_rows|$insert_lead_id|\n|$stmtA|";   &agi_output;}
@@ -6858,7 +6929,10 @@ if ( ($drop_timer > $DROP_TIME) || ($MCdrop_override > 0) )
 	$populate_provinceUPDATE='';
 	if ($populate_lead_province =~ /OW_did/i) 
 		{&populate_lead_province_process;}
-	$stmtA = "UPDATE vicidial_list set status='$DRstatus' $populate_provinceUPDATE $UPDATEstateSQL $called_since_last_resetSQL where lead_id = '$insert_lead_id';";
+	$populate_ownerUPDATE='';
+	if ($populate_lead_owner =~ /OW_did/i) 
+		{&populate_lead_owner_process;}
+	$stmtA = "UPDATE vicidial_list set status='$DRstatus' $populate_provinceUPDATE $populate_ownerUPDATE $UPDATEstateSQL $called_since_last_resetSQL where lead_id = '$insert_lead_id';";
 	$affected_rows = $dbhA->do($stmtA);
 		$dbhP=$dbhA;   $mysql_count='02101';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 	if ($AGILOG) {$agi_string = "--    VDCL vl update: |$affected_rows|$insert_lead_id|\n|$stmtA|";   &agi_output;}
@@ -7628,7 +7702,7 @@ sub populate_lead_province_process
 			$custom_five =				$aryA[7];
 
 			$populate_provinceA=',province';
-			$populate_provinceB="''";
+			$populate_provinceB=",''";
 			if ($populate_lead_province =~ /did_pattern/)			{$populate_provinceB="'$did_pattern'";}
 			if ($populate_lead_province =~ /did_description/)		{$populate_provinceB="'$did_description'";}
 			if ($populate_lead_province =~ /did_carrier/)			{$populate_provinceB="'$did_carrier_description'";}
@@ -7645,6 +7719,69 @@ sub populate_lead_province_process
 		}
 	else
 		{if ($AGILOG) {$agi_string = "No DID record found($uniqueid)|";   &agi_output;}}
+	}
+
+sub populate_lead_owner_process
+	{
+	if ($populate_lead_owner =~ /OWNERCUSTOM/)
+		{
+		if ($call_handle_method =~ /OWNERCUSTOM/)
+			{
+			$populate_ownerA=',owner';
+			$populate_ownerB=",'$temp_owner'";
+			$populate_ownerUPDATE=",owner='$temp_owner'";
+			}
+		}
+	else
+		{
+		$stmtA = "SELECT did_id FROM vicidial_did_log where uniqueid='$uniqueid' order by call_date desc limit 1;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+			$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$DRAE_did_id =	$aryA[0];
+			$sthA->finish();
+			if ($AGILOG) {$agi_string = "--    ORIGINAL DID FOUND : |$DRAE_did_id|$uniqueid|";   &agi_output;}
+
+			$stmtA = "SELECT did_pattern,did_description,did_carrier_description,custom_one,custom_two,custom_three,custom_four,custom_five FROM vicidial_inbound_dids where did_id = '$DRAE_did_id';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$DIDs_in_system=$sthA->rows;
+				$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
+			if ($DIDs_in_system > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$did_pattern =				$aryA[0];
+				$did_description =			$aryA[1];
+				$did_carrier_description =	$aryA[2];
+				$custom_one =				$aryA[3];
+				$custom_two =				$aryA[4];
+				$custom_three =				$aryA[5];
+				$custom_four =				$aryA[6];
+				$custom_five =				$aryA[7];
+
+				$populate_ownerA=',owner';
+				$populate_ownerB=",''";
+				if ($populate_lead_owner =~ /did_pattern/)			{$populate_ownerB="'$did_pattern'";}
+				if ($populate_lead_owner =~ /did_description/)		{$populate_ownerB="'$did_description'";}
+				if ($populate_lead_owner =~ /did_carrier/)			{$populate_ownerB="'$did_carrier_description'";}
+				if ($populate_lead_owner =~ /did_custom_one/)		{$populate_ownerB="'$custom_one'";}
+				if ($populate_lead_owner =~ /did_custom_two/)		{$populate_ownerB="'$custom_two'";}
+				if ($populate_lead_owner =~ /did_custom_three/)		{$populate_ownerB="'$custom_three'";}
+				if ($populate_lead_owner =~ /did_custom_four/)		{$populate_ownerB="'$custom_four'";}
+				if ($populate_lead_owner =~ /did_custom_five/)		{$populate_ownerB="'$custom_five'";}
+				$populate_ownerUPDATE=",owner=$populate_ownerB";
+				$populate_ownerB = ",$populate_ownerB";
+				}
+			$sthA->finish();
+			if ($AGILOG) {$agi_string = "DID record found($uniqueid $DRAE_did_id|$populate_ownerA|$populate_ownerB)|";   &agi_output;}
+			}
+		else
+			{if ($AGILOG) {$agi_string = "No DID record found($uniqueid)|";   &agi_output;}}
+		}
 	}
 
 sub lead_timezone_process
@@ -8621,7 +8758,10 @@ sub no_agent_no_queue_process
 		$populate_provinceUPDATE='';
 		if ($populate_lead_province =~ /OW_did/i) 
 			{&populate_lead_province_process;}
-		$stmtA = "UPDATE vicidial_list set status='$NQstatus' $populate_provinceUPDATE $UPDATEstateSQL $called_since_last_resetSQL where lead_id = '$insert_lead_id';";
+		$populate_ownerUPDATE='';
+		if ($populate_lead_owner =~ /OW_did/i) 
+			{&populate_lead_owner_process;}
+		$stmtA = "UPDATE vicidial_list set status='$NQstatus' $populate_provinceUPDATE $populate_ownerUPDATE $UPDATEstateSQL $called_since_last_resetSQL where lead_id = '$insert_lead_id';";
 		$affected_rows = $dbhA->do($stmtA);
 			$dbhP=$dbhA;   $mysql_count='02106';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 		if ($AGILOG) {$agi_string = "--  NA VDCL vl update: |$affected_rows|$insert_lead_id|\n|$stmtA|";   &agi_output;}

@@ -144,9 +144,10 @@
 # 210719-1520 - Added additional state override methods for call_limit_24hour
 # 210731-0952 - Added cid_group_id_two campaign option
 # 210827-1044 - Fix for Extended auto-alt-dialing issue #1323
+# 210901-1020 - Another fix for Extended auto-alt-dialing issue #1323
 #
 
-$build='210827-1044';
+$build='210901-1020';
 $script='AST_VDauto_dial';
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -3232,7 +3233,7 @@ while($one_day_interval > 0)
 									$sthA->finish();
 										$event_string = "|$stmtA|$alt_dial_phones_count";   &event_logger;
 
-									while ( ($alt_dial_phones_count > 0) && ($alt_dial_phones_count > $Xlast) )
+									while ( ($alt_dial_phones_count > 0) && ($alt_dial_phones_count > $Xlast) && ($Xlast != 'LAST') )
 										{
 										$Xlast++;
 										$stmtA="SELECT alt_phone_id,phone_number,active,phone_code FROM vicidial_list_alt_phones where lead_id='$CLlead_id' and alt_phone_count='$Xlast';";

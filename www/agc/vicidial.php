@@ -680,10 +680,11 @@
 # 210715-1215 - Added 24-Hour Call Count Limit features
 # 210719-0907 - Added new state override options for 24-Hour Call Count Limits
 # 210720-0850 - Fixes for inconsistent hangup_xfer_record_start behavior
+# 210913-0831 - Fix for alternate number auto-dial logging issues
 #
 
-$version = '2.14-648c';
-$build = '210720-0850';
+$version = '2.14-649c';
+$build = '210913-0831';
 $php_script = 'vicidial.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=98;
@@ -12599,14 +12600,25 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 									{showDiv('CBcommentsBox');}
 								}
 							if (dialed_label == 'ALT')
-                                {document.getElementById("CusTInfOSpaN").innerHTML = " <b> <?php echo _QXZ("ALT DIAL NUMBER: ALT"); ?> </b>";}
+                                {
+								lead_dial_number = document.vicidial_form.alt_phone.value;
+								dialed_number = lead_dial_number;
+								document.getElementById("CusTInfOSpaN").innerHTML = " <b> <?php echo _QXZ("ALT DIAL NUMBER: ALT"); ?> </b>";
+								}
 							if (dialed_label == 'ADDR3')
-                                {document.getElementById("CusTInfOSpaN").innerHTML = " <b> <?php echo _QXZ("ALT DIAL NUMBER: ADDRESS3"); ?> </b>";}
+                                {
+								lead_dial_number = document.vicidial_form.address3.value;
+								dialed_number = lead_dial_number;
+								document.getElementById("CusTInfOSpaN").innerHTML = " <b> <?php echo _QXZ("ALT DIAL NUMBER: ADDRESS3"); ?> </b>";
+								}
 							var REGalt_dial = new RegExp("X","g");
 							if (dialed_label.match(REGalt_dial))
 								{
                                 document.getElementById("CusTInfOSpaN").innerHTML = " <b> <?php echo _QXZ("ALT DIAL NUMBER:"); ?> " + dialed_label + "</b>";
 								document.getElementById("EAcommentsBoxA").innerHTML = "<b><?php echo _QXZ("Phone Code and Number:"); ?> </b>" + EAphone_code + " " + EAphone_number;
+
+								lead_dial_number = EAphone_number;
+								dialed_number = lead_dial_number;
 
 								var EAactive_link = '';
 								if (EAalt_phone_active == 'Y')

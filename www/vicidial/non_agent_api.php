@@ -183,10 +183,11 @@
 # 210701-2050 - Added ingroup_rank/ingroup_grade options to the update_user function
 # 210812-2640 - Added update of live agent records for ingroup_rank/ingroup_grade in the update_user function
 # 210823-0918 - Fix for security issue
+# 210917-1615 - Added batch_update_lead function
 #
 
-$version = '2.14-160';
-$build = '210823-0918';
+$version = '2.14-161';
+$build = '210917-1615';
 $php_script='non_agent_api.php';
 $api_url_log = 0;
 
@@ -660,6 +661,9 @@ if (isset($_GET["ingrp_rg_only"]))			{$ingrp_rg_only=$_GET["ingrp_rg_only"];}
 	elseif (isset($_POST["ingrp_rg_only"]))	{$ingrp_rg_only=$_POST["ingrp_rg_only"];}
 if (isset($_GET["group_id"]))				{$group_id=$_GET["group_id"];}
 	elseif (isset($_POST["group_id"]))		{$group_id=$_POST["group_id"];}
+if (isset($_GET["lead_ids"]))				{$lead_ids=$_GET["lead_ids"];}
+	elseif (isset($_POST["lead_ids"]))		{$lead_ids=$_POST["lead_ids"];}
+
 
 if (file_exists('options.php'))
 	{require('options.php');}
@@ -940,6 +944,7 @@ else
 $list_id = preg_replace('/[^-_0-9a-zA-Z]/','',$list_id);
 $list_id_field = preg_replace('/[^0-9]/','',$list_id_field);
 $lead_id = preg_replace('/[^0-9]/','',$lead_id);
+$lead_ids = preg_replace('/[^\,0-9]/','',$lead_ids);
 $list_exists_check = preg_replace('/[^0-9a-zA-Z]/','',$list_exists_check);
 $use_internal_webserver = preg_replace('/[^0-9a-zA-Z]/','',$use_internal_webserver);
 $field_rerank = preg_replace('/[^_0-9a-zA-Z]/','',$field_rerank);
@@ -1121,7 +1126,7 @@ $LOGuser_group =			$row[2];
 $VUselected_language =		$row[3];
 $VUdelete_inbound_dids =	$row[4];
 
-if ( ($api_list_restrict > 0) and ( ($function == 'add_lead') or ($function == 'update_lead') or ($function == 'update_list') or ($function == 'list_info') or ($function == 'list_custom_fields') ) )
+if ( ($api_list_restrict > 0) and ( ($function == 'add_lead') or ($function == 'update_lead') or ($function == 'batch_update_lead') or ($function == 'update_list') or ($function == 'list_info') or ($function == 'list_custom_fields') ) )
 	{
 	$stmt="SELECT allowed_campaigns from vicidial_user_groups where user_group='$LOGuser_group';";
 	if ($DB>0) {echo "|$stmt|\n";}
@@ -14250,6 +14255,194 @@ if ($function == 'update_lead')
 ################################################################################
 
 
+
+
+
+################################################################################
+### batch_update_lead - updates multiple leads in vicidial_list with single set of field values (limited field options)
+################################################################################
+if ($function == 'batch_update_lead')
+	{
+	$list_id_field = preg_replace('/[^0-9]/','',$list_id_field);
+	if(strlen($source)<2)
+		{
+		$result = 'ERROR';
+		$result_reason = "Invalid Source";
+		echo "$result: $result_reason - $source\n";
+		api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+		echo "ERROR: Invalid Source: |$source|\n";
+		exit;
+		}
+	else
+		{
+		if ( (!preg_match("/ $function /",$api_allowed_functions)) and (!preg_match("/ALL_FUNCTIONS/",$api_allowed_functions)) )
+			{
+			$result = 'ERROR';
+			$result_reason = "auth USER DOES NOT HAVE PERMISSION TO USE THIS FUNCTION";
+			echo "$result: $result_reason: |$user|$function|\n";
+			$data = "$allowed_user";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1' and modify_leads IN('1','2','3','4') and user_level > 7 and active='Y';";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$row=mysqli_fetch_row($rslt);
+		$modify_leads=$row[0];
+
+		if ($modify_leads < 1)
+			{
+			$result = 'ERROR';
+			$result_reason = "batch_update_lead USER DOES NOT HAVE PERMISSION TO UPDATE LEADS IN THE SYSTEM";
+			echo "$result: $result_reason: |$user|$modify_leads|\n";
+			$data = "$modify_leads";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		else
+			{
+			$lead_ids_SQL='';
+			$find_lead_id=0;
+			if (strlen($records)<1)
+				{$records='1000';}
+
+			if (strlen($lead_ids)>0)
+				{
+				$find_lead_id=1;
+				$lead_ids_SQL = "lead_id IN($lead_ids)";
+				}
+			else
+				{
+				$result = 'ERROR';
+				$result_reason = "batch_update_lead NO LEADS DEFINED";
+				$data = "$lead_ids";
+				echo "$result: $result_reason - $user|$data\n";
+				api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+				exit;
+				}
+
+			if ( ($api_list_restrict > 0) and ($list_id_field >= 99) )
+				{
+				if (!preg_match("/ $list_id_field /",$allowed_lists))
+					{
+					$result = 'ERROR';
+					$result_reason = "batch_update_lead NOT AN ALLOWED LIST ID";
+					$data = "$list_id_field";
+					echo "$result: $result_reason - $user|$data\n";
+					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+					exit;
+					}
+				}
+			if ( (preg_match("/Y/i",$list_exists_check)) and (strlen($list_id_field) > 0) )
+				{
+				$stmt="SELECT count(*) from vicidial_lists where list_id='$list_id_field';";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$row=mysqli_fetch_row($rslt);
+				if ($DB>0) {echo "DEBUG: batch_update_lead list_exists_check query - $row[0]|$stmt\n";}
+				$list_exists_count = $row[0];
+				if ($list_exists_count < 1)
+					{
+					$result = 'ERROR';
+					$result_reason = "batch_update_lead NOT A DEFINED LIST ID, LIST EXISTS CHECK ENABLED";
+					$data = "$list_id_field";
+					echo "$result: $result_reason - $user|$data\n";
+					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+					exit;
+					}
+				}
+
+			$search_found=0;
+			$found_lead_ids='';
+			if (strlen($lead_ids) > 0) # search for the lead_id
+				{
+				if (strlen($allowed_listsSQL) > 3)
+					{$allowed_listsSQL = "and list_id IN($allowed_listsSQL)";}
+				$stmt="SELECT lead_id from vicidial_list where $lead_ids_SQL $allowed_listsSQL order by lead_id desc limit $records;";
+				if ($DB>0) {echo "DEBUG: Checking for lead_ids - $lead_ids |$stmt|\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$pc_recs = mysqli_num_rows($rslt);
+				$n=0;
+				while ($pc_recs > $n)
+					{
+					$row=mysqli_fetch_row($rslt);
+					if ($n > 0)
+						{$found_lead_ids .= ",";}
+					$found_lead_ids .=	"$row[0]";
+					$n++;
+					$search_found++;
+					}
+				}
+			### END searching ###
+
+			if ( ($search_found > 0) and (strlen($found_lead_ids) > 0) )
+				{
+				$VL_update_SQL='';
+				##### BEGIN update lead information in the system #####
+				if (strlen($user_field)>0)			{$VL_update_SQL .= "user=\"$user_field\",";}
+				if (strlen($list_id_field)>0)		{$VL_update_SQL .= "list_id=\"$list_id_field\",";}
+				if (strlen($status)>0)				{$VL_update_SQL .= "status=\"$status\",";}
+				if (strlen($vendor_lead_code)>0)	{$VL_update_SQL .= "vendor_lead_code=\"$vendor_lead_code\",";}
+				if (strlen($source_id)>0)			{$VL_update_SQL .= "source_id=\"$source_id\",";}
+				if (strlen($gmt_offset_now)>0)		{$VL_update_SQL .= "gmt_offset_now=\"$gmt_offset_now\",";}
+				if (strlen($title)>0)				{$VL_update_SQL .= "title=\"$title\",";}
+				if (strlen($first_name)>0)			{$VL_update_SQL .= "first_name=\"$first_name\",";}
+				if (strlen($middle_initial)>0)		{$VL_update_SQL .= "middle_initial=\"$middle_initial\",";}
+				if (strlen($last_name)>0)			{$VL_update_SQL .= "last_name=\"$last_name\",";}
+				if (strlen($address1)>0)			{$VL_update_SQL .= "address1=\"$address1\",";}
+				if (strlen($address2)>0)			{$VL_update_SQL .= "address2=\"$address2\",";}
+				if (strlen($address3)>0)			{$VL_update_SQL .= "address3=\"$address3\",";}
+				if (strlen($city)>0)				{$VL_update_SQL .= "city=\"$city\",";}
+				if (strlen($state)>0)				{$VL_update_SQL .= "state=\"$state\",";}
+				if (strlen($province)>0)			{$VL_update_SQL .= "province=\"$province\",";}
+				if (strlen($postal_code)>0)			{$VL_update_SQL .= "postal_code=\"$postal_code\",";}
+				if (strlen($country_code)>0)		{$VL_update_SQL .= "country_code=\"$country_code\",";}
+				if (strlen($gender)>0)				{$VL_update_SQL .= "gender=\"$gender\",";}
+				if (strlen($date_of_birth)>0)		{$VL_update_SQL .= "date_of_birth=\"$date_of_birth\",";}
+				if (strlen($alt_phone)>0)			{$VL_update_SQL .= "alt_phone=\"$alt_phone\",";}
+				if (strlen($email)>0)				{$VL_update_SQL .= "email=\"$email\",";}
+				if (strlen($security_phrase)>0)		{$VL_update_SQL .= "security_phrase=\"$security_phrase\",";}
+				if (strlen($comments)>0)			{$VL_update_SQL .= "comments=\"$comments\",";}
+				if (strlen($rank)>0)				{$VL_update_SQL .= "rank=\"$rank\",";}
+				if (strlen($owner)>0)				{$VL_update_SQL .= "owner=\"$owner\",";}
+				if (strlen($called_count)>0)		{$VL_update_SQL .= "called_count=\"$called_count\",";}
+				if (strlen($phone_code)>0)			{$VL_update_SQL .= "phone_code=\"$phone_code\",";}
+				if ( (strlen($reset_lead) > 0 && $reset_lead == 'Y') )	{$VL_update_SQL .= "called_since_last_reset='N',";}
+				$VL_update_SQL = preg_replace("/,$/","",$VL_update_SQL);
+				$VL_update_SQL = preg_replace("/\"--BLANK--\"/",'""',$VL_update_SQL);
+				$VL_update_SQL = preg_replace("/\n/","!N",$VL_update_SQL);
+
+				$VLaffected_rows=0;
+
+				if (strlen($VL_update_SQL)>6)
+					{
+					$stmt = "UPDATE vicidial_list SET $VL_update_SQL where lead_id IN($found_lead_ids);";
+					$result_reason = "batch_update_lead LEADS HAVE BEEN UPDATED";
+
+					if ($DB>0) {echo "DEBUG: batch_update_lead query - $stmt\n";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+					$VLaffected_rows = mysqli_affected_rows($link);
+
+					$result = 'SUCCESS';
+					$data = "$VLaffected_rows|$search_found|$found_lead_ids";
+					echo "$result: $result_reason - $user|$data\n";
+					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+					}
+				##### END update lead information in the system #####
+				}
+			else
+				{
+				$result = 'ERROR';
+				$result_reason = "batch_update_lead NO MATCHES FOUND IN THE SYSTEM";
+				$data = "$lead_ids";
+				echo "$result: $result_reason: |$user|$data\n";
+				api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+				}
+			}
+		exit;
+		}
+	}
+################################################################################
+### END batch_update_lead
+################################################################################
 
 
 

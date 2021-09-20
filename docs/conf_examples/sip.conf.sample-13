@@ -85,6 +85,7 @@ jbimpl = fixed              ; Jitterbuffer implementation, used on the receiving
 jblog = no                  ; Enables jitterbuffer frame logging. Defaults to "no".
 qualify=yes             ; By default, qualify all peers at 2000ms
 limitonpeer = yes       ; enable call limit on a per peer basis, different from limitonpeers
+websocket_enabled=true	; Set to false to prevent chan_sip listening to websockets. Needed if using SIP & PJSIP on the same system
 
 #include sip-vicidial.conf
 

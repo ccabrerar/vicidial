@@ -684,6 +684,8 @@ OTHER CHANGES:
 
 190. Added Asterisk 16 "PJSIP" compatibility
 
+191. Added 'batch_update_lead' Non-Agent API function
+
 
 
 

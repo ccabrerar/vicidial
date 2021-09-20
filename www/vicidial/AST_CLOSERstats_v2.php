@@ -69,6 +69,7 @@
 # 190930-1345 - Fixed PHP7 array issue
 # 200924-0918 - Added two new drop calculations
 # 210821-1520 - Added AHT to CUSTOM INDICATOR section
+# 210914-1020 - Fixed bug for default start/end times on call times when all days have custom s/e time
 #
 
 $startMS = microtime();
@@ -628,6 +629,8 @@ if (mysqli_num_rows($ct_rslt)>0)
 	$ct_row=mysqli_fetch_array($ct_rslt);
 	$default_time_BEGIN=$ct_row["ct_default_start"];
 	$default_time_END=$ct_row["ct_default_stop"];
+	$days_with_custom_times=0;
+
 	while (strlen($default_time_BEGIN)<4) {$default_time_BEGIN="0".$default_time_BEGIN;}
 	while (strlen($default_time_END)<4) {$default_time_END="0".$default_time_END;}
 	$default_time_BEGIN=substr($default_time_BEGIN,0,2).":".substr($default_time_BEGIN,2,2).":00";
@@ -653,6 +656,7 @@ if (mysqli_num_rows($ct_rslt)>0)
 			array_push($call_time_ranges, array("1", "$default_time_BEGIN", "$default_time_END"));
 		}
 	} else {
+		$days_with_custom_times++;
 		$sunday_BEGIN=$ct_row["ct_sunday_start"];
 		$sunday_END=$ct_row["ct_sunday_stop"];
 		while (strlen($sunday_BEGIN)<4) {$sunday_BEGIN="0".$sunday_BEGIN;}
@@ -681,6 +685,7 @@ if (mysqli_num_rows($ct_rslt)>0)
 			array_push($call_time_ranges, array("2", "$default_time_BEGIN", "$default_time_END"));
 		}
 	} else {
+		$days_with_custom_times++;
 		$monday_BEGIN=$ct_row["ct_monday_start"];
 		$monday_END=$ct_row["ct_monday_stop"];
 		while (strlen($monday_BEGIN)<4) {$monday_BEGIN="0".$monday_BEGIN;}
@@ -709,6 +714,7 @@ if (mysqli_num_rows($ct_rslt)>0)
 			array_push($call_time_ranges, array("3", "$default_time_BEGIN", "$default_time_END"));
 		}
 	} else {
+		$days_with_custom_times++;
 		$tuesday_BEGIN=$ct_row["ct_tuesday_start"];
 		$tuesday_END=$ct_row["ct_tuesday_stop"];
 		while (strlen($tuesday_BEGIN)<4) {$tuesday_BEGIN="0".$tuesday_BEGIN;}
@@ -737,6 +743,7 @@ if (mysqli_num_rows($ct_rslt)>0)
 			array_push($call_time_ranges, array("4", "$default_time_BEGIN", "$default_time_END"));
 		}
 	} else {
+		$days_with_custom_times++;
 		$wednesday_BEGIN=$ct_row["ct_wednesday_start"];
 		$wednesday_END=$ct_row["ct_wednesday_stop"];
 		while (strlen($wednesday_BEGIN)<4) {$wednesday_BEGIN="0".$wednesday_BEGIN;}
@@ -765,6 +772,7 @@ if (mysqli_num_rows($ct_rslt)>0)
 			array_push($call_time_ranges, array("5", "$default_time_BEGIN", "$default_time_END"));
 		}
 	} else {
+		$days_with_custom_times++;
 		$thursday_BEGIN=$ct_row["ct_thursday_start"];
 		$thursday_END=$ct_row["ct_thursday_stop"];
 		while (strlen($thursday_BEGIN)<4) {$thursday_BEGIN="0".$thursday_BEGIN;}
@@ -793,6 +801,7 @@ if (mysqli_num_rows($ct_rslt)>0)
 			array_push($call_time_ranges, array("6", "$default_time_BEGIN", "$default_time_END"));
 		}
 	} else {
+		$days_with_custom_times++;
 		$friday_BEGIN=$ct_row["ct_friday_start"];
 		$friday_END=$ct_row["ct_friday_stop"];
 		while (strlen($friday_BEGIN)<4) {$friday_BEGIN="0".$friday_BEGIN;}
@@ -821,6 +830,7 @@ if (mysqli_num_rows($ct_rslt)>0)
 			array_push($call_time_ranges, array("7", "$default_time_BEGIN", "$default_time_END"));
 		}
 	} else {
+		$days_with_custom_times++;
 		$saturday_BEGIN=$ct_row["ct_saturday_start"];
 		$saturday_END=$ct_row["ct_saturday_stop"];
 		while (strlen($saturday_BEGIN)<4) {$saturday_BEGIN="0".$saturday_BEGIN;}
@@ -866,9 +876,19 @@ else
 	#  CREATE CALL TIME ARRAYS
 	for ($i=1; $i<=7; $i++) 
 		{
+		$days_with_custom_times++;
 		array_push($call_time_ranges, array("$i", "$time_BEGIN", "$time_END"));
 		}
 
+	}
+
+# If all days have their own custom start-end times, default time is not needed and should just be for 24 hours to ensure
+# no day of the week is constrained by the default
+if ($days_with_custom_times==7)
+	{
+	$time_BEGIN="00:00:00";
+	$time_END="23:59:59";
+	if ($DB) {$MAIN.="** Default call time disregarded, all days have their own call times **<BR>\n";}
 	}
 $query_date_BEGIN = "$query_date $time_BEGIN";   
 $query_date_END = "$end_date $time_END";
