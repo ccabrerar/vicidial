@@ -126,6 +126,7 @@
 # 191120-2235 - Added DYN multi-prompt survey prompts functionality
 # 200825-2342 - Added option for auto-only sip actions
 # 200915-2218 - Fixes for surveys with hash-star
+# 210907-1254 - Added KHOMP code (install JSON::PP Perl module and remove '#UC#' in the code to enable)
 #
 
 $script = 'agi-VDAD_ALL_outbound.agi';
@@ -135,8 +136,31 @@ $mysql_log_count=147;
 $one_mysql_log=0;
 
 use Time::Local;
-use Time::HiRes ('gettimeofday','usleep','sleep');  # necessary to have perl sleep command of less than one second
+use Time::HiRes ('tv_interval','gettimeofday','usleep','sleep');  # necessary to have perl sleep command of less than one second
 ($START_s_hires, $START_usec) = gettimeofday();
+
+# Needed for Khomp Integration
+#UC# use JSON::PP qw(encode_json decode_json);
+
+
+### find curl binary for KHOMP
+$curlbin = '';
+$khomp_enabled = 1;
+if ( -e ('/bin/curl')) {$curlbin = '/bin/curl';}
+else
+	{
+	if ( -e ('/usr/bin/curl')) {$curlbin = '/usr/bin/curl';}
+	else
+		{
+		if ( -e ('/usr/local/bin/curl')) {$curlbin = '/usr/local/bin/curl';}
+		else
+			{
+			if ($AGILOG) {$agi_string = "ERROR: curl binary not found, KHOMP disabled";   &agi_output;}
+			$khomp_enabled = 0;
+			}
+		}
+	}
+
 
 $DROP_TIME = 9;	### default number of seconds to wait until you drop a waiting call
 $at='@';
@@ -844,6 +868,144 @@ if ($VDACaffected_rows > 0)
 		}
 	$sthA->finish();
 
+	### if using KHOMP Analytics get relavant system settings
+	if ( $amd_type eq "KHOMP" )
+		{
+		$khomp_api_url =	'';
+		$khomp_api_proxied =	'false';
+		$khomp_api_login_url =	'';
+		$khomp_api_user =       '';
+		$khomp_api_pass =       '';
+		$khomp_header =	 '';
+		$khomp_id_format =      '';
+
+		$stmtA = "SELECT container_entry FROM vicidial_settings_containers WHERE container_id = 'KHOMPSETTINGS';";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$container_entry = $aryA[0];
+
+			my @lines = split ( /\n/, $container_entry );
+			foreach my $line (@lines)
+				{
+				# remove comments and blank lines
+				$line =~ /^\s*$/ and next; # skip blank lines
+				$line =~ /^\s*#/ and next; # skip line that begin with #
+				if ( $line =~ /#/ ) # check for comments midway through the line
+					{
+					# remove them
+					@split_line = split( /#/ , $line );
+					$line = $split_line[0];
+					}
+	
+				if ( $line =~ /=>/ )
+					{
+					@setting = split( /=>/ , $line );
+					$key = $setting[0];
+					$key =~ s/^\s+|\s+$//g;
+					$value = $setting[1];
+					$value =~ s/^\s+|\s+$//g;
+	
+					if ( $key eq 'khomp_api_url' )	  { $khomp_api_url = $value; }
+					if ( $key eq 'khomp_api_proxied' )    { $khomp_api_proxied = $value; }
+					if ( $key eq 'khomp_api_user' )	 { $khomp_api_user = $value; }
+					if ( $key eq 'khomp_api_pass' )	 { $khomp_api_pass = $value; }
+					if ( $key eq 'khomp_header' )	   { $khomp_header = $value; }
+					if ( $key eq 'khomp_id_format' )	{ $khomp_id_format = $value; }
+					if ( $key eq 'khomp_api_login_url' )	{ $khomp_api_login_url = $value; }
+	                                if ( $key eq 'khomp_api_token' )                { $khomp_api_token = $value; }
+	                                if ( $key eq 'khomp_api_token_expire' )         { $khomp_api_token_expire = $value; }
+					}
+	
+				}
+			$agi_string = "KHOMP Settings: url-$khomp_api_url|proxied-$khomp_api_proxied|login_url-$khomp_api_login_url|user-$khomp_api_user|pass-$khomp_api_pass|header-$khomp_header|format-$khomp_id_format";
+			&agi_output;
+			}
+
+		### load the Khomp status map
+		%conclusion_map = {};
+
+		$stmtA = "SELECT container_entry FROM vicidial_settings_containers WHERE container_id = 'KHOMPSTATUSMAP';";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$container_entry = $aryA[0];
+
+			my @lines = split ( /\n/, $container_entry );
+			foreach my $line (@lines)
+				{
+				# remove comments and blank lines
+				$line =~ /^\s*$/ and next; # skip blank lines
+				$line =~ /^\s*#/ and next; # skip line that begin with #
+				if ( $line =~ /#/ ) # check for comments midway through the line
+					{
+					# remove them
+					@split_line = split( /#/ , $line );
+					$line = $split_line[0];
+					}
+
+				if ( $line =~ /=>/ )
+					{
+					@setting = split( /=>/ , $line );
+					$conclusion_pattern = $setting[0];
+					$conclusion_pattern =~ s/^\s+|\s+$//g;
+
+					$action_status = $setting[1];
+					$action_status =~ s/^\s+|\s+$//g;
+
+					# check if the conclusion_pattern looks like "blah"."blahblah" or just "blah"
+					if ( $conclusion_pattern =~ /\./ )
+						{
+						# if "blah"."blahblah" break it up
+
+						@rsr = split( /\./ , $conclusion_pattern );
+						$conclusion = $rsr[0];
+						$conclusion =~ s/^\s+|\s+$//g;
+						$conclusion =~ s/^"|"$//g;
+
+						$pattern = $rsr[1];
+						$pattern =~ s/^\s+|\s+$//g;
+						$pattern =~ s/^"|"$//g;
+						}
+					else
+						{
+						# otherwise conclusion is the string and pattern is blank
+	
+						$conclusion = $conclusion_pattern;
+						$conclusion =~ s/^\s+|\s+$//g;
+						$conclusion =~ s/^"|"$//g;
+						$pattern = "";
+						}
+
+					@as = split( /\./ , $action_status );
+					$action = @as[0];
+					$action =~ s/^\s+|\s+$//g;
+					$action =~ s/^"|"$//g;
+
+					$status = @as[1];
+					$status =~ s/^\s+|\s+$//g;
+					$status =~ s/^"|"$//g;
+
+					$dial_status = @as[2];
+					$dial_status =~ s/^\s+|\s+$//g;
+					$dial_status =~ s/^"|"$//g;
+
+
+					# load the result map hash with the values
+					$conclusion_map{"$conclusion"}{"$pattern"}{'action'} = $action;
+					$conclusion_map{"$conclusion"}{"$pattern"}{'status'} = $status;					
+					$conclusion_map{"$conclusion"}{"$pattern"}{'dial_status'} = $dial_status;
+					}
+				}
+
+			}
+		}
 
 	##### BEGIN SIP Action check #####
 	if ( ($SIP_event_recent_inserted > 0) && ($SIP_event_action_checked < 1) && (length($CAMPsip_event_logging) > 0) and ($CAMPsip_event_logging !~ /^DISABLED$/i) )
@@ -1410,51 +1572,75 @@ if ($call_handle_method =~ /REMIND/)
 	{
 	$AGI->stream_file('sip-silence');
 
-	############# BEGIN CPD AMD SECTION ############################
-	if ($cpd_amd_action =~ /DISPO|MESSAGE|CALLMENU|INGROUP/)
+	### Using Sangoma CPD
+	if ( $amd_type eq 'CPD' )
 		{
-		$stmtA = "SELECT count(*) FROM vicidial_cpd_log where callerid='$callerid' and result NOT IN('Voice','Unknown','???','') and status='NEW';";
-			if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
-		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-		$sthArows=$sthA->rows;
-			$dbhP=$dbhA;   $mysql_count='01054';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
-		if ($sthArows > 0)
+		############# BEGIN CPD AMD SECTION ############################
+		if ($cpd_amd_action =~ /DISPO|MESSAGE|CALLMENU|INGROUP/)
 			{
-			@aryA = $sthA->fetchrow_array;
-			$cpd_amd = $aryA[0];
+			$stmtA = "SELECT count(*) FROM vicidial_cpd_log where callerid='$callerid' and result NOT IN('Voice','Unknown','???','') and status='NEW';";
+				if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+				$dbhP=$dbhA;   $mysql_count='01054';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$cpd_amd = $aryA[0];
+				}
+			$sthA->finish();
+	
+			if ($cpd_amd > 0)
+				{
+				&cpd_end_call;
+				}
 			}
-		$sthA->finish();
-
-		if ($cpd_amd > 0)
+		############# END CPD AMD SECTION ############################
+	
+		############# BEGIN CPD Unknown SECTION ############################
+		if ($cpd_unknown_action =~ /DISPO|MESSAGE|CALLMENU|INGROUP/)
 			{
-			&cpd_end_call;
+			$stmtA = "SELECT count(*) FROM vicidial_cpd_log where callerid='$callerid' and result IN('Unknown','???') and status='NEW';";
+				if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+				$dbhP=$dbhA;   $mysql_count='01109';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$cpd_unknown = $aryA[0];
+				}
+			$sthA->finish();
+	
+			if ($cpd_unknown > 0)
+				{
+				&cpd_end_call;
+				}
 			}
+		############# END CPD Unknown SECTION ############################
 		}
-	############# END CPD AMD SECTION ############################
 
-	############# BEGIN CPD Unknown SECTION ############################
-	if ($cpd_unknown_action =~ /DISPO|MESSAGE|CALLMENU|INGROUP/)
+	### Using KHOMP call analytics
+	if (( $amd_type eq 'KHOMP' ) && ( $khomp_enabled ) )
 		{
-		$stmtA = "SELECT count(*) FROM vicidial_cpd_log where callerid='$callerid' and result IN('Unknown','???') and status='NEW';";
-			if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
-		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-		$sthArows=$sthA->rows;
-			$dbhP=$dbhA;   $mysql_count='01109';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
-		if ($sthArows > 0)
-			{
-			@aryA = $sthA->fetchrow_array;
-			$cpd_unknown = $aryA[0];
-			}
-		$sthA->finish();
-
-		if ($cpd_unknown > 0)
-			{
-			&cpd_end_call;
-			}
+		process_khomp_analytics( 
+			$khomp_api_url,
+			$khomp_api_proxied,
+			$khomp_api_login_url,
+			$khomp_api_user, 
+			$khomp_api_pass, 
+			$khomp_header, 
+			$khomp_id_format, 
+			$external_server_ip, 
+			$VDADcampaign, 
+			$callerid, 
+			$cpd_amd_action, 
+			$cpd_unknown_action,
+			$CIDlead_id
+			);
 		}
-	############# END CPD Unknown SECTION ############################
 
 	$stmtA = "UPDATE vicidial_auto_calls set last_update_time='$FDtsSQLdate',stage='REMIND-0' where callerid='$callerid' order by call_time desc limit 1;";
 	$affected_rows = $dbhA->do($stmtA);
@@ -1491,51 +1677,75 @@ if ($call_handle_method =~ /SURVEY/)
 	{
 	$AGI->stream_file('sip-silence');
 
-	############# BEGIN CPD AMD SECTION ############################
-	if ($cpd_amd_action =~ /DISPO|MESSAGE|CALLMENU|INGROUP/)
+	### Using Sangoma CPD
+	if ( $amd_type eq 'CPD' )
 		{
-		$stmtA = "SELECT count(*) FROM vicidial_cpd_log where callerid='$callerid' and result NOT IN('Voice','Unknown','???','') and status='NEW';";
-			if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
-		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-		$sthArows=$sthA->rows;
-			$dbhP=$dbhA;   $mysql_count='01110';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
-		if ($sthArows > 0)
+		############# BEGIN CPD AMD SECTION ############################
+		if ($cpd_amd_action =~ /DISPO|MESSAGE|CALLMENU|INGROUP/)
 			{
-			@aryA = $sthA->fetchrow_array;
-			$cpd_amd		= $aryA[0];
+			$stmtA = "SELECT count(*) FROM vicidial_cpd_log where callerid='$callerid' and result NOT IN('Voice','Unknown','???','') and status='NEW';";
+				if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+				$dbhP=$dbhA;   $mysql_count='01110';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$cpd_amd		= $aryA[0];
+				}
+			$sthA->finish();
+	
+			if ($cpd_amd > 0)
+				{
+				&cpd_end_call;
+				}
 			}
-		$sthA->finish();
+		############# END CPD AMD SECTION ############################
+	
+		############# BEGIN CPD Unknown SECTION ############################
+		if ($cpd_unknown_action =~ /DISPO|MESSAGE|CALLMENU|INGROUP/)
+			{
+			$stmtA = "SELECT count(*) FROM vicidial_cpd_log where callerid='$callerid' and result IN('Unknown','???') and status='NEW';";
+				if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+				$dbhP=$dbhA;   $mysql_count='01111';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$cpd_unknown		= $aryA[0];
+				}
+			$sthA->finish();
 
-		if ($cpd_amd > 0)
-			{
-			&cpd_end_call;
+			if ($cpd_unknown > 0)
+				{
+				&cpd_end_call;
+				}
 			}
+		############# END CPD Unknown SECTION ############################
 		}
-	############# END CPD AMD SECTION ############################
 
-	############# BEGIN CPD Unknown SECTION ############################
-	if ($cpd_unknown_action =~ /DISPO|MESSAGE|CALLMENU|INGROUP/)
+	### Using KHOMP call analytics
+	if (( $amd_type eq 'KHOMP' ) && ( $khomp_enabled ) )
 		{
-		$stmtA = "SELECT count(*) FROM vicidial_cpd_log where callerid='$callerid' and result IN('Unknown','???') and status='NEW';";
-			if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
-		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-		$sthArows=$sthA->rows;
-			$dbhP=$dbhA;   $mysql_count='01111';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
-		if ($sthArows > 0)
-			{
-			@aryA = $sthA->fetchrow_array;
-			$cpd_unknown		= $aryA[0];
-			}
-		$sthA->finish();
-
-		if ($cpd_unknown > 0)
-			{
-			&cpd_end_call;
-			}
-		}
-	############# END CPD Unknown SECTION ############################
+		process_khomp_analytics( 
+			$khomp_api_url, 
+			$khomp_api_proxied,
+			$khomp_api_login_url,
+			$khomp_api_user, 
+			$khomp_api_pass, 
+			$khomp_header, 
+			$khomp_id_format, 
+			$external_server_ip, 
+			$VDADcampaign,
+			$callerid, 
+			$cpd_amd_action, 
+			$cpd_unknown_action,
+			$CIDlead_id
+			);
+		}	
 
 	$stmtA = "UPDATE vicidial_auto_calls set last_update_time='$FDtsSQLdate',stage='SURVEY-0' where callerid='$callerid' order by call_time desc limit 1;";
 	$affected_rows = $dbhA->do($stmtA);
@@ -2401,6 +2611,26 @@ $drop_seconds=0;
 $hold_message_counter=25;
 $hold_tone_counter=0;
 
+#### Using KHOMP analytics
+if (( $amd_type eq 'KHOMP' ) && ( $khomp_enabled ) )
+	{
+	process_khomp_analytics(
+		$khomp_api_url,
+		$khomp_api_proxied,
+		$khomp_api_login_url,
+		$khomp_api_user,
+		$khomp_api_pass,
+		$khomp_header,
+		$khomp_id_format,
+		$external_server_ip,
+		$VDADcampaign,
+		$callerid,
+		$cpd_amd_action,
+		$cpd_unknown_action,
+		$CIDlead_id
+		);
+	}
+
 while ($drop_timer <= $DROP_TIME)
 	{
 	$channel_status = $AGI->channel_status("$channel");
@@ -2419,52 +2649,55 @@ while ($drop_timer <= $DROP_TIME)
 			$drop_timer = ($drop_timer + $DROP_TIME);
 			}
 		}
-
-	############# BEGIN CPD AMD SECTION ############################
-	if ($cpd_amd_action =~ /DISPO|MESSAGE|CALLMENU|INGROUP/)
+	### Using Sangoma CPD
+	if ( $amd_type eq 'CPD' )
 		{
-		$stmtA = "SELECT count(*) FROM vicidial_cpd_log where callerid='$callerid' and result NOT IN('Voice','Unknown','???','') and status='NEW';";
-			if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
-		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-		$sthArows=$sthA->rows;
-			$dbhP=$dbhA;   $mysql_count='01117';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
-		if ($sthArows > 0)
+		############# BEGIN CPD AMD SECTION ############################
+		if ($cpd_amd_action =~ /DISPO|MESSAGE|CALLMENU|INGROUP/)
 			{
-			@aryA = $sthA->fetchrow_array;
-			$cpd_amd		= $aryA[0];
+			$stmtA = "SELECT count(*) FROM vicidial_cpd_log where callerid='$callerid' and result NOT IN('Voice','Unknown','???','') and status='NEW';";
+				if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+				$dbhP=$dbhA;   $mysql_count='01117';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$cpd_amd		= $aryA[0];
+				}
+			$sthA->finish();
+	
+			if ($cpd_amd > 0)
+				{
+				&cpd_end_call;
+				}
 			}
-		$sthA->finish();
+		############# END CPD AMD SECTION ############################
 
-		if ($cpd_amd > 0)
+		############# BEGIN CPD Unknown SECTION ############################
+		if ($cpd_unknown_action =~ /DISPO|MESSAGE|CALLMENU|INGROUP/)
 			{
-			&cpd_end_call;
-			}
-		}
-	############# END CPD AMD SECTION ############################
-
-	############# BEGIN CPD Unknown SECTION ############################
-	if ($cpd_unknown_action =~ /DISPO|MESSAGE|CALLMENU|INGROUP/)
-		{
-		$stmtA = "SELECT count(*) FROM vicidial_cpd_log where callerid='$callerid' and result IN('Unknown','???') and status='NEW';";
-			if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
-		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-		$sthArows=$sthA->rows;
+			$stmtA = "SELECT count(*) FROM vicidial_cpd_log where callerid='$callerid' and result IN('Unknown','???') and status='NEW';";
+				if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
 			$dbhP=$dbhA;   $mysql_count='01118';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
-		if ($sthArows > 0)
-			{
-			@aryA = $sthA->fetchrow_array;
-			$cpd_unknown		= $aryA[0];
-			}
-		$sthA->finish();
-
-		if ($cpd_unknown > 0)
-			{
-			&cpd_end_call;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$cpd_unknown		= $aryA[0];
+				}
+			$sthA->finish();
+	
+			if ($cpd_unknown > 0)
+				{
+				&cpd_end_call;
+				}
 			}
 		}
-	############# END CPD Unknown SECTION ############################
+		############# END CPD Unknown SECTION ############################
 
 
 
@@ -4977,4 +5210,490 @@ sub validate_cid_name
 		return 0; # if not return 0 for false
 		}
 
+	}
+
+### code for processing KHOMP analytics
+sub process_khomp_analytics
+	{
+	(
+		$khomp_api_url, 
+		$khomp_api_proxied,
+		$khomp_api_login_url,
+		$khomp_api_user, 
+		$khomp_api_pass, 
+		$khomp_header, 
+		$khomp_id_format, 
+		$external_server_ip, 
+		$campaign_id, 
+		$callerid, 
+		$cpd_amd_action, 
+		$cpd_unknown_action,
+		$CIDlead_id
+	) = @_;
+
+	### Extra SIP Headers begin with an X
+	$khomp_header = "X-" . $khomp_header;
+
+	# determin khomp id format to use
+	if ($khomp_id_format eq 'CALLERCODE')
+		{ $khomp_id = $callerid; }
+	elsif ($khomp_id_format eq 'CALLERCODE_EXTERNIP')
+		{ $khomp_id = $callerid . '_' . $external_server_ip; }
+	elsif ($khomp_id_format eq 'CALLERCODE_CAMP_EXTERNIP')
+		{ $khomp_id = $callerid . '_' . $campaign_id . '_' . $external_server_ip; }
+
+	my $api_auth_time = 0;
+	if ( ($khomp_api_token_expire < time() ) or ( $khomp_api_token eq 'TOKENTOKENTOKEN' ))
+		{
+		if ($AGILOG) {$agi_string = "--    KHOMP API Token $khomp_api_token has expired at $khomp_api_token_expire";   &agi_output;}
+
+		# get a new API token
+		my $new_khomp_api_token = '';
+		if ( $khomp_api_proxied eq 'false' )
+			{
+			($new_khomp_api_token, $api_auth_time) = khomp_api_login( $khomp_api_login_url, $khomp_api_user, $khomp_api_pass );
+			}
+
+		# update the settings container
+		my $old_token_string = "khomp_api_token => $khomp_api_token";
+		my $new_token_string = "khomp_api_token => $new_khomp_api_token";
+		my $new_token_expire_time = time() + 3600;
+		my $old_token_expire_string = "khomp_api_token_expire => $khomp_api_token_expire";
+		my $new_token_expire_string = "khomp_api_token_expire => $new_token_expire_time";
+
+		# LOCK vicidial_settings_containers
+		$stmtA = "LOCK TABLES vicidial_settings_containers WRITE";
+		$dbhA->do($stmtA);
+		# UPDATE the Token
+		$stmtToken = "UPDATE vicidial_settings_containers SET container_entry = REGEXP_REPLACE(container_entry, '$old_token_string', '$new_token_string') WHERE container_id = 'KHOMPSETTINGS';";
+		$affected_rows = $dbhA->do($stmtToken);
+		# UPDATE the Expire time
+		$stmtExpire = "UPDATE vicidial_settings_containers SET container_entry = REGEXP_REPLACE(container_entry, '$old_token_expire_string', '$new_token_expire_string') WHERE container_id = 'KHOMPSETTINGS';";
+		$affected_rows = $dbhA->do($stmtExpire);
+		# Unlock vicidial_settings_containers
+		$stmtA = "UNLOCK TABLES";
+		$dbhA->do($stmtA);
+
+		if ($AGILOG) {$agi_string = "--    KHOMP SC TOKEN UPDATE|$affected_rows|$stmtToken|";   &agi_output;}
+		if ($AGILOG) {$agi_string = "--    KHOMP SC TOKEN EXPIRE UPDATE|$affected_rows|$stmtExpire|";   &agi_output;}
+
+		# over write the old with the new
+		$khomp_api_token = $new_khomp_api_token;
+		}
+	else
+		{
+		if ($AGILOG) {$agi_string = "--    KHOMP API Token $khomp_api_token still valid till $khomp_api_token_expire";   &agi_output;}
+		} 
+
+	if ( $khomp_api_token ne 'TOKENTOKENTOKEN' )
+		{
+		# build JSON object
+		my $khomp_request = {
+			'id' => 0,
+			'method' => 'CallList',
+			'params' => {
+				'token' => "$khomp_api_token",
+				'query' => {
+					'type' => "eq",
+					'field' => "sip_header:$khomp_header",
+					'values' => ["$khomp_id"],
+				},
+				'selected_fields' => ["sip_header:call-id", "start_stamp", "audio_stamp", "answer_stamp", "end_stamp", "analyzer_stamp", "analyzer_conclusion", "analyzer_pattern", "analyzer_action", "hangup_origin", "hangup_cause", "hangup_cause_sent"]
+			},
+			'jsonrpc' => '2.0',
+		};
+	
+		# encode it as JSON
+#UC#	$khomp_json = encode_json( $khomp_request );
+	
+		# call the API
+		($result, $api_query_time) = khomp_json_api( $khomp_json, $khomp_api_url );
+	
+		# check the result
+		if ( $result =~ /^ERROR/ )
+			{
+			# we got an error so log it
+			if ($AGILOG) { $agi_string = "--KHOMP: $result"; &agi_output; }
+			}
+		else
+			{
+			# we got a result
+
+			if ( defined $result->{'result'}->{'calls'}[0]->{'fields'} )
+				{
+				my $khomp_call_data = $result->{'result'}->{'calls'}[0]->{'fields'};
+
+				%parsed_data = khomp_parse_call_data( $khomp_header, $khomp_id, $callerid, $CIDlead_id, $khomp_id_format, $khomp_call_data );
+				$parsed_data{'api_auth_time'} = $api_auth_time;
+				$parsed_data{'api_query_time'} = $api_query_time;
+	
+				$conclusion = $parsed_data{'conclusion'};
+				$pattern = $parsed_data{'pattern'};	
+
+				#$agi_string = Dumper( \%conclusion_map );
+				#&agi_output;
+
+				my $action = '';
+				my $status = '';
+
+				if ( defined ( $conclusion_map{"$conclusion"}{"$pattern"}{'action'} ) )
+					{
+					$action = $conclusion_map{"$conclusion"}{"$pattern"}{'action'};
+					$status = $conclusion_map{"$conclusion"}{"$pattern"}{'status'};
+					}
+				elsif ( defined( $conclusion_map{"$conclusion"}{''}{'action'} ) )
+					{
+					$action = $conclusion_map{"$conclusion"}{''}{'action'};
+					$status = $conclusion_map{"$conclusion"}{''}{'status'};
+					}
+				else
+					{
+					$action = 'route';
+					$status = 'KPEROR';
+					}
+	
+				if ($AGILOG) { $agi_string = "--KHOMP: conclusion = $conclusion|pattern = $pattern|action = $action|status = $status"; &agi_output; }
+				
+				if ( $action ne '' ) { $parsed_data{'vici_action'} = "$action"; }
+				if ( $status ne '' ) { $parsed_data{'vici_status'} = "$status"; }
+				
+				# log the khomp data in the vicidial_khomp_log
+				log_khomp_call_data( %parsed_data );
+	
+				# handle the AMD action
+				if (
+					(( $action eq 'amdaction' ) && ($cpd_amd_action =~ /DISPO|MESSAGE|CALLMENU|INGROUP/)) ||
+					(( $action eq 'cpdunknown' ) && ($cpd_unknown_action =~ /DISPO|MESSAGE|CALLMENU|INGROUP/)) ||
+					( $action eq 'status' )
+				)
+					{
+					khomp_end_call( %parsed_data );
+					}
+				if ( $action eq 'route' )
+					{
+					if ($AGILOG) { $agi_string = "--KHOMP: Routing Call"; &agi_output; }
+					}
+				if ( $action eq '' )
+					{
+					if ($AGILOG) { $agi_string = "--KHOMP: No Action Defined. Routing Call"; &agi_output; }
+					}
+				}
+			else 
+				{
+				if ($AGILOG) { $agi_string = "--KHOMP: No Call Record Found"; &agi_output; }
+				}
+			}
+		}
+	else
+		{
+		if ($AGILOG) { $agi_string = "--KHOMP: Login Failed"; &agi_output; }
+		}
+
+	}
+
+# code to log the khomp data in vicidial_khomp_log
+sub log_khomp_call_data
+	{
+	%khomp_call_data = @_;
+
+	$stmtA = "UPDATE vicidial_khomp_log SET caller_code = '$khomp_call_data{'caller_code'}', lead_id = '$khomp_call_data{'lead_id'}', server_ip = '$VARserver_ip', khomp_header = '$khomp_call_data{'khomp_header'}', khomp_id = '$khomp_call_data{'khomp_id'}', khomp_id_format = '$khomp_call_data{'khomp_id_format'}', route_auth_time = '$khomp_call_data{'api_auth_time'}', route_query_time = '$khomp_call_data{'api_query_time'}'";
+
+	if ( defined( $khomp_call_data{'sip_call_id'} ) ) { $stmtA .= ", sip_call_id = '$khomp_call_data{'sip_call_id'}'"; }
+	if ( defined( $khomp_call_data{'start_epoch'} ) ) { $stmtA .= ", start_date = FROM_UNIXTIME($khomp_call_data{'start_epoch'})"; }
+	if ( defined( $khomp_call_data{'audio_epoch'} ) ) { $stmtA .= ", audio_date = FROM_UNIXTIME($khomp_call_data{'audio_epoch'})"; }
+	if ( defined( $khomp_call_data{'answer_epoch'} ) ) { $stmtA .= ", answer_date = FROM_UNIXTIME($khomp_call_data{'answer_epoch'})"; }
+	if ( defined( $khomp_call_data{'end_epoch'} ) ) { $stmtA .= ", end_date = FROM_UNIXTIME($khomp_call_data{'end_epoch'})"; }
+	if ( defined( $khomp_call_data{'analyzer_epoch'} ) ) { $stmtA .= ", analyzer_date = FROM_UNIXTIME($khomp_call_data{'analyzer_epoch'})"; }
+	if ( defined( $khomp_call_data{'conclusion'} ) ) { $stmtA .= ", conclusion = '$khomp_call_data{'conclusion'}'"; }
+	if ( defined( $khomp_call_data{'pattern'} ) ) { $stmtA .= ", pattern = '$khomp_call_data{'pattern'}'"; }
+	if ( defined( $khomp_call_data{'action'} ) ) { $stmtA .= ", action = '$khomp_call_data{'action'}'"; }
+	if ( defined( $khomp_call_data{'hangup_origin'} ) ) { $stmtA .= ", hangup_origin = '$khomp_call_data{'hangup_origin'}'"; }
+	if ( defined( $khomp_call_data{'hangup_cause_recv'} ) ) { $stmtA .= ", hangup_cause_recv = '$khomp_call_data{'hangup_cause_recv'}'"; }
+	if ( defined( $khomp_call_data{'hangup_cause_sent'} ) ) { $stmtA .= ", hangup_cause_sent = '$khomp_call_data{'hangup_cause_sent'}'"; }
+	if ( defined( $khomp_call_data{'vici_action'} ) ) { $stmtA .= ", vici_action = '$khomp_call_data{'vici_action'}'"; }
+	if ( defined( $khomp_call_data{'vici_status'} ) ) { $stmtA .= ", vici_status = '$khomp_call_data{'vici_status'}'"; }
+
+	$stmtA .= " WHERE khomp_id = '$khomp_call_data{'khomp_id'}'";
+
+	$affected_rows = $dbhA->do($stmtA);
+
+	if ($AGILOG) {$agi_string = "--    KHOMP Log Update: |$stmtA|$affected_rows|";   &agi_output;}
+
+	}
+
+sub khomp_end_call
+	{
+	%khomp_call_data = @_;
+
+	$vdad_action = $khomp_call_data{'vici_action'};
+	$vdad_result = $khomp_call_data{'vici_status'};
+
+	if ($AGILOG) {$agi_string = "--    VDAD KHOMP End Call |a:$vdad_action|s:$vdad_result|";   &agi_output;}	
+	
+	my $conclusion = $khomp_call_data{'conclusion'};
+	my $pattern = $khomp_call_data{'pattern'};
+	
+	($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+	$year = ($year + 1900);
+	$mon++;
+	if ($mon < 10) {$mon = "0$mon";}
+	if ($mday < 10) {$mday = "0$mday";}
+	if ($hour < 10) {$hour = "0$hour";}
+	if ($min < 10) {$min = "0$min";}
+	if ($sec < 10) {$sec = "0$sec";}
+
+	$now_date_epoch = time();
+	$now_date = "$year-$mon-$mday $hour:$min:$sec";
+	$CIDdate = "$mon$mday$hour$min$sec";
+	$tsSQLdate = "$year$mon$mday$hour$min$sec";
+	$SQLdate = "$year-$mon-$mday $hour:$min:$sec";
+
+	if ($enable_queuemetrics_logging > 0)
+		{
+		$dbhB = DBI->connect("DBI:mysql:$queuemetrics_dbname:$queuemetrics_server_ip:3306", "$queuemetrics_login", "$queuemetrics_pass")
+		 or die "Couldn't connect to database: " . DBI->errstr;
+
+		if ($DBX) {print "CONNECTED TO DATABASE:  $queuemetrics_server_ip|$queuemetrics_dbname\n";}
+
+		$stmtB = "INSERT INTO queue_log SET `partition`='P01',time_id='$now_date_epoch',call_id='$callerid',queue='$VDADcampaign',agent='NONE',verb='EXITWITHTIMEOUT',data1='1',serverid='$queuemetrics_log_id';";
+		$Baffected_rows = $dbhB->do($stmtB);
+			$dbhP=$dbhB;   $stmtA=$stmtB;   $mysql_count='01048';   $MEL_aff_rows=$Baffected_rows;   &mysql_error_logging;
+
+		$stmtB = "INSERT INTO queue_log SET `partition`='P01',time_id='$now_date_epoch',call_id='$callerid',queue='$VDADcampaign',agent='NONE',verb='CALLSTATUS',data1='$vdad_result',serverid='$queuemetrics_log_id';";
+		$Baffected_rows = $dbhB->do($stmtB);
+			$dbhP=$dbhB;   $stmtA=$stmtB;   $mysql_count='01049';   $MEL_aff_rows=$Baffected_rows;   &mysql_error_logging;
+
+		$dbhB->disconnect();
+		}
+
+	if ($drop_seconds < 1)
+		{
+		$drop_seconds = $DROP_TIME;
+		}
+
+	if (
+		( ($cpd_amd_action =~ /MESSAGE|CALLMENU|INGROUP/) && ($vdad_action eq 'amdaction') ) ||
+		( ($cpd_unknown_action =~ /MESSAGE|CALLMENU|INGROUP/) && ($vdad_action eq 'cpdunknown' ) )
+	)
+		{
+		$DROPexten = "8320";
+		$AMDSTATUS_set =	$AGI->set_variable('AMDSTATUS', "CPDMACHINE");
+		$AMDCAUSE_set =	 $AGI->set_variable('AMDCAUSE', "$conclusion-$pattern");
+		}
+	else
+		{
+		$stmtA = "DELETE FROM vicidial_auto_calls where callerid='$callerid' order by call_time desc limit 1;";
+		$affected_rows = $dbhA->do($stmtA);
+		$dbhP=$dbhA;   $mysql_count='01052';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
+		if ($AGILOG) {$agi_string = "--    VDAD KHOMP vac record deleted: |$affected_rows|$VDADcampaign|$callerid|";   &agi_output;}
+		}
+	
+	$Euniqueid=$uniqueid;
+	$Euniqueid =~ s/\.\d+//gi;
+	$stmtA = "UPDATE vicidial_log FORCE INDEX(lead_id) set status='$vdad_result',end_epoch='$now_date_epoch',length_in_sec='$drop_seconds',term_reason='AGENT' where lead_id = '$CIDlead_id' and uniqueid LIKE \"$Euniqueid%\";";
+		if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+	$affected_rows = $dbhA->do($stmtA);
+		$dbhP=$dbhA;   $mysql_count='01050';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
+	if ($AGILOG) {$agi_string = "--    VDAD KHOMP vicidial_log update: |$affected_rows|$uniqueid";   &agi_output;}
+
+	$stmtA = "UPDATE vicidial_list set status='$vdad_result' where lead_id = '$CIDlead_id';";
+		if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+	$affected_rows = $dbhA->do($stmtA);
+		$dbhP=$dbhA;   $mysql_count='01051';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
+	if ($AGILOG) {$agi_string = "--    VDAD KHOMP vicidial_list update: |$affected_rows|$CIDlead_id";   &agi_output;}
+
+	### use STDOUT to send call to proper DROP location
+	$VHqueryCID = "VH$CIDdate$VDADconf_exten";
+
+	if (length($DROPexten)>0)
+		{       ### if DROP extension is defined then send the dropped call there instead of hangup
+		$AGI->stream_file('sip-silence');
+		$AGI->stream_file('sip-silence');
+		$AGI->stream_file('sip-silence');
+
+		if ($AGILOG) {$agi_string = "exiting the VDAD app, KHOMP transferring call to $DROPexten";   &agi_output;}
+		print "SET CONTEXT $ext_context\n";
+			$result = <STDIN>;
+			checkresult($result);
+		print "SET EXTENSION $DROPexten\n";
+			$result = <STDIN>;
+			checkresult($result);
+		print "SET PRIORITY 1\n";
+			$result = <STDIN>;
+			checkresult($result);
+
+		exit;
+		}
+	else
+		{
+		### insert a NEW record to the vicidial_manager table to be processed
+		$stmtA = "INSERT INTO vicidial_manager values('','','$SQLdate','NEW','N','$VARserver_ip','','Hangup','$VHqueryCID','Channel: $channel','','','','','','','','','')";
+		$affected_rows = $dbhA->do($stmtA);
+			$dbhP=$dbhA;   $mysql_count='01053';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
+		if ($AGILOG) {$agi_string = "--    VDAD call_hungup KHOMP timout: |$CIDlead_id|$VHqueryCID|$VDADconf_exten|$channel|insert to vicidial_manager";   &agi_output;}
+
+		$AGI->hangup();
+
+		exit;
+		}
+	}
+
+
+### code for parsing the call data into a useful data structure
+sub khomp_parse_call_data
+	{
+	( $khomp_header, $khomp_id, $callerid, $lead_id, $khomp_id_format, $khomp_call_data ) = @_;
+
+	my %new_khomp_call_data;
+
+	
+	#KHOMP Field Names - Meaning:
+	#	sip_header:call-id - leg A - SIP Call-ID
+	#	start_stamp - unix timestamp of the call start (first INVITE)
+	#	audio_stamp - unix timestamp of the audio start (183)
+	#	answer_stamp - unix timestamp of the call answer (200 OK)
+	#	end_stamp - unix timestamp of call end 
+	#	analyzer_stamp - unix timestamp of Analytics conclusion
+	#	analyzer_conclusion - the Analytics conclusion
+	#	analyzer_pattern - The specific pattern that was detected (if any)
+	#	analyzer_action - the action taken for the analytics conclusion
+	#	hangup_origin - which leg hangup the call: leg a or leg b
+	#	hangup_cause - hangup cause received 
+	#	hangup_cause_sent - the cause code that was sent
+	#
+
+	$new_khomp_call_data{'caller_code'} = $callerid;
+	$new_khomp_call_data{'lead_id'} = $lead_id;
+	$new_khomp_call_data{'khomp_header'} = $khomp_header;
+	$new_khomp_call_data{'khomp_id'} = $khomp_id;
+	$new_khomp_call_data{'khomp_id_format'} = $khomp_id_format;
+	$new_khomp_call_data{'sip_call_id'} = $khomp_call_data->{'sip_header:call-id'};
+	$new_khomp_call_data{'start_epoch'} = $khomp_call_data->{'start_stamp'};
+	$new_khomp_call_data{'audio_epoch'} = $khomp_call_data->{'audio_stamp'};
+	$new_khomp_call_data{'answer_epoch'} = $khomp_call_data->{'answer_stamp'};
+	$new_khomp_call_data{'end_epoch'} = $khomp_call_data->{'end_stamp'};
+	$new_khomp_call_data{'analyzer_epoch'} = $khomp_call_data->{'analyzer_stamp'};
+	$new_khomp_call_data{'conclusion'} = $khomp_call_data->{'analyzer_conclusion'};
+	$new_khomp_call_data{'pattern'} = $khomp_call_data->{'analyzer_pattern'};
+	$new_khomp_call_data{'action'} = $khomp_call_data->{'analyzer_action'};
+	$new_khomp_call_data{'hangup_origin'} = $khomp_call_data->{'hangup_origin'};
+	$new_khomp_call_data{'hangup_cause_recv'} = $khomp_call_data->{'hangup_cause'};
+	$new_khomp_call_data{'hangup_cause_sent'} = $khomp_call_data->{'hangup_cause_sent'};
+
+	# handle blank times
+	if ($new_khomp_call_data{'start_epoch'} eq '') { $new_khomp_call_data{'start_epoch'} = 0; }
+	if ($new_khomp_call_data{'audio_epoch'} eq '') { $new_khomp_call_data{'audio_epoch'} = 0; }
+	if ($new_khomp_call_data{'answer_epoch'} eq '') { $new_khomp_call_data{'answer_epoch'} = 0; }
+	if ($new_khomp_call_data{'end_epoch'} eq '') { $new_khomp_call_data{'end_epoch'} = 0; }
+	if ($new_khomp_call_data{'analyzer_epoch'}  eq '') { $new_khomp_call_data{'analyzer_epoch'} = 0; }
+
+	# time is returned in milliseconds since 1970 we need seconds
+	if ($new_khomp_call_data{'start_epoch'} > 0) { $new_khomp_call_data{'start_epoch'} = $new_khomp_call_data{'start_epoch'} / 1000; }
+	if ($new_khomp_call_data{'audio_epoch'} > 0) { $new_khomp_call_data{'audio_epoch'} = $new_khomp_call_data{'audio_epoch'} / 1000; }
+	if ($new_khomp_call_data{'answer_epoch'} > 0) { $new_khomp_call_data{'answer_epoch'} = $new_khomp_call_data{'answer_epoch'} / 1000; }
+	if ($new_khomp_call_data{'end_epoch'} > 0) { $new_khomp_call_data{'end_epoch'} = $new_khomp_call_data{'end_epoch'} / 1000; }
+	if ($new_khomp_call_data{'analyzer_epoch'} > 0) { $new_khomp_call_data{'analyzer_epoch'} = $new_khomp_call_data{'analyzer_epoch'} / 1000; }
+
+	return %new_khomp_call_data;
+	}
+
+### code for logging into KHOMP api
+sub khomp_api_login
+	{
+	(
+	$khomp_api_login_url,
+	$khomp_api_user,
+	$khomp_api_pass
+	) = @_;
+
+	my $token = 'login';
+	my $auth_start_sec;
+	my $auth_start_usec;
+	my $auth_end_sec;
+	my $auth_end_usec;
+	my $auth_sec;
+	my $auth_usec;
+	my $api_auth_time;
+
+	($auth_start_sec, $auth_start_usec) = gettimeofday();
+
+	# build JSON object
+	my $login_json = {
+		'id' => 0,
+		'method' => 'SessionLogin',
+		'params' => {
+			'username' => "$khomp_api_user",
+			'password' => "$khomp_api_pass",
+		},
+		'jsonrpc' => '2.0',
+	};
+
+	# encode it as JSON
+#UC#	$login_json = encode_json( $login_json );
+
+	my $curl_cmd = "$curlbin -sS --data \'$login_json\' $khomp_api_login_url";
+	
+	$agi_string = "--    KHOMP CURL COMMAND: $curl_cmd";   &agi_output;
+
+	$message = `$curl_cmd`;
+
+	chomp($message);
+
+	if ($AGILOG)
+		{
+		$agi_string = "--    KHOMP LOGIN URL: |$khomp_api_login_url|";   &agi_output;
+		$agi_string = "--    KHOMP LOGIN JSON : |$login_json|";   &agi_output;
+		$agi_string = "--    KHOMP LOGIN RESPONSE JSON: |$message|";   &agi_output;
+		}
+
+#UC#	$json = JSON::PP->new->ascii->pretty->allow_nonref;
+#UC#	$result = $json->decode($message);
+
+	$token = $result->{'result'}->{'token'};
+
+	($auth_end_sec, $auth_end_usec) = gettimeofday();
+
+	$api_auth_time = tv_interval ( [$auth_start_sec, $auth_start_usec], [$auth_end_sec, $auth_end_usec]);
+
+	return ($token, $api_auth_time);
+	}
+
+### code for connecting to KHOMP api and passing JSON
+sub khomp_json_api
+	{
+	( $khomp_json, $khomp_api_url ) = @_;
+
+	my $query_start_sec;
+	my $query_start_usec;
+	my $query_end_sec;
+	my $query_end_usec;
+	my $query_sec;
+	my $query_usec;
+	my $api_query_time;
+
+	($query_start_sec, $query_start_usec) = gettimeofday();
+
+	my $curl_cmd = "$curlbin -sS --data \'$khomp_json\' $khomp_api_url";
+
+	$agi_string = "--    KHOMP CURL COMMAND: $curl_cmd";   &agi_output;
+
+	$message = `$curl_cmd`;
+
+	chomp($message);
+
+	if ($AGILOG) 
+		{
+		$agi_string = "--    KHOMP URL: |$khomp_api_url|";   &agi_output;
+		$agi_string = "--    KHOMP JSON : |$khomp_json|";   &agi_output;
+		$agi_string = "--    KHOMP RESPONSE JSON: |$message|";   &agi_output;
+		}
+
+#UC#	$json = JSON::PP->new->ascii->pretty->allow_nonref;
+#UC#	$result = $json->decode($message);
+
+	($query_end_sec, $query_end_usec) = gettimeofday();
+
+	$api_query_time = tv_interval ( [$query_start_sec, $query_start_usec], [$query_end_sec, $query_end_usec]); 
+
+	return ($result, $api_query_time);
 	}

@@ -1,4 +1,4 @@
-KHOMP Answering Machine Detection	Started: 2018-09-29	Update: 2021-07-20
+KHOMP Answering Machine Detection	Started: 2018-09-29	Update: 2021-09-07
 
 
 The KHOMP Analytics Integration code, installation and configuration information
@@ -21,6 +21,7 @@ Here are a few basic things to check with KHOMP if you are experiencing issues, 
         c. Make sure campaign's "AMD Type" is set to 'KHOMP'
         d. Make sure the campaign's "Routing Extension" is set to '8368'.
         e. If you want to leave answering machine messages make sure the "CPD AMD Action" and "CPD Unknown Actions" are setup to do so.
+
 2. "Why did this call do this thing?"
         a. Do a lead search for the phone number.
         b. Bring up the lead.
@@ -29,6 +30,7 @@ Here are a few basic things to check with KHOMP if you are experiencing issues, 
         e. Note the 'Conclusion' and 'Pattern' KHOMP returned.
         f. Go to "Reports -> Admin Utilities -> Dialer KHOMP Admin Tool".
         g. Search for the Conclusion / Pattern in the list and verify that it is configured to do what you expect.
+
 3. "Something is clearly wrong. Every call is coming back as *SOME WEIRD CONCLUSION*"
         a. Recommend they reboot the KHOMP server.
         b. Disable KHOMP in the campaign.
@@ -37,3 +39,7 @@ Here are a few basic things to check with KHOMP if you are experiencing issues, 
                 III. If they want to use Asterisk AMD set the "Campaign Routing Extension" appropriately.
         c. Have the manager wait until all their existing calls from before the change have ended.
         d. Reboot the Khomp Server by going into Administration -> "Reboot The Gateway" in the Khomp interface.
+
+4. "All of my answered calls are being set as PU, what's going on?"
+	a. The KHOMP server itself needs to either have a valid SSL certificate from a valid certificate authority, or HTTPS needs to be disabled on the KHOMP server.
+	   If you don't do this, curl will refuse to connect to the API and all answered calls will end up as PU.

@@ -157,7 +157,7 @@ $secX = time();
 $DB=1;  # Debug flag, set to 0 for no debug messages, lots of output
 $US='_';
 $MT[0]='';
-$svn_revision_fixed = 3522;
+$svn_revision_fixed = 3529;
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)

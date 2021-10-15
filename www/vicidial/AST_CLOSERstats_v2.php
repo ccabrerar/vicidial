@@ -70,6 +70,7 @@
 # 200924-0918 - Added two new drop calculations
 # 210821-1520 - Added AHT to CUSTOM INDICATOR section
 # 210914-1020 - Fixed bug for default start/end times on call times when all days have custom s/e time
+# 210923-2247 - Added OCR, SL-1 & SL-2 stats to CUSTOM INDICATOR section
 #
 
 $startMS = microtime();
@@ -1356,6 +1357,11 @@ if (strlen($group_SQL)>3)
 		$PCTanswer_sec_pct_rt_stat_two = round($PCTanswer_sec_pct_rt_stat_two, 0);
 		#$PCTanswer_sec_pct_rt_stat_two = sprintf("%10s", $PCTanswer_sec_pct_rt_stat_two);
 
+		$PCTallcall_sec_pct_rt_stat_one = (MathZDC($answer_sec_pct_rt_stat_one, $TOTALcalls) * 100);
+		$PCTallcall_sec_pct_rt_stat_one = round($PCTallcall_sec_pct_rt_stat_one, 0);
+		$PCTallcall_sec_pct_rt_stat_two = (MathZDC($answer_sec_pct_rt_stat_two, $TOTALcalls) * 100);
+		$PCTallcall_sec_pct_rt_stat_two = round($PCTallcall_sec_pct_rt_stat_two, 0);
+
 		$stmt="SELECT uniqueid from ".$vicidial_closer_log_table." where campaign_id IN($group_SQL) and call_date >= '$query_date_BEGIN' and call_date <= '$query_date_END' $calldate_call_time_clause and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','INBND','MAXCAL') and uniqueid!='';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$uniqueids_to_print = mysqli_num_rows($rslt);
@@ -1370,15 +1376,19 @@ if (strlen($group_SQL)>3)
 			}
 		if (strlen($uniqueidSQL) < 2) {$uniqueidSQL="'X'";}
 
-		$stmt = "SELECT count(*),sum(talk_sec + dispo_sec) from ".$vicidial_agent_log_table." where uniqueid IN($uniqueidSQL) and event_time >= '$query_date_BEGIN' and event_time <= '$query_date_END' and talk_sec < 65000 and dispo_sec < 65000;";
+		$stmt = "SELECT count(*),sum(talk_sec + dispo_sec),sum(talk_sec + dispo_sec + wait_sec) from ".$vicidial_agent_log_table." where uniqueid IN($uniqueidSQL) and event_time >= '$query_date_BEGIN' and event_time <= '$query_date_END' and talk_sec < 65000 and dispo_sec < 65000 and wait_sec < 65000;";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		if ($DB) {$MAIN.="$stmt\n";}
 		$row=mysqli_fetch_row($rslt);
 		$AHTcalls = $row[0];
 		$AHTtime = $row[1];
+		$AHTwait = $row[2];
 
 		$AHTaverage = (MathZDC($AHTtime, $AHTcalls));
 		$TALK_DISPO_HOLDseconds = round($AHTaverage, 0);
+
+		$OCRaverage = (MathZDC($AHTtime, $AHTwait));
+		$OCRate = round($OCRaverage, 2);
 		}
 	}
 
@@ -1386,48 +1396,62 @@ if ($CHAT=='Y')
 	{
 	$MAIN.="\n";
 	$MAIN.="---------- "._QXZ("CUSTOM INDICATORS")."\n";
-	$MAIN.="GDE "._QXZ("(Answered/Total chats taken in to this In-Group)",50).":  $ANSWEREDpercent%\n";
-	$MAIN.="ACR "._QXZ("(Dropped/Answered)",50).":  $DROP_ANSWEREDpercent%\n";
-	$MAIN.="AHT "._QXZ("(Agent-Answered chats / Talk+Hold+Dead+Dispo sec)",50).":  $TALK_DISPO_HOLDseconds sec\n";
+	$MAIN.="GDE  "._QXZ("(Answered/Total chats taken in to this In-Group)",50).": $ANSWEREDpercent%\n";
+	$MAIN.="ACR  "._QXZ("(Dropped/Answered)",50).":  $DROP_ANSWEREDpercent%\n";
+	$MAIN.="AHT  "._QXZ("(Agent-Answered chats / Handle Time sec)",50).": $TALK_DISPO_HOLDseconds sec\n";
+	$MAIN.="OCR  "._QXZ("Occupancy Rate = (Handle Time / Handle + Wait sec)",50).": $OCRate\n";
+	$MAIN.="      *"._QXZ("Handle Time = (Talk+Hold+Dead+Dispo sec)",50)."\n";
 
 	$CSV_text1.="\n\""._QXZ("CUSTOM INDICATORS")."\"\n";
 	$CSV_text1.="\"GDE "._QXZ("(Answered/Total chats taken in to this In-Group)").":\",\"$ANSWEREDpercent%\"\n";
 	$CSV_text1.="\"ACR "._QXZ("(Dropped/Answered)").":\",\"$DROP_ANSWEREDpercent%\"\n";
 	$CSV_text1.="\"AHT "._QXZ("(Agent-Answered chats / Talk+Hold+Dead+Dispo sec)").":\",\"$TALK_DISPO_HOLDseconds sec\"\n";
+	$CSV_text1.="\"OCR "._QXZ("Occupancy Rate = (Handle Time / Handle + Wait sec)").":\",\"$OCRate\"\n";
 	}
 elseif ($EMAIL=='Y')
 	{
 	$MAIN.="\n";
 	$MAIN.="---------- "._QXZ("CUSTOM INDICATORS")."\n";
-	$MAIN.="GDE "._QXZ("(Answered/Total emails taken in to this In-Group)",50).":  $ANSWEREDpercent%\n";
-	$MAIN.="ACR "._QXZ("(Dropped/Answered)",50).":  $DROP_ANSWEREDpercent%\n";
-	$MAIN.="AHT "._QXZ("(Agent-Answered emails / Talk+Hold+Dead+Dispo sec)",50).":  $TALK_DISPO_HOLDseconds sec\n";
+	$MAIN.="GDE  "._QXZ("(Answered/Total emails taken in to this In-Group)",50).": $ANSWEREDpercent%\n";
+	$MAIN.="ACR  "._QXZ("(Dropped/Answered)",50).":  $DROP_ANSWEREDpercent%\n";
+	$MAIN.="AHT  "._QXZ("(Agent-Answered emails / Handle Time sec)",50).": $TALK_DISPO_HOLDseconds sec\n";
+	$MAIN.="OCR  "._QXZ("Occupancy Rate = (Handle Time / Handle + Wait sec)",50).": $OCRate\n";
+	$MAIN.="      *"._QXZ("Handle Time = (Talk+Hold+Dead+Dispo sec)",50)."\n";
 
 	$CSV_text1.="\n\""._QXZ("CUSTOM INDICATORS")."\"\n";
 	$CSV_text1.="\"GDE "._QXZ("(Answered/Total emails taken in to this In-Group)").":\",\"$ANSWEREDpercent%\"\n";
 	$CSV_text1.="\"ACR "._QXZ("(Dropped/Answered)").":\",\"$DROP_ANSWEREDpercent%\"\n";
 	$CSV_text1.="\"AHT "._QXZ("(Agent-Answered emails / Talk+Hold+Dead+Dispo sec)").":\",\"$TALK_DISPO_HOLDseconds sec\"\n";
+	$CSV_text1.="\"OCR "._QXZ("Occupancy Rate = (Handle Time / Handle + Wait sec)").":\",\"$OCRate\"\n";
 	}
 else
 	{
 	$MAIN.="\n";
 	$MAIN.="---------- "._QXZ("CUSTOM INDICATORS")."\n";
-	$MAIN.="GDE "._QXZ("(Answered/Total calls taken in to this In-Group)",50).":  $ANSWEREDpercent%\n";
-	$MAIN.="ACR "._QXZ("(Dropped/Answered)",50).":  $DROP_ANSWEREDpercent%\n";
-	$MAIN.="AHT "._QXZ("(Agent-Answered calls / Talk+Hold+Dead+Dispo sec)",50).":  $TALK_DISPO_HOLDseconds sec\n";
+	$MAIN.="GDE  "._QXZ("(Answered/Total calls taken in to this In-Group)",50).": $ANSWEREDpercent%\n";
+	$MAIN.="ACR  "._QXZ("(Dropped/Answered)",50).": $DROP_ANSWEREDpercent%\n";
+	$MAIN.="AHT  "._QXZ("(Agent-Answered calls / Handle Time sec)",50).": $TALK_DISPO_HOLDseconds sec\n";
+	$MAIN.="OCR  "._QXZ("Occupancy Rate = (Handle Time / Handle + Wait sec)",50).": $OCRate\n";
+	$MAIN.="      *"._QXZ("Handle Time = (Talk+Hold+Dead+Dispo sec)",50)."\n";
 
 	$CSV_text1.="\n\""._QXZ("CUSTOM INDICATORS")."\"\n";
 	$CSV_text1.="\"GDE "._QXZ("(Answered/Total calls taken in to this In-Group)").":\",\"$ANSWEREDpercent%\"\n";
 	$CSV_text1.="\"ACR "._QXZ("(Dropped/Answered)").":\",\"$DROP_ANSWEREDpercent%\"\n";
 	$CSV_text1.="\"AHT "._QXZ("(Agent-Answered calls / Talk+Hold+Dead+Dispo sec)").":\",\"$TALK_DISPO_HOLDseconds sec\"\n";
+	$CSV_text1.="\"OCR "._QXZ("Occupancy Rate = (Handle Time / Handle + Wait sec)").":\",\"$OCRate\"\n";
 	}
 
 if ($DID!='Y')
 	{
 	$MAIN.="TMR1 "._QXZ("(Answered within %1s seconds/Answered)",50,'',$Sanswer_sec_pct_rt_stat_one).": $PCTanswer_sec_pct_rt_stat_one%\n";
 	$MAIN.="TMR2 "._QXZ("(Answered within %1s seconds/Answered)",50,'',$Sanswer_sec_pct_rt_stat_two).": $PCTanswer_sec_pct_rt_stat_two%\n";
+	$MAIN.="SL-1 "._QXZ("(Answered within %1s seconds/All Calls)",50,'',$Sanswer_sec_pct_rt_stat_one).": $PCTallcall_sec_pct_rt_stat_one%\n";
+	$MAIN.="SL-2 "._QXZ("(Answered within %1s seconds/All Calls)",50,'',$Sanswer_sec_pct_rt_stat_two).": $PCTallcall_sec_pct_rt_stat_two%\n";
+
 	$CSV_text1.="\"TMR1 "._QXZ("(Answered within %1s seconds/Answered)",0,'',$Sanswer_sec_pct_rt_stat_one).":\",\"$PCTanswer_sec_pct_rt_stat_one%\"\n";
 	$CSV_text1.="\"TMR2 "._QXZ("(Answered within %1s seconds/Answered)",0,'',$Sanswer_sec_pct_rt_stat_two).":\",\"$PCTanswer_sec_pct_rt_stat_two%\"\n";
+	$CSV_text1.="\"SL-1 "._QXZ("(Answered within %1s seconds/All Calls)",0,'',$Sanswer_sec_pct_rt_stat_one).":\",\"$PCTallcall_sec_pct_rt_stat_one%\"\n";
+	$CSV_text1.="\"SL-2 "._QXZ("(Answered within %1s seconds/All Calls)",0,'',$Sanswer_sec_pct_rt_stat_two).":\",\"$PCTallcall_sec_pct_rt_stat_two%\"\n";
 	}
 
 

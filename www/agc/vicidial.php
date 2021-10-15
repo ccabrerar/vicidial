@@ -4693,7 +4693,7 @@ while ($CINC < 12)
 					{
 					$CPRNTmday = $Cdayarray['mday'];
 					if ($CPRNTmday < 10) {$CPRNTmday = "0$CPRNTmday";}
-					if (preg_match("/\|$CPRNTDAY-$CPRNTmday\|/",$ct_holiday_dates)) 
+					if (preg_match("/\|$CPRNTDAY-$CPRNTmday\|/",$ct_holiday_dates))
 						{
 						$hd_loop=0;
 						while ($hd_loop < $hd_ct)
@@ -5869,7 +5869,7 @@ if (!IE) document.captureEvents(Event.MOUSEMOVE)
 
 
 // ################################################################################
-// Display Holiday name when hovering 
+// Display Holiday name when hovering
 function holiday_display(holiday_name)
 	{
 	document.getElementById("HolidayDisplayDiv").innerHTML="<table border=\"1\" cellpadding=\"3\" bordercolor=\"000000\" cellspacing=\"0\" bgcolor=\"#FFCC66\"><tr><td><b><font face=\"Arial,Helvetica\" size=2>" + holiday_name + "</font></b></td></td></table>";
@@ -5880,10 +5880,10 @@ function holiday_display(holiday_name)
 	} else {  // grab the x-y pos.s if browser is NS
 		tempX = event.pageX
 		tempY = event.pageY
-	}  
+	}
 	// catch possible negative values in NS4
 	if (tempX < 0){tempX = 0}
-	if (tempY < 0){tempY = 0}  
+	if (tempY < 0){tempY = 0}
 
 	tempX+=15;
 
@@ -9032,7 +9032,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 							lead_change = xmlhttprequestselectupdate.responseText;
 						//	alert(checkVDAI_query);
 						//	alert(xmlhttprequestselectupdate.responseText);
-						//	document.getElementById("debugbottomspan").innerHTML = xmlhttprequestselectupdate.responseText; 
+						//	document.getElementById("debugbottomspan").innerHTML = xmlhttprequestselectupdate.responseText;
 							var change_array=lead_change.split("\n");
 							if (change_array[0] == '1')
 								{
@@ -10673,7 +10673,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								auto_dial_level=starting_dial_level;
 								MainPanelToFront();
 								CalLBacKsCounTCheck();
-								InternalChatsCheck(); 
+								InternalChatsCheck();
 
 								if (MDnextCID.match(regMNCvar))
 									{
@@ -10737,7 +10737,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								in_lead_preview_state=0;
 								}
 
-								if (alert_displayed==0)						
+								if (alert_displayed==0)
 									{alert_box("<?php echo _QXZ("Unspecified error:"); ?>\n" + mdnPhonENumbeR + "|" + MDnextCID);   alert_displayed=1;}
 
 								if (starting_dial_level == 0)
@@ -17439,13 +17439,13 @@ else
 		"&email=" + encodeURIComponent(document.vicidial_form.email.value) +
 		"&security_phrase=" + encodeURIComponent(document.vicidial_form.security_phrase.value) +
 		"&comments=" + encodeURIComponent(document.vicidial_form.comments.value) +
-		"&user=" + UDCtemp_user + 
-		"&pass=" + UDCtemp_pass + 
+		"&user=" + UDCtemp_user +
+		"&pass=" + UDCtemp_pass +
 		"&orig_pass=" + UDCtemp_orig_pass +
 		"&campaign=" + campaign +
-		"&phone_login=" + UDCtemp_phone_login + 
+		"&phone_login=" + UDCtemp_phone_login +
 		"&original_phone_login=" + UDCtemp_orig_phone_login +
-		"&phone_pass=" + UDCtemp_phone_pass + 
+		"&phone_pass=" + UDCtemp_phone_pass +
 		"&fronter=" + fronter +
 		"&closer=" + user +
 		"&group=" + group +

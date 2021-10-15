@@ -152,9 +152,10 @@
 # 210630-1630 - Remove commas from mailbox name before writing to conf file, use "Full Name" for a phone's mailbox name, if set
 # 210712-2312 - Added purging of vicidial_lead_24hour_calls table
 # 210827-0939 - Added PJSIP compatibility
+# 210924-2333 - Fix for calls_today issue at timeclock-end-of-day
 #
 
-$build = '210827-0939';
+$build = '210924-2333';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -1301,6 +1302,12 @@ if ($timeclock_end_of_day_NOW > 0)
 		$affected_rows = $dbhA->do($stmtA);
 		if($DB){print STDERR "\n|$affected_rows vicidial_live_inbound_agents call counts reset|\n";}
 		if ($teodDB) {$event_string = "vicidial_live_inbound_agents records reset: $affected_rows";   &teod_logger;}
+
+		$stmtA = "update vicidial_live_agents SET calls_today=0;";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$affected_rows = $dbhA->do($stmtA);
+		if($DB){print STDERR "\n|$affected_rows vicidial_live_agents call counts reset|\n";}
+		if ($teodDB) {$event_string = "vicidial_live_agents calls_today records reset: $affected_rows";   &teod_logger;}
 
 		$stmtA = "delete from vicidial_lead_call_daily_counts;";
 		if($DBX){print STDERR "\n|$stmtA|\n";}

@@ -1,4 +1,4 @@
-Sending email after agent dispositions a call		Started: 2015-08-06	Updated: 2021-08-25
+Sending email after agent dispositions a call		Started: 2015-08-06	Updated: 2021-09-26
 
 These instructions will show you how to set up automatic emails to be sent out when an agent dispositions a call with a specific defined "sale status".
 
@@ -22,6 +22,9 @@ UPDATE! 2021-08-23 - Changed email attachments so they must be placed in the "ag
 
 
 
+
+
+
 HERE IS AN EXAMPLE DISPO CALL URL ENTRY FOR THIS FEATURE:
 
 	(in this example, only calls that are set by the agent as SALE, SSALE or XSALE status would have an email sent out, and the email would use the TEST_CONTAINER settings container as the email's template)
@@ -36,7 +39,9 @@ VARhttp://192.168.1.1/agc/dispo_send_email.php?container_id=TEST_CONTAINER&lead_
 
 
 
-HERE IS AN EXAMPLE SETTINGS CONTAINER TO SEND OUT AN EMAIL:
+
+
+HERE IS AN EXAMPLE SETTINGS CONTAINER(Container ID: "TEST_CONTAINER") TO SEND OUT AN EMAIL AFTER CALL DISPO:
 
 	(The four keys you can use are: "email_to", "email_from", "email_subject" and "email_body_begin" will start your message while "email_body_end" will mark the finish of the message. You can use most standard SCRIPT variables in the subject and body fields, and you can use either fixed email addresses or "agent_email" and "customer_email" as variables for the email addresses as shown below. A semi-colon ";" at the beginning of a line will comment out that line and it will not be parsed. If you want to include custom fields values in the email, then you need to put "--A--CF_uses_custom_fields--B--" into the email body somewhere, it will be removed before the email is sent. Then you can put custom fields values in just like you do in a script.)
 
@@ -138,13 +143,14 @@ email_body_end
 
 
 
+
 HERE IS AN EXAMPLE NO AGENT CALL URL ENTRY FROM AN IN-GROUP FOR THIS FEATURE:
 
 VARhttp://server/agc/dispo_send_email.php?container_id=INGROUP_NA_EMAIL-test&lead_id=--A--lead_id--B--&call_id=--A--call_id--B--&dispo=--A--dispo--B--&user=NOAGENTURL&pass=--A--call_id--B--&sale_status=TIMEOT---NANQUE---DROP---AFTHRS&log_to_file=1
 
 
 
-HERE IS AN EXAMPLE SETTINGS CONTAINER TO SEND OUT AN EMAIL FROM THE ABOVE EXAMPLE:
+HERE IS AN EXAMPLE SETTINGS CONTAINER(Container ID: "INGROUP_NA_EMAIL-test") TO SEND OUT AN EMAIL FROM THE ABOVE EXAMPLE:
 
 ; destination email
 email_to => vicidialemailtesting@gmail.com
@@ -186,4 +192,38 @@ call_id: --A--call_id--B--
 
 
 ACME Call Center
+email_body_end
+
+
+
+
+
+
+HERE IS AN EXAMPLE SCRIPT TAB ENTRY FOR THIS FEATURE(click to email):
+   (Note: This example includes an attachment, the file 'Refund_Form.pdf' is located in the "../agc/attachments/" web directory)
+
+Click on the link below to send an email with the Refund Form attached to it.
+<BR><BR>
+Customer Email: --A--email--B--
+<BR><BR>
+<a href="../agc/dispo_send_email.php?container_id=REFUND_FORM_EMAIL&stage=offline&lead_id=--A--lead_id--B--&call_id=--A--call_id--B--&user=NOAGENTURL&pass=--A--call_id--B--&sale_status=ALL-STATUSES&log_to_file=1&email_attachment_1=Refund_Form.pdf&email_to=--A--email--B--&additional_notes=Hi+Good+morning+I+have+attached+the+refund+form+as+we+discussed+on+the+phone.+If+you+have+any+questions,+please+reply+back." target="_blank">CLICK HERE TO SEND EMAIL</a>
+
+
+
+HERE IS AN EXAMPLE SETTINGS CONTAINER(Container ID: "REFUND_FORM_EMAIL") TO SEND OUT AN EMAIL FROM THE ABOVE EXAMPLE:
+
+email_from => testing@vicidial.com
+email_subject => Refund Form
+email_body_begin =>
+
+Dear--A--first_name--B-- --A--last_name--B--,
+
+Please find within requested Refund Form PDF file.
+
+--A--additional_notes--B--
+
+Thank you,
+
+ACME Support
+
 email_body_end
