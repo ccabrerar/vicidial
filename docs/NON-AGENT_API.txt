@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2021-09-17
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2021-11-07
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -45,6 +45,7 @@ lead_field_info - pulls the value of one field of a lead
 lead_callback_info - outputs scheduled callback data for a specific lead
 lead_all_info - outputs all lead data for a lead(optionally including custom fields)
 lead_status_search - displays all field values of all leads that match the status and call date in request
+lead_search - searches for leads in the vicidial_list table by phone numbers
 ccc_lead_info - outputs lead data for cross-cluster-communication call
 server_refresh - forces a conf file refresh on all telco servers in the cluster
 check_phone_number - allows you to check if a phone number is valid and dialable
@@ -194,6 +195,7 @@ Changes:
 210701-2050 - Added ingroup_rank/ingroup_grade options to the update_user function
 210812-2640 - Added update of live agent records for ingroup_rank/ingroup_grade in the update_user function
 210917-1615 - Added batch_update_lead function
+211107-1556 - Added optional phone_number search for lead_all_info function
 
 
 API Functions use the 'function' variable
@@ -755,13 +757,14 @@ A SUCCESS response will not show "SUCCESS", but instead will just print the valu
 --------------------------------------------------------------------------------
 lead_all_info - outputs all lead data for a lead(optionally including custom fields)
 
-NOTE: api user for this function must have user_level set to 7 or higher and "view reports" enabled and modify_leads set to 1-4
+NOTE: api user for this function must have user_level set to 7 or higher and "view reports" enabled and modify_leads set to 1-5
 
 REQUIRED FIELDS-
 source -		description of what originated the API call (maximum 20 characters)
 lead_id -		1-10 digits
 
 OPTIONAL FIELDS-
+phone_number -		6-19 digits, can be used in place of a lead_id(may return multiple records, up to 1000, most recently added lead first)
 custom_fields -		Y or N, default is N. If the field you want to pull is a custom field or not
 force_entry_list_id -	3-12 digits, will override the lead's assigned entry_list_id to look for custom fields data for this lead from a different list
 
@@ -771,17 +774,18 @@ header -		include a header(YES) or not(NO). This is optional, default is not to 
 
 Example URL strings for API calls:
 http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=lead_all_info&lead_id=1079425
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=lead_all_info&phone_number=3125551212
 http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=lead_all_info&lead_id=1079425&header=YES&custom_fields=Y
 http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=lead_all_info&lead_id=1079425&header=YES&custom_fields=Y&force_entry_list_id=999880
 
 Example responses:
 ERROR: lead_all_info USER DOES NOT HAVE PERMISSION TO GET LEAD INFO - 6666|0
-ERROR: lead_all_info LIST NOT FOUND - 6666||
-ERROR: lead_all_info LEAD NOT FOUND - 6666||
+ERROR: lead_all_info LIST NOT FOUND - 6666|||
+ERROR: lead_all_info LEAD NOT FOUND - 6666|||
 
 A SUCCESS response will not show "SUCCESS", but instead will just print the results in the following format:
-status|user|vendor_lead_code|source_id|list_id|gmt_offset_now|phone_code|phone_number|title|first_name|middle_initial|last_name|address1|address2|address3|city|state|province|postal_code|country_code|gender|date_of_birth|alt_phone|email|security_phrase|comments|called_count|last_local_call_time|rank|owner|entry_list_id
-TD|6666|554443||501|-4.00|1|9998887112|Mr|Billy'Oj|U|O'Reillyo|ad1|ad2|ad3|city next|FL|U|33777||U|0000-00-00|bobo'brien|test@test.com||2017-06-01 18:38:41|79|2017-06-09 14:53:27|0|4646|0
+status|user|vendor_lead_code|source_id|list_id|gmt_offset_now|phone_code|phone_number|title|first_name|middle_initial|last_name|address1|address2|address3|city|state|province|postal_code|country_code|gender|date_of_birth|alt_phone|email|security_phrase|comments|called_count|last_local_call_time|rank|owner|entry_list_id|lead_id
+TD|6666|554443||501|-4.00|1|9998887112|Mr|Billy'Oj|U|O'Reillyo|ad1|ad2|ad3|city next|FL|U|33777||U|0000-00-00|bobo'brien|test@test.com||2017-06-01 18:38:41|79|2017-06-09 14:53:27|0|4646|0|98234789
 
 
 
@@ -825,6 +829,46 @@ phone_code => 1
 phone_number => 9999028405
 ...
 test_custom_field => new value
+
+
+
+
+
+--------------------------------------------------------------------------------
+lead_search - searches for leads in the vicidial_list table by phone numbers
+
+NOTE: api user for this function must have user_level set to 7 or higher and "view reports" enabled and modify_leads set to 1-5
+
+REQUIRED FIELDS-
+phone_number -		6-19 digits(multiple separated by a comma ',', for example: 3125551212,9055551212,4075551212)
+source -		description of what originated the API call (maximum 20 characters)
+
+SETTINGS FIELDS-
+records -		number of records to display in results if more than 1 found (defaults to '1000'[most recently inserted leads displayed first])
+
+SETTINGS FIELDS-
+header -		include a header(YES) or not(NO). This is optional, default is not to include a header
+
+NOTES- 
+- If no results are found for any of the searched phone numbers, then an error will be displayed
+- If there are any matches found, every phone number searched for will have one line in the output, detailed below
+- If more than 1 matching lead is found for a phone number, then the matching lead_ids will be separated by a dash '-'
+
+Example URL strings for API calls:
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=lead_search&phone_number=9998885112,9998887112,9998886112,4075551212
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=lead_search&phone_number=9998885112,9055551212,9998886112,4075551212&header=YES
+
+Example responses:
+ERROR: lead_search USER DOES NOT HAVE PERMISSION TO SEARCH FOR LEADS - 6666|0
+ERROR: lead_search NO VALID SEARCH METHOD - ||||
+ERROR: lead_search NO MATCHES FOUND IN THE SYSTEM - ||||
+
+A SUCCESS response will not show "SUCCESS", but instead will just print the results in the following format:
+search_key|records_found|lead_ids
+9998885112|4|1949076-1946517-1943958-1941399
+9998887112|8|1946941-1946940-1946939-1946875-1946805-1946656-1946655-1944382
+9998886112|1|1946891
+4075551212|0|
 
 
 

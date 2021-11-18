@@ -145,9 +145,10 @@
 # 210731-0952 - Added cid_group_id_two campaign option
 # 210827-1044 - Fix for Extended auto-alt-dialing issue #1323
 # 210901-1020 - Another fix for Extended auto-alt-dialing issue #1323
+# 211022-1637 - Added incall_tally_threshold_seconds campaign feature
 #
 
-$build='210901-1020';
+$build='211022-1637';
 $script='AST_VDauto_dial';
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -424,8 +425,12 @@ while($one_day_interval > 0)
 		@DBIPactive=@MT;
 		@DBIPvdadexten=@MT;
 		@DBIPcount=@MT;
+		@DBIPcountT=@MT;
 		@DBIPACTIVEcount=@MT;
 		@DBIPINCALLcount=@MT;
+		@DBIPINCALLthresh=@MT;
+		@DBIPINCALLdiff=@MT;
+		@DBIPINCALLdeadT=@MT;
 		@DBIPDEADcount=@MT;
 		@DBIPadlevel=@MT;
 		@DBIPdialtimeout=@MT;
@@ -464,6 +469,7 @@ while($one_day_interval > 0)
 		@DBIPavailable_only_tally=@MT;
 		@DBIPavailable_only_tally_threshold=@MT;
 		@DBIPavailable_only_tally_threshold_agents=@MT;
+		@DBIPincall_tally_threshold_seconds=@MT;
 		@DBIPdial_level_threshold=@MT;
 		@DBIPdial_level_threshold_agents=@MT;
 		@DBIPadaptive_dl_diff_target=@MT;
@@ -817,6 +823,7 @@ while($one_day_interval > 0)
 			{
 			@camp_sort_line = split(/---/,$DBIPcampaign_sorted[$user_CIPct_sort]);
 			$user_CIPct = $camp_sort_line[3];
+			$user_last_call_epoch_CIP = $camp_sort_line[1];
 			$debug_string='';
 			$user_counter=0;
 			foreach(@DBlive_campaign)
@@ -932,7 +939,7 @@ while($one_day_interval > 0)
 
 			### grab the dial_level and multiply by active agents to get your goalcalls
 			$DBIPadlevel[$user_CIPct]=0;
-			$stmtA = "SELECT auto_dial_level,local_call_time,dial_timeout,dial_prefix,campaign_cid,active,campaign_vdad_exten,closer_campaigns,omit_phone_code,available_only_ratio_tally,auto_alt_dial,campaign_allow_inbound,queue_priority,dial_method,use_custom_cid,inbound_queue_no_dial,available_only_tally_threshold,available_only_tally_threshold_agents,dial_level_threshold,dial_level_threshold_agents,adaptive_dl_diff_target,dl_diff_target_method,inbound_no_agents_no_dial_container,inbound_no_agents_no_dial_threshold,cid_group_id,scheduled_callbacks_auto_reschedule,call_quota_lead_ranking,dial_timeout_lead_container,drop_call_seconds,drop_action,drop_inbound_group,call_limit_24hour_method,call_limit_24hour_scope,call_limit_24hour,call_limit_24hour_override,cid_group_id_two FROM vicidial_campaigns where campaign_id='$DBIPcampaign[$user_CIPct]'";
+			$stmtA = "SELECT auto_dial_level,local_call_time,dial_timeout,dial_prefix,campaign_cid,active,campaign_vdad_exten,closer_campaigns,omit_phone_code,available_only_ratio_tally,auto_alt_dial,campaign_allow_inbound,queue_priority,dial_method,use_custom_cid,inbound_queue_no_dial,available_only_tally_threshold,available_only_tally_threshold_agents,dial_level_threshold,dial_level_threshold_agents,adaptive_dl_diff_target,dl_diff_target_method,inbound_no_agents_no_dial_container,inbound_no_agents_no_dial_threshold,cid_group_id,scheduled_callbacks_auto_reschedule,call_quota_lead_ranking,dial_timeout_lead_container,drop_call_seconds,drop_action,drop_inbound_group,call_limit_24hour_method,call_limit_24hour_scope,call_limit_24hour,call_limit_24hour_override,cid_group_id_two,incall_tally_threshold_seconds FROM vicidial_campaigns where campaign_id='$DBIPcampaign[$user_CIPct]'";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
@@ -980,6 +987,7 @@ while($one_day_interval > 0)
 				$DBIPcall_limit_24hour[$user_CIPct] =			$aryA[33];
 				$DBIPcall_limit_24hour_override[$user_CIPct] =	$aryA[34];
 				$DBIPcid_group_id_two[$user_CIPct] =	$aryA[35];
+				$DBIPincall_tally_threshold_seconds[$user_CIPct] =	$aryA[36];
 
 				# check for Dial Timeout Lead override
 				if ( (length($DBIPdial_timeout_lead_container[$user_CIPct]) > 1) && ($DBIPdial_timeout_lead_container[$user_CIPct] !~ /^DISABLED$/i) )
@@ -997,6 +1005,64 @@ while($one_day_interval > 0)
 						}
 					$sthC->finish();
 					}
+
+				$DBIPINCALLdiff[$user_CIPct]=0;
+				$DBIPINCALLdeadT[$user_CIPct]=0;
+
+				# If Agent In-Call Tally Seconds Threshold is enabled, find the number of agents INCALL at-or-below the incall_tally_threshold_seconds
+				if ($DBIPincall_tally_threshold_seconds[$user_CIPct] > 0)
+					{
+					$all_callerids='';
+					$stmtC = "SELECT callerid from vicidial_auto_calls;";
+					$sthC = $dbhC->prepare($stmtC) or die "preparing: ",$dbhC->errstr;
+					$sthC->execute or die "executing: $stmtC ", $dbhC->errstr;
+					$sthCrows=$sthC->rows;
+					$Crc=0;
+					while ($sthCrows > $Crc)
+						{
+						@aryC = $sthC->fetchrow_array;
+						if ($Crc > 0) {$all_callerids .= ",";}
+						$all_callerids .= "'$aryC[0]'";
+						$Crc++;
+						}
+					$sthC->finish();
+					if ($DBX) {print "     DEBUG2: |$sthCrows|$all_callerids|$stmtC|\n";}
+					if ($Crc < 1) {$all_callerids = "''";}
+
+					$DBIPINCALLthresh[$user_CIPct]=0;
+					$stmtC = "SELECT count(*) from vicidial_live_agents where ( (campaign_id='$DBIPcampaign[$user_CIPct]') or (dial_campaign_id='$DBIPcampaign[$user_CIPct]') ) and last_update_time > '$BDtsSQLdate' and status IN('INCALL','QUEUE') and ( (UNIX_TIMESTAMP(NOW()) - UNIX_TIMESTAMP(last_call_time)) <= $DBIPincall_tally_threshold_seconds[$user_CIPct]) and (callerid IN($all_callerids));";
+					$sthC = $dbhC->prepare($stmtC) or die "preparing: ",$dbhC->errstr;
+					$sthC->execute or die "executing: $stmtC ", $dbhC->errstr;
+					$sthCrows=$sthC->rows;
+					if ($sthCrows > 0)
+						{
+						@aryC = $sthC->fetchrow_array;
+						$DBIPINCALLthresh[$user_CIPct] = $aryC[0];
+						}
+					$sthC->finish();
+
+					$stmtC = "SELECT count(*) from vicidial_live_agents where ( (campaign_id='$DBIPcampaign[$user_CIPct]') or (dial_campaign_id='$DBIPcampaign[$user_CIPct]') ) and last_update_time > '$BDtsSQLdate' and status IN('INCALL','QUEUE') and (callerid NOT IN($all_callerids));";
+					$sthC = $dbhC->prepare($stmtC) or die "preparing: ",$dbhC->errstr;
+					$sthC->execute or die "executing: $stmtC ", $dbhC->errstr;
+					$sthCrows=$sthC->rows;
+					if ($sthCrows > 0)
+						{
+						@aryC = $sthC->fetchrow_array;
+						$DBIPINCALLdeadT[$user_CIPct] = $aryC[0];
+						}
+					$sthC->finish();
+
+					$DBIPcountT[$user_CIPct] = ($DBIPACTIVEcount[$user_CIPct] + $DBIPINCALLthresh[$user_CIPct]);
+					if ($DBX) {print "     DEBUG1: |$sthCrows|$DBIPACTIVEcount[$user_CIPct]|$DBIPINCALLthresh[$user_CIPct]|$stmtC|\n";}
+
+					$DBIPINCALLdiff[$user_CIPct] = ($DBIPINCALLcount[$user_CIPct] - $DBIPINCALLthresh[$user_CIPct]);
+
+					if ($DB) {print "     Debug: AGENT IN-CALL TALLY SECONDS THRESHOLD: $DBIPcampaign[$user_CIPct] $DBIPincall_tally_threshold_seconds[$user_CIPct] seconds   |all: $DBIPINCALLcount[$user_CIPct]  thresh: $DBIPINCALLthresh[$user_CIPct] (diff: $DBIPINCALLdiff[$user_CIPct] dead: $DBIPINCALLdeadT[$user_CIPct])|   |total: $DBIPcount[$user_CIPct]   thresh tot: $DBIPcountT[$user_CIPct]|$stmtC|\n";}
+					$debug_string .= "   !! AGENT IN-CALL TALLY SECONDS THRESHOLD ENABLED for INCALL AGENTS: $DBIPincall_tally_threshold_seconds[$user_CIPct] seconds   |all: $DBIPINCALLcount[$user_CIPct]  thresh: $DBIPINCALLthresh[$user_CIPct] (diff: $DBIPINCALLdiff[$user_CIPct] dead: $DBIPINCALLdeadT[$user_CIPct])|   |total: $DBIPcount[$user_CIPct]   thresh tot: $DBIPcountT[$user_CIPct]|\n";
+					$DBIPINCALLcount[$user_CIPct] = $DBIPINCALLthresh[$user_CIPct];
+					$DBIPcount[$user_CIPct] = $DBIPcountT[$user_CIPct];
+					}
+
 
 				# BEGIN check if drop-in-group agents should be included ---NONE--- #
 				if ( ($DBIPdrop_call_seconds[$user_CIPct] < 0) && ($DBIPdrop_action[$user_CIPct] =~ /IN_GROUP/i) && ($DBIPdrop_inbound_group[$user_CIPct] !~ /^---NONE---$/) && (length($DBIPdrop_inbound_group[$user_CIPct]) > 0) && ($new_agent_multicampaign > 0) && ($DBIPdial_method[$user_CIPct] !~ /SHARED_/i) ) 
@@ -1076,7 +1142,10 @@ while($one_day_interval > 0)
 					if ($active_only > 0)
 						{$DBIPcount[$user_CIPct] = $DBIPACTIVEcount[$user_CIPct];}
 					else
-						{$DBIPcount[$user_CIPct] = ($DBIPcount[$user_CIPct] - $DBIPDEADcount[$user_CIPct]);}
+						{
+						if ($DBX > 0) {print "     DEBUG: dialable agent count: ($DBIPcount[$user_CIPct] - $DBIPDEADcount[$user_CIPct] + $DBIPINCALLdeadT[$user_CIPct])\n";}
+						$DBIPcount[$user_CIPct] = ($DBIPcount[$user_CIPct] - $DBIPDEADcount[$user_CIPct] + $DBIPINCALLdeadT[$user_CIPct]);
+						}
 
 					if ($DBIPcount[$user_CIPct] < 0)
 						{$DBIPcount[$user_CIPct]=0;}
@@ -1326,6 +1395,8 @@ while($one_day_interval > 0)
 
 				$DBIPexistcalls[$user_CIPct] = $DBIPexistcalls_OUT[$user_CIPct];
 				}
+			if ( ($DBIPINCALLdiff[$user_CIPct] > 0) && ($DBIPexistcalls[$user_CIPct] >= $DBIPINCALLdiff[$user_CIPct]) )
+				{$DBIPexistcalls[$user_CIPct] = ($DBIPexistcalls[$user_CIPct] - $DBIPINCALLdiff[$user_CIPct])}
 
 			$active_line_goal=0;
 			$DBIPmakecalls[$user_CIPct] = ($DBIPgoalcalls[$user_CIPct] - $DBIPexistcalls[$user_CIPct]);

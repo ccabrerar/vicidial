@@ -57,6 +57,7 @@
 # 191013-0846 - Fixes for PHP7
 # 210318-1558 - Added agent screen visibility stats
 # 210324-2010 - Added agent visibility stats to HTML graphs
+# 211115-1513 - Fix for case-mismatch on pause code statuses for multi-campaign selects
 #
 
 $startMS = microtime();
@@ -1016,7 +1017,7 @@ else
 			$i=0; $status_found=0;
 			while ( ($i < $subs_to_print) and ($status_found < 1) )
 				{
-				if ( ($Suser[$m]=="$PCuser[$i]") and ($Sstatus=="$sub_status[$i]") )
+				if ( ($Suser[$m]=="$PCuser[$i]") and (preg_match("/^$sub_status[$i]$/i",$Sstatus)) )
 					{
 					$USERcodePAUSE_MS =		sec_convert($PCpause_sec[$i],$TIME_agenttimedetail);
 					if (strlen($USERcodePAUSE_MS)<1) {$USERcodePAUSE_MS='0';}
@@ -1263,7 +1264,7 @@ else
 		$i=0; $status_found=0;
 		while ($i < $subs_to_print)
 			{
-			if ($Sstatus=="$sub_status[$i]")
+			if (preg_match("/^$sub_status[$i]$/i",$Sstatus))
 				{
 				$Scalls =		($Scalls + $PCpause_sec[$i]);
 				$status_found++;
@@ -1694,6 +1695,7 @@ $stmt="UPDATE vicidial_report_log set run_time='$TOTALrun' where report_log_id='
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 
+if ($DB > 0) {echo "$TOTALrun\n";}
 ?>
 
 </BODY></HTML>

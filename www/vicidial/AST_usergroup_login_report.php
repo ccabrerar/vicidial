@@ -447,7 +447,7 @@ if ($SUBMIT)
 		while ($data_row=mysqli_fetch_array($data_rslt)) 
 			{
 			preg_match('/^[^\s]+/', $data_row["browser"], $browser_ary);
-			$browser=$browser_ary[0];
+			if ($report_display_type=="TEXT") {$browser=$browser_ary[0];} else {$browser=$data_row["browser"];}
 			$ASCII_text.="| ".sprintf("%-30s", $row["fullname"])." | <a href='user_stats.php?user=$row[user]'>".sprintf("%-8s", $row["user"])."</a> | ".sprintf("%-20s", $data_row["user_group"])." | ".sprintf("%-19s", $date_row["min_date"])." | ".sprintf("%-19s", $date_row["max_date"])." | ".sprintf("%-8s", $data_row["campaign_id"])." | ".sprintf("%-15s", $data_row["server_ip"])." | ".sprintf("%-15s", $data_row["computer_ip"])." | ".sprintf("%-20s", $data_row["ext"])." | ".sprintf("%-12s", $browser)." | ".sprintf("%-15s", $data_row["phone_login"])." | ".sprintf("%-15s", $data_row["server_phone"])." | ".sprintf("%-15s", $data_row["phone_ip"])." |\n";
 			$CSV_text.="\"$row[full_name]\",\"$row[user]\",\"$data_row[user_group]\",\"$date_row[min_date]\",\"$date_row[max_date]\",\"$data_row[campaign_id]\",\"$data_row[server_ip]\",\"$data_row[computer_ip]\",\"$data_row[extension]\",\"$data_row[browser]\",\"$data_row[phone_login]\",\"$data_row[server_phone]\",\"$data_row[phone_ip]\"\n";
 

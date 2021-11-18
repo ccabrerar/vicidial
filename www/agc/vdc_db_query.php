@@ -519,10 +519,11 @@
 # 210822-2111 - Fix for manual dial lead search with phone_code, Issue #1322
 # 210825-0912 - Fix for XSS security issue
 # 210827-0749 - Added PJSIP compatibility
+# 211117-2033 - Added ALT Dispo Call URL url_call_length setting
 #
 
-$version = '2.14-412';
-$build = '210827-0749';
+$version = '2.14-413';
+$build = '211117-2033';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=865;
@@ -14351,11 +14352,38 @@ if ($ACTION == 'updateDISPO')
 	$dispo_call_urlARY = array();
 	$dispo_call_urlARY[0]='';
 	$dispo_urls='';
+	$talk_time=0;
+	$talk_time_ms=0;
+	$talk_time_min=0;
+
+	$stmt = "SELECT talk_sec,dead_sec from vicidial_agent_log where lead_id='$lead_id' and agent_log_id='$CALL_agent_log_id';";
+	if ($DB) {echo "$stmt\n";}
+	$rslt=mysql_to_mysqli($stmt, $link);
+		if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00289',$user,$server_ip,$session_name,$one_mysql_log);}
+	$VAL_talk_ct = mysqli_num_rows($rslt);
+	if ($VAL_talk_ct > 0)
+		{
+		$row=mysqli_fetch_row($rslt);
+		$talk_sec	=		$row[0];
+		$dead_sec	=		$row[1];
+		$talk_time = ($talk_sec - $dead_sec);
+		if ($talk_time < 1)
+			{
+			$talk_time = 0;
+			$talk_time_ms = 0;
+			}
+		else
+			{
+			$talk_time_ms = ($talk_time * 1000);
+			$talk_time_min = ceil($talk_time / 60);
+			}
+		}
+
 	if ( (strlen($dispo_call_url) > 7) or ($dispo_call_url == 'ALT') )
 		{
 		if ($dispo_call_url == 'ALT')
 			{
-			$stmt="SELECT url_rank,url_statuses,url_address,url_lists from vicidial_url_multi where campaign_id='$DUcampaign_id' and entry_type='$DUentry_type' and url_type='dispo' and active='Y' order by url_rank limit 1000;";
+			$stmt="SELECT url_rank,url_statuses,url_address,url_lists,url_call_length from vicidial_url_multi where campaign_id='$DUcampaign_id' and entry_type='$DUentry_type' and url_type='dispo' and active='Y' order by url_rank limit 1000;";
 			if ($DB) {echo "$stmt\n";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00634',$user,$server_ip,$session_name,$one_mysql_log);}
@@ -14368,8 +14396,9 @@ if ($ACTION == 'updateDISPO')
 				$url_statuses =		" $row[1] ";
 				$url_address =		$row[2];
 				$url_lists =		" $row[3] ";
+				$url_call_length =	$row[4];
 
-				if ( ( (preg_match("/---ALL---/",$url_statuses)) or ( (strlen($url_statuses)>2) and (preg_match("/ $dispo_choice /",$url_statuses)) ) ) and ( (strlen($url_lists)<3) or ( (strlen($url_lists)>2) and (preg_match("/ $list_id /",$url_lists)) ) ) )
+				if ( ( (preg_match("/---ALL---/",$url_statuses)) or ( (strlen($url_statuses)>2) and (preg_match("/ $dispo_choice /",$url_statuses)) ) ) and ( (strlen($url_lists)<3) or ( (strlen($url_lists)>2) and (preg_match("/ $list_id /",$url_lists)) ) ) and ($talk_time >= $url_call_length) )
 					{
 					$dispo_call_urlARY[$dispo_call_url_count] = $url_address;
 					$dispo_call_url_count++;
@@ -14387,9 +14416,6 @@ if ($ACTION == 'updateDISPO')
 	$j=0;
 	while ($dispo_call_url_count > $j)
 		{
-		$talk_time=0;
-		$talk_time_ms=0;
-		$talk_time_min=0;
 		if ( (preg_match('/--A--user_custom_/i',$dispo_call_urlARY[$j])) or (preg_match('/--A--fullname/i',$dispo_call_urlARY[$j])) or (preg_match('/--A--user_group/i',$dispo_call_urlARY[$j])) )
 			{
 			$stmt = "SELECT custom_one,custom_two,custom_three,custom_four,custom_five,full_name,user_group from vicidial_users where user='$user';";
@@ -14407,32 +14433,6 @@ if ($ACTION == 'updateDISPO')
 				$user_custom_five =		urlencode(trim($row[4]));
 				$fullname =				urlencode(trim($row[5]));
 				$user_group =			urlencode(trim($row[6]));
-				}
-			}
-
-		if (preg_match('/--A--talk_time/i',$dispo_call_urlARY[$j]))
-			{
-			$stmt = "SELECT talk_sec,dead_sec from vicidial_agent_log where lead_id=$lead_id and agent_log_id='$CALL_agent_log_id';";
-			if ($DB) {echo "$stmt\n";}
-			$rslt=mysql_to_mysqli($stmt, $link);
-				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00289',$user,$server_ip,$session_name,$one_mysql_log);}
-			$VAL_talk_ct = mysqli_num_rows($rslt);
-			if ($VAL_talk_ct > 0)
-				{
-				$row=mysqli_fetch_row($rslt);
-				$talk_sec	=		$row[0];
-				$dead_sec	=		$row[1];
-				$talk_time = ($talk_sec - $dead_sec);
-				if ($talk_time < 1)
-					{
-					$talk_time = 0;
-					$talk_time_ms = 0;
-					}
-				else
-					{
-					$talk_time_ms = ($talk_time * 1000);
-					$talk_time_min = ceil($talk_time / 60);
-					}
 				}
 			}
 

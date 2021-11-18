@@ -686,6 +686,17 @@ OTHER CHANGES:
 
 191. Added 'batch_update_lead' Non-Agent API function
 
+192. Added 'Agent In-Call Tally Seconds Threshold' campaign setting, to better
+	handle dialing volume on campaigns with long agent talk time.
+
+193. Added 'In-Queue No Agents Check' in-group setting, to allow for checking of
+	logged-in or available agents for the in-group while calls are in-queue,
+	and if there are no agents available, sending the customers to the
+	No-Agent-No-Queue Action. With configurable pause code exceptions.
+
+194. Added MIN LENGTH to the Dispo Call URL ALT admin screen, allowing for a
+	minimum call time threshold before a Dispo Call URL will trigger.
+
 
 
 

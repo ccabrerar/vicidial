@@ -1822,3 +1822,16 @@ UPDATE system_settings SET db_schema_version='1644',db_schema_update_date=NOW() 
 ALTER TABLE vicidial_inbound_groups ADD populate_lead_owner VARCHAR(20) default 'DISABLED';
 
 UPDATE system_settings SET db_schema_version='1645',db_schema_update_date=NOW() where db_schema_version < 1645;
+
+ALTER TABLE vicidial_campaigns ADD incall_tally_threshold_seconds SMALLINT(5) UNSIGNED default '0';
+
+UPDATE system_settings SET db_schema_version='1646',db_schema_update_date=NOW() where db_schema_version < 1646;
+
+ALTER TABLE vicidial_inbound_groups ADD in_queue_nanque ENUM('N','Y','NO_PAUSED','NO_PAUSED_EXCEPTIONS','NO_READY') default 'N';
+ALTER TABLE vicidial_inbound_groups ADD in_queue_nanque_exceptions VARCHAR(40) default '';
+
+UPDATE system_settings SET db_schema_version='1647',db_schema_update_date=NOW() where db_schema_version < 1647;
+
+ALTER TABLE vicidial_url_multi ADD url_call_length SMALLINT(5) default '0';
+
+UPDATE system_settings SET db_schema_version='1648',db_schema_update_date=NOW() where db_schema_version < 1648;

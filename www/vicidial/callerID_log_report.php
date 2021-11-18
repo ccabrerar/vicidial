@@ -405,7 +405,10 @@ if ($SUBMIT)
 				$CID["$caller_id"][1]++;
 				$log_calls++;
 				}
-			else {print "$status not in $status_string<BR>\n";}
+			else 
+				{
+				if ($DB) {print "$status not in $status_string<BR>\n";}
+				}
 			}
 		}
 

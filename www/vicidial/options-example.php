@@ -32,6 +32,7 @@
 # 210314-2101 - Added RS_DIDdesc option
 # 210618-0937 - Added CORS support
 # 210625-1425 - Added RS_BargeSwap option for blind monitoring
+# 211022-0733 - Added IR_SLA_all_statuses option for Inbound Reports
 #
 
 # used by the realtime_report.php script
@@ -130,6 +131,9 @@ $enable_status_mismatch_leadloader_option=0;
 
 # call report export ALTERNATE_2 header
 $call_export_report_ALTERNATE_2_header="address3\tfirst_name\tlast_name\tphone_number\tstatus_name\tstatus_date\r\n";
+
+# Inbound reports, use all statuses for SLA calculation
+$IR_SLA_all_statuses=0;
 
 
 # CORS settings: (to enable, customize the variables below, and uncomment the "require_once('adminCORS.php');" line at the bottom)

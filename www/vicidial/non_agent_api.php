@@ -184,10 +184,12 @@
 # 210812-2640 - Added update of live agent records for ingroup_rank/ingroup_grade in the update_user function
 # 210823-0918 - Fix for security issue
 # 210917-1615 - Added batch_update_lead function
+# 211027-0845 - Added lead_search function
+# 211107-1556 - Added optional phone_number search for lead_all_info function
 #
 
-$version = '2.14-161';
-$build = '210917-1615';
+$version = '2.14-163';
+$build = '211107-1556';
 $php_script='non_agent_api.php';
 $api_url_log = 0;
 
@@ -940,6 +942,9 @@ else
 	$source = preg_replace('/[^-_0-9\p{L}]/u',"",$source);
 	$source_user = preg_replace('/[^-_0-9\p{L}]/u',"",$source_user);
 	$menu_id = preg_replace('/[^-_0-9\p{L}]/u','',$menu_id);
+	$phone_number = preg_replace('/[^\,0-9]/','',$phone_number);
+	$vendor_lead_code = preg_replace('/;|#/','',$vendor_lead_code);
+		$vendor_lead_code = preg_replace('/\+/',' ',$vendor_lead_code);
 	}
 $list_id = preg_replace('/[^-_0-9a-zA-Z]/','',$list_id);
 $list_id_field = preg_replace('/[^0-9]/','',$list_id_field);
@@ -1126,7 +1131,7 @@ $LOGuser_group =			$row[2];
 $VUselected_language =		$row[3];
 $VUdelete_inbound_dids =	$row[4];
 
-if ( ($api_list_restrict > 0) and ( ($function == 'add_lead') or ($function == 'update_lead') or ($function == 'batch_update_lead') or ($function == 'update_list') or ($function == 'list_info') or ($function == 'list_custom_fields') ) )
+if ( ($api_list_restrict > 0) and ( ($function == 'add_lead') or ($function == 'update_lead') or ($function == 'batch_update_lead') or ($function == 'update_list') or ($function == 'list_info') or ($function == 'list_custom_fields') or ($function == 'lead_search') ) )
 	{
 	$stmt="SELECT allowed_campaigns from vicidial_user_groups where user_group='$LOGuser_group';";
 	if ($DB>0) {echo "|$stmt|\n";}
@@ -11524,7 +11529,7 @@ if ($function == 'lead_all_info')
 			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
 			exit;
 			}
-		$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1' and modify_leads IN('1','2','3','4') and view_reports='1' and user_level > 6 and active='Y';";
+		$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1' and modify_leads IN('1','2','3','4','5') and view_reports='1' and user_level > 6 and active='Y';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$row=mysqli_fetch_row($rslt);
 		$allowed_user=$row[0];
@@ -11541,13 +11546,15 @@ if ($function == 'lead_all_info')
 			{
 			$call_search_SQL='';
 			$search_ready=0;
+			$no_list_counter=0;
+			$no_list_output='';
 			$call_id = preg_replace("/\n|\r|\t| /",'',$call_id);
 
-			if (strlen($lead_id) < 1)
+			if ( (strlen($lead_id) < 1) and ( (strlen($phone_number) < 6) or (strlen($phone_number) > 19) ) )
 				{
 				$result = 'ERROR';
 				$result_reason = "lead_all_info LEAD NOT FOUND";
-				$data = "$user|$lead_id";
+				$data = "$user|$lead_id|$phone_number";
 				echo "$result: $result_reason: $data\n";
 				api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
 				exit;
@@ -11569,6 +11576,12 @@ if ($function == 'lead_all_info')
 					$LOGallowed_campaignsSQL = "and campaign_id IN('$LOGallowed_campaignsSQL')";
 					}
 
+				$searchSQL='';
+				if ( (strlen($phone_number) >= 6) and (strlen($phone_number) <= 19) )
+					{$searchSQL = "phone_number='$phone_number'";}
+				if (strlen($lead_id) > 0)
+					{$searchSQL = "lead_id='$lead_id'";}
+
 				$DLset=0;
 				$output='';
 				if ($stage == 'csv')
@@ -11582,25 +11595,40 @@ if ($function == 'lead_all_info')
 				if ($DLset < 1)
 					{$DL='|';   $stage='pipe';}
 
-				$stmt="SELECT list_id,entry_list_id from vicidial_list where lead_id='$lead_id';";
+				$stmt="SELECT list_id,entry_list_id,lead_id from vicidial_list where $searchSQL order by lead_id desc limit 1000;";
 				$rslt=mysql_to_mysqli($stmt, $link);
-				if ($DB) {echo "$stmt\n";}
 				$lead_exists = mysqli_num_rows($rslt);
+				if ($DB) {echo "$lead_exists|$stmt\n";}
+				$lead_loop_ct=0;
+				$ARY_lead_list_id=array();
+				$ARY_lead_entry_list_id=array();
+				$ARY_lead_lead_id=array();
 
-				if ($lead_exists > 0)
+				while ($lead_exists > $lead_loop_ct)
 					{
 					$row=mysqli_fetch_row($rslt);
-					$lead_list_id =			$row[0];
-					$lead_entry_list_id =	$row[1];
+					$ARY_lead_list_id[$lead_loop_ct] =			$row[0];
+					$ARY_lead_entry_list_id[$lead_loop_ct] =	$row[1];
+					$ARY_lead_lead_id[$lead_loop_ct] =			$row[2];
+					$lead_loop_ct++;
+					}
+
+				$lead_loop_ct=0;
+				while ($lead_exists > $lead_loop_ct)
+					{
+					$lead_list_id =			$ARY_lead_list_id[$lead_loop_ct];
+					$lead_entry_list_id =	$ARY_lead_entry_list_id[$lead_loop_ct];
+					$lead_lead_id =			$ARY_lead_lead_id[$lead_loop_ct];
 					# check for custom list override
 					if (strlen($force_entry_list_id) > 0)
 						{$lead_entry_list_id = $force_entry_list_id;}
+					if ($DB) {echo "DEBUG: $lead_loop_ct|$lead_list_id|$lead_entry_list_id|$lead_lead_id|\n";}
 	
 					$stmt="SELECT count(*) from vicidial_lists where list_id='$lead_list_id' $LOGallowed_campaignsSQL;";
-					if ($DB) {$MAIN.="|$stmt|\n";}
 					$rslt=mysql_to_mysqli($stmt, $link);
 					$row=mysqli_fetch_row($rslt);
 					$list_exists =	$row[0];
+					if ($DB) {echo "DEBUG: $list_exists|$stmt|\n";}
 
 					if ($list_exists > 0)
 						{
@@ -11687,7 +11715,7 @@ if ($function == 'lead_all_info')
 								$r++;
 								}
 
-							$stmt="SELECT $custom_fields_list from custom_$lead_entry_list_id where lead_id='$lead_id';";
+							$stmt="SELECT $custom_fields_list from custom_$lead_entry_list_id where lead_id='$lead_lead_id';";
 							$rslt=mysql_to_mysqli($stmt, $link);
 							$custom_fields_found = mysqli_num_rows($rslt);
 							if ($DB) {echo "$custom_fields_found|$stmt\n";}
@@ -11732,10 +11760,10 @@ if ($function == 'lead_all_info')
 							}
 							if ($header == 'YES')
 								{
-								$output .= 'status' . $DL . 'user' . $DL . 'vendor_lead_code' . $DL . 'source_id' . $DL . 'list_id' . $DL . 'gmt_offset_now' . $DL . 'phone_code' . $DL . 'phone_number' . $DL . 'title' . $DL . 'first_name' . $DL . 'middle_initial' . $DL . 'last_name' . $DL . 'address1' . $DL . 'address2' . $DL . 'address3' . $DL . 'city' . $DL . 'state' . $DL . 'province' . $DL . 'postal_code' . $DL . 'country_code' . $DL . 'gender' . $DL . 'date_of_birth' . $DL . 'alt_phone' . $DL . 'email' . $DL . 'security_phrase' . $DL . 'comments' . $DL . 'called_count' . $DL . 'last_local_call_time' . $DL . 'rank' . $DL . 'owner' . $DL . 'entry_list_id' . $CF_header_output . "\n";
+							$output .= 'status' . $DL . 'user' . $DL . 'vendor_lead_code' . $DL . 'source_id' . $DL . 'list_id' . $DL . 'gmt_offset_now' . $DL . 'phone_code' . $DL . 'phone_number' . $DL . 'title' . $DL . 'first_name' . $DL . 'middle_initial' . $DL . 'last_name' . $DL . 'address1' . $DL . 'address2' . $DL . 'address3' . $DL . 'city' . $DL . 'state' . $DL . 'province' . $DL . 'postal_code' . $DL . 'country_code' . $DL . 'gender' . $DL . 'date_of_birth' . $DL . 'alt_phone' . $DL . 'email' . $DL . 'security_phrase' . $DL . 'comments' . $DL . 'called_count' . $DL . 'last_local_call_time' . $DL . 'rank' . $DL . 'owner' . $DL . 'entry_list_id' . $DL . 'lead_id' . $CF_header_output . "\n";
 								}
 
-						$stmt="SELECT status,user,vendor_lead_code,source_id,list_id,gmt_offset_now,phone_code,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner,entry_list_id from vicidial_list where lead_id='$lead_id';";
+						$stmt="SELECT status,user,vendor_lead_code,source_id,list_id,gmt_offset_now,phone_code,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner,entry_list_id from vicidial_list where lead_id='$lead_lead_id';";
 						$rslt=mysql_to_mysqli($stmt, $link);
 						if ($DB) {echo "$stmt\n";}
 						$standard_field_exists = mysqli_num_rows($rslt);
@@ -11774,12 +11802,12 @@ if ($function == 'lead_all_info')
 							$LEADowner =				$row[29];
 							$LEADentry_list_id =		$row[30];
 
-							$output .= "$LEADstatus$DL$LEADuser$DL$LEADvendor_lead_code$DL$LEADsource_id$DL$LEADlist_id$DL$LEADgmt_offset_now$DL$LEADphone_code$DL$LEADphone_number$DL$LEADtitle$DL$LEADfirst_name$DL$LEADmiddle_initial$DL$LEADlast_name$DL$LEADaddress1$DL$LEADaddress2$DL$LEADaddress3$DL$LEADcity$DL$LEADstate$DL$LEADprovince$DL$LEADpostal_code$DL$LEADcountry_code$DL$LEADgender$DL$LEADdate_of_birth$DL$LEADalt_phone$DL$LEADemail$DL$LEADsecurity_phrase$DL$LEADcomments$DL$LEADcalled_count$DL$LEADlast_local_call_time$DL$LEADrank$DL$LEADowner$DL$LEADentry_list_id$CF_data_output\n";
+							$output .= "$LEADstatus$DL$LEADuser$DL$LEADvendor_lead_code$DL$LEADsource_id$DL$LEADlist_id$DL$LEADgmt_offset_now$DL$LEADphone_code$DL$LEADphone_number$DL$LEADtitle$DL$LEADfirst_name$DL$LEADmiddle_initial$DL$LEADlast_name$DL$LEADaddress1$DL$LEADaddress2$DL$LEADaddress3$DL$LEADcity$DL$LEADstate$DL$LEADprovince$DL$LEADpostal_code$DL$LEADcountry_code$DL$LEADgender$DL$LEADdate_of_birth$DL$LEADalt_phone$DL$LEADemail$DL$LEADsecurity_phrase$DL$LEADcomments$DL$LEADcalled_count$DL$LEADlast_local_call_time$DL$LEADrank$DL$LEADowner$DL$LEADentry_list_id$DL$lead_lead_id$CF_data_output\n";
 
-							echo "$output";
+						#	echo "$output";
 
 							$result = 'SUCCESS';
-							$data = "$user|$lead_id|$stage";
+							$data = "$user|$lead_id|$phone_number|$stage";
 							$result_reason = "lead_all_info $output";
 
 							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
@@ -11788,7 +11816,7 @@ if ($function == 'lead_all_info')
 							{
 							$result = 'ERROR';
 							$result_reason = "lead_all_info LEAD NOT FOUND";
-							$data = "$user|$lead_id";
+							$data = "$user|$lead_id|$phone_number";
 							echo "$result: $result_reason: $data\n";
 							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
 							exit;
@@ -11796,24 +11824,44 @@ if ($function == 'lead_all_info')
 						}
 					else
 						{
+						$no_list_counter++;
+						$no_list_output = "$lead_list_id";
+						}
+					if ( ($list_exists < 1) and ($api_list_restrict > 0) )
+						{
 						$result = 'ERROR';
 						$result_reason = "lead_all_info LIST NOT FOUND";
-						$data = "$user|$lead_id";
+						$data = "$user|$lead_id|$phone_number";
 						echo "$result: $result_reason: $data\n";
 						api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
-						exit;
+					#	exit;
 						}
+					$lead_loop_ct++;
 					}
-				else
+				if ($lead_exists < 1)
 					{
 					$result = 'ERROR';
 					$result_reason = "lead_all_info LEAD NOT FOUND";
-					$data = "$user|$agent_user";
+					$data = "$user|$lead_id|$phone_number";
 					echo "$result: $result_reason: $data\n";
 					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
 					exit;
 					}
+				if (strlen($output) > 10)
+					{echo "$output";}
+				else
+					{
+					if ($no_list_counter > 0)
+						{
+						$result = 'ERROR';
+						$result_reason = "lead_all_info LIST NOT FOUND";
+						$data = "$user|$lead_id|$phone_number|$no_list_output";
+						echo "$result: $result_reason: $data\n";
+						api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+						exit;
 				}
+			}
+		}
 			}
 		}
 	exit;
@@ -11821,17 +11869,6 @@ if ($function == 'lead_all_info')
 ################################################################################
 ### lead_all_info - outputs all lead data for a lead(including custom fields)
 ################################################################################
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -12222,6 +12259,336 @@ if ($function == 'lead_status_search')
 	}
 ################################################################################
 ### lead_status_search - displays all field values of all leads that match the status and call date in request
+################################################################################
+
+
+
+
+
+################################################################################
+### lead_search - searches for a lead in the vicidial_list table
+################################################################################
+if ($function == 'lead_search')
+	{
+	$list_id = preg_replace('/[^0-9]/','',$list_id);
+	if(strlen($source)<2)
+		{
+		$result = 'ERROR';
+		$result_reason = "Invalid Source";
+		echo "$result: $result_reason - $source\n";
+		api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+		echo "ERROR: Invalid Source: |$source|\n";
+		exit;
+		}
+	else
+		{
+		if ( (!preg_match("/ $function /",$api_allowed_functions)) and (!preg_match("/ALL_FUNCTIONS/",$api_allowed_functions)) )
+			{
+			$result = 'ERROR';
+			$result_reason = "auth USER DOES NOT HAVE PERMISSION TO USE THIS FUNCTION";
+			echo "$result: $result_reason: |$user|$function|\n";
+			$data = "$allowed_user";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1' and modify_leads IN('1','2','3','4','5') and user_level > 7 and active='Y';";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$row=mysqli_fetch_row($rslt);
+		$modify_leads=$row[0];
+
+		if ($modify_leads < 1)
+			{
+			$result = 'ERROR';
+			$result_reason = "lead_search USER DOES NOT HAVE PERMISSION TO SEARCH FOR LEADS";
+			echo "$result: $result_reason: |$user|$modify_leads|\n";
+			$data = "$modify_leads";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		else
+			{
+			$search_SQL='';
+			$lead_id_SQL='';
+			$vendor_lead_code_SQL='';
+			$phone_number_SQL='';
+			$find_lead_id=0;
+			$find_vendor_lead_code=0;
+			$find_phone_number=0;
+			$find_lead_idARY=array();
+			$find_vendor_lead_codeARY=array();
+			$find_phone_numberARY=array();
+			$find_vendor_lead_codeARYx=array();
+			$find_phone_numberARYx=array();
+			if ( (strlen($search_location)<4) or ($list_id < 99) or (strlen($list_id)<3) )
+				{$search_location='SYSTEM';}
+			if (strlen($search_method)<6)
+				{$search_method='PHONE_NUMBER';}
+			if (strlen($records)<1)
+				{$records='1000';}
+			if (strlen($force_entry_list_id) > 1)
+				{$entry_list_id = $force_entry_list_id;}
+			if ( (preg_match("/LEAD_ID/",$search_method)) and (strlen($lead_id)>0) )
+				{
+				$find_lead_id=1;
+				$lead_id_SQL = "lead_id IN($lead_ids)";
+				$find_lead_idARY = explode(',',$lead_ids);
+				}
+			if ( (preg_match("/VENDOR_LEAD_CODE/",$search_method)) and (strlen($vendor_lead_code)>0) )
+				{
+				$find_vendor_lead_code=1;
+				$vendor_lead_code_SQL='';
+				$find_vendor_lead_codeARY = explode(',',$vendor_lead_code);
+				$VLC_count = count($find_vendor_lead_codeARY);
+				if ($VLC_count > 0)
+					{
+					$tc=0;
+					$pc=0;
+					while ($tc < $VLC_count)
+						{
+						if (strlen($find_vendor_lead_codeARY[$tc]) > 0)
+							{
+							if ($pc > 0) {$vendor_lead_code_SQL .= ",";}
+							$vendor_lead_code_SQL .= "'$find_vendor_lead_codeARY[$tc]'";
+							$find_vendor_lead_codeARYx[$pc] = $find_vendor_lead_codeARY[$tc];
+							$pc++;
+							}
+						$tc++;
+						}
+					if (strlen($vendor_lead_code_SQL) > 2)
+						{$vendor_lead_code_SQL = "vendor_lead_code IN($vendor_lead_code_SQL)";}
+					}
+				}
+			if ( (preg_match("/PHONE_NUMBER/",$search_method)) and (strlen($phone_number)>5) )
+				{
+				$find_phone_number=1;
+				$phone_number_SQL='';
+				$find_phone_numberARY = explode(',',$phone_number);
+				$PN_count = count($find_phone_numberARY);
+				if ($PN_count > 0)
+					{
+					$tc=0;
+					$pc=0;
+					while ($tc < $PN_count)
+						{
+						if ( (strlen($find_phone_numberARY[$tc]) > 5) and (strlen($find_phone_numberARY[$tc])<19) )
+							{
+							if ($pc > 0) {$phone_number_SQL .= ",";}
+							$phone_number_SQL .= "'$find_phone_numberARY[$tc]'";
+							$find_phone_numberARYx[$pc] = $find_phone_numberARY[$tc];
+							$pc++;
+							}
+						$tc++;
+						}
+					if (strlen($phone_number_SQL) > 2)
+						{$phone_number_SQL = "phone_number IN($phone_number_SQL)";}
+					}
+				}
+			if ( ($find_lead_id<1) and ($find_vendor_lead_code<1) and ($find_phone_number<1) )
+				{
+				$result = 'ERROR';
+				$result_reason = "lead_search NO VALID SEARCH METHOD";
+				$data = "$search_method|$lead_id($find_lead_id)|$vendor_lead_code($find_vendor_lead_code)|$phone_number($find_phone_number)";
+				echo "$result: $result_reason - $user|$data\n";
+				api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+				exit;
+				}
+			else
+				{
+				if ( ($api_list_restrict > 0) and ($list_id >= 99) )
+					{
+					if (!preg_match("/ $list_id /",$allowed_lists))
+						{
+						$result = 'ERROR';
+						$result_reason = "lead_search NOT AN ALLOWED LIST ID";
+						$data = "$phone_number|$list_id";
+						echo "$result: $result_reason - $data\n";
+						api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+						exit;
+						}
+					}
+
+				if (preg_match("/CAMPAIGN/i",$search_location)) # find lists within campaign
+					{
+					$stmt="SELECT campaign_id from vicidial_lists where list_id='$list_id';";
+					$rslt=mysql_to_mysqli($stmt, $link);
+					$ci_recs = mysqli_num_rows($rslt);
+					if ($ci_recs > 0)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$search_camp =	$row[0];
+
+						$stmt="select list_id from vicidial_lists where campaign_id='$search_camp';";
+						$rslt=mysql_to_mysqli($stmt, $link);
+						$li_recs = mysqli_num_rows($rslt);
+						if ($li_recs > 0)
+							{
+							$L=0;
+							while ($li_recs > $L)
+								{
+								$row=mysqli_fetch_row($rslt);
+								$search_lists .=	"'$row[0]',";
+								$L++;
+								}
+							$search_lists = preg_replace('/,$/i', '',$search_lists);
+							$search_SQL = "and list_id IN($search_lists)";
+							}
+						}
+					}
+				if (preg_match("/LIST/i",$search_location)) # search check within list
+					{
+					$search_SQL = "and list_id='$list_id'";
+					}
+
+				$search_found=0;
+				$search_key=array();
+				$search_lead_id=array();
+				$search_lead_list=array();
+				$search_entry_list=array();
+				$search_phone_number=array();
+				$search_phone_code=array();
+				if ($find_lead_id > 0) # search for the lead_id
+					{
+					$stmt="SELECT lead_id,list_id,entry_list_id,phone_number,phone_code from vicidial_list where $lead_id_SQL $search_SQL order by lead_id desc limit $records;";
+					$rslt=mysql_to_mysqli($stmt, $link);
+					$pc_recs = mysqli_num_rows($rslt);
+					if ($DB>0) {echo "DEBUG: Checking for lead_id - $lead_id|$pc_recs|$stmt|\n";}
+					$n=0;
+					while ($pc_recs > $n)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$search_key[$search_found] =			$row[0];
+						$search_lead_id[$search_found] =		$row[0];
+						$search_lead_list[$search_found] =		$row[1];
+						$search_entry_list[$search_found] =		$row[2];
+						$search_phone_number[$search_found] =	$row[3];
+						$search_phone_code[$search_found] =		$row[4];
+						if (strlen($force_entry_list_id) > 1)
+							{$search_entry_list[$search_found] = $force_entry_list_id;}
+						$n++;
+						$search_found++;
+						}
+					}
+				if ( ($find_vendor_lead_code > 0) and ($search_found < 1) ) # search for the vendor_lead_code
+					{
+					$stmt="SELECT lead_id,list_id,entry_list_id,phone_number,phone_code,vendor_lead_code from vicidial_list where $vendor_lead_code_SQL $search_SQL order by lead_id desc limit $records;";
+					$rslt=mysql_to_mysqli($stmt, $link);
+					$pc_recs = mysqli_num_rows($rslt);
+					if ($DB>0) {echo "DEBUG: Checking for vendor_lead_code - $vendor_lead_code|$pc_recs|$stmt|\n";}
+					$n=0;
+					while ($pc_recs > $n)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$search_key[$search_found] =			$row[5];
+						$search_lead_id[$search_found] =		$row[0];
+						$search_lead_list[$search_found] =		$row[1];
+						$search_entry_list[$search_found] =		$row[2];
+						$search_phone_number[$search_found] =	$row[3];
+						$search_phone_code[$search_found] =		$row[4];
+						if (strlen($force_entry_list_id) > 1)
+							{$search_entry_list[$search_found] = $force_entry_list_id;}
+						$n++;
+						$search_found++;
+						}
+					}
+				if ( ($find_phone_number > 0) and ($search_found < 1) ) # search for the phone_number
+					{
+					$stmt="SELECT lead_id,list_id,entry_list_id,phone_number,phone_code from vicidial_list where $phone_number_SQL $search_SQL order by lead_id desc limit $records;";
+					$rslt=mysql_to_mysqli($stmt, $link);
+					$pc_recs = mysqli_num_rows($rslt);
+					if ($DB>0) {echo "DEBUG: Checking for phone_number - $phone_number|$pc_recs|$stmt|\n";}
+					$n=0;
+					while ($pc_recs > $n)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$search_key[$search_found] =			$row[3];
+						$search_lead_id[$search_found] =		$row[0];
+						$search_lead_list[$search_found] =		$row[1];
+						$search_entry_list[$search_found] =		$row[2];
+						$search_phone_number[$search_found] =	$row[3];
+						$search_phone_code[$search_found] =		$row[4];
+						if (strlen($force_entry_list_id) > 1)
+							{$search_entry_list[$search_found] = $force_entry_list_id;}
+						$n++;
+						$search_found++;
+						}
+					}
+				### END searching ###
+
+				if ($search_found > 0)
+					{
+					$output='';
+					if ($header == 'YES')
+						{
+						$output .= 'search_key' . $DL . 'records_found' . $DL . 'lead_ids' . "\n";
+						}
+					$PH_search = count($find_phone_numberARYx);
+					$SK_count = count($search_key);
+					if ($DB > 0) {echo "Results found, preparing output: |$search_found|$PH_search|$SK_count|\n";}
+					$tc=0;
+					while ($tc < $PH_search)
+						{
+						$rc=0;
+						$temp_match=0;
+						$temp_lead_ids='';
+						while ($rc < $SK_count)
+							{
+							if ($find_phone_numberARYx[$tc] == $search_key[$rc])
+								{
+								$temp_match++;
+								if ($temp_match > 1) {$temp_lead_ids .= "-";}
+								$temp_lead_ids .= "$search_lead_id[$rc]";
+								}
+							$rc++;
+							}
+						$output .= "$find_phone_numberARYx[$tc]|$temp_match|$temp_lead_ids\n";
+						$tc++;
+						}
+
+					$PH_search = count($find_vendor_lead_codeARYx);
+					$SK_count = count($search_key);
+					$tc=0;
+					while ($tc < $PH_search)
+						{
+						$rc=0;
+						$temp_match=0;
+						$temp_lead_ids='';
+						while ($rc < $SK_count)
+							{
+							if ($find_vendor_lead_codeARYx[$tc] == $search_key[$rc])
+								{
+								$temp_match++;
+								if ($temp_match > 1) {$temp_lead_ids .= "-";}
+								$temp_lead_ids .= "$search_lead_id[$rc]";
+								}
+							$rc++;
+							}
+						$output .= "$find_vendor_lead_codeARYx[$tc]|$temp_match|$temp_lead_ids\n";
+						$tc++;
+						}
+
+					$result = 'SUCCESS';
+					$result_reason = "lead_search LEADS FOUND IN THE SYSTEM";
+					$data = "$lead_id|$vendor_lead_code|$phone_number|$search_found";
+					echo "$output";
+					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+					}
+				else
+					{
+					$result = 'ERROR';
+					$result_reason = "lead_search NO MATCHES FOUND IN THE SYSTEM";
+					$data = "$lead_id|$vendor_lead_code|$phone_number";
+					echo "$result: $result_reason: |$user|$data\n";
+					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+
+					exit;
+					}
+				}
+			}
+		exit;
+		}
+	}
+################################################################################
+### END lead_search
 ################################################################################
 
 

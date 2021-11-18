@@ -78,3 +78,4 @@ UNKAL - CPD Unknown call sent to a message and message has been played
 NVAINS - Default status for new inserted lead on phone NVA call
 CLOSOP - In-Group Closing-Time option selected
 PAUSMX - Pause Max Seconds timeout default status
+IQNANQ - In-Queue call No-Agent-No-Queue drop

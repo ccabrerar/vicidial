@@ -9,13 +9,14 @@
 #
 # /usr/share/astguiclient/AST_call_log_export.pl --campaign=GOODB-GROUP1-GROUP3-GROUP4-SPECIALS-DNC_BEDS --output-format=tab-basic --debug --filename=BEDSsaleDATETIME.txt --email-list=test@gmail.com --email-sender=test@test.com
 #
-# Copyright (C) 2011  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 100310-0112 - First version
 # 110202-2214 - Added ncad14csv format
 # 110423-0350 - Do not die on email issue
 # 111103-0626 - Added MAXCAL as a drop status
+# 212207-2207 - Added IQNANQ to drop SQL calculation queries
 #
 
 $txt = '.txt';
@@ -416,7 +417,7 @@ if (!$Q)
 ###########################################################################
 # call_date|phone_number|vendor_id|status|user|first_name|last_name|lead_id|list_id|campaign_id|length_in_sec|source_id|
 
-$stmtA = "select CONVERT_TZ(call_date,$convert_tz),vicidial_log.phone_number,vendor_lead_code,vicidial_log.status,vicidial_log.user,first_name,last_name,vicidial_list.lead_id,vicidial_log.list_id,campaign_id,length_in_sec,vicidial_list.source_id,uniqueid from vicidial_list,vicidial_log where $VLcampaignSQL and $VLdateSQL and vicidial_log.lead_id=vicidial_list.lead_id and vicidial_log.status IN('DROP','XDROP','NA','AA','AM','AL','AB','ADC','PU','PM','SVYEXT','SVYVM','SVYHU','SVYREC','HXFER','HOLDTO','QVMAIL','RQXFER','CPDATB','CPDB','CPDNA','CPDREJ','CPDINV','CPDSUA','CPDSI','CPDSNC','CPDSR','CPDSUK','CPDSV','CPDUK','CPDERR','TIMEOT','AFTHRS','NANQUE','MAXCAL') order by call_date;";
+$stmtA = "select CONVERT_TZ(call_date,$convert_tz),vicidial_log.phone_number,vendor_lead_code,vicidial_log.status,vicidial_log.user,first_name,last_name,vicidial_list.lead_id,vicidial_log.list_id,campaign_id,length_in_sec,vicidial_list.source_id,uniqueid from vicidial_list,vicidial_log where $VLcampaignSQL and $VLdateSQL and vicidial_log.lead_id=vicidial_list.lead_id and vicidial_log.status IN('DROP','XDROP','NA','AA','AM','AL','AB','ADC','PU','PM','SVYEXT','SVYVM','SVYHU','SVYREC','HXFER','HOLDTO','QVMAIL','RQXFER','CPDATB','CPDB','CPDNA','CPDREJ','CPDINV','CPDSUA','CPDSI','CPDSNC','CPDSR','CPDSUK','CPDSV','CPDUK','CPDERR','TIMEOT','AFTHRS','NANQUE','IQNANQ','MAXCAL') order by call_date;";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -453,7 +454,7 @@ $sthA->finish();
 ###########################################################################
 # call_date|phone_number|vendor_id|status|user|first_name|last_name|lead_id|list_id|campaign_id|length_in_sec|source_id|
 
-$stmtA = "select CONVERT_TZ(event_time,$convert_tz),vicidial_list.phone_number,vendor_lead_code,vicidial_agent_log.status,vicidial_agent_log.user,first_name,last_name,vicidial_list.lead_id,vicidial_list.list_id,campaign_id,talk_sec,vicidial_list.source_id,dead_sec,agent_log_id from vicidial_list,vicidial_agent_log where $VLAcampaignSQL and $VLAdateSQL and vicidial_agent_log.lead_id=vicidial_list.lead_id and vicidial_agent_log.status NOT IN('DROP','XDROP','NA','AA','AM','AL','AB','ADC','PU','PM','SVYEXT','SVYVM','SVYHU','SVYREC','HXFER','HOLDTO','QVMAIL','RQXFER','CPDATB','CPDB','CPDNA','CPDREJ','CPDINV','CPDSUA','CPDSI','CPDSNC','CPDSR','CPDSUK','CPDSV','CPDUK','CPDERR','TIMEOT','AFTHRS','NANQUE','INCALL','','QUEUE','MAXCAL') order by event_time;";
+$stmtA = "select CONVERT_TZ(event_time,$convert_tz),vicidial_list.phone_number,vendor_lead_code,vicidial_agent_log.status,vicidial_agent_log.user,first_name,last_name,vicidial_list.lead_id,vicidial_list.list_id,campaign_id,talk_sec,vicidial_list.source_id,dead_sec,agent_log_id from vicidial_list,vicidial_agent_log where $VLAcampaignSQL and $VLAdateSQL and vicidial_agent_log.lead_id=vicidial_list.lead_id and vicidial_agent_log.status NOT IN('DROP','XDROP','NA','AA','AM','AL','AB','ADC','PU','PM','SVYEXT','SVYVM','SVYHU','SVYREC','HXFER','HOLDTO','QVMAIL','RQXFER','CPDATB','CPDB','CPDNA','CPDREJ','CPDINV','CPDSUA','CPDSI','CPDSNC','CPDSR','CPDSUK','CPDSV','CPDUK','CPDERR','TIMEOT','AFTHRS','NANQUE','IQNANQ','INCALL','','QUEUE','MAXCAL') order by event_time;";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
