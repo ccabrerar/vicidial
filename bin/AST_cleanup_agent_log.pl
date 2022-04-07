@@ -10,7 +10,7 @@
 #
 # This program only needs to be run by one server
 #
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 60711-0945 - Changed to DBI by Marin Blu
@@ -46,6 +46,7 @@
 # 200606-1802 - Added optional queue_log cleanup for multiple PAUSEREASON records in the same PAUSE session
 # 201106-2146 - Added EXITEMPTY verb for queue_log cleanup section
 # 210523-2321 - Added optional check for qa_data duplicates, -qm-qa-duplicate-check
+# 220206-0714 - Added new -roll-back-preview-skips function to roll back the last_local_call_time and called_count for leads that were previewed and not dialed
 #
 
 # constants
@@ -85,11 +86,12 @@ if (length($ARGV[0])>1)
 		print "  [-only-dedupe-vicidial-log] = will look for duplicate vicidial_log and extended entries\n";
 		print "  [-only-check-vicidial-log-agent] = will check for missing agent log entries\n";
 		print "  [-only-hold-cleanup] = will look for hold entries and correct agent log wait/talk times\n";
+		print "  [-roll-back-preview-skips] = roll back the last_local_call_time and called_count for leads that were previewed and not dialed\n";
 		print "  [-run-check] = concurrency check, die if another instance is running\n";
 		print "  [-quiet] = quiet, no output\n";
 		print "  [-test] = test\n";
 		print "  [-debug] = verbose debug messages\n";
-		print "  [-debugX] = Extra-verbose debug messages\n\n";
+		print "  [--debugX] = Extra-verbose debug messages\n\n";
 		exit;
 		}
 	else
@@ -215,6 +217,11 @@ if (length($ARGV[0])>1)
 			$hold_cleanup=1;
 			if ($Q < 1) {print "\n----- FIX HOLD ENTRIES ONLY -----\n\n";}
 			}
+		if ($args =~ /-roll-back-preview-skips/i)
+			{
+			$roll_back_preview_skips=1;
+			if ($Q < 1) {print "\n----- ROLL BACK PREVIEW SKIPS: $roll_back_preview_skips -----\n\n";}
+			}
 		if ($args =~ /-run-check/i)
 			{
 			$run_check=1;
@@ -264,6 +271,7 @@ if ($Tsec < 10) {$Tsec = "0$Tsec";}
 	$TDSQLdate = "$Tyear-$Tmon-$Tmday $Thour:$Tmin:$Tsec";
 
 $VDAD_SQL_time = "and event_time > \"$TDSQLdate\" and event_time < \"$FDSQLdate\"";
+$VDAD_SQL_time_where = "where event_time > \"$TDSQLdate\" and event_time < \"$FDSQLdate\"";
 $VDCL_SQL_time = "and call_date > \"$TDSQLdate\" and call_date < \"$FDSQLdate\"";
 $VDCL_SQL_time_where = "where call_date > \"$TDSQLdate\" and call_date < \"$FDSQLdate\"";
 $VDP_SQL_time = "and parked_time > \"$TDSQLdate\" and parked_time < \"$FDSQLdate\"";
@@ -291,6 +299,7 @@ if ($ONE_MINUTE > 0)
 		$MDSQLdate = "$Myear-$Mmon-$Mmday $Mhour:$Mmin:$Msec";
 
 	$VDAD_SQL_time = "and event_time < \"$MDSQLdate\" and event_time > \"$TDSQLdate\"";
+	$VDAD_SQL_time_where = "where event_time > \"$MDSQLdate\" and event_time < \"$TDSQLdate\"";
 	$VDCL_SQL_time = "and call_date < \"$MDSQLdate\" and call_date > \"$TDSQLdate\"";
 	$VDCL_SQL_time_where = "where call_date < \"$MDSQLdate\" and call_date > \"$TDSQLdate\"";
 	$VDP_SQL_time = "and parked_time > \"$TDSQLdate\" and parked_time < \"$MDSQLdate\"";
@@ -311,6 +320,7 @@ if ($TWENTYFOUR_HOURS > 0)
 		$TDSQLdate = "$Tyear-$Tmon-$Tmday $Thour:$Tmin:$Tsec";
 
 	$VDAD_SQL_time = "and event_time > \"$TDSQLdate\" and event_time < \"$FDSQLdate\"";
+	$VDAD_SQL_time_where = "where event_time > \"$TDSQLdate\" and event_time < \"$FDSQLdate\"";
 	$VDCL_SQL_time = "and call_date > \"$TDSQLdate\" and call_date < \"$FDSQLdate\"";
 	$VDCL_SQL_time_where = "where call_date > \"$TDSQLdate\" and call_date < \"$FDSQLdate\"";
 	$VDP_SQL_time = "and parked_time > \"$TDSQLdate\" and parked_time < \"$FDSQLdate\"";
@@ -342,6 +352,7 @@ if ($ONEDAYAGO > 0)
 		$KDSQLdate = "$Kyear-$Kmon-$Kmday $Khour:$Kmin:$Ksec";
 
 	$VDAD_SQL_time = "and event_time > \"$KDSQLdate\" and event_time < \"$TDSQLdate\"";
+	$VDAD_SQL_time_where = "where event_time > \"$KDSQLdate\" and event_time < \"$TDSQLdate\"";
 	$VDCL_SQL_time = "and call_date > \"$KDSQLdate\" and call_date < \"$TDSQLdate\"";
 	$VDCL_SQL_time_where = "where call_date > \"$KDSQLdate\" and call_date < \"$TDSQLdate\"";
 	$VDP_SQL_time = "and parked_time > \"$KDSQLdate\" and parked_time < \"$TDSQLdate\"";
@@ -362,6 +373,7 @@ if ($TWENTYFOUR_OLDER > 0)
 		$TDSQLdate = "$Tyear-$Tmon-$Tmday $Thour:$Tmin:$Tsec";
 
 	$VDAD_SQL_time = "and event_time < \"$TDSQLdate\"";
+	$VDAD_SQL_time_where = "where event_time < \"$TDSQLdate\"";
 	$VDCL_SQL_time = "and call_date < \"$TDSQLdate\"";
 	$VDCL_SQL_time_where = "where call_date < \"$TDSQLdate\"";
 	$VDP_SQL_time = "and parked_time < \"$TDSQLdate\"";
@@ -382,6 +394,7 @@ if ($THIRTY_DAYS > 0)
 		$TDSQLdate = "$Tyear-$Tmon-$Tmday $Thour:$Tmin:$Tsec";
 
 	$VDAD_SQL_time = "and event_time > \"$TDSQLdate\" and event_time < \"$FDSQLdate\"";
+	$VDAD_SQL_time_where = "where event_time > \"$TDSQLdate\" and event_time < \"$FDSQLdate\"";
 	$VDCL_SQL_time = "and call_date > \"$TDSQLdate\" and call_date < \"$FDSQLdate\"";
 	$VDCL_SQL_time_where = "where call_date > \"$TDSQLdate\" and call_date < \"$FDSQLdate\"";
 	$VDP_SQL_time = "and parked_time > \"$TDSQLdate\" and parked_time < \"$FDSQLdate\"";
@@ -475,6 +488,353 @@ if ($sthArows > 0)
 $sthA->finish();
 ##### END QUEUEMETRICS LOGGING LOOKUP #####
 ###########################################
+
+
+
+
+
+### BEGIN roll back the last_local_call_time and called_count for leads that were previewed and not dialed
+# this function will basically gather every MANUAL DIAL lead_id that any agent handled during the current day and check if it has a dispo, or has a log entry in the vicidial_dial_log or vicidial_log, and if not, then roll back the lead called data
+#  and lead_id=31095499
+if ($roll_back_preview_skips > 0) 
+	{
+	$processed_lead_ids=' ';
+	if ($DB) {print " - check for leads that were handled by an agent that had no status\n";}
+	$stmtA = "SELECT agent_log_id,lead_id,comments,user,status,event_time,wait_epoch,DATE(event_time) from vicidial_agent_log $VDAD_SQL_time_where and ( (status IS NULL) or (status IN('','ERI')) ) and comments='MANUAL' order by event_time desc;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if($DBX){print STDERR "\n$sthArows|$stmtA|\n";}
+	$i=0;
+	while ($sthArows > $i)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$RB_agent_log_id[$i] =	$aryA[0];
+		$RB_lead_id[$i] =		$aryA[1];
+		$RB_comments[$i] =		$aryA[2];
+		$RB_user[$i] =			$aryA[3];
+		$RB_status[$i] =		$aryA[4];
+		$RB_event_time[$i] =	$aryA[5];
+		$RB_wait_epoch[$i] =	$aryA[6];
+		$RB_wait_epoch60min[$i] = ($RB_wait_epoch[$i] - 3600);
+		$RB_event_timeDATE[$i] =$aryA[7];
+		$i++;
+		}
+	$sthA->finish();
+
+	if ($DB > 0) 
+		{
+		print "$sthArows vicidial_agent_log no-status records found, starting analysis...\n";
+		}
+
+	$i=0;
+	$newer_agent_record=0;
+	$newer_outbound_record=0;
+	$newer_dial_record=0;
+	$newer_closer_record=0;
+	$bad_agent_log=0;
+	$within_hour_agent_record=0;
+	$lead_gone=0;
+	$lead_not_updated=0;
+	$lead_already_processed=0;
+	$live_callback_found=0;
+	$update_called_count=0;
+	$update_last_call=0;
+	$lead_updates=0;
+	$lead_updates_affected=0;
+
+	while ($sthArows > $i)
+		{
+		# check for newer agent record with a status for this lead
+		$stmtA = "SELECT count(*) from vicidial_agent_log $VDAD_SQL_time_where and lead_id='$RB_lead_id[$i]' and agent_log_id!='$RB_agent_log_id[$i]' and ( (wait_epoch >= \"$RB_wait_epoch[$i]\") or (event_time >= \"$RB_event_time[$i]\") ) and ( (status IS NOT NULL) and (status NOT IN('','ERI')) );";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArowsVAL=$sthA->rows;
+		if($DBX){print STDERR "\n$sthArowsVAL|$stmtA|\n";}
+		if ($sthArowsVAL > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$sthA->finish();
+			$newer_agent_count[$i] =	$aryA[0];
+			if ($newer_agent_count[$i] > 0) 
+				{$newer_agent_record++;}
+			else
+				{
+				# check for vicidial_log entry for this lead
+				$stmtA = "SELECT count(*) from vicidial_log $VDCL_SQL_time_where and lead_id='$RB_lead_id[$i]' and (call_date >= \"$RB_event_time[$i]\") and ( (status IS NOT NULL) and (status NOT IN('','ERI')) );";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArowsVAL=$sthA->rows;
+				if($DBX){print STDERR "\n$sthArowsVAL|$stmtA|\n";}
+				if ($sthArowsVAL > 0)
+					{
+					@aryA = $sthA->fetchrow_array;
+					$sthA->finish();
+					$newer_outbound_count[$i] =	$aryA[0];
+					if ($newer_outbound_count[$i] > 0) 
+						{$newer_outbound_record++;}
+					else
+						{
+						# check for vicidial_dial_log entry for this lead
+						$stmtA = "SELECT count(*) from vicidial_dial_log $VDCL_SQL_time_where and lead_id='$RB_lead_id[$i]' and (call_date >= \"$RB_event_time[$i]\") and caller_code NOT LIKE \"%Alert%\";";
+						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+						$sthArowsVAL=$sthA->rows;
+						if($DBX){print STDERR "\n$sthArowsVAL|$stmtA|\n";}
+						if ($sthArowsVAL > 0)
+							{
+							@aryA = $sthA->fetchrow_array;
+							$sthA->finish();
+							$newer_dial_count[$i] =	$aryA[0];
+							if ($newer_dial_count[$i] > 0) 
+								{$newer_dial_record++;}
+							else
+								{
+								# check for vicidial_closer_log entry for this lead
+								$stmtA = "SELECT count(*) from vicidial_closer_log $VDCL_SQL_time_where and lead_id='$RB_lead_id[$i]' and (call_date >= \"$RB_event_time[$i]\");";
+								$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+								$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+								$sthArowsVAL=$sthA->rows;
+								if($DBX){print STDERR "\n$sthArowsVAL|$stmtA|\n";}
+								if ($sthArowsVAL > 0)
+									{
+									@aryA = $sthA->fetchrow_array;
+									$sthA->finish();
+									$newer_closer_count[$i] =	$aryA[0];
+									if ($newer_closer_count[$i] > 0) 
+										{$newer_closer_record++;}
+									else
+										{
+										# check for slightly older agent record with a status for this lead
+										$stmtA = "SELECT count(*) from vicidial_agent_log $VDAD_SQL_time_where and lead_id='$RB_lead_id[$i]' and agent_log_id!='$RB_agent_log_id[$i]' and (wait_epoch >= \"$RB_wait_epoch60min[$i]\") and (wait_epoch > 0) and ( (status IS NOT NULL) and (status NOT IN('','ERI')) );";
+										$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+										$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+										$sthArowsVAL=$sthA->rows;
+										if($DBX){print STDERR "\n$sthArowsVAL|$stmtA|\n";}
+										if ($sthArowsVAL > 0)
+											{
+											@aryA = $sthA->fetchrow_array;
+											$sthA->finish();
+											$within_hour_agent_count[$i] =	$aryA[0];
+											if ($within_hour_agent_count[$i] > 0) 
+												{$within_hour_agent_record++;}
+											else
+												{
+												# check for lead existing
+												$stmtA = "SELECT count(*) from vicidial_list where lead_id='$RB_lead_id[$i]';";
+												$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+												$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+												$sthArowsVL=$sthA->rows;
+												if($DBX){print STDERR "\n$sthArowsVL|$stmtA|\n";}
+												if ($sthArowsVL > 0)
+													{
+													@aryA = $sthA->fetchrow_array;
+													$sthA->finish();
+													$lead_gone_count[$i] =	$aryA[0];
+													if ($lead_gone_count[$i] < 1) 
+														{$lead_gone++;}
+													else
+														{
+														# check for lead modification date being in the past
+														$stmtA = "SELECT count(*) from vicidial_list where lead_id='$RB_lead_id[$i]' and last_local_call_time < \"$RB_event_timeDATE[$i] 00:00:00\";";
+														$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+														$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+														$sthArowsVL=$sthA->rows;
+														if($DBX){print STDERR "\n$sthArowsVL|$stmtA|\n";}
+														if ($sthArowsVL > 0)
+															{
+															@aryA = $sthA->fetchrow_array;
+															$sthA->finish();
+															$lead_not_updated_count[$i] =	$aryA[0];
+															if ($lead_not_updated_count[$i] > 0) 
+																{$lead_not_updated++;}
+															else
+																{
+																# check for live/active callback record
+																$stmtA = "SELECT count(*) from vicidial_callbacks where lead_id='$RB_lead_id[$i]' and status IN('ACTIVE','LIVE');";
+																$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+																$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+																$sthArowsVL=$sthA->rows;
+																if($DBX){print STDERR "\n$sthArowsVL|$stmtA|\n";}
+																if ($sthArowsVL > 0)
+																	{
+																	@aryA = $sthA->fetchrow_array;
+																	$sthA->finish();
+																	$live_callback_count[$i] =	$aryA[0];
+																	if ($live_callback_count[$i] > 0) 
+																		{$live_callback_found++;}
+																	else
+																		{
+																		# check for already processed lead
+																		if ($processed_lead_ids =~ / $RB_lead_id[$i] /) 
+																			{$lead_already_processed++;}
+																		else
+																			{
+																			$something_changed=0;
+																			$use_vd_log=0;
+																			$processed_lead_ids .= "$RB_lead_id[$i] ";
+																			$bad_agent_log++;
+																			if ($DB > 0) {print "FOUND!     $i|$bad_agent_log|User: $RB_user[$i]|Lead ID: $RB_lead_id[$i]|Time: $RB_event_time[$i]|Agent Log ID: $RB_agent_log_id[$i]| \n";}
+
+																			# gather lead info before fix
+																			$last_call_EPOCH=0;
+																			$stmtA = "SELECT entry_date,called_count,last_local_call_time,UNIX_TIMESTAMP(last_local_call_time) from vicidial_list where lead_id='$RB_lead_id[$i]';";
+																			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+																			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+																			$sthArowsVL=$sthA->rows;
+																			if($DBX){print STDERR "\n$sthArowsVL|$stmtA|\n";}
+																			if ($sthArowsVL > 0)
+																				{
+																				@aryA = $sthA->fetchrow_array;
+																				$sthA->finish();
+																				$entry_date =			$aryA[0];
+																				$called_count =			$aryA[1];
+																				$last_local_call_time =	$aryA[2];
+																				$last_call_day =		$aryA[2];
+																					$last_call_day =~ s/ .*//gi;
+																				$last_call_EPOCH =		$aryA[3];
+																				}
+
+																			# gather lead info before fix
+																			$dial_log_count=0;
+																			$stmtA = "SELECT count(*) from vicidial_dial_log where lead_id='$RB_lead_id[$i]' and call_date >= \"$entry_date\" and caller_code NOT LIKE \"%Alert%\";";
+																			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+																			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+																			$sthArowsVDL=$sthA->rows;
+																			if($DBX){print STDERR "\n$sthArowsVDL|$stmtA|\n";}
+																			if ($sthArowsVDL > 0)
+																				{
+																				@aryA = $sthA->fetchrow_array;
+																				$sthA->finish();
+																				$dial_log_count =	$aryA[0];
+																				}
+																			$vd_log_count=0;
+																			$stmtA = "SELECT count(*) from vicidial_log where lead_id='$RB_lead_id[$i]' and call_date >= \"$entry_date\";";
+																			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+																			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+																			$sthArowsVDL=$sthA->rows;
+																			if($DBX){print STDERR "\n$sthArowsVDL|$stmtA|\n";}
+																			if ($sthArowsVDL > 0)
+																				{
+																				@aryA = $sthA->fetchrow_array;
+																				$sthA->finish();
+																				$vd_log_count =	$aryA[0];
+																				}
+																			if ($vd_log_count > $dial_log_count) 
+																				{
+																				$use_vd_log++;
+																				if($DB){print STDERR "     DEBUG 0: use vicidial_log count: |$vd_log_count|$dial_log_count|$RB_lead_id[$i]|\n";}
+																				$dial_log_count = $vd_log_count;
+																				}
+																			if ($called_count ne $dial_log_count) 
+																				{
+																				if($DB){print STDERR "     DEBUG 1: lead called_count change: |$called_count|$dial_log_count|$RB_lead_id[$i]|\n";}
+																				$update_called_count++;
+																				$something_changed++;
+																				$called_count = $dial_log_count;
+																				}
+																			if ($dial_log_count > 0)
+																				{
+																				$stmtA = "SELECT call_date,UNIX_TIMESTAMP(call_date) from vicidial_dial_log where lead_id='$RB_lead_id[$i]' and call_date >= \"$entry_date\" and caller_code NOT LIKE \"%Alert%\" order by call_date desc limit 1;";
+																				if ($use_vd_log > 0) 
+																					{$stmtA = "SELECT call_date,UNIX_TIMESTAMP(call_date) from vicidial_log where lead_id='$RB_lead_id[$i]' and call_date >= \"$entry_date\" order by call_date desc limit 1;";}
+																				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+																				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+																				$sthArowsVDL=$sthA->rows;
+																				if($DBX){print STDERR "\n$sthArowsVDL|$stmtA|\n";}
+																				if ($sthArowsVDL > 0)
+																					{
+																					@aryA = $sthA->fetchrow_array;
+																					$sthA->finish();
+																					$last_local_call_time_DIAL =	$aryA[0];
+																					$last_call_day_DIAL =			$aryA[0];
+																						$last_call_day_DIAL =~ s/ .*//gi;
+																					$last_local_call_time_EPOCH =	$aryA[1];
+																					if ( ($last_local_call_time_EPOCH > 0) && ($last_call_day ne $last_call_day_DIAL) )
+																						{
+																						if($DB){print STDERR "     DEBUG 2: lead last_local_call_time change: |$last_local_call_time|$last_local_call_time_DIAL|$last_call_day|$last_call_day_DIAL|$RB_lead_id[$i]|\n";}
+																						$update_last_call++;
+																						$something_changed++;
+																						$last_local_call_time = $last_local_call_time_DIAL;
+																						}
+																					}
+																				}
+																			if ($called_count < 1) 
+																				{$last_local_call_time = $entry_date;}
+																			if ($something_changed > 0) 
+																				{
+																				$VLaffected_rows=0;
+																				$stmtAX = "UPDATE vicidial_list SET last_local_call_time='$last_local_call_time',called_count='$called_count' where lead_id='$RB_lead_id[$i]';";
+																				if ($TEST < 1) {$VLaffected_rows = $dbhA->do($stmtAX);}
+																				if ($DB) {print "VL record updated: $VLaffected_rows|$stmtAX|\n";}
+																				$lead_updates_affected = ($lead_updates_affected + $VLaffected_rows);
+																				$lead_updates++;
+																				}
+																			}
+																		}
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				else
+					{
+					if ($DB > 0) 
+						{print "ERROR VL query: $i|$stmtA|\n";}
+					}
+				}
+			}
+		
+		$i++;
+
+		if ( ($i =~ /0$/) && ($DB > 0) )
+			{
+			if ($i =~ /00$/) {$k='+';}
+			if ($i =~ /10$/) {$k='|';}
+			if ($i =~ /20$/) {$k='/';}
+			if ($i =~ /30$/) {$k='-';}
+			if ($i =~ /40$/) {$k="\\";}
+			if ($i =~ /50$/) {$k='|';}
+			if ($i =~ /60$/) {$k='/';}
+			if ($i =~ /70$/) {$k='-';}
+			if ($i =~ /80$/) {$k="\\";}
+			if ($i =~ /90$/) {$k='0';}
+			print STDERR "$k    $i / $sthArows     BAD: $bad_agent_log \r";
+			}
+		}
+
+	if ($DB > 0) 
+		{
+		print "Processiong complete... $i records scanned\n";
+		print "Newer agent log record:                   $newer_agent_record \n";
+		print "Newer outbound log record:                $newer_outbound_record \n";
+		print "Newer dial log record:                    $newer_dial_record \n";
+		print "Newer closer log record:                  $newer_closer_record \n";
+		print "Within hour agent log record:             $within_hour_agent_record \n";
+		print "Lead record gone:                         $lead_gone \n";
+		print "Lead call time not updated:               $lead_not_updated \n";
+		print "Live callback found:                      $live_callback_found \n";
+		print "Lead already processed:                   $lead_already_processed \n";
+		print "     Bad agent log record:                $bad_agent_log \n";
+		print "        Update lead called_count:            $update_called_count \n";
+		print "        Update lead last_call:               $update_last_call \n";
+		print "        Total leads updated:                 $lead_updates ($lead_updates_affected) \n";
+		}
+
+	exit;
+	}
+### END roll back the last_local_call_time and called_count for leads that were previewed and not dialed
+
+
+
 
 
 ### BEGIN check for vicidial_log entries with a user with no vicidial_agent_log entry

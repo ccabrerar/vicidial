@@ -1,7 +1,7 @@
 <?php 
 # AST_LISTS_stats.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This is a list inventory report, not a calling report. This report will show
 # statistics for all of the lists in the selected campaigns
@@ -18,6 +18,7 @@
 # 170409-1539 - Added IP List validation code
 # 170903-0951 - Added screen color settings
 # 180507-2315 - Added new help display
+# 220302-1214 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
@@ -31,8 +32,6 @@ $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
-if (isset($_GET["group"]))				{$group=$_GET["group"];}
-	elseif (isset($_POST["group"]))		{$group=$_POST["group"];}
 if (isset($_GET["list"]))				{$list=$_GET["list"];}
 	elseif (isset($_POST["list"]))		{$list=$_POST["list"];}
 if (isset($_GET["DB"]))					{$DB=$_GET["DB"];}
@@ -41,12 +40,19 @@ if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
 	elseif (isset($_POST["submit"]))	{$submit=$_POST["submit"];}
 if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))	{$SUBMIT=$_POST["SUBMIT"];}
-if (isset($_GET["file_download"]))				{$file_download=$_GET["file_download"];}
+if (isset($_GET["file_download"]))			{$file_download=$_GET["file_download"];}
 	elseif (isset($_POST["file_download"]))	{$file_download=$_POST["file_download"];}
-if (isset($_GET["report_display_type"]))				{$report_display_type=$_GET["report_display_type"];}
+if (isset($_GET["report_display_type"]))			{$report_display_type=$_GET["report_display_type"];}
 	elseif (isset($_POST["report_display_type"]))	{$report_display_type=$_POST["report_display_type"];}
 if (isset($_GET["campaigns_or_lists_rpt"]))				{$campaigns_or_lists_rpt=$_GET["campaigns_or_lists_rpt"];}
 	elseif (isset($_POST["campaigns_or_lists_rpt"]))	{$campaigns_or_lists_rpt=$_POST["campaigns_or_lists_rpt"];}
+
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
+$NOW_DATE = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$STARTtime = date("U");
+if (!isset($list)) {$list = array();}
 
 $report_name = 'Lists Statuses Report';
 $db_source = 'M';
@@ -59,9 +65,9 @@ $JS_onload="onload = function() {\n";
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {$MAIN.="$stmt\n";}
+#if ($DB) {$MAIN.="$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -72,9 +78,20 @@ if ($qm_conf_ct > 0)
 	$reports_use_slave_db =			$row[3];
 	$SSenable_languages =			$row[4];
 	$SSlanguage_method =			$row[5];
+	$SSallow_web_debug =			$row[6];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$report_display_type = preg_replace('/[^-_0-9a-zA-Z]/', '', $report_display_type);
+$file_download = preg_replace('/[^-_0-9a-zA-Z]/', '', $file_download);
+$campaigns_or_lists_rpt = preg_replace('/[^-_0-9a-zA-Z]/', '', $campaigns_or_lists_rpt);
+
+# Variables filtered further down in the code
+# $list
 
 if ($non_latin < 1)
 	{
@@ -83,8 +100,8 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
@@ -195,7 +212,7 @@ else
 	$webserver_id = mysqli_insert_id($link);
 	}
 
-$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$group[0], $query_date, $end_date, $shift, $file_download, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
+$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$query_date, $end_date, $shift, $file_download, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $report_log_id = mysqli_insert_id($link);
@@ -231,10 +248,6 @@ if ( (!preg_match("/$report_name/",$LOGallowed_reports)) and (!preg_match("/ALL 
     exit;
 	}
 
-$NOW_DATE = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-$STARTtime = date("U");
-
 $LOGallowed_campaignsSQL='';
 $whereLOGallowed_campaignsSQL='';
 if ( (!preg_match('/\-ALL/i', $LOGallowed_campaigns)) )
@@ -247,13 +260,13 @@ if ( (!preg_match('/\-ALL/i', $LOGallowed_campaigns)) )
 $regexLOGallowed_campaigns = " $LOGallowed_campaigns ";
 
 ###########
-if (!isset($list)) {$list = array();}
 
 $i=0;
 $list_string='|';
 $list_ct = count($list);
 while($i < $list_ct)
 	{
+	$list[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $list[$i]);
 	$list_string .= "$list[$i]|";
 	$i++;
 	}
@@ -279,6 +292,7 @@ $list_string='|';
 $list_ct = count($list);
 while($i < $list_ct)
 	{
+	$list[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $list[$i]);
 	$list_string .= "$list[$i]|";
 	$list_SQL .= "'$list[$i]',";
 	$listQS .= "&list[]=$list[$i]";
@@ -456,9 +470,9 @@ $MAIN.="<BR><BR><BR>\n";
 $MAIN.="<INPUT style='background-color:#$SSbutton_color' type=submit NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>\n";
 $MAIN.="</TD><TD VALIGN=TOP> &nbsp; &nbsp; &nbsp; &nbsp; ";
 $MAIN.="<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
-if (strlen($group[0]) > 1)
+if (strlen($list[0]) > 1)
 	{
-	$MAIN.=" <a href=\"./admin.php?ADD=34&campaign_id=$group[0]\">"._QXZ("MODIFY")."</a> | \n";
+	$MAIN.=" <a href=\"./admin.php?ADD=34&campaign_id=$list[0]\">"._QXZ("MODIFY")."</a> | \n";
 	$MAIN.=" <a href=\"./admin.php?ADD=999999\">"._QXZ("REPORTS")."</a> </FONT>\n";
 	}
 else

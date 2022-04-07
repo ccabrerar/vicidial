@@ -5,13 +5,14 @@
 # Created to find problematic caller IDs, which can be found if bad outbound calls are dispositioned 
 # particular statuses
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
 # 200115-1512 - First build
 # 200120-1430 - Added total calls, percentage of calls matched, default CID notation
 # 201111-1630 - Translation issue fix, Issue #1231
+# 220228-2053 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
@@ -35,7 +36,7 @@ if (isset($_GET["campaign"]))				{$campaign=$_GET["campaign"];}
 	elseif (isset($_POST["campaign"]))		{$campaign=$_POST["campaign"];}
 if (isset($_GET["status"]))					{$status=$_GET["status"];}
 	elseif (isset($_POST["status"]))		{$status=$_POST["status"];}
-if (isset($_GET["interval"]))						{$interval=$_GET["interval"];}
+if (isset($_GET["interval"]))					{$interval=$_GET["interval"];}
 	elseif (isset($_POST["interval"]))			{$interval=$_POST["interval"];}
 if (isset($_GET["search_archived_data"]))			{$search_archived_data=$_GET["search_archived_data"];}
 	elseif (isset($_POST["search_archived_data"]))	{$search_archived_data=$_POST["search_archived_data"];}
@@ -46,6 +47,21 @@ if (isset($_GET["SUBMIT"]))					{$SUBMIT=$_GET["SUBMIT"];}
 if (isset($_GET["file_download"]))			{$file_download=$_GET["file_download"];}
 	elseif (isset($_POST["file_download"]))	{$file_download=$_POST["file_download"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
+$US='_';
+$MT[0]='';
+$ip = getenv("REMOTE_ADDR");
+$NOW_DATE = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$FILE_TIME = date("Ymd-His");
+$STARTtime = date("U");
+if (!isset($campaign)) {$campaign = array();}
+if (!isset($status)) {$status = array();}
+if (!isset($query_date)) {$query_date = $NOW_DATE;}
+if (!isset($end_date)) {$end_date = $NOW_DATE;}
+if (!isset($query_time)) {$query_time = "00:00:00";}
+if (!isset($end_time)) {$end_time = "23:59:59";}
 if (strlen($shift)<2) {$shift='ALL';}
 
 $report_name = 'Caller ID Log Report';
@@ -54,7 +70,55 @@ $file_exported=0;
 $NWB = "<IMG SRC=\"help.png\" onClick=\"FillAndShowHelpDiv(event, '";
 $NWE = "')\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP>";
 if (!isset($interval)) {$interval = '0';}
+
+#############################################
+##### START SYSTEM_SETTINGS LOOKUP #####
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,custom_fields_enabled,enable_languages,language_method,active_modules,allow_web_debug FROM system_settings;";
+$rslt=mysql_to_mysqli($stmt, $link);
+#if ($DB) {echo "$stmt\n";}
+$qm_conf_ct = mysqli_num_rows($rslt);
+if ($qm_conf_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$non_latin =					$row[0];
+	$outbound_autodial_active =		$row[1];
+	$slave_db_server =				$row[2];
+	$reports_use_slave_db =			$row[3];
+	$custom_fields_enabled =		$row[4];
+	$SSenable_languages =			$row[5];
+	$SSlanguage_method =			$row[6];
+	$active_modules =				$row[7];
+	$SSallow_web_debug =			$row[8];
+	}
+if ($SSallow_web_debug < 1) {$DB=0;}
+##### END SETTINGS LOOKUP #####
+###########################################
+
 $interval=preg_replace('/[^0-9]/', '', $interval);
+$query_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date);
+$end_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $end_date);
+$query_time = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_time);
+$end_time = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $end_time);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+$search_archived_data = preg_replace('/[^-_0-9a-zA-Z]/', '', $search_archived_data);
+$file_download = preg_replace('/[^-_0-9a-zA-Z]/', '', $file_download);
+$report_display_type = preg_replace('/[^-_0-9a-zA-Z]/', '', $report_display_type);
+
+# Variables filtered further down in the code
+# $campaign
+# $status
+
+if ($non_latin < 1)
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	}
+else
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	}
 
 ### ARCHIVED DATA CHECK CONFIGURATION
 $archives_available="N";
@@ -77,39 +141,6 @@ else
 	$vicidial_log_table="vicidial_log";
 	}
 #############
-
-
-#############################################
-##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,custom_fields_enabled,enable_languages,language_method,active_modules FROM system_settings;";
-$rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
-$qm_conf_ct = mysqli_num_rows($rslt);
-if ($qm_conf_ct > 0)
-	{
-	$row=mysqli_fetch_row($rslt);
-	$non_latin =					$row[0];
-	$outbound_autodial_active =		$row[1];
-	$slave_db_server =				$row[2];
-	$reports_use_slave_db =			$row[3];
-	$custom_fields_enabled =		$row[4];
-	$SSenable_languages =			$row[5];
-	$SSlanguage_method =			$row[6];
-	$active_modules =				$row[7];
-	}
-##### END SETTINGS LOOKUP #####
-###########################################
-if ($non_latin < 1)
-	{
-	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
-	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
-	}
-else
-	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
-	}
-
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
@@ -233,7 +264,7 @@ else
 	$webserver_id = mysqli_insert_id($link);
 	}
 
-$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name Carrier', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$campaign[0], $query_date, $end_date|', url='$LOGfull_url', webserver='$webserver_id';";
+$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name Carrier', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$query_date, $end_date|', url='$LOGfull_url', webserver='$webserver_id';";
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $report_log_id = mysqli_insert_id($link);
@@ -299,17 +330,6 @@ if ( (!preg_match('/\-\-ALL\-\-/i', $LOGadmin_viewable_call_times)) and (strlen(
 ##### START RUN THE EXPORT AND OUTPUT FLAT DATA FILE #####
 if ($SUBMIT)
 	{
-	$US='_';
-	$MT[0]='';
-	$ip = getenv("REMOTE_ADDR");
-	$NOW_DATE = date("Y-m-d");
-	$NOW_TIME = date("Y-m-d H:i:s");
-	$FILE_TIME = date("Ymd-His");
-	$STARTtime = date("U");
-	if (!isset($campaign)) {$campaign = array();}
-	if (!isset($status)) {$status = array();}
-	if (!isset($query_date)) {$query_date = $NOW_DATE;}
-	if (!isset($end_date)) {$end_date = $NOW_DATE;}
 	$log_calls=0;
 	$total_calls=0;
 
@@ -331,6 +351,7 @@ if ($SUBMIT)
 	$i=0;
 	while($i < $campaign_ct)
 		{
+		$campaign[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $campaign[$i]);
 		if ( (preg_match("/ $campaign[$i] /",$regexLOGallowed_campaigns)) or (preg_match("/-ALL/",$LOGallowed_campaigns)) )
 			{
 			$campaign_string .= "$campaign[$i]|";
@@ -361,6 +382,7 @@ if ($SUBMIT)
 	$i=0;
 	while($i < $status_ct)
 		{
+		$status[$i] = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$status[$i]);
 		$status_string .= "$status[$i]|";
 		$status_SQL .= "'$status[$i]',";
 		$statusQS .= "&status[]=$status[$i]";
@@ -530,16 +552,6 @@ if ($SUBMIT)
 
 if ($file_exported < 1)
 	{
-	$NOW_DATE = date("Y-m-d");
-	$NOW_TIME = date("Y-m-d H:i:s");
-	$STARTtime = date("U");
-	if (!isset($campaign)) {$campaign = array();}
-	if (!isset($status)) {$status = array();}
-	if (!isset($query_date)) {$query_date = $NOW_DATE;}
-	if (!isset($end_date)) {$end_date = $NOW_DATE;}
-	if (!isset($query_time)) {$query_time = "00:00:00";}
-	if (!isset($end_time)) {$end_time = "23:59:59";}
-
 	$stmt="select campaign_id from vicidial_campaigns $whereLOGallowed_campaignsSQL order by campaign_id;";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	if ($DB) {echo "$stmt\n";}

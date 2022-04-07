@@ -1,7 +1,7 @@
 <?php 
 # AST_timeonVDADallSUMMARY_mobile.php
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # Mobile version of summary report for all campaigns live real-time stats for the VICIDIAL Auto-Dialer all servers
 #
@@ -11,6 +11,7 @@
 #
 # 190129-1258 - First release
 # 200414-2000 - Minor display modifications, auto-selecting refresh rate onload
+# 220301-2036 - Added allow_web_debug system setting
 #
 
 require("dbconnect_mysqli.php");
@@ -28,18 +29,22 @@ if (isset($_GET["adastats"]))			{$adastats=$_GET["adastats"];}
 	elseif (isset($_POST["adastats"]))	{$adastats=$_POST["adastats"];}
 if (isset($_GET["types"]))				{$types=$_GET["types"];}
 	elseif (isset($_POST["types"]))		{$types=$_POST["types"];}
-if (isset($_GET["current_displayed_report"]))				{$current_displayed_report=$_GET["current_displayed_report"];}
-	elseif (isset($_POST["current_displayed_report"]))		{$current_displayed_report=$_POST["current_displayed_report"];}
+if (isset($_GET["current_displayed_report"]))			{$current_displayed_report=$_GET["current_displayed_report"];}
+	elseif (isset($_POST["current_displayed_report"]))	{$current_displayed_report=$_POST["current_displayed_report"];}
 if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
 	elseif (isset($_POST["submit"]))	{$submit=$_POST["submit"];}
 if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))	{$SUBMIT=$_POST["SUBMIT"];}
-if (isset($_GET["file_download"]))				{$file_download=$_GET["file_download"];}
+if (isset($_GET["file_download"]))			{$file_download=$_GET["file_download"];}
 	elseif (isset($_POST["file_download"]))	{$file_download=$_POST["file_download"];}
 if (isset($_GET["browser_dimension"]))	{$browser_dimension=$_GET["browser_dimension"];}
 	elseif (isset($_POST["browser_dimension"]))	{$browser_dimension=$_POST["browser_dimension"];}
 
-if (!isset($browser_dimension))			{$browser_dimension=800;}
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
+$NOW_TIME = date("Y-m-d H:i:s");
+$STARTtime = date("U");
+if (!isset($browser_dimension))	{$browser_dimension=800;}
 if (!isset($types))			{$types='LIST ALL CAMPAIGNS';}
 $cell_dimension=floor($browser_dimension/10);
 
@@ -48,9 +53,9 @@ $db_source = 'M';
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {$MAIN.="$stmt\n";}
+#if ($DB) {$MAIN.="$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -61,18 +66,22 @@ if ($qm_conf_ct > 0)
 	$reports_use_slave_db =			$row[3];
 	$SSenable_languages =			$row[4];
 	$SSlanguage_method =			$row[5];
+	$SSallow_web_debug =			$row[6];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-if ( (strlen($slave_db_server)>5) and (preg_match("/$report_name/",$reports_use_slave_db)) )
-	{
-	mysqli_close($link);
-	$use_slave_server=1;
-	$db_source = 'S';
-	require("dbconnect_mysqli.php");
-	$MAIN.="<!-- Using slave server $slave_db_server $db_source -->\n";
-	}
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+$RR = preg_replace('/[^-_0-9a-zA-Z]/', '', $RR);
+$file_download = preg_replace('/[^-_0-9a-zA-Z]/', '', $file_download);
+$adastats = preg_replace('/[^-_0-9a-zA-Z]/', '', $adastats);
+$current_displayed_report = preg_replace('/[^-_0-9a-zA-Z]/', '', $current_displayed_report);
+$browser_dimension = preg_replace('/[^-_0-9a-zA-Z]/', '', $browser_dimension);
+
+# Variables filtered further down in the code
+# $types
 
 if ($non_latin < 1)
 	{
@@ -81,8 +90,17 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	}
+
+if ( (strlen($slave_db_server)>5) and (preg_match("/$report_name/",$reports_use_slave_db)) )
+	{
+	mysqli_close($link);
+	$use_slave_server=1;
+	$db_source = 'S';
+	require("dbconnect_mysqli.php");
+	$MAIN.="<!-- Using slave server $slave_db_server $db_source -->\n";
 	}
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
@@ -173,9 +191,6 @@ if ( (!preg_match("/$report_name/",$LOGallowed_reports)) and (!preg_match("/ALL 
     exit;
 	}
 
-$NOW_TIME = date("Y-m-d H:i:s");
-$STARTtime = date("U");
-
 $LOGallowed_campaignsSQL='';
 $whereLOGallowed_campaignsSQL='';
 if ( (!preg_match('/\-ALL/i', $LOGallowed_campaigns)) )
@@ -186,21 +201,32 @@ if ( (!preg_match('/\-ALL/i', $LOGallowed_campaigns)) )
 	$whereLOGallowed_campaignsSQL = "where campaign_id IN('$rawLOGallowed_campaignsSQL')";
 	}
 
+for ($q=0; $q<count($types); $q++) 
+	{
+	$types[$q] = preg_replace('/[^- \_0-9a-zA-Z]/', '', $types[$q]);
+	}
+
 $campaign_typeSQL='';
-if (count($types)<2) {
+if (count($types)<2) 
+	{
+	$types = preg_replace('/[^- \_0-9\p{L}]/u', '', $types);
 	if ($types == 'AUTO-DIAL ONLY')			{$campaign_typeSQL="and dial_method IN('RATIO','ADAPT_HARD_LIMIT','ADAPT_TAPERED','ADAPT_AVERAGE')";} 
 	if ($types == 'MANUAL ONLY')			{$campaign_typeSQL="and dial_method IN('MANUAL','INBOUND_MAN')";} 
 	if ($types == 'INBOUND ONLY')			{$campaign_typeSQL="and campaign_allow_inbound='Y'";} 
-} else {
-	if (!in_array('LIST ALL CAMPAIGNS', $types)) {
+	}
+else 
+	{
+	if (!in_array('LIST ALL CAMPAIGNS', $types)) 
+		{
+		$types = preg_replace('/[^- \_0-9\p{L}]/u', '', $types);
 		$campaign_typeSQL='and (';
 		if (in_array('AUTO-DIAL ONLY', $types)) {$campaign_typeSQL="dial_method IN('RATIO','ADAPT_HARD_LIMIT','ADAPT_TAPERED','ADAPT_AVERAGE') or ";} #  unset($types['AUTO-DIAL ONLY']);
 		if (in_array('MANUAL ONLY', $types)) {$campaign_typeSQL="dial_method IN('MANUAL','INBOUND_MAN') or ";} #  unset($types['MANUAL ONLY']);
 		if (in_array('INBOUND ONLY', $types)) {$campaign_typeSQL="campaign_allow_inbound='Y' or ";} #  unset($types['INBOUND ONLY']);
 		$campaign_typeSQL='campaign_id in ('.implode("', '", $types).')';
 		$campaign_typeSQL=')';
+		}
 	}
-}
 
 
 $stmt="select campaign_id from vicidial_campaigns where active='Y' $LOGallowed_campaignsSQL $campaign_typeSQL order by campaign_id;";

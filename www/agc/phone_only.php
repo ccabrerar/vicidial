@@ -1,7 +1,7 @@
 <?php
 # phone_only.php - the web-based web-phone-only client application
 # 
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 110511-1336 - First Build
@@ -21,10 +21,11 @@
 # 200123-1639 - Added Webphone options
 # 210615-1028 - Default security fixes, CVE-2021-28854
 # 210616-2043 - Added optional CORS support, see options.php for details
+# 220220-0936 - Added allow_web_debug system setting
 #
 
-$version = '2.14-17p';
-$build = '210616-2043';
+$version = '2.14-18p';
+$build = '220220-0936';
 $php_script = 'phone_only.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=74;
@@ -67,6 +68,7 @@ $phone_login=preg_replace("/[^\,0-9a-zA-Z]/","",$phone_login);
 $phone_pass=preg_replace("/[^-_0-9a-zA-Z]/","",$phone_pass);
 $VD_login=preg_replace("/\'|\"|\\\\|;| /","",$VD_login);
 $VD_pass=preg_replace("/\'|\"|\\\\|;| /","",$VD_pass);
+$relogin=preg_replace("/[^-_0-9a-zA-Z]/","",$relogin);
 
 
 $forever_stop=0;
@@ -95,22 +97,10 @@ $random = (rand(1000000, 9999999) + 10000000);
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
-$VUselected_language = '';
-$stmt="SELECT selected_language from vicidial_users where user='$VD_login';";
-if ($DB) {echo "|$stmt|\n";}
-$rslt=mysql_to_mysqli($stmt, $link);
-	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'09074',$VD_login,$server_ip,$session_name,$one_mysql_log);}
-$sl_ct = mysqli_num_rows($rslt);
-if ($sl_ct > 0)
-	{
-	$row=mysqli_fetch_row($rslt);
-	$VUselected_language =		$row[0];
-	}
-
-$stmt = "SELECT use_non_latin,vdc_header_date_format,vdc_customer_date_format,vdc_header_phone_format,webroot_writable,timeclock_end_of_day,vtiger_url,enable_vtiger_integration,outbound_autodial_active,enable_second_webform,user_territories_active,static_agent_url,custom_fields_enabled,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,vdc_header_date_format,vdc_customer_date_format,vdc_header_phone_format,webroot_writable,timeclock_end_of_day,vtiger_url,enable_vtiger_integration,outbound_autodial_active,enable_second_webform,user_territories_active,static_agent_url,custom_fields_enabled,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'09001',$VD_login,$server_ip,$session_name,$one_mysql_log);}
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -130,6 +120,20 @@ if ($qm_conf_ct > 0)
 	$custom_fields_enabled =		$row[12];
 	$SSenable_languages =			$row[13];
 	$SSlanguage_method =			$row[14];
+	$SSallow_web_debug =			$row[15];
+	}
+if ($SSallow_web_debug < 1) {$DB=0;}
+
+$VUselected_language = '';
+$stmt="SELECT selected_language from vicidial_users where user='$VD_login';";
+if ($DB) {echo "|$stmt|\n";}
+$rslt=mysql_to_mysqli($stmt, $link);
+	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'09074',$VD_login,$server_ip,$session_name,$one_mysql_log);}
+$sl_ct = mysqli_num_rows($rslt);
+if ($sl_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$VUselected_language =		$row[0];
 	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
@@ -138,6 +142,11 @@ if ($non_latin < 1)
 	{
 	$VD_login=preg_replace("/[^-_0-9a-zA-Z]/","",$VD_login);
 	$VD_pass=preg_replace("/[^-_0-9a-zA-Z]/","",$VD_pass);
+	}
+else
+	{
+	$VD_login = preg_replace('/[^-_0-9\p{L}]/u','',$VD_login);
+	$VD_pass = preg_replace('/[^-_0-9\p{L}]/u','',$VD_pass);
 	}
 
 

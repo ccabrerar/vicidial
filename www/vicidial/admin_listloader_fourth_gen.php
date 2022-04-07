@@ -2,7 +2,7 @@
 # admin_listloader_fourth_gen.php - version 2.14
 #  (based upon - new_listloader_superL.php script)
 # 
-# Copyright (C) 2021  Matt Florell,Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell,Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # ViciDial web-based lead loader from formatted file
 # 
@@ -79,10 +79,11 @@
 # 200812-1745 - Added international DNC scrub option
 # 200922-1013 - Added web_loader_phone_strip system setting feature
 # 210210-1602 - Added duplicate check with more X-day options
+# 220222-1002 - Added allow_web_debug system setting
 #
 
-$version = '2.14-77';
-$build = '210210-1602';
+$version = '2.14-78';
+$build = '220222-1002';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -152,7 +153,7 @@ if (isset($_GET["postal_code_field"]))				{$postal_code_field=$_GET["postal_code
 if (isset($_GET["country_code_field"]))				{$country_code_field=$_GET["country_code_field"];}
 	elseif (isset($_POST["country_code_field"]))	{$country_code_field=$_POST["country_code_field"];}
 if (isset($_GET["gender_field"]))			{$gender_field=$_GET["gender_field"];}
-	elseif (isset($_POST["gender_field"]))		{$gender_field=$_POST["gender_field"];}
+	elseif (isset($_POST["gender_field"]))	{$gender_field=$_POST["gender_field"];}
 if (isset($_GET["date_of_birth_field"]))			{$date_of_birth_field=$_GET["date_of_birth_field"];}
 	elseif (isset($_POST["date_of_birth_field"]))	{$date_of_birth_field=$_POST["date_of_birth_field"];}
 if (isset($_GET["alt_phone_field"]))			{$alt_phone_field=$_GET["alt_phone_field"];}
@@ -178,10 +179,10 @@ if (isset($_GET["dupcheck"]))				{$dupcheck=$_GET["dupcheck"];}
 	elseif (isset($_POST["dupcheck"]))		{$dupcheck=$_POST["dupcheck"];}
 if (isset($_GET["dedupe_statuses"]))				{$dedupe_statuses=$_GET["dedupe_statuses"];}
 	elseif (isset($_POST["dedupe_statuses"]))		{$dedupe_statuses=$_POST["dedupe_statuses"];}
-if (isset($_GET["dedupe_statuses_override"]))				{$dedupe_statuses_override=$_GET["dedupe_statuses_override"];}
-	elseif (isset($_POST["dedupe_statuses_override"]))		{$dedupe_statuses_override=$_POST["dedupe_statuses_override"];}
+if (isset($_GET["dedupe_statuses_override"]))			{$dedupe_statuses_override=$_GET["dedupe_statuses_override"];}
+	elseif (isset($_POST["dedupe_statuses_override"]))	{$dedupe_statuses_override=$_POST["dedupe_statuses_override"];}
 if (isset($_GET["status_mismatch_action"]))				{$status_mismatch_action=$_GET["status_mismatch_action"];}
-	elseif (isset($_POST["status_mismatch_action"]))		{$status_mismatch_action=$_POST["status_mismatch_action"];}
+	elseif (isset($_POST["status_mismatch_action"]))	{$status_mismatch_action=$_POST["status_mismatch_action"];}
 if (isset($_GET["postalgmt"]))				{$postalgmt=$_GET["postalgmt"];}
 	elseif (isset($_POST["postalgmt"]))		{$postalgmt=$_POST["postalgmt"];}
 if (isset($_GET["phone_code_override"]))			{$phone_code_override=$_GET["phone_code_override"];}
@@ -189,8 +190,8 @@ if (isset($_GET["phone_code_override"]))			{$phone_code_override=$_GET["phone_co
 	$phone_code_override = (preg_replace("/\D/","",$phone_code_override));
 if (isset($_GET["DB"]))					{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))		{$DB=$_POST["DB"];}
-if (isset($_GET["template_id"]))					{$template_id=$_GET["template_id"];}
-	elseif (isset($_POST["template_id"]))		{$template_id=$_POST["template_id"];}
+if (isset($_GET["template_id"]))			{$template_id=$_GET["template_id"];}
+	elseif (isset($_POST["template_id"]))	{$template_id=$_POST["template_id"];}
 if (isset($_GET["usacan_check"]))			{$usacan_check=$_GET["usacan_check"];}
 	elseif (isset($_POST["usacan_check"]))	{$usacan_check=$_POST["usacan_check"];}
 if (isset($_GET["state_conversion"]))			{$state_conversion=$_GET["state_conversion"];}
@@ -200,10 +201,8 @@ if (isset($_GET["web_loader_phone_length"]))			{$web_loader_phone_length=$_GET["
 if (isset($_GET["international_dnc_scrub"]))			{$international_dnc_scrub=$_GET["international_dnc_scrub"];}
 	elseif (isset($_POST["international_dnc_scrub"]))	{$international_dnc_scrub=$_POST["international_dnc_scrub"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
-if (strlen($dedupe_statuses_override)>0) {
-	$dedupe_statuses=explode(",", $dedupe_statuses_override);
-}
 # if the didnt select an over ride wipe out in_file
 if ( $list_id_override == "in_file" ) { $list_id_override = ""; }
 if ( $phone_code_override == "in_file" ) { $phone_code_override = ""; }
@@ -217,11 +216,11 @@ $vicidial_list_fields = '|lead_id|vendor_lead_code|source_id|list_id|gmt_offset_
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,admin_web_directory,custom_fields_enabled,webroot_writable,enable_languages,language_method,active_modules,admin_screen_colors,web_loader_phone_length,enable_international_dncs,web_loader_phone_strip FROM system_settings;";
+$stmt = "SELECT use_non_latin,admin_web_directory,custom_fields_enabled,webroot_writable,enable_languages,language_method,active_modules,admin_screen_colors,web_loader_phone_length,enable_international_dncs,web_loader_phone_strip,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
-if ($qm_conf_ct > 0)
+#if ($qm_conf_ct > 0)
 	{
 	$row=mysqli_fetch_row($rslt);
 	$non_latin =					$row[0];
@@ -235,22 +234,75 @@ if ($qm_conf_ct > 0)
 	$SSweb_loader_phone_length =	$row[8];
 	$SSenable_international_dncs =	$row[9];
 	$SSweb_loader_phone_strip =		$row[10];
+	$SSallow_web_debug =			$row[11];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$list_id_override = preg_replace('/[^0-9]/','',$list_id_override);
+$phone_code_override = preg_replace('/[^0-9]/','',$phone_code_override);
+$web_loader_phone_length = preg_replace('/[^0-9]/','',$web_loader_phone_length);
+$international_dnc_scrub = preg_replace('/[^-_0-9a-zA-Z]/', '', $international_dnc_scrub);
+$master_list_override = preg_replace('/[^-_0-9a-zA-Z]/', '', $master_list_override);
+$usacan_check = preg_replace('/[^-_0-9a-zA-Z]/', '', $usacan_check);
+$state_conversion = preg_replace('/[^-_0-9a-zA-Z]/', '', $state_conversion);
+$status_mismatch_action = preg_replace('/[^- \_0-9a-zA-Z]/', '', $status_mismatch_action);
+$postalgmt = preg_replace('/[^- \_0-9a-zA-Z]/', '', $postalgmt);
+$dupcheck = preg_replace('/[^- \_0-9a-zA-Z]/', '', $dupcheck);
+$lead_file = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$lead_file);
+$vendor_lead_code_field = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$vendor_lead_code_field);
+$source_id_field = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$source_id_field);
+$list_id_field = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$list_id_field);
+$phone_code_field = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$phone_code_field);
+$phone_number_field = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$phone_number_field);
+$title_field = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$title_field);
+$first_name_field = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$first_name_field);
+$middle_initial_field = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$middle_initial_field);
+$last_name_field = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$last_name_field);
+$address1_field = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$address1_field);
+$address2_field = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$address2_field);
+$address3_field = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$address3_field);
+$city_field = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$city_field);
+$state_field = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$state_field);
+$province_field = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$province_field);
+$postal_code_field = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$postal_code_field);
+$country_code_field = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$country_code_field);
+$gender_field = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$gender_field);
+$date_of_birth_field = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$date_of_birth_field);
+$alt_phone_field = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$alt_phone_field);
+$email_field = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$email_field);
+$security_phrase_field = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$security_phrase_field);
+$comments_field = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$comments_field);
+$rank_field = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$rank_field);
+$owner_field = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$owner_field);
+$submit_file = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit_file);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+$file_layout = preg_replace('/[^-_0-9a-zA-Z]/', '', $file_layout);
+$OK_to_process = preg_replace('/[^- \_0-9a-zA-Z]/', '', $OK_to_process);
+
+# Variables filter further down in the code
+# $dedupe_statuses
+
+if (strlen($dedupe_statuses_override)>0) 
+	{
+	$dedupe_statuses_override = preg_replace('/[^- \,\_0-9a-zA-Z]/', '', $dedupe_statuses_override);
+	$dedupe_statuses=explode(",", $dedupe_statuses_override);
+	}
 
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$template_id = preg_replace('/[^-_0-9a-zA-Z]/', '', $template_id);
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$template_id = preg_replace('/[^-_0-9\p{L}]/u', '', $template_id);
 	}
-$list_id_override = preg_replace('/[^0-9]/','',$list_id_override);
-$web_loader_phone_length = preg_replace('/[^0-9]/','',$web_loader_phone_length);
 
 $STARTtime = date("U");
 $TODAY = date("Y-m-d");
@@ -960,6 +1012,7 @@ if ($OK_to_process)
 			$status_dedupe_str="";
 			for($ds=0; $ds<count($dedupe_statuses); $ds++) 
 				{
+				$dedupe_statuses[$ds] = preg_replace('/[^-_0-9\p{L}]/u', '', $dedupe_statuses[$ds]);
 				$statuses_clause.="'$dedupe_statuses[$ds]',";
 				$status_dedupe_str.="$dedupe_statuses[$ds], ";
 				if (preg_match('/\-\-ALL\-\-/', $dedupe_statuses[$ds])) 
@@ -1202,12 +1255,13 @@ if ($OK_to_process)
 
 							#	if ($DB>0) {echo "$A_field_label[$o]|$A_field_type[$o]\n";}
 
-								if ( ($A_field_type[$o]!='DISPLAY') and ($A_field_type[$o]!='SCRIPT') )
+								if ( ($A_field_type[$o]!='DISPLAY') and ($A_field_type[$o]!='SCRIPT') and ($A_field_type[$o]!='SWITCH') and ($A_field_type[$o]!='BUTTON') )
 									{
 									if (!preg_match("/\|$A_field_label[$o]\|/",$vicidial_list_fields))
 										{
 										if (isset($_GET["$field_name_id"]))				{$form_field_value=$_GET["$field_name_id"];}
 											elseif (isset($_POST["$field_name_id"]))	{$form_field_value=$_POST["$field_name_id"];}
+										$form_field_value = preg_replace("/\<|\>|\"|\\\\|;/","",$form_field_value);
 
 										if ($form_field_value >= 0)
 											{
@@ -2568,6 +2622,7 @@ if (($leadfile) && ($LF_path))
 				$statuses_clause=" and status in (";
 				$status_dedupe_str="";
 				for($ds=0; $ds<count($dedupe_statuses); $ds++) {
+					$dedupe_statuses[$ds] = preg_replace('/[^-_0-9\p{L}]/u', '', $dedupe_statuses[$ds]);
 					$statuses_clause.="'$dedupe_statuses[$ds]',";
 					$status_dedupe_str.="$dedupe_statuses[$ds], ";
 					if (preg_match('/\-\-ALL\-\-/', $dedupe_statuses[$ds])) {
@@ -3221,7 +3276,7 @@ if (($leadfile) && ($LF_path))
 
 						if ($DB>0) {echo "$A_field_label[$o]|$A_field_type[$o]\n";}
 
-						if ( ($A_field_type[$o]!='DISPLAY') and ($A_field_type[$o]!='SCRIPT') )
+						if ( ($A_field_type[$o]!='DISPLAY') and ($A_field_type[$o]!='SCRIPT') and ($A_field_type[$o]!='SWITCH') and ($A_field_type[$o]!='BUTTON') )
 							{
 							if (!preg_match("/\|$A_field_label[$o]\|/",$vicidial_list_fields))
 								{
@@ -3290,6 +3345,7 @@ if (($leadfile) && ($LF_path))
 		if (count($dedupe_statuses)>0) {
 			$status_dedupe_str="";
 			for($ds=0; $ds<count($dedupe_statuses); $ds++) {
+				$dedupe_statuses[$ds] = preg_replace('/[^-_0-9\p{L}]/u', '', $dedupe_statuses[$ds]);
 				$status_dedupe_str.="$dedupe_statuses[$ds],";
 				if (preg_match('/\-\-ALL\-\-/', $dedupe_statuses[$ds])) {
 					$status_mismatch_action=""; # Important - if ALL statuses are selected there's no need for this feature

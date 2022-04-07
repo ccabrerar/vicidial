@@ -1,7 +1,7 @@
 <?php
 # admin_search_lead.php   version 2.14
 #
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # AST GUI database administration search for lead info
 # admin_modify_lead.php
@@ -52,6 +52,9 @@
 # 201111-1957 - Fix for side menu issue #1233
 # 201117-2353 - Changes for better compatibility with non-latin data input
 # 210316-2344 - Changed lead-modify page links to javascript because of Chrome
+# 220222-1947 - Added allow_web_debug system setting
+# 220303-0124 - Fix for Issue #1353
+# 220331-0926 - Small fix for $phone variable filtering
 #
 
 require("dbconnect_mysqli.php");
@@ -102,11 +105,27 @@ if (isset($_GET["archive_search"]))			{$archive_search=$_GET["archive_search"];}
 if (isset($_GET["called_count"]))			{$called_count=$_GET["called_count"];}
 	elseif (isset($_POST["called_count"]))	{$called_count=$_POST["called_count"];}
 
+$report_name = 'Search Leads Logs';
+
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
+$vicidial_list_fields = 'lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,gmt_offset_now,called_since_last_reset,phone_code,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner';
+
+if (strlen($alt_phone_search) < 2) {$alt_phone_search='No';}
+
+$STARTtime = date("U");
+$TODAY = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$date = date("r");
+$ip = getenv("REMOTE_ADDR");
+$browser = getenv("HTTP_USER_AGENT");
+$log_archive_link=0;
+
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,user_territories_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,qc_features_active FROM system_settings;";
+$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,user_territories_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,qc_features_active,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -120,38 +139,46 @@ if ($qm_conf_ct > 0)
 	$SSenable_languages =			$row[6];
 	$SSlanguage_method =			$row[7];
 	$SSqc_features_active =			$row[8];
+	$SSallow_web_debug =			$row[9];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
-
-$report_name = 'Search Leads Logs';
 
 if ($archive_search=="Yes") {$vl_table="vicidial_list_archive";} 
 else {$vl_table="vicidial_list"; $archive_search="No";}
 
-$vicidial_list_fields = 'lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,gmt_offset_now,called_since_last_reset,phone_code,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner';
-
-$STARTtime = date("U");
-$TODAY = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-$date = date("r");
-$ip = getenv("REMOTE_ADDR");
-$browser = getenv("HTTP_USER_AGENT");
-$log_archive_link=0;
-
-if (strlen($alt_phone_search) < 2) {$alt_phone_search='No';}
+$phone = preg_replace('/[^0-9]/','',$phone);
+$log_phone = preg_replace('/[^-_0-9a-zA-Z]/', '', $log_phone);
+$log_phone_archive = preg_replace('/[^-_0-9a-zA-Z]/', '', $log_phone_archive);
+$list_id = preg_replace('/[^0-9]/','',$list_id);
+$lead_id = preg_replace('/[^0-9]/','',$lead_id);
+$log_lead_id = preg_replace('/[^0-9]/','',$log_lead_id);
+$log_lead_id_archive = preg_replace('/[^0-9]/','',$log_lead_id_archive);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+$vendor_id = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$vendor_id);
+$first_name = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$first_name);
+$last_name = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$last_name);
+$email = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$email);
+$user = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$user);
+$owner = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$owner);
+$alt_phone_search = preg_replace('/[^-_0-9a-zA-Z]/', '', $alt_phone_search);
+$archive_search = preg_replace('/[^-_0-9a-zA-Z]/', '', $archive_search);
+$called_count = preg_replace('/[^0-9]/','',$called_count);
 
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$status = preg_replace('/[^-_0-9a-zA-Z]/', '', $status);
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$status = preg_replace('/[^-_0-9\p{L}]/u', '', $status);
 	}
-$phone = preg_replace('/[^0-9]/','',$phone);
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}

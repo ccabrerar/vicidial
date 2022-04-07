@@ -1,7 +1,7 @@
 <?php
 # admin_campaign_multi_alt.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # this screen will control the campaign settings needed for alternate number 
 # dialing using multiple leads with the same account number and different phone 
@@ -21,10 +21,11 @@
 # 150728-1046 - Added option for secondary sorting by vendor_lead_code, Issue #833
 # 170409-1535 - Added IP List validation code
 # 180329-1344 - Added screen colors
+# 220222-0902 - Added allow_web_debug system setting
 #
 
-$admin_version = '2.14-11';
-$build = '180329-1344';
+$admin_version = '2.14-12';
+$build = '220222-0902';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -50,12 +51,13 @@ if (strlen($action) < 2)
 	{$action = 'BLANK';}
 if (strlen($DB) < 1)
 	{$DB=0;}
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,webroot_writable,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,webroot_writable,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $ss_conf_ct = mysqli_num_rows($rslt);
 if ($ss_conf_ct > 0)
 	{
@@ -64,22 +66,28 @@ if ($ss_conf_ct > 0)
 	$webroot_writable =				$row[1];
 	$SSenable_languages =			$row[2];
 	$SSlanguage_method =			$row[3];
+	$SSallow_web_debug =			$row[4];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$lead_order_randomize = preg_replace('/[^-_0-9a-zA-Z]/','',$lead_order_randomize);
+$lead_order_secondary = preg_replace('/[^-_0-9a-zA-Z]/','',$lead_order_secondary);
+$action = preg_replace('/[^-_0-9a-zA-Z]/','',$action);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/','',$SUBMIT);
 
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/','',$PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/','',$PHP_AUTH_PW);
 	$campaign_id = preg_replace('/[^-_0-9a-zA-Z]/','',$campaign_id);
-	$lead_order_randomize = preg_replace('/[^-_0-9a-zA-Z]/','',$lead_order_randomize);
-	$lead_order_secondary = preg_replace('/[^-_0-9a-zA-Z]/','',$lead_order_secondary);
 	}	# end of non_latin
 else
 	{
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$campaign_id = preg_replace('/[^-_0-9\p{L}]/u', '', $campaign_id);
 	}
 
 $STARTtime = date("U");
@@ -255,6 +263,8 @@ if ($action == "ALT_MULTI_SUBMIT")
 				elseif (isset($_POST["$campaign_id$US$owner"]))		{$owner_check=$_POST["$campaign_id$US$owner"];}
 			if (isset($_GET["rank_$campaign_id$US$owner"]))				{$owner_rank=$_GET["rank_$campaign_id$US$owner"];}
 				elseif (isset($_POST["rank_$campaign_id$US$owner"]))	{$owner_rank=$_POST["rank_$campaign_id$US$owner"];}
+			$owner_check = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$owner_check);
+			$owner_rank = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$owner_rank);
 
 			if ($owner_check=='YES')
 				{$new_filter_sql .= "'$owner_raw',";}

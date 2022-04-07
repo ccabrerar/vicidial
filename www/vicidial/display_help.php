@@ -1,13 +1,14 @@
 <?php
 # display_help.php
 #
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # pulls help text to display on the screen when the appropriate help link is clicked
 #
 # CHANGELOG:
 # 180501-0045 - First build
 # 180512-1055 - Added update of help_documentation.txt file if modified
+# 220224-1053 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
@@ -20,18 +21,20 @@ if ( file_exists($help_file) )
 require("dbconnect_mysqli.php");
 require("functions.php");
 
+$PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
+$PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 if (isset($_GET["help_id"]))			{$help_id=$_GET["help_id"];}
 	elseif (isset($_POST["help_id"]))	{$help_id=$_POST["help_id"];}
 if (isset($_GET["DB"]))					{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))		{$DB=$_POST["DB"];}
 
-$help_id = preg_replace('/[^-\_0-9a-zA-Z]/', '',$help_id);
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,enable_languages,language_method,help_modification_date FROM system_settings;";
+$stmt = "SELECT use_non_latin,enable_languages,language_method,help_modification_date,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -40,12 +43,13 @@ if ($qm_conf_ct > 0)
 	$SSenable_languages =			$row[1];
 	$SSlanguage_method =			$row[2];
 	$help_modification_date =		$row[3];
+	$SSallow_web_debug =			$row[4];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-$PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
-$PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
+$help_id = preg_replace('/[^-_0-9a-zA-Z]/', '',$help_id);
 
 if ($non_latin < 1)
 	{
@@ -54,8 +58,8 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace('/\'|\"|\\\\|;/', '',$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace('/\'|\"|\\\\|;/', '',$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";

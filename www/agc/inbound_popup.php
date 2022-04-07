@@ -1,7 +1,7 @@
 <?php
 # inbound_popup.php    version 2.14
 # 
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to open up when a live_inbound call comes in giving the user
 #   options of what to do with the call or options to lookup the callerID on various web sites
@@ -40,10 +40,11 @@
 # 190111-0905 - Fix for PHP7
 # 210616-2106 - Added optional CORS support, see options.php for details
 # 210825-0906 - Fix for XSS security issue
+# 220220-0914 - Added allow_web_debug system setting
 #
 
-$version = '2.14-16';
-$build = '210825-0906';
+$version = '2.14-17';
+$build = '220220-0914';
 $php_script = 'inbound_popup.php';
 
 require_once("dbconnect_mysqli.php");
@@ -80,11 +81,6 @@ if (isset($_GET["local_web_callerID_URL_enc"]))			{$local_web_callerID_URL = raw
 # variable filtering
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
-$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
-$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
-$uniqueid = preg_replace('/[^-_\.0-9a-zA-Z]/','',$uniqueid);
-$exten = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$exten);
-$vmail_box = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$vmail_box);
 
 # default optional vars if not set
 if (!isset($format))   {$format="text";}
@@ -105,6 +101,21 @@ if (file_exists('options.php'))
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
+$stmt = "SELECT use_non_latin,enable_languages,language_method,allow_web_debug FROM system_settings;";
+$rslt=mysql_to_mysqli($stmt, $link);
+	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+#if ($DB) {echo "$stmt\n";}
+$qm_conf_ct = mysqli_num_rows($rslt);
+if ($qm_conf_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$non_latin =				$row[0];
+	$SSenable_languages =		$row[1];
+	$SSlanguage_method =		$row[2];
+	$SSallow_web_debug =		$row[3];
+	}
+if ($SSallow_web_debug < 1) {$DB=0;}
+
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$user';";
 if ($DB) {echo "|$stmt|\n";}
@@ -116,25 +127,32 @@ if ($sl_ct > 0)
 	$row=mysqli_fetch_row($rslt);
 	$VUselected_language =		$row[0];
 	}
-
-$stmt = "SELECT use_non_latin,enable_languages,language_method FROM system_settings;";
-$rslt=mysql_to_mysqli($stmt, $link);
-	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
-if ($DB) {echo "$stmt\n";}
-$qm_conf_ct = mysqli_num_rows($rslt);
-if ($qm_conf_ct > 0)
-	{
-	$row=mysqli_fetch_row($rslt);
-	$non_latin =				$row[0];
-	$SSenable_languages =		$row[1];
-	$SSlanguage_method =		$row[2];
-	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
+$uniqueid = preg_replace('/[^-_\.0-9a-zA-Z]/','',$uniqueid);
+$exten = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$exten);
+$vmail_box = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$vmail_box);
+$format = preg_replace('/[^-_0-9a-zA-Z]/','',$format);
+$voicemail_dump_exten = preg_replace('/[^-_0-9a-zA-Z]/','',$voicemail_dump_exten);
+$local_web_callerID_URL = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$local_web_callerID_URL);
+$local_web_callerID_URL_enc = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$local_web_callerID_URL_enc);
 
 if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
+	$pass=preg_replace("/[^-\.\+\/\=_0-9a-zA-Z]/","",$pass);
+	$ext_context=preg_replace("/[^-_0-9a-zA-Z]/","",$ext_context);
+	$ext_priority=preg_replace("/[^-_0-9a-zA-Z]/","",$ext_priority);
+	}
+else
+	{
+	$user = preg_replace('/[^-_0-9\p{L}]/u','',$user);
+	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
+	$ext_context = preg_replace('/[^-_0-9\p{L}]/u','',$ext_context);
+	$ext_priority = preg_replace('/[^-_0-9\p{L}]/u','',$ext_priority);
 	}
 
 $auth=0;

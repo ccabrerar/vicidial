@@ -1,7 +1,7 @@
 <?php 
 # AST_agent_time_sheet_archive.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -18,6 +18,7 @@
 # 141230-1521 - Added code for on-the-fly language translations display
 # 170409-1534 - Added IP List validation code
 # 170711-1103 - Added screen colors and fixed default date variable
+# 220303-1625 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
@@ -41,12 +42,21 @@ if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
 	elseif (isset($_POST["submit"]))	{$submit=$_POST["submit"];}
 if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))	{$SUBMIT=$_POST["SUBMIT"];}
+if (isset($_GET["DB"]))					{$DB=$_GET["DB"];}
+	elseif (isset($_POST["DB"]))		{$DB=$_POST["DB"];}
+
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
+$NOW_DATE = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$STARTtime = date("U");
+if ( (!isset($query_date)) or (strlen($query_date) < 8) ) {$query_date = $NOW_DATE;}
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,enable_languages,language_method,admin_screen_colors,report_default_format FROM system_settings;";
+$stmt = "SELECT use_non_latin,enable_languages,language_method,admin_screen_colors,report_default_format,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -56,9 +66,17 @@ if ($qm_conf_ct > 0)
 	$SSlanguage_method =		$row[2];
 	$SSadmin_screen_colors =	$row[3];
 	$SSreport_default_format =	$row[4];
+	$SSallow_web_debug =		$row[5];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$agent = preg_replace('/[^-_0-9a-zA-Z]/', '', $agent);
+$query_date = preg_replace('/[^-_0-9a-zA-Z]/', '', $query_date);
+$calls_summary = preg_replace('/[^-_0-9a-zA-Z]/', '', $calls_summary);
+$submit = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$submit);
+$SUBMIT = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$SUBMIT);
 
 if ($non_latin < 1)
 	{
@@ -67,10 +85,9 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
-$group = preg_replace("/'|\"|\\\\|;/","",$group);
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
@@ -139,14 +156,6 @@ else
 	exit;
 	}
 
-$agent = preg_replace('/[^-_0-9a-zA-Z]/', '', $agent);
-$query_date = preg_replace('/[^-_0-9a-zA-Z]/', '', $query_date);
-$calls_summary = preg_replace('/[^-_0-9a-zA-Z]/', '', $calls_summary);
-$NOW_DATE = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-$STARTtime = date("U");
-if ( (!isset($query_date)) or (strlen($query_date) < 8) ) {$query_date = $NOW_DATE;}
-
 
 ##### BEGIN log visit to the vicidial_report_log table #####
 $LOGip = getenv("REMOTE_ADDR");
@@ -188,7 +197,7 @@ else
 	$webserver_id = mysqli_insert_id($link);
 	}
 
-$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$group[0], $query_date, $end_date, $shift, $file_download, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
+$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$query_date, $end_date, $shift, $file_download, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $report_log_id = mysqli_insert_id($link);

@@ -1,7 +1,7 @@
 <?php 
 # AST_inbound_daily_report.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -34,6 +34,7 @@
 # 171012-2015 - Fixed javascript/apache errors with graphs
 # 191013-0902 - Fixes for PHP7
 # 200701-1500 - Added option to exclude after-hours from abandons, list ID filtering
+# 220302-1803 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
@@ -68,7 +69,7 @@ if (isset($_GET["show_disposition_statuses"]))			{$show_disposition_statuses=$_G
 	elseif (isset($_POST["show_disposition_statuses"]))	{$show_disposition_statuses=$_POST["show_disposition_statuses"];}
 if (isset($_GET["ignore_afterhours"]))			{$ignore_afterhours=$_GET["ignore_afterhours"];}
 	elseif (isset($_POST["ignore_afterhours"]))	{$ignore_afterhours=$_POST["ignore_afterhours"];}
-if (isset($_GET["exclude_afterhours"]))			{$exclude_afterhours=$_GET["exclude_afterhours"];}
+if (isset($_GET["exclude_afterhours"]))				{$exclude_afterhours=$_GET["exclude_afterhours"];}
 	elseif (isset($_POST["exclude_afterhours"]))	{$exclude_afterhours=$_POST["exclude_afterhours"];}
 if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
 	elseif (isset($_POST["submit"]))	{$submit=$_POST["submit"];}
@@ -81,6 +82,15 @@ if (isset($_GET["report_display_type"]))			{$report_display_type=$_GET["report_d
 if (isset($_GET["search_archived_data"]))			{$search_archived_data=$_GET["search_archived_data"];}
 	elseif (isset($_POST["search_archived_data"]))	{$search_archived_data=$_POST["search_archived_data"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
+$NOW_DATE = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$STARTtime = date("U");
+if (!isset($group)) {$group = array();}
+if (!isset($list_ids)) {$list_ids = array(); $all_lists_selected="selected";}
+if (!isset($query_date)) {$query_date = $NOW_DATE;}
+if (!isset($end_date)) {$end_date = $NOW_DATE;}
 if (strlen($shift)<2) {$shift='ALL';}
 
 $report_name = 'Inbound Daily Report';
@@ -90,9 +100,9 @@ if ($ignore_afterhours=="checked") {$status_clause=" and status!='AFTHRS'";}
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,report_default_format FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,report_default_format,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {$MAIN.="$stmt\n";}
+#if ($DB) {$MAIN.="$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -104,10 +114,41 @@ if ($qm_conf_ct > 0)
 	$SSenable_languages =			$row[4];
 	$SSlanguage_method =			$row[5];
 	$SSreport_default_format =		$row[6];
+	$SSallow_web_debug =			$row[7];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
+if (strlen($report_display_type)<2) {$report_display_type = $SSreport_default_format;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
-if (strlen($report_display_type)<2) {$report_display_type = $SSreport_default_format;}
+
+$query_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date);
+$end_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $end_date);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$report_display_type = preg_replace('/[^-_0-9a-zA-Z]/', '', $report_display_type);
+$file_download = preg_replace('/[^-_0-9a-zA-Z]/', '', $file_download);
+$search_archived_data = preg_replace('/[^-_0-9a-zA-Z]/', '', $search_archived_data);
+$hourly_breakdown = preg_replace('/[^-_0-9a-zA-Z]/', '', $hourly_breakdown);
+$show_disposition_statuses = preg_replace('/[^-_0-9a-zA-Z]/', '', $show_disposition_statuses);
+$ignore_afterhours = preg_replace('/[^-_0-9a-zA-Z]/', '', $ignore_afterhours);
+$exclude_afterhours = preg_replace('/[^-_0-9a-zA-Z]/', '', $exclude_afterhours);
+
+# Variables filtered further down in the code
+# $list_ids
+# $group
+
+if ($non_latin < 1)
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$shift = preg_replace('/[^-_0-9a-zA-Z]/', '', $shift);
+	}
+else
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$shift = preg_replace('/[^-_0-9\p{L}]/u', '', $shift);
+	}
 
 ### ARCHIVED DATA CHECK CONFIGURATION
 $archives_available="N";
@@ -124,17 +165,6 @@ else
 	$vicidial_closer_log_table="vicidial_closer_log";
 	}
 #############
-
-if ($non_latin < 1)
-	{
-	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
-	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
-	}
-else
-	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
-	}
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
@@ -243,7 +273,7 @@ else
 	$webserver_id = mysqli_insert_id($link);
 	}
 
-$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$group[0], $query_date, $end_date, $shift, $file_download, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
+$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$query_date, $end_date, $shift, $file_download, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $report_log_id = mysqli_insert_id($link);
@@ -335,14 +365,6 @@ else
 	$shift="24hours";
 	}
 
-$NOW_DATE = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-$STARTtime = date("U");
-if (!isset($group)) {$group = array();}
-if (!isset($list_ids)) {$list_ids = array(); $all_lists_selected="selected";}
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
-if (!isset($end_date)) {$end_date = $NOW_DATE;}
-
 ###### INGROUPS ######
 $groups_selected = count($group);
 $group_name_str="";
@@ -350,6 +372,7 @@ $groups_selected_str="";
 $groups_selected_URLstr="";
 for ($i=0; $i<$groups_selected; $i++) 
 	{
+	$group[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $group[$i]);
 	$selected_group_URLstr.="&group[]=$group[$i]";
 	if ($group[$i]=="--ALL--") 
 		{
@@ -397,6 +420,7 @@ $lists_selected_URLstr="";
 
 for ($i=0; $i<$lists_selected; $i++) 
 	{
+	$list_ids[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $list_ids[$i]);
 	$selected_group_URLstr.="&list_ids[]=$list_ids[$i]";
 	if ($list_ids[$i]=="--ALL--") 
 		{

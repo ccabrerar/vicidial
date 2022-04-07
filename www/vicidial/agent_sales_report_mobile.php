@@ -1,12 +1,13 @@
 <?php 
 # agent_sales_report_mobile.php
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # Streamlined report for displaying sale-only statistics in a format easily readable on a mobile device
 #
 # CHANGELOG:
 # 200309-1819 - First Build
+# 220303-1515 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
@@ -47,19 +48,20 @@ if (isset($_GET["report_display_type"]))			{$report_display_type=$_GET["report_d
 if (isset($_GET["refresh_rate"]))			{$refresh_rate=$_GET["refresh_rate"];}
 	elseif (isset($_POST["refresh_rate"]))	{$refresh_rate=$_POST["refresh_rate"];}
 
-
 $DB = preg_replace('/[^0-9]/','',$DB);
-$end_date_D = preg_replace('/[^-0-9]/','',$end_date_D);
-$end_date_T = preg_replace('/[^0-9\:]/','',$end_date_T);
-$query_date_D = preg_replace('/[^-0-9]/','',$query_date_D);
-$query_date_T = preg_replace('/[^0-9\:]/','',$query_date_T);
-$refresh_rate = preg_replace('/[^0-9]/','',$refresh_rate);
-$top_agents = preg_replace('/[^0-9]/','',$top_agents);
-$graph_type=preg_replace('/[^_0-9\p{L}]/u','',$graph_type);
-$report_display_type=preg_replace('/[^_\p{L}]/u','',$report_display_type);
-$sort_by=preg_replace('/[^\p{L}]/u','',$sort_by);
-$SUBMIT=preg_replace('/[^\p{L}]/u','',$SUBMIT);
 
+$MT[0]='';
+$NOW_DATE = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$STARTtime = date("U");
+if (!isset($group)) {$group = array();}
+if (!isset($user_group)) {$user_group = array();}
+if (!isset($query_date_D)) {$query_date_D=$NOW_DATE;}
+if (!isset($query_date_T)) {$query_date_T="00:00:00";}
+if (!isset($refresh_rate)) {$refresh_rate="1000000";}
+if (!isset($graph_type)) {$graph_type = "sale_graph";}
+if (!isset($top_agents)) {$top_agents=10;}
+if (!isset($sort_by)) {$sort_by="sales";}
 
 $report_name = 'Agent Sales Report';
 $db_source = 'M';
@@ -68,9 +70,9 @@ $JS_onload="onload = function() {\n";
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,report_default_format FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,report_default_format,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {$HTML_text.="$stmt\n";}
+#if ($DB) {$HTML_text.="$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -82,10 +84,28 @@ if ($qm_conf_ct > 0)
 	$SSenable_languages =			$row[4];
 	$SSlanguage_method =			$row[5];
 	$SSreport_default_format =		$row[6];
+	$SSallow_web_debug =			$row[7];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 # if (strlen($report_display_type)<2) {$report_display_type = $SSreport_default_format;}
+
+$end_date_D = preg_replace('/[^-0-9]/','',$end_date_D);
+$end_date_T = preg_replace('/[^0-9\:]/','',$end_date_T);
+$query_date_D = preg_replace('/[^-0-9]/','',$query_date_D);
+$query_date_T = preg_replace('/[^0-9\:]/','',$query_date_T);
+$refresh_rate = preg_replace('/[^0-9]/','',$refresh_rate);
+$top_agents = preg_replace('/[^0-9]/','',$top_agents);
+$graph_type=preg_replace('/[^_0-9\p{L}]/u','',$graph_type);
+$report_display_type=preg_replace('/[^_\p{L}]/u','',$report_display_type);
+$sort_by=preg_replace('/[^\p{L}]/u','',$sort_by);
+$SUBMIT=preg_replace('/[^\p{L}]/u','',$SUBMIT);
+$call_status=preg_replace('/[^\p{L}]/u','',$call_status);
+
+# Variables filtered further down in the code
+# $group
+# $user_group
 
 if ($non_latin < 1)
 	{
@@ -94,8 +114,8 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
@@ -213,7 +233,7 @@ else
 	$webserver_id = mysqli_insert_id($link);
 	}
 
-$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$group[0], $query_date, $end_date, $shift, 0, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
+$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$query_date, $end_date, $shift, 0, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $report_log_id = mysqli_insert_id($link);
@@ -274,18 +294,6 @@ if ( (!preg_match('/\-\-ALL\-\-/i',$LOGadmin_viewable_groups)) and (strlen($LOGa
 
 ######################################
 
-$MT[0]='';
-$NOW_DATE = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-$STARTtime = date("U");
-if (!isset($group)) {$group = array();}
-if (!isset($user_group)) {$user_group = array();}
-if (!isset($query_date_D)) {$query_date_D=$NOW_DATE;}
-if (!isset($query_date_T)) {$query_date_T="00:00:00";}
-if (!isset($refresh_rate)) {$refresh_rate="1000000";}
-if (!isset($graph_type)) {$graph_type = "sale_graph";}
-if (!isset($top_agents)) {$top_agents=10;}
-if (!isset($sort_by)) {$sort_by="sales";}
 
 $query_date="$query_date_D $query_date_T";
 $end_date="$end_date_D $end_date_T";
@@ -295,6 +303,7 @@ $group_string='|';
 $group_ct = count($group);
 while($i < $group_ct)
 	{
+	$group[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $group[$i]);
 	$group_string .= "$group[$i]|";
 	$i++;
 	}
@@ -340,6 +349,7 @@ $group_string='|';
 $group_ct = count($group);
 while($i < $group_ct)
 	{
+	$group[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $group[$i]);
 	if ( (preg_match("/ $group[$i] /",$regexLOGallowed_campaigns)) or (preg_match("/-ALL/",$LOGallowed_campaigns)) )
 		{
 		$group_string .= "$group[$i]|";
@@ -364,6 +374,7 @@ $user_group_string='|';
 $user_group_ct = count($user_group);
 while($i < $user_group_ct)
 	{
+	$user_group[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $user_group[$i]);
 	$user_group_string .= "$user_group[$i]|";
 	$user_group_SQL .= "'$user_group[$i]',";
 	$user_groupQS .= "&user_group[]=$user_group[$i]";

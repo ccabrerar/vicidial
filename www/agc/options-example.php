@@ -1,7 +1,7 @@
 <?php
 # options.php - manually defined options for vicidial.php
 #
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # rename this file to options.php for the settings here to go into effect
 #
@@ -22,6 +22,7 @@
 # 210616-0959 - Added CORS support
 # 210705-1624 - Added user_pass_webform and phone_login_webform options
 # 210823-1633 - Added email_attachment_path option for dispo_send_email.php script
+# 220127-0931 - Added email_header_attach and allow_sendmail_bypass options
 #
 
 $conf_silent_prefix		= '5';	# vicidial_conferences prefix to enter silently and muted for recording
@@ -66,6 +67,8 @@ $user_pass_webform		= '0';	# set to 1 or 2 to return to default of including the
 $phone_login_webform	= '0';	# set to 1 or 2 to return to default of including the 'phone_login'(1) and 'phone_pass'(2) by default in webform URLs
 $alt_display_enabled	= '0';	# set to 1 to allow the alt_display.php script to be used
 $email_attachment_path	= './attachments';	# set to the absolute path from where all of the dispo_send_email.php script attachemnts will be located
+$email_header_attach	= '0';	# set to 1 to force blank line after attachments in header. WARNING: Will break on newer versions of PHP
+$allow_sendmail_bypass	= '';	# some setups require bypassing PHP's mail() function to send properly, set this to 'sendmail' path: '/usr/sbin/sendmail'
 $customer_chat_refresh_seconds	= 1;	# How often (in seconds) to refresh customer ang agent chat window
 $manager_chat_refresh_seconds	= 1;	# How often (in seconds) to refresh manager chat window
 

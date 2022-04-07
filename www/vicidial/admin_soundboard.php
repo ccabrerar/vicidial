@@ -1,7 +1,7 @@
 <?php
 # admin_soundboard.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # this screen manages the optional soundboard tables in ViciDial
 #
@@ -20,10 +20,11 @@
 # 170409-1549 - Added IP List validation code
 # 180503-2215 - Added new help display
 # 180618-2300 - Modified calls to audio file chooser function
+# 220222-1512 - Added allow_web_debug system setting
 #
 
-$admin_version = '2.14-13';
-$build = '180503-2215';
+$admin_version = '2.14-14';
+$build = '220222-1512';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -85,12 +86,13 @@ if (isset($_GET["ConFiRm"]))					{$ConFiRm=$_GET["ConFiRm"];}
 if (isset($_GET["SUBMIT"]))						{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))			{$SUBMIT=$_POST["SUBMIT"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,auto_dial_limit,user_territories_active,allow_custom_dialplan,callcard_enabled,admin_modify_refresh,nocache_admin,webroot_writable,allow_emails,active_modules,sounds_central_control_active,qc_features_active,contacts_enabled,enable_languages,active_modules,agent_soundboards,language_method,enable_auto_reports,campaign_cid_areacodes_enabled FROM system_settings;";
+$stmt = "SELECT use_non_latin,auto_dial_limit,user_territories_active,allow_custom_dialplan,callcard_enabled,admin_modify_refresh,nocache_admin,webroot_writable,allow_emails,active_modules,sounds_central_control_active,qc_features_active,contacts_enabled,enable_languages,active_modules,agent_soundboards,language_method,enable_auto_reports,campaign_cid_areacodes_enabled,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -114,7 +116,9 @@ if ($qm_conf_ct > 0)
 	$SSlanguage_method =			$row[16];
 	$SSenable_auto_reports =		$row[17];
 	$SScampaign_cid_areacodes_enabled = $row[18];
+	$SSallow_web_debug =			$row[19];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
@@ -122,25 +126,26 @@ if (strlen($DB) < 1)
 	{$DB=0;}
 $modify_refresh_set=0;
 
+$DB = preg_replace('/[^0-9]/','',$DB);
+$rank = preg_replace('/[^0-9]/','',$rank);
+$level = preg_replace('/[^0-9]/','',$level);
+$parent_rank = preg_replace('/[^0-9]/','',$parent_rank);
+$columns_limit = preg_replace('/[^0-9]/','',$columns_limit);
+$active = preg_replace('/[^NY]/','',$active);
+$ConFiRm = preg_replace('/[^0-9a-zA-Z]/','',$ConFiRm);
+$name_position = preg_replace('/[^0-9a-zA-Z]/','',$name_position);
+$multi_position = preg_replace('/[^0-9a-zA-Z]/','',$multi_position);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/','',$SUBMIT);
+$ADD = preg_replace('/[^-_0-9a-zA-Z]/','',$ADD);
+$action = preg_replace('/[^-_0-9a-zA-Z]/','',$action);
+
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/','',$PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/','',$PHP_AUTH_PW);
-
-	$DB = preg_replace('/[^0-9]/','',$DB);
-	$rank = preg_replace('/[^0-9]/','',$rank);
-	$level = preg_replace('/[^0-9]/','',$level);
-	$parent_rank = preg_replace('/[^0-9]/','',$parent_rank);
-	$columns_limit = preg_replace('/[^0-9]/','',$columns_limit);
-
-	$active = preg_replace('/[^NY]/','',$active);
-
 	$avatar_api_user = preg_replace('/[^-_0-9a-zA-Z]/','',$avatar_api_user);
 	$avatar_api_pass = preg_replace('/[^-_0-9a-zA-Z]/','',$avatar_api_pass);
-	$ConFiRm = preg_replace('/[^0-9a-zA-Z]/','',$ConFiRm);
-	$name_position = preg_replace('/[^0-9a-zA-Z]/','',$name_position);
-	$multi_position = preg_replace('/[^0-9a-zA-Z]/','',$multi_position);
-
+	$source_avatar_id = preg_replace('/[^-_0-9a-zA-Z]/','',$source_avatar_id);
 	$soundboard_id = preg_replace('/[^_0-9a-zA-Z]/','',$soundboard_id);
 	$copy_option = preg_replace('/[^_0-9a-zA-Z]/','',$copy_option);
 	$audio_functions = preg_replace('/[^-_0-9a-zA-Z]/', '',$audio_functions);
@@ -148,18 +153,33 @@ if ($non_latin < 1)
 	$stage = preg_replace('/[^-_0-9a-zA-Z]/', '',$stage);
 	$user_group = preg_replace('/[^-_0-9a-zA-Z]/', '',$user_group);
 	$soundboard_layout = preg_replace('/[^-_0-9a-zA-Z]/', '',$soundboard_layout);
-
 	$avatar_name = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$avatar_name);
 	$avatar_notes = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$avatar_notes);
 	$audio_name = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$audio_name);
-
 	$audio_filename = preg_replace('/[^-\|\,\_0-9a-zA-Z]/', '',$audio_filename);
 	$parent_audio_filename = preg_replace('/[^-\|\,\_0-9a-zA-Z]/', '',$parent_audio_filename);
+	$parent_filename = preg_replace('/[^-\|\,\_0-9a-zA-Z]/', '',$parent_filename);
 	}	# end of non_latin
 else
 	{
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$avatar_api_user = preg_replace('/[^-_0-9\p{L}]/u','',$avatar_api_user);
+	$avatar_api_pass = preg_replace('/[^-_0-9\p{L}]/u','',$avatar_api_pass);
+	$source_avatar_id = preg_replace('/[^-_0-9\p{L}]/u','',$source_avatar_id);
+	$soundboard_id = preg_replace('/[^_0-9\p{L}]/u','',$soundboard_id);
+	$copy_option = preg_replace('/[^_0-9\p{L}]/u','',$copy_option);
+	$audio_functions = preg_replace('/[^-_0-9\p{L}]/u', '',$audio_functions);
+	$audio_display = preg_replace('/[^-_0-9\p{L}]/u', '',$audio_display);
+	$stage = preg_replace('/[^-_0-9\p{L}]/u', '',$stage);
+	$user_group = preg_replace('/[^-_0-9\p{L}]/u', '',$user_group);
+	$soundboard_layout = preg_replace('/[^-_0-9\p{L}]/u', '',$soundboard_layout);
+	$avatar_name = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$avatar_name);
+	$avatar_notes = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$avatar_notes);
+	$audio_name = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$audio_name);
+	$audio_filename = preg_replace('/[^-\|\,\_0-9\p{L}]/u', '',$audio_filename);
+	$parent_audio_filename = preg_replace('/[^-\|\,\_0-9\p{L}]/u', '',$parent_audio_filename);
+	$parent_filename = preg_replace('/[^-\|\,\_0-9\p{L}]/u', '',$parent_filename);
 	}
 
 $STARTtime = date("U");
@@ -539,7 +559,7 @@ if ($ADD==162111111111)
 		echo "<tr bgcolor=#". $SSstd_row2_background ."><td align=right>"._QXZ("Soundboard Name").": </td><td align=left><input type=text name=avatar_name size=70 maxlength=255>$NWB#soundboard-avatar_name$NWE</td></tr>\n";
 		echo "<tr bgcolor=#". $SSstd_row2_background ."><td align=right>"._QXZ("Soundboard Notes").": </td><td align=left><input type=text name=avatar_notes size=70 maxlength=1000>$NWB#soundboard-avatar_name$NWE</td></tr>\n";
 		echo "<tr bgcolor=#". $SSstd_row2_background ."><td align=right>"._QXZ("Soundboard API User").": </td><td align=left><input type=text name=avatar_api_user size=20 maxlength=20>$NWB#soundboard-avatar_api_user$NWE</td></tr>\n";
-		echo "<tr bgcolor=#". $SSstd_row2_background ."><td align=right>"._QXZ("Soundboard API Pass").": </td><td align=left><input type=password name=avatar_api_pass size=20 maxlength=20>$NWB#soundboard-avatar_api_pass$NWE</td></tr>\n";
+		echo "<tr bgcolor=#". $SSstd_row2_background ."><td align=right>"._QXZ("Soundboard API Pass").": </td><td align=left><input type=password name=avatar_api_pass size=40 maxlength=100>$NWB#soundboard-avatar_api_pass$NWE</td></tr>\n";
 		echo "<tr bgcolor=#". $SSstd_row2_background ."><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
 		echo "$UUgroups_list";
 		echo "<option SELECTED value=\"---ALL---\">"._QXZ("All Admin User Groups")."</option>\n";
@@ -799,13 +819,13 @@ if ($ADD==462111111111)
 					$HORDfilename = '--HORD--' . $avatarfiles[$o] . '--' . $avatarlevel[$o] . '--' . $avatarranks[$o] . '--' . $avatarparent[$o];
 					$TYPEfilename = '--TYPE--' . $avatarfiles[$o] . '--' . $avatarlevel[$o] . '--' . $avatarranks[$o] . '--' . $avatarparent[$o];
 					$FONTfilename = '--FONT--' . $avatarfiles[$o] . '--' . $avatarlevel[$o] . '--' . $avatarranks[$o] . '--' . $avatarparent[$o];
-					if (isset($_GET["$Ffilename"]))			{$new_rank=$_GET["$Ffilename"];}
+					if (isset($_GET["$Ffilename"]))				{$new_rank=$_GET["$Ffilename"];}
 						elseif (isset($_POST["$Ffilename"]))	{$new_rank=$_POST["$Ffilename"];}
 					if (isset($_GET["$NAMEfilename"]))			{$new_name=$_GET["$NAMEfilename"];}
 						elseif (isset($_POST["$NAMEfilename"]))	{$new_name=$_POST["$NAMEfilename"];}
-					if (isset($_GET["$LEVELfilename"]))			{$new_level=$_GET["$LEVELfilename"];}
+					if (isset($_GET["$LEVELfilename"]))				{$new_level=$_GET["$LEVELfilename"];}
 						elseif (isset($_POST["$LEVELfilename"]))	{$new_level=$_POST["$LEVELfilename"];}
-					if (isset($_GET["$OLDRANKfilename"]))				{$old_rank=$_GET["$OLDRANKfilename"];}
+					if (isset($_GET["$OLDRANKfilename"]))			{$old_rank=$_GET["$OLDRANKfilename"];}
 						elseif (isset($_POST["$OLDRANKfilename"]))	{$old_rank=$_POST["$OLDRANKfilename"];}
 					if (isset($_GET["$HORDfilename"]))			{$new_h_ord=$_GET["$HORDfilename"];}
 						elseif (isset($_POST["$HORDfilename"]))	{$new_h_ord=$_POST["$HORDfilename"];}
@@ -814,6 +834,14 @@ if ($ADD==462111111111)
 					if (isset($_GET["$FONTfilename"]))			{$new_font_size=$_GET["$FONTfilename"];}
 						elseif (isset($_POST["$FONTfilename"]))	{$new_font_size=$_POST["$FONTfilename"];}
 	
+					$new_rank = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$new_rank);
+					$new_name = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$new_name);
+					$new_level = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$new_level);
+					$old_rank = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$old_rank);
+					$new_h_ord = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$new_h_ord);
+					$new_button_type = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$new_button_type);
+					$new_font_size = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$new_font_size);
+
 					if ($DB)
 						{
 						echo "update variable debug: ($avatarfiles[$o])\n";
@@ -1013,7 +1041,7 @@ if ($ADD==362111111111)
 		echo "<tr bgcolor=#". $SSstd_row2_background ."><td align=right>"._QXZ("Soundboard Name").": </td><td align=left><input type=text name=avatar_name size=70 maxlength=100 value=\"$avatar_name\">$NWB#soundboard-avatar_name$NWE</td></tr>\n";
 		echo "<tr bgcolor=#". $SSstd_row2_background ."><td align=right>"._QXZ("Soundboard Notes").": </td><td align=left><input type=text name=avatar_notes size=70 maxlength=1000 value=\"$avatar_notes\">$NWB#soundboard-avatar_notes$NWE</td></tr>\n";
 		echo "<tr bgcolor=#". $SSstd_row2_background ."><td align=right>"._QXZ("Soundboard API User").": </td><td align=left><input type=text name=avatar_api_user size=20 maxlength=20 value=\"$avatar_api_user\">$NWB#soundboard-avatar_api_user$NWE</td></tr>\n";
-		echo "<tr bgcolor=#". $SSstd_row2_background ."><td align=right>"._QXZ("Soundboard API Pass").": </td><td align=left><input type=password name=avatar_api_pass size=20 maxlength=20 value=\"$avatar_api_pass\">$NWB#soundboard-avatar_api_pass$NWE</td></tr>\n";
+		echo "<tr bgcolor=#". $SSstd_row2_background ."><td align=right>"._QXZ("Soundboard API Pass").": </td><td align=left><input type=password name=avatar_api_pass size=40 maxlength=100 value=\"$avatar_api_pass\">$NWB#soundboard-avatar_api_pass$NWE</td></tr>\n";
 		echo "<tr bgcolor=#". $SSstd_row2_background ."><td align=right>"._QXZ("Active").": </td><td align=left><select size=1 name=active><option value='N'>"._QXZ("N")."</option><option value='Y'>"._QXZ("Y")."</option><option value='$active' SELECTED>"._QXZ("$active")."</option></select>$NWB#soundboard-active$NWE</td></tr>\n";
 		echo "<tr bgcolor=#". $SSstd_row2_background ."><td align=right>"._QXZ("Audio Functions").": </td><td align=left><input type=text name=audio_functions size=70 maxlength=100 value=\"$audio_functions\">$NWB#soundboard-audio_functions$NWE</td></tr>\n";
 		echo "<tr bgcolor=#". $SSstd_row2_background ."><td align=right>"._QXZ("Audio Display").": </td><td align=left><input type=text name=audio_display size=70 maxlength=100 value=\"$audio_display\">$NWB#soundboard-audio_display$NWE</td></tr>\n";

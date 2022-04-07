@@ -1,7 +1,7 @@
 <?php
 # NANPA_running_processes.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script shows running NANPA filter batch proccesses
 #
@@ -12,10 +12,11 @@
 # 160108-2300 - Changed some mysqli_query to mysql_to_mysqli for consistency
 # 170409-1537 - Added IP List validation code
 # 170822-2230 - Added screen color settings
+# 220222-1917 - Added allow_web_debug system setting
 #
 
-$version = '2.14-5';
-$build = '170409-1537';
+$version = '2.14-6';
+$build = '220222-1917';
 $startMS = microtime();
 
 require("dbconnect_mysqli.php");
@@ -34,7 +35,7 @@ if (isset($_GET["process_limit"]))			{$process_limit=$_GET["process_limit"];}
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
@@ -47,9 +48,17 @@ if ($qm_conf_ct > 0)
 	$reports_use_slave_db =			$row[3];
 	$SSenable_languages =			$row[4];
 	$SSlanguage_method =			$row[5];
+	$SSallow_web_debug =			$row[6];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$process_limit = preg_replace('/[^-_0-9a-zA-Z]/', '', $process_limit);
+$show_history = preg_replace('/[^-_0-9a-zA-Z]/', '', $show_history);
+
+# Variables filtered further down in the code
+# $output_codes_to_display
 
 if ($non_latin < 1)
 	{
@@ -58,11 +67,9 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
-
-$process_limit = preg_replace('/[^-_0-9a-zA-Z]/', '', $process_limit);
 
 $NOW_DATE = date("Y-m-d");
 
@@ -197,6 +204,7 @@ $url_str="";
 
 for ($i=0; $i<$oc_ct; $i++) 
 	{
+	$output_codes_to_display[$i] = preg_replace("/\'|\"|\\\\|;/","",$output_codes_to_display[$i]);
 	$oc_SQL.="'$output_codes_to_display[$i]',";
 	$url_str.="output_codes_to_display[]=".$output_codes_to_display[$i];
 	}

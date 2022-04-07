@@ -1,12 +1,13 @@
 <?php
 # KHOMP_admin.php - KHOMP carrier definition administration page
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # Interface for defining KHOMP codes for the dialer
 #
 # 200210-1604 - First build
-# 
+# 220223-1109 - Added allow_web_debug system setting
+#
 
 $startMS = microtime();
 
@@ -71,15 +72,13 @@ $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $QUERY_STRING = getenv("QUERY_STRING");
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
-
-
 if (isset($_GET["DB"]))				{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))	{$DB=$_POST["DB"];}
 if (isset($_GET["query_date"]))				{$query_date=$_GET["query_date"];}
 	elseif (isset($_POST["query_date"]))	{$query_date=$_POST["query_date"];}
-if (isset($_GET["end_date"]))				{$end_date=$_GET["end_date"];}
+if (isset($_GET["end_date"]))			{$end_date=$_GET["end_date"];}
 	elseif (isset($_POST["end_date"]))	{$end_date=$_POST["end_date"];}
-if (isset($_GET["submit_khomp"]))				{$submit_khomp=$_GET["submit_khomp"];}
+if (isset($_GET["submit_khomp"]))			{$submit_khomp=$_GET["submit_khomp"];}
 	elseif (isset($_POST["submit_khomp"]))	{$submit_khomp=$_POST["submit_khomp"];}
 if (isset($_GET["new_conclusion"]))				{$new_conclusion=$_GET["new_conclusion"];}
 	elseif (isset($_POST["new_conclusion"]))	{$new_conclusion=$_POST["new_conclusion"];}
@@ -91,22 +90,72 @@ if (isset($_GET["new_status"]))				{$new_status=$_GET["new_status"];}
 	elseif (isset($_POST["new_status"]))	{$new_status=$_POST["new_status"];}
 if (isset($_GET["new_dialstatus"]))				{$new_dialstatus=$_GET["new_dialstatus"];}
 	elseif (isset($_POST["new_dialstatus"]))	{$new_dialstatus=$_POST["new_dialstatus"];}
-if (isset($_GET["update_conclusion"]))				{$update_conclusion=$_GET["update_conclusion"];}
+if (isset($_GET["update_conclusion"]))			{$update_conclusion=$_GET["update_conclusion"];}
 	elseif (isset($_POST["update_conclusion"]))	{$update_conclusion=$_POST["update_conclusion"];}
 if (isset($_GET["update_pattern"]))				{$update_pattern=$_GET["update_pattern"];}
 	elseif (isset($_POST["update_pattern"]))	{$update_pattern=$_POST["update_pattern"];}
-if (isset($_GET["update_action"]))				{$update_action=$_GET["update_action"];}
+if (isset($_GET["update_action"]))			{$update_action=$_GET["update_action"];}
 	elseif (isset($_POST["update_action"]))	{$update_action=$_POST["update_action"];}
-if (isset($_GET["update_status"]))				{$update_status=$_GET["update_status"];}
+if (isset($_GET["update_status"]))			{$update_status=$_GET["update_status"];}
 	elseif (isset($_POST["update_status"]))	{$update_status=$_POST["update_status"];}
-if (isset($_GET["update_dialstatus"]))				{$update_dialstatus=$_GET["update_dialstatus"];}
+if (isset($_GET["update_dialstatus"]))			{$update_dialstatus=$_GET["update_dialstatus"];}
 	elseif (isset($_POST["update_dialstatus"]))	{$update_dialstatus=$_POST["update_dialstatus"];}
+
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 $SQLdate = date("Y-m-d H:i:s");
 $date = date("r");
 $ip = getenv("REMOTE_ADDR");
 $browser = getenv("HTTP_USER_AGENT");
 
+#############################################
+##### START SYSTEM_SETTINGS LOOKUP #####
+$stmt = "SELECT use_non_latin,allow_chats,enable_languages,language_method,default_language,allow_web_debug FROM system_settings;";
+$rslt=mysql_to_mysqli($stmt, $link);
+#if ($DB) {echo "$stmt\n";}
+$qm_conf_ct = mysqli_num_rows($rslt);
+if ($qm_conf_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$non_latin =			$row[0];
+	$SSallow_chats =		$row[1];
+    $SSenable_languages =	$row[2];
+    $SSlanguage_method =	$row[3];
+	$SSdefault_language =	$row[4];
+	$SSallow_web_debug =	$row[5];
+	}
+if ($SSallow_web_debug < 1) {$DB=0;}
+$VUselected_language = $SSdefault_language;
+##### END SETTINGS LOOKUP #####
+###########################################
+
+$query_date = preg_replace("/[^-_0-9a-zA-Z]/", "",$query_date);
+$end_date = preg_replace("/[^-_0-9a-zA-Z]/", "",$end_date);
+$submit_khomp = preg_replace("/[^-_0-9a-zA-Z]/", "",$submit_khomp);
+$new_conclusion=trim(preg_replace('/[^- \_0-9a-zA-Z]/', "", $new_conclusion));
+$new_pattern=trim(preg_replace('/[^- \_0-9a-zA-Z]/', "", $new_pattern));
+$new_action=trim(preg_replace('/[^a-zA-Z]/', "", $new_action));
+$new_status=trim(strtoupper(preg_replace('/[^0-9a-zA-Z]/', "", $new_status)));
+$new_dialstatus=trim(strtoupper(preg_replace('/[^0-9a-zA-Z]/', "", $new_dialstatus)));
+$update_action=trim(preg_replace('/[^a-zA-Z]/', "", $update_action));
+$update_status=trim(strtoupper(preg_replace('/[^0-9a-zA-Z]/', "", $update_status)));
+$update_dialstatus=trim(strtoupper(preg_replace('/[^0-9a-zA-Z]/', "", $update_dialstatus)));
+$update_conclusion=trim(preg_replace('/[^- \_0-9a-zA-Z]/', "", $update_conclusion));
+$update_pattern=trim(preg_replace('/[^- \_0-9a-zA-Z]/', "", $update_pattern));
+
+if ($non_latin < 1)
+	{
+	$PHP_AUTH_USER = preg_replace("/[^-_0-9a-zA-Z]/", "",$PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace("/[^-_0-9a-zA-Z]/", "",$PHP_AUTH_PW);
+	}	# end of non_latin
+else
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	}
+
+$auth=0;
+$user_auth=0;
 $auth_message = user_authorization($PHP_AUTH_USER,$PHP_AUTH_PW,'QC',1,0);
 if ( ($auth_message == 'GOOD') or ($auth_message == '2FA') )
 	{
@@ -136,11 +185,31 @@ if ($user_auth > 0)
 		}
 	}
 
+if ($auth < 1)
+	{
+	$VDdisplayMESSAGE = _QXZ("Login incorrect, please try again");
+	if ($auth_message == 'LOCK')
+		{
+		$VDdisplayMESSAGE = _QXZ("Too many login attempts, try again in 15 minutes");
+		Header ("Content-type: text/html; charset=utf-8");
+		echo "$VDdisplayMESSAGE: |$PHP_AUTH_USER|$auth_message|\n";
+		exit;
+		}
+	if ($auth_message == 'IPBLOCK')
+		{
+		$VDdisplayMESSAGE = _QXZ("Your IP Address is not allowed") . ": $ip";
+		Header ("Content-type: text/html; charset=utf-8");
+		echo "$VDdisplayMESSAGE: |$PHP_AUTH_USER|$auth_message|\n";
+		exit;
+		}
+	Header("WWW-Authenticate: Basic realm=\"CONTACT-CENTER-ADMIN\"");
+	Header("HTTP/1.0 401 Unauthorized");
+	echo "$VDdisplayMESSAGE: |$PHP_AUTH_USER|$PHP_AUTH_PW|$auth_message|\n";
+	exit;
+	}
+
 if ($submit_khomp=="UPDATE") 
 	{
-	$update_action=trim(preg_replace('/[^a-zA-Z]/', "", $update_action));
-	$update_status=trim(strtoupper(preg_replace('/[^0-9a-zA-Z]/', "", $update_status)));
-	$update_dialstatus=trim(strtoupper(preg_replace('/[^0-9a-zA-Z]/', "", $update_dialstatus)));
 	if($update_conclusion) 
 		{
 		$update_khomp_string="\"$update_conclusion\"";
@@ -212,12 +281,6 @@ if ($submit_khomp=="UPDATE")
 	} 
 else if ($submit_khomp=="ADD") 
 	{
-	$new_conclusion=trim(preg_replace('/[^- \_0-9a-zA-Z]/', "", $new_conclusion));
-	$new_pattern=trim(preg_replace('/[^- \_0-9a-zA-Z]/', "", $new_pattern));
-	$new_action=trim(preg_replace('/[^a-zA-Z]/', "", $new_action));
-	$new_status=trim(strtoupper(preg_replace('/[^0-9a-zA-Z]/', "", $new_status)));
-	$new_dialstatus=trim(strtoupper(preg_replace('/[^0-9a-zA-Z]/', "", $new_dialstatus)));
-
 	if($new_conclusion) 
 		{
 		$new_khomp_string="\"$new_conclusion\"";

@@ -1,7 +1,7 @@
 <?php 
 # AST_email_log_report.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # report of emails handled by the system
 # 
@@ -21,12 +21,13 @@
 # 170409-1538 - Added IP List validation code
 # 170829-0040 - Added screen color settings
 # 191013-0823 - Fixes for PHP7
+# 220303-0223 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
 
-$version = '2.14-13';
-$build = '191013-0823';
+$version = '2.14-14';
+$build = '220303-0223';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -37,48 +38,44 @@ $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
-if (isset($_GET["server_ip"]))			{$server_ip=$_GET["server_ip"];}
-	elseif (isset($_POST["server_ip"]))	{$server_ip=$_POST["server_ip"];}
-if (isset($_GET["RR"]))					{$RR=$_GET["RR"];}
-	elseif (isset($_POST["RR"]))		{$RR=$_POST["RR"];}
-if (isset($_GET["inbound"]))			{$inbound=$_GET["inbound"];}
-	elseif (isset($_POST["inbound"]))	{$inbound=$_POST["inbound"];}
 if (isset($_GET["group"]))				{$group=$_GET["group"];}
 	elseif (isset($_POST["group"]))		{$group=$_POST["group"];}
-if (isset($_GET["groups"]))				{$groups=$_GET["groups"];}
-	elseif (isset($_POST["groups"]))	{$groups=$_POST["groups"];}
-if (isset($_GET["usergroup"]))			{$usergroup=$_GET["usergroup"];}
-	elseif (isset($_POST["usergroup"]))	{$usergroup=$_POST["usergroup"];}
 if (isset($_GET["DB"]))					{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))		{$DB=$_POST["DB"];}
-if (isset($_GET["file_download"]))				{$file_download=$_GET["file_download"];}
+if (isset($_GET["file_download"]))			{$file_download=$_GET["file_download"];}
 	elseif (isset($_POST["file_download"]))	{$file_download=$_POST["file_download"];}
 if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
 	elseif (isset($_POST["submit"]))	{$submit=$_POST["submit"];}
 if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))	{$SUBMIT=$_POST["SUBMIT"];}
-if (isset($_GET["user_group_filter"]))				{$user_group_filter=$_GET["user_group_filter"];}
-	elseif (isset($_POST["user_group_filter"]))	{$user_group_filter=$_POST["user_group_filter"];}
 if (isset($_GET["email_type"]))				{$email_type=$_GET["email_type"];}
 	elseif (isset($_POST["email_type"]))	{$email_type=$_POST["email_type"];}
 if (isset($_GET["date_type"]))				{$date_type=$_GET["date_type"];}
-	elseif (isset($_POST["date_type"]))	{$date_type=$_POST["date_type"];}
+	elseif (isset($_POST["date_type"]))		{$date_type=$_POST["date_type"];}
 if (isset($_GET["query_date"]))				{$query_date=$_GET["query_date"];}
 	elseif (isset($_POST["query_date"]))	{$query_date=$_POST["query_date"];}
 if (isset($_GET["end_date"]))				{$end_date=$_GET["end_date"];}
-	elseif (isset($_POST["end_date"]))	{$end_date=$_POST["end_date"];}
+	elseif (isset($_POST["end_date"]))		{$end_date=$_POST["end_date"];}
 if (isset($_GET["search_archived_data"]))			{$search_archived_data=$_GET["search_archived_data"];}
 	elseif (isset($_POST["search_archived_data"]))	{$search_archived_data=$_POST["search_archived_data"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
+$NOW_DATE = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$STARTtime = date("U");
+if (!isset($group)) {$group = array();}
+if (!isset($query_date)) {$query_date = $NOW_DATE;}
+if (!isset($end_date)) {$end_date = $NOW_DATE;}
 
 $report_name = 'Email Log Report';
 $db_source = 'M';
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,allow_emails,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,allow_emails,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -90,9 +87,34 @@ if ($qm_conf_ct > 0)
 	$email_enabled =				$row[4];
 	$SSenable_languages =			$row[5];
 	$SSlanguage_method =			$row[6];
+	$SSallow_web_debug =			$row[7];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$query_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date);
+$end_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $end_date);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$file_download = preg_replace('/[^-_0-9a-zA-Z]/', '', $file_download);
+$email_type = preg_replace('/[^-_0-9a-zA-Z]/', '', $email_type);
+$date_type = preg_replace('/[^-_0-9a-zA-Z]/', '', $date_type);
+$search_archived_data = preg_replace('/[^-_0-9a-zA-Z]/', '', $search_archived_data);
+
+# Variables filtered further down in the code
+# $group
+
+if ($non_latin < 1)
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	}
+else
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	}
 
 ### ARCHIVED DATA CHECK CONFIGURATION
 $archives_available="N";
@@ -128,17 +150,6 @@ if ($gmt_conf_ct > 0)
 	$row=mysqli_fetch_row($rslt);
 	$local_gmt =		$row[0];
 	$epoch_offset =		(($local_gmt + $dst) * 3600);
-	}
-
-if ($non_latin < 1)
-	{
-	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
-	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
-	}
-else
-	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
 	}
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
@@ -248,7 +259,7 @@ else
 	$webserver_id = mysqli_insert_id($link);
 	}
 
-$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$group[0], $query_date, $end_date, $shift, $file_download, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
+$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$query_date, $end_date, $shift, $file_download, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $report_log_id = mysqli_insert_id($link);
@@ -296,13 +307,6 @@ if ( (!preg_match('/\-\-ALL\-\-/i',$LOGadmin_viewable_groups)) and (strlen($LOGa
 	$whereLOGadmin_viewable_groupsSQL = "where user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')";
 	}
 
-$NOW_DATE = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-$STARTtime = date("U");
-if (!isset($group)) {$group = array();}
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
-if (!isset($end_date)) {$end_date = $NOW_DATE;}
-
 $stmt="select group_id,group_name,8 from vicidial_inbound_groups where group_handling='EMAIL' $LOGadmin_viewable_groupsSQL order by group_id;";
 $rslt=mysql_to_mysqli($stmt, $link);
 
@@ -331,6 +335,7 @@ $group_string='|';
 $group_ct = count($group);
 while($i < $group_ct)
 	{
+	$group[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $group[$i]);
 	if ( (strlen($group[$i]) > 0) and (preg_match("/\|$group[$i]\|/",$groups_string)) )
 		{
 		$group_string .= "$group[$i]|";

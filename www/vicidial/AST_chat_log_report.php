@@ -1,7 +1,7 @@
 <?php
 # AST_chat_log_report.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # This is the report page where you can view report information of any of the dialer's chats.  The web page will 
 # display the information about the chat, including the start time and participants, and will also provide links 
@@ -14,6 +14,7 @@
 # 161217-0820 - Added chat-type to allow for multi-user internal chat sessions
 # 170409-1550 - Added IP List validation code
 # 191013-0857 - Fixes for PHP7
+# 220303-0909 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
@@ -33,7 +34,7 @@ if (isset($_GET["group"]))					{$group=$_GET["group"];}
 	elseif (isset($_POST["group"]))			{$group=$_POST["group"];}
 if (isset($_GET["user_group"]))				{$user_group=$_GET["user_group"];}
 	elseif (isset($_POST["user_group"]))	{$user_group=$_POST["user_group"];}
-if (isset($_GET["inbound_group"]))				{$inbound_group=$_GET["inbound_group"];}
+if (isset($_GET["inbound_group"]))			{$inbound_group=$_GET["inbound_group"];}
 	elseif (isset($_POST["inbound_group"]))	{$inbound_group=$_POST["inbound_group"];}
 if (isset($_GET["users"]))					{$users=$_GET["users"];}
 	elseif (isset($_POST["users"]))			{$users=$_POST["users"];}
@@ -47,24 +48,35 @@ if (isset($_GET["submit"]))					{$submit=$_GET["submit"];}
 	elseif (isset($_POST["submit"]))		{$submit=$_POST["submit"];}
 if (isset($_GET["SUBMIT"]))					{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))		{$SUBMIT=$_POST["SUBMIT"];}
-if (isset($_GET["file_download"]))				{$file_download=$_GET["file_download"];}
+if (isset($_GET["file_download"]))			{$file_download=$_GET["file_download"];}
 	elseif (isset($_POST["file_download"]))	{$file_download=$_POST["file_download"];}
-if (isset($_GET["text_search"]))				{$text_search=$_GET["text_search"];}
+if (isset($_GET["text_search"]))			{$text_search=$_GET["text_search"];}
 	elseif (isset($_POST["text_search"]))	{$text_search=$_POST["text_search"];}
-if (isset($_GET["report_display_type"]))				{$report_display_type=$_GET["report_display_type"];}
+if (isset($_GET["report_display_type"]))			{$report_display_type=$_GET["report_display_type"];}
 	elseif (isset($_POST["report_display_type"]))	{$report_display_type=$_POST["report_display_type"];}
-if (isset($_GET["chat_log_type"]))				{$chat_log_type=$_GET["chat_log_type"];}
+if (isset($_GET["chat_log_type"]))			{$chat_log_type=$_GET["chat_log_type"];}
 	elseif (isset($_POST["chat_log_type"]))	{$chat_log_type=$_POST["chat_log_type"];}
-if (isset($_GET["download_chat_id"]))				{$download_chat_id=$_GET["download_chat_id"];}
+if (isset($_GET["download_chat_id"]))			{$download_chat_id=$_GET["download_chat_id"];}
 	elseif (isset($_POST["download_chat_id"]))	{$download_chat_id=$_POST["download_chat_id"];}
-if (isset($_GET["download_chat_subid"]))				{$download_chat_subid=$_GET["download_chat_subid"];}
+if (isset($_GET["download_chat_subid"]))			{$download_chat_subid=$_GET["download_chat_subid"];}
 	elseif (isset($_POST["download_chat_subid"]))	{$download_chat_subid=$_POST["download_chat_subid"];}
-if (isset($_GET["download_user"]))				{$download_user=$_GET["download_user"];}
+if (isset($_GET["download_user"]))			{$download_user=$_GET["download_user"];}
 	elseif (isset($_POST["download_user"]))	{$download_user=$_POST["download_user"];}
-if (isset($_GET["download_manager"]))				{$download_manager=$_GET["download_manager"];}
+if (isset($_GET["download_manager"]))			{$download_manager=$_GET["download_manager"];}
 	elseif (isset($_POST["download_manager"]))	{$download_manager=$_POST["download_manager"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
+$MT[0]='';
+$NOW_DATE = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$STARTtime = date("U");
+if (!isset($group)) {$group = array();}
+if (!isset($inbound_group)) {$inbound_group = array();}
+if (!isset($user_group)) {$user_group = array();}
+if (!isset($users)) {$users = array();}
+if (!isset($query_date)) {$query_date = $NOW_DATE;}
+if (!isset($end_date)) {$end_date = $NOW_DATE;}
 if (strlen($shift)<2) {$shift='ALL';}
 
 $report_name = 'Agent-Manager Chat Log';
@@ -74,9 +86,9 @@ $JS_onload="onload = function() {\n";
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -87,19 +99,45 @@ if ($qm_conf_ct > 0)
 	$reports_use_slave_db =			$row[3];
 	$SSenable_languages =			$row[4];
 	$SSlanguage_method =			$row[5];
+	$SSallow_web_debug =			$row[6];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$query_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date);
+$end_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $end_date);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$file_download = preg_replace('/[^-_0-9a-zA-Z]/', '', $file_download);
+$chat_log_type = preg_replace('/[^-_0-9a-zA-Z]/', '', $chat_log_type);
+$report_display_type = preg_replace('/[^-_0-9a-zA-Z]/', '', $report_display_type);
+$stage = preg_replace('/[^-_0-9a-zA-Z]/', '', $stage);
+$download_chat_id = preg_replace('/[^-_0-9a-zA-Z]/', '', $download_chat_id);
+$download_chat_subid = preg_replace('/[^-_0-9a-zA-Z]/', '', $download_chat_subid);
+$text_search = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $text_search);
+
+# Variables filtered further down in the code
+# $group
+# $inbound_group
+# $user_group
+# $users
 
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$shift = preg_replace('/[^-_0-9a-zA-Z]/', '', $shift);
+	$download_user = preg_replace('/[^-_0-9a-zA-Z]/', '', $download_user);
+	$download_manager = preg_replace('/[^-_0-9a-zA-Z]/', '', $download_manager);
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$shift = preg_replace('/[^-_0-9\p{L}]/u', '', $shift);
+	$download_user = preg_replace('/[^-_0-9\p{L}]/u', '', $download_user);
+	$download_manager = preg_replace('/[^-_0-9\p{L}]/u', '', $download_manager);
 	}
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
@@ -209,7 +247,7 @@ else
 	$webserver_id = mysqli_insert_id($link);
 	}
 
-$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$group[0], $query_date, $end_date, $shift, $file_download, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
+$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$query_date, $end_date, $shift, $file_download, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $report_log_id = mysqli_insert_id($link);
@@ -278,23 +316,13 @@ if ( (!preg_match('/\-\-ALL\-\-/i', $LOGadmin_viewable_call_times)) and (strlen(
 	$whereLOGadmin_viewable_call_timesSQL = "where call_time_id IN('---ALL---','$rawLOGadmin_viewable_call_timesSQL')";
 	}
 
-$MT[0]='';
-$NOW_DATE = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-$STARTtime = date("U");
-if (!isset($group)) {$group = array();}
-if (!isset($inbound_group)) {$inbound_group = array();}
-if (!isset($user_group)) {$user_group = array();}
-if (!isset($users)) {$users = array();}
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
-if (!isset($end_date)) {$end_date = $NOW_DATE;}
-
 
 $i=0;
 $group_string='|';
 $group_ct = count($group);
 while($i < $group_ct)
 	{
+	$group[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $group[$i]);
 	$group_string .= "$group[$i]|";
 	$i++;
 	}
@@ -304,6 +332,7 @@ $users_string='|';
 $users_ct = count($users);
 while($i < $users_ct)
 	{
+	$users[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $users[$i]);
 	$users_string .= "$users[$i]|";
 	$i++;
 	}
@@ -313,6 +342,7 @@ $user_group_string='|';
 $user_group_ct = count($user_group);
 while($i < $users_ct)
 	{
+	$user_group[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $user_group[$i]);
 	$user_group_string .= "$user_group[$i]|";
 	$i++;
 	}
@@ -322,6 +352,7 @@ $inbound_group_string='|';
 $inbound_group_ct = count($inbound_group);
 while($i < $users_ct)
 	{
+	$inbound_group[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $inbound_group[$i]);
 	$inbound_group_string .= "$inbound_group[$i]|";
 	$i++;
 	}
@@ -392,6 +423,7 @@ $user_string='|';
 $user_ct = count($users);
 while($i < $user_ct)
 	{
+	$users[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $users[$i]);
 	$user_string .= "$users[$i]|";
 #	$user_SQL .= "'$users[$i]',";
 	$user_SQL .= " selected_agents like '%|".$users[$i]."|%' or ";
@@ -420,6 +452,7 @@ $user_group_string='|';
 $user_group_ct = count($user_group);
 while($i < $user_group_ct)
 	{
+	$user_group[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $user_group[$i]);
 	$user_group_string .= "$user_group[$i]|";
 #	$user_group_SQL .= "'$user_group[$i]',";
 	$user_group_SQL .= " selected_user_groups like '%|".$user_group[$i]."|%' or ";
@@ -445,6 +478,7 @@ $group_string='|';
 $group_ct = count($group);
 while($i < $group_ct)
 	{
+	$group[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $group[$i]);
 	if ( (preg_match("/ $group[$i] /",$regexLOGallowed_campaigns)) or (preg_match("/-ALL/",$LOGallowed_campaigns)) )
 		{
 		$group_string .= "$group[$i]|";
@@ -472,6 +506,7 @@ $inbound_group_string='|';
 $inbound_group_ct = count($inbound_group);
 while($i < $inbound_group_ct)
 	{
+	$inbound_group[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $inbound_group[$i]);
 	if ( (preg_match("/ $inbound_group[$i] /",$regexLOGallowed_campaigns)) or (preg_match("/-ALL/",$LOGallowed_campaigns)) )
 		{
 		$inbound_group_string .= "$inbound_group[$i]|";

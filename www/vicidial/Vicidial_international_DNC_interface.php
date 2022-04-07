@@ -1,12 +1,13 @@
 <?php
 # Vicidial_international_DNC_interface.php - version 2.14
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
 #
 # ViciDial web-based DNC file loader from formatted file
 # 
 # CHANGES:
 # 200813-1230 - First version 
+# 220227-0848 - Added allow_web_debug system setting
 #
 
 require("dbconnect_mysqli.php");
@@ -24,14 +25,18 @@ $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
+if (isset($_GET["DB"]))					{$DB=$_GET["DB"];}
+	elseif (isset($_POST["DB"]))		{$DB=$_POST["DB"];}
 if (isset($_GET["file_update_str"]))	{$file_update_str=$_GET["file_update_str"];}
 	elseif (isset($_POST["file_update_str"]))	{$file_update_str=$_POST["file_update_str"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,admin_web_directory,custom_fields_enabled,webroot_writable,enable_languages,language_method,active_modules,admin_screen_colors,web_loader_phone_length,enable_international_dncs FROM system_settings;";
+$stmt = "SELECT use_non_latin,admin_web_directory,custom_fields_enabled,webroot_writable,enable_languages,language_method,active_modules,admin_screen_colors,web_loader_phone_length,enable_international_dncs,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -46,9 +51,13 @@ if ($qm_conf_ct > 0)
 	$SSadmin_screen_colors =		$row[7];
 	$SSweb_loader_phone_length =	$row[8];
 	$SSenable_international_dncs =	$row[9];
+	$SSallow_web_debug =			$row[10];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$file_update_str = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$file_update_str);
 
 if ($non_latin < 1)
 	{
@@ -57,11 +66,9 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
-$list_id_override = preg_replace('/[^0-9]/','',$list_id_override);
-$web_loader_phone_length = preg_replace('/[^0-9]/','',$web_loader_phone_length);
 
 $STARTtime = date("U");
 $TODAY = date("Y-m-d");
@@ -398,6 +405,7 @@ while ($row=mysqli_fetch_array($rslt))
 echo "<tr bgcolor='#000'><th colspan='10'><input type='button' onClick=\"window.location.href='$PHP_SELF'\" value='"._QXZ("REFRESH PAGE")."'></th></tr>";
 echo "</table>";
 echo "<input type=hidden name='file_update_str' id='file_update_str'>";
+echo "<input type=hidden name='DB' id='DB' value='$DB'>";
 echo "</form>";
 
 ?>

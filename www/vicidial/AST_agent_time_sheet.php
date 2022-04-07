@@ -1,7 +1,7 @@
 <?php 
 # AST_agent_time_sheet.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -27,6 +27,8 @@
 # 160325-1428 - Changes for sidebar update
 # 170409-1539 - Added IP List validation code
 # 170711-1102 - Added screen colors and fixed default date variable
+# 220122-1700 - Added more variable filtering
+# 220221-0938 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
@@ -55,12 +57,21 @@ if (isset($_GET["file_download"]))				{$file_download=$_GET["file_download"];}
 	elseif (isset($_POST["file_download"]))		{$file_download=$_POST["file_download"];}
 if (isset($_GET["search_archived_data"]))			{$search_archived_data=$_GET["search_archived_data"];}
 	elseif (isset($_POST["search_archived_data"]))	{$search_archived_data=$_POST["search_archived_data"];}
+if (isset($_GET["DB"]))					{$DB=$_GET["DB"];}
+	elseif (isset($_POST["DB"]))		{$DB=$_POST["DB"];}
+
+$NOW_DATE = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$STARTtime = date("U");
+if ( (!isset($query_date)) or (strlen($query_date) < 8) ) {$query_date = $NOW_DATE;}
+
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,user_territories_active,enable_languages,language_method,admin_screen_colors,report_default_format FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,user_territories_active,enable_languages,language_method,admin_screen_colors,report_default_format,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {$MAIN.="$stmt\n";}
+#if ($DB) {$MAIN.="$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -74,7 +85,9 @@ if ($qm_conf_ct > 0)
 	$SSlanguage_method =			$row[6];
 	$SSadmin_screen_colors =		$row[7];
 	$SSreport_default_format =		$row[8];
+	$SSallow_web_debug =			$row[9];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
@@ -100,18 +113,28 @@ else
 	}
 #############
 
-$user=$agent;
+$query_date = preg_replace('/[^- \:\_0-9a-zA-Z]/',"",$query_date);
+$file_download = preg_replace('/[^-_0-9a-zA-Z]/', '', $file_download);
+$search_archived_data = preg_replace('/[^-_0-9a-zA-Z]/', '', $search_archived_data);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+$calls_summary = preg_replace('/[^-_0-9a-zA-Z]/', '', $calls_summary);
 
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$agent = preg_replace('/[^-_0-9a-zA-Z]/','',$agent);
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$agent = preg_replace('/[^-_0-9\p{L}]/u','',$agent);
 	}
+
+
+$user=$agent;
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
@@ -179,15 +202,6 @@ else
 	echo "$VDdisplayMESSAGE: |$PHP_AUTH_USER|$PHP_AUTH_PW|$auth_message|\n";
 	exit;
 	}
-
-$agent = preg_replace('/[^-_0-9a-zA-Z]/', '', $agent);
-$query_date = preg_replace('/[^-_0-9a-zA-Z]/', '', $query_date);
-$calls_summary = preg_replace('/[^-_0-9a-zA-Z]/', '', $calls_summary);
-$file_download = preg_replace('/[^-_0-9a-zA-Z]/', '', $file_download);
-$NOW_DATE = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-$STARTtime = date("U");
-if ( (!isset($query_date)) or (strlen($query_date) < 8) ) {$query_date = $NOW_DATE;}
 
 
 ##### BEGIN log visit to the vicidial_report_log table #####

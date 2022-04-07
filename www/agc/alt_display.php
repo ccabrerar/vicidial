@@ -1,7 +1,7 @@
 <?php
 # alt_display.php
 # 
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to display agent screen information outside of the agent screen
 # To use this script, you must set the options.php setting $alt_display_enabled	= '1';
@@ -21,10 +21,11 @@
 # 210426-0138 - Added calls_inqueue_count_ campaign settings options, and calls_in_queue_option=CAMPAIGN setting
 # 210428-2156 - Added calls_in_queue_display setting
 # 210616-1907 - Added optional CORS support, see options.php for details
+# 220220-0940 - Added allow_web_debug system setting
 #
 
-$version = '2.14-6';
-$build = '210616-1907';
+$version = '2.14-7';
+$build = '220220-0940';
 $php_script = 'alt_display.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=11;
@@ -53,6 +54,10 @@ if (isset($_GET["calls_in_queue_display"]))				{$calls_in_queue_display=$_GET["c
 if (isset($_GET["DB"]))							{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))				{$DB=$_POST["DB"];}
 
+# default optional vars if not set
+if (!isset($stage))   {$stage="default";}
+if (!isset($ACTION))   {$ACTION="top_panel";}
+
 $user = preg_replace("/\'|\"|\\\\|;/","",$user);
 $stage = preg_replace("/[^-_0-9a-zA-Z]/","",$stage);
 $ACTION = preg_replace('/[^-_0-9a-zA-Z]/','',$ACTION);
@@ -61,10 +66,6 @@ $calls_in_queue_display = preg_replace('/[^-_0-9a-zA-Z]/','',$calls_in_queue_dis
 $DB = preg_replace('/[^-_0-9a-zA-Z]/','',$DB);
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
-
-# default optional vars if not set
-if (!isset($stage))   {$stage="default";}
-if (!isset($ACTION))   {$ACTION="top_panel";}
 
 $alt_display_enabled	= '0';	# set to 1 to allow the alt_display.php script to be used
 
@@ -145,10 +146,10 @@ $LOCAL_GMT_OFF_STD = $SERVER_GMT;
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,timeclock_end_of_day,agentonly_callback_campaign_lock,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,qc_features_active,allow_emails,callback_time_24hour,enable_languages,language_method,agent_debug_logging,default_language,active_modules,allow_chats,default_phone_code,user_new_lead_limit,sip_event_logging,call_quota_lead_ranking FROM system_settings;";
+$stmt = "SELECT use_non_latin,timeclock_end_of_day,agentonly_callback_campaign_lock,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,qc_features_active,allow_emails,callback_time_24hour,enable_languages,language_method,agent_debug_logging,default_language,active_modules,allow_chats,default_phone_code,user_new_lead_limit,sip_event_logging,call_quota_lead_ranking,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'09002',$user,$server_ip,$session_name,$one_mysql_log);}
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -174,9 +175,22 @@ if ($qm_conf_ct > 0)
 	$SSuser_new_lead_limit =				$row[18];
 	$SSsip_event_logging =					$row[19];
 	$SScall_quota_lead_ranking =			$row[20];
+	$SSallow_web_debug =					$row[21];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+if ($non_latin < 1)
+	{
+	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
+	$pass=preg_replace("/[^-\.\+\/\=_0-9a-zA-Z]/","",$pass);
+	}
+else
+	{
+	$user = preg_replace('/[^-_0-9\p{L}]/u','',$user);
+	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
+	}
 
 if (strlen($SSagent_debug_logging) > 1)
 	{

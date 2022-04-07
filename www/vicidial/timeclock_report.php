@@ -1,7 +1,7 @@
 <?php 
 # timeclock_report.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -32,6 +32,7 @@
 # 170409-1555 - Added IP List validation code
 # 171012-2015 - Fixed javascript/apache errors with graphs
 # 191013-0827 - Fixes for PHP7
+# 220226-1716 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
@@ -67,17 +68,27 @@ if (isset($_GET["file_download"]))			{$file_download=$_GET["file_download"];}
 if (isset($_GET["report_display_type"]))			{$report_display_type=$_GET["report_display_type"];}
 	elseif (isset($_POST["report_display_type"]))	{$report_display_type=$_POST["report_display_type"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
+$STARTtime = date("U");
+$TODAY = date("Y-m-d");
+$NOW_DATE = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$STARTtime = date("U");
 if (strlen($shift)<2) {$shift='ALL';}
 if (strlen($order)<2) {$order='hours_down';}
+if ( (!isset($query_date)) or (strlen($query_date) < 10) ) {$query_date = $TODAY;}
+if ( (!isset($end_date)) or (strlen($end_date) < 10) ) {$end_date = $TODAY;}
+if (!isset($user_group)) {$user_group = array();}
 
 $report_name = 'User Timeclock Report';
 $db_source = 'M';
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,webroot_writable,enable_languages,language_method,admin_screen_colors,report_default_format FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,webroot_writable,enable_languages,language_method,admin_screen_colors,report_default_format,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {$MAIN.="$stmt\n";}
+#if ($DB) {$MAIN.="$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -91,34 +102,38 @@ if ($qm_conf_ct > 0)
 	$SSlanguage_method =			$row[6];
 	$SSadmin_screen_colors =		$row[7];
 	$SSreport_default_format =		$row[8];
+	$SSallow_web_debug =			$row[9];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
+if (strlen($report_display_type)<2) {$report_display_type = $SSreport_default_format;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
-if (strlen($report_display_type)<2) {$report_display_type = $SSreport_default_format;}
 
-$STARTtime = date("U");
-$TODAY = date("Y-m-d");
+$query_date = preg_replace('/[^-_0-9a-zA-Z]/',"",$query_date);
+$end_date = preg_replace('/[^-_0-9a-zA-Z]/',"",$end_date);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/',"",$submit);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/',"",$SUBMIT);
+$file_download = preg_replace('/[^-_0-9a-zA-Z]/',"",$file_download);
+$order = preg_replace('/[^-_0-9a-zA-Z]/',"",$order);
+$report_display_type = preg_replace('/[^-_0-9a-zA-Z]/',"",$report_display_type);
 
-if ( (!isset($query_date)) or (strlen($query_date) < 10) ) {$query_date = $TODAY;}
-if ( (!isset($end_date)) or (strlen($end_date) < 10) ) {$end_date = $TODAY;}
+# Variables filter further down in the code
+# $user_group
 
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$user = preg_replace('/[^-_0-9a-zA-Z]/', '', $user);
+	$shift = preg_replace('/[^-_0-9a-zA-Z]/',"",$shift);
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$user = preg_replace('/[^-_0-9\p{L}]/u', '', $user);
+	$shift = preg_replace('/[^-_0-9\p{L}]/u',"",$shift);
 	}
-$query_date = preg_replace("/'|\"|\\\\|;/","",$query_date);
-$end_date = preg_replace("/'|\"|\\\\|;/","",$end_date);
-$shift = preg_replace("/'|\"|\\\\|;/","",$shift);
-$order = preg_replace("/'|\"|\\\\|;/","",$order);
-$user = preg_replace("/'|\"|\\\\|;/","",$user);
-$file_download = preg_replace("/'|\"|\\\\|;/","",$file_download);
-$report_display_type = preg_replace("/'|\"|\\\\|;/","",$report_display_type);
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
@@ -227,7 +242,7 @@ else
 	$webserver_id = mysqli_insert_id($link);
 	}
 
-$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$user_group[0], $query_date, $end_date, $shift, $file_download, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
+$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$query_date, $end_date, $shift, $file_download, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $report_log_id = mysqli_insert_id($link);
@@ -283,13 +298,6 @@ if ( (!preg_match('/\-\-ALL\-\-/i', $LOGadmin_viewable_call_times)) and (strlen(
 	$LOGadmin_viewable_call_timesSQL = "and call_time_id IN('---ALL---','$rawLOGadmin_viewable_call_timesSQL')";
 	$whereLOGadmin_viewable_call_timesSQL = "where call_time_id IN('---ALL---','$rawLOGadmin_viewable_call_timesSQL')";
 	}
-
-$NOW_DATE = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-$STARTtime = date("U");
-if (!isset($user_group)) {$user_group = array();}
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
-if (!isset($end_date)) {$end_date = $NOW_DATE;}
 
 $stmt="select user_group from vicidial_user_groups $whereLOGadmin_viewable_groupsSQL order by user_group;";
 $rslt=mysql_to_mysqli($stmt, $link);
@@ -453,6 +461,7 @@ $user_group_string='|';
 $i=0;
 while($i < $user_group_ct)
 	{
+	$user_group[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $user_group[$i]);
 	$user_group_string .= "$user_group[$i]|";
 	$user_group_SQL .= "'$user_group[$i]',";
 	$user_groupQS .= "&user_group[]=$user_group[$i]";

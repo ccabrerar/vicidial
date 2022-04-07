@@ -1,7 +1,7 @@
 <?php
 # astguiclient.php - the web-based version of the astGUIclient client application
 # 
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # make sure you have added a user to the vicidial_users MySQL table with at least
 # user_level 1 or greater to access this page. Also you need to have the login
@@ -72,10 +72,11 @@
 # 200319-1532 - Small fixes for conference tab issues
 # 210615-1037 - Default security fixes, CVE-2021-28854
 # 210616-2053 - Added optional CORS support, see options.php for details
+# 220220-0938 - Added allow_web_debug system setting
 #
 
-$version = '2.2.6-5';
-$build = '210616-2053';
+$version = '2.2.6-6';
+$build = '220220-0938';
 $php_script = 'astguiclient.php';
 
 require_once("dbconnect_mysqli.php");
@@ -114,6 +115,7 @@ $phone_login=preg_replace("/[^-_0-9a-zA-Z]/","",$phone_login);
 $phone_pass=preg_replace("/[^-_0-9a-zA-Z]/","",$phone_pass);
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
+$relogin=preg_replace("/[^-_0-9a-zA-Z]/","",$relogin);
 
 # if options file exists, use the override values for the above variables
 #   see the options-example.php file for more information
@@ -124,6 +126,22 @@ if (file_exists('options.php'))
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
+$stmt = "SELECT use_non_latin,enable_languages,language_method,default_language,allow_web_debug FROM system_settings;";
+$rslt=mysql_to_mysqli($stmt, $link);
+	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+#if ($DB) {echo "$stmt\n";}
+$qm_conf_ct = mysqli_num_rows($rslt);
+if ($qm_conf_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$non_latin =				$row[0];
+	$SSenable_languages =		$row[1];
+	$SSlanguage_method =		$row[2];
+	$SSdefault_language =		$row[3];
+	$SSallow_web_debug =		$row[4];
+	}
+if ($SSallow_web_debug < 1) {$DB=0;}
+
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$user';";
 if ($DB) {echo "|$stmt|\n";}
@@ -136,20 +154,6 @@ if ($sl_ct > 0)
 	$VUselected_language =		$row[0];
 	}
 
-$stmt = "SELECT use_non_latin,enable_languages,language_method,default_language FROM system_settings;";
-$rslt=mysql_to_mysqli($stmt, $link);
-	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
-if ($DB) {echo "$stmt\n";}
-$qm_conf_ct = mysqli_num_rows($rslt);
-if ($qm_conf_ct > 0)
-	{
-	$row=mysqli_fetch_row($rslt);
-	$non_latin =				$row[0];
-	$SSenable_languages =		$row[1];
-	$SSlanguage_method =		$row[2];
-	$SSdefault_language =		$row[3];
-	}
-
 if (strlen($VUselected_language) < 1)
 	{$VUselected_language = $SSdefault_language;}
 ##### END SETTINGS LOOKUP #####
@@ -159,6 +163,11 @@ if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
 	$pass=preg_replace("/[^-_0-9a-zA-Z]/","",$pass);
+	}
+else
+	{
+	$user = preg_replace('/[^-_0-9\p{L}]/u','',$user);
+	$pass = preg_replace('/[^-_0-9\p{L}]/u','',$pass);
 	}
 
 if ($force_logout)

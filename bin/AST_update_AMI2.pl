@@ -5,7 +5,7 @@
 # This script uses the Asterisk Manager interface to update the live_channels
 # tables and verify the parked_channels table in the asterisk MySQL database
 #
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 170915-2110 - Initial version for Asterisk 13, based upon AST_update.pl
@@ -18,6 +18,7 @@
 # 201119-2119 - Fix for time logging inserts/updates to database
 # 210315-1045 - Populate the CIDname in live_sip_channels/live_channels tables, Issue #1255
 # 210827-0930 - Added PJSIP compatibility
+# 220310-1136 - Fix for issue dealing with bad carrier 'P-Asserted-Identity' input
 #
 
 # constants
@@ -778,7 +779,7 @@ sub process_channels
 		$CIDnameSQL = $channel_ref->{'CallerIDName'};
 		$CIDnameSQL =~ s/'|"|;//gi; # remove quotes and semi-colon
 		if (length($CIDnameSQL) > 30) 
-			{$CIDnameSQL =~ substr($CIDnameSQL,0,30);}
+			{$CIDnameSQL = substr($CIDnameSQL,0,30);}
 
 		# make sure the channel is a channel type we care about
 		if ( $channel_ref->{'Channel'} =~ /^IAX2|^SIP|^Local|^DAHDI|^PJSIP/)

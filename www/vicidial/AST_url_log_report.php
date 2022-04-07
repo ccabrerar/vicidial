@@ -1,7 +1,7 @@
 <?php 
 # AST_url_log_report.php
 # 
-# Copyright (C) 2017  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 130620-0806 - First build
@@ -12,6 +12,7 @@
 # 151211-0950 - Added missing url types
 # 170409-1536 - Added IP List validation code
 # 170710-1801 - Added webform url type
+# 220301-1951 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
@@ -50,6 +51,9 @@ if (isset($_GET["SUBMIT"]))					{$SUBMIT=$_GET["SUBMIT"];}
 if (isset($_GET["report_display_type"]))			{$report_display_type=$_GET["report_display_type"];}
 	elseif (isset($_POST["report_display_type"]))	{$report_display_type=$_POST["report_display_type"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
+$NOW_DATE = date("Y-m-d");
 if (strlen($query_date_D) < 6) {$query_date_D = "00:00:00";}
 if (strlen($query_date_T) < 6) {$query_date_T = "23:59:59";}
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
@@ -57,9 +61,9 @@ if (!isset($url_type)) {$url_type = array();}
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {$MAIN.="$stmt\n";}
+#if ($DB) {$MAIN.="$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -70,9 +74,25 @@ if ($qm_conf_ct > 0)
 	$reports_use_slave_db =			$row[3];
 	$SSenable_languages =			$row[4];
 	$SSlanguage_method =			$row[5];
+	$SSallow_web_debug =			$row[6];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$query_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date);
+$query_date_D = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date_D);
+$query_date_T = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date_T);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+$report_display_type = preg_replace('/[^-_0-9a-zA-Z]/', '', $report_display_type);
+$file_download = preg_replace('/[^-_0-9a-zA-Z]/', '', $file_download);
+$response_sec = preg_replace('/[^-_0-9a-zA-Z]/', '', $response_sec);
+$lower_limit = preg_replace('/[^-_0-9a-zA-Z]/', '', $lower_limit);
+$upper_limit = preg_replace('/[^-_0-9a-zA-Z]/', '', $upper_limit);
+
+# Variables filtered further down in the code
+# $url_type
 
 if ($non_latin < 1)
 	{
@@ -81,11 +101,9 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
-
-$NOW_DATE = date("Y-m-d");
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
@@ -217,6 +235,7 @@ $url_type_ct = count($url_type);
 $i=0;
 while($i < $url_type_ct)
 	{
+	$url_type[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $url_type[$i]);
 	$url_type_string .= "$url_type[$i]|";
 	$i++;
 	}
@@ -239,6 +258,7 @@ $url_types_string='|';
 $url_type_ct = count($url_type);
 while($i < $url_type_ct)
 	{
+	$url_type[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $url_type[$i]);
 	if ( (strlen($url_type[$i]) > 0) and (preg_match("/\|$url_type[$i]\|/",$url_type_string)) )
 		{
 		$url_types_string .= "$url_type[$i]|";

@@ -1,4 +1,4 @@
-PJSIP SUPPORT IN ASTERISK		Started: 2021-01-12	Updated: 2021-08-31
+PJSIP SUPPORT IN ASTERISK		Started: 2021-01-12	Updated: 2022-01-03
 
 * NOTE: Full PJSIP support was added to VICIdial in svn/trunk revision 3511.
 
@@ -99,6 +99,6 @@ aors = PJSIPCARRIER
 DIALPLAN ENTRY:
 
 exten => _91NXXNXXXXXX,1,AGI(agi://127.0.0.1:4577/call_log) 
-exten => _91NXXNXXXXXX,n,Dial(PJSIP/${EXTEN:1}@PJSIPCARRIER,,To) 
+exten => _91NXXNXXXXXX,n,Dial(PJSIP/${EXTEN:1}@PJSIPCARRIER,${CAMPDTO},To) 
 exten => _91NXXNXXXXXX,n,Hangup()  
 

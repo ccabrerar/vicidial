@@ -1,7 +1,7 @@
 <?php
 # record_conf_1_hour.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # grab: $server_ip $station $session_id
 #
@@ -15,6 +15,7 @@
 # 130616-2230 - Added filtering of input to prevent SQL injection attacks and new user auth
 # 130901-0857 - Changed to mysqli PHP functions
 # 170409-1534 - Added IP List validation code
+# 220227-0901 - Added allow_web_debug system setting
 #
 
 require("dbconnect_mysqli.php");
@@ -36,23 +37,10 @@ if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
 	elseif (isset($_POST["submit"]))	{$submit=$_POST["submit"];}
 if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))	{$SUBMIT=$_POST["SUBMIT"];}
+if (isset($_GET["DB"]))					{$DB=$_GET["DB"];}
+	elseif (isset($_POST["DB"]))		{$DB=$_POST["DB"];}
 
-#############################################
-##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,user_territories_active FROM system_settings;";
-$rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
-$qm_conf_ct = mysqli_num_rows($rslt);
-if ($qm_conf_ct > 0)
-	{
-	$row=mysqli_fetch_row($rslt);
-	$non_latin =					$row[0];
-	$webroot_writable =				$row[1];
-	$SSoutbound_autodial_active =	$row[2];
-	$user_territories_active =		$row[3];
-	}
-##### END SETTINGS LOOKUP #####
-###########################################
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 $STARTtime = date("U");
 $TODAY = date("Y-m-d");
@@ -63,15 +51,42 @@ $date = date("r");
 $ip = getenv("REMOTE_ADDR");
 $browser = getenv("HTTP_USER_AGENT");
 
+#############################################
+##### START SYSTEM_SETTINGS LOOKUP #####
+$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,user_territories_active,allow_web_debug FROM system_settings;";
+$rslt=mysql_to_mysqli($stmt, $link);
+#if ($DB) {echo "$stmt\n";}
+$qm_conf_ct = mysqli_num_rows($rslt);
+if ($qm_conf_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$non_latin =					$row[0];
+	$webroot_writable =				$row[1];
+	$SSoutbound_autodial_active =	$row[2];
+	$user_territories_active =		$row[3];
+	$SSallow_web_debug =			$row[4];
+	}
+if ($SSallow_web_debug < 1) {$DB=0;}
+##### END SETTINGS LOOKUP #####
+###########################################
+
+$session_id = preg_replace('/[^-_0-9a-zA-Z]/', '', $session_id);
+$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/', '', $server_ip);
+$NEW_RECORDING = preg_replace('/[^-_0-9a-zA-Z]/', '', $NEW_RECORDING);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$station = preg_replace('/[^-_0-9a-zA-Z]/', '', $station);
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$station = preg_replace('/[^-_0-9\p{L}]/u', '', $station);
 	}
 
 $auth=0;
@@ -185,6 +200,7 @@ else
 	{
 	echo "<br>Start recording a conference for 1 hour: <form action=$PHP_SELF method=POST>\n";
 	echo "<input type=hidden name=NEW_RECORDING value=1>\n";
+	echo "<input type=hidden name=DB value='$DB'>\n";
 	echo "server_ip: <input type=text name=server_ip size=15 maxlength=15> | \n";
 	echo "session_id: <input type=text name=session_id size=7 maxlength=7> | \n";
 	echo "station: <input type=text name=station size=5 maxlength=5> | \n";

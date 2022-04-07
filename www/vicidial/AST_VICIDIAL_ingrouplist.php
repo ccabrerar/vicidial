@@ -3,7 +3,7 @@
 # 
 # shows the agents logged into vicidial and set to take calls from in-group
 #
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 100320-2102 - First Build
@@ -16,6 +16,7 @@
 # 141230-0045 - Added code for on-the-fly language translations display
 # 170409-1534 - Added IP List validation code
 # 190216-0806 - Fix for user-group, in-group and campaign allowed/permissions matching issues
+# 220301-1624 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
@@ -38,11 +39,20 @@ if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
 if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))	{$SUBMIT=$_POST["SUBMIT"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
+$NOW_DATE = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$STARTtime = date("U");
+if (!isset($group)) {$group = '';}
+if (!isset($query_date)) {$query_date = $NOW_DATE;}
+if (!isset($server_ip)) {$server_ip = '10.10.10.15';}
+
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -50,21 +60,27 @@ if ($qm_conf_ct > 0)
 	$non_latin =					$row[0];
 	$SSenable_languages =			$row[1];
 	$SSlanguage_method =			$row[2];
+	$SSallow_web_debug =			$row[3];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
 
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$group = preg_replace('/[^-_0-9a-zA-Z]/', '', $group);
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$group = preg_replace('/[^-_0-9\p{L}]/u', '', $group);
 	}
-$group = preg_replace("/'|\"|\\\\|;/","",$group);
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
@@ -178,13 +194,6 @@ if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $report_log_id = mysqli_insert_id($link);
 ##### END log visit to the vicidial_report_log table #####
-
-$NOW_DATE = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-$STARTtime = date("U");
-if (!isset($group)) {$group = '';}
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
-if (!isset($server_ip)) {$server_ip = '10.10.10.15';}
 
 $stmt="select group_id,group_name from vicidial_inbound_groups order by group_id;";
 $rslt=mysql_to_mysqli($stmt, $link);

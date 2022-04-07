@@ -1835,3 +1835,85 @@ UPDATE system_settings SET db_schema_version='1647',db_schema_update_date=NOW() 
 ALTER TABLE vicidial_url_multi ADD url_call_length SMALLINT(5) default '0';
 
 UPDATE system_settings SET db_schema_version='1648',db_schema_update_date=NOW() where db_schema_version < 1648;
+
+ALTER TABLE vicidial_users ADD user_location VARCHAR(100) default '';
+
+INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('USER_LOCATIONS_SYSTEM','User Locations List','OTHER','---ALL---',';location|description\n|default\n');
+
+CREATE TABLE vicidial_queue_groups (
+queue_group VARCHAR(20) NOT NULL,
+queue_group_name VARCHAR(40) NOT NULL,
+included_campaigns TEXT,
+included_inbound_groups TEXT,
+user_group VARCHAR(20) default '---ALL---',
+active ENUM('Y','N')
+) ENGINE=MyISAM;
+
+UPDATE system_settings SET db_schema_version='1649',db_schema_update_date=NOW() where db_schema_version < 1649;
+
+ALTER TABLE vicidial_user_groups ADD allowed_queue_groups TEXT;
+ALTER TABLE vicidial_user_groups ADD reports_header_override ENUM('DISABLED','LOGO_ONLY_SMALL','LOGO_ONLY_LARGE','ALT_1','ALT_2','ALT_3','ALT_4') default 'DISABLED';
+ALTER TABLE vicidial_user_groups ADD admin_home_url VARCHAR(255) default '';
+
+UPDATE system_settings SET db_schema_version='1650',db_schema_update_date=NOW() where db_schema_version < 1650;
+
+ALTER TABLE vicidial_campaigns ADD auto_alt_threshold TINYINT(3) UNSIGNED default '0';
+
+ALTER TABLE vicidial_lists ADD auto_alt_threshold TINYINT(3) default '-1';
+
+UPDATE system_settings SET db_schema_version='1651',db_schema_update_date=NOW() where db_schema_version < 1651;
+
+ALTER TABLE vicidial_users ADD download_invalid_files ENUM('0','1') default '0';
+
+UPDATE system_settings SET db_schema_version='1652',db_schema_update_date=NOW() where db_schema_version < 1652;
+
+ALTER TABLE vicidial_campaigns ADD pause_max_url TEXT;
+
+UPDATE system_settings SET db_schema_version='1653',db_schema_update_date=NOW() where db_schema_version < 1653;
+
+ALTER TABLE system_settings MODIFY script_remove_js ENUM('1','0','2','3','4','5','6') default '1';
+ALTER TABLE system_settings ADD agent_hide_hangup ENUM('1','0','2','3','4','5','6') default '0';
+
+ALTER TABLE vicidial_campaigns ADD agent_hide_hangup ENUM('Y','N') default 'N';
+
+UPDATE system_settings SET db_schema_version='1654',db_schema_update_date=NOW() where db_schema_version < 1654;
+
+ALTER TABLE system_settings ADD allow_web_debug ENUM('0','1','2','3','4','5','6') default '0';
+
+UPDATE system_settings SET db_schema_version='1655',db_schema_update_date=NOW() where db_schema_version < 1655;
+
+ALTER TABLE vicidial_campaigns MODIFY enable_xfer_presets ENUM('DISABLED','ENABLED','STAGING','CONTACTS') default 'DISABLED';
+
+CREATE TABLE vicidial_sync_log (
+user VARCHAR(20) default '',
+start_time DATETIME NOT NULL,
+db_time DATETIME NOT NULL,
+run_time VARCHAR(20) default '0',
+php_script VARCHAR(40) NOT NULL,
+action VARCHAR(100) default '',
+lead_id INT(10) UNSIGNED default '0',
+stage VARCHAR(200) default '',
+session_name VARCHAR(40) default '',
+last_sql TEXT,
+KEY ajax_dbtime_key (db_time)
+) ENGINE=MyISAM CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+UPDATE system_settings SET db_schema_version='1656',db_schema_update_date=NOW() where db_schema_version < 1656;
+
+ALTER TABLE vicidial_lists ADD cid_group_id VARCHAR(20) default '---DISABLED---';
+
+CREATE TABLE vicidial_dial_cid_log (
+caller_code VARCHAR(30) NOT NULL,
+call_date DATETIME,
+call_type ENUM('OUT','OUTBALANCE','MANUAL','OVERRIDE','3WAY') default 'OUT',
+call_alt VARCHAR(20) default '',
+outbound_cid VARCHAR(20) default '',
+outbound_cid_type VARCHAR(20) default '',
+index (caller_code),
+index (call_date)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_dial_cid_log_archive LIKE vicidial_dial_cid_log;
+CREATE UNIQUE INDEX caller_code_date on vicidial_dial_cid_log_archive (caller_code,call_date);
+
+UPDATE system_settings SET db_schema_version='1657',db_schema_update_date=NOW() where db_schema_version < 1657;

@@ -2,7 +2,7 @@
 # qc_api.php
 # 
 # Copyright (C) 2012  poundteam.com    LICENSE: AGPLv2
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to allow API functions for QC applications, contributed by poundteam.com
 #
@@ -16,10 +16,11 @@
 # 141229-2015 - Added code for on-the-fly language translations display
 # 150626-2120 - Modified mysqli_error() to mysqli_connect_error() where appropriate
 # 210306-1051 - Changes for new QC module
+# 220224-1021 - Added allow_web_debug system setting
 #
 
-$version = '2.14-8';
-$build = '210306-1051';
+$version = '2.14-9';
+$build = '220224-1021';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -134,15 +135,17 @@ if (isset($_GET["consultative"]))				{$consultative=$_GET["consultative"];}
 if (isset($_GET["DB"]))							{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))				{$DB=$_POST["DB"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
 header ("Content-type: text/html; charset=utf-8");
 header ("Cache-Control: no-cache, must-revalidate");  // HTTP/1.1
 header ("Pragma: no-cache");                          // HTTP/1.0
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -150,12 +153,28 @@ if ($qm_conf_ct > 0)
 	$non_latin =					$row[0];
 	$SSenable_languages =			$row[1];
 	$SSlanguage_method =			$row[2];
+	$SSallow_web_debug =			$row[3];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
 $ingroup_choices = preg_replace("/\+/"," ",$ingroup_choices);
 $query_string = preg_replace("/'|\"|\\\\|;/","",$query_string);
+$dial_override = preg_replace("/[^A-Z]/","",$dial_override);
+$consultative = preg_replace("/[^A-Z]/","",$consultative);
+$phone_code = preg_replace("/[^0-9X]/","",$phone_code);
+$format = preg_replace("/[^0-9a-zA-Z]/","",$format);
+$set_as_default = preg_replace("/[^A-Z]/","",$set_as_default);
+$phone_number = preg_replace("/[^0-9]/","",$phone_number);
+$blended = preg_replace("/[^A-Z]/","",$blended);
+$vtiger_callback = preg_replace("/[^A-Z]/","",$vtiger_callback);
+$alt_dial = preg_replace("/[^0-9A-Z]/","",$alt_dial);
+$rank = preg_replace("/[^-0-9]/","",$rank);
+$stage = preg_replace("/[^-_0-9a-zA-Z]/","",$stage);
+$close_window_link = preg_replace("/[^-_0-9a-zA-Z]/","",$close_window_link);
+$dnc_check = preg_replace("/[^-_0-9a-zA-Z]/","",$dnc_check);
+$campaign_dnc_check = preg_replace("/[^-_0-9a-zA-Z]/","",$campaign_dnc_check);
 
 if ($non_latin < 1)
 	{
@@ -163,24 +182,18 @@ if ($non_latin < 1)
 	$pass=preg_replace("/[^-_0-9a-zA-Z]/","",$pass);
 	$agent_user=preg_replace("/[^0-9a-zA-Z]/","",$agent_user);
 	$function = preg_replace("/[^-\_0-9a-zA-Z]/","",$function);
+	$status = preg_replace("/[^-_0-9a-zA-Z]/","",$status);
 	$value = preg_replace("/[^-\_0-9a-zA-Z]/","",$value);
 	$vendor_id = preg_replace("/[^-\.\_0-9a-zA-Z]/","",$vendor_id);
 	$focus = preg_replace("/[^-\_0-9a-zA-Z]/","",$focus);
 	$preview = preg_replace("/[^-\_0-9a-zA-Z]/","",$preview);
 		$notes = preg_replace("/\+/"," ",$notes);
 	$notes = preg_replace("/[^- \.\_0-9a-zA-Z]/","",$notes);
-	$phone_code = preg_replace("/[^0-9X]/","",$phone_code);
 	$search = preg_replace("/[^-\_0-9a-zA-Z]/","",$search);
 	$group_alias = preg_replace("/[^0-9a-zA-Z]/","",$group_alias);
 	$dial_prefix = preg_replace("/[^0-9a-zA-Z]/","",$dial_prefix);
 	$source = preg_replace("/[^0-9a-zA-Z]/","",$source);
-	$format = preg_replace("/[^0-9a-zA-Z]/","",$format);
-	$vtiger_callback = preg_replace("/[^A-Z]/","",$vtiger_callback);
-	$alt_dial = preg_replace("/[^0-9A-Z]/","",$alt_dial);
-	$blended = preg_replace("/[^A-Z]/","",$blended);
 	$ingroup_choices = preg_replace("/[^- \_0-9a-zA-Z]/","",$ingroup_choices);
-	$set_as_default = preg_replace("/[^A-Z]/","",$set_as_default);
-	$phone_number = preg_replace("/[^0-9]/","",$phone_number);
 	$address1 = preg_replace("/[^- \_0-9a-zA-Z]/","",$address1);
 	$address2 = preg_replace("/[^- \_0-9a-zA-Z]/","",$address2);
 	$address3 = preg_replace("/[^- \_0-9a-zA-Z]/","",$address3);
@@ -202,10 +215,7 @@ if ($non_latin < 1)
 	$state = preg_replace("/[^- \_0-9a-zA-Z]/","",$state);
 	$title = preg_replace("/[^- \_0-9a-zA-Z]/","",$title);
 	$vendor_lead_code = preg_replace("/[^- \.\_0-9a-zA-Z]/","",$vendor_lead_code);
-	$rank = preg_replace("/[^-0-9]/","",$rank);
 	$owner = preg_replace("/[^-\.\:\/\@\_0-9a-zA-Z]/","",$owner);
-	$dial_override = preg_replace("/[^A-Z]/","",$dial_override);
-	$consultative = preg_replace("/[^A-Z]/","",$consultative);
 		$callback_datetime = preg_replace("/\+/"," ",$callback_datetime);
 	$callback_datetime = preg_replace("/[^- \:\.\_0-9a-zA-Z]/","",$callback_datetime);
 	$callback_type = preg_replace("/[^A-Z]/","",$callback_type);
@@ -217,11 +227,51 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$user = preg_replace("/'|\"|\\\\|;/","",$user);
-	$pass = preg_replace("/'|\"|\\\\|;/","",$pass);
-	$source = preg_replace("/'|\"|\\\\|;/","",$source);
-	$agent_user = preg_replace("/'|\"|\\\\|;/","",$agent_user);
-	$alt_user = preg_replace("/'|\"|\\\\|;/","",$alt_user);
+	$user=preg_replace("/[^-_0-9\p{L}]/u","",$user);
+	$pass=preg_replace("/[^-_0-9\p{L}]/u","",$pass);
+	$agent_user=preg_replace("/[^0-9\p{L}]/u","",$agent_user);
+	$function = preg_replace("/[^-\_0-9\p{L}]/u","",$function);
+	$value = preg_replace("/[^-\_0-9\p{L}]/u","",$value);
+	$vendor_id = preg_replace("/[^-\.\_0-9\p{L}]/u","",$vendor_id);
+	$focus = preg_replace("/[^-\_0-9\p{L}]/u","",$focus);
+	$preview = preg_replace("/[^-\_0-9\p{L}]/u","",$preview);
+		$notes = preg_replace("/\+/"," ",$notes);
+	$notes = preg_replace("/[^- \.\_0-9\p{L}]/u","",$notes);
+	$search = preg_replace("/[^-\_0-9\p{L}]/u","",$search);
+	$group_alias = preg_replace("/[^0-9\p{L}]/u","",$group_alias);
+	$dial_prefix = preg_replace("/[^0-9\p{L}]/u","",$dial_prefix);
+	$source = preg_replace("/[^0-9\p{L}]/u","",$source);
+	$ingroup_choices = preg_replace("/[^- \_0-9\p{L}]/u","",$ingroup_choices);
+	$address1 = preg_replace("/[^- \_0-9\p{L}]/u","",$address1);
+	$address2 = preg_replace("/[^- \_0-9\p{L}]/u","",$address2);
+	$address3 = preg_replace("/[^- \_0-9\p{L}]/u","",$address3);
+	$alt_phone = preg_replace("/[^- \_0-9\p{L}]/u","",$alt_phone);
+	$city = preg_replace("/[^- \_0-9\p{L}]/u","",$city);
+	$comments = preg_replace("/[^- \_0-9\p{L}]/u","",$comments);
+	$country_code = preg_replace("/[^A-Z]/","",$country_code);
+	$date_of_birth = preg_replace("/[^- \_0-9]/","",$date_of_birth);
+	$email = preg_replace("/[^-\.\:\/\@\_0-9\p{L}]/u","",$email);
+	$first_name = preg_replace("/[^- \_0-9\p{L}]/u","",$first_name);
+	$gender = preg_replace("/[^A-Z]/","",$gender);
+	$gmt_offset_now = preg_replace("/[^- \.\_0-9]/","",$gmt_offset_now);
+	$last_name = preg_replace("/[^- \_0-9\p{L}]/u","",$last_name);
+	$lead_id = preg_replace("/[^0-9]/","",$lead_id);
+	$middle_initial = preg_replace("/[^- \_0-9\p{L}]/u","",$middle_initial);
+	$province = preg_replace("/[^- \.\_0-9\p{L}]/u","",$province);
+	$security_phrase = preg_replace("/[^- \.\_0-9\p{L}]/u","",$security_phrase);
+	$source_id = preg_replace("/[^- \.\_0-9\p{L}]/u","",$source_id);
+	$state = preg_replace("/[^- \_0-9\p{L}]/u","",$state);
+	$title = preg_replace("/[^- \_0-9\p{L}]/u","",$title);
+	$vendor_lead_code = preg_replace("/[^- \.\_0-9\p{L}]/u","",$vendor_lead_code);
+	$owner = preg_replace("/[^-\.\:\/\@\_0-9\p{L}]/u","",$owner);
+		$callback_datetime = preg_replace("/\+/"," ",$callback_datetime);
+	$callback_datetime = preg_replace("/[^- \:\.\_0-9\p{L}]/u","",$callback_datetime);
+	$callback_type = preg_replace("/[^A-Z]/","",$callback_type);
+		$callback_comments = preg_replace("/\+/"," ",$callback_comments);
+	$callback_comments = preg_replace("/[^- \.\_0-9\p{L}]/u","",$callback_comments);
+	$qm_dispo_code = preg_replace("/[^-\.\_0-9\p{L}]/u","",$qm_dispo_code);
+	$alt_user = preg_replace("/[^0-9\p{L}]/u","",$alt_user);
+	$postal_code = preg_replace("/[^- \.\_0-9\p{L}]/u","",$postal_code);
 	}
 
 ### date and fixed variables

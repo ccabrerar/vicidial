@@ -1,7 +1,7 @@
 <?php
 # admin_lists_custom.php
 # 
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # this screen manages the custom lists fields in ViciDial
 #
@@ -56,10 +56,12 @@
 # 210211-0032 - Added SOURCESELECT field type
 # 210304-2039 - Added option to "re-rank" field ranks when adding/updating a field in the middle of the form
 # 210311-2338 - Added BUTTON field type and 2FA
+# 220217-2004 - Added input variable filtering
+# 220221-0910 - Added allow_web_debug system setting
 #
 
-$admin_version = '2.14-47';
-$build = '210311-2338';
+$admin_version = '2.14-49';
+$build = '220221-0910';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -123,11 +125,13 @@ if (isset($_GET["SUBMIT"]))						{$SUBMIT=$_GET["SUBMIT"];}
 if (isset($_GET["field_rerank"]))				{$field_rerank=$_GET["field_rerank"];}
 	elseif (isset($_POST["field_rerank"]))		{$field_rerank=$_POST["field_rerank"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,user_territories_active,custom_fields_enabled,enable_languages,language_method,active_modules FROM system_settings;";
+$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,user_territories_active,custom_fields_enabled,enable_languages,language_method,active_modules,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -140,7 +144,9 @@ if ($qm_conf_ct > 0)
 	$SSenable_languages =			$row[5];
 	$SSlanguage_method =			$row[6];
 	$SSactive_modules =				$row[7];
+	$SSallow_web_debug =			$row[8];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
@@ -157,47 +163,54 @@ if ( (strlen($field_size) < 1) or ($field_size < 1) )
 if ( (strlen($field_max) < 1) or ($field_max < 1) )
 	{$field_max = 1;}
 
+$list_id = preg_replace('/[^0-9]/','',$list_id);
+$field_id = preg_replace('/[^0-9]/','',$field_id);
+$field_rank = preg_replace('/[^0-9]/','',$field_rank);
+$field_size = preg_replace('/[^0-9]/','',$field_size);
+$field_max = preg_replace('/[^0-9]/','',$field_max);
+$field_order = preg_replace('/[^0-9]/','',$field_order);
+$source_list_id = preg_replace('/[^0-9]/','',$source_list_id);
+$field_rerank = preg_replace('/[^_0-9a-zA-Z]/','',$field_rerank);
+$field_cost = preg_replace('/[^_0-9a-zA-Z]/','',$field_cost);
+$action = preg_replace('/[^-_0-9a-zA-Z]/','',$action);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/','',$SUBMIT);
+$field_encrypt = preg_replace('/[^NY]/','',$field_encrypt);
+$field_required = preg_replace('/[^_A-Z]/','',$field_required);
+$field_duplicate = preg_replace('/[^_A-Z]/','',$field_duplicate);
+$field_type = preg_replace('/[^0-9a-zA-Z]/','',$field_type);
+$ConFiRm = preg_replace('/[^0-9a-zA-Z]/','',$ConFiRm);
+$name_position = preg_replace('/[^0-9a-zA-Z]/','',$name_position);
+$multi_position = preg_replace('/[^0-9a-zA-Z]/','',$multi_position);
+$copy_option = preg_replace('/[^_0-9a-zA-Z]/','',$copy_option);
+$field_show_hide = preg_replace('/[^_0-9a-zA-Z]/','',$field_show_hide);
+
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/','',$PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/','',$PHP_AUTH_PW);
-
-	$list_id = preg_replace('/[^0-9]/','',$list_id);
-	$field_id = preg_replace('/[^0-9]/','',$field_id);
-	$field_rank = preg_replace('/[^0-9]/','',$field_rank);
-	$field_size = preg_replace('/[^0-9]/','',$field_size);
-	$field_max = preg_replace('/[^0-9]/','',$field_max);
-	$field_order = preg_replace('/[^0-9]/','',$field_order);
-	$source_list_id = preg_replace('/[^0-9]/','',$source_list_id);
-
-	$field_required = preg_replace('/[^_A-Z]/','',$field_required);
-	$field_encrypt = preg_replace('/[^NY]/','',$field_encrypt);
-	$field_duplicate = preg_replace('/[^_A-Z]/','',$field_duplicate);
-
-	$field_type = preg_replace('/[^0-9a-zA-Z]/','',$field_type);
-	$ConFiRm = preg_replace('/[^0-9a-zA-Z]/','',$ConFiRm);
-	$name_position = preg_replace('/[^0-9a-zA-Z]/','',$name_position);
-	$multi_position = preg_replace('/[^0-9a-zA-Z]/','',$multi_position);
-
 	$field_label = preg_replace('/[^_0-9a-zA-Z]/','',$field_label);
-	$copy_option = preg_replace('/[^_0-9a-zA-Z]/','',$copy_option);
-	$field_show_hide = preg_replace('/[^_0-9a-zA-Z]/','',$field_show_hide);
-
 	$field_name = preg_replace('/[^ \.\,-\_0-9a-zA-Z]/','',$field_name);
 	$field_description = preg_replace('/[^ \.\,-\_0-9a-zA-Z]/','',$field_description);
 	$field_options = preg_replace('/[^ \'\&\.\n\|\,-\_0-9a-zA-Z]/', '',$field_options);
 	if ($field_type != 'SCRIPT')
 		{$field_options = preg_replace('/[^ \.\n\|\,-\_0-9a-zA-Z]/', '',$field_options);}
-	$field_help = preg_replace('/[^ \'\&\.\n\|\,-\_0-9a-zA-Z]/', '',$field_help);
+	$field_help = preg_replace('/[^ \'\&\!\?\.\n\|\,-\_0-9a-zA-Z]/', '',$field_help);
 	$field_default = preg_replace('/[^ \.\n\,-\_0-9a-zA-Z]/', '',$field_default);
 	}	# end of non_latin
 else
 	{
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u','',$PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u','',$PHP_AUTH_PW);
+	$field_label = preg_replace('/[^_0-9\p{L}]/u','',$field_label);
+	$field_name = preg_replace('/[^ \.\,-\_0-9\p{L}]/u','',$field_name);
+	$field_description = preg_replace('/[^ \.\,-\_0-9\p{L}]/u','',$field_description);
+	$field_options = preg_replace('/[^ \'\&\.\n\|\,-\_0-9\p{L}]/u', '',$field_options);
+	if ($field_type != 'SCRIPT')
+		{$field_options = preg_replace('/[^ \.\n\|\,-\_0-9\p{L}]/u', '',$field_options);}
+	$field_help = preg_replace('/[^ \'\&\!\?\.\n\|\,-\_0-9\p{L}]/u', '',$field_help);
+	$field_default = preg_replace('/[^ \.\n\,-\_0-9\p{L}]/u', '',$field_default);
 	}
 
-$field_rerank = preg_replace('/[^_0-9a-zA-Z]/','',$field_rerank);
 
 $STARTtime = date("U");
 $TODAY = date("Y-m-d");

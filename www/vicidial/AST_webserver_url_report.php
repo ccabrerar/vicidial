@@ -1,7 +1,7 @@
 <?php 
 # AST_webserver_url_report.php
 # 
-# Copyright (C) 2019  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 140225-0229 - First build
@@ -11,6 +11,7 @@
 # 170818-2130 - Added HTML formatting
 # 170829-0040 - Added screen color settings
 # 191013-0907 - Fixes for PHP7
+# 220301-1616 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
@@ -51,8 +52,9 @@ if (isset($_GET["SUBMIT"]))					{$SUBMIT=$_GET["SUBMIT"];}
 if (isset($_GET["report_display_type"]))			{$report_display_type=$_GET["report_display_type"];}
 	elseif (isset($_POST["report_display_type"]))	{$report_display_type=$_POST["report_display_type"];}
 
-$NOW_DATE = date("Y-m-d");
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
+$NOW_DATE = date("Y-m-d");
 if (strlen($query_date_D) < 6) {$query_date_D = "00:00:00";}
 if (strlen($query_date_T) < 6) {$query_date_T = "23:59:59";}
 if (!isset($webserver)) {$webserver = array();}
@@ -62,9 +64,9 @@ if (!isset($end_date)) {$end_date = $NOW_DATE;}
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {$MAIN.="$stmt\n";}
+#if ($DB) {$MAIN.="$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -75,9 +77,26 @@ if ($qm_conf_ct > 0)
 	$reports_use_slave_db =			$row[3];
 	$SSenable_languages =			$row[4];
 	$SSlanguage_method =			$row[5];
+	$SSallow_web_debug =			$row[6];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$query_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date);
+$end_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $end_date);
+$query_date_D = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date_D);
+$query_date_T = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date_T);
+$end_date_D = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $end_date_D);
+$end_date_T = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $end_date_T);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+$report_display_type = preg_replace('/[^-_0-9a-zA-Z]/', '', $report_display_type);
+$file_download = preg_replace('/[^-_0-9a-zA-Z]/', '', $file_download);
+
+# Variables filtered further down in the code
+# $webserver
+# $url
 
 if ($non_latin < 1)
 	{
@@ -86,11 +105,9 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
-
-$NOW_DATE = date("Y-m-d");
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
@@ -221,6 +238,7 @@ $webserver_ct = count($webserver);
 $i=0;
 while($i < $webserver_ct)
 	{
+	$webserver[$i] = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$webserver[$i]);
 	$webserver_string .= "$webserver[$i]|";
 	$i++;
 	}
@@ -280,6 +298,7 @@ $url_ct = count($url);
 $i=0;
 while($i < $url_ct)
 	{
+	$url[$i] = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$url[$i]);
 	$url_string .= "$url[$i]|";
 	$i++;
 	}
@@ -307,6 +326,7 @@ $i=0;
 $url_SQL="";
 while($i < $url_ct)
 	{
+	$url[$i] = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$url[$i]);
 	if ( (strlen($url[$i]) > 0) and (preg_match("/\|$url[$i]\|/",$url_string)) ) 
 		{
 		$urls_string .= "$url[$i]|";

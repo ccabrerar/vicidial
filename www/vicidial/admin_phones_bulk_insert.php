@@ -1,7 +1,7 @@
 <?php
 # admin_phones_bulk_insert.php
 # 
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # this screen will insert phones into your multi-server system with aliases
 #
@@ -22,10 +22,11 @@
 # 181130-1304 - Added template option
 # 201112-1017 - Fix for side menu issue #1223
 # 210827-0907 - Added PJSIP support
+# 220222-1942 - Added allow_web_debug system setting
 #
 
-$admin_version = '2.14-15';
-$build = '210827-0907';
+$admin_version = '2.14-16';
+$build = '220222-1942';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -73,12 +74,13 @@ if (strlen($action) < 2)
 	{$action = 'BLANK';}
 if (strlen($DB) < 1)
 	{$DB=0;}
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,webroot_writable,enable_languages,language_method,admin_screen_colors,campaign_cid_areacodes_enabled,sounds_central_control_active,contacts_enabled,enable_auto_reports,allowed_sip_stacks FROM system_settings;";
+$stmt = "SELECT use_non_latin,webroot_writable,enable_languages,language_method,admin_screen_colors,campaign_cid_areacodes_enabled,sounds_central_control_active,contacts_enabled,enable_auto_reports,allowed_sip_stacks,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $ss_conf_ct = mysqli_num_rows($rslt);
 if ($ss_conf_ct > 0)
 	{
@@ -93,7 +95,9 @@ if ($ss_conf_ct > 0)
 	$SScontacts_enabled =				$row[7];
 	$SSenable_auto_reports =			$row[8];
 	$SSallowed_sip_stacks =				$row[9];
+	$SSallow_web_debug =				$row[10];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
@@ -104,31 +108,37 @@ $date = date("r");
 $ip = getenv("REMOTE_ADDR");
 $browser = getenv("HTTP_USER_AGENT");
 
+$servers = preg_replace("/'|\"|\\\\|;/","",$servers);
+$phones = preg_replace("/'|\"|\\\\|;/","",$phones);
+$action = preg_replace("/[^-_0-9a-zA-Z]/", "",$action);
+$alias_option = preg_replace("/[^-_0-9a-zA-Z]/", "",$alias_option);
+$protocol = preg_replace("/[^-_0-9a-zA-Z]/", "",$protocol);
+$local_gmt = preg_replace("/[^- \.\,\_0-9a-zA-Z]/","",$local_gmt);
+$is_webphone = preg_replace("/[^-_0-9a-zA-Z]/", "",$is_webphone);
+$webphone_dialpad = preg_replace("/[^-_0-9a-zA-Z]/", "",$webphone_dialpad);
+$webphone_auto_answer = preg_replace("/[^NY]/","",$webphone_auto_answer);
+$use_external_server_ip = preg_replace("/[^NY]/","",$use_external_server_ip);
+$SUBMIT = preg_replace("/[^-_0-9a-zA-Z]/", "",$SUBMIT);
+
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace("/[^-_0-9a-zA-Z]/", "",$PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace("/[^-_0-9a-zA-Z]/", "",$PHP_AUTH_PW);
-
-	$servers = preg_replace("/'|\"|\\\\|;/","",$servers);
-	$phones = preg_replace("/'|\"|\\\\|;/","",$phones);
-	$action = preg_replace("/[^-_0-9a-zA-Z]/", "",$action);
 	$conf_secret = preg_replace("/[^-_0-9a-zA-Z]/", "",$conf_secret);
 	$pass = preg_replace("/[^-_0-9a-zA-Z]/", "",$pass);
-	$alias_option = preg_replace("/[^-_0-9a-zA-Z]/", "",$alias_option);
 	$alias_suffix = preg_replace("/[^0-9a-zA-Z]/","",$alias_suffix);
-	$protocol = preg_replace("/[^-_0-9a-zA-Z]/", "",$protocol);
-	$local_gmt = preg_replace("/[^- \.\,\_0-9a-zA-Z]/","",$local_gmt);
-	$is_webphone = preg_replace("/[^-_0-9a-zA-Z]/", "",$is_webphone);
-	$webphone_dialpad = preg_replace("/[^-_0-9a-zA-Z]/", "",$webphone_dialpad);
-	$webphone_auto_answer = preg_replace("/[^NY]/","",$webphone_auto_answer);
-	$use_external_server_ip = preg_replace("/[^NY]/","",$use_external_server_ip);
 	$phone_context = preg_replace("/[^-\_0-9a-zA-Z]/","",$phone_context);
 	$template_id = preg_replace('/[^-_0-9a-zA-Z]/','',$template_id);
 	}	# end of non_latin
 else
 	{
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$conf_secret = preg_replace("/[^-_0-9\p{L}]/u", "",$conf_secret);
+	$pass = preg_replace("/[^-_0-9\p{L}]/u", "",$pass);
+	$alias_suffix = preg_replace("/[^0-9\p{L}]/u","",$alias_suffix);
+	$phone_context = preg_replace("/[^-\_0-9\p{L}]/u","",$phone_context);
+	$template_id = preg_replace('/[^-_0-9\p{L}]/u','',$template_id);
 	}
 
 $user = $PHP_AUTH_USER;

@@ -15,7 +15,7 @@
 #  - Auto reset lists at defined times
 #  - Auto restarts Asterisk process if enabled in servers settings
 #
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 61011-1348 - First build
@@ -153,9 +153,11 @@
 # 210712-2312 - Added purging of vicidial_lead_24hour_calls table
 # 210827-0939 - Added PJSIP compatibility
 # 210924-2333 - Fix for calls_today issue at timeclock-end-of-day
+# 220310-0959 - Added purging of vicidial_sync_log table
+# 220312-0819 - Added CID Group Auto-Rotate to check for List use
 #
 
-$build = '210924-2333';
+$build = '220312-0819';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -1857,6 +1859,24 @@ if ($timeclock_end_of_day_NOW > 0)
 		if ($DB) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
 		$sthA->finish();
 		##### END vicidial_ajax_log end of day process removing records older than 7 days #####
+
+
+		##### BEGIN vicidial_sync_log end of day process removing records older than 7 days #####
+		$stmtA = "DELETE from vicidial_sync_log where db_time < \"$SDSQLdate\";";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$affected_rows = $dbhA->do($stmtA);
+		if($DB){print STDERR "\n|$affected_rows vicidial_sync_log records older than 7 days purged|\n";}
+		if ($teodDB) {$event_string = "vicidial_sync_log records older than 7 days purged: |$stmtA|$affected_rows|";   &teod_logger;}
+
+		$stmtA = "optimize table vicidial_sync_log;";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		@aryA = $sthA->fetchrow_array;
+		if ($DB) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+		$sthA->finish();
+		##### END vicidial_sync_log end of day process removing records older than 7 days #####
 
 
 		##### BEGIN vicidial_vdad_log end of day process removing records older than 7 days #####
@@ -4990,6 +5010,13 @@ if ( ($active_voicemail_server =~ /$server_ip/) && ((length($active_voicemail_se
 	$i=0;
 	while ($sthArows > $i)
 		{
+		$Rcampaign_calldate='';
+		$Rcampaign_id='';
+		$Rcampaign_calldate_epoch=0;
+		$Lcampaign_calldate='';
+		$Llist_id='';
+		$Lcampaign_calldate_epoch=0;
+
 		$stmtA = "SELECT campaign_calldate,campaign_id,UNIX_TIMESTAMP(campaign_calldate) from vicidial_campaigns where cid_group_id='$cid_group_id[$i]' order by campaign_calldate desc limit 1;";
 		if ($DBX) {print "$stmtA\n";}
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
@@ -5004,13 +5031,27 @@ if ( ($active_voicemail_server =~ /$server_ip/) && ((length($active_voicemail_se
 			}
 		$sthA->finish();
 
-		if ( ($Rcampaign_calldate_epoch < $FMtarget) && (length($cid_auto_rotate_cid[$i]) >= 6 ) )
+		$stmtA = "SELECT list_lastcalldate,list_id,UNIX_TIMESTAMP(list_lastcalldate) from vicidial_lists where cid_group_id='$cid_group_id[$i]' order by list_lastcalldate desc limit 1;";
+		if ($DBX) {print "$stmtA\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArowsX=$sthA->rows;
+		if ($sthArowsX > 0)
 			{
-			if ($DB) {print "     skip CID Group rotate, no recent campaign calls: $cid_group_id[$i]|$Rcampaign_id|$Rcampaign_calldate|  ($Rcampaign_calldate_epoch <> $FMtarget)\n";}
+			@aryA = $sthA->fetchrow_array;
+			$Lcampaign_calldate =			$aryA[0];
+			$Llist_id =						$aryA[1];
+			$Lcampaign_calldate_epoch =		$aryA[2];
+			}
+		$sthA->finish();
+
+		if ( ( ($Rcampaign_calldate_epoch < $FMtarget) && ($Lcampaign_calldate_epoch < $FMtarget) ) && (length($cid_auto_rotate_cid[$i]) >= 6 ) )
+			{
+			if ($DB) {print "     skip CID Group rotate, no recent campaign/list calls: $cid_group_id[$i]|$Rcampaign_id|$Rcampaign_calldate|  ($Rcampaign_calldate_epoch <> $FMtarget)|$Llist_id|$Lcampaign_calldate|($Lcampaign_calldate_epoch < $FMtarget)\n";}
 			}
 		else
 			{
-			if ($DBX) {print "     DEBUG: CID Group rotate, recent campaign calls: $cid_group_id[$i]|$Rcampaign_id|$Rcampaign_calldate|  ($Rcampaign_calldate_epoch <> $FMtarget)\n";}
+			if ($DBX) {print "     DEBUG: CID Group rotate, recent campaign/list calls: $cid_group_id[$i]|$Rcampaign_id|$Rcampaign_calldate|  ($Rcampaign_calldate_epoch <> $FMtarget)|$Llist_id|$Lcampaign_calldate|($Lcampaign_calldate_epoch < $FMtarget)\n";}
 			$rotate_run_minutes = (($secX - $cid_last_auto_rotate_epoch[$i]) / 60);
 			if ($rotate_run_minutes < $cid_auto_rotate_minutes[$i])
 				{

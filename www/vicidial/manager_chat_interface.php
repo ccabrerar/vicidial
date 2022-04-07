@@ -1,7 +1,7 @@
 <?php
 # manager_chat_interface.php
 # 
-# Copyright (C) 2018  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This page is for managers (level 8 or higher) to chat with live agents
 #
@@ -16,10 +16,11 @@
 # 170409-1551 - Added IP List validation code
 # 180508-2215 - Added new help display
 # 210114-1338 - Fixed user group permission bug, Issue #1240
+# 220223-0933 - Added allow_web_debug system setting
 #
 
-$admin_version = '2.14-10';
-$build = '210114-1338';
+$admin_version = '2.14-11';
+$build = '220223-0933';
 
 $sh="managerchats"; 
 
@@ -54,13 +55,14 @@ if (isset($_GET["submit_chat"]))						{$submit_chat=$_GET["submit_chat"];}
 	elseif (isset($_POST["submit_chat"]))				{$submit_chat=$_POST["submit_chat"];}
 if (!$allow_replies) {$allow_replies="N";}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
 $VUselected_language = '';
-$stmt = "SELECT use_non_latin,enable_queuemetrics_logging,enable_vtiger_integration,qc_features_active,outbound_autodial_active,sounds_central_control_active,enable_second_webform,user_territories_active,custom_fields_enabled,admin_web_directory,webphone_url,first_login_trigger,hosted_settings,default_phone_registration_password,default_phone_login_password,default_server_password,test_campaign_calls,active_voicemail_server,voicemail_timezones,default_voicemail_timezone,default_local_gmt,campaign_cid_areacodes_enabled,pllb_grouping_limit,did_ra_extensions_enabled,expanded_list_stats,contacts_enabled,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,allow_emails,allow_emails,level_8_disable_add,allow_chats,enable_languages,language_method,default_language FROM system_settings;";
+$stmt = "SELECT use_non_latin,enable_queuemetrics_logging,enable_vtiger_integration,qc_features_active,outbound_autodial_active,sounds_central_control_active,enable_second_webform,user_territories_active,custom_fields_enabled,admin_web_directory,webphone_url,first_login_trigger,hosted_settings,default_phone_registration_password,default_phone_login_password,default_server_password,test_campaign_calls,active_voicemail_server,voicemail_timezones,default_voicemail_timezone,default_local_gmt,campaign_cid_areacodes_enabled,pllb_grouping_limit,did_ra_extensions_enabled,expanded_list_stats,contacts_enabled,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,allow_emails,allow_emails,level_8_disable_add,allow_chats,enable_languages,language_method,default_language,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -103,10 +105,26 @@ if ($qm_conf_ct > 0)
     $SSenable_languages =					$row[35];
     $SSlanguage_method =					$row[36];
 	$SSdefault_language =					$row[37];
+	$SSallow_web_debug =					$row[38];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 $VUselected_language = $SSdefault_language;
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$list_id = preg_replace("/[^0-9]/","",$list_id);
+$action = preg_replace("/[^-_0-9a-zA-Z]/", "",$action);
+$SUBMIT = preg_replace("/[^-_0-9a-zA-Z]/", "",$SUBMIT);
+$manager_chat_id = preg_replace("/[^-_0-9a-zA-Z]/", "",$manager_chat_id);
+$allow_replies = preg_replace("/[^-_0-9a-zA-Z]/", "",$allow_replies);
+$end_all_chats = preg_replace("/[^-_0-9a-zA-Z]/", "",$end_all_chats);
+$submit_chat = preg_replace("/[^- \.\_0-9a-zA-Z]/", "",$submit_chat);
+
+### Variables filtered further down in the code
+# $available_chat_agents
+# $available_chat_groups
+# $available_chat_campaigns
+# $manager_message
 
 if ($non_latin < 1)
 	{
@@ -115,10 +133,9 @@ if ($non_latin < 1)
 	}	# end of non_latin
 else
 	{
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
-$list_id = preg_replace("/[^0-9]/","",$list_id);
 
 $STARTtime = date("U");
 $TODAY = date("Y-m-d");
@@ -209,6 +226,7 @@ else if ($submit_chat)
 	$chat_agents_SQL_OR="vicidial_live_agents.user in ('',";
 	while($i < $available_chat_agents_ct)
 		{
+		$available_chat_agents[$i] = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$available_chat_agents[$i]);
 		$available_chat_agents_string .= "$available_chat_agents[$i]|";
 		$chat_agents_SQL_OR.="'$available_chat_agents[$i]',";
 		$i++;
@@ -222,6 +240,7 @@ else if ($submit_chat)
 	$chat_groups_SQL_OR="vicidial_users.user_group in ('',";
 	while($i < $available_chat_groups_ct)
 		{
+		$available_chat_groups[$i] = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$available_chat_groups[$i]);
 		$available_chat_groups_string .= "$available_chat_groups[$i]|";
 		$chat_groups_SQL_OR.="'$available_chat_groups[$i]',";
 		$i++;
@@ -235,6 +254,7 @@ else if ($submit_chat)
 	$chat_campaigns_SQL_OR="vicidial_live_agents.campaign_id in ('',";
 	while($i < $available_chat_campaigns_ct)
 		{
+		$available_chat_campaigns[$i] = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$available_chat_campaigns[$i]);
 		$available_chat_campaigns_string .= "$available_chat_campaigns[$i]|";
 		$chat_campaigns_SQL_OR.="'$available_chat_campaigns[$i]',";
 		$i++;

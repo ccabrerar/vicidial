@@ -1,7 +1,7 @@
 <?php
 # lead_tools_advanced.php - Various tools for lead basic lead management, advanced version.
 #
-# Copyright (C) 2021  Matt Florell,Michael Cargile <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell,Michael Cargile <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 131016-1948 - Initial Build based upon lead_tools.php
@@ -16,10 +16,11 @@
 # 170819-1003 - Added allow_manage_active_lists option, Changed list selection to multi
 # 191119-1817 - Fixes for translations compatibility, issue #1142
 # 210607-0923 - Added option to reset called_count to 0
+# 220228-1012 - Added allow_web_debug system setting
 #
 
-$version = '2.14-12';
-$build = '210607-0923';
+$version = '2.14-13';
+$build = '220228-1012';
 
 # This limit is to prevent data inconsistancies.
 # If there are too many leads in a list this
@@ -73,8 +74,38 @@ if (isset($_GET["confirm_reset_called_count"])) {$confirm_reset_called_count=$_G
 	elseif (isset($_POST["confirm_reset_called_count"])) {$confirm_reset_called_count=$_POST["confirm_reset_called_count"];}
 if (isset($_GET["confirm_callback"])) {$confirm_callback=$_GET["confirm_callback"];}
 	elseif (isset($_POST["confirm_callback"])) {$confirm_callback=$_POST["confirm_callback"];}
+# Several sets of variable inputs are further down in the code as well
 
 $DB = preg_replace('/[^0-9]/','',$DB);
+
+#############################################
+##### START SYSTEM_SETTINGS LOOKUP #####
+$sys_settings_stmt = "SELECT use_non_latin,outbound_autodial_active,sounds_central_control_active,enable_languages,language_method,admin_screen_colors,report_default_format,allow_manage_active_lists,allow_web_debug FROM system_settings;";
+$sys_settings_rslt=mysql_to_mysqli($sys_settings_stmt, $link);
+#if ($DB) {echo "$sys_settings_stmt\n";}
+$num_rows = mysqli_num_rows($sys_settings_rslt);
+if ($num_rows > 0)
+	{
+	$sys_settings_row=mysqli_fetch_row($sys_settings_rslt);
+	$non_latin =						$sys_settings_row[0];
+	$SSoutbound_autodial_active =		$sys_settings_row[1];
+	$sounds_central_control_active =	$sys_settings_row[2];
+	$SSenable_languages =				$sys_settings_row[3];
+	$SSlanguage_method =				$sys_settings_row[4];
+	$SSadmin_screen_colors =			$sys_settings_row[5];
+	$SSreport_default_format =			$sys_settings_row[6];
+	$SSallow_manage_active_lists =		$sys_settings_row[7];
+	$SSallow_web_debug =				$sys_settings_row[8];
+	}
+else
+	{
+	# there is something really weird if there are no system settings
+	exit;
+	}
+if ($SSallow_web_debug < 1) {$DB=0;}
+##### END SETTINGS LOOKUP #####
+###########################################
+
 $move_submit = preg_replace('/[^-_0-9a-zA-Z]/','',$move_submit);
 $update_submit = preg_replace('/[^-_0-9a-zA-Z]/','',$update_submit);
 $delete_submit = preg_replace('/[^-_0-9a-zA-Z]/','',$delete_submit);
@@ -88,40 +119,6 @@ $confirm_callback = preg_replace('/[^-_0-9a-zA-Z]/','',$confirm_callback);
 $delete_status = preg_replace('/[^-_0-9a-zA-Z]/','',$delete_status);
 $reset_called_count_status = preg_replace('/[^-_0-9a-zA-Z]/','',$reset_called_count_status);
 
-$DBlink='';
-if ($DB)
-	{
-	$DBlink="?DB=$DB";
-	echo "<p>DB = $DB | "._QXZ("move_submit")." = $move_submit | "._QXZ("update_submit")." = $update_submit | "._QXZ("delete_submit")." = $delete_submit | "._QXZ("reset_called_count_submit")." = $reset_called_count_submit | "._QXZ("callback_submit")." = $callback_submit | "._QXZ("confirm_move")." = $confirm_move | "._QXZ("confirm_update")." = $confirm_update | "._QXZ("confirm_delete")." = $confirm_delete | "._QXZ("confirm_reset_called_count")." = $confirm_reset_called_count | "._QXZ("confirm_callback")." = $confirm_callback</p>";
-	}
-
-
-#############################################
-##### START SYSTEM_SETTINGS LOOKUP #####
-$sys_settings_stmt = "SELECT use_non_latin,outbound_autodial_active,sounds_central_control_active,enable_languages,language_method,admin_screen_colors,report_default_format,allow_manage_active_lists FROM system_settings;";
-$sys_settings_rslt=mysql_to_mysqli($sys_settings_stmt, $link);
-if ($DB) {echo "$sys_settings_stmt\n";}
-$num_rows = mysqli_num_rows($sys_settings_rslt);
-if ($num_rows > 0)
-	{
-	$sys_settings_row=mysqli_fetch_row($sys_settings_rslt);
-	$non_latin =						$sys_settings_row[0];
-	$SSoutbound_autodial_active =		$sys_settings_row[1];
-	$sounds_central_control_active =	$sys_settings_row[2];
-	$SSenable_languages =				$sys_settings_row[3];
-	$SSlanguage_method =				$sys_settings_row[4];
-	$SSadmin_screen_colors =			$sys_settings_row[5];
-	$SSreport_default_format =			$sys_settings_row[6];
-	$SSallow_manage_active_lists =		$sys_settings_row[7];
-	}
-else
-	{
-	# there is something really weird if there are no system settings
-	exit;
-	}
-##### END SETTINGS LOOKUP #####
-###########################################
-
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
@@ -129,10 +126,16 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
-$list_id_override = preg_replace('/[^0-9]/','',$list_id_override);
+
+$DBlink='';
+if ($DB)
+	{
+	$DBlink="?DB=$DB";
+	echo "<p>DB = $DB | "._QXZ("move_submit")." = $move_submit | "._QXZ("update_submit")." = $update_submit | "._QXZ("delete_submit")." = $delete_submit | "._QXZ("reset_called_count_submit")." = $reset_called_count_submit | "._QXZ("callback_submit")." = $callback_submit | "._QXZ("confirm_move")." = $confirm_move | "._QXZ("confirm_update")." = $confirm_update | "._QXZ("confirm_delete")." = $confirm_delete | "._QXZ("confirm_reset_called_count")." = $confirm_reset_called_count | "._QXZ("confirm_callback")." = $confirm_callback</p>";
+	}
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
@@ -2547,7 +2550,7 @@ if ( ( $delete_submit == _QXZ("delete") ) && ( $delete_lists > 0 ) )
 		}
 
 	# filter out anything bad
-	$enable_delete_status = preg_replace('/[^a-zA-Z]/','',$enable_delete_status);
+	$enable_delete_lead_id = preg_replace('/[^a-zA-Z]/','',$enable_delete_lead_id);
 	$enable_delete_country_code = preg_replace('/[^a-zA-Z]/','',$enable_delete_country_code);
 	$enable_delete_vendor_lead_code = preg_replace('/[^a-zA-Z]/','',$enable_delete_vendor_lead_code);
 	$enable_delete_source_id = preg_replace('/[^a-zA-Z]/','',$enable_delete_source_id);
@@ -2950,7 +2953,7 @@ if ( ( $confirm_delete == _QXZ("confirm") ) && ( $delete_lists > 0 ) )
 		}
 
 	# filter out anything bad
-	$enable_delete_status = preg_replace('/[^a-zA-Z]/','',$enable_delete_status);
+	$enable_delete_lead_id = preg_replace('/[^a-zA-Z]/','',$enable_delete_lead_id);
 	$enable_delete_country_code = preg_replace('/[^a-zA-Z]/','',$enable_delete_country_code);
 	$enable_delete_vendor_lead_code = preg_replace('/[^a-zA-Z]/','',$enable_delete_vendor_lead_code);
 	$enable_delete_source_id = preg_replace('/[^a-zA-Z]/','',$enable_delete_source_id);
@@ -3324,7 +3327,7 @@ if ( ( $reset_called_count_submit == _QXZ("reset called count") ) && ( $modify_l
 		}
 
 	# filter out anything bad
-	$enable_reset_called_count_status = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_status);
+	$enable_reset_called_count_lead_id = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_lead_id);
 	$enable_reset_called_count_country_code = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_country_code);
 	$enable_reset_called_count_vendor_lead_code = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_vendor_lead_code);
 	$enable_reset_called_count_source_id = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_source_id);
@@ -3727,7 +3730,7 @@ if ( ( $confirm_reset_called_count == _QXZ("confirm") ) && ( $modify_leads > 0 )
 		}
 
 	# filter out anything bad
-	$enable_reset_called_count_status = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_status);
+	$enable_reset_called_count_lead_id = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_lead_id);
 	$enable_reset_called_count_country_code = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_country_code);
 	$enable_reset_called_count_vendor_lead_code = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_vendor_lead_code);
 	$enable_reset_called_count_source_id = preg_replace('/[^a-zA-Z]/','',$enable_reset_called_count_source_id);

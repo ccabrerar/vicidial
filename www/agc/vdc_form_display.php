@@ -1,7 +1,7 @@
 <?php
 # vdc_form_display.php
 # 
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed display the contents of the FORM tab in the agent 
 # interface, as well as take submission of the form submission when the agent 
@@ -223,6 +223,8 @@ if (isset($_GET["orig_URL"]))			{$orig_URL=$_GET["orig_URL"];}
 if (isset($_GET["DB"]))				{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))	{$DB=$_POST["DB"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
 if ($bcrypt == 'OFF')
 	{$bcrypt=0;}
 
@@ -278,6 +280,12 @@ $vdcURL = $vdcPAGE . '?' . $query_string;
 
 $vicidial_list_fields = '|lead_id|entry_date|vendor_lead_code|source_id|list_id|gmt_offset_now|called_since_last_reset|phone_code|phone_number|title|first_name|middle_initial|last_name|address1|address2|address3|city|state|province|postal_code|country_code|gender|date_of_birth|alt_phone|email|security_phrase|comments|called_count|last_local_call_time|rank|owner|';
 
+# default optional vars if not set
+if (!isset($format))   {$format="text";}
+	if ($format == 'debug')	{$DB=1;}
+if (!isset($ACTION))   {$ACTION="custom_form_frame";}
+if (!isset($query_date)) {$query_date = $NOW_DATE;}
+
 $IFRAME=0;
 $SUBMIT_only=0;
 
@@ -286,22 +294,10 @@ $pass = preg_replace("/\'|\"|\\\\|;| /","",$pass);
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
-$VUselected_language = '';
-$stmt="SELECT selected_language from vicidial_users where user='$user';";
-if ($DB) {echo "|$stmt|\n";}
-$rslt=mysql_to_mysqli($stmt, $link);
-	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'06002',$user,$server_ip,$session_name,$one_mysql_log);}
-$sl_ct = mysqli_num_rows($rslt);
-if ($sl_ct > 0)
-	{
-	$row=mysqli_fetch_row($rslt);
-	$VUselected_language =		$row[0];
-	}
-
-$stmt = "SELECT use_non_latin,timeclock_end_of_day,agentonly_callback_campaign_lock,custom_fields_enabled,enable_languages,language_method,agent_debug_logging FROM system_settings;";
+$stmt = "SELECT use_non_latin,timeclock_end_of_day,agentonly_callback_campaign_lock,custom_fields_enabled,enable_languages,language_method,agent_debug_logging,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'06005',$user,$server_ip,$session_name,$one_mysql_log);}
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -313,44 +309,146 @@ if ($qm_conf_ct > 0)
 	$SSenable_languages =					$row[4];
 	$SSlanguage_method =					$row[5];
 	$SSagent_debug_logging =				$row[6];
+	$SSallow_web_debug =					$row[7];
+	}
+if ($SSallow_web_debug < 1) {$DB=0;}
+
+$VUselected_language = '';
+$stmt="SELECT selected_language from vicidial_users where user='$user';";
+if ($DB) {echo "|$stmt|\n";}
+$rslt=mysql_to_mysqli($stmt, $link);
+	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'06002',$user,$server_ip,$session_name,$one_mysql_log);}
+$sl_ct = mysqli_num_rows($rslt);
+if ($sl_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$VUselected_language =		$row[0];
 	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-$length_in_sec = preg_replace("/[^0-9]/","",$length_in_sec);
-$phone_code = preg_replace("/[^0-9]/","",$phone_code);
-$phone_number = preg_replace("/[^0-9]/","",$phone_number);
+$agent_email = preg_replace("/\<|\>|\"|\\\\|;/",'-',$agent_email);
+$agent_log_id = preg_replace("/\<|\>|\"|\\\\|;/",'-',$agent_log_id);
+$agent_log_id = preg_replace('/[^0-9]/', '', $agent_log_id);
+$button_action = preg_replace('/[^-_0-9a-zA-Z]/','',$button_action);
+$call_id = preg_replace('/[^-_\.0-9a-zA-Z]/','',$call_id);
+$called_count = preg_replace("/\<|\>|\"|\\\\|;/",'-',$called_count);
+$camp_script = preg_replace("/\<|\>|\"|\\\\|;/",'-',$camp_script);
+$channel_group = preg_replace("/\<|\>|\"|\\\\|;/",'-',$channel_group);
+$closecallid = preg_replace("/[^-_0-9a-zA-Z]/",'-',$closecallid);
+$closer = preg_replace("/\<|\>|\"|\\\\|;/",'-',$closer);
+$customer_server_ip = preg_replace("/\<|\>|\"|\\\\|;/",'-',$customer_server_ip);
+$customer_zap_channel = preg_replace("/\<|\>|\"|\\\\|;/",'-',$customer_zap_channel);
+$DB = preg_replace("/\"|\\\\|;/",'-',$DB);
+$dialed_label = preg_replace("/\<|\>|\"|\\\\|;/",'-',$dialed_label);
+$dialed_number = preg_replace("/\<|\>|\"|\\\\|;/",'-',$dialed_number);
+$did_custom_five  = preg_replace("/\<|\>|\"|\\\\|;/",'-',$did_custom_five );
+$did_custom_four = preg_replace("/\<|\>|\"|\\\\|;/",'-',$did_custom_four);
+$did_custom_one = preg_replace("/\<|\>|\"|\\\\|;/",'-',$did_custom_one);
+$did_custom_three = preg_replace("/\<|\>|\"|\\\\|;/",'-',$did_custom_three);
+$did_custom_two = preg_replace("/\<|\>|\"|\\\\|;/",'-',$did_custom_two);
+$did_description = preg_replace("/\<|\>|\"|\\\\|;/",'-',$did_description);
+$did_extension = preg_replace("/\<|\>|\"|\\\\|;/",'-',$did_extension);
+$did_id = preg_replace("/\<|\>|\"|\\\\|;/",'-',$did_id);
+$did_pattern = preg_replace("/\<|\>|\"|\\\\|;/",'-',$did_pattern);
+$epoch = preg_replace("/\<|\>|\"|\\\\|;/",'-',$epoch);
+$fronter = preg_replace("/\<|\>|\"|\\\\|;/",'-',$fronter);
+$fullname = preg_replace("/\<|\>|\"|\\\\|;/",'-',$fullname);
+$in_script = preg_replace("/\<|\>|\"|\\\\|;/",'-',$in_script);
 $lead_id = preg_replace('/[^0-9]/', '', $lead_id);
 $list_id = preg_replace('/[^0-9]/', '', $list_id);
 $new_list_id = preg_replace('/[^0-9]/', '', $new_list_id);
-$agent_log_id = preg_replace('/[^0-9]/', '', $agent_log_id);
+$only_field = preg_replace('/[^-_0-9a-zA-Z]/','',$only_field);
+$original_phone_login = preg_replace("/\<|\>|\"|\\\\|;/",'-',$original_phone_login);
+$parked_by = preg_replace("/\<|\>|\"|\\\\|;/",'-',$parked_by);
+$pass = preg_replace("/\<|\>|\"|\\\\|;/",'-',$pass);
+$phone = preg_replace("/\<|\>|\"|\\\\|;/",'-',$phone);
+$phone_login = preg_replace("/\<|\>|\"|\\\\|;/",'-',$phone_login);
+$phone_pass = preg_replace("/\<|\>|\"|\\\\|;/",'-',$phone_pass);
+$preset_dtmf_a = preg_replace("/\<|\>|\"|\\\\|;/",'-',$preset_dtmf_a);
+$preset_dtmf_b = preg_replace("/\<|\>|\"|\\\\|;/",'-',$preset_dtmf_b);
+$preset_number_a = preg_replace("/\<|\>|\"|\\\\|;/",'-',$preset_number_a);
+$preset_number_b = preg_replace("/\<|\>|\"|\\\\|;/",'-',$preset_number_b);
+$preset_number_c = preg_replace("/\<|\>|\"|\\\\|;/",'-',$preset_number_c);
+$preset_number_d = preg_replace("/\<|\>|\"|\\\\|;/",'-',$preset_number_d);
+$preset_number_e = preg_replace("/\<|\>|\"|\\\\|;/",'-',$preset_number_e);
+$preset_number_f = preg_replace("/\<|\>|\"|\\\\|;/",'-',$preset_number_f);
+$recording_filename = preg_replace("/\<|\>|\"|\\\\|;/",'-',$recording_filename);
+$recording_id = preg_replace("/\<|\>|\"|\\\\|;/",'-',$recording_id);
+$script_height = preg_replace("/\<|\>|\"|\\\\|;/",'-',$script_height);
+$script_width = preg_replace("/\<|\>|\"|\\\\|;/",'-',$script_width);
 $server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
 $session_id = preg_replace('/[^0-9]/','',$session_id);
-$call_id = preg_replace('/[^-_\.0-9a-zA-Z]/','',$call_id);
-$button_action = preg_replace('/[^-_0-9a-zA-Z]/','',$button_action);
-$only_field = preg_replace('/[^-_0-9a-zA-Z]/','',$only_field);
+$SIPexten = preg_replace("/\<|\>|\"|\\\\|;/",'-',$SIPexten);
 $source_field = preg_replace('/[^-_0-9a-zA-Z]/','',$source_field);
 $source_field_value = preg_replace("/\'|\"|\\\\|;/",'',$source_field_value);
+$SQLdate = preg_replace("/\<|\>|\"|\\\\|;/",'-',$SQLdate);
+$uniqueid = preg_replace('/[^-_\.0-9a-zA-Z]/','',$uniqueid);
+$user_custom_five = preg_replace("/\"|\\\\|;/",'-',$user_custom_five);
+$user_custom_four = preg_replace("/\"|\\\\|;/",'-',$user_custom_four);
+$user_custom_one = preg_replace("/\"|\\\\|;/",'-',$user_custom_one);
+$user_custom_three = preg_replace("/\"|\\\\|;/",'-',$user_custom_three);
+$user_custom_two = preg_replace("/\"|\\\\|;/",'-',$user_custom_two);
+$user_group = preg_replace("/\<|\>|\"|\\\\|;/",'-',$user_group);
+$web_vars = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$web_vars);
+$xfercallid = preg_replace("/\<|\>|\"|\\\\|;/",'-',$xfercallid);
+$stage = preg_replace('/[^-_\.0-9a-zA-Z]/','',$stage);
+$submit_button = preg_replace('/[^-_0-9a-zA-Z]/','',$submit_button);
+$admin_submit = preg_replace('/[^-_0-9a-zA-Z]/','',$admin_submit);
+$bgcolor = preg_replace("/\<|\>|\'|\"|\\\\|;| /","",$bgcolor);
+$bcrypt = preg_replace('/[^-_0-9a-zA-Z]/','',$bcrypt);
+$hide_gender = preg_replace('/[^-_0-9a-zA-Z]/','',$hide_gender);
+$orig_URL = preg_replace("/\<|\>|\"|\\\\|;/",'-',$orig_URL);
 
 if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
+	$pass=preg_replace("/[^-\.\+\/\=_0-9a-zA-Z]/","",$pass);
 	$uniqueid = preg_replace('/[^-_\.0-9a-zA-Z]/','',$uniqueid);
 	$campaign = preg_replace('/[^-_0-9a-zA-Z]/','',$campaign);
-	$user_group = preg_replace('/[^-_0-9a-zA-Z]/','',$user_group);
+	$group = preg_replace('/[^-_0-9a-zA-Z]/','',$group);
+	$agent_email = preg_replace("/[^-\.\:\/\@\_0-9a-zA-Z]/",'-',$agent_email);
+	$did_id = preg_replace("/[^-_0-9a-zA-Z]/",'-',$did_id);
+	$did_extension = preg_replace("/[^-_0-9a-zA-Z]/",'-',$did_extension);
+	$did_pattern = preg_replace("/[^:\+\*\#\.\_0-9a-zA-Z]/",'-',$did_pattern);
+	$did_description = preg_replace("/[^- \.\,\_0-9a-zA-Z]/",'-',$did_description);
+	$xfercallid = preg_replace("/[^-_0-9a-zA-Z]/",'-',$xfercallid);
+	$agent_log_id = preg_replace("/[^-_0-9a-zA-Z]/",'-',$agent_log_id);
+	$user_group = preg_replace("/[^-_0-9a-zA-Z]/",'-',$user_group);
+	$called_count = preg_replace("/[^-_0-9a-zA-Z]/",'-',$called_count);
+	$did_custom_one = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$did_custom_one);
+	$did_custom_two = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$did_custom_two);
+	$did_custom_three = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$did_custom_three);
+	$did_custom_four = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$did_custom_four);
+	$did_custom_five  = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$did_custom_five );
+	$list_name = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$list_name);
+	$list_description = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$list_description);
 	}
 else
 	{
+	$user = preg_replace('/[^-_0-9\p{L}]/u','',$user);
+	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
 	$uniqueid = preg_replace('/[^-_\.0-9\p{L}]/u','',$uniqueid);
 	$campaign = preg_replace('/[^-_0-9\p{L}]/u','',$campaign);
-	$user_group = preg_replace('/[^-_0-9\p{L}]/u','',$user_group);
+	$group = preg_replace('/[^-_0-9\p{L}]/u','',$group);
+	$agent_email = preg_replace("/[^-\.\:\/\@\_0-9\p{L}]/u",'-',$agent_email);
+	$did_id = preg_replace("/[^-_0-9\p{L}]/u",'-',$did_id);
+	$did_extension = preg_replace("/[^-_0-9\p{L}]/u",'-',$did_extension);
+	$did_pattern = preg_replace("/[^:\+\*\#\.\_0-9\p{L}]/u",'-',$did_pattern);
+	$did_description = preg_replace("/[^- \.\,\_0-9\p{L}]/u",'-',$did_description);
+	$xfercallid = preg_replace("/[^-_0-9\p{L}]/u",'-',$xfercallid);
+	$agent_log_id = preg_replace("/[^-_0-9\p{L}]/u",'-',$agent_log_id);
+	$user_group = preg_replace("/[^-_0-9\p{L}]/u",'-',$user_group);
+	$called_count = preg_replace("/[^-_0-9\p{L}]/u",'-',$called_count);
+	$did_custom_one = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$did_custom_one);
+	$did_custom_two = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$did_custom_two);
+	$did_custom_three = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$did_custom_three);
+	$did_custom_four = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$did_custom_four);
+	$did_custom_five  = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$did_custom_five );
+	$list_name = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$list_name);
+	$list_description = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$list_description);
 	}
 
-# default optional vars if not set
-if (!isset($format))   {$format="text";}
-	if ($format == 'debug')	{$DB=1;}
-if (!isset($ACTION))   {$ACTION="custom_form_frame";}
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (strlen($SSagent_debug_logging) > 1)
 	{
 	if ($SSagent_debug_logging == "$user")

@@ -1,7 +1,7 @@
 <?php
 # closer_popup.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # this is the closer popup of a specific call that grabs the call and allows you
 # to go and fetch info on that caller in the local CRM system.
@@ -17,6 +17,7 @@
 # 141007-2213 - Finalized adding QXZ translation to all admin files
 # 141229-2035 - Added code for on-the-fly language translations display
 # 170409-1532 - Added IP List validation code
+# 220224-1554 - Added allow_web_debug system setting
 #
 
 require("dbconnect_mysqli.php");
@@ -59,12 +60,13 @@ if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
 if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))	{$SUBMIT=$_POST["SUBMIT"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,user_territories_active,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,user_territories_active,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -75,19 +77,42 @@ if ($qm_conf_ct > 0)
 	$user_territories_active =		$row[3];
 	$SSenable_languages =			$row[4];
 	$SSlanguage_method =			$row[5];
+	$SSallow_web_debug =			$row[6];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/', '', $server_ip);
+$dialplan_number = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$dialplan_number);
+$extension = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$extension);
+$PHONE_LOGIN = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$PHONE_LOGIN);
+$channel = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$channel);
+$parked_time = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$parked_time);
+$debugvars = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$debugvars);
+$parked_by = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$parked_by);
+$submit = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$submit);
+$SUBMIT = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$SUBMIT);
 
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$user = preg_replace('/[^-_0-9a-zA-Z]/', '', $user);
+	$group = preg_replace('/[^-_0-9a-zA-Z]/', '', $group);
+	$group_selected = preg_replace('/[^-_0-9a-zA-Z]/', '', $group_selected);
+	$groupselect = preg_replace('/[^-_0-9a-zA-Z]/', '', $groupselect);
+	$channel_group = preg_replace('/[^-_0-9a-zA-Z]/', '', $channel_group);
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$user = preg_replace('/[^-_0-9\p{L}]/u', '', $user);
+	$group = preg_replace('/[^-_0-9\p{L}]/u', '', $group);
+	$group_selected = preg_replace('/[^-_0-9\p{L}]/u', '', $group_selected);
+	$groupselect = preg_replace('/[^-_0-9\p{L}]/u', '', $groupselect);
+	$channel_group = preg_replace('/[^-_0-9\p{L}]/u', '', $channel_group);
 	}
 
 #$DB=1;

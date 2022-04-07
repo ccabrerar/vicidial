@@ -1,7 +1,7 @@
 <?php
 # dispo_move_list.php
 # 
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to be used in the "Dispo URL" field of a campaign
 # or in-group (although it can also be used in the "No Agent Call URL" field). 
@@ -67,6 +67,7 @@
 # 180419-2257 - Added multi_trigger option
 # 210615-1038 - Default security fixes, CVE-2021-28854
 # 210616-2046 - Added optional CORS support, see options.php for details
+# 220219-2253 - Added allow_web_debug system setting
 #
 
 $api_script = 'movelist';
@@ -125,6 +126,7 @@ if (isset($_GET["list_id_trigger"]))			{$list_id_trigger=$_GET["list_id_trigger"
 if (isset($_GET["multi_trigger"]))			{$multi_trigger=$_GET["multi_trigger"];}
 	elseif (isset($_POST["multi_trigger"]))	{$multi_trigger=$_POST["multi_trigger"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 #$DB = '1';	# DEBUG override
 $US = '_';
@@ -142,12 +144,6 @@ $k=0;
 # filter variables
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
-$lead_age = preg_replace('/[^_0-9]/', '', $lead_age);
-$lead_id = preg_replace('/[^_0-9]/', '', $lead_id);
-$list_id = preg_replace('/[^_0-9]/', '', $list_id);
-$new_list_id = preg_replace('/[^_0-9]/', '', $new_list_id);
-$list_id_trigger = preg_replace('/[^_0-9]/', '', $list_id_trigger);
-$multi_trigger=preg_replace("/\'|\"|\\\\|;| /","",$multi_trigger);
 
 # if options file exists, use the override values for the above variables
 #   see the options-example.php file for more information
@@ -160,6 +156,21 @@ header ("Content-type: text/html; charset=utf-8");
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
+$stmt = "SELECT use_non_latin,enable_languages,language_method,allow_web_debug FROM system_settings;";
+$rslt=mysql_to_mysqli($stmt, $link);
+	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02001',$user,$server_ip,$session_name,$one_mysql_log);}
+#if ($DB) {echo "$stmt\n";}
+$qm_conf_ct = mysqli_num_rows($rslt);
+if ($qm_conf_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$non_latin =				$row[0];
+	$SSenable_languages =		$row[1];
+	$SSlanguage_method =		$row[2];
+	$SSallow_web_debug =		$row[3];
+	}
+if ($SSallow_web_debug < 1) {$DB=0;}
+
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$user';";
 if ($DB) {echo "|$stmt|\n";}
@@ -171,26 +182,42 @@ if ($sl_ct > 0)
 	$row=mysqli_fetch_row($rslt);
 	$VUselected_language =		$row[0];
 	}
-
-$stmt = "SELECT use_non_latin,enable_languages,language_method FROM system_settings;";
-$rslt=mysql_to_mysqli($stmt, $link);
-	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02001',$user,$server_ip,$session_name,$one_mysql_log);}
-if ($DB) {echo "$stmt\n";}
-$qm_conf_ct = mysqli_num_rows($rslt);
-if ($qm_conf_ct > 0)
-	{
-	$row=mysqli_fetch_row($rslt);
-	$non_latin =				$row[0];
-	$SSenable_languages =		$row[1];
-	$SSlanguage_method =		$row[2];
-	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$lead_age = preg_replace('/[^_0-9]/', '', $lead_age);
+$lead_id = preg_replace('/[^_0-9]/', '', $lead_id);
+$list_id = preg_replace('/[^_0-9]/', '', $list_id);
+$new_list_id = preg_replace('/[^_0-9]/', '', $new_list_id);
+$list_id_trigger = preg_replace('/[^_0-9]/', '', $list_id_trigger);
+$multi_trigger=preg_replace("/\'|\"|\\\\|;| /","",$multi_trigger);
+$log_to_file = preg_replace('/[^-_0-9a-zA-Z]/', '', $log_to_file);
+$called_count = preg_replace('/[^-_0-9a-zA-Z]/', '', $called_count);
+$called_count_trigger = preg_replace('/[^-_0-9a-zA-Z]/', '', $called_count_trigger);
+$talk_time = preg_replace('/[^-_0-9a-zA-Z]/', '', $talk_time);
+$talk_time_trigger = preg_replace('/[^-_0-9a-zA-Z]/', '', $talk_time_trigger);
+$reset_dialed = preg_replace('/[^-_0-9a-zA-Z]/', '', $reset_dialed);
+$entry_date = preg_replace('/[^- \:_0-9a-zA-Z]/', '', $entry_date);
+$populate_sp_old_list = preg_replace('/[^-_0-9a-zA-Z]/', '', $populate_sp_old_list);
+$populate_comm_old_date = preg_replace('/[^-_0-9a-zA-Z]/', '', $populate_comm_old_date);
 
 if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
+	$pass=preg_replace("/[^-\.\+\/\=_0-9a-zA-Z]/","",$pass);
+	$exclude_status = preg_replace('/[^-_0-9a-zA-Z]/', '', $exclude_status);
+	$sale_status = preg_replace('/[^-_0-9a-zA-Z]/', '', $sale_status);
+	$dispo = preg_replace('/[^-_0-9a-zA-Z]/', '', $dispo);
 	}
+else
+	{
+	$user = preg_replace('/[^-_0-9\p{L}]/u','',$user);
+	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
+	$exclude_status = preg_replace('/[^-_0-9\p{L}]/u', '', $exclude_status);
+	$sale_status = preg_replace('/[^-_0-9\p{L}]/u', '', $sale_status);
+	$dispo = preg_replace('/[^-_0-9\p{L}]/u', '', $dispo);
+	}
+
 
 if ($lead_age > 0)
 	{
@@ -322,6 +349,10 @@ else
 		$sale_status = "$TD$sale_status$TD";
 		$lead_age = preg_replace('/[^_0-9]/', '', $lead_age);
 		$list_id_trigger = preg_replace('/[^_0-9]/', '', $list_id_trigger);
+		$called_count_trigger = preg_replace('/[^-_0-9a-zA-Z]/', '', $called_count_trigger);
+		$talk_time_trigger = preg_replace('/[^-_0-9a-zA-Z]/', '', $talk_time_trigger);
+		$sale_status = preg_replace('/[^-_0-9\p{L}]/u', '', $sale_status);
+		$exclude_status = preg_replace('/[^-_0-9\p{L}]/u', '', $exclude_status);
 
 		if ($lead_age > 0)
 			{
@@ -362,6 +393,8 @@ else
 								if (isset($_GET["$resetfield"]))			{$reset_dialed=$_GET["$resetfield"];}
 									elseif (isset($_POST["$resetfield"]))	{$reset_dialed=$_POST["$resetfield"];}
 								$new_list_id = preg_replace('/[^_0-9]/', '', $new_list_id);
+								$reset_dialed = preg_replace('/[^-_0-9a-zA-Z]/', '', $reset_dialed);
+
 								if ($DB) {echo _QXZ("MULTI_MATCH:")." $k|$sale_status|$new_list_id|$reset_dialed|$exclude_status|$talk_time_trigger|$called_count_trigger|\n";}
 								}
 							}

@@ -1,12 +1,13 @@
 <?php
 # recording_log_redirect.php - audio recording access logging and redirect script
 # 
-# Copyright (C) 2017  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 160116-1349 - First Build
 # 170409-1538 - Added IP List validation code
 # 210401-1625 - Added no_redirect for logging when playing a Javascript audio object
+# 220227-0858 - Added allow_web_debug system setting
 #
  
 require("dbconnect_mysqli.php");
@@ -25,13 +26,16 @@ if (isset($_GET["no_redirect"]))				{$no_redirect=$_GET["no_redirect"];}
 	elseif (isset($_POST["no_redirect"]))		{$no_redirect=$_POST["no_redirect"];}
 if (isset($_GET["search_archived_data"]))			{$search_archived_data=$_GET["search_archived_data"];}
 	elseif (isset($_POST["search_archived_data"]))	{$search_archived_data=$_POST["search_archived_data"];}
+if (isset($_GET["DB"]))							{$DB=$_GET["DB"];}
+	elseif (isset($_POST["DB"]))				{$DB=$_POST["DB"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,custom_fields_enabled,webroot_writable,allow_emails,enable_languages,language_method,active_modules,log_recording_access FROM system_settings;";
+$stmt = "SELECT use_non_latin,custom_fields_enabled,webroot_writable,allow_emails,enable_languages,language_method,active_modules,log_recording_access,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -44,23 +48,26 @@ if ($qm_conf_ct > 0)
 	$SSlanguage_method =		$row[5];
 	$active_modules =			$row[6];
 	$log_recording_access =		$row[7];
+	$SSallow_web_debug =		$row[8];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
 $recording_id = preg_replace('/[^0-9]/','',$recording_id);
 $lead_id = preg_replace('/[^0-9]/','',$lead_id);
-$search_archived_data = preg_replace("/'|\"|\\\\|;/","",$search_archived_data);
+$no_redirect = preg_replace('/[^-_0-9a-zA-Z]/','',$no_redirect);
+$search_archived_data = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$search_archived_data);
 
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/','',$PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/','',$PHP_AUTH_PW);
-	}	# end of non_latin
+	}
 else
 	{
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
 
 if ($search_archived_data) 

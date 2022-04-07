@@ -1,22 +1,29 @@
-ALTERNATE NUMBER DIALING Redesign	Started: 2008-08-20	Updated: 2020-04-06
+ALTERNATE NUMBER DIALING Redesign	Started: 2008-08-20	Updated: 2022-01-19
 
 *** THIS SECTION OUTLINES PROPOSED CHANGES TO ALT-NUMBER-DIALING  in the 2.0.5 version ***
 *** FOR INFORMATION ON THE 2.0.3 AND 2.0.4 VERSION OF ALT NUMBER DIALING LOOK BELOW THIS SECTION ***
 
 
 As of the 2.4 svn version 2011-08-02 the MULTI_LEAD option has been enabled and is fully functional
-  (see the MULTI LEAD section below)
+  (see the "MULTI LEAD" section below)
 
 As of the 2.2.0 version a lot of bugs have been fixed, and DNC statuses can now be used as auto-alt-dial triggering statuses
 
 Some important rules:
-- never duplicate the same number for the same lead in phone_number, alt_phone, address3 or any of the vicidial_list_alt_phones entries, doing so will mess up the auto-alt-dialing process causing numbers to be dialed many more times than they should
+- never duplicate the same phone number for the same lead in phone_number, alt_phone, address3 or any of the vicidial_list_alt_phones entries, doing so will mess up the auto-alt-dialing process causing numbers to be dialed many more times than they should
 - make sure you do not have conflicting lead recycling and auto-alt-dial statuses, this can cause other duplicate dialing problems
 
 
 
 
-In order to allow for more alt-numbers per lead to dial we built a new method of storing and dialing alt-numbers for leads.
+*For the old standard Auto-Alt-Number-Dialing features(allowing up to 3 phone numbers per lead) see the "STANDARD ALTERNATE NUMBER DIALING" section below
+
+
+
+
+Notes on EXTENDED standard auto-alt-number dialing:
+
+In order to allow for more than 3 total phone numbers per lead to dial we built a new method of storing and dialing alt-numbers for leads.
 
 CLI lead loader will be changed to allow for the importation of upto 65,000 phone numbers per lead. The new file format is shown below.
 
@@ -39,6 +46,7 @@ The multi-alt-entries field is formatted as a field of phone-number/phone-code/p
 
 
 
+
 MULTI LEAD Auto Alt number dialing: (PREFERRED, WITH MORE OPTIONS THAN STANDARD AUTO-ALT-DIALING, unlimited numbers per account, tied together by vendor_lead_code)
 
 Using MULTI_LEAD is different from the other standard Auto-Alt-Dial functions, it allows you to use a separate lead for each number on a customer account that all share a common vendor_lead_code, and the type of phone number for each is to be defined with a label in the Owner field. This option will disable some options on the Modify Campaign screen and show a link to the Multi-Alt Settings page which allows you to set which phone number types, defined by the label of each lead, will be dialed and in what order. This will create a special lead filter and will alter the Rank field of all of the leads inside the lists set to this campaign in order to call them in the order you have specified. 
@@ -46,6 +54,7 @@ Using MULTI_LEAD is different from the other standard Auto-Alt-Dial functions, i
 The Auto-Alt-Statuses are still in used for MULTI_LEAD so you may want to make sure that statuses like DROP, PDROP and others to your campaign's auto-alt-dial statuses so that the other leads tied by vendor_lead_code in the campaign's lists are not deactivated.
 
 There is a feature in the hopper section of the modify campaign page that it is recommended you activate if you are using MULTI_LEAD auto-alt dialing: Hopper VLC Dup Check. This feature will prevent multiple numbers from the same account from getting inserted into the hopper at the same time.
+
 
 
 
@@ -109,7 +118,7 @@ UPDATE system_settings SET db_schema_version='1104';
 
 
 
-ALTERNATE NUMBER DIALING Summary and Overview                         2007-01-15
+STANDARD ALTERNATE NUMBER DIALING Summary and Overview      2007-01-15	Updated: 2022-01-19
 
 *** ALTERNATE NUMBER DIALING IN AUTODIAL MODE HAS BEEN ADDED IN THE 2.0.3 RELEASE ***
 
@@ -117,7 +126,15 @@ This document will outline the methods used to automatically dial the alt_phone 
 
 If you will be using automatic alt number dialing, it is strongly recommended that you filter your alternate numbers to be the proper length, and remove any non-numeric characters from those fields.
 
+A new Campaign and List-Override feature was added in January of 2022(svn/trunk rev 3553) called "Auto Alt-Number Dialing Threshold":
 
+"If Auto Alt-Number Dialing is enabled, and not set to MULTI_LEAD, then this setting will specify the number of call attempts to the lead after which the Auto Alt dialing will no longer place alternate number calls for a specific lead, if the lead is called after this number of attempts then only the main phone number will be called. There is also a List Override option for this feature. Default is 0 for the threshold being disabled."
+
+
+
+Technical explanation:
+
+!!! DO NOT MAKE THESE DATABASE CHANGES, FOR DOCUMENTATION PURPOSES ONLY !!!!
 
 First, a new field in vicidial_campaigns was needed to tell the dialer that it should look for contact numbers in the alt_phone and/or address3 fields if a call to a regular number results in a no-contact(NA/B/DC/N)[defined in the auto_alt_dial_statuses field in the vicidial_campaigns table].
 

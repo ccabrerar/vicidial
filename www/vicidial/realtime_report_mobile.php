@@ -1,7 +1,7 @@
 <?php 
 # realtime_report_mobile.php
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
 #
 # streamlined mobile version of live real-time stats for the VICIDIAL Auto-Dialer all servers
 #
@@ -15,12 +15,13 @@
 # 190228-1535 - Minor pre-release changes
 # 200309-1819 - Modifications for display formatting
 # 210827-1818 - Fix for security issue
+# 220221-1522 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
 
-$version = '2.14-3';
-$build = '200309-1819';
+$version = '2.14-4';
+$build = '220221-1522';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -89,19 +90,21 @@ if (isset($_GET["PRESETstats"]))			{$PRESETstats=$_GET["PRESETstats"];}
 	elseif (isset($_POST["PRESETstats"]))	{$PRESETstats=$_POST["PRESETstats"];}
 if (isset($_GET["AGENTtimeSTATS"]))				{$AGENTtimeSTATS=$_GET["AGENTtimeSTATS"];}
 	elseif (isset($_POST["AGENTtimeSTATS"]))	{$AGENTtimeSTATS=$_POST["AGENTtimeSTATS"];}
-if (isset($_GET["INGROUPcolorOVERRIDE"]))				{$INGROUPcolorOVERRIDE=$_GET["INGROUPcolorOVERRIDE"];}
+if (isset($_GET["INGROUPcolorOVERRIDE"]))			{$INGROUPcolorOVERRIDE=$_GET["INGROUPcolorOVERRIDE"];}
 	elseif (isset($_POST["INGROUPcolorOVERRIDE"]))	{$INGROUPcolorOVERRIDE=$_POST["INGROUPcolorOVERRIDE"];}
 if (isset($_GET["droppedOFtotal"]))				{$droppedOFtotal=$_GET["droppedOFtotal"];}
 	elseif (isset($_POST["droppedOFtotal"]))	{$droppedOFtotal=$_POST["droppedOFtotal"];}
+
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 $report_name = 'Real-Time Main Report';
 $db_source = 'M';
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,agent_whisper_enabled,report_default_format,enable_pause_code_limits FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,agent_whisper_enabled,report_default_format,enable_pause_code_limits,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -115,7 +118,9 @@ if ($qm_conf_ct > 0)
 	$agent_whisper_enabled =		$row[6];
 	$SSreport_default_format =		$row[7];
 	$SSenable_pause_code_limits =	$row[8];
+	$SSallow_web_debug =			$row[9];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
@@ -261,8 +266,8 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
 $RR = preg_replace('/[^0-9]/', '', $RR);
 $inbound = preg_replace('/[^-_0-9a-zA-Z]/', '', $inbound);
@@ -293,6 +298,8 @@ $INGROUPcolorOVERRIDE = preg_replace('/[^-_0-9a-zA-Z]/', '', $INGROUPcolorOVERRI
 $droppedOFtotal = preg_replace('/[^-_0-9a-zA-Z]/', '', $droppedOFtotal);
 $server_ip=preg_replace("/[^0-9\.]/", "", $server_ip);
 $user_group_filter=preg_replace('/[^-_0-9\p{L}]/u','',$user_group_filter);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
 $TOTALdisplay+=$ALLINGROUPstats;
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";

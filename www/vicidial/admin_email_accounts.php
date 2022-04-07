@@ -1,7 +1,7 @@
 <?php
 # admin_email_accounts.php
 # 
-# Copyright (C) 2018  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This page manages the inbound email accounts in ViciDial
 #
@@ -24,10 +24,11 @@
 # 170409-1540 - Added IP List validation code
 # 180219-1233 - Fixed translation issue #1069
 # 180502-2215 - Added new help display
+# 220222-0906 - Added allow_web_debug system setting
 #
 
-$admin_version = '2.14-18';
-$build = '180502-2215';
+$admin_version = '2.14-19';
+$build = '220222-0906';
 
 $sh="emails"; 
 
@@ -95,11 +96,13 @@ if (isset($_GET["call_handle_method"]))						{$call_handle_method=$_GET["call_ha
 if (isset($_GET["agent_search_method"]))					{$agent_search_method=$_GET["agent_search_method"];}
 	elseif (isset($_POST["agent_search_method"]))			{$agent_search_method=$_POST["agent_search_method"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,enable_queuemetrics_logging,enable_vtiger_integration,qc_features_active,outbound_autodial_active,sounds_central_control_active,enable_second_webform,user_territories_active,custom_fields_enabled,admin_web_directory,webphone_url,first_login_trigger,hosted_settings,default_phone_registration_password,default_phone_login_password,default_server_password,test_campaign_calls,active_voicemail_server,voicemail_timezones,default_voicemail_timezone,default_local_gmt,campaign_cid_areacodes_enabled,pllb_grouping_limit,did_ra_extensions_enabled,expanded_list_stats,contacts_enabled,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,allow_emails,allow_emails,level_8_disable_add,enable_languages,language_method,active_modules,enable_auto_reports FROM system_settings;";
+$stmt = "SELECT use_non_latin,enable_queuemetrics_logging,enable_vtiger_integration,qc_features_active,outbound_autodial_active,sounds_central_control_active,enable_second_webform,user_territories_active,custom_fields_enabled,admin_web_directory,webphone_url,first_login_trigger,hosted_settings,default_phone_registration_password,default_phone_login_password,default_server_password,test_campaign_calls,active_voicemail_server,voicemail_timezones,default_voicemail_timezone,default_local_gmt,campaign_cid_areacodes_enabled,pllb_grouping_limit,did_ra_extensions_enabled,expanded_list_stats,contacts_enabled,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,allow_emails,allow_emails,level_8_disable_add,enable_languages,language_method,active_modules,enable_auto_reports,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -142,30 +145,56 @@ if ($qm_conf_ct > 0)
 	$SSlanguage_method =					$row[35];
 	$SSactive_modules =						$row[36];
 	$SSenable_auto_reports =				$row[37];
+	$SSallow_web_debug =					$row[38];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$list_id = preg_replace("/[^0-9]/","",$list_id);
+$default_list_id = preg_replace("/[^0-9]/","",$default_list_id);
+$email_frequency_check_mins = preg_replace("/[^0-9]/","",$email_frequency_check_mins);
+$active = preg_replace("/[^_0-9a-zA-Z]/","",$active);
+$protocol = preg_replace("/[^_0-9a-zA-Z]/","",$protocol);
+$action = preg_replace('/[^-_0-9a-zA-Z]/','',$action);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/','',$SUBMIT);
+$stage = preg_replace('/[^-_0-9a-zA-Z]/','',$stage);
+$eact = preg_replace('/[^-_0-9a-zA-Z]/','',$eact);
+$email_account_user = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$email_account_user);
+$email_account_pass = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$email_account_pass);
+$pop3_auth_mode = preg_replace('/[^-_0-9a-zA-Z]/','',$pop3_auth_mode);
+$email_account_type = preg_replace('/[^-_0-9a-zA-Z]/','',$email_account_type);
+$call_handle_method = preg_replace('/[^-_0-9a-zA-Z]/','',$call_handle_method);
+$agent_search_method = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_search_method);
+$confirm_deletion = preg_replace('/[^-_0-9a-zA-Z]/','',$confirm_deletion);
+$new_account_id = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$new_account_id);
+$source_email_account = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$source_email_account);
+$email_replyto_address = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$email_replyto_address);
 
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace("/[^-_0-9a-zA-Z]/", "",$PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace("/[^-_0-9a-zA-Z]/", "",$PHP_AUTH_PW);
-
 	$email_account_id = preg_replace("/[^_0-9a-zA-Z]/","",$email_account_id);
 	$email_account_name = preg_replace("/[^ \.\,-\_0-9a-zA-Z]/","",$email_account_name);
 	$email_account_description = preg_replace("/[^ \.\,-\_0-9a-zA-Z]/","",$email_account_description);
-	$user_group = preg_replace("/[^_0-9a-zA-Z]/","",$user_group);
-	$protocol = preg_replace("/[^_0-9a-zA-Z]/","",$protocol);
+	$user_group = preg_replace("/[^-_0-9a-zA-Z]/","",$user_group);
 	$email_account_server = preg_replace("/[^\.\-\_0-9a-zA-Z]/","",$email_account_server);
-	$active = preg_replace("/[^_0-9a-zA-Z]/","",$active);
-	$email_frequency_check_mins = preg_replace("/[^0-9]/","",$email_frequency_check_mins);
+	$group_id = preg_replace("/[^-_0-9a-zA-Z]/", "",$group_id);
+	$campaign_id = preg_replace("/[^-_0-9a-zA-Z]/", "",$campaign_id);
 	}	# end of non_latin
 else
 	{
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$email_account_id = preg_replace("/[^_0-9\p{L}]/u","",$email_account_id);
+	$email_account_name = preg_replace("/[^ \.\,-\_0-9\p{L}]/u","",$email_account_name);
+	$email_account_description = preg_replace("/[^ \.\,-\_0-9\p{L}]/u","",$email_account_description);
+	$user_group = preg_replace("/[^-_0-9\p{L}]/u","",$user_group);
+	$email_account_server = preg_replace("/[^\.\-\_0-9\p{L}]/u","",$email_account_server);
+	$group_id = preg_replace('/[^-_0-9\p{L}]/u', '', $group_id);
+	$campaign_id = preg_replace('/[^-_0-9\p{L}]/u', '', $campaign_id);
 	}
-$list_id = preg_replace("/[^0-9]/","",$list_id);
 
 $STARTtime = date("U");
 $TODAY = date("Y-m-d");

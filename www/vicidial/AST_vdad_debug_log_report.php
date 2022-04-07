@@ -1,12 +1,13 @@
 <?php 
 # AST_vdad_debug_log_report.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 161124-0737 - First build
 # 161201-0815 - Added more statistics and options
 # 170409-1550 - Added IP List validation code
+# 220301-1650 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
@@ -49,12 +50,22 @@ if (isset($_GET["submit"]))					{$submit=$_GET["submit"];}
 if (isset($_GET["SUBMIT"]))					{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))		{$SUBMIT=$_POST["SUBMIT"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+$DBX=preg_replace("/[^0-9a-zA-Z]/","",$DBX);
+
+$NOW_DATE = date("Y-m-d");
+if (strlen($query_date_D) < 6) {$query_date_D = "00:00:00";}
+if (strlen($query_date_T) < 6) {$query_date_T = "23:59:59";}
+if (!isset($query_date)) {$query_date = $NOW_DATE;}
+if (strlen($stage) < 2) {$stage = 'SUMMARY';}
+if (strlen($lrerr_statuses) < 1) {$lrerr_statuses = 0;}
+if (strlen($uncounted_statuses) < 1) {$uncounted_statuses = 0;}
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {$MAIN.="$stmt\n";}
+#if ($DB) {$MAIN.="$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -65,11 +76,23 @@ if ($qm_conf_ct > 0)
 	$reports_use_slave_db =			$row[3];
 	$SSenable_languages =			$row[4];
 	$SSlanguage_method =			$row[5];
+	$SSallow_web_debug =			$row[6];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;   $DBX=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-$NOW_DATE = date("Y-m-d");
+$query_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date);
+$query_date_D = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date_D);
+$query_date_T = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date_T);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+$lower_limit = preg_replace('/[^-_0-9a-zA-Z]/', '', $lower_limit);
+$upper_limit = preg_replace('/[^-_0-9a-zA-Z]/', '', $upper_limit);
+$file_download = preg_replace('/[^-_0-9a-zA-Z]/', '', $file_download);
+$archive = preg_replace('/[^-_0-9a-zA-Z]/', '', $archive);
+$lrerr_statuses = preg_replace('/[^-_0-9a-zA-Z]/', '', $lrerr_statuses);
+$uncounted_statuses = preg_replace('/[^-_0-9a-zA-Z]/', '', $uncounted_statuses);
 
 if ($non_latin < 1)
 	{
@@ -79,9 +102,9 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
-	$stage = preg_replace("/'|\"|\\\\|;/","",$stage);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$stage = preg_replace('/[^-_0-9\p{L}]/u',"",$stage);
 	}
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
@@ -207,13 +230,6 @@ if ( (strlen($slave_db_server)>5) and (preg_match("/$report_name/",$reports_use_
 	$MAIN.="<!-- Using slave server $slave_db_server $db_source -->\n";
 	}
 
-
-if (strlen($query_date_D) < 6) {$query_date_D = "00:00:00";}
-if (strlen($query_date_T) < 6) {$query_date_T = "23:59:59";}
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
-if (strlen($stage) < 2) {$stage = 'SUMMARY';}
-if (strlen($lrerr_statuses) < 1) {$lrerr_statuses = 0;}
-if (strlen($uncounted_statuses) < 1) {$uncounted_statuses = 0;}
 $vicidial_vdad_log = 'vicidial_vdad_log';
 if ($archive > 0) {$vicidial_vdad_log = 'vicidial_vdad_log_archive';}
 $vicidial_log = 'vicidial_log';

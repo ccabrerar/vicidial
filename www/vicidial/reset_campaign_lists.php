@@ -1,7 +1,7 @@
 <?php
 # reset_campaign_lists.php - VICIDIAL administration page
 #
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 130711-2051 - First build
@@ -11,10 +11,11 @@
 # 160508-2301 - Added colors features, fixed allowed campaigns bug
 # 170409-1541 - Added IP List validation code
 # 180916-1027 - Added per-list daily reset limit
+# 220223-0822 - Added allow_web_debug system setting
 #
 
-$admin_version = '2.14-7';
-$build = '180916-1027';
+$admin_version = '2.14-8';
+$build = '220223-0822';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -26,12 +27,20 @@ $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["DB"]))				{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))	{$DB=$_POST["DB"];}
+if (isset($_GET["reset_lead_called_campaigns"]))			{$reset_lead_called_campaigns=$_GET["reset_lead_called_campaigns"];}
+	elseif (isset($_POST["reset_lead_called_campaigns"]))	{$reset_lead_called_campaigns=$_POST["reset_lead_called_campaigns"];}
+if (isset($_GET["all_or_active_only"]))			{$all_or_active_only=$_GET["all_or_active_only"];}
+	elseif (isset($_POST["all_or_active_only"]))	{$all_or_active_only=$_POST["all_or_active_only"];}
+if (isset($_GET["submit_campaign_reset"]))			{$submit_campaign_reset=$_GET["submit_campaign_reset"];}
+	elseif (isset($_POST["submit_campaign_reset"]))	{$submit_campaign_reset=$_POST["submit_campaign_reset"];}
+
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,auto_dial_limit,user_territories_active,allow_custom_dialplan,callcard_enabled,admin_modify_refresh,nocache_admin,webroot_writable,allow_emails,hosted_settings,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,auto_dial_limit,user_territories_active,allow_custom_dialplan,callcard_enabled,admin_modify_refresh,nocache_admin,webroot_writable,allow_emails,hosted_settings,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -48,19 +57,26 @@ if ($qm_conf_ct > 0)
 	$SShosted_settings =			$row[9];
 	$SSenable_languages =			$row[10];
 	$SSlanguage_method =			$row[11];
+	$SSallow_web_debug =			$row[12];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$all_or_active_only = preg_replace('/[^- \_0-9a-zA-Z]/', '', $all_or_active_only);
+$submit_campaign_reset = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit_campaign_reset);
 
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$reset_lead_called_campaigns = preg_replace('/[^-_0-9a-zA-Z]/', '', $reset_lead_called_campaigns);
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$reset_lead_called_campaigns = preg_replace('/[^-_0-9\p{L}]/u', '', $reset_lead_called_campaigns);
 	}
 
 $NOW_DATE = date("Y-m-d");
@@ -222,13 +238,6 @@ if ( (!preg_match('/\-ALL/i', $LOGallowed_campaigns)) )
 	$whereLOGallowed_campaignsSQL = "where vc.campaign_id IN('$rawLOGallowed_campaignsSQL')";
 	}
 $regexLOGallowed_campaigns = " $LOGallowed_campaigns ";
-
-if (isset($_GET["reset_lead_called_campaigns"]))			{$reset_lead_called_campaigns=$_GET["reset_lead_called_campaigns"];}
-	elseif (isset($_POST["reset_lead_called_campaigns"]))	{$reset_lead_called_campaigns=$_POST["reset_lead_called_campaigns"];}
-if (isset($_GET["all_or_active_only"]))			{$all_or_active_only=$_GET["all_or_active_only"];}
-	elseif (isset($_POST["all_or_active_only"]))	{$all_or_active_only=$_POST["all_or_active_only"];}
-if (isset($_GET["submit_campaign_reset"]))			{$submit_campaign_reset=$_GET["submit_campaign_reset"];}
-	elseif (isset($_POST["submit_campaign_reset"]))	{$submit_campaign_reset=$_POST["submit_campaign_reset"];}
 
 ?>
 

@@ -1,7 +1,7 @@
 <?php 
 # QM_live_monitor.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # Script to initiate live monitoring from QueueMetrics link
 #
@@ -11,10 +11,11 @@
 # 130617-2128 - Added filtering of input to prevent SQL injection attacks
 # 130901-0859 - Changed to mysqli PHP functions
 # 180529-1005 - Added debug logging
+# 220226-2215 - Added allow_web_debug system setting
 #
 
-$version = '2.14-5';
-$build = '180529-1005';
+$version = '2.14-6';
+$build = '220226-2215';
 
 $DBlogfile=0; # set to 1 for logfile writing
 
@@ -48,15 +49,47 @@ if (isset($_GET["extension"]))			{$extension=$_GET["extension"];}
 if (isset($_GET["stage"]))				{$stage=$_GET["stage"];}
 	elseif (isset($_POST["stage"]))		{$stage=$_POST["stage"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
+$ERR=0;
+$ERRstring='';
+
+#############################################
+##### START QUEUEMETRICS LOGGING LOOKUP #####
+$stmt = "SELECT use_non_latin,enable_queuemetrics_logging,allow_web_debug FROM system_settings;";
+$rslt=mysql_to_mysqli($stmt, $link);
+#if ($DB) {echo "$stmt\n";}
+$qm_conf_ct = mysqli_num_rows($rslt);
+if ($qm_conf_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$non_latin =					$row[0];
+	$enable_queuemetrics_logging =	$row[1];
+	$SSallow_web_debug =			$row[2];
+	}
+if ($SSallow_web_debug < 1) {$DB=0;   $DBlogfile=0;}
+##### END QUEUEMETRICS LOGGING LOOKUP #####
+###########################################
+
 $call = preg_replace('/[^0-9a-zA-Z]/', '', $call);
-$user = preg_replace('/[^0-9a-zA-Z]/', '', $user);
-$extension = preg_replace("/'|\"|\\\\|;/", '', $extension);
-$server_ip = preg_replace("/'|\"|\\\\|;/", '', $server_ip);
-$stage = preg_replace("/'|\"|\\\\|;/", '', $stage);
-$campaign = preg_replace("/'|\"|\\\\|;/", '', $campaign);
-$phone = preg_replace("/'|\"|\\\\|;/", '', $phone);
-$type = preg_replace("/'|\"|\\\\|;/", '', $type);
-$QMuser = preg_replace("/'|\"|\\\\|;/", '', $QMuser);
+$session = preg_replace('/[^0-9a-zA-Z]/', '', $session);
+$extension = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $extension);
+$server_ip = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $server_ip);
+$stage = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $stage);
+$phone = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $phone);
+$type = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $type);
+$QMuser = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $QMuser);
+
+if ($non_latin < 1)
+	{
+	$user = preg_replace('/[^-_0-9a-zA-Z]/', '', $user);
+	$campaign = preg_replace('/[^-_0-9a-zA-Z]/', '', $campaign);
+	}
+else
+	{
+	$user = preg_replace('/[^-_0-9\p{L}]/u', '', $user);
+	$campaign = preg_replace('/[^-_0-9\p{L}]/u', '', $campaign);
+	}
 
 if ($DBlogfile > 0)
 	{
@@ -65,22 +98,6 @@ if ($DBlogfile > 0)
 	fclose($logfile);
 	}
 
-$ERR=0;
-$ERRstring='';
-
-#############################################
-##### START QUEUEMETRICS LOGGING LOOKUP #####
-$stmt = "SELECT enable_queuemetrics_logging FROM system_settings;";
-$rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
-$qm_conf_ct = mysqli_num_rows($rslt);
-if ($qm_conf_ct > 0)
-	{
-	$row=mysqli_fetch_row($rslt);
-	$enable_queuemetrics_logging =	$row[0];
-	}
-##### END QUEUEMETRICS LOGGING LOOKUP #####
-###########################################
 if ($enable_queuemetrics_logging > 0)
 	{
 	$stmt = "SELECT user,server_ip,conf_exten,comments FROM vicidial_live_agents where callerid='$call';";

@@ -1,17 +1,18 @@
 <?php
 # email_agent_login_link.php
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script sends an email to an agent with a link that will log them
 # into their vicidial account when clicked.
 #
 # changes:
 # 200324-1543 - Initial Build
+# 220228-1055 - Added allow_web_debug system setting
 #
 
-$version = '2.14-13';
-$build = '200324-1543';
+$version = '2.14-2';
+$build = '220228-1055';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -35,17 +36,14 @@ if (isset($_GET["agent_id"]))	{$agent_id=$_GET["agent_id"];}
 	elseif (isset($_POST["agent_id"]))	{$agent_id=$_POST["agent_id"];}
 
 $DB = preg_replace('/[^0-9]/','',$DB);
-$preview = preg_replace('/[^-_0-9a-zA-Z]/','',$preview);
-$agent_id = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_id);
 
 if ( $preview == "" ) { $preview == 1; }
 
-
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$sys_settings_stmt = "SELECT use_non_latin,outbound_autodial_active,sounds_central_control_active,enable_languages,language_method,admin_screen_colors,report_default_format,allow_manage_active_lists,user_account_emails,pass_hash_enabled FROM system_settings;";
+$sys_settings_stmt = "SELECT use_non_latin,outbound_autodial_active,sounds_central_control_active,enable_languages,language_method,admin_screen_colors,report_default_format,allow_manage_active_lists,user_account_emails,pass_hash_enabled,allow_web_debug FROM system_settings;";
 $sys_settings_rslt=mysql_to_mysqli($sys_settings_stmt, $link);
-if ($DB) {echo "$sys_settings_stmt\n";}
+#if ($DB) {echo "$sys_settings_stmt\n";}
 $num_rows = mysqli_num_rows($sys_settings_rslt);
 if ($num_rows > 0)
 	{
@@ -60,14 +58,19 @@ if ($num_rows > 0)
 	$SSallow_manage_active_lists =		$sys_settings_row[7];
 	$user_account_emails =				$sys_settings_row[8];
 	$pass_hash_enabled = 				$sys_settings_row[9];
+	$SSallow_web_debug =				$sys_settings_row[10];
 	}
 else
 	{
 	# there is something really weird if there are no system settings
 	exit;
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$preview = preg_replace('/[^-_0-9a-zA-Z]/','',$preview);
+$agent_id = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_id);
 
 if ($non_latin < 1)
 	{
@@ -76,10 +79,9 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
-$list_id_override = preg_replace('/[^0-9]/','',$list_id_override);
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}

@@ -1,7 +1,7 @@
 <?php
 # leadloader_template_display.php - version 2.14
 # 
-# Copyright (C) 2021  Matt Florell,Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell,Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 120402-2238 - First Build
@@ -18,6 +18,7 @@
 # 170409-1534 - Added IP List validation code
 # 171204-1518 - Fix for custom field duplicate issue, removed link to old lead loader
 # 210312-1700 - Added layout editing functionality
+# 220222-1059 - Added allow_web_debug system setting
 #
 
 require("dbconnect_mysqli.php");
@@ -48,11 +49,13 @@ if (isset($_GET["buffer"]))				{$buffer=$_GET["buffer"];}
 if (isset($_GET["DB"]))				{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))	{$DB=$_POST["DB"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,admin_web_directory,custom_fields_enabled,webroot_writable,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,admin_web_directory,custom_fields_enabled,webroot_writable,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -63,22 +66,35 @@ if ($qm_conf_ct > 0)
 	$webroot_writable =			$row[3];
 	$SSenable_languages =		$row[4];
 	$SSlanguage_method =		$row[5];
+	$SSallow_web_debug =		$row[6];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$list_id = preg_replace('/in_file/', '0', $list_id);
+$list_id = preg_replace('/[^0-9]/', '', $list_id);
+$form_action = preg_replace('/[^- \_0-9a-zA-Z]/', '', $form_action);
+$custom_fields_enabled = preg_replace('/[^- \_0-9a-zA-Z]/', '', $custom_fields_enabled);
+$delimiter = preg_replace("/\<|\>|\'|\"|;/",'',$delimiter);
+
+# Variables filtered further down in the code
+# $buffer
+# $sample_template_file
+# $sample_template_file_name
 
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$template_id = preg_replace('/[^-_0-9a-zA-Z]/', '', $template_id);
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$template_id = preg_replace('/[^-_0-9\p{L}]/u', '', $template_id);
 	}
-$list_id = preg_replace('/in_file/', '0', $list_id);
-$list_id = preg_replace('/[^0-9]/', '', $list_id);
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
@@ -341,7 +357,7 @@ else if ($form_action=="update_template" && $template_id)
 
 						if ($DB>0) {echo "$A_field_label[$o]|$A_field_type[$o]\n";}
 
-						if ( ($A_field_type[$o]!='DISPLAY') and ($A_field_type[$o]!='SCRIPT') and ($A_field_type[$o]!='SWITCH') )
+						if ( ($A_field_type[$o]!='DISPLAY') and ($A_field_type[$o]!='SCRIPT') and ($A_field_type[$o]!='SWITCH') and ($A_field_type[$o]!='BUTTON') )
 							{
 							if (!preg_match("/\|$A_field_label[$o]\|/",$vicidial_list_fields))
 								{
@@ -496,7 +512,7 @@ else
 
 					if ($DB>0) {echo "$A_field_label[$o]|$A_field_type[$o]\n";}
 
-					if ( ($A_field_type[$o]!='DISPLAY') and ($A_field_type[$o]!='SCRIPT') and ($A_field_type[$o]!='SWITCH') )
+					if ( ($A_field_type[$o]!='DISPLAY') and ($A_field_type[$o]!='SCRIPT') and ($A_field_type[$o]!='SWITCH') and ($A_field_type[$o]!='BUTTON') )
 						{
 						if (!preg_match("/\|$A_field_label[$o]\|/",$vicidial_list_fields))
 							{

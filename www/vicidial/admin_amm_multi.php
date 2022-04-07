@@ -1,7 +1,7 @@
 <?php
 # admin_amm_multi.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # this screen will control the *amd* settings needed when the Campaign setting 
 # "AM Message Wildcards" is enabled. This screen allows for multiple messages 
@@ -15,10 +15,11 @@
 # 180502-2115 - Added new help display
 # 180618-2300 - Modified calls to audio file chooser function
 # 180924-1606 - Added called_count as field
+# 220222-0817 - Added allow_web_debug system setting
 #
 
-$admin_version = '2.14-6';
-$build = '180924-1606';
+$admin_version = '2.14-7';
+$build = '220222-0817';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -56,12 +57,13 @@ if (strlen($action) < 2)
 	{$action = 'BLANK';}
 if (strlen($DB) < 1)
 	{$DB=0;}
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,webroot_writable,enable_languages,language_method,qc_features_active FROM system_settings;";
+$stmt = "SELECT use_non_latin,webroot_writable,enable_languages,language_method,qc_features_active,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $ss_conf_ct = mysqli_num_rows($rslt);
 if ($ss_conf_ct > 0)
 	{
@@ -71,28 +73,39 @@ if ($ss_conf_ct > 0)
 	$SSenable_languages =			$row[2];
 	$SSlanguage_method =			$row[3];
 	$SSqc_features_active =			$row[4];
+	$SSallow_web_debug =			$row[5];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$amm_id = preg_replace('/[^0-9]/','',$amm_id);
+$amm_rank = preg_replace('/[^-0-9]/','',$amm_rank);
+$active = preg_replace('/[^A-Z]/','',$active);
+$action = preg_replace('/[^-_0-9a-zA-Z]/','',$action);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/','',$SUBMIT);
 
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/','',$PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/','',$PHP_AUTH_PW);
-	$amm_id = preg_replace('/[^0-9]/','',$amm_id);
 	$campaign_id = preg_replace('/[^-_0-9a-zA-Z]/','',$campaign_id);
 	$entry_type = preg_replace('/[^_0-9a-zA-Z]/','',$entry_type);
-	$active = preg_replace('/[^A-Z]/','',$active);
 	$amm_field = preg_replace('/[^_0-9a-zA-Z]/','',$amm_field);
-	$amm_rank = preg_replace('/[^-0-9]/','',$amm_rank);
 	$amm_wildcard = preg_replace('/[^- _0-9a-zA-Z]/','',$amm_wildcard);
 	$amm_description = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$amm_description);
 	$amm_filename = preg_replace('/[^- \|\.\,\_0-9a-zA-Z]/','',$amm_filename);
 	}	# end of non_latin
 else
 	{
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$campaign_id = preg_replace('/[^-_0-9\p{L}]/u','',$campaign_id);
+	$entry_type = preg_replace('/[^_0-9\p{L}]/u','',$entry_type);
+	$amm_field = preg_replace('/[^_0-9\p{L}]/u','',$amm_field);
+	$amm_wildcard = preg_replace('/[^- _0-9\p{L}]/u','',$amm_wildcard);
+	$amm_description = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$amm_description);
+	$amm_filename = preg_replace('/[^- \|\.\,\_0-9\p{L}]/u','',$amm_filename);
 	}
 
 $STARTtime = date("U");

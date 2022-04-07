@@ -1,7 +1,7 @@
 <?php
 # callcard_admin.php
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This callcard script is to administer the callcard accounts in ViciDial
 # it is separate from the standard admin.php script. callcard_enabled in
@@ -23,10 +23,11 @@
 # 170829-0040 - Added screen color settings
 # 180508-0115 - Added new help display
 # 201111-1615 - Fix for Issue #1230
+# 220224-1631 - Added allow_web_debug system setting
 #
 
-$version = '2.14-13';
-$build = '201111-1615';
+$version = '2.14-14';
+$build = '220224-1631';
 
 $MT[0]='';
 
@@ -84,14 +85,16 @@ if (isset($_GET["user"]))					{$user=$_GET["user"];}
 if (isset($_GET["SUBMIT"]))					{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))		{$SUBMIT=$_POST["SUBMIT"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
 $report_name = 'CallCard Search';
 $SEARCHONLY=0;
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,callcard_enabled,enable_languages,language_method,active_modules,contacts_enabled,allow_emails,outbound_autodial_active,enable_tts_integration,sounds_central_control_active,qc_features_active,enable_auto_reports,campaign_cid_areacodes_enabled FROM system_settings;";
+$stmt = "SELECT use_non_latin,callcard_enabled,enable_languages,language_method,active_modules,contacts_enabled,allow_emails,outbound_autodial_active,enable_tts_integration,sounds_central_control_active,qc_features_active,enable_auto_reports,campaign_cid_areacodes_enabled,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $ss_conf_ct = mysqli_num_rows($rslt);
 if ($ss_conf_ct > 0)
 	{
@@ -109,27 +112,51 @@ if ($ss_conf_ct > 0)
 	$SSqc_features_active =				$row[10];
 	$SSenable_auto_reports =			$row[11];
 	$SScampaign_cid_areacodes_enabled = $row[12];
+	$SSallow_web_debug =				$row[13];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
+$DB = preg_replace('/[^0-9]/','',$DB);
+$action = preg_replace('/[^\_0-9a-zA-Z]/','',$action);
+$card_id = preg_replace('/[^-\_0-9]/','',$card_id);
+$run = preg_replace('/[^0-9]/','',$run);
+$batch = preg_replace('/[^0-9a-zA-Z]/','',$batch);
+$pack = preg_replace('/[^0-9]/','',$pack);
+$sequence = preg_replace('/[^0-9]/','',$sequence);
+$pin = preg_replace('/[^0-9a-zA-Z]/','',$pin);
+$starting_batch = preg_replace("/\<|\>|\’|\"|\\\\|;/",'',$starting_batch);
+$status = preg_replace("/\<|\>|\’|\"|\\\\|;/",'',$status);
+$total = preg_replace("/\<|\>|\’|\"|\\\\|;/",'',$total);
+$comment = preg_replace("/\<|\>|\’|\"|\\\\|;/",'',$comment);
+$balance_minutes = preg_replace("/\<|\>|\’|\"|\\\\|;/",'',$balance_minutes);
+$initial_value = preg_replace("/\<|\>|\’|\"|\\\\|;/",'',$initial_value);
+$initial_minutes = preg_replace("/\<|\>|\’|\"|\\\\|;/",'',$initial_minutes);
+$note_purchase_order = preg_replace("/\<|\>|\’|\"|\\\\|;/",'',$note_purchase_order);
+$note_printer = preg_replace("/\<|\>|\’|\"|\\\\|;/",'',$note_printer);
+$note_did = preg_replace("/\<|\>|\’|\"|\\\\|;/",'',$note_did);
+$inbound_group_id = preg_replace("/\<|\>|\’|\"|\\\\|;/",'',$inbound_group_id);
+$note_language = preg_replace("/\<|\>|\’|\"|\\\\|;/",'',$note_language);
+$note_name = preg_replace("/\<|\>|\’|\"|\\\\|;/",'',$note_name);
+$note_comments = preg_replace("/\<|\>|\’|\"|\\\\|;/",'',$note_comments);
+$SUBMIT = preg_replace("/\<|\>|\’|\"|\\\\|;/",'',$SUBMIT);
 
 if ($non_latin < 1)
 	{
-	### Clean Variable Values ###
-	$DB = preg_replace('/[^0-9]/','',$DB);
-	$action = preg_replace('/[^\_0-9a-zA-Z]/','',$action);
-	$card_id = preg_replace('/[^-\_0-9]/','',$card_id);
-	$run = preg_replace('/[^0-9]/','',$run);
-	$batch = preg_replace('/[^0-9a-zA-Z]/','',$batch);
-	$pack = preg_replace('/[^0-9]/','',$pack);
-	$sequence = preg_replace('/[^0-9]/','',$sequence);
 	$territory_description = preg_replace('/[^- \_\.\,0-9a-zA-Z]/','',$territory_description);
-	$user = preg_replace('/[^-\_0-9a-zA-Z]/', '',$user);
-	$old_territory = preg_replace('/[^-\_0-9a-zA-Z]/', '',$old_territory);
-	$old_user = preg_replace('/[^-\_0-9a-zA-Z]/', '',$old_user);
-	$accountid = preg_replace('/[^-\_0-9a-zA-Z]/', '',$accountid);
-	$pin = preg_replace('/[^0-9a-zA-Z]/','',$pin);
+	$user = preg_replace('/[^-_0-9a-zA-Z]/', '',$user);
+	$old_territory = preg_replace('/[^-_0-9a-zA-Z]/', '',$old_territory);
+	$old_user = preg_replace('/[^-_0-9a-zA-Z]/', '',$old_user);
+	$accountid = preg_replace('/[^-_0-9a-zA-Z]/', '',$accountid);
+	}
+else
+	{
+	$territory_description = preg_replace('/[^- \_\.\,0-9\p{L}]/u','',$territory_description);
+	$user = preg_replace('/[^-_0-9\p{L}]/u', '',$user);
+	$old_territory = preg_replace('/[^-_0-9\p{L}]/u', '',$old_territory);
+	$old_user = preg_replace('/[^-_0-9\p{L}]/u', '',$old_user);
+	$accountid = preg_replace('/[^-_0-9\p{L}]/u', '',$accountid);
 	}
 
 if (preg_match("/YES/i",$batch))
@@ -154,10 +181,10 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PASS = preg_replace("/'|\"|\\\\|;/","",$PASS);
-	$USER = preg_replace("/'|\"|\\\\|;/","",$USER);
-	$user = preg_replace("/'|\"|\\\\|;/","",$user);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PASS = preg_replace('/[^-_0-9\p{L}]/u', '', $PASS);
+	$USER = preg_replace('/[^-_0-9\p{L}]/u', '', $USER);
+	$user = preg_replace('/[^-_0-9\p{L}]/u', '', $user);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
 	}
 
 $stmt="SELECT selected_language from vicidial_users where user='$user';";

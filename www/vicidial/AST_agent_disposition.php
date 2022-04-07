@@ -3,7 +3,7 @@
 #
 # Date Range - Agent/Campaign Disposition (Perfect Network Corporation)
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -15,6 +15,7 @@
 # 141114-0911 - Finalized adding QXZ translation to all admin files
 # 141230-1525 - Added code for on-the-fly language translations display
 # 170409-1534 - Added IP List validation code
+# 220303-1631 - Added allow_web_debug system setting
 #
 
 require("dbconnect_mysqli.php");
@@ -27,19 +28,30 @@ $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["group"]))				{$group=$_GET["group"];}
 	elseif (isset($_POST["group"]))		{$group=$_POST["group"];}
 if (isset($_GET["query_date"]))				{$query_date=$_GET["query_date"];}
-	elseif (isset($_POST["query_date"]))		{$query_date=$_POST["query_date"];}
+	elseif (isset($_POST["query_date"]))	{$query_date=$_POST["query_date"];}
 if (isset($_GET["shift"]))				{$shift=$_GET["shift"];}
 	elseif (isset($_POST["shift"]))		{$shift=$_POST["shift"];}
 if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
-	elseif (isset($_POST["submit"]))		{$submit=$_POST["submit"];}
+	elseif (isset($_POST["submit"]))	{$submit=$_POST["submit"];}
 if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
-	elseif (isset($_POST["SUBMIT"]))		{$SUBMIT=$_POST["SUBMIT"];}
+	elseif (isset($_POST["SUBMIT"]))	{$SUBMIT=$_POST["SUBMIT"];}
+if (isset($_GET["DB"]))					{$DB=$_GET["DB"];}
+	elseif (isset($_POST["DB"]))		{$DB=$_POST["DB"];}
+
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
+$NOW_DATE = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$STARTtime = date("U");
+if (!isset($group)) {$group = '';}
+if (!isset($begin_date)) {$begin_date =  $NOW_DATE;}
+if (!isset($end_date)) {$end_date =  $NOW_DATE;}
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -47,9 +59,17 @@ if ($qm_conf_ct > 0)
 	$non_latin =				$row[0];
 	$SSenable_languages =		$row[1];
 	$SSlanguage_method =		$row[2];
+	$SSallow_web_debug =		$row[3];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$group = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$group);
+$query_date = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$query_date);
+$shift = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$shift);
+$submit = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$submit);
+$SUBMIT = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$SUBMIT);
 
 if ($non_latin < 1)
 	{
@@ -58,10 +78,9 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
-$group = preg_replace("/'|\"|\\\\|;/","",$group);
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
@@ -130,12 +149,6 @@ else
 	exit;
 	}
 	
-$NOW_DATE = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-$STARTtime = date("U");
-if (!isset($group)) {$group = '';}
-if (!isset($begin_date)) {$begin_date =  $NOW_DATE;}
-if (!isset($end_date)) {$end_date =  $NOW_DATE;}
 
 $stmt="select campaign_id from vicidial_campaigns;";
 if ($non_latin > 0) {$rslt=mysql_to_mysqli("SET NAMES 'UTF8'", $link);}

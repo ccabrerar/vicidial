@@ -1,7 +1,7 @@
 <?php
 # vdc_script_notes.php
 # 
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed open in the SCRIPT tab in the agent interface through
 # an IFRAME. It will create a new record for every SUBMIT
@@ -22,10 +22,11 @@
 # 201117-2213 - Changes for better compatibility with non-latin data input
 # 210616-2034 - Added optional CORS support, see options.php for details
 # 210825-0901 - Fix for XSS security issue
+# 220219-0136 - Added allow_web_debug system setting
 #
 
-$version = '2.14-12';
-$build = '210825-0901';
+$version = '2.14-13';
+$build = '220219-0136';
 $php_script = 'vdc_script_notes.php';
 
 require_once("dbconnect_mysqli.php");
@@ -203,9 +204,7 @@ if (strlen($vicidial_id) < 1)
 if (strlen($appointment_time) < 1)
 	{$appointment_time = '12:00:00';}
 
-$appointment_timeARRAY = explode(":",$appointment_time);
-$appointment_hour = $appointment_timeARRAY[0];
-$appointment_min = $appointment_timeARRAY[1];
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 # if options file exists, use the override values for the above variables
 #   see the options-example.php file for more information
@@ -227,8 +226,12 @@ $ENTRYdate = date("YmdHis");
 $MT[0]='';
 $agents='@agents';
 
-if (strlen($call_date) < 1)
-	{$call_date = $NOW_TIME;}
+# default optional vars if not set
+if (!isset($format))   {$format="text";}
+	if ($format == 'debug')	{$DB=1;}
+if (!isset($ACTION))   {$ACTION="refresh";}
+if (!isset($query_date)) {$query_date = $NOW_DATE;}
+if (strlen($call_date) < 1)	{$call_date = $NOW_TIME;}
 
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
@@ -238,20 +241,8 @@ $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
-$VUselected_language = '';
-$stmt="SELECT selected_language from vicidial_users where user='$user';";
-if ($DB) {echo "|$stmt|\n";}
-$rslt=mysql_to_mysqli($stmt, $link);
-	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
-$sl_ct = mysqli_num_rows($rslt);
-if ($sl_ct > 0)
-	{
-	$row=mysqli_fetch_row($rslt);
-	$VUselected_language =		$row[0];
-	}
-
-$stmt = "SELECT use_non_latin,timeclock_end_of_day,agentonly_callback_campaign_lock,custom_fields_enabled,enable_languages,language_method FROM system_settings;";
-if ($DB) {echo "$stmt\n";}
+$stmt = "SELECT use_non_latin,timeclock_end_of_day,agentonly_callback_campaign_lock,custom_fields_enabled,enable_languages,language_method,allow_web_debug FROM system_settings;";
+#if ($DB) {echo "$stmt\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
 $qm_conf_ct = mysqli_num_rows($rslt);
@@ -264,6 +255,20 @@ if ($qm_conf_ct > 0)
 	$custom_fields_enabled =				$row[3];
 	$SSenable_languages =					$row[4];
 	$SSlanguage_method =					$row[5];
+	$SSallow_web_debug =					$row[6];
+	}
+if ($SSallow_web_debug < 1) {$DB=0;   $format='text';}
+
+$VUselected_language = '';
+$stmt="SELECT selected_language from vicidial_users where user='$user';";
+if ($DB) {echo "|$stmt|\n";}
+$rslt=mysql_to_mysqli($stmt, $link);
+	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+$sl_ct = mysqli_num_rows($rslt);
+if ($sl_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$VUselected_language =		$row[0];
 	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
@@ -274,22 +279,99 @@ $notesid = preg_replace('/[^0-9]/', '', $notesid);
 $server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
 $session_id = preg_replace('/[^0-9]/','',$session_id);
 $uniqueid = preg_replace('/[^-_\.0-9a-zA-Z]/','',$uniqueid);
-$session_name = preg_replace("/\'|\"|\\\\|;/","",$session_name);
-$length_in_sec = preg_replace("/[^0-9]/","",$length_in_sec);
 $phone_code = preg_replace("/[^0-9]/","",$phone_code);
 $phone_number = preg_replace("/[^0-9]/","",$phone_number);
+$vendor_id = preg_replace("/\"|\\\\|;/",'-',$vendor_id);
+$vendor_lead_code = preg_replace("/\"|\\\\|;/",'-',$vendor_lead_code);
+$gmt_offset_now = preg_replace("/\"|\\\\|;/",'-',$gmt_offset_now);
+$title = preg_replace("/\"|\\\\|;/",'-',$title);
+$first_name = preg_replace("/\"|\\\\|;/",'-',$first_name);
+$middle_initial = preg_replace("/\"|\\\\|;/",'-',$middle_initial);
+$last_name = preg_replace("/\"|\\\\|;/",'-',$last_name);
+$address1 = preg_replace("/\"|\\\\|;/",'-',$address1);
+$address2 = preg_replace("/\"|\\\\|;/",'-',$address2);
+$address3 = preg_replace("/\"|\\\\|;/",'-',$address3);
+$city = preg_replace("/\"|\\\\|;/",'-',$city);
+$state = preg_replace("/\"|\\\\|;/",'-',$state);
+$province = preg_replace("/\"|\\\\|;/",'-',$province);
+$postal_code = preg_replace("/\"|\\\\|;/",'-',$postal_code);
+$country_code = preg_replace("/\"|\\\\|;/",'-',$country_code);
+$gender = preg_replace("/\"|\\\\|;/",'-',$gender);
+$date_of_birth = preg_replace("/\"|\\\\|;/",'-',$date_of_birth);
+$alt_phone = preg_replace("/\"|\\\\|;/",'-',$alt_phone);
+$email = preg_replace("/\"|\\\\|;/",'-',$email);
+$security_phrase = preg_replace("/\"|\\\\|;/",'-',$security_phrase);
+$comments = preg_replace("/\"|\\\\|;/",'-',$comments);
+$pass = preg_replace("/\<|\>|\"|\\\\|;/",'-',$pass);
+$phone_login = preg_replace("/\<|\>|\"|\\\\|;/",'-',$phone_login);
+$original_phone_login = preg_replace("/\<|\>|\"|\\\\|;/",'-',$original_phone_login);
+$phone_pass = preg_replace("/\<|\>|\"|\\\\|;/",'-',$phone_pass);
+$fronter = preg_replace("/\<|\>|\"|\\\\|;/",'-',$fronter);
+$closer = preg_replace("/\<|\>|\"|\\\\|;/",'-',$closer);
+$channel_group = preg_replace("/\<|\>|\"|\\\\|;/",'-',$channel_group);
+$SQLdate = preg_replace("/\<|\>|\"|\\\\|;/",'-',$SQLdate);
+$epoch = preg_replace("/\<|\>|\"|\\\\|;/",'-',$epoch);
+$customer_zap_channel = preg_replace("/\<|\>|\"|\\\\|;/",'-',$customer_zap_channel);
+$customer_server_ip = preg_replace("/\<|\>|\"|\\\\|;/",'-',$customer_server_ip);
+$SIPexten = preg_replace("/\<|\>|\"|\\\\|;/",'-',$SIPexten);
+$phone = preg_replace("/\<|\>|\"|\\\\|;/",'-',$phone);
+$parked_by = preg_replace("/\<|\>|\"|\\\\|;/",'-',$parked_by);
+$dispo = preg_replace("/\<|\>|\"|\\\\|;/",'-',$dispo);
+$dialed_number = preg_replace("/\<|\>|\"|\\\\|;/",'-',$dialed_number);
+$dialed_label = preg_replace("/\<|\>|\"|\\\\|;/",'-',$dialed_label);
+$source_id = preg_replace("/\<|\>|\"|\\\\|;/",'-',$source_id);
+$rank = preg_replace("/\<|\>|\"|\\\\|;/",'-',$rank);
+$owner = preg_replace("/\<|\>|\"|\\\\|;/",'-',$owner);
+$camp_script = preg_replace("/\<|\>|\"|\\\\|;/",'-',$camp_script);
+$in_script = preg_replace("/\<|\>|\"|\\\\|;/",'-',$in_script);
+$script_width = preg_replace("/\<|\>|\"|\\\\|;/",'-',$script_width);
+$script_height = preg_replace("/\<|\>|\"|\\\\|;/",'-',$script_height);
+$fullname = preg_replace("/\<|\>|\"|\\\\|;/",'-',$fullname);
+$recording_filename = preg_replace("/\<|\>|\"|\\\\|;/",'-',$recording_filename);
+$recording_id = preg_replace("/\<|\>|\"|\\\\|;/",'-',$recording_id);
+$user_custom_one = preg_replace("/\"|\\\\|;/",'-',$user_custom_one);
+$user_custom_two = preg_replace("/\"|\\\\|;/",'-',$user_custom_two);
+$user_custom_three = preg_replace("/\"|\\\\|;/",'-',$user_custom_three);
+$user_custom_four = preg_replace("/\"|\\\\|;/",'-',$user_custom_four);
+$user_custom_five = preg_replace("/\"|\\\\|;/",'-',$user_custom_five);
+$preset_number_a = preg_replace("/\<|\>|\"|\\\\|;/",'-',$preset_number_a);
+$preset_number_b = preg_replace("/\<|\>|\"|\\\\|;/",'-',$preset_number_b);
+$preset_number_c = preg_replace("/\<|\>|\"|\\\\|;/",'-',$preset_number_c);
+$preset_number_d = preg_replace("/\<|\>|\"|\\\\|;/",'-',$preset_number_d);
+$preset_number_e = preg_replace("/\<|\>|\"|\\\\|;/",'-',$preset_number_e);
+$preset_number_f = preg_replace("/\<|\>|\"|\\\\|;/",'-',$preset_number_f);
+$preset_dtmf_a = preg_replace("/\<|\>|\"|\\\\|;/",'-',$preset_dtmf_a);
+$preset_dtmf_b = preg_replace("/\<|\>|\"|\\\\|;/",'-',$preset_dtmf_b);
+$ScrollDIV = preg_replace("/\<|\>|\"|\\\\|;/",'-',$ScrollDIV);
+$ignore_list_script = preg_replace("/\<|\>|\"|\\\\|;/",'-',$ignore_list_script);
+$DB = preg_replace("/\"|\\\\|;/",'-',$DB);
+$process = preg_replace("/\"|\\\\|;/",'-',$process);
+$vicidial_id = preg_replace("/\"|\\\\|;/",'-',$vicidial_id);
+$call_date = preg_replace("/\"|\\\\|;/",'-',$call_date);
+$order_id = preg_replace("/\"|\\\\|;/",'-',$order_id);
+$appointment_date = preg_replace("/\<|\>|\"|\\\\|;/",'-',$appointment_date);
+$appointment_time = preg_replace("/\<|\>|\"|\\\\|;/",'-',$appointment_time);
+$call_notes  = preg_replace("/\<|\>|\"|\\\\|;/",'-',$call_notes );
 
 if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
+	$pass=preg_replace("/[^-\.\+\/\=_0-9a-zA-Z]/","",$pass);
 	$campaign = preg_replace('/[^-_0-9a-zA-Z]/','',$campaign);
 	$group = preg_replace('/[^-_0-9a-zA-Z]/','',$group);
 	}
 else
 	{
+	$user = preg_replace('/[^-_0-9\p{L}]/u','',$user);
+	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
 	$campaign = preg_replace('/[^-_0-9\p{L}]/u','',$campaign);
 	$group = preg_replace('/[^-_0-9\p{L}]/u','',$group);
 	}
+
+$appointment_timeARRAY = explode(":",$appointment_time);
+$appointment_hour = $appointment_timeARRAY[0];
+$appointment_min = $appointment_timeARRAY[1];
+
 
 if ($DB > 0)
 	{
@@ -340,12 +422,6 @@ if (strlen($row[16])>0) {$label_security_phrase =	$row[16];}
 if (strlen($row[17])>0) {$label_email =				$row[17];}
 if (strlen($row[18])>0) {$label_comments =			$row[18];}
 ### END find any custom field labels ###
-
-# default optional vars if not set
-if (!isset($format))   {$format="text";}
-	if ($format == 'debug')	{$DB=1;}
-if (!isset($ACTION))   {$ACTION="refresh";}
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
 
 $auth=0;
 $auth_message = user_authorization($user,$pass,'',0,0,0,0,'script_notes');

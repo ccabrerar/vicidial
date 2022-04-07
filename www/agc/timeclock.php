@@ -1,7 +1,7 @@
 <?php
 # timeclock.php - VICIDIAL system user timeclock
 # 
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 80523-0134 - First Build 
@@ -25,10 +25,11 @@
 # 190111-0901 - Fix for PHP7
 # 201117-2117 - Changes for better compatibility with non-latin data input
 # 210616-2101 - Added optional CORS support, see options.php for details
+# 220220-0934 - Added allow_web_debug system setting
 #
 
-$version = '2.14-20';
-$build = '210616-2101';
+$version = '2.14-21';
+$build = '220220-0934';
 $php_script = 'timeclock.php';
 
 $StarTtimE = date("U");
@@ -92,6 +93,8 @@ if (!isset($phone_pass))
 $DB=preg_replace("/[^0-9a-z]/","",$DB);
 $VD_login=preg_replace("/\'|\"|\\\\|;| /","",$VD_login);
 $VD_pass=preg_replace("/\'|\"|\\\\|;| /","",$VD_pass);
+$user=preg_replace("/\'|\"|\\\\|;| /","",$user);
+$pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
 
 require_once("dbconnect_mysqli.php");
 require_once("functions.php");
@@ -105,21 +108,8 @@ if (file_exists('options.php'))
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
-$VUselected_language = '';
-$stmt="SELECT user,selected_language from vicidial_users where user='$VD_login';";
-if ($DB) {echo "|$stmt|\n";}
-$rslt=mysql_to_mysqli($stmt, $link);
-	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$VD_login,$server_ip,$session_name,$one_mysql_log);}
-$sl_ct = mysqli_num_rows($rslt);
-if ($sl_ct > 0)
-	{
-	$row=mysqli_fetch_row($rslt);
-	$VUuser =				$row[0];
-	$VUselected_language =	$row[1];
-	}
-
-$stmt = "SELECT use_non_latin,admin_home_url,admin_web_directory,enable_languages,language_method,default_language,agent_screen_colors,agent_script FROM system_settings;";
-if ($DB) {echo "$stmt\n";}
+$stmt = "SELECT use_non_latin,admin_home_url,admin_web_directory,enable_languages,language_method,default_language,agent_screen_colors,agent_script,allow_web_debug FROM system_settings;";
+#if ($DB) {echo "$stmt\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 $qm_conf_ct = mysqli_num_rows($rslt);
@@ -134,6 +124,21 @@ if ($qm_conf_ct > 0)
 	$SSdefault_language =	$row[5];
 	$agent_screen_colors =	$row[6];
 	$SSagent_script =		$row[7];
+	$SSallow_web_debug =	$row[8];
+	}
+if ($SSallow_web_debug < 1) {$DB=0;}
+
+$VUselected_language = '';
+$stmt="SELECT user,selected_language from vicidial_users where user='$VD_login';";
+if ($DB) {echo "|$stmt|\n";}
+$rslt=mysql_to_mysqli($stmt, $link);
+	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$VD_login,$server_ip,$session_name,$one_mysql_log);}
+$sl_ct = mysqli_num_rows($rslt);
+if ($sl_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$VUuser =				$row[0];
+	$VUselected_language =	$row[1];
 	}
 
 if (strlen($VUselected_language) < 1)
@@ -152,7 +157,7 @@ $referrer=preg_replace("/[^0-9a-zA-Z]/","",$referrer);
 if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
-	$pass=preg_replace("/[^-_0-9a-zA-Z]/","",$pass);
+	$pass=preg_replace("/[^-\.\+\/\=_0-9a-zA-Z]/","",$pass);
 	$VD_login=preg_replace("/[^-_0-9a-zA-Z]/","",$VD_login);
 	$VD_pass=preg_replace("/[^-_0-9a-zA-Z]/","",$VD_pass);
 	$VD_campaign=preg_replace("/[^-_0-9a-zA-Z]/","",$VD_campaign);
@@ -161,7 +166,13 @@ if ($non_latin < 1)
 	}
 else
 	{
+	$user=preg_replace("/[^-_0-9\p{L}]/u","",$user);
+	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
+	$VD_login=preg_replace("/[^-_0-9\p{L}]/u","",$VD_login);
+	$VD_pass=preg_replace("/[^-_0-9\p{L}]/u","",$VD_pass);
 	$VD_campaign=preg_replace("/[^-_0-9\p{L}]/u","",$VD_campaign);
+	$phone_login=preg_replace("/[^\,0-9\p{L}]/u","",$phone_login);
+	$phone_pass=preg_replace("/[^-_0-9\p{L}]/u","",$phone_pass);
 	}
 
 header ("Content-type: text/html; charset=utf-8");

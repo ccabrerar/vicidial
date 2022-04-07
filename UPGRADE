@@ -697,6 +697,25 @@ OTHER CHANGES:
 194. Added MIN LENGTH to the Dispo Call URL ALT admin screen, allowing for a
 	minimum call time threshold before a Dispo Call URL will trigger.
 
+195. Added User Location to the Modify User page. Also added Queue Groups Admin
+	pages, allowing you to define multiple campaigns and/or in-groups in a 
+	single Queue Group to be used in some reports.
+
+196. Added Campaign and List options for "Auto Alt-Number Dialing Threshold"
+	allowing you to stop auto-dialing alternate phone numbers for a lead 
+	after a set number of call attempts, and thereafter only dialing the 
+	main phone number for the lead.
+
+197. Added 'update_alt_url' Non-Agent API function
+
+198. Added "Pause Max URL" Campaign feature
+
+199. Added "Allow Web DB Debug" System Settings feature, to allow use of the $DB
+	variable on the web screens for troubleshooting issues. 
+	It is disabled by default.
+
+200. Added List CID Group Override to the List Modification admin screen.
+
 
 
 

@@ -1,7 +1,7 @@
 <?php
 # AST_rt_monitor_log_report.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -10,6 +10,7 @@
 # 180507-2315 - Added new help display
 # 180712-1508 - Fix for rare allowed reports issue
 # 191013-0906 - Fixes for PHP7
+# 220302-0849 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
@@ -30,15 +31,15 @@ if (isset($_GET["campaign"]))				{$campaign=$_GET["campaign"];}
 	elseif (isset($_POST["campaign"]))		{$campaign=$_POST["campaign"];}
 if (isset($_GET["users"]))					{$users=$_GET["users"];}
 	elseif (isset($_POST["users"]))			{$users=$_POST["users"];}
-if (isset($_GET["managers"]))					{$managers=$_GET["managers"];}
-	elseif (isset($_POST["managers"]))			{$managers=$_POST["managers"];}
+if (isset($_GET["managers"]))				{$managers=$_GET["managers"];}
+	elseif (isset($_POST["managers"]))		{$managers=$_POST["managers"];}
 if (isset($_GET["query_date"]))				{$query_date=$_GET["query_date"];}
 	elseif (isset($_POST["query_date"]))	{$query_date=$_POST["query_date"];}
 if (isset($_GET["end_date"]))				{$end_date=$_GET["end_date"];}
 	elseif (isset($_POST["end_date"]))		{$end_date=$_POST["end_date"];}
 if (isset($_GET["shift"]))				{$shift=$_GET["shift"];}
 	elseif (isset($_POST["shift"]))		{$shift=$_POST["shift"];}
-if (isset($_GET["order_by"]))				{$order_by=$_GET["order_by"];}
+if (isset($_GET["order_by"]))			{$order_by=$_GET["order_by"];}
 	elseif (isset($_POST["order_by"]))	{$order_by=$_POST["order_by"];}
 if (isset($_GET["agent"]))			{$agent=$_GET["agent"];}
 	elseif (isset($_POST["agent"]))	{$agent=$_POST["agent"];}
@@ -50,10 +51,11 @@ if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))	{$SUBMIT=$_POST["SUBMIT"];}
 if (isset($_GET["DB"]))				{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))	{$DB=$_POST["DB"];}
-if (isset($_GET["report_display_type"]))				{$report_display_type=$_GET["report_display_type"];}
+if (isset($_GET["report_display_type"]))			{$report_display_type=$_GET["report_display_type"];}
 	elseif (isset($_POST["report_display_type"]))	{$report_display_type=$_POST["report_display_type"];}
 
-if (strlen($shift)<2) {$shift='ALL';}
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
 $MT[0]='';
 $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
@@ -65,15 +67,16 @@ if (!isset($report_display_type)) {$report_display_type = "HTML";}
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (!isset($end_date)) {$end_date = $NOW_DATE;}
 if (!isset($order_by)) {$order_by="monitor_start_time-asc";} 
+if (strlen($shift)<2) {$shift='ALL';}
 
 $report_name = 'Real-Time Monitoring Log Report';
 $db_source = 'M';
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {$MAIN.="$stmt\n";}
+#if ($DB) {$MAIN.="$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -84,19 +87,38 @@ if ($qm_conf_ct > 0)
 	$reports_use_slave_db =			$row[3];
 	$SSenable_languages =			$row[4];
 	$SSlanguage_method =			$row[5];
+	$SSallow_web_debug =			$row[6];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$query_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date);
+$end_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $end_date);
+$order_by = preg_replace('/[^-_0-9a-zA-Z]/', '', $order_by);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$report_display_type = preg_replace('/[^-_0-9a-zA-Z]/', '', $report_display_type);
+$file_download = preg_replace('/[^-_0-9a-zA-Z]/', '', $file_download);
+
+# Variables filtered further down in the code
+# $users
+# $managers
+# $campaign
 
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$shift = preg_replace('/[^-_0-9a-zA-Z]/', '', $shift);
+	$agent = preg_replace('/[^-_0-9a-zA-Z]/', '', $agent);
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$shift = preg_replace('/[^-_0-9\p{L}]/u', '', $shift);
+	$agent = preg_replace('/[^-_0-9\p{L}]/u', '', $agent);
 	}
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
@@ -254,7 +276,7 @@ else
 	$webserver_id = mysqli_insert_id($link);
 	}
 
-$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$group[0], $query_date, $end_date, $shift, $file_download, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
+$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$query_date, $end_date, $shift, $file_download, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $report_log_id = mysqli_insert_id($link);
@@ -317,6 +339,7 @@ $users_string='|';
 $users_ct = count($users);
 while($i < $users_ct)
 	{
+	$users[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $users[$i]);
 	$users_string .= "$users[$i]|";
 	$i++;
 	}
@@ -345,6 +368,7 @@ $managers_string='|';
 $managers_ct = count($managers);
 while($i < $managers_ct)
 	{
+	$managers[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $managers[$i]);
 	$managers_string .= "$managers[$i]|";
 	$i++;
 	}
@@ -372,6 +396,7 @@ $campaign_string='|';
 $campaign_ct = count($campaign);
 while($i < $campaign_ct)
 	{
+	$campaign[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $campaign[$i]);
 	if (in_array("--ALL--", $campaign))
 		{
 		$campaign_string = "--ALL--";
@@ -406,6 +431,7 @@ $users_string='|';
 $user_ct = count($users);
 while($i < $user_ct)
 	{
+	$users[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $users[$i]);
 	if (in_array("--ALL--", $users))
 		{
 		$users_string = "--ALL--";
@@ -438,6 +464,7 @@ $manager_string='|';
 $manager_ct = count($managers);
 while($i < $manager_ct)
 	{
+	$managers[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $managers[$i]);
 	$manager_string .= "$managers[$i]|";
 	$manager_SQL .= "'$managers[$i]',";
 	$managerQS .= "&managers[]=$managers[$i]";

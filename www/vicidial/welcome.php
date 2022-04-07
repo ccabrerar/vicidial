@@ -1,11 +1,12 @@
 <?php
 # welcome.php - VICIDIAL welcome page
 # 
-# Copyright (C) 2016  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG:
 # 141007-2140 - Finalized adding QXZ translation to all admin files
 # 161106-1920 - Changed to use newer design and dynamic links
+# 220228-1109 - Added allow_web_debug system setting
 #
 
 header ("Content-type: text/html; charset=utf-8");
@@ -22,10 +23,10 @@ if (file_exists('options.php'))
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,enable_languages,language_method,default_language,agent_screen_colors,admin_web_directory,agent_script FROM system_settings;";
+$stmt = "SELECT use_non_latin,enable_languages,language_method,default_language,agent_screen_colors,admin_web_directory,agent_script,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01001',$VD_login,$server_ip,$session_name,$one_mysql_log);}
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -37,7 +38,9 @@ if ($qm_conf_ct > 0)
 	$agent_screen_colors =		$row[4];
 	$admin_web_directory =		$row[5];
 	$SSagent_script =			$row[6];
+	$SSallow_web_debug =		$row[7];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 

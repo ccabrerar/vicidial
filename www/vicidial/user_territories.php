@@ -1,7 +1,7 @@
 <?php
 # user_territories.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This territories script is for use with custom tables in Vtiger which is why
 # it is separate from the standard admin.php script. user_territories_active in
@@ -24,10 +24,11 @@
 # 160508-0211 - Added screen colors feature
 # 161101-2126 - Fixed missing menu items
 # 180508-2215 - Added new help display
+# 220223-0808 - Added allow_web_debug system setting
 #
 
-$version = '2.14-16';
-$build = '180508-2215';
+$version = '2.14-17';
+$build = '220223-0808';
 
 $MT[0]='';
 
@@ -57,15 +58,17 @@ if (isset($_GET["vl_owner"]))				{$vl_owner=$_GET["vl_owner"];}
 if (isset($_GET["SUBMIT"]))					{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))		{$SUBMIT=$_POST["SUBMIT"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
 header ("Content-type: text/html; charset=utf-8");
 header ("Cache-Control: no-cache, must-revalidate");  // HTTP/1.1
 header ("Pragma: no-cache");                          // HTTP/1.0
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,user_territories_active,enable_vtiger_integration,outbound_autodial_active,vtiger_server_ip,vtiger_dbname,vtiger_login,vtiger_pass,vtiger_url,enable_languages,language_method,qc_features_active,user_new_lead_limit FROM system_settings;";
+$stmt = "SELECT use_non_latin,user_territories_active,enable_vtiger_integration,outbound_autodial_active,vtiger_server_ip,vtiger_dbname,vtiger_login,vtiger_pass,vtiger_url,enable_languages,language_method,qc_features_active,user_new_lead_limit,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $ss_conf_ct = mysqli_num_rows($rslt);
 if ($ss_conf_ct > 0)
 	{
@@ -83,7 +86,9 @@ if ($ss_conf_ct > 0)
 	$SSlanguage_method =				$row[10];
 	$SSqc_features_active =				$row[11];
 	$SSuser_new_lead_limit =			$row[12];
+	$SSallow_web_debug =				$row[13];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
@@ -93,29 +98,31 @@ if ($user_territories_active < 1)
 	exit;
 	}
 
+### Filter Variable Values ###
+$DB = preg_replace('/[^0-9]/','',$DB);
+$action = preg_replace('/[^\_0-9a-zA-Z]/','',$action);
+$level = preg_replace('/[^\_A-Z]/','',$level);
+$batch = preg_replace('/[^-_0-9a-zA-Z]/', '',$batch);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '',$SUBMIT);
+$vl_owner = preg_replace('/[^-_0-9a-zA-Z]/', '',$vl_owner);
+
 if ($non_latin < 1)
 	{
-	### Clean Variable Values ###
-	$DB = preg_replace('/[^0-9]/','',$DB);
-	$action = preg_replace('/[^\_0-9a-zA-Z]/','',$action);
+	$user = preg_replace('/[^-\_0-9a-zA-Z]/', '',$user);
 	$territory = preg_replace('/[^-\_0-9a-zA-Z]/', '',$territory);
 	$territory_description = preg_replace('/[^- \_\.\,0-9a-zA-Z]/','',$territory_description);
-	$user = preg_replace('/[^-\_0-9a-zA-Z]/', '',$user);
-	$level = preg_replace('/[^\_A-Z]/','',$level);
 	$old_territory = preg_replace('/[^-\_0-9a-zA-Z]/', '',$old_territory);
 	$old_user = preg_replace('/[^-\_0-9a-zA-Z]/', '',$old_user);
 	$accountid = preg_replace('/[^-\_0-9a-zA-Z]/', '',$accountid);
 	}
 else
 	{
-	$action = preg_replace("/'|\"|\\\\|;/","",$action);
-	$territory = preg_replace("/'|\"|\\\\|;/","",$territory);
-	$territory_description = preg_replace("/'|\"|\\\\|;/","",$territory_description);
-	$user = preg_replace("/'|\"|\\\\|;/","",$user);
-	$level = preg_replace("/'|\"|\\\\|;/","",$level);
-	$old_territory = preg_replace("/'|\"|\\\\|;/","",$old_territory);
-	$old_user = preg_replace("/'|\"|\\\\|;/","",$old_user);
-	$accountid = preg_replace("/'|\"|\\\\|;/","",$accountid);
+	$user = preg_replace('/[^-_0-9\p{L}]/u',"",$user);
+	$territory = preg_replace('/[^-\_0-9\p{L}]/u', '',$territory);
+	$territory_description = preg_replace('/[^- \_\.\,0-9\p{L}]/u','',$territory_description);
+	$old_territory = preg_replace('/[^-\_0-9\p{L}]/u', '',$old_territory);
+	$old_user = preg_replace('/[^-\_0-9\p{L}]/u', '',$old_user);
+	$accountid = preg_replace('/[^-\_0-9\p{L}]/u', '',$accountid);
 	}
 
 if (preg_match("/YES/i",$batch))
@@ -127,8 +134,16 @@ else
 	{
 	$USER=$_SERVER['PHP_AUTH_USER'];
 	$PASS=$_SERVER['PHP_AUTH_PW'];
-	$USER = preg_replace('/[^-_0-9a-zA-Z]/','',$USER);
-	$PASS = preg_replace('/[^-_0-9a-zA-Z]/','',$PASS);
+	if ($non_latin < 1)
+		{
+		$USER = preg_replace('/[^-_0-9a-zA-Z]/','',$USER);
+		$PASS = preg_replace('/[^-_0-9a-zA-Z]/','',$PASS);
+		}
+	else
+		{
+		$USER = preg_replace('/[^-_0-9\p{L}]/u', '', $USER);
+		$PASS = preg_replace('/[^-_0-9\p{L}]/u', '', $PASS);
+		}
 	}
 
 $stmt="SELECT selected_language,qc_enabled from vicidial_users where user='$USER';";

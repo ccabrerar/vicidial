@@ -1,7 +1,7 @@
 <?php 
 # AST_parkstats.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -20,6 +20,7 @@
 # 170823-2154 - Added HTML formatting and screen colors
 # 180311-0327 - Added unique lead ID count
 # 191013-0858 - Fixes for PHP7
+# 220303-1614 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
@@ -36,24 +37,34 @@ $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["group"]))				{$group=$_GET["group"];}
 	elseif (isset($_POST["group"]))		{$group=$_POST["group"];}
-if (isset($_GET["show_details"]))				{$show_details=$_GET["show_details"];}
-	elseif (isset($_POST["show_details"]))		{$show_details=$_POST["show_details"];}
-if (isset($_GET["sort_by_details"]))				{$sort_by_details=$_GET["sort_by_details"];}
-	elseif (isset($_POST["sort_by_details"]))		{$sort_by_details=$_POST["sort_by_details"];}
+if (isset($_GET["show_details"]))			{$show_details=$_GET["show_details"];}
+	elseif (isset($_POST["show_details"]))	{$show_details=$_POST["show_details"];}
+if (isset($_GET["sort_by_details"]))			{$sort_by_details=$_GET["sort_by_details"];}
+	elseif (isset($_POST["sort_by_details"]))	{$sort_by_details=$_POST["sort_by_details"];}
 if (isset($_GET["query_date"]))				{$query_date=$_GET["query_date"];}
-	elseif (isset($_POST["query_date"]))		{$query_date=$_POST["query_date"];}
+	elseif (isset($_POST["query_date"]))	{$query_date=$_POST["query_date"];}
 if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
-	elseif (isset($_POST["submit"]))		{$submit=$_POST["submit"];}
+	elseif (isset($_POST["submit"]))	{$submit=$_POST["submit"];}
 if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
-	elseif (isset($_POST["SUBMIT"]))		{$SUBMIT=$_POST["SUBMIT"];}
+	elseif (isset($_POST["SUBMIT"]))	{$SUBMIT=$_POST["SUBMIT"];}
 if (isset($_GET["report_display_type"]))			{$report_display_type=$_GET["report_display_type"];}
 	elseif (isset($_POST["report_display_type"]))	{$report_display_type=$_POST["report_display_type"];}
+if (isset($_GET["DB"]))					{$DB=$_GET["DB"];}
+	elseif (isset($_POST["DB"]))		{$DB=$_POST["DB"];}
+
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
+$NOW_DATE = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$STARTtime = date("U");
+if (!isset($group)) {$group = '';}
+if (!isset($query_date)) {$query_date = $NOW_DATE;}
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -61,9 +72,19 @@ if ($qm_conf_ct > 0)
 	$non_latin = 				$row[0];
 	$SSenable_languages =		$row[1];
 	$SSlanguage_method =		$row[2];
+	$SSallow_web_debug =		$row[3];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$group = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$group);
+$show_details = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$show_details);
+$sort_by_details = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$sort_by_details);
+$query_date = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$query_date);
+$submit = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$submit);
+$SUBMIT = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$SUBMIT);
+$report_display_type = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$report_display_type);
 
 if ($non_latin < 1)
 	{
@@ -72,8 +93,8 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
@@ -142,9 +163,6 @@ else
 	echo "$VDdisplayMESSAGE: |$PHP_AUTH_USER|$PHP_AUTH_PW|$auth_message|\n";
 	exit;
 	}
-
-
-
 
 
 
@@ -242,12 +260,6 @@ if ( (!preg_match("/$report_name/",$LOGallowed_reports)) and (!preg_match("/ALL 
     exit;
 	}
 
-
-$NOW_DATE = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-$STARTtime = date("U");
-if (!isset($group)) {$group = '';}
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
 
 $stmt="select distinct channel_group from park_log $whereLOGallowed_campaignsSQL;";
 $rslt=mysql_to_mysqli($stmt, $link);

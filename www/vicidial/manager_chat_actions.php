@@ -1,7 +1,7 @@
 <?php
 # manager_chat_actions.php
 # 
-# Copyright (C) 2017  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # Contains PHP actions for manager_chat_interface.php - works with vicidial_chat.js
 #
@@ -13,10 +13,11 @@
 # 160108-2300 - Changed some mysqli_query to mysql_to_mysqli for consistency
 # 161217-0821 - Added chat-type to allow for multi-user internal chat sessions
 # 170409-1550 - Added IP List validation code
+# 220223-0934 - Added allow_web_debug system setting
 #
 
-$admin_version = '2.14-7';
-$build = '170409-1550';
+$admin_version = '2.14-8';
+$build = '220223-0934';
 
 $sh="managerchats"; 
 
@@ -44,11 +45,13 @@ if (isset($_GET["reload_chat_span"]))			{$reload_chat_span=$_GET["reload_chat_sp
 if (isset($_GET["action"]))						{$action=$_GET["action"];}
 	elseif (isset($_POST["action"]))			{$action=$_POST["action"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,allow_chats,enable_languages,language_method,default_language FROM system_settings;";
+$stmt = "SELECT use_non_latin,allow_chats,enable_languages,language_method,default_language,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -58,10 +61,21 @@ if ($qm_conf_ct > 0)
     $SSenable_languages =	$row[2];
     $SSlanguage_method =	$row[3];
 	$SSdefault_language =	$row[4];
+	$SSallow_web_debug =	$row[5];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 $VUselected_language = $SSdefault_language;
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$action = preg_replace("/[^-_0-9a-zA-Z]/", "",$action);
+$manager_chat_id = preg_replace("/[^-_0-9a-zA-Z]/", "",$manager_chat_id);
+$chat_sub_id = preg_replace("/[^-_0-9a-zA-Z]/", "",$chat_sub_id);
+$reload_chat_span = preg_replace("/[^-_0-9a-zA-Z]/", "",$reload_chat_span);
+
+### Variables filtered further down in the code
+# $chat_sub_ids
+# $chat_message
 
 if ($non_latin < 1)
 	{
@@ -71,9 +85,9 @@ if ($non_latin < 1)
 	}	# end of non_latin
 else
 	{
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$user = preg_replace("/'|\"|\\\\|;/","",$user);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$user = preg_replace('/[^-_0-9\p{L}]/u',"",$user);
 	}
 
 $auth=0;
@@ -189,6 +203,7 @@ if ($action=="CheckEndedChats" && $manager_chat_id) {
 
 if ($action=="PrintSubChatText") {
 	for ($i=0; $i<$chat_sub_id_ct; $i++) {
+		$chat_sub_ids[$i] = preg_replace("/[^-_0-9a-zA-Z]/", "",$chat_sub_ids[$i]);
 		$chat_sub_id=$chat_sub_ids[$i];
 		$span_name="manager_chat_".$manager_chat_id."_".$chat_sub_id;
 

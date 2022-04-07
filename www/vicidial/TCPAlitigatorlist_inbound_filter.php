@@ -1,7 +1,7 @@
 <?php
 # TCPAlitigatorlist_inbound_filter.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script searches tcpalitigatorlist.com's scrub service for incoming DID phone numbers
 # and returns a blocking match of '1' that will send the call to the Filter route
@@ -21,6 +21,7 @@
 #
 # CHANGES
 # 190618-1417 - First Build
+# 220226-1730 - Added allow_web_debug system setting
 #
 
 header ("Content-type: text/html; charset=utf-8");
@@ -37,20 +38,27 @@ if (isset($_GET["in_filter_override"]))				{$in_filter_override=$_GET["in_filter
 if (isset($_GET["in_cache_override"]))			{$in_cache_override=$_GET["in_cache_override"];}
 	elseif (isset($_POST["in_cache_override"]))	{$in_cache_override=$_POST["in_cache_override"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,webroot_writable FROM system_settings;";
+$stmt = "SELECT use_non_latin,webroot_writable,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
 	$row=mysqli_fetch_row($rslt);
 	$non_latin =				$row[0];
 	$webroot_writable =			$row[1];
+	$SSallow_web_debug =		$row[2];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$in_filter_override=preg_replace('/[^-_0-9a-zA-Z]/','',$in_filter_override);
+$in_cache_override=preg_replace('/[^-_0-9a-zA-Z]/','',$in_cache_override);
 
 if ($non_latin < 1)
 	{
@@ -60,8 +68,7 @@ else
 	{
 	$phone = preg_replace("/'|\"|\\\\|;/","",$phone);
 	}
-$in_filter_override=preg_replace('/[^-_0-9a-zA-Z]/','',$in_filter_override);
-$in_cache_override=preg_replace('/[^-_0-9a-zA-Z]/','',$in_cache_override);
+
 $filter_count=0;
 $ENTRYdate = date("mdHis");
 

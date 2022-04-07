@@ -1,7 +1,7 @@
 <?php
 # lead_tools.php - Various tools for lead basic lead management.
 #
-# Copyright (C) 2019  Matt Florell,Michael Cargile <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell,Michael Cargile <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 121110-1446 - Initial Build
@@ -17,10 +17,11 @@
 # 170711-1105 - Added screen colors
 # 170819-1002 - Added allow_manage_active_lists option
 # 191119-1815 - Fixes for translations compatibility, issue #1142
+# 220228-1025 - Added allow_web_debug system setting
 #
 
-$version = '2.14-13';
-$build = '191119-1815';
+$version = '2.14-14';
+$build = '220228-1025';
 
 # This limit is to prevent data inconsistancies.
 # If there are too many leads in a list this
@@ -62,21 +63,15 @@ if (isset($_GET["confirm_update"])) {$confirm_move=$_GET["confirm_update"];}
 	elseif (isset($_POST["confirm_update"])) {$confirm_update=$_POST["confirm_update"];}
 if (isset($_GET["confirm_delete"])) {$confirm_delete=$_GET["confirm_delete"];}
 	elseif (isset($_POST["confirm_delete"])) {$confirm_delete=$_POST["confirm_delete"];}
-	
+# Several sets of variable inputs are further down in the code as well
+
 $DB = preg_replace('/[^0-9]/','',$DB);
-$move_submit = preg_replace('/[^-_0-9a-zA-Z]/','',$move_submit);
-$update_submit = preg_replace('/[^-_0-9a-zA-Z]/','',$update_submit);
-$delete_submit = preg_replace('/[^-_0-9a-zA-Z]/','',$delete_submit);
-$confirm_move = preg_replace('/[^-_0-9a-zA-Z]/','',$confirm_move);
-$confirm_update = preg_replace('/[^-_0-9a-zA-Z]/','',$confirm_update);
-$confirm_delete = preg_replace('/[^-_0-9a-zA-Z]/','',$confirm_delete);
-$delete_status = preg_replace('/[^-_0-9a-zA-Z]/','',$delete_status);
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$sys_settings_stmt = "SELECT use_non_latin,outbound_autodial_active,sounds_central_control_active,enable_languages,language_method,admin_screen_colors,report_default_format,allow_manage_active_lists FROM system_settings;";
+$sys_settings_stmt = "SELECT use_non_latin,outbound_autodial_active,sounds_central_control_active,enable_languages,language_method,admin_screen_colors,report_default_format,allow_manage_active_lists,allow_web_debug FROM system_settings;";
 $sys_settings_rslt=mysql_to_mysqli($sys_settings_stmt, $link);
-if ($DB) {echo "$sys_settings_stmt\n";}
+#if ($DB) {echo "$sys_settings_stmt\n";}
 $num_rows = mysqli_num_rows($sys_settings_rslt);
 if ($num_rows > 0)
 	{
@@ -89,14 +84,24 @@ if ($num_rows > 0)
 	$SSadmin_screen_colors =			$sys_settings_row[5];
 	$SSreport_default_format =			$sys_settings_row[6];
 	$SSallow_manage_active_lists =		$sys_settings_row[7];
+	$SSallow_web_debug =				$sys_settings_row[8];
 	}
 else
 	{
 	# there is something really weird if there are no system settings
 	exit;
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$move_submit = preg_replace('/[^-_0-9a-zA-Z]/','',$move_submit);
+$update_submit = preg_replace('/[^-_0-9a-zA-Z]/','',$update_submit);
+$delete_submit = preg_replace('/[^-_0-9a-zA-Z]/','',$delete_submit);
+$confirm_move = preg_replace('/[^-_0-9a-zA-Z]/','',$confirm_move);
+$confirm_update = preg_replace('/[^-_0-9a-zA-Z]/','',$confirm_update);
+$confirm_delete = preg_replace('/[^-_0-9a-zA-Z]/','',$confirm_delete);
+$delete_status = preg_replace('/[^-_0-9a-zA-Z]/','',$delete_status);
 
 if ($non_latin < 1)
 	{
@@ -105,10 +110,9 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
-$list_id_override = preg_replace('/[^0-9]/','',$list_id_override);
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
@@ -311,9 +315,9 @@ if ($move_submit == _QXZ("move") )
 	if (isset($_GET["move_count_num"])) {$move_count_num=$_GET["move_count_num"];}
 		elseif (isset($_POST["move_count_num"])) {$move_count_num=$_POST["move_count_num"];}
 	
-	#$move_status = preg_replace('/[^-_0-9a-zA-Z]/','',$move_status);
 	$move_from_list = preg_replace('/[^0-9]/','',$move_from_list);
 	$move_to_list = preg_replace('/[^0-9]/','',$move_to_list);
+	$move_status = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $move_status);
 	$move_count_num = preg_replace('/[^0-9]/','',$move_count_num);
 	$move_count_op = preg_replace('/[^<>=]/','',$move_count_op);
 
@@ -401,9 +405,9 @@ if ($confirm_move == _QXZ("confirm"))
 	if (isset($_GET["move_count_num"])) {$move_count_num=$_GET["move_count_num"];}
 		elseif (isset($_POST["move_count_num"])) {$move_count_num=$_POST["move_count_num"];}
 			
-	#$move_status = preg_replace('/[^-_0-9a-zA-Z]/','',$move_status);
 	$move_from_list = preg_replace('/[^0-9]/','',$move_from_list);
 	$move_to_list = preg_replace('/[^0-9]/','',$move_to_list);
+	$move_status = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $move_status);
 	$move_count_num = preg_replace('/[^0-9]/','',$move_count_num);
 	$move_count_op = preg_replace('/[^<>=]/','',$move_count_op);
 
@@ -465,8 +469,8 @@ if ($update_submit == _QXZ("update") )
 	if (isset($_GET["update_count_num"])) {$update_count_num=$_GET["update_count_num"];}
 		elseif (isset($_POST["update_count_num"])) {$update_count_num=$_POST["update_count_num"];}
 			
-	$update_from_status = preg_replace('/[^-_0-9a-zA-Z]/','',$update_from_status);
-	$update_to_status = preg_replace('/[^-_0-9a-zA-Z]/','',$update_to_status);
+	$update_from_status = preg_replace('/[^-_0-9\p{L}]/u','',$update_from_status);
+	$update_to_status = preg_replace('/[^-_0-9\p{L}]/u','',$update_to_status);
 	$update_list = preg_replace('/[^0-9]/','',$update_list);
 	$update_count_num = preg_replace('/[^0-9]/','',$update_count_num);
 	$update_count_op = preg_replace('/[^<>=]/','',$update_count_op);
@@ -532,8 +536,8 @@ if ($confirm_update == _QXZ("confirm"))
 	if (isset($_GET["update_count_num"])) {$update_count_num=$_GET["update_count_num"];}
 		elseif (isset($_POST["update_count_num"])) {$update_count_num=$_POST["update_count_num"];}
 
-	$update_from_status = preg_replace('/[^-_0-9a-zA-Z]/','',$update_from_status);
-	$update_to_status = preg_replace('/[^-_0-9a-zA-Z]/','',$update_to_status);
+	$update_from_status = preg_replace('/[^-_0-9\p{L}]/u','',$update_from_status);
+	$update_to_status = preg_replace('/[^-_0-9\p{L}]/u','',$update_to_status);
 	$update_list = preg_replace('/[^0-9]/','',$update_list);
 	$update_count_num = preg_replace('/[^0-9]/','',$update_count_num);
 	$update_count_op = preg_replace('/[^<>=]/','',$update_count_op);
@@ -593,7 +597,7 @@ if ( ( $delete_submit == _QXZ("delete") ) && ( $delete_lists > 0 ) )
 	if (isset($_GET["delete_count_num"])) {$delete_count_num=$_GET["delete_count_num"];}
 		elseif (isset($_POST["delete_count_num"])) {$delete_count_num=$_POST["delete_count_num"];}
 	
-	$delete_status = preg_replace('/[^-_0-9a-zA-Z]/','',$delete_status);
+	$delete_status = preg_replace('/[^-_0-9\p{L}]/u','',$delete_status);
 	$delete_list = preg_replace('/[^0-9]/','',$delete_list);
 	$delete_count_num = preg_replace('/[^0-9]/','',$delete_count_num);
 	$delete_count_op = preg_replace('/[^<>=]/','',$delete_count_op);
@@ -655,7 +659,7 @@ if ( ( $confirm_delete == _QXZ("confirm") ) && ( $delete_lists > 0 ) )
 	if (isset($_GET["delete_count_num"])) {$delete_count_num=$_GET["delete_count_num"];}
 		elseif (isset($_POST["delete_count_num"])) {$delete_count_num=$_POST["delete_count_num"];}
 
-	$delete_status = preg_replace('/[^-_0-9a-zA-Z]/','',$delete_status);
+	$delete_status = preg_replace('/[^-_0-9\p{L}]/u','',$delete_status);
 	$delete_list = preg_replace('/[^0-9]/','',$delete_list);
 	$delete_count_num = preg_replace('/[^0-9]/','',$delete_count_num);
 	$delete_count_op = preg_replace('/[^<>=]/','',$delete_count_op);

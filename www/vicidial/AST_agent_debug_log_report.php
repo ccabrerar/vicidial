@@ -1,7 +1,7 @@
 <?php 
 # AST_agent_debug_log_report.php
 # 
-# Copyright (C) 2017  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 150724-0740 - First build
@@ -9,6 +9,7 @@
 # 170409-1547 - Added IP List validation code
 # 170817-2330 - Added HTML format option
 # 170829-0040 - Added screen color settings
+# 220303-1507 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
@@ -45,11 +46,18 @@ if (isset($_GET["report_display_type"]))			{$report_display_type=$_GET["report_d
 if (isset($_GET["SUBMIT"]))					{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))		{$SUBMIT=$_POST["SUBMIT"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
+$NOW_DATE = date("Y-m-d");
+if (strlen($query_date_D) < 6) {$query_date_D = "00:00:00";}
+if (strlen($query_date_T) < 6) {$query_date_T = "23:59:59";}
+if (!isset($query_date)) {$query_date = $NOW_DATE;}
+
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {$MAIN.="$stmt\n";}
+#if ($DB) {$MAIN.="$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -60,11 +68,21 @@ if ($qm_conf_ct > 0)
 	$reports_use_slave_db =			$row[3];
 	$SSenable_languages =			$row[4];
 	$SSlanguage_method =			$row[5];
+	$SSallow_web_debug =			$row[6];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-$NOW_DATE = date("Y-m-d");
+$query_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date);
+$query_date_D = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date_D);
+$query_date_T = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date_T);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$file_download = preg_replace('/[^-_0-9a-zA-Z]/', '', $file_download);
+$lower_limit = preg_replace('/[^-_0-9a-zA-Z]/', '', $lower_limit);
+$upper_limit = preg_replace('/[^-_0-9a-zA-Z]/', '', $upper_limit);
+$report_display_type = preg_replace('/[^-_0-9a-zA-Z]/', '', $report_display_type);
 
 if ($non_latin < 1)
 	{
@@ -74,9 +92,9 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
-	$agent_user = preg_replace("/'|\"|\\\\|;/","",$agent_user);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$agent_user = preg_replace('/[^-_0-9\p{L}]/u','',$agent_user);
 	}
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
@@ -201,11 +219,6 @@ if ( (strlen($slave_db_server)>5) and (preg_match("/$report_name/",$reports_use_
 	require("dbconnect_mysqli.php");
 	$MAIN.="<!-- Using slave server $slave_db_server $db_source -->\n";
 	}
-
-
-if (strlen($query_date_D) < 6) {$query_date_D = "00:00:00";}
-if (strlen($query_date_T) < 6) {$query_date_T = "23:59:59";}
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
 
 
 require("screen_colors.php");

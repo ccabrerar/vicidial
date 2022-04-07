@@ -4,7 +4,7 @@
 # This script is designed to broadcast a recorded message or allow a person to
 # speak to all agents logged into a VICIDIAL campaign.
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 #
 # CHANGES
@@ -20,6 +20,7 @@
 # 141007-2143 - Finalized adding QXZ translation to all admin files
 # 141229-1817 - Added code for on-the-fly language translations display
 # 170217-1213 - Fixed non-latin auth issue #995
+# 220226-2221 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
@@ -52,11 +53,6 @@ if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
 if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))	{$SUBMIT=$_POST["SUBMIT"];}
 
-$campaign_id = preg_replace('/[^0-9a-zA-Z]/', '', $campaign_id);
-$server_ip = preg_replace('/[^\.0-9a-zA-Z]/', '', $server_ip);
-$session_id = preg_replace('/[^0-9a-zA-Z]/', '', $session_id);
-$message = preg_replace('/[^0-9a-zA-Z]/', '', $message);
-
 $STARTtime = date("U");
 $TODAY = date("Y-m-d");
 $mysql_datetime = date("Y-m-d H:i:s");
@@ -72,9 +68,9 @@ $ext_context = 'demo';
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,custom_fields_enabled,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,custom_fields_enabled,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -83,19 +79,32 @@ if ($qm_conf_ct > 0)
 	$custom_fields_enabled =	$row[1];
 	$SSenable_languages =		$row[2];
 	$SSlanguage_method =		$row[3];
+	$SSallow_web_debug =		$row[4];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$server_ip = preg_replace('/[^\.0-9a-zA-Z]/', '', $server_ip);
+$session_id = preg_replace('/[^0-9a-zA-Z]/', '', $session_id);
+$message = preg_replace('/[^0-9a-zA-Z]/', '', $message);
+$NEW_VOICE_LAB = preg_replace('/[^0-9a-zA-Z]/', '', $NEW_VOICE_LAB);
+$KILL_VOICE_LAB = preg_replace('/[^0-9a-zA-Z]/', '', $KILL_VOICE_LAB);
+$PLAY_MESSAGE = preg_replace('/[^0-9a-zA-Z]/', '', $PLAY_MESSAGE);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/',"",$submit);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/',"",$SUBMIT);
 
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$campaign_id = preg_replace('/[^0-9a-zA-Z]/', '', $campaign_id);
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$campaign_id = preg_replace('/[^-_0-9\p{L}]/u', '', $campaign_id);
 	}
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";

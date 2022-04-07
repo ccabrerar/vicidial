@@ -5,7 +5,7 @@
 # custom reports and make them available to user groups
 # of their choosing
 #
-# Copyright (C) 2018 Joseph Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022 Joseph Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -16,6 +16,7 @@
 # 170829-0040 - Added screen color settings
 # 171002-2140 - Added capability to add/modify preset variables
 # 180508-2215 - Added new help display
+# 220221-1926 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
@@ -62,11 +63,13 @@ if (isset($_GET["upd_domain"]))				{$upd_domain=$_GET["upd_domain"];}
 if (isset($_GET["upd_custom_reports_user_groups"]))				{$upd_custom_reports_user_groups=$_GET["upd_custom_reports_user_groups"];}
 	elseif (isset($_POST["upd_custom_reports_user_groups"]))	{$upd_custom_reports_user_groups=$_POST["upd_custom_reports_user_groups"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,custom_fields_enabled,enable_languages,language_method,active_modules FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,custom_fields_enabled,enable_languages,language_method,active_modules,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -79,9 +82,32 @@ if ($qm_conf_ct > 0)
 	$SSenable_languages =			$row[5];
 	$SSlanguage_method =			$row[6];
 	$active_modules =				$row[7];
+	$SSallow_web_debug =			$row[8];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$report_name = preg_replace('/[^- \,\|\_0-9a-zA-Z]/', '', $report_name);
+$upd_report_name = preg_replace('/[^- \,\|\_0-9a-zA-Z]/', '', $upd_report_name);
+$domain = preg_replace('/[^-\:\.\/\_0-9a-zA-Z]/', '', $domain);
+$upd_domain = preg_replace('/[^-\:\.\/\_0-9a-zA-Z]/', '', $upd_domain);
+$path_name = preg_replace('/[^-\[\]\:\.\/\_0-9a-zA-Z]/', '', $path_name);
+$upd_path_name = preg_replace('/[^-\[\]\:\.\/\_0-9a-zA-Z]/', '', $upd_path_name);
+$presets_string = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$presets_string);
+$upd_presets_string = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$upd_presets_string);
+$slave = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$slave);
+$upd_slave = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$upd_slave);
+$add_custom_report = preg_replace('/[^- \,\|\_0-9a-zA-Z]/', '', $add_custom_report);
+$delete_custom_report = preg_replace('/[^- \,\|\_0-9a-zA-Z]/', '', $delete_custom_report);
+$update_custom_report = preg_replace('/[^- \,\|\_0-9a-zA-Z]/', '', $update_custom_report);
+$upd_custom_report_id = preg_replace('/[^- \,\|\_0-9a-zA-Z]/', '', $upd_custom_report_id);
+$upd_report_name = preg_replace('/[^- \,\|\_0-9a-zA-Z]/', '', $upd_report_name);
+
+# Variables filtered further down in the code
+# $custom_reports_user_groups
+# $upd_custom_reports_user_groups
+
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
@@ -89,8 +115,8 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
@@ -240,7 +266,9 @@ if ($add_custom_report) {
 			if (mysqli_affected_rows($link)<1) {
 				$error_msg="<BR><B>"._QXZ("INSERT FAILED")."</B><BR>";
 			} else {
-				$user_group_stmt="select user_group, allowed_custom_reports from vicidial_user_groups where user_group in ('".implode("','", $custom_reports_user_groups)."') $LOGadmin_viewable_groupsSQL";
+				$temp_custom_reports_user_groups = implode("','", $custom_reports_user_groups);
+				$temp_custom_reports_user_groups = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$temp_custom_reports_user_groups);
+				$user_group_stmt="select user_group, allowed_custom_reports from vicidial_user_groups where user_group in ('".$temp_custom_reports_user_groups."') $LOGadmin_viewable_groupsSQL";
 				#		echo $user_group_stmt."<BR>\n";
 				$user_group_rslt=mysql_to_mysqli($user_group_stmt, $link);
 				while ($user_group_row=mysqli_fetch_array($user_group_rslt)) {

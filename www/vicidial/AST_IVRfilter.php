@@ -1,7 +1,7 @@
 <?php 
 # AST_IVRfilter.php
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -21,6 +21,7 @@
 # 160227-1931 - Uniform form format
 # 170409-1538 - Added IP List validation code
 # 180507-2315 - Added new help display
+# 220302-1630 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
@@ -36,30 +37,80 @@ $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["query_date"]))				{$query_date=$_GET["query_date"];}
 	elseif (isset($_POST["query_date"]))	{$query_date=$_POST["query_date"];}
-if (isset($_GET["query_dateY"]))				{$query_dateY=$_GET["query_dateY"];}
+if (isset($_GET["query_dateY"]))			{$query_dateY=$_GET["query_dateY"];}
 	elseif (isset($_POST["query_dateY"]))	{$query_dateY=$_POST["query_dateY"];}
-if (isset($_GET["query_dateM"]))				{$query_dateM=$_GET["query_dateM"];}
+if (isset($_GET["query_dateM"]))			{$query_dateM=$_GET["query_dateM"];}
 	elseif (isset($_POST["query_dateM"]))	{$query_dateM=$_POST["query_dateM"];}
-if (isset($_GET["query_dateD"]))				{$query_dateD=$_GET["query_dateD"];}
+if (isset($_GET["query_dateD"]))			{$query_dateD=$_GET["query_dateD"];}
 	elseif (isset($_POST["query_dateD"]))	{$query_dateD=$_POST["query_dateD"];}
 if (isset($_GET["end_date"]))			{$end_date=$_GET["end_date"];}
 	elseif (isset($_POST["end_date"]))	{$end_date=$_POST["end_date"];}
-if (isset($_GET["end_dateY"]))				{$end_dateY=$_GET["end_dateY"];}
+if (isset($_GET["end_dateY"]))			{$end_dateY=$_GET["end_dateY"];}
 	elseif (isset($_POST["end_dateY"]))	{$end_dateY=$_POST["end_dateY"];}
-if (isset($_GET["end_dateM"]))				{$end_dateM=$_GET["end_dateM"];}
+if (isset($_GET["end_dateM"]))			{$end_dateM=$_GET["end_dateM"];}
 	elseif (isset($_POST["end_dateM"]))	{$end_dateM=$_POST["end_dateM"];}
-if (isset($_GET["end_dateD"]))				{$end_dateD=$_GET["end_dateD"];}
+if (isset($_GET["end_dateD"]))			{$end_dateD=$_GET["end_dateD"];}
 	elseif (isset($_POST["end_dateD"]))	{$end_dateD=$_POST["end_dateD"];}
 if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
 	elseif (isset($_POST["submit"]))	{$submit=$_POST["submit"];}
 if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))	{$SUBMIT=$_POST["SUBMIT"];}
-if (isset($_GET["hourly_breakdown"]))				{$hourly_breakdown=$_GET["hourly_breakdown"];}
+if (isset($_GET["hourly_breakdown"]))			{$hourly_breakdown=$_GET["hourly_breakdown"];}
 	elseif (isset($_POST["hourly_breakdown"]))	{$hourly_breakdown=$_POST["hourly_breakdown"];}
 if (isset($_GET["DB"]))					{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))		{$DB=$_POST["DB"];}
 if (isset($_GET["file_download"]))				{$file_download=$_GET["file_download"];}
 	elseif (isset($_POST["file_download"]))	{$file_download=$_POST["file_download"];}
+
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
+$NOW_DATE = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$STARTtime = date("U");
+if (!isset($query_date)) {$query_date = $NOW_DATE;}
+if (!isset($end_date)) {$end_date = $NOW_DATE;}
+
+#############################################
+##### START SYSTEM_SETTINGS LOOKUP #####
+$stmt = "SELECT use_non_latin,enable_languages,language_method,allow_web_debug FROM system_settings;";
+$rslt=mysql_to_mysqli($stmt, $link);
+#if ($DB) {$HTML_header.="$stmt\n";}
+$qm_conf_ct = mysqli_num_rows($rslt);
+if ($qm_conf_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$non_latin =				$row[0];
+	$SSenable_languages =		$row[1];
+	$SSlanguage_method =		$row[2];
+	$SSallow_web_debug =		$row[3];
+	}
+if ($SSallow_web_debug < 1) {$DB=0;}
+##### END SETTINGS LOOKUP #####
+###########################################
+
+$query_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date);
+$query_dateY = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_dateY);
+$query_dateM = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_dateM);
+$query_dateD = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_dateD);
+$end_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $end_date);
+$end_dateY = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $end_dateY);
+$end_dateM = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $end_dateM);
+$end_dateD = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $end_dateD);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$hourly_breakdown = preg_replace('/[^-_0-9a-zA-Z]/', '', $hourly_breakdown);
+$file_download = preg_replace('/[^-_0-9a-zA-Z]/', '', $file_download);
+
+if ($non_latin < 1)
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	}
+else
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	}
 
 if ($hourly_breakdown) 
 	{
@@ -72,35 +123,6 @@ else
 	$date_int=86400;
 	$substr_place=10;
 	$checked="";
-	}
-
-#############################################
-##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,enable_languages,language_method FROM system_settings;";
-$rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {$HTML_header.="$stmt\n";}
-$qm_conf_ct = mysqli_num_rows($rslt);
-$i=0;
-while ($i < $qm_conf_ct)
-	{
-	$row=mysqli_fetch_row($rslt);
-	$non_latin =				$row[0];
-	$SSenable_languages =		$row[1];
-	$SSlanguage_method =		$row[2];
-	$i++;
-	}
-##### END SETTINGS LOOKUP #####
-###########################################
-
-if ($non_latin < 1)
-	{
-	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
-	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
-	}
-else
-	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
 	}
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
@@ -210,17 +232,12 @@ else
 	$webserver_id = mysqli_insert_id($link);
 	}
 
-$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$campaign[0], $query_date, $end_date|', url='$LOGfull_url', webserver='$webserver_id';";
+$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$query_date, $end_date|', url='$LOGfull_url', webserver='$webserver_id';";
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $report_log_id = mysqli_insert_id($link);
 ##### END log visit to the vicidial_report_log table #####
 
-$NOW_DATE = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-$STARTtime = date("U");
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
-if (!isset($end_date)) {$end_date = $NOW_DATE;}
 
 $i=0;
 

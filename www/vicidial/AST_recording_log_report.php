@@ -3,7 +3,7 @@
 #
 # This report is for viewing the a report of which users accessed which recordings
 #
-# Copyright (C) 2019  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -12,6 +12,8 @@
 # 170824-2130 - Added HTML formatting and screen colors
 # 180507-2315 - Added new help display
 # 191013-0830 - Fixes for PHP7
+# 220302-0912 - Added allow_web_debug system setting
+# 220307-2323 - Fix for display issue
 #
 
 $startMS = microtime();
@@ -37,8 +39,6 @@ if (isset($_GET["SUBMIT"]))					{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))		{$SUBMIT=$_POST["SUBMIT"];}
 if (isset($_GET["file_download"]))				{$file_download=$_GET["file_download"];}
 	elseif (isset($_POST["file_download"]))		{$file_download=$_POST["file_download"];}
-if (isset($_GET["list_ids"]))					{$list_ids=$_GET["list_ids"];}
-	elseif (isset($_POST["list_ids"]))			{$list_ids=$_POST["list_ids"];}
 if (isset($_GET["recording_date_D"]))			{$recording_date_D=$_GET["recording_date_D"];}
 	elseif (isset($_POST["recording_date_D"]))	{$recording_date_D=$_POST["recording_date_D"];}
 if (isset($_GET["recording_date_end_D"]))			{$recording_date_end_D=$_GET["recording_date_end_D"];}
@@ -54,7 +54,8 @@ if (isset($_GET["search_archived_data"]))			{$search_archived_data=$_GET["search
 if (isset($_GET["DB"]))					{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))		{$DB=$_POST["DB"];}
 
-$report_name="Recording Access Log Report";
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
 $NOW_DATE = date("Y-m-d");
 if (!isset($users)) {$users=array();}
 if (!isset($user_group)) {$user_group=array();}
@@ -62,6 +63,61 @@ if (!isset($access_date_D)) {$access_date_D=$NOW_DATE;}
 if (!isset($access_date_end_D)) {$access_date_end_D=$NOW_DATE;}
 if (!isset($access_date_T)) {$access_date_T="00:00:00";}
 if (!isset($access_date_end_T)) {$access_date_end_T="23:59:59";}
+
+$report_name="Recording Access Log Report";
+
+#############################################
+##### START SYSTEM_SETTINGS LOOKUP #####
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,allow_web_debug FROM system_settings;";
+$rslt=mysql_to_mysqli($stmt, $link);
+#if ($DB) {$HTML_text.="$stmt\n";}
+$qm_conf_ct = mysqli_num_rows($rslt);
+if ($qm_conf_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$non_latin =					$row[0];
+	$outbound_autodial_active =		$row[1];
+	$slave_db_server =				$row[2];
+	$reports_use_slave_db =			$row[3];
+	$SSenable_languages =			$row[4];
+	$SSlanguage_method =			$row[5];
+	$SSallow_web_debug =			$row[6];
+	}
+if ($SSallow_web_debug < 1) {$DB=0;}
+if ($archive_tbl) {$agent_log_table="vicidial_agent_log_archive";} else {$agent_log_table="vicidial_agent_log";}
+##### END SETTINGS LOOKUP #####
+###########################################
+
+$access_date_D = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $access_date_D);
+$access_date_end_D = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $access_date_end_D);
+$access_date_T = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $access_date_T);
+$access_date_end_T = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $access_date_end_T);
+$recording_date_D = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $recording_date_D);
+$recording_date_end_D = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $recording_date_end_D);
+$recording_date_T = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $recording_date_T);
+$recording_date_end_T = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $recording_date_end_T);
+$search_archived_data = preg_replace('/[^-_0-9a-zA-Z]/', '', $search_archived_data);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$report_display_type = preg_replace('/[^-_0-9a-zA-Z]/', '', $report_display_type);
+$file_download = preg_replace('/[^-_0-9a-zA-Z]/', '', $file_download);
+
+# Variables filtered further down in the code
+# $users
+# $user_group
+
+if ($non_latin < 1)
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	}
+else
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	}
+
+
 $access_date_from="$access_date_D $access_date_T";
 $access_date_to="$access_date_end_D $access_date_end_T";
 $CSV_text="\""._QXZ("RECORDING ACCESS LOG REPORT")."\"\n";
@@ -79,32 +135,6 @@ if ($recording_date_D)
 	$CSV_text.="\""._QXZ("RECORDING DATE RANGE").":\",\"$recording_date_from "._QXZ("to")." $recording_date_to\"\n";
 	$ASCII_rpt_header.=_QXZ("RECORDING DATE RANGE").": $recording_date_from "._QXZ("to")." $recording_date_to\n";
 	}
-
-
-#if (!isset($recording_date_D)) {$recording_date_D=$NOW_DATE;}
-#if (!isset($recording_date_end_D)) {$recording_date_end_D=$NOW_DATE;}
-#if (!isset($recording_date_T)) {$recording_date_T="00:00:00";}
-#if (!isset($recording_date_end_T)) {$recording_date_end_T="23:59:59";}
-
-#############################################
-##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method FROM system_settings;";
-$rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {$HTML_text.="$stmt\n";}
-if ($archive_tbl) {$agent_log_table="vicidial_agent_log_archive";} else {$agent_log_table="vicidial_agent_log";}
-$qm_conf_ct = mysqli_num_rows($rslt);
-if ($qm_conf_ct > 0)
-	{
-	$row=mysqli_fetch_row($rslt);
-	$non_latin =					$row[0];
-	$outbound_autodial_active =		$row[1];
-	$slave_db_server =				$row[2];
-	$reports_use_slave_db =			$row[3];
-	$SSenable_languages =			$row[4];
-	$SSlanguage_method =			$row[5];
-	}
-##### END SETTINGS LOOKUP #####
-###########################################
 
 ### ARCHIVED DATA CHECK CONFIGURATION
 $archives_available="N";
@@ -127,17 +157,6 @@ else
 	$recording_log_table="recording_log";
 	}
 #############
-
-if ($non_latin < 1)
-	{
-	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
-	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
-	}
-else
-	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
-	}
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
@@ -246,7 +265,7 @@ else
 	$webserver_id = mysqli_insert_id($link);
 	}
 
-$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$group[0], $query_date, $end_date, $shift, $file_download, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
+$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$query_date, $end_date, $shift, $file_download, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $report_log_id = mysqli_insert_id($link);
@@ -302,6 +321,7 @@ $users_string='|';
 $users_ct = count($users);
 while($i < $users_ct)
 	{
+	$users[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $users[$i]);
 	$users_string .= "$users[$i]|";
 	$i++;
 	}
@@ -311,6 +331,7 @@ $user_group_string='|';
 $user_group_ct = count($user_group);
 while($i < $users_ct)
 	{
+	$user_group[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $user_group[$i]);
 	$user_group_string .= "$user_group[$i]|";
 	$i++;
 	}
@@ -348,6 +369,7 @@ $user_string='|';
 $user_ct = count($users);
 while($i < $user_ct)
 	{
+	$users[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $users[$i]);
 	$user_string .= "$users[$i]|";
 	$userQS .= "&users[]=$users[$i]";
 	$vra_user_SQL="vra.user in ('".implode("','", $users)."') and ";
@@ -367,24 +389,30 @@ else
 	}
 
 $i=0;
-$user_group_string='|';
-$user_group_ct = count($user_group);
-while($i < $user_group_ct)
+$user_groups_string='|';
+$user_groups_ct = count($user_groups);
+while($i < $user_groups_ct)
 	{
-	$user_group_string .= "$user_group[$i]|";
-	$user_groupQS .= "&user_group[]=$user_group[$i]";
-	$user_group_SQL=" user_group in ('".implode("','", $user_group)."') and vra.user=vu.user and ";
+	$user_groups[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $user_groups[$i]);
+	$user_groups_string .= "$user_groups[$i]|";
+#	$user_groupQS .= "&user_group[]=$user_groups[$i]";
 	$i++;
 	}
-
-if ( (preg_match('/\-\-ALL\-\-/',$user_group_string) ) or ($user_group_ct < 1) )
-	{$user_group_SQL = "";}
-else
+if ($user_groups_ct > 0)
 	{
-	$ASCII_rpt_header.="   "._QXZ("User groups").": ".implode(", ", $user_group)."\n";
-	$CSV_text.="\""._QXZ("User groups").":\",\"".implode(", ", $user_group)."\"\n";
-	$GRAPH_header.="<th class='column_header grey_graph_cell'>"._QXZ("SELECTED USER GROUPS")."</th>";
+	$user_group_SQL=" user_group in ('".implode("','", $user_groups)."') and vra.user=vu.user and ";
 	}
+if (preg_match('/\-\-ALL\-\-/i',$LOGadmin_viewable_groups))
+	{$user_group_SQL = "";}
+
+if ( (preg_match('/\-\-ALL\-\-/',$user_groups_string) ) or ($user_groups_ct < 1) )
+	{$user_group_SQL = "";}
+#else
+#	{
+#	$ASCII_rpt_header.="   "._QXZ("User groups").": ".implode(", ", $user_groups)."\n";
+#	$CSV_text.="\""._QXZ("User groups").":\",\"".implode(", ", $user_groups)."\"\n";
+#	$GRAPH_header.="<th class='column_header grey_graph_cell'>"._QXZ("SELECTED USER GROUPS")."</th>";
+#	}
 
 
 ##### BEGIN Define colors and logo #####

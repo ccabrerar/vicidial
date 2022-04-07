@@ -3,7 +3,7 @@
 # vicidial_sales_viewer.php - VICIDIAL administration page
 # 
 # 
-# Copyright (C) 2017  Joe Johnson,Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Joe Johnson,Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 80310-1500 - first build
@@ -15,6 +15,7 @@
 # 141007-2147 - Finalized adding QXZ translation to all admin files
 # 170217-1213 - Fixed non-latin auth issue #995
 # 170526-2044 - Fixed unfilter variables issue #1015
+# 220221-1921 - Added allow_web_debug system setting
 #
 
 if (isset($_GET["dcampaign"]))					{$dcampaign=$_GET["dcampaign"];}
@@ -39,12 +40,13 @@ $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -54,9 +56,18 @@ if ($qm_conf_ct > 0)
 	$SSoutbound_autodial_active =	$row[2];
 	$SSenable_languages =			$row[3];
 	$SSlanguage_method =			$row[4];
+	$SSallow_web_debug =			$row[5];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$dcampaign = preg_replace('/[^0-9a-zA-Z]/', '', $dcampaign);
+$list_ids = preg_replace('/[^\,0-9a-zA-Z]/', '', $list_ids);
+$forc = preg_replace('/[^0-9a-zA-Z]/', '', $forc);
+$submit_report = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit_report);
+$sales_number = preg_replace('/[^-_0-9a-zA-Z]/', '', $sales_number);
+$sales_time_frame = preg_replace('/[^-_0-9a-zA-Z]/', '', $sales_time_frame);
 
 if ($non_latin < 1)
 	{
@@ -65,12 +76,9 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
-$dcampaign = preg_replace('/[^0-9a-zA-Z]/', '', $dcampaign);
-$list_ids = preg_replace('/[^\,0-9a-zA-Z]/', '', $list_ids);
-$forc = preg_replace('/[^0-9a-zA-Z]/', '', $forc);
 
 $auth=0;
 $reports_auth=0;

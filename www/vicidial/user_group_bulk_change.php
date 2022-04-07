@@ -1,7 +1,7 @@
 <?php
 # user_group_bulk_change.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 81119-0918 - First build
@@ -20,6 +20,7 @@
 # 160325-1429 - Changes for sidebar update
 # 170217-1213 - Fixed non-latin auth issue #995
 # 170409-1553 - Added IP List validation code
+# 220223-0815 - Added allow_web_debug system setting
 #
 
 header ("Content-type: text/html; charset=utf-8");
@@ -44,11 +45,13 @@ if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
 if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))	{$SUBMIT=$_POST["SUBMIT"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -58,23 +61,30 @@ if ($qm_conf_ct > 0)
 	$SSoutbound_autodial_active =	$row[2];
 	$SSenable_languages =			$row[3];
 	$SSlanguage_method =			$row[4];
+	$SSallow_web_debug =			$row[5];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$stage = preg_replace('/[^-_0-9a-zA-Z]/',"",$stage);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/',"",$submit);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/',"",$SUBMIT);
 
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$group = preg_replace('/[^-_0-9a-zA-Z]/', '', $group);
+	$old_group = preg_replace('/[^-_0-9a-zA-Z]/', '', $old_group);
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$group = preg_replace('/[^-_0-9\p{L}]/u', '', $group);
+	$old_group = preg_replace('/[^-_0-9\p{L}]/u', '', $old_group);
 	}
-$old_group = preg_replace("/'|\"|\\\\|;/","",$old_group);
-$group = preg_replace("/'|\"|\\\\|;/","",$group);
-$stage = preg_replace("/'|\"|\\\\|;/","",$stage);
 
 $StarTtimE = date("U");
 $TODAY = date("Y-m-d");

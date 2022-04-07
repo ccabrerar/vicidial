@@ -1,7 +1,7 @@
 <?php
 # list_merge.php - merge smaller lists into a larger one. Part of Admin Utilities.
 #
-# Copyright (C) 2018  Matt Florell,Joseph Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell,Joseph Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 161004-2240 - Initial Build
@@ -10,10 +10,11 @@
 # 180508-2215 - Added new help display
 # 191101-1630 - Translation patch, removed function.js 
 # 201117-1350 - Translation bug fixed, Issue #1236
+# 220227-2210 - Added allow_web_debug system setting
 #
 
-$version = '2.14-3';
-$build = '170819-1000';
+$version = '2.14-4';
+$build = '220227-2210';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -61,25 +62,13 @@ if (isset($_GET["retain_original_list"])) {$retain_original_list=$_GET["retain_o
 if (isset($_GET["create_new_list"])) {$create_new_list=$_GET["create_new_list"];}
 	elseif (isset($_POST["create_new_list"])) {$create_new_list=$_POST["create_new_list"];}
 
-	
-	
-
 $DB = preg_replace('/[^0-9]/','',$DB);
-$retain_original_list = preg_replace('/[^NY]/i','',$retain_original_list);
-$available_lists = preg_replace('/[^0-9\|]/','',$available_lists);
-$start_dest_list_id = preg_replace('/[^0-9]/','',$start_dest_list_id);
-$destination_list_id = preg_replace('/[^0-9]/','',$destination_list_id);
-$new_list_id = preg_replace('/[^0-9]/','',$new_list_id);
-$new_list_name = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$new_list_name);
-$new_list_description = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$new_list_description);
-$num_leads = preg_replace('/[^0-9]/','',$num_leads);
-
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$sys_settings_stmt = "SELECT use_non_latin,outbound_autodial_active,sounds_central_control_active,enable_languages,language_method,active_modules,admin_screen_colors,allow_manage_active_lists FROM system_settings;";
+$sys_settings_stmt = "SELECT use_non_latin,outbound_autodial_active,sounds_central_control_active,enable_languages,language_method,active_modules,admin_screen_colors,allow_manage_active_lists,allow_web_debug FROM system_settings;";
 $sys_settings_rslt=mysql_to_mysqli($sys_settings_stmt, $link);
-if ($DB) {echo "$sys_settings_stmt\n";}
+#if ($DB) {echo "$sys_settings_stmt\n";}
 $num_rows = mysqli_num_rows($sys_settings_rslt);
 if ($num_rows > 0)
 	{
@@ -92,26 +81,42 @@ if ($num_rows > 0)
 	$SSactive_modules =					$sys_settings_row[5];
 	$SSadmin_screen_colors =			$sys_settings_row[6];
 	$SSallow_manage_active_lists =		$sys_settings_row[7];
+	$SSallow_web_debug =				$sys_settings_row[8];
 	}
 else
 	{
 	# there is something really weird if there are no system settings
 	exit;
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$retain_original_list = preg_replace('/[^NY]/i','',$retain_original_list);
+$available_lists = preg_replace('/[^0-9\|]/','',$available_lists);
+$start_dest_list_id = preg_replace('/[^0-9]/','',$start_dest_list_id);
+$destination_list_id = preg_replace('/[^0-9]/','',$destination_list_id);
+$new_list_id = preg_replace('/[^0-9]/','',$new_list_id);
+$new_list_name = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$new_list_name);
+$new_list_description = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$new_list_description);
+$num_leads = preg_replace('/[^0-9]/','',$num_leads);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$confirm = preg_replace('/[^-_0-9a-zA-Z]/', '', $confirm);
+$active = preg_replace('/[^-_0-9a-zA-Z]/', '', $active);
+$create_new_list = preg_replace('/[^-_0-9a-zA-Z]/', '', $create_new_list);
 
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$campaign_id = preg_replace('/[^-_0-9a-zA-Z]/', '', $campaign_id);
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$campaign_id = preg_replace('/[^-_0-9\p{L}]/u', '', $campaign_id);
 	}
-$list_id_override = preg_replace('/[^0-9]/','',$list_id_override);
 
 $stmt="SELECT selected_language,modify_lists from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}

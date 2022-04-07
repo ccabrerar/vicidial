@@ -1,7 +1,7 @@
 <?php 
 # AST_SIP_event_report.php
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -46,18 +46,24 @@ if (isset($_GET["report_display_type"]))			{$report_display_type=$_GET["report_d
 if (isset($_GET["search_archived_data"]))			{$search_archived_data=$_GET["search_archived_data"];}
 	elseif (isset($_POST["search_archived_data"]))	{$search_archived_data=$_POST["search_archived_data"];}
 
-$query_date = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','',$query_date);
-$query_date_D = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','',$query_date_D);
-$query_date_T = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','',$query_date_T);
-$group = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','',$group);
-$shift = preg_replace('/[^0-9]/','',$shift);
-$stage = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','',$stage);
-$file_download = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','',$file_download);
-$color = preg_replace('/[^0-9a-zA-Z]/','',$color);
 $DB = preg_replace('/[^0-9a-zA-Z]/','',$DB);
-$report_display_type = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','',$report_display_type);
-$search_archived_data = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','',$search_archived_data);
+
+$MT[0]='';
+if (strlen($query_date_D) < 6) {$query_date_D = "00:00:00";}
+if (strlen($query_date_T) < 6) {$query_date_T = "23:59:59";}
+if (strlen($shift) < 1) {$shift = '0';}
+$shiftSQL = "$shift,1000";
+$next_shift = ($shift + 1000);
+$prev_shift = ($shift - 1000);
+$NOW_DATE = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$STARTtime = date("U");
+if (!isset($query_date)) {$query_date = $NOW_DATE;}
+$query_date_BEGIN = "$query_date $query_date_D";
+$query_date_END = "$query_date $query_date_T";
+if (strlen($group) < 1) {$group = 'call_date desc';}
 if (strlen($color)<1) {$color='E6E6E6';}
+
 $report_name = 'SIP Event Report';
 $db_source = 'M';
 $JS_text="<script language='Javascript'>\n";
@@ -65,9 +71,9 @@ $JS_onload="onload = function() {\n";
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,report_default_format,sip_event_logging FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,report_default_format,sip_event_logging,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -80,10 +86,36 @@ if ($qm_conf_ct > 0)
 	$SSlanguage_method =			$row[5];
 	$SSreport_default_format =		$row[6];
 	$SSsip_event_logging =			$row[7];
+	$SSallow_web_debug =			$row[8];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
+if (strlen($report_display_type)<2) {$report_display_type = $SSreport_default_format;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
-if (strlen($report_display_type)<2) {$report_display_type = $SSreport_default_format;}
+
+$query_date = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','',$query_date);
+$query_date_D = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','',$query_date_D);
+$query_date_T = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','',$query_date_T);
+$group = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','',$group);
+$shift = preg_replace('/[^0-9]/','',$shift);
+$stage = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','',$stage);
+$file_download = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','',$file_download);
+$color = preg_replace('/[^0-9a-zA-Z]/','',$color);
+$report_display_type = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','',$report_display_type);
+$search_archived_data = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','',$search_archived_data);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+
+if ($non_latin < 1)
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	}
+else
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	}
 
 ### ARCHIVED DATA CHECK CONFIGURATION
 $archives_available="N";
@@ -111,16 +143,6 @@ else
 	}
 #############
 
-if ($non_latin < 1)
-	{
-	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
-	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
-	}
-else
-	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
-	}
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
@@ -465,20 +487,6 @@ if ( (!preg_match('/\-\-ALL\-\-/i', $LOGadmin_viewable_call_times)) and (strlen(
 	$whereLOGadmin_viewable_call_timesSQL = "where call_time_id IN('---ALL---','$rawLOGadmin_viewable_call_timesSQL')";
 	}
 
-$MT[0]='';
-if (strlen($query_date_D) < 6) {$query_date_D = "00:00:00";}
-if (strlen($query_date_T) < 6) {$query_date_T = "23:59:59";}
-if (strlen($shift) < 1) {$shift = '0';}
-$shiftSQL = "$shift,1000";
-$next_shift = ($shift + 1000);
-$prev_shift = ($shift - 1000);
-$NOW_DATE = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-$STARTtime = date("U");
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
-$query_date_BEGIN = "$query_date $query_date_D";
-$query_date_END = "$query_date $query_date_T";
-if (strlen($group) < 1) {$group = 'call_date desc';}
 
 $LINKbase = "$PHP_SELF?query_date=$query_date&query_date_D=$query_date_D&query_date_T=$query_date_T&group=$group&DB=$DB&search_archived_data=$search_archived_data&report_display_type=$report_display_type";
 

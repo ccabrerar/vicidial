@@ -1,7 +1,7 @@
 <?php 
 # AST_agent_performance_detail.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -41,6 +41,7 @@
 # 140108-0712 - Added webserver and hostname to report logging
 # 150516-1309 - Fixed Javascript element problem, Issue #857
 # 170409-1535 - Added IP List validation code
+# 220303-1439 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
@@ -72,12 +73,22 @@ if (isset($_GET["submit"]))					{$submit=$_GET["submit"];}
 	elseif (isset($_POST["submit"]))		{$submit=$_POST["submit"];}
 if (isset($_GET["SUBMIT"]))					{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))		{$SUBMIT=$_POST["SUBMIT"];}
-if (isset($_GET["file_download"]))				{$file_download=$_GET["file_download"];}
+if (isset($_GET["file_download"]))			{$file_download=$_GET["file_download"];}
 	elseif (isset($_POST["file_download"]))	{$file_download=$_POST["file_download"];}
-if (isset($_GET["report_display_type"]))				{$report_display_type=$_GET["report_display_type"];}
+if (isset($_GET["report_display_type"]))			{$report_display_type=$_GET["report_display_type"];}
 	elseif (isset($_POST["report_display_type"]))	{$report_display_type=$_POST["report_display_type"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
+$MT[0]='';
+$NOW_DATE = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$STARTtime = date("U");
+if (!isset($group)) {$group = array();}
+if (!isset($user_group)) {$user_group = array();}
+if (!isset($users)) {$users = array();}
+if (!isset($query_date)) {$query_date = $NOW_DATE;}
+if (!isset($end_date)) {$end_date = $NOW_DATE;}
 if (strlen($shift)<2) {$shift='ALL';}
 
 $report_name = 'Agent Performance Detail';
@@ -87,9 +98,9 @@ $JS_onload="onload = function() {\n";
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {$HTML_text.="$stmt\n";}
+#if ($DB) {$HTML_text.="$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -98,19 +109,36 @@ if ($qm_conf_ct > 0)
 	$outbound_autodial_active =		$row[1];
 	$slave_db_server =				$row[2];
 	$reports_use_slave_db =			$row[3];
+	$SSallow_web_debug =			$row[4];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$query_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date);
+$end_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $end_date);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$file_download = preg_replace('/[^-_0-9a-zA-Z]/', '', $file_download);
+$report_display_type = preg_replace('/[^-_0-9a-zA-Z]/', '', $report_display_type);
+$stage = preg_replace('/[^-_0-9a-zA-Z]/', '', $stage);
+
+# Variables filtered further down in the code
+# $group
+# $user_group
+# $users
 
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$shift = preg_replace('/[^-_0-9a-zA-Z]/', '', $shift);
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$shift = preg_replace('/[^-_0-9\p{L}]/u', '', $shift);
 	}
 
 $auth=0;
@@ -210,7 +238,7 @@ else
 	$webserver_id = mysqli_insert_id($link);
 	}
 
-$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$group[0], $query_date, $end_date, $shift, $file_download, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
+$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$query_date, $end_date, $shift, $file_download, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $report_log_id = mysqli_insert_id($link);
@@ -279,22 +307,13 @@ if ( (!preg_match('/\-\-ALL\-\-/i', $LOGadmin_viewable_call_times)) and (strlen(
 	$whereLOGadmin_viewable_call_timesSQL = "where call_time_id IN('---ALL---','$rawLOGadmin_viewable_call_timesSQL')";
 	}
 
-$MT[0]='';
-$NOW_DATE = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-$STARTtime = date("U");
-if (!isset($group)) {$group = array();}
-if (!isset($user_group)) {$user_group = array();}
-if (!isset($users)) {$users = array();}
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
-if (!isset($end_date)) {$end_date = $NOW_DATE;}
-
 
 $i=0;
 $group_string='|';
 $group_ct = count($group);
 while($i < $group_ct)
 	{
+	$group[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $group[$i]);
 	$group_string .= "$group[$i]|";
 	$i++;
 	}
@@ -304,6 +323,7 @@ $users_string='|';
 $users_ct = count($users);
 while($i < $users_ct)
 	{
+	$users[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $users[$i]);
 	$users_string .= "$users[$i]|";
 	$i++;
 	}
@@ -323,7 +343,8 @@ while ($i < $campaigns_to_print)
 	}
 for ($i=0; $i<count($user_group); $i++)
 	{
-	if (preg_match('/\-\-ALL\-\-/', $user_group[$i])) {$all_user_groups=1; $user_group="";}
+	$user_group[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $user_group[$i]);
+	if (preg_match('/\-\-ALL\-\-/', $user_group[$i])) {$all_user_groups=1;}
 	}
 
 $stmt="select user_group from vicidial_user_groups $whereLOGadmin_viewable_groupsSQL order by user_group;";
@@ -359,6 +380,7 @@ $group_string='|';
 $group_ct = count($group);
 while($i < $group_ct)
 	{
+	$group[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $group[$i]);
 	if ( (preg_match("/ $group[$i] /",$regexLOGallowed_campaigns)) or (preg_match("/-ALL/",$LOGallowed_campaigns)) )
 		{
 		$group_string .= "$group[$i]|";
@@ -380,13 +402,14 @@ $user_group_string='|';
 $user_group_ct = count($user_group);
 while($i < $user_group_ct)
 	{
+	$user_group[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $user_group[$i]);
 	$user_group_string .= "$user_group[$i]|";
 	$user_group_SQL .= "'$user_group[$i]',";
 	$user_groupQS .= "&user_group[]=$user_group[$i]";
 	$i++;
 	}
 if ( (preg_match('/\-\-ALL\-\-/',$user_group_string) ) or ($user_group_ct < 1) )
-	{$user_group_SQL = "";}
+	{$user_group_SQL = "";   $user_groupQS='&user_group[]=--ALL--';}
 else
 	{
 	$user_group_SQL = preg_replace('/,$/i', '',$user_group_SQL);
@@ -399,6 +422,7 @@ $user_string='|';
 $user_ct = count($users);
 while($i < $user_ct)
 	{
+	$users[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $users[$i]);
 	$user_string .= "$users[$i]|";
 	$user_SQL .= "'$users[$i]',";
 	$userQS .= "&users[]=$users[$i]";
@@ -687,7 +711,7 @@ while ($i < $rows_to_print)
 	$dispo_sec[$i] =	$row[6];
 	$status[$i] =		strtoupper($row[7]);
 	$dead_sec[$i] =		$row[8];
-	$user_group[$i] =	$row[9];
+	$user_groupX[$i] =	$row[9];
 	$customer_sec[$i] =	($talk_sec[$i] - $dead_sec[$i]);
 	
 	if (preg_match("/\|$status[$i]\|/i", $sale_pattern_match)) {
@@ -719,7 +743,7 @@ while ($i < $rows_to_print)
 		$users .= "$user[$i]-";
 		$usersARY[$k] = $user[$i];
 		$user_namesARY[$k] = $full_name[$i];
-		$user_groupsARY[$k] = $user_group[$i];
+		$user_groupsARY[$k] = $user_groupX[$i];
 		$k++;
 		}
 
@@ -859,7 +883,9 @@ while ($m < $k)
 		$Sfull_name=	sprintf("%-45s", $Sfull_name); 
 		while(mb_strlen($Sfull_name,'utf-8')>15) {$Sfull_name = mb_substr("$Sfull_name", 0, -1,'utf-8');}
 		$Suser_group=	sprintf("%-45s", $Suser_group); 
-		while(mb_strlen($Suser_group,'utf-8')>15) {$Suser_group = mb_substr("$Suser_group", 0, -1,'utf-8');}
+		while(mb_strlen($Suser_group,'utf-8')>20) {$Suser_group = mb_substr("$Suser_group", 0, -1,'utf-8');}
+		$Slast_user_group=	sprintf("%-45s", $Slast_user_group); 
+		while(mb_strlen($Slast_user_group,'utf-8')>20) {$Slast_user_group = mb_substr("$Suser_group", 0, -1,'utf-8');}
 		$Suser =	sprintf("%-24s", $Suser);
 		while(mb_strlen($Suser,'utf-8')>8) {$Suser = mb_substr("$Suser", 0, -1,'utf-8');}
 		}

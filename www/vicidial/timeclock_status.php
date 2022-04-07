@@ -1,7 +1,7 @@
 <?php
 # timeclock_status.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -24,6 +24,7 @@
 # 141229-1853 - Added code for on-the-fly language translations display
 # 161019-2254 - Added screen colors
 # 170409-1544 - Added IP List validation code
+# 220226-1712 - Added allow_web_debug system setting
 #
 
 #header ("Content-type: text/html; charset=utf-8");
@@ -54,14 +55,16 @@ if (isset($_GET["SUBMIT"]))					{$SUBMIT=$_GET["SUBMIT"];}
 if (isset($_GET["file_download"]))					{$file_download=$_GET["file_download"];}
 	elseif (isset($_POST["file_download"]))		{$file_download=$_POST["file_download"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
 $report_name = 'User Group Timeclock Status Report';
 $db_source = 'M';
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,webroot_writable,timeclock_end_of_day,enable_languages,language_method,admin_screen_colors FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,webroot_writable,timeclock_end_of_day,enable_languages,language_method,admin_screen_colors,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {$MAIN.="$stmt\n";}
+#if ($DB) {$MAIN.="$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -75,24 +78,32 @@ if ($qm_conf_ct > 0)
 	$SSenable_languages =			$row[6];
 	$SSlanguage_method =			$row[7];
 	$SSadmin_screen_colors =		$row[8];
+	$SSallow_web_debug =			$row[9];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$begin_date = preg_replace('/[^-_0-9a-zA-Z]/',"",$begin_date);
+$end_date = preg_replace('/[^-_0-9a-zA-Z]/',"",$end_date);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/',"",$submit);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/',"",$SUBMIT);
+$file_download = preg_replace('/[^-_0-9a-zA-Z]/',"",$file_download);
 
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$user = preg_replace('/[^-_0-9a-zA-Z]/', '', $user);
+	$user_group = preg_replace('/[^-_0-9a-zA-Z]/', '', $user_group);
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$user = preg_replace('/[^-_0-9\p{L}]/u', '', $user);
+	$user_group = preg_replace('/[^-_0-9\p{L}]/u', '', $user_group);
 	}
-$begin_date = preg_replace("/'|\"|\\\\|;/","",$begin_date);
-$end_date = preg_replace("/'|\"|\\\\|;/","",$end_date);
-$user = preg_replace("/'|\"|\\\\|;/","",$user);
-$user_group = preg_replace("/'|\"|\\\\|;/","",$user_group);
 
 $STARTtime = date("U");
 $TODAY = date("Y-m-d");

@@ -8,7 +8,7 @@
 # just needs to enter the leadID and then they can view and modify the 
 # information in the record for that lead
 #
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -107,6 +107,8 @@
 # 210421-2120 - Added more screen labels
 # 210629-1545 - Added KHOMP stats display
 # 210630-0838 - Added display of vicidial_vmm_counts data, if $CIDdisplay=="Yes"
+# 220222-1454 - Added allow_web_debug system setting
+# 220312-0953 - Added vicidial_dial_cid_log data
 #
 
 require("dbconnect_mysqli.php");
@@ -120,8 +122,6 @@ if (isset($_GET["vendor_id"]))				{$vendor_id=$_GET["vendor_id"];}
 	elseif (isset($_POST["vendor_id"]))		{$vendor_id=$_POST["vendor_id"];}
 if (isset($_GET["source_id"]))				{$source_id=$_GET["source_id"];}
 	elseif (isset($_POST["source_id"]))		{$source_id=$_POST["source_id"];}
-if (isset($_GET["phone"]))				{$phone=$_GET["phone"];}
-	elseif (isset($_POST["phone"]))		{$phone=$_POST["phone"];}
 if (isset($_GET["old_phone"]))				{$old_phone=$_GET["old_phone"];}
 	elseif (isset($_POST["old_phone"]))		{$old_phone=$_POST["old_phone"];}
 if (isset($_GET["lead_id"]))				{$lead_id=$_GET["lead_id"];}
@@ -246,6 +246,7 @@ if ($archive_search=="Yes") {$vl_table="vicidial_list_archive";}
 else {$vl_table="vicidial_list"; $archive_search="No";}
 $altCIDdisplay="Yes";
 if ($CIDdisplay=="Yes") {$altCIDdisplay="No";} 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 $STARTtime = date("U");
 $TODAY = date("Y-m-d");
@@ -268,9 +269,9 @@ if ($nonselectable_statuses > 0)
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,custom_fields_enabled,webroot_writable,allow_emails,enable_languages,language_method,active_modules,log_recording_access,admin_screen_colors,enable_gdpr_download_deletion,source_id_display,mute_recordings,sip_event_logging FROM system_settings;";
+$stmt = "SELECT use_non_latin,custom_fields_enabled,webroot_writable,allow_emails,enable_languages,language_method,active_modules,log_recording_access,admin_screen_colors,enable_gdpr_download_deletion,source_id_display,mute_recordings,sip_event_logging,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -288,7 +289,9 @@ if ($qm_conf_ct > 0)
 	$SSsource_id_display =		$row[10];
 	$SSmute_recordings =		$row[11];
 	$SSsip_event_logging =		$row[12];
+	$SSallow_web_debug =		$row[13];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ### See if KHOMP is set up
 $stmt = "SELECT container_id FROM vicidial_settings_containers where container_id IN('KHOMPSETTINGS','KHOMPSTATUSMAP');";
@@ -321,6 +324,31 @@ $called_count=preg_replace('/[^0-9]/','',$called_count);
 $local_gmt=preg_replace('/[^-\.0-9]/','',$local_gmt);
 $callback = preg_replace('/[^A-Z]/','',$callback);
 $callback_type = preg_replace('/[^A-Z]/','',$callback_type);
+$end_call=preg_replace('/[^0-9]/','',$end_call);
+$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
+$extension = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$extension);
+$channel = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$channel);
+$submit = preg_replace('/[^- \.\_0-9a-zA-Z]/','',$submit);
+$SUBMIT = preg_replace('/[^- \.\_0-9a-zA-Z]/','',$SUBMIT);
+$modify_logs=preg_replace('/[^0-9]/','',$modify_logs);
+$modify_closer_logs=preg_replace('/[^0-9]/','',$modify_closer_logs);
+$modify_agent_logs=preg_replace('/[^0-9]/','',$modify_agent_logs);
+$add_closer_record=preg_replace('/[^0-9]/','',$add_closer_record);
+$call_began = preg_replace('/[^- \:\_0-9a-zA-Z]/','',$call_began);
+$parked_time = preg_replace('/[^- \:\_0-9a-zA-Z]/','',$parked_time);
+$callback_id = preg_replace('/[^-_0-9a-zA-Z]/','',$callback_id);
+$CBchangeUSERtoANY = preg_replace('/[^-_0-9a-zA-Z]/','',$CBchangeUSERtoANY);
+$CBchangeANYtoUSER = preg_replace('/[^-_0-9a-zA-Z]/','',$CBchangeANYtoUSER);
+$CBchangeDATE = preg_replace('/[^-_0-9a-zA-Z]/','',$CBchangeDATE);
+$archive_search = preg_replace('/[^-_0-9a-zA-Z]/','',$archive_search);
+$archive_log = preg_replace('/[^-_0-9a-zA-Z]/','',$archive_log);
+$gdpr_action = preg_replace('/[^-_0-9a-zA-Z]/','',$gdpr_action);
+$CIDdisplay = preg_replace('/[^-_0-9a-zA-Z]/','',$CIDdisplay);
+$appointment_date = preg_replace('/[^- \:\_0-9a-zA-Z]/','',$appointment_date);
+$appointment_time = preg_replace('/[^- \:\_0-9a-zA-Z]/','',$appointment_time);
+
+# Variables filtered further down in the code
+# $vendor_id
 
 if ($non_latin < 1)
 	{
@@ -344,6 +372,7 @@ if ($non_latin < 1)
 	$alt_phone = preg_replace('/[^- \'\+\_\.0-9a-zA-Z]/','',$alt_phone);
 	$email = preg_replace('/[^- \'\+\.\:\/\@\%\_0-9a-zA-Z]/','',$email);
 	$security_phrase = preg_replace('/[^- \'\+\.\:\/\@\_0-9a-zA-Z]/','',$security_phrase);
+	$security = preg_replace('/[^- \'\+\.\:\/\@\_0-9a-zA-Z]/','',$security);
 	$campaign_id = preg_replace('/[^-\_0-9a-zA-Z]/', '',$campaign_id);
 	$multi_alt_phones = preg_replace('/[^- \+\!\:\_0-9a-zA-Z]/','',$multi_alt_phones);
 	$source = preg_replace('/[^0-9a-zA-Z]/','',$source);
@@ -360,11 +389,16 @@ if ($non_latin < 1)
 	$modify_log_submit = preg_replace('/[^-_0-9a-zA-Z]/','',$modify_log_submit);
 	$modify_log_table = preg_replace('/[^-_0-9a-zA-Z]/','',$modify_log_table);
 	$vicidial_id = preg_replace('/[^-\+\.\:\_0-9a-zA-Z]/','',$vicidial_id);
+	$dispo = preg_replace('/[^-_0-9a-zA-Z]/','',$dispo);
+	$status = preg_replace('/[^-_0-9a-zA-Z]/','',$status);
+	$CBstatus = preg_replace('/[^-_0-9a-zA-Z]/','',$CBstatus);
+	$tsr = preg_replace('/[^-_0-9a-zA-Z]/','',$tsr);
+	$CBuser = preg_replace('/[^-_0-9a-zA-Z]/','',$CBuser);
 	}
 else
 	{
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	$user=preg_replace('/[^-_0-9\p{L}]/u','',$user);
 	$pass=preg_replace('/[^-_0-9\p{L}]/u','',$pass);
 	$function = preg_replace('/[^-\_0-9\p{L}]/u', '',$function);
@@ -383,6 +417,7 @@ else
 	$alt_phone = preg_replace('/[^- \'\+\_\.0-9\p{L}]/u','',$alt_phone);
 	$email = preg_replace('/[^- \'\+\.\:\/\@\%\_0-9\p{L}]/u','',$email);
 	$security_phrase = preg_replace('/[^- \'\+\.\:\/\@\_0-9\p{L}]/u','',$security_phrase);
+	$security = preg_replace('/[^- \'\+\.\:\/\@\_0-9\p{L}]/u','',$security);
 	$campaign_id = preg_replace('/[^-\_0-9\p{L}]/u', '',$campaign_id);
 	$multi_alt_phones = preg_replace('/[^- \+\!\:\_0-9\p{L}]/u','',$multi_alt_phones);
 	$source = preg_replace('/[^0-9\p{L}]/u','',$source);
@@ -399,6 +434,11 @@ else
 	$modify_log_submit = preg_replace('/[^-_0-9\p{L}]/u','',$modify_log_submit);
 	$modify_log_table = preg_replace('/[^-_0-9\p{L}]/u','',$modify_log_table);
 	$vicidial_id = preg_replace('/[^-\+\.\:\_0-9\p{L}]/u','',$vicidial_id);
+	$dispo = preg_replace('/[^-_0-9\p{L}]/u','',$dispo);
+	$status = preg_replace('/[^-_0-9\p{L}]/u','',$status);
+	$CBstatus = preg_replace('/[^-_0-9\p{L}]/u','',$CBstatus);
+	$tsr = preg_replace('/[^-_0-9\p{L}]/u','',$tsr);
+	$CBuser = preg_replace('/[^-_0-9\p{L}]/u','',$CBuser);
 	}
 
 $first_name = preg_replace('/\+/',' ',$first_name);
@@ -1818,13 +1858,13 @@ else
 		$call_log .= "<td align=right><font size=2> $row[3] </td>\n";
 		$call_log .= "<td align=right><font size=2> $row[2] </td>\n";
 		$call_log .= "<td align=right><font size=2> $row[1] </td>\n";
-		$call_log .= "<td align=right><font size=2> $row[15] </td>\n";
-		$call_log .= "<td align=right><font size=2>&nbsp; $row[10] </td>\n";
+		$call_log .= "<td align=center><font size=2> $row[15] </td>\n";
+		$call_log .= "<td align=left><font size=2>&nbsp; $row[10] </font><font size=1>$row[16] </td>\n";
 
 		if ($CIDdisplay=="Yes")
 			{
 			$caller_code='';
-			$stmtA="SELECT caller_code,server_ip FROM vicidial_log_extended WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and uniqueid='$row[0]';";
+			$stmtA="SELECT caller_code,server_ip FROM vicidial_log_extended WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and uniqueid='$row[0]' limit 1;";
 			$rsltA=mysql_to_mysqli($stmtA, $link);
 			$cc_to_print = mysqli_num_rows($rsltA);
 			if ($cc_to_print > 0)
@@ -1833,8 +1873,8 @@ else
 				$caller_code =	$rowA[0];
 				$VLEserver_ip = $rowA[1];
 				}
-			$outbound_cid='';
-			$stmtA="SELECT outbound_cid,server_ip FROM vicidial_dial_log WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and caller_code='$caller_code';";
+			$outbound_cid='';   $VDLcall_date='0';
+			$stmtA="SELECT outbound_cid,server_ip,call_date FROM vicidial_dial_log WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and caller_code='$caller_code' limit 1;";
 			$rsltA=mysql_to_mysqli($stmtA, $link);
 			$cid_to_print = mysqli_num_rows($rsltA);
 			if ($cid_to_print > 0)
@@ -1843,14 +1883,27 @@ else
 				$outbound_cid = $rowA[0];
 				$outbound_cid = preg_replace("/\".*\" /",'',$outbound_cid);
 				$VDLserver_ip = $rowA[1];
+				$VDLcall_date = $rowA[2];
 				}
+			$outbound_cid_num='';   $outbound_cid_type='';
+			$stmtA="SELECT outbound_cid,outbound_cid_type FROM vicidial_dial_cid_log WHERE call_date='$VDLcall_date' and caller_code='$caller_code' limit 1;";
+			$rsltA=mysql_to_mysqli($stmtA, $link);
+			$vdl_to_print = mysqli_num_rows($rsltA);
+			if ($vdl_to_print > 0)
+				{
+				$rowA=mysqli_fetch_row($rsltA);
+				$outbound_cid_num = $rowA[0];
+				$outbound_cid_num = preg_replace("/\".*\" /",'',$outbound_cid_num);
+				$outbound_cid_type = $rowA[1];
+				}
+
 			if ($SSsip_event_logging > 0)
 				{
-				$call_log .= "<td align=right nowrap><font size=2>&nbsp; $outbound_cid  <span onClick=\"ShowCallDetail(event,'$caller_code','$SSframe_background')\"><font color=blue><u>$caller_code</u></font></span></td><td align=right><font size=2>&nbsp; $row[0]</td><td align=right><font size=2>&nbsp; $rowA[1]</td>\n";
+				$call_log .= "<td align=left nowrap><font size=2>&nbsp; $outbound_cid  <span onClick=\"ShowCallDetail(event,'$caller_code','$SSframe_background')\"><font color=blue><u>$caller_code</u></font></span> <font size=1>$outbound_cid_type</td><td align=right><font size=2>&nbsp; $row[0]</td><td align=right><font size=2>&nbsp; $VDLserver_ip</td>\n";
 				}
 			else
 				{
-				$call_log .= "<td align=right nowrap><font size=2>&nbsp; $outbound_cid $caller_code</td><td align=right><font size=2>&nbsp; $row[0]</td><td align=right><font size=2>&nbsp; $rowA[1]</td>\n";
+				$call_log .= "<td align=left nowrap><font size=2>&nbsp; $outbound_cid $caller_code </font><font size=1>$outbound_cid_type</td><td align=right><font size=2>&nbsp; $row[0]</td><td align=right><font size=2>&nbsp; $VDLserver_ip</td>\n";
 				}
 			$AMDSTATUS='';	$AMDRESPONSE='';
 			$stmtA="SELECT AMDSTATUS,AMDRESPONSE FROM vicidial_amd_log WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and caller_code='$caller_code';";
@@ -2071,8 +2124,8 @@ else
 			$call_log .= "<td align=right><font size=2> $row[3] </td>\n";
 			$call_log .= "<td align=right><font size=2> $row[2] </td>\n";
 			$call_log .= "<td align=right><font size=2> $row[1] </td>\n";
-			$call_log .= "<td align=right><font size=2> $row[15] </td>\n";
-			$call_log .= "<td align=right><font size=2>&nbsp; $row[10] </td>\n";
+			$call_log .= "<td align=center><font size=2> $row[15] </td>\n";
+			$call_log .= "<td align=right><font size=2>&nbsp; $row[10] </font><font size=1>$row[16] </td>\n";
 
 			if ($CIDdisplay=="Yes")
 				{
@@ -2086,8 +2139,8 @@ else
 					$caller_code = $rowA[0];
 					$VLEserver_ip = $rowA[1];
 					}
-				$outbound_cid='';
-				$stmtA="SELECT outbound_cid,server_ip FROM vicidial_dial_log_archive WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and caller_code='$caller_code';";
+				$outbound_cid='';   $VDLcall_date='0';
+				$stmtA="SELECT outbound_cid,server_ip,call_date FROM vicidial_dial_log_archive WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and caller_code='$caller_code' limit 1;";
 				$rsltA=mysql_to_mysqli($stmtA, $link);
 				$cid_to_print = mysqli_num_rows($rsltA);
 				if ($cid_to_print > 0)
@@ -2096,14 +2149,27 @@ else
 					$outbound_cid = $rowA[0];
 					$outbound_cid = preg_replace("/\".*\" /",'',$outbound_cid);
 					$VDLserver_ip = $rowA[1];
+					$VDLcall_date = $rowA[2];
 					}
+				$outbound_cid_num='';   $outbound_cid_type='';
+				$stmtA="SELECT outbound_cid,outbound_cid_type FROM vicidial_dial_cid_log_archive WHERE call_date='$VDLcall_date' and caller_code='$caller_code' limit 1;";
+				$rsltA=mysql_to_mysqli($stmtA, $link);
+				$vdl_to_print = mysqli_num_rows($rsltA);
+				if ($vdl_to_print > 0)
+					{
+					$rowA=mysqli_fetch_row($rsltA);
+					$outbound_cid_num = $rowA[0];
+					$outbound_cid_num = preg_replace("/\".*\" /",'',$outbound_cid_num);
+					$outbound_cid_type = $rowA[1];
+					}
+
 				if ($SSsip_event_logging > 0)
 					{
-					$call_log .= "<td align=right nowrap><font size=2>&nbsp; $outbound_cid  <span onClick=\"ShowCallDetail(event,'$caller_code','$SSframe_background')\"><font color=blue><u>$caller_code</u></font></span></td><td align=right><font size=2>&nbsp; $row[0]</td><td align=right><font size=2>&nbsp; $rowA[1]</td>\n";
+					$call_log .= "<td align=right nowrap><font size=2>&nbsp; $outbound_cid  <span onClick=\"ShowCallDetail(event,'$caller_code','$SSframe_background')\"><font color=blue><u>$caller_code</u></font></span> <font size=1>$outbound_cid_type</td><td align=right><font size=2>&nbsp; $row[0]</td><td align=right><font size=2>&nbsp; $VDLserver_ip</td>\n";
 					}
 				else
 					{
-					$call_log .= "<td align=right nowrap><font size=2>&nbsp; $outbound_cid $caller_code</td><td align=right><font size=2>&nbsp; $row[0]</td><td align=right><font size=2>&nbsp; $rowA[1]</td>\n";
+					$call_log .= "<td align=right nowrap><font size=2>&nbsp; $outbound_cid $caller_code </font><font size=1>$outbound_cid_type</td><td align=right><font size=2>&nbsp; $row[0]</td><td align=right><font size=2>&nbsp; $VDLserver_ip</td>\n";
 					}
 				}
 			$call_log .= "</tr>\n";
@@ -3060,7 +3126,7 @@ else
 			$out_log_width=1300;
 			if ($AMDcount > 0) {$out_log_width=1500;}
 			echo "<TABLE width=$out_log_width cellspacing=0 cellpadding=1>\n";
-			echo "<tr><td><font size=1># </td><td><font size=2>"._QXZ("DATE/TIME")." </td><td align=left><font size=2>"._QXZ("LENGTH")."</td><td align=left><font size=2> "._QXZ("STATUS")."</td><td align=left><font size=2> "._QXZ("TSR")."</td><td align=right><font size=2> "._QXZ("CAMPAIGN")."</td><td align=right><font size=2> "._QXZ("LIST")."</td><td align=right><font size=2> "._QXZ("LEAD")."</td><td align=right><font size=2> "._QXZ("HANGUP REASON")."</td><td align=right><font size=2> "._QXZ("PHONE")."</td><td align=center><font size=2> <a href=\"$PHP_SELF?lead_id=$lead_id&archive_search=$archive_search&archive_log=$archive_log&CIDdisplay=$altCIDdisplay\">"._QXZ("CALLER ID")."</a></td><td align=right><font size=2> <a href=\"$PHP_SELF?lead_id=$lead_id&archive_search=$archive_search&archive_log=$archive_log&CIDdisplay=$altCIDdisplay\">"._QXZ("UNIQUEID")."</a></td><td align=right><font size=2> <a href=\"$PHP_SELF?lead_id=$lead_id&archive_search=$archive_search&archive_log=$archive_log&CIDdisplay=$altCIDdisplay\">"._QXZ("SERVER IP")."</a></td>";
+			echo "<tr><td><font size=1># </td><td><font size=2>"._QXZ("DATE/TIME")." </td><td align=left><font size=2>"._QXZ("LENGTH")."</td><td align=left><font size=2> "._QXZ("STATUS")."</td><td align=left><font size=2> "._QXZ("TSR")."</td><td align=right><font size=2> "._QXZ("CAMPAIGN")."</td><td align=right><font size=2> "._QXZ("LIST")."</td><td align=right><font size=2> "._QXZ("LEAD")."</td><td align=right><font size=2> "._QXZ("HANGUP REASON")."</td><td align=center><font size=2> "._QXZ("PHONE")."</td><td align=center><font size=2> <a href=\"$PHP_SELF?lead_id=$lead_id&archive_search=$archive_search&archive_log=$archive_log&CIDdisplay=$altCIDdisplay\">"._QXZ("CALLER ID")."</a></td><td align=right><font size=2> <a href=\"$PHP_SELF?lead_id=$lead_id&archive_search=$archive_search&archive_log=$archive_log&CIDdisplay=$altCIDdisplay\">"._QXZ("UNIQUEID")."</a></td><td align=right><font size=2> <a href=\"$PHP_SELF?lead_id=$lead_id&archive_search=$archive_search&archive_log=$archive_log&CIDdisplay=$altCIDdisplay\">"._QXZ("SERVER IP")."</a></td>";
 			if ($AMDcount > 0)
 				{echo "<td align=right><font size=2> "._QXZ("AMD STATUS")."</td><td align=right><font size=2> "._QXZ("AMD RESPONSE")."</td>";}
 			echo "</tr>\n";
@@ -3068,7 +3134,7 @@ else
 		else
 			{
 			echo "<TABLE width=850 cellspacing=0 cellpadding=1>\n";
-			echo "<tr><td><font size=1># </td><td><font size=2>"._QXZ("DATE/TIME")." </td><td align=left><font size=2>"._QXZ("LENGTH")."</td><td align=left><font size=2> "._QXZ("STATUS")."</td><td align=left><font size=2> "._QXZ("TSR")."</td><td align=right><font size=2> "._QXZ("CAMPAIGN")."</td><td align=right><font size=2> "._QXZ("LIST")."</td><td align=right><font size=2> "._QXZ("LEAD")."</td><td align=right><font size=2> "._QXZ("HANGUP REASON")."</td><td align=right><font size=2> "._QXZ("PHONE")."</td><td align=right><font size=2> <a href=\"$PHP_SELF?lead_id=$lead_id&archive_search=$archive_search&archive_log=$archive_log&CIDdisplay=$altCIDdisplay\">"._QXZ("CALLER ID")."</a></td></tr>\n";
+			echo "<tr><td><font size=1># </td><td><font size=2>"._QXZ("DATE/TIME")." </td><td align=left><font size=2>"._QXZ("LENGTH")."</td><td align=left><font size=2> "._QXZ("STATUS")."</td><td align=left><font size=2> "._QXZ("TSR")."</td><td align=right><font size=2> "._QXZ("CAMPAIGN")."</td><td align=right><font size=2> "._QXZ("LIST")."</td><td align=right><font size=2> "._QXZ("LEAD")."</td><td align=right><font size=2> "._QXZ("HANGUP REASON")."</td><td align=center><font size=2> "._QXZ("PHONE")."</td><td align=right><font size=2> <a href=\"$PHP_SELF?lead_id=$lead_id&archive_search=$archive_search&archive_log=$archive_log&CIDdisplay=$altCIDdisplay\">"._QXZ("CALLER ID")."</a></td></tr>\n";
 			}
 
 		echo "$call_log\n";

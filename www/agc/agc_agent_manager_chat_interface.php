@@ -1,7 +1,7 @@
 <?php
 # agc_agent_manager_chat_interface.php
 #
-# Copyright (C) 2021  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This page is for agents to chat with managers via the agent interface.
 #
@@ -17,10 +17,11 @@
 # 180927-0624 - Fix for missing translationm issue #1125
 # 201117-2239 - Changes for better compatibility with non-latin data input
 # 210616-2056 - Added optional CORS support, see options.php for details
+# 220220-0855 - Added allow_web_debug system setting
 #
 
-$admin_version = '2.14-11';
-$build = '210616-2056';
+$admin_version = '2.14-12';
+$build = '220220-0855';
 $php_script = 'agc_agent_manager_chat_interface.php';
 
 $sh="managerchats";
@@ -42,13 +43,17 @@ if (isset($_GET["pass"]))						{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))				{$pass=$_POST["pass"];}
 if (!$user) {echo "Page should only be viewed through the agent interface."; die;}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+$user=preg_replace("/\'|\"|\\\\|;| /","",$user);
+$pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
+
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
 $VUselected_language = '';
-$stmt = "SELECT use_non_latin,enable_languages,language_method,default_language,allow_chats FROM system_settings;";
+$stmt = "SELECT use_non_latin,enable_languages,language_method,default_language,allow_chats,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -58,22 +63,27 @@ if ($qm_conf_ct > 0)
 	$SSlanguage_method =	$row[2];
 	$SSdefault_language =	$row[3];
 	$SSallow_chats =		$row[4];
+	$SSallow_web_debug =	$row[5];
 	}
 $VUselected_language = $SSdefault_language;
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
+$action = preg_replace('/[^-\_0-9a-zA-Z]/','',$action);
+$SUBMIT = preg_replace('/[^-\_0-9a-zA-Z]/','',$SUBMIT);
+
 if ($non_latin < 1)
 	{
-	$user = preg_replace('/[^-\_0-9a-zA-Z]/','',$user);
-	$pass = preg_replace('/[^-\_0-9a-zA-Z]/','',$pass);
+	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
+	$pass=preg_replace("/[^-\.\+\/\=_0-9a-zA-Z]/","",$pass);
 	$manager_chat_id = preg_replace('/[^- \_\.0-9a-zA-Z]/','',$user);
 	}
 else
 	{
-	$user = preg_replace("/\'|\"|\\\\|;/","",$user);
-	$pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
-	$manager_chat_id = preg_replace("/\'|\"|\\\\|;/","",$user);
+	$user = preg_replace('/[^-_0-9\p{L}]/u','',$user);
+	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
+	$manager_chat_id = preg_replace("/[^- \_\.0-9\p{L}]/u","",$user);
 	}
 
 # Load hard coded variables and then load then from options.php

@@ -58,6 +58,7 @@
 # 210707-2215 - Fixes for several rare logging and stats issues
 # 211022-1638 - Added incall_tally_threshold_seconds campaign feature
 # 212207-2207 - Added IQNANQ to drop SQL calculation queries
+# 211122-1457 - Fix for logging bug and modification to drop percentage calculation
 #
 
 $build='212207-2207';
@@ -2883,7 +2884,7 @@ sub calculate_drops
 				while (@aryA = $sthA->fetchrow_array) 
 					{
 					$VL_current_hour_date_int =	$aryA[0];
-					$current_hr=substr($VL_current_hour_date_int, 11, 2);
+					$current_hr=substr($VCL_current_hour_date_int, 11, 2);
 					$VL_current_hour_calls =	$aryA[1];
 					$VL_next_hour_date_int =	$aryA[2];
 					if ($DBX) {print "VCHC CURRENT HOUR CALLS ANSWERS: |$sthArows|$VL_current_hour_date_int|$VL_current_hour_calls|$stmtA|\n";}
@@ -5154,7 +5155,7 @@ sub calculate_drops_inbound
 				while (@aryA = $sthA->fetchrow_array) 
 					{
 					$VCL_current_hour_date_int =	$aryA[0];
-					$current_hr=substr($VL_current_hour_date_int, 11, 2);
+					$current_hr=substr($VCL_current_hour_date_int, 11, 2);
 					$VCL_current_hour_calls =	$aryA[1];
 					$VCL_next_hour_date_int =	$aryA[2];
 					if ($DBX) {print "VCLHC CURRENT HOUR CALLS DROPS: |$sthArows|$VCL_current_hour_calls|$stmtA|\n";}
@@ -5292,8 +5293,15 @@ sub calculate_drops_inbound
 			{
 			$iVCSdrops_today_pct[$p] = ( ($iVCSdrops_today[$p] / $iVCScalls_today[$p]) * 100 );
 			$iVCSdrops_today_pct[$p] = sprintf("%.2f", $iVCSdrops_today_pct[$p]);
-			if ($iVCSanswers_today[$p] < 1) {$iVCSanswers_today[$p] = 1;}
-			$iVCSdrops_answers_today_pct[$p] = ( ($iVCSdrops_today[$p] / $iVCSanswers_today[$p]) * 100 );
+			# if ($iVCSanswers_today[$p] < 1) {$iVCSanswers_today[$p] = 1;}
+			if ($iVCSanswers_today[$p] < 1) 
+				{
+				$iVCSdrops_answers_today_pct[$p] = 0;
+				}
+			else
+				{
+				$iVCSdrops_answers_today_pct[$p] = ( ($iVCSdrops_today[$p] / $iVCSanswers_today[$p]) * 100 );
+				}
 			$iVCSdrops_answers_today_pct[$p] = sprintf("%.2f", $iVCSdrops_answers_today_pct[$p]);
 			}
 

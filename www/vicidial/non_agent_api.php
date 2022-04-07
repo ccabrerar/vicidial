@@ -1,7 +1,7 @@
 <?php
 # non_agent_api.php
 #
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed as an API(Application Programming Interface) to allow
 # other programs to interact with all non-agent-screen VICIDIAL functions
@@ -186,10 +186,18 @@
 # 210917-1615 - Added batch_update_lead function
 # 211027-0845 - Added lead_search function
 # 211107-1556 - Added optional phone_number search for lead_all_info function
+# 211118-1946 - Added 'delete_cf_data' setting to the update_lead function
+# 211217-0733 - Fixes for PHP8, issue #1341
+# 220120-0914 - Added download_invalid_files user function for audio store file listings
+# 220126-2116 - Added dispo_call_url and alt URL options for update_campaign. Added 'update_alt_url' function
+# 220223-0838 - Added allow_web_debug system setting
+# 220307-0937 - Added 'update_presets' function
+# 220310-0825 - Added DELETE action to the 'update_presets' function
+# 220312-0944 - Added vicidial_dial_cid_log logging
 #
 
-$version = '2.14-163';
-$build = '211107-1556';
+$version = '2.14-171';
+$build = '220312-0944';
 $php_script='non_agent_api.php';
 $api_url_log = 0;
 
@@ -563,10 +571,6 @@ if (isset($_GET["leads_counts"]))			{$leads_counts=$_GET["leads_counts"];}
 	elseif (isset($_POST["leads_counts"]))	{$leads_counts=$_POST["leads_counts"];}
 if (isset($_GET["remove_from_hopper"]))				{$remove_from_hopper=$_GET["remove_from_hopper"];}
 	elseif (isset($_POST["remove_from_hopper"]))	{$remove_from_hopper=$_POST["remove_from_hopper"];}
-if (isset($_GET["dedupe_statuses"]))				{$dedupe_statuses=$_GET["dedupe_statuses"];}
-	elseif (isset($_POST["dedupe_statuses"]))		{$dedupe_statuses=$_POST["dedupe_statuses"];}
-if (isset($_GET["status_mismatch_action"]))				{$status_mismatch_action=$_GET["status_mismatch_action"];}
-	elseif (isset($_POST["status_mismatch_action"]))	{$status_mismatch_action=$_POST["status_mismatch_action"];}
 if (isset($_GET["custom_order"]))				{$custom_order=$_GET["custom_order"];}
 	elseif (isset($_POST["custom_order"]))		{$custom_order=$_POST["custom_order"];}
 if (isset($_GET["custom_copy_method"]))				{$custom_copy_method=$_GET["custom_copy_method"];}
@@ -625,8 +629,6 @@ if (isset($_GET["field_max"]))					{$field_max=$_GET["field_max"];}
 	elseif (isset($_POST["field_max"]))			{$field_max=$_POST["field_max"];}
 if (isset($_GET["field_default"]))				{$field_default=$_GET["field_default"];}
 	elseif (isset($_POST["field_default"]))		{$field_default=$_POST["field_default"];}
-if (isset($_GET["field_cost"]))					{$field_cost=$_GET["field_cost"];}
-	elseif (isset($_POST["field_cost"]))		{$field_cost=$_POST["field_cost"];}
 if (isset($_GET["field_required"]))				{$field_required=$_GET["field_required"];}
 	elseif (isset($_POST["field_required"]))	{$field_required=$_POST["field_required"];}
 if (isset($_GET["name_position"]))				{$name_position=$_GET["name_position"];}
@@ -665,7 +667,40 @@ if (isset($_GET["group_id"]))				{$group_id=$_GET["group_id"];}
 	elseif (isset($_POST["group_id"]))		{$group_id=$_POST["group_id"];}
 if (isset($_GET["lead_ids"]))				{$lead_ids=$_GET["lead_ids"];}
 	elseif (isset($_POST["lead_ids"]))		{$lead_ids=$_POST["lead_ids"];}
+if (isset($_GET["delete_cf_data"]))				{$delete_cf_data=$_GET["delete_cf_data"];}
+	elseif (isset($_POST["delete_cf_data"]))	{$delete_cf_data=$_POST["delete_cf_data"];}
+if (isset($_GET["dispo_call_url"]))				{$dispo_call_url=$_GET["dispo_call_url"];}
+	elseif (isset($_POST["dispo_call_url"]))	{$dispo_call_url=$_POST["dispo_call_url"];}
+if (isset($_GET["entry_type"]))				{$entry_type=$_GET["entry_type"];}
+	elseif (isset($_POST["entry_type"]))	{$entry_type=$_POST["entry_type"];}
+if (isset($_GET["alt_url_id"]))				{$alt_url_id=$_GET["alt_url_id"];}
+	elseif (isset($_POST["alt_url_id"]))	{$alt_url_id=$_POST["alt_url_id"];}
+if (isset($_GET["url_address"]))			{$url_address=$_GET["url_address"];}
+	elseif (isset($_POST["url_address"]))	{$url_address=$_POST["url_address"];}
+if (isset($_GET["url_type"]))				{$url_type=$_GET["url_type"];}
+	elseif (isset($_POST["url_type"]))		{$url_type=$_POST["url_type"];}
+if (isset($_GET["url_rank"]))				{$url_rank=$_GET["url_rank"];}
+	elseif (isset($_POST["url_rank"]))		{$url_rank=$_POST["url_rank"];}
+if (isset($_GET["url_statuses"]))			{$url_statuses=$_GET["url_statuses"];}
+	elseif (isset($_POST["url_statuses"]))	{$url_statuses=$_POST["url_statuses"];}
+if (isset($_GET["url_description"]))			{$url_description=$_GET["url_description"];}
+	elseif (isset($_POST["url_description"]))	{$url_description=$_POST["url_description"];}
+if (isset($_GET["url_lists"]))				{$url_lists=$_GET["url_lists"];}
+	elseif (isset($_POST["url_lists"]))		{$url_lists=$_POST["url_lists"];}
+if (isset($_GET["url_call_length"]))			{$url_call_length=$_GET["url_call_length"];}
+	elseif (isset($_POST["url_call_length"]))	{$url_call_length=$_POST["url_call_length"];}
+if (isset($_GET["preset_name"]))			{$preset_name=$_GET["preset_name"];}
+	elseif (isset($_POST["preset_name"]))	{$preset_name=$_POST["preset_name"];}
+if (isset($_GET["preset_number"]))			{$preset_number=$_GET["preset_number"];}
+	elseif (isset($_POST["preset_number"]))	{$preset_number=$_POST["preset_number"];}
+if (isset($_GET["preset_dtmf"]))			{$preset_dtmf=$_GET["preset_dtmf"];}
+	elseif (isset($_POST["preset_dtmf"]))	{$preset_dtmf=$_POST["preset_dtmf"];}
+if (isset($_GET["preset_hide_number"]))				{$preset_hide_number=$_GET["preset_hide_number"];}
+	elseif (isset($_POST["preset_hide_number"]))	{$preset_hide_number=$_POST["preset_hide_number"];}
+if (isset($_GET["action"]))				{$action=$_GET["action"];}
+	elseif (isset($_POST["action"]))	{$action=$_POST["action"];}
 
+$DB=preg_replace('/[^0-9]/','',$DB);
 
 if (file_exists('options.php'))
 	{require('options.php');}
@@ -676,7 +711,7 @@ header ("Pragma: no-cache");                          // HTTP/1.0
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,custom_fields_enabled,pass_hash_enabled,agent_whisper_enabled,active_modules,auto_dial_limit,enable_languages,language_method,admin_web_directory,sounds_web_server FROM system_settings;";
+$stmt = "SELECT use_non_latin,custom_fields_enabled,pass_hash_enabled,agent_whisper_enabled,active_modules,auto_dial_limit,enable_languages,language_method,admin_web_directory,sounds_web_server,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
@@ -694,39 +729,146 @@ if ($qm_conf_ct > 0)
 	$SSlanguage_method =		$row[7];
 	$SSadmin_web_directory =	$row[8];
 	$SSsounds_web_server =		$row[9];
+	$SSallow_web_debug =		$row[10];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
+$list_id = preg_replace('/[^-_0-9a-zA-Z]/','',$list_id);
+$list_id_field = preg_replace('/[^0-9]/','',$list_id_field);
+$lead_id = preg_replace('/[^0-9]/','',$lead_id);
+$lead_ids = preg_replace('/[^\,0-9]/','',$lead_ids);
+$list_exists_check = preg_replace('/[^0-9a-zA-Z]/','',$list_exists_check);
+$use_internal_webserver = preg_replace('/[^0-9a-zA-Z]/','',$use_internal_webserver);
+$field_rerank = preg_replace('/[^_0-9a-zA-Z]/','',$field_rerank);
+$custom_fields_add = preg_replace('/[^_0-9a-zA-Z]/','',$custom_fields_add);
+$custom_fields_update = preg_replace('/[^_0-9a-zA-Z]/','',$custom_fields_update);
+$custom_fields_delete = preg_replace('/[^_0-9a-zA-Z]/','',$custom_fields_delete);
+$dialable_count = preg_replace('/[^_0-9a-zA-Z]/','',$dialable_count);
+$call_handle_method = preg_replace('/[^_0-9a-zA-Z]/','',$call_handle_method);
+$agent_search_method = preg_replace('/[^_0-9a-zA-Z]/','',$agent_search_method);
+$delete_cf_data = preg_replace('/[^A-Z]/','',$delete_cf_data);
+$entry_type = preg_replace('/[^_0-9a-zA-Z]/','',$entry_type);
+$alt_url_id = preg_replace('/[^0-9A-Z]/','',$alt_url_id);
+$url_type = preg_replace('/[^_0-9a-zA-Z]/','',$url_type);
+$url_rank = preg_replace('/[^0-9]/','',$url_rank);
+$url_lists = preg_replace('/[^- 0-9A-Z]/', '',$url_lists);
+$url_call_length = preg_replace('/[^0-9]/','',$url_call_length);
+$status_breakdown = preg_replace('/[^1Y]/','',$status_breakdown);
+$show_percentages = preg_replace('/[^1Y]/','',$show_percentages);
+$function = preg_replace('/[^-_0-9a-zA-Z]/', '',$function);
+$format = preg_replace('/[^0-9a-zA-Z]/','',$format);
+$session_id = preg_replace('/[^0-9]/','',$session_id);
+$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
+$stage = preg_replace('/[^-_0-9a-zA-Z]/','',$stage);
+$rank = preg_replace('/[^0-9]/','',$rank);
+$did_ids=preg_replace('/[^\,\+0-9a-zA-Z]/','',$did_ids);
+$did_patterns = preg_replace('/[^\,\:\+\*\#\.\_0-9a-zA-Z]/','',$did_patterns);
+$end_date=preg_replace('/[^-0-9]/','',$end_date);
+$end_time=preg_replace('/[^:0-9]/','',$end_time);
+$entry_list_id = preg_replace('/[^0-9]/','',$entry_list_id);
+$phone_code = preg_replace('/[^0-9]/','',$phone_code);
+$update_phone_number=preg_replace('/[^A-Z]/','',$update_phone_number);
+$date_of_birth = preg_replace('/[^-0-9]/','',$date_of_birth);
+$gender = preg_replace('/[^A-Z]/','',$gender);
+$dnc_check = preg_replace('/[^A-Z]/','',$dnc_check);
+$campaign_dnc_check = preg_replace('/[^A-Z]/','',$campaign_dnc_check);
+$add_to_hopper = preg_replace('/[^A-Z]/','',$add_to_hopper);
+$hopper_priority = preg_replace("/[^-0-9]/", "",$hopper_priority);
+$hopper_local_call_time_check = preg_replace('/[^A-Z]/','',$hopper_local_call_time_check);
+$custom_fields = preg_replace('/[^0-9a-zA-Z]/','',$custom_fields);
+$search_method = preg_replace('/[^-_0-9a-zA-Z]/','',$search_method);
+$duplicate_check = preg_replace('/[^-_0-9a-zA-Z]/','',$duplicate_check);
+$insert_if_not_found = preg_replace('/[^A-Z]/','',$insert_if_not_found);
+$records = preg_replace('/[^0-9]/','',$records);
+$search_location = preg_replace('/[^A-Z]/','',$search_location);
+$no_update = preg_replace('/[^A-Z]/','',$no_update);
+$delete_lead = preg_replace('/[^A-Z]/','',$delete_lead);
+$called_count=preg_replace('/[^0-9]/','',$called_count);
+$agent_user_level=preg_replace('/[^0-9]/','',$agent_user_level);
+$hotkeys_active=preg_replace('/[^0-9]/','',$hotkeys_active);
+$protocol=preg_replace('/[^0-9a-zA-Z]/','',$protocol);
+$local_gmt=preg_replace('/[^-\.0-9]/','',$local_gmt);
+$active=preg_replace('/[^A-Z]/','',$active);
+$reset_list=preg_replace('/[^A-Z]/','',$reset_list);
+$delete_list=preg_replace('/[^A-Z]/','',$delete_list);
+$delete_leads=preg_replace('/[^A-Z]/','',$delete_leads);
+$reset_time=preg_replace('/[^-_0-9]/', '',$reset_time);
+$tz_method = preg_replace('/[^-\_0-9a-zA-Z]/', '',$tz_method);
+$reset_lead = preg_replace('/[^A-Z]/','',$reset_lead);
+$usacan_areacode_check = preg_replace('/[^A-Z]/','',$usacan_areacode_check);
+$usacan_prefix_check = preg_replace('/[^A-Z]/','',$usacan_prefix_check);
+$delete_phone = preg_replace('/[^A-Z]/','',$delete_phone);
+$callback_datetime = preg_replace('/[^- \+\.\:\/\@\_0-9a-zA-Z]/','',$callback_datetime);
+$callback = preg_replace('/[^A-Z]/','',$callback);
+$callback_type = preg_replace('/[^A-Z]/','',$callback_type);
+$datetime_start = preg_replace('/[^- \+\:\_0-9]/','',$datetime_start);
+$datetime_end = preg_replace('/[^- \+\:\_0-9]/','',$datetime_end);
+$time_format = preg_replace('/[^A-Z]/','',$time_format);
+$nanpa_ac_prefix_check = preg_replace('/[^A-Z]/','',$nanpa_ac_prefix_check);
+$delete_user = preg_replace('/[^A-Z]/','',$delete_user);
+$campaign_rank = preg_replace('/[^-_0-9]/','',$campaign_rank);
+$campaign_grade = preg_replace('/[^0-9]/','',$campaign_grade);
+$camp_rg_only = preg_replace('/[^0-9]/','',$camp_rg_only);
+$wrapup_seconds_override = preg_replace('/[^-0-9]/','',$wrapup_seconds_override);
+$show_sub_status = preg_replace('/[^A-Z]/','',$show_sub_status);
+$auto_dial_level = preg_replace('/[^\.0-9]/','',$auto_dial_level);
+$adaptive_maximum_level = preg_replace('/[^\.0-9]/','',$adaptive_maximum_level);
+$campaign_vdad_exten = preg_replace('/[^0-9]/','',$campaign_vdad_exten);
+$hopper_level = preg_replace('/[^0-9]/','',$hopper_level);
+$reset_hopper = preg_replace('/[^NY]/','',$reset_hopper);
+$dial_method = preg_replace('/[^-_0-9a-zA-Z]/','',$dial_method);
+$dial_timeout = preg_replace('/[^0-9]/','',$dial_timeout);
+$lookup_state = preg_replace('/[^A-Z]/','',$lookup_state);
+$detail = preg_replace('/[^A-Z]/','',$detail);
+$type = preg_replace('/[^A-Z]/','',$type);
+$force_entry_list_id = preg_replace('/[^0-9]/','',$force_entry_list_id);
+$file_download = preg_replace('/[^0-9]/','',$file_download);
+$agent_choose_ingroups = preg_replace('/[^0-9]/','',$agent_choose_ingroups);
+$agent_choose_blended = preg_replace('/[^0-9]/','',$agent_choose_blended);
+$closer_default_blended = preg_replace('/[^0-9]/','',$closer_default_blended);
+$phone_ring_timeout = preg_replace('/[^0-9]/','',$phone_ring_timeout);
+$delete_vm_after_email = preg_replace('/[^a-zA-Z]/','',$delete_vm_after_email);
+$field_rank = preg_replace('/[^0-9]/','',$field_rank);
+$field_size = preg_replace('/[^0-9]/','',$field_size);
+$field_max = preg_replace('/[^0-9]/','',$field_max);
+$field_order = preg_replace('/[^0-9]/','',$field_order);
+$field_required = preg_replace('/[^_A-Z]/','',$field_required);
+$field_encrypt = preg_replace('/[^NY]/','',$field_encrypt);
+$field_duplicate = preg_replace('/[^_A-Z]/','',$field_duplicate);
+$field_type = preg_replace('/[^0-9a-zA-Z]/','',$field_type);
+$name_position = preg_replace('/[^0-9a-zA-Z]/','',$name_position);
+$multi_position = preg_replace('/[^0-9a-zA-Z]/','',$multi_position);
+$ingroup_rank = preg_replace('/[^-_0-9]/','',$ingroup_rank);
+$ingroup_grade = preg_replace('/[^0-9]/','',$ingroup_grade);
+$ingrp_rg_only = preg_replace('/[^0-9]/','',$ingrp_rg_only);
+$query_date=preg_replace('/[^-0-9]/','',$query_date);
+$query_time=preg_replace('/[^:0-9]/','',$query_time);
+$gmt_offset_now = preg_replace('/[^-\_\.0-9]/','',$gmt_offset_now);
+$date=preg_replace('/[^-0-9]/','',$date);
+$header = preg_replace('/[^0-9a-zA-Z]/','',$header);
+$preset_hide_number = preg_replace('/[^0-9a-zA-Z]/','',$preset_hide_number);
+$preset_number = preg_replace('/[^\*\#\.\_0-9a-zA-Z]/','',$preset_number);
+$preset_dtmf = preg_replace('/[^- \,\*\#0-9a-zA-Z]/','',$preset_dtmf);
+$action = preg_replace('/[^0-9a-zA-Z]/','',$action);
+
 if ($non_latin < 1)
 	{
-	$users=preg_replace('/[^-_0-9a-zA-Z\,]/','',$users);
-	$did_patterns = preg_replace('/[^:\+\*\#\.\_0-9a-zA-Z\,]/','',$did_patterns);
-	$did_ids=preg_replace('/[^0-9\,]/','',$did_ids);
-	$query_date=preg_replace('/[^-0-9]/','',$query_date);
-	$query_time=preg_replace('/[^:0-9]/','',$query_time);
-	$end_date=preg_replace('/[^-0-9]/','',$end_date);
-	$end_time=preg_replace('/[^:0-9]/','',$end_time);
+	$status = preg_replace('/[^-_0-9a-zA-Z]/','',$status);
+	$ingroups = preg_replace('/[^-_0-9a-zA-Z]/','',$ingroups);
+	$phone_extension = preg_replace('/[^-_0-9a-zA-Z]/','',$phone_extension);
+	$users=preg_replace('/[^-\,\_0-9a-zA-Z]/','',$users);
 	$statuses = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$statuses);
-	$categories = preg_replace('/[^-_0-9a-zA-Z\,]/','',$categories);
-	$status_breakdown = preg_replace('/[^1Y]/','',$status_breakdown);
-	$show_percentages = preg_replace('/[^1Y]/','',$show_percentages);
-
-	$DB=preg_replace('/[^0-9]/','',$DB);
+	$categories = preg_replace('/[^-\,\_0-9a-zA-Z]/','',$categories);
 	$user=preg_replace('/[^-_0-9a-zA-Z]/','',$user);
 	$pass=preg_replace('/[^-_0-9a-zA-Z]/','',$pass);
 	$agent_user=preg_replace('/[^-_0-9a-zA-Z]/','',$agent_user);
-	$function = preg_replace('/[^-\_0-9a-zA-Z]/', '',$function);
-	$format = preg_replace('/[^0-9a-zA-Z]/','',$format);
-	$entry_list_id = preg_replace('/[^0-9]/','',$entry_list_id);
-	$phone_code = preg_replace('/[^0-9]/','',$phone_code);
-	$update_phone_number=preg_replace('/[^A-Z]/','',$update_phone_number);
 	$phone_number = preg_replace('/[^\,0-9]/','',$phone_number);
-	$vendor_lead_code = preg_replace('/;|#/','',$vendor_lead_code);
+	$vendor_lead_code = preg_replace('/;|#|\"/','',$vendor_lead_code);
 		$vendor_lead_code = preg_replace('/\+/',' ',$vendor_lead_code);
-	$source_id = preg_replace('/;|#/','',$source_id);
+	$source_id = preg_replace('/;|#|\"/','',$source_id);
 		$source_id = preg_replace('/\+/',' ',$source_id);
-	$gmt_offset_now = preg_replace('/[^-\_\.0-9]/','',$gmt_offset_now);
 	$title = preg_replace('/[^- \'\_\.0-9a-zA-Z]/','',$title);
 	$first_name = preg_replace('/[^- \'\+\_\.0-9a-zA-Z]/','',$first_name);
 		$first_name = preg_replace('/\+/',' ',$first_name);
@@ -746,46 +888,24 @@ if ($non_latin < 1)
 		$province = preg_replace('/\+/',' ',$province);
 	$postal_code = preg_replace('/[^- \'\+0-9a-zA-Z]/','',$postal_code);
 		$postal_code = preg_replace('/\+/',' ',$postal_code);
-	$country_code = preg_replace('/[^A-Z]/','',$country_code);
-	$gender = preg_replace('/[^A-Z]/','',$gender);
-	$date_of_birth = preg_replace('/[^-0-9]/','',$date_of_birth);
+	$country_code = preg_replace('/[^-_0-9a-zA-Z]/','',$country_code);
 	$alt_phone = preg_replace('/[^- \'\+\_\.0-9a-zA-Z]/','',$alt_phone);
 		$alt_phone = preg_replace('/\+/',' ',$alt_phone);
 	$email = preg_replace('/[^- \'\+\.\:\/\@\%\_0-9a-zA-Z]/','',$email);
 		$email = preg_replace('/\+/',' ',$email);
 	$security_phrase = preg_replace('/[^- \'\+\.\:\/\@\_0-9a-zA-Z]/','',$security_phrase);
 		$security_phrase = preg_replace('/\+/',' ',$security_phrase);
-	$comments = preg_replace('/;|#/','',$comments);
+	$comments = preg_replace('/;|#|\"/','',$comments);
 		$comments = preg_replace('/\+/',' ',$comments);
-	$dnc_check = preg_replace('/[^A-Z]/','',$dnc_check);
-	$campaign_dnc_check = preg_replace('/[^A-Z]/','',$campaign_dnc_check);
-	$add_to_hopper = preg_replace('/[^A-Z]/','',$add_to_hopper);
-	$hopper_priority = preg_replace("/[^-0-9]/", "",$hopper_priority);
-	$hopper_local_call_time_check = preg_replace('/[^A-Z]/','',$hopper_local_call_time_check);
 	$campaign_id = preg_replace('/[^-\_0-9a-zA-Z]/', '',$campaign_id);
 	$multi_alt_phones = preg_replace('/[^- \+\!\:\_0-9a-zA-Z]/','',$multi_alt_phones);
 		$multi_alt_phones = preg_replace('/\+/',' ',$multi_alt_phones);
 	$source = preg_replace('/[^0-9a-zA-Z]/','',$source);
 	$phone_login = preg_replace('/[^-\_0-9a-zA-Z]/', '',$phone_login);
-	$session_id = preg_replace('/[^0-9]/','',$session_id);
-	$server_ip = preg_replace('/[^\.0-9]/','',$server_ip);
-	$stage = preg_replace('/[^a-zA-Z]/','',$stage);
-	$rank = preg_replace('/[^0-9]/','',$rank);
 	$owner = preg_replace('/[^- \'\+\.\:\/\@\_0-9a-zA-Z]/','',$owner);
 		$owner = preg_replace('/\+/',' ',$owner);
-	$duplicate_check = preg_replace('/[^-_0-9a-zA-Z]/','',$duplicate_check);
-	$custom_fields = preg_replace('/[^0-9a-zA-Z]/','',$custom_fields);
-	$search_method = preg_replace('/[^-_0-9a-zA-Z]/','',$search_method);
-	$insert_if_not_found = preg_replace('/[^A-Z]/','',$insert_if_not_found);
-	$records = preg_replace('/[^0-9]/','',$records);
-	$search_location = preg_replace('/[^A-Z]/','',$search_location);
 	$user_field = preg_replace('/[^-_0-9a-zA-Z]/','',$user_field);
-	$no_update = preg_replace('/[^A-Z]/','',$no_update);
-	$delete_lead = preg_replace('/[^A-Z]/','',$delete_lead);
-	$called_count=preg_replace('/[^0-9]/','',$called_count);
-	$agent_user_level=preg_replace('/[^0-9]/','',$agent_user_level);
-	$hotkeys_active=preg_replace('/[^0-9]/','',$hotkeys_active);
-	$voicemail_id=preg_replace('/[^0-9]/','',$voicemail_id);
+	$voicemail_id=preg_replace('/[^0-9a-zA-Z]/','',$voicemail_id);
 	$agent_pass=preg_replace('/[^-_0-9a-zA-Z]/','',$agent_pass);
 	$agent_full_name=preg_replace('/[^- \+\.\:\/\@\_0-9a-zA-Z]/','',$agent_full_name);
 	$agent_user_group=preg_replace('/[^-_0-9a-zA-Z]/','',$agent_user_group);
@@ -797,82 +917,43 @@ if ($non_latin < 1)
 	$custom_five=preg_replace('/[^- \+\.\:\/\@\_0-9a-zA-Z]/','',$custom_five);
 	$extension=preg_replace('/[^-_0-9a-zA-Z]/','',$extension);
 	$dialplan_number=preg_replace('/[^\*\#0-9a-zA-Z]/','',$dialplan_number);
-	$protocol=preg_replace('/[^0-9a-zA-Z]/','',$protocol);
 	$registration_password=preg_replace('/[^-_0-9a-zA-Z]/','',$registration_password);
 	$phone_full_name=preg_replace('/[^- \+\.\_0-9a-zA-Z]/','',$phone_full_name);
-	$local_gmt=preg_replace('/[^-\.0-9]/','',$local_gmt);
 	$outbound_cid=preg_replace('/[^-_0-9a-zA-Z]/','',$outbound_cid);
 	$phone_context=preg_replace('/[^-_0-9a-zA-Z]/','',$phone_context);
 	$list_name=preg_replace('/[^- \+\.\:\/\@\?\&\_0-9a-zA-Z]/','',$list_name);
-	$active=preg_replace('/[^A-Z]/','',$active);
 	$script=preg_replace('/[^-_0-9a-zA-Z]/','',$script);
 	$am_message=preg_replace('/[^-_0-9a-zA-Z]/','',$am_message);
 	$drop_inbound_group=preg_replace('/[^-_0-9a-zA-Z]/','',$drop_inbound_group);
 	$web_form_address=preg_replace('/[^- %=\+\.\:\/\@\?\&\_0-9a-zA-Z]/','',$web_form_address);
 	$web_form_address_two=preg_replace('/[^- %=\+\.\:\/\@\?\&\_0-9a-zA-Z]/','',$web_form_address_two);
-	$reset_list=preg_replace('/[^A-Z]/','',$reset_list);
-	$delete_list=preg_replace('/[^A-Z]/','',$delete_list);
-	$delete_leads=preg_replace('/[^A-Z]/','',$delete_leads);
-	$reset_time=preg_replace('/[^-_0-9]/', '',$reset_time);
+	$web_form_address_three=preg_replace('/[^- %=\+\.\:\/\@\?\&\_0-9a-zA-Z]/','',$web_form_address_three);
+	$dispo_call_url=preg_replace('/[^- %=\+\.\:\/\@\?\&\_0-9a-zA-Z]/','',$dispo_call_url);
+	$url_address=preg_replace('/[^- %=\+\.\:\/\@\?\&\_0-9a-zA-Z]/','',$url_address);
 	$uniqueid=preg_replace('/[^- \.\_0-9a-zA-Z]/','',$uniqueid);
-	$tz_method = preg_replace('/[^-\_0-9a-zA-Z]/', '',$tz_method);
-	$reset_lead = preg_replace('/[^A-Z]/','',$reset_lead);
-	$usacan_areacode_check = preg_replace('/[^A-Z]/','',$usacan_areacode_check);
-	$usacan_prefix_check = preg_replace('/[^A-Z]/','',$usacan_prefix_check);
-	$delete_phone = preg_replace('/[^A-Z]/','',$delete_phone);
 	$alias_id = preg_replace('/[^-\_0-9a-zA-Z]/', '',$alias_id);
 	$phone_logins = preg_replace('/[^-\,\_0-9a-zA-Z]/','',$phone_logins);
 	$alias_name = preg_replace('/[^- \+\.\:\/\@\_0-9a-zA-Z]/','',$alias_name);
 	$delete_alias = preg_replace('/[^A-Z]/','',$delete_alias);
-	$callback = preg_replace('/[^A-Z]/','',$callback);
 	$callback_status = preg_replace('/[^-\_0-9a-zA-Z]/', '',$callback_status);
-	$callback_datetime = preg_replace('/[^- \+\.\:\/\@\_0-9a-zA-Z]/','',$callback_datetime);
-	$callback_type = preg_replace('/[^A-Z]/','',$callback_type);
 	$callback_user = preg_replace('/[^-\_0-9a-zA-Z]/', '',$callback_user);
 	$callback_comments = preg_replace('/[^- \+\.\:\/\@\_0-9a-zA-Z]/','',$callback_comments);
 	$admin_user_group = preg_replace('/[^-\_0-9a-zA-Z]/', '',$admin_user_group);
-	$datetime_start = preg_replace('/[^- \+\:\_0-9]/','',$datetime_start);
-	$datetime_end = preg_replace('/[^- \+\:\_0-9]/','',$datetime_end);
-	$time_format = preg_replace('/[^A-Z]/','',$time_format);
 	$group_alias_id = preg_replace('/[^\_0-9a-zA-Z]/','',$group_alias_id);
 	$group_alias_name = preg_replace('/[^- \+\_0-9a-zA-Z]/','',$group_alias_name);
 	$caller_id_number = preg_replace('/[^0-9]/','',$caller_id_number);
 	$caller_id_name = preg_replace('/[^- \+\_0-9a-zA-Z]/','',$caller_id_name);
-	$user_groups = preg_replace('/[^-\|\_0-9a-zA-Z\,]/','',$user_groups); #JCJ
-	$in_groups = preg_replace('/[^-\|\_0-9a-zA-Z\,]/','',$in_groups); #JCJ
-	$call_id = preg_replace('/[^0-9a-zA-Z]/','',$call_id);
+	$user_groups = preg_replace('/[^-\|\,\_0-9a-zA-Z]/','',$user_groups); #JCJ
+	$in_groups = preg_replace('/[^-\|\,\_0-9a-zA-Z]/','',$in_groups); #JCJ
 	$group = preg_replace('/[^-\|\_0-9a-zA-Z]/','',$group);
+	$call_id = preg_replace('/[^0-9a-zA-Z]/','',$call_id);
 	$expiration_date = preg_replace('/[^-_0-9a-zA-Z]/','',$expiration_date);
-	$nanpa_ac_prefix_check = preg_replace('/[^A-Z]/','',$nanpa_ac_prefix_check);
-	$delete_user = preg_replace('/[^A-Z]/','',$delete_user);
-	$campaign_rank = preg_replace('/[^-_0-9]/','',$campaign_rank);
-	$campaign_grade = preg_replace('/[^0-9]/','',$campaign_grade);
 	$local_call_time = preg_replace('/[^-_0-9a-zA-Z]/','',$local_call_time);
-	$camp_rg_only = preg_replace('/[^0-9]/','',$camp_rg_only);
-	$wrapup_seconds_override = preg_replace('/[^-0-9]/','',$wrapup_seconds_override);
-	$show_sub_status = preg_replace('/[^A-Z]/','',$show_sub_status);
-	$campaigns = preg_replace('/[^-\|\_0-9a-zA-Z\,]/','',$campaigns); # JCJ
+	$campaigns = preg_replace('/[^-\,\|\_0-9a-zA-Z]/','',$campaigns); # JCJ
 	$campaign_name = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$campaign_name);
-	$auto_dial_level = preg_replace('/[^\.0-9]/','',$auto_dial_level);
-	$adaptive_maximum_level = preg_replace('/[^\.0-9]/','',$adaptive_maximum_level);
-	$campaign_vdad_exten = preg_replace('/[^0-9]/','',$campaign_vdad_exten);
-	$hopper_level = preg_replace('/[^0-9]/','',$hopper_level);
-	$reset_hopper = preg_replace('/[^NY]/','',$reset_hopper);
-	$dial_method = preg_replace('/[^-_0-9a-zA-Z]/','',$dial_method);
-	$dial_timeout = preg_replace('/[^0-9]/','',$dial_timeout);
 	$field_name = preg_replace('/[^-_0-9a-zA-Z]/','',$field_name);
-	$lookup_state = preg_replace('/[^A-Z]/','',$lookup_state);
-	$detail = preg_replace('/[^A-Z]/','',$detail);
-	$type = preg_replace('/[^A-Z]/','',$type);
-	$force_entry_list_id = preg_replace('/[^0-9]/','',$force_entry_list_id);
-	$file_download = preg_replace('/[^0-9]/','',$file_download);
 	$lead_filter_id = preg_replace('/[^-_0-9a-zA-Z]/','',$lead_filter_id);
-	$agent_choose_ingroups = preg_replace('/[^0-9]/','',$agent_choose_ingroups);
-	$agent_choose_blended = preg_replace('/[^0-9]/','',$agent_choose_blended);
-	$closer_default_blended = preg_replace('/[^0-9]/','',$closer_default_blended);
 	$outbound_alt_cid = preg_replace('/[^0-9a-zA-Z]/','',$outbound_alt_cid);
-	$phone_ring_timeout = preg_replace('/[^0-9]/','',$phone_ring_timeout);
-	$delete_vm_after_email = preg_replace('/[^a-zA-Z]/','',$delete_vm_after_email);
 	$did_pattern = preg_replace('/[^:\+\*\#\.\_0-9a-zA-Z]/','',$did_pattern);
 	$did_description = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$did_description);
 	$did_route = preg_replace('/[^-_0-9a-zA-Z]/','',$did_route);
@@ -910,16 +991,6 @@ if ($non_latin < 1)
 	$xferconf_three=preg_replace('/[^-_0-9a-zA-Z]/','',$xferconf_three);
 	$xferconf_four=preg_replace('/[^-_0-9a-zA-Z]/','',$xferconf_four);
 	$xferconf_five=preg_replace('/[^-_0-9a-zA-Z]/','',$xferconf_five);
-	$field_rank = preg_replace('/[^0-9]/','',$field_rank);
-	$field_size = preg_replace('/[^0-9]/','',$field_size);
-	$field_max = preg_replace('/[^0-9]/','',$field_max);
-	$field_order = preg_replace('/[^0-9]/','',$field_order);
-	$field_required = preg_replace('/[^_A-Z]/','',$field_required);
-	$field_encrypt = preg_replace('/[^NY]/','',$field_encrypt);
-	$field_duplicate = preg_replace('/[^_A-Z]/','',$field_duplicate);
-	$field_type = preg_replace('/[^0-9a-zA-Z]/','',$field_type);
-	$name_position = preg_replace('/[^0-9a-zA-Z]/','',$name_position);
-	$multi_position = preg_replace('/[^0-9a-zA-Z]/','',$multi_position);
 	$field_label = preg_replace('/[^_0-9a-zA-Z]/','',$field_label);
 	$field_show_hide = preg_replace('/[^_0-9a-zA-Z]/','',$field_show_hide);
 	$field_name = preg_replace('/[^ \.\,-\_0-9a-zA-Z]/','',$field_name);
@@ -929,36 +1000,163 @@ if ($non_latin < 1)
 		{$field_options = preg_replace('/[^ \.\n\|\,-\_0-9a-zA-Z]/', '',$field_options);}
 	$field_help = preg_replace('/[^ \'\&\.\n\|\,-\_0-9a-zA-Z]/', '',$field_help);
 	$field_default = preg_replace('/[^ \.\n\,-\_0-9a-zA-Z]/', '',$field_default);
-	$ingroup_rank = preg_replace('/[^-_0-9]/','',$ingroup_rank);
-	$ingroup_grade = preg_replace('/[^0-9]/','',$ingroup_grade);
 	$group_id = preg_replace('/[^_0-9a-zA-Z]/','',$group_id);
-	$ingrp_rg_only = preg_replace('/[^0-9]/','',$ingrp_rg_only);
+	$url_statuses = preg_replace('/[^- 0-9a-zA-Z]/', '',$url_statuses);
+	$url_description = preg_replace('/[^ \.\,-\_0-9a-zA-Z]/','',$url_description);
+	$preset_name = preg_replace('/[^- \_0-9a-zA-Z]/','',$preset_name);
 	}
 else
 	{
-	$user = preg_replace('/[^-_0-9\p{L}]/u',"",$user);
-	$pass = preg_replace('/[^-_0-9\p{L}]/u',"",$pass);
+	$status = preg_replace('/[^-_0-9\p{L}]/u','',$status);
+	$ingroups = preg_replace('/[^-_0-9\p{L}]/u','',$ingroups);
+	$phone_extension = preg_replace('/[^-_0-9\p{L}]/u','',$phone_extension);
+	$users=preg_replace('/[^-\,\_0-9\p{L}]/u','',$users);
+	$statuses = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$statuses);
+	$categories = preg_replace('/[^-\,\_0-9\p{L}]/u','',$categories);
+	$user=preg_replace('/[^-_0-9\p{L}]/u','',$user);
+	$pass=preg_replace('/[^-_0-9\p{L}]/u','',$pass);
 	$agent_user=preg_replace('/[^-_0-9\p{L}]/u','',$agent_user);
-	$source = preg_replace('/[^-_0-9\p{L}]/u',"",$source);
-	$source_user = preg_replace('/[^-_0-9\p{L}]/u',"",$source_user);
-	$menu_id = preg_replace('/[^-_0-9\p{L}]/u','',$menu_id);
 	$phone_number = preg_replace('/[^\,0-9]/','',$phone_number);
-	$vendor_lead_code = preg_replace('/;|#/','',$vendor_lead_code);
+	$vendor_lead_code = preg_replace('/;|#|\"/','',$vendor_lead_code);
 		$vendor_lead_code = preg_replace('/\+/',' ',$vendor_lead_code);
+	$source_id = preg_replace('/;|#|\"/','',$source_id);
+		$source_id = preg_replace('/\+/',' ',$source_id);
+	$title = preg_replace('/[^- \'\_\.0-9\p{L}]/u','',$title);
+	$first_name = preg_replace('/[^- \'\+\_\.0-9\p{L}]/u','',$first_name);
+		$first_name = preg_replace('/\+/',' ',$first_name);
+	$middle_initial = preg_replace('/[^-_0-9\p{L}]/u','',$middle_initial);
+	$last_name = preg_replace('/[^- \'\+\_\.0-9\p{L}]/u','',$last_name);
+		$last_name = preg_replace('/\+/',' ',$last_name);
+	$address1 = preg_replace('/[^- \'\+\.\:\/\@\_0-9\p{L}]/u','',$address1);
+	$address2 = preg_replace('/[^- \'\+\.\:\/\@\_0-9\p{L}]/u','',$address2);
+	$address3 = preg_replace('/[^- \'\+\.\:\/\@\_0-9\p{L}]/u','',$address3);
+		$address1 = preg_replace('/\+/',' ',$address1);
+		$address2 = preg_replace('/\+/',' ',$address2);
+		$address3 = preg_replace('/\+/',' ',$address3);
+	$city = preg_replace('/[^- \'\+\.\:\/\@\_0-9\p{L}]/u','',$city);
+		$city = preg_replace('/\+/',' ',$city);
+	$state = preg_replace('/[^- 0-9\p{L}]/u','',$state);
+	$province = preg_replace('/[^- \'\+\.\_0-9\p{L}]/u','',$province);
+		$province = preg_replace('/\+/',' ',$province);
+	$postal_code = preg_replace('/[^- \'\+0-9\p{L}]/u','',$postal_code);
+		$postal_code = preg_replace('/\+/',' ',$postal_code);
+	$country_code = preg_replace('/[^-_0-9\p{L}]/u','',$country_code);
+	$alt_phone = preg_replace('/[^- \'\+\_\.0-9\p{L}]/u','',$alt_phone);
+		$alt_phone = preg_replace('/\+/',' ',$alt_phone);
+	$email = preg_replace('/[^- \'\+\.\:\/\@\%\_0-9\p{L}]/u','',$email);
+		$email = preg_replace('/\+/',' ',$email);
+	$security_phrase = preg_replace('/[^- \'\+\.\:\/\@\_0-9\p{L}]/u','',$security_phrase);
+		$security_phrase = preg_replace('/\+/',' ',$security_phrase);
+	$comments = preg_replace('/;|#|\"/','',$comments);
+		$comments = preg_replace('/\+/',' ',$comments);
+	$campaign_id = preg_replace('/[^-\_0-9\p{L}]/u', '',$campaign_id);
+	$multi_alt_phones = preg_replace('/[^- \+\!\:\_0-9\p{L}]/u','',$multi_alt_phones);
+		$multi_alt_phones = preg_replace('/\+/',' ',$multi_alt_phones);
+	$source = preg_replace('/[^0-9\p{L}]/u','',$source);
+	$phone_login = preg_replace('/[^-\_0-9\p{L}]/u', '',$phone_login);
+	$owner = preg_replace('/[^- \'\+\.\:\/\@\_0-9\p{L}]/u','',$owner);
+		$owner = preg_replace('/\+/',' ',$owner);
+	$user_field = preg_replace('/[^-_0-9\p{L}]/u','',$user_field);
+	$voicemail_id=preg_replace('/[^0-9\p{L}]/u','',$voicemail_id);
+	$agent_pass=preg_replace('/[^-_0-9\p{L}]/u','',$agent_pass);
+	$agent_full_name=preg_replace('/[^- \+\.\:\/\@\_0-9\p{L}]/u','',$agent_full_name);
+	$agent_user_group=preg_replace('/[^-_0-9\p{L}]/u','',$agent_user_group);
+	$phone_pass=preg_replace('/[^-_0-9\p{L}]/u','',$phone_pass);
+	$custom_one=preg_replace('/[^- \+\.\:\/\@\_0-9\p{L}]/u','',$custom_one);
+	$custom_two=preg_replace('/[^- \+\.\:\/\@\_0-9\p{L}]/u','',$custom_two);
+	$custom_three=preg_replace('/[^- \+\.\:\/\@\_0-9\p{L}]/u','',$custom_three);
+	$custom_four=preg_replace('/[^- \+\.\:\/\@\_0-9\p{L}]/u','',$custom_four);
+	$custom_five=preg_replace('/[^- \+\.\:\/\@\_0-9\p{L}]/u','',$custom_five);
+	$extension=preg_replace('/[^-_0-9\p{L}]/u','',$extension);
+	$dialplan_number=preg_replace('/[^\*\#0-9\p{L}]/u','',$dialplan_number);
+	$registration_password=preg_replace('/[^-_0-9\p{L}]/u','',$registration_password);
+	$phone_full_name=preg_replace('/[^- \+\.\_0-9\p{L}]/u','',$phone_full_name);
+	$outbound_cid=preg_replace('/[^-_0-9\p{L}]/u','',$outbound_cid);
+	$phone_context=preg_replace('/[^-_0-9\p{L}]/u','',$phone_context);
+	$list_name=preg_replace('/[^- \+\.\:\/\@\?\&\_0-9\p{L}]/u','',$list_name);
+	$script=preg_replace('/[^-_0-9\p{L}]/u','',$script);
+	$am_message=preg_replace('/[^-_0-9\p{L}]/u','',$am_message);
+	$drop_inbound_group=preg_replace('/[^-_0-9\p{L}]/u','',$drop_inbound_group);
+	$web_form_address=preg_replace('/[^- %=\+\.\:\/\@\?\&\_0-9\p{L}]/u','',$web_form_address);
+	$web_form_address_two=preg_replace('/[^- %=\+\.\:\/\@\?\&\_0-9\p{L}]/u','',$web_form_address_two);
+	$web_form_address_three=preg_replace('/[^- %=\+\.\:\/\@\?\&\_0-9\p{L}]/u','',$web_form_address_three);
+	$dispo_call_url=preg_replace('/[^- %=\+\.\:\/\@\?\&\_0-9\p{L}]/u','',$dispo_call_url);
+	$url_address=preg_replace('/[^- %=\+\.\:\/\@\?\&\_0-9\p{L}]/u','',$url_address);
+	$uniqueid=preg_replace('/[^- \.\_0-9\p{L}]/u','',$uniqueid);
+	$alias_id = preg_replace('/[^-\_0-9\p{L}]/u', '',$alias_id);
+	$phone_logins = preg_replace('/[^-\,\_0-9\p{L}]/u','',$phone_logins);
+	$alias_name = preg_replace('/[^- \+\.\:\/\@\_0-9\p{L}]/u','',$alias_name);
+	$delete_alias = preg_replace('/[^A-Z]/','',$delete_alias);
+	$callback_status = preg_replace('/[^-\_0-9\p{L}]/u', '',$callback_status);
+	$callback_user = preg_replace('/[^-\_0-9\p{L}]/u', '',$callback_user);
+	$callback_comments = preg_replace('/[^- \+\.\:\/\@\_0-9\p{L}]/u','',$callback_comments);
+	$admin_user_group = preg_replace('/[^-\_0-9\p{L}]/u', '',$admin_user_group);
+	$group_alias_id = preg_replace('/[^\_0-9\p{L}]/u','',$group_alias_id);
+	$group_alias_name = preg_replace('/[^- \+\_0-9\p{L}]/u','',$group_alias_name);
+	$caller_id_number = preg_replace('/[^0-9]/','',$caller_id_number);
+	$caller_id_name = preg_replace('/[^- \+\_0-9\p{L}]/u','',$caller_id_name);
+	$user_groups = preg_replace('/[^-\|\,\_0-9\p{L}]/u','',$user_groups); #JCJ
+	$in_groups = preg_replace('/[^-\|\,\_0-9\p{L}]/u','',$in_groups); #JCJ
+	$group = preg_replace('/[^-\|\_0-9\p{L}]/u','',$group);
+	$call_id = preg_replace('/[^0-9\p{L}]/u','',$call_id);
+	$expiration_date = preg_replace('/[^-_0-9\p{L}]/u','',$expiration_date);
+	$local_call_time = preg_replace('/[^-_0-9\p{L}]/u','',$local_call_time);
+	$campaigns = preg_replace('/[^-\,\|\_0-9\p{L}]/u','',$campaigns); # JCJ
+	$campaign_name = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$campaign_name);
+	$field_name = preg_replace('/[^-_0-9\p{L}]/u','',$field_name);
+	$lead_filter_id = preg_replace('/[^-_0-9\p{L}]/u','',$lead_filter_id);
+	$outbound_alt_cid = preg_replace('/[^0-9\p{L}]/u','',$outbound_alt_cid);
+	$did_pattern = preg_replace('/[^:\+\*\#\.\_0-9\p{L}]/u','',$did_pattern);
+	$did_description = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$did_description);
+	$did_route = preg_replace('/[^-_0-9\p{L}]/u','',$did_route);
+	$record_call = preg_replace('/[^-_0-9\p{L}]/u','',$record_call);
+	$exten_context = preg_replace('/[^-_0-9\p{L}]/u','',$exten_context);
+	$voicemail_ext = preg_replace('/[^\*\#\.\_0-9\p{L}]/u','',$voicemail_ext);
+	$extension = preg_replace('/[^-\*\#\.\:\/\@\_0-9\p{L}]/u','',$extension);
+	$filter_clean_cid_number = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$filter_clean_cid_number);
+	$ignore_agentdirect = preg_replace('/[^A-Z]/','',$ignore_agentdirect);
+	$areacode = preg_replace('/[^-_0-9\p{L}]/u','',$areacode);
+	$cid_group_id = preg_replace('/[^-_0-9\p{L}]/u','',$cid_group_id);
+	$cid_description = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$cid_description);
+	$custom_fields_copy = preg_replace('/[^0-9]/','',$custom_fields_copy);
+	if ($outbound_cid != '---ALL---')
+		{$outbound_cid=preg_replace('/[^0-9]/','',$outbound_cid);}
+	if ($areacode != '---ALL---')
+		{$areacode=preg_replace('/[^0-9\p{L}]/u','',$areacode);}
+	$leads_counts = preg_replace('/[^-_0-9\p{L}]/u','',$leads_counts);
+	$remove_from_hopper=preg_replace('/[^0-9\p{L}]/u','',$remove_from_hopper);
+	$list_description=preg_replace('/[^- \+\.\:\/\@\?\&\_0-9\p{L}]/u','',$list_description);
+	$custom_order = preg_replace('/[^-_0-9\p{L}]/u','',$custom_order);
+	$custom_copy_method = preg_replace('/[^-_0-9\p{L}]/u','',$custom_copy_method);
+	$duration = preg_replace('/[^-_0-9\p{L}]/u','',$duration);
+	$is_webphone = preg_replace('/[^-_0-9\p{L}]/u','',$is_webphone);
+	$webphone_auto_answer = preg_replace('/[^-_0-9\p{L}]/u','',$webphone_auto_answer);
+	$use_external_server_ip = preg_replace('/[^-_0-9\p{L}]/u','',$use_external_server_ip);
+	$template_id = preg_replace('/[^-_0-9\p{L}]/u','',$template_id);
+	$on_hook_agent = preg_replace('/[^-_0-9\p{L}]/u','',$on_hook_agent);
+	$delete_did = preg_replace('/[^0-9\p{L}]/u','',$delete_did);
+	$group_by_campaign = preg_replace('/[^0-9\p{L}]/u','',$group_by_campaign);
+	$source_user = preg_replace('/[^-_0-9\p{L}]/u','',$source_user);
+	$menu_id = preg_replace('/[^-_0-9\p{L}]/u','',$menu_id);
+	$xferconf_one=preg_replace('/[^-_0-9\p{L}]/u','',$xferconf_one);
+	$xferconf_two=preg_replace('/[^-_0-9\p{L}]/u','',$xferconf_two);
+	$xferconf_three=preg_replace('/[^-_0-9\p{L}]/u','',$xferconf_three);
+	$xferconf_four=preg_replace('/[^-_0-9\p{L}]/u','',$xferconf_four);
+	$xferconf_five=preg_replace('/[^-_0-9\p{L}]/u','',$xferconf_five);
+	$field_label = preg_replace('/[^_0-9\p{L}]/u','',$field_label);
+	$field_show_hide = preg_replace('/[^_0-9\p{L}]/u','',$field_show_hide);
+	$field_name = preg_replace('/[^ \.\,-\_0-9\p{L}]/u','',$field_name);
+	$field_description = preg_replace('/[^ \.\,-\_0-9\p{L}]/u','',$field_description);
+	$field_options = preg_replace('/[^ \'\&\.\n\|\,-\_0-9\p{L}]/u', '',$field_options);
+	if ($field_type != 'SCRIPT')
+		{$field_options = preg_replace('/[^ \.\n\|\,-\_0-9\p{L}]/u', '',$field_options);}
+	$field_help = preg_replace('/[^ \'\&\.\n\|\,-\_0-9\p{L}]/u', '',$field_help);
+	$field_default = preg_replace('/[^ \.\n\,-\_0-9\p{L}]/u', '',$field_default);
+	$group_id = preg_replace('/[^_0-9\p{L}]/u','',$group_id);
+	$url_statuses = preg_replace('/[^- 0-9\p{L}]/u', '',$url_statuses);
+	$url_description = preg_replace('/[^ \.\,-\_0-9\p{L}]/u','',$url_description);
+	$preset_name = preg_replace('/[^- \_0-9\p{L}]/u','',$preset_name);
 	}
-$list_id = preg_replace('/[^-_0-9a-zA-Z]/','',$list_id);
-$list_id_field = preg_replace('/[^0-9]/','',$list_id_field);
-$lead_id = preg_replace('/[^0-9]/','',$lead_id);
-$lead_ids = preg_replace('/[^\,0-9]/','',$lead_ids);
-$list_exists_check = preg_replace('/[^0-9a-zA-Z]/','',$list_exists_check);
-$use_internal_webserver = preg_replace('/[^0-9a-zA-Z]/','',$use_internal_webserver);
-$field_rerank = preg_replace('/[^_0-9a-zA-Z]/','',$field_rerank);
-$custom_fields_add = preg_replace('/[^_0-9a-zA-Z]/','',$custom_fields_add);
-$custom_fields_update = preg_replace('/[^_0-9a-zA-Z]/','',$custom_fields_update);
-$custom_fields_delete = preg_replace('/[^_0-9a-zA-Z]/','',$custom_fields_delete);
-$dialable_count = preg_replace('/[^_0-9a-zA-Z]/','',$dialable_count);
-$call_handle_method = preg_replace('/[^_0-9a-zA-Z]/','',$call_handle_method);
-$agent_search_method = preg_replace('/[^_0-9a-zA-Z]/','',$agent_search_method);
 
 $USarea = 			substr($phone_number, 0, 3);
 $USprefix = 		substr($phone_number, 3, 3);
@@ -1121,7 +1319,7 @@ if ($auth < 1)
 	exit;
 	}
 
-$stmt="SELECT api_list_restrict,api_allowed_functions,user_group,selected_language,delete_inbound_dids from vicidial_users where user='$user' and active='Y';";
+$stmt="SELECT api_list_restrict,api_allowed_functions,user_group,selected_language,delete_inbound_dids,download_invalid_files,user_level from vicidial_users where user='$user' and active='Y';";
 if ($DB>0) {echo "DEBUG: auth query - $stmt\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $row=mysqli_fetch_row($rslt);
@@ -1130,6 +1328,8 @@ $api_allowed_functions =	$row[1];
 $LOGuser_group =			$row[2];
 $VUselected_language =		$row[3];
 $VUdelete_inbound_dids =	$row[4];
+$VUdownload_invalid_files = $row[5];
+$VUuser_level =				$row[6];
 
 if ( ($api_list_restrict > 0) and ( ($function == 'add_lead') or ($function == 'update_lead') or ($function == 'batch_update_lead') or ($function == 'update_list') or ($function == 'list_info') or ($function == 'list_custom_fields') or ($function == 'lead_search') ) )
 	{
@@ -1371,6 +1571,7 @@ if ($function == 'sounds_list')
 							}
 						$sf++;
 						$BWB='';   $BWE='';
+						$PLAYlink = "<a href=\"$admDIR/$admin_web_dir$sounds_web_directory/$file_names[$m]\" target=\"_blank\"><font size=1 face=\"Arial,Helvetica\">"._QXZ("PLAY")."</a>";
 						if ( (preg_match('/\.wav$/', $file_names[$m])) and (strlen($bad_wavs) > 2) )
 							{
 							$temp_filename = $file_names[$m];
@@ -1378,13 +1579,17 @@ if ($function == 'sounds_list')
 								{
 								$BWB='<font color=red><b>';
 								$BWE=" &nbsp; &nbsp; "._QXZ("BAD WAV FORMAT")."</b></font>";
+								if ( ($VUdownload_invalid_files < 1) or ($VUuser_level < 9) )
+									{
+									$PLAYlink = "<DEL><font size=1 face=\"Arial,Helvetica\">"._QXZ("PLAY")."</DEL>";
+									}
 								}
 							}
 						echo "<tr><td><font size=1 face=\"Arial,Helvetica\">$sf</td>\n";
 						echo "<td><a href=\"javascript:choose_file('$file_namesPROMPT[$m]','$comments');\"><font size=1 face=\"Arial,Helvetica\">$BWB$file_names[$m]$BWE</a></td>\n";
 						echo "<td><font size=1 face=\"Arial,Helvetica\">$file_dates[$m]</td>\n";
 						echo "<td><font size=1 face=\"Arial,Helvetica\">$file_sizes[$m]</td>\n";
-						echo "<td><a href=\"$admDIR/$admin_web_dir$sounds_web_directory/$file_names[$m]\" target=\"_blank\"><font size=1 face=\"Arial,Helvetica\">"._QXZ("PLAY")."</a></td></tr>\n";
+						echo "<td>$PLAYlink</td></tr>\n";
 						}
 					}
 				$k++;
@@ -2798,6 +3003,11 @@ if ($function == 'blind_monitor')
 						$man_id = mysqli_insert_id($link);
 
 						$stmt = "INSERT INTO vicidial_dial_log SET caller_code='$BMquery',lead_id='0',server_ip='$monitor_server_ip',call_date='$NOW_TIME',extension='$dialplan_number',channel='Local/$monitor_dialstring$stage$session_id@default',timeout='0',outbound_cid='\"$BMquery\" <$outbound_cid>',context='default';";
+						$rslt=mysql_to_mysqli($stmt, $link);
+
+						### log outbound call in the dial cid log
+						$stmt = "INSERT INTO vicidial_dial_cid_log SET caller_code='$BMquery',call_date='$NOW_TIME',call_type='MANUAL',call_alt='MAIN', outbound_cid='$outbound_cid',outbound_cid_type='MONITOR_AGENT';";
+						if ($DB) {echo "$stmt\n";}
 						$rslt=mysql_to_mysqli($stmt, $link);
 
 						$stmt = "INSERT INTO vicidial_rt_monitor_log SET manager_user='$user',manager_server_ip='$monitor_server_ip',manager_phone='$phone_login',manager_ip='$ip',agent_user='$AGENTuser',agent_server_ip='$server_ip',agent_status='$AGENTstatus',agent_session='$session_id',lead_id='$AGENTlead_id',campaign_id='$AGENTcampaign',caller_code='$BMquery',monitor_start_time=NOW(),monitor_type='$monitor_type';";
@@ -7399,6 +7609,7 @@ if ($function == 'update_campaign')
 					$xferconf_threeSQL='';
 					$xferconf_fourSQL='';
 					$xferconf_fiveSQL='';
+					$dispo_call_urlSQL='';
 
 					if (strlen($auto_dial_level) > 0)
 						{
@@ -7644,8 +7855,27 @@ if ($function == 'update_campaign')
 								{$xferconf_fiveSQL = " ,xferconf_e_number='$xferconf_five'";}
 							}
 						}
+					if (strlen($dispo_call_url) > 0)
+						{
+						if ($dispo_call_url == '--BLANK--')
+							{$dispo_call_urlSQL = " ,dispo_call_url=''";}
+						else
+							{
+							if ( (strlen($dispo_call_url) < 3) or (strlen($dispo_call_url) > 65000) )
+								{
+								$result = 'ERROR';
+								$result_reason = "update_campaign DISPO CALL URL IS NOT VALID, THIS IS AN OPTIONAL FIELD";
+								$data = "$dispo_call_url";
+								echo "$result: $result_reason: |$user|$data\n";
+								api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+								exit;
+								}
+							else
+								{$dispo_call_urlSQL = " ,dispo_call_url='" . mysqli_real_escape_string($link, $dispo_call_url) . "'";}
+							}
+						}
 
-					$updateSQL = "$campaignnameSQL$activeSQL$dialtimeoutSQL$hopperlevelSQL$campaignvdadextenSQL$adaptivemaximumlevelSQL$dialmethodSQL$autodiallevelSQL$campaigncidSQL$campaignfilterSQL$xferconf_oneSQL$xferconf_twoSQL$xferconf_threeSQL$xferconf_fourSQL$xferconf_fiveSQL";
+					$updateSQL = "$campaignnameSQL$activeSQL$dialtimeoutSQL$hopperlevelSQL$campaignvdadextenSQL$adaptivemaximumlevelSQL$dialmethodSQL$autodiallevelSQL$campaigncidSQL$campaignfilterSQL$xferconf_oneSQL$xferconf_twoSQL$xferconf_threeSQL$xferconf_fourSQL$xferconf_fiveSQL$dispo_call_urlSQL";
 
 					if (strlen($updateSQL)< 3)
 						{
@@ -7704,6 +7934,743 @@ if ($function == 'update_campaign')
 	}
 ################################################################################
 ### END update_campaign
+################################################################################
+
+
+
+
+
+################################################################################
+### update_alt_url - updates/adds/displays alternate dispo call url entries for a campaign
+################################################################################
+if ($function == 'update_alt_url')
+	{
+	if(strlen($source)<2)
+		{
+		$result = 'ERROR';
+		$result_reason = "Invalid Source";
+		echo "$result: $result_reason - $source\n";
+		api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+		echo "ERROR: Invalid Source: |$source|\n";
+		exit;
+		}
+	else
+		{
+		if ( (!preg_match("/ $function /",$api_allowed_functions)) and (!preg_match("/ALL_FUNCTIONS/",$api_allowed_functions)) )
+			{
+			$result = 'ERROR';
+			$result_reason = "auth USER DOES NOT HAVE PERMISSION TO USE THIS FUNCTION";
+			echo "$result: $result_reason: |$user|$function|\n";
+			$data = "$allowed_user";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1' and modify_campaigns='1' and user_level >= 8 and active='Y';";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$row=mysqli_fetch_row($rslt);
+		$allowed_user=$row[0];
+		if ($allowed_user < 1)
+			{
+			$result = 'ERROR';
+			$result_reason = "update_alt_url USER DOES NOT HAVE PERMISSION TO UPDATE CAMPAIGNS";
+			$data = "$allowed_user";
+			echo "$result: $result_reason: |$user|$data\n";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		else
+			{
+			if ( (strlen($campaign_id)<2) or (strlen($campaign_id)>20) )
+				{
+				$result = 'ERROR';
+				$result_reason = "update_alt_url YOU MUST USE ALL REQUIRED FIELDS";
+				$data = "$campaign_id|$campaign_name|$campaign_id";
+				echo "$result: $result_reason: |$user|$data\n";
+				api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+				exit;
+				}
+			else
+				{
+				$stmt="SELECT allowed_campaigns,admin_viewable_groups from vicidial_user_groups where user_group='$LOGuser_group';";
+				if ($DB>0) {echo "|$stmt|\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$row=mysqli_fetch_row($rslt);
+				$LOGallowed_campaigns =			$row[0];
+				$LOGadmin_viewable_groups =		$row[1];
+
+				$LOGallowed_campaignsSQL='';
+				$whereLOGallowed_campaignsSQL='';
+				if ( (!preg_match('/\-ALL/i', $LOGallowed_campaigns)) )
+					{
+					$rawLOGallowed_campaignsSQL = preg_replace("/ -/",'',$LOGallowed_campaigns);
+					$rawLOGallowed_campaignsSQL = preg_replace("/ /","','",$rawLOGallowed_campaignsSQL);
+					$LOGallowed_campaignsSQL = "and campaign_id IN('$rawLOGallowed_campaignsSQL')";
+					$whereLOGallowed_campaignsSQL = "where campaign_id IN('$rawLOGallowed_campaignsSQL')";
+					}
+
+				$stmt="SELECT count(*) from vicidial_campaigns where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$row=mysqli_fetch_row($rslt);
+				$camp_exists=$row[0];
+				if ($camp_exists < 1)
+					{
+					$result = 'ERROR';
+					$result_reason = "update_alt_url CAMPAIGN DOES NOT EXIST";
+					$data = "$campaign_id";
+					echo "$result: $result_reason: |$user|$data\n";
+					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+					exit;
+					}
+				else
+					{
+					if ($alt_url_id == 'LIST')
+						{
+						$output='';
+						$DLset=0;
+						if ($stage == 'csv')
+							{$DL = ',';   $DLset++;}
+						if ($stage == 'tab')
+							{$DL = "\t";   $DLset++;}
+						if ($stage == 'pipe')
+							{$DL = '|';   $DLset++;}
+						if ($DLset < 1)
+							{$DL='|';}
+						if ($header == 'YES')
+							{$output .= 'url_id' . $DL . 'campaign_id' . $DL . 'entry_type' . $DL . 'active' . $DL . 'url_type' . $DL . 'url_rank' . $DL . 'url_statuses' . $DL . 'url_description' . $DL . 'url_lists' . $DL . 'url_call_length' . $DL . "url_address\n";}
+
+						$stmt="SELECT url_id,campaign_id,entry_type,active,url_type,url_rank,url_statuses,url_description,url_lists,url_call_length,url_address from vicidial_url_multi where campaign_id='$campaign_id' and entry_type='$entry_type' and url_type='$url_type' order by url_id limit 1000;";
+						$rslt=mysql_to_mysqli($stmt, $link);
+						$vum_recs = mysqli_num_rows($rslt);
+						if ($DB>0) {echo "$vum_recs|$stmt|\n";}
+						$M=0;
+						while ($vum_recs > $M)
+							{
+							$row=mysqli_fetch_row($rslt);
+							$url_id =			$row[0];
+							$campaign_id =		$row[1];
+							$entry_type =		$row[2];
+							$active =			$row[3];
+							$url_type =			$row[4];
+							$url_rank =			$row[5];
+							$url_statuses =		$row[6];
+							$url_description =	$row[7];
+							$url_lists =		$row[8];
+							$url_call_length =	$row[9];
+							$url_address =		$row[10];
+
+							$output .= "$url_id" . $DL . "$campaign_id" . $DL . "$entry_type" . $DL . "$active" . $DL . "$url_type" . $DL . "$url_rank" . $DL . "$url_statuses" . $DL . "$url_description" . $DL . "$url_lists" . $DL . "$url_call_length" . $DL . "$url_address\n";
+
+							$M++;
+							}
+						if ($M < 1)
+							{echo "NOTICE: update_alt_url LIST, No Records Found - $user|$url_type|$entry_type|$campaign_id|0\n";}
+						else
+							{echo $output;}
+
+						$result = 'SUCCESS';
+						$result_reason = "update_alt_url ALT URL LIST DISPLAYED";
+						$data = "$url_type|$entry_type|$campaign_id|$M";
+						api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+
+						exit;
+						}
+					if ($entry_type == 'campaign')
+						{
+						$event_section = 'CAMPAIGNS';
+						if ($url_type == 'dispo')
+							{$validate_stmt="SELECT count(*) from vicidial_campaigns where campaign_id='$campaign_id' and dispo_call_url='ALT';";}
+						elseif ($url_type == 'start')
+							{$validate_stmt="SELECT count(*) from vicidial_campaigns where campaign_id='$campaign_id' and start_call_url='ALT';";}
+						elseif ($url_type == 'noagent')
+							{$validate_stmt="SELECT count(*) from vicidial_campaigns where campaign_id='$campaign_id' and na_call_url='ALT';";}
+						else
+							{
+							$result = 'ERROR';
+							$result_reason = "update_alt_url NO VALID URL TYPE DEFINED:";
+							$data = "$url_type|$entry_type|$campaign_id";
+							echo "$result: $result_reason: |$user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							exit;
+							}
+						}
+					elseif ($entry_type == 'ingroup')
+						{
+						$event_section = 'INGROUPS';
+						if ($url_type == 'dispo')
+							{$validate_stmt="SELECT count(*) from vicidial_inbound_groups where group_id='$campaign_id' and dispo_call_url='ALT';";}
+						elseif ($url_type == 'start')
+							{$validate_stmt="SELECT count(*) from vicidial_inbound_groups where group_id='$campaign_id' and start_call_url='ALT';";}
+						elseif ($url_type == 'noagent')
+							{$validate_stmt="SELECT count(*) from vicidial_inbound_groups where group_id='$campaign_id' and na_call_url='ALT';";}
+						elseif ($url_type == 'addlead')
+							{$validate_stmt="SELECT count(*) from vicidial_inbound_groups where group_id='$campaign_id' and add_lead_url='ALT';";}
+						else
+							{
+							$result = 'ERROR';
+							$result_reason = "update_alt_url NO VALID URL TYPE DEFINED:";
+							$data = "$url_type|$entry_type|$campaign_id";
+							echo "$result: $result_reason: |$user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							exit;
+							}
+						}
+					elseif ($entry_type == 'list')
+						{
+						$event_section = 'LISTS';
+						if ($url_type == 'noagent')
+							{$validate_stmt="SELECT count(*) from vicidial_lists where list_id='$campaign_id' and na_call_url='ALT';";}
+						else
+							{
+							$result = 'ERROR';
+							$result_reason = "update_alt_url NO VALID URL TYPE DEFINED:";
+							$data = "$url_type|$entry_type|$campaign_id";
+							echo "$result: $result_reason: |$user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							exit;
+							}
+						}
+					else
+						{
+						$result = 'ERROR';
+						$result_reason = "update_alt_url NO ENTRY TYPE DEFINED:";
+						$data = "$entry_type|$campaign_id";
+						echo "$result: $result_reason: |$user|$data\n";
+						api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+						exit;
+						}
+					
+					# find if the campaign/in-group/list field type is set to use ALT URLs
+					$rslt=mysql_to_mysqli($validate_stmt, $link);
+					$row=mysqli_fetch_row($rslt);
+					$camp_exists=$row[0];
+					if ($camp_exists < 1)
+						{
+						$result = 'ERROR';
+						$result_reason = "update_alt_url $event_section $url_type URL IS NOT SET TO ALT";
+						$data = "$url_type|$entry_type|$campaign_id";
+						echo "$result: $result_reason: |$user|$data\n";
+						api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+						exit;
+						}
+
+					if ($alt_url_id != 'NEW')
+						{
+						$stmt="SELECT count(*) from vicidial_url_multi where campaign_id='$campaign_id' and entry_type='$entry_type' and url_type='$url_type' and url_id='$alt_url_id';";
+						$rslt=mysql_to_mysqli($stmt, $link);
+						$row=mysqli_fetch_row($rslt);
+						$alt_id_exists=$row[0];
+						if ($alt_id_exists < 1)
+							{
+							$stmt="SELECT url_id from vicidial_url_multi where campaign_id='$campaign_id' and entry_type='$entry_type' and url_type='$url_type' order by url_id limit 2;";
+							$rslt=mysql_to_mysqli($stmt, $link);
+							$vum_recs = mysqli_num_rows($rslt);
+							if ($vum_recs < 2)
+								{
+								$row=mysqli_fetch_row($rslt);
+								$alt_url_id =		$row[0];
+								}
+							else
+								{
+								$result = 'ERROR';
+								$result_reason = "update_alt_url ALT URL ID DOES NOT EXIST";
+								$data = "$alt_url_id|$url_type|$entry_type|$campaign_id|$vum_recs";
+								echo "$result: $result_reason: |$user|$data\n";
+								api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+								exit;
+								}
+							}
+						}
+
+					$activeSQL='';
+					$url_addressSQL='';
+					$url_rankSQL='';
+					$url_statusesSQL='';
+					$url_descriptionSQL='';
+					$url_listsSQL='';
+					$url_call_lengthSQL='';
+
+					if (strlen($active) > 0)
+						{
+						if ( ($active != 'Y') and ($active != 'N') )
+							{
+							$result = 'ERROR';
+							$result_reason = "update_alt_url ACTIVE MUST BE Y OR N, THIS IS AN OPTIONAL FIELD";
+							$data = "$active";
+							echo "$result: $result_reason: |$user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							exit;
+							}
+						else
+							{$activeSQL = " ,active='$active'";}
+						}
+					if (strlen($url_address) > 0)
+						{
+						if ($url_address == '--BLANK--')
+							{$url_addressSQL = " ,url_address=''";}
+						else
+							{
+							if ( (strlen($url_address) < 5) or (strlen($url_address) > 65000) )
+								{
+								$result = 'ERROR';
+								$result_reason = "update_alt_url URL ADDRESS IS NOT VALID, THIS IS AN OPTIONAL FIELD";
+								$data = "$url_address";
+								echo "$result: $result_reason: |$user|$data\n";
+								api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+								exit;
+								}
+							else
+								{$url_addressSQL = " ,url_address='" . mysqli_real_escape_string($link, $url_address) . "'";}
+							}
+						}
+					if (strlen($url_rank) > 0)
+						{
+						if (strlen($url_rank) > 5)
+							{
+							$result = 'ERROR';
+							$result_reason = "update_alt_url URL RANK IS NOT VALID, THIS IS AN OPTIONAL FIELD";
+							$data = "$url_rank";
+							echo "$result: $result_reason: |$user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							exit;
+							}
+						else
+							{$url_rankSQL = " ,url_rank='$url_rank'";}
+						}
+					if (strlen($url_call_length) > 0)
+						{
+						if (strlen($url_call_length) > 5)
+							{
+							$result = 'ERROR';
+							$result_reason = "update_alt_url URL CAL LENGTH IS NOT VALID, THIS IS AN OPTIONAL FIELD";
+							$data = "$url_call_length";
+							echo "$result: $result_reason: |$user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							exit;
+							}
+						else
+							{$url_call_lengthSQL = " ,url_call_length='$url_call_length'";}
+						}
+					if (strlen($url_statuses) > 0)
+						{
+						if (strlen($url_statuses) > 1000)
+							{
+							$result = 'ERROR';
+							$result_reason = "update_alt_url URL STATUSES IS NOT VALID, THIS IS AN OPTIONAL FIELD";
+							$data = "$url_statuses";
+							echo "$result: $result_reason: |$user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							exit;
+							}
+						else
+							{$url_statusesSQL = " ,url_statuses='$url_statuses'";}
+						}
+					if (strlen($url_description) > 0)
+						{
+						if ($url_description == '--BLANK--')
+							{$url_descriptionSQL = " ,url_description=''";}
+						else
+							{
+							if (strlen($url_description) > 255)
+								{
+								$result = 'ERROR';
+								$result_reason = "update_alt_url URL DESCRIPTION IS NOT VALID, THIS IS AN OPTIONAL FIELD";
+								$data = "$url_description";
+								echo "$result: $result_reason: |$user|$data\n";
+								api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+								exit;
+								}
+							else
+								{$url_descriptionSQL = " ,url_description='$url_description'";}
+							}
+						}
+					if (strlen($url_lists) > 0)
+						{
+						if ($url_lists == '--BLANK--')
+							{$url_listsSQL = " ,url_lists=''";}
+						else
+							{
+							if (strlen($url_lists) > 1000)
+								{
+								$result = 'ERROR';
+								$result_reason = "update_alt_url URL LISTS IS NOT VALID, THIS IS AN OPTIONAL FIELD";
+								$data = "$url_lists";
+								echo "$result: $result_reason: |$user|$data\n";
+								api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+								exit;
+								}
+							else
+								{$url_listsSQL = " ,url_lists='$url_lists'";}
+							}
+						}
+
+					$updateSQL = "$activeSQL$url_rankSQL$url_statusesSQL$url_descriptionSQL$url_listsSQL$url_call_lengthSQL$url_addressSQL";
+
+					if (strlen($updateSQL)< 3)
+						{
+						$result = 'NOTICE';
+						$result_reason = "update_alt_url NO UPDATES DEFINED";
+						$data = "$updateSQL";
+						echo "$result: $result_reason: |$user|$data\n";
+						api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+						}
+					else
+						{
+						if ($alt_url_id == 'NEW')
+							{
+							$updateSQLx = ltrim($updateSQL, ' ,');
+							$stmt="INSERT INTO vicidial_url_multi SET campaign_id='$campaign_id',entry_type='$entry_type',url_type='$url_type', $updateSQLx;";
+							$rslt=mysql_to_mysqli($stmt, $link);
+							$add_count = mysqli_affected_rows($link);
+							$new_url_id = mysqli_insert_id($link);
+							if ($DB) {echo "$add_count|$new_url_id|$stmt|\n";}
+
+							### LOG INSERTION Admin Log Table ###
+							$SQL_log = "$stmt|";
+							$SQL_log = preg_replace('/;/', '', $SQL_log);
+							$SQL_log = addslashes($SQL_log);
+							$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$user', ip_address='$ip', event_section='$event_section', event_type='ADD', record_id='$campaign_id', event_code='ADMIN API UPDATE ALT URL', event_sql=\"$SQL_log\", event_notes='campaign: $campaign_id|url_id: $new_url_id|entry_type: $entry_type|url_type:$url_type';";
+							if ($DB) {echo "|$stmt|\n";}
+							$rslt=mysql_to_mysqli($stmt, $link);
+
+							$result = 'SUCCESS';
+							$result_reason = "update_alt_url ALT URL HAS BEEN ADDED";
+							$data = "NEW URL ID: $new_url_id|$url_type|$entry_type|$campaign_id";
+							echo "$result: $result_reason - $user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							}
+						else
+							{
+							$updateSQLx = ltrim($updateSQL, ' ,');
+							$stmt="UPDATE vicidial_url_multi SET $updateSQLx WHERE campaign_id='$campaign_id' and url_id='$alt_url_id';";
+							$rslt=mysql_to_mysqli($stmt, $link);
+							if ($DB) {echo "|$stmt|\n";}
+
+							### LOG INSERTION Admin Log Table ###
+							$SQL_log = "$stmt|";
+							$SQL_log = preg_replace('/;/', '', $SQL_log);
+							$SQL_log = addslashes($SQL_log);
+							$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$user', ip_address='$ip', event_section='$event_section', event_type='MODIFY', record_id='$campaign_id', event_code='ADMIN API UPDATE ALT URL', event_sql=\"$SQL_log\", event_notes='campaign: $campaign_id|url_id: $alt_url_id|entry_type: $entry_type|url_type:$url_type';";
+							if ($DB) {echo "|$stmt|\n";}
+							$rslt=mysql_to_mysqli($stmt, $link);
+
+							$result = 'SUCCESS';
+							$result_reason = "update_alt_url ALT URL HAS BEEN UPDATED";
+							$data = "$alt_url_id|$url_type|$entry_type|$campaign_id";
+							echo "$result: $result_reason - $user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							}
+						}
+					}
+				}
+			}
+		}
+	exit;
+	}
+################################################################################
+### END update_alt_url
+################################################################################
+
+
+
+
+
+################################################################################
+### update_presets - updates/adds/displays campaign preset entries
+################################################################################
+if ($function == 'update_presets')
+	{
+	if(strlen($source)<2)
+		{
+		$result = 'ERROR';
+		$result_reason = "Invalid Source";
+		echo "$result: $result_reason - $source\n";
+		api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+		echo "ERROR: Invalid Source: |$source|\n";
+		exit;
+		}
+	else
+		{
+		if ( (!preg_match("/ $function /",$api_allowed_functions)) and (!preg_match("/ALL_FUNCTIONS/",$api_allowed_functions)) )
+			{
+			$result = 'ERROR';
+			$result_reason = "auth USER DOES NOT HAVE PERMISSION TO USE THIS FUNCTION";
+			echo "$result: $result_reason: |$user|$function|\n";
+			$data = "$allowed_user";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1' and modify_campaigns='1' and user_level >= 8 and active='Y';";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$row=mysqli_fetch_row($rslt);
+		$allowed_user=$row[0];
+		if ($allowed_user < 1)
+			{
+			$result = 'ERROR';
+			$result_reason = "update_presets USER DOES NOT HAVE PERMISSION TO UPDATE CAMPAIGNS";
+			$data = "$allowed_user";
+			echo "$result: $result_reason: |$user|$data\n";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		else
+			{
+			if ( (strlen($campaign_id)<2) or (strlen($campaign_id)>8) )
+				{
+				$result = 'ERROR';
+				$result_reason = "update_presets YOU MUST USE ALL REQUIRED FIELDS";
+				$data = "$campaign_id|$campaign_name|$campaign_id";
+				echo "$result: $result_reason: |$user|$data\n";
+				api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+				exit;
+				}
+			else
+				{
+				$stmt="SELECT allowed_campaigns,admin_viewable_groups from vicidial_user_groups where user_group='$LOGuser_group';";
+				if ($DB>0) {echo "|$stmt|\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$row=mysqli_fetch_row($rslt);
+				$LOGallowed_campaigns =			$row[0];
+				$LOGadmin_viewable_groups =		$row[1];
+
+				$LOGallowed_campaignsSQL='';
+				$whereLOGallowed_campaignsSQL='';
+				if ( (!preg_match('/\-ALL/i', $LOGallowed_campaigns)) )
+					{
+					$rawLOGallowed_campaignsSQL = preg_replace("/ -/",'',$LOGallowed_campaigns);
+					$rawLOGallowed_campaignsSQL = preg_replace("/ /","','",$rawLOGallowed_campaignsSQL);
+					$LOGallowed_campaignsSQL = "and campaign_id IN('$rawLOGallowed_campaignsSQL')";
+					$whereLOGallowed_campaignsSQL = "where campaign_id IN('$rawLOGallowed_campaignsSQL')";
+					}
+
+				$stmt="SELECT count(*) from vicidial_campaigns where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$row=mysqli_fetch_row($rslt);
+				$camp_exists=$row[0];
+				if ($camp_exists < 1)
+					{
+					$result = 'ERROR';
+					$result_reason = "update_presets CAMPAIGN DOES NOT EXIST";
+					$data = "$campaign_id";
+					echo "$result: $result_reason: |$user|$data\n";
+					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+					exit;
+					}
+				else
+					{
+					if ($action == 'LIST')
+						{
+						$output='';
+						$DLset=0;
+						if ($stage == 'csv')
+							{$DL = ',';   $DLset++;}
+						if ($stage == 'tab')
+							{$DL = "\t";   $DLset++;}
+						if ($stage == 'pipe')
+							{$DL = '|';   $DLset++;}
+						if ($DLset < 1)
+							{$DL='|';}
+						if ($header == 'YES')
+							{$output .= 'preset_name' . $DL . 'campaign_id' . $DL . 'preset_number' . $DL . 'preset_hide_number' . $DL . "preset_dtmf\n";}
+
+						$stmt="SELECT preset_name,campaign_id,preset_number,preset_hide_number,preset_dtmf from vicidial_xfer_presets where campaign_id='$campaign_id' order by preset_name limit 1000;";
+						$rslt=mysql_to_mysqli($stmt, $link);
+						$vum_recs = mysqli_num_rows($rslt);
+						if ($DB>0) {echo "$vum_recs|$stmt|\n";}
+						$M=0;
+						while ($vum_recs > $M)
+							{
+							$row=mysqli_fetch_row($rslt);
+							$preset_name =			$row[0];
+							$campaign_id =			$row[1];
+							$preset_number =		$row[2];
+							$preset_hide_number =	$row[3];
+							$preset_dtmf =			$row[4];
+
+							$output .= "$preset_name" . $DL . "$campaign_id" . $DL . "$preset_number" . $DL . "$preset_hide_number" . $DL . "$preset_dtmf\n";
+
+							$M++;
+							}
+						if ($M < 1)
+							{echo "NOTICE: update_presets LIST, No Records Found - $user|$campaign_id|0\n";}
+						else
+							{echo $output;}
+
+						$result = 'SUCCESS';
+						$result_reason = "update_presets PRESET LIST DISPLAYED";
+						$data = "$campaign_id|$M";
+						api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+
+						exit;
+						}
+
+					if ($action != 'NEW')
+						{
+						$stmt="SELECT count(*) from vicidial_xfer_presets where campaign_id='$campaign_id' and preset_name='$preset_name';";
+						$rslt=mysql_to_mysqli($stmt, $link);
+						$row=mysqli_fetch_row($rslt);
+						$alt_id_exists=$row[0];
+						if ($alt_id_exists < 1)
+							{
+							$stmt="SELECT preset_name from vicidial_xfer_presets where campaign_id='$campaign_id' order by preset_name limit 2;";
+							$rslt=mysql_to_mysqli($stmt, $link);
+							$vum_recs = mysqli_num_rows($rslt);
+							if ($vum_recs < 2)
+								{
+								$row=mysqli_fetch_row($rslt);
+								$preset_name =		$row[0];
+								}
+							else
+								{
+								$result = 'ERROR';
+								$result_reason = "update_presets PRESET NAME DOES NOT EXIST";
+								$data = "$preset_name|$campaign_id|$vum_recs";
+								echo "$result: $result_reason: |$user|$data\n";
+								api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+								exit;
+								}
+							}
+						}
+
+					$preset_numberSQL='';
+					$preset_dtmfSQL='';
+					$preset_hide_numberSQL='';
+
+					if (strlen($preset_hide_number) > 0)
+						{
+						if ( ($preset_hide_number != 'Y') and ($preset_hide_number != 'N') )
+							{
+							$result = 'ERROR';
+							$result_reason = "update_presets PRESET HIDE NUMBER MUST BE Y OR N, THIS IS AN OPTIONAL FIELD";
+							$data = "$preset_hide_number";
+							echo "$result: $result_reason: |$user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							exit;
+							}
+						else
+							{$preset_hide_numberSQL = " ,preset_hide_number='$preset_hide_number'";}
+						}
+					if (strlen($preset_number) > 0)
+						{
+						if ( (strlen($preset_number) > 50) or (strlen($preset_number) < 1) )
+							{
+							$result = 'ERROR';
+							$result_reason = "update_presets PRESET NUMBER IS NOT VALID, THIS IS AN OPTIONAL FIELD";
+							$data = "$preset_number";
+							echo "$result: $result_reason: |$user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							exit;
+							}
+						else
+							{$preset_numberSQL = " ,preset_number='$preset_number'";}
+						}
+					if (strlen($preset_dtmf) > 0)
+						{
+						if ($preset_dtmf == '--BLANK--')
+							{$preset_dtmfSQL = " ,preset_dtmf=''";}
+						else
+							{
+							if (strlen($preset_dtmf) > 50)
+								{
+								$result = 'ERROR';
+								$result_reason = "update_presets PRESET DTMF IS NOT VALID, THIS IS AN OPTIONAL FIELD";
+								$data = "$preset_dtmf";
+								echo "$result: $result_reason: |$user|$data\n";
+								api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+								exit;
+								}
+							else
+								{$preset_dtmfSQL = " ,preset_dtmf='$preset_dtmf'";}
+							}
+						}
+
+					$updateSQL = "$preset_numberSQL$preset_dtmfSQL$preset_hide_numberSQL";
+
+					if ( (strlen($updateSQL)< 3) or ($action == 'DELETE') )
+						{
+						if ($action == 'DELETE')
+							{
+							$stmt="DELETE FROM vicidial_xfer_presets WHERE campaign_id='$campaign_id' and preset_name='$preset_name';";
+							$rslt=mysql_to_mysqli($stmt, $link);
+							$del_count = mysqli_affected_rows($link);
+							if ($DB) {echo "$del_count|$preset_name|$stmt|\n";}
+
+							### LOG INSERTION Admin Log Table ###
+							$SQL_log = "$stmt|";
+							$SQL_log = preg_replace('/;/', '', $SQL_log);
+							$SQL_log = addslashes($SQL_log);
+							$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$user', ip_address='$ip', event_section='$event_section', event_type='DELETE', record_id='$campaign_id', event_code='ADMIN API DELETE PRESET', event_sql=\"$SQL_log\", event_notes='campaign: $campaign_id|preset_name: $preset_name';";
+							if ($DB) {echo "|$stmt|\n";}
+							$rslt=mysql_to_mysqli($stmt, $link);
+
+							$result = 'SUCCESS';
+							$result_reason = "update_presets PRESET HAS BEEN DELETED";
+							$data = "$preset_name|$campaign_id";
+							echo "$result: $result_reason - $user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							}
+						else
+							{
+							$result = 'NOTICE';
+							$result_reason = "update_presets NO UPDATES DEFINED";
+							$data = "$updateSQL";
+							echo "$result: $result_reason: |$user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							}
+						}
+					else
+						{
+						if ($action == 'NEW')
+							{
+							$updateSQLx = ltrim($updateSQL, ' ,');
+							$stmt="INSERT INTO vicidial_xfer_presets SET campaign_id='$campaign_id',preset_name='$preset_name', $updateSQLx;";
+							$rslt=mysql_to_mysqli($stmt, $link);
+							$add_count = mysqli_affected_rows($link);
+							if ($DB) {echo "$add_count|$preset_name|$stmt|\n";}
+
+							### LOG INSERTION Admin Log Table ###
+							$SQL_log = "$stmt|";
+							$SQL_log = preg_replace('/;/', '', $SQL_log);
+							$SQL_log = addslashes($SQL_log);
+							$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$user', ip_address='$ip', event_section='$event_section', event_type='ADD', record_id='$campaign_id', event_code='ADMIN API UPDATE PRESET', event_sql=\"$SQL_log\", event_notes='campaign: $campaign_id|preset_name: $preset_name';";
+							if ($DB) {echo "|$stmt|\n";}
+							$rslt=mysql_to_mysqli($stmt, $link);
+
+							$result = 'SUCCESS';
+							$result_reason = "update_presets PRESET HAS BEEN ADDED";
+							$data = "NEW PRESET: $preset_name|$campaign_id";
+							echo "$result: $result_reason - $user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							}
+						else
+							{
+							$updateSQLx = ltrim($updateSQL, ' ,');
+							$stmt="UPDATE vicidial_xfer_presets SET $updateSQLx WHERE campaign_id='$campaign_id' and preset_name='$preset_name';";
+							$rslt=mysql_to_mysqli($stmt, $link);
+							if ($DB) {echo "|$stmt|\n";}
+
+							### LOG INSERTION Admin Log Table ###
+							$SQL_log = "$stmt|";
+							$SQL_log = preg_replace('/;/', '', $SQL_log);
+							$SQL_log = addslashes($SQL_log);
+							$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$user', ip_address='$ip', event_section='$event_section', event_type='MODIFY', record_id='$campaign_id', event_code='ADMIN API UPDATE PRESET', event_sql=\"$SQL_log\", event_notes='campaign: $campaign_id|preset_name: $preset_name';";
+							if ($DB) {echo "|$stmt|\n";}
+							$rslt=mysql_to_mysqli($stmt, $link);
+
+							$result = 'SUCCESS';
+							$result_reason = "update_presets PRESET HAS BEEN UPDATED";
+							$data = "$preset_name|$campaign_id";
+							echo "$result: $result_reason - $user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							}
+						}
+					}
+				}
+			}
+		}
+	exit;
+	}
+################################################################################
+### END update_presets
 ################################################################################
 
 
@@ -12348,7 +13315,7 @@ if ($function == 'lead_search')
 						if (strlen($find_vendor_lead_codeARY[$tc]) > 0)
 							{
 							if ($pc > 0) {$vendor_lead_code_SQL .= ",";}
-							$vendor_lead_code_SQL .= "'$find_vendor_lead_codeARY[$tc]'";
+							$vendor_lead_code_SQL .= "\"$find_vendor_lead_codeARY[$tc]\"";
 							$find_vendor_lead_codeARYx[$pc] = $find_vendor_lead_codeARY[$tc];
 							$pc++;
 							}
@@ -13883,6 +14850,39 @@ if ($function == 'update_lead')
 									}
 								}
 
+							if ($delete_cf_data=='Y')
+								{
+								$CFentry_list_id='';
+								if (strlen($entry_list_id) > 0)
+									{$CFentry_list_id=$entry_list_id;}
+								if (strlen($force_entry_list_id) > 0)
+									{$CFentry_list_id=$force_entry_list_id;}
+								if (strlen($CFentry_list_id) < 1)
+									{$CFentry_list_id=$search_entry_list[$n];}
+								$stmt="SHOW TABLES LIKE \"custom_$CFentry_list_id\";";
+								if ($DB>0) {echo "$stmt\n";}
+								$rslt=mysql_to_mysqli($stmt, $link);
+								$tablecount_to_print = mysqli_num_rows($rslt);
+								if ($tablecount_to_print > 0) 
+									{
+									$stmt = "DELETE from custom_$CFentry_list_id where lead_id='$search_lead_id[$n]';";
+									if ($DB>0) {echo "DEBUG: update_lead query - $stmt\n";}
+									$rslt=mysql_to_mysqli($stmt, $link);
+									$VCFaffected_rows = mysqli_affected_rows($link);
+									}
+
+								$stmt = "UPDATE vicidial_list SET entry_list_id=0 where lead_id='$search_lead_id[$n]';";
+								$result_reason = "update_lead CUSTOM FIELDS DATA HAS BEEN DELETED";
+								if ($DB>0) {echo "DEBUG: update_lead query - $stmt\n";}
+								$rslt=mysql_to_mysqli($stmt, $link);
+								$VLaffected_rows = mysqli_affected_rows($link);
+
+								$result = 'NOTICE';
+								echo "$result: $result_reason - $user|$search_lead_id[$n]|$CFentry_list_id|$VLaffected_rows|$VCFaffected_rows\n";
+								$data = "$phone_number|$search_lead_list[$n]|$search_lead_id[$n]|$CFentry_list_id|$VLaffected_rows|$VCFaffected_rows";
+								api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+								}
+
 							if ( (strlen($VL_update_SQL)>6) or ($delete_lead=='Y') )
 								{
 								if ($delete_lead=='Y')
@@ -13900,7 +14900,7 @@ if ($function == 'update_lead')
 									$stmt = "DELETE from vicidial_list where lead_id='$search_lead_id[$n]';";
 									$result_reason = "update_lead LEAD HAS BEEN DELETED $VCBaffected_rows|$VCBAaffected_rows";
 									}
-								else
+								if (strlen($VL_update_SQL)>6)
 									{
 									$stmt = "UPDATE vicidial_list SET $VL_update_SQL where lead_id='$search_lead_id[$n]';";
 									$result_reason = "update_lead LEAD HAS BEEN UPDATED";
@@ -13910,7 +14910,7 @@ if ($function == 'update_lead')
 								$VLaffected_rows = mysqli_affected_rows($link);
 
 								$result = 'SUCCESS';
-								echo "$result: $result_reason - $user|$search_lead_id[$n]|$VLaffected_rows\n";
+								echo "$result: $result_reason - $user|$search_lead_id[$n]|$VLaffected_rows|$VCBAaffected_rows|$VCBAaffected_rows|\n";
 								$data = "$phone_number|$search_lead_list[$n]|$search_lead_id[$n]|$gmt_offset";
 								api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
 								}
@@ -14098,7 +15098,7 @@ if ($function == 'update_lead')
 											{
 											$result = 'NOTICE';
 											$result_reason = "update_lead CUSTOM FIELDS ENTRY DELETED";
-											echo "$result: $result_reason - $phone_number|$search_lead_id[$n]|$search_lead_list[$n]|$search_entry_list[$n]|$lead_custom_list|$custom_update_count\n";
+											echo "$result: $result_reason - $phone_number|$search_lead_id[$n]|$search_lead_list[$n]|$search_entry_list[$n]|$lead_custom_list|$VCLDaffected_rows\n";
 											$data = "$phone_number|$search_lead_id[$n]|$search_lead_list[$n]|$VCLDaffected_rows";
 											api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
 											}
@@ -15448,16 +16448,16 @@ if ($function == 'call_status_stats')
 				$campaign_rslt=mysql_to_mysqli($campaign_stmt, $link);
 				while ($row=mysqli_fetch_row($campaign_rslt))
 					{
-					$outbound_array{"$row[0]"}[0]=0;
-					$outbound_array{"$row[0]"}[1]=0;
+					$outbound_array["$row[0]"][0]=0;
+					$outbound_array["$row[0]"][1]=0;
 					}
 				}
 			else
 				{
 				for ($i=0; $i<count($campaign_array); $i++)
 					{
-					$outbound_array{"$campaign_array[$i]"}[0]=0;
-					$outbound_array{"$campaign_array[$i]"}[1]=0;
+					$outbound_array["$campaign_array[$i]"][0]=0;
+					$outbound_array["$campaign_array[$i]"][1]=0;
 					}
 				}
 			ksort($outbound_array);
@@ -15504,8 +16504,8 @@ if ($function == 'call_status_stats')
 			$ingroup_SQL=" and campaign_id in ('".implode("', '", $ingroup_array)."') ";
 			for ($i=0; $i<count($ingroup_array); $i++)
 				{
-				$inbound_array{"$ingroup_array[$i]"}[0]=0;
-				$inbound_array{"$ingroup_array[$i]"}[1]=0;
+				$inbound_array["$ingroup_array[$i]"][0]=0;
+				$inbound_array["$ingroup_array[$i]"][1]=0;
 				}
 			ksort($inbound_array);
 
@@ -15516,18 +16516,18 @@ if ($function == 'call_status_stats')
 			for ($i=0; $i<24; $i++)
 				{
 				$hrkey=substr("0$i", -2);
-				$total_hr_array{"$hrkey"}=0;
+				$total_hr_array["$hrkey"]=0;
 				}
 
 			while($outb_row=mysqli_fetch_row($outb_rslt))
 				{
-				$outbound_array{"$outb_row[0]"}[0]+=$outb_row[3];
+				$outbound_array["$outb_row[0]"][0]+=$outb_row[3];
 				if (in_array($outb_row[1], $human_ans_array))
 					{
-					$outbound_array{"$outb_row[0]"}[1]+=$outb_row[3];
+					$outbound_array["$outb_row[0]"][1]+=$outb_row[3];
 					}
-				$temp_stat_array{"$outb_row[0]"}{"$outb_row[1]"}+=$outb_row[3];
-				$temp_hour_array{"$outb_row[0]"}{"$outb_row[2]"}+=$outb_row[3];
+				$temp_stat_array["$outb_row[0]"]["$outb_row[1]"]+=$outb_row[3];
+				$temp_hour_array["$outb_row[0]"]["$outb_row[2]"]+=$outb_row[3];
 				}
 
 			$inb_stmt="select campaign_id, status, substr(call_date, 12, 2) as hour, count(*) from vicidial_closer_log where call_date>='$query_date $query_time' and call_date<='$end_date $end_time' $ingroup_SQL $status_SQL group by campaign_id, status, hour order by campaign_id, status, hour";
@@ -15535,13 +16535,13 @@ if ($function == 'call_status_stats')
 			$inb_rslt=mysql_to_mysqli($inb_stmt, $link);
 			while($inb_row=mysqli_fetch_row($inb_rslt))
 				{
-				$inbound_array{"$inb_row[0]"}[0]+=$inb_row[3];
+				$inbound_array["$inb_row[0]"][0]+=$inb_row[3];
 				if (in_array($inb_row[1], $human_ans_array))
 					{
-					$inbound_array{"$inb_row[0]"}[1]+=$inb_row[3];
+					$inbound_array["$inb_row[0]"][1]+=$inb_row[3];
 					}
-				$temp_stat_array{"$inb_row[0]"}{"$inb_row[1]"}+=$inb_row[3];
-				$temp_hour_array{"$inb_row[0]"}{"$inb_row[2]"}+=$inb_row[3];
+				$temp_stat_array["$inb_row[0]"]["$inb_row[1]"]+=$inb_row[3];
+				$temp_hour_array["$inb_row[0]"]["$inb_row[2]"]+=$inb_row[3];
 				}
 			}
 
@@ -15552,24 +16552,25 @@ if ($function == 'call_status_stats')
 				for ($i=0; $i<24; $i++)
 					{
 					$hrkey=substr("0$i", -2);
-					$hrs=$temp_hour_array{"$key"}{"$hrkey"}+=0;
+					$hrs=$temp_hour_array["$key"]["$hrkey"]+=0;
 					$hour_str.="$hrkey-$hrs,";
 					}
 				$hour_str=substr($hour_str, 0, -1);
 
-				$temp_ary_ct = count($temp_stat_array{"$key"});
+				if (is_null($temp_stat_array["$key"])) $temp_stat_array["$key"] = array();
+				$temp_ary_ct = count($temp_stat_array["$key"]);
 				if ($temp_ary_ct > 0)
 					{
-					ksort($temp_stat_array{"$key"});
+					ksort($temp_stat_array["$key"]);
 #					while(list($statkey, $statval)=each($temp_stat_array{"$key"})) 
-					foreach($temp_stat_array{"$key"} as $statkey => $statval)
+					foreach($temp_stat_array["$key"] as $statkey => $statval)
 						{
-						$status_str.=$statkey."-".$temp_stat_array{"$key"}{"$statkey"}.",";
+						$status_str.=$statkey."-".$temp_stat_array["$key"]["$statkey"].",";
 						}
 					}
 				$status_str=substr($status_str, 0, -1);
 
-				echo $key."|".$outbound_array{$key}[0]."|".$outbound_array{$key}[1]."|".$hour_str."|".$status_str."|\n";
+				echo $key."|".$outbound_array[$key][0]."|".$outbound_array[$key][1]."|".$hour_str."|".$status_str."|\n";
 			}
 
 #			while(list($key, $val)=each($inbound_array)) {
@@ -15579,24 +16580,25 @@ if ($function == 'call_status_stats')
 				for ($i=0; $i<24; $i++)
 					{
 					$hrkey=substr("0$i", -2);
-					$hrs=$temp_hour_array{"$key"}{"$hrkey"}+=0;
+					$hrs=$temp_hour_array["$key"]["$hrkey"]+=0;
 					$hour_str.="$hrkey-$hrs,";
 					}
 				$hour_str=substr($hour_str, 0, -1);
 
-				$temp_ary_ct = count($temp_stat_array{"$key"});
+				if (is_null($temp_stat_array["$key"])) $temp_stat_array["$key"] = array();
+				$temp_ary_ct = count($temp_stat_array["$key"]);
 				if ($temp_ary_ct > 0)
 					{
-					ksort($temp_stat_array{"$key"});
+					ksort($temp_stat_array["$key"]);
 					# while(list($statkey, $statval)=each($temp_stat_array{"$key"})) 
-					foreach($temp_stat_array{"$key"} as $statkey => $statval)
+					foreach($temp_stat_array["$key"] as $statkey => $statval)
 						{
-						$status_str.=$statkey."-".$temp_stat_array{"$key"}{"$statkey"}.",";
+						$status_str.=$statkey."-".$temp_stat_array["$key"]["$statkey"].",";
 						}
 					}
 				$status_str=substr($status_str, 0, -1);
 
-				echo $key."|".$inbound_array{$key}[0]."|".$inbound_array{$key}[1]."|".$hour_str."|".$status_str."|\n";
+				echo $key."|".$inbound_array[$key][0]."|".$inbound_array[$key][1]."|".$hour_str."|".$status_str."|\n";
 			}
 
 		$result = 'SUCCESS';
@@ -15616,7 +16618,7 @@ if ($function == 'call_status_stats')
 ################################################################################
 if ($function == 'call_dispo_report')
 	{
-	if(strlen($campaigns)<2 && strlen($ingroups)<2 && strlen($did_ids)<2 && strlen($did_patterns)<2)
+	if(strlen($campaigns)<2 && strlen($ingroups)<2 && strlen($did_ids)<1 && strlen($did_patterns)<2)
 		{
 		$result = 'ERROR';
 		$result_reason = "call_dispo_report INVALID OR MISSING CAMPAIGNS, INGROUPS, OR DIDS";
@@ -15712,6 +16714,7 @@ if ($function == 'call_dispo_report')
 					}
 				}
 
+			if (is_null($did_id_array)) $did_id_array = array();
 			if (count($did_id_array)>0 && $skip_inbound) # DON'T DO A REPORT FOR INGROUPS AND DIDS YET.
 				{
 				$did_SQL="and did_id in ('".implode("', '", $did_id_array)."')";
@@ -15743,7 +16746,8 @@ if ($function == 'call_dispo_report')
 					}
 				}
 
-			if (count($status_array)>0)
+			if (is_null($status_array)) $status_array = array();
+			if ($status_array && count($status_array)>0) 
 				{
 				$status_SQL=" and status in ('".implode("', '", $status_array)."') ";
 				if (in_array("ALLSTATUSES", $status_array) || preg_match('/\-\-\-ALL\-\-\-/', $statuses) || in_array("ALLCATEGORIES", $categories_array) || preg_match('/\-\-\-ALL\-\-\-/', $categories))
@@ -15769,7 +16773,8 @@ if ($function == 'call_dispo_report')
 						}
 					}
 				}
-			if (count($user_array)>0)
+			if (is_null($user_array)) $user_array = array();
+			if ($user_array && count($user_array)>0) 
 				{
 				$user_SQL=" and user in ('".implode("', '", $user_array)."') ";
 				if (in_array("ALLUSERS", $user_array) || preg_match('/\-\-\-ALL\-\-\-/', $users) || in_array("ALLGROUPS", $user_group_array) || preg_match('/\-\-\-ALL\-\-\-/', $user_groups))
@@ -15792,7 +16797,7 @@ if ($function == 'call_dispo_report')
 				$rslt=mysql_to_mysqli($stmt, $link);
 				while ($row=mysqli_fetch_row($rslt))
 					{
-					$outbound_ct_array{"$row[0]"}{"TOTAL CALLS"}+=$row[2];
+					$outbound_ct_array["$row[0]"]["TOTAL CALLS"]+=$row[2];
 					$grand_total_calls+=$row[2];
 					if ($status_breakdown)
 						{
@@ -15800,8 +16805,8 @@ if ($function == 'call_dispo_report')
 							{
 							array_push($status_ct_array, "$row[1]");
 							}
-						$outbound_ct_array{"$row[0]"}{"$row[1]"}+=$row[2];
-						$grand_total_array{"$row[1]"}+=$row[2];
+						$outbound_ct_array["$row[0]"]["$row[1]"]+=$row[2];
+						$grand_total_array["$row[1]"]+=$row[2];
 						}
 					}
 				}
@@ -15812,7 +16817,7 @@ if ($function == 'call_dispo_report')
 				$rslt=mysql_to_mysqli($stmt, $link);
 				while ($row=mysqli_fetch_row($rslt))
 					{
-					$inbound_ct_array{"$row[0]"}{"TOTAL CALLS"}+=$row[2];
+					$inbound_ct_array["$row[0]"]["TOTAL CALLS"]+=$row[2];
 					$grand_total_calls+=$row[2];
 					if ($status_breakdown)
 						{
@@ -15820,8 +16825,8 @@ if ($function == 'call_dispo_report')
 							{
 							array_push($status_ct_array, "$row[1]");
 							}
-						$inbound_ct_array{"$row[0]"}{"$row[1]"}+=$row[2];
-						$grand_total_array{"$row[1]"}+=$row[2];
+						$inbound_ct_array["$row[0]"]["$row[1]"]+=$row[2];
+						$grand_total_array["$row[1]"]+=$row[2];
 						}
 					}
 				}
@@ -15832,7 +16837,7 @@ if ($function == 'call_dispo_report')
 				$rslt=mysql_to_mysqli($stmt, $link);
 				while ($row=mysqli_fetch_row($rslt))
 					{
-					$did_ct_array{"$row[1]"}{"TOTAL CALLS"}+=$row[4];
+					$did_ct_array["$row[1]"]["TOTAL CALLS"]+=$row[4];
 					$grand_total_calls+=$row[4];
 					if ($status_breakdown)
 						{
@@ -15840,12 +16845,13 @@ if ($function == 'call_dispo_report')
 							{
 							array_push($status_ct_array, "$row[3]");
 							}
-						$did_ct_array{"$row[1]"}{"$row[3]"}+=$row[4];
-						$grand_total_array{"$row[3]"}+=$row[4];
+						$did_ct_array["$row[1]"]["$row[3]"]+=$row[4];
+						$grand_total_array["$row[3]"]+=$row[4];
 						}
 					}
 				}
 
+			if (is_null($status_ct_array)) $status_ct_array = array();
 			$rpt_str.="CAMPAIGN,TOTAL CALLS";
 			if ($status_breakdown)
 				{
@@ -15858,18 +16864,18 @@ if ($function == 'call_dispo_report')
 #			while (list($key, $val)=each($outbound_ct_array)) 
 			foreach($outbound_ct_array as $key => $val)
 				{
-				$total_calls=$outbound_ct_array{$key}{"TOTAL CALLS"};
-				$rpt_str.="$key,".$outbound_ct_array{$key}{"TOTAL CALLS"};
-				unset($outbound_ct_array{$key}{"TOTAL CALLS"});
+				$total_calls=$outbound_ct_array[$key]["TOTAL CALLS"];
+				$rpt_str.="$key,".$outbound_ct_array[$key]["TOTAL CALLS"];
+				unset($outbound_ct_array[$key]["TOTAL CALLS"]);
 				if ($status_breakdown)
 					{
 					for ($i=0; $i<count($status_ct_array); $i++)
 						{
-						$outbound_ct_array{$key}{"$status_ct_array[$i]"}+=0;
+						$outbound_ct_array[$key]["$status_ct_array[$i]"]+=0;
 						}
-					ksort($outbound_ct_array{$key});
+					ksort($outbound_ct_array[$key]);
 #					while (list($key2, $val2)=each($outbound_ct_array{$key})) 
-					foreach($outbound_ct_array{$key} as $key2 => $val2)
+					foreach($outbound_ct_array[$key] as $key2 => $val2)
 						{
 						$rpt_str.=",$val2";
 						if ($show_percentages)
@@ -15885,18 +16891,18 @@ if ($function == 'call_dispo_report')
 #			while (list($key, $val)=each($inbound_ct_array)) 
 			foreach($inbound_ct_array as $key => $val)
 				{
-				$total_calls=$inbound_ct_array{$key}{"TOTAL CALLS"};
-				$rpt_str.="$key,".$inbound_ct_array{$key}{"TOTAL CALLS"};
-				unset($inbound_ct_array{$key}{"TOTAL CALLS"});
+				$total_calls=$inbound_ct_array[$key]["TOTAL CALLS"];
+				$rpt_str.="$key,".$inbound_ct_array[$key]["TOTAL CALLS"];
+				unset($inbound_ct_array[$key]["TOTAL CALLS"]);
 				if ($status_breakdown)
 					{
 					for ($i=0; $i<count($status_ct_array); $i++)
 						{
-						$inbound_ct_array{$key}{"$status_ct_array[$i]"}+=0;
+						$inbound_ct_array[$key]["$status_ct_array[$i]"]+=0;
 						}
-					ksort($inbound_ct_array{$key});
+					ksort($inbound_ct_array[$key]);
 #					while (list($key2, $val2)=each($inbound_ct_array{$key})) 
-					foreach($inbound_ct_array{$key} as $key2 => $val2)
+					foreach($inbound_ct_array[$key] as $key2 => $val2)
 						{
 						$rpt_str.=",$val2";
 						if ($show_percentages)
@@ -15912,18 +16918,18 @@ if ($function == 'call_dispo_report')
 #			while (list($key, $val)=each($did_ct_array)) 
 			foreach($did_ct_array as $key => $val)
 				{
-				$total_calls=$did_ct_array{$key}{"TOTAL CALLS"};
-				$rpt_str.="$key,".$did_ct_array{$key}{"TOTAL CALLS"};
-				unset($did_ct_array{$key}{"TOTAL CALLS"});
+				$total_calls=$did_ct_array[$key]["TOTAL CALLS"];
+				$rpt_str.="$key,".$did_ct_array[$key]["TOTAL CALLS"];
+				unset($did_ct_array[$key]["TOTAL CALLS"]);
 				if ($status_breakdown)
 					{
 					for ($i=0; $i<count($status_ct_array); $i++)
 						{
-						$did_ct_array{$key}{"$status_ct_array[$i]"}+=0;
+						$did_ct_array[$key]["$status_ct_array[$i]"]+=0;
 						}
-					ksort($did_ct_array{$key});
+					ksort($did_ct_array[$key]);
 #					while (list($key2, $val2)=each($did_ct_array{$key})) 
-					foreach($did_ct_array{$key} as $key2 => $val2)
+					foreach($did_ct_array[$key] as $key2 => $val2)
 						{
 						$rpt_str.=",$val2";
 						if ($show_percentages)

@@ -1,7 +1,7 @@
 <?php
 # active_list_refresh.php    version 2.12
 # 
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed purely to serve updates of the live data to the display scripts
 # This script depends on the server_ip being sent and also needs to have a valid user/pass from the vicidial_users table
@@ -49,10 +49,11 @@
 # 190111-0903 - Fix for PHP7
 # 210616-2108 - Added optional CORS support, see options.php for details
 # 210825-0908 - Fix for XSS security issue
+# 220220-0922 - Added allow_web_debug system setting
 # 
 
-$version = '0.0.20';
-$build = '210825-0908';
+$version = '0.0.21';
+$build = '220220-0922';
 $php_script = 'active_list_refresh.php';
 $SSagent_debug_logging=0;
 $startMS = microtime();
@@ -101,22 +102,6 @@ if (isset($_GET["field_name"]))				{$field_name=$_GET["field_name"];}
 ### security strip all non-alphanumeric characters out of the variables ###
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
-$ADD=preg_replace("/[^0-9]/","",$ADD);
-$order=preg_replace("/[^0-9a-zA-Z]/","",$order);
-$format=preg_replace("/[^0-9a-zA-Z]/","",$format);
-$bgcolor=preg_replace("/[^\#0-9a-zA-Z]/","",$bgcolor);
-$txtcolor=preg_replace("/[^\#0-9a-zA-Z]/","",$txtcolor);
-$txtsize=preg_replace("/[^0-9a-zA-Z]/","",$txtsize);
-$selectsize=preg_replace("/[^0-9a-zA-Z]/","",$selectsize);
-$selectfontsize=preg_replace("/[^0-9a-zA-Z]/","",$selectfontsize);
-$selectedext=preg_replace("/[^ \#\*\:\/\@\.\-\_0-9a-zA-Z]/","",$selectedext);
-$selectedtrunk=preg_replace("/[^ \#\*\:\/\@\.\-\_0-9a-zA-Z]/","",$selectedtrunk);
-$selectedlocal=preg_replace("/[^ \#\*\:\/\@\.\-\_0-9a-zA-Z]/","",$selectedlocal);
-$textareaheight=preg_replace("/[^0-9a-zA-Z]/","",$textareaheight);
-$textareawidth=preg_replace("/[^0-9a-zA-Z]/","",$textareawidth);
-$field_name=preg_replace("/[^ \#\*\:\/\@\.\-\_0-9a-zA-Z]/","",$field_name);
-$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
-$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
 
 # default optional vars if not set
 if (!isset($ADD))				{$ADD="1";}
@@ -144,6 +129,22 @@ if (file_exists('options.php'))
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
+$stmt = "SELECT use_non_latin,enable_languages,language_method,agent_debug_logging,allow_web_debug FROM system_settings;";
+$rslt=mysql_to_mysqli($stmt, $link);
+	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+#if ($DB) {echo "$stmt\n";}
+$qm_conf_ct = mysqli_num_rows($rslt);
+if ($qm_conf_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$non_latin =				$row[0];
+	$SSenable_languages =		$row[1];
+	$SSlanguage_method =		$row[2];
+	$SSagent_debug_logging =	$row[3];
+	$SSallow_web_debug =		$row[4];
+	}
+if ($SSallow_web_debug < 1) {$DB=0;   $format="text";}
+
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$user';";
 if ($DB) {echo "|$stmt|\n";}
@@ -155,27 +156,37 @@ if ($sl_ct > 0)
 	$row=mysqli_fetch_row($rslt);
 	$VUselected_language =		$row[0];
 	}
-
-$stmt = "SELECT use_non_latin,enable_languages,language_method,agent_debug_logging FROM system_settings;";
-$rslt=mysql_to_mysqli($stmt, $link);
-	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
-if ($DB) {echo "$stmt\n";}
-$qm_conf_ct = mysqli_num_rows($rslt);
-if ($qm_conf_ct > 0)
-	{
-	$row=mysqli_fetch_row($rslt);
-	$non_latin =				$row[0];
-	$SSenable_languages =		$row[1];
-	$SSlanguage_method =		$row[2];
-	$SSagent_debug_logging =	$row[3];
-	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$ADD=preg_replace("/[^0-9]/","",$ADD);
+$order=preg_replace("/[^0-9a-zA-Z]/","",$order);
+$format=preg_replace("/[^0-9a-zA-Z]/","",$format);
+$bgcolor=preg_replace("/[^\#0-9a-zA-Z]/","",$bgcolor);
+$txtcolor=preg_replace("/[^\#0-9a-zA-Z]/","",$txtcolor);
+$txtsize=preg_replace("/[^0-9a-zA-Z]/","",$txtsize);
+$selectsize=preg_replace("/[^0-9a-zA-Z]/","",$selectsize);
+$selectfontsize=preg_replace("/[^0-9a-zA-Z]/","",$selectfontsize);
+$selectedext=preg_replace("/[^ \#\*\:\/\@\.\-\_0-9a-zA-Z]/","",$selectedext);
+$selectedtrunk=preg_replace("/[^ \#\*\:\/\@\.\-\_0-9a-zA-Z]/","",$selectedtrunk);
+$selectedlocal=preg_replace("/[^ \#\*\:\/\@\.\-\_0-9a-zA-Z]/","",$selectedlocal);
+$textareaheight=preg_replace("/[^0-9a-zA-Z]/","",$textareaheight);
+$textareawidth=preg_replace("/[^0-9a-zA-Z]/","",$textareawidth);
+$field_name=preg_replace("/[^ \#\*\:\/\@\.\-\_0-9a-zA-Z]/","",$field_name);
+$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
 
 if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
+	$pass=preg_replace("/[^-\.\+\/\=_0-9a-zA-Z]/","",$pass);
 	}
+else
+	{
+	$user = preg_replace('/[^-_0-9\p{L}]/u','',$user);
+	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
+	}
+
 if (strlen($SSagent_debug_logging) > 1)
 	{
 	if ($SSagent_debug_logging == "$user")

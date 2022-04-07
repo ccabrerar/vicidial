@@ -1,7 +1,7 @@
 <?php
 # admin_bulk_tools.php
 #
-# Copyright (C) 2021  Mike Coate, Mike Cargile, Matt Florell	<vicidial@gmail.com>	LICENSE: AGPLv2
+# Copyright (C) 2022  Mike Coate, Mike Cargile, Matt Florell	<vicidial@gmail.com>	LICENSE: AGPLv2
 #
 # This is the admin screen for various bulk copy/delete tools.
 #
@@ -30,13 +30,15 @@
 # 200816-0930 - Added CID Groups to several labels
 # 210312-1429 - Added DID bulk delete text area, filtered out did_system_filter as selectable
 # 210315-1644 - Added CID bulk delete text area and ---ALL-- option
+# 220112-1806 - Added CAN(Canadian) states lookup for STATEFILL feature and CID-STATE feature
+# 220222-0821 - Added allow_web_debug system setting
 #
 
 require("dbconnect_mysqli.php");
 require("functions.php");
 
-$version = '2.14-24';
-$build = '210315-1644';
+$version = '2.14-26';
+$build = '220222-0821';
 
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
@@ -86,8 +88,36 @@ if (isset($_POST["USERdelete_from"]))				{$USERdelete_from=$_POST["USERdelete_fr
 if (isset($_POST["USERdelete_from_CONFIRMED"]))		{$USERdelete_from_CONFIRMED=$_POST["USERdelete_from_CONFIRMED"];}
 if (isset($_POST["DIDto_delete_TB"]))				{$DIDto_delete_TB=$_POST["DIDto_delete_TB"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 if ($DB) {echo "$form_to_run|";}
+
+#############################################
+##### START SYSTEM_SETTINGS LOOKUP #####
+$sys_settings_stmt = "SELECT use_non_latin,enable_languages,language_method,campaign_cid_areacodes_enabled,sounds_central_control_active,contacts_enabled,enable_auto_reports,allow_web_debug FROM system_settings;";
+$sys_settings_rslt=mysql_to_mysqli($sys_settings_stmt, $link);
+#if ($DB) {echo "$sys_settings_stmt|";}
+$num_rows = mysqli_num_rows($sys_settings_rslt);
+if ($num_rows > 0)
+	{
+	$sys_settings_row=mysqli_fetch_row($sys_settings_rslt);
+	$non_latin =						$sys_settings_row[0];
+	$SSenable_languages =				$sys_settings_row[1];
+	$SSlanguage_method =				$sys_settings_row[2];
+	$SScampaign_cid_areacodes_enabled = $sys_settings_row[3];
+	$SSsounds_central_control_active =	$sys_settings_row[4];
+	$SScontacts_enabled =				$sys_settings_row[5];
+	$SSenable_auto_reports =			$sys_settings_row[6];
+	$SSallow_web_debug =				$sys_settings_row[7];
+	}
+else
+	{
+	echo _QXZ("There are no system settings. You might want to look into that.");
+	exit;
+	}
+if ($SSallow_web_debug < 1) {$DB=0;}
+##### END SETTINGS LOOKUP #####
+###########################################
 
 $ACCIDto_insert_raw = explode("\n", $ACCIDto_insert_raw);
 if ($ACCIDmethod == "CSV") 
@@ -113,16 +143,58 @@ else
 	$ACCIDto_insert_raw = preg_replace('/[^0-9]/','',$ACCIDto_insert_raw);
 	$ACCIDto_insert_raw_ArFilter = array_filter($ACCIDto_insert_raw);
 	}
+$DIDto_insert_raw = preg_replace('/[^0-9\n]/','',$DIDto_insert_raw);
 $DIDto_insert_raw = explode("\n", $DIDto_insert_raw);
-$DIDto_insert_raw = preg_replace('/[^0-9]/','',$DIDto_insert_raw);
-if ( $form_to_run == "BULKDIDSDELETETB" ) {
+if ( $form_to_run == "BULKDIDSDELETETB" ) 
+	{
 	$DIDdelete_from = explode("\n", $DIDto_delete_TB);
 	$DIDdelete_from = preg_replace('/[^0-9]/','',$DIDdelete_from);
-}
+	}
 $DIDto_insert_raw_ArFilter = array_filter($DIDto_insert_raw);
 $USERstart = preg_replace('/[^0-9]/','',$USERstart);
 $USERstop = preg_replace('/[^0-9]/','',$USERstop);
 $USERfull_name = preg_replace('/[^-_0-9a-zA-Z]/','',$USERfull_name);
+if ( $form_to_run == "ACCIDDELETEconfirmTB" ) 
+	{
+	$ACCIDdelete_from = explode("\n", $ACCIDdelete_from);
+	$ACCIDdelete_from = preg_replace('/[^0-9]/','',$ACCIDdelete_from);
+	}
+
+$ACCIDclear_all = preg_replace('/[^-_0-9a-zA-Z]/','',$ACCIDclear_all);
+$ACCIDclear_all_CONFIRMED = preg_replace('/[^-_0-9a-zA-Z]/','',$ACCIDclear_all_CONFIRMED);
+$DIDcopy_from = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$DIDcopy_from);
+$USERforce_pw = preg_replace('/[^-_0-9a-zA-Z]/','',$USERforce_pw);
+
+# Variables filter further down in the code
+#	$ACCIDareacode
+#	$ACCIDto_insert_CONFIRMED
+#	$ACCIDdescription
+#	$ACCIDactive
+#	$ACCIDactiveinput
+#	$DIDto_insert_CONFIRMED
+#	$USERto_insert
+#	$ACCIDdelete_from_CONFIRMED
+#	$DIDdelete_from_CONFIRMED
+#	$USERdelete_from
+#	$USERdelete_from_CONFIRMED
+
+if ($non_latin < 1)
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$ACCIDcampaign = preg_replace('/[^-_0-9a-zA-Z]/', '', $ACCIDcampaign);
+	$ACCIDdelete_campaign = preg_replace('/[^-_0-9a-zA-Z]/', '', $ACCIDdelete_campaign);
+	$USERcopy_from = preg_replace('/[^-_0-9a-zA-Z]/', '', $USERcopy_from);
+	}
+else
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$ACCIDcampaign = preg_replace('/[^-_0-9\p{L}]/u', '', $ACCIDcampaign);
+	$ACCIDdelete_campaign = preg_replace('/[^-_0-9\p{L}]/u', '', $ACCIDdelete_campaign);
+	$USERcopy_from = preg_replace('/[^-_0-9\p{L}]/u', '', $USERcopy_from);
+	}
+
 if (empty($USERfull_name)) 					{$USERfull_name = "BLANK";}
 if (empty($USERdelete_from))				{$USERdelete_from="BLANK";}
 if (empty($ACCIDto_insert_raw_ArFilter)) 	{$CIDcheck = "BLANK";}
@@ -130,49 +202,9 @@ if (empty($DIDto_insert_raw_ArFilter)) 		{$DIDcheck = "BLANK";}
 if (empty($DIDdelete_from)) 				{$DIDdelete_from="BLANK";}
 if (empty($USERstart)) 						{$USERstart = "BLANK";}
 if (empty($USERstop)) 						{$USERstop = "BLANK";}
-if ( $form_to_run == "ACCIDDELETEconfirmTB" ) {
-	$ACCIDdelete_from = explode("\n", $ACCIDdelete_from);
-	$ACCIDdelete_from = preg_replace('/[^0-9]/','',$ACCIDdelete_from);
-}
 if (empty($ACCIDdelete_from)) 				{$ACCIDdelete_from = "BLANK";}
 if (empty($ACCIDdelete_campaign)) 			{$ACCIDdelete_campaign = "BLANK";}
 if ($ACCIDclear_all == "Y")					{$form_to_run="ACCIDDELETEconfirm";}
-
-#############################################
-##### START SYSTEM_SETTINGS LOOKUP #####
-$sys_settings_stmt = "SELECT use_non_latin,enable_languages,language_method,campaign_cid_areacodes_enabled,sounds_central_control_active,contacts_enabled,enable_auto_reports FROM system_settings;";
-$sys_settings_rslt=mysql_to_mysqli($sys_settings_stmt, $link);
-if ($DB) {echo "$sys_settings_stmt|";}
-$num_rows = mysqli_num_rows($sys_settings_rslt);
-if ($num_rows > 0)
-	{
-	$sys_settings_row=mysqli_fetch_row($sys_settings_rslt);
-	$non_latin =						$sys_settings_row[0];
-	$SSenable_languages =				$sys_settings_row[1];
-	$SSlanguage_method =				$sys_settings_row[2];
-	$SScampaign_cid_areacodes_enabled = $sys_settings_row[3];
-	$SSsounds_central_control_active =	$sys_settings_row[4];
-	$SScontacts_enabled =				$sys_settings_row[5];
-	$SSenable_auto_reports =			$sys_settings_row[6];
-	}
-else
-	{
-	echo _QXZ("There are no system settings. You might want to look into that.");
-	exit;
-	}
-##### END SETTINGS LOOKUP #####
-###########################################
-
-if ($non_latin < 1)
-	{
-	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
-	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
-	}
-else
-	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
-	}
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "$stmt|";}
@@ -418,12 +450,12 @@ if ($form_to_run == "ACCID")
 		while ($i < count($ACCIDto_insert_raw))
 			{
 			$STATEFILLareacode[$i] = substr($ACCIDto_insert_raw[$i], 0, 3);
-			$SQL = "SELECT state FROM vicidial_phone_codes WHERE country='USA' AND areacode='$STATEFILLareacode[$i]';";
+			$SQL = "SELECT state FROM vicidial_phone_codes WHERE country IN('USA','CAN') AND areacode='$STATEFILLareacode[$i]';";
 			if ($DB) {echo "$SQL|";}
 			$SQL_rslt = mysql_to_mysqli($SQL, $link);
 			$state = mysqli_fetch_row($SQL_rslt);
 			
-			$SQL = "SELECT areacode FROM vicidial_phone_codes WHERE country='USA' AND state='$state[0]';";
+			$SQL = "SELECT areacode FROM vicidial_phone_codes WHERE country IN('USA','CAN') AND state='$state[0]';";
 			if ($DB) {echo "$SQL|";}
 			$SQL_rslt = mysql_to_mysqli($SQL, $link);
 			$areacode_count = mysqli_num_rows($SQL_rslt);
@@ -462,7 +494,7 @@ if ($form_to_run == "ACCID")
 			$areacode[$i] = substr($ACCIDto_insert_raw[$i], 0, 3);
 			if ($CGT == 'STATE')
 				{
-				$SQL = "SELECT state FROM vicidial_phone_codes WHERE country='USA' AND areacode='$areacode[$i]';";
+				$SQL = "SELECT state FROM vicidial_phone_codes WHERE country IN('USA','CAN') AND areacode='$areacode[$i]';";
 				if ($DB) {echo "$SQL|";}
 				$SQL_rslt = mysql_to_mysqli($SQL, $link);
 				$row=mysqli_fetch_row($SQL_rslt);
@@ -591,6 +623,7 @@ elseif ($form_to_run == "ACCIDconfirmed")
 		$i = 0;
 		while ($i < count($ACCIDto_insert_CONFIRMED))
 			{
+			$ACCIDareacode[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $ACCIDareacode[$i]);
 			if (!preg_match("/[A-Z]/i",$ACCIDareacode[$i]))
 				{
 				$SQL="SELECT state FROM vicidial_phone_codes WHERE areacode='$ACCIDareacode[$i]';";
@@ -657,6 +690,11 @@ elseif ($form_to_run == "ACCIDconfirmed")
 			if (strlen($ACCIDactiveinput[$INSERTindex]) > 0) {$tempACCIDactive = $ACCIDactiveinput[$INSERTindex];}
 			else {$tempACCIDactive='N';}
 			}
+		$ACCIDareacode[$INSERTindex] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $ACCIDareacode[$INSERTindex]);
+		$ACCIDto_insert_CONFIRMED[$INSERTindex] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $ACCIDto_insert_CONFIRMED[$INSERTindex]);
+		$ACCIDdescription[$INSERTindex] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $ACCIDdescription[$INSERTindex]);
+		$tempACCIDactive = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $tempACCIDactive);
+
 		if ($DB) {echo "|ACCIDactive: $ACCIDactive|$ACCIDactiveinput[$INSERTindex]|$tempACCIDactive|";}
 
 		$SQL = "INSERT IGNORE INTO vicidial_campaign_cid_areacodes (campaign_id,areacode,outbound_cid,active,cid_description) VALUES ('$ACCIDcampaign','$ACCIDareacode[$INSERTindex]','$ACCIDto_insert_CONFIRMED[$INSERTindex]','$tempACCIDactive','$ACCIDdescription[$INSERTindex]')";
@@ -672,6 +710,11 @@ elseif ($form_to_run == "ACCIDconfirmed")
 					if (strlen($ACCIDactiveinput[$INSERTindex]) > 0) {$tempACCIDactive = $ACCIDactiveinput[$INSERTindex];}
 					else {$tempACCIDactive='N';}
 					}
+				$ACCIDareacode[$INSERTindex] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $ACCIDareacode[$INSERTindex]);
+				$ACCIDto_insert_CONFIRMED[$INSERTindex] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $ACCIDto_insert_CONFIRMED[$INSERTindex]);
+				$ACCIDdescription[$INSERTindex] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $ACCIDdescription[$INSERTindex]);
+				$tempACCIDactive = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $tempACCIDactive);
+
 				if ($DB) {echo "|ACCIDactive: $ACCIDactive|$ACCIDactiveinput[$INSERTindex]|$tempACCIDactive|";}
 				$SQL.= ",('" . $ACCIDcampaign . "','" . $ACCIDareacode[$INSERTindex] . "','" . $ACCIDto_insert_CONFIRMED[$INSERTindex] . "','" . $tempACCIDactive . "','" . $ACCIDdescription[$INSERTindex] . "')";
 				$SQL_sentence.= " |$ACCIDareacode[$INSERTindex]|$ACCIDto_insert_CONFIRMED[$INSERTindex]|$ACCIDdescription[$INSERTindex]|$tempACCIDactive";
@@ -691,6 +734,11 @@ elseif ($form_to_run == "ACCIDconfirmed")
 					if (strlen($ACCIDactiveinput[$INSERTindex]) > 0) {$tempACCIDactive = $ACCIDactiveinput[$INSERTindex];}
 					else {$tempACCIDactive='N';}
 					}
+				$ACCIDareacode[$INSERTindex] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $ACCIDareacode[$INSERTindex]);
+				$ACCIDto_insert_CONFIRMED[$INSERTindex] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $ACCIDto_insert_CONFIRMED[$INSERTindex]);
+				$ACCIDdescription[$INSERTindex] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $ACCIDdescription[$INSERTindex]);
+				$tempACCIDactive = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $tempACCIDactive);
+
 				if ($DB) {echo "|ACCIDactive: $ACCIDactive|$ACCIDactiveinput[$INSERTindex]|$tempACCIDactive|";}
 				$SQL.= ",('" . $ACCIDcampaign . "','" . $ACCIDareacode[$INSERTindex] . "','" . $ACCIDto_insert_CONFIRMED[$INSERTindex] . "','" . $tempACCIDactive . "','" . $ACCIDdescription[$INSERTindex] . "')";
 				$SQL_sentence.= " |$ACCIDareacode[$INSERTindex]|$ACCIDto_insert_CONFIRMED[$INSERTindex]|$ACCIDdescription[$INSERTindex]|$tempACCIDactive";
@@ -861,6 +909,7 @@ elseif ($form_to_run == "ACCIDDELETEconfirmed" || $form_to_run == "ACCIDDELETEco
 			$i = 1; # loop counter
 			while ($i < count($ACCIDdelete_from_CONFIRMED))
 				{
+				$ACCIDdelete_from_CONFIRMED[$i] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $ACCIDdelete_from_CONFIRMED[$i]);
 				$SQL_sentence.= "$ACCIDdelete_from_CONFIRMED[$i] |";
 				$i++;
 				}
@@ -894,6 +943,7 @@ elseif ($form_to_run == "ACCIDDELETEconfirmed" || $form_to_run == "ACCIDDELETEco
 			$k = 1; # areacode index counter
 			while ($i < count($ACCIDdelete_from_CONFIRMED))
 				{
+				$ACCIDdelete_from_CONFIRMED[$i] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $ACCIDdelete_from_CONFIRMED[$i]);
 				if ($i & 1)
 					{
 					$ACCIDdelete_cid[$j] = $ACCIDdelete_from_CONFIRMED[$i];
@@ -912,6 +962,9 @@ elseif ($form_to_run == "ACCIDDELETEconfirmed" || $form_to_run == "ACCIDDELETEco
 			$i = 0;
 			while ($i < count($ACCIDdelete_areacode))
 				{
+				$ACCIDdelete_cid[$i] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $ACCIDdelete_cid[$i]);
+				$ACCIDdelete_areacode[$i] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $ACCIDdelete_areacode[$i]);
+
 				$SQL = "DELETE FROM vicidial_campaign_cid_areacodes WHERE campaign_id='$ACCIDdelete_campaign' AND outbound_cid='$ACCIDdelete_cid[$i]' AND areacode='$ACCIDdelete_areacode[$i]';";
 				$i++;
 				if ($DB) {echo "$SQL|";}
@@ -1153,6 +1206,8 @@ elseif ($form_to_run == "DIDADDconfirmed")
 	$INSERTsqlLOG='';
 	while ($INSERTloopflag == "TRUE")
 		{
+		$DIDto_insert_CONFIRMED[$INSERTindex] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $DIDto_insert_CONFIRMED[$INSERTindex]);
+
 		$SQL = "INSERT IGNORE INTO vicidial_inbound_dids (did_pattern,did_description,did_active,did_route,extension,exten_context,voicemail_ext,phone,server_ip,user,user_unavailable_action,user_route_settings_ingroup,group_id,call_handle_method,agent_search_method,list_id,campaign_id,phone_code,menu_id,record_call,filter_inbound_number,filter_phone_group_id,filter_url,filter_action,filter_extension,filter_exten_context,filter_voicemail_ext,filter_phone,filter_server_ip,filter_user,filter_user_unavailable_action,filter_user_route_settings_ingroup,filter_group_id,filter_call_handle_method,filter_agent_search_method,filter_list_id,filter_campaign_id,filter_phone_code,filter_menu_id,filter_clean_cid_number,custom_one,custom_two,custom_three,custom_four,custom_five,user_group,filter_dnc_campaign,filter_url_did_redirect,no_agent_ingroup_redirect,no_agent_ingroup_id,no_agent_ingroup_extension,pre_filter_phone_group_id,pre_filter_extension,entry_list_id,filter_entry_list_id,max_queue_ingroup_calls,max_queue_ingroup_id,max_queue_ingroup_extension,did_carrier_description) VALUES ('$DIDto_insert_CONFIRMED[$INSERTindex]','$did_description','$did_active','$did_route','$extension','$exten_context','$voicemail_ext','$phone','$server_ip','$user','$user_unavailable_action','$user_route_settings_ingroup','$group_id','$call_handle_method','$agent_search_method','$list_id','$ACCIDcampaign_id','$phone_code','$menu_id','$record_call','$filter_inbound_number','$filter_phone_group_id','$filter_url','$filter_action','$filter_extension','$filter_exten_context','$filter_voicemail_ext','$filter_phone','$filter_server_ip','$filter_user','$filter_user_unavailable_action','$filter_user_route_settings_ingroup','$filter_group_id','$filter_call_handle_method','$filter_agent_search_method','$filter_list_id','$filter_campaign_id','$filter_phone_code','$filter_menu_id','$filter_clean_cid_number','$custom_one','$custom_two','$custom_three','$custom_four','$custom_five','$user_group','$filter_dnc_campaign','$filter_url_did_redirect','$no_agent_ingroup_redirect','$no_agent_ingroup_id','$no_agent_ingroup_extension','$pre_filter_phone_group_id','$pre_filter_extension','$entry_list_id','$filter_entry_list_id','$max_queue_ingroup_calls','$max_queue_ingroup_id','$max_queue_ingroup_extension','$did_carrier_description')";
 		$INSERTindex++;
 		if ($INSERTgroup_counter > 0)
@@ -1160,6 +1215,8 @@ elseif ($form_to_run == "DIDADDconfirmed")
 			$i = 1;
 			while ($i < $INSERTgroup_limit)
 				{
+				$DIDto_insert_CONFIRMED[$INSERTindex] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $DIDto_insert_CONFIRMED[$INSERTindex]);
+
 				$SQL.= ",('" . $DIDto_insert_CONFIRMED[$INSERTindex] . "','" . $did_description . "','" . $did_active . "','" . $did_route . "','" . $extension . "','" . $exten_context . "','" . $voicemail_ext . "','" . $phone . "','" . $server_ip . "','" . $user . "','" . $user_unavailable_action . "','" . $user_route_settings_ingroup . "','" . $group_id . "','" . $call_handle_method . "','" . $agent_search_method . "','" . $list_id . "','" . $ACCIDcampaign_id . "','" . $phone_code . "','" . $menu_id . "','" . $record_call . "','" . $filter_inbound_number . "','" . $filter_phone_group_id . "','" . $filter_url . "','" . $filter_action . "','" . $filter_extension . "','" . $filter_exten_context . "','" . $filter_voicemail_ext . "','" . $filter_phone . "','" . $filter_server_ip . "','" . $filter_user . "','" . $filter_user_unavailable_action . "','" . $filter_user_route_settings_ingroup . "','" . $filter_group_id . "','" . $filter_call_handle_method . "','" . $filter_agent_search_method . "','" . $filter_list_id . "','" . $filter_campaign_id . "','" . $filter_phone_code . "','" . $filter_menu_id . "','" . $filter_clean_cid_number . "','" . $custom_one . "','" . $custom_two . "','" . $custom_three . "','" . $custom_four . "','" . $custom_five . "','" . $user_group . "','" . $filter_dnc_campaign . "','" . $filter_url_did_redirect . "','" . $no_agent_ingroup_redirect . "','" . $no_agent_ingroup_id . "','" . $no_agent_ingroup_extension . "','" . $pre_filter_phone_group_id . "','" . $pre_filter_extension . "','" . $entry_list_id . "','" . $filter_entry_list_id . "','" . $max_queue_ingroup_calls . "','" . $max_queue_ingroup_id . "','" . $max_queue_ingroup_extension . "','" . $did_carrier_description . "')";
 				$SQL_sentence.= " |$DIDto_insert_CONFIRMED[$i]";
 				$i++;
@@ -1172,6 +1229,8 @@ elseif ($form_to_run == "DIDADDconfirmed")
 			$i = 1;
 			while ($i < $INSERTremainder)
 				{
+				$DIDto_insert_CONFIRMED[$INSERTindex] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $DIDto_insert_CONFIRMED[$INSERTindex]);
+
 				$SQL.= ",('" . $DIDto_insert_CONFIRMED[$INSERTindex] . "','" . $did_description . "','" . $did_active . "','" . $did_route . "','" . $extension . "','" . $exten_context . "','" . $voicemail_ext . "','" . $phone . "','" . $server_ip . "','" . $user . "','" . $user_unavailable_action . "','" . $user_route_settings_ingroup . "','" . $group_id . "','" . $call_handle_method . "','" . $agent_search_method . "','" . $list_id . "','" . $ACCIDcampaign_id . "','" . $phone_code . "','" . $menu_id . "','" . $record_call . "','" . $filter_inbound_number . "','" . $filter_phone_group_id . "','" . $filter_url . "','" . $filter_action . "','" . $filter_extension . "','" . $filter_exten_context . "','" . $filter_voicemail_ext . "','" . $filter_phone . "','" . $filter_server_ip . "','" . $filter_user . "','" . $filter_user_unavailable_action . "','" . $filter_user_route_settings_ingroup . "','" . $filter_group_id . "','" . $filter_call_handle_method . "','" . $filter_agent_search_method . "','" . $filter_list_id . "','" . $filter_campaign_id . "','" . $filter_phone_code . "','" . $filter_menu_id . "','" . $filter_clean_cid_number . "','" . $custom_one . "','" . $custom_two . "','" . $custom_three . "','" . $custom_four . "','" . $custom_five . "','" . $user_group . "','" . $filter_dnc_campaign . "','" . $filter_url_did_redirect . "','" . $no_agent_ingroup_redirect . "','" . $no_agent_ingroup_id . "','" . $no_agent_ingroup_extension . "','" . $pre_filter_phone_group_id . "','" . $pre_filter_extension . "','" . $entry_list_id . "','" . $filter_entry_list_id . "','" . $max_queue_ingroup_calls . "','" . $max_queue_ingroup_id . "','" . $max_queue_ingroup_extension . "','" . $did_carrier_description . "')";
 				$SQL_sentence.= " |$DIDto_insert_CONFIRMED[$i]";
 				$i++;
@@ -1222,6 +1281,7 @@ elseif ($form_to_run == "BULKDIDSDELETE" || $form_to_run == "BULKDIDSDELETETB")
 	$i = 0;
 	while ($i < count($DIDdelete_from))
 		{
+		$DIDdelete_from[$i] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $DIDdelete_from[$i]);
 		echo "<br> $DIDdelete_from[$i]";
 		$i++;
 		}
@@ -1240,10 +1300,12 @@ elseif ($form_to_run == "BULKDIDSDELETE" || $form_to_run == "BULKDIDSDELETETB")
 elseif ($form_to_run == "BULKDIDSDELETEconfirmed")
 	{		
 	$DIDdelete_from_CONFIRMED = unserialize($DIDdelete_from_CONFIRMED);
+	$DIDdelete_from_CONFIRMED[0] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $DIDdelete_from_CONFIRMED[0]);
 	$SQL = "DELETE FROM vicidial_inbound_dids WHERE did_pattern IN ('$DIDdelete_from_CONFIRMED[0]'";
 	$i = 1;
 	while ($i < count($DIDdelete_from_CONFIRMED))
 		{
+		$DIDdelete_from_CONFIRMED[$i] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $DIDdelete_from_CONFIRMED[$i]);
 		$SQL.= ",'" . $DIDdelete_from_CONFIRMED[$i] . "'";
 		$i++;
 		}
@@ -1563,6 +1625,8 @@ elseif ($form_to_run == "BULKUSERSconfirmed")
 	$INSERTsqlLOG='';
 	while ($INSERTloopflag == "TRUE")
 		{
+		$USERto_insert[$INSERTindex] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $USERto_insert[$INSERTindex]);
+
 		$SQL = "INSERT IGNORE INTO vicidial_users (user,pass,full_name,user_level,user_group,phone_login,phone_pass,delete_users,delete_user_groups,delete_lists,delete_campaigns,delete_ingroups,delete_remote_agents,load_leads,campaign_detail,ast_admin_access,ast_delete_phones,delete_scripts,modify_leads,hotkeys_active,change_agent_campaign,agent_choose_ingroups,closer_campaigns,scheduled_callbacks,agentonly_callbacks,agentcall_manual,vicidial_recording,vicidial_transfers,delete_filters,alter_agent_interface_options,closer_default_blended,delete_call_times,modify_call_times,modify_users,modify_campaigns,modify_lists,modify_scripts,modify_filters,modify_ingroups,modify_usergroups,modify_remoteagents,modify_servers,view_reports,vicidial_recording_override,alter_custdata_override,qc_enabled,qc_user_level,qc_pass,qc_finish,qc_commit,add_timeclock_log,modify_timeclock_log,delete_timeclock_log,alter_custphone_override,vdc_agent_api_access,modify_inbound_dids,delete_inbound_dids,active,alert_enabled,download_lists,agent_shift_enforcement_override,manager_shift_enforcement_override,shift_override_flag,export_reports,delete_from_dnc,email,user_code,territory,allow_alerts,agent_choose_territories,custom_one,custom_two,custom_three,custom_four,custom_five,voicemail_id,agent_call_log_view_override,callcard_admin,agent_choose_blended,realtime_block_user_info,custom_fields_modify,force_change_password,agent_lead_search_override,modify_shifts,modify_phones,modify_carriers,modify_labels,modify_statuses,modify_voicemail,modify_audiostore,modify_moh,modify_tts,preset_contact_search,modify_contacts,modify_same_user_level,admin_hide_lead_data,admin_hide_phone_data,agentcall_email,modify_email_accounts,failed_login_count,last_login_date,last_ip,pass_hash,alter_admin_interface_options,max_inbound_calls,modify_custom_dialplans,wrapup_seconds_override,modify_languages,selected_language,user_choose_language,ignore_group_on_search,api_list_restrict,api_allowed_functions,lead_filter_id,admin_cf_show_hidden,agentcall_chat,user_hide_realtime,access_recordings,modify_colors,user_nickname,user_new_lead_limit,api_only_user,modify_auto_reports,modify_ip_lists,ignore_ip_list,ready_max_logout,export_gdpr_leads) VALUES ('$USERto_insert[$INSERTindex]','$USERto_insert[$INSERTindex]','$USERto_insert[$INSERTindex]','$user_level','$user_group','$phone_login','$phone_pass','$delete_users','$delete_user_groups','$delete_lists','$delete_campaigns','$delete_ingroups','$delete_remote_agents','$load_leads','$ACCIDcampaign_detail','$ast_admin_access','$ast_delete_phones','$delete_scripts','$modify_leads','$hotkeys_active','$change_agent_campaign','$agent_choose_ingroups','$closer_campaigns','$scheduled_callbacks','$agentonly_callbacks','$agentcall_manual','$vicidial_recording','$vicidial_transfers','$delete_filters','$alter_agent_interface_options','$closer_default_blended','$delete_call_times','$modify_call_times','$modify_users','$modify_campaigns','$modify_lists','$modify_scripts','$modify_filters','$modify_ingroups','$modify_usergroups','$modify_remoteagents','$modify_servers','$view_reports','$vicidial_recording_override','$alter_custdata_override','$qc_enabled','$qc_user_level','$qc_pass','$qc_finish','$qc_commit','$add_timeclock_log','$modify_timeclock_log','$delete_timeclock_log','$alter_custphone_override','$vdc_agent_api_access','$modify_inbound_dids','$delete_inbound_dids','$user_active','$alert_enabled','$download_lists','$agent_shift_enforcement_override','$manager_shift_enforcement_override','$shift_override_flag','$export_reports','$delete_from_dnc','$email','$user_code','$territory','$allow_alerts','$agent_choose_territories','$custom_one','$custom_two','$custom_three','$custom_four','$custom_five','$voicemail_id','$agent_call_log_view_override','$callcard_admin','$agent_choose_blended','$realtime_block_user_info','$custom_fields_modify','$USERforce_pw','$agent_lead_search_override','$modify_shifts','$modify_phones','$modify_carriers','$modify_labels','$modify_statuses','$modify_voicemail','$modify_audiostore','$modify_moh','$modify_tts','$preset_contact_search','$modify_contacts','$modify_same_user_level','$admin_hide_lead_data','$admin_hide_phone_data','$agentcall_email','$modify_email_accounts','$failed_login_count','$last_login_date','$last_ip','$pass_hash','$alter_admin_interface_options','$max_inbound_calls','$modify_custom_dialplans','$wrapup_seconds_override','$modify_languages','$selected_language','$user_choose_language','$ignore_group_on_search','$api_list_restrict','$api_allowed_functions','$lead_filter_id','$admin_cf_show_hidden','$agentcall_chat','$user_hide_realtime','$access_recordings','$modify_colors','$user_nickname','$user_new_lead_limit','$api_only_user','$modify_auto_reports','$modify_ip_lists','$ignore_ip_list','$ready_max_logout','$export_gdpr_leads')";
 		$INSERTindex++;
 		if ($INSERTgroup_counter > 0)
@@ -1570,6 +1634,8 @@ elseif ($form_to_run == "BULKUSERSconfirmed")
 			$i = 1;
 			while ($i < $INSERTgroup_limit)
 				{
+				$USERto_insert[$INSERTindex] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $USERto_insert[$INSERTindex]);
+
 				$SQL.= ",('$USERto_insert[$INSERTindex]','$USERto_insert[$INSERTindex]','$USERto_insert[$INSERTindex]','$user_level','$user_group','$phone_login','$phone_pass','$delete_users','$delete_user_groups','$delete_lists','$delete_campaigns','$delete_ingroups','$delete_remote_agents','$load_leads','$ACCIDcampaign_detail','$ast_admin_access','$ast_delete_phones','$delete_scripts','$modify_leads','$hotkeys_active','$change_agent_campaign','$agent_choose_ingroups','$closer_campaigns','$scheduled_callbacks','$agentonly_callbacks','$agentcall_manual','$vicidial_recording','$vicidial_transfers','$delete_filters','$alter_agent_interface_options','$closer_default_blended','$delete_call_times','$modify_call_times','$modify_users','$modify_campaigns','$modify_lists','$modify_scripts','$modify_filters','$modify_ingroups','$modify_usergroups','$modify_remoteagents','$modify_servers','$view_reports','$vicidial_recording_override','$alter_custdata_override','$qc_enabled','$qc_user_level','$qc_pass','$qc_finish','$qc_commit','$add_timeclock_log','$modify_timeclock_log','$delete_timeclock_log','$alter_custphone_override','$vdc_agent_api_access','$modify_inbound_dids','$delete_inbound_dids','$user_active','$alert_enabled','$download_lists','$agent_shift_enforcement_override','$manager_shift_enforcement_override','$shift_override_flag','$export_reports','$delete_from_dnc','$email','$user_code','$territory','$allow_alerts','$agent_choose_territories','$custom_one','$custom_two','$custom_three','$custom_four','$custom_five','$voicemail_id','$agent_call_log_view_override','$callcard_admin','$agent_choose_blended','$realtime_block_user_info','$custom_fields_modify','$USERforce_pw','$agent_lead_search_override','$modify_shifts','$modify_phones','$modify_carriers','$modify_labels','$modify_statuses','$modify_voicemail','$modify_audiostore','$modify_moh','$modify_tts','$preset_contact_search','$modify_contacts','$modify_same_user_level','$admin_hide_lead_data','$admin_hide_phone_data','$agentcall_email','$modify_email_accounts','$failed_login_count','$last_login_date','$last_ip','$pass_hash','$alter_admin_interface_options','$max_inbound_calls','$modify_custom_dialplans','$wrapup_seconds_override','$modify_languages','$selected_language','$user_choose_language','$ignore_group_on_search','$api_list_restrict','$api_allowed_functions','$lead_filter_id','$admin_cf_show_hidden','$agentcall_chat','$user_hide_realtime','$access_recordings','$modify_colors','$user_nickname','$user_new_lead_limit','$api_only_user','$modify_auto_reports','$modify_ip_lists','$ignore_ip_list','$ready_max_logout','$export_gdpr_leads')";
 				$SQL_sentence.= " |$USERto_insert[$INSERTindex]";
 				$i++;
@@ -1582,6 +1648,8 @@ elseif ($form_to_run == "BULKUSERSconfirmed")
 			$i = 1;
 			while ($i < $INSERTremainder)
 				{
+				$USERto_insert[$INSERTindex] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $USERto_insert[$INSERTindex]);
+
 				$SQL.= ",('$USERto_insert[$INSERTindex]','$USERto_insert[$INSERTindex]','$USERto_insert[$INSERTindex]','$user_level','$user_group','$phone_login','$phone_pass','$delete_users','$delete_user_groups','$delete_lists','$delete_campaigns','$delete_ingroups','$delete_remote_agents','$load_leads','$ACCIDcampaign_detail','$ast_admin_access','$ast_delete_phones','$delete_scripts','$modify_leads','$hotkeys_active','$change_agent_campaign','$agent_choose_ingroups','$closer_campaigns','$scheduled_callbacks','$agentonly_callbacks','$agentcall_manual','$vicidial_recording','$vicidial_transfers','$delete_filters','$alter_agent_interface_options','$closer_default_blended','$delete_call_times','$modify_call_times','$modify_users','$modify_campaigns','$modify_lists','$modify_scripts','$modify_filters','$modify_ingroups','$modify_usergroups','$modify_remoteagents','$modify_servers','$view_reports','$vicidial_recording_override','$alter_custdata_override','$qc_enabled','$qc_user_level','$qc_pass','$qc_finish','$qc_commit','$add_timeclock_log','$modify_timeclock_log','$delete_timeclock_log','$alter_custphone_override','$vdc_agent_api_access','$modify_inbound_dids','$delete_inbound_dids','$user_active','$alert_enabled','$download_lists','$agent_shift_enforcement_override','$manager_shift_enforcement_override','$shift_override_flag','$export_reports','$delete_from_dnc','$email','$user_code','$territory','$allow_alerts','$agent_choose_territories','$custom_one','$custom_two','$custom_three','$custom_four','$custom_five','$voicemail_id','$agent_call_log_view_override','$callcard_admin','$agent_choose_blended','$realtime_block_user_info','$custom_fields_modify','$USERforce_pw','$agent_lead_search_override','$modify_shifts','$modify_phones','$modify_carriers','$modify_labels','$modify_statuses','$modify_voicemail','$modify_audiostore','$modify_moh','$modify_tts','$preset_contact_search','$modify_contacts','$modify_same_user_level','$admin_hide_lead_data','$admin_hide_phone_data','$agentcall_email','$modify_email_accounts','$failed_login_count','$last_login_date','$last_ip','$pass_hash','$alter_admin_interface_options','$max_inbound_calls','$modify_custom_dialplans','$wrapup_seconds_override','$modify_languages','$selected_language','$user_choose_language','$ignore_group_on_search','$api_list_restrict','$api_allowed_functions','$lead_filter_id','$admin_cf_show_hidden','$agentcall_chat','$user_hide_realtime','$access_recordings','$modify_colors','$user_nickname','$user_new_lead_limit','$api_only_user','$modify_auto_reports','$modify_ip_lists','$ignore_ip_list','$ready_max_logout','$export_gdpr_leads')";
 				$SQL_sentence.= " |$USERto_insert[$INSERTindex]";
 				$i++;
@@ -1624,6 +1692,7 @@ elseif ($form_to_run == "BULKUSERSDELETE") ### BULK USER DELETE
 	$i = 0;
 	while ($i < count($USERdelete_from))
 		{
+		$USERdelete_from[$i] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $USERdelete_from[$i]);
 		echo "<br> $USERdelete_from[$i]";
 		$i++;
 		}
@@ -1643,10 +1712,12 @@ elseif ($form_to_run == "BULKUSERSDELETE") ### BULK USER DELETE
 elseif ($form_to_run == "BULKUSERSDELETEconfirmed")### BULK USER DELETE CONFIRM
 	{
 	$USERdelete_from_CONFIRMED = unserialize($USERdelete_from_CONFIRMED);
+	$USERdelete_from_CONFIRMED[0] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $USERdelete_from_CONFIRMED[0]);
 	$SQL = "DELETE FROM vicidial_users WHERE user IN ('$USERdelete_from_CONFIRMED[0]'";
 	$i = 1;
 	while ($i < count($USERdelete_from_CONFIRMED))
 		{
+		$USERdelete_from_CONFIRMED[$i] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $USERdelete_from_CONFIRMED[$i]);
 		$SQL.= ",'" . $USERdelete_from_CONFIRMED[$i] . "'";
 		$i++;
 		}

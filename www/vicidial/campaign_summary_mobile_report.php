@@ -1,7 +1,7 @@
 <?php 
 # campaign_summary_mobile_report.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # Back-end PHP script that generates text output to be interpreted by AST_timeonVDADallSUMMARY_mobile.php
 #
@@ -10,6 +10,7 @@
 # changes:
 #
 # 181212-2329 - Initial build
+# 220301-1015 - Added allow_web_debug system setting
 #
 
 require("dbconnect_mysqli.php");
@@ -38,11 +39,16 @@ if (isset($_GET["file_download"]))				{$file_download=$_GET["file_download"];}
 if (isset($_GET["browser_dimension"]))	{$browser_dimension=$_GET["browser_dimension"];}
 	elseif (isset($_POST["browser_dimension"]))	{$browser_dimension=$_POST["browser_dimension"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
+$NOW_TIME = date("Y-m-d H:i:s");
+$STARTtime = date("U");
+
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {$MAIN.="$stmt\n";}
+#if ($DB) {$MAIN.="$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -53,18 +59,22 @@ if ($qm_conf_ct > 0)
 	$reports_use_slave_db =			$row[3];
 	$SSenable_languages =			$row[4];
 	$SSlanguage_method =			$row[5];
+	$SSallow_web_debug =			$row[6];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-if ( (strlen($slave_db_server)>5) and (preg_match("/$report_name/",$reports_use_slave_db)) )
-	{
-	mysqli_close($link);
-	$use_slave_server=1;
-	$db_source = 'S';
-	require("dbconnect_mysqli.php");
-	$MAIN.="<!-- Using slave server $slave_db_server $db_source -->\n";
-	}
+$RR = preg_replace('/[^-_0-9a-zA-Z]/', '', $RR);
+$current_displayed_report = preg_replace('/[^-_0-9a-zA-Z]/', '', $current_displayed_report);
+$browser_dimension = preg_replace('/[^-_0-9a-zA-Z]/', '', $browser_dimension);
+$adastats = preg_replace('/[^-_0-9a-zA-Z]/', '', $adastats);
+$file_download = preg_replace('/[^-_0-9a-zA-Z]/', '', $file_download);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+
+# Variables filtered further down in the code
+# $types
 
 if ($non_latin < 1)
 	{
@@ -73,8 +83,17 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	}
+
+if ( (strlen($slave_db_server)>5) and (preg_match("/$report_name/",$reports_use_slave_db)) )
+	{
+	mysqli_close($link);
+	$use_slave_server=1;
+	$db_source = 'S';
+	require("dbconnect_mysqli.php");
+	$MAIN.="<!-- Using slave server $slave_db_server $db_source -->\n";
 	}
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
@@ -165,9 +184,6 @@ if ( (!preg_match("/$report_name/",$LOGallowed_reports)) and (!preg_match("/ALL 
     exit;
 	}
 
-$NOW_TIME = date("Y-m-d H:i:s");
-$STARTtime = date("U");
-
 $LOGallowed_campaignsSQL='';
 $whereLOGallowed_campaignsSQL='';
 if ( (!preg_match('/\-ALL/i', $LOGallowed_campaigns)) )
@@ -178,13 +194,30 @@ if ( (!preg_match('/\-ALL/i', $LOGallowed_campaigns)) )
 	$whereLOGallowed_campaignsSQL = "where campaign_id IN('$rawLOGallowed_campaignsSQL')";
 	}
 
+$typesSQL='';
+if (is_array($types))
+	{
+	for ($q=0; $q<count($types); $q++) 
+		{
+		$types[$q] = preg_replace('/[^- \_0-9a-zA-Z]/', '', $types[$q]);
+		if ($q > 0) {$typesSQL .= ",";}
+		$typesSQL .= "'$types[$q]'";
+		}
+	}
+else
+	{
+	$types = preg_replace('/[^- \_0-9a-zA-Z]/', '', $types);
+	$typesSQL .= "'$types[$q]'";
+	}
+
 $campaign_typeSQL='';
 if (count($types)<2) {
+	$types = preg_replace('/[^- \_0-9\p{L}]/u', '', $types);
 	if (in_array('LIST ALL CAMPAIGNS', $types))			{$campaign_typeSQL="";} 
 	else if (in_array('AUTO-DIAL ONLY', $types))			{$campaign_typeSQL="and dial_method IN('RATIO','ADAPT_HARD_LIMIT','ADAPT_TAPERED','ADAPT_AVERAGE')";} 
 	else if (in_array('MANUAL ONLY', $types))			{$campaign_typeSQL="and dial_method IN('MANUAL','INBOUND_MAN')";} 
 	else if (in_array('INBOUND ONLY', $types))			{$campaign_typeSQL="and campaign_allow_inbound='Y'";} 
-	else {$campaign_typeSQL="and campaign_id='".implode("', '", $types)."'";}
+	else {$campaign_typeSQL="and campaign_id IN(".$typesSQL.")";}
 } else {
 	if (!in_array('LIST ALL CAMPAIGNS', $types)) {
 		$campaign_typeSQL='and (';

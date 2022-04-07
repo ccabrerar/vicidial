@@ -1,7 +1,7 @@
 <?php
 # admin_launch_trigger.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to launch a CLI script on the voicemail server through
 # the triggering process
@@ -9,10 +9,11 @@
 # CHANGELOG:
 # 161016-2014 - First build of script based upon admin_NANPA_updater.php
 # 170409-1543 - Added IP List validation code
+# 220222-0957 - Added allow_web_debug system setting, if disabled, this script is disabled
 #
 
-$version = '2.14-2';
-$build = '170409-1543';
+$version = '2.14-3';
+$build = '220222-0957';
 $startMS = microtime();
 
 require("dbconnect_mysqli.php");
@@ -31,10 +32,11 @@ if (isset($_GET["DB"]))						{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))			{$DB=$_POST["DB"];}
 
 $block_scheduling_while_running=0;
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,active_voicemail_server,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,active_voicemail_server,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
@@ -48,22 +50,26 @@ if ($qm_conf_ct > 0)
 	$active_voicemail_server =		$row[4];
 	$SSenable_languages =			$row[5];
 	$SSlanguage_method =			$row[6];
+	$SSallow_web_debug =			$row[7];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;   $stage='';}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$stage = preg_replace('/[^-_0-9a-zA-Z]/','',$stage);
 
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$container_id = preg_replace('/[^-_0-9a-zA-Z]/','',$container_id);
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$container_id = preg_replace('/[^-_0-9\p{L}]/u', '', $container_id);
 	}
-
-$container_id = preg_replace('/[^-_0-9a-zA-Z]/','',$container_id);
 
 $NOW_DATE = date("Y-m-d");
 
@@ -176,7 +182,7 @@ if ($SSnocache_admin=='1')
 
 echo "<html>\n";
 echo "<head>\n";
-echo "<!-- VERSION: $admin_version   BUILD: $build   ADD: $ADD   PHP_SELF: $PHP_SELF-->\n";
+echo "<!-- VERSION: $version   BUILD: $build   PHP_SELF: $PHP_SELF-->\n";
 echo "<META NAME=\"ROBOTS\" CONTENT=\"NONE\">\n";
 echo "<META NAME=\"COPYRIGHT\" CONTENT=\"&copy; 2016 ViciDial Group\">\n";
 echo "<META NAME=\"AUTHOR\" CONTENT=\"ViciDial Group\">\n";

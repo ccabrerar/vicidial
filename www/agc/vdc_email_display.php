@@ -1,7 +1,7 @@
 <?php
 # vdc_email_display.php - VICIDIAL agent email display script
 #
-# Copyright (C) 2021  Matt Florell, Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell, Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This page displays any incoming emails in the Vicidial user interface.  It 
 # also allows the user to download and view any attachments sent in the email,
@@ -24,10 +24,11 @@
 # 170526-2330 - Added additional variable filtering
 # 171126-1406 - Added fault tolerance and extra debug
 # 210616-2038 - Added optional CORS support, see options.php for details
+# 220219-1839 - More security changes
 #
 
-$version = '2.14-14';
-$build = '210616-2038';
+$version = '2.14-15';
+$build = '220219-1839';
 $php_script = 'vdc_email_display.php';
 
 require_once("dbconnect_mysqli.php");
@@ -63,6 +64,8 @@ if (isset($_GET["REPLY"]))	{$REPLY=$_GET["REPLY"];}
 	elseif (isset($_POST["REPLY"]))	{$REPLY=$_POST["REPLY"];}
 if (isset($_GET["agent_email"]))	{$agent_email=$_GET["agent_email"];}
 	elseif (isset($_POST["agent_email"]))	{$agent_email=$_POST["agent_email"];}
+
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
@@ -115,27 +118,21 @@ if (strlen($bgcolor) < 6) {$bgcolor='FFFFFF';}
 
 $IFRAME=0;
 
+# default optional vars if not set
+if (!isset($format))   {$format="text";}
+	if ($format == 'debug')	{$DB=1;}
+if (!isset($ACTION))   {$ACTION="refresh";}
+if (!isset($query_date)) {$query_date = $NOW_DATE;}
+
 $user = preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass = preg_replace("/\'|\"|\\\\|;| /","",$pass);
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
-$VUselected_language = '';
-$stmt="SELECT selected_language from vicidial_users where user='$user';";
-if ($DB) {echo "|$stmt|\n";}
+$stmt = "SELECT use_non_latin,timeclock_end_of_day,agentonly_callback_campaign_lock,custom_fields_enabled,allow_emails,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
-$sl_ct = mysqli_num_rows($rslt);
-if ($sl_ct > 0)
-	{
-	$row=mysqli_fetch_row($rslt);
-	$VUselected_language =		$row[0];
-	}
-
-$stmt = "SELECT use_non_latin,timeclock_end_of_day,agentonly_callback_campaign_lock,custom_fields_enabled,allow_emails,enable_languages,language_method FROM system_settings;";
-$rslt=mysql_to_mysqli($stmt, $link);
-	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -147,6 +144,20 @@ if ($qm_conf_ct > 0)
 	$allow_emails =							$row[4];
 	$SSenable_languages =					$row[5];
 	$SSlanguage_method =					$row[6];
+	$SSallow_web_debug =					$row[7];
+	}
+if ($SSallow_web_debug < 1) {$DB=0;}
+
+$VUselected_language = '';
+$stmt="SELECT selected_language from vicidial_users where user='$user';";
+if ($DB) {echo "|$stmt|\n";}
+$rslt=mysql_to_mysqli($stmt, $link);
+	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+$sl_ct = mysqli_num_rows($rslt);
+if ($sl_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$VUselected_language =		$row[0];
 	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
@@ -157,26 +168,36 @@ if ($allow_emails<1)
 	exit;
 	}
 
-$campaign = preg_replace("/\'|\"|\\\\|;/","",$campaign);
+$campaign = preg_replace('/[^-_0-9\p{L}]/u',"",$campaign);
 $attachment_id = preg_replace("/[^0-9]/","",$attachment_id);
 $lead_id = preg_replace('/[^0-9]/','',$lead_id);
 $email_row_id = preg_replace('/[^0-9]/','',$email_row_id);
 $reply_to_address = preg_replace("/\'|\"|\\\\|;/","",$reply_to_address);
+$reply_to_address = preg_replace('/[^-\.\:\/\@\_0-9\p{L}]/u','',$reply_to_address);
+$stage = preg_replace('/[^-_0-9\p{L}]/u','',$stage);
+$sender_email = preg_replace('/[^-\.\:\/\@\_0-9\p{L}]/u','',$sender_email);
+$reply_subject = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$reply_subject);
+$reply_from_address = preg_replace('/[^-\.\:\/\@\_0-9\p{L}]/u','',$reply_from_address);
+$agent_email = preg_replace('/[^-\.\:\/\@\_0-9\p{L}]/u','',$agent_email);
+$REPLY=preg_replace("/[^-_0-9a-zA-Z]/","",$REPLY);
+
+# filtered
+# $reply_message
 
 if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
+	$pass=preg_replace("/[^-\.\+\/\=_0-9a-zA-Z]/","",$pass);
+	}
+else
+	{
+	$user=preg_replace("/[^-_0-9\p{L}]/u","",$user);
+	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
 	}
 
 
-# default optional vars if not set
-if (!isset($format))   {$format="text";}
-	if ($format == 'debug')	{$DB=1;}
-if (!isset($ACTION))   {$ACTION="refresh";}
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
-
 $auth=0;
-$auth_message = user_authorization($user,$pass,'',0,0,0,0,'vdc_email_display');
+$auth_message = user_authorization($user,$pass,'',0,1,0,0,'vdc_email_display');
 if ($auth_message == 'GOOD')
 	{$auth=1;}
 
@@ -416,6 +437,6 @@ if ( ($lead_id) or (strlen($email_row_id)>0) )
 <?php
 	}
 } else {
-	echo _QXZ("ERROR - ID variable missing");
+	echo _QXZ("No email to display");
 }
 ?>

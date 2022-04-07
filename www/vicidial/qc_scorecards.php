@@ -1,17 +1,18 @@
 <?php
 # qc_scorecards.php
 # 
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # this screen manages QC Scorecards within VICIdial
 #
 # changes:
 # 210306-1532 - First Build
 # 210827-1818 - Fix for security issue
+# 220224-2144 - Added allow_web_debug system setting
 #
 
-$admin_version = '2.14-1';
-$build = '210306-1532';
+$admin_version = '2.14-2';
+$build = '220224-2144';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -28,45 +29,7 @@ $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $QUERY_STRING = getenv("QUERY_STRING");
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
-
-#############################################
-##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,auto_dial_limit,user_territories_active,allow_custom_dialplan,callcard_enabled,admin_modify_refresh,nocache_admin,webroot_writable,admin_screen_colors,qc_features_active,hosted_settings FROM system_settings;";
-$rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
-$qm_conf_ct = mysqli_num_rows($rslt);
-if ($qm_conf_ct > 0)
-	{
-	$row=mysqli_fetch_row($rslt);
-	$non_latin =					$row[0];
-	$SSauto_dial_limit =			$row[1];
-	$SSuser_territories_active =	$row[2];
-	$SSallow_custom_dialplan =		$row[3];
-	$SScallcard_enabled =			$row[4];
-	$SSadmin_modify_refresh =		$row[5];
-	$SSnocache_admin =				$row[6];
-	$SSwebroot_writable =			$row[7];
-	$SSadmin_screen_colors =		$row[8];
-	$SSqc_features_active =			$row[9];
-	$SShosted_settings =			$row[10];
-
-	# slightly increase limit value, because PHP somehow thinks 2.8 > 2.8
-	$SSauto_dial_limit = ($SSauto_dial_limit + 0.001);
-	}
-##### END SETTINGS LOOKUP #####
-###########################################
-
-$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u','',$PHP_AUTH_USER);
-
-if ( file_exists("/etc/mysql_enc.conf") ) {
-	$DBCagc = file("/etc/mysql_enc.conf");
-	foreach ($DBCagc as $DBCline) {
-		$DBCline = preg_replace("/ |>|\n|\r|\t|\#.*|;.*/","",$DBCline);
-		if (ereg("^enckey", $DBCline)) {$enckey = $DBCline;   $enckey = preg_replace("/.*=/","",$enckey);}
-	}
-}
-
-if (isset($_GET["DB"]))	{$DB=$_GET["DB"];}
+if (isset($_GET["DB"]))				{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))	{$DB=$_POST["DB"];}
 if (isset($_GET["submit"]))	{$submit=$_GET["submit"];}
 	elseif (isset($_POST["submit"]))	{$submit=$_POST["submit"];}
@@ -85,15 +48,65 @@ if (isset($_GET["confirm_deletion"]))	{$confirm_deletion=$_GET["confirm_deletion
 if (isset($_GET["scorecard_id"]))	{$scorecard_id=$_GET["scorecard_id"];}
 	elseif (isset($_POST["scorecard_id"]))	{$scorecard_id=$_POST["scorecard_id"];}
 
+if ( file_exists("/etc/mysql_enc.conf") ) {
+	$DBCagc = file("/etc/mysql_enc.conf");
+	foreach ($DBCagc as $DBCline) {
+		$DBCline = preg_replace("/ |>|\n|\r|\t|\#.*|;.*/","",$DBCline);
+		if (ereg("^enckey", $DBCline)) {$enckey = $DBCline;   $enckey = preg_replace("/.*=/","",$enckey);}
+	}
+}
+
+$DB=preg_replace('/[^0-9]/','',$DB);
+
+#############################################
+##### START SYSTEM_SETTINGS LOOKUP #####
+$stmt = "SELECT use_non_latin,auto_dial_limit,user_territories_active,allow_custom_dialplan,callcard_enabled,admin_modify_refresh,nocache_admin,webroot_writable,admin_screen_colors,qc_features_active,hosted_settings,allow_web_debug FROM system_settings;";
+$rslt=mysql_to_mysqli($stmt, $link);
+#if ($DB) {echo "$stmt\n";}
+$qm_conf_ct = mysqli_num_rows($rslt);
+if ($qm_conf_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$non_latin =					$row[0];
+	$SSauto_dial_limit =			$row[1];
+	$SSuser_territories_active =	$row[2];
+	$SSallow_custom_dialplan =		$row[3];
+	$SScallcard_enabled =			$row[4];
+	$SSadmin_modify_refresh =		$row[5];
+	$SSnocache_admin =				$row[6];
+	$SSwebroot_writable =			$row[7];
+	$SSadmin_screen_colors =		$row[8];
+	$SSqc_features_active =			$row[9];
+	$SShosted_settings =			$row[10];
+	# slightly increase limit value, because PHP somehow thinks 2.8 > 2.8
+	$SSauto_dial_limit = ($SSauto_dial_limit + 0.001);
+	$SSallow_web_debug =			$row[11];
+	}
+if ($SSallow_web_debug < 1) {$DB=0;}
+##### END SETTINGS LOOKUP #####
+###########################################
+
 $submit=preg_replace('/[^-0-9 \p{L}]/u','',$submit);
-$new_scorecard_id = preg_replace('/[^-_0-9a-zA-Z]/','',$new_scorecard_id);
-$new_scorecard_name = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$new_scorecard_name);
 $new_active = preg_replace('/[^NY]/','',$new_active);
 $active = preg_replace('/[^NY]/','',$active);
 $action = preg_replace('/[^-_0-9a-zA-Z]/','',$action);
 $confirm_deletion = preg_replace('/[^Y]/','',$confirm_deletion);
 $scorecard_id = preg_replace('/[^-_0-9a-zA-Z]/','',$scorecard_id);
 
+if ($non_latin < 1)
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$new_scorecard_id = preg_replace('/[^-_0-9a-zA-Z]/','',$new_scorecard_id);
+	$new_scorecard_name = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$new_scorecard_name);
+	}
+else
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$new_scorecard_id = preg_replace('/[^-_0-9\p{L}]/u','',$new_scorecard_id);
+	$new_scorecard_name = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$new_scorecard_name);
+	}
 
 $SSmenu_background='015B91';
 $SSframe_background='D9E6FE';
@@ -132,11 +145,6 @@ $Mhead_color =	$SSstd_row5_background;
 $Mmain_bgcolor = $SSmenu_background;
 $Mhead_color =	$SSstd_row5_background;
 
-if ($submit==_QXZ("SUBMIT NEW SCORECARD")) {
-	$ins_stmt="insert into quality_control_scorecards(qc_scorecard_id, scorecard_name, active) VALUES('".mysqli_escape_string($link, $new_scorecard_id)."', '".mysqli_escape_string($link, $new_scorecard_name)."', '$new_active')";
-	$ins_rslt=mysql_to_mysqli($ins_stmt, $link);
-}
-
 # Valid user
 $auth=0;
 $auth_message = user_authorization($PHP_AUTH_USER,$PHP_AUTH_PW,'',1,0);
@@ -165,6 +173,13 @@ if ($auth < 1)
 	echo "$VDdisplayMESSAGE: |$PHP_AUTH_USER|$PHP_AUTH_PW|$auth_message|\n";
 	exit;
 	}	
+
+# submit new scorecard
+if ($submit==_QXZ("SUBMIT NEW SCORECARD")) 
+	{
+	$ins_stmt="insert into quality_control_scorecards(qc_scorecard_id, scorecard_name, active) VALUES('".mysqli_escape_string($link, $new_scorecard_id)."', '".mysqli_escape_string($link, $new_scorecard_name)."', '$new_active')";
+	$ins_rslt=mysql_to_mysqli($ins_stmt, $link);
+	}
 
 if ($auth) 
 	{

@@ -1,7 +1,7 @@
 <?php 
 # AST_timeonVDADall_mobile.php
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # live real-time stats for the VICIDIAL Auto-Dialer all servers
 #
@@ -9,10 +9,11 @@
 # 
 # CHANGELOG:
 # 200318-1124 - First build, based upon AST_timeonVDADall.php
+# 220221-1536 - Added allow_web_debug system setting
 #
 
-$version = '2.14-1';
-$build = '200318-1124';
+$version = '2.14-2';
+$build = '220221-1536';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -95,20 +96,21 @@ if (isset($_GET["droppedOFtotal"]))				{$droppedOFtotal=$_GET["droppedOFtotal"];
 	elseif (isset($_POST["droppedOFtotal"]))	{$droppedOFtotal=$_POST["droppedOFtotal"];}
 if (isset($_GET["report_display_type"]))			{$report_display_type=$_GET["report_display_type"];}
 	elseif (isset($_POST["report_display_type"]))	{$report_display_type=$_POST["report_display_type"];}
-if (isset($_GET["RTdisplay_type"]))			{$RTdisplay_type=$_GET["RTdisplay_type"];}
+if (isset($_GET["RTdisplay_type"]))				{$RTdisplay_type=$_GET["RTdisplay_type"];}
 	elseif (isset($_POST["RTdisplay_type"]))	{$RTdisplay_type=$_POST["RTdisplay_type"];}
 if (isset($_GET["mobile_device"]))				{$mobile_device=$_GET["mobile_device"];}
-	elseif (isset($_POST["mobile_device"]))	{$mobile_device=$_POST["mobile_device"];}
+	elseif (isset($_POST["mobile_device"]))		{$mobile_device=$_POST["mobile_device"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 $report_name = 'Real-Time Main Report';
 $db_source = 'M';
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,agent_whisper_enabled,allow_chats,cache_carrier_stats_realtime,report_default_format,ofcom_uk_drop_calc,enable_pause_code_limits FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,agent_whisper_enabled,allow_chats,cache_carrier_stats_realtime,report_default_format,ofcom_uk_drop_calc,enable_pause_code_limits,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -125,10 +127,12 @@ if ($qm_conf_ct > 0)
 	$SSreport_default_format =		$row[9];
 	$SSofcom_uk_drop_calc =			$row[10];
 	$SSenable_pause_code_limits =	$row[11];
+	$SSallow_web_debug =			$row[12];
 	}
+if (strlen($report_display_type)<2) {$report_display_type = $SSreport_default_format;}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
-if (strlen($report_display_type)<2) {$report_display_type = $SSreport_default_format;}
 
 if ( (strlen($slave_db_server)>5) and (preg_match("/$report_name/",$reports_use_slave_db)) )
 	{
@@ -246,9 +250,54 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
+$RR = preg_replace('/[^0-9]/', '', $RR);
+$inbound = preg_replace('/[^-_0-9a-zA-Z]/', '', $inbound);
+$group = preg_replace('/[^-_0-9a-zA-Z]/', '', $group);
+$groups[0] = preg_replace('/[^-_0-9a-zA-Z]/', '', $groups[0]);
+$usergroup = preg_replace('/[^-_0-9a-zA-Z]/', '', $usergroup);
+$DB = preg_replace('/[^0-9]/', '', $DB);
+$adastats = preg_replace('/[^-_0-9a-zA-Z]/', '', $adastats);
+$SIPmonitorLINK = preg_replace('/[^-_0-9a-zA-Z]/', '', $SIPmonitorLINK);
+$IAXmonitorLINK = preg_replace('/[^-_0-9a-zA-Z]/', '', $IAXmonitorLINK);
+$UGdisplay = preg_replace('/[^-_0-9a-zA-Z]/', '', $UGdisplay);
+$UidORname = preg_replace('/[^-_0-9a-zA-Z]/', '', $UidORname);
+$orderby = preg_replace('/[^-_0-9a-zA-Z]/', '', $orderby);
+$SERVdisplay = preg_replace('/[^-_0-9a-zA-Z]/', '', $SERVdisplay);
+$CALLSdisplay = preg_replace('/[^-_0-9a-zA-Z]/', '', $CALLSdisplay);
+$PHONEdisplay = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHONEdisplay);
+$CUSTPHONEdisplay = preg_replace('/[^-_0-9a-zA-Z]/', '', $CUSTPHONEdisplay);
+$CUSTINFOdisplay = preg_replace('/[^-_0-9a-zA-Z]/', '', $CUSTINFOdisplay);
+if ($CUSTINFOdisplay==1)	{$CUSTPHONEdisplay=0;}	# only one of these should be on at one time
+if ($CUSTPHONEdisplay==1)	{$CUSTINFOdisplay=0;}	# only one of these should be on at one time
+$NOLEADSalert = preg_replace('/[^-_0-9a-zA-Z]/', '', $NOLEADSalert);
+$DROPINGROUPstats = preg_replace('/[^-_0-9a-zA-Z]/', '', $DROPINGROUPstats);
+$ALLINGROUPstats = preg_replace('/[^-_0-9a-zA-Z]/', '', $ALLINGROUPstats);
+$with_inbound = preg_replace('/[^-_0-9a-zA-Z]/', '', $with_inbound);
+$monitor_active = preg_replace('/[^-_0-9a-zA-Z]/', '', $monitor_active);
+$monitor_phone = preg_replace('/[^-_0-9a-zA-Z]/', '', $monitor_phone);
+$CARRIERstats = preg_replace('/[^-_0-9a-zA-Z]/', '', $CARRIERstats);
+$PRESETstats = preg_replace('/[^-_0-9a-zA-Z]/', '', $PRESETstats);
+$AGENTtimeSTATS = preg_replace('/[^-_0-9a-zA-Z]/', '', $AGENTtimeSTATS);
+$parkSTATS = preg_replace('/[^-_0-9a-zA-Z]/', '', $parkSTATS);
+$SLAinSTATS = preg_replace('/[^-_0-9a-zA-Z]/', '', $SLAinSTATS);
+$INGROUPcolorOVERRIDE = preg_replace('/[^-_0-9a-zA-Z]/', '', $INGROUPcolorOVERRIDE);
+$droppedOFtotal = preg_replace('/[^-_0-9a-zA-Z]/', '', $droppedOFtotal);
+$report_display_type = preg_replace('/[^-_0-9a-zA-Z]/', '', $report_display_type);
+$mobile_device = preg_replace('/[^-_0-9a-zA-Z]/', '', $mobile_device);
+$RTdisplay_type = preg_replace('/[^-_0-9a-zA-Z]/', '', $RTdisplay_type);
+$RTajax = preg_replace('/[^-_0-9a-zA-Z]/', '', $RTajax);
+$RTpass = preg_replace('/[^-_0-9a-zA-Z]/', '', $RTpass);
+$RTuser = preg_replace('/[^-_0-9a-zA-Z]/', '', $RTuser);
+$server_ip = preg_replace('/[^-\._0-9a-zA-Z]/', '', $server_ip);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+
+# Variables filtered further down in the code
+# $user_group_filter
+# $ingroup_filter
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}

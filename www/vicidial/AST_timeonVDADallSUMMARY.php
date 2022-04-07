@@ -1,7 +1,7 @@
 <?php 
 # AST_timeonVDADallSUMMARY.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # Summary for all campaigns live real-time stats for the VICIDIAL Auto-Dialer all servers
 #
@@ -31,6 +31,7 @@
 # 141230-0038 - Added code for on-the-fly language translations display
 # 170409-1534 - Added IP List validation code
 # 190927-1300 - Fixed PHP7 array issue
+# 220301-2044 - Added allow_web_debug system setting
 #
 
 require("dbconnect_mysqli.php");
@@ -55,18 +56,21 @@ if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
 if (isset($_GET["file_download"]))				{$file_download=$_GET["file_download"];}
 	elseif (isset($_POST["file_download"]))	{$file_download=$_POST["file_download"];}
 
-if (!isset($RR))			{$gRRroup=4;}
-if (!isset($types))			{$types='SHOW ALL CAMPAIGNS';}
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
+$NOW_TIME = date("Y-m-d H:i:s");
+$STARTtime = date("U");
+if (!isset($RR))	{$RR=4;}
+if (!isset($types))	{$types='SHOW ALL CAMPAIGNS';}
 
 $report_name = 'Real-Time Campaign Summary';
 $db_source = 'M';
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {$MAIN.="$stmt\n";}
+#if ($DB) {$MAIN.="$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -77,18 +81,18 @@ if ($qm_conf_ct > 0)
 	$reports_use_slave_db =			$row[3];
 	$SSenable_languages =			$row[4];
 	$SSlanguage_method =			$row[5];
+	$SSallow_web_debug =			$row[6];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-if ( (strlen($slave_db_server)>5) and (preg_match("/$report_name/",$reports_use_slave_db)) )
-	{
-	mysqli_close($link);
-	$use_slave_server=1;
-	$db_source = 'S';
-	require("dbconnect_mysqli.php");
-	$MAIN.="<!-- Using slave server $slave_db_server $db_source -->\n";
-	}
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+$RR = preg_replace('/[^-_0-9a-zA-Z]/', '', $RR);
+$file_download = preg_replace('/[^-_0-9a-zA-Z]/', '', $file_download);
+$adastats = preg_replace('/[^-_0-9a-zA-Z]/', '', $adastats);
+$types = preg_replace('/[^- \_0-9a-zA-Z]/', '', $types);
 
 if ($non_latin < 1)
 	{
@@ -97,8 +101,17 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	}
+
+if ( (strlen($slave_db_server)>5) and (preg_match("/$report_name/",$reports_use_slave_db)) )
+	{
+	mysqli_close($link);
+	$use_slave_server=1;
+	$db_source = 'S';
+	require("dbconnect_mysqli.php");
+	$MAIN.="<!-- Using slave server $slave_db_server $db_source -->\n";
 	}
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
@@ -189,9 +202,6 @@ if ( (!preg_match("/$report_name/",$LOGallowed_reports)) and (!preg_match("/ALL 
     exit;
 	}
 
-$NOW_TIME = date("Y-m-d H:i:s");
-$STARTtime = date("U");
-
 $LOGallowed_campaignsSQL='';
 $whereLOGallowed_campaignsSQL='';
 if ( (!preg_match('/\-ALL/i', $LOGallowed_campaigns)) )
@@ -220,8 +230,6 @@ while ($i < $groups_to_print)
 	$groups[$i] =$row[0];
 	$i++;
 	}
-
-if (!isset($RR))   {$RR=4;}
 
 require("screen_colors.php");
 

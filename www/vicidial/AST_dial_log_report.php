@@ -1,7 +1,7 @@
 <?php
 # AST_dial_log_report.php
 #
-# Copyright (C) 2021  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 130709-1346 - First build
@@ -14,6 +14,7 @@
 # 170829-0040 - Added screen color settings
 # 191013-0818 - Fixes for PHP7
 # 210129-1010 - Added archive search option, issue #1222
+# 220303-0812 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
@@ -35,8 +36,6 @@ if (isset($_GET["query_date_T"]))			{$query_date_T=$_GET["query_date_T"];}
 	elseif (isset($_POST["query_date_T"]))	{$query_date_T=$_POST["query_date_T"];}
 if (isset($_GET["server_ip"]))				{$server_ip=$_GET["server_ip"];}
 	elseif (isset($_POST["server_ip"]))		{$server_ip=$_POST["server_ip"];}
-if (isset($_GET["hangup_cause"]))					{$hangup_cause=$_GET["hangup_cause"];}
-	elseif (isset($_POST["hangup_cause"]))			{$hangup_cause=$_POST["hangup_cause"];}
 if (isset($_GET["sip_hangup_cause"]))					{$sip_hangup_cause=$_GET["sip_hangup_cause"];}
 	elseif (isset($_POST["sip_hangup_cause"]))			{$sip_hangup_cause=$_POST["sip_hangup_cause"];}
 if (isset($_GET["file_download"]))			{$file_download=$_GET["file_download"];}
@@ -60,6 +59,7 @@ if (isset($_GET["report_display_type"]))			{$report_display_type=$_GET["report_d
 if (isset($_GET["search_archived_data"]))			{$search_archived_data=$_GET["search_archived_data"];}
 	elseif (isset($_POST["search_archived_data"]))	{$search_archived_data=$_POST["search_archived_data"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 #### SIP response code directory
 $sip_response_directory = array(
@@ -151,7 +151,6 @@ foreach ($sip_response_directory as $key => $val)
 $sip_responses_to_print=count($master_sip_response_directory);
 
 $NOW_DATE = date("Y-m-d");
-
 if (strlen($query_date_D) < 6) {$query_date_D = "00:00:00";}
 if (strlen($query_date_T) < 6) {$query_date_T = "23:59:59";}
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
@@ -160,9 +159,9 @@ if (!isset($sip_hangup_cause)) {$sip_hangup_cause = array();}
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {$MAIN.="$stmt\n";}
+#if ($DB) {$MAIN.="$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -173,9 +172,39 @@ if ($qm_conf_ct > 0)
 	$reports_use_slave_db =			$row[3];
 	$SSenable_languages =			$row[4];
 	$SSlanguage_method =			$row[5];
+	$SSallow_web_debug =			$row[6];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$query_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date);
+$query_date_D = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date_D);
+$query_date_T = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date_T);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$report_display_type = preg_replace('/[^-_0-9a-zA-Z]/', '', $report_display_type);
+$file_download = preg_replace('/[^-_0-9a-zA-Z]/', '', $file_download);
+$lower_limit = preg_replace('/[^-_0-9a-zA-Z]/', '', $lower_limit);
+$upper_limit = preg_replace('/[^-_0-9a-zA-Z]/', '', $upper_limit);
+$lead_id = preg_replace('/[^-_0-9a-zA-Z]/', '', $lead_id);
+$extension = preg_replace('/[^-_0-9a-zA-Z]/', '', $extension);
+$search_archived_data = preg_replace('/[^-_0-9a-zA-Z]/', '', $search_archived_data);
+
+# Variables filtered further down in the code
+# $server_ip
+# $sip_hangup_cause
+
+if ($non_latin < 1)
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	}
+else
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	}
 
 ### ARCHIVED DATA CHECK CONFIGURATION
 $archives_available="N";
@@ -196,21 +225,6 @@ else
 	$vicidial_dial_log_table="vicidial_dial_log";
 	}
 #############
-
-$query_date = preg_replace('/[^-_0-9a-zA-Z]/', '', $query_date);
-
-if ($non_latin < 1)
-	{
-	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
-	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
-	}
-else
-	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
-	}
-
-$NOW_DATE = date("Y-m-d");
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
@@ -341,6 +355,7 @@ $server_ip_ct = count($server_ip);
 $i=0;
 while($i < $server_ip_ct)
 	{
+	$server_ip[$i] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $server_ip[$i]);
 	$server_ip_string .= "$server_ip[$i]|";
 	$i++;
 	}
@@ -368,6 +383,7 @@ $server_ips_string='|';
 $server_ip_ct = count($server_ip);
 while($i < $server_ip_ct)
 	{
+	$server_ip[$i] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $server_ip[$i]);
 	if ( (strlen($server_ip[$i]) > 0) and (preg_match("/\|$server_ip[$i]\|/",$server_ip_string)) )
 		{
 		$server_ips_string .= "$server_ip[$i]|";
@@ -396,6 +412,7 @@ $sip_hangup_cause_ct = count($sip_hangup_cause);
 $i=0;
 while($i < $sip_hangup_cause_ct)
 	{
+	$sip_hangup_cause[$i] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $sip_hangup_cause[$i]);
 	$sip_hangup_cause_string .= "$sip_hangup_cause[$i]|";
 	$i++;
 	}
@@ -406,6 +423,7 @@ $i=0;
 $sip_hangup_cause_SQL="";
 while($i < $sip_hangup_cause_ct)
 	{
+	$sip_hangup_cause[$i] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $sip_hangup_cause[$i]);
 	if ( (strlen($sip_hangup_cause[$i]) > 0) and (preg_match("/\|$sip_hangup_cause[$i]\|/",$sip_hangup_cause_string)) )
 		{
 		$sip_hangup_causes_string .= "$sip_hangup_cause[$i]|";

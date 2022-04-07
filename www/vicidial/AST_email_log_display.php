@@ -1,7 +1,7 @@
 <?php
 # AST_email_log_display - VICIDIAL administration page
 #
-# Copyright (C) 2017  Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # This page displays emails from the log
 #
@@ -13,6 +13,7 @@
 # 141114-0843 - Finalized adding QXZ translation to all admin files
 # 141230-1506 - Added code for on-the-fly language translations display
 # 170409-1534 - Added IP List validation code
+# 220303-0233 - Added allow_web_debug system setting
 #
 
 require("dbconnect_mysqli.php");
@@ -24,10 +25,12 @@ $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["DB"]))				{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))	{$DB=$_POST["DB"];}
-if (isset($_GET["email_row_id"]))	{$email_row_id=$_GET["email_row_id"];}
+if (isset($_GET["email_row_id"]))			{$email_row_id=$_GET["email_row_id"];}
 	elseif (isset($_POST["email_row_id"]))	{$email_row_id=$_POST["email_row_id"];}
-if (isset($_GET["email_log_id"]))	{$email_log_id=$_GET["email_log_id"];}
+if (isset($_GET["email_log_id"]))			{$email_log_id=$_GET["email_log_id"];}
 	elseif (isset($_POST["email_log_id"]))	{$email_log_id=$_POST["email_log_id"];}
+
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 header ("Content-type: text/html; charset=utf-8");
 header ("Cache-Control: no-cache, must-revalidate");  // HTTP/1.1
@@ -35,9 +38,9 @@ header ("Pragma: no-cache");                          // HTTP/1.0
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,timeclock_end_of_day,agentonly_callback_campaign_lock,custom_fields_enabled,allow_emails,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,timeclock_end_of_day,agentonly_callback_campaign_lock,custom_fields_enabled,allow_emails,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -49,15 +52,14 @@ if ($qm_conf_ct > 0)
 	$allow_emails =							$row[4];
 	$SSenable_languages =					$row[5];
 	$SSlanguage_method =					$row[6];
+	$SSallow_web_debug =					$row[7];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-if ($allow_emails<1) 
-	{
-	echo _QXZ("Your system does not have the email setting enabled")."\n";
-	exit;
-	}
+$email_row_id = preg_replace('/[^-_0-9a-zA-Z]/', '', $email_row_id);
+$email_log_id = preg_replace('/[^-_0-9a-zA-Z]/', '', $email_log_id);
 
 if ($non_latin < 1)
 	{
@@ -66,10 +68,16 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
 
+
+if ($allow_emails<1) 
+	{
+	echo _QXZ("Your system does not have the email setting enabled")."\n";
+	exit;
+	}
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);

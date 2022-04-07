@@ -1,7 +1,7 @@
 <?php
 # voicemail_check.php    version 2.14
 # 
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed purely to check whether the voicemail box on the server defined has new and old messages
 # This script depends on the server_ip being sent and also needs to have a valid user/pass from the vicidial_users table
@@ -33,10 +33,11 @@
 # 170526-2351 - Added additional variable filtering
 # 210616-2109 - Added optional CORS support, see options.php for details
 # 210825-0910 - Fix for XSS security issue
+# 220220-0855 - Added allow_web_debug system setting
 #
 
-$version = '2.14-16';
-$build = '210825-0910';
+$version = '2.14-17';
+$build = '220220-0855';
 $php_script = 'voicemail_check.php';
 $SSagent_debug_logging=0;
 $startMS = microtime();
@@ -60,9 +61,6 @@ if (isset($_GET["vmail_box"]))				{$vmail_box=$_GET["vmail_box"];}
 
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
-$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
-$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
-$vmail_box = preg_replace('/[^-_0-9\p{L}]/u',"",$vmail_box);
 
 # default optional vars if not set
 if (!isset($format))   {$format="text";}
@@ -83,7 +81,7 @@ if (file_exists('options.php'))
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$user';";
-if ($DB) {echo "|$stmt|\n";}
+#if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
 $sl_ct = mysqli_num_rows($rslt);
@@ -93,10 +91,10 @@ if ($sl_ct > 0)
 	$VUselected_language =		$row[0];
 	}
 
-$stmt = "SELECT use_non_latin,enable_languages,language_method,agent_debug_logging FROM system_settings;";
+$stmt = "SELECT use_non_latin,enable_languages,language_method,agent_debug_logging,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -105,13 +103,26 @@ if ($qm_conf_ct > 0)
 	$SSenable_languages =		$row[1];
 	$SSlanguage_method =		$row[2];
 	$SSagent_debug_logging =	$row[3];
+	$SSallow_web_debug =		$row[4];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
+$vmail_box = preg_replace('/[^-_0-9\p{L}]/u',"",$vmail_box);
+$format = preg_replace('/[^-_0-9a-zA-Z]/','',$format);
 
 if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
+	$pass=preg_replace("/[^-\.\+\/\=_0-9a-zA-Z]/","",$pass);
+	}
+else
+	{
+	$user = preg_replace('/[^-_0-9\p{L}]/u','',$user);
+	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
 	}
 
 $auth=0;

@@ -1,7 +1,7 @@
 <?php
 # closer_dispo.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # this is the closer disposition screen of a call that has been grabbed. This 
 # allows the closer to modify customer information and disposition the call
@@ -17,6 +17,7 @@
 # 141007-2138 - Finalized adding QXZ translation to all admin files
 # 141229-2037 - Added code for on-the-fly language translations display
 # 170409-1532 - Added IP List validation code
+# 220224-1611 - Added allow_web_debug system setting
 #
 
 require("dbconnect_mysqli.php");
@@ -41,7 +42,7 @@ if (isset($_GET["phone_number"]))				{$phone_number=$_GET["phone_number"];}
 if (isset($_GET["end_call"]))				{$end_call=$_GET["end_call"];}
 	elseif (isset($_POST["end_call"]))		{$end_call=$_POST["end_call"];}
 if (isset($_GET["DB"]))				{$DB=$_GET["DB"];}
-	elseif (isset($_POST["DB"]))		{$DB=$_POST["DB"];}
+	elseif (isset($_POST["DB"]))	{$DB=$_POST["DB"];}
 if (isset($_GET["dispo"]))				{$dispo=$_GET["dispo"];}
 	elseif (isset($_POST["dispo"]))		{$dispo=$_POST["dispo"];}
 if (isset($_GET["list_id"]))				{$list_id=$_GET["list_id"];}
@@ -93,11 +94,13 @@ if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
 if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))		{$SUBMIT=$_POST["SUBMIT"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,user_territories_active,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,user_territories_active,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -108,19 +111,69 @@ if ($qm_conf_ct > 0)
 	$user_territories_active =		$row[3];
 	$SSenable_languages =			$row[4];
 	$SSlanguage_method =			$row[5];
+	$SSallow_web_debug =			$row[6];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/', '', $server_ip);
+$dialplan_number = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$dialplan_number);
+$extension = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$extension);
+$PHONE_LOGIN = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$PHONE_LOGIN);
+$channel = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$channel);
+$parked_time = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$parked_time);
+$debugvars = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$debugvars);
+$parked_by = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$parked_by);
+$submit = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$submit);
+$SUBMIT = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$SUBMIT);
+$vendor_id = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$vendor_id);
+$phone = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$phone);
+$lead_id = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$lead_id);
+$first_name = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$first_name);
+$last_name = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$last_name);
+$phone_number = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$phone_number);
+$end_call = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$end_call);
+$DB = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$DB);
+$dispo = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$dispo);
+$list_id = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$list_id);
+$campaign_id = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$campaign_id);
+$phone_code = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$phone_code);
+$call_began = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$call_began);
+$tsr = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$tsr);
+$address1 = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$address1);
+$address2 = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$address2);
+$address3 = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$address3);
+$city = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$city);
+$state = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$state);
+$postal_code = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$postal_code);
+$province = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$province);
+$country_code = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$country_code);
+$alt_phone = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$alt_phone);
+$email = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$email);
+$security = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$security);
+$comments = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$comments);
+$status  = preg_replace("/\<|\>|\’|\"|\\\\|;/",'-',$status );
 
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$user = preg_replace('/[^-_0-9a-zA-Z]/', '', $user);
+	$group = preg_replace('/[^-_0-9a-zA-Z]/', '', $group);
+	$group_selected = preg_replace('/[^-_0-9a-zA-Z]/', '', $group_selected);
+	$groupselect = preg_replace('/[^-_0-9a-zA-Z]/', '', $groupselect);
+	$channel_group = preg_replace('/[^-_0-9a-zA-Z]/', '', $channel_group);
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$user = preg_replace('/[^-_0-9\p{L}]/u', '', $user);
+	$group = preg_replace('/[^-_0-9\p{L}]/u', '', $group);
+	$group_selected = preg_replace('/[^-_0-9\p{L}]/u', '', $group_selected);
+	$groupselect = preg_replace('/[^-_0-9\p{L}]/u', '', $groupselect);
+	$channel_group = preg_replace('/[^-_0-9\p{L}]/u', '', $channel_group);
 	}
 
 $STARTtime = date("U");

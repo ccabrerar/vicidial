@@ -7,7 +7,7 @@
 #
 # /usr/share/astguiclient/AST_VDsales_export.pl --campaign=GOODB-GROUP1-GROUP3-GROUP4-SPECIALS-DNC_BEDS --output-format=fixed-as400 --sale-statuses=SALE --debug --filename=BEDSsaleMMDD.txt --date=yesterday --email-list=test@gmail.com --email-sender=test@test.com
 #
-# Copyright (C) 2016  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 61219-1118 - First version
@@ -34,6 +34,7 @@
 # 130811-0902 - Added wget HTTP auth options and added more debug output
 # 140403-1603 - Added --skip-rec-xtra option to not perform additional recording lookups beyond vicidial_id
 # 160722-1140 - Added --nodatedir option
+# 220307-0915 - Added 'tab-CSScustomUSA' format
 #
 
 $txt = '.txt';
@@ -42,6 +43,7 @@ $MT[0] = '';
 $Q=0;
 $DB=0;
 $uniqueidLIST='|';
+$recordings_ct=0;
 
 # Default FTP account variables
 $VARREPORT_host = '10.0.0.4';
@@ -201,7 +203,7 @@ if (length($ARGV[0])>1)
 		print "  [--debugX] = Super debugging messages\n";
 		print "\n";
 		print "  format options:\n";
-		print "   pipe-standard|csv-standard|tab-standard|pipe-triplep|pipe-vici|html-rec|fixed-as400|tab-QMcustomUSA|tab-SCcustomUSA\n";
+		print "   pipe-standard|csv-standard|tab-standard|pipe-triplep|pipe-vici|html-rec|fixed-as400|tab-QMcustomUSA|tab-SCcustomUSA|tab-CSScustomUSA\n";
 		print "\n";
 
 
@@ -1137,6 +1139,7 @@ sub select_format_loop
 					$sthB->finish();
 					}
 				}
+			$recordings_ct = $rec_countB;
 
 			if ( ($ftp_audio_transfer > 0) && (length($ivr_filename) > 3) && (length($ivr_location) > 5) )
 				{
@@ -1198,6 +1201,7 @@ sub select_format_loop
 					}
 				}
 			$sthB->finish();
+			$recordings_ct = $rec_countB;
 
 			if ($skip_rec_extra < 1) 
 				{
@@ -1556,6 +1560,63 @@ sub select_format_loop
 
 			}
 
+
+		if ($output_format =~ /^tab-CSScustomUSA$/) 
+			{
+			# 03-03-2022      17:16:31        1646345763.4347 TEST_IN3        9998887112      SALE    6666    Admin user      0.67    1               1922348
+			# Date | Time | Call ID* | Campaign | ANI [customer phone number] | Call Disposition **| CSS Agent ID | CSS Agent Name | Length of call in Mins | Recordings***| Confirmation Number | Lead ID |
+
+			# 1-  Date: call date in EST
+			# 2-  Time: call time in EST.
+			# 3-  Call id: uniqueid padded
+			# 4-  Campaign ID
+			# 5-  ANI (customer phone number)
+			# 6-  Status of the call(from agent or system)
+			# 7-  Agent id: Who handled the call(user ID in the system)
+			# 8-  Agent Name (user fullname in the system)
+			# 9-  Talk: time in minutes for how long the agent was talking with the customer
+			# 10- Recordings: If there is a recording, put the first recording start time here ($recordings_ct)
+			# 11- EMPTY (saved for 'Confirmation Number')
+			# 12- Lead ID (lead_id from the system)
+
+			@call_date_array = split(/ /,$call_date);
+			@call_date_format = split(/-/,$call_date_array[0]);
+			$call_date_array[0] = "$call_date_format[1]-$call_date_format[2]-$call_date_format[0]";
+
+			while (length($phone_number)>10) {$phone_number =~ s/^.//gi;}
+			$phone_areacode = substr($phone_number, 0, 3);
+			if (length($closer) < 1) {$closer = $user;}
+			if ($closer =~ /VDCL|VDAD/) {$closer='-';}
+			$application = 	substr($did_name, 0, 4);
+			$queue_seconds = int($queue_seconds + .5);
+			$talk_seconds = ( ($length_in_sec - $queue_seconds) - $agent_alert_delay);
+			if ($talk_seconds < 0) {$talk_seconds=0;   $talk_minutes=0;}
+			else
+				{$talk_minutes = ($talk_seconds / 60);   $talk_minutes = sprintf("%.2f", $talk_minutes);}
+
+			$dispo_time = 0;
+			$stmtB = "select dispo_sec from vicidial_agent_log where lead_id='$lead_id' and user='$closer' and event_time >= '$shipdate 00:00:00' and event_time <= '$shipdate 23:59:59' order by event_time desc limit 1;";
+			$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
+			$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
+			$sthBrows=$sthB->rows;
+			if ($DB) {print "$sthBrows|$stmtB|\n";}
+			$rec_countB=0;
+			while ($sthBrows > $rec_countB)
+				{
+				@aryB = $sthB->fetchrow_array;
+				$dispo_time =	$aryB[0];
+				$rec_countB++;
+				}
+			$sthB->finish();
+
+			$str = "$call_date_array[0]\t$call_date_array[1]\t$uniqueid\t$campaign_id\t$phone_number\t$status\t$user\t$agent_name\t$talk_minutes\t$recordings_ct\t\t$lead_id\t\n";
+
+	#		if ($DBX > 0) {print "$uniqueid|$talk_seconds|$outbound|$INcalls|$OUTcalls\n";}
+
+			if ($outbound =~ /Y/) {$OUTtalk = ($OUTtalk + $talk_seconds);   $OUTcalls++;}
+			else {$INtalk = ($INtalk + $talk_seconds);   $INcalls++;}
+			}
+
 		$Ealert .= "$str"; 
 
 		print out "$str"; 
@@ -1575,7 +1636,7 @@ sub select_format_loop
 		if ($rec_count =~ /70$/i) {print STDERR "|     $rec_count\r";}
 		if ($rec_count =~ /80$/i) {print STDERR "+     $rec_count\r";}
 		if ($rec_count =~ /90$/i) {print STDERR "0     $rec_count\r";}
-		if ($rec_count =~ /00$/i) {print "$rec_count|$TOTAL_SALES|$CALLTIME_KICK|         |$phone_number|\n";}
+		if ($rec_count =~ /00$/i) {print "$rec_count($OUTcalls/$INcalls)|$TOTAL_SALES|$CALLTIME_KICK|         |$phone_number|\n";}
 		}
 	$rec_count++;
 

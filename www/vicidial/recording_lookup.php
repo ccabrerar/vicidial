@@ -53,9 +53,9 @@ $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["QUERY_recid"]))				{$QUERY_recid=$_GET["QUERY_recid"];}
 	elseif (isset($_POST["QUERY_recid"]))		{$QUERY_recid=$_POST["QUERY_recid"];}
 
-$QUERY_recid = preg_replace("/'|\"|\\\\|;/","",$QUERY_recid);
-$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
-$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
+$QUERY_recid = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$QUERY_recid);
+$PHP_AUTH_USER = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$PHP_AUTH_USER);
+$PHP_AUTH_PW = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$PHP_AUTH_PW);
 
 $web_server = '1.1.1.1';
 $US='_';

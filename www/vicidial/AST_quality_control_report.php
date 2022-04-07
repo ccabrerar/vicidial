@@ -1,17 +1,18 @@
 <?php 
 # AST_quality_control_report.php
 # 
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # Report for QC activity within VICIdial
 #
 # changes:
 # 210306-1556 - First Build
 # 210827-1818 - Fix for security issue
+# 220302-0927 - Added allow_web_debug system setting
 #
 
-$admin_version = '2.14-1';
-$build = '210306-1556';
+$admin_version = '2.14-3';
+$build = '220302-0927';
 
 
 $startMS = microtime();
@@ -32,39 +33,59 @@ if (isset($_GET["query_time"]))				{$query_time=$_GET["query_time"];}
 	elseif (isset($_POST["query_time"]))	{$query_time=$_POST["query_time"];}
 if (isset($_GET["end_time"]))				{$end_time=$_GET["end_time"];}
 	elseif (isset($_POST["end_time"]))		{$end_time=$_POST["end_time"];}
-if (isset($_GET["qc_finish_start_date"]))				{$qc_finish_start_date=$_GET["qc_finish_start_date"];}
+if (isset($_GET["qc_finish_start_date"]))			{$qc_finish_start_date=$_GET["qc_finish_start_date"];}
 	elseif (isset($_POST["qc_finish_start_date"]))	{$qc_finish_start_date=$_POST["qc_finish_start_date"];}
 if (isset($_GET["qc_finish_end_date"]))				{$qc_finish_end_date=$_GET["qc_finish_end_date"];}
-	elseif (isset($_POST["qc_finish_end_date"]))		{$qc_finish_end_date=$_POST["qc_finish_end_date"];}
-if (isset($_GET["qc_finish_start_time"]))				{$qc_finish_start_time=$_GET["qc_finish_start_time"];}
+	elseif (isset($_POST["qc_finish_end_date"]))	{$qc_finish_end_date=$_POST["qc_finish_end_date"];}
+if (isset($_GET["qc_finish_start_time"]))			{$qc_finish_start_time=$_GET["qc_finish_start_time"];}
 	elseif (isset($_POST["qc_finish_start_time"]))	{$qc_finish_start_time=$_POST["qc_finish_start_time"];}
 if (isset($_GET["qc_finish_end_time"]))				{$qc_finish_end_time=$_GET["qc_finish_end_time"];}
-	elseif (isset($_POST["qc_finish_end_time"]))		{$qc_finish_end_time=$_POST["qc_finish_end_time"];}
-
+	elseif (isset($_POST["qc_finish_end_time"]))	{$qc_finish_end_time=$_POST["qc_finish_end_time"];}
 if (isset($_GET["group"]))					{$group=$_GET["group"];}
 	elseif (isset($_POST["group"]))			{$group=$_POST["group"];}
 if (isset($_GET["users"]))					{$users=$_GET["users"];}
 	elseif (isset($_POST["users"]))			{$users=$_POST["users"];}
-if (isset($_GET["user_groups"]))				{$user_groups=$_GET["user_groups"];}
+if (isset($_GET["user_groups"]))			{$user_groups=$_GET["user_groups"];}
 	elseif (isset($_POST["user_groups"]))	{$user_groups=$_POST["user_groups"];}
-if (isset($_GET["statuses"]))					{$statuses=$_GET["statuses"];}
-	elseif (isset($_POST["statuses"]))			{$statuses=$_POST["statuses"];}
-if (isset($_GET["QCusers"]))					{$QCusers=$_GET["QCusers"];}
-	elseif (isset($_POST["QCusers"]))			{$QCusers=$_POST["QCusers"];}
-if (isset($_GET["QCuser_groups"]))				{$QCuser_groups=$_GET["QCuser_groups"];}
+if (isset($_GET["QCusers"]))				{$QCusers=$_GET["QCusers"];}
+	elseif (isset($_POST["QCusers"]))		{$QCusers=$_POST["QCusers"];}
+if (isset($_GET["QCuser_groups"]))			{$QCuser_groups=$_GET["QCuser_groups"];}
 	elseif (isset($_POST["QCuser_groups"]))	{$QCuser_groups=$_POST["QCuser_groups"];}
-if (isset($_GET["QCstatuses"]))					{$QCstatuses=$_GET["QCstatuses"];}
-	elseif (isset($_POST["QCstatuses"]))			{$QCstatuses=$_POST["QCstatuses"];}
+if (isset($_GET["QCstatuses"]))				{$QCstatuses=$_GET["QCstatuses"];}
+	elseif (isset($_POST["QCstatuses"]))	{$QCstatuses=$_POST["QCstatuses"];}
 if (isset($_GET["DB"]))						{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))			{$DB=$_POST["DB"];}
 if (isset($_GET["SUBMIT"]))					{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))		{$SUBMIT=$_POST["SUBMIT"];}
-if (isset($_GET["show_percentages"]))					{$show_percentages=$_GET["show_percentages"];}
-	elseif (isset($_POST["show_percentages"]))			{$show_percentages=$_POST["show_percentages"];}
-if (isset($_GET["search_archived_data"]))					{$search_archived_data=$_GET["search_archived_data"];}
-	elseif (isset($_POST["search_archived_data"]))			{$search_archived_data=$_POST["search_archived_data"];}
+if (isset($_GET["show_percentages"]))				{$show_percentages=$_GET["show_percentages"];}
+	elseif (isset($_POST["show_percentages"]))		{$show_percentages=$_POST["show_percentages"];}
+if (isset($_GET["search_archived_data"]))			{$search_archived_data=$_GET["search_archived_data"];}
+	elseif (isset($_POST["search_archived_data"]))	{$search_archived_data=$_POST["search_archived_data"];}
 if (isset($_GET["file_download"]))			{$file_download=$_GET["file_download"];}
 	elseif (isset($_POST["file_download"]))	{$file_download=$_POST["file_download"];}
+
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
+$MT[0]='';
+$NOW_DATE = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$STARTtime = date("U");
+if (!isset($group) || !is_array($group)) {$group = array();}
+if (!isset($users) || !is_array($users)) {$users = array();}
+if (!isset($user_groups) || !is_array($user_groups)) {$user_groups = array();}
+if (!isset($QCusers) || !is_array($QCusers)) {$QCusers = array();}
+if (!isset($QCstatuses) || !is_array($QCstatuses)) {$QCstatuses = array();}
+if (!isset($QCuser_groups) || !is_array($QCuser_groups)) {$QCuser_groups = array();}
+if (!isset($query_date)) {$query_date = $NOW_DATE;}
+if (!isset($end_date)) {$end_date = $NOW_DATE;}
+if (!isset($query_time)) {$query_time = "00:00:00";}
+if (!isset($end_time)) {$end_time = "23:59:59";}
+#if (!isset($qc_finish_start_date)) {$qc_finish_start_date = $NOW_DATE;}
+#if (!isset($qc_finish_end_date)) {$qc_finish_end_date = $NOW_DATE;}
+#if (!isset($qc_finish_start_time)) {$qc_finish_start_time = "00:00:00";}
+#if (!isset($qc_finish_end_time)) {$qc_finish_end_time = "23:59:59";}
+$all_QC_statuses=array("CLAIMED", "FINISHED");
+$QC_statuses_to_print=count($all_QC_statuses);
 
 $report_name = 'Quality Control Report';
 $db_source = 'M';
@@ -72,9 +93,9 @@ $report_display_type="HTML";
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,report_default_format,qc_features_active,log_recording_access FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,report_default_format,qc_features_active,log_recording_access,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {$HTML_text.="$stmt\n";}
+#if ($DB) {$HTML_text.="$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -88,10 +109,45 @@ if ($qm_conf_ct > 0)
 	$SSreport_default_format =		$row[6];
 	$SSqc_features_active =			$row[7];
 	$log_recording_access =			$row[8];
+	$SSallow_web_debug =			$row[9];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
+if (strlen($report_display_type)<2) {$report_display_type = $SSreport_default_format;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
-if (strlen($report_display_type)<2) {$report_display_type = $SSreport_default_format;}
+
+$query_date = preg_replace('/[^-0-9]/','',$query_date);
+$end_date = preg_replace('/[^-0-9]/','',$end_date);
+$query_time=preg_replace("/[^0-9\:]/", "", $query_time);
+$end_time=preg_replace("/[^0-9\:]/", "", $end_time);
+$qc_finish_start_date = preg_replace('/[^-0-9]/','',$qc_finish_start_date);
+$qc_finish_end_date = preg_replace('/[^-0-9]/','',$qc_finish_end_date);
+$qc_finish_start_time=preg_replace("/[^0-9\:]/", "", $qc_finish_start_time);
+$qc_finish_end_time=preg_replace("/[^0-9\:]/", "", $qc_finish_end_time);
+$DB = preg_replace('/[^0-9]/','',$DB);
+$SUBMIT=preg_replace('/[^-_0-9\p{L}]/u','',$SUBMIT);
+$show_percentages=preg_replace('/[^-_0-9\p{L}]/u','',$show_percentages);
+$file_download = preg_replace('/[^0-9]/','',$file_download);
+$search_archived_data=preg_replace('/[^-_0-9\p{L}]/u','',$search_archived_data);
+
+# Variables filtered further down in the code
+# $group
+# $users
+# $user_groups
+# $QCusers
+# $QCstatuses
+# $QCuser_groups
+
+if ($non_latin < 1)
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	}
+else
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	}
 
 ### ARCHIVED DATA CHECK CONFIGURATION
 $archives_available="N";
@@ -116,17 +172,6 @@ else
 	$vicidial_agent_log_table="vicidial_agent_log";
 	}
 #############
-
-if ($non_latin < 1)
-	{
-	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
-	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
-	}
-else
-	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
-	}
 
 $stmt="SELECT selected_language,qc_enabled from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
@@ -236,7 +281,7 @@ else
 	$webserver_id = mysqli_insert_id($link);
 	}
 
-$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$group[0], $query_date, $end_date, $shift, $file_download, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
+$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$query_date, $end_date, $shift, $file_download, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $report_log_id = mysqli_insert_id($link);
@@ -296,57 +341,12 @@ if ( (!preg_match('/\-\-ALL\-\-/i',$LOGadmin_viewable_groups)) and (strlen($LOGa
 	}
 
 
-
-$MT[0]='';
-$NOW_DATE = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-$STARTtime = date("U");
-if (!isset($group) || !is_array($group)) {$group = array();}
-if (!isset($statuses) || !is_array($statuses)) {$statuses = array();}
-if (!isset($users) || !is_array($users)) {$users = array();}
-if (!isset($user_groups) || !is_array($user_groups)) {$user_groups = array();}
-if (!isset($QCusers) || !is_array($QCusers)) {$QCusers = array();}
-if (!isset($QCstatuses) || !is_array($QCstatuses)) {$QCstatuses = array();}
-if (!isset($QCuser_groups) || !is_array($QCuser_groups)) {$QCuser_groups = array();}
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
-if (!isset($end_date)) {$end_date = $NOW_DATE;}
-if (!isset($query_time)) {$query_time = "00:00:00";}
-if (!isset($end_time)) {$end_time = "23:59:59";}
-#if (!isset($qc_finish_start_date)) {$qc_finish_start_date = $NOW_DATE;}
-#if (!isset($qc_finish_end_date)) {$qc_finish_end_date = $NOW_DATE;}
-#if (!isset($qc_finish_start_time)) {$qc_finish_start_time = "00:00:00";}
-#if (!isset($qc_finish_end_time)) {$qc_finish_end_time = "23:59:59";}
-$all_QC_statuses=array("CLAIMED", "FINISHED");
-$QC_statuses_to_print=count($all_QC_statuses);
-
-$group=preg_replace('/[^-_0-9\p{L}]/u','',$group);
-$campaign=preg_replace('/[^-_0-9\p{L}]/u','',$campaign);
-$query_date = preg_replace('/[^-0-9]/','',$query_date);
-$end_date = preg_replace('/[^-0-9]/','',$end_date);
-$query_time=preg_replace("/[^0-9\:]/", "", $query_time);
-$end_time=preg_replace("/[^0-9\:]/", "", $end_time);
-$qc_finish_start_date = preg_replace('/[^-0-9]/','',$qc_finish_start_date);
-$qc_finish_end_date = preg_replace('/[^-0-9]/','',$qc_finish_end_date);
-$qc_finish_start_time=preg_replace("/[^0-9\:]/", "", $qc_finish_start_time);
-$qc_finish_end_time=preg_replace("/[^0-9\:]/", "", $qc_finish_end_time);
-
-$users=preg_replace('/[^-_0-9\p{L}]/u','',$users);
-$user_groups=preg_replace('/[^-_0-9\p{L}]/u','',$user_groups);
-$statuses=preg_replace('/[^-_0-9\p{L}]/u','',$statuses);
-$QCusers=preg_replace('/[^-_0-9\p{L}]/u','',$QCusers);
-$QCuser_groups=preg_replace('/[^-_0-9\p{L}]/u','',$QCuser_groups);
-$QCstatuses=preg_replace('/[^-_0-9\p{L}]/u','',$QCstatuses);
-$DB = preg_replace('/[^0-9]/','',$DB);
-$SUBMIT=preg_replace('/[^-_0-9\p{L}]/u','',$SUBMIT);
-$show_percentages=preg_replace('/[^-_0-9\p{L}]/u','',$show_percentages);
-$file_download = preg_replace('/[^0-9]/','',$file_download);
-
-
 $i=0;
 $campaign_string='|';
 $campaigns_ct = count($group);
 while($i < $campaigns_ct)
 	{
+	$group[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $group[$i]);
 	$campaign_string .= "$group[$i]|";
 	$i++;
 	}
@@ -356,6 +356,7 @@ $users_string='|';
 $users_ct = count($users);
 while($i < $users_ct)
 	{
+	$users[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $users[$i]);
 	$users_string .= "$users[$i]|";
 	$i++;
 	}
@@ -365,6 +366,7 @@ $QCusers_string='|';
 $QCusers_ct = count($QCusers);
 while($i < $QCusers_ct)
 	{
+	$QCusers[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $QCusers[$i]);
 	$QCusers_string .= "$QCusers[$i]|";
 	$i++;
 	}
@@ -374,6 +376,7 @@ $QCstatuses_string='|';
 $QCstatuses_ct = count($QCstatuses);
 while($i < $QCstatuses_ct)
 	{
+	$QCstatuses[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $QCstatuses[$i]);
 	$QCstatuses_string .= "$QCstatuses[$i]|";
 	$i++;
 	}
@@ -450,6 +453,7 @@ $user_group_string='|';
 $user_group_ct = count($user_group);
 while($i < $user_group_ct)
 	{
+	$user_group[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $user_group[$i]);
 	$user_group_string .= "$user_group[$i]|";
 	$user_group_SQL .= "'$user_group[$i]',";
 	$user_groupQS .= "&user_group[]=$user_group[$i]";
@@ -485,6 +489,7 @@ $QCuser_group_string='|';
 $QCuser_group_ct = count($QCuser_group);
 while($i < $QCuser_group_ct)
 	{
+	$QCuser_group[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $QCuser_group[$i]);
 	$QCuser_group_string .= "$QCuser_group[$i]|";
 	$QCuser_group_SQL .= "'$QCuser_group[$i]',";
 	$QCuser_groupQS .= "&QCuser_group[]=$QCuser_group[$i]";
@@ -520,6 +525,7 @@ $group_string='|';
 $group_ct = count($group);
 while($i < $group_ct)
 	{
+	$group[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $group[$i]);
 	if ( (preg_match("/ $group[$i] /",$regexLOGallowed_campaigns)) or (preg_match("/-ALL/",$LOGallowed_campaigns)) )
 		{
 		$group_string .= "$group[$i]|";
@@ -541,6 +547,7 @@ $user_string='|';
 $user_ct = count($users);
 while($i < $user_ct)
 	{
+	$users[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $users[$i]);
 	$user_string .= "$users[$i]|";
 	$user_SQL .= "'$users[$i]',";
 	$userQS .= "&users[]=$users[$i]";
@@ -560,6 +567,7 @@ $QCuser_string='|';
 $QCuser_ct = count($QCusers);
 while($i < $QCuser_ct)
 	{
+	$QCusers[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $QCusers[$i]);
 	$QCuser_string .= "$QCusers[$i]|";
 	$QCuser_SQL .= "'$QCusers[$i]',";
 	$QCuserQS .= "&QCusers[]=$QCusers[$i]";
@@ -579,6 +587,7 @@ $QCstatus_string='|';
 $QCstatus_ct = count($QCstatuses);
 while($i < $QCstatus_ct)
 	{
+	$QCstatuses[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $QCstatuses[$i]);
 	$QCstatus_string .= "$QCstatuses[$i]|";
 	$QCstatus_SQL .= "'$QCstatuses[$i]',";
 	$QCstatusQS .= "&QCstatuses[]=$QCstatuses[$i]";

@@ -1,7 +1,7 @@
 <?php
 # AST_admin_template_maker.php - version 2.14
 # 
-# Copyright (C) 2021  Matt Florell,Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell,Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 120402-2132 - First Build
@@ -18,6 +18,7 @@
 # 180503-2215 - Added new help display
 # 180927-0633 - Fix for deleted template function in alternate language, issue #1127
 # 210312-1700 - Added layout editing functionality
+# 220222-1100 - Added allow_web_debug system setting
 #
 
 require("dbconnect_mysqli.php");
@@ -51,7 +52,7 @@ if (isset($_GET["submit_template"]))				{$submit_template=$_GET["submit_template
 	elseif (isset($_POST["submit_template"]))		{$submit_template=$_POST["submit_template"];}
 if (isset($_GET["submit_edited_template"]))				{$submit_edited_template=$_GET["submit_edited_template"];}
 	elseif (isset($_POST["submit_edited_template"]))		{$submit_edited_template=$_POST["submit_edited_template"];}
-if (isset($_GET["edit_standard_fields_layout"]))				{$edit_standard_fields_layout=$_GET["edit_standard_fields_layout"];}
+if (isset($_GET["edit_standard_fields_layout"]))			{$edit_standard_fields_layout=$_GET["edit_standard_fields_layout"];}
 	elseif (isset($_POST["edit_standard_fields_layout"]))	{$edit_standard_fields_layout=$_POST["edit_standard_fields_layout"];}
 if (isset($_GET["edit_custom_fields_layout"]))				{$edit_custom_fields_layout=$_GET["edit_custom_fields_layout"];}
 	elseif (isset($_POST["edit_custom_fields_layout"]))		{$edit_custom_fields_layout=$_POST["edit_custom_fields_layout"];}
@@ -62,6 +63,7 @@ $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 #$vicidial_list_fields = '|lead_id|vendor_lead_code|source_id|list_id|gmt_offset_now|called_since_last_reset|phone_code|phone_number|title|first_name|middle_initial|last_name|address1|address2|address3|city|state|province|postal_code|country_code|gender|date_of_birth|alt_phone|email|security_phrase|comments|called_count|last_local_call_time|rank|owner|entry_list_id|';
 $vicidial_listloader_fields = '|vendor_lead_code|source_id|phone_code|phone_number|title|first_name|middle_initial|last_name|address1|address2|address3|city|state|province|postal_code|country_code|gender|date_of_birth|alt_phone|email|security_phrase|comments|rank|owner|';
@@ -70,9 +72,9 @@ $vicidial_listloader_fields = '|vendor_lead_code|source_id|phone_code|phone_numb
 $US='_';
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,admin_web_directory,custom_fields_enabled,webroot_writable,enable_languages,language_method,admin_screen_colors FROM system_settings;";
+$stmt = "SELECT use_non_latin,admin_web_directory,custom_fields_enabled,webroot_writable,enable_languages,language_method,admin_screen_colors,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -84,9 +86,30 @@ if ($qm_conf_ct > 0)
 	$SSenable_languages =		$row[4];
 	$SSlanguage_method =		$row[5];
 	$SSadmin_screen_colors =	$row[6];
+	$SSallow_web_debug =		$row[7];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$list_id_override = preg_replace('/[^0-9]/','',$list_id_override);
+$template_list_id = preg_replace('/[^0-9]/','',$template_list_id);
+$template_id = preg_replace("/\<|\>|'|\"|\\\\|;/","",$template_id);
+$template_name = preg_replace("/\<|\>|'|\"|\\\\|;/","",$template_name);
+$template_description = preg_replace("/\<|\>|'|\"|\\\\|;/","",$template_description);
+$standard_fields_layout = preg_replace("/\<|\>|'|\"|\\\\|;/","",$standard_fields_layout);
+$custom_table = preg_replace("/\<|\>|'|\"|\\\\|;/","",$custom_table);
+$custom_fields_layout = preg_replace("/\<|\>|'|\"|\\\\|;/","",$custom_fields_layout);
+$edit_standard_fields_layout = preg_replace("/\<|\>|'|\"|\\\\|;/","",$edit_standard_fields_layout);
+$edit_custom_fields_layout = preg_replace("/\<|\>|'|\"|\\\\|;/","",$edit_custom_fields_layout);
+$delete_template = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $delete_template);
+$submit_template = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $submit_template);
+$submit_edited_template = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $submit_edited_template);
+$file_format = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$file_format);
+$file_delimiter = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$file_delimiter);
+
+# Variables filtered further down in the code
+# $template_statuses
 
 if ($non_latin < 1)
 	{
@@ -95,19 +118,9 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
-$list_id_override = preg_replace('/[^0-9]/','',$list_id_override);
-$template_list_id = preg_replace('/[^0-9]/','',$template_list_id);
-$template_id = preg_replace("/'|\"|\\\\|;/","",$template_id);
-$template_name = preg_replace("/'|\"|\\\\|;/","",$template_name);
-$template_description = preg_replace("/'|\"|\\\\|;/","",$template_description);
-$standard_fields_layout = preg_replace("/'|\"|\\\\|;/","",$standard_fields_layout);
-$custom_table = preg_replace("/'|\"|\\\\|;/","",$custom_table);
-$custom_fields_layout = preg_replace("/'|\"|\\\\|;/","",$custom_fields_layout);
-$edit_standard_fields_layout = preg_replace("/'|\"|\\\\|;/","",$edit_standard_fields_layout);
-$edit_custom_fields_layout = preg_replace("/'|\"|\\\\|;/","",$edit_custom_fields_layout);
 
 if ($submit_edited_template)
 	{
@@ -196,11 +209,14 @@ if ($submit_template==_QXZ("SUBMIT TEMPLATE") && $template_id && $template_name 
 
 	$status_str="";
 	$status_count=count($template_statuses);
-	for ($q=0; $q<count($template_statuses); $q++) {
-			echo "<!-- $template_statuses[$q] //-->\n";
+	for ($q=0; $q<count($template_statuses); $q++) 
+		{
+		$template_statuses[$q] = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$template_statuses[$q]);
+
+		echo "<!-- $template_statuses[$q] //-->\n";
 
 		$status_str.="$template_statuses[$q]|";
-	}
+		}
 	echo "<!-- $status_str //-->";
 	$status_str=preg_replace('/\|$/', '', $status_str);
 	if (preg_match('/\-\-ALL\-\-/', $status_str)) {$status_str="";}

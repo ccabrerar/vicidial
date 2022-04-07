@@ -1,7 +1,7 @@
 <?php
 # vdc_soundboard_display.php
 # 
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed display the contents of an audio soundboard in the system
 #
@@ -14,10 +14,11 @@
 # 161111-1647 - Added HIDENUMBERS display option, Font size, button type and layout options
 # 191013-2122 - Fixes for PHP7
 # 210616-2032 - Added optional CORS support, see options.php for details
+# 220219-0143 - Added allow_web_debug system setting
 #
 
-$version = '2.14-8';
-$build = '210616-2032';
+$version = '2.14-9';
+$build = '220219-0143';
 $php_script = 'vdc_soundboard_display.php';
 
 require_once("dbconnect_mysqli.php");
@@ -78,33 +79,36 @@ $agents='@agents';
 $script_height = ($script_height - 20);
 if (strlen($bgcolor) < 6) {$bgcolor='FFFFFF';}
 
+# default optional vars if not set
+if (!isset($format))   {$format="text";}
+	if ($format == 'debug')	{$DB=1;}
+if (!isset($ACTION))   {$ACTION="refresh";}
+if (!isset($query_date)) {$query_date = $NOW_DATE;}
+if ( (strlen($soundboard_id) < 1) and (strlen($avatar_id) > 0) ) {$soundboard_id=$avatar_id;}
+
 $IFRAME=0;
 $wav='.wav';
 $gsm='.gsm';
 
-$user = preg_replace("/\'|\"|\\\\|;| /","",$user);
-$pass = preg_replace("/\'|\"|\\\\|;| /","",$pass);
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+$user=preg_replace("/[^-_0-9\p{L}]/u","",$user);
+$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
+$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
+$session_id = preg_replace('/[^-_\.0-9a-zA-Z]/','',$session_id);
+$stage = preg_replace('/[^-_\.0-9a-zA-Z]/','',$stage);
+$submit_button = preg_replace('/[^-_0-9a-zA-Z]/','',$submit_button);
+$admin_submit = preg_replace('/[^-_0-9a-zA-Z]/','',$admin_submit);
+$bgcolor = preg_replace("/\<|\>|\'|\"|\\\\|;| /","",$bgcolor);
+$bcrypt = preg_replace('/[^-_0-9a-zA-Z]/','',$bcrypt);
 
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
-$VUselected_language = '';
-$stmt="SELECT selected_language from vicidial_users where user='$user';";
-if ($DB) {echo "|$stmt|\n";}
+$stmt = "SELECT use_non_latin,timeclock_end_of_day,agentonly_callback_campaign_lock,active_modules,enable_languages,language_method,agent_soundboards,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
-$sl_ct = mysqli_num_rows($rslt);
-if ($sl_ct > 0)
-	{
-	$row=mysqli_fetch_row($rslt);
-	$VUselected_language =		$row[0];
-	}
-
-$stmt = "SELECT use_non_latin,timeclock_end_of_day,agentonly_callback_campaign_lock,active_modules,enable_languages,language_method,agent_soundboards FROM system_settings;";
-$rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -116,6 +120,20 @@ if ($qm_conf_ct > 0)
 	$SSenable_languages =					$row[4];
 	$SSlanguage_method =					$row[5];
 	$SSagent_soundboards =					$row[6];
+	$SSallow_web_debug =					$row[7];
+	}
+if ($SSallow_web_debug < 1) {$DB=0;   $format='text';}
+
+$VUselected_language = '';
+$stmt="SELECT selected_language from vicidial_users where user='$user';";
+if ($DB) {echo "|$stmt|\n";}
+$rslt=mysql_to_mysqli($stmt, $link);
+	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+$sl_ct = mysqli_num_rows($rslt);
+if ($sl_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$VUselected_language =		$row[0];
 	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
@@ -123,27 +141,19 @@ if ($qm_conf_ct > 0)
 if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
-	$pass=preg_replace("/[^-_0-9a-zA-Z]/","",$pass);
+	$pass=preg_replace("/[^-\.\+\/\=_0-9a-zA-Z]/","",$pass);
 	$soundboard_id=preg_replace("/[^-_0-9a-zA-Z]/","",$soundboard_id);
 	$avatar_id=preg_replace("/[^-_0-9a-zA-Z]/","",$avatar_id);
 	$session_name=preg_replace("/[^-_0-9a-zA-Z]/","",$session_name);
 	}
 else
 	{
-	$user=preg_replace("/\'|\"|\\\\|;| /","",$user);
-	$pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
+	$user = preg_replace('/[^-_0-9\p{L}]/u','',$user);
+	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
 	$soundboard_id=preg_replace("/\'|\"|\\\\|;| /","",$soundboard_id);
 	$avatar_id=preg_replace("/\'|\"|\\\\|;| /","",$avatar_id);
 	$session_name=preg_replace("/[^-_0-9a-zA-Z]/","",$session_name);
 	}
-
-
-# default optional vars if not set
-if (!isset($format))   {$format="text";}
-	if ($format == 'debug')	{$DB=1;}
-if (!isset($ACTION))   {$ACTION="refresh";}
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
-if ( (strlen($soundboard_id) < 1) and (strlen($avatar_id) > 0) ) {$soundboard_id=$avatar_id;}
 
 $auth=0;
 $auth_message = user_authorization($user,$pass,'',0,$bcrypt,0,0,'vdc_soundboard_display');

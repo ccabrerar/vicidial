@@ -1,7 +1,7 @@
 <?php 
 # AST_inboundEXTstats.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 60421-1450 - check GET/POST vars lines with isset to not trigger PHP NOTICES
@@ -15,6 +15,7 @@
 # 141114-0836 - Finalized adding QXZ translation to all admin files
 # 141230-1452 - Added code for on-the-fly language translations display
 # 170409-1534 - Added IP List validation code
+# 220303-1623 - Added allow_web_debug system setting
 #
 
 require("dbconnect_mysqli.php");
@@ -34,12 +35,22 @@ if (isset($_GET["submit"]))					{$submit=$_GET["submit"];}
 	elseif (isset($_POST["submit"]))		{$submit=$_POST["submit"];}
 if (isset($_GET["SUBMIT"]))					{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))		{$SUBMIT=$_POST["SUBMIT"];}
+if (isset($_GET["DB"]))					{$DB=$_GET["DB"];}
+	elseif (isset($_POST["DB"]))		{$DB=$_POST["DB"];}
+
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
+$NOW_DATE = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$STARTtime = date("U");
+if (!isset($query_date)) {$query_date = $NOW_DATE;}
+if (!isset($server_ip)) {$server_ip = '10.10.11.20';}
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -47,9 +58,17 @@ if ($qm_conf_ct > 0)
 	$non_latin =				$row[0];
 	$SSenable_languages =		$row[1];
 	$SSlanguage_method =		$row[2];
+	$SSallow_web_debug =		$row[3];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$group = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$group);
+$query_date = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$query_date);
+$server_ip = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$server_ip);
+$submit = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$submit);
+$SUBMIT = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$SUBMIT);
 
 if ($non_latin < 1)
 	{
@@ -58,10 +77,9 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
-$group = preg_replace("/'|\"|\\\\|;/","",$group);
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
@@ -130,11 +148,6 @@ else
 	exit;
 	}
 
-$NOW_DATE = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-$STARTtime = date("U");
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
-if (!isset($server_ip)) {$server_ip = '10.10.11.20';}
 
 $stmt="select extension,full_number,inbound_name from inbound_numbers where server_ip='" . mysqli_real_escape_string($link, $server_ip) . "';";
 $rslt=mysql_to_mysqli($stmt, $link);

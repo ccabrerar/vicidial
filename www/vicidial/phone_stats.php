@@ -1,7 +1,7 @@
 <?php
 # phone_stats.php
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # 
 # changes:
@@ -19,6 +19,7 @@
 # 141230-0911 - Added code for on-the-fly language translations display
 # 170409-1534 - Added IP List validation code
 # 210812-1614 - Added slave DB and user group allowed reports permissions code, and report log logging
+# 220303-1538 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
@@ -30,10 +31,6 @@ $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
-if (isset($_GET["group"]))				{$group=$_GET["group"];}
-	elseif (isset($_POST["group"]))		{$group=$_POST["group"];}
-if (isset($_GET["query_date"]))				{$query_date=$_GET["query_date"];}
-	elseif (isset($_POST["query_date"]))	{$query_date=$_POST["query_date"];}
 if (isset($_GET["begin_date"]))				{$begin_date=$_GET["begin_date"];}
 	elseif (isset($_POST["begin_date"]))	{$begin_date=$_POST["begin_date"];}
 if (isset($_GET["end_date"]))				{$end_date=$_GET["end_date"];}
@@ -50,15 +47,28 @@ if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
 	elseif (isset($_POST["submit"]))	{$submit=$_POST["submit"];}
 if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))	{$SUBMIT=$_POST["SUBMIT"];}
+if (isset($_GET["DB"]))						{$DB=$_GET["DB"];}
+	elseif (isset($_POST["DB"]))			{$DB=$_POST["DB"];}
+
+$DB = preg_replace('/[^0-9]/','',$DB);
+
+$STARTtime = date("U");
+$TODAY = date("Y-m-d");
+$admin_page = './admin.php';
+$date = date("r");
+$ip = getenv("REMOTE_ADDR");
+$browser = getenv("HTTP_USER_AGENT");
+if (!isset($begin_date)) {$begin_date = $TODAY;}
+if (!isset($end_date)) {$end_date = $TODAY;}
 
 $report_name = 'Phone Stats';
 $db_source = 'M';
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,user_territories_active,enable_languages,language_method,slave_db_server,reports_use_slave_db FROM system_settings;";
+$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,user_territories_active,enable_languages,language_method,slave_db_server,reports_use_slave_db,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -71,34 +81,32 @@ if ($qm_conf_ct > 0)
 	$SSlanguage_method =			$row[5];
 	$slave_db_server =				$row[6];
 	$reports_use_slave_db =			$row[7];
+	$SSallow_web_debug =			$row[8];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-$STARTtime = date("U");
-$TODAY = date("Y-m-d");
-$admin_page = './admin.php';
-$date = date("r");
-$ip = getenv("REMOTE_ADDR");
-$browser = getenv("HTTP_USER_AGENT");
-
-if (!isset($begin_date)) {$begin_date = $TODAY;}
-if (!isset($end_date)) {$end_date = $TODAY;}
+$extension = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $extension);
+$server_ip = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $server_ip);
+$begin_date = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$begin_date);
+$end_date = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$end_date);
+$full_name = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$full_name);
+$submit = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$submit);
+$SUBMIT = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$SUBMIT);
 
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$user = preg_replace('/[^-_0-9a-zA-Z]/', '', $user);
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$user = preg_replace('/[^-_0-9\p{L}]/u', '', $user);
 	}
-$extension = preg_replace("/'|\"|\\\\|;/", '', $extension);
-$server_ip = preg_replace("/'|\"|\\\\|;/", '', $server_ip);
-$begin_date = preg_replace("/'|\"|\\\\|;/","",$begin_date);
-$end_date = preg_replace("/'|\"|\\\\|;/","",$end_date);
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
@@ -207,7 +215,7 @@ else
 	$webserver_id = mysqli_insert_id($link);
 	}
 
-$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$group[0], $query_date, $end_date, $shift, $file_download, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
+$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$end_date, $shift, $file_download, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $report_log_id = mysqli_insert_id($link);

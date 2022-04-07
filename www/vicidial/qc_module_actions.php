@@ -1,4 +1,15 @@
 <?php
+# qc_module_actions.php
+#
+# For as part of new enhanced QC system within VICIdial
+#
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+#
+# CHANGES:
+# 210309-1645 - First build
+# 220224-0836 - Added allow_web_debug system setting
+#
+
 header ("Content-type: text/html; charset=utf-8");
 
 require("dbconnect_mysqli.php");
@@ -12,39 +23,11 @@ if ( file_exists("/etc/mysql_enc.conf") ) {
 	}
 }
 
-
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $QUERY_STRING = getenv("QUERY_STRING");
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
-
-#############################################
-##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,auto_dial_limit,user_territories_active,allow_custom_dialplan,callcard_enabled,admin_modify_refresh,nocache_admin,webroot_writable,admin_screen_colors,qc_features_active FROM system_settings;";
-$rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
-$qm_conf_ct = mysqli_num_rows($rslt);
-if ($qm_conf_ct > 0)
-	{
-	$row=mysqli_fetch_row($rslt);
-	$non_latin =					$row[0];
-	$SSauto_dial_limit =			$row[1];
-	$SSuser_territories_active =	$row[2];
-	$SSallow_custom_dialplan =		$row[3];
-	$SScallcard_enabled =			$row[4];
-	$SSadmin_modify_refresh =		$row[5];
-	$SSnocache_admin =				$row[6];
-	$SSwebroot_writable =			$row[7];
-	$SSadmin_screen_colors =		$row[8];
-	$SSqc_features_active =			$row[9];
-
-	# slightly increase limit value, because PHP somehow thinks 2.8 > 2.8
-	$SSauto_dial_limit = ($SSauto_dial_limit + 0.001);
-	}
-##### END SETTINGS LOOKUP #####
-###########################################
-
 if (isset($_GET["DB"]))	{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))	{$DB=$_POST["DB"];}
 if (isset($_GET["end_date"]))	{$end_date=$_GET["end_date"];}
@@ -71,12 +54,10 @@ if (isset($_GET["qc_agent_comments"]))	{$qc_agent_comments=$_GET["qc_agent_comme
 	elseif (isset($_POST["qc_agent_comments"]))	{$qc_agent_comments=$_POST["qc_agent_comments"];}
 if (isset($_GET["qc_manager_comments"]))	{$qc_manager_comments=$_GET["qc_manager_comments"];}
 	elseif (isset($_POST["qc_manager_comments"]))	{$qc_manager_comments=$_POST["qc_manager_comments"];}
-
 if (isset($_GET["field_name"]))	{$field_name=$_GET["field_name"];}
 	elseif (isset($_POST["field_name"]))	{$field_name=$_POST["field_name"];}
 if (isset($_GET["field_value"]))	{$field_value=$_GET["field_value"];}
 	elseif (isset($_POST["field_value"]))	{$field_value=$_POST["field_value"];}
-
 if (isset($_GET["lead_id"]))	{$lead_id=$_GET["lead_id"];}
 	elseif (isset($_POST["lead_id"]))	{$lead_id=$_POST["lead_id"];}
 if (isset($_GET["callback_id"]))	{$callback_id=$_GET["callback_id"];}
@@ -89,8 +70,6 @@ if (isset($_GET["callback_time"]))	{$callback_time=$_GET["callback_time"];}
 	elseif (isset($_POST["callback_time"]))	{$callback_time=$_POST["callback_time"];}
 if (isset($_GET["callback_comments"]))	{$callback_comments=$_GET["callback_comments"];}
 	elseif (isset($_POST["callback_comments"]))	{$callback_comments=$_POST["callback_comments"];}
-
-
 if (isset($_GET["qc_checkpoint_log_id"]))	{$qc_checkpoint_log_id=$_GET["qc_checkpoint_log_id"];}
 	elseif (isset($_POST["qc_checkpoint_log_id"]))	{$qc_checkpoint_log_id=$_POST["qc_checkpoint_log_id"];}
 if (isset($_GET["qc_level"]))	{$qc_level=$_GET["qc_level"];}
@@ -146,9 +125,97 @@ if (isset($_POST["upd_customer"]))			{$upd_customer=$_POST["upd_customer"];}
 if (isset($_POST["view_epoch"]))			{$view_epoch=$_POST["view_epoch"];}
 	elseif (isset($_GET["view_epoch"]))	{$view_epoch=$_GET["view_epoch"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
 $defaultappointment = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 $STARTtime = date("U");
+
+#############################################
+##### START SYSTEM_SETTINGS LOOKUP #####
+$stmt = "SELECT use_non_latin,auto_dial_limit,user_territories_active,allow_custom_dialplan,callcard_enabled,admin_modify_refresh,nocache_admin,webroot_writable,admin_screen_colors,qc_features_active,allow_web_debug FROM system_settings;";
+$rslt=mysql_to_mysqli($stmt, $link);
+#if ($DB) {echo "$stmt\n";}
+$qm_conf_ct = mysqli_num_rows($rslt);
+if ($qm_conf_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$non_latin =					$row[0];
+	$SSauto_dial_limit =			$row[1];
+	$SSuser_territories_active =	$row[2];
+	$SSallow_custom_dialplan =		$row[3];
+	$SScallcard_enabled =			$row[4];
+	$SSadmin_modify_refresh =		$row[5];
+	$SSnocache_admin =				$row[6];
+	$SSwebroot_writable =			$row[7];
+	$SSadmin_screen_colors =		$row[8];
+	$SSqc_features_active =			$row[9];
+	# slightly increase limit value, because PHP somehow thinks 2.8 > 2.8
+	$SSauto_dial_limit = ($SSauto_dial_limit + 0.001);
+	$SSallow_web_debug =			$row[10];
+	}
+if ($SSallow_web_debug < 1) {$DB=0;}
+##### END SETTINGS LOOKUP #####
+###########################################
+
+$lead_id = preg_replace('/[^0-9]/', '', $lead_id);
+$end_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $end_date);
+$modify_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $modify_date);
+$recording_id = preg_replace('/[^-_0-9a-zA-Z]/', '', $recording_id);
+$qc_action = preg_replace('/[^-_0-9a-zA-Z]/', '', $qc_action);
+$claim_rec = preg_replace('/[^-_0-9a-zA-Z]/', '', $claim_rec);
+$mgr_override = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$mgr_override);
+$scorecard_id = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$scorecard_id);
+$qc_row_id = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$qc_row_id);
+$qc_log_id = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$qc_log_id);
+$qc_status = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$qc_status);
+$qc_agent_comments = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$qc_agent_comments);
+$qc_manager_comments = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$qc_manager_comments);
+$field_name = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$field_name);
+$field_value = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$field_value);
+$callback_id = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$callback_id);
+$recipient = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$recipient);
+$CBuser = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$CBuser);
+$callback_time = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$callback_time);
+$callback_comments = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$callback_comments);
+$qc_checkpoint_log_id = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$qc_checkpoint_log_id);
+$qc_level = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$qc_level);
+$checkpoint_rank = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$checkpoint_rank);
+$checkpoint_points = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$checkpoint_points);
+$checkpoint_points_earned = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$checkpoint_points_earned);
+$new_checkpoint_points = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$new_checkpoint_points);
+$checkpoint_points_failed = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$checkpoint_points_failed);
+$old_checkpoint_rank = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$old_checkpoint_rank);
+$new_checkpoint_rank = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$new_checkpoint_rank);
+$new_active = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$new_active);
+$new_commission_loss = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$new_commission_loss);
+$new_instant_fail = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$new_instant_fail);
+$new_checkpoint_text = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$new_checkpoint_text);
+$new_checkpoint_text_presets = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$new_checkpoint_text_presets);
+$checkpoint_row_id = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$checkpoint_row_id);
+$checkpoint_comment_agent = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$checkpoint_comment_agent);
+$checkpoint_answer = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$checkpoint_answer);
+$instant_fail = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$instant_fail);
+$instant_fail_value = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$instant_fail_value);
+$commission_loss = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$commission_loss);
+$parameter = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$parameter);
+$parameter_value = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$parameter_value);
+$recording_timestamp = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$recording_timestamp);
+$upd_customer = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$upd_customer);
+$view_epoch = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$view_epoch);
+$new_admin_notes = preg_replace("/\<|\>|\"|\\\\|;/",'-',$new_admin_notes);
+$admin_notes = preg_replace("/\<|\>|\"|\\\\|;/",'-',$admin_notes);
+
+if ($non_latin < 1)
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	}
+else
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	}
 
 $rights_stmt = "SELECT modify_leads,qc_enabled,full_name,modify_leads,user_group,selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}

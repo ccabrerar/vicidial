@@ -1,7 +1,7 @@
 <?php
 # admin_languages.php
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # this screen manages the optional language tables in ViciDial
 #
@@ -19,10 +19,11 @@
 # 170409-1547 - Added IP List validation code
 # 180502-2215 - Added new help display
 # 200828-1628 - Fix for early permissions message, Issue #1227
+# 220222-0949 - Added allow_web_debug system setting
 #
 
-$admin_version = '2.14-12';
-$build = '200828-1628';
+$admin_version = '2.14-13';
+$build = '220222-0949';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -43,7 +44,6 @@ if (isset($_GET["user"]))						{$user=$_GET["user"];}
 	elseif (isset($_POST["user"]))				{$user=$_POST["user"];}
 if (isset($_GET["pass"]))						{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))				{$pass=$_POST["pass"];}
-
 if (isset($_GET["language_id"]))				{$language_id=$_GET["language_id"];}
 	elseif (isset($_POST["language_id"]))		{$language_id=$_POST["language_id"];}
 if (isset($_GET["language_code"]))				{$language_code=$_GET["language_code"];}
@@ -62,7 +62,6 @@ if (isset($_GET["import_data"]))				{$import_data=$_GET["import_data"];}
 	elseif (isset($_POST["import_data"]))		{$import_data=$_POST["import_data"];}
 if (isset($_GET["active"]))						{$active=$_GET["active"];}
 	elseif (isset($_POST["active"]))			{$active=$_POST["active"];}
-
 if (isset($_GET["copy_option"]))				{$copy_option=$_GET["copy_option"];}
 	elseif (isset($_POST["copy_option"]))		{$copy_option=$_POST["copy_option"];}
 if (isset($_GET["ConFiRm"]))					{$ConFiRm=$_GET["ConFiRm"];}
@@ -82,12 +81,13 @@ else
 	}
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,auto_dial_limit,user_territories_active,allow_custom_dialplan,callcard_enabled,admin_modify_refresh,nocache_admin,webroot_writable,allow_emails,active_modules,sounds_central_control_active,qc_features_active,contacts_enabled,enable_languages,language_method,admin_web_directory,admin_screen_colors,enable_auto_reports,campaign_cid_areacodes_enabled FROM system_settings;";
+$stmt = "SELECT use_non_latin,auto_dial_limit,user_territories_active,allow_custom_dialplan,callcard_enabled,admin_modify_refresh,nocache_admin,webroot_writable,allow_emails,active_modules,sounds_central_control_active,qc_features_active,contacts_enabled,enable_languages,language_method,admin_web_directory,admin_screen_colors,enable_auto_reports,campaign_cid_areacodes_enabled,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -111,7 +111,9 @@ if ($qm_conf_ct > 0)
 	$SSadmin_screen_colors =		$row[16];
 	$SSenable_auto_reports =		$row[17];
 	$SScampaign_cid_areacodes_enabled = $row[18];
+	$SSallow_web_debug =			$row[19];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
@@ -121,45 +123,46 @@ $modify_refresh_set=0;
 $import_with_missing_periods=1;
 $gif='.gif';
 
+$DB = preg_replace('/[^0-9]/','',$DB);
+$rank = preg_replace('/[^0-9]/','',$rank);
+$level = preg_replace('/[^0-9]/','',$level);
+$parent_rank = preg_replace('/[^0-9]/','',$parent_rank);
+$phrase_id = preg_replace('/[^0-9]/','',$phrase_id);
+$active = preg_replace('/[^NY]/','',$active);
+$ConFiRm = preg_replace('/[^0-9a-zA-Z]/','',$ConFiRm);
+$copy_option = preg_replace('/[^_0-9a-zA-Z]/','',$copy_option);
+$stage = preg_replace('/[^-_0-9a-zA-Z]/', '',$stage);
+$import_data = preg_replace("/\\\\|;|\r/","",$import_data);
+$english_text = preg_replace("/\\\\|;|\n|\r/","",$english_text);
+$translated_text = preg_replace("/\\\\|;|\n|\r/","",$translated_text);
+$ADD = preg_replace('/[^-_0-9a-zA-Z]/', '',$ADD);
+$action = preg_replace('/[^-_0-9a-zA-Z]/', '',$action);
+$session_name = preg_replace('/[^-_0-9a-zA-Z]/', '',$session_name);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '',$SUBMIT);
+
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/','',$PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/','',$PHP_AUTH_PW);
 	$user = preg_replace('/[^-_0-9a-zA-Z]/','',$user);
 	$pass = preg_replace('/[^-_0-9a-zA-Z]/','',$pass);
-
-	$DB = preg_replace('/[^0-9]/','',$DB);
-	$rank = preg_replace('/[^0-9]/','',$rank);
-	$level = preg_replace('/[^0-9]/','',$level);
-	$parent_rank = preg_replace('/[^0-9]/','',$parent_rank);
-	$phrase_id = preg_replace('/[^0-9]/','',$phrase_id);
-
-	$active = preg_replace('/[^NY]/','',$active);
-
-	$ConFiRm = preg_replace('/[^0-9a-zA-Z]/','',$ConFiRm);
-
 	$language_id = preg_replace('/[^-_0-9a-zA-Z]/','',$language_id);
 	$source_language_id = preg_replace('/[^-_0-9a-zA-Z]/','',$source_language_id);
 	$language_code = preg_replace('/[^-_0-9a-zA-Z]/','',$language_code);
 	$language_description = preg_replace('/[^- _0-9a-zA-Z]/','',$language_description);
-	$english_text = preg_replace("/\\\\|;|\n|\r/","",$english_text);
-	$translated_text = preg_replace("/\\\\|;|\n|\r/","",$translated_text);
-	$import_data = preg_replace("/\\\\|;|\r/","",$import_data);
-
-	$copy_option = preg_replace('/[^_0-9a-zA-Z]/','',$copy_option);
-	$stage = preg_replace('/[^-_0-9a-zA-Z]/', '',$stage);
 	$user_group = preg_replace('/[^-_0-9a-zA-Z]/', '',$user_group);
 	}	# end of non_latin
 else
 	{
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$user = preg_replace("/'|\"|\\\\|;/","",$user);
-	$pass = preg_replace("/'|\"|\\\\|;/","",$pass);
-	$language_id = preg_replace("/'|\"|\\\\|;/","",$language_id);
-	$english_text = preg_replace("/\\\\|;|\n|\r/","",$english_text);
-	$translated_text = preg_replace("/\\\\|;|\n|\r/","",$translated_text);
-	$import_data = preg_replace("/\\\\|;|\r/","",$import_data);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$user = preg_replace('/[^-_0-9\p{L}]/u','',$user);
+	$pass = preg_replace('/[^-_0-9\p{L}]/u','',$pass);
+	$language_id = preg_replace('/[^-_0-9\p{L}]/u','',$language_id);
+	$source_language_id = preg_replace('/[^-_0-9\p{L}]/u','',$source_language_id);
+	$language_code = preg_replace('/[^-_0-9\p{L}]/u','',$language_code);
+	$language_description = preg_replace('/[^- _0-9\p{L}]/u','',$language_description);
+	$user_group = preg_replace('/[^-_0-9\p{L}]/u', '',$user_group);
 	}
 
 $STARTtime = date("U");

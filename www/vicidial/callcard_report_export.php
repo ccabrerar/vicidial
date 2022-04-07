@@ -5,7 +5,7 @@
 # batch, pack and date range. 
 # downloads to a flat text file that is tab delimited
 #
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -17,6 +17,7 @@
 # 141230-1348 - Added code for on-the-fly language translations display
 # 170409-1534 - Added IP List validation code
 # 170829-0040 - Added screen color settings
+# 220228-2119 - Added allow_web_debug system setting
 #
 
 require("dbconnect_mysqli.php");
@@ -51,13 +52,24 @@ if (isset($_GET["submit"]))					{$submit=$_GET["submit"];}
 if (isset($_GET["SUBMIT"]))					{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))		{$SUBMIT=$_POST["SUBMIT"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
+$US='_';
+$MT[0]='';
+$ip = getenv("REMOTE_ADDR");
+$NOW_DATE = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$FILE_TIME = date("Ymd-His");
+$STARTtime = date("U");
+if (!isset($query_date)) {$query_date = $NOW_DATE;}
+if (!isset($end_date)) {$end_date = $NOW_DATE;}
 if (strlen($shift)<2) {$shift='ALL';}
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -65,9 +77,23 @@ if ($qm_conf_ct > 0)
 	$non_latin = 				$row[0];
 	$SSenable_languages =		$row[1];
 	$SSlanguage_method =		$row[2];
+	$SSallow_web_debug =		$row[3];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$query_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date);
+$end_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $end_date);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+$run = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$run);
+$batch = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$batch);
+$pack = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$pack);
+$agent = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$agent);
+$did = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$did);
+$callerid = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$callerid);
+$run_export = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$run_export);
 
 if ($non_latin < 1)
 	{
@@ -76,8 +102,8 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
@@ -164,16 +190,6 @@ if ($LOGcallcard_admin < 1)
 ##### START RUN THE EXPORT AND OUTPUT FLAT DATA FILE #####
 if ($run_export > 0)
 	{
-	$US='_';
-	$MT[0]='';
-	$ip = getenv("REMOTE_ADDR");
-	$NOW_DATE = date("Y-m-d");
-	$NOW_TIME = date("Y-m-d H:i:s");
-	$FILE_TIME = date("Ymd-His");
-	$STARTtime = date("U");
-	if (!isset($query_date)) {$query_date = $NOW_DATE;}
-	if (!isset($end_date)) {$end_date = $NOW_DATE;}
-
 	$inbound_to_print=0;
 	$export_rows='';
 	$k=0;
@@ -266,12 +282,6 @@ if ($run_export > 0)
 
 else
 	{
-	$NOW_DATE = date("Y-m-d");
-	$NOW_TIME = date("Y-m-d H:i:s");
-	$STARTtime = date("U");
-	if (!isset($query_date)) {$query_date = $NOW_DATE;}
-	if (!isset($end_date)) {$end_date = $NOW_DATE;}
-
 	echo "<HTML><HEAD>\n";
 
 	echo "<script language=\"JavaScript\" src=\"calendar_db.js\"></script>\n";

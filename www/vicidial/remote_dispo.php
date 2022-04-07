@@ -1,7 +1,7 @@
 <?php
 # remote_dispo.php
 # 
-# Copyright (C) 2014  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # this is the remote agent disposition screen for calls sent to remote agents. 
 # This allows the remote agent to modify customer information and disposition 
@@ -17,6 +17,7 @@
 # 130901-0854 - Changed to mysqli PHP functions
 # 141007-2137 - Finalized adding QXZ translation to all admin files
 # 141229-2012 - Added code for on-the-fly language translations display
+# 220223-0832 - Added allow_web_debug system setting
 #
 
 require("dbconnect_mysqli.php");
@@ -48,12 +49,8 @@ if (isset($_GET["comments"]))				{$comments=$_GET["comments"];}
 	elseif (isset($_POST["comments"]))		{$comments=$_POST["comments"];}
 if (isset($_GET["country_code"]))				{$country_code=$_GET["country_code"];}
 	elseif (isset($_POST["country_code"]))		{$country_code=$_POST["country_code"];}
-if (isset($_GET["customer_zap_channel"]))				{$customer_zap_channel=$_GET["customer_zap_channel"];}
-	elseif (isset($_POST["customer_zap_channel"]))		{$customer_zap_channel=$_POST["customer_zap_channel"];}
 if (isset($_GET["DB"]))				{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))		{$DB=$_POST["DB"];}
-if (isset($_GET["dispo"]))				{$dispo=$_GET["dispo"];}
-	elseif (isset($_POST["dispo"]))		{$dispo=$_POST["dispo"];}
 if (isset($_GET["email"]))				{$email=$_GET["email"];}
 	elseif (isset($_POST["email"]))		{$email=$_POST["email"];}
 if (isset($_GET["end_call"]))				{$end_call=$_GET["end_call"];}
@@ -88,18 +85,10 @@ if (isset($_GET["security"]))				{$security=$_GET["security"];}
 	elseif (isset($_POST["security"]))		{$security=$_POST["security"];}
 if (isset($_GET["server_ip"]))				{$server_ip=$_GET["server_ip"];}
 	elseif (isset($_POST["server_ip"]))		{$server_ip=$_POST["server_ip"];}
-if (isset($_GET["server_ip"]))				{$server_ip=$_GET["server_ip"];}
-	elseif (isset($_POST["server_ip"]))		{$server_ip=$_POST["server_ip"];}
-if (isset($_GET["session_id"]))				{$session_id=$_GET["session_id"];}
-	elseif (isset($_POST["session_id"]))		{$session_id=$_POST["session_id"];}
 if (isset($_GET["state"]))				{$state=$_GET["state"];}
 	elseif (isset($_POST["state"]))		{$state=$_POST["state"];}
 if (isset($_GET["status"]))				{$status=$_GET["status"];}
 	elseif (isset($_POST["status"]))		{$status=$_POST["status"];}
-if (isset($_GET["tsr"]))				{$tsr=$_GET["tsr"];}
-	elseif (isset($_POST["tsr"]))		{$tsr=$_POST["tsr"];}
-if (isset($_GET["user"]))				{$user=$_GET["user"];}
-	elseif (isset($_POST["user"]))		{$user=$_POST["user"];}
 if (isset($_GET["vendor_id"]))				{$vendor_id=$_GET["vendor_id"];}
 	elseif (isset($_POST["vendor_id"]))		{$vendor_id=$_POST["vendor_id"];}
 if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
@@ -107,11 +96,13 @@ if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
 if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))		{$SUBMIT=$_POST["SUBMIT"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,user_territories_active,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,user_territories_active,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -122,9 +113,25 @@ if ($qm_conf_ct > 0)
 	$user_territories_active =		$row[3];
 	$SSenable_languages =			$row[4];
 	$SSlanguage_method =			$row[5];
+	$SSallow_web_debug =			$row[6];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+
+if ($non_latin < 1)
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	}
+else
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	}
 
 $STARTtime = date("U");
 $TODAY = date("Y-m-d");
@@ -135,17 +142,6 @@ $ip = getenv("REMOTE_ADDR");
 $browser = getenv("HTTP_USER_AGENT");
 
 $ext_context = 'demo';
-
-if ($non_latin < 1)
-	{
-	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
-	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
-	}
-else
-	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
-	}
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
@@ -194,7 +190,7 @@ echo "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=utf-8\">\n"
 
 <?php 
 
-echo "<!-- $call_began $lead_id -->";
+if ($DB) {echo "<!-- $call_began $lead_id -->";}
 
 if ($end_call > 0)
 	{

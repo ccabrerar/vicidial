@@ -1,7 +1,7 @@
 <?php
 # customer_chat_code.php
 #
-# Copyright (C) 2016  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # Example for incorporating the customer side of the Vicidial chat into a web page.  
 # Can be called as an include file, if desired.
@@ -12,6 +12,7 @@
 # 151219-1415 - Added header and language variable
 # 160108-1659 - Added available_agents variable
 # 160120-1944 - Added show_email variable
+# 220220-1921 - Added allow_web_debug system setting
 #
 
 if (isset($_GET["lead_id"]))				{$lead_id=$_GET["lead_id"];}
@@ -32,6 +33,16 @@ if (isset($_GET["available_agents"]))			{$available_agents=$_GET["available_agen
 	elseif (isset($_POST["available_agents"]))	{$available_agents=$_POST["available_agents"];}
 if (isset($_GET["show_email"]))				{$show_email=$_GET["show_email"];}
 	elseif (isset($_POST["show_email"]))	{$show_email=$_POST["show_email"];}
+
+$lead_id = preg_replace("/[^0-9]/","",$lead_id);
+$chat_id = preg_replace('/[^-\_\.0-9a-zA-Z]/','',$chat_id);
+$group_id = preg_replace('/[^-\_0-9\p{L}]/u','',$group_id);
+$chat_group_id = preg_replace('/[^-\_0-9\p{L}]/u','',$chat_group_id);
+$email = preg_replace('/[^-\.\:\/\@\_0-9\p{L}]/u','',$email);
+$unique_userID = preg_replace('/[^-\.\_0-9a-zA-Z]/','',$unique_userID);
+$language = preg_replace('/[^-\_0-9a-zA-Z]/','',$language);
+$available_agents = preg_replace('/[^-\_0-9a-zA-Z]/','',$available_agents);
+$show_email = preg_replace('/[^-\_0-9a-zA-Z]/','',$show_email);
 
 $URL_vars="?user=".urlencode($unique_userID)."&lead_id=".$lead_id."&group_id=".urlencode($chat_group_id)."&chat_id=".$chat_id."&email=".urlencode($email)."&language=".urlencode($language)."&available_agents=".urlencode($available_agents)."&show_email=".urlencode($show_email);
 header ("Content-type: text/html; charset=utf-8");

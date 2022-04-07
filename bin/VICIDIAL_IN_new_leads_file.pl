@@ -10,7 +10,7 @@
 #
 # NOTE: the machine this is run on must have a servers entry in the database
 #
-# Copyright (C) 2016  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 #
 # CHANGES
@@ -64,9 +64,10 @@
 # 160729-0811 - Added t2r27csv format
 # 160809-1113 - Added t2r26csv format
 # 161010-1616 - Added t2r15csv format
+# 220211-0924 - Added vicidl format
 #
 
-$version = '161010-1616';
+$version = '220211-0924';
 
 $secX = time();
 $MT[0]='';
@@ -201,6 +202,9 @@ if (length($ARGV[0])>1)
 		print "standard:\n";
 		print "vendor_lead_code|source_id|list_id|phone_code|phone_number|title|first_name|middle|last_name|address1|address2|address3|city|state|province|postal_code|country|gender|date_of_birth|alt_phone|email|security_phrase|COMMENTS|called_count|status|entry_date|multi-alt-entries\n";
 		print "3857822|31022|105|01144|1625551212|MRS|B||BURTON|249 MUNDON ROAD|MALDON|ESSEX||||CM9 6PW|UK||||||COMMENTS|2|B|2007-08-09 00:00:00|7275551212_1_work!7275551213_61_sister house!7275551214_44_neighbor\n\n";
+		print "vicidl:\n";
+		print "lead_id\tentry_date\tmodify_date\tstatus\tuser\tvendor_lead_code\tsource_id\tlist_id\tgmt_offset_now\tcalled_since_last_reset\tphone_code\tphone_number\ttitle\tfirst_name\tmiddle_initial\tlast_name\taddress1\taddress2\taddress3\tcity\tstate\tprovince\tpostal_code\tcountry_code\tgender\tdate_of_birth\talt_phone\temail\tsecurity_phrase\tcomments\tcalled_count\tlast_local_call_time\trank\towner\tentry_list_id\n";
+		print "327163\t2022-01-01 00:00:00\t2022-01-02 10:00:00\tA\t1234\t12345\tinternet\t999\t-5.00\tY\t1\t3145551212\tTIM\tBURTON\t1234 Mockingbird Ln.\t\t\tAtlanta\tGA\t\t04240\tUS\tM\t0000-00-00\t8589134523\t\tGreen\t2\t2022-01-02 10:01:12\t0\t\t0\n\n";
 		print "stdrankowner:\n";
 		print "vendor_lead_code|source_id|list_id|phone_code|phone_number|title|first_name|middle|last_name|address1|address2|address3|city|state|province|postal_code|country|gender|date_of_birth|alt_phone|email|security_phrase|COMMENTS|called_count|status|entry_date|rank|owner|multi-alt-entries\n";
 		print "3857822|31022|105|01144|1625551212|MRS|B||BURTON|249 MUNDON ROAD|MALDON|ESSEX||||CM9 6PW|UK||||||COMMENTS|2|B|2007-08-09 00:00:00|99|6666|7275551212_1_work!7275551213_61_sister house!7275551214_44_neighbor\n\n";
@@ -2039,7 +2043,69 @@ foreach(@FILES)
 
 				$format_set++;
 				}
+		
+		# This is the format that lists are downloaded in through the Vicidial Admin web interface
+		# lead_id \t entry_date \t modify_date \t status \t user \t vendor_lead_code \t source_id \t list_id \t gmt_offset_now \t called_since_last_reset \t phone_code \t phone_number \t title \t first_name \t middle_initial \t last_name \t address1 \t address2 \t address3 \t city \t state \t province \t postal_code \t country_code \t gender \t date_of_birth \t alt_phone \t email \t security_phrase \t comments \t called_count \t last_local_call_time \t rank \t owner \t entry_list_id
+			if ( ($format =~ /vicidl/) && ($format_set < 1) )
+				{
 
+				$raw_number = $number;
+                                chomp($number);
+                                $number =~ s/,\"0\"/,/gi;
+                                $number =~ s/\t/\|/gi;
+                                $number =~ s/\'|\t|\r|\n|\l//gi;
+                                $number =~ s/\",,,,,,,\"/\|\|\|\|\|\|\|/gi;
+                                $number =~ s/\",,,,,,\"/\|\|\|\|\|\|/gi;
+                                $number =~ s/\",,,,,\"/\|\|\|\|\|/gi;
+                                $number =~ s/\",,,,\"/\|\|\|\|/gi;
+                                $number =~ s/\",,,\"/\|\|\|/gi;
+                                $number =~ s/\",,\"/\|\|/gi;
+                                $number =~ s/\",\"/\|/gi;
+                                $number =~ s/\"//gi;
+				$number =~ s/\\//gi;
+                 #              $number =~ s/\|0000000000//gi;
+                                $number =~ s/          //gi;
+                                @m=@MT;
+                                @m = split(/\|/, $number);
+                                if ($DBX) {print "RAW: $#m-----$number\n";}
+
+
+				$vendor_lead_code = 	$m[5];		chomp($vendor_lead_code);
+                                $source_id = 		$m[6];		chomp($source_id);
+                                $list_id = 		$m[7];		chomp($list_id);
+                                $phone_code =		$m[10];		chomp($phone_code);	$phone_code =~ s/\D//gi;
+                                $phone_number =		$m[11];		chomp($phone_number);	$phone_number =~ s/\D//gi;
+                                $USarea =		substr($phone_number, 0, 3);
+                                $title =		$m[12];		chomp($title);
+                                $first_name =		$m[13];		chomp($first_name);
+                                $middle_initial =	$m[14];		chomp($middle_initial);
+                                $last_name =		$m[15];		chomp($last_name);
+                                $address1 =		$m[16];		chomp($address1);
+                                $address2 =		$m[17];		chomp($address2);
+                                $address3 =		$m[18];		chomp($address3);
+                                $city =			$m[19];		chomp($city);
+                                $state =		$m[20];		chomp($state);
+                                $province =		$m[21];		chomp($province);
+                                $postal_code =		$m[22];		chomp($postal_code);
+                                $country =		$m[23];		chomp($country);
+                                $gender =		$m[24];
+                                $date_of_birth =	$m[25];
+                                $alt_phone =		$m[26];		chomp($alt_phone);	$alt_phone =~ s/\D//gi;
+                                $email =		$m[27];
+                                $security_phrase =	$m[28];
+                                $comments =		$m[29];
+                                $called_count =		$m[30];         $called_count =~ s/\D|\r|\n|\t//gi;	if (length($called_count)<1) {$called_count=0;}
+                                $status =		$m[3];		$status =~ s/ |\r|\n|\t//gi;	if (length($status)<1) {$status='NEW';}
+                                $insert_date =		$m[1];		$insert_date =~ s/\r|\n|\t|[a-zA-Z]//gi;	if (length($insert_date)<6) {$insert_date=$pulldate0;}
+                                if ($insert_date =~ /\//)
+                                        {
+                                        @iD = split(/\//, $insert_date);
+                                        $iD[0] = sprintf("%02d", $iD[0]);
+                                        $iD[1] = sprintf("%02d", $iD[1]);
+                                        $insert_date = "$iD[2]-$iD[0]-$iD[1]";
+                                        }
+				$format_set++;
+				}
 
 		# This is the format for the standard lead files
 		#3857822|31022|105|01144|1625551212|MRS|B||BURTON|249 MUNDON ROAD|MALDON|ESSEX||||CM9 6PW|UK||||||COMMENTS

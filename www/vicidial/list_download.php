@@ -4,7 +4,7 @@
 # downloads the entire contents of a vicidial list ID to a flat text file
 # that is tab delimited
 #
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -38,6 +38,7 @@
 # 190926-1015 - Fix for PHP7
 # 201208-1630 - Fix for custom fields issue when downloading list with no custom fields itself
 # 210308-0939 - Fix for ALL_DNC_CAMPAIGNS dnc download
+# 220224-1041 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
@@ -64,15 +65,16 @@ if (isset($_GET["download_type"]))			{$download_type=$_GET["download_type"];}
 
 if (strlen($shift)<2) {$shift='ALL';}
 if ($group_id=='SYSTEM_INTERNAL') {$download_type='systemdnc';}
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 $report_name = 'Download List';
 $db_source = 'M';
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,custom_fields_enabled,enable_languages,language_method,active_modules FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,custom_fields_enabled,enable_languages,language_method,active_modules,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -85,9 +87,17 @@ if ($qm_conf_ct > 0)
 	$SSenable_languages =			$row[5];
 	$SSlanguage_method =			$row[6];
 	$active_modules =				$row[7];
+	$SSallow_web_debug =			$row[8];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$list_id = preg_replace('/[^-_0-9a-zA-Z]/','',$list_id);
+$group_id = preg_replace('/[^-_0-9a-zA-Z]/','',$group_id);
+$download_type = preg_replace('/[^-_0-9a-zA-Z]/','',$download_type);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/','',$submit);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/','',$SUBMIT);
 
 if ($non_latin < 1)
 	{
@@ -96,12 +106,9 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
-$list_id = preg_replace('/[^-_0-9a-zA-Z]/','',$list_id);
-$group_id = preg_replace('/[^-_0-9a-zA-Z]/','',$group_id);
-$download_type = preg_replace('/[^-_0-9a-zA-Z]/','',$download_type);
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}

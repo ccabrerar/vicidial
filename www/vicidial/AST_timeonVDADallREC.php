@@ -1,7 +1,7 @@
 <?php 
 # AST_timeonVDADallREC.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # live real-time stats for the VICIDIAL Auto-Dialer all servers
 #
@@ -34,6 +34,7 @@
 # 141114-0717 - Finalized adding QXZ translation to all admin files
 # 141230-1416 - Added code for on-the-fly language translations display
 # 170409-1534 - Added IP List validation code
+# 220301-2050 - Added allow_web_debug system setting
 #
 
 header ("Content-type: text/html; charset=utf-8");
@@ -73,11 +74,19 @@ if (isset($_GET["orderby"]))			{$orderby=$_GET["orderby"];}
 	elseif (isset($_POST["orderby"]))	{$orderby=$_POST["orderby"];}
 if (isset($_GET["SERVdisplay"]))			{$SERVdisplay=$_GET["SERVdisplay"];}
 	elseif (isset($_POST["SERVdisplay"]))	{$SERVdisplay=$_POST["SERVdisplay"];}
-
 if (isset($_GET["RECmonitorLINK"]))				{$RECmonitorLINK=$_GET["RECmonitorLINK"];}
 	elseif (isset($_POST["RECmonitorLINK"]))	{$RECmonitorLINK=$_POST["RECmonitorLINK"];}
 
-if (!isset($RR))			{$gRRroup=4;}
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
+$NOW_TIME = date("Y-m-d H:i:s");
+$FILE_TIME = date("Ymd-His");
+$NOW_DAY = date("Y-m-d");
+$NOW_HOUR = date("H:i:s");
+$STARTtime = date("U");
+$epochSIXhoursAGO = ($STARTtime - 21600);
+$timeSIXhoursAGO = date("Y-m-d H:i:s",$epochSIXhoursAGO);
+if (!isset($RR))			{$RR=4;}
 if (!isset($group))			{$group='';}
 if (!isset($usergroup))		{$usergroup='';}
 if (!isset($UGdisplay))		{$UGdisplay=0;}	# 0=no, 1=yes
@@ -126,9 +135,9 @@ $load_ave = get_server_load(true);
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {$MAIN.="$stmt\n";}
+#if ($DB) {$MAIN.="$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -139,9 +148,27 @@ if ($qm_conf_ct > 0)
 	$reports_use_slave_db =			$row[3];
 	$SSenable_languages =			$row[4];
 	$SSlanguage_method =			$row[5];
+	$SSallow_web_debug =			$row[6];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$RR = preg_replace('/[^0-9]/', '', $RR);
+$group = preg_replace('/[^-_0-9a-zA-Z]/', '', $group);
+$usergroup = preg_replace('/[^-_0-9a-zA-Z]/', '', $usergroup);
+$DB = preg_replace('/[^0-9]/', '', $DB);
+$adastats = preg_replace('/[^-_0-9a-zA-Z]/', '', $adastats);
+$SIPmonitorLINK = preg_replace('/[^-_0-9a-zA-Z]/', '', $SIPmonitorLINK);
+$IAXmonitorLINK = preg_replace('/[^-_0-9a-zA-Z]/', '', $IAXmonitorLINK);
+$UGdisplay = preg_replace('/[^-_0-9a-zA-Z]/', '', $UGdisplay);
+$UidORname = preg_replace('/[^-_0-9a-zA-Z]/', '', $UidORname);
+$orderby = preg_replace('/[^-_0-9a-zA-Z]/', '', $orderby);
+$SERVdisplay = preg_replace('/[^-_0-9a-zA-Z]/', '', $SERVdisplay);
+$RECmonitorLINK = preg_replace('/[^-_0-9a-zA-Z]/', '', $RECmonitorLINK);
+$server_ip = preg_replace('/[^-\._0-9a-zA-Z]/', '', $server_ip);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
 
 if ($non_latin < 1)
 	{
@@ -150,8 +177,8 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
@@ -230,14 +257,6 @@ $authrec=$row[0];
 if ($authrec=='1') {$RECmonitorLINK = 1;} else {$RECmonitorLINK = 0;}
    
 
-$NOW_TIME = date("Y-m-d H:i:s");
-$FILE_TIME = date("Ymd-His");
-$NOW_DAY = date("Y-m-d");
-$NOW_HOUR = date("H:i:s");
-$STARTtime = date("U");
-$epochSIXhoursAGO = ($STARTtime - 21600);
-$timeSIXhoursAGO = date("Y-m-d H:i:s",$epochSIXhoursAGO);
-
 $stmt="select campaign_id from vicidial_campaigns where active='Y';";
 if ($non_latin > 0)
 {
@@ -271,8 +290,6 @@ while ($i < $usergroups_to_print)
 	$usergroups[$i] =$row[0];
 	$i++;
 	}
-
-if (!isset($RR))   {$RR=4;}
 
 $NFB = '<b><font size=6 face="courier">';
 $NFE = '</font></b>';

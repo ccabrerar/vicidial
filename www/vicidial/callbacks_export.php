@@ -1,10 +1,11 @@
 <?php
 # callbacks_export.php
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 200622-1615 - First build 
+# 220228-2126 - Added allow_web_debug system setting
 #
 
 require("dbconnect_mysqli.php");
@@ -14,51 +15,40 @@ $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
-if (isset($_GET["days"]))				{$days=$_GET["days"];}
-	elseif (isset($_POST["days"]))		{$days=$_POST["days"];}
-if (isset($_GET["user"]))				{$user=$_GET["user"];}
-	elseif (isset($_POST["user"]))		{$user=$_POST["user"];}
-if (isset($_GET["list_id"]))			{$list_id=$_GET["list_id"];}
-	elseif (isset($_POST["list_id"]))	{$list_id=$_POST["list_id"];}
-if (isset($_GET["campaign_id"]))			{$campaign_id=$_GET["campaign_id"];}
-	elseif (isset($_POST["campaign_id"]))	{$campaign_id=$_POST["campaign_id"];}
-if (isset($_GET["user_group"]))				{$user_group=$_GET["user_group"];}
-	elseif (isset($_POST["user_group"]))	{$user_group=$_POST["user_group"];}
-if (isset($_GET["stage"]))				{$stage=$_GET["stage"];}
-	elseif (isset($_POST["stage"]))		{$stage=$_POST["stage"];}
-if (isset($_GET["confirm_transfer"]))			{$confirm_transfer=$_GET["confirm_transfer"];}
-	elseif (isset($_POST["confirm_transfer"]))	{$confirm_transfer=$_POST["confirm_transfer"];}
 if (isset($_GET["DB"]))					{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))		{$DB=$_POST["DB"];}
 if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
 	elseif (isset($_POST["submit"]))	{$submit=$_POST["submit"];}
 if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))	{$SUBMIT=$_POST["SUBMIT"];}
-if (isset($_GET["file_download"]))					{$file_download=$_GET["file_download"];}
+if (isset($_GET["file_download"]))				{$file_download=$_GET["file_download"];}
 	elseif (isset($_POST["file_download"]))		{$file_download=$_POST["file_download"];}
-
-if (isset($_GET["query_date"]))			{$query_date=$_GET["query_date"];}
+if (isset($_GET["query_date"]))				{$query_date=$_GET["query_date"];}
 	elseif (isset($_POST["query_date"]))	{$query_date=$_POST["query_date"];}
 if (isset($_GET["end_date"]))			{$end_date=$_GET["end_date"];}
 	elseif (isset($_POST["end_date"]))	{$end_date=$_POST["end_date"];}
 if (isset($_GET["cb_groups"]))			{$cb_groups=$_GET["cb_groups"];}
 	elseif (isset($_POST["cb_groups"]))	{$cb_groups=$_POST["cb_groups"];}
-if (isset($_GET["cb_user_groups"]))			{$cb_user_groups=$_GET["cb_user_groups"];}
-	elseif (isset($_POST["cb_user_groups"]))	{$cb_user_groups=$_POST["cb_user_groups"];}
-if (isset($_GET["cb_lists"]))			{$cb_lists=$_GET["cb_lists"];}
-	elseif (isset($_POST["cb_lists"]))	{$cb_lists=$_POST["cb_lists"];}
-if (isset($_GET["cb_users"]))			{$cb_users=$_GET["cb_users"];}
-	elseif (isset($_POST["cb_users"]))	{$cb_users=$_POST["cb_users"];}
-if (isset($_GET["callback_time_start"]))			{$callback_time_start=$_GET["callback_time_start"];}
-	elseif (isset($_POST["callback_time_start"]))	{$callback_time_start=$_POST["callback_time_start"];}
-if (isset($_GET["callback_time_end"]))			{$callback_time_end=$_GET["callback_time_end"];}
-	elseif (isset($_POST["callback_time_end"]))	{$callback_time_end=$_POST["callback_time_end"];}
+
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
+$StarTtimE = date("U");
+$TODAY = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+if (!isset($cb_groups)) {$cb_groups=array();}
+if (!isset($query_date)) {$query_date = $TODAY;}
+if (!isset($end_date)) {$end_date = $TODAY;}
+$ip = getenv("REMOTE_ADDR");
+$date = date("r");
+$ip = getenv("REMOTE_ADDR");
+$browser = getenv("HTTP_USER_AGENT");
+$report_name="CALLBACKS EXPORT";
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,enable_languages,language_method,qc_features_active FROM system_settings;";
+$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,enable_languages,language_method,qc_features_active,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -69,9 +59,22 @@ if ($qm_conf_ct > 0)
 	$SSenable_languages =			$row[3];
 	$SSlanguage_method =			$row[4];
 	$SSqc_features_active =			$row[5];
+	$SSallow_web_debug =			$row[6];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$query_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date);
+$end_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $end_date);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+$search_archived_data = preg_replace('/[^-_0-9a-zA-Z]/', '', $search_archived_data);
+$file_download = preg_replace('/[^-_0-9a-zA-Z]/', '', $file_download);
+$report_display_type = preg_replace('/[^-_0-9a-zA-Z]/', '', $report_display_type);
+
+# Variables filtered further down in the code
+# $cb_groups
 
 if ($non_latin < 1)
 	{
@@ -80,22 +83,9 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
-
-$StarTtimE = date("U");
-$TODAY = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-if (!isset($group)) {$group=array();}
-if (!isset($users)) {$users=array();}
-if (!isset($query_date)) {$query_date = $TODAY;}
-if (!isset($end_date)) {$end_date = $TODAY;}
-$ip = getenv("REMOTE_ADDR");
-$date = date("r");
-$ip = getenv("REMOTE_ADDR");
-$browser = getenv("HTTP_USER_AGENT");
-$report_name="CALLBACKS EXPORT";
 
 $stmt="SELECT selected_language,qc_enabled from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
@@ -212,7 +202,6 @@ $NWE = "')\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP>";
 
 if ($SUBMIT) 
 	{
-
 	##### BEGIN log visit to the vicidial_report_log table #####
 	$LOGip = getenv("REMOTE_ADDR");
 	$LOGbrowser = getenv("HTTP_USER_AGENT");
@@ -296,6 +285,10 @@ if ($SUBMIT)
 
 	if (count($cb_groups)>0 && $query_date)
 		{
+		for ($i=0; $i<count($cb_groups); $i++) 
+			{
+			$cb_groups[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $cb_groups[$i]);
+			}
 
 		if (in_array("ALL", $cb_groups)) 
 			{

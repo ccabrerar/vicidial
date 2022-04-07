@@ -1,7 +1,7 @@
 <?php
 # callbacks_bulk_move.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 150218-0923 - First build based on callbacks_bulk_change.php
@@ -10,6 +10,7 @@
 # 170409-1548 - Added IP List validation code
 # 180508-0115 - Added new help display
 # 191013-0853 - Fixes for PHP7
+# 220224-1656 - Added allow_web_debug system setting
 #
 
 require("dbconnect_mysqli.php");
@@ -39,7 +40,6 @@ if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
 	elseif (isset($_POST["submit"]))	{$submit=$_POST["submit"];}
 if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))	{$SUBMIT=$_POST["SUBMIT"];}
-
 if (isset($_GET["new_list_id"]))			{$new_list_id=$_GET["new_list_id"];}
 	elseif (isset($_POST["new_list_id"]))	{$new_list_id=$_POST["new_list_id"];}
 if (isset($_GET["new_status"]))				{$new_status=$_GET["new_status"];}
@@ -61,11 +61,13 @@ if (isset($_GET["purge_uncalled_records"]))			{$purge_uncalled_records=$_GET["pu
 if (isset($_GET["revert_status"]))			{$revert_status=$_GET["revert_status"];}
 	elseif (isset($_POST["revert_status"]))	{$revert_status=$_POST["revert_status"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,enable_languages,language_method,qc_features_active FROM system_settings;";
+$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,enable_languages,language_method,qc_features_active,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -76,19 +78,48 @@ if ($qm_conf_ct > 0)
 	$SSenable_languages =			$row[3];
 	$SSlanguage_method =			$row[4];
 	$SSqc_features_active =			$row[5];
+	$SSallow_web_debug =			$row[6];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$list_id = preg_replace('/[^0-9a-zA-Z]/', '', $list_id);
+$new_list_id = preg_replace('/[^0-9a-zA-Z]/', '', $new_list_id);
+$days = preg_replace('/[^-0-9]/', '', $days);
+$days_uncalled = preg_replace('/[^-0-9]/', '', $days_uncalled);
+$stage = preg_replace('/[^-_0-9a-zA-Z]/', '', $stage);
+$confirm_transfer = preg_replace('/[^-_0-9a-zA-Z]/', '', $confirm_transfer);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+$purge_called_records = preg_replace('/[^-_0-9a-zA-Z]/', '', $purge_called_records);
+$purge_uncalled_records = preg_replace('/[^-_0-9a-zA-Z]/', '', $purge_uncalled_records);
+
+# Variables filtered further down in the code
+# $cb_lists
+# $cb_groups
+# $cb_user_groups
+# $cb_users
 
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$revert_status = preg_replace('/[^-_0-9a-zA-Z]/', '', $revert_status);
+	$new_status = preg_replace('/[^-_0-9a-zA-Z]/', '', $new_status);
+	$campaign_id = preg_replace('/[^-_0-9a-zA-Z]/', '', $campaign_id);
+	$user = preg_replace('/[^-_0-9a-zA-Z]/', '', $user);
+	$user_group = preg_replace('/[^-_0-9a-zA-Z]/', '', $user_group);
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$revert_status = preg_replace('/[^-_0-9\p{L}]/u', '', $revert_status);
+	$new_status = preg_replace('/[^-_0-9\p{L}]/u', '', $new_status);
+	$campaign_id = preg_replace('/[^-_0-9\p{L}]/u', '', $campaign_id);
+	$user = preg_replace('/[^-_0-9\p{L}]/u', '', $user);
+	$user_group = preg_replace('/[^-_0-9\p{L}]/u', '', $user_group);
 	}
 
 $StarTtimE = date("U");
@@ -119,6 +150,7 @@ if (strlen($user) < 1)			{$category='USERS';			$record_id=$user;}
 if (strlen($user_group) < 1)	{$category='USERGROUPS';	$record_id=$user_group;}
 if (strlen($list_id) < 1)		{$category='LISTS';			$record_id=$list_id;}
 if (strlen($campaign_id) < 1)	{$category='CAMPAIGNS';		$record_id=$campaign_id;}
+$cb_dispos=array("CALLBK","CBHOLD");
 
 $auth=0;
 $auth_message = user_authorization($PHP_AUTH_USER,$PHP_AUTH_PW,'',1,0);
@@ -547,12 +579,16 @@ if ($SUBMIT && $new_list_id && ($new_status || $revert_status))
 			}
 		else 
 			{
-			$usersSQL=" and vc.user in ('".implode("','", $cb_users)."') ";
+			$usersSQLx="";
 			$usersQS="";
 			for ($i=0; $i<count($cb_users); $i++) 
 				{
+				$cb_users[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $cb_users[$i]);
 				$usersQS.="&cb_users[]=".$cb_users[$i];
+				if ($i > 0) {$usersSQL.="','";}
+				$usersSQLx.="$cb_users[$i]";
 				}
+			$usersSQL=" and vc.user in ('".$usersSQLx."') ";
 			}
 		}
 
@@ -574,12 +610,16 @@ if ($SUBMIT && $new_list_id && ($new_status || $revert_status))
 			}
 		else 
 			{
-			$user_groupsSQL=" and vc.user_group in ('".implode("','", $cb_user_groups)."') ";
+			$user_groupsSQLx="";
 			$user_groupsQS="";
 			for ($i=0; $i<count($cb_user_groups); $i++) 
 				{
+				$cb_user_groups[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $cb_user_groups[$i]);
 				$user_groupsQS.="&cb_user_groups[]=".$cb_user_groups[$i];
+				if ($i > 0) {$user_groupsSQL.="','";}
+				$user_groupsSQLx.="$cb_user_groups[$i]";
 				}
+			$user_groupsSQL=" and vc.user_group in ('".$user_groupsSQLx."') ";
 			}
 		}
 
@@ -610,12 +650,16 @@ if ($SUBMIT && $new_list_id && ($new_status || $revert_status))
 			}
 		else 
 			{
-			$listsSQL=" and vc.list_id in ('".implode("','", $cb_lists)."') ";
+			$listsSQLx="";
 			$listsQS="";
 			for ($i=0; $i<count($cb_lists); $i++) 
 				{
+				$cb_lists[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $cb_lists[$i]);
 				$listsQS.="&cb_lists[]=".$cb_lists[$i];
+				if ($i > 0) {$listsSQL.="','";}
+				$listsSQLx.="$cb_lists[$i]";
 				}
+			$listsSQL=" and vc.list_id in ('".$listsSQLx."') ";
 			}
 		}
 
@@ -637,12 +681,16 @@ if ($SUBMIT && $new_list_id && ($new_status || $revert_status))
 			}
 		else
 			{
-			$groupsSQL=" and vc.campaign_id in ('".implode("','", $cb_groups)."') ";
+			$groupsSQLx="";
 			$groupsQS="";
 			for ($i=0; $i<count($cb_groups); $i++) 
 				{
+				$cb_groups[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $cb_groups[$i]);
 				$groupsQS.="&cb_groups[]=".$cb_groups[$i];
+				if ($i > 0) {$groupsSQL.="','";}
+				$groupsSQLx.="$cb_groups[$i]";
 				}
+			$groupsSQL=" and vc.campaign_id in ('".$groupsSQLx."') ";
 			}
 		}
 
@@ -656,7 +704,6 @@ if ($SUBMIT && $new_list_id && ($new_status || $revert_status))
 	$callback_dispo_stmt="SELECT distinct status from vicidial_statuses where scheduled_callback='Y' UNION SELECT distinct status from vicidial_campaign_statuses where scheduled_callback='Y' ".preg_replace("/vc\./", "", $groupsSQL);
 	if ($DB) {echo $callback_dispo_stmt."<BR>";}
 	$callback_dispo_rslt=mysql_to_mysqli($callback_dispo_stmt, $link);
-	$cb_dispos=array("CALLBK","CBHOLD");
 	while ($cb_dispo_row=mysqli_fetch_row($callback_dispo_rslt)) 
 		{
 		array_push($cb_dispos, "$cb_dispo_row[0]");
@@ -852,10 +899,30 @@ else if ($SUBMIT && $new_list_id  && ($new_status || $revert_status) && (count($
 
 	echo "<table width='500' align='center'><tr><td align='left'>";
 	echo _QXZ("You are about to transfer")." $callback_ct "._QXZ("callbacks from")."<BR><UL>\n";
-	if (count($cb_groups)>0) {echo "<LI>"._QXZ("campaigns")." ".implode(",", $cb_groups)."</LI>\n";}
-	if (count($cb_lists)>0) {echo "<LI>"._QXZ("lists")." ".implode(",", $cb_lists)."</LI>\n";}
-	if (count($cb_user_groups)>0) {echo"<LI>". _QXZ("user groups")." ".implode(",", $cb_user_groups)."</LI>\n";}
-	if (count($cb_users)>0) {echo "<LI>"._QXZ("users")." ".implode(",", $cb_users)."</LI>\n";}
+	if (count($cb_groups)>0) 
+		{
+		$temp_groups = implode(",", $cb_groups);
+		$temp_groups = preg_replace('/[^-\,\_0-9\p{L}]/u', '', $temp_groups);
+		echo "<LI>"._QXZ("campaigns")." ".$temp_groups."</LI>\n";
+		}
+	if (count($cb_lists)>0) 
+		{
+		$temp_lists = implode(",", $cb_lists);
+		$temp_lists = preg_replace('/[^-\,\_0-9\p{L}]/u', '', $temp_lists);
+		echo "<LI>"._QXZ("lists")." ".$temp_lists."</LI>\n";
+		}
+	if (count($cb_user_groups)>0) 
+		{
+		$temp_groups = implode(",", $cb_user_groups);
+		$temp_groups = preg_replace('/[^-\,\_0-9\p{L}]/u', '', $temp_groups);
+		echo"<LI>". _QXZ("user groups")." ".$temp_groups."</LI>\n";
+		}
+	if (count($cb_users)>0) 
+		{
+		$temp_users = implode(",", $cb_users);
+		$temp_users = preg_replace('/[^-\,\_0-9\p{L}]/u', '', $temp_users);
+		echo "<LI>"._QXZ("users")." ".$temp_users."</LI>\n";
+		}
 	if ($days_uncalled) {echo "<LI>"._QXZ("where leads have been LIVE and uncalled for ")." $days_uncalled "._QXZ("days")."</LI>\n";}
 	echo "</UL><BR>";
 

@@ -1,7 +1,7 @@
 <?php
 # dispo_list_quota.php
 # 
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to be used in the "Dispo URL" field of a campaign
 # or in-group. It can check to see if a list should be set to active=N if the 
@@ -23,6 +23,7 @@
 #
 # CHANGES
 # 210813-1340 - First Build
+# 220219-2311 - Added allow_web_debug system setting
 #
 
 $api_script = 'dispo_list_quota';
@@ -63,6 +64,7 @@ if (isset($_GET["DB"]))						{$DB=$_GET["DB"];}
 if (isset($_GET["log_to_file"]))			{$log_to_file=$_GET["log_to_file"];}
 	elseif (isset($_POST["log_to_file"]))	{$log_to_file=$_POST["log_to_file"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 #$DB = '1';	# DEBUG override
 $US = '_';
@@ -97,6 +99,20 @@ header ("Content-type: text/html; charset=utf-8");
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
+$stmt = "SELECT use_non_latin,enable_languages,language_method,allow_web_debug FROM system_settings;";
+$rslt=mysql_to_mysqli($stmt, $link);
+#if ($DB) {echo "$stmt\n";}
+$qm_conf_ct = mysqli_num_rows($rslt);
+if ($qm_conf_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$non_latin =				$row[0];
+	$SSenable_languages =		$row[1];
+	$SSlanguage_method =		$row[2];
+	$SSallow_web_debug =		$row[3];
+	}
+if ($SSallow_web_debug < 1) {$DB=0;}
+
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$user';";
 if ($DB) {echo "|$stmt|\n";}
@@ -107,18 +123,6 @@ if ($sl_ct > 0)
 	$row=mysqli_fetch_row($rslt);
 	$VUselected_language =		$row[0];
 	}
-
-$stmt = "SELECT use_non_latin,enable_languages,language_method FROM system_settings;";
-$rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
-$qm_conf_ct = mysqli_num_rows($rslt);
-if ($qm_conf_ct > 0)
-	{
-	$row=mysqli_fetch_row($rslt);
-	$non_latin =				$row[0];
-	$SSenable_languages =		$row[1];
-	$SSlanguage_method =		$row[2];
-	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
@@ -128,16 +132,19 @@ $log_to_file = preg_replace('/[^0-9]/','',$log_to_file);
 $list_quota_field = preg_replace('/[^-_0-9a-zA-Z]/', '', $list_quota_field);
 $list_quota_count = preg_replace('/[^-_0-9a-zA-Z]/', '', $list_quota_count);
 $clear_from_hopper = preg_replace('/[^0-9]/','',$clear_from_hopper);
+$logged_count = preg_replace('/[^-_0-9a-zA-Z]/', '', $logged_count);
 
 if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
-	$pass=preg_replace("/[^-_0-9a-zA-Z]/","",$pass);
+	$pass=preg_replace("/[^-\.\+\/\=_0-9a-zA-Z]/","",$pass);
 	$quota_status = preg_replace('/[^-_0-9a-zA-Z]/','',$quota_status);
 	$dispo = preg_replace('/[^-_0-9a-zA-Z]/', '', $dispo);
 	}
 else
 	{
+	$user=preg_replace("/[^-_0-9\p{L}]/u","",$user);
+	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
 	$quota_status = preg_replace('/[^-_0-9\p{L}]/u','',$quota_status);
 	$dispo = preg_replace('/[^-_0-9\p{L}]/u','',$dispo);
 	}

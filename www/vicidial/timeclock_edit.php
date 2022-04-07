@@ -1,7 +1,7 @@
 <?php
 # timeclock_edit.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -19,6 +19,7 @@
 # 151203-1902 - Fix for javascript timezone issues in editing of timeclock entries
 # 160329-1610 - Fix for DST time and editing entries
 # 170409-1539 - Added IP List validation code
+# 220226-1726 - Added allow_web_debug system setting
 #
 
 header ("Content-type: text/html; charset=utf-8");
@@ -61,11 +62,20 @@ if (isset($_GET["submit"]))						{$submit=$_GET["submit"];}
 if (isset($_GET["SUBMIT"]))						{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))			{$SUBMIT=$_POST["SUBMIT"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
+$StarTtimE = date("U");
+$TODAY = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$isdst = date("I");
+$ip = getenv("REMOTE_ADDR");
+$invalid_record=0;
+
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,user_territories_active,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,user_territories_active,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -76,16 +86,39 @@ if ($qm_conf_ct > 0)
 	$user_territories_active =		$row[3];
 	$SSenable_languages =			$row[4];
 	$SSlanguage_method =			$row[5];
+	$SSallow_web_debug =			$row[6];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-$StarTtimE = date("U");
-$TODAY = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-$isdst = date("I");
-$ip = getenv("REMOTE_ADDR");
-$invalid_record=0;
+$timeclock_id = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$timeclock_id);
+$oldLOGINepoch = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$oldLOGINepoch);
+$oldLOGOUTepoch = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$oldLOGOUTepoch);
+$oldLOGINdate = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$oldLOGINdate);
+$oldLOGOUTdate = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$oldLOGOUTdate);
+$LOGINepoch = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$LOGINepoch);
+$LOGOUTepoch = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$LOGOUTepoch);
+$notes = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$notes);
+$LOGINevent_id = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$LOGINevent_id);
+$LOGOUTevent_id = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$LOGOUTevent_id);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/',"",$submit);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/',"",$SUBMIT);
+
+if ($non_latin < 1)
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$user = preg_replace('/[^-_0-9a-zA-Z]/', '', $user);
+	$stage = preg_replace('/[^-_0-9a-zA-Z]/',"",$stage);
+	}
+else
+	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$user = preg_replace('/[^-_0-9\p{L}]/u', '', $user);
+	$stage = preg_replace('/[^-_0-9\p{L}]/u',"",$stage);
+	}
 
 $local_gmt=0;
 $stmt = "SELECT local_gmt FROM servers where active='Y';";
@@ -99,29 +132,6 @@ if ($sr_conf_ct > 0)
 	}
 $local_gmt = ($local_gmt + $isdst);
 $local_gmt_sec = ($local_gmt * -3600);
-
-if ($non_latin < 1)
-	{
-	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
-	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
-	}
-else
-	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
-	}
-$user = preg_replace("/'|\"|\\\\|;/","",$user);
-$timeclock_id = preg_replace("/'|\"|\\\\|;/","",$timeclock_id);
-$stage = preg_replace("/'|\"|\\\\|;/","",$stage);
-$oldLOGINepoch = preg_replace("/'|\"|\\\\|;/","",$oldLOGINepoch);
-$oldLOGOUTepoch = preg_replace("/'|\"|\\\\|;/","",$oldLOGOUTepoch);
-$oldLOGINdate = preg_replace("/'|\"|\\\\|;/","",$oldLOGINdate);
-$oldLOGOUTdate = preg_replace("/'|\"|\\\\|;/","",$oldLOGOUTdate);
-$LOGINepoch = preg_replace("/'|\"|\\\\|;/","",$LOGINepoch);
-$LOGOUTepoch = preg_replace("/'|\"|\\\\|;/","",$LOGOUTepoch);
-$notes = preg_replace("/'|\"|\\\\|;/","",$notes);
-$LOGINevent_id = preg_replace("/'|\"|\\\\|;/","",$LOGINevent_id);
-$LOGOUTevent_id = preg_replace("/'|\"|\\\\|;/","",$LOGOUTevent_id);
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}

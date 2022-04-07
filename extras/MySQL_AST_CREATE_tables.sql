@@ -691,7 +691,9 @@ max_inbound_filter_min_sec SMALLINT(5) default '-1',
 status_group_id VARCHAR(20) default '',
 mobile_number VARCHAR(20) default '',
 two_factor_override  ENUM('NOT_ACTIVE','ENABLED','DISABLED') default 'NOT_ACTIVE',
-manual_dial_filter VARCHAR(50) default 'DISABLED'
+manual_dial_filter VARCHAR(50) default 'DISABLED',
+user_location VARCHAR(100) default '',
+download_invalid_files ENUM('0','1') default '0'
 ) ENGINE=MyISAM;
 
 CREATE UNIQUE INDEX user ON vicidial_users (user);
@@ -753,7 +755,10 @@ agent_xfer_park_3way ENUM('Y','N') default 'Y',
 admin_ip_list VARCHAR(30) default '',
 agent_ip_list VARCHAR(30) default '',
 api_ip_list VARCHAR(30) default '',
-webphone_layout VARCHAR(255) default ''
+webphone_layout VARCHAR(255) default '',
+allowed_queue_groups TEXT,
+reports_header_override ENUM('DISABLED','LOGO_ONLY_SMALL','LOGO_ONLY_LARGE','ALT_1','ALT_2','ALT_3','ALT_4') default 'DISABLED',
+admin_home_url VARCHAR(255) default ''
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaigns (
@@ -910,7 +915,7 @@ blind_monitor_message VARCHAR(255) default 'Someone is blind monitoring your ses
 blind_monitor_filename VARCHAR(100) default '',
 inbound_queue_no_dial ENUM('DISABLED','ENABLED','ALL_SERVERS','ENABLED_WITH_CHAT','ALL_SERVERS_WITH_CHAT') default 'DISABLED',
 timer_action_destination VARCHAR(30) default '',
-enable_xfer_presets ENUM('DISABLED','ENABLED','CONTACTS') default 'DISABLED',
+enable_xfer_presets ENUM('DISABLED','ENABLED','STAGING','CONTACTS') default 'DISABLED',
 hide_xfer_number_to_dial ENUM('DISABLED','ENABLED') default 'DISABLED',
 manual_dial_prefix VARCHAR(20) default '',
 customer_3way_hangup_logging ENUM('DISABLED','ENABLED') default 'ENABLED',
@@ -1078,7 +1083,10 @@ call_limit_24hour_scope ENUM('SYSTEM_WIDE','CAMPAIGN_LISTS') default 'SYSTEM_WID
 call_limit_24hour TINYINT(3) UNSIGNED default '0',
 call_limit_24hour_override VARCHAR(40) default 'DISABLED',
 cid_group_id_two VARCHAR(20) default '---DISABLED---',
-incall_tally_threshold_seconds SMALLINT(5) UNSIGNED default '0'
+incall_tally_threshold_seconds SMALLINT(5) UNSIGNED default '0',
+auto_alt_threshold TINYINT(3) UNSIGNED default '0',
+pause_max_url TEXT,
+agent_hide_hangup ENUM('Y','N') default 'N'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_lists (
@@ -1122,7 +1130,9 @@ inbound_drop_voicemail VARCHAR(20),
 inbound_after_hours_voicemail VARCHAR(20),
 qc_scorecard_id VARCHAR(20) DEFAULT '',
 qc_statuses_id VARCHAR(20) DEFAULT '',
-qc_web_form_address VARCHAR(255) DEFAULT ''
+qc_web_form_address VARCHAR(255) DEFAULT '',
+auto_alt_threshold TINYINT(3) default '-1',
+cid_group_id VARCHAR(20) default '---DISABLED---'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_statuses (
@@ -1870,7 +1880,7 @@ admin_row_click ENUM('0', '1') default '1',
 admin_screen_colors VARCHAR(20) default 'default',
 ofcom_uk_drop_calc ENUM('1','0') default '0',
 agent_screen_colors VARCHAR(20) default 'default',
-script_remove_js ENUM('1','0') default '1',
+script_remove_js ENUM('1','0','2','3','4','5','6') default '1',
 manual_auto_next ENUM('1','0') default '0',
 user_new_lead_limit ENUM('1','0') default '0',
 agent_xfer_park_3way ENUM('1','0') default '0',
@@ -1945,7 +1955,9 @@ label_owner VARCHAR(60) default '',
 label_entry_list_id VARCHAR(60) default '',
 call_limit_24hour ENUM('0','1') default '0',
 call_limit_24hour_reset DATETIME default '2000-01-01 00:00:01',
-allowed_sip_stacks ENUM('SIP','PJSIP','SIP_and_PJSIP') default 'SIP'
+allowed_sip_stacks ENUM('SIP','PJSIP','SIP_and_PJSIP') default 'SIP',
+agent_hide_hangup ENUM('1','0','2','3','4','5','6') default '0',
+allow_web_debug ENUM('0','1','2','3','4','5','6') default '0'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaigns_list_mix (
@@ -3703,6 +3715,20 @@ last_sql TEXT,
 KEY ajax_dbtime_key (db_time)
 ) ENGINE=MyISAM CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
+CREATE TABLE vicidial_sync_log (
+user VARCHAR(20) default '',
+start_time DATETIME NOT NULL,
+db_time DATETIME NOT NULL,
+run_time VARCHAR(20) default '0',
+php_script VARCHAR(40) NOT NULL,
+action VARCHAR(100) default '',
+lead_id INT(10) UNSIGNED default '0',
+stage VARCHAR(200) default '',
+session_name VARCHAR(40) default '',
+last_sql TEXT,
+KEY ajax_dbtime_key (db_time)
+) ENGINE=MyISAM CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
 CREATE TABLE vicidial_settings_containers (
 container_id VARCHAR(40) PRIMARY KEY NOT NULL,
 container_notes VARCHAR(255) default '',
@@ -4685,6 +4711,26 @@ index (call_date),
 unique index cicc_cd (caller_code, uniqueid)
 ) ENGINE=MyISAM;
 
+CREATE TABLE vicidial_queue_groups (
+queue_group VARCHAR(20) NOT NULL,
+queue_group_name VARCHAR(40) NOT NULL,
+included_campaigns TEXT,
+included_inbound_groups TEXT,
+user_group VARCHAR(20) default '---ALL---',
+active ENUM('Y','N')
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_dial_cid_log (
+caller_code VARCHAR(30) NOT NULL,
+call_date DATETIME,
+call_type ENUM('OUT','OUTBALANCE','MANUAL','OVERRIDE','3WAY') default 'OUT',
+call_alt VARCHAR(20) default '',
+outbound_cid VARCHAR(20) default '',
+outbound_cid_type VARCHAR(20) default '',
+index (caller_code),
+index (call_date)
+) ENGINE=MyISAM;
+
 
 ALTER TABLE vicidial_email_list MODIFY message text character set utf8;
 
@@ -4756,9 +4802,9 @@ INSERT INTO vicidial_shifts SET shift_id='24HRMIDNIGHT',shift_name='24 hours 7 d
 INSERT INTO vicidial_conf_templates SET template_id='SIP_generic',template_name='SIP phone generic',template_contents="type=friend\nhost=dynamic\ncanreinvite=no\ncontext=default";
 INSERT INTO vicidial_conf_templates SET template_id='IAX_generic',template_name='IAX phone generic',template_contents="type=friend\nhost=dynamic\nmaxauthreq=10\nauth=md5,plaintext,rsa\ncontext=default";
 
-INSERT INTO vicidial_server_carriers SET carrier_id='PARAXIP', carrier_name='TEST ParaXip CPD example',registration_string='', template_id='--NONE--', account_entry="[paraxip]\ndisallow=all\nallow=ulaw\ntype=peer\nusername=paraxip\nfromuser=paraxip\nsecret=test\nfromdomain=10.10.10.16\nhost=10.10.10.15\ninsecure=port,invite\noutboundproxy=10.0.0.7", protocol='SIP', globals_string='TESTSIPTRUNKP = SIP/paraxip', dialplan_entry="exten => _5591999NXXXXXX,1,AGI(agi://127.0.0.1:4577/call_log)\nexten => _5591999NXXXXXX,2,Dial(${TESTSIPTRUNKP}/${EXTEN:4},,To)\nexten => _5591999NXXXXXX,3,Hangup", server_ip='10.10.10.15', active='N';
-INSERT INTO vicidial_server_carriers SET carrier_id='SIPEXAMPLE', carrier_name='TEST SIP carrier example',registration_string='register => testcarrier:test@10.10.10.15:5060', template_id='--NONE--', account_entry="[testcarrier]\ndisallow=all\nallow=ulaw\ntype=friend\nusername=testcarrier\nsecret=test\nhost=dynamic\ndtmfmode=rfc2833\ncontext=trunkinbound\n", protocol='SIP', globals_string='TESTSIPTRUNK = SIP/testcarrier', dialplan_entry="exten => _91999NXXXXXX,1,AGI(agi://127.0.0.1:4577/call_log)\nexten => _91999NXXXXXX,2,Dial(${TESTSIPTRUNK}/${EXTEN:2},,To)\nexten => _91999NXXXXXX,3,Hangup\n", server_ip='10.10.10.15', active='N';
-INSERT INTO vicidial_server_carriers SET carrier_id='IAXEXAMPLE', carrier_name='TEST IAX carrier example',registration_string='register => testcarrier:test@10.10.10.15:4569', template_id='--NONE--', account_entry="[testcarrier]\ndisallow=all\nallow=ulaw\ntype=friend\naccountcode=testcarrier\nsecret=test\nhost=dynamic\ncontext=trunkinbound\n", protocol='IAX2', globals_string='TESTIAXTRUNK = IAX2/testcarrier', dialplan_entry="exten => _71999NXXXXXX,1,AGI(agi://127.0.0.1:4577/call_log)\nexten => _71999NXXXXXX,2,Dial(${TESTIAXTRUNK}/${EXTEN:2},,To)\nexten => _71999NXXXXXX,3,Hangup\n", server_ip='10.10.10.15', active='N';
+INSERT INTO vicidial_server_carriers SET carrier_id='PARAXIP', carrier_name='TEST ParaXip CPD example',registration_string='', template_id='--NONE--', account_entry="[paraxip]\ndisallow=all\nallow=ulaw\ntype=peer\nusername=paraxip\nfromuser=paraxip\nsecret=test\nfromdomain=10.10.10.16\nhost=10.10.10.15\ninsecure=port,invite\noutboundproxy=10.0.0.7", protocol='SIP', globals_string='TESTSIPTRUNKP = SIP/paraxip', dialplan_entry="exten => _5591999NXXXXXX,1,AGI(agi://127.0.0.1:4577/call_log)\nexten => _5591999NXXXXXX,2,Dial(${TESTSIPTRUNKP}/${EXTEN:4},${CAMPDTO},To)\nexten => _5591999NXXXXXX,3,Hangup", server_ip='10.10.10.15', active='N';
+INSERT INTO vicidial_server_carriers SET carrier_id='SIPEXAMPLE', carrier_name='TEST SIP carrier example',registration_string='register => testcarrier:test@10.10.10.15:5060', template_id='--NONE--', account_entry="[testcarrier]\ndisallow=all\nallow=ulaw\ntype=friend\nusername=testcarrier\nsecret=test\nhost=dynamic\ndtmfmode=rfc2833\ncontext=trunkinbound\n", protocol='SIP', globals_string='TESTSIPTRUNK = SIP/testcarrier', dialplan_entry="exten => _91999NXXXXXX,1,AGI(agi://127.0.0.1:4577/call_log)\nexten => _91999NXXXXXX,2,Dial(${TESTSIPTRUNK}/${EXTEN:2},${CAMPDTO},To)\nexten => _91999NXXXXXX,3,Hangup\n", server_ip='10.10.10.15', active='N';
+INSERT INTO vicidial_server_carriers SET carrier_id='IAXEXAMPLE', carrier_name='TEST IAX carrier example',registration_string='register => testcarrier:test@10.10.10.15:4569', template_id='--NONE--', account_entry="[testcarrier]\ndisallow=all\nallow=ulaw\ntype=friend\naccountcode=testcarrier\nsecret=test\nhost=dynamic\ncontext=trunkinbound\n", protocol='IAX2', globals_string='TESTIAXTRUNK = IAX2/testcarrier', dialplan_entry="exten => _71999NXXXXXX,1,AGI(agi://127.0.0.1:4577/call_log)\nexten => _71999NXXXXXX,2,Dial(${TESTIAXTRUNK}/${EXTEN:2},${CAMPDTO},To)\nexten => _71999NXXXXXX,3,Hangup\n", server_ip='10.10.10.15', active='N';
 
 INSERT INTO vicidial_inbound_dids SET did_pattern='default', did_description='Default DID', did_active='Y', did_route='EXTEN', extension='9998811112', exten_context='default';
 
@@ -4945,6 +4991,9 @@ ALTER TABLE vicidial_peer_event_log_archive MODIFY peer_event_id INT(9) UNSIGNED
 
 CREATE TABLE vicidial_inbound_caller_codes_archive LIKE vicidial_inbound_caller_codes;
 
+CREATE TABLE vicidial_dial_cid_log_archive LIKE vicidial_dial_cid_log;
+CREATE UNIQUE INDEX caller_code_date on vicidial_dial_cid_log_archive (caller_code,call_date);
+
 GRANT RELOAD ON *.* TO cron@'%';
 GRANT RELOAD ON *.* TO cron@localhost;
 
@@ -5026,7 +5075,8 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('PHONE_DEFAULTS','Default phone settings for preloading','PHONE_DEFAULTS','---ALL---','# Below are all phone settings recognized under the PHONE_DEFAULTS \r\n# container type and the type of data each accepts.  Any setting that\r\n# uses a default value in the database has said value pre-set below\r\n\r\n# 10 char max\r\nvoicemail_id => \r\n \r\n# 15 char max\r\nserver_ip => \r\n\r\n# 100 char max\r\npass => \r\n\r\n# 10 char max\r\nstatus => \r\n\r\n# Y/N only\r\nactive => Y\r\n\r\n# 50 char max\r\nphone_type => \r\n\r\n# \'SIP\',\'Zap\',\'IAX2\' or \'EXTERNAL\'\r\nprotocol => SIP\r\n\r\n# positive or negatier 2-decimal floating point number\r\nlocal_gmt => -5.00\r\n\r\n# 20 char max\r\nvoicemail_dump_exten => 85026666666666\r\n\r\n# 20 char max\r\noutbound_cid => \r\n\r\n# 100 char max\r\nemail => \r\n\r\n# 15 char max\r\ntemplate_id => \r\n\r\n# text, conf_override can span multiple lines, see below\r\nconf_override => \r\n# type=friend\r\n# host=dynamic\r\n# canreinvite=no\r\n# context=default1\r\n\r\n# 50 char max\r\nphone_context => default\r\n\r\n# Unsigned - max value 65536\r\nphone_ring_timeout => 60\r\n\r\n# 20 char max\r\nconf_secret => test\r\n\r\n# Y/N only\r\ndelete_vm_after_email => N\r\n\r\n# Options - Y, N, or Y_API_LAUNCH\r\nis_webphone => N\r\n\r\n# Y/N only\r\nuse_external_server_ip => N\r\n\r\n# 100 char max\r\ncodecs_list => \r\n\r\n# 0/1 only\r\ncodecs_with_template => 0\r\n\r\n# Options - Y, N, TOGGLE, or TOGGLE_OFF\r\nwebphone_dialpad => Y\r\n\r\n# Y/N only\r\non_hook_agent => N\r\n\r\n# Y/N only\r\nwebphone_auto_answer => Y\r\n\r\n# 30 char max\r\nvoicemail_timezone => eastern\r\n\r\n# 255 char max\r\nvoicemail_options => \r\n\r\n# 20 char max\r\nuser_group => ---ALL---\r\n\r\n# 100 char max\r\nvoicemail_greeting => \r\n\r\n# 20 char max\r\nvoicemail_dump_exten_no_inst => 85026666666667\r\n\r\n# Y/N only\r\nvoicemail_instructions => Y\r\n\r\n# Y/N only\r\non_login_report => N\r\n\r\n# 40 char max\r\nunavail_dialplan_fwd_exten => \r\n\r\n# 100 char max\r\nunavail_dialplan_fwd_context => \r\n\r\n# text\r\nnva_call_url => \r\n\r\n# 40 char max\r\nnva_search_method => \r\n\r\n# 255 char max\r\nnva_error_filename => \r\n\r\n# Integer, any size\r\nnva_new_list_id => 995\r\n\r\n# 10 char max\r\nnva_new_phone_code => 1\r\n\r\n# 6 char max\r\nnva_new_status => NVAINS\r\n\r\n# Y/N only\r\nwebphone_dialbox => Y\r\n\r\n# Y/N only\r\nwebphone_mute => Y\r\n\r\n# Y/N only\r\nwebphone_volume => Y\r\n\r\n# Y/N only\r\nwebphone_debug => N\r\n\r\n# 20 char max\r\noutbound_alt_cid => \r\n\r\n# Y/N only\r\nconf_qualify => Y\r\n\r\n# 255 char max\r\nwebphone_layout => \r\n');
 INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('QC_STATUS_TEMPLATE','Sample QC Status Template','QC_TEMPLATE','---ALL---','# These types of containers are simply used for creating a list of \r\n# QC-enabled statuses to apply to campaigns, lists, and ingroups.\r\n# Simply put all the statuses that this template should allow in\r\n# a comma-delimited string, as below:\r\n\r\nSALE,DNC,NI');
 INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('INTERNATIONAL_DNC_IMPORT','Process DNC lists of various countries from FTP site','PERL_CLI','---ALL---','# This setting container is used for the international DNC system. \r\n# The below two settings are mandatory for importing suppression lists\r\n# and tell the import process where to look for new files and where to\r\n# move them when handled.  These settings cannot have the same value. \r\n--file-dir=/root/ftp\r\n--file-destination=/root/ftp/DONE\r\n\r\n# Uncomment below and set the status to whatever custom disposition you \r\n# would like already-loaded leads to be set to when they dedupe against\r\n# a country\'s DNC list (default is \"DNCI\")\r\n# --dnc-status-override=BMNR\r\n\r\n# The below settings are optional for when files are stored on a remote\r\n# server.  It is strongly recommended these settings are not used and\r\n# that the processing scripts and files are stored locally on the same\r\n# server. \r\n# --ftp-host=localhost\r\n# --ftp-user=user\r\n# --ftp-pwd=pwd\r\n# --ftp-port=21\r\n# --ftp-passive=1\r\n'),('DNC_IMPORT_FORMATS','Import formats for DNC files','OTHER','---ALL---','# This setting container is used for storing file formats used when \r\n# loading DNC suppression lists into the dialer. \r\n#\r\n# import template => (delimited|fixed),delimiter,phone1(,phone2,phone3)\r\n#\r\n# For delimited files, the phone1 value should be the index value of\r\n# the field where the phone appears.  The first array index is 0 and\r\n# indexes continue through the natural numbers.\r\n\r\n# In delimited files, acceptable values for the \"delimiter\" field are:\r\n# - \"tab\", \"pipe\", \"comma\", \"quote-comma\"\r\nBASIC_DELIMITED_FORMAT => delimited,pipe,0\r\n\r\n# If the phone number is split into multiple fields (ex: area code in\r\n# one field, rest of the number in another), simply list additional \r\n# indices of the phone number fields separated by commas in the order \r\n# in which the data should be combined to make the complete phone \r\n# number \r\nDELIMITED_WITH_AC_AND_EXCHANGE_SPLIT => delimited,tab,0,1\r\n\r\n# For fixed-length files, the phone field values should be of the type:\r\n# - \"starting_position|length\"\r\nBASIC_FIXED_FORMAT => fixed,,0|10\r\n\r\n# (delimited|fixed) is not used for CSV/Excel files, so all that needs \r\n# providing for those is the index field value(s) of the phone number\r\nBASIC_CSV_OR_EXCEL_FORMAT => ,,0'),('DNC_CURRENT_BLOCKED_LISTS','Lists currently blocked due to pending DNC scrub','READ_ONLY','---ALL---','');
+INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('USER_LOCATIONS_SYSTEM','User Locations List','OTHER','---ALL---',';location|description\n|default\n');
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1648',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1657',db_schema_update_date=NOW(),reload_timestamp=NOW();

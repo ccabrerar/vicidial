@@ -1,4 +1,4 @@
-Call URL features(start call url, dispo call url, etc...)
+Call URL features(start call url, dispo call url, etc...)	Updated: 2022-02-12
 
 
 
@@ -123,6 +123,31 @@ populated just like the web form address, with the VAR in the front and using
 --A--user_custom_one--B-- to define variables. 
 
 
+################################################################################
+# DEAD CALL TRIGGER URL
+################################################################################
+
+Dead Call Trigger URL - Similar to the Start Call URL feature, this is sent if 
+the Dead Call Seconds Trigger is met while an agent is on a call and the 
+customer hangs up the phone. You can use the agc/dispo_call_url.php script with
+this feature to send an email upon its triggering. (example at bottom of page)
+
+
+################################################################################
+# PAUSE MAX URL
+################################################################################
+
+Pause Max URL - This feature is different because no call details are available 
+because the agent is on pause at the time of the trigger. Because of this, only 
+the user_custom... variables and other user variables are available to this 
+function: --A--user--B--, --A--campaign--B--, --A--fullname--B--, 
+--A--user_custom_one--B--, --A--user_custom_two--B--, 
+--A--user_custom_three--B--, --A--user_custom_four--B--, 
+--A--user_custom_five--B--, --A--user_group--B--, --A--agent_email--B--
+You can use the agc/dispo_call_url.php script with this feature to send an email
+upon its triggering. (example at bottom of page)
+
+
 
 
 ################################################################################
@@ -174,3 +199,8 @@ VARhttp://192.168.192.3/agc/vdc_call_url_test.php?leadID=--A--lead_id--B--&listI
 
 VARhttp://www.server.org/env.php?one=--A--user_custom_one--B--&two=--A--user_custom_two--B--
   (http://www.server.org/env.php?one=asmith&two=hS87yt2)
+
+https://www.server.org/agc/dispo_send_email.php?container_id=TEST_DEAD_EMAIL&lead_id=--A--lead_id--B--&call_id=--A--call_id--B--&dispo=DEAD&user=NOAGENTURL--A--user--B--&pass=--A--call_id--B--&sale_status=ALL-STATUSES&called_count=--A--called_count--B--&log_to_file=1
+
+https://www.server.org/agc/dispo_send_email.php?container_id=TEST_PAUSE_MAX_EMAIL&lead_id=PAUSEMAX&call_id=PAUSEMAX&user=NOAGENTURL--A--user--B--&pass=--A--user--B--&sale_status=ALL-STATUSES&log_to_file=1
+

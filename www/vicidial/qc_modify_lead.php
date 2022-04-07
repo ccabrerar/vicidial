@@ -6,7 +6,7 @@
 # qc_modify_lead.php
 # 
 # Copyright (C) 2012  poundteam.com    LICENSE: AGPLv2
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to allow QC review and modification of leads, contributed by poundteam.com
 #
@@ -31,6 +31,7 @@
 # 210304-1650 - Added modify_leads=5 read-only option
 # 210306-0854 - Redesign of QC module
 # 210827-1818 - Fix for security issue
+# 220224-2143 - Added allow_web_debug system setting
 #
 
 require("dbconnect_mysqli.php");
@@ -167,13 +168,36 @@ if (isset($_POST["referring_section"]))			{$referring_section=$_POST["referring_
 if (isset($_POST["referring_element"]))			{$referring_element=$_POST["referring_element"];}
 	elseif (isset($_GET["referring_element"]))	{$referring_element=$_GET["referring_element"];}
 
+$DB=preg_replace('/[^0-9]/','',$DB);
+
+#############################################
+##### START SYSTEM_SETTINGS LOOKUP #####
+$stmt = "SELECT use_non_latin,custom_fields_enabled,enable_languages,language_method,active_modules,log_recording_access,allow_web_debug FROM system_settings;";
+$rslt=mysql_to_mysqli($stmt, $link);
+#if ($DB) {echo "$stmt\n";}
+$qm_conf_ct = mysqli_num_rows($rslt);
+if ($qm_conf_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$non_latin =				$row[0];
+	$custom_fields_enabled =	$row[1];
+	$SSenable_languages =		$row[2];
+	$SSlanguage_method =		$row[3];
+	$active_modules =			$row[4];
+	$log_recording_access =		$row[5];
+	$SSallow_web_debug =		$row[6];
+	}
+if ($SSallow_web_debug < 1) {$DB=0;}
+##### END SETTINGS LOOKUP #####
+###########################################
+
 $CBchangeANYtoUSER=preg_replace('/[^A-Z]/','',$CBchangeANYtoUSER);
 $CBchangeDATE=preg_replace('/[^A-Z]/','',$CBchangeDATE);
 $CBchangeUSERtoANY=preg_replace('/[^A-Z]/','',$CBchangeUSERtoANY);
 $CBchangeUSERtoUSER=preg_replace('/[^A-Z]/','',$CBchangeUSERtoUSER);
 $claim_QC=preg_replace('/[^A-Z]/','',$claim_QC);
 $referring_section=preg_replace('/[^A-Z]/','',$referring_section);
-$DB=preg_replace('/[^0-9]/','',$DB);
+$call_began = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$call_began);
 
 if ($non_latin < 1)
 	{
@@ -215,8 +239,8 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	$user=preg_replace('/[^-_0-9\p{L}]/u','',$user);
 	$tsr=preg_replace('/[^-_0-9\p{L}]/u','',$tsr);
 	$CBuser=preg_replace('/[^-_0-9\p{L}]/u','',$CBuser);
@@ -264,7 +288,6 @@ $alt_phone = preg_replace('/\+/',' ',$alt_phone);
 $email = preg_replace('/\+/',' ',$email);
 $security_phrase = preg_replace('/\+/',' ',$security_phrase);
 $owner = preg_replace('/\+/',' ',$owner);
-
 
 $list_id = preg_replace('/[^0-9]/','',$list_id);
 $lead_id = preg_replace('/[^0-9a-zA-Z]/','',$lead_id);
@@ -322,40 +345,6 @@ switch($referring_section) # was $scorecard_source
 	case "INGROUP":
 		$back_link.="&group_id=$referring_element";
 		break;
-	}
-
-#############################################
-##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,custom_fields_enabled,enable_languages,language_method,active_modules,log_recording_access FROM system_settings;";
-$rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
-$qm_conf_ct = mysqli_num_rows($rslt);
-if ($qm_conf_ct > 0)
-	{
-	$row=mysqli_fetch_row($rslt);
-	$non_latin =				$row[0];
-	$custom_fields_enabled =	$row[1];
-	$SSenable_languages =		$row[2];
-	$SSlanguage_method =		$row[3];
-	$active_modules =			$row[4];
-	$log_recording_access =			$row[5];
-	}
-##### END SETTINGS LOOKUP #####
-###########################################
-
-if ($non_latin < 1)
-	{
-	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/','',$PHP_AUTH_USER);
-	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/','',$PHP_AUTH_PW);
-
-	$old_phone = preg_replace('/[^0-9]/','',$old_phone);
-	$phone_number = preg_replace('/[^0-9]/','',$phone_number);
-	$alt_phone = preg_replace('/[^0-9]/','',$alt_phone);
-	}	# end of non_latin
-else
-	{
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
 	}
 
 $rights_stmt = "SELECT modify_leads,qc_enabled,full_name,modify_leads,user_group,selected_language from vicidial_users where user='$PHP_AUTH_USER';";

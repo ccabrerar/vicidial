@@ -1,7 +1,7 @@
 <?php
 # vicidial_chat_customer_side.php
 #
-# Copyright (C) 2016  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # The main page of the customer chat interface.  This will display a form for the customer
 # to fill out to attempt to initiate a chat with an available agent in the in-group 
@@ -18,6 +18,7 @@
 # 160120-1925 - Fixed missing list_id on vicidial_list inserts, Issue #915. Added show_email option
 # 160203-1052 - Added display of chat message after ending it
 # 160805-2315 - Added coding to show logos in customer display
+# 220220-1915 - Added allow_web_debug system setting
 #
 
 require("dbconnect_mysqli.php");
@@ -57,16 +58,44 @@ $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 
 $lead_id = preg_replace("/[^0-9]/","",$lead_id);
+$user = preg_replace("/\'|\"|\\\\|;/","",$user);
 $chat_id = preg_replace('/[^- \_\.0-9a-zA-Z]/','',$chat_id);
 $group_id = preg_replace('/[^- \_0-9a-zA-Z]/','',$group_id);
 $language = preg_replace('/[^-\_0-9a-zA-Z]/','',$language);
 $available_agents = preg_replace('/[^-\_0-9a-zA-Z]/','',$available_agents);
 $status_link = preg_replace('/[^-\_0-9a-zA-Z]/','',$status_link);
 $show_email = preg_replace('/[^-\_0-9a-zA-Z]/','',$show_email);
+$send_request = preg_replace('/[^-\_0-9a-zA-Z]/','',$send_request);
+$join_chat = preg_replace('/[^-\_0-9a-zA-Z]/','',$join_chat);
+$stage = preg_replace('/[^-\_0-9a-zA-Z]/','',$stage);
+
+#############################################
+##### START SYSTEM_SETTINGS LOOKUP #####
+$VUselected_language='';
+$stmt = "SELECT use_non_latin,enable_languages,language_method,default_language,allow_chats,chat_url,allow_web_debug FROM system_settings;";
+$rslt=mysql_to_mysqli($stmt, $link);
+        if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+if ($DB) {echo "$stmt\n";}
+$qm_conf_ct = mysqli_num_rows($rslt);
+if ($qm_conf_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$non_latin =			$row[0];
+	$SSenable_languages =	$row[1];
+	$SSlanguage_method =	$row[2];
+	$SSdefault_language =	$row[3];
+	$SSallow_chats =		$row[4];
+	$SSchat_url =			$row[5];
+	$SSallow_web_debug =	$row[6];
+	}
+$VUselected_language = $SSdefault_language;
+if ($SSallow_web_debug < 1) {$DB=0;}
+##### END SETTINGS LOOKUP #####
+###########################################
 
 if ($non_latin < 1)
 	{
-	$user = preg_replace('/[^- \'\+\_\.0-9a-zA-Z]/','',$user);
+	$user = preg_replace('/[^- \+\_\.0-9a-zA-Z]/','',$user);
 	$first_name = preg_replace('/[^- \'\+\_\.0-9a-zA-Z]/','',$first_name);
 	$first_name = preg_replace('/\+/',' ',$first_name);
 	$last_name = preg_replace('/[^- \'\+\_\.0-9a-zA-Z]/','',$last_name);
@@ -81,30 +110,8 @@ else
 	$first_name = preg_replace("/\"|\\\\|;/","",$first_name);
 	$last_name = preg_replace("/\"|\\\\|;/","",$last_name);
 	$email = preg_replace("/\'|\"|\\\\|;/","",$email);
-	$phone_number = preg_replace('/[^- \'\+\.\:\/\@\%\_0-9a-zA-Z]/','',$email);
+	$phone_number = preg_replace('/[^- \'\+\.\:\/\@\%\_0-9a-zA-Z]/','',$phone_number);
 	}
-
-#############################################
-##### START SYSTEM_SETTINGS LOOKUP #####
-$VUselected_language='';
-$stmt = "SELECT use_non_latin,enable_languages,language_method,default_language,allow_chats,chat_url FROM system_settings;";
-$rslt=mysql_to_mysqli($stmt, $link);
-        if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
-if ($DB) {echo "$stmt\n";}
-$qm_conf_ct = mysqli_num_rows($rslt);
-if ($qm_conf_ct > 0)
-	{
-	$row=mysqli_fetch_row($rslt);
-	$non_latin =			$row[0];
-	$SSenable_languages =	$row[1];
-	$SSlanguage_method =	$row[2];
-	$SSdefault_language =	$row[3];
-	$SSallow_chats =		$row[4];
-	$SSchat_url =			$row[5];
-	}
-$VUselected_language = $SSdefault_language;
-##### END SETTINGS LOOKUP #####
-###########################################
 
 if (strlen($language) > 1)
 	{
@@ -790,7 +797,7 @@ $chat_title= _QXZ("Request chat with agent"); # This can be modified for customi
 	<audio id='CustomerChatAudioAlertFile'><source src="sounds/chat_alert.mp3" type="audio/mpeg"></audio>
 	</form>
 	</body>
-<?
+<?php
 }
 ?>
 

@@ -1,10 +1,11 @@
 <?php 
 # bench_agent_assign.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 190815-2242 - First build
+# 220224-1753 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
@@ -36,11 +37,13 @@ if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
 if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))	{$SUBMIT=$_POST["SUBMIT"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,user_territories_active,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,user_territories_active,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -51,9 +54,16 @@ if ($qm_conf_ct > 0)
 	$user_territories_active =		$row[3];
 	$SSenable_languages =			$row[4];
 	$SSlanguage_method =			$row[5];
+	$SSallow_web_debug =			$row[6];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$list_id = preg_replace('/[^0-9]/', '', $list_id);
+$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/', '', $server_ip);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
 
 if ($non_latin < 1)
 	{
@@ -61,18 +71,16 @@ if ($non_latin < 1)
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
 	$absent_agent = preg_replace('/[^-_0-9a-zA-Z]/', '', $absent_agent);
 	$bench_agent = preg_replace('/[^-_0-9a-zA-Z]/', '', $bench_agent);
+	$group = preg_replace('/[^-_0-9a-zA-Z]/', '', $group);
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
-	$absent_agent = preg_replace("/'|\"|\\\\|;/","",$absent_agent);
-	$bench_agent = preg_replace("/'|\"|\\\\|;/","",$bench_agent);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$absent_agent = preg_replace('/[^-_0-9\p{L}]/u', '', $absent_agent);
+	$bench_agent = preg_replace('/[^-_0-9\p{L}]/u', '', $bench_agent);
+	$group = preg_replace('/[^-_0-9\p{L}]/u', '', $group);
 	}
-
-$list_id = preg_replace('/[^0-9]/', '', $list_id);
-$group = preg_replace('/[^-_0-9a-zA-Z]/', '', $group);
-$server_ip = preg_replace('/[^-._0-9a-zA-Z]/', '', $server_ip);
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}

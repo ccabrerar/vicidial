@@ -20,7 +20,7 @@
 # Based on perl scripts in ViciDial from Matt Florell and post:
 # http://www.vicidial.org/VICIDIALforum/viewtopic.php?p=22506&sid=ca5347cffa6f6382f56ce3db9fb3d068#22506
 #
-# Copyright (C) 2021  I. Taushanov, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  I. Taushanov, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 90615-1701 - First version
@@ -63,6 +63,8 @@
 # 210407-2023 - Added vicidial_peer_event_log archiving
 # 210819-0826 - Added vicidial_inbound_caller_codes archiving
 # 210912-1546 - Added --api-log-days=X and --api-only flags
+# 220309-2246 - Added --api-archive-days=X and --api-archive-only flags
+# 220312-0859 - Added vicidial_dial_cid_log table archiving, same as vicidial_dial_log
 #
 
 $CALC_TEST=0;
@@ -73,6 +75,7 @@ $did_log_archive=0;
 $park_log_archive=0;
 $wipe_closer_log=0;
 $api_log_only=0;
+$api_archive_only=0;
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -105,12 +108,15 @@ if (length($ARGV[0])>1)
 		print "  [--park-log-days=XX] = OPTIONAL, number of days to archive park_log table only past\n";
 		print "  [--api-only] = OPTIONAL, only archive vicidial_api_log table then exit\n";
 		print "       [--api-log-days=XX] = REQUIRED FOR --api-only, number of days to archive vicidial_api_log table only past\n";
+		print "  [--api-archive-only] = OPTIONAL, only purge vicidial_api_log_archive table then exit\n";
+		print "       [--api-archive-days=XX] = REQUIRED FOR --api-archive-only, number of days to purge vicidial_api_log_archive table only past\n";
 		print "  [--cpd-log-purge-days=XX] = OPTIONAL, number of days to purge vicidial_cpd_log table only past\n";
 		print "  [--wipe-closer-log] = OPTIONAL, deletes all records from vicidial_closer_log after archiving\n";
 		print "  [--wipe-all-being-archived] = OPTIONAL, deletes all records from most tables after archiving\n";
 		print "  [--quiet] = quiet\n";
 		print "  [--calc-test] = date calculation test only\n";
-		print "  [--test] = test\n\n";
+		print "  [--test] = test\n";
+		print "  [--debug] = debug output for some options\n\n";
 		exit;
 		}
 	else
@@ -123,6 +129,11 @@ if (length($ARGV[0])>1)
 			{
 			$T=1;   $TEST=1;
 			print "\n-----TESTING-----\n\n";
+			}
+		if ($args =~ /--debug/i)
+			{
+			$DB=1;
+			print "\n-----DEBUG-----\n\n";
 			}
 		if ($args =~ /--calc-test/i)
 			{
@@ -245,6 +256,7 @@ if (length($ARGV[0])>1)
 			if ($Q < 1) 
 				{print "\n----- API LOG ARCHIVE ONLY -----\n\n";}
 			}
+
 		if ($args =~ /--api-log-days=/i)
 			{
 			$api_log_archive++;
@@ -256,6 +268,26 @@ if (length($ARGV[0])>1)
 				{$apidays=1825;}
 			if ($Q < 1) 
 				{print "\n----- API LOG ARCHIVE ACTIVE, DAYS: $apidays -----\n\n";}
+			}
+
+		if ($args =~ /--api-archive-only/i)
+			{
+			$api_archive_only++;
+			if ($Q < 1) 
+				{print "\n----- API ARCHIVE PURGE ONLY -----\n\n";}
+			}
+
+		if ($args =~ /--api-archive-days=/i)
+			{
+			$api_log_archive_purge++;
+			@data_in = split(/--api-archive-days=/,$args);
+			$apiarchivedays = $data_in[1];
+			$apiarchivedays =~ s/ .*$//gi;
+			$apiarchivedays =~ s/\D//gi;
+			if ($apiarchivedays > 999999)
+				{$apiarchivedays=1825;}
+			if ($Q < 1) 
+				{print "\n----- API ARCHIVE PURGE, DAYS: $apiarchivedays -----\n\n";}
 			}
 
 		if ($args =~ /--cpd-log-purge-days=/i)
@@ -369,6 +401,19 @@ if ($api_log_archive > 0)
 	if ($APIsec < 10) {$APIsec = "0$APIsec";}
 	$APIdel_time = "$APIyear-$APImon-$APImday $APIhour:$APImin:$APIsec";
 	}
+if ($api_log_archive_purge > 0) 
+	{
+	$APIPURGEdel_epoch = ($secX - (86400 * $apiarchivedays));   # X days ago
+	($APIPURGEsec,$APIPURGEmin,$APIPURGEhour,$APIPURGEmday,$APIPURGEmon,$APIPURGEyear,$APIPURGEwday,$APIPURGEyday,$APIPURGEisdst) = localtime($APIPURGEdel_epoch);
+	$APIPURGEyear = ($APIPURGEyear + 1900);
+	$APIPURGEmon++;
+	if ($APIPURGEmon < 10) {$APIPURGEmon = "0$APIPURGEmon";}
+	if ($APIPURGEmday < 10) {$APIPURGEmday = "0$APIPURGEmday";}
+	if ($APIPURGEhour < 10) {$APIPURGEhour = "0$APIPURGEhour";}
+	if ($APIPURGEmin < 10) {$APIPURGEmin = "0$APIPURGEmin";}
+	if ($APIPURGEsec < 10) {$APIPURGEsec = "0$APIPURGEsec";}
+	$APIPURGEdel_time = "$APIPURGEyear-$APIPURGEmon-$APIPURGEmday $APIPURGEhour:$APIPURGEmin:$APIPURGEsec";
+	}
 
 if ($cpd_log_purge > 0)
 	{
@@ -395,6 +440,7 @@ if ( (!$Q) && ($recording_log_archive > 0) ) {print "REC $RECORDINGdays days ( $
 if ( (!$Q) && ($did_log_archive > 0) ) {print "DID $diddays days ( $DIDdel_time|$DIDdel_epoch ) from current date \n\n";}
 if ( (!$Q) && ($park_log_archive > 0) ) {print "PARK $parkdays days ( $PARKdel_time|$PARKdel_epoch ) from current date \n\n";}
 if ( (!$Q) && ($api_log_archive > 0) ) {print "API $apidays days ( $APIdel_time|$APIdel_epoch ) from current date \n\n";}
+if ( (!$Q) && ($api_log_archive_purge > 0) ) {print "API PURGE $apiarchivedays days ( $APIPURGEdel_time|$APIPURGEdel_epoch ) from current date \n\n";}
 if ( (!$Q) && ($cpd_log_purge > 0) ) {print "CPD $CPDdays days ( $CPDdel_time|$CPDdel_epoch ) from current date \n\n";}
 
 if ($CALC_TEST > 0)
@@ -627,6 +673,35 @@ if (!$T)
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			}
 		##### END vicidial_dial_log_archive trim processing #####
+
+		##### BEGIN vicidial_dial_cid_log_archive trim processing #####
+		$stmtA = "SELECT count(*) from vicidial_dial_cid_log_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$vicidial_dial_cid_log_archive_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		if (!$Q) {print "Trimming vicidial_dial_cid_log_archive table...  ($vicidial_dial_cid_log_archive_count)\n";}
+		
+		$rv = $sthA->err();
+		if (!$rv) 
+			{
+			$stmtA = "DELETE FROM vicidial_dial_cid_log_archive WHERE call_date < '$del_time';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			if (!$Q) {print "$sthArows rows deleted from vicidial_dial_cid_log_archive table \n";}
+
+			$stmtA = "optimize table vicidial_dial_cid_log_archive;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			}
+		##### END vicidial_dial_cid_log_archive trim processing #####
 
 
 		if ($only_trim_archive > 1)
@@ -1208,6 +1283,53 @@ if (!$T)
 		##### END vicidial_dial_log DAILY processing #####
 
 
+		##### BEGIN vicidial_dial_cid_log DAILY processing #####
+		$stmtA = "SELECT count(*) from vicidial_dial_cid_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$vicidial_dial_cid_log_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		$stmtA = "SELECT count(*) from vicidial_dial_cid_log_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$vicidial_dial_cid_log_archive_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		if (!$Q) {print "\nProcessing vicidial_dial_cid_log table...  ($vicidial_dial_cid_log_count|$vicidial_dial_cid_log_archive_count)\n";}
+		$stmtA = "INSERT IGNORE INTO vicidial_dial_cid_log_archive SELECT * from vicidial_dial_cid_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows inserted into vicidial_dial_cid_log_archive table \n";}
+		
+		$rv = $sthA->err();
+		if (!$rv) 
+			{
+			$stmtA = "DELETE FROM vicidial_dial_cid_log WHERE call_date < '$del_time';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			if (!$Q) {print "$sthArows rows deleted from vicidial_dial_cid_log table \n";}
+
+			$stmtA = "optimize table vicidial_dial_cid_log;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			}
+		##### END vicidial_dial_cid_log DAILY processing #####
+
+
 		##### BEGIN vicidial_api_log DAILY processing #####
 		$stmtA = "SELECT count(*) from vicidial_api_log;";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
@@ -1587,6 +1709,67 @@ if (!$T)
 			}
 		exit;
 		}
+	########## END --api-log-only flag processing ##########
+
+
+	########## BEGIN --api-archive-only flag processing ##########
+	if ($api_archive_only > 0)
+		{
+		##### vicidial_api_log_archive
+		$stmtA = "SELECT count(*) from vicidial_api_log_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$vicidial_api_log_archive_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		if (!$Q) {print "\nProcessing vicidial_api_log_archive table...  ($vicidial_api_log_archive_count)\n";}
+
+		$stmtA = "DELETE FROM vicidial_api_log_archive WHERE api_date < '$APIPURGEdel_time';";
+		if ($DB > 0) {print "     DEBUG: |$stmtA|\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows deleted from vicidial_api_log_archive table \n";}
+
+		$stmtA = "optimize table vicidial_api_log_archive;";
+		if ($DB > 0) {print "     DEBUG: |$stmtA|\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+
+		$stmtA = "SELECT count(*) from vicidial_api_urls_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$vicidial_api_urls_archive_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		if (!$Q) {print "\nProcessing vicidial_api_urls_archive table...  ($vicidial_api_urls_archive_count)\n";}
+		
+		$stmtA = "DELETE FROM vicidial_api_urls_archive WHERE api_date < '$APIPURGEdel_time';";
+		if ($DB > 0) {print "     DEBUG: |$stmtA|\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows deleted from vicidial_api_urls_archive table \n";}
+
+		$stmtA = "optimize table vicidial_api_urls_archive;";
+		if ($DB > 0) {print "     DEBUG: |$stmtA|\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+
+		exit;
+		}
+	########## END --api-archive-only flag processing ##########
+
 
 	if ($queue_log > 0)
 		{
@@ -2148,6 +2331,58 @@ if (!$T)
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		}
 
+
+	##### vicidial_dial_cid_log
+	$stmtA = "SELECT count(*) from vicidial_dial_cid_log;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$vicidial_dial_cid_log_count =	$aryA[0];
+		}
+	$sthA->finish();
+
+	$stmtA = "SELECT count(*) from vicidial_dial_cid_log_archive;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$vicidial_dial_cid_log_archive_count =	$aryA[0];
+		}
+	$sthA->finish();
+
+	if (!$Q) {print "\nProcessing vicidial_dial_cid_log table...  ($vicidial_dial_cid_log_count|$vicidial_dial_cid_log_archive_count)\n";}
+	$stmtA = "INSERT IGNORE INTO vicidial_dial_cid_log_archive SELECT * from vicidial_dial_cid_log;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	
+	$sthArows = $sthA->rows;
+	if (!$Q) {print "$sthArows rows inserted into vicidial_dial_cid_log_archive table \n";}
+	
+	$rv = $sthA->err();
+	if (!$rv) 
+		{	
+		if ($wipe_all > 0)
+			{$stmtA = "DELETE FROM vicidial_dial_cid_log;";}
+		else
+			{$stmtA = "DELETE FROM vicidial_dial_cid_log WHERE call_date < '$del_time';";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows deleted from vicidial_dial_cid_log table \n";}
+
+		$stmtA = "optimize table vicidial_dial_cid_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+
+		$stmtA = "optimize table vicidial_dial_cid_log_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		}
 
 
 	##### vicidial_api_log

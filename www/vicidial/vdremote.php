@@ -4,7 +4,7 @@
 # make sure you have added a user to the vicidial_users MySQL table with at 
 # least user_level 4 to access this page the first time
 #
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # Changes
 # 50307-1721 - First version
@@ -22,10 +22,11 @@
 # 141229-1847 - Added code for on-the-fly language translations display
 # 170217-1213 - Fixed non-latin auth issue #995
 # 210618-1001 - Added CORS support
+# 220224-0820 - Added allow_web_debug system setting
 #
 
-$version = '2.14-14';
-$build = '210618-1001';
+$version = '2.14-15';
+$build = '220224-0820';
 $php_script='vdremote.php';
 
 require("dbconnect_mysqli.php");
@@ -35,38 +36,40 @@ $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
-if (isset($_GET["ADD"]))				{$ADD=$_GET["ADD"];}
-	elseif (isset($_POST["ADD"]))		{$ADD=$_POST["ADD"];}
+if (isset($_GET["ADD"]))			{$ADD=$_GET["ADD"];}
+	elseif (isset($_POST["ADD"]))	{$ADD=$_POST["ADD"];}
 if (isset($_GET["DB"]))				{$DB=$_GET["DB"];}
-	elseif (isset($_POST["DB"]))		{$DB=$_POST["DB"];}
-if (isset($_GET["user"]))				{$user=$_GET["user"];}
-	elseif (isset($_POST["user"]))		{$user=$_POST["user"];}
-if (isset($_GET["force_logout"]))				{$force_logout=$_GET["force_logout"];}
-	elseif (isset($_POST["force_logout"]))		{$force_logout=$_POST["force_logout"];}
+	elseif (isset($_POST["DB"]))	{$DB=$_POST["DB"];}
+if (isset($_GET["user"]))			{$user=$_GET["user"];}
+	elseif (isset($_POST["user"]))	{$user=$_POST["user"];}
+if (isset($_GET["force_logout"]))			{$force_logout=$_GET["force_logout"];}
+	elseif (isset($_POST["force_logout"]))	{$force_logout=$_POST["force_logout"];}
 if (isset($_GET["groups"]))				{$groups=$_GET["groups"];}
-	elseif (isset($_POST["groups"]))		{$groups=$_POST["groups"];}
-if (isset($_GET["remote_agent_id"]))				{$remote_agent_id=$_GET["remote_agent_id"];}
-	elseif (isset($_POST["remote_agent_id"]))		{$remote_agent_id=$_POST["remote_agent_id"];}
+	elseif (isset($_POST["groups"]))	{$groups=$_POST["groups"];}
+if (isset($_GET["remote_agent_id"]))			{$remote_agent_id=$_GET["remote_agent_id"];}
+	elseif (isset($_POST["remote_agent_id"]))	{$remote_agent_id=$_POST["remote_agent_id"];}
 if (isset($_GET["user_start"]))				{$user_start=$_GET["user_start"];}
-	elseif (isset($_POST["user_start"]))		{$user_start=$_POST["user_start"];}
-if (isset($_GET["number_of_lines"]))				{$number_of_lines=$_GET["number_of_lines"];}
-	elseif (isset($_POST["number_of_lines"]))		{$number_of_lines=$_POST["number_of_lines"];}
+	elseif (isset($_POST["user_start"]))	{$user_start=$_POST["user_start"];}
+if (isset($_GET["number_of_lines"]))			{$number_of_lines=$_GET["number_of_lines"];}
+	elseif (isset($_POST["number_of_lines"]))	{$number_of_lines=$_POST["number_of_lines"];}
 if (isset($_GET["server_ip"]))				{$server_ip=$_GET["server_ip"];}
 	elseif (isset($_POST["server_ip"]))		{$server_ip=$_POST["server_ip"];}
 if (isset($_GET["conf_exten"]))				{$conf_exten=$_GET["conf_exten"];}
-	elseif (isset($_POST["conf_exten"]))		{$conf_exten=$_POST["conf_exten"];}
+	elseif (isset($_POST["conf_exten"]))	{$conf_exten=$_POST["conf_exten"];}
 if (isset($_GET["status"]))				{$status=$_GET["status"];}
-	elseif (isset($_POST["status"]))		{$status=$_POST["status"];}
-if (isset($_GET["campaign_id"]))				{$campaign_id=$_GET["campaign_id"];}
-	elseif (isset($_POST["campaign_id"]))		{$campaign_id=$_POST["campaign_id"];}
+	elseif (isset($_POST["status"]))	{$status=$_POST["status"];}
+if (isset($_GET["campaign_id"]))			{$campaign_id=$_GET["campaign_id"];}
+	elseif (isset($_POST["campaign_id"]))	{$campaign_id=$_POST["campaign_id"];}
 if (isset($_GET["groups"]))				{$groups=$_GET["groups"];}
-	elseif (isset($_POST["groups"]))		{$groups=$_POST["groups"];}
+	elseif (isset($_POST["groups"]))	{$groups=$_POST["groups"];}
 if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
-	elseif (isset($_POST["submit"]))		{$submit=$_POST["submit"];}
+	elseif (isset($_POST["submit"]))	{$submit=$_POST["submit"];}
 if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
-	elseif (isset($_POST["SUBMIT"]))		{$SUBMIT=$_POST["SUBMIT"];}
+	elseif (isset($_POST["SUBMIT"]))	{$SUBMIT=$_POST["SUBMIT"];}
 
+if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (!isset($force_logout)) {$force_logout = 0;}
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 if (file_exists('options.php'))
 	{require('options.php');}
@@ -84,9 +87,9 @@ if ($force_logout)
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,custom_fields_enabled,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,custom_fields_enabled,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -98,23 +101,41 @@ if ($qm_conf_ct > 0)
 	$custom_fields_enabled =		$row[4];
 	$SSenable_languages =			$row[5];
 	$SSlanguage_method =			$row[6];
+	$SSallow_web_debug =			$row[7];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
+$remote_agent_id = preg_replace('/[^-_0-9a-zA-Z]/', '', $remote_agent_id);
+$query_date = preg_replace('/[^-_0-9a-zA-Z]/', '', $query_date);
+$ADD = preg_replace('/[^-_0-9a-zA-Z]/', '', $ADD);
+$force_logout = preg_replace('/[^-_0-9a-zA-Z]/', '', $force_logout);
+$user_start = preg_replace('/[^-_0-9a-zA-Z]/', '', $user_start);
+$number_of_lines = preg_replace('/[^-_0-9a-zA-Z]/', '', $number_of_lines);
+$status = preg_replace('/[^-_0-9a-zA-Z]/', '', $status);
+$conf_exten = preg_replace('/[^-_0-9a-zA-Z]/', '', $conf_exten);
+$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/', '', $server_ip);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+
+# Variables filtered further down in the code
+# $groups
+
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$user = preg_replace('/[^-_0-9a-zA-Z]/', '', $user);
+	$campaign_id = preg_replace('/[^-_0-9a-zA-Z]/', '', $campaign_id);
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$user = preg_replace('/[^-_0-9\p{L}]/u', '', $user);
+	$campaign_id = preg_replace('/[^-_0-9\p{L}]/u', '', $campaign_id);
 	}
-$remote_agent_id = preg_replace('/[^-_0-9a-zA-Z]/', '', $remote_agent_id);
-$query_date = preg_replace('/[^-_0-9a-zA-Z]/', '', $query_date);
 
 $popup_page = './closer_popup.php';
 $STARTtime = date("U");
@@ -267,8 +288,9 @@ if (strlen($ADD)>4)
 		$group_name_value = $rowx[1];
 		$groups_list .= "<input type=\"checkbox\" name=\"groups[]\" value=\"$group_id_value\"";
 		$p=0;
-		while ($p<50)
+		while ($p<100)
 			{
+			$groups[$p] = preg_replace('/[^-_0-9a-zA-Z]/', '', $groups[$p]);
 			if ($group_id_value == $groups[$p]) 
 				{
 				$groups_list .= " CHECKED";
@@ -626,7 +648,4 @@ echo "<font size=0>\n\n\n<br><br><br>\nscript runtime: $RUNtime seconds</font>";
 	
 exit; 
 
-
-
 ?>
-

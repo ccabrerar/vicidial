@@ -1,7 +1,7 @@
 <?php
 # callbacks_bulk_change.php
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 120819-0119 - First build
@@ -15,6 +15,8 @@
 # 170409-1547 - Added IP List validation code
 # 170822-2255 - Added screen color settings
 # 170829-0040 - Added screen color settings
+# 220217-2220 - Added input variable filtering
+# 220224-1752 - Added allow_web_debug system setting
 #
 
 require("dbconnect_mysqli.php");
@@ -32,8 +34,8 @@ if (isset($_GET["group"]))				{$group=$_GET["group"];}
 	elseif (isset($_POST["group"]))		{$group=$_POST["group"];}
 if (isset($_GET["stage"]))				{$stage=$_GET["stage"];}
 	elseif (isset($_POST["stage"]))		{$stage=$_POST["stage"];}
-if (isset($_GET["confirm_transfer"]))				{$confirm_transfer=$_GET["confirm_transfer"];}
-	elseif (isset($_POST["confirm_transfer"]))		{$confirm_transfer=$_POST["confirm_transfer"];}
+if (isset($_GET["confirm_transfer"]))			{$confirm_transfer=$_GET["confirm_transfer"];}
+	elseif (isset($_POST["confirm_transfer"]))	{$confirm_transfer=$_POST["confirm_transfer"];}
 if (isset($_GET["DB"]))					{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))		{$DB=$_POST["DB"];}
 if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
@@ -43,11 +45,13 @@ if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
 if (isset($_GET["convert_to_anyone"]))			{$convert_to_anyone=$_GET["convert_to_anyone"];}
 	elseif (isset($_POST["convert_to_anyone"]))	{$convert_to_anyone=$_POST["convert_to_anyone"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,webroot_writable,outbound_autodial_active,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -57,19 +61,34 @@ if ($qm_conf_ct > 0)
 	$SSoutbound_autodial_active =	$row[2];
 	$SSenable_languages =			$row[3];
 	$SSlanguage_method =			$row[4];
+	$SSallow_web_debug =			$row[5];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$convert_to_anyone = preg_replace('/[^-_0-9a-zA-Z]/', '', $convert_to_anyone);
+$confirm_transfer = preg_replace('/[^-_0-9a-zA-Z]/', '', $confirm_transfer);
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
 
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$old_user = preg_replace('/[^-_0-9a-zA-Z]/', '', $old_user);
+	$new_user = preg_replace('/[^-_0-9a-zA-Z]/', '', $new_user);
+	$group = preg_replace('/[^-_0-9a-zA-Z]/', '', $group);
+	$stage = preg_replace('/[^-_0-9a-zA-Z]/', '', $stage);
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$old_user = preg_replace('/[^-_0-9\p{L}]/u', '', $old_user);
+	$new_user = preg_replace('/[^-_0-9\p{L}]/u', '', $new_user);
+	$group = preg_replace('/[^-_0-9\p{L}]/u', '', $group);
+	$stage = preg_replace('/[^-_0-9\p{L}]/u', '', $stage);
 	}
 
 $StarTtimE = date("U");

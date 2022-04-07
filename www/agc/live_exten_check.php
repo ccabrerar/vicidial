@@ -1,7 +1,7 @@
 <?php
 # live_exten_check.php    version 2.14
 # 
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed purely to send whether the client channel is live and to what channel it is connected
 # This script depends on the server_ip being sent and also needs to have a valid user/pass from the vicidial_users table
@@ -43,10 +43,11 @@
 # 190111-0906 - Fix for PHP7
 # 210616-2105 - Added optional CORS support, see options.php for details
 # 210825-0905 - Fix for XSS security issue
+# 220220-0907 - Added allow_web_debug system setting
 #
 
-$version = '2.14-19';
-$build = '210825-0905';
+$version = '2.14-20';
+$build = '220220-0907';
 $php_script = 'live_exten_check.php';
 $SSagent_debug_logging=0;
 $startMS = microtime();
@@ -61,27 +62,22 @@ if (isset($_GET["pass"]))				{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))		{$pass=$_POST["pass"];}
 if (isset($_GET["server_ip"]))				{$server_ip=$_GET["server_ip"];}
 	elseif (isset($_POST["server_ip"]))		{$server_ip=$_POST["server_ip"];}
-if (isset($_GET["session_name"]))				{$session_name=$_GET["session_name"];}
-	elseif (isset($_POST["session_name"]))		{$session_name=$_POST["session_name"];}
+if (isset($_GET["session_name"]))			{$session_name=$_GET["session_name"];}
+	elseif (isset($_POST["session_name"]))	{$session_name=$_POST["session_name"];}
 if (isset($_GET["format"]))				{$format=$_GET["format"];}
-	elseif (isset($_POST["format"]))		{$format=$_POST["format"];}
+	elseif (isset($_POST["format"]))	{$format=$_POST["format"];}
 if (isset($_GET["exten"]))				{$exten=$_GET["exten"];}
 	elseif (isset($_POST["exten"]))		{$exten=$_POST["exten"];}
 if (isset($_GET["protocol"]))				{$protocol=$_GET["protocol"];}
 	elseif (isset($_POST["protocol"]))		{$protocol=$_POST["protocol"];}
-if (isset($_GET["favorites_count"]))				{$favorites_count=$_GET["favorites_count"];}
-	elseif (isset($_POST["favorites_count"]))		{$favorites_count=$_POST["favorites_count"];}
+if (isset($_GET["favorites_count"]))			{$favorites_count=$_GET["favorites_count"];}
+	elseif (isset($_POST["favorites_count"]))	{$favorites_count=$_POST["favorites_count"];}
 if (isset($_GET["favorites_list"]))				{$favorites_list=$_GET["favorites_list"];}
-	elseif (isset($_POST["favorites_list"]))		{$favorites_list=$_POST["favorites_list"];}
+	elseif (isset($_POST["favorites_list"]))	{$favorites_list=$_POST["favorites_list"];}
 
 # variable filtering
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
-$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
-$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
-$exten = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$exten);
-$protocol = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$protocol);
-$favorites_list = preg_replace("/\'|\"|\\\\|;| /","",$favorites_list);
 
 # default optional vars if not set
 if (!isset($format))   {$format="text";}
@@ -100,6 +96,22 @@ if (file_exists('options.php'))
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
+$stmt = "SELECT use_non_latin,enable_languages,language_method,agent_debug_logging,allow_web_debug FROM system_settings;";
+$rslt=mysql_to_mysqli($stmt, $link);
+	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+#if ($DB) {echo "$stmt\n";}
+$qm_conf_ct = mysqli_num_rows($rslt);
+if ($qm_conf_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$non_latin =				$row[0];
+	$SSenable_languages =		$row[1];
+	$SSlanguage_method =		$row[2];
+	$SSagent_debug_logging =	$row[3];
+	$SSallow_web_debug =		$row[4];
+	}
+if ($SSallow_web_debug < 1) {$DB=0;   $format="text";}
+
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$user';";
 if ($DB) {echo "|$stmt|\n";}
@@ -111,27 +123,28 @@ if ($sl_ct > 0)
 	$row=mysqli_fetch_row($rslt);
 	$VUselected_language =		$row[0];
 	}
-
-$stmt = "SELECT use_non_latin,enable_languages,language_method,agent_debug_logging FROM system_settings;";
-$rslt=mysql_to_mysqli($stmt, $link);
-	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
-if ($DB) {echo "$stmt\n";}
-$qm_conf_ct = mysqli_num_rows($rslt);
-if ($qm_conf_ct > 0)
-	{
-	$row=mysqli_fetch_row($rslt);
-	$non_latin =				$row[0];
-	$SSenable_languages =		$row[1];
-	$SSlanguage_method =		$row[2];
-	$SSagent_debug_logging =	$row[3];
-	}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
+$exten = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$exten);
+$protocol = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$protocol);
+$favorites_list = preg_replace("/\'|\"|\\\\|;| /","",$favorites_list);
+$format = preg_replace('/[^-_0-9a-zA-Z]/','',$format);
+$favorites_count = preg_replace('/[^-_0-9a-zA-Z]/','',$favorites_count);
 
 if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
+	$pass=preg_replace("/[^-\.\+\/\=_0-9a-zA-Z]/","",$pass);
 	}
+else
+	{
+	$user = preg_replace('/[^-_0-9\p{L}]/u','',$user);
+	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
+	}
+
 if (strlen($SSagent_debug_logging) > 1)
 	{
 	if ($SSagent_debug_logging == "$user")

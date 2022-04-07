@@ -54,10 +54,15 @@ if (isset($_GET["format"]))				{$format=$_GET["format"];}
 	elseif (isset($_POST["format"]))	{$format=$_POST["format"];}
 if (isset($_GET["auth"]))				{$auth=$_GET["auth"];}
 	elseif (isset($_POST["auth"]))		{$auth=$_POST["auth"];}
+if (isset($_GET["DB"]))					{$DB=$_GET["DB"];}
+	elseif (isset($_POST["DB"]))		{$DB=$_POST["DB"];}
 
-$phone = preg_replace("/'|\"|\\\\|;/","",$phone);
-$format = preg_replace("/'|\"|\\\\|;/","",$format);
-$auth = preg_replace("/'|\"|\\\\|;/","",$auth);
+$DB = preg_replace('/[^0-9]/','',$DB);
+$DB=0; # disable $DB, it's not used in this script
+
+$phone = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$phone);
+$format = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$format);
+$auth = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$auth);
 
 $US='_';
 

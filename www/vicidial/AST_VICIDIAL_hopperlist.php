@@ -1,7 +1,7 @@
 <?php 
 # AST_VICIDIAL_hopperlist.php
 # 
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -29,6 +29,7 @@
 # 190716-2119 - Added rank
 # 201111-1435 - Added Campaign Drop-Run load
 # 210514-1615 - Added owner to DB=1 output
+# 220301-1627 - Added allow_web_debug system setting
 #
 
 $startMS = microtime();
@@ -51,11 +52,21 @@ if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
 if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))	{$SUBMIT=$_POST["SUBMIT"];}
 
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+
+$NOW_DATE = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$STARTtime = date("U");
+if (!isset($group)) {$group = '';}
+if (!isset($query_date)) {$query_date = $NOW_DATE;}
+if (!isset($server_ip)) {$server_ip = '10.10.10.15';}
+$isdst = date("I");
+
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,enable_languages,language_method,source_id_display FROM system_settings;";
+$stmt = "SELECT use_non_latin,enable_languages,language_method,source_id_display,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {echo "$stmt\n";}
+#if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -64,21 +75,27 @@ if ($qm_conf_ct > 0)
 	$SSenable_languages =			$row[1];
 	$SSlanguage_method =			$row[2];
 	$SSsource_id_display =			$row[3];
+	$SSallow_web_debug =			$row[4];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
+$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
 
 if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$group = preg_replace('/[^-_0-9a-zA-Z]/', '', $group);
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$group = preg_replace('/[^-_0-9\p{L}]/u', '', $group);
 	}
-$group = preg_replace("/'|\"|\\\\|;/","",$group);
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
@@ -213,14 +230,6 @@ $LOGfullname =				$row[0];
 $LOGuser_group =			$row[1];
 $LOGadmin_hide_lead_data =	$row[2];
 $LOGadmin_hide_phone_data =	$row[3];
-
-$NOW_DATE = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-$STARTtime = date("U");
-if (!isset($group)) {$group = '';}
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
-if (!isset($server_ip)) {$server_ip = '10.10.10.15';}
-$isdst = date("I");
 
 ### Grab Server GMT value from the database
 $SERVER_GMT=-5;

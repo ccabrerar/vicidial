@@ -1,7 +1,7 @@
 <?php
 # admin_NANPA_updater.php
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to launch NANPA filter batch proccesses through the
 # triggering process
@@ -17,10 +17,11 @@
 # 170822-2230 - Added screen color settings
 # 180503-2015 - Added new help display
 # 191013-0814 - Fixes for PHP7
+# 220222-1753 - Added allow_web_debug system setting
 #
 
-$version = '2.14-8';
-$build = '191013-0814';
+$version = '2.14-9';
+$build = '220222-1753';
 $startMS = microtime();
 
 require("dbconnect_mysqli.php");
@@ -57,12 +58,13 @@ if (isset($_GET["DB"]))				{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))	{$DB=$_POST["DB"];}
 
 $block_scheduling_while_running=0;
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,active_voicemail_server,enable_languages,language_method FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,active_voicemail_server,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {$MAIN.="$stmt\n";}
+#if ($DB) {$MAIN.="$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
@@ -74,9 +76,26 @@ if ($qm_conf_ct > 0)
 	$active_voicemail_server =		$row[4];
 	$SSenable_languages =			$row[5];
 	$SSlanguage_method =			$row[6];
+	$SSallow_web_debug =			$row[7];
 	}
+if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+$cellphone_list_id=preg_replace('/[^0-9]/', '', $cellphone_list_id);
+$landline_list_id=preg_replace('/[^0-9]/', '', $landline_list_id);
+$invalid_list_id=preg_replace('/[^0-9]/', '', $invalid_list_id);
+$exclusion_value=preg_replace('/[\'\"\\\\]/', '', $exclusion_value);
+$exclusion_value=preg_replace('/\s/', '\\\\\ ', $exclusion_value);
+$submit_form = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit_form);
+$delete_trigger_id = preg_replace('/[^-_0-9a-zA-Z]/', '', $delete_trigger_id);
+$vl_field_update = preg_replace('/[^-_0-9a-zA-Z]/', '', $vl_field_update);
+$vl_field_exclude = preg_replace('/[^-_0-9a-zA-Z]/', '', $vl_field_exclude);
+$activation_delay = preg_replace('/[^- \.\_0-9a-zA-Z]/', '', $activation_delay);
+$fields_to_update = preg_replace('/[^- \,\.\_0-9a-zA-Z]/', '', $fields_to_update);
+
+# Variables filtered further down in the code
+# $lists
 
 if ($non_latin < 1)
 	{
@@ -85,8 +104,8 @@ if ($non_latin < 1)
 	}
 else
 	{
-	$PHP_AUTH_PW = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_PW);
-	$PHP_AUTH_USER = preg_replace("/'|\"|\\\\|;/","",$PHP_AUTH_USER);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
 
 $NOW_DATE = date("Y-m-d");
@@ -221,18 +240,12 @@ if ($submit_form=="SUBMIT" && $list_ct>0 && (strlen($vl_field_update)>0 || strle
 		}
 	$list_ct=count($lists);
 
-	$cellphone_list_id=preg_replace('/[^0-9]/', '', $cellphone_list_id);
-	$landline_list_id=preg_replace('/[^0-9]/', '', $landline_list_id);
-	$invalid_list_id=preg_replace('/[^0-9]/', '', $invalid_list_id);
-	$exclusion_value=preg_replace('/[\'\"\\\\]/', '', $exclusion_value);
-	$exclusion_value=preg_replace('/\s/', '\\\\\ ', $exclusion_value);
-	
-
 	$options="--user=$PHP_AUTH_USER --pass=$PHP_AUTH_PW ";
 	
 	$list_id_str="";
 	for ($i=0; $i<$list_ct; $i++) 
 		{
+		$lists[$i] = preg_replace('/[^0-9]/','',$lists[$i]);
 		$list_id_str.=$lists[$i]."--";
 		}
 	$list_id_str=substr($list_id_str, 0, -2);
