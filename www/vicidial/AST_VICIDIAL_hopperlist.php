@@ -30,6 +30,7 @@
 # 201111-1435 - Added Campaign Drop-Run load
 # 210514-1615 - Added owner to DB=1 output
 # 220301-1627 - Added allow_web_debug system setting
+# 220812-0929 - Added User Group report permissions checking
 #
 
 $startMS = microtime();
@@ -270,6 +271,14 @@ if ( (!preg_match('/\-ALL/i', $LOGallowed_campaigns)) )
 	$whereLOGallowed_campaignsSQL = "where campaign_id IN('$rawLOGallowed_campaignsSQL')";
 	}
 $regexLOGallowed_campaigns = " $LOGallowed_campaigns ";
+
+if ( (!preg_match("/$report_name/",$LOGallowed_reports)) and (!preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
+	{
+    Header("WWW-Authenticate: Basic realm=\"CONTACT-CENTER-ADMIN\"");
+    Header("HTTP/1.0 401 Unauthorized");
+    echo "You are not allowed to view this report: |$PHP_AUTH_USER|$report_name|\n";
+    exit;
+	}
 
 
 $stmt="select campaign_id,campaign_name from vicidial_campaigns $whereLOGallowed_campaignsSQL order by campaign_id;";

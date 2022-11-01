@@ -1,11 +1,11 @@
-AGENT MULTI-CAMPAIGN DIALING DOC	Started: 2020-08-24	Updated: 2021-02-07
+AGENT MULTI-CAMPAIGN DIALING DOC	Started: 2020-08-24	Updated: 2022-05-24
 
 NOTE: Requires VICIdial svn/trunk code revision 3284 or higher to work properly!!!
 
-NOTE: The new SHARED campaign dial method requires VICIdial svn/trunk code revision 3340 or higher to work properly!!!
+NOTE: The new SHARED campaign dial methods require VICIdial svn/trunk code revision 3340 or higher to work properly!!!
 
 NOTE: THIS FEATURE IS OPTIONAL, AND SHOULD ONLY BE CONFIGURED AFTER YOUR SYSTEM 
-      HAS BEEN INSTALLED AND TESTED!
+      HAS BEEN INSTALLED AND TESTED WITH A STANDARD OUTBOUND CAMPAIGN!
 
 
 
@@ -194,6 +194,9 @@ The following are instructions for how to set up a "SHARED_" set of campaigns:
 * NOTES: 
 - The "SHARED_..." campaign dial method does not require the use of Remote Agents at all, and the live agents do need to select to take blended (outbound) calls or no calls will be placed for them as they rotate through the shared agent campaigns.
 - For SHARED agent campaigns, there is an additional campaign setting: "Shared Dial Rank", which will allow you to prioritize the dialing of your shared campaigns as calls are placed for them.
+- For SHARED agent campaigns, the vicidial_log table will show In-Group transfer drops as 'SRDROP' status instead of 'DROP' status to differentiate them from standard dialing campaign drops. These are not considered dropped calls at all because they were never attempted to be routed to an agent by the outbound campaign before being sent to the In-Group.
+- For SHARED agent campaigns, the predictive algorithm will not count In-Group transfer drops as dropped calls in its statistical calculations
+
 
 
 

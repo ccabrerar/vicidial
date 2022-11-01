@@ -21,7 +21,7 @@
 # exten => _8320*.,1,AGI(VD_amd.agi,${EXTEN}-----YES)
 # exten => _8320*.,2,Hangup
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 60206-1434 - first build
@@ -62,6 +62,7 @@
 # 200205-1839 - Fix for list override message
 # 200311-0041 - Added amd_agent_route_options feature
 # 200424-1839 - Added STC(settings-container) and LTT(lead temp table) message playback options
+# 220411-0833 - Added FHG(file-http-get) message playback option to download file from website
 #
 
 $script = 'VD_amd.agi';
@@ -69,6 +70,7 @@ $script = 'VD_amd.agi';
 $A = 1;		# set to 1 for AMD output messages mode
 $AMD_LOG = 3;	# set to 1 for logfile and 2 forDB log, 3 for both
 $wav='.wav';
+$US='_';
 
 ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
 $year = ($year + 1900);
@@ -768,12 +770,13 @@ else
 			if ($AGILOG) {$agi_string = "--    VDAD vicidial_lead_call_quota_counts AM update: |$affected_rows|$uniqueid|";   &agi_output;}
 			}
 
-		##### BEGIN Check if prompt uses TTS, STC, LTT or DYN. If so, create TTS and set the filename to the generated prompt #####
-		if ($DB_am_message_exten =~ /^TTS|^STC|^LTT|^DYN/)
+		##### BEGIN Check if prompt uses TTS, STC, LTT,DYN or FHG. If so, create TTS and set the filename to the generated prompt #####
+		if ($DB_am_message_exten =~ /^TTS|^STC|^LTT|^DYN|^FHG/)
 			{
 			$useTTS=0;
 			$useSTC=0;
 			$useLTT=0;
+			$useFHG=0;
 			# Cepstral Text-To-Speech, vicidial_tts_prompts
 			if ($DB_am_message_exten =~ /^TTS/) 
 				{
@@ -798,6 +801,17 @@ else
 				$TTS_filename =~s/^LTT//gi;
 				$TTS_filename =~s/\|.*//gi;
 				}
+			# File-HTTP-get entry
+			elsif ($DB_am_message_exten =~ /^FHGhttp/) 
+				{
+				$useFHG++;
+				$TTS_filename = $DB_am_message_exten;
+				$TTS_filename =~ s/^FHG//gi;
+				$TTS_filename =~ s/;|\||\\//gi;
+				$TTS_filename =~ s/http\/\//http:\/\//gi;
+				$TTS_filename =~ s/https\/\//https:\/\//gi;
+				$TTS_text = $TTS_filename;
+				}
 			# dynamic filename lookup
 			else
 				{
@@ -806,7 +820,7 @@ else
 				$TTS_text = $TTS_filename;
 				}
 
-			if ($AGILOG) {$agi_string = "--    TTS : |$useTTS|$useSTC|$useLTT|$TTS_filename|";   &agi_output;}
+			if ($AGILOG) {$agi_string = "--    TTS : |$useTTS|$useSTC|$useLTT|$useFHG|$TTS_filename|";   &agi_output;}
 
 			$stmtA = "SELECT lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner FROM vicidial_list where lead_id='$VD_lead_id';";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
@@ -950,6 +964,101 @@ else
 			$TTS_text =~ s/--A--ingroup--B--/$VD_campaign_id/gi;
 			$TTS_text =~ s/--A--group--B--/$VD_campaign_id/gi;
 			### END replace variables with record values ###
+
+			### BEGIN download FHG web file for playback ###
+			if ($useFHG > 0) 
+				{
+				# Request URL as '$TTS_text'
+				$parse_url = $TTS_text;
+
+				### insert a new url log entry
+				$SQL_log = "$parse_url";
+				$SQL_log =~ s/;|\||\\//gi;
+				$stmtA = "INSERT INTO vicidial_url_log SET uniqueid='$uniqueid',url_date=NOW(),url_type='amd_fhg',url='$SQL_log',url_response='';";
+				$affected_rows = $dbhA->do($stmtA);
+				$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
+				$sthA = $dbhA->prepare($stmtB) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArows=$sthA->rows;
+				if ($sthArows > 0)
+					{
+					@aryA = $sthA->fetchrow_array;
+					$url_id = $aryA[0];
+					}
+				$sthA->finish();
+
+				$url = $parse_url;
+				$url =~ s/'/\\'/gi;
+				$url =~ s/"/\\"/gi;
+
+				$temp_OUTPUT_file = $PATHsounds . "/tts/FHG$US$TTS_lead_id$US$now_date_epoch";
+				$temp_OUTPUT_fileWAV = $temp_OUTPUT_file . ".wav";
+
+				my $secW = time();
+
+				# disconnect from the database to free up the DB connection
+				$dbhA->disconnect();
+
+				### find wget binary
+				$wgetbin = '';
+				if ( -e ('/bin/wget')) {$wgetbin = '/bin/wget';}
+				else
+					{
+					if ( -e ('/usr/bin/wget')) {$wgetbin = '/usr/bin/wget';}
+					else
+						{
+						if ( -e ('/usr/local/bin/wget')) {$wgetbin = '/usr/local/bin/wget';}
+						else
+							{
+							print "Can't find wget binary! Exiting...\n";
+							exit;
+							}
+						}
+					}
+
+				# request the web URL
+				`$wgetbin --no-check-certificate --output-document=$temp_OUTPUT_fileWAV --output-file=/tmp/ASUBtmpF$US$url_id$US$now_date_epoch $url `;
+
+				# reconnect to the database to log response and response time
+				$dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
+				 or die "Couldn't connect to database: " . DBI->errstr;
+
+				if ($DB) {print "$function|$wgetbin --no-check-certificate --output-document=$temp_OUTPUT_file --output-file=/tmp/ASUBtmpF$US$url_id$US$now_date_epoch $url|";}
+
+				my $secY = time();
+				my $response_sec = ($secY - $secW);
+
+				$FILEsizeFHG = (-s "$temp_OUTPUT_fileWAV");
+
+				open(Wfile, "/tmp/ASUBtmpF$US$url_id$US$now_date_epoch") || die "can't open /tmp/ASUBtmpF$US$url_id$US$now_date_epoch: $!\n";
+				@Wfile = <Wfile>;
+				close(Wfile);
+				$i=0;
+				$Wfileline_cat='';
+				foreach(@Wfile)
+					{
+					$Wfileline = $Wfile[$i];
+					$Wfileline =~ s/\n|\r/!/gi;
+					$Wfileline =~ s/  |\t|\'|\`//gi;
+					$Wfileline_cat .= "$Wfileline";
+					$i++;
+					}
+				if (length($Wfileline_cat)<1) 
+					{$Wfileline_cat='<HEADER EMPTY>';}
+
+
+				### update url log entry
+				$stmtA = "UPDATE vicidial_url_log SET url_response='$FILEsizeFHG|$temp_OUTPUT_fileWAV|$Wfileline_cat',response_sec='$response_sec' where url_log_id='$url_id';";
+				$affected_rows = $dbhA->do($stmtA);
+				if ($DB) {print "$affected_rows|$stmtA\n";}
+
+				$TTS_text = $temp_OUTPUT_file;
+
+				if ($AGILOG) {$agi_string = "FHG: File downloaded($FILEsizeFHG bytes, $response_sec seconds) |$TTS_text|";   &agi_output;}
+
+				sleep(1);
+				}
+			### END download FHG web file for playback ###
 
 			if ($useTTS > 0) 
 				{
@@ -1505,6 +1614,12 @@ else
 				if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 			$affected_rows = $dbhA->do($stmtA);
 			if ($AGILOG) {$agi_string = "--    VLM vicidial_lead_messages POST-CALL update: |$affected_rows|$stmtA|";   &agi_output;}
+			}
+
+		if ($useFHG > 0) 
+			{
+			# add 2 seconds of silence before hanging up for FHG messages
+			sleep(2);
 			}
 		}
 

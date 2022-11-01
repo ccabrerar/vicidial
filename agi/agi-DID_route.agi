@@ -13,7 +13,7 @@
 # ;inbound DID catch-all:
 #exten => _X.,1,AGI(agi-DID_route.agi)
 #
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 81007-0324 - First Build
@@ -48,6 +48,7 @@
 # 200623-2258 - Added Answer Signal options
 # 201112-0834 - Fix for AGENT routing, check for availability, issue #1211
 # 210315-1132 - Fix for multiple filter_clean_cid_number actions, added 'T' filter action, Issue #1247
+# 220507-0811 - Added pre_filter_recent_call function
 #
 
 
@@ -57,6 +58,7 @@ $at='@';
 $S='*';
 $US='_';
 $route_type='DID';
+$DBX=0;		# set to 1 for extra debugging output
 
 ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
 $year = ($year + 1900);
@@ -220,7 +222,7 @@ $extension =~ s/\'|\"|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
 if ($SSdid_system_filter > 0) 
 	{
 	if ($AGILOG) {$agi_string = "--    DID SYSTEM FILTER ENABLED: |$SSdid_system_filter|";   &agi_output;}
-	$stmtA = "SELECT did_id,did_pattern,did_description,did_active,did_route,extension,exten_context,voicemail_ext,phone,server_ip,user,user_unavailable_action,user_route_settings_ingroup,menu_id,record_call,filter_inbound_number,filter_phone_group_id,filter_url,filter_action,filter_extension,filter_exten_context,filter_voicemail_ext,filter_phone,filter_server_ip,filter_user,filter_user_unavailable_action,filter_user_route_settings_ingroup,filter_group_id,filter_call_handle_method,filter_agent_search_method,filter_list_id,filter_campaign_id,filter_phone_code,filter_menu_id,filter_clean_cid_number,group_id,filter_dnc_campaign,filter_url_did_redirect,no_agent_ingroup_redirect,no_agent_ingroup_id,no_agent_ingroup_extension,pre_filter_phone_group_id,pre_filter_extension,max_queue_ingroup_calls,max_queue_ingroup_id,max_queue_ingroup_extension,inbound_route_answer FROM vicidial_inbound_dids where did_pattern = 'did_system_filter' and did_active='Y';";
+	$stmtA = "SELECT did_id,did_pattern,did_description,did_active,did_route,extension,exten_context,voicemail_ext,phone,server_ip,user,user_unavailable_action,user_route_settings_ingroup,menu_id,record_call,filter_inbound_number,filter_phone_group_id,filter_url,filter_action,filter_extension,filter_exten_context,filter_voicemail_ext,filter_phone,filter_server_ip,filter_user,filter_user_unavailable_action,filter_user_route_settings_ingroup,filter_group_id,filter_call_handle_method,filter_agent_search_method,filter_list_id,filter_campaign_id,filter_phone_code,filter_menu_id,filter_clean_cid_number,group_id,filter_dnc_campaign,filter_url_did_redirect,no_agent_ingroup_redirect,no_agent_ingroup_id,no_agent_ingroup_extension,pre_filter_phone_group_id,pre_filter_extension,max_queue_ingroup_calls,max_queue_ingroup_id,max_queue_ingroup_extension,inbound_route_answer,pre_filter_recent_call,pre_filter_recent_extension FROM vicidial_inbound_dids where did_pattern = 'did_system_filter' and did_active='Y';";
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 	$sthArows=$sthA->rows;
@@ -274,6 +276,8 @@ if ($SSdid_system_filter > 0)
 		$max_queue_ingroup_id =			$aryA[44];
 		$max_queue_ingroup_extension =	$aryA[45];
 		$inbound_route_answer =			$aryA[46];
+		$pre_filter_recent_call =		$aryA[47];
+		$pre_filter_recent_extension =	$aryA[48];
 		}
 	else
 		{
@@ -679,7 +683,7 @@ if ($SSdid_system_filter > 0)
 
 ### Grab DID values from the database
 $DIDs_in_system=0;
-$stmtA = "SELECT did_id,did_pattern,did_description,did_active,did_route,extension,exten_context,voicemail_ext,phone,server_ip,user,user_unavailable_action,user_route_settings_ingroup,menu_id,record_call,filter_inbound_number,filter_phone_group_id,filter_url,filter_action,filter_extension,filter_exten_context,filter_voicemail_ext,filter_phone,filter_server_ip,filter_user,filter_user_unavailable_action,filter_user_route_settings_ingroup,filter_group_id,filter_call_handle_method,filter_agent_search_method,filter_list_id,filter_campaign_id,filter_phone_code,filter_menu_id,filter_clean_cid_number,group_id,filter_dnc_campaign,filter_url_did_redirect,no_agent_ingroup_redirect,no_agent_ingroup_id,no_agent_ingroup_extension,pre_filter_phone_group_id,pre_filter_extension,max_queue_ingroup_calls,max_queue_ingroup_id,max_queue_ingroup_extension,inbound_route_answer FROM vicidial_inbound_dids where did_pattern = '$extension' and did_active='Y';";
+$stmtA = "SELECT did_id,did_pattern,did_description,did_active,did_route,extension,exten_context,voicemail_ext,phone,server_ip,user,user_unavailable_action,user_route_settings_ingroup,menu_id,record_call,filter_inbound_number,filter_phone_group_id,filter_url,filter_action,filter_extension,filter_exten_context,filter_voicemail_ext,filter_phone,filter_server_ip,filter_user,filter_user_unavailable_action,filter_user_route_settings_ingroup,filter_group_id,filter_call_handle_method,filter_agent_search_method,filter_list_id,filter_campaign_id,filter_phone_code,filter_menu_id,filter_clean_cid_number,group_id,filter_dnc_campaign,filter_url_did_redirect,no_agent_ingroup_redirect,no_agent_ingroup_id,no_agent_ingroup_extension,pre_filter_phone_group_id,pre_filter_extension,max_queue_ingroup_calls,max_queue_ingroup_id,max_queue_ingroup_extension,inbound_route_answer,pre_filter_recent_call,pre_filter_recent_extension FROM vicidial_inbound_dids where did_pattern = '$extension' and did_active='Y';";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -733,6 +737,8 @@ if ($sthArows > 0)
 	$max_queue_ingroup_id =			$aryA[44];
 	$max_queue_ingroup_extension =	$aryA[45];
 	$inbound_route_answer =			$aryA[46];
+	$pre_filter_recent_call =		$aryA[47];
+	$pre_filter_recent_extension =	$aryA[48];
 
 	$DIDs_in_system++;
 	}
@@ -741,7 +747,7 @@ $sthA->finish();
 if ($sthArows < 1)
 	{
 	### Grab DID values from the database for a default DID pattern if there is one
-	$stmtA = "SELECT did_id,did_pattern,did_description,did_active,did_route,extension,exten_context,voicemail_ext,phone,server_ip,user,user_unavailable_action,user_route_settings_ingroup,menu_id,record_call,filter_inbound_number,filter_phone_group_id,filter_url,filter_action,filter_extension,filter_exten_context,filter_voicemail_ext,filter_phone,filter_server_ip,filter_user,filter_user_unavailable_action,filter_user_route_settings_ingroup,filter_group_id,filter_call_handle_method,filter_agent_search_method,filter_list_id,filter_campaign_id,filter_phone_code,filter_menu_id,filter_clean_cid_number,group_id,filter_dnc_campaign,filter_url_did_redirect,no_agent_ingroup_redirect,no_agent_ingroup_id,no_agent_ingroup_extension,pre_filter_phone_group_id,pre_filter_extension,max_queue_ingroup_calls,max_queue_ingroup_id,max_queue_ingroup_extension,inbound_route_answer FROM vicidial_inbound_dids where did_pattern = 'default' and did_active='Y';";
+	$stmtA = "SELECT did_id,did_pattern,did_description,did_active,did_route,extension,exten_context,voicemail_ext,phone,server_ip,user,user_unavailable_action,user_route_settings_ingroup,menu_id,record_call,filter_inbound_number,filter_phone_group_id,filter_url,filter_action,filter_extension,filter_exten_context,filter_voicemail_ext,filter_phone,filter_server_ip,filter_user,filter_user_unavailable_action,filter_user_route_settings_ingroup,filter_group_id,filter_call_handle_method,filter_agent_search_method,filter_list_id,filter_campaign_id,filter_phone_code,filter_menu_id,filter_clean_cid_number,group_id,filter_dnc_campaign,filter_url_did_redirect,no_agent_ingroup_redirect,no_agent_ingroup_id,no_agent_ingroup_extension,pre_filter_phone_group_id,pre_filter_extension,max_queue_ingroup_calls,max_queue_ingroup_id,max_queue_ingroup_extension,inbound_route_answer,pre_filter_recent_call,pre_filter_recent_extension FROM vicidial_inbound_dids where did_pattern = 'default' and did_active='Y';";
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 	$DIDs_in_system=$sthA->rows;
@@ -795,6 +801,8 @@ if ($sthArows < 1)
 		$max_queue_ingroup_id =			$aryA[44];
 		$max_queue_ingroup_extension =	$aryA[45];
 		$inbound_route_answer =			$aryA[46];
+		$pre_filter_recent_call =		$aryA[47];
+		$pre_filter_recent_extension =	$aryA[48];
 		}
 	$sthA->finish();
 	}
@@ -986,6 +994,286 @@ if ( (length($pre_filter_phone_group_id)>0) && (length($pre_filter_extension)>0)
 		}
 	}
 ##### END pre-filtering process #####
+
+
+##### BEGIN pre-filter recent call process #####
+$pre_filter_recent_outbound_found=0;
+$pre_filter_recent_inbound_found=0;
+$outbound_searchSQL='';
+$inbound_searchSQL='';
+if ( (length($pre_filter_recent_call)>0) && (length($pre_filter_recent_extension)>0) )
+	{
+	if ($AGILOG) {$agi_string = "pre-filter recent call active: |$extension|$pre_filter_recent_call|$pre_filter_recent_extension|$filter_clean_cid_number|$callerid";   &agi_output;}
+
+	$temp_cid_test = $callerid;
+	if (length($callerid)<1) {$temp_cid_test = 'BLANK';}
+
+	### BEGIN gather settings container details for pre-filter recent call
+	$CQcontainer_entry='';
+	$stmtA = "SELECT container_entry FROM vicidial_settings_containers where container_id='$pre_filter_recent_call';";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		$outbound_recent_call_check_type='';
+		$outbound_recent_call_days=0;
+		$outbound_recent_call_campaigns='';
+		$outbound_recent_call_statuses='';
+		$inbound_recent_call_check_type='';
+		$inbound_recent_call_days=0;
+		$inbound_recent_call_groups='';
+		$inbound_recent_call_statuses='';
+		@aryA = $sthA->fetchrow_array;
+		$RCcontainer_entry = $aryA[0];
+		$RCcontainer_entry =~ s/\r|\t|\'|\"//gi;
+		@RCfilter_settings = split(/\n/,$RCcontainer_entry);
+		$sea=0;
+		foreach (@RCfilter_settings)
+			{
+			if ($DBX > 0) {print STDERR "RC DEBUG 0: $sea|$RCfilter_settings[$sea]|\n";}
+			if ($RCfilter_settings[$sea] =~ /^outbound_recent_call_check_type => /)
+				{
+				# outbound_recent_call_check_type => lead-x-y-days-range  (or 'log-x-y-days-range')
+				$RCfilter_settings[$sea] =~ s/^outbound_recent_call_check_type => //gi;
+				$outbound_recent_call_check_type = $RCfilter_settings[$sea];
+				if ($DBX > 0) {print STDERR "RC DEBUG 2:    outbound_recent_call_check_type FOUND: |$outbound_recent_call_check_type|   $sea|$RCfilter_settings[$sea]|\n";}
+				}
+			if ($RCfilter_settings[$sea] =~ /^outbound_recent_call_days => /)
+				{
+				# outbound_recent_call_days => 0-21
+				$RCfilter_settings[$sea] =~ s/^outbound_recent_call_days => //gi;
+				$outbound_recent_call_days = $RCfilter_settings[$sea];
+				$outbound_recent_call_days =~ s/[^-0-9]//gi;
+				if ($DBX > 0) {print STDERR "RC DEBUG 2:    outbound_recent_call_days FOUND: |$outbound_recent_call_days|   $sea|$RCfilter_settings[$sea]|\n";}
+				}
+			if ($RCfilter_settings[$sea] =~ /^outbound_recent_call_campaigns => /)
+				{
+				# outbound_recent_call_campaigns => --ALL--  (or pipe-delimited list of campaign IDs: "TESTCAMP|TEST2|TEST3")
+				$RCfilter_settings[$sea] =~ s/^outbound_recent_call_campaigns => //gi;
+				$outbound_recent_call_campaigns = $RCfilter_settings[$sea];
+				if ($DBX > 0) {print STDERR "RC DEBUG 3:    outbound_recent_call_campaigns FOUND: |$outbound_recent_call_campaigns|   $sea|$RCfilter_settings[$sea]|\n";}
+				}
+			if ($RCfilter_settings[$sea] =~ /^outbound_recent_call_statuses => /)
+				{
+				# outbound_recent_call_statuses => --ALL--  (or pipe-delimited list of statuses: "DNC|NI|LIT")
+				$RCfilter_settings[$sea] =~ s/^outbound_recent_call_statuses => //gi;
+				$outbound_recent_call_statuses = $RCfilter_settings[$sea];
+				if ($DBX > 0) {print STDERR "RC DEBUG 4:    outbound_recent_call_statuses FOUND: |$outbound_recent_call_statuses|   $sea|$RCfilter_settings[$sea]|\n";}
+				}
+
+			if ($RCfilter_settings[$sea] =~ /^inbound_recent_call_check_type => /)
+				{
+				# inbound_recent_call_check_type => lead-x-y-days-range  (or 'log-x-y-days-range')
+				$RCfilter_settings[$sea] =~ s/^inbound_recent_call_check_type => //gi;
+				$inbound_recent_call_check_type = $RCfilter_settings[$sea];
+				if ($DBX > 0) {print STDERR "RC DEBUG 5:    inbound_recent_call_check_type FOUND: |$inbound_recent_call_check_type|   $sea|$RCfilter_settings[$sea]|\n";}
+				}
+			if ($RCfilter_settings[$sea] =~ /^inbound_recent_call_days => /)
+				{
+				# inbound_recent_call_days => 21-999
+				$RCfilter_settings[$sea] =~ s/^inbound_recent_call_days => //gi;
+				$inbound_recent_call_days = $RCfilter_settings[$sea];
+				$inbound_recent_call_days =~ s/[^-0-9]//gi;
+				if ($DBX > 0) {print STDERR "RC DEBUG 6:    inbound_recent_call_days FOUND: |$inbound_recent_call_days|   $sea|$RCfilter_settings[$sea]|\n";}
+				}
+			if ($RCfilter_settings[$sea] =~ /^inbound_recent_call_groups => /)
+				{
+				# inbound_recent_call_groups => --ALL--  (or pipe-delimited list of inbound group IDs: "TEST_IN|TEST_IN2|TEST_IN3")
+				#	NOTE: if using a 'lead' check type, this field should be a list of campaign IDs to check within the campaign lists
+				$RCfilter_settings[$sea] =~ s/^inbound_recent_call_groups => //gi;
+				$inbound_recent_call_groups = $RCfilter_settings[$sea];
+				if ($DBX > 0) {print STDERR "RC DEBUG 7:    inbound_recent_call_groups FOUND: |$inbound_recent_call_groups|   $sea|$RCfilter_settings[$sea]|\n";}
+				}
+			if ($RCfilter_settings[$sea] =~ /^inbound_recent_call_statuses => /)
+				{
+				# inbound_recent_call_statuses => --ALL--  (or pipe-delimited list of statuses: "DNC|NI|LIT")
+				$RCfilter_settings[$sea] =~ s/^inbound_recent_call_statuses => //gi;
+				$inbound_recent_call_statuses = $RCfilter_settings[$sea];
+				if ($DBX > 0) {print STDERR "RC DEBUG 8:    inbound_recent_call_statuses FOUND: |$inbound_recent_call_statuses|   $sea|$RCfilter_settings[$sea]|\n";}
+				}
+			$sea++;
+			}
+		
+		# OUTBOUND validate and build SQL segments based on settings above
+		$outbound_search_table = 'vicidial_log';
+		$outbound_search_date = 'call_date';
+		if ( ($outbound_recent_call_check_type =~ /x-y-days-range/i) && ($outbound_recent_call_check_type =~ /lead|log/i) && (length($outbound_recent_call_campaigns) > 1) && (length($outbound_recent_call_statuses) > 0) )
+			{
+			if ( (length($outbound_recent_call_days) > 2) && ($outbound_recent_call_days =~ /\d-\d/) )
+				{
+				if ($outbound_recent_call_check_type =~ /lead/i) 
+					{
+					$outbound_search_table = 'vicidial_list';
+					$outbound_search_date = 'last_local_call_time';
+					}
+
+				@outbound_recent_call_days_ARY = split(/-/,$outbound_recent_call_days);
+				$temp_days_start = $outbound_recent_call_days_ARY[0];
+				$temp_days_end = $outbound_recent_call_days_ARY[1];
+				$temp_days_start =~ s/\D//gi;
+				$temp_days_end =~ s/\D//gi;
+				if ( (length($temp_days_start) > 0) && (length($temp_days_start) > 0) ) 
+					{
+					$outbound_searchSQL = "and ($outbound_search_date <= CONCAT(DATE_ADD(CURDATE(), INTERVAL -$temp_days_start DAY),' 23:59:59')) and ($outbound_search_date >= CONCAT(DATE_ADD(CURDATE(), INTERVAL -$temp_days_end DAY),' 00:00:00'))";
+					}
+
+				if ($outbound_recent_call_campaigns !~ /--ALL--/) 
+					{
+					$outbound_recent_call_campaigns =~ s/\|/','/gi;
+					if ($outbound_recent_call_check_type =~ /lead/i) 
+						{
+						$temp_lists='';
+						# gather all lists within the defined campaigns
+						$cl=0;
+						$stmtA = "SELECT list_id FROM vicidial_lists where campaign_id IN('$outbound_recent_call_campaigns');";
+						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+						$sthArows=$sthA->rows;
+						while ($sthArows > $cl)
+							{
+							@aryA = $sthA->fetchrow_array;
+							if ($cl > 0) {$temp_lists .= ",";}
+							$temp_lists .= "'$aryA[0]'";
+							$cl++;
+							}
+						$sthA->finish();
+						if (length($temp_lists) < 3) 
+							{$temp_lists = "'99999999999999999999'";}
+						$outbound_searchSQL .= " and list_id IN($temp_lists)";
+						}
+					else
+						{
+						$outbound_searchSQL .= " and campaign_id IN('$outbound_recent_call_campaigns')";
+						}
+					}
+
+				if ($outbound_recent_call_statuses !~ /--ALL--/) 
+					{
+					$outbound_recent_call_statuses =~ s/\|/','/gi;
+					$outbound_searchSQL .= " and status IN('$outbound_recent_call_statuses')";
+					}
+				}
+			}
+
+		# INBOUND validate and build SQL segments based on settings above
+		$inbound_search_table = 'vicidial_closer_log';
+		$inbound_search_date = 'call_date';
+		if ( ($inbound_recent_call_check_type =~ /x-y-days-range/i) && ($inbound_recent_call_check_type =~ /lead|log/i) && (length($inbound_recent_call_groups) > 1) && (length($inbound_recent_call_statuses) > 0) )
+			{
+			if ( (length($inbound_recent_call_days) > 2) && ($inbound_recent_call_days =~ /\d-\d/) )
+				{
+				if ($inbound_recent_call_check_type =~ /lead/i) 
+					{
+					$inbound_search_table = 'vicidial_list';
+					$inbound_search_date = 'last_local_call_time';
+					}
+
+				@inbound_recent_call_days_ARY = split(/-/,$inbound_recent_call_days);
+				$temp_days_start = $inbound_recent_call_days_ARY[0];
+				$temp_days_end = $inbound_recent_call_days_ARY[1];
+				$temp_days_start =~ s/\D//gi;
+				$temp_days_end =~ s/\D//gi;
+				if ( (length($temp_days_start) > 0) && (length($temp_days_start) > 0) ) 
+					{
+					$inbound_searchSQL = "and ($inbound_search_date <= CONCAT(DATE_ADD(CURDATE(), INTERVAL -$temp_days_start DAY),' 23:59:59')) and ($inbound_search_date >= CONCAT(DATE_ADD(CURDATE(), INTERVAL -$temp_days_end DAY),' 00:00:00'))";
+					}
+
+				if ($inbound_recent_call_groups !~ /--ALL--/) 
+					{
+					$inbound_recent_call_groups =~ s/\|/','/gi;
+					if ($inbound_recent_call_check_type =~ /lead/i) 
+						{
+						$temp_lists='';
+						# gather all lists within the defined campaigns
+						$cl=0;
+						$stmtA = "SELECT list_id FROM vicidial_lists where campaign_id IN('$inbound_recent_call_groups');";
+						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+						$sthArows=$sthA->rows;
+						while ($sthArows > $cl)
+							{
+							@aryA = $sthA->fetchrow_array;
+							if ($cl > 0) {$temp_lists .= ",";}
+							$temp_lists .= "'$aryA[0]'";
+							$cl++;
+							}
+						$sthA->finish();
+						if (length($temp_lists) < 3) 
+							{$temp_lists = "'99999999999999999999'";}
+						$inbound_searchSQL .= " and list_id IN($temp_lists)";
+						}
+					else
+						{
+						$inbound_searchSQL .= " and campaign_id IN('$inbound_recent_call_groups')";
+						}
+					}
+
+				if ($inbound_recent_call_statuses !~ /--ALL--/) 
+					{
+					$inbound_recent_call_statuses =~ s/\|/','/gi;
+					$inbound_searchSQL .= " and status IN('$inbound_recent_call_statuses')";
+					}
+				}
+			}
+
+		}
+	$sthA->finish();
+	### END gather settings container details for pre-filter recent call
+
+	# check for outbound call match
+	if (length($outbound_searchSQL) > 10) 
+		{
+		$stmtA = "SELECT count(*) FROM $outbound_search_table where phone_number='$temp_cid_test' $outbound_searchSQL;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$pre_filter_recent_outbound_found =	$aryA[0];
+			}
+		if ($AGILOG) {$agi_string = "--    DID RECENT OUTBOUND CALL SEARCH : |$pre_filter_recent_outbound_found|$stmtA|";   &agi_output;}
+		}
+
+	# check for inbound call match
+	if (length($inbound_searchSQL) > 10) 
+		{
+		$stmtA = "SELECT count(*) FROM $inbound_search_table where phone_number='$temp_cid_test' $inbound_searchSQL;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$pre_filter_recent_inbound_found =	$aryA[0];
+			}
+		if ($AGILOG) {$agi_string = "--    DID RECENT INBOUND CALL SEARCH : |$pre_filter_recent_inbound_found|$stmtA|";   &agi_output;}
+		}
+
+	$sthA->finish();
+	if ( ($pre_filter_recent_inbound_found > 0) || ($pre_filter_recent_outbound_found) )
+		{
+		$did_route='DID';
+		$did_extension =				$pre_filter_recent_extension;
+		$filter_match_found =			$pre_filter_recent_extension;
+		$exten_context =				'trunkinbound';
+		$route_type =					'PRERECENT';
+
+		if ($AGILOG) {$agi_string = "PRE-Filter Recent Call match found: |$pre_filter_recent_outbound_found|$pre_filter_recent_inbound_found|$pre_filter_recent_call|$pre_filter_recent_extension|$did_route|";   &agi_output;}
+
+		### Update the call in vicidial_did_log
+		$stmtA = "UPDATE vicidial_did_log SET did_route='PFR_$did_route' where uniqueid='$uniqueid' and channel='$channel' and server_ip='$VARserver_ip' and caller_id_number='$callerid' and call_date='$SQLdate';";
+			if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+		$affected_rowsL = $dbhA->do($stmtA);
+		if ($AGILOG) {$agi_string = "--    DID UPDATE LOG : |$affected_rowsL|$stmtA|";   &agi_output;}
+		}
+	else
+		{
+		if ($AGILOG) {$agi_string = "--    DID NO RECENT CALL FOUND : |$outbound_searchSQL|$inbound_searchSQL|";   &agi_output;}
+		}
+	}
+##### END pre-filter recent call process #####
 
 
 ##### BEGIN filtering process #####

@@ -1,0 +1,55 @@
+--- agi-VDAD_RINGALL.agi.orig	2022-09-07 11:20:53.126448503 -0400
++++ agi-VDAD_RINGALL.agi	2022-09-07 11:20:12.322581793 -0400
+@@ -90,7 +90,7 @@
+     or die "Couldn't connect to database: " . DBI->errstr;
+ 
+ ### Grab Server values from the database
+-$stmtA = "SELECT agi_output,ext_context,asterisk_version FROM servers where server_ip = '$VARserver_ip';";
++$stmtA = "SELECT agi_output,ext_context,asterisk_version,conf_engine FROM servers where server_ip = '$VARserver_ip';";
+ $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+ $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+ $sthArows=$sthA->rows;
+@@ -101,6 +101,7 @@
+ 	$DBagi_output =			$aryA[0];
+ 	$ext_context =			$aryA[1];
+ 	$asterisk_version =		$aryA[2];
++	$conf_engine =			$aryA[3];
+ 	if ($DBagi_output =~ /STDERR/)	{$AGILOG = '1';}
+ 	if ($DBagi_output =~ /FILE/)	{$AGILOG = '2';}
+ 	if ($DBagi_output =~ /BOTH/)	{$AGILOG = '3';}
+@@ -273,7 +274,9 @@
+ 		if ($VLAextension =~ /^R\//)
+ 			{
+ 			### BEGIN If remote agent, then reserve a vicidial_conferences session on their server to send the calls to ###
+-			$stmtA="SELECT count(*) FROM vicidial_conferences where server_ip='$VLAserver_ip' and ((extension='') or (extension is null)) and conf_exten != '$VLAconf_exten';";
++			$conf_table = "vicidial_conferences";
++			if ($conf_engine == "CONFBRIDGE") {$conf_table = "vicidial_confbridges";}
++			$stmtA="SELECT count(*) FROM $conf_table where server_ip='$VLAserver_ip' and ((extension='') or (extension is null)) and conf_exten != '$VLAconf_exten';";
+ 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+ 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+ 			$AVCcount=$sthA->rows;
+@@ -284,11 +287,11 @@
+ 				$sthA->finish();
+ 				if ($available_sessions > 0)
+ 					{
+-					$stmtA="UPDATE vicidial_conferences set extension='3WAY_$dial_user', leave_3way='1', leave_3way_datetime='$now_date' where server_ip='$VLAserver_ip' and ((extension='') or (extension is null)) and conf_exten != '$VLAconf_exten' limit 1;";
++					$stmtA="UPDATE $conf_table set extension='3WAY_$dial_user', leave_3way='1', leave_3way_datetime='$now_date' where server_ip='$VLAserver_ip' and ((extension='') or (extension is null)) and conf_exten != '$VLAconf_exten' limit 1;";
+ 					$AVCaffected_rows = $dbhA->do($stmtA);  
+ 					if ($AVCaffected_rows > 0)
+ 						{
+-						$stmtA="SELECT conf_exten from vicidial_conferences where server_ip='$VLAserver_ip' and extension='3WAY_$dial_user' and leave_3way_datetime='$now_date' and conf_exten != '$VLAconf_exten';";
++						$stmtA="SELECT conf_exten from $conf_table where server_ip='$VLAserver_ip' and extension='3WAY_$dial_user' and leave_3way_datetime='$now_date' and conf_exten != '$VLAconf_exten';";
+ 						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+ 						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+ 						$SVCcount=$sthA->rows;
+@@ -560,8 +563,8 @@
+ 				$d = leading_zero($4);
+ 				$VLA_DIALstr = "$a$S$b$S$c$S$d$S";
+ 				}
+-			$VLA_DIALstr .= "7$VLAconf_exten";
+-
++			if ($conf_engine == "CONFBRIDGE") {$VLA_DIALstrPrefix = "1";} else {$VLA_DIALstrPrefix = "7";}
++			$VLA_DIALstr .= "$VLA_DIALstrPrefix$VLAconf_exten";
+ 			$AGI->stream_file('sip-silence');
+ 			$AGI->stream_file('sip-silence');
+ 			$AGI->stream_file('sip-silence');

@@ -16,10 +16,15 @@
 # 141230-1452 - Added code for on-the-fly language translations display
 # 170409-1534 - Added IP List validation code
 # 220303-1623 - Added allow_web_debug system setting
+# 220812-0954 - Added User Group report permissions checking
 #
+
+$startMS = microtime();
 
 require("dbconnect_mysqli.php");
 require("functions.php");
+
+$report_name='Inbound Extension Stats';
 
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
@@ -81,7 +86,7 @@ else
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
 
-$stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
+$stmt="SELECT selected_language,user_group from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $sl_ct = mysqli_num_rows($rslt);
@@ -89,6 +94,7 @@ if ($sl_ct > 0)
 	{
 	$row=mysqli_fetch_row($rslt);
 	$VUselected_language =		$row[0];
+	$LOGuser_group =			$row[1];
 	}
 
 $auth=0;
@@ -148,6 +154,79 @@ else
 	exit;
 	}
 
+$stmt="SELECT allowed_campaigns,allowed_reports,admin_viewable_groups,admin_viewable_call_times from vicidial_user_groups where user_group='$LOGuser_group';";
+if ($DB) {$HTML_text.="|$stmt|\n";}
+$rslt=mysql_to_mysqli($stmt, $link);
+$row=mysqli_fetch_row($rslt);
+$LOGallowed_campaigns =			$row[0];
+$LOGallowed_reports =			$row[1];
+$LOGadmin_viewable_groups =		$row[2];
+$LOGadmin_viewable_call_times =	$row[3];
+
+$LOGallowed_campaignsSQL='';
+$whereLOGallowed_campaignsSQL='';
+if ( (!preg_match('/\-ALL/i', $LOGallowed_campaigns)) )
+	{
+	$rawLOGallowed_campaignsSQL = preg_replace("/ -/",'',$LOGallowed_campaigns);
+	$rawLOGallowed_campaignsSQL = preg_replace("/ /","','",$rawLOGallowed_campaignsSQL);
+	$LOGallowed_campaignsSQL = "and campaign_id IN('$rawLOGallowed_campaignsSQL')";
+	$whereLOGallowed_campaignsSQL = "where campaign_id IN('$rawLOGallowed_campaignsSQL')";
+	}
+$regexLOGallowed_campaigns = " $LOGallowed_campaigns ";
+
+if ( (!preg_match("/$report_name/",$LOGallowed_reports)) and (!preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
+	{
+    Header("WWW-Authenticate: Basic realm=\"CONTACT-CENTER-ADMIN\"");
+    Header("HTTP/1.0 401 Unauthorized");
+    echo "You are not allowed to view this report: |$PHP_AUTH_USER|$report_name|\n";
+    exit;
+	}
+
+##### BEGIN log visit to the vicidial_report_log table #####
+$LOGip = getenv("REMOTE_ADDR");
+$LOGbrowser = getenv("HTTP_USER_AGENT");
+$LOGscript_name = getenv("SCRIPT_NAME");
+$LOGserver_name = getenv("SERVER_NAME");
+$LOGserver_port = getenv("SERVER_PORT");
+$LOGrequest_uri = getenv("REQUEST_URI");
+$LOGhttp_referer = getenv("HTTP_REFERER");
+$LOGbrowser=preg_replace("/\'|\"|\\\\/","",$LOGbrowser);
+$LOGrequest_uri=preg_replace("/\'|\"|\\\\/","",$LOGrequest_uri);
+$LOGhttp_referer=preg_replace("/\'|\"|\\\\/","",$LOGhttp_referer);
+if (preg_match("/443/i",$LOGserver_port)) {$HTTPprotocol = 'https://';}
+  else {$HTTPprotocol = 'http://';}
+if (($LOGserver_port == '80') or ($LOGserver_port == '443') ) {$LOGserver_port='';}
+else {$LOGserver_port = ":$LOGserver_port";}
+$LOGfull_url = "$HTTPprotocol$LOGserver_name$LOGserver_port$LOGrequest_uri";
+
+$LOGhostname = php_uname('n');
+if (strlen($LOGhostname)<1) {$LOGhostname='X';}
+if (strlen($LOGserver_name)<1) {$LOGserver_name='X';}
+
+$stmt="SELECT webserver_id FROM vicidial_webservers where webserver='$LOGserver_name' and hostname='$LOGhostname' LIMIT 1;";
+$rslt=mysql_to_mysqli($stmt, $link);
+if ($DB) {echo "$stmt\n";}
+$webserver_id_ct = mysqli_num_rows($rslt);
+if ($webserver_id_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$webserver_id = $row[0];
+	}
+else
+	{
+	##### insert webserver entry
+	$stmt="INSERT INTO vicidial_webservers (webserver,hostname) values('$LOGserver_name','$LOGhostname');";
+	if ($DB) {echo "$stmt\n";}
+	$rslt=mysql_to_mysqli($stmt, $link);
+	$affected_rows = mysqli_affected_rows($link);
+	$webserver_id = mysqli_insert_id($link);
+	}
+
+$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name', url='$LOGfull_url', webserver='$webserver_id';";
+if ($DB) {echo "|$stmt|\n";}
+$rslt=mysql_to_mysqli($stmt, $link);
+$report_log_id = mysqli_insert_id($link);
+##### END log visit to the vicidial_report_log table #####
 
 $stmt="select extension,full_number,inbound_name from inbound_numbers where server_ip='" . mysqli_real_escape_string($link, $server_ip) . "';";
 $rslt=mysql_to_mysqli($stmt, $link);
@@ -498,3 +577,18 @@ if ($output == 'FULL')
 </PRE>
 
 </BODY></HTML>
+
+<?php
+$endMS = microtime();
+$startMSary = explode(" ",$startMS);
+$endMSary = explode(" ",$endMS);
+$runS = ($endMSary[0] - $startMSary[0]);
+$runM = ($endMSary[1] - $startMSary[1]);
+$TOTALrun = ($runS + $runM);
+
+$stmt="UPDATE vicidial_report_log set run_time='$TOTALrun' where report_log_id='$report_log_id';";
+if ($DB) {echo "|$stmt|\n";}
+$rslt=mysql_to_mysqli($stmt, $link);
+
+exit;
+?>

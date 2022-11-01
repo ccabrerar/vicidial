@@ -1,0 +1,22 @@
+--- AST_DB_optimize.pl.old	2022-08-26 16:00:06.989647473 -0400
++++ AST_DB_optimize.pl	2022-08-26 15:59:47.605714442 -0400
+@@ -293,6 +293,19 @@
+ 	$sthA->finish();
+ 	}
+ 
++$stmtA = "optimize table vicidial_confbridges;";
++if($DB){print STDERR "\n|$stmtA|\n";}
++if (!$T)
++	{
++	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
++	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
++	$sthArows=$sthA->rows;
++	@aryA = $sthA->fetchrow_array;
++	if (!$q) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
++	$sthA->finish();
++	}
++
++
+ $stmtA = "optimize table vicidial_hopper;";
+ if($DB){print STDERR "\n|$stmtA|\n";}
+ if (!$T) 

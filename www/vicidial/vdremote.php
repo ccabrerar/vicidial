@@ -23,11 +23,20 @@
 # 170217-1213 - Fixed non-latin auth issue #995
 # 210618-1001 - Added CORS support
 # 220224-0820 - Added allow_web_debug system setting
+# 221006-1454 - Added missing input variable, issue #1383
 #
 
-$version = '2.14-15';
-$build = '220224-0820';
+$version = '2.14-16';
+$build = '221006-1454';
 $php_script='vdremote.php';
+
+$popup_page = './closer_popup.php';
+$STARTtime = date("U");
+$NOW_DATE = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$date = date("r");
+$ip = getenv("REMOTE_ADDR");
+$browser = getenv("HTTP_USER_AGENT");
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -66,6 +75,8 @@ if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
 	elseif (isset($_POST["submit"]))	{$submit=$_POST["submit"];}
 if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))	{$SUBMIT=$_POST["SUBMIT"];}
+if (isset($_GET["query_date"]))				{$query_date=$_GET["query_date"];}
+	elseif (isset($_POST["query_date"]))	{$query_date=$_POST["query_date"];}
 
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (!isset($force_logout)) {$force_logout = 0;}
@@ -136,14 +147,6 @@ else
 	$user = preg_replace('/[^-_0-9\p{L}]/u', '', $user);
 	$campaign_id = preg_replace('/[^-_0-9\p{L}]/u', '', $campaign_id);
 	}
-
-$popup_page = './closer_popup.php';
-$STARTtime = date("U");
-$NOW_DATE = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-$date = date("r");
-$ip = getenv("REMOTE_ADDR");
-$browser = getenv("HTTP_USER_AGENT");
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}

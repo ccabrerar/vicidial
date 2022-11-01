@@ -20,10 +20,11 @@
 #
 #  MAKE SURE YOU TEST THAT THIS IS WORKING MANUALLY!!!
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 200601-1047 - First version, based upon AST_email_web_report.pl
+# 221002-1603 - Added comments for optional additional FTPSSL variable: "OverridePASV"
 #
 
 $txt = '.txt';
@@ -752,6 +753,7 @@ if (length($VARREPORT_host) > 7)
 
 	# Some versions of the FTPSSL perl module require you to hard code the encryption value: IMP_CRYPT or EXP_CRYPT
 	# $ftps = Net::FTPSSL->new("$VARREPORT_host", Port => $VARREPORT_port, Encryption => $VARFTP_encrypt, Debug => $FTPdb);
+	# optional additional variable (, OverridePASV => "$VARFTP_host") which will force the passive FTP hostname
 	if ( $VARFTP_encrypt eq "IMP_CRYPT" ) 
 		{
 		$ftps = Net::FTPSSL->new("$VARREPORT_host", Port => $VARREPORT_port, Encryption => IMP_CRYPT, Debug => $FTPdb);

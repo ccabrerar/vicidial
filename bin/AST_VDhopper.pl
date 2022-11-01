@@ -105,10 +105,11 @@
 # 210713-1317 - Added call_limit_24hour feature support
 # 210718-0343 - Fixes for 24-Hour Call Count Limits with standard Auto-Alt-Dialing
 # 210719-1519 - Added additional state override methods for call_limit_24hour
+# 220822-0938 - Change DNC check queries to put phone_number in double-quotes instead of single-quotes
 #
 
 # constants
-$build = '210719-1519';
+$build = '220822-0938';
 $script='AST_VDhopper';
 $DB=0;  # Debug flag, set to 0 for no debug messages. Can be overriden with CLI --debug flag
 $US='__';
@@ -643,7 +644,7 @@ if ($CBHOLD_count > 0)
 						$stmtA="SELECT count(*) FROM vicidial_dnc where phone_number IN('$VD_phone_number','$pth_areacode');";
 						}
 					else
-						{$stmtA="SELECT count(*) FROM vicidial_dnc where phone_number='$VD_phone_number';";}
+						{$stmtA="SELECT count(*) FROM vicidial_dnc where phone_number=\"$VD_phone_number\";";}
 					if ($DB) {print "     Doing DNC Check: $VD_phone_number - $VD_use_internal_dnc\n";}
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -677,7 +678,7 @@ if ($CBHOLD_count > 0)
 						$stmtA="SELECT count(*) FROM vicidial_campaign_dnc where phone_number IN('$VD_phone_number','$pth_areacode') and campaign_id='$temp_campaign_id';";
 						}
 					else
-						{$stmtA="SELECT count(*) FROM vicidial_campaign_dnc where phone_number='$VD_phone_number' and campaign_id='$temp_campaign_id';";}
+						{$stmtA="SELECT count(*) FROM vicidial_campaign_dnc where phone_number=\"$VD_phone_number\" and campaign_id='$temp_campaign_id';";}
 					if ($DBX) {print "$VD_use_other_campaign_dnc|$stmtA\n";}
 					if ($DB) {print "Doing CAMP DNC Check: $VD_phone_number - $VD_use_campaign_dnc - $temp_campaign_id\n";}
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
@@ -866,7 +867,7 @@ if ($hopper_dnc_count > 0)
 						$stmtA="SELECT count(*) FROM vicidial_dnc where phone_number IN('$VD_alt_phone','$alt_areacode');";
 						}
 					else
-						{$stmtA="SELECT count(*) FROM vicidial_dnc where phone_number='$VD_alt_phone';";}
+						{$stmtA="SELECT count(*) FROM vicidial_dnc where phone_number=\"$VD_alt_phone\";";}
 						if ($DB) {$event_string = "|$stmtA|";   &event_logger;}
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -890,7 +891,7 @@ if ($hopper_dnc_count > 0)
 						$stmtA="SELECT count(*) FROM vicidial_campaign_dnc where phone_number IN('$VD_alt_phone','$alt_areacode') and campaign_id='$temp_VD_campaign_id';";
 						}
 					else
-						{$stmtA="SELECT count(*) FROM vicidial_campaign_dnc where phone_number='$VD_alt_phone' and campaign_id='$temp_VD_campaign_id';";}
+						{$stmtA="SELECT count(*) FROM vicidial_campaign_dnc where phone_number=\"$VD_alt_phone\" and campaign_id='$temp_VD_campaign_id';";}
 						if ($DB) {$event_string = "|$stmtA|";   &event_logger;}
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -974,7 +975,7 @@ if ($hopper_dnc_count > 0)
 						$stmtA="SELECT count(*) FROM vicidial_dnc where phone_number IN('$VD_address3','$addr3_areacode');";
 						}
 					else
-						{$stmtA="SELECT count(*) FROM vicidial_dnc where phone_number='$VD_address3';";}
+						{$stmtA="SELECT count(*) FROM vicidial_dnc where phone_number=\"$VD_address3\";";}
 						if ($DB) {$event_string = "|$stmtA|";   &event_logger;}
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -998,7 +999,7 @@ if ($hopper_dnc_count > 0)
 						$stmtA="SELECT count(*) FROM vicidial_campaign_dnc where phone_number IN('$VD_address3','$addr3_areacode') and campaign_id='$temp_VD_campaign_id';";
 						}
 					else
-						{$stmtA="SELECT count(*) FROM vicidial_campaign_dnc where phone_number='$VD_address3' and campaign_id='$temp_VD_campaign_id';";}
+						{$stmtA="SELECT count(*) FROM vicidial_campaign_dnc where phone_number=\"$VD_address3\" and campaign_id='$temp_VD_campaign_id';";}
 						if ($DB) {$event_string = "|$stmtA|";   &event_logger;}
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -1124,7 +1125,7 @@ if ($hopper_dnc_count > 0)
 							$stmtA="SELECT count(*) FROM vicidial_dnc where phone_number IN('$VD_altdial_phone','$ad_areacode');";
 							}
 						else
-							{$stmtA="SELECT count(*) FROM vicidial_dnc where phone_number='$VD_altdial_phone';";}
+							{$stmtA="SELECT count(*) FROM vicidial_dnc where phone_number=\"$VD_altdial_phone\";";}
 							if ($DB) {$event_string = "|$stmtA|";   &event_logger;}
 						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -1148,7 +1149,7 @@ if ($hopper_dnc_count > 0)
 							$stmtA="SELECT count(*) FROM vicidial_campaign_dnc where phone_number IN('$VD_altdial_phone','$ad_areacode') and campaign_id='$temp_VD_campaign_id';";
 							}
 						else
-							{$stmtA="SELECT count(*) FROM vicidial_campaign_dnc where phone_number='$VD_altdial_phone' and campaign_id='$temp_VD_campaign_id';";}
+							{$stmtA="SELECT count(*) FROM vicidial_campaign_dnc where phone_number=\"$VD_altdial_phone\" and campaign_id='$temp_VD_campaign_id';";}
 							if ($DB) {$event_string = "|$stmtA|";   &event_logger;}
 						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -3428,7 +3429,7 @@ foreach(@campaign_id)
 								$stmtA="SELECT count(*) FROM vicidial_dnc where phone_number IN('$phone_to_hopper[$h]','$pth_areacode');";
 								}
 							else
-								{$stmtA="SELECT count(*) FROM vicidial_dnc where phone_number='$phone_to_hopper[$h]';";}
+								{$stmtA="SELECT count(*) FROM vicidial_dnc where phone_number=\"$phone_to_hopper[$h]\";";}
 							if ($DB) {print "     Doing DNC Check: $phone_to_hopper[$h] - $use_internal_dnc[$i]\n";}
 							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -3459,7 +3460,7 @@ foreach(@campaign_id)
 								$stmtA="SELECT count(*) FROM vicidial_campaign_dnc where phone_number IN('$phone_to_hopper[$h]','$pth_areacode') and campaign_id='$temp_campaign_id';";
 								}
 							else
-								{$stmtA="SELECT count(*) FROM vicidial_campaign_dnc where phone_number='$phone_to_hopper[$h]' and campaign_id='$temp_campaign_id';";}
+								{$stmtA="SELECT count(*) FROM vicidial_campaign_dnc where phone_number=\"$phone_to_hopper[$h]\" and campaign_id='$temp_campaign_id';";}
 							if ($DBX) {print "$use_other_campaign_dnc[$i]|$stmtA\n";}
 							if ($DB) {print "Doing CAMP DNC Check: $phone_to_hopper[$h] - $use_campaign_dnc[$i] - $temp_campaign_id\n";}
 							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
@@ -3700,7 +3701,7 @@ sub check_24hour_call_count
 		}
 	if ($TEMPcall_limit_24hour_method =~ /PHONE_NUMBER/)
 		{
-		$stmtA="SELECT count(*) FROM vicidial_lead_24hour_calls where phone_number='$temp_24hour_phone' and phone_code='$temp_24hour_phone_code' and (call_date >= NOW() - INTERVAL 1 DAY) $limit_scopeSQL;";
+		$stmtA="SELECT count(*) FROM vicidial_lead_24hour_calls where phone_number=\"$temp_24hour_phone\" and phone_code=\"$temp_24hour_phone_code\" and (call_date >= NOW() - INTERVAL 1 DAY) $limit_scopeSQL;";
 		}
 	else
 		{

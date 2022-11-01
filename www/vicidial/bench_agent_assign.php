@@ -11,6 +11,7 @@
 $startMS = microtime();
 
 $report_name='Bench Agent Assign';
+$user_group_restructions='';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -256,6 +257,12 @@ echo "<TITLE>"._QXZ("Bench Agent Assign")."</TITLE></HEAD><BODY BGCOLOR=WHITE ma
 
 	require("admin_header.php");
 
+$user_group_restructionsSQL='';
+if (strlen($user_group_restructions) > 0)
+	{
+	$user_group_restructionsSQL = preg_replace("/,/","','",$user_group_restructions);
+	$user_group_restructionsSQL = "and user_group IN('$user_group_restructionsSQL')";
+	}
 
 if ( (strlen($absent_agent) < 1) or (strlen($bench_agent) < 1) )
 	{
@@ -280,7 +287,7 @@ if ( (strlen($absent_agent) < 1) or (strlen($bench_agent) < 1) )
 	while ($i < $owners_to_print)
 		{
 		$users_to_print=0;
-		$stmt="SELECT user,full_name from vicidial_users where user='$owners[$i]';";
+		$stmt="SELECT user,full_name from vicidial_users where user='$owners[$i]' $user_group_restructionsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		if ($DB) {echo "$stmt\n";}
 		if ($rslt) {$users_to_print = mysqli_num_rows($rslt);}
@@ -295,7 +302,7 @@ if ( (strlen($absent_agent) < 1) or (strlen($bench_agent) < 1) )
 
 	$bench_menu="<option value=\"\">--- "._QXZ("SELECT BENCH AGENT HERE")." ---</option>\n";
 	$benches_to_print=0;
-	$stmt="SELECT user,full_name from vicidial_users where active='Y'  order by user;";
+	$stmt="SELECT user,full_name from vicidial_users where active='Y' $user_group_restructionsSQL order by user;";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	if ($DB) {echo "$stmt\n";}
 	if ($rslt) {$benches_to_print = mysqli_num_rows($rslt);}

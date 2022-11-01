@@ -79,3 +79,4 @@ NVAINS - Default status for new inserted lead on phone NVA call
 CLOSOP - In-Group Closing-Time option selected
 PAUSMX - Pause Max Seconds timeout default status
 IQNANQ - In-Queue call No-Agent-No-Queue drop
+SRDROP - SHARED outbound campaign drop to in-group, not included in most DROP stats

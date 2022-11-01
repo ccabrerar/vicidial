@@ -67,6 +67,7 @@
 # 220122-1701 - Added more variable filtering
 # 220221-0916 - Added allow_web_debug system setting
 # 220310-1427 - Fix for LOGOUT/LOGIN events sharing the same timedate
+# 220916-1744 - Added reporting section for webserver/URL logins
 #
 
 $startMS = microtime();
@@ -789,11 +790,15 @@ else
 		$CSV_text2.="\""._QXZ("Agent Login and Logout Time")."\"\n";
 		$CSV_text2.="\"\",\""._QXZ("EVENT")."\",\""._QXZ("DATE")."\",\""._QXZ("CAMPAIGN")."\",\""._QXZ("GROUP")."\",\""._QXZ("HOURS:MM:SS")."\",\""._QXZ("SESSION")."\",\""._QXZ("SERVER")."\",\""._QXZ("PHONE")."\",\""._QXZ("COMPUTER")."\",\""._QXZ("PHONE_LOGIN")."\",\""._QXZ("PHONE_IP")."\"\n";
 
-		$stmt="SELECT event,event_epoch,event_date,campaign_id,user_group,session_id,server_ip,extension,computer_ip,phone_login,phone_ip,if(event='LOGOUT' or event='TIMEOUTLOGOUT', 1, 0) as LOGpriority from ".$vicidial_user_log_table." where user='" . mysqli_real_escape_string($link, $user) . "' and event_date >= '" . mysqli_real_escape_string($link, $begin_date) . " 0:00:01'  and event_date <= '" . mysqli_real_escape_string($link, $end_date) . " 23:59:59' order by event_date, LOGpriority asc;";
+		$CSV_text15.="\""._QXZ("Agent Webserver and URL Login Time")."\"\n";
+		$CSV_text15.="\""._QXZ("DATE")."\",\""._QXZ("CAMPAIGN")."\",\""._QXZ("GROUP")."\",\""._QXZ("DIALER SERVER")."\",\""._QXZ("WEB SERVER")."\",\""._QXZ("LOGIN URL")."\"\n";
+
+		$stmt="SELECT event,event_epoch,event_date,campaign_id,user_group,session_id,server_ip,extension,computer_ip,phone_login,phone_ip,if(event='LOGOUT' or event='TIMEOUTLOGOUT', 1, 0) as LOGpriority, webserver, login_url from ".$vicidial_user_log_table." where user='" . mysqli_real_escape_string($link, $user) . "' and event_date >= '" . mysqli_real_escape_string($link, $begin_date) . " 0:00:01'  and event_date <= '" . mysqli_real_escape_string($link, $end_date) . " 23:59:59' order by event_date, LOGpriority asc;";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$events_to_print = mysqli_num_rows($rslt);
 
 		$total_calls=0;
+		$total_logins=0;
 		$o=0;
 		$event_start_seconds='';
 		$event_stop_seconds='';
@@ -820,8 +825,46 @@ else
 				$MAIN.="<td align=right><font size=2> $row[8] </td>\n";
 				$MAIN.="<td align=right><font size=2> $row[9] </td>\n";
 				$MAIN.="<td align=right><font size=2> $row[10] </td>\n";
+				if ($LOGuser_level==9)
+					{
+					if ($total_logins%2==0)
+						{$url_bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
+					else
+						{$url_bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
+
+					
+					$webserver_txt="";
+					$url_txt="";
+					if ($row[12]>0)
+						{
+						$webserver_stmt="select webserver, hostname from vicidial_webservers where webserver_id='$row[12]'";
+						$webserver_rslt=mysql_to_mysqli($webserver_stmt, $link);
+						$webserver_row=mysqli_fetch_row($webserver_rslt);
+						$webserver_txt="$webserver_row[0] - $webserver_row[1]";
+						$webserver_txt=preg_replace('/^\s\-\s|\s\-\s$/', '', $webserver_txt);
+						}
+					if ($row[13]>0)
+						{
+						$login_url_stmt="select url from vicidial_urls where url_id='$row[13]'";
+						$login_url_rslt=mysql_to_mysqli($login_url_stmt, $link);
+						$login_url_row=mysqli_fetch_row($login_url_rslt);
+						$url_txt=trim("$login_url_row[0]");
+						}
+
+					$URL_MAIN.="<tr $url_bgcolor>";
+					$URL_MAIN.="<td align=right><font size=2> $row[2] </td>\n";
+					$URL_MAIN.="<td align=right><font size=2> $row[3] </td>\n";
+					$URL_MAIN.="<td align=right><font size=2> $row[4] </td>\n";
+					$URL_MAIN.="<td align=right><font size=2> $row[6] </td>\n";
+					$URL_MAIN.="<td align=right><font size=2> ".(!$webserver_txt ? "&nbsp;" : "$webserver_txt")." </td>\n";
+					$URL_MAIN.="<td align=right><font size=2> ".(!$url_txt ? "&nbsp;" : "$url_txt")." </td>\n";
+					$URL_MAIN.="</tr>\n";
+					$CSV_text15.="\"$row[2]\",\"$row[3]\",\"$row[4]\",\"$row[6]\",\"$webserver_txt\",\"$url_txt\"\n";
+					}
 				$MAIN.="</tr>\n";
 				$CSV_text2.="\"\",\"$row[0]\",$row[2]\",\"$row[3]\",\"$row[4]\",\"\",\"$row[5]\",\"$row[6]\",\"$row[7]\",\"$row[8]\",\"$row[9]\",\"$row[10]\"\n";
+
+				$total_logins++;
 				}
 			if (preg_match('/LOGOUT/', $row[0]))
 				{
@@ -873,6 +916,23 @@ else
 		$MAIN.="</TABLE></center>\n";
 
 
+		
+		##### webserver and url login records for user #####
+
+		if ($LOGuser_level==9)
+			{
+			$MAIN.="<br><br>\n";
+
+			$MAIN.="<center>\n";
+
+			$MAIN.="<FONT FACE=\"ARIAL,HELVETICA\" SIZE=3><B>"._QXZ("Agent Webserver and URL Logins").": $NWB#user_stats-agent_webserver_url_logins$NWE </FONT><FONT FACE=\"ARIAL,HELVETICA\" SIZE=2>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href='$download_link&file_download=15'>["._QXZ("DOWNLOAD")."]</a></B></FONT>\n";
+			$MAIN.="<TABLE width=800 cellspacing=0 cellpadding=1>\n";
+			$MAIN.="<tr><td align=right><font size=2> "._QXZ("DATE")."</td><td align=right><font size=2> "._QXZ("CAMPAIGN")."</td><td align=right><font size=2> "._QXZ("GROUP")."</td><td align=right><font size=2>"._QXZ("DIALER SERVER")."</td><td align=right><font size=2>"._QXZ("WEB SERVER")."</td><td align=right><font size=2>"._QXZ("LOGIN URL")."</td></tr>\n";
+
+			$MAIN.=$URL_MAIN;
+
+			$MAIN.="</TABLE></center>\n";
+			}
 
 
 

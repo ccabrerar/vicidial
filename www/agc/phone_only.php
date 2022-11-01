@@ -22,10 +22,11 @@
 # 210615-1028 - Default security fixes, CVE-2021-28854
 # 210616-2043 - Added optional CORS support, see options.php for details
 # 220220-0936 - Added allow_web_debug system setting
+# 221021-1026 - Added webphone_settings phones option
 #
 
-$version = '2.14-18p';
-$build = '220220-0936';
+$version = '2.14-19p';
+$build = '221021-1026';
 $php_script = 'phone_only.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=74;
@@ -629,7 +630,7 @@ else
 			echo "<!-- Phones balance selection: $phone_login|$pb_server_ip|$past_minutes_date|     |$pb_log -->\n";
 			}
 		echo "<title>"._QXZ("Phone web client")."</title>\n";
-		$stmt="SELECT extension,dialplan_number,voicemail_id,phone_ip,computer_ip,server_ip,login,pass,status,active,phone_type,fullname,company,picture,messages,old_messages,protocol,local_gmt,ASTmgrUSERNAME,ASTmgrSECRET,login_user,login_pass,login_campaign,park_on_extension,conf_on_extension,VICIDIAL_park_on_extension,VICIDIAL_park_on_filename,monitor_prefix,recording_exten,voicemail_exten,voicemail_dump_exten,ext_context,dtmf_send_extension,call_out_number_group,client_browser,install_directory,local_web_callerID_URL,VICIDIAL_web_URL,AGI_call_logging_enabled,user_switching_enabled,conferencing_enabled,admin_hangup_enabled,admin_hijack_enabled,admin_monitor_enabled,call_parking_enabled,updater_check_enabled,AFLogging_enabled,QUEUE_ACTION_enabled,CallerID_popup_enabled,voicemail_button_enabled,enable_fast_refresh,fast_refresh_rate,enable_persistant_mysql,auto_dial_next_number,VDstop_rec_after_each_call,DBX_server,DBX_database,DBX_user,DBX_pass,DBX_port,DBY_server,DBY_database,DBY_user,DBY_pass,DBY_port,outbound_cid,enable_sipsak_messages,email,template_id,conf_override,phone_context,phone_ring_timeout,conf_secret,is_webphone,use_external_server_ip,codecs_list,webphone_dialpad,phone_ring_timeout,on_hook_agent,webphone_auto_answer,webphone_dialbox,webphone_mute,webphone_volume,webphone_debug,webphone_layout from phones where login='$phone_login' and pass='$phone_pass' and active = 'Y';";
+		$stmt="SELECT extension,dialplan_number,voicemail_id,phone_ip,computer_ip,server_ip,login,pass,status,active,phone_type,fullname,company,picture,messages,old_messages,protocol,local_gmt,ASTmgrUSERNAME,ASTmgrSECRET,login_user,login_pass,login_campaign,park_on_extension,conf_on_extension,VICIDIAL_park_on_extension,VICIDIAL_park_on_filename,monitor_prefix,recording_exten,voicemail_exten,voicemail_dump_exten,ext_context,dtmf_send_extension,call_out_number_group,client_browser,install_directory,local_web_callerID_URL,VICIDIAL_web_URL,AGI_call_logging_enabled,user_switching_enabled,conferencing_enabled,admin_hangup_enabled,admin_hijack_enabled,admin_monitor_enabled,call_parking_enabled,updater_check_enabled,AFLogging_enabled,QUEUE_ACTION_enabled,CallerID_popup_enabled,voicemail_button_enabled,enable_fast_refresh,fast_refresh_rate,enable_persistant_mysql,auto_dial_next_number,VDstop_rec_after_each_call,DBX_server,DBX_database,DBX_user,DBX_pass,DBX_port,DBY_server,DBY_database,DBY_user,DBY_pass,DBY_port,outbound_cid,enable_sipsak_messages,email,template_id,conf_override,phone_context,phone_ring_timeout,conf_secret,is_webphone,use_external_server_ip,codecs_list,webphone_dialpad,phone_ring_timeout,on_hook_agent,webphone_auto_answer,webphone_dialbox,webphone_mute,webphone_volume,webphone_debug,webphone_layout,webphone_settings from phones where login='$phone_login' and pass='$phone_pass' and active = 'Y';";
 		if ($DB) {echo "|$stmt|\n";}
 		$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'09015',$VD_login,$server_ip,$session_name,$one_mysql_log);}
@@ -709,6 +710,7 @@ else
 		$webphone_volume=$row[82];
 		$webphone_debug=$row[83];
 		$webphone_layout=$row[84];
+		$webphone_settings=$row[85];
 
 		$no_empty_session_warnings=0;
 		if ( ($phone_login == 'nophone') or ($on_hook_agent == 'Y') )
@@ -831,6 +833,40 @@ else
 				$system_key =$row[0];
 				}
 			}
+
+		$webphone_settings_scrubbed = '';
+		if (strlen($webphone_settings) > 0) 
+			{
+			$stmt="SELECT container_entry FROM vicidial_settings_containers WHERE container_id='$webphone_settings';";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			if (mysqli_num_rows($rslt) > 0)
+				{
+				$row=mysqli_fetch_row($rslt);
+				$webphone_settings_entry = $row[0];
+
+				### scrub unnecessary characters from the settings container
+				$webphone_settings_lines = preg_split('/\r\n|\r|\n/',$webphone_settings_entry);
+
+				foreach( $webphone_settings_lines as $line )
+					{
+					# remove comments
+					if ( strpos($line, '#') === 0 ) 
+						{
+						$line = substr($line, 0, strpos($line, '#'));
+						}
+
+					# remove whitespace outside double quotes
+					$line = preg_replace('~"[^"]*"(*SKIP)(*F)|\s+~',"",$line);
+
+					# remove blank lines
+					if ($line != '')
+						{
+						$webphone_settings_scrubbed = $webphone_settings_scrubbed . $line . '\n';
+						}
+					}
+				}
+			}
+
 		$webphone_options='INITIAL_LOAD';
 		if ($webphone_dialpad == 'Y') {$webphone_options .= "--DIALPAD_Y";}
 		if ($webphone_dialpad == 'N') {$webphone_options .= "--DIALPAD_N";}
@@ -847,6 +883,8 @@ else
 		if ($webphone_debug == 'Y') {$webphone_options .= "--DEBUG";}
 		if (strlen($web_socket_url) > 5) {$webphone_options .= "--WEBSOCKETURL$web_socket_url";}
 		if (strlen($webphone_layout) > 0) {$webphone_options .= "--WEBPHONELAYOUT$webphone_layout";}
+		if (strlen($session_id) > 0) { $webphone_options .= "--SESSION$session_id";}
+		if (strlen($webphone_settings_scrubbed) > 0) {$webphone_options .= "--SETTINGS$webphone_settings_scrubbed";}
 		$webphone_url = preg_replace("/LOCALFQDN/",$FQDN,$webphone_url);
 		if ($DB > 0) {echo "<!-- debug: SOCKET:$web_socket_url|VERSION:$asterisk_version| -->";}
 

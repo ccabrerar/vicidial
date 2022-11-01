@@ -2,7 +2,7 @@
 
 # install.pl version 2.14
 #
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 
 # CHANGES
@@ -47,6 +47,8 @@
 # 190701-0127 - SVN revision hardcoded into this file (for Github usage)
 # 210813-0925 - Added Asteirsk 16 option
 # 210827-0926 - Added PJSIP default conf files to Asterisk 16 install
+# 220827-2239 - Added VERM web directory
+# 220829-1434 - Added 'C' keepalive option
 #
 
 ############################################
@@ -210,6 +212,7 @@ if (length($ARGV[0])>1)
 		print "     7 - AST_VDauto_dial_FILL (only for multi-server, this must only be on one server)\n";
 		print "     8 - ip_relay (used for blind agent monitoring)\n";
 		print "     9 - Timeclock auto-logout\n";
+		print "     C - ConfBridge process, (see the ConfBridge documentation for more info)\n";
 		print "     E - Email processor, (If multi-server system, this must only be on one server)\n";
 		print "     S - SIP Logger (Patched Asterisk 13 or higher required)\n";
 		print "  [--asterisk_version] = set the asterisk version you want to install for\n";
@@ -1825,6 +1828,7 @@ else
 			print " 7 - AST_VDauto_dial_FILL (only for multi-server, this must only be on one server)\n";
 			print " 8 - ip_relay (used for blind agent monitoring)\n";
 			print " 9 - Timeclock auto logout\n";
+			print " C - ConfBridge process, (see the ConfBridge documentation for more info)\n";
 			print " E - Email processor, (If multi-server system, this must only be on one server)\n";
 			print " S - SIP Logger (Patched Asterisk 13 or higher required)\n";
 			print "Enter active keepalives or press enter for default: [$VARactive_keepalives] ";
@@ -2432,6 +2436,7 @@ print conf "#  6 - FastAGI_log\n";
 print conf "#  7 - AST_VDauto_dial_FILL (only for multi-server, this must only be on one server)\n";
 print conf "#  8 - ip_relay (used for blind agent monitoring)\n";
 print conf "#  9 - Timeclock auto logout, (If multi-server system, this must only be on one server)\n";
+print conf "#  C - ConfBridge process, (see the ConfBridge documentation for more info)\n";
 print conf "#  E - Email processor, (If multi-server system, this must only be on one server)\n";
 print conf "#  S - SIP Logger (Patched Asterisk 13 or higher required)\n";
 print conf "VARactive_keepalives => $VARactive_keepalives\n";
@@ -2572,6 +2577,7 @@ if ($NOWEB < 1)
 	if (!-e "$PATHweb/vicidial/agent_reports/")		{`mkdir -p $PATHweb/vicidial/agent_reports/`;}
 	if (!-e "$PATHweb/vicidial/server_reports/")	{`mkdir -p $PATHweb/vicidial/server_reports/`;}
 	if (!-e "$PATHweb/chat_customer/")				{`mkdir -p $PATHweb/chat_customer/`;}
+	if (!-e "$PATHweb/VERM/")						{`mkdir -p $PATHweb/VERM/`;}
 
 	print "Copying web files...\n";
 	# save custom.css if its not empty
@@ -2584,12 +2590,14 @@ if ($NOWEB < 1)
 	`cp -f ./www/vicidial/robots.txt $PATHweb/vicidial/server_reports/`;
 	if (-e "$PATHweb/agc/css/custom.css.save_user_changes") {`mv $PATHweb/agc/css/custom.css.save_user_changes $PATHweb/agc/css/custom.css`;}
 	`cp -f ./www/vicidial/robots.txt $PATHweb/chat_customer/`;
+	`cp -f ./www/vicidial/robots.txt $PATHweb/VERM/`;
 
 	print "setting web scripts to executable...\n";
 	`chmod 0777 $PATHweb/`;
 	`chmod -R 0755 $PATHweb/agc/`;
 	`chmod -R 0755 $PATHweb/vicidial/`;
 	`chmod -R 0755 $PATHweb/chat_customer/`;
+	`chmod -R 0755 $PATHweb/VERM/`;
 	`chmod 0777 $PATHweb/agc/`;
 	`chmod 0777 $PATHweb/vicidial/`;
 	`chmod 0777 $PATHweb/vicidial/ploticus/`;
@@ -2605,6 +2613,9 @@ if ($NOWEB < 1)
 	`rm -f $PATHweb/vicidial/listloader_super.pl`;
 	`rm -f $PATHweb/vicidial/listloader.pl`;
 	`chmod 0777 $PATHweb/chat_customer/`;
+	`cp -f /dev/null $PATHweb/VERM/project_auth_entries.txt`;
+	`chmod 0777 $PATHweb/VERM/project_auth_entries.txt`;
+	`chmod 0777 $PATHweb/VERM/`;
 	}
 
 if ( ($PROMPTcopy_web_lang =~ /y/i) || ($CLIcopy_web_lang =~ /y/i) )
@@ -2634,6 +2645,7 @@ if ($PATHconf !~ /\/etc\/astguiclient.conf/)
 	`sed -i 's/$PATHconfDEFAULT/$PATHconfEREG/g' $PATHweb/vicidial/listloader_rowdisplay.pl `;
 	`sed -i 's/$PATHconfDEFAULT/$PATHconfEREG/g' $PATHweb/vicidial/spreadsheet_sales_viewer.pl `;
 	`sed -i 's/$PATHconfDEFAULT/$PATHconfEREG/g' $PATHweb/chat_customer/dbconnect_mysqli.php `;
+	`sed -i 's/$PATHconfDEFAULT/$PATHconfEREG/g' $PATHweb/VERM/dbconnect_mysqli.php `;
 	}
 
 if ( ($PROMPTcopy_conf_files =~ /y/i) || ($CLIcopy_conf_files =~ /y/i) )

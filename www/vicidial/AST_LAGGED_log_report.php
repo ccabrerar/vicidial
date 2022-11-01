@@ -11,6 +11,7 @@
 # 141230-1446 - Added code for on-the-fly language translations display
 # 170409-1536 - Added IP List validation code
 # 220302-1624 - Added allow_web_debug system setting
+# 220812-0946 - Added User Group report permissions checking
 #
 
 $startMS = microtime();
@@ -94,7 +95,7 @@ else
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
 
-$stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
+$stmt="SELECT selected_language,user_group from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $sl_ct = mysqli_num_rows($rslt);
@@ -102,6 +103,7 @@ if ($sl_ct > 0)
 	{
 	$row=mysqli_fetch_row($rslt);
 	$VUselected_language =		$row[0];
+	$LOGuser_group =			$row[1];
 	}
 
 $auth=0;
@@ -161,6 +163,33 @@ else
 	exit;
 	}
 
+$stmt="SELECT allowed_campaigns,allowed_reports,admin_viewable_groups,admin_viewable_call_times from vicidial_user_groups where user_group='$LOGuser_group';";
+if ($DB) {$HTML_text.="|$stmt|\n";}
+$rslt=mysql_to_mysqli($stmt, $link);
+$row=mysqli_fetch_row($rslt);
+$LOGallowed_campaigns =			$row[0];
+$LOGallowed_reports =			$row[1];
+$LOGadmin_viewable_groups =		$row[2];
+$LOGadmin_viewable_call_times =	$row[3];
+
+$LOGallowed_campaignsSQL='';
+$whereLOGallowed_campaignsSQL='';
+if ( (!preg_match('/\-ALL/i', $LOGallowed_campaigns)) )
+	{
+	$rawLOGallowed_campaignsSQL = preg_replace("/ -/",'',$LOGallowed_campaigns);
+	$rawLOGallowed_campaignsSQL = preg_replace("/ /","','",$rawLOGallowed_campaignsSQL);
+	$LOGallowed_campaignsSQL = "and campaign_id IN('$rawLOGallowed_campaignsSQL')";
+	$whereLOGallowed_campaignsSQL = "where campaign_id IN('$rawLOGallowed_campaignsSQL')";
+	}
+$regexLOGallowed_campaigns = " $LOGallowed_campaigns ";
+
+if ( (!preg_match("/$report_name/",$LOGallowed_reports)) and (!preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
+	{
+    Header("WWW-Authenticate: Basic realm=\"CONTACT-CENTER-ADMIN\"");
+    Header("HTTP/1.0 401 Unauthorized");
+    echo "You are not allowed to view this report: |$PHP_AUTH_USER|$report_name|\n";
+    exit;
+	}
 
 ##### BEGIN log visit to the vicidial_report_log table #####
 $LOGip = getenv("REMOTE_ADDR");

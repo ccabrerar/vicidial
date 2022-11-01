@@ -4,15 +4,16 @@
 #
 # functions for agent scripts
 #
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 #
 # CHANGES:
 # 151212-0826 - First Build for customer chat, based on agc/functions.php
 # 210615-1044 - Default security fixes, CVE-2021-28854
+# 220921-1233 - Added more failed login logging in user_authorization function
 #
 
-# $mysql_queries = 20
+# $mysql_queries = 22
 
 ##### BEGIN validate user login credentials, check for failed lock out #####
 function user_authorization($user,$pass,$user_option,$user_update,$bcrypt,$return_hash)
@@ -90,7 +91,7 @@ function user_authorization($user,$pass,$user_option,$user_update,$bcrypt,$retur
 
 			if ($failed_login_count < $LOCK_trigger_attempts)
 				{
-				$stmt="UPDATE vicidial_users set failed_login_count=(failed_login_count+1),last_ip='$ip' where user='$user';";
+				$stmt="UPDATE vicidial_users set failed_login_count=(failed_login_count+1),failed_login_attempts_today=(failed_login_attempts_today+1),failed_login_count_today=(failed_login_count_today+1),failed_last_ip_today='$ip',failed_last_type_today='hBAD' where user='$user';";
 				$rslt=mysql_to_mysqli($stmt, $link);
 					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'05011',$user,$server_ip,$session_name,$one_mysql_log);}
 				}
@@ -98,12 +99,17 @@ function user_authorization($user,$pass,$user_option,$user_update,$bcrypt,$retur
 				{
 				if ($LOCK_over > $last_login_date)
 					{
-					$stmt="UPDATE vicidial_users set last_login_date=NOW(),failed_login_count=1,last_ip='$ip' where user='$user';";
+					$stmt="UPDATE vicidial_users set last_login_date=NOW(),failed_login_count=1,failed_last_ip_today='$ip',failed_login_attempts_today=(failed_login_attempts_today+1),failed_login_count_today=(failed_login_count_today+1),failed_last_type_today='hBAD' where user='$user';";
 					$rslt=mysql_to_mysqli($stmt, $link);
 						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'05012',$user,$server_ip,$session_name,$one_mysql_log);}
 					}
 				else
-					{$auth_key='LOCK';}
+					{
+					$auth_key='LOCK';
+					$stmt="UPDATE vicidial_users set failed_login_attempts_today=(failed_login_attempts_today+1),failed_last_type_today='hLOCK' where user='$user';";
+					$rslt=mysql_to_mysqli($stmt, $link);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'05021',$user,$server_ip,$session_name,$one_mysql_log);}
+					}
 				}
 			}
 		if ($SSwebroot_writable > 0)
@@ -199,6 +205,12 @@ function user_authorization($user,$pass,$user_option,$user_update,$bcrypt,$retur
 			$auth_key='GOOD';
 			if ( ($return_hash == '1') and ($SSpass_hash_enabled > 0) and (strlen($pass_hash) > 12) )
 				{$auth_key .= "|$pass_hash";}
+			}
+		else
+			{
+			$stmt="UPDATE vicidial_users set failed_login_attempts_today=(failed_login_attempts_today+1),failed_last_type_today='h$auth_key' where user='$user';";
+			$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'05022',$user,$server_ip,$session_name,$one_mysql_log);}
 			}
 		}
 	return $auth_key;

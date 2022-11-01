@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2022-03-10
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2022-09-20
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -202,6 +202,8 @@ Changes:
 220126-2116 - Added dispo_call_url and alt URL options for update_campaign. Added 'update_alt_url' function
 220307-0937 - Added 'update_presets' function
 220310-0825 - Added DELETE action to the 'update_presets' function
+220902-0823 - Added dial_status_add/dial_status_remove options to update_campaign function
+220920-0814 - Added more "XDAY" options to add_lead duplicate checks
 
 
 API Functions use the 'function' variable
@@ -1008,7 +1010,7 @@ duplicate_check -	Check for duplicate records in the system, can select more tha
 				DUPNAMEPHONELIST - check for duplicate first_name, last_name and phone_number in same list
 				DUPNAMEPHONECAMP - check for duplicate first_name, last_name and phone_number in all lists for this list's campaign
 				DUPNAMEPHONESYS - check for duplicate first_name, last_name and phone_number in entire system
-				 "  30/60/90/180/360DAY - Added to one of the above duplicate checks(i.e. "DUPSYS90DAY"), only checks leads loaded in last 90 days
+				 "  1/2/3/7/14/15/21/28/30/60/90/180/360DAY - Added to one of the above duplicate checks(i.e. "DUPSYS90DAY"), only checks leads loaded in last 90 days
 usacan_prefix_check -	Y or N, default is N. Check for a valid 4th digit for USA and Canada phone numbers (cannot be 0 or 1)
 usacan_areacode_check -	Y or N, default is N. Check for a valid areacode for USA and Canada phone numbers(also checks for 10-digit length)
 nanpa_ac_prefix_check -	Y or N, default is N. Check for a valid NANPA areacode and prefix, if optional NANPA data is on the system
@@ -2243,6 +2245,8 @@ reset_hopper -		Must be one of these: 'Y','N', will default to 'N'
 dial_method -		Must be one of these: 'MANUAL','RATIO','INBOUND_MAN','ADAPT_AVERAGE','ADAPT_HARD_LIMIT','ADAPT_TAPERED'
 dial_timeout -		Must be from 1 to 120
 outbound_cid -		1-20 digits
+dial_status_add -	1-6 characters
+dial_status_remove -	1-6 characters
 lead_filter_id -	Must be a valid Filter in the system, or '---NONE---' to not use a filter
 xferconf_one -		Transfer - Conf Number 1: 1-50 characters
 xferconf_two -		Transfer - Conf Number 2: 1-50 characters
@@ -2260,6 +2264,7 @@ http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&functio
 http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_campaign&campaign_id=TESTOUT&reset_hopper=Y
 http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_campaign&campaign_id=TESTOUT&dispo_call_url=http%3A%2F%2Fvicidial.org%2Fquery.php%3Fvar1%3DX%26var2%3Dy
 http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_campaign&campaign_id=TESTOUT&dispo_call_url=ALT
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_campaign&campaign_id=TESTOUT&dial_status_add=A2&dial_status_remove=A3
 
 Example responses:
 ERROR: update_campaign USER DOES NOT HAVE PERMISSION TO UPDATE CAMPAIGNS - 6666
@@ -2281,6 +2286,11 @@ ERROR: update_campaign TRANSFER CONF NUMBER THREE IS NOT VALID, THIS IS AN OPTIO
 ERROR: update_campaign TRANSFER CONF NUMBER FOUR IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|123456789012345678901234567890123456789012345678901
 ERROR: update_campaign TRANSFER CONF NUMBER FIVE IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|123456789012345678901234567890123456789012345678901
 ERROR: update_campaign ACTIVE MUST BE Y OR N, THIS IS AN OPTIONAL FIELD - 6666|U
+ERROR: update_campaign DIAL STATUS ADD IS NOT VALID, THIS IS AN OPTIONAL FIELD - |6666|A1234567|
+ERROR: update_campaign DIAL STATUS ADD FAILURE, TOO MANY EXISTING DIAL STATUSES, THIS IS AN OPTIONAL FIELD - |6666|A12345|
+ERROR: update_campaign DIAL STATUS REMOVE IS NOT VALID, THIS IS AN OPTIONAL FIELD - |6666|A1234567|
+ERROR: update_campaign DIAL STATUS REMOVE FAILURE, NO EXISTING DIAL STATUSES SET, THIS IS AN OPTIONAL FIELD - |666666|A12345|
+ERROR: update_campaign DIAL STATUS REMOVE FAILURE, NOT AN EXISTING DIAL STATUS, THIS IS AN OPTIONAL FIELD - |666666|A12345|
 NOTICE: update_campaign NO UPDATES DEFINED - 6666|
 NOTICE: update_campaign HOPPER HAS BEEN RESET - 6666|1101|324
 SUCCESS: update_campaign CAMPAIGN HAS BEEN UPDATED - 6666|1101

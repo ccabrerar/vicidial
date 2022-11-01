@@ -4,7 +4,7 @@
 #
 # functions for administrative scripts and reports
 #
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 #
 # CHANGES:
@@ -39,6 +39,7 @@
 # 210316-0924 - Small fix for 2FA consistency
 # 210406-1740 - Moved 'dialable_leads' function to this script
 # 210615-0952 - Default security fix, CVE-2021-28854
+# 220921-1209 - Added more failed login logging in user_authorization function
 #
 
 ##### BEGIN validate user login credentials, check for failed lock out #####
@@ -120,18 +121,22 @@ function user_authorization($user,$pass,$user_option,$user_update,$api_call)
 
 			if ($failed_login_count < $LOCK_trigger_attempts)
 				{
-				$stmt="UPDATE vicidial_users set failed_login_count=(failed_login_count+1),last_ip='$ip' where user='$user';";
+				$stmt="UPDATE vicidial_users set failed_login_count=(failed_login_count+1),failed_login_attempts_today=(failed_login_attempts_today+1),failed_login_count_today=(failed_login_count_today+1),failed_last_ip_today='$ip',failed_last_type_today='aBAD' where user='$user';";
 				$rslt=mysql_to_mysqli($stmt, $link);
 				}
 			else
 				{
 				if ($LOCK_over > $last_login_date)
 					{
-					$stmt="UPDATE vicidial_users set last_login_date=NOW(),failed_login_count=1,last_ip='$ip' where user='$user';";
+					$stmt="UPDATE vicidial_users set last_login_date=NOW(),failed_login_count=1,failed_last_ip_today='$ip',failed_login_attempts_today=(failed_login_attempts_today+1),failed_login_count_today=(failed_login_count_today+1),failed_last_type_today='aBAD' where user='$user';";
 					$rslt=mysql_to_mysqli($stmt, $link);
 					}
 				else
-					{$auth_key='LOCK';}
+					{
+					$auth_key='LOCK';
+					$stmt="UPDATE vicidial_users set failed_login_attempts_today=(failed_login_attempts_today+1),failed_last_type_today='aLOCK' where user='$user';";
+					$rslt=mysql_to_mysqli($stmt, $link);
+					}
 				}
 			}
 		if ($SSwebroot_writable > 0)
@@ -255,6 +260,11 @@ function user_authorization($user,$pass,$user_option,$user_update,$api_call)
 						}
 					}
 				}
+			}
+		else
+			{
+			$stmt="UPDATE vicidial_users set failed_login_attempts_today=(failed_login_attempts_today+1),failed_last_type_today='a$auth_key' where user='$user';";
+			$rslt=mysql_to_mysqli($stmt, $link);
 			}
 		}
 	return $auth_key;

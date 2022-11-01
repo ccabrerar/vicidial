@@ -1,0 +1,27 @@
+--- AST_VDremote_agents.pl.old	2022-08-31 10:14:56.754198885 -0400
++++ AST_VDremote_agents.pl	2022-08-31 21:44:54.969475700 -0400
+@@ -194,7 +194,7 @@
+ ###########################################
+ 
+ ### Grab Server values from the database
+-$stmtA = "SELECT vd_server_logs,local_gmt,ext_context FROM servers where server_ip = '$VARserver_ip';";
++$stmtA = "SELECT vd_server_logs,local_gmt,ext_context,conf_engine FROM servers where server_ip = '$VARserver_ip';";
+ $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+ $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+ $sthArows=$sthA->rows;
+@@ -204,6 +204,7 @@
+ 	$DBvd_server_logs =		$aryA[0];
+ 	$DBSERVER_GMT =			$aryA[1];
+ 	$ext_context =			$aryA[2];
++	$conf_engine =			$aryA[3];
+ 	if ($DBvd_server_logs =~ /Y/)	{$SYSLOG = '1';}
+ 	else {$SYSLOG = '0';}
+ 	if (length($DBSERVER_GMT)>0)	{$SERVER_GMT = $DBSERVER_GMT;}
+@@ -664,6 +665,7 @@
+ 					{
+ 					$TESTrun++;
+ 					$DBremote_conf_exten[$user_counter] = ($user_counter + 8600051);
++					if ($conf_engine eq 'CONFBRIDGE') { $DBremote_conf_exten[$user_counter] = ($user_counter + 9600051); }
+ 					}
+ 				$DBremote_closer[$user_counter] =		$closer_campaigns;
+ 				$DBremote_random[$user_counter] =		$random;

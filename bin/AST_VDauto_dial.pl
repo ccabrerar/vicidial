@@ -150,6 +150,7 @@
 # 220118-2206 - Added auto_alt_threshold campaign & list settings
 # 220311-1920 - Added List CID Group Override option
 # 220328-1310 - Small change made per Issue #1337
+# 220623-1621 - Added List dial_prefix override
 #
 
 $build='220328-1310';
@@ -1822,9 +1823,10 @@ while($one_day_interval > 0)
 											{
 											$campaign_cid_override='';
 											$LIST_cid_group_override='';
+											$LIST_dial_prefix_override='';
 											$auto_alt_threshold=-1;
 											### gather list_id overrides
-											$stmtA = "SELECT campaign_cid_override,auto_alt_threshold,cid_group_id FROM vicidial_lists where list_id='$list_id';";
+											$stmtA = "SELECT campaign_cid_override,auto_alt_threshold,cid_group_id,dial_prefix FROM vicidial_lists where list_id='$list_id';";
 											$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 											$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 											$sthArowsL=$sthA->rows;
@@ -1834,6 +1836,7 @@ while($one_day_interval > 0)
 												$campaign_cid_override =	$aryA[0];
 												$auto_alt_threshold =		$aryA[1];
 												$LIST_cid_group_override =	$aryA[2];
+												$LIST_dial_prefix_override =	$aryA[3];
 												}
 											$sthA->finish();
 
@@ -2063,6 +2066,7 @@ while($one_day_interval > 0)
 											if ($DTL_override > 4) {$Local_dial_timeout = $DTL_override;}
 											$Local_dial_timeout = ($Local_dial_timeout * 1000);
 											if (length($DBIPdialprefix[$user_CIPct]) > 0) {$Local_out_prefix = "$DBIPdialprefix[$user_CIPct]";}
+											if (length($LIST_dial_prefix_override) > 0) {$Local_out_prefix = "$LIST_dial_prefix_override";}
 											if (length($DBIPvdadexten[$user_CIPct]) > 0) {$VDAD_dial_exten = "$DBIPvdadexten[$user_CIPct]";}
 											else {$VDAD_dial_exten = "$answer_transfer_agent";}
 
@@ -2311,7 +2315,7 @@ while($one_day_interval > 0)
 													}
 												}
 
-											if ($DBIPdialprefix[$user_CIPct] =~ /x/i) {$Local_out_prefix = '';}
+											if ($Local_out_prefix =~ /x/i) {$Local_out_prefix = '';}
 
 											if ($RECcount)
 												{

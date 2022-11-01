@@ -29,6 +29,9 @@
 # 170711-1102 - Added screen colors and fixed default date variable
 # 220122-1700 - Added more variable filtering
 # 220221-0938 - Added allow_web_debug system setting
+# 220811-1440 - Modified for date ranges instead of single-day
+# 220822-1728 - Changed total login time calculation to work for multi-day ranges
+# 221005-1647 - Added JS calendar functionality for date fields
 #
 
 $startMS = microtime();
@@ -47,6 +50,8 @@ if (isset($_GET["agent"]))				{$agent=$_GET["agent"];}
 	elseif (isset($_POST["agent"]))		{$agent=$_POST["agent"];}
 if (isset($_GET["query_date"]))				{$query_date=$_GET["query_date"];}
 	elseif (isset($_POST["query_date"]))	{$query_date=$_POST["query_date"];}
+if (isset($_GET["end_date"]))				{$end_date=$_GET["end_date"];}
+	elseif (isset($_POST["end_date"]))	{$end_date=$_POST["end_date"];}
 if (isset($_GET["calls_summary"]))			{$calls_summary=$_GET["calls_summary"];}
 	elseif (isset($_POST["calls_summary"]))	{$calls_summary=$_POST["calls_summary"];}
 if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
@@ -64,6 +69,7 @@ $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 $STARTtime = date("U");
 if ( (!isset($query_date)) or (strlen($query_date) < 8) ) {$query_date = $NOW_DATE;}
+if ( (!isset($end_date)) or (strlen($end_date) < 8) ) {$end_date = $NOW_DATE;}
 
 $DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
@@ -114,6 +120,7 @@ else
 #############
 
 $query_date = preg_replace('/[^- \:\_0-9a-zA-Z]/',"",$query_date);
+$end_date = preg_replace('/[^- \:\_0-9a-zA-Z]/',"",$end_date);
 $file_download = preg_replace('/[^-_0-9a-zA-Z]/', '', $file_download);
 $search_archived_data = preg_replace('/[^-_0-9a-zA-Z]/', '', $search_archived_data);
 $submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
@@ -381,6 +388,11 @@ $HEADER.="   .purple {color: white; background-color: purple}\n";
 $HEADER.="-->\n";
 $HEADER.=" </STYLE>\n";
 
+
+$HEADER.="<script language=\"JavaScript\" src=\"calendar_db.js\"></script>\n";
+$HEADER.="<link rel=\"stylesheet\" href=\"calendar.css\">\n";
+
+
 $HEADER.="<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=utf-8\">\n";
 $HEADER.="<TITLE>"._QXZ("$report_name");
 
@@ -408,16 +420,73 @@ $subcamp_color =	'#C6C6C6';
 
 $MAIN.="<TABLE WIDTH=$page_width BGCOLOR=\"#$SSframe_background\" cellpadding=2 cellspacing=0><TR BGCOLOR=\"#$SSframe_background\"><TD>\n";
 
-$MAIN.=_QXZ("Agent Time Sheet for").": $user\n";
+$MAIN.=_QXZ("Agent Time Sheet for").": <B>$user</B>\n";
 $MAIN.="<BR>\n";
-$MAIN.="<FORM ACTION=\"$PHP_SELF\" METHOD=GET> &nbsp; \n";
-$MAIN.=_QXZ("Date").": <INPUT TYPE=TEXT NAME=query_date SIZE=10 MAXLENGTH=19 VALUE=\"$query_date\">\n";
-$MAIN.=_QXZ("User ID").": <INPUT TYPE=TEXT NAME=agent SIZE=20 MAXLENGTH=20 VALUE=\"$agent\">\n";
+$MAIN.="<FORM ACTION=\"$PHP_SELF\" METHOD=GET name='vicidial_report'> &nbsp; &nbsp; \n";
+$MAIN.="<table border='0' width='350' cellpadding='3' cellspacing='0'>";
+$MAIN.="<tr><td align='right'>"._QXZ("Date").":</td>";
+$MAIN.="<td align='left'><INPUT TYPE=TEXT NAME=query_date SIZE=10 MAXLENGTH=10 VALUE=\"$query_date\">";
+	$MAIN.="<script language=\"JavaScript\">\n";
+	$MAIN.="function openNewWindow(url)\n";
+	$MAIN.="  {\n";
+	$MAIN.="  window.open (url,\"\",'width=620,height=300,scrollbars=yes,menubar=yes,address=yes');\n";
+	$MAIN.="  }\n";
+	$MAIN.="var o_cal = new tcal ({\n";
+	$MAIN.="	// form name\n";
+	$MAIN.="	'formname': 'vicidial_report',\n";
+	$MAIN.="	// input name\n";
+	$MAIN.="	'controlname': 'query_date'\n";
+	$MAIN.="});\n";
+	$MAIN.="o_cal.a_tpl.yearscroll = false;\n";
+	$MAIN.="// o_cal.a_tpl.weekstart = 1; // Monday week start\n";
+	$MAIN.="</script>\n";
+$MAIN.="</td>\n";
+$MAIN.="<td align='right'>"._QXZ("To").":</td>";
+$MAIN.="<td align='left'><INPUT TYPE=TEXT NAME=end_date SIZE=10 MAXLENGTH=10 VALUE=\"$end_date\">";
+	$MAIN.="<script language=\"JavaScript\">\n";
+	$MAIN.="function openNewWindow(url)\n";
+	$MAIN.="  {\n";
+	$MAIN.="  window.open (url,\"\",'width=620,height=300,scrollbars=yes,menubar=yes,address=yes');\n";
+	$MAIN.="  }\n";
+	$MAIN.="var o_cal = new tcal ({\n";
+	$MAIN.="	// form name\n";
+	$MAIN.="	'formname': 'vicidial_report',\n";
+	$MAIN.="	// input name\n";
+	$MAIN.="	'controlname': 'end_date'\n";
+	$MAIN.="});\n";
+	$MAIN.="o_cal.a_tpl.yearscroll = false;\n";
+	$MAIN.="// o_cal.a_tpl.weekstart = 1; // Monday week start\n";
+	$MAIN.="</script>\n";
+$MAIN.="</td></tr>";
+$MAIN.="<tr><td align='right'>"._QXZ("User ID").":</td><td align='left' colspan='3'><INPUT TYPE=TEXT NAME=agent SIZE=20 MAXLENGTH=20 VALUE=\"$agent\"></td></tr>\n";
+
+
+
+
+
+$HTML_text.="<script language=\"JavaScript\">\n";
+$HTML_text.="function openNewWindow(url)\n";
+$HTML_text.="  {\n";
+$HTML_text.="  window.open (url,\"\",'width=620,height=300,scrollbars=yes,menubar=yes,address=yes');\n";
+$HTML_text.="  }\n";
+$HTML_text.="var o_cal = new tcal ({\n";
+$HTML_text.="	// form name\n";
+$HTML_text.="	'formname': 'vicidial_report',\n";
+$HTML_text.="	// input name\n";
+$HTML_text.="	'controlname': 'end_date'\n";
+$HTML_text.="});\n";
+$HTML_text.="o_cal.a_tpl.yearscroll = false;\n";
+$HTML_text.="// o_cal.a_tpl.weekstart = 1; // Monday week start\n";
+$HTML_text.="</script>\n";
+
 
 if ($archives_available=="Y") 
 	{
-	$MAIN.="<input type='checkbox' name='search_archived_data' value='checked' $search_archived_data>"._QXZ("Search archived data")."<BR><BR>\n";
+	$MAIN.="<tr><td align='center' colspan='4'><input type='checkbox' name='search_archived_data' value='checked' $search_archived_data>"._QXZ("Search archived data")."</td></tr>\n";
 	}
+
+$MAIN.="</table>";
+$MAIN.="<BR><BR>\n";
 
 $MAIN.="<INPUT TYPE=SUBMIT NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>\n";
 $MAIN.="</FORM>\n\n";
@@ -436,6 +505,8 @@ else
 {
 $query_date_BEGIN = "$query_date 00:00:00";   
 $query_date_END = "$query_date 23:59:59";
+$end_date_BEGIN = "$end_date 00:00:00";   
+$end_date_END = "$end_date 23:59:59";
 $time_BEGIN = "00:00:00";   
 $time_END = "23:59:59";
 
@@ -447,17 +518,17 @@ $full_name = $row[0];
 
 $MAIN.=""._QXZ("Agent Time Sheet",44)." $NOW_TIME\n";
 
-$MAIN.=_QXZ("Time range").": $query_date_BEGIN "._QXZ("to")." $query_date_END\n\n";
+$MAIN.=_QXZ("Time range").": $query_date_BEGIN "._QXZ("to")." $end_date_END\n\n";
 $MAIN.="---------- "._QXZ("AGENT TIME SHEET").": $agent - $full_name -------------\n\n";
 
 $CSV_text_header.="\""._QXZ("Agent Time Sheet")." - $NOW_TIME\"\n";
-$CSV_text_header.="\""._QXZ("Time range").": $query_date_BEGIN "._QXZ("to")." $query_date_END\"\n";
+$CSV_text_header.="\""._QXZ("Time range").": $query_date_BEGIN "._QXZ("to")." $end_date_END\"\n";
 $CSV_text_header.="\""._QXZ("AGENT TIME SHEET").": $agent - $full_name\"\n\n";
 
 
 if ($calls_summary)
 	{
-	$stmt="select count(*) as calls,sum(talk_sec) as talk,avg(talk_sec),sum(pause_sec),avg(pause_sec),sum(wait_sec),avg(wait_sec),sum(dispo_sec),avg(dispo_sec) from ".$vicidial_agent_log_table." where event_time <= '" . mysqli_real_escape_string($link, $query_date_END) . "' and event_time >= '" . mysqli_real_escape_string($link, $query_date_BEGIN) . "' and user='" . mysqli_real_escape_string($link, $agent) . "' and pause_sec<48800 and wait_sec<48800 and talk_sec<48800 and dispo_sec<48800 limit 1;";
+	$stmt="select count(*) as calls,sum(talk_sec) as talk,avg(talk_sec),sum(pause_sec),avg(pause_sec),sum(wait_sec),avg(wait_sec),sum(dispo_sec),avg(dispo_sec) from ".$vicidial_agent_log_table." where event_time <= '" . mysqli_real_escape_string($link, $end_date_END) . "' and event_time >= '" . mysqli_real_escape_string($link, $query_date_BEGIN) . "' and user='" . mysqli_real_escape_string($link, $agent) . "' and pause_sec<48800 and wait_sec<48800 and talk_sec<48800 and dispo_sec<48800 limit 1;";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	if ($DB) {$MAIN.="$stmt\n";}
 	$row=mysqli_fetch_row($rslt);
@@ -484,7 +555,7 @@ if ($calls_summary)
 	$pfWAIT_AVG_MS =		sprintf("%6s", $WAIT_AVG_MS);
 	$pfWRAPUP_AVG_MS =		sprintf("%6s", $WRAPUP_AVG_MS);
 
-	$MAIN.=_QXZ("TOTAL CALLS TAKEN",17).": $row[0]     <a href='$PHP_SELF?calls_summary=$calls_summary&agent=$agent&query_date=$query_date&file_download=1&search_archived_data=$search_archived_data'>["._QXZ("DOWNLOAD")."]</a>\n";
+	$MAIN.=_QXZ("TOTAL CALLS TAKEN",17).": $row[0]     <a href='$PHP_SELF?calls_summary=$calls_summary&agent=$agent&query_date=$query_date&end_date=$end_date&file_download=1&search_archived_data=$search_archived_data'>["._QXZ("DOWNLOAD")."]</a>\n";
 	$MAIN.=_QXZ("TALK TIME:",24)." $pfTALK_TIME_HMS "._QXZ("AVERAGE",11,"r").": $pfTALK_AVG_MS\n";
 	$MAIN.=_QXZ("PAUSE TIME:",24)." $pfPAUSE_TIME_HMS "._QXZ("AVERAGE",11,"r").": $pfPAUSE_AVG_MS\n";
 	$MAIN.=_QXZ("WAIT TIME:",24)." $pfWAIT_TIME_HMS "._QXZ("AVERAGE",11,"r").": $pfWAIT_AVG_MS\n";
@@ -501,11 +572,11 @@ if ($calls_summary)
 	}
 else
 	{
-	$MAIN.="<a href=\"$PHP_SELF?calls_summary=1&agent=$agent&query_date=$query_date\">"._QXZ("Call Activity Summary")."</a>\n\n";
+	$MAIN.="<a href=\"$PHP_SELF?calls_summary=1&agent=$agent&query_date=$query_date&end_date=$end_date\">"._QXZ("Call Activity Summary")."</a>\n\n";
 
 	}
 
-$stmt="select event_time,UNIX_TIMESTAMP(event_time) from ".$vicidial_agent_log_table." where event_time <= '" . mysqli_real_escape_string($link, $query_date_END) . "' and event_time >= '" . mysqli_real_escape_string($link, $query_date_BEGIN) . "' and user='" . mysqli_real_escape_string($link, $agent) . "' order by event_time limit 1;";
+$stmt="select event_time,UNIX_TIMESTAMP(event_time) from ".$vicidial_agent_log_table." where event_time <= '" . mysqli_real_escape_string($link, $end_date_END) . "' and event_time >= '" . mysqli_real_escape_string($link, $query_date_BEGIN) . "' and user='" . mysqli_real_escape_string($link, $agent) . "' order by event_time limit 1;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $row=mysqli_fetch_row($rslt);
@@ -515,7 +586,7 @@ $start = $row[1];
 
 $CSV_login.="\"\",\""._QXZ("FIRST LOGIN").":\",\"$row[0]\"\n";
 
-$stmt="select event_time,UNIX_TIMESTAMP(event_time) from ".$vicidial_agent_log_table." where event_time <= '" . mysqli_real_escape_string($link, $query_date_END) . "' and event_time >= '" . mysqli_real_escape_string($link, $query_date_BEGIN) . "' and user='" . mysqli_real_escape_string($link, $agent) . "' order by event_time desc limit 1;";
+$stmt="select event_time,UNIX_TIMESTAMP(event_time) from ".$vicidial_agent_log_table." where event_time <= '" . mysqli_real_escape_string($link, $end_date_END) . "' and event_time >= '" . mysqli_real_escape_string($link, $query_date_BEGIN) . "' and user='" . mysqli_real_escape_string($link, $agent) . "' order by event_time desc limit 1;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$MAIN.="$stmt\n";}
 $row=mysqli_fetch_row($rslt);
@@ -525,7 +596,14 @@ $end = $row[1];
 
 $CSV_login.="\"\",\""._QXZ("LAST LOG ACTIVITY").":\",\"$row[0]\"\n";
 
-$login_time = ($end - $start);
+# $login_time = ($end - $start);
+
+$total_stmt="select sum(talk_sec+pause_sec+wait_sec+dispo_sec) from ".$vicidial_agent_log_table." where event_time <= '" . mysqli_real_escape_string($link, $end_date_END) . "' and event_time >= '" . mysqli_real_escape_string($link, $query_date_BEGIN) . "' and user='" . mysqli_real_escape_string($link, $agent) . "' and pause_sec<48800 and wait_sec<48800 and talk_sec<48800 and dispo_sec<48800 limit 1;";
+$total_rslt=mysql_to_mysqli($total_stmt, $link);
+if ($DB) {$MAIN.="$total_stmt\n";}
+$total_row=mysqli_fetch_row($total_rslt);
+$login_time=$total_row[0];
+
 $LOGIN_TIME_HMS =		sec_convert($login_time,'H'); 
 $pfLOGIN_TIME_HMS =		sprintf("%8s", $LOGIN_TIME_HMS);
 
@@ -542,13 +620,13 @@ $CSV_text1.=$CSV_login;
 
 $total_login_time=0;
 $SQday_ARY =	explode('-',$query_date_BEGIN);
-$EQday_ARY =	explode('-',$query_date_END);
+$EQday_ARY =	explode('-',$end_date_END);
 $SQepoch = mktime(0, 0, 0, $SQday_ARY[1], $SQday_ARY[2], $SQday_ARY[0]);
 $EQepoch = mktime(23, 59, 59, $EQday_ARY[1], $EQday_ARY[2], $EQday_ARY[0]);
 
 $MAIN.="\n";
 
-$MAIN.="<B>"._QXZ("TIMECLOCK LOGIN/LOGOUT TIME").":     <a href='$PHP_SELF?calls_summary=$calls_summary&agent=$agent&query_date=$query_date&file_download=2&search_archived_data=$search_archived_data'>["._QXZ("DOWNLOAD")."]</a></B>\n";
+$MAIN.="<B>"._QXZ("TIMECLOCK LOGIN/LOGOUT TIME").":     <a href='$PHP_SELF?calls_summary=$calls_summary&agent=$agent&query_date=$query_date&end_date=$end_date&file_download=2&search_archived_data=$search_archived_data'>["._QXZ("DOWNLOAD")."]</a></B>\n";
 $MAIN.="<TABLE width=550 cellspacing=0 cellpadding=1>\n";
 $MAIN.="<tr><td><font size=2>"._QXZ("ID")." </td><td><font size=2>"._QXZ("EDIT")." </td><td align=right><font size=2>"._QXZ("EVENT")." </td><td align=right><font size=2> "._QXZ("DATE")."</td><td align=right><font size=2> "._QXZ("IP ADDRESS")."</td><td align=right><font size=2> "._QXZ("GROUP")."</td><td align=right><font size=2>"._QXZ("HOURS:MINUTES")."</td></tr>\n";
 
@@ -564,7 +642,8 @@ $CSV_text2.="\"\",\""._QXZ("ID")."\",\""._QXZ("EDIT")."\",\""._QXZ("EVENT")."\",
 
 	$total_logs=0;
 	$o=0;
-	while ($events_to_print > $o) {
+	while ($events_to_print > $o) 
+		{
 		$row=mysqli_fetch_row($rslt);
 		if ( ($row[0]=='START') or ($row[0]=='LOGIN') )
 			{$bgcolor='bgcolor="#'.$SSstd_row3_background.'"';} 
@@ -606,10 +685,17 @@ $CSV_text2.="\"\",\""._QXZ("ID")."\",\""._QXZ("EDIT")."\",\""._QXZ("EVENT")."\",
 			$CSV_text2.="\"\",\"$row[5]\",\"$manager_edit\",\"$row[0]\",\"$TC_log_date\",\"$row[4]\",\"$row[2]\",\"$event_hours_minutes\"\n";
 			}
 		$o++;
-	}
+		}
 if (strlen($login_sec)<1)
 	{
-	$login_sec = ($STARTtime - $row[1]);
+	if ($events_to_print==0) 
+		{
+		$login_sec=0;
+		}
+	else
+		{
+		$login_sec = ($STARTtime - $row[1]);
+		}
 	$total_login_time = ($total_login_time + $login_sec);
 		if ($DB) {$MAIN.=_QXZ("LOGIN ONLY")." - $total_login_time - $login_sec";}
 	}

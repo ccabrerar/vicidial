@@ -12,6 +12,7 @@
 # 190927-1758 - Fixed PHP7 array issue
 # 210827-1818 - Fix for security issue
 # 220221-1505 - Added allow_web_debug system setting
+# 220823-1327 - Fix for warnings being thrown on arrays
 #
 
 $startMS = microtime();
@@ -57,10 +58,20 @@ if (isset($_GET["DB"]))				{$DB=$_GET["DB"];}
 if (isset($_GET["report_display_type"]))			{$report_display_type=$_GET["report_display_type"];}
 	elseif (isset($_POST["report_display_type"]))	{$report_display_type=$_POST["report_display_type"];}
 
-if (!$query_date) {$query_date=date("Y-m-d");}
-if (!$end_date) {$end_date=date("Y-m-d");}
-if (!$query_time) {$query_time="08:00:00";}
-if (!$end_time) {$end_time="17:00:00";}
+$NOW_DATE = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$STARTtime = date("U");
+
+if (!isset($query_date)) {$query_date = $NOW_DATE;}
+if (!isset($end_date)) {$end_date = $NOW_DATE;}
+if (!isset($query_time)) {$query_time="08:00:00";}
+if (!isset($end_time)) {$end_time="17:00:00";}
+if (!isset($campaigns)) {$campaigns = array(); if ($DB) {echo "\$campaigns not set, making array...\n".(is_array($campaigns) ? "Yes" : "No");} } else {if ($DB) {echo "\$campaigns IS set: $campaigns\n";} }
+if (!isset($users)) {$users = array();}
+if (!isset($user_groups)) {$user_groups = array();}
+if (!isset($dids)) {$dids = array();}
+if (!isset($groups)) {$groups = array();}
+if (!isset($report_display_type)) {$report_display_type = "HTML";}
 if (strlen($shift)<2) {$shift='ALL';}
 
 $query_date = preg_replace('/[^-0-9]/','',$query_date);
@@ -237,13 +248,6 @@ if ( (!preg_match('/\-\-ALL\-\-/i', $LOGadmin_viewable_call_times)) and (strlen(
 	$whereLOGadmin_viewable_call_timesSQL = "where call_time_id IN('---ALL---','$rawLOGadmin_viewable_call_timesSQL')";
 	}
 
-$NOW_DATE = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-$STARTtime = date("U");
-if (!isset($groups)) {$groups = array();}
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
-if (!isset($end_date)) {$end_date = $NOW_DATE;}
-
 $stmt="SELECT user_group from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {$MAIN.="|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
@@ -283,14 +287,6 @@ $MT[0]='';
 $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 $STARTtime = date("U");
-if (!isset($campaigns)) {$campaigns = array();}
-if (!isset($users)) {$users = array();}
-if (!isset($user_groups)) {$user_groups = array();}
-if (!isset($dids)) {$dids = array();}
-if (!isset($groups)) {$groups = array();}
-if (!isset($report_display_type)) {$report_display_type = "HTML";}
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
-if (!isset($end_date)) {$end_date = $NOW_DATE;}
 
 
 $stmt="SELECT campaign_id from vicidial_campaigns $whereLOGallowed_campaignsSQL order by campaign_id;";

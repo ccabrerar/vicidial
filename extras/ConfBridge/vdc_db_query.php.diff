@@ -1,0 +1,20 @@
+--- vdc_db_query.php.old	2022-08-26 16:05:04.444619207 -0400
++++ vdc_db_query.php	2022-08-26 16:05:25.996544730 -0400
+@@ -16297,8 +16297,15 @@
+ 
+ 		if ($no_delete_sessions < 1)
+ 			{
+-			##### Remove the reservation on the vicidial_conferences meetme room
+-			$stmt="UPDATE vicidial_conferences set extension='' where server_ip='$server_ip' and conf_exten='$conf_exten';";
++			##### Figure out which conference table to use
++			$conf_table = 'vicidial_conferences';
++			$stmt="SELECT conf_engine FROM servers where server_ip='$server_ip';";
++			$rslt=mysql_to_mysqli($stmt, $link);
++			$row=mysqli_fetch_row($rslt);
++			if ( $row[0] == 'CONFBRIDGE' ) { $conf_table = 'vicidial_confbridges'; }
++
++			##### Remove the reservation on the vicidial_conferences or vicidial_confbridges room
++			$stmt="UPDATE $conf_table set extension='' where server_ip='$server_ip' and conf_exten='$conf_exten';";
+ 			if ($DB) {echo "$stmt\n";}
+ 			$rslt=mysql_to_mysqli($stmt, $link);
+ 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00129',$user,$server_ip,$session_name,$one_mysql_log);}

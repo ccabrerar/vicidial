@@ -1,0 +1,630 @@
+VICIdial ConfBridge Support:		STARTED: 2022-06-22	UPDATED: 2022-10-26
+
+
+!!! NOTE: VICIdial ConfBridge support is currently in BETA mode and is not recommended for systems that require a stable and tested codebase !!!
+
+!!! NOTE: VICIdial ConfBridge support requires Asterisk 16 or higher to be installed on your dialers. Code development and testing was done with VICIbox 10 and the optional Asterisk 16 package available through VICIbox 10 !!!
+
+
+BETA support for ConfBridge is included in the VICIdial svn/trunk codebase as of revision 3624.
+
+
+- Background 
+For the past 19 years, the core of Vicidial has been based around the MeetMe conferencing engine built into Asterisk. When an agent logs into Vicidial their phone gets called by Vicidial. When that call connects the agent gets placed into a MeetMe conference. For the most part they stay within that conference the entire time they are logged into Vicidial. It is only when they leave a consultative transfer that they get moved to a different MeetMe conference. When an agent places a Manual dial phone call, the outbound call gets connected to their MeetMe phone conference. When an auto dial phone call answers it goes through the outbound routing agi and ultimately gets routed into an agent's MeetMe phone conference. When an inbound call gets past to the inbound routing AGI script it ultimately gets routed to an agent's MeetMe phone conference. Vicidial initiates call recordings by attaching a monitoring extension to an agents MeetMe phone conference. As such Vicidial at its most basic level is designed to place channels into and remove them from MeetMe phone conferences.
+
+As such when Digium announced that they would be removing the MeetMe conferencing engine from the Asterisk code base in favor of their ConfBridge application, it meant a major change to Vicidial. The web interface code needed to be updated. The routing scripts needed to be updated. The core process monitoring scripts needed to be updated. The Asterisk dialplan needed to be updated. ConfBridge does have several features that make it a better fit for Vicidial, but it uses more load to preform the same tasks and it does not have a 19 year track record of being rock solid stable. 
+
+
+- Changes to ConfBridge
+One request we have gotten through the years with the MeetMe conference engine was to remove the "Bloop" sound that is heard by both the agents and the customer when the customer enters the conference. The only issue with doing this is it means the agent does not get an auditory alert when a customers channel enters their phone conference. Agent's have a bad habit of not paying attention to their screen. As such it is not really a good idea to have no alert when the customer enters the conference. With the changes being done to Vicidial to accommodate ConfBridge we felt that altering the ConfBridge code to allow a way to not play this incoming alter to the customer, while still playing it to the agent was a good idea. We added an option to user profile of the confbridge.conf configuration file in Asterisk called "hear_own_join_sound". When this is set to 'no' a channel entering a conference using their user profile will trigger the sound_join audio file to be played BEFORE the channel gets placed into the conference. When this option is set to 'yes' the channel is placed into the conference before the sound_join audio file is played. After quite a bit of back and forth with the Asterisk developers we were able to get this option merged into the official version of ConfBridge.
+
+
+- Dialplan changes
+The following extensions needed to be added to the Asterisk /etc/asterisk/extensions.conf dialplan to work with ConfBridge:
+
+	; --------------------------
+	; ConfBridge Extensions
+	; --------------------------
+
+	; use to send a customer channel into the conference
+	exten => _9600XXX,1,Answer()
+	exten => _9600XXX,n,Playback(sip-silence)
+	exten => _9600XXX,n,ConfBridge(${EXTEN},vici_agent_bridge,vici_customer_user)
+	exten => _9600XXX,n,Hangup()
+
+	; used to send an agent channel into the conference
+	exten => _29600XXX,1,Answer()
+	exten => _29600XXX,n,Playback(sip-silence)
+	exten => _29600XXX,n,ConfBridge(${EXTEN:1},vici_agent_bridge,vici_agent_user)
+	exten => _29600XXX,n,Hangup()
+
+	; used by an admin to enter the confernece
+	exten => _39600XXX,1,Answer()
+	exten => _39600XXX,n,Playback(sip-silence)
+	exten => _39600XXX,n,ConfBridge(${EXTEN:1},vici_agent_bridge,vici_admin_user)
+	exten => _39600XXX,n,Hangup()
+
+	; used to monitor a conference
+	exten => _49600XXX,1,Answer()
+	exten => _49600XXX,n,Playback(sip-silence)
+	exten => _49600XXX,n,ConfBridge(${EXTEN:1},vici_agent_bridge,vici_monitor_user)
+	exten => _49600XXX,n,Hangup()
+
+	; used to record into a conference
+	exten => _59600XXX,1,Answer()
+	exten => _59600XXX,n,Playback(sip-silence)
+	exten => _59600XXX,n,ConfBridge(${EXTEN:1},vici_agent_bridge,vici_recording_user)
+	exten => _59600XXX,n,Hangup()
+
+	; used to barge a conference
+	exten => _69600XXX,1,Answer()
+	exten => _69600XXX,n,Playback(sip-silence)
+	exten => _69600XXX,n,ConfBridge(${EXTEN:1},vici_agent_bridge,vici_barge_user)
+	exten => _69600XXX,n,Hangup()
+
+	; used to trigger DTMF tones in a conference
+	exten => _79600XXX,1,Answer()
+	exten => _79600XXX,n,Playback(sip-silence)
+	exten => _79600XXX,n,ConfBridge(${EXTEN:1},vici_agent_bridge,vici_dtmf_user)
+	exten => _79600XXX,n,Hangup()
+
+	; Used to play an audio file to a conference
+	exten => _89600XXX,1,Answer()
+	exten => _89600XXX,n,Playback(sip-silence)
+	exten => _89600XXX,n,ConfBridge(${EXTEN:1},vici_agent_bridge,vici_audio_user)
+	exten => _89600XXX,n,Hangup()
+
+	; Used to kick all channels from a conference
+	exten => _99600XXX,1,ConfKick(${EXTEN:1},all)
+	exten => _99600XXX,2,Hangup()
+	exten => _55559600XXX,1,ConfKick(${EXTEN:4},all)
+	exten => _55559600XXX,2,Hangup()
+
+	; used to send an ringall agent channel into the conference
+	exten => _19600XXX,1,Answer()
+	exten => _19600XXX,n,Playback(sip-silence)
+	exten => _19600XXX,n,ConfBridge(${EXTEN:1},vici_agent_bridge,vici_ringall_user)
+	exten => _19600XXX,n,Hangup()
+
+
+One key difference between how Vicidial handles MeetMe and ConfBridge conferences is the way various types of channels enter a conference. Each channel type now has its own conference user profile. Most noteably the customer's channel is placed into the conference with a different user profile than the agent. With MeetMe these two types of channel used the same extension to enter the conference. These seperations should allow for more advanced features to be added in the future.
+
+
+- ConfBridge configuration
+
+In the /etc/asterisk/confbridge.conf add:
+
+	#include "confbridge-vicidial.conf"
+
+to the bottom of the file. Then create the /etc/asterisk/confbridge-vicidial.conf file with the following contents:
+
+	; Bridge Profile for agent conferences
+	[vici_agent_bridge]
+	type=bridge
+	max_members=10
+	record_conference=no
+	internal_sample_rate=8000
+	mixing_interval=20
+	video_mode=none
+	sound_join=enter
+	sound_leave=leave
+	sound_has_joined=sip-silence
+	sound_has_left=sip-silence
+	sound_kicked=sip-silence
+	sound_muted=sip-silence
+	sound_unmuted=sip-silence
+	sound_only_person=confbridge-only-participant
+	sound_only_one=sip-silence
+	sound_there_are=sip-silence
+	sound_other_in_party=sip-silence
+	sound_begin=sip-silence
+	sound_wait_for_leader=sip-silence
+	sound_leader_has_left=sip-silence
+	sound_get_pin=sip-silence
+	sound_invalid_pin=sip-silence
+	sound_locked=sip-silence
+	sound_locked_now=sip-silence
+	sound_unlocked_now=sip-silence
+	sound_error_menu=sip-silence
+	sound_participants_muted=sip-silence
+
+
+	; User Profile for agent channels
+	[vici_agent_user]
+	type=user
+	admin=no
+	quiet=no
+	startmuted=no
+	marked=yes
+	dtmf_passthrough=yes
+	hear_own_join_sound=yes
+	dsp_drop_silence=yes
+
+	; User Profile for admin channels
+	[vici_admin_user]
+	type=user
+	admin=yes
+	quiet=no
+	startmuted=no
+	marked=yes
+	dtmf_passthrough=yes
+	dsp_drop_silence=yes
+
+	; User Profile for monitoring
+	[vici_monitor_user]
+	type=user
+	admin=no
+	quiet=yes
+	startmuted=yes
+	marked=no
+	dtmf_passthrough=no
+	dsp_drop_silence=yes
+
+	; User Profile for barging
+	[vici_barge_user]
+	type=user
+	admin=no
+	quiet=no
+	startmuted=no
+	marked=no
+	dtmf_passthrough=yes
+	dsp_drop_silence=yes
+
+	; User Profile for customers channels
+	[vici_customer_user]
+	type=user
+	admin=no
+	quiet=no
+	startmuted=no
+	marked=yes
+	dtmf_passthrough=yes
+	hear_own_join_sound=no
+	dsp_drop_silence=yes
+
+	; User Profile for call recording channels
+	[vici_recording_user]
+	type=user
+	admin=no
+	quiet=yes
+	startmuted=yes
+	marked=no
+	dtmf_passthrough=no
+	dsp_drop_silence=yes
+
+	; User Profile for audio playback channels
+	[vici_audio_user]
+	type=user
+	admin=no
+	quiet=yes
+	startmuted=no
+	marked=no
+	dtmf_passthrough=no
+	dsp_drop_silence=yes
+
+	; User Profile for triggering DTMF
+	[vici_dtmf_user]
+	type=user
+	admin=no
+	quiet=yes
+	startmuted=yes
+	marked=no
+	dtmf_passthrough=yes
+	dsp_drop_silence=yes
+
+	; User Profile for RINGALL agent channels
+	[vici_ringall_user]
+	type=user
+	admin=no
+	quiet=no
+	startmuted=no
+	marked=yes
+	dtmf_passthrough=yes
+	announce_only_user=no
+	hear_own_join_sound=no
+	dsp_drop_silence=yes
+
+In the /etc/asterisk/manager.conf add:
+
+	[confcron]
+	secret = 1234
+	read = command,reporting
+	write = command,reporting
+
+	eventfilter=Event: Meetme
+	eventfilter=Event: Confbridge
+
+to the bottom of the file.
+
+
+
+- Timing changes
+
+Unlike MeetMe which gets its timing directly from the DADHI kernel driver, ConfBridge gets its timing from the Asterisk Timing interface. By default this uses res_timing_timerfd.so and not res_timing_dahdi.so. To switch ConfBridge over to use DAHDI for its timing the following needs to be added to /etc/asterisk/modules.conf:
+
+	noload => res_timing_timerfd.so
+	noload => res_timing_kqueue.so
+	noload => res_timing_pthread.so
+
+This is important because the res_timing_timerfd.so module which is the default is affected whenever Asterisk forks itself like whenever an AGI script it executed. This can cause audio frames to be skipped by ConfBridge. Vicidial uses AGI scripts heavily.
+
+	
+
+- Database changes
+To accomodate the change to ConfBridge two fields were added to the "servers" table in Vicidial and another table was added. Here are the two fields added to the servers table:
+NOTE: These have already been added to the standard VICIdial install and upgrade SQL files:
+
+	alter table servers add column `conf_engine` enum('MEETME','CONFBRIDGE') COLLATE utf8_unicode_ci DEFAULT 'MEETME';
+	alter table servers add column `conf_update_interval` smallint(6) NOT NULL DEFAULT 60;
+
+The conf_engine field determines which conferencing engine a server is using. This changes the way calls route on this server as well as the way the agent interface logs an agent in on the server. The conf_update_interval determines how often the new AST_conf_update_screen.pl screen process checks both MeetMe and ConfBridge conferences for orphaned channels. This is the SQL for adding the new table:
+NOTE: This have already been added to the standard VICIdial install and upgrade SQL files:
+
+	CREATE TABLE `vicidial_confbridges` (   
+		`conf_exten` int(7) unsigned NOT NULL,
+		`server_ip` varchar(15) COLLATE utf8_unicode_ci NOT NULL,
+		`extension` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+		`leave_3way` enum('0','1') COLLATE utf8_unicode_ci DEFAULT '0',
+		`leave_3way_datetime` datetime DEFAULT NULL,
+		UNIQUE KEY `serverconf` (`server_ip`,`conf_exten`),
+		UNIQUE KEY `conf_exten` (`conf_exten`,`server_ip`) 
+	) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+	
+This table is currently the same as the vicidial_conferences table, but may be changed in the future to accomidate new features that can be added with ConfBridge. The following entries need to be inserted into the vicidial_confbridges table:
+
+	INSERT INTO `vicidial_confbridges` VALUES 
+	(9600000,'10.10.10.17','','0',NULL),
+	(9600001,'10.10.10.17','','0',NULL),
+	(9600002,'10.10.10.17','','0',NULL),
+	(9600003,'10.10.10.17','','0',NULL),
+	(9600004,'10.10.10.17','','0',NULL),
+	(9600005,'10.10.10.17','','0',NULL),
+	(9600006,'10.10.10.17','','0',NULL),
+	(9600007,'10.10.10.17','','0',NULL),
+	(9600008,'10.10.10.17','','0',NULL),
+	(9600009,'10.10.10.17','','0',NULL),
+	(9600010,'10.10.10.17','','0',NULL),
+	(9600011,'10.10.10.17','','0',NULL),
+	(9600012,'10.10.10.17','','0',NULL),
+	(9600013,'10.10.10.17','','0',NULL),
+	(9600014,'10.10.10.17','','0',NULL),
+	(9600015,'10.10.10.17','','0',NULL),
+	(9600016,'10.10.10.17','','0',NULL),
+	(9600017,'10.10.10.17','','0',NULL),
+	(9600018,'10.10.10.17','','0',NULL),
+	(9600019,'10.10.10.17','','0',NULL),
+	(9600020,'10.10.10.17','','0',NULL),
+	(9600021,'10.10.10.17','','0',NULL),
+	(9600022,'10.10.10.17','','0',NULL),
+	(9600023,'10.10.10.17','','0',NULL),
+	(9600024,'10.10.10.17','','0',NULL),
+	(9600025,'10.10.10.17','','0',NULL),
+	(9600026,'10.10.10.17','','0',NULL),
+	(9600027,'10.10.10.17','','0',NULL),
+	(9600028,'10.10.10.17','','0',NULL),
+	(9600029,'10.10.10.17','','0',NULL),
+	(9600030,'10.10.10.17','','0',NULL),
+	(9600031,'10.10.10.17','','0',NULL),
+	(9600032,'10.10.10.17','','0',NULL),
+	(9600033,'10.10.10.17','','0',NULL),
+	(9600034,'10.10.10.17','','0',NULL),
+	(9600035,'10.10.10.17','','0',NULL),
+	(9600036,'10.10.10.17','','0',NULL),
+	(9600037,'10.10.10.17','','0',NULL),
+	(9600038,'10.10.10.17','','0',NULL),
+	(9600039,'10.10.10.17','','0',NULL),
+	(9600040,'10.10.10.17','','0',NULL),
+	(9600041,'10.10.10.17','','0',NULL),
+	(9600042,'10.10.10.17','','0',NULL),
+	(9600043,'10.10.10.17','','0',NULL),
+	(9600044,'10.10.10.17','','0',NULL),
+	(9600045,'10.10.10.17','','0',NULL),
+	(9600046,'10.10.10.17','','0',NULL),
+	(9600047,'10.10.10.17','','0',NULL),
+	(9600048,'10.10.10.17','','0',NULL),
+	(9600049,'10.10.10.17','','0',NULL),
+	(9600050,'10.10.10.17','','0',NULL),
+	(9600051,'10.10.10.17','','0',NULL),
+	(9600052,'10.10.10.17','','0',NULL),
+	(9600053,'10.10.10.17','','0',NULL),
+	(9600054,'10.10.10.17','','0',NULL),
+	(9600055,'10.10.10.17','','0',NULL),
+	(9600056,'10.10.10.17','','0',NULL),
+	(9600057,'10.10.10.17','','0',NULL),
+	(9600058,'10.10.10.17','','0',NULL),
+	(9600059,'10.10.10.17','','0',NULL),
+	(9600060,'10.10.10.17','','0',NULL),
+	(9600061,'10.10.10.17','','0',NULL),
+	(9600062,'10.10.10.17','','0',NULL),
+	(9600063,'10.10.10.17','','0',NULL),
+	(9600064,'10.10.10.17','','0',NULL),
+	(9600065,'10.10.10.17','','0',NULL),
+	(9600066,'10.10.10.17','','0',NULL),
+	(9600067,'10.10.10.17','','0',NULL),
+	(9600068,'10.10.10.17','','0',NULL),
+	(9600069,'10.10.10.17','','0',NULL),
+	(9600070,'10.10.10.17','','0',NULL),
+	(9600071,'10.10.10.17','','0',NULL),
+	(9600072,'10.10.10.17','','0',NULL),
+	(9600073,'10.10.10.17','','0',NULL),
+	(9600074,'10.10.10.17','','0',NULL),
+	(9600075,'10.10.10.17','','0',NULL),
+	(9600076,'10.10.10.17','','0',NULL),
+	(9600077,'10.10.10.17','','0',NULL),
+	(9600078,'10.10.10.17','','0',NULL),
+	(9600079,'10.10.10.17','','0',NULL),
+	(9600080,'10.10.10.17','','0',NULL),
+	(9600081,'10.10.10.17','','0',NULL),
+	(9600082,'10.10.10.17','','0',NULL),
+	(9600083,'10.10.10.17','','0',NULL),
+	(9600084,'10.10.10.17','','0',NULL),
+	(9600085,'10.10.10.17','','0',NULL),
+	(9600086,'10.10.10.17','','0',NULL),
+	(9600087,'10.10.10.17','','0',NULL),
+	(9600088,'10.10.10.17','','0',NULL),
+	(9600089,'10.10.10.17','','0',NULL),
+	(9600090,'10.10.10.17','','0',NULL),
+	(9600091,'10.10.10.17','','0',NULL),
+	(9600092,'10.10.10.17','','0',NULL),
+	(9600093,'10.10.10.17','','0',NULL),
+	(9600094,'10.10.10.17','','0',NULL),
+	(9600095,'10.10.10.17','','0',NULL),
+	(9600096,'10.10.10.17','','0',NULL),
+	(9600097,'10.10.10.17','','0',NULL),
+	(9600098,'10.10.10.17','','0',NULL),
+	(9600099,'10.10.10.17','','0',NULL),
+	(9600100,'10.10.10.17','','0',NULL),
+	(9600101,'10.10.10.17','','0',NULL),
+	(9600102,'10.10.10.17','','0',NULL),
+	(9600103,'10.10.10.17','','0',NULL),
+	(9600104,'10.10.10.17','','0',NULL),
+	(9600105,'10.10.10.17','','0',NULL),
+	(9600106,'10.10.10.17','','0',NULL),
+	(9600107,'10.10.10.17','','0',NULL),
+	(9600108,'10.10.10.17','','0',NULL),
+	(9600109,'10.10.10.17','','0',NULL),
+	(9600110,'10.10.10.17','','0',NULL),
+	(9600111,'10.10.10.17','','0',NULL),
+	(9600112,'10.10.10.17','','0',NULL),
+	(9600113,'10.10.10.17','','0',NULL),
+	(9600114,'10.10.10.17','','0',NULL),
+	(9600115,'10.10.10.17','','0',NULL),
+	(9600116,'10.10.10.17','','0',NULL),
+	(9600117,'10.10.10.17','','0',NULL),
+	(9600118,'10.10.10.17','','0',NULL),
+	(9600119,'10.10.10.17','','0',NULL),
+	(9600120,'10.10.10.17','','0',NULL),
+	(9600121,'10.10.10.17','','0',NULL),
+	(9600122,'10.10.10.17','','0',NULL),
+	(9600123,'10.10.10.17','','0',NULL),
+	(9600124,'10.10.10.17','','0',NULL),
+	(9600125,'10.10.10.17','','0',NULL),
+	(9600126,'10.10.10.17','','0',NULL),
+	(9600127,'10.10.10.17','','0',NULL),
+	(9600128,'10.10.10.17','','0',NULL),
+	(9600129,'10.10.10.17','','0',NULL),
+	(9600130,'10.10.10.17','','0',NULL),
+	(9600131,'10.10.10.17','','0',NULL),
+	(9600132,'10.10.10.17','','0',NULL),
+	(9600133,'10.10.10.17','','0',NULL),
+	(9600134,'10.10.10.17','','0',NULL),
+	(9600135,'10.10.10.17','','0',NULL),
+	(9600136,'10.10.10.17','','0',NULL),
+	(9600137,'10.10.10.17','','0',NULL),
+	(9600138,'10.10.10.17','','0',NULL),
+	(9600139,'10.10.10.17','','0',NULL),
+	(9600140,'10.10.10.17','','0',NULL),
+	(9600141,'10.10.10.17','','0',NULL),
+	(9600142,'10.10.10.17','','0',NULL),
+	(9600143,'10.10.10.17','','0',NULL),
+	(9600144,'10.10.10.17','','0',NULL),
+	(9600145,'10.10.10.17','','0',NULL),
+	(9600146,'10.10.10.17','','0',NULL),
+	(9600147,'10.10.10.17','','0',NULL),
+	(9600148,'10.10.10.17','','0',NULL),
+	(9600149,'10.10.10.17','','0',NULL),
+	(9600150,'10.10.10.17','','0',NULL),
+	(9600151,'10.10.10.17','','0',NULL),
+	(9600152,'10.10.10.17','','0',NULL),
+	(9600153,'10.10.10.17','','0',NULL),
+	(9600154,'10.10.10.17','','0',NULL),
+	(9600155,'10.10.10.17','','0',NULL),
+	(9600156,'10.10.10.17','','0',NULL),
+	(9600157,'10.10.10.17','','0',NULL),
+	(9600158,'10.10.10.17','','0',NULL),
+	(9600159,'10.10.10.17','','0',NULL),
+	(9600160,'10.10.10.17','','0',NULL),
+	(9600161,'10.10.10.17','','0',NULL),
+	(9600162,'10.10.10.17','','0',NULL),
+	(9600163,'10.10.10.17','','0',NULL),
+	(9600164,'10.10.10.17','','0',NULL),
+	(9600165,'10.10.10.17','','0',NULL),
+	(9600166,'10.10.10.17','','0',NULL),
+	(9600167,'10.10.10.17','','0',NULL),
+	(9600168,'10.10.10.17','','0',NULL),
+	(9600169,'10.10.10.17','','0',NULL),
+	(9600170,'10.10.10.17','','0',NULL),
+	(9600171,'10.10.10.17','','0',NULL),
+	(9600172,'10.10.10.17','','0',NULL),
+	(9600173,'10.10.10.17','','0',NULL),
+	(9600174,'10.10.10.17','','0',NULL),
+	(9600175,'10.10.10.17','','0',NULL),
+	(9600176,'10.10.10.17','','0',NULL),
+	(9600177,'10.10.10.17','','0',NULL),
+	(9600178,'10.10.10.17','','0',NULL),
+	(9600179,'10.10.10.17','','0',NULL),
+	(9600180,'10.10.10.17','','0',NULL),
+	(9600181,'10.10.10.17','','0',NULL),
+	(9600182,'10.10.10.17','','0',NULL),
+	(9600183,'10.10.10.17','','0',NULL),
+	(9600184,'10.10.10.17','','0',NULL),
+	(9600185,'10.10.10.17','','0',NULL),
+	(9600186,'10.10.10.17','','0',NULL),
+	(9600187,'10.10.10.17','','0',NULL),
+	(9600188,'10.10.10.17','','0',NULL),
+	(9600189,'10.10.10.17','','0',NULL),
+	(9600190,'10.10.10.17','','0',NULL),
+	(9600191,'10.10.10.17','','0',NULL),
+	(9600192,'10.10.10.17','','0',NULL),
+	(9600193,'10.10.10.17','','0',NULL),
+	(9600194,'10.10.10.17','','0',NULL),
+	(9600195,'10.10.10.17','','0',NULL),
+	(9600196,'10.10.10.17','','0',NULL),
+	(9600197,'10.10.10.17','','0',NULL),
+	(9600198,'10.10.10.17','','0',NULL),
+	(9600199,'10.10.10.17','','0',NULL),
+	(9600200,'10.10.10.17','','0',NULL),
+	(9600201,'10.10.10.17','','0',NULL),
+	(9600202,'10.10.10.17','','0',NULL),
+	(9600203,'10.10.10.17','','0',NULL),
+	(9600204,'10.10.10.17','','0',NULL),
+	(9600205,'10.10.10.17','','0',NULL),
+	(9600206,'10.10.10.17','','0',NULL),
+	(9600207,'10.10.10.17','','0',NULL),
+	(9600208,'10.10.10.17','','0',NULL),
+	(9600209,'10.10.10.17','','0',NULL),
+	(9600210,'10.10.10.17','','0',NULL),
+	(9600211,'10.10.10.17','','0',NULL),
+	(9600212,'10.10.10.17','','0',NULL),
+	(9600213,'10.10.10.17','','0',NULL),
+	(9600214,'10.10.10.17','','0',NULL),
+	(9600215,'10.10.10.17','','0',NULL),
+	(9600216,'10.10.10.17','','0',NULL),
+	(9600217,'10.10.10.17','','0',NULL),
+	(9600218,'10.10.10.17','','0',NULL),
+	(9600219,'10.10.10.17','','0',NULL),
+	(9600220,'10.10.10.17','','0',NULL),
+	(9600221,'10.10.10.17','','0',NULL),
+	(9600222,'10.10.10.17','','0',NULL),
+	(9600223,'10.10.10.17','','0',NULL),
+	(9600224,'10.10.10.17','','0',NULL),
+	(9600225,'10.10.10.17','','0',NULL),
+	(9600226,'10.10.10.17','','0',NULL),
+	(9600227,'10.10.10.17','','0',NULL),
+	(9600228,'10.10.10.17','','0',NULL),
+	(9600229,'10.10.10.17','','0',NULL),
+	(9600230,'10.10.10.17','','0',NULL),
+	(9600231,'10.10.10.17','','0',NULL),
+	(9600232,'10.10.10.17','','0',NULL),
+	(9600233,'10.10.10.17','','0',NULL),
+	(9600234,'10.10.10.17','','0',NULL),
+	(9600235,'10.10.10.17','','0',NULL),
+	(9600236,'10.10.10.17','','0',NULL),
+	(9600237,'10.10.10.17','','0',NULL),
+	(9600238,'10.10.10.17','','0',NULL),
+	(9600239,'10.10.10.17','','0',NULL),
+	(9600240,'10.10.10.17','','0',NULL),
+	(9600241,'10.10.10.17','','0',NULL),
+	(9600242,'10.10.10.17','','0',NULL),
+	(9600243,'10.10.10.17','','0',NULL),
+	(9600244,'10.10.10.17','','0',NULL),
+	(9600245,'10.10.10.17','','0',NULL),
+	(9600246,'10.10.10.17','','0',NULL),
+	(9600247,'10.10.10.17','','0',NULL),
+	(9600248,'10.10.10.17','','0',NULL),
+	(9600249,'10.10.10.17','','0',NULL),
+	(9600250,'10.10.10.17','','0',NULL),
+	(9600251,'10.10.10.17','','0',NULL),
+	(9600252,'10.10.10.17','','0',NULL),
+	(9600253,'10.10.10.17','','0',NULL),
+	(9600254,'10.10.10.17','','0',NULL),
+	(9600255,'10.10.10.17','','0',NULL),
+	(9600256,'10.10.10.17','','0',NULL),
+	(9600257,'10.10.10.17','','0',NULL),
+	(9600258,'10.10.10.17','','0',NULL),
+	(9600259,'10.10.10.17','','0',NULL),
+	(9600260,'10.10.10.17','','0',NULL),
+	(9600261,'10.10.10.17','','0',NULL),
+	(9600262,'10.10.10.17','','0',NULL),
+	(9600263,'10.10.10.17','','0',NULL),
+	(9600264,'10.10.10.17','','0',NULL),
+	(9600265,'10.10.10.17','','0',NULL),
+	(9600266,'10.10.10.17','','0',NULL),
+	(9600267,'10.10.10.17','','0',NULL),
+	(9600268,'10.10.10.17','','0',NULL),
+	(9600269,'10.10.10.17','','0',NULL),
+	(9600270,'10.10.10.17','','0',NULL),
+	(9600271,'10.10.10.17','','0',NULL),
+	(9600272,'10.10.10.17','','0',NULL),
+	(9600273,'10.10.10.17','','0',NULL),
+	(9600274,'10.10.10.17','','0',NULL),
+	(9600275,'10.10.10.17','','0',NULL),
+	(9600276,'10.10.10.17','','0',NULL),
+	(9600277,'10.10.10.17','','0',NULL),
+	(9600278,'10.10.10.17','','0',NULL),
+	(9600279,'10.10.10.17','','0',NULL),
+	(9600280,'10.10.10.17','','0',NULL),
+	(9600281,'10.10.10.17','','0',NULL),
+	(9600282,'10.10.10.17','','0',NULL),
+	(9600283,'10.10.10.17','','0',NULL),
+	(9600284,'10.10.10.17','','0',NULL),
+	(9600285,'10.10.10.17','','0',NULL),
+	(9600286,'10.10.10.17','','0',NULL),
+	(9600287,'10.10.10.17','','0',NULL),
+	(9600288,'10.10.10.17','','0',NULL),
+	(9600289,'10.10.10.17','','0',NULL),
+	(9600290,'10.10.10.17','','0',NULL),
+	(9600291,'10.10.10.17','','0',NULL),
+	(9600292,'10.10.10.17','','0',NULL),
+	(9600293,'10.10.10.17','','0',NULL),
+	(9600294,'10.10.10.17','','0',NULL),
+	(9600295,'10.10.10.17','','0',NULL),
+	(9600296,'10.10.10.17','','0',NULL),
+	(9600297,'10.10.10.17','','0',NULL),
+	(9600298,'10.10.10.17','','0',NULL),
+	(9600299,'10.10.10.17','','0',NULL);
+	
+and their IP addresses adjusted for the server that is being setup to use ConfBridge.
+
+
+
+- Code changes:
+
+Included in the "extras/ConfBridge/" directory of the svn/trunk codebase are several new/patched files that need to be applied to the servers on your system for ConfBridge compatibility with VICIdial. They can be applied by going into the directory with the file to be patched in it and then running commands like the following:
+
+vici-dev1:/srv/www/htdocs/agc/ # patch -p0 < vicidial.php.diff
+patching file vicidial.php
+
+NOTE: The "AST_conf_update_screen.pl" script is a new perl script, not a patch file, so it just needs to be copied to the proper directory and given 'r' + 'x' file permissions.
+
+
+Here is the list of files for specific default directories:
+
+Dialers:
+/usr/share/astguiclient/ - 
+- ADMIN_keepalive_ALL.pl.diff
+- ADMIN_update_server_ip.pl.diff
+- AST_DB_optimize.pl.diff
+- AST_reset_mysql_vars.pl.diff
+- AST_VDremote_agents.pl.diff
+- AST_conf_update_screen.pl
+/var/lib/asterisk/agi-bin/ - 
+- agi-VDAD_RINGALL.agi.diff
+- agi-VDAD_ALL_inbound.agi.diff
+
+Webservers:
+/srv/www/htdocs/agc/ - 
+- vicidial.php.diff
+- vdc_db_query.php.diff
+- manager_send.php.diff
+/srv/www/htdocs/vicidial/ - 
+- non_agent_api.php.diff
+
+
+- Web Admin changes:
+
+The admin web screens had been modified to show ConfBridges on servers and management of ConfBridges in the database.
+
+Also, the "Server Modify" page now has settings for the Conferencing Engine and the Conf Update Interval.
+
+
+
+- Screen Session:
+
+A new screen session has been added called 'AST_conf_update_screen.pl'. This screen session replaces both the AST_conf_update.pl and AST_conf_update_3way.pl scripts. It checks both MeetMe and ConfBridge conferences for unnecessary channels and removes them. For instance if an agent does a Leave 3way and a few minutes later one of the remaining channels hangs up. This script will remove the remaining channel and free the conference for use by Vicidial. This screen session is optional for use with MeetMe but is required to be used with ConfBridge.
+
+To enable this screen session you need to add a 'C' to the 'VARactive_keepalives' variable in the '/etc/astguiclient.conf' on your dialers, and comment out the following line from your crontab:
+
+                ### updater for conference validator
+                * * * * * /usr/share/astguiclient/AST_conf_update.pl
+
+You can configure the refresh interval for how often the screen session checks for unnecessary channels by changing "Conf Update Interval" in Admin -> Servers.

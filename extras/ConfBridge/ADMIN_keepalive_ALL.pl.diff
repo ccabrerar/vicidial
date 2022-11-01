@@ -1,0 +1,507 @@
+--- ADMIN_keepalive_ALL.pl.orig	2022-09-14 10:37:18.395450572 -0400
++++ ADMIN_keepalive_ALL.pl	2022-09-15 08:53:43.353869671 -0400
+@@ -438,6 +438,7 @@
+ #	9 - Timeclock auto logout\n";
+ #	E - Email parser script
+ #	S - SIP Logger
++#	C - Conference Updater
+ #     - Other setting are set by configuring them in the database
+ 
+ # Customized Variables
+@@ -485,7 +486,7 @@
+ if ($DBXXX > 0) {print "SYSTEM SETTINGS:     $sounds_central_control_active|$active_voicemail_server|$SScustom_dialplan_entry|$SSdefault_codecs\n";}
+ 
+ ##### Get the settings for this server's server_ip #####
+-$stmtA = "SELECT active_asterisk_server,generate_vicidial_conf,rebuild_conf_files,asterisk_version,sounds_update,conf_secret,custom_dialplan_entry,auto_restart_asterisk,asterisk_temp_no_restart,gather_asterisk_output,conf_qualify FROM servers where server_ip='$server_ip';";
++$stmtA = "SELECT active_asterisk_server,generate_vicidial_conf,rebuild_conf_files,asterisk_version,sounds_update,conf_secret,custom_dialplan_entry,auto_restart_asterisk,asterisk_temp_no_restart,gather_asterisk_output,conf_qualify,conf_engine FROM servers where server_ip='$server_ip';";
+ #	print "$stmtA\n";
+ $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+ $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+@@ -504,12 +505,17 @@
+ 	$asterisk_temp_no_restart =		$aryA[8];
+ 	$gather_asterisk_output =		$aryA[9];
+ 	$conf_qualify =					$aryA[10];
++	$conf_engine = 				$aryA[11];
+ 	}
+ $sthA->finish();
+ 
+ %ast_ver_str = parse_asterisk_version($asterisk_version);
+ if ($DBX) {print "Asterisk version: $ast_ver_str{major} $ast_ver_str{minor}\n";}
+ 
++$vicidial_conf_table = 'vicidial_conferences';
++if ( $conf_engine eq "CONFBRIDGE" ) { $vicidial_conf_table = 'vicidial_confbridges'; }
++if ($DBX) {print "Server is using $conf_engine for conferences. Conference table is $vicidial_conf_table\n";}
++
+ if ($VARactive_keepalives =~ /X/)
+ 	{
+ 	if ($DB) {print "X in active_keepalives, skipping this section...\n";}
+@@ -540,6 +546,7 @@
+ 	$runningemail_inbound=0;
+ 	$runningASTERISK=0;
+ 	$runningsip_logger=0;
++	$runningconf_updater=0;
+ 	$AST_conf_3way=0;
+ 
+ 	if ($VARactive_keepalives =~ /1/) 
+@@ -597,6 +604,11 @@
+ 		$sip_logger=1;
+ 		if ($DB) {print "Check to see if sip logger should run\n";}
+ 		}
++	if ($VARactive_keepalives =~ /C/)
++		{
++		$conf_updater=1;
++		if ($DB) {print "Check to see if conference updater should run\n";}
++		}
+ 	if ($cu3way > 0) 
+ 		{
+ 		$AST_conf_3way=1;
+@@ -631,69 +643,74 @@
+ 		if ($psoutput[$i] =~ /bin\/asterisk/) 
+ 			{
+ 			$runningASTERISK++;
+-			if ($DB) {print "asterisk RUNNING:              |$psoutput[$i]|\n";}
++			if ($DB) {print "asterisk RUNNING:		|$psoutput[$i]|\n";}
+ 			}
+ 		if ($psline[1] =~ /$REGhome\/AST_update/) 
+ 			{
+ 			$runningAST_update++;
+-			if ($DB) {print "AST_update RUNNING:              |$psline[1]|\n";}
++			if ($DB) {print "AST_update RUNNING:		|$psline[1]|\n";}
+ 			}
+ 		if ($psline[1] =~ /AST_manager_se/) 
+ 			{
+ 			$runningAST_send++;
+-			if ($DB) {print "AST_send RUNNING:                |$psline[1]|\n";}
++			if ($DB) {print "AST_send RUNNING:		|$psline[1]|\n";}
+ 			}
+ 		if ($psline[1] =~ /AST_manager_li/) 
+ 			{
+ 			$psoutput[$i] =~ s/ .*|\n|\r|\t| //gi;
+ 			$listen_pid[$runningAST_listen] = $psoutput[$i];
+ 			$runningAST_listen++;
+-			if ($DB) {print "AST_listen RUNNING:              |$psline[1]|\n";}
++			if ($DB) {print "AST_listen RUNNING:		|$psline[1]|\n";}
+ 			}
+ 		if ($psline[1] =~ /$REGhome\/AST_manager_sip_AMI2\.pl/)
+ 			{
+ 			$runningsip_logger++;
+-			if ($DB) {print "SIP Logger RUNNING:         |$psline[1]|\n";}
++			if ($DB) {print "SIP Logger RUNNING:		|$psline[1]|\n";}
++			}
++		if ($psline[1] =~ /$REGhome\/AST_conf_update_screen\.pl/)
++			{
++			$runningconf_updater++;
++			if ($DB) {print "Conference Updater RUNNING:	|$spline[1]\n";}
+ 			}
+ 		if ($psline[1] =~ /$REGhome\/AST_VDauto_dial\.pl/) 
+ 			{
+ 			$runningAST_VDauto_dial++;
+-			if ($DB) {print "AST_VDauto_dial RUNNING:         |$psline[1]|\n";}
++			if ($DB) {print "AST_VDauto_dial RUNNING:	|$psline[1]|\n";}
+ 			}
+ 		if ($psline[1] =~ /$REGhome\/AST_VDremote_agents\.pl/) 
+ 			{
+ 			$runningAST_VDremote_agents++;
+-			if ($DB) {print "AST_VDremote_agents RUNNING:     |$psline[1]|\n";}
++			if ($DB) {print "AST_VDremote_agents RUNNING:	|$psline[1]|\n";}
+ 			}
+ 		if ($psline[1] =~ /$REGhome\/AST_VDadapt\.pl/) 
+ 			{
+ 			$runningAST_VDadapt++;
+-			if ($DB) {print "AST_VDadapt RUNNING:             |$psline[1]|\n";}
++			if ($DB) {print "AST_VDadapt RUNNING:		|$psline[1]|\n";}
+ 			}
+ 		if ($psline[1] =~ /$REGhome\/FastAGI_log\.pl/) 
+ 			{
+ 			$runningFastAGI_log++;
+-			if ($DB) {print "FastAGI_log RUNNING:             |$psline[1]|\n";}
++			if ($DB) {print "FastAGI_log RUNNING:		|$psline[1]|\n";}
+ 			}
+ 		if ($psline[1] =~ /$REGhome\/AST_VDauto_dial_FILL\.pl/) 
+ 			{
+ 			$runningAST_VDauto_dial_FILL++;
+-			if ($DB) {print "AST_VDauto_dial_FILL RUNNING:    |$psline[1]|\n";}
++			if ($DB) {print "AST_VDauto_dial_FILL RUNNING:	|$psline[1]|\n";}
+ 			}
+ 		if ($psline[1] =~ /$REGhome\/VD_email_inbound\.pl/) 
+ 			{
+ 			$runningemail_inbound++;
+-			if ($DB) {print "VD_email_inbound RUNNING:|$psline[1]|\n";}
++			if ($DB) {print "VD_email_inbound RUNNING:	|$psline[1]|\n";}
+ 			}
+ 		if ($psoutput[$i] =~ / ip_relay /) 
+ 			{
+ 			$runningip_relay++;
+-			if ($DB) {print "ip_relay RUNNING:                |$psoutput[$i]|\n";}
++			if ($DB) {print "ip_relay RUNNING:		|$psoutput[$i]|\n";}
+ 			}
+ 		if ($psline[1] =~ /$REGhome\/AST_conf_update_3way\.pl/) 
+ 			{
+ 			$runningAST_conf_3way++;
+-			if ($DB) {print "AST_conf_3way RUNNING:           |$psline[1]|\n";}
++			if ($DB) {print "AST_conf_3way RUNNING:		|$psline[1]|\n";}
+ 			}
+ 
+ 		$i++;
+@@ -732,7 +749,7 @@
+ 			if ($psline[1] =~ /AST_manager_li/) 
+ 				{
+ 				$listen_pid[$runningAST_listen] = $psoutput[$i];
+-				if ($DB) {print "AST_listen RUNNING:              |$psline[1]|$listen_pid[$runningAST_listen]|\n";}
++				if ($DB) {print "AST_listen RUNNING:	      |$psline[1]|$listen_pid[$runningAST_listen]|\n";}
+ 				$runningAST_listen++;
+ 				}
+ 
+@@ -768,7 +785,8 @@
+ 		( ($ip_relay > 0) && ($runningip_relay < 1) ) ||
+ 		( ($AST_conf_3way > 0) && ($runningAST_conf_3way < 1) ) || 
+ 		( ($email_inbound > 0) && ($runningemail_inbound < 1) ) ||
+-		( ($sip_logger > 0) && ($runningsip_logger < 1) )
++		( ($sip_logger > 0) && ($runningsip_logger < 1) ) ||
++		( ($conf_updater > 0) && ($runningconf_updater < 1) )
+ 	   )
+ 		{
+ 
+@@ -794,67 +812,72 @@
+ 			if ($psoutput2[$i] =~ /bin\/asterisk/) 
+ 				{
+ 				$runningASTERISK++;
+-				if ($DB) {print "asterisk RUNNING:              |$psoutput2[$i]|\n";}
++				if ($DB) {print "asterisk RUNNING:		|$psoutput2[$i]|\n";}
+ 				}
+ 			if ($psline[1] =~ /$REGhome\/AST_update/) 
+ 				{
+ 				$runningAST_update++;
+-				if ($DB) {print "AST_update RUNNING:              |$psline[1]|\n";}
++				if ($DB) {print "AST_update RUNNING:		|$psline[1]|\n";}
+ 				}
+ 			if ($psline[1] =~ /AST_manager_se/) 
+ 				{
+ 				$runningAST_send++;
+-				if ($DB) {print "AST_send RUNNING:                |$psline[1]|\n";}
++				if ($DB) {print "AST_send RUNNING:		|$psline[1]|\n";}
+ 				}
+ 			if ($psline[1] =~ /AST_manager_li/) 
+ 				{
+ 				$runningAST_listen++;
+-				if ($DB) {print "AST_listen RUNNING:              |$psline[1]|\n";}
++				if ($DB) {print "AST_listen RUNNING:		|$psline[1]|\n";}
+ 				}
+ 			if ($psline[1] =~ /$REGhome\/AST_manager_sip_AMI2\.pl/)
+ 				{
+ 				$runningsip_logger++;
+-				if ($DB) {print "SIP Logger RUNNING:         |$psline[1]|\n";}
++				if ($DB) {print "SIP Logger RUNNING:		|$psline[1]|\n";}
++				}
++			if ($psline[1] =~ /$REGhome\/AST_conf_update_screen\.pl/)
++				{
++				$runningconf_updater++;
++				if ($DB) {print "Conference Updater RUNNING:	|$spline[1]\n";}
+ 				}
+ 			if ($psline[1] =~ /$REGhome\/AST_VDauto_dial\.pl/) 
+ 				{
+ 				$runningAST_VDauto_dial++;
+-				if ($DB) {print "AST_VDauto_dial RUNNING:         |$psline[1]|\n";}
++				if ($DB) {print "AST_VDauto_dial RUNNING:	|$psline[1]|\n";}
+ 				}
+ 			if ($psline[1] =~ /$REGhome\/AST_VDremote_agents\.pl/) 
+ 				{
+ 				$runningAST_VDremote_agents++;
+-				if ($DB) {print "AST_VDremote_agents RUNNING:     |$psline[1]|\n";}
++				if ($DB) {print "AST_VDremote_agents RUNNING:	|$psline[1]|\n";}
+ 				}
+ 			if ($psline[1] =~ /$REGhome\/AST_VDadapt\.pl/) 
+ 				{
+ 				$runningAST_VDadapt++;
+-				if ($DB) {print "AST_VDadapt RUNNING:             |$psline[1]|\n";}
++				if ($DB) {print "AST_VDadapt RUNNING:		|$psline[1]|\n";}
+ 				}
+ 			if ($psline[1] =~ /$REGhome\/FastAGI_log\.pl/) 
+ 				{
+ 				$runningFastAGI_log++;
+-				if ($DB) {print "FastAGI_log RUNNING:             |$psline[1]|\n";}
++				if ($DB) {print "FastAGI_log RUNNING:		|$psline[1]|\n";}
+ 				}
+ 			if ($psline[1] =~ /$REGhome\/AST_VDauto_dial_FILL\.pl/) 
+ 				{
+ 				$runningAST_VDauto_dial_FILL++;
+-				if ($DB) {print "AST_VDauto_dial_FILL RUNNING:    |$psline[1]|\n";}
++				if ($DB) {print "AST_VDauto_dial_FILL RUNNING:	|$psline[1]|\n";}
+ 				}
+ 			if ($psline[1] =~ /$REGhome\/VD_email_inbound\.pl/) 
+ 				{
+ 				$runningemail_inbound++;
+-				if ($DB) {print "VD_email_inbound RUNNING:|$psline[1]|\n";}
++				if ($DB) {print "VD_email_inbound RUNNING:	|$psline[1]|\n";}
+ 				}
+ 			if ($psoutput2[$i] =~ / ip_relay /) 
+ 				{
+ 				$runningip_relay++;
+-				if ($DB) {print "ip_relay RUNNING:                |$psoutput2[$i]|\n";}
++				if ($DB) {print "ip_relay RUNNING:		|$psoutput2[$i]|\n";}
+ 				}
+ 			if ($psline[1] =~ /$REGhome\/AST_conf_update_3way\.pl/) 
+ 				{
+ 				$runningAST_conf_3way++;
+-				if ($DB) {print "AST_conf_3way RUNNING:           |$psline[1]|\n";}
++				if ($DB) {print "AST_conf_3way RUNNING:		|$psline[1]|\n";}
+ 				}
+ 			$i++;
+ 			}
+@@ -930,6 +953,18 @@
+ 				}
+ 			}
+ 
++		if ( ($conf_updater > 0) && ($runningconf_updater < 1) )
++			{
++			if ($DB) {print "starting Conference Updater...\n";}
++			# add a '-L' to the command below to activate logging
++			`/usr/bin/screen -d -m -S ASTConfUpdater $PATHhome/AST_conf_update_screen.pl $debug_string`;
++			if ($megaDB)
++				{
++				`/usr/bin/screen -S ASTConfUpdater -X logfile $PATHlogs/ASTconf-updater-screenlog.0`;
++				`/usr/bin/screen -S ASTConfUpdater -X log`;
++				}
++			}
++
+ 		if ( ($AST_VDremote_agents > 0) && ($runningAST_VDremote_agents < 1) )
+ 			{ 
+ 			if ($DB) {print "starting AST_VDremote_agents...\n";}
+@@ -1061,9 +1096,9 @@
+ 		}
+ 	$sthA->finish();
+ 
+-	if ($DB) {print "Starting clear out non-used vicidial_conferences sessions process...\n";}
++	if ($DB) {print "Starting clear out non-used $vicidial_conf_table sessions process...\n";}
+ 
+-	$stmtA = "SELECT conf_exten,extension from vicidial_conferences where server_ip='$server_ip' and leave_3way='0';";
++	$stmtA = "SELECT conf_exten,extension from $vicidial_conf_table where server_ip='$server_ip' and leave_3way='0';";
+ 	if ($DB) {print "|$stmtA|\n";}
+ 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+ 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+@@ -1096,14 +1131,14 @@
+ 
+ 		if ($live_session < 1)
+ 			{
+-			$stmtA = "UPDATE vicidial_conferences set extension='' where server_ip='$server_ip' and conf_exten='$PT_conf_extens[$k]';";
++			$stmtA = "UPDATE $vicidial_conf_table set extension='' where server_ip='$server_ip' and conf_exten='$PT_conf_extens[$k]';";
+ 				if($DBX){print STDERR "\n|$stmtA|\n";}
+ 			$affected_rows = $dbhA->do($stmtA); #  or die  "Couldn't execute query:|$stmtA|\n";
+ 			$conf_cleared = ($conf_cleared + $affected_rows);
+ 			}
+ 		$k++;
+ 		}
+-	if ($teodDB) {$event_string = "Empty vicidial_conferences entries cleared: $conf_cleared";   &teod_logger;}
++	if ($teodDB) {$event_string = "Empty $vicidial_conf_table entries cleared: $conf_cleared";   &teod_logger;}
+ 
+ 
+ 	### Only run the following on one server in the cluster, the one set as the active voicemail server ###
+@@ -2692,9 +2727,16 @@
+ 		$Lext .= "; Agent session audio playback meetme entry\n";
+ 		$Lext .= "exten => _473782178600XXX,1,Meetme(\${EXTEN:8},q)\n";
+ 		$Lext .= "exten => _473782178600XXX,n,Hangup()\n";
++		$Lext .= "; Agent session audio playback ConfBridge entry\n";
++		$Lext .= "exten => _473782179600XXX,1,Answer()\n";
++		$Lext .= "exten => _473782179600XXX,n,Playback(sip-silence)\n";
++		$Lext .= "exten => _473782179600XXX,n,ConfBridge(\${EXTEN:8},vici_agent_bridge,vici_audio_user)\n";
++		$Lext .= "exten => _473782179600XXX,n,Hangup()\n";
+ 		$Lext .= "; Agent session audio playback loop\n";
+ 		$Lext .= "exten => _473782168600XXX,1,Dial(\${TRUNKplay}/47378217\${EXTEN:8},5,To)\n";
+ 		$Lext .= "exten => _473782168600XXX,n,Hangup()\n";
++		$Lext .= "exten => _473782169600XXX,1,Dial(\${TRUNKplay}/47378217\${EXTEN:8},5,To)\n";
++		$Lext .= "exten => _473782169600XXX,n,Hangup()\n";
+ 		$Lext .= "; Agent session audio playback extension\n";
+ 		$Lext .= "exten => 473782158521111,1,Answer\n";
+ 		$Lext .= "exten => 473782158521111,n,ControlPlayback(\${CALLERID(name)},99999,0,1,2,3,4)\n";
+@@ -2715,6 +2757,14 @@
+ 		$Lext .= "exten => _473782188600XXX,n,GotoIf(\$[ \"\${agent_zap_channel}\" = \"101\" ]?fin)\n";
+ 		$Lext .= "exten => _473782188600XXX,n,ChanSpy(\${agent_zap_channel},qw)\n";
+ 		$Lext .= "exten => _473782188600XXX,n(fin),Hangup()\n";
++		$Lext .= "; Whisper to agent ConfBridge entry\n";
++		$Lext .= "exten => _473782189600XXX,1,Answer\n";
++		$Lext .= "exten => _473782189600XXX,n,Wait(1)\n";
++		$Lext .= "exten => _473782189600XXX,n,AGI(getAGENTchannel.agi)\n";
++		$Lext .= "exten => _473782189600XXX,n,NoOp(\${agent_zap_channel})\n";
++		$Lext .= "exten => _473782189600XXX,n,GotoIf(\$[ \"\${agent_zap_channel}\" = \"101\" ]?fin)\n";
++		$Lext .= "exten => _473782189600XXX,n,ChanSpy(\${agent_zap_channel},qw)\n";
++		$Lext .= "exten => _473782189600XXX,n(fin),Hangup()\n";
+ 		}
+ 
+ 	$Lext .= "\n";
+@@ -3750,7 +3800,7 @@
+ 
+ 	##### BEGIN Generate custom meetme entries if set #####
+ 	$meetme_custom_ext='';
+-	if ( (length($meetme_enter_login_filename) > 0) || (length($meetme_enter_leave3way_filename) > 0) ) 
++	if ( ($conf_engine eq "MEETME") && ( (length($meetme_enter_login_filename) > 0) || (length($meetme_enter_leave3way_filename) > 0) ) )
+ 		{
+ 		if (length($meetme_enter_login_filename) < 1) {$meetme_enter_login_filename='sip-silence';}
+ 		if (length($meetme_enter_leave3way_filename) < 1) {$meetme_enter_leave3way_filename='sip-silence';}
+@@ -3773,6 +3823,42 @@
+ 		if ($DBX>0) {print "Custom Meetme login and leave3way entries generated: |$meetme_enter_login_filename|$meetme_enter_leave3way_filename|\n";}
+ 		}
+ 	##### END Generate custom meetme entries if set #####
++	
++	##### BEGIN Generate custom ConfBridge entries if set #####
++	$confbridge_custom_ext='';
++	if ( ($conf_engine eq "CONFBRIDGE") && ( (length($meetme_enter_login_filename) > 0) || (length($meetme_enter_leave3way_filename) > 0) ) )
++		{
++		if (length($meetme_enter_login_filename) < 1) {$meetme_enter_login_filename='sip-silence';}
++		if (length($meetme_enter_leave3way_filename) < 1) {$meetme_enter_leave3way_filename='sip-silence';}
++
++		$confbridge_custom_ext .= '[confbridge-enter-login]';
++		$confbridge_custom_ext .= "\n; confbridge entry for Vicidial agent logging in, Asterisk 16+ compatible only\n";
++		$confbridge_custom_ext .= "exten => _29600XXX,1,Answer()\n";
++		$confbridge_custom_ext .= "exten => _29600XXX,n,Playback(sip-silence)\n";
++		$confbridge_custom_ext .= "exten => _29600XXX,n,Set(CONFBRIDGE(bridge,template)=vici_agent_bridge)\n";
++		$confbridge_custom_ext .= "exten => _29600XXX,n,Set(CONFBRIDGE(bridge,sound_only_person)=$meetme_enter_login_filename)\n";
++		$confbridge_custom_ext .= "exten => _29600XXX,n,Set(CONFBRIDGE(user,template)=vici_agent_user)\n";
++		$confbridge_custom_ext .= "exten => _29600XXX,n,ConfBridge(\${EXTEN:1})\n";
++		$confbridge_custom_ext .= "exten => _29600XXX,n,Hangup()\n";
++		$confbridge_custom_ext .= "\n";
++		$confbridge_custom_ext .= $hangup_exten_line;
++		$confbridge_custom_ext .= "\n\n";
++		$confbridge_custom_ext .= '[confbridge-enter-leave3way]';
++		$confbridge_custom_ext .= "\n; confbridge entry for Vicidial agent leaving 3way call, Asterisk 16+ compatible only\n";
++		$confbridge_custom_ext .= "exten => _29600XXX,1,Answer()\n";
++		$confbridge_custom_ext .= "exten => _29600XXX,n,Playback(sip-silence)\n";
++		$confbridge_custom_ext .= "exten => _29600XXX,n,Set(CONFBRIDGE(bridge,template)=vici_agent_bridge)\n";
++		$confbridge_custom_ext .= "exten => _29600XXX,n,Set(CONFBRIDGE(bridge,sound_only_person)=$meetme_enter_leave3way_filename)\n";
++		$confbridge_custom_ext .= "exten => _29600XXX,n,Set(CONFBRIDGE(user,template)=vici_agent_user)\n";
++		$confbridge_custom_ext .= "exten => _29600XXX,n,ConfBridge(\${EXTEN:1})\n";
++		$confbridge_custom_ext .= "exten => _29600XXX,n,Hangup()\n";
++		$confbridge_custom_ext .= "\n";
++		$confbridge_custom_ext .= $hangup_exten_line;
++		$confbridge_custom_ext .= "\n\n";
++
++		if ($DBX>0) {print "Custom ConfBridge login and leave3way entries generated: |$meetme_enter_login_filename|$meetme_enter_leave3way_filename|\n";}
++		}
++	##### END Generate ConfBridge meetme entries if set #####
+ 
+ 
+ 	##### BEGIN Generate the Call Menu entries #####
+@@ -3782,6 +3868,7 @@
+ 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+ 	$sthArows=$sthA->rows;
+ 	$i=0;
++	if ($DBX>0) {print "$sthArows|$stmtA\n";}
+ 	while ($sthArows > $i)
+ 		{
+ 		@aryA = $sthA->fetchrow_array;
+@@ -4376,53 +4463,56 @@
+ 	##### END generate voicemail accounts for all distinct phones on dedicated voicemail server
+ 
+ 
+-
++	
+ 	##### BEGIN generate meetme entries for this server
+-	$mm = "; ViciDial Conferences:\n";
+-
+-	### Find vicidial_conferences on this server
+-	$stmtA = "SELECT conf_exten FROM vicidial_conferences where server_ip='$server_ip';";
+-	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+-	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+-	$sthArowsVC=$sthA->rows;
+-	$j=0;
+-	while ($sthArowsVC > $j)
++	if ($conf_engine eq "MEETME")
+ 		{
+-		@aryA = $sthA->fetchrow_array;
+-		$vc_meetme[$j] =	$aryA[0];
+-		$j++;
+-		}
+-	$sthA->finish();
+-
+-	$j=0;
+-	while ($sthArowsVC > $j)
+-		{
+-		$mm .= "conf => $vc_meetme[$j]\n";
+-		$j++;
+-		}
+-
+-	$mm .= "\n";
+-	$mm .= "; Conferences:\n";
++		$mm = "; ViciDial Conferences:\n";
++	
++		### Find vicidial_conferences on this server
++		$stmtA = "SELECT conf_exten FROM vicidial_conferences where server_ip='$server_ip';";
++		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
++		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
++		$sthArowsVC=$sthA->rows;
++		$j=0;
++		while ($sthArowsVC > $j)
++			{
++			@aryA = $sthA->fetchrow_array;
++			$vc_meetme[$j] =	$aryA[0];
++			$j++;
++			}
++		$sthA->finish();
++	
++		$j=0;
++		while ($sthArowsVC > $j)
++			{
++			$mm .= "conf => $vc_meetme[$j]\n";
++			$j++;
++			}
++	
++		$mm .= "\n";
++		$mm .= "; Conferences:\n";
+ 
+-	### Find conferences on this server
+-	$stmtA = "SELECT conf_exten FROM conferences where server_ip='$server_ip';";
+-	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+-	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+-	$sthArowsC=$sthA->rows;
+-	$j=0;
+-	while ($sthArowsC > $j)
+-		{
+-		@aryA = $sthA->fetchrow_array;
+-		$meetme[$j] =	$aryA[0];
+-		$j++;
+-		}
+-	$sthA->finish();
++		### Find conferences on this server
++		$stmtA = "SELECT conf_exten FROM conferences where server_ip='$server_ip';";
++		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
++		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
++		$sthArowsC=$sthA->rows;
++		$j=0;
++		while ($sthArowsC > $j)
++			{
++			@aryA = $sthA->fetchrow_array;
++			$meetme[$j] =	$aryA[0];
++			$j++;
++			}
++		$sthA->finish();
+ 
+-	$j=0;
+-	while ($sthArowsC > $j)
+-		{
+-		$mm .= "conf => $meetme[$j]\n";
+-		$j++;
++		$j=0;
++		while ($sthArowsC > $j)
++			{
++			$mm .= "conf => $meetme[$j]\n";
++			$j++;
++			}
+ 		}
+ 	##### END generate meetme entries for this server
+ 
+@@ -4503,6 +4593,7 @@
+ 	print ext "; WARNING- THIS FILE IS AUTO-GENERATED BY VICIDIAL, ANY EDITS YOU MAKE WILL BE LOST\n";
+ 	print ext "$ext\n";
+ 	print ext "$meetme_custom_ext\n";
++	print ext "$confbridge_custom_ext\n";
+ 	print ext "$call_menu_ext\n";
+ 	print ext "\n";
+ 	if (length($SScustom_dialplan_entry)>5)
+@@ -4878,7 +4969,7 @@
+ 			if ($screenoutput[$i] =~ /\.asterisk/) 
+ 				{
+ 				$asteriskSCREEN++;
+-				if ($DB) {print "asterisk screen session open:              |$screenoutput[$i]|\n";}
++				if ($DB) {print "asterisk screen session open:		|$screenoutput[$i]|\n";}
+ 				}
+ 			$i++;
+ 			}

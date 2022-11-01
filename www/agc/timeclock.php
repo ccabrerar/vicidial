@@ -26,10 +26,11 @@
 # 201117-2117 - Changes for better compatibility with non-latin data input
 # 210616-2101 - Added optional CORS support, see options.php for details
 # 220220-0934 - Added allow_web_debug system setting
+# 220921-1702 - Added failed login reason messages
 #
 
-$version = '2.14-21';
-$build = '220220-0934';
+$version = '2.14-22';
+$build = '220921-1702';
 $php_script = 'timeclock.php';
 
 $StarTtimE = date("U");
@@ -269,6 +270,24 @@ if ( ($stage == 'login') or ($stage == 'logout') )
 		{
 		### NOT A VALID USER/PASS
 		$VDdisplayMESSAGE = _QXZ("The user and password you entered are not active in the system<BR>Please try again:");
+		if ($auth_message == 'LOCK')
+			{$VDdisplayMESSAGE = _QXZ("Too many login attempts, try again in 15 minutes")."<br />";}
+		if ($auth_message == 'ERRNETWORK')
+			{$VDdisplayMESSAGE = _QXZ("Too many network errors, please contact your administrator")."<br />";}
+		if ($auth_message == 'ERRSERVERS')
+			{$VDdisplayMESSAGE = _QXZ("No available servers, please contact your administrator")."<br />";}
+		if ($auth_message == 'ERRPHONES')
+			{$VDdisplayMESSAGE = _QXZ("No available phones, please contact your administrator")."<br />";}
+		if ($auth_message == 'ERRDUPLICATE')
+			{$VDdisplayMESSAGE = _QXZ("You are already logged in, please log out of your other session first")."<br />";}
+		if ($auth_message == 'ERRAGENTS')
+			{$VDdisplayMESSAGE = _QXZ("Too many agents logged in, please contact your administrator")."<br />";}
+		if ($auth_message == 'ERRCAMPAGENTS')
+			{$VDdisplayMESSAGE = _QXZ("Too many agents logged in to this campaign, please contact your manager")."<br />";}
+		if ($auth_message == 'ERRCASE')
+			{$VDdisplayMESSAGE = _QXZ("Login incorrect, user names are case sensitive")."<br />";}
+		if ($auth_message == 'IPBLOCK')
+			{$VDdisplayMESSAGE = _QXZ("Your IP Address is not allowed").": $ip<br />";}
 
 		echo"<HTML><HEAD>\n";
 		echo"<TITLE>"._QXZ("Agent Timeclock")."</TITLE>\n";

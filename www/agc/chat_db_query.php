@@ -26,6 +26,7 @@
 # 201117-2238 - Changes for better compatibility with non-latin data input
 # 210616-2055 - Added optional CORS support, see options.php for details
 # 220219-2336 - Added allow_web_debug system setting
+# 220518-2212 - Small fix for encrypted auth
 #
 
 $php_script = 'chat_db_query.php';
@@ -167,7 +168,7 @@ else
 	}
 
 $auth=0;
-$auth_message = user_authorization($user,$pass,'',0,0,0,0,'chat_db_query');
+$auth_message = user_authorization($user,$pass,'',0,1,0,0,'chat_db_query');
 if ($auth_message == 'GOOD')
 	{$auth=1;}
 

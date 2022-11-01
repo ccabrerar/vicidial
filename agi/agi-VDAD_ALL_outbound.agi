@@ -46,7 +46,7 @@
 #exten => 8366,4,AGI(agi-VDAD_ALL_outbound.agi,SURVEY-----LB-----US_pol_survey_hello-----1238-----8-----US_pol_survey_transfer-----US_thanks_no_contact-----OPTOUT-----DNC)
 #exten => 8366,5,Hangup
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 80218-2027 - First Build
@@ -127,6 +127,7 @@
 # 200825-2342 - Added option for auto-only sip actions
 # 200915-2218 - Fixes for surveys with hash-star
 # 210907-1254 - Added KHOMP code (install JSON::PP Perl module and remove '#UC#' in the code to enable)
+# 220524-1746 - Changed SHARED_ campaign in-group transfers to use 'SRDROP' log status instead of 'DROP'
 #
 
 $script = 'agi-VDAD_ALL_outbound.agi';
@@ -811,7 +812,7 @@ if ($VDACaffected_rows > 0)
 	##### END - Max call stats
 
 	### Grab campaign values from the database
-	$stmtA = "SELECT drop_call_seconds,drop_action,safe_harbor_exten,concurrent_transfers,next_agent_call,voicemail_ext,drop_inbound_group,use_internal_dnc,use_campaign_dnc,cpd_amd_action,am_message_exten,three_way_call_cid,campaign_cid,survey_first_audio_file,survey_opt_in_audio_file,survey_ni_audio_file,survey_third_audio_file,survey_fourth_audio_file,extension_appended_cidname,queue_priority,closer_campaigns,queuemetrics_phone_environment,campaign_recording,campaign_rec_filename,safe_harbor_audio,safe_harbor_menu_id,survey_recording,safe_harbor_audio_field,use_other_campaign_dnc,cpd_unknown_action,routing_initiated_recordings,campaign_rec_exten,call_quota_lead_ranking,sip_event_logging,amd_type,agent_search_method FROM vicidial_campaigns where campaign_id = '$VDADcampaign';";
+	$stmtA = "SELECT drop_call_seconds,drop_action,safe_harbor_exten,concurrent_transfers,next_agent_call,voicemail_ext,drop_inbound_group,use_internal_dnc,use_campaign_dnc,cpd_amd_action,am_message_exten,three_way_call_cid,campaign_cid,survey_first_audio_file,survey_opt_in_audio_file,survey_ni_audio_file,survey_third_audio_file,survey_fourth_audio_file,extension_appended_cidname,queue_priority,closer_campaigns,queuemetrics_phone_environment,campaign_recording,campaign_rec_filename,safe_harbor_audio,safe_harbor_menu_id,survey_recording,safe_harbor_audio_field,use_other_campaign_dnc,cpd_unknown_action,routing_initiated_recordings,campaign_rec_exten,call_quota_lead_ranking,sip_event_logging,amd_type,agent_search_method,dial_method FROM vicidial_campaigns where campaign_id = '$VDADcampaign';";
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 	$sthArows=$sthA->rows;
@@ -858,6 +859,7 @@ if ($VDACaffected_rows > 0)
 		$CAMPsip_event_logging =		$aryA[33];
 		$amd_type =						$aryA[34];
 		$agent_search_method_OVERRIDE = $aryA[35];
+		$campaign_dial_method =			$aryA[36];
 		if (length($closer_campaigns) > 2)
 			{
 			$closer_campaigns =~ s/^ | -$//gi;
@@ -4226,6 +4228,7 @@ if ($drop_timer > $DROP_TIME)
 		}
 
 	$drop_status='DROP';
+	$drop_log_status='';
 	if ($survey_drop > 0)
 		{$drop_status='PM';}
 
@@ -4273,6 +4276,8 @@ if ($drop_timer > $DROP_TIME)
 		# Example:   90009*CL_uk3survy_*8301*10000123*universal*7275551212*1234*"
 		$S='*';
 		$DROPexten = "90009*$drop_inbound_group$S$S$CIDlead_id$S$S$VDADphone$S$fronter$S";
+		if ( ($DBdrop_call_seconds < 0) && ($campaign_dial_method =~ /SHARED/i) )
+			{$drop_log_status = 'SRDROP';}
 		}
 	if ($drop_action =~ /CALLMENU/)
 		{
@@ -4285,6 +4290,7 @@ if ($drop_timer > $DROP_TIME)
 		$ext_context = $safe_harbor_menu_id;
 		if (length($ext_context)<1)
 			{$DROPexten = '';}
+		if (length($drop_log_status) < 1) {$drop_log_status = $drop_status;}
 
 		if ($enable_queuemetrics_logging > 0)
 			{
@@ -4297,14 +4303,14 @@ if ($drop_timer > $DROP_TIME)
 			$Baffected_rows = $dbhB->do($stmtB);
 				$dbhP=$dbhB;   $stmtA=$stmtB;   $mysql_count='01081';   $MEL_aff_rows=$Baffected_rows;   &mysql_error_logging;
 
-			$stmtB = "INSERT INTO queue_log SET `partition`='P01',time_id='$now_date_epoch',call_id='$callerid',queue='$VDADcampaign',agent='NONE',verb='CALLSTATUS',data1='$drop_status',serverid='$queuemetrics_log_id';";
+			$stmtB = "INSERT INTO queue_log SET `partition`='P01',time_id='$now_date_epoch',call_id='$callerid',queue='$VDADcampaign',agent='NONE',verb='CALLSTATUS',data1='$drop_log_status',serverid='$queuemetrics_log_id';";
 			$Baffected_rows = $dbhB->do($stmtB);
 				$dbhP=$dbhB;   $stmtA=$stmtB;   $mysql_count='01082';   $MEL_aff_rows=$Baffected_rows;   &mysql_error_logging;
 
 			$dbhB->disconnect();
 			}
 
-		$stmtA = "UPDATE vicidial_log FORCE INDEX(lead_id) set status='$drop_status',end_epoch='$now_date_epoch',length_in_sec='$drop_seconds',term_reason='CALLMENUXFER' where lead_id = '$CIDlead_id' and uniqueid LIKE \"$Euniqueid%\";";
+		$stmtA = "UPDATE vicidial_log FORCE INDEX(lead_id) set status='$drop_log_status',end_epoch='$now_date_epoch',length_in_sec='$drop_seconds',term_reason='CALLMENUXFER' where lead_id = '$CIDlead_id' and uniqueid LIKE \"$Euniqueid%\";";
 			if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 		$affected_rows = $dbhA->do($stmtA);
 			$dbhP=$dbhA;   $mysql_count='01083';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
@@ -4318,6 +4324,7 @@ if ($drop_timer > $DROP_TIME)
 		}
 	else
 		{
+		if (length($drop_log_status) < 1) {$drop_log_status = $drop_status;}
 		if ($enable_queuemetrics_logging > 0)
 			{
 			$dbhB = DBI->connect("DBI:mysql:$queuemetrics_dbname:$queuemetrics_server_ip:3306", "$queuemetrics_login", "$queuemetrics_pass")
@@ -4329,18 +4336,18 @@ if ($drop_timer > $DROP_TIME)
 			$Baffected_rows = $dbhB->do($stmtB);
 				$dbhP=$dbhB;   $stmtA=$stmtB;   $mysql_count='01048';   $MEL_aff_rows=$Baffected_rows;   &mysql_error_logging;
 
-			$stmtB = "INSERT INTO queue_log SET `partition`='P01',time_id='$now_date_epoch',call_id='$callerid',queue='$VDADcampaign',agent='NONE',verb='CALLSTATUS',data1='$drop_status',serverid='$queuemetrics_log_id';";
+			$stmtB = "INSERT INTO queue_log SET `partition`='P01',time_id='$now_date_epoch',call_id='$callerid',queue='$VDADcampaign',agent='NONE',verb='CALLSTATUS',data1='$drop_log_status',serverid='$queuemetrics_log_id';";
 			$Baffected_rows = $dbhB->do($stmtB);
 				$dbhP=$dbhB;   $stmtA=$stmtB;   $mysql_count='01049';   $MEL_aff_rows=$Baffected_rows;   &mysql_error_logging;
 
 			$dbhB->disconnect();
 			}
 
-		$stmtA = "UPDATE vicidial_log FORCE INDEX(lead_id) set status='$drop_status',end_epoch='$now_date_epoch',length_in_sec='$drop_seconds',term_reason='QUEUETIMEOUT' where lead_id = '$CIDlead_id' and uniqueid LIKE \"$Euniqueid%\";";
+		$stmtA = "UPDATE vicidial_log FORCE INDEX(lead_id) set status='$drop_log_status',end_epoch='$now_date_epoch',length_in_sec='$drop_seconds',term_reason='QUEUETIMEOUT' where lead_id = '$CIDlead_id' and uniqueid LIKE \"$Euniqueid%\";";
 			if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 		$affected_rows = $dbhA->do($stmtA);
 			$dbhP=$dbhA;   $mysql_count='01050';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
-		if ($AGILOG) {$agi_string = "--    VDAD vicidial_log update: |$affected_rows|$uniqueid";   &agi_output;}
+		if ($AGILOG) {$agi_string = "--    VDAD vicidial_log update: |$affected_rows|$uniqueid|$drop_log_status|$drop_status";   &agi_output;}
 
 		$stmtA = "UPDATE vicidial_list set status='$drop_status' where lead_id = '$CIDlead_id';";
 			if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}

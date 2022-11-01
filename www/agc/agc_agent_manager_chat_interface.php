@@ -18,10 +18,12 @@
 # 201117-2239 - Changes for better compatibility with non-latin data input
 # 210616-2056 - Added optional CORS support, see options.php for details
 # 220220-0855 - Added allow_web_debug system setting
+# 220518-2210 - Small fix for encrypted auth
+# 220922-1027 - Added BLANK action for first agent screen page load
 #
 
-$admin_version = '2.14-12';
-$build = '220220-0855';
+$admin_version = '2.14-13';
+$build = '220922-1027';
 $php_script = 'agc_agent_manager_chat_interface.php';
 
 $sh="managerchats";
@@ -94,9 +96,14 @@ if (file_exists('options.php'))
 
 $manager_chat_refresh_miliseconds = $manager_chat_refresh_seconds * 1000;
 
+if ($action == 'BLANK')
+	{
+	header ("Content-type: text/html; charset=utf-8");
+	exit;
+	}
 
 $auth=0;
-$auth_message = user_authorization($user,$pass,'',0,0,0,0,'chat');
+$auth_message = user_authorization($user,$pass,'',0,1,0,0,'chat');
 if ($auth_message == 'GOOD')
 	{$auth=1;}
 

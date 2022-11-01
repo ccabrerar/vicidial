@@ -1,0 +1,48 @@
+--- agi-VDAD_ALL_inbound.agi.orig	2022-09-07 11:21:08.774397398 -0400
++++ agi-VDAD_ALL_inbound.agi	2022-09-07 11:20:24.378542407 -0400
+@@ -372,6 +372,7 @@
+ $sthArows=$sthA->rows;
+ 	$dbhP=$dbhA;   $mysql_count='02001';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
+ $rec_count=0;
++$conf_engine='';
+ while ($sthArows > $rec_count)
+ 	{
+ 	$AGILOG = '0';
+@@ -3773,6 +3774,21 @@
+ 					$dbhP=$dbhA;   $mysql_count='02067';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
+ 				if ($AGILOG) {$agi_string = "--    closer log : |$affected_rows|update of vcl table: $insert_lead_id\n|$stmtA|";   &agi_output;}
+ 
++				### Grab Server values from the database for the server the agent is on
++				$stmtA = "SELECT conf_engine FROM servers where server_ip = '$VARserver_ip';";
++				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
++				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
++				$sthArows=$sthA->rows;
++				$rec_count=0;
++				$conf_engine='';
++				while ($sthArows > $rec_count)
++				        {
++				        @aryA = $sthA->fetchrow_array;
++					$conf_engine =	$aryA[0];
++				        $rec_count++;
++				        }
++				$sthA->finish();
++
+ 				### format the remote server dialstring to get the call to the overflow agent meetme room
+ 				if( $VDADserver_ip =~ m/(\S+)\.(\S+)\.(\S+)\.(\S+)/ )
+ 					{
+@@ -3784,7 +3800,14 @@
+ 					$RAredDIALstr = "$a$S$b$S$c$S$d$S";
+ 					}
+ 				$alertVDADremDIALstr = "$VDADremDIALstr";
+-				$alertVDADremDIALstr .= "$dtmf_silent_prefix$VDADconf_exten";
++				if ($conf_engine == "CONFBRIDGE")
++					{
++					$alertVDADremDIALstr .= "8$VDADconf_exten";
++					}
++				else
++					{
++					$alertVDADremDIALstr .= "$dtmf_silent_prefix$VDADconf_exten";
++					}
+ 				$VDADremDIALstr .= "$VDADconf_exten";
+ 
+ 

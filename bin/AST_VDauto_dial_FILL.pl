@@ -51,6 +51,7 @@
 # 210715-1335 - Added call_limit_24hour feature support, also fix for variable issue
 # 210731-0951 - Added cid_group_id_two campaign option
 # 220311-1922 - Added List CID Group Override option
+# 220623-1622 - Added List dial_prefix override
 #
 
 ### begin parsing run-time options ###
@@ -838,16 +839,18 @@ while($one_day_interval > 0)
 													
 													$campaign_cid_override='';
 													$LIST_cid_group_override='';
+													$LIST_dial_prefix_override='';
 													### gather list_id overrides
-													$stmtA = "SELECT campaign_cid_override,cid_group_id FROM vicidial_lists where list_id='$list_id';";
+													$stmtA = "SELECT campaign_cid_override,cid_group_id,dial_prefix FROM vicidial_lists where list_id='$list_id';";
 													$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 													$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 													$sthArowsL=$sthA->rows;
 													if ($sthArowsL > 0)
 														{
 														@aryA = $sthA->fetchrow_array;
-														$campaign_cid_override =	$aryA[0];
-														$LIST_cid_group_override =	$aryA[1];
+														$campaign_cid_override =		$aryA[0];
+														$LIST_cid_group_override =		$aryA[1];
+														$LIST_dial_prefix_override =	$aryA[2];
 														}
 													$sthA->finish();
 
@@ -975,6 +978,7 @@ while($one_day_interval > 0)
 													if ($DTL_override > 4) {$Local_dial_timeout = $DTL_override;}
 													$Local_dial_timeout = ($Local_dial_timeout * 1000);
 													if (length($DBIPdialprefix[$camp_CIPct]) > 0) {$Local_out_prefix = "$DBIPdialprefix[$camp_CIPct]";}
+													if (length($LIST_dial_prefix_override) > 0) {$Local_out_prefix = "$LIST_dial_prefix_override";}
 													if (length($DBIPvdadexten[$camp_CIPct]) > 0) {$VDAD_dial_exten = "$DBIPvdadexten[$camp_CIPct]";}
 													else {$VDAD_dial_exten = "$answer_transfer_agent";}
 
@@ -1219,7 +1223,7 @@ while($one_day_interval > 0)
 															}
 														}
 
-													if ($DBIPdialprefix[$camp_CIPct] =~ /x/i) {$Local_out_prefix = '';}
+													if ($Local_out_prefix =~ /x/i) {$Local_out_prefix = '';}
 
 													if ($RECcount)
 														{

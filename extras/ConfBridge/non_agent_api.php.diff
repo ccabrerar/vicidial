@@ -1,0 +1,46 @@
+--- non_agent_api.php.old	2022-08-31 17:16:56.143133710 -0400
++++ non_agent_api.php	2022-08-31 21:45:30.209365913 -0400
+@@ -195,6 +195,7 @@
+ # 220310-0825 - Added DELETE action to the 'update_presets' function
+ # 220312-0944 - Added vicidial_dial_cid_log logging
+ # 220519-2206 - Small fix for 'update_lead' delete_lead feature
++# 200831-0758 - Added ConfBridge to BLIND_MONITOR
+ #
+ 
+ $version = '2.14-172';
+@@ -2882,7 +2883,25 @@
+ 			}
+ 		else
+ 			{
+-			$stmt="SELECT count(*) from vicidial_conferences where conf_exten='$session_id' and server_ip='$server_ip';";
++			$stmt ="SELECT conf_engine from servers where server_ip='$server_ip';";
++			$rslt=mysql_to_mysqli($stmt, $link);
++			$row=mysqli_fetch_row($rslt);
++			$conf_engine=$row[0];
++			
++			if($conf_engine == "CONFBRIDGE")
++				{
++				$conf_table = "vicidial_confbridges";
++				$monitor_prefix = '4';
++				$barge_prefix = '6';
++				}
++			else
++				{
++				$conf_table = "vicidial_conferences";
++				$monitor_prefix = '0';
++				$barge_prefix = '';
++				}
++				
++			$stmt="SELECT count(*) from $conf_table where conf_exten='$session_id' and server_ip='$server_ip';";
+ 			$rslt=mysql_to_mysqli($stmt, $link);
+ 			$row=mysqli_fetch_row($rslt);
+ 			$session_exists=$row[0];
+@@ -2948,7 +2967,7 @@
+ 					$monitor_dialstring = "$D_s_ip[0]$S$D_s_ip[1]$S$D_s_ip[2]$S$D_s_ip[3]$S";
+ 
+ 					$monitor_type='LISTEN'; $cid_prefix='BM'; $swap_chan=0;
+-					if ( (preg_match('/MONITOR/',$stage)) or (strlen($stage)<1) ) {$stage = '0';}
++					if ( (preg_match('/MONITOR/',$stage)) or (strlen($stage)<1) ) {$stage = $monitor_prefix;}
+ 					if (preg_match('/BARGE/',$stage)) 
+ 						{
+ 						if (preg_match('/SWAP/',$stage)) {$swap_chan=1;}

@@ -23,6 +23,7 @@
 # 210705-1624 - Added user_pass_webform and phone_login_webform options
 # 210823-1633 - Added email_attachment_path option for dispo_send_email.php script
 # 220127-0931 - Added email_header_attach and allow_sendmail_bypass options
+# 220916-0901 - Added INSERT_before_body_close option, Issue #1375
 #
 
 $conf_silent_prefix		= '5';	# vicidial_conferences prefix to enter silently and muted for recording
@@ -102,6 +103,7 @@ $INSERT_head_js			= '';	# inserted after first javascript function
 $INSERT_first_onload	= '';	# inserted at the beginning of the first section of the onload function
 $INSERT_window_onload	= '';	# inserted at the end of the onload function
 $INSERT_agent_events	= '';	# inserted within the agent_events function
+$INSERT_before_body_close = '';	# inserted before each BODY close tag
 
 # CORS settings: (to enable, customize the variables below, and uncomment the "require_once('agentCORS.php');" line at the bottom)
 # (NOTE: The first 3 variables must be set for these features to be active)

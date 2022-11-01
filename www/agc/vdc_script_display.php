@@ -45,10 +45,11 @@
 # 210616-2100 - Added optional CORS support, see options.php for details
 # 210825-0858 - Fix for security issue
 # 220219-0144 - Added allow_web_debug system setting
+# 220901-0849 - Added campaign user_group_script option
 #
 
-$version = '2.14-39';
-$build = '220219-0144';
+$version = '2.14-40';
+$build = '220901-0849';
 $php_script = 'vdc_script_display.php';
 
 require_once("dbconnect_mysqli.php");
@@ -267,6 +268,10 @@ if (isset($_GET["LOGINvarFIVE"]))			{$LOGINvarFIVE=$_GET["LOGINvarFIVE"];}
 	elseif (isset($_POST["LOGINvarFIVE"]))	{$LOGINvarFIVE=$_POST["LOGINvarFIVE"];}
 if (isset($_GET["script_span"]))			{$script_span=$_GET["script_span"];}
 	elseif (isset($_POST["script_span"]))	{$script_span=$_POST["script_span"];}
+if (isset($_GET["user_group_script"]))			{$user_group_script=$_GET["user_group_script"];}
+	elseif (isset($_POST["user_group_script"]))	{$user_group_script=$_POST["user_group_script"];}
+if (isset($_GET["UGscript_id"]))			{$UGscript_id=$_GET["UGscript_id"];}
+	elseif (isset($_POST["UGscript_id"]))	{$UGscript_id=$_POST["UGscript_id"];}
 
 $DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
@@ -445,6 +450,7 @@ $vendor_id = preg_replace("/\"|\\\\|;/",'-',$vendor_id);
 $vendor_lead_code = preg_replace("/\"|\\\\|;/",'-',$vendor_lead_code);
 $web_vars = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$web_vars);
 $xfercallid = preg_replace("/\<|\>|\"|\\\\|;/",'-',$xfercallid);
+$user_group_script=preg_replace("/[^-_0-9a-zA-Z]/","",$user_group_script);
 
 if ($non_latin < 1)
 	{
@@ -477,6 +483,7 @@ if ($non_latin < 1)
 	$did_custom_three = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$did_custom_three);
 	$did_custom_four = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$did_custom_four);
 	$did_custom_five  = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$did_custom_five );
+	$UGscript_id = preg_replace("/[^-_0-9a-zA-Z]/",'-',$UGscript_id);
 	}
 else
 	{
@@ -509,6 +516,7 @@ else
 	$did_custom_three = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$did_custom_three);
 	$did_custom_four = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$did_custom_four);
 	$did_custom_five  = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$did_custom_five );
+	$UGscript_id = preg_replace("/[^-_0-9\p{L}]/u",'-',$UGscript_id);
 	}
 
 $auth=0;
@@ -554,7 +562,9 @@ if ($inOUT == 'IN')
 		{$ignore_list_script=1;}
 	}
 
-if ( ($ignore_list_script < 1) and ($script_span != 'Script2Contents') )
+if ($DB > 0) {echo "DEBUG: |$ignore_list_script|$script_span|$user_group_script|$UGscript_id|\n";}
+
+if ( ($ignore_list_script < 1) and ($script_span != 'Script2Contents') and ( ($user_group_script != 'ENABLED') or (strlen($UGscript_id)<1) ) )
 	{
 #	$stmt="SELECT agent_script_override from vicidial_lists where list_id='$list_id';";
 	$stmt="SELECT if('$inOUT'= 'IN',if(inbound_list_script_override is null or inbound_list_script_override='',agent_script_override,inbound_list_script_override),agent_script_override) from vicidial_lists where list_id='$list_id';";

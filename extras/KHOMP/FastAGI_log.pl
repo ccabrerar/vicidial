@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# FastAGI_log.pl version 2.14 (KHOMP VERSION as of svn/trunk rev 3524)
+# FastAGI_log.pl version 2.14 (KHOMP VERSION as of svn/trunk rev 3553)
 # 
 # Experimental Deamon using perl Net::Server that runs as FastAGI to reduce load
 # replaces the following AGI scripts:
@@ -25,7 +25,7 @@
 # exten => h,1,DeadAGI(agi://127.0.0.1:4577/call_log--HVcauses--PRI-----NODEBUG-----${HANGUPCAUSE}-----${DIALSTATUS}-----${DIALEDTIME}-----${ANSWEREDTIME})
 # 
 #
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG:
 # 61010-1007 - First test build
@@ -92,6 +92,9 @@
 # 210719-1521 - Added additional state override methods for call_limit_24hour
 # 210827-0936 - Added PJSIP compatibility
 # 210907-0841 - Added KHOMP code (install JSON::PP Perl module and remove '#UC#' in the code to enable)
+# 220103-1520 - Added timeout fix for manual dial calls, set the CAMPDTO dialplan variable
+# 220118-0937 - Added $ADB auto-alt-dial extra debug output option, fix for extended auto-alt-dial issue #1337
+# 220118-2207 - Added auto_alt_threshold campaign & list settings
 #
 
 # defaults for PreFork
@@ -102,6 +105,9 @@ $VARfastagi_log_max_spare_servers = '8';
 $VARfastagi_log_max_requests =	'1000';
 $VARfastagi_log_checkfordead =	'30';
 $VARfastagi_log_checkforwait =	'60';
+$DB=0;
+$DBX=0;
+$ADB=0;
 
 # default path to astguiclient configuration file:
 $PATHconf =		'/etc/astguiclient.conf';
@@ -194,7 +200,7 @@ use Time::HiRes ('tv_interval','gettimeofday','usleep','sleep');  # necessary to
 use Time::Local;
 
 # Needed for Khomp Integration
- use JSON::PP qw(encode_json decode_json);
+use JSON::PP qw(encode_json decode_json);
 
 ### find curl binary for KHOMP
 $curlbin = '';
@@ -715,7 +721,7 @@ sub process_request
 				$sthA->finish();
 
 				### get campaign settings
-				$stmtA = "SELECT amd_type,campaign_vdad_exten FROM vicidial_campaigns where campaign_id = '$campaign';";
+				$stmtA = "SELECT amd_type,campaign_vdad_exten,dial_timeout,manual_dial_timeout FROM vicidial_campaigns where campaign_id = '$campaign';";
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 				$sthArows=$sthA->rows;
@@ -724,6 +730,8 @@ sub process_request
 					@aryA = $sthA->fetchrow_array;
 					$amd_type =     $aryA[0];
 					$campaign_vdad_exten =	$aryA[1];
+					$dial_timeout =			$aryA[2];
+					$man_dial_timeout =		$aryA[3];
 					}
 				$sthA->finish();
 				
@@ -734,6 +742,16 @@ sub process_request
 					if ($AGILOG) {$agi_string = "|CAMPCUST: $CAMPCUST|$callerid|";   &agi_output;}
 					}
 
+				### on manual dial calls set the CAMPDTO dialplan variable
+				if ($callerid =~ /^M/)
+					{
+					if (length($man_dial_timeout) > 0)
+						{
+						$dial_timeout = $man_dial_timeout;
+						}
+					$AGI->exec("EXEC Set(_CAMPDTO=$dial_timeout)");
+					if ($AGILOG) {$agi_string = "|CAMPDTO: $dial_timeout|$callerid|";   &agi_output;}
+					}
 
 				### BEGIN OpenSIPs CallerIDname code ###
 				### get system_settings
@@ -1167,6 +1185,7 @@ sub process_request
 
 				if ($AGILOG) {$agi_string = "VD_hangup : $callerid $channel $priority $CIDlead_id";   &agi_output;}
 
+				$CLauto_alt_threshold=0;
 				if ($callerid =~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/)
 					{
 					$campaign='';
@@ -1201,14 +1220,15 @@ sub process_request
 						}
 
 					### get campaign settings
-					$stmtA = "SELECT amd_type FROM vicidial_campaigns where campaign_id = '$campaign';";
+					$stmtA = "SELECT amd_type,auto_alt_threshold FROM vicidial_campaigns where campaign_id = '$campaign';";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows=$sthA->rows;
 					if ($sthArows > 0)
 						{
 						@aryA = $sthA->fetchrow_array;
-						$amd_type =     $aryA[0];
+						$amd_type =				$aryA[0];
+						$CLauto_alt_threshold = $aryA[1];
 						}
 					$sthA->finish();
 
@@ -2036,7 +2056,7 @@ sub process_request
 							$VD_auto_alt_dial = 'NONE';
 							$VD_auto_alt_dial_statuses='';
 							$VD_call_quota_lead_ranking='DISABLED';
-							$stmtA="SELECT auto_alt_dial,auto_alt_dial_statuses,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc,call_quota_lead_ranking,call_limit_24hour_method,call_limit_24hour_scope,call_limit_24hour,call_limit_24hour_override FROM vicidial_campaigns where campaign_id='$VD_campaign_id';";
+							$stmtA="SELECT auto_alt_dial,auto_alt_dial_statuses,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc,call_quota_lead_ranking,call_limit_24hour_method,call_limit_24hour_scope,call_limit_24hour,call_limit_24hour_override,auto_alt_threshold FROM vicidial_campaigns where campaign_id='$VD_campaign_id';";
 								if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -2055,7 +2075,30 @@ sub process_request
 								$VD_call_limit_24hour_scope =		$aryA[7];
 								$VD_call_limit_24hour =				$aryA[8];
 								$VD_call_limit_24hour_override =	$aryA[9];
+								$CLauto_alt_threshold =				$aryA[10];
 								$epc_countCAMPDATA++;
+								}
+
+							$LISTauto_alt_threshold=-1;
+							$stmtA="SELECT auto_alt_threshold from vicidial_lists where list_id='$VD_list_id' limit 1;";
+								if ($DB) {$event_string = "|$stmtA|";   &event_logger;}
+							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+							$sthArowsVLL=$sthA->rows;
+							if ($sthArowsVLL > 0)
+								{
+								@aryA = $sthA->fetchrow_array;
+								$LISTauto_alt_threshold = 	$aryA[0];
+								}
+							$sthA->finish();
+
+							$temp_auto_alt_threshold = $CLauto_alt_threshold;
+							if ($LISTauto_alt_threshold > -1 ) {$temp_auto_alt_threshold = $LISTauto_alt_threshold;}
+							$auto_alt_lead_disabled=0;
+							if ( ($temp_auto_alt_threshold > 0) && ($called_count >= $temp_auto_alt_threshold) ) 
+								{
+								$auto_alt_lead_disabled=1;
+								if ($ADB > 0) {$aad_string = "ALT-20: $CLlead_id|$VD_alt_dial|$VD_auto_alt_dial|$CLauto_alt_threshold|$LISTauto_alt_threshold|($called_count <> $temp_auto_alt_threshold)|auto_alt_lead_disabled: $auto_alt_lead_disabled|";   &aad_output;}
 								}
 
 							##### BEGIN Call Quota Lead Ranking logging #####
@@ -2072,10 +2115,12 @@ sub process_request
 							##### BEGIN AUTO ALT PHONE DIAL SECTION #####
 							$sthA->finish();
 				#			if ($AGILOG) {$agi_string = "AUTO-ALT TEST: |$VD_status|$VDL_status|$VD_auto_alt_dial_statuses|$VD_auto_alt_dial|";   &agi_output;}
-							if ($VD_auto_alt_dial_statuses =~ / $VD_status | $VDL_status /)
+							if ($ADB > 0) {$aad_string = "ALT-21: $VD_lead_id|$VD_alt_dial|$VD_status|$VDL_status|$VD_auto_alt_dial_statuses|$VD_auto_alt_dial|";   &aad_output;}
+							if ( ($VD_auto_alt_dial_statuses =~ / $VD_status | $VDL_status /) && ($auto_alt_lead_disabled < 1) )
 								{
 								$alt_skip_reason='';   $addr3_skip_reason='';
 								if ($AGILOG) {$agi_string = "AUTO-ALT MATCH: |$VD_status|$VDL_status|$VD_auto_alt_dial_statuses|$VD_auto_alt_dial|$VD_alt_dial|$VD_alt_dial_log|";   &agi_output;}
+								if ($ADB > 0) {$aad_string = "ALT-22: $VD_lead_id|Alt-Dial Match|";   &aad_output;}
 								if ( ($VD_auto_alt_dial =~ /(ALT_ONLY|ALT_AND_ADDR3|ALT_AND_EXTENDED)/) && ($VD_alt_dial =~ /NONE|MAIN/) )
 									{
 									$alt_dial_skip=0;
@@ -2099,6 +2144,7 @@ sub process_request
 										$epc_countCAMPDATA++;
 										}
 									$sthA->finish();
+									if ($ADB > 0) {$aad_string = "ALT-23: $VD_lead_id|ALT-PHONE: $VD_alt_phone|";   &aad_output;}
 									if (length($VD_alt_phone)>5)
 										{
 										if ( ($VD_use_internal_dnc =~ /Y/) || ($VD_use_internal_dnc =~ /AREACODE/) )
@@ -2175,10 +2221,12 @@ sub process_request
 										{$alt_dial_skip=1;   $alt_skip_reason='ALT phone invalid';}
 									if ($alt_dial_skip > 0)
 										{
+										if ($ADB > 0) {$aad_string = "ALT-24: $VD_lead_id|$VD_alt_dial|ALT-SKIP: $alt_skip_reason|";   &aad_output;}
 										$VD_alt_dial='ALT';
 										if ($AGILOG) {$aad_string = "$VD_lead_id|$VD_alt_phone|$VD_campaign_id|ALT|0|hopper skip|$alt_skip_reason|";   &aad_output;}
 										}
 									}
+									if ($ADB > 0) {$aad_string = "ALT-25: $VD_lead_id|$VD_alt_dial|";   &aad_output;}
 								if ( ( ($VD_auto_alt_dial =~ /(ADDR3_ONLY)/) && ($VD_alt_dial =~ /NONE|MAIN/) ) || ( ($VD_auto_alt_dial =~ /(ALT_AND_ADDR3)/) && ($VD_alt_dial =~ /ALT/) ) )
 									{
 									$addr3_dial_skip=0;
@@ -2202,6 +2250,7 @@ sub process_request
 										$epc_countCAMPDATA++;
 										}
 									$sthA->finish();
+									if ($ADB > 0) {$aad_string = "ALT-26: $VD_lead_id|$VD_alt_dial|ADDR3-PHONE: $VD_address3|";   &aad_output;}
 									if (length($VD_address3)>5)
 										{
 										if ( ($VD_use_internal_dnc =~ /Y/) || ($VD_use_internal_dnc =~ /AREACODE/) )
@@ -2278,10 +2327,12 @@ sub process_request
 										{$addr3_dial_skip=1;   $addr3_skip_reason='ADDR3 phone invalid';}
 									if ($addr3_dial_skip > 0)
 										{
+										if ($ADB > 0) {$aad_string = "ALT-27: $VD_lead_id|$VD_alt_dial|ADDR3-SKIP: $addr3_skip_reason|";   &aad_output;}
 										$VD_alt_dial='ADDR3';
 										if ($AGILOG) {$aad_string = "$VD_lead_id|$VD_address3|$VD_campaign_id|ADDR3|0|hopper skip|$addr3_skip_reason|";   &aad_output;}
 										}
 									}
+								if ($ADB > 0) {$aad_string = "ALT-28: $VD_lead_id|$VD_alt_dial|";   &aad_output;}
 								if ( ( ($VD_auto_alt_dial =~ /(EXTENDED_ONLY)/) && ($VD_alt_dial =~ /NONE|MAIN/) ) || ( ($VD_auto_alt_dial =~ /(ALT_AND_EXTENDED)/) && ($VD_alt_dial =~ /ALT/) ) || ( ($VD_auto_alt_dial =~ /ADDR3_AND_EXTENDED|ALT_AND_ADDR3_AND_EXTENDED/) && ($VD_alt_dial =~ /ADDR3/) ) || ( ($VD_auto_alt_dial =~ /(EXTENDED)/) && ($VD_alt_dial =~ /X/) && ($VD_alt_dial !~ /XLAST/) ) )
 									{
 									if ($VD_alt_dial =~ /ADDR3/) {$Xlast=0;}
@@ -2319,6 +2370,7 @@ sub process_request
 										$alt_dial_phones_count = $aryA[0];
 										}
 									$sthA->finish();
+									if ($ADB > 0) {$aad_string = "ALT-29: $VD_lead_id|$VD_alt_dial|$Xlast|$alt_dial_phones_count|";   &aad_output;}
 
 									while ( ($alt_dial_phones_count > 0) && ($alt_dial_phones_count > $Xlast) )
 										{
@@ -2337,8 +2389,9 @@ sub process_request
 											$VD_altdial_phone_code = 	$aryA[3];
 											}
 										else
-											{$Xlast=9999999999;}
+											{$Xlast=99999;}
 										$sthA->finish();
+										if ($ADB > 0) {$aad_string = "ALT-30: $VD_lead_id|$VD_alt_dial|$Xlast|";   &aad_output;}
 
 										if ($VD_altdial_active =~ /Y/)
 											{
@@ -2411,7 +2464,8 @@ sub process_request
 													$affected_rows = $dbhA->do($stmtA);
 													if ($AGILOG) {$agi_string = "--    VDH record inserted: |$affected_rows|   |$stmtA|X$Xlast|$VD_altdial_id|";   &agi_output;}
 													if ($AGILOG) {$aad_string = "$VD_lead_id|$VD_altdial_phone|$VD_campaign_id|X$Xlast|15|hopper insert|";   &aad_output;}
-													$Xlast=9999999999;
+													if ($ADB > 0) {$aad_string = "ALT-31: $VD_lead_id|$VD_alt_dial|X$Xlast|";   &aad_output;}
+													$Xlast=99999;
 													$DNC_hopper_trigger=0;
 													}
 												else
@@ -2423,19 +2477,22 @@ sub process_request
 												{
 												if ( ( ($VD_auto_alt_dial_statuses =~ / DNCC /) && ($DNCC > 0) ) || ( ($VD_auto_alt_dial_statuses =~ / DNCL /) && ($DNCL > 0) ) || ( ($auto_alt_dial_statuses[$i] =~ / TFHCCL /) && ($TFHCCL > 0) ) )
 													{
+													if ($ADB > 0) {$aad_string = "ALT-32: $VD_lead_id|$VD_alt_dial|$Xlast|$alt_dial_phones_count|";   &aad_output;}
 													if ($alt_dial_phones_count eq '$Xlast') 
 														{$Xlast = 'LAST';}
 													$stmtA = "INSERT INTO vicidial_hopper SET lead_id='$VD_lead_id',campaign_id='$VD_campaign_id',status='DNC',list_id='$VD_list_id',gmt_offset_now='$VD_gmt_offset_now',state='$VD_state',alt_dial='X$Xlast',user='',priority='15',source='A';";
 													$affected_rows = $dbhA->do($stmtA);
 													if ($AGILOG) {$agi_string = "--    VDH record DNC inserted: |$affected_rows|   |$stmtA|X$Xlast|$VD_altdial_id|";   &agi_output;}
-													$Xlast=9999999999;
+													$Xlast=99999;
 													if ($AGILOG) {$agi_string = "--    VDH alt dial inserting DNC|X$Xlast|$VD_altdial_phone|";   &agi_output;}
 													if ($AGILOG) {$aad_string = "$VD_lead_id|$VD_altdial_phone|$VD_campaign_id|X$Xlast|15|hopper DNC insert|";   &aad_output;}
+													if ($ADB > 0) {$aad_string = "ALT-33: $VD_lead_id|$VD_alt_dial|$Xlast|DNC|";   &aad_output;}
 													}
 												else
 													{
 													if ($AGILOG) {$agi_string = "--    VDH alt dial not-inserting DNC|X$Xlast|$VD_altdial_phone|";   &agi_output;}
 													if ($AGILOG) {$aad_string = "$VD_lead_id|$VD_altdial_phone|$VD_campaign_id|X$Xlast|15|hopper DNC skip|";   &aad_output;}
+													if ($ADB > 0) {$aad_string = "ALT-34: $VD_lead_id|$VD_alt_dial|$Xlast|DNC|";   &aad_output;}
 													}
 												}
 											}
@@ -3005,7 +3062,7 @@ sub agi_output
 
 sub aad_output
 	{
-	if ($AGILOG > 0)
+	if ( ($AGILOG > 0) || ($ADB > 0) )
 		{
 		### open the log file for writing ###
 		open(Aout, ">>$AADLOGfile") || die "Can't open $AADLOGfile: $!\n";

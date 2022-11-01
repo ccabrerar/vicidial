@@ -1,0 +1,14 @@
+--- AST_reset_mysql_vars.pl.old	2022-08-26 16:01:47.681299321 -0400
++++ AST_reset_mysql_vars.pl	2022-08-26 16:01:30.585358428 -0400
+@@ -76,6 +76,11 @@
+ 	$affected_rows = $dbhA->do($stmtA); #  or die  "Couldn't execute query: |$stmtA|\n";
+ 	print " - vicidial_conferences reset\n";
+ 
++	$stmtA = "UPDATE vicidial_confbridges set extension='' where server_ip='$server_ip';";
++		if($DB){print STDERR "\n|$stmtA|\n";}
++	$affected_rows = $dbhA->do($stmtA); #  or die  "Couldn't execute query: |$stmtA|\n";
++	print " - vicidial_confbridges reset\n";
++
+ #	$stmtA = "UPDATE vicidial_manager set status='DEAD' where server_ip='$server_ip' and status='NEW';";
+ #		if($DB){print STDERR "\n|$stmtA|\n";}
+ #	$dbhA->query($stmtA); #  or die  "Couldn't execute query: |$stmtA|\n";

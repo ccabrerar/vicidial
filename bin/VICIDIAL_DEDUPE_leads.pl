@@ -10,7 +10,8 @@
 # /usr/share/astguiclient/VICIDIAL_DEDUPE_leads.pl --debugX --campaign-duplicate=CTF --ignore-list=999
 #
 # CHANGES
-# 70521-1643 - first build
+# 070521-1643 - first build
+# 220825-0958 - Added option to remove older leads
 #
 
 $secX = time();
@@ -97,6 +98,7 @@ if (length($ARGV[0])>1)
 	print "  [--campaign-duplicate=1234] = duplicate check witin this campaign\n";
 	print "  [--ignore-list=999] = ignores the list in duplicate check\n";
 	print "  [--duplicate-list=998] = list_id that duplicate leads are moved to, default is 998\n";
+	print "  [--remove-old-leads] = Removes older leads, keeping the newest one\n";
 	print "  [-h] = this help screen\n\n";
 	print "\n";
 
@@ -163,7 +165,14 @@ if (length($ARGV[0])>1)
 		}
 		else
 			{$duplicatelist = '998';}
-
+		
+		$remove_old_leads = 0;
+		if ($args =~ /--remove-old-leads/i)
+		{
+		$remove_old_leads = 1;
+		print "\n----- MOVE OLDER LEADS -----\n\n";
+		}
+		
 	}
 }
 else
@@ -259,7 +268,12 @@ $b=0;
 foreach(@dup_list)
 	{
 	$dup_limit = ($dup_count[$b] - 1);
-	$stmtA = "select lead_id,list_id,entry_date from vicidial_list where phone_number='$dup_list[$b]' $and $campSQL $listSQL order by entry_date;";
+	$descSQL = '';
+	if ( $remove_old_leads )
+		{
+		$descSQL = 'desc';
+		}
+	$stmtA = "select lead_id,list_id,entry_date from vicidial_list where phone_number='$dup_list[$b]' $and $campSQL $listSQL order by entry_date $descSQL;";
 		if($DBX){print STDERR "\n|$stmtA|\n";}
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;

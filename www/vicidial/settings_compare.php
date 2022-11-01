@@ -6,6 +6,7 @@
 # CHANGES
 # 210306-2052 - First build
 # 220227-1955 - Added allow_web_debug system setting
+# 220812-0937 - Added User Group report permissions checking
 #
 
 $startMS = microtime();
@@ -80,7 +81,7 @@ else
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
 
-$stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
+$stmt="SELECT selected_language,user_group from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $sl_ct = mysqli_num_rows($rslt);
@@ -88,6 +89,7 @@ if ($sl_ct > 0)
 	{
 	$row=mysqli_fetch_row($rslt);
 	$VUselected_language =		$row[0];
+	$LOGuser_group =			$row[1];
 	}
 
 $auth=0;
@@ -201,6 +203,14 @@ if ( (!preg_match('/\-\-ALL\-\-/i',$LOGadmin_viewable_groups)) and (strlen($LOGa
 	}
 else 
 	{$admin_viewable_groupsALL=1;}
+
+if ( (!preg_match("/$report_name/",$LOGallowed_reports)) and (!preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
+	{
+    Header("WWW-Authenticate: Basic realm=\"CONTACT-CENTER-ADMIN\"");
+    Header("HTTP/1.0 401 Unauthorized");
+    echo "You are not allowed to view this report: |$PHP_AUTH_USER|$report_name|\n";
+    exit;
+	}
 
 
 ##### BEGIN log visit to the vicidial_report_log table #####

@@ -1,4 +1,4 @@
-DNC.COM INTEGRATION	  Started: 2015-12-02	Updated: 2017-09-25
+DNC.COM INTEGRATION	  Started: 2015-12-02	Updated: 2022-04-21
 
 NOTE: for DNC.COM integration of batch cellphone filtering, see this document:
 	CELLPHONE_USA_TCPA_FCC_COMPLIANCE.txt
@@ -11,10 +11,20 @@ DNC.COM is also offering a Free 15 day trial to VICIdial users of their Real-tim
 
 ########## OUTBOUND LIST FILTERING ############################################
 
-The script that allows for this must be run from the Linux command-line(CLI):
-	AST_DNCcom_filter.pl
+NOTE: Outbound list filtering is currently only available in a batch mode 
+application, after the leads are already loaded into a list on the system, it 
+does NOT look phone numbers up as they are dialed.
 
-In order for this script to work, you must have a Settings Container set up within Vicidial with the ID of "DNCDOTCOM". This settings container should be customized for your specific DNC.COM account, and how you want it to function.
+The script that allows for this must be run from the Linux command-line(CLI):
+	AST_DNCcom_filter.pl --lists=LISTID1-LISTID2
+
+The DNC.com List Filtering is designed to work in batch mode, usually set up in
+the crontab of one of your system's dialers. We recommend running this script 
+after-hours, or only during calling hours on inavtive lists.
+
+In order for this script to work, you must have a Settings Container set up 
+within Vicidial with the ID of "DNCDOTCOM". This settings container should be 
+customized for your specific DNC.COM account, and how you want it to function.
 
 
 Below is an example Settings Container for DNC.COM:

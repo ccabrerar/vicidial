@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# agi-AGENT_route.agi version 2.6
+# agi-AGENT_route.agi version 2.14
 # 
 # for use with a Call Menu in the custom dialplan section or as an AGI route.
 #
@@ -28,12 +28,13 @@
 #; example with 4-digit agent IDs
 # exten => _XXXX,1,AGI(agi-AGENT_route.agi,default---AGENTDIRECT---ACTIVE)
 #
-# Copyright (C) 2013  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 100321-0108 - First Build
 # 100704-2128 - Added several options
 # 130108-1811 - Changes for Asterisk 1.8 compatibility
+# 220414-2122 - Added more debug output
 #
 
 $script = 'agi-AGENT_route.agi';
@@ -174,6 +175,9 @@ if ($minimum_user_digits =~ /X/)
 	$pound_finish =	1;
 	}
 
+if ($AGILOG) {$agi_string = "$did_settings|$in_group|$agent_active_filter|$user_id_prompt|$minimum_user_digits|$invalid_prompt|$invalid_reenter_prompt|$retry_attempts|$invalid_ingroup|$transfer_prompt|$transfer_logout_prompt";   &agi_output;}
+
+
 $|=1;
 while(<STDIN>) 
 	{
@@ -217,6 +221,7 @@ $stmtA = "SELECT did_id FROM vicidial_inbound_dids where did_pattern = '$did_set
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
+if ($AGILOG) {$agi_string = "$stmtA|$sthArows";   &agi_output;}
 if ($sthArows > 0)
 	{
 	@aryA = $sthA->fetchrow_array;
@@ -232,6 +237,7 @@ if ($sthArows < 1)
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 	$DIDs_in_system=$sthA->rows;
+	if ($AGILOG) {$agi_string = "$stmtA|$DIDs_in_system";   &agi_output;}
 	if ($DIDs_in_system > 0)
 		{
 		@aryA = $sthA->fetchrow_array;
@@ -246,6 +252,7 @@ $stmtA = "SELECT ext_context FROM servers where server_ip = '$VARserver_ip';";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
+if ($AGILOG) {$agi_string = "$stmtA|$sthArows";   &agi_output;}
 while ($sthArows > $cbc)
 	{
 	@aryA = $sthA->fetchrow_array;
@@ -286,6 +293,7 @@ else
 
 if ( ($agent_active_filter =~ /LOGGED_IN/) && ($logged_in_user < 1) && ($active_user > 0) )
 	{
+	if ($AGILOG) {$agi_string = "user not logged in";   &agi_output;}
 	$transfer_prompt = $transfer_logout_prompt;
 	$active_user=0;
 	}
@@ -305,6 +313,7 @@ else
 
 	if (length($invalid_ingroup) > 1)
 		{
+		if ($AGILOG) {$agi_string = "user not active";   &agi_output;}
 		$did_extension = "99909$S$did_id$S$invalid_ingroup$S$S";
 		}
 	else
@@ -350,6 +359,7 @@ sub find_if_active_user
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 	$sthArows=$sthA->rows;
+	if ($AGILOG) {$agi_string = "$stmtA|$sthArows";   &agi_output;}
 	if ($sthArows > 0)
 		{
 		@aryA = $sthA->fetchrow_array;
@@ -363,6 +373,7 @@ sub find_if_active_user
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;
+		if ($AGILOG) {$agi_string = "$stmtA|$sthArows";   &agi_output;}
 		if ($sthArows > 0)
 			{
 			@aryA = $sthA->fetchrow_array;
@@ -383,7 +394,7 @@ sub user_id_gather
 
 	$interrupt_digit = $AGI->stream_file("$user_id_prompt",'0123456789');   
 
-		print STDERR "interrupt_digit |$interrupt_digit|\n";
+		if ($AGILOG) {$agi_string = "interrupt_digit |$interrupt_digit|";    &agi_output;}
 
 	$digits_being_entered=1;
 	$extension='';
@@ -412,7 +423,7 @@ sub user_id_gather
 		if ($digit =~ /\d/)
 			{
 			$extension = "$extension$digit";
-			print STDERR "digit |$digit|     extension |$extension|\n";
+			if ($AGILOG) {$agi_string =  "digit |$digit|     extension |$extension|";   &agi_output;}
 	#		$AGI->say_digits("$digit");
 			undef $digit;
 			}
@@ -426,7 +437,10 @@ sub user_id_gather
 		}
 
 	$extension =~ s/\D//gi;
-	if ($extension > 0) {print STDERR "digit collection done|$digit|     extension |$extension|\n";}
+	if ($extension > 0) 
+		{
+		if ($AGILOG) {$agi_string = "digit collection done|$digit|     extension |$extension|";   &agi_output;}
+		}
 	}
 	##### END collect the user id number ###############################################
 

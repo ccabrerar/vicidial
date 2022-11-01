@@ -716,6 +716,23 @@ OTHER CHANGES:
 
 200. Added List CID Group Override to the List Modification admin screen.
 
+201. Added "Pre-Filter Recent Call" DID feature, to be able to filter out 
+	inbound calls based on the caller phone number and whether it had been 
+	called(or had called in) within the last X number of days.
+
+202. Added the "Inbound DID Detail Report" to the Admin Utilities page.
+
+203. Added Beta support for ConfBridge Asterisk Conferencing engine. See the
+	"/extras/ConfBridge" directory for more information.
+
+204. Added Beta support for VERM(the VICIdial Enhanced Reporting Module),
+	accessible from the "Reports -> Admin Utilities" page.
+
+205. Added User Group "Script Override" option, with per-campaign activation.
+
+206. Added "Webphone Settings" option to Phones, allows for more WebRTC config
+	options to be set through a Settings Container.
+
 
 
 

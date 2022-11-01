@@ -9,7 +9,7 @@
 # !!!!!!!! IMPORTANT !!!!!!!!!!!!!!!!!!
 # THIS SCRIPT SHOULD ONLY BE RUN ON ONE SERVER ON YOUR CLUSTER
 #
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 60717-1214 - changed to DBI by Marin Blu
@@ -30,6 +30,7 @@
 # 190222-1321 - Added optional flushing of vicidial_sessions_recent table
 # 190503-1606 - Added flushing of vicidial_sip_event_recent table
 # 191029-1555 - Added flushing of vicidial_agent_vmm_overrides table
+# 220921-1148 - Added optimize of vicidial_users table
 #
 
 $session_flush=0;
@@ -455,6 +456,20 @@ if (!$T)
 	$sthA->finish();
 	}
 if (!$Q) {print " - OPTIMIZE vicidial_inbound_groups          \n";}
+
+
+$stmtA = "OPTIMIZE table vicidial_users;";
+if($DB){print STDERR "\n|$stmtA|\n";}
+if (!$T) 
+	{
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	@aryA = $sthA->fetchrow_array;
+	if (!$Q) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+	$sthA->finish();
+	}
+if (!$Q) {print " - OPTIMIZE vicidial_users          \n";}
 
 
 ### Gather active servers from the database

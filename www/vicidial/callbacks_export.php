@@ -1,12 +1,16 @@
 <?php
 # callbacks_export.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 200622-1615 - First build 
 # 220228-2126 - Added allow_web_debug system setting
+# 220713-1748 - Added user & count to output/modified SQL
+# 220812-1000 - Added User Group report permissions checking
 #
+
+$startMS = microtime();
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -42,7 +46,8 @@ $ip = getenv("REMOTE_ADDR");
 $date = date("r");
 $ip = getenv("REMOTE_ADDR");
 $browser = getenv("HTTP_USER_AGENT");
-$report_name="CALLBACKS EXPORT";
+
+$report_name="Callbacks Export";
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
@@ -87,7 +92,7 @@ else
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
 
-$stmt="SELECT selected_language,qc_enabled from vicidial_users where user='$PHP_AUTH_USER';";
+$stmt="SELECT selected_language,qc_enabled,user_group from vicidial_users where user='$PHP_AUTH_USER';";
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $sl_ct = mysqli_num_rows($rslt);
@@ -96,6 +101,7 @@ if ($sl_ct > 0)
 	$row=mysqli_fetch_row($rslt);
 	$VUselected_language =		$row[0];
 	$qc_auth =					$row[1];
+	$LOGuser_group =			$row[2];
 	}
 
 $category='';
@@ -192,6 +198,14 @@ if ( (!preg_match('/\-\-ALL\-\-/i', $LOGadmin_viewable_call_times)) and (strlen(
 	$rawLOGadmin_viewable_call_timesSQL = preg_replace("/ /","','",$rawLOGadmin_viewable_call_timesSQL);
 	$LOGadmin_viewable_call_timesSQL = "and call_time_id IN('---ALL---','$rawLOGadmin_viewable_call_timesSQL')";
 	$whereLOGadmin_viewable_call_timesSQL = "where call_time_id IN('---ALL---','$rawLOGadmin_viewable_call_timesSQL')";
+	}
+
+if ( (!preg_match("/$report_name/",$LOGallowed_reports)) and (!preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
+	{
+    Header("WWW-Authenticate: Basic realm=\"CONTACT-CENTER-ADMIN\"");
+    Header("HTTP/1.0 401 Unauthorized");
+    echo "You are not allowed to view this report: |$PHP_AUTH_USER|$report_name|\n";
+    exit;
 	}
 
 $NWB = "<IMG SRC=\"help.png\" onClick=\"FillAndShowHelpDiv(event, '";
@@ -294,7 +308,7 @@ if ($SUBMIT)
 			{
 			$groups_stmt="SELECT distinct campaign_id from vicidial_callbacks $whereLOGallowed_campaignsSQL";
 			$groups_rslt=mysql_to_mysqli($groups_stmt, $link);
-			$groupsSQL=" and vc.campaign_id in (";
+			$groupsSQL=" and campaign_id in (";
 			$groupsQS="";
 			while($groups_row=mysqli_fetch_row($groups_rslt)) 
 				{
@@ -306,7 +320,7 @@ if ($SUBMIT)
 			}
 		else
 			{
-			$groupsSQL=" and vc.campaign_id in ('".implode("','", $cb_groups)."') ";
+			$groupsSQL=" and campaign_id in ('".implode("','", $cb_groups)."') ";
 			$groupsQS="";
 			for ($i=0; $i<count($cb_groups); $i++) 
 				{
@@ -315,40 +329,85 @@ if ($SUBMIT)
 			}
 
 		if (!$end_date) {$end_date=$query_date;}
-		$daySQL=" and vc.callback_time>='$query_date 00:00:00' and vc.callback_time<='$end_date 23:59:59' ";
+		$daySQL=" callback_time>='$query_date 00:00:00' and callback_time<='$end_date 23:59:59' ";
 
-		$callback_stmt="select vc.lead_id, phone_number, vc.status, entry_time, callback_time, vc.comments from vicidial_callbacks vc, vicidial_list v where v.lead_id=vc.lead_id $groupsSQL $daySQL order by callback_time asc, entry_date asc";
+		# $callback_stmt="select vc.lead_id, phone_number, vc.status, entry_time, callback_time, vc.comments, vc.user from vicidial_callbacks vc, vicidial_list v where v.lead_id=vc.lead_id $groupsSQL $daySQL order by callback_time asc, entry_date asc";
+		$callback_stmt="select lead_id, status, entry_time, callback_time, comments, user from vicidial_callbacks where $daySQL $groupsSQL order by callback_time asc, entry_time asc";
 		$callback_rslt=mysql_to_mysqli($callback_stmt, $link);
+		$callbacks_count=mysqli_num_rows($callback_rslt);
 
 		if (mysqli_num_rows($callback_rslt)>0) 
 			{
 			$rpt_output="<table width='100%' cellspacing='0' cellpadding='3'>";
-			$rpt_output.="<tr><th colspan='6'><FONT FACE=\"ARIAL,HELVETICA\" SIZE=2><a href='$PHP_SELF?query_date=$query_date&end_date=$end_date$groupsQS&file_download=1&SUBMIT=$SUBMIT'>[DOWNLOAD AS CSV FILE]</A></font></th></tr>";
+			$rpt_output.="<tr><th colspan='4'><FONT class='standard'>Total Results:</font> <font color='red' class='standard_bold'>".$callbacks_count."</FONT></th><th colspan='3'><FONT class='standard'><a href='$PHP_SELF?query_date=$query_date&end_date=$end_date$groupsQS&file_download=1&SUBMIT=$SUBMIT'>[DOWNLOAD AS CSV FILE]</A></font></th></tr>";
+			$rpt_output.="<tr bgcolor='#000'>";
+			$rpt_output.="</tr>";
 			$rpt_output.="<tr bgcolor='#000'>";
 			$rpt_output.="<th nowrap><FONT FACE=\"ARIAL,HELVETICA\" COLOR=WHITE SIZE=1>"._QXZ("Lead ID")."</FONT></th>";
 			$rpt_output.="<th nowrap><FONT FACE=\"ARIAL,HELVETICA\" COLOR=WHITE SIZE=1>"._QXZ("Phone number")."</FONT></th>";
 			$rpt_output.="<th nowrap><FONT FACE=\"ARIAL,HELVETICA\" COLOR=WHITE SIZE=1>"._QXZ("Callback status")."</FONT></th>";
+			$rpt_output.="<th nowrap><FONT FACE=\"ARIAL,HELVETICA\" COLOR=WHITE SIZE=1>"._QXZ("Created by user")."</FONT></th>";
 			$rpt_output.="<th nowrap><FONT FACE=\"ARIAL,HELVETICA\" COLOR=WHITE SIZE=1>"._QXZ("Callback entry time")."</FONT></th>";
 			$rpt_output.="<th nowrap><FONT FACE=\"ARIAL,HELVETICA\" COLOR=WHITE SIZE=1>"._QXZ("Scheduled callback time")."</FONT></th>";
 			$rpt_output.="<th><FONT FACE=\"ARIAL,HELVETICA\" COLOR=WHITE SIZE=1>"._QXZ("Notes")."</FONT></th>";
 			$rpt_output.="</tr>";
 
-			$CSV_output="\"LEAD ID\",\"PHONE NUMBER\",\"STATUS\",\"CALLBACK ENTRY TIME\",\"SCHEDULED CALLBACK TIME\",\"NOTES\"\n";
+			$CSV_output="\"LEAD ID\",\"PHONE NUMBER\",\"CALLBACK STATUS\",\"CREATED BY USER\",\"CALLBACK ENTRY TIME\",\"SCHEDULED CALLBACK TIME\",\"NOTES\"\n";
 
 			$i=0;
 			while($callback_row=mysqli_fetch_array($callback_rslt))
 				{
+				$lead_active=0;
+				$lead_archived=0;
+				$phone_number="";
+				$vl_stmt="select count(*), phone_number from vicidial_list where lead_id='$callback_row[lead_id]'";
+				$vl_rslt=mysql_to_mysqli($vl_stmt, $link);
+				$vl_row=mysqli_fetch_row($vl_rslt);
+				if($vl_row[0]>0) 
+					{
+					$lead_active=1;
+					$phone_number=$vl_row[1];
+					}
+				else
+					{
+					if(table_exists("vicidial_list_archive"))
+						{
+						$vl_stmt.="select count(*), phone_number from vicidial_list_archive where lead_id='$callback_row[lead_id]'";
+						$vl_rslt=mysql_to_mysqli($vl_stmt, $link);
+						$vl_row=mysqli_fetch_row($vl_rslt);
+						if($vl_row[0]>0) 
+							{
+							$lead_archived=1;
+							$phone_number=$vl_row[1];
+							}
+						}
+					}
+
 				$i++;
-				if ($i%2==0) {$bgcolor=$SSstd_row1_background;} else {$bgcolor=$SSstd_row2_background;}
+				if ($lead_active)
+					{
+					if ($i%2==0) {$bgcolor=$SSstd_row1_background;} else {$bgcolor=$SSstd_row2_background;}
+					}
+				else if ($lead_archived)
+					{
+					$bgcolor="#FF9";
+					$callback_row["status"]="LEAD ARCHIVED";
+					}
+				else
+					{
+					$bgcolor="#F99";
+					$callback_row["status"]="LEAD MISSING";
+					}
 				$rpt_output.="<tr bgcolor='".$bgcolor."'>\n";
 				$rpt_output.="<th nowrap><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$callback_row[lead_id]</FONT></th>";
-				$rpt_output.="<th nowrap><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$callback_row[phone_number]</FONT></th>";
+				$rpt_output.="<th nowrap><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$phone_number</FONT></th>";
 				$rpt_output.="<th nowrap><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$callback_row[status]</FONT></th>";
+				$rpt_output.="<th nowrap><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$callback_row[user]</FONT></th>";
 				$rpt_output.="<th nowrap><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$callback_row[entry_time]</FONT></th>";
 				$rpt_output.="<th nowrap><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$callback_row[callback_time]</FONT></th>";
 				$rpt_output.="<th><FONT FACE=\"ARIAL,HELVETICA\" SIZE=1>$callback_row[comments]</FONT></th>";
 				$rpt_output.="</tr>";
-				$CSV_output.="\"$callback_row[lead_id]\",\"$callback_row[phone_number]\",\"$callback_row[status]\",\"$callback_row[entry_time]\",\"$callback_row[callback_time]\",\"$callback_row[comments]\"\n";
+				$CSV_output.="\"$callback_row[lead_id]\",\"$phone_number\",\"$callback_row[status]\",\"$callback_row[user]\",\"$callback_row[entry_time]\",\"$callback_row[callback_time]\",\"$callback_row[comments]\"\n";
 				}
 			$rpt_output.="</table>";
 		#	$rpt_output.=$callback_stmt."*\n";

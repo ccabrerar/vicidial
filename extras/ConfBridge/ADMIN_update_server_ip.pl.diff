@@ -1,0 +1,14 @@
+--- ADMIN_update_server_ip.pl.old	2022-08-26 15:58:07.510059960 -0400
++++ ADMIN_update_server_ip.pl	2022-08-26 15:57:50.982117018 -0400
+@@ -445,6 +445,11 @@
+ $affected_rows = $dbhA->do($stmtA);
+ if ($DB) {print "     |$affected_rows|$stmtA|\n";}
+ 
++print "  Updating vicidial_confbridges table...\n";
++$stmtA = "UPDATE vicidial_confbridges SET server_ip='$VARserver_ip' where server_ip='$VARold_server_ip';";
++$affected_rows = $dbhA->do($stmtA);
++if ($DB) {print "     |$affected_rows|$stmtA|\n";}
++
+ print "  Updating vicidial_stations table...\n";
+ $stmtA = "UPDATE vicidial_stations SET server_ip='$VARserver_ip' where server_ip='$VARold_server_ip';";
+ $affected_rows = $dbhA->do($stmtA);

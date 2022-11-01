@@ -21,6 +21,7 @@
 # 201117-2207 - Changes for better compatibility with non-latin data input
 # 210616-2040 - Added optional CORS support, see options.php for details
 # 220220-0928 - Added allow_web_debug system setting
+# 220518-2211 - Small fix for encrypted auth
 #
 
 require("dbconnect_mysqli.php");
@@ -156,7 +157,7 @@ if ($SSallow_chats < 1)
 	}
 
 $auth=0;
-$auth_message = user_authorization($user,$pass,'',0,0,0,0,'vdc_chat_display');
+$auth_message = user_authorization($user,$pass,'',0,1,0,0,'vdc_chat_display');
 if ($auth_message == 'GOOD')
 	{$auth=1;}
 

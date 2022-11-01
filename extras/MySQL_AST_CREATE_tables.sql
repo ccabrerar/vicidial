@@ -105,6 +105,7 @@ webphone_layout VARCHAR(255) default '',
 mohsuggest VARCHAR(100) default '',
 peer_status ENUM('UNKNOWN','REGISTERED','UNREGISTERED','REACHABLE','LAGGED','UNREACHABLE') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'UNKNOWN',
 ping_time SMALLINT(6) DEFAULT NULL,
+webphone_settings VARCHAR(40) default 'VICIPHONE_SETTINGS',
 index (server_ip),
 index (voicemail_id),
 index (dialplan_number),
@@ -166,7 +167,9 @@ gather_asterisk_output ENUM('Y','N') default 'N',
 web_socket_url VARCHAR(255) default '',
 conf_qualify ENUM('Y','N') default 'Y',
 routing_prefix VARCHAR(10) default '13',
-external_web_socket_url VARCHAR(255) default ''
+external_web_socket_url VARCHAR(255) default '',
+conf_engine ENUM('MEETME','CONFBRIDGE') COLLATE utf8_unicode_ci DEFAULT 'MEETME',
+conf_update_interval SMALLINT(6) NOT NULL DEFAULT '60'
 ) ENGINE=MyISAM;
 
 CREATE UNIQUE INDEX server_id on servers (server_id);
@@ -693,7 +696,12 @@ mobile_number VARCHAR(20) default '',
 two_factor_override  ENUM('NOT_ACTIVE','ENABLED','DISABLED') default 'NOT_ACTIVE',
 manual_dial_filter VARCHAR(50) default 'DISABLED',
 user_location VARCHAR(100) default '',
-download_invalid_files ENUM('0','1') default '0'
+download_invalid_files ENUM('0','1') default '0',
+user_group_two VARCHAR(20) default '',
+failed_login_attempts_today MEDIUMINT(8) UNSIGNED default '0',
+failed_login_count_today SMALLINT(6) UNSIGNED default '0',
+failed_last_ip_today VARCHAR(50) default '',
+failed_last_type_today VARCHAR(20) default ''
 ) ENGINE=MyISAM;
 
 CREATE UNIQUE INDEX user ON vicidial_users (user);
@@ -758,7 +766,8 @@ api_ip_list VARCHAR(30) default '',
 webphone_layout VARCHAR(255) default '',
 allowed_queue_groups TEXT,
 reports_header_override ENUM('DISABLED','LOGO_ONLY_SMALL','LOGO_ONLY_LARGE','ALT_1','ALT_2','ALT_3','ALT_4') default 'DISABLED',
-admin_home_url VARCHAR(255) default ''
+admin_home_url VARCHAR(255) default '',
+script_id VARCHAR(20) default ''
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaigns (
@@ -1086,7 +1095,11 @@ cid_group_id_two VARCHAR(20) default '---DISABLED---',
 incall_tally_threshold_seconds SMALLINT(5) UNSIGNED default '0',
 auto_alt_threshold TINYINT(3) UNSIGNED default '0',
 pause_max_url TEXT,
-agent_hide_hangup ENUM('Y','N') default 'N'
+agent_hide_hangup ENUM('Y','N') default 'N',
+ig_xfer_list_sort ENUM('GROUP_ID_UP','GROUP_ID_DOWN','GROUP_NAME_UP','GROUP_NAME_DOWN','PRIORITY_UP','PRIORITY_DOWN') default 'GROUP_ID_UP',
+script_tab_frame_size VARCHAR(10) default 'DEFAULT',
+max_logged_in_agents SMALLINT(5) UNSIGNED default '0',
+user_group_script ENUM('DISABLED','ENABLED') default 'DISABLED'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_lists (
@@ -1132,7 +1145,8 @@ qc_scorecard_id VARCHAR(20) DEFAULT '',
 qc_statuses_id VARCHAR(20) DEFAULT '',
 qc_web_form_address VARCHAR(255) DEFAULT '',
 auto_alt_threshold TINYINT(3) default '-1',
-cid_group_id VARCHAR(20) default '---DISABLED---'
+cid_group_id VARCHAR(20) default '---DISABLED---',
+dial_prefix VARCHAR(20) default ''
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_statuses (
@@ -1957,7 +1971,10 @@ call_limit_24hour ENUM('0','1') default '0',
 call_limit_24hour_reset DATETIME default '2000-01-01 00:00:01',
 allowed_sip_stacks ENUM('SIP','PJSIP','SIP_and_PJSIP') default 'SIP',
 agent_hide_hangup ENUM('1','0','2','3','4','5','6') default '0',
-allow_web_debug ENUM('0','1','2','3','4','5','6') default '0'
+allow_web_debug ENUM('0','1','2','3','4','5','6') default '0',
+max_logged_in_agents ENUM('0','1','2','3','4','5','6','7') default '0',
+user_codes_admin ENUM('0','1','2','3','4','5','6','7') default '0',
+login_kickall ENUM('0','1','2','3','4','5','6','7') default '0'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaigns_list_mix (
@@ -2278,6 +2295,8 @@ max_queue_ingroup_id VARCHAR(20) default '',
 max_queue_ingroup_extension VARCHAR(50) default '9998811112',
 did_carrier_description VARCHAR(255) default '',
 inbound_route_answer ENUM('Y','N') DEFAULT 'Y',
+pre_filter_recent_call VARCHAR(20) default '',
+pre_filter_recent_extension VARCHAR(50) default '',
 unique index (did_pattern),
 index (group_id)
 ) ENGINE=MyISAM;
@@ -4731,6 +4750,69 @@ index (caller_code),
 index (call_date)
 ) ENGINE=MyISAM;
 
+CREATE TABLE `vicidial_confbridges` (   
+`conf_exten` INT(7) UNSIGNED NOT NULL,
+`server_ip` VARCHAR(15) COLLATE utf8_unicode_ci NOT NULL,
+`extension` VARCHAR(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+`leave_3way` ENUM('0','1') COLLATE utf8_unicode_ci DEFAULT '0',
+`leave_3way_datetime` DATETIME DEFAULT NULL,
+UNIQUE KEY `serverconf` (`server_ip`,`conf_exten`),
+UNIQUE KEY `conf_exten` (`conf_exten`,`server_ip`) 
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE TABLE `verm_custom_report_holder` (
+`custom_report_id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+`user` VARCHAR(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+`report_name` VARCHAR(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+`report_parameters` TEXT COLLATE utf8_unicode_ci DEFAULT NULL,
+`modify_date` TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+PRIMARY KEY (`custom_report_id`),
+UNIQUE KEY `verm_custom_report_holder_pkey` (`user`,`report_name`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE TABLE `wallboard_widgets` (
+`widget_id` VARCHAR(100) COLLATE utf8_unicode_ci NOT NULL,
+`wallboard_report_id` VARCHAR(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+`view_id` VARCHAR(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+`widget_title` VARCHAR(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+`widget_type` VARCHAR(30) COLLATE utf8_unicode_ci DEFAULT NULL,
+`widget_width` TINYINT(3) UNSIGNED DEFAULT NULL,
+`widget_is_row` ENUM('Y','N') COLLATE utf8_unicode_ci DEFAULT 'N',
+`widget_rowspan` TINYINT(3) UNSIGNED DEFAULT 1,
+`widget_text` TEXT COLLATE utf8_unicode_ci DEFAULT NULL,
+`widget_queue` VARCHAR(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+`widget_sla_level` VARCHAR(5) COLLATE utf8_unicode_ci DEFAULT NULL,
+`widget_agent` VARCHAR(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+`widget_color` VARCHAR(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+`widget_color2` VARCHAR(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+`widget_alarms` TEXT COLLATE utf8_unicode_ci DEFAULT NULL,
+`widget_order` TINYINT(3) UNSIGNED DEFAULT NULL,
+PRIMARY KEY (`widget_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE TABLE `wallboard_reports` (
+`wallboard_report_id` VARCHAR(20) COLLATE utf8_unicode_ci NOT NULL,
+`wallboard_name` VARCHAR(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+`wallboard_views` TINYINT(3) UNSIGNED DEFAULT NULL,
+`date_created` DATETIME DEFAULT NULL,
+`last_modified` TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+`data_refresh_rate` SMALLINT(5) UNSIGNED DEFAULT 10,
+`view_refresh_rate` SMALLINT(5) UNSIGNED DEFAULT 30,
+PRIMARY KEY (`wallboard_report_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE TABLE vicidial_user_logins_daily (
+user VARCHAR(20),
+login_day DATE,
+last_login_date DATETIME default '2001-01-01 00:00:01',
+last_ip VARCHAR(50) default '',
+failed_login_attempts_today MEDIUMINT(8) UNSIGNED default '0',
+failed_login_count_today SMALLINT(6) UNSIGNED default '0',
+failed_last_ip_today VARCHAR(50) default '',
+failed_last_type_today VARCHAR(20) default '',
+index (user)
+) ENGINE=MyISAM;
+
 
 ALTER TABLE vicidial_email_list MODIFY message text character set utf8;
 
@@ -4872,6 +4954,7 @@ CREATE INDEX comment_a on live_inbound_log (comment_a);
 CREATE UNIQUE INDEX vicidial_campaign_statuses_key on vicidial_campaign_statuses(status, campaign_id);
 CREATE INDEX vlecc on vicidial_log_extended (caller_code);
 CREATE UNIQUE INDEX vvmmcount on vicidial_vmm_counts (lead_id,call_date);
+CREATE UNIQUE INDEX vicidial_user_logins_daily_user on vicidial_user_logins_daily(login_day, user);
 
 CREATE INDEX vlali on vicidial_live_agents (lead_id);
 CREATE INDEX vlaus on vicidial_live_agents (user);
@@ -5076,7 +5159,14 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('QC_STATUS_TEMPLATE','Sample QC Status Template','QC_TEMPLATE','---ALL---','# These types of containers are simply used for creating a list of \r\n# QC-enabled statuses to apply to campaigns, lists, and ingroups.\r\n# Simply put all the statuses that this template should allow in\r\n# a comma-delimited string, as below:\r\n\r\nSALE,DNC,NI');
 INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('INTERNATIONAL_DNC_IMPORT','Process DNC lists of various countries from FTP site','PERL_CLI','---ALL---','# This setting container is used for the international DNC system. \r\n# The below two settings are mandatory for importing suppression lists\r\n# and tell the import process where to look for new files and where to\r\n# move them when handled.  These settings cannot have the same value. \r\n--file-dir=/root/ftp\r\n--file-destination=/root/ftp/DONE\r\n\r\n# Uncomment below and set the status to whatever custom disposition you \r\n# would like already-loaded leads to be set to when they dedupe against\r\n# a country\'s DNC list (default is \"DNCI\")\r\n# --dnc-status-override=BMNR\r\n\r\n# The below settings are optional for when files are stored on a remote\r\n# server.  It is strongly recommended these settings are not used and\r\n# that the processing scripts and files are stored locally on the same\r\n# server. \r\n# --ftp-host=localhost\r\n# --ftp-user=user\r\n# --ftp-pwd=pwd\r\n# --ftp-port=21\r\n# --ftp-passive=1\r\n'),('DNC_IMPORT_FORMATS','Import formats for DNC files','OTHER','---ALL---','# This setting container is used for storing file formats used when \r\n# loading DNC suppression lists into the dialer. \r\n#\r\n# import template => (delimited|fixed),delimiter,phone1(,phone2,phone3)\r\n#\r\n# For delimited files, the phone1 value should be the index value of\r\n# the field where the phone appears.  The first array index is 0 and\r\n# indexes continue through the natural numbers.\r\n\r\n# In delimited files, acceptable values for the \"delimiter\" field are:\r\n# - \"tab\", \"pipe\", \"comma\", \"quote-comma\"\r\nBASIC_DELIMITED_FORMAT => delimited,pipe,0\r\n\r\n# If the phone number is split into multiple fields (ex: area code in\r\n# one field, rest of the number in another), simply list additional \r\n# indices of the phone number fields separated by commas in the order \r\n# in which the data should be combined to make the complete phone \r\n# number \r\nDELIMITED_WITH_AC_AND_EXCHANGE_SPLIT => delimited,tab,0,1\r\n\r\n# For fixed-length files, the phone field values should be of the type:\r\n# - \"starting_position|length\"\r\nBASIC_FIXED_FORMAT => fixed,,0|10\r\n\r\n# (delimited|fixed) is not used for CSV/Excel files, so all that needs \r\n# providing for those is the index field value(s) of the phone number\r\nBASIC_CSV_OR_EXCEL_FORMAT => ,,0'),('DNC_CURRENT_BLOCKED_LISTS','Lists currently blocked due to pending DNC scrub','READ_ONLY','---ALL---','');
 INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('USER_LOCATIONS_SYSTEM','User Locations List','OTHER','---ALL---',';location|description\n|default\n');
+INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('USER_CODES_SYSTEM','User Codes List','OTHER','---ALL---','');
+INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('VICIPHONE_SETTINGS','VICIphone WebRTC Extra Settings','WEBPHONE_SETTINGS','---ALL---','# determines if automatic gain control is enabled\nautoGain : 0\n\n# determines if echo cancellation is enabled\nechoCan : 0\n\n# determines if noise suppression is enabled\nnoiseSup :0\n\n# determines if the reg_exten is called upon successful registration\ndialRegExten : 1\n\n# determines the regional sound to use for progress audio\nprogReg : na\n\n# English translation phrases\nlangAttempting:"Attempting"\nlangConnected:"WS Connected"\nlangDisconnected:"WS Disconnected"\nlangExten:"Extension"\nlangIncall:"Incall"\nlangInit:"Initializing..."\nlangRedirect:"Redirect"\nlangRegFailed:"Reg. Failed"\nlangRegistering:"Registering"\nlangRegistered:"Registered"\nlangReject:"Rejected"\nlangRinging:"Ringing"\nlangSend:"Send"\nlangTrying:"Trying"\nlangUnregFailed:"Unreg. Failed"\nlangUnregistered:"Unregistered"\nlangUnregistering:"Unregistering"\nlangWebrtcError:"Something went wrong with WebRTC. Either your browser does not support the necessary WebRTC functions, you did not allow your browser to access the microphone, or there is a configuration issue. Please check your browsers error console for more details. For a list of compatible browsers please vist http://webrtc.org/"');
+INSERT INTO `vicidial_settings_containers` VALUES ('VERM_STATUS_NAMES_OVERRIDE','Override dialer status names in enhanced reporting','OTHER','---ALL---','; For each status name you want overridden, type the status followed by\r\n; a pipe, then the new status name\r\n; Ex:\r\n; NZ|Taumatawhakatangihangakoauauotamateaturipukakapikimaungahoronukupoka\r\n201214|Request To Cancel\r\n210200|No Answer-Incomplete Call\r\n210201|Contact Established\r\n210202|Provider Review - HB\r\n210203|Promise to Pay\r\n210204|Setup Payment Plan\r\n210205|Research-Inquiry\r\n210206|Voice Mail Left - HB\r\n210207|Do Not Call\r\n210208|Appeal Verification\r\n210209|Bad Phone\r\n210210|Bad Address\r\n210211|Direct Pay Verification\r\n210213|Provider Approved\r\n210215|Update Notes Only\r\n210216|Voicemail-No Status Change\r\n210217|Sent Letter Request - HB\r\n210218|Auto VoiceMail Left - HB\r\n210219|Auto VoiceMail-No Status Change\r\n210302|Provider Review - LB\r\n210306|Voice Mail Left - LB\r\n210317|Sent Letter Request - LB\r\n210318|Auto VoiceMail Left - LB\r\n211503|Provider - COVID-19\r\n211603|Transferred Call to MLA\r\n'), ('VERM_REPORT_OPTIONS','Container for customizing VERM report output','OTHER','---ALL---','; This is the report queue used if none is chosen by the user\r\n; It\'s preloaded in some forms as well\r\nVERM_default_report_queue => ALL\r\n\r\n; If there are statuses to exclude from reports, list them here\r\n; Separate with commas.  Default is AFTHRS\r\nexc_addtl_statuses => AFTHRS\r\n\r\n; Set the below value to 1 (or anything non-blank/non-zero) in order to \r\n; show the agents ID in addition to their full name in the report results\r\nshow_full_agent_info => 1\r\n\r\n; Some reports count \"lost\" calls - which are defined by the below variable\r\n; listing what you define as \"lost\" dispos.  Separate with commas.\r\nlost_statuses => LOST,210208,DISPO\r\n\r\n; You can create a detailed IVR survey report for ingroups by defining\r\n; \"ivr_survey_ingroups_detail\" and \"ivr_survey_ingroups_voicemails.\"\r\n; For \"details\", supply an ingroup used as a tracking group on call menus.\r\n; Then, add a pipe and after that list all call menus that use the ingroup\r\n; as the tracking group, separating each with a comma\r\n; To track whether the calls went to voicemail, list every call menu/option\r\n; combination that goes to voicemail, separating the call menu from the \r\n; option with a pipe.  One callmenu/option combo per line.\r\nivr_survey_ingroups_detail => 521205|561401,561402,561403,561404,561505\r\nivr_survey_ingroups_voicemails => 561505|t\r\n\r\n; #####################################################\r\n; # ALL of the below are used in the wallboard report #\r\n; #####################################################\r\nVERM_default_outb_widget_queue => ALL_OUT\r\nVERM_default_inb_widget_queue1 => 514915v_USA_Shared\r\nVERM_default_inb_widget_queue2 => 515915v_MLA_Shared\r\n\r\n; Used specifically for the SLA widget\r\n; Uses ingroups - separate multiple ingroups by commas\r\n; Comment out or leave blank to count all ingroups\r\nSLA_LEVEL_PCT_ingroups => 514915v,515915v\r\n\r\n; This removes remote agents from the wallboard reports\r\n; Comment out to include remote agents (or set to zero)\r\nomit_remote_agents => 1\r\n');
+
+INSERT INTO `wallboard_widgets` VALUES ('queues_widget_1','AGENTS_AND_QUEUES','queues','','TEXT',5,'N',1,'Queue Information','','',NULL,'','',NULL,2),('queues_widget_0','AGENTS_AND_QUEUES','queues','','LOGO',2,'N',1,NULL,'','',NULL,'','',NULL,1),('queues_widget_2','AGENTS_AND_QUEUES','queues','SLA Level %','SLA_LEVEL_PCT',1,'N',1,NULL,'','>60',NULL,'','',NULL,3),('queues_widget_3','AGENTS_AND_QUEUES','queues','Outbound calls','LIVE_QUEUE_INFO',1,'N',1,'','201201','','','','','yellow_alarm,|red_alarm,',4),('queues_widget_4','AGENTS_AND_QUEUES','queues','USA Ded Inbound','LIVE_QUEUE_INFO',1,'N',1,'','ALL_IN','','','','','yellow_alarm,|red_alarm,',5),('queues_widget_5','AGENTS_AND_QUEUES','queues','MLA Ded Inbound','LIVE_QUEUE_INFO',1,'N',1,'','514911','','','','','yellow_alarm,|red_alarm,',6),('queues_widget_6','AGENTS_AND_QUEUES','queues','N Waiting Calls','N_WAITING_CALLS',1,'N',1,NULL,'','',NULL,'','',NULL,7),('queues_widget_7','AGENTS_AND_QUEUES','queues','Offered Calls','OFFERED_CALLS',1,'N',1,NULL,'','',NULL,'','',NULL,8),('queues_widget_8','AGENTS_AND_QUEUES','queues','Answered Calls','ANSWERED_CALLS',1,'N',1,NULL,'','',NULL,'','',NULL,9),('queues_widget_9','AGENTS_AND_QUEUES','queues','Lost Calls','LOST_CALLS',1,'N',1,NULL,'','',NULL,'','',NULL,10),('queues_widget_10','AGENTS_AND_QUEUES','queues','Longest Wait','LONGEST_WAIT',1,'N',1,NULL,'','',NULL,'','',NULL,11),('queues_widget_11','AGENTS_AND_QUEUES','queues','Live Queues','LIVE_QUEUES',1,'Y',1,NULL,'','',NULL,'','',NULL,12),('queues_widget_12','AGENTS_AND_QUEUES','queues','Live Calls','LIVE_CALLS',1,'Y',2,NULL,'','',NULL,'','',NULL,13),('agent_widget_0','AGENTS_AND_QUEUES','agents','','LOGO',2,'N',1,NULL,'','',NULL,'','',NULL,1),('agent_widget_1','AGENTS_AND_QUEUES','agents','N Waiting Calls','N_WAITING_CALLS',1,'N',1,NULL,'','',NULL,'','',NULL,2),('agent_widget_2','AGENTS_AND_QUEUES','agents','Agents Ready','AGENTS_READY',1,'N',1,NULL,'','',NULL,'','',NULL,3),('agent_widget_3','AGENTS_AND_QUEUES','agents','Agents On Call','N_AGENTS_ON_CALL',1,'N',1,NULL,'','',NULL,'','',NULL,4),('agent_widget_4','AGENTS_AND_QUEUES','agents','N Answered Calls','N_ANSWERED_CALLS',1,'N',1,NULL,'','',NULL,'','',NULL,5),('agent_widget_5','AGENTS_AND_QUEUES','agents','Clock','CLOCK',1,'N',1,NULL,'','',NULL,'','',NULL,6),('agent_widget_6','AGENTS_AND_QUEUES','agents','Live Agents','LIVE_AGENTS',1,'Y',3,NULL,'','',NULL,'','',NULL,7);
+
+INSERT INTO `wallboard_reports` VALUES ('AGENTS_AND_QUEUES','Agents and Queues',2,'2022-01-18 09:00:23','2022-01-18 15:00:23',10,30);
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1657',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1669',db_schema_update_date=NOW(),reload_timestamp=NOW();
