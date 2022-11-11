@@ -56,12 +56,13 @@
 # 211216-0846 - Added new User Group options
 # 220217-2046 - Added input variable filters
 # 220221-1514 - Added allow_web_debug system setting
+# 221105-0826 - Added webphone_settings to webphone launch data, issue #1385
 #
 
 $startMS = microtime();
 
-$version = '2.14-43';
-$build = '220221-1514';
+$version = '2.14-44';
+$build = '221105-0826';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -1144,7 +1145,7 @@ $open_list = '<TABLE WIDTH=250 CELLPADDING=0 CELLSPACING=0 BGCOLOR=\'#D9E6FE\'><
 ##### BEGIN code for embedded webphone for monitoring #####
 if (strlen($monitor_phone)>1)
 	{
-	$stmt="SELECT extension,dialplan_number,server_ip,login,pass,protocol,conf_secret,is_webphone,use_external_server_ip,codecs_list,webphone_dialpad,outbound_cid,webphone_auto_answer from phones where login='$monitor_phone' and active = 'Y';";
+	$stmt="SELECT extension,dialplan_number,server_ip,login,pass,protocol,conf_secret,is_webphone,use_external_server_ip,codecs_list,webphone_dialpad,outbound_cid,webphone_auto_answer,webphone_settings from phones where login='$monitor_phone' and active = 'Y';";
 	if ($DB) {echo "|$stmt|\n";}
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$Mph_ct = mysqli_num_rows($rslt);
@@ -1164,6 +1165,7 @@ if (strlen($monitor_phone)>1)
 		$webphone_dialpad =			$row[10];
 		$outbound_cid =				$row[11];
 		$webphone_auto_answer =		$row[12];
+		$webphone_settings = 		$row[13];
 
 		if ($is_webphone == 'Y')
 			{
@@ -1221,6 +1223,39 @@ if (strlen($monitor_phone)>1)
 					$system_key = $row[0];
 					}
 				}
+
+		$webphone_settings_scrubbed = '';
+		if (strlen($webphone_settings) > 0) 
+			{
+			$stmt="SELECT container_entry FROM vicidial_settings_containers WHERE container_id='$webphone_settings';";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			if (mysqli_num_rows($rslt) > 0)
+				{
+				$row=mysqli_fetch_row($rslt);
+				$webphone_settings_entry = $row[0];
+
+				### scrub unnecessary characters from the settings container
+				$webphone_settings_lines = preg_split('/\r\n|\r|\n/',$webphone_settings_entry);
+
+				foreach( $webphone_settings_lines as $line )
+					{
+					# remove comments
+					if ( strpos($line, '#') === 0 ) 
+						{
+						$line = substr($line, 0, strpos($line, '#'));
+						}
+
+					# remove whitespace outside double quotes
+					$line = preg_replace('~"[^"]*"(*SKIP)(*F)|\s+~',"",$line);
+
+					# remove blank lines
+					if ($line != '')
+						{
+						$webphone_settings_scrubbed = $webphone_settings_scrubbed . $line . '\n';
+						}
+					}
+				}
+			}
 		#	echo "<!-- debug: $webphone_dialpad|$webphone_dialpad_override|$monitor_phone|$extension -->";
 			if ( ($webphone_dialpad_override != 'DISABLED') and (strlen($webphone_dialpad_override) > 0) )
 				{$webphone_dialpad = $webphone_dialpad_override;}
@@ -1231,6 +1266,7 @@ if (strlen($monitor_phone)>1)
 			if ($webphone_dialpad == 'TOGGLE_OFF') {$webphone_options .= "--DIALPAD_OFF_TOGGLE";}
 			if ($webphone_auto_answer == 'Y') {$webphone_options .= "--AUTOANSWER_Y";}
 			if ($webphone_auto_answer == 'N') {$webphone_options .= "--AUTOANSWER_N";}
+			if (strlen($webphone_settings_scrubbed) > 0) {$webphone_options .= "--SETTINGS$webphone_settings_scrubbed";}
 			if (strlen($web_socket_url) > 5) {$webphone_options .= "--WEBSOCKETURL$web_socket_url";}
 			if ($DB > 0) {echo "<!-- debug: SOCKET:$web_socket_url|VERSION:$asterisk_version| -->";}
 

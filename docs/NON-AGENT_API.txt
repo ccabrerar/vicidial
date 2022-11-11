@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2022-09-20
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2022-11-09
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -204,6 +204,7 @@ Changes:
 220310-0825 - Added DELETE action to the 'update_presets' function
 220902-0823 - Added dial_status_add/dial_status_remove options to update_campaign function
 220920-0814 - Added more "XDAY" options to add_lead duplicate checks
+221108-1849 - Added include_ip option for agent_status function
 
 
 API Functions use the 'function' variable
@@ -676,9 +677,10 @@ agent_user -		2-20 characters, use only for one agent status
 SETTINGS FIELDS-
 stage -			the format of the exported data: csv, tab, pipe(default)
 header -		include a header(YES) or not(NO). This is optional, default is not to include a header
+include_ip -		include computer_ip field(YES) or not(NO), the last ip address that the agent used to log in to the agent screen
 
 Example URL strings for API calls:
-http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=agent_status&agent_user=1234&stage=csv&header=YES
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=agent_status&agent_user=1234&stage=csv&header=YES&include_ip=YES
 
 Example responses:
 ERROR: agent_status USER DOES NOT HAVE PERMISSION TO GET AGENT INFO - 6666|0
@@ -687,10 +689,10 @@ ERROR: agent_status AGENT NOT FOUND - 6666||
 ERROR: agent_status AGENT NOT LOGGED IN - 6666||
 
 A SUCCESS response will not show "SUCCESS", but instead will just print the results in the following format:
-status,call_id,lead_id,campaign_id,calls_today,full_name,user_group,user_level,pause_code,real_time_sub_status,phone_number,vendor_lead_code,session_id
-INCALL,M4050908070000012345,12345,TESTCAMP,1,Test Agent,AGENTS,3,LOGIN,,7275551212,123456,8600051
-INCALL|M4181606420000000104|104|TESTBLND|1|Admin|ADMIN|9|BRK2|DEAD|3125551212|123457|8600051
-PAUSED||105|TESTBLND|1|Admin|ADMIN|9||PREVIEW|9545551212|123458|8600052
+status,call_id,lead_id,campaign_id,calls_today,full_name,user_group,user_level,pause_code,real_time_sub_status,phone_number,vendor_lead_code,session_id,computer_ip
+INCALL,M4050908070000012345,12345,TESTCAMP,1,Test Agent,AGENTS,3,LOGIN,,7275551212,123456,8600051,192.168.1.205
+INCALL|M4181606420000000104|104|TESTBLND|1|Admin|ADMIN|9|BRK2|DEAD|3125551212|123457|8600051,192.168.1.206
+PAUSED||105|TESTBLND|1|Admin|ADMIN|9||PREVIEW|9545551212|123458|8600052,192.168.1.202
 
 NOTE: real_time_sub_status field can consist of: DEAD, DISPO, 3-WAY, PARK, RING, PREVIEW, DIAL or it can be empty
 

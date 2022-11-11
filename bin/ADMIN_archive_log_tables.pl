@@ -3019,7 +3019,7 @@ if (!$T)
 		}
 	$sthA->finish();
 
-	if (!$Q) {print "\nProcessing vicidial_agent table...  ($vicidial_agent_log_count|$vicidial_agent_log_archive_count)\n";}
+	if (!$Q) {print "\nProcessing vicidial_agent_log table...  ($vicidial_agent_log_count|$vicidial_agent_log_archive_count)\n";}
 	$stmtA = "INSERT IGNORE INTO vicidial_agent_log_archive SELECT * from vicidial_agent_log;";
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -3071,7 +3071,7 @@ if (!$T)
 		}
 	$sthA->finish();
 
-	if (!$Q) {print "\nProcessing vicidial_agent table...  ($vicidial_agent_visibility_log_count|$vicidial_agent_visibility_log_archive_count)\n";}
+	if (!$Q) {print "\nProcessing vicidial_agent_visibility_log table...  ($vicidial_agent_visibility_log_count|$vicidial_agent_visibility_log_archive_count)\n";}
 	$stmtA = "INSERT IGNORE INTO vicidial_agent_visibility_log_archive SELECT * from vicidial_agent_visibility_log;";
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;

@@ -26,6 +26,7 @@
 # 191013-0828 - Fixes for PHP7
 # 210330-1659 - Added extra warnings and forced confirmation before running report
 # 220221-0906 - Added allow_web_debug system setting
+# 221109-0729 - Fix for DOWNLOAD link and use_lists variable in links
 #
 
 $startMS = microtime();
@@ -588,7 +589,7 @@ if (strlen($group[0]) < 1)
 	}
 else if (strlen($group[0]) >= 1 && !$confirm_run)
 	{
-	$MAIN.="<font color='#900' size='3'><B>"._QXZ("REMINDER - THIS REPORT CAN TAKE A LONG TIME TO RUN AND WILL INTERFERE WITH DIALING IF EXECUTED DURING PRODUCTION.")."<BR>"._QXZ("IF YOU ARE SURE YOU WOULD LIKE TO RUN THE REPORT AT THIS TIME")." <a href=\"$PHP_SELF?DB=$DB$groupQS&SUBMIT=$SUBMIT&confirm_run=1&search_archived_data=$search_archived_data\">"._QXZ("CLICK HERE")."</a></B></font>";
+	$MAIN.="<font color='#900' size='3'><B>"._QXZ("REMINDER - THIS REPORT CAN TAKE A LONG TIME TO RUN AND WILL INTERFERE WITH DIALING IF EXECUTED DURING PRODUCTION.")."<BR>"._QXZ("IF YOU ARE SURE YOU WOULD LIKE TO RUN THE REPORT AT THIS TIME")." <a href=\"$PHP_SELF?DB=$DB$groupQS&SUBMIT=$SUBMIT&confirm_run=1&use_lists=1&search_archived_data=$search_archived_data\">"._QXZ("CLICK HERE")."</a></B></font>";
 	}
 else
 	{
@@ -603,7 +604,7 @@ else
 	$TOTALleads = 0;
 
 	$OUToutput .= "\n";
-	$OUToutput .= "---------- "._QXZ("LIST ID SUMMARY",19)." <a href=\"$PHP_SELF?DB=$DB$groupQS&SUBMIT=$SUBMIT&file_download=1&search_archived_data=$search_archived_data\">"._QXZ("DOWNLOAD")."</a>\n";
+	$OUToutput .= "---------- "._QXZ("LIST ID SUMMARY",19)." <a href=\"$PHP_SELF?DB=$DB$groupQS&SUBMIT=$SUBMIT&file_download=1&confirm_run=1&use_lists=1&search_archived_data=$search_archived_data\">"._QXZ("DOWNLOAD")."</a>\n";
 
 	$OUToutput .= "+------------+------------------------------------------+----------+------------+----------+";
 	$OUToutput .= "---------+---------+---------+---------+---------+---------+";

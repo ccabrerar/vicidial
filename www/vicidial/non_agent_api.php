@@ -197,10 +197,11 @@
 # 220519-2206 - Small fix for 'update_lead' delete_lead feature
 # 220902-0823 - Added dial_status_add/dial_status_remove options to update_campaign function
 # 220920-0814 - Added more "XDAY" options to add_lead duplicate checks
+# 221108-1849 - Added include_ip option for agent_status function
 #
 
-$version = '2.14-174';
-$build = '220920-0814';
+$version = '2.14-175';
+$build = '221108-1849';
 $php_script='non_agent_api.php';
 $api_url_log = 0;
 
@@ -706,6 +707,8 @@ if (isset($_GET["dial_status_add"]))			{$dial_status_add=$_GET["dial_status_add"
 	elseif (isset($_POST["dial_status_add"]))	{$dial_status_add=$_POST["dial_status_add"];}
 if (isset($_GET["dial_status_remove"]))				{$dial_status_remove=$_GET["dial_status_remove"];}
 	elseif (isset($_POST["dial_status_remove"]))	{$dial_status_remove=$_POST["dial_status_remove"];}
+if (isset($_GET["include_ip"]))				{$include_ip=$_GET["include_ip"];}
+	elseif (isset($_POST["include_ip"]))	{$include_ip=$_POST["include_ip"];}
 
 $DB=preg_replace('/[^0-9]/','',$DB);
 
@@ -859,6 +862,7 @@ $preset_hide_number = preg_replace('/[^0-9a-zA-Z]/','',$preset_hide_number);
 $preset_number = preg_replace('/[^\*\#\.\_0-9a-zA-Z]/','',$preset_number);
 $preset_dtmf = preg_replace('/[^- \,\*\#0-9a-zA-Z]/','',$preset_dtmf);
 $action = preg_replace('/[^0-9a-zA-Z]/','',$action);
+$include_ip = preg_replace('/[^0-9a-zA-Z]/','',$include_ip);
 
 if ($non_latin < 1)
 	{
@@ -11468,7 +11472,12 @@ if ($function == 'agent_status')
 				if (strlen($time_format) < 1)
 					{$time_format = 'HF';}
 				if ($header == 'YES')
-					{$output .= 'status' . $DL . 'callerid' . $DL . 'lead_id' . $DL . 'campaign_id' . $DL . 'calls_today' . $DL . 'full_name' . $DL . 'user_group' . $DL . 'user_level' . "\n";}
+					{
+					$output .= 'status' . $DL . 'callerid' . $DL . 'lead_id' . $DL . 'campaign_id' . $DL . 'calls_today' . $DL . 'full_name' . $DL . 'user_group' . $DL . 'user_level' . $DL . 'pause_code' . $DL . 'real_time_sub_status' . $DL . 'phone_number' . $DL . 'vendor_lead_code' . $DL . 'session_id';
+					if ($include_ip == 'YES')
+						{$output .= $DL . 'computer_ip';}
+					$output .= "\n";
+					}
 
 				$stmt="SELECT full_name,user_group,user_level from vicidial_users $agent_search_SQL $LOGadmin_viewable_groupsSQL;";
 				$rslt=mysql_to_mysqli($stmt, $link);
@@ -11625,8 +11634,28 @@ if ($function == 'agent_status')
 									{$phone_number = $row[0];}
 								}
 							}
+						$computer_ipOUTPUT='';
+						if ($include_ip == 'YES')
+							{
+							$computer_ip='';
+							$two_days_ago = date("Y-m-d H:i:s", mktime(date("H"),date("i"),date("s"),date("m"),date("d")-2,date("Y")));
+							$stmt="SELECT computer_ip from vicidial_user_log where user='$agent_user' and event='LOGIN' and event_date < \"$two_days_ago\" order by event_date desc limit 1;";
+							$rslt=mysql_to_mysqli($stmt, $link);
+							if ($DB) {echo "$stmt\n";}
+							$ipinfo_ct = mysqli_num_rows($rslt);
+							if ($ipinfo_ct > 0)
+								{
+								$row=mysqli_fetch_row($rslt);
+								if (strlen($row[0])>3)
+									{
+									$computer_ip = $row[0];
+									$computer_ipOUTPUT = "$DL$computer_ip";
+									}
+								}
+							}
 
-						$output .= "$status$DL$callerid$DL$lead_id$DL$campaign_id$DL$calls_today$DL$full_name$DL$user_group$DL$user_level$DL$pause_code$DL$rtr_status$DL$phone_number$DL$vendor_lead_code$DL$conf_exten\n";
+
+						$output .= "$status$DL$callerid$DL$lead_id$DL$campaign_id$DL$calls_today$DL$full_name$DL$user_group$DL$user_level$DL$pause_code$DL$rtr_status$DL$phone_number$DL$vendor_lead_code$DL$conf_exten$computer_ipOUTPUT\n";
 
 						echo "$output";
 
