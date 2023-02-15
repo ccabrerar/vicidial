@@ -21,7 +21,7 @@
 #exten => _XXXXX,1,AGI(cm.agi,INBOUND-----${EXTEN}-----postal_code)
 #exten => _XXXXX,n,Goto(next_callmenu_here,s,1)
 #
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 110525-2100 - First Build
@@ -32,6 +32,7 @@
 # 160305-2244 - Added Alt IVR Logging options
 # 161102-1039 - Fixed QM partition problem
 # 191011-0921 - Fixed logging issue with missing active call record
+# 230118-1634 - Added response logging for manual dial outbound calls
 #
 
 $script = 'cm.agi';
@@ -189,7 +190,7 @@ $extension =~ s/\'|\"|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
 
 $outboundIVR=0;
 $fieldUPDATE=0;
-if ($calleridname =~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/)
+if ($calleridname =~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^M\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/)
 	{
 	$phone_number = $callerid;
 	$callerid = $calleridname;
@@ -362,8 +363,7 @@ exit;
 
 
 
-
-
+##### SUBROUTINES #####
 sub agi_output
 	{
 	if ($AGILOG >=2)

@@ -1,7 +1,7 @@
 <?php
 # vicidial_stylesheet.php
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # CSS/PHP file that uses the system-defined screen colors to display report elements
 #
@@ -9,6 +9,7 @@
 # 180501-0045 - New elements added
 # 190129-1303 - New mobile display elements added
 # 200309-1819 - Modifications for display formatting
+# 221230-2220 - Added cust_form style for text input fields
 #
 
 require("dbconnect_mysqli.php");
@@ -139,6 +140,8 @@ redalert {font-size: 18px; font-weight:bold; font-family: Arial, Sans-Serif; col
 
 .autosize_10 {width: 10vw; max-width: 160px;}
 .autosize_12 {width: 12vw; max-width: 180px;}
+
+.cust_form {font-family: sans-serif; font-size: 10px; overflow: hidden;}
 
 /* 
 	LEVEL ONE MENU

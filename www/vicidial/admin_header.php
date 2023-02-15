@@ -1,7 +1,7 @@
 <?php
 # admin_header.php - VICIDIAL administration header
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 # 
 
 # CHANGES
@@ -94,7 +94,12 @@
 # 220827-0941 - Added ConfBridge top menu options
 # 220829-1017 - Changed 'admin.php' links to "$ADMIN" variable
 # 220830-2303 - Fix for ADMIN change, issue #1370
+# 221214-1321 - Added HTML color chooser
+# 221230-2230 - Added Postal Codes Cities submenu
+# 230118-0835 - Added Agent Call Hangup Change function
 #
+
+$HTMLcolors = 'IndianRed,CD5C5C|LightCoral,F08080|Salmon,FA8072|DarkSalmon,E9967A|LightSalmon,FFA07A|Crimson,DC143C|Red,FF0000|FireBrick,B22222|DarkRed,8B0000|Pink,FFC0CB|LightPink,FFB6C1|HotPink,FF69B4|DeepPink,FF1493|MediumVioletRed,C71585|PaleVioletRed,DB7093|LightSalmon,FFA07A|Coral,FF7F50|Tomato,FF6347|OrangeRed,FF4500|DarkOrange,FF8C00|Orange,FFA500|Gold,FFD700|Yellow,FFFF00|LightYellow,FFFFE0|LemonChiffon,FFFACD|LightGoldenrodYellow,FAFAD2|PapayaWhip,FFEFD5|Moccasin,FFE4B5|PeachPuff,FFDAB9|PaleGoldenrod,EEE8AA|Khaki,F0E68C|DarkKhaki,BDB76B|Lavender,E6E6FA|Thistle,D8BFD8|Plum,DDA0DD|Violet,EE82EE|Orchid,DA70D6|Fuchsia,FF00FF|Magenta,FF00FF|MediumOrchid,BA55D3|MediumPurple,9370DB|RebeccaPurple,663399|BlueViolet,8A2BE2|DarkViolet,9400D3|DarkOrchid,9932CC|DarkMagenta,8B008B|Purple,800080|Indigo,4B0082|SlateBlue,6A5ACD|DarkSlateBlue,483D8B|MediumSlateBlue,7B68EE|GreenYellow,ADFF2F|Chartreuse,7FFF00|LawnGreen,7CFC00|Lime,00FF00|LimeGreen,32CD32|PaleGreen,98FB98|LightGreen,90EE90|MediumSpringGreen,00FA9A|SpringGreen,00FF7F|MediumSeaGreen,3CB371|SeaGreen,2E8B57|ForestGreen,228B22|Green,008000|DarkGreen,006400|YellowGreen,9ACD32|OliveDrab,6B8E23|Olive,808000|DarkOliveGreen,556B2F|MediumAquamarine,66CDAA|DarkSeaGreen,8FBC8B|LightSeaGreen,20B2AA|DarkCyan,008B8B|Teal,008080|Aqua,00FFFF|Cyan,00FFFF|LightCyan,E0FFFF|PaleTurquoise,AFEEEE|Aquamarine,7FFFD4|Turquoise,40E0D0|MediumTurquoise,48D1CC|DarkTurquoise,00CED1|CadetBlue,5F9EA0|SteelBlue,4682B4|LightSteelBlue,B0C4DE|PowderBlue,B0E0E6|LightBlue,ADD8E6|SkyBlue,87CEEB|LightSkyBlue,87CEFA|DeepSkyBlue,00BFFF|DodgerBlue,1E90FF|CornflowerBlue,6495ED|MediumSlateBlue,7B68EE|RoyalBlue,4169E1|Blue,0000FF|MediumBlue,0000CD|DarkBlue,00008B|Navy,000080|MidnightBlue,191970|Cornsilk,FFF8DC|BlanchedAlmond,FFEBCD|Bisque,FFE4C4|NavajoWhite,FFDEAD|Wheat,F5DEB3|BurlyWood,DEB887|Tan,D2B48C|RosyBrown,BC8F8F|SandyBrown,F4A460|Goldenrod,DAA520|DarkGoldenrod,B8860B|Peru,CD853F|Chocolate,D2691E|SaddleBrown,8B4513|Sienna,A0522D|Brown,A52A2A|Maroon,800000|White,FFFFFF|Snow,FFFAFA|HoneyDew,F0FFF0|MintCream,F5FFFA|Azure,F0FFFF|AliceBlue,F0F8FF|GhostWhite,F8F8FF|WhiteSmoke,F5F5F5|SeaShell,FFF5EE|Beige,F5F5DC|OldLace,FDF5E6|FloralWhite,FFFAF0|Ivory,FFFFF0|AntiqueWhite,FAEBD7|Linen,FAF0E6|LavenderBlush,FFF0F5|MistyRose,FFE4E1|Gainsboro,DCDCDC|LightGray,D3D3D3|Silver,C0C0C0|DarkGray,A9A9A9|Gray,808080|DimGray,696969|LightSlateGray,778899|SlateGray,708090|DarkSlateGray,2F4F4F|Black,000000';
 
 $stmt="SELECT admin_home_url,enable_tts_integration,callcard_enabled,custom_fields_enabled,allow_emails,level_8_disable_add,allow_chats,enable_languages,admin_row_click,admin_screen_colors,user_new_lead_limit,user_territories_active,qc_features_active,agent_soundboards,enable_drop_lists,allow_ip_lists,admin_web_directory from system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
@@ -689,6 +694,53 @@ if ( ( ($ADD==34) or ($ADD==31) or ($ADD==49) ) and ($SUB==29) and ($LOGmodify_c
 	}
 	<?php
 		}
+
+	if ( ( ($ADD==31) or ($ADD==41) ) and ($LOGmodify_campaigns==1) and ( (preg_match("/$campaign_id/i", $LOGallowed_campaigns)) or (preg_match("/ALL\-CAMPAIGNS/i",$LOGallowed_campaigns)) ) ) 
+		{
+	?>
+	// Agent Call Hangup Route change trigger
+	function AgentCallHangupRouteChange(ACHR_new_value) 
+		{
+		var ACHR_list = document.getElementById("agent_hangup_route");
+		var ACHR_route = ACHR_list.value;
+		var ACHR_value = document.getElementById("agent_hangup_value");
+		var ACHR_title = document.getElementById("agent_hangup_value_title");
+		var ACHR_chooser = document.getElementById("agent_hangup_value_chooser");
+
+		if (ACHR_route=='HANGUP')
+			{
+			ACHR_title.innerHTML = '-<?php echo _QXZ("no value required") ?>-';
+			ACHR_chooser.innerHTML = '';
+			ACHR_value.value='';
+			}
+		if (ACHR_route=='MESSAGE')
+			{
+			ACHR_title.innerHTML = '<?php echo _QXZ("Agent Hangup Message") ?>';
+			ACHR_chooser.innerHTML = " <a href=\"javascript:launch_chooser('agent_hangup_value','date');\"><?php echo _QXZ("audio chooser") ?></a> ";
+			ACHR_value.value='';
+			}
+		if (ACHR_route=='EXTENSION')
+			{
+			ACHR_title.innerHTML = '<?php echo _QXZ("Agent Hangup Dialplan Extension") ?>';
+			ACHR_chooser.innerHTML = '';
+			ACHR_value.value='';
+			}
+		if (ACHR_route=='IN_GROUP')
+			{
+			ACHR_title.innerHTML = '<?php echo _QXZ("Agent Hangup In-Group") ?>';
+			ACHR_chooser.innerHTML = " <a href=\"javascript:launch_ingroup_chooser('agent_hangup_value','group_id');\"><?php echo _QXZ("in-group chooser") ?></a> ";
+			ACHR_value.value='';
+			}
+		if (ACHR_route=='CALLMENU')
+			{
+			ACHR_title.innerHTML = '<?php echo _QXZ("Agent Hangup Call Menu") ?>';
+			ACHR_chooser.innerHTML = " <a href=\"javascript:launch_callmenu_chooser('agent_hangup_value','menu_id');\"><?php echo _QXZ("call menu chooser") ?></a> ";
+			ACHR_value.value='';
+			}
+		}
+
+	<?php
+	}
 	?>
 
 	var weak = new Image();
@@ -832,9 +884,12 @@ else
 	}
 	document.addEventListener("click", getMousePos);
 
+	var chooser_field='';
+	var chooser_field_td='';
+	var chooser_type='';
+
 	function launch_chooser(fieldname,stage)
 		{
-
 		var h = window.innerHeight;		
 		var vposition=mouseY;
 
@@ -851,7 +906,6 @@ else
 
 	function launch_moh_chooser(fieldname,stage)
 		{
-
 		var h = window.innerHeight;		
 		var vposition=mouseY;
 
@@ -866,9 +920,40 @@ else
 		document.getElementById("audio_chooser_span").innerHTML = Iframe_content;
 		}
 
+	function launch_ingroup_chooser(fieldname,stage)
+		{
+		var h = window.innerHeight;		
+		var vposition=mouseY;
+
+		var apilistURL = "./non_agent_api.php";
+		var apilistQuery = "source=admin&function=ingroup_list&user=" + user + "&pass=" + pass + "&format=selectframe&stage=" + stage + "&comments=" + fieldname;
+		var Iframe_content = '<IFRAME SRC="' + apilistURL + '?' + apilistQuery + '"  style="width:740;height:440;background-color:white;" scrolling="NO" frameborder="0" allowtransparency="true" id="audio_chooser_frame' + epoch + '" name="audio_chooser_frame" width="740" height="460" STYLE="z-index:2"> </IFRAME>';
+
+		document.getElementById("audio_chooser_span").style.position = "absolute";
+		document.getElementById("audio_chooser_span").style.left = "220px";
+		document.getElementById("audio_chooser_span").style.top = vposition + "px";
+		document.getElementById("audio_chooser_span").style.visibility = 'visible';
+		document.getElementById("audio_chooser_span").innerHTML = Iframe_content;
+		}
+
+	function launch_callmenu_chooser(fieldname,stage)
+		{
+		var h = window.innerHeight;		
+		var vposition=mouseY;
+
+		var apilistURL = "./non_agent_api.php";
+		var apilistQuery = "source=admin&function=callmenu_list&user=" + user + "&pass=" + pass + "&format=selectframe&stage=" + stage + "&comments=" + fieldname;
+		var Iframe_content = '<IFRAME SRC="' + apilistURL + '?' + apilistQuery + '"  style="width:740;height:440;background-color:white;" scrolling="NO" frameborder="0" allowtransparency="true" id="audio_chooser_frame' + epoch + '" name="audio_chooser_frame" width="740" height="460" STYLE="z-index:2"> </IFRAME>';
+
+		document.getElementById("audio_chooser_span").style.position = "absolute";
+		document.getElementById("audio_chooser_span").style.left = "220px";
+		document.getElementById("audio_chooser_span").style.top = vposition + "px";
+		document.getElementById("audio_chooser_span").style.visibility = 'visible';
+		document.getElementById("audio_chooser_span").innerHTML = Iframe_content;
+		}
+
 	function launch_vm_chooser(fieldname,stage)
 		{
-
 		var h = window.innerHeight;		
 		var vposition=mouseY;
 
@@ -881,6 +966,63 @@ else
 		document.getElementById("audio_chooser_span").style.top = vposition + "px";
 		document.getElementById("audio_chooser_span").style.visibility = 'visible';
 		document.getElementById("audio_chooser_span").innerHTML = Iframe_content;
+		}
+
+	function launch_color_chooser(fieldname,stage,type)
+		{
+		var h = window.innerHeight;		
+		var vposition=mouseY;
+		chooser_field = fieldname;
+		chooser_field_td = fieldname + '_td';
+		chooser_type = type;
+	<?php
+	$color_chooser_output .= " &nbsp; <a href=\\\"javascript:close_chooser();\\\"><font size=1 face='Arial,Helvetica'>"._QXZ("close frame")."</font></a> &nbsp; <BR>";
+	$color_chooser_output .= "<div id='select_color_frame' style=\\\"height:400px;width:400px;overflow:scroll;background-color:white;\\\">";
+	$color_chooser_output .= '<table border=0 cellpadding=2 cellspacing=2 width=400 bgcolor=white>';
+	$HTMLcolorsARY = explode('|',$HTMLcolors);
+	$HTMLcolorsARYcount = count($HTMLcolorsARY);
+	$HTMLct=0;
+	while ($HTMLcolorsARYcount > $HTMLct)
+		{
+		$HTMLcolorsLINE = explode(',',$HTMLcolorsARY[$HTMLct]);
+		if (preg_match("/1$|3$|5$|7$|9$/i", $HTMLct))
+			{$bgcolor='#E6E6E6';} 
+		else
+			{$bgcolor='#F6F6F6';}
+
+		$color_chooser_output .= "<tr bgcolor=\\\"$bgcolor\\\"><td>$HTMLcolorsLINE[0] </td><td><a href=\\\"javascript:choose_color('$HTMLcolorsLINE[1]');\\\"><font size=1 face='Arial,Helvetica'>#$HTMLcolorsLINE[1]</a> </td><td bgcolor='#$HTMLcolorsLINE[1]'> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </td></tr>";
+
+		$HTMLct++;
+		}
+	$color_chooser_output .= '</table></div>';
+	?>
+
+		var span_content = '<span id="color_chooser_frame' + epoch + '" name="color_chooser_frame" style="width:740;height:440;background-color:white;overflow:scroll;z-index:2;">' + "<?php  echo $color_chooser_output ?></span>";
+
+		document.getElementById("audio_chooser_span").style.position = "absolute";
+		document.getElementById("audio_chooser_span").style.left = "220px";
+		document.getElementById("audio_chooser_span").style.top = vposition + "px";
+		document.getElementById("audio_chooser_span").style.visibility = 'visible';
+		document.getElementById("audio_chooser_span").style.backgroundcolor = 'white';
+		document.getElementById("audio_chooser_span").innerHTML = span_content;
+		}
+
+	function choose_color(colorname)
+		{
+		if (colorname.length > 0)
+			{
+			if (chooser_type == '2')
+				{
+				document.getElementById(chooser_field).value = colorname;
+				document.getElementById(chooser_field_td).style.backgroundColor = '#' + colorname;
+				}
+			else
+				{
+				document.getElementById(chooser_field).value = '#' + colorname;
+				document.getElementById(chooser_field_td).style.backgroundColor = '#' + colorname;
+				}
+			close_chooser();
+			}
 		}
 
 	function close_chooser()
@@ -2725,10 +2867,10 @@ if ($SSenable_languages == '1')
 	<?php }
 
 
-if ( ($ADD=='999988') or ($ADD=='999987') or ($ADD=='999986') ) 
+if ( ($ADD=='999988') or ($ADD=='999987') or ($ADD=='999986') or ($ADD=='999985') ) 
 	{ 
 	?>
-	<TR BGCOLOR=<?php echo $users_color ?>><TD ALIGN=LEFT COLSPAN=2> &nbsp; <a href="<?php echo $ADMIN ?>?ADD=999988" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"><?php echo _QXZ("Available Timezones"); ?> </a> &nbsp; | &nbsp; <a href="<?php echo $ADMIN ?>?ADD=999987" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"><?php echo _QXZ("Phone Codes"); ?> </a> &nbsp; | &nbsp; <a href="<?php echo $ADMIN ?>?ADD=999986" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"><?php echo _QXZ("Postal Codes"); ?> </a> &nbsp; </TD></TR>
+	<TR BGCOLOR=<?php echo $users_color ?>><TD ALIGN=LEFT COLSPAN=2> &nbsp; <a href="<?php echo $ADMIN ?>?ADD=999988" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"><?php echo _QXZ("Available Timezones"); ?> </a> &nbsp; | &nbsp; <a href="<?php echo $ADMIN ?>?ADD=999987" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"><?php echo _QXZ("Phone Codes"); ?> </a> &nbsp; | &nbsp; <a href="<?php echo $ADMIN ?>?ADD=999986" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"><?php echo _QXZ("Postal Codes"); ?> </a> &nbsp; | &nbsp; <a href="<?php echo $ADMIN ?>?ADD=999985" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"><?php echo _QXZ("Postal Codes Cities"); ?> </a> &nbsp; </TD></TR>
 	<?php 
 	}
 else

@@ -1099,7 +1099,10 @@ agent_hide_hangup ENUM('Y','N') default 'N',
 ig_xfer_list_sort ENUM('GROUP_ID_UP','GROUP_ID_DOWN','GROUP_NAME_UP','GROUP_NAME_DOWN','PRIORITY_UP','PRIORITY_DOWN') default 'GROUP_ID_UP',
 script_tab_frame_size VARCHAR(10) default 'DEFAULT',
 max_logged_in_agents SMALLINT(5) UNSIGNED default '0',
-user_group_script ENUM('DISABLED','ENABLED') default 'DISABLED'
+user_group_script ENUM('DISABLED','ENABLED') default 'DISABLED',
+agent_hangup_route ENUM('HANGUP','MESSAGE','EXTENSION','IN_GROUP','CALLMENU') default 'HANGUP',
+agent_hangup_value TEXT,
+agent_hangup_ig_override ENUM('Y','N') default 'N'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_lists (
@@ -1223,7 +1226,7 @@ php_tz VARCHAR(100) default ''
 CREATE TABLE vicidial_inbound_groups (
 group_id VARCHAR(20) PRIMARY KEY NOT NULL,
 group_name VARCHAR(30),
-group_color VARCHAR(7),
+group_color VARCHAR(20),
 active ENUM('Y','N'),
 web_form_address TEXT,
 voicemail_ext VARCHAR(10),
@@ -1324,7 +1327,7 @@ eht_minimum_prompt_no_block ENUM('N','Y') default 'N',
 eht_minimum_prompt_seconds SMALLINT(5) default '10',
 on_hook_ring_time SMALLINT(5) default '15',
 na_call_url TEXT,
-on_hook_cid VARCHAR(30) default 'GENERIC',
+on_hook_cid VARCHAR(30) default 'CUSTOMER_PHONE_RINGAGENT',
 group_calldate DATETIME,
 action_xfer_cid VARCHAR(18) default 'CUSTOMER',
 drop_callmenu VARCHAR(50) default '',
@@ -1520,7 +1523,7 @@ script_comments VARCHAR(255),
 script_text TEXT,
 active ENUM('Y','N'),
 user_group VARCHAR(20) default '---ALL---',
-script_color VARCHAR(7) default 'white'
+script_color VARCHAR(20) default 'white'
 ) ENGINE=MyISAM;
 
 CREATE TABLE phone_favorites (
@@ -4141,7 +4144,10 @@ queue_priority TINYINT(2) default '0',
 call_date DATETIME,
 gmt_offset_now DECIMAL(4,2) DEFAULT '0.00',
 modify_date TIMESTAMP,
-index (icbq_status)
+index (icbq_status),
+index (group_id),
+index (icbq_date),
+index (call_date)
 ) ENGINE=MyISAM;
 
 CREATE TABLE recording_log_deletion_queue (
@@ -4813,6 +4819,63 @@ failed_last_type_today VARCHAR(20) default '',
 index (user)
 ) ENGINE=MyISAM;
 
+CREATE TABLE vicidial_long_extensions (
+le_id INT(9) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
+extension VARCHAR(1000),
+call_date DATETIME default '2001-01-01 00:00:01',
+source VARCHAR(20) default '',
+index (call_date)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_postal_codes_cities (
+postal_code VARCHAR(10) NOT NULL,
+state VARCHAR(4),
+city VARCHAR(60),
+county VARCHAR(60),
+latitude VARCHAR(17),
+longitude VARCHAR(17),
+areacode CHAR(3),
+country_code SMALLINT(5) UNSIGNED,
+country CHAR(3),
+index (postal_code)
+) ENGINE=MyISAM;
+
+CREATE TABLE gateway_recording_log (
+gateway_recording_id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
+recording_log_id INT(10) UNSIGNED default '0',
+call_direction ENUM('INBOUND','OUTBOUND','NA') default 'NA',
+call_id VARCHAR(40) default '',
+lead_id INT(9) UNSIGNED,
+uniqueid VARCHAR(20) NOT NULL,
+server_ip VARCHAR(15),
+caller_id_number VARCHAR(18),
+caller_id_name VARCHAR(20),
+extension VARCHAR(100),
+start_time DATETIME,
+end_time DATETIME,
+length_in_sec MEDIUMINT(8) UNSIGNED default '0',
+filename VARCHAR(100),
+location VARCHAR(255),
+index(start_time),
+index(call_id),
+index(lead_id)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_did_gateway_log (
+uniqueid VARCHAR(20) NOT NULL,
+channel VARCHAR(100) NOT NULL,
+server_ip VARCHAR(15) NOT NULL,
+caller_id_number VARCHAR(18),
+caller_id_name VARCHAR(20),
+extension VARCHAR(100),
+call_date DATETIME,
+VICIrecGatewayID VARCHAR(30) default '',
+index (uniqueid),
+index (VICIrecGatewayID),
+index (extension),
+index (call_date)
+) ENGINE=MyISAM;
+
 
 ALTER TABLE vicidial_email_list MODIFY message text character set utf8;
 
@@ -5169,4 +5232,4 @@ INSERT INTO `wallboard_reports` VALUES ('AGENTS_AND_QUEUES','Agents and Queues',
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1669',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1676',db_schema_update_date=NOW(),reload_timestamp=NOW();

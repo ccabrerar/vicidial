@@ -27,7 +27,7 @@
 #   dial_prefix => 444
 #   user_code => backoffice_agent
 #
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 80112-0330 - First Build
@@ -35,6 +35,7 @@
 # 140426-1950 - Added pause_type
 # 200412-1037 - Updated to match web emergency logout, with QM logging
 # 210811-1630 - Added option to logout agents only within campaigns/users with a specific dial_prefix/user_code
+# 221202-1639 - Change in CIDname prefix to differentiate from other processes
 #
 
 # constants
@@ -480,7 +481,7 @@ while($rec_count > $i)
 	$local_AMP = '@';
 	$ext_context = 'default';
 	$kick_local_channel = "$local_DEF$conf_exten[$i]$local_AMP$ext_context";
-	$queryCID = "ULGH3457$now_date_epoch";
+	$queryCID = "ULAL3458$now_date_epoch";
 
 	$stmtC="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$server_ip[$i]','','Originate','$queryCID','Channel: $kick_local_channel','Context: $ext_context','Exten: 8300','Priority: 1','Callerid: $queryCID','','','','','');";
 	$affected_rowsC = $dbhA->do($stmtC);

@@ -25,7 +25,7 @@
 # exten => h,1,DeadAGI(agi://127.0.0.1:4577/call_log--HVcauses--PRI-----NODEBUG-----${HANGUPCAUSE}-----${DIALSTATUS}-----${DIALEDTIME}-----${ANSWEREDTIME})
 # 
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG:
 # 61010-1007 - First test build
@@ -95,6 +95,8 @@
 # 220103-1520 - Added timeout fix for manual dial calls, set the CAMPDTO dialplan variable
 # 220118-0937 - Added $ADB auto-alt-dial extra debug output option, fix for extended auto-alt-dial issue #1337
 # 220118-2207 - Added auto_alt_threshold campaign & list settings
+# 221221-2134 - Added enhanced_disconnect_logging=3 support , issue #1367
+# 230120-1557 - Added CAMPDTO dialplan variable for ^DC 3-way agent screen calls
 #
 
 # defaults for PreFork
@@ -743,7 +745,7 @@ sub process_request
 					}
 
 				### on manual dial calls set the CAMPDTO dialplan variable
-				if ($callerid =~ /^M/)
+				if ($callerid =~ /^M|^DC/)
 					{
 					if (length($man_dial_timeout) > 0)
 						{
@@ -1356,17 +1358,26 @@ sub process_request
 						{
 						if ($CPDfound < 1) 
 							{
-							if ($enhanced_disconnect_logging == '2') 
+							if ( ($enhanced_disconnect_logging == '2') || ($enhanced_disconnect_logging == '3') ) 
 								{
-								if ($dialstatus =~ /BUSY/) {$VDL_status = 'AB'; $VDAC_status = 'BUSY';}
-								if ($dialstatus =~ /CHANUNAVAIL/) {$VDL_status = 'ADC'; $VDAC_status = 'DISCONNECT';}
-								if ($enhanced_disconnect_logging > 0)
+								if ($enhanced_disconnect_logging == '2') 
 									{
-									if ($dialstatus =~ /CHANUNAVAIL/ && $hangup_cause =~/^18/) {$VDL_status = 'ADCT'; $VDAC_status = 'DISCONNECT';}
-									if ($dialstatus =~ /CONGESTION/ && $hangup_cause =~ /^1$/) {$VDL_status = 'ADC'; $VDAC_status = 'DISCONNECT';}
-									if (($dialstatus =~ /CONGESTION/ && $hangup_cause =~ /^21$|^34$|^38$|^102$/) || ($dialstatus =~ /BUSY/ && $hangup_cause =~ /^19$/)) {$VDL_status = 'ADCT'; $VDAC_status = 'DISCONNECT';}
-									if ($dialstatus =~ /DISCONNECT/) {$VDL_status = 'ADCCAR'; $VDAC_status = 'ADCCAR';} # pre-carrier disconnect filter
-									if ($dialstatus =~ /DNC/) {$VDL_status = 'DNCCAR'; $VDAC_status = 'DNCCAR';} # pre-carrier DNC filter
+									if ($dialstatus =~ /BUSY/) {$VDL_status = 'AB'; $VDAC_status = 'BUSY';}
+									if ($dialstatus =~ /CHANUNAVAIL/) {$VDL_status = 'ADC'; $VDAC_status = 'DISCONNECT';}
+									if ($enhanced_disconnect_logging > 0)
+										{
+										if ($dialstatus =~ /CHANUNAVAIL/ && $hangup_cause =~/^18/) {$VDL_status = 'ADCT'; $VDAC_status = 'DISCONNECT';}
+										if ($dialstatus =~ /CONGESTION/ && $hangup_cause =~ /^1$/) {$VDL_status = 'ADC'; $VDAC_status = 'DISCONNECT';}
+										if (($dialstatus =~ /CONGESTION/ && $hangup_cause =~ /^21$|^34$|^38$|^102$/) || ($dialstatus =~ /BUSY/ && $hangup_cause =~ /^19$/)) {$VDL_status = 'ADCT'; $VDAC_status = 'DISCONNECT';}
+										if ($dialstatus =~ /DISCONNECT/) {$VDL_status = 'ADCCAR'; $VDAC_status = 'ADCCAR';} # pre-carrier disconnect filter
+										if ($dialstatus =~ /DNC/) {$VDL_status = 'DNCCAR'; $VDAC_status = 'DNCCAR';} # pre-carrier DNC filter
+										}
+									}
+								if ($enhanced_disconnect_logging == '3') 
+									{
+									if ($hangup_cause =~ /^18$|^19$|^21$|^34$|^38$|^41$|^42$|^88$|^102$/) {$VDL_status = 'HUC'.$hangup_cause; $VDAC_status = 'CARRIERFAIL';}
+									if ($hangup_cause =~ /^1$|^28$/) {$VDL_status = 'ADC'; $VDAC_status = 'DISCONNECT';}
+									if ($hangup_cause =~ /^17/) {$VDL_status = 'AB'; $VDAC_status = 'BUSY';}
 									}
 								}
 							else

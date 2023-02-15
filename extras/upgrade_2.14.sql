@@ -2049,3 +2049,93 @@ ALTER TABLE phones ADD webphone_settings VARCHAR(40) default 'VICIPHONE_SETTINGS
 INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('VICIPHONE_SETTINGS','VICIphone WebRTC Extra Settings','WEBPHONE_SETTINGS','---ALL---','# determines if automatic gain control is enabled\nautoGain : 0\n\n# determines if echo cancellation is enabled\nechoCan : 0\n\n# determines if noise suppression is enabled\nnoiseSup :0\n\n# determines if the reg_exten is called upon successful registration\ndialRegExten : 1\n\n# determines the regional sound to use for progress audio\nprogReg : na\n\n# English translation phrases\nlangAttempting:"Attempting"\nlangConnected:"WS Connected"\nlangDisconnected:"WS Disconnected"\nlangExten:"Extension"\nlangIncall:"Incall"\nlangInit:"Initializing..."\nlangRedirect:"Redirect"\nlangRegFailed:"Reg. Failed"\nlangRegistering:"Registering"\nlangRegistered:"Registered"\nlangReject:"Rejected"\nlangRinging:"Ringing"\nlangSend:"Send"\nlangTrying:"Trying"\nlangUnregFailed:"Unreg. Failed"\nlangUnregistered:"Unregistered"\nlangUnregistering:"Unregistering"\nlangWebrtcError:"Something went wrong with WebRTC. Either your browser does not support the necessary WebRTC functions, you did not allow your browser to access the microphone, or there is a configuration issue. Please check your browsers error console for more details. For a list of compatible browsers please vist http://webrtc.org/"');
 
 UPDATE system_settings SET db_schema_version='1669',db_schema_update_date=NOW() where db_schema_version < 1669;
+
+CREATE TABLE vicidial_long_extensions (
+le_id INT(9) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
+extension VARCHAR(1000),
+call_date DATETIME default '2001-01-01 00:00:01',
+source VARCHAR(20) default '',
+index (call_date)
+) ENGINE=MyISAM;
+
+UPDATE system_settings SET db_schema_version='1670',db_schema_update_date=NOW() where db_schema_version < 1670;
+
+CREATE INDEX vicq_group_id on vicidial_inbound_callback_queue(group_id);
+CREATE INDEX vicq_icbq_date on vicidial_inbound_callback_queue(icbq_date);
+CREATE INDEX vicq_call_date on vicidial_inbound_callback_queue(call_date);
+
+CREATE INDEX vicqa_group_id on vicidial_inbound_callback_queue_archive(group_id);
+CREATE INDEX vicqa_icbq_date on vicidial_inbound_callback_queue_archive(icbq_date);
+CREATE INDEX vicqa_call_date on vicidial_inbound_callback_queue_archive(call_date);
+
+UPDATE system_settings SET db_schema_version='1671',db_schema_update_date=NOW() where db_schema_version < 1671;
+
+ALTER TABLE vicidial_inbound_groups MODIFY group_color VARCHAR(20);
+
+ALTER TABLE vicidial_scripts MODIFY script_color VARCHAR(20) default 'white';
+
+UPDATE system_settings SET db_schema_version='1672',db_schema_update_date=NOW() where db_schema_version < 1672;
+
+CREATE TABLE vicidial_postal_codes_cities (
+postal_code VARCHAR(10) NOT NULL,
+state VARCHAR(4),
+city VARCHAR(60),
+county VARCHAR(60),
+latitude VARCHAR(17),
+longitude VARCHAR(17),
+areacode CHAR(3),
+country_code SMALLINT(5) UNSIGNED,
+country CHAR(3),
+index (postal_code)
+) ENGINE=MyISAM;
+
+UPDATE system_settings SET db_schema_version='1673',db_schema_update_date=NOW() where db_schema_version < 1673;
+
+ALTER TABLE vicidial_inbound_groups MODIFY on_hook_cid VARCHAR(30) default 'CUSTOMER_PHONE_RINGAGENT';
+
+UPDATE system_settings SET db_schema_version='1674',db_schema_update_date=NOW() where db_schema_version < 1674;
+
+ALTER TABLE vicidial_campaigns ADD agent_hangup_route ENUM('HANGUP','MESSAGE','EXTENSION','IN_GROUP','CALLMENU') default 'HANGUP';
+ALTER TABLE vicidial_campaigns ADD agent_hangup_value TEXT;
+ALTER TABLE vicidial_campaigns ADD agent_hangup_ig_override ENUM('Y','N') default 'N';
+UPDATE vicidial_campaigns SET agent_hangup_value='' where agent_hangup_value IS NULL;
+
+UPDATE system_settings SET db_schema_version='1675',db_schema_update_date=NOW() where db_schema_version < 1675;
+
+CREATE TABLE gateway_recording_log (
+gateway_recording_id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
+recording_log_id INT(10) UNSIGNED default '0',
+call_direction ENUM('INBOUND','OUTBOUND','NA') default 'NA',
+call_id VARCHAR(40) default '',
+lead_id INT(9) UNSIGNED,
+uniqueid VARCHAR(20) NOT NULL,
+server_ip VARCHAR(15),
+caller_id_number VARCHAR(18),
+caller_id_name VARCHAR(20),
+extension VARCHAR(100),
+start_time DATETIME,
+end_time DATETIME,
+length_in_sec MEDIUMINT(8) UNSIGNED default '0',
+filename VARCHAR(100),
+location VARCHAR(255),
+index(start_time),
+index(call_id),
+index(lead_id)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_did_gateway_log (
+uniqueid VARCHAR(20) NOT NULL,
+channel VARCHAR(100) NOT NULL,
+server_ip VARCHAR(15) NOT NULL,
+caller_id_number VARCHAR(18),
+caller_id_name VARCHAR(20),
+extension VARCHAR(100),
+call_date DATETIME,
+VICIrecGatewayID VARCHAR(30) default '',
+index (uniqueid),
+index (VICIrecGatewayID),
+index (extension),
+index (call_date)
+) ENGINE=MyISAM;
+
+UPDATE system_settings SET db_schema_version='1676',db_schema_update_date=NOW() where db_schema_version < 1676;

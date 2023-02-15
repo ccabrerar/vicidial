@@ -1,11 +1,22 @@
 #!/usr/bin/perl
 #
-# AST_VDsales_export.pl                version: 2.12
+# AST_VDsales_exportFTPSSL.pl                version: 2.12
 #
 # This script is designed to gather sales for a VICIDIAL Outbound-only campaign and
 # post them to a directory
 #
 # /usr/share/astguiclient/AST_VDsales_export.pl --campaign=GOODB-GROUP1-GROUP3-GROUP4-SPECIALS-DNC_BEDS --output-format=fixed-as400 --sale-statuses=SALE --debug --filename=BEDSsaleMMDD.txt --date=yesterday --email-list=test@gmail.com --email-sender=test@test.com
+#
+# ************* IMPORTANT!!!!!!!!!!!!!!!!!!!! ***************************
+#  THIS SCRIPT REQUIRES THE Net::FTPSSL PERL MODULE TO RUN!!!
+#  $ cpan
+#  cpan> install ExtUtils::MakeMaker
+#  cpan> install IO::Socket::SSL
+#  cpan> install Net::SSLeay::Handle
+#  cpan> install Net::FTPSSL
+#  cpan> quit
+#
+#  MAKE SURE YOU TEST THAT THIS IS WORKING MANUALLY!!!
 #
 # Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
@@ -35,7 +46,8 @@
 # 140403-1603 - Added --skip-rec-xtra option to not perform additional recording lookups beyond vicidial_id
 # 160722-1140 - Added --nodatedir option
 # 220307-0915 - Added 'tab-CSScustomUSA' format
-# 230115-1523 - Added --filedate-calldate option
+# 230115-0856 - Added FTPSSL transmission of files
+# 230115-1524 - Added --filedate-calldate option
 #
 
 $txt = '.txt';
@@ -168,7 +180,7 @@ if (length($ARGV[0])>1)
 
 	if ($args =~ /--help/i)
 		{
-		print "allowed run time options:\n";
+		print "allowed run time options: (NOTE: This script is for FTPS[SSL/TLS] transport only!)\n";
 		print "  [--date=YYYY-MM-DD] = date override\n";
 		print "  [--filedate-calldate] = override filedate of today with the date of the calls\n";
 		print "  [--hour-offset=X] = print datetime strings with this hour offset\n";
@@ -825,7 +837,7 @@ if (length($with_inboundSQL)>3)
 		$user = '';
 		$agent_name='';
 
-		$stmtB = "select vicidial_xfer_log.user,full_name from vicidial_xfer_log,vicidial_users where lead_id=$lead_id and closer='$closer' and xfercallid='$xfercallid' and call_date >= '$shipdate 00:00:00' and call_date <= '$shipdate 23:59:59' and vicidial_users.user=vicidial_xfer_log.user order by call_date desc limit 1;";
+		$stmtB = "select vicidial_xfer_log.user,full_name from vicidial_xfer_log,vicidial_users where lead_id='$lead_id' and closer='$closer' and xfercallid='$xfercallid' and call_date >= '$shipdate 00:00:00' and call_date <= '$shipdate 23:59:59' and vicidial_users.user=vicidial_xfer_log.user order by call_date desc limit 1;";
 		$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
 		$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
 		$sthBrows=$sthB->rows;
@@ -907,14 +919,39 @@ if ($ftp_transfer > 0)
 	$FTPdb=0;
 	if ($DBX>0) {$FTPdb=1;}
 
-	use Net::FTP;
+	use Net::FTPSSL;
 
-	if (!$Q) {print "Sending File Over FTP: $outfile   ($VARREPORT_user @ $VARREPORT_host)\n";}
-	$ftp = Net::FTP->new("$VARREPORT_host", Port => $VARREPORT_port, Debug => "$FTPdb");
-	$ftp->login("$VARREPORT_user","$VARREPORT_pass");
-	$ftp->cwd("$VARREPORT_dir");
-	$ftp->put("$PATHweb/vicidial/server_reports/$outfile", "$outfile");
-	$ftp->quit;
+	if (!$Q) {print "Sending File Over FTPS: $outfile   ($VARREPORT_user @ $VARREPORT_host)\n";}
+
+	# Some versions of the FTPSSL perl module require you to hard code the encryption value: IMP_CRYPT or EXP_CRYPT
+	# $ftps = Net::FTPSSL->new("$VARREPORT_host", Port => $VARREPORT_port, Encryption => $VARFTP_encrypt, Debug => $FTPdb);
+	# optional additional variable (, OverridePASV => "$VARFTP_host") which will force the passive FTP hostname
+	if ( $VARFTP_encrypt eq "IMP_CRYPT" ) 
+		{
+		$ftps = Net::FTPSSL->new("$VARREPORT_host", Port => $VARREPORT_port, Encryption => IMP_CRYPT, Debug => $FTPdb);
+		}
+	else 
+		{
+		$ftps = Net::FTPSSL->new("$VARREPORT_host", Port => $VARREPORT_port, Encryption => EXP_CRYPT, Debug => $FTPdb);
+		}
+	# for "TLS Session Resumption", use the below connection options:
+	# $ftps = Net::FTPSSL->new("$VARREPORT_host", Port => $VARREPORT_port, Encryption => IMP_CRYPT, Debug => $FTPdb, Trace => 1, SSL_Client_Certificate => { SSL_session_cache_size => 100 });
+
+	# For advanced debug, you may need to do the following:
+	# Here is how to enable high debug in the IO::Socket::SSL library that Net::FTPSSL is using:
+	# $IO::Socket::SSL::DEBUG = 3;
+	#   and here are the possible values:
+	# 0 - No debugging (default).
+	# 1 - Print out errors from IO::Socket::SSL and ciphers from Net::SSLeay.
+	# 2 - Print also information about call flow from IO::Socket::SSL and progress information from Net::SSLeay.
+	# 3 - Print also some data dumps from IO::Socket::SSL and from Net::SSLeay.
+
+	if($DBX){print STDERR "DEBUG: auth: ($VARREPORT_user|$VARREPORT_pass)\n";}
+	$ftps->login($VARREPORT_user,$VARREPORT_pass);
+	$ftps->cwd("$VARREPORT_dir");
+	$ftps->binary();
+	$ftps->put("$PATHweb/vicidial/server_reports/$outfile", "$outfile");
+	$ftps->quit;
 	}
 
 if ( ( ($DB) || ($totals_only > 0) ) && ($output_format =~ /^tab-QMcustomUSA$|^tab-SCcustomUSA$/) )
@@ -937,11 +974,11 @@ if ( ( ($DB) || ($totals_only > 0) ) && ($output_format =~ /^tab-QMcustomUSA$|^t
 
 if ($ftp_audio_transfer > 0)
 	{
-	use Net::FTP;
+	use Net::FTPSSL;
 	opendir(FILE, "$tempdir/");
 	@FILES = readdir(FILE);
 
-	if (!$Q) {print "Sending Audio Over FTP: $#FILES\n";}
+	if (!$Q) {print "Sending Audio Over FTPS: $#FILES\n";}
 
 	if ($ftp_norun > 0)
 		{exit;}
@@ -951,24 +988,49 @@ if ($ftp_audio_transfer > 0)
 		{
 		if ( (length($FILES[$i]) > 4) && (!-d "$tempdir/$FILES[$i]") )
 			{
-			$ftp = Net::FTP->new("$VARREPORT_host", Port => "$VARREPORT_port", Debug => "$DB", Passive => "1");
-			$ftp->login("$VARREPORT_user","$VARREPORT_pass");
+			if (!$Q) {print "Sending File Over FTPS: $FILES[$i]   ($VARREPORT_user @ $VARREPORT_host)\n";}
+
+			# Some versions of the FTPSSL perl module require you to hard code the encryption value: IMP_CRYPT or EXP_CRYPT
+			# $ftps = Net::FTPSSL->new("$VARREPORT_host", Port => $VARREPORT_port, Encryption => $VARFTP_encrypt, Debug => $FTPdb);
+			# optional additional variable (, OverridePASV => "$VARFTP_host") which will force the passive FTP hostname
+			if ( $VARFTP_encrypt eq "IMP_CRYPT" ) 
+				{
+				$ftps = Net::FTPSSL->new("$VARREPORT_host", Port => $VARREPORT_port, Encryption => IMP_CRYPT, Debug => $FTPdb);
+				}
+			else 
+				{
+				$ftps = Net::FTPSSL->new("$VARREPORT_host", Port => $VARREPORT_port, Encryption => EXP_CRYPT, Debug => $FTPdb);
+				}
+			# for "TLS Session Resumption", use the below connection options:
+			# $ftps = Net::FTPSSL->new("$VARREPORT_host", Port => $VARREPORT_port, Encryption => IMP_CRYPT, Debug => $FTPdb, Trace => 1, SSL_Client_Certificate => { SSL_session_cache_size => 100 });
+
+			# For advanced debug, you may need to do the following:
+			# Here is how to enable high debug in the IO::Socket::SSL library that Net::FTPSSL is using:
+			# $IO::Socket::SSL::DEBUG = 3;
+			#   and here are the possible values:
+			# 0 - No debugging (default).
+			# 1 - Print out errors from IO::Socket::SSL and ciphers from Net::SSLeay.
+			# 2 - Print also information about call flow from IO::Socket::SSL and progress information from Net::SSLeay.
+			# 3 - Print also some data dumps from IO::Socket::SSL and from Net::SSLeay.
+
+			if($DBX){print STDERR "DEBUG: auth: ($VARREPORT_user|$VARREPORT_pass)\n";}
+			$ftps->login($VARREPORT_user,$VARREPORT_pass);
 			if (length($VARREPORT_dir) > 0)
-				{$ftp->cwd("$VARREPORT_dir");}
+				{$ftps->cwd("$VARREPORT_dir");}
 			if ($NODATEDIR < 1)
 				{
 				if ($YEARDIR > 0)
 					{
-					$ftp->mkdir("$year");
-					$ftp->cwd("$year");
+					$ftps->mkdir("$year");
+					$ftps->cwd("$year");
 					}
-				$ftp->mkdir("$start_date");
-				$ftp->cwd("$start_date");
+				$ftps->mkdir("$start_date");
+				$ftps->cwd("$start_date");
 				}
 			$start_date_PATH = "$start_date/";
-			$ftp->binary();
-			$ftp->put("$tempdir/$FILES[$i]", "$FILES[$i]");
-			$ftp->quit;
+			$ftps->binary();
+			$ftps->put("$tempdir/$FILES[$i]", "$FILES[$i]");
+			$ftps->quit;
 			}
 		$i++;
 		}
@@ -1083,7 +1145,7 @@ sub select_format_loop
 			$ivr_id = '0';
 			$ivr_filename = '';
 
-			$stmtB = "select recording_id,filename,location from recording_log where lead_id=$lead_id and vicidial_id='$vicidial_id' and start_time >= '$shipdate 00:00:00' and start_time <= '$shipdate 23:59:59' order by start_time desc limit 1;";
+			$stmtB = "select recording_id,filename,location from recording_log where lead_id='$lead_id' and vicidial_id='$vicidial_id' and start_time >= '$shipdate 00:00:00' and start_time <= '$shipdate 23:59:59' order by start_time desc limit 1;";
 			$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
 			$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
 			$sthBrows=$sthB->rows;
@@ -1100,7 +1162,7 @@ sub select_format_loop
 
 			if ( ($sthBrows < 1) && ($skip_rec_extra < 1) )
 				{
-				$stmtB = "select recording_id,filename,location from recording_log where lead_id=$lead_id and start_time >= '$shipdate 00:00:00' and start_time <= '$shipdate 23:59:59' order by length_in_sec desc limit 1;";
+				$stmtB = "select recording_id,filename,location from recording_log where lead_id='$lead_id' and start_time >= '$shipdate 00:00:00' and start_time <= '$shipdate 23:59:59' order by length_in_sec desc limit 1;";
 				$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
 				$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
 				$sthBrows=$sthB->rows;
@@ -1118,7 +1180,7 @@ sub select_format_loop
 
 			if ( (length($ivr_id)<3) && ($skip_rec_extra < 1) )
 				{
-				$stmtB = "select recording_id,filename,location from recording_log where lead_id=$lead_id order by length_in_sec desc limit 1;";
+				$stmtB = "select recording_id,filename,location from recording_log where lead_id='$lead_id' order by length_in_sec desc limit 1;";
 				$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
 				$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
 				$sthBrows=$sthB->rows;
@@ -1219,7 +1281,7 @@ sub select_format_loop
 				{
 				### Look for other closer calls after this call
 				$more_calls[0]='';
-				$stmtB = "select closecallid,length_in_sec,queue_seconds,agent_alert_delay from vicidial_closer_log,vicidial_inbound_groups where lead_id=$lead_id and call_date >= '$call_date' and call_date <= '$shipdate 23:59:59' and campaign_id=group_id order by call_date limit 10;";
+				$stmtB = "select closecallid,length_in_sec,queue_seconds,agent_alert_delay from vicidial_closer_log,vicidial_inbound_groups where lead_id='$lead_id' and call_date >= '$call_date' and call_date <= '$shipdate 23:59:59' and campaign_id=group_id order by call_date limit 10;";
 				$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
 				$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
 				$sthBrows=$sthB->rows;
@@ -1305,7 +1367,7 @@ sub select_format_loop
 				}
 			else
 				{
-				$stmtB = "select vc.campaign_cid,vc.campaign_name,CONVERT_TZ(call_date,$convert_tz) from vicidial_campaigns vc,vicidial_log vl where lead_id=$lead_id and call_date >= '$shipdate 00:00:00' and call_date <= '$call_date' and vc.campaign_id=vl.campaign_id order by call_date desc limit 1;";
+				$stmtB = "select vc.campaign_cid,vc.campaign_name,CONVERT_TZ(call_date,$convert_tz) from vicidial_campaigns vc,vicidial_log vl where lead_id='$lead_id' and call_date >= '$shipdate 00:00:00' and call_date <= '$call_date' and vc.campaign_id=vl.campaign_id order by call_date desc limit 1;";
 				if ($DBX > 0) {print "$stmtB\n";}
 				$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
 				$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
@@ -1492,7 +1554,7 @@ sub select_format_loop
 			# 17-  Note Time Stamp: Time Stamp of Note
 			# 18-  Note Text: Actual Note taken by agent
 
-			$stmtB = "select CONVERT_TZ(call_date,$convert_tz),order_id,appointment_date,appointment_time,call_notes from vicidial_call_notes where lead_id=$lead_id and vicidial_id='$uniqueid' and call_date >= '$shipdate 00:00:00' and call_date <= '$shipdate 23:59:59' order by call_date desc limit 1;";
+			$stmtB = "select CONVERT_TZ(call_date,$convert_tz),order_id,appointment_date,appointment_time,call_notes from vicidial_call_notes where lead_id='$lead_id' and vicidial_id='$uniqueid' and call_date >= '$shipdate 00:00:00' and call_date <= '$shipdate 23:59:59' order by call_date desc limit 1;";
 			$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
 			$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
 			$sthBrows=$sthB->rows;
@@ -1544,7 +1606,7 @@ sub select_format_loop
 			else {$in_out = "Inbound";}
 
 			$dispo_time = 0;
-			$stmtB = "select dispo_sec from vicidial_agent_log where lead_id=$lead_id and user='$closer' and event_time >= '$shipdate 00:00:00' and event_time <= '$shipdate 23:59:59' order by event_time desc limit 1;";
+			$stmtB = "select dispo_sec from vicidial_agent_log where lead_id='$lead_id' and user='$closer' and event_time >= '$shipdate 00:00:00' and event_time <= '$shipdate 23:59:59' order by event_time desc limit 1;";
 			$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
 			$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
 			$sthBrows=$sthB->rows;

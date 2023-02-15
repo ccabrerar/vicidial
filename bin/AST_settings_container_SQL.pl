@@ -10,10 +10,11 @@
 # !!!!! IMPORTANT !!!!!
 # THE SQL STATEMENTS MUST NOT CONTAIN NEWLINES OR CARRIAGE RETURNS!
 #
-# Copyright (C) 2016  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 160118-1638 - First build
+# 230117-2210 - Fix for admin log issue
 #
 
 ### begin parsing run-time options ###
@@ -172,7 +173,9 @@ if (length($container_sql)>5)
 				if (!$T) {	$affected_rows = $dbhA->do($stmtA);}
 				if (!$Q) {print " - line $i executed, affected: $affected_rows rows\n";}
 
-				$stmtB="INSERT INTO vicidial_admin_log set event_date=NOW(), user='VDAD', ip_address='1.1.1.1', event_section='CONTAINERS', event_type='OTHER', record_id='$container', event_code='CONTAINER SQL RUN', event_sql=\"$container_lines[$i]\", event_notes='line $i executed, $affected_rows rows affected';";
+				$temp_lines = $container_lines[$i];
+				$temp_lines =~ s/"/'/gi;
+				$stmtB="INSERT INTO vicidial_admin_log set event_date=NOW(), user='VDAD', ip_address='1.1.1.1', event_section='CONTAINERS', event_type='OTHER', record_id='$container', event_code='CONTAINER SQL RUN', event_sql=\"$temp_lines\", event_notes='line $i executed, $affected_rows rows affected';";
 				if (!$T) {	$Iaffected_rows = $dbhA->do($stmtB);}
 				if ($DBX) {print " - admin log insert debug: |$Iaffected_rows|$stmtB|\n";}
 				}

@@ -39,7 +39,7 @@
 # 
 # This program assumes that recordings are saved by Asterisk as .wav
 # 
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # 
 # 80302-1958 - First Build
@@ -59,6 +59,7 @@
 # 160406-2055 - Added YMDdatedir option
 # 180511-2018 - Added --YearYMDdatedir option
 # 180616-2248 - Added --localdatedir option
+# 230131-2321 - Allowed for handling of stereo gateway recordings
 #
 
 ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
@@ -432,6 +433,7 @@ foreach(@FILES)
 			$SQLFILE = $FILES[$i];
 			$SQLFILE =~ s/\.gpg//gi;
 			$SQLFILE =~ s/-all\.wav|-all\.gsm|-all\.ogg|-all\.mp3//gi;
+			$SQLFILE =~ s/\.wav|\.gsm|\.ogg|\.mp3//gi;
 
 			$stmtA = "select recording_id,start_time from recording_log where filename='$SQLFILE' order by recording_id desc LIMIT 1;";
 			if($DBX){print STDERR "\n|$stmtA|\n";}

@@ -24,6 +24,7 @@
 # 210823-1633 - Added email_attachment_path option for dispo_send_email.php script
 # 220127-0931 - Added email_header_attach and allow_sendmail_bypass options
 # 220916-0901 - Added INSERT_before_body_close option, Issue #1375
+# 221206-1458 - Added login_submit_once option
 #
 
 $conf_silent_prefix		= '5';	# vicidial_conferences prefix to enter silently and muted for recording
@@ -70,6 +71,7 @@ $alt_display_enabled	= '0';	# set to 1 to allow the alt_display.php script to be
 $email_attachment_path	= './attachments';	# set to the absolute path from where all of the dispo_send_email.php script attachemnts will be located
 $email_header_attach	= '0';	# set to 1 to force blank line after attachments in header. WARNING: Will break on newer versions of PHP
 $allow_sendmail_bypass	= '';	# some setups require bypassing PHP's mail() function to send properly, set this to 'sendmail' path: '/usr/sbin/sendmail'
+$login_submit_once		= '1';	# set to 0 to remove the "disable the login submit button after submitting" feature
 $customer_chat_refresh_seconds	= 1;	# How often (in seconds) to refresh customer ang agent chat window
 $manager_chat_refresh_seconds	= 1;	# How often (in seconds) to refresh manager chat window
 

@@ -1,0 +1,111 @@
+VICI RECORDING GATEWAY SERVER	Started: 2023-01-14	Updated: 2023-02-01
+
+
+
+This project was designed to allow for a dedicated recording gateway server to generate stereo audio recordings of the entirety of all inbound and outbound phone calls, with the customer on one channel and the agent/dialer on the other, within the same WAV audio file.
+
+The recording files can be archived on the normal archive server, although keep in mind that if the uncompressed WAV audio format is used, that these new recordings will take up ten times as much space as MP3 audio files. Also, these recordings will be for entire phone calls, including any queue time on inbound calls and ring time on all outbound calls(even unanswered calls), so the space required(even if compressed) could be substantially more than standard VICIdial recordings would take.
+
+For outbound calls, the gateway recordings can be tied to the original Lead ID and the call_id of the call, providing that the CallerIDname is not modified before it reaches the recording gateway server.
+
+For inbound calls, the gateway recordings can be tied to the original DID Log entry and UniqueID of the call on the VICIdial system. Depending on how complex the inbound call routing is, the gateway recording may also be able to be tied to a Lead ID.
+
+
+
+New scripts added:
+- agi-VICIrecGateway.agi		Logs calls and recordings on the gateway
+- AST_CRON_audio_1_gateway_stereo.pl	Merges L/R into Stereo, updates recording_log
+
+Existing scripts modified:
+- agi-DID_route.agi			Check for Gateway inbound call, log if found
+- AST_CRON_audio_...pl scripts		Allow for gateway recordings to be processed
+
+
+Scripts to add to the crontab on the Gateway Recording server, staggered every 3 minutes during production times:
+
+/usr/share/astguiclient/AST_CRON_audio_1_gateway_stereo.pl --STEREO --debugX
+
+(if required:)
+/usr/share/astguiclient/AST_CRON_audio_3_ftp.pl --WAV --debugX --run-check --ftp-persistent --ftp-validate
+
+
+
+Example extensions.conf changes:
+
+INBOUND EXISTING VICIDIAL SERVERS:
+(add the first line, change the priority of second line to 'n')
+
+[trunkinbound]
+exten => _X.,1,Set(VICIrecGatewayID=${SIP_HEADER(X-VICIrecGatewayID)})
+exten => _x.,n,Noop(${SIP_HEADER(X-VICIrecGatewayID)})
+exten => _X.,n,AGI(agi-DID_route.agi)
+exten => _X.,n,Hangup()
+
+
+
+NEW VICI RECORDING GATEWAY SERVER:
+(Assumes use of PJSIP on the Gateway Recording server, adjust for your inbound dialer and outbound carrier)
+
+[handler]
+exten => addheader,1,Set(PJSIP_HEADER(add,X-VICIrecGatewayID)=${VICIrecGatewayID})
+exten => addheader,n,Return()
+
+[stereo-rec-inbound]
+exten => _X.,1,Progress()
+exten => _X.,n,Noop(${CALLERID(num)})
+exten => _X.,n,AGI(agi-VICIrecGateway.agi)
+exten => _X.,n,Noop(${CARRIER_FILENAME})
+exten => _X.,n,Noop(${DIALER_FILENAME})
+exten => _X.,n,MixMonitor(,r(${CARRIER_FILENAME})t(${DIALER_FILENAME})S)
+exten => _X.,n,Dial(PJSIP/${EXTEN}@pjdial147,,Tob(handler^addheader^1))
+
+[stereo-rec-outbound]
+exten => _X.,1,Progress()
+exten => _X.,n,Noop(${CALLERID(num)})
+exten => _X.,n,AGI(agi-VICIrecGateway.agi)
+exten => _X.,n,Noop(${CARRIER_FILENAME})
+exten => _X.,n,Noop(${DIALER_FILENAME})
+exten => _X.,n,MixMonitor(,t(${CARRIER_FILENAME})r(${DIALER_FILENAME})S)
+exten => _X.,n,Dial(PJSIP/${EXTEN}@pjsgw1,,To)
+
+
+
+
+-------------------------------------------------------------------------------------------------
+New Database Tables (FOR REFERENCE ONLY!):
+
+CREATE TABLE gateway_recording_log (
+gateway_recording_id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
+recording_log_id INT(10) UNSIGNED default '0',
+call_direction ENUM('INBOUND','OUTBOUND','NA') default 'NA',
+call_id VARCHAR(40) default '',
+lead_id INT(9) UNSIGNED,
+uniqueid VARCHAR(20) NOT NULL,
+server_ip VARCHAR(15),
+caller_id_number VARCHAR(18),
+caller_id_name VARCHAR(20),
+extension VARCHAR(100),
+start_time DATETIME,
+end_time DATETIME,
+length_in_sec MEDIUMINT(8) UNSIGNED default '0',
+filename VARCHAR(100),
+location VARCHAR(255),
+index(start_time),
+index(call_id),
+index(lead_id)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_did_gateway_log (
+uniqueid VARCHAR(20) NOT NULL,
+channel VARCHAR(100) NOT NULL,
+server_ip VARCHAR(15) NOT NULL,
+caller_id_number VARCHAR(18),
+caller_id_name VARCHAR(20),
+extension VARCHAR(100),
+call_date DATETIME,
+VICIrecGatewayID VARCHAR(30) default '',
+index (uniqueid),
+index (VICIrecGatewayID),
+index (extension),
+index (call_date)
+) ENGINE=MyISAM;

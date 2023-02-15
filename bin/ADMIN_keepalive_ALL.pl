@@ -15,7 +15,7 @@
 #  - Auto reset lists at defined times
 #  - Auto restarts Asterisk process if enabled in servers settings
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 61011-1348 - First build
@@ -157,9 +157,11 @@
 # 220312-0819 - Added CID Group Auto-Rotate to check for List use
 # 220526-1444 - Fix for CID auto-rotate functions
 # 220921-1255 - Added vicidial_user_logins_daily TEOD population
+# 221116-1157 - Added vicidial_long_extensions TEOD truncating
+# 230118-1623 - Added Playback audio then hangup extension
 #
 
-$build = '220921-1255';
+$build = '230118-1623';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -1335,6 +1337,21 @@ if ($timeclock_end_of_day_NOW > 0)
 		if ($teodDB) {$event_string = "vicidial_agent_dial_campaigns records reset: $affected_rows";   &teod_logger;}
 
 		$stmtA = "optimize table vicidial_agent_dial_campaigns;";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		@aryA = $sthA->fetchrow_array;
+		if ($DB) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+		$sthA->finish();
+
+		$stmtA = "delete from vicidial_long_extensions where call_date < \"$RMSQLdate\";";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$affected_rows = $dbhA->do($stmtA);
+		if($DB){print STDERR "\n|$affected_rows vicidial_long_extensions records deleted|\n";}
+		if ($teodDB) {$event_string = "vicidial_long_extensions records reset: $affected_rows";   &teod_logger;}
+
+		$stmtA = "optimize table vicidial_long_extensions;";
 		if($DBX){print STDERR "\n|$stmtA|\n";}
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -2954,7 +2971,17 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		{$Vext .= "exten => 83047777777777,2,Playback(\${CALLERID(name)})\n";}
 	$Vext .= "exten => 83047777777777,3,Hangup()\n";
 
-	$Vext .= "; This is a loopback dial-around to allow for immediate answer of outbound calls\n";
+	$Vext .= "\n;     Playback audio then hangup extension\n";
+	$Vext .= "exten => _83046777777777*.,1,Answer\n";
+	$Vext .= "exten => _83046777777777*.,n,Playback(sip-silence)\n";
+	$Vext .= "exten => _83046777777777*.,n,Playback(sip-silence)\n";
+	$Vext .= "exten => _83046777777777*.,n,Playback(sip-silence)\n";
+	$Vext .= "exten => _83046777777777*.,n,NoOp(Playing \${EXTEN:15})\n";
+	$Vext .= "exten => _83046777777777*.,n,Playback(\${EXTEN:15})\n";
+	$Vext .= "exten => _83046777777777*.,n,Playback(silence)\n";
+	$Vext .= "exten => _83046777777777*.,n,Hangup()\n";
+
+	$Vext .= "\n; This is a loopback dial-around to allow for immediate answer of outbound calls\n";
 	$Vext .= "exten => _8305888888888888.,1,Answer\n";
 	$Vext .= "exten => _8305888888888888.,n,Wait(\${EXTEN:16:1})\n";
 	$Vext .= "exten => _8305888888888888.,n,Dial(\${TRUNKloop}/\${EXTEN:17},,To)\n";

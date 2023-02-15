@@ -151,13 +151,14 @@
 # 210825-0911 - Fix for XSS security issue
 # 220220-0904 - Added allow_web_debug system setting
 # 220312-0936 - Added vicidial_dial_cid_log logging
+# 221116-1051 - Fix for long in-group dialstring extensions
 #
 
-$version = '2.14-98';
-$build = '220312-0936';
+$version = '2.14-99';
+$build = '221116-1051';
 $php_script = 'manager_send.php';
 $mel=1;					# Mysql Error Log enabled = 1
-$mysql_log_count=143;
+$mysql_log_count=148;
 $one_mysql_log=0;
 $SSagent_debug_logging=0;
 $startMS = microtime();
@@ -610,7 +611,46 @@ if ($ACTION=="Originate")
 			}
 		else
 			{$variable='';   $account="Variable: $call_variables";}
-		$stmt="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$server_ip','','Originate','$queryCID','Channel: $channel','Context: $ext_context','Exten: $exten','Priority: $ext_priority','Callerid: $outCID','$account','$variable','','','');";
+
+		$new_variable='';
+		$new_channel=$channel;
+		$new_exten=$exten;
+		if ( (preg_match("/^900\d\d\*|^9900\d\d\*|^980\d\d\*|^9980\d\d\*|^8305888888888888\d90009|^8305888888888888\d98009/",$exten)) or (preg_match("/^Local\/900\d\d\*|^Local\/9900\d\d\*|^Local\/980\d\d\*|^Local\/9980\d\d\*|^Local\/8305888888888888\d90009|^Local\/8305888888888888\d98009/",$channel)) )
+			{
+			if (preg_match("/^900\d\d\*|^9900\d\d\*|^980\d\d\*|^9980\d\d\*|^8305888888888888\d90009|^8305888888888888\d98009/",$exten))
+				{
+				$new_source='manager_send_exten';
+				$temp_exten = $exten;
+
+				$stmt="INSERT INTO vicidial_long_extensions values('','$temp_exten',NOW(),'$new_source');";
+					if ($format=='debug') {echo "\n<!-- $stmt -->";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02144',$user,$server_ip,$session_name,$one_mysql_log);}
+				$le_id = mysqli_insert_id($link);
+
+				$new_exten = preg_replace("/\*.*/",'',$exten);
+				$new_exten .= "**LEXTEN*$le_id";
+				$new_variable = "Variable: _new_exten=$new_exten";
+				}
+			if (preg_match("/^Local\/900\d\d\*|^Local\/9900\d\d\*|^Local\/980\d\d\*|^Local\/9980\d\d\*|^Local\/8305888888888888\d90009|^Local\/8305888888888888\d98009/",$channel))
+				{
+				$new_source='manager_send_channel';
+				$temp_exten = preg_replace("/^Local\//",'',$channel);
+				$temp_context = preg_replace("/^.*\@/",'',$channel);
+
+				$stmt="INSERT INTO vicidial_long_extensions values('','$temp_exten',NOW(),'$new_source');";
+					if ($format=='debug') {echo "\n<!-- $stmt -->";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02145',$user,$server_ip,$session_name,$one_mysql_log);}
+				$le_id = mysqli_insert_id($link);
+
+				$new_channel = preg_replace("/\*.*/",'',$temp_exten);
+				$new_channel = "Local/$new_channel**LEXTEN*$le_id@$temp_context";
+				$new_variable = "Variable: _new_channel=$new_channel";
+				}
+			}
+
+		$stmt="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$server_ip','','Originate','$queryCID','Channel: $new_channel','Context: $ext_context','Exten: $new_exten','Priority: $ext_priority','Callerid: $outCID','$account','$variable','','','');";
 			if ($format=='debug') {echo "\n<!-- $stmt -->";}
 		$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02007',$user,$server_ip,$session_name,$one_mysql_log);}
@@ -626,7 +666,7 @@ if ($ACTION=="Originate")
 		$stmt = "INSERT INTO vicidial_dial_cid_log SET caller_code='$queryCID',call_date='$NOW_TIME',call_type='MANUAL',call_alt='$agent_dialed_type', outbound_cid='$outbound_cid',outbound_cid_type='AGENT';";
 		if ($DB) {echo "$stmt\n";}
 		$rslt=mysql_to_mysqli($stmt, $link);
-			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02146',$user,$server_ip,$session_name,$one_mysql_log);}
 
 		if ( (strlen($lead_id) > 0) and (strlen($session_id) > 0) and (preg_match("/^DC/",$queryCID)) )
 			{
@@ -2256,7 +2296,45 @@ if ($ACTION=="Redirect")
 			}
 		if ($channel_live==1)
 			{
-			$stmt="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$server_ip','','Redirect','$queryCID','Channel: $channel','Context: $ext_context','Exten: $exten','Priority: $ext_priority','CallerID: $queryCID','','','','','');";
+			$new_variable='';
+			$new_channel=$channel;
+			$new_exten=$exten;
+			if ( (preg_match("/^900\d\d\*|^9900\d\d\*|^980\d\d\*|^9980\d\d\*|^8305888888888888\d90009|^8305888888888888\d98009/",$exten)) or (preg_match("/^Local\/900\d\d\*|^Local\/9900\d\d\*|^Local\/980\d\d\*|^Local\/9980\d\d\*|^Local\/8305888888888888\d90009|^Local\/8305888888888888\d98009/",$channel)) )
+				{
+				if (preg_match("/^900\d\d\*|^9900\d\d\*|^980\d\d\*|^9980\d\d\*|^8305888888888888\d90009|^8305888888888888\d98009/",$exten))
+					{
+					$new_source='manager_send_exten';
+					$temp_exten = $exten;
+
+					$stmt="INSERT INTO vicidial_long_extensions values('','$temp_exten',NOW(),'$new_source');";
+						if ($format=='debug') {echo "\n<!-- $stmt -->";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02147',$user,$server_ip,$session_name,$one_mysql_log);}
+					$le_id = mysqli_insert_id($link);
+
+					$new_exten = preg_replace("/\*.*/",'',$exten);
+					$new_exten .= "**LEXTEN*$le_id";
+					$new_variable = "Variable: _new_exten=$new_exten";
+					}
+				if (preg_match("/^Local\/900\d\d\*|^Local\/9900\d\d\*|^Local\/980\d\d\*|^Local\/9980\d\d\*|^Local\/8305888888888888\d90009|^Local\/8305888888888888\d98009/",$channel))
+					{
+					$new_source='manager_send_channel';
+					$temp_exten = preg_replace("/^Local\//",'',$channel);
+					$temp_context = preg_replace("/^.*\@/",'',$channel);
+
+					$stmt="INSERT INTO vicidial_long_extensions values('','$temp_exten',NOW(),'$new_source');";
+						if ($format=='debug') {echo "\n<!-- $stmt -->";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02148',$user,$server_ip,$session_name,$one_mysql_log);}
+					$le_id = mysqli_insert_id($link);
+
+					$new_channel = preg_replace("/\*.*/",'',$temp_exten);
+					$new_channel = "Local/$new_channel**LEXTEN*$le_id@$temp_context";
+					$new_variable = "Variable: _new_channel=$new_channel";
+					}
+				}
+
+			$stmt="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$server_ip','','Redirect','$queryCID','Channel: $new_channel','Context: $ext_context','Exten: $new_exten','Priority: $ext_priority','CallerID: $queryCID','','','','','');";
 				if ($format=='debug') {echo "\n<!-- $stmt -->";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02064',$user,$server_ip,$session_name,$one_mysql_log);}

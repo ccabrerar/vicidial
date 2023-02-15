@@ -42,6 +42,7 @@
 # 170409-1555 - Added IP List validation code
 # 170912-1704 - Removed non-functional change-campaign feature
 # 220221-0953 - Added allow_web_debug system setting
+# 221202-1644 - Change in CIDname prefix to differentiate from other processes
 #
 
 $startMS = microtime();
@@ -575,7 +576,7 @@ if ($stage == "log_agent_out")
 		$local_AMP = '@';
 		$ext_context = 'default';
 		$kick_local_channel = "$local_DEF$VLA_conf_exten$local_AMP$ext_context";
-		$queryCID = "ULGH3457$StarTtimE";
+		$queryCID = "ULUS3451$StarTtimE";
 
 		$stmtC="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$VLA_server_ip','','Originate','$queryCID','Channel: $kick_local_channel','Context: $ext_context','Exten: 8300','Priority: 1','Callerid: $queryCID','','','','$channel','$exten');";
 		if ($DB) {echo "<BR>$stmtC\n";}

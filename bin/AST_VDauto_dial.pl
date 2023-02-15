@@ -25,7 +25,7 @@
 # It is good practice to keep this program running by placing the associated
 # KEEPALIVE script running every minute to ensure this program is always running
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG:
 # 50125-1201 - Changed dial timeout to 120 seconds from 180 seconds
@@ -151,9 +151,11 @@
 # 220311-1920 - Added List CID Group Override option
 # 220328-1310 - Small change made per Issue #1337
 # 220623-1621 - Added List dial_prefix override
+# 221221-2135 - Added enhanced_disconnect_logging=3 support, issue #1367
+# 230204-2144 - Added ability to use ALT na_call_url entries
 #
 
-$build='220328-1310';
+$build='230204-2144';
 $script='AST_VDauto_dial';
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -2584,7 +2586,7 @@ while($one_day_interval > 0)
 		#		$event_string = "|     vac test: |$auto_call_id|$CLstatus|$KLcalltime[$kill_vac]|$CLlead_id|$KLcallerid[$kill_vac]|$end_epoch|$KLchannel[$kill_vac]|$CLcall_type|$CLdial_timeout|$CLdrop_call_seconds|$call_timeout|$dialtime_log|$dialtime_catch|$PARKchannel|";
 		#		&event_logger;
 
-				if ( ( ($dialtime_log >= $call_timeout) || ($dialtime_catch >= $call_timeout) || ($CLstatus =~ /BUSY|DISCONNECT|XFER|CLOSER/) ) && ($PARKchannel < 1) )
+				if ( ( ($dialtime_log >= $call_timeout) || ($dialtime_catch >= $call_timeout) || ($CLstatus =~ /BUSY|DISCONNECT|XFER|CLOSER|CARRIERFAIL/) ) && ($PARKchannel < 1) )
 					{
 					if ( ($CLcall_type !~ /IN/) && ($CLstatus !~ /IVR/) )
 						{
@@ -2639,7 +2641,7 @@ while($one_day_interval > 0)
 								if ($ADB > 0) {$aad_string = "ALT-00: $CLlead_id|$VD_auto_alt_dial|$CLauto_alt_threshold|$LISTauto_alt_threshold|($called_count <> $temp_auto_alt_threshold)|auto_alt_lead_disabled: $auto_alt_lead_disabled|";   &aad_output;}
 								}
 
-							if ($CLstatus =~ /BUSY/) {$CLnew_status = 'B';}
+							if ($CLstatus =~ /BUSY/) {$CLnew_status = 'AB';}
 							else
 								{
 								$new_status_set=0;
@@ -2738,7 +2740,7 @@ while($one_day_interval > 0)
 									}
 								}
 
-							if ($CLlead_id > 0)
+							if ($CLlead_id > 0 && $CLstatus != 'CARRIERFAIL')
 								{
 								$stmtA = "UPDATE vicidial_list set status='$CLnew_status' where lead_id='$CLlead_id'";
 								$affected_rows = $dbhA->do($stmtA);
@@ -4510,7 +4512,7 @@ while($one_day_interval > 0)
 													}
 												$NCUcamp_loop++;
 												}
-											if (length($NCUncurl_value) > 10)
+											if ( (length($NCUncurl_value) > 10) || ($NCUncurl_value =~ /^ALT$/) )
 												{
 												$event_string = "        NCU url defined, launching web GET:   $NCUcallerid[$vle_count]|$NCUstatus[$vle_count]";
 												 &event_logger;
@@ -4530,9 +4532,12 @@ while($one_day_interval > 0)
 												$launch .= " --alt_dial=" . $NCUaltdial[$vle_count];
 												$launch .= " --call_id=" . $NCUcallerid[$vle_count];
 												$launch .= " --list_id=" . $NCUlist[$vle_count];
+												$launch .= " --status=" . $NCUstatus[$vle_count];
 												$launch .= " --function=NA_CALL_URL";
 
 												system($launch . ' &');
+
+												if ($DBX > 0) {print "     NCU debugX: |$NCUlist[$vle_count]|$NCUcampaign[$vle_count]|$launch|$NCUncurl_value|\n";}
 
 												$event_string = "        NCU url sent processed:   $NCUcallerid[$vle_count]|$NCUcampaign[$vle_count]|$NCUuser[$vle_count]";
 												 &event_logger;

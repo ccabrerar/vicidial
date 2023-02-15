@@ -1,7 +1,7 @@
 <?php
 # dispo_send_email.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to be used in the "Dispo URL" field of a campaign
 # or in-group. It will send out an email to a fixed email address as defined
@@ -11,8 +11,8 @@
 # logged to the vicidial_api_log table.
 #
 # Examples of what to put in the Dispo URL field:
-# VARhttp://192.168.1.1/agc/dispo_send_email.php?container_id=TEST_CONTAINER&lead_id=--A--lead_id--B--&call_id=--A--call_id--B--&dispo=--A--dispo--B--&user=--A--user--B--&pass=--A--pass--B--&sale_status=SALE---SSALE---XSALE&log_to_file=1
-# VARhttp://192.168.1.1/agc/dispo_send_email.php?container_id=TEST_CONTAINER&lead_id=--A--lead_id--B--&call_id=--A--call_id--B--&dispo=--A--dispo--B--&user=--A--user--B--&pass=--A--pass--B--&sale_status=ALL-STATUSES&called_count=--A--called_count--B--&called_count_trigger=40&log_to_file=1
+# VARhttp://192.168.1.1/agc/dispo_send_email.php?container_id=TEST_CONTAINER&lead_id=--A--lead_id--B--&call_id=--A--call_id--B--&dispo=--A--dispo--B--&user=--A--user--B--&pass=--A--pass--B--&sale_status=SALE---SSALE---XSALE&log_to_file=1&dialed_number=--A--dialed_number--B--
+# VARhttp://192.168.1.1/agc/dispo_send_email.php?container_id=TEST_CONTAINER&lead_id=--A--lead_id--B--&call_id=--A--call_id--B--&dispo=--A--dispo--B--&user=--A--user--B--&pass=--A--pass--B--&sale_status=ALL-STATUSES&called_count=--A--called_count--B--&called_count_trigger=40&log_to_file=1&dialed_number=--A--dialed_number--B--
 #
 #
 # Example of what to put in Dead Trigger URL campaign setting field:
@@ -49,6 +49,7 @@
 # 220213-0849 - Added code for Pause Max Email functionality
 # 220216-0027 - Fix for very large emails using allow_sendmail_bypass
 # 220219-0135 - Added allow_web_debug system setting
+# 230113-0839 - Added dialed_number & dialed_label to allowed variables in email subject and body
 #
 
 $api_script = 'send_email';
@@ -136,6 +137,10 @@ if (isset($_GET["email_attachment_19"]))			{$email_attachment_19=$_GET["email_at
 	elseif (isset($_POST["email_attachment_19"]))	{$email_attachment_19=$_POST["email_attachment_19"];}
 if (isset($_GET["email_attachment_20"]))			{$email_attachment_20=$_GET["email_attachment_20"];}
 	elseif (isset($_POST["email_attachment_20"]))	{$email_attachment_20=$_POST["email_attachment_20"];}
+if (isset($_GET["dialed_number"]))			{$dialed_number=$_GET["dialed_number"];}
+	elseif (isset($_POST["dialed_number"]))	{$dialed_number=$_POST["dialed_number"];}
+if (isset($_GET["dialed_label"]))			{$dialed_label=$_GET["dialed_label"];}
+	elseif (isset($_POST["dialed_label"]))	{$dialed_label=$_POST["dialed_label"];}
 
 $DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
@@ -258,6 +263,8 @@ $email_to = preg_replace('/[^-\.\:\/\@\_0-9\p{L}]/u','',$email_to);
 $log_to_file = preg_replace('/[^-_0-9a-zA-Z]/', '', $log_to_file);
 $called_count = preg_replace('/[^-_0-9a-zA-Z]/', '', $called_count);
 $called_count_trigger = preg_replace('/[^-_0-9a-zA-Z]/', '', $called_count_trigger);
+$dialed_number = preg_replace('/[^-_0-9a-zA-Z]/', '', $dialed_number);
+$dialed_label = preg_replace('/[^-_0-9a-zA-Z]/', '', $dialed_label);
 
 if ($non_latin < 1)
 	{
@@ -688,6 +695,8 @@ if ($match_found > 0)
 						$email_subject = preg_replace('/--A--uniqueid--B--/i',"$uniqueid",$email_subject);
 						$email_subject = preg_replace('/--A--group--B--/i',"$channel_group",$email_subject);
 						$email_subject = preg_replace('/--A--channel_group--B--/i',"$channel_group",$email_subject);
+						$email_subject = preg_replace('/--A--dialed_number--B--/i',"$dialed_number",$email_subject);
+						$email_subject = preg_replace('/--A--dialed_label--B--/i',"$dialed_label",$email_subject);
 
 						# not currently active
 						$email_subject = preg_replace('/--A--campaign--B--/i',"$campaign",$email_subject);
@@ -703,8 +712,6 @@ if ($match_found > 0)
 						$email_subject = preg_replace('/--A--in_script--B--/i',"$in_script",$email_subject);
 						$email_subject = preg_replace('/--A--dispo--B--/i',"$dispo",$email_subject);
 						$email_subject = preg_replace('/--A--dispo_name--B--/i',"$dispo_name",$email_subject);
-						$email_subject = preg_replace('/--A--dialed_number--B--/i',"$dialed_number",$email_subject);
-						$email_subject = preg_replace('/--A--dialed_label--B--/i',"$dialed_label",$email_subject);
 						$email_subject = preg_replace('/--A--talk_time--B--/i',"$talk_time",$email_subject);
 						$email_subject = preg_replace('/--A--talk_time_ms--B--/i',"$talk_time_ms",$email_subject);
 						$email_subject = preg_replace('/--A--talk_time_min--B--/i',"$talk_time_min",$email_subject);
@@ -787,6 +794,8 @@ if ($match_found > 0)
 						$email_body = preg_replace('/--A--additional_notes--B--/i',"$additional_notes",$email_body);
 						$email_body = preg_replace('/--A--group--B--/i',"$channel_group",$email_body);
 						$email_body = preg_replace('/--A--channel_group--B--/i',"$channel_group",$email_body);
+						$email_body = preg_replace('/--A--dialed_number--B--/i',"$dialed_number",$email_body);
+						$email_body = preg_replace('/--A--dialed_label--B--/i',"$dialed_label",$email_body);
 						$email_body = urldecode($email_body);
 						}
 

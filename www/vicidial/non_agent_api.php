@@ -1,7 +1,7 @@
 <?php
 # non_agent_api.php
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed as an API(Application Programming Interface) to allow
 # other programs to interact with all non-agent-screen VICIDIAL functions
@@ -198,10 +198,12 @@
 # 220902-0823 - Added dial_status_add/dial_status_remove options to update_campaign function
 # 220920-0814 - Added more "XDAY" options to add_lead duplicate checks
 # 221108-1849 - Added include_ip option for agent_status function
+# 230118-0833 - Added ingroup_list and callmenu_list functions
+# 230122-1821 - Added reset_password option to update_user function
 #
 
-$version = '2.14-175';
-$build = '221108-1849';
+$version = '2.14-177';
+$build = '230122-1821';
 $php_script='non_agent_api.php';
 $api_url_log = 0;
 
@@ -357,8 +359,6 @@ if (isset($_GET["hotkeys_active"]))				{$hotkeys_active=$_GET["hotkeys_active"];
 	elseif (isset($_POST["hotkeys_active"]))	{$hotkeys_active=$_POST["hotkeys_active"];}
 if (isset($_GET["voicemail_id"]))			{$voicemail_id=$_GET["voicemail_id"];}
 	elseif (isset($_POST["voicemail_id"]))	{$voicemail_id=$_POST["voicemail_id"];}
-if (isset($_GET["email"]))					{$email=$_GET["email"];}
-	elseif (isset($_POST["email"]))			{$email=$_POST["email"];}
 if (isset($_GET["custom_one"]))				{$custom_one=$_GET["custom_one"];}
 	elseif (isset($_POST["custom_one"]))	{$custom_one=$_POST["custom_one"];}
 if (isset($_GET["custom_two"]))				{$custom_two=$_GET["custom_two"];}
@@ -709,6 +709,8 @@ if (isset($_GET["dial_status_remove"]))				{$dial_status_remove=$_GET["dial_stat
 	elseif (isset($_POST["dial_status_remove"]))	{$dial_status_remove=$_POST["dial_status_remove"];}
 if (isset($_GET["include_ip"]))				{$include_ip=$_GET["include_ip"];}
 	elseif (isset($_POST["include_ip"]))	{$include_ip=$_POST["include_ip"];}
+if (isset($_GET["reset_password"]))				{$reset_password=$_GET["reset_password"];}
+	elseif (isset($_POST["reset_password"]))	{$reset_password=$_POST["reset_password"];}
 
 $DB=preg_replace('/[^0-9]/','',$DB);
 
@@ -863,6 +865,7 @@ $preset_number = preg_replace('/[^\*\#\.\_0-9a-zA-Z]/','',$preset_number);
 $preset_dtmf = preg_replace('/[^- \,\*\#0-9a-zA-Z]/','',$preset_dtmf);
 $action = preg_replace('/[^0-9a-zA-Z]/','',$action);
 $include_ip = preg_replace('/[^0-9a-zA-Z]/','',$include_ip);
+$reset_password = preg_replace('/[^0-9]/','',$reset_password);
 
 if ($non_latin < 1)
 	{
@@ -1950,6 +1953,254 @@ if ($function == 'vm_list')
 	}
 ################################################################################
 ### END vm_list
+################################################################################
+
+
+
+
+################################################################################
+### ingroup_list - sends a list of the inbound groups in the system
+################################################################################
+if ($function == 'ingroup_list')
+	{
+	$stmt="SELECT count(*) from vicidial_users where user='$user' and user_level > 6 and active='Y';";
+	$rslt=mysql_to_mysqli($stmt, $link);
+	$row=mysqli_fetch_row($rslt);
+	$allowed_user=$row[0];
+	if ($allowed_user < 1)
+		{
+		$result = 'ERROR';
+		$result_reason = "ingroup_list USER DOES NOT HAVE PERMISSION TO VIEW INBOUND GROUPS LIST";
+		echo "$result: $result_reason: |$user|$allowed_user|\n";
+		$data = "$allowed_user";
+		api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+		exit;
+		}
+	else
+		{
+		if ( (!preg_match("/ $function /",$api_allowed_functions)) and (!preg_match("/ALL_FUNCTIONS/",$api_allowed_functions)) )
+			{
+			$result = 'ERROR';
+			$result_reason = "auth USER DOES NOT HAVE PERMISSION TO USE THIS FUNCTION";
+			echo "$result: $result_reason: |$user|$function|\n";
+			$data = "$allowed_user";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		$stmt="SELECT allowed_campaigns,admin_viewable_groups from vicidial_user_groups where user_group='$LOGuser_group';";
+		if ($DB>0) {echo "|$stmt|\n";}
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$row=mysqli_fetch_row($rslt);
+		$LOGallowed_campaigns =			$row[0];
+		$LOGadmin_viewable_groups =		$row[1];
+
+		$LOGadmin_viewable_groupsSQL='';
+		$whereLOGadmin_viewable_groupsSQL='';
+		if ( (!preg_match('/\-\-ALL\-\-/i',$LOGadmin_viewable_groups)) and (strlen($LOGadmin_viewable_groups) > 3) )
+			{
+			$rawLOGadmin_viewable_groupsSQL = preg_replace("/ -/",'',$LOGadmin_viewable_groups);
+			$rawLOGadmin_viewable_groupsSQL = preg_replace("/ /","','",$rawLOGadmin_viewable_groupsSQL);
+			$LOGadmin_viewable_groupsSQL = "and user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')";
+			$whereLOGadmin_viewable_groupsSQL = "where user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')";
+			}
+
+		$server_name = getenv("SERVER_NAME");
+		$server_port = getenv("SERVER_PORT");
+		if (preg_match("/443/i",$server_port)) {$HTTPprotocol = 'https://';}
+		  else {$HTTPprotocol = 'http://';}
+		$admDIR = "$HTTPprotocol$server_name:$server_port";
+
+		echo "\n";
+		echo "<HTML><head><title>NON-AGENT API</title>\n";
+		echo "<script language=\"Javascript\">\n";
+		echo "function choose_file(filename,fieldname)\n";
+		echo "	{\n";
+		echo "	if (filename.length > 0)\n";
+		echo "		{\n";
+		echo "		parent.document.getElementById(fieldname).value = filename;\n";
+		echo "		document.getElementById(\"selectframe\").innerHTML = '';\n";
+		echo "		document.getElementById(\"selectframe\").style.visibility = 'hidden';\n";
+		echo "		parent.close_chooser();\n";
+		echo "		}\n";
+		echo "	}\n";
+		echo "function close_file()\n";
+		echo "	{\n";
+		echo "	document.getElementById(\"selectframe\").innerHTML = '';\n";
+		echo "	document.getElementById(\"selectframe\").style.visibility = 'hidden';\n";
+		echo "	parent.close_chooser();\n";
+		echo "	}\n";
+		echo "</script>\n";
+		echo "</head>\n\n";
+
+		echo "<body>\n";
+		echo "<a href=\"javascript:close_file();\"><font size=1 face=\"Arial,Helvetica\">"._QXZ("close frame")."</font></a>\n";
+		echo "<div id='selectframe' style=\"height:400px;width:710px;overflow:scroll;\">\n";
+		echo "<table border=0 cellpadding=1 cellspacing=2 width=690 bgcolor=white><tr>\n";
+		echo "<td width=30>#</td>\n";
+		echo "<td colspan=2>"._QXZ("Inbound Groups")."</td>\n";
+		echo "<td>"._QXZ("Name")."</td>\n";
+		echo "<td>"._QXZ("Color")."</td>\n";
+		echo "</tr>\n";
+
+		$rowx=array();
+		$group_id=array();
+		$fullname=array();
+		$color=array();
+
+		$stmt="SELECT group_id,group_name,group_color from vicidial_inbound_groups where active='Y' $LOGadmin_viewable_groupsSQL order by group_id";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$vm_to_print = mysqli_num_rows($rslt);
+		$k=0;
+		$sf=0;
+		while ($vm_to_print > $k) 
+			{
+			$rowx=mysqli_fetch_row($rslt);
+			$group_id[$k] =	$rowx[0];
+			$fullname[$k] =		$rowx[1];
+			$color[$k] =		$rowx[2];
+			$sf++;
+			if (preg_match("/1$|3$|5$|7$|9$/i", $sf))
+				{$bgcolor='bgcolor="#E6E6E6"';} 
+			else
+				{$bgcolor='bgcolor="#F6F6F6"';}
+			echo "<tr $bgcolor><td width=30><font size=1 face=\"Arial,Helvetica\">$sf</td>\n";
+			echo "<td colspan=2><a href=\"javascript:choose_file('$group_id[$k]','$comments');\"><font size=2 face=\"Arial,Helvetica\">$group_id[$k]</a></td>\n";
+			echo "<td><font size=2 face=\"Arial,Helvetica\">$fullname[$k]</td>\n";
+			echo "<td bgcolor=\"$color[$k]\"><font size=2 face=\"Arial,Helvetica\"> &nbsp; &nbsp; &nbsp; &nbsp; </td></tr>\n";
+
+			$k++;
+			}
+		echo "</table></div></body></HTML>\n";
+
+		exit;
+		}
+	}
+################################################################################
+### END ingroup_list
+################################################################################
+
+
+
+
+################################################################################
+### callmenu_list - sends a list of the inbound groups in the system
+################################################################################
+if ($function == 'callmenu_list')
+	{
+	$stmt="SELECT count(*) from vicidial_users where user='$user' and user_level > 6 and active='Y';";
+	$rslt=mysql_to_mysqli($stmt, $link);
+	$row=mysqli_fetch_row($rslt);
+	$allowed_user=$row[0];
+	if ($allowed_user < 1)
+		{
+		$result = 'ERROR';
+		$result_reason = "callmenu_list USER DOES NOT HAVE PERMISSION TO VIEW CALL MENUS LIST";
+		echo "$result: $result_reason: |$user|$allowed_user|\n";
+		$data = "$allowed_user";
+		api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+		exit;
+		}
+	else
+		{
+		if ( (!preg_match("/ $function /",$api_allowed_functions)) and (!preg_match("/ALL_FUNCTIONS/",$api_allowed_functions)) )
+			{
+			$result = 'ERROR';
+			$result_reason = "auth USER DOES NOT HAVE PERMISSION TO USE THIS FUNCTION";
+			echo "$result: $result_reason: |$user|$function|\n";
+			$data = "$allowed_user";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		$stmt="SELECT allowed_campaigns,admin_viewable_groups from vicidial_user_groups where user_group='$LOGuser_group';";
+		if ($DB>0) {echo "|$stmt|\n";}
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$row=mysqli_fetch_row($rslt);
+		$LOGallowed_campaigns =			$row[0];
+		$LOGadmin_viewable_groups =		$row[1];
+
+		$LOGadmin_viewable_groupsSQL='';
+		$whereLOGadmin_viewable_groupsSQL='';
+		if ( (!preg_match('/\-\-ALL\-\-/i',$LOGadmin_viewable_groups)) and (strlen($LOGadmin_viewable_groups) > 3) )
+			{
+			$rawLOGadmin_viewable_groupsSQL = preg_replace("/ -/",'',$LOGadmin_viewable_groups);
+			$rawLOGadmin_viewable_groupsSQL = preg_replace("/ /","','",$rawLOGadmin_viewable_groupsSQL);
+			$LOGadmin_viewable_groupsSQL = "and user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')";
+			$whereLOGadmin_viewable_groupsSQL = "where user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')";
+			}
+
+		$server_name = getenv("SERVER_NAME");
+		$server_port = getenv("SERVER_PORT");
+		if (preg_match("/443/i",$server_port)) {$HTTPprotocol = 'https://';}
+		  else {$HTTPprotocol = 'http://';}
+		$admDIR = "$HTTPprotocol$server_name:$server_port";
+
+		echo "\n";
+		echo "<HTML><head><title>NON-AGENT API</title>\n";
+		echo "<script language=\"Javascript\">\n";
+		echo "function choose_file(filename,fieldname)\n";
+		echo "	{\n";
+		echo "	if (filename.length > 0)\n";
+		echo "		{\n";
+		echo "		parent.document.getElementById(fieldname).value = filename;\n";
+		echo "		document.getElementById(\"selectframe\").innerHTML = '';\n";
+		echo "		document.getElementById(\"selectframe\").style.visibility = 'hidden';\n";
+		echo "		parent.close_chooser();\n";
+		echo "		}\n";
+		echo "	}\n";
+		echo "function close_file()\n";
+		echo "	{\n";
+		echo "	document.getElementById(\"selectframe\").innerHTML = '';\n";
+		echo "	document.getElementById(\"selectframe\").style.visibility = 'hidden';\n";
+		echo "	parent.close_chooser();\n";
+		echo "	}\n";
+		echo "</script>\n";
+		echo "</head>\n\n";
+
+		echo "<body>\n";
+		echo "<a href=\"javascript:close_file();\"><font size=1 face=\"Arial,Helvetica\">"._QXZ("close frame")."</font></a>\n";
+		echo "<div id='selectframe' style=\"height:400px;width:710px;overflow:scroll;\">\n";
+		echo "<table border=0 cellpadding=1 cellspacing=2 width=690 bgcolor=white><tr>\n";
+		echo "<td width=30>#</td>\n";
+		echo "<td colspan=2>"._QXZ("Call Menus")."</td>\n";
+		echo "<td>"._QXZ("Name")."</td>\n";
+	#	echo "<td>"._QXZ("Color")."</td>\n";
+		echo "</tr>\n";
+
+		$rowx=array();
+		$group_id=array();
+		$fullname=array();
+		$color=array();
+
+		$stmt="SELECT menu_id,menu_name,menu_prompt from vicidial_call_menu $whereLOGadmin_viewable_groupsSQL order by menu_id";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$vm_to_print = mysqli_num_rows($rslt);
+		$k=0;
+		$sf=0;
+		while ($vm_to_print > $k) 
+			{
+			$rowx=mysqli_fetch_row($rslt);
+			$group_id[$k] =	$rowx[0];
+			$fullname[$k] =		$rowx[1];
+			$color[$k] =		$rowx[2];
+			$sf++;
+			if (preg_match("/1$|3$|5$|7$|9$/i", $sf))
+				{$bgcolor='bgcolor="#E6E6E6"';} 
+			else
+				{$bgcolor='bgcolor="#F6F6F6"';}
+			echo "<tr $bgcolor><td width=30><font size=1 face=\"Arial,Helvetica\">$sf</td>\n";
+			echo "<td colspan=2><a href=\"javascript:choose_file('$group_id[$k]','$comments');\"><font size=2 face=\"Arial,Helvetica\">$group_id[$k]</a></td>\n";
+			echo "<td><font size=2 face=\"Arial,Helvetica\">$fullname[$k]</td></tr>\n";
+		#	echo "<td bgcolor=\"$color[$k]\"><font size=2 face=\"Arial,Helvetica\"> &nbsp; &nbsp; &nbsp; &nbsp; </td></tr>\n";
+
+			$k++;
+			}
+		echo "</table></div></body></HTML>\n";
+
+		exit;
+		}
+	}
+################################################################################
+### END callmenu_list
 ################################################################################
 
 
@@ -4091,6 +4342,87 @@ if ($function == 'update_user')
 							$data = "$agent_user|$ingroup_rank|$ingroup_grade$ingrp_rg_onlyNOTE";
 							echo "$result: $result_reason - $user|$data\n";
 							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							}
+
+						if ( (strlen($reset_password) > 0) and ($reset_password > 7) )
+							{
+							### BEGIN reset_password section ###
+							if (strlen($email) < 5)
+								{
+								$stmt="SELECT email from vicidial_users where user='$agent_user';";
+								$rslt=mysql_to_mysqli($stmt, $link);
+								$row=mysqli_fetch_row($rslt);
+								$email =	$row[0];
+								}
+							if (!filter_var($email, FILTER_VALIDATE_EMAIL))
+								{
+								$result = 'NOTICE';
+								$result_reason = "update_user USER PASSWORD RESET FAILED: NO VALID EMAIL PROVIDED";
+								$data = "$agent_user|$email";
+								echo "$result: $result_reason - $user|$data\n";
+								api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+								}
+							else
+								{
+								$temp_pass = '';
+								$possible = "0123456789ABCDEFGHIJKLMNPQRSTUVWXYZ";  
+								$i = 0; 
+								while ($i < $reset_password) 
+									{ 
+									$char = substr($possible, mt_rand(0, strlen($possible)-1), 1);
+									$temp_pass .= $char;
+									$i++;
+									}
+
+								$email_message = "Here is your new temporary password: $temp_pass";
+								$email_subject = "User Account Reset";
+							
+								$success = mail($email, $email_subject, $email_message);
+								if ($success)
+									{
+									$pass_hash='';
+									$pass_hashSQL='';
+									if ($SSpass_hash_enabled > 0)
+										{
+										if (strlen($temp_pass) > 1)
+											{
+											$temp_pass = preg_replace("/\'|\"|\\\\|;| /","",$temp_pass);
+											$pass_hash = exec("../agc/bp.pl --pass=$temp_pass");
+											$pass_hash = preg_replace("/PHASH: |\n|\r|\t| /",'',$pass_hash);
+											$pass_hashSQL = ",pass_hash='$pass_hash'";
+											}
+										$temp_pass='';
+										}
+
+									$stmt="UPDATE vicidial_users SET force_change_password='Y',pass='$temp_pass' $pass_hashSQL WHERE user='$agent_user';";
+									$rslt=mysql_to_mysqli($stmt, $link);
+									if ($DB) {echo "|$stmt|\n";}
+
+									### LOG INSERTION Admin Log Table ###
+									$SQL_log = "$stmt|";
+									$SQL_log = preg_replace('/;/', '', $SQL_log);
+									$SQL_log = addslashes($SQL_log);
+									$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$user', ip_address='$ip', event_section='USERS', event_type='MODIFY', record_id='$agent_user', event_code='ADMIN API RESET PASS', event_sql=\"$SQL_log\", event_notes='user: $agent_user';";
+									if ($DB) {echo "|$stmt|\n";}
+									$rslt=mysql_to_mysqli($stmt, $link);
+
+									$result = 'NOTICE';
+									$result_reason = "update_user USER PASSWORD HAS BEEN RESET";
+									$data = "$agent_user|$email";
+									echo "$result: $result_reason - $user|$data\n";
+									api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+									}
+								else
+									{
+									$error_msg = error_get_last()['message'];
+									$result = 'NOTICE';
+									$result_reason = "update_user USER PASSWORD RESET FAILED: EMAIL FAILURE";
+									$data = "$agent_user|$email|$error_msg";
+									echo "$result: $result_reason - $user|$data\n";
+									api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+									}
+								}
+							### END reset_password section ###
 							}
 
 						$updateSQL = "$passSQL$pass_hashSQL$full_nameSQL$user_levelSQL$user_groupSQL$phone_loginSQL$phone_passSQL$hotkeys_activeSQL$voicemail_idSQL$emailSQL$custom_oneSQL$custom_twoSQL$custom_threeSQL$custom_fourSQL$custom_fiveSQL$activeSQL$wrapup_seconds_overrideSQL";

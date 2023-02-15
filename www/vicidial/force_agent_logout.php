@@ -12,6 +12,7 @@
 # 201025-2320 - First build
 # 220124-2127 - Changed to allow user_level 7 users with the proper permissions to use this page
 # 220223-2155 - Added allow_web_debug system setting
+# 221202-1642 - Change in CIDname prefix to differentiate from other processes
 #
 
 $startMS = microtime();
@@ -512,7 +513,7 @@ else
 		$local_AMP = '@';
 		$ext_context = 'default';
 		$kick_local_channel = "$local_DEF$VLA_conf_exten$local_AMP$ext_context";
-		$queryCID = "ULGH3457$StarTtimE";
+		$queryCID = "ULFA3459$StarTtimE";
 
 		$stmtC="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$VLA_server_ip','','Originate','$queryCID','Channel: $kick_local_channel','Context: $ext_context','Exten: 8300','Priority: 1','Callerid: $queryCID','','','','$channel','$exten');";
 		if ($DB) {echo "<BR>$stmtC\n";}

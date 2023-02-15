@@ -283,6 +283,17 @@ else
 	exit;
 	}
 
+if ($url_type == 'dispo')
+	{$url_type_text='Dispo Call';}
+elseif ($url_type == 'start')
+	{$url_type_text='Start Call';}
+elseif ($url_type == 'noagent')
+	{$url_type_text='No Agent Call';}
+elseif ($url_type == 'addlead')
+	{$url_type_text='Add Lead';}
+else
+	{$url_type_text='Error';}
+
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $row=mysqli_fetch_row($rslt);
@@ -314,7 +325,7 @@ require("admin_header.php");
 
 if ($camp_multi < 1)
 	{
-	echo _QXZ("This URL is not set ALT")."$entry_type|$url_type\n";
+	echo _QXZ("This URL is not set ALT")."$entry_type|$url_type|$url_type_text\n";
 	exit;
 	}
 
@@ -452,7 +463,7 @@ if ($action == "BLANK")
 	echo "<br>"._QXZ("Alternate URL Form");
 	echo "<center><TABLE width=1020 cellspacing=3>\n";
 	echo "<tr><td align=center colspan=2>\n";
-	echo "<br><b>"._QXZ("Alternate %1s URLs for %2s",0,'',$url_type,$entry_type).": <a href=\"./admin.php?$mod_link$campaign_id\">$campaign_id</a></b> &nbsp; $NWB#alt_multi_urls$NWE\n";
+	echo "<br><b>"._QXZ("Alternate %1s URLs for %2s",0,'',$url_type_text,$entry_type).": <a href=\"./admin.php?$mod_link$campaign_id\">$campaign_id</a></b> &nbsp; $NWB#alt_multi_urls$NWE\n";
 
 	echo "<TABLE width=1000 cellspacing=3>\n";
 	echo "<tr><td><font size=2><b>#</td><td NOWRAP><font size=1>URL ID</td><td><font size=2><b>"._QXZ("ACTIVE")."</td><td><font size=2><b>"._QXZ("RANK")."</td><td><font size=2><b>"._QXZ("STATUSES")."</td><td><font size=2><b>"._QXZ("LISTS")."</td><td><font size=2><b>"._QXZ("MIN LENGTH")."</td><td><font size=2><b>"._QXZ("DESCRIPTION")."</td><td><font size=2><b>"._QXZ("SUBMIT")."</td></tr>\n";
@@ -513,7 +524,7 @@ if ($action == "BLANK")
 	echo "</table></center><br>\n";
 
 
-	echo "<br>"._QXZ("Add a new %1s URL",0,'',$url_type).":<br>";
+	echo "<br>"._QXZ("Add a new %1s URL",0,'',$url_type_text).":<br>";
 	echo "</td></tr>\n";
 
 	echo "<TABLE width=700 cellspacing=3>\n";

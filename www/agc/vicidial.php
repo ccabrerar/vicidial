@@ -1,7 +1,7 @@
 <?php
 # vicidial.php - the web-based version of the astVICIDIAL client application
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # Other scripts that this application depends on:
 # - vdc_db_query.php: Updates information in the database
@@ -704,10 +704,16 @@
 # 221012-1723 - Fix for webform URLs updates with correct recording variables
 # 221020-1651 - Added login_kickall system setting
 # 221021-1022 - Added webphone_settings phones option
+# 221112-1638 - Fix for dispo timer issue #1387
+# 221116-1059 - Fix for long in-group dialstring extensions
+# 221116-2159 - Fix for recording buttons ALLFORCE issue #1389
+# 221206-1520 - Added login form multi-submit prevention ($login_submit_once), Added dialRegExten_enabled webphone option
+# 230118-0947 - Added agent_hangup_route features
+# 230131-0826 - Added filtering of 3-way number to dial to remove non-diable characters
 #
 
-$version = '2.14-672c';
-$build = '221021-1022';
+$version = '2.14-678c';
+$build = '230131-0826';
 $php_script = 'vicidial.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=98;
@@ -989,6 +995,7 @@ $logged_in_refresh_link = '0';	# set to 1 to allow clickable "Logged in as..." l
 $webphone_call_seconds	= '0';	# set to 1 or higher to have the agent phone(if set to webphone) called X seconds after login
 $user_pass_webform		= '0';	# set to 1 or 2 to return to default of including the 'user'(1) and 'pass'(2) by default in webform URLs
 $phone_login_webform	= '0';	# set to 1 or 2 to return to default of including the 'phone_login'(1) and 'phone_pass'(2) by default in webform URLs
+$login_submit_once		= '1';	# set to 0 to remove the "disable the login submit button after submitting" feature
 
 $TEST_all_statuses		= '0';	# TEST variable allows all statuses in dispo screen, FOR DEBUG ONLY
 
@@ -1083,6 +1090,7 @@ if ( ($SSweb_logo!='default_new') and ($SSweb_logo!='default_old') )
 ##### END Define colors and logo #####
 
 $hide_gender=0;
+$dialRegExten_enabled=0;
 $US='_';
 $AT='@';
 $DS='-';
@@ -1325,9 +1333,6 @@ if ($LogiNAJAX > 0)
 				delete xmlhttp;
 				}
 			}
-	// -->
-	</script>
-
 	<?php
 	}
 else
@@ -1341,12 +1346,54 @@ else
 		{
 		var nothing=0;
 		}
+	<?php
+	}
+if ($login_submit_once > 0)
+	{
+	?>
+	var submit_clicks=0;
+	var image_loading = new Image();
+		image_loading.src='./images/<?php echo _QXZ("agent_loading_animation.gif") ?>';
+
+	function login_click()
+		{
+		login_submit();
+		}
+	function login_submit()
+		{
+		submit_clicks++;
+		if (submit_clicks > 1)
+			{
+			document.getElementById("login_sub").value='<?php echo _QXZ("Loading, please wait..."); ?> ' + submit_clicks;
+			}
+		else
+			{
+			document.vicidial_form.submit();
+			document.getElementById("login_sub").value='<?php echo _QXZ("Loading, please wait..."); ?>';
+			document.getElementById("login_sub").disabled=true;
+			document.getElementById("LoginLoadingBox").style.visibility = 'visible';
+			}
+		}
 
 	// -->
 	</script>
 
 	<?php
+	$LOGINformSUBtrigger = 'onsubmit="login_submit()"';
+	$LoginLoadingBox  = "<span id=\"LoginLoadingBox\"  style=\"visibility:hidden\">\n";
+	$LoginLoadingBox .= "<br />\n<font class=\"skb_text\">"._QXZ("Logging in")."...</font>\n";
+	$LoginLoadingBox .= "<br /><br />\n";
+	$LoginLoadingBox .= "<img src=\"./images/"._QXZ("agent_loading_animation.gif")."\" height=\"103px\" width=\"103px\" alt=\""._QXZ("Loading...")."\" />\n</span>\n";
+	}
+else
+	{
+	$LOGINformSUBtrigger='';
+	$LoginLoadingBox='';
+?>
+	// -->
+	</script>
 
+<?php
 	}
 
 $grey_link='';
@@ -1359,11 +1406,11 @@ if ($relogin == 'YES')
 	echo "</head>\n";
     echo "<body onresize=\"browser_dimensions();\" onload=\"browser_dimensions();\" style=\"background-color:white\">\n";
 	if ($hide_timeclock_link < 1)
-	   {echo "<a href=\"./timeclock.php?referrer=agent&amp;pl=$phone_login&amp;pp=$phone_pass&amp;VD_login=$VD_login&amp;VD_pass=$VD_pass\"> <font class=\"sb_text\">"._QXZ("Timeclock")."</font></a>$grey_link<br />\n";}
+		{echo "<a href=\"./timeclock.php?referrer=agent&amp;pl=$phone_login&amp;pp=$phone_pass&amp;VD_login=$VD_login&amp;VD_pass=$VD_pass\"> <font class=\"sb_text\">"._QXZ("Timeclock")."</font></a>$grey_link<br />\n";}
     echo "<table width=\"100%\"><tr><td></td>\n";
 	echo "<!-- INTERNATIONALIZATION-LINKS-PLACEHOLDER-VICIDIAL -->\n";
     echo "</tr></table>\n";
-    echo "<form name=\"vicidial_form\" id=\"vicidial_form\" action=\"$agcPAGE\" method=\"post\">\n";
+	echo "<form name=\"vicidial_form\" id=\"vicidial_form\" action=\"$agcPAGE\" method=\"post\" $LOGINformSUBtrigger>\n";
     echo "<input type=\"hidden\" name=\"DB\" id=\"DB\" value=\"$DB\" />\n";
     echo "<input type=\"hidden\" name=\"JS_browser_height\" id=\"JS_browser_height\" value=\"\" />\n";
     echo "<input type=\"hidden\" name=\"JS_browser_width\" id=\"JS_browser_width\" value=\"\" />\n";
@@ -1411,11 +1458,17 @@ if ($relogin == 'YES')
 		}
     echo "<tr><td align=\"right\" valign=\"top\"><font class=\"skb_text\">"._QXZ("Campaign:")."</font>  </td>";
     echo "<td align=\"left\"><font class=\"skb_text\"><span id=\"LogiNCamPaigns\">$camp_form_code</span></font></td></tr>\n";
-    echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";
+	if ($login_submit_once > 0)
+		{echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" id=\"login_sub\" name=\"login_sub\" value=\""._QXZ("SUBMIT")."\" onclick=\"login_click()\"> &nbsp; \n";}
+	else
+		{echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";}
     echo "<span id=\"LogiNReseT\"><input type=\"button\" value=\""._QXZ("Refresh Campaign List")."\" onclick=\"login_allowable_campaigns()\"></span></td></tr>\n";
     echo "<tr><td align=\"left\" colspan=\"2\"><font class=\"body_tiny\"><br />"._QXZ("VERSION:")." $version &nbsp; &nbsp; &nbsp; "._QXZ("BUILD:")." $build</font></td></tr>\n";
-    echo "</table></center>\n";
+	echo "</table>\n";
     echo "</form>\n\n";
+	echo "\n\n";
+	echo "$LoginLoadingBox";
+	echo "</center>\n";
 	echo "$INSERT_before_body_close";
 	echo "</body>\n\n";
 	echo "</html>\n\n";
@@ -1428,41 +1481,47 @@ if ($user_login_first == 1)
 		{
 		echo "<title>"._QXZ("Agent web client: Campaign Login")."</title>\n";
 		echo "</head>\n";
-	   echo "<body onresize=\"browser_dimensions();\" onload=\"browser_dimensions();\">\n";
+		echo "<body onresize=\"browser_dimensions();\" onload=\"browser_dimensions();\">\n";
 		if ($hide_timeclock_link < 1)
-		  {echo "<a href=\"./timeclock.php?referrer=agent&amp;pl=$phone_login&amp;pp=$phone_pass&amp;VD_login=$VD_login&amp;VD_pass=$VD_pass\"> <font class=\"sb_text\">"._QXZ("Timeclock")."</font></a>$grey_link<br />\n";}
-	   echo "<table width=\"100%\"><tr><td></td>\n";
+			{echo "<a href=\"./timeclock.php?referrer=agent&amp;pl=$phone_login&amp;pp=$phone_pass&amp;VD_login=$VD_login&amp;VD_pass=$VD_pass\"> <font class=\"sb_text\">"._QXZ("Timeclock")."</font></a>$grey_link<br />\n";}
+		echo "<table width=\"100%\"><tr><td></td>\n";
 		echo "<!-- INTERNATIONALIZATION-LINKS-PLACEHOLDER-VICIDIAL -->\n";
-	   echo "</tr></table>\n";
-	   echo "<form name=\"vicidial_form\" id=\"vicidial_form\" action=\"$agcPAGE\" method=\"post\">\n";
-	   echo "<input type=\"hidden\" name=\"DB\" value=\"$DB\" />\n";
-	   echo "<input type=\"hidden\" name=\"JS_browser_height\" id=\"JS_browser_height\" value=\"\" />\n";
-	   echo "<input type=\"hidden\" name=\"JS_browser_width\" id=\"JS_browser_width\" value=\"\" />\n";
-	   #echo "<input type=\"hidden\" name=\"phone_login\" value=\"$phone_login\">\n";
-	   #echo "<input type=\"hidden\" name=\"phone_pass\" value=\"$phone_pass\">\n";
+		echo "</tr></table>\n";
+		echo "<form name=\"vicidial_form\" id=\"vicidial_form\" action=\"$agcPAGE\" method=\"post\" $LOGINformSUBtrigger>\n";
+		echo "<input type=\"hidden\" name=\"DB\" value=\"$DB\" />\n";
+		echo "<input type=\"hidden\" name=\"JS_browser_height\" id=\"JS_browser_height\" value=\"\" />\n";
+		echo "<input type=\"hidden\" name=\"JS_browser_width\" id=\"JS_browser_width\" value=\"\" />\n";
+		#echo "<input type=\"hidden\" name=\"phone_login\" value=\"$phone_login\">\n";
+		#echo "<input type=\"hidden\" name=\"phone_pass\" value=\"$phone_pass\">\n";
 		echo "<input type=\"hidden\" name=\"LOGINvarONE\" id=\"LOGINvarONE\" value=\"$LOGINvarONE\" />\n";
 		echo "<input type=\"hidden\" name=\"LOGINvarTWO\" id=\"LOGINvarTWO\" value=\"$LOGINvarTWO\" />\n";
 		echo "<input type=\"hidden\" name=\"LOGINvarTHREE\" id=\"LOGINvarTHREE\" value=\"$LOGINvarTHREE\" />\n";
 		echo "<input type=\"hidden\" name=\"LOGINvarFOUR\" id=\"LOGINvarFOUR\" value=\"$LOGINvarFOUR\" />\n";
 		echo "<input type=\"hidden\" name=\"LOGINvarFIVE\" id=\"LOGINvarFIVE\" value=\"$LOGINvarFIVE\" />\n";
 		echo "<input type=\"hidden\" name=\"hide_relogin_fields\" id=\"hide_relogin_fields\" value=\"$hide_relogin_fields\" />\n";
-	   echo "<center><br /><b>"._QXZ("User Login")."</b><br /><br />";
-	   echo "<table width=\"460px\" cellpadding=\"3\" cellspacing=\"0\" bgcolor=\"#$SSframe_background\"><tr bgcolor=\"white\">";
-	   echo "<td align=\"left\" valign=\"bottom\" bgcolor=\"#$SSmenu_background\" width=\"170\"><img src=\"$selected_logo\" border=\"0\" height=\"45\" width=\"170\" alt=\"Agent Screen\" /></td>";
-	   echo "<td align=\"center\" valign=\"middle\" bgcolor=\"#$SSmenu_background\"> <font class=\"sh_text_white\">"._QXZ("Campaign Login")."</font> </td>";
-	   echo "</tr>\n";
-	   echo "<tr><td align=\"left\" colspan=\"2\"><font size=\"1\"> &nbsp; </font></td></tr>\n";
-	   echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("User Login").":</font>  </td>";
-	   echo "<td align=\"left\"><input type=\"text\" name=\"VD_login\" size=\"20\" maxlength=\"20\" value=\"$VD_login\" /></td></tr>\n";
-	   echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("User Password:")."</font>  </td>";
-	   echo "<td align=\"left\"><input type=\"password\" name=\"VD_pass\" size=\"20\" maxlength=\"100\" value=\"$VD_pass\" /></td></tr>\n";
-	   echo "<tr><td align=\"right\" valign=\"top\"><font class=\"skb_text\">"._QXZ("Campaign:")."</font>  </td>";
-	   echo "<td align=\"left\"><font class=\"skb_text\"><span id=\"LogiNCamPaigns\">$camp_form_code</span></font></td></tr>\n";
-	   echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";
-	   echo "<span id=\"LogiNReseT\"></span></td></tr>\n";
-	   echo "<tr><td align=\"left\" colspan=\"2\"><font class=\"body_tiny\"><br />"._QXZ("VERSION:")." $version &nbsp; &nbsp; &nbsp; "._QXZ("BUILD:")." $build</font></td></tr>\n";
-	   echo "</table>\n";
-	   echo "</form>\n\n";
+		echo "<center><br /><b>"._QXZ("User Login")."</b><br /><br />";
+		echo "<table width=\"460px\" cellpadding=\"3\" cellspacing=\"0\" bgcolor=\"#$SSframe_background\"><tr bgcolor=\"white\">";
+		echo "<td align=\"left\" valign=\"bottom\" bgcolor=\"#$SSmenu_background\" width=\"170\"><img src=\"$selected_logo\" border=\"0\" height=\"45\" width=\"170\" alt=\"Agent Screen\" /></td>";
+		echo "<td align=\"center\" valign=\"middle\" bgcolor=\"#$SSmenu_background\"> <font class=\"sh_text_white\">"._QXZ("Campaign Login")."</font> </td>";
+		echo "</tr>\n";
+		echo "<tr><td align=\"left\" colspan=\"2\"><font size=\"1\"> &nbsp; </font></td></tr>\n";
+		echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("User Login").":</font>  </td>";
+		echo "<td align=\"left\"><input type=\"text\" name=\"VD_login\" size=\"20\" maxlength=\"20\" value=\"$VD_login\" /></td></tr>\n";
+		echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("User Password:")."</font>  </td>";
+		echo "<td align=\"left\"><input type=\"password\" name=\"VD_pass\" size=\"20\" maxlength=\"100\" value=\"$VD_pass\" /></td></tr>\n";
+		echo "<tr><td align=\"right\" valign=\"top\"><font class=\"skb_text\">"._QXZ("Campaign:")."</font>  </td>";
+		echo "<td align=\"left\"><font class=\"skb_text\"><span id=\"LogiNCamPaigns\">$camp_form_code</span></font></td></tr>\n";
+		if ($login_submit_once > 0)
+			{echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" id=\"login_sub\" name=\"login_sub\" value=\""._QXZ("SUBMIT")."\" onclick=\"login_click()\"> &nbsp; \n";}
+		else
+			{echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";}
+		echo "<span id=\"LogiNReseT\"></span></td></tr>\n";
+		echo "<tr><td align=\"left\" colspan=\"2\"><font class=\"body_tiny\"><br />"._QXZ("VERSION:")." $version &nbsp; &nbsp; &nbsp; "._QXZ("BUILD:")." $build</font></td></tr>\n";
+		echo "</table>\n";
+		echo "</form>\n\n";
+		echo "\n\n";
+		echo "$LoginLoadingBox";
+		echo "</center>\n";
 		echo "$INSERT_before_body_close";
 		echo "</body>\n\n";
 		echo "</html>\n\n";
@@ -1484,42 +1543,48 @@ if ($user_login_first == 1)
 				{
 				echo "<title>"._QXZ("Agent web client:  Login")."</title>\n";
 				echo "</head>\n";
-			 echo "<body onresize=\"browser_dimensions();\"  onLoad=\"browser_dimensions();\">\n";
+				echo "<body onresize=\"browser_dimensions();\"  onLoad=\"browser_dimensions();\">\n";
 				if ($hide_timeclock_link < 1)
-				{echo "<a href=\"./timeclock.php?referrer=agent&amp;pl=$phone_login&amp;pp=$phone_pass&amp;VD_login=$VD_login&amp;VD_pass=$VD_pass\"> <font class=\"sb_text\">"._QXZ("Timeclock")."</font></a>$grey_link<br />\n";}
-			 echo "<table width=\"100%\"><tr><td></td>\n";
+					{echo "<a href=\"./timeclock.php?referrer=agent&amp;pl=$phone_login&amp;pp=$phone_pass&amp;VD_login=$VD_login&amp;VD_pass=$VD_pass\"> <font class=\"sb_text\">"._QXZ("Timeclock")."</font></a>$grey_link<br />\n";}
+				echo "<table width=\"100%\"><tr><td></td>\n";
 				echo "<!-- INTERNATIONALIZATION-LINKS-PLACEHOLDER-VICIDIAL -->\n";
-			 echo "</tr></table>\n";
-			 echo "<form  name=\"vicidial_form\" id=\"vicidial_form\" action=\"$agcPAGE\" method=\"post\">\n";
-			 echo "<input type=\"hidden\" name=\"DB\" value=\"$DB\" />\n";
-			 echo "<input type=\"hidden\" name=\"JS_browser_height\" id=\"JS_browser_height\" value=\"\" />\n";
-			 echo "<input type=\"hidden\" name=\"JS_browser_width\" id=\"JS_browser_width\" value=\"\" />\n";
+				echo "</tr></table>\n";
+				echo "<form  name=\"vicidial_form\" id=\"vicidial_form\" action=\"$agcPAGE\" method=\"post\" $LOGINformSUBtrigger>\n";
+				echo "<input type=\"hidden\" name=\"DB\" value=\"$DB\" />\n";
+				echo "<input type=\"hidden\" name=\"JS_browser_height\" id=\"JS_browser_height\" value=\"\" />\n";
+				echo "<input type=\"hidden\" name=\"JS_browser_width\" id=\"JS_browser_width\" value=\"\" />\n";
 				echo "<input type=\"hidden\" name=\"LOGINvarONE\" id=\"LOGINvarONE\" value=\"$LOGINvarONE\" />\n";
 				echo "<input type=\"hidden\" name=\"LOGINvarTWO\" id=\"LOGINvarTWO\" value=\"$LOGINvarTWO\" />\n";
 				echo "<input type=\"hidden\" name=\"LOGINvarTHREE\" id=\"LOGINvarTHREE\" value=\"$LOGINvarTHREE\" />\n";
 				echo "<input type=\"hidden\" name=\"LOGINvarFOUR\" id=\"LOGINvarFOUR\" value=\"$LOGINvarFOUR\" />\n";
 				echo "<input type=\"hidden\" name=\"LOGINvarFIVE\" id=\"LOGINvarFIVE\" value=\"$LOGINvarFIVE\" />\n";
 				echo "<input type=\"hidden\" name=\"hide_relogin_fields\" id=\"hide_relogin_fields\" value=\"$hide_relogin_fields\" />\n";
-			 echo "<br /><br /><br /><center><table width=\"460px\" cellpadding=\"3\" cellspacing=\"0\"  bgcolor=\"#$SSframe_background\"><tr bgcolor=\"white\">";
-			 echo "<td align=\"left\" valign=\"bottom\" bgcolor=\"#$SSmenu_background\" width=\"170\"><img src=\"$selected_logo\" border=\"0\" height=\"45\" width=\"170\" alt=\"Agent Screen\" /></td>";
-			 echo "<td align=\"center\" valign=\"middle\" bgcolor=\"#$SSmenu_background\"> <font class=\"sh_text_white\">"._QXZ("Login")."</font> </td>";
-			 echo "</tr>\n";
-			 echo "<tr><td align=\"left\" colspan=\"2\"><font size=\"1\"> &nbsp; </font></td></tr>\n";
-			 echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("Phone Login:")."</font> </td>";
-			 echo "<td align=\"left\"><input type=\"text\" name=\"phone_login\" size=\"20\" maxlength=\"20\" value=\"$phone_login\" /></td></tr>\n";
-			 echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("Phone Password:")."</font>  </td>";
-			 echo "<td align=\"left\"><input type=\"password\" name=\"phone_pass\" size=\"20\" maxlength=\"100\" value=\"$phone_pass\" /></td></tr>\n";
-			 echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("User Login").":</font>  </td>";
-			 echo "<td align=\"left\"><input type=\"text\" name=\"VD_login\" size=\"20\" maxlength=\"20\" value=\"$VD_login\" /></td></tr>\n";
-			 echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("User Password:")."</font>  </td>";
-			 echo "<td align=\"left\"><input type=\"password\" name=\"VD_pass\" size=\"20\" maxlength=\"100\" value=\"$VD_pass\" /></td></tr>\n";
-			 echo "<tr><td align=\"right\" valign=\"top\"><font class=\"skb_text\">"._QXZ("Campaign:")."</font>  </td>";
-			 echo "<td align=\"left\"><font class=\"skb_text\"><span id=\"LogiNCamPaigns\">$camp_form_code</span></font></td></tr>\n";
-			 echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";
-			 echo "<span id=\"LogiNReseT\"></span></td></tr>\n";
-			 echo "<tr><td align=\"left\" colspan=\"2\"><font class=\"body_tiny\"><br />"._QXZ("VERSION:")." $version &nbsp; &nbsp; &nbsp; "._QXZ("BUILD:")." $build</font></td></tr>\n";
-			 echo "</table></center>\n";
-			 echo "</form>\n\n";
+				echo "<br /><br /><br /><center><table width=\"460px\" cellpadding=\"3\" cellspacing=\"0\"  bgcolor=\"#$SSframe_background\"><tr bgcolor=\"white\">";
+				echo "<td align=\"left\" valign=\"bottom\" bgcolor=\"#$SSmenu_background\" width=\"170\"><img src=\"$selected_logo\" border=\"0\" height=\"45\" width=\"170\" alt=\"Agent Screen\" /></td>";
+				echo "<td align=\"center\" valign=\"middle\" bgcolor=\"#$SSmenu_background\"> <font class=\"sh_text_white\">"._QXZ("Login")."</font> </td>";
+				echo "</tr>\n";
+				echo "<tr><td align=\"left\" colspan=\"2\"><font size=\"1\"> &nbsp; </font></td></tr>\n";
+				echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("Phone Login:")."</font> </td>";
+				echo "<td align=\"left\"><input type=\"text\" name=\"phone_login\" size=\"20\" maxlength=\"20\" value=\"$phone_login\" /></td></tr>\n";
+				echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("Phone Password:")."</font>  </td>";
+				echo "<td align=\"left\"><input type=\"password\" name=\"phone_pass\" size=\"20\" maxlength=\"100\" value=\"$phone_pass\" /></td></tr>\n";
+				echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("User Login").":</font>  </td>";
+				echo "<td align=\"left\"><input type=\"text\" name=\"VD_login\" size=\"20\" maxlength=\"20\" value=\"$VD_login\" /></td></tr>\n";
+				echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("User Password:")."</font>  </td>";
+				echo "<td align=\"left\"><input type=\"password\" name=\"VD_pass\" size=\"20\" maxlength=\"100\" value=\"$VD_pass\" /></td></tr>\n";
+				echo "<tr><td align=\"right\" valign=\"top\"><font class=\"skb_text\">"._QXZ("Campaign:")."</font>  </td>";
+				echo "<td align=\"left\"><font class=\"skb_text\"><span id=\"LogiNCamPaigns\">$camp_form_code</span></font></td></tr>\n";
+				if ($login_submit_once > 0)
+					{echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" id=\"login_sub\" name=\"login_sub\" value=\""._QXZ("SUBMIT")."\" onclick=\"login_click()\"> &nbsp; \n";}
+				else
+					{echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";}
+                echo "<span id=\"LogiNReseT\"></span></td></tr>\n";
+                echo "<tr><td align=\"left\" colspan=\"2\"><font class=\"body_tiny\"><br />"._QXZ("VERSION:")." $version &nbsp; &nbsp; &nbsp; "._QXZ("BUILD:")." $build</font></td></tr>\n";
+				echo "</table>\n";
+				echo "</form>\n\n";
+				echo "\n\n";
+				echo "$LoginLoadingBox";
+				echo "</center>\n";
 				echo "$INSERT_before_body_close";
 				echo "</body>\n\n";
 				echo "</html>\n\n";
@@ -1535,11 +1600,11 @@ if ( (strlen($phone_login)<2) or (strlen($phone_pass)<2) )
 	echo "</head>\n";
     echo "<body onresize=\"browser_dimensions();\"  onload=\"browser_dimensions();\">\n";
 	if ($hide_timeclock_link < 1)
-	   {echo "<a href=\"./timeclock.php?referrer=agent&amp;pl=$phone_login&amp;pp=$phone_pass&amp;VD_login=$VD_login&amp;VD_pass=$VD_pass\"> <font class=\"sb_text\">"._QXZ("Timeclock")."</font></a>$grey_link<br />\n";}
+		{echo "<a href=\"./timeclock.php?referrer=agent&amp;pl=$phone_login&amp;pp=$phone_pass&amp;VD_login=$VD_login&amp;VD_pass=$VD_pass\"> <font class=\"sb_text\">"._QXZ("Timeclock")."</font></a>$grey_link<br />\n";}
     echo "<table width=100%><tr><td></td>\n";
 	echo "<!-- INTERNATIONALIZATION-LINKS-PLACEHOLDER-VICIDIAL -->\n";
     echo "</tr></table>\n";
-    echo "<form name=\"vicidial_form\" id=\"vicidial_form\" action=\"$agcPAGE\" method=\"post\">\n";
+	echo "<form name=\"vicidial_form\" id=\"vicidial_form\" action=\"$agcPAGE\" method=\"post\" $LOGINformSUBtrigger>\n";
     echo "<input type=\"hidden\" name=\"DB\" value=\"$DB\" />\n";
     echo "<input type=\"hidden\" name=\"JS_browser_height\" id=\"JS_browser_height\" value=\"\" />\n";
     echo "<input type=\"hidden\" name=\"JS_browser_width\" id=\"JS_browser_width\" value=\"\" />\n";
@@ -1558,11 +1623,17 @@ if ( (strlen($phone_login)<2) or (strlen($phone_pass)<2) )
     echo "<td align=\"left\"><input type=\"text\" name=\"phone_login\" size=\"10\" maxlength=\"20\" value=\"\" /></td></tr>\n";
     echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("Phone Password:")."</font>  </td>";
     echo "<td align=\"left\"><input type=\"password\" name=\"phone_pass\" size=\"10\" maxlength=\"100\" value=\"\" /></td></tr>\n";
-    echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";
+	if ($login_submit_once > 0)
+		{echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" id=\"login_sub\" name=\"login_sub\" value=\""._QXZ("SUBMIT")."\" onclick=\"login_click()\"> &nbsp; \n";}
+	else
+		{echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";}
     echo "<span id=\"LogiNReseT\"></span></td></tr>\n";
     echo "<tr><td align=\"left\" colspan=\"2\"><font class=\"body_tiny\"><br />"._QXZ("VERSION:")." $version &nbsp; &nbsp; &nbsp; "._QXZ("BUILD:")." $build</font></td></tr>\n";
-    echo "</table></center>\n";
+	echo "</table>\n";
     echo "</form>\n\n";
+	echo "\n\n";
+	echo "$LoginLoadingBox";
+	echo "</center>\n";
 	echo "$INSERT_before_body_close";
 	echo "</body>\n\n";
 	echo "</html>\n\n";
@@ -1716,7 +1787,7 @@ else
 						echo "<!-- USER PASSWORD CHANGED: |$VUpassword_affected_rows| -->\n";
 						echo "$DBoutput";
 						echo "</tr></table>\n";
-						echo "<form name=\"vicidial_form\" id=\"vicidial_form\" action=\"$PHP_SELF\" method=\"post\">\n";
+						echo "<form name=\"vicidial_form\" id=\"vicidial_form\" action=\"$PHP_SELF\" method=\"post\" $LOGINformSUBtrigger>\n";
 						echo "<input type=\"hidden\" name=\"DB\" value=\"$DB\" />\n";
 						echo "<input type=\"hidden\" name=\"JS_browser_height\" id=\"JS_browser_height\" value=\"\" />\n";
 						echo "<input type=\"hidden\" name=\"JS_browser_width\" id=\"JS_browser_width\" value=\"\" />\n";
@@ -1736,11 +1807,17 @@ else
 						echo "<td align=\"left\" valign=\"bottom\" bgcolor=\"#$SSmenu_background\" width=\"170\"><img src=\"$selected_logo\" border=\"0\" height=\"45\" width=\"170\" alt=\"Agent Screen\" /></td>";
 						echo "<td align=\"center\" valign=\"middle\" bgcolor=\"#$SSmenu_background\"> <font class=\"sh_text_white\">"._QXZ("Password has been changed successfully")."</font> </td>";
 						echo "</tr>\n";
-						echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("CLICK HERE TO LOG IN")."\" /> &nbsp; \n";
+						if ($login_submit_once > 0)
+							{echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" id=\"login_sub\" name=\"login_sub\" value=\""._QXZ("CLICK HERE TO LOG IN")."\" onclick=\"login_click()\"> &nbsp; \n";}
+						else
+							{echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("CLICK HERE TO LOG IN")."\" /> &nbsp; \n";}
 						echo "<span id=\"LogiNReseT\"></span></td></tr>\n";
 						echo "<tr><td align=\"left\" colspan=\"2\"><font class=\"body_tiny\"><br />"._QXZ("VERSION:")." $version &nbsp; &nbsp; &nbsp; "._QXZ("BUILD:")." $build</font></td></tr>\n";
-						echo "</table></center>\n";
+						echo "</table>\n";
 						echo "</form>\n\n";
+						echo "\n\n";
+						echo "$LoginLoadingBox";
+						echo "</center>\n";
 						echo "$INSERT_before_body_close";
 						echo "</body>\n\n";
 						echo "</html>\n\n";
@@ -1760,7 +1837,7 @@ else
 				echo "<!-- INTERNATIONALIZATION-LINKS-PLACEHOLDER-VICIDIAL -->\n";
 				echo "$DBoutput";
 				echo "</tr></table>\n";
-				echo "<form name=\"vicidial_form\" id=\"vicidial_form\" action=\"$PHP_SELF\" method=\"post\">\n";
+				echo "<form name=\"vicidial_form\" id=\"vicidial_form\" action=\"$PHP_SELF\" method=\"post\" $LOGINformSUBtrigger>\n";
 				echo "<input type=\"hidden\" name=\"DB\" value=\"$DB\" />\n";
 				echo "<input type=\"hidden\" name=\"JS_browser_height\" id=\"JS_browser_height\" value=\"\" />\n";
 				echo "<input type=\"hidden\" name=\"JS_browser_width\" id=\"JS_browser_width\" value=\"\" />\n";
@@ -1785,11 +1862,17 @@ else
 				echo "<td align=\"left\"><input type=\"password\" name=\"new_pass1\" id=\"new_pass1\" size=\"60\" maxlength=\"100\" onkeyup=\"return pwdChanged('new_pass1','pass_length1');\" /> &nbsp; <font size=1 face=\"Arial,Helvetica\"><span id=\"pass_length1\"></font></td></tr>\n";
 				echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("Confirm New Password").":  </font> </td>";
 				echo "<td align=\"left\"><input type=\"password\" name=\"new_pass2\" id=\"new_pass2\" size=\"60\" maxlength=\"100\" onkeyup=\"return pwdChanged('new_pass2','pass_length2');\" /> &nbsp; <font size=1 face=\"Arial,Helvetica\"><span id=\"pass_length2\"></font></td></tr>\n";
-				echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";
+				if ($login_submit_once > 0)
+					{echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" id=\"login_sub\" name=\"login_sub\" value=\""._QXZ("SUBMIT")."\" onclick=\"login_click()\"> &nbsp; \n";}
+				else
+					{echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";}
 				echo "<span id=\"LogiNReseT\"></span></td></tr>\n";
 				echo "<tr><td align=\"left\" colspan=\"2\"><font class=\"body_tiny\"><br />"._QXZ("VERSION:")." $version &nbsp; &nbsp; &nbsp; "._QXZ("BUILD:")." $build</font></td></tr>\n";
-				echo "</table></center>\n";
+				echo "</table>\n";
 				echo "</form>\n\n";
+				echo "\n\n";
+				echo "$LoginLoadingBox";
+				echo "</center>\n";
 				echo "$INSERT_before_body_close";
 				echo "</body>\n\n";
 				echo "</html>\n\n";
@@ -2157,31 +2240,37 @@ else
 				{
 				echo "<title>"._QXZ("Agent web client: Campaign Login")."</title>\n";
 				echo "</head>\n";
-			 echo "<body onresize=\"browser_dimensions();\" onload=\"browser_dimensions();\">\n";
+				echo "<body onresize=\"browser_dimensions();\" onload=\"browser_dimensions();\">\n";
 				if ($hide_timeclock_link < 1)
-				{echo "<a href=\"./timeclock.php?referrer=agent&amp;pl=$phone_login&amp;pp=$phone_pass&amp;VD_login=$VD_login&amp;VD_pass=$VD_pass\"> <font class=\"sb_text\">"._QXZ("Timeclock")."</font></a>$grey_link<br />\n";}
-			 echo "<table width=\"100%\"><tr><td></td>\n";
+					{echo "<a href=\"./timeclock.php?referrer=agent&amp;pl=$phone_login&amp;pp=$phone_pass&amp;VD_login=$VD_login&amp;VD_pass=$VD_pass\"> <font class=\"sb_text\">"._QXZ("Timeclock")."</font></a>$grey_link<br />\n";}
+				echo "<table width=\"100%\"><tr><td></td>\n";
 				echo "<!-- INTERNATIONALIZATION-LINKS-PLACEHOLDER-VICIDIAL -->\n";
-			 echo "</tr></table>\n";
-			 echo "<b><font class=\"skb_text\">"._QXZ("Sorry, you are not allowed to login to this campaign:")." $VD_campaign</b>\n";
-			 echo "<form action=\"$PHP_SELF\" method=\"post\">\n";
-			 echo "<input type=\"hidden\" name=\"db\" value=\"$DB\" />\n";
-			 echo "<input type=\"hidden\" name=\"JS_browser_height\" id=\"JS_browser_height\" value=\"\" />\n";
-			 echo "<input type=\"hidden\" name=\"JS_browser_width\" id=\"JS_browser_width\" value=\"\" />\n";
-			 echo "<input type=\"hidden\" name=\"phone_login\" value=\"$phone_login\" />\n";
-			 echo "<input type=\"hidden\" name=\"phone_pass\" value=\"$phone_pass\" />\n";
+				echo "</tr></table>\n";
+				echo "<b><font class=\"skb_text\">"._QXZ("Sorry, you are not allowed to login to this campaign:")." $VD_campaign</b>\n";
+				echo "<form name=\"vicidial_form\" id=\"vicidial_form\" action=\"$agcPAGE\" method=\"post\" $LOGINformSUBtrigger>\n";
+				echo "<input type=\"hidden\" name=\"db\" value=\"$DB\" />\n";
+				echo "<input type=\"hidden\" name=\"JS_browser_height\" id=\"JS_browser_height\" value=\"\" />\n";
+				echo "<input type=\"hidden\" name=\"JS_browser_width\" id=\"JS_browser_width\" value=\"\" />\n";
+				echo "<input type=\"hidden\" name=\"phone_login\" value=\"$phone_login\" />\n";
+				echo "<input type=\"hidden\" name=\"phone_pass\" value=\"$phone_pass\" />\n";
 				echo "<input type=\"hidden\" name=\"LOGINvarONE\" id=\"LOGINvarONE\" value=\"$LOGINvarONE\" />\n";
 				echo "<input type=\"hidden\" name=\"LOGINvarTWO\" id=\"LOGINvarTWO\" value=\"$LOGINvarTWO\" />\n";
 				echo "<input type=\"hidden\" name=\"LOGINvarTHREE\" id=\"LOGINvarTHREE\" value=\"$LOGINvarTHREE\" />\n";
 				echo "<input type=\"hidden\" name=\"LOGINvarFOUR\" id=\"LOGINvarFOUR\" value=\"$LOGINvarFOUR\" />\n";
 				echo "<input type=\"hidden\" name=\"LOGINvarFIVE\" id=\"LOGINvarFIVE\" value=\"$LOGINvarFIVE\" />\n";
 				echo "<input type=\"hidden\" name=\"hide_relogin_fields\" id=\"hide_relogin_fields\" value=\"$hide_relogin_fields\" />\n";
-			 echo "<font class=\"skb_text\">"._QXZ("Login").": <input type=\"text\" name=\"VD_login\" size=\"20\" maxlength=\"20\" value=\"$VD_login\" />\n<br />";
-			 echo "<font class=\"skb_text\">"._QXZ("Password").": <input type=\"password\" name=\"VD_pass\" size=\"20\" maxlength=\"100\" value=\"$VD_pass\" /><br />\n";
-			 echo "<font class=\"skb_text\">"._QXZ("Campaign").": <span id=\"LogiNCamPaigns\">$camp_form_code</span><br />\n";
-			 echo "<input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";
+				echo "<font class=\"skb_text\">"._QXZ("Login").": <input type=\"text\" name=\"VD_login\" size=\"20\" maxlength=\"20\" value=\"$VD_login\" />\n<br />";
+				echo "<font class=\"skb_text\">"._QXZ("Password").": <input type=\"password\" name=\"VD_pass\" size=\"20\" maxlength=\"100\" value=\"$VD_pass\" /><br />\n";
+				echo "<font class=\"skb_text\">"._QXZ("Campaign").": <span id=\"LogiNCamPaigns\">$camp_form_code</span><br />\n";
+				if ($login_submit_once > 0)
+					{echo "<input type=\"submit\" id=\"login_sub\" name=\"login_sub\" value=\""._QXZ("SUBMIT")."\" onclick=\"login_click()\"> &nbsp; \n";}
+				else
+					{echo "<input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";}
 				echo "<span id=\"LogiNReseT\"></span>\n";
-			 echo "</form>\n\n";
+				echo "</form>\n\n";
+				echo "\n\n";
+				echo "$LoginLoadingBox";
+				echo "</center>\n";
 				echo "$INSERT_before_body_close";
 				echo "</body>\n\n";
 				echo "</html>\n\n";
@@ -2355,7 +2444,7 @@ else
 				$HKstatusnames = substr("$HKstatusnames", 0, -1);
 
 				##### grab the campaign settings
-				$stmt="SELECT park_ext,park_file_name,web_form_address,allow_closers,auto_dial_level,dial_timeout,dial_prefix,campaign_cid,campaign_vdad_exten,campaign_rec_exten,campaign_recording,campaign_rec_filename,campaign_script,get_call_launch,am_message_exten,xferconf_a_dtmf,xferconf_a_number,xferconf_b_dtmf,xferconf_b_number,alt_number_dialing,scheduled_callbacks,wrapup_seconds,wrapup_message,closer_campaigns,use_internal_dnc,allcalls_delay,omit_phone_code,agent_pause_codes_active,no_hopper_leads_logins,campaign_allow_inbound,manual_dial_list_id,default_xfer_group,xfer_groups,disable_alter_custphone,display_queue_count,manual_dial_filter,agent_clipboard_copy,use_campaign_dnc,three_way_call_cid,dial_method,three_way_dial_prefix,web_form_target,vtiger_screen_login,agent_allow_group_alias,default_group_alias,quick_transfer_button,prepopulate_transfer_preset,view_calls_in_queue,view_calls_in_queue_launch,call_requeue_button,pause_after_each_call,no_hopper_dialing,agent_dial_owner_only,agent_display_dialable_leads,web_form_address_two,agent_select_territories,crm_popup_login,crm_login_address,timer_action,timer_action_message,timer_action_seconds,start_call_url,dispo_call_url,xferconf_c_number,xferconf_d_number,xferconf_e_number,use_custom_cid,scheduled_callbacks_alert,scheduled_callbacks_count,manual_dial_override,blind_monitor_warning,blind_monitor_message,blind_monitor_filename,timer_action_destination,enable_xfer_presets,hide_xfer_number_to_dial,manual_dial_prefix,customer_3way_hangup_logging,customer_3way_hangup_seconds,customer_3way_hangup_action,ivr_park_call,manual_preview_dial,api_manual_dial,manual_dial_call_time_check,my_callback_option,per_call_notes,agent_lead_search,agent_lead_search_method,queuemetrics_phone_environment,auto_pause_precall,auto_pause_precall_code,auto_resume_precall,manual_dial_cid,custom_3way_button_transfer,callback_days_limit,disable_dispo_screen,disable_dispo_status,screen_labels,status_display_fields,pllb_grouping,pllb_grouping_limit,in_group_dial,in_group_dial_select,pause_after_next_call,owner_populate,manual_dial_lead_id,dead_max,dispo_max,pause_max,dead_max_dispo,dispo_max_dispo,max_inbound_calls,manual_dial_search_checkbox,hide_call_log_info,timer_alt_seconds,wrapup_bypass,wrapup_after_hotkey,callback_active_limit,callback_active_limit_override,comments_all_tabs,comments_dispo_screen,comments_callback_screen,qc_comment_history,show_previous_callback,clear_script,manual_dial_search_filter,web_form_address_three,manual_dial_override_field,status_display_ingroup,customer_gone_seconds,agent_display_fields,manual_dial_timeout,manual_auto_next,manual_auto_show,allow_required_fields,dead_to_dispo,agent_xfer_validation,ready_max_logout,callback_display_days,three_way_record_stop,hangup_xfer_record_start,max_inbound_calls_outcome,manual_auto_next_options,agent_screen_time_display,pause_max_dispo,script_top_dispo,routing_initiated_recordings,dead_trigger_seconds,dead_trigger_action,dead_trigger_repeat,dead_trigger_filename,scheduled_callbacks_force_dial,callback_hours_block,callback_display_days,scheduled_callbacks_timezones_container,three_way_volume_buttons,manual_dial_validation,mute_recordings,leave_vm_no_dispo,leave_vm_message_group_id,campaign_script_two,browser_alert_sound,browser_alert_volume,three_way_record_stop_exception,pause_max_exceptions,transfer_button_launch,leave_3way_start_recording,leave_3way_start_recording_exception,calls_waiting_vl_one,calls_waiting_vl_two,in_man_dial_next_ready_seconds,in_man_dial_next_ready_seconds_override,transfer_no_dispo,local_call_time,pause_max_url,agent_hide_hangup,ig_xfer_list_sort,script_tab_frame_size,user_group_script,allow_chats FROM vicidial_campaigns where campaign_id = '$VD_campaign';";
+				$stmt="SELECT park_ext,park_file_name,web_form_address,allow_closers,auto_dial_level,dial_timeout,dial_prefix,campaign_cid,campaign_vdad_exten,campaign_rec_exten,campaign_recording,campaign_rec_filename,campaign_script,get_call_launch,am_message_exten,xferconf_a_dtmf,xferconf_a_number,xferconf_b_dtmf,xferconf_b_number,alt_number_dialing,scheduled_callbacks,wrapup_seconds,wrapup_message,closer_campaigns,use_internal_dnc,allcalls_delay,omit_phone_code,agent_pause_codes_active,no_hopper_leads_logins,campaign_allow_inbound,manual_dial_list_id,default_xfer_group,xfer_groups,disable_alter_custphone,display_queue_count,manual_dial_filter,agent_clipboard_copy,use_campaign_dnc,three_way_call_cid,dial_method,three_way_dial_prefix,web_form_target,vtiger_screen_login,agent_allow_group_alias,default_group_alias,quick_transfer_button,prepopulate_transfer_preset,view_calls_in_queue,view_calls_in_queue_launch,call_requeue_button,pause_after_each_call,no_hopper_dialing,agent_dial_owner_only,agent_display_dialable_leads,web_form_address_two,agent_select_territories,crm_popup_login,crm_login_address,timer_action,timer_action_message,timer_action_seconds,start_call_url,dispo_call_url,xferconf_c_number,xferconf_d_number,xferconf_e_number,use_custom_cid,scheduled_callbacks_alert,scheduled_callbacks_count,manual_dial_override,blind_monitor_warning,blind_monitor_message,blind_monitor_filename,timer_action_destination,enable_xfer_presets,hide_xfer_number_to_dial,manual_dial_prefix,customer_3way_hangup_logging,customer_3way_hangup_seconds,customer_3way_hangup_action,ivr_park_call,manual_preview_dial,api_manual_dial,manual_dial_call_time_check,my_callback_option,per_call_notes,agent_lead_search,agent_lead_search_method,queuemetrics_phone_environment,auto_pause_precall,auto_pause_precall_code,auto_resume_precall,manual_dial_cid,custom_3way_button_transfer,callback_days_limit,disable_dispo_screen,disable_dispo_status,screen_labels,status_display_fields,pllb_grouping,pllb_grouping_limit,in_group_dial,in_group_dial_select,pause_after_next_call,owner_populate,manual_dial_lead_id,dead_max,dispo_max,pause_max,dead_max_dispo,dispo_max_dispo,max_inbound_calls,manual_dial_search_checkbox,hide_call_log_info,timer_alt_seconds,wrapup_bypass,wrapup_after_hotkey,callback_active_limit,callback_active_limit_override,comments_all_tabs,comments_dispo_screen,comments_callback_screen,qc_comment_history,show_previous_callback,clear_script,manual_dial_search_filter,web_form_address_three,manual_dial_override_field,status_display_ingroup,customer_gone_seconds,agent_display_fields,manual_dial_timeout,manual_auto_next,manual_auto_show,allow_required_fields,dead_to_dispo,agent_xfer_validation,ready_max_logout,callback_display_days,three_way_record_stop,hangup_xfer_record_start,max_inbound_calls_outcome,manual_auto_next_options,agent_screen_time_display,pause_max_dispo,script_top_dispo,routing_initiated_recordings,dead_trigger_seconds,dead_trigger_action,dead_trigger_repeat,dead_trigger_filename,scheduled_callbacks_force_dial,callback_hours_block,callback_display_days,scheduled_callbacks_timezones_container,three_way_volume_buttons,manual_dial_validation,mute_recordings,leave_vm_no_dispo,leave_vm_message_group_id,campaign_script_two,browser_alert_sound,browser_alert_volume,three_way_record_stop_exception,pause_max_exceptions,transfer_button_launch,leave_3way_start_recording,leave_3way_start_recording_exception,calls_waiting_vl_one,calls_waiting_vl_two,in_man_dial_next_ready_seconds,in_man_dial_next_ready_seconds_override,transfer_no_dispo,local_call_time,pause_max_url,agent_hide_hangup,ig_xfer_list_sort,script_tab_frame_size,user_group_script,agent_hangup_route,agent_hangup_value,agent_hangup_ig_override,allow_chats FROM vicidial_campaigns where campaign_id = '$VD_campaign';";
 				$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01013',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 				if ($DB) {echo "$stmt\n";}
@@ -2539,7 +2628,10 @@ else
 				$ig_xfer_list_sort =		$row[176];
 				$script_tab_frame_size =	$row[177];
 				$user_group_script =		$row[178];
-				$allow_chats = 				$row[179];
+				$agent_hangup_route =		$row[179];
+				$agent_hangup_value =		$row[180];
+				$agent_hangup_ig_override =	$row[181];
+				$allow_chats =				$row[182];
 
 				if ( (strlen($UGscript_id) > 0) and ($user_group_script == 'ENABLED') )
 					{
@@ -3314,41 +3406,47 @@ else
 		{
 		echo "<title>"._QXZ("Agent web client: Campaign Login")."</title>\n";
 		echo "</head>\n";
-	   echo "<body onresize=\"browser_dimensions();\"  onload=\"browser_dimensions();\">\n";
+		echo "<body onresize=\"browser_dimensions();\"  onload=\"browser_dimensions();\">\n";
 		if ($hide_timeclock_link < 1)
-		  {echo "<a href=\"./timeclock.php?referrer=agent&amp;pl=$phone_login&amp;pp=$phone_pass&amp;VD_login=$VD_login&amp;VD_pass=$VD_pass\"> <font class=\"sb_text\">"._QXZ("Timeclock")."</font></a>$grey_link<br />\n";}
-	   echo "<table width=\"100%\"><tr><td></td>\n";
+			{echo "<a href=\"./timeclock.php?referrer=agent&amp;pl=$phone_login&amp;pp=$phone_pass&amp;VD_login=$VD_login&amp;VD_pass=$VD_pass\"> <font class=\"sb_text\">"._QXZ("Timeclock")."</font></a>$grey_link<br />\n";}
+		echo "<table width=\"100%\"><tr><td></td>\n";
 		echo "<!-- INTERNATIONALIZATION-LINKS-PLACEHOLDER-VICIDIAL -->\n";
-	   echo "</tr></table>\n";
-	   echo "<form name=\"vicidial_form\" id=\"vicidial_form\" action=\"$agcPAGE\" method=\"post\">\n";
-	   echo "<input type=\"hidden\" name=\"DB\" value=\"$DB\" />\n";
-	   echo "<input type=\"hidden\" name=\"JS_browser_height\" id=\"JS_browser_height\" value=\"\" />\n";
-	   echo "<input type=\"hidden\" name=\"JS_browser_width\" id=\"JS_browser_width\" value=\"\" />\n";
-	   echo "<input type=\"hidden\" name=\"phone_login\" value=\"$phone_login\" />\n";
-	   echo "<input type=\"hidden\" name=\"phone_pass\" value=\"$phone_pass\" />\n";
+		echo "</tr></table>\n";
+		echo "<form name=\"vicidial_form\" id=\"vicidial_form\" action=\"$agcPAGE\" method=\"post\" $LOGINformSUBtrigger>\n";
+		echo "<input type=\"hidden\" name=\"DB\" value=\"$DB\" />\n";
+		echo "<input type=\"hidden\" name=\"JS_browser_height\" id=\"JS_browser_height\" value=\"\" />\n";
+		echo "<input type=\"hidden\" name=\"JS_browser_width\" id=\"JS_browser_width\" value=\"\" />\n";
+		echo "<input type=\"hidden\" name=\"phone_login\" value=\"$phone_login\" />\n";
+		echo "<input type=\"hidden\" name=\"phone_pass\" value=\"$phone_pass\" />\n";
 		echo "<input type=\"hidden\" name=\"LOGINvarONE\" id=\"LOGINvarONE\" value=\"$LOGINvarONE\" />\n";
 		echo "<input type=\"hidden\" name=\"LOGINvarTWO\" id=\"LOGINvarTWO\" value=\"$LOGINvarTWO\" />\n";
 		echo "<input type=\"hidden\" name=\"LOGINvarTHREE\" id=\"LOGINvarTHREE\" value=\"$LOGINvarTHREE\" />\n";
 		echo "<input type=\"hidden\" name=\"LOGINvarFOUR\" id=\"LOGINvarFOUR\" value=\"$LOGINvarFOUR\" />\n";
 		echo "<input type=\"hidden\" name=\"LOGINvarFIVE\" id=\"LOGINvarFIVE\" value=\"$LOGINvarFIVE\" />\n";
 		echo "<input type=\"hidden\" name=\"hide_relogin_fields\" id=\"hide_relogin_fields\" value=\"$hide_relogin_fields\" />\n";
-	   echo "<center><br /><b>$VDdisplayMESSAGE</b><br /><br />";
-	   echo "<table width=\"460px\" cellpadding=\"3\" cellspacing=\"0\" bgcolor=\"#$SSframe_background\"><tr bgcolor=\"white\">";
-	   echo "<td align=\"left\" valign=\"bottom\" bgcolor=\"#$SSmenu_background\" width=\"170\"><img src=\"$selected_logo\" border=\"0\" height=\"45\" width=\"170\" alt=\"Agent Screen\" /></td>";
-	   echo "<td align=\"center\" valign=\"middle\" bgcolor=\"#$SSmenu_background\"> <font class=\"sh_text_white\">"._QXZ("Campaign Login")."</font> </td>";
-	   echo "</tr>\n";
-	   echo "<tr><td align=\"left\" colspan=\"2\"><font size=\"1\"> &nbsp; </font></td></tr>\n";
-	   echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("User Login").":</font>  </td>";
-	   echo "<td align=\"left\"><input type=\"text\" name=\"VD_login\" size=\"20\" maxlength=\"20\" value=\"$VD_login\" /></td></tr>\n";
-	   echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("User Password:")."</font>  </td>";
-	   echo "<td align=\"left\"><input type=\"password\" name=\"VD_pass\" size=\"20\" maxlength=\"100\" value=\"$VD_pass\" /></td></tr>\n";
-	   echo "<tr><td align=\"right\" valign=\"top\"><font class=\"skb_text\">"._QXZ("Campaign:")."</font>  </td>";
-	   echo "<td align=\"left\"><font class=\"skb_text\"><span id=\"LogiNCamPaigns\">$camp_form_code</span></font></td></tr>\n";
-	   echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";
-	   echo "<span id=\"LogiNReseT\"></span></td></tr>\n";
-	   echo "<tr><td align=\"left\" colspan=\"2\"><font class=\"body_tiny\"><br />"._QXZ("VERSION:")." $version &nbsp; &nbsp; &nbsp; "._QXZ("BUILD:")." $build</font></td></tr>\n";
-	   echo "</table>\n";
-	   echo "</form>\n\n";
+		echo "<center><br /><b>$VDdisplayMESSAGE</b><br /><br />";
+		echo "<table width=\"460px\" cellpadding=\"3\" cellspacing=\"0\" bgcolor=\"#$SSframe_background\"><tr bgcolor=\"white\">";
+		echo "<td align=\"left\" valign=\"bottom\" bgcolor=\"#$SSmenu_background\" width=\"170\"><img src=\"$selected_logo\" border=\"0\" height=\"45\" width=\"170\" alt=\"Agent Screen\" /></td>";
+		echo "<td align=\"center\" valign=\"middle\" bgcolor=\"#$SSmenu_background\"> <font class=\"sh_text_white\">"._QXZ("Campaign Login")."</font> </td>";
+		echo "</tr>\n";
+		echo "<tr><td align=\"left\" colspan=\"2\"><font size=\"1\"> &nbsp; </font></td></tr>\n";
+		echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("User Login").":</font>  </td>";
+		echo "<td align=\"left\"><input type=\"text\" name=\"VD_login\" size=\"20\" maxlength=\"20\" value=\"$VD_login\" /></td></tr>\n";
+		echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("User Password:")."</font>  </td>";
+		echo "<td align=\"left\"><input type=\"password\" name=\"VD_pass\" size=\"20\" maxlength=\"100\" value=\"$VD_pass\" /></td></tr>\n";
+		echo "<tr><td align=\"right\" valign=\"top\"><font class=\"skb_text\">"._QXZ("Campaign:")."</font>  </td>";
+		echo "<td align=\"left\"><font class=\"skb_text\"><span id=\"LogiNCamPaigns\">$camp_form_code</span></font></td></tr>\n";
+		if ($login_submit_once > 0)
+			{echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" id=\"login_sub\" name=\"login_sub\" value=\""._QXZ("SUBMIT")."\" onclick=\"login_click()\"> &nbsp; \n";}
+		else
+			{echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";}
+		echo "<span id=\"LogiNReseT\"></span></td></tr>\n";
+		echo "<tr><td align=\"left\" colspan=\"2\"><font class=\"body_tiny\"><br />"._QXZ("VERSION:")." $version &nbsp; &nbsp; &nbsp; "._QXZ("BUILD:")." $build</font></td></tr>\n";
+		echo "</table>\n";
+		echo "</form>\n\n";
+		echo "\n\n";
+		echo "$LoginLoadingBox";
+		echo "</center>\n";
 		echo "$INSERT_before_body_close";
 		echo "</body>\n\n";
 		echo "</html>\n\n";
@@ -3421,38 +3519,44 @@ else
 		{
 		echo "<title>"._QXZ("Agent web client: Phone Login Error")."</title>\n";
 		echo "</head>\n";
-	   echo "<body onresize=\"browser_dimensions();\"  onload=\"browser_dimensions();\">\n";
+		echo "<body onresize=\"browser_dimensions();\"  onload=\"browser_dimensions();\">\n";
 		if ($hide_timeclock_link < 1)
-		  {echo "<a href=\"./timeclock.php?referrer=agent&amp;pl=$phone_login&amp;pp=$phone_pass&amp;VD_login=$VD_login&amp;VD_pass=$VD_pass\"> <font class=\"sb_text\">"._QXZ("Timeclock")."</font></a>$grey_link<br />\n";}
-	   echo "<table width=\"100%\"><tr><td></td>\n";
+			{echo "<a href=\"./timeclock.php?referrer=agent&amp;pl=$phone_login&amp;pp=$phone_pass&amp;VD_login=$VD_login&amp;VD_pass=$VD_pass\"> <font class=\"sb_text\">"._QXZ("Timeclock")."</font></a>$grey_link<br />\n";}
+		echo "<table width=\"100%\"><tr><td></td>\n";
 		echo "<!-- INTERNATIONALIZATION-LINKS-PLACEHOLDER-VICIDIAL -->\n";
-	   echo "</tr></table>\n";
-	   echo "<form name=\"vicidial_form\" id=\"vicidial_form\" action=\"$agcPAGE\" method=\"post\">\n";
-	   echo "<input type=\"hidden\" name=\"DB\" value=\"$DB\">\n";
-	   echo "<input type=\"hidden\" name=\"JS_browser_height\" value=\"\" />\n";
-	   echo "<input type=\"hidden\" name=\"JS_browser_width\" value=\"\" />\n";
-	   echo "<input type=\"hidden\" name=\"VD_login\" value=\"$VD_login\" />\n";
-	   echo "<input type=\"hidden\" name=\"VD_pass\" value=\"$VD_pass\" />\n";
-	   echo "<input type=\"hidden\" name=\"VD_campaign\" value=\"$VD_campaign\" />\n";
+		echo "</tr></table>\n";
+		echo "<form name=\"vicidial_form\" id=\"vicidial_form\" action=\"$agcPAGE\" method=\"post\" $LOGINformSUBtrigger>\n";
+		echo "<input type=\"hidden\" name=\"DB\" value=\"$DB\">\n";
+		echo "<input type=\"hidden\" name=\"JS_browser_height\" value=\"\" />\n";
+		echo "<input type=\"hidden\" name=\"JS_browser_width\" value=\"\" />\n";
+		echo "<input type=\"hidden\" name=\"VD_login\" value=\"$VD_login\" />\n";
+		echo "<input type=\"hidden\" name=\"VD_pass\" value=\"$VD_pass\" />\n";
+		echo "<input type=\"hidden\" name=\"VD_campaign\" value=\"$VD_campaign\" />\n";
 		echo "<input type=\"hidden\" name=\"LOGINvarONE\" id=\"LOGINvarONE\" value=\"$LOGINvarONE\" />\n";
 		echo "<input type=\"hidden\" name=\"LOGINvarTWO\" id=\"LOGINvarTWO\" value=\"$LOGINvarTWO\" />\n";
 		echo "<input type=\"hidden\" name=\"LOGINvarTHREE\" id=\"LOGINvarTHREE\" value=\"$LOGINvarTHREE\" />\n";
 		echo "<input type=\"hidden\" name=\"LOGINvarFOUR\" id=\"LOGINvarFOUR\" value=\"$LOGINvarFOUR\" />\n";
 		echo "<input type=\"hidden\" name=\"LOGINvarFIVE\" id=\"LOGINvarFIVE\" value=\"$LOGINvarFIVE\" />\n";
 		echo "<input type=\"hidden\" name=\"hide_relogin_fields\" id=\"hide_relogin_fields\" value=\"$hide_relogin_fields\" />\n";
-	   echo "<br /><br /><br /><center><table width=\"460px\" cellpadding=\"3\" cellspacing=\"0\" bgcolor=\"#$SSframe_background\"><tr bgcolor=\"white\">";
-	   echo "<td align=\"left\" valign=\"bottom\" bgcolor=\"#$SSmenu_background\" width=\"170\"><img src=\"$selected_logo\" border=\"0\" height=\"45\" width=\"170\" alt=\"Agent Screen\" /></td>";
-	   echo "<td align=\"center\" valign=\"middle\" bgcolor=\"#$SSmenu_background\"> <font class=\"sh_text_white\">"._QXZ("Login Error")."</font></td>";
-	   echo "</tr>\n";
-	   echo "<tr><td align=\"center\" colspan=\"2\"><font size=\"1\"> &nbsp; <br /><font size=\"3\">"._QXZ("Sorry, your phone login and password are not active in this system, please try again:")." <br /> &nbsp;</font></td></tr>\n";
-	   echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("Phone Login:")."</font> </td>";
-	   echo "<td align=\"left\"><input type=\"text\" name=\"phone_login\" size=\"20\" maxlength=\"20\" value=\"$phone_login\"></td></tr>\n";
-	   echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("Phone Password:")."</font>  </td>";
-	   echo "<td align=\"left\"><input type=\"password\" name=\"phone_pass\" size=20 maxlength=100 value=\"$phone_pass\"></td></tr>\n";
-	   echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /></td></tr>\n";
-	   echo "<tr><td align=\"left\" colspan=\"2\"><font class=\"body_tiny\"><br />"._QXZ("VERSION:")." $version &nbsp; &nbsp; &nbsp; "._QXZ("BUILD:")." $build</font></td></tr>\n";
-	   echo "</table></center>\n";
-	   echo "</form>\n\n";
+		echo "<br /><br /><br /><center><table width=\"460px\" cellpadding=\"3\" cellspacing=\"0\" bgcolor=\"#$SSframe_background\"><tr bgcolor=\"white\">";
+		echo "<td align=\"left\" valign=\"bottom\" bgcolor=\"#$SSmenu_background\" width=\"170\"><img src=\"$selected_logo\" border=\"0\" height=\"45\" width=\"170\" alt=\"Agent Screen\" /></td>";
+		echo "<td align=\"center\" valign=\"middle\" bgcolor=\"#$SSmenu_background\"> <font class=\"sh_text_white\">"._QXZ("Login Error")."</font></td>";
+		echo "</tr>\n";
+		echo "<tr><td align=\"center\" colspan=\"2\"><font size=\"1\"> &nbsp; <br /><font size=\"3\">"._QXZ("Sorry, your phone login and password are not active in this system, please try again:")." <br /> &nbsp;</font></td></tr>\n";
+		echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("Phone Login:")."</font> </td>";
+		echo "<td align=\"left\"><input type=\"text\" name=\"phone_login\" size=\"20\" maxlength=\"20\" value=\"$phone_login\"></td></tr>\n";
+		echo "<tr><td align=\"right\"><font class=\"skb_text\">"._QXZ("Phone Password:")."</font>  </td>";
+		echo "<td align=\"left\"><input type=\"password\" name=\"phone_pass\" size=20 maxlength=100 value=\"$phone_pass\"></td></tr>\n";
+		if ($login_submit_once > 0)
+			{echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" id=\"login_sub\" name=\"login_sub\" value=\""._QXZ("SUBMIT")."\" onclick=\"login_click()\"> &nbsp; \n";}
+		else
+			{echo "<tr><td align=\"center\" colspan=\"2\"><input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /></td></tr>\n";}
+		echo "<tr><td align=\"left\" colspan=\"2\"><font class=\"body_tiny\"><br />"._QXZ("VERSION:")." $version &nbsp; &nbsp; &nbsp; "._QXZ("BUILD:")." $build</font></td></tr>\n";
+		echo "</table>\n";
+		echo "</form>\n\n";
+		echo "\n\n";
+		echo "$LoginLoadingBox";
+		echo "</center>\n";
 		echo "$INSERT_before_body_close";
 		echo "</body>\n\n";
 		echo "</html>\n\n";
@@ -4173,9 +4277,16 @@ else
 							if ($line != '')
 								{
 								$webphone_settings_scrubbed = $webphone_settings_scrubbed . $line . '\n';
+								# check for dialRegExten enabled
+								if (preg_match("/dialRegExten/i",$line))
+									{
+									$temp_line = $line;
+									$temp_line = preg_replace("/.*:/","",$temp_line);
+									$dialRegExten_enabled = preg_replace("/[^0-9]/","",$temp_line);
 								}
 							}
 						}
+					}
 					}
 
 				$webphone_options='INITIAL_LOAD';
@@ -4406,31 +4517,38 @@ else
 			{
 			echo "<title>"._QXZ("Agent web client: Campaign Login")."</title>\n";
 			echo "</head>\n";
-		  echo "<body onresize=\"browser_dimensions();\" onload=\"browser_dimensions();\">\n";
+			echo "<body onresize=\"browser_dimensions();\" onload=\"browser_dimensions();\">\n";
 			if ($hide_timeclock_link < 1)
-			 {echo "<a href=\"./timeclock.php?referrer=agent&amp;pl=$phone_login&amp;pp=$phone_pass&amp;VD_login=$VD_login&amp;VD_pass=$VD_pass\"> <font class=\"sb_text\">"._QXZ("Timeclock")."</font></a>$grey_link<br />\n";}
-		  echo "<table width=\"100%\"><tr><td></td>\n";
+				{echo "<a href=\"./timeclock.php?referrer=agent&amp;pl=$phone_login&amp;pp=$phone_pass&amp;VD_login=$VD_login&amp;VD_pass=$VD_pass\"> <font class=\"sb_text\">"._QXZ("Timeclock")."</font></a>$grey_link<br />\n";}
+			echo "<table width=\"100%\"><tr><td></td>\n";
 			echo "<!-- INTERNATIONALIZATION-LINKS-PLACEHOLDER-VICIDIAL -->\n";
-		  echo "</tr></table>\n";
-		  echo "<b><font class=\"skb_text\">"._QXZ("Sorry, there are no leads in the hopper for this campaign")."</b>\n";
-		  echo "<form action=\"$PHP_SELF\" method=\"post\">\n";
-		  echo "<input type=\"hidden\" name=\"DB\" value=\"$DB\" />\n";
-		  echo "<input type=\"hidden\" name=\"JS_browser_height\" id=\"JS_browser_height\" value=\"\" />\n";
-		  echo "<input type=\"hidden\" name=\"JS_browser_width\" id=\"JS_browser_width\" value=\"\" />\n";
-		  echo "<input type=\"hidden\" name=\"phone_login\" value=\"$phone_login\" />\n";
-		  echo "<input type=\"hidden\" name=\"phone_pass\" value=\"$phone_pass\" />\n";
+			echo "</tr></table>\n";
+			echo "<b><font class=\"skb_text\">"._QXZ("Sorry, there are no leads in the hopper for this campaign")."</b>\n";
+			echo "<form name=\"vicidial_form\" id=\"vicidial_form\" action=\"$agcPAGE\" method=\"post\" $LOGINformSUBtrigger>\n";
+			echo "<input type=\"hidden\" name=\"DB\" value=\"$DB\" />\n";
+			echo "<input type=\"hidden\" name=\"JS_browser_height\" id=\"JS_browser_height\" value=\"\" />\n";
+			echo "<input type=\"hidden\" name=\"JS_browser_width\" id=\"JS_browser_width\" value=\"\" />\n";
+			echo "<input type=\"hidden\" name=\"phone_login\" value=\"$phone_login\" />\n";
+			echo "<input type=\"hidden\" name=\"phone_pass\" value=\"$phone_pass\" />\n";
 			echo "<input type=\"hidden\" name=\"LOGINvarONE\" id=\"LOGINvarONE\" value=\"$LOGINvarONE\" />\n";
 			echo "<input type=\"hidden\" name=\"LOGINvarTWO\" id=\"LOGINvarTWO\" value=\"$LOGINvarTWO\" />\n";
 			echo "<input type=\"hidden\" name=\"LOGINvarTHREE\" id=\"LOGINvarTHREE\" value=\"$LOGINvarTHREE\" />\n";
 			echo "<input type=\"hidden\" name=\"LOGINvarFOUR\" id=\"LOGINvarFOUR\" value=\"$LOGINvarFOUR\" />\n";
 			echo "<input type=\"hidden\" name=\"LOGINvarFIVE\" id=\"LOGINvarFIVE\" value=\"$LOGINvarFIVE\" />\n";
 			echo "<input type=\"hidden\" name=\"hide_relogin_fields\" id=\"hide_relogin_fields\" value=\"$hide_relogin_fields\" />\n";
-		  echo "<font class=\"skb_text\">"._QXZ("Login:")." <input type=\"text\" name=\"VD_login\" size=\"20\" maxlength=\"20\" value=\"$VD_login\" />\n<br />";
-		  echo "<font class=\"skb_text\">"._QXZ("Password:")." <input type=\"password\" name=\"VD_pass\" size=\"20\" maxlength=\"100\" value=\"$VD_pass\" /><br />\n";
-		  echo "<font class=\"skb_text\">"._QXZ("Campaign:")." <span id=\"LogiNCamPaigns\">$camp_form_code</span><br />\n";
-		  echo "<input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";
+			echo "<font class=\"skb_text\">"._QXZ("Login:")." <input type=\"text\" name=\"VD_login\" size=\"20\" maxlength=\"20\" value=\"$VD_login\" />\n<br />";
+			echo "<font class=\"skb_text\">"._QXZ("Password:")." <input type=\"password\" name=\"VD_pass\" size=\"20\" maxlength=\"100\" value=\"$VD_pass\" /><br />\n";
+			echo "<font class=\"skb_text\">"._QXZ("Campaign:")." <span id=\"LogiNCamPaigns\">$camp_form_code</span><br />\n";
+			if ($login_submit_once > 0)
+				{echo "<input type=\"submit\" id=\"login_sub\" name=\"login_sub\" value=\""._QXZ("SUBMIT")."\" onclick=\"login_click()\"> &nbsp; \n";}
+			else
+				{echo "<input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";}
 			echo "<span id=\"LogiNReseT\"></span>\n";
-		  echo "</form>\n\n";
+			echo "</table>\n";
+			echo "</form>\n\n";
+			echo "\n\n";
+			echo "$LoginLoadingBox";
+			echo "</center>\n";
 			echo "$INSERT_before_body_close";
 			echo "</body>\n\n";
 			echo "</html>\n\n";
@@ -4440,31 +4558,38 @@ else
 			{
 			echo "<title>"._QXZ("Agent web client: Campaign Login")."</title>\n";
 			echo "</head>\n";
-		  echo "<body onresize=\"browser_dimensions();\" onload=\"browser_dimensions();\">\n";
+			echo "<body onresize=\"browser_dimensions();\" onload=\"browser_dimensions();\">\n";
 			if ($hide_timeclock_link < 1)
-			 {echo "<a href=\"./timeclock.php?referrer=agent&amp;pl=$phone_login&amp;pp=$phone_pass&amp;VD_login=$VD_login&amp;VD_pass=$VD_pass\"> <font class=\"sb_text\">"._QXZ("Timeclock")."</font></a>$grey_link<br />\n";}
-		  echo "<table width=\"100%\"><tr><td></td>\n";
+				{echo "<a href=\"./timeclock.php?referrer=agent&amp;pl=$phone_login&amp;pp=$phone_pass&amp;VD_login=$VD_login&amp;VD_pass=$VD_pass\"> <font class=\"sb_text\">"._QXZ("Timeclock")."</font></a>$grey_link<br />\n";}
+			echo "<table width=\"100%\"><tr><td></td>\n";
 			echo "<!-- INTERNATIONALIZATION-LINKS-PLACEHOLDER-VICIDIAL -->\n";
-		  echo "</tr></table>\n";
-		  echo "<b><font class=\"skb_text\">"._QXZ("Sorry, there are no available sessions")."</b>: |$session_id|$server_ip|$extension|$SIP_user|\n";
-		  echo "<form action=\"$PHP_SELF\" method=\"post\" />\n";
-		  echo "<input type=\"hidden\" name=\"DB\" value=\"$DB\" />\n";
-		  echo "<input type=\"hidden\" name=\"JS_browser_height\" id=\"JS_browser_height\" value=\"\" />\n";
-		  echo "<input type=\"hidden\" name=\"JS_browser_width\" id=\"JS_browser_width\" value=\"\" />\n";
-		  echo "<input type=\"hidden\" name=\"phone_login\" value=\"$phone_login\" />\n";
-		  echo "<input type=\"hidden\" name=\"phone_pass\" value=\"$phone_pass\" />\n";
+			echo "</tr></table>\n";
+			echo "<b><font class=\"skb_text\">"._QXZ("Sorry, there are no available sessions")."</b>: |$session_id|$server_ip|$extension|$SIP_user|\n";
+			echo "<form name=\"vicidial_form\" id=\"vicidial_form\" action=\"$agcPAGE\" method=\"post\" $LOGINformSUBtrigger>\n";
+			echo "<input type=\"hidden\" name=\"DB\" value=\"$DB\" />\n";
+			echo "<input type=\"hidden\" name=\"JS_browser_height\" id=\"JS_browser_height\" value=\"\" />\n";
+			echo "<input type=\"hidden\" name=\"JS_browser_width\" id=\"JS_browser_width\" value=\"\" />\n";
+			echo "<input type=\"hidden\" name=\"phone_login\" value=\"$phone_login\" />\n";
+			echo "<input type=\"hidden\" name=\"phone_pass\" value=\"$phone_pass\" />\n";
 			echo "<input type=\"hidden\" name=\"LOGINvarONE\" id=\"LOGINvarONE\" value=\"$LOGINvarONE\" />\n";
 			echo "<input type=\"hidden\" name=\"LOGINvarTWO\" id=\"LOGINvarTWO\" value=\"$LOGINvarTWO\" />\n";
 			echo "<input type=\"hidden\" name=\"LOGINvarTHREE\" id=\"LOGINvarTHREE\" value=\"$LOGINvarTHREE\" />\n";
 			echo "<input type=\"hidden\" name=\"LOGINvarFOUR\" id=\"LOGINvarFOUR\" value=\"$LOGINvarFOUR\" />\n";
 			echo "<input type=\"hidden\" name=\"LOGINvarFIVE\" id=\"LOGINvarFIVE\" value=\"$LOGINvarFIVE\" />\n";
 			echo "<input type=\"hidden\" name=\"hide_relogin_fields\" id=\"hide_relogin_fields\" value=\"$hide_relogin_fields\" />\n";
-		  echo "<font class=\"skb_text\">"._QXZ("Login:")." <input type=\"text\" name=\"VD_login\" size=\"20\" maxlength=\"20\" value=\"$VD_login\" />\n<br />";
-		  echo "<font class=\"skb_text\">"._QXZ("Password:")." <input type=\"password\" name=\"VD_pass\" size=\"20\" maxlength=\"100\" value=\"$VD_pass\" /><br />\n";
-		  echo "<font class=\"skb_text\">"._QXZ("Campaign:")." <span id=\"LogiNCamPaigns\">$camp_form_code</span><br />\n";
-		  echo "<input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";
+			echo "<font class=\"skb_text\">"._QXZ("Login:")." <input type=\"text\" name=\"VD_login\" size=\"20\" maxlength=\"20\" value=\"$VD_login\" />\n<br />";
+			echo "<font class=\"skb_text\">"._QXZ("Password:")." <input type=\"password\" name=\"VD_pass\" size=\"20\" maxlength=\"100\" value=\"$VD_pass\" /><br />\n";
+			echo "<font class=\"skb_text\">"._QXZ("Campaign:")." <span id=\"LogiNCamPaigns\">$camp_form_code</span><br />\n";
+			if ($login_submit_once > 0)
+				{echo "<input type=\"submit\" id=\"login_sub\" name=\"login_sub\" value=\""._QXZ("SUBMIT")."\" onclick=\"login_click()\"> &nbsp; \n";}
+			else
+				{echo "<input type=\"submit\" name=\"SUBMIT\" value=\""._QXZ("SUBMIT")."\" /> &nbsp; \n";}
 			echo "<span id=\"LogiNReseT\"></span>\n";
-			echo "</FORM>\n\n";
+			echo "</table>\n";
+			echo "</form>\n\n";
+			echo "\n\n";
+			echo "$LoginLoadingBox";
+			echo "</center>\n";
 			echo "$INSERT_before_body_close";
 			echo "</body>\n\n";
 			echo "</html>\n\n";
@@ -5835,6 +5960,10 @@ if ($enable_fast_refresh < 1) {echo "\tvar refresh_interval = 1000;\n";}
 	var agent_hide_hangup_ACTIVE = '<?php $agent_hide_hangup_ACTIVE ?>';
 	var agent_datetime='';
 	var tempDB2='';
+	var dialRegExten_enabled='<?php echo $dialRegExten_enabled ?>';
+	var agent_hangup_route='<?php echo $agent_hangup_route ?>';
+	var agent_hangup_value='<?php echo $agent_hangup_value ?>';
+	var agent_hangup_ig_override='<?php echo $agent_hangup_ig_override ?>';
 	var DiaLControl_auto_HTML = "<a href=\"#\" onclick=\"AutoDial_ReSume_PauSe('VDADready','','','','','','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_paused.gif") ?>\" border=\"0\" alt=\"You are paused\" /></a>";
 	var DiaLControl_auto_HTML_ready = "<a href=\"#\" onclick=\"AutoDial_ReSume_PauSe('VDADpause','','','','','','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_active.gif") ?>\" border=\"0\" alt=\"You are active\" /></a>";
 	var DiaLControl_auto_HTML_OFF = "<img src=\"./images/<?php echo _QXZ("vdc_LB_blank_OFF.gif") ?>\" border=\"0\" alt=\"pause button disabled\" />";
@@ -6501,6 +6630,7 @@ function holiday_display(holiday_name)
 			var manual_string = manual_number.toString();
 			var dial_conf_exten = session_id;
 
+			manual_string = manual_string.replace(/\||`|&|\'|\"|\\\\|;| /ig,'');
 			var testXFregstr = 'x' + manual_string + 'x'
 			var regXFSRvars = new RegExp(testXFregstr,"g");
 			// test for three_way_record_stop and exception
@@ -6718,6 +6848,7 @@ function holiday_display(holiday_name)
 			var XfeR_GrouP = XfeRSelecT.value;
 			if (API_selected_xfergroup.length > 1)
 				{var XfeR_GrouP = API_selected_xfergroup;}
+				// 		 "90009*$group*CXFER*$lead_id**$phone_number*$user*$agent_only*$seconds*";
 			tasknum = Ctasknum + "*" + XfeR_GrouP + '*CXFER*' + document.vicidial_form.lead_id.value + '**' + dialed_number + '*' + user + '*' + agentdirect + '*' + VD_live_call_secondS + '*';
 
 			if (consult_custom_sent < 1)
@@ -7361,7 +7492,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 							WaitingForNextStep=0;
 							custchannellive=0;
 
-							if ( (inbound_post_call_survey=='ENABLED') && (inbound_survey_participate=='Y') )
+							if ( (inbound_post_call_survey=='ENABLED') && (inbound_survey_participate=='Y') && (agent_hangup_ig_override=='N') )
 								{
 								document.vicidial_form.xfernumber.value = '83068888888888883999';
 								document.vicidial_form.xferoverride.checked=true;
@@ -7370,8 +7501,40 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								}
 							else
 								{
+								if ( (agent_hangup_value.length > 0) && ( (agent_hangup_route=='MESSAGE') || (agent_hangup_route=='EXTENSION') || (agent_hangup_route=='IN_GROUP') || (agent_hangup_route=='CALLMENU') ) )
+									{
+									button_click_log = button_click_log + "" + SQLdate + "-----APIHangupCallRoute---" + agent_hangup_route + " " + agent_hangup_value + " " + document.vicidial_form.xfernumber.value + "|";
+
+									if (agent_hangup_route=='MESSAGE')
+										{
+										document.vicidial_form.xfernumber.value = '83046777777777*' + agent_hangup_value;
+										document.vicidial_form.xferoverride.checked=true;
+										mainxfer_send_redirect('XfeRBLIND',lastcustchannel,lastcustserverip);
+										}
+									if (agent_hangup_route=='EXTENSION')
+										{
+										document.vicidial_form.xfernumber.value = agent_hangup_value;
+										document.vicidial_form.xferoverride.checked=true;
+										mainxfer_send_redirect('XfeRBLIND',lastcustchannel,lastcustserverip);
+										}
+									if (agent_hangup_route=='CALLMENU')
+										{
+										API_selected_callmenu = agent_hangup_value;
+										document.vicidial_form.xfernumber.value = agent_hangup_value;
+										mainxfer_send_redirect('XfeRBLIND',lastcustchannel,lastcustserverip);
+										}
+									if (agent_hangup_route=='IN_GROUP')
+										{
+										API_selected_xfergroup = agent_hangup_value;
+										document.vicidial_form.xfernumber.value = agent_hangup_value;
+										mainxfer_send_redirect('XfeRLOCAL',lastcustchannel,lastcustserverip);
+										}
+									}
+								else
+									{
 								dialedcall_send_hangup();
 								}
+							}
 							}
 						if ( (APIStatuS.length < 1000) && (APIStatuS.length > 0) && (AgentDispoing > 1) && (APIStatuS != '::::::::::') )
 							{
@@ -7903,7 +8066,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 
 				if (LIVE_campaign_recording == 'ALLFORCE')
 					{
-				document.getElementById("RecorDControl").innerHTML = "<img src=\"./images/<?php echo _QXZ("$start_recording_GIF_off") ?>\" border=\"0\" alt=\"Start Recording\" />";
+                    document.getElementById("RecorDControl").innerHTML = "<img src=\"./images/<?php echo _QXZ("$stop_recording_GIF_off") ?>\" border=\"0\" alt=\"Stop Recording\" />";
 					}
 				else
 					{
@@ -7983,7 +8146,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 							var conf_rec_mute_html = "<a href=\"#\" onclick=\"MuteRecording('on');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_LB_mute_recording_AVAILABLE.gif") ?>\" border=\"0\" alt=\"Mute Recording\" /></a><br />";
 							if (LIVE_campaign_recording == 'ALLFORCE')
 								{
-								document.getElementById("RecorDControl").innerHTML = "<img src=\"./images/<?php echo _QXZ("$start_recording_GIF_off") ?>\" border=\"0\" alt=\"Start Recording\" />";
+								document.getElementById("RecorDControl").innerHTML = "<img src=\"./images/<?php echo _QXZ("$stop_recording_GIF_off") ?>\" border=\"0\" alt=\"Stop Recording\" />";
 								}
 							else
 								{
@@ -10213,7 +10376,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 							 document.getElementById("ivrParkControl").innerHTML ="<a href=\"#\" onclick=\"mainxfer_send_redirect('ParKivr','" + lastcustchannel + "','" + lastcustserverip + "','','','','YES');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_LB_ivrparkcall.gif"); ?>\" border=\"0\" alt=\"IVR Park Call\" /></a>";
 									}
 
-						  document.getElementById("HangupControl").innerHTML = "<a href=\"#\" onclick=\"dialedcall_send_hangup('','','','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_hangupcustomer.gif"); ?>\" border=\"0\" alt=\"Hangup Customer\" /></a>";
+                                document.getElementById("HangupControl").innerHTML = "<a href=\"#\" onclick=\"hangup_customer_button_click('','','','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_hangupcustomer.gif"); ?>\" border=\"0\" alt=\"Hangup Customer\" /></a>";
 
 						  document.getElementById("XferControl").innerHTML = "<a href=\"#\" onclick=\"ShoWTransferMain('ON','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_transferconf.gif"); ?>\" border=\"0\" alt=\"Transfer - Conference\" /></a>";
 
@@ -11367,7 +11530,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 									MD_channel_look=1;
 									custchannellive=1;
 
-									document.getElementById("HangupControl").innerHTML = "<a href=\"#\" onclick=\"dialedcall_send_hangup('','','','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_hangupcustomer.gif"); ?>\" border=\"0\" alt=\"Hangup Customer\" /></a>";
+									document.getElementById("HangupControl").innerHTML = "<a href=\"#\" onclick=\"hangup_customer_button_click('','','','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_hangupcustomer.gif"); ?>\" border=\"0\" alt=\"Hangup Customer\" /></a>";
 
 									if ( (LIVE_campaign_recording == 'ALLCALLS') || (LIVE_campaign_recording == 'ALLFORCE') )
 										{all_record = 'YES';}
@@ -11962,7 +12125,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 
 								document.getElementById("MainStatuSSpan").innerHTML = " <?php echo _QXZ("Calling:"); ?> " + status_display_number + " " + status_display_content + " &nbsp; <?php echo _QXZ("Waiting for Ring..."); ?>";
 
-								document.getElementById("HangupControl").innerHTML = "<a href=\"#\" onclick=\"dialedcall_send_hangup('','','','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_hangupcustomer.gif"); ?>\" border=\"0\" alt=\"Hangup Customer\" /></a>";
+								document.getElementById("HangupControl").innerHTML = "<a href=\"#\" onclick=\"hangup_customer_button_click('','','','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_hangupcustomer.gif"); ?>\" border=\"0\" alt=\"Hangup Customer\" /></a>";
 								}
 							if ( (LIVE_campaign_recording == 'ALLCALLS') || (LIVE_campaign_recording == 'ALLFORCE') )
 								{all_record = 'YES';}
@@ -12966,16 +13129,17 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 						  document.getElementById("QuickXfer").innerHTML = "<a href=\"#\" onclick=\"mainxfer_send_redirect('XfeRBLIND','" + lastcustchannel + "','" + lastcustserverip + "','','','" + quick_transfer_button_locked + "','YES');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_LB_quickxfer.gif"); ?>\" border=\"0\" alt=\"QUICK TRANSFER\" /></a>";
 								}
 
-							if ( (inbound_post_call_survey=='ENABLED') && (inbound_survey_participate=='Y') )
+							if ( (inbound_post_call_survey=='ENABLED') && (inbound_survey_participate=='Y') && (agent_hangup_ig_override=='N') )
 								{
 								document.vicidial_form.xfernumber.value = '83068888888888883999';
 								document.vicidial_form.xferoverride.checked=true;
 								document.getElementById("HangupControl").innerHTML = "<a href=\"#\" onclick=\"mainxfer_send_redirect('XfeRBLIND','" + lastcustchannel + "','" + lastcustserverip + "','','','','YES');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_LB_hangupcustomer.gif"); ?>\" border=\"0\" alt=\"Hangup Customer\" /></a>";
 								button_click_log = button_click_log + "" + SQLdate + "-----AskInGroupSurvey---" + inbound_post_call_survey + " " + inbound_survey_participate + " " + document.vicidial_form.xfernumber.value + "|";
 								}
+
 							else
 								{
-								document.getElementById("HangupControl").innerHTML = "<a href=\"#\" onclick=\"dialedcall_send_hangup('','','','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_hangupcustomer.gif"); ?>\" border=\"0\" alt=\"Hangup Customer\" /></a>";
+								document.getElementById("HangupControl").innerHTML = "<a href=\"#\" onclick=\"hangup_customer_button_click('','','','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_hangupcustomer.gif"); ?>\" border=\"0\" alt=\"Hangup Customer\" /></a>";
 								}
 
 							if (custom_3way_button_transfer_enabled > 0)
@@ -13721,7 +13885,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								document.getElementById("MainStatuSSpan").innerHTML = " <?php echo _QXZ("Incoming:"); ?> " + dial_display_number + " " + custom_call_id + " " + temp_status_display_ingroup + "&nbsp; " + VDIC_fronter + " " + status_display_content;
 								}
 
-							document.getElementById("HangupControl").innerHTML = "<a href=\"#\" onclick=\"dialedcall_send_hangup('','','','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_hangupcustomer.gif"); ?>\" border=\"0\" alt=\"Hangup Customer\" /></a>";
+							document.getElementById("HangupControl").innerHTML = "<a href=\"#\" onclick=\"hangup_customer_button_click('','','','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_hangupcustomer.gif"); ?>\" border=\"0\" alt=\"Hangup Customer\" /></a>";
 
 							// JOEJ - 053018 - PATCH
 							if (lastcustchannel=="EMAIL")
@@ -14282,6 +14446,47 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 		if (lastxferchannel.length > 3)
 			{xfercall_send_hangup();}
 		}
+
+
+// ################################################################################
+// Hangup Customer Button Press
+	function hangup_customer_button_click(dispowindow,hotkeysused,altdispo,nodeletevdac,DSHclick) 
+		{
+		if ( (agent_hangup_value.length > 0) && ( (agent_hangup_route=='MESSAGE') || (agent_hangup_route=='EXTENSION') || (agent_hangup_route=='IN_GROUP') || (agent_hangup_route=='CALLMENU') ) )
+			{
+			button_click_log = button_click_log + "" + SQLdate + "-----AgentHangupCallRoute---" + agent_hangup_route + " " + agent_hangup_value + " " + document.vicidial_form.xfernumber.value + "|";
+
+			if (agent_hangup_route=='MESSAGE')
+				{
+				document.vicidial_form.xfernumber.value = '83046777777777*' + agent_hangup_value;
+				document.vicidial_form.xferoverride.checked=true;
+				mainxfer_send_redirect('XfeRBLIND',lastcustchannel,lastcustserverip);
+				}
+			if (agent_hangup_route=='EXTENSION')
+				{
+				document.vicidial_form.xfernumber.value = agent_hangup_value;
+				document.vicidial_form.xferoverride.checked=true;
+				mainxfer_send_redirect('XfeRBLIND',lastcustchannel,lastcustserverip);
+				}
+			if (agent_hangup_route=='CALLMENU')
+				{
+				API_selected_callmenu = agent_hangup_value;
+				document.vicidial_form.xfernumber.value = agent_hangup_value;
+				mainxfer_send_redirect('XfeRBLIND',lastcustchannel,lastcustserverip);
+				}
+			if (agent_hangup_route=='IN_GROUP')
+				{
+				API_selected_xfergroup = agent_hangup_value;
+				document.vicidial_form.xfernumber.value = agent_hangup_value;
+				mainxfer_send_redirect('XfeRLOCAL',lastcustchannel,lastcustserverip);
+				}
+			}
+		else
+			{
+			dialedcall_send_hangup(dispowindow,hotkeysused,altdispo,nodeletevdac,DSHclick);
+			}
+		}
+
 
 // ################################################################################
 // Send Hangup command for customer call connected to the conference now to Manager
@@ -15104,7 +15309,8 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 				}
 
 			HidEGenDerPulldown();
-			AgentDispoing = 1;
+			if ((taskDSstage == 'ReSET') && (DSCclick!='YES'))
+				{AgentDispoing = 1;}
 			var CBflag = '';
 			var MINMAXbegin='';
 			var MINMAXend='';
@@ -20111,15 +20317,18 @@ function phone_number_format(formatphone) {
 					}
 				else
 					{
-				NoneInSession();
-				document.getElementById("NoneInSessionLink").innerHTML = "<a href=\"#\" onclick=\"NoneInSessionCalL('LOGIN');return false;\"><?php echo _QXZ("Call Agent Webphone"); ?> -></a>";
+					if (dialRegExten_enabled < 1)
+						{
+						NoneInSession();
+						document.getElementById("NoneInSessionLink").innerHTML = "<a href=\"#\" onclick=\"NoneInSessionCalL('LOGIN');return false;\"><?php echo _QXZ("Call Agent Webphone"); ?> -></a>";
+						
+						var WebPhonEtarget = 'webphonewindow';
 
-				var WebPhonEtarget = 'webphonewindow';
+					//	WebPhonEwin =window.open(WebPhonEurl, WebPhonEtarget,'toolbar=1,location=1,directories=1,status=1,menubar=1,scrollbars=1,resizable=1,width=180,height=270');
 
-			//	WebPhonEwin =window.open(WebPhonEurl, WebPhonEtarget,'toolbar=1,location=1,directories=1,status=1,menubar=1,scrollbars=1,resizable=1,width=180,height=270');
-
-			//	WebPhonEwin.blur();
-				}
+					//	WebPhonEwin.blur();
+						}
+					}
 				}
 
 			if ( (ivr_park_call=='ENABLED') || (ivr_park_call=='ENABLED_PARK_ONLY') )

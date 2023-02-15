@@ -21,11 +21,12 @@
 # FLAGS FOR ENCRYPTION OPTIONS
 # --GPG = GnuPG encryption(assumes recipient public keys are loaded on server)
 #
-# Copyright (C) 2016  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # 
 # 150911-1814 - First Build based upon 110524-1059 AST_CRON_audio_2_compress.pl
 # 160523-0651 - Added --HTTPS option to use https instead of http in local location
+# 230201-0003 - Allowed for handling of stereo gateway recordings
 #
 
 $WAV=0;   $GSM=0;   $MP3=0;   $OGG=0;   $GSW=0;
@@ -320,6 +321,7 @@ foreach(@FILES)
 			$ALLfile = $FILES[$i];
 			$SQLFILE = $FILES[$i];
 			$SQLFILE =~ s/-all\.wav|-all\.gsm|-all\.mp3|-all\.gsw|-all\.ogg//gi;
+			$SQLFILE =~ s/\.wav|\.gsm|\.ogg|\.mp3//gi;
 
 			$stmtA = "select recording_id from recording_log where filename='$SQLFILE' order by recording_id desc LIMIT 1;";
 			if($DBX){print STDERR "\n|$stmtA|\n";}
@@ -344,6 +346,11 @@ foreach(@FILES)
 				$GPGfile =~ s/-all\.mp3/-all.mp3.gpg/gi;
 				$GPGfile =~ s/-all\.gsw/-all.gsw.gpg/gi;
 				$GPGfile =~ s/-all\.ogg/-all.ogg.gpg/gi;
+				$GPGfile =~ s/\.wav/.wav.gpg/gi;
+				$GPGfile =~ s/\.gsm/.gsm.gpg/gi;
+				$GPGfile =~ s/\.mp3/.mp3.gpg/gi;
+				$GPGfile =~ s/\.gsw/.gsw.gpg/gi;
+				$GPGfile =~ s/\.ogg/.ogg.gpg/gi;
 
 				if ($DB) {print "$i|$recording_id|$ALLfile|$GPGfile|     |$SQLfile|\n";}
 

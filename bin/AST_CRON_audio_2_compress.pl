@@ -28,7 +28,7 @@
 #
 # This program assumes that recordings are saved by Asterisk as .wav
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # 
 # 80302-1958 - First Build
@@ -38,6 +38,7 @@
 # 110524-1059 - Added run-check concurrency check option
 # 160523-0652 - Added --HTTPS option to use https instead of http in local location
 # 170212-0732 - Added --file-sorting option to put files into dated directories (THIS WILL NOT ALLOW FTP ARCHIVING)
+# 230201-0007 - Allowed for handling of stereo gateway recordings
 #
 
 $GSM=0;   $MP3=0;   $OGG=0;   $GSW=0;
@@ -303,6 +304,7 @@ foreach(@FILES)
 			$ALLfile = $FILES[$i];
 			$SQLFILE = $FILES[$i];
 			$SQLFILE =~ s/-all\.wav|-all\.gsm//gi;
+			$SQLFILE =~ s/\.wav|\.gsm//gi;
 
 			$stmtA = "select recording_id, LEFT(start_time,10) AS file_date from recording_log where filename='$SQLFILE' order by recording_id desc LIMIT 1;";
 			if($DBX){print STDERR "\n|$stmtA|\n";}
@@ -339,6 +341,7 @@ foreach(@FILES)
 				{
 				$GSMfile = $FILES[$i];
 				$GSMfile =~ s/-all\.wav/-all.gsm/gi;
+				$GSMfile =~ s/\.wav/.gsm/gi;
 
 				if ($DB) {print "|$recording_id|$ALLfile|$dir2/$location$GSMfile|     |$SQLfile|\n";}
 
@@ -353,6 +356,7 @@ foreach(@FILES)
 				{
 				$OGGfile = $FILES[$i];
 				$OGGfile =~ s/-all\.wav/-all.ogg/gi;
+				$OGGfile =~ s/\.wav|\.gsm/.ogg/gi;
 
 				if ($DB) {print "|$recording_id|$ALLfile|$dir2/$location$OGGfile|     |$SQLfile|\n";}
 
@@ -367,6 +371,7 @@ foreach(@FILES)
 				{
 				$MP3file = $FILES[$i];
 				$MP3file =~ s/-all\.wav/-all.mp3/gi;
+				$MP3file =~ s/\.wav|\.gsm/.mp3/gi;
 
 				if ($DB) {print "|$recording_id|$ALLfile|$dir2/$location$MP3file|     |$SQLfile|\n";}
 

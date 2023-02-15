@@ -548,7 +548,8 @@ if ($widget_type=="LIVE_QUEUE_INFO")
 		$lost_calls+=$lost_calls_row[0];
 		}
 
-	$lost_calls_pct=sprintf("%.1f", MathZDC((100*$lost_calls), $offered_calls));
+	if ($offered_calls < 1) {$lost_calls_pct=0;}
+	else {$lost_calls_pct=sprintf("%.1f", MathZDC((100*$lost_calls), $offered_calls));}
 
 	echo "$offered_calls|$offered_calls|$lost_calls_pct|$live_queue";
 	/*

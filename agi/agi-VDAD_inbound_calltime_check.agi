@@ -32,7 +32,7 @@
 #exten => 1234,2,AGI(agi-VDAD_inbound_calltime_check.agi,INBOUND-----YES-----START-----24hours-----EXTENSION-----101-----default-----NO-----YES)
 #exten => 1234,3,Hangup
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 80525-0144 - First Build
@@ -57,6 +57,7 @@
 # 180213-0935 - Fixed issues with VMAIL_NO_INST timecheck route
 # 200624-2302 - Added play sip-silence audio option
 # 201026-1501 - Fix for overwriting short CIDnum
+# 230118-1728 - Added response logging for manual dial outbound calls
 #
 
 $script = 'agi-VDAD_inbound_calltime_check.agi';
@@ -240,7 +241,7 @@ $extension =~ s/\'|\"|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
 $outboundIVR=0;
 $ingroupIVR=0;
 $lead_id='';
-if ($calleridname =~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^Y\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/)
+if ($calleridname =~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^M\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^Y\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/)
 	{
 	$stmtA = "SELECT campaign_id,lead_id FROM vicidial_auto_calls where callerid='$calleridname';";
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
@@ -263,7 +264,7 @@ if ($calleridname =~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^Y\d\d\d\d\d\d\d\
 		}
 	$sthA->finish();
 
-	if ($calleridname =~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/)
+	if ($calleridname =~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^M\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/)
 		{$outboundIVR=1;}
 	if ($calleridname =~ /^Y\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/)
 		{$ingroupIVR=1;}

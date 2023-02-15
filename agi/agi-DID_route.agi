@@ -13,7 +13,7 @@
 # ;inbound DID catch-all:
 #exten => _X.,1,AGI(agi-DID_route.agi)
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 81007-0324 - First Build
@@ -49,6 +49,7 @@
 # 201112-0834 - Fix for AGENT routing, check for availability, issue #1211
 # 210315-1132 - Fix for multiple filter_clean_cid_number actions, added 'T' filter action, Issue #1247
 # 220507-0811 - Added pre_filter_recent_call function
+# 230124-1228 - Added logging of VICIrecGatewayID channel variable, and vicidial_did_gateway_log table
 #
 
 
@@ -217,6 +218,18 @@ $callerid =~ s/\'|\"|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
 $calleridname =~ s/\'|\"|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
 $extension =~ s/\'|\"|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
 
+$VICIrecGatewayID = $AGI->get_variable('VICIrecGatewayID');
+$VICIrecGatewayID =~ s/[^0-9a-zA-Z]//gi;
+if (length($VICIrecGatewayID) > 19) 
+	{
+	if ($AGILOG) {$agi_string = "--    VICIrecGatewayID set on this call: |$VICIrecGatewayID|";   &agi_output;}
+
+	### Log the call to vicidial_did_gateway_log
+	$stmtA = "INSERT INTO vicidial_did_gateway_log SET uniqueid='$uniqueid',channel='$channel',server_ip='$VARserver_ip',caller_id_number='$callerid',caller_id_name='$calleridname',extension='$extension',call_date='$SQLdate',VICIrecGatewayID='$VICIrecGatewayID';";
+		if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+	$affected_rowsG = $dbhA->do($stmtA);
+	if ($AGILOG) {$agi_string = "--    VICIrecGatewayID LOG INSERT: |$affected_rowsG|$stmtA|";   &agi_output;}
+	}
 
 ### BEGIN did_system_filter filter process ###
 if ($SSdid_system_filter > 0) 

@@ -733,6 +733,21 @@ OTHER CHANGES:
 206. Added "Webphone Settings" option to Phones, allows for more WebRTC config
 	options to be set through a Settings Container.
 
+207. Added "Agent Call Hangup Route" campaign settings, allowing you to send 
+	calls that an agent is finished with to a Call Menu, In-Group or a 
+	pre-recorded message before hanging up the call.
+
+	NOTE: After upgrading your system, be sure to set each dialer to 
+	"Rebuild conf files" = 'Y' for this feature to work properly.
+
+208. Added instructions and scripts for creating a Gateway Recording server
+	See the GATEWAY_RECORDING_SERVER.txt doc for more info.
+
+209. Added the ability to have multiple "No Agent Call URL" entries for a 
+	single Campaign/In-Group/List, by putting "ALT" in the No Agent Call URL
+	field on the Campaign, In-Group, List modify screen. Just like how it 
+	works with Dispo Call URL currently.
+
 
 
 

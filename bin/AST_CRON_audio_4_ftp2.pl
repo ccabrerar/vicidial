@@ -26,7 +26,7 @@
 # 
 # This program assumes that recordings are saved by Asterisk as .wav
 # 
-# Copyright (C) 2015  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES:
 # 91123-0005 - First Build
@@ -34,6 +34,7 @@
 # 111128-1617 - Added Ftp persistence option
 # 111130-1801 - Added Ftp validate option
 # 130116-1536 - Added ftp port CLI flag
+# 230201-0006 - Allowed for handling of stereo gateway recordings
 #
 
 ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
@@ -332,6 +333,7 @@ foreach(@FILES)
 			$SQLFILE = $FILES[$i];
 			$SQLFILE =~ s/\.gpg//gi;
 			$SQLFILE =~ s/-all\.wav|-all\.gsm|-all\.ogg|-all\.mp3//gi;
+			$SQLFILE =~ s/\.wav|\.gsm|\.ogg|\.mp3//gi;
 
 			$stmtA = "select recording_id,start_time from recording_log where filename='$SQLFILE' order by recording_id desc LIMIT 1;";
 			if($DBX){print STDERR "\n|$stmtA|\n";}

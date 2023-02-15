@@ -520,7 +520,7 @@ if ($match_found > 0)
 			$SQL_log = "$stmt|$stmtB|$CBaffected_rows|";
 			$SQL_log = preg_replace('/;/','',$SQL_log);
 			$SQL_log = addslashes($SQL_log);
-			$stmt="INSERT INTO vicidial_api_log set user='$user',agent_user='$user',function='deactivate_lead',value=$lead_id,result='$affected_rows',result_reason=$lead_id,source='vdc',data='$SQL_log',api_date='$NOW_TIME',api_script='$api_script';";
+			$stmt="INSERT INTO vicidial_api_log set user='$user',agent_user='$user',function='lead_move_list',value='$lead_id',result='$affected_rows',result_reason='$lead_id',source='vdc',data='$SQL_log',api_date='$NOW_TIME',api_script='$api_script';";
 			$rslt=mysql_to_mysqli($stmt, $link);
 
 			$MESSAGE = _QXZ("DONE: %1s match found, %2s updated to %3s with %4s status",0,'',$search_count,$affected_rows,$new_list_id,$dispo);

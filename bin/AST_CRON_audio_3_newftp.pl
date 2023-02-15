@@ -53,12 +53,13 @@
 #    --ftp-host="10.10.10.15" --ftp-port=21 --ftp-user="username" --ftp-pass="password" --ftp-dir="RECORDINGS" \
 #    --url-path="http://10.10.10.15/RECORDINGS" --transfer-limit=50 --list-limit=200 --campaign_id="TESTCAMP1-TESTCAMP2"
 #
-# Copyright (C) 2015  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG:
 # 90930-1405 - mikec - first build
 # 110524-1054 - Added run-check concurrency check option
 # 150912-0837 - Added GPG encrypted audio file compatibility
+# 230201-0002 - Allowed for handling of stereo gateway recordings
 #
 
 use 5.008;
@@ -504,6 +505,7 @@ foreach(@files)	{
 			my $SQLFILE = $files[$file_loop_count];
 			$SQLFILE =~ s/\.gpg//gi;
 			$SQLFILE =~ s/-all\.wav|-all\.gsm|-all\.ogg|-all\.mp3//gi;
+			$SQLFILE =~ s/\.wav|\.gsm|\.ogg|\.mp3//gi;
 
 			my $rec_log_db_stmt = "select recording_id, start_time, vicidial_id, lead_id from recording_log where filename=$SQLFILE order by recording_id desc LIMIT 1;";
 			$rec_log_sth->execute($SQLFILE) or die "executing: $rec_log_db_stmt ", $dbhA->errstr;

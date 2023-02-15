@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2022-11-09
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2023-01-23
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -205,6 +205,7 @@ Changes:
 220902-0823 - Added dial_status_add/dial_status_remove options to update_campaign function
 220920-0814 - Added more "XDAY" options to add_lead duplicate checks
 221108-1849 - Added include_ip option for agent_status function
+230122-1821 - Added reset_password option to update_user function
 
 
 API Functions use the 'function' variable
@@ -1454,6 +1455,8 @@ camp_rg_only -		0 or 1, this will set only one campaign rank/grade for this user
 campaign_id -		only required for use with camp_rg_only
 ingrp_rg_only -		0 or 1, this will set only one inbound group rank/grade for this user, requires group_id to be set
 group_id -		only required for use with ingrp_rg_only
+reset_password -	0 or 8+ digits, this will reset the user's password to a random password of this length and email the new password to the user
+			  NOTE: the 'email' field is required if the user's current email is not a valid email address
 
 Example URL strings for API calls:
 http://server/vicidial/non_agent_api.php?source=test&function=update_user&user=6666&pass=1234&agent_user=2424&agent_pass=9876
@@ -1461,6 +1464,7 @@ http://server/vicidial/non_agent_api.php?source=test&function=update_user&user=6
 http://server/vicidial/non_agent_api.php?source=test&function=update_user&user=6666&pass=1234&agent_user=2424&agent_full_name=Testing&hotkeys_active=1&active=Y
 http://server/vicidial/non_agent_api.php?source=test&function=update_user&user=6666&pass=1234&agent_user=2424&campaign_rank=3&campaign_grade=4
 http://server/vicidial/non_agent_api.php?source=test&function=update_user&user=6666&pass=1234&agent_user=2424&ingroup_rank=3&ingroup_grade=4&ingrp_rg_only=1&group_id=TEST_IN
+http://server/vicidial/non_agent_api.php?source=test&function=update_user&user=6666&pass=1234&agent_user=2424&reset_password=12&email=info@vicidial.com
 
 Example responses:
 ERROR: update_user USER DOES NOT HAVE PERMISSION TO UPDATE USERS - 6666|0
@@ -1490,6 +1494,9 @@ ERROR: update_user YOU MUST USE A VALID IN-GROUP GRADE, THIS IS AN OPTIONAL FIEL
 ERROR: update_user NO UPDATES DEFINED - 6666|0
 NOTICE: update_user USER CAMPAIGN RANKS/GRADES HAVE BEEN UPDATED - 6666|9|10|TESTCAMP|1
 NOTICE: update_user USER IN-GROUP RANKS/GRADES HAVE BEEN UPDATED - 6666|9|10|TEST_IN|1
+NOTICE: update_user USER PASSWORD RESET FAILED: NO VALID EMAIL PROVIDED - 6666|email@doman
+NOTICE: update_user USER PASSWORD RESET FAILED: EMAIL FAILURE - 6666|info@vicidial.com|email-error
+NOTICE: update_user update_user USER PASSWORD HAS BEEN RESET - 6666|info@vicidial.com
 SUCCESS: update_user USER HAS BEEN UPDATED - 6666|7878
 SUCCESS: update_user USER HAS BEEN DELETED - 6666|7878
 

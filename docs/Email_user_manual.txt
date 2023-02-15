@@ -1,4 +1,4 @@
-EMAIL HANDLING DOC		Started: 2012-12-23	Updated: 2021-03-28
+EMAIL HANDLING DOC		Started: 2012-12-23	Updated: 2022-12-08
 
 (example of how to set up an email account with Gmail is at the bottom)
 
@@ -248,7 +248,8 @@ successfully.
 
 NOTES:
 
-- You may need to install gcc, make and associated libraries in order for some perl modules to install properly. To do this on Vicibox or OpenSuSE you can use the software management utility in "yast".
+- You may need to install gcc, make and associated libraries in order for some perl modules to install properly. To do this on Vicibox or OpenSuSE you can use the software management utility in "yast". Just enter 'yast' on the Linux command-line, then go to Software -> Software Management -> Search Phrase, then enter in the perl module name(i.e. "FormatText"), then in the results section you'll highlight the module and press <space>. Then press F10 to accept and confirm the module to be installed, then F10 again to finish. After that you can do it again for any remaining modules that are needed.
+
 - If you see the following error:
 
 *******************************************************************
@@ -290,3 +291,16 @@ Save it(since the file is most likely read-only, you might have to force save[in
 Then try running the email script again:
 
  /usr/share/astguiclient/AST_inbound_email_parser.pl --ssl-no-cert --debugX --force-check
+
+
+
+
+- Email log errors compaining about "Sender address rejected: need fully-qualified address":
+
+You have to give your server a Fully Qualified Domain Name(FQDN), if only locally.
+1. On your local DNS server, or your real-world DNS server for a domain you control, add a new A NAME with the IP Address of the server you will be assigning
+2. Edit the "/etc/hostname" file on that server and enter in the FQDN that you have added to DNS
+3. Edit the "/etc/hosts" file on that server and enter in the new FQDN and the local IP Address, with another entry for the real-world IP Address if there is one
+4. Reboot your server.
+
+You may also need to define your FQDN in your email configuration files, for example if you are using Postfix for email, in the “/etc/postfix/main.cf" you will need to change the “myhostname” setting to your FQDN(i.e.: “myhostname = dialer01.dialer-domain.com”). Also, if you are using a mail relay server, you will need to set the “relayhost” setting as well(i.e.: “relayhost = mail.relay-domain.com:587”).

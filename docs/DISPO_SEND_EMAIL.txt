@@ -1,4 +1,4 @@
-Sending email after agent dispositions a call		Started: 2015-08-06	Updated: 2021-09-26
+Sending email after agent dispositions a call		Started: 2015-08-06	Updated: 2022-11-15
 
 These instructions will show you how to set up automatic emails to be sent out when an agent dispositions a call with a specific defined "sale status".
 
@@ -43,7 +43,7 @@ VARhttp://192.168.1.1/agc/dispo_send_email.php?container_id=TEST_CONTAINER&lead_
 
 HERE IS AN EXAMPLE SETTINGS CONTAINER(Container ID: "TEST_CONTAINER") TO SEND OUT AN EMAIL AFTER CALL DISPO:
 
-	(The four keys you can use are: "email_to", "email_from", "email_subject" and "email_body_begin" will start your message while "email_body_end" will mark the finish of the message. You can use most standard SCRIPT variables in the subject and body fields, and you can use either fixed email addresses or "agent_email" and "customer_email" as variables for the email addresses as shown below. A semi-colon ";" at the beginning of a line will comment out that line and it will not be parsed. If you want to include custom fields values in the email, then you need to put "--A--CF_uses_custom_fields--B--" into the email body somewhere, it will be removed before the email is sent. Then you can put custom fields values in just like you do in a script.)
+	(The four keys you can use are: "email_to", "email_from", "email_subject" and "email_body_begin" will start your message while "email_body_end" will mark the finish of the message. You can use most standard SCRIPT variables in the subject and body fields, and you can use either fixed email addresses or "agent_email" and "customer_email" as variables for the email addresses as shown below. A semi-colon ";" at the beginning of a line will comment out that line and it will not be parsed. If you want to include custom fields values in the email, then you need to put "--A--CF_uses_custom_fields--B--" into the email body somewhere, it will be removed before the email is sent. Then you can put custom fields values in just like you do in a script. If you have to use the allow_sendmail_bypass option, include "sendmail_bypass" at the very end of the container entry to activate it.)
 
 ; destination email (if you want to use more than one email address, you should separate them by a space ' ')
 ;email_to => vicidialemailtesting@gmail.com

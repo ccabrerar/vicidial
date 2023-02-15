@@ -74,6 +74,7 @@
 # 211022-0734 - Added IR_SLA_all_statuses options.php setting
 # 211027-1050 - Added optional campaign selection(camp_select), for calculation of OCR only
 # 212207-2227 - Added IQNANQ to drop SQL calculation queries, fix for AHT calculation in show_camp mode
+# 221208-1013 - Added vicidial_inbound_callback_queue stats
 #
 
 $startMS = microtime();
@@ -1041,6 +1042,7 @@ $orig_call_time_clause.=" )";
 $calldate_call_time_clause=preg_replace('/<DATE_COLUMN>/', 'call_date', $orig_call_time_clause);
 $starttime_call_time_clause=preg_replace('/<DATE_COLUMN>/', 'start_time', $orig_call_time_clause);
 $eventtime_call_time_clause=preg_replace('/<DATE_COLUMN>/', 'event_time', $orig_call_time_clause);
+$icbq_date_call_time_clause=preg_replace('/<DATE_COLUMN>/', 'icbq_date', $orig_call_time_clause);
 
 
 # Calculate first record in interval and last
@@ -1734,6 +1736,75 @@ else
 	$rpt_type_verbiage=_QXZ("CALL",6);
 	$rpt_type_verbiages=_QXZ("CALLS",6);
 	}
+
+
+##############################
+#########  CALLBACK QUEUE STATS
+if ($DID != 'Y')
+	{
+	$MAIN.="\n";
+	$MAIN.="---------- "._QXZ("CALLBACK QUEUE STATS")."\n";
+
+	$CSV_text1.="\n\""._QXZ("CALLBACK QUEUE STATS")."\"\n";
+
+	$stmt="SELECT count(*) from vicidial_inbound_callback_queue where icbq_date >= '$query_date_BEGIN' and icbq_date <= '$query_date_END' $icbq_date_call_time_clause and group_id IN($group_SQL);";
+	$rslt=mysql_to_mysqli($stmt, $link);
+	if ($DB) {$MAIN.="$stmt\n";}
+	$row=mysqli_fetch_row($rslt);
+	$today_cbQUEUEcalls = $row[0];
+
+	$stmt="SELECT count(*) from vicidial_inbound_callback_queue_archive where icbq_date >= '$query_date_BEGIN' and icbq_date <= '$query_date_END' $icbq_date_call_time_clause and group_id IN($group_SQL);";
+	$rslt=mysql_to_mysqli($stmt, $link);
+	if ($DB) {$MAIN.="$stmt\n";}
+	$row=mysqli_fetch_row($rslt);
+	$archive_cbQUEUEcalls = $row[0];
+	$temp_cbQUEUE_calls = ($today_cbQUEUEcalls + $archive_cbQUEUEcalls);
+	$cbQUEUEstatus_output='';
+
+	if ($temp_cbQUEUE_calls > 0)
+		{
+		$cbQUEUEstatus_output .= _QXZ("Callback Queue Statuses").":\n";
+		$cbQUEUEstatus_outputCSV .= '"'._QXZ("Callback Queue Statuses").":\"\n";
+
+		$stmt="SELECT sum(qty), icbq_status FROM ( (SELECT count(*) as qty, t.icbq_status FROM vicidial_inbound_callback_queue t WHERE icbq_date >= '$query_date_BEGIN' and icbq_date <= '$query_date_END' $icbq_date_call_time_clause and group_id IN($group_SQL) group by t.icbq_status) UNION ALL (SELECT count(*) as qty, c.icbq_status FROM vicidial_inbound_callback_queue_archive c WHERE icbq_date >= '$query_date_BEGIN' and icbq_date <= '$query_date_END' $icbq_date_call_time_clause and group_id IN($group_SQL) group by c.icbq_status) ) t group by icbq_status order by icbq_status;";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		if ($DB) {$MAIN.="$stmt\n";}
+		$icbq_to_print = mysqli_num_rows($rslt);
+
+		$i=0;
+		while ($i < $icbq_to_print)
+			{
+			$row=mysqli_fetch_row($rslt);
+			$campaigns_allowed[$i] =		$row[0];
+			$campaigns_names[$i] =	$row[1];
+
+			$temp_count =	sprintf("%10s", $row[0]);
+			$temp_status =	sprintf("%10s", $row[1]);
+
+			$cbQUEUEstatus_output .= "$temp_status $temp_count\n";
+			$cbQUEUEstatus_outputCSV .= "\"$temp_status\",\"$temp_count\"\n";
+			$i++;
+			}
+		}
+
+	$cbQUEUEcalls =	sprintf("%10s", $temp_cbQUEUE_calls);
+	$cbQUEUEpercent = (MathZDC($cbQUEUEcalls, $TOTALcalls) * 100);
+	$cbQUEUEpercent = round($cbQUEUEpercent, 0);
+
+	$MAIN.=_QXZ("Total Callback Queue Calls:",46)." $cbQUEUEcalls  $cbQUEUEpercent%\n";
+	$MAIN.=$cbQUEUEstatus_output;
+#	$MAIN.=_QXZ("Average QUEUE Length for queue calls:",46)." $average_queue_seconds "._QXZ("seconds")."\n";
+#	$MAIN.=_QXZ("Average QUEUE Length across all calls:",46)." $average_total_queue_seconds "._QXZ("seconds")."\n";
+
+	$CSV_text1.="\""._QXZ("Total Callback Queue Calls").":\",\"$cbQUEUEcalls\",\"$cbQUEUEpercent%\"\n";
+	$CSV_text1.=$cbQUEUEstatus_outputCSV;
+#	$CSV_text1.="\""._QXZ("Average QUEUE Length for queue calls").":\",\"$average_queue_seconds "._QXZ("seconds")."\"\n";
+#	$CSV_text1.="\""._QXZ("Average QUEUE Length across all calls").":\",\"$average_total_queue_seconds "._QXZ("seconds")."\"\n";
+
+	$rpt_type_verbiage=_QXZ("CALLBACK QUEUE CALL",6);
+	$rpt_type_verbiages=_QXZ("CALLBACK QUEUE CALLS",6);
+	}
+
 
 ##############################
 #########  CALL HOLD TIME BREAKDOWN IN SECONDS
