@@ -1410,6 +1410,9 @@ function _QXZ($English_text, $sprintf=0, $align="l", $v_one='', $v_two='', $v_th
 	{
 	global $SSenable_languages, $SSlanguage_method, $VUselected_language, $link;
 
+	$original_text = $English_text;
+	$all_caps1 = ($English_text == mb_strtoupper($English_text));
+
 	if ($SSenable_languages == '1')
 		{
 		if ($SSlanguage_method != 'DISABLED')
@@ -1424,10 +1427,13 @@ function _QXZ($English_text, $sprintf=0, $align="l", $v_one='', $v_two='', $v_th
 					$stmt="SELECT translated_text from vicidial_language_phrases where english_text='$English_text' and language_id='$VUselected_language';";
 					$rslt=mysql_to_mysqli($stmt, $link);
 					$sl_ct = mysqli_num_rows($rslt);
+					$original = $English_text;
+					$translated = "";
 					if ($sl_ct > 0)
 						{
 						$row=mysqli_fetch_row($rslt);
 						$English_text =		$row[0];
+						$translated = $row[0];
 						}
 					}
 				}
@@ -1460,8 +1466,17 @@ function _QXZ($English_text, $sprintf=0, $align="l", $v_one='', $v_two='', $v_th
 			}
 		$English_text=sprintf($fmt, substr($English_text, 0, $sprintf));
 		}
+
+	// Check if all caps
+   	$all_caps2 = ($English_text == mb_strtoupper($English_text));
+
+	if ($all_caps1 && !$all_caps2)
+		$English_text = mb_strtoupper($English_text);
+	elseif (!$all_caps1 && $all_caps2)
+		$English_text = ucfirst(mb_strtolower($English_text));
+
 	return $English_text;
-	}
+}
 
 function hex2rgb($hex) {
 	$hex = str_replace("#", "", $hex);
