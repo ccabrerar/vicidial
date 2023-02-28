@@ -5,6 +5,7 @@
 # 
 # CHANGELOG:
 # 220825-1627 - First build
+# 230106-1729 - Added page flushing so page elements appear as they load
 #
 
 # if (isset($_GET["SUBMIT"]))			{$SUBMIT=$_GET["SUBMIT"];}
@@ -192,6 +193,8 @@ $HTML_output.="<tr class='export_row'>";
 $HTML_output.="<td class='export_row_cell' colspan='5'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('AREA', 'answered_area')\" title=\"Export as a CSV file\" value='CSV'></td>";
 $HTML_output.="</tr>";
 $HTML_output.="</table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 #############################
 
 ##### UNANSWERED OUTPUT #####
@@ -231,6 +234,8 @@ $HTML_output.="<tr class='export_row'>";
 $HTML_output.="<td class='export_row_cell' colspan='4'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('AREA', 'unanswered_area')\" title=\"Export as a CSV file\" value='CSV'></td>";
 $HTML_output.="</tr>";
 $HTML_output.="</table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 #############################
 
 if ($download_rpt)

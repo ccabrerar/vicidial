@@ -5,6 +5,7 @@
 # 
 # CHANGELOG:
 # 220825-1615 - First build
+# 230123-1827 - Added auto download limits
 #
 
 if (isset($_GET["page_no"]))			{$page_no=$_GET["page_no"];}
@@ -152,6 +153,12 @@ $HTML_output.="</td>";
 $HTML_output.="</tr>";
 $HTML_output.="<tr>";
 $CSV_output="";
+
+if ($total_calls>$auto_download_limit)
+	{
+	$CSV_output.="\""._QXZ("WARNING").":\",\""._QXZ("OVER")." $auto_download_limit "._QXZ("RECORDS")."\",\""._QXZ("AUTOMATIC DOWNLOAD")."\"\n\n\n";
+	}
+
 foreach ($selected_columns as $display_name => $column_name)
 	{
 	if ($display_name!="uniqueid")
@@ -247,7 +254,7 @@ foreach ($output_array as $data_row)
 			}
 		else
 			{
-			$HTML_output.="<td><a onClick=\"ShowCallDetails('$value', 'answered')\"><svg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg' data-svg='search'><circle fill='none' stroke='#000' stroke-width='1.1' cx='9' cy='9' r='7'></circle><path fill='none' stroke='#000' stroke-width='1.1' d='M14,14 L18,18 L14,14 Z'></path></svg></a></td>";
+			$HTML_output.="<td><a onClick=\"ShowCallDetails('$value', 'answered')\"><svg width='20' height='20' viewBox='0 0 20 20' data-svg='search'><circle fill='none' stroke='#000' stroke-width='1.1' cx='9' cy='9' r='7'></circle><path fill='none' stroke='#000' stroke-width='1.1' d='M14,14 L18,18 L14,14 Z'></path></svg></a></td>";
 			# $HTML_output.="<td><IMG SRC=\"images/glass.png\" onClick=\"ShowCallDetails('$value')\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP></td>";
 			}
 		}
@@ -263,7 +270,7 @@ $HTML_output.="<input type='button' class='download_button' onClick=\"GoToDetail
 $HTML_output.="</td>";
 # $HTML_output.="<td class='export_row_cell' align='center' colspan='".(count($selected_columns)-2)."'>"._QXZ("Export as")."... &nbsp;&nbsp;&nbsp;&nbsp;<a  href=\"".$PHP_SELF."?download_rpt=answer_details&sort_unanswered_details=".$sort_unanswered_details."\" title=\"Export as a CSV file\" class=\"uk-icon\">CSV</a>&nbsp;&nbsp;&nbsp;&nbsp;Current page: $page_no / $total_pages</td>";
 $HTML_output.="<td class='export_row_cell' colspan='".(count($selected_columns)-2)."'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('UNANSWERED_DT', 'answer_details')\" title=\"Export as a CSV file\" value='CSV'>&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("Current page").": $page_no / $total_pages</td>";
-# $HTML_output.="<td class='export_row_cell' align='right'><B><a class='header_link' href='".$PHP_SELF."?sort_unanswered_details=".$sort_unanswered_details."&page_no=".($page_no+1)."#page_anchor' alt='Next page of results'>>></a>&nbsp;&nbsp;&nbsp;&nbsp;<a class='header_link' href='".$PHP_SELF."?sort_unanswered_details=".$sort_unanswered_details."&page_no=".($total_pages-1)."#page_anchor' alt='Last page of results'>>|</a></B></td>";
+$HTML_output.="<td class='export_row_cell' align='right'><B><a class='header_link' href='".$PHP_SELF."?sort_unanswered_details=".$sort_unanswered_details."&page_no=".($page_no+1)."#page_anchor' alt='Next page of results'>>></a>&nbsp;&nbsp;&nbsp;&nbsp;<a class='header_link' href='".$PHP_SELF."?sort_unanswered_details=".$sort_unanswered_details."&page_no=".($total_pages-1)."#page_anchor' alt='Last page of results'>>|</a></B></td>";
 $HTML_output.="<td class='export_row_cell' align='right'>";
 $HTML_output.="<input type='button' class='download_button' onClick=\"GoToDetailsPage('UNANSWERED_DT', '".($page_no<$total_pages ? $page_no+1 : $total_pages)."')\" title=\"Next page\" value='>>'>&nbsp;&nbsp;&nbsp;&nbsp;";
 $HTML_output.="<input type='button' class='download_button' onClick=\"GoToDetailsPage('UNANSWERED_DT', '".($total_pages)."')\" title=\"Last page\" value='>|'>";

@@ -1,10 +1,11 @@
 <?php
 # VERM_header.inc - Vicidial Enhanced Reporting header output
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
 # 
 # CHANGELOG:
 # 220825-1621 - First build
+# 230106-1321 - Added missing QXZ functions, removed debug output
 #
 
 /* 08/26 - redundant, already used in parent VERM_main_report_page.php
@@ -104,7 +105,6 @@ $HTML_header="<html>\n";
 $HTML_header.="<TITLE>"._QXZ("$report_name").": $report_full_names_array[$report_type]</TITLE>\n";
 $HTML_header.="<HEAD>\n";
 $HTML_header.="<link rel=\"stylesheet\" type=\"text/css\" href=\"VERM_stylesheet.php\">\n";
-$HTML_header.="<script src=\"https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js\"></script>\n";
 $HTML_header.="<script language=\"JavaScript\" src=\"calendar_db.js\"></script>\n";
 $HTML_header.="<script language=\"JavaScript\" src=\"help.js\"></script>\n";
 $HTML_header.="<script language=\"JavaScript\" src=\"VERM_custom_form_functions.php\"></script>\n";
@@ -117,9 +117,6 @@ $HTML_header.="<div id='CallDetailsDiv' class='details_info' style='display:none
 $HTML_header.="<div id='AgentDetailsDiv' class='details_info' style='display:none;z-index:11;'></div>\n";
 $HTML_header.="<div id='OutcomesDetailsDiv' class='details_info' style='display:none;z-index:5;'></div>\n";
 $HTML_header.="<div id='HelpDisplayDiv' class='help_info' style='display:none;z-index:99;'></div>";
-
-$HTML_header.="\n\n<!--\n$calls_stmt\n-->\n\n";
-
 
 $HTML_header.="<form action='$PHP_SELF' method='POST'>\n";
 
@@ -171,13 +168,13 @@ echo "<input type='hidden' name='DB' id='DB' value='$DB'>\n";
 echo "<input type='hidden' name='report_types_to_display' id='report_types_to_display' value='$report_types_to_display'>\n";
 ?>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.6.1/chart.js" integrity="sha512-9fQaGKKJO2zXOYXpPTEEyzIdx7r3ou0nZgvxS9VICh70AGvdangg7lUVonofpBYrNWd6h2e/FQHoWSCRZkwOUQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="chart.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <table id="nav_table">
 <?php
 	echo "<tr>\n";
 	echo "<td align='left' valign='top' class='title_cell'><A HREF='VERM_admin.php'><IMG SRC='$selected_logo' BORDER=0 ALT='System logo'></A> &nbsp; </td>\n";
 	echo "<td align='right' valign='middle' class='title_cell'><B>$PHP_AUTH_USER</B> | $PHP_AUTH_USER_fullname<BR><BR>";
-	echo "<a class='header_link' href='javascript:window.location.reload()'>RELOAD &#8635;</a> | <a class='header_link' href='javascript:if(window.print)window.print()'>PRINT <img src='./images/print_icon.png' width='15' height='15'></a> | <a class='header_link' href='VERM_admin.php?start_date=$start_date&end_date=$end_date'>NEW REPORT</a> | <a class='header_link' href='/".$SSadmin_web_directory."/admin.php?force_logout=1'>LOG OUT</a>";
+	echo "<a class='header_link' href='javascript:window.location.reload()'>"._QXZ("RELOAD")." &#8635;</a> | <a class='header_link' href='javascript:if(window.print)window.print()'>"._QXZ("PRINT")." <img src='./images/print_icon.png' width='15' height='15'></a> | <a class='header_link' href='VERM_admin.php?start_date=$start_date&end_date=$end_date'>"._QXZ("NEW REPORT"). "</a> | <a class='header_link' href='/".$SSadmin_web_directory."/admin.php?force_logout=1'>"._QXZ("LOG OUT")."</a>";
 	echo "</td>\n";
 	echo "</tr>\n";
 ?>
@@ -188,12 +185,12 @@ if ($report_types_to_display=="Quick agents report") {
 	<tr>
 		<td colspan='2' class='nav_header' align='left'>
 		<ul class='navigation_list'>
-		<li style="display:inline"><input type='button' class='transparent_button' value='HOME' onClick="document.location.href='VERM_admin.php'"></li>
-		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="ANSWERED" ? " current_report" : ""); ?>' value='ANSWERED' id='ANSWERED' onClick='GoToReport(this.id)'></li>
-		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="ANSWERED_DT" ? " current_report" : ""); ?>' value='ANS.DT.' id='ANSWERED_DT' onClick='GoToReport(this.id)'></li>
-		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="AGENTS" ? " current_report" : ""); ?>' value='AGENTS' id='AGENTS' onClick='GoToReport(this.id)'></li>
-		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="AGENTS_DT" ? " current_report" : ""); ?>' value='AG.DT.' id='AGENTS_DT' onClick='GoToReport(this.id)'></li>
-		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="OUTCOMES" ? " current_report" : ""); ?>' value='OUTCOMES' id='OUTCOMES' onClick='GoToReport(this.id)'></li>
+		<li style="display:inline"><input type='button' class='transparent_button' value='<?php echo _QXZ("HOME"); ?>' onClick="document.location.href='VERM_admin.php'"></li>
+		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="ANSWERED" ? " current_report" : ""); ?>' value='<?php echo _QXZ("ANSWERED"); ?>' id='ANSWERED' onClick='GoToReport(this.id)'></li>
+		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="ANSWERED_DT" ? " current_report" : ""); ?>' value='<?php echo _QXZ("ANS.DT."); ?>' id='ANSWERED_DT' onClick='GoToReport(this.id)'></li>
+		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="AGENTS" ? " current_report" : ""); ?>' value='<?php echo _QXZ("AGENTS"); ?>' id='AGENTS' onClick='GoToReport(this.id)'></li>
+		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="AGENTS_DT" ? " current_report" : ""); ?>' value='<?php echo _QXZ("AG.DT."); ?>' id='AGENTS_DT' onClick='GoToReport(this.id)'></li>
+		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="OUTCOMES" ? " current_report" : ""); ?>' value='<?php echo _QXZ("OUTCOMES"); ?>' id='OUTCOMES' onClick='GoToReport(this.id)'></li>
 		</ul>
 		</td>
 	</tr>
@@ -205,9 +202,9 @@ if ($report_types_to_display=="Quick agents report") {
 	<tr>
 		<td colspan='2' class='nav_header' align='left'>
 		<ul class='navigation_list'>
-		<li style="display:inline"><input type='button' class='transparent_button' value='HOME' onClick="document.location.href='VERM_admin.php'"></li>
-		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="STATS" ? " current_report" : ""); ?>' value='STATS' id='STATS' onClick='GoToReport(this.id)'></li>
-		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="CALLS" ? " current_report" : ""); ?>' value='CALLS' id='CALLS' onClick='GoToReport(this.id)'></li>
+		<li style="display:inline"><input type='button' class='transparent_button' value='<?php echo _QXZ("HOME"); ?>' onClick="document.location.href='VERM_admin.php'"></li>
+		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="STATS" ? " current_report" : ""); ?>' value='<?php echo _QXZ("STATS"); ?>' id='STATS' onClick='GoToReport(this.id)'></li>
+		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="CALLS" ? " current_report" : ""); ?>' value='<?php echo _QXZ("CALLS"); ?>' id='CALLS' onClick='GoToReport(this.id)'></li>
 		</ul>
 		</td>
 	</tr>
@@ -217,20 +214,20 @@ if ($report_types_to_display=="Quick agents report") {
 	<tr>
 		<td colspan='2' class='nav_header' align='left'>
 		<ul class='navigation_list'>
-		<li style="display:inline"><input type='button' class='transparent_button' value='HOME' onClick="document.location.href='VERM_admin.php'"></li>
-		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="ANSWERED" ? " current_report" : ""); ?>' value='ANSWERED' id='ANSWERED' onClick='GoToReport(this.id)'></li>
-		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="ANSWERED_DT" ? " current_report" : ""); ?>' value='ANS.DT.' id='ANSWERED_DT' onClick='GoToReport(this.id)'></li>
-		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="UNANSWERED" ? " current_report" : ""); ?>' value='UNANS.' id='UNANSWERED' onClick='GoToReport(this.id)'></li>
-		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="UNANSWERED_DT" ? " current_report" : ""); ?>' value='UNANS.DT.' id='UNANSWERED_DT' onClick='GoToReport(this.id)'></li>
-		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="IVR" ? " current_report" : ""); ?>' value='IVR' id='IVR' onClick='GoToReport(this.id)'></li>
-		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="AREA" ? " current_report" : ""); ?>' value='AREA' id='AREA' onClick='GoToReport(this.id)'></li>
-		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="ATT" ? " current_report" : ""); ?>' value='ATT.' id='ATT' onClick='GoToReport(this.id)'></li>
-		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="DAY" ? " current_report" : ""); ?>' value='DAY' id='DAY' onClick='GoToReport(this.id)'></li>
-		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="HOUR" ? " current_report" : ""); ?>' value='HR.' id='HOUR' onClick='GoToReport(this.id)'></li>
-		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="DOW" ? " current_report" : ""); ?>' value='DOW' id='DOW' onClick='GoToReport(this.id)'></li>
-		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="AGENTS" ? " current_report" : ""); ?>' value='AGENTS' id='AGENTS' onClick='GoToReport(this.id)'></li>
-		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="AGENTS_DT" ? " current_report" : ""); ?>' value='AG.DT.' id='AGENTS_DT' onClick='GoToReport(this.id)'></li>
-		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="OUTCOMES" ? " current_report" : ""); ?>' value='OUTCOMES' id='OUTCOMES' onClick='GoToReport(this.id)'></li>
+		<li style="display:inline"><input type='button' class='transparent_button' value='<?php echo _QXZ("HOME"); ?>' onClick="document.location.href='VERM_admin.php'"></li>
+		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="ANSWERED" ? " current_report" : ""); ?>' value='<?php echo _QXZ("ANSWERED"); ?>' id='ANSWERED' onClick='GoToReport(this.id)'></li>
+		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="ANSWERED_DT" ? " current_report" : ""); ?>' value='<?php echo _QXZ("ANS.DT."); ?>' id='ANSWERED_DT' onClick='GoToReport(this.id)'></li>
+		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="UNANSWERED" ? " current_report" : ""); ?>' value='<?php echo _QXZ("UNANS."); ?>' id='UNANSWERED' onClick='GoToReport(this.id)'></li>
+		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="UNANSWERED_DT" ? " current_report" : ""); ?>' value='<?php echo _QXZ("UNANS.DT."); ?>' id='UNANSWERED_DT' onClick='GoToReport(this.id)'></li>
+		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="IVR" ? " current_report" : ""); ?>' value='<?php echo _QXZ("IVR"); ?>' id='IVR' onClick='GoToReport(this.id)'></li>
+		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="AREA" ? " current_report" : ""); ?>' value='<?php echo _QXZ("AREA"); ?>' id='AREA' onClick='GoToReport(this.id)'></li>
+		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="ATT" ? " current_report" : ""); ?>' value='<?php echo _QXZ("ATT."); ?>' id='ATT' onClick='GoToReport(this.id)'></li>
+		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="DAY" ? " current_report" : ""); ?>' value='<?php echo _QXZ("DAY"); ?>' id='DAY' onClick='GoToReport(this.id)'></li>
+		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="HOUR" ? " current_report" : ""); ?>' value='<?php echo _QXZ("HR."); ?>' id='HOUR' onClick='GoToReport(this.id)'></li>
+		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="DOW" ? " current_report" : ""); ?>' value='<?php echo _QXZ("DOW"); ?>' id='DOW' onClick='GoToReport(this.id)'></li>
+		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="AGENTS" ? " current_report" : ""); ?>' value='<?php echo _QXZ("AGENTS"); ?>' id='AGENTS' onClick='GoToReport(this.id)'></li>
+		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="AGENTS_DT" ? " current_report" : ""); ?>' value='<?php echo _QXZ("AG.DT."); ?>' id='AGENTS_DT' onClick='GoToReport(this.id)'></li>
+		<li style="display:inline"><input type='button' class='transparent_button<?php echo ($report_type=="OUTCOMES" ? " current_report" : ""); ?>' value='<?php echo _QXZ("OUTCOMES"); ?>' id='OUTCOMES' onClick='GoToReport(this.id)'></li>
 		</ul>
 		</td>
 	</tr>
@@ -242,7 +239,7 @@ if ($report_types_to_display=="Quick agents report") {
 <table id="rpt_table">
 
 	<tr>
-		<th style="width:25vw">Report Details:</th>
+		<th style="width:25vw"><?php echo _QXZ("Report Details"); ?>:</th>
 		<td style="width:75vw"></td>
 	</tr>
 <?php
@@ -250,14 +247,14 @@ if ($report_full_names_array["$report_type"])
 	{
 ?>
 	<tr>
-		<td style="width:25vw" class='bold_cell'>Currently viewing:</th>
+		<td style="width:25vw" class='bold_cell'><?php echo _QXZ("Currently viewing:"); ?></th>
 		<td style="width:75vw" class='bold_cell'><?php echo $report_full_names_array["$report_type"]; ?></td>
 	</tr>
 <?php
 	}
 ?>
 	<tr>
-		<td style="width:25vw" class='bold_cell'>Report queue:</td>
+		<td style="width:25vw" class='bold_cell'><?php echo _QXZ("Report queue"); ?>:</td>
 		<td style="width:75vw" class='bold_cell'>
 		<?php
 		echo $vicidial_queue_groups;
@@ -265,11 +262,11 @@ if ($report_full_names_array["$report_type"])
 		</td>
 	</tr>
 	<tr>
-		<td style="width:25vw">Report generated on:</td>
+		<td style="width:25vw"><?php echo _QXZ("Report generated on"); ?>:</td>
 		<td style="width:75vw"><?php echo date("F j Y, G:i"); ?></td>
 	</tr>
 	<tr>
-		<td style="width:25vw">Campaigns/ingroups considered: <?php echo "$NWB#VERM_header-atomic_queues$NWE"; ?></td>
+		<td style="width:25vw"><?php echo _QXZ("Campaigns/ingroups considered"); ?>: <?php echo "$NWB#VERM_header-atomic_queues$NWE"; ?></td>
 		<td style="width:75vw" class='queue_cell'>
 		<?php
 		echo $atomic_queue_str;
@@ -277,19 +274,19 @@ if ($report_full_names_array["$report_type"])
 		</td>
 	</tr>
 	<tr>
-		<td style="width:25vw">Period start date: <?php echo "$NWB#VERM_header-period_start_date$NWE"; ?></td>
+		<td style="width:25vw"><?php echo _QXZ("Period start date"); ?>: <?php echo "$NWB#VERM_header-period_start_date$NWE"; ?></td>
 		<td style="width:75vw"><?php echo date('F j Y, H:i', strtotime("$start_date $start_time")); ?></td>
 	</tr>
 	<tr>
-		<td style="width:25vw">Period end date: <?php echo "$NWB#VERM_header-period_end_date$NWE"; ?></td>
+		<td style="width:25vw"><?php echo _QXZ("Period end date"); ?>: <?php echo "$NWB#VERM_header-period_end_date$NWE"; ?></td>
 		<td style="width:75vw"><?php echo date('F j Y, H:i', strtotime("$end_date $end_time")); ?></td>
 	</tr>
 	<tr>
-		<td style="width:25vw">Total calls processed: <?php echo "$NWB#VERM_header-total_calls_processed$NWE"; ?></td>
+		<td style="width:25vw"><?php echo _QXZ("Total calls processed"); ?>: <?php echo "$NWB#VERM_header-total_calls_processed$NWE"; ?></td>
 		<td style="width:75vw"><?php echo $total_calls." (".$total_answered_calls." ans / ".$total_unanswered_calls." unans)"; ?></td>
 	</tr>
 	<tr>
-		<td style="width:25vw">Ratio: <?php echo "$NWB#VERM_header-ratio$NWE"; ?></td>
+		<td style="width:25vw"><?php echo _QXZ("Ratio"); ?>: <?php echo "$NWB#VERM_header-ratio$NWE"; ?></td>
 		<td style="width:75vw"><?php
 		$answered_percentage=sprintf("%.1f", MathZDC((100*$total_answered_calls), $total_calls));
 		$unanswered_percentage=sprintf("%.1f", MathZDC((100*$total_unanswered_calls), $total_calls));
@@ -298,11 +295,11 @@ if ($report_full_names_array["$report_type"])
 	</tr>
 	<tr>
 		<td style="width:25vw">&nbsp;</td>
-		<td style="width:75vw"><input type="button" class="actButton" value="Search" alt="DIRECTS BACK TO CUSTOM REPORT INTERFACE" onclick="javascript:document.location.href='VERM_custom_report.php'"> <?php echo "$NWB#VERM_header-buttons$NWE"; ?></td>
+		<td style="width:75vw"><input type="button" class="actButton" value="<?php echo _QXZ("Search"); ?>" alt="DIRECTS BACK TO CUSTOM REPORT INTERFACE" onclick="javascript:document.location.href='VERM_custom_report.php'"> <?php echo "$NWB#VERM_header-buttons$NWE"; ?></td>
 	</tr>
 	<tr>
 		<td style="width:25vw">&nbsp;</td>
-		<td style="width:75vw"><input type="button" class="actButton" value="Link" alt="GIVES LINK DIRECTLY TO PAGE" onclick="GenerateLink(event);">
+		<td style="width:75vw"><input type="button" class="actButton" value="<?php echo _QXZ("Link"); ?>" alt="GIVES LINK DIRECTLY TO PAGE" onclick="GenerateLink(event);">
 		<input type="button" class="actButton" value="CSV" onClick="DownloadReport('<?php echo $report_type; ?>', 'header')">
 		</td>
 	</tr>
@@ -310,6 +307,7 @@ if ($report_full_names_array["$report_type"])
 		<td colspan='2' class='export_row_cell' valign='top'><div class="chart-container" style="height:25vw; width:40vh"><canvas id='answered_unanswered_display' role="img"> </canvas></div>
 <!--
 		<?php
+/*
 		echo "<BR><BR>Vicidial log SQL: $vicidial_log_SQL<BR><B>$and_vicidial_log_SQL</b><BR>\n";
 		echo "<BR>Vicidial CLOSER log SQL: $vicidial_closer_log_SQL\n";
 		echo "<BR>Vicidial DID log SQL: $vicidial_did_log_SQL\n";
@@ -331,6 +329,7 @@ if ($report_full_names_array["$report_type"])
 		# echo "Asterisk CID: $and_caller_code_sql<BR>\n"; 
 		print_r($extended_log_uniqueid_array);
 		echo "Day of week: $and_call_date_DOWsql<BR>\n";
+*/
 		?>
 //-->
 		</td>

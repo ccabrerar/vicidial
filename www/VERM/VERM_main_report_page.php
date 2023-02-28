@@ -5,6 +5,8 @@
 # 
 # CHANGELOG:
 # 220828-1402 - First build
+# 230106-1332 - Added auto download variables, permissions, report logging
+# 230116-1640 - Ingroup-related clauses no longer allow blank campaign_id values (double-dipping issue)
 #
 
 # NANQUE, not an unanswered call?
@@ -122,7 +124,7 @@ if (isset($_GET["time_of_day_end"]))			{$time_of_day_end=$_GET["time_of_day_end"
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,agent_whisper_enabled,report_default_format,enable_pause_code_limits,allow_web_debug,admin_screen_colors,admin_web_directory FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,agent_whisper_enabled,report_default_format,enable_pause_code_limits,allow_web_debug,admin_screen_colors,admin_web_directory,log_recording_access FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
@@ -141,6 +143,7 @@ if ($qm_conf_ct > 0)
 	$SSallow_web_debug =			$row[9];
 	$SSadmin_screen_colors =		$row[10];
 	$SSadmin_web_directory =		$row[11];
+	$log_recording_access =			$row[12];
 	}
 if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
@@ -603,7 +606,8 @@ while($ingroups_id_row=mysqli_fetch_array($ingroups_id_rslt))
 	$atomic_queue_str.=" <i>[".$ingroups_id_row["group_id"]."]</i>,";
 	$atomic_queue_ingroups_str.="$ingroups_id_row[group_id]', '";
 	}
-$and_atomic_queue_ingroups_clause="and campaign_id in ('".$atomic_queue_ingroups_str."')";
+#### IMPORTANT - 1/26/23 - added "and campaign_id!=''" - may need to add to and_atomic_queue_campaigns_clause as well.
+$and_atomic_queue_ingroups_clause="and campaign_id in ('".$atomic_queue_ingroups_str."') and campaign_id!=''";
 $atomic_queue_str=preg_replace('/,$/', '', $atomic_queue_str);
 
 if (strlen($atomic_queue_str)==0)
@@ -1087,17 +1091,17 @@ else
 
 if ($time_of_day_end)
 	{
-        $and_call_date_TODEsql=" and time(call_date)<='$time_of_day_end' ";
-        $where_call_date_TODEsql=" where time(call_date)<='$time_of_day_end' ";
-        # Agent log
-        $and_event_time_TODEsql=" and time(event_time)<='$time_of_day_end' ";
-        $where_event_time_TODEsql=" where time(event_time)<='$time_of_day_end' ";
-        # Live inbound log
-        $and_start_time_TODEsql=" and time(start_time)<='$time_of_day_end' ";
-        $where_start_time_TODEsql=" where time(start_time)<='$time_of_day_end' ";
-        # Park log
-        $and_parked_time_TODEsql=" and time(parked_time)<='$time_of_day_end' ";
-        $where_parked_time_TODEsql=" where time(parked_time)<='$time_of_day_end' ";
+	$and_call_date_TODEsql=" and time(call_date)<='$time_of_day_end' ";
+	$where_call_date_TODEsql=" where time(call_date)<='$time_of_day_end' ";
+	# Agent log
+	$and_event_time_TODEsql=" and time(event_time)<='$time_of_day_end' ";
+	$where_event_time_TODEsql=" where time(event_time)<='$time_of_day_end' ";
+	# Live inbound log
+	$and_start_time_TODEsql=" and time(start_time)<='$time_of_day_end' ";
+	$where_start_time_TODEsql=" where time(start_time)<='$time_of_day_end' ";
+	# Park log
+	$and_parked_time_TODEsql=" and time(parked_time)<='$time_of_day_end' ";
+	$where_parked_time_TODEsql=" where time(parked_time)<='$time_of_day_end' ";
 
 	
 	$vicidial_log_SQL.=$and_call_date_TODEsql;
@@ -1245,13 +1249,26 @@ if (!$total_calls || !$total_unanswered_calls || !$total_answered_calls)
 		$unanswered_percentage=sprintf("%.1f", MathZDC((100*$total_unanswered_calls), $total_calls));
 	}
 
-$CSV_output["header"]="\"Report Details:\"\n";
-$CSV_output["header"].="\"Report generated on:\",\"".date("F j Y, G:i")."\"\n";
-$CSV_output["header"].="\"Atomic queue(s) considered:\",\"".strip_tags($atomic_queue_str)."\"\n";
-$CSV_output["header"].="\"Period start date:\",\"".date('F j Y, H:i', strtotime("$start_date $start_time"))."\"\n";
-$CSV_output["header"].="\"Period end date:\",\"".date('F j Y, H:i', strtotime("$end_date $end_time"))."\"\n";
-$CSV_output["header"].="\"Total calls processed:\",\"".$total_calls." (".$total_answered_calls." ans / ".$total_unanswered_calls." unans)"."\"\n";
-$CSV_output["header"].="\"Ratio:\",\"".$answered_percentage."% ans / ".$unanswered_percentage."% unans"."\"\n";
+$CSV_output["header"]="\""._QXZ("Report Details").":\"\n";
+$CSV_output["header"].="\""._QXZ("Report generated on").":\",\"".date("F j Y, G:i")."\"\n";
+$CSV_output["header"].="\""._QXZ("Atomic queue(s) considered").":\",\"".strip_tags($atomic_queue_str)."\"\n";
+$CSV_output["header"].="\""._QXZ("Period start date").":\",\"".date('F j Y, H:i', strtotime("$start_date $start_time"))."\"\n";
+$CSV_output["header"].="\""._QXZ("Period end date").":\",\"".date('F j Y, H:i', strtotime("$end_date $end_time"))."\"\n";
+$CSV_output["header"].="\""._QXZ("Total calls processed").":\",\"".$total_calls." (".$total_answered_calls." ans / ".$total_unanswered_calls." unans)"."\"\n";
+$CSV_output["header"].="\""._QXZ("Ratio").":\",\"".$answered_percentage."% ans / ".$unanswered_percentage."% unans"."\"\n";
+
+$report_log_count=0;
+
+if (!$auto_download_limit) {$auto_download_limit=99999999999;}
+if ($total_calls>$auto_download_limit) {$agents_dt_download_notice=1;}
+if ($total_answered_calls>$auto_download_limit) {$answered_dt_download_notice=1;}
+if ($total_unanswered_calls>$auto_download_limit) {$unanswered_dt_download_notice=1;}
+
+
+if ( ($total_calls>$auto_download_limit && $report_type=="AGENTS_DT") || ($total_answered_calls>$auto_download_limit && $report_type=="ANSWERED_DT") || ($total_unanswered_calls>$auto_download_limit && $report_type=="UNANSWERED_DT") )
+	{
+	$download_rpt="auto_download";
+	}
 
 if (!$download_rpt)
 	{

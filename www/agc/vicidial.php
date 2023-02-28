@@ -710,10 +710,11 @@
 # 221206-1520 - Added login form multi-submit prevention ($login_submit_once), Added dialRegExten_enabled webphone option
 # 230118-0947 - Added agent_hangup_route features
 # 230131-0826 - Added filtering of 3-way number to dial to remove non-diable characters
+# 230220-1802 - Fix for In-Group manual dial issue
 #
 
-$version = '2.14-678c';
-$build = '230131-0826';
+$version = '2.14-679c';
+$build = '230220-1802';
 $php_script = 'vicidial.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=98;
@@ -7126,7 +7127,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 				}
 			if (xmlhttprequestcheckconf)
 				{
-				checkconf_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&user=" + user + "&pass=" + pass + "&client=vdc&conf_exten=" + taskconfnum + "&auto_dial_level=" + auto_dial_level + "&campagentstdisp=" + campagentstdisp + "&customer_chat_id=" + document.vicidial_form.customer_chat_id.value + "&live_call_seconds=" + VD_live_call_secondS + "&xferchannel=" + document.vicidial_form.xferchannel.value + "&check_for_answer=" + MDcheck_for_answer + "&MDnextCID=" + MDnextCID + "&campaign=" + campaign + "&phone_number=" + dialed_number + "&visibility=" + visibility_log + "&clicks=" + button_click_log;
+				checkconf_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&user=" + user + "&pass=" + pass + "&client=vdc&conf_exten=" + taskconfnum + "&auto_dial_level=" + auto_dial_level + "&campagentstdisp=" + campagentstdisp + "&customer_chat_id=" + document.vicidial_form.customer_chat_id.value + "&live_call_seconds=" + VD_live_call_secondS + "&active_ingroup_dial=" + active_ingroup_dial + "&xferchannel=" + document.vicidial_form.xferchannel.value + "&check_for_answer=" + MDcheck_for_answer + "&MDnextCID=" + MDnextCID + "&campaign=" + campaign + "&phone_number=" + dialed_number + "&visibility=" + visibility_log + "&clicks=" + button_click_log;
 				button_click_log='';
 				visibility_log='';
 				xmlhttprequestcheckconf.open('POST', 'conf_exten_check.php');
@@ -7713,7 +7714,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								}
 							}
 
-						if ( (CheckDEADcall > 0) && (VD_live_customer_call==1) && (currently_in_email_or_chat < 1) )
+						if ( (CheckDEADcall > 0) && (VD_live_customer_call==1) && (currently_in_email_or_chat < 1) && ( ( (active_ingroup_dial.length > 0) && (VD_live_call_secondS > 2) ) || (active_ingroup_dial.length < 1) ) )
 							{
 							if (CheckDEADcallON < 1)
 								{
@@ -7724,7 +7725,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								CheckDEADcallON=1;
 								CheckDEADcallCOUNT++;
 								customer_sec = VD_live_call_secondS;
-								button_click_log = button_click_log + "" + SQLdate + "-----dead_call---" + customer_sec + " " + lastcustchannel + " " + lastcustserverip + " " + LasTCID + "|";
+								button_click_log = button_click_log + "" + SQLdate + "-----dead_call---" + customer_sec + " " + active_ingroup_dial + " " + lastcustchannel + " " + lastcustserverip + " " + LasTCID + "|";
 
 								if ( (xfer_in_call > 0) && (customer_3way_hangup_logging=='ENABLED') )
 									{
@@ -7748,7 +7749,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								CheckDEADcallON=1;
 								CheckDEADcallCOUNT++;
 								customer_sec = VD_live_call_secondS;
-								button_click_log = button_click_log + "" + SQLdate + "-----dead_call---" + customer_sec + " " + lastcustchannel + " " + lastcustserverip + " " + LasTCID + "|";
+								button_click_log = button_click_log + "" + SQLdate + "-----dead_call_chat---" + customer_sec + " " + lastcustchannel + " " + lastcustserverip + " " + LasTCID + "|";
 								}
 							}
 						if (InGroupChange > 0)

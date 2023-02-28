@@ -5,6 +5,7 @@
 # 
 # CHANGELOG:
 # 220825-1624 - First build
+# 230106-1311 - Added page flushing to show page load progress
 #
 
 $vicidial_user_log_table="vicidial_user_log";
@@ -307,6 +308,8 @@ $HTML_output.="</table>";
 $HTML_output.="</td><td width='*' align='center' valign='top'>";
 # $HTML_output.="<div class=\"chart-container\" style=\"height:80vh; width:80vh\"><canvas id='agents_on_queue_display' role=\"img\"> </canvas></div>";
 $HTML_output.="</td></tr></table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 ###########################################
 
 #### ANSWERED CALL WAIT TIME PER DAY ###
@@ -368,6 +371,8 @@ $HTML_output.="</table>";
 $HTML_output.="</td><td width='*' align='center' valign='top'>";
 # $HTML_output.="<div class=\"chart-container\" style=\"height:80vh; width:80vh\"><canvas id='agents_on_queue_display' role=\"img\"> </canvas></div>";
 $HTML_output.="</td></tr></table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 ###########################################
 
 #### UNANSWERED CALL WAIT TIME PER DAY ###
@@ -432,6 +437,8 @@ $HTML_output.="</table>";
 $HTML_output.="</td><td width='*' align='center' valign='top'>";
 # $HTML_output.="<div class=\"chart-container\" style=\"height:80vh; width:80vh\"><canvas id='agents_on_queue_display' role=\"img\"> </canvas></div>";
 $HTML_output.="</td></tr></table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 ###########################################
 
 #### SALES PER DAY ###
@@ -479,6 +486,8 @@ $HTML_output.="<tr class='export_row'>";
 $HTML_output.="<td class='export_row_cell' colspan='10'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('DAY', 'sales_per_day')\" title=\"Export as a CSV file\" value='CSV'></td>";
 $HTML_output.="</tr>";
 $HTML_output.="</table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 ###########################################
 
 #### QUEUE LENGTH PER DAY ###
@@ -523,6 +532,8 @@ $HTML_output.="<td class='export_row_cell' colspan='7'>"._QXZ("Export as")."...<
 $HTML_output.="</tr>";
 $HTML_output.="</table>";
 ### $HTML_output.="** - coverage = percent of calls with queue position.  Assumed 100% if including outbound with a default position of '1' - also true for avg position<BR><BR>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 ###########################################
 
 #### SCHEDULE ADHERENCE PER DAY ###
@@ -546,6 +557,8 @@ foreach ($user_array as $call_date_key => $users_that_day)
 	$HTML_output.="<td>".sprintf("%.1f", (100*count($users_that_day)/$total_distinct_users_per_date))." %</td>";
 	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".sprintf("%.1f", (100*count($users_that_day)/$total_distinct_users_per_date))."%'></td>";
 	$HTML_output.="</tr>\n";
+
+	if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 
 	$CSV_output["schedule_adherence_per_day"].="\"$call_date_key\",\"".count($users_that_day)."\",\"".sprintf("%.1f", (100*count($users_that_day)/$total_distinct_users_per_date))." %\",\"\"\n";
 
@@ -580,6 +593,9 @@ $HTML_output.="<tr class='export_row'>";
 $HTML_output.="<td class='export_row_cell' colspan='4'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('DAY', 'schedule_adherence_per_day')\" title=\"Export as a CSV file\" value='CSV'></td>";
 $HTML_output.="</tr>";
 $HTML_output.="</table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+###########################################
 
 #### SERVICE LEVEL PER DAY ####
 $HTML_output.="<BR><h2 class='rpt_header'>"._QXZ("Inclusive SLA per day (inbound and outbound)").": $NWB#VERM_DAY-inclusive_SLA$NWE</h2>";
@@ -629,6 +645,8 @@ foreach ($calls_array as $call_date_key => $data)
 		}
 	$HTML_output.="</tr>\n";
 
+	if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 	$CSV_output["inclusive_sla_per_day"].="\n";
 
 	$prev_int=$interval;
@@ -638,6 +656,9 @@ $HTML_output.="<tr class='export_row'>";
 $HTML_output.="<td class='export_row_cell' colspan='".(4+count($svc_lvl_row))."'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('DAY', 'inclusive_sla_per_day')\" title=\"Export as a CSV file\" value='CSV'></td>";
 $HTML_output.="</tr>";
 $HTML_output.="</table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+###########################################
 
 if ($download_rpt)
 	{

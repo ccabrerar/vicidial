@@ -5974,12 +5974,13 @@ $rjs_debug='';
 # 221230-2231 - Added Postal Codes Cities display
 # 230117-0838 - Added Agent Call Hangup Routing options, changed year to 2023
 # 230204-1642 - Added No Agent Call URL "ALT" multi-url options
+# 230227-1150 - Updated VERM code and notices
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-873a';
-$build = '230204-1642';
+$admin_version = '2.14-874a';
+$build = '230227-1150';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -49643,6 +49644,13 @@ if ($ADD==999995)
 	echo "<td align=right valign=top><B><font size=2>"._QXZ("Copyright").": </B></td><td align=left><font size=1> &nbsp; "._QXZ("The classAudioFile PHP library was written by Michael Kamleitner").", &copy; 2003</td></tr>\n";
 	echo "<tr bgcolor=#$SSstd_row4_background><td align=right valign=top><B><font size=2>"._QXZ("License").": </B></td><td align=left><font size=1> &nbsp; "._QXZ("classAudioFile is licensed under the")." <a href=\"http://www.opensource.org/licenses/gpl-license.html\" target=\"_blank\">GPL "._QXZ("open source license")."</a></td></tr>\n";
 	echo "<tr bgcolor=#$SSstd_row4_background><td align=right valign=top nowrap><B><font size=2>"._QXZ("Source Code").": </B></td><td align=left><font size=1> &nbsp; "._QXZ("classAudioFile original source code is available at")." <a href=\"https://www.phpclasses.org/audiofile\" target=\"_blank\">"._QXZ("this link")."</a>.</td></tr>\n";
+
+	echo "<tr><td colspan=3> &nbsp; </tr>";
+
+	echo "<tr bgcolor=#$SSstd_row4_background><td align=right valign=middle rowspan=3 nowrap><B><font size=3>"._QXZ("Jquery").": </B></td>";
+	echo "<td align=right valign=top><B><font size=2>"._QXZ("Copyright").": </B></td><td align=left><font size=1> &nbsp; "._QXZ("The Jquery javascript library was written by OpenJS Foundation contributors").", &copy; 2023</td></tr>\n";
+	echo "<tr bgcolor=#$SSstd_row4_background><td align=right valign=top><B><font size=2>"._QXZ("License").": </B></td><td align=left><font size=1> &nbsp; "._QXZ("Jquery is licensed under the")." <a href=\"https://jquery.org/license/\" target=\"_blank\">MIT "._QXZ("open source license")."</a></td></tr>\n";
+	echo "<tr bgcolor=#$SSstd_row4_background><td align=right valign=top nowrap><B><font size=2>"._QXZ("Source Code").": </B></td><td align=left><font size=1> &nbsp; "._QXZ("Jquery original source code is available at")." <a href=\"https://jquery.com/download/\" target=\"_blank\">"._QXZ("this link")."</a>.</td></tr>\n";
 
 	echo "</TABLE></center>\n";
 	}

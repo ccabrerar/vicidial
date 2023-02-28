@@ -5,6 +5,7 @@
 # 
 # CHANGELOG:
 # 220825-1632 - First build
+# 230106-1301 - Added auto-download for large page displays to avoid memory errors
 #
 
 # NANQUE, not an unanswered call?
@@ -147,20 +148,43 @@ while ($session_row=mysqli_fetch_array($session_rslt))
 		$agent_logged_in=1;
 		}
 
-	# 6/3/22 - added $agent_sessions_array["$user"]["$start_date_epoch"]["start_hour"] to skip dual logouts
-	if (preg_match('/LOGOUT/', $event) && $agent_sessions_array["$user"]["$start_date_epoch"]["start_hour"]) # && $agent_logged_in==1
+	if (preg_match('/LOGOUT/', $event)) # && $agent_logged_in==1
 		{
 		$agent_sessions_array["$user"]["$start_date_epoch"]["end_hour"]=$event_epoch;
 		$agent_sessions_array["$user"]["$start_date_epoch"]["duration"]=($agent_sessions_array["$user"]["$start_date_epoch"]["end_hour"]-$agent_sessions_array["$user"]["$start_date_epoch"]["start_hour"]);
 		$agent_sessions_array["$user"]["$start_date_epoch"]["notes"]=$notes;
 
+/* Removed 9/20 - leaving in just in case
 		$pause_stmt="select sec_to_time(sum(pause_sec)), count(*) from vicidial_agent_log where event_time>=from_unixtime(".$agent_sessions_array["$user"]["$start_date_epoch"]["start_hour"].") and event_time<=from_unixtime(".$agent_sessions_array["$user"]["$start_date_epoch"]["end_hour"].") and user='$user' and pause_sec>0";
 		# print $pause_stmt."<BR>\n";
 		$pause_rslt=mysql_to_mysqli($pause_stmt, $link);
 		$pause_row=mysqli_fetch_row($pause_rslt);
 		$agent_sessions_array["$user"]["$start_date_epoch"]["pauses"]=$pause_row[1];
 		$agent_sessions_array["$user"]["$start_date_epoch"]["pause_time"]=($pause_row[0]!="" ? $pause_row[0] : "00:00:00");		
-
+*/
+		if ($agent_sessions_array["$user"]["$start_date_epoch"]["start_hour"]) # 9/8/22 added to prevent warnings
+			{ 
+			$pause_stmt="select sec_to_time(sum(pause_sec)), count(*) from vicidial_agent_log where event_time>=from_unixtime(".$agent_sessions_array["$user"]["$start_date_epoch"]["start_hour"].") and event_time<=from_unixtime(".$agent_sessions_array["$user"]["$start_date_epoch"]["end_hour"].") and user='$user' and pause_sec>0";
+			# print $pause_stmt."<BR>\n";
+			$pause_rslt=mysql_to_mysqli($pause_stmt, $link);
+			
+			if (mysqli_num_rows($pause_rslt)>0) # 9/8/22 added to prevent warnings
+				{
+				$pause_row=mysqli_fetch_row($pause_rslt);
+				$agent_sessions_array["$user"]["$start_date_epoch"]["pauses"]=$pause_row[1];
+				$agent_sessions_array["$user"]["$start_date_epoch"]["pause_time"]=($pause_row[0]!="" ? $pause_row[0] : "00:00:00");		
+				}
+			else
+				{
+				$agent_sessions_array["$user"]["$start_date_epoch"]["pauses"]=0;
+				$agent_sessions_array["$user"]["$start_date_epoch"]["pause_time"]="00:00:00";		
+				}
+			}
+		else
+			{
+			$agent_sessions_array["$user"]["$start_date_epoch"]["pauses"]=0;
+			$agent_sessions_array["$user"]["$start_date_epoch"]["pause_time"]="00:00:00";		
+			}
 		$start_date_epoch=0;
 		$agent_logged_in=0;
 		}
@@ -234,6 +258,8 @@ $HTML_output.="<th><a class='header_link' name='agent_sessions_sort_server_ip' i
 $HTML_output.="</tr>\n";
 
 $CSV_output["agent_sessions"]="\""._QXZ("Agent")."\",\""._QXZ("Start hour")."\",\""._QXZ("End hour")."\",\""._QXZ("Duration")."\",\""._QXZ("Ext.")."\",\""._QXZ("Termination")."\",\""._QXZ("Pause")."\",\""._QXZ("P.Time")."\",\""._QXZ("Srv")."\"\n";
+$CSV_output["auto_download"]="\"WARNING:\",\"OVER $auto_download_limit RECORDS\",\"AUTOMATIC DOWNLOAD\"\n\n\n";
+$CSV_output["auto_download"]="\""._QXZ("Agent")."\",\""._QXZ("Start hour")."\",\""._QXZ("End hour")."\",\""._QXZ("Duration")."\",\""._QXZ("Ext.")."\",\""._QXZ("Termination")."\",\""._QXZ("Pause")."\",\""._QXZ("P.Time")."\",\""._QXZ("Srv")."\"\n";
 
 ## Compress multi-multi-dimensional array into multi-dimensional array
 $agent_sessions_final_array=array();
@@ -305,6 +331,7 @@ foreach ($agent_sessions_final_array as $i => $row)
 	$HTML_output.="</tr>\n";
 
 	$CSV_output["agent_sessions"].="\"".$row["full_name"]."\",\"".$row["start_hour"]."\",\"".$row["end_hour"]."\",\"".$row["duration"]."\",\"".$row["extension"]."\",\"".$row["notes"]."\",\"".$row["pauses"]."\",\"".$row["pause_time"]."\",\"".$row["server_ip"]."\"\n";
+	$CSV_output["auto_download"].="\"".$row["full_name"]."\",\"".$row["start_hour"]."\",\"".$row["end_hour"]."\",\"".$row["duration"]."\",\"".$row["extension"]."\",\"".$row["notes"]."\",\"".$row["pauses"]."\",\"".$row["pause_time"]."\",\"".$row["server_ip"]."\"\n";
 	}
 
 $HTML_output.="<tr class='export_row'>";
@@ -373,6 +400,7 @@ $HTML_output.="<th><a class='header_link' name='agent_pause_sort_duration' id='a
 $HTML_output.="</tr>\n";
 
 $CSV_output["agent_pause_details"]="\""._QXZ("Agent")."\",\""._QXZ("Ext.")."\",\""._QXZ("Code")."\",\""._QXZ("Activity")."\",\"...\",\""._QXZ("Billable?")."\",\""._QXZ("Start hour")."\",\""._QXZ("End hour")."\",\""._QXZ("Duration")."\"\n";
+$CSV_output["auto_download"].="\n\n\""._QXZ("Agent")."\",\""._QXZ("Ext.")."\",\""._QXZ("Code")."\",\""._QXZ("Activity")."\",\"...\",\""._QXZ("Billable?")."\",\""._QXZ("Start hour")."\",\""._QXZ("End hour")."\",\""._QXZ("Duration")."\"\n";
 
 $agent_pause_stmt="select campaign_id, user, '' as extension, if (sub_status in ('BLANK', '') or sub_status is null, '-', sub_status) as pause_code, event_time, event_time+INTERVAL pause_sec SECOND as end_hour, sec_to_time(pause_sec) as duration from vicidial_agent_log $vicidial_agent_log_SQL and pause_sec>0";
 if ($DB) {$HTML_output.="<B>$agent_pause_stmt</B>";}
@@ -435,9 +463,10 @@ if ($sort_apd_index)
 	# print_r($agent_pause_array);
 	}
 
+$q=0;
 foreach ($agent_pause_array as $i => $row)
 	{
-
+	$q++;
 	$myDateTime = DateTime::createFromFormat('Y-m-d H:i:s', $row["start_hour"]);
 	$start_hour_value = $myDateTime->format('m/d - H:i:s');
 
@@ -455,8 +484,11 @@ foreach ($agent_pause_array as $i => $row)
 	$HTML_output.="<td>".$end_hour_value."</td>";
 	$HTML_output.="<td>".$row["duration"]."</td>";
 	$HTML_output.="</tr>\n";
+	
+	if (!$download_rpt && $q%100==0) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 
 	$CSV_output["agent_pause_details"].="\"".$row["user"]."\",\"".$row["extension"]."\",\"".$row["pause_code"]."\",\"".$row["pause_code_name"]."\",\"".$row["billable_code"]."\",\"".$row["is_billable"]."\",\"".$start_hour_value."\",\"".$end_hour_value."\",\"".$row["duration"]."\"\n";
+	$CSV_output["auto_download"].="\"".$row["user"]."\",\"".$row["extension"]."\",\"".$row["pause_code"]."\",\"".$row["pause_code_name"]."\",\"".$row["billable_code"]."\",\"".$row["is_billable"]."\",\"".$start_hour_value."\",\"".$end_hour_value."\",\"".$row["duration"]."\"\n";
 	}
 
 $HTML_output.="<tr class='export_row'>";
@@ -507,7 +539,6 @@ if ($download_rpt)
 	exit;
 
 	}
-
 
 echo $HTML_output; 
 ?>

@@ -5,7 +5,7 @@
 # DESCRIPTION:
 # Backs-up the asterisk database, conf/agi/sounds/bin files
 #
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 #
@@ -27,6 +27,7 @@
 # 191119-1649 - Fix for sounds symlinks with Asterisk 13, issue #1149
 # 191119-1658 - Added --db-remote option to specify '--host' parameter for mysqldumpdump
 # 210817-1956 - Added --db-leads-only option to dump only the vicidial_list table
+# 230215-1456 - update of table categories
 #
 
 $secT = time();
@@ -451,11 +452,11 @@ if ( ($without_db < 1) && ($conf_only < 1) )
 					{
 					$archive_tables .= " $aryA[0]";
 					}
-				elsif ($aryA[0] =~ /_log|server_performance|vicidial_ivr|vicidial_hopper|vicidial_manager|web_client_sessions|imm_outcomes/)
+				elsif ($aryA[0] =~ /_log|server_performance|vicidial_ivr|vicidial_hopper|vicidial_manager|web_client_sessions|imm_outcomes|_counts|_sip$|_recent|_queue$|_urls$/) 
 					{
 					$log_tables .= " $aryA[0]";
 					}
-				elsif ($aryA[0] =~ /server|^phones|conferences|stats|vicidial_list$|^custom/)
+				elsif ($aryA[0] =~ /server|^phones|conferences|stats|vicidial_list$|^custom|_email_list|_email_attachments|_notes$/) 
 					{
 					$regular_tables .= " $aryA[0]";
 					}

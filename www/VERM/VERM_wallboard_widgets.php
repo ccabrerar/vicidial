@@ -9,8 +9,8 @@
 
 $startMS = microtime();
 
-#$version = '2.14-1';
-#$build = '220825-1601';
+#$version = '2.14-873';
+#$build = '230127-1750';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -564,7 +564,7 @@ if ($widget_type=="LIVE_QUEUE_INFO")
 	}
 
 if ($widget_type=="LOGO")
-	{ 
+	{
 	$logo_stmt="select web_logo from vicidial_screen_colors, system_settings where colors_id=admin_screen_colors;";
 	$logo_rslt=mysql_to_mysqli($logo_stmt, $link);
 	if (mysqli_num_rows($logo_rslt)>0)

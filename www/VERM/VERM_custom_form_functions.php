@@ -5,10 +5,11 @@
 # 
 # CHANGELOG:
 # 220825-1607 - First build
+# 230123-1735 - Changed require files to local dbconnect/function files
 #
 
-require("../vicidial/dbconnect_mysqli.php");
-require("../vicidial/functions.php");
+require("dbconnect_mysqli.php");
+require("functions.php");
 
 require("VERM_options.php");
 ?>

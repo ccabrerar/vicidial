@@ -1,3 +1,7 @@
+var IE = document.all?true:false
+// If NS -- that is, !IE -- then set up for mouse capture
+if (!IE) document.captureEvents(Event.MOUSEMOVE)
+
 // LINK BUTTON FUNCTION
 function GenerateLink(e) {
 	document.getElementById("DisplayLinkDiv").innerHTML="";
@@ -265,3 +269,29 @@ function ToggleVisibility(span_name, display_type) {
 		span_vis.display = display_type;
 		}
 }
+
+function AutoDownloadWarning(e, report_name, limit) 
+	{
+	document.getElementById("HelpDisplayDiv").innerHTML="";
+
+	if (IE) { // grab the x-y pos.s if browser is IE
+		tempX = event.clientX + document.body.scrollLeft+250
+		tempY = event.clientY + document.body.scrollTop
+	} else {  // grab the x-y pos.s if browser is NS
+		tempX = e.pageX
+		tempY = e.pageY
+	}  
+	// catch possible negative values in NS4
+	if (tempX < 0){tempX = 0}
+	if (tempY < 0){tempY = 0}  
+	// show the position values in the form named Show
+	// in the text fields named MouseX and MouseY
+
+	tempX+=20;
+
+	document.getElementById("HelpDisplayDiv").style.display="block";
+	document.getElementById("HelpDisplayDiv").style.left = tempX + "px";
+	document.getElementById("HelpDisplayDiv").style.top = tempY + "px";
+
+	document.getElementById("HelpDisplayDiv").innerHTML="<TABLE CELLPADDING=2 CELLSPACING=0 border='0' class='help_td' width='300'><TR><TD VALIGN='TOP' width='280'><FONT class='help_bold'>NOTICE:</B></font></td><TD VALIGN='TOP' align='right' width='20'>&nbsp;</td></tr><TR><TD VALIGN='TOP' colspan='2'>"+report_name+" report is over "+limit+" records, and will auto-download as a CSV file rather than attempt to display to your screen.</td></tr></TABLE>";
+	}

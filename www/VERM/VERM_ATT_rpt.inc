@@ -5,6 +5,7 @@
 # 
 # CHANGELOG:
 # 220825-1626 - First build
+# 230106-1311 - Added page flushing to show page load progress
 #
 
 # if (isset($_GET["SUBMIT"]))			{$SUBMIT=$_GET["SUBMIT"];}
@@ -134,6 +135,8 @@ $HTML_output.="<tr class='export_row'>";
 $HTML_output.="<td class='export_row_cell' colspan='7'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('ATT', 'acd_attempts_by_queue')\" title=\"Export as a CSV file\" value='CSV'></td>";
 $HTML_output.="</tr>";
 $HTML_output.="</table><BR>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 ####################################
 
 
@@ -196,6 +199,8 @@ $HTML_output.="<tr class='export_row'>";
 $HTML_output.="<td class='export_row_cell' colspan='7'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('ATT', 'acd_attempts_by_terminal')\" title=\"Export as a CSV file\" value='CSV'></td>";
 $HTML_output.="</tr>";
 $HTML_output.="</table><BR>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 #############################
 
 if ($download_rpt)

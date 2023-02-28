@@ -1,8 +1,8 @@
-WEB BROWSER JAVASCRIPT THROTTLING	Started: 2021-03-25	Updated: 2021-04-27
+WEB BROWSER JAVASCRIPT THROTTLING	Started: 2021-03-25	Updated: 2023-02-21
 
 
 
-This document will go over issues related to Javascript timer action throttling in web browsers and how this affects the VICIdial Agent Screen.
+This document will go over issues related to Javascript timer action throttling and the Memory/Energy Savers features in web browsers and how these affect the VICIdial Agent Screen.
 
 
 
@@ -15,6 +15,8 @@ Prior to 2017, most web browsers limited the frequency of Javascript timers to o
 In 2017, the Google Chrome development team announced that, in an effort to reduce power usage, they would begin "throttling" Javascript past the previous once-per-second standard for tabs in the "background" that use more than 1% of CPU cycles on your computer. This change went into effect in Chrome build 57 in March of 2017.
 
 In early 2021, Google Chrome build 88 changed this behavior by default and enabled what they call "Intensive Javascript Throttling" which would only affect hidden tabs starting at 5 minutes being hidden, with no audio having played for 30 seconds and no Web RTC connections on the page(like VICIphone). This "Intensive" throttling actually begins as soon as the VICIdial Agent Screen is hidden from view by only allowing it to refresh every 2 seconds, instead of the standard every 1 second that happens when the agent screen is visible. Then after 5 minutes of being hidden, the refresh rate is limited to once every minute(usually at a set number of seconds past the minute, like :02, :22, etc...). At this point, the VICIdial Agent Screen will become unusable unless you make it visible right away, and the agent session will pause automatically.
+
+In early 2023, Google Chrome build 110 made a change to Javascript Throttling and also introduced "Memory Saver" and "Energy Saver" features that are enabled by default to further restrict non-active browser tabs. The Throttling change means that hidden tabs will start being throttled after only 10 seconds now(as opposed to 5 minutes before). As for the new "Saver" features, they can be turned off in the Settings -> Performance options. These new chrome browser optimizations do seem to follow the same exemptions as the "Intensive Javascript Throttling" did above, so in most cases agents using Chrome with one of the exemptions methods for that should remain unaffected by these new Chrome features. In our testing, if you are using the "Agent Hidden Browser Sound" method, you may need to reduce the "Agent Hidden Browser Sound Seconds" setting to 10 or even 5 to get it to work 100% of the time. The "Memory Saver" feature also has a session-specific URL-specific exemption available by going to the chrome://discards/ URL in your Chrome browser and selecting a discarded tab and setting it to not be "Auto Discardable", it is important to note this only works for the current browser session, it is not persistent to the URL.
 
 NOTE: Any web browser that is based on the Chromium Open-Source codebase, like Google Chrome and Microsoft Edge, might be affected by this issue.
 
@@ -100,9 +102,11 @@ The new feature is activated in System Settings, using the "Agent Hidden Browser
 We have tested the following settings and found them to be effective on all client systems we have used them on:
 - Set "Agent Hidden Browser Sound" to 'click_quiet'
 - Set "volume" to '25'
-- Set "Agent Hidden Browser Sound Seconds" to '20'
+- Set "Agent Hidden Browser Sound Seconds" to '20' (for Chrome builds 110+ may need to set this to '10' or even '5')
 
 Adding this new feature also required us to add Agent Screen Visibility Logging to VICIdial, so you can now also view statistics of how long your agents' screens were visible to them in the Agent Time Detail report and the User Stats report.
+
+NOTE: In Chrome build 110 and higher, you may need to reduce the "Agent Hidden Browser Sound Seconds" setting to 10 or even 5 to get it to work 100% of the time due to new changes in how Javascript Throttling works.
 
 
 
@@ -116,7 +120,7 @@ Thanks to 'fperdomo' on the VICIdial Forums for posting a simple method using SS
 
 THE FUTURE
 
-It looks like the maintainers of Chrome have every intention of increasing Javascript Throttling in the future, even removing the flag they created to disable it just 4 months after creating it, but hopefully they will leave at least one of the above methods for disabling it in place.
+It looks like the maintainers of Chrome have every intention of increasing Javascript Throttling and "inactive" tab resource reduction in the future, even removing the flag they created to disable Javascript Throttling just 4 months after creating it, but hopefully they will leave at least one of the above methods for exemptions tabs from these features in place.
 
 
 Why not switch the VICIdial Agent Screen from AJAX(Polling) to using streaming server connections (SSE, Server-Sent-Events) like EventSource or WebSockets?
@@ -127,6 +131,7 @@ Second, this would require moving some of the data processing to the server, and
 
 Third, some older networks and proxy servers do not support perpetual connections like SSE uses, which will cause the network to fail to transmit all data to the client workstation, so it is not a one-size-fits-all solution like AJAX has been for the last 16 years.
 
+Fourth, there is no guarantee that the Chrome developers won't just target SSE for optimization next. As they continue to tighten resource optimizations in non-visible browser tabs, they will widen the functions that are affected, as we are now seeing with the reduced time to throttling and the new Memory/Energy Saver features introduced in Chrome build 110.
 
 
 
@@ -136,5 +141,9 @@ FOR MORE INFORMATION
 Here is the Chrome maintainers post on how Javascript Throttling works, starting in Chrome 88:
 https://developer.chrome.com/blog/timer-throttling-in-chrome-88/
 
+Here are details on the default changes to Javascript THrottling in Chrome build 110:
+https://chromestatus.com/feature/5580139453743104
 
-
+Here are the Chrome maintainers posts on how the "Memory Saver" and "Energy Saver" features work and how to deactivate them, starting in Chrome build 110:
+https://developer.chrome.com/blog/memory-and-energy-saver-mode/
+https://support.google.com/chrome/answer/12929150

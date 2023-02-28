@@ -1,7 +1,7 @@
 <?php
 # VERM_admin.php - Vicidial Enhanced Reporting administration page
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
 # 
 # CHANGELOG:
 # 220825-1609 - First build
@@ -10,8 +10,8 @@
 
 $startMS = microtime();
 
-$version = '2.14-1';
-$build = '220825-1609';
+$version = '2.14-873';
+$build = '230127-1750';
 
 $report_name = 'VERM Reports';
 
@@ -20,18 +20,6 @@ header ("Content-type: text/html; charset=utf-8");
 require("dbconnect_mysqli.php");
 require("functions.php");
 require("VERM_options.php"); # Added cuz I'm sick of keeping track.
-
-#### CUSTOM REPORT VARIABLES ####
-if (isset($_GET["vicidial_queue_groups"]))			{$vicidial_queue_groups=$_GET["vicidial_queue_groups"];}
-	elseif (isset($_POST["vicidial_queue_groups"]))	{$vicidial_queue_groups=$_POST["vicidial_queue_groups"];}
-if (isset($_GET["report_types_to_display"]))			{$report_types_to_display=$_GET["report_types_to_display"];}
-	elseif (isset($_POST["report_types_to_display"]))	{$report_types_to_display=$_POST["report_types_to_display"];}
-if (isset($_GET["start_date"]))			{$start_date=$_GET["start_date"];}
-	elseif (isset($_POST["start_date"]))	{$start_date=$_POST["start_date"];}
-if (isset($_GET["end_date"]))			{$end_date=$_GET["end_date"];}
-	elseif (isset($_POST["end_date"]))	{$end_date=$_POST["end_date"];}
-if (isset($_GET["DB"]))			{$DB=$_GET["DB"];}
-	elseif (isset($_POST["DB"]))	{$DB=$_POST["DB"];}
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
@@ -70,6 +58,16 @@ if (file_exists('options.php'))
 	{
 	require('options.php');
 	}
+
+#### CUSTOM REPORT VARIABLES ####
+if (isset($_GET["vicidial_queue_groups"]))			{$vicidial_queue_groups=$_GET["vicidial_queue_groups"];}
+	elseif (isset($_POST["vicidial_queue_groups"]))	{$vicidial_queue_groups=$_POST["vicidial_queue_groups"];}
+if (isset($_GET["report_types_to_display"]))			{$report_types_to_display=$_GET["report_types_to_display"];}
+	elseif (isset($_POST["report_types_to_display"]))	{$report_types_to_display=$_POST["report_types_to_display"];}
+if (isset($_GET["start_date"]))			{$start_date=$_GET["start_date"];}
+	elseif (isset($_POST["start_date"]))	{$start_date=$_POST["start_date"];}
+if (isset($_GET["end_date"]))			{$end_date=$_GET["end_date"];}
+	elseif (isset($_POST["end_date"]))	{$end_date=$_POST["end_date"];}
 
 ### Force hard-coded variables
 # $report_display_type='LIMITED';
@@ -697,8 +695,7 @@ function LaunchWallboard(wallboard_id)
 	}
 </script>
 <link rel="stylesheet" type="text/css" href="VERM_stylesheet.php">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="jquery.min.js"></script>
 <script language="JavaScript" src="help.js"></script>
 
 <?php
@@ -734,7 +731,7 @@ echo "<div id='HelpDisplayDiv' class='help_info' style='display:none;'></div>";
 			echo "</tr>";
 			
 			echo "<tr class='export_row'>";
-			echo "<td align='right'>Queue:</td>";
+			echo "<td align='right'>"._QXZ("Queue")."</td>";
 			echo "<td align='left' width='320' nowrap>";
 			echo "	<input list='VERM_report_queues' type='text' size='40' maxlength='255' class='VERM_form_field' id='vicidial_queue_groups' name='vicidial_queue_groups' onClick=\"javascript:this.value=''\" value=''>\n"; # $vicidial_queue_groups
 			echo "	<datalist id=\"VERM_report_queues\" name=\"VERM_report_queues\">";

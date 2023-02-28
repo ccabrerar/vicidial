@@ -5,6 +5,7 @@
 # 
 # CHANGELOG:
 # 220825-1629 - First build
+# 230106-1310 - Added auto download and page flushing for large data output, modification to uniqueid handling to speed up page load
 #
 
 # DROP, WAITTO, TIMEOT are unanswered statuses, not NANQUE
@@ -119,7 +120,8 @@ while ($calls_row=mysqli_fetch_array($calls_rslt))
 		} 
 	else 
 		{
-		array_push($uniqueid_array, $calls_row["uniqueid"]);
+		# array_push($uniqueid_array, $calls_row["uniqueid"]);
+		$uniqueid_array["$calls_row[uniqueid]"]="Y";
 		$total_answered_calls++;
 		if ($calls_row["direction"]=="O")
 			{
@@ -135,6 +137,7 @@ while ($calls_row=mysqli_fetch_array($calls_rslt))
 
 		# Use full name here so we can sort in the 'Agents on queue' section painlessly.
 		$agent_full_name=$fullname_info["$calls_row[user]"];
+		if (!$agent_full_name) {$agent_full_name=$calls_row["user"];}
 		$agent_full_name=($show_full_agent_info ? $calls_row["user"]." - " : "").$fullname_info["$calls_row[user]"];
 		$agent_call_counts["$agent_full_name"]++;
 		$agent_call_lengths["$agent_full_name"]+=$calls_row["length_in_sec"];
@@ -280,6 +283,8 @@ $HTML_output.="<td class='export_row_cell' colspan='2'>"._QXZ("Export as")."...<
 $HTML_output.="</tr>\n";
 $HTML_output.="</table>";
 
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 $CSV_output["all_calls"]="\""._QXZ("All calls")."\",\"\"\n";
 $CSV_output["all_calls"].="\""._QXZ("N. calls answered by operators").":\",\"$total_answered_calls\"\n";
 $CSV_output["all_calls"].="\""._QXZ("Average call length").":\",\"$average_call_length s.\"\n";
@@ -366,6 +371,8 @@ $HTML_output.="<tr class='export_row'>";
 $HTML_output.="<td colspan='2' class='export_row_cell'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('ANSWERED', 'all_calls_wi')\" title=\"Export as a CSV file\" value='CSV'></td>";
 $HTML_output.="</tr>\n";
 $HTML_output.="</table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 
 $CSV_output["all_calls_wi"]="\""._QXZ("All calls fully within the given time interval")."\",\"\"\n";
 $CSV_output["all_calls_wi"].="\""._QXZ("N. calls answered by operators").":\",\"$total_answered_calls_wi\"\n";
@@ -505,6 +512,9 @@ $HTML_output.="</td><td width='*' align='center' valign='top'>";
 $HTML_output.="<div class=\"chart-container\" style=\"height:80vh; width:80vh\"><canvas id='agents_on_queue_display' role=\"img\"> </canvas></div>";
 $HTML_output.="</td></tr></table>";
 $HTML_output.="<input type='hidden' name='sort_agents_on_queue' id='sort_agents_on_queue' value='sort_agents_on_queue'>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 ######################
 
 #### SERVICE LEVEL ####
@@ -588,6 +598,9 @@ $HTML_output.="</table>";
 $HTML_output.="</td><td width='*' align='center' valign='top'>";
 $HTML_output.="<div class=\"chart-container\" style=\"height:80vh; width:80vh\"><canvas id='service_level_agreement_display' role=\"img\"> </canvas></div>";
 $HTML_output.="</td></tr></table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 ######################
 
 #### DISCONNECTIONS ###
@@ -645,6 +658,9 @@ $HTML_output.="</table>";
 $HTML_output.="</td><td width='*' align='center' valign='top'>";
 $HTML_output.="<div class=\"chart-container\" style=\"height:50vh; width:50vh\"><canvas id='disconnection_causes_display' role=\"img\"> </canvas></div>";
 $HTML_output.="</td></tr></table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 ######################
 
 #### TRANSFERS ###
@@ -694,6 +710,9 @@ $HTML_output.="<tr class='export_row'>";
 $HTML_output.="<td colspan='4' class='export_row_cell'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('ANSWERED', 'transfers')\" title=\"Export as a CSV file\" value='CSV'></td>";
 $HTML_output.="</tr>\n";
 $HTML_output.="</table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 ######################
 
 #### ANSWERED CALLS BY CAMPAIGN/INGROUP ###
@@ -753,6 +772,9 @@ $HTML_output.="</table>";
 $HTML_output.="</td><td width='*' align='center' valign='top'>";
 $HTML_output.="<div class=\"chart-container\" style=\"height:40vh; width:60vh\"><canvas id='answered_calls_by_queue_display' role=\"img\"> </canvas></div>";
 $HTML_output.="</td></tr></table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 #####################
 
 #### ANSWERED CALLS BY DIRECTION ###
@@ -814,6 +836,9 @@ $HTML_output.="</table>";
 $HTML_output.="</td><td width='*' align='center' valign='top'>";
 $HTML_output.="<div class=\"chart-container\" style=\"height:40vh; width:40vh\"><canvas id='answered_calls_by_direction_display' role=\"img\"> </canvas></div>";
 $HTML_output.="</td></tr></table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 #####################
 
 /*
@@ -909,11 +934,15 @@ $HTML_output.="</table>";
 $HTML_output.="</td><td width='*' align='center' valign='top'>";
 $HTML_output.="<div  style=\"height:20px; width:300px\"><canvas id='queue_position_display' style=\"height:200px; width:300px\" role=\"img\"> </canvas></div>";
 $HTML_output.="</td></tr></table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 #####################
 
 ##### IVR STATS #####
 $ivr_stmt="select uniqueid,extension,start_time,comment_a,comment_b,comment_d,UNIX_TIMESTAMP(start_time),phone_ext from live_inbound_log $live_inbound_log_SQL and comment_a IN('CALLMENU') order by uniqueid,start_time";
 if ($DB) {$HTML_output.="<B>$ivr_stmt</B>";}
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 $ivr_rslt=mysql_to_mysqli($ivr_stmt, $link);
 $ivr_paths=array(); # 0 - total calls, 1 - total time, 2 - min time, 3 - max time
 $ivr_counts=array();
@@ -922,7 +951,8 @@ while ($ivr_row=mysqli_fetch_array($ivr_rslt))
 	{
 	$uniqueid=$ivr_row[0];
 
-	if (in_array($uniqueid, $uniqueid_array))
+	# if (in_array($uniqueid, $uniqueid_array))
+	if (isset($uniqueid_array["$uniqueid"]))
 		{
 		if (!$prev_id) 
 			{
@@ -1025,6 +1055,8 @@ $CSV_output["ivr_selection"]="\""._QXZ("IVR selection").":\"\n";
 $CSV_output["ivr_selection"].="\""._QXZ("IVR")."\",\""._QXZ("N. Calls")."\",\"\",\"\",\""._QXZ("Total Duration")."\",\""._QXZ("Average Duration")."\",\""._QXZ("Min Duration")."\",\""._QXZ("Max Duration")."\"\n";
 $CSV_output["ivr_selection"].="\""._QXZ("Untracked")."\",\"$untracked_calls\",\"".$untracked_ivr_pct." %\",\"\",\"\",\"\",\"\",\"\"\n";
 
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 ksort($ivr_paths);
 $x=1;
 foreach ($ivr_paths as $pathname => $value)
@@ -1069,6 +1101,9 @@ $HTML_output.="</table>";
 $HTML_output.="</td><td width='*' align='center' valign='top'>";
 $HTML_output.="<div class=\"chart-container\" style=\"height:60vh; width:30vw\"><canvas id='ivr_selection_display'  style=\"height:60vh; width:30vw\" role=\"img\"> </canvas></div>";
 $HTML_output.="</td></tr></table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 #####################
 
 ###### Inbound DID used #####
@@ -1080,7 +1115,8 @@ $did_counts=array(); # 0 - total calls, 1 - total time, 2 - min time, 3 - max ti
 $untracked_did_calls=$total_answered_calls;
 while ($did_row=mysqli_fetch_array($did_rslt))
 	{
-	if(in_array($did_row["uniqueid"], $uniqueid_array))
+	# if(in_array($did_row["uniqueid"], $uniqueid_array))
+	if (isset($uniqueid_array["$did_row[uniqueid]"]))
 		{
 		$did_counts["$did_row[extension]"]++;
 		$untracked_did_calls--;
@@ -1137,6 +1173,8 @@ foreach ($did_counts as $did => $value)
 	$did_used_graph_bgcolor.="\"".$background_colors[$x]."\",";
 	$did_used_graph_hovborder.="\"".$border_colors[$x]."\",";
 
+	if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 	$x++;
 	}
 $did_used_graph_labels=preg_replace('/,$/', '', $did_used_graph_labels)."]";
@@ -1152,6 +1190,9 @@ $HTML_output.="</table>";
 $HTML_output.="</td><td width='*' align='center' valign='top'>";
 $HTML_output.="<div class=\"chart-container\" style=\"height:40vh; width:40vw\"><canvas id='did_used_display' style=\"height:40vh; width:40vw\" role=\"img\"> </canvas></div>";
 $HTML_output.="</td></tr></table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 ######################
 
 #### MUSIC ON HOLD ####
@@ -1204,6 +1245,8 @@ $HTML_output.="<tr class='export_row'>";
 $HTML_output.="<td class='export_row_cell' colspan='5'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('ANSWERED', 'moh_agent')\" title=\"Export as a CSV file\" value='CSV'></td>";
 $HTML_output.="</tr>\n";
 $HTML_output.="</table>\n";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 #####################
 
 if ($download_rpt)

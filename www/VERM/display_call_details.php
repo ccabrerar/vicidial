@@ -5,6 +5,7 @@
 # 
 # CHANGELOG:
 # 220825-1611 - First build
+# 230126-1158 - Added recording log access, QXZ translation
 #
 
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
@@ -25,7 +26,7 @@ if (isset($_GET["detail_span_height"]))			{$detail_span_height=$_GET["detail_spa
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,agent_whisper_enabled,report_default_format,enable_pause_code_limits,allow_web_debug,admin_screen_colors,admin_web_directory FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,agent_whisper_enabled,report_default_format,enable_pause_code_limits,allow_web_debug,admin_screen_colors,admin_web_directory,log_recording_access FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
@@ -44,6 +45,7 @@ if ($qm_conf_ct > 0)
 	$SSallow_web_debug =			$row[9];
 	$SSadmin_screen_colors =		$row[10];
 	$SSadmin_web_directory =		$row[11];
+	$log_recording_access =			$row[12];
 	}
 if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
@@ -78,12 +80,12 @@ $closecallid=$lookup_data[1];
 ### Lookup of call details for display
 if (!$closecallid)
 	{
-	$stmt="select date_format(call_date, '%m/%d - %H:%i:%s') as call_date, phone_number, campaign_id, 0 as ivr, '0' as wait, length_in_sec as duration, '1' as queue_position, CAST(term_reason AS CHAR) as term_reason, user, '1' as attempts, status, uniqueid, 0 as moh_events, '00:00:00' as moh_duration, '' as ivr_duration, '' as ivr_path, '' as dnis, '' as url, '' as tag, '0' as feat, '0' as vars, '' as feature_codes, '' as variables, 0 as xfercallid, 'O' as direction from vicidial_log where uniqueid='$uniqueid'";
+	$stmt="select date_format(call_date, '%m/%d - %H:%i:%s') as call_date, phone_number, campaign_id, 0 as ivr, '0' as wait, length_in_sec as duration, '1' as queue_position, CAST(term_reason AS CHAR) as term_reason, user, '1' as attempts, status, uniqueid, 0 as moh_events, '00:00:00' as moh_duration, '' as ivr_duration, '' as ivr_path, '' as dnis, '' as url, '' as tag, '0' as feat, '0' as vars, '' as feature_codes, '' as variables, 0 as xfercallid, 'O' as direction, lead_id from vicidial_log where uniqueid='$uniqueid'";
 	$vicidial_id=$uniqueid;
 	}
 else
 	{
-	$stmt="select date_format(call_date, '%m/%d - %H:%i:%s') as call_date, phone_number, campaign_id, 0 as ivr, queue_seconds as wait, length_in_sec-queue_seconds as duration, queue_position, CAST(term_reason AS CHAR) as term_reason, user, '1' as attempts, status, uniqueid, 0 as moh_events, '00:00:00' as moh_duration, '' as ivr_duration, '' as ivr_path, '' as dnis, '' as url, '' as tag, '0' as feat, '0' as vars, '' as feature_codes, '' as variables, xfercallid, 'I' as direction from vicidial_closer_log where uniqueid='$uniqueid' and closecallid='$closecallid'";
+	$stmt="select date_format(call_date, '%m/%d - %H:%i:%s') as call_date, phone_number, campaign_id, 0 as ivr, queue_seconds as wait, length_in_sec-queue_seconds as duration, queue_position, CAST(term_reason AS CHAR) as term_reason, user, '1' as attempts, status, uniqueid, 0 as moh_events, '00:00:00' as moh_duration, '' as ivr_duration, '' as ivr_path, '' as dnis, '' as url, '' as tag, '0' as feat, '0' as vars, '' as feature_codes, '' as variables, xfercallid, 'I' as direction, lead_id from vicidial_closer_log where uniqueid='$uniqueid' and closecallid='$closecallid'";
 	$vicidial_id=$closecallid;
 	}
 
@@ -104,7 +106,12 @@ if ($row["xfercallid"]==0 || $call_type=="ivr") # Possible origin call, need to 
 	}
 $dnis=GetDNIS($uniqueid);
 $recording_array=GetRecording($vicidial_id);
-	$recording_link="<a href='$recording_array[1]'>$recording_array[0]</a>";
+
+if ($log_recording_access<1) 
+	{$recording_link="<a href='$recording_array[1]'>$recording_array[0]</a>";}
+else
+	{$recording_link = "<a href=\"recording_log_redirect.php?recording_id=$recording_array[2]&lead_id=$row[lead_id]&search_archived_data=$search_archived_data\" target=\"_blank\">$recording_array[0]</a>";}
+	
 # $xfer_array=GetTransferInfo($uniqueid);
 
  echo "<table border=0 width='100%' bgcolor='#FFF'><tr>";
@@ -125,7 +132,7 @@ echo "</td>";
 echo "</tr>";
 #echo "<tr><td colspan='2'>";
 #echo "<hr style='height:2px;border-width:0;color:#ddd;background-color:#ddd;margin-bottom: 2em;'></td></tr>";
-echo "<tr><td colspan='2'><input type='button' class='actButton' value='Call details' onClick=\"ToggleVisibility('all_call_details', 'block'); ToggleVisibility('all_ivr_details', 'none');\"> $NWB#VERM_display_call_details$NWE&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;<input type='button' class='actButton' value='IVR events: $ivr_events' onClick=\"ToggleVisibility('all_call_details', 'none'); ToggleVisibility('all_ivr_details', 'block');\"> $NWB#VERM_display_call_details-IVR$NWE</td></tr>";
+echo "<tr><td colspan='2'><input type='button' class='actButton' value='"._QXZ("Call details")."' onClick=\"ToggleVisibility('all_call_details', 'block'); ToggleVisibility('all_ivr_details', 'none');\"> $NWB#VERM_display_call_details$NWE&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;<input type='button' class='actButton' value='IVR events: $ivr_events' onClick=\"ToggleVisibility('all_call_details', 'none'); ToggleVisibility('all_ivr_details', 'block');\"> $NWB#VERM_display_call_details-IVR$NWE</td></tr>";
 
 echo "<tr><td colspan='2'>";
 
@@ -233,11 +240,11 @@ function GetRecording($vicidial_id)
 
 	$rec_str="";
 
-	$rec_stmt="select filename, location from recording_log where vicidial_id='$vicidial_id'";
+	$rec_stmt="select filename, location, recording_id from recording_log where vicidial_id='$vicidial_id'";
 	$rec_rslt=mysqli_query($link, $rec_stmt);
 	$rec_row=mysqli_fetch_array($rec_rslt);
 
-	return array("$rec_row[filename]", "$rec_row[location]");
+	return array("$rec_row[filename]", "$rec_row[location]", "$rec_row[recording_id]");
 	}
 
 ?>

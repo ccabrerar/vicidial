@@ -5,14 +5,16 @@
 # 
 # CHANGELOG:
 # 220825-1618 - First build
+# 230106-1329 - Added CSV output, page flushing, and recording access logging
 #
 
 # $DB=1;
+$CSV_output["ivr_survey_details"]="";
 foreach ($ivr_survey_ingroups_detail as $comment_a => $callmenu_list) 
 	{
 
 	$ingrp_stmt="select group_name from vicidial_inbound_groups where group_id='$comment_a' UNION select menu_name from vicidial_call_menu where menu_id='$comment_a'";
-	echo "<!-- $ingrp_stmt //-->\n";
+	# echo "<!-- $ingrp_stmt //-->\n";
 	if ($DB){$HTML_output.="$ingrp_stmt<BR>";}
 	$ingrp_rslt=mysql_to_mysqli($ingrp_stmt, $link);
 	while($ingrp_row=mysqli_fetch_row($ingrp_rslt))
@@ -34,6 +36,8 @@ foreach ($ivr_survey_ingroups_detail as $comment_a => $callmenu_list)
 		$HTML_output.="<th>"._QXZ("Date")."</th>";
 		$HTML_output.="<th>"._QXZ("Caller")."</th>";
 		$HTML_output.="<th>"._QXZ("DID")."</th>";
+		$CSV_output["ivr_survey_details"].="\""._QXZ("IVR Details for survey")." $survey_name:\"\n\""._QXZ("Date")."\",\""._QXZ("Caller")."\",\""._QXZ("DID")."\",";
+	
 		for ($t=0; $t<count($callmenu_list); $t++)
 			{
 			$svy_menu=$callmenu_list[$t];
@@ -41,11 +45,13 @@ foreach ($ivr_survey_ingroups_detail as $comment_a => $callmenu_list)
 			$cm_rslt=mysql_to_mysqli($cm_stmt, $link);
 			$cm_row=mysqli_fetch_row($cm_rslt);
 			$HTML_output.="<th>".$svy_menu." - ".$cm_row[0]."</th>";
+			$CSV_output["ivr_survey_details"].="\"$svy_menu - $cm_row[0]\",";
 			}
 		$HTML_output.="<th>"._QXZ("Survey voicemail")."</th>";
 		$HTML_output.="<th>"._QXZ("Agent who handled call prior to survey")."</th>";
 		$HTML_output.="<th>"._QXZ("Link to call recording prior to survey")."</th>";
 		$HTML_output.="</tr>\n";
+		$CSV_output["ivr_survey_details"].="\""._QXZ("Survey voicemail")."\",\""._QXZ("Agent who handled call prior to survey")."\",\""._QXZ("Link to call recording prior to survey")."\"\n";
 
 		while ($ivr_row=mysqli_fetch_row($ivr_rslt))
 			{
@@ -64,10 +70,15 @@ foreach ($ivr_survey_ingroups_detail as $comment_a => $callmenu_list)
 				$xfercallid=$vcl_row["xfercallid"];
 				$closer_lead_id=$vcl_row["lead_id"];
 
-				$rec_stmt="select filename, location from recording_log where vicidial_id='$vicidial_id'";
+				$rec_stmt="select filename, location, recording_id, lead_id from recording_log where vicidial_id='$vicidial_id'";
 				$rec_rslt=mysql_to_mysqli($rec_stmt, $link);
 				$rec_row=mysqli_fetch_row($rec_rslt);
-				$rec_link="<a href='$rec_row[1]'>$rec_row[0]</a>";
+				# $rec_link="<a href='$rec_row[1]'>$rec_row[0]</a>";
+				if ($log_recording_access<1) 
+					{$rec_link="<a href='$rec_row[1]'>$rec_row[0]</a>";}
+				else
+					{$rec_link = "<a href=\"recording_log_redirect.php?recording_id=$rec_row[2]&lead_id=$rec_row[3]&search_archived_data=$search_archived_data\" target=\"_blank\">$rec_row[0]</a>";}
+
 				}
 
 			$failsafe=0;
@@ -113,11 +124,13 @@ foreach ($ivr_survey_ingroups_detail as $comment_a => $callmenu_list)
 			$HTML_output.="<td>$date</td>";
 			$HTML_output.="<td>$caller</td>";
 			$HTML_output.="<td>$did_pattern</td>";
+			$CSV_output["ivr_survey_details"].="\"$date\",\"$caller\",\"$did_pattern\",";
 
 			for ($i=0; $i<count($callmenu_list); $i++)
 				{
 				$svy_menu=$callmenu_list[$i];
 				$HTML_output.="<td>".(!$survey_array["$svy_menu"] ? "&nbsp;" : $survey_array["$svy_menu"])."</td>";
+				$CSV_output["ivr_survey_details"].="\"".$survey_array["$svy_menu"]."\",";
 				}
 
 			if ($ivr_survey_ingroups_voicemails)
@@ -141,10 +154,17 @@ foreach ($ivr_survey_ingroups_detail as $comment_a => $callmenu_list)
 			$HTML_output.="<td>$agent_who_handled</td>";
 			$HTML_output.="<td>$rec_link</td>";
 			$HTML_output.="</tr>\n";
-				
+			$CSV_output["ivr_survey_details"].="\"$voicemail\",\"$agent_who_handled\",\"$rec_row[1]\"\n";
+
+			if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 			}
 
+		$HTML_output.="<tr class='export_row'>";
+		$HTML_output.="<td class='export_row_cell' colspan='".(6+count($callmenu_list))."'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('IVR', 'ivr_survey_details')\" title=\"Export as a CSV file\" value='CSV'></td>";
+		$HTML_output.="</tr>\n";
 		$HTML_output.="</table>";
+		$CSV_output["ivr_survey_details"].="\n";
 		}
 	}
 ?>

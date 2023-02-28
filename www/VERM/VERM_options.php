@@ -5,6 +5,7 @@
 # 
 # CHANGELOG:
 # 220825-1604 - First build
+# 230106-1355 - Added auto-download limit and special status settings for outcomes report
 #
 
 /*
@@ -42,8 +43,13 @@ print "\n\n\n";
 */
 
 $exc_addtl_statuses="";
+$auto_download_limit=99999999999;
 
 $lost_statuses_array=array();
+$known_outcome_statuses=array();
+$unknown_network_statuses=array();
+$outcome_status_overrides=array();
+$outcome_lagged_status_overrides=array();
 $lost_statuses="";
 $exc_lost_statuses="";
 
@@ -120,6 +126,9 @@ if (mysqli_num_rows($options_rslt)>0)
 			if ($setting_name=="show_full_agent_info" && $setting_value)
 				{$show_full_agent_info=$setting_value;}
 
+			if ($setting_name=="auto_download_limit" && $setting_value)
+				{$auto_download_limit=$setting_value;}
+
 			if ($setting_name=="exc_addtl_statuses" && $setting_value)
 				{
 				$exc_statuses=explode(",", $setting_value);
@@ -136,6 +145,44 @@ if (mysqli_num_rows($options_rslt)>0)
 					{
 					$lost_statuses=" and status in ('".implode("', '", $lost_statuses_array)."') ";
 					$exc_lost_statuses=" and status NOT in ('".implode("', '", $lost_statuses_array)."') ";
+					}
+				}
+
+			if ($setting_name=="outcome_lagged_status_overrides" && $setting_value)
+				{
+				$outcome_lagged_status_overrides=explode(",", $setting_value);
+				}
+
+			if ($setting_name=="unknown_network_statuses" && $setting_value)
+				{
+				$unknown_network_statuses=explode(",", $setting_value);
+				}
+
+/*
+			if ($setting_name=="outcome_lagged_status_overrides" && $setting_value)
+				{
+				$setting_value_ary=explode("|", $setting_value);
+				for ($i=0; $i<count($setting_value_ary); $i++)
+					{
+					$olso_ary=explode(",", $setting_value_ary[$i]);
+					if (strlen($olso_ary[0])>0 && strlen($olso_ary[1])>0)
+						{
+						$outcome_lagged_status_overrides["$olso_ary[0]"]=explode("-", $olso_ary[1]);
+						}
+					}
+				}
+*/
+
+			if ($setting_name=="outcome_status_overrides" && $setting_value)
+				{
+				$setting_value_ary=explode("|", $setting_value);
+				for ($i=0; $i<count($setting_value_ary); $i++)
+					{
+					$oso_ary=explode(",", $setting_value_ary[$i]);
+					if (strlen($oso_ary[0])>0 && strlen($oso_ary[1])>0)
+						{
+						$outcome_status_overrides["$oso_ary[0]"]=$oso_ary[1];
+						}
 					}
 				}
 

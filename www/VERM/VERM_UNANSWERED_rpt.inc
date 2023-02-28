@@ -5,6 +5,7 @@
 # 
 # CHANGELOG:
 # 220825-1614 - First build
+# 230106-1506 - Uniqueid array modification to speed up page loading, added page flushing
 #
 
 if (isset($_GET["sort_agents_on_queue"]))			{$sort_agents_on_queue=$_GET["sort_agents_on_queue"];}
@@ -96,7 +97,8 @@ $agent_stats_wi=array();
 ############################
 
 $uniqueid_array=array();
-$unanswered_uniqueid_array=array();
+$unans_uniqueid_array=array(); # For implosion in SQL queries
+$unanswered_uniqueid_array=array(); # Associative, for checking
 
 while ($calls_row=mysqli_fetch_array($calls_rslt)) 
 	{
@@ -122,7 +124,9 @@ while ($calls_row=mysqli_fetch_array($calls_rslt))
 #			{
 			$total_unanswered_calls++;
 			$total_unanswered_call_length+=$calls_row["length_in_sec"];
-			array_push($unanswered_uniqueid_array, $calls_row["uniqueid"]);
+			# array_push($unanswered_uniqueid_array, $calls_row["uniqueid"]);
+			array_push($unans_uniqueid_array, $calls_row["uniqueid"]);
+			$unanswered_uniqueid_array["$calls_row[uniqueid]"]="Y";
 			$total_unanswered_wait_time+=$calls_row["queue_seconds"];
 			if (preg_match('/^DROP$/', $calls_row["status"])) {$unanswered_coverage_calls++;} 
 			if ($calls_row["direction"]=="O")
@@ -160,7 +164,8 @@ while ($calls_row=mysqli_fetch_array($calls_rslt))
 		} 
 	else 
 		{
-		array_push($uniqueid_array, $calls_row["uniqueid"]);
+		# array_push($uniqueid_array, $calls_row["uniqueid"]);
+		$uniqueid_array["$calls_row[uniqueid]"]="Y";
 		$total_answered_calls++;
 		$answered_coverage_calls++;
 		$total_answered_wait_time+=$calls_row["queue_seconds"];
@@ -387,6 +392,7 @@ $CSV_output["all_calls"].="\""._QXZ("Total waiting time").":\",\"".$total_unansw
 $CSV_output["all_calls"].="\""._QXZ("Average initial position").":\",\"".$average_unanswered_position."\"\n";
 $CSV_output["all_calls"].="\""._QXZ("Min initial position").":\",\"".$min_unanswered_position."\"\n";
 $CSV_output["all_calls"].="\""._QXZ("Max initial position").":\",\"".$max_unanswered_position."\"\n";
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 
 ### Commented out 5/19/22 - not needed
 ### $CSV_output["all_calls"].="\""._QXZ("Coverage").":\",\"".$coverage." H\"\n";
@@ -468,6 +474,7 @@ $CSV_output["all_calls_wi"].="\""._QXZ("Total waiting time").":\",\"".$total_una
 $CSV_output["all_calls_wi"].="\""._QXZ("Average initial position").":\",\"".$average_unanswered_position_wi."\"\n";
 $CSV_output["all_calls_wi"].="\""._QXZ("Min initial position").":\",\"".$min_unanswered_position_wi."\"\n";
 $CSV_output["all_calls_wi"].="\""._QXZ("Max initial position").":\",\"".$max_unanswered_position_wi."\"\n";
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 
 ### Commented out 5/19/22 - not needed
 ### $CSV_output["all_calls_wi"].="\""._QXZ("Coverage").":\",\"".$coverage_wi." H\"\n";
@@ -514,7 +521,7 @@ switch ($sort_agents_on_queue)
 			break;
 	}
 
-$HTML_output.="<BR><h2 class='rpt_header'>Agents on queue: $NWB#VERM_UNANSWERED-calls_by_queue$NWE</h2>";
+$HTML_output.="<BR><h2 class='rpt_header'>"._QXZ("Agents on queue").": $NWB#VERM_UNANSWERED-calls_by_queue$NWE</h2>";
 $HTML_output.="<hr style='height:2px;border-width:0;color:#ddd;background-color:#ddd;margin-bottom: 2em;'>";
 $HTML_output.="<table border='0' cellpadding='0' cellspacing='0'>";
 $HTML_output.="<tr><td width='60%'>";
@@ -580,7 +587,7 @@ $HTML_output.="</td></tr></table>";
 ######################
 
 #### SERVICE LEVEL ####
-$HTML_output.="<BR><h2 class='rpt_header'>Service Level Agreement (inbound calls only): $NWB#VERM_UNANSWERED-inclusive_SLA$NWE</h2>";
+$HTML_output.="<BR><h2 class='rpt_header'>"._QXZ("Service Level Agreement (inbound calls only)").": $NWB#VERM_UNANSWERED-inclusive_SLA$NWE</h2>";
 $HTML_output.="<hr style='height:2px;border-width:0;color:#ddd;background-color:#ddd;margin-bottom: 2em;'>";
 $HTML_output.="<table border='0' cellpadding='0' cellspacing='0'>";
 $HTML_output.="<tr><td width='60%'>";
@@ -714,6 +721,9 @@ $HTML_output.="</table>";
 $HTML_output.="</td><td width='*' align='center' valign='top'>";
 $HTML_output.="<div class=\"chart-container\" style=\"height:50vh; width:50vh\"><canvas id='disconnection_causes_display' role=\"img\"> </canvas></div>";
 $HTML_output.="</td></tr></table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 ######################
 
 /*
@@ -812,6 +822,9 @@ $HTML_output.="</table>";
 $HTML_output.="</td><td width='*' align='center' valign='top'>";
 $HTML_output.="<div class=\"chart-container\" style=\"height:40vh; width:60vh\"><canvas id='unanswered_calls_by_queue_display' role=\"img\"> </canvas></div>";
 $HTML_output.="</td></tr></table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 #####################
 
 #### UNANSWERED CALLS BY AGENT ###
@@ -851,6 +864,9 @@ $HTML_output.="<tr class='export_row'>";
 $HTML_output.="<td colspan='5' class='export_row_cell'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('UNANSWERED', 'unanswered_calls_by_agent')\" title=\"Export as a CSV file\" value='CSV'></td>";
 $HTML_output.="</tr>";
 $HTML_output.="</table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 #####################
 
 #### UNANSWERED CALLS - DISTRIBUTION BY LENGTH ###
@@ -935,6 +951,9 @@ $HTML_output.="</table>";
 $HTML_output.="</td><td width='*' align='center' valign='top'>";
 $HTML_output.="<div class=\"chart-container\" style=\"height:80vh; width:80vh\"><canvas id='unanswered_calls_by_distribution_display' role=\"img\"> </canvas></div>";
 $HTML_output.="</td></tr></table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 ###############################
 
 #### SERVICE LEVEL ####
@@ -1013,6 +1032,9 @@ $HTML_output.="</table>";
 $HTML_output.="</td><td width='*' align='center' valign='top'>";
 $HTML_output.="<div class=\"chart-container\" style=\"height:80vh; width:80vh\"><canvas id='service_level_agreement_display' role=\"img\"> </canvas></div>";
 $HTML_output.="</td></tr></table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 ######################
 
 #### UNANSWERED CALLS BY KEYPRESS ###
@@ -1028,7 +1050,7 @@ $HTML_output.="</tr>";
 
 $CSV_output["unanswered_calls_by_keypress"].="\""._QXZ("Key")."\",\""._QXZ("N. Calls")."\",\"\",\"...\"\n";
 
-$keypress_stmt="select extension, count(*) as ct From live_inbound_log where uniqueid in ('".implode("', '", $unanswered_uniqueid_array)."') and extension not in ('s', 'i', 't') and comment_a='CALLMENU' group by extension order by extension";
+$keypress_stmt="select extension, count(*) as ct From live_inbound_log where uniqueid in ('".implode("', '", $unans_uniqueid_array)."') and extension not in ('s', 'i', 't') and comment_a='CALLMENU' group by extension order by extension";
 if ($DB) {$HTML_output.="<B>$keypress_stmt</B>";}
 $keypress_rslt=mysql_to_mysqli($keypress_stmt, $link);
 while ($kp_row=mysqli_fetch_array($keypress_rslt))
@@ -1058,6 +1080,9 @@ $HTML_output.="<td colspan='5' class='export_row_cell'>"._QXZ("Export as")."...<
 $HTML_output.="</tr>";
 $HTML_output.="</table>";
 $HTML_output.="** does not include start/invalid/timeout options<BR>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 #####################################
 
 /*
@@ -1218,6 +1243,9 @@ $HTML_output.="</table>";
 $HTML_output.="</td><td width='*' align='center' valign='top'>";
 $HTML_output.="<div class=\"chart-container\" style=\"height:40vh; width:40vh\"><canvas id='queue_position_display' role=\"img\"> </canvas></div>";
 $HTML_output.="</td></tr></table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 #####################
 
 #### UNANSWERED CALLS BY POSITION ###
@@ -1276,6 +1304,9 @@ $HTML_output.="</table>";
 $HTML_output.="</td><td width='*' align='center' valign='top'>";
 $HTML_output.="<div class=\"chart-container\" style=\"height:40vh; width:40vh\"><canvas id='queue_position_all_calls_display' role=\"img\"> </canvas></div>";
 $HTML_output.="</td></tr></table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 #####################
 
 ##### UN ANSWERED IVR STATS #####
@@ -1289,7 +1320,8 @@ while ($ivr_row=mysqli_fetch_array($ivr_rslt))
 	{
 	$uniqueid=$ivr_row[0];
 
-	if (in_array($uniqueid, $unanswered_uniqueid_array))
+	# if (in_array($uniqueid, $unanswered_uniqueid_array))
+	if (isset($unanswered_uniqueid_array["$uniqueid"]))
 		{
 		if (!$prev_id) 
 			{
@@ -1437,6 +1469,9 @@ $HTML_output.="</table>";
 $HTML_output.="</td><td width='*' align='center' valign='top'>";
 $HTML_output.="<div class=\"chart-container\" style=\"height:400px; width:500px\"><canvas id='unanswered_ivr_selection_display'  style=\"height:400px; width:500px\" role=\"img\"> </canvas></div>";
 $HTML_output.="</td></tr></table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 #####################
 
 ##### IVR STATS #####
@@ -1451,7 +1486,8 @@ while ($ivr_row=mysqli_fetch_array($ivr_rslt))
 	{
 	$uniqueid=$ivr_row[0];
 
-	if (in_array($uniqueid, $unanswered_uniqueid_array) || in_array($uniqueid, $uniqueid_array))
+	# if (in_array($uniqueid, $unanswered_uniqueid_array) || in_array($uniqueid, $uniqueid_array))
+	if (isset($unanswered_uniqueid_array["$uniqueid"])|| isset($uniqueid_array["$uniqueid"]))
 		{
 		if (!$prev_id) 
 			{
@@ -1599,6 +1635,9 @@ $HTML_output.="</table>";
 $HTML_output.="</td><td width='*' align='center' valign='top'>";
 $HTML_output.="<div class=\"chart-container\" style=\"height:500px; width:400px\"><canvas id='ivr_selection_display'  style=\"height:500px; width:400px\" role=\"img\"> </canvas></div>";
 $HTML_output.="</td></tr></table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 #####################
 
 ###### UNANSWERED inbound DID used #####
@@ -1610,7 +1649,8 @@ $did_counts=array(); # 0 - total calls, 1 - total time, 2 - min time, 3 - max ti
 $untracked_did_calls=$total_unanswered_calls;
 while ($did_row=mysqli_fetch_array($did_rslt))
 	{
-	if(in_array($did_row["uniqueid"], $unanswered_uniqueid_array))
+	# if(in_array($did_row["uniqueid"], $unanswered_uniqueid_array))
+	if(isset($unanswered_uniqueid_array["$did_row[uniqueid]"]))
 		{
 		$did_counts["$did_row[extension]"]++;
 		$untracked_did_calls--;
@@ -1682,6 +1722,9 @@ $HTML_output.="</table>";
 $HTML_output.="</td><td width='*' align='center' valign='top'>";
 $HTML_output.="<div class=\"chart-container\" style=\"height:600px; width:400px\"><canvas id='unanswered_did_used_display' role=\"img\"> </canvas></div>";
 $HTML_output.="</td></tr></table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 ######################
 
 ###### Inbound DID used #####
@@ -1693,7 +1736,8 @@ $did_counts=array(); # 0 - total calls, 1 - total time, 2 - min time, 3 - max ti
 $untracked_did_calls=$total_calls;
 while ($did_row=mysqli_fetch_array($did_rslt))
 	{
-	if(in_array($did_row["uniqueid"], $unanswered_uniqueid_array) || in_array($did_row["uniqueid"], $uniqueid_array))
+	# if(in_array($did_row["uniqueid"], $unanswered_uniqueid_array) || in_array($did_row["uniqueid"], $uniqueid_array))
+	if(isset($unanswered_uniqueid_array["$did_row[uniqueid]"]) || isset($uniqueid_array["$did_row[uniqueid]"]))
 		{
 		$did_counts["$did_row[extension]"]++;
 		$untracked_did_calls--;
@@ -1765,6 +1809,9 @@ $HTML_output.="</table>";
 $HTML_output.="</td><td width='*' align='center' valign='top'>";
 $HTML_output.="<div class=\"chart-container\" style=\"height:600px; width:400px\"><canvas id='did_used_display' role=\"img\"> </canvas></div>";
 $HTML_output.="</td></tr></table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 ######################
 
 #### CALL OVERVIEW ####
@@ -1855,6 +1902,8 @@ $HTML_output.="</table>";
 
 $CSV_output["call_overview"].="\"TOTAL\",\"".$total_queue_calls."\",\"".$total_queue_answered."\",\"".$total_queue_unanswered."\",\"".($avg_call_time>=3600 ? floor($avg_call_time/3600).":" : "").gmdate("i:s", $avg_call_time)."\",\"".($total_queue_call_time>=3600 ? floor($total_queue_call_time/3600).":" : "").gmdate("i:s", $total_queue_call_time)."\",\"".($avg_wait_time>=3600 ? floor($avg_wait_time/3600).":" : "").gmdate("i:s", $avg_wait_time)."\",\"".($total_queue_wait_time>=3600 ? floor($total_queue_wait_time/3600).":" : "").gmdate("i:s", $total_queue_wait_time)."\"\n";	
 
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 #######################
 
 #### SERVICE LEVEL ####
@@ -1934,6 +1983,9 @@ $HTML_output.="</table>";
 $HTML_output.="</td><td width='*' align='center' valign='top'>";
 $HTML_output.="<div class=\"chart-container\" style=\"height:80vh; width:80vh\"><canvas id='answered_service_level_agreement_display' role=\"img\"> </canvas></div>";
 $HTML_output.="</td></tr></table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 ######################
 
 if ($download_rpt)

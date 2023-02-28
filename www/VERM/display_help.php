@@ -18,8 +18,8 @@ $help_file_time=0;
 if ( file_exists($help_file) )
 	{$help_file_time = filemtime($help_file);}
 
-require("../vicidial/dbconnect_mysqli.php");
-require("../vicidial/functions.php");
+require("dbconnect_mysqli.php");
+require("functions.php");
 
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];

@@ -5,6 +5,8 @@
 # 
 # CHANGELOG:
 # 220825-1617 - First build
+# 230106-1500 - Added page flushing
+# 230124-1218 - Updated LookupCall function, added unknown statuses option, outcome status/lagged status overrides
 #
 
 # NANQUE, not an unanswered call?
@@ -27,12 +29,15 @@ if (isset($_GET["sort_nonbillable_activities"]))		{$sort_nonbillable_activities=
 if (isset($_GET["sort_outcomes_per_agent"]))			{$sort_outcomes_per_agent=$_GET["sort_outcomes_per_agent"];}
 	elseif (isset($_POST["sort_outcomes_per_agent"]))	{$sort_outcomes_per_agent=$_POST["sort_outcomes_per_agent"];}
 
+if (!$known_outcome_statuses) {$known_outcome_statues=array();}
+
 if ($non_latin < 1)
 	{
 	$sort_call_results = preg_replace('/[^\s\-_0-9a-zA-Z]/','',$sort_call_results);
 	$sort_billable_activities = preg_replace('/[^\s\-_0-9a-zA-Z]/','',$sort_billable_activities);
 	$sort_nonbillable_activities = preg_replace('/[^\s\-_0-9a-zA-Z]/','',$sort_nonbillable_activities);
 	$sort_outcomes_per_agent = preg_replace('/[^\s\-_0-9a-zA-Z]/','',$sort_outcomes_per_agent);
+	$known_outcome_statuses = preg_replace('/[^- \.\,\_0-9a-zA-Z]/u','',$known_outcome_statuses);
 	}
 else
 	{
@@ -40,32 +45,36 @@ else
 	$sort_billable_activities = preg_replace('/[^\s\-_0-9\p{L}]/u','',$sort_billable_activities);
 	$sort_nonbillable_activities = preg_replace('/[^\s\-_0-9\p{L}]/u','',$sort_nonbillable_activities);
 	$sort_outcomes_per_agent = preg_replace('/[^\s\-_0-9\p{L}]/u','',$sort_outcomes_per_agent);
+	$known_outcome_statuses = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$known_outcome_statuses);
 	}
 
 ### FUNCTION
-function LookUpCall($uniqueid, $comments)
+function LookUpCall($uniqueid, $comments, $user)
 	{
 	global $link, $DB;
 
 	$call_outcome="";
 
-	if ($comments=="INBOUND")
+	if ($uniqueid && strlen($uniqueid)>0)
 		{
-		$table_name="vicidial_closer_log";
-		}
-	else
-		{
-		$table_name="vicidial_log";
-		}
+		if ($comments=="INBOUND")
+			{
+			$table_name="vicidial_closer_log";
+			}
+		else
+			{
+			$table_name="vicidial_log";
+			}
 
-	$vl_stmt="select status from ".$table_name." where uniqueid='$uniqueid'";
-	$vl_rslt=mysqli_query($link, $vl_stmt);
-	if (mysqli_num_rows($vl_rslt)>0)
-		{
-		$vl_row=mysqli_fetch_row($vl_rslt);
-		$call_outcome=$vl_row[0];
+		$vl_stmt="select status from ".$table_name." where uniqueid='$uniqueid' and user='$user'";
+		$vl_rslt=mysqli_query($link, $vl_stmt);
+		if (mysqli_num_rows($vl_rslt)>0)
+			{
+			$vl_row=mysqli_fetch_row($vl_rslt);
+			$call_outcome=$vl_row[0];
+			}
+		return $call_outcome;
 		}
-	return $call_outcome;
 	}
 
 
@@ -88,13 +97,14 @@ if ($DB) {$HTML_output.="<B>$vcl_uniqueid_stmt</B><BR>$included_campaigns_ct<BR>
 $outcomes_stmt_outb="";
 if ($atomic_queue_campaigns_str!="")
 	{
-	$outcomes_stmt_outb="select *, if (sub_status in ('BLANK', '') or sub_status is null, '-', sub_status) as pause_code from vicidial_agent_log $vicidial_agent_log_SQL and status!='' and comments!='INBOUND' ";
+	$outcomes_stmt_outb="select *, if (sub_status in ('BLANK', '') or sub_status is null, '-', sub_status) as pause_code from vicidial_agent_log $vicidial_agent_log_SQL and comments!='INBOUND' "; #  and status!=''
 	}
 
 $outcomes_stmt_inb="";
-if ($atomic_queue_ingroups_str!="" && count($val_uniqueid_array)>0) 
+if ($atomic_queue_ingroups_str!="")  #  && count($val_uniqueid_array)>0
 	{
-	$outcomes_stmt_inb="select *, if (sub_status in ('BLANK', '') or sub_status is null, '-', sub_status) as pause_code from vicidial_agent_log $vicidial_agent_log_UID_SQL and uniqueid in ('".implode("', '", $val_uniqueid_array)."')";
+	$outcomes_stmt_inb="select *, if (sub_status in ('BLANK', '') or sub_status is null, '-', sub_status) as pause_code from vicidial_agent_log $vicidial_agent_log_UID_SQL and comments='INBOUND'"; 
+	#  and uniqueid in ('".implode("', '", $val_uniqueid_array)."')
 	}
 
 $outcomes_stmt=$outcomes_stmt_outb.($outcomes_stmt_outb!="" && $outcomes_stmt_inb!="" ? " UNION " : "").$outcomes_stmt_inb;
@@ -208,27 +218,80 @@ while ($outcomes_row=mysqli_fetch_array($outcomes_rslt))
 	if (strlen($call_outcome)<=1)
 		{
 		$call_type="None";
-		$status=LookUpCall($uniqueid, $comments);
+		$status=LookUpCall($uniqueid, $comments, $user);
 		# print "$status=LookUpCall($uniqueid, $comments);<BR>\n";
 		$call_outcome=$status;
 		}
+# JCJ 12/6/22 - added for overriding certain statuses 
+	if (array_key_exists($status, $outcome_status_overrides))
+		{
+		$call_outcome=$outcome_status_overrides["$status"];
+		$status=$call_outcome;
+		}
+# JCJ 12/6/22 - added for removing certain statuses that should basically be lagged in certain conditions
+# 1/27/23 - changed $outcome_lagged_status_overrides to normal array instead of associative
+	else if (in_array($status, $outcome_lagged_status_overrides) && strlen($uniqueid)<1)
+		{
+		$status="LAGGED";
+		$call_outcome="";
+		}
+/* JCJ 12/6/22 - commented out, may be useful later
+# 1/27/23 - changed $outcome_lagged_status_overrides to normal array instead of associative, below section won't work now
+	else if (array_key_exists($status, $outcome_lagged_status_overrides))
+		{
+		# print_r($outcome_lagged_status_overrides);
+		# $HTML_output.="<!-- \n*** $uniqueid, $call_outcome, $status\n";
+		$status=LookUpCall($uniqueid, $comments, $user);
+		if (in_array($status, $outcome_lagged_status_overrides["$call_outcome"]))
+			{
+			$status="LAGGED";
+			$call_outcome="";
+			}
+		else
+			{
+			$status=$call_outcome;
+			}
+		# $HTML_output.="*** $uniqueid, $call_outcome, $status //-->\n";
+		}
+*/
 
-
-	if ($status_names["$status"])
+	if ($status_names["$status"] && !in_array($status, $unknown_network_statuses))
 		{
 		$call_outcome=$status_names["$status"];
 
 		$call_type="Known";
 		}
+	else if (in_array($status, $unknown_network_statuses) || strlen($call_outcome)<=1)
+		{
+		# $call_outcome.=" (unknown)";
+		$call_outcome="Network/LAGGED";
+		}
 	else
 		{
-		$call_outcome.=" (unknown)";
+		$call_outcome.=" (unknown)"; # commented out 10/13, uncommented 11/2 (known_outcome_stauses not working as they expect)
 		}
 
 	if (strlen($call_outcome)<=1)
 		{
 		$call_type="None";
 		}
+
+/* Added 10/13, removed 11/2 - known_outcome_statuses not having desired effect
+	if (in_array($status, $selectable_array["$campaign_id"]) || in_array($status, $selectable_array["SYSTEM"]) || in_array($status, $known_outcome_statuses))
+		{
+		$outcomes_array["selected"]++;
+
+		$agent_details_array["$full_name"]["selected"]++;
+
+		$call_type="Known";
+		}
+	else
+		{
+		$status="---";
+		$call_type="System/Auto";
+		$call_outcome="(unknown)";
+		}
+*/
 
 	# Human answered (contact)
 	if (in_array($status, $human_ans_array["$campaign_id"]) || in_array($status, $human_ans_array["SYSTEM"]))
@@ -419,6 +482,8 @@ $HTML_output.="<tr class='export_row'>";
 $HTML_output.="<td class='export_row_cell' colspan='2'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('OUTCOMES', 'outcomes')\" title=\"Export as a CSV file\" value='CSV'></td>";
 $HTML_output.="</tr>";
 $HTML_output.="</table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 ##################
 
 #### CALL RESULTS OUTCOMES ####
@@ -504,7 +569,7 @@ foreach ($call_results_array as $outcome => $data)
 	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".((100*$data["total_pct"])/$max_call_results_total_pct)."%'></td>";
 	$HTML_output.="<td>".$data["taken_pct"]." %</td>";
 	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".((100*$data["taken_pct"])/$max_call_results_taken_pct)."%'></td>";
-	$HTML_output.="<td><a onClick=\"ShowOutcomesDetails('', '$start_date $start_time', '$end_date $end_time', '', '', '".trim(preg_replace("/\(unknown\)/", "", $outcome))."')\"><svg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg' data-svg='search'><circle fill='none' stroke='#000' stroke-width='1.1' cx='9' cy='9' r='7'></circle><path fill='none' stroke='#000' stroke-width='1.1' d='M14,14 L18,18 L14,14 Z'></path></svg></a></td>";
+	$HTML_output.="<td><a onClick=\"ShowOutcomesDetails('', '$start_date $start_time', '$end_date $end_time', '', '', '".trim(preg_replace("/\(unknown\)/", "", $outcome))."')\"><svg width='20' height='20' viewBox='0 0 20 20' data-svg='search'><circle fill='none' stroke='#000' stroke-width='1.1' cx='9' cy='9' r='7'></circle><path fill='none' stroke='#000' stroke-width='1.1' d='M14,14 L18,18 L14,14 Z'></path></svg></a></td>";
 	$HTML_output.="</tr>\n";
 
 	$CSV_output["call_results"].="\"$outcome\",\"$data[call_type]\",\"$data[total]\",\"$data[taken]\",\"$data[lost]\",\"$data[total_pct] %\",\"\",\"$data[taken_pct] %\",\n";
@@ -516,6 +581,8 @@ $HTML_output.="<td class='export_row_cell' colspan='10'>"._QXZ("Export as")."...
 $HTML_output.="</tr>";
 $HTML_output.="</table>";
 $HTML_output.="<input type='hidden' name='sort_call_results' id='sort_call_results' value='$sort_call_results'>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 ###############################
 
 #### BILLABLE ACTIVITIES   ####
@@ -573,7 +640,7 @@ $HTML_output.="<th><a class='header_link' name='billable_activities_min' id='bil
 	$HTML_output.="<th><input type='button' class='sort_button' value='"._QXZ("Avg.").("avg"==$sort_billable_activities_preg ? " $sort_char" : "")."' onClick=\"javascript:document.getElementById('sort_billable_activities').value='".("avg"==$sort_billable_activities_preg ? "$reverse_link" : "avg")."'; this.form.action+='#sba_anchor'; this.form.submit()\"></th>\n";
 	$HTML_output.="<th><input type='button' class='sort_button' value='"._QXZ("Min.").("min"==$sort_billable_activities_preg ? " $sort_char" : "")."' onClick=\"javascript:document.getElementById('sort_billable_activities').value='".("min"==$sort_billable_activities_preg ? "$reverse_link" : "min")."'; this.form.action+='#sba_anchor'; this.form.submit()\"></th>\n";
 
-$HTML_output.="<th>Max.</a></th>";
+$HTML_output.="<th>"._QXZ("Max.")."</a></th>";
 $HTML_output.="<th>%</th>";
 $HTML_output.="<th>&nbsp;</th>";
 $HTML_output.="</tr>\n";
@@ -604,6 +671,8 @@ $HTML_output.="<td class='export_row_cell' colspan='10'>"._QXZ("Export as")."...
 $HTML_output.="</tr>";
 $HTML_output.="</table>";
 $HTML_output.="<input type='hidden' name='sort_billable_activities' id='sort_billable_activities' value='$sort_billable_activities'>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 ###############################
 
 #### NONBILLABLE ACTIVITIES ####
@@ -691,6 +760,8 @@ $HTML_output.="<td class='export_row_cell' colspan='10'>"._QXZ("Export as")."...
 $HTML_output.="</tr>";
 $HTML_output.="</table>";
 $HTML_output.="<input type='hidden' name='sort_nonbillable_activities' id='sort_nonbillable_activities' value='$sort_billable_activities'>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 ###############################
 
 #### AGENT DETAILS REPORT #####
@@ -760,6 +831,8 @@ $HTML_output.="<tr class='export_row'>";
 $HTML_output.="<td class='export_row_cell' colspan='15'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('OUTCOMES', 'agent_details')\" title=\"Export as a CSV file\" value='CSV'></td>";
 $HTML_output.="</tr>";
 $HTML_output.="</table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 ###############################
 
 #### AGENT OUTCOMES REPORT ####
@@ -868,6 +941,8 @@ $HTML_output.="</tr>";
 $HTML_output.="</table>";
 $HTML_output.="<input type='hidden' name='sort_outcomes_per_agent' id='sort_outcomes_per_agent' value='$sort_outcomes_per_agent'>";
 
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 ###############################
 
 if ($download_rpt)

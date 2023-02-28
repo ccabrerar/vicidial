@@ -1,5 +1,5 @@
 --- vicidial.php.orig	2022-09-14 10:57:14.823660709 -0400
-+++ vicidial.php	2022-09-14 10:38:50.167146363 -0400
++++ vicidial.php	2023-02-28 08:35:21.167146363 -0400
 @@ -3446,6 +3446,15 @@
  					}
  				else
@@ -10,7 +10,7 @@
 +				if ($DB) {echo "|$stmt|\n";}
 +                		$rslt=mysql_to_mysqli($stmt, $link);
 +		                $row=mysqli_fetch_row($rslt);
-+                		$conf_engine = $row[3];
++                		$conf_engine = $row[0];
 +	                        $conf_table = "vicidial_conferences";
 +	                        if ( $conf_engine == "CONFBRIDGE" ) { $conf_table = "vicidial_confbridges"; }
  				

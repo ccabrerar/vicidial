@@ -5,6 +5,7 @@
 # 
 # CHANGELOG:
 # 220825-1619 - First build
+# 230106-1328 - Added page flushing to show page load progress
 #
 
 if (isset($_GET["page_no"]))			{$page_no=$_GET["page_no"];}
@@ -183,6 +184,8 @@ $HTML_output.="<th>"._QXZ("Hangups")."</th>";
 $HTML_output.="<th>"._QXZ("Attrition rate")."</th>";
 $HTML_output.="</tr>\n";
 
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 $CSV_output["ivr_traversal"]="\""._QXZ("IVR path")."\",\""._QXZ("N. Calls")."\",\""._QXZ("IVR goal report")."\",\""._QXZ("Success rate")."\",\""._QXZ("Hangups")."\",\""._QXZ("Attrition rate")."\"\n";
 
 $prev_ivr_key="";
@@ -264,6 +267,8 @@ foreach ($ivr_data as $ivr_path => $data)
 		$HTML_output.="<td>".sprintf("%.1f", (100*$data["hangups"]/$data["calls"]))." %</td>";
 		$HTML_output.="</tr>\n";
 
+		if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 		$CSV_output["ivr_traversal"].="\"".$CSV_ivr_value."\",\"".$data["calls"]."\",\"".($data["calls"]-$data["hangups"])."\",\"".sprintf("%.1f", (100*($data["calls"]-$data["hangups"])/$data["calls"]))." %\",\"".$data["hangups"]."\",\"".sprintf("%.1f", (100*$data["hangups"]/$data["calls"]))." %\"\n";
 
 		if(preg_match('/\-TOTAL$/', $ivr_path)) {unset($ivr_data["$ivr_path"]);} # Remove total, don't need anymore
@@ -274,6 +279,8 @@ $HTML_output.="<tr class='export_row'>";
 $HTML_output.="<td class='export_row_cell' colspan='6'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('IVR', 'ivr_traversal')\" title=\"Export as a CSV file\" value='CSV'></td>";
 $HTML_output.="</tr>";
 $HTML_output.="</table>\n";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 
 # print $HTML_output; die;
 # print_r($ivr_data); die;
@@ -291,6 +298,8 @@ $HTML_output.="<th>"._QXZ("Total time")."</th>";
 $HTML_output.="<th>"._QXZ("Minimum time")."</th>";
 $HTML_output.="<th>"._QXZ("Maximum time")."</th>";
 $HTML_output.="</tr>\n";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 
 $CSV_output["ivr_timing"]="\""._QXZ("IVR path")."\",\""._QXZ("N. Calls")."\",\""._QXZ("Average time")."\",\""._QXZ("Total time")."\",\""._QXZ("Minimum time")."\",\""._QXZ("Maximum time")."\"\n";
 
@@ -332,6 +341,8 @@ foreach ($ivr_data as $comment_d => $data)
 			$HTML_subheader="<tr class='standard_font_small'><td>$base_path_output</td><td>$total_prompt_calls</td><td>$base_average_time</td><td>$base_total_time</td><td>$base_minimum_time</td><td>$base_maximum_time</td></tr>";
 			$HTML_output.=$HTML_subheader.$HTML_datarows;
 			$HTML_datarows="";
+
+			if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 
 			$CSV_header="\"$base_path_output\",\"$total_prompt_calls\",\"$base_average_time\",\"$base_total_time\",\"$base_minimum_time\",\"$base_maximum_time\"\n";
 			$CSV_output["ivr_timing"].=$CSV_header.$CSV_row_output;
@@ -391,6 +402,8 @@ $HTML_output.="<td class='export_row_cell' colspan='6'>"._QXZ("Export as")."...<
 $HTML_output.="</tr>";
 $HTML_output.="</table>\n";
 
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 $CSV_header="\"$prev_base_path - $callmenu_names[$prev_base_path]\",\"$total_prompt_calls\",\"$base_average_time\",\"$base_total_time\",\"$base_minimum_time\",\"$base_maximum_time\"\n";
 $CSV_output["ivr_timing"].=$CSV_header.$CSV_row_output;
 
@@ -442,7 +455,7 @@ foreach ($path_data as $goal => $path)
 			$maximum_time=($data["maximum_time"]>=3600 ? intval(floor($data["maximum_time"]/3600)).date(":i:s", $data["maximum_time"]) : intval(date("i", $data["maximum_time"])).":".date("s", $data["maximum_time"]));
 
 			$HTML_output.="<tr class='standard_font_small'>";
-			$HTML_output.="<td>Campaign/ingroup: ".$ingroup_names["$goal"]."</td>";
+			$HTML_output.="<td>"._QXZ("Campaign/ingroup").": ".$ingroup_names["$goal"]."</td>";
 #			$HTML_output.="<td>".$key_array[0]." - ".$callmenu_names["$key_array[0]"]."</td>";
 			$HTML_output.="<td>".$final_key_path."</td>";
 			$HTML_output.="<td>".$key_array[1]."</td>";
@@ -452,7 +465,9 @@ foreach ($path_data as $goal => $path)
 			$HTML_output.="<td>".$maximum_time."</td>";
 			$HTML_output.="</tr>\n";
 
-			$CSV_output["ivr_goal"].="\"Campaign/ingroup: ".$ingroup_names["$goal"]."\",";
+			if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
+			$CSV_output["ivr_goal"].="\""._QXZ("Campaign/ingroup").": ".$ingroup_names["$goal"]."\",";
 #			$CSV_output["ivr_goal"].="\"".$key_array[0]." - ".$callmenu_names["$key_array[0]"]."\",";
 			$CSV_output["ivr_goal"].="\"".$CSV_final_key_path."\",";
 			$CSV_output["ivr_goal"].="\"".$key_array[1]."\",";
@@ -470,6 +485,8 @@ $HTML_output.="<tr class='export_row'>";
 $HTML_output.="<td class='export_row_cell' colspan='7'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('IVR', 'ivr_goal')\" title=\"Export as a CSV file\" value='CSV'></td>";
 $HTML_output.="</tr>";
 $HTML_output.="</table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 
 #############################
 
@@ -507,6 +524,8 @@ foreach ($ivr_details_columns as $display_name => $column_name)
 		# $HTML_output.="<th><a class='header_link' name='call_detail_sort_".$column_name."' id='call_detail_sort_".$column_name."' href='".$PHP_SELF."?sort_ivr_details=".($column_name==$sort_ivr_details_preg ? "$reverse_link" : "$column_name")."&page_no=".$page_no."#call_detail_sort_".$column_name."'>".$display_name.($column_name==$sort_ivr_details_preg ? " $sort_char" : "")."</a></th>";
 
 		$HTML_output.="<th><input type='button' class='sort_button' value='".$display_name.($column_name==$sort_ivr_details_preg ? " $sort_char" : "")."' onClick=\"javascript:document.getElementById('sort_ivr_details').value='".($column_name==$sort_ivr_details_preg ? "$reverse_link" : "$column_name")."'; this.form.action+='#sid_anchor'; this.form.submit()\"></th>\n";
+
+		if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 		}
 	}
 $CSV_output["ivr_details"].="\n";
@@ -534,49 +553,51 @@ foreach ($ivr_details as $uniqueid => $data_row)
 	if (preg_match("/$ivr_choice/i", $data_row["ivr_path"])) # from search results
 		{
 
-	$HTML_output.="<tr class='standard_font_small'>";
-	foreach ($data_row as $key => $value)
-		{
-		if ($key=="closecallid")
+		$HTML_output.="<tr class='standard_font_small'>";
+		foreach ($data_row as $key => $value)
 			{
-			$detail_id.="|$value";
-			}
-		else 
-			{
-			if ($key=="date")
+			if ($key=="closecallid")
 				{
-				$myDateTime = DateTime::createFromFormat('Y-m-d H:i:s', $value);
-				$value = $myDateTime->format('m/d - H:i:s');
+				$detail_id.="|$value";
 				}
-			if ($key=="goal")
+			else 
 				{
-				$value=$ingroup_names["$value"];
-				}
-
-			if ($key=="ivr_path")
-				{
-				$final_key_path="";
-				$ivr_path_array=explode(">", $value);
-				$ivr_array=explode(",", $ivr_path_array[0]);
-				for($i=0; $i<count($ivr_array); $i++)
+				if ($key=="date")
 					{
-					# if ($callmenu_names["$ivr_array[$i]"]) {$ivr_base=preg_replace("/$ivr_array[$i]/", $callmenu_names["$ivr_array[$i]"], $ivr_base);}
-					$final_key_path.=$ivr_array[$i].($callmenu_names["$ivr_array[$i]"] ? " - ".$callmenu_names["$ivr_array[$i]"] : "")." => ";
+					$myDateTime = DateTime::createFromFormat('Y-m-d H:i:s', $value);
+					$value = $myDateTime->format('m/d - H:i:s');
 					}
-				$final_key_path=preg_replace('/ \=\> $/', "", $final_key_path)." > ".$ivr_path_array[1];
-				$value=$final_key_path;
-				}
+				if ($key=="goal")
+					{
+					$value=$ingroup_names["$value"];
+					}
+
+				if ($key=="ivr_path")
+					{
+					$final_key_path="";
+					$ivr_path_array=explode(">", $value);
+					$ivr_array=explode(",", $ivr_path_array[0]);
+					for($i=0; $i<count($ivr_array); $i++)
+						{
+						# if ($callmenu_names["$ivr_array[$i]"]) {$ivr_base=preg_replace("/$ivr_array[$i]/", $callmenu_names["$ivr_array[$i]"], $ivr_base);}
+						$final_key_path.=$ivr_array[$i].($callmenu_names["$ivr_array[$i]"] ? " - ".$callmenu_names["$ivr_array[$i]"] : "")." => ";
+						}
+					$final_key_path=preg_replace('/ \=\> $/', "", $final_key_path)." > ".$ivr_path_array[1];
+					$value=$final_key_path;
+					}
 			
 
-			$HTML_output.="<td>".$value."</td>";
-			$CSV_output["ivr_details"].="\"".$value."\",";
+				$HTML_output.="<td>".$value."</td>";
+				$CSV_output["ivr_details"].="\"".$value."\",";
+				}
 			}
-		}
-	$HTML_output.="<td><a onClick=\"ShowCallDetails('$detail_id', 'ivr')\"><svg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg' data-svg='search'><circle fill='none' stroke='#000' stroke-width='1.1' cx='9' cy='9' r='7'></circle><path fill='none' stroke='#000' stroke-width='1.1' d='M14,14 L18,18 L14,14 Z'></path></svg></a></td>";
-	
-	$CSV_output["ivr_details"].="\n";
+		$HTML_output.="<td><a onClick=\"ShowCallDetails('$detail_id', 'ivr')\"><svg width='20' height='20' viewBox='0 0 20 20' data-svg='search'><circle fill='none' stroke='#000' stroke-width='1.1' cx='9' cy='9' r='7'></circle><path fill='none' stroke='#000' stroke-width='1.1' d='M14,14 L18,18 L14,14 Z'></path></svg></a></td>";
+		
+		$CSV_output["ivr_details"].="\n";
 
-	$HTML_output.="</tr>";
+		$HTML_output.="</tr>";
+
+		if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 		}
 	}
 $HTML_output.="<tr class='export_row'>";
@@ -598,14 +619,14 @@ $HTML_output.="</table>";
 $HTML_output.="<input type=hidden name=page_no id=page_no value='$page_no'>";
 $HTML_output.="<input type='hidden' name='sort_ivr_details' id='sort_ivr_details' value='$sort_ivr_details'>";
 
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
 if ($ivr_survey_ingroups_detail && count($ivr_survey_ingroups_detail)>0)
 	{
 	require("VERM_IVR_survey_details.inc");
 	}
-else
-	{
-	# $HTML_output.="<H2>NOPE</H2>";
-	}
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 
 if ($download_rpt)
 	{

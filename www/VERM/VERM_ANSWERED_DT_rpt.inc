@@ -5,6 +5,7 @@
 # 
 # CHANGELOG:
 # 220825-1630 - First build
+# 230106-1307 - Auto download for large data output
 #
 
 if (isset($_GET["page_no"]))			{$page_no=$_GET["page_no"];}
@@ -114,6 +115,12 @@ $HTML_output.="</td>";
 $HTML_output.="</tr>";
 $HTML_output.="<tr>";
 $CSV_output="";
+
+if ($total_calls>$auto_download_limit)
+	{
+	$CSV_output.="\""._QXZ("WARNING").":\",\""._QXZ("OVER")." $auto_download_limit "._QXZ("RECORDS")."\",\""._QXZ("AUTOMATIC DOWNLOAD")."\"\n\n\n";
+	}
+
 foreach ($selected_columns as $display_name => $column_name)
 	{
 	if ($display_name!="uniqueid")
@@ -208,7 +215,7 @@ foreach ($output_array as $data_row)
 			}
 		else
 			{
-			$HTML_output.="<td><a onClick=\"ShowCallDetails('$value', 'ANSWERED_DT')\"><svg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg' data-svg='search'><circle fill='none' stroke='#000' stroke-width='1.1' cx='9' cy='9' r='7'></circle><path fill='none' stroke='#000' stroke-width='1.1' d='M14,14 L18,18 L14,14 Z'></path></svg></a></td>";
+			$HTML_output.="<td><a onClick=\"ShowCallDetails('$value', 'ANSWERED_DT')\"><svg width='20' height='20' viewBox='0 0 20 20' data-svg='search'><circle fill='none' stroke='#000' stroke-width='1.1' cx='9' cy='9' r='7'></circle><path fill='none' stroke='#000' stroke-width='1.1' d='M14,14 L18,18 L14,14 Z'></path></svg></a></td>";
 			# $HTML_output.="<td><IMG SRC=\"images/glass.png\" onClick=\"ShowCallDetails('$value')\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP></td>";
 			}
 		}

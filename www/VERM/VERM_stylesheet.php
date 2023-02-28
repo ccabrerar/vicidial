@@ -7,13 +7,14 @@
 # 
 # CHANGELOG:
 # 220825-1603 - First build
+# 230123-1825 - Changed require statements to local files
 #
 
-require("../vicidial/dbconnect_mysqli.php");
-require("../vicidial/functions.php");
+require("dbconnect_mysqli.php");
+require("functions.php");
 header("Content-type: text/css");
 
-require("../vicidial/screen_colors.php");
+require("screen_colors.php");
 ?>
 div.help_info {position:absolute; top:0; left:0; display:none;}
 

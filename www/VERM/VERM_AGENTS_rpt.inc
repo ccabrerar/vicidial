@@ -5,6 +5,7 @@
 # 
 # CHANGELOG:
 # 220825-1631 - First build
+# 230106-1304 - Added data flushing for large page outputs
 #
 
 # NANQUE, not an unanswered call?
@@ -25,6 +26,8 @@ if (isset($_GET["SUBMIT"]))			{$SUBMIT=$_GET["SUBMIT"];}
 
 # No campaigns, need to query for all.
 $vicidial_user_log_SQL=preg_replace('/and campaign_id in \(\'\'\)/', '', $vicidial_user_log_SQL);
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 
 # Sessions
 $vicidial_user_stmt="select distinct user from vicidial_user_log $vicidial_user_log_SQL and event in ('LOGIN', 'LOGOUT', 'TIMEOUTLOGOUT') order by user asc";
@@ -368,6 +371,7 @@ foreach ($agent_sessions_array as $user => $sessions)
 				{
 				$vcl_uniqueid_stmt="select uniqueid, status, length_in_sec-queue_seconds  from vicidial_closer_log $vicidial_closer_log_SQL and call_date+INTERVAL ceil(queue_seconds) SECOND>=from_unixtime(".$agent_sessions_array["$user"]["$start_event_date"]["start_hour"].") and call_date+INTERVAL ceil(queue_seconds) SECOND<=from_unixtime(".$agent_sessions_array["$user"]["$start_event_date"]["end_hour"].") and user='$user' and status!='AFTHRS'";
 			
+				$vcl_uniqueid_stmt.=" and call_date>=from_unixtime(".$agent_sessions_array["$user"]["$start_event_date"]["start_hour"].")-INTERVAL 24 HOUR and call_date<=from_unixtime(".$agent_sessions_array["$user"]["$start_event_date"]["end_hour"].")+INTERVAL 24 HOUR";
 				# $DB=1;
 				if ($DB) {print "\n\n<!--\n $vcl_uniqueid_stmt \n//-->\n\n";}
 				
@@ -643,7 +647,6 @@ foreach ($campaign_sessions_array as $campaign_id => $logins)
 # Fill in hour array
 foreach ($agent_sessions_hour_array as $user => $hour)
 	{
-
 	for ($i=0; $i<=23; $i++)
 		{
 		$agent_sessions_hour_array["$user"][$i]+=0;
@@ -704,6 +707,8 @@ $CSV_output["agent_session_detail"].="\""._QXZ("Average agent time").":\",\"".($
 $CSV_output["agent_session_detail"].="\""._QXZ("Min agent time").":\",\"".($min_agent_time>=3600 ? floor($min_agent_time/3600).":" : "").gmdate("i:s", $min_agent_time)."\"\n";
 $CSV_output["agent_session_detail"].="\""._QXZ("Max agent time").":\",\"".($max_agent_time>=3600 ? floor($max_agent_time/3600).":" : "").gmdate("i:s", $max_agent_time)."\"\n";
 $CSV_output["agent_session_detail"].="\""._QXZ("Total agent time").":\",\"".sprintf("%.1f", ($total_agent_time/3600))." H\"\n";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 ########################################
 
 ######### AGENT PAUSE DETAIL ###########
@@ -789,6 +794,8 @@ $HTML_output.="<tr class='export_row'>\n";
 $HTML_output.="<td class='export_row_cell' colspan='7'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('AGENTS', 'agent_pause_detail')\" title=\"Export as a CSV file\" value='CSV'></td>";
 $HTML_output.="</tr>\n";
 $HTML_output.="</table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 ########################################
 
 ######### AGENT AVAILABILITY ###########
@@ -853,6 +860,8 @@ $HTML_output.="<tr class='export_row'>\n";
 $HTML_output.="<td class='export_row_cell' colspan='7'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('AGENTS', 'agent_availability')\" title=\"Export as a CSV file\" value='CSV'></td>";
 $HTML_output.="</tr>\n";
 $HTML_output.="</table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 ########################################
 
 ######### ANSWERED CALLS ###########
@@ -913,6 +922,8 @@ $HTML_output.="<tr class='export_row'>\n";
 $HTML_output.="<td class='export_row_cell' colspan='6'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('AGENTS', 'answered_calls')\" title=\"Export as a CSV file\" value='CSV'></td>";
 $HTML_output.="</tr>\n";
 $HTML_output.="</table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 ########################################
 
 ######### ANSWERED CALLS BY USER GROUP ###########
@@ -952,6 +963,8 @@ $HTML_output.="<tr class='export_row'>\n";
 $HTML_output.="<td class='export_row_cell' colspan='5'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('AGENTS', 'answered_calls_by_user_group')\" title=\"Export as a CSV file\" value='CSV'></td>";
 $HTML_output.="</tr>\n";
 $HTML_output.="</table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 ####################################
 
 ######### ANSWERED CALLS BY LOCATION ###########
@@ -994,6 +1007,8 @@ $HTML_output.="<tr class='export_row'>\n";
 $HTML_output.="<td class='export_row_cell' colspan='6'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('AGENTS', 'answered_calls_by_location')\" title=\"Export as a CSV file\" value='CSV'></td>";
 $HTML_output.="</tr>\n";
 $HTML_output.="</table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 ####################################
 
 ######### DREADED OCCUPANCY ###########
@@ -1083,6 +1098,8 @@ $HTML_output.="<tr class='export_row'>\n";
 $HTML_output.="<td class='export_row_cell' colspan='9'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('AGENTS', 'occupancy')\" title=\"Export as a CSV file\" value='CSV'></td>";
 $HTML_output.="</tr>\n";
 $HTML_output.="</table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 ####################################
 
 ##### AGENT SESSION TIME BY HOUR ###
@@ -1129,6 +1146,8 @@ $HTML_output.="<tr class='export_row'>\n";
 $HTML_output.="<td class='export_row_cell' colspan='26'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('AGENTS', 'agent_sessions_by_hour')\" title=\"Export as a CSV file\" value='CSV'></td>";
 $HTML_output.="</tr>\n";
 $HTML_output.="</table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 ####################################
 
 # No payable, not used
@@ -1177,6 +1196,8 @@ $HTML_output.="<tr class='export_row'>\n";
 $HTML_output.="<td class='export_row_cell' colspan='26'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('AGENTS', 'agent_billable_by_hour')\" title=\"Export as a CSV file\" value='CSV'></td>";
 $HTML_output.="</tr>\n";
 $HTML_output.="</table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 ####################################
 
 #### AGENTS BY HOUR ###
@@ -1230,6 +1251,8 @@ $HTML_output.="<tr class='export_row'>\n";
 $HTML_output.="<td class='export_row_cell' colspan='26'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('AGENTS', 'agents_by_hour')\" title=\"Export as a CSV file\" value='CSV'></td>";
 $HTML_output.="</tr>\n";
 $HTML_output.="</table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 ####################################
 
 ######## AGENT SESSIONS VIEW #######
@@ -1368,9 +1391,9 @@ foreach ($agent_sessions_array as $user => $sessions)
 	$HTML_output.="<td class='small_text'>0</td>";
 	$HTML_output.="<td class='small_text'>0</td>";
 	$HTML_output.="<td class='small_text'>$avg_talk_His</td>";
-	$HTML_output.="<td><a onClick=\"ShowOutcomesDetails('', '$start_date $start_time', '$end_date $end_time', '$user')\"><svg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg' data-svg='search'><circle fill='none' stroke='#000' stroke-width='1.1' cx='9' cy='9' r='7'></circle><path fill='none' stroke='#000' stroke-width='1.1' d='M14,14 L18,18 L14,14 Z'></path></svg></a></td>";
+	$HTML_output.="<td><a onClick=\"ShowOutcomesDetails('', '$start_date $start_time', '$end_date $end_time', '$user')\"><svg width='20' height='20' viewBox='0 0 20 20' data-svg='search'><circle fill='none' stroke='#000' stroke-width='1.1' cx='9' cy='9' r='7'></circle><path fill='none' stroke='#000' stroke-width='1.1' d='M14,14 L18,18 L14,14 Z'></path></svg></a></td>";
 	### Removed 6/14, may re-instate if "taken/lost" becomes necessary/desired
-	### $HTML_output.="<td><a onClick=\"ShowOutcomesDetails('THERE IS NO SUCH THING', '$start_date $start_time', '$end_date $end_time')\"><svg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg' data-svg='search'><circle fill='none' stroke='#000' stroke-width='1.1' cx='9' cy='9' r='7'></circle><path fill='none' stroke='#000' stroke-width='1.1' d='M14,14 L18,18 L14,14 Z'></path></svg></a></td>";
+	### $HTML_output.="<td><a onClick=\"ShowOutcomesDetails('THERE IS NO SUCH THING', '$start_date $start_time', '$end_date $end_time')\"><svg width='20' height='20' viewBox='0 0 20 20' data-svg='search'><circle fill='none' stroke='#000' stroke-width='1.1' cx='9' cy='9' r='7'></circle><path fill='none' stroke='#000' stroke-width='1.1' d='M14,14 L18,18 L14,14 Z'></path></svg></a></td>";
 	$HTML_output.="</tr>\n";
 
 	$CSV_output["agent_sessions_view"].="\"".$agentName."\",\"$total_duration_His\",\"$total_talk_His\",\"$total_idle_His\",\"$total_pause_His\",\"$total_billable_His\",\"$total_nonbillable_His\",\"$total_wait_His\",\"$total_sales\",\"$sph\",\"$total_contacts\",\"$ccph\",\"$total_human_answered\",\"$haph\",\"$total_calls\",\"$ha_conv\",\"$cc_conv\",\"0\",\"0\",\"$avg_talk_His\"\n";
@@ -1379,6 +1402,8 @@ $HTML_output.="<tr class='export_row'>\n";
 $HTML_output.="<td class='export_row_cell' colspan='21'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('AGENTS', 'agent_sessions_view')\" title=\"Export as a CSV file\" value='CSV'></td>";
 $HTML_output.="</tr>\n";
 $HTML_output.="</table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 ####################################
 
 $HTML_output.="<BR><h2 class='rpt_header'>"._QXZ("Campaign/Ingroup Sessions View")." $NWB#VERM_AGENTS-queue_sessions_view$NWE</h2>"; # Inbound
@@ -1517,6 +1542,7 @@ $HTML_output.="<td class='export_row_cell' colspan='18'>"._QXZ("Export as")."...
 $HTML_output.="</tr>\n";
 $HTML_output.="</table>";
 
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 ####################################
 
 /* Removed 5/19
@@ -1542,6 +1568,8 @@ $HTML_output.="<th>Pau N/Bill</th>";
 $HTML_output.="</tr>\n";
 $HTML_output.="</table>";
 */
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 
 
 if ($download_rpt)

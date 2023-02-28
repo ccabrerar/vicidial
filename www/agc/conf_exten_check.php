@@ -1,7 +1,7 @@
 <?php
 # conf_exten_check.php    version 2.14
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed purely to send whether the meetme conference has live channels connected and which they are
 # This script depends on the server_ip being sent and also needs to have a valid user/pass from the vicidial_users table
@@ -92,10 +92,11 @@
 # 210825-0907 - Fix for XSS security issue
 # 220219-2328 - Added allow_web_debug system setting
 # 220310-0934 - Added more time-sync detailed logging
+# 230220-1759 - Fix for In-Group manual dial issue
 #
 
-$version = '2.14-66';
-$build = '220310-0934';
+$version = '2.14-67';
+$build = '230220-1759';
 $php_script = 'conf_exten_check.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=51;
@@ -155,6 +156,8 @@ if (isset($_GET["phone_number"]))			{$phone_number=$_GET["phone_number"];}
 	elseif (isset($_POST["phone_number"]))	{$phone_number=$_POST["phone_number"];}
 if (isset($_GET["visibility"]))				{$visibility=$_GET["visibility"];}
 	elseif (isset($_POST["visibility"]))	{$visibility=$_POST["visibility"];}
+if (isset($_GET["active_ingroup_dial"]))			{$active_ingroup_dial=$_GET["active_ingroup_dial"];}
+	elseif (isset($_POST["active_ingroup_dial"]))	{$active_ingroup_dial=$_POST["active_ingroup_dial"];}
 
 $DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
@@ -235,12 +238,14 @@ if ($non_latin < 1)
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
 	$pass=preg_replace("/[^-\.\+\/\=_0-9a-zA-Z]/","",$pass);
 	$campaign = preg_replace("/[^-_0-9a-zA-Z]/","",$campaign);
+	$active_ingroup_dial = preg_replace("/[^-_0-9a-zA-Z]/","",$active_ingroup_dial);
 	}
 	else
 	{
 	$user = preg_replace('/[^-_0-9\p{L}]/u','',$user);
 	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
 	$campaign = preg_replace('/[^-_0-9\p{L}]/u', '', $campaign);
+	$active_ingroup_dial = preg_replace('/[^-_0-9\p{L}]/u',"",$active_ingroup_dial);
 	}
 
 if (strlen($SSagent_debug_logging) > 1)
@@ -825,7 +830,7 @@ if ($ACTION == 'refresh')
 					$retry_count++;
 					}
 
-				if ( ( ($Acomments != 'CHAT') and ($Acomments != 'EMAIL') ) or ($live_call_seconds > 4) )
+				if ( ( ($Acomments != 'CHAT') and ($Acomments != 'EMAIL') and (strlen($active_ingroup_dial) < 1) ) or ($live_call_seconds > 4) )
 					{
 					##### BEGIN DEAD logging section #####
 					if ( ( (strlen($customer_chat_id > 0) ) and ($customer_chat_id > 0) ) or ($Acomments == 'EMAIL') )

@@ -1,5 +1,5 @@
-# version: 20220827175401
-VERM_admin-queue	Queue	<QXZ>A queue is a collection of campaigns and ingroups to report on - these are created and modified through the admin Queue Groups section if the user has the privileges to use them.</QXZ>
+# version: 20230227095801
+VERM_admin-queue	Queue	<QXZ>A queue is a collection of campaigns and ingroups to report on - these are created and modified through the admin section if the user has the privileges to use them.</QXZ>
 VERM_admin-report	Report	<QXZ>Enhanced report can run one of three report types - "All reports" will show all report sections enhanced reporting offers, "Quick agents reports" limits it to 5 report sections all relating to agent activity: ANSWERED, ANSWERED DETAILS, AGENTS, AGENT DETAILS, and OUTCOMES.  "Quick reports" generates two report sections, STATS and CALLS, that combine together specific sub-reports found under other report sections.</QXZ>
 VERM_admin-agent	Agent Report	<QXZ>You can run the "All reports" report type for a specific agent under the selected/default queue via selecting said agent from this dropdown, and then selecting a date interval underneath the dropdown.</QXZ>
 VERM_admin-qa	Quality Assessment	<QXZ>This is simply another link to the main wallboard.</QXZ>

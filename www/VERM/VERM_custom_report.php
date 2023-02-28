@@ -9,8 +9,8 @@
 
 $startMS = microtime();
 
-$version = '2.14-1';
-$build = '220825-1606';
+$version = '2.14-873';
+$build = '230127-1750';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -688,7 +688,7 @@ $F=''; $FG=''; $B=''; $BG='';
 <HTML>
 <HEAD>
 <link rel="stylesheet" type="text/css" href="VERM_stylesheet.php">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="jquery.min.js"></script>
 <script language="JavaScript" src="calendar_db.js"></script>
 <script language="JavaScript" src="help.js"></script>
 <script language="JavaScript" src="VERM_custom_form_functions.php"></script>

@@ -5,6 +5,7 @@
 # 
 # CHANGELOG:
 # 220825-1622 - First build
+# 230106-1317 - Added missing QXZ, added pull of selectable statuses, human answered statues now include DISPO and SYSTEM
 #
 
 if (isset($_GET["start_date"]))			{$start_date=$_GET["start_date"];}
@@ -305,8 +306,17 @@ while ($sale_row=mysqli_fetch_array($sale_rslt))
 	array_push($sale_array["$sale_row[campaign_id]"], $sale_row["status"]);
 	}
 
+$selectable_array=array("SYSTEM" => array());
+$selectable_stmt="select distinct status, 'SYSTEM' as campaign_id from vicidial_statuses where selectable='Y' UNION select distinct status, campaign_id from vicidial_campaign_statuses where selectable='Y'";
+$selectable_rslt=mysql_to_mysqli($selectable_stmt, $link);
+while ($selectable_row=mysqli_fetch_array($selectable_rslt))
+	{
+	if (!array_key_exists("$selectable_row[campaign_id]", $selectable_array)) {$selectable_array["$selectable_row[campaign_id]"]=array();}
+	array_push($selectable_array["$selectable_row[campaign_id]"], $selectable_row["status"]);
+	}
+
 $human_ans_array=array("SYSTEM" => array());
-$human_ans_stmt="select distinct status, 'SYSTEM' as campaign_id from vicidial_statuses where human_answered='Y' UNION select distinct status, campaign_id from vicidial_campaign_statuses where human_answered='Y'";
+$human_ans_stmt="select distinct status, 'SYSTEM' as campaign_id from vicidial_statuses where human_answered='Y' UNION select distinct status, campaign_id from vicidial_campaign_statuses where human_answered='Y' UNION select 'DISPO', 'SYSTEM'";
 $human_ans_rslt=mysql_to_mysqli($human_ans_stmt, $link);
 while ($human_ans_row=mysqli_fetch_array($human_ans_rslt))
 	{
@@ -442,20 +452,20 @@ $border_colors=array("#00FF00", "#FF0000", "#0000FF", "#FFFF00", "#FF00FF", "#00
 ###########################
 
 ### REPORT FULL NAMES ###
-$report_full_names_array["ANSWERED"]="Answered calls";
-$report_full_names_array["ANSWERED_DT"]="Answered calls details";
-$report_full_names_array["UNANSWERED"]="Unanswered calls";
-$report_full_names_array["UNANSWERED_DT"]="Unanswered calls details";
-$report_full_names_array["IVR"]="IVR call statistics";
-$report_full_names_array["AREA"]="Answered/unanswered call counts by area code";
-$report_full_names_array["ATT"]="Inbound call distribution";
-$report_full_names_array["DAY"]="Call reports - day/date breakdown";
-$report_full_names_array["HOUR"]="Call reports - hourly breakdown";
-$report_full_names_array["DOW"]="Call reports - day-of-week breakdown";
-$report_full_names_array["AGENTS"]="Agent statistics";
-$report_full_names_array["AGENTS_DT"]="Agent call details";
-$report_full_names_array["OUTCOMES"]="Outcome/status call statistics";
-$report_full_names_array["STATS"]="Selected call statistics";
-$report_full_names_array["CALLS"]="Combined answered/unanswered call details";
+$report_full_names_array["ANSWERED"]=_QXZ("Answered calls");
+$report_full_names_array["ANSWERED_DT"]=_QXZ("Answered calls details");
+$report_full_names_array["UNANSWERED"]=_QXZ("Unanswered calls");
+$report_full_names_array["UNANSWERED_DT"]=_QXZ("Unanswered calls details");
+$report_full_names_array["IVR"]=_QXZ("IVR call statistics");
+$report_full_names_array["AREA"]=_QXZ("Answered/unanswered call counts by area code");
+$report_full_names_array["ATT"]=_QXZ("Inbound call distribution");
+$report_full_names_array["DAY"]=_QXZ("Call reports - day/date breakdown");
+$report_full_names_array["HOUR"]=_QXZ("Call reports - hourly breakdown");
+$report_full_names_array["DOW"]=_QXZ("Call reports - day-of-week breakdown");
+$report_full_names_array["AGENTS"]=_QXZ("Agent statistics");
+$report_full_names_array["AGENTS_DT"]=_QXZ("Agent call details");
+$report_full_names_array["OUTCOMES"]=_QXZ("Outcome/status call statistics");
+$report_full_names_array["STATS"]=_QXZ("Selected call statistics");
+$report_full_names_array["CALLS"]=_QXZ("Combined answered/unanswered call details");
 #########################
 ?>
