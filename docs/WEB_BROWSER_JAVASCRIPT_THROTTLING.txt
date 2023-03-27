@@ -1,4 +1,4 @@
-WEB BROWSER JAVASCRIPT THROTTLING	Started: 2021-03-25	Updated: 2023-02-21
+WEB BROWSER JAVASCRIPT THROTTLING	Started: 2021-03-25	Updated: 2023-03-07
 
 
 
@@ -32,6 +32,7 @@ Below are the ways you can prevent Chrome's Intensive Javascript Throttling from
 3. Use a WebRTC phone for your agent phone connection(like VICIphone)
 4. Enable the VICIdial System Settings for "Agent Hidden Browser Sound"
 5. Switch the VICIdial System Setting for "Agent Screen Timer" to 'EventSource'
+6. Switch the VICIdial System Setting for "Agent Screen Timer" to 'setTimeoutAudioLoop'
 
 
 More information on each of the above...
@@ -104,6 +105,8 @@ We have tested the following settings and found them to be effective on all clie
 - Set "volume" to '25'
 - Set "Agent Hidden Browser Sound Seconds" to '20' (for Chrome builds 110+ may need to set this to '10' or even '5')
 
+Another option for using this setting without any click sound at all is to use the "20Hz_tone" sound(added in svn/trunk rev. 3693). This audio is inaudible to most people and the file is 5 seconds long, so if you use a 5 second delay it will be constantly playing in the background. This constantly-playing method also allows you to lower the Hidden Browser Sound "volume" to '1' and still be effective.
+
 Adding this new feature also required us to add Agent Screen Visibility Logging to VICIdial, so you can now also view statistics of how long your agents' screens were visible to them in the Agent Time Detail report and the User Stats report.
 
 NOTE: In Chrome build 110 and higher, you may need to reduce the "Agent Hidden Browser Sound Seconds" setting to 10 or even 5 to get it to work 100% of the time due to new changes in how Javascript Throttling works.
@@ -113,6 +116,13 @@ NOTE: In Chrome build 110 and higher, you may need to reduce the "Agent Hidden B
 5. SWITCH THE VICIDIAL SYSTEM SETTING FOR "AGENT SCREEN TIMER" TO 'EventSource'
 
 Thanks to 'fperdomo' on the VICIdial Forums for posting a simple method using SSE to work-around the Chrome JavasScript Throttling issue by replacing the JavaScript "setTimeout()" with an "EventSource()" that runs once a second. After some fine-tuning and testing in different web browsers, we committed this as an optional System Setting called "Agent Screen Timer" to the VICIdial codebase in svn/trunk revision 3407. Since EventSource SSE uses open connection streaming over HTTP, some older networks and proxy servers may have problems handling the open connections, so be sure to test on your network before enabling during production times.
+
+
+
+6. SWITCH THE VICIDIAL SYSTEM SETTING FOR "AGENT SCREEN TIMER" TO 'setTimeoutAudioLoop'
+
+Thanks to 'martinch' on the VICIdial Issue Tracker for posting a simple method using an HTML audio tag with the 'loop' option to work-around the Chrome JavasScript Throttling issue by playing of a loop of inaudible 20Hz audio while the agent is logged in. After some fine-tuning and testing in different web browsers, we committed this as another option to the System Setting "Agent Screen Timer" feature in the VICIdial codebase in svn/trunk revision 3694. Since this method will currently disable any other HTML audio sounds playing in the same window, it will break "Agent Browser Call Alerts" if they are enabled on your system.
+
 
 
 

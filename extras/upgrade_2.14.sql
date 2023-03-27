@@ -2143,3 +2143,31 @@ UPDATE system_settings SET db_schema_version='1676',db_schema_update_date=NOW() 
 update vicidial_settings_containers set container_entry=CONCAT(container_entry, '\r\n\r\n; #### AUTO DOWNLOAD ####\r\n; If the "total calls" value on any report requested exceeds the below \r\n; limit, automatically download the three "DETAILS" reports instead\r\n; of attempting to display that many records on-screen\r\nauto_download_limit => 50000\r\n\r\n; #### OUTCOMES report overrides ####\r\n; Use "outcome_lagged_status_overrides" for conditions where the call \r\n; record in the vicidial_log or vicidial_closer_log table has no uniqueid\r\n; value despite having a status/outcome, which can indicate a call \r\n; affected by network lag for certain statuses.  This will change the call \r\n; status to "LAGGED".  Separate statuses with commas.  Default is the \r\n; automatic "PU" status.\r\noutcome_lagged_status_overrides => PU\r\n\r\n; Use "unknown_network_statuses" to change call statuses to read "Network/\r\n; LAGGED" on the OUTCOMES report. Separate statuses with commas.\r\n; IMPORTANT: if you are using the outcome_lagged_status_overrides option \r\n; above, make sure "LAGGED" is one of the unknown_network_statuses here\r\n; unknown_network_statuses => LAGGED\r\n\r\n; Use "outcome_status_overrides" to change one status to another on the \r\n; OUTCOMES report.  Overrides are comma-separated pairs of dispositions  \r\n; where the first disposition is the disposition to change, and the second\r\n; is the disposition to change to.  Separate pairs with a pipe character as\r\n; in the below example.  Off by default.\r\n; outcome_status_overrides => CBHOLD,DISPO|XFER,AL') WHERE container_id='VERM_REPORT_OPTIONS' and container_entry NOT LIKE "%outcome_status_overrides%";
 
 UPDATE system_settings SET db_schema_version='1677',db_schema_update_date=NOW() where db_schema_version < 1677;
+
+ALTER TABLE servers ADD ara_url TEXT;
+
+ALTER TABLE vicidial_campaigns ADD show_confetti ENUM('DISABLED','SALES','CALLBACKS','SALES_AND_CALLBACKS') default 'DISABLED';
+
+INSERT INTO vicidial_settings_containers (container_id,container_notes,container_type,user_group,container_entry) VALUES ('CONFETTI_SETTINGS', 'Confetti settings for screen display', 'OTHER', '---ALL---', '; Confetti settings, to add visual interest to certain events\r\n; duration is how long the confetti animation runs, maxParticleCount is the\r\n; max number of confetti \"pieces\", and particleSpeed is how fast they float\r\nduration => 2\r\nmaxParticleCount => 2350\r\nparticleSpeed => 2\r\n');
+
+ALTER TABLE system_settings ADD abandon_check_queue ENUM('0','1','2','3','4','5','6','7') default '0';
+
+CREATE TABLE vicidial_abandon_check_queue (
+abandon_check_id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
+lead_id INT(9) UNSIGNED,
+phone_number VARCHAR(18) default '',
+call_id VARCHAR(40) default '',
+abandon_time DATETIME,
+dispo VARCHAR(6),
+check_status ENUM('NEW','REJECT','QUEUE','PROCESSING','COMPLETE','CONNECTED','ARCHIVE') default 'NEW',
+reject_reason VARCHAR(40) default '',
+source VARCHAR(20),
+index(abandon_time),
+index(phone_number),
+index(lead_id)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_abandon_check_queue_archive LIKE vicidial_abandon_check_queue;
+ALTER TABLE vicidial_abandon_check_queue_archive MODIFY abandon_check_id INT(9) UNSIGNED NOT NULL;
+
+UPDATE system_settings SET db_schema_version='1678',db_schema_update_date=NOW() where db_schema_version < 1678;

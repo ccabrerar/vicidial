@@ -1,7 +1,7 @@
 <?php 
 # AST_url_log_report.php
 # 
-# Copyright (C) 2022  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 130620-0806 - First build
@@ -14,6 +14,7 @@
 # 170710-1801 - Added webform url type
 # 220301-1951 - Added allow_web_debug system setting
 # 220812-0931 - Added User Group report permissions checking
+# 230310-1051 - Added more missing url types
 #
 
 $startMS = microtime();
@@ -270,7 +271,7 @@ while($i < $url_type_ct)
 	$i++;
 	}
 
-$LISTurltypes=array("add_lead", "custom", "dispo", "na_callurl", "non-agent", "other", "qm_socket", "start", "start_ra","nva_phone","DID_FILTER","DNCcom","park_ivr_c","webform");
+$LISTurltypes=array("abandonchk","add_lead","ccc_look","custom","dead","DID_FILTER","dispo","DNCcom","enter_ig","event","na_callurl","non-agent","nva_phone","other","park_ivr_c","pause_max","qm_socket","sc_callurl","start","start_ra","TCPAlit","2FA_SMS","TILTX_SHAK","wcu_off","wcu_on","webform");
 
 $url_types_to_print=count($LISTurltypes);
 $i=0;

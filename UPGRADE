@@ -748,6 +748,41 @@ OTHER CHANGES:
 	field on the Campaign, In-Group, List modify screen. Just like how it 
 	works with Dispo Call URL currently.
 
+210. Added new User Group “Script Tab Frame Location” allowing the script tab 
+	to extend to the far left side of the screen.
+
+211. Added new campaign setting “Max Logged-In Agents”, allowing you to set a 
+	maximum number of agents that can be logged into this campaign at any 
+	time.
+
+212. Added list option for “Dial Prefix Override”.
+
+213. Added a “color chooser” for the In-Group Color and Screen Colors fields. 
+	Also added color hex code validation to those fields.
+
+214. Added “Invalid Phone Number Replacement” option to the Web Lead Loader, 
+	allowing you to replace an invalid phone_number lead value with either 
+	the alt_phone or address3 value in the same lead.
+
+215. Added optional “Agent Login Kick-all” system setting which hangs up any 
+	channels that were already in the agent session before the agent is 
+	placed into the session.
+
+216. Added “User Codes Admin Pulldown” allowing only User Level 9 users to 
+	modify the User Code field on the User Modify page, and it will change 
+	the User Code field to a pulldown menu.
+
+217. Added "Show Confetti" campaign setting, allowing for confetti to be shown
+	to agents when they disposition a call as a SALE and/or a CALLBACK
+	flagged status.
+
+218. Added "Abandon Check Queue" feature, to catch dropped Call Menu calls that
+	are tagged with a Lead ID. For more information, see the bottom of the
+	INBOUND_CALLBACK_QUEUE.txt document.
+
+219. Added "Asterisk Restart URL" to the Modify Servers page, this can send a 
+	URL request any time Asterisk is auto-restarted on that server.
+
 
 
 

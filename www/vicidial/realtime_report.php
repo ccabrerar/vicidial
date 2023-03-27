@@ -1,7 +1,7 @@
 <?php 
 # realtime_report.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # live real-time stats for the VICIDIAL Auto-Dialer all servers
 #
@@ -57,12 +57,13 @@
 # 220217-2046 - Added input variable filters
 # 220221-1514 - Added allow_web_debug system setting
 # 221105-0826 - Added webphone_settings to webphone launch data, issue #1385
+# 230308-0215 - Added option to show customer phone code
 #
 
 $startMS = microtime();
 
-$version = '2.14-44';
-$build = '221105-0826';
+$version = '2.14-45';
+$build = '230308-0215';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -131,6 +132,8 @@ if (isset($_GET["monitor_phone"]))				{$monitor_phone=$_GET["monitor_phone"];}
 	elseif (isset($_POST["monitor_phone"]))		{$monitor_phone=$_POST["monitor_phone"];}
 if (isset($_GET["CARRIERstats"]))			{$CARRIERstats=$_GET["CARRIERstats"];}
 	elseif (isset($_POST["CARRIERstats"]))	{$CARRIERstats=$_POST["CARRIERstats"];}
+if (isset($_GET["ShowCustPhoneCode"]))			{$ShowCustPhoneCode=$_GET["ShowCustPhoneCode"];}
+	elseif (isset($_POST["ShowCustPhoneCode"]))	{$ShowCustPhoneCode=$_POST["ShowCustPhoneCode"];}
 if (isset($_GET["PRESETstats"]))			{$PRESETstats=$_GET["PRESETstats"];}
 	elseif (isset($_POST["PRESETstats"]))	{$PRESETstats=$_POST["PRESETstats"];}
 if (isset($_GET["AGENTtimeSTATS"]))				{$AGENTtimeSTATS=$_GET["AGENTtimeSTATS"];}
@@ -276,6 +279,11 @@ if (!isset($with_inbound))
 		}
 	else {$with_inbound = $RS_with_inbound;}
 	}
+if (!isset($ShowCustPhoneCode)) 
+	{
+	if (!isset($RS_ShowCustPhoneCode)) {$ShowCustPhoneCode='0';}
+	else {$ShowCustPhoneCode = $RS_ShowCustPhoneCode;}
+	}
 if (!isset($CARRIERstats)) 
 	{
 	if (!isset($RS_CARRIERstats)) {$CARRIERstats='0';}
@@ -371,6 +379,7 @@ $ALLINGROUPstats = preg_replace('/[^-_0-9a-zA-Z]/', '', $ALLINGROUPstats);
 $with_inbound = preg_replace('/[^-_0-9a-zA-Z]/', '', $with_inbound);
 $monitor_active = preg_replace('/[^-_0-9a-zA-Z]/', '', $monitor_active);
 $monitor_phone = preg_replace('/[^-_0-9a-zA-Z]/', '', $monitor_phone);
+$ShowCustPhoneCode = preg_replace('/[^-_0-9a-zA-Z]/', '', $ShowCustPhoneCode);
 $CARRIERstats = preg_replace('/[^-_0-9a-zA-Z]/', '', $CARRIERstats);
 $PRESETstats = preg_replace('/[^-_0-9a-zA-Z]/', '', $PRESETstats);
 $AGENTtimeSTATS = preg_replace('/[^-_0-9a-zA-Z]/', '', $AGENTtimeSTATS);
@@ -1031,6 +1040,16 @@ $select_list .= ">"._QXZ("SLA 2 ONLY")."</option>";
 $select_list .= "</SELECT></TD></TR>";
 
 $select_list .= "<TR><TD align=right>";
+$select_list .= _QXZ("Show Cust. Phone Code").":  </TD><TD align=left><SELECT SIZE=1 NAME=ShowCustPhoneCode ID=ShowCustPhoneCode>";
+$select_list .= "<option value='0'";
+	if ($ShowCustPhoneCode < 1) {$select_list .= " selected";} 
+$select_list .= ">"._QXZ("NO")."</option>";
+$select_list .= "<option value='1'";
+	if ($ShowCustPhoneCode=='1') {$select_list .= " selected";} 
+$select_list .= ">"._QXZ("YES")."</option>";
+$select_list .= "</SELECT></TD></TR>";
+
+$select_list .= "<TR><TD align=right>";
 $select_list .= _QXZ("Show Carrier Stats").":  </TD><TD align=left><SELECT SIZE=1 NAME=CARRIERstats ID=CARRIERstats>";
 $select_list .= "<option value='0'";
 	if ($CARRIERstats < 1) {$select_list .= " selected";} 
@@ -1352,6 +1371,7 @@ var monitor_phone = '<?php echo $monitor_phone ?>';
 var ALLINGROUPstats = '<?php echo $ALLINGROUPstats ?>';
 var DROPINGROUPstats = '<?php echo $DROPINGROUPstats ?>';
 var NOLEADSalert = '<?php echo $NOLEADSalert ?>';
+var ShowCustPhoneCode = '<?php echo $ShowCustPhoneCode ?>';
 var CARRIERstats = '<?php echo $CARRIERstats ?>';
 var PRESETstats = '<?php echo $PRESETstats ?>';
 var AGENTtimeSTATS = '<?php echo $AGENTtimeSTATS ?>';
@@ -1649,7 +1669,7 @@ function gather_realtime_content()
 		}
 	if (xmlhttp) 
 		{
-		RTupdate_query = "RTajax=1&DB=" + DB + "" + groupQS + usergroupQS + ingroupQS + "&adastats=" + adastats + "&SIPmonitorLINK=" + SIPmonitorLINK + "&IAXmonitorLINK=" + IAXmonitorLINK + "&usergroup=" + usergroup + "&UGdisplay=" + UGdisplay + "&UidORname=" + UidORname + "&orderby=" + orderby + "&SERVdisplay=" + SERVdisplay + "&CALLSdisplay=" + CALLSdisplay + "&PHONEdisplay=" + PHONEdisplay + "&CUSTPHONEdisplay=" + CUSTPHONEdisplay + "&CUSTINFOdisplay=" + CUSTINFOdisplay + "&with_inbound=" + with_inbound + "&monitor_active=" + monitor_active + "&monitor_phone=" + monitor_phone + "&ALLINGROUPstats=" + ALLINGROUPstats + "&DROPINGROUPstats=" + DROPINGROUPstats + "&NOLEADSalert=" + NOLEADSalert + "&CARRIERstats=" + CARRIERstats + "&PRESETstats=" + PRESETstats + "&AGENTtimeSTATS=" + AGENTtimeSTATS + "&parkSTATS=" + parkSTATS + "&SLAinSTATS=" + SLAinSTATS + "&INGROUPcolorOVERRIDE=" + INGROUPcolorOVERRIDE + "&droppedOFtotal=" + droppedOFtotal + "&report_display_type=" + report_display_type + "";
+		RTupdate_query = "RTajax=1&DB=" + DB + "" + groupQS + usergroupQS + ingroupQS + "&adastats=" + adastats + "&SIPmonitorLINK=" + SIPmonitorLINK + "&IAXmonitorLINK=" + IAXmonitorLINK + "&usergroup=" + usergroup + "&UGdisplay=" + UGdisplay + "&UidORname=" + UidORname + "&orderby=" + orderby + "&SERVdisplay=" + SERVdisplay + "&CALLSdisplay=" + CALLSdisplay + "&PHONEdisplay=" + PHONEdisplay + "&CUSTPHONEdisplay=" + CUSTPHONEdisplay + "&CUSTINFOdisplay=" + CUSTINFOdisplay + "&with_inbound=" + with_inbound + "&monitor_active=" + monitor_active + "&monitor_phone=" + monitor_phone + "&ALLINGROUPstats=" + ALLINGROUPstats + "&DROPINGROUPstats=" + DROPINGROUPstats + "&NOLEADSalert=" + NOLEADSalert + "&ShowCustPhoneCode=" + ShowCustPhoneCode + "&CARRIERstats=" + CARRIERstats + "&PRESETstats=" + PRESETstats + "&AGENTtimeSTATS=" + AGENTtimeSTATS + "&parkSTATS=" + parkSTATS + "&SLAinSTATS=" + SLAinSTATS + "&INGROUPcolorOVERRIDE=" + INGROUPcolorOVERRIDE + "&droppedOFtotal=" + droppedOFtotal + "&report_display_type=" + report_display_type + "";
 
 		xmlhttp.open('POST', 'AST_timeonVDADall.php'); 
 		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
@@ -1788,6 +1808,8 @@ function update_variables(task_option,task_choice,force_reload)
 		DROPINGROUPstats = DROPINGROUPstatsFORM[DROPINGROUPstatsFORM.selectedIndex].value;
 		var NOLEADSalertFORM = document.getElementById('NOLEADSalert');
 		NOLEADSalert = NOLEADSalertFORM[NOLEADSalertFORM.selectedIndex].value;
+		var ShowCustPhoneCodeFORM = document.getElementById('ShowCustPhoneCode');
+		ShowCustPhoneCode = ShowCustPhoneCodeFORM[ShowCustPhoneCodeFORM.selectedIndex].value;
 		var CARRIERstatsFORM = document.getElementById('CARRIERstats');
 		CARRIERstats = CARRIERstatsFORM[CARRIERstatsFORM.selectedIndex].value;
 		<?php
@@ -1871,7 +1893,7 @@ function update_variables(task_option,task_choice,force_reload)
 		// force a reload if the phone is changed
 		if ( (temp_monitor_phone != monitor_phone) || (force_reload=='YES') )
 			{
-			reload_url = PHP_SELF + "?RR=" + RR + "&DB=" + DB + "" + groupQS + usergroupQS + ingroupQS + "&adastats=" + adastats + "&SIPmonitorLINK=" + SIPmonitorLINK + "&IAXmonitorLINK=" + IAXmonitorLINK + "&usergroup=" + usergroup + "&UGdisplay=" + UGdisplay + "&UidORname=" + UidORname + "&orderby=" + orderby + "&SERVdisplay=" + SERVdisplay + "&CALLSdisplay=" + CALLSdisplay + "&PHONEdisplay=" + PHONEdisplay + "&CUSTPHONEdisplay=" + CUSTPHONEdisplay + "&with_inbound=" + with_inbound + "&monitor_active=" + monitor_active + "&monitor_phone=" + temp_monitor_phone + "&ALLINGROUPstats=" + ALLINGROUPstats + "&DROPINGROUPstats=" + DROPINGROUPstats + "&NOLEADSalert=" + NOLEADSalert + "&CARRIERstats=" + CARRIERstats + "&PRESETstats=" + PRESETstats + "&AGENTtimeSTATS=" + AGENTtimeSTATS + "&parkSTATS=" + parkSTATS + "&SLAinSTATS=" + SLAinSTATS + "&INGROUPcolorOVERRIDE=" + INGROUPcolorOVERRIDE + "&droppedOFtotal=" + droppedOFtotal + "&report_display_type=" + report_display_type + "";
+			reload_url = PHP_SELF + "?RR=" + RR + "&DB=" + DB + "" + groupQS + usergroupQS + ingroupQS + "&adastats=" + adastats + "&SIPmonitorLINK=" + SIPmonitorLINK + "&IAXmonitorLINK=" + IAXmonitorLINK + "&usergroup=" + usergroup + "&UGdisplay=" + UGdisplay + "&UidORname=" + UidORname + "&orderby=" + orderby + "&SERVdisplay=" + SERVdisplay + "&CALLSdisplay=" + CALLSdisplay + "&PHONEdisplay=" + PHONEdisplay + "&CUSTPHONEdisplay=" + CUSTPHONEdisplay + "&with_inbound=" + with_inbound + "&monitor_active=" + monitor_active + "&monitor_phone=" + temp_monitor_phone + "&ALLINGROUPstats=" + ALLINGROUPstats + "&DROPINGROUPstats=" + DROPINGROUPstats + "&NOLEADSalert=" + NOLEADSalert + "&ShowCustPhoneCode=" + ShowCustPhoneCode + "&CARRIERstats=" + CARRIERstats + "&PRESETstats=" + PRESETstats + "&AGENTtimeSTATS=" + AGENTtimeSTATS + "&parkSTATS=" + parkSTATS + "&SLAinSTATS=" + SLAinSTATS + "&INGROUPcolorOVERRIDE=" + INGROUPcolorOVERRIDE + "&droppedOFtotal=" + droppedOFtotal + "&report_display_type=" + report_display_type + "";
 
 		//	alert('|' + temp_monitor_phone + '|' + monitor_phone + '|\n' + reload_url);
 			window.location.href = reload_url;

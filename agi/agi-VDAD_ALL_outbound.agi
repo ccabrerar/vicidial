@@ -46,7 +46,7 @@
 #exten => 8366,4,AGI(agi-VDAD_ALL_outbound.agi,SURVEY-----LB-----US_pol_survey_hello-----1238-----8-----US_pol_survey_transfer-----US_thanks_no_contact-----OPTOUT-----DNC)
 #exten => 8366,5,Hangup
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 80218-2027 - First Build
@@ -128,6 +128,7 @@
 # 200915-2218 - Fixes for surveys with hash-star
 # 210907-1254 - Added KHOMP code (install JSON::PP Perl module and remove '#UC#' in the code to enable)
 # 220524-1746 - Changed SHARED_ campaign in-group transfers to use 'SRDROP' log status instead of 'DROP'
+# 230309-0952 - Added abandon_check_queue feature
 #
 
 $script = 'agi-VDAD_ALL_outbound.agi';
@@ -169,6 +170,7 @@ $US='_';
 $wav='.wav';
 
 # get date/time
+$now_date_epoch = time();
 ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
 $year = ($year + 1900);
 $Tyear = ($year - 2000);
@@ -179,7 +181,16 @@ if ($hour < 10) {$hour = "0$hour";}
 if ($min < 10)	{$min = "0$min";}
 if ($sec < 10)	{$sec = "0$sec";}
 
-$now_date_epoch = time();
+$epochTWENTYFOURhoursAGO = ($now_date_epoch - 86400);
+($Ssec,$Smin,$Shour,$Smday,$Smon,$Syear,$Swday,$Syday,$Sisdst) = localtime($epochTWENTYFOURhoursAGO);
+$Smon++;	$Syear = ($Syear + 1900);
+if ($Smon < 10) {$Smon = "0$Smon";}
+if ($Smday < 10) {$Smday = "0$Smday";}
+if ($Shour < 10) {$Shour = "0$Shour";}
+if ($Smin < 10) {$Smin = "0$Smin";}
+if ($Ssec < 10) {$Ssec = "0$Ssec";}
+$timeTWENTYFOURhoursAGO = "$Syear-$Smon-$Smday $Shour:$Smin:$Ssec";
+
 $now_date = "$year-$mon-$mday $hour:$min:$sec";
 $CLInow_date = "$year-$mon-$mday\\ $hour:$min:$sec";
 $start_time_epoch = $now_date_epoch;
@@ -270,7 +281,7 @@ $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VA
 
 #############################################
 ##### Gather system_settings #####
-$stmtA = "SELECT sip_event_logging,call_quota_lead_ranking,agent_search_method FROM system_settings;";
+$stmtA = "SELECT sip_event_logging,call_quota_lead_ranking,agent_search_method,abandon_check_queue FROM system_settings;";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -280,6 +291,7 @@ if ($sthArows > 0)
 	$SSsip_event_logging =			$aryA[0];
 	$SScall_quota_lead_ranking =	$aryA[1];
 	$SSagent_search_method =		$aryA[2];
+	$SSabandon_check_queue =		$aryA[3];
 	}
 $sthA->finish();
 ###########################################
@@ -3314,6 +3326,24 @@ while ($drop_timer <= $DROP_TIME)
 				$affected_rows = $dbhA->do($stmtA);
 					$dbhP=$dbhA;   $mysql_count='01038';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 				if ($AGILOG) {$agi_string = "--    VDAD XFER : |$affected_rows|update of vac table: $callerid\n|$stmtA|";   &agi_output;}
+
+				if ($SSabandon_check_queue > 0)
+					{
+					### check for ACTIVE vicidial_abandon_check_queue records and set to CONNECTED if they exist
+					$stmtA = "UPDATE vicidial_abandon_check_queue SET check_status='CONNECTED' where lead_id = '$CIDlead_id' and check_status IN('NEW','QUEUE','PROCESSING') and abandon_time > \"$timeTWENTYFOURhoursAGO\" order by abandon_time desc limit 1;";
+					$affected_rows = $dbhA->do($stmtA);  
+						$dbhP=$dbhA;   $mysql_count='02068';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
+					if ($AGILOG) {$agi_string = "--    VACQ connected 1: |$CIDlead_id|$affected_rows|$stmtA";   &agi_output;}
+
+					if ($affected_rows < 1) 
+						{
+						### check for INACTIVE vicidial_abandon_check_queue records and set to CONNECTED if they exist
+						$stmtA = "UPDATE vicidial_abandon_check_queue SET check_status='CONNECTED' where lead_id = '$CIDlead_id' and check_status IN('COMPLETE','REJECT','CONNECTED') and abandon_time > \"$timeTWENTYFOURhoursAGO\" order by abandon_time desc limit 1;";
+						$affected_rows = $dbhA->do($stmtA);  
+							$dbhP=$dbhA;   $mysql_count='02068';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
+						if ($AGILOG) {$agi_string = "--    VACQ connected 2: |$CIDlead_id|$affected_rows|$stmtA";   &agi_output;}
+						}
+					}
 
 				if ($enable_queuemetrics_logging > 0)
 					{

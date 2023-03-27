@@ -1354,7 +1354,7 @@ while($one_day_interval > 0)
 					if ( ($staggered > 0) && ($staggered_ct > 0) )
 						{
 						$staggered_fill=0;
-						$stmtA = "SELECT count(*),vicidial_balance_rank FROM servers where vicidial_balance_active = 'Y' group by vicidial_balance_rank order by vicidial_balance_rank desc;";
+						$stmtA = "SELECT count(*),vicidial_balance_rank FROM servers where vicidial_balance_active = 'Y' and active = 'Y' group by vicidial_balance_rank order by vicidial_balance_rank desc;";
 						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 						$sthArows=$sthA->rows;
@@ -1372,7 +1372,7 @@ while($one_day_interval > 0)
 						$staggered_rank_ct=0;
 						while ( ($st_ct > $staggered_rank_ct) && ($staggered_ct > $staggered_fill) )
 							{
-							$stmtA = "SELECT server_ip,asterisk_version,routing_prefix FROM servers where vicidial_balance_rank='$ST_rank[$staggered_rank_ct]' and vicidial_balance_active = 'Y' order by server_ip LIMIT $ST_count[$staggered_rank_ct];";
+							$stmtA = "SELECT server_ip,asterisk_version,routing_prefix FROM servers where vicidial_balance_rank='$ST_rank[$staggered_rank_ct]' and vicidial_balance_active = 'Y' and active = 'Y' order by server_ip LIMIT $ST_count[$staggered_rank_ct];";
 							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 							$sthArowsSIPS=$sthA->rows;

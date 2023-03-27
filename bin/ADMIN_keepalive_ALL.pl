@@ -159,9 +159,10 @@
 # 220921-1255 - Added vicidial_user_logins_daily TEOD population
 # 221116-1157 - Added vicidial_long_extensions TEOD truncating
 # 230118-1623 - Added Playback audio then hangup extension
+# 230309-0926 - Added ara_url for server asterisk reboots, daily rolling of vicidial_abandon_check_queue table
 #
 
-$build = '230118-1623';
+$build = '230309-0926';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -1673,6 +1674,33 @@ if ($timeclock_end_of_day_NOW > 0)
 			if ($teodDB) {&teod_logger;}
 
 			$stmtA = "optimize table vicidial_ccc_log;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			}
+
+
+		# roll of vicidial_abandon_check_queue records, keep only 1 day of records in active table
+		if (!$Q) {print "\nProcessing vicidial_abandon_check_queue table...\n";}
+		$stmtA = "INSERT IGNORE INTO vicidial_abandon_check_queue_archive SELECT * from vicidial_abandon_check_queue;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows = $sthA->rows;
+		$event_string = "$sthArows rows inserted into vicidial_abandon_check_queue_archive table";
+		if (!$Q) {print "$event_string \n";}
+		if ($teodDB) {&teod_logger;}
+
+		$rv = $sthA->err();
+		if (!$rv) 
+			{	
+			$stmtA = "DELETE FROM vicidial_abandon_check_queue WHERE abandon_time < \"$RMSQLdate\";";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			$event_string = "$sthArows rows deleted from vicidial_abandon_check_queue table";
+			if (!$Q) {print "$event_string \n";}
+			if ($teodDB) {&teod_logger;}
+
+			$stmtA = "optimize table vicidial_abandon_check_queue;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			}
@@ -4956,6 +4984,33 @@ if ($active_asterisk_server =~ /Y/)
 			if ($DBX) {print "Restart asterisk debug 1: |$Iaffected_rows|$stmtA|\n";}
 
 			`$PATHhome/start_asterisk_boot.pl`;
+			}
+
+		##### Get the ara_url for this server's server_ip #####
+		$stmtA = "SELECT ara_url where server_ip='$server_ip';";
+		if ($DB) {print "$stmtA\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$ara_url = $aryA[0];
+			}
+		$sthA->finish();
+
+		# Call the ara_url
+		if ($ara_url ne '')
+			{
+			$ara_url =~ s/ /+/gi;
+			$ara_url =~ s/&/\\&/gi;
+			$launch = $PATHhome . "/AST_send_URL.pl";
+			$launch .= " --SYSLOG" if ($SYSLOG);
+			$launch .= " --lead_id=0";
+			$launch .= " --function=QM_SOCKET_SEND";
+			$launch .= " --compat_url=" . $ara_url;
+
+			system($launch . ' &');
 			}
 		}
 	}

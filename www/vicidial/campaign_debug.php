@@ -1,7 +1,7 @@
 <?php 
 # campaign_debug.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 110514-1231 - First build
@@ -19,6 +19,7 @@
 # 201219-2119 - Added SHARED campaign output
 # 220228-2048 - Added allow_web_debug system setting
 # 220812-0933 - Added User Group report permissions checking
+# 230312-1019 - Added --CALLBACK-QUEUE-- and --ABANDON-QUEUE-- options
 #
 
 $startMS = microtime();
@@ -301,6 +302,10 @@ while ($campaigns_to_print > $o)
 	else {echo "<option value=\"$campaign_id[$o]\">$campaign_id[$o] - $campaign_name[$o]</option>\n";}
 	$o++;
 	}
+if ($group == '--CALLBACK-QUEUE--') {echo "<option selected value=\"--CALLBACK-QUEUE--\">--CALLBACK-QUEUE--</option>\n";}
+else {echo "<option value=\"--CALLBACK-QUEUE--\">--CALLBACK-QUEUE--</option>\n";}
+if ($group == '--ABANDON-QUEUE--') {echo "<option selected value=\"--ABANDON-QUEUE--\">--ABANDON-QUEUE--</option>\n";}
+else {echo "<option value=\"--ABANDON-QUEUE--\">--ABANDON-QUEUE--</option>\n";}
 echo "</SELECT>\n";
 echo "<INPUT TYPE=SUBMIT NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>\n";
 echo " &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a href=\"./admin.php?ADD=34&campaign_id=$group\">"._QXZ("MODIFY")."</a> \n";

@@ -200,10 +200,11 @@
 # 221108-1849 - Added include_ip option for agent_status function
 # 230118-0833 - Added ingroup_list and callmenu_list functions
 # 230122-1821 - Added reset_password option to update_user function
+# 230308-1758 - Fix for update_lead list-restrict phone number update issue
 #
 
-$version = '2.14-177';
-$build = '230122-1821';
+$version = '2.14-178';
+$build = '230308-1758';
 $php_script='non_agent_api.php';
 $api_url_log = 0;
 
@@ -359,6 +360,8 @@ if (isset($_GET["hotkeys_active"]))				{$hotkeys_active=$_GET["hotkeys_active"];
 	elseif (isset($_POST["hotkeys_active"]))	{$hotkeys_active=$_POST["hotkeys_active"];}
 if (isset($_GET["voicemail_id"]))			{$voicemail_id=$_GET["voicemail_id"];}
 	elseif (isset($_POST["voicemail_id"]))	{$voicemail_id=$_POST["voicemail_id"];}
+if (isset($_GET["email"]))					{$email=$_GET["email"];}
+	elseif (isset($_POST["email"]))			{$email=$_POST["email"];}
 if (isset($_GET["custom_one"]))				{$custom_one=$_GET["custom_one"];}
 	elseif (isset($_POST["custom_one"]))	{$custom_one=$_POST["custom_one"];}
 if (isset($_GET["custom_two"]))				{$custom_two=$_GET["custom_two"];}
@@ -15103,7 +15106,7 @@ if ($function == 'update_lead')
 					if (!preg_match("/ $list_id /",$allowed_lists))
 						{
 						$result = 'ERROR';
-						$result_reason = "update_lead NOT AN ALLOWED LIST ID";
+						$result_reason = "update_lead NOT AN ALLOWED LIST ID, SEARCH";
 						$data = "$phone_number|$list_id";
 						echo "$result: $result_reason - $data\n";
 						api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
@@ -15300,7 +15303,7 @@ if ($function == 'update_lead')
 								if (!preg_match("/ $search_lead_list[$n] /",$allowed_lists))
 									{
 									$result = 'ERROR';
-									$result_reason = "update_lead NOT AN ALLOWED LIST ID";
+									$result_reason = "update_lead NOT AN ALLOWED LIST ID, RESULTS";
 									$data = "$search_lead_list[$n]";
 									echo "$result: $result_reason - $data\n";
 									api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
@@ -15719,10 +15722,10 @@ if ($function == 'update_lead')
 								{
 								if ( ($api_list_restrict > 0) and ($list_id >= 99) )
 									{
-									if (!preg_match("/ $search_lead_list[$n] /",$allowed_lists))
+									if (!preg_match("/ $list_id /",$allowed_lists)) # $search_lead_list[$n] replaced with $list_id 03/08/23
 										{
 										$result = 'ERROR';
-										$result_reason = "update_lead NOT AN ALLOWED LIST ID";
+										$result_reason = "update_lead NOT AN ALLOWED LIST ID, INSERT";
 										$data = "$phone_number|$list_id";
 										echo "$result: $result_reason - $data\n";
 										api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);

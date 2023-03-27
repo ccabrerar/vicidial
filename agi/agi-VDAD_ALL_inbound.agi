@@ -251,6 +251,7 @@
 # 211106-1523 - Added in_queue_nanque options
 # 221116-1050 - Fix for long in-group dialstring extensions
 # 230204-0015 - Fix for vicidial_log_extended entries for multiple in-group calls in succession
+# 230309-0950 - Added abandon_check_queue feature
 #
 
 $script = 'agi-VDAD_ALL_inbound.agi';
@@ -271,6 +272,7 @@ $areacode_filter_run=0;
 $no_agent_no_queue_checked=0;
 
 
+$now_date_epoch = time();
 ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
 $year = ($year + 1900);
 $mon++;
@@ -283,7 +285,26 @@ if ($sec < 10) {$sec = "0$sec";}
 $hm = "$hour$min";
 $hm = ($hm + 0);
 
-$now_date_epoch = time();
+$epochFOURhoursAGO = ($now_date_epoch - 14400);
+($Ssec,$Smin,$Shour,$Smday,$Smon,$Syear,$Swday,$Syday,$Sisdst) = localtime($epochFOURhoursAGO);
+$Smon++;	$Syear = ($Syear + 1900);
+if ($Smon < 10) {$Smon = "0$Smon";}
+if ($Smday < 10) {$Smday = "0$Smday";}
+if ($Shour < 10) {$Shour = "0$Shour";}
+if ($Smin < 10) {$Smin = "0$Smin";}
+if ($Ssec < 10) {$Ssec = "0$Ssec";}
+$timeFOURhoursAGO = "$Syear-$Smon-$Smday $Shour:$Smin:$Ssec";
+
+$epochTWENTYFOURhoursAGO = ($now_date_epoch - 86400);
+($Ssec,$Smin,$Shour,$Smday,$Smon,$Syear,$Swday,$Syday,$Sisdst) = localtime($epochTWENTYFOURhoursAGO);
+$Smon++;	$Syear = ($Syear + 1900);
+if ($Smon < 10) {$Smon = "0$Smon";}
+if ($Smday < 10) {$Smday = "0$Smday";}
+if ($Shour < 10) {$Shour = "0$Shour";}
+if ($Smin < 10) {$Smin = "0$Smin";}
+if ($Ssec < 10) {$Ssec = "0$Ssec";}
+$timeTWENTYFOURhoursAGO = "$Syear-$Smon-$Smday $Shour:$Smin:$Ssec";
+
 $start_epoch = $now_date_epoch;
 $now_date = "$year-$mon-$mday $hour:$min:$sec";
 $CLInow_date = "$year-$mon-$mday\\ $hour:$min:$sec";
@@ -390,7 +411,7 @@ $sthA->finish();
 
 #############################################
 ##### START SYSTEM SETTINGS LOOKUP      #####
-$stmtA = "SELECT enable_queuemetrics_logging,queuemetrics_server_ip,queuemetrics_dbname,queuemetrics_login,queuemetrics_pass,queuemetrics_log_id,queuemetrics_eq_prepend,queuemetrics_pe_phone_append,did_agent_log,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,did_ra_extensions_enabled,queuemetrics_socket,queuemetrics_socket_url,enable_did_entry_list_id,enable_drop_lists,inbound_answer_config,agent_search_method FROM system_settings;";
+$stmtA = "SELECT enable_queuemetrics_logging,queuemetrics_server_ip,queuemetrics_dbname,queuemetrics_login,queuemetrics_pass,queuemetrics_log_id,queuemetrics_eq_prepend,queuemetrics_pe_phone_append,did_agent_log,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,did_ra_extensions_enabled,queuemetrics_socket,queuemetrics_socket_url,enable_did_entry_list_id,enable_drop_lists,inbound_answer_config,agent_search_method,abandon_check_queue FROM system_settings;";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -419,6 +440,7 @@ if ($sthArows > 0)
 	$enable_drop_lists =			$aryA[18];
 	$inbound_answer_config =		$aryA[19];
 	$SSagent_search_method =		$aryA[20];
+	$SSabandon_check_queue =		$aryA[21];
 	}
 $sthA->finish();
 ##### END SYSTEM SETTINGS LOOKUP      #####
@@ -2290,15 +2312,6 @@ if ($call_handle_method =~ /CLOSER|DIGITID$/)
 	{
 	### find uniqueid of originating call ###
 	$front_uniqueid='';
-	$epochFOURhoursAGO = ($now_date_epoch - 14400);
-	($Ssec,$Smin,$Shour,$Smday,$Smon,$Syear,$Swday,$Syday,$Sisdst) = localtime($epochFOURhoursAGO);
-	$Smon++;	$Syear = ($Syear + 1900);
-	if ($Smon < 10) {$Smon = "0$Smon";}
-	if ($Smday < 10) {$Smday = "0$Smday";}
-	if ($Shour < 10) {$Shour = "0$Shour";}
-	if ($Smin < 10) {$Smin = "0$Smin";}
-	if ($Ssec < 10) {$Ssec = "0$Ssec";}
-	$timeFOURhoursAGO = "$Syear-$Smon-$Smday $Shour:$Smin:$Ssec";
 
 	$stmtA = "SELECT uniqueid FROM vicidial_log_extended where call_date <= \"$SQLdate\" and call_date > \"$timeFOURhoursAGO\" and lead_id='$insert_lead_id' order by call_date desc limit 1;";
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
@@ -3863,6 +3876,24 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 					{
 					$AGI->stream_file('sip-silence'); # stop music-on-hold process
 					$AGI->stream_file('sip-silence');
+					}
+
+				if ($SSabandon_check_queue > 0)
+					{
+					### check for ACTIVE vicidial_abandon_check_queue records and set to CONNECTED if they exist
+					$stmtA = "UPDATE vicidial_abandon_check_queue SET check_status='CONNECTED' where lead_id = '$insert_lead_id' and check_status IN('NEW','QUEUE','PROCESSING') and abandon_time > \"$timeTWENTYFOURhoursAGO\" order by abandon_time desc limit 1;";
+					$affected_rows = $dbhA->do($stmtA);  
+						$dbhP=$dbhA;   $mysql_count='02068';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
+					if ($AGILOG) {$agi_string = "--    VACQ connected 1: |$insert_lead_id|$affected_rows|$stmtA";   &agi_output;}
+
+					if ($affected_rows < 1) 
+						{
+						### check for INACTIVE vicidial_abandon_check_queue records and set to CONNECTED if they exist
+						$stmtA = "UPDATE vicidial_abandon_check_queue SET check_status='CONNECTED' where lead_id = '$insert_lead_id' and check_status IN('COMPLETE','REJECT','CONNECTED') and abandon_time > \"$timeTWENTYFOURhoursAGO\" order by abandon_time desc limit 1;";
+						$affected_rows = $dbhA->do($stmtA);  
+							$dbhP=$dbhA;   $mysql_count='02068';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
+						if ($AGILOG) {$agi_string = "--    VACQ connected 2: |$insert_lead_id|$affected_rows|$stmtA";   &agi_output;}
+						}
 					}
 
 				### gather user details for max calls and filtered settings

@@ -530,10 +530,11 @@
 # 221116-1052 - Fix for long in-group dialstring extensions
 # 221202-1645 - Change in CIDname prefix for clearing session command to differentiate from other processes
 # 230204-1618 - Small fix for dispo url processed logging
+# 230309-1005 - Added abandon_check_queue feature
 #
 
-$version = '2.14-423';
-$build = '230204-1618';
+$version = '2.14-424';
+$build = '230309-1005';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=902;
@@ -870,6 +871,7 @@ $txt = '.txt';
 $StarTtime = date("U");
 $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
+$twentyfour_hours_ago = date("Y-m-d H:i:s", mktime(date("H"),date("i"),date("s"),date("m"),date("d")-1,date("Y")));
 $SQLdate = $NOW_TIME;
 $CIDdate = date("mdHis");
 $ENTRYdate = date("YmdHis");
@@ -1048,7 +1050,7 @@ $sip_hangup_cause_dictionary = array(
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,timeclock_end_of_day,agentonly_callback_campaign_lock,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,qc_features_active,allow_emails,callback_time_24hour,enable_languages,language_method,agent_debug_logging,default_language,active_modules,allow_chats,default_phone_code,user_new_lead_limit,sip_event_logging,call_quota_lead_ranking,daily_call_count_limit,call_limit_24hour,allow_web_debug FROM system_settings;";
+$stmt = "SELECT use_non_latin,timeclock_end_of_day,agentonly_callback_campaign_lock,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,qc_features_active,allow_emails,callback_time_24hour,enable_languages,language_method,agent_debug_logging,default_language,active_modules,allow_chats,default_phone_code,user_new_lead_limit,sip_event_logging,call_quota_lead_ranking,daily_call_count_limit,call_limit_24hour,allow_web_debug,abandon_check_queue FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00001',$user,$server_ip,$session_name,$one_mysql_log);}
 #if ($DB) {echo "$stmt\n";}
@@ -1080,6 +1082,7 @@ if ($qm_conf_ct > 0)
 	$SSdaily_call_count_limit =				$row[21];
 	$SScall_limit_24hour =					$row[22];
 	$SSallow_web_debug =					$row[23];
+	$SSabandon_check_queue =				$row[24];
 	}
 if ($SSallow_web_debug < 1) {$DB=0;   $format='text';}
 ##### END SETTINGS LOOKUP #####
@@ -7768,6 +7771,14 @@ if ($ACTION == 'manDiaLlookCaLL')
 					if ($format=='debug') {echo "\n<!-- $stmt -->";}
 				$rslt=mysql_to_mysqli($stmt, $link);
 					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00742',$user,$server_ip,$session_name,$one_mysql_log);}
+				}
+
+			if ($SSabandon_check_queue > 0)
+				{
+				$stmt="UPDATE vicidial_abandon_check_queue SET check_status='CONNECTED' where lead_id='$lead_id' and check_status IN('NEW','QUEUE','PROCESSING','COMPLETE') and abandon_time > \"$twentyfour_hours_ago\" order by abandon_time desc limit 1;";
+					if ($format=='debug') {echo "\n<!-- $stmt -->";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
 				}
 
 			$sip_event_action_output='';
