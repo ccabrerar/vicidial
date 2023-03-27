@@ -1292,7 +1292,7 @@ if ($LogiNAJAX > 0)
 		document.vicidial_form.JS_browser_height.value = BrowseHeight;
 
 		var canvas = document.getElementById("confetti-canvas");
-		if (canvas != null) 
+		if (canvas != null)
 			{
 			canvas.width = BrowseWidth;
 			canvas.height = BrowseHeight;
@@ -1686,14 +1686,14 @@ else
 		# check for campaign max agents
 		if($auth>0)
 			{
-			if ($SSmax_logged_in_agents > 0) 
+			if ($SSmax_logged_in_agents > 0)
 				{
 				$stmt="SELECT max_logged_in_agents from vicidial_campaigns where campaign_id='$VD_campaign' $LOGallowed_campaignsSQL;";
 				if ($non_latin > 0) {$rslt=mysql_to_mysqli("SET NAMES 'UTF8'", $link);}
 				$rslt=mysql_to_mysqli($stmt, $link);
 					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01XXX',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 				$camps_to_print = mysqli_num_rows($rslt);
-				if ($camps_to_print > 0) 
+				if ($camps_to_print > 0)
 					{
 					$max_logged_in_agents=999999999;
 					$rowx=mysqli_fetch_row($rslt);
@@ -3621,12 +3621,12 @@ else
 			$stmt = "SELECT container_entry FROM vicidial_settings_containers where container_id='AGENT_LOAD_BALANCING_WEIGHT';";
 			$rslt=mysql_to_mysqli($stmt, $link);
 			$row=mysqli_fetch_row($rslt);
-			if (strlen($row[0]) > 0) 
+			if (strlen($row[0]) > 0)
 			{
 				$albw_array = array();
 				$albw_total = 0;
 
-				foreach (explode("\n", $row[0]) as $x) 
+				foreach (explode("\n", $row[0]) as $x)
 				{
 					// The following regex matches only those lines with an IP address followed by a comma and an integer value
 					// Example: 10.10.10.1,20
@@ -4287,7 +4287,7 @@ else
 					}
 
 				$webphone_settings_scrubbed = '';
-				if (strlen($webphone_settings) > 0) 
+				if (strlen($webphone_settings) > 0)
 					{
 					$stmt="SELECT container_entry FROM vicidial_settings_containers WHERE container_id='$webphone_settings';";
 					$rslt=mysql_to_mysqli($stmt, $link);
@@ -4302,7 +4302,7 @@ else
 						foreach( $webphone_settings_lines as $line )
 							{
 							# remove comments
-							if ( strpos($line, '#') === 0 ) 
+							if ( strpos($line, '#') === 0 )
 								{
 								$line = substr($line, 0, strpos($line, '#'));
 								}
@@ -4736,7 +4736,7 @@ else
 			}
 		$MMscriptids = substr("$MMscriptids", 0, -1);
 		$MMscriptnames = substr("$MMscriptnames", 0, -1);
-		$MMscriptcolors = substr("$MMscriptcolors", 0, -1); 
+		$MMscriptcolors = substr("$MMscriptcolors", 0, -1);
 
 
 		##### BEGIN vicidial_list FIELD LENGTH LOOKUP #####
@@ -4893,7 +4893,7 @@ if ($webphone_location == 'bar')
 $AVTheight = '0';
 if ($is_webphone) {$AVTheight = '20';}
 
-if ($script_tab_frame_size == 'LEFT_EDGE') 
+if ($script_tab_frame_size == 'LEFT_EDGE')
 	{
 	$SPwidth = ($SPwidth + 154);
 	$SEwidth = ($SEwidth + 154);
@@ -6863,7 +6863,7 @@ function holiday_display(holiday_name)
 
 // ################################################################################
 // Send Originate command to manager to place a phone call
-	function basic_originate_call(tasknum,taskprefix,taskreverse,taskdialvalue,tasknowait,taskconfxfer,taskcid,taskusegroupalias,taskalert,taskpresetname,taskvariables,taskplay) 
+	function basic_originate_call(tasknum,taskprefix,taskreverse,taskdialvalue,tasknowait,taskconfxfer,taskcid,taskusegroupalias,taskalert,taskpresetname,taskvariables,taskplay)
 		{
 		if (taskalert == '1')
 			{
@@ -14541,7 +14541,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 
 // ################################################################################
 // Hangup Customer Button Press
-	function hangup_customer_button_click(dispowindow,hotkeysused,altdispo,nodeletevdac,DSHclick) 
+	function hangup_customer_button_click(dispowindow,hotkeysused,altdispo,nodeletevdac,DSHclick)
 		{
 		if ( (agent_hangup_value.length > 0) && ( (agent_hangup_route=='MESSAGE') || (agent_hangup_route=='EXTENSION') || (agent_hangup_route=='IN_GROUP') || (agent_hangup_route=='CALLMENU') ) )
 			{
@@ -18207,7 +18207,9 @@ else
 							}
 						if (field_parsed < 1)
 							{
-							var CFN_value = vcFormIFrame.document.form_custom_fields[CFN_field].value;
+    							var CFN_value = '';
+							if (typeof vcFormIFrame.document.form_custom_fields[CFN_field] !== 'undefined')
+      							var CFN_value = vcFormIFrame.document.form_custom_fields[CFN_field].value;
 							field_parsed=1;
 							}
 						}
@@ -20430,7 +20432,7 @@ function phone_number_format(formatphone) {
 						{
 						NoneInSession();
 						document.getElementById("NoneInSessionLink").innerHTML = "<a href=\"#\" onclick=\"NoneInSessionCalL('LOGIN');return false;\"><?php echo _QXZ("Call Agent Webphone"); ?> -></a>";
-						
+
 						var WebPhonEtarget = 'webphonewindow';
 
 					//	WebPhonEwin =window.open(WebPhonEurl, WebPhonEtarget,'toolbar=1,location=1,directories=1,status=1,menubar=1,scrollbars=1,resizable=1,width=180,height=270');
