@@ -10087,7 +10087,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 			{
 			var sending_group_alias = 0;
 			var MDDiaLCodEform = document.vicidial_form.MDDiaLCodE.value;
-			var MDPhonENumbeRform = document.vicidial_form.MDPhonENumbeR.value;
+			var MDPhonENumbeRform = document.vicidial_form.MDPhonENumbeR.value.replace(/\D/g,'');
 			var MDLeadIDform = document.vicidial_form.MDLeadID.value;
 			var MDLeadIDEntryform = document.vicidial_form.MDLeadIDEntry.value;
 			var MDTypeform = document.vicidial_form.MDType.value;
