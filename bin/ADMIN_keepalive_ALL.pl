@@ -4987,7 +4987,7 @@ if ($active_asterisk_server =~ /Y/)
 			}
 
 		##### Get the ara_url for this server's server_ip #####
-		$stmtA = "SELECT ara_url where server_ip='$server_ip';";
+		$stmtA = "SELECT ara_url from servers where server_ip='$server_ip';";
 		if ($DB) {print "$stmtA\n";}
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
