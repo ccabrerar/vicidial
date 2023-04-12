@@ -6,7 +6,7 @@
 # QC statuses of QCFAIL, QCCANC and sales are defined by the Sale=Y status
 # flags being set on those statuses.
 #
-# Copyright (C) 2022  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -36,6 +36,7 @@
 # 200917-1720 - Modified for sale counts to be campaign-specific
 # 210222-1508 - Added option to show all users
 # 220301-2155 - Added allow_web_debug system setting
+# 230407-1039 - Added include_sales_in_TPD_report option
 #
 
 $startMS = microtime();
@@ -115,6 +116,11 @@ if ($SSallow_web_debug < 1) {$DB=0;}
 if (strlen($report_display_type)<2) {$report_display_type = $SSreport_default_format;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+if (file_exists('options.php'))
+	{
+	require('options.php');
+	}
 
 $query_date_D = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date_D);
 $query_date_T = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date_T);
@@ -385,7 +391,7 @@ if (preg_match("/--NONE--/", $call_status_string))
 	$call_status_ct=0;
 	}
 
-$stmt="select distinct status, status_name from vicidial_statuses where sale!='Y' UNION select distinct status, status_name from vicidial_campaign_statuses where sale!='Y' $LOGallowed_campaignsSQL order by status, status_name;";
+$stmt="select distinct status, status_name from vicidial_statuses ".(!$include_sales_in_TPD_report ? "where sale!='Y'" : "")." UNION select distinct status, status_name from vicidial_campaign_statuses ".(!$include_sales_in_TPD_report ? "where sale!='Y'" : "")." $LOGallowed_campaignsSQL order by status, status_name;";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {$HTML_text.="$stmt\n";}
 $call_statuses_to_print = mysqli_num_rows($rslt);

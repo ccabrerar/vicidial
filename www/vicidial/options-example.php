@@ -1,7 +1,7 @@
 <?php
 # options.php - manually defined options for vicidial admin scripts
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # rename this file to options.php for the settings here to go into effect
 #
@@ -34,6 +34,7 @@
 # 210625-1425 - Added RS_BargeSwap option for blind monitoring
 # 211022-0733 - Added IR_SLA_all_statuses option for Inbound Reports
 # 220120-0926 - Added audio_store_GSM_allowed option for the Audio Store
+# 230407-1040 - Added include_sales_in_TPD_report option
 #
 
 # used by the realtime_report.php script
@@ -139,6 +140,8 @@ $IR_SLA_all_statuses=0;
 # Allow GSM audio files to be manually uploaded to the Audio Store
 $audio_store_GSM_allowed=0;
 
+# Include sale statuses in Team Performance Detail report
+$include_sales_in_TPD_report=0;
 
 # CORS settings: (to enable, customize the variables below, and uncomment the "require_once('adminCORS.php');" line at the bottom)
 # (NOTE: The first 3 variables must be set for these features to be active)

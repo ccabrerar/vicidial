@@ -160,9 +160,10 @@
 # 221116-1157 - Added vicidial_long_extensions TEOD truncating
 # 230118-1623 - Added Playback audio then hangup extension
 # 230309-0926 - Added ara_url for server asterisk reboots, daily rolling of vicidial_abandon_check_queue table
+# 230331-2155 - Fix for issue #1458
 #
 
-$build = '230309-0926';
+$build = '230331-2155';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -5420,7 +5421,7 @@ if ($sthBrows > 0)
 	$trigger_lines =~ s/;|\\|\"//gi;
 	$trigger_results =~ s/;|\\|\"//gi;
 
-	$stmtA="INSERT INTO vicidial_process_trigger_log SET trigger_id='$trigger_id',user='$user',trigger_time=NOW(),server_ip='$server_ip',trigger_lines='$trigger_lines',trigger_results='$trigger_results';";
+	$stmtA="INSERT INTO vicidial_process_trigger_log SET trigger_id='$trigger_id',user='$user',trigger_time=NOW(),server_ip='$server_ip',trigger_lines=\"$trigger_lines\",trigger_results=\"$trigger_results\";";
 	$Iaffected_rows = $dbhA->do($stmtA);
 	if ($DB) {print "FINISHED:   $affected_rows|$Iaffected_rows";}
 	}
