@@ -1,4 +1,4 @@
-Sending email after agent dispositions a call		Started: 2015-08-06	Updated: 2022-11-15
+Sending email after agent dispositions a call		Started: 2015-08-06	Updated: 2023-04-20
 
 These instructions will show you how to set up automatic emails to be sent out when an agent dispositions a call with a specific defined "sale status".
 
@@ -20,6 +20,7 @@ UPDATE! 2020-08-14 - Added "email_body_html" flag so the email is sent as an HTM
 
 UPDATE! 2021-08-23 - Changed email attachments so they must be placed in the "agc/attachments/" web directory, or a subdirectory. There is an options.php override for this with the "$email_attachment_path" setting.
 
+UPDATE! 2023-04-20 - Added "email_display_name" as a container option for the email sender
 
 
 
@@ -52,6 +53,7 @@ email_to => --A--customer_email--B--
 ; sending email address
 ;email_from => customertesting@vicidial.com
 email_from => --A--agent_email--B--
+email_display_name => --A--fullname--B--
 
 ; subject of the email
 email_subject => Order confirmation --A--vendor_lead_code--B--

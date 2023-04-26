@@ -36,6 +36,7 @@
 # 160722-1140 - Added --nodatedir option
 # 220307-0915 - Added 'tab-CSScustomUSA' format
 # 230115-1523 - Added --filedate-calldate option
+# 230421-1614 - Added check for date directory before creating it
 #
 
 $txt = '.txt';
@@ -959,12 +960,34 @@ if ($ftp_audio_transfer > 0)
 				{
 				if ($YEARDIR > 0)
 					{
-					$ftp->mkdir("$year");
-					$ftp->cwd("$year");
-					}
-				$ftp->mkdir("$start_date");
-				$ftp->cwd("$start_date");
-				}
+					 @file_list = $ftp->ls();
+					 if ( grep( /^$year$/, @file_list ) )
+						 {
+						 # year directory exists do just enter it
+						 $ftp->cwd("$year");
+						 }
+					 else
+						 {
+						 # year directory does not exist
+						 # make it and enter it
+						 $ftp->mkdir("$year");
+						 $ftp->cwd("$year");
+						 }
+					 }
+				 @file_list = $ftp->ls();
+				 if ( grep( /^$start_date$/, @file_list ) )
+					 {
+					 # start_date directory exists do just enter it
+					 $ftp->cwd("$start_date");
+					 }
+				 else
+					 {
+					 # start_date directory does not exists
+					 # make it and enter it
+					 $ftp->mkdir("$start_date");
+					 $ftp->cwd("$start_date");
+					 }
+				 }
 			$start_date_PATH = "$start_date/";
 			$ftp->binary();
 			$ftp->put("$tempdir/$FILES[$i]", "$FILES[$i]");

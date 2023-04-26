@@ -93,10 +93,12 @@
 # 220219-2328 - Added allow_web_debug system setting
 # 220310-0934 - Added more time-sync detailed logging
 # 230220-1759 - Fix for In-Group manual dial issue
+# 230412-1020 - Added code for send_notification API function
+# 230420-2020 - Added latency logging
 #
 
-$version = '2.14-67';
-$build = '230220-1759';
+$version = '2.14-69';
+$build = '230420-2020';
 $php_script = 'conf_exten_check.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=51;
@@ -105,6 +107,7 @@ $DB=0;
 $VD_login=0;
 $SSagent_debug_logging=0;
 $startMS = microtime();
+$ip = getenv("REMOTE_ADDR");
 
 require_once("dbconnect_mysqli.php");
 require_once("functions.php");
@@ -158,6 +161,8 @@ if (isset($_GET["visibility"]))				{$visibility=$_GET["visibility"];}
 	elseif (isset($_POST["visibility"]))	{$visibility=$_POST["visibility"];}
 if (isset($_GET["active_ingroup_dial"]))			{$active_ingroup_dial=$_GET["active_ingroup_dial"];}
 	elseif (isset($_POST["active_ingroup_dial"]))	{$active_ingroup_dial=$_POST["active_ingroup_dial"];}
+if (isset($_GET["latency"]))			{$latency=$_GET["latency"];}
+	elseif (isset($_POST["latency"]))	{$latency=$_POST["latency"];}
 
 $DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
@@ -184,7 +189,7 @@ $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
-$stmt = "SELECT use_non_latin,enable_languages,language_method,agent_debug_logging,allow_web_debug FROM system_settings;";
+$stmt = "SELECT use_non_latin,enable_languages,language_method,agent_debug_logging,allow_web_debug,agent_notifications FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03001',$user,$server_ip,$session_name,$one_mysql_log);}
 #if ($DB) {echo "$stmt\n";}
@@ -197,6 +202,7 @@ if ($qm_conf_ct > 0)
 	$SSlanguage_method =		$row[2];
 	$SSagent_debug_logging =	$row[3];
 	$SSallow_web_debug =		$row[4];
+	$SSagent_notifications =	$row[5];
 	}
 if ($SSallow_web_debug < 1) {$DB=0;   $format='text';}
 
@@ -232,6 +238,7 @@ $client = preg_replace("/[^-_0-9a-zA-Z]/","",$client);
 $campagentstdisp = preg_replace("/[^-_0-9a-zA-Z]/","",$campagentstdisp);
 $phone_number = preg_replace("/[^-_0-9a-zA-Z]/","",$phone_number);
 $xferchannel = preg_replace("/\'|\"|\\\\|;/","",$xferchannel);
+$latency = preg_replace("/[^-_0-9a-zA-Z]/","",$latency);
 
 if ($non_latin < 1)
 	{
@@ -830,6 +837,18 @@ if ($ACTION == 'refresh')
 					$retry_count++;
 					}
 
+				### update the vicidial_live_agents_details record
+				$stmt="UPDATE vicidial_live_agents_details set latency='$latency',web_ip='$ip',update_date=NOW() where user='$user';";
+					if ($format=='debug') {echo "\n<!-- $stmt -->";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {$errno = mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+
+				### insert a vicidial_agent_latency_log record
+				$stmt="INSERT INTO vicidial_agent_latency_log SET latency='$latency',web_ip='$ip',user='$user',log_date=NOW();";
+					if ($format=='debug') {echo "\n<!-- $stmt -->";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {$errno = mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+
 				if ( ( ($Acomments != 'CHAT') and ($Acomments != 'EMAIL') and (strlen($active_ingroup_dial) < 1) ) or ($live_call_seconds > 4) )
 					{
 					##### BEGIN DEAD logging section #####
@@ -916,6 +935,18 @@ if ($ACTION == 'refresh')
 					$one_mysql_log=0;
 					$retry_count++;
 					}
+
+				### update the vicidial_live_agents_details record
+				$stmt="UPDATE vicidial_live_agents_details set latency='$latency',web_ip='$ip',update_date=NOW() where user='$user';";
+					if ($format=='debug') {echo "\n<!-- $stmt -->";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {$errno = mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+
+				### insert a vicidial_agent_latency_log record
+				$stmt="INSERT INTO vicidial_agent_latency_log SET latency='$latency',web_ip='$ip',user='$user',log_date=NOW();";
+					if ($format=='debug') {echo "\n<!-- $stmt -->";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {$errno = mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03XXX',$user,$server_ip,$session_name,$one_mysql_log);}
 
 				##### BEGIN DEAD logging section #####
 				if ($Acomments != 'EMAIL')
@@ -1374,6 +1405,52 @@ if ($ACTION == 'refresh')
 					}
 				}
 
+			if ($SSagent_notifications > 0)
+				{
+				// Check for alerts
+				// Activate notifications that are ready to be sent systemwide
+				$upd_stmt="update vicidial_agent_notifications set notification_status='READY' where notification_date<=now() and notification_status='QUEUED'";
+				$upd_rslt=mysql_to_mysqli($upd_stmt, $link);
+
+				# gather all READY notifications to be triggered, limit with $user, $VU_user_group, $campaign
+				$alert_stmt="select * from vicidial_agent_notifications where notification_status='READY' and ( (recipient_type='USER' and recipient='$user') or (recipient_type='USER_GROUP' and recipient='$VU_user_group') or (recipient_type='CAMPAIGN' and recipient='$campaign') ) order by notification_date asc limit 1";
+				$alert_rslt=mysql_to_mysqli($alert_stmt, $link);
+				while ($alert_row=mysqli_fetch_array($alert_rslt))
+					{
+					$notification_id=$alert_row["notification_id"];
+					$recipient=$alert_row["recipient"];
+					$recipient_type=$alert_row["recipient_type"];
+
+					$upd_stmt="update vicidial_agent_notifications set notification_status='SENT' where notification_id='$notification_id'";
+					$upd_rslt=mysql_to_mysqli($upd_stmt, $link);
+					if (mysqli_affected_rows($link)>0)
+						{
+						if ($recipient_type=="CAMPAIGN") {$column="campaign_id"; $recipient_str="$recipient";}
+						else if ($recipient_type=="USER_GROUP") 
+							{
+							$column="user";
+							$ug_stmt="select user from vicidial_users where user_group='$recipient'";
+							$ug_rslt=mysql_to_mysqli($ug_stmt, $link);
+							$recipient_str="";
+							while ($ug_row=mysqli_fetch_row($ug_rslt))
+								{
+								$recipient_str.="$ug_row[0]', '";
+								}
+							}
+						else {$column="user"; $recipient_str="$recipient";}
+						
+						$agent_stmt="select user from vicidial_live_agents where $column in ('$recipient_str')";
+						$agent_rslt=mysql_to_mysqli($agent_stmt, $link);
+						while($agent_row=mysqli_fetch_row($agent_rslt))
+							{
+							$ins_stmt="INSERT INTO vicidial_agent_notifications_queue(notification_id, user) VALUES('$notification_id', '$agent_row[0]')";
+							$ins_rslt=mysql_to_mysqli($ins_stmt, $link);
+							}
+						}
+					}
+				}
+
+
 
 			echo 'DateTime: ' . $NOW_TIME . '|UnixTime: ' . $StarTtime . '|Logged-in: ' . $Alogin . '|CampCalls: ' . $RingCalls . '|Status: ' . $Astatus . '|DiaLCalls: ' . $DiaLCalls . '|APIHanguP: ' . $external_hangup . '|APIStatuS: ' . $external_status . '|APIPausE: ' . $external_pause . '|APIDiaL: ' . $external_dial . '|DEADcall: ' . $DEADcustomer . '|InGroupChange: ' . $InGroupChangeDetails . '|APIFields: ' . $external_update_fields . '|APIFieldsData: ' . $external_update_fields_data . '|APITimerAction: ' . $timer_action . '|APITimerMessage: ' . $timer_action_message . '|APITimerSeconds: ' . $timer_action_seconds . '|APIdtmf: ' . $external_dtmf . '|APItransferconf: ' . $external_transferconf . '|APIpark: ' . $external_park . '|APITimerDestination: ' . $timer_action_destination . '|APIManualDialQueue: ' . $MDQ_count . '|APIRecording: ' . $external_recording . '|APIPaUseCodE: ' . $external_pause_code . '|WaitinGChats: ' . $WaitinGChats . '|WaitinGEmails: ' . $WaitinGEmails . '|LivEAgentCommentS: ' . $live_agents_comments . '|LeadIDSwitch: ' . $external_lead_id .'|DEADxfer: '.$DEADxfer .'|CHANanswer: '.$CHANanswer .'|Alogin_notes: '.$Alogin_notes. "\n";
 
@@ -1430,7 +1507,34 @@ if ($ACTION == 'refresh')
 		}
 
 	echo "$countecho\n";
-	$stage = "$Astatus|$Aagent_log_id$DEADlog";
+	$stage = "$Astatus|$Aagent_log_id|".$latency."ms|$DEADlog";
+
+	}
+
+################################################################################
+### AlertDisplay - send alerts to agents
+################################################################################
+if ($ACTION == 'AlertDisplay')
+	{
+	$alert_check_stmt="select * from vicidial_agent_notifications_queue where user='$user' order by queue_date asc limit 1";
+	$alert_check_rslt=mysql_to_mysqli($alert_check_stmt, $link);
+	if (mysqli_num_rows($alert_check_rslt)>0)
+		{
+		$acr_rows=mysqli_num_rows($alert_check_rslt);
+		$acr_row=mysqli_fetch_array($alert_check_rslt);
+		$notification_id=$acr_row["notification_id"];
+		$queue_id=$acr_row["queue_id"];
+
+		$notification_stmt="select * from vicidial_agent_notifications where notification_id='$notification_id' limit 1";
+		$notification_rslt=mysql_to_mysqli($notification_stmt, $link);
+		while($notif_row=mysqli_fetch_array($notification_rslt))
+			{
+			echo "$acr_rows|$notif_row[notification_text]|$notif_row[text_size]|$notif_row[text_font]|$notif_row[text_color]|$notif_row[text_weight]|$notif_row[show_confetti]|$notif_row[confetti_options]";
+			}
+
+		$del_stmt="delete from vicidial_agent_notifications_queue where queue_id='$queue_id'";
+		$del_rslt=mysql_to_mysqli($del_stmt, $link);
+		}
 	}
 
 

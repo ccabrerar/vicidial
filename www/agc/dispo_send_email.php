@@ -50,6 +50,7 @@
 # 220216-0027 - Fix for very large emails using allow_sendmail_bypass
 # 220219-0135 - Added allow_web_debug system setting
 # 230113-0839 - Added dialed_number & dialed_label to allowed variables in email subject and body
+# 230420-1620 - Added email_display_name as a container option for the email sender
 #
 
 $api_script = 'send_email';
@@ -423,6 +424,8 @@ if ($match_found > 0)
 							}
 						if (preg_match("/^email_from/",$line))
 							{$email_from = $line;   $email_from = trim(preg_replace("/.*=/",'',$email_from));}
+						if (preg_match("/^email_display_name/",$line))
+							{$email_display_name = $line;   $email_display_name = trim(preg_replace("/.*=/",'',$email_display_name));}
 						if (preg_match("/^email_subject/",$line))
 							{$email_subject = $line;   $email_subject = trim(preg_replace("/.*=/",'',$email_subject));}
 						if (preg_match("/^email_body_html/",$line))
@@ -446,7 +449,7 @@ if ($match_found > 0)
 
 				if ( (strlen($email_to) > 5) and (strlen($email_from) > 5) and (strlen($email_subject) > 1) and (strlen($email_body) > 1) )
 					{
-					if ( (preg_match('/--A--/i',$email_subject)) or (preg_match('/--A--/i',$email_body)) or (preg_match('/--A--/i',$email_to)) or (preg_match('/--A--/i',$email_from)) )
+					if ( (preg_match('/--A--/i',$email_subject)) or (preg_match('/--A--/i',$email_body)) or (preg_match('/--A--/i',$email_to)) or (preg_match('/--A--/i',$email_from)) or (preg_match('/--A--/i',$email_display_name)) )
 						{
 						##### grab the data from vicidial_list for the lead_id
 						$stmt="SELECT lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,gmt_offset_now,called_since_last_reset,phone_code,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner,entry_list_id FROM vicidial_list where lead_id=$lead_id LIMIT 1;";
@@ -817,6 +820,38 @@ if ($match_found > 0)
 						$email_from = preg_replace('/--A--customer_email--B--/i',"$email",$email_from);
 						$email_from = preg_replace('/--A--agent_email--B--/i',"$agent_email",$email_from);
 						$email_from = urldecode($email_from);
+						}
+
+					### check for variables in email_display_name
+					if (preg_match('/--A--/i',$email_display_name))
+						{
+						$email_display_name = preg_replace('/^VAR/','',$email_display_name);
+						$email_display_name = preg_replace('/--A--first_name--B--/i',"$first_name",$email_display_name);
+						$email_display_name = preg_replace('/--A--last_name--B--/i',"$last_name",$email_display_name);
+						$email_display_name = preg_replace('/--A--address1--B--/i',"$address1",$email_display_name);
+						$email_display_name = preg_replace('/--A--address2--B--/i',"$address2",$email_display_name);
+						$email_display_name = preg_replace('/--A--address3--B--/i',"$address3",$email_display_name);
+						$email_display_name = preg_replace('/--A--city--B--/i',"$city",$email_display_name);
+						$email_display_name = preg_replace('/--A--state--B--/i',"$state",$email_display_name);
+						$email_display_name = preg_replace('/--A--province--B--/i',"$province",$email_display_name);
+						$email_display_name = preg_replace('/--A--security_phrase--B--/i',"$security_phrase",$email_display_name);
+						$email_display_name = preg_replace('/--A--comments--B--/i',"$comments",$email_display_name);
+						$email_display_name = preg_replace('/--A--source_id--B--/i',"$source_id",$email_display_name);
+						$email_display_name = preg_replace('/--A--fullname--B--/i',"$fullname",$email_display_name);
+						$email_display_name = preg_replace('/--A--RUSfullname--B--/i',"$RUSfullname",$email_display_name);
+						$email_display_name = preg_replace('/--A--user_custom_one--B--/i',"$user_custom_one",$email_display_name);
+						$email_display_name = preg_replace('/--A--user_custom_two--B--/i',"$user_custom_two",$email_display_name);
+						$email_display_name = preg_replace('/--A--user_custom_three--B--/i',"$user_custom_three",$email_display_name);
+						$email_display_name = preg_replace('/--A--user_custom_four--B--/i',"$user_custom_four",$email_display_name);
+						$email_display_name = preg_replace('/--A--user_custom_five--B--/i',"$user_custom_five",$email_display_name);
+						$email_display_name = preg_replace('/--A--did_description--B--/i',"$did_description",$email_display_name);
+						$email_display_name = preg_replace('/--A--did_carrier_description--B--/i',"$did_carrier_description",$email_display_name);
+						$email_display_name = preg_replace('/--A--did_custom_one--B--/i',"$did_custom_one",$email_display_name);
+						$email_display_name = preg_replace('/--A--did_custom_two--B--/i',"$did_custom_two",$email_display_name);
+						$email_display_name = preg_replace('/--A--did_custom_three--B--/i',"$did_custom_three",$email_display_name);
+						$email_display_name = preg_replace('/--A--did_custom_four--B--/i',"$did_custom_four",$email_display_name);
+						$email_display_name = preg_replace('/--A--did_custom_five--B--/i',"$did_custom_five",$email_display_name);
+						$email_display_name = urldecode($email_display_name);
 						}
 
 					// Generate an email boundary
@@ -1631,7 +1666,9 @@ if ($match_found > 0)
 					if ($valid_attachments > 0)
 						{
 						// Email header
-						$header = "From: ".$email_from.PHP_EOL;
+						# $header = "From: ".$email_from.PHP_EOL;
+						if(isset($email_display_name)){$from_string = '"'.$email_display_name.'" <'.$email_from.'>';}else{$from_string = $email_from;}
+						$header = "From: ".$from_string.PHP_EOL;
 						$header .= "Reply-To: ".$email_from.PHP_EOL;
 						$header .= "MIME-Version: 1.0".PHP_EOL;
 
@@ -1709,6 +1746,7 @@ if ($match_found > 0)
 							$result = passthru("/usr/bin/cat /tmp/$temp_mail_file | $allow_sendmail_bypass -t -i");
 
 							echo "Sent |$result|";
+						#	echo "Sent |$result| /usr/bin/cat /tmp/$temp_mail_file | $allow_sendmail_bypass -t -i";
 							}
 						else
 							{
@@ -1732,7 +1770,9 @@ if ($match_found > 0)
 					else
 						{
 						// Email header
-						$header = "From: ".$email_from.PHP_EOL;
+						# $header = "From: ".$email_from.PHP_EOL;
+						if(isset($email_display_name)){$from_string = '"'.$email_display_name.'" <'.$email_from.'>';}else{$from_string = $email_from;}
+						$header = "From: ".$from_string.PHP_EOL;
 						$header .= "Reply-To: ".$email_from.PHP_EOL;
 						$header .= "MIME-Version: 1.0".PHP_EOL;
 
@@ -1745,7 +1785,8 @@ if ($match_found > 0)
 						$header .= "Content-Transfer-Encoding: 7bit".PHP_EOL.PHP_EOL;
 
 						##### sending standard email with no attachments through PHP #####
-						mail("$email_to","$email_subject","$email_body", $header);
+						# mail("$email_to","$email_subject","$email_body", $header);
+						mail("$email_to","$email_subject","$email_body", $header, "-f $email_from");
 						}
 
 					$SQL_log = "$stmt|$stmtB|$CBaffected_rows|$email_from|$email_to|$email_subject|";

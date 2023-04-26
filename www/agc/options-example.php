@@ -1,7 +1,7 @@
 <?php
 # options.php - manually defined options for vicidial.php
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # rename this file to options.php for the settings here to go into effect
 #
@@ -25,6 +25,8 @@
 # 220127-0931 - Added email_header_attach and allow_sendmail_bypass options
 # 220916-0901 - Added INSERT_before_body_close option, Issue #1375
 # 221206-1458 - Added login_submit_once option
+# 230418-1008 - Added astguiclient_disabled option
+# 230418-1548 - Added dial_override_limit option
 #
 
 $conf_silent_prefix		= '5';	# vicidial_conferences prefix to enter silently and muted for recording
@@ -72,6 +74,8 @@ $email_attachment_path	= './attachments';	# set to the absolute path from where 
 $email_header_attach	= '0';	# set to 1 to force blank line after attachments in header. WARNING: Will break on newer versions of PHP
 $allow_sendmail_bypass	= '';	# some setups require bypassing PHP's mail() function to send properly, set this to 'sendmail' path: '/usr/sbin/sendmail'
 $login_submit_once		= '1';	# set to 0 to remove the "disable the login submit button after submitting" feature
+$astguiclient_disabled	= '1';	# set to 0 to allow use of the astguiclient.php script
+$dial_override_limit	= '6';	# number of dial-override calls per minute that will lock user account, set to 0 to disable dial_override limit
 $customer_chat_refresh_seconds	= 1;	# How often (in seconds) to refresh customer ang agent chat window
 $manager_chat_refresh_seconds	= 1;	# How often (in seconds) to refresh manager chat window
 

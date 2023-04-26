@@ -1,7 +1,7 @@
 <?php
 # astguiclient.php - the web-based version of the astGUIclient client application
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # make sure you have added a user to the vicidial_users MySQL table with at least
 # user_level 1 or greater to access this page. Also you need to have the login
@@ -73,11 +73,13 @@
 # 210615-1037 - Default security fixes, CVE-2021-28854
 # 210616-2053 - Added optional CORS support, see options.php for details
 # 220220-0938 - Added allow_web_debug system setting
+# 230418-1009 - Added astguiclient_disabled options.php setting, disabled by default
 #
 
-$version = '2.2.6-6';
-$build = '220220-0938';
+$version = '2.2.6-7';
+$build = '230418-1009';
 $php_script = 'astguiclient.php';
+$astguiclient_disabled = '1';
 
 require_once("dbconnect_mysqli.php");
 require_once("functions.php");
@@ -122,6 +124,12 @@ $relogin=preg_replace("/[^-_0-9a-zA-Z]/","",$relogin);
 if (file_exists('options.php'))
 	{
 	require_once('options.php');
+	}
+
+if ($astguiclient_disabled > 0)
+	{
+	echo "astguiclient is disabled on this system\n";
+	exit;
 	}
 
 #############################################

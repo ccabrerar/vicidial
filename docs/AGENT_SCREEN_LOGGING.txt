@@ -1,0 +1,117 @@
+AGENT SCREEN LOGGING		Started: 2023-04-20	Updated: 2023-04-21
+
+
+
+This document covers some of the various data points that are collected related to usage of the VICIdial Agent Screen.
+
+
+
+Agent Screen Usage Logging Items:
+- Agent IP Addresses		Viewable in the User Stats page and the User Logins Report and others
+- Agent Screen Visibility	Viewable in the User Stats page
+- Agent Screen Latency		Viewable in the Real-Time Report, the Agent Latency Report and the Agent Debug Log Report
+- Agent Screen Debug		Viewable in the Agent Debug Log Report
+
+
+
+AGENT IP ADDRESSES:
+
+Both the agent web IP Address and the agent phone IP address that are used to connect to the VICIdial servers can be logged. The web IP Address is logged by default in several places, and the phone IP Address can be logged by putting the "AST_phone_update.pl" script in the crontab on each of the dialer servers in your cluster.
+
+These IP addresses are viewable in the "User Stats" page, the "User Logins Report", the "Agent LAGGED Report", the "User Group Login Report" and other reports.
+
+
+
+AGENT SCREEN VISIBILITY:
+
+This metric tells you when the agent is viewing the Agent Screen and when they have hidden that web browser window, as well as how long it was visible or hidden.
+
+This data is viewable in the "User Stats" page and the "Agent Debug Log Report".
+
+
+
+AGENT SCREEN LATENCY:
+
+This metric measures the amount of time in milliseconds that it takes for the agent's web browser to send a request and receive data back from the VICIdial web server. This data is logged about every second.
+
+This data is viewable in the Real-Time Report, the Agent Latency Report and the Agent Debug Log Report.
+
+In the "Real-Time Report", the LATENCY column can appear on the AGENTS table if you enable one of the "Agent Latency" options in the "Report Display Options" panel. The 4 active options for this setting are:
+	YES = show only the 1 minute average latency
+	ALL = show the 1-minute average and 1 minute peak latencies
+	DAY = show the 1-minute, 60-minute and current-day averages and peak latencies
+	NOW = show only the current latency in real-time
+
+The "Agent Latency Report" will show either the current day latencies for all active agents, or it will show the archival daily summary history for a single agent as far back as the daily latency log summaries go.
+
+The "Agent Debug Log Report" will show this data as a part of the "refresh" function log entry data records.
+
+On the back-end, the 'vicidial_agent_latency_log' database table stores the per-second data. This table is archived and truncated every night and the archives are only stored for 7 days before they are purged. The 'vicidial_live_agents_details' database table stores the real-time data for agents that have logged in during the current day. The 'vicidial_agent_latency_summary_log' database table stores the archival daily summaries of the latency data for each user/IP set and it is generated every night before the vicidial_agent_latency_log is archived(in the "ADMIN_keepalive_ALL.pl" script on the Active Voicemail Server at the Timeclock End of Day).
+
+
+
+AGENT SCREEN DEBUG:
+
+This metric is really a collection of all of the available agent screen debug data put together. This metric is not enabled by default, to use it you need to enable the "Agent Screen Debug Logging" option in System Settings. The data that is collected is only stored on your system for 7 days.
+
+The "Agent Debug Log Report" will show all of this data, including the back-end communication between the agent screen and the webserver, every active element that the agent clicks on, and the time it takes to perform many of the agent screen functions.
+
+
+
+
+
+
+
+
+
+
+-------------------------------------------------------------------------------------------------
+Database Tables (FOR REFERENCE ONLY!):
+
+CREATE TABLE vicidial_agent_visibility_log (
+db_time DATETIME NOT NULL,
+event_start_epoch INT(10) UNSIGNED,
+event_end_epoch INT(10) UNSIGNED,
+user VARCHAR(20),
+length_in_sec INT(10),
+visibility  ENUM('VISIBLE','HIDDEN','LOGIN','NONE') default 'NONE',
+agent_log_id INT(9) UNSIGNED,
+index (db_time),
+index (agent_log_id),
+unique index visibleuser (user, visibility, event_end_epoch)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_live_agents_details (
+user VARCHAR(20) NOT NULL PRIMARY KEY,
+update_date DATETIME,
+web_ip VARCHAR(45) default '',
+latency MEDIUMINT(7) default '0',
+latency_min_avg MEDIUMINT(7) default '0',
+latency_min_peak MEDIUMINT(7) default '0',
+latency_hour_avg MEDIUMINT(7) default '0',
+latency_hour_peak MEDIUMINT(7) default '0',
+latency_today_avg MEDIUMINT(7) default '0',
+latency_today_peak MEDIUMINT(7) default '0',
+index (user),
+index (update_date)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_agent_latency_log (
+user VARCHAR(20) NOT NULL,
+log_date DATETIME,
+latency MEDIUMINT(7) default '0',
+web_ip VARCHAR(45) default '',
+index (user),
+index (log_date)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_agent_latency_summary_log (
+user VARCHAR(20) NOT NULL,
+log_date DATETIME,
+web_ip VARCHAR(45) default '',
+latency_avg MEDIUMINT(7) default '0',
+latency_peak MEDIUMINT(7) default '0',
+latency_count SMALLINT(4) default '0',
+index (user),
+index (log_date)
+) ENGINE=MyISAM;

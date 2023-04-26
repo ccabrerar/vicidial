@@ -1,7 +1,7 @@
 <?php
 # manager_send.php    version 2.14
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed purely to insert records into the vicidial_manager table to signal Actions to an asterisk server
 # This script depends on the server_ip being sent and also needs to have a valid user/pass from the vicidial_users table
@@ -152,16 +152,19 @@
 # 220220-0904 - Added allow_web_debug system setting
 # 220312-0936 - Added vicidial_dial_cid_log logging
 # 221116-1051 - Fix for long in-group dialstring extensions
+# 230418-1022 - Added dial_override_limit options.php setting
 #
 
-$version = '2.14-99';
-$build = '221116-1051';
+$version = '2.14-100';
+$build = '230418-1022';
 $php_script = 'manager_send.php';
 $mel=1;					# Mysql Error Log enabled = 1
-$mysql_log_count=148;
+$mysql_log_count=160;
 $one_mysql_log=0;
 $SSagent_debug_logging=0;
 $startMS = microtime();
+$dial_override_limit=6;
+$ip = getenv("REMOTE_ADDR");
 
 require_once("dbconnect_mysqli.php");
 require_once("functions.php");
@@ -495,6 +498,13 @@ if ($ACTION=="SysCIDOriginate")
 			if ($format=='debug') {echo "\n<!-- $stmt -->";}
 		$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02004',$user,$server_ip,$session_name,$one_mysql_log);}
+
+		### log outbound call in the vicidial_user_dial_log
+		$stmt = "INSERT INTO vicidial_user_dial_log SET caller_code='$queryCID',user='$user',call_date='$NOW_TIME',call_type='SYS',notes='$exten $ext_context $channel';";
+		if ($DB) {echo "$stmt\n";}
+		$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02149',$user,$server_ip,$session_name,$one_mysql_log);}
+
 		echo _QXZ("Originate command sent for Exten %1s Channel %2s on %3s",0,'',$exten,$channel,$server_ip)."\n";
 		}
 	}
@@ -596,6 +606,88 @@ if ($ACTION=="Originate")
 			if ($SSagent_debug_logging > 0) {vicidial_ajax_log($NOW_TIME,$startMS,$link,$ACTION,$php_script,$user,$stage,$lead_id,$session_name,$stmt);}
 			exit;
 			}
+		$call_type='';
+		if ( (strlen($call_type) < 1) and (preg_match("/^M/i",$queryCID)) ) {$call_type='M';}
+		if ( (strlen($call_type) < 1) and (preg_match("/^Y/i",$queryCID)) ) {$call_type='Y';}
+		if ( (strlen($call_type) < 1) and (preg_match("/^S/i",$queryCID)) ) {$call_type='S';}
+		if ( (strlen($call_type) < 1) and (preg_match("/^AC/i",$queryCID)) ) {$call_type='AC';}
+		if ( (strlen($call_type) < 1) and (preg_match("/^DC/i",$queryCID)) ) {$call_type='DC';}
+		if ( (strlen($call_type) < 1) and (preg_match("/^DV/i",$queryCID)) ) {$call_type='DV';}
+		if ( (strlen($call_type) < 1) and (preg_match("/^DO/i",$queryCID)) ) {$call_type='DO';}
+		if ( (strlen($call_type) < 1) and (preg_match("/^BM/i",$queryCID)) ) {$call_type='BM';}
+		if ( (strlen($call_type) < 1) and (preg_match("/^BW/i",$queryCID)) ) {$call_type='BW';}
+		if ( (strlen($call_type) < 1) and (preg_match("/^BB/i",$queryCID)) ) {$call_type='BB';}
+
+		# check for too many dial override calls per minute and lock account if over the set limit
+		if ( (preg_match("/^DO|^DV/i",$queryCID)) and ($dial_override_limit > 0) )
+			{
+			# first check to see if this queryCID has already been sent in the last 60 minutes
+			$stmt="SELECT count(*) FROM vicidial_dial_log where caller_code='$queryCID' and call_date >= (NOW() - INTERVAL 60 MINUTE);";
+				if ($format=='debug') {echo "\n<!-- $stmt -->";}
+			$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02150',$user,$server_ip,$session_name,$one_mysql_log);}
+			$row=mysqli_fetch_row($rslt);
+			if ($row[0] > 0)
+				{
+				### log FAILED outbound call in the dial log
+				$stmt = "INSERT INTO vicidial_dial_log SET caller_code='$queryCID',lead_id='$lead_id',server_ip='$server_ip',call_date='$NOW_TIME',extension='$exten',channel='$channel',timeout='0',outbound_cid='$outCID',context='$ext_context',sip_hangup_cause='999',sip_hangup_reason='$call_type DUPLICATE for $user';";
+				if ($DB) {echo "$stmt\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02151',$user,$server_ip,$session_name,$one_mysql_log);}
+
+				### log FAILED outbound call in the user dial log
+				$stmt = "INSERT INTO vicidial_user_dial_log SET caller_code='$queryCID',user='$user',call_date='$NOW_TIME',call_type='$call_type',notes='DUPLICATE';";
+				if ($DB) {echo "$stmt\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02152',$user,$server_ip,$session_name,$one_mysql_log);}
+
+				if ($row[0] >= $dial_override_limit)
+					{
+					### lock user account after duplicate exceed limit
+					$stmt="UPDATE vicidial_users set last_login_date=NOW(),failed_login_count=10,failed_last_ip_today='$ip',failed_login_attempts_today=(failed_login_attempts_today+1),failed_login_count_today=(failed_login_count_today+1),failed_last_type_today='04sLOCK' where user='$user';";
+					if ($DB) {echo "$stmt\n";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02153',$user,$server_ip,$session_name,$one_mysql_log);}
+					}
+
+				$stage .= " DUP $exten $channel $server_ip $outbound_cid";
+				if ($SSagent_debug_logging > 0) {vicidial_ajax_log($NOW_TIME,$startMS,$link,$ACTION,$php_script,$user,$stage,$lead_id,$session_name,$stmt);}
+				exit; 
+				}
+			else
+				{
+				# check how many dial-override calls this user has already placed in the last 1 minute
+				$stmt="SELECT count(*) FROM vicidial_user_dial_log where user='$user' and call_type IN('DO','DV') and call_date >= (NOW() - INTERVAL 1 MINUTE);";
+					if ($format=='debug') {echo "\n<!-- $stmt -->";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02154',$user,$server_ip,$session_name,$one_mysql_log);}
+				$row=mysqli_fetch_row($rslt);
+				if ($row[0] >= $dial_override_limit)
+					{
+					### log FAILED outbound call in the dial log
+					$stmt = "INSERT INTO vicidial_dial_log SET caller_code='$queryCID',lead_id='$lead_id',server_ip='$server_ip',call_date='$NOW_TIME',extension='$exten',channel='$channel',timeout='0',outbound_cid='$outCID',context='$ext_context',sip_hangup_cause='999',sip_hangup_reason='$call_type LIMIT for $user ($row[0] > $dial_override_limit)';";
+					if ($DB) {echo "$stmt\n";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02155',$user,$server_ip,$session_name,$one_mysql_log);}
+
+					### log FAILED outbound call in the user dial log
+					$stmt = "INSERT INTO vicidial_user_dial_log SET caller_code='$queryCID',user='$user',call_date='$NOW_TIME',call_type='$call_type',notes='DO LIMIT ($row[0] > $dial_override_limit)';";
+					if ($DB) {echo "$stmt\n";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02156',$user,$server_ip,$session_name,$one_mysql_log);}
+
+					### lock user account after duplicate exceed limit
+					$stmt="UPDATE vicidial_users set last_login_date=NOW(),failed_login_count=10,failed_last_ip_today='$ip',failed_login_attempts_today=(failed_login_attempts_today+1),failed_login_count_today=(failed_login_count_today+1),failed_last_type_today='05sLOCK' where user='$user';";
+					if ($DB) {echo "$stmt\n";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02157',$user,$server_ip,$session_name,$one_mysql_log);}
+
+					$stage .= " LIMIT $exten $channel $server_ip $outbound_cid";
+					if ($SSagent_debug_logging > 0) {vicidial_ajax_log($NOW_TIME,$startMS,$link,$ACTION,$php_script,$user,$stage,$lead_id,$session_name,$stmt);}
+					exit; 
+					}
+				}
+			}
 
 		if (strlen($outbound_cid)>1)
 			{$outCID = "\"$queryCID\" <$outbound_cid>";}
@@ -667,6 +759,12 @@ if ($ACTION=="Originate")
 		if ($DB) {echo "$stmt\n";}
 		$rslt=mysql_to_mysqli($stmt, $link);
 			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02146',$user,$server_ip,$session_name,$one_mysql_log);}
+
+		### log outbound call in the vicidial_user_dial_log
+		$stmt = "INSERT INTO vicidial_user_dial_log SET caller_code='$queryCID',user='$user',call_date='$NOW_TIME',call_type='$call_type',notes='';";
+		if ($DB) {echo "$stmt\n";}
+		$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02158',$user,$server_ip,$session_name,$one_mysql_log);}
 
 		if ( (strlen($lead_id) > 0) and (strlen($session_id) > 0) and (preg_match("/^DC/",$queryCID)) )
 			{
@@ -2529,6 +2627,12 @@ if ( ($ACTION=="MonitorConf") || ($ACTION=="StopMonitorConf") )
 						if ($format=='debug') {echo "\n<!-- $stmt -->";}
 					$rslt=mysql_to_mysqli($stmt, $link);
 						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02135',$user,$server_ip,$session_name,$one_mysql_log);}
+
+					### log outbound call in the vicidial_user_dial_log
+					$stmt = "INSERT INTO vicidial_user_dial_log SET caller_code='$filename',user='$user',call_date='$NOW_TIME',call_type='RC',notes='$exten $ext_context $channel';";
+					if ($DB) {echo "$stmt\n";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02159',$user,$server_ip,$session_name,$one_mysql_log);}
 					}
 				else
 					{
@@ -2538,7 +2642,13 @@ if ( ($ACTION=="MonitorConf") || ($ACTION=="StopMonitorConf") )
 					$rslt=mysql_to_mysqli($stmt, $link);
 						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02072',$user,$server_ip,$session_name,$one_mysql_log);}
 
-					$stmt = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user) values('$channel','$server_ip','$exten','$NOW_TIME','$StarTtime','$filename',$lead_id,'$user')";
+					### log outbound call in the vicidial_user_dial_log
+					$stmt = "INSERT INTO vicidial_user_dial_log SET caller_code='$filename',user='$user',call_date='$NOW_TIME',call_type='RC',notes='$exten $ext_context $channel';";
+					if ($DB) {echo "$stmt\n";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02160',$user,$server_ip,$session_name,$one_mysql_log);}
+
+					$stmt = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user) values('$channel','$server_ip','$exten','$NOW_TIME','$StarTtime','$filename','$lead_id','$user')";
 						if ($format=='debug') {echo "\n<!-- $stmt -->";}
 					$rslt=mysql_to_mysqli($stmt, $link);
 						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02073',$user,$server_ip,$session_name,$one_mysql_log);}

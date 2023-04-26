@@ -1,4 +1,4 @@
-AGENT API DOCUMENT		Started: 2008-07-03	Updated: 2021-05-03
+AGENT API DOCUMENT		Started: 2008-07-03	Updated: 2023-04-13
 
 This document describes the functions of an API(Application Programming Interface)
 for the VICIDIAL Agent screen. This functionality will be rather limited at first
@@ -39,6 +39,7 @@ switch_lead - for inbound calls, switches lead_id of live inbound call on agent 
 calls_in_queue_count - display a count of the calls waiting in queue for the specific agent
 force_fronter_leave_3way - will send a command to fronter agent to leave-3way call that executing agent is on
 force_fronter_audio_stop - will send a command to fronter agent session to stop any audio_playback playing on it
+send_notification - will send text alerts and/or confetti effects to agent interface
 vm_message - set a custom voicemail message to be played when agent clicks the VM button on the agent screen
 
 
@@ -1028,6 +1029,61 @@ ERROR: force_fronter_audio_stop error - no audio playing in other agent session 
 SUCCESS: force_fronter_audio_stop function SENT - LOCAL_AND_CCC||6667|1234
 SUCCESS: force_fronter_audio_stop command sent over CCC - test_ccc
 
+
+
+
+
+--------------------------------------------------------------------------------
+send_notification - 
+
+DESCRIPTION:
+can send a customizable message and customizable confetti effects to one or more active agent screens
+
+VALUES:
+ recipient_type -
+  REQUIRED, choices are below:
+   USER - send notification to a single user
+   USER_GROUP - send notification to all agents logged in under a particular user_group at the time the notification_date is reached
+   CAMPAIGN - send notification to all agents logged into a particular campaign at the time the notification_date is reached
+   ** If a recipient is passed but the recipient_type is missing or none of the above values, the recipient value will be used to look up a matching recipient_type.  Order of priority is USER, then USER_GROUP, then CAMPAIGN 
+ recipient -
+  REQUIRED, needs to be a value corresponding to the recipient_type, meaning if you send to a recipient_type USER, recipient must be that user's ID.  For USER_GROUP, recipient must be a valid user_group from your dialer.
+ notification_date
+  OPTIONAL, date and time in yyyy-mm-dd HH:ii:ss format to send the notification.  If the desired recipients are not logged in, the notification will remain active for 1 minute after the date/time is reached.  Default is the current date and time.
+ notification_text
+  OPTIONAL, text to display in the agent alert box in the recipients agent interface.
+ text_size
+  OPTIONAL, used to customize the size of the notification text in points.  Numeric only, default value is 12.
+ text_font
+  OPTIONAL, used to customize the font of the notification text.  Default value is 'Arial'.
+ text_weight
+  OPTIONAL, used to customize the appearance of the notification text - currently supports 'bold', 'italic' and 'underline'.  Value can be passed as a delimited string ("bold,underline") or even a long single string ("underlineitalicbold").  Default value is 'bold'.
+ text_color
+  OPTIONAL, used to customize the color of the notification text - can use either a color name ('red', 'aqua', 'yellow', 'green') or a three or six-character hexadecimal value ("FF0", "009900").  Default is 'black'.
+ show_confetti
+  OPTIONAL, a Y/N flag that determines if a confetti effect will appear on the agent interface.  Default is 'N'.
+ duration
+  OPTIONAL, the length of time in seconds to show the confetti animation in the agent interface.  Numeric only, default is collected from the settings container "CONFETTI_SETTINGS" - if that does not exist, the default is 2 seconds.  Max value is 10 seconds.
+ maxParticleCount
+  OPTIONAL, the number of particles of confetti to show during the animation.  Numeric only, default is collected from the settings container "CONFETTI_SETTINGS" - if that does not exist, the default is 2350 particles.  Max value is 9999 particles.
+ particleSpeed
+  OPTIONAL, the speed at which the confetti floats through the screen.  Numeric only, default is collected from the settings container "CONFETTI_SETTINGS" - if that does not exist, the default is 60.  Max value is 100.
+
+EXAMPLE URLS:
+http://server/agc/api.php?user=6666&pass=1234&function=send_notification&source=test&recipient=6666&recipient_type=USER&show_confetti=Y
+http://server/agc/api.php?user=6666&pass=1234&function=send_notification&source=test&recipient=AGENTS&recipient_type=USER_GROUP&show_confetti=N&notification_text=Ten+minutes+to+closing&text_size=36&text_color=9900FF&text_weight=bold,italic,underline
+http://server/agc/api.php?user=6666&pass=1234&function=send_notification&source=test&recipient=TESTCAMP&recipient_type=CAMPAIGN&show_confetti=Y&duration=4&maxParticleCount=3000&particleSpeed=50&notification_text=YOU+ARE+FIRED&text_weight=underline&text_size=48&text_color=red
+
+RESPONSES:
+ERROR: Agent API Notifications are disabled on this system - 0
+ERROR: Missing recipient or recipient_type: (<recipient>|<recipient_type>)
+ERROR: Invalid request, missing variables
+ERROR: ACCESS TO CAMPAIGN TESTCAMP NOT ALLOWED FOR USER 6666
+ERROR: ACCESS TO USER GROUP ADMIN NOT ALLOWED FOR USER 6666
+ERROR: user_group DOES NOT EXIST - ADMIN|6666
+ERROR: 6667 DOES NOT EXIST in vicidial_users
+SUCCESS: notification queued
+** Additionally, there are "NOTICE" messages that will be included in the response if the notification date is improperly formatted/missing, or if the recipient_type is not included.
 
 
 

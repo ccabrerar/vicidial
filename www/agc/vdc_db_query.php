@@ -531,13 +531,15 @@
 # 221202-1645 - Change in CIDname prefix for clearing session command to differentiate from other processes
 # 230204-1618 - Small fix for dispo url processed logging
 # 230309-1005 - Added abandon_check_queue feature
+# 230418-0852 - Changed LogiNCamPaigns to require user auth for campaign list
+# 230418-1354 - Added vicidial_user_dial_log logging
 #
 
-$version = '2.14-424';
-$build = '230309-1005';
+$version = '2.14-426';
+$build = '230418-1354';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
-$mysql_log_count=902;
+$mysql_log_count=911;
 $one_mysql_log=0;
 $DB=0;
 $VD_login=0;
@@ -1364,10 +1366,15 @@ if ($format=='debug')
 ################################################################################
 if ($ACTION == 'LogiNCamPaigns')
 	{
-	if ( (strlen($user)<1) )
+	$auth=0;
+	$auth_message = user_authorization($user,$pass,'',0,0,0,0,'vdc_db_query');
+	if ($auth_message == 'GOOD')
+		{$auth=1;}
+
+	if( (strlen($user)<2) or (strlen($pass)<2) or ($auth==0))
 		{
 		echo "<select size=1 name=VD_campaign id=VD_campaign>\n";
-		echo "<option value=\"\">-- ERROR --</option>\n";
+		echo "<option value=\"\">-- "._QXZ("ERROR Invalid Username or Password")." --</option>\n";
 		echo "</select>\n";
 		if ($SSagent_debug_logging > 0) {vicidial_ajax_log($NOW_TIME,$startMS,$link,$ACTION,$php_script,$user,$stage,$lead_id,$session_name,$stmt);}
 		exit;
@@ -1471,7 +1478,7 @@ if ($ACTION == 'LogiNCamPaigns')
 		else
 			{
 			echo "<select size=1 name=VD_campaign id=VD_campaign>\n";
-			echo "<option value=\"\">-- "._QXZ("USER LOGIN ERROR")." --</option>\n";
+			echo "<option value=\"\">-- "._QXZ("ERROR Invalid Username or Password")." --</option>\n";
 			echo "</select>\n";
 			if ($SSagent_debug_logging > 0) {vicidial_ajax_log($NOW_TIME,$startMS,$link,$ACTION,$php_script,$user,$stage,$lead_id,$session_name,$stmt);}
 			exit;
@@ -5117,6 +5124,12 @@ if ($ACTION == 'manDiaLnextCaLL')
 				$rslt=mysql_to_mysqli($stmt, $link);
 					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00884',$user,$server_ip,$session_name,$one_mysql_log);}
 
+				### log outbound call in the vicidial_user_dial_log
+				$stmt = "INSERT INTO vicidial_user_dial_log SET caller_code='$MqueryCID',user='$user',call_date='$NOW_TIME',call_type='M',notes='$agent_dialed_type $CCIDtype';";
+				if ($DB) {echo "$stmt\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00903',$user,$server_ip,$session_name,$one_mysql_log);}
+
 				$calls_todaySQL = ",calls_today='$calls_today'";
 				### Skip logging and list overrides if dial in-group is used
 				if (strlen($dial_ingroup) < 1)
@@ -5192,6 +5205,12 @@ if ($ACTION == 'manDiaLnextCaLL')
 							if ($format=='debug') {echo "\n<!-- $stmt -->";}
 						$rslt=mysql_to_mysqli($stmt, $link);
 							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00730',$user,$server_ip,$session_name,$one_mysql_log);}
+
+						### log outbound call in the vicidial_user_dial_log
+						$stmt = "INSERT INTO vicidial_user_dial_log SET caller_code='$vmgr_callerid',user='$user',call_date='$NOW_TIME',call_type='RC',notes='$exten $ext_context $channel';";
+						if ($DB) {echo "$stmt\n";}
+						$rslt=mysql_to_mysqli($stmt, $link);
+								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00904',$user,$server_ip,$session_name,$one_mysql_log);}
 						}
 					else
 						{
@@ -5210,6 +5229,12 @@ if ($ACTION == 'manDiaLnextCaLL')
 							{
 							$recording_id = mysqli_insert_id($link);
 							}
+
+						### log outbound call in the vicidial_user_dial_log
+						$stmt = "INSERT INTO vicidial_user_dial_log SET caller_code='$vmgr_callerid',user='$user',call_date='$NOW_TIME',call_type='RC',notes='$exten $ext_context $channel';";
+						if ($DB) {echo "$stmt\n";}
+						$rslt=mysql_to_mysqli($stmt, $link);
+								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00905',$user,$server_ip,$session_name,$one_mysql_log);}
 						}
 
 					##### insert into routing_initiated_recordings
@@ -6935,6 +6960,12 @@ if ($ACTION == 'manDiaLonly')
 		$rslt=mysql_to_mysqli($stmt, $link);
 			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00890',$user,$server_ip,$session_name,$one_mysql_log);}
 
+		### log outbound call in the vicidial_user_dial_log
+		$stmt = "INSERT INTO vicidial_user_dial_log SET caller_code='$MqueryCID',user='$user',call_date='$NOW_TIME',call_type='M',notes='$agent_dialed_type $CCIDtype';";
+		if ($DB) {echo "$stmt\n";}
+		$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00906',$user,$server_ip,$session_name,$one_mysql_log);}
+
 		### update the agent status to INCALL in vicidial_live_agents
 		$stmt = "UPDATE vicidial_live_agents set status='INCALL',last_call_time='$NOW_TIME',callerid='$MqueryCID',lead_id=$lead_id,comments='MANUAL',calls_today='$calls_today',external_hangup=0,external_status='',external_pause='',external_dial='',last_state_change='$NOW_TIME',pause_code='',preview_lead_id='0' where user='$user' and server_ip='$server_ip';";
 		if ($DB) {echo "$stmt\n";}
@@ -7092,6 +7123,12 @@ if ($ACTION == 'manDiaLonly')
 					if ($format=='debug') {echo "\n<!-- $stmt -->";}
 				$rslt=mysql_to_mysqli($stmt, $link);
 					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00737',$user,$server_ip,$session_name,$one_mysql_log);}
+
+				### log outbound call in the vicidial_user_dial_log
+				$stmt = "INSERT INTO vicidial_user_dial_log SET caller_code='$vmgr_callerid',user='$user',call_date='$NOW_TIME',call_type='RC',notes='$exten $ext_context $channel';";
+				if ($DB) {echo "$stmt\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00907',$user,$server_ip,$session_name,$one_mysql_log);}
 				}
 			else
 				{
@@ -7101,7 +7138,13 @@ if ($ACTION == 'manDiaLonly')
 				$rslt=mysql_to_mysqli($stmt, $link);
 					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00738',$user,$server_ip,$session_name,$one_mysql_log);}
 
-				$stmt = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$server_ip','$exten','$NOW_TIME','$StarTtime','$recording_filename',$lead_id,'$user','$MqueryCID')";
+				### log outbound call in the vicidial_user_dial_log
+				$stmt = "INSERT INTO vicidial_user_dial_log SET caller_code='$vmgr_callerid',user='$user',call_date='$NOW_TIME',call_type='RC',notes='$exten $ext_context $channel';";
+				if ($DB) {echo "$stmt\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00908',$user,$server_ip,$session_name,$one_mysql_log);}
+
+				$stmt = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$server_ip','$exten','$NOW_TIME','$StarTtime','$recording_filename','$lead_id','$user','$MqueryCID')";
 					if ($format=='debug') {echo "\n<!-- $stmt -->";}
 				$rslt=mysql_to_mysqli($stmt, $link);
 					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00739',$user,$server_ip,$session_name,$one_mysql_log);}
@@ -7778,7 +7821,7 @@ if ($ACTION == 'manDiaLlookCaLL')
 				$stmt="UPDATE vicidial_abandon_check_queue SET check_status='CONNECTED' where lead_id='$lead_id' and check_status IN('NEW','QUEUE','PROCESSING','COMPLETE') and abandon_time > \"$twentyfour_hours_ago\" order by abandon_time desc limit 1;";
 					if ($format=='debug') {echo "\n<!-- $stmt -->";}
 				$rslt=mysql_to_mysqli($stmt, $link);
-					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00909',$user,$server_ip,$session_name,$one_mysql_log);}
 				}
 
 			$sip_event_action_output='';
@@ -9412,6 +9455,12 @@ if ($stage == "end")
 				if ($format=='debug') {echo "\n<!-- $stmt -->";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00858',$user,$server_ip,$session_name,$one_mysql_log);}
+
+			### log outbound call in the vicidial_user_dial_log
+			$stmt = "INSERT INTO vicidial_user_dial_log SET caller_code='$vmgr_callerid',user='$user',call_date='$NOW_TIME',call_type='3RC',notes='$exten $ext_context $channelrec';";
+			if ($DB) {echo "$stmt\n";}
+			$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00910',$user,$server_ip,$session_name,$one_mysql_log);}
 			}
 		else
 			{
@@ -9420,6 +9469,12 @@ if ($stage == "end")
 				if ($format=='debug') {echo "\n<!-- $stmt -->";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00859',$user,$server_ip,$session_name,$one_mysql_log);}
+
+			### log outbound call in the vicidial_user_dial_log
+			$stmt = "INSERT INTO vicidial_user_dial_log SET caller_code='$vmgr_callerid',user='$user',call_date='$NOW_TIME',call_type='3RC',notes='$exten $ext_context $channelrec';";
+			if ($DB) {echo "$stmt\n";}
+			$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00911',$user,$server_ip,$session_name,$one_mysql_log);}
 
 			$stmt = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id,length_in_sec) values('$channel','$server_ip','$exten','$NOW_TIME','$StarTtime','$leave_3way_start_recording_filename','$lead_id','$user','$uniqueid','0')";
 				if ($format=='debug') {echo "\n<!-- $stmt -->";}

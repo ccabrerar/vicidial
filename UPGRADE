@@ -783,6 +783,15 @@ OTHER CHANGES:
 219. Added "Asterisk Restart URL" to the Modify Servers page, this can send a 
 	URL request any time Asterisk is auto-restarted on that server.
 
+220. Added Agent API "send_notification" function, allowing you to send 
+	notifications to agents by User, User Group or Campaign.
+
+221. Added "AMD Agent Route Options" flag to allow immediately hangup and dispo
+	of calls with no audio data. This is a campaign feature.
+
+222. Added agent screen latency logging, viewable in the Real-Time Report and
+	the new Agent Latency Report.
+
 
 
 

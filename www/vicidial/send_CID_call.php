@@ -3,7 +3,7 @@
 #
 # Send calls with custom callerID numbers from web form
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: GPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: GPLv2
 #
 # CHANGES
 #
@@ -18,7 +18,10 @@
 # 170409-1533 - Added IP List validation code
 # 220223-0820 - Added allow_web_debug system setting
 # 220312-0942 - Added vicidial_dial_cid_log logging
+# 230418-1511 - Added vicidial_user_dial_log logging, and rate limiting
 #
+
+$sendCID_limit=6;
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -80,6 +83,7 @@ else
 
 $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
+$HIS_TIME = date("His");
 $STARTtime = date("U");
 $ip = getenv("REMOTE_ADDR");
 
@@ -173,25 +177,58 @@ if ( (strlen($sender) < 6) or (strlen($receiver) < 6) or (strlen($cid_number) < 
 	{
 	echo "\n\n";
 	echo _QXZ("PLEASE ENTER A CALLER, RECEIVER AND CALLERID NUMBER ABOVE AND CLICK SUBMIT")."\n";
+	exit;
 	}
 
+# Create CID to use to identify call in system: CID1451019998883112
+$queryCID = "CID$HIS_TIME$sender";
+$CIDcalls=0;
+$Local_end = '@default';
+
+# check how many SendCID calls this user has already placed in the last 1 minute
+$stmt="SELECT count(*) FROM vicidial_user_dial_log where user='$PHP_AUTH_USER' and call_type IN('CID') and call_date >= (NOW() - INTERVAL 1 MINUTE);";
+if ($DB) {echo "|$stmt|\n";}
+$rslt=mysql_to_mysqli($stmt, $link);
+$sl_ct = mysqli_num_rows($rslt);
+if ($sl_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$CIDcalls =		$row[0];
+	}
+
+if ($CIDcalls >= $sendCID_limit)
+	{
+	### log outbound call in the vicidial_dial_log
+	$stmt = "INSERT INTO vicidial_dial_log SET caller_code='$queryCID',lead_id='0',server_ip='$server_ip',call_date='$NOW_TIME',extension='91$receiver',channel='Local/91$sender$Local_end',timeout='$Local_dial_timeout',outbound_cid='\"$cid_number\" <$cid_number>',context='default',sip_hangup_cause='999',sip_hangup_reason='CID LIMIT for $PHP_AUTH_USER';";
+	$rslt=mysql_to_mysqli($stmt, $link);
+
+	### log outbound call in the vicidial_user_dial_log
+	$stmt = "INSERT INTO vicidial_user_dial_log SET caller_code='$queryCID',user='$PHP_AUTH_USER',call_date='$NOW_TIME',call_type='CID',notes='CID LIMIT $receiver $sender';";
+	if ($DB) {echo "$stmt\n";}
+	$rslt=mysql_to_mysqli($stmt, $link);
+	echo "\n\n";
+	echo _QXZ("TOO MANY CID CALLS AT ONCE, HIT LIMIT")."!\n";
+	}
 else
 	{
 	$stmt = "INSERT INTO user_call_log (user,call_date,call_type,server_ip,phone_number,number_dialed,lead_id,callerid,group_alias_id) values('$PHP_AUTH_USER','$NOW_TIME','CID','$server_ip','$sender','$receiver','0','$cid_number','$ip')";
 	if ($DB) {echo "$stmt\n";}
 	$rslt=mysql_to_mysqli($stmt, $link);
 
-	$Local_end = '@default';
-
-	$stmt = "INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$server_ip','','Originate','TESTCIDCALL098765432','Exten: 91$receiver','Context: default','Channel: Local/91$sender$Local_end','Priority: 1','Callerid: \"$cid_number\" <$cid_number>','','','','','');";
+	$stmt = "INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$server_ip','','Originate','$queryCID','Exten: 91$receiver','Context: default','Channel: Local/91$sender$Local_end','Priority: 1','Callerid: \"$cid_number\" <$cid_number>','','','','','');";
 	if ($DB) {echo "$stmt\n";}
 	$rslt=mysql_to_mysqli($stmt, $link);
 
-	$stmt = "INSERT INTO vicidial_dial_log SET caller_code='TESTCIDCALL098765432',lead_id='0',server_ip='$server_ip',call_date='$NOW_TIME',extension='91$receiver',channel='Local/91$sender$Local_end',timeout='$Local_dial_timeout',outbound_cid='\"$cid_number\" <$cid_number>',context='default';";
+	$stmt = "INSERT INTO vicidial_dial_log SET caller_code='$queryCID',lead_id='0',server_ip='$server_ip',call_date='$NOW_TIME',extension='91$receiver',channel='Local/91$sender$Local_end',timeout='$Local_dial_timeout',outbound_cid='\"$cid_number\" <$cid_number>',context='default';";
 	$rslt=mysql_to_mysqli($stmt, $link);
 
 	### log outbound call in the dial cid log
-	$stmt = "INSERT INTO vicidial_dial_cid_log SET caller_code='TESTCIDCALL098765432',call_date='$NOW_TIME',call_type='MANUAL',call_alt='MAIN', outbound_cid='$cid_number',outbound_cid_type='SEND_CID_CALL_PAGE';";
+	$stmt = "INSERT INTO vicidial_dial_cid_log SET caller_code='$queryCID',call_date='$NOW_TIME',call_type='MANUAL',call_alt='MAIN', outbound_cid='$cid_number',outbound_cid_type='SEND_CID_CALL_PAGE';";
+	if ($DB) {echo "$stmt\n";}
+	$rslt=mysql_to_mysqli($stmt, $link);
+
+	### log outbound call in the vicidial_user_dial_log
+	$stmt = "INSERT INTO vicidial_user_dial_log SET caller_code='$queryCID',user='$PHP_AUTH_USER',call_date='$NOW_TIME',call_type='CID',notes='$receiver $sender';";
 	if ($DB) {echo "$stmt\n";}
 	$rslt=mysql_to_mysqli($stmt, $link);
 

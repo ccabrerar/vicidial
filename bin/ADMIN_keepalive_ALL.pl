@@ -161,9 +161,11 @@
 # 230118-1623 - Added Playback audio then hangup extension
 # 230309-0926 - Added ara_url for server asterisk reboots, daily rolling of vicidial_abandon_check_queue table
 # 230331-2155 - Fix for issue #1458
+# 230412-1405 - Added daily rolling of vicidial_agent_notifications table, truncating of vicidial_agent_notifications_queue table
+# 230420-2321 - Added latency live agent detail updates and log rolling nightly
 #
 
-$build = '230331-2155';
+$build = '230420-2321';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -1488,6 +1490,21 @@ if ($timeclock_end_of_day_NOW > 0)
 		if ($DB) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
 		$sthA->finish();
 
+		$stmtA = "delete from vicidial_agent_notifications_queue where queue_date < \"$TDSQLdate\";";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$affected_rows = $dbhA->do($stmtA);
+		if($DB){print STDERR "\n|$affected_rows vicidial_agent_notifications_queue old records deleted|\n";}
+		if ($teodDB) {$event_string = "vicidial_agent_notifications_queue old records deleted($TDSQLdate): $affected_rows";   &teod_logger;}
+
+		$stmtA = "optimize table vicidial_agent_notifications_queue;";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		@aryA = $sthA->fetchrow_array;
+		if ($DB) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+		$sthA->finish();
+
 		# set past holidays to EXPIRED status
 		$stmtA = "UPDATE vicidial_call_time_holidays SET holiday_status='EXPIRED' where holiday_date < \"$RMdate\" and holiday_status!='EXPIRED';";
 		if($DBX){print STDERR "\n|$stmtA|\n";}
@@ -1702,6 +1719,33 @@ if ($timeclock_end_of_day_NOW > 0)
 			if ($teodDB) {&teod_logger;}
 
 			$stmtA = "optimize table vicidial_abandon_check_queue;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			}
+
+
+		# roll of vicidial_agent_notifications records, keep only 1 day of records in active table
+		if (!$Q) {print "\nProcessing vicidial_agent_notifications table...\n";}
+		$stmtA = "INSERT IGNORE INTO vicidial_agent_notifications_archive SELECT * from vicidial_agent_notifications;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows = $sthA->rows;
+		$event_string = "$sthArows rows inserted into vicidial_agent_notifications_archive table";
+		if (!$Q) {print "$event_string \n";}
+		if ($teodDB) {&teod_logger;}
+
+		$rv = $sthA->err();
+		if (!$rv) 
+			{	
+			$stmtA = "DELETE FROM vicidial_agent_notifications WHERE notification_date < \"$RMSQLdate\";";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			$event_string = "$sthArows rows deleted from vicidial_agent_notifications table";
+			if (!$Q) {print "$event_string \n";}
+			if ($teodDB) {&teod_logger;}
+
+			$stmtA = "optimize table vicidial_agent_notifications;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			}
@@ -2107,6 +2151,107 @@ if ($timeclock_end_of_day_NOW > 0)
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		##### END vicidial_lead_24hour_calls end of day process removing records older than 1 day #####
+
+
+		#####  START latency log summary log inserts
+
+		##### gather vicidial_agent_latency_log #####
+		$stmtA = "SELECT user,web_ip,count(*),max(latency),avg(latency) FROM vicidial_agent_latency_log where log_date >= \"$RMSQLdate\" and log_date < \"$now_date\" group by user,web_ip order by user,web_ip;";
+		if ($DBX) {print "$stmtA\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		$i=0;
+		while ($sthArows > $i)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$VLADuser[$i] =				$aryA[0];
+			$VLADweb_ip[$i] =			$aryA[1];
+			$VLADcount_latency[$i] =	$aryA[2];
+			$VLADmax_latency[$i] =		$aryA[3];
+			$VLADavg_latency[$i] =		$aryA[4];
+			$i++;
+			}
+		$sthA->finish();
+
+		if ($DB) {print "   past day vicidial_agent_latency_log user/ip entries to insert: $i\n";}
+
+		if ($i > 0) 
+			{
+			$i=0;
+			$sum_inserts=0;
+			while ($sthArows > $i)
+				{
+				$stmtA = "INSERT INTO vicidial_agent_latency_summary_log SET user='$VLADuser[$i]',log_date='$RMSQLdate',web_ip='$VLADweb_ip[$i]',latency_avg='$VLADavg_latency[$i]',latency_peak='$VLADmax_latency[$i]',latency_count='$VLADcount_latency[$i]';";
+				$affected_rows = $dbhA->do($stmtA) or die  "Couldn't execute query: |$stmtA|\n";
+				$sum_inserts = ($sum_inserts + $affected_rows);
+				$event_string = "vicidial_agent_latency_summary_log insert query: $sum_inserts|$affected_rows|$stmtA|";
+				if ($DBX) {print "$event_string\n";}
+				if ($teodDB) {&teod_logger;}
+
+				$i++;
+				}
+			
+			if ($sum_inserts > 0) 
+				{
+				$stmtA = "INSERT INTO vicidial_agent_latency_summary_log(user,log_date,web_ip,latency_count,latency_peak,latency_avg) SELECT user,'$RMSQLdate','---ALL---',sum(latency_count),max(latency_peak),sum(latency_avg * latency_count) / sum(latency_count) from vicidial_agent_latency_summary_log where log_date = \"$RMSQLdate\" group by user order by user;";
+				$affected_rows = $dbhA->do($stmtA) or die  "Couldn't execute query: |$stmtA|\n";
+				$event_string = "vicidial_agent_latency_summary_log ALL insert query: |$affected_rows|$stmtA|";
+				if ($DBX) {print "$event_string\n";}
+				if ($teodDB) {&teod_logger;}
+				}
+
+			# remove non-active records from vicidial_live_agents_details table and optimize
+			$stmtA = "DELETE FROM vicidial_live_agents_details where update_date < (NOW()-INTERVAL 5 MINUTE);";
+			$affected_rows = $dbhA->do($stmtA) or die  "Couldn't execute query: |$stmtA|\n";
+			$event_string = "vicidial_live_agents_details delete query: |$affected_rows|$stmtA|";
+			if ($DBX) {print "$event_string\n";}
+			if ($teodDB) {&teod_logger;}
+
+			$stmtA = "optimize table vicidial_live_agents_details;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+
+			# archive vicidial_agent_latency_log table every night
+			if (!$Q) {print "\nProcessing vicidial_agent_latency_log table...\n";}
+			$stmtA = "INSERT IGNORE INTO vicidial_agent_latency_log_archive SELECT * from vicidial_agent_latency_log;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			$event_string = "$sthArows rows inserted into vicidial_agent_latency_log_archive table";
+			if (!$Q) {print "$event_string \n";}
+			if ($teodDB) {&teod_logger;}
+
+			$rv = $sthA->err();
+			if (!$rv) 
+				{	
+				$stmtA = "DELETE FROM vicidial_agent_latency_log WHERE log_date < \"$now_date\";";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArows = $sthA->rows;
+				$event_string = "$sthArows rows deleted from in vicidial_agent_latency_log table";
+				if (!$Q) {print "$event_string \n";}
+				if ($teodDB) {&teod_logger;}
+
+				$stmtA = "optimize table vicidial_agent_latency_log;";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				}
+			
+			# delete vicidial_agent_latency_log_archive records older than 7 days old
+			$stmtA = "DELETE FROM vicidial_agent_latency_log_archive WHERE log_date < \"$SDSQLdate\";";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			$event_string = "$sthArows old rows deleted from in vicidial_agent_latency_log_archive table ($SDSQLdate)";
+			if (!$Q) {print "$event_string \n";}
+			if ($teodDB) {&teod_logger;}
+
+			$stmtA = "optimize table vicidial_agent_latency_log_archive;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			}
+		#####  END latency log summary log inserts
 
 
 		##### BEGIN usacan_phone_dialcode_fix funciton #####
@@ -5024,6 +5169,36 @@ if ($active_asterisk_server =~ /Y/)
 
 
 ################################################################################
+#####  BEGIN Clearing old/dead agent notifications
+################################################################################
+# only run this on active voicemail server
+if ( ($active_voicemail_server =~ /$server_ip/) && ((length($active_voicemail_server)) eq (length($server_ip))) )
+	{
+	$stmtA="UPDATE vicidial_agent_notifications set notification_status='DEAD' where notification_date <= NOW()-INTERVAL 1 MINUTE and notification_status='QUEUED';";
+	$affected_rows = $dbhA->do($stmtA);
+
+	$stmtC="UPDATE vicidial_agent_notifications set notification_status='DEAD' where notification_date <= NOW()-INTERVAL 1 HOUR and notification_status='READY';";
+	$affected_rowsC = $dbhA->do($stmtC);
+
+	$stmtB="DELETE FROM vicidial_agent_notifications_queue where queue_date <= NOW()-INTERVAL 1 MINUTE;";
+	$affected_rowsB = $dbhA->do($stmtB);
+
+	if ($DB) {print "Clearing old/dead agent notifications: $affected_rows $affected_rowsB $affected_rowsC \n";}
+
+	if ( ($teodDB) && ( ($affected_rows > 0) || ($affected_rowsB > 0) || ($affected_rowsC > 0) ) )
+		{
+		$event_string = "Clearing old/dead agent notifications: $affected_rows $affected_rowsB $affected_rowsC";
+		&teod_logger;
+		}
+	}
+################################################################################
+#####  END Clearing old/dead agent notifications
+################################################################################
+
+
+
+
+################################################################################
 #####  START scheduled callbacks move old USERONLY triggered to ANYONE
 ################################################################################
 # only run this on active voicemail server
@@ -5299,6 +5474,93 @@ if ( ($active_voicemail_server =~ /$server_ip/) && ((length($active_voicemail_se
 #####  END CID Group auto-rotate feature, for CID Type NONE only
 ################################################################################
 
+
+
+
+################################################################################
+#####  START latency log live agent details updates
+################################################################################
+# only run this on active voicemail server
+if ( ($active_voicemail_server =~ /$server_ip/) && ((length($active_voicemail_server)) eq (length($server_ip))) )
+	{
+	##### gather vicidial_live_agents_details #####
+	$stmtA = "SELECT user,web_ip FROM vicidial_live_agents_details where update_date > (NOW()-INTERVAL 5 MINUTE);";
+	if ($DBX) {print "$stmtA\n";}
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	$i=0;
+	while ($sthArows > $i)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$VLADuser[$i] =		$aryA[0];
+		$VLADweb_ip[$i] =	$aryA[1];
+		$i++;
+		}
+	$sthA->finish();
+
+	if ($DB) {print "   recent vicidial_live_agents_details entries to update: $i\n";}
+
+	$i=0;
+	while ($sthArows > $i)
+		{
+		$VALLmin_count_latency=0;   $VALLmin_max_latency=0;   $VALLmin_avg_latency=0;   
+		$stmtA = "SELECT count(*),max(latency),avg(latency) from vicidial_agent_latency_log where user='$VLADuser[$i]' and log_date >= (NOW()-INTERVAL 1 MINUTE);";
+		if ($DBX) {print "$stmtA\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArowsX=$sthA->rows;
+		if ($sthArowsX > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$VALLmin_count_latency =		$aryA[0];
+			$VALLmin_max_latency =			$aryA[1];
+			$VALLmin_avg_latency =			$aryA[2];
+			}
+		$sthA->finish();
+
+		if ($VALLmin_count_latency > 0) 
+			{
+			$VALLhour_count_latency=0;   $VALLhour_max_latency=0;   $VALLhour_avg_latency=0;   
+			$stmtA = "SELECT count(*),max(latency),avg(latency) from vicidial_agent_latency_log where user='$VLADuser[$i]' and log_date >= (NOW()-INTERVAL 60 MINUTE);";
+			if ($DBX) {print "$stmtA\n";}
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArowsX=$sthA->rows;
+			if ($sthArowsX > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$VALLhour_count_latency =		$aryA[0];
+				$VALLhour_max_latency =			$aryA[1];
+				$VALLhour_avg_latency =			$aryA[2];
+				}
+			$sthA->finish();
+
+			$VALLtoday_count_latency=0;   $VALLtoday_max_latency=0;   $VALLtoday_avg_latency=0;   
+			$stmtA = "SELECT count(*),max(latency),avg(latency) from vicidial_agent_latency_log where user='$VLADuser[$i]' and log_date >= \"$today_start\";";
+			if ($DBX) {print "$stmtA\n";}
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArowsX=$sthA->rows;
+			if ($sthArowsX > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$VALLtoday_count_latency =		$aryA[0];
+				$VALLtoday_max_latency =			$aryA[1];
+				$VALLtoday_avg_latency =			$aryA[2];
+				}
+			$sthA->finish();
+
+			$stmtA = "UPDATE vicidial_live_agents_details SET latency_min_avg='$VALLmin_avg_latency',latency_min_peak='$VALLmin_max_latency',latency_hour_avg='$VALLhour_avg_latency',latency_hour_peak='$VALLhour_max_latency',latency_today_avg='$VALLtoday_avg_latency',latency_today_peak='$VALLtoday_max_latency' where user='$VLADuser[$i]';";
+			$affected_rows = $dbhA->do($stmtA) or die  "Couldn't execute query: |$stmtA|\n";
+			if ($DBX) {print "vicidial_live_agents_details update query: |$affected_rows|$stmtA|\n";}
+			}
+		$i++;
+		}
+	}
+################################################################################
+#####  END latency log live agent details updates
+################################################################################
 
 
 

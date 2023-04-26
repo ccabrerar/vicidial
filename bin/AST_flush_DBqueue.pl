@@ -9,7 +9,7 @@
 # !!!!!!!! IMPORTANT !!!!!!!!!!!!!!!!!!
 # THIS SCRIPT SHOULD ONLY BE RUN ON ONE SERVER ON YOUR CLUSTER
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 60717-1214 - changed to DBI by Marin Blu
@@ -31,10 +31,14 @@
 # 190503-1606 - Added flushing of vicidial_sip_event_recent table
 # 191029-1555 - Added flushing of vicidial_agent_vmm_overrides table
 # 220921-1148 - Added optimize of vicidial_users table
+# 230414-1622 - Added --reset-stuck-leads option
 #
 
 $session_flush=0;
 $SSsip_event_logging=0;
+$reset_stuck_leads=0;
+$stuck_lists='';
+$stuck_listsSQL='';
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -52,8 +56,11 @@ if (length($ARGV[0])>1)
 		print "  [-q] = quiet\n";
 		print "  [-t] = test\n";
 		print "  [--debug] = debugging messages\n";
+		print "  [--debugX] = extra debugging messages\n";
 		print "  [--seconds=XXX] = optional, minimum number of seconds worth of records to keep(default 3600)\n";
 		print "  [--session-flush] = flush the vicidial_sessions_recent table\n";
+		print "  [--reset-stuck-leads] = reset status of ERI/INCALL leads to NEW if previewed but not called\n";
+		print "  [--stuck-lists=X] = restrict stuck leads check to these lists: X-Y-Z multiple lists separated by a single dash\n";
 		print "\n";
 
 		exit;
@@ -69,6 +76,11 @@ if (length($ARGV[0])>1)
 			$DB=1;
 			print "\n-----DEBUGGING -----\n\n";
 			}
+		if ($args =~ /--debugX/i)
+			{
+			$DBX=1;
+			print "\n----- EXTRA DEBUGGING -----\n\n";
+			}
 		if ($args =~ /-t|--test/i)
 			{
 			$T=1; $TEST=1;
@@ -79,6 +91,23 @@ if (length($ARGV[0])>1)
 			$session_flush=1;
 			if ($Q < 1)
 				{print "\n----- SESSION FLUSH(vicidial_sessions_recent) ----- $session_flush \n\n";}
+			}
+		if ($args =~ /--reset-stuck-leads/i)
+			{
+			$reset_stuck_leads=1;
+			if ($Q < 1)
+				{print "\n----- RESET STUCK LEADS ----- $reset_stuck_leads \n\n";}
+			}
+		if ($args =~ /--stuck-lists=/i)
+			{
+			@data_in = split(/--stuck-lists=/,$args);
+			$stuck_lists = $data_in[1];
+			$stuck_lists =~ s/ .*$//gi;
+			$stuck_listsSQL = $stuck_lists;
+			$stuck_listsSQL =~ s/-/','/gi;
+			if (length($stuck_listsSQL) > 0) {$stuck_listsSQL = "and list_id IN('$stuck_listsSQL')";}
+			if ($Q < 1)
+				{print "\n----- STUCK LISTS DEFINED: $stuck_lists [$stuck_listsSQL] -----\n\n";}
 			}
 		if ($args =~ /--seconds=/i)
 			{
@@ -119,6 +148,7 @@ if ($hour < 10) {$hour = "0$hour";}
 if ($min < 10) {$min = "0$min";}
 if ($sec < 10) {$sec = "0$sec";}
 $SQLdate_NOW="$year-$mon-$mday $hour:$min:$sec";
+$SQLdate_MIDNIGHT="$year-$mon-$mday 00:00:00";
 
 ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time() - 121);
 $year = ($year + 1900);
@@ -163,6 +193,28 @@ if ($hour < 10) {$hour = "0$hour";}
 if ($min < 10) {$min = "0$min";}
 if ($sec < 10) {$sec = "0$sec";}
 $SQLdate_NEG_halfhour="$year-$mon-$mday $hour:$min:$sec";
+
+($Ssec,$Smin,$Shour,$Smday,$Smon,$Syear,$Swday,$Syday,$Sisdst) = localtime(time() - 21600);
+$Syear = ($Syear + 1900);
+$Syy = $Syear; $Syy =~ s/^..//gi;
+$Smon++;
+if ($Smon < 10) {$Smon = "0$Smon";}
+if ($Smday < 10) {$Smday = "0$Smday";}
+if ($Shour < 10) {$Shour = "0$Shour";}
+if ($Smin < 10) {$Smin = "0$Smin";}
+if ($Ssec < 10) {$Ssec = "0$Ssec";}
+$SQLdate_NEG_sixhour="$Syear-$Smon-$Smday $Shour:$Smin:$Ssec";
+
+($Tsec,$Tmin,$Thour,$Tmday,$Tmon,$Tyear,$Twday,$Tyday,$Tisdst) = localtime(time() - 600);
+$Tyear = ($Tyear + 1900);
+$Tyy = $Tyear; $Tyy =~ s/^..//gi;
+$Tmon++;
+if ($Tmon < 10) {$Tmon = "0$Tmon";}
+if ($Tmday < 10) {$Tmday = "0$Tmday";}
+if ($Thour < 10) {$Thour = "0$Thour";}
+if ($Tmin < 10) {$Tmin = "0$Tmin";}
+if ($Tsec < 10) {$Tsec = "0$Tsec";}
+$SQLdate_NEG_tenminute="$Tyear-$Tmon-$Tmday $Thour:$Tmin:$Tsec";
 
 
 if (!$Q) {print "TEST\n\n";}
@@ -547,5 +599,148 @@ if ($session_flush > 0)
 	}
 $dbhA->disconnect();
 
+
+if ($reset_stuck_leads > 0) 
+	{
+	$found_stuck_ct=0;
+	# Gather possible stuck leads
+	$stmtA = "SELECT lead_id,list_id,status,user,last_local_call_time,called_count,modify_date FROM vicidial_list where status IN('ERI','INCALL') and modify_date >= \"$SQLdate_NEG_sixhour\" and modify_date <= \"$SQLdate_NEG_2min\" $stuck_listsSQL order by modify_date limit 10000;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArowsSTUCK=$sthA->rows;
+	if ($DBX) {print "DEBUG: $sthArowsSTUCK|$stmtA|\n";}
+	$a=0;
+	while ($sthArowsSTUCK > $a)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$ST_lead_id[$a] =				$aryA[0];
+		$ST_list_id[$a] =				$aryA[1];
+		$ST_status[$a] =				$aryA[2];
+		$ST_user[$a] =					$aryA[3];
+		$ST_last_local_call_time[$a] =	$aryA[4];
+		$ST_called_count[$a] =			$aryA[5];
+		$ST_modify_date[$a] =			$aryA[6];
+		$a++;
+		}
+	$sthA->finish();
+
+	$a=0;
+	while ($sthArowsSTUCK > $a)
+		{
+		$active_count=0;
+		$log_count=0;
+		$inbound_count=0;
+		$dial_count=0;
+		$preview_count=0;
+
+		$stmtA = "SELECT count(*) FROM vicidial_auto_calls where lead_id='$ST_lead_id[$a]';";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArowsACTIVE=$sthA->rows;
+		if ($DBX) {print "DEBUG: $sthArowsACTIVE|$stmtA|\n";}
+		if ($sthArowsACTIVE > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$active_count =		$aryA[0];
+			}
+		$sthA->finish();
+
+		if ($active_count > 0) 
+			{if($DB){print STDERR "Call active: $active_count|$ST_lead_id[$a]|\n";}}
+		else
+			{
+			$stmtA = "SELECT count(*) FROM vicidial_log where lead_id='$ST_lead_id[$a]' and call_date >= \"$SQLdate_MIDNIGHT\";";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArowsACTIVE=$sthA->rows;
+			if ($DBX) {print "DEBUG: $sthArowsACTIVE|$stmtA|\n";}
+			if ($sthArowsACTIVE > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$log_count =	$aryA[0];
+				}
+			$sthA->finish();
+
+			if ($log_count > 0) 
+				{if($DB){print STDERR "Lead has outbound log today: $log_count|$ST_lead_id[$a]|\n";}}
+			else
+				{
+				$stmtA = "SELECT count(*) FROM vicidial_closer_log where lead_id='$ST_lead_id[$a]' and call_date >= \"$SQLdate_MIDNIGHT\";";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArowsACTIVE=$sthA->rows;
+				if ($DBX) {print "DEBUG: $sthArowsACTIVE|$stmtA|\n";}
+				if ($sthArowsACTIVE > 0)
+					{
+					@aryA = $sthA->fetchrow_array;
+					$inbound_count = 	$aryA[0];
+					}
+				$sthA->finish();
+
+				if ($inbound_count > 0) 
+					{if($DB){print STDERR "Lead has inbound log today: $inbound_count|$ST_lead_id[$a]|\n";}}
+				else
+					{
+					$stmtA = "SELECT count(*) FROM vicidial_dial_log where lead_id='$ST_lead_id[$a]' and call_date >= \"$SQLdate_MIDNIGHT\";";
+					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+					$sthArowsACTIVE=$sthA->rows;
+					if ($DBX) {print "DEBUG: $sthArowsACTIVE|$stmtA|\n";}
+					if ($sthArowsACTIVE > 0)
+						{
+						@aryA = $sthA->fetchrow_array;
+						$dial_count = 	$aryA[0];
+						}
+					$sthA->finish();
+
+					if ($dial_count > 0) 
+						{if($DB){print STDERR "Lead has dial log today: $dial_count|$ST_lead_id[$a]|\n";}}
+					else
+						{
+						$stmtA = "SELECT count(*) FROM vicidial_live_agents where preview_lead_id='$ST_lead_id[$a]' and last_state_change >= \"$SQLdate_MIDNIGHT\";";
+						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+						$sthArowsACTIVE=$sthA->rows;
+						if ($DBX) {print "DEBUG: $sthArowsACTIVE|$stmtA|\n";}
+						if ($sthArowsACTIVE > 0)
+							{
+							@aryA = $sthA->fetchrow_array;
+							$preview_count = 	$aryA[0];
+							}
+						$sthA->finish();
+
+						if ($preview_count > 0) 
+							{if($DB){print STDERR "Lead is being previewed right now: $preview_count|$ST_lead_id[$a]|\n";}}
+						else
+							{
+							if (!$Q) {print " - stuck lead found: |$ST_modify_date[$a]|$ST_lead_id[$a]|$ST_list_id[$a]|$ST_status[$a]|$ST_user[$a]|$ST_last_local_call_time[$a]|$ST_called_count[$a]|\n";}
+
+							$new_status='NEW';
+							$affected_rows=0;
+		
+							# lead should be reset to allowed to be called again
+							$stmtA = "UPDATE vicidial_list SET status='$new_status',called_since_last_reset='N' where lead_id='$ST_lead_id[$a]';";
+							if($DB){print STDERR "\n|$stmtA|\n";}
+							if (!$T) {$affected_rows = $dbhA->do($stmtA);}
+							if ($DBX) {print "DEBUG: $affected_rows|$stmtA|\n";}
+							$found_stuck_ct++;
+							if (!$Q) {print " - stuck call has been reset: $ST_lead_id[$a]|$found_stuck_ct|\n";}
+
+							if (!$STUCKLOGfile)	{$STUCKLOGfile = "$PATHlogs/stuck_leads.$year-$mon-$mday";}
+							open(Lout, ">>$STUCKLOGfile")
+									|| die "Can't open $STUCKLOGfile: $!\n";
+							print Lout "$SQLdate_NOW|$affected_rows|$ST_modify_date[$a]|$ST_lead_id[$a]|$ST_list_id[$a]|$ST_user[$a]|$ST_last_local_call_time[$a]|$ST_called_count[$a]|$ST_status[$a]|\n";
+							close(Lout);
+							}
+						}
+					}
+				}
+			}
+		$a++;
+		}
+
+	if (!$Q) {print " - STUCK leads check finished, stuck calls checked: $a  reset: $found_stuck_ct, exiting...\n";}
+	}
+$dbhA->disconnect();
 
 exit;

@@ -137,6 +137,7 @@ $sip_response_directory = array(
 	603 => _QXZ("Decline"),
 	604 => _QXZ("Does Not Exist Anywhere"),
 	606 => _QXZ("Not Acceptable"),
+	999 => _QXZ("Internal Error"),
 );
 
 $master_sip_response_directory=array();

@@ -35,6 +35,8 @@
 # 211022-0733 - Added IR_SLA_all_statuses option for Inbound Reports
 # 220120-0926 - Added audio_store_GSM_allowed option for the Audio Store
 # 230407-1040 - Added include_sales_in_TPD_report option
+# 230421-0220 - Added RS_AGENTlatency option
+# 230421-1645 - Added RS_UGlatencyRESTRICT option
 #
 
 # used by the realtime_report.php script
@@ -86,6 +88,8 @@ $RS_agentWAIT =			3;	# 3 or 4
 $RS_INcolumnsHIDE =		0;	# 0=no, 1=yes  # whether to hide the 'HOLD' & 'IN-GROUP' columns in the agent detail section
 $RS_DIDdesc =			0;	# 0=no, 1=yes  # whether to show a 'DID DESCRIPTION' column in the agent detail section
 $RS_report_default_format = '';	# 'TEXT', 'HTML' or '': If set, this will override the System Setting for this report only
+$RS_AGENTlatency =		0;	# 0=no, 1=yes, 2=all, 3=day, 4=now
+$RS_UGlatencyRESTRICT =	'';	# this can restrict the "LATENCY" features to only be accessible to users in set User Groups: "ADMIN|ADMIN2"
 $RS_AGENTstatusTALLY =	'';	# <any valid status>: If set, will look at the number of calls statused by the agent in this status for today
 							# WARNING!!! Using the above option may cause system lag issues, USE WITH CAUTION!
 
