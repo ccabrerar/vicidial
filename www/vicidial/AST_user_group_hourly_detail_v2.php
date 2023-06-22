@@ -1,7 +1,7 @@
 <?php 
 # AST_user_group_hourly_detail.php
 #
-# Copyright (C) 2022  Liz Tejada <liz@softkyrios.com> 
+# Copyright (C) 2023  Liz Tejada <liz@softkyrios.com> 
 #                     Joseph Johnson <freewermadmin@gmail.com>
 #                     Matt Florell <vicidial@gmail.com>
 #  
@@ -19,6 +19,7 @@
 # 180507-2315 - Added new help display
 # 191013-0816 - Fixes for PHP7
 # 220301-1940 - Added allow_web_debug system setting
+# 230526-1740 - Patch for user_group bug, related to Issue #1346
 #
 
 $startMS = microtime();
@@ -204,6 +205,13 @@ else
 		echo "$VDdisplayMESSAGE: |$PHP_AUTH_USER|$auth_message|\n";
 		exit;
 		}
+	if ($auth_message == 'IPBLOCK')
+		{
+		$VDdisplayMESSAGE = _QXZ("Your IP Address is not allowed") . ": $ip";
+		Header ("Content-type: text/html; charset=utf-8");
+		echo "$VDdisplayMESSAGE: |$PHP_AUTH_USER|$auth_message|\n";
+		exit;
+		}
 	Header("WWW-Authenticate: Basic realm=\"CONTACT-CENTER-ADMIN\"");
 	Header("HTTP/1.0 401 Unauthorized");
 	echo "$VDdisplayMESSAGE: |$PHP_AUTH_USER|$PHP_AUTH_PW|$auth_message|\n";
@@ -218,6 +226,9 @@ $LOGserver_name = getenv("SERVER_NAME");
 $LOGserver_port = getenv("SERVER_PORT");
 $LOGrequest_uri = getenv("REQUEST_URI");
 $LOGhttp_referer = getenv("HTTP_REFERER");
+$LOGbrowser=preg_replace("/\'|\"|\\\\/","",$LOGbrowser);
+$LOGrequest_uri=preg_replace("/\'|\"|\\\\/","",$LOGrequest_uri);
+$LOGhttp_referer=preg_replace("/\'|\"|\\\\/","",$LOGhttp_referer);
 if (preg_match("/443/i",$LOGserver_port)) {$HTTPprotocol = 'https://';}
   else {$HTTPprotocol = 'http://';}
 if (($LOGserver_port == '80') or ($LOGserver_port == '443') ) {$LOGserver_port='';}
@@ -321,7 +332,7 @@ if ( (!preg_match('/\-\-ALL\-\-/i', $LOGadmin_viewable_call_times)) and (strlen(
 
 $stmt="select user_group from vicidial_user_groups $whereLOGadmin_viewable_groupsSQL order by user_group;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {$HTML_text.="$stmt\n";}
+if ($DB) {echo "$stmt\n";}
 $user_groups_to_print = mysqli_num_rows($rslt);
 $i=0;
 $user_groups=array();
@@ -344,7 +355,7 @@ while($i < $user_group_ct)
 	$i++;
 	}
 if ( (preg_match("/--ALL--/",$user_group_string) ) or ($user_group_ct < 1) )
-	{$user_group_SQL = "";}
+	{$user_group_SQL = "and log.user_group IN('".implode("', '", $user_groups)."')";}
 else
 	{
 	$user_group_SQL = preg_replace("/,\$/",'',$user_group_SQL);
@@ -360,10 +371,19 @@ if ($DB) {$HTML_text.="$stmt\n";}
 $campaigns_to_print = mysqli_num_rows($rslt);
 $i=0;
 $groups=array();
+if (in_array("--ALL--", $group))
+	{
+	$ALL_campaigns_selected=1;
+	$group=array();
+	}
 while ($i < $campaigns_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
 	$groups[$i] =$row[0];
+	if ($ALL_campaigns_selected) 
+		{
+		$group[$i]=$row[0];
+		}
 	$i++;
 	}
 

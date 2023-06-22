@@ -1,5 +1,5 @@
 --- vicidial.php.orig	2022-09-14 10:57:14.823660709 -0400
-+++ vicidial.php	2023-02-28 08:35:21.167146363 -0400
++++ vicidial.php	2023-05-02 10:14:01.892345753 -0400
 @@ -3446,6 +3446,15 @@
  					}
  				else
@@ -127,15 +127,6 @@
 +			if ( $conf_engine == 'CONFBRIDGE' ) { $session_prepend = 2; }
 +			$agent_login_data="||$NOW_TIME|NEW|N|$server_ip||Originate|$SIqueryCID|Channel: $SIP_user_DiaL|Context: $login_context|Exten: $session_prepend$session_id|Priority: 1|Callerid: \"$SIqueryCID\" <$campaign_cid>|||||";
 +			$agent_login_stmt="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$server_ip','','Originate','$SIqueryCID','Channel: $TEMP_SIP_user_DiaL','Context: $login_context','Exten: $session_prepend$session_id','Priority: 1','Callerid: \"$SIqueryCID\" <$campaign_cid>','','','','','');";
- 			if ( ($is_webphone != 'Y') and ($is_webphone != 'Y_API_LAUNCH') )
- 				{
- 				if ($DB) {echo "$agent_login_stmt\n";}
-@@ -23087,7 +23106,7 @@
- 	<br /><br /><br />
- 	<?php echo _QXZ("Manager Username"); ?>: <input type="text" size="20" name="MgrApr_user" id="MgrApr_user" maxlength="20" class="cust_form" value="" />
- 	<br />
--	<?php echo _QXZ("Manager Password"); ?>: <input type="password" size="20" name="MgrApr_pass" id="MgrApr_pass" maxlength="20" class="cust_form" value="" />
-+	<?php echo _QXZ("Manager Password"); ?>: <input type="password" size="20" name="MgrApr_pass" id="MgrApr_pass" maxlength="100" class="cust_form" value="" />
- 	<br /><br />
- 
- 	<font size="3" face="Arial, Helvetica, sans-serif" style="BACKGROUND-COLOR: #FFFFCC"><b><a href="#" onclick="PauseCodeSelect_MgrApr();return false;"><?php echo _QXZ("Submit"); ?></a></font> &nbsp; &nbsp; 
+
+			### log outbound call in the vicidial_user_dial_log
+			$stmt = "INSERT INTO vicidial_user_dial_log SET caller_code='$SIqueryCID',user='$VD_login',call_date='$NOW_TIME',call_type='APL',notes='$session_id $login_context $TEMP_SIP_user_DiaL';";

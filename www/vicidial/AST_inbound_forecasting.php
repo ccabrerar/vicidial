@@ -1,7 +1,7 @@
 <?php
 # AST_inbound_forecasting.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -14,6 +14,7 @@
 # 191013-0856 - Fixes for PHP7
 # 210823-0948 - Fix for security issue, added NONE option for campaigns
 # 220301-2219 - Added allow_web_debug system setting
+# 230526-1740 - Patch for user_group bug, related to Issue #1346
 #
 
 $startMS = microtime();
@@ -299,6 +300,7 @@ if ( (!preg_match('/\-\-ALL\-\-/i',$LOGadmin_viewable_groups)) and (strlen($LOGa
 	$rawLOGadmin_viewable_groupsSQL = preg_replace("/ -/",'',$LOGadmin_viewable_groups);
 	$rawLOGadmin_viewable_groupsSQL = preg_replace("/ /","','",$rawLOGadmin_viewable_groupsSQL);
 	$LOGadmin_viewable_groupsSQL = "and user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')";
+	$LOGadmin_viewable_and_null_groupsSQL = "and ( user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL') OR (user_group is null AND user='VDCL')) )";
 	$whereLOGadmin_viewable_groupsSQL = "where user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')";
 	}
 
@@ -725,17 +727,17 @@ else
 	}
 
 	if ($erlang_type=="B") {
-		$hour_stmt="select closecallid, substr(call_date, 1, 13) as start_hour, length_in_sec, substr(call_date+INTERVAL length_in_sec second, 1, 13) as end_hour, if(DATE_FORMAT(call_date, '%Y-%m-%d %H:00:00')!=DATE_FORMAT(call_date+INTERVAL length_in_sec second, '%Y-%m-%d %H:00:00'), UNIX_TIMESTAMP(DATE_FORMAT(call_date+INTERVAL length_in_sec second, '%Y-%m-%d %H:00:00'))-UNIX_TIMESTAMP(call_date), length_in_sec) as length_up_to_next_hour, if(DATE_FORMAT(call_date, '%Y-%m-%d %H:00:00')!=DATE_FORMAT(call_date+INTERVAL length_in_sec second, '%Y-%m-%d %H:00:00'), UNIX_TIMESTAMP(call_date+INTERVAL length_in_sec second)-UNIX_TIMESTAMP(DATE_FORMAT(call_date+INTERVAL length_in_sec second, '%Y-%m-%d %H:00:00')), 0) as length_running_into_next_hour, status, uniqueid from vicidial_closer_log where length_in_sec is not null and campaign_id in ($campaign_group_SQL) and call_date>='$query_date 00:00:00' and call_date<='$end_date 23:59:59' and status!='AFTHRS'"; # *
+		$hour_stmt="select closecallid, substr(call_date, 1, 13) as start_hour, length_in_sec, substr(call_date+INTERVAL length_in_sec second, 1, 13) as end_hour, if(DATE_FORMAT(call_date, '%Y-%m-%d %H:00:00')!=DATE_FORMAT(call_date+INTERVAL length_in_sec second, '%Y-%m-%d %H:00:00'), UNIX_TIMESTAMP(DATE_FORMAT(call_date+INTERVAL length_in_sec second, '%Y-%m-%d %H:00:00'))-UNIX_TIMESTAMP(call_date), length_in_sec) as length_up_to_next_hour, if(DATE_FORMAT(call_date, '%Y-%m-%d %H:00:00')!=DATE_FORMAT(call_date+INTERVAL length_in_sec second, '%Y-%m-%d %H:00:00'), UNIX_TIMESTAMP(call_date+INTERVAL length_in_sec second)-UNIX_TIMESTAMP(DATE_FORMAT(call_date+INTERVAL length_in_sec second, '%Y-%m-%d %H:00:00')), 0) as length_running_into_next_hour, status, uniqueid from vicidial_closer_log where length_in_sec is not null and campaign_id in ($campaign_group_SQL) and call_date>='$query_date 00:00:00' and call_date<='$end_date 23:59:59' and status!='AFTHRS' $LOGadmin_viewable_and_null_groupsSQL"; # *
 
-		$avg_stmt="select avg(length_in_sec) as avg_length from vicidial_closer_log where length_in_sec is not null and campaign_id in ($campaign_group_SQL) and call_date>='$query_date 00:00:00' and call_date<='$end_date 23:59:59'"; # **
+		$avg_stmt="select avg(length_in_sec) as avg_length from vicidial_closer_log where length_in_sec is not null and campaign_id in ($campaign_group_SQL) and call_date>='$query_date 00:00:00' and call_date<='$end_date 23:59:59' $LOGadmin_viewable_and_null_groupsSQL"; # **
 
-		$wrapup_stmt="select uniqueid from vicidial_closer_log where length_in_sec is not null and user!='VDCL' and campaign_id in ($campaign_group_SQL) and call_date>='$query_date 00:00:00' and call_date<='$end_date 23:59:59'"; # ***
+		$wrapup_stmt="select uniqueid from vicidial_closer_log where length_in_sec is not null and user!='VDCL' and campaign_id in ($campaign_group_SQL) and call_date>='$query_date 00:00:00' and call_date<='$end_date 23:59:59' $LOGadmin_viewable_groupsSQL"; # ***
 	} else {
-		$hour_stmt="select uniqueid, substr(call_date, 1, 13) as start_hour, length_in_sec, substr(call_date+INTERVAL length_in_sec second, 1, 13) as end_hour, if(DATE_FORMAT(call_date, '%Y-%m-%d %H:00:00')!=DATE_FORMAT(call_date+INTERVAL length_in_sec second, '%Y-%m-%d %H:00:00'), UNIX_TIMESTAMP(DATE_FORMAT(call_date+INTERVAL length_in_sec second, '%Y-%m-%d %H:00:00'))-UNIX_TIMESTAMP(call_date), length_in_sec) as length_up_to_next_hour, if(DATE_FORMAT(call_date, '%Y-%m-%d %H:00:00')!=DATE_FORMAT(call_date+INTERVAL length_in_sec second, '%Y-%m-%d %H:00:00'), UNIX_TIMESTAMP(call_date+INTERVAL length_in_sec second)-UNIX_TIMESTAMP(DATE_FORMAT(call_date+INTERVAL length_in_sec second, '%Y-%m-%d %H:00:00')), 0) as length_running_into_next_hour, status, uniqueid from vicidial_log where length_in_sec is not null and campaign_id in ($campaign_SQL) and call_date>='$query_date 00:00:00' and call_date<='$end_date 23:59:59' and status!='AFTHRS'"; # *
+		$hour_stmt="select uniqueid, substr(call_date, 1, 13) as start_hour, length_in_sec, substr(call_date+INTERVAL length_in_sec second, 1, 13) as end_hour, if(DATE_FORMAT(call_date, '%Y-%m-%d %H:00:00')!=DATE_FORMAT(call_date+INTERVAL length_in_sec second, '%Y-%m-%d %H:00:00'), UNIX_TIMESTAMP(DATE_FORMAT(call_date+INTERVAL length_in_sec second, '%Y-%m-%d %H:00:00'))-UNIX_TIMESTAMP(call_date), length_in_sec) as length_up_to_next_hour, if(DATE_FORMAT(call_date, '%Y-%m-%d %H:00:00')!=DATE_FORMAT(call_date+INTERVAL length_in_sec second, '%Y-%m-%d %H:00:00'), UNIX_TIMESTAMP(call_date+INTERVAL length_in_sec second)-UNIX_TIMESTAMP(DATE_FORMAT(call_date+INTERVAL length_in_sec second, '%Y-%m-%d %H:00:00')), 0) as length_running_into_next_hour, status, uniqueid from vicidial_log where length_in_sec is not null and campaign_id in ($campaign_SQL) and call_date>='$query_date 00:00:00' and call_date<='$end_date 23:59:59' and status!='AFTHRS' $LOGadmin_viewable_and_null_groupsSQL"; # *
 
 		$avg_stmt="select avg(length_in_sec) as avg_length from vicidial_log where length_in_sec is not null and campaign_id in ($campaign_SQL) and call_date>='$query_date 00:00:00' and call_date<='$end_date 23:59:59'"; # **
 
-		$wrapup_stmt="select uniqueid from vicidial_log where length_in_sec is not null and user!='VDCL' and campaign_id in ($campaign_SQL) and call_date>='$query_date 00:00:00' and call_date<='$end_date 23:59:59'"; # ***
+		$wrapup_stmt="select uniqueid from vicidial_log where length_in_sec is not null and user!='VDAD' and campaign_id in ($campaign_SQL) and call_date>='$query_date 00:00:00' and call_date<='$end_date 23:59:59'"; # ***
 	}
 	if ($DB) {echo "|$hour_stmt|\n";}
 	if ($DB) {echo "|$avg_stmt|\n";}

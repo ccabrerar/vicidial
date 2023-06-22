@@ -1,4 +1,4 @@
-Call URL features(start call url, dispo call url, etc...)	Updated: 2022-02-12
+Call URL features(start call url, dispo call url, etc...)	Updated: 2022-05-18
 
 
 
@@ -174,7 +174,9 @@ preset_number_e, preset_number_f, preset_dtmf_a, preset_dtmf_b, entry_date,
 did_id, did_extension, did_pattern, did_description, closecallid, called_count,
 xfercallid, agent_log_id, entry_list_id, call_id, user_group, list_name,
 did_custom_one, did_custom_two, did_custom_three, did_custom_four, 
-did_custom_five
+did_custom_five, ig_custom_one, ig_custom_two, ig_custom_three,, ig_custom_four,
+ig_custom_five, camp_custom_one, camp_custom_two, camp_custom_three, 
+camp_custom_four, camp_custom_five
 
 For most of the functions above, you can also reference custom list fields using
 the standard --A-- and --B-- around the custom field ID

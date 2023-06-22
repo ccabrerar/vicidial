@@ -1,7 +1,7 @@
 <?php 
 # AST_user_group_hourly_detail.php
 #
-# Copyright (C) 2022  Joseph Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Joseph Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # Gives hourly count of distinct agents per user group, with totals.
 # For single days only
@@ -14,6 +14,7 @@
 # 180507-2315 - Added new help display
 # 191013-0855 - Fixes for PHP7
 # 220221-0932 - Added allow_web_debug system setting
+# 230526-1740 - Patch for user_group bug, related to Issue #1346
 #
 
 $startMS = microtime();
@@ -327,7 +328,7 @@ if ( (!preg_match('/\-\-ALL\-\-/i', $LOGadmin_viewable_call_times)) and (strlen(
 
 $stmt="select user_group from vicidial_user_groups $whereLOGadmin_viewable_groupsSQL order by user_group;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {$HTML_text.="$stmt\n";}
+if ($DB) {echo "$stmt\n";}
 $user_groups_to_print = mysqli_num_rows($rslt);
 $i=0;
 $user_groups=array();
@@ -349,7 +350,7 @@ while($i < $user_group_ct)
 	$i++;
 	}
 if ( (preg_match("/--ALL--/",$user_group_string) ) or ($user_group_ct < 1) )
-	{$user_group_SQL = "";}
+	{$user_group_SQL = "and user_group IN('".implode("', '", $user_groups)."')";}
 else
 	{
 	$user_group_SQL = preg_replace("/,\$/",'',$user_group_SQL);
@@ -361,14 +362,23 @@ else
 
 $stmt="SELECT campaign_id from vicidial_campaigns $whereLOGallowed_campaignsSQL order by campaign_id;";
 $rslt=mysql_to_mysqli($stmt, $link);
-if ($DB) {$HTML_text.="$stmt\n";}
+if ($DB) {echo "$stmt\n";}
 $campaigns_to_print = mysqli_num_rows($rslt);
 $i=0;
 $groups=array();
+if (in_array("--ALL--", $group))
+	{
+	$ALL_campaigns_selected=1;
+	$group=array();
+	}
 while ($i < $campaigns_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
 	$groups[$i] =$row[0];
+	if ($ALL_campaigns_selected) 
+		{
+		$group[$i]=$row[0];
+		}
 	$i++;
 	}
 

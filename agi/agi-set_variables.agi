@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# agi-set_variables.agi version 2.10
+# agi-set_variables.agi version 2.14
 #
 # runs after a call_log before call is placed out the trunk and sets all 
 # vicidial_list fields as variables for the call
@@ -10,16 +10,18 @@
 # ; VICIDIAL_auto_dialer transfer script AMD with Load Balanced:
 # exten => _91NXXNXXXXXX,1,AGI(agi://127.0.0.1:4577/call_log)
 # exten => _91NXXNXXXXXX,n,AGI(agi-set_variables.agi,)
+# exten => _91NXXNXXXXXX,n,Verbose("phone_code:${phone_code}, phone_number:${phone_number}, lead_id:${lead_id}")
 # exten => _91NXXNXXXXXX,n,Dial(${TESTSIPTRUNK}/${EXTEN:2},,tTor)
 # exten => _91NXXNXXXXXX,n,Hangup
 # 
-# Copyright (C) 2014  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 101118-1409 - First build
 # 101125-2115 - Added parsing for 3-way calls
 # 110404-1604 - Added dial_timeout and cpd_amd_action variables
 # 141211-1643 - Added cpd_unknown_action
+# 230606-0818 - Added remaining vicidial_list fields
 #
 
 $script = 'agi-set_variables.agi';
@@ -232,7 +234,7 @@ if ($sthArows > 0)
 	$sthA->finish();
 	}
 
-$stmtA = "SELECT lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner FROM vicidial_list where lead_id='$VD_lead_id';";
+$stmtA = "SELECT lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner,phone_code,called_since_last_reset,entry_list_id,gmt_offset_now FROM vicidial_list where lead_id='$VD_lead_id';";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -270,6 +272,10 @@ if ($sthArows > 0)
 	$last_local_call_time = $aryA[28];
 	$rank =					$aryA[29];
 	$owner =				$aryA[30];
+	$phone_code =			$aryA[31];
+	$called_since_last_reset = $aryA[32];
+	$entry_list_id =		$aryA[33];
+	$gmt_offset_now =		$aryA[34];
 	}
 $sthA->finish();
 
@@ -304,6 +310,10 @@ $called_count =~ s/ /+/gi;
 $last_local_call_time =~ s/ /+/gi;
 $rank =~ s/ /+/gi;
 $owner =~ s/ /+/gi;
+$phone_code =~ s/ /+/gi;
+$called_since_last_reset =~ s/ /+/gi;
+$entry_list_id =~ s/ /+/gi;
+$gmt_offset_now =~ s/ /+/gi;
 $campaign_id =~ s/ /+/gi;
 $dialed_number =~ s/ /+/gi;
 
@@ -338,6 +348,10 @@ $AGI->exec("EXEC Set(_called_count=$called_count)");
 $AGI->exec("EXEC Set(_last_local_call_time=$last_local_call_time)");
 $AGI->exec("EXEC Set(_rank=$rank)");
 $AGI->exec("EXEC Set(_owner=$owner)");
+$AGI->exec("EXEC Set(_phone_code=$phone_code)");
+$AGI->exec("EXEC Set(_called_since_last_reset=$called_since_last_reset)");
+$AGI->exec("EXEC Set(_entry_list_id=$entry_list_id)");
+$AGI->exec("EXEC Set(_gmt_offset_now=$gmt_offset_now)");
 $AGI->exec("EXEC Set(_campaign_id=$campaign_id)");
 $AGI->exec("EXEC Set(_dialed_number=$dialed_number)");
 $AGI->exec("EXEC Set(_auto_dial_timeout=$auto_dial_timeout)");

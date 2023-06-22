@@ -67,6 +67,7 @@
 # 220312-0859 - Added vicidial_dial_cid_log table archiving, same as vicidial_dial_log
 # 230418-1341 - Added vicidial_user_dial_log archiving, same as vicidial_dial_log
 # 230421-0057 - Added vicidial_agent_latency_summary_log archiving
+# 230507-0804 - Added vicidial_latency_gaps archiving
 #
 
 $CALC_TEST=0;
@@ -3267,7 +3268,7 @@ if (!$T)
 		if ($wipe_all > 0)
 			{$stmtA = "DELETE FROM vicidial_agent_latency_summary_log;";}
 		else
-			{$stmtA = "DELETE FROM vicidial_agent_latency_summary_log WHERE db_time < '$del_time';";}
+			{$stmtA = "DELETE FROM vicidial_agent_latency_summary_log WHERE log_date < '$del_time';";}
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows = $sthA->rows;
@@ -3278,6 +3279,58 @@ if (!$T)
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 
 		$stmtA = "optimize table vicidial_agent_latency_summary_log_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		}
+
+
+	##### vicidial_latency_gaps
+	$stmtA = "SELECT count(*) from vicidial_latency_gaps;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$vicidial_latency_gaps_count =	$aryA[0];
+		}
+	$sthA->finish();
+
+	$stmtA = "SELECT count(*) from vicidial_latency_gaps_archive;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$vicidial_latency_gaps_archive_count =	$aryA[0];
+		}
+	$sthA->finish();
+
+	if (!$Q) {print "\nProcessing vicidial_latency_gaps table...  ($vicidial_latency_gaps_count|$vicidial_latency_gaps_archive_count)\n";}
+	$stmtA = "INSERT IGNORE INTO vicidial_latency_gaps_archive SELECT * from vicidial_latency_gaps;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows = $sthA->rows;
+	if (!$Q) {print "$sthArows rows inserted into vicidial_latency_gaps_archive table \n";}
+	
+	$rv = $sthA->err();
+	if (!$rv) 
+		{
+		if ($wipe_all > 0)
+			{$stmtA = "DELETE FROM vicidial_latency_gaps;";}
+		else
+			{$stmtA = "DELETE FROM vicidial_latency_gaps WHERE gap_date < '$del_time';";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows deleted from vicidial_latency_gaps table \n";}
+
+		$stmtA = "optimize table vicidial_latency_gaps;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+
+		$stmtA = "optimize table vicidial_latency_gaps_archive;";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		}

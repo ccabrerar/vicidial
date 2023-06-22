@@ -1,7 +1,7 @@
 <?php 
 # AST_agent_days_detail.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -35,6 +35,7 @@
 # 171204-2300 - Fixed minor reporting bug
 # 191013-0848 - Fixes for PHP7
 # 220221-0946 - Added allow_web_debug system setting
+# 230526-1740 - Patch for user_group bug, related to Issue #1346
 #
 
 $startMS = microtime();
@@ -335,15 +336,33 @@ if ( (!preg_match('/\-\-ALL\-\-/i', $LOGadmin_viewable_call_times)) and (strlen(
 	$whereLOGadmin_viewable_call_timesSQL = "where call_time_id IN('---ALL---','$rawLOGadmin_viewable_call_timesSQL')";
 	}
 
-
+$stmt="select user_group from vicidial_user_groups $whereLOGadmin_viewable_groupsSQL order by user_group;";
+$rslt=mysql_to_mysqli($stmt, $link);
+if ($DB) {echo "$stmt\n";}
+$user_groups_to_print = mysqli_num_rows($rslt);
 $i=0;
-$group_string='|';
-$group_ct = count($group);
-while($i < $group_ct)
+$user_groups=array();
+while ($i < $user_groups_to_print)
 	{
-	$group_string .= "$group[$i]|";
+	$row=mysqli_fetch_row($rslt);
+	$user_groups[$i] =$row[0];
 	$i++;
 	}
+
+
+#if ( (preg_match("/--ALL--/",$group_string) ) or ($group_ct < 1) )
+#	{
+	$user_group_SQL = "and user_group IN('".implode("', '", $user_groups)."')";
+	$user_group_SQL_val = "and vicidial_agent_log.user_group IN('".implode("', '", $user_groups)."')";
+	$user_group_IN_clause="user_group in ('".implode("', '", $user_groups)."')";
+#	}
+#else
+#	{
+#	$user_group_SQL = preg_replace("/,\$/",'',$user_group_SQL);
+#	$user_group_SQL_str=$user_group_SQL;
+#	$user_group_IN_clause="user_group in ($user_group_SQL)";
+#	$user_group_SQL = "and user_group IN($user_group_SQL)";
+#	}
 
 $stmt="select campaign_id from vicidial_campaigns $whereLOGallowed_campaignsSQL order by campaign_id;";
 $rslt=mysql_to_mysqli($stmt, $link);
@@ -516,39 +535,57 @@ else
 	$date_namesARY[0]='';
 	$k=0;
 
-	$stmt="select date_format(event_time, '%Y-%m-%d') as date,count(*) as calls,status from vicidial_users,".$vicidial_agent_log_table." where event_time <= '$query_date_END' and event_time >= '$query_date_BEGIN' and vicidial_users.user=".$vicidial_agent_log_table.".user and ".$vicidial_agent_log_table.".user='$user' $group_SQL $user_group_SQL $vuLOGadmin_viewable_groupsSQL group by date,status order by date,status desc limit 500000;";
-	$rslt=mysql_to_mysqli($stmt, $link);
-	if ($DB) {echo "$stmt\n";}
-	$rows_to_print = mysqli_num_rows($rslt);
-	$i=0;
-	while ($i < $rows_to_print)
-		{
-		$row=mysqli_fetch_row($rslt);
+	$ustmt="select count(*), if($user_group_IN_clause, 1, 0) as accessible_user From vicidial_users where user='$user'";
+	if ($DB) {echo "$ustmt\n";}
+	$urslt=mysql_to_mysqli($ustmt, $link);
+	$urow=mysqli_fetch_row($urslt);
+	$rows_to_print=0;
 
-		if ( ($row[1] > 0) and (strlen($row[2]) > 0) )
+	if ($urow[0]>0 && $urow[1]>0)
+		{
+		$stmt="select date_format(event_time, '%Y-%m-%d') as date,count(*) as calls,status from vicidial_users,".$vicidial_agent_log_table." where event_time <= '$query_date_END' and event_time >= '$query_date_BEGIN' and vicidial_users.user=".$vicidial_agent_log_table.".user and ".$vicidial_agent_log_table.".user='$user' $group_SQL $user_group_SQL_val $vuLOGadmin_viewable_groupsSQL group by date,status order by date,status desc limit 500000;";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		if ($DB) {echo "$stmt\n";}
+		$rows_to_print = mysqli_num_rows($rslt);
+		$i=0;
+		while ($i < $rows_to_print)
 			{
-			$date[$i] =			$row[0];
-			$calls[$i] =		$row[1];
-			$status[$i] =		$row[2];
-			if ( (!preg_match("/\-$status[$i]\-/i", $statuses)) and (strlen($status[$i])>0) )
+			$row=mysqli_fetch_row($rslt);
+
+			if ( ($row[1] > 0) and (strlen($row[2]) > 0) )
 				{
-				$statusesTXT = sprintf("%8s", $status[$i]);
-				$statusesHEAD .= "----------+";
-				$statusesHTML .= " $statusesTXT |";
-				$statusesFILE .= "$status[$i],";
-				$statuses .= "$status[$i]-";
-				$statusesARY[$j] = $status[$i];
-				$j++;
+				$date[$i] =			$row[0];
+				$calls[$i] =		$row[1];
+				$status[$i] =		$row[2];
+				if ( (!preg_match("/\-$status[$i]\-/i", $statuses)) and (strlen($status[$i])>0) )
+					{
+					$statusesTXT = sprintf("%8s", $status[$i]);
+					$statusesHEAD .= "----------+";
+					$statusesHTML .= " $statusesTXT |";
+					$statusesFILE .= "$status[$i],";
+					$statuses .= "$status[$i]-";
+					$statusesARY[$j] = $status[$i];
+					$j++;
+					}
+				if (!preg_match("/\-$date[$i]\-/i", $dates))
+					{
+					$dates .= "$date[$i]-";
+					$datesARY[$k] = $date[$i];
+					$k++;
+					}
 				}
-			if (!preg_match("/\-$date[$i]\-/i", $dates))
-				{
-				$dates .= "$date[$i]-";
-				$datesARY[$k] = $date[$i];
-				$k++;
-				}
+			$i++;
 			}
-		$i++;
 		}
+
+
+	if ($urow[0]==0 || $urow[1]==0 || $rows_to_print==0)
+		{
+		$ASCII_text.=($urow[0]==0 ? "*** "._QXZ("USER ID NOT FOUND")." ***" : ($urow[1]==0 ? "*** "._QXZ("YOU DO NOT HAVE PRIVILEGES TO VIEW THIS USER")." ***" : "*** "._QXZ("NO RECORDS FOUND")." ***"))."\n";
+		$GRAPH_text.="<BR><font class='standard_bold' color='red'>".($urow[0]==0 ? "*** "._QXZ("USER ID NOT FOUND")." ***" : ($urow[1]==0 ? "*** "._QXZ("YOU DO NOT HAVE PRIVILEGES TO VIEW THIS USER")." ***" : "*** "._QXZ("NO RECORDS FOUND")." ***"))."</font>";
+		}
+	else 
+		{
 
 	if ($file_download < 1)
 		{
@@ -903,6 +940,8 @@ else
 		}
 	}
 
+	} // END USER CHECK
+
 
 if ($file_download > 0)
 	{
@@ -944,6 +983,7 @@ if ($file_download > 0)
 
 	exit;
 	}
+
 
 $JS_onload.="}\n";
 if ($report_display_type=='HTML') {$JS_text.=$JS_onload;}

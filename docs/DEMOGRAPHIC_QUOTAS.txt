@@ -1,0 +1,276 @@
+DEMOGRAPHIC QUOTAS DOC	Started: 2023-04-25	Updated: 2023-05-15
+
+
+THIS FEATURE WAS DESIGNED FOR SURVEYS AND POLLING BASED ON DEMOGRAPHICS
+
+*This feature was added to the VICIdial svn/trunk codebase in revision 3723
+
+
+
+The Demographic Quotas features, which allow for a dialing pattern that is based around a set of demographic types and values(like: gender(M,F,U), age-group(18-24,25-34,...), political-party(R,D,I), etc...) with associated quota goals in order of priority. The leads are ranked and dialed in order of priority and as each goal is filled(set to a specific status) the leads are re-ranked until all goals are met and the campaign dialing is deactivated.
+
+This document is written for call center managers and IT staff that already know how to run a standard campaign on their VICIdial system.
+
+
+In order to use these Demographic Quotas features in a campaign, here are the required steps you should take, in order:
+
+1. In System Settings, set the 'Demographic Quotas' option to "1" and submit the form
+2. Create a new List, load your leads into the list with demographic data in it, see the 'LEADS' section below
+3. Create a new Settings Container, see the 'SETTINGS CONTAINER' section below
+4. Create a new Campaign, see the 'CAMPAIGN' section below
+5. Set the campaign to Active to 'Y', the Demographic Quotas to 'ENABLED' and the Demographic Quotas to 'NOW'
+6. Log agents into the campaign and start dialing
+7. Look at the "Demographic Quotas Report" to follow the progress of your campaign, see the 'REPORTS' section below
+8. When all quota goals are met, the Demographic Quotas setting will change to 'COMPLETE' automatically and all dialing will stop on the campaign within one minute
+
+
+
+
+--------------------------------------------------------------------------------
+LEADS - demographic data:
+
+The demographic data used for these features need to be stored in the 'vicidial_list' database table directly, in order to be able to efficiently filter and update leads as active/inactive for dialing.
+
+The demographic field values need to be strictly defined, that means for example age ranges specifically defined(like '18-24') instead of a specific age('23'). The demographic quotas used will be looking for exact values in these fields, so any extra characters or spaces in a record's values will not find a match.
+
+As for the field mapping, you can use any of the following default vicidial_list fields for your demographic data:
+
+SIZE	FIELD			NOTES
+20	vendor_lead_code
+50	source_id
+4	title
+30	first_name
+1	middle_initial
+30	last_name
+100	address1
+100	address2
+100	address3
+50	city
+2	state
+50	province
+10	postal_code
+3	country_code
+1	gender			*only: 'M','F','U'
+10	date_of_birth		*format: 'YYYY-MM-DD'
+12	alt_phone
+70	email
+100	security_phrase
+20	owner
+
+Data Field Notes: Some of the above fields are smaller than others, some have data restrictions(like 'gender' and 'date_of_birth'), and some of the fields like 'security_phrase' may be altered by inbound call handling depending on how your system is configured. The 'rank' field is not included in the above list specifically because it is used for ranking the leads by the demographic priorities set for the campaign(details on that further down).
+
+
+
+
+--------------------------------------------------------------------------------
+SETTINGS CONTAINER - demographic fields and value parameters:
+
+This new "Demographic Quotas" campaign feature uses a "Settings Container" to define the fields to be used for each demographic, the quota count for each field value, and the priority order in which each value should be dialed.
+
+A sample of a Settings Container using an example set of demographic quotas(container type = DEMOGRAPHIC_QUOTAS), would look something like this:
+
+
+; define finished lead statuses for this campaign that will meet quota:
+finished_statuses => SVDONE,COMPLT
+
+; demo 01 - age range
+demo01_field => address3
+; field values(in dial priority order), quota goal of finished leads
+demo01_value01 => 18-24,47
+demo01_value02 => 25-34,70
+demo01_value03 => 35-44,72
+demo01_value04 => 45-54,85
+demo01_value05 => 55-64,90
+demo01_value06 => 65-74,79
+demo01_value07 => 75,57
+
+; demo 02 - region
+demo02_field => province
+demo02_value01 => Central,100
+demo02_value02 => Cumberland Plateau,174
+demo02_value03 => Eastern Panhandle,92
+demo02_value04 => Northern Panhandle,34
+demo02_value05 => South West,100
+
+; demo 03 - political party
+demo03_field => address3
+demo03_value01 => Registered GOP,475
+demo03_value02 => Non-GOP,25
+
+; demo 04 - gender
+demo04_field => gender
+demo04_value01 => M,253
+demo04_value02 => F,247
+
+
+Notes:
+- This system allows up to 10 demographics in the above configuration, as well as up to 10 field values for each demographic, which makes this system extremely flexible different types of polling/survey campaigns.
+
+- Since each lead covers multiple demographics. For example, one lead may be a 26-year-old, GOP, Female from the Central region. If that person completes a survey, that satisfies 4 separate demographic quotas. There is no need to call that person again for another quota goal because they already completed the survey. So, you are never really calling only one demographic at a time.
+
+- There is another example of a Demographic Quota Settings Container further down in this document. That example can be used to test these features on any VICIdial system with the included "performance_test_leads.txt" leads file.
+
+
+
+
+--------------------------------------------------------------------------------
+CAMPAIGN - Demographic Quota settings:
+
+When you create your new campaign, make sure you first set the campaign's 'List Order' to "UP RANK".
+
+The 'Demographic Quotas' setting will enable or disable the Demographic Quotas feature for this campaign. For these features to work, you will first need to select a Settings Container for it in that setting below. Once your leads are loaded and all other campaign settings are defined properly, you need to set this field to "ENABLED" and the Re-Rank setting to "NOW" or "NOW_HOUR" for the lead ranking process to start. Once that is complete, your agents can log in and begin dialing on this campaign. If this field is changed by the system to be "INVALID" then something in your configuration is wrong and needs to be corrected before you try setting this field to ENABLED again. To see debug output to help you identify configuration problems, you can click on the "DQ Debug" link directly to the right of this setting field. After your quota goals have all been filled, this field will change to COMPLETE and all dialing will be halted within one minute. NOTE: This feature is not related to Call Quota Lead Ranking and the two features should not be active on any single campaign at the same time.
+
+The optional 'Demographic Quotas Force Re-Rank' setting is off by default. Demographic Quotas will only re-rank the leads in the campaign lists either when a quota has been reached or the campaign has run out of leads to dial. But this setting can force the system to re-rank the leads once using NOW, every hour using HOUR or every minute using the MINUTE setting. Keep in mind that depending on your system capacity and the number of leads in the campaign lists, this re-ranking process may lead to temporary system disruption, especially if it is run very frequently. When NOW is used, after the re-ranking process, the value of this setting will go back to NO. Default is NO.
+
+The optional 'Demographic Quotas List Resets' setting can automatically reset the active lists in this campaign if there are leads within the call time available and there are no more dialable leads in the campaign lists or the hopper. We do not recommend activating this setting in most cases because it can result in customers being called an excessive number of times in a single day. Default is MANUAL. If enabled, it will not auto-reset any lists if any list in the campaign has been reset in the last 5 mintues, and any single list within the last 3 hours. Also, no single list can be auto-reset more than 4 times in a single day, even if the list reset limit setting is higher.
+
+There must be a 'Dispo Call URL' entry set up for the "agc/DQ_dispo.php" script set and active for this campaign, with the 'dispo=--A--dispo--B--' and 'campaign_id=XXXX' values included the URL(the campaign's ID must be in place of the 'XXXX' in the above example). for an example, here is the Dispo Call URL as defined for a campaign ID of "DQTEST":
+http://192.168.1.3/agc/DQ_dispo.php?lead_id=--A--lead_id--B--&dispo=--A--dispo--B--&campaign_id=DQTEST&user=--A--user--B--&pass=--A--pass--B--
+
+Other important notes: 
+- If you use a non-default AST_VDhopper.pl flags in your crontab, they need to be added to the HOPPER_CLI_FLAGS Settings Container
+- You should disable the "Automatic Hopper Level" campaign setting
+
+
+
+
+--------------------------------------------------------------------------------
+REPORT - Demographic Quota reporting options:
+
+A new 'Demographic Quota Goals Report' is also available that will allow you to check on the status of your campaign's quota goals at any time to see what goals have been met and which goals are still being filled. A link to this report is on the Campaign Detail page, next to the "Demographic Quota" setting, it is marked as "DQ Report". This report will show the details of a single campaign's Demographic Quota settings, goals and other basic campaign calling information all on one screen. As quota goals are filled, the goal table rows will change from a green to a purple background color. The numbers in this report are updated once per minute, but the 'count' column can also be updated as agents disposition calls. It is possible for the 'count' column to be higher than it really is if a call is dispositioned at the same time as the back-end process runs, but this will not impact the functions of this feature and the numbers will be corrected within one minute. There are also links near the top of the report to go to the campaign modify page and the debug page to see more information on the last time the Demographic Quotas process ran.
+
+The 'Campaign Debug' report will also have debug output data from the back-end process that runs the Demographic Quotas features. This output can be useful for many reasons, for example if your configuration is invalid, the reason why will be shown in the Campaign Debug report.
+
+
+
+
+--------------------------------------------------------------------------------
+BACK-END PROCESSES - Demographic Quota process flow:
+
+The new back-end process and 'Dispo Call URL' script that will read the above quota specifications for the campaign will start with the "demo01" demographic and dial until either the quotas were filled, or all leads that match those quota values for that demo had been called once. Then, the campaign would move on to "demo02" and then to "demo03" and "demo04". After one run through all lists in the campaign, if any quotas had not been met, the lists can be automatically reset(optional campaign setting for this) and a second pass would start with the dialable leads that were left. This system allows up to 10 demographics in the above configuration, as well as up to 10 field values for each demographic, which makes this system extremely flexible different types of polling/survey campaigns.
+
+For campaigns that have Demographic Quotas enabled on them, the standard back-end hopper filling process will add a filter to exclude leads with a rank of '-9999'. This is both for improved system performance and also so that leads that are for already filled quota values can be excluded from dialing in the campaign.
+
+As for any perceptible system lag, that depends on the size of your lists and the capacity of your DB server. The resets should not be very frequent, and you should only have the lists active that you are actively dialing on at any time, which will help with the speed of the quota list management. The back-end process will actually log the amount of time it takes to run the ranking queries and the longest query run time will be shown as part of the Campaign Debug "DEMO_QUOTAS" output. To help reduce database load, if the Re-Rank option is set to HOUR or MINUTE, the number of ranked leads will be limited to the number of leads that can be put into the hopper in a few hours/minutes instead of re-ranking all leads every time the re-ranking process is run.
+
+On the technical side, the 'AST_VDdemographic_quotas.pl' script is responsible for this set of features, and it is triggered automatically on the server in your cluster defined in System Settings as the "Active Voicemail Server". This is also the server that will run the 'AST_VDhopper.pl' script as it is triggered by the Demographic Quotas processes.
+
+
+
+
+
+
+-------------- TESTING EXAMPLE USING BUILT-IN PERFORMANCE TEST LIST AND LOOPBACK CALLING -----------
+
+Another Settings Container example for Demographic Quotas:
+
+
+; define finished lead statuses for this campaign that will meet quota:
+finished_statuses => SVYCLM,AFTHRS
+
+; demo 01 - age range
+demo01_field => address3
+; field values(in dial priority order), quota goal of finished leads
+demo01_value01 => 18-24,2
+demo01_value02 => 25-34,7
+demo01_value03 => 35-44,8
+demo01_value04 => 45-54,8
+demo01_value05 => 55-64,9
+demo01_value06 => 65-74,10
+demo01_value07 => 75,5
+
+; demo 02 - region
+demo02_field => province
+demo02_value01 => North,15
+demo02_value02 => Central,20
+demo02_value03 => South,15
+
+; demo 03 - political party
+demo03_field => title
+demo03_value01 => REP,20
+demo03_value02 => DEM,20
+demo03_value03 => OTH,10
+
+; demo 04 - gender
+demo04_field => gender
+demo04_value01 => M,22
+demo04_value02 => F,28
+
+
+
+To test the above, load the "performance_test_list.txt" sample leads file into list 999884, then perform the following MySQL queries:
+
+DELETE FROM vicidial_list where list_id=999884 order by RAND() limit 10000;
+
+UPDATE vicidial_list set gender='U' where list_id=999884;
+UPDATE vicidial_list set gender='M' where list_id=999884 order by RAND() limit 22000;
+UPDATE vicidial_list set gender='F' where list_id=999884 and gender!='M' order by RAND() limit 28000;
+
+UPDATE vicidial_list set title='X' where list_id=999884;
+UPDATE vicidial_list set title='REP' where list_id=999884 order by RAND() limit 20000;
+UPDATE vicidial_list set title='DEM' where list_id=999884 and title NOT IN('REP') order by RAND() limit 20000;
+UPDATE vicidial_list set title='OTH' where list_id=999884 and title NOT IN('REP','DEM') order by RAND() limit 10000;
+
+UPDATE vicidial_list set province='Y' where list_id=999884;
+UPDATE vicidial_list set province='North' where list_id=999884 order by RAND() limit 15000;
+UPDATE vicidial_list set province='Central' where list_id=999884 and province NOT IN('North') order by RAND() limit 20000;
+UPDATE vicidial_list set province='South' where list_id=999884 and province NOT IN('North','Central') order by RAND() limit 15000;
+
+UPDATE vicidial_list set address3='0' where list_id=999884;
+UPDATE vicidial_list set address3='18-24' where list_id=999884 order by RAND() limit 2000;
+UPDATE vicidial_list set address3='25-34' where list_id=999884 and address3='0' order by RAND() limit 7000;
+UPDATE vicidial_list set address3='35-44' where list_id=999884 and address3='0' order by RAND() limit 8000;
+UPDATE vicidial_list set address3='45-54' where list_id=999884 and address3='0' order by RAND() limit 8000;
+UPDATE vicidial_list set address3='55-64' where list_id=999884 and address3='0' order by RAND() limit 9000;
+UPDATE vicidial_list set address3='65-74' where list_id=999884 and address3='0' order by RAND() limit 10000;
+UPDATE vicidial_list set address3='75' where list_id=999884 and address3='0' order by RAND() limit 5000;
+
+UPDATE vicidial_list set status='SVYCLM' where list_id=999884 order by RAND() limit 50;
+
+
+
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+FOR REFERENCE ONLY, DO NOT RUN THESE QUERIES!!!!!!!!!!!!!!!!!!!!
+
+Demographic Quotas SQL changes:
+
+ALTER TABLE system_settings ADD demographic_quotas ENUM('0','1','2','3','4','5','6','7') default '0';
+
+ALTER TABLE vicidial_campaigns ADD demographic_quotas ENUM('DISABLED','ENABLED','INVALID','COMPLETE') default 'DISABLED';
+ALTER TABLE vicidial_campaigns ADD demographic_quotas_container VARCHAR(40) default 'DISABLED';
+ALTER TABLE vicidial_campaigns ADD demographic_quotas_rerank ENUM('NO','NOW','HOUR','MINUTE','NOW_HOUR') default 'NO';
+ALTER TABLE vicidial_campaigns ADD demographic_quotas_last_rerank DATETIME default '2000-01-01 00:00:00';
+ALTER TABLE vicidial_campaigns ADD demographic_quotas_list_resets ENUM('AUTO','MANUAL') default 'MANUAL';
+
+CREATE TABLE vicidial_demographic_quotas_goals (
+vdqg_id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
+campaign_id VARCHAR(8) default '',
+demographic_quotas_container VARCHAR(40) default '',
+quota_field VARCHAR(20) default '',
+quota_field_order TINYINT(3) default '0',
+quota_value VARCHAR(100) default '',
+quota_value_order TINYINT(3) default '0',
+quota_goal MEDIUMINT(7) default '0',
+quota_count MEDIUMINT(7) default '0',
+quota_leads_total MEDIUMINT(7) default '0',
+quota_leads_active MEDIUMINT(7) default '0',
+quota_status VARCHAR(10) default 'ACTIVE',
+quota_modify_date DATETIME,
+last_lead_id INT(9) UNSIGNED default '0',
+last_list_id BIGINT(14) UNSIGNED default '0',
+last_call_date DATETIME,
+last_status VARCHAR(6) default '',
+index(campaign_id),
+index(quota_field),
+index(quota_value),
+unique index vdqgi (campaign_id,quota_field,quota_field_order,quota_value,quota_value_order)
+) ENGINE=MyISAM;
+
+INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('HOPPER_CLI_FLAGS', 'Comand-line flags for hopper process', 'PERL_CLI', '---ALL---', '');

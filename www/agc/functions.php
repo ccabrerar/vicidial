@@ -4,7 +4,7 @@
 #
 # functions for agent scripts
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 #
 # CHANGES:
@@ -57,6 +57,7 @@
 # 210603-1616 - Fix for specific custom field values with a slash in them
 # 210615-1032 - Default security fixes, CVE-2021-28854
 # 220921-1204 - Added more failed login logging in user_authorization function
+# 230518-1111 - Added in-group and campaign custom fields 1-5, for script/webform/dispo-call-url use
 #
 
 # $mysql_queries = 28
@@ -1292,8 +1293,6 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 
 		if (preg_match('/--A--list_|--U--list_/i',$CFoutput))
 			{
-			$rslt=mysql_to_mysqli($stmt, $link);
-			$row=mysqli_fetch_row($rslt);
 			### find the dialed number and label for this call
 			$stmt="SELECT list_name,list_description from vicidial_lists where list_id='$list_id';";
 			if ($DB) {$CFoutput .= "$stmt\n";}
@@ -1310,8 +1309,6 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 
 		if (preg_match('/--A--did_|--U--did_/i',$CFoutput))
 			{
-			$rslt=mysql_to_mysqli($stmt, $link);
-			$row=mysqli_fetch_row($rslt);
 			### find the did_carrier_description for this call
 			$stmt="SELECT did_carrier_description,custom_one,custom_two,custom_three,custom_four,custom_five from vicidial_inbound_dids where did_id='$did_id';";
 			if ($DB) {$CFoutput .= "$stmt\n";}
@@ -1327,6 +1324,37 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 				$did_custom_three =			$row[3];
 				$did_custom_four =			$row[4];
 				$did_custom_five =			$row[5];
+				}
+			}
+
+		if (preg_match('/--A--ig_custom_|--U--ig_custom_/i',$CFoutput))
+			{
+			### find the in-group values for this call
+			$stmt="SELECT campaign_id from vicidial_closer_log where uniqueid='$uniqueid' order by call_date desc limit 1;";
+			if ($DB) {$CFoutput .= "$stmt\n";}
+			$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'05XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+			$dcd_ct = mysqli_num_rows($rslt);
+			if ($dcd_ct > 0)
+				{
+				$row=mysqli_fetch_row($rslt);
+				$temp_group_id =	$row[0];
+				}
+
+			### find the in-group values for this call
+			$stmt="SELECT custom_one,custom_two,custom_three,custom_four,custom_five from vicidial_inbound_groups where group_id='$temp_group_id';";
+			if ($DB) {$CFoutput .= "$stmt\n";}
+			$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'05XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+			$dcd_ct = mysqli_num_rows($rslt);
+			if ($dcd_ct > 0)
+				{
+				$row=mysqli_fetch_row($rslt);
+				$ig_custom_one =			$row[0];
+				$ig_custom_two =			$row[1];
+				$ig_custom_three =			$row[2];
+				$ig_custom_four =			$row[3];
+				$ig_custom_five =			$row[4];
 				}
 			}
 
@@ -1373,6 +1401,11 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 		$CFoutput = preg_replace('/--U--user_custom_three--V--/i',urlencode($user_custom_three),$CFoutput);
 		$CFoutput = preg_replace('/--U--user_custom_four--V--/i',urlencode($user_custom_four),$CFoutput);
 		$CFoutput = preg_replace('/--U--user_custom_five--V--/i',urlencode($user_custom_five),$CFoutput);
+		$CFoutput = preg_replace('/--U--camp_custom_one--V--/i',urlencode($camp_custom_one),$CFoutput);
+		$CFoutput = preg_replace('/--U--camp_custom_two--V--/i',urlencode($camp_custom_two),$CFoutput);
+		$CFoutput = preg_replace('/--U--camp_custom_three--V--/i',urlencode($camp_custom_three),$CFoutput);
+		$CFoutput = preg_replace('/--U--camp_custom_four--V--/i',urlencode($camp_custom_four),$CFoutput);
+		$CFoutput = preg_replace('/--U--camp_custom_five--V--/i',urlencode($camp_custom_five),$CFoutput);
 		$CFoutput = preg_replace('/--U--preset_number_a--V--/i',urlencode($preset_number_a),$CFoutput);
 		$CFoutput = preg_replace('/--U--preset_number_b--V--/i',urlencode($preset_number_b),$CFoutput);
 		$CFoutput = preg_replace('/--U--preset_number_c--V--/i',urlencode($preset_number_c),$CFoutput);
@@ -1394,6 +1427,11 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 		$CFoutput = preg_replace('/--U--did_custom_three--V--/i',urlencode($did_custom_three),$CFoutput);
 		$CFoutput = preg_replace('/--U--did_custom_four--V--/i',urlencode($did_custom_four),$CFoutput);
 		$CFoutput = preg_replace('/--U--did_custom_five--V--/i',urlencode($did_custom_five),$CFoutput);
+		$CFoutput = preg_replace('/--U--ig_custom_one--V--/i',urlencode($ig_custom_one),$CFoutput);
+		$CFoutput = preg_replace('/--U--ig_custom_two--V--/i',urlencode($ig_custom_two),$CFoutput);
+		$CFoutput = preg_replace('/--U--ig_custom_three--V--/i',urlencode($ig_custom_three),$CFoutput);
+		$CFoutput = preg_replace('/--U--ig_custom_four--V--/i',urlencode($ig_custom_four),$CFoutput);
+		$CFoutput = preg_replace('/--U--ig_custom_five--V--/i',urlencode($ig_custom_five),$CFoutput);
 		$CFoutput = preg_replace('/--U--did_carrier_description--V--/i',urlencode($did_carrier_description),$CFoutput);
 		$CFoutput = preg_replace('/--U--list_name--V--/i',urlencode($list_name),$CFoutput);
 		$CFoutput = preg_replace('/--U--list_description--V--/i',urlencode($list_description),$CFoutput);
@@ -1441,6 +1479,11 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 		$CFoutput = preg_replace('/--A--user_custom_three--B--/i',"$user_custom_three",$CFoutput);
 		$CFoutput = preg_replace('/--A--user_custom_four--B--/i',"$user_custom_four",$CFoutput);
 		$CFoutput = preg_replace('/--A--user_custom_five--B--/i',"$user_custom_five",$CFoutput);
+		$CFoutput = preg_replace('/--A--camp_custom_one--B--/i',"$camp_custom_one",$CFoutput);
+		$CFoutput = preg_replace('/--A--camp_custom_two--B--/i',"$camp_custom_two",$CFoutput);
+		$CFoutput = preg_replace('/--A--camp_custom_three--B--/i',"$camp_custom_three",$CFoutput);
+		$CFoutput = preg_replace('/--A--camp_custom_four--B--/i',"$camp_custom_four",$CFoutput);
+		$CFoutput = preg_replace('/--A--camp_custom_five--B--/i',"$camp_custom_five",$CFoutput);
 		$CFoutput = preg_replace('/--A--preset_number_a--B--/i',"$preset_number_a",$CFoutput);
 		$CFoutput = preg_replace('/--A--preset_number_b--B--/i',"$preset_number_b",$CFoutput);
 		$CFoutput = preg_replace('/--A--preset_number_c--B--/i',"$preset_number_c",$CFoutput);
@@ -1462,6 +1505,11 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 		$CFoutput = preg_replace('/--A--did_custom_three--B--/i',"$did_custom_three",$CFoutput);
 		$CFoutput = preg_replace('/--A--did_custom_four--B--/i',"$did_custom_four",$CFoutput);
 		$CFoutput = preg_replace('/--A--did_custom_five--B--/i',"$did_custom_five",$CFoutput);
+		$CFoutput = preg_replace('/--A--ig_custom_one--B--/i',"$ig_custom_one",$CFoutput);
+		$CFoutput = preg_replace('/--A--ig_custom_two--B--/i',"$ig_custom_two",$CFoutput);
+		$CFoutput = preg_replace('/--A--ig_custom_three--B--/i',"$ig_custom_three",$CFoutput);
+		$CFoutput = preg_replace('/--A--ig_custom_four--B--/i',"$ig_custom_four",$CFoutput);
+		$CFoutput = preg_replace('/--A--ig_custom_five--B--/i',"$ig_custom_five",$CFoutput);
 		$CFoutput = preg_replace('/--A--did_carrier_description--B--/i',"$did_carrier_description",$CFoutput);
 		$CFoutput = preg_replace('/--A--list_name--B--/i',"$list_name",$CFoutput);
 		$CFoutput = preg_replace('/--A--list_description--B--/i',"$list_description",$CFoutput);

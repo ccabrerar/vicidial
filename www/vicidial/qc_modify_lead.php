@@ -1146,7 +1146,7 @@ function UpdateCallback(callback_id, recipient, CBuser)
 		{
 		xmlhttp = new XMLHttpRequest();
 		var update_query = "&view_epoch="+timestamp+"&qc_action=update_callback&qc_log_id="+qc_log_id+"&callback_id="+callback_id+"&recipient="+recipient+"&CBuser="+CBuser;
-		// alert(update_query); return false;
+		/// alert(update_query); // return false;
 		xmlhttp.open('POST', 'qc_module_actions.php'); 
 		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
 		xmlhttp.send(update_query); 
@@ -1644,12 +1644,12 @@ else
 				}
 			else
 				{
-				echo "<br>"; # <form action=$PHP_SELF method=POST>
+				echo "<br>($rowx[9])"; # <form action=$PHP_SELF method=POST>
 				echo "<TR BGCOLOR=\"#E6E6E6\"><TD align=center colspan=2><FONT class='standard'>";
 				echo "<input type=hidden name=CBchangeANYtoUSER value=\"YES\">";
-				echo "<input type=hidden name=DB value=\"$DB\">";
-				echo "<input type=hidden name=lead_id value=\"$lead_id\">";
-				echo "<input type=hidden name=callback_id value=\"$rowx[0]\">";
+				# echo "<input type=hidden name=DB value=\"$DB\">";
+				# echo "<input type=hidden name=lead_id value=\"$lead_id\">";
+				# echo "<input type=hidden name=callback_id value=\"$rowx[0]\">";
 				echo _QXZ("New Callback Owner UserID").": <input class='cust_form' type=text name=CBuser id=CBuser size=8 maxlength=20 value=\"$rowx[8]\"> ";
 				echo "<input style='background-color:#$SSbutton_color;width:270px' type=button onClick=\"UpdateCallback(this.form.callback_id.value, 'USERONLY', this.form.CBuser.value)\" name=submit value=\""._QXZ("CHANGE TO USERONLY CALLBACK")."\"><input type=hidden name=viewtime value='$STARTtime' /></font></TD></TR>"; # </form>
 				}
@@ -1777,7 +1777,8 @@ else
 			echo __LINE__."";
 			}
 			//Modifed text to allow for other than CBHOLD via custom statuses with scheduled callback chosen
-		echo "<BR>"._QXZ("If you want to change this lead to a scheduled callback, first change the Disposition to CBHOLD or similar, then submit and you will be able to set the callback date and time.")."<BR>";
+		# echo "<BR>"._QXZ("If you want to change this lead to a scheduled callback, first change the Disposition to CBHOLD or similar, then submit and you will be able to set the callback date and time.")."<BR>";
+		echo "<BR>"._QXZ("This lead is not currently a recognized callback status, such as CALLBK or CBHOLD, or a campaign or system status where the \"scheduled callback\" parameter is set to 'Y'.")."<BR>";
 		}
 	echo "</TD></TR></TABLE>";
 	echo "</center></span>";

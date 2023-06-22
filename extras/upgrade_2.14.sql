@@ -2269,3 +2269,122 @@ CREATE TABLE vicidial_agent_latency_summary_log_archive LIKE vicidial_agent_late
 CREATE UNIQUE INDEX vdalsla on vicidial_agent_latency_summary_log_archive (user,log_date,web_ip);
 
 UPDATE system_settings SET db_schema_version='1682',db_schema_update_date=NOW() where db_schema_version < 1682;
+
+ALTER TABLE system_settings ADD demographic_quotas ENUM('0','1','2','3','4','5','6','7') default '0';
+ALTER TABLE system_settings ADD log_latency_gaps ENUM('0','1','2','3','4','5','6','7') default '1';
+
+ALTER TABLE vicidial_campaigns ADD demographic_quotas ENUM('DISABLED','ENABLED','INVALID','COMPLETE') default 'DISABLED';
+ALTER TABLE vicidial_campaigns ADD demographic_quotas_container VARCHAR(40) default 'DISABLED';
+ALTER TABLE vicidial_campaigns ADD demographic_quotas_rerank ENUM('NO','NOW','HOUR','MINUTE','NOW_HOUR') default 'NO';
+ALTER TABLE vicidial_campaigns ADD demographic_quotas_last_rerank DATETIME default '2000-01-01 00:00:00';
+ALTER TABLE vicidial_campaigns ADD demographic_quotas_list_resets ENUM('AUTO','MANUAL') default 'MANUAL';
+
+CREATE TABLE vicidial_demographic_quotas_goals (
+vdqg_id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
+campaign_id VARCHAR(8) default '',
+demographic_quotas_container VARCHAR(40) default '',
+quota_field VARCHAR(20) default '',
+quota_field_order TINYINT(3) default '0',
+quota_value VARCHAR(100) default '',
+quota_value_order TINYINT(3) default '0',
+quota_goal MEDIUMINT(7) default '0',
+quota_count MEDIUMINT(7) default '0',
+quota_leads_total MEDIUMINT(7) default '0',
+quota_leads_active MEDIUMINT(7) default '0',
+quota_status VARCHAR(10) default 'ACTIVE',
+quota_modify_date DATETIME,
+last_lead_id INT(9) UNSIGNED default '0',
+last_list_id BIGINT(14) UNSIGNED default '0',
+last_call_date DATETIME,
+last_status VARCHAR(6) default '',
+index(campaign_id),
+index(quota_field),
+index(quota_value),
+unique index vdqgi (campaign_id,quota_field,quota_field_order,quota_value,quota_value_order)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_latency_gaps (
+user VARCHAR(20) default '',
+user_ip VARCHAR(45) default '',
+gap_date DATETIME,
+gap_length MEDIUMINT(5) UNSIGNED default '0',
+last_login_date DATETIME,
+check_date DATETIME,
+index(user),
+index(gap_date),
+index(check_date),
+unique index vlgi (user,gap_date)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_latency_gaps_archive LIKE vicidial_latency_gaps;
+CREATE UNIQUE INDEX vdlga on vicidial_latency_gaps_archive (user,gap_date);
+
+INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('HOPPER_CLI_FLAGS', 'Comand-line flags for hopper process', 'PERL_CLI', '---ALL---', '');
+
+INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('AGENT_LATENCY_LOGGING','Default agent latency logging settings','PERL_CLI','---ALL---','minimum_gap => 30\r\nemail_sender => \r\nemail_list => \r\nemail_subject => Agent Network Alert');
+
+UPDATE system_settings SET db_schema_version='1683',db_schema_update_date=NOW() where db_schema_version < 1683;
+
+ALTER TABLE vicidial_campaigns ADD custom_one TEXT;
+ALTER TABLE vicidial_campaigns ADD custom_two TEXT;
+ALTER TABLE vicidial_campaigns ADD custom_three TEXT;
+ALTER TABLE vicidial_campaigns ADD custom_four TEXT;
+ALTER TABLE vicidial_campaigns ADD custom_five TEXT;
+
+ALTER TABLE vicidial_inbound_groups ADD custom_one TEXT;
+ALTER TABLE vicidial_inbound_groups ADD custom_two TEXT;
+ALTER TABLE vicidial_inbound_groups ADD custom_three TEXT;
+ALTER TABLE vicidial_inbound_groups ADD custom_four TEXT;
+ALTER TABLE vicidial_inbound_groups ADD custom_five TEXT;
+
+UPDATE vicidial_campaigns SET custom_one='' WHERE custom_one IS NULL;
+UPDATE vicidial_campaigns SET custom_two='' WHERE custom_two IS NULL;
+UPDATE vicidial_campaigns SET custom_three='' WHERE custom_three IS NULL;
+UPDATE vicidial_campaigns SET custom_four='' WHERE custom_four IS NULL;
+UPDATE vicidial_campaigns SET custom_five='' WHERE custom_five IS NULL;
+
+UPDATE vicidial_inbound_groups SET custom_one='' WHERE custom_one IS NULL;
+UPDATE vicidial_inbound_groups SET custom_two='' WHERE custom_two IS NULL;
+UPDATE vicidial_inbound_groups SET custom_three='' WHERE custom_three IS NULL;
+UPDATE vicidial_inbound_groups SET custom_four='' WHERE custom_four IS NULL;
+UPDATE vicidial_inbound_groups SET custom_five='' WHERE custom_five IS NULL;
+
+UPDATE system_settings SET db_schema_version='1684',db_schema_update_date=NOW() where db_schema_version < 1684;
+
+ALTER TABLE vicidial_users ADD modify_dial_prefix ENUM('0','1','2','3','4','5','6') default '0';
+
+UPDATE vicidial_users, system_settings SET modify_dial_prefix='1' where campaign_detail='1' and user_level >= 8 and active='Y' and db_schema_version < 1685;
+
+UPDATE system_settings SET db_schema_version='1685',db_schema_update_date=NOW() where db_schema_version < 1685;
+
+ALTER TABLE system_settings ADD inbound_credits ENUM('0','1','2','3','4','5','6','7') default '0';
+
+ALTER TABLE vicidial_users ADD inbound_credits MEDIUMINT(7) default '-1';
+
+UPDATE system_settings SET db_schema_version='1686',db_schema_update_date=NOW() where db_schema_version < 1686;
+
+ALTER TABLE system_settings ADD weekday_resets ENUM('0','1','2','3','4','5','6','7') default '0';
+
+ALTER TABLE vicidial_lists ADD weekday_resets_container VARCHAR(40) default 'DISABLED';
+
+INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('EXAMPLE_LIST_WEEKDAY_RESETS','Example Weekday List Resets Container settings','LIST_WEEKDAY_RESETS','---ALL---','; weekday => reset-times in 24-hour time separated by dashes\r\nmonday => 0830-1230-1800\r\ntuesday => 0900-1400-1830\r\nwednesday => 0930-1200-1730-1900\r\nthursday => 1030-1330-1900\r\nfriday => 0800-1300-1530\r\nsaturday => 0930-1100\r\nsunday => 1000');
+
+UPDATE system_settings SET db_schema_version='1687',db_schema_update_date=NOW() where db_schema_version < 1687;
+
+ALTER TABLE vicidial_inbound_groups ADD second_alert_trigger VARCHAR(20) default 'DISABLED';
+ALTER TABLE vicidial_inbound_groups ADD second_alert_trigger_seconds INT(6) default '600';
+ALTER TABLE vicidial_inbound_groups ADD second_alert_filename VARCHAR(100) default '';
+ALTER TABLE vicidial_inbound_groups ADD second_alert_delay INT(6) default '1000';
+
+UPDATE system_settings SET db_schema_version='1688',db_schema_update_date=NOW() where db_schema_version < 1688;
+
+ALTER TABLE vicidial_inbound_groups ADD second_alert_container VARCHAR(40) default 'DISABLED';
+ALTER TABLE vicidial_inbound_groups ADD second_alert_only VARCHAR(40) default 'DISABLED';
+
+INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('EXAMPLE_VID_PROMPT_SPECIAL','Example Call Menu VID Special Container settings','CM_VIDPROMPT_SPECIAL','---ALL---','list_ingroup => 102,TEST_IN2\r\nlist_ingroup => 103,TEST_IN3\r\nlist_ingroup => 104,TEST_IN4\r\ndefault_ingroup => TEST_IN5\r\nnot_found_action => new_lead\r\nnew_lead_ingroup => TEST_IN');
+
+UPDATE system_settings SET db_schema_version='1689',db_schema_update_date=NOW() where db_schema_version < 1689;
+
+ALTER TABLE vicidial_campaigns ADD dead_stop_recording ENUM('DISABLED','ALL_CALLS','OUTBOUND_ONLY','INBOUND_ONLY','AUTODIAL_ONLY','MANUAL_ONLY') default 'DISABLED';
+
+UPDATE system_settings SET db_schema_version='1690',db_schema_update_date=NOW() where db_schema_version < 1690;

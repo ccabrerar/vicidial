@@ -109,10 +109,11 @@
 # 220220-0847 - Added allow_web_debug system setting
 # 230412-0945 - Added send_notification function
 # 230413-1957 - Fix for send_notification user group permissions
+# 230519-0731 - Fix for input variable filtering
 #
 
-$version = '2.14-74';
-$build = '230413-1957';
+$version = '2.14-75';
+$build = '230519-0731';
 $php_script = 'api.php';
 
 $startMS = microtime();
@@ -352,7 +353,7 @@ if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
 	$pass=preg_replace("/[^-\.\+\/\=_0-9a-zA-Z]/","",$pass);
-	$agent_user=preg_replace("/[^0-9a-zA-Z]/","",$agent_user);
+	$agent_user=preg_replace("/[^-_0-9a-zA-Z]/","",$agent_user);
 	$function = preg_replace("/[^-\_0-9a-zA-Z]/","",$function);
 	$value = preg_replace("/[^-\|\_0-9a-zA-Z]/","",$value);
 	$focus = preg_replace("/[^-\_0-9a-zA-Z]/","",$focus);
@@ -445,7 +446,7 @@ else
 	{
 	$user=preg_replace("/[^-_0-9\p{L}]/u","",$user);
 	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
-	$agent_user=preg_replace("/[^0-9\p{L}]/u","",$agent_user);
+	$agent_user=preg_replace("/[^-_0-9\p{L}]/u","",$agent_user);
 	$function = preg_replace("/[^-\_0-9\p{L}]/u","",$function);
 	$value = preg_replace("/[^-\|\_0-9\p{L}]/u","",$value);
 	$focus = preg_replace("/[^-\_0-9\p{L}]/u","",$focus);

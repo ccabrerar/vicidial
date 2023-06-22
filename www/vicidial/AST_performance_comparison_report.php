@@ -1,7 +1,7 @@
 <?php 
 # AST_performance_comparison_report.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -21,6 +21,7 @@
 # 180507-2315 - Added new help display
 # 191013-0900 - Fixes for PHP7
 # 220302-0957 - Added allow_web_debug system setting
+# 230526-1740 - Patch for user_group bug, related to Issue #1346
 #
 
 $startMS = microtime();
@@ -446,11 +447,14 @@ while($i < $user_group_ct)
 	$i++;
 	}
 if ( (preg_match('/\-\-ALL\-\-/',$user_group_string) ) or ($user_group_ct < 1) )
-	{$user_group_SQL = "";}
+	{
+	# $user_group_SQL = "";
+	$user_group_SQL = "and vicidial_users.user_group IN('".implode("', '", $user_groups)."')";
+	}
 else
 	{
 	$user_group_SQL = preg_replace('/,$/i', '',$user_group_SQL);
-	$user_group_agent_log_SQL = "and ".$vicidial_agent_log_table.".user_group IN($user_group_SQL)";
+	# $user_group_agent_log_SQL = "and ".$vicidial_agent_log_table.".user_group IN($user_group_SQL)";
 	$user_group_SQL = "and vicidial_users.user_group IN($user_group_SQL)";
 	}
 

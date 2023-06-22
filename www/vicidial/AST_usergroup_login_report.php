@@ -4,7 +4,7 @@
 # This User-Group based report runs some very intensive SQL queries, so it is
 # not recommended to run this on long time periods. 
 #
-# Copyright (C) 2022  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -25,6 +25,7 @@
 # 180507-2315 - Added new help display
 # 191013-0822 - Fixes for PHP7
 # 220301-1656 - Added allow_web_debug system setting
+# 230526-1740 - Patch for user_group bug, related to Issue #1346
 #
 
 $startMS = microtime();
@@ -314,11 +315,11 @@ while($i < $user_group_ct)
 	}
 
 if ( (preg_match('/\-\-ALL\-\-/',$user_group_string) ) or ($user_group_ct < 1) )
-	{$user_group_SQL = "";}
+	{$user_group_SQL = "where USER_group in ('".implode("', '", $user_groups)."')";}
 else
 	{
 	$user_group_SQL = preg_replace('/,$/i', '',$user_group_SQL);
-	$user_group_SQL = "where user_group in ($user_group_SQL)";
+	$user_group_SQL = "where user_GROUP in ($user_group_SQL)";
 	#$user_group_SQL = "and vicidial_agent_log.user_group IN($user_group_SQL)";
 	}
 

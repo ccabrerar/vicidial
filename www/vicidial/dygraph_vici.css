@@ -1,0 +1,50 @@
+.dygraph-legend { 
+	font-family: Arial, Helvetica, serif;
+	font-size: 10pt;
+	font-weight: bold;
+	}
+.dygraph-title {
+	font-family: Arial, Helvetica, serif;
+	color: #000;
+	text-shadow: #999 2px 2px 2px; 
+}
+dygraph-axis-label {
+	font-family: Arial, Helvetica, serif;
+	font-size: 10pt;
+	color: #900;
+	text-shadow: #999 1px 1px 1px; 
+}
+.dygraph-axis-label-x {
+	font-family: Arial, Helvetica, serif;
+	font-size: 10pt;
+	color: #900;
+	text-shadow: #999 1px 1px 1px; 
+}
+
+.dygraph-axis-label-y {
+	font-family: Arial, Helvetica, serif;
+	font-size: 10pt;
+	color: #900;
+	text-shadow: #999 1px 1px 1px; 
+}
+.dygraph-xlabel {
+	font-family: Arial, Helvetica, serif;
+	font-size: 12pt;
+	font-weight: bold;
+	text-shadow: #999 1px 1px 1px; 
+}	
+
+.dygraph-ylabel {
+	font-family: Arial, Helvetica, serif;
+	font-size: 12pt;
+	font-weight: bold;
+	text-shadow: #999 1px 1px 1px; 
+}
+
+.loading_text {
+	font-family: Arial, Helvetica, serif;
+	font-size: 36pt;
+	font-weight: bold;
+	color: #009;
+	text-shadow: #999 5px 5px 5px; 
+}

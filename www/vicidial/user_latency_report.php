@@ -1,11 +1,12 @@
 <?php 
 # user_latency_report.php
 # 
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 230421-0843 - First build
 # 230422-0820 - Header fixes and no-records output
+# 230508-0247 - Graph links added
 #
 
 $startMS = microtime();
@@ -283,6 +284,123 @@ $NWE = "')\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP>";
    .purple {color: white; background-color: purple}
 -->
  </STYLE>
+<script type="text/javascript" src="dygraph.js"></script>
+<link rel="stylesheet" type="text/css" href="dygraph.css" />
+<script language="Javascript">
+var RawGraphData="";
+function DrawGraph(user, LogDate, IPAddress, API_action)
+	{
+	document.getElementById('loading_please_wait').style.display='block';
+	document.getElementById('chart_div').style.display='none';
+
+	var xmlhttp=false;
+	/*@cc_on @*/
+	/*@if (@_jscript_version >= 5)
+	// JScript gives us Conditional compilation, we can cope with old IE versions.
+	// and security blocked creation of the objects.
+	try {
+	xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
+	} catch (e) {
+		try {
+		xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+		} catch (E) {
+		xmlhttp = false;
+		}
+	}
+	@end @*/
+	if (!xmlhttp && typeof XMLHttpRequest!='undefined')
+		{
+		xmlhttp = new XMLHttpRequest();
+		}
+	if (xmlhttp) 
+		{ 
+		var GraphQuery = "user=" + user + "&log_date=" + LogDate + "&web_ip=" + IPAddress + "&ACTION="+API_action;
+		xmlhttp.open('POST', 'dygraph_functions.php'); 
+		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
+		xmlhttp.send(GraphQuery); 
+		xmlhttp.onreadystatechange = function() 
+			{ 
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
+				{
+				RawGraphData = xmlhttp.responseText;
+
+				if (API_action=="all_agent_latency")
+					{
+					var LSL_value=1;
+					var stacked=1;
+					}
+				else
+					{
+					var LSL_value=0;
+					var stacked=0;
+					}
+
+				var graphTitle='Latency';
+				if (!user.match("---ALL---"))
+					{
+					graphTitle+=' for agent '+user;
+					}
+				else
+					{
+					graphTitle+=' for ALL agents';
+					}
+
+				graphTitle+=' for '+LogDate;
+
+				if (!IPAddress.match("---ALL---"))
+					{
+					graphTitle+=' on IP address '+IPAddress;
+					}
+				//var graph_data=[];
+				//var maxLatency=0;
+				//var graph_array=RawGraphData.split("|");
+				//alert(graph_array.length);
+				//for (var i=0; i<graph_array.length; i++)
+				//	{
+				//	dataset=graph_array[i].split(",");
+				//	if (i<5) {alert(dataset[0]);}
+				//	graph_data.push([dataset[0], parseInt(dataset[1])]);
+				//	if (parseInt(dataset[1])>maxLatency)
+				//		{
+				//		maxLatency=parseInt(dataset[1]);
+				//		}
+				//	}
+				if (!LatencyGraph)
+					{
+					// alert(RawGraphData);
+					var LatencyGraph=new Dygraph(document.getElementById("latency_graph_div"), RawGraphData,
+						{
+						title: graphTitle,
+						labelsDiv: document.getElementById("legend_div"),
+						drawPoints: true,
+						showRoller: false,
+						resizable: "both",
+						// legend: 'follow',
+						// legendFollowOffsetX: 5,
+						// legendFollowOffsetY: -5,
+						labelsSeparateLines: LSL_value,
+						connectSeparatedPoints: false,
+						drawGapEdgePoints: false,
+						ylabel: 'Latency',
+						xlabel: 'Time (HH:mm:ss)',
+						strokeWidth: 1.5
+						} );
+					}
+				else
+					{
+					LatencyGraph.updateOptions( {'file': RawGraphData, title: graphTitle} );
+					}
+				
+				document.getElementById('loading_please_wait').style.display='none';
+				document.getElementById('chart_div').style.display='block';
+				}
+			}
+		}
+
+
+
+	}
+</script>
 
 <?php 
 echo "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=utf-8\">\n";
@@ -334,7 +452,7 @@ else
 	$multi_user=0;
 	$latencies_to_print=0;
 	$Hlatencies_to_print=0;
-	$stmt="SELECT vlad.user,vlad.update_date,vlad.web_ip,vlad.latency,vlad.latency_min_avg,vlad.latency_min_peak,vlad.latency_hour_avg,vlad.latency_hour_peak,vlad.latency_today_avg,vlad.latency_today_peak from vicidial_live_agents_details vlad where vlad.user='" . mysqli_real_escape_string($link, $user) . "' $vmLOGadmin_viewable_groupsSQL order by user limit 1000;";
+	$stmt="SELECT vlad.user,vlad.update_date,vlad.web_ip,vlad.latency,vlad.latency_min_avg,vlad.latency_min_peak,vlad.latency_hour_avg,vlad.latency_hour_peak,vlad.latency_today_avg,vlad.latency_today_peak from vicidial_live_agents_details vlad where vlad.user='" . mysqli_real_escape_string($link, $user) . "' $LOGadmin_viewable_groupsSQL order by user limit 1000;";
 	if ($user == '--ACTIVE-USERS-TODAY--')
 		{
 		$multi_user=1;
@@ -353,7 +471,7 @@ else
 
 		$archive_output .= "| ".sprintf("%-20s", $row[0])." |";
 		$archive_output .= " ".sprintf("%-19s", $row[1])." |";
-		$archive_output .= " ".sprintf("%-20s", $row[2])." |";
+		$archive_output .= " <a href=\"javascript:void(0)\" onClick=\"DrawGraph('$row[0]', '".substr($row[1], 0, 10)."', '---ALL---', 'latency_by_user')\">".sprintf("%-20s", $row[2])."</a> |";
 		$archive_output .= " ".sprintf("%-10s", $row[3])." |";
 		$archive_output .= " ".sprintf("%-10s", $row[4])." |";
 		$archive_output .= " ".sprintf("%-10s", $row[5])." |";
@@ -369,7 +487,7 @@ else
 
 	if ($multi_user < 1)
 		{
-		$stmt="select user,log_date,web_ip,latency_avg,latency_peak from vicidial_agent_latency_summary_log where user='" . mysqli_real_escape_string($link, $user) . "' $LOGadmin_viewable_groupsSQL order by log_date desc,web_ip limit 1000;";
+		$stmt="select user,log_date,web_ip,latency_avg,latency_peak,if(date(log_date)>=date(now()-INTERVAL 7 DAY), 1, 0) as show_link from vicidial_agent_latency_summary_log where user='" . mysqli_real_escape_string($link, $user) . "' $LOGadmin_viewable_groupsSQL order by log_date desc,web_ip limit 1000;";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		if ($DB) {echo "$stmt\n";}
 		$Hlatencies_to_print = mysqli_num_rows($rslt);
@@ -382,7 +500,14 @@ else
 
 			echo "| ".sprintf("%-20s", $row[0])." |";
 			echo " ".sprintf("%-19s", $row[1])." |";
-			echo " ".sprintf("%-20s", $row[2])." |";
+			if ($row[5])
+				{
+				echo " <a href=\"javascript:void(0)\" onClick=\"DrawGraph('$row[0]', '".substr($row[1], 0, 10)."', '$row[2]', 'latency_by_user')\">".sprintf("%-20s", $row[2])."</a> |";
+				}
+			else
+				{
+				echo " ".sprintf("%-20s", $row[2])." |";
+				}
 			echo " ".sprintf("%-10s", ' ')." |";
 			echo " ".sprintf("%-10s", ' ')." |";
 			echo " ".sprintf("%-10s", ' ')." |";
@@ -394,8 +519,26 @@ else
 			$i++;
 			}
 		}
+	else
+		{
+		echo "+----------------------+---------------------+----------------------+------------+------------+------------+------------+------------+------------+------------+\n";
+		echo "| GRAPH AGENTS BY DATE:  <a href=\"javascript:void(0)\" onClick=\"DrawGraph('---ALL---', '".date("Y-m-d")."', '---ALL---', 'all_agent_latency')\">[ ".date("Y-m-d")." ]</a>";
+		$date_stmt="select distinct date(log_date) as ldate from vicidial_agent_latency_log_archive order by ldate desc";
+		$date_rslt=mysql_to_mysqli($date_stmt, $link);
+		$col_width=119;
+		while ($date_row=mysqli_fetch_row($date_rslt))
+			{
+			echo "   <a href=\"javascript:void(0)\" onClick=\"DrawGraph('---ALL---', '".$date_row[0]."', '---ALL---', 'all_agent_latency')\">[ $date_row[0] ]</a>";
+			$col_width-=17;
+			}
+		echo sprintf("%-".$col_width."s", ' ')."|\n";
+		echo "+----------------------+---------------------+----------------------+------------+------------+------------+------------+------------+------------+------------+\n";
+		}
 	if ( ($latencies_to_print < 1) and ($Hlatencies_to_print < 1) )
 		{echo _QXZ("No records to report");}
+	else
+		{
+		}
 
 	echo "\n";
 	}
@@ -423,6 +566,73 @@ $rslt=mysql_to_mysqli($stmt, $link);
 
 </PRE>
 
-</TD></TR></TABLE>
+<table>
+<tr><td>
+<style>
+.dygraph-legend { 
+	font-family: Arial, Helvetica, serif;
+	font-size: 10pt;
+	font-weight: bold;
+	}
+.dygraph-title {
+	font-family: Arial, Helvetica, serif;
+	color: #000;
+	text-shadow: #999 2px 2px 2px; 
+}
+dygraph-axis-label {
+	font-family: Arial, Helvetica, serif;
+	font-size: 10pt;
+	color: #900;
+	text-shadow: #999 1px 1px 1px; 
+}
+.dygraph-axis-label-x {
+	font-family: Arial, Helvetica, serif;
+	font-size: 10pt;
+	color: #900;
+	text-shadow: #999 1px 1px 1px; 
+}
+
+.dygraph-axis-label-y {
+	font-family: Arial, Helvetica, serif;
+	font-size: 10pt;
+	color: #900;
+	text-shadow: #999 1px 1px 1px; 
+}
+.dygraph-xlabel {
+	font-family: Arial, Helvetica, serif;
+	font-size: 12pt;
+	font-weight: bold;
+	text-shadow: #999 1px 1px 1px; 
+}	
+
+.dygraph-ylabel {
+	font-family: Arial, Helvetica, serif;
+	font-size: 12pt;
+	font-weight: bold;
+	text-shadow: #999 1px 1px 1px; 
+}
+
+.loading_text {
+	font-family: Arial, Helvetica, serif;
+	font-size: 36pt;
+	font-weight: bold;
+	color: #009;
+	text-shadow: #999 5px 5px 5px; 
+}
+
+</style>
+<div class='loading_text' id='loading_please_wait' style="width:800px; height:400px; display:none;">
+<center>LOADING, PLEASE WAIT...</center> 
+</div>
+<div id="chart_div" class="chart" style="width:800px; height:400px;">
+<div id='latency_graph_div' style="width:800px;height:400px"></div>
+</div>
+</td>
+
+<td align='left' valign='top'>
+<div id='legend_div' class='dygraph-legend' style="width:200px;height:300px"></div>
+</TD>
+
+</TR></TABLE>
 
 </BODY></HTML>

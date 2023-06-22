@@ -51,6 +51,7 @@
 # 220219-0135 - Added allow_web_debug system setting
 # 230113-0839 - Added dialed_number & dialed_label to allowed variables in email subject and body
 # 230420-1620 - Added email_display_name as a container option for the email sender
+# 230518-1035 - Added in-group and campaign custom fields 1-5, for script/webform/dispo-call-url use
 #
 
 $api_script = 'send_email';
@@ -142,6 +143,16 @@ if (isset($_GET["dialed_number"]))			{$dialed_number=$_GET["dialed_number"];}
 	elseif (isset($_POST["dialed_number"]))	{$dialed_number=$_POST["dialed_number"];}
 if (isset($_GET["dialed_label"]))			{$dialed_label=$_GET["dialed_label"];}
 	elseif (isset($_POST["dialed_label"]))	{$dialed_label=$_POST["dialed_label"];}
+if (isset($_GET["camp_custom_one"]))			{$camp_custom_one=$_GET["camp_custom_one"];}
+	elseif (isset($_POST["camp_custom_one"]))	{$camp_custom_one=$_POST["camp_custom_one"];}
+if (isset($_GET["camp_custom_two"]))			{$camp_custom_two=$_GET["camp_custom_two"];}
+	elseif (isset($_POST["camp_custom_two"]))	{$camp_custom_two=$_POST["camp_custom_two"];}
+if (isset($_GET["camp_custom_three"]))			{$camp_custom_three=$_GET["camp_custom_three"];}
+	elseif (isset($_POST["camp_custom_three"]))	{$camp_custom_three=$_POST["camp_custom_three"];}
+if (isset($_GET["camp_custom_four"]))			{$camp_custom_four=$_GET["camp_custom_four"];}
+	elseif (isset($_POST["camp_custom_four"]))	{$camp_custom_four=$_POST["camp_custom_four"];}
+if (isset($_GET["camp_custom_five"]))			{$camp_custom_five=$_GET["camp_custom_five"];}
+	elseif (isset($_POST["camp_custom_five"]))	{$camp_custom_five=$_POST["camp_custom_five"];}
 
 $DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
@@ -155,7 +166,7 @@ $search_value='';
 $match_found=0;
 $k=0;
 $mel=1;					# Mysql Error Log enabled = 1
-$mysql_log_count=14;
+$mysql_log_count=20;
 $email_format = 'TEXT';
 $email_charset = 'iso-8859-1';
 #$email_attachment_path = '/dev/null';
@@ -275,6 +286,11 @@ if ($non_latin < 1)
 	$sale_status = preg_replace('/[^-_0-9a-zA-Z]/', '', $sale_status);
 	$dispo = preg_replace('/[^-_0-9a-zA-Z]/', '', $dispo);
 	$channel_group = preg_replace('/[^-_0-9a-zA-Z]/', '', $channel_group);
+	$camp_custom_one = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$camp_custom_one);
+	$camp_custom_two = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$camp_custom_two);
+	$camp_custom_three = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$camp_custom_three);
+	$camp_custom_four = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$camp_custom_four);
+	$camp_custom_five  = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$camp_custom_five );
 	}
 else
 	{
@@ -284,6 +300,11 @@ else
 	$sale_status = preg_replace('/[^-_0-9\p{L}]/u', '', $sale_status);
 	$dispo = preg_replace('/[^-_0-9\p{L}]/u', '', $dispo);
 	$channel_group = preg_replace('/[^-_0-9\p{L}]/u', '', $channel_group);
+	$camp_custom_one = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$camp_custom_one);
+	$camp_custom_two = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$camp_custom_two);
+	$camp_custom_three = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$camp_custom_three);
+	$camp_custom_four = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$camp_custom_four);
+	$camp_custom_five  = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$camp_custom_five );
 	}
 
 
@@ -320,7 +341,7 @@ if ($match_found > 0)
 			$stmt="SELECT count(*) from vicidial_user_log where user='$user' and event_date > \"$one_minute_ago\" and event='TIMEOUTLOGOUT';";
 			if ($DB) {echo "|$stmt|\n";}
 			$rslt=mysql_to_mysqli($stmt, $link);
-				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'60XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'60015',$user,$server_ip,$session_name,$one_mysql_log);}
 			$row=mysqli_fetch_row($rslt);
 			$authlive=$row[0];
 			$auth=$row[0];
@@ -569,6 +590,91 @@ if ($match_found > 0)
 								}
 							}
 
+						if ( (preg_match('/--A--camp_custom_|--A--campaign/i',$email_subject)) or (preg_match('/--A--camp_custom_|--A--campaign/i',$email_body)) or (preg_match('/--A--camp_custom_/i',$email_from)) or (preg_match('/--A--camp_custom_/i',$email_to)) or (preg_match('/--A--camp_custom_/i',$email_display_name)) )
+							{
+							$camp_custom_one='';
+							$camp_custom_two='';
+							$camp_custom_three='';
+							$camp_custom_four='';
+							$camp_custom_five='';
+
+							$stmt = "SELECT campaign_id from vicidial_log where uniqueid='$uniqueid' order by call_date desc limit 1;";
+							if ($DB) {echo "$stmt\n";}
+							$rslt=mysql_to_mysqli($stmt, $link);
+								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'60016',$user,$server_ip,$session_name,$one_mysql_log);}
+							$VDIDL_ct = mysqli_num_rows($rslt);
+							if ($VDIDL_ct > 0)
+								{
+								$row=mysqli_fetch_row($rslt);
+								$campaign	=			$row[0];
+								}
+							else
+								{
+								$stmt = "SELECT campaign_id from vicidial_live_agents where user='$user' limit 1;";
+								if ($DB) {echo "$stmt\n";}
+								$rslt=mysql_to_mysqli($stmt, $link);
+									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'60017',$user,$server_ip,$session_name,$one_mysql_log);}
+								$VDIDL_ct = mysqli_num_rows($rslt);
+								if ($VDIDL_ct > 0)
+									{
+									$row=mysqli_fetch_row($rslt);
+									$campaign	=			$row[0];
+									}
+								}
+							if (strlen($campaign) > 0)
+								{
+								$stmt = "SELECT custom_one,custom_two,custom_three,custom_four,custom_five from vicidial_campaigns where campaign_id='$campaign' limit 1;";
+								if ($DB) {echo "$stmt\n";}
+								$rslt=mysql_to_mysqli($stmt, $link);
+									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'60018',$user,$server_ip,$session_name,$one_mysql_log);}
+								$VDIDL_ct = mysqli_num_rows($rslt);
+								if ($VDIDL_ct > 0)
+									{
+									$row=mysqli_fetch_row($rslt);
+									$camp_custom_one =		$row[0];
+									$camp_custom_two=		$row[1];
+									$camp_custom_three=		$row[2];
+									$camp_custom_four=		$row[3];
+									$camp_custom_five=		$row[4];
+									}
+								}
+							}
+
+						if ( (preg_match('/--A--ig_custom_|--A--group_id/i',$email_subject)) or (preg_match('/--A--ig_custom_|--A--group_id/i',$email_body)) or (preg_match('/--A--ig_custom_/i',$email_from)) or (preg_match('/--A--ig_custom_/i',$email_to)) or (preg_match('/--A--ig_custom_/i',$email_display_name)) )
+							{
+							$ig_custom_one='';
+							$ig_custom_two='';
+							$ig_custom_three='';
+							$ig_custom_four='';
+							$ig_custom_five='';
+
+							$stmt = "SELECT campaign_id from vicidial_closer_log where uniqueid='$uniqueid' order by call_date desc limit 1;";
+							if ($DB) {echo "$stmt\n";}
+							$rslt=mysql_to_mysqli($stmt, $link);
+								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'60019',$user,$server_ip,$session_name,$one_mysql_log);}
+							$VDIDL_ct = mysqli_num_rows($rslt);
+							if ($VDIDL_ct > 0)
+								{
+								$row=mysqli_fetch_row($rslt);
+								$temp_group_id	=			$row[0];
+
+								$stmt = "SELECT custom_one,custom_two,custom_three,custom_four,custom_five from vicidial_inbound_groups where group_id='$temp_group_id' limit 1;";
+								if ($DB) {echo "$stmt\n";}
+								$rslt=mysql_to_mysqli($stmt, $link);
+									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'60020',$user,$server_ip,$session_name,$one_mysql_log);}
+								$VDIDL_ct = mysqli_num_rows($rslt);
+								if ($VDIDL_ct > 0)
+									{
+									$row=mysqli_fetch_row($rslt);
+									$ig_custom_one =		$row[0];
+									$ig_custom_two=			$row[1];
+									$ig_custom_three=		$row[2];
+									$ig_custom_four=		$row[3];
+									$ig_custom_five=		$row[4];
+									}
+								}
+							}
+
 						$stmt = "SELECT custom_one,custom_two,custom_three,custom_four,custom_five,full_name,user_group,email from vicidial_users where user='$user';";
 						if ($DB) {echo "$stmt\n";}
 						$rslt=mysql_to_mysqli($stmt, $link);
@@ -683,6 +789,11 @@ if ($match_found > 0)
 						$email_subject = preg_replace('/--A--user_custom_three--B--/i',"$user_custom_three",$email_subject);
 						$email_subject = preg_replace('/--A--user_custom_four--B--/i',"$user_custom_four",$email_subject);
 						$email_subject = preg_replace('/--A--user_custom_five--B--/i',"$user_custom_five",$email_subject);
+						$email_subject = preg_replace('/--A--camp_custom_one--B--/i',"$camp_custom_one",$email_subject);
+						$email_subject = preg_replace('/--A--camp_custom_two--B--/i',"$camp_custom_two",$email_subject);
+						$email_subject = preg_replace('/--A--camp_custom_three--B--/i',"$camp_custom_three",$email_subject);
+						$email_subject = preg_replace('/--A--camp_custom_four--B--/i',"$camp_custom_four",$email_subject);
+						$email_subject = preg_replace('/--A--camp_custom_five--B--/i',"$camp_custom_five",$email_subject);
 						$email_subject = preg_replace('/--A--user_group--B--/i',urlencode(trim($user_group)),$email_subject);
 						$email_subject = preg_replace('/--A--agent_email--B--/i',"$agent_email",$email_subject);
 						$email_subject = preg_replace('/--A--did_id--B--/i',"$DID_id",$email_subject);
@@ -695,14 +806,20 @@ if ($match_found > 0)
 						$email_subject = preg_replace('/--A--did_custom_three--B--/i',"$DID_custom_three",$email_subject);
 						$email_subject = preg_replace('/--A--did_custom_four--B--/i',"$DID_custom_four",$email_subject);
 						$email_subject = preg_replace('/--A--did_custom_five--B--/i',"$DID_custom_five",$email_subject);
+						$email_subject = preg_replace('/--A--ig_custom_one--B--/i',"$ig_custom_one",$email_subject);
+						$email_subject = preg_replace('/--A--ig_custom_two--B--/i',"$ig_custom_two",$email_subject);
+						$email_subject = preg_replace('/--A--ig_custom_three--B--/i',"$ig_custom_three",$email_subject);
+						$email_subject = preg_replace('/--A--ig_custom_four--B--/i',"$ig_custom_four",$email_subject);
+						$email_subject = preg_replace('/--A--ig_custom_five--B--/i',"$ig_custom_five",$email_subject);
 						$email_subject = preg_replace('/--A--uniqueid--B--/i',"$uniqueid",$email_subject);
 						$email_subject = preg_replace('/--A--group--B--/i',"$channel_group",$email_subject);
 						$email_subject = preg_replace('/--A--channel_group--B--/i',"$channel_group",$email_subject);
 						$email_subject = preg_replace('/--A--dialed_number--B--/i',"$dialed_number",$email_subject);
 						$email_subject = preg_replace('/--A--dialed_label--B--/i',"$dialed_label",$email_subject);
+						$email_subject = preg_replace('/--A--campaign--B--/i',"$campaign",$email_subject);
+						$email_subject = preg_replace('/--A--group_id--B--/i',"$temp_group_id",$email_subject);
 
 						# not currently active
-						$email_subject = preg_replace('/--A--campaign--B--/i',"$campaign",$email_subject);
 						$email_subject = preg_replace('/--A--phone_login--B--/i',"$phone_login",$email_subject);
 						$email_subject = preg_replace('/--A--customer_zap_channel--B--/i',"$customer_zap_channel",$email_subject);
 						$email_subject = preg_replace('/--A--customer_server_ip--B--/i',"$customer_server_ip",$email_subject);
@@ -780,6 +897,11 @@ if ($match_found > 0)
 						$email_body = preg_replace('/--A--user_custom_three--B--/i',"$user_custom_three",$email_body);
 						$email_body = preg_replace('/--A--user_custom_four--B--/i',"$user_custom_four",$email_body);
 						$email_body = preg_replace('/--A--user_custom_five--B--/i',"$user_custom_five",$email_body);
+						$email_body = preg_replace('/--A--camp_custom_one--B--/i',"$camp_custom_one",$email_body);
+						$email_body = preg_replace('/--A--camp_custom_two--B--/i',"$camp_custom_two",$email_body);
+						$email_body = preg_replace('/--A--camp_custom_three--B--/i',"$camp_custom_three",$email_body);
+						$email_body = preg_replace('/--A--camp_custom_four--B--/i',"$camp_custom_four",$email_body);
+						$email_body = preg_replace('/--A--camp_custom_five--B--/i',"$camp_custom_five",$email_body);
 						$email_body = preg_replace('/--A--user_group--B--/i',urlencode(trim($user_group)),$email_body);
 						$email_body = preg_replace('/--A--agent_email--B--/i',"$agent_email",$email_body);
 						$email_body = preg_replace('/--A--did_id--B--/i',"$DID_id",$email_body);
@@ -792,6 +914,11 @@ if ($match_found > 0)
 						$email_body = preg_replace('/--A--did_custom_three--B--/i',"$DID_custom_three",$email_body);
 						$email_body = preg_replace('/--A--did_custom_four--B--/i',"$DID_custom_four",$email_body);
 						$email_body = preg_replace('/--A--did_custom_five--B--/i',"$DID_custom_five",$email_body);
+						$email_body = preg_replace('/--A--ig_custom_one--B--/i',"$ig_custom_one",$email_body);
+						$email_body = preg_replace('/--A--ig_custom_two--B--/i',"$ig_custom_two",$email_body);
+						$email_body = preg_replace('/--A--ig_custom_three--B--/i',"$ig_custom_three",$email_body);
+						$email_body = preg_replace('/--A--ig_custom_four--B--/i',"$ig_custom_four",$email_body);
+						$email_body = preg_replace('/--A--ig_custom_five--B--/i',"$ig_custom_five",$email_body);
 						$email_body = preg_replace('/--A--uniqueid--B--/i',"$uniqueid",$email_body);
 						$email_body = preg_replace('/--A--call_notes--B--/i',"$call_notes",$email_body);
 						$email_body = preg_replace('/--A--additional_notes--B--/i',"$additional_notes",$email_body);
@@ -799,6 +926,8 @@ if ($match_found > 0)
 						$email_body = preg_replace('/--A--channel_group--B--/i',"$channel_group",$email_body);
 						$email_body = preg_replace('/--A--dialed_number--B--/i',"$dialed_number",$email_body);
 						$email_body = preg_replace('/--A--dialed_label--B--/i',"$dialed_label",$email_body);
+						$email_body = preg_replace('/--A--campaign--B--/i',"$campaign",$email_body);
+						$email_body = preg_replace('/--A--group_id--B--/i',"$temp_group_id",$email_body);
 						$email_body = urldecode($email_body);
 						}
 
@@ -809,6 +938,16 @@ if ($match_found > 0)
 						$email_to = preg_replace('/--A--email--B--/i',"$email",$email_to);
 						$email_to = preg_replace('/--A--customer_email--B--/i',"$email",$email_to);
 						$email_to = preg_replace('/--A--agent_email--B--/i',"$agent_email",$email_to);
+						$email_to = preg_replace('/--A--camp_custom_one--B--/i',"$camp_custom_one",$email_to);
+						$email_to = preg_replace('/--A--camp_custom_two--B--/i',"$camp_custom_two",$email_to);
+						$email_to = preg_replace('/--A--camp_custom_three--B--/i',"$camp_custom_three",$email_to);
+						$email_to = preg_replace('/--A--camp_custom_four--B--/i',"$camp_custom_four",$email_to);
+						$email_to = preg_replace('/--A--camp_custom_five--B--/i',"$camp_custom_five",$email_to);
+						$email_to = preg_replace('/--A--ig_custom_one--B--/i',"$ig_custom_one",$email_to);
+						$email_to = preg_replace('/--A--ig_custom_two--B--/i',"$ig_custom_two",$email_to);
+						$email_to = preg_replace('/--A--ig_custom_three--B--/i',"$ig_custom_three",$email_to);
+						$email_to = preg_replace('/--A--ig_custom_four--B--/i',"$ig_custom_four",$email_to);
+						$email_to = preg_replace('/--A--ig_custom_five--B--/i',"$ig_custom_five",$email_to);
 						$email_to = urldecode($email_to);
 						}
 
@@ -819,6 +958,16 @@ if ($match_found > 0)
 						$email_from = preg_replace('/--A--email--B--/i',"$email",$email_from);
 						$email_from = preg_replace('/--A--customer_email--B--/i',"$email",$email_from);
 						$email_from = preg_replace('/--A--agent_email--B--/i',"$agent_email",$email_from);
+						$email_from = preg_replace('/--A--camp_custom_one--B--/i',"$camp_custom_one",$email_from);
+						$email_from = preg_replace('/--A--camp_custom_two--B--/i',"$camp_custom_two",$email_from);
+						$email_from = preg_replace('/--A--camp_custom_three--B--/i',"$camp_custom_three",$email_from);
+						$email_from = preg_replace('/--A--camp_custom_four--B--/i',"$camp_custom_four",$email_from);
+						$email_from = preg_replace('/--A--camp_custom_five--B--/i',"$camp_custom_five",$email_from);
+						$email_from = preg_replace('/--A--ig_custom_one--B--/i',"$ig_custom_one",$email_from);
+						$email_from = preg_replace('/--A--ig_custom_two--B--/i',"$ig_custom_two",$email_from);
+						$email_from = preg_replace('/--A--ig_custom_three--B--/i',"$ig_custom_three",$email_from);
+						$email_from = preg_replace('/--A--ig_custom_four--B--/i',"$ig_custom_four",$email_from);
+						$email_from = preg_replace('/--A--ig_custom_five--B--/i',"$ig_custom_five",$email_from);
 						$email_from = urldecode($email_from);
 						}
 
@@ -844,6 +993,11 @@ if ($match_found > 0)
 						$email_display_name = preg_replace('/--A--user_custom_three--B--/i',"$user_custom_three",$email_display_name);
 						$email_display_name = preg_replace('/--A--user_custom_four--B--/i',"$user_custom_four",$email_display_name);
 						$email_display_name = preg_replace('/--A--user_custom_five--B--/i',"$user_custom_five",$email_display_name);
+						$email_display_name = preg_replace('/--A--camp_custom_one--B--/i',"$camp_custom_one",$email_display_name);
+						$email_display_name = preg_replace('/--A--camp_custom_two--B--/i',"$camp_custom_two",$email_display_name);
+						$email_display_name = preg_replace('/--A--camp_custom_three--B--/i',"$camp_custom_three",$email_display_name);
+						$email_display_name = preg_replace('/--A--camp_custom_four--B--/i',"$camp_custom_four",$email_display_name);
+						$email_display_name = preg_replace('/--A--camp_custom_five--B--/i',"$camp_custom_five",$email_display_name);
 						$email_display_name = preg_replace('/--A--did_description--B--/i',"$did_description",$email_display_name);
 						$email_display_name = preg_replace('/--A--did_carrier_description--B--/i',"$did_carrier_description",$email_display_name);
 						$email_display_name = preg_replace('/--A--did_custom_one--B--/i',"$did_custom_one",$email_display_name);
@@ -851,6 +1005,11 @@ if ($match_found > 0)
 						$email_display_name = preg_replace('/--A--did_custom_three--B--/i',"$did_custom_three",$email_display_name);
 						$email_display_name = preg_replace('/--A--did_custom_four--B--/i',"$did_custom_four",$email_display_name);
 						$email_display_name = preg_replace('/--A--did_custom_five--B--/i',"$did_custom_five",$email_display_name);
+						$email_display_name = preg_replace('/--A--ig_custom_one--B--/i',"$ig_custom_one",$email_display_name);
+						$email_display_name = preg_replace('/--A--ig_custom_two--B--/i',"$ig_custom_two",$email_display_name);
+						$email_display_name = preg_replace('/--A--ig_custom_three--B--/i',"$ig_custom_three",$email_display_name);
+						$email_display_name = preg_replace('/--A--ig_custom_four--B--/i',"$ig_custom_four",$email_display_name);
+						$email_display_name = preg_replace('/--A--ig_custom_five--B--/i',"$ig_custom_five",$email_display_name);
 						$email_display_name = urldecode($email_display_name);
 						}
 

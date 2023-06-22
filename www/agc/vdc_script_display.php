@@ -1,7 +1,7 @@
 <?php
 # vdc_script_display.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed display the contents of the SCRIPT tab in the agent interface
 #
@@ -46,10 +46,11 @@
 # 210825-0858 - Fix for security issue
 # 220219-0144 - Added allow_web_debug system setting
 # 220901-0849 - Added campaign user_group_script option
+# 230518-1046 - Added in-group and campaign custom fields 1-5, for script/webform/dispo-call-url use
 #
 
-$version = '2.14-40';
-$build = '220901-0849';
+$version = '2.14-41';
+$build = '230518-1046';
 $php_script = 'vdc_script_display.php';
 
 require_once("dbconnect_mysqli.php");
@@ -272,6 +273,26 @@ if (isset($_GET["user_group_script"]))			{$user_group_script=$_GET["user_group_s
 	elseif (isset($_POST["user_group_script"]))	{$user_group_script=$_POST["user_group_script"];}
 if (isset($_GET["UGscript_id"]))			{$UGscript_id=$_GET["UGscript_id"];}
 	elseif (isset($_POST["UGscript_id"]))	{$UGscript_id=$_POST["UGscript_id"];}
+if (isset($_GET["camp_custom_one"]))			{$camp_custom_one=$_GET["camp_custom_one"];}
+	elseif (isset($_POST["camp_custom_one"]))	{$camp_custom_one=$_POST["camp_custom_one"];}
+if (isset($_GET["camp_custom_two"]))			{$camp_custom_two=$_GET["camp_custom_two"];}
+	elseif (isset($_POST["camp_custom_two"]))	{$camp_custom_two=$_POST["camp_custom_two"];}
+if (isset($_GET["camp_custom_three"]))			{$camp_custom_three=$_GET["camp_custom_three"];}
+	elseif (isset($_POST["camp_custom_three"]))	{$camp_custom_three=$_POST["camp_custom_three"];}
+if (isset($_GET["camp_custom_four"]))			{$camp_custom_four=$_GET["camp_custom_four"];}
+	elseif (isset($_POST["camp_custom_four"]))	{$camp_custom_four=$_POST["camp_custom_four"];}
+if (isset($_GET["camp_custom_five"]))			{$camp_custom_five=$_GET["camp_custom_five"];}
+	elseif (isset($_POST["camp_custom_five"]))	{$camp_custom_five=$_POST["camp_custom_five"];}
+if (isset($_GET["ig_custom_one"]))				{$ig_custom_one=$_GET["ig_custom_one"];}
+	elseif (isset($_POST["ig_custom_one"]))		{$ig_custom_one=$_POST["ig_custom_one"];}
+if (isset($_GET["ig_custom_two"]))				{$ig_custom_two=$_GET["ig_custom_two"];}
+	elseif (isset($_POST["ig_custom_two"]))		{$ig_custom_two=$_POST["ig_custom_two"];}
+if (isset($_GET["ig_custom_three"]))			{$ig_custom_three=$_GET["ig_custom_three"];}
+	elseif (isset($_POST["ig_custom_three"]))	{$ig_custom_three=$_POST["ig_custom_three"];}
+if (isset($_GET["ig_custom_four"]))				{$ig_custom_four=$_GET["ig_custom_four"];}
+	elseif (isset($_POST["ig_custom_four"]))	{$ig_custom_four=$_POST["ig_custom_four"];}
+if (isset($_GET["ig_custom_five"]))				{$ig_custom_five=$_GET["ig_custom_five"];}
+	elseif (isset($_POST["ig_custom_five"]))	{$ig_custom_five=$_POST["ig_custom_five"];}
 
 $DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
@@ -484,6 +505,16 @@ if ($non_latin < 1)
 	$did_custom_four = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$did_custom_four);
 	$did_custom_five  = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$did_custom_five );
 	$UGscript_id = preg_replace("/[^-_0-9a-zA-Z]/",'-',$UGscript_id);
+	$camp_custom_one = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$camp_custom_one);
+	$camp_custom_two = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$camp_custom_two);
+	$camp_custom_three = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$camp_custom_three);
+	$camp_custom_four = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$camp_custom_four);
+	$camp_custom_five  = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$camp_custom_five );
+	$ig_custom_one = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$ig_custom_one);
+	$ig_custom_two = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$ig_custom_two);
+	$ig_custom_three = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$ig_custom_three);
+	$ig_custom_four = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$ig_custom_four);
+	$ig_custom_five  = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$ig_custom_five );
 	}
 else
 	{
@@ -517,6 +548,16 @@ else
 	$did_custom_four = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$did_custom_four);
 	$did_custom_five  = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$did_custom_five );
 	$UGscript_id = preg_replace("/[^-_0-9\p{L}]/u",'-',$UGscript_id);
+	$camp_custom_one = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$camp_custom_one);
+	$camp_custom_two = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$camp_custom_two);
+	$camp_custom_three = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$camp_custom_three);
+	$camp_custom_four = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$camp_custom_four);
+	$camp_custom_five  = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$camp_custom_five );
+	$ig_custom_one = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$ig_custom_one);
+	$ig_custom_two = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$ig_custom_two);
+	$ig_custom_three = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$ig_custom_three);
+	$ig_custom_four = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$ig_custom_four);
+	$ig_custom_five  = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$ig_custom_five );
 	}
 
 $auth=0;
@@ -664,6 +705,11 @@ if (preg_match("/iframe\ssrc/i",$script_text))
 		$user_custom_three = urlencode(trim($user_custom_three));
 		$user_custom_four = urlencode(trim($user_custom_four));
 		$user_custom_five = urlencode(trim($user_custom_five));
+		$camp_custom_one = urlencode(trim($camp_custom_one));
+		$camp_custom_two = urlencode(trim($camp_custom_two));
+		$camp_custom_three = urlencode(trim($camp_custom_three));
+		$camp_custom_four = urlencode(trim($camp_custom_four));
+		$camp_custom_five = urlencode(trim($camp_custom_five));
 		$preset_number_a = urlencode(trim($preset_number_a));
 		$preset_number_b = urlencode(trim($preset_number_b));
 		$preset_number_c = urlencode(trim($preset_number_c));
@@ -684,6 +730,11 @@ if (preg_match("/iframe\ssrc/i",$script_text))
 		$did_custom_three = urlencode(trim($did_custom_three));
 		$did_custom_four = urlencode(trim($did_custom_four));
 		$did_custom_five = urlencode(trim($did_custom_five));
+		$ig_custom_one = urlencode(trim($ig_custom_one));
+		$ig_custom_two = urlencode(trim($ig_custom_two));
+		$ig_custom_three = urlencode(trim($ig_custom_three));
+		$ig_custom_four = urlencode(trim($ig_custom_four));
+		$ig_custom_five = urlencode(trim($ig_custom_five));
 		$web_vars = urlencode(trim($web_vars));
 		}
 	else
@@ -752,6 +803,11 @@ if (preg_match("/iframe\ssrc/i",$script_text))
 		$user_custom_three = preg_replace('/\s/i','+',$user_custom_three);
 		$user_custom_four = preg_replace('/\s/i','+',$user_custom_four);
 		$user_custom_five = preg_replace('/\s/i','+',$user_custom_five);
+		$camp_custom_one = preg_replace('/\s/i','+',$camp_custom_one);
+		$camp_custom_two = preg_replace('/\s/i','+',$camp_custom_two);
+		$camp_custom_three = preg_replace('/\s/i','+',$camp_custom_three);
+		$camp_custom_four = preg_replace('/\s/i','+',$camp_custom_four);
+		$camp_custom_five = preg_replace('/\s/i','+',$camp_custom_five);
 		$preset_number_a = preg_replace('/\s/i','+',$preset_number_a);
 		$preset_number_b = preg_replace('/\s/i','+',$preset_number_b);
 		$preset_number_c = preg_replace('/\s/i','+',$preset_number_c);
@@ -772,6 +828,11 @@ if (preg_match("/iframe\ssrc/i",$script_text))
 		$did_custom_three = preg_replace('/\s/i','+',$did_custom_three);
 		$did_custom_four = preg_replace('/\s/i','+',$did_custom_four);
 		$did_custom_five = preg_replace('/\s/i','+',$did_custom_five);
+		$ig_custom_one = preg_replace('/\s/i','+',$ig_custom_one);
+		$ig_custom_two = preg_replace('/\s/i','+',$ig_custom_two);
+		$ig_custom_three = preg_replace('/\s/i','+',$ig_custom_three);
+		$ig_custom_four = preg_replace('/\s/i','+',$ig_custom_four);
+		$ig_custom_five = preg_replace('/\s/i','+',$ig_custom_five);
 		$web_vars = preg_replace('/\s/i','+',$web_vars);
 		}
 	}
@@ -843,6 +904,11 @@ $script_text = preg_replace('/--A--user_custom_two--B--/i',"$user_custom_two",$s
 $script_text = preg_replace('/--A--user_custom_three--B--/i',"$user_custom_three",$script_text);
 $script_text = preg_replace('/--A--user_custom_four--B--/i',"$user_custom_four",$script_text);
 $script_text = preg_replace('/--A--user_custom_five--B--/i',"$user_custom_five",$script_text);
+$script_text = preg_replace('/--A--camp_custom_one--B--/i',"$camp_custom_one",$script_text);
+$script_text = preg_replace('/--A--camp_custom_two--B--/i',"$camp_custom_two",$script_text);
+$script_text = preg_replace('/--A--camp_custom_three--B--/i',"$camp_custom_three",$script_text);
+$script_text = preg_replace('/--A--camp_custom_four--B--/i',"$camp_custom_four",$script_text);
+$script_text = preg_replace('/--A--camp_custom_five--B--/i',"$camp_custom_five",$script_text);
 $script_text = preg_replace('/--A--preset_number_a--B--/i',"$preset_number_a",$script_text);
 $script_text = preg_replace('/--A--preset_number_b--B--/i',"$preset_number_b",$script_text);
 $script_text = preg_replace('/--A--preset_number_c--B--/i',"$preset_number_c",$script_text);
@@ -869,6 +935,11 @@ $script_text = preg_replace('/--A--did_custom_two--B--/i',"$did_custom_two",$scr
 $script_text = preg_replace('/--A--did_custom_three--B--/i',"$did_custom_three",$script_text);
 $script_text = preg_replace('/--A--did_custom_four--B--/i',"$did_custom_four",$script_text);
 $script_text = preg_replace('/--A--did_custom_five--B--/i',"$did_custom_five",$script_text);
+$script_text = preg_replace('/--A--ig_custom_one--B--/i',"$ig_custom_one",$script_text);
+$script_text = preg_replace('/--A--ig_custom_two--B--/i',"$ig_custom_two",$script_text);
+$script_text = preg_replace('/--A--ig_custom_three--B--/i',"$ig_custom_three",$script_text);
+$script_text = preg_replace('/--A--ig_custom_four--B--/i',"$ig_custom_four",$script_text);
+$script_text = preg_replace('/--A--ig_custom_five--B--/i',"$ig_custom_five",$script_text);
 $script_text = preg_replace('/--A--LOGINvarONE--B--/i',"$LOGINvarONE",$script_text);
 $script_text = preg_replace('/--A--LOGINvarTWO--B--/i',"$LOGINvarTWO",$script_text);
 $script_text = preg_replace('/--A--LOGINvarTHREE--B--/i',"$LOGINvarTHREE",$script_text);

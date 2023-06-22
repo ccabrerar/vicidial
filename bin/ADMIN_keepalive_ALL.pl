@@ -163,9 +163,12 @@
 # 230331-2155 - Fix for issue #1458
 # 230412-1405 - Added daily rolling of vicidial_agent_notifications table, truncating of vicidial_agent_notifications_queue table
 # 230420-2321 - Added latency live agent detail updates and log rolling nightly
+# 230511-0825 - Added log_latency_gaps trigger, demographic_quotas trigger
+# 230524-2144 - Added weekday_resets
+# 230609-1137 - Added VIDPROMPTSPECIAL call menu In-Group dialplan entries
 #
 
-$build = '230420-2321';
+$build = '230609-1137';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -460,7 +463,7 @@ $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VA
 
 
 ##### Get the settings from system_settings #####
-$stmtA = "SELECT sounds_central_control_active,active_voicemail_server,custom_dialplan_entry,default_codecs,generate_cross_server_exten,voicemail_timezones,default_voicemail_timezone,call_menu_qualify_enabled,allow_voicemail_greeting,reload_timestamp,meetme_enter_login_filename,meetme_enter_leave3way_filename,allow_chats,enable_auto_reports,enable_drop_lists,expired_lists_inactive,sip_event_logging,call_quota_lead_ranking,inbound_answer_config FROM system_settings;";
+$stmtA = "SELECT sounds_central_control_active,active_voicemail_server,custom_dialplan_entry,default_codecs,generate_cross_server_exten,voicemail_timezones,default_voicemail_timezone,call_menu_qualify_enabled,allow_voicemail_greeting,reload_timestamp,meetme_enter_login_filename,meetme_enter_leave3way_filename,allow_chats,enable_auto_reports,enable_drop_lists,expired_lists_inactive,sip_event_logging,call_quota_lead_ranking,inbound_answer_config,log_latency_gaps,demographic_quotas,weekday_resets FROM system_settings;";
 #	print "$stmtA\n";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -487,6 +490,9 @@ if ($sthArows > 0)
 	$SSsip_event_logging =				$aryA[16];
 	$SScall_quota_lead_ranking =		$aryA[17];
 	$SSinbound_answer_config =			$aryA[18];
+	$SSlog_latency_gaps =				$aryA[19];
+	$SSdemographic_quotas =				$aryA[20];
+	$SSweekday_resets =					$aryA[21];
 	}
 $sthA->finish();
 if ($DBXXX > 0) {print "SYSTEM SETTINGS:     $sounds_central_control_active|$active_voicemail_server|$SScustom_dialplan_entry|$SSdefault_codecs\n";}
@@ -4064,6 +4070,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		$call_menu_options_ext = '';
 		$cm_invalid_set=0;
 		$cm_timeout_set=0;
+		$VIDSPECIAL_flag=0;
 		if ($DBX>0) {print "$sthArowsJ|$stmtA\n";}
 		while ($sthArowsJ > $j)
 			{
@@ -4220,16 +4227,25 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 					$IGvid_id_number_filename =	$IGoption_route_value_context[6];
 					$IGvid_confirm_filename =	$IGoption_route_value_context[7];
 					$IGvid_validate_digits =	$IGoption_route_value_context[8];
+					$IGvid_container =			$IGoption_route_value_context[9];
 
 					if ($dtmf_log[$i] > 0)
 						{$call_menu_line .= "exten => $option_value[$j],$PRI,AGI(cm.agi,$tracking_group[$i]-----$option_value[$j]-----$dtmf_field[$i]-----$alt_dtmf_log[$i]-----$question[$i])\n";   $PRI++;}
-					if ($option_route_value[$j] =~ /DYNAMIC_INGROUP_VAR/)
+					if ($IGhandle_method =~ /VIDPROMPTSPECIAL/) 
+						{
+						$call_menu_line .= "exten => $option_value[$j],$PRI,AGI(cm_VID_SPECIAL.agi,$IGhandle_method---$IGsearch_method---$IGlist_id---$IGphone_code---$IGcampaign_id---$IGvid_enter_filename---$IGvid_id_number_filename---$IGvid_confirm_filename---$IGvid_validate_digits---$IGvid_container)\n";   $PRI++;
+						$VIDSPECIAL_flag++;
+						}
+					else
+						{
+						if ($option_route_value[$j] =~ /DYNAMIC_INGROUP_VAR/) 
 						{
 						$call_menu_line .= "exten => $option_value[$j],$PRI,AGI(agi-VDAD_ALL_inbound.agi,$IGhandle_method-----$IGsearch_method-----\$\{ingroupvar\}-----$menu_id[$i]--------------------$IGlist_id-----$IGphone_code-----$IGcampaign_id---------------$IGvid_enter_filename-----$IGvid_id_number_filename-----$IGvid_confirm_filename-----$IGvid_validate_digits)\n";   $PRI++;
 						}
 					else
 						{
 						$call_menu_line .= "exten => $option_value[$j],$PRI,AGI(agi-VDAD_ALL_inbound.agi,$IGhandle_method-----$IGsearch_method-----$option_route_value[$j]-----$menu_id[$i]--------------------$IGlist_id-----$IGphone_code-----$IGcampaign_id---------------$IGvid_enter_filename-----$IGvid_id_number_filename-----$IGvid_confirm_filename-----$IGvid_validate_digits)\n";   $PRI++;
+						}
 						}
 					$call_menu_line .= "exten => $option_value[$j],$PRI,Hangup()\n";
 					}
@@ -4460,6 +4476,12 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		$call_menu_ext .= "\n";
 		$call_menu_ext .= "$call_menu_options_ext";
 		$call_menu_ext .= "\n";
+
+		if ($VIDSPECIAL_flag > 0) 
+			{
+			$call_menu_ext .= "exten => A1B1C123,1,AGI(agi-VDAD_ALL_inbound.agi,CLOSER-----\$\{igsearchmethod\}-----\$\{ingroupvar\}-----$menu_id[$i]--------------------\$\{iglistid\}-----\$\{igphonecode\}-----\$\{igcampaignid\}------------------------------)\n";   $PRI++;
+			$call_menu_ext .= "exten => A2B2C234,1,AGI(agi-VDAD_ALL_inbound.agi,CID-----\$\{igsearchmethod\}-----\$\{ingroupvar\}-----$menu_id[$i]--------------------\$\{iglistid\}-----\$\{igphonecode\}-----\$\{igcampaignid\}----------\$\{igvendorid\}--------------------)\n";   $PRI++;
+			}
 
 		if (length($call_menu_timeout_ext) < 1)
 			{
@@ -5557,10 +5579,58 @@ if ( ($active_voicemail_server =~ /$server_ip/) && ((length($active_voicemail_se
 			}
 		$i++;
 		}
+
+	# trigger the latency gaps logging process if enabled
+	if ($SSlog_latency_gaps > 0) 
+		{
+		$LL_email='';
+		if ($SSlog_latency_gaps < 2) 
+			{$LL_email='--email-gaps-notice';}
+		if ($DB) {print "running agent latency gaps logging process...\n";}
+		`/usr/bin/screen -d -m -S Gaps$reset_test $PATHhome/AST_latency_gaps.pl -q --container=AGENT_LATENCY_LOGGING --live $LL_email 2>/dev/null 1>&2`;
+		}
 	}
 ################################################################################
 #####  END latency log live agent details updates
 ################################################################################
+
+
+
+
+################################################################################
+#####  START launch Demographic Quotas process, if enabled on any active campaigns
+################################################################################
+# only run this on active voicemail server
+if ( ($active_voicemail_server =~ /$server_ip/) && ((length($active_voicemail_server)) eq (length($server_ip))) && ($SSdemographic_quotas > 0) )
+	{
+	##### look for active campaigns with DQ enabled on them #####
+	$demographic_quotas=0;
+	$stmtA = "SELECT count(*) FROM vicidial_campaigns where active='Y' and demographic_quotas='ENABLED';";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($DBX) {print "$sthArows|$stmtA|\n";}
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$demographic_quotas =		$aryA[0];
+		}
+	$sthA->finish();
+
+	if ($demographic_quotas > 0) 
+		{
+		if ($DB) {print "Demographic Quotas campaigns enabled on this system, launching process: $demographic_quotas \n";}
+		`/usr/bin/screen -d -m -S DQrun$reset_test $PATHhome/AST_VDdemographic_quotas.pl 2>/dev/null 1>&2`;
+		}
+	else
+		{
+		if ($DB) {print "No Demographic Quotas campaigns enabled on this system: $demographic_quotas \n";}
+		}
+	}
+################################################################################
+#####  START launch Demographic Quotas process, if enabled on any active campaigns
+################################################################################
+
 
 
 
@@ -5915,7 +5985,7 @@ if ($AST_VDadapt > 0)
 		}
 	$sthA->finish();
 
-	if ($DBX) {print "RESET LIST:   $i|$reset_test";}
+	if ($DBX) {print "RESET LIST:   $i|$reset_test\n";}
 
 	$i=0;
 	while ($sthBrows > $i)
@@ -5936,7 +6006,7 @@ if ($AST_VDadapt > 0)
 
 			$stmtA="INSERT INTO vicidial_admin_log set event_date='$now_date', user='VDAD', ip_address='1.1.1.1', event_section='LISTS', event_type='RESET', record_id='$list_id[$i]', event_code='ADMIN RESET LIST', event_sql=\"$SQL_log\", event_notes='$affected_rowsB leads reset, list resets today: $resets_today[$i]';";
 			$Iaffected_rows = $dbhA->do($stmtA);
-			if ($DB) {print "FINISHED:   $affected_rows|$Iaffected_rows|$stmtA";}
+			if ($DB) {print "FINISHED:   $affected_rows|$Iaffected_rows|$stmtA\n";}
 			}
 		else
 			{
@@ -5944,11 +6014,114 @@ if ($AST_VDadapt > 0)
 
 			$stmtA="INSERT INTO vicidial_admin_log set event_date='$now_date', user='VDAD', ip_address='1.1.1.1', event_section='LISTS', event_type='RESET', record_id='$list_id[$i]', event_code='ADMIN RESET LIST FAILED', event_sql=\"Reset Limit Reached $daily_reset_limit[$i] / $resets_today[$i]\", event_notes='Reset failed';";
 			$Iaffected_rows = $dbhA->do($stmtA);
-			if ($DB) {print "FINISHED:   $affected_rows|$Iaffected_rows|$stmtA";}
+			if ($DB) {print "FINISHED:   $affected_rows|$Iaffected_rows|$stmtA\n";}
 			}
 
 		$i++;
 		}
+
+	##### BEGIN Check weekday_resets #####
+	if ($SSweekday_resets > 0) 
+		{
+		$weekday_resets_ct=0;
+		$stmtA = "SELECT list_id,daily_reset_limit,resets_today,weekday_resets_container FROM vicidial_lists where weekday_resets_container NOT IN('','DISABLED');";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthBrows=$sthA->rows;
+		$i=0;
+		while ($sthBrows > $i)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$L_list_id[$i] =					$aryA[0];
+			$L_daily_reset_limit[$i] = 			$aryA[1];
+			$L_resets_today[$i] = 				$aryA[2];
+			$L_weekday_resets_container[$i] = 	$aryA[3];
+			$i++;
+			}
+		$sthA->finish();
+
+		if ($DBX) {print "WEEKDAY RESET LISTS TO CHECK:   $i\n";}
+
+		$i=0;
+		while ($sthBrows > $i)
+			{
+			if ( ($L_daily_reset_limit[$i] > $L_resets_today[$i]) || ($L_daily_reset_limit[$i] < 0) ) 
+				{
+				### list resets not over limit, check the settings container to see if we should reset the list
+				$reset_this_list=0;
+				$stmtA = "SELECT container_entry FROM vicidial_settings_containers where container_id='$L_weekday_resets_container[$i]';";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthSCrows=$sthA->rows;
+				if ($DB) {print "Checking Weekday Reset Container for list ID: $L_list_id[$i] - |$sthSCrows|$stmtA|\n";}
+				if ($sthSCrows > 0)
+					{
+					@aryA = $sthA->fetchrow_array;
+					$TEMPcontainer_entry = $aryA[0];
+					$TEMPcontainer_entry =~ s/\\//gi;
+					if (length($TEMPcontainer_entry) > 5) 
+						{
+						@container_lines = split(/\n/,$TEMPcontainer_entry);
+						$c=0;
+						foreach(@container_lines)
+							{
+							$container_lines[$c] =~ s/;.*|\r|\t| //gi;
+							if (length($container_lines[$c]) > 5)
+								{
+								# define call_quota_run_time settings
+								if ( ($wday eq '1') && ($container_lines[$c] =~ /^monday/i) && ($container_lines[$c] =~ /$reset_test/) )
+									{$reset_this_list++;   print "   DB: List monday reset found: $i|$c|$container_lines[$c]|$reset_test|$wday|\n";}
+								if ( ($wday eq '2') && ($container_lines[$c] =~ /^tuesday/i) && ($container_lines[$c] =~ /$reset_test/) )
+									{$reset_this_list++;   print "   DB: List tuesday reset found: $i|$c|$container_lines[$c]|$reset_test|$wday|\n";}
+								if ( ($wday eq '3') && ($container_lines[$c] =~ /^wednesday/i) && ($container_lines[$c] =~ /$reset_test/) )
+									{$reset_this_list++;   print "   DB: List wednesday reset found: $i|$c|$container_lines[$c]|$reset_test|$wday|\n";}
+								if ( ($wday eq '4') && ($container_lines[$c] =~ /^thursday/i) && ($container_lines[$c] =~ /$reset_test/) )
+									{$reset_this_list++;   print "   DB: List thursday reset found: $i|$c|$container_lines[$c]|$reset_test|$wday|\n";}
+								if ( ($wday eq '5') && ($container_lines[$c] =~ /^friday/i) && ($container_lines[$c] =~ /$reset_test/) )
+									{$reset_this_list++;   print "   DB: List friday reset found: $i|$c|$container_lines[$c]|$reset_test|$wday|\n";}
+								if ( ($wday eq '6') && ($container_lines[$c] =~ /^saturday/i) && ($container_lines[$c] =~ /$reset_test/) )
+									{$reset_this_list++;   print "   DB: List saturday reset found: $i|$c|$container_lines[$c]|$reset_test|$wday|\n";}
+								if ( ($wday eq '0') && ($container_lines[$c] =~ /^sunday/i) && ($container_lines[$c] =~ /$reset_test/) )
+									{$reset_this_list++;   print "   DB: List sunday reset found: $i|$c|$container_lines[$c]|$reset_test|$wday|\n";}
+								}
+							$c++;
+							}
+						}
+					}
+				$sthA->finish();
+
+				if ($reset_this_list > 0) 
+					{
+					$stmtA="UPDATE vicidial_lists set resets_today=(resets_today + 1) where list_id='$L_list_id[$i]';";
+					$affected_rows = $dbhA->do($stmtA);
+
+					$stmtB="UPDATE vicidial_list set called_since_last_reset='N' where list_id='$L_list_id[$i]';";
+					$affected_rowsB = $dbhA->do($stmtB);
+
+					$SQL_log = "$stmtA|$stmtB|";
+					$SQL_log =~ s/;|\\|\'|\"//gi;
+					$L_resets_today[$i] = ($L_resets_today[$i] + 1);
+
+					if ($DB) {print "List Weekday Reset DONE: $L_list_id[$i]($affected_rows|$affected_rowsB)\n";}
+
+					$stmtA="INSERT INTO vicidial_admin_log set event_date='$now_date', user='VDAD', ip_address='1.1.1.1', event_section='LISTS', event_type='RESET', record_id='$L_list_id[$i]', event_code='ADMIN RESET LIST', event_sql=\"$SQL_log\", event_notes='$affected_rowsB leads reset, list resets today: $L_resets_today[$i], weekday reset';";
+					$Iaffected_rows = $dbhA->do($stmtA);
+					if ($DB) {print "FINISHED:   $affected_rows|$Iaffected_rows|$stmtA";}
+					}
+				else
+					{
+					if ($DBX) {print "List No Weekday Reset found: $L_list_id[$i]|$L_weekday_resets_container[$i] \n";}
+					}
+				}
+			else
+				{
+				if ($DBX) {print "List Reset Over Limit: $L_list_id[$i](Reset Limit $L_daily_reset_limit[$i] / $L_resets_today[$i])\n";}
+				}
+			$i++;
+			}
+		if ($DB) {print "Weekday resets complete: $weekday_resets_ct/$i \n";}
+		}
+	##### END Check weekday_resets #####
 
 	### set expired lists to inactive, only run at 12 minutes past the hour
 	if ( ($SSexpired_lists_inactive > 0) && ($min =~ /12/) )

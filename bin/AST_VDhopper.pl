@@ -106,10 +106,11 @@
 # 210718-0343 - Fixes for 24-Hour Call Count Limits with standard Auto-Alt-Dialing
 # 210719-1519 - Added additional state override methods for call_limit_24hour
 # 220822-0938 - Change DNC check queries to put phone_number in double-quotes instead of single-quotes
+# 230428-2017 - Added demographic_quotas code
 #
 
 # constants
-$build = '220822-0938';
+$build = '230428-2017';
 $script='AST_VDhopper';
 $DB=0;  # Debug flag, set to 0 for no debug messages. Can be overriden with CLI --debug flag
 $US='__';
@@ -117,6 +118,7 @@ $MT[0]='';
 #$vicidial_hopper='TEST_vicidial_hopper';	# for testing only
 $vicidial_hopper='vicidial_hopper';
 $count_only=0;
+$run_check=0;
 
 # options
 $insert_auto_CB_to_hopper	= 1; # set to 1 to automatically insert ANYONE callbacks into the hopper, default = 1
@@ -202,6 +204,7 @@ if (length($ARGV[0])>1)
 		print "  [--help] = this screen\n";
 		print "  [--version] = print version of this script, then exit\n";
 		print "  [--count-only] = only display the number of leads in the hopper, then exit\n";
+		print "  [--run-check] = concurrency check, exit if already running\n";
 		print "  [--debug] = debug\n";
 		print "  [--debugX] = super debug\n";
 		print "  [--dbgmt] = show GMT offset of records as they are inserted into hopper\n";
@@ -281,11 +284,31 @@ if (length($ARGV[0])>1)
 			{
 			$count_only=1;
 			}
+		if ($args =~ /--run-check/i)
+			{
+			$run_check=1;
+			if ($DB) {print "\n----- CONCURRENCY CHECK -----\n\n";}
+			}
 		}
 	}
 else
 	{
 	print "no command line options set\n";
+	}
+
+### concurrency check (hopper runs should be unique)
+if ($run_check > 0)
+	{
+	my $grepout = `/bin/ps ax | grep $0 | grep -v grep | grep -v '/bin/sh'`;
+	my $grepnum=0;
+	$grepnum++ while ($grepout =~ m/\n/g);
+	if ($grepnum > 1)
+		{
+		if ($DB) {print "I am not alone! Another $0 is running! Exiting...\n";}
+		$event_string = "I am not alone! Another $0 is running! Exiting...";
+		&event_logger;
+		exit 1;
+		}
 	}
 
 # default path to astguiclient configuration file:
@@ -1254,11 +1277,11 @@ $ANY_hopper_vlc_dup_check='N';
 
 if (length($CLIcampaign)>1)
 	{
-	$stmtA = "SELECT campaign_id,lead_order,hopper_level,auto_dial_level,local_call_time,lead_filter_id,use_internal_dnc,dial_method,available_only_ratio_tally,adaptive_dropped_percentage,adaptive_maximum_level,dial_statuses,list_order_mix,use_campaign_dnc,drop_lockout_time,no_hopper_dialing,auto_alt_dial_statuses,dial_timeout,auto_hopper_multi,use_auto_hopper,auto_trim_hopper,lead_order_randomize,lead_order_secondary,call_count_limit,hopper_vlc_dup_check,use_other_campaign_dnc,callback_dnc,hopper_drop_run_trigger,daily_call_count_limit,daily_limit_manual,call_limit_24hour_method,call_limit_24hour_scope,call_limit_24hour,call_limit_24hour_override from vicidial_campaigns where campaign_id IN('$CLIcampaign');";
+	$stmtA = "SELECT campaign_id,lead_order,hopper_level,auto_dial_level,local_call_time,lead_filter_id,use_internal_dnc,dial_method,available_only_ratio_tally,adaptive_dropped_percentage,adaptive_maximum_level,dial_statuses,list_order_mix,use_campaign_dnc,drop_lockout_time,no_hopper_dialing,auto_alt_dial_statuses,dial_timeout,auto_hopper_multi,use_auto_hopper,auto_trim_hopper,lead_order_randomize,lead_order_secondary,call_count_limit,hopper_vlc_dup_check,use_other_campaign_dnc,callback_dnc,hopper_drop_run_trigger,daily_call_count_limit,daily_limit_manual,call_limit_24hour_method,call_limit_24hour_scope,call_limit_24hour,call_limit_24hour_override,demographic_quotas,demographic_quotas_container from vicidial_campaigns where campaign_id IN('$CLIcampaign');";
 	}
 else
 	{
-	$stmtA = "SELECT campaign_id,lead_order,hopper_level,auto_dial_level,local_call_time,lead_filter_id,use_internal_dnc,dial_method,available_only_ratio_tally,adaptive_dropped_percentage,adaptive_maximum_level,dial_statuses,list_order_mix,use_campaign_dnc,drop_lockout_time,no_hopper_dialing,auto_alt_dial_statuses,dial_timeout,auto_hopper_multi,use_auto_hopper,auto_trim_hopper,lead_order_randomize,lead_order_secondary,call_count_limit,hopper_vlc_dup_check,use_other_campaign_dnc,callback_dnc,hopper_drop_run_trigger,daily_call_count_limit,daily_limit_manual,call_limit_24hour_method,call_limit_24hour_scope,call_limit_24hour,call_limit_24hour_override from vicidial_campaigns where active='Y';";
+	$stmtA = "SELECT campaign_id,lead_order,hopper_level,auto_dial_level,local_call_time,lead_filter_id,use_internal_dnc,dial_method,available_only_ratio_tally,adaptive_dropped_percentage,adaptive_maximum_level,dial_statuses,list_order_mix,use_campaign_dnc,drop_lockout_time,no_hopper_dialing,auto_alt_dial_statuses,dial_timeout,auto_hopper_multi,use_auto_hopper,auto_trim_hopper,lead_order_randomize,lead_order_secondary,call_count_limit,hopper_vlc_dup_check,use_other_campaign_dnc,callback_dnc,hopper_drop_run_trigger,daily_call_count_limit,daily_limit_manual,call_limit_24hour_method,call_limit_24hour_scope,call_limit_24hour,call_limit_24hour_override,demographic_quotas,demographic_quotas_container from vicidial_campaigns where active='Y';";
 	}
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -1304,8 +1327,12 @@ while ($sthArows > $rec_count)
 	$call_limit_24hour_scope[$rec_count] =		$aryA[31];
 	$call_limit_24hour[$rec_count] =			$aryA[32];
 	$call_limit_24hour_override[$rec_count] =	$aryA[33];
+	$demographic_quotas[$rec_count] =			$aryA[34];
+	$demographic_quotas_container[$rec_count] =	$aryA[35];
+	$demographic_quotasSQL[$rec_count] =		'';
 
-
+	if ( ($demographic_quotas[$rec_count] =~ /ENABLED|COMPLETE/) && ( (length($demographic_quotas_container[$rec_count]) > 0) && ($demographic_quotas_container[$rec_count] !~ /DISABLED/) ) ) 
+		{$demographic_quotasSQL[$rec_count] = "and rank!='-9999'";}
 	if ($hopper_vlc_dup_check[$rec_count] =~ /Y/)
 		{$ANY_hopper_vlc_dup_check = 'Y';}
 
@@ -2903,12 +2930,12 @@ foreach(@campaign_id)
 		##### Get count of leads that are dialable #####
 		if ($list_order_mix[$i] =~ /DISABLED/)
 			{
-			$stmtA = "SELECT count(*) FROM vicidial_list $VLforce_index where $cslrSQL status IN($STATUSsql[$i]) and ($list_id_sql[$i]) and ($all_gmtSQL[$i]) $lead_filter_sql[$i] $DLTsql[$i] $CCLsql[$i];";
+			$stmtA = "SELECT count(*) FROM vicidial_list $VLforce_index where $cslrSQL status IN($STATUSsql[$i]) and ($list_id_sql[$i]) and ($all_gmtSQL[$i]) $lead_filter_sql[$i] $DLTsql[$i] $CCLsql[$i] $demographic_quotasSQL[$i];";
 			}
 		else
 			{
 			if (length($list_mix_dialableSQL)<3) {$list_mix_dialableSQL="called_count < 0";}
-			$stmtA = "SELECT count(*) FROM vicidial_list $VLforce_index where $cslrSQL ($list_mix_dialableSQL) and ($all_gmtSQL[$i]) $lead_filter_sql[$i] $DLTsql[$i] $CCLsql[$i];";
+			$stmtA = "SELECT count(*) FROM vicidial_list $VLforce_index where $cslrSQL ($list_mix_dialableSQL) and ($all_gmtSQL[$i]) $lead_filter_sql[$i] $DLTsql[$i] $CCLsql[$i] $demographic_quotasSQL[$i];";
 			}
 			if ($DBX) {print "     |$stmtA|\n";}
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
@@ -2926,7 +2953,7 @@ foreach(@campaign_id)
 
 		if ( ($lead_order[$i] =~ / 2nd NEW$| 3rd NEW$| 4th NEW$| 5th NEW$| 6th NEW$/) && ($list_order_mix[$i] =~ /DISABLED/) )
 			{
-			$stmtA = "SELECT count(*) FROM vicidial_list $VLforce_index where $cslrSQL status IN('NEW') and ($list_id_sql[$i]) and ($all_gmtSQL[$i]) $lead_filter_sql[$i] $DLTsql[$i];";
+			$stmtA = "SELECT count(*) FROM vicidial_list $VLforce_index where $cslrSQL status IN('NEW') and ($list_id_sql[$i]) and ($all_gmtSQL[$i]) $lead_filter_sql[$i] $DLTsql[$i] $demographic_quotasSQL[$i];";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
@@ -3074,7 +3101,7 @@ foreach(@campaign_id)
 					if ($hopper_vlc_dup_check[$i] =~ /Y/) 
 						{$vlc_dup_check_SQL = "and vendor_lead_code NOT IN($live_vlc$vlc_lists)";}
 
-					$stmtA = "SELECT lead_id,list_id,gmt_offset_now,phone_number,state,status,modify_date,user,vendor_lead_code,phone_code,postal_code FROM vicidial_list $VLforce_index where $recycle_SQL[$i] and ($list_id_sql[$i]) and lead_id NOT IN($lead_id_lists) $vlc_dup_check_SQL and ($all_gmtSQL[$i]) $lead_filter_sql[$i] $CCLsql[$i] $DLTsql[$i] $dnc_blocked_lists_SQL $order_stmt limit $hopper_level[$i];";
+					$stmtA = "SELECT lead_id,list_id,gmt_offset_now,phone_number,state,status,modify_date,user,vendor_lead_code,phone_code,postal_code FROM vicidial_list $VLforce_index where $recycle_SQL[$i] and ($list_id_sql[$i]) and lead_id NOT IN($lead_id_lists) $vlc_dup_check_SQL and ($all_gmtSQL[$i]) $lead_filter_sql[$i] $CCLsql[$i] $DLTsql[$i] $demographic_quotasSQL[$i] $dnc_blocked_lists_SQL $order_stmt limit $hopper_level[$i];";
 					if ($DBX) {print "     |$stmtA|\n";}
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -3135,7 +3162,7 @@ foreach(@campaign_id)
 					if ($hopper_vlc_dup_check[$i] =~ /Y/) 
 						{$vlc_dup_check_SQL = "and vendor_lead_code NOT IN($live_vlc$vlc_lists)";}
 
-					$stmtA = "SELECT lead_id,list_id,gmt_offset_now,phone_number,state,status,modify_date,user,vendor_lead_code,phone_code,postal_code FROM vicidial_list $VLforce_index where $cslrSQL status IN('NEW') and ($list_id_sql[$i]) and lead_id NOT IN($lead_id_lists) $vlc_dup_check_SQL and ($all_gmtSQL[$i]) $lead_filter_sql[$i] $CCLsql[$i] $DLTsql[$i] $dnc_blocked_lists_SQL $order_stmt limit $NEW_level;";
+					$stmtA = "SELECT lead_id,list_id,gmt_offset_now,phone_number,state,status,modify_date,user,vendor_lead_code,phone_code,postal_code FROM vicidial_list $VLforce_index where $cslrSQL status IN('NEW') and ($list_id_sql[$i]) and lead_id NOT IN($lead_id_lists) $vlc_dup_check_SQL and ($all_gmtSQL[$i]) $lead_filter_sql[$i] $CCLsql[$i] $DLTsql[$i] $demographic_quotasSQL[$i] $dnc_blocked_lists_SQL $order_stmt limit $NEW_level;";
 					if ($DBX) {print "     |$stmtA|\n";}
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -3194,7 +3221,7 @@ foreach(@campaign_id)
 
 					if ($list_order_mix[$i] =~ /DISABLED/)
 						{
-						$stmtA = "SELECT lead_id,list_id,gmt_offset_now,phone_number,state,status,modify_date,user,vendor_lead_code,phone_code,postal_code FROM vicidial_list $VLforce_index where $cslrSQL status IN($STATUSsql[$i]) and ($list_id_sql[$i]) and lead_id NOT IN($lead_id_lists) $vlc_dup_check_SQL and ($all_gmtSQL[$i]) $lead_filter_sql[$i] $CCLsql[$i] $DLTsql[$i] $dnc_blocked_lists_SQL $order_stmt limit $OTHER_level;";
+						$stmtA = "SELECT lead_id,list_id,gmt_offset_now,phone_number,state,status,modify_date,user,vendor_lead_code,phone_code,postal_code FROM vicidial_list $VLforce_index where $cslrSQL status IN($STATUSsql[$i]) and ($list_id_sql[$i]) and lead_id NOT IN($lead_id_lists) $vlc_dup_check_SQL and ($all_gmtSQL[$i]) $lead_filter_sql[$i] $CCLsql[$i] $DLTsql[$i] $demographic_quotasSQL[$i] $dnc_blocked_lists_SQL $order_stmt limit $OTHER_level;";
 						if ($DBX) {print "     |$stmtA|\n";}
 						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -3303,7 +3330,7 @@ foreach(@campaign_id)
 							if ($hopper_vlc_dup_check[$i] =~ /Y/) 
 								{$vlc_dup_check_SQL = "and vendor_lead_code NOT IN($live_vlc$vlc_lists)";}
 
-							$stmtA = "SELECT lead_id,list_id,gmt_offset_now,phone_number,state,status,modify_date,user,vendor_lead_code,phone_code,postal_code FROM vicidial_list $VLforce_index where $cslrSQL ($list_mix_dialableSQL) and lead_id NOT IN($lead_id_lists) $vlc_dup_check_SQL and ($all_gmtSQL[$i]) $lead_filter_sql[$i] $CCLsql[$i] $DLTsql[$i] $dnc_blocked_lists_SQL $order_stmt limit $LM_step_goal[$x];";
+							$stmtA = "SELECT lead_id,list_id,gmt_offset_now,phone_number,state,status,modify_date,user,vendor_lead_code,phone_code,postal_code FROM vicidial_list $VLforce_index where $cslrSQL ($list_mix_dialableSQL) and lead_id NOT IN($lead_id_lists) $vlc_dup_check_SQL and ($all_gmtSQL[$i]) $lead_filter_sql[$i] $CCLsql[$i] $DLTsql[$i] $demographic_quotasSQL[$i] $dnc_blocked_lists_SQL $order_stmt limit $LM_step_goal[$x];";
 							if ($DBX) {print "     |$stmtA|\n";}
 							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -3673,7 +3700,7 @@ if($DB)
 
 	if (!$q) {print "DONE. Script execution time in seconds: $secZ\n";}
 	}
-exit;
+exit 0;
 
 
 ##### SUBROUTINES #####

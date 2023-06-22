@@ -1,4 +1,4 @@
-AGENT SCREEN LOGGING		Started: 2023-04-20	Updated: 2023-04-21
+AGENT SCREEN LOGGING		Started: 2023-04-20	Updated: 2023-05-08
 
 
 
@@ -10,6 +10,7 @@ Agent Screen Usage Logging Items:
 - Agent IP Addresses		Viewable in the User Stats page and the User Logins Report and others
 - Agent Screen Visibility	Viewable in the User Stats page
 - Agent Screen Latency		Viewable in the Real-Time Report, the Agent Latency Report and the Agent Debug Log Report
+- Agent Screen Latency Gaps	Viewable in the Agent Latency Report and the Latency Gaps Report, email alerts also available
 - Agent Screen Debug		Viewable in the Agent Debug Log Report
 
 
@@ -50,6 +51,13 @@ On the back-end, the 'vicidial_agent_latency_log' database table stores the per-
 
 
 
+AGENT SCREEN LATENCY GAPS:
+
+This metric is derived from the agent screen latency logging. There is a back-end script "AST_latency_gaps.pl" that is run every minute, on the active voicemail server in a cluster, that will analyze the latency logs for all logged-in agents and log the gaps that happen within those logs in real-time. The above script can also send out email alerts as soon as the gaps are detected and those emails can be segregated by User Group as well. There is also the option to send an End-of-Day email with a list of all of the gaps that have happened for that day. For more informaiton on how to configure the "AST_latency_gaps.pl" script, see the named section below. The latency gaps information can also be viewed in the Latency Gaps Report available in the Admin Utilities page.
+
+
+
+
 AGENT SCREEN DEBUG:
 
 This metric is really a collection of all of the available agent screen debug data put together. This metric is not enabled by default, to use it you need to enable the "Agent Screen Debug Logging" option in System Settings. The data that is collected is only stored on your system for 7 days.
@@ -58,6 +66,47 @@ The "Agent Debug Log Report" will show all of this data, including the back-end 
 
 
 
+
+
+
+
+CONFIGURING THE "AST_latency_gaps.pl" SCRIPT:
+
+This script is run every minute on the active voicemail server in your cluster to analyze the latency log gaps for logged-in agents. This script required a Settings Container to run(added by default: 'AGENT_LATENCY_LOGGING'). If you would like to use the End-of-Day email feature, you can set up an additional Settings Container with only those settings in it and then use that as a crontab entry on one of the servers in your cluster.
+
+As for the options available in the AGENT_LATENCY_LOGGING container:
+(All settings below are optional except for 'minimum_gap')
+
+minimum_gap		The minimum gap in agent latency log entries before a gap will be logged. We suggest 30 seconds, should be 10 of higher.
+email_sender		The email address that the alert emails will be sent from
+email_list		The list of email addresses that the alert emails will be sent to, if more than one separate by commas
+email_subject		The subject of the alert emails
+group01_groups		Segregated alert emails by User Group, if more than one separate by commas, can add multiple groups, increment number by 1
+group01_email		Email list for the above group of user group alerts, can add multiple groups, increment number by 1
+day_end_email_list	For the End-of-Day process, the list of email addresses that the alert emails will be sent to
+day_end_email_subject	For the End-of-Day process, the subject of the end-of-day emails
+day_end_minimum_gap	For the End-of-Day process, the minimum gap in agent latency log entries that will be sent in the email, must be equal to or greater than minimum_gap
+day_end_hours		For the End-of-Day process, the number of hours into the past to gather latency gaps from
+day_end_groups		For the End-of-Day process, the user groups to gather gaps from, if more than one separate by commas
+
+
+Here is an example Settings Container for the "AST_latency_gaps.pl" script:
+
+minimum_gap => 10
+email_sender => vicidial@gmail.com
+email_list => info@vicidial.com,support@vicidial.com
+email_subject => Agent Latency Gap Detected
+group01_groups => ADMIN,AGENTS
+group01_email => vicidial@gmail.com
+group02_groups => SUPPORT
+group02_email => support@vicidial.com
+group03_groups => SALES
+group03_email => info@vicidial.com
+day_end_email_list => info@vicidial.com
+day_end_email_subject => Day-End Agent Latency Gaps Report
+day_end_minimum_gap => 11
+day_end_hours => 16
+day_end_groups => ADMIN,AGENTS
 
 
 

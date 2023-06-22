@@ -1,7 +1,7 @@
 <?php 
 # AST_agentDIDstats.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -10,6 +10,7 @@
 # 170829-0040 - Added screen color settings
 # 191013-0836 - Fixes for PHP7
 # 220303-1422 - Added allow_web_debug system setting
+# 230526-1740 - Patch for user_group bug, related to Issue #1346
 #
 
 $startMS = microtime();
@@ -217,6 +218,7 @@ if ( (!preg_match('/\-\-ALL\-\-/i',$LOGadmin_viewable_groups)) and (strlen($LOGa
 	$rawLOGadmin_viewable_groupsSQL = preg_replace("/ -/",'',$LOGadmin_viewable_groups);
 	$rawLOGadmin_viewable_groupsSQL = preg_replace("/ /","','",$rawLOGadmin_viewable_groupsSQL);
 	$LOGadmin_viewable_groupsSQL = "and user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')";
+	$LOGadmin_viewable_and_null_groupsSQL = "and ( ".$vicidial_closer_log_table.".user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL') OR (".$vicidial_closer_log_table.".user_group is null AND ".$vicidial_closer_log_table.".user='VDCL') )";
 	$whereLOGadmin_viewable_groupsSQL = "where user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')";
 	}
 
@@ -640,7 +642,7 @@ else
 			$rslt=mysql_to_mysqli($stmt, $link);
 			if (mysqli_num_rows($rslt)>0) {
 				while ($row=mysqli_fetch_array($rslt)) {
-					$agent_stmt="select vicidial_users.user, vicidial_users.full_name from ".$vicidial_closer_log_table.", vicidial_users where uniqueid='$row[uniqueid]' and ".$vicidial_closer_log_table.".user=vicidial_users.user";
+					$agent_stmt="select vicidial_users.user, vicidial_users.full_name from ".$vicidial_closer_log_table.", vicidial_users where uniqueid='$row[uniqueid]' and ".$vicidial_closer_log_table.".user=vicidial_users.user $LOGadmin_viewable_and_null_groupsSQL";
 					if ($DB) {echo "$agent_stmt\n";}
 					$agent_rslt=mysql_to_mysqli($agent_stmt, $link);
 					while($agent_row=mysqli_fetch_array($agent_rslt)) {
@@ -648,11 +650,16 @@ else
 					}
 				}
 
-				$ASCII_text.=" $current_date\n";
-				$ASCII_text.=$ASCII_headerA.$ASCII_headerB.$ASCII_headerA;
+				# Added 5/23/23, as with new user_group filter we don't want to print a date entry that has no viewable users
+				if (count($user_array)>0)
+					{
+					$ASCII_text.=" $current_date\n";
+					$ASCII_text.=$ASCII_headerA.$ASCII_headerB.$ASCII_headerA;
 
-				$CSV_text.="\"$current_date\"\n";
-				$CSV_text.=$CSV_header;
+					$CSV_text.="\"$current_date\"\n";
+					$CSV_text.=$CSV_header;
+					}
+
 				#while (list($key, $val)=each($user_array)) {
 				foreach($user_array as $key => $val) {
 					$agent_total=0;
@@ -671,8 +678,12 @@ else
 					$CSV_text.="\"$agent_total\"\n";
 					$date_total+=$agent_total;
 				}
-				$ASCII_text.=$ASCII_headerA."\n\n";
-				$CSV_text.="\n\n";
+				# Added 5/23/23, as with new user_group filter we don't want to print a date entry that has no viewable users
+				if (count($user_array)>0)
+					{
+					$ASCII_text.=$ASCII_headerA."\n\n";
+					$CSV_text.="\n\n";
+					}
 			}
 
 			$q++;
@@ -689,7 +700,7 @@ else
 			$rslt=mysql_to_mysqli($stmt, $link);
 			if (mysqli_num_rows($rslt)>0) {
 				while ($row=mysqli_fetch_array($rslt)) {
-					$agent_stmt="select vicidial_users.user, vicidial_users.full_name from ".$vicidial_closer_log_table.", vicidial_users where uniqueid='$row[uniqueid]' and ".$vicidial_closer_log_table.".user=vicidial_users.user";
+					$agent_stmt="select vicidial_users.user, vicidial_users.full_name from ".$vicidial_closer_log_table.", vicidial_users where uniqueid='$row[uniqueid]' and ".$vicidial_closer_log_table.".user=vicidial_users.user $LOGadmin_viewable_and_null_groupsSQL";
 					if ($DB) {echo "$agent_stmt\n";}
 					$agent_rslt=mysql_to_mysqli($agent_stmt, $link);
 					while($agent_row=mysqli_fetch_array($agent_rslt)) {

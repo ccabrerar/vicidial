@@ -1,13 +1,14 @@
 <?php 
 # AST_agent_inbound_status.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
 # 170913-0853 - First build based upon AST_agent_status_detail.php
 # 191013-0841 - Fixes for PHP7
 # 220303-1503 - Added allow_web_debug system setting
+# 230526-1740 - Patch for user_group bug, related to Issue #1346
 #
 
 $startMS = microtime();
@@ -268,6 +269,7 @@ if ( (!preg_match('/\-\-ALL\-\-/i',$LOGadmin_viewable_groups)) and (strlen($LOGa
 	$rawLOGadmin_viewable_groupsSQL = preg_replace("/ /","','",$rawLOGadmin_viewable_groupsSQL);
 	$LOGadmin_viewable_groupsSQL = "and user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')";
 	$whereLOGadmin_viewable_groupsSQL = "where user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')";
+	$LOGadminVCL_viewable_groupsSQL = "and (".$closer_log_table.".user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL') OR (".$closer_log_table.".user_group IS NULL and ".$closer_log_table.".user='VDCL'))";
 	}
 
 $LOGadmin_viewable_call_timesSQL='';
@@ -355,11 +357,11 @@ while($i < $user_group_ct)
 	$i++;
 	}
 if ( (preg_match('/\-\-ALL\-\-/',$user_group_string) ) or ($user_group_ct < 1) )
-	{$user_group_SQL = "";}
+	{$user_group_SQL = "$LOGadminVCL_viewable_groupsSQL";}
 else
 	{
 	$user_group_SQL = preg_replace('/,$/i', '',$user_group_SQL);
-	$user_group_SQL = "and ".$closer_log_table.".user_group IN($user_group_SQL)";
+	$user_group_SQL = "$LOGadminVCL_viewable_groupsSQL and ".$closer_log_table.".user_group IN($user_group_SQL)";
 	}
 
 if ($DB) {echo "$user_group_string|$user_group_ct|$user_groupQS|$i<BR>";}

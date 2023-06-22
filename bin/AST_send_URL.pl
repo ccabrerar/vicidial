@@ -30,6 +30,8 @@
 # 180601-0929 - Added full_name and launch_user variable options
 # 210519-2208 - Added DB disconnect and reconnect to save DB connections on long response time URLs
 # 230204-2145 - Added ability to use ALT na_call_url entries, added status input
+# 230531-1139 - Added option to send any URL as POST if "POST" is at the end of the $function var
+# 230605-0836 - Added SC_CALL_URL option to add post headers
 #
 
 $|++;
@@ -54,6 +56,7 @@ my ($campaign, $lead_id, $phone_number, $call_type, $user, $uniqueid, $alt_dial,
 my $FULL_LOG = 1;
 $url_function = 'other';
 $US='_';
+$post_headers='';
 
 ### begin parsing run-time options ###
 if (scalar @ARGV) {
@@ -234,6 +237,8 @@ if (length($lead_id) > 0)
 	if ($function =~ /SC_CALL_URL/)
 		{
 		$sc_call_url='';
+		$post_headers='';
+		$sc_container_entry='';
 		$stmtH= "SELECT container_entry from vicidial_settings_containers where container_id='$container';";
 		$sthA = $dbhA->prepare($stmtH) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -242,11 +247,35 @@ if (length($lead_id) > 0)
 		if ($sthArows > 0)
 			{
 			@aryA = $sthA->fetchrow_array;
-			$sc_call_url	= $aryA[0];
+			$sc_container_entry	= $aryA[0];
 			}
 		else
 			{$no_container=2;}
 		$sthA->finish();
+
+		if (length($sc_container_entry) > 3) 
+			{
+			@container_lines = split(/\n/,$sc_container_entry);
+			$c=0;
+			foreach(@container_lines)
+				{
+				if ($container_lines[$c] =~ /; POST-HEADER=/) 
+					{
+					$container_lines[$c] =~ s/; POST-HEADER=|\r|\t//gi;
+					$post_headers .= " --header=\"$container_lines[$c]\"";
+					}
+				else
+					{
+					$container_lines[$c] =~ s/;.*|\r|\t//gi;
+					if (length($container_lines[$c]) > 0)
+						{
+						$sc_call_url .= $container_lines[$c];
+						}
+					}
+				$c++;
+				}
+			}
+
 		}
 
 	if ( ($function =~ /NA_CALL_URL/) && (length($list_id) > 1) )
@@ -1023,6 +1052,8 @@ if (length($lead_id) > 0)
 			}
 		$sthA->finish();
 
+		if (length($VAR_dispo) < 1) {$VAR_dispo = $VAR_status;}
+
 		if ($sc_call_url =~ /--A--user_custom_|--A--full_name--B--/)
 			{
 			$stmtA = "SELECT custom_one,custom_two,custom_three,custom_four,custom_five,user_group,full_name from vicidial_users where user='$user';";
@@ -1166,7 +1197,7 @@ if (length($lead_id) > 0)
 		$sc_call_url =~ s/--A--talk_time--B--/$talk_time/gi;
 		$sc_call_url =~ s/--A--talk_time_min--B--/$talk_time_min/gi;
 		$sc_call_url =~ s/--A--SQLdate--B--/$now_date/gi;
-		$sc_call_url =~ s/ /+/gi;
+		if ($function !~ /POST$/) {$sc_call_url =~ s/ /+/gi;}
 		$sc_call_url =~ s/&/\\&/gi;
 		$parse_url = $sc_call_url;
 
@@ -1389,19 +1420,32 @@ if (length($lead_id) > 0)
 	$url =~ s/'/\\'/gi;
 	$url =~ s/"/\\"/gi;
 
+	$post_data='';   $post_note='';
+	if ( ($function =~ /POST$/) && ( ($url =~ /\?/) || (length($post_headers) > 5) ) )
+		{
+		@url_split = split(/\?/,$url);
+		$url =		$url_split[0];
+		$postvars = $url_split[1];
+		$post_data = "--post-data=\"$postvars\"";
+		if ($DB) {print "Send-as-POST: |$url|$post_data| \n";}
+		$post_note="|HTTP-POST|$post_headers";
+		}
+
 	my $secW = time();
 
 	# disconnect from the database to free up the DB connection
 	$dbhA->disconnect();
 
 	# request the web URL
-	`$wgetbin --no-check-certificate --output-document=/tmp/ASUBtmpD$US$url_id$US$secX --output-file=/tmp/ASUBtmpF$US$url_id$US$secX $url `;
+	`$wgetbin --no-check-certificate --output-document=/tmp/ASUBtmpD$US$url_id$US$secX --output-file=/tmp/ASUBtmpF$US$url_id$US$secX $url $post_data $post_headers `;
+
+	# $post_note .= "|$wgetbin --no-check-certificate --output-document=/tmp/ASUBtmpD$US$url_id$US$secX --output-file=/tmp/ASUBtmpF$US$url_id$US$secX $url $post_data  $post_headers ";
 
 	# reconnect to the database to log response and response time
 	$dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
 	 or die "Couldn't connect to database: " . DBI->errstr;
 
-	$event_string="$function|$wgetbin --no-check-certificate --output-document=/tmp/ASUBtmpD$US$url_id$US$secX --output-file=/tmp/ASUBtmpF$US$url_id$US$secX $url|";
+	$event_string="$function|$wgetbin --no-check-certificate --output-document=/tmp/ASUBtmpD$US$url_id$US$secX --output-file=/tmp/ASUBtmpF$US$url_id$US$secX $url $post_data|";
 	&event_logger;
 
 	my $secY = time();
@@ -1441,7 +1485,7 @@ if (length($lead_id) > 0)
 
 
 	### update url log entry
-	$stmtA = "UPDATE vicidial_url_log SET url_response='$Wdocline_cat|$Wfileline_cat',response_sec='$response_sec' where url_log_id='$url_id';";
+	$stmtA = "UPDATE vicidial_url_log SET url_response='$Wdocline_cat|$Wfileline_cat$post_note',response_sec='$response_sec' where url_log_id='$url_id';";
 	$affected_rows = $dbhA->do($stmtA);
 	if ($DB) {print "$affected_rows|$stmtA\n";}
 	}

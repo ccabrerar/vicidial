@@ -4,7 +4,7 @@
 # Pulls time stats per agent selectable by campaign or user group
 # should be most accurate agent stats of all of the reports
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 90522-0723 - First build
@@ -59,6 +59,7 @@
 # 210324-2010 - Added agent visibility stats to HTML graphs
 # 211115-1513 - Fix for case-mismatch on pause code statuses for multi-campaign selects
 # 220303-1427 - Added allow_web_debug system setting
+# 230526-1740 - Patch for user_group bug, related to Issue #1346
 #
 
 $startMS = microtime();
@@ -481,7 +482,11 @@ while($i < $user_group_ct)
 	$i++;
 	}
 if ( (preg_match('/\-\-ALL\-\-/',$user_group_string) ) or ($user_group_ct < 1) )
-	{$user_group_SQL = "";}
+	{
+	# $user_group_SQL = "";
+	$user_group_SQL = " $LOGadmin_viewable_groupsSQL";
+	$TCuser_group_SQL = " $LOGadmin_viewable_groupsSQL";
+	}
 else
 	{
 	$user_group_SQL = preg_replace('/,$/i', '',$user_group_SQL);
@@ -622,7 +627,8 @@ else
 	############################################################################
 
 	### BEGIN gather user IDs and names for matching up later
-	$stmt="select full_name,$userSQL from vicidial_users $whereLOGadmin_viewable_groupsSQL order by user limit 100000;";
+	# user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')
+	$stmt="select full_name,$userSQL,if(user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL'), 1, 0) from vicidial_users $whereLOGadmin_viewable_groupsSQL order by user limit 100000;";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	if ($DB) {echo "|$stmt\n";}
 	$users_to_print = mysqli_num_rows($rslt);

@@ -1,7 +1,7 @@
 <?php 
 # AST_CLOSERsummary_hourly.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -34,6 +34,7 @@
 # 191013-0831 - Fixes for PHP7
 # 200605-1100 - user_group bug fix
 # 220303-0829 - Added allow_web_debug system setting
+# 230526-1740 - Patch for user_group bug, related to Issue #1346
 #
 
 $startMS = microtime();
@@ -325,8 +326,8 @@ if ( (!preg_match('/\-\-ALL\-\-/i',$LOGadmin_viewable_groups)) and (strlen($LOGa
 	{
 	$rawLOGadmin_viewable_groupsSQL = preg_replace("/ -/",'',$LOGadmin_viewable_groups);
 	$rawLOGadmin_viewable_groupsSQL = preg_replace("/ /","','",$rawLOGadmin_viewable_groupsSQL);
-	$LOGadmin_viewable_groupsSQL = "and user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')";
-	$whereLOGadmin_viewable_groupsSQL = "where user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')";
+	$LOGadmin_viewable_groupsSQL = "and (user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL') OR user_group is null)";
+	$whereLOGadmin_viewable_groupsSQL = "where (user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL') OR user_group is null)";
 	}
 
 $LOGadmin_viewable_call_timesSQL='';

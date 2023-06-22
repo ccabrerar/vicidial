@@ -1,4 +1,4 @@
-2FA - TWO FACTOR AUTHENTICATION				Updated: 2021-03-12
+2FA - TWO FACTOR AUTHENTICATION				Updated: 2023-06-10
 
 This document covers the 2FA(Two-Factor-Authentication) features in VICIdial as
 of admin.php build 210312-1239(svn/trunk revision 3373).
@@ -60,6 +60,11 @@ sms_url => https://http-api.d7networks.com/send?to=1--A--mobile_number--B--&from
 
 USER MODIFY:
 3. There is also a User option "Two Factor Auth Override" which allows an administrator to disable 2FA for a specific user account.
+
+
+Notes:
+Upon activating 2FA in the System Settings, if you get the following message, it means that your user account does not have an Email address and Mobile Phone number filled in:
+"Your User account is not configured for Two-Factor-Authentication. Please contact your system administrator"
 
 
 

@@ -201,10 +201,11 @@
 # 230118-0833 - Added ingroup_list and callmenu_list functions
 # 230122-1821 - Added reset_password option to update_user function
 # 230308-1758 - Fix for update_lead list-restrict phone number update issue
+# 230614-0828 - Added container_list function
 #
 
-$version = '2.14-178';
-$build = '230308-1758';
+$version = '2.14-179';
+$build = '230614-0828';
 $php_script='non_agent_api.php';
 $api_url_log = 0;
 
@@ -837,7 +838,7 @@ $dial_method = preg_replace('/[^-_0-9a-zA-Z]/','',$dial_method);
 $dial_timeout = preg_replace('/[^0-9]/','',$dial_timeout);
 $lookup_state = preg_replace('/[^A-Z]/','',$lookup_state);
 $detail = preg_replace('/[^A-Z]/','',$detail);
-$type = preg_replace('/[^A-Z]/','',$type);
+$type = preg_replace('/[^-_0-9a-zA-Z]/','',$type);
 $force_entry_list_id = preg_replace('/[^0-9]/','',$force_entry_list_id);
 $file_download = preg_replace('/[^0-9]/','',$file_download);
 $agent_choose_ingroups = preg_replace('/[^0-9]/','',$agent_choose_ingroups);
@@ -2086,7 +2087,7 @@ if ($function == 'ingroup_list')
 
 
 ################################################################################
-### callmenu_list - sends a list of the inbound groups in the system
+### callmenu_list - sends a list of the call menus in the system
 ################################################################################
 if ($function == 'callmenu_list')
 	{
@@ -2205,6 +2206,138 @@ if ($function == 'callmenu_list')
 ################################################################################
 ### END callmenu_list
 ################################################################################
+
+
+
+
+################################################################################
+### container_list - sends a list of the settings containers in the system
+################################################################################
+if ($function == 'container_list')
+	{
+	if (strlen($type) < 1)
+		{
+		$result = 'ERROR';
+		$result_reason = "container_list NO CONTAINER TYPE DEFINED";
+		echo "$result: $result_reason: |$user|$type|\n";
+		$data = "$allowed_user";
+		api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+		exit;
+		}
+	$stmt="SELECT count(*) from vicidial_users where user='$user' and user_level > 6 and active='Y';";
+	$rslt=mysql_to_mysqli($stmt, $link);
+	$row=mysqli_fetch_row($rslt);
+	$allowed_user=$row[0];
+	if ($allowed_user < 1)
+		{
+		$result = 'ERROR';
+		$result_reason = "container_list USER DOES NOT HAVE PERMISSION TO VIEW CALL MENUS LIST";
+		echo "$result: $result_reason: |$user|$allowed_user|\n";
+		$data = "$allowed_user";
+		api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+		exit;
+		}
+	else
+		{
+		if ( (!preg_match("/ $function /",$api_allowed_functions)) and (!preg_match("/ALL_FUNCTIONS/",$api_allowed_functions)) )
+			{
+			$result = 'ERROR';
+			$result_reason = "auth USER DOES NOT HAVE PERMISSION TO USE THIS FUNCTION";
+			echo "$result: $result_reason: |$user|$function|\n";
+			$data = "$allowed_user";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		$stmt="SELECT allowed_campaigns,admin_viewable_groups from vicidial_user_groups where user_group='$LOGuser_group';";
+		if ($DB>0) {echo "|$stmt|\n";}
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$row=mysqli_fetch_row($rslt);
+		$LOGallowed_campaigns =			$row[0];
+		$LOGadmin_viewable_groups =		$row[1];
+
+		$LOGadmin_viewable_groupsSQL='';
+		$whereLOGadmin_viewable_groupsSQL='';
+		if ( (!preg_match('/\-\-ALL\-\-/i',$LOGadmin_viewable_groups)) and (strlen($LOGadmin_viewable_groups) > 3) )
+			{
+			$rawLOGadmin_viewable_groupsSQL = preg_replace("/ -/",'',$LOGadmin_viewable_groups);
+			$rawLOGadmin_viewable_groupsSQL = preg_replace("/ /","','",$rawLOGadmin_viewable_groupsSQL);
+			$LOGadmin_viewable_groupsSQL = "and user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')";
+			$whereLOGadmin_viewable_groupsSQL = "where user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')";
+			}
+
+		$server_name = getenv("SERVER_NAME");
+		$server_port = getenv("SERVER_PORT");
+		if (preg_match("/443/i",$server_port)) {$HTTPprotocol = 'https://';}
+		  else {$HTTPprotocol = 'http://';}
+		$admDIR = "$HTTPprotocol$server_name:$server_port";
+
+		echo "\n";
+		echo "<HTML><head><title>NON-AGENT API</title>\n";
+		echo "<script language=\"Javascript\">\n";
+		echo "function choose_file(filename,fieldname)\n";
+		echo "	{\n";
+		echo "	if (filename.length > 0)\n";
+		echo "		{\n";
+		echo "		parent.document.getElementById(fieldname).value = filename;\n";
+		echo "		document.getElementById(\"selectframe\").innerHTML = '';\n";
+		echo "		document.getElementById(\"selectframe\").style.visibility = 'hidden';\n";
+		echo "		parent.close_chooser();\n";
+		echo "		}\n";
+		echo "	}\n";
+		echo "function close_file()\n";
+		echo "	{\n";
+		echo "	document.getElementById(\"selectframe\").innerHTML = '';\n";
+		echo "	document.getElementById(\"selectframe\").style.visibility = 'hidden';\n";
+		echo "	parent.close_chooser();\n";
+		echo "	}\n";
+		echo "</script>\n";
+		echo "</head>\n\n";
+
+		echo "<body>\n";
+		echo "<a href=\"javascript:close_file();\"><font size=1 face=\"Arial,Helvetica\">"._QXZ("close frame")."</font></a>\n";
+		echo "<div id='selectframe' style=\"height:400px;width:710px;overflow:scroll;\">\n";
+		echo "<table border=0 cellpadding=1 cellspacing=2 width=690 bgcolor=white><tr>\n";
+		echo "<td width=30>#</td>\n";
+		echo "<td colspan=2>"._QXZ("Settings Containers").": <br>"._QXZ("$type")." "._QXZ("type")."</td>\n";
+		echo "<td>"._QXZ("Container Notes")."</td>\n";
+	#	echo "<td>"._QXZ("Color")."</td>\n";
+		echo "</tr>\n";
+
+		$rowx=array();
+		$group_id=array();
+		$fullname=array();
+
+		$stmt="SELECT container_id,container_notes from vicidial_settings_containers where container_type='$type' $LOGadmin_viewable_groupsSQL order by container_id";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$vm_to_print = mysqli_num_rows($rslt);
+		$k=0;
+		$sf=0;
+		while ($vm_to_print > $k) 
+			{
+			$rowx=mysqli_fetch_row($rslt);
+			$group_id[$k] =	$rowx[0];
+			$fullname[$k] =		$rowx[1];
+			$sf++;
+			if (preg_match("/1$|3$|5$|7$|9$/i", $sf))
+				{$bgcolor='bgcolor="#E6E6E6"';} 
+			else
+				{$bgcolor='bgcolor="#F6F6F6"';}
+			echo "<tr $bgcolor><td width=30><font size=1 face=\"Arial,Helvetica\">$sf</td>\n";
+			echo "<td colspan=2><a href=\"javascript:choose_file('$group_id[$k]','$comments');\"><font size=2 face=\"Arial,Helvetica\">$group_id[$k]</a></td>\n";
+			echo "<td><font size=2 face=\"Arial,Helvetica\">$fullname[$k]</td></tr>\n";
+
+			$k++;
+			}
+	#	echo "<tr><td>$stmt</td></tr\n";
+		echo "</table></div></body></HTML>\n";
+
+		exit;
+		}
+	}
+################################################################################
+### END container_list
+################################################################################
+
 
 
 
@@ -3704,7 +3837,7 @@ if ($function == 'copy_user')
 								$agent_pass='';
 								}
 
-							$stmt="INSERT INTO vicidial_users (user,pass,full_name,user_level,user_group,phone_login,phone_pass,delete_users,delete_user_groups,delete_lists,delete_campaigns,delete_ingroups,delete_remote_agents,load_leads,campaign_detail,ast_admin_access,ast_delete_phones,delete_scripts,modify_leads,hotkeys_active,change_agent_campaign,agent_choose_ingroups,closer_campaigns,scheduled_callbacks,agentonly_callbacks,agentcall_manual,vicidial_recording,vicidial_transfers,delete_filters,alter_agent_interface_options,closer_default_blended,delete_call_times,modify_call_times,modify_users,modify_campaigns,modify_lists,modify_scripts,modify_filters,modify_ingroups,modify_usergroups,modify_remoteagents,modify_servers,view_reports,vicidial_recording_override,alter_custdata_override,qc_enabled,qc_user_level,qc_pass,qc_finish,qc_commit,add_timeclock_log,modify_timeclock_log,delete_timeclock_log,alter_custphone_override,vdc_agent_api_access,modify_inbound_dids,delete_inbound_dids,active,alert_enabled,download_lists,agent_shift_enforcement_override,manager_shift_enforcement_override,export_reports,delete_from_dnc,email,user_code,territory,allow_alerts,agent_choose_territories,custom_one,custom_two,custom_three,custom_four,custom_five,voicemail_id,agent_call_log_view_override,callcard_admin,agent_choose_blended,realtime_block_user_info,custom_fields_modify,force_change_password,agent_lead_search_override,modify_shifts,modify_phones,modify_carriers,modify_labels,modify_statuses,modify_voicemail,modify_audiostore,modify_moh,modify_tts,preset_contact_search,modify_contacts,modify_same_user_level,admin_hide_lead_data,admin_hide_phone_data,agentcall_email,agentcall_chat,modify_email_accounts,pass_hash,alter_admin_interface_options,max_inbound_calls,modify_custom_dialplans,wrapup_seconds_override,modify_languages,selected_language,user_choose_language,ignore_group_on_search,api_list_restrict,api_allowed_functions,lead_filter_id,admin_cf_show_hidden,user_hide_realtime,modify_colors,user_nickname,user_new_lead_limit,api_only_user,modify_auto_reports,modify_ip_lists,ignore_ip_list,ready_max_logout,export_gdpr_leads,access_recordings,pause_code_approval,max_hopper_calls,max_hopper_calls_hour,mute_recordings,hide_call_log_info,next_dial_my_callbacks,user_admin_redirect_url,max_inbound_filter_enabled,max_inbound_filter_statuses,max_inbound_filter_ingroups,max_inbound_filter_min_sec,status_group_id) SELECT \"$agent_user\",\"$agent_pass\",\"$agent_full_name\",user_level,user_group,phone_login,phone_pass,delete_users,delete_user_groups,delete_lists,delete_campaigns,delete_ingroups,delete_remote_agents,load_leads,campaign_detail,ast_admin_access,ast_delete_phones,delete_scripts,modify_leads,hotkeys_active,change_agent_campaign,agent_choose_ingroups,closer_campaigns,scheduled_callbacks,agentonly_callbacks,agentcall_manual,vicidial_recording,vicidial_transfers,delete_filters,alter_agent_interface_options,closer_default_blended,delete_call_times,modify_call_times,modify_users,modify_campaigns,modify_lists,modify_scripts,modify_filters,modify_ingroups,modify_usergroups,modify_remoteagents,modify_servers,view_reports,vicidial_recording_override,alter_custdata_override,qc_enabled,qc_user_level,qc_pass,qc_finish,qc_commit,add_timeclock_log,modify_timeclock_log,delete_timeclock_log,alter_custphone_override,vdc_agent_api_access,modify_inbound_dids,delete_inbound_dids,active,alert_enabled,download_lists,agent_shift_enforcement_override,manager_shift_enforcement_override,export_reports,delete_from_dnc,email,user_code,territory,allow_alerts,agent_choose_territories,custom_one,custom_two,custom_three,custom_four,custom_five,voicemail_id,agent_call_log_view_override,callcard_admin,agent_choose_blended,realtime_block_user_info,custom_fields_modify,force_change_password,agent_lead_search_override,modify_shifts,modify_phones,modify_carriers,modify_labels,modify_statuses,modify_voicemail,modify_audiostore,modify_moh,modify_tts,preset_contact_search,modify_contacts,modify_same_user_level,admin_hide_lead_data,admin_hide_phone_data,agentcall_email,agentcall_chat,modify_email_accounts,\"$pass_hash\",alter_admin_interface_options,max_inbound_calls,modify_custom_dialplans,wrapup_seconds_override,modify_languages,selected_language,user_choose_language,ignore_group_on_search,api_list_restrict,api_allowed_functions,lead_filter_id,admin_cf_show_hidden,user_hide_realtime,modify_colors,user_nickname,user_new_lead_limit,api_only_user,modify_auto_reports,modify_ip_lists,ignore_ip_list,ready_max_logout,export_gdpr_leads,access_recordings,pause_code_approval,max_hopper_calls,max_hopper_calls_hour,mute_recordings,hide_call_log_info,next_dial_my_callbacks,user_admin_redirect_url,max_inbound_filter_enabled,max_inbound_filter_statuses,max_inbound_filter_ingroups,max_inbound_filter_min_sec,status_group_id from vicidial_users where user=\"$source_user\";";
+							$stmt="INSERT INTO vicidial_users (user,pass,full_name,user_level,user_group,phone_login,phone_pass,delete_users,delete_user_groups,delete_lists,delete_campaigns,delete_ingroups,delete_remote_agents,load_leads,campaign_detail,ast_admin_access,ast_delete_phones,delete_scripts,modify_leads,hotkeys_active,change_agent_campaign,agent_choose_ingroups,closer_campaigns,scheduled_callbacks,agentonly_callbacks,agentcall_manual,vicidial_recording,vicidial_transfers,delete_filters,alter_agent_interface_options,closer_default_blended,delete_call_times,modify_call_times,modify_users,modify_campaigns,modify_lists,modify_scripts,modify_filters,modify_ingroups,modify_usergroups,modify_remoteagents,modify_servers,view_reports,vicidial_recording_override,alter_custdata_override,qc_enabled,qc_user_level,qc_pass,qc_finish,qc_commit,add_timeclock_log,modify_timeclock_log,delete_timeclock_log,alter_custphone_override,vdc_agent_api_access,modify_inbound_dids,delete_inbound_dids,active,alert_enabled,download_lists,agent_shift_enforcement_override,manager_shift_enforcement_override,export_reports,delete_from_dnc,email,user_code,territory,allow_alerts,agent_choose_territories,custom_one,custom_two,custom_three,custom_four,custom_five,voicemail_id,agent_call_log_view_override,callcard_admin,agent_choose_blended,realtime_block_user_info,custom_fields_modify,force_change_password,agent_lead_search_override,modify_shifts,modify_phones,modify_carriers,modify_labels,modify_statuses,modify_voicemail,modify_audiostore,modify_moh,modify_tts,preset_contact_search,modify_contacts,modify_same_user_level,admin_hide_lead_data,admin_hide_phone_data,agentcall_email,agentcall_chat,modify_email_accounts,pass_hash,alter_admin_interface_options,max_inbound_calls,modify_custom_dialplans,wrapup_seconds_override,modify_languages,selected_language,user_choose_language,ignore_group_on_search,api_list_restrict,api_allowed_functions,lead_filter_id,admin_cf_show_hidden,user_hide_realtime,modify_colors,user_nickname,user_new_lead_limit,api_only_user,modify_auto_reports,modify_ip_lists,ignore_ip_list,ready_max_logout,export_gdpr_leads,access_recordings,pause_code_approval,max_hopper_calls,max_hopper_calls_hour,mute_recordings,hide_call_log_info,next_dial_my_callbacks,user_admin_redirect_url,max_inbound_filter_enabled,max_inbound_filter_statuses,max_inbound_filter_ingroups,max_inbound_filter_min_sec,status_group_id,mobile_number,two_factor_override,manual_dial_filter,user_location,download_invalid_files,user_group_two,modify_dial_prefix) SELECT \"$agent_user\",\"$agent_pass\",\"$agent_full_name\",user_level,user_group,phone_login,phone_pass,delete_users,delete_user_groups,delete_lists,delete_campaigns,delete_ingroups,delete_remote_agents,load_leads,campaign_detail,ast_admin_access,ast_delete_phones,delete_scripts,modify_leads,hotkeys_active,change_agent_campaign,agent_choose_ingroups,closer_campaigns,scheduled_callbacks,agentonly_callbacks,agentcall_manual,vicidial_recording,vicidial_transfers,delete_filters,alter_agent_interface_options,closer_default_blended,delete_call_times,modify_call_times,modify_users,modify_campaigns,modify_lists,modify_scripts,modify_filters,modify_ingroups,modify_usergroups,modify_remoteagents,modify_servers,view_reports,vicidial_recording_override,alter_custdata_override,qc_enabled,qc_user_level,qc_pass,qc_finish,qc_commit,add_timeclock_log,modify_timeclock_log,delete_timeclock_log,alter_custphone_override,vdc_agent_api_access,modify_inbound_dids,delete_inbound_dids,active,alert_enabled,download_lists,agent_shift_enforcement_override,manager_shift_enforcement_override,export_reports,delete_from_dnc,email,user_code,territory,allow_alerts,agent_choose_territories,custom_one,custom_two,custom_three,custom_four,custom_five,voicemail_id,agent_call_log_view_override,callcard_admin,agent_choose_blended,realtime_block_user_info,custom_fields_modify,force_change_password,agent_lead_search_override,modify_shifts,modify_phones,modify_carriers,modify_labels,modify_statuses,modify_voicemail,modify_audiostore,modify_moh,modify_tts,preset_contact_search,modify_contacts,modify_same_user_level,admin_hide_lead_data,admin_hide_phone_data,agentcall_email,agentcall_chat,modify_email_accounts,\"$pass_hash\",alter_admin_interface_options,max_inbound_calls,modify_custom_dialplans,wrapup_seconds_override,modify_languages,selected_language,user_choose_language,ignore_group_on_search,api_list_restrict,api_allowed_functions,lead_filter_id,admin_cf_show_hidden,user_hide_realtime,modify_colors,user_nickname,user_new_lead_limit,api_only_user,modify_auto_reports,modify_ip_lists,ignore_ip_list,ready_max_logout,export_gdpr_leads,access_recordings,pause_code_approval,max_hopper_calls,max_hopper_calls_hour,mute_recordings,hide_call_log_info,next_dial_my_callbacks,user_admin_redirect_url,max_inbound_filter_enabled,max_inbound_filter_statuses,max_inbound_filter_ingroups,max_inbound_filter_min_sec,status_group_id,mobile_number,two_factor_override,manual_dial_filter,user_location,download_invalid_files,user_group_two,modify_dial_prefix from vicidial_users where user=\"$source_user\";";
 							$rslt=mysql_to_mysqli($stmt, $link);
 							$affected_rows = mysqli_affected_rows($link);
 

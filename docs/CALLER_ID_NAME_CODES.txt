@@ -1,4 +1,4 @@
-CALLER ID NAME CODES DOC	Started: 2013-07-15	Updated: 2023-04-18
+CALLER ID NAME CODES DOC	Started: 2013-07-15	Updated: 2023-06-07
 
 
 This document is meant for reference only, and it does not contain all CID name codes possible, but more will be added over time.
@@ -17,6 +17,7 @@ FP - Back to agent From Park (FPvdcW14529553216666)
 LX - Park Xfer Call (LXvdcW13739432176666)
 FX - Xfer Back to session From Park (FXvdcW14529553216666)
 VH - Inbound Agent Alert (VH7152252518600051)
+VS - Inbound Second Agent Alert (VS7152252518600051)
 RH - Recording Hangup (RH1234514529553690)
 CX - Consultative Transfer (CXAR2420160116094751)
 XLvdc - Agent Local Closer or ReQueue Call (XLvdcW13739431946666) [epoch + user...]

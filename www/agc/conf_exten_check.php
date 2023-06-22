@@ -95,10 +95,11 @@
 # 230220-1759 - Fix for In-Group manual dial issue
 # 230412-1020 - Added code for send_notification API function
 # 230420-2020 - Added latency logging
+# 230616-1810 - Added dead_count checking and 1-second delay in DEAD call logging and dead call log reversal
 #
 
-$version = '2.14-69';
-$build = '230420-2020';
+$version = '2.14-70';
+$build = '230616-1810';
 $php_script = 'conf_exten_check.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=51;
@@ -106,6 +107,7 @@ $one_mysql_log=0;
 $DB=0;
 $VD_login=0;
 $SSagent_debug_logging=0;
+$dead_logging_version=1;
 $startMS = microtime();
 $ip = getenv("REMOTE_ADDR");
 
@@ -163,6 +165,8 @@ if (isset($_GET["active_ingroup_dial"]))			{$active_ingroup_dial=$_GET["active_i
 	elseif (isset($_POST["active_ingroup_dial"]))	{$active_ingroup_dial=$_POST["active_ingroup_dial"];}
 if (isset($_GET["latency"]))			{$latency=$_GET["latency"];}
 	elseif (isset($_POST["latency"]))	{$latency=$_POST["latency"];}
+if (isset($_GET["dead_count"]))				{$dead_count=$_GET["dead_count"];}
+	elseif (isset($_POST["dead_count"]))	{$dead_count=$_POST["dead_count"];}
 
 $DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
@@ -239,6 +243,7 @@ $campagentstdisp = preg_replace("/[^-_0-9a-zA-Z]/","",$campagentstdisp);
 $phone_number = preg_replace("/[^-_0-9a-zA-Z]/","",$phone_number);
 $xferchannel = preg_replace("/\'|\"|\\\\|;/","",$xferchannel);
 $latency = preg_replace("/[^-_0-9a-zA-Z]/","",$latency);
+$dead_count = preg_replace("/[^-_0-9a-zA-Z]/","",$dead_count);
 
 if ($non_latin < 1)
 	{
@@ -891,6 +896,8 @@ if ($ACTION == 'refresh')
 
 					if ( ($AcalleridCOUNT < 1) and (preg_match("/INCALL/i",$Astatus)) and (strlen($Aagent_log_id) > 0) )
 						{
+						if ($dead_count > 0)
+							{
 						$DEADcustomer++;
 						$DEADlog = "|   DEAD:$Acallerid|$Alead_id|$AcalleridCOUNT";
 						### find whether the agent log record has already logged DEAD
@@ -914,6 +921,51 @@ if ($ACTION == 'refresh')
 								if ($format=='debug') {echo "\n<!-- $stmt -->";}
 							$rslt=mysql_to_mysqli($stmt, $link);
 								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03021',$user,$server_ip,$session_name,$one_mysql_log);}
+								$tempACTION = 'dead_log';
+								$TEMPstage = "DEAD call logged A|$dead_count|";
+								vicidial_ajax_log($NOW_TIME,$startMS,$link,$tempACTION,$php_script,$user,$TEMPstage,$lead_id,$session_name,$stmt);
+							}
+						}
+						else
+							{
+							$tempACTION = 'dead_log';
+							$TEMPstage = "DEAD call first detect A|$dead_count|";
+							vicidial_ajax_log($NOW_TIME,$startMS,$link,$tempACTION,$php_script,$user,$TEMPstage,$lead_id,$session_name,$stmt);
+					}
+						$dead_count++;
+						}
+					else
+						{
+						if ($dead_count > 0)
+							{
+							$unDEADaffected_rows=0;
+							### find whether the agent log record has already logged DEAD
+							$stmt="SELECT count(*) from vicidial_agent_log where agent_log_id='$Aagent_log_id' and ( (dead_epoch IS NOT NULL) or (dead_epoch > 10000) ) and (dispo_epoch IS NULL);";
+							if ($DB) {echo "|$stmt|\n";}
+							$rslt=mysql_to_mysqli($stmt, $link);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03030',$user,$server_ip,$session_name,$one_mysql_log);}
+							$row=mysqli_fetch_row($rslt);
+							$Aagent_log_idCOUNT=$row[0];
+
+							### if dead logged already on this call, but call is no longer dead, reverse thee dead logging
+							if ( ($Aagent_log_idCOUNT  > 0) and ($dead_logging_version >= 2) )
+								{
+								$undeadNOW_TIME = date("Y-m-d H:i:s");
+								$stmt="UPDATE vicidial_agent_log set dead_epoch=NULL where agent_log_id='$Aagent_log_id';";
+									if ($format=='debug') {echo "\n<!-- $stmt -->";}
+								$rslt=mysql_to_mysqli($stmt, $link);
+									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+								$unDEADaffected_rows = mysqli_affected_rows($link);
+
+								$stmt="UPDATE vicidial_live_agents set last_state_change='$undeadNOW_TIME' where agent_log_id='$Aagent_log_id';";
+									if ($format=='debug') {echo "\n<!-- $stmt -->";}
+								$rslt=mysql_to_mysqli($stmt, $link);
+									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+								}
+							$tempACTION = 'dead_log';
+							$TEMPstage = "UNDEAD call reversal A: |$Aagent_log_idCOUNT|$dead_count|$unDEADaffected_rows|$dead_logging_version|";
+							vicidial_ajax_log($NOW_TIME,$startMS,$link,$tempACTION,$php_script,$user,$TEMPstage,$lead_id,$session_name,$stmt);
+							$dead_count=0;
 							}
 						}
 					}
@@ -970,6 +1022,8 @@ if ($ACTION == 'refresh')
 
 					if ( ($AcalleridCOUNT < 1) and (preg_match("/INCALL/i",$Astatus)) and (strlen($Aagent_log_id) > 0) )
 						{
+						if ($dead_count > 0)
+							{
 						$DEADcustomer++;
 						$DEADlog = "|   DEAD:$Acallerid|$Alead_id|$AcalleridCOUNT";
 						### find whether the agent log record has already logged DEAD
@@ -979,7 +1033,7 @@ if ($ACTION == 'refresh')
 					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03030',$user,$server_ip,$session_name,$one_mysql_log);}
 						$row=mysqli_fetch_row($rslt);
 						$Aagent_log_idCOUNT=$row[0];
-
+							
 						if ($Aagent_log_idCOUNT < 1)
 							{
 							$NEWdead_epoch = date("U");
@@ -993,6 +1047,51 @@ if ($ACTION == 'refresh')
 								if ($format=='debug') {echo "\n<!-- $stmt -->";}
 							$rslt=mysql_to_mysqli($stmt, $link);
 								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03032',$user,$server_ip,$session_name,$one_mysql_log);}
+								$tempACTION = 'dead_log';
+								$TEMPstage = "DEAD call logged B|$dead_count|";
+								vicidial_ajax_log($NOW_TIME,$startMS,$link,$tempACTION,$php_script,$user,$TEMPstage,$lead_id,$session_name,$stmt);
+							}
+						}
+						else
+							{
+							$tempACTION = 'dead_log';
+							$TEMPstage = "DEAD call first detect B|$dead_count|";
+							vicidial_ajax_log($NOW_TIME,$startMS,$link,$tempACTION,$php_script,$user,$TEMPstage,$lead_id,$session_name,$stmt);
+					}
+						$dead_count++;
+						}
+					else
+						{
+						if ($dead_count > 0)
+							{
+							$unDEADaffected_rows=0;
+							### find whether the agent log record has already logged DEAD
+							$stmt="SELECT count(*) from vicidial_agent_log where agent_log_id='$Aagent_log_id' and ( (dead_epoch IS NOT NULL) or (dead_epoch > 10000) ) and (dispo_epoch IS NULL);";
+							if ($DB) {echo "|$stmt|\n";}
+							$rslt=mysql_to_mysqli($stmt, $link);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03030',$user,$server_ip,$session_name,$one_mysql_log);}
+							$row=mysqli_fetch_row($rslt);
+							$Aagent_log_idCOUNT=$row[0];
+
+							### if dead logged already on this call, but call is no longer dead, reverse thee dead logging
+							if ( ($Aagent_log_idCOUNT  > 0) and ($dead_logging_version >= 2) )
+								{
+								$undeadNOW_TIME = date("Y-m-d H:i:s");
+								$stmt="UPDATE vicidial_agent_log set dead_epoch=NULL where agent_log_id='$Aagent_log_id';";
+									if ($format=='debug') {echo "\n<!-- $stmt -->";}
+								$rslt=mysql_to_mysqli($stmt, $link);
+									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+								$unDEADaffected_rows = mysqli_affected_rows($link);
+
+								$stmt="UPDATE vicidial_live_agents set last_state_change='$undeadNOW_TIME' where agent_log_id='$Aagent_log_id';";
+									if ($format=='debug') {echo "\n<!-- $stmt -->";}
+								$rslt=mysql_to_mysqli($stmt, $link);
+									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+								}
+							$tempACTION = 'dead_log';
+							$TEMPstage = "UNDEAD call reversal B: |$Aagent_log_idCOUNT|$dead_count|$unDEADaffected_rows|$dead_logging_version|";
+							vicidial_ajax_log($NOW_TIME,$startMS,$link,$tempACTION,$php_script,$user,$TEMPstage,$lead_id,$session_name,$stmt);
+							$dead_count=0;
 							}
 						}
 					}
@@ -1452,7 +1551,7 @@ if ($ACTION == 'refresh')
 
 
 
-			echo 'DateTime: ' . $NOW_TIME . '|UnixTime: ' . $StarTtime . '|Logged-in: ' . $Alogin . '|CampCalls: ' . $RingCalls . '|Status: ' . $Astatus . '|DiaLCalls: ' . $DiaLCalls . '|APIHanguP: ' . $external_hangup . '|APIStatuS: ' . $external_status . '|APIPausE: ' . $external_pause . '|APIDiaL: ' . $external_dial . '|DEADcall: ' . $DEADcustomer . '|InGroupChange: ' . $InGroupChangeDetails . '|APIFields: ' . $external_update_fields . '|APIFieldsData: ' . $external_update_fields_data . '|APITimerAction: ' . $timer_action . '|APITimerMessage: ' . $timer_action_message . '|APITimerSeconds: ' . $timer_action_seconds . '|APIdtmf: ' . $external_dtmf . '|APItransferconf: ' . $external_transferconf . '|APIpark: ' . $external_park . '|APITimerDestination: ' . $timer_action_destination . '|APIManualDialQueue: ' . $MDQ_count . '|APIRecording: ' . $external_recording . '|APIPaUseCodE: ' . $external_pause_code . '|WaitinGChats: ' . $WaitinGChats . '|WaitinGEmails: ' . $WaitinGEmails . '|LivEAgentCommentS: ' . $live_agents_comments . '|LeadIDSwitch: ' . $external_lead_id .'|DEADxfer: '.$DEADxfer .'|CHANanswer: '.$CHANanswer .'|Alogin_notes: '.$Alogin_notes. "\n";
+			echo 'DateTime: ' . $NOW_TIME . '|UnixTime: ' . $StarTtime . '|Logged-in: ' . $Alogin . '|CampCalls: ' . $RingCalls . '|Status: ' . $Astatus . '|DiaLCalls: ' . $DiaLCalls . '|APIHanguP: ' . $external_hangup . '|APIStatuS: ' . $external_status . '|APIPausE: ' . $external_pause . '|APIDiaL: ' . $external_dial . '|DEADcall: ' . $DEADcustomer . ',' . $dead_count . '|InGroupChange: ' . $InGroupChangeDetails . '|APIFields: ' . $external_update_fields . '|APIFieldsData: ' . $external_update_fields_data . '|APITimerAction: ' . $timer_action . '|APITimerMessage: ' . $timer_action_message . '|APITimerSeconds: ' . $timer_action_seconds . '|APIdtmf: ' . $external_dtmf . '|APItransferconf: ' . $external_transferconf . '|APIpark: ' . $external_park . '|APITimerDestination: ' . $timer_action_destination . '|APIManualDialQueue: ' . $MDQ_count . '|APIRecording: ' . $external_recording . '|APIPaUseCodE: ' . $external_pause_code . '|WaitinGChats: ' . $WaitinGChats . '|WaitinGEmails: ' . $WaitinGEmails . '|LivEAgentCommentS: ' . $live_agents_comments . '|LeadIDSwitch: ' . $external_lead_id .'|DEADxfer: '.$DEADxfer .'|CHANanswer: '.$CHANanswer .'|Alogin_notes: '.$Alogin_notes. "\n";
 
 			if (strlen($timer_action) > 3)
 				{

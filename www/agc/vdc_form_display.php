@@ -1,7 +1,7 @@
 <?php
 # vdc_form_display.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed display the contents of the FORM tab in the agent 
 # interface, as well as take submission of the form submission when the agent 
@@ -54,10 +54,11 @@
 # 210506-1825 - Fix for SELECTSOURCE reloading issue
 # 210616-2037 - Added optional CORS support, see options.php for details
 # 210825-0902 - Fix for XSS security issue
+# 230518-1053 - Added in-group and campaign custom fields 1-5, for script/webform/dispo-call-url use
 #
 
-$version = '2.14-44';
-$build = '210825-0902';
+$version = '2.14-45';
+$build = '230518-1053';
 $php_script = 'vdc_form_display.php';
 
 require_once("dbconnect_mysqli.php");
@@ -154,6 +155,16 @@ if (isset($_GET["user_custom_four"]))	{$user_custom_four=$_GET["user_custom_four
 	elseif (isset($_POST["user_custom_four"]))	{$user_custom_four=$_POST["user_custom_four"];}
 if (isset($_GET["user_custom_five"]))	{$user_custom_five=$_GET["user_custom_five"];}
 	elseif (isset($_POST["user_custom_five"]))	{$user_custom_five=$_POST["user_custom_five"];}
+if (isset($_GET["camp_custom_one"]))	{$camp_custom_one=$_GET["camp_custom_one"];}
+	elseif (isset($_POST["camp_custom_one"]))	{$camp_custom_one=$_POST["camp_custom_one"];}
+if (isset($_GET["camp_custom_two"]))	{$camp_custom_two=$_GET["camp_custom_two"];}
+	elseif (isset($_POST["camp_custom_two"]))	{$camp_custom_two=$_POST["camp_custom_two"];}
+if (isset($_GET["camp_custom_three"]))	{$camp_custom_three=$_GET["camp_custom_three"];}
+	elseif (isset($_POST["camp_custom_three"]))	{$camp_custom_three=$_POST["camp_custom_three"];}
+if (isset($_GET["camp_custom_four"]))	{$camp_custom_four=$_GET["camp_custom_four"];}
+	elseif (isset($_POST["camp_custom_four"]))	{$camp_custom_four=$_POST["camp_custom_four"];}
+if (isset($_GET["camp_custom_five"]))	{$camp_custom_five=$_GET["camp_custom_five"];}
+	elseif (isset($_POST["camp_custom_five"]))	{$camp_custom_five=$_POST["camp_custom_five"];}
 if (isset($_GET["preset_number_a"]))	{$preset_number_a=$_GET["preset_number_a"];}
 	elseif (isset($_POST["preset_number_a"]))	{$preset_number_a=$_POST["preset_number_a"];}
 if (isset($_GET["preset_number_b"]))	{$preset_number_b=$_GET["preset_number_b"];}
@@ -208,6 +219,16 @@ if (isset($_GET["did_custom_four"]))			{$did_custom_four=$_GET["did_custom_four"
 	elseif (isset($_POST["did_custom_four"]))	{$did_custom_four=$_POST["did_custom_four"];}
 if (isset($_GET["did_custom_five"]))			{$did_custom_five=$_GET["did_custom_five"];}
 	elseif (isset($_POST["did_custom_five"]))	{$did_custom_five=$_POST["did_custom_five"];}
+if (isset($_GET["ig_custom_one"]))				{$ig_custom_one=$_GET["ig_custom_one"];}
+	elseif (isset($_POST["ig_custom_one"]))	{$ig_custom_one=$_POST["ig_custom_one"];}
+if (isset($_GET["ig_custom_two"]))				{$ig_custom_two=$_GET["ig_custom_two"];}
+	elseif (isset($_POST["ig_custom_two"]))	{$ig_custom_two=$_POST["ig_custom_two"];}
+if (isset($_GET["ig_custom_three"]))			{$ig_custom_three=$_GET["ig_custom_three"];}
+	elseif (isset($_POST["ig_custom_three"]))	{$ig_custom_three=$_POST["ig_custom_three"];}
+if (isset($_GET["ig_custom_four"]))			{$ig_custom_four=$_GET["ig_custom_four"];}
+	elseif (isset($_POST["ig_custom_four"]))	{$ig_custom_four=$_POST["ig_custom_four"];}
+if (isset($_GET["ig_custom_five"]))			{$ig_custom_five=$_GET["ig_custom_five"];}
+	elseif (isset($_POST["ig_custom_five"]))	{$ig_custom_five=$_POST["ig_custom_five"];}
 if (isset($_GET["hide_gender"]))			{$hide_gender=$_GET["hide_gender"];}
 	elseif (isset($_POST["hide_gender"]))	{$hide_gender=$_POST["hide_gender"];}
 if (isset($_GET["button_action"]))			{$button_action=$_GET["button_action"];}
@@ -423,6 +444,16 @@ if ($non_latin < 1)
 	$did_custom_five  = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$did_custom_five );
 	$list_name = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$list_name);
 	$list_description = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$list_description);
+	$camp_custom_one = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$camp_custom_one);
+	$camp_custom_two = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$camp_custom_two);
+	$camp_custom_three = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$camp_custom_three);
+	$camp_custom_four = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$camp_custom_four);
+	$camp_custom_five  = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$camp_custom_five );
+	$ig_custom_one = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$ig_custom_one);
+	$ig_custom_two = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$ig_custom_two);
+	$ig_custom_three = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$ig_custom_three);
+	$ig_custom_four = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$ig_custom_four);
+	$ig_custom_five  = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$ig_custom_five );
 	}
 else
 	{
@@ -447,6 +478,16 @@ else
 	$did_custom_five  = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$did_custom_five );
 	$list_name = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$list_name);
 	$list_description = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$list_description);
+	$camp_custom_one = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$camp_custom_one);
+	$camp_custom_two = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$camp_custom_two);
+	$camp_custom_three = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$camp_custom_three);
+	$camp_custom_four = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$camp_custom_four);
+	$camp_custom_five  = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$camp_custom_five );
+	$ig_custom_one = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$ig_custom_one);
+	$ig_custom_two = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$ig_custom_two);
+	$ig_custom_three = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$ig_custom_three);
+	$ig_custom_four = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$ig_custom_four);
+	$ig_custom_five  = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$ig_custom_five );
 	}
 
 if (strlen($SSagent_debug_logging) > 1)
@@ -902,7 +943,7 @@ if ($SUBMIT_only < 1)
 	echo "			}\n";
 	echo "		}\n";
 
-	$only_field_query = "DB=$DB&SIPexten=$SIPexten&SQLdate=$SQLdate&admin_submit=$admin_submit&agent_email=$agent_email&agent_log_id=$agent_log_id&bcrypt=$bcrypt&bgcolor=$bgcolor&button_action=$button_action&call_id=$call_id&called_count=$called_count&camp_script=$camp_script&campaign=$campaign&channel_group=$channel_group&closecallid=$closecallid&closer=$closer&customer_server_ip=$customer_server_ip&customer_zap_channel=$customer_zap_channel&dialed_label=$dialed_label&dialed_number=$dialed_number&did_custom_five=$did_custom_five&did_custom_four=$did_custom_four&did_custom_one=$did_custom_one&did_custom_three=$did_custom_three&did_custom_two=$did_custom_two&did_description=$did_description&did_extension=$did_extension&did_id=$did_id&did_pattern=$did_pattern&epoch=$epoch&fronter=$fronter&fullname=$fullname&group=$group&hide_gender=$hide_gender&in_script=$in_script&lead_id=$lead_id&list_description=$list_description&list_id=$list_id&list_name=$list_name&new_list_id=$new_list_id&original_phone_login=$original_phone_login&parked_by=$parked_by&pass=$pass&phone=$phone&phone_login=$phone_login&phone_pass=$phone_pass&preset_dtmf_a=$preset_dtmf_a&preset_dtmf_b=$preset_dtmf_b&preset_number_a=$preset_number_a&preset_number_b=$preset_number_b&preset_number_c=$preset_number_c&preset_number_d=$preset_number_d&preset_number_e=$preset_number_e&preset_number_f=$preset_number_f&recording_filename=$recording_filename&recording_id=$recording_id&script_height=$script_height&script_width=$script_width&server_ip=$server_ip&server_ip=$server_ip&session_id=$session_id&session_id=$session_id&submit_button=$submit_button&uniqueid=$uniqueid&user=$user&user_custom_five=$user_custom_five&user_custom_four=$user_custom_four&user_custom_one=$user_custom_one&user_custom_three=$user_custom_three&user_custom_two=$user_custom_two&user_group=$user_group&xfercallid=$xfercallid&web_vars=$web_vars&orig_URL=$orig_URL";
+	$only_field_query = "DB=$DB&SIPexten=$SIPexten&SQLdate=$SQLdate&admin_submit=$admin_submit&agent_email=$agent_email&agent_log_id=$agent_log_id&bcrypt=$bcrypt&bgcolor=$bgcolor&button_action=$button_action&call_id=$call_id&called_count=$called_count&camp_script=$camp_script&campaign=$campaign&channel_group=$channel_group&closecallid=$closecallid&closer=$closer&customer_server_ip=$customer_server_ip&customer_zap_channel=$customer_zap_channel&dialed_label=$dialed_label&dialed_number=$dialed_number&did_custom_five=$did_custom_five&did_custom_four=$did_custom_four&did_custom_one=$did_custom_one&did_custom_three=$did_custom_three&did_custom_two=$did_custom_two&ig_custom_five=$ig_custom_five&ig_custom_four=$ig_custom_four&ig_custom_one=$ig_custom_one&ig_custom_three=$ig_custom_three&ig_custom_two=$ig_custom_two&did_description=$did_description&did_extension=$did_extension&did_id=$did_id&did_pattern=$did_pattern&epoch=$epoch&fronter=$fronter&fullname=$fullname&group=$group&hide_gender=$hide_gender&in_script=$in_script&lead_id=$lead_id&list_description=$list_description&list_id=$list_id&list_name=$list_name&new_list_id=$new_list_id&original_phone_login=$original_phone_login&parked_by=$parked_by&pass=$pass&phone=$phone&phone_login=$phone_login&phone_pass=$phone_pass&preset_dtmf_a=$preset_dtmf_a&preset_dtmf_b=$preset_dtmf_b&preset_number_a=$preset_number_a&preset_number_b=$preset_number_b&preset_number_c=$preset_number_c&preset_number_d=$preset_number_d&preset_number_e=$preset_number_e&preset_number_f=$preset_number_f&recording_filename=$recording_filename&recording_id=$recording_id&script_height=$script_height&script_width=$script_width&server_ip=$server_ip&server_ip=$server_ip&session_id=$session_id&session_id=$session_id&submit_button=$submit_button&uniqueid=$uniqueid&user=$user&user_custom_five=$user_custom_five&user_custom_four=$user_custom_four&user_custom_one=$user_custom_one&user_custom_three=$user_custom_three&user_custom_two=$user_custom_two&camp_custom_five=$camp_custom_five&camp_custom_four=$camp_custom_four&camp_custom_one=$camp_custom_one&camp_custom_three=$camp_custom_three&camp_custom_two=$camp_custom_two&user_group=$user_group&xfercallid=$xfercallid&web_vars=$web_vars&orig_URL=$orig_URL";
 	?>
 
 // ################################################################################

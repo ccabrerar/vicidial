@@ -790,7 +790,26 @@ OTHER CHANGES:
 	of calls with no audio data. This is a campaign feature.
 
 222. Added agent screen latency logging, viewable in the Real-Time Report and
-	the new Agent Latency Report.
+	the new Agent Latency Report and Latency Gaps Report.
+
+223. Added Demographic Quotas, allowing for setting of quota goals for leads 
+	based upon lead field values for demographic parameters like: gender,
+	age-group, political-party, etc... For more information on this set of
+	features, read the DEMOGRAPHIC_QUOTAS.txt document.
+
+224. Added Inbound Calls Credits, allowing per-User setting of a number of 
+	inbound calls that can be handled, until reset by a manager.
+
+225. Added List Weekday Resets, allowing for automatic list resets scheduled by
+	day-of-the-week on a per-list basis.
+
+226. Added Second Agent Alert Trigger In-Group settings, allowing for a second
+	audio alert to be played to the agent on repeat calls.
+
+227. Added VIDPROMPTSPECIAL Call Menu Handle Methods when sending calls to 
+	In-Groups. Allows for list-based In-Group routing based on settings in
+	a Settings Container. Also allows for separate routing of not-found
+	leads.
 
 
 

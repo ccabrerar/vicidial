@@ -1,7 +1,7 @@
 <?php 
 # AST_inbound_daily_report.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -35,6 +35,7 @@
 # 191013-0902 - Fixes for PHP7
 # 200701-1500 - Added option to exclude after-hours from abandons, list ID filtering
 # 220302-1803 - Added allow_web_debug system setting
+# 230526-1740 - Patch for user_group bug, related to Issue #1346
 #
 
 $startMS = microtime();

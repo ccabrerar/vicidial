@@ -1,4 +1,4 @@
-Sending email after agent dispositions a call		Started: 2015-08-06	Updated: 2023-04-20
+Sending email after agent dispositions a call		Started: 2015-08-06	Updated: 2023-05-18
 
 These instructions will show you how to set up automatic emails to be sent out when an agent dispositions a call with a specific defined "sale status".
 
@@ -129,6 +129,16 @@ did_custom_two: --A--did_custom_two--B--
 did_custom_three: --A--did_custom_three--B--
 did_custom_four: --A--did_custom_four--B--
 did_custom_five: --A--did_custom_five--B--
+campaign custom 1: --A--camp_custom_one--B--
+campaign custom 2: --A--camp_custom_two--B--
+campaign custom 3: --A--camp_custom_three--B--
+campaign custom 4: --A--camp_custom_four--B--
+campaign custom 5: --A--camp_custom_five--B--
+in-group custom 1: --A--ig_custom_one--B--
+in-group custom 2: --A--ig_custom_two--B--
+in-group custom 3: --A--ig_custom_three--B--
+in-group custom 4: --A--ig_custom_four--B--
+in-group custom 5: --A--ig_custom_five--B--
 custom field x: --A--custom_xyz--B--
 call notes: --A--call_notes--B--
 

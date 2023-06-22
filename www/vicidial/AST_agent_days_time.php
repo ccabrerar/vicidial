@@ -1,7 +1,7 @@
 <?php 
 # AST_agent_days_time.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -12,6 +12,7 @@
 # 170829-0040 - Added screen color settings
 # 191013-0812 - Fixes for PHP7
 # 220303-1510 - Added allow_web_debug system setting
+# 230526-1740 - Patch for user_group bug, related to Issue #1346
 #
 
 $startMS = microtime();
@@ -493,27 +494,35 @@ else
 	$date_namesARY[0]='';
 	$k=0;
 
-	$stmt="select date_format(event_time, '%Y-%m-%d') as date,count(*) as calls from vicidial_users,".$vicidial_agent_log_table." where event_time <= '$query_date_END' and event_time >= '$query_date_BEGIN' and vicidial_users.user=".$vicidial_agent_log_table.".user and ".$vicidial_agent_log_table.".user='$user' $group_SQL $user_group_SQL $vuLOGadmin_viewable_groupsSQL group by date order by date desc limit 500000;";
-	$rslt=mysql_to_mysqli($stmt, $link);
-	if ($DB) {echo "$stmt\n";}
-	$rows_to_print = mysqli_num_rows($rslt);
-	$i=0;
-	while ($i < $rows_to_print)
-		{
-		$row=mysqli_fetch_row($rslt);
+	$ustmt="select count(*), if(user_group in ('$rawLOGadmin_viewable_groupsSQL'), 1, 0) as accessible_user From vicidial_users where user='$user'";
+	$urslt=mysql_to_mysqli($ustmt, $link);
+	$urow=mysqli_fetch_row($urslt);
+	$rows_to_print=0;
 
-		if ( ($row[1] > 0) and (strlen($row[0]) > 0) )
+	if ($urow[0]>0 && $urow[1]>0)
+		{
+		$stmt="select date_format(event_time, '%Y-%m-%d') as date,count(*) as calls from vicidial_users,".$vicidial_agent_log_table." where event_time <= '$query_date_END' and event_time >= '$query_date_BEGIN' and vicidial_users.user=".$vicidial_agent_log_table.".user and ".$vicidial_agent_log_table.".user='$user' $group_SQL $user_group_SQL $vuLOGadmin_viewable_groupsSQL group by date order by date desc limit 500000;";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		if ($DB) {echo "$stmt\n";}
+		$rows_to_print = mysqli_num_rows($rslt);
+		$i=0;
+		while ($i < $rows_to_print)
 			{
-			$date[$i] =			$row[0];
-			$calls[$i] =		$row[1];
-			if (!preg_match("/\-$date[$i]\-/i", $dates))
+			$row=mysqli_fetch_row($rslt);
+
+			if ( ($row[1] > 0) and (strlen($row[0]) > 0) )
 				{
-				$dates .= "$date[$i]-";
-				$datesARY[$k] = $date[$i];
-				$k++;
+				$date[$i] =			$row[0];
+				$calls[$i] =		$row[1];
+				if (!preg_match("/\-$date[$i]\-/i", $dates))
+					{
+					$dates .= "$date[$i]-";
+					$datesARY[$k] = $date[$i];
+					$k++;
+					}
 				}
+			$i++;
 			}
-		$i++;
 		}
 
 
@@ -521,6 +530,7 @@ else
 	$MAIN.="<TABLE width=750 cellspacing=0 cellpadding=1>\n";
 	$MAIN.="<tr><td><font size=2>"._QXZ("DATE")." </td><td align=left><font size=2>"._QXZ("PAUSE")."</td><td align=left><font size=2> "._QXZ("WAIT")."</td><td align=left><font size=2> "._QXZ("TALK")."</td><td align=right><font size=2> "._QXZ("DISPO")."</td><td align=right><font size=2> "._QXZ("DEAD")."</td><td align=right><font size=2> "._QXZ("CUSTOMER")."</td><td align=right><font size=2> "._QXZ("TOTAL")."</td></tr>\n";
 	$MAINprintALL .= $MAIN;
+	$MAIN='';
 
 	$i=0;
 	while ($i < $rows_to_print)
@@ -653,6 +663,11 @@ else
 		$i++;
 		}
 
+	if ($i==0)
+		{
+		$MAIN.="<tr><td colspan='8' align='center'><font size=2>".(($urow[0]==0) ? "*** "._QXZ("USER ID NOT FOUND")." ***" : (($urow[1]==0) ? "*** "._QXZ("YOU DO NOT HAVE PRIVILEGES TO VIEW THIS USER")." ***" : "*** "._QXZ("NO RECORDS FOUND")." ***"))."</font></td></tr>";
+		}
+
 	$MAIN.="</TABLE></center><BR><BR>\n";
 	}
 
@@ -749,6 +764,7 @@ echo $MAINprintALL;
 
 echo "</span>\n";
 
+/*
 if ($report_display_type=="TEXT" || !$report_display_type) 
 	{
 	echo "<span style=\"position:absolute;left:3px;top:3px;z-index:18;\"  id=agent_status_bars>\n";
@@ -781,6 +797,7 @@ if ($report_display_type=="TEXT" || !$report_display_type)
 
 	echo "</span>\n";
 	}
+*/
 
 if ($db_source == 'S')
 	{
