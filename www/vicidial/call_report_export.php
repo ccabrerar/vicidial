@@ -5,7 +5,7 @@
 # and/or vicidial_closer_log information by status, list_id and date range.
 # downloads to a flat text file that is tab delimited
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -63,6 +63,8 @@
 # 210911-1907 - Fix for --ALL-- selection user-group permission issue
 # 211119-1500 - Fix for status names 
 # 220301-1603 - Added allow_web_debug system setting
+# 230622-1652 - Added filtering by time (hours), and option for single user exports.
+# 230623-1025 - Added sort_dir sort direction
 #
 
 $startMS = microtime();
@@ -76,10 +78,18 @@ $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["query_date"]))				{$query_date=$_GET["query_date"];}
 	elseif (isset($_POST["query_date"]))	{$query_date=$_POST["query_date"];}
+if (isset($_GET["query_hour"]))				{$query_hour=$_GET["query_hour"];}
+	elseif (isset($_POST["query_hour"]))	{$query_hour=$_POST["query_hour"];}
 if (isset($_GET["date_field"]))				{$date_field=$_GET["date_field"];}
 	elseif (isset($_POST["date_field"]))	{$date_field=$_POST["date_field"];}
 if (isset($_GET["end_date"]))				{$end_date=$_GET["end_date"];}
 	elseif (isset($_POST["end_date"]))		{$end_date=$_POST["end_date"];}
+if (isset($_GET["end_hour"]))				{$end_hour=$_GET["end_hour"];}
+	elseif (isset($_POST["end_hour"]))		{$end_hour=$_POST["end_hour"];}
+if (isset($_GET["user"]))				{$user=$_GET["user"];}
+	elseif (isset($_POST["user"]))		{$user=$_POST["user"];}
+if (isset($_GET["sort_dir"]))				{$sort_dir=$_GET["sort_dir"];}
+	elseif (isset($_POST["sort_dir"]))		{$sort_dir=$_POST["sort_dir"];}
 if (isset($_GET["campaign"]))				{$campaign=$_GET["campaign"];}
 	elseif (isset($_POST["campaign"]))		{$campaign=$_POST["campaign"];}
 if (isset($_GET["group"]))					{$group=$_GET["group"];}
@@ -129,6 +139,9 @@ if (!isset($list_id)) {$list_id = array();}
 if (!isset($status)) {$status = array();}
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (!isset($end_date)) {$end_date = $NOW_DATE;}
+if (!isset($query_hour)) {$query_hour = "00";}
+if (!isset($end_hour)) {$end_hour = "23";}
+if (!isset($sort_dir)) {$sort_dir = "asc";}
 if (strlen($shift)<2) {$shift='ALL';}
 
 $report_name = 'Export Calls Report';
@@ -161,6 +174,8 @@ if ($SSallow_web_debug < 1) {$DB=0;}
 
 $query_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date);
 $end_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $end_date);
+$query_hour = preg_replace('/[^0-9]/', '', $query_hour);
+$end_hour = preg_replace('/[^0-9]/', '', $end_hour);
 $date_field = preg_replace('/[^-\.\_0-9a-zA-Z]/', '', $date_field);
 $submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
 $SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
@@ -172,6 +187,9 @@ $custom_fields = preg_replace('/[^-_0-9a-zA-Z]/', '', $custom_fields);
 $call_notes = preg_replace('/[^-_0-9a-zA-Z]/', '', $call_notes);
 $export_fields = preg_replace('/[^-_0-9a-zA-Z]/', '', $export_fields);
 $search_archived_data = preg_replace('/[^-_0-9a-zA-Z]/', '', $search_archived_data);
+$query_time=$query_hour.":00:00";
+$end_time=$end_hour.":59:59";
+
 
 # Variables filtered further down in the code
 # $campaign
@@ -184,12 +202,27 @@ if ($non_latin < 1)
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	$user = preg_replace('/[^-_0-9a-zA-Z]/', '', $user);
+	$sort_dir = preg_replace('/[^a-zA-Z]/', '', $sort_dir);
 	}
 else
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	$sort_dir = preg_replace('/[^\p{L}]/u', '', $sort_dir);
 	}
+
+switch ($sort_dir) {
+	default:
+	case "asc":
+		$asc="checked";
+		$desc="";
+		break;
+	case "desc":
+		$asc="";
+		$desc="checked";
+		break;
+}
 
 ### ARCHIVED DATA CHECK CONFIGURATION
 $archives_available="N";
@@ -416,6 +449,16 @@ if ( (!preg_match('/\-\-ALL\-\-/i', $LOGadmin_viewable_call_times)) and (strlen(
 ##### START RUN THE EXPORT AND OUTPUT FLAT DATA FILE #####
 if ($run_export > 0)
 	{
+
+	if ($user)
+		{
+		$user_SQL=" and vl.user='$user' ";
+		}
+	else
+		{
+		$user_SQL="";
+		}
+
 	if ($date_field=="entry_date") {
 		$date_field = "vi.entry_date";
 		# Since entry_date only appears when the EXTENDED export option is selected, EXTENDED will automatically be used when entry_date is selected as the date field.
@@ -722,11 +765,11 @@ if ($run_export > 0)
 		{
 		if ( ($export_fields == 'EXTENDED') or ($export_fields == 'EXTENDED_2') or ($export_fields == 'EXTENDED_3') or ($export_fields == 'EXTENDED_4') )
 			{
-			$stmt = "SELECT vl.call_date,vl.phone_number,vl.status,vl.user,vu.full_name,vl.campaign_id,vi.vendor_lead_code,vi.source_id,vi.list_id,vi.gmt_offset_now,vi.phone_code,vi.phone_number,vi.title,vi.first_name,vi.middle_initial,vi.last_name,vi.address1,vi.address2,vi.address3,vi.city,vi.state,vi.province,vi.postal_code,vi.country_code,vi.gender,vi.date_of_birth,vi.alt_phone,vi.email,vi.security_phrase,vi.comments,vl.length_in_sec,vl.user_group,vl.alt_dial,vi.rank,vi.owner,vi.lead_id,vl.uniqueid,vi.entry_list_id, ifnull(val.dispo_sec+val.dead_sec,0)$export_fields_SQL from vicidial_users vu,vicidial_list vi,".$vicidial_log_table." vl LEFT OUTER JOIN ".$vicidial_agent_log_table." val ON vl.uniqueid=val.uniqueid and vl.lead_id=val.lead_id and vl.user=val.user where ".$date_field." >= '$query_date 00:00:00' and ".$date_field." <= '$end_date 23:59:59' and vu.user=vl.user and vi.lead_id=vl.lead_id $list_SQL $campaign_SQL $user_group_SQL $status_SQL order by ".$date_field." limit 1000000;";
+			$stmt = "SELECT vl.call_date,vl.phone_number,vl.status,vl.user,vu.full_name,vl.campaign_id,vi.vendor_lead_code,vi.source_id,vi.list_id,vi.gmt_offset_now,vi.phone_code,vi.phone_number,vi.title,vi.first_name,vi.middle_initial,vi.last_name,vi.address1,vi.address2,vi.address3,vi.city,vi.state,vi.province,vi.postal_code,vi.country_code,vi.gender,vi.date_of_birth,vi.alt_phone,vi.email,vi.security_phrase,vi.comments,vl.length_in_sec,vl.user_group,vl.alt_dial,vi.rank,vi.owner,vi.lead_id,vl.uniqueid,vi.entry_list_id, ifnull(val.dispo_sec+val.dead_sec,0)$export_fields_SQL from vicidial_users vu,vicidial_list vi,".$vicidial_log_table." vl LEFT OUTER JOIN ".$vicidial_agent_log_table." val ON vl.uniqueid=val.uniqueid and vl.lead_id=val.lead_id and vl.user=val.user where ".$date_field." >= '$query_date $query_time' and ".$date_field." <= '$end_date $end_time' and vu.user=vl.user and vi.lead_id=vl.lead_id $list_SQL $campaign_SQL $user_SQL $user_group_SQL $status_SQL order by ".$date_field." $sort_dir limit 1000000;";
 			}
 		else
 			{
-			$stmt = "SELECT vl.call_date,vl.phone_number,vl.status,vl.user,vu.full_name,vl.campaign_id,vi.vendor_lead_code,vi.source_id,vi.list_id,vi.gmt_offset_now,vi.phone_code,vi.phone_number,vi.title,vi.first_name,vi.middle_initial,vi.last_name,vi.address1,vi.address2,vi.address3,vi.city,vi.state,vi.province,vi.postal_code,vi.country_code,vi.gender,vi.date_of_birth,vi.alt_phone,vi.email,vi.security_phrase,vi.comments,vl.length_in_sec,vl.user_group,vl.alt_dial,vi.rank,vi.owner,vi.lead_id,vl.uniqueid,vi.entry_list_id$export_fields_SQL from vicidial_users vu,".$vicidial_log_table." vl,vicidial_list vi where ".$date_field." >= '$query_date 00:00:00' and ".$date_field." <= '$end_date 23:59:59' and vu.user=vl.user and vi.lead_id=vl.lead_id $list_SQL $campaign_SQL $user_group_SQL $status_SQL order by ".$date_field." limit 1000000;";
+			$stmt = "SELECT vl.call_date,vl.phone_number,vl.status,vl.user,vu.full_name,vl.campaign_id,vi.vendor_lead_code,vi.source_id,vi.list_id,vi.gmt_offset_now,vi.phone_code,vi.phone_number,vi.title,vi.first_name,vi.middle_initial,vi.last_name,vi.address1,vi.address2,vi.address3,vi.city,vi.state,vi.province,vi.postal_code,vi.country_code,vi.gender,vi.date_of_birth,vi.alt_phone,vi.email,vi.security_phrase,vi.comments,vl.length_in_sec,vl.user_group,vl.alt_dial,vi.rank,vi.owner,vi.lead_id,vl.uniqueid,vi.entry_list_id$export_fields_SQL from vicidial_users vu,".$vicidial_log_table." vl,vicidial_list vi where ".$date_field." >= '$query_date $query_time' and ".$date_field." <= '$end_date $end_time' and vu.user=vl.user and vi.lead_id=vl.lead_id $list_SQL $campaign_SQL $user_SQL $user_group_SQL $status_SQL order by ".$date_field." $sort_dir limit 1000000;";
 			}
 		$rslt=mysql_to_mysqli($stmt, $link);
 		if ($DB) {$DBout .= "$stmt\n";}
@@ -868,11 +911,11 @@ if ($run_export > 0)
 		{
 		if ( ($export_fields == 'EXTENDED') or ($export_fields == 'EXTENDED_2') or ($export_fields == 'EXTENDED_3') or ($export_fields == 'EXTENDED_4') )
 			{
-			$stmtA = "SELECT vl.call_date,vl.phone_number,vl.status,vl.user,vu.full_name,vl.campaign_id,vi.vendor_lead_code,vi.source_id,vi.list_id,vi.gmt_offset_now,vi.phone_code,vi.phone_number,vi.title,vi.first_name,vi.middle_initial,vi.last_name,vi.address1,vi.address2,vi.address3,vi.city,vi.state,vi.province,vi.postal_code,vi.country_code,vi.gender,vi.date_of_birth,vi.alt_phone,vi.email,vi.security_phrase,vi.comments,vl.length_in_sec,vl.user_group,vl.queue_seconds,vi.rank,vi.owner,vi.lead_id,vl.closecallid,vi.entry_list_id,vl.uniqueid,val.campaign_id, ifnull(val.dispo_sec+val.dead_sec,0)$export_fields_SQL from vicidial_users vu,vicidial_list vi,".$vicidial_closer_log_table." vl LEFT OUTER JOIN ".$vicidial_agent_log_table." val ON vl.uniqueid=val.uniqueid and vl.lead_id=val.lead_id and vl.user=val.user where ".$date_field." >= '$query_date 00:00:00' and ".$date_field." <= '$end_date 23:59:59' and vu.user=vl.user and vi.lead_id=vl.lead_id $list_SQL $group_SQL $user_group_SQL $status_SQL order by ".$date_field." limit 1000000;";
+			$stmtA = "SELECT vl.call_date,vl.phone_number,vl.status,vl.user,vu.full_name,vl.campaign_id,vi.vendor_lead_code,vi.source_id,vi.list_id,vi.gmt_offset_now,vi.phone_code,vi.phone_number,vi.title,vi.first_name,vi.middle_initial,vi.last_name,vi.address1,vi.address2,vi.address3,vi.city,vi.state,vi.province,vi.postal_code,vi.country_code,vi.gender,vi.date_of_birth,vi.alt_phone,vi.email,vi.security_phrase,vi.comments,vl.length_in_sec,vl.user_group,vl.queue_seconds,vi.rank,vi.owner,vi.lead_id,vl.closecallid,vi.entry_list_id,vl.uniqueid,val.campaign_id, ifnull(val.dispo_sec+val.dead_sec,0)$export_fields_SQL from vicidial_users vu,vicidial_list vi,".$vicidial_closer_log_table." vl LEFT OUTER JOIN ".$vicidial_agent_log_table." val ON vl.uniqueid=val.uniqueid and vl.lead_id=val.lead_id and vl.user=val.user where ".$date_field." >= '$query_date $query_time' and ".$date_field." <= '$end_date $end_time' and vu.user=vl.user and vi.lead_id=vl.lead_id $list_SQL $group_SQL $user_SQL $user_group_SQL $status_SQL order by ".$date_field." $sort_dir limit 1000000;";
 			}
 		else
 			{
-			$stmtA = "SELECT vl.call_date,vl.phone_number,vl.status,vl.user,vu.full_name,vl.campaign_id,vi.vendor_lead_code,vi.source_id,vi.list_id,vi.gmt_offset_now,vi.phone_code,vi.phone_number,vi.title,vi.first_name,vi.middle_initial,vi.last_name,vi.address1,vi.address2,vi.address3,vi.city,vi.state,vi.province,vi.postal_code,vi.country_code,vi.gender,vi.date_of_birth,vi.alt_phone,vi.email,vi.security_phrase,vi.comments,vl.length_in_sec,vl.user_group,vl.queue_seconds,vi.rank,vi.owner,vi.lead_id,vl.closecallid,vi.entry_list_id,vl.uniqueid,val.campaign_id$export_fields_SQL from vicidial_users vu,vicidial_list vi,".$vicidial_closer_log_table." vl LEFT OUTER JOIN ".$vicidial_agent_log_table." val ON vl.uniqueid=val.uniqueid and vl.lead_id=val.lead_id and vl.user=val.user where ".$date_field." >= '$query_date 00:00:00' and ".$date_field." <= '$end_date 23:59:59' and vu.user=vl.user and vi.lead_id=vl.lead_id $list_SQL $group_SQL $user_group_SQL $status_SQL order by ".$date_field." limit 1000000;";
+			$stmtA = "SELECT vl.call_date,vl.phone_number,vl.status,vl.user,vu.full_name,vl.campaign_id,vi.vendor_lead_code,vi.source_id,vi.list_id,vi.gmt_offset_now,vi.phone_code,vi.phone_number,vi.title,vi.first_name,vi.middle_initial,vi.last_name,vi.address1,vi.address2,vi.address3,vi.city,vi.state,vi.province,vi.postal_code,vi.country_code,vi.gender,vi.date_of_birth,vi.alt_phone,vi.email,vi.security_phrase,vi.comments,vl.length_in_sec,vl.user_group,vl.queue_seconds,vi.rank,vi.owner,vi.lead_id,vl.closecallid,vi.entry_list_id,vl.uniqueid,val.campaign_id$export_fields_SQL from vicidial_users vu,vicidial_list vi,".$vicidial_closer_log_table." vl LEFT OUTER JOIN ".$vicidial_agent_log_table." val ON vl.uniqueid=val.uniqueid and vl.lead_id=val.lead_id and vl.user=val.user where ".$date_field." >= '$query_date $query_time' and ".$date_field." <= '$end_date $end_time' and vu.user=vl.user and vi.lead_id=vl.lead_id $list_SQL $group_SQL $user_SQL $user_group_SQL $status_SQL order by ".$date_field." $sort_dir limit 1000000;";
 			}
 		$rslt=mysql_to_mysqli($stmtA, $link);
 		if ($DB) {$DBout .= "$stmtA\n";}
@@ -1352,7 +1395,7 @@ if ($run_export > 0)
 					$IVRdelimiter='|';
 					if ($export_fields=='ALTERNATE_1')
 						{$IVRdelimiter='^';}
-					$stmt="select menu_id,UNIX_TIMESTAMP(event_date) from ".$vicidial_outbound_ivr_log_table." where event_date >= '$query_date 00:00:00' and event_date <= '$end_date 23:59:59' and uniqueid='$export_uniqueid[$i]' order by event_date,menu_action desc;";
+					$stmt="select menu_id,UNIX_TIMESTAMP(event_date) from ".$vicidial_outbound_ivr_log_table." where event_date >= '$query_date $query_time' and event_date <= '$end_date $end_time' and uniqueid='$export_uniqueid[$i]' order by event_date,menu_action desc;";
 					$rslt=mysql_to_mysqli($stmt, $link);
 				#	$ivr_path = "$stmt|$export_uniqueid[$i]|";
 					if ($DB) {$MAIN.="$stmt\n";}
@@ -1646,7 +1689,16 @@ else
 	echo "<link rel=\"stylesheet\" type=\"text/css\" href=\"vicidial_stylesheet.php\">\n";
 	echo "<script language=\"JavaScript\" src=\"help.js\"></script>\n";
 	echo "<link rel=\"stylesheet\" href=\"calendar.css\">\n";
-
+	echo "<style type='text/css'>\n";
+	echo "label {\n";
+	echo "    display:flex;\n";
+	echo "    align-items: baseline;\n";
+	echo "}\n";
+	echo "\n";
+	echo "input[type=checkbox] {\n";
+	echo "    margin-right: 8px;\n";
+	echo "}\n";
+	echo "</style>\n";
 	echo "<div id='HelpDisplayDiv' class='help_info' style='display:none;'></div>";
 
 	echo "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=utf-8\">\n";
@@ -1689,8 +1741,8 @@ else
 	echo "<INPUT TYPE=HIDDEN NAME=ivr_export VALUE=\"$ivr_export\">";
 	echo "<TABLE BORDER=0 CELLSPACING=8><TR><TD ALIGN=LEFT VALIGN=TOP ROWSPAN=3>\n";
 
-	echo "<font class=\"select_bold\"><B>"._QXZ("Date Range").":</B></font><BR><CENTER>\n";
-	echo "<INPUT TYPE=TEXT NAME=query_date SIZE=10 MAXLENGTH=10 VALUE=\"$query_date\">";
+	echo "<font class=\"select_bold\"><B>"._QXZ("Date Range").":</B></font><BR>\n"; #<CENTER>
+	echo "<INPUT TYPE=TEXT NAME=query_date SIZE=8 MAXLENGTH=10 VALUE=\"$query_date\">";
 
 	?>
 	<script language="JavaScript">
@@ -1704,9 +1756,18 @@ else
 	// o_cal.a_tpl.weekstart = 1; // Monday week start
 	</script>
 	<?php
+	echo "<BR>\n";
+	echo "<select name='query_hour' id='query_hour'>\n";
+	for ($i=0; $i<24; $i++)
+		{
+		$hr=substr("0$i", -2);
+		if($query_hour==$hr) {$s="selected";} else {$s="";}
+		echo "<option value='$hr' $s>$hr</option>\n";
+		}
+	echo "</select><B>:00:00</B>\n";
 
-	echo "<BR>"._QXZ("to")."<BR>\n";
-	echo "<INPUT TYPE=TEXT NAME=end_date SIZE=10 MAXLENGTH=10 VALUE=\"$end_date\">";
+	echo "<BR><CENTER><B>"._QXZ("to")."</B></CENTER>\n";
+	echo "<INPUT TYPE=TEXT NAME=end_date SIZE=8 MAXLENGTH=10 VALUE=\"$end_date\">";
 
 	?>
 	<script language="JavaScript">
@@ -1720,50 +1781,70 @@ else
 	// o_cal.a_tpl.weekstart = 1; // Monday week start
 	</script>
 	<?php
+	echo "<BR>\n";
+	echo "<select name='end_hour' id='end_hour'>\n";
+	for ($i=0; $i<24; $i++)
+		{
+		$hr=substr("0$i", -2);
+		if($end_hour==$hr) {$s="selected";} else {$s="";}
+		echo "<option value='$hr' $s>$hr</option>\n";
+		}
+	echo "</select><B>:59:59</B>\n";
 
 	echo "<BR><BR>\n";
 
-	echo "<B>"._QXZ("Date Field").":</B> $NWB#call_export_report-date_field$NWE<BR>\n";
-	echo "<select size=1 name=date_field><option selected value=\"call_date\">"._QXZ("Call date")."</option><option value=\"entry_date\">"._QXZ("Entry date")."</option></select>\n";
+	echo "<B>"._QXZ("User").":</B><BR>\n";
+	echo "<input type='text' name='user' id='user' size='7' maxlength='20'> $NWB#call_export_report-user$NWE\n";
 
 	echo "<BR><BR>\n";
 
-	echo "<B>"._QXZ("Header Row").":</B> $NWB#call_export_report-header_row$NWE<BR>\n";
-	echo "<select size=1 name=header_row><option selected value=\"YES\">"._QXZ("YES")."</option><option value=\"NO\">"._QXZ("NO")."</option></select>\n";
+	echo "<B>"._QXZ("Date Field").":</B><BR>\n";
+	echo "<select size=1 name=date_field><option selected value=\"call_date\">"._QXZ("Call date")."</option><option value=\"entry_date\">"._QXZ("Entry date")."</option></select> $NWB#call_export_report-date_field$NWE\n";
 
 	echo "<BR><BR>\n";
 
-	echo "<B>"._QXZ("Recording Fields").":</B> $NWB#call_export_report-rec_fields$NWE<BR>\n";
+	echo "<B>"._QXZ("Sort order").":</B> $NWB#call_export_report-sort_dir$NWE\n<BR>\n";
+	echo "<input type=radio value='asc' name='sort_dir' $asc>"._QXZ("Ascending")."<BR>\n";
+	echo "<input type=radio value='desc' name='sort_dir' $desc>"._QXZ("Descending")."<BR>\n";
+	
+	echo "<BR><BR>\n";
+
+	echo "<B>"._QXZ("Header Row").":</B><BR>\n";
+	echo "<select size=1 name=header_row><option selected value=\"YES\">"._QXZ("YES")."</option><option value=\"NO\">"._QXZ("NO")."</option></select> $NWB#call_export_report-header_row$NWE\n";
+
+	echo "<BR><BR>\n";
+
+	echo "<B>"._QXZ("Rec Fields").":</B><BR>\n";
 	echo "<select size=1 name=rec_fields>";
 	echo "<option value=\"ID\">"._QXZ("ID")."</option>";
 	echo "<option value=\"FILENAME\">"._QXZ("FILENAME")."</option>";
 	echo "<option value=\"LOCATION\">"._QXZ("LOCATION")."</option>";
 	echo "<option value=\"ALL\">"._QXZ("ALL")."</option>";
 	echo "<option selected value=\"NONE\">"._QXZ("NONE")."</option>";
-	echo "</select>\n";
+	echo "</select> $NWB#call_export_report-rec_fields$NWE\n";
 
 	if ($custom_fields_enabled > 0)
 		{
 		echo "<BR><BR>\n";
 
-		echo "<B>"._QXZ("Custom Fields").":</B> $NWB#call_export_report-custom_fields$NWE<BR>\n";
-		echo "<select size=1 name=custom_fields><option value=\"YES\">"._QXZ("YES")."</option><option selected value=\"NO\">"._QXZ("NO")."</option></select>\n";
+		echo "<B>"._QXZ("Custom Fields").":</B><BR>\n";
+		echo "<select size=1 name=custom_fields><option value=\"YES\">"._QXZ("YES")."</option><option selected value=\"NO\">"._QXZ("NO")."</option></select> $NWB#call_export_report-custom_fields$NWE\n";
 		}
 
 	echo "<BR><BR>\n";
 
-	echo "<B>"._QXZ("Per Call Notes").":</B> $NWB#call_export_report-call_notes$NWE<BR>\n";
-	echo "<select size=1 name=call_notes><option value=\"YES\">"._QXZ("YES")."</option><option selected value=\"NO\">"._QXZ("NO")."</option></select>\n";
+	echo "<B>"._QXZ("Per Call Notes").":</B><BR>\n";
+	echo "<select size=1 name=call_notes><option value=\"YES\">"._QXZ("YES")."</option><option selected value=\"NO\">"._QXZ("NO")."</option></select> $NWB#call_export_report-call_notes$NWE\n";
 
 	echo "<BR><BR>\n";
 
-	echo "<B>"._QXZ("Export Fields").":</B> $NWB#call_export_report-export_fields$NWE<BR>\n";
+	echo "<B>"._QXZ("Export Type").":</B>$NWB#call_export_report-export_type$NWE<BR>\n";
 	echo "<select size=1 name=export_fields><option selected value=\"STANDARD\">"._QXZ("STANDARD")."</option><option value=\"EXTENDED\">"._QXZ("EXTENDED")."</option><option value=\"EXTENDED_2\">"._QXZ("EXTENDED_2")."</option><option value=\"EXTENDED_3\">"._QXZ("EXTENDED_3")."</option><option value=\"EXTENDED_4\">"._QXZ("EXTENDED_4")."</option><option value=\"ALTERNATE_1\">ALTERNATE_1</option><option value=\"ALTERNATE_2\">ALTERNATE_2</option></select>\n";
 
 
 	if ($archives_available=="Y")
 	{
-	echo "<BR><BR><input type='checkbox' name='search_archived_data' value='checked' $search_archived_data><B>"._QXZ("Search archived data")."</B> $NWB#call_export_report-search_archived_data$NWE<BR>\n";
+	echo "<BR><BR><label><input type='checkbox' name='search_archived_data' value='checked' $search_archived_data><B>"._QXZ("Search archived data")."</B> $NWB#call_export_report-search_archived_data$NWE</label><BR>\n";
 	}
 
 	### bottom of first column
@@ -1817,7 +1898,7 @@ else
 		$o=0;
 		while ($statuses_to_print > $o)
 		{
-			if (preg_match("/\|$LISTstatus[$o]\|/",$list_string))
+			if (preg_match("/\|$LISTstatus[$o]\|/",$status_string)) 
 				{echo "<option selected value=\"$LISTstatus[$o]\">"._QXZ("$LISTstatus[$o]")."</option>\n";}
 			else
 				{echo "<option value=\"$LISTstatus[$o]\">"._QXZ("$LISTstatus[$o]")."</option>\n";}
