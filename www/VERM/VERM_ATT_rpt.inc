@@ -11,7 +11,7 @@
 # if (isset($_GET["SUBMIT"]))			{$SUBMIT=$_GET["SUBMIT"];}
 # 	elseif (isset($_POST["SUBMIT"]))	{$SUBMIT=$_POST["SUBMIT"];}
 
-$PHP_SELF=$_SERVER['PHP_SELF'];
+# $PHP_SELF=$_SERVER['PHP_SELF'];
 
 $ACD_queue_counts=array();
 $ACD_terminal_counts=array();

@@ -12,7 +12,7 @@
 #
 # Should only be run on one server in a multi-server Asterisk/VICIDIAL cluster
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG:
 # 61115-1246 - First build, framework setup, non-functional
@@ -52,6 +52,9 @@
 # 210731-0951 - Added cid_group_id_two campaign option
 # 220311-1922 - Added List CID Group Override option
 # 220623-1622 - Added List dial_prefix override
+# 230830-1056 - Changed outbound_calls_per_second max to allow up to 1000 CPS
+# 231116-0916 - Added hopper_hold_inserts option
+# 231129-0905 - Added vicidial_phone_number_call_daily_counts updates/inserts
 #
 
 ### begin parsing run-time options ###
@@ -217,7 +220,7 @@ $event_string='LOGGED INTO MYSQL SERVER ON 1 CONNECTION|';
 &event_logger;
 
 ### Grab system_settings values from the database
-$stmtA = "SELECT use_non_latin,call_limit_24hour FROM system_settings;";
+$stmtA = "SELECT use_non_latin,call_limit_24hour,hopper_hold_inserts FROM system_settings;";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -226,6 +229,7 @@ if ($sthArows > 0)
 	@aryA = $sthA->fetchrow_array;
 	$non_latin = 						$aryA[0];
 	$SScall_limit_24hour =				$aryA[1];
+	$SShopper_hold_inserts =			$aryA[2];
 	}
 $sthA->finish();
 
@@ -340,7 +344,7 @@ while($one_day_interval > 0)
 			}
 		$sthA->finish();
 
-		if ( ($outbound_calls_per_second > 0) && ($outbound_calls_per_second < 201) )
+		if ( ($outbound_calls_per_second > 0) && ($outbound_calls_per_second < 1001) )
 			{$per_call_delay = (1000 / $outbound_calls_per_second);}
 		else
 			{$per_call_delay = '25';}
@@ -395,7 +399,9 @@ while($one_day_interval > 0)
 						$DBIPcid_group_id[$camp_CIPct] =	$aryA[9];
 						$DBIPscheduled_callbacks_auto_reschedule[$camp_CIPct] =	$aryA[10];
 						$DBIPdial_timeout_lead_container[$camp_CIPct] =	$aryA[11];
-						$DBIPcid_group_id_two[$camp_CIPct] =$aryA[12];
+						$DBIPcid_group_id_two[$camp_CIPct] =	$aryA[12];
+						$DBIPhopper_hold_inserts[$camp_CIPct] =	$aryA[13];
+						if ($SShopper_hold_inserts < 1) {$DBIPhopper_hold_inserts[$camp_CIPct] = 'DISABLED';}
 
 						if ($omit_phone_code =~ /Y/) {$DBIPomitcode[$camp_CIPct] = 1;}
 						else {$DBIPomitcode[$camp_CIPct] = 0;}
@@ -925,17 +931,22 @@ while($one_day_interval > 0)
 														}
 													# update daily called counts for this lead
 													$stmtDC = "INSERT IGNORE INTO vicidial_lead_call_daily_counts SET lead_id='$lead_id',modify_date=NOW(),list_id='$PSCBlist_id',called_count_total='1',called_count_auto='1' ON DUPLICATE KEY UPDATE modify_date=NOW(),list_id='$PSCBlist_id',called_count_total=(called_count_total + 1),called_count_auto=(called_count_auto + 1);";
+													# update daily called counts for this phone_number
+													$stmtPDC = "INSERT IGNORE INTO vicidial_phone_number_call_daily_counts SET phone_number='$phone_number',modify_date=NOW(),called_count='1' ON DUPLICATE KEY UPDATE modify_date=NOW(),called_count=(called_count + 1);";
 													if ($staggered < 1)
 														{
 														$affected_rows = $dbhA->do($stmtA);
 														$affected_rowsDC = $dbhA->do($stmtDC);
+														$affected_rowsPDC = $dbhA->do($stmtPDC);
 														if ($DB) {print "LEAD UPDATE: $affected_rows|$stmtA|\n";}
 														if ($DB) {print "LEAD CALL COUNT UPDATE: $affected_rowsDC|$stmtDC|\n";}
+														if ($DB) {print "PHONE CALL COUNT UPDATE: $affected_rowsPDC|$stmtPDC|\n";}
 														}
 													else
 														{
 														$vl_updates[$staggered_ct] = $stmtA;
 														$vdc_updates[$staggered_ct] = $stmtDC;
+														$vdcp_updates[$staggered_ct] = $stmtPDC;
 														}
 
 													$PADlead_id = sprintf("%010s", $lead_id);	while (length($PADlead_id) > 10) {chop($PADlead_id);}
@@ -1428,6 +1439,7 @@ while($one_day_interval > 0)
 								$TEMP_vac_insert = $vac_inserts[$staggered_fill];
 								$TEMP_vl_update = $vl_updates[$staggered_fill];
 								$TEMP_vdc_update = $vdc_updates[$staggered_fill];
+								$TEMP_vdcp_update = $vdcp_updates[$staggered_fill];
 								$TEMP_st_logged = $st_logged[$staggered_fill];
 								$TEMP_vddl_inserts = $vddl_inserts[$staggered_fill];
 								$TEMP_vltfh_inserts = $vltfh_inserts[$staggered_fill];
@@ -1446,6 +1458,7 @@ while($one_day_interval > 0)
 									{
 									$affected_rows_vl = $dbhA->do($TEMP_vl_update);
 									$affected_rows_vdc = $dbhA->do($TEMP_vdc_update);
+									$affected_rows_vdcp = $dbhA->do($TEMP_vdcp_update);
 									$affected_rows_vm = $dbhA->do($TEMP_vm_insert);
 									$affected_rows_vac = $dbhA->do($TEMP_vac_insert);
 									$affected_rows_vddl = $dbhA->do($TEMP_vddl_inserts);
@@ -1454,6 +1467,7 @@ while($one_day_interval > 0)
 
 									if ($DB) {print "LEAD UPDATE: $affected_rows_vl|$TEMP_vl_update|\n";}
 									if ($DB) {print "LEAD CALL COUNT UPDATE: $affected_rows_vdc|$TEMP_vdc_update|\n";}
+									if ($DB) {print "PHONE CALL COUNT UPDATE: $affected_rows_vdcp|$TEMP_vdcp_update|\n";}
 									if ($DB) {print "VICIDIAL_MANAGER INSERT: $affected_rows_vm|$TEMP_vm_insert|\n";}
 									if ($DB) {print "VICIDIAL_AUTO_CALLS INSERT: $affected_rows_vac|$TEMP_vac_insert|\n";}
 									if ($DB) {print "VICIDIAL_DIAL_LOG INSERT: $affected_rows_vddl|$TEMP_vddl_inserts|\n";}
@@ -1487,6 +1501,7 @@ while($one_day_interval > 0)
 					@vac_inserts=@MT;
 					@vl_updates=@MT;
 					@vdc_updates=@MT;
+					@vdcp_updates=@MT;
 					@st_logged=@MT;
 					@vddl_inserts=@MT;
 					###############################################################################

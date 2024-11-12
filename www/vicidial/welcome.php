@@ -1,12 +1,13 @@
 <?php
 # welcome.php - VICIDIAL welcome page
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG:
 # 141007-2140 - Finalized adding QXZ translation to all admin files
 # 161106-1920 - Changed to use newer design and dynamic links
 # 220228-1109 - Added allow_web_debug system setting
+# 231119-1540 - Added HCI Screen link if hopper_hold_inserts are allowed on the system
 #
 
 header ("Content-type: text/html; charset=utf-8");
@@ -18,12 +19,12 @@ require("functions.php");
 #   see the options-example.php file for more information
 if (file_exists('options.php'))
 	{
-	require_once('options.php');
+	require('options.php');
 	}
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,enable_languages,language_method,default_language,agent_screen_colors,admin_web_directory,agent_script,allow_web_debug FROM system_settings;";
+$stmt = "SELECT use_non_latin,enable_languages,language_method,default_language,agent_screen_colors,admin_web_directory,agent_script,allow_web_debug,hopper_hold_inserts FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01001',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 #if ($DB) {echo "$stmt\n";}
@@ -39,6 +40,7 @@ if ($qm_conf_ct > 0)
 	$admin_web_directory =		$row[5];
 	$SSagent_script =			$row[6];
 	$SSallow_web_debug =		$row[7];
+	$SShopper_hold_inserts =	$row[8];
 	}
 if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
@@ -126,6 +128,11 @@ echo "<TR><TD ALIGN=CENTER COLSPAN=2><font size=1> &nbsp; </TD></TR>\n";
 if ($hide_timeclock_link < 1)
 	{echo "<TR><TD ALIGN=CENTER COLSPAN=2><font class=\"skb_text\"> <a href=\"../agc/timeclock.php?referrer=welcome\"> "._QXZ("Timeclock")."</a> </TD></TR>\n";}
 echo "<TR><TD ALIGN=CENTER COLSPAN=2><font size=1> &nbsp; </TD></TR>\n";
+if ($SShopper_hold_inserts > 0)
+	{
+	echo "<TR><TD ALIGN=CENTER COLSPAN=2><font class=\"skb_text\"> <a href=\"../$admin_web_directory/hci_screen.php\"> "._QXZ("HCI Screen")."</a> </TD></TR>\n";
+	echo "<TR><TD ALIGN=CENTER COLSPAN=2><font size=1> &nbsp; </TD></TR>\n";
+	}
 echo "<TR><TD ALIGN=CENTER COLSPAN=2><font class=\"skb_text\"> <a href=\"../$admin_web_directory/admin.php\">"._QXZ("Administration")."</a> </TD></TR>\n";
 echo "<TR><TD ALIGN=CENTER COLSPAN=2><font size=1> &nbsp; </TD></TR>\n";
 

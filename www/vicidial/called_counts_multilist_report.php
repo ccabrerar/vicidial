@@ -1,7 +1,7 @@
 <?php
 # called_counts_multilist_report.php
 # 
-# Copyright (C) 2022  Joe Johnson <freewermadmin@gmail.com>, Matt Florell <mattf@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Joe Johnson <freewermadmin@gmail.com>, Matt Florell <mattf@vicidial.com>    LICENSE: AGPLv2
 #
 # This is a report designed for showing called counts similar to the results
 # at the bottom of each list detail screen, but for multiple lists and using
@@ -20,6 +20,7 @@
 # 180508-0115 - Added new help display
 # 191013-0840 - Fixes for PHP7
 # 220228-2108 - Added allow_web_debug system setting
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
@@ -64,8 +65,8 @@ $DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 $STARTtime = date("U");
-if (!isset($group)) {$group = array();}
-if (!isset($list_ids)) {$list_ids = array();}
+if (!is_array($group)) {$group = array();}
+if (!is_array($list_ids)) {$list_ids = array();}
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (!isset($end_date)) {$end_date = $NOW_DATE;}
 if (strlen($shift)<2) {$shift='ALL';}
@@ -722,6 +723,7 @@ if (strlen($QUERY_STRING) > 5)
 	$first_row=1;
 	$all_called_first=1000;
 	$all_called_last=0;
+	$status=array();
 	$count_statuses=array();
 	$count_called=array();
 	$count_count=array();

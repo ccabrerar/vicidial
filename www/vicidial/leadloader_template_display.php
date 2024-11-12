@@ -1,7 +1,7 @@
 <?php
 # leadloader_template_display.php - version 2.14
 # 
-# Copyright (C) 2022  Matt Florell,Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell,Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 120402-2238 - First Build
@@ -19,6 +19,7 @@
 # 171204-1518 - Fix for custom field duplicate issue, removed link to old lead loader
 # 210312-1700 - Added layout editing functionality
 # 220222-1059 - Added allow_web_debug system setting
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 require("dbconnect_mysqli.php");
@@ -534,6 +535,10 @@ else
 		{
 		$total=0; $good=0; $bad=0; $dup=0; $post=0; $phone_list='';
 		$row=explode($delimiter, preg_replace('/[\'\"]/i', '', $buffer));
+		}
+	else
+		{
+		$row=array();
 		}
 
 	echo "<table border=0 width='100%' cellpadding=0 cellspacing=0>";

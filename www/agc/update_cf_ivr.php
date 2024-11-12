@@ -118,7 +118,7 @@ else
 #   see the options-example.php file for more information
 if (file_exists('options.php'))
 	{
-	require_once('options.php');
+	require('options.php');
 	}
 
 if ($DB>0) {echo "$lead_id|$caller_id|$list_id|$field|$value|$user|$DB|$log_to_file|\n";}

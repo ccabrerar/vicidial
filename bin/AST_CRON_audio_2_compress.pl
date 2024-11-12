@@ -28,7 +28,7 @@
 #
 # This program assumes that recordings are saved by Asterisk as .wav
 # 
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # 
 # 80302-1958 - First Build
@@ -39,10 +39,12 @@
 # 160523-0652 - Added --HTTPS option to use https instead of http in local location
 # 170212-0732 - Added --file-sorting option to put files into dated directories (THIS WILL NOT ALLOW FTP ARCHIVING)
 # 230201-0007 - Allowed for handling of stereo gateway recordings
+# 240213-1146 - Added --GATEWAY option
 #
 
 $GSM=0;   $MP3=0;   $OGG=0;   $GSW=0;
 $HTTPS=0;
+$GATEWAY=0;
 $maxfiles = 100000;
 $location='';
 
@@ -68,6 +70,7 @@ if (length($ARGV[0])>1)
 		print "  [--OGG] = compress into OGG Vorbis codec\n";
 		print "  [--GSW] = compress into GSM codec with RIFF headers and .wav extension\n";
 		print "  [--HTTPS] = use https instead of http in local location\n";
+		print "  [--GATEWAY] = use gateway recording server settings\n";
 		print "  [--run-check] = concurrency check, die if another instance is running\n";
 		print "  [--max-files=x] = maximum number of files to process, default is 100000\n";
 		print "  [--file-sorting] = sort files into subfolders in YYYY-MM-DD format (THIS WILL NOT ALLOW FTP ARCHIVING)\n";
@@ -111,6 +114,11 @@ if (length($ARGV[0])>1)
 			{
 			$HTTPS=1;
 			if ($DB) {print "HTTPS location option enabled\n";}
+			}
+		if ($args =~ /--GATEWAY/i)
+			{
+			$GATEWAY=1;
+			if ($DB) {print "GATEWAY settings option enabled\n";}
 			}
 		if ($args =~ /--GSM/i)
 			{
@@ -375,7 +383,14 @@ foreach(@FILES)
 
 				if ($DB) {print "|$recording_id|$ALLfile|$dir2/$location$MP3file|     |$SQLfile|\n";}
 
-				`$lamebin -b 16 -m m --silent "$dir2/$ALLfile" "$dir2/$location$MP3file"`;
+				if ($GATEWAY > 0) 
+					{
+					`$lamebin -b 16 -m s --silent "$dir2/$ALLfile" "$dir2/$location$MP3file"`;
+					}
+				else
+					{
+					`$lamebin -b 16 -m m --silent "$dir2/$ALLfile" "$dir2/$location$MP3file"`;
+					}
 
 				$stmtA = "UPDATE recording_log set location='$HTTP://$server_ip/RECORDINGS/$location$MP3file' where recording_id='$recording_id';";
 					if($DBX){print STDERR "\n|$stmtA|\n";}

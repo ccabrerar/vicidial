@@ -1,12 +1,13 @@
 <?php
 # VERM_main_report_page.php - Vicidial Enhanced Reporting main report display page
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
 # 
 # CHANGELOG:
 # 220828-1402 - First build
 # 230106-1332 - Added auto download variables, permissions, report logging
 # 230116-1640 - Ingroup-related clauses no longer allow blank campaign_id values (double-dipping issue)
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 # NANQUE, not an unanswered call?
@@ -148,6 +149,15 @@ if ($qm_conf_ct > 0)
 if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+if ( (strlen($slave_db_server)>5) and (preg_match("/$report_name/",$reports_use_slave_db)) )
+	{
+	mysqli_close($link);
+	$use_slave_server=1;
+	$db_source = 'S';
+	require("dbconnect_mysqli.php");
+	echo "<!-- Using slave server $slave_db_server $db_source -->\n";
+	}
 
 $start_date=preg_replace('/[^-0-9]/', '', $start_date);
 $start_time_hour=preg_replace('/[^0-9]/', '', $start_time_hour);
@@ -557,6 +567,9 @@ if ($vicidial_queue_groups)
 		$included_campaigns_clause="and campaign_id in ('')";
 		$included_inbound_groups_clause="and group_id in ('')";
 		$where_included_inbound_groups_clause="where group_id in ('')";
+
+		$included_campaigns_array=array();
+		$included_inbound_groups_array=array();
 		}
 	}
 else
@@ -564,6 +577,9 @@ else
 	$included_campaigns_clause="and campaign_id in ('')";
 	$included_inbound_groups_clause="and group_id in ('')";
 	$where_included_inbound_groups_clause="where group_id in ('')";
+
+	$included_campaigns_array=array();
+	$included_inbound_groups_array=array();
 	}
 
 
@@ -844,7 +860,7 @@ if ($length_in_sec_min || $length_in_sec_max)
 		$and_length_in_sec_sql.=" and length_in_sec>='$length_in_sec_min' ";
 
 		# Closer log
-		$and_closer_length_in_sec_sql.=" and (length_in_sec-queue_seconds)>='$length_in_sec_min' ";
+		$and_closer_length_in_sec_sql.=" and if(comments='EMAIL', length_in_sec, (length_in_sec-queue_seconds))>='$length_in_sec_min' ";
 
 		# Agent log
 		$and_agent_length_in_sec_sql.=" and talk_sec>='$length_in_sec_min' ";
@@ -856,7 +872,7 @@ if ($length_in_sec_min || $length_in_sec_max)
 		$and_length_in_sec_sql.=" and length_in_sec<='$length_in_sec_max' ";
 
 		# Closer log
-		$and_closer_length_in_sec_sql.=" and (length_in_sec-queue_seconds)<='$length_in_sec_max' ";
+		$and_closer_length_in_sec_sql.=" and if(comments='EMAIL', length_in_sec, (length_in_sec-queue_seconds))<='$length_in_sec_max' ";
 
 		# Agent log
 		$and_agent_length_in_sec_sql.=" and talk_sec<='$length_in_sec_max' ";
@@ -1175,9 +1191,9 @@ $LOGserver_name = getenv("SERVER_NAME");
 $LOGserver_port = getenv("SERVER_PORT");
 $LOGrequest_uri = getenv("REQUEST_URI");
 $LOGhttp_referer = getenv("HTTP_REFERER");
-$LOGbrowser=preg_replace("/\'|\"|\\\\/","",$LOGbrowser);
-$LOGrequest_uri=preg_replace("/\'|\"|\\\\/","",$LOGrequest_uri);
-$LOGhttp_referer=preg_replace("/\'|\"|\\\\/","",$LOGhttp_referer);
+$LOGbrowser=preg_replace("/<|>|\'|\"|\\\\/","",$LOGbrowser);
+$LOGrequest_uri=preg_replace("/<|>|\'|\"|\\\\/","",$LOGrequest_uri);
+$LOGhttp_referer=preg_replace("/<|>|\'|\"|\\\\/","",$LOGhttp_referer);
 if (preg_match("/443/i",$LOGserver_port)) {$HTTPprotocol = 'https://';}
   else {$HTTPprotocol = 'http://';}
 if (($LOGserver_port == '80') or ($LOGserver_port == '443') ) {$LOGserver_port='';}

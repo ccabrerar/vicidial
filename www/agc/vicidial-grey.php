@@ -759,7 +759,7 @@ $win_valid_name			= 'subwindow_launch';	# only window name to allow if validatio
 #   see the options-example.php file for more information
 if (file_exists('options.php'))
 	{
-	require_once('options.php');
+	require('options.php');
 	}
 
 $hide_gender=0;

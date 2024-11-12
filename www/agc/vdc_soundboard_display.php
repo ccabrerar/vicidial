@@ -61,7 +61,7 @@ if ($bcrypt == 'OFF')
 #   see the options-example.php file for more information
 if (file_exists('options.php'))
 	{
-	require_once('options.php');
+	require('options.php');
 	}
 
 header ("Content-type: text/html; charset=utf-8");

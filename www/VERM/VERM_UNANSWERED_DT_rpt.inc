@@ -128,7 +128,7 @@ $sort_unanswered_details_preg=preg_replace('/ desc$/', '', $sort_unanswered_deta
 
 # $stmt="select call_date, phone_number, campaign_id, 0 as ivr, '0:00' as wait, sec_to_time(round(length_in_sec)) as duration, '1' as queue_position, CAST(term_reason AS CHAR) as term_reason, user, '1' as attempts, status, uniqueid, 0 as moh_events, '00:00:00' as moh_duration, '' as ivr_duration, '' as ivr_path, '' as did, '' as url, '' as tag, '0' as feat, '0' as vars, '' as feature_codes, '' as variables, uniqueid as detail_id, 'O' as direction from vicidial_log where call_date>='$start_date $start_time' and call_date<='$end_date $end_time' and user in ('VDAD') UNION select call_date, phone_number, campaign_id, 0 as ivr, sec_to_time(round(queue_seconds)) as wait, sec_to_time(round(length_in_sec-queue_seconds)) as duration, queue_position, CAST(term_reason AS CHAR) as term_reason, user, '1' as attempts, status, uniqueid, 0 as moh_events, '00:00:00' as moh_duration, '' as ivr_duration, '' as ivr_path, '' as did, '' as url, '' as tag, '0' as feat, '0' as vars, '' as feature_codes, '' as variables, CONCAT(uniqueid, '|', closecallid) as detail_id, 'I' as direction from vicidial_closer_log where call_date>='$start_date $start_time' and call_date<='$end_date $end_time' and user in ('VDCL') $and_NANQUE_clause $sort_clause";
 
-$stmt="select call_date, phone_number, campaign_id, 0 as ivr, '0:00' as wait, sec_to_time(round(length_in_sec)) as duration, '1' as queue_position, CAST(term_reason AS CHAR) as term_reason, user, '1' as attempts, status, uniqueid, 0 as moh_events, '00:00:00' as moh_duration, '' as ivr_duration, '' as ivr_path, '' as did, '' as url, '' as tag, '0' as feat, '0' as vars, '' as feature_codes, '' as variables, uniqueid as detail_id, 'O' as direction from vicidial_log $vicidial_log_SQL $exc_addtl_statuses and user in ('VDAD') UNION select call_date, phone_number, campaign_id, 0 as ivr, sec_to_time(round(queue_seconds)) as wait, sec_to_time(round(length_in_sec-queue_seconds)) as duration, queue_position, CAST(term_reason AS CHAR) as term_reason, user, '1' as attempts, status, uniqueid, 0 as moh_events, '00:00:00' as moh_duration, '' as ivr_duration, '' as ivr_path, '' as did, '' as url, '' as tag, '0' as feat, '0' as vars, '' as feature_codes, '' as variables, CONCAT(uniqueid, '|', closecallid) as detail_id, 'I' as direction from vicidial_closer_log $vicidial_closer_log_SQL $exc_addtl_statuses and user in ('VDCL') $and_NANQUE_clause $sort_clause";
+$stmt="select call_date, phone_number, campaign_id, 0 as ivr, '0:00' as wait, sec_to_time(round(length_in_sec)) as duration, '1' as queue_position, CAST(term_reason AS CHAR) as term_reason, user, '1' as attempts, status, uniqueid, 0 as moh_events, '00:00:00' as moh_duration, '' as ivr_duration, '' as ivr_path, '' as did, '' as url, '' as tag, '0' as feat, '0' as vars, '' as feature_codes, '' as variables, uniqueid as detail_id, 'O' as direction from vicidial_log $vicidial_log_SQL $exc_addtl_statuses and user in ('VDAD') UNION select call_date, phone_number, campaign_id, 0 as ivr, sec_to_time(round(queue_seconds)) as wait, sec_to_time(round(if(comments='EMAIL', length_in_sec, length_in_sec-queue_seconds))) as duration, queue_position, CAST(term_reason AS CHAR) as term_reason, user, '1' as attempts, status, uniqueid, 0 as moh_events, '00:00:00' as moh_duration, '' as ivr_duration, '' as ivr_path, '' as did, '' as url, '' as tag, '0' as feat, '0' as vars, '' as feature_codes, '' as variables, CONCAT(uniqueid, '|', closecallid) as detail_id, 'I' as direction from vicidial_closer_log $vicidial_closer_log_SQL $exc_addtl_statuses and user in ('VDCL') $and_NANQUE_clause $sort_clause";
 
 if ($DB) {$HTML_output.="<B>$stmt</B>";}
 
@@ -198,6 +198,12 @@ while ($row=mysqli_fetch_array($rslt))
 		$row["ivr_duration"]=$ivr_info_array[1];
 		$row["ivr_path"]=$ivr_info_array[2];
 		$row["call_date"]=$ivr_info_array[3];
+
+		if($caller_id_override=="ALWAYS" || ($caller_id_override=="IF_BLANK" && $row["phone_number"]==""))
+			{
+			$row["phone_number"]=$ivr_info_array[4];
+			}
+
 		$row["did"]=GetDID($row["uniqueid"]);
 		}
 
@@ -373,12 +379,13 @@ function GetIVRInfo($uniqueid, $actual_start_time)
 		$ivr_duration=$ivr_row[5]-$ivr_start_time;
 		$ivr_length+=$ivr_duration;
 		$prev_time=$ivr_row[5];
+		$phone_ext=$ivr_row[6];
 		}
 
 	$ivr_duration_fmt=($ivr_duration>=3600 ? floor($ivr_duration/3600).":" : "").gmdate("i:s", $ivr_duration);
 	$ivr_length_fmt=($ivr_length>=3600 ? floor($ivr_length/3600).":" : "").gmdate("i:s", $ivr_length);
 
-	return array("$ivr_length_fmt", "$ivr_duration_fmt", "$ivr_path", "$actual_start_time");
+	return array("$ivr_length_fmt", "$ivr_duration_fmt", "$ivr_path", "$actual_start_time", "$phone_ext");
 	}
 
 function GetDID($uniqueid)

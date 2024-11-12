@@ -1,7 +1,7 @@
 <?php
 # alt_display.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to display agent screen information outside of the agent screen
 # To use this script, you must set the options.php setting $alt_display_enabled	= '1';
@@ -13,6 +13,7 @@
 # - top_panel = static agent dashboard
 # - top_panel_realtime = agent dashboard reloading every second
 # - agent_status = data-only compressed details for logged-in agent status
+# - notification_data = data-only, designed to check for and send ALT_DISPLAY recipient notification data only for this agent for outside display
 #
 # CHANGELOG:
 # 200827-1157 - First build
@@ -22,10 +23,13 @@
 # 210428-2156 - Added calls_in_queue_display setting
 # 210616-1907 - Added optional CORS support, see options.php for details
 # 220220-0940 - Added allow_web_debug system setting
+# 231214-0912 - Added notification_data action
+# 240320-1047 - Added input filtering for error output
+# 240805-0121 - Updates to notification_data function
 #
 
-$version = '2.14-7';
-$build = '220220-0940';
+$version = '2.14-10';
+$build = '240805-0121';
 $php_script = 'alt_display.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=11;
@@ -73,7 +77,7 @@ $alt_display_enabled	= '0';	# set to 1 to allow the alt_display.php script to be
 #   see the options-example.php file for more information
 if (file_exists('options.php'))
 	{
-	require_once('options.php');
+	require('options.php');
 	}
 
 header ("Content-type: text/html; charset=utf-8");
@@ -82,11 +86,13 @@ header ("Pragma: no-cache");                          // HTTP/1.0
 
 if ($alt_display_enabled < 1)
 	{
+	$user = preg_replace('/[^-_0-9\p{L}]/u','',$user);
 	echo "ERROR: Alt Display script disabled: |$user|$alt_display_enabled|\n";
 	exit;
 	}
 if (strlen($user) < 1)
 	{
+	$user = preg_replace('/[^-_0-9\p{L}]/u','',$user);
 	echo "ERROR: user not defined: |$user|\n";
 	exit;
 	}
@@ -762,6 +768,9 @@ if ($ACTION == 'top_panel')
 	if ($SSagent_debug_logging > 0) {vicidial_ajax_log($NOW_TIME,$startMS,$link,$ACTION,$php_script,$user,$stage,$lead_id,$session_name,$stmt);}
 	exit;
 	}
+################################################################################
+### END top_panel - shows a static display of the top panel dashboard for the agent
+################################################################################
 
 
 
@@ -843,6 +852,9 @@ if ($ACTION == 'top_panel_realtime')
 	if ($SSagent_debug_logging > 0) {vicidial_ajax_log($NOW_TIME,$startMS,$link,$ACTION,$php_script,$user,$stage,$lead_id,$session_name,$stmt);}
 	exit;
 	}
+################################################################################
+### END top_panel_realtime - constant refresh of the top_panel dashboard every second
+################################################################################
 
 
 
@@ -979,8 +991,81 @@ if ($ACTION == 'agent_status')
 	if ($SSagent_debug_logging > 0) {vicidial_ajax_log($NOW_TIME,$startMS,$link,$ACTION,$php_script,$user,$stage,$lead_id,$session_name,$stmt);}
 	exit;
 	}
+################################################################################
+### END agent_status - data-only compressed details for logged-in agent status
+################################################################################
 
 
+
+
+
+################################################################################
+### notification_data - data-only, designed to check for and send notification data for this agent for outside display
+###                will output these fields:	"rows|notification_text|text_size|text_font|text_color|text_weight|show_confetti|duration,maxParticleCount,particleSpeed";
+###                   example:     1|message-here|14|Arial|red|bold|Y|3,2450,60
+################################################################################
+if ($ACTION == 'notification_data')
+	{
+	$notif_queued_ct=0;
+	$notif_sent_ct=0;
+	$notif_ids='';
+	# gather only ALT_DISPLAY READY notifications to be triggered, for this $user only
+	$alert_stmt="select * from vicidial_agent_notifications where notification_status='READY' and (recipient_type='ALT_DISPLAY' and recipient='$user') order by notification_date asc limit 1;";
+	$alert_rslt=mysql_to_mysqli($alert_stmt, $link);
+	while ($alert_row=mysqli_fetch_array($alert_rslt))
+		{
+		$notification_id=$alert_row["notification_id"];
+		$recipient=$alert_row["recipient"];
+		$recipient_type=$alert_row["recipient_type"];
+
+		$upd_stmt="update vicidial_agent_notifications set notification_status='SENT' where notification_id='$notification_id'";
+		$upd_rslt=mysql_to_mysqli($upd_stmt, $link);
+		if (mysqli_affected_rows($link)>0)
+			{
+			$column="user"; $recipient_str="$recipient";
+			$agent_stmt="select user from vicidial_live_agents where $column in ('$recipient_str')";
+			$agent_rslt=mysql_to_mysqli($agent_stmt, $link);
+			while($agent_row=mysqli_fetch_row($agent_rslt))
+				{
+				$ins_stmt="INSERT INTO vicidial_agent_notifications_queue(notification_id, user) VALUES('$notification_id', '$agent_row[0]')";
+				$ins_rslt=mysql_to_mysqli($ins_stmt, $link);
+				$notif_queued_ct++;
+				}
+			}
+		}
+
+	$alert_check_stmt="select * from vicidial_agent_notifications_queue where user='$user' order by queue_date asc limit 1";
+	$alert_check_rslt=mysql_to_mysqli($alert_check_stmt, $link);
+	if (mysqli_num_rows($alert_check_rslt)>0)
+		{
+		$acr_rows=mysqli_num_rows($alert_check_rslt);
+		$acr_row=mysqli_fetch_array($alert_check_rslt);
+		$notification_id=$acr_row["notification_id"];
+		$queue_id=$acr_row["queue_id"];
+
+		$notification_stmt="select * from vicidial_agent_notifications where notification_id='$notification_id' limit 1";
+		$notification_rslt=mysql_to_mysqli($notification_stmt, $link);
+		while($notif_row=mysqli_fetch_array($notification_rslt))
+			{
+			$notif_sent_ct++;
+			$notif_ids .= "-$notification_id";
+			echo "$acr_rows|$notif_row[notification_text]|$notif_row[text_size]|$notif_row[text_font]|$notif_row[text_color]|$notif_row[text_weight]|$notif_row[show_confetti]|$notif_row[confetti_options]";
+			}
+
+		$del_stmt="delete from vicidial_agent_notifications_queue where queue_id='$queue_id'";
+		$del_rslt=mysql_to_mysqli($del_stmt, $link);
+		}
+
+	### END Calls in Queue section ###
+	$stage="$notif_queued_ct|$notif_sent_ct|$notif_ids|";
+	echo "$stage\n";
+
+	if ($SSagent_debug_logging > 0) {vicidial_ajax_log($NOW_TIME,$startMS,$link,$ACTION,$php_script,$user,$stage,$lead_id,$session_name,$stmt);}
+	exit;
+	}
+################################################################################
+### END notification_data - data-only, designed to check for and send notification data for this agent for outside display
+################################################################################
 
 
 

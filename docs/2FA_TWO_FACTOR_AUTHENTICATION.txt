@@ -1,26 +1,27 @@
-2FA - TWO FACTOR AUTHENTICATION				Updated: 2023-06-10
+2FA - TWO FACTOR AUTHENTICATION				Updated: 2023-11-09
 
 This document covers the 2FA(Two-Factor-Authentication) features in VICIdial as
-of admin.php build 210312-1239(svn/trunk revision 3373).
+of admin.php build 231109-0904(svn/trunk revision 3770).
 
 
 
 What is 2FA (Two-Factor-Authentication)?
 
-Two-Factor-Authentication adds a required second step to the admin web screen login process through a method other than a password, such as: an Email, Phone Call or Text-Message(SMS). This 2FA auth also lasts only a set amount of time(defined in System Settings[number of hours, from 1-9999 hours]), or until the user logs out. Currently, 2FA is not available or affected by agent screen logins.
+Two-Factor-Authentication adds a required second step to the admin web screen and/or agent web screen login process through a method other than a password, such as: an Email, Phone Call or Text-Message(SMS). This 2FA auth also lasts only a set amount of time(defined in System Settings[number of hours, from 1-9999 hours]), or until the user logs out in the case of the admin web screens. 2FA can be enabled for the admin web screens, the agent web screen or both.
 
 
-To use 2FA on your system, you will need to have at least one of the following enabled on your VICIdial system:
+To use 2FA on your system, you will need to have AT LEAST ONE of the following enabled on your VICIdial system:
 1. The ability for your webserver to send email through PHP
 2. The ability to place phone calls from one of your dialers
 3. An SMS service that can send text messages by an HTTP or HTTPS API
 
 
-To enable and configure 2FA in VICIdial, there are two settings in the Admin -> System Settings web configuration page, and one override setting in the User Modify page:
+To enable and configure 2FA in VICIdial, there are three settings in the Admin -> System Settings web configuration page, and one override setting in the User Modify page:
 
 SYSTEM SETTINGS:
-1. 2FA Auth Expire Hours - Must be set to a number higher than 0 to enable
-2. 2FA Settings Container - Must be a valid 2FA_SETTINGS Container Type, with the following configuration options(example is below the field definitions):
+1. Two-Factor Admin Auth Hours - Must be set to a number higher than 0 to enable for admin web users
+2. Two-Factor Agent Auth Hours - Must be set to a number higher than 0 to enable for agent screen users
+3. Two-Factor Auth Config Container - Must be a valid 2FA_SETTINGS Container Type, with the following configuration options(example is below the field definitions):
 
 auth_code_expire_minutes =	The number of minutes the Authorization code will be valid for, default is 30 minutes
 auth_code_attempts =		The number of attempts a person has to enter an auth code before their account is locked for 15 minutes, default is 10
@@ -66,7 +67,7 @@ Notes:
 Upon activating 2FA in the System Settings, if you get the following message, it means that your user account does not have an Email address and Mobile Phone number filled in:
 "Your User account is not configured for Two-Factor-Authentication. Please contact your system administrator"
 
-
+If you are using email as an option, the "email_from" email address should use a domain name that is registered to your webserver, or you may have issues with email filtering
 
 
 

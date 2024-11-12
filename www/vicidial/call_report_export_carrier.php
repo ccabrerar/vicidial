@@ -6,7 +6,7 @@
 # downloads to a flat text file that is tab delimited. This version also
 # attempts to link carrier and dial log entries to those calls.
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -22,6 +22,7 @@
 # 190926-0927 - Fixes for PHP7
 # 210911-1908 - Fix for --ALL-- selection user-group permission issue
 # 220301-1551 - Added allow_web_debug system setting
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
@@ -79,11 +80,11 @@ $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 $FILE_TIME = date("Ymd-His");
 $STARTtime = date("U");
-if (!isset($campaign)) {$campaign = array();}
-if (!isset($group)) {$group = array();}
-if (!isset($user_group)) {$user_group = array();}
-if (!isset($list_id)) {$list_id = array();}
-if (!isset($status)) {$status = array();}
+if (!is_array($campaign)) {$campaign = array();}
+if (!is_array($group)) {$group = array();}
+if (!is_array($user_group)) {$user_group = array();}
+if (!is_array($list_id)) {$list_id = array();}
+if (!is_array($status)) {$status = array();}
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (!isset($end_date)) {$end_date = $NOW_DATE;}
 if (strlen($shift)<2) {$shift='ALL';}

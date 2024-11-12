@@ -32,7 +32,7 @@
 #exten => 1234,2,AGI(agi-VDAD_inbound_calltime_check.agi,INBOUND-----YES-----START-----24hours-----EXTENSION-----101-----default-----NO-----YES)
 #exten => 1234,3,Hangup
 #
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 80525-0144 - First Build
@@ -58,6 +58,7 @@
 # 200624-2302 - Added play sip-silence audio option
 # 201026-1501 - Fix for overwriting short CIDnum
 # 230118-1728 - Added response logging for manual dial outbound calls
+# 240227-1154 - Added holiday_method option
 #
 
 $script = 'agi-VDAD_inbound_calltime_check.agi';
@@ -480,6 +481,7 @@ if ($sthArows > 0)
 		}
 	}
 
+$holiday_ADDITION_REVERSE_trigger=0;
 if (length($ct_holidays) > 2)
 	{
 	$stmtA = "SELECT count(*) from vicidial_call_time_holidays where holiday_date='$YMD' and holiday_status='ACTIVE';";
@@ -500,7 +502,7 @@ if (length($ct_holidays) > 2)
 			{
 			if (length($holiday_rules[$b])>1)
 				{
-				$stmtA = "SELECT holiday_id,holiday_date,holiday_name,ct_default_start,ct_default_stop,default_afterhours_filename_override from vicidial_call_time_holidays where holiday_id='$holiday_rules[$b]' and holiday_status='ACTIVE' and holiday_date='$YMD';";
+				$stmtA = "SELECT holiday_id,holiday_date,holiday_name,ct_default_start,ct_default_stop,default_afterhours_filename_override,holiday_method from vicidial_call_time_holidays where holiday_id='$holiday_rules[$b]' and holiday_status='ACTIVE' and holiday_date='$YMD' order by ct_default_start asc;";
 				if ($DBX) {print "   |$stmtA|\n";}
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -508,14 +510,32 @@ if (length($ct_holidays) > 2)
 				if ($sthArows > 0)
 					{
 					@aryA = $sthA->fetchrow_array;
-					$holiday_id =								$aryA[0];
-					$holiday_date =								$aryA[1];
-					$holiday_name =								$aryA[2];
-					$ct_default_start =							$aryA[3];
-					$ct_default_stop =							$aryA[4];
-					$default_afterhours_filename_override =		$aryA[5];
+					$holiday_id =							$aryA[0];
+					$holiday_date =							$aryA[1];
+					$holiday_name =							$aryA[2];
+					$holiday_method =						$aryA[6];
+					if ($AGILOG) {$agi_string = "Active Holiday found!    |$holiday_id|$holiday_date|$holiday_name|$hm|$aryA[3]|$aryA[4]|$aryA[5]|$holiday_method|";   &agi_output;}
 
-					if ($AGILOG) {$agi_string = "Active Holiday found!    |$holiday_id|$holiday_date|$holiday_name|$ct_default_start|$ct_default_stop|$default_afterhours_filename_override|";   &agi_output;}
+					if ($holiday_method =~ /ADDITION_REVERSE/)
+						{
+						$temp_begin =	($aryA[3] + 0);		# ex: 1100
+						$temp_end =		($aryA[4] + 0);		# ex: 2300
+						if ($AGILOG) {$agi_string = "Holiday ADDITION_REVERSE check:    |$holiday_id|$holiday_date|$holiday_name|($temp_begin <= $hm)|$temp_end >= $hm)|$aryA[5]|$holiday_method|";   &agi_output;}
+						if ( ($temp_begin <= $hm) && ($temp_end >= $hm) )
+							{
+							$after_hours_message_filename =		$aryA[5];
+
+							$holiday_ADDITION_REVERSE_trigger++;
+
+							if ($AGILOG) {$agi_string = "Holiday ADDITION_REVERSE match!    |$holiday_id|$holiday_ADDITION_REVERSE_trigger|";   &agi_output;}
+							}
+						}
+					else
+						{
+						$ct_default_start =					$aryA[3];
+						$ct_default_stop =					$aryA[4];
+						$after_hours_message_filename =		$aryA[5];
+						}
 					}
 				$sthA->finish();
 				}
@@ -534,7 +554,7 @@ if ($sip_silence_playback =~ /YES/i)
 $ct_stop_overflow=0;   # allow for overflow time, past midnight
 if ($ct_yest_stop > 2400)
 	{$ct_stop_overflow = ($ct_yest_stop - 2400);}
-if ( ( ($hm < $ct_default_start) || ($hm > $ct_default_stop) ) && ($hm >= $ct_stop_overflow) )
+if ( ( ($hm < $ct_default_start) || ($hm > $ct_default_stop) || ($holiday_ADDITION_REVERSE_trigger > 0) ) && ($hm >= $ct_stop_overflow) )
 	{
 	$VHqueryCID = "VA$CIDdate$hour$min$sec$sec";
 

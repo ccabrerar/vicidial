@@ -1,7 +1,7 @@
 <?php 
 # AST_LAGGED_log_report.php
 # 
-# Copyright (C) 2022  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Mike Coate, Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 130622-1026 - First build
@@ -12,6 +12,7 @@
 # 170409-1536 - Added IP List validation code
 # 220302-1624 - Added allow_web_debug system setting
 # 220812-0946 - Added User Group report permissions checking
+# 231201-1528 - Added link to AST_LAGGED_log_report_summary.php report
 #
 
 $startMS = microtime();
@@ -199,9 +200,9 @@ $LOGserver_name = getenv("SERVER_NAME");
 $LOGserver_port = getenv("SERVER_PORT");
 $LOGrequest_uri = getenv("REQUEST_URI");
 $LOGhttp_referer = getenv("HTTP_REFERER");
-$LOGbrowser=preg_replace("/\'|\"|\\\\/","",$LOGbrowser);
-$LOGrequest_uri=preg_replace("/\'|\"|\\\\/","",$LOGrequest_uri);
-$LOGhttp_referer=preg_replace("/\'|\"|\\\\/","",$LOGhttp_referer);
+$LOGbrowser=preg_replace("/<|>|\'|\"|\\\\/","",$LOGbrowser);
+$LOGrequest_uri=preg_replace("/<|>|\'|\"|\\\\/","",$LOGrequest_uri);
+$LOGhttp_referer=preg_replace("/<|>|\'|\"|\\\\/","",$LOGhttp_referer);
 if (preg_match("/443/i",$LOGserver_port)) {$HTTPprotocol = 'https://';}
   else {$HTTPprotocol = 'http://';}
 if (($LOGserver_port == '80') or ($LOGserver_port == '443') ) {$LOGserver_port='';}
@@ -297,6 +298,7 @@ $MAIN.="<select name='report_display_type'>";
 if ($report_display_type) {$MAIN.="<option value='$report_display_type' selected>$report_display_type</option>";}
 $MAIN.="<option value='TEXT'>"._QXZ("TEXT")."</option><option value='HTML'>"._QXZ("HTML")."</option></select></TD>";
 $MAIN.="<TD VALIGN=TOP align=center><INPUT TYPE=submit NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>\n";
+$MAIN.="</TD><TD><a href='AST_LAGGED_log_report_summary.php'>"._QXZ("SUMMARY")."</a>";
 $MAIN.="</TD></TR></TABLE>\n";
 if ($SUBMIT && $query_date) {
 	$stmt="SELECT server_ip, count(*) as ct From vicidial_agent_log where event_time>='$query_date $query_date_D' and event_time<='$query_date $query_date_T' and sub_status='LAGGED' group by server_ip order by server_ip";

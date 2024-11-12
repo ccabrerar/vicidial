@@ -228,6 +228,7 @@ while (@group=$campaign_rslt->fetchrow_array)
 	$inventory_ptnstr="|";
 	while (@row=$rslt->fetchrow_array) 
 		{
+		$row[0] =~ s/[^-_0-9\p{L}]//ugi;
 		$dial_statuses.="$row[0] ";
 		$inventory_statuses.="'$row[0]',";
 		$inventory_ptnstr.="$row[0]|";
@@ -383,6 +384,7 @@ sub GetListCount
 	$new_count=0;  $total_calls=0;
 	while (@ct_row=$ct_rslt->fetchrow_array) 
 		{
+		$ct_row[0] =~ s/[^-_0-9\p{L}]//ugi;
 		$list_start_inv+=$ct_row[2];
 		$total_calls+=($ct_row[1]*$ct_row[2]);
 		if ($inventory_ptnstr=~/\|$ct_row[0]\|/ && $ct_row[1]=="0") {$new_count+=$ct_row[2];} 

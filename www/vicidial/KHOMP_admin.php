@@ -1,12 +1,13 @@
 <?php
 # KHOMP_admin.php - KHOMP carrier definition administration page
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # Interface for defining KHOMP codes for the dialer
 #
 # 200210-1604 - First build
 # 220223-1109 - Added allow_web_debug system setting
+# 240801-1130 - Bug fixes
 #
 
 $startMS = microtime();
@@ -110,19 +111,20 @@ $browser = getenv("HTTP_USER_AGENT");
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,allow_chats,enable_languages,language_method,default_language,allow_web_debug FROM system_settings;";
+$stmt = "SELECT use_non_latin,allow_chats,enable_languages,language_method,default_language,allow_web_debug,outbound_autodial_active FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 #if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
 	{
 	$row=mysqli_fetch_row($rslt);
-	$non_latin =			$row[0];
-	$SSallow_chats =		$row[1];
-    $SSenable_languages =	$row[2];
-    $SSlanguage_method =	$row[3];
-	$SSdefault_language =	$row[4];
-	$SSallow_web_debug =	$row[5];
+	$non_latin =					$row[0];
+	$SSallow_chats =				$row[1];
+    $SSenable_languages =			$row[2];
+    $SSlanguage_method =			$row[3];
+	$SSdefault_language =			$row[4];
+	$SSallow_web_debug =			$row[5];
+	$SSoutbound_autodial_active =	$row[6];
 	}
 if ($SSallow_web_debug < 1) {$DB=0;}
 $VUselected_language = $SSdefault_language;
@@ -232,11 +234,13 @@ if ($submit_khomp=="UPDATE")
 				}
 			}
 
+		if (!$link) echo "No DB link.";
+
 		$update_khomp_string=trim(preg_replace('/\//', "\/", $update_khomp_string));
 		$stmt="select * from vicidial_settings_containers where container_id='KHOMPSTATUSMAP'";
 		$rslt=mysql_to_mysqli($stmt, $link);
 
-		while($row=mysqli_fetch_row($rslt)) 
+		while($row=mysqli_fetch_array($rslt)) 
 			{
 			$container_entry=$row[4];
 			$khomps_array=explode("\n", $container_entry);
@@ -263,9 +267,9 @@ if ($submit_khomp=="UPDATE")
 					$SQL_log = "$update_stmt|";
 					$SQL_log = preg_replace('/;/', '', $SQL_log);
 					$SQL_log = addslashes($SQL_log);
-					$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='KHOMP', event_type='UPDATE', record_id='$PN[$p]', event_code='ADMIN UPDATE KHOMP CODE', event_sql=\"$SQL_log\", event_notes='';";
+					$log_stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='KHOMP', event_type='UPDATE', record_id='$PN[$p]', event_code='ADMIN UPDATE KHOMP CODE', event_sql=\"$SQL_log\", event_notes='';";
 					if ($DB) {echo "|$stmt|\n";}
-					$rslt=mysql_to_mysqli($stmt, $link);
+					$log_rslt=mysql_to_mysqli($log_stmt, $link);
 					}
 				else
 					{
@@ -328,9 +332,9 @@ else if ($submit_khomp=="ADD")
 					$SQL_log = "$update_stmt|";
 					$SQL_log = preg_replace('/;/', '', $SQL_log);
 					$SQL_log = addslashes($SQL_log);
-					$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='KHOMP', event_type='ADD', record_id='$PN[$p]', event_code='ADMIN ADD KHOMP CODE', event_sql=\"$SQL_log\", event_notes='';";
+					$log_stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='KHOMP', event_type='ADD', record_id='$PN[$p]', event_code='ADMIN ADD KHOMP CODE', event_sql=\"$SQL_log\", event_notes='';";
 					if ($DB) {echo "|$stmt|\n";}
-					$rslt=mysql_to_mysqli($stmt, $link);
+					$log_rslt=mysql_to_mysqli($log_stmt, $link);
 					}
 				else
 					{

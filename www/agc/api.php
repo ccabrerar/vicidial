@@ -1,7 +1,7 @@
 <?php
 # api.php
 # 
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed as an API(Application Programming Interface) to allow
 # other programs to interact with the VICIDIAL Agent screen
@@ -110,10 +110,16 @@
 # 230412-0945 - Added send_notification function
 # 230413-1957 - Fix for send_notification user group permissions
 # 230519-0731 - Fix for input variable filtering
+# 231129-1457 - Added refresh_panel function
+# 231222-2105 - Added multi_dial_phones option to the transfer_conference function
+# 240219-1500 - Added daily_limit setting to change_ingroups function
+# 240425-1901 - Added md_check option for transfer_conference function
+# 240427-0809 - Added tw_check option for transfer_conference function
+# 240429-2220 - Added PARK_XFER|GRAB_XFER options for park_call function
 #
 
-$version = '2.14-75';
-$build = '230519-0731';
+$version = '2.14-81';
+$build = '240429-2220';
 $php_script = 'api.php';
 
 $startMS = microtime();
@@ -287,6 +293,12 @@ if (isset($_GET["text_weight"]))			{$text_weight=$_GET["text_weight"];}
 	elseif (isset($_POST["text_weight"]))	{$text_weight=$_POST["text_weight"];}
 if (isset($_GET["text_color"]))				{$text_color=$_GET["text_color"];}
 	elseif (isset($_POST["text_color"]))	{$text_color=$_POST["text_color"];}
+if (isset($_GET["multi_dial_phones"]))			{$multi_dial_phones=$_GET["multi_dial_phones"];}
+	elseif (isset($_POST["multi_dial_phones"]))	{$multi_dial_phones=$_POST["multi_dial_phones"];}
+if (isset($_GET["md_check"]))			{$md_check=$_GET["md_check"];}
+	elseif (isset($_POST["md_check"]))	{$md_check=$_POST["md_check"];}
+if (isset($_GET["tw_check"]))			{$tw_check=$_GET["tw_check"];}
+	elseif (isset($_POST["tw_check"]))	{$tw_check=$_POST["tw_check"];}
 
 $DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
@@ -294,7 +306,7 @@ $DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 #   see the options-example.php file for more information
 if (file_exists('options.php'))
 	{
-	require_once('options.php');
+	require('options.php');
 	}
 
 header ("Content-type: text/html; charset=utf-8");
@@ -348,6 +360,9 @@ $close_window_link=preg_replace("/[^-_0-9a-zA-Z]/","",$close_window_link);
 $dnc_check=preg_replace("/[^-_0-9a-zA-Z]/","",$dnc_check);
 $campaign_dnc_check=preg_replace("/[^-_0-9a-zA-Z]/","",$campaign_dnc_check);
 $notification_date = preg_replace('/[^- \:0-9]/','',$notification_date);
+$multi_dial_phones = preg_replace('/[^\,0-9]/','',$multi_dial_phones);
+$md_check = preg_replace("/[^0-9a-zA-Z]/","",$md_check);
+$tw_check = preg_replace("/[^0-9a-zA-Z]/","",$tw_check);
 
 if ($non_latin < 1)
 	{
@@ -2651,7 +2666,7 @@ if ($function == 'change_ingroups')
 						{
 						if (strlen($in_groups[$k])>1)
 							{
-							$stmtB="SELECT group_weight,calls_today,group_grade,calls_today_filtered FROM vicidial_inbound_group_agents where user='$agent_user' and group_id='$in_groups[$k]';";
+							$stmtB="SELECT group_weight,calls_today,group_grade,calls_today_filtered,daily_limit FROM vicidial_inbound_group_agents where user='$agent_user' and group_id='$in_groups[$k]';";
 							$rslt=mysql_to_mysqli($stmtB, $link);
 							if ($DB) {echo "$stmtB\n";}
 							$viga_ct = mysqli_num_rows($rslt);
@@ -2662,6 +2677,7 @@ if ($function == 'change_ingroups')
 								$calls_today =	$row[1];
 								$group_grade =	$row[2];
 								$calls_today_filtered =	$row[3];
+								$daily_limit =	$row[4];
 								}
 							else
 								{
@@ -2669,8 +2685,9 @@ if ($function == 'change_ingroups')
 								$calls_today =	0;
 								$group_grade =	0;
 								$calls_today_filtered =	0;
+								$daily_limit =	-1;
 								}
-							$stmtB="INSERT IGNORE INTO vicidial_live_inbound_agents set user='$agent_user',group_id='$in_groups[$k]',group_weight='$group_weight',group_grade='$group_grade',calls_today='$calls_today',calls_today_filtered='$calls_today_filtered',last_call_time='$NOW_TIME',last_call_finish='$NOW_TIME',last_call_time_filtered='$NOW_TIME',last_call_finish_filtered='$NOW_TIME' ON DUPLICATE KEY UPDATE group_weight='$group_weight',group_grade='$group_grade',calls_today='$calls_today',calls_today_filtered='$calls_today_filtered';";
+							$stmtB="INSERT IGNORE INTO vicidial_live_inbound_agents set user='$agent_user',group_id='$in_groups[$k]',group_weight='$group_weight',group_grade='$group_grade',calls_today='$calls_today',calls_today_filtered='$calls_today_filtered',last_call_time='$NOW_TIME',last_call_finish='$NOW_TIME',last_call_time_filtered='$NOW_TIME',last_call_finish_filtered='$NOW_TIME',daily_limit='$daily_limit' ON DUPLICATE KEY UPDATE group_weight='$group_weight',group_grade='$group_grade',calls_today='$calls_today',calls_today_filtered='$calls_today_filtered',daily_limit='$daily_limit';";
 							$stmtBlog .= "$stmtB|";
 								if ($format=='debug') {echo "\n<!-- $stmtB -->";}
 							$rslt=mysql_to_mysqli($stmtB, $link);
@@ -2762,7 +2779,7 @@ if ($function == 'update_fields')
 	if (strlen($agent_user)<1)
 		{
 		$result = _QXZ("ERROR");
-		$result_reason = _QXZ("st_login_log not valid");
+		$result_reason = _QXZ("agent_user not valid");
 		$data = "$agent_user";
 		echo "$result: $result_reason - $data\n";
 		api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
@@ -3092,6 +3109,115 @@ if ($function == 'update_fields')
 	}
 ################################################################################
 ### END - update_fields
+################################################################################
+
+
+
+
+
+################################################################################
+### BEGIN - refresh_panel
+################################################################################
+if ($function == 'refresh_panel')
+	{
+	if (strlen($agent_user)<1)
+		{
+		$result = _QXZ("ERROR");
+		$result_reason = _QXZ("agent_user not valid");
+		$data = "$agent_user";
+		echo "$result: $result_reason - $data\n";
+		api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+		}
+	else
+		{
+		if ( (!preg_match("/ $function /",$VUapi_allowed_functions)) and (!preg_match("/ALL_FUNCTIONS/",$VUapi_allowed_functions)) )
+			{
+			$result = _QXZ("ERROR");
+			$result_reason = _QXZ("auth USER DOES NOT HAVE PERMISSION TO USE THIS FUNCTION");
+			echo "$result: $result_reason - $value|$user|$function|$VUuser_group\n";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		$stmt = "select count(*) from vicidial_live_agents where user='$agent_user';";
+		if ($DB) {echo "$stmt\n";}
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$row=mysqli_fetch_row($rslt);
+		if ($row[0] > 0)
+			{
+			$fieldsLISTS='';
+			$agent_update=0;
+
+			if (preg_match('/formreload/i',$query_string))
+				{
+				if ($DB) {echo _QXZ("form reload triggered")."\n";}
+				$fieldsLIST .= "formreload,";
+				$agent_update++;
+				}
+			if (preg_match('/scriptreload/i',$query_string))
+				{
+				if ($DB) {echo _QXZ("script reload triggered")."\n";}
+				$fieldsLIST .= "scriptreload,";
+				$agent_update++;
+				}
+			if (preg_match('/script2reload/i',$query_string))
+				{
+				if ($DB) {echo _QXZ("script 2 reload triggered")."\n";}
+				$fieldsLIST .= "script2reload,";
+				$agent_update++;
+				}
+			if (preg_match('/emailreload/i',$query_string))
+				{
+				if ($DB) {echo _QXZ("email reload triggered")."\n";}
+				$fieldsLIST .= "emailreload,";
+				$agent_update++;
+				}
+			if (preg_match('/chatreload/i',$query_string))
+				{
+				if ($DB) {echo _QXZ("chat reload triggered")."\n";}
+				$fieldsLIST .= "chatreload,";
+				$agent_update++;
+				}
+			if (preg_match('/callbacksreload/i',$query_string))
+				{
+				if ($DB) {echo _QXZ("callbacks reload triggered")."\n";}
+				$fieldsLIST .= "callbacksreload,";
+				$agent_update++;
+				}
+			if ( ($field_set > 0) or ($agent_update > 0) )
+				{
+				$fieldsLIST = preg_replace("/,$/","",$fieldsLIST);
+
+				$affected_rowsVLA=0;
+				$stmt="UPDATE vicidial_live_agents set external_update_fields='1',external_update_fields_data='$fieldsLIST' where user='$agent_user';";
+					if ($format=='debug') {echo "\n<!-- $stmt -->";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$affected_rowsVLA = mysqli_affected_rows($link);
+
+				$result = _QXZ("SUCCESS");
+				$result_reason = _QXZ("refresh_panel request sent");
+				$data = "$user|$agent_user|$affected_rowsVLA|$fieldsLIST|";
+				echo "$result: $result_reason - $data\n";
+				api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+				}
+			else
+				{
+				$result = _QXZ("ERROR");
+				$result_reason = _QXZ("no panels have been defined");
+				echo "$result: $result_reason - $agent_user\n";
+				api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+				}
+			}
+		else
+			{
+			$result = _QXZ("ERROR");
+			$result_reason = _QXZ("agent_user is not logged in");
+			echo "$result: $result_reason - $agent_user\n";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			}
+		}
+	}
+################################################################################
+### END - refresh_panel
 ################################################################################
 
 
@@ -3774,7 +3900,7 @@ if ($function == 'send_dtmf')
 ################################################################################
 if ($function == 'park_call')
 	{
-	if ( (strlen($value)<10) or ( (strlen($agent_user)<1) and (strlen($alt_user)<2) ) )
+	if ( (!preg_match("/PARK_CUSTOMER|GRAB_CUSTOMER|PARK_IVR_CUSTOMER|GRAB_IVR_CUSTOMER|PARK_XFER|GRAB_XFER/",$value)) or ( (strlen($agent_user)<1) and (strlen($alt_user)<2) ) )
 		{
 		$result = _QXZ("ERROR");
 		$result_reason = _QXZ("park_call not valid");
@@ -3911,12 +4037,15 @@ if ($function == 'transfer_conference')
 		$row=mysqli_fetch_row($rslt);
 		if ($row[0] > 0)
 			{
-			$stmt = "select lead_id,callerid from vicidial_live_agents where user='$agent_user';";
+			$stmt = "select lead_id,callerid,server_ip,conf_exten,status from vicidial_live_agents where user='$agent_user';";
 			if ($DB) {echo "$stmt\n";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 			$row=mysqli_fetch_row($rslt);
-			$lead_id =	$row[0];
-			$callerid = $row[1];
+			$lead_id =			$row[0];
+			$callerid =			$row[1];
+			$AGENTserver_ip =	$row[2];
+			$AGENTconf_exten =	$row[3];
+			$AGENTstatus =		$row[4];
 			if ( ($lead_id > 0) and (strlen($callerid)>15) )
 				{
 				### START In-group transfer or bridge ###
@@ -4100,13 +4229,120 @@ if ($function == 'transfer_conference')
 					{
 					if ($SUCCESS > 0)
 						{
+						$stmtVP='';
+						$multi_dial_phones_OUTPUT='';
+						$multi_dial_phones_STRING='';
+						if (strlen($multi_dial_phones) > 4)
+							{
+							### START 3-way press-1 multi-dial calls processing ###
+							$multi_dial_phonesARY=array();
+							$multi_dial_phones_ct=0;
+							if (preg_match("/,/",$multi_dial_phones))
+								{
+								$multi_dial_phonesARY = explode(',',$multi_dial_phones);
+								$multi_dial_phones_ct = count($multi_dial_phonesARY);
+								}
+							else
+								{
+								$multi_dial_phonesARY[0] = $multi_dial_phones;
+								$multi_dial_phones_ct = 1;
+								}
+							$mp=0;
+							$vp=0;
+							while ($mp < $multi_dial_phones_ct)
+								{
+								$temp_phone = $multi_dial_phonesARY[$mp];
+								if ( (strlen($temp_phone) > 4) and (strlen($temp_phone) < 19) and (!preg_match("/$temp_phone/",$multi_dial_phones_STRING)) )
+									{
+									if ($vp > 0) {$multi_dial_phones_STRING .= ",";}
+									$multi_dial_phones_STRING .= "$temp_phone";
+									$vp++;
+									}
+								$mp++;
+								}
+							$affected_rowsVP=0;
+							if ($vp > 0)
+								{
+								$md_check_ok=1;
+								$md_check_ct=0;
+								if (preg_match("/YES/i",$md_check))
+									{
+									$half_hour_ago = date("Y-m-d H:i:s", mktime(date("H"),date("i")-30,date("s"),date("m"),date("d"),date("Y")));
+									# check for still-active previous 3-way calls from this agent and send error if any are found
+									$stmt = "select count(*) from vicidial_3way_press_live where user='$agent_user' and status NOT IN('HUNGUP','DEFEATED','TRANSFER','TOOSLOW','DECLINED') and call_date > \"$half_hour_ago\";";
+									if ($DB) {echo "$stmt\n";}
+									$rslt=mysql_to_mysqli($stmt, $link);
+									$VDTW_live_ct = mysqli_num_rows($rslt);
+									if ($VDTW_live_ct > 0)
+										{
+										$row=mysqli_fetch_row($rslt);
+										$md_check_ct	= $row[0];
+										}
+									if ($md_check_ct > 0) {$md_check_ok = 0;}
+									}
+								if ($md_check_ok > 0)
+									{
+									$stmtVP = "INSERT IGNORE INTO vicidial_3way_press_multi SET user='$agent_user',call_date=NOW(),phone_numbers='$multi_dial_phones_STRING',phone_numbers_ct='$vp',status='NEW' ON DUPLICATE KEY UPDATE call_date=NOW(),phone_numbers='$multi_dial_phones_STRING',phone_numbers_ct='$vp',status='NEW';";
+									$rslt=mysql_to_mysqli($stmtVP, $link);
+									$affected_rowsVP = mysqli_affected_rows($link);
+									}
+								else 
+									{
+									$result = _QXZ("ERROR");
+									$result_reason = _QXZ("agent_user has previous active 3-way calls");
+									$data = "$md_check_ct|$md_check_ok|$md_check";
+									echo "$result: $result_reason - $agent_user|$data\n";
+									api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+									exit;
+									}
+								}
+							$multi_dial_phones_OUTPUT = "|Multi-phones: $vp $mp $affected_rowsVP";
+							### END 3-way press-1 multi-dial calls processing ###
+							}
+
+						### START Check for already active 3-way calls in agent session, if enabled ###
+						if (preg_match("/YES/i",$tw_check))
+							{
+							$conf_engine='';
+							$conf_table = 'vicidial_conferences';
+							$tw_check_ct=0;
+
+							$stmt = "SELECT conf_engine from servers where server_ip='$AGENTserver_ip';";
+							if ($DB) {echo "$stmt\n";}
+							$rslt=mysql_to_mysqli($stmt, $link);
+							$row=mysqli_fetch_row($rslt);
+							$conf_engine =	$row[0];
+							if (preg_match("/CONFBRIDGE/i",$conf_engine)) {$conf_table = 'vicidial_confbridges';}
+
+							# check for active 3-way call from this agent and send error if any are found
+							$stmt = "SELECT count(*) from live_sip_channels where server_ip='$AGENTserver_ip' and channel_group LIKE \"DC%W\" and extension='$AGENTconf_exten';";
+							if ($DB) {echo "$stmt\n";}
+							$rslt=mysql_to_mysqli($stmt, $link);
+							$TW_live_ct = mysqli_num_rows($rslt);
+							if ($TW_live_ct > 0)
+								{
+								$row=mysqli_fetch_row($rslt);
+								$tw_check_ct	= $row[0];
+								}
+							if ($tw_check_ct > 0)
+								{
+								$result = _QXZ("ERROR");
+								$result_reason = _QXZ("agent_user has current active 3-way call");
+								$data = "$tw_check_ct|0|$tw_check";
+								echo "$result: $result_reason - $agent_user|$data\n";
+								api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+								exit;
+								}
+							}
+						### END Check for already active 3-way calls in agent session, if enabled ###
+
 						$stmt="UPDATE vicidial_live_agents set external_transferconf='$external_transferconf' where user='$agent_user';";
 							if ($format=='debug') {echo "\n<!-- $stmt -->";}
 						if ($DB) {echo "$stmt\n";}
 						$rslt=mysql_to_mysqli($stmt, $link);
 						$result = _QXZ("SUCCESS");
 						$result_reason = _QXZ("transfer_conference function set");
-						$data = "$callerid";
+						$data = "$callerid$multi_dial_phones_OUTPUT";
 						echo "$result: $result_reason - $value|$ingroup_choices|$phone_number|$consultative|$agent_user|$data|\n";
 						api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
 						}

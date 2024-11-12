@@ -1,18 +1,19 @@
 <?php
 # VERM_ANSWERED_rpt.inc - Vicidial Enhanced Reporting answered call report
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
 # 
 # CHANGELOG:
 # 220825-1629 - First build
 # 230106-1310 - Added auto download and page flushing for large data output, modification to uniqueid handling to speed up page load
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 # DROP, WAITTO, TIMEOT are unanswered statuses, not NANQUE
-$PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
-$PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
-$PHP_SELF=$_SERVER['PHP_SELF'];
-$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
+# $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
+# $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
+# $PHP_SELF=$_SERVER['PHP_SELF'];
+# $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 
 $startMS = microtime();
 
@@ -465,7 +466,7 @@ $HTML_output.="</tr>\n";
 $CSV_output["agents_on_queue"]="\""._QXZ("Agents on queue")."\"\n";
 $CSV_output["agents_on_queue"].="\""._QXZ("Agent")."\",\""._QXZ("N. Calls")."\",\"\",\"...\",\""._QXZ("Total call time")."\",\""._QXZ("Average call time")."\"\n";
 
-$highest_agent_call_count=max($agent_call_counts);
+$highest_agent_call_count=(count($agent_call_counts)>0 ? max($agent_call_counts) : 0);
 
 $agents_on_queue_graph_labels="[";
 $agents_on_queue_graph_data="[";
@@ -624,7 +625,7 @@ $disconnection_causes_graph_data="[";
 $disconnection_causes_graph_bgcolor="["; # SAME FOR hoverBackgroundColor
 $disconnection_causes_graph_hovborder="[";
 
-$max_term_reason=max($term_reasons);
+$max_term_reason=(count($term_reasons)>0 ? max($term_reasons) : 0);
 $x=0;
 foreach ($term_reasons as $reason => $value)
 	{
@@ -689,7 +690,7 @@ while ($xfer_row=mysqli_fetch_row($xfer_rslt))
 	}
 # print_r($transferred_counts);
 
-$max_xfer_count=max($transferred_counts);
+$max_xfer_count=(count($transferred_counts)>0 ? max($transferred_counts) : 0);
 $x=0;
 foreach ($transferred_counts as $reason => $value)
 	{
@@ -737,7 +738,7 @@ $answered_calls_by_queue_graph_data="[";
 $answered_calls_by_queue_graph_bgcolor="["; # SAME FOR hoverBackgroundColor
 $answered_calls_by_queue_graph_hovborder="[";
 
-$max_queue_count=max($queue_stats);
+$max_queue_count=(count($queue_stats)>0 ? max($queue_stats) : 0);
 ksort($queue_stats);
 $x=0;
 foreach ($queue_stats as $queue => $value)
@@ -799,7 +800,7 @@ $answered_calls_by_direction_graph_data="[";
 $answered_calls_by_direction_graph_bgcolor="["; # SAME FOR hoverBackgroundColor
 $answered_calls_by_direction_graph_hovborder="[";
 
-$max_call_direction=max($call_directions);
+$max_call_direction=(count($call_directions)>0 ? max($call_directions) : 0);
 ksort($call_directions);
 $call_directions["Any calls"]=0;
 $x=0;
@@ -900,7 +901,7 @@ $queue_position_graph_data="[";
 $queue_position_graph_bgcolor="["; # SAME FOR hoverBackgroundColor
 $queue_position_graph_hovborder="[";
 
-$max_queue_count=max($queue_positions);
+$max_queue_count=(count($queue_positions)>0 ? max($queue_positions) : 0);
 $x=0;
 foreach ($queue_positions as $position => $value)
 	{
@@ -1015,7 +1016,7 @@ if ($ivr_path!="")
 	if ($ivr_paths["$ivr_path"][3]<$ivr_call_time) {$ivr_paths["$ivr_path"][3]=$ivr_call_time;}
 	}
 
-$max_ivr_count=max($ivr_counts);
+$max_ivr_count=(count($ivr_counts)>0 ? max($ivr_counts) : 0);
 if ($max_ivr_count<$untracked_calls) {$max_ivr_count=$untracked_calls;}
 $untracked_ivr_pct=sprintf("%.1f", MathZDC((100*$untracked_calls), $total_answered_calls));
 
@@ -1122,7 +1123,7 @@ while ($did_row=mysqli_fetch_array($did_rslt))
 		$untracked_did_calls--;
 		}
 	}
-$max_did=max($did_counts);
+$max_did=(count($did_counts)>0 ? max($did_counts) : 0);
 if ($max_did<$untracked_did_calls) {$max_did=$untracked_did_calls;}
 
 $untracked_did_pct=sprintf("%.1f", MathZDC((100*$untracked_did_calls), $total_answered_calls));

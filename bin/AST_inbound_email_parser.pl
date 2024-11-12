@@ -10,7 +10,7 @@ use Encode qw(from_to decode encode);
 use MIME::Base64;
 use MIME::QuotedPrint;
 
-# Copyright (C) 2017  Matt Florell, Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell, Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
 # 
 # AST_inbound_email_parser.pl - This script is essential for periodically checking any active POP3 or IMAP 
 # email accounts set up through the Vicidial admin.
@@ -66,6 +66,7 @@ use MIME::QuotedPrint;
 # 161014-2200 - Bug patch for "&nbsp;" string in email message
 # 170523-1319 - file attachment patch, issue #1014
 # 171026-0106 - Added optional queue_log logging
+# 240225-1442 - Changes for perl module compatibility and attachment compatibility
 #
 
 # default path to astguiclient configuration file:
@@ -291,7 +292,7 @@ while (@row=$rslt->fetchrow_array) {
 					(	Proto    => 'tcp',
 						PeerAddr => "$VARemail_server",
 						PeerPort => 993, # IMAP over SSL standard port
-						SSL_verify_mode => 'SSL_VERIFY_NONE',
+						SSL_verify_mode => SSL_VERIFY_NONE,
 					),
 				 );
 				}
@@ -479,6 +480,30 @@ while (@row=$rslt->fetchrow_array) {
 													case "text/plain" {$attachment_fulltype="TXT";}
 													case "application/vnd.oasis.opendocument.text" {$attachment_fulltype="ODT";}
 													case "application/vnd.oasis.opendocument.spreadsheet" {$attachment_fulltype="ODS";}
+													case "application/vnd.ms-excel.sheet.binary.macroenabled.12" {$attachment_fulltype="XLSB";}
+													case "application/vnd.ms-excel.sheet.macroenabled.12" {$attachment_fulltype="XLSM";}
+													case "application/vnd.ms-excel.template.macroenabled.12" {$attachment_fulltype="XLTM";}
+													case "application/vnd.ms-word.document.macroenabled.12" {$attachment_fulltype="DOCM";}
+													case "application/vnd.ms-word.template.macroenabled.12" {$attachment_fulltype="DOTM";}
+													case "application/vnd.openxmlformats-officedocument.presentationml.presentation" {$attachment_fulltype="PPTX";}
+													case "application/vnd.openxmlformats-officedocument.presentationml.slideshow" {$attachment_fulltype="PPSX";}
+													case "application/vnd.openxmlformats-officedocument.presentationml.template" {$attachment_fulltype="POTX";}
+													case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" {$attachment_fulltype="XLSX";}
+													case "application/vnd.openxmlformats-officedocument.spreadsheetml.template" {$attachment_fulltype="XLTX";}
+													case "application/vnd.openxmlformats-officedocument.wordprocessingml.document" {$attachment_fulltype="DOCX";}
+													case "application/vnd.openxmlformats-officedocument.wordprocessingml.template" {$attachment_fulltype="DOTX";}
+													case "application/vnd.visio" {$attachment_fulltype="VSD";}
+													case "application/x-7z-compressed" {$attachment_fulltype="7Z";}
+													case "application/xhtml+xml" {$attachment_fulltype="XHTML";}
+													case "application/xml" {$attachment_fulltype="XML";}
+													case "application/x-msaccess" {$attachment_fulltype="MDB";}
+													case "application/x-mspublisher" {$attachment_fulltype="PUB";}
+													case "application/x-rar-compressed" {$attachment_fulltype="RAR";}
+													case "image/emf" {$attachment_fulltype="EMF";}
+													case "image/tiff" {$attachment_fulltype="TIF";}
+													case "image/wmf" {$attachment_fulltype="WMF";}
+													case "text/html" {$attachment_fulltype="HTML";}
+													case "text/vcard-contact" {$attachment_fulltype="VCF";}
 												}
 												if ($sub_content_disposition=~/filename\=\"?(.*?)\"?$|filename=\"[^\"]+\"/i) {$attachment_filename=$&;}
 												if (length($attachment_filename)==0) {
@@ -507,7 +532,7 @@ while (@row=$rslt->fetchrow_array) {
 														if ($DB) {print "!!!!WARNING - Found valid attachment, type $attachment_type \n Attachment does not have file name.  Skipping...\n";}
 													}
 												} else {
-													if ($DB) {print "!!!!WARNING - Found attachment $attachment_filename, but is NOT a valid file type \n Attachment type is $attachment_type.  Skipping...\n";}
+													if ($DB) {print "!!!!WARNING - Found attachment $attachment_filename, but is NOT a valid file type \n Attachment type is $attachment_type ($attachment_fulltype).  Skipping...\n";}
 												}
 											}
 											# print "\n";
@@ -600,7 +625,10 @@ while (@row=$rslt->fetchrow_array) {
 									my @lead_id_row=$vicidial_lead_check_rslt->fetchrow_array;
 									$lead_id=$lead_id_row[0];
 								} else {
-									my $vicidial_list_stmt="insert into vicidial_list(list_id, email, comments, status, entry_date, phone_code) values('$default_list_id', '$email_from', '".substr($message,0,255)."', '$status', NOW(), '$SSdefault_phone_code')";
+									StripHTML();
+									$vl_message=substr($message,0,255);
+									$vl_message=~s/\\+$//gi;
+									my $vicidial_list_stmt="insert into vicidial_list(list_id, email, comments, status, entry_date, phone_code) values('$default_list_id', '$email_from', '$vl_message', '$status', NOW(), '$SSdefault_phone_code')";
 									if ($DBX) {print $vicidial_list_stmt;}
 									my $vicidial_list_rslt=$dbhA->prepare($vicidial_list_stmt);
 									if ($vicidial_list_rslt->execute()) {
@@ -843,6 +871,30 @@ while (@row=$rslt->fetchrow_array) {
 									case "text/plain" {$attachment_fulltype="TXT";}
 									case "application/vnd.oasis.opendocument.text" {$attachment_fulltype="ODT";}
 									case "application/vnd.oasis.opendocument.spreadsheet" {$attachment_fulltype="ODS";}
+									case "application/vnd.ms-excel.sheet.binary.macroenabled.12" {$attachment_fulltype="XLSB";}
+									case "application/vnd.ms-excel.sheet.macroenabled.12" {$attachment_fulltype="XLSM";}
+									case "application/vnd.ms-excel.template.macroenabled.12" {$attachment_fulltype="XLTM";}
+									case "application/vnd.ms-word.document.macroenabled.12" {$attachment_fulltype="DOCM";}
+									case "application/vnd.ms-word.template.macroenabled.12" {$attachment_fulltype="DOTM";}
+									case "application/vnd.openxmlformats-officedocument.presentationml.presentation" {$attachment_fulltype="PPTX";}
+									case "application/vnd.openxmlformats-officedocument.presentationml.slideshow" {$attachment_fulltype="PPSX";}
+									case "application/vnd.openxmlformats-officedocument.presentationml.template" {$attachment_fulltype="POTX";}
+									case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" {$attachment_fulltype="XLSX";}
+									case "application/vnd.openxmlformats-officedocument.spreadsheetml.template" {$attachment_fulltype="XLTX";}
+									case "application/vnd.openxmlformats-officedocument.wordprocessingml.document" {$attachment_fulltype="DOCX";}
+									case "application/vnd.openxmlformats-officedocument.wordprocessingml.template" {$attachment_fulltype="DOTX";}
+									case "application/vnd.visio" {$attachment_fulltype="VSD";}
+									case "application/x-7z-compressed" {$attachment_fulltype="7Z";}
+									case "application/xhtml+xml" {$attachment_fulltype="XHTML";}
+									case "application/xml" {$attachment_fulltype="XML";}
+									case "application/x-msaccess" {$attachment_fulltype="MDB";}
+									case "application/x-mspublisher" {$attachment_fulltype="PUB";}
+									case "application/x-rar-compressed" {$attachment_fulltype="RAR";}
+									case "image/emf" {$attachment_fulltype="EMF";}
+									case "image/tiff" {$attachment_fulltype="TIF";}
+									case "image/wmf" {$attachment_fulltype="WMF";}
+									case "text/html" {$attachment_fulltype="HTML";}
+									case "text/vcard-contact" {$attachment_fulltype="VCF";}
 								}
 								if ($sub_content_disposition=~/filename\=\"?(.*?)\"?$|filename=\"[^\"]+\"/i) {$attachment_filename=$&;}
 								if (length($attachment_filename)==0) {
@@ -974,7 +1026,10 @@ while (@row=$rslt->fetchrow_array) {
 					my @lead_id_row=$vicidial_lead_check_rslt->fetchrow_array;
 					$lead_id=$lead_id_row[0];
 				} else {
-					my $vicidial_list_stmt="insert into vicidial_list(list_id, email, comments, status, entry_date, phone_code) values('$default_list_id', '$email_from', '".substr($message,0,255)."', '$status', NOW(), '$SSdefault_phone_code')";
+					StripHTML();
+					$vl_message=substr($message, 0, 255);
+					$vl_message=~s/\\+$//gi;
+					my $vicidial_list_stmt="insert into vicidial_list(list_id, email, comments, status, entry_date, phone_code) values('$default_list_id', '$email_from', '$vl_message', '$status', NOW(), '$SSdefault_phone_code')";
 					if ($DBX) {print $vicidial_list_stmt."\n";}
 					my $vicidial_list_rslt=$dbhA->prepare($vicidial_list_stmt);
 					if ($vicidial_list_rslt->execute()) {

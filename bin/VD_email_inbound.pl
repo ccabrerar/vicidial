@@ -2,7 +2,7 @@
 # default path to astguiclient configuration file:
 $PATHconf =		'/etc/astguiclient.conf';
 
-# Copyright (C) 2019  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # VD_email_inbound.pl
 # This script is responsible for assigning transferred and new emails to 
@@ -26,6 +26,7 @@ $PATHconf =		'/etc/astguiclient.conf';
 # 180610-1812 - Added code to not allow XFER emails to go to user who transferred
 # 190216-0810 - Fix for user-group, email-group and campaign allowed/permissions matching issues
 # 191017-2043 - Added filtered routing options
+# 240219-1526 - Added daily_limit in-group parameter
 #
 
 if ($ARGV[0]=~/--help/) 
@@ -275,7 +276,7 @@ sub AssignAgents()
 			$stmtA = "LOCK TABLES vicidial_live_agents WRITE, vicidial_live_inbound_agents WRITE;";
 			my $LOCKaffected_rows = $dbhA->do($stmtA);
 
-			$stmtA = "SELECT vicidial_live_agents.user from vicidial_live_agents, vicidial_live_inbound_agents WHERE vicidial_live_agents.user=vicidial_live_inbound_agents.user and status IN('CLOSER','READY') and lead_id<1 $ADUfindSQL and vicidial_live_inbound_agents.group_id='$group_id' and last_update_time > '$BDtsSQLdate' and vicidial_live_agents.user NOT IN($ring_no_answer_agents$vlia_users) and ring_callerid='' $qp_groupWAIT_camp_SQL $agent_call_order limit 1;";
+			$stmtA = "SELECT vicidial_live_agents.user from vicidial_live_agents, vicidial_live_inbound_agents WHERE vicidial_live_agents.user=vicidial_live_inbound_agents.user and status IN('CLOSER','READY') and lead_id<1 $ADUfindSQL and vicidial_live_inbound_agents.group_id='$group_id' and last_update_time > '$BDtsSQLdate' and vicidial_live_agents.user NOT IN($ring_no_answer_agents$vlia_users) and ring_callerid='' and ( (vicidial_live_inbound_agents.daily_limit = '-1') or (vicidial_live_inbound_agents.daily_limit > vicidial_live_inbound_agents.calls_today) ) $qp_groupWAIT_camp_SQL $agent_call_order limit 1;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;

@@ -1,0 +1,222 @@
+LOG ARCHIVING AND COLD STORAGE DOC	Started: 2024-07-04	Updated: 2024-07-11
+
+
+This document covers the options for archiving of specific log tables and the new "Cold Storage" features
+
+
+
+--------------------------------------------------------------------------------
+LOG ARCHIVING:
+
+On a high-volume VICIdial system, some log tables can grow very large, resulting in performance issues on the database server. To help mitigate this, we created a log archiving script back in 2009("ADMIN_archive_log_tables.pl") to move log records from specific database log tables to their associated "_archive" log tables. This archive script has grown over the years to add archiving of more log tables and even optional purging(deleting rows from) specific archive and log tables if desired.
+
+NOTE: the "ADMIN_archive_log_tables.pl" script can take hours to run depending on the settings used, the number of log records in your system and the speed of your database server. As such, you should only run this script during non-production hours.
+
+For reference, here are the optional commands for the log archiving script:
+
+
+# /usr/share/astguiclient/ADMIN_archive_log_tables.pl --help
+allowed run time options:
+  [--daily] = only archives call_log, vicidial_log_extended, vicidial_dial_log and vicidial_drop_log tables, only last 24 hours kept
+  [--carrier-daily] = will also archive the vicidial_carrier_log table when --daily is run
+  [--vlog-daily] = will also archive the vicidial_log table when --daily is run
+  [--days=XX] = number of days to archive past, default is 732(2 years)
+  [--months=XX] = number of months to archive past, default is 24(2 years) If 'days' used then 'months' ignored
+  [--queue-log] = archive QM queue_log records
+  [--only-trim-archive-level-one] = will not perform normal archive process, instead this will only delete records
+                                    that are older than XX months from least important log archive tables:
+                               call_log_archive, vicidial_log_extended_archive, vicidial_dial_log_archive, vicidial_drop_log
+  [--only-trim-archive-level-two] = same as --only-trim-archive-level-one, except includes tables:
+                               vicidial_carrier_log_archive, vicidial_api_log_archive, vicidial_rt_monitor_log_archive
+  [--only-trim-archive-level-three] = same as --only-trim-archive-level-two, except includes tables:
+                               vicidial_log_archive, vicidial_agent_log_archive, vicidial_closer_log_archive, vicidial_xfer_log_archive
+  [--recording-log-days=XX] = OPTIONAL, number of days to archive recording_log table only past
+  [--did-log-days=XX] = OPTIONAL, number of days to archive vicidial_did_log table only past
+  [--park-log-days=XX] = OPTIONAL, number of days to archive park_log table only past
+  [--api-only] = OPTIONAL, only archive vicidial_api_log table then exit
+       [--api-log-days=XX] = REQUIRED FOR --api-only, number of days to archive vicidial_api_log table only past
+  [--api-archive-only] = OPTIONAL, only purge vicidial_api_log_archive table then exit
+       [--api-archive-days=XX] = REQUIRED FOR --api-archive-only, number of days to purge vicidial_api_log_archive table only past
+  [--url-log-only] = OPTIONAL, only purge vicidial_url_log table then exit
+       [--url-log-days=XX] = REQUIRED FOR --url-log-only, number of days to purge vicidial_url_log table only past
+  [--cpd-log-purge-days=XX] = OPTIONAL, number of days to purge vicidial_cpd_log table only past
+  [--wipe-closer-log] = OPTIONAL, deletes all records from vicidial_closer_log after archiving
+  [--wipe-all-being-archived] = OPTIONAL, deletes all records from most tables after archiving
+  [--quiet] = quiet
+  [--calc-test] = date calculation test only
+  [--test] = test
+  [--debug] = debug output for some options
+
+
+Here are some example crorntab entries for this script to perform certain log archiving and purging:
+(these should only be active on a single server on your VICIdial cluster)
+
+WARNING! Do not schedule any ADMIN_archive_log_tables.pl processes to be running at the same time as any ADMIN_cold_storage_log_tables.pl processes!
+
+
+### archive logs weekly on Saturday morning at 1am, keep only 2 years of logs in the active log tables, archive older log records
+20 1 * * 6 /usr/share/astguiclient/ADMIN_archive_log_tables.pl --months=24
+
+### archive api log entries older than 1 day, do this every night at 12:10 AM
+10 0 * * * /usr/share/astguiclient/ADMIN_archive_log_tables.pl --api-only --api-log-days=1
+
+### delete api log entries older than 7 days, do this on Sunday morning at 1:15AM
+15 1 * * 0 /usr/share/astguiclient/ADMIN_archive_log_tables.pl --api-archive-only --api-archive-days=7
+
+### delete url log entries older than 7 days, do this on Sunday morning at 1:05AM
+5 1 * * 6 /usr/share/astguiclient/ADMIN_archive_log_tables.pl --url-log-only --url-log-days=7 --debugX
+
+### for a very  high-volume inbound cluster, archive logs older than 1 day, including recording log, clear the closer log table and archive did log entries past 31 days
+3 1 * * 0,1,2,3,4,5,6 /usr/share/astguiclient/ADMIN_archive_log_tables.pl --days=1 --recording-log-days=1 --wipe-closer-log --wipe-all-being-archived --did-log-days=31
+
+### purge(delete) level-three archive log table records older than 92 days
+15 21 * * 5 /usr/share/astguiclient/ADMIN_archive_log_tables.pl --debug --only-trim-archive-level-three --days=92
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+ARCHIVED LOG COLD STORAGE:
+
+In July 2024, we added some basic options to allow for the moving of already archived log records from the primary database server to a separate database server to allow for more efficient use of the primary database server while still having limited access to very old log records without losing them entirely by deleting them.
+
+Admin access to cold-storage logs is currently available through the following pages:
+- Admin Lead Search Page
+- Admin Modify Lead Page
+
+
+
+The "ADMIN_cold_storage_log_tables.pl" script was added to move archived log records from the primary database to a separate "cold storage" database server. This "cold storage" database server should have the standard vicidial log tables loaded on it, BUT it should NEVER have any live agents or calls running through it, the purpose of this "cold storage" database server is ONLY for storage of old log records. The archived log records on the "cold storage" database server will be stored in the same "_archive" log tables that they were on the primary database server, the reasons for this are: to make programming these features easier, to allow for easier integration of cold-storage logs into existing reporting and admin utilities, and to possibly allow for multiple-level cold-storage in the future.
+
+We added new settings to the /etc/astguiclient.conf file that will run the "ADMIN_cold_storage_log_tables.pl" script, these credentials should allow for read-write access(see example "GRANT" statement below):
+
+# default cold storage logs database server variables: 
+$VARCS_server =	'';
+$VARCS_database =	'asterisk_coldstorage';
+$VARCS_user =	'coldstorage';
+$VARCS_pass =	'cs1234';
+$VARCS_port =	'3306';
+
+GRANT SELECT,INSERT,UPDATE,DELETE,LOCK TABLES on asterisk_coldstorage.* TO coldstorage@'%' IDENTIFIED BY 'cs1234';
+GRANT SELECT,INSERT,UPDATE,DELETE,LOCK TABLES on asterisk_coldstorage.* TO coldstorage@localhost IDENTIFIED BY 'cs1234';
+flush privileges;
+
+
+We also added system_settings fields for read-only access to the cold-storage database server:
+NOTE: You should use a separate database read-only user for the below credentials(see example "GRANT" statement below)
+
+ALTER TABLE system_settings ADD coldstorage_server_ip VARCHAR(50) default '';
+ALTER TABLE system_settings ADD coldstorage_dbname VARCHAR(50) default '';
+ALTER TABLE system_settings ADD coldstorage_login VARCHAR(50) default '';
+ALTER TABLE system_settings ADD coldstorage_pass VARCHAR(50) default '';
+ALTER TABLE system_settings ADD coldstorage_port VARCHAR(10) default '';
+
+GRANT SELECT,LOCK TABLES on asterisk_coldstorage.* TO csread@'%' IDENTIFIED BY 'csr1234';
+GRANT SELECT,LOCK TABLES on asterisk_coldstorage.* TO csread@localhost IDENTIFIED BY 'csr1234';
+flush privileges;
+
+
+The "ADMIN_cold_storage_log_tables.pl" script has a reduced set of options, with the "--days=X" option being the most important one:
+
+ # /usr/share/astguiclient/ADMIN_cold_storage_log_tables.pl --help
+allowed run time options:
+  [--days=XX] = number of days to archive past, default is 1461(4 years)
+  [--quiet] = quiet
+  [--calc-test] = date calculation test only
+  [--query-count-test] = run archive counts test only
+  [--no-optimize-tables] = do not optimize the archive tables after deletion of rows
+  [--test] = test
+  [--debug] = debug output for some options
+  [--debugX] = extra debug output for some options
+
+
+WARNING! Do not schedule any ADMIN_cold_storage_log_tables.pl processes to be running at the same time as any ADMIN_archive_log_tables.pl processes!
+
+NOTE: If you have never run the "ADMIN_cold_storage_log_tables.pl" script before, we strongly recommend running it manually and with the "--query-count-test" flag first so you can see how many archive records will be affected, and if the server you are running the script on has enough memory to allow it to run. If there are too many records to be sent to cold-storage in any single table, then the script will die with only the message "Killed" on the screen when it happens. For example, if you are running the script on a server with only 8GB of RAM, then moving more than 25,000,000 records to cold-storage in any single table will most likely be too many, so you'll have to adjust the "--days=X" flag to lower the number so it can run to completion. After getting to the level you want to maintain in the archive tables, you can schedule this script to run in your crontab perhaps once a week or once a month during low system utilization periods.
+
+
+Here is a list of the archive tables that are currently moved by the "ADMIN_cold_storage_log_tables.pl" script:
+
+call_log_archive
+vicidial_agent_log_archive
+vicidial_agent_visibility_log_archive
+vicidial_amd_log_archive
+vicidial_api_log_archive
+vicidial_api_urls_archive
+vicidial_carrier_log_archive
+vicidial_dial_cid_log_archive
+vicidial_dial_log_archive
+vicidial_log_archive
+vicidial_log_extended_archive
+vicidial_log_extended_sip_archive
+
+
+
+
+
+Here is example output of this script being run on one of our test development systems:
+
+
+# /usr/share/astguiclient/ADMIN_cold_storage_log_tables.pl --debug --days=1600 --query-count-test
+
+-----DEBUG-----
+
+
+-----ARCHIVE TABLES QUERY COUNT TESTING ONLY: 1-----
+
+
+----- DAYS OVERRIDE: 1600 -----
+
+
+
+-- ADMIN_cold_storage_log_tables.pl --
+
+This script is designed take records of a specific age from call_log_archive,
+vicidial_log_archive, vicidial_log_extended_archive and
+other _archive tables and move them to the cold-storage log database, then
+delete the records in original tables older than X days
+1600 days ( 2020-02-17 07:26:25 [2020-02-17]|1581942385 ) from current date
+
+Cold-Storage Database test: 1
+
+Starting cold-storage process...
+
+Analyzing call_log_archive table...  (2|7544031)
+call_log_archive has no records to send to cold-storage, skipping this table...
+
+Analyzing vicidial_log_archive table...  (21762085|27201201)
+vicidial_log_archive has no records to send to cold-storage, skipping this table...
+
+Analyzing vicidial_log_extended_archive table...  (11188151|0)
+vicidial_log_extended_archive has no records to send to cold-storage, skipping this table...
+
+Analyzing vicidial_dial_log_archive table...  (11370308|0)
+vicidial_dial_log_archive has no records to send to cold-storage, skipping this table...
+
+Analyzing vicidial_carrier_log_archive table...  (11148895|0)
+vicidial_carrier_log_archive has no records to send to cold-storage, skipping this table...
+
+Analyzing vicidial_dial_cid_log_archive table...  (0|0)
+vicidial_dial_cid_log_archive has no records to send to cold-storage, skipping this table...
+
+Analyzing vicidial_amd_log_archive table...  (13|0)
+vicidial_amd_log_archive has no records to send to cold-storage, skipping this table...
+
+Analyzing vicidial_agent_log_archive table...  (92743|270581)
+vicidial_agent_log_archive has no records to send to cold-storage, skipping this table...
+
+Analyzing vicidial_api_log_archive table...  (74|0)
+vicidial_api_log_archive has no records to send to cold-storage, skipping this table...
+
+Analyzing vicidial_api_urls_archive table...  (74|0)
+vicidial_api_urls_archive has no records to send to cold-storage, skipping this table...
+
+Analyzing vicidial_agent_visibility_log_archive table...  (0|0)
+vicidial_agent_visibility_log_archive has no records to send to cold-storage, skipping this table...
+
+Analyzing vicidial_log_extended_sip_archive table...  (524953|0)
+vicidial_log_extended_sip_archive has no records to send to cold-storage, skipping this table...
+
+script execution time in seconds: 19     minutes: 0.316666666666667

@@ -6,7 +6,7 @@
 # adjusts the auto_dial_level for vicidial adaptive-predictive campaigns. 
 # gather call stats for campaigns and in-groups
 #
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 60823-1302 - First build from AST_VDhopper.pl
@@ -60,9 +60,10 @@
 # 212207-2207 - Added IQNANQ to drop SQL calculation queries
 # 211122-1457 - Fix for logging bug and modification to drop percentage calculation
 # 230309-1009 - Added abandon_check_queue feature
+# 240219-1514 - Added vicidial_live_inbound_agents.daily_limit parameter
 #
 
-$build='230309-1009';
+$build='240219-1514';
 # constants
 $DB=0;  # Debug flag, set to 0 for no debug messages, On an active system this will generate lots of lines of output per minute
 $US='__';
@@ -561,7 +562,7 @@ while ($master_loop < $CLIloops)
 		$hopper_ready_count=0;
 		$agents_loggedin_count=0;
 		### Find out how many leads are in the hopper from a specific campaign
-		$stmtA = "SELECT count(*) from vicidial_hopper where campaign_id='$campaign_id[$i]' and status='READY';";
+		$stmtA = "SELECT count(*) from vicidial_hopper where campaign_id='$campaign_id[$i]' and status IN('READY','RHOLD','RQUEUE');";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;
@@ -1040,7 +1041,7 @@ while ($master_loop < $CLIloops)
 						if (length($qp_groupWAIT_aco)<2)
 							{$qp_groupWAIT_aco="''";}
 						### Get list of users that should take higher priority inbound calls first
-						$stmtA = "SELECT distinct user from vicidial_live_inbound_agents where group_id IN($qp_groupWAIT_aco);";
+						$stmtA = "SELECT distinct user from vicidial_live_inbound_agents where group_id IN($qp_groupWAIT_aco) and ( (daily_limit = '-1') or (daily_limit > calls_today) );";
 						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 						$sthArows=$sthA->rows;
@@ -1068,7 +1069,7 @@ while ($master_loop < $CLIloops)
 								@GRADEuser=@MT;
 								@GRADEgrade=@MT;
 								@userGRADEarray=@MT;
-								$stmtA = "SELECT vicidial_live_agents.user,vicidial_live_inbound_agents.group_grade,vicidial_live_agents.campaign_grade from vicidial_live_agents, vicidial_live_inbound_agents WHERE vicidial_live_agents.user=vicidial_live_inbound_agents.user and status IN('CLOSER','READY') and lead_id<1 $ADUfindSQL and vicidial_live_inbound_agents.group_id='$ICBQgroup_id[$r]' and last_update_time > '$BDtsSQLdate' and vicidial_live_agents.user NOT IN($vlia_users) and ring_callerid='' $qp_groupWAIT_camp_SQL limit 1000;";
+								$stmtA = "SELECT vicidial_live_agents.user,vicidial_live_inbound_agents.group_grade,vicidial_live_agents.campaign_grade from vicidial_live_agents, vicidial_live_inbound_agents WHERE vicidial_live_agents.user=vicidial_live_inbound_agents.user and status IN('CLOSER','READY') and lead_id<1 $ADUfindSQL and vicidial_live_inbound_agents.group_id='$ICBQgroup_id[$r]' and last_update_time > '$BDtsSQLdate' and vicidial_live_agents.user NOT IN($vlia_users) and ring_callerid='' and ( (vicidial_live_inbound_agents.daily_limit = '-1') or (vicidial_live_inbound_agents.daily_limit > vicidial_live_inbound_agents.calls_today) ) $qp_groupWAIT_camp_SQL limit 1000;";
 								$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 								$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 								$sthArows=$sthA->rows;
@@ -1134,7 +1135,7 @@ while ($master_loop < $CLIloops)
 								{
 								$sthArowsFA=0;
 								$VDADuser='';
-								$stmtA = "SELECT vicidial_live_agents.conf_exten,vicidial_live_agents.user,vicidial_live_agents.extension,vicidial_live_agents.server_ip,vicidial_live_inbound_agents.group_weight,ra_user,vicidial_live_agents.campaign_id,on_hook_agent,on_hook_ring_time,vicidial_live_inbound_agents.group_grade,vicidial_live_agents.campaign_grade from vicidial_live_agents, vicidial_live_inbound_agents WHERE vicidial_live_agents.user=vicidial_live_inbound_agents.user and status IN('CLOSER','READY') and lead_id<1 $ADUfindSQL and vicidial_live_inbound_agents.group_id='$ICBQgroup_id[$r]' and last_update_time > '$BDtsSQLdate' and vicidial_live_agents.user NOT IN($routed_user_list$vlia_users) and ring_callerid='' $qp_groupWAIT_camp_SQL $agent_call_order limit 1;";
+								$stmtA = "SELECT vicidial_live_agents.conf_exten,vicidial_live_agents.user,vicidial_live_agents.extension,vicidial_live_agents.server_ip,vicidial_live_inbound_agents.group_weight,ra_user,vicidial_live_agents.campaign_id,on_hook_agent,on_hook_ring_time,vicidial_live_inbound_agents.group_grade,vicidial_live_agents.campaign_grade from vicidial_live_agents, vicidial_live_inbound_agents WHERE vicidial_live_agents.user=vicidial_live_inbound_agents.user and status IN('CLOSER','READY') and lead_id<1 $ADUfindSQL and vicidial_live_inbound_agents.group_id='$ICBQgroup_id[$r]' and last_update_time > '$BDtsSQLdate' and vicidial_live_agents.user NOT IN($routed_user_list$vlia_users) and ring_callerid='' and ( (vicidial_live_inbound_agents.daily_limit = '-1') or (vicidial_live_inbound_agents.daily_limit > vicidial_live_inbound_agents.calls_today) ) $qp_groupWAIT_camp_SQL $agent_call_order limit 1;";
 								$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 								$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 								$sthArowsFA=$sthA->rows;

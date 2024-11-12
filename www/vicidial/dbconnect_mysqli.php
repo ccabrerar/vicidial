@@ -4,7 +4,7 @@
 #
 # database connection settings and some global web settings
 #
-# Copyright (C) 2016  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES:
 # 130328-0022 - Converted ereg to preg functions
@@ -15,7 +15,25 @@
 # 150313-0913 - Added ExpectedDBSchema conf file value
 # 150626-2120 - Modified mysqli_error() to mysqli_connect_error() where appropriate
 # 160325-1434 - Changes for sidebar update
+# 240801-1130 - Code updates for PHP8 compatibility
+# 240805-2103 - Added PHP_error_reporting_OVERRIDE options
 #
+
+$PHP_error_reporting_OVERRIDE=0;
+if (file_exists('options.php'))
+        {
+        require('options.php');
+        }
+if ($PHP_error_reporting_OVERRIDE > 0)
+	{
+	$php_err_suppression_value=32767; # E_ALL
+	$php_err_suppression_value-=($PHP_error_reporting_HIDE_ERRORS ? 1 : 0);
+	$php_err_suppression_value-=($PHP_error_reporting_HIDE_WARNINGS ? 2 : 0);
+	$php_err_suppression_value-=($PHP_error_reporting_HIDE_PARSES ? 4 : 0);
+	$php_err_suppression_value-=($PHP_error_reporting_HIDE_NOTICES ? 8 : 0);
+	$php_err_suppression_value-=($PHP_error_reporting_HIDE_DEPRECATIONS ? 8192 : 0);
+	error_reporting($php_err_suppression_value);
+	}
 
 if ( file_exists("/etc/astguiclient.conf") )
 	{

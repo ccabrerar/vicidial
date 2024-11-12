@@ -17,10 +17,11 @@
 #
 #  MAKE SURE YOU TEST THAT THIS IS WORKING MANUALLY!!!
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 200601-1047 - First version, based upon AST_email_web_report.pl
+# 240401-1342 - Added vicidial_pending_ar table entries
 #
 
 $txt = '.txt';
@@ -532,6 +533,8 @@ if (length($report_id) > 1)
 		$email_subject =~ s/--A--date--B--|--A--today--B--/$year-$mon-$mday/gi;
 		$email_subject =~ s/--A--yesterday--B--/$Tyear-$Tmon-$Tmday/gi;
 		$email_subject =~ s/--A--datetime--B--/$year-$mon-$mday $hour:$min:$sec/gi;
+		@php_script_url = $location =~ /([\w-]+\.php)/g;
+		$php_script = $php_script_url[0];
 		$location =~ s/\&/\\&/gi;
 		$location =~ s/--A--today--B--/$year-$mon-$mday/gi;
 		$location =~ s/--A--yesterday--B--/$Tyear-$Tmon-$Tmday/gi;
@@ -554,6 +557,7 @@ if (length($report_id) > 1)
 		$filename_override =~ s/--A--30days--B--/$Hyear-$Hmon-$Hmday/gi;
 		$filename_override =~ s/--A--filedatetime--B--/$filedatetime/gi;
 		if ($DB) {print "FINAL LOCATION:    |$location|\n";}
+		if ($DB) {print "REPORT SCRIPT:     |$php_script|\n";}
 		if ($DB) {print "FILENAME OVERRIDE: |$filename_override|\n";}
 		}
 	else
@@ -638,6 +642,11 @@ else
 	}
 
 ### GRAB THE REPORT
+
+$stmtB="INSERT INTO vicidial_pending_ar SET start_datetime='$timestamp', user='$http_user', report_id='$report_id', php_script='$php_script', status='TRIGGERED', notes='';";
+$Iaffected_rows = $dbhA->do($stmtB);
+if ($DB) {print "Pending AR entry inserted:   $Iaffected_rows|$stmtB\n";}
+
 if (!$Q) {print "Running Report $ship_date\n$location\n";}
 `/usr/bin/wget --auth-no-challenge --http-user=$http_user --http-password=$http_pass --output-document=/tmp/X$HTMLfile --output-file=/tmp/Y$HTMLfileLOG $location `;
 

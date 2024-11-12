@@ -8,12 +8,13 @@
 #
 # It is recommended that you run this program on the local Asterisk machine
 #
-# Copyright (C) 2014  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 130915-1345 - first build
 # 130928-0747 - Force overwrite of unzipped files, more standard debug output
 # 140702-2319 - Added additional logging to admin log --adminlog
+# 240711-1727 - Change to remote SFTP file path
 #
 
 $PATHconf =			'/etc/astguiclient.conf';
@@ -178,11 +179,11 @@ if ($skip_download < 1)
 	$sftp = Net::SFTP::Foreign->new($PREFIX_SFTP_user . '@' . $PREFIX_SFTP_server, password => "$PREFIX_SFTP_pass", port => "$PREFIX_SFTP_port", more => "$sftp_more");
 	if ($DB > 0) 
 		{
-		$sftp->get("/$PREFIX_SFTP_user/_Databases/Neustar/neustar.zip", '/tmp/neustar.zip', callback => \&readcallback) or die "file transfer failed: " . $sftp->error;
+		$sftp->get("/_Databases/Neustar/neustar.zip", '/tmp/neustar.zip', callback => \&readcallback) or die "file transfer failed: " . $sftp->error;
 		}
 	else
 		{
-		$sftp->get("/$PREFIX_SFTP_user/_Databases/Neustar/neustar.zip", '/tmp/neustar.zip') or die "file transfer failed: " . $sftp->error;
+		$sftp->get("/_Databases/Neustar/neustar.zip", '/tmp/neustar.zip') or die "file transfer failed: " . $sftp->error;
 		}
 
 	sleep(1);
@@ -191,11 +192,11 @@ if ($skip_download < 1)
 	$sftpX = Net::SFTP::Foreign->new($PREFIX_SFTP_user . '@' . $PREFIX_SFTP_server, password => "$PREFIX_SFTP_pass", port => "$PREFIX_SFTP_port", more => "$sftp_more");
 	if ($DB > 0) 
 		{
-		$sftpX->get("/$PREFIX_SFTP_user/_Databases/WirelessPrefix/PrefixMasterList.zip", '/tmp/PrefixMasterList.zip', callback => \&readcallback) or die "file transfer failed: " . $sftpX->error;
+		$sftpX->get("/_Databases/WirelessPrefix/PrefixMasterList.zip", '/tmp/PrefixMasterList.zip', callback => \&readcallback) or die "file transfer failed: " . $sftpX->error;
 		}
 	else
 		{
-		$sftpX->get("/$PREFIX_SFTP_user/_Databases/WirelessPrefix/PrefixMasterList.zip", '/tmp/PrefixMasterList.zip') or die "file transfer failed: " . $sftpX->error;
+		$sftpX->get("/_Databases/WirelessPrefix/PrefixMasterList.zip", '/tmp/PrefixMasterList.zip') or die "file transfer failed: " . $sftpX->error;
 		}
 
 	if ($DB > 0) {print "\n unzipping files...  PrefixMasterList.zip\n";}

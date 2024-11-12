@@ -1,0 +1,189 @@
+Agent 3-way Press-1 Calls DOC	Started: 2023-11-13	Updated: 2024-01-17
+
+
+This document will go over how to set up Agent Screen 3-way calls with outside
+users that have to press-1 on their phone to be bridged with the agent and 
+customer.
+
+NOTE: This requires svn/trunk revision 3778 or higher!!!
+
+
+
+What is an Agent Screen 3-way calls with an outside user that has to press-1?
+
+The purpose of this feature is to allow agents using the Agent Screen the ability to call an outside number as part of a 3-way call and require that the outside called party press 1 on their phone before they will be bridged to the agent and their customer. To make this work, instead of just sending the "phone_number" you want to call by itself, you will need to send a dial-string that has a reserved prefix for this feature (this is "49907"), then you will need to add the dial_prefix you want to use for the call to the outside-agent(for example: '9'), then the phone_code of '1' then the "phone_number" (for this example: '7275551212'), so the resulting dialstring you would want to use would be "49907917275551212", you will also must check the DIAL OVERRIDE checkbox before clicking on the "DIAL WITH CUSTOMER" button for this to work properly. Alternatively, you can use the Agent API's "transfer_conference" function with the phone_number field set to "49907917275551212" and the "dial_override" variable to "YES".
+
+On the agent side, after placing the 3-way call while waiting for the called-party to answer and press-1, the agent and customer will only hear a quiet hold tone once every 5 seconds until the call is bridged. If the called-party does not press-1 after answering, then the call will time out after 20 seconds(this is configurable in the custom dialplan below), they will hear a quick buzz sound, and the Xfer line will hang up.
+
+All activity for these calls are logged, with the logs being visible in the Admin Modify Lead page, in the "3-WAY PRESS LOGS FOR THIS LEAD" section.
+
+
+Outside User Multi-Call:
+
+A newer option(included in svn/trunk rev 3792) added to this feature allows the agent to place multiple(up to 10) concurrent phone calls to outside users at the same time and the outside user that presses 1 first will get sent to the user and customer session. This feature only works with the Agent API "transfer_conference" function initiating the 3-way call, and the multiple phone numbers are to be sent through the "multi_dial_phones" variable as a list of comma-separated phone numbers. Here is an example URL for this:
+
+https://server/agc/api.php?source=outsidexfer&user=6666&pass=XXXXXXXXXXXXXXX&function=transfer_conference&value=DIAL_WITH_CUSTOMER&cid_choice=CUSTOMER&agent_user=7777&phone_number=49907819991991999&dial_override=YES&multi_dial_phones=7275551212,7275551213,7275551214
+
+
+
+How do I configure this on my system?
+
+All that is required is the lines below be added to the System Settings "Custom Dialplan Entry", and the "Reload Dialplan On Servers" option set to '1' before submitting the changes.
+
+
+
+Is there any reporting available for this feature?
+
+Yes, the "3-Way Press Log Report" is available on the "Reports -> Admin Utilities" page. This report will display the logs of the 3-way phone calls that are placed to outside-users from the agent screen as detailed in this document. You can search by date range and filter by agent user and/or outside-user-phone_number. The outside-user call records shown in black are successful transfer calls, while the records shown in red are unsuccessful outside-agent calls. These records include both single 3-way phone calls and multi-3-way phone calls. As for the events shown in the Results column, here is what they mean:
+
+Started = All calls will have this event, it simply means the outside-user call was launched.
+Answered = The outside-user call was answered.
+Accepted = The outside-user pressed '1' to accept the call.
+Reserved = The agent screen approves of the outside-user call and prepares for the transfer.
+Transfer = The outside-user call is transferred to the agent and customer.
+Declined = The outside-user call did not press '1' to accept the call.
+Too Slow = Multi-Call Only, The outside-user did press '1' to accept the call, but another outside-user pressed '1' before them.
+Defeated = Multi-Call Only, another outside-user pressed '1' before them, so this call was hung up.
+Agent Gone = The agent 3way call is gone, no ability to accept outside-agent transfer
+Hungup = Either the call timed out or another outside-user pressed '1' before them, so this call was hung up.
+
+
+
+Is there any way to tell if the outside-user is still on the phone call with the customer/agent?
+
+Yes, the 'vicidial_3way_press_log' database table has a "call_channel" field that will store the Asterisk channel name in it after the call is answered, and that value together with the "server_ip" field will allow you to look up that channel in the 'live_sip_channels' database table to see if it is still active on the system. As for multi-call, you can look at the "call_transfer" field in the 'vicidial_3way_press_log' database table to see which outside-user call was transferred to the customer/agent session. If "call_transfer" is set to 'Y' then that call was the successfully transferred one.
+
+
+
+Are there any timeouts on these outside-user phone calls?
+
+Yes, there is a built-in timeout at 100 seconds from initiation of the 3way call by the VICIdial agent if none of the external-users have connected by then. After 100 seconds, the initial 3way from the customer/agent session will be hung up and any remaining outside-user calls will be marked as "Timeout". This 100 seconds allows for up to 80 seconds of ring-time and 20 seconds of waiting after Answer to allow pressing 1. 
+
+
+
+How do you change the audio prompt that the outside-users hear asking them to press-1?
+
+You can actually change the prompts to the outside-users to anything in the Audio Store that you want since it's just dialplan configuration. If you go to the "Admin -> System Settings" screen, look at the "Custom Dialplan Entry" field. There are several segments of dialplan here, but the one you will want to edit looks like the dialplan enries below. The three "Background(..." entries in the segment below are the prompts that the outside-user will hear when they pick up the phone, you can change these to a single "Background(..." entry with only one audio file, or you can use multiple entries if you want. Once you are done making changes, be sure to set the "Reload Dialplan On Servers" option on the same page to '1', and then submit your changes. The changes should go into effect within 1 minute.
+
+
+
+Are there any definable timeouts for these processes?
+
+There are actually 4 separate timeouts for this process that you can define in the custom dialplan entry in System Settings:
+
+1. The VICIdial agent timeout: This is the total time from the initiation of the 3way call process, this includes the outside-agent dial time, and the prompting of the outside-agent and waiting for their response. If you want 30 seconds of dial time and 20 seconds waiting for a response, then you would want to set this to '50'.
+
+2. The 3way call dial timeout: This is the outside-agent call Dial() timeout, how long the system will wait without receiving an Answer signal before hanging up the call. Default is '80', but I've set this to '30' in the example below.
+
+3. The outside-agent prompt timeout: This is the amount of time waiting for the outside-agent to press '1' after the prompt finishes, default for this is '20'
+
+4. The outside-agent acceptance timeout: This is only the time after the outside-agent presses '1' and is waiting for transfer to the customer/agent session in most cases, this doesn't need to be any higher than '10'.
+
+
+
+
+SYSTEM SETTINGS DIALPLAN ENTRIES, PUT AT THE BOTTOM OF THE ENTRY!!! :
+-------------------------------------------------------------------------
+
+
+; VICIdial agent initation of outside-agent transfer:
+exten => _49907.,1,Dial(${TRUNKloop}/499${EXTEN},,to)
+exten => _49907.,n,Hangup()
+exten => _49949907.,1,Goto(xfer_press_dialplan,${EXTEN:3},1)
+exten => _49949907.,n,Hangup()
+
+; VICIdial outside-agent transfer after initiated by agent:
+[xfer_press_dialplan]
+exten => s,1,Answer
+exten => s,n,NoOp(${call_3way_id})
+exten => s,n,NoOp(${CALLERID(name)})
+exten => s,n,AGI(agi-3way_press_outside.agi,answered)
+exten => s,n,Playback(sip-silence)
+exten => s,n,Background(outside-sales)
+exten => s,n,Background(press-1)
+exten => s,n,Background(now)
+exten => s,n,WaitExten(20)
+exten => s,n,AGI(agi-3way_press_outside.agi,declined)
+exten => s,n,Hangup
+
+exten => 1,1,NoOp(${call_3way_id})
+exten => 1,n,NoOp(${CALLERID(name)})
+exten => 1,n,AGI(agi-3way_press_outside.agi,accepted---10)
+exten => 1,n,Hangup()
+
+exten => t,1,Playback(buzz)
+exten => t,n,Hangup()
+
+exten => i,1,Playback(buzz)
+exten => i,n,Hangup()
+
+; VICIdial agent initation of outside-agent transfer:
+exten => _49907.,1,Answer
+exten => _49907.,n,NoOp(${CALLERID(name)})
+exten => _49907.,n,Playback(sip-silence)
+exten => _49907.,n,AGI(agi-3way_press_agent.agi,start---50---30)
+exten => _49907.,n,Hangup
+
+
+-------------------------------------------------------------------------
+
+
+
+
+
+DATABASE CHANGES FOR REFERENCE ONLY!!!!!!!!!
+
+CREATE TABLE vicidial_3way_press_live (
+call_date DATETIME(6),
+caller_code VARCHAR(30) NOT NULL,
+call_3way_id VARCHAR(30) NOT NULL,
+lead_id INT(9) UNSIGNED,
+phone_number VARCHAR(18),
+dialstring VARCHAR(28),
+outbound_cid VARCHAR(20),
+user VARCHAR(20),
+session_id VARCHAR(20),
+server_ip VARCHAR(15),
+session_id_3way VARCHAR(20) default '',
+status VARCHAR(40),
+call_channel VARCHAR(100) default '',
+agent_heartbeat DATETIME,
+index(call_date),
+index(caller_code),
+index(call_3way_id),
+index(lead_id)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_3way_press_log (
+call_date DATETIME(6),
+caller_code VARCHAR(30) NOT NULL,
+call_3way_id VARCHAR(30) NOT NULL,
+lead_id INT(9) UNSIGNED,
+phone_number VARCHAR(18),
+dialstring VARCHAR(28),
+outbound_cid VARCHAR(20),
+user VARCHAR(20),
+session_id VARCHAR(20),
+server_ip VARCHAR(15),
+session_id_3way VARCHAR(20) default '',
+result TEXT,
+call_channel VARCHAR(100) default '',
+call_transfer ENUM('N','Y') default 'N',
+index(call_date),
+index(caller_code),
+index(call_3way_id),
+index(lead_id),
+index(phone_number)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_3way_press_log_archive LIKE vicidial_3way_press_log;
+CREATE UNIQUE INDEX vdpla on vicidial_3way_press_log_archive (call_date,caller_code,user);
+
+CREATE TABLE vicidial_3way_press_multi (
+user VARCHAR(20) PRIMARY KEY,
+call_date DATETIME,
+phone_numbers VARCHAR(255) default '',
+phone_numbers_ct TINYINT(3) default '0',
+status VARCHAR(40) default '',
+index(call_date)
+) ENGINE=MyISAM;

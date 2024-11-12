@@ -1,7 +1,7 @@
 <?php
 # AST_dial_log_report.php
 #
-# Copyright (C) 2022  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 130709-1346 - First build
@@ -16,6 +16,7 @@
 # 210129-1010 - Added archive search option, issue #1222
 # 220303-0812 - Added allow_web_debug system setting
 # 220812-0953 - Added User Group report permissions checking
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
@@ -156,8 +157,8 @@ $NOW_DATE = date("Y-m-d");
 if (strlen($query_date_D) < 6) {$query_date_D = "00:00:00";}
 if (strlen($query_date_T) < 6) {$query_date_T = "23:59:59";}
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
-if (!isset($server_ip)) {$server_ip = array();}
-if (!isset($sip_hangup_cause)) {$sip_hangup_cause = array();}
+if (!is_array($server_ip)) {$server_ip = array();}
+if (!is_array($sip_hangup_cause)) {$sip_hangup_cause = array();}
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
@@ -332,9 +333,9 @@ $LOGserver_name = getenv("SERVER_NAME");
 $LOGserver_port = getenv("SERVER_PORT");
 $LOGrequest_uri = getenv("REQUEST_URI");
 $LOGhttp_referer = getenv("HTTP_REFERER");
-$LOGbrowser=preg_replace("/\'|\"|\\\\/","",$LOGbrowser);
-$LOGrequest_uri=preg_replace("/\'|\"|\\\\/","",$LOGrequest_uri);
-$LOGhttp_referer=preg_replace("/\'|\"|\\\\/","",$LOGhttp_referer);
+$LOGbrowser=preg_replace("/<|>|\'|\"|\\\\/","",$LOGbrowser);
+$LOGrequest_uri=preg_replace("/<|>|\'|\"|\\\\/","",$LOGrequest_uri);
+$LOGhttp_referer=preg_replace("/<|>|\'|\"|\\\\/","",$LOGhttp_referer);
 if (preg_match("/443/i",$LOGserver_port)) {$HTTPprotocol = 'https://';}
   else {$HTTPprotocol = 'http://';}
 if (($LOGserver_port == '80') or ($LOGserver_port == '443') ) {$LOGserver_port='';}

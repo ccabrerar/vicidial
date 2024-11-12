@@ -20,7 +20,7 @@
 # Based on perl scripts in ViciDial from Matt Florell and post:
 # http://www.vicidial.org/VICIDIALforum/viewtopic.php?p=22506&sid=ca5347cffa6f6382f56ce3db9fb3d068#22506
 #
-# Copyright (C) 2023  I. Taushanov, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  I. Taushanov, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 90615-1701 - First version
@@ -68,6 +68,11 @@
 # 230418-1341 - Added vicidial_user_dial_log archiving, same as vicidial_dial_log
 # 230421-0057 - Added vicidial_agent_latency_summary_log archiving
 # 230507-0804 - Added vicidial_latency_gaps archiving
+# 231028-0810 - Added --url-log-only and --url-log-days=x options for purging of vicidial_url_log table only
+# 231117-1914 - Added vicidial_3way_press_log archiving
+# 231126-2227 - Added vicidial_hci_log archiving
+# 240916-2159 - Added --extended-log-only
+# 240924-2041 - Added --vicidial-log-only
 #
 
 $CALC_TEST=0;
@@ -79,6 +84,8 @@ $park_log_archive=0;
 $wipe_closer_log=0;
 $api_log_only=0;
 $api_archive_only=0;
+$url_log_only=0;
+$url_log_archive=0;
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -111,8 +118,14 @@ if (length($ARGV[0])>1)
 		print "  [--park-log-days=XX] = OPTIONAL, number of days to archive park_log table only past\n";
 		print "  [--api-only] = OPTIONAL, only archive vicidial_api_log table then exit\n";
 		print "       [--api-log-days=XX] = REQUIRED FOR --api-only, number of days to archive vicidial_api_log table only past\n";
+		print "  [--vicidial-log-only] = OPTIONAL, only archive vicidial_log table then exit\n";
+		print "       [--vicidial-log-days=XX] = REQUIRED FOR --vicidial-log-only, number of days to archive vicidial_log table only past\n";
+		print "  [--extended-log-only] = OPTIONAL, only archive vicidial_log_extended table then exit\n";
+		print "       [--extended-log-days=XX] = REQUIRED FOR --extended-log-only, number of days to archive vicidial_log_extended table only past\n";
 		print "  [--api-archive-only] = OPTIONAL, only purge vicidial_api_log_archive table then exit\n";
 		print "       [--api-archive-days=XX] = REQUIRED FOR --api-archive-only, number of days to purge vicidial_api_log_archive table only past\n";
+		print "  [--url-log-only] = OPTIONAL, only purge vicidial_url_log table then exit\n";
+		print "       [--url-log-days=XX] = REQUIRED FOR --url-log-only, number of days to purge vicidial_url_log table only past\n";
 		print "  [--cpd-log-purge-days=XX] = OPTIONAL, number of days to purge vicidial_cpd_log table only past\n";
 		print "  [--wipe-closer-log] = OPTIONAL, deletes all records from vicidial_closer_log after archiving\n";
 		print "  [--wipe-all-being-archived] = OPTIONAL, deletes all records from most tables after archiving\n";
@@ -273,6 +286,46 @@ if (length($ARGV[0])>1)
 				{print "\n----- API LOG ARCHIVE ACTIVE, DAYS: $apidays -----\n\n";}
 			}
 
+		if ($args =~ /--vicidial-log-only/i)
+			{
+			$vicidial_log_only++;
+			if ($Q < 1) 
+				{print "\n----- VICIDIAL LOG ARCHIVE ONLY $vicidial_log_only -----\n\n";}
+			}
+
+		if ($args =~ /--vicidial-log-days=/i)
+			{
+			$vicidial_log_only++;
+			@data_in = split(/--vicidial-log-days=/,$args);
+			$extendeddays = $data_in[1];
+			$extendeddays =~ s/ .*$//gi;
+			$extendeddays =~ s/\D//gi;
+			if ($extendeddays > 999999)
+				{$extendeddays=1825;}
+			if ($Q < 1) 
+				{print "\n----- VICIDIAL LOG ARCHIVE ACTIVE, DAYS: $extendeddays -----\n\n";}
+			}
+
+		if ($args =~ /--extended-log-only/i)
+			{
+			$extended_log_only++;
+			if ($Q < 1) 
+				{print "\n----- EXTENDED LOG ARCHIVE ONLY $extended_log_only -----\n\n";}
+			}
+
+		if ($args =~ /--extended-log-days=/i)
+			{
+			$extended_log_only++;
+			@data_in = split(/--extended-log-days=/,$args);
+			$extendeddays = $data_in[1];
+			$extendeddays =~ s/ .*$//gi;
+			$extendeddays =~ s/\D//gi;
+			if ($extendeddays > 999999)
+				{$extendeddays=1825;}
+			if ($Q < 1) 
+				{print "\n----- EXTENDED LOG ARCHIVE ACTIVE, DAYS: $extendeddays -----\n\n";}
+			}
+
 		if ($args =~ /--api-archive-only/i)
 			{
 			$api_archive_only++;
@@ -291,6 +344,26 @@ if (length($ARGV[0])>1)
 				{$apiarchivedays=1825;}
 			if ($Q < 1) 
 				{print "\n----- API ARCHIVE PURGE, DAYS: $apiarchivedays -----\n\n";}
+			}
+
+		if ($args =~ /--url-log-only/i)
+			{
+			$url_log_only++;
+			if ($Q < 1) 
+				{print "\n----- URL LOG PURGE ONLY -----\n\n";}
+			}
+
+		if ($args =~ /--url-log-days=/i)
+			{
+			$url_log_only++;
+			@data_in = split(/--url-log-days=/,$args);
+			$urldays = $data_in[1];
+			$urldays =~ s/ .*$//gi;
+			$urldays =~ s/\D//gi;
+			if ($urldays > 999999)
+				{$urldays=1825;}
+			if ($Q < 1) 
+				{print "\n----- URL LOG PURGE ACTIVE, DAYS: $urldays -----\n\n";}
 			}
 
 		if ($args =~ /--cpd-log-purge-days=/i)
@@ -417,7 +490,32 @@ if ($api_log_archive_purge > 0)
 	if ($APIPURGEsec < 10) {$APIPURGEsec = "0$APIPURGEsec";}
 	$APIPURGEdel_time = "$APIPURGEyear-$APIPURGEmon-$APIPURGEmday $APIPURGEhour:$APIPURGEmin:$APIPURGEsec";
 	}
-
+if ($url_log_only > 0) 
+	{
+	$URLdel_epoch = ($secX - (86400 * $urldays));   # X days ago
+	($URLsec,$URLmin,$URLhour,$URLmday,$URLmon,$URLyear,$URLwday,$URLyday,$URLisdst) = localtime($URLdel_epoch);
+	$URLyear = ($URLyear + 1900);
+	$URLmon++;
+	if ($URLmon < 10) {$URLmon = "0$URLmon";}
+	if ($URLmday < 10) {$URLmday = "0$URLmday";}
+	if ($URLhour < 10) {$URLhour = "0$URLhour";}
+	if ($URLmin < 10) {$URLmin = "0$URLmin";}
+	if ($URLsec < 10) {$URLsec = "0$URLsec";}
+	$URLdel_time = "$URLyear-$URLmon-$URLmday $URLhour:$URLmin:$URLsec";
+	}
+if ( ($extended_log_only > 0) || ($vicidial_log_only > 0) )
+	{
+	$EXTENDEDdel_epoch = ($secX - (86400 * $extendeddays));   # X days ago
+	($EXTENDEDsec,$EXTENDEDmin,$EXTENDEDhour,$EXTENDEDmday,$EXTENDEDmon,$EXTENDEDyear,$EXTENDEDwday,$EXTENDEDyday,$EXTENDEDisdst) = localtime($EXTENDEDdel_epoch);
+	$EXTENDEDyear = ($EXTENDEDyear + 1900);
+	$EXTENDEDmon++;
+	if ($EXTENDEDmon < 10) {$EXTENDEDmon = "0$EXTENDEDmon";}
+	if ($EXTENDEDmday < 10) {$EXTENDEDmday = "0$EXTENDEDmday";}
+	if ($EXTENDEDhour < 10) {$EXTENDEDhour = "0$EXTENDEDhour";}
+	if ($EXTENDEDmin < 10) {$EXTENDEDmin = "0$EXTENDEDmin";}
+	if ($EXTENDEDsec < 10) {$EXTENDEDsec = "0$EXTENDEDsec";}
+	$EXTENDEDdel_time = "$EXTENDEDyear-$EXTENDEDmon-$EXTENDEDmday $EXTENDEDhour:$EXTENDEDmin:$EXTENDEDsec";
+	}
 if ($cpd_log_purge > 0)
 	{
 	$CPDdel_epoch = ($secX - (86400 * $CPDdays));   # X days ago
@@ -1848,6 +1946,169 @@ if (!$T)
 		exit;
 		}
 	########## END --api-archive-only flag processing ##########
+
+
+	########## BEGIN --url-log-only flag processing ##########
+	if ($url_log_only > 0)
+		{
+		##### vicidial_url_log
+		$stmtA = "SELECT count(*) from vicidial_url_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$vicidial_url_log_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		if (!$Q) {print "\nProcessing vicidial_url_log table...  ($vicidial_url_log_count)\n";}
+
+		$stmtA = "DELETE FROM vicidial_url_log WHERE url_date < '$URLdel_time';";
+		if ($DB > 0) {print "     DEBUG: |$stmtA|\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows deleted from vicidial_url_log table \n";}
+
+		$stmtA = "optimize table vicidial_url_log;";
+		if ($DB > 0) {print "     DEBUG: |$stmtA|\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+
+		$stmtA = "SELECT count(*) from vicidial_url_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$vicidial_url_log_count_now =	$aryA[0];
+			}
+		$sthA->finish();
+
+		if (!$Q) {print "\nProcessing vicidial_url_log table finished:  ($vicidial_url_log_count -> $vicidial_url_log_count_now)\n";}
+		
+		exit;
+		}
+	########## END --url-log-only flag processing ##########
+
+
+	########## BEGIN --extended-log-only flag processing ##########
+	if ($extended_log_only > 0)
+		{
+		##### vicidial_log_extended
+		$stmtA = "SELECT count(*) from vicidial_log_extended;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$vicidial_log_extended_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		$stmtA = "SELECT count(*) from vicidial_log_extended_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$vicidial_log_extended_archive_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		if (!$Q) {print "\nProcessing vicidial_log_extended table...  ($vicidial_log_extended_count|$vicidial_log_extended_archive_count)\n";}
+		$stmtA = "INSERT IGNORE INTO vicidial_log_extended_archive SELECT * from vicidial_log_extended;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows inserted into vicidial_log_extended_archive table \n";}
+		
+		$rv = $sthA->err();
+		if (!$rv) 
+			{
+			if ($wipe_all > 0)
+				{$stmtA = "DELETE FROM vicidial_log_extended;";}
+			else
+				{$stmtA = "DELETE FROM vicidial_log_extended WHERE call_date < '$EXTENDEDdel_time';";}
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			if (!$Q) {print "$sthArows rows deleted from vicidial_log_extended table \n";}
+
+			$stmtA = "optimize table vicidial_log_extended;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			}
+
+		if (!$Q) {print "\nProcessing vicidial_log_extended table finished:  ($sthArows rows deleted) \n";}
+		
+		exit;
+		}
+	########## END --extended-log-only flag processing ##########
+
+
+	########## BEGIN --vicidial-log-only flag processing ##########
+	if ($vicidial_log_only > 0)
+		{
+		##### vicidial_log
+		$stmtA = "SELECT count(*) from vicidial_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$vicidial_log_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		$stmtA = "SELECT count(*) from vicidial_log_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$vicidial_log_archive_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		if (!$Q) {print "\nProcessing vicidial_log table...  ($vicidial_log_count|$vicidial_log_archive_count)\n";}
+		$stmtA = "INSERT IGNORE INTO vicidial_log_archive SELECT * from vicidial_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows inserted into vicidial_log_archive table \n";}
+		
+		$rv = $sthA->err();
+		if (!$rv) 
+			{
+			if ($wipe_all > 0)
+				{$stmtA = "DELETE FROM vicidial_log;";}
+			else
+				{$stmtA = "DELETE FROM vicidial_log WHERE call_date < '$EXTENDEDdel_time';";}
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			if (!$Q) {print "$sthArows rows deleted from vicidial_log table \n";}
+
+			$stmtA = "optimize table vicidial_log;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			}
+
+		if (!$Q) {print "\nProcessing vicidial_log table finished:  ($sthArows rows deleted) \n";}
+		
+		exit;
+		}
+	########## END --vicidial-log-only flag processing ##########
 
 
 	if ($queue_log > 0)
@@ -3388,6 +3649,111 @@ if (!$T)
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		}
 
+
+	##### vicidial_3way_press_log
+	$stmtA = "SELECT count(*) from vicidial_3way_press_log;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$vicidial_3way_press_log_count =	$aryA[0];
+		}
+	$sthA->finish();
+
+	$stmtA = "SELECT count(*) from vicidial_3way_press_log_archive;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$vicidial_3way_press_log_archive_count =	$aryA[0];
+		}
+	$sthA->finish();
+
+	if (!$Q) {print "\nProcessing vicidial_3way_press_log table...  ($vicidial_3way_press_log_count|$vicidial_3way_press_log_archive_count)\n";}
+	$stmtA = "INSERT IGNORE INTO vicidial_3way_press_log_archive SELECT * from vicidial_3way_press_log;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	
+	$sthArows = $sthA->rows;
+	if (!$Q) {print "$sthArows rows inserted into vicidial_3way_press_log_archive table \n";}
+	
+	$rv = $sthA->err();
+	if (!$rv) 
+		{	
+		if ($wipe_all > 0)
+			{$stmtA = "DELETE FROM vicidial_3way_press_log;";}
+		else
+			{$stmtA = "DELETE FROM vicidial_3way_press_log WHERE call_date < '$del_time';";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows deleted from vicidial_3way_press_log table \n";}
+
+		$stmtA = "optimize table vicidial_3way_press_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+
+		$stmtA = "optimize table vicidial_3way_press_log_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		}
+
+
+	##### vicidial_hci_log
+	$stmtA = "SELECT count(*) from vicidial_hci_log;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$vicidial_hci_log_count =	$aryA[0];
+		}
+	$sthA->finish();
+
+	$stmtA = "SELECT count(*) from vicidial_hci_log_archive;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$vicidial_hci_log_archive_count =	$aryA[0];
+		}
+	$sthA->finish();
+
+	if (!$Q) {print "\nProcessing vicidial_hci_log table...  ($vicidial_hci_log_count|$vicidial_hci_log_archive_count)\n";}
+	$stmtA = "INSERT IGNORE INTO vicidial_hci_log_archive SELECT * from vicidial_hci_log;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	
+	$sthArows = $sthA->rows;
+	if (!$Q) {print "$sthArows rows inserted into vicidial_hci_log_archive table \n";}
+	
+	$rv = $sthA->err();
+	if (!$rv) 
+		{	
+		if ($wipe_all > 0)
+			{$stmtA = "DELETE FROM vicidial_hci_log;";}
+		else
+			{$stmtA = "DELETE FROM vicidial_hci_log WHERE call_date < '$del_time';";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows deleted from vicidial_hci_log table \n";}
+
+		$stmtA = "optimize table vicidial_hci_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+
+		$stmtA = "optimize table vicidial_hci_log_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		}
 
 
 	##### vicidial_call_notes

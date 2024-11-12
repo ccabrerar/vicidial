@@ -1,7 +1,7 @@
 <?php 
 # campaign_summary_mobile_report.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # Back-end PHP script that generates text output to be interpreted by AST_timeonVDADallSUMMARY_mobile.php
 #
@@ -11,6 +11,7 @@
 #
 # 181212-2329 - Initial build
 # 220301-1015 - Added allow_web_debug system setting
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 require("dbconnect_mysqli.php");
@@ -72,6 +73,7 @@ $adastats = preg_replace('/[^-_0-9a-zA-Z]/', '', $adastats);
 $file_download = preg_replace('/[^-_0-9a-zA-Z]/', '', $file_download);
 $submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
 $SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+if(!is_array($types)) {$types=array();}
 
 # Variables filtered further down in the code
 # $types
@@ -217,7 +219,7 @@ if (count($types)<2) {
 	else if (in_array('AUTO-DIAL ONLY', $types))			{$campaign_typeSQL="and dial_method IN('RATIO','ADAPT_HARD_LIMIT','ADAPT_TAPERED','ADAPT_AVERAGE')";} 
 	else if (in_array('MANUAL ONLY', $types))			{$campaign_typeSQL="and dial_method IN('MANUAL','INBOUND_MAN')";} 
 	else if (in_array('INBOUND ONLY', $types))			{$campaign_typeSQL="and campaign_allow_inbound='Y'";} 
-	else {$campaign_typeSQL="and campaign_id IN(".$typesSQL.")";}
+	else if ($typesSQL) 						{$campaign_typeSQL="and campaign_id IN(".$typesSQL.")";}
 } else {
 	if (!in_array('LIST ALL CAMPAIGNS', $types)) {
 		$campaign_typeSQL='and (';

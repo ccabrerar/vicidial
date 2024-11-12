@@ -12,10 +12,11 @@
 #
 # CHANGELOG
 # 230427-1424 - First build
+# 231116-0921 - Added hopper_hold_inserts option
 #
 
 # constants
-$build = '230427-1424';
+$build = '231116-0921';
 $script='demo_quota';
 $DB=0;  # Debug flag, set to 0 for no debug messages. Can be overriden with CLI --debug flag
 $US='__';
@@ -1086,7 +1087,7 @@ foreach(@campaign_id)
 		if ($DBX) {print "DQ List AUTO Resets enabled, checking hopper count:  $demographic_quotas_list_resets[$i] \n";}
 		$hopper_begin_output .= "DQ List AUTO Resets enabled, checking hopper count:  $demographic_quotas_list_resets[$i] \n";
 		$hopper_leads=0;
-		$stmtA="SELECT count(*) FROM vicidial_hopper where campaign_id='$campaign_id[$i]' and status IN('READY');";
+		$stmtA="SELECT count(*) FROM vicidial_hopper where campaign_id='$campaign_id[$i]' and status IN('READY','RHOLD','RQUEUE');";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;
@@ -1523,7 +1524,7 @@ foreach(@campaign_id)
 	if ($ranked_leads > 0) 
 		{
 		$hopper_leads=0;
-		$stmtA="SELECT count(*) FROM vicidial_hopper where campaign_id='$campaign_id[$i]' and status IN('READY');";
+		$stmtA="SELECT count(*) FROM vicidial_hopper where campaign_id='$campaign_id[$i]' and status IN('READY','RHOLD','RQUEUE');";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;

@@ -1,4 +1,4 @@
-VICI RECORDING GATEWAY SERVER	Started: 2023-01-14	Updated: 2023-02-01
+VICI RECORDING GATEWAY SERVER	Started: 2023-01-14	Updated: 2024-03-08
 
 
 
@@ -9,6 +9,8 @@ The recording files can be archived on the normal archive server, although keep 
 For outbound calls, the gateway recordings can be tied to the original Lead ID and the call_id of the call, providing that the CallerIDname is not modified before it reaches the recording gateway server.
 
 For inbound calls, the gateway recordings can be tied to the original DID Log entry and UniqueID of the call on the VICIdial system. Depending on how complex the inbound call routing is, the gateway recording may also be able to be tied to a Lead ID.
+
+To view the Inbound and Outbound Gateway recordings in your VICIdial web admin screens, add a user with the ID of "GATEWAY" and the recordings will show up under that user.
 
 
 
@@ -26,6 +28,7 @@ Scripts to add to the crontab on the Gateway Recording server, staggered every 3
 /usr/share/astguiclient/AST_CRON_audio_1_gateway_stereo.pl --STEREO --debugX
 
 (if required:)
+/usr/share/astguiclient/AST_CRON_audio_2_compress --MP3 --GATEWAY
 /usr/share/astguiclient/AST_CRON_audio_3_ftp.pl --WAV --debugX --run-check --ftp-persistent --ftp-validate
 
 
@@ -68,6 +71,20 @@ exten => _X.,n,Noop(${DIALER_FILENAME})
 exten => _X.,n,MixMonitor(,t(${CARRIER_FILENAME})r(${DIALER_FILENAME})S)
 exten => _X.,n,Dial(PJSIP/${EXTEN}@pjsgw1,,To)
 
+
+EXAMPLE OUTBOUND DIALPLAN WITH KHOMP GATEWAY SIP-VARIABLES PASSTHRU:
+
+exten => _X.,1,Progress()
+exten => _X.,n,Noop(${CALLERID(num)})
+exten => _X.,n,AGI(agi-VICIrecGateway.agi)
+exten => _X.,n,Noop(${CARRIER_FILENAME})
+exten => _X.,n,Noop(${DIALER_FILENAME})
+exten => _X.,n,MixMonitor(,t(${CARRIER_FILENAME})r(${DIALER_FILENAME})S)
+exten => _X.,n,Set(KHOMPID=${SIP_HEADER(X-KHOMP-Vicidial-ID,1)})
+exten => _X.,n,Noop(${KHOMPID})
+exten => _X.,n,SIPAddHeader(X-KHOMP-Vicidial-ID: ${KHOMPID})
+exten => _X.,n,Dial(SIP/khompgw/${EXTEN},,To)
+exten => _X.,n,Hangup
 
 
 

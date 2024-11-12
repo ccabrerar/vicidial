@@ -1,7 +1,7 @@
 <?php 
 # AST_inbound_daily_report.php
 # 
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -36,6 +36,7 @@
 # 200701-1500 - Added option to exclude after-hours from abandons, list ID filtering
 # 220302-1803 - Added allow_web_debug system setting
 # 230526-1740 - Patch for user_group bug, related to Issue #1346
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
@@ -88,8 +89,8 @@ $DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 $STARTtime = date("U");
-if (!isset($group)) {$group = array();}
-if (!isset($list_ids)) {$list_ids = array(); $all_lists_selected="selected";}
+if (!is_array($group)) {$group = array();}
+if (!is_array($list_ids)) {$list_ids = array(); $all_lists_selected="selected";}
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (!isset($end_date)) {$end_date = $NOW_DATE;}
 if (strlen($shift)<2) {$shift='ALL';}
@@ -242,9 +243,9 @@ $LOGserver_name = getenv("SERVER_NAME");
 $LOGserver_port = getenv("SERVER_PORT");
 $LOGrequest_uri = getenv("REQUEST_URI");
 $LOGhttp_referer = getenv("HTTP_REFERER");
-$LOGbrowser=preg_replace("/\'|\"|\\\\/","",$LOGbrowser);
-$LOGrequest_uri=preg_replace("/\'|\"|\\\\/","",$LOGrequest_uri);
-$LOGhttp_referer=preg_replace("/\'|\"|\\\\/","",$LOGhttp_referer);
+$LOGbrowser=preg_replace("/<|>|\'|\"|\\\\/","",$LOGbrowser);
+$LOGrequest_uri=preg_replace("/<|>|\'|\"|\\\\/","",$LOGrequest_uri);
+$LOGhttp_referer=preg_replace("/<|>|\'|\"|\\\\/","",$LOGhttp_referer);
 if (preg_match("/443/i",$LOGserver_port)) {$HTTPprotocol = 'https://';}
   else {$HTTPprotocol = 'http://';}
 if (($LOGserver_port == '80') or ($LOGserver_port == '443') ) {$LOGserver_port='';}
@@ -1592,7 +1593,7 @@ else
 				}
 			}
 
-		if (!isset($totAGENTSdate[$d])) {$totAGENTSdate[$d]=array();}
+		if (!is_array($totAGENTSdate[$d])) {$totAGENTSdate[$d]=array();}
 		$totAGENTSdayCOUNT=count($totAGENTSdate[$d]);
 		$totAGENTSday=sprintf("%8s", count($totAGENTSdate[$d]));
 

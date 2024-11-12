@@ -1,7 +1,7 @@
 <?php
 # callbacks_bulk_move.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 150218-0923 - First build based on callbacks_bulk_change.php
@@ -11,6 +11,8 @@
 # 180508-0115 - Added new help display
 # 191013-0853 - Fixes for PHP7
 # 220224-1656 - Added allow_web_debug system setting
+# 231129-1404 - 'SQL/x' variable bug fix
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 require("dbconnect_mysqli.php");
@@ -125,8 +127,12 @@ else
 $StarTtimE = date("U");
 $TODAY = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
-if (!isset($group)) {$group=array();}
-if (!isset($users)) {$users=array();}
+if (!is_array($group)) {$group=array();}
+if (!is_array($users)) {$users=array();}
+if (!is_array($cb_users)) {$cb_users=array();}
+if (!is_array($cb_user_groups)) {$cb_user_groups=array();}
+if (!is_array($cb_lists)) {$cb_lists=array();}
+if (!is_array($cb_groups)) {$cb_groups=array();}
 $ip = getenv("REMOTE_ADDR");
 $date = date("r");
 $ip = getenv("REMOTE_ADDR");
@@ -585,7 +591,7 @@ if ($SUBMIT && $new_list_id && ($new_status || $revert_status))
 				{
 				$cb_users[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $cb_users[$i]);
 				$usersQS.="&cb_users[]=".$cb_users[$i];
-				if ($i > 0) {$usersSQL.="','";}
+				if ($i > 0) {$usersSQLx.="','";}
 				$usersSQLx.="$cb_users[$i]";
 				}
 			$usersSQL=" and vc.user in ('".$usersSQLx."') ";
@@ -616,7 +622,7 @@ if ($SUBMIT && $new_list_id && ($new_status || $revert_status))
 				{
 				$cb_user_groups[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $cb_user_groups[$i]);
 				$user_groupsQS.="&cb_user_groups[]=".$cb_user_groups[$i];
-				if ($i > 0) {$user_groupsSQL.="','";}
+				if ($i > 0) {$user_groupsSQLx.="','";}
 				$user_groupsSQLx.="$cb_user_groups[$i]";
 				}
 			$user_groupsSQL=" and vc.user_group in ('".$user_groupsSQLx."') ";
@@ -656,7 +662,7 @@ if ($SUBMIT && $new_list_id && ($new_status || $revert_status))
 				{
 				$cb_lists[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $cb_lists[$i]);
 				$listsQS.="&cb_lists[]=".$cb_lists[$i];
-				if ($i > 0) {$listsSQL.="','";}
+				if ($i > 0) {$listsSQLx.="','";}
 				$listsSQLx.="$cb_lists[$i]";
 				}
 			$listsSQL=" and vc.list_id in ('".$listsSQLx."') ";
@@ -687,7 +693,7 @@ if ($SUBMIT && $new_list_id && ($new_status || $revert_status))
 				{
 				$cb_groups[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $cb_groups[$i]);
 				$groupsQS.="&cb_groups[]=".$cb_groups[$i];
-				if ($i > 0) {$groupsSQL.="','";}
+				if ($i > 0) {$groupsSQLx.="','";}
 				$groupsSQLx.="$cb_groups[$i]";
 				}
 			$groupsSQL=" and vc.campaign_id in ('".$groupsSQLx."') ";
@@ -701,6 +707,7 @@ if ($SUBMIT && $new_list_id && ($new_status || $revert_status))
 #	else 
 #		{}
 
+	$groupsSQL=preg_replace('/ in \(\)/', ' in (\'\')', $groupsSQL);
 	$callback_dispo_stmt="SELECT distinct status from vicidial_statuses where scheduled_callback='Y' UNION SELECT distinct status from vicidial_campaign_statuses where scheduled_callback='Y' ".preg_replace("/vc\./", "", $groupsSQL);
 	if ($DB) {echo $callback_dispo_stmt."<BR>";}
 	$callback_dispo_rslt=mysql_to_mysqli($callback_dispo_stmt, $link);
@@ -877,6 +884,8 @@ else if ($SUBMIT && $new_list_id  && ($new_status || $revert_status) && (count($
 		$callback_stmt="SELECT * from vicidial_callbacks vc, vicidial_list vl where $purge_clause and vc.lead_id=vl.lead_id $usersSQL $user_groupsSQL $listsSQL $groupsSQL $daySQL";
 
 		$purge_stmt="SELECT vc.status, vl.status from vicidial_callbacks vc, vicidial_list vl where $purge_clause and vc.lead_id=vl.lead_id $usersSQL $user_groupsSQL $listsSQL $groupsSQL $daySQL";
+		$purge_stmt=preg_replace('/ in \(\)/', ' in (\'\')', $purge_stmt);
+		if ($DB) {echo $purge_stmt."<BR>";}
 		$purge_rslt=mysql_to_mysqli($purge_stmt, $link);
 		$purge_ct=mysqli_num_rows($purge_rslt);
 		$purge_called_ct=0;
@@ -887,6 +896,7 @@ else if ($SUBMIT && $new_list_id  && ($new_status || $revert_status) && (count($
 			if ($purge_row[0]=="ACTIVE" || ($purge_row[0]=="LIVE" && in_array("$purge_row[1]", $cb_dispos))) {$purge_uncalled_ct++;} 
 			}
 		}
+	$callback_stmt=preg_replace('/ in \(\)/', ' in (\'\')', $callback_stmt);
 	$callback_rslt=mysql_to_mysqli($callback_stmt, $link);
 	$callback_ct=mysqli_num_rows($callback_rslt);
 	if ($DB) {echo $callback_stmt."<BR>";}

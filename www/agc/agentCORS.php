@@ -1,7 +1,7 @@
 <?php
 # agentCORS.php - CORS processing and responses for Cross-Origin Features
 # 
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CORS settings coming from the options.php script (the first 3 variables must be set for these features to be active)
 #	$CORS_allowed_origin		= '';	# if multiple origins allowed, separate them by a pipe (also allows PHP preg syntax)
@@ -20,7 +20,25 @@
 # 
 # CHANGELOG
 # 210616-1012 - First Build
+# 240801-1130 - Code updates for PHP8 compatibility
+# 240805-2103 - Added PHP_error_reporting_OVERRIDE options
 #
+
+$PHP_error_reporting_OVERRIDE=0;
+if (file_exists('options.php'))
+        {
+        require('options.php');
+        }
+if ($PHP_error_reporting_OVERRIDE > 0)
+	{
+	$php_err_suppression_value=32767; # E_ALL
+	$php_err_suppression_value-=($PHP_error_reporting_HIDE_ERRORS ? 1 : 0);
+	$php_err_suppression_value-=($PHP_error_reporting_HIDE_WARNINGS ? 2 : 0);
+	$php_err_suppression_value-=($PHP_error_reporting_HIDE_PARSES ? 4 : 0);
+	$php_err_suppression_value-=($PHP_error_reporting_HIDE_NOTICES ? 8 : 0);
+	$php_err_suppression_value-=($PHP_error_reporting_HIDE_DEPRECATIONS ? 8192 : 0);
+	error_reporting($php_err_suppression_value);
+	}
 
 $NOW_TIME = date("Y-m-d H:i:s");
 
@@ -28,7 +46,7 @@ if (strlen($php_script) < 1)
 	{$donothing=1;}
 else
 	{
-	$CORS_origin = $_SERVER['HTTP_ORIGIN']; # The client browser origin server
+	$CORS_origin = "$_SERVER[HTTP_ORIGIN]"; # The client browser origin server - treated as string for stripos command
 	$CORS_method = isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']) ? $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD'] : $_SERVER['REQUEST_METHOD']; # Either the requested HTTP method or the current one
 	$CORS_affected_scripts = " $CORS_affected_scripts "; # surround with spaces for preg match below
 

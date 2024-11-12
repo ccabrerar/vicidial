@@ -6,6 +6,7 @@
 # CHANGELOG:
 # 220825-1600 - First build
 #
+$report_name="VERM reports";
 
 $startMS = microtime();
 
@@ -50,6 +51,16 @@ if ($qm_conf_ct > 0)
 if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+if ( (strlen($slave_db_server)>5) and (preg_match("/$report_name/",$reports_use_slave_db)) )
+	{
+	mysqli_close($link);
+	$use_slave_server=1;
+	$db_source = 'S';
+	require("dbconnect_mysqli.php");
+	echo "<!-- Using slave server $slave_db_server $db_source -->\n";
+	}
+
 
 # $report_name = 'Vicidial Enhanced Reporting Module';
 require("../$SSadmin_web_directory/screen_colors.php");
@@ -221,11 +232,13 @@ if ($vicidial_queue_group)
 		$vqg_row=mysqli_fetch_array($vqg_rslt);
 		$queue_group_name=$vqg_row["queue_group_name"];
 		$included_campaigns=trim(preg_replace('/\s\-$/', '', $vqg_row["included_campaigns"]));
-		$included_campaigns_array=sort(explode(" ", $included_campaigns));
+		$included_campaigns_array=explode(" ", $included_campaigns);
+		sort($included_campaigns_array);
 		$included_campaigns_ct=count($included_campaigns_array);
 		$included_campaigns_clause="and campaign_id in ('".preg_replace('/\s/', "', '", $included_campaigns)."')";
 		$included_inbound_groups=trim(preg_replace('/\s\-$/', '', $vqg_row["included_inbound_groups"]));
-		$included_inbound_groups_array=sort(explode(" ", $included_inbound_groups));
+		$included_inbound_groups_array=explode(" ", $included_inbound_groups);
+		sort($included_inbound_groups_array);
 		$included_inbound_groups_ct=count($included_inbound_groups_array);
 		$included_inbound_groups_clause="and group_id in ('".preg_replace('/\s/', "', '", $included_inbound_groups)."')";
 		$where_included_inbound_groups_clause="where group_id in ('".preg_replace('/\s/', "', '", $included_inbound_groups)."')";

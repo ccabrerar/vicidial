@@ -1,11 +1,12 @@
 <?php
 # VERM_IVR_rpt.inc - Vicidial Enhanced Reporting IVR report
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
 # 
 # CHANGELOG:
 # 220825-1619 - First build
 # 230106-1328 - Added page flushing to show page load progress
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 if (isset($_GET["page_no"]))			{$page_no=$_GET["page_no"];}
@@ -262,14 +263,14 @@ foreach ($ivr_data as $ivr_path => $data)
 		$HTML_output.="<td>".$ivr_value."</td>";
 		$HTML_output.="<td>".$data["calls"]."</td>";
 		$HTML_output.="<td>".$data["goals"]."</td>";
-		$HTML_output.="<td>".sprintf("%.1f", (100*($data["calls"]-$data["hangups"])/$data["calls"]))." %</td>";
+		$HTML_output.="<td>".sprintf("%.1f", (MathZDC(100*($data["calls"]-$data["hangups"]), $data["calls"])))." %</td>";
 		$HTML_output.="<td>".$data["hangups"]."</td>";
-		$HTML_output.="<td>".sprintf("%.1f", (100*$data["hangups"]/$data["calls"]))." %</td>";
+		$HTML_output.="<td>".sprintf("%.1f", (MathZDC(100*$data["hangups"], $data["calls"])))." %</td>";
 		$HTML_output.="</tr>\n";
 
 		if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 
-		$CSV_output["ivr_traversal"].="\"".$CSV_ivr_value."\",\"".$data["calls"]."\",\"".($data["calls"]-$data["hangups"])."\",\"".sprintf("%.1f", (100*($data["calls"]-$data["hangups"])/$data["calls"]))." %\",\"".$data["hangups"]."\",\"".sprintf("%.1f", (100*$data["hangups"]/$data["calls"]))." %\"\n";
+		$CSV_output["ivr_traversal"].="\"".$CSV_ivr_value."\",\"".$data["calls"]."\",\"".($data["calls"]-$data["hangups"])."\",\"".sprintf("%.1f", (MathZDC(100*($data["calls"]-$data["hangups"]), $data["calls"])))." %\",\"".$data["hangups"]."\",\"".sprintf("%.1f", (MathZDC(100*$data["hangups"], $data["calls"])))." %\"\n";
 
 		if(preg_match('/\-TOTAL$/', $ivr_path)) {unset($ivr_data["$ivr_path"]);} # Remove total, don't need anymore
 		}
@@ -317,9 +318,9 @@ foreach ($ivr_data as $comment_d => $data)
 		if ($prev_base_path!=$base_path)
 			{
 			# Calculate totals for base path
-			$total_success_rate=sprintf("%.1f", (100*(($total_prompt_calls-$total_prompt_hangups)/$total_prompt_calls)));
-			$total_hangup_rate=sprintf("%.1f", (100*($total_prompt_hangups/$total_prompt_calls)));
-			$total_average_sec=round($total_prompt_time/$total_prompt_calls);
+			$total_success_rate=sprintf("%.1f", (100*MathZDC(($total_prompt_calls-$total_prompt_hangups), $total_prompt_calls)));
+			$total_hangup_rate=sprintf("%.1f", (100*MathZDC($total_prompt_hangups, $total_prompt_calls)));
+			$total_average_sec=round(MathZDC($total_prompt_time, $total_prompt_calls));
 			$base_average_time=($total_average_sec>=3600 ? intval(floor($total_average_sec/3600)).date(":i:s", $total_average_sec) : intval(date("i", $total_average_sec)).":".date("s", $total_average_sec));
 			$base_total_time=($total_prompt_time>=3600 ? intval(floor($total_prompt_time/3600)).date(":i:s", $total_prompt_time) : intval(date("i", $total_prompt_time)).":".date("s", $total_prompt_time));
 			$base_minimum_time=($total_minimum_time>=3600 ? intval(floor($total_minimum_time/3600)).date(":i:s", $total_minimum_time) : intval(date("i", $total_minimum_time)).":".date("s", $total_minimum_time));
@@ -359,14 +360,14 @@ foreach ($ivr_data as $comment_d => $data)
 			$total_maximum_time=0;
 			}
 
-		$average_sec=round($data["time"]/$data["calls"]);
+		$average_sec=round(MathZDC($data["time"], $data["calls"]));
 		$average_time=($average_sec>=3600 ? intval(floor($average_sec/3600)).date(":i:s", $average_sec) : intval(date("i", $average_sec)).":".date("s", $average_sec));
 		$total_time=($data["time"]>=3600 ? intval(floor($data["time"]/3600)).date(":i:s", $data["time"]) : intval(date("i", $data["time"])).":".date("s", $data["time"]));
 		$minimum_time=($data["minimum_time"]>=3600 ? intval(floor($data["minimum_time"]/3600)).date(":i:s", $data["minimum_time"]) : intval(date("i", $data["minimum_time"])).":".date("s", $data["minimum_time"]));
 		$maximum_time=($data["maximum_time"]>=3600 ? intval(floor($data["maximum_time"]/3600)).date(":i:s", $data["maximum_time"]) : intval(date("i", $data["maximum_time"])).":".date("s", $data["maximum_time"]));
 		
-		$success_rate=sprintf("%.1f", (100*(($data["calls"]-$data["hangups"])/$data["calls"])));
-		$hangup_rate=sprintf("%.1f", (100*($data["hangups"]/$data["calls"])));
+		$success_rate=sprintf("%.1f", (100*(MathZDC(($data["calls"]-$data["hangups"]), $data["calls"]))));
+		$hangup_rate=sprintf("%.1f", (100*(MathZDC($data["hangups"], $data["calls"]))));
 		#$traversal_outputs.="     - $selection -> ".$data["calls"].", ".($data["calls"]-$data["hangups"]).", $success_rate %, ".$data["hangups"].", $hangup_rate % \n";
 		#$CSV_time_outputs.="     - $selection -> ".$data["calls"].", $average_time, $total_time, $minimum_time, $maximum_time\n";
 		$HTML_datarows.="<tr class='standard_font_small'><td>&nbsp;#&nbsp; $selection</td><td>".$data["calls"]."</td><td>$average_time</td><td>$total_time</td><td>$minimum_time</td><td>$maximum_time</td></tr>\n";
@@ -382,7 +383,7 @@ foreach ($ivr_data as $comment_d => $data)
 		}
 	}
 
-$total_average_sec=round($total_prompt_time/$total_prompt_calls);
+$total_average_sec=round(MathZDC($total_prompt_time, $total_prompt_calls));
 $base_average_time=($total_average_sec>=3600 ? intval(floor($total_average_sec/3600)).date(":i:s", $total_average_sec) : intval(date("i", $total_average_sec)).":".date("s", $total_average_sec));
 $base_total_time=($total_prompt_time>=3600 ? intval(floor($total_prompt_time/3600)).date(":i:s", $total_prompt_time) : intval(date("i", $total_prompt_time)).":".date("s", $total_prompt_time));
 $base_minimum_time=($total_minimum_time>=3600 ? intval(floor($total_minimum_time/3600)).date(":i:s", $total_minimum_time) : intval(date("i", $total_minimum_time)).":".date("s", $total_minimum_time));
@@ -449,7 +450,7 @@ foreach ($path_data as $goal => $path)
 			$final_key_path=preg_replace('/ \=\> $/', "", $final_key_path);
 			$CSV_final_key_path=$final_key_path;
 
-			$average_sec=round($data["time"]/$data["calls"]);
+			$average_sec=round(MathZDC($data["time"], $data["calls"]));
 			$average_time=($average_sec>=3600 ? intval(floor($average_sec/3600)).date(":i:s", $average_sec) : intval(date("i", $average_sec)).":".date("s", $average_sec));
 			$minimum_time=($data["minimum_time"]>=3600 ? intval(floor($data["minimum_time"]/3600)).date(":i:s", $data["minimum_time"]) : intval(date("i", $data["minimum_time"])).":".date("s", $data["minimum_time"]));
 			$maximum_time=($data["maximum_time"]>=3600 ? intval(floor($data["maximum_time"]/3600)).date(":i:s", $data["maximum_time"]) : intval(date("i", $data["maximum_time"])).":".date("s", $data["maximum_time"]));
@@ -621,7 +622,7 @@ $HTML_output.="<input type='hidden' name='sort_ivr_details' id='sort_ivr_details
 
 if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 
-if ($ivr_survey_ingroups_detail && count($ivr_survey_ingroups_detail)>0)
+if (is_array($ivr_survey_ingroups_detail) && count($ivr_survey_ingroups_detail)>0)
 	{
 	require("VERM_IVR_survey_details.inc");
 	}

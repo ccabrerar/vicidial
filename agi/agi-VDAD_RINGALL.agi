@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# agi-VDAD_RINGALL.agi version 2.8
+# agi-VDAD_RINGALL.agi version 2.14
 # 
 # NOTE: this script is used for on-hook agents to be connected to customer calls
 # when they answer their ringing phones
@@ -12,7 +12,7 @@
 # exten => _8331*.,n,AGI(agi-VDAD_RINGALL.agi,${EXTEN})
 # exten => _8331*.,n,Hangup
 #
-# Copyright (C) 2014  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 110303-2325 - First build
@@ -22,6 +22,8 @@
 # 130108-1808 - Changes for Asterisk 1.8 compatibility
 # 140312-2112 - Added CALLID as recording filename variable
 # 140421-1448 - Added code to halt ringing of other channels in ring_all NAC method
+# 240420-2241 - Added ConfBridge code
+# 240415-1702 - Fix for ConfBridge code
 #
 
 $script = 'agi-VDAD_RINGALL.agi';
@@ -90,7 +92,7 @@ $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VA
     or die "Couldn't connect to database: " . DBI->errstr;
 
 ### Grab Server values from the database
-$stmtA = "SELECT agi_output,ext_context,asterisk_version FROM servers where server_ip = '$VARserver_ip';";
+$stmtA = "SELECT agi_output,ext_context,asterisk_version,conf_engine FROM servers where server_ip = '$VARserver_ip';";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -101,6 +103,7 @@ if ($sthArows > 0)
 	$DBagi_output =			$aryA[0];
 	$ext_context =			$aryA[1];
 	$asterisk_version =		$aryA[2];
+	$conf_engine =			$aryA[3];
 	if ($DBagi_output =~ /STDERR/)	{$AGILOG = '1';}
 	if ($DBagi_output =~ /FILE/)	{$AGILOG = '2';}
 	if ($DBagi_output =~ /BOTH/)	{$AGILOG = '3';}
@@ -273,7 +276,9 @@ if ($NAGcount > 0)
 		if ($VLAextension =~ /^R\//)
 			{
 			### BEGIN If remote agent, then reserve a vicidial_conferences session on their server to send the calls to ###
-			$stmtA="SELECT count(*) FROM vicidial_conferences where server_ip='$VLAserver_ip' and ((extension='') or (extension is null)) and conf_exten != '$VLAconf_exten';";
+			$conf_table = "vicidial_conferences";
+			if ($conf_engine eq "CONFBRIDGE") {$conf_table = "vicidial_confbridges";}
+			$stmtA="SELECT count(*) FROM $conf_table where server_ip='$VLAserver_ip' and ((extension='') or (extension is null)) and conf_exten != '$VLAconf_exten';";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$AVCcount=$sthA->rows;
@@ -284,11 +289,11 @@ if ($NAGcount > 0)
 				$sthA->finish();
 				if ($available_sessions > 0)
 					{
-					$stmtA="UPDATE vicidial_conferences set extension='3WAY_$dial_user', leave_3way='1', leave_3way_datetime='$now_date' where server_ip='$VLAserver_ip' and ((extension='') or (extension is null)) and conf_exten != '$VLAconf_exten' limit 1;";
+					$stmtA="UPDATE $conf_table set extension='3WAY_$dial_user', leave_3way='1', leave_3way_datetime='$now_date' where server_ip='$VLAserver_ip' and ((extension='') or (extension is null)) and conf_exten != '$VLAconf_exten' limit 1;";
 					$AVCaffected_rows = $dbhA->do($stmtA);  
 					if ($AVCaffected_rows > 0)
 						{
-						$stmtA="SELECT conf_exten from vicidial_conferences where server_ip='$VLAserver_ip' and extension='3WAY_$dial_user' and leave_3way_datetime='$now_date' and conf_exten != '$VLAconf_exten';";
+						$stmtA="SELECT conf_exten from $conf_table where server_ip='$VLAserver_ip' and extension='3WAY_$dial_user' and leave_3way_datetime='$now_date' and conf_exten != '$VLAconf_exten';";
 						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 						$SVCcount=$sthA->rows;
@@ -560,8 +565,8 @@ if ($NAGcount > 0)
 				$d = leading_zero($4);
 				$VLA_DIALstr = "$a$S$b$S$c$S$d$S";
 				}
-			$VLA_DIALstr .= "7$VLAconf_exten";
-
+			if ($conf_engine eq "CONFBRIDGE") {$VLA_DIALstrPrefix = "1";} else {$VLA_DIALstrPrefix = "7";}
+			$VLA_DIALstr .= "$VLA_DIALstrPrefix$VLAconf_exten";
 			$AGI->stream_file('sip-silence');
 			$AGI->stream_file('sip-silence');
 			$AGI->stream_file('sip-silence');

@@ -1,7 +1,7 @@
 <?php
 # NANPA_running_processes.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script shows running NANPA filter batch proccesses
 #
@@ -13,10 +13,11 @@
 # 170409-1537 - Added IP List validation code
 # 170822-2230 - Added screen color settings
 # 220222-1917 - Added allow_web_debug system setting
+# 240801-1136 - Code updates for PHP8 compatibility
 #
 
-$version = '2.14-6';
-$build = '220222-1917';
+$version = '2.14-7';
+$build = '240801-1136';
 $startMS = microtime();
 
 require("dbconnect_mysqli.php");
@@ -197,6 +198,7 @@ if ($agent_screen_colors != 'default')
 		}
 	}
 
+if(!is_array($output_codes_to_display)) {$output_codes_to_display=array();}
 
 $oc_ct=count($output_codes_to_display);
 $oc_SQL="'',";

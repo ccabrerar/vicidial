@@ -1,7 +1,7 @@
 <?php 
 # fcstats_detail.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -45,6 +45,7 @@
 # 191013-0851 - Fixes for PHP7
 # 220228-1955 - Added allow_web_debug system setting
 # 230621-1434 - Fixed download bug, added option to see unanswered transfers
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
@@ -93,10 +94,10 @@ $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 $STARTtime = date("U");
 $HTML_text='';
-if (!isset($user_group)) {$user_group = array();}
-if (!isset($campaign)) {$campaign = array();}
-if (!isset($users)) {$users = array();}
-if (!isset($group)) {$group = array();}
+if (!is_array($user_group)) {$user_group = array();}
+if (!is_array($campaign)) {$campaign = array();}
+if (!is_array($users)) {$users = array();}
+if (!is_array($group)) {$group = array();}
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (!isset($end_date)) {$end_date = $query_date;}
 if (strlen($shift)<2) {$shift='ALL';}
@@ -733,6 +734,9 @@ if ($campaign_ct>0 || $user_group_ct>0 || $user_ct>0) {
 	$summary_user_closer_log_SQL = "and ".$vicidial_closer_log_table.".user IN($total_user_SQL)";
 }
 
+$complete_xfer_log=array();
+$complete_fronter_stats=array();
+$complete_closer_stats=array();
 
 #### LOG SECTION
 if ($campaign_ct>0 || $user_group_ct>0 || $user_ct>0) {

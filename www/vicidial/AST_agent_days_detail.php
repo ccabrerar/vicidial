@@ -1,7 +1,7 @@
 <?php 
 # AST_agent_days_detail.php
 # 
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -36,6 +36,7 @@
 # 191013-0848 - Fixes for PHP7
 # 220221-0946 - Added allow_web_debug system setting
 # 230526-1740 - Patch for user_group bug, related to Issue #1346
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
@@ -77,7 +78,7 @@ $MT[0]='';
 $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 $STARTtime = date("U");
-if (!isset($group)) {$group = array();}
+if (!is_array($group)) {$group = array();}
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (!isset($end_date)) {$end_date = $NOW_DATE;}
 if (strlen($shift)<2) {$shift='ALL';}
@@ -233,9 +234,9 @@ $LOGserver_name = getenv("SERVER_NAME");
 $LOGserver_port = getenv("SERVER_PORT");
 $LOGrequest_uri = getenv("REQUEST_URI");
 $LOGhttp_referer = getenv("HTTP_REFERER");
-$LOGbrowser=preg_replace("/\'|\"|\\\\/","",$LOGbrowser);
-$LOGrequest_uri=preg_replace("/\'|\"|\\\\/","",$LOGrequest_uri);
-$LOGhttp_referer=preg_replace("/\'|\"|\\\\/","",$LOGhttp_referer);
+$LOGbrowser=preg_replace("/<|>|\'|\"|\\\\/","",$LOGbrowser);
+$LOGrequest_uri=preg_replace("/<|>|\'|\"|\\\\/","",$LOGrequest_uri);
+$LOGhttp_referer=preg_replace("/<|>|\'|\"|\\\\/","",$LOGhttp_referer);
 if (preg_match("/443/i",$LOGserver_port)) {$HTTPprotocol = 'https://';}
   else {$HTTPprotocol = 'http://';}
 if (($LOGserver_port == '80') or ($LOGserver_port == '443') ) {$LOGserver_port='';}
@@ -353,7 +354,7 @@ while ($i < $user_groups_to_print)
 #if ( (preg_match("/--ALL--/",$group_string) ) or ($group_ct < 1) )
 #	{
 	$user_group_SQL = "and user_group IN('".implode("', '", $user_groups)."')";
-	$user_group_SQL_val = "and vicidial_agent_log.user_group IN('".implode("', '", $user_groups)."')";
+	$user_group_SQL_val = "and ".$vicidial_agent_log_table.".user_group IN('".implode("', '", $user_groups)."')";
 	$user_group_IN_clause="user_group in ('".implode("', '", $user_groups)."')";
 #	}
 #else

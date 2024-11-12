@@ -102,7 +102,6 @@ if ($SSallow_web_debug < 1) {$DB=0;}
 $customer_chat_refresh_seconds = 1;
 
 if (file_exists('options.php'))
-	{require('options.php');}
 
 $customer_chat_refresh_miliseconds = $customer_chat_refresh_seconds * 1000;
 

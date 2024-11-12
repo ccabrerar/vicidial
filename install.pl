@@ -2,7 +2,7 @@
 
 # install.pl version 2.14
 #
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 
 # CHANGES
@@ -52,6 +52,7 @@
 # 221228-2049 - Added KhompEnabled option
 # 230117-2220 - Added --khomp-enable CLI flag
 # 230508-0809 - Added Asterisk 18 compatibility
+# 240704-0830 - Added coldstorage DB entries
 #
 
 ############################################
@@ -86,6 +87,12 @@ $VARDB_pass =	'1234';
 $VARDB_custom_user =	'custom';
 $VARDB_custom_pass =	'custom1234';
 $VARDB_port =	'3306';
+# default cold storage logs database server variables: 
+$VARCS_server =	'';
+$VARCS_database =	'asterisk_coldstorage';
+$VARCS_user =	'coldstorage';
+$VARCS_pass =	'cs1234';
+$VARCS_port =	'3306';
 # default keepalive processes:
 $VARactive_keepalives =		'1234568';
 # default Asterisk version:
@@ -130,6 +137,11 @@ $CLIDB_pass=0;
 $CLIDB_custom_user=0;
 $CLIDB_custom_pass=0;
 $CLIDB_port=0;
+$CLICS_server=0;
+$CLICS_database=0;
+$CLICS_user=0;
+$CLICS_pass=0;
+$CLICS_port=0;
 $CLIVARactive_keepalives=0;
 $CLIVARasterisk_version=0;
 $CLIFTP_host=0;
@@ -164,7 +176,7 @@ $secX = time();
 $DB=1;  # Debug flag, set to 0 for no debug messages, lots of output
 $US='_';
 $MT[0]='';
-$svn_revision_fixed = 3743;
+$svn_revision_fixed = 3884;
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -206,6 +218,11 @@ if (length($ARGV[0])>1)
 		print "  [--DB_custom_user=custom] = define database custom user login at runtime\n";
 		print "  [--DB_custom_pass=custom1234] = define database custom user password at runtime\n";
 		print "  [--DB_port=3306] = define database connection port at runtime\n";
+		print "  [--CS_server=x] = define cold-storage database server IP address at runtime\n";
+		print "  [--CS_database=asterisk_coldstorage] = define cold-storage database name at runtime\n";
+		print "  [--CS_user=cron] = define cold-storage database user login at runtime\n";
+		print "  [--CS_pass=1234] = define cold-storage database user password at runtime\n";
+		print "  [--CS_port=3306] = define cold-storage database connection port at runtime\n";
 		print "  [--active_keepalives=123456] = define processes to keepalive\n";
 		print "     X - NO KEEPALIVE PROCESSES (use only if you want none to be keepalive)\n";
 		print "     1 - AST_update\n";
@@ -452,6 +469,66 @@ if (length($ARGV[0])>1)
 				$VARDB_port =~ s/ |\r|\n|\t//gi;
 				$CLIDB_port=1;
 				print "  CLI defined DB port:        $VARDB_port\n";
+				}
+			}
+		if ($args =~ /--CS_server=/i) # CLI defined Cosl Storage Database server address
+			{
+			@CLICS_serverARY = split(/--CS_server=/,$args);
+			@CLICS_serverARX = split(/ /,$CLICS_serverARY[1]);
+			if (length($CLICS_serverARX[0])>2)
+				{
+				$VARCS_server = $CLICS_serverARX[0];
+				$VARCS_server =~ s/\/$| |\r|\n|\t//gi;
+				$CLICS_server=1;
+				print "  CLI defined CS server:      $VARCS_server\n";
+				}
+			}
+		if ($args =~ /--CS_database=/i) # CLI defined CS Database name
+			{
+			@CLICS_databaseARY = split(/--CS_database=/,$args);
+			@CLICS_databaseARX = split(/ /,$CLICS_databaseARY[1]);
+			if (length($CLICS_databaseARX[0])>1)
+				{
+				$VARCS_database = $CLICS_databaseARX[0];
+				$VARCS_database =~ s/ |\r|\n|\t//gi;
+				$CLICS_database=1;
+				print "  CLI defined CS database:    $VARCS_database\n";
+				}
+			}
+		if ($args =~ /--CS_user=/i) # CLI defined CS Database user login
+			{
+			@CLICS_userARY = split(/--CS_user=/,$args);
+			@CLICS_userARX = split(/ /,$CLICS_userARY[1]);
+			if (length($CLICS_userARX[0])>1)
+				{
+				$VARCS_user = $CLICS_userARX[0];
+				$VARCS_user =~ s/ |\r|\n|\t//gi;
+				$CLICS_user=1;
+				print "  CLI defined CS user:        $VARCS_user\n";
+				}
+			}
+		if ($args =~ /--CS_pass=/i) # CLI defined CS Database user password
+			{
+			@CLICS_passARY = split(/--CS_pass=/,$args);
+			@CLICS_passARX = split(/ /,$CLICS_passARY[1]);
+			if (length($CLICS_passARX[0])>1)
+				{
+				$VARCS_pass = $CLICS_passARX[0];
+				$VARCS_pass =~ s/ |\r|\n|\t//gi;
+				$CLICS_pass=1;
+				print "  CLI defined CS password:    $VARCS_pass\n";
+				}
+			}
+		if ($args =~ /--CS_port=/i) # CLI defined CS Database connection port
+			{
+			@CLICS_portARY = split(/--CS_port=/,$args);
+			@CLICS_portARX = split(/ /,$CLICS_portARY[1]);
+			if (length($CLICS_portARX[0])>1)
+				{
+				$VARCS_port = $CLICS_portARX[0];
+				$VARCS_port =~ s/ |\r|\n|\t//gi;
+				$CLICS_port=1;
+				print "  CLI defined CS port:        $VARCS_port\n";
 				}
 			}
 		if ($args =~ /--active_keepalives=/i) # CLI defined keepalive processes
@@ -757,6 +834,16 @@ if (length($ARGV[0])>1)
 					{$VARDB_custom_pass = $line;   $VARDB_custom_pass =~ s/.*=//gi;}
 				if ( ($line =~ /^VARDB_port/) && ($CLIDB_port < 1) )
 					{$VARDB_port = $line;   $VARDB_port =~ s/.*=//gi;}
+				if ( ($line =~ /^VARCS_server/) && ($CLICS_server < 1) )
+					{$VARCS_server = $line;   $VARCS_server =~ s/.*=//gi;}
+				if ( ($line =~ /^VARCS_database/) && ($CLICS_database < 1) )
+					{$VARCS_database = $line;   $VARCS_database =~ s/.*=//gi;}
+				if ( ($line =~ /^VARCS_user/) && ($CLICS_user < 1) )
+					{$VARCS_user = $line;   $VARCS_user =~ s/.*=//gi;}
+				if ( ($line =~ /^VARCS_pass/) && ($CLICS_pass < 1) )
+					{$VARCS_pass = $line;   $VARCS_pass =~ s/.*=//gi;}
+				if ( ($line =~ /^VARCS_port/) && ($CLICS_port < 1) )
+					{$VARCS_port = $line;   $VARCS_port =~ s/.*=//gi;}
 				$i++;
 				}
 
@@ -923,6 +1010,16 @@ if (length($ARGV[0])>1)
 					{$VARDB_custom_pass = $line;   $VARDB_custom_pass =~ s/.*=//gi;}
 				if ( ($line =~ /^VARDB_port/) && ($CLIDB_port < 1) )
 					{$VARDB_port = $line;   $VARDB_port =~ s/.*=//gi;}
+				if ( ($line =~ /^VARCS_server/) && ($CLICS_server < 1) )
+					{$VARCS_server = $line;   $VARCS_server =~ s/.*=//gi;}
+				if ( ($line =~ /^VARCS_database/) && ($CLICS_database < 1) )
+					{$VARCS_database = $line;   $VARCS_database =~ s/.*=//gi;}
+				if ( ($line =~ /^VARCS_user/) && ($CLICS_user < 1) )
+					{$VARCS_user = $line;   $VARCS_user =~ s/.*=//gi;}
+				if ( ($line =~ /^VARCS_pass/) && ($CLICS_pass < 1) )
+					{$VARCS_pass = $line;   $VARCS_pass =~ s/.*=//gi;}
+				if ( ($line =~ /^VARCS_port/) && ($CLICS_port < 1) )
+					{$VARCS_port = $line;   $VARCS_port =~ s/.*=//gi;}
 				$i++;
 				}
 
@@ -1068,6 +1165,16 @@ if (-e "$PATHconf")
 			{$VARDB_custom_pass = $line;   $VARDB_custom_pass =~ s/.*=//gi;}
 		if ( ($line =~ /^VARDB_port/) && ($CLIDB_port < 1) )
 			{$VARDB_port = $line;   $VARDB_port =~ s/.*=//gi;}
+		if ( ($line =~ /^VARCS_server/) && ($CLICS_server < 1) )
+			{$VARCS_server = $line;   $VARCS_server =~ s/.*=//gi;}
+		if ( ($line =~ /^VARCS_database/) && ($CLICS_database < 1) )
+			{$VARCS_database = $line;   $VARCS_database =~ s/.*=//gi;}
+		if ( ($line =~ /^VARCS_user/) && ($CLICS_user < 1) )
+			{$VARCS_user = $line;   $VARCS_user =~ s/.*=//gi;}
+		if ( ($line =~ /^VARCS_pass/) && ($CLICS_pass < 1) )
+			{$VARCS_pass = $line;   $VARCS_pass =~ s/.*=//gi;}
+		if ( ($line =~ /^VARCS_port/) && ($CLICS_port < 1) )
+			{$VARCS_port = $line;   $VARCS_port =~ s/.*=//gi;}
 		if ( ($line =~ /^VARactive_keepalives/) && ($CLIactive_keepalives < 1) )
 			{$VARactive_keepalives = $line;   $VARactive_keepalives =~ s/.*=//gi;}
 		if ( ($line =~ /^VARasterisk_version/) && ($CLIasterisk_version < 1) )
@@ -1190,6 +1297,16 @@ else
 					{$VARDB_custom_pass = $line;   $VARDB_custom_pass =~ s/.*=//gi;}
 				if ( ($line =~ /^VARDB_port/) && ($CLIDB_port < 1) )
 					{$VARDB_port = $line;   $VARDB_port =~ s/.*=//gi;}
+				if ( ($line =~ /^VARCS_server/) && ($CLICS_server < 1) )
+					{$VARCS_server = $line;   $VARCS_server =~ s/.*=//gi;}
+				if ( ($line =~ /^VARCS_database/) && ($CLICS_database < 1) )
+					{$VARCS_database = $line;   $VARCS_database =~ s/.*=//gi;}
+				if ( ($line =~ /^VARCS_user/) && ($CLICS_user < 1) )
+					{$VARCS_user = $line;   $VARCS_user =~ s/.*=//gi;}
+				if ( ($line =~ /^VARCS_pass/) && ($CLICS_pass < 1) )
+					{$VARCS_pass = $line;   $VARCS_pass =~ s/.*=//gi;}
+				if ( ($line =~ /^VARCS_port/) && ($CLICS_port < 1) )
+					{$VARCS_port = $line;   $VARCS_port =~ s/.*=//gi;}
 				if ( ($line =~ /^VARactive_keepalives/) && ($CLIactive_keepalives < 1) )
 					{$VARactive_keepalives = $line;   $VARactive_keepalives =~ s/.*=//gi;}
 				if ( ($line =~ /^VARasterisk_version/) && ($CLIasterisk_version < 1) )
@@ -1830,6 +1947,111 @@ else
 			}
 		##### END DB_port prompting and check  #####
 
+
+		##### BEGIN CS_server prompting and check #####
+		if (length($VARCS_server)<7)
+			{	
+			$VARCS_server = '';
+			}
+		$continue='NO';
+		while ($continue =~/NO/)
+			{
+			print("\nCS server address or press enter for default(optional): [$VARCS_server] ");
+			$PROMPTCS_server = <STDIN>;
+			chomp($PROMPTCS_server);
+			if (length($PROMPTCS_server)>6)
+				{
+				$PROMPTCS_server =~ s/ |\n|\r|\t|\/$//gi;
+				$VARCS_server=$PROMPTCS_server;
+				$continue='YES';
+				}
+			else
+				{
+				$continue='YES';
+				}
+			}
+		##### END CS_server prompting and check  #####
+
+		##### BEGIN CS_database prompting and check #####
+		$continue='NO';
+		while ($continue =~/NO/)
+			{
+			print("\nCS database name or press enter for default(optional): [$VARCS_database] ");
+			$PROMPTCS_database = <STDIN>;
+			chomp($PROMPTCS_database);
+			if (length($PROMPTCS_database)>1)
+				{
+				$PROMPTCS_database =~ s/ |\n|\r|\t|\/$//gi;
+				$VARCS_database=$PROMPTCS_database;
+				$continue='YES';
+				}
+			else
+				{
+				$continue='YES';
+				}
+			}
+		##### END CS_database prompting and check  #####
+
+		##### BEGIN CS_user prompting and check #####
+		$continue='NO';
+		while ($continue =~/NO/)
+			{
+			print("\nCS user login or press enter for default(optional): [$VARCS_user] ");
+			$PROMPTCS_user = <STDIN>;
+			chomp($PROMPTCS_user);
+			if (length($PROMPTCS_user)>1)
+				{
+				$PROMPTCS_user =~ s/ |\n|\r|\t|\/$//gi;
+				$VARCS_user=$PROMPTCS_user;
+				$continue='YES';
+				}
+			else
+				{
+				$continue='YES';
+				}
+			}
+		##### END CS_user prompting and check  #####
+
+		##### BEGIN CS_pass prompting and check #####
+		$continue='NO';
+		while ($continue =~/NO/)
+			{
+			print("\nCS user password or press enter for default(optional): [$VARCS_pass] ");
+			$PROMPTCS_pass = <STDIN>;
+			chomp($PROMPTCS_pass);
+			if (length($PROMPTCS_pass)>1)
+				{
+				$PROMPTCS_pass =~ s/ |\n|\r|\t|\/$//gi;
+				$VARCS_pass=$PROMPTCS_pass;
+				$continue='YES';
+				}
+			else
+				{
+				$continue='YES';
+				}
+			}
+		##### END CS_pass prompting and check  #####
+
+		##### BEGIN CS_port prompting and check #####
+		$continue='NO';
+		while ($continue =~/NO/)
+			{
+			print("\nCS connection port or press enter for default(optional): [$VARCS_port] ");
+			$PROMPTCS_port = <STDIN>;
+			chomp($PROMPTCS_port);
+			if (length($PROMPTCS_port)>1)
+				{
+				$PROMPTCS_port =~ s/ |\n|\r|\t|\/$//gi;
+				$VARCS_port=$PROMPTCS_port;
+				$continue='YES';
+				}
+			else
+				{
+				$continue='YES';
+				}
+			}
+		##### END CS_port prompting and check  #####
+
 		##### BEGIN active_keepalives prompting and check #####
 		$continue='NO';
 		while ($continue =~/NO/)
@@ -2376,6 +2598,11 @@ else
 		print "  defined DB_custom_user:   $VARDB_custom_user\n";
 		print "  defined DB_custom_pass:   $VARDB_custom_pass\n";
 		print "  defined DB_port:          $VARDB_port\n";
+		print "  defined CS_server:        $VARCS_server\n";
+		print "  defined CS_database:      $VARCS_database\n";
+		print "  defined CS_user:          $VARCS_user\n";
+		print "  defined CS_pass:          $VARCS_pass\n";
+		print "  defined CS_port:          $VARCS_port\n";
 		print "  defined active_keepalives:     $VARactive_keepalives\n";
 		print "  defined asterisk_version:      $VARasterisk_version\n";
 		print "  defined copying conf files:    $PROMPTcopy_conf_files\n";
@@ -2461,6 +2688,13 @@ print conf "VARDB_pass => $VARDB_pass\n";
 print conf "VARDB_custom_user => $VARDB_custom_user\n";
 print conf "VARDB_custom_pass => $VARDB_custom_pass\n";
 print conf "VARDB_port => $VARDB_port\n";
+print conf "\n";
+print conf "# Cold-Storage Database connection information (optional)\n";
+print conf "VARCS_server => $VARCS_server\n";
+print conf "VARCS_database => $VARCS_database\n";
+print conf "VARCS_user => $VARCS_user\n";
+print conf "VARCS_pass => $VARCS_pass\n";
+print conf "VARCS_port => $VARCS_port\n";
 print conf "\n";
 print conf "# Alpha-Numeric list of the astGUIclient processes to be kept running\n";
 print conf "# (value should be listing of characters with no spaces: 1234568)\n";

@@ -1,7 +1,7 @@
 <?php 
 # AST_LISTS_pass_report.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This is a list inventory report, not a calling report. This report will show
 # statistics for all of the lists in the selected campaigns
@@ -27,6 +27,7 @@
 # 210330-1659 - Added extra warnings and forced confirmation before running report
 # 220221-0906 - Added allow_web_debug system setting
 # 221109-0729 - Fix for DOWNLOAD link and use_lists variable in links
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
@@ -62,7 +63,7 @@ if (isset($_GET["search_archived_data"]))			{$search_archived_data=$_GET["search
 $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 $STARTtime = date("U");
-if (!isset($group)) {$group = array();}
+if (!is_array($group)) {$group = array();}
 
 $DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
@@ -213,9 +214,9 @@ $LOGserver_name = getenv("SERVER_NAME");
 $LOGserver_port = getenv("SERVER_PORT");
 $LOGrequest_uri = getenv("REQUEST_URI");
 $LOGhttp_referer = getenv("HTTP_REFERER");
-$LOGbrowser=preg_replace("/\'|\"|\\\\/","",$LOGbrowser);
-$LOGrequest_uri=preg_replace("/\'|\"|\\\\/","",$LOGrequest_uri);
-$LOGhttp_referer=preg_replace("/\'|\"|\\\\/","",$LOGhttp_referer);
+$LOGbrowser=preg_replace("/<|>|\'|\"|\\\\/","",$LOGbrowser);
+$LOGrequest_uri=preg_replace("/<|>|\'|\"|\\\\/","",$LOGrequest_uri);
+$LOGhttp_referer=preg_replace("/<|>|\'|\"|\\\\/","",$LOGhttp_referer);
 if (preg_match("/443/i",$LOGserver_port)) {$HTTPprotocol = 'https://';}
   else {$HTTPprotocol = 'http://';}
 if (($LOGserver_port == '80') or ($LOGserver_port == '443') ) {$LOGserver_port='';}
@@ -589,7 +590,7 @@ if (strlen($group[0]) < 1)
 	}
 else if (strlen($group[0]) >= 1 && !$confirm_run)
 	{
-	$MAIN.="<font color='#900' size='3'><B>"._QXZ("REMINDER - THIS REPORT CAN TAKE A LONG TIME TO RUN AND WILL INTERFERE WITH DIALING IF EXECUTED DURING PRODUCTION.")."<BR>"._QXZ("IF YOU ARE SURE YOU WOULD LIKE TO RUN THE REPORT AT THIS TIME")." <a href=\"$PHP_SELF?DB=$DB$groupQS&SUBMIT=$SUBMIT&confirm_run=1&use_lists=1&search_archived_data=$search_archived_data\">"._QXZ("CLICK HERE")."</a></B></font>";
+	$MAIN.="<font color='#900' size='3'><B>"._QXZ("REMINDER - THIS REPORT CAN TAKE A LONG TIME TO RUN AND WILL INTERFERE WITH DIALING IF EXECUTED DURING PRODUCTION.")."<BR>"._QXZ("IF YOU ARE SURE YOU WOULD LIKE TO RUN THE REPORT AT THIS TIME")." <a href=\"$PHP_SELF?DB=$DB$groupQS&SUBMIT=$SUBMIT&confirm_run=1&use_lists=$use_lists&report_display_type=$report_display_type&search_archived_data=$search_archived_data\">"._QXZ("CLICK HERE")."</a></B></font>";
 	}
 else
 	{

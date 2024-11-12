@@ -24,7 +24,7 @@
 # This program assumes that recordings are saved by Asterisk as .wav
 # should be easy to change this code if you use .gsm instead
 # 
-# Copyright (C) 2016  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # 
 # 80302-1958 - First Build
@@ -33,6 +33,7 @@
 # 130805-1450 - Added check for length and gather length of recording for database record
 # 160501-1001 - Added --SPHINX options to check for SPHINX audio files
 # 160523-0650 - Added --HTTPS option to use https instead of http in local location
+# 231019-2203 - Changed sleep time between directory scans from 5 to 15 seconds
 #
 
 $MIX=0;
@@ -231,7 +232,7 @@ foreach(@FILES)
 	$i++;
 	}
 
-sleep(5);
+sleep(15);
 
 
 ### Loop through files a second time to gather filesizes again 5 seconds later

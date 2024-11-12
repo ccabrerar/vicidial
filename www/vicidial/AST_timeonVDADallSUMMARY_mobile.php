@@ -1,7 +1,7 @@
 <?php 
 # AST_timeonVDADallSUMMARY_mobile.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # Mobile version of summary report for all campaigns live real-time stats for the VICIDIAL Auto-Dialer all servers
 #
@@ -12,6 +12,7 @@
 # 190129-1258 - First release
 # 200414-2000 - Minor display modifications, auto-selecting refresh rate onload
 # 220301-2036 - Added allow_web_debug system setting
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 require("dbconnect_mysqli.php");
@@ -45,7 +46,7 @@ $DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 $NOW_TIME = date("Y-m-d H:i:s");
 $STARTtime = date("U");
 if (!isset($browser_dimension))	{$browser_dimension=800;}
-if (!isset($types))			{$types='LIST ALL CAMPAIGNS';}
+if (!is_array($types))			{$types=array('LIST ALL CAMPAIGNS');}
 $cell_dimension=floor($browser_dimension/10);
 
 $report_name = 'Real-Time Campaign Summary';

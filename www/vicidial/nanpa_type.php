@@ -1,7 +1,7 @@
 <?php
 # nanpa_type.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to work with the NANPA exchange(NPA-NXX-X) data and
 # the wireless-to-wired and wired-to-wireless number portability data from
@@ -32,10 +32,11 @@
 # 170409-1531 - Added IP List validation code
 # 210618-1012 - Added CORS support
 # 220222-1917 - Added allow_web_debug system setting
+# 240801-1135 - Code updates for PHP8 compatibility
 #
 
-$version = '2.14-5';
-$build = '220222-1917';
+$version = '2.14-6';
+$build = '240801-1135';
 $php_script='nanpa_type.php';
 
 $startMS = microtime();
@@ -92,8 +93,6 @@ else
 	$user = preg_replace('/[^-_0-9\p{L}]/u', '', $user);
 	$pass = preg_replace('/[^-_0-9\p{L}]/u', '', $pass);
 	}
-
-
 
 ################################################################################
 ### version - show version, date, time and time zone information for the API

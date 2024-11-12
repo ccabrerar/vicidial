@@ -1,7 +1,7 @@
 <?php
 # AST_rt_whiteboard_rpt.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # Real-time report that allows users to create a customized, graphical display of various data sets
 #
@@ -13,6 +13,7 @@
 # 210827-1818 - Fix for security issue
 # 220221-1505 - Added allow_web_debug system setting
 # 220823-1327 - Fix for warnings being thrown on arrays
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
@@ -66,11 +67,11 @@ if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (!isset($end_date)) {$end_date = $NOW_DATE;}
 if (!isset($query_time)) {$query_time="08:00:00";}
 if (!isset($end_time)) {$end_time="17:00:00";}
-if (!isset($campaigns)) {$campaigns = array(); if ($DB) {echo "\$campaigns not set, making array...\n".(is_array($campaigns) ? "Yes" : "No");} } else {if ($DB) {echo "\$campaigns IS set: $campaigns\n";} }
-if (!isset($users)) {$users = array();}
-if (!isset($user_groups)) {$user_groups = array();}
-if (!isset($dids)) {$dids = array();}
-if (!isset($groups)) {$groups = array();}
+if (!is_array($campaigns)) {$campaigns = array(); if ($DB) {echo "\$campaigns not set, making array...\n".(is_array($campaigns) ? "Yes" : "No");} } else {if ($DB) {echo "\$campaigns IS set: $campaigns\n";} }
+if (!is_array($users)) {$users = array();}
+if (!is_array($user_groups)) {$user_groups = array();}
+if (!is_array($dids)) {$dids = array();}
+if (!is_array($groups)) {$groups = array();}
 if (!isset($report_display_type)) {$report_display_type = "HTML";}
 if (strlen($shift)<2) {$shift='ALL';}
 

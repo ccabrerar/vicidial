@@ -6,7 +6,7 @@
 # syncronizes audio between audio store and this server
 #
 # 
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 90513-0458 - First Build
@@ -20,6 +20,7 @@
 # 141125-1555 - Added audio_store_details audio file info gathering and DB population
 # 150712-2210 - Added touch of conf files to Asterisk will notice changes
 # 201002-1537 - Allowed for secure sounds_web_server setting
+# 230914-1528 - Added --no-check-certificate to the wget requests for audio store files
 #
 
 # constants
@@ -296,7 +297,7 @@ if ($DB)
 
 $audio_list_file = '/tmp/audio_store_list.txt';
 `rm -f $audio_list_file`;
-`$wgetbin -q --output-document=$audio_list_file $URL `;
+`$wgetbin -q --no-check-certificate --output-document=$audio_list_file $URL `;
 
 open(list, "$audio_list_file") || die "can't open $audio_list_file: $!\n";
 @list = <list>;
@@ -339,7 +340,7 @@ while ($i <= $#list)
 
 	if ( ($found_file < 1) || ($force_download > 0) )
 		{
-		`$wgetbin -q --output-document=$PATHsounds/$filename $sounds_web_server_URL_prefix/$web_prefix$sounds_web_directory/$filename`;
+		`$wgetbin -q --no-check-certificate --output-document=$PATHsounds/$filename $sounds_web_server_URL_prefix/$web_prefix$sounds_web_directory/$filename`;
 		$event_string = "DOWNLOADING: $filename     $filesize";
 		if ($DB > 0) {print "          $event_string\n";}
 		&event_logger;
@@ -360,7 +361,7 @@ $total_files = $i;
 
 
 `rm -f $audio_list_file`;
-`$wgetbin -q --output-document=$audio_list_file $URL `;
+`$wgetbin -q --no-check-certificate --output-document=$audio_list_file $URL `;
 
 open(list, "$audio_list_file") || die "can't open $audio_list_file: $!\n";
 @list = <list>;

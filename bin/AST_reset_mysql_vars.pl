@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# AST_reset_mysql_vars.pl    version 2.0.5
+# AST_reset_mysql_vars.pl    version 2.4
 #
 #  !!! DO NOT RUN THIS WHILE THERE ARE ACTIVE CALLS ON THE ASTERISK SERVER !!!
 #
@@ -10,11 +10,12 @@
 # It is recommended that you run this program on the local Asterisk machine
 # You should place a command to run this in the /etc/rc.d/rc.local file
 #
-# Copyright (C) 2008  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 60717-1237 - changed to DBI by Marin Blu
 # 60717-1536 - changed to use /etc/astguiclient.conf for configs
+# 240420-2249 - Added ConfBridge code
 #
 
 # default path to astguiclient configuration file:
@@ -75,6 +76,11 @@ $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VA
 		if($DB){print STDERR "\n|$stmtA|\n";}
 	$affected_rows = $dbhA->do($stmtA); #  or die  "Couldn't execute query: |$stmtA|\n";
 	print " - vicidial_conferences reset\n";
+
+	$stmtA = "UPDATE vicidial_confbridges set extension='' where server_ip='$server_ip';";
+		if($DB){print STDERR "\n|$stmtA|\n";}
+	$affected_rows = $dbhA->do($stmtA); #  or die  "Couldn't execute query: |$stmtA|\n";
+	print " - vicidial_confbridges reset\n";
 
 #	$stmtA = "UPDATE vicidial_manager set status='DEAD' where server_ip='$server_ip' and status='NEW';";
 #		if($DB){print STDERR "\n|$stmtA|\n";}

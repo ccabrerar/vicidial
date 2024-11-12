@@ -35,6 +35,12 @@ div.text_input { overflow: auto; font-size: 10px;  font-family: sans-serif; }
 animation: blink .75s linear infinite;
 }
 
+.adminmenu_style_selected
+	{
+	background-color: white;
+	}
+.adminmenu_style_selected:hover{background-color: #E6E6E6;}
+
 @-webkit-keyframes blink {
 0% { opacity: 1; }
 50% { opacity: 1; }

@@ -1,11 +1,13 @@
 <?php
 # VERM_wallboard_widgets.php - Vicidial Enhanced Reporting widget-generating script
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
 # 
 # CHANGELOG:
 # 220825-1601 - First build
+# 240801-1130 - Code updates for PHP8 compatibility
 #
+$report_name="VERM reports";
 
 $startMS = microtime();
 
@@ -50,6 +52,15 @@ if ($qm_conf_ct > 0)
 if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
+
+if ( (strlen($slave_db_server)>5) and (preg_match("/$report_name/",$reports_use_slave_db)) )
+	{
+	mysqli_close($link);
+	$use_slave_server=1;
+	$db_source = 'S';
+	require("dbconnect_mysqli.php");
+	}
+
 
 if ($non_latin < 1)
 	{
@@ -717,9 +728,9 @@ if ($widget_type=="N_WAITING_CALLS")
 		}
 	else
 		{
-		$waiting_clause="sum(if(status='LIVE' IN('XFER') $included_campaigns_clause), 1, 0)";
+		$waiting_clause="sum(if(status in ('LIVE', 'XFER') $included_campaigns_clause, 1, 0))";
 		# sum(if(status='LIVE' IN('XFER') $included_campaigns_clause), 1, 0)
-		$stmtB="from vicidial_auto_calls where status='LIVE' IN('XFER') $included_campaigns_clause order by queue_priority desc,campaign_id,call_time;";
+		$stmtB="from vicidial_auto_calls where status in ('LIVE', 'XFER') $included_campaigns_clause order by queue_priority desc,campaign_id,call_time;";
 		}
 
 

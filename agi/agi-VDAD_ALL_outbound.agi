@@ -46,7 +46,7 @@
 #exten => 8366,4,AGI(agi-VDAD_ALL_outbound.agi,SURVEY-----LB-----US_pol_survey_hello-----1238-----8-----US_pol_survey_transfer-----US_thanks_no_contact-----OPTOUT-----DNC)
 #exten => 8366,5,Hangup
 #
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 80218-2027 - First Build
@@ -129,6 +129,10 @@
 # 210907-1254 - Added KHOMP code (install JSON::PP Perl module and remove '#UC#' in the code to enable)
 # 220524-1746 - Changed SHARED_ campaign in-group transfers to use 'SRDROP' log status instead of 'DROP'
 # 230309-0952 - Added abandon_check_queue feature
+# 240804-1218 - Remove ding and sleep for dropped calls going to an extension(message)
+# 240906-1021 - Added testing for stereo_recording campaign option *NOT PRODUCTION READY*
+# 241001-2222 - Fixes for Khomp call processing
+# 241020-1928 - Added khomp campaign settings options
 #
 
 $script = 'agi-VDAD_ALL_outbound.agi';
@@ -298,7 +302,7 @@ $sthA->finish();
 
 
 ### Grab Server values from the database
-$stmtA = "SELECT voicemail_dump_exten,ext_context,answer_transfer_agent,local_gmt,asterisk_version,max_vicidial_trunks,agi_output,voicemail_dump_exten_no_inst,external_server_ip FROM servers where server_ip = '$VARserver_ip';";
+$stmtA = "SELECT voicemail_dump_exten,ext_context,answer_transfer_agent,local_gmt,asterisk_version,max_vicidial_trunks,agi_output,voicemail_dump_exten_no_inst,external_server_ip,conf_engine FROM servers where server_ip = '$VARserver_ip';";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -316,6 +320,7 @@ while ($sthArows > $rec_count)
 	$DBagi_output =						$aryA[6];
 	$voicemail_dump_exten_no_inst =		$aryA[7];
 	$external_server_ip = 				$aryA[8];
+	$conf_engine =						$aryA[9];
 	if ($DBvoicemail_dump_exten)	{$voicemail_dump_exten = $DBvoicemail_dump_exten;}
 	if ($DBext_context)				{$ext_context = $DBext_context;}
 	if ($DBanswer_transfer_agent)	{$answer_transfer_agent = $DBanswer_transfer_agent;}
@@ -824,7 +829,7 @@ if ($VDACaffected_rows > 0)
 	##### END - Max call stats
 
 	### Grab campaign values from the database
-	$stmtA = "SELECT drop_call_seconds,drop_action,safe_harbor_exten,concurrent_transfers,next_agent_call,voicemail_ext,drop_inbound_group,use_internal_dnc,use_campaign_dnc,cpd_amd_action,am_message_exten,three_way_call_cid,campaign_cid,survey_first_audio_file,survey_opt_in_audio_file,survey_ni_audio_file,survey_third_audio_file,survey_fourth_audio_file,extension_appended_cidname,queue_priority,closer_campaigns,queuemetrics_phone_environment,campaign_recording,campaign_rec_filename,safe_harbor_audio,safe_harbor_menu_id,survey_recording,safe_harbor_audio_field,use_other_campaign_dnc,cpd_unknown_action,routing_initiated_recordings,campaign_rec_exten,call_quota_lead_ranking,sip_event_logging,amd_type,agent_search_method,dial_method FROM vicidial_campaigns where campaign_id = '$VDADcampaign';";
+	$stmtA = "SELECT drop_call_seconds,drop_action,safe_harbor_exten,concurrent_transfers,next_agent_call,voicemail_ext,drop_inbound_group,use_internal_dnc,use_campaign_dnc,cpd_amd_action,am_message_exten,three_way_call_cid,campaign_cid,survey_first_audio_file,survey_opt_in_audio_file,survey_ni_audio_file,survey_third_audio_file,survey_fourth_audio_file,extension_appended_cidname,queue_priority,closer_campaigns,queuemetrics_phone_environment,campaign_recording,campaign_rec_filename,safe_harbor_audio,safe_harbor_menu_id,survey_recording,safe_harbor_audio_field,use_other_campaign_dnc,cpd_unknown_action,routing_initiated_recordings,campaign_rec_exten,call_quota_lead_ranking,sip_event_logging,amd_type,agent_search_method,dial_method,stereo_recording,khomp_settings_container FROM vicidial_campaigns where campaign_id = '$VDADcampaign';";
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 	$sthArows=$sthA->rows;
@@ -872,6 +877,8 @@ if ($VDACaffected_rows > 0)
 		$amd_type =						$aryA[34];
 		$agent_search_method_OVERRIDE = $aryA[35];
 		$campaign_dial_method =			$aryA[36];
+		$stereo_recording =				$aryA[37];
+		$khomp_settings_container =		$aryA[38];
 		if (length($closer_campaigns) > 2)
 			{
 			$closer_campaigns =~ s/^ | -$//gi;
@@ -890,10 +897,15 @@ if ($VDACaffected_rows > 0)
 		$khomp_api_login_url =	'';
 		$khomp_api_user =       '';
 		$khomp_api_pass =       '';
+		$khomp_api_check_ssl =	'';
 		$khomp_header =	 '';
 		$khomp_id_format =      '';
+		$khomp_api_token =	'';
+		$khomp_api_token_expire = 0;
 
-		$stmtA = "SELECT container_entry FROM vicidial_settings_containers WHERE container_id = 'KHOMPSETTINGS';";
+		$agi_string = "--    KHOMP: Using settings container $khomp_settings_container"; &agi_output;
+
+		$stmtA = "SELECT container_entry FROM vicidial_settings_containers WHERE container_id = '$khomp_settings_container';";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;
@@ -927,6 +939,7 @@ if ($VDACaffected_rows > 0)
 					if ( $key eq 'khomp_api_proxied' )    { $khomp_api_proxied = $value; }
 					if ( $key eq 'khomp_api_user' )	 { $khomp_api_user = $value; }
 					if ( $key eq 'khomp_api_pass' )	 { $khomp_api_pass = $value; }
+					if ( $key eq 'khomp_api_check_ssl' ) { $khomp_api_check_ssl = $value; }
 					if ( $key eq 'khomp_header' )	   { $khomp_header = $value; }
 					if ( $key eq 'khomp_id_format' )	{ $khomp_id_format = $value; }
 					if ( $key eq 'khomp_api_login_url' )	{ $khomp_api_login_url = $value; }
@@ -935,7 +948,7 @@ if ($VDACaffected_rows > 0)
 					}
 	
 				}
-			$agi_string = "KHOMP Settings: url-$khomp_api_url|proxied-$khomp_api_proxied|login_url-$khomp_api_login_url|user-$khomp_api_user|pass-$khomp_api_pass|header-$khomp_header|format-$khomp_id_format";
+			$agi_string = "KHOMP Settings: url-$khomp_api_url|proxied-$khomp_api_proxied|login_url-$khomp_api_login_url|user-$khomp_api_user|pass-$khomp_api_pass|ssl-check-$khomp_api_check_ssl|header-$khomp_header|format-$khomp_id_format|api-token-$khomp_api_token|token-expire-$khomp_api_token_expire|";
 			&agi_output;
 			}
 
@@ -1644,9 +1657,11 @@ if ($call_handle_method =~ /REMIND/)
 			$khomp_api_proxied,
 			$khomp_api_login_url,
 			$khomp_api_user, 
-			$khomp_api_pass, 
+			$khomp_api_pass,
+			$khomp_api_check_ssl,
 			$khomp_header, 
 			$khomp_id_format, 
+			$khomp_settings_container,
 			$external_server_ip, 
 			$VDADcampaign, 
 			$callerid, 
@@ -1749,9 +1764,11 @@ if ($call_handle_method =~ /SURVEY/)
 			$khomp_api_proxied,
 			$khomp_api_login_url,
 			$khomp_api_user, 
-			$khomp_api_pass, 
+			$khomp_api_pass,
+			$khomp_api_check_ssl, 
 			$khomp_header, 
 			$khomp_id_format, 
+			$khomp_settings_container,
 			$external_server_ip, 
 			$VDADcampaign,
 			$callerid, 
@@ -2634,8 +2651,10 @@ if (( $amd_type eq 'KHOMP' ) && ( $khomp_enabled ) )
 		$khomp_api_login_url,
 		$khomp_api_user,
 		$khomp_api_pass,
+		$khomp_api_check_ssl,
 		$khomp_header,
 		$khomp_id_format,
+		$khomp_settings_container,
 		$external_server_ip,
 		$VDADcampaign,
 		$callerid,
@@ -3156,21 +3175,49 @@ while ($drop_timer <= $DROP_TIME)
 						$campaign_rec_filename =~ s/CALLID/$callerid/gi;
 						$campaign_rec_filename =~ s/\"|\'//gi;
 
-						%ast_ver_str = parse_asterisk_version($asterisk_version);
-						if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6))
+						if ( ($stereo_recording =~ /CUSTOMER/i) && ($conf_engine eq "CONFBRIDGE") ) 
 							{
-							$AGI->exec("Monitor wav|/var/spool/asterisk/monitor/MIX/$campaign_rec_filename");
+							$retval = $AGI->exec("MixMonitor",",r(/var/spool/asterisk/monitorS/$campaign_rec_filename-in.wav)t(/var/spool/asterisk/monitorS/$campaign_rec_filename-out.wav)"); 
 							}
 						else
 							{
-							$AGI->exec("Monitor","wav,/var/spool/asterisk/monitor/MIX/$campaign_rec_filename"); 
+							%ast_ver_str = parse_asterisk_version($asterisk_version);
+							if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6))
+								{
+								$retval = $AGI->exec("Monitor wav|/var/spool/asterisk/monitor/MIX/$campaign_rec_filename");
+								}
+							else
+								{
+								$retval = $AGI->exec("Monitor","wav,/var/spool/asterisk/monitor/MIX/$campaign_rec_filename"); 
+								}
 							}
 
 						### insert record into recording_log table ###
 						$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,length_in_sec,filename,lead_id,user,location,vicidial_id) values('$channel','$VARserver_ip','$VDADphone','$now_date','$now_date_epoch','0','$campaign_rec_filename','$CIDlead_id','$VDADuser','$campaign_rec_filename','$uniqueid');";
 						$RLRAaffected_rows = $dbhA->do($stmtA);
 							$dbhP=$dbhA;   $mysql_count='01074';   $MEL_aff_rows=$RLRAaffected_rows;   &mysql_error_logging;
-						if ($AGILOG) {$agi_string = "--    REMOTE RECORDING STARTED : |$RLRAaffected_rows|$campaign_rec_filename|$stmtA|";   &agi_output;}
+						if ($AGILOG) {$agi_string = "--    REMOTE RECORDING STARTED : |$retval|$RLRAaffected_rows|$campaign_rec_filename|$stmtA|";   &agi_output;}
+
+						if ( ($stereo_recording =~ /CUSTOMER/i) && ($conf_engine eq "CONFBRIDGE") ) 
+							{
+							$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
+							$sthA = $dbhA->prepare($stmtB) or die "preparing: ",$dbhA->errstr;
+							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+							$sthArows=$sthA->rows;
+								$dbhP=$dbhA;   $stmtA=$stmtB;   $mysql_count='01XXX';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
+							if ($sthArows > 0)
+								{
+								@aryA = $sthA->fetchrow_array;
+								$recording_id = $aryA[0];
+								}
+							$sthA->finish();
+
+							### insert record into recording_log_stereo table ###
+							$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log) values('$recording_id','$VARserver_ip','$now_date','0','$campaign_rec_filename','$CIDlead_id','$stereo_recording $VDADcampaign','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|');";
+							$SRaffected_rows = $dbhA->do($stmtA);
+								$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
+							if ($AGILOG) {$agi_string = "--    REMOTE STEREO RECORDING STARTED : |$retval|$SRaffected_rows|$recording_id|$stmtA|";   &agi_output;}
+							}
 						}
 					}
 				### END REMOTE AGENT SECTION
@@ -3267,6 +3314,17 @@ while ($drop_timer <= $DROP_TIME)
 								$stmtA = "UPDATE recording_log SET filename='$campaign_rec_filename' where recording_id='$recording_id';";
 								$affected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='02125';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
+								}
+
+							if ( ($stereo_recording =~ /CUSTOMER/i) && ($conf_engine eq "CONFBRIDGE") ) 
+								{
+								$retval = $AGI->exec("MixMonitor",",r(/var/spool/asterisk/monitorS/$campaign_rec_filename-in.wav)t(/var/spool/asterisk/monitorS/$campaign_rec_filename-out.wav)"); 
+
+								### insert record into recording_log_stereo table ###
+								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log) values('$recording_id','$VARserver_ip','$now_date','0','$campaign_rec_filename','$CIDlead_id','$stereo_recording $VDADcampaign','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|');";
+								$SRaffected_rows = $dbhA->do($stmtA);
+									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
+								if ($AGILOG) {$agi_string = "--    REMOTE STEREO RECORDING STARTED : |$retval|$SRaffected_rows|$recording_id|$stmtA|";   &agi_output;}
 								}
 
 							$vmgr_callerid = substr($campaign_rec_filename, 0, 17) . '...';
@@ -3897,21 +3955,50 @@ while ($drop_timer <= $DROP_TIME)
 						$campaign_rec_filename =~ s/CALLID/$callerid/gi;
 						$campaign_rec_filename =~ s/\"|\'//gi;
 
-						%ast_ver_str = parse_asterisk_version($asterisk_version);
-						if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6))
+						if ( ($stereo_recording =~ /CUSTOMER/i) && ($conf_engine eq "CONFBRIDGE") ) 
 							{
-							$AGI->exec("Monitor wav|/var/spool/asterisk/monitor/MIX/$campaign_rec_filename");
+							$retval = $AGI->exec("MixMonitor",",r(/var/spool/asterisk/monitorS/$campaign_rec_filename-in.wav)t(/var/spool/asterisk/monitorS/$campaign_rec_filename-out.wav)"); 
 							}
 						else
 							{
-							$AGI->exec("Monitor","wav,/var/spool/asterisk/monitor/MIX/$campaign_rec_filename"); 
+							%ast_ver_str = parse_asterisk_version($asterisk_version);
+							if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6))
+								{
+								$retval = $AGI->exec("Monitor wav|/var/spool/asterisk/monitor/MIX/$campaign_rec_filename");
+								}
+							else
+								{
+								$retval = $AGI->exec("Monitor","wav,/var/spool/asterisk/monitor/MIX/$campaign_rec_filename"); 
+								}
 							}
 
 						### insert record into recording_log table ###
 						$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,length_in_sec,filename,lead_id,user,location,vicidial_id) values('$channel','$VARserver_ip','$VDADphone','$now_date','$now_date_epoch','0','$campaign_rec_filename','$CIDlead_id','$VDADuser','$campaign_rec_filename','$uniqueid');";
 						$RLRAaffected_rows = $dbhA->do($stmtA);
 							$dbhP=$dbhA;   $mysql_count='01076';   $MEL_aff_rows=$RLRAaffected_rows;   &mysql_error_logging;
-						if ($AGILOG) {$agi_string = "--    REMOTE RECORDING STARTED : |$RLRAaffected_rows|$campaign_rec_filename|$stmtA|";   &agi_output;}
+						if ($AGILOG) {$agi_string = "--    REMOTE RECORDING STARTED : |$retval|$RLRAaffected_rows|$campaign_rec_filename|$stmtA|";   &agi_output;}
+
+						if ( ($stereo_recording =~ /CUSTOMER/i) && ($conf_engine eq "CONFBRIDGE") ) 
+							{
+							$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
+							$sthA = $dbhA->prepare($stmtB) or die "preparing: ",$dbhA->errstr;
+							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+							$sthArows=$sthA->rows;
+								$dbhP=$dbhA;   $stmtA=$stmtB;   $mysql_count='01XXX';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
+							if ($sthArows > 0)
+								{
+								@aryA = $sthA->fetchrow_array;
+								$recording_id = $aryA[0];
+								}
+							$sthA->finish();
+
+							### insert record into recording_log_stereo table ###
+							$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log) values('$recording_id','$VARserver_ip','$now_date','0','$campaign_rec_filename','$CIDlead_id','$stereo_recording $VDADcampaign','start: $now_date|vicidial_id: $uniqueid|channel: $channel|');";
+							$SRaffected_rows = $dbhA->do($stmtA);
+								$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
+							if ($AGILOG) {$agi_string = "--    REMOTE2 STEREO RECORDING STARTED : |$retval|$SRaffected_rows|$recording_id|$stmtA|";   &agi_output;}
+							}
+
 						}
 					}
 				### END REMOTE AGENT SECTION
@@ -4008,6 +4095,17 @@ while ($drop_timer <= $DROP_TIME)
 								$stmtA = "UPDATE recording_log SET filename='$campaign_rec_filename' where recording_id='$recording_id';";
 								$affected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='02133';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
+								}
+
+							if ( ($stereo_recording =~ /CUSTOMER/i) && ($conf_engine eq "CONFBRIDGE") ) 
+								{
+								$retval = $AGI->exec("MixMonitor",",r(/var/spool/asterisk/monitorS/$campaign_rec_filename-in.wav)t(/var/spool/asterisk/monitorS/$campaign_rec_filename-out.wav)"); 
+
+								### insert record into recording_log_stereo table ###
+								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log) values('$recording_id','$VARserver_ip','$now_date','0','$campaign_rec_filename','$CIDlead_id','$stereo_recording $VDADcampaign','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|');";
+								$SRaffected_rows = $dbhA->do($stmtA);
+									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
+								if ($AGILOG) {$agi_string = "--    REMOTE STEREO RECORDING STARTED : |$retval|$SRaffected_rows|$recording_id|$stmtA|";   &agi_output;}
 								}
 
 							$vmgr_callerid = substr($campaign_rec_filename, 0, 17) . '...';
@@ -4457,9 +4555,10 @@ if ($drop_timer > $DROP_TIME)
 		{	
 		### if DROP extension is defined then send the dropped call there instead of hangup
 
-		$AGI->stream_file('ding'); # stop music-on-hold process
+		$AGI->stream_file('sip-silence');
 
-		sleep(1);
+		# $AGI->stream_file('ding'); # stop music-on-hold process
+		# sleep(1);
 
 		if ($AGILOG) {$agi_string = "exiting the VDAD app, transferring call to $DROPexten $ext_context";   &agi_output;}
 		print "SET CONTEXT $ext_context\n";
@@ -5257,9 +5356,11 @@ sub process_khomp_analytics
 		$khomp_api_proxied,
 		$khomp_api_login_url,
 		$khomp_api_user, 
-		$khomp_api_pass, 
+		$khomp_api_pass,
+		$khomp_api_check_ssl, 
 		$khomp_header, 
 		$khomp_id_format, 
+		$khomp_settings_container,
 		$external_server_ip, 
 		$campaign_id, 
 		$callerid, 
@@ -5288,34 +5389,38 @@ sub process_khomp_analytics
 		my $new_khomp_api_token = '';
 		if ( $khomp_api_proxied eq 'false' )
 			{
-			($new_khomp_api_token, $api_auth_time) = khomp_api_login( $khomp_api_login_url, $khomp_api_user, $khomp_api_pass );
+			($new_khomp_api_token, $api_auth_time) = khomp_api_login( $khomp_api_login_url, $khomp_api_user, $khomp_api_pass, $khomp_api_check_ssl );
 			}
 
-		# update the settings container
-		my $old_token_string = "khomp_api_token => $khomp_api_token";
-		my $new_token_string = "khomp_api_token => $new_khomp_api_token";
-		my $new_token_expire_time = time() + 3600;
-		my $old_token_expire_string = "khomp_api_token_expire => $khomp_api_token_expire";
-		my $new_token_expire_string = "khomp_api_token_expire => $new_token_expire_time";
+		if ( $new_khomp_api_token ne '0' )
+			{
 
-		# LOCK vicidial_settings_containers
-		$stmtA = "LOCK TABLES vicidial_settings_containers WRITE";
-		$dbhA->do($stmtA);
-		# UPDATE the Token
-		$stmtToken = "UPDATE vicidial_settings_containers SET container_entry = REGEXP_REPLACE(container_entry, '$old_token_string', '$new_token_string') WHERE container_id = 'KHOMPSETTINGS';";
-		$affected_rows = $dbhA->do($stmtToken);
-		# UPDATE the Expire time
-		$stmtExpire = "UPDATE vicidial_settings_containers SET container_entry = REGEXP_REPLACE(container_entry, '$old_token_expire_string', '$new_token_expire_string') WHERE container_id = 'KHOMPSETTINGS';";
-		$affected_rows = $dbhA->do($stmtExpire);
-		# Unlock vicidial_settings_containers
-		$stmtA = "UNLOCK TABLES";
-		$dbhA->do($stmtA);
+			# update the settings container
+			my $old_token_string = "khomp_api_token => $khomp_api_token";
+			my $new_token_string = "khomp_api_token => $new_khomp_api_token";
+			my $new_token_expire_time = time() + 3600;
+			my $old_token_expire_string = "khomp_api_token_expire => $khomp_api_token_expire";
+			my $new_token_expire_string = "khomp_api_token_expire => $new_token_expire_time";
 
-		if ($AGILOG) {$agi_string = "--    KHOMP SC TOKEN UPDATE|$affected_rows|$stmtToken|";   &agi_output;}
-		if ($AGILOG) {$agi_string = "--    KHOMP SC TOKEN EXPIRE UPDATE|$affected_rows|$stmtExpire|";   &agi_output;}
+			# LOCK vicidial_settings_containers
+			$stmtA = "LOCK TABLES vicidial_settings_containers WRITE";
+			$dbhA->do($stmtA);
+			# UPDATE the Token
+			$stmtToken = "UPDATE vicidial_settings_containers SET container_entry = REGEXP_REPLACE(container_entry, '$old_token_string', '$new_token_string') WHERE container_id = '$khomp_settings_container';";
+			$affected_rows = $dbhA->do($stmtToken);
+			# UPDATE the Expire time
+			$stmtExpire = "UPDATE vicidial_settings_containers SET container_entry = REGEXP_REPLACE(container_entry, '$old_token_expire_string', '$new_token_expire_string') WHERE container_id = '$khomp_settings_container';";
+			$affected_rows = $dbhA->do($stmtExpire);
+			# Unlock vicidial_settings_containers
+			$stmtA = "UNLOCK TABLES";
+			$dbhA->do($stmtA);
 
-		# over write the old with the new
-		$khomp_api_token = $new_khomp_api_token;
+			if ($AGILOG) {$agi_string = "--    KHOMP SC TOKEN UPDATE|$affected_rows|$stmtToken|";   &agi_output;}
+			if ($AGILOG) {$agi_string = "--    KHOMP SC TOKEN EXPIRE UPDATE|$affected_rows|$stmtExpire|";   &agi_output;}
+
+			# over write the old with the new
+			$khomp_api_token = $new_khomp_api_token;
+			}
 		}
 	else
 		{
@@ -5344,7 +5449,7 @@ sub process_khomp_analytics
 #UC#	$khomp_json = encode_json( $khomp_request );
 	
 		# call the API
-		($result, $api_query_time) = khomp_json_api( $khomp_json, $khomp_api_url );
+		($result, $api_query_time) = khomp_json_api( $khomp_json, $khomp_api_url, $khomp_api_check_ssl );
 	
 		# check the result
 		if ( $result =~ /^ERROR/ )
@@ -5640,7 +5745,8 @@ sub khomp_api_login
 	(
 	$khomp_api_login_url,
 	$khomp_api_user,
-	$khomp_api_pass
+	$khomp_api_pass,
+	$khomp_api_check_ssl
 	) = @_;
 
 	my $token = 'login';
@@ -5668,7 +5774,17 @@ sub khomp_api_login
 	# encode it as JSON
 #UC#	$login_json = encode_json( $login_json );
 
-	my $curl_cmd = "$curlbin -sS --data \'$login_json\' $khomp_api_login_url";
+
+	my $curl_cmd = "";
+        if ($khomp_api_check_ssl == 0)
+                {
+                $agi_string = "--    KHOMP SSL VERIFICATION DISABLE!";   &agi_output;
+                $curl_cmd = "$curlbin --insecure -sS --data \'$login_json\' $khomp_api_login_url";
+                }
+        else
+                {
+                $curl_cmd = "$curlbin -sS --data \'$login_json\' $khomp_api_login_url";
+                }
 	
 	$agi_string = "--    KHOMP CURL COMMAND: $curl_cmd";   &agi_output;
 
@@ -5688,6 +5804,8 @@ sub khomp_api_login
 
 	$token = $result->{'result'}->{'token'};
 
+	if ( $token eq '' ) { $token = '0'; }
+
 	($auth_end_sec, $auth_end_usec) = gettimeofday();
 
 	$api_auth_time = tv_interval ( [$auth_start_sec, $auth_start_usec], [$auth_end_sec, $auth_end_usec]);
@@ -5698,7 +5816,7 @@ sub khomp_api_login
 ### code for connecting to KHOMP api and passing JSON
 sub khomp_json_api
 	{
-	( $khomp_json, $khomp_api_url ) = @_;
+	( $khomp_json, $khomp_api_url, $khomp_api_check_ssl ) = @_;
 
 	my $query_start_sec;
 	my $query_start_usec;
@@ -5710,7 +5828,16 @@ sub khomp_json_api
 
 	($query_start_sec, $query_start_usec) = gettimeofday();
 
-	my $curl_cmd = "$curlbin -sS --data \'$khomp_json\' $khomp_api_url";
+	my $curl_cmd = "";
+	if ($khomp_api_check_ssl == 0) 
+		{ 
+		$agi_string = "--    KHOMP SSL VERIFICATION DISABLE!";   &agi_output;
+		$curl_cmd = "$curlbin --insecure -sS --data \'$khomp_json\' $khomp_api_url";
+		}
+	else
+		{
+		$curl_cmd = "$curlbin -sS --data \'$khomp_json\' $khomp_api_url";
+		}
 
 	$agi_string = "--    KHOMP CURL COMMAND: $curl_cmd";   &agi_output;
 

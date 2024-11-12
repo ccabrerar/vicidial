@@ -25,7 +25,7 @@
 # This program assumes that recordings are saved by Asterisk as .wav
 # should be easy to change this code if you use .gsm instead
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # 
 # 80302-1958 - First Build
@@ -34,6 +34,7 @@
 # 160523-0654 - Added --HTTPS option to use https instead of http in local location
 # 160731-2103 - Added --POST options to change filename with variable lookups
 # 190311-0105 - Added code to check for agent-muted recordings
+# 231019-2202 - Changed sleep time between directory scans from 5 to 15 seconds
 #
 
 $HTTPS=0;
@@ -258,7 +259,7 @@ foreach(@FILES)
 	$i++;
 	}
 
-sleep(5);
+sleep(15);
 
 
 ### Loop through files a second time to gather filesizes again 5 seconds later

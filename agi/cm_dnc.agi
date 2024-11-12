@@ -12,12 +12,12 @@
 # 2- default to insert into the vicidial_dnc table for DNC selections (Default=YES)
 # 3- campaign to take dnc settings from(overrides option 2)
 # 4- call menu option to send the call to after executing (Default=B)
-# 5- if option 3 is used, search for lead in campaign lists or whole system(CAMP or SYS) (Default=SYS)
+# 5- if option 3 is used, search for lead in campaign lists, whole system or no lead update(CAMP, SYS, NONE) (Default=SYS)
 #
 # example of what to put in the AGI entry for a Call Menu AGI route:
 # cm_dnc.agi,DNC---YES---TESTCAMP---B---CAMP
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 121109-1623 - First draft
@@ -26,6 +26,8 @@
 # 150928-1822 - Added dnc logging
 # 170313-1610 - Fixed issue with DNC not logging if no campaign defined
 # 171010-1228 - Added ability to recognize existing Vicidial calls
+# 240430-0821 - Added option to not update vicidial_list
+# 240712-0848 - Cleanup of callerid validation/failover, Issue #1521
 #
 
 $script = 'cm_dnc.agi';
@@ -178,15 +180,16 @@ while(<STDIN>)
 
 	$callerid =~ s/\D//gi;
 	$calleridname =~ s/unknown//gi;
-	if ( (!$callerid) or ($callerid =~ /unknown/) )
+	$calleridname_digits = $calleridname;
+	$calleridname_digits =~ s/\D//gi;
+	if ( (!$callerid) or ($callerid =~ /unknown|anonymous/) )
 		{$callerid = $calleridname;}
+	if ( (length($callerid)<6) && (length($calleridname_digits)>5) ) {$callerid = $calleridname_digits;}
 
 	if (length($callerid)>0) {$phone_number = $callerid;}
 	   else {$phone_number = '';}
 	if (length($calleridname)>0) {$VLcomments = $calleridname;}
 	   else {$VLcomments = '';}
-	if (length($callerid)<10) {$callerid = $parked_by;}
-	if (length($pin)>0) {$callerid = $pin;}
 	}
 
 $call_type='';
@@ -237,6 +240,10 @@ foreach $i (sort keys %AGI)
 
 if ($AGILOG) {$agi_string = "AGI Variables: |$unique_id|$channel|$extension|$type|$callerid|";   &agi_output;}
 
+if ($camp_sys =~ /NONE/)
+	{
+	if ($AGILOG) {$agi_string = "No Lead Updates, only DNC inserts |$unique_id|$channel|$extension|$type|$callerid|";   &agi_output;}
+	}
 
 # if campaign is used and selected for search, find the lists in the campaign
 $listSQL='';
@@ -266,7 +273,7 @@ if ( (length($campaign_id) > 0) && ($camp_sys =~ /CAMP/) )
 
 
 ### Gather the lead IDs of the leads with this phone number ###
-if ( (length($call_type) < 1) || ($lead_id < 1) )
+if ( ( (length($call_type) < 1) || ($lead_id < 1) ) && ($camp_sys !~ /NONE/) )
 	{
 	$stmtA= "SELECT lead_id from vicidial_list where phone_number='$phone_number' $listSQL;";
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
@@ -284,19 +291,22 @@ if ( (length($call_type) < 1) || ($lead_id < 1) )
 	}
 else
 	{
-	$stmtA= "SELECT phone_number from vicidial_list where lead_id='$lead_id';";
-	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-	$sthArows=$sthA->rows;
-		if ($AGILOG) {$agi_string = "$sthArows|$stmtA|";   &agi_output;}
-	$g=0;
-	while ($sthArows > $g)
+	if ($lead_id > 0) 
 		{
-		@aryA = $sthA->fetchrow_array;
-		$phone_number = $aryA[0];
-		$g++;
+		$stmtA= "SELECT phone_number from vicidial_list where lead_id='$lead_id';";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+			if ($AGILOG) {$agi_string = "$sthArows|$stmtA|";   &agi_output;}
+		$g=0;
+		while ($sthArows > $g)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$phone_number = $aryA[0];
+			$g++;
+			}
+		$sthA->finish();
 		}
-	$sthA->finish();
 	}
 chop($SleadsSQL);
 
@@ -304,7 +314,7 @@ chop($SleadsSQL);
 ### process for NI path
 if ($new_status =~ /NI/)	# set the phone_number to NI
 	{
-	if ($g > 0)
+	if ( ($g > 0) && ($camp_sys !~ /NONE/) )
 		{
 		### update all records for the phone_number in vicidial_list to NI (Not Interested)
 		$stmtA = "UPDATE vicidial_list SET status='NI' where lead_id IN($SleadsSQL);";
@@ -316,7 +326,7 @@ if ($new_status =~ /NI/)	# set the phone_number to NI
 ### process for DNC path
 if ($new_status =~ /DNC/)	# set the phone_number to DNC
 	{
-	if ($g > 0)
+	if ( ($g > 0) && ($camp_sys !~ /NONE/) )
 		{
 		### update all records for the phone_number in vicidial_list to NI (Not Interested)
 		$stmtA = "UPDATE vicidial_list SET status='DNC' where lead_id IN($SleadsSQL);";

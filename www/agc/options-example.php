@@ -1,7 +1,7 @@
 <?php
 # options.php - manually defined options for vicidial.php
 #
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # rename this file to options.php for the settings here to go into effect
 #
@@ -28,6 +28,9 @@
 # 230418-1008 - Added astguiclient_disabled option
 # 230418-1548 - Added dial_override_limit option
 # 230617-0815 - Added dead_logging_version option
+# 231109-0830 - Changed link_to_grey_version to disabled by default
+# 231115-1610 - Added allow_vlc_lookup, default_consultative
+# 240802-1250 - Added options to customize PHP error reporting
 #
 
 $conf_silent_prefix		= '5';	# vicidial_conferences prefix to enter silently and muted for recording
@@ -63,7 +66,7 @@ $conf_check_attempts	= '3';	# number of attempts to try before loosing webserver
 $focus_blur_enabled		= '0';	# set to 1 to enable the focus/blur enter key blocking(some IE instances have issues)
 $consult_custom_delay	= '2';	# number of seconds to delay consultative transfers when custom fields are active
 $mrglock_ig_select_ct	= '4';	# number of seconds to leave in-group select screen open if agent select is disabled
-$link_to_grey_version	= '1';	# show link to old grey version of agent screen at login screen, next to timeclock link
+$link_to_grey_version	= '0';	# show link to old grey version of agent screen at login screen, next to timeclock link
 $use_agent_colors		= '1';	# agent chat colors
 $no_empty_session_warnings=0;	# set to 1 to disable empty session warnings on agent screen
 $logged_in_refresh_link = '0';	# set to 1 to allow clickable "Logged in as..." link at top to force Javascript refresh
@@ -78,8 +81,8 @@ $login_submit_once		= '1';	# set to 0 to remove the "disable the login submit bu
 $astguiclient_disabled	= '1';	# set to 0 to allow use of the astguiclient.php script
 $dial_override_limit	= '6';	# number of dial-override calls per minute that will lock user account, set to 0 to disable dial_override limit
 $dead_logging_version	= '0';	# experimental dead logging enabled, can reverse false DEAD call logging
-$customer_chat_refresh_seconds	= 1;	# How often (in seconds) to refresh customer ang agent chat window
-$manager_chat_refresh_seconds	= 1;	# How often (in seconds) to refresh manager chat window
+$allow_vlc_lookup		= '1';	# allow lead lookup by vendor_lead_code
+$default_consultative	= '0';	# set the CONSULTATIVE checkbox on the transfer panel be checked by default
 
 $TEST_all_statuses		= '0';	# TEST variable allows all statuses in dispo screen
 
@@ -111,6 +114,15 @@ $INSERT_first_onload	= '';	# inserted at the beginning of the first section of t
 $INSERT_window_onload	= '';	# inserted at the end of the onload function
 $INSERT_agent_events	= '';	# inserted within the agent_events function
 $INSERT_before_body_close = '';	# inserted before each BODY close tag
+
+# If this option is set to 1, then the error_reporting in php.ini will be ignored and settings below will be used for this directory
+$PHP_error_reporting_OVERRIDE =	0;
+	# PHP error reporting options, set to 1 to keep the type of error from being displayed, either on-screen or to the error logs.
+$PHP_error_reporting_HIDE_ERRORS =		0;	# STRONGLY advise leaving this value alone, but you do you.
+$PHP_error_reporting_HIDE_WARNINGS =	0;
+$PHP_error_reporting_HIDE_PARSES =		0;
+$PHP_error_reporting_HIDE_NOTICES =		0;
+$PHP_error_reporting_HIDE_DEPRECATIONS=	0;
 
 # CORS settings: (to enable, customize the variables below, and uncomment the "require_once('agentCORS.php');" line at the bottom)
 # (NOTE: The first 3 variables must be set for these features to be active)

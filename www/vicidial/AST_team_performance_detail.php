@@ -6,7 +6,7 @@
 # QC statuses of QCFAIL, QCCANC and sales are defined by the Sale=Y status
 # flags being set on those statuses.
 #
-# Copyright (C) 2023  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -37,6 +37,7 @@
 # 210222-1508 - Added option to show all users
 # 220301-2155 - Added allow_web_debug system setting
 # 230407-1039 - Added include_sales_in_TPD_report option
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
@@ -81,9 +82,10 @@ $MT[0]='';
 $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 $STARTtime = date("U");
-if (!isset($group)) {$group = array();}
-if (!isset($user_group)) {$user_group = array();}
-if (!isset($call_statuses)) {$call_statuses = array();}
+if (!is_array($group)) {$group = array();}
+if (!is_array($user_group)) {$user_group = array();}
+if (!is_array($call_status)) {$call_status = array();}
+if (!is_array($call_statuses)) {$call_statuses = array();}
 if (!isset($query_date_D)) {$query_date_D=$NOW_DATE;}
 if (!isset($end_date_D)) {$end_date_D=$NOW_DATE;}
 if (!isset($query_date_T)) {$query_date_T="00:00:00";}
@@ -245,9 +247,9 @@ $LOGserver_name = getenv("SERVER_NAME");
 $LOGserver_port = getenv("SERVER_PORT");
 $LOGrequest_uri = getenv("REQUEST_URI");
 $LOGhttp_referer = getenv("HTTP_REFERER");
-$LOGbrowser=preg_replace("/\'|\"|\\\\/","",$LOGbrowser);
-$LOGrequest_uri=preg_replace("/\'|\"|\\\\/","",$LOGrequest_uri);
-$LOGhttp_referer=preg_replace("/\'|\"|\\\\/","",$LOGhttp_referer);
+$LOGbrowser=preg_replace("/<|>|\'|\"|\\\\/","",$LOGbrowser);
+$LOGrequest_uri=preg_replace("/<|>|\'|\"|\\\\/","",$LOGrequest_uri);
+$LOGhttp_referer=preg_replace("/<|>|\'|\"|\\\\/","",$LOGhttp_referer);
 if (preg_match("/443/i",$LOGserver_port)) {$HTTPprotocol = 'https://';}
   else {$HTTPprotocol = 'http://';}
 if (($LOGserver_port == '80') or ($LOGserver_port == '443') ) {$LOGserver_port='';}

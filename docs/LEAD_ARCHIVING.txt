@@ -1,0 +1,119 @@
+LEAD ARCHIVING				Updated: 2023-11-10
+
+This document covers the process of archiving leads and the features that use
+lead archiving in VICIdial as of admin.php build 231109-2027(svn/trunk revision 3773).
+
+
+
+What is Lead Archiving?
+
+Lead archiving is the process of moving leads that are in the active "vicidial_list" database table into a separate non-active database table so that your system can operate more efficiently. You cannot dial on these archived leads, or use them to scrub against for duplicates during lead loading, but you can manually search for archived leads in the Admin Lead Search page, view their details and logs in the Admin Modify Lead page, and the Lead Export Report can also gather details of archived leads. There is also a Non-Agent API function, "lead_dearchive" that allows you to move a single lead from the archive back into the active "vicidial_list" database table.
+
+
+
+
+Why Would You Want to Archive Your Leads?
+
+The number one reason for wanting to archive your older or no-longer-used leads from your active VICIdial lists database table is to keep your system running as efficiently as possible. The more leads in your system, the greater chance of slow queries when VICIdial accesses the "vicidial_list" database table. There are no hard thresholds for when significant slowdowns occur, but in general, over 2 million leads on a basic system is one starting point, up to 10 million leads on very high-end database servers. You can certainly have a lot more active leads in your system than this, but your system performance and responsiveness will be negatively affected by having so many leads.
+
+
+
+
+How Do I Start Archiving Leads on My System?
+
+To use Lead Archiving on your system, first you will need to create the "vicidial_list_archive" database table on your database, since it is not a default table in VICIdial:
+1. mysql asterisk
+2. CREATE TABLE vicidial_list_archive LIKE vicidial_list; 
+3. ALTER TABLE vicidial_list_archive MODIFY lead_id INT(9) UNSIGNED NOT NULL;
+
+Once you have the "vicidial_list_archive" database table, you can either manually move batches of leads into it, or you can set up an automated process to do this at regular intervals.
+
+
+
+MANUALLY ARCHIVING BATCHES OF LEADS:
+
+The most common method for archiving leads is to move over batches of leads within specific lists to the archive table. The following MySQL queries show an example of how this works:
+
+> SELECT count(*) from vicidial_list where list_id IN('100','110','120','150','998','997','9998');
+> INSERT INTO vicidial_list_archive SELECT * from vicidial_list where list_id IN('100','110','120','150','998','997','9998');
+> SELECT count(*) from vicidial_list_archive where list_id IN('100','110','120','150','998','997','9998');
+> DELETE from vicidial_list where list_id IN('100','110','120','150','998','997','9998');
+> OPTIMIZE table vicidial_list;
+
+Another example is moving only older leads in all lists into the archive table, in this case archiving leads inserted into the system before the year 2014 using the "entry_date" field:
+
+> SELECT count(*) from vicidial_list where entry_date < "2014-01-01 00:00:00";
+> INSERT INTO vicidial_list_archive SELECT * from vicidial_list where entry_date < "2014-01-01 00:00:00";
+> SELECT count(*) from vicidial_list_archive where entry_date < "2014-01-01 00:00:00";
+> DELETE from vicidial_list where entry_date < "2014-01-01 00:00:00";
+> OPTIMIZE table vicidial_list;
+
+
+The above set of queries allow you to double-check what is happening in each step: First you are seeing how many leads will be archived, then you are inserting them into the archive table, then you are confirming how many leads are now in the archive table, then you are deleting the live leads from the active vicidial_list table, then you are optimizing the vicidial_list table to run more efficiently after deleting a large number of leads from it.
+
+
+
+AUTOMATED PROCESS FOR ARCHIVING LEADS:
+
+Using the Linux crontab on your database server, and a VICIdial "Settings Container" you can set up a regular process with queries that you can modify in the web admin screens to archive leads. First, we would want to set up a new Settings Container. We will call this container "ARCHIVE_TEST" and it should have a Container Type of "PERL_CLI". For the Container Entry, you can use something like one of the sets of queries shown above, or something more dynamic that will change as time goes on automatically, like the following example that only archives leads within one campaign's lists that are more than 90 days old, as shown below:
+
+INSERT IGNORE INTO vicidial_list_archive SELECT l.lead_id,l.entry_date,l.modify_date,l.status,l.user,l.vendor_lead_code,l.source_id,l.list_id,l.gmt_offset_now,l.called_since_last_reset,l.phone_code,l.phone_number,l.title,l.first_name,l.middle_initial,l.last_name,l.address1,l.address2,l.address3,l.city,l.state,l.province,l.postal_code,l.country_code,l.gender,l.date_of_birth,l.alt_phone,l.email,l.security_phrase,l.comments,l.called_count,l.last_local_call_time,l.rank,l.owner,l.entry_list_id from vicidial_list l,vicidial_lists s where ( (entry_date < CONCAT(DATE_ADD(CURDATE(), INTERVAL -90 DAY),' ',CURTIME()) ) and (l.list_id=s.list_id) and (s.campaign_id='TEST2') );
+DELETE from vicidial_list where (entry_date < CONCAT(DATE_ADD(CURDATE(), INTERVAL -90 DAY),' ',CURTIME()) ) and list_id IN(SELECT list_id from vicidial_lists where campaign_id='TEST2');
+
+
+Next, you will need to add a Linux crontab entry on your database server. This task is best left to someone who has experience with Linux command-line utilities, but a basic set of commands is shown below:
+
+> crontab -e
+--- enter the following new line, then save your crontab changes and exit ---
+
+59 0 * * 0 /usr/share/astguiclient/AST_settings_container_SQL.pl --debugX --container=ARCHIVE_TEST
+
+
+The above entry will run every Sunday at 00:59(12:59 AM), and it will insert an entry into the VICIdial Admin Log that you can view in the "Administration Change Log" report that will show how many records were archived every time it runs.
+
+
+Another option for regularly archiving leads can be using the "ADMIN_archive_leads.pl" script in a crontab entry. This script has some additional options like the ability to specify lead statuses, a call-date, entry-date and groups of campaigns to archive from. To see the available options for this script, run it with the "--help" flag:
+
+/usr/share/astguiclient/ADMIN_archive_leads.pl --help
+
+Here is one example of how the script can be run:
+
+/usr/share/astguiclient/ADMIN_archive_leads.pl --campaigns=TEST1-TEST2 --statuses---ALL--- --debug
+
+
+
+
+How Do I De-Archive Leads Once They Have Been Archived?
+
+To de-archive leads, you can basically run the same queries in reverse. You insert into the "vicidial_list" table, selecting from the "vicidial_list_archive" table. Here is an example of doing that using the first batch archive example that was shown above:
+
+> SELECT count(*) from vicidial_list_archive where list_id IN('100','110','120','150','998','997','9998');
+> INSERT INTO vicidial_list SELECT * from vicidial_list_archive where list_id IN('100','110','120','150','998','997','9998');
+> SELECT count(*) from vicidial_list where list_id IN('100','110','120','150','998','997','9998');
+> DELETE from vicidial_list_archive where list_id IN('100','110','120','150','998','997','9998');
+> OPTIMIZE table vicidial_list_archive;
+
+
+
+If you only want to de-archive one lead at a time, you can use the "lead_dearchive" Non-Agent API function, as shown below:
+
+--------------------------------------------------------------------------------
+lead_dearchive - moves a lead from the archive to active leads table
+
+NOTE: api user for this function must have user_level set to 8 or higher and "modify leads" enabled
+
+REQUIRED FIELDS-
+source -		description of what originated the API call (maximum 20 characters)
+lead_id -		16-40 characters
+
+Example URL strings for API calls:
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=lead_dearchive&lead_id=274071
+
+Example responses:
+ERROR: lead_dearchive USER DOES NOT HAVE PERMISSION TO MODIFY LEAD INFO - 6666|0
+ERROR: lead_dearchive INVALID SEARCH PARAMETERS - 6666||
+ERROR: lead_dearchive LEAD INSERT FAILED - 6666||
+ERROR: lead_dearchive NON-ARCHIVED LEAD FOUND - 6666||
+ERROR: lead_dearchive ARCHIVED LEAD NOT FOUND - 6666||
+SUCCESS: lead_dearchive LEAD DE-ARCHIVED - 6666|274071|1|1
+

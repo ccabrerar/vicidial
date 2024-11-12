@@ -1778,7 +1778,7 @@ else
 			}
 			//Modifed text to allow for other than CBHOLD via custom statuses with scheduled callback chosen
 		# echo "<BR>"._QXZ("If you want to change this lead to a scheduled callback, first change the Disposition to CBHOLD or similar, then submit and you will be able to set the callback date and time.")."<BR>";
-		echo "<BR>"._QXZ("This lead is not currently a recognized callback status, such as CALLBK or CBHOLD, or a campaign or system status where the \"scheduled callback\" parameter is set to 'Y'.")."<BR>";
+		echo "<BR>"._QXZ("This lead is not currently a recognized callback status, such as CALLBK or CBHOLD, or a campaign or system status where the -scheduled callback- parameter is set to -Y-.")."<BR>";
 		}
 	echo "</TD></TR></TABLE>";
 	echo "</center></span>";

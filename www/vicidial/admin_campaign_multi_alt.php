@@ -400,7 +400,6 @@ if ($action == "BLANK")
 	$o=0;
 	if ($lead_list['count'] > 0)
 		{
-#		while (list($owner,) = each($lead_list[$since_reset]))
 		foreach($lead_list[$since_reset] as $owner => $blank)
 			{
 			$owner_var = preg_replace('/ |\n|\r|\t/','',$owner);

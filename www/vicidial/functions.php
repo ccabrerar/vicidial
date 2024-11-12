@@ -4,7 +4,7 @@
 #
 # functions for administrative scripts and reports
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 #
 # CHANGES:
@@ -40,7 +40,27 @@
 # 210406-1740 - Moved 'dialable_leads' function to this script
 # 210615-0952 - Default security fix, CVE-2021-28854
 # 220921-1209 - Added more failed login logging in user_authorization function
+# 231119-1445 - Added user_authorization for HCI page users
+# 240401-1459 - Added check for vicidial_pending_ar entries in user_authorization
+# 240801-1130 - Code updates for PHP8 compatibility
+# 240805-2103 - Added PHP_error_reporting_OVERRIDE options
 #
+
+$PHP_error_reporting_OVERRIDE=0;
+if (file_exists('options.php'))
+        {
+        require('options.php');
+        }
+if ($PHP_error_reporting_OVERRIDE > 0)
+	{
+	$php_err_suppression_value=32767; # E_ALL
+	$php_err_suppression_value-=($PHP_error_reporting_HIDE_ERRORS ? 1 : 0);
+	$php_err_suppression_value-=($PHP_error_reporting_HIDE_WARNINGS ? 2 : 0);
+	$php_err_suppression_value-=($PHP_error_reporting_HIDE_PARSES ? 4 : 0);
+	$php_err_suppression_value-=($PHP_error_reporting_HIDE_NOTICES ? 8 : 0);
+	$php_err_suppression_value-=($PHP_error_reporting_HIDE_DEPRECATIONS ? 8192 : 0);
+	error_reporting($php_err_suppression_value);
+	}
 
 ##### BEGIN validate user login credentials, check for failed lock out #####
 function user_authorization($user,$pass,$user_option,$user_update,$api_call)
@@ -50,7 +70,7 @@ function user_authorization($user,$pass,$user_option,$user_update,$api_call)
 
 	#############################################
 	##### START SYSTEM_SETTINGS LOOKUP #####
-	$stmt = "SELECT use_non_latin,webroot_writable,pass_hash_enabled,pass_key,pass_cost,allow_ip_lists,system_ip_blacklist,two_factor_auth_hours,two_factor_container FROM system_settings;";
+	$stmt = "SELECT use_non_latin,webroot_writable,pass_hash_enabled,pass_key,pass_cost,allow_ip_lists,system_ip_blacklist,two_factor_auth_hours,two_factor_container,enable_auto_reports FROM system_settings;";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	if ($DB) {echo "$stmt\n";}
 	$qm_conf_ct = mysqli_num_rows($rslt);
@@ -66,6 +86,7 @@ function user_authorization($user,$pass,$user_option,$user_update,$api_call)
 		$SSsystem_ip_blacklist =		$row[6];
 		$SStwo_factor_auth_hours =		$row[7];
 		$SStwo_factor_container =		$row[8];
+		$SSenable_auto_reports =		$row[9];
 		}
 	##### END SETTINGS LOOKUP #####
 	###########################################
@@ -100,6 +121,8 @@ function user_authorization($user,$pass,$user_option,$user_update,$api_call)
 		{$stmt="SELECT count(*) from vicidial_users where user='$user' and $passSQL and user_level > 3 and active='Y' and ( (failed_login_count < $LOCK_trigger_attempts) or (UNIX_TIMESTAMP(last_login_date) < $LOCK_over) );";}
 	if ($user_option == 'QC')
 		{$stmt="SELECT count(*) from vicidial_users where user='$user' and $passSQL and user_level > 1 and active='Y' and ( (failed_login_count < $LOCK_trigger_attempts) or (UNIX_TIMESTAMP(last_login_date) < $LOCK_over) );";}
+	if ($user_option == 'HCI')
+		{$stmt="SELECT count(*) from vicidial_users where user='$user' and $passSQL and user_level >= 1 and active='Y' and ( (failed_login_count < $LOCK_trigger_attempts) or (UNIX_TIMESTAMP(last_login_date) < $LOCK_over) );";}
 	if ($DB) {echo "|$stmt|\n";}
 	if ($non_latin > 0) {$rslt=mysql_to_mysqli("SET NAMES 'UTF8'", $link);}
 	$rslt=mysql_to_mysqli($stmt, $link);
@@ -257,6 +280,26 @@ function user_authorization($user,$pass,$user_option,$user_update,$api_call)
 					if ($VALID_2FA < 1)
 						{
 						$auth_key='2FA';
+
+						if ( ($user_option == 'REPORTS') and ($SSenable_auto_reports > 0) )
+							{
+							# If this is a REPORT, check for a triggered automated report, and if so, allow it to proceed
+							$stmt="SELECT count(*) from vicidial_pending_ar where user='$user' and status='TRIGGERED' and start_datetime > date_add(now(), interval 5 minute);";
+							$rslt=mysql_to_mysqli($stmt, $link);
+							if ($DB) {echo "$stmt\n";}
+							$auth_check_to_print = mysqli_num_rows($rslt);
+							if ($auth_check_to_print > 0)
+								{
+								$row=mysqli_fetch_row($rslt);
+								if ($row[0] > 0);
+									{
+									$stmt="UPDATE vicidial_pending_ar SET status='AUTHORIZED',notes='$NOW_TIME $ip' WHERE user='$user' and status='TRIGGERED' and start_datetime > date_add(now(), interval 5 minute) order by start_datetime limit 1;";
+									$rslt=mysql_to_mysqli($stmt, $link);
+
+									$auth_key='GOOD';
+									}
+								}
+							}
 						}
 					}
 				}

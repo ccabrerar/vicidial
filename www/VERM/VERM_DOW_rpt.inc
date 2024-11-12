@@ -1,20 +1,21 @@
 <?php
 # VERM_DOW_rpt.inc - Vicidial Enhanced Reporting per-day-of-week report
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
 # 
 # CHANGELOG:
 # 220825-1623 - First build
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 # NANQUE, not an unanswered call?
 # TIMEOT, unanswered even though it was dropped into a call that was picked up
 # Warm transfers count as two calls
 
-$PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
-$PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
-$PHP_SELF=$_SERVER['PHP_SELF'];
-$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
+# $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
+# $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
+# $PHP_SELF=$_SERVER['PHP_SELF'];
+# $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 
 $vicidial_user_log_table="vicidial_user_log";
 
@@ -114,7 +115,7 @@ for ($q=0; $q<=6; $q++)
 	$user_array["$key"]=array();
 	}
 
-$stmt="select dayname(call_date) as cdate, dayofweek(call_date) as day_no, campaign_id, status, user, length_in_sec as call_length, uniqueid, '0' as wait_sec, 'O' as direction, '1' as queue_position, lead_id from vicidial_log $vicidial_log_SQL $and_NANQUE_clause $exc_addtl_statuses UNION ALL select dayname(call_date) as cdate, dayofweek(call_date) as day_no, campaign_id, status, user, length_in_sec-queue_seconds as call_length, uniqueid, queue_seconds as wait_sec, 'I' as direction, queue_position, lead_id from vicidial_closer_log $vicidial_closer_log_SQL $and_NANQUE_clause $exc_addtl_statuses order by day_no";
+$stmt="select dayname(call_date) as cdate, dayofweek(call_date) as day_no, campaign_id, status, user, length_in_sec as call_length, uniqueid, '0' as wait_sec, 'O' as direction, '1' as queue_position, lead_id from vicidial_log $vicidial_log_SQL $and_NANQUE_clause $exc_addtl_statuses UNION ALL select dayname(call_date) as cdate, dayofweek(call_date) as day_no, campaign_id, status, user, if(comments='EMAIL', length_in_sec, length_in_sec-queue_seconds) as call_length, uniqueid, if(comments='EMAIL', '0', queue_seconds) as wait_sec, 'I' as direction, queue_position, lead_id from vicidial_closer_log $vicidial_closer_log_SQL $and_NANQUE_clause $exc_addtl_statuses order by day_no";
 if ($DB) {$HTML_output.="<B>$stmt</B>";}
 # print $stmt."\n";
 $rslt=mysql_to_mysqli($stmt, $link);
@@ -233,17 +234,17 @@ while ($row=mysqli_fetch_array($rslt))
 
 		### These counts are in here because by definition these SHOULD be answers, but you never know with some morons.
 		### "Real" campaign_id should have been gotten under the direction clause above
-		if (in_array($status, $sale_array["$campaign_id"]) || in_array($status, $sale_array["SYSTEM"]))
+		if ((array_key_exists("$campaign_id", $sale_array) && in_array($status, $sale_array["$campaign_id"])) || in_array($status, $sale_array["SYSTEM"]))
 			{
 			$calls_array["$call_date"]["sales"]++;
 			$total_sales++;
 			}
-		if (in_array($status, $human_ans_array["$campaign_id"]) || in_array($status, $human_ans_array["SYSTEM"]))
+		if ((array_key_exists("$campaign_id", $human_ans_array) && in_array($status, $human_ans_array["$campaign_id"])) || in_array($status, $human_ans_array["SYSTEM"]))
 			{
 			$calls_array["$call_date"]["human_answered"]++;
 			$total_human_answered++;
 			}
-		if (in_array($status, $contact_array["$campaign_id"]) || in_array($status, $contact_array["SYSTEM"]))
+		if ((array_key_exists("$campaign_id", $contact_array) && in_array($status, $contact_array["$campaign_id"])) || in_array($status, $contact_array["SYSTEM"]))
 			{
 			$calls_array["$call_date"]["customer_contacts"]++;
 			$total_customer_contacts++;
@@ -274,7 +275,7 @@ while ($row=mysqli_fetch_array($rslt))
 	# Queue array
 	$queue_array["$call_date"]["total_calls"]++;
 	$queue_array["$call_date"]["total_queue"]+=$queue_position;
-	$queue_array["$call_date"]["avg_position"]=($queue_array["$call_date"]["total_queue"]/$queue_array["$call_date"]["total_calls"]);
+	$queue_array["$call_date"]["avg_position"]=(MathZDC($queue_array["$call_date"]["total_queue"], $queue_array["$call_date"]["total_calls"]));
 	# Min/max queue
 	if (!$queue_array["$call_date"]["min_queue_position"] || $queue_position<$queue_array["$call_date"]["min_queue_position"])
 		{
@@ -332,21 +333,23 @@ foreach ($answered_calls_array as $call_date_key => $call_date_data)
 	$avg_call_length=round(MathZDC($answered_calls_array["$call_date_key"]["total_length"], $total_date_calls_answered));
 	$avg_call_length_fmt=($avg_call_length>=3600 ? floor($avg_call_length/3600).":" : "").gmdate("i:s", $avg_call_length);
 
+	$answered_calls_array["$call_date_key"]["min_call_length"]+=0;
+	$answered_calls_array["$call_date_key"]["max_call_length"]+=0;
 	$min_call_length_fmt=($answered_calls_array["$call_date_key"]["min_call_length"]>=3600 ? floor($answered_calls_array["$call_date_key"]["min_call_length"]/3600).":" : "").gmdate("i:s", $answered_calls_array["$call_date_key"]["min_call_length"]);
 	$max_call_length_fmt=($answered_calls_array["$call_date_key"]["max_call_length"]>=3600 ? floor($answered_calls_array["$call_date_key"]["max_call_length"]/3600).":" : "").gmdate("i:s", $answered_calls_array["$call_date_key"]["max_call_length"]);
 
 	$HTML_output.="<tr>";
 	$HTML_output.="<td>".$call_date_key."</td>";
 	$HTML_output.="<td>".$total_date_calls_answered."</td>";
-	$HTML_output.="<td>".sprintf("%.1f", ((100*$total_date_calls_answered)/$total_answered_calls))." %</td>";
-	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".((100*$total_date_calls_answered)/$total_answered_calls)."%'></td>";
+	$HTML_output.="<td>".sprintf("%.1f", (MathZDC((100*$total_date_calls_answered), $total_answered_calls)))." %</td>";
+	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(MathZDC((100*$total_date_calls_answered), $total_answered_calls))."%'></td>";
 	$HTML_output.="<td>".$avg_call_length_fmt."</td>";
 	$HTML_output.="<td>".$min_call_length_fmt."</td>";
 	$HTML_output.="<td>".$max_call_length_fmt."</td>";
-	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".((100*$avg_call_length)/$max_avg_call_length)."%'></td>";
+	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(MathZDC((100*$avg_call_length), $max_avg_call_length))."%'></td>";
 	$HTML_output.="</tr>";
 
-	$CSV_output["answered_call_distribution"].="\"".$call_date_key."\",\"".$total_date_calls_answered."\",\"".sprintf("%.1f", ((100*$total_date_calls_answered)/$total_answered_calls))." %\",\"\",\"".$avg_call_length_fmt."\",\"".$min_call_length_fmt."\",\"".$max_call_length_fmt."\",\"\"\n";
+	$CSV_output["answered_call_distribution"].="\"".$call_date_key."\",\"".$total_date_calls_answered."\",\"".sprintf("%.1f", (MathZDC((100*$total_date_calls_answered), $total_answered_calls)))." %\",\"\",\"".$avg_call_length_fmt."\",\"".$min_call_length_fmt."\",\"".$max_call_length_fmt."\",\"\"\n";
 
 	$answered_call_distribution_graph_labels.="\"$call_date_key\",";
 	$answered_call_distribution_graph_data1.="\"$total_date_calls_answered\",";
@@ -420,21 +423,23 @@ foreach ($answered_calls_array as $call_date_key => $call_date_data)
 	$avg_wait_time=round(MathZDC($answered_calls_array["$call_date_key"]["total_wait"], $total_date_calls_answered));
 	$avg_wait_time_fmt=($avg_wait_time>=3600 ? floor($avg_wait_time/3600).":" : "").gmdate("i:s", $avg_wait_time);
 
+	$answered_calls_array["$call_date_key"]["min_wait_time"]+=0;
+	$answered_calls_array["$call_date_key"]["max_wait_time"]+=0;
 	$min_wait_time_fmt=($answered_calls_array["$call_date_key"]["min_wait_time"]>=3600 ? floor($answered_calls_array["$call_date_key"]["min_wait_time"]/3600).":" : "").gmdate("i:s", $answered_calls_array["$call_date_key"]["min_wait_time"]);
 	$max_wait_time_fmt=($answered_calls_array["$call_date_key"]["max_wait_time"]>=3600 ? floor($answered_calls_array["$call_date_key"]["max_wait_time"]/3600).":" : "").gmdate("i:s", $answered_calls_array["$call_date_key"]["max_wait_time"]);
 
 	$HTML_output.="<tr>";
 	$HTML_output.="<td>".$call_date_key."</td>";
 	$HTML_output.="<td>".$total_date_calls_answered."</td>";
-	$HTML_output.="<td>".sprintf("%.1f", ((100*$total_date_calls_answered)/$total_answered_calls))." %</td>";
-	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".((100*$total_date_calls_answered)/$total_answered_calls)."%'></td>";
+	$HTML_output.="<td>".sprintf("%.1f", (MathZDC((100*$total_date_calls_answered), $total_answered_calls)))." %</td>";
+	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(MathZDC((100*$total_date_calls_answered), $total_answered_calls))."%'></td>";
 	$HTML_output.="<td>".$avg_wait_time_fmt."</td>";
 	$HTML_output.="<td>".$min_wait_time_fmt."</td>";
 	$HTML_output.="<td>".$max_wait_time_fmt."</td>";
-	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".((100*$avg_wait_time)/$max_avg_wait_time)."%'></td>";
+	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(MathZDC((100*$avg_wait_time), $max_avg_wait_time))."%'></td>";
 	$HTML_output.="</tr>";
 
-	$CSV_output["answered_call_wait_time"].="\"".$call_date_key."\",\"".$total_date_calls_answered."\",\"".sprintf("%.1f", ((100*$total_date_calls_answered)/$total_answered_calls))." %\",\"\",\"".$avg_wait_time_fmt."\",\"".$min_wait_time_fmt."\",\"".$max_wait_time_fmt."\",\"\"\n";
+	$CSV_output["answered_call_wait_time"].="\"".$call_date_key."\",\"".$total_date_calls_answered."\",\"".sprintf("%.1f", (MathZDC((100*$total_date_calls_answered), $total_answered_calls)))." %\",\"\",\"".$avg_wait_time_fmt."\",\"".$min_wait_time_fmt."\",\"".$max_wait_time_fmt."\",\"\"\n";
 
 	$answered_call_wait_time_graph_labels.="\"$call_date_key\",";
 	$answered_call_wait_time_graph_data1.="\"$total_date_calls_answered\",";
@@ -509,21 +514,23 @@ foreach ($unanswered_calls_array as $call_date_key => $call_date_data)
 	$avg_wait_time=round(MathZDC($unanswered_calls_array["$call_date_key"]["total_wait"], $total_date_calls_unanswered));
 	$avg_wait_time_fmt=($avg_wait_time>=3600 ? floor($avg_wait_time/3600).":" : "").gmdate("i:s", $avg_wait_time);
 
+	$unanswered_calls_array["$call_date_key"]["min_wait_time"]+=0;
+	$unanswered_calls_array["$call_date_key"]["max_wait_time"]+=0;
 	$min_wait_time_fmt=($unanswered_calls_array["$call_date_key"]["min_wait_time"]>=3600 ? floor($unanswered_calls_array["$call_date_key"]["min_wait_time"]/3600).":" : "").gmdate("i:s", $unanswered_calls_array["$call_date_key"]["min_wait_time"]);
 	$max_wait_time_fmt=($unanswered_calls_array["$call_date_key"]["max_wait_time"]>=3600 ? floor($unanswered_calls_array["$call_date_key"]["max_wait_time"]/3600).":" : "").gmdate("i:s", $unanswered_calls_array["$call_date_key"]["max_wait_time"]);
 
 	$HTML_output.="<tr>";
 	$HTML_output.="<td>".$call_date_key."</td>";
 	$HTML_output.="<td>".$total_date_calls_unanswered."</td>";
-	$HTML_output.="<td>".sprintf("%.1f", ((100*$total_date_calls_unanswered)/$total_unanswered_calls))." %</td>";
-	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".((100*$total_date_calls_unanswered)/$total_unanswered_calls)."%'></td>";
+	$HTML_output.="<td>".sprintf("%.1f", (MathZDC((100*$total_date_calls_unanswered), $total_unanswered_calls)))." %</td>";
+	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(MathZDC((100*$total_date_calls_unanswered), $total_unanswered_calls))."%'></td>";
 	$HTML_output.="<td>".$avg_wait_time_fmt."</td>";
 	$HTML_output.="<td>".$min_wait_time_fmt."</td>";
 	$HTML_output.="<td>".$max_wait_time_fmt."</td>";
-	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".((100*$avg_wait_time)/$max_avg_wait_time)."%'></td>";
+	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(MathZDC((100*$avg_wait_time), $max_avg_wait_time))."%'></td>";
 	$HTML_output.="</tr>";
 
-	$CSV_output["unanswered_call_wait_time"].="\"".$call_date_key."\",\"".$total_date_calls_unanswered."\",\"".sprintf("%.1f", ((100*$total_date_calls_unanswered)/$total_unanswered_calls))." %\",\"\",\"".$avg_wait_time_fmt."\",\"".$min_wait_time_fmt."\",\"".$max_wait_time_fmt."\",\"\"\n";
+	$CSV_output["unanswered_call_wait_time"].="\"".$call_date_key."\",\"".$total_date_calls_unanswered."\",\"".sprintf("%.1f", (MathZDC((100*$total_date_calls_unanswered), $total_unanswered_calls)))." %\",\"\",\"".$avg_wait_time_fmt."\",\"".$min_wait_time_fmt."\",\"".$max_wait_time_fmt."\",\"\"\n";
 
 	$unanswered_call_wait_time_graph_labels.="\"$call_date_key\",";
 	$unanswered_call_wait_time_graph_data1.="\"$total_date_calls_unanswered\",";
@@ -573,8 +580,8 @@ $HTML_output.="</tr>\n";
 $CSV_output["sales_per_day"]="\""._QXZ("Day")."\",\""._QXZ("Human ans. conv")."\",\""._QXZ("Customer cont. conv")."\",\""._QXZ("Sales")."\",\"\",\"\",\""._QXZ("Human answers")."\",\""._QXZ("Customer contacts")."\",\"\",\"\"\n";
 
 #print_r($calls_array);
-$max_day_sales=max(array_column($calls_array, 'sales'));
-$max_day_customer_contacts=max(array_column($calls_array, 'customer_contacts'));
+$max_day_sales=(count(array_column($calls_array, 'sales'))>0 ? max(array_column($calls_array, 'sales')) : 0);
+$max_day_customer_contacts=(count(array_column($calls_array, 'customer_contacts'))>0 ? max(array_column($calls_array, 'customer_contacts')) : 0);
 #print "<BR>$max_day_sales<BR>\n";
 foreach ($calls_array as $call_date_key => $data)
 	{
@@ -583,15 +590,15 @@ foreach ($calls_array as $call_date_key => $data)
 	$HTML_output.="<td>".sprintf("%.1f", MathZDC((100*$data["sales"]), $data["human_answered"]))." %</td>";
 	$HTML_output.="<td>".sprintf("%.1f", MathZDC((100*$data["sales"]), $data["customer_contacts"]))." %</td>";
 	$HTML_output.="<td>".($data["sales"]+0)."</td>";
-	$HTML_output.="<td>".sprintf("%.1f", ((100*$data["sales"])/$total_sales))." %</td>";
-	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".((100*$data["sales"])/$max_day_sales)."%'></td>";
+	$HTML_output.="<td>".sprintf("%.1f", (MathZDC((100*$data["sales"]), $total_sales)))." %</td>";
+	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(MathZDC((100*$data["sales"]), $max_day_sales))."%'></td>";
 	$HTML_output.="<td>".$data["human_answered"]."</td>";
 	$HTML_output.="<td>".$data["customer_contacts"]."</td>";
-	$HTML_output.="<td>".sprintf("%.1f", ((100*$data["customer_contacts"])/$total_customer_contacts))." %</td>";
-	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".((100*$data["customer_contacts"])/$max_day_customer_contacts)."%'></td>";
+	$HTML_output.="<td>".sprintf("%.1f", (MathZDC((100*$data["customer_contacts"]), $total_customer_contacts)))." %</td>";
+	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(MathZDC((100*$data["customer_contacts"]), $max_day_customer_contacts))."%'></td>";
 	$HTML_output.="</tr>\n";
 
-	$CSV_output["sales_per_day"].="\"$call_date_key\",\"".sprintf("%.1f", MathZDC((100*$data["sales"]), $data["human_answered"]))." %\",\"".sprintf("%.1f", MathZDC((100*$data["sales"]), $data["customer_contacts"]))." %\",\"".($data["sales"]+0)."\",\"".sprintf("%.1f", MathZDC((100*$data["sales"]), $total_sales))." %\",\"\",\"".$data["human_answered"]."\",\"".$data["customer_contacts"]."\",\"".sprintf("%.1f", ((100*$data["customer_contacts"])/$total_customer_contacts))." %\",\"\"\n";
+	$CSV_output["sales_per_day"].="\"$call_date_key\",\"".sprintf("%.1f", MathZDC((100*$data["sales"]), $data["human_answered"]))." %\",\"".sprintf("%.1f", MathZDC((100*$data["sales"]), $data["customer_contacts"]))." %\",\"".($data["sales"]+0)."\",\"".sprintf("%.1f", MathZDC((100*$data["sales"]), $total_sales))." %\",\"\",\"".$data["human_answered"]."\",\"".$data["customer_contacts"]."\",\"".sprintf("%.1f", (MathZDC((100*$data["customer_contacts"]), $total_customer_contacts)))." %\",\"\"\n";
 	}
 $HTML_output.="<tr class='export_row'>";
 # $HTML_output.="<td colspan='10' class='export_row_cell'>"._QXZ("Export as")."...<a href=\"".$PHP_SELF."?download_rpt=sales_per_day\" title=\"Export as a CSV file\" class=\"uk-icon\">CSV</a></td>";
@@ -621,17 +628,17 @@ $HTML_output.="</tr>\n";
 ### Removed Coverage column before Steps 5/19/22 - not needed
 $CSV_output["queue_length_per_day"]="\""._QXZ("Day")."\",\""._QXZ("Avg")."\",\"...\",\""._QXZ("Min")."\",\""._QXZ("Max")."\",\"...\",\""._QXZ("Average Sum of Queue Positions Per Hour")."\"\n";
 
-$max_call_position=max(array_column($queue_array, 'max_queue_position'));
-$max_avg_position=max(array_column($queue_array, 'avg_position'));
+$max_call_position=(count(array_column($queue_array, 'max_queue_position'))>0 ? max(array_column($queue_array, 'max_queue_position')) : 0);
+$max_avg_position=(count(array_column($queue_array, 'avg_position'))>0 ? max(array_column($queue_array, 'avg_position')) : 0);
 foreach ($queue_array as $call_date_key => $data)
 	{
 	$HTML_output.="<tr>";
 	$HTML_output.="<td>$call_date_key</td>";
 	$HTML_output.="<td>".sprintf("%.1f", $queue_array["$call_date_key"]["avg_position"])."</td>";
-	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".((100*$queue_array["$call_date_key"]["avg_position"])/$max_avg_position)."%'></td>";
+	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(MathZDC((100*$queue_array["$call_date_key"]["avg_position"]), $max_avg_position))."%'></td>";
 	$HTML_output.="<td>".$queue_array["$call_date_key"]["min_queue_position"]."</td>";
 	$HTML_output.="<td>".$queue_array["$call_date_key"]["max_queue_position"]."</td>";
-	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".((100*$queue_array["$call_date_key"]["max_queue_position"])/$max_call_position)."%'></td>";
+	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(MathZDC((100*$queue_array["$call_date_key"]["max_queue_position"]), $max_call_position))."%'></td>";
 	### $HTML_output.="<td>100% **</td>";
 	$HTML_output.="<td>".sprintf("%.1f", $queue_array["$call_date_key"]["total_queue"]/24)."</td>"; # Always seems to be 24 hours for the date - even when I ran starting at 8am.
 	$HTML_output.="</tr>\n";
@@ -666,13 +673,13 @@ foreach ($user_array as $call_date_key => $users_that_day)
 	$HTML_output.="<tr>";
 	$HTML_output.="<td>$call_date_key</td>";
 	$HTML_output.="<td>".count($users_that_day)."</td>";
-	$HTML_output.="<td>".sprintf("%.1f", (100*count($users_that_day)/$total_distinct_users_per_date))." %</td>";
-	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".sprintf("%.1f", (100*count($users_that_day)/$total_distinct_users_per_date))."%'></td>";
+	$HTML_output.="<td>".sprintf("%.1f", (MathZDC(100*count($users_that_day), $total_distinct_users_per_date)))." %</td>";
+	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".sprintf("%.1f", (MathZDC(100*count($users_that_day), $total_distinct_users_per_date)))."%'></td>";
 	$HTML_output.="</tr>\n";
 
 	if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 
-	$CSV_output["schedule_adherence_per_day"].="\"$call_date_key\",\"".count($users_that_day)."\",\"".sprintf("%.1f", (100*count($users_that_day)/$total_distinct_users_per_date))." %\",\"\"\n";
+	$CSV_output["schedule_adherence_per_day"].="\"$call_date_key\",\"".count($users_that_day)."\",\"".sprintf("%.1f", (MathZDC(100*count($users_that_day), $total_distinct_users_per_date)))." %\",\"\"\n";
 
 	# print "agents for $call_date_key: ".count($users_that_day)."\n";
 
@@ -730,6 +737,7 @@ $HTML_output.="</tr>\n";
 
 $CSV_output["inclusive_sla_per_day"].="\n";
 
+$svc_lvl_row=array();
 foreach ($calls_array as $call_date_key => $data)
 	{	
 	$svc_lvl_stmt="select $SLA_query from vicidial_closer_log where call_date>='$start_date $start_time' and call_date<='$end_date $end_time' and dayname(call_date)='$call_date_key' $and_vicidial_closer_log_SQL and (user!='VDCL')"; #  and campaign_id in ($ingroup_str) and user in ('VDCL', $user_str)

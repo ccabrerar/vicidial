@@ -1,4 +1,4 @@
-ALTERNATE NUMBER DIALING Redesign	Started: 2008-08-20	Updated: 2022-01-19
+ALTERNATE NUMBER DIALING Redesign	Started: 2008-08-20	Updated: 2024-08-05
 
 *** THIS SECTION OUTLINES PROPOSED CHANGES TO ALT-NUMBER-DIALING  in the 2.0.5 version ***
 *** FOR INFORMATION ON THE 2.0.3 AND 2.0.4 VERSION OF ALT NUMBER DIALING LOOK BELOW THIS SECTION ***
@@ -53,7 +53,11 @@ Using MULTI_LEAD is different from the other standard Auto-Alt-Dial functions, i
 
 The Auto-Alt-Statuses are still in used for MULTI_LEAD so you may want to make sure that statuses like DROP, PDROP and others to your campaign's auto-alt-dial statuses so that the other leads tied by vendor_lead_code in the campaign's lists are not deactivated.
 
-There is a feature in the hopper section of the modify campaign page that it is recommended you activate if you are using MULTI_LEAD auto-alt dialing: Hopper VLC Dup Check. This feature will prevent multiple numbers from the same account from getting inserted into the hopper at the same time.
+There is a feature in the hopper section of the modify campaign page that it is recommended you activate if you are using MULTI_LEAD auto-alt dialing: "Hopper VLC Dup Check". This feature will prevent multiple numbers from the same account from getting inserted into the hopper at the same time.
+
+Also, you can have the system automatically disable the rest of the leads for an account by adding a "Dispo Call URL" entry for the campaign using the "agc/deactivate_lead.php" script. For example: VARhttp://192.168.1.1/agc/deactivate_lead.php?search_field=vendor_lead_code&new_status=INACTIV&dispo=--A--dispo--B--&lead_id=--A--lead_id--B--&campaign_check=TESTCAMP&user=--A--user--B--&pass=--A--pass--B--&sale_status=SALE---XSALE&log_to_file=1 
+
+The above dispo call url example will set the other leads tied to the account linked by the vendor_lead_code to a status of 'INACTIV' when one of them is set as a SALE or XSALE.
 
 
 
@@ -129,6 +133,7 @@ If you will be using automatic alt number dialing, it is strongly recommended th
 A new Campaign and List-Override feature was added in January of 2022(svn/trunk rev 3553) called "Auto Alt-Number Dialing Threshold":
 
 "If Auto Alt-Number Dialing is enabled, and not set to MULTI_LEAD, then this setting will specify the number of call attempts to the lead after which the Auto Alt dialing will no longer place alternate number calls for a specific lead, if the lead is called after this number of attempts then only the main phone number will be called. There is also a List Override option for this feature. Default is 0 for the threshold being disabled."
+
 
 
 

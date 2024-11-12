@@ -5,7 +5,7 @@
 # or aource_id ,user's choice, of the calls and their statuses for all lists 
 # within a campaign for a set time period
 #
-# Copyright (C) 2022  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -14,6 +14,7 @@
 # 180507-2315 - Added new help display
 # 191013-0834 - Fixes for PHP7
 # 220302-0835 - Added allow_web_debug system setting
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
@@ -53,7 +54,7 @@ if (isset($_GET["search_archived_data"]))			{$search_archived_data=$_GET["search
 $DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 $NOW_DATE = date("Y-m-d");
-if (!isset($group)) {$group=array();}
+if (!is_array($group)) {$group=array();}
 if (!isset($query_date_D)) {$query_date_D=$NOW_DATE;}
 if (!isset($end_date_D)) {$end_date_D=$NOW_DATE;}
 if (!isset($query_date_T)) {$query_date_T="00:00:00";}
@@ -204,9 +205,9 @@ $LOGserver_name = getenv("SERVER_NAME");
 $LOGserver_port = getenv("SERVER_PORT");
 $LOGrequest_uri = getenv("REQUEST_URI");
 $LOGhttp_referer = getenv("HTTP_REFERER");
-$LOGbrowser=preg_replace("/\'|\"|\\\\/","",$LOGbrowser);
-$LOGrequest_uri=preg_replace("/\'|\"|\\\\/","",$LOGrequest_uri);
-$LOGhttp_referer=preg_replace("/\'|\"|\\\\/","",$LOGhttp_referer);
+$LOGbrowser=preg_replace("/<|>|\'|\"|\\\\/","",$LOGbrowser);
+$LOGrequest_uri=preg_replace("/<|>|\'|\"|\\\\/","",$LOGrequest_uri);
+$LOGhttp_referer=preg_replace("/<|>|\'|\"|\\\\/","",$LOGhttp_referer);
 if (preg_match("/443/i",$LOGserver_port)) {$HTTPprotocol = 'https://';}
   else {$HTTPprotocol = 'http://';}
 if (($LOGserver_port == '80') or ($LOGserver_port == '443') ) {$LOGserver_port='';}

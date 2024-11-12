@@ -92,7 +92,6 @@ else
 $manager_chat_refresh_seconds = 1;
 
 if (file_exists('options.php'))
-	{require('options.php');}
 
 $manager_chat_refresh_milliseconds = ($manager_chat_refresh_seconds ? $manager_chat_refresh_seconds*1000 : 1000);
 

@@ -1,7 +1,7 @@
 <?php 
 # realtime_report_mobile.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
 #
 # streamlined mobile version of live real-time stats for the VICIDIAL Auto-Dialer all servers
 #
@@ -16,12 +16,13 @@
 # 200309-1819 - Modifications for display formatting
 # 210827-1818 - Fix for security issue
 # 220221-1522 - Added allow_web_debug system setting
+# 240801-1134 - Code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
 
-$version = '2.14-4';
-$build = '220221-1522';
+$version = '2.14-5';
+$build = '240801-1134';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -269,6 +270,9 @@ else
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
+if (!is_array($groups)) {$groups=array();}
+if (!is_array($user_group_filter)) {$user_group_filter=array();}
+if (!isset($ALLINGROUPstats)) {$ALLINGROUPstats=0;}
 $RR = preg_replace('/[^0-9]/', '', $RR);
 $inbound = preg_replace('/[^-_0-9a-zA-Z]/', '', $inbound);
 $group = preg_replace('/[^-_0-9a-zA-Z]/', '', $group);
@@ -287,7 +291,7 @@ $PHONEdisplay = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHONEdisplay);
 $CUSTPHONEdisplay = preg_replace('/[^-_0-9a-zA-Z]/', '', $CUSTPHONEdisplay);
 $NOLEADSalert = preg_replace('/[^-_0-9a-zA-Z]/', '', $NOLEADSalert);
 $DROPINGROUPstats = preg_replace('/[^-_0-9a-zA-Z]/', '', $DROPINGROUPstats);
-$ALLINGROUPstats = preg_replace('/[^-_0-9a-zA-Z]/', '', $ALLINGROUPstats);
+$ALLINGROUPstats = preg_replace('/[^0-9]/', '', $ALLINGROUPstats);
 $with_inbound = preg_replace('/[^-_0-9a-zA-Z]/', '', $with_inbound);
 $monitor_active = preg_replace('/[^-_0-9a-zA-Z]/', '', $monitor_active);
 $monitor_phone = preg_replace('/[^-_0-9a-zA-Z]/', '', $monitor_phone);

@@ -1,7 +1,7 @@
 <?php 
 # realtime_report.php
 # 
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # live real-time stats for the VICIDIAL Auto-Dialer all servers
 #
@@ -60,12 +60,15 @@
 # 230308-0215 - Added option to show customer phone code
 # 230421-0106 - Added AGENTlatency display
 # 230421-1625 - Added RS_UGlatencyRESTRICT options.php setting
+# 230811-1530 - Added monitoring display information
+# 231115-1646 - Added RS_no_DEAD_status and RS_hide_CUST_info options.php settings
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
 
-$version = '2.14-46';
-$build = '230421-0106';
+$version = '2.14-48';
+$build = '231115-1646';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -116,6 +119,8 @@ if (isset($_GET["CALLSdisplay"]))			{$CALLSdisplay=$_GET["CALLSdisplay"];}
 	elseif (isset($_POST["CALLSdisplay"]))	{$CALLSdisplay=$_POST["CALLSdisplay"];}
 if (isset($_GET["PHONEdisplay"]))			{$PHONEdisplay=$_GET["PHONEdisplay"];}
 	elseif (isset($_POST["PHONEdisplay"]))	{$PHONEdisplay=$_POST["PHONEdisplay"];}
+if (isset($_GET["MONITORdisplay"]))			{$MONITORdisplay=$_GET["MONITORdisplay"];}
+	elseif (isset($_POST["MONITORdisplay"]))	{$MONITORdisplay=$_POST["MONITORdisplay"];}
 if (isset($_GET["CUSTPHONEdisplay"]))			{$CUSTPHONEdisplay=$_GET["CUSTPHONEdisplay"];}
 	elseif (isset($_POST["CUSTPHONEdisplay"]))	{$CUSTPHONEdisplay=$_POST["CUSTPHONEdisplay"];}
 if (isset($_GET["CUSTINFOdisplay"]))			{$CUSTINFOdisplay=$_GET["CUSTINFOdisplay"];}
@@ -191,8 +196,9 @@ $webphone_bufh =	'1';
 $webphone_pad =		'10';
 $webphone_clpos =	"<BR>  &nbsp; <a href=\"#\" onclick=\"hideDiv('webphone_content');\">"._QXZ("webphone")." -</a>";
 
-$RS_ListenBarge =		'MONITOR|BARGE|WHISPER';
-
+$RS_ListenBarge = 'MONITOR|BARGE|WHISPER';
+$RS_no_DEAD_status=0;
+$RS_hide_CUST_info=0;
 
 if (file_exists('options.php'))
 	{
@@ -251,6 +257,11 @@ if (!isset($PHONEdisplay))
 	{
 	if (!isset($RS_PHONEdisplay)) {$PHONEdisplay=0;}
 	else {$PHONEdisplay = $RS_PHONEdisplay;}
+	}
+if (!isset($MONITORdisplay)) 
+	{
+	if (!isset($RS_MONITORdisplay)) {$MONITORdisplay=0;}
+	else {$MONITORdisplay = $RS_MONITORdisplay;}
 	}
 if (!isset($CUSTPHONEdisplay)) 
 	{
@@ -330,10 +341,11 @@ $ingroup_detail='';
 # $report_display_type='LIMITED';
 # $ingroup_filter=array('_STAY','TEST_IN2','TEST_IN3');
 
+if (!is_array($groups)) {$groups=array();}
 if ( (strlen($group)>1) and (strlen($groups[0])<1) ) {$groups[0] = $group;}
 else {$group = $groups[0];}
-if (!isset($user_group_filter)) {$user_group_filter=array();}
-if (!isset($ingroup_filter)) {$ingroup_filter=array();}
+if (!is_array($user_group_filter)) {$user_group_filter=array();}
+if (!is_array($ingroup_filter)) {$ingroup_filter=array();}
 
 $NOW_TIME = date("Y-m-d H:i:s");
 $NOW_DAY = date("Y-m-d");
@@ -378,6 +390,7 @@ $orderby = preg_replace('/[^-_0-9a-zA-Z]/', '', $orderby);
 $SERVdisplay = preg_replace('/[^-_0-9a-zA-Z]/', '', $SERVdisplay);
 $CALLSdisplay = preg_replace('/[^-_0-9a-zA-Z]/', '', $CALLSdisplay);
 $PHONEdisplay = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHONEdisplay);
+$MONITORdisplay = preg_replace('/[^-_0-9a-zA-Z]/', '', $MONITORdisplay);
 $CUSTPHONEdisplay = preg_replace('/[^-_0-9a-zA-Z]/', '', $CUSTPHONEdisplay);
 $CUSTINFOdisplay = preg_replace('/[^-_0-9a-zA-Z]/', '', $CUSTINFOdisplay);
 if ($CUSTINFOdisplay==1)	{$CUSTPHONEdisplay=0;}	# only one of these should be on at one time
@@ -1408,6 +1421,7 @@ var orderby = '<?php echo $orderby ?>';
 var SERVdisplay = '<?php echo $SERVdisplay ?>';
 var CALLSdisplay = '<?php echo $CALLSdisplay ?>';
 var PHONEdisplay = '<?php echo $PHONEdisplay ?>';
+var MONITORdisplay = '<?php echo $MONITORdisplay ?>';
 var CUSTPHONEdisplay = '<?php echo $CUSTPHONEdisplay ?>';
 var CUSTINFOdisplay = '<?php echo $CUSTINFOdisplay ?>';
 var with_inbound = '<?php echo $with_inbound ?>';
@@ -1715,7 +1729,7 @@ function gather_realtime_content()
 		}
 	if (xmlhttp) 
 		{
-		RTupdate_query = "RTajax=1&DB=" + DB + "" + groupQS + usergroupQS + ingroupQS + "&adastats=" + adastats + "&SIPmonitorLINK=" + SIPmonitorLINK + "&IAXmonitorLINK=" + IAXmonitorLINK + "&usergroup=" + usergroup + "&UGdisplay=" + UGdisplay + "&UidORname=" + UidORname + "&orderby=" + orderby + "&SERVdisplay=" + SERVdisplay + "&CALLSdisplay=" + CALLSdisplay + "&PHONEdisplay=" + PHONEdisplay + "&CUSTPHONEdisplay=" + CUSTPHONEdisplay + "&CUSTINFOdisplay=" + CUSTINFOdisplay + "&with_inbound=" + with_inbound + "&monitor_active=" + monitor_active + "&monitor_phone=" + monitor_phone + "&ALLINGROUPstats=" + ALLINGROUPstats + "&DROPINGROUPstats=" + DROPINGROUPstats + "&NOLEADSalert=" + NOLEADSalert + "&ShowCustPhoneCode=" + ShowCustPhoneCode + "&CARRIERstats=" + CARRIERstats + "&PRESETstats=" + PRESETstats + "&AGENTtimeSTATS=" + AGENTtimeSTATS + "&AGENTlatency=" + AGENTlatency + "&parkSTATS=" + parkSTATS + "&SLAinSTATS=" + SLAinSTATS + "&INGROUPcolorOVERRIDE=" + INGROUPcolorOVERRIDE + "&droppedOFtotal=" + droppedOFtotal + "&report_display_type=" + report_display_type + "";
+		RTupdate_query = "RTajax=1&DB=" + DB + "" + groupQS + usergroupQS + ingroupQS + "&adastats=" + adastats + "&SIPmonitorLINK=" + SIPmonitorLINK + "&IAXmonitorLINK=" + IAXmonitorLINK + "&usergroup=" + usergroup + "&UGdisplay=" + UGdisplay + "&UidORname=" + UidORname + "&orderby=" + orderby + "&SERVdisplay=" + SERVdisplay + "&CALLSdisplay=" + CALLSdisplay + "&PHONEdisplay=" + PHONEdisplay + "&MONITORdisplay=" + MONITORdisplay + "&CUSTPHONEdisplay=" + CUSTPHONEdisplay + "&CUSTINFOdisplay=" + CUSTINFOdisplay + "&with_inbound=" + with_inbound + "&monitor_active=" + monitor_active + "&monitor_phone=" + monitor_phone + "&ALLINGROUPstats=" + ALLINGROUPstats + "&DROPINGROUPstats=" + DROPINGROUPstats + "&NOLEADSalert=" + NOLEADSalert + "&ShowCustPhoneCode=" + ShowCustPhoneCode + "&CARRIERstats=" + CARRIERstats + "&PRESETstats=" + PRESETstats + "&AGENTtimeSTATS=" + AGENTtimeSTATS + "&AGENTlatency=" + AGENTlatency + "&parkSTATS=" + parkSTATS + "&SLAinSTATS=" + SLAinSTATS + "&INGROUPcolorOVERRIDE=" + INGROUPcolorOVERRIDE + "&droppedOFtotal=" + droppedOFtotal + "&report_display_type=" + report_display_type + "";
 
 		xmlhttp.open('POST', 'AST_timeonVDADall.php'); 
 		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
@@ -1805,6 +1819,15 @@ function update_variables(task_option,task_choice,force_reload)
 		if (PHONEdisplay == '1') {PHONEdisplay='0';   document.getElementById("PHONEdisplayTXT").innerHTML = "<?php echo _QXZ("SHOW PHONES"); ?>";}
 		else {PHONEdisplay='1';   document.getElementById("PHONEdisplayTXT").innerHTML = "<?php echo _QXZ("HIDE PHONES"); ?>";}
 		}
+	if (task_option == 'MONITORdisplay')
+		{
+		if (MONITORdisplay == '1') {MONITORdisplay='0';   document.getElementById("MONITORdisplayTXT").innerHTML = "<?php echo _QXZ("SHOW MONITORS"); ?>";}
+		else {MONITORdisplay='1';   document.getElementById("MONITORdisplayTXT").innerHTML = "<?php echo _QXZ("HIDE MONITORS"); ?>";}
+		}
+<?php
+if ($RS_hide_CUST_info < 1)
+	{
+?>
 	if (task_option == 'CUSTPHONEdisplay')
 		{
 		if (CUSTPHONEdisplay == '1') 
@@ -1835,6 +1858,10 @@ function update_variables(task_option,task_choice,force_reload)
 			document.getElementById("CUSTPHONEdisplayTXT").innerHTML = "<?php echo _QXZ("SHOW CUSTPHONES"); ?>";
 			}
 		}
+<?php
+	}
+?>
+
 	if (task_option == 'ALLINGROUPstats')
 		{
 		if (ALLINGROUPstats == '1') {ALLINGROUPstats='0';   document.getElementById("ALLINGROUPstatsTXT").innerHTML = "<?php echo _QXZ("SHOW IN-GROUP STATS"); ?>";}
@@ -1948,7 +1975,7 @@ function update_variables(task_option,task_choice,force_reload)
 		// force a reload if the phone is changed
 		if ( (temp_monitor_phone != monitor_phone) || (force_reload=='YES') )
 			{
-			reload_url = PHP_SELF + "?RR=" + RR + "&DB=" + DB + "" + groupQS + usergroupQS + ingroupQS + "&adastats=" + adastats + "&SIPmonitorLINK=" + SIPmonitorLINK + "&IAXmonitorLINK=" + IAXmonitorLINK + "&usergroup=" + usergroup + "&UGdisplay=" + UGdisplay + "&UidORname=" + UidORname + "&orderby=" + orderby + "&SERVdisplay=" + SERVdisplay + "&CALLSdisplay=" + CALLSdisplay + "&PHONEdisplay=" + PHONEdisplay + "&CUSTPHONEdisplay=" + CUSTPHONEdisplay + "&with_inbound=" + with_inbound + "&monitor_active=" + monitor_active + "&monitor_phone=" + temp_monitor_phone + "&ALLINGROUPstats=" + ALLINGROUPstats + "&DROPINGROUPstats=" + DROPINGROUPstats + "&NOLEADSalert=" + NOLEADSalert + "&ShowCustPhoneCode=" + ShowCustPhoneCode + "&CARRIERstats=" + CARRIERstats + "&PRESETstats=" + PRESETstats + "&AGENTtimeSTATS=" + AGENTtimeSTATS + "&AGENTlatency=" + AGENTlatency + "&parkSTATS=" + parkSTATS + "&SLAinSTATS=" + SLAinSTATS + "&INGROUPcolorOVERRIDE=" + INGROUPcolorOVERRIDE + "&droppedOFtotal=" + droppedOFtotal + "&report_display_type=" + report_display_type + "";
+			reload_url = PHP_SELF + "?RR=" + RR + "&DB=" + DB + "" + groupQS + usergroupQS + ingroupQS + "&adastats=" + adastats + "&SIPmonitorLINK=" + SIPmonitorLINK + "&IAXmonitorLINK=" + IAXmonitorLINK + "&usergroup=" + usergroup + "&UGdisplay=" + UGdisplay + "&UidORname=" + UidORname + "&orderby=" + orderby + "&SERVdisplay=" + SERVdisplay + "&CALLSdisplay=" + CALLSdisplay + "&PHONEdisplay=" + PHONEdisplay + "&MONITORdisplay=" + MONITORdisplay + "&CUSTPHONEdisplay=" + CUSTPHONEdisplay + "&with_inbound=" + with_inbound + "&monitor_active=" + monitor_active + "&monitor_phone=" + temp_monitor_phone + "&ALLINGROUPstats=" + ALLINGROUPstats + "&DROPINGROUPstats=" + DROPINGROUPstats + "&NOLEADSalert=" + NOLEADSalert + "&ShowCustPhoneCode=" + ShowCustPhoneCode + "&CARRIERstats=" + CARRIERstats + "&PRESETstats=" + PRESETstats + "&AGENTtimeSTATS=" + AGENTtimeSTATS + "&AGENTlatency=" + AGENTlatency + "&parkSTATS=" + parkSTATS + "&SLAinSTATS=" + SLAinSTATS + "&INGROUPcolorOVERRIDE=" + INGROUPcolorOVERRIDE + "&droppedOFtotal=" + droppedOFtotal + "&report_display_type=" + report_display_type + "";
 
 		//	alert('|' + temp_monitor_phone + '|' + monitor_phone + '|\n' + reload_url);
 			window.location.href = reload_url;
@@ -2207,17 +2234,26 @@ if (!preg_match("/WALL|LIMITED/",$report_display_type))
 		{echo " &nbsp; &nbsp; &nbsp; <a href=\"#\" onclick=\"update_variables('PHONEdisplay','');\"><font class=\"top_settings_val\"><span id=PHONEdisplayTXT>"._QXZ("HIDE PHONES")."</span></font></a>";}
 	else
 		{echo " &nbsp; &nbsp; &nbsp; <a href=\"#\" onclick=\"update_variables('PHONEdisplay','');\"><font class=\"top_settings_val\"><span id=PHONEdisplayTXT>"._QXZ("SHOW PHONES")."</span></font></a>";}
-	if ($CUSTPHONEdisplay>0)
-		{echo " &nbsp; &nbsp; &nbsp; <a href=\"#\" onclick=\"update_variables('CUSTPHONEdisplay','');\"><font class=\"top_settings_val\"><span id=CUSTPHONEdisplayTXT>"._QXZ("HIDE CUSTPHONES")."</span></font></a>";}
+	if ($MONITORdisplay>0)
+		{echo " &nbsp; &nbsp; &nbsp; <a href=\"#\" onclick=\"update_variables('MONITORdisplay','');\"><font class=\"top_settings_val\"><span id=MONITORdisplayTXT>"._QXZ("HIDE MONITORS")."</span></font></a>";}
 	else
-		{echo " &nbsp; &nbsp; &nbsp; <a href=\"#\" onclick=\"update_variables('CUSTPHONEdisplay','');\"><font class=\"top_settings_val\"><span id=CUSTPHONEdisplayTXT>"._QXZ("SHOW CUSTPHONES")."</span></font></a>";}
-	
+		{echo " &nbsp; &nbsp; &nbsp; <a href=\"#\" onclick=\"update_variables('MONITORdisplay','');\"><font class=\"top_settings_val\"><span id=MONITORdisplayTXT>"._QXZ("SHOW MONITORS")."</span></font></a>";}
+	if ($RS_hide_CUST_info < 1)
+		{
+		if ($CUSTPHONEdisplay>0)
+			{echo " &nbsp; &nbsp; &nbsp; <a href=\"#\" onclick=\"update_variables('CUSTPHONEdisplay','');\"><font class=\"top_settings_val\"><span id=CUSTPHONEdisplayTXT>"._QXZ("HIDE CUSTPHONES")."</span></font></a>";}
+		else
+			{echo " &nbsp; &nbsp; &nbsp; <a href=\"#\" onclick=\"update_variables('CUSTPHONEdisplay','');\"><font class=\"top_settings_val\"><span id=CUSTPHONEdisplayTXT>"._QXZ("SHOW CUSTPHONES")."</span></font></a>";}
+		}
 	if ($LOGuser_level >= $CUSTINFOminUL) 
 		{
-		if ($CUSTINFOdisplay>0)
-			{echo " &nbsp; &nbsp; &nbsp; <a href=\"#\" onclick=\"update_variables('CUSTINFOdisplay','');\"><font class=\"top_settings_val\"><span id=CUSTINFOdisplayTXT>"._QXZ("HIDE CUST INFO")."</span></font></a>";}
-		else
-			{echo " &nbsp; &nbsp; &nbsp; <a href=\"#\" onclick=\"update_variables('CUSTINFOdisplay','');\"><font class=\"top_settings_val\"><span id=CUSTINFOdisplayTXT>"._QXZ("SHOW CUST INFO")."</span></font></a>";}
+		if ($RS_hide_CUST_info < 1)
+			{
+			if ($CUSTINFOdisplay>0)
+				{echo " &nbsp; &nbsp; &nbsp; <a href=\"#\" onclick=\"update_variables('CUSTINFOdisplay','');\"><font class=\"top_settings_val\"><span id=CUSTINFOdisplayTXT>"._QXZ("HIDE CUST INFO")."</span></font></a>";}
+			else
+				{echo " &nbsp; &nbsp; &nbsp; <a href=\"#\" onclick=\"update_variables('CUSTINFOdisplay','');\"><font class=\"top_settings_val\"><span id=CUSTINFOdisplayTXT>"._QXZ("SHOW CUST INFO")."</span></font></a>";}
+			}
 		}
 	}
 

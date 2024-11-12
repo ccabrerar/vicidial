@@ -11,7 +11,7 @@
 # agents that should appear to be logged in so that the calls can be transferred 
 # out to them properly.
 #
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG:
 # 50215-0954 - First version of script
@@ -55,7 +55,12 @@
 # 190716-1628 - Added code for Call Quotas
 # 191017-1909 - Added code for filtered maximum inbound calls
 # 230523-0825 - Added User inbound_credits feature
+# 240219-1518 - Added daily_limit inbound option
+# 240420-2246 - Added ConfBridge code
+# 240516-2149 - Allow for ALT start_call_url, added --version flag
 #
+
+$build = '240516-2149';
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -70,11 +75,17 @@ if (length($ARGV[0])>1)
 		{
 		print "allowed run time options:\n";
 		print "  [--help] = this screen\n";
+		print "  [--version] = show script build version\n";
 		print "  [--test] = test\n";
 		print "  [--debug] = verbose debug messages\n";
 		print "  [--debugX] = extra verbose debug messages\n";
 		print "  [--delay=XXX] = delay of XXX seconds per loop, default 2 seconds\n";
 		print "\n";
+		exit;
+		}
+	if ($args =~ /--version/i)
+		{
+		print "script build: $build \n";
 		exit;
 		}
 	else
@@ -196,7 +207,7 @@ $sthA->finish();
 ###########################################
 
 ### Grab Server values from the database
-$stmtA = "SELECT vd_server_logs,local_gmt,ext_context FROM servers where server_ip = '$VARserver_ip';";
+$stmtA = "SELECT vd_server_logs,local_gmt,ext_context,conf_engine FROM servers where server_ip = '$VARserver_ip';";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -206,6 +217,7 @@ if ($sthArows > 0)
 	$DBvd_server_logs =		$aryA[0];
 	$DBSERVER_GMT =			$aryA[1];
 	$ext_context =			$aryA[2];
+	$conf_engine =			$aryA[3];
 	if ($DBvd_server_logs =~ /Y/)	{$SYSLOG = '1';}
 	else {$SYSLOG = '0';}
 	if (length($DBSERVER_GMT)>0)	{$SERVER_GMT = $DBSERVER_GMT;}
@@ -577,7 +589,7 @@ while($one_day_interval > 0)
 
 				### This is where the call to the start_call_url launch goes
 
-				if (length($start_call_url) > 5) 
+				if ( (length($start_call_url) > 5) || ($start_call_url =~ /^ALT$/) )
 					{
 					$launch = $PATHhome . "/AST_send_URL.pl";
 					$launch .= " --SYSLOG" if ($SYSLOG);
@@ -688,6 +700,7 @@ while($one_day_interval > 0)
 					{
 					$TESTrun++;
 					$DBremote_conf_exten[$user_counter] = ($user_counter + 8600051);
+					if ($conf_engine eq 'CONFBRIDGE') { $DBremote_conf_exten[$user_counter] = ($user_counter + 9600051); }
 					}
 				$DBremote_closer[$user_counter] =		$closer_campaigns;
 				$DBremote_random[$user_counter] =		$random;
@@ -922,9 +935,10 @@ while($one_day_interval > 0)
 							$TEMPagentWEIGHT=0;
 							$TEMPagentCALLS=0;
 							$TEMPexistsVLIA=0;
+							$TEMPagentLIMIT=-1;
 							# grab the group weight and calls today of the agent in each in-group
 							$DBuser_level[$h]='1';
-							$stmtA = "SELECT group_weight,calls_today,group_grade,calls_today_filtered FROM vicidial_inbound_group_agents where user='$DBuser_start[$h]' and group_id='$TEMPingroups[$s]';";
+							$stmtA = "SELECT group_weight,calls_today,group_grade,calls_today_filtered,daily_limit FROM vicidial_inbound_group_agents where user='$DBuser_start[$h]' and group_id='$TEMPingroups[$s]';";
 							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 							$sthArowsVIGA=$sthA->rows;
@@ -935,6 +949,7 @@ while($one_day_interval > 0)
 								$TEMPagentCALLS =		$aryA[1];
 								$TEMPagentGRADE =		$aryA[2];
 								$TEMPagentCALLSftl =	$aryA[3];
+								$TEMPagentLIMIT =		$aryA[4];
 								}
 							$sthA->finish();
 
@@ -955,7 +970,7 @@ while($one_day_interval > 0)
 
 							if ($TEMPexistsVLIA < 1)
 								{
-								$stmtA = "INSERT IGNORE INTO vicidial_live_inbound_agents SET user='$DBremote_user[$h]', group_id='$TEMPingroups[$s]', group_weight='$TEMPagentWEIGHT', calls_today='$TEMPagentCALLS', calls_today_filtered='$TEMPagentCALLSftl', last_call_time='$SQLdate', last_call_time_filtered='$SQLdate', last_call_finish='$SQLdate', group_grade='$TEMPagentGRADE' ON DUPLICATE KEY UPDATE group_weight='$TEMPagentWEIGHT',group_grade='$TEMPagentGRADE';";
+								$stmtA = "INSERT IGNORE INTO vicidial_live_inbound_agents SET user='$DBremote_user[$h]', group_id='$TEMPingroups[$s]', group_weight='$TEMPagentWEIGHT', calls_today='$TEMPagentCALLS', calls_today_filtered='$TEMPagentCALLSftl', last_call_time='$SQLdate', last_call_time_filtered='$SQLdate', last_call_finish='$SQLdate', group_grade='$TEMPagentGRADE', daily_limit='$TEMPagentLIMIT' ON DUPLICATE KEY UPDATE group_weight='$TEMPagentWEIGHT',group_grade='$TEMPagentGRADE';";
 								$affected_rows = $dbhA->do($stmtA);
 								if ( ($DBX) && ($affected_rows > 0) ) {print STDERR "$DBremote_user[$h] VLIA UPDATE: $affected_rows|$TEMPingroups[$s]|$TEMPagentWEIGHT\n";}
 

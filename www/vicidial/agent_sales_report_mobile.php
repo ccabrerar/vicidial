@@ -1,13 +1,14 @@
 <?php 
 # agent_sales_report_mobile.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # Streamlined report for displaying sale-only statistics in a format easily readable on a mobile device
 #
 # CHANGELOG:
 # 200309-1819 - First Build
 # 220303-1515 - Added allow_web_debug system setting
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
@@ -54,8 +55,8 @@ $MT[0]='';
 $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 $STARTtime = date("U");
-if (!isset($group)) {$group = array();}
-if (!isset($user_group)) {$user_group = array();}
+if (!is_array($group)) {$group = array();}
+if (!is_array($user_group)) {$user_group = array();}
 if (!isset($query_date_D)) {$query_date_D=$NOW_DATE;}
 if (!isset($query_date_T)) {$query_date_T="00:00:00";}
 if (!isset($refresh_rate)) {$refresh_rate="1000000";}
@@ -411,7 +412,7 @@ if ($SUBMIT==_QXZ("SUBMIT") || $SUBMIT==_QXZ("REFRESH")) {
 	$campaign_status_rslt=mysql_to_mysqli($campaign_status_stmt, $link);
 	$campaign_sales=array();
 	while ($campaign_status_row=mysqli_fetch_row($campaign_status_rslt)) {
-		if (!isset($campaign_sales["$campaign_status_row[0]"])) {$campaign_sales["$campaign_status_row[0]"]=array();}
+		if (!is_array($campaign_sales["$campaign_status_row[0]"])) {$campaign_sales["$campaign_status_row[0]"]=array();}
 		array_push($campaign_sales["$campaign_status_row[0]"], "$campaign_status_row[1]");
 	}
 

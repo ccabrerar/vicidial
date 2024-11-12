@@ -6,16 +6,17 @@
 # CHANGELOG:
 # 220825-1632 - First build
 # 230106-1301 - Added auto-download for large page displays to avoid memory errors
+# 240422-1750 - Added agent dead time section
 #
 
 # NANQUE, not an unanswered call?
 # TIMEOT, unanswered even though it was dropped into a call that was picked up
 # Warm transfers count as two calls
 
-$PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
-$PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
-$PHP_SELF=$_SERVER['PHP_SELF'];
-$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
+# $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
+# $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
+# $PHP_SELF=$_SERVER['PHP_SELF'];
+# $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 
 $vicidial_agent_log_table="vicidial_agent_log";
 
@@ -26,6 +27,8 @@ if (isset($_GET["sort_agent_sessions_detail"]))			{$sort_agent_sessions_detail=$
 	elseif (isset($_POST["sort_agent_sessions_detail"]))	{$sort_agent_sessions_detail=$_POST["sort_agent_sessions_detail"];}
 if (isset($_GET["sort_agent_pause_detail"]))			{$sort_agent_pause_detail=$_GET["sort_agent_pause_detail"];}
 	elseif (isset($_POST["sort_agent_pause_detail"]))	{$sort_agent_pause_detail=$_POST["sort_agent_pause_detail"];}
+if (isset($_GET["sort_agent_dead_detail"]))			{$sort_agent_dead_detail=$_GET["sort_agent_dead_detail"];}
+	elseif (isset($_POST["sort_agent_dead_detail"]))	{$sort_agent_dead_detail=$_POST["sort_agent_dead_detail"];}
 
 # No campaigns, need to query for all.
 $vicidial_user_log_SQL=preg_replace('/and campaign_id in \(\'\'\)/', '', $vicidial_user_log_SQL);
@@ -35,11 +38,13 @@ if ($non_latin < 1)
 	{
 	$sort_agent_sessions_detail = preg_replace('/[^\s\-_0-9a-zA-Z]/','',$sort_agent_sessions_detail);
 	$sort_agent_pause_detail = preg_replace('/[^\s\-_0-9a-zA-Z]/','',$sort_agent_pause_detail);
+	$sort_agent_dead_detail = preg_replace('/[^\s\-_0-9a-zA-Z]/','',$sort_agent_dead_detail);
 	}
 else
 	{
 	$sort_agent_sessions_detail = preg_replace('/[^\s\-_0-9\p{L}]/u','',$sort_agent_sessions_detail);
 	$sort_agent_pause_detail = preg_replace('/[^\s\-_0-9\p{L}]/u','',$sort_agent_pause_detail);
+	$sort_agent_dead_detail = preg_replace('/[^\s\-_0-9\p{L}]/u','',$sort_agent_dead_detail);
 	}
 
 if (preg_match('/ desc$/', $sort_agent_pause_detail)) 
@@ -53,6 +58,18 @@ else
 	$reverse_link=$sort_agent_pause_detail." desc";
 	}
 $sort_agent_pause_detail_preg=preg_replace('/ desc$/', '', $sort_agent_pause_detail);
+
+if (preg_match('/ desc$/', $sort_agent_dead_detail)) 
+	{
+	$sort_char="&#8595;"; 
+	$reverse_dead_link=preg_replace('/ desc$/', '', $sort_agent_dead_detail);
+	} 
+else 
+	{
+	$sort_char="&#8593;"; 
+	$reverse_dead_link=$sort_agent_dead_detail." desc";
+	}
+$sort_agent_dead_detail_preg=preg_replace('/ desc$/', '', $sort_agent_dead_detail);
 
 /*
 $start_date="2021-12-20";
@@ -499,6 +516,96 @@ $HTML_output.="</table>";
 $HTML_output.="<input type='hidden' name='sort_agent_pause_detail' id='sort_agent_pause_detail' value='$sort_agent_pause_detail'>";
 #####################################
 
+####### AGENT DEAD DETAIL ##########
+$sort_add_index=preg_replace('/ desc/', '', $sort_agent_dead_detail);
+if (preg_match('/ desc$/', $sort_agent_dead_detail)) 
+	{
+	$sort_char="&#8595;"; 
+	$reverse_link=preg_replace('/ desc$/', '', $sort_agent_dead_detail);
+	} 
+else 
+	{
+	$sort_char="&#8593;"; 
+	$reverse_link=$sort_agent_dead_detail." desc";
+	}
+$sort_agent_dead_detail_preg=preg_replace('/ desc$/', '', $sort_agent_dead_detail);
+
+
+$HTML_output.="<BR><h2 class='rpt_header' id='sadd_anchor'>"._QXZ("Detail of agent dead time").": </h2>"; # $NWB#VERM_AGENTS_DT-detail_of_agent_dead_time$NWE
+$HTML_output.="<hr style='height:2px;border-width:0;color:#ddd;background-color:#ddd;margin-bottom: 2em;'>";
+$HTML_output.="<table width='100%' id='rpt_table'>";
+
+$HTML_output.="<tr class='standard_font bold'>";
+$HTML_output.="<th><input type='button' class='sort_button' value='Agent".("user"==$sort_agent_dead_detail_preg ? " $sort_char" : "")."' onClick=\"javascript:document.getElementById('sort_agent_dead_detail').value='".("user"==$sort_agent_dead_detail_preg ? "$reverse_link" : "user")."'; this.form.action+='#sadd_anchor'; this.form.submit()\"></th>\n";
+$HTML_output.="<th><input type='button' class='sort_button' value='Agent ID".("ID"==$sort_agent_dead_detail_preg ? " $sort_char" : "")."' onClick=\"javascript:document.getElementById('sort_agent_dead_detail').value='".("ID"==$sort_agent_dead_detail_preg ? "$reverse_link" : "ID")."'; this.form.action+='#sadd_anchor'; this.form.submit()\"></th>\n";
+$HTML_output.="<th><input type='button' class='sort_button' value='Total Dead Time".("total_dead_time"==$sort_agent_dead_detail_preg ? " $sort_char" : "")."' onClick=\"javascript:document.getElementById('sort_agent_dead_detail').value='".("total_dead_time"==$sort_agent_dead_detail_preg ? "$reverse_link" : "total_dead_time")."'; this.form.action+='#sadd_anchor'; this.form.submit()\"></th>\n";
+$HTML_output.="<th><input type='button' class='sort_button' value='Average Dead Time".("average_dead_time"==$sort_agent_dead_detail_preg ? " $sort_char" : "")."' onClick=\"javascript:document.getElementById('sort_agent_dead_detail').value='".("average_dead_time"==$sort_agent_dead_detail_preg ? "$reverse_link" : "average_dead_time")."'; this.form.action+='#sadd_anchor'; this.form.submit()\"></th>\n";
+
+$HTML_output.="</tr>\n";
+
+
+$CSV_output["agent_dead_details"]="\""._QXZ("Agent")."\",\""._QXZ("Agent ID")."\",\""._QXZ("Total Dead Time")."\",\""._QXZ("Average Dead Time")."\"\n";
+$CSV_output["auto_download"]="\""._QXZ("Agent")."\",\""._QXZ("Agent ID")."\",\""._QXZ("Total Dead Time")."\",\""._QXZ("Average Dead Time")."\"\n";
+
+$agent_dead_stmt="select user, count(*) as calls, sec_to_time(sum(dead_sec)) as total_dead_time, sec_to_time(round(sum(dead_sec)/count(*))) as average_dead_time from vicidial_agent_log $vicidial_agent_log_SQL and lead_id is not null group by user";
+if ($DB) {$HTML_output.="<B>$agent_dead_stmt</B>";}
+$agent_dead_rslt=mysql_to_mysqli($agent_dead_stmt, $link);
+$agent_dead_array=array(); $i=0;
+while ($agent_dead_row=mysqli_fetch_array($agent_dead_rslt))
+	{
+	$user=$agent_dead_row["user"];
+	$agentName=$fullname_info["$user"];
+	
+	$agent_dead_array[$i]["user"]=$agentName;
+	$agent_dead_array[$i]["ID"]=$user;
+	$agent_dead_array[$i]["total_dead_time"]=$agent_dead_row["total_dead_time"];
+	$agent_dead_array[$i]["average_dead_time"]=$agent_dead_row["average_dead_time"];
+	$i++;
+
+	}
+
+if (!$sort_add_index) {$sort_add_index="user";}
+
+if ($sort_add_index)
+	{
+
+	$col = array_column( $agent_dead_array, "$sort_add_index" );
+	if (preg_match('/ desc$/', $sort_agent_dead_detail))
+		{
+		array_multisort( $col, SORT_DESC, SORT_STRING, $agent_dead_array );
+		}
+	else
+		{
+		array_multisort( $col, SORT_ASC, SORT_STRING, $agent_dead_array );
+		}
+
+	# print_r($agent_dead_array);
+	}
+
+$q=0;
+foreach ($agent_dead_array as $i => $row)
+	{
+	$q++;
+
+	$HTML_output.="<tr class='standard_font'>";
+	$HTML_output.="<td>".$row["user"]."</td>";
+	$HTML_output.="<td>".$row["ID"]."</td>";
+	$HTML_output.="<td>".$row["total_dead_time"]."</td>";
+	$HTML_output.="<td>".$row["average_dead_time"]."</td>";
+	$HTML_output.="</tr>\n";
+	
+	if (!$download_rpt && $q%100==0) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+
+	$CSV_output["agent_dead_details"].="\"".$row["user"]."\",\"".$row["ID"]."\",\"".$row["total_dead_time"]."\",\"".$row["average_dead_time"]."\"\n";
+	$CSV_output["auto_download"].="\"".$row["user"]."\",\"".$row["ID"]."\",\"".$row["total_dead_time"]."\",\"".$row["average_dead_time"]."\"\n";
+	}
+
+$HTML_output.="<tr class='export_row'>";
+$HTML_output.="<td colspan='4' class='export_row_cell'>Export as...<input type='button' class='download_button' onClick=\"DownloadReport('AGENTS_DT', 'agent_dead_details')\" title=\"Export as a CSV file\" value='CSV'></td>";
+$HTML_output.="</tr>";
+$HTML_output.="</table>";
+$HTML_output.="<input type='hidden' name='sort_agent_dead_detail' id='sort_agent_dead_detail' value='$sort_agent_dead_detail'>";
+#####################################
 
 if ($download_rpt)
 	{

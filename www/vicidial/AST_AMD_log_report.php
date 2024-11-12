@@ -1,13 +1,14 @@
 <?php 
 # AST_AMD_log_report.php
 # 
-# Copyright (C) 2022  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 190329-1852 - First build, based on AST_carrier_log_report.php
 # 191013-0839 - Fixes for PHP7
 # 220303-1415 - Added allow_web_debug system setting
 # 220812-0951 - Added User Group report permissions checking
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
@@ -52,9 +53,9 @@ $DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 $START_TIME=date("U");
 $NOW_DATE = date("Y-m-d");
-if (!isset($server_ip)) {$server_ip = array();}
-if (!isset($AMDSTATUS)) {$AMDSTATUS = array();}
-if (!isset($AMDRESPONSE)) {$AMDRESPONSE = array();}
+if (!is_array($server_ip)) {$server_ip = array();}
+if (!is_array($AMDSTATUS)) {$AMDSTATUS = array();}
+if (!is_array($AMDRESPONSE)) {$AMDRESPONSE = array();}
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (strlen($query_date_D) < 6) {$query_date_D = "00:00:00";}
 if (strlen($query_date_T) < 6) {$query_date_T = "23:59:59";}
@@ -210,9 +211,9 @@ $LOGserver_name = getenv("SERVER_NAME");
 $LOGserver_port = getenv("SERVER_PORT");
 $LOGrequest_uri = getenv("REQUEST_URI");
 $LOGhttp_referer = getenv("HTTP_REFERER");
-$LOGbrowser=preg_replace("/\'|\"|\\\\/","",$LOGbrowser);
-$LOGrequest_uri=preg_replace("/\'|\"|\\\\/","",$LOGrequest_uri);
-$LOGhttp_referer=preg_replace("/\'|\"|\\\\/","",$LOGhttp_referer);
+$LOGbrowser=preg_replace("/<|>|\'|\"|\\\\/","",$LOGbrowser);
+$LOGrequest_uri=preg_replace("/<|>|\'|\"|\\\\/","",$LOGrequest_uri);
+$LOGhttp_referer=preg_replace("/<|>|\'|\"|\\\\/","",$LOGhttp_referer);
 if (preg_match("/443/i",$LOGserver_port)) {$HTTPprotocol = 'https://';}
   else {$HTTPprotocol = 'http://';}
 if (($LOGserver_port == '80') or ($LOGserver_port == '443') ) {$LOGserver_port='';}

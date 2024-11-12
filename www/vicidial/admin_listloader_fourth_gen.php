@@ -2,7 +2,7 @@
 # admin_listloader_fourth_gen.php - version 2.14
 #  (based upon - new_listloader_superL.php script)
 # 
-# Copyright (C) 2022  Matt Florell,Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell,Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # ViciDial web-based lead loader from formatted file
 # 
@@ -80,10 +80,13 @@
 # 200922-1013 - Added web_loader_phone_strip system setting feature
 # 210210-1602 - Added duplicate check with more X-day options
 # 220222-1002 - Added allow_web_debug system setting
+# 231207-1445 - Fix for web_loader_phone_strip duplicate check, issue #1498
+# 240320-1033 - Added misssing input variable filtering
+# 240801-1131 - Code updates for PHP8 compatibility
 #
 
-$version = '2.14-78';
-$build = '220222-1002';
+$version = '2.14-81';
+$build = '240801-1131';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -284,6 +287,22 @@ $OK_to_process = preg_replace('/[^- \_0-9a-zA-Z]/', '', $OK_to_process);
 
 # Variables filter further down in the code
 # $dedupe_statuses
+
+if (is_array($dedupe_statuses)) 
+	{
+	if (count($dedupe_statuses)>0) 
+		{
+		for($ds=0; $ds<count($dedupe_statuses); $ds++) 
+			{
+			$dedupe_statuses[$ds] = preg_replace('/[^-_0-9\p{L}]/u', '', $dedupe_statuses[$ds]);
+			}
+		}
+	}
+else
+	{
+	$dedupe_statuses=array();
+	}
+
 
 if (strlen($dedupe_statuses_override)>0) 
 	{
@@ -911,7 +930,7 @@ if ($SSenable_international_dncs)
 		<tr>
 			<td align=center colspan=2><input style='background-color:#<?php echo "$SSbutton_color"; ?>' type=submit value="<?php echo _QXZ("SUBMIT"); ?>" name='submit_file'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input style='background-color:#<?php echo "$SSbutton_color"; ?>' type=button onClick="javascript:document.location='admin_listloader_fourth_gen.php'" value="<?php echo _QXZ("START OVER"); ?>" name='reload_page'></td>
 		  </tr>
-		  <tr><td align=left><font size=1> &nbsp; &nbsp; &nbsp; &nbsp; <a href="admin.php?ADD=100" target="_parent"><?php echo _QXZ("BACK TO ADMIN"); ?></a> &nbsp; &nbsp; </font></td><td align=right><font size=1><?php echo _QXZ("LIST LOADER 4th Gen"); ?>- &nbsp; &nbsp; <?php echo _QXZ("VERSION"); ?>: <?php echo $version ?> &nbsp; &nbsp; <?php echo _QXZ("BUILD"); ?>: <?php echo $build ?> &nbsp; &nbsp; </td></tr>
+		  <tr><td align=left><font size=1> &nbsp; &nbsp; &nbsp; &nbsp; <a href="admin.php?ADD=100" target="_parent"><?php echo _QXZ("BACK TO ADMIN"); ?></a> &nbsp; &nbsp; </font></td><td align=right><font size=1><?php echo _QXZ("LIST LOADER 4th Gen"); ?> | <a href="admin_listloader_fifth_gen.php"><?php echo _QXZ("5th Gen"); ?></a> &nbsp; &nbsp; <?php echo _QXZ("VERSION"); ?>: <?php echo $version ?> &nbsp; &nbsp; <?php echo _QXZ("BUILD"); ?>: <?php echo $build ?> &nbsp; &nbsp; </td></tr>
 		</table>
 		<?php 
 
@@ -984,9 +1003,9 @@ if ($SSenable_international_dncs)
 ##### BEGIN custom fields submission #####
 if ($OK_to_process) 
 	{
-	print "<script language='JavaScript1.2'>document.forms[0].leadfile.disabled=true;document.forms[0].list_id_override.disabled=true;document.forms[0].phone_code_override.disabled=true; document.forms[0].submit_file.disabled=true; document.forms[0].reload_page.disabled=true;</script>";
+	print "<script language='JavaScript1.2'>\nif(document.forms[0].leadfile) {document.forms[0].leadfile.disabled=true;}\ndocument.forms[0].list_id_override.disabled=true;\ndocument.forms[0].phone_code_override.disabled=true;\nif(document.forms[0].submit_file) {document.forms[0].submit_file.disabled=true;}\nif(document.forms[0].reload_page) {document.forms[0].reload_page.disabled=true;}\n</script>";
 	flush();
-	$total=0; $good=0; $bad=0; $dup=0; $post=0; $moved=0; $phone_list='';
+	$total=0; $good=0; $bad=0; $dup=0; $inv=0; $post=0; $moved=0; $phone_list='';
 
 	$file=fopen("$lead_file", "r");
 	if ($webroot_writable > 0)
@@ -1006,7 +1025,7 @@ if ($OK_to_process)
 		$file=fopen("$lead_file", "r");
 		print "<center><font face='arial, helvetica' size=3 color='#009900'><B>"._QXZ("Processing file")."...\n";
 
-		if (count($dedupe_statuses)>0) 
+		if (is_array($dedupe_statuses) && count($dedupe_statuses)>0) 
 			{
 			$statuses_clause=" and status in (";
 			$status_dedupe_str="";
@@ -1298,6 +1317,10 @@ if ($OK_to_process)
 
 				$custom_SQL = preg_replace("/,$/","",$custom_SQL);
 
+				if ( (strlen($SSweb_loader_phone_strip)>0) and ($SSweb_loader_phone_strip != 'DISABLED') )
+					{
+					$phone_number = preg_replace("/^$SSweb_loader_phone_strip/",'',$phone_number);
+					}
 
 				##### Check for duplicate phone numbers in vicidial_list table for all lists in a campaign #####
 				if (preg_match("/DUPCAMP/i",$dupcheck))
@@ -1572,10 +1595,6 @@ if ($OK_to_process)
 
 				$valid_number=1;
 				$invalid_reason='';
-				if ( (strlen($SSweb_loader_phone_strip)>0) and ($SSweb_loader_phone_strip != 'DISABLED') )
-					{
-					$phone_number = preg_replace("/^$SSweb_loader_phone_strip/",'',$phone_number);
-					}
 				if ( (strlen($phone_number)<5) || (strlen($phone_number)>18) )
 					{
 					$valid_number=0;
@@ -1744,7 +1763,7 @@ if ($OK_to_process)
 
 if (($leadfile) && ($LF_path))
 	{
-	$total=0; $good=0; $bad=0; $dup=0; $post=0; $moved=0; $phone_list='';
+	$total=0; $good=0; $bad=0; $dup=0; $inv=0; $post=0; $moved=0; $phone_list='';
 
 	### LOG INSERTION Admin Log Table ###
 	$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LISTS', event_type='LOAD', record_id='$list_id_override', event_code='ADMIN LOAD LIST', event_sql='', event_notes='File Name: $leadfile_name, DEBUG: dedupe_statuses:$dedupe_statuses[0]| dedupe_statuses_override:$dedupe_statuses_override| dupcheck:$dupcheck | status mismatch action: $status_mismatch_action| lead_file:$lead_file| list_id_override:$list_id_override| phone_code_override:$phone_code_override| postalgmt:$postalgmt| template_id:$template_id| usacan_check:$usacan_check| dnc_country_scrub:$international_dnc_scrub| state_conversion:$state_conversion| web_loader_phone_length:$web_loader_phone_length| web_loader_phone_strip:$SSweb_loader_phone_strip|';";
@@ -1821,7 +1840,7 @@ if (($leadfile) && ($LF_path))
 				}
 			}
 
-		print "<script language='JavaScript1.2'>document.forms[0].leadfile.disabled=true; document.forms[0].submit_file.disabled=true; document.forms[0].reload_page.disabled=false;</script>";
+		print "<script language='JavaScript1.2'>\nif(document.forms[0].leadfile) {document.forms[0].leadfile.disabled=true;}\nif(document.forms[0].submit_file) {document.forms[0].submit_file.disabled=true;}\nif(document.forms[0].reload_page) {document.forms[0].reload_page.disabled=false;}\n</script>";
 		flush();
 
 		$delim_set=0;
@@ -1874,7 +1893,7 @@ if (($leadfile) && ($LF_path))
 			{
 			flush();
 			$file=fopen("$lead_file", "r");
-			$total=0; $good=0; $bad=0; $dup=0; $post=0; $moved=0; $phone_list='';
+			$total=0; $good=0; $bad=0; $dup=0; $inv=0; $post=0; $moved=0; $phone_list='';
 			print "<center><font face='arial, helvetica' size=3 color='#009900'><B>"._QXZ("Processing")." $delim_name "._QXZ("file using template")." $template_id... ($tab_count|$pipe_count)\n";
 			if (strlen($list_id_override)>0) 
 				{
@@ -2044,6 +2063,10 @@ if (($leadfile) && ($LF_path))
 							}
 						}
 
+					if ( (strlen($SSweb_loader_phone_strip)>0) and ($SSweb_loader_phone_strip != 'DISABLED') )
+						{
+						$phone_number = preg_replace("/^$SSweb_loader_phone_strip/",'',$phone_number);
+						}
 
 					##### Check for duplicate phone numbers in vicidial_list table for all lists in a campaign #####
 					if (preg_match("/DUPCAMP/i",$dupcheck))
@@ -2315,10 +2338,6 @@ if (($leadfile) && ($LF_path))
 
 					$valid_number=1;
 					$invalid_reason='';
-					if ( (strlen($SSweb_loader_phone_strip)>0) and ($SSweb_loader_phone_strip != 'DISABLED') )
-						{
-						$phone_number = preg_replace("/^$SSweb_loader_phone_strip/",'',$phone_number);
-						}
 					if ( (strlen($phone_number)<5) || (strlen($phone_number)>18) )
 						{
 						$valid_number=0;
@@ -2411,6 +2430,10 @@ if (($leadfile) && ($LF_path))
 							#$rslt=mysql_to_mysqli($custom_SQL_query, $link);
 							#$affected_rows = mysqli_affected_rows($link);
 
+							$custom_tbl_stmt="SHOW TABLES LIKE '$custom_table'";
+							$custom_tbl_rslt=mysql_to_mysqli($custom_tbl_stmt, $link);
+							if(mysqli_num_rows($custom_tbl_rslt)>0)
+								{
 							$custom_ins_stmt="INSERT INTO $custom_table(lead_id";
 							$custom_SQL_values="";
 							for ($q=0; $q<count($custom_fields_ary); $q++) 
@@ -2461,6 +2484,7 @@ if (($leadfile) && ($LF_path))
 							echo "<!-- $custom_ins_stmt //-->\n";
 							if ( ($webroot_writable > 0) and ($DB>0) )
 								{fwrite($stmt_file, $custom_ins_stmt."\r\n");}
+								}
 /*
 							} 
 						else 
@@ -2561,7 +2585,7 @@ if (($leadfile) && ($LF_path))
 	##### BEGIN process standard file layout #####
 	if ($file_layout=="standard") 
 		{
-		print "<script language='JavaScript1.2'>document.forms[0].leadfile.disabled=true; document.forms[0].submit_file.disabled=true; document.forms[0].reload_page.disabled=false;</script>";
+		print "<script language='JavaScript1.2'>\nif(document.forms[0].leadfile) {document.forms[0].leadfile.disabled=true;}\nif(document.forms[0].submit_file) {document.forms[0].submit_file.disabled=true;}\nif(document.forms[0].reload_page) {document.forms[0].reload_page.disabled=false;}\n</script>";
 		flush();
 
 
@@ -2615,7 +2639,7 @@ if (($leadfile) && ($LF_path))
 			{
 			flush();
 			$file=fopen("$lead_file", "r");
-			$total=0; $good=0; $bad=0; $dup=0; $post=0; $moved=0; $phone_list='';
+			$total=0; $good=0; $bad=0; $dup=0; $inv=0; $post=0; $moved=0; $phone_list='';
 			print "<center><font face='arial, helvetica' size=3 color='#009900'><B>"._QXZ("Processing")." $delim_name "._QXZ("file")."... ($tab_count|$pipe_count)\n";
 
 			if (count($dedupe_statuses)>0) {
@@ -2805,6 +2829,11 @@ if (($leadfile) && ($LF_path))
 								$state = $state_abbr;
 								}
 							}
+						}
+
+					if ( (strlen($SSweb_loader_phone_strip)>0) and ($SSweb_loader_phone_strip != 'DISABLED') )
+						{
+						$phone_number = preg_replace("/^$SSweb_loader_phone_strip/",'',$phone_number);
 						}
 
 					##### Check for duplicate phone numbers in vicidial_list table for all lists in a campaign #####
@@ -3078,10 +3107,6 @@ if (($leadfile) && ($LF_path))
 					$valid_number=1;
 					$dnc_matches=0;
 					$invalid_reason='';
-					if ( (strlen($SSweb_loader_phone_strip)>0) and ($SSweb_loader_phone_strip != 'DISABLED') )
-						{
-						$phone_number = preg_replace("/^$SSweb_loader_phone_strip/",'',$phone_number);
-						}
 					if ( (strlen($phone_number)<5) || (strlen($phone_number)>18) )
 						{
 						$valid_number=0;
@@ -3232,7 +3257,7 @@ if (($leadfile) && ($LF_path))
 	##### BEGIN field chooser #####
 	else if ($file_layout=="custom")
 		{
-		print "<script language='JavaScript1.2'>document.forms[0].leadfile.disabled=true; document.forms[0].submit_file.disabled=true; document.forms[0].reload_page.disabled=true;</script><HR>";
+		print "<script language='JavaScript1.2'>\nif(document.forms[0].leadfile) {document.forms[0].leadfile.disabled=true;}\nif(document.forms[0].submit_file) {document.forms[0].submit_file.disabled=true;}\nif(document.forms[0].reload_page) {document.forms[0].reload_page.disabled=true;}\n</script><HR>";
 		flush();
 		print "<table border=0 cellpadding=3 cellspacing=0 width=700 align=center>\r\n";
 		print "  <tr bgcolor='#$SSmenu_background'>\r\n";
@@ -3448,7 +3473,7 @@ if (($leadfile) && ($LF_path))
 		print "  </tr>\r\n";
 		print "</table>\r\n";
 
-		print "<script language='JavaScript1.2'>document.forms[0].leadfile.disabled=false; document.forms[0].submit_file.disabled=false; document.forms[0].reload_page.disabled=false;</script>";
+		print "<script language='JavaScript1.2'>\nif(document.forms[0].leadfile) {document.forms[0].leadfile.disabled=false;}\nif(document.forms[0].submit_file) {document.forms[0].submit_file.disabled=true;}\nif(document.forms[0].reload_page) {document.forms[0].reload_page.disabled=false;}\n</script>";
 		}
 	##### END field chooser #####
 

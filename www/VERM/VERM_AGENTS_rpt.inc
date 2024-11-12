@@ -1,21 +1,22 @@
 <?php
 # VERM_AGENTS_rpt.inc - Vicidial Enhanced Reporting agent report
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
 # 
 # CHANGELOG:
 # 220825-1631 - First build
 # 230106-1304 - Added data flushing for large page outputs
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 # NANQUE, not an unanswered call?
 # TIMEOT, unanswered even though it was dropped into a call that was picked up
 # Warm transfers count as two calls
 
-$PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
-$PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
-$PHP_SELF=$_SERVER['PHP_SELF'];
-$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
+# $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
+# $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
+# $PHP_SELF=$_SERVER['PHP_SELF'];
+# $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 
 $startMS = microtime();
 
@@ -369,7 +370,7 @@ foreach ($agent_sessions_array as $user => $sessions)
 			$call_stmt_inb="";
 			if ($atomic_queue_ingroups_str!="")
 				{
-				$vcl_uniqueid_stmt="select uniqueid, status, length_in_sec-queue_seconds  from vicidial_closer_log $vicidial_closer_log_SQL and call_date+INTERVAL ceil(queue_seconds) SECOND>=from_unixtime(".$agent_sessions_array["$user"]["$start_event_date"]["start_hour"].") and call_date+INTERVAL ceil(queue_seconds) SECOND<=from_unixtime(".$agent_sessions_array["$user"]["$start_event_date"]["end_hour"].") and user='$user' and status!='AFTHRS'";
+				$vcl_uniqueid_stmt="select uniqueid, status, if(comments='EMAIL', length_in_sec, length_in_sec-queue_seconds)  from vicidial_closer_log $vicidial_closer_log_SQL and call_date+INTERVAL ceil(if(comments='EMAIL', 0, queue_seconds)) SECOND>=from_unixtime(".$agent_sessions_array["$user"]["$start_event_date"]["start_hour"].") and call_date+INTERVAL ceil(if(comments='EMAIL', 0, queue_seconds)) SECOND<=from_unixtime(".$agent_sessions_array["$user"]["$start_event_date"]["end_hour"].") and user='$user' and status!='AFTHRS'";
 			
 				$vcl_uniqueid_stmt.=" and call_date>=from_unixtime(".$agent_sessions_array["$user"]["$start_event_date"]["start_hour"].")-INTERVAL 24 HOUR and call_date<=from_unixtime(".$agent_sessions_array["$user"]["$start_event_date"]["end_hour"].")+INTERVAL 24 HOUR";
 				# $DB=1;
@@ -748,11 +749,11 @@ foreach ($agent_sessions_array as $user => $sessions)
 	$total_dispo_time=array_sum(array_column($sessions,'dispo_sec'));
 	$total_ALL_billable_time=($total_talk_time+$total_wait_time+$total_billable_time+$total_dispo_time);
 
-	$average_pause_time=sprintf('%02d', floor(($total_pause_time/$total_pauses)/3600)).gmdate(":i:s", round($total_pause_time/$total_pauses));
+	$average_pause_time=sprintf('%02d', floor(MathZDC($total_pause_time, $total_pauses)/3600)).gmdate(":i:s", round(MathZDC($total_pause_time, $total_pauses)));
 	$total_sessions=count($sessions);
-	$avg_session=sprintf('%02d', floor(($total_duration/$total_sessions)/3600)).gmdate(":i:s", round($total_duration/$total_sessions));
-	$pauses_pct=sprintf("%.1f", 100*($total_pause_time/$total_duration));
-	$pauses_per_session=sprintf("%.1f", ($total_pauses/$total_sessions));
+	$avg_session=sprintf('%02d', floor(MathZDC($total_duration, $total_sessions)/3600)).gmdate(":i:s", round(MathZDC($total_duration, $total_sessions)));
+	$pauses_pct=sprintf("%.1f", 100*MathZDC($total_pause_time, $total_duration));
+	$pauses_per_session=sprintf("%.1f", MathZDC($total_pauses, $total_sessions));
 
 	$total_pause_His=sprintf('%02d', floor($total_pause_time/3600)).gmdate(":i:s", $total_pause_time);
 	$total_available_His=sprintf('%02d', floor($total_available_time/3600)).gmdate(":i:s", $total_available_time);
@@ -836,7 +837,7 @@ foreach ($agent_sessions_array as $user => $sessions)
 	$total_nonbillable_His=sprintf('%02d', floor($total_nonbillable_time/3600)).gmdate(":i:s", $total_nonbillable_time);
 	$total_ALL_billable_His=sprintf('%02d', floor($total_ALL_billable_time/3600)).gmdate(":i:s", $total_ALL_billable_time);
 
-	$available_pct=sprintf("%.1f", 100*($total_duration/$grand_total_duration));
+	$available_pct=sprintf("%.1f", 100*MathZDC($total_duration, $grand_total_duration));
 
 	$overlapping="0:00";
 
@@ -851,7 +852,7 @@ foreach ($agent_sessions_array as $user => $sessions)
 	$HTML_output.="<td>".$total_nonbillable_His."</td>";
 	### $HTML_output.="<td>".$overlapping."</td>";
 	$HTML_output.="<td>".$available_pct." %</td>";
-	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".((100*$total_duration)/$max_agent_duration)."%'></td>";
+	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(MathZDC((100*$total_duration), $max_agent_duration))."%'></td>";
 	$HTML_output.="</tr>\n";
 
 	$CSV_output["agent_availability"].="\"".$agentName."\",\"".$total_available_His."\",\"".$total_pause_His."\",\"".$total_billable_His."\",\"".$total_nonbillable_His."\",\"".$available_pct." %\"\n";
@@ -901,7 +902,7 @@ foreach ($agent_sessions_array as $user => $sessions)
 	$total_billable_His=sprintf('%02d', floor($total_billable_time/3600)).gmdate(":i:s", $total_billable_time);
 	$total_ALL_billable_His=sprintf('%02d', floor($total_ALL_billable_time/3600)).gmdate(":i:s", $total_ALL_billable_time);
 
-	$queue_pct=sprintf("%.1f", 100*($total_calls/$grand_total_calls));
+	$queue_pct=sprintf("%.1f", 100*MathZDC($total_calls, $grand_total_calls));
 
 	$agentName=($show_full_agent_info ? "$user - ".$fullname_info["$user"] : $fullname_info["$user"]);
 
@@ -944,9 +945,9 @@ $CSV_output["answered_calls_by_user_group"]="\""._QXZ("Agent group")."\",\""._QX
 foreach ($user_groups_array as $user_group => $data)
 	{
 	$total_talk_His=sprintf('%02d', floor($data["talk_sec"]/3600)).gmdate(":i:s", $data["talk_sec"]);
-	$avg_talk_His=gmdate("H:i:s", round($data["talk_sec"]/$data["calls"]));
+	$avg_talk_His=gmdate("H:i:s", MathZDC(round($data["talk_sec"]), $data["calls"]));
 
-	$queue_pct=sprintf("%.1f", 100*($data["calls"]/$grand_total_calls));
+	$queue_pct=sprintf("%.1f", 100*MathZDC($data["calls"], $grand_total_calls));
 
 	$HTML_output.="<tr>\n";
 	$HTML_output.="<td>$user_group"."-".$usergroup_info["$user_group"]."</td>";
@@ -985,10 +986,10 @@ $CSV_output["answered_calls_by_location"]="\""._QXZ("Location")."\",\""._QXZ("N.
 foreach ($locations_array as $location => $data)
 	{
 	$total_talk_His=sprintf('%02d', floor($data["talk_sec"]/3600)).gmdate(":i:s", $data["talk_sec"]);
-	$avg_talk_His=gmdate("H:i:s", round($data["talk_sec"]/$data["calls"]));
-	$avg_wait_His=gmdate("H:i:s", round($data["wait_sec"]/$data["calls"]));
+	$avg_talk_His=gmdate("H:i:s", round(MathZDC($data["talk_sec"], $data["calls"])));
+	$avg_wait_His=gmdate("H:i:s", round(MathZDC($data["wait_sec"], $data["calls"])));
 
-	$queue_pct=sprintf("%.1f", 100*($data["calls"]/$grand_total_calls));
+	$queue_pct=sprintf("%.1f", 100*MathZDC($data["calls"], $grand_total_calls));
 
 
 	$HTML_output.="<tr>\n";
@@ -1038,7 +1039,7 @@ $grand_total_pause_His=sprintf('%02d', floor($grand_total_pause_time/3600)).gmda
 $grand_total_duration_His=sprintf('%02d', floor($grand_total_duration/3600)).gmdate(":i:s", $grand_total_duration);
 $grand_total_billable_His=sprintf('%02d', floor($grand_total_billable_time/3600)).gmdate(":i:s", $grand_total_billable_time);
 $grand_total_nonbillable_His=sprintf('%02d', floor($grand_total_nonbillable_time/3600)).gmdate(":i:s", $grand_total_nonbillable_time);
-$grand_total_occupancy=sprintf("%.1f", 100*($grand_total_talk_time/($grand_total_duration-$grand_total_pause_time)));
+$grand_total_occupancy=sprintf("%.1f", 100*(MathZDC($grand_total_talk_time, ($grand_total_duration-$grand_total_pause_time))));
 
 $HTML_output.="<tr>\n";
 ### $HTML_output.="<td>&nbsp;</td>";
@@ -1220,6 +1221,7 @@ $HTML_output.="</tr>\n";
 
 $CSV_output["agents_by_hour"].="\""._QXZ("Total")."\"\n";
 
+ksort($agent_date_hour_array);
 foreach ($agent_date_hour_array as $array_date => $hour)
 	{
 	$total_distinct_agents=array();
@@ -1291,12 +1293,12 @@ $HTML_output.="</tr>\n";
 $CSV_output["agent_sessions_view"]="\""._QXZ("Agent")."\",\""._QXZ("Login")."\",\""._QXZ("Talk")."\",\""._QXZ("Pause + Wait")."\",\""._QXZ("Pause")."\",\""._QXZ("Billable (pause)")."\",\""._QXZ("Not Billable (pause)")."\",\""._QXZ("Tot. Wait")."\",\""._QXZ("Sales")."\",\""._QXZ("S PH")."\",\""._QXZ("Cust Cont")."\",\""._QXZ("CC PH")."\",\""._QXZ("Human Ans")."\",\""._QXZ("HA PH")."\",\""._QXZ("Answered")."\",\""._QXZ("HA Conv.")."\",\""._QXZ("CC Conv.")."\",\""._QXZ("Goal Ftrs")."\",\""._QXZ("Ftrs")."\",\""._QXZ("Avg")."\"\n";
 
 $grand_total_idle_time=$grand_total_pause_time+$grand_total_wait_time;
-$grand_sph=sprintf("%.1f", $grand_total_sales/($grand_total_duration/3600));
-$grand_haph=sprintf("%.1f", $grand_total_human_answered/($grand_total_duration/3600));
-$grand_ccph=sprintf("%.1f", $grand_total_contacts/($grand_total_duration/3600));
-$grand_ha_conv=sprintf("%.1f", 100*($grand_total_sales/$grand_total_human_answered));
-$grand_cc_conv=sprintf("%.1f", 100*($grand_total_sales/$grand_total_contacts));
-$grand_avg_talk_time=round($grand_total_talk_time/$grand_total_calls);
+$grand_sph=sprintf("%.1f", MathZDC($grand_total_sales, ($grand_total_duration/3600)));
+$grand_haph=sprintf("%.1f", MathZDC($grand_total_human_answered, ($grand_total_duration/3600)));
+$grand_ccph=sprintf("%.1f", MathZDC($grand_total_contacts, ($grand_total_duration/3600)));
+$grand_ha_conv=sprintf("%.1f", 100*MathZDC($grand_total_sales, $grand_total_human_answered));
+$grand_cc_conv=sprintf("%.1f", 100*MathZDC($grand_total_sales, $grand_total_contacts));
+$grand_avg_talk_time=round(MathZDC($grand_total_talk_time, $grand_total_calls));
 
 $grand_total_talk_His=sprintf('%02d', floor($grand_total_talk_time/3600)).gmdate(":i:s", $grand_total_talk_time);
 $grand_total_wait_His=sprintf('%02d', floor($grand_total_wait_time/3600)).gmdate(":i:s", $grand_total_wait_time);

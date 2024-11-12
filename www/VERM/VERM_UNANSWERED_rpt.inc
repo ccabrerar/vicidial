@@ -1,11 +1,12 @@
 <?php
 # VERM_UNANSWERED_rpt.inc - Vicidial Enhanced Reporting unanswered call report
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
 # 
 # CHANGELOG:
 # 220825-1614 - First build
 # 230106-1506 - Uniqueid array modification to speed up page loading, added page flushing
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 if (isset($_GET["sort_agents_on_queue"]))			{$sort_agents_on_queue=$_GET["sort_agents_on_queue"];}
@@ -62,6 +63,7 @@ $max_unanswered_position=0;
 $min_unanswered_position=1000000;
 $unanswered_queue_stats=array(); # campaign id breakdown BY UNANSWERED CALLS
 $unanswered_term_reasons=array(); # UNANSWERED CALLS ONLY
+$unanswered_calls_by_agent=array();
 $unanswered_call_directions=array(); # UNANSWERED CALLS 
 $unanswered_call_stints=array(); # UNANSWERED CALLS
 $unanswered_agent_events=array(); # UNANSWERED CALLS
@@ -687,7 +689,7 @@ $disconnection_causes_graph_data="[";
 $disconnection_causes_graph_bgcolor="["; # SAME FOR hoverBackgroundColor
 $disconnection_causes_graph_hovborder="[";
 
-$max_term_reason=max($unanswered_term_reasons);
+$max_term_reason=(count($unanswered_term_reasons)>0 ? max($unanswered_term_reasons) : 0);
 $x=0;
 foreach ($unanswered_term_reasons as $reason => $value)
 	{
@@ -787,7 +789,7 @@ $unanswered_calls_by_queue_graph_data="[";
 $unanswered_calls_by_queue_graph_bgcolor="["; # SAME FOR hoverBackgroundColor
 $unanswered_calls_by_queue_graph_hovborder="[";
 
-$max_queue_count=max($unanswered_queue_stats);
+$max_queue_count=(count($unanswered_queue_stats)>0 ? max($unanswered_queue_stats) : 0);
 ksort($unanswered_queue_stats);
 $x=0;
 foreach ($unanswered_queue_stats as $queue => $value)
@@ -842,7 +844,7 @@ $HTML_output.="</tr>";
 $CSV_output["unanswered_calls_by_agent"]="\""._QXZ("Unanswered calls, by agent").":\"\n";
 $CSV_output["unanswered_calls_by_agent"].="\"\",\""._QXZ("Campaign/ingroup")."\",\""._QXZ("N. Calls")."\",\"\",\"...\"\n";
 
-$max_queue_count=max($unanswered_calls_by_agent);
+$max_queue_count=(count($unanswered_calls_by_agent)>0 ? max($unanswered_calls_by_agent) : 0);
 ksort($unanswered_calls_by_agent);
 $x=0;
 foreach ($unanswered_calls_by_agent as $user => $value)
@@ -916,18 +918,18 @@ foreach($svc_lvl_row as $interval => $sum)
 	$HTML_output.="<td>$int_name "._QXZ("seconds").":</td>";
 	$HTML_output.="<td>".$sum."</td>";
 	$HTML_output.="<td align='right'><i>$delta</i>&nbsp;&nbsp;</td>";
-	$HTML_output.="<td align='right'>".sprintf("%.1f", ((100*$sum)/$unanswered_inbound_calls))." %</td>";
-	$HTML_output.="<td align='right'>".sprintf("%.1f", ((100*$sum)/$total_unanswered_calls))." %</td>";
-	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".((100*$sum)/$unanswered_inbound_calls)."%'></td>";
+	$HTML_output.="<td align='right'>".sprintf("%.1f", (MathZDC((100*$sum), $unanswered_inbound_calls)))." %</td>";
+	$HTML_output.="<td align='right'>".sprintf("%.1f", (MathZDC((100*$sum), $total_unanswered_calls)))." %</td>";
+	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(MathZDC((100*$sum), $unanswered_inbound_calls))."%'></td>";
 	$HTML_output.="</tr>";
 
-	$CSV_output["unanswered_calls_by_distribution"].="\"$int_name seconds:\",\"$sum\",\"$delta\",\"".sprintf("%.1f", ((100*$sum)/$unanswered_inbound_calls))." %\",\"".sprintf("%.1f", ((100*$sum)/$total_inbound_calls))." %\"\n";
+	$CSV_output["unanswered_calls_by_distribution"].="\"$int_name seconds:\",\"$sum\",\"$delta\",\"".sprintf("%.1f", (MathZDC((100*$sum), $unanswered_inbound_calls)))." %\",\"".sprintf("%.1f", (MathZDC((100*$sum), $total_inbound_calls)))." %\"\n";
 
 	$unanswered_calls_by_distribution_graph_labels.="\"$int_name\",";
 	$unanswered_calls_by_distribution_graph_delta_data.="\"".($prev_int || $x>0 ? ($sum-$prev_int) : "0")."\",";
 	$unanswered_calls_by_distribution_graph_delta_bgcolor.="\"#33CCCC\",";
 	$unanswered_calls_by_distribution_graph_delta_hovborder.="\"#66FFFF\",";
-	$unanswered_calls_by_distribution_graph_percent_data.="\"".sprintf("%.1f", ((100*$sum)/$unanswered_inbound_calls))."\",";
+	$unanswered_calls_by_distribution_graph_percent_data.="\"".sprintf("%.1f", (MathZDC((100*$sum), $unanswered_inbound_calls)))."\",";
 	$unanswered_calls_by_distribution_graph_percent_bgcolor.="\"#FFCC66\",";
 	$unanswered_calls_by_distribution_graph_percent_hovborder.="\"#FFFF99\",";
 
@@ -998,17 +1000,17 @@ foreach($svc_lvl_row as $interval => $sum)
 	$HTML_output.="<td>$int_name "._QXZ("seconds").":</td>";
 	$HTML_output.="<td>".$sum."</td>";
 	$HTML_output.="<td align='right'><i>$delta</i>&nbsp;&nbsp;</td>";
-	$HTML_output.="<td align='right'>".sprintf("%.1f", ((100*$sum)/$total_inbound_calls))." %</td>";
-	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".((100*$sum)/$total_inbound_calls)."%'></td>";
+	$HTML_output.="<td align='right'>".sprintf("%.1f", (MathZDC((100*$sum), $total_inbound_calls)))." %</td>";
+	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(MathZDC((100*$sum), $total_inbound_calls))."%'></td>";
 	$HTML_output.="</tr>";
 
-	$CSV_output["service_level_agreement"].="\"$int_name seconds:\",\"$sum\",\"$delta\",\"".sprintf("%.1f", ((100*$sum)/$total_inbound_calls))." %\"\n";
+	$CSV_output["service_level_agreement"].="\"$int_name seconds:\",\"$sum\",\"$delta\",\"".sprintf("%.1f", (MathZDC((100*$sum), $total_inbound_calls)))." %\"\n";
 
 	$service_level_agreement_graph_labels.="\"$int_name\",";
 	$service_level_agreement_graph_delta_data.="\"".($prev_int ? ($sum-$prev_int) : "0")."\",";
 	$service_level_agreement_graph_delta_bgcolor.="\"#33CCCC\",";
 	$service_level_agreement_graph_delta_hovborder.="\"#66FFFF\",";
-	$service_level_agreement_graph_percent_data.="\"".sprintf("%.1f", ((100*$sum)/$total_inbound_calls))."\",";
+	$service_level_agreement_graph_percent_data.="\"".sprintf("%.1f", (MathZDC((100*$sum), $total_inbound_calls)))."\",";
 	$service_level_agreement_graph_percent_bgcolor.="\"#FFCC66\",";
 	$service_level_agreement_graph_percent_hovborder.="\"#FFFF99\",";
 
@@ -1053,6 +1055,7 @@ $CSV_output["unanswered_calls_by_keypress"].="\""._QXZ("Key")."\",\""._QXZ("N. C
 $keypress_stmt="select extension, count(*) as ct From live_inbound_log where uniqueid in ('".implode("', '", $unans_uniqueid_array)."') and extension not in ('s', 'i', 't') and comment_a='CALLMENU' group by extension order by extension";
 if ($DB) {$HTML_output.="<B>$keypress_stmt</B>";}
 $keypress_rslt=mysql_to_mysqli($keypress_stmt, $link);
+$kp_array=array();
 while ($kp_row=mysqli_fetch_array($keypress_rslt))
 	{
 	$kp_array["$kp_row[extension]"]+=$kp_row["ct"];
@@ -1206,16 +1209,16 @@ $queue_position_graph_data="[";
 $queue_position_graph_bgcolor="["; # SAME FOR hoverBackgroundColor
 $queue_position_graph_hovborder="[";
 
-$max_queue_count=max($unanswered_queue_positions);
+$max_queue_count=(count($unanswered_queue_positions)>0 ? max($unanswered_queue_positions) : 0);
 $x=0;
 foreach ($unanswered_queue_positions as $position => $value)
 	{
-	$position_pct=sprintf("%.1f", (100*$value)/$total_unanswered_calls);
+	$position_pct=sprintf("%.1f", MathZDC((100*$value), $total_unanswered_calls));
 	$HTML_output.="<tr>";
 	$HTML_output.="<td>".$position."</td>";
 	$HTML_output.="<td>".$value."</td>";
 	$HTML_output.="<td>".$position_pct." %</td>";
-	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(100*($value/$max_queue_count))."%'></td>";
+	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(100*MathZDC($value, $max_queue_count))."%'></td>";
 	$HTML_output.="</tr>";
 
 	$CSV_output["queue_position"].="\"".$position."\",\"".$value."\",\"".$position_pct." %\",\"\"\n";
@@ -1270,16 +1273,16 @@ $queue_position_all_calls_graph_bgcolor="["; # SAME FOR hoverBackgroundColor
 $queue_position_all_calls_graph_hovborder="[";
 
 ksort($queue_positions);
-$max_queue_count=max($queue_positions);
+$max_queue_count=(count($queue_positions)>0 ? max($queue_positions) : 0);
 $x=0;
 foreach ($queue_positions as $position => $value)
 	{
-	$position_pct=sprintf("%.1f", (100*$value)/$total_calls);
+	$position_pct=sprintf("%.1f", MathZDC((100*$value), $total_calls));
 	$HTML_output.="<tr>";
 	$HTML_output.="<td>".$position."</td>";
 	$HTML_output.="<td>".$value."</td>";
 	$HTML_output.="<td>".$position_pct." %</td>";
-	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(100*($value/$max_queue_count))."%'></td>";
+	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(100*MathZDC($value, $max_queue_count))."%'></td>";
 	$HTML_output.="</tr>";
 
 	$CSV_output["queue_position_all_calls_all_calls"].="\"".$position."\",\"".$value."\",\"".$position_pct." %\",\"\"\n";
@@ -1384,9 +1387,9 @@ if ($ivr_path!="")
 	if ($ivr_paths["$ivr_path"][3]<$ivr_call_time) {$ivr_paths["$ivr_path"][3]=$ivr_call_time;}
 	}
 
-$max_ivr_count=max($ivr_counts);
+$max_ivr_count=(count($ivr_counts)>0 ? max($ivr_counts) : 0);
 if ($max_ivr_count<$untracked_calls) {$max_ivr_count=$untracked_calls;}
-$untracked_ivr_pct=sprintf("%.1f", (100*$untracked_calls)/$total_unanswered_calls);
+$untracked_ivr_pct=sprintf("%.1f", MathZDC((100*$untracked_calls), $total_unanswered_calls));
 
 $HTML_output.="<BR><h2 class='rpt_header'>"._QXZ("IVR selection").": $NWB#VERM_UNANSWERED-ivr_selection$NWE</h2>";
 $HTML_output.="<hr style='height:2px;border-width:0;color:#ddd;background-color:#ddd;margin-bottom: 2em;'>";
@@ -1408,7 +1411,7 @@ $HTML_output.="<tr>";
 $HTML_output.="<td>"._QXZ("Untracked")."</td>";
 $HTML_output.="<td>$untracked_calls</td>";
 $HTML_output.="<td>".$untracked_ivr_pct." %</td>";
-$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(100*($untracked_calls/$total_unanswered_calls))."%'></td>";
+$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(100*MathZDC($untracked_calls, $total_unanswered_calls))."%'></td>";
 $HTML_output.="<td>&nbsp;</td>";
 $HTML_output.="<td>&nbsp;</td>";
 $HTML_output.="<td>&nbsp;</td>";
@@ -1440,7 +1443,7 @@ foreach ($ivr_paths as $pathname => $value)
 	$HTML_output.="<td>".$pathname."</td>";
 	$HTML_output.="<td>".$value[0]."</td>";
 	$HTML_output.="<td>".$ivr_pct." %</td>";
-	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(100*($value[0]/$total_unanswered_calls))."%'></td>";
+	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(100*MathZDC($value[0], $total_unanswered_calls))."%'></td>";
 	$HTML_output.="<td>".$total_duration."</td>";
 	$HTML_output.="<td>".$average_duration."</td>";
 	$HTML_output.="<td>".$min_duration."</td>";
@@ -1550,9 +1553,9 @@ if ($ivr_path!="")
 	if ($ivr_paths["$ivr_path"][3]<$ivr_call_time) {$ivr_paths["$ivr_path"][3]=$ivr_call_time;}
 	}
 
-$max_ivr_count=max($ivr_counts);
+$max_ivr_count=(count($ivr_counts)>0 ? max($ivr_counts) : 0);
 if ($max_ivr_count<$untracked_calls) {$max_ivr_count=$untracked_calls;}
-$untracked_ivr_pct=sprintf("%.1f", (100*$untracked_calls)/$total_calls);
+$untracked_ivr_pct=sprintf("%.1f", MathZDC((100*$untracked_calls), $total_calls));
 
 $HTML_output.="<BR><h2 class='rpt_header'>"._QXZ("IVR selection, all calls").": $NWB#VERM_UNANSWERED-IVR_selection_all_calls$NWE</h2>";
 $HTML_output.="<hr style='height:2px;border-width:0;color:#ddd;background-color:#ddd;margin-bottom: 2em;'>";
@@ -1575,7 +1578,7 @@ $HTML_output.="<tr>";
 $HTML_output.="<td>"._QXZ("Untracked")."</td>";
 $HTML_output.="<td>$untracked_calls</td>";
 $HTML_output.="<td>".$untracked_ivr_pct." %</td>";
-$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(100*($untracked_calls/$total_calls))."%'></td>";
+$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(100*MathZDC($untracked_calls, $total_calls))."%'></td>";
 $HTML_output.="<td>&nbsp;</td>";
 $HTML_output.="<td>&nbsp;</td>";
 $HTML_output.="<td>&nbsp;</td>";
@@ -1606,7 +1609,7 @@ foreach ($ivr_paths as $pathname => $value)
 	$HTML_output.="<td>".$pathname."</td>";
 	$HTML_output.="<td>".$value[0]."</td>";
 	$HTML_output.="<td>".$ivr_pct." %</td>";
-	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(100*($value[0]/$total_calls))."%'></td>";
+	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(100*MathZDC($value[0], $total_calls))."%'></td>";
 	$HTML_output.="<td>".$total_duration."</td>";
 	$HTML_output.="<td>".$average_duration."</td>";
 	$HTML_output.="<td>".$min_duration."</td>";
@@ -1656,10 +1659,10 @@ while ($did_row=mysqli_fetch_array($did_rslt))
 		$untracked_did_calls--;
 		}
 	}
-$max_did=max($did_counts);
+$max_did=(count($did_counts)>0 ? max($did_counts) : 0);
 if ($max_did<$untracked_did_calls) {$max_did=$untracked_did_calls;}
 
-$untracked_did_pct=sprintf("%.1f", ((100*$untracked_did_calls)/$total_unanswered_calls));
+$untracked_did_pct=sprintf("%.1f", (MathZDC((100*$untracked_did_calls), $total_unanswered_calls)));
 $HTML_output.="<BR><h2 class='rpt_header'>"._QXZ("Inbound DID used").": $NWB#VERM_UNANSWERED-did_used$NWE</h2>";
 $HTML_output.="<hr style='height:2px;border-width:0;color:#ddd;background-color:#ddd;margin-bottom: 2em;'>";
 $HTML_output.="<table border='0' cellpadding='0' cellspacing='5'>";
@@ -1743,10 +1746,10 @@ while ($did_row=mysqli_fetch_array($did_rslt))
 		$untracked_did_calls--;
 		}
 	}
-$max_did=max($did_counts);
+$max_did=(count($did_counts)>0 ? max($did_counts) : 0);
 if ($max_did<$untracked_did_calls) {$max_did=$untracked_did_calls;}
 
-$untracked_did_pct=sprintf("%.1f", ((100*$untracked_did_calls)/$total_calls));
+$untracked_did_pct=sprintf("%.1f", (MathZDC((100*$untracked_did_calls), $total_calls)));
 $HTML_output.="<BR><h2 class='rpt_header'>"._QXZ("Inbound DID used, for all calls").": $NWB#VERM_UNANSWERED-did_used_all_calls$NWE</h2>";
 $HTML_output.="<hr style='height:2px;border-width:0;color:#ddd;background-color:#ddd;margin-bottom: 2em;'>";
 $HTML_output.="<table border='0' cellpadding='0' cellspacing='5'>";
@@ -1779,7 +1782,7 @@ ksort($did_counts);
 $x=1;
 foreach ($did_counts as $did => $value)
 	{
-	$did_pct=sprintf("%.1f", (100*$value)/$total_answered_calls);
+	$did_pct=sprintf("%.1f", MathZDC((100*$value), $total_answered_calls));
 	$HTML_output.="<tr>";
 	$HTML_output.="<td>".$did." - ".$did_pattern_info["$did"]."</td>";
 	$HTML_output.="<td>$value</td>";
@@ -1881,8 +1884,8 @@ foreach($total_queue_stats as $campaign_name => $data)
 	$CSV_output["call_overview"].="\"".$campaign_name."\",\"".$data["calls"]."\",\"".$data["answered"]."\",\"".$data["unanswered"]."\",\"".($avg_call_time>=3600 ? floor($avg_call_time/3600).":" : "").gmdate("i:s", $avg_call_time)."\",\"".($data["call_time"]>=3600 ? floor($data["call_time"]/3600).":" : "").gmdate("i:s", $data["call_time"])."\",\"".($avg_wait_time>=3600 ? floor($avg_wait_time/3600).":" : "").gmdate("i:s", $avg_wait_time)."\",\"".($data["wait_time"]>=3600 ? floor($data["wait_time"]/3600).":" : "").gmdate("i:s", $data["wait_time"])."\"\n";	
 	}
 
-$avg_call_time=round($total_queue_call_time/$total_queue_answered);
-$avg_wait_time=round($total_queue_wait_time/$total_queue_calls);
+$avg_call_time=round(MathZDC($total_queue_call_time, $total_queue_answered));
+$avg_wait_time=round(MathZDC($total_queue_wait_time, $total_queue_calls));
 
 $HTML_output.="<tr>";
 $HTML_output.="<td>"._QXZ("TOTAL")."</td>";
@@ -1948,18 +1951,18 @@ foreach($svc_lvl_row as $interval => $sum)
 	$HTML_output.="<td>$int_name "._QXZ("seconds").":</td>";
 	$HTML_output.="<td>".$sum."</td>";
 	$HTML_output.="<td align='right'><i>$delta</i>&nbsp;&nbsp;</td>";
-	$HTML_output.="<td align='right'>".sprintf("%.1f", ((100*$sum)/$answered_inbound_calls))." %</td>";
-	$HTML_output.="<td align='right'>".sprintf("%.1f", ((100*$sum)/$total_inbound_calls))." %</td>";
-	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".((100*$sum)/$answered_inbound_calls)."%'></td>";
+	$HTML_output.="<td align='right'>".sprintf("%.1f", (MathZDC((100*$sum), $answered_inbound_calls)))." %</td>";
+	$HTML_output.="<td align='right'>".sprintf("%.1f", (MathZDC((100*$sum), $total_inbound_calls)))." %</td>";
+	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(MathZDC((100*$sum), $answered_inbound_calls))."%'></td>";
 	$HTML_output.="</tr>";
 
-	$CSV_output["answered_service_level_agreement"].="\"$int_name "._QXZ("seconds").":\",\"$sum\",\"$delta\",\"".sprintf("%.1f", ((100*$sum)/$answered_inbound_calls))." %\",\"".sprintf("%.1f", ((100*$sum)/$total_inbound_calls))." %\"\n";
+	$CSV_output["answered_service_level_agreement"].="\"$int_name "._QXZ("seconds").":\",\"$sum\",\"$delta\",\"".sprintf("%.1f", (MathZDC((100*$sum), $answered_inbound_calls)))." %\",\"".sprintf("%.1f", (MathZDC((100*$sum), $total_inbound_calls)))." %\"\n";
 
 	$answered_service_level_agreement_graph_labels.="\"$int_name\",";
 	$answered_service_level_agreement_graph_delta_data.="\"".($prev_int ? ($sum-$prev_int) : "0")."\",";
 	$answered_service_level_agreement_graph_delta_bgcolor.="\"#33CCCC\",";
 	$answered_service_level_agreement_graph_delta_hovborder.="\"#66FFFF\",";
-	$answered_service_level_agreement_graph_percent_data.="\"".sprintf("%.1f", ((100*$sum)/$answered_inbound_calls))."\",";
+	$answered_service_level_agreement_graph_percent_data.="\"".sprintf("%.1f", (MathZDC((100*$sum), $answered_inbound_calls)))."\",";
 	$answered_service_level_agreement_graph_percent_bgcolor.="\"#FFCC66\",";
 	$answered_service_level_agreement_graph_percent_hovborder.="\"#FFFF99\",";
 

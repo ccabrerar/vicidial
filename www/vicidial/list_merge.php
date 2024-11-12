@@ -1,7 +1,7 @@
 <?php
 # list_merge.php - merge smaller lists into a larger one. Part of Admin Utilities.
 #
-# Copyright (C) 2022  Matt Florell,Joseph Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell,Joseph Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 161004-2240 - Initial Build
@@ -11,10 +11,11 @@
 # 191101-1630 - Translation patch, removed function.js 
 # 201117-1350 - Translation bug fixed, Issue #1236
 # 220227-2210 - Added allow_web_debug system setting
+# 240801-1133 - Code updates for PHP8 compatibility
 #
 
-$version = '2.14-4';
-$build = '220227-2210';
+$version = '2.14-5';
+$build = '240801-1133';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -31,7 +32,7 @@ $submit = "";
 $confirm = "";
 $available_lists = "";
 $start_dest_list_id = "";
-$num_leads = "";
+$num_leads = 0;
 
 if (isset($_GET["DB"])) {$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"])) {$DB=$_POST["DB"];}
@@ -435,7 +436,7 @@ if ($submit == _QXZ("submit") )
 	$orig_count_row = mysqli_fetch_row($orig_count_rslt);
 	$orig_count = $orig_count_row[0];
 
-	$num_lists = ceil( $orig_count / $num_leads );
+	$num_lists = ceil( MathZDC($orig_count, $num_leads) );
 
 
 	echo ""._QXZ("You are about to merge list(s) <UL><LI>%1s</UL><BR>into list ID %2s.<BR><BR><B>TOTAL LEADS TO BE MOVED: %3s",0,'',implode("<LI>", $available_lists),$destination_list_id,$orig_count)."\n";

@@ -100,7 +100,7 @@ while ($outb_row=mysqli_fetch_array($outb_rslt))
 		}
 	}
 
-$inb_stmt="select substr(phone_number, $CLI_position, $CLI_digits) as snippet, user, uniqueid, length_in_sec-queue_seconds as talk_time, queue_seconds, queue_position, lead_id from vicidial_closer_log $vicidial_closer_log_SQL $and_NANQUE_clause $exc_addtl_statuses";
+$inb_stmt="select substr(phone_number, $CLI_position, $CLI_digits) as snippet, user, uniqueid, if(comments='EMAIL', length_in_sec, length_in_sec-queue_seconds) as talk_time, if(comments='EMAIL', 0, queue_seconds) as queue_seconds, queue_position, lead_id from vicidial_closer_log $vicidial_closer_log_SQL $and_NANQUE_clause $exc_addtl_statuses";
 if ($DB) {$HTML_output.="<B>$inb_stmt</B>";}
 # print $inb_stmt."\n";
 $inb_rslt=mysql_to_mysqli($inb_stmt, $link);
@@ -175,7 +175,7 @@ foreach ($answered_array as $prefix => $data)
 	$CSV_output["answered_area"].="\"".$prefix."\",";
 	$CSV_output["answered_area"].="\"".$data["calls"]."\",";
 	$CSV_output["answered_area"].="\"".$call_time."\",";
-	$CSV_output["answered_area"].="\"".$average_time."\",";
+	$CSV_output["answered_area"].="\"".$average_time_str."\",";
 	$CSV_output["answered_area"].="\"".$average_wait_time."\"";
 	$CSV_output["answered_area"].="\n";
 
@@ -211,7 +211,7 @@ foreach ($unanswered_array as $prefix => $data)
 	$call_time=($data["call_time"]>=3600 ? intval(floor($data["call_time"]/3600)).date(":i:s", $data["call_time"]) : intval(date("i", $data["call_time"])).":".date("s", $data["call_time"]));
 
 	$average_position=sprintf("%.1f", ($data["position"]/$data["calls"]));
-	$average_time=($average_time>=3600 ? intval(floor($average_time/3600)).date(":i:s", $average_time) : intval(date("i", $average_time)).":".date("s", $average_time));
+	# $average_time=($average_time>=3600 ? intval(floor($average_time/3600)).date(":i:s", $average_time) : intval(date("i", $average_time)).":".date("s", $average_time));
 
 	$average_wait_time=round($data["wait_time"]/$data["calls"]);
 	$average_wait_time=($average_wait_time>=3600 ? intval(floor($average_wait_time/3600)).date(":i:s", $average_wait_time) : intval(date("i", $average_wait_time)).":".date("s", $average_wait_time));

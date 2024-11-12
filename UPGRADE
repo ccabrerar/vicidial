@@ -803,13 +803,69 @@ OTHER CHANGES:
 225. Added List Weekday Resets, allowing for automatic list resets scheduled by
 	day-of-the-week on a per-list basis.
 
-226. Added Second Agent Alert Trigger In-Group settings, allowing for a second
-	audio alert to be played to the agent on repeat calls.
+226. Added Second and Third Agent Alert Trigger In-Group settings, allowing for
+	a second and/or third audio alert to be played to the agent on repeat 
+	calls.
 
 227. Added VIDPROMPTSPECIAL Call Menu Handle Methods when sending calls to 
 	In-Groups. Allows for list-based In-Group routing based on settings in
 	a Settings Container. Also allows for separate routing of not-found
 	leads.
+
+228. Added Dead Call Stop Recording campaign feature.
+
+229. Manual VM Message Status Updates campaign option.
+
+230. Added Per Call Notes Required campaign option.
+
+231. Added Agent Search In-Group List Restrict options, allowing for Lead 
+	Search restrictions on inbound group calls to a single list ID.
+
+232. Added option to use Two-Factor Authentication with Agent Screen logins
+
+233. Added the "lead_dearchive" Non-Agent API function, to move archived leads 
+	back to the active list table.
+
+234. Added the ability for agents to place 3way calls and require that the 
+	called-party press 1 before the call is bridged to the agent and 
+	customer. For more information, see the AGENT_3WAY_PRESS-1_CALLS.txt 
+	document.
+
+235. Added HCI Screen and Hopper Hold Inserts to allow for required Human 
+	Intervention on phone calls placed out of a campaign. See the 
+	HCI_Human_Call_Indicator_screen.txt document for more info.
+
+236. Added the Daily Phone Number Call Limit System-wide campaign option
+
+237. Added "refresh_panel" Agent API function
+
+238. Added "LAGGED Agent Log Summary Report".
+
+239. Added a Multi-call option to the agent 3-way press-1 calls feature.
+
+240. Added DUPPHONEALT... duplicate_check options within the add_lead 
+	Non-Agent API function. Checks for duplicate phone against both the 
+	phone_number and alt_phone fields.
+
+241. Added State Descriptions Banner campaign and in-group settings, allowing
+	for a custom description and color banner to appear on the agent screen
+	on a per-campaign and per-in-group basis.
+
+242. Added Per-User Per-In-Group daily call limits.
+
+243. Added 'delete_dnc_phone' Non-Agent API function.
+
+244. Added "Script Tab Height Override" campaign setting, to allow for longer
+	Script tab contents.
+
+245. Added "Call Log View Days" campaign setting, to allow restrictions to the
+	number of days an agent can go back to look at their call logs.
+
+246. Added ALT option for "Start Call URL" to allow for multiple URLs to be
+	requested at the agent-start of a call.
+
+247. Added archived-log cold-storage options and scripts.
+	See LOG_ARCHIVING_AND_COLD_STORAGE.txt document for more infomation.
 
 
 

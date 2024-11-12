@@ -1,11 +1,12 @@
-CALL COUNT LIMITS		Started: 2020-11-22	Updated: 2021-07-20
+CALL COUNT LIMITS		Started: 2020-11-22	Updated: 2023-11-29
 
 
 
 This document will go over the various "Call Count Limit" features available within VICIdial, including:
 - Lifetime Lead Call Count Limits
-- Daily Call Count Limits
-- 24-Hour Call Count Limits (added at svn/trunk revision 3484)
+- Daily Lead Call Count Limits
+- 24-Hour Lead or Phone Number Call Count Limits (added at svn/trunk revision 3484)
+- Daily Phone Number Call Count Limits System-wide (added at svn/trunk revision 3780)
 
 
 
@@ -30,6 +31,8 @@ DAILY CALL COUNT LIMITS
 Daily Call Count Limits must be enabled on the "Admin -> System Settings" page(Enable Daily Called Count Limits) before you can configure them on a "Modify Campaign -> Detail" page. This setting will limit the number of calls that can be placed to a lead on a per-day basis, with each "day" beginning at midnight server-time, and if this setting is set to '0', there will be no limit on the number of times a lead can be called each day within this campaign. Once a lead has reached this set limit, if the lead is selected to be dialed again, the called-since-last-reset flag on the lead will be changed to 'Y' and the call will not be dialed. If you want to raise this daily limit during the day, you might need to reset your lists to be able to dial the leads that hit the previous limit earlier in the day. 
 
 There is also another setting on the campaign detail page related to this Daily Call Count Limit feature: Daily Call Limit Manual. If the Daily Call Count Limit is enabled, this setting will determine if manual dial calls will be counted and or restricted in the daily call count limit. The DISABLED option will not count manual dial calls or restrict them as part of the daily call count limits, only auto-dial calls would be counted restricted. If one of the COUNT options is used, then manual dial calls would be included in the daily call counts. If one of the RESTRICT options is used, then manual dial calls would be restricted as part of the daily call count limit. Default of this setting is DISABLED.
+
+Another campaign-level daily call count feature option is a system-wide phone number daily call count limit, which can be enabled on a per-campaign basis. This will count and affect all calls placed from a campaign that it has been enabled on. The daily called counts for each phone number will be across the whole system and will reset at the "Timeclock End of Day" time that is set in System Settings.
 
 NOTE: This feature may conflict with Auto-Alt-Dial features if they are enabled on a campaign.
 NOTE: This feature may conflict with Lead Recycling features if they are enabled on a campaign.
@@ -137,3 +140,11 @@ ALTER TABLE vicidial_campaigns ADD call_limit_24hour_override VARCHAR(40) defaul
 ALTER TABLE system_settings ADD call_limit_24hour ENUM('0','1') default '0';
 ALTER TABLE system_settings ADD call_limit_24hour_reset DATETIME default '2000-01-01 00:00:01';
 
+ALTER TABLE vicidial_campaigns ADD daily_phone_number_call_limit TINYINT(3) UNSIGNED default '0';
+
+CREATE TABLE vicidial_phone_number_call_daily_counts (
+phone_number VARCHAR(18) NOT NULL,
+called_count TINYINT(3) UNSIGNED default '0',
+modify_date DATETIME,
+unique index vpncdc_phone_number (phone_number)
+) ENGINE=MyISAM;

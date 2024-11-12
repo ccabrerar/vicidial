@@ -1,13 +1,14 @@
 <?php
 # callbacks_export.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 200622-1615 - First build 
 # 220228-2126 - Added allow_web_debug system setting
 # 220713-1748 - Added user & count to output/modified SQL
 # 220812-1000 - Added User Group report permissions checking
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
@@ -39,7 +40,7 @@ $DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 $StarTtimE = date("U");
 $TODAY = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
-if (!isset($cb_groups)) {$cb_groups=array();}
+if (!is_array($cb_groups)) {$cb_groups=array();}
 if (!isset($query_date)) {$query_date = $TODAY;}
 if (!isset($end_date)) {$end_date = $TODAY;}
 $ip = getenv("REMOTE_ADDR");
@@ -317,6 +318,7 @@ if ($SUBMIT)
 				}
 			$groupsSQL=preg_replace('/,$/', '', $groupsSQL);
 			$groupsSQL.=") ";
+			if (!$groupsQS) {$groupsSQL="";}
 			}
 		else
 			{

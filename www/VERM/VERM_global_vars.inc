@@ -1,11 +1,12 @@
 <?php
 # VERM_global_vars.inc - Vicidial Enhanced Reporting global variables
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
 # 
 # CHANGELOG:
 # 220825-1622 - First build
 # 230106-1317 - Added missing QXZ, added pull of selectable statuses, human answered statues now include DISPO and SYSTEM
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 if (isset($_GET["start_date"]))			{$start_date=$_GET["start_date"];}
@@ -39,6 +40,9 @@ $did = preg_replace('/[^0-9]/','',$did);
 
 if ($non_latin < 1)
 	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/','',$PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/','',$PHP_AUTH_PW);
+
 	$campaigns = preg_replace('/[^-_0-9a-zA-Z]/','',$campaigns);
 	$ingroups = preg_replace('/[^-_0-9a-zA-Z]/','',$ingroups);
 	$users = preg_replace('/[^-_0-9a-zA-Z]/','',$users);
@@ -47,6 +51,9 @@ if ($non_latin < 1)
 	}
 else
 	{
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/','',$PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/','',$PHP_AUTH_PW);
+
 	$campaigns = preg_replace('/[^-_0-9\p{L}]/u','',$campaigns);
 	$ingroups = preg_replace('/[^-_0-9\p{L}]/u','',$ingroups);
 	$users = preg_replace('/[^-_0-9\p{L}]/u','',$users);
@@ -272,11 +279,25 @@ while ($callmenu_row=mysqli_fetch_row($callmenu_rslt))
 
 # Compile closer campaigns for waiting calls
 $campaign_closer_names=array();
+# 7/31/24 - below arrays moved here to be declared as they need to exist for every campaign in the queue, not just ones where there are pause codes.
+# Null campaign entries for the pause code arrays will cause an error;
+$billable_pause_codes=array();
+$payable_pause_codes=array();
+$sale_array=array("SYSTEM" => array());
+$selectable_array=array("SYSTEM" => array());
+$human_ans_array=array("SYSTEM" => array());
+$contact_array=array("SYSTEM" => array());
 $campaign_closer_stmt="select campaign_id, closer_campaigns from vicidial_campaigns $queueSQL_where";
 $campaign_closer_rslt=mysql_to_mysqli($campaign_closer_stmt, $link);
 while ($campaign_closer_row=mysqli_fetch_row($campaign_closer_rslt))
 	{
 	$campaign_closer_names["$campaign_closer_row[0]"]="$campaign_closer_row[1]";
+	$billable_pause_codes["$campaign_closer_row[0]"]=array();
+	$payable_pause_codes["$campaign_closer_row[0]"]=array();
+	$sale_array["$campaign_closer_row[0]"]=array();
+	$selectable_array["$campaign_closer_row[0]"]=array();
+	$human_ans_array["$campaign_closer_row[0]"]=array();
+	$contact_array["$campaign_closer_row[0]"]=array();
 	}
 
 # Compile closer campaigns for waiting calls
@@ -297,7 +318,7 @@ while ($terminal_row=mysqli_fetch_row($terminal_rslt))
 	$terminal_names["$terminal_row[0]"]="$terminal_row[1]";
 	}
 
-$sale_array=array("SYSTEM" => array());
+# $sale_array=array("SYSTEM" => array());
 $sale_stmt="select distinct status, 'SYSTEM' as campaign_id from vicidial_statuses where sale='Y' UNION select distinct status, campaign_id from vicidial_campaign_statuses where sale='Y'";
 $sale_rslt=mysql_to_mysqli($sale_stmt, $link);
 while ($sale_row=mysqli_fetch_array($sale_rslt))
@@ -306,7 +327,7 @@ while ($sale_row=mysqli_fetch_array($sale_rslt))
 	array_push($sale_array["$sale_row[campaign_id]"], $sale_row["status"]);
 	}
 
-$selectable_array=array("SYSTEM" => array());
+# $selectable_array=array("SYSTEM" => array());
 $selectable_stmt="select distinct status, 'SYSTEM' as campaign_id from vicidial_statuses where selectable='Y' UNION select distinct status, campaign_id from vicidial_campaign_statuses where selectable='Y'";
 $selectable_rslt=mysql_to_mysqli($selectable_stmt, $link);
 while ($selectable_row=mysqli_fetch_array($selectable_rslt))
@@ -315,7 +336,7 @@ while ($selectable_row=mysqli_fetch_array($selectable_rslt))
 	array_push($selectable_array["$selectable_row[campaign_id]"], $selectable_row["status"]);
 	}
 
-$human_ans_array=array("SYSTEM" => array());
+# $human_ans_array=array("SYSTEM" => array());
 $human_ans_stmt="select distinct status, 'SYSTEM' as campaign_id from vicidial_statuses where human_answered='Y' UNION select distinct status, campaign_id from vicidial_campaign_statuses where human_answered='Y' UNION select 'DISPO', 'SYSTEM'";
 $human_ans_rslt=mysql_to_mysqli($human_ans_stmt, $link);
 while ($human_ans_row=mysqli_fetch_array($human_ans_rslt))
@@ -324,7 +345,7 @@ while ($human_ans_row=mysqli_fetch_array($human_ans_rslt))
 	array_push($human_ans_array["$human_ans_row[campaign_id]"], $human_ans_row["status"]);
 	}
 
-$contact_array=array("SYSTEM" => array());
+# $contact_array=array("SYSTEM" => array());
 $contact_stmt="select distinct status, 'SYSTEM' as campaign_id from vicidial_statuses where customer_contact='Y' UNION select distinct status, campaign_id from vicidial_campaign_statuses where customer_contact='Y'";
 $contact_rslt=mysql_to_mysqli($contact_stmt, $link);
 while ($contact_row=mysqli_fetch_array($contact_rslt))
@@ -359,8 +380,8 @@ if (mysqli_num_rows($container_rslt)>0)
 
 $pause_code_stmt="select * from vicidial_pause_codes";
 $pause_code_rslt=mysql_to_mysqli($pause_code_stmt, $link);
-$billable_pause_codes=array();
-$payable_pause_codes=array();
+# $billable_pause_codes=array();
+# $payable_pause_codes=array();
 $pause_code_names=array();
 while ($pause_code_row=mysqli_fetch_array($pause_code_rslt))
 	{

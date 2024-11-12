@@ -1,7 +1,7 @@
 <?php 
 # timeclock_report.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -33,6 +33,7 @@
 # 171012-2015 - Fixed javascript/apache errors with graphs
 # 191013-0827 - Fixes for PHP7
 # 220226-1716 - Added allow_web_debug system setting
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
@@ -79,7 +80,7 @@ if (strlen($shift)<2) {$shift='ALL';}
 if (strlen($order)<2) {$order='hours_down';}
 if ( (!isset($query_date)) or (strlen($query_date) < 10) ) {$query_date = $TODAY;}
 if ( (!isset($end_date)) or (strlen($end_date) < 10) ) {$end_date = $TODAY;}
-if (!isset($user_group)) {$user_group = array();}
+if (!is_array($user_group)) {$user_group = array();}
 
 $report_name = 'User Timeclock Report';
 $db_source = 'M';

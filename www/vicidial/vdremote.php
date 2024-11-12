@@ -4,7 +4,7 @@
 # make sure you have added a user to the vicidial_users MySQL table with at 
 # least user_level 4 to access this page the first time
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # Changes
 # 50307-1721 - First version
@@ -24,6 +24,7 @@
 # 210618-1001 - Added CORS support
 # 220224-0820 - Added allow_web_debug system setting
 # 221006-1454 - Added missing input variable, issue #1383
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 $version = '2.14-16';
@@ -267,7 +268,7 @@ if (strlen($ADD)>4)
 		}
 
 	##### get inbound groups listing for checkboxes
-	if ( (($ADD==31111) or ($ADD==31111)) and (count($groups)<1) )
+	if ( (($ADD==31111) or ($ADD==31111)) and (!is_array($groups)) )
 		{
 		$stmt="SELECT closer_campaigns from vicidial_remote_agents where remote_agent_id='" . mysqli_real_escape_string($link, $remote_agent_id) . "';";
 		$rslt=mysql_to_mysqli($stmt, $link);

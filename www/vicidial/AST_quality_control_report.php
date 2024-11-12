@@ -1,7 +1,7 @@
 <?php 
 # AST_quality_control_report.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # Report for QC activity within VICIdial
 #
@@ -9,6 +9,7 @@
 # 210306-1556 - First Build
 # 210827-1818 - Fix for security issue
 # 220302-0927 - Added allow_web_debug system setting
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 $admin_version = '2.14-3';
@@ -70,12 +71,12 @@ $MT[0]='';
 $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 $STARTtime = date("U");
-if (!isset($group) || !is_array($group)) {$group = array();}
-if (!isset($users) || !is_array($users)) {$users = array();}
-if (!isset($user_groups) || !is_array($user_groups)) {$user_groups = array();}
-if (!isset($QCusers) || !is_array($QCusers)) {$QCusers = array();}
-if (!isset($QCstatuses) || !is_array($QCstatuses)) {$QCstatuses = array();}
-if (!isset($QCuser_groups) || !is_array($QCuser_groups)) {$QCuser_groups = array();}
+if (!is_array($group)) {$group = array();}
+if (!is_array($users)) {$users = array();}
+if (!is_array($user_groups)) {$user_groups = array();}
+if (!is_array($QCusers)) {$QCusers = array();}
+if (!is_array($QCstatuses)) {$QCstatuses = array();}
+if (!is_array($QCuser_groups)) {$QCuser_groups = array();}
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (!isset($end_date)) {$end_date = $NOW_DATE;}
 if (!isset($query_time)) {$query_time = "00:00:00";}
@@ -249,9 +250,9 @@ $LOGserver_name = getenv("SERVER_NAME");
 $LOGserver_port = getenv("SERVER_PORT");
 $LOGrequest_uri = getenv("REQUEST_URI");
 $LOGhttp_referer = getenv("HTTP_REFERER");
-$LOGbrowser=preg_replace("/\'|\"|\\\\/","",$LOGbrowser);
-$LOGrequest_uri=preg_replace("/\'|\"|\\\\/","",$LOGrequest_uri);
-$LOGhttp_referer=preg_replace("/\'|\"|\\\\/","",$LOGhttp_referer);
+$LOGbrowser=preg_replace("/<|>|\'|\"|\\\\/","",$LOGbrowser);
+$LOGrequest_uri=preg_replace("/<|>|\'|\"|\\\\/","",$LOGrequest_uri);
+$LOGhttp_referer=preg_replace("/<|>|\'|\"|\\\\/","",$LOGhttp_referer);
 if (preg_match("/443/i",$LOGserver_port)) {$HTTPprotocol = 'https://';}
   else {$HTTPprotocol = 'http://';}
 if (($LOGserver_port == '80') or ($LOGserver_port == '443') ) {$LOGserver_port='';}

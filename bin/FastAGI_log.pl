@@ -25,7 +25,7 @@
 # exten => h,1,DeadAGI(agi://127.0.0.1:4577/call_log--HVcauses--PRI-----NODEBUG-----${HANGUPCAUSE}-----${DIALSTATUS}-----${DIALEDTIME}-----${ANSWEREDTIME})
 # 
 #
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG:
 # 61010-1007 - First test build
@@ -97,6 +97,12 @@
 # 220118-2207 - Added auto_alt_threshold campaign & list settings
 # 221221-2134 - Added enhanced_disconnect_logging=3 support , issue #1367
 # 230120-1557 - Added CAMPDTO dialplan variable for ^DC 3-way agent screen calls
+# 231116-0846 - Added hopper_hold_inserts option
+# 231118-1054 - Added hangup processing of 3-way press outside-agent calls
+# 240225-0957 - Added AUTONEXT hopper_hold_inserts campaign option
+# 241001-2224 - Fixes for Khomp call processing
+# 241020-1929 - Added khomp campaign settings options
+# 281028-0958 - Added vicidial_khomp_log logging of container used
 #
 
 # defaults for PreFork
@@ -315,144 +321,6 @@ sub process_request
 	if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} >= 12))
 		{$h_exten_reason=1;}
 
-	### Grab KHOMP settings from the KHOMPSETTINGS settings container
-	$khomp_api_url =		'';
-	$khomp_api_proxied =	'false';
-	$khomp_api_login_url =	'';
-	$khomp_api_user =		'';
-	$khomp_api_pass =		'';
-	$khomp_header =			'';
-	$khomp_id_format =		'';
-	$khomp_sub_account_header =	'';
-
-	$stmtA = "SELECT container_entry FROM vicidial_settings_containers WHERE container_id = 'KHOMPSETTINGS';";
-	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-	$sthArows=$sthA->rows;
-	if ($sthArows > 0)
-		{
-		@aryA = $sthA->fetchrow_array;
-		$container_entry = $aryA[0];
-
-		my @lines = split ( /\n/, $container_entry );
-		foreach my $line (@lines)
-			{
-			# remove comments and blank lines
-			$line =~ /^\s*$/ and next; # skip blank lines
-			$line =~ /^\s*#/ and next; # skip line that begin with #
-			if ( $line =~ /#/ ) # check for comments midway through the line
-				{
-				# remove them
-				@split_line = split( /#/ , $line );
-				$line = $split_line[0]; 
-				}
-
-			if ( $line =~ /=>/ )
-				{
-				@setting = split( /=>/ , $line ); 
-				$key = $setting[0];
-				$key =~ s/^\s+|\s+$//g;
-				$value = $setting[1];
-				$value =~ s/^\s+|\s+$//g;
-
-				if ( $key eq 'khomp_api_url' )			{ $khomp_api_url = $value; }
-				if ( $key eq 'khomp_api_proxied' )    	{ $khomp_api_proxied = $value; }
-				if ( $key eq 'khomp_api_user' )			{ $khomp_api_user = $value; }
-				if ( $key eq 'khomp_api_pass' )			{ $khomp_api_pass = $value; }
-				if ( $key eq 'khomp_header' )			{ $khomp_header = $value; }
-				if ( $key eq 'khomp_id_format' )		{ $khomp_id_format = $value; }
-				if ( $key eq 'khomp_api_login_url' )	{ $khomp_api_login_url = $value; }
-				if ( $key eq 'khomp_sub_account_header' )	{ $khomp_sub_account_header = $value; }
-				if ( $key eq 'khomp_api_token' )                { $khomp_api_token = $value; }
-				if ( $key eq 'khomp_api_token_expire' )         { $khomp_api_token_expire = $value; }
-				}
-
-			}
-		$agi_string = "KHOMP Settings: url-$khomp_api_url|user-$khomp_api_user|pass-$khomp_api_pass|header-$khomp_header|format-$khomp_id_format|sub-account-$khomp_sub_account_header";
-		#&agi_output;
-		}
-		
-	### load the Khomp status map
-	%conclusion_map = {};
-
-	$stmtA = "SELECT container_entry FROM vicidial_settings_containers WHERE container_id = 'KHOMPSTATUSMAP';";
-	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-	$sthArows=$sthA->rows;
-	if ($sthArows > 0)
-		{
-		@aryA = $sthA->fetchrow_array;
-		$container_entry = $aryA[0];
-
-		my @lines = split ( /\n/, $container_entry );
-		foreach my $line (@lines)
-			{
-			# remove comments and blank lines
-			$line =~ /^\s*$/ and next; # skip blank lines
-			$line =~ /^\s*#/ and next; # skip line that begin with #
-			if ( $line =~ /#/ ) # check for comments midway through the line
-				{
-				# remove them
-				@split_line = split( /#/ , $line );
-				$line = $split_line[0];
-				}
-
-			if ( $line =~ /=>/ )
-				{
-				@setting = split( /=>/ , $line );
-				$conclusion_pattern = $setting[0];
-				$conclusion_pattern =~ s/^\s+|\s+$//g;
-
-				$action_status = $setting[1];
-				$action_status =~ s/^\s+|\s+$//g;
-
-				# check if the conclusion_pattern looks like "blah"."blahblah" or just "blah"
-				if ( $conclusion_pattern =~ /"\."/ )
-					{
-					# if "blah"."blahblah" break it up
-
-					@rsr = split( /"\."/ , $conclusion_pattern );
-					$conclusion = $rsr[0];
-					$conclusion =~ s/^\s+|\s+$//g;
-					$conclusion =~ s/^"|"$//g;
-
-					$pattern = $rsr[1];
-					$pattern =~ s/^\s+|\s+$//g;
-					$pattern =~ s/^"|"$//g;
-					}
-				else
-					{
-					# otherwise result is the string and pattern is blank
-
-					$conclusion = $conclusion_pattern;
-					$conclusion =~ s/^\s+|\s+$//g;
-					$conclusion =~ s/^"|"$//g;
-					$pattern = "";
-					}
-
-				@as = split( /\./ , $action_status );
-				$action = @as[0];
-				$action =~ s/^\s+|\s+$//g;
-				$action =~ s/^"|"$//g;
-
-				$status = @as[1];
-				$status =~ s/^\s+|\s+$//g;
-				$status =~ s/^"|"$//g;
-				
-				$dial_status = @as[2];
-				$dial_status =~ s/^\s+|\s+$//g;
-				$dial_status =~ s/^"|"$//g;
-
-				# load the result map hash with the values
-				$conclusion_map{"$conclusion"}{"$pattern"}{'action'} = $action;
-				$conclusion_map{"$conclusion"}{"$pattern"}{'status'} = $status;	
-				$conclusion_map{"$conclusion"}{"$pattern"}{'dial_status'} = $dial_status;						
-
-				}
-			}
-
-		}
-		
 	if ($AGILOG) 
 		{
 		$agi_string = "+++++++++++++++++ FastAGI Start ++++ Asterisk version: $ast_ver_str{major} $ast_ver_str{minor} ++++++ hER: $h_exten_reason ++++++"; 
@@ -723,7 +591,7 @@ sub process_request
 				$sthA->finish();
 
 				### get campaign settings
-				$stmtA = "SELECT amd_type,campaign_vdad_exten,dial_timeout,manual_dial_timeout FROM vicidial_campaigns where campaign_id = '$campaign';";
+				$stmtA = "SELECT amd_type,campaign_vdad_exten,dial_timeout,manual_dial_timeout,khomp_settings_container FROM vicidial_campaigns where campaign_id = '$campaign';";
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 				$sthArows=$sthA->rows;
@@ -734,8 +602,155 @@ sub process_request
 					$campaign_vdad_exten =	$aryA[1];
 					$dial_timeout =			$aryA[2];
 					$man_dial_timeout =		$aryA[3];
+					$khomp_settings_container =	$aryA[4];
 					}
 				$sthA->finish();
+				
+				if (( $amd_type eq 'KHOMP' ) && ( $khomp_enabled ) )
+					{
+					### Grab KHOMP settings from the KHOMPSETTINGS settings container
+					$khomp_api_url =		'';
+					$khomp_api_proxied =    'false';
+					$khomp_api_login_url =  '';
+					$khomp_api_user =	      '';
+					$khomp_api_pass =	      '';
+					$khomp_api_check_ssl =  '';
+					$khomp_header =	  '';
+					$khomp_id_format =	    '';
+					$khomp_sub_account_header =     '';
+
+					$agi_string = "--    KHOMP: Using settings container $khomp_settings_container"; &agi_output;
+
+					$stmtA = "SELECT container_entry FROM vicidial_settings_containers WHERE container_id = '$khomp_settings_container';";
+					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+					$sthArows=$sthA->rows;
+					if ($sthArows > 0)
+						{
+						@aryA = $sthA->fetchrow_array;
+						$container_entry = $aryA[0];
+
+						my @lines = split ( /\n/, $container_entry );
+						foreach my $line (@lines)
+							{
+							# remove comments and blank lines
+							$line =~ /^\s*$/ and next; # skip blank lines
+							$line =~ /^\s*#/ and next; # skip line that begin with #
+							if ( $line =~ /#/ ) # check for comments midway through the line
+								{
+								# remove them
+								@split_line = split( /#/ , $line );
+								$line = $split_line[0];
+								}
+
+							if ( $line =~ /=>/ )
+								{
+								@setting = split( /=>/ , $line );
+								$key = $setting[0];
+								$key =~ s/^\s+|\s+$//g;
+								$value = $setting[1];
+								$value =~ s/^\s+|\s+$//g;
+
+								if ( $key eq 'khomp_api_url' )	    { $khomp_api_url = $value; }
+								if ( $key eq 'khomp_api_proxied' )      { $khomp_api_proxied = $value; }
+								if ( $key eq 'khomp_api_user' )	  { $khomp_api_user = $value; }
+								if ( $key eq 'khomp_api_pass' )	  { $khomp_api_pass = $value; }
+								if ( $key eq 'khomp_api_check_ssl' )	  { $khomp_api_check_ssl = $value; }
+								if ( $key eq 'khomp_header' )	      { $khomp_header = $value; }
+								if ( $key eq 'khomp_id_format' )		{ $khomp_id_format = $value; }
+								if ( $key eq 'khomp_api_login_url' )    { $khomp_api_login_url = $value; }
+								if ( $key eq 'khomp_sub_account_header' )       { $khomp_sub_account_header = $value; }
+								if ( $key eq 'khomp_api_token' )		{ $khomp_api_token = $value; }
+								if ( $key eq 'khomp_api_token_expire' )  { $khomp_api_token_expire = $value; }
+								}
+
+							}
+
+						$agi_string = "KHOMP Settings: url-$khomp_api_url|proxied-$khomp_api_proxied|login_url-$khomp_api_login_url|user-$khomp_api_user|pass-$khomp_api_pass|ssl-check-$khomp_api_check_ssl|header-$khomp_header|format-$khomp_id_format|api-token-$khomp_api_token|token-expire-$khomp_api_token_expire|";
+						&agi_output;
+						}
+
+					### load the Khomp status map
+					%conclusion_map = {};
+
+					$stmtA = "SELECT container_entry FROM vicidial_settings_containers WHERE container_id = 'KHOMPSTATUSMAP';";
+					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+					$sthArows=$sthA->rows;
+					if ($sthArows > 0)
+						{
+						@aryA = $sthA->fetchrow_array;
+						$container_entry = $aryA[0];
+
+						my @lines = split ( /\n/, $container_entry );
+						foreach my $line (@lines)
+							{
+							# remove comments and blank lines
+							$line =~ /^\s*$/ and next; # skip blank lines
+							$line =~ /^\s*#/ and next; # skip line that begin with #
+							if ( $line =~ /#/ ) # check for comments midway through the line
+								{
+								# remove them
+								@split_line = split( /#/ , $line );
+								$line = $split_line[0];
+								}
+
+							if ( $line =~ /=>/ )
+								{
+								@setting = split( /=>/ , $line );
+								$conclusion_pattern = $setting[0];
+								$conclusion_pattern =~ s/^\s+|\s+$//g;
+
+								$action_status = $setting[1];
+								$action_status =~ s/^\s+|\s+$//g;
+
+								# check if the conclusion_pattern looks like "blah"."blahblah" or just "blah"
+								if ( $conclusion_pattern =~ /"\."/ )
+									{
+									# if "blah"."blahblah" break it up
+
+									@rsr = split( /"\."/ , $conclusion_pattern );
+									$conclusion = $rsr[0];
+									$conclusion =~ s/^\s+|\s+$//g;
+									$conclusion =~ s/^"|"$//g;
+
+									$pattern = $rsr[1];
+									$pattern =~ s/^\s+|\s+$//g;
+									$pattern =~ s/^"|"$//g;
+									}
+								else
+									{
+									# otherwise result is the string and pattern is blank
+
+									$conclusion = $conclusion_pattern;
+									$conclusion =~ s/^\s+|\s+$//g;
+									$conclusion =~ s/^"|"$//g;
+									$pattern = "";
+									}
+
+								@as = split( /\./ , $action_status );
+								$action = @as[0];
+								$action =~ s/^\s+|\s+$//g;
+								$action =~ s/^"|"$//g;
+
+								$status = @as[1];
+								$status =~ s/^\s+|\s+$//g;
+								$status =~ s/^"|"$//g;
+
+								$dial_status = @as[2];
+								$dial_status =~ s/^\s+|\s+$//g;
+								$dial_status =~ s/^"|"$//g;
+
+								# load the result map hash with the values
+								$conclusion_map{"$conclusion"}{"$pattern"}{'action'} = $action;
+								$conclusion_map{"$conclusion"}{"$pattern"}{'status'} = $status;
+								$conclusion_map{"$conclusion"}{"$pattern"}{'dial_status'} = $dial_status;
+
+								}
+							}
+						}
+					}
+
 				
 				### set dialplan variable CAMPCUST to the campaign_id of the outbound auto-dial or manual dial call
 				if (length($CAMPCUST) > 0)
@@ -808,7 +823,7 @@ sub process_request
 					elsif ($khomp_id_format eq 'CALLERCODE_CAMP_EXTERNIP') 
 						{ $khomp_id = $callerid . '_' . $campaign . '_' . $external_server_ip; }
 
-					$stmtA = "INSERT INTO vicidial_khomp_log SET caller_code = '$callerid', lead_id = '$lead_id', server_ip = '$VARserver_ip', khomp_header = '$khomp_header', khomp_id = '$khomp_id', khomp_id_format = '$khomp_id_format', start_date=NOW()";
+					$stmtA = "INSERT INTO vicidial_khomp_log SET caller_code = '$callerid', lead_id = '$lead_id', server_ip = '$VARserver_ip', khomp_header = '$khomp_header', khomp_id = '$khomp_id', khomp_id_format = '$khomp_id_format', start_date=NOW(), khomp_settings_container='$khomp_settings_container'";
 					if ($AGILOG) {$agi_string = "--    KHOMP Log Insert: |$stmtA|";   &agi_output;}
 					$dbhA->do($stmtA);
 
@@ -883,6 +898,21 @@ sub process_request
 			
 			if ($park_abandon < 1)
 				{
+				$highest_lead_id=999999999;
+				$highest_lead_id_test=999999999;
+				### Grab highest lead_id value from vicidial_list
+				$stmtA = "SELECT highest_lead_id from system_settings;";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArows=$sthA->rows;
+				if ($sthArows > 0)
+					{
+					@aryA = $sthA->fetchrow_array;
+					$highest_lead_id = $aryA[0];
+					$highest_lead_id_test = ($highest_lead_id + 10000);
+					}
+				$sthA->finish();
+
 				if ($request =~ /--HVcauses--/i)
 					{
 					$HVcauses=1;
@@ -1025,6 +1055,40 @@ sub process_request
 						}
 					}
 				### END log end of real-time blind monitor calls ###
+
+
+				### BEGIN log end of 3-way press outside-agent calls ###
+				if ($callerid =~ /^T\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/)
+					{
+					$stmtA = "SELECT status from vicidial_3way_press_live where call_3way_id='$callerid';";
+					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+					$sthArows=$sthA->rows;
+					if ($sthArows > 0)
+						{
+						@aryA = $sthA->fetchrow_array;
+						$sthA->finish();
+						$TW_status =		$aryA[0];
+	
+						if ($TW_status !~ /HUNGUP/) 
+							{
+							$stmtA = "UPDATE vicidial_3way_press_live SET status='HUNGUP' where call_3way_id='$callerid';";
+							$affected_rowsTWV = $dbhA->do($stmtA);
+
+							$stmtB = "UPDATE vicidial_3way_press_log SET result=CONCAT(result,'|Hungup: ',NOW()) where call_3way_id='$callerid';";
+							$affected_rowsTWL = $dbhA->do($stmtB);
+
+							if ($AGILOG) {$agi_string = "3WAY press outside-agent call updated: |$affected_rowsTWV|$affected_rowsTWL|$stmtA|$stmtB|";   &agi_output;}
+							}
+						else
+							{
+							if ($AGILOG) {$agi_string = "3WAY press outside-agent call NOT updated: |$TW_status|$stmtA|";   &agi_output;}
+							}
+						}
+					if ($AGILOG) {$agi_string = "|$affected_rowsBM|$stmtA|$monitor_start_time|$EPOCHmonitor_start_time|";   &agi_output;}
+					}
+				### END log end of real-time blind monitor calls ###
+
 
 				### get uniqueid and start_epoch from the call_log table
 				$CALLunique_id = $unique_id;
@@ -1222,7 +1286,7 @@ sub process_request
 						}
 
 					### get campaign settings
-					$stmtA = "SELECT amd_type,auto_alt_threshold FROM vicidial_campaigns where campaign_id = '$campaign';";
+					$stmtA = "SELECT amd_type,khomp_settings_container,auto_alt_threshold FROM vicidial_campaigns where campaign_id = '$campaign';";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows=$sthA->rows;
@@ -1230,12 +1294,155 @@ sub process_request
 						{
 						@aryA = $sthA->fetchrow_array;
 						$amd_type =				$aryA[0];
-						$CLauto_alt_threshold = $aryA[1];
+						$khomp_settings_container =		$aryA[1];
+						$CLauto_alt_threshold = 		$aryA[2];
 						}
 					$sthA->finish();
 
 					if (( $amd_type eq 'KHOMP' ) && ( $khomp_enabled ) )
 						{
+						### Grab KHOMP settings from the KHOMPSETTINGS settings container
+						$khomp_api_url =		'';
+						$khomp_api_proxied =    'false';
+						$khomp_api_login_url =  '';
+						$khomp_api_user =	       '';
+						$khomp_api_pass =	       '';
+						$khomp_api_check_ssl =	'';
+						$khomp_header =		 '';
+						$khomp_id_format =	      '';
+						$khomp_sub_account_header =     '';
+
+						$stmtA = "SELECT container_entry FROM vicidial_settings_containers WHERE container_id = '$khomp_settings_container';";
+						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+						$sthArows=$sthA->rows;
+						if ($sthArows > 0)
+							{
+							@aryA = $sthA->fetchrow_array;
+							$container_entry = $aryA[0];
+
+							my @lines = split ( /\n/, $container_entry );
+							foreach my $line (@lines)
+								{
+								# remove comments and blank lines
+								$line =~ /^\s*$/ and next; # skip blank lines
+								$line =~ /^\s*#/ and next; # skip line that begin with #
+								if ( $line =~ /#/ ) # check for comments midway through the line
+									{
+									# remove them
+									@split_line = split( /#/ , $line );
+									$line = $split_line[0];
+									}
+
+								if ( $line =~ /=>/ )
+									{
+									@setting = split( /=>/ , $line );
+									$key = $setting[0];
+									$key =~ s/^\s+|\s+$//g;
+									$value = $setting[1];
+									$value =~ s/^\s+|\s+$//g;
+
+									if ( $key eq 'khomp_api_url' )		  { $khomp_api_url = $value; }
+									if ( $key eq 'khomp_api_proxied' )      { $khomp_api_proxied = $value; }
+									if ( $key eq 'khomp_api_user' )		 { $khomp_api_user = $value; }
+									if ( $key eq 'khomp_api_pass' )		 { $khomp_api_pass = $value; }
+									if ( $key eq 'khomp_api_check_ssl' )	  { $khomp_api_check_ssl = $value; }
+									if ( $key eq 'khomp_header' )		   { $khomp_header = $value; }
+									if ( $key eq 'khomp_id_format' )		{ $khomp_id_format = $value; }
+									if ( $key eq 'khomp_api_login_url' )    { $khomp_api_login_url = $value; }
+									if ( $key eq 'khomp_sub_account_header' )       { $khomp_sub_account_header = $value; }
+									if ( $key eq 'khomp_api_token' )		{ $khomp_api_token = $value; }
+									if ( $key eq 'khomp_api_token_expire' )	 { $khomp_api_token_expire = $value; }
+									}
+
+								}
+							$agi_string = "KHOMP Settings: url-$khomp_api_url|user-$khomp_api_user|pass-$khomp_api_pass|ssl-check-$khomp_api_check_ssl|header-$khomp_header|format-$khomp_id_format|sub-account-$khomp_sub_account_header";
+							#&agi_output;
+							}
+
+						### load the Khomp status map
+						%conclusion_map = {};
+
+						$stmtA = "SELECT container_entry FROM vicidial_settings_containers WHERE container_id = 'KHOMPSTATUSMAP';";
+						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+						$sthArows=$sthA->rows;
+						if ($sthArows > 0)
+							{
+							@aryA = $sthA->fetchrow_array;
+							$container_entry = $aryA[0];
+
+							my @lines = split ( /\n/, $container_entry );
+							foreach my $line (@lines)
+								{
+								# remove comments and blank lines
+								$line =~ /^\s*$/ and next; # skip blank lines
+								$line =~ /^\s*#/ and next; # skip line that begin with #
+								if ( $line =~ /#/ ) # check for comments midway through the line
+									{
+									# remove them
+									@split_line = split( /#/ , $line );
+									$line = $split_line[0];
+									}
+
+								if ( $line =~ /=>/ )
+									{
+									@setting = split( /=>/ , $line );
+									$conclusion_pattern = $setting[0];
+									$conclusion_pattern =~ s/^\s+|\s+$//g;
+
+									$action_status = $setting[1];
+									$action_status =~ s/^\s+|\s+$//g;
+
+									# check if the conclusion_pattern looks like "blah"."blahblah" or just "blah"
+									if ( $conclusion_pattern =~ /"\."/ )
+										{
+										# if "blah"."blahblah" break it up
+
+										@rsr = split( /"\."/ , $conclusion_pattern );
+										$conclusion = $rsr[0];
+										$conclusion =~ s/^\s+|\s+$//g;
+										$conclusion =~ s/^"|"$//g;
+
+										$pattern = $rsr[1];
+										$pattern =~ s/^\s+|\s+$//g;
+										$pattern =~ s/^"|"$//g;
+										}
+									else
+										{
+										# otherwise result is the string and pattern is blank
+
+										$conclusion = $conclusion_pattern;
+										$conclusion =~ s/^\s+|\s+$//g;
+										$conclusion =~ s/^"|"$//g;
+										$pattern = "";
+										}
+
+									@as = split( /\./ , $action_status );
+									$action = @as[0];
+									$action =~ s/^\s+|\s+$//g;
+									$action =~ s/^"|"$//g;
+
+									$status = @as[1];
+									$status =~ s/^\s+|\s+$//g;
+									$status =~ s/^"|"$//g;
+
+									$dial_status = @as[2];
+									$dial_status =~ s/^\s+|\s+$//g;
+									$dial_status =~ s/^"|"$//g;
+
+									# load the result map hash with the values
+									$conclusion_map{"$conclusion"}{"$pattern"}{'action'} = $action;
+									$conclusion_map{"$conclusion"}{"$pattern"}{'status'} = $status;
+									$conclusion_map{"$conclusion"}{"$pattern"}{'dial_status'} = $dial_status;
+
+									}
+								}
+
+							}
+
+
+
 						if ($AGILOG) {$agi_string = "--    KHOMP process call for campaign $campaign callerid $callerid";   &agi_output;}
 						( $khomp_action, $khomp_VDL_status, $khomp_VDAC_status ) = process_khomp_analytics(
 							$khomp_api_url, 
@@ -1243,8 +1450,10 @@ sub process_request
 							$khomp_api_login_url,
 							$khomp_api_user, 
 							$khomp_api_pass, 
+							$khomp_api_check_ssl,
 							$khomp_header, 
 							$khomp_id_format, 
+							$khomp_settings_container,
 							$external_server_ip, 
 							$campaign, 
 							$callerid, 
@@ -1397,10 +1606,17 @@ sub process_request
 						if (length($VDL_status) > 0) 
 							{
 							$stmtA = "UPDATE vicidial_list set status='$VDL_status' where lead_id = $CIDlead_id;";
+							if ($CIDlead_id < $highest_lead_id_test)
+								{
+								$stmtA = "UPDATE vicidial_list set status='$VDL_status' where lead_id = '$CIDlead_id';";
 								if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 							$VDADaffected_rows = $dbhA->do($stmtA);
-							if ($AGILOG) {$agi_string = "--    VDAD vicidial_list update: |$VDADaffected_rows|$CIDlead_id";   &agi_output;}
-
+								if ($AGILOG) {$agi_string = "--    VDAD vicidial_list update 1: |$VDADaffected_rows|$CIDlead_id";   &agi_output;}
+								}
+							else
+								{
+								if ($AGILOG) {$agi_string = "--    VDAD highest_lead_id test failed: |$highest_lead_id|$highest_lead_id_test|$CIDlead_id";   &agi_output;}
+								}
 							$stmtA = "UPDATE vicidial_auto_calls set status='$VDAC_status' where callerid = '$callerid';";
 								if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 							$VDACaffected_rows = $dbhA->do($stmtA);
@@ -1963,7 +2179,7 @@ sub process_request
 									$stmtA = "UPDATE vicidial_list set status='DROP' where lead_id = $VD_lead_id;";
 										if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 									$affected_rows = $dbhA->do($stmtA);
-									if ($AGILOG) {$agi_string = "--    VDAD vicidial_list update: |$affected_rows|$VD_lead_id";   &agi_output;}
+									if ($AGILOG) {$agi_string = "--    VDAD vicidial_list update 2: |$affected_rows|$VD_lead_id";   &agi_output;}
 									}
 								else 
 									{
@@ -2064,11 +2280,24 @@ sub process_request
 									}
 								}
 
+							### Grab system_settings values from the database
+							$anyone_callback_inactive_lists='default';
+							$stmtA = "SELECT hopper_hold_inserts FROM system_settings;";
+							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+							$sthArows=$sthA->rows;
+							if ($sthArows > 0)
+								{
+								@aryA = $sthA->fetchrow_array;
+								$SShopper_hold_inserts =			$aryA[0];
+								}
+							$sthA->finish();
+
 							### check to see if campaign has alt_dial or call quotas enabled
 							$VD_auto_alt_dial = 'NONE';
 							$VD_auto_alt_dial_statuses='';
 							$VD_call_quota_lead_ranking='DISABLED';
-							$stmtA="SELECT auto_alt_dial,auto_alt_dial_statuses,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc,call_quota_lead_ranking,call_limit_24hour_method,call_limit_24hour_scope,call_limit_24hour,call_limit_24hour_override,auto_alt_threshold FROM vicidial_campaigns where campaign_id='$VD_campaign_id';";
+							$stmtA="SELECT auto_alt_dial,auto_alt_dial_statuses,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc,call_quota_lead_ranking,call_limit_24hour_method,call_limit_24hour_scope,call_limit_24hour,call_limit_24hour_override,auto_alt_threshold,hopper_hold_inserts FROM vicidial_campaigns where campaign_id='$VD_campaign_id';";
 								if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -2088,6 +2317,8 @@ sub process_request
 								$VD_call_limit_24hour =				$aryA[8];
 								$VD_call_limit_24hour_override =	$aryA[9];
 								$CLauto_alt_threshold =				$aryA[10];
+								$VD_hopper_hold_inserts =			$aryA[11];
+								if ($SShopper_hold_inserts < 1) {$VD_hopper_hold_inserts = 'DISABLED';}
 								$epc_countCAMPDATA++;
 								}
 
@@ -2218,7 +2449,9 @@ sub process_request
 												}
 											if ($passed_24hour_call_count > 0) 
 												{
-												$stmtA = "INSERT INTO vicidial_hopper SET lead_id='$VD_lead_id',campaign_id='$VD_campaign_id',status='READY',list_id='$VD_list_id',gmt_offset_now='$VD_gmt_offset_now',state='$VD_state',alt_dial='ALT',user='',priority='25',source='A';";
+												$hopper_status='READY';
+												if ($VD_hopper_hold_inserts =~ /ENABLED|AUTONEXT/) {$hopper_status='RHOLD';}
+												$stmtA = "INSERT INTO vicidial_hopper SET lead_id='$VD_lead_id',campaign_id='$VD_campaign_id',status='$hopper_status',list_id='$VD_list_id',gmt_offset_now='$VD_gmt_offset_now',state='$VD_state',alt_dial='ALT',user='',priority='25',source='A';";
 											$affected_rows = $dbhA->do($stmtA);
 											if ($AGILOG) {$agi_string = "--    VDH record inserted: |$affected_rows|   |$stmtA|";   &agi_output;}
 												if ($AGILOG) {$aad_string = "$VD_lead_id|$VD_alt_phone|$VD_campaign_id|ALT|25|hopper insert|";   &aad_output;}
@@ -2324,7 +2557,9 @@ sub process_request
 												}
 											if ($passed_24hour_call_count > 0) 
 												{
-												$stmtA = "INSERT INTO vicidial_hopper SET lead_id='$VD_lead_id',campaign_id='$VD_campaign_id',status='READY',list_id='$VD_list_id',gmt_offset_now='$VD_gmt_offset_now',state='$VD_state',alt_dial='ADDR3',user='',priority='20',source='A';";
+												$hopper_status='READY';
+												if ($VD_hopper_hold_inserts =~ /ENABLED|AUTONEXT/) {$hopper_status='RHOLD';}
+												$stmtA = "INSERT INTO vicidial_hopper SET lead_id='$VD_lead_id',campaign_id='$VD_campaign_id',status='$hopper_status',list_id='$VD_list_id',gmt_offset_now='$VD_gmt_offset_now',state='$VD_state',alt_dial='ADDR3',user='',priority='20',source='A';";
 											$affected_rows = $dbhA->do($stmtA);
 											if ($AGILOG) {$agi_string = "--    VDH record inserted: |$affected_rows|   |$stmtA|";   &agi_output;}
 												if ($AGILOG) {$aad_string = "$VD_lead_id|$VD_address3|$VD_campaign_id|ADDR3|20|hopper insert|";   &aad_output;}
@@ -2471,7 +2706,9 @@ sub process_request
 													}
 												if ($passed_24hour_call_count > 0) 
 													{
-													$stmtA = "INSERT INTO vicidial_hopper SET lead_id='$VD_lead_id',campaign_id='$VD_campaign_id',status='READY',list_id='$VD_list_id',gmt_offset_now='$VD_gmt_offset_now',state='$VD_state',alt_dial='X$Xlast',user='',priority='15',source='A';";
+													$hopper_status='READY';
+													if ($VD_hopper_hold_inserts =~ /ENABLED|AUTONEXT/) {$hopper_status='RHOLD';}
+													$stmtA = "INSERT INTO vicidial_hopper SET lead_id='$VD_lead_id',campaign_id='$VD_campaign_id',status='$hopper_status',list_id='$VD_list_id',gmt_offset_now='$VD_gmt_offset_now',state='$VD_state',alt_dial='X$Xlast',user='',priority='15',source='A';";
 												$affected_rows = $dbhA->do($stmtA);
 												if ($AGILOG) {$agi_string = "--    VDH record inserted: |$affected_rows|   |$stmtA|X$Xlast|$VD_altdial_id|";   &agi_output;}
 													if ($AGILOG) {$aad_string = "$VD_lead_id|$VD_altdial_phone|$VD_campaign_id|X$Xlast|15|hopper insert|";   &aad_output;}
@@ -3135,8 +3372,10 @@ sub process_khomp_analytics
 		$khomp_api_login_url,
 		$khomp_api_user, 
 		$khomp_api_pass, 
+		$khomp_api_check_ssl,
 		$khomp_header, 
 		$khomp_id_format, 
+		$khomp_settings_container,
 		$external_server_ip, 
 		$campaign_id, 
 		$callerid, 
@@ -3157,17 +3396,20 @@ sub process_khomp_analytics
 		{ $khomp_id = $callerid . '_' . $campaign_id . '_' . $external_server_ip; }
 
 	my $api_auth_time = 0;
-	if ( ($khomp_api_token_expire < time() ) or ( $khomp_api_token eq 'TOKENTOKENTOKEN' ))
+	my $cur_time = time();
+	if ( ($khomp_api_token_expire < $cur_time ) or ( $khomp_api_token eq 'TOKENTOKENTOKEN' ))
 		{
-		if ($AGILOG) {$agi_string = "--    KHOMP API Token $khomp_api_token has expired at $khomp_api_token_expire";   &agi_output;}
+		if ($AGILOG) {$agi_string = "--    KHOMP API Token $khomp_api_token has expired at $khomp_api_token_expire|$cur_time";   &agi_output;}
 
 		# get a new API token
 		my $new_khomp_api_token = '';
 		if ( $khomp_api_proxied eq 'false' )
 			{
-			($new_khomp_api_token, $api_auth_time) = khomp_api_login( $khomp_api_login_url, $khomp_api_user, $khomp_api_pass );
+			($new_khomp_api_token, $api_auth_time) = khomp_api_login( $khomp_api_login_url, $khomp_api_user, $khomp_api_pass, $khomp_api_check_ssl );
 			}
 
+		if ( $new_khomp_api_token ne '0' )
+			{
 		# update the settings container
 		my $old_token_string = "khomp_api_token => $khomp_api_token";
 		my $new_token_string = "khomp_api_token => $new_khomp_api_token";
@@ -3179,10 +3421,10 @@ sub process_khomp_analytics
 		$stmtA = "LOCK TABLES vicidial_settings_containers WRITE";
 		$dbhA->do($stmtA);
 		# UPDATE the Token
-		$stmtToken = "UPDATE vicidial_settings_containers SET container_entry = REGEXP_REPLACE(container_entry, '$old_token_string', '$new_token_string') WHERE container_id = 'KHOMPSETTINGS';";
+			$stmtToken = "UPDATE vicidial_settings_containers SET container_entry = REGEXP_REPLACE(container_entry, '$old_token_string', '$new_token_string') WHERE container_id = '$khomp_settings_container';";
 		$affected_rows = $dbhA->do($stmtToken);
 		# UPDATE the Expire time
-		$stmtExpire = "UPDATE vicidial_settings_containers SET container_entry = REGEXP_REPLACE(container_entry, '$old_token_expire_string', '$new_token_expire_string') WHERE container_id = 'KHOMPSETTINGS';";
+			$stmtExpire = "UPDATE vicidial_settings_containers SET container_entry = REGEXP_REPLACE(container_entry, '$old_token_expire_string', '$new_token_expire_string') WHERE container_id = '$khomp_settings_container';";
 		$affected_rows = $dbhA->do($stmtExpire);
 		# Unlock vicidial_settings_containers
 		$stmtA = "UNLOCK TABLES";
@@ -3193,6 +3435,7 @@ sub process_khomp_analytics
 
 		# over write the old with the new
 		$khomp_api_token = $new_khomp_api_token;
+		}
 		}
 	else
 		{
@@ -3472,7 +3715,8 @@ sub khomp_api_login
 	( 
 	$khomp_api_login_url,
 	$khomp_api_user,
-	$khomp_api_pass
+	$khomp_api_pass,
+	$khomp_api_check_ssl
 	) = @_;
 
 	my $token = 'login';
@@ -3500,7 +3744,16 @@ sub khomp_api_login
 	# encode it as JSON
 #UC#	$login_json = encode_json( $login_json );
 
-	my $curl_cmd = "$curlbin -sS --data \'$login_json\' $khomp_api_login_url";
+	my $curl_cmd = "";
+	if ($khomp_api_check_ssl == 0)
+		{
+		$agi_string = "--    KHOMP SSL VERIFICATION DISABLE!";   &agi_output;
+		$curl_cmd = "$curlbin --insecure -sS --data \'$login_json\' $khomp_api_login_url";
+		}
+	else
+		{
+		$curl_cmd = "$curlbin -sS --data \'$login_json\' $khomp_api_login_url";
+		}
 
 	$agi_string = "--    KHOMP CURL COMMAND: $curl_cmd";   &agi_output;
 
@@ -3520,6 +3773,11 @@ sub khomp_api_login
 
 	$token = $result->{'result'}->{'token'};
 
+	if ( $token eq '' ) { 
+		$agi_string = "--    ERROR!!!!!!KHOMP RETURNED INVALID TOKEN!!!!!";   &agi_output;
+		$token = '0'; 
+	}
+
 	($auth_end_sec, $auth_end_usec) = gettimeofday();
 
 	$api_auth_time = tv_interval ( [$auth_start_sec, $auth_start_usec], [$auth_end_sec, $auth_end_usec]);
@@ -3530,7 +3788,7 @@ sub khomp_api_login
 ### code for connecting to KHOMP api and passing JSON
 sub khomp_json_api
 	{
-	( $khomp_json, $khomp_api_url ) = @_;
+	( $khomp_json, $khomp_api_url, $khomp_api_check_ssl ) = @_;
 
 	my $query_start_sec;
 	my $query_start_usec;
@@ -3542,7 +3800,16 @@ sub khomp_json_api
 
 	($query_start_sec, $query_start_usec) = gettimeofday();
 
-	my $curl_cmd = "$curlbin -sS --data \'$khomp_json\' $khomp_api_url";
+	my $curl_cmd = "";
+	if ($khomp_api_check_ssl == 0)
+		{
+		$agi_string = "--    KHOMP SSL VERIFICATION DISABLE!";   &agi_output;
+		$curl_cmd = "$curlbin --insecure -sS --data \'$khomp_json\' $khomp_api_url";
+		}
+	else
+		{
+		$curl_cmd = "$curlbin -sS --data \'$khomp_json\' $khomp_api_url";
+		}
 
 	$agi_string = "--    KHOMP CURL COMMAND: $curl_cmd";   &agi_output;
 

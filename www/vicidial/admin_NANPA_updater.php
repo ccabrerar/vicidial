@@ -1,7 +1,7 @@
 <?php
 # admin_NANPA_updater.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to launch NANPA filter batch proccesses through the
 # triggering process
@@ -18,10 +18,11 @@
 # 180503-2015 - Added new help display
 # 191013-0814 - Fixes for PHP7
 # 220222-1753 - Added allow_web_debug system setting
+# 240801-1138 - Code updates for PHP8 compatibility
 #
 
-$version = '2.14-9';
-$build = '220222-1753';
+$version = '2.14-10';
+$build = '240801-1138';
 $startMS = microtime();
 
 require("dbconnect_mysqli.php");
@@ -214,7 +215,7 @@ if ($delete_trigger_id)
 	$delete_rslt=mysql_to_mysqli($delete_stmt, $link);
 	}
 
-if (!isset($lists)) {$lists=array();}
+if (!is_array($lists)) {$lists=array();}
 $list_ct=count($lists);
 if ($submit_form=="SUBMIT" && $list_ct>0 && (strlen($vl_field_update)>0 || strlen($cellphone_list_id)>0 || strlen($landline_list_id)>0 || strlen($invalid_list_id)>0) ) 
 	{
@@ -348,6 +349,7 @@ function StartRefresh() {
         rInt=window.setInterval(function() {RefreshNANPA("<?php echo $iframe_url; ?>")}, 10000);
 }
 function RefreshNANPA(spanURL) {
+	if (!document.getElementById("running_processes")) {return false;}
 	var xmlhttp=false;
 	try {
 		xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
@@ -420,7 +422,7 @@ echo "<link rel=\"stylesheet\" type=\"text/css\" href=\"vicidial_stylesheet.php\
 echo "<script language=\"JavaScript\" src=\"help.js\"></script>\n";
 echo "<div id='HelpDisplayDiv' class='help_info' style='display:none;'></div>";
 echo "</head>\n";
-$ADMIN=$PHP_SELF;
+# $ADMIN=$PHP_SELF;
 $short_header=1;
 
 # $NWB = " &nbsp; <a href=\"javascript:openNewWindow('help.php?ADD=99999";

@@ -4,7 +4,7 @@
 #
 # This script checks if there are channels in reserved conferences
 #
-# Copyright (C) 2020  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # 50810-1532 - Added database server variable definitions lookup
 # 50823-1456 - Added commandline arguments for debug at runtime
@@ -21,6 +21,8 @@
 # 170916-0947 - Added support for AMI version 2+
 # 180420-2302 - Fix for high-volume systems, added varibles to hangup queryCID
 # 200413-1356 - Fix for \n\n at the end of PING commands causing errors in AMI
+# 231117-2254 - Added AMI version 5 compatibility
+# 231118-1111 - Added override option of up to Xtimeout9 for 3WAY_... leave-3way sessions
 #
 
 # constants
@@ -350,6 +352,24 @@ if ($no_vc_3way_check < 1)
 				if ($DB) {print "\n\n|$PTextensions[$i]|$PT_conf_extens[$i]|$COMMAND|\n";}
 				@list_channels = $t->cmd(String => "$COMMAND", Prompt => '/--END COMMAND--\n\n/');
 				}
+			elsif ($ami_version =~ /^5\./i)
+				{
+				# get the current time
+				( $now_sec, $now_micro_sec ) = gettimeofday();
+
+				# figure out how many micro seconds since epoch
+				$now_micro_epoch = $now_sec * 1000000;
+				$now_micro_epoch = $now_micro_epoch + $now_micro_sec;
+
+				$begin_micro_epoch = $now_micro_epoch;
+
+				# create a new action id
+				$action_id = "$now_sec.$now_micro_sec";
+
+				$COMMAND = "Action: Command\nActionID:$action_id\nCommand: Meetme list $PT_conf_extens[$i]";
+				if ($DB) {print "\n\n|$PTextensions[$i]|$PT_conf_extens[$i]|$COMMAND|\n";}
+				@list_channels = $t->cmd(String => "$COMMAND", Prompt => '/\n\n/');
+				}
 
 			$j=0;
 			$conf_empty[$i]=0;
@@ -381,6 +401,12 @@ if ($no_vc_3way_check < 1)
 				{
 				$NEWexten[$i] = $PTextensions[$i];
 				$leave_3waySQL='1';
+				if ($PTextensions[$i] =~ /Xtimeout9$/i) {$NEWexten[$i] =~ s/Xtimeout9$/Xtimeout8/gi;}
+				if ($PTextensions[$i] =~ /Xtimeout8$/i) {$NEWexten[$i] =~ s/Xtimeout8$/Xtimeout7/gi;}
+				if ($PTextensions[$i] =~ /Xtimeout7$/i) {$NEWexten[$i] =~ s/Xtimeout7$/Xtimeout6/gi;}
+				if ($PTextensions[$i] =~ /Xtimeout6$/i) {$NEWexten[$i] =~ s/Xtimeout6$/Xtimeout5/gi;}
+				if ($PTextensions[$i] =~ /Xtimeout5$/i) {$NEWexten[$i] =~ s/Xtimeout5$/Xtimeout4/gi;}
+				if ($PTextensions[$i] =~ /Xtimeout4$/i) {$NEWexten[$i] =~ s/Xtimeout4$/Xtimeout3/gi;}
 				if ($PTextensions[$i] =~ /Xtimeout3$/i) {$NEWexten[$i] =~ s/Xtimeout3$/Xtimeout2/gi;}
 				if ($PTextensions[$i] =~ /Xtimeout2$/i) {$NEWexten[$i] =~ s/Xtimeout2$/Xtimeout1/gi;}
 				if ($PTextensions[$i] =~ /Xtimeout1$/i) {$NEWexten[$i] = ''; $leave_3waySQL='0';}
@@ -541,6 +567,24 @@ if ( !( ( @PTextensions == 1 ) && ( $PTextensions[0] eq '') ) )
 				if ($DB) {print "|$PTextensions[$i]|$PT_conf_extens[$i]|$COMMAND|\n";}
 				@list_channels = $t->cmd(String => "$COMMAND", Prompt => '/--END COMMAND--/');
 				}
+			elsif ($ami_version =~ /^5\./i)
+				{
+				# get the current time
+				( $now_sec, $now_micro_sec ) = gettimeofday();
+
+				# figure out how many micro seconds since epoch
+				$now_micro_epoch = $now_sec * 1000000;
+				$now_micro_epoch = $now_micro_epoch + $now_micro_sec;
+
+				$begin_micro_epoch = $now_micro_epoch;
+
+				# create a new action id
+				$action_id = "$now_sec.$now_micro_sec";
+
+				$COMMAND = "Action: Command\nActionID: $action_id\nCommand: Meetme list $PT_conf_extens[$i]";
+				if ($DB) {print "|$PTextensions[$i]|$PT_conf_extens[$i]|$COMMAND|\n";}
+				@list_channels = $t->cmd(String => "$COMMAND", Prompt => '/\n\n/');
+				}
 
 			$j=0;
 			$conf_empty[$i]=0;
@@ -575,6 +619,12 @@ if ( !( ( @PTextensions == 1 ) && ( $PTextensions[0] eq '') ) )
 			else
 				{
 				$NEWexten[$i] = $PTextensions[$i];
+				if ($PTextensions[$i] =~ /Xtimeout9$/i) {$NEWexten[$i] =~ s/Xtimeout9$/Xtimeout8/gi;}
+				if ($PTextensions[$i] =~ /Xtimeout8$/i) {$NEWexten[$i] =~ s/Xtimeout8$/Xtimeout7/gi;}
+				if ($PTextensions[$i] =~ /Xtimeout7$/i) {$NEWexten[$i] =~ s/Xtimeout7$/Xtimeout6/gi;}
+				if ($PTextensions[$i] =~ /Xtimeout6$/i) {$NEWexten[$i] =~ s/Xtimeout6$/Xtimeout5/gi;}
+				if ($PTextensions[$i] =~ /Xtimeout5$/i) {$NEWexten[$i] =~ s/Xtimeout5$/Xtimeout4/gi;}
+				if ($PTextensions[$i] =~ /Xtimeout4$/i) {$NEWexten[$i] =~ s/Xtimeout4$/Xtimeout3/gi;}
 				if ($PTextensions[$i] =~ /Xtimeout3$/i) {$NEWexten[$i] =~ s/Xtimeout3$/Xtimeout2/gi;}
 				if ($PTextensions[$i] =~ /Xtimeout2$/i) {$NEWexten[$i] =~ s/Xtimeout2$/Xtimeout1/gi;}
 				if ($PTextensions[$i] =~ /Xtimeout1$/i) {$NEWexten[$i] = '';}

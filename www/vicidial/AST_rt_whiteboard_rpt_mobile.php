@@ -1,7 +1,7 @@
 <?php
 # AST_rt_whiteboard_rpt_mobile.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
 #
 # Mobile version of real-time report that allows users to create a customized, graphical display of various data sets
 #
@@ -9,6 +9,7 @@
 # 200309-1819 - Modifications for display formatting
 # 210827-1818 - Fix for security issue
 # 220221-1513 - Added allow_web_debug system setting
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
@@ -237,7 +238,11 @@ if ( (!preg_match('/\-\-ALL\-\-/i', $LOGadmin_viewable_call_times)) and (strlen(
 $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 $STARTtime = date("U");
-if (!isset($groups) || !is_array($groups)) {$groups = array();}
+if (!is_array($groups)) {$groups = array();}
+if (!is_array($campaigns)) {$campaigns = array();}
+if (!is_array($users)) {$users = array();}
+if (!is_array($user_groups)) {$user_groups = array();}
+if (!is_array($dids)) {$dids = array();}
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (!isset($end_date)) {$end_date = $NOW_DATE;}
 
@@ -406,11 +411,6 @@ $MT[0]='';
 $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 $STARTtime = date("U");
-if (!isset($campaigns)) {$campaign = array();}
-if (!isset($users)) {$users = array();}
-if (!isset($user_groups)) {$user_groups = array();}
-if (!isset($dids)) {$dids = array();}
-if (!isset($groups)) {$groups = array();}
 if (!isset($report_display_type)) {$report_display_type = "HTML";}
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (!isset($end_date)) {$end_date = $NOW_DATE;}

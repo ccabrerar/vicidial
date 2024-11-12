@@ -22,19 +22,21 @@
 # ; 10. audio filename before sending call to no-agent route
 # ; 11. audio filename before sending call to no-agent route if agent active but
 # ;		not logged-in to vicidial
-#
+# ; 12. set to "PL" to search by the user's Phone Login (phone_login) instead of user
+#---------------------------
 #; example in CallMenu AGI route with all options
-# "agi-AGENT_route.agi,default---AGENTDIRECT---LOGGED_IN---if-u-know-ext-dial---X---invalid---please-try-again---3---TEST_IN3---pbxtransfer---outside-transfer"
+# "agi-AGENT_route.agi,default---AGENTDIRECT---LOGGED_IN---if-u-know-ext-dial---X---invalid---please-try-again---3---TEST_IN3---pbxtransfer---outside-transfer---"
 #; example with 4-digit agent IDs
 # exten => _XXXX,1,AGI(agi-AGENT_route.agi,default---AGENTDIRECT---ACTIVE)
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 100321-0108 - First Build
 # 100704-2128 - Added several options
 # 130108-1811 - Changes for Asterisk 1.8 compatibility
 # 220414-2122 - Added more debug output
+# 240130-1013 - Added phone_login search option for user
 #
 
 $script = 'agi-AGENT_route.agi';
@@ -62,6 +64,7 @@ $CIDdate = "$mon$mday$hour$min$sec";
 $tsSQLdate = "$year$mon$mday$hour$min$sec";
 $SQLdate = "$year-$mon-$mday $hour:$min:$sec";
 $SQLdateBEGIN = $SQLdate;
+$user_field='user';
 
 # default path to astguiclient configuration file:
 $PATHconf =		'/etc/astguiclient.conf';
@@ -155,6 +158,7 @@ if (length($ARGV[0])>1)
 	$invalid_ingroup =			$ARGV_vars[8];
 	$transfer_prompt =			$ARGV_vars[9];
 	$transfer_logout_prompt =	$ARGV_vars[10];
+	$user_field =				$ARGV_vars[11];
 	}
 if (length($did_settings) < 1)
 	{$did_settings = 'default';}
@@ -174,8 +178,12 @@ if ($minimum_user_digits =~ /X/)
 	$minimum_user_digits = '20';
 	$pound_finish =	1;
 	}
+if ($user_field =~ /PL/)
+	{$user_field = 'phone_login';}
+else
+	{$user_field = 'user';}
 
-if ($AGILOG) {$agi_string = "$did_settings|$in_group|$agent_active_filter|$user_id_prompt|$minimum_user_digits|$invalid_prompt|$invalid_reenter_prompt|$retry_attempts|$invalid_ingroup|$transfer_prompt|$transfer_logout_prompt";   &agi_output;}
+if ($AGILOG) {$agi_string = "$did_settings|$in_group|$agent_active_filter|$user_id_prompt|$minimum_user_digits|$invalid_prompt|$invalid_reenter_prompt|$retry_attempts|$invalid_ingroup|$transfer_prompt|$transfer_logout_prompt|$user_field";   &agi_output;}
 
 
 $|=1;
@@ -265,6 +273,7 @@ $sthA->finish();
 
 
 $active_user=0;
+$active_user_id='';
 $logged_in_user=0;
 if (length($user_id_prompt) > 0)
 	{
@@ -302,7 +311,7 @@ if ( ($agent_active_filter =~ /LOGGED_IN/) && ($logged_in_user < 1) && ($active_
 ### Route call to a logged-in VICIDIAL agent
 if ($active_user > 0)
 	{
-	$did_extension = "99909$S$did_id$S$in_group$S$extension$S";
+	$did_extension = "99909$S$did_id$S$in_group$S$active_user_id$S";
 	}
 else
 	{
@@ -354,22 +363,23 @@ exit;
 
 sub find_if_active_user
 	{
+	$active_user=0;
 	### find out if user exists and is active in system
-	$stmtA = "SELECT count(*) FROM vicidial_users where user='$extension' and active='Y';";
+	$stmtA = "SELECT user FROM vicidial_users where $user_field='$extension' and active='Y' order by last_login_date desc limit 1;";
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-	$sthArows=$sthA->rows;
-	if ($AGILOG) {$agi_string = "$stmtA|$sthArows";   &agi_output;}
-	if ($sthArows > 0)
+	$active_user=$sthA->rows;
+	if ($AGILOG) {$agi_string = "$stmtA|$active_user";   &agi_output;}
+	if ($active_user > 0)
 		{
 		@aryA = $sthA->fetchrow_array;
-		$active_user = $aryA[0];
+		$active_user_id = $aryA[0];
 		}
 	$sthA->finish();
 
 	if ($agent_active_filter =~ /LOGGED_IN/)
 		{
-		$stmtA = "SELECT count(*) FROM vicidial_live_agents where user='$extension';";
+		$stmtA = "SELECT count(*) FROM vicidial_live_agents where user='$active_user_id';";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;

@@ -5,7 +5,7 @@
 # Created to find problematic caller IDs, which can be found if bad outbound calls are dispositioned 
 # particular statuses
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -13,6 +13,7 @@
 # 200120-1430 - Added total calls, percentage of calls matched, default CID notation
 # 201111-1630 - Translation issue fix, Issue #1231
 # 220228-2053 - Added allow_web_debug system setting
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
@@ -56,8 +57,8 @@ $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 $FILE_TIME = date("Ymd-His");
 $STARTtime = date("U");
-if (!isset($campaign)) {$campaign = array();}
-if (!isset($status)) {$status = array();}
+if (!is_array($campaign)) {$campaign = array();}
+if (!is_array($status)) {$status = array();}
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (!isset($end_date)) {$end_date = $NOW_DATE;}
 if (!isset($query_time)) {$query_time = "00:00:00";}

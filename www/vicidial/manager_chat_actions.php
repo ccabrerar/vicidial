@@ -1,7 +1,7 @@
 <?php
 # manager_chat_actions.php
 # 
-# Copyright (C) 2022  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # Contains PHP actions for manager_chat_interface.php - works with vicidial_chat.js
 #
@@ -14,6 +14,7 @@
 # 161217-0821 - Added chat-type to allow for multi-user internal chat sessions
 # 170409-1550 - Added IP List validation code
 # 220223-0934 - Added allow_web_debug system setting
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 $admin_version = '2.14-8';
@@ -71,6 +72,7 @@ $VUselected_language = $SSdefault_language;
 $action = preg_replace("/[^-_0-9a-zA-Z]/", "",$action);
 $manager_chat_id = preg_replace("/[^-_0-9a-zA-Z]/", "",$manager_chat_id);
 $chat_sub_id = preg_replace("/[^-_0-9a-zA-Z]/", "",$chat_sub_id);
+if (!is_array($chat_sub_ids)) {$chat_sub_ids=array();}
 $reload_chat_span = preg_replace("/[^-_0-9a-zA-Z]/", "",$reload_chat_span);
 
 ### Variables filtered further down in the code
@@ -275,7 +277,6 @@ if ($reload_chat_span) {
 		echo "<TD rowspan=3 valign='top'>";
 		echo "<select name='available_chat_agents[]' multiple size='12' style=\"width:350px\">\n";
 		if (count($user_array)==0) {echo "<option value=''>---- "._QXZ("NO LIVE AGENTS")." ----</option>";}
-		#while (list($user, $full_name) = each($user_array)) {
 		foreach($user_array as $user => $full_name) {
 			echo "<option value='$user'>$user - $full_name</option>\n";
 		}
@@ -284,7 +285,6 @@ if ($reload_chat_span) {
 		echo "<TD valign='top'>";
 		echo "<select name='available_chat_campaigns[]' multiple size='5' style=\"width:350px\">\n";
 		if (count($campaign_id_array)==0) {echo "<option value=''>---- "._QXZ("NO LIVE CAMPAIGNS")." ----</option>";}
-		#while (list($campaign_id, $campaign_name) = each($campaign_id_array)) {
 		foreach($campaign_id_array as $campaign_id => $campaign_name) {
 			echo "<option value='$campaign_id'>$campaign_id - $campaign_name</option>\n";
 		}
@@ -297,7 +297,6 @@ if ($reload_chat_span) {
 		echo "<TD valign='top'>";
 		echo "<select name='available_chat_groups[]' multiple size='5' style=\"width:350px\">\n";
 		if (count($user_group_array)==0) {echo "<option value=''>---- "._QXZ("NO LIVE USER GROUPS")." ----</option>";}
-		# while (list($user_group, $group_name) = each($user_group_array)) {
 		foreach($user_group_array as $user_group => $group_name) {
 			echo "<option value='$user_group'>$user_group - $group_name</option>\n";
 		}
@@ -354,7 +353,6 @@ if ($reload_chat_span) {
 			}
 			$chat_subids_array=preg_replace("/,$/", "", $chat_subids_array);
 			$chat_subids_array.="]";
-			# while (list($chat_subid, $text) = each($chat_output_header)) {
 			foreach($chat_output_header as $chat_subid => $text) {
 				echo $chat_output_header[$chat_subid];
 				echo $chat_output_text[$chat_subid];

@@ -1,7 +1,7 @@
 <?php 
 # sph_report.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -18,6 +18,7 @@
 # 170409-1534 - Added IP List validation code
 # 220227-1936 - Added allow_web_debug system setting
 # 220812-0935 - Added User Group report permissions checking
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
@@ -62,9 +63,9 @@ $NOW_TIME = date("Y-m-d H:i:s");
 $STARTtime = date("U");
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (!isset($end_date)) {$end_date = $NOW_DATE;}
-if (!isset($campaign)) {$campaign = array();}
-if (!isset($group)) {$group = array();}
-if (!isset($user_group)) {$group = array();}
+if (!is_array($campaign)) {$campaign = array();}
+if (!is_array($group)) {$group = array();}
+if (!is_array($user_group)) {$group = array();}
 if (strlen($shift)<2) {$shift='ALL';}
 if (strlen($role)<2) {$role='ALL';}
 if (strlen($order)<2) {$order='sales_down';}

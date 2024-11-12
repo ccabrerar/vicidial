@@ -1,11 +1,15 @@
 <?php
 # display_outcomes_details.php - Vicidial Enhanced Reporting outcomes details page
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
 # 
 # CHANGELOG:
 # 220825-1610 - First build
+# 240801-1130 - Code updates for PHP8 compatibility
 #
+$subreport_name="VERM Reports";
+$report_display_type="display_outcomes_details.php";
+$startMS=microtime();
 
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
@@ -14,7 +18,6 @@ $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 
 require("dbconnect_mysqli.php");
 require("functions.php");
-require("VERM_global_vars.inc");
 
 if (isset($_GET["download_rpt"]))			{$download_rpt=$_GET["download_rpt"];}
 	elseif (isset($_POST["download_rpt"]))	{$download_rpt=$_POST["download_rpt"];}
@@ -109,6 +112,129 @@ else
 	$vicidial_queue_groups = preg_replace('/[^-_0-9\p{L}]/u','',$vicidial_queue_groups);
 	$sort_answered_details = preg_replace('/[^\s-_0-9\p{L}]/u','',$sort_answered_details);
 	}
+
+$stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
+if ($DB) {echo "|$stmt|\n";}
+$rslt=mysql_to_mysqli($stmt, $link);
+$sl_ct = mysqli_num_rows($rslt);
+if ($sl_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$VUselected_language =		$row[0];
+	}
+
+$auth=0;
+$reports_auth=0;
+$admin_auth=0;
+$auth_message = user_authorization($PHP_AUTH_USER,$PHP_AUTH_PW,'REPORTS',0,0);
+if ( ($auth_message == 'GOOD') or ($auth_message == '2FA') )
+	{
+	$auth=1;
+	if ($auth_message == '2FA')
+		{
+		header ("Content-type: text/html; charset=utf-8");
+		echo _QXZ("Your session is expired").". <a href=\"admin.php\">"._QXZ("Click here to log in")."</a>.\n";
+		exit;
+		}
+	}
+
+if ($auth > 0)
+	{
+	$stmt="SELECT count(*) from vicidial_users where user='$PHP_AUTH_USER' and user_level > 7 and view_reports='1';";
+	if ($DB) {echo "|$stmt|\n";}
+	$rslt=mysql_to_mysqli($stmt, $link);
+	$row=mysqli_fetch_row($rslt);
+	$admin_auth=$row[0];
+
+	$stmt="SELECT count(*) from vicidial_users where user='$PHP_AUTH_USER' and user_level > 6 and view_reports='1';";
+	if ($DB) {echo "|$stmt|\n";}
+	$rslt=mysql_to_mysqli($stmt, $link);
+	$row=mysqli_fetch_row($rslt);
+	$reports_auth=$row[0];
+
+	if ($reports_auth < 1)
+		{
+		$VDdisplayMESSAGE = _QXZ("You are not allowed to view reports");
+		Header ("Content-type: text/html; charset=utf-8");
+		echo "$VDdisplayMESSAGE: |$PHP_AUTH_USER|$auth_message|\n";
+		exit;
+		}
+	if ( ($reports_auth > 0) and ($admin_auth < 1) )
+		{
+		$ADD=999999;
+		$reports_only_user=1;
+		}
+	}
+else
+	{
+	$VDdisplayMESSAGE = _QXZ("Login incorrect, please try again");
+	if ($auth_message == 'LOCK')
+		{
+		$VDdisplayMESSAGE = _QXZ("Too many login attempts, try again in 15 minutes");
+		Header ("Content-type: text/html; charset=utf-8");
+		echo "$VDdisplayMESSAGE: |$PHP_AUTH_USER|$auth_message|\n";
+		exit;
+		}
+	if ($auth_message == 'IPBLOCK')
+		{
+		$VDdisplayMESSAGE = _QXZ("Your IP Address is not allowed") . ": $ip";
+		Header ("Content-type: text/html; charset=utf-8");
+		echo "$VDdisplayMESSAGE: |$PHP_AUTH_USER|$auth_message|\n";
+		exit;
+		}
+	Header("WWW-Authenticate: Basic realm=\"CONTACT-CENTER-ADMIN\"");
+	Header("HTTP/1.0 401 Unauthorized");
+	echo "$VDdisplayMESSAGE: |$PHP_AUTH_USER|$PHP_AUTH_PW|$auth_message|\n";
+	exit;
+	}
+
+require("VERM_global_vars.inc"); # Must be after user_auth for sanitization purposes
+
+##### BEGIN log visit to the vicidial_report_log table #####
+$LOGip = getenv("REMOTE_ADDR");
+$LOGbrowser = getenv("HTTP_USER_AGENT");
+$LOGscript_name = getenv("SCRIPT_NAME");
+$LOGserver_name = getenv("SERVER_NAME");
+$LOGserver_port = getenv("SERVER_PORT");
+$LOGrequest_uri = getenv("REQUEST_URI");
+$LOGhttp_referer = getenv("HTTP_REFERER");
+$LOGbrowser=preg_replace("/<|>|\'|\"|\\\\/","",$LOGbrowser);
+$LOGrequest_uri=preg_replace("/<|>|\'|\"|\\\\/","",$LOGrequest_uri);
+$LOGhttp_referer=preg_replace("/<|>|\'|\"|\\\\/","",$LOGhttp_referer);
+if (preg_match("/443/i",$LOGserver_port)) {$HTTPprotocol = 'https://';}
+  else {$HTTPprotocol = 'http://';}
+if (($LOGserver_port == '80') or ($LOGserver_port == '443') ) {$LOGserver_port='';}
+else {$LOGserver_port = ":$LOGserver_port";}
+$LOGfull_url = "$HTTPprotocol$LOGserver_name$LOGserver_port$LOGrequest_uri";
+
+$LOGhostname = php_uname('n');
+if (strlen($LOGhostname)<1) {$LOGhostname='X';}
+if (strlen($LOGserver_name)<1) {$LOGserver_name='X';}
+
+$stmt="SELECT webserver_id FROM vicidial_webservers where webserver='$LOGserver_name' and hostname='$LOGhostname' LIMIT 1;";
+$rslt=mysql_to_mysqli($stmt, $link);
+if ($DB) {echo "$stmt\n";}
+$webserver_id_ct = mysqli_num_rows($rslt);
+if ($webserver_id_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$webserver_id = $row[0];
+	}
+else
+	{
+	##### insert webserver entry
+	$stmt="INSERT INTO vicidial_webservers (webserver,hostname) values('$LOGserver_name','$LOGhostname');";
+	if ($DB) {echo "$stmt\n";}
+	$rslt=mysql_to_mysqli($stmt, $link);
+	$affected_rows = mysqli_affected_rows($link);
+	$webserver_id = mysqli_insert_id($link);
+	}
+
+$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$start_datetime, $end_datetime, $user, $campaign_id, $users, $teams, $location, $user_group, $status_name |', url='$LOGfull_url', webserver='$webserver_id';";
+if ($DB) {echo "|$stmt|\n";}
+$rslt=mysql_to_mysqli($stmt, $link);
+$report_log_id = mysqli_insert_id($link);
+##### END log visit to the vicidial_report_log table #####
 
 if (!$start_datetime || !$end_datetime) {echo "Missing information - needs start date/time, end date/time"; $die=1;}
 
@@ -410,7 +536,7 @@ else
 $sort_answered_details_preg=preg_replace('/ desc$/', '', $sort_answered_details);
 
 ### ALL CALLS FROM vicidial_log AND vicidial_closer_log TABLES - CONTAINS ALL INFO NEEDED BUT DISPO IS UNRELIABLE IN VoxQ
-$stmt="select call_date, phone_number, campaign_id, 0 as ivr, '0:00' as wait, sec_to_time(round(length_in_sec)) as duration, '1' as queue_position, CAST(term_reason AS CHAR) as term_reason, user, '1' as attempts, status, uniqueid, 0 as moh_events, '00:00:00' as moh_duration, '' as ivr_duration, '' as ivr_path, '' as did, '' as url, '' as tag, '0' as feat, '0' as vars, '' as feature_codes, '' as variables, uniqueid as detail_id, 'O' as direction from vicidial_log $vicidial_log_SQL and user not in ('VDAD') UNION select call_date, phone_number, campaign_id, 0 as ivr, sec_to_time(round(queue_seconds)) as wait, sec_to_time(round(length_in_sec-queue_seconds)) as duration, queue_position, CAST(term_reason AS CHAR) as term_reason, user, '1' as attempts, status, uniqueid, 0 as moh_events, '00:00:00' as moh_duration, '' as ivr_duration, '' as ivr_path, '' as did, '' as url, '' as tag, '0' as feat, '0' as vars, '' as feature_codes, '' as variables, CONCAT(uniqueid, '|', closecallid) as detail_id, 'I' as direction from vicidial_closer_log $vicidial_closer_log_SQL and user not in ('VDCL') $sort_clause";
+$stmt="select call_date, phone_number, campaign_id, 0 as ivr, '0:00' as wait, sec_to_time(round(length_in_sec)) as duration, '1' as queue_position, CAST(term_reason AS CHAR) as term_reason, user, '1' as attempts, status, uniqueid, 0 as moh_events, '00:00:00' as moh_duration, '' as ivr_duration, '' as ivr_path, '' as did, '' as url, '' as tag, '0' as feat, '0' as vars, '' as feature_codes, '' as variables, uniqueid as detail_id, 'O' as direction from vicidial_log $vicidial_log_SQL and user not in ('VDAD') UNION select call_date, phone_number, campaign_id, 0 as ivr, sec_to_time(round(queue_seconds)) as wait, sec_to_time(round(if(comments='EMAIL', length_in_sec, length_in_sec-queue_seconds))) as duration, queue_position, CAST(term_reason AS CHAR) as term_reason, user, '1' as attempts, status, uniqueid, 0 as moh_events, '00:00:00' as moh_duration, '' as ivr_duration, '' as ivr_path, '' as did, '' as url, '' as tag, '0' as feat, '0' as vars, '' as feature_codes, '' as variables, CONCAT(uniqueid, '|', closecallid) as detail_id, 'I' as direction from vicidial_closer_log $vicidial_closer_log_SQL and user not in ('VDCL') $sort_clause";
 # print $stmt;
 
 ### ALL CALLS FROM vicidial_agent_log - DISPO COUNTS RELIABLE, NEED TO FILL GAPS IN REPORT WITH ADDITIONAL QUERIES
@@ -435,7 +561,7 @@ $HTML_output.="<link rel=\"stylesheet\" href=\"calendar.css\">\n";
 $HTML_output.="<script language=\"JavaScript\" src=\"VERM_functions.js\"></script>\n";
 $HTML_output.="</head>\n";
 $HTML_output.="<body>\n";
-$HTML_output.="<form action='$PHP_SELF' method='POST'>\n";
+$HTML_output.="$slave_output<form action='$PHP_SELF' method='POST'>\n";
 
 $HTML_output.="<input type='hidden' name='vicidial_queue_groups' id='vicidial_queue_groups' value='$vicidial_queue_groups'>\n";
 $HTML_output.="<input type='hidden' name='user' id='user' value='$user'>\n";
@@ -457,7 +583,7 @@ $HTML_output.="<td align='left'>";
 #$HTML_output.="<div style='position:fixed; top: -5; right: -30;'><a onClick='HideAgentDetails()'><h2 class='rpt_header'>[X]</h2></a></div>";
 #$HTML_output.="<div align='left'><h2 class='rpt_header'>Agent Detail: $user</h2></div>";
 $HTML_output.="<h2 class='rpt_header'>"._QXZ("Statuses Detail").": $NWB#VERM_display_outcomes_detail$NWE</h2>";
-$HTML_output.="\n<!-- $stmt //-->\n";
+# $HTML_output.="\n<!-- $stmt //-->\n";
 $HTML_output.="</td>";
 $HTML_output.="<td align='right'>";
 $HTML_output.="<a onClick='HideOutcomesDetails()'><h2 class='rpt_header'>[X]</h2></a>";

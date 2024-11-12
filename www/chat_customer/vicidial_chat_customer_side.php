@@ -1,7 +1,7 @@
 <?php
 # vicidial_chat_customer_side.php
 #
-# Copyright (C) 2022  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # The main page of the customer chat interface.  This will display a form for the customer
 # to fill out to attempt to initiate a chat with an available agent in the in-group 
@@ -19,6 +19,7 @@
 # 160203-1052 - Added display of chat message after ending it
 # 160805-2315 - Added coding to show logos in customer display
 # 220220-1915 - Added allow_web_debug system setting
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 require("dbconnect_mysqli.php");
@@ -57,17 +58,17 @@ if (isset($_GET["show_email"]))				{$show_email=$_GET["show_email"];}
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 
-$lead_id = preg_replace("/[^0-9]/","",$lead_id);
-$user = preg_replace("/\'|\"|\\\\|;/","",$user);
-$chat_id = preg_replace('/[^- \_\.0-9a-zA-Z]/','',$chat_id);
-$group_id = preg_replace('/[^- \_0-9a-zA-Z]/','',$group_id);
-$language = preg_replace('/[^-\_0-9a-zA-Z]/','',$language);
-$available_agents = preg_replace('/[^-\_0-9a-zA-Z]/','',$available_agents);
-$status_link = preg_replace('/[^-\_0-9a-zA-Z]/','',$status_link);
-$show_email = preg_replace('/[^-\_0-9a-zA-Z]/','',$show_email);
-$send_request = preg_replace('/[^-\_0-9a-zA-Z]/','',$send_request);
-$join_chat = preg_replace('/[^-\_0-9a-zA-Z]/','',$join_chat);
-$stage = preg_replace('/[^-\_0-9a-zA-Z]/','',$stage);
+if (isset($lead_id)) {$lead_id = preg_replace("/[^0-9]/","",$lead_id);}
+if (isset($user)) {$user = preg_replace("/\'|\"|\\\\|;/","",$user);}
+if (isset($chat_id)) {$chat_id = preg_replace('/[^- \_\.0-9a-zA-Z]/','',$chat_id);}
+if (isset($group_id)) {$group_id = preg_replace('/[^- \_0-9a-zA-Z]/','',$group_id);}
+if (isset($language)) {$language = preg_replace('/[^-\_0-9a-zA-Z]/','',$language);}
+if (isset($available_agents)) {$available_agents = preg_replace('/[^-\_0-9a-zA-Z]/','',$available_agents);}
+if (isset($status_link)) {$status_link = preg_replace('/[^-\_0-9a-zA-Z]/','',$status_link);}
+if (isset($show_email)) {$show_email = preg_replace('/[^-\_0-9a-zA-Z]/','',$show_email);}
+if (isset($send_request)) {$send_request = preg_replace('/[^-\_0-9a-zA-Z]/','',$send_request);}
+if (isset($join_chat)) {$join_chat = preg_replace('/[^-\_0-9a-zA-Z]/','',$join_chat);}
+if (isset($stage)) {$stage = preg_replace('/[^-\_0-9a-zA-Z]/','',$stage);}
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
@@ -668,7 +669,7 @@ $chat_title= _QXZ("Request chat with agent"); # This can be modified for customi
 	</span>
 	</form>
 	</body>
-<?
+<?php
 } else if ($chat_id && $group_id && (!$first_name || !$last_name)) {
 ?>
 	<body>
@@ -710,7 +711,7 @@ $chat_title= _QXZ("Request chat with agent"); # This can be modified for customi
 	</form>
 	</body>
 
-<?
+<?php
 } else {
 ?>
 	<body onLoad="StartRefresh();" onUnload="javascript:clearInterval(rInt); LeaveChat();">

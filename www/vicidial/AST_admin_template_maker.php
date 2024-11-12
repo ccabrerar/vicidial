@@ -1,7 +1,7 @@
 <?php
 # AST_admin_template_maker.php - version 2.14
 # 
-# Copyright (C) 2022  Matt Florell,Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell,Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 120402-2132 - First Build
@@ -19,6 +19,7 @@
 # 180927-0633 - Fix for deleted template function in alternate language, issue #1127
 # 210312-1700 - Added layout editing functionality
 # 220222-1100 - Added allow_web_debug system setting
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 require("dbconnect_mysqli.php");
@@ -107,6 +108,7 @@ $submit_template = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $submit_template);
 $submit_edited_template = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $submit_edited_template);
 $file_format = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$file_format);
 $file_delimiter = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$file_delimiter);
+if (!is_array($template_statuses)) {$template_statuses=array();}
 
 # Variables filtered further down in the code
 # $template_statuses

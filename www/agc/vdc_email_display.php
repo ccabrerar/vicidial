@@ -74,7 +74,7 @@ $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 #   see the options-example.php file for more information
 if (file_exists('options.php'))
 	{
-	require_once('options.php');
+	require('options.php');
 	}
 
 $attachment1=$_FILES["attachment1"];

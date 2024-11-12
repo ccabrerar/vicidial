@@ -1,10 +1,11 @@
 <?php
 # VERM_custom_report.php - Vicidial Enhanced Reporting custom report form page
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
 # 
 # CHANGELOG:
 # 220825-1606 - First build
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
@@ -16,7 +17,6 @@ header ("Content-type: text/html; charset=utf-8");
 
 require("dbconnect_mysqli.php");
 require("functions.php");
-require("VERM_global_vars.inc");
 
 if (isset($_GET["start_date"]))			{$start_date=$_GET["start_date"];}
 	elseif (isset($_POST["start_date"]))	{$start_date=$_POST["start_date"];}
@@ -139,35 +139,6 @@ else
 	$custom_report_name = preg_replace('/[^-_0-9\p{L}/u','',$custom_report_name);
 	}
 
-##### Look up custom report parameters from prior use #####
-$custom_rpt_stmt="select * from verm_custom_report_holder where user='$PHP_AUTH_USER' and ((report_name!='' and report_name='$custom_report_name') or modify_date>=now()-INTERVAL 8 HOUR) limit 1";
-$custom_rpt_rslt=mysql_to_mysqli($custom_rpt_stmt, $link);
-$dow=array();
-while ($custom_rpt_row=mysqli_fetch_array($custom_rpt_rslt))
-	{
-	$custom_rpt_parameters=$custom_rpt_row["report_parameters"];
-	$custom_rpt_array=explode("|", $custom_rpt_parameters);
-	for ($i=0; $i<count($custom_rpt_array); $i++)
-		{
-		$var_info=explode("=", $custom_rpt_array[$i]);
-		$var_name=$var_info[0];
-		$var_value=$var_info[1];
-		if (strlen($var_name)>0)
-			{
-			$var_value=preg_replace('/^undefined$/i', '', $var_value); 
-			if (preg_match('/^dow/', $var_name))
-				{
-				array_push($dow, $var_value);
-				}
-			else
-				{
-				$$var_name=$var_value;
-				}
-			}
-		}
-	}	
-###########################################################
-
 if (file_exists('options.php'))
 	{
 	require('options.php');
@@ -180,8 +151,8 @@ if (file_exists('options.php'))
 
 if ( (strlen($group)>1) and (strlen($groups[0])<1) ) {$groups[0] = $group;}
 else {$group = $groups[0];}
-if (!isset($user_group_filter) || $user_group_filter=='') {$user_group_filter=array();}
-if (!isset($ingroup_filter) || $ingroup_filter=='') {$ingroup_filter=array();}
+if (!is_array($user_group_filter) || $user_group_filter=='') {$user_group_filter=array();}
+if (!is_array($ingroup_filter) || $ingroup_filter=='') {$ingroup_filter=array();}
 
 $NOW_TIME = date("Y-m-d H:i:s");
 $NOW_DAY = date("Y-m-d");
@@ -287,6 +258,38 @@ else
 	exit;
 	}
 
+require("VERM_global_vars.inc");
+
+##### Look up custom report parameters from prior use #####
+$custom_rpt_stmt="select * from verm_custom_report_holder where user='$PHP_AUTH_USER' and ((report_name!='' and report_name='$custom_report_name') or modify_date>=now()-INTERVAL 8 HOUR) limit 1";
+$custom_rpt_rslt=mysql_to_mysqli($custom_rpt_stmt, $link);
+$dow=array();
+while ($custom_rpt_row=mysqli_fetch_array($custom_rpt_rslt))
+	{
+	$custom_rpt_parameters=$custom_rpt_row["report_parameters"];
+	$custom_rpt_array=explode("|", $custom_rpt_parameters);
+	for ($i=0; $i<count($custom_rpt_array); $i++)
+		{
+		$var_info=explode("=", $custom_rpt_array[$i]);
+		$var_name=$var_info[0];
+		$var_value=$var_info[1];
+		if (strlen($var_name)>0)
+			{
+			$var_value=preg_replace('/^undefined$/i', '', $var_value); 
+			if (preg_match('/^dow/', $var_name))
+				{
+				array_push($dow, $var_value);
+				}
+			else
+				{
+				$$var_name=$var_value;
+				}
+			}
+		}
+	}	
+###########################################################
+
+
 ##### BEGIN log visit to the vicidial_report_log table #####
 $LOGip = getenv("REMOTE_ADDR");
 $LOGbrowser = getenv("HTTP_USER_AGENT");
@@ -295,9 +298,9 @@ $LOGserver_name = getenv("SERVER_NAME");
 $LOGserver_port = getenv("SERVER_PORT");
 $LOGrequest_uri = getenv("REQUEST_URI");
 $LOGhttp_referer = getenv("HTTP_REFERER");
-$LOGbrowser=preg_replace("/\'|\"|\\\\/","",$LOGbrowser);
-$LOGrequest_uri=preg_replace("/\'|\"|\\\\/","",$LOGrequest_uri);
-$LOGhttp_referer=preg_replace("/\'|\"|\\\\/","",$LOGhttp_referer);
+$LOGbrowser=preg_replace("/<|>|\'|\"|\\\\/","",$LOGbrowser);
+$LOGrequest_uri=preg_replace("/<|>|\'|\"|\\\\/","",$LOGrequest_uri);
+$LOGhttp_referer=preg_replace("/<|>|\'|\"|\\\\/","",$LOGhttp_referer);
 if (preg_match("/443/i",$LOGserver_port)) {$HTTPprotocol = 'https://';}
   else {$HTTPprotocol = 'http://';}
 if (($LOGserver_port == '80') or ($LOGserver_port == '443') ) {$LOGserver_port='';}
@@ -474,7 +477,7 @@ $allactivecampaigns .= "''";
 
 $i=0;
 $group_string='|';
-if (!$groups) {$groups=array();}
+if (!is_array($groups)) {$groups=array();}
 $group_ct = count($groups);
 while($i < $group_ct)
 	{

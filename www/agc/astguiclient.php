@@ -123,7 +123,7 @@ $relogin=preg_replace("/[^-_0-9a-zA-Z]/","",$relogin);
 #   see the options-example.php file for more information
 if (file_exists('options.php'))
 	{
-	require_once('options.php');
+	require('options.php');
 	}
 
 if ($astguiclient_disabled > 0)

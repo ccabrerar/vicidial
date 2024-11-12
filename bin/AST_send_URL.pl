@@ -8,7 +8,7 @@
 # This script is also used for the Add-Lead-URL feature in In-groups and for
 # QM socket-send as well as from call menus using a settings container.
 #
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 100622-0929 - First Build
@@ -32,7 +32,10 @@
 # 230204-2145 - Added ability to use ALT na_call_url entries, added status input
 # 230531-1139 - Added option to send any URL as POST if "POST" is at the end of the $function var
 # 230605-0836 - Added SC_CALL_URL option to add post headers
+# 230516-2150 - Added ALT start_call_url code and --version flag
 #
+
+$build = '230516-2150';
 
 $|++;
 use Getopt::Long;
@@ -51,7 +54,7 @@ if ($sec < 10) {$sec = "0$sec";}
 $now_date = "$year-$mon-$mday $hour:$min:$sec";
 
 ### Initialize run-time variables ###
-my ($CLOhelp, $SYSLOG,$DB, $DBX);
+my ($CLOhelp, $CLOversion, $SYSLOG,$DB, $DBX);
 my ($campaign, $lead_id, $phone_number, $call_type, $user, $uniqueid, $alt_dial, $call_id, $status, $function, $container);
 my $FULL_LOG = 1;
 $url_function = 'other';
@@ -61,6 +64,7 @@ $post_headers='';
 ### begin parsing run-time options ###
 if (scalar @ARGV) {
 	GetOptions('help!' => \$CLOhelp,
+		'version!' => \$CLOversion,
 		'SYSLOG!' => \$SYSLOG,
 		'campaign=s' => \$campaign,
 		'lead_id=s' => \$lead_id,
@@ -104,6 +108,7 @@ if (scalar @ARGV) {
 		{
 		print "allowed run time options:\n";
 		print "  [--help] = this help screen\n";
+		print "  [--version] = show build of this script\n";
 		print "  [--SYSLOG] = whether to log actions or not\n";
 		print "required flags:\n";
 		print "  [--campaign] = campaign ID or In-group ID of the call\n";
@@ -127,6 +132,12 @@ if (scalar @ARGV) {
 		print "\n";
 		print "You may prefix an option with 'no' to disable it.\n";
 		print " ie. --noSYSLOG or --noFULLLOG\n";
+
+		exit 0;
+		}
+	if ($CLOversion)
+		{
+		print "script build: $build \n";
 
 		exit 0;
 		}
@@ -1206,7 +1217,7 @@ if (length($lead_id) > 0)
 		}
 	else
 		{
-		##### BEGIN Call URL function #####
+		##### BEGIN Start Call URL function #####
 		$stmtA = "SELECT lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner,phone_code FROM vicidial_list where lead_id=$lead_id;";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -1246,158 +1257,288 @@ if (length($lead_id) > 0)
 			}
 		$sthA->finish();
 
-		if ($start_call_url =~ /--A--user_custom_|--A--full_name--B--/)
+		### BEGIN section if start_call_url is set to ALT ###
+		if ($start_call_url =~ /^ALT$/)
 			{
-			$stmtA = "SELECT custom_one,custom_two,custom_three,custom_four,custom_five,user_group,full_name from vicidial_users where user='$user';";
+			$stmtA="SELECT url_rank,url_statuses,url_address,url_lists from vicidial_url_multi where campaign_id='$alt_id' and entry_type='$alt_type' and url_type='start' and active='Y' order by url_rank limit 1000;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-			$sthArows=$sthA->rows;
-			if ($sthArows > 0)
+			$scALTsthArows=$sthA->rows;
+			$scALT=0;
+			while ($scALTsthArows > $scALT)
 				{
 				@aryA = $sthA->fetchrow_array;
-				$VAR_user_custom_one =		$aryA[0];
-				$VAR_user_custom_two =		$aryA[1];
-				$VAR_user_custom_three =	$aryA[2];
-				$VAR_user_custom_four =		$aryA[3];
-				$VAR_user_custom_five =		$aryA[4];
-				$VAR_user_group =			$aryA[5];
-				$VAR_full_name =			$aryA[6];
-				}
-			}
-
-		if ($start_call_url =~ /--A--did_/)
-			{
-			$stmtA = "SELECT did_id,extension FROM vicidial_did_log where uniqueid='$uniqueid';";
-			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-			$sthArows=$sthA->rows;
-			if ($sthArows > 0)
-				{
-				@aryA = $sthA->fetchrow_array;
-				$VAR_did_id =			$aryA[0];
-				$VAR_did_extension =	$aryA[1];
-				}
-			$sthA->finish();
-
-			$stmtA = "SELECT did_pattern,did_description FROM vicidial_inbound_dids where did_id='$VAR_did_id';";
-			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-			$sthArows=$sthA->rows;
-			if ($sthArows > 0)
-				{
-				@aryA = $sthA->fetchrow_array;
-				$VAR_did_pattern =		$aryA[0];
-				$VAR_did_description =	$aryA[1];
-				}
-			$sthA->finish();
-			}
-
-		if ($start_call_url =~ /--A--closecallid--B--/)
-			{
-			$stmtA = "SELECT closecallid FROM vicidial_closer_log where uniqueid='$uniqueid' order by closecallid limit 1;";
-			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-			$sthArows=$sthA->rows;
-			if ($sthArows > 0)
-				{
-				@aryA = $sthA->fetchrow_array;
-				$VAR_closecallid =		$aryA[0];
-				}
-			$sthA->finish();
-			}
-
-		if ( (length($VAR_list_id) > 1) && ( ( (length($list_name) < 1) && ($start_call_url =~ /--A--list_name--B--/) ) || ( (length($list_description) < 1) && ($start_call_url =~ /--A--list_description--B--/) ) ) )
-			{
-			$stmtH = "SELECT list_name,list_description FROM vicidial_lists where list_id='$VAR_list_id';";
-			$sthA = $dbhA->prepare($stmtH) or die "preparing: ",$dbhA->errstr;
-			$sthA->execute or die "executing: $stmtH ", $dbhA->errstr;
-			$list_name_ct=$sthA->rows;
-			if ($list_name_ct > 0)
-				{
-				@aryA = $sthA->fetchrow_array;
-				if (length($aryA[0])>0) 
+				$scALT_url_rank[$scALT] =			$aryA[0];
+				$scALT_url_statuses[$scALT] =		" $aryA[1] ";
+				$scALT_url_address[$scALT] =		$aryA[2];
+				$scALT_url_lists[$scALT] =			$aryA[3];
+				$scALT_url_failed[$scALT] =		0;
+				if ( ($scALT_url_lists[$scALT] > 2) && ($scALT_url_lists[$scALT] !~ / $list_id /i) )
 					{
-					$list_name =		$aryA[0];
+					if ($DBX) {print "   Start Call URL entry $scALT failed list qualifier: |$list_id|$scALT_url_lists[$scALT]|\n";}
+					$scALT_url_failed[$scALT]++;
 					}
-				if (length($aryA[1])>0) 
-					{
-					$list_description =	$aryA[1];
-					}
+				$scALT++;
 				}
-			$sthA->finish();
 			}
-
-		$start_call_url =~ s/^VAR//gi;
-		$start_call_url =~ s/--A--lead_id--B--/$VAR_lead_id/gi;
-		$start_call_url =~ s/--A--entry_date--B--/$VAR_entry_date/gi;
-		$start_call_url =~ s/--A--modify_date--B--/$VAR_modify_date/gi;
-		$start_call_url =~ s/--A--status--B--/$VAR_status/gi;
-		$start_call_url =~ s/--A--user--B--/$VAR_user/gi;
-		$start_call_url =~ s/--A--vendor_id--B--/$VAR_vendor_lead_code/gi;
-		$start_call_url =~ s/--A--vendor_lead_code--B--/$VAR_vendor_lead_code/gi;
-		$start_call_url =~ s/--A--source_id--B--/$VAR_source_id/gi;
-		$start_call_url =~ s/--A--list_id--B--/$VAR_list_id/gi;
-		$start_call_url =~ s/--A--list_name--B--/$list_name/gi;
-		$start_call_url =~ s/--A--list_description--B--/$list_description/gi;
-		$start_call_url =~ s/--A--phone_code--B--/$VAR_phone_code/gi;
-		$start_call_url =~ s/--A--phone_number--B--/$VAR_phone_number/gi;
-		$start_call_url =~ s/--A--title--B--/$VAR_title/gi;
-		$start_call_url =~ s/--A--first_name--B--/$VAR_first_name/gi;
-		$start_call_url =~ s/--A--middle_initial--B--/$VAR_middle_initial/gi;
-		$start_call_url =~ s/--A--last_name--B--/$VAR_last_name/gi;
-		$start_call_url =~ s/--A--address1--B--/$VAR_address1/gi;
-		$start_call_url =~ s/--A--address2--B--/$VAR_address2/gi;
-		$start_call_url =~ s/--A--address3--B--/$VAR_address3/gi;
-		$start_call_url =~ s/--A--city--B--/$VAR_city/gi;
-		$start_call_url =~ s/--A--state--B--/$VAR_state/gi;
-		$start_call_url =~ s/--A--province--B--/$VAR_province/gi;
-		$start_call_url =~ s/--A--postal_code--B--/$VAR_postal_code/gi;
-		$start_call_url =~ s/--A--country_code--B--/$VAR_country_code/gi;
-		$start_call_url =~ s/--A--gender--B--/$VAR_gender/gi;
-		$start_call_url =~ s/--A--date_of_birth--B--/$VAR_date_of_birth/gi;
-		$start_call_url =~ s/--A--alt_phone--B--/$VAR_alt_phone/gi;
-		$start_call_url =~ s/--A--email--B--/$VAR_email/gi;
-		$start_call_url =~ s/--A--security_phrase--B--/$VAR_security_phrase/gi;
-		$start_call_url =~ s/--A--comments--B--/$VAR_comments/gi;
-		$start_call_url =~ s/--A--called_count--B--/$VAR_called_count/gi;
-		$start_call_url =~ s/--A--last_local_call_time--B--/$VAR_last_local_call_time/gi;
-		$start_call_url =~ s/--A--rank--B--/$VAR_rank/gi;
-		$start_call_url =~ s/--A--owner--B--/$VAR_owner/gi;
-		$start_call_url =~ s/--A--dialed_number--B--/$VAR_phone_number/gi;
-		$start_call_url =~ s/--A--dialed_label--B--/$VAR_alt_dial/gi;
-		$start_call_url =~ s/--A--user_custom_one--B--/$VAR_user_custom_one/gi;
-		$start_call_url =~ s/--A--user_custom_two--B--/$VAR_user_custom_two/gi;
-		$start_call_url =~ s/--A--user_custom_three--B--/$VAR_user_custom_three/gi;
-		$start_call_url =~ s/--A--user_custom_four--B--/$VAR_user_custom_four/gi;
-		$start_call_url =~ s/--A--user_custom_five--B--/$VAR_user_custom_five/gi;
-		$start_call_url =~ s/--A--full_name--B--/$VAR_full_name/gi;
-		$start_call_url =~ s/--A--launch_user--B--/$user/gi;
-		$start_call_url =~ s/--A--did_id--B--/$VAR_did_id/gi;
-		$start_call_url =~ s/--A--did_extension--B--/$VAR_did_extension/gi;
-		$start_call_url =~ s/--A--did_pattern--B--/$VAR_did_pattern/gi;
-		$start_call_url =~ s/--A--did_description--B--/$VAR_did_description/gi;
-		$start_call_url =~ s/--A--closecallid--B--/$VAR_closecallid/gi;
-		$start_call_url =~ s/--A--uniqueid--B--/$VAR_uniqueid/gi;
-		$start_call_url =~ s/--A--call_id--B--/$VAR_call_id/gi;
-		$start_call_url =~ s/--A--user_group--B--/$VAR_user_group/gi;
-		$start_call_url =~ s/--A--campaign--B--/$VAR_campaign_id/gi;
-		$start_call_url =~ s/--A--campaign_id--B--/$VAR_campaign_id/gi;
-		$start_call_url =~ s/--A--group--B--/$VAR_campaign_id/gi;
-		$start_call_url =~ s/--A--function--B--/$function/gi;
-		$start_call_url =~ s/--A--SQLdate--B--/$now_date/gi;
-		$start_call_url =~ s/ /+/gi;
-		$start_call_url =~ s/&/\\&/gi;
-		$parse_url = $start_call_url;
-
-		if ($function =~ /REMOTE_AGENT_START_CALL_URL/)
+		else
 			{
-			$url_function = 'start_ra';
-			
-			$stmtA="UPDATE vicidial_log_extended set start_url_processed='Y' where uniqueid='$uniqueid';";
-			$affected_rows = $dbhA->do($stmtA);
+			$scALT_url_rank[0] =		1;
+			$scALT_url_statuses[0] =	'---ALL---';
+			$scALT_url_address[0] =		$start_call_url;
+			$scALT_url_lists[0] =		'';
+			$scALT_url_failed[0] =		0;
+			$scALTsthArows=1;
+			$scALT++;
+			}
+		### END section if start_call_url is set to ALT ###
+		if ($DBX) {print "DEBUG: NCU - $scALT|$alt_type|$alt_id|$start_call_url|\n";}
+
+		$scALT=0;
+		while ($scALTsthArows > $scALT)
+			{
+			if (length($scALT_url_address[$scALT]) > 5)
+				{
+				if ($scALT_url_address[$scALT] =~ /--A--user_custom_|--A--full_name--B--/)
+					{
+					$stmtA = "SELECT custom_one,custom_two,custom_three,custom_four,custom_five,user_group,full_name from vicidial_users where user='$user';";
+					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+					$sthArows=$sthA->rows;
+					if ($sthArows > 0)
+						{
+						@aryA = $sthA->fetchrow_array;
+						$VAR_user_custom_one =		$aryA[0];
+						$VAR_user_custom_two =		$aryA[1];
+						$VAR_user_custom_three =	$aryA[2];
+						$VAR_user_custom_four =		$aryA[3];
+						$VAR_user_custom_five =		$aryA[4];
+						$VAR_user_group =			$aryA[5];
+						$VAR_full_name =			$aryA[6];
+						}
+					}
+
+				if ($scALT_url_address[$scALT] =~ /--A--did_/)
+					{
+					$stmtA = "SELECT did_id,extension FROM vicidial_did_log where uniqueid='$uniqueid';";
+					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+					$sthArows=$sthA->rows;
+					if ($sthArows > 0)
+						{
+						@aryA = $sthA->fetchrow_array;
+						$VAR_did_id =			$aryA[0];
+						$VAR_did_extension =	$aryA[1];
+						}
+					$sthA->finish();
+
+					$stmtA = "SELECT did_pattern,did_description FROM vicidial_inbound_dids where did_id='$VAR_did_id';";
+					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+					$sthArows=$sthA->rows;
+					if ($sthArows > 0)
+						{
+						@aryA = $sthA->fetchrow_array;
+						$VAR_did_pattern =		$aryA[0];
+						$VAR_did_description =	$aryA[1];
+						}
+					$sthA->finish();
+					}
+
+				if ($scALT_url_address[$scALT] =~ /--A--closecallid--B--/)
+					{
+					$stmtA = "SELECT closecallid FROM vicidial_closer_log where uniqueid='$uniqueid' order by closecallid limit 1;";
+					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+					$sthArows=$sthA->rows;
+					if ($sthArows > 0)
+						{
+						@aryA = $sthA->fetchrow_array;
+						$VAR_closecallid =		$aryA[0];
+						}
+					$sthA->finish();
+					}
+
+				if ( (length($VAR_list_id) > 1) && ( ( (length($list_name) < 1) && ($scALT_url_address[$scALT] =~ /--A--list_name--B--/) ) || ( (length($list_description) < 1) && ($scALT_url_address[$scALT] =~ /--A--list_description--B--/) ) ) )
+					{
+					$stmtH = "SELECT list_name,list_description FROM vicidial_lists where list_id='$VAR_list_id';";
+					$sthA = $dbhA->prepare($stmtH) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtH ", $dbhA->errstr;
+					$list_name_ct=$sthA->rows;
+					if ($list_name_ct > 0)
+						{
+						@aryA = $sthA->fetchrow_array;
+						if (length($aryA[0])>0) 
+							{
+							$list_name =		$aryA[0];
+							}
+						if (length($aryA[1])>0) 
+							{
+							$list_description =	$aryA[1];
+							}
+						}
+					$sthA->finish();
+					}
+
+				$scALT_url_address[$scALT] =~ s/^VAR//gi;
+				$scALT_url_address[$scALT] =~ s/--A--lead_id--B--/$VAR_lead_id/gi;
+				$scALT_url_address[$scALT] =~ s/--A--entry_date--B--/$VAR_entry_date/gi;
+				$scALT_url_address[$scALT] =~ s/--A--modify_date--B--/$VAR_modify_date/gi;
+				$scALT_url_address[$scALT] =~ s/--A--status--B--/$VAR_status/gi;
+				$scALT_url_address[$scALT] =~ s/--A--user--B--/$VAR_user/gi;
+				$scALT_url_address[$scALT] =~ s/--A--vendor_id--B--/$VAR_vendor_lead_code/gi;
+				$scALT_url_address[$scALT] =~ s/--A--vendor_lead_code--B--/$VAR_vendor_lead_code/gi;
+				$scALT_url_address[$scALT] =~ s/--A--source_id--B--/$VAR_source_id/gi;
+				$scALT_url_address[$scALT] =~ s/--A--list_id--B--/$VAR_list_id/gi;
+				$scALT_url_address[$scALT] =~ s/--A--list_name--B--/$list_name/gi;
+				$scALT_url_address[$scALT] =~ s/--A--list_description--B--/$list_description/gi;
+				$scALT_url_address[$scALT] =~ s/--A--phone_code--B--/$VAR_phone_code/gi;
+				$scALT_url_address[$scALT] =~ s/--A--phone_number--B--/$VAR_phone_number/gi;
+				$scALT_url_address[$scALT] =~ s/--A--title--B--/$VAR_title/gi;
+				$scALT_url_address[$scALT] =~ s/--A--first_name--B--/$VAR_first_name/gi;
+				$scALT_url_address[$scALT] =~ s/--A--middle_initial--B--/$VAR_middle_initial/gi;
+				$scALT_url_address[$scALT] =~ s/--A--last_name--B--/$VAR_last_name/gi;
+				$scALT_url_address[$scALT] =~ s/--A--address1--B--/$VAR_address1/gi;
+				$scALT_url_address[$scALT] =~ s/--A--address2--B--/$VAR_address2/gi;
+				$scALT_url_address[$scALT] =~ s/--A--address3--B--/$VAR_address3/gi;
+				$scALT_url_address[$scALT] =~ s/--A--city--B--/$VAR_city/gi;
+				$scALT_url_address[$scALT] =~ s/--A--state--B--/$VAR_state/gi;
+				$scALT_url_address[$scALT] =~ s/--A--province--B--/$VAR_province/gi;
+				$scALT_url_address[$scALT] =~ s/--A--postal_code--B--/$VAR_postal_code/gi;
+				$scALT_url_address[$scALT] =~ s/--A--country_code--B--/$VAR_country_code/gi;
+				$scALT_url_address[$scALT] =~ s/--A--gender--B--/$VAR_gender/gi;
+				$scALT_url_address[$scALT] =~ s/--A--date_of_birth--B--/$VAR_date_of_birth/gi;
+				$scALT_url_address[$scALT] =~ s/--A--alt_phone--B--/$VAR_alt_phone/gi;
+				$scALT_url_address[$scALT] =~ s/--A--email--B--/$VAR_email/gi;
+				$scALT_url_address[$scALT] =~ s/--A--security_phrase--B--/$VAR_security_phrase/gi;
+				$scALT_url_address[$scALT] =~ s/--A--comments--B--/$VAR_comments/gi;
+				$scALT_url_address[$scALT] =~ s/--A--called_count--B--/$VAR_called_count/gi;
+				$scALT_url_address[$scALT] =~ s/--A--last_local_call_time--B--/$VAR_last_local_call_time/gi;
+				$scALT_url_address[$scALT] =~ s/--A--rank--B--/$VAR_rank/gi;
+				$scALT_url_address[$scALT] =~ s/--A--owner--B--/$VAR_owner/gi;
+				$scALT_url_address[$scALT] =~ s/--A--dialed_number--B--/$VAR_phone_number/gi;
+				$scALT_url_address[$scALT] =~ s/--A--dialed_label--B--/$VAR_alt_dial/gi;
+				$scALT_url_address[$scALT] =~ s/--A--user_custom_one--B--/$VAR_user_custom_one/gi;
+				$scALT_url_address[$scALT] =~ s/--A--user_custom_two--B--/$VAR_user_custom_two/gi;
+				$scALT_url_address[$scALT] =~ s/--A--user_custom_three--B--/$VAR_user_custom_three/gi;
+				$scALT_url_address[$scALT] =~ s/--A--user_custom_four--B--/$VAR_user_custom_four/gi;
+				$scALT_url_address[$scALT] =~ s/--A--user_custom_five--B--/$VAR_user_custom_five/gi;
+				$scALT_url_address[$scALT] =~ s/--A--full_name--B--/$VAR_full_name/gi;
+				$scALT_url_address[$scALT] =~ s/--A--launch_user--B--/$user/gi;
+				$scALT_url_address[$scALT] =~ s/--A--did_id--B--/$VAR_did_id/gi;
+				$scALT_url_address[$scALT] =~ s/--A--did_extension--B--/$VAR_did_extension/gi;
+				$scALT_url_address[$scALT] =~ s/--A--did_pattern--B--/$VAR_did_pattern/gi;
+				$scALT_url_address[$scALT] =~ s/--A--did_description--B--/$VAR_did_description/gi;
+				$scALT_url_address[$scALT] =~ s/--A--closecallid--B--/$VAR_closecallid/gi;
+				$scALT_url_address[$scALT] =~ s/--A--uniqueid--B--/$VAR_uniqueid/gi;
+				$scALT_url_address[$scALT] =~ s/--A--call_id--B--/$VAR_call_id/gi;
+				$scALT_url_address[$scALT] =~ s/--A--user_group--B--/$VAR_user_group/gi;
+				$scALT_url_address[$scALT] =~ s/--A--campaign--B--/$VAR_campaign_id/gi;
+				$scALT_url_address[$scALT] =~ s/--A--campaign_id--B--/$VAR_campaign_id/gi;
+				$scALT_url_address[$scALT] =~ s/--A--group--B--/$VAR_campaign_id/gi;
+				$scALT_url_address[$scALT] =~ s/--A--function--B--/$function/gi;
+				$scALT_url_address[$scALT] =~ s/--A--SQLdate--B--/$now_date/gi;
+				$scALT_url_address[$scALT] =~ s/ /+/gi;
+				$scALT_url_address[$scALT] =~ s/&/\\&/gi;
+				$parse_url = $scALT_url_address[$scALT];
+
+				if ($function =~ /REMOTE_AGENT_START_CALL_URL/)
+					{
+					$url_function = 'start_ra';
+					
+					$stmtA="UPDATE vicidial_log_extended set start_url_processed='Y' where uniqueid='$uniqueid';";
+					$affected_rows = $dbhA->do($stmtA);
+					}
+
+				### insert a new url log entry
+				$SQL_log = "$parse_url";
+				$SQL_log =~ s/;|\||\\//gi;
+				$stmtA = "INSERT INTO vicidial_url_log SET uniqueid='$uniqueid',url_date='$now_date',url_type='$url_function',url='$SQL_log',url_response='';";
+				$affected_rows = $dbhA->do($stmtA);
+				$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
+				$sthA = $dbhA->prepare($stmtB) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArows=$sthA->rows;
+				if ($sthArows > 0)
+					{
+					@aryA = $sthA->fetchrow_array;
+					$url_id = $aryA[0];
+					}
+				$sthA->finish();
+
+				$url = $parse_url;
+				$url =~ s/'/\\'/gi;
+				$url =~ s/"/\\"/gi;
+
+				my $secW = time();
+
+				# disconnect from the database to free up the DB connection
+				$dbhA->disconnect();
+
+				# request the web URL
+				`$wgetbin --no-check-certificate --output-document=/tmp/ASUBtmpD$US$url_id$US$secX --output-file=/tmp/ASUBtmpF$US$url_id$US$secX $url `;
+
+				# reconnect to the database to log response and response time
+				$dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
+				 or die "Couldn't connect to database: " . DBI->errstr;
+
+				$event_string="$function|$wgetbin --no-check-certificate --output-document=/tmp/ASUBtmpD$US$url_id$US$secX --output-file=/tmp/ASUBtmpF$US$url_id$US$secX $url|";
+				&event_logger;
+
+				my $secY = time();
+				my $response_sec = ($secY - $secW);
+
+				open(Wdoc, "/tmp/ASUBtmpD$US$url_id$US$secX") || die "can't open /tmp/ASUBtmpD$US$url_id$US$secX: $!\n";
+				@Wdoc = <Wdoc>;
+				close(Wdoc);
+				$i=0;
+				$Wdocline_cat='';
+				foreach(@Wdoc)
+					{
+					$Wdocline = $Wdoc[$i];
+					$Wdocline =~ s/\n|\r/!/gi;
+					$Wdocline =~ s/  |\t|\'|\`//gi;
+					$Wdocline_cat .= "$Wdocline";
+					$i++;
+					}
+				if (length($Wdocline_cat)<1) 
+					{$Wdocline_cat='<RESPONSE EMPTY>';}
+
+				open(Wfile, "/tmp/ASUBtmpF$US$url_id$US$secX") || die "can't open /tmp/ASUBtmpF$US$url_id$US$secX: $!\n";
+				@Wfile = <Wfile>;
+				close(Wfile);
+				$i=0;
+				$Wfileline_cat='';
+				foreach(@Wfile)
+					{
+					$Wfileline = $Wfile[$i];
+					$Wfileline =~ s/\n|\r/!/gi;
+					$Wfileline =~ s/  |\t|\'|\`//gi;
+					$Wfileline_cat .= "$Wfileline";
+					$i++;
+					}
+				if (length($Wfileline_cat)<1) 
+					{$Wfileline_cat='<HEADER EMPTY>';}
+
+
+				### update url log entry
+				$stmtA = "UPDATE vicidial_url_log SET url_response='$Wdocline_cat|$Wfileline_cat',response_sec='$response_sec' where url_log_id='$url_id';";
+				$affected_rows = $dbhA->do($stmtA);
+				if ($DB) {print "$affected_rows|$stmtA\n";}
+				}
+			else
+				{
+				if ($DB) {print "Not runnning Start Call URL entry $scALT, it failed qualifiers\n";}
+				}
+			##### END Call URL function #####
+			$scALT++;
 			}
 
-		##### END Call URL function #####
+		my $secZ = time();
+		my $script_time = ($secZ - $secX);
+		if ($DB) {print "DONE execute time: $script_time seconds\n";}
+
+		exit 0;
 		}
 
 	### insert a new url log entry

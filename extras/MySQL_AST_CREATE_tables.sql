@@ -71,7 +71,7 @@ template_id VARCHAR(15) NOT NULL,
 conf_override TEXT,
 phone_context VARCHAR(20) default 'default',
 phone_ring_timeout SMALLINT(3) default '60',
-conf_secret VARCHAR(20) default 'test',
+conf_secret VARCHAR(100) default 'test',
 delete_vm_after_email ENUM('N','Y') default 'N',
 is_webphone ENUM('Y','N','Y_API_LAUNCH') default 'N',
 use_external_server_ip ENUM('Y','N') default 'N',
@@ -151,7 +151,7 @@ carrier_logging_active ENUM('Y','N') default 'Y',
 vicidial_balance_rank TINYINT(3) UNSIGNED default '0',
 rebuild_music_on_hold ENUM('Y','N') default 'Y',
 active_agent_login_server ENUM('Y','N') default 'Y',
-conf_secret VARCHAR(20) default 'test',
+conf_secret VARCHAR(100) default 'test',
 external_server_ip VARCHAR(100) default '',
 custom_dialplan_entry TEXT,
 active_twin_server_ip VARCHAR(15) default '',
@@ -315,13 +315,13 @@ action VARCHAR(20),
 callerid VARCHAR(20),
 cmd_line_b VARCHAR(100),
 cmd_line_c VARCHAR(100),
-cmd_line_d VARCHAR(100),
+cmd_line_d VARCHAR(200),
 cmd_line_e VARCHAR(100),
 cmd_line_f VARCHAR(100),
 cmd_line_g VARCHAR(100),
 cmd_line_h VARCHAR(100),
-cmd_line_i VARCHAR(100),
-cmd_line_j VARCHAR(100),
+cmd_line_i VARCHAR(50),
+cmd_line_j VARCHAR(50),
 cmd_line_k VARCHAR(100),
 index (callerid),
 index (uniqueid),
@@ -379,7 +379,7 @@ CREATE TABLE vicidial_hopper (
 hopper_id INT(9) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
 lead_id INT(9) UNSIGNED NOT NULL,
 campaign_id VARCHAR(8),
-status ENUM('READY','QUEUE','INCALL','DONE','HOLD','DNC') default 'READY',
+status ENUM('READY','QUEUE','INCALL','DONE','HOLD','DNC','RHOLD','RQUEUE') default 'READY',
 user VARCHAR(20),
 list_id BIGINT(14) UNSIGNED NOT NULL,
 gmt_offset_now DECIMAL(4,2) DEFAULT '0.00',
@@ -704,7 +704,8 @@ failed_login_count_today SMALLINT(6) UNSIGNED default '0',
 failed_last_ip_today VARCHAR(50) default '',
 failed_last_type_today VARCHAR(20) default '',
 modify_dial_prefix ENUM('0','1','2','3','4','5','6') default '0',
-inbound_credits MEDIUMINT(7) default '-1'
+inbound_credits MEDIUMINT(7) default '-1',
+hci_enabled ENUM('0','1','2','3','4','5','6') default '0'
 ) ENGINE=MyISAM;
 
 CREATE UNIQUE INDEX user ON vicidial_users (user);
@@ -754,7 +755,7 @@ agent_xfer_blind_transfer ENUM('Y','N') default 'Y',
 agent_xfer_dial_with_customer ENUM('Y','N') default 'Y',
 agent_xfer_park_customer_dial ENUM('Y','N') default 'Y',
 agent_fullscreen ENUM('Y','N') default 'N',
-allowed_reports VARCHAR(2000) default 'ALL REPORTS',
+allowed_reports VARCHAR(4000) default 'ALL REPORTS',
 webphone_url_override VARCHAR(255) default '',
 webphone_systemkey_override VARCHAR(100) default '',
 webphone_dialpad_override ENUM('DISABLED','Y','N','TOGGLE','TOGGLE_OFF') default 'DISABLED',
@@ -1117,7 +1118,21 @@ custom_two TEXT,
 custom_three TEXT,
 custom_four TEXT,
 custom_five TEXT,
-dead_stop_recording ENUM('DISABLED','ALL_CALLS','OUTBOUND_ONLY','INBOUND_ONLY','AUTODIAL_ONLY','MANUAL_ONLY') default 'DISABLED'
+dead_stop_recording ENUM('DISABLED','ALL_CALLS','OUTBOUND_ONLY','INBOUND_ONLY','AUTODIAL_ONLY','MANUAL_ONLY') default 'DISABLED',
+manual_vm_status_updates ENUM('ENABLED','DISABLED') default 'ENABLED',
+force_per_call_notes ENUM('DISABLED','ENABLED','5_CHARACTERS','15_CHARACTERS','30_CHARACTERS','100_CHARACTERS') default 'DISABLED',
+agent_search_ingroup_list ENUM('DISABLED','ENABLED','ENABLED_OVERRIDE') default 'DISABLED',
+hopper_hold_inserts ENUM('ENABLED','DISABLED','AUTONEXT') default 'DISABLED',
+daily_phone_number_call_limit TINYINT(3) UNSIGNED default '0',
+state_descriptions VARCHAR(40) default '---DISABLED---',
+script_tab_height SMALLINT(5) default '0',
+call_log_days SMALLINT(5) default '0',
+leave_3way_stop_recording ENUM('DISABLED','ALL_CALLS') default 'DISABLED',
+manual_minimum_ring_seconds SMALLINT(5) default '0',
+manual_minimum_attempt_seconds SMALLINT(5) default '0',
+manual_minimum_answer_seconds SMALLINT(5) default '0',
+stereo_recording ENUM('DISABLED','CUSTOMER','CUSTOMER_MUTE') default 'DISABLED',
+khomp_settings_container VARCHAR(40) DEFAULT 'KHOMPSETTINGS'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_lists (
@@ -1435,7 +1450,16 @@ second_alert_trigger_seconds INT(6) default '600',
 second_alert_filename VARCHAR(100) default '',
 second_alert_delay INT(6) default '1000',
 second_alert_container VARCHAR(40) default 'DISABLED',
-second_alert_only VARCHAR(40) default 'DISABLED'
+second_alert_only VARCHAR(40) default 'DISABLED',
+third_alert_trigger VARCHAR(20) default 'DISABLED',
+third_alert_trigger_seconds INT(6) default '600',
+third_alert_filename VARCHAR(100) default '',
+third_alert_delay INT(6) default '1000',
+third_alert_container VARCHAR(40) default 'DISABLED',
+third_alert_only VARCHAR(40) default 'DISABLED',
+agent_search_list VARCHAR(20) default '',
+state_descriptions VARCHAR(40) default '---DISABLED---',
+stereo_recording ENUM('DISABLED','CUSTOMER','CUSTOMER_MUTE') default 'DISABLED'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_stations (
@@ -1847,7 +1871,7 @@ label_security_phrase VARCHAR(60) default '',
 label_email VARCHAR(60) default '',
 label_comments VARCHAR(60) default '',
 slave_db_server VARCHAR(50) default '',
-reports_use_slave_db VARCHAR(2000) default '',
+reports_use_slave_db VARCHAR(4000) default '',
 webphone_systemkey VARCHAR(100) default '',
 first_login_trigger ENUM('Y','N') default 'N',
 hosted_settings VARCHAR(100) default '',
@@ -2010,7 +2034,16 @@ agent_notifications ENUM('0','1','2','3','4','5','6','7') default '0',
 demographic_quotas ENUM('0','1','2','3','4','5','6','7') default '0',
 log_latency_gaps ENUM('0','1','2','3','4','5','6','7') default '1',
 inbound_credits ENUM('0','1','2','3','4','5','6','7') default '0',
-weekday_resets ENUM('0','1','2','3','4','5','6','7') default '0'
+weekday_resets ENUM('0','1','2','3','4','5','6','7') default '0',
+two_factor_auth_agent_hours SMALLINT(5) default '0',
+highest_lead_id VARCHAR(20) default '0',
+hopper_hold_inserts ENUM('0','1','2','3','4','5','6','7') default '0',
+coldstorage_server_ip VARCHAR(50) default '',
+coldstorage_dbname VARCHAR(50) default '',
+coldstorage_login VARCHAR(50) default '',
+coldstorage_pass VARCHAR(50) default '',
+coldstorage_port VARCHAR(10) default '',
+stereo_recording ENUM('0','1','2','3','4','5','6') default '0'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaigns_list_mix (
@@ -2101,6 +2134,7 @@ group_web_vars VARCHAR(255) default '',
 group_grade TINYINT(2) UNSIGNED default '1',
 group_type VARCHAR(1) default 'C',
 calls_today_filtered SMALLINT(5) UNSIGNED default '0',
+daily_limit SMALLINT(5) default '-1',
 index (group_id),
 index (user),
 unique index viga_user_group_id (user, group_id)
@@ -2117,6 +2151,7 @@ group_grade TINYINT(2) UNSIGNED default '1',
 calls_today_filtered SMALLINT(5) UNSIGNED default '0',
 last_call_time_filtered DATETIME,
 last_call_finish_filtered DATETIME,
+daily_limit SMALLINT(5) default '-1',
 index (group_id),
 index (group_weight),
 unique index vlia_user_group_id (user, group_id)
@@ -3299,6 +3334,7 @@ old_status VARCHAR(6) COLLATE utf8_unicode_ci DEFAULT NULL,
 new_status VARCHAR(6) COLLATE utf8_unicode_ci DEFAULT NULL,
 details TEXT COLLATE utf8_unicode_ci,
 processed ENUM('Y','N') COLLATE utf8_unicode_ci NOT NULL,
+qc_log_id INT(10) UNSIGNED,
 PRIMARY KEY (qc_agent_log_id),
 KEY view_epoch (view_epoch)
 ) ENGINE=MyISAM;
@@ -3343,7 +3379,8 @@ holiday_status ENUM('ACTIVE','INACTIVE','EXPIRED') default 'INACTIVE',
 ct_default_start SMALLINT(4) unsigned NOT NULL default '900',
 ct_default_stop SMALLINT(4) unsigned NOT NULL default '2100',
 default_afterhours_filename_override VARCHAR(255) default '',
-user_group VARCHAR(20) default '---ALL---'
+user_group VARCHAR(20) default '---ALL---',
+holiday_method VARCHAR(40) default 'REPLACE'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_email_list (
@@ -4750,6 +4787,7 @@ CREATE TABLE `vicidial_khomp_log` (
 `route_query_time` varchar(20) COLLATE utf8_unicode_ci DEFAULT '0',
 `vici_action` varchar(10) COLLATE utf8_unicode_ci DEFAULT NULL,
 `vici_status` varchar(6) COLLATE utf8_unicode_ci DEFAULT NULL,
+`khomp_settings_container` varchar(40),
 PRIMARY KEY (`khomp_log_id`),
 KEY `caller_code` (`caller_code`),
 KEY `start_date` (`start_date`),
@@ -4928,7 +4966,7 @@ CREATE TABLE vicidial_agent_notifications (
 notification_id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
 entry_date DATETIME DEFAULT current_timestamp(),
 recipient VARCHAR(20) DEFAULT NULL,
-recipient_type ENUM('USER','USER_GROUP','CAMPAIGN') DEFAULT NULL,
+recipient_type ENUM('USER','USER_GROUP','CAMPAIGN','ALT_DISPLAY') DEFAULT NULL,
 notification_date DATETIME DEFAULT current_timestamp(),
 notification_retry ENUM('Y','N') DEFAULT 'N',
 notification_text TEXT DEFAULT NULL,
@@ -5035,6 +5073,238 @@ index(check_date),
 unique index vlgi (user,gap_date)
 ) ENGINE=MyISAM;
 
+CREATE TABLE vicidial_3way_press_live (
+call_date DATETIME(6),
+caller_code VARCHAR(30) NOT NULL,
+call_3way_id VARCHAR(30) NOT NULL,
+lead_id INT(9) UNSIGNED,
+phone_number VARCHAR(18),
+dialstring VARCHAR(28),
+outbound_cid VARCHAR(20),
+user VARCHAR(20),
+session_id VARCHAR(20),
+server_ip VARCHAR(15),
+session_id_3way VARCHAR(20) default '',
+status VARCHAR(40),
+call_channel VARCHAR(100) default '',
+agent_heartbeat DATETIME,
+index(call_date),
+index(caller_code),
+index(call_3way_id),
+index(lead_id)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_3way_press_log (
+call_date DATETIME(6),
+caller_code VARCHAR(30) NOT NULL,
+call_3way_id VARCHAR(30) NOT NULL,
+lead_id INT(9) UNSIGNED,
+phone_number VARCHAR(18),
+dialstring VARCHAR(28),
+outbound_cid VARCHAR(20),
+user VARCHAR(20),
+session_id VARCHAR(20),
+server_ip VARCHAR(15),
+session_id_3way VARCHAR(20) default '',
+result TEXT,
+call_channel VARCHAR(100) default '',
+call_transfer ENUM('N','Y') default 'N',
+index(call_date),
+index(caller_code),
+index(call_3way_id),
+index(lead_id),
+index(phone_number)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_hci_live_agents (
+user VARCHAR(20),
+campaign_id VARCHAR(8),
+user_ip VARCHAR(45) default '',
+login_time DATETIME,
+last_call_time DATETIME,
+last_update_time TIMESTAMP,
+status VARCHAR(40),
+lead_id INT(9) UNSIGNED default '0',
+phone_number VARCHAR(18),
+random_id INT(8) UNSIGNED,
+index(user),
+index(campaign_id),
+index(last_update_time)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_hci_agent_log (
+user VARCHAR(20),
+campaign_id VARCHAR(8),
+user_ip VARCHAR(45) default '',
+login_time DATETIME,
+last_call_time DATETIME,
+status VARCHAR(40),
+index(user),
+index(login_time)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_hci_reserve (
+user VARCHAR(20),
+lead_id INT(9) UNSIGNED,
+phone_number VARCHAR(18),
+reserve_date DATETIME,
+campaign_id VARCHAR(8),
+status VARCHAR(40),
+index(user),
+index(reserve_date),
+index(lead_id)
+) ENGINE=MyISAM;
+
+CREATE UNIQUE INDEX vhcir on vicidial_hci_reserve (lead_id,user,campaign_id);
+
+CREATE TABLE vicidial_hci_log (
+user VARCHAR(20),
+lead_id INT(9) UNSIGNED,
+phone_number VARCHAR(18),
+call_date DATETIME,
+campaign_id VARCHAR(8),
+status VARCHAR(40),
+user_ip VARCHAR(45) default '',
+index(user),
+index(call_date),
+index(lead_id)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_hci_log_archive LIKE vicidial_hci_log;
+CREATE UNIQUE INDEX vhlclu on vicidial_hci_log_archive (call_date,lead_id,user);
+
+CREATE TABLE hci_logs (
+date DATETIME,
+user VARCHAR(20) default '',
+lead_id INT(9) UNSIGNED NOT NULL,
+campaign_id VARCHAR(8),
+index(date)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_phone_number_call_daily_counts (
+phone_number VARCHAR(18) NOT NULL,
+called_count TINYINT(3) UNSIGNED default '0',
+modify_date DATETIME,
+unique index vpncdc_phone_number (phone_number)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_3way_press_multi (
+user VARCHAR(20) PRIMARY KEY,
+call_date DATETIME,
+phone_numbers VARCHAR(255) default '',
+phone_numbers_ct TINYINT(3) default '0',
+status VARCHAR(40) default '',
+index(call_date)
+) ENGINE=MyISAM;
+
+CREATE TABLE server_live_stats (
+update_time DATETIME NOT NULL,
+server_ip VARCHAR(15) NOT NULL,
+server_name VARCHAR(100) NOT NULL,
+cpu_count SMALLINT(5) UNSIGNED default '0',
+loadavg_1 DECIMAL(8,2) default '0.00',
+loadavg_5 DECIMAL(8,2) default '0.00',
+loadavg_15 DECIMAL(8,2) default '0.00',
+freeram INT(9) default '0',
+usedram INT(9) default '0',
+processes SMALLINT(4) default '0',
+system_uptime VARCHAR(255) default '',
+cpu_user_percent DECIMAL(6,2) default '0.00',
+cpu_sys_percent DECIMAL(6,2) default '0.00',
+cpu_idle_percent DECIMAL(6,2) default '0.00',
+cpu_iowait_percent DECIMAL(6,2) default '0.00',
+cpu_vm_percent DECIMAL(6,2) default '0.00',
+disk_reads INT(9) UNSIGNED default '0',
+disk_writes INT(9) UNSIGNED default '0',
+asterisk_channels_total SMALLINT(4) UNSIGNED default '0',
+asterisk_agents_total SMALLINT(4) UNSIGNED default '0',
+mysql_uptime VARCHAR(20) default '0',
+mysql_queries_per_second INT(9) UNSIGNED default '0',
+mysql_connections MEDIUMINT(7) UNSIGNED default '0',
+unique index liveservers (server_ip)
+) ENGINE=MyISAM;
+
+CREATE TABLE server_live_drives (
+update_time DATETIME NOT NULL,
+server_ip VARCHAR(15) NOT NULL,
+drive_order TINYINT UNSIGNED default '0',
+drive_device VARCHAR(100) default '',
+read_sec DECIMAL(8,2) default '0.0',
+write_sec DECIMAL(8,2) default '0.0',
+kb_read_sec DECIMAL(12,2) default '0.0',
+kb_write_sec DECIMAL(12,2) default '0.0',
+util_pct DECIMAL(7,2) default '0.0',
+unique index livedrives (server_ip, drive_device)
+) ENGINE=MyISAM;
+
+CREATE TABLE server_live_partitions (
+update_time DATETIME NOT NULL,
+server_ip VARCHAR(15) NOT NULL,
+partition_order TINYINT UNSIGNED default '0',
+partition_path VARCHAR(100) default '',
+partition_filesystem VARCHAR(100) default '',
+use_pct TINYINT UNSIGNED default '0',
+mb_used BIGINT(14) default '0',
+mb_available BIGINT(14) default '0',
+unique index livepartitions (server_ip, partition_path)
+) ENGINE=MyISAM;
+
+CREATE TABLE inbound_disabled_entries (
+interval_id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+start_datetime DATETIME,
+end_datetime datetime,
+location VARCHAR(50),
+message VARCHAR(100),
+message_type ENUM('MEETING','CLOSED','WEATHER','CUSTOM'),
+status ENUM('ACTIVE','LIVE','COMPLETED','CANCELLED') DEFAULT 'ACTIVE',
+user VARCHAR(20),
+modify_date TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+modified_by VARCHAR(20),
+holiday_id VARCHAR(30),
+KEY inbound_disabled_entries_key (start_datetime,end_datetime,location)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_pending_ar (
+ar_id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+report_id VARCHAR(30) default '',
+start_datetime DATETIME,
+php_script VARCHAR(50) default '',
+user VARCHAR(20),
+status ENUM('TRIGGERED','AUTHORIZED','COMPLETED','ERROR') DEFAULT 'TRIGGERED',
+notes TEXT,
+KEY pending_ar_key (user,start_datetime)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_timeoff_log (
+vtl_id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+user VARCHAR(20) DEFAULT NULL,
+full_name VARCHAR(100) DEFAULT NULL,
+timeoff_month CHAR(7) DEFAULT NULL,
+timeoff_type VARCHAR(10) DEFAULT NULL,
+hours DECIMAL(5,2) unsigned DEFAULT NULL,
+entry_date DATETIME DEFAULT NULL,
+modify_date TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+entered_by VARCHAR(20) DEFAULT NULL,
+last_modified_by VARCHAR(20) DEFAULT NULL,
+PRIMARY KEY (vtl_id),
+UNIQUE KEY vicidial_timeoff_log_agent_month_key (user,timeoff_month,timeoff_type)
+);
+
+CREATE TABLE recording_log_stereo (
+recording_id INT(10) UNSIGNED PRIMARY KEY NOT NULL,
+server_ip VARCHAR(15),
+start_time DATETIME,
+end_time DATETIME,
+length_in_sec MEDIUMINT(8) UNSIGNED,
+filename VARCHAR(100),
+lead_id INT(9) UNSIGNED,
+options VARCHAR(100),
+processing_log TEXT,
+index(filename),
+index(lead_id),
+index(start_time)
+) ENGINE=MyISAM;
+
 
 ALTER TABLE vicidial_email_list MODIFY message text character set utf8;
 
@@ -5096,21 +5366,25 @@ INSERT INTO vicidial_call_times SET call_time_id='12pm-9pm',call_time_name='defa
 INSERT INTO vicidial_call_times SET call_time_id='5pm-9pm',call_time_name='default 5pm to 9pm calling',ct_default_start='1700',ct_default_stop='2100';
 
 INSERT INTO vicidial_state_call_times SET state_call_time_id='alabama',state_call_time_state='AL',state_call_time_name='Alabama 8am-8pm and Sunday',sct_default_start='800',sct_default_stop='2000',sct_sunday_start='2400',sct_sunday_stop='2400';
+INSERT INTO vicidial_state_call_times SET state_call_time_id='florida',state_call_time_state='FL',state_call_time_name='Florida 8am 8pm',sct_default_start='800',sct_default_stop='2000';
 INSERT INTO vicidial_state_call_times SET state_call_time_id='illinois',state_call_time_state='IL',state_call_time_name='Illinois 8am',sct_default_start='800',sct_default_stop='2100';
 INSERT INTO vicidial_state_call_times SET state_call_time_id='indiana',state_call_time_state='IN',state_call_time_name='Indiana 8pm restriction',sct_default_start='900',sct_default_stop='2000';
 INSERT INTO vicidial_state_call_times SET state_call_time_id='kentucky',state_call_time_state='KY',state_call_time_name='Kentucky 10am restriction',sct_default_start='1000',sct_default_stop='2100';
 INSERT INTO vicidial_state_call_times SET state_call_time_id='louisiana',state_call_time_state='LA',state_call_time_name='Louisiana 8am-8pm and Sunday',sct_default_start='800',sct_default_stop='2000',sct_sunday_start='2400',sct_sunday_stop='2400';
+INSERT INTO vicidial_state_call_times SET state_call_time_id='maine',state_call_time_state='ME',state_call_time_name='Maine 9am-5pm',sct_default_start='900',sct_default_stop='1700';
+INSERT INTO vicidial_state_call_times SET state_call_time_id='maryland',state_call_time_state='MD',state_call_time_name='Maryland 8am 8pm',sct_default_start='800',sct_default_stop='2000';
 INSERT INTO vicidial_state_call_times SET state_call_time_id='massachuse',state_call_time_state='MA',state_call_time_name='Massachusetts 8am-8pm',sct_default_start='800',sct_default_stop='2000';
 INSERT INTO vicidial_state_call_times SET state_call_time_id='mississipp',state_call_time_state='MS',state_call_time_name='Mississippi 8am-8pm and Sunday',sct_default_start='800',sct_default_stop='2000',sct_sunday_start='2400',sct_sunday_stop='2400';
 INSERT INTO vicidial_state_call_times SET state_call_time_id='nebraska',state_call_time_state='NE',state_call_time_name='Nebraska 8am',sct_default_start='800',sct_default_stop='2100';
 INSERT INTO vicidial_state_call_times SET state_call_time_id='nevada',state_call_time_state='NV',state_call_time_name='Nevada 8pm restriction',sct_default_start='900',sct_default_stop='2000';
+INSERT INTO vicidial_state_call_times SET state_call_time_id='oklahoma',state_call_time_state='OK',state_call_time_name='Oklahoma 8am 8pm',sct_default_start='800',sct_default_stop='2000';
 INSERT INTO vicidial_state_call_times SET state_call_time_id='pennsylvan',state_call_time_state='PA',state_call_time_name='Pennsylvania sunday restrictn',sct_sunday_start='1330',sct_sunday_stop='2100';
 INSERT INTO vicidial_state_call_times SET state_call_time_id='rhodeislan',state_call_time_state='RI',state_call_time_name='Rhode Island restrictions',sct_default_start='900',sct_default_stop='1800',sct_sunday_start='2400',sct_sunday_stop='2400',sct_saturday_start='1000',sct_saturday_stop='1700';
 INSERT INTO vicidial_state_call_times SET state_call_time_id='sdakota',state_call_time_state='SD',state_call_time_name='South Dakota sunday restrict',sct_sunday_start='2400',sct_sunday_stop='2400';
 INSERT INTO vicidial_state_call_times SET state_call_time_id='tennessee',state_call_time_state='TN',state_call_time_name='Tennessee 8am',sct_default_start='800',sct_default_stop='2100';
 INSERT INTO vicidial_state_call_times SET state_call_time_id='texas',state_call_time_state='TX',state_call_time_name='Texas sunday restriction',sct_sunday_start='1200',sct_sunday_stop='2100';
 INSERT INTO vicidial_state_call_times SET state_call_time_id='utah',state_call_time_state='UT',state_call_time_name='Utah 8pm restriction',sct_default_start='900',sct_default_stop='2000';
-INSERT INTO vicidial_state_call_times SET state_call_time_id='washington',state_call_time_state='WA',state_call_time_name='Washington 8am',sct_default_start='800',sct_default_stop='2100';
+INSERT INTO vicidial_state_call_times SET state_call_time_id='washington',state_call_time_state='WA',state_call_time_name='Washington 8am-8pm',sct_default_start='800',sct_default_stop='2000';
 INSERT INTO vicidial_state_call_times SET state_call_time_id='wyoming',state_call_time_state='WY',state_call_time_name='Wyoming 8am-8pm',sct_default_start='800',sct_default_stop='2000';
 
 INSERT INTO vicidial_shifts SET shift_id='24HRMIDNIGHT',shift_name='24 hours 7 days a week',shift_start_time='0000',shift_length='24:00',shift_weekdays='0123456';
@@ -5118,9 +5392,11 @@ INSERT INTO vicidial_shifts SET shift_id='24HRMIDNIGHT',shift_name='24 hours 7 d
 INSERT INTO vicidial_conf_templates SET template_id='SIP_generic',template_name='SIP phone generic',template_contents="type=friend\nhost=dynamic\ncanreinvite=no\ncontext=default";
 INSERT INTO vicidial_conf_templates SET template_id='IAX_generic',template_name='IAX phone generic',template_contents="type=friend\nhost=dynamic\nmaxauthreq=10\nauth=md5,plaintext,rsa\ncontext=default";
 
-INSERT INTO vicidial_server_carriers SET carrier_id='PARAXIP', carrier_name='TEST ParaXip CPD example',registration_string='', template_id='--NONE--', account_entry="[paraxip]\ndisallow=all\nallow=ulaw\ntype=peer\nusername=paraxip\nfromuser=paraxip\nsecret=test\nfromdomain=10.10.10.16\nhost=10.10.10.15\ninsecure=port,invite\noutboundproxy=10.0.0.7", protocol='SIP', globals_string='TESTSIPTRUNKP = SIP/paraxip', dialplan_entry="exten => _5591999NXXXXXX,1,AGI(agi://127.0.0.1:4577/call_log)\nexten => _5591999NXXXXXX,2,Dial(${TESTSIPTRUNKP}/${EXTEN:4},${CAMPDTO},To)\nexten => _5591999NXXXXXX,3,Hangup", server_ip='10.10.10.15', active='N';
-INSERT INTO vicidial_server_carriers SET carrier_id='SIPEXAMPLE', carrier_name='TEST SIP carrier example',registration_string='register => testcarrier:test@10.10.10.15:5060', template_id='--NONE--', account_entry="[testcarrier]\ndisallow=all\nallow=ulaw\ntype=friend\nusername=testcarrier\nsecret=test\nhost=dynamic\ndtmfmode=rfc2833\ncontext=trunkinbound\n", protocol='SIP', globals_string='TESTSIPTRUNK = SIP/testcarrier', dialplan_entry="exten => _91999NXXXXXX,1,AGI(agi://127.0.0.1:4577/call_log)\nexten => _91999NXXXXXX,2,Dial(${TESTSIPTRUNK}/${EXTEN:2},${CAMPDTO},To)\nexten => _91999NXXXXXX,3,Hangup\n", server_ip='10.10.10.15', active='N';
-INSERT INTO vicidial_server_carriers SET carrier_id='IAXEXAMPLE', carrier_name='TEST IAX carrier example',registration_string='register => testcarrier:test@10.10.10.15:4569', template_id='--NONE--', account_entry="[testcarrier]\ndisallow=all\nallow=ulaw\ntype=friend\naccountcode=testcarrier\nsecret=test\nhost=dynamic\ncontext=trunkinbound\n", protocol='IAX2', globals_string='TESTIAXTRUNK = IAX2/testcarrier', dialplan_entry="exten => _71999NXXXXXX,1,AGI(agi://127.0.0.1:4577/call_log)\nexten => _71999NXXXXXX,2,Dial(${TESTIAXTRUNK}/${EXTEN:2},${CAMPDTO},To)\nexten => _71999NXXXXXX,3,Hangup\n", server_ip='10.10.10.15', active='N';
+INSERT INTO vicidial_server_carriers SET carrier_id='OLD_SIPEXAMPLE', carrier_name='OLD TEST SIP carrier example',registration_string='register => testcarrier:test@10.10.10.15:5060', template_id='--NONE--', account_entry="[testcarrier]\ndisallow=all\nallow=ulaw\ntype=friend\nusername=testcarrier\nsecret=test\nhost=dynamic\ndtmfmode=rfc2833\ncontext=trunkinbound\n", protocol='SIP', globals_string='TESTSIPTRUNK = SIP/testcarrier', dialplan_entry="exten => _91999NXXXXXX,1,AGI(agi://127.0.0.1:4577/call_log)\nexten => _91999NXXXXXX,2,Dial(${TESTSIPTRUNK}/${EXTEN:2},${CAMPDTO},To)\nexten => _91999NXXXXXX,3,Hangup\n", server_ip='10.10.10.15', active='N';
+INSERT INTO vicidial_server_carriers SET carrier_id='OLD_IAXEXAMPLE', carrier_name='OLD TEST IAX carrier example',registration_string='register => testcarrier:test@10.10.10.15:4569', template_id='--NONE--', account_entry="[testcarrier]\ndisallow=all\nallow=ulaw\ntype=friend\naccountcode=testcarrier\nsecret=test\nhost=dynamic\ncontext=trunkinbound\n", protocol='IAX2', globals_string='TESTIAXTRUNK = IAX2/testcarrier', dialplan_entry="exten => _71999NXXXXXX,1,AGI(agi://127.0.0.1:4577/call_log)\nexten => _71999NXXXXXX,2,Dial(${TESTIAXTRUNK}/${EXTEN:2},${CAMPDTO},To)\nexten => _71999NXXXXXX,3,Hangup\n", server_ip='10.10.10.15', active='N';
+INSERT INTO `vicidial_server_carriers`(carrier_id,carrier_name,registration_string,template_id,account_entry,protocol,globals_string,dialplan_entry,server_ip,active,carrier_description,user_group) VALUES ('SIPExample', 'SIP Example', '', '--NONE--', '[ExampleSIP]\ntype = peer\ncontext = trunkinbound\nusecallerid = yes\ntrustrpid = no\nsendrpid = yes\nhost = 10.10.10.15\nqualify = yes\ninsecure = port,invite\ndisallow = all\nallow = ulaw\ndtmfmode = auto', 'SIP', 'SIPTRUNK = SIP/ExampleSIP', 'exten => _91999NXXXXXX,1,AGI(agi://127.0.0.1:4577/call_log)\nexten => _91999NXXXXXX,2,Dial(${SIPTRUNK}/${EXTEN:1},${CAMPDTO},To)\nexten => _91999NXXXXXX,3,Hangup', '0.0.0.0', 'N', 'A SIP example carrier using IP Authentication', '---ALL---');
+INSERT INTO `vicidial_server_carriers`(carrier_id,carrier_name,registration_string,template_id,account_entry,protocol,globals_string,dialplan_entry,server_ip,active,carrier_description,user_group) VALUES ('PJSIPExample', 'PJSIP Example', '', '--NONE--', '[ExamplePJSIP]\ntype = aor\ncontact = sip:10.10.10.15\nqualify_frequency = 15\nmaximum_expiration = 3600\nminimum_expiration = 60\ndefault_expiration = 120\n\n[ExamplePJSIP]\ntype = identify\nendpoint = ExamplePJSIP\nmatch = 10.10.10.15\n\n[ExamplePJSIP]\ntype = endpoint\ncontext = trunkinbound\ndtmf_mode = rfc4733\ndisallow = all\nallow = ulaw\nrtp_symmetric = yes\nrewrite_contact = yes\nrtp_timeout = 60\nuse_ptime = yes\nmoh_suggest = default\ndirect_media = no\ntrust_id_inbound = yes\nsend_rpid = yes\ninband_progress = no\ntos_audio = ef\nlanguage = en\naors = ExamplePJSIP\ndtmf_mode=auto', 'PJSIP', 'PJTRUNK=ExamplePJSIP', 'exten => _91999NXXXXXX,1,AGI(agi://127.0.0.1:4577/call_log)\nexten => _91999NXXXXXX,n,Dial(PJSIP/${EXTEN:1}@${PJTRUNK},${CAMPDTO},To)\nexten => _91999NXXXXXX,n,Hangup()', '0.0.0.0', 'N', 'A PJSIP example carrier using IP authentication', '---ALL---');
+INSERT INTO `vicidial_server_carriers`(carrier_id,carrier_name,registration_string,template_id,account_entry,protocol,globals_string,dialplan_entry,server_ip,active,carrier_description,user_group) VALUES ('PJSIPWIZExample', 'PJSIP_WIZ Example', '', '--NONE--', '[ExamplePJSIPWIZ]\ntype = wizard\nremote_hosts = 10.10.10.15:5060\nsends_registrations = no\naccepts_registrations = no\nsends_auth = no\naccepts_auth = no\naor/qualify_frequency = 15\naor/maximum_expiration = 3600\naor/minimum_expiration = 60\naor/default_expiration = 120\nendpoint/allow_subscribe = no\nendpoint/context = trunkinbound\nendpoint/dtmf_mode = auto\nendpoint/disallow = all\nendpoint/allow = ulaw\nendpoint/rtp_symmetric = yes\nendpoint/rewrite_contact = yes\nendpoint/rtp_timeout = 60\nendpoint/use_ptime = yes\nendpoint/moh_suggest = default\nendpoint/direct_media = no\nendpoint/trust_id_inbound = yes\nendpoint/send_rpid = yes\nendpoint/inband_progress = no\nendpoint/tos_audio = ef\nendpoint/language = en', 'PJSIP_WIZ', 'WIZTRK=ExamplePJSIPWIZ', 'exten => _91999NXXXXXX,1,AGI(agi://127.0.0.1:4577/call_log)\nexten => _91999NXXXXXX,n,Dial(PJSIP/${EXTEN:1}@${WIZTRK},${CAMPDTO},To)\nexten => _91999NXXXXXX,n,Hangup()', '0.0.0.0', 'N', 'A PJSIP_WIZ example carrier using IP authentication', '---ALL---');
 
 INSERT INTO vicidial_inbound_dids SET did_pattern='default', did_description='Default DID', did_active='Y', did_route='EXTEN', extension='9998811112', exten_context='default';
 
@@ -5329,6 +5605,11 @@ CREATE UNIQUE INDEX vdalsla on vicidial_agent_latency_summary_log_archive (user,
 CREATE TABLE vicidial_latency_gaps_archive LIKE vicidial_latency_gaps;
 CREATE UNIQUE INDEX vdlga on vicidial_latency_gaps_archive (user,gap_date);
 
+CREATE TABLE vicidial_3way_press_log_archive LIKE vicidial_3way_press_log;
+CREATE UNIQUE INDEX vdpla on vicidial_3way_press_log_archive (call_date,caller_code,user);
+
+CREATE TABLE vicidial_daily_rt_monitoring_log LIKE vicidial_rt_monitor_log;
+
 GRANT RELOAD ON *.* TO cron@'%';
 GRANT RELOAD ON *.* TO cron@localhost;
 
@@ -5420,6 +5701,7 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('EXAMPLE_LIST_WEEKDAY_RESETS','Example Weekday List Resets Container settings','LIST_WEEKDAY_RESETS','---ALL---','; weekday => reset-times in 24-hour time separated by dashes\r\nmonday => 0830-1230-1800\r\ntuesday => 0900-1400-1830\r\nwednesday => 0930-1200-1730-1900\r\nthursday => 1030-1330-1900\r\nfriday => 0800-1300-1530\r\nsaturday => 0930-1100\r\nsunday => 1000');
 INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('EXAMPLE_VID_PROMPT_SPECIAL','Example Call Menu VID Special Container settings','CM_VIDPROMPT_SPECIAL','---ALL---','list_ingroup => 102,TEST_IN2\r\nlist_ingroup => 103,TEST_IN3\r\nlist_ingroup => 104,TEST_IN4\r\ndefault_ingroup => TEST_IN5\r\nnot_found_action => new_lead\r\nnew_lead_ingroup => TEST_IN');
 INSERT INTO `vicidial_settings_containers` VALUES ('VERM_STATUS_NAMES_OVERRIDE','Override dialer status names in enhanced reporting','OTHER','---ALL---','; For each status name you want overridden, type the status followed by\r\n; a pipe, then the new status name\r\n; Ex:\r\n; NZ|Taumatawhakatangihangakoauauotamateaturipukakapikimaungahoronukupoka\r\n201214|Request To Cancel\r\n210200|No Answer-Incomplete Call\r\n210201|Contact Established\r\n210202|Provider Review - HB\r\n210203|Promise to Pay\r\n210204|Setup Payment Plan\r\n210205|Research-Inquiry\r\n210206|Voice Mail Left - HB\r\n210207|Do Not Call\r\n210208|Appeal Verification\r\n210209|Bad Phone\r\n210210|Bad Address\r\n210211|Direct Pay Verification\r\n210213|Provider Approved\r\n210215|Update Notes Only\r\n210216|Voicemail-No Status Change\r\n210217|Sent Letter Request - HB\r\n210218|Auto VoiceMail Left - HB\r\n210219|Auto VoiceMail-No Status Change\r\n210302|Provider Review - LB\r\n210306|Voice Mail Left - LB\r\n210317|Sent Letter Request - LB\r\n210318|Auto VoiceMail Left - LB\r\n211503|Provider - COVID-19\r\n211603|Transferred Call to MLA\r\n'), ('VERM_REPORT_OPTIONS','Container for customizing VERM report output','OTHER','---ALL---','; This is the report queue used if none is chosen by the user\r\n; It\'s preloaded in some forms as well\r\nVERM_default_report_queue => ALL\r\n\r\n; If there are statuses to exclude from reports, list them here\r\n; Separate with commas.  Default is AFTHRS\r\nexc_addtl_statuses => AFTHRS\r\n\r\n; Set the below value to 1 (or anything non-blank/non-zero) in order to \r\n; show the agents ID in addition to their full name in the report results\r\nshow_full_agent_info => 1\r\n\r\n; Some reports count \"lost\" calls - which are defined by the below variable\r\n; listing what you define as \"lost\" dispos.  Separate with commas.\r\nlost_statuses => LOST,210208,DISPO\r\n\r\n; You can create a detailed IVR survey report for ingroups by defining\r\n; \"ivr_survey_ingroups_detail\" and \"ivr_survey_ingroups_voicemails.\"\r\n; For \"details\", supply an ingroup used as a tracking group on call menus.\r\n; Then, add a pipe and after that list all call menus that use the ingroup\r\n; as the tracking group, separating each with a comma\r\n; To track whether the calls went to voicemail, list every call menu/option\r\n; combination that goes to voicemail, separating the call menu from the \r\n; option with a pipe.  One callmenu/option combo per line.\r\nivr_survey_ingroups_detail => 521205|561401,561402,561403,561404,561505\r\nivr_survey_ingroups_voicemails => 561505|t\r\n\r\n; #####################################################\r\n; # ALL of the below are used in the wallboard report #\r\n; #####################################################\r\nVERM_default_outb_widget_queue => ALL_OUT\r\nVERM_default_inb_widget_queue1 => 514915v_USA_Shared\r\nVERM_default_inb_widget_queue2 => 515915v_MLA_Shared\r\n\r\n; Used specifically for the SLA widget\r\n; Uses ingroups - separate multiple ingroups by commas\r\n; Comment out or leave blank to count all ingroups\r\nSLA_LEVEL_PCT_ingroups => 514915v,515915v\r\n\r\n; This removes remote agents from the wallboard reports\r\n; Comment out to include remote agents (or set to zero)\r\nomit_remote_agents => 1\r\n\r\n\r\n; #### AUTO DOWNLOAD ####\r\n; If the "total calls" value on any report requested exceeds the below \r\n; limit, automatically download the three "DETAILS" reports instead\r\n; of attempting to display that many records on-screen\r\nauto_download_limit => 50000\r\n\r\n; #### OUTCOMES report overrides ####\r\n; Use "outcome_lagged_status_overrides" for conditions where the call \r\n; record in the vicidial_log or vicidial_closer_log table has no uniqueid\r\n; value despite having a status/outcome, which can indicate a call \r\n; affected by network lag for certain statuses.  This will change the call \r\n; status to "LAGGED".  Separate statuses with commas.  Default is the \r\n; automatic "PU" status.\r\noutcome_lagged_status_overrides => PU\r\n\r\n; Use "unknown_network_statuses" to change call statuses to read "Network/\r\n; LAGGED" on the OUTCOMES report. Separate statuses with commas.\r\n; IMPORTANT: if you are using the outcome_lagged_status_overrides option \r\n; above, make sure "LAGGED" is one of the unknown_network_statuses here\r\n; unknown_network_statuses => LAGGED\r\n\r\n; Use "outcome_status_overrides" to change one status to another on the \r\n; OUTCOMES report.  Overrides are comma-separated pairs of dispositions  \r\n; where the first disposition is the disposition to change, and the second\r\n; is the disposition to change to.  Separate pairs with a pipe character as\r\n; in the below example.  Off by default.\r\n; outcome_status_overrides => CBHOLD,DISPO|XFER,AL');
+INSERT INTO vicidial_settings_containers VALUES ('VICIDIAL_TIMEOFF_SETTINGS','Settings for time-off admin utility','OTHER','---ALL---','; Comma-delimited time-off codes - MANDATORY, must have at least one defined. \r\n; Default is \'VAC\' for vacation\r\ntimeoff_types => VAC\r\n\r\n; optional, if set to \'1\' will show all viewable agents, even ones with no \r\n; time off for month.  Default is 0\r\ndisplay_all_agents => 0\r\n\r\n; optional, used to filter users displayed, in addition to user_group \r\n; permissions\r\nuser_filter_SQL =>  \r\n\r\n; optional, uses columns from vicidial_users table.   Defaults to \r\n; full_name asc, user asc if commented out or non-existent\r\n; sort_SQL => full_name asc, user asc\r\n\r\n; include custom coding for misc download coding where \"custom_download\" \r\n; marked in agent_timeoff_script.php - DO NOT USE WITHOUT CODING KNOWLEDGE\r\n; set to \'1\' to activate\r\ncustom_download => 0');
 
 INSERT INTO `wallboard_widgets` VALUES ('queues_widget_1','AGENTS_AND_QUEUES','queues','','TEXT',5,'N',1,'Queue Information','','',NULL,'','',NULL,2),('queues_widget_0','AGENTS_AND_QUEUES','queues','','LOGO',2,'N',1,NULL,'','',NULL,'','',NULL,1),('queues_widget_2','AGENTS_AND_QUEUES','queues','SLA Level %','SLA_LEVEL_PCT',1,'N',1,NULL,'','>60',NULL,'','',NULL,3),('queues_widget_3','AGENTS_AND_QUEUES','queues','Outbound calls','LIVE_QUEUE_INFO',1,'N',1,'','201201','','','','','yellow_alarm,|red_alarm,',4),('queues_widget_4','AGENTS_AND_QUEUES','queues','USA Ded Inbound','LIVE_QUEUE_INFO',1,'N',1,'','ALL_IN','','','','','yellow_alarm,|red_alarm,',5),('queues_widget_5','AGENTS_AND_QUEUES','queues','MLA Ded Inbound','LIVE_QUEUE_INFO',1,'N',1,'','514911','','','','','yellow_alarm,|red_alarm,',6),('queues_widget_6','AGENTS_AND_QUEUES','queues','N Waiting Calls','N_WAITING_CALLS',1,'N',1,NULL,'','',NULL,'','',NULL,7),('queues_widget_7','AGENTS_AND_QUEUES','queues','Offered Calls','OFFERED_CALLS',1,'N',1,NULL,'','',NULL,'','',NULL,8),('queues_widget_8','AGENTS_AND_QUEUES','queues','Answered Calls','ANSWERED_CALLS',1,'N',1,NULL,'','',NULL,'','',NULL,9),('queues_widget_9','AGENTS_AND_QUEUES','queues','Lost Calls','LOST_CALLS',1,'N',1,NULL,'','',NULL,'','',NULL,10),('queues_widget_10','AGENTS_AND_QUEUES','queues','Longest Wait','LONGEST_WAIT',1,'N',1,NULL,'','',NULL,'','',NULL,11),('queues_widget_11','AGENTS_AND_QUEUES','queues','Live Queues','LIVE_QUEUES',1,'Y',1,NULL,'','',NULL,'','',NULL,12),('queues_widget_12','AGENTS_AND_QUEUES','queues','Live Calls','LIVE_CALLS',1,'Y',2,NULL,'','',NULL,'','',NULL,13),('agent_widget_0','AGENTS_AND_QUEUES','agents','','LOGO',2,'N',1,NULL,'','',NULL,'','',NULL,1),('agent_widget_1','AGENTS_AND_QUEUES','agents','N Waiting Calls','N_WAITING_CALLS',1,'N',1,NULL,'','',NULL,'','',NULL,2),('agent_widget_2','AGENTS_AND_QUEUES','agents','Agents Ready','AGENTS_READY',1,'N',1,NULL,'','',NULL,'','',NULL,3),('agent_widget_3','AGENTS_AND_QUEUES','agents','Agents On Call','N_AGENTS_ON_CALL',1,'N',1,NULL,'','',NULL,'','',NULL,4),('agent_widget_4','AGENTS_AND_QUEUES','agents','N Answered Calls','N_ANSWERED_CALLS',1,'N',1,NULL,'','',NULL,'','',NULL,5),('agent_widget_5','AGENTS_AND_QUEUES','agents','Clock','CLOCK',1,'N',1,NULL,'','',NULL,'','',NULL,6),('agent_widget_6','AGENTS_AND_QUEUES','agents','Live Agents','LIVE_AGENTS',1,'Y',3,NULL,'','',NULL,'','',NULL,7);
 
@@ -5427,4 +5709,4 @@ INSERT INTO `wallboard_reports` VALUES ('AGENTS_AND_QUEUES','Agents and Queues',
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1690',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1720',db_schema_update_date=NOW(),reload_timestamp=NOW();

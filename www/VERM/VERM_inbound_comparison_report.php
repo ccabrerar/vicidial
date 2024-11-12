@@ -2,14 +2,17 @@
 
 # VERM_inbound_comparison_report.php
 
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
+
 # changes
 # 230225-1531 - First build of script
+# 240801-1139 - Code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
 
-$version = '2.14-41';
-$build = '230225-1531';
+$version = '2.14-42';
+$build = '240801-1139';
 
 header ("Content-type: text/html; charset=utf-8");
 
@@ -17,7 +20,6 @@ require("dbconnect_mysqli.php");
 require("functions.php");
 
 require("VERM_options.php");
-require("VERM_global_vars.inc");
 
 if (isset($_GET["start_date"]))			{$start_date=$_GET["start_date"];}
 	elseif (isset($_POST["start_date"]))	{$start_date=$_POST["start_date"];}
@@ -32,12 +34,24 @@ if (isset($_GET["submit_report"]))			{$submit_report=$_GET["submit_report"];}
 if (isset($_GET["DB"]))			{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))	{$DB=$_POST["DB"];}
 
-$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
 $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
+
+if ($non_latin < 1)
+	{
+	$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
+	}
+else
+	{
+	$DB=preg_replace("/[^0-9\p{L}]/u","",$DB);
+	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
+	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
+	}
 
 $report_name = 'Vox Enhanced Reporting Module';
 $db_source = 'M';
@@ -70,10 +84,13 @@ if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-$PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
-$PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
-$PHP_SELF=$_SERVER['PHP_SELF'];
-$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
+# $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
+# $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
+# $PHP_SELF=$_SERVER['PHP_SELF'];
+# $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
+
+if(!is_array($comparison_years)) {$comparison_years=array();}
+if(!is_array($comparison_months)) {$comparison_months=array();}
 
 $start_date=preg_replace('/[^-0-9]/', '', $start_date);
 $end_date=preg_replace('/[^-0-9]/', '', $end_date);
@@ -87,6 +104,83 @@ $survey_ivr_groups=array("561403", "561402");
 $survey_ivr_group_names=array("PRS-Survey-Overall-iVR", "PRS-Survey-NPS-iVR");
 if (!$vicidial_queue_groups) {$vicidial_queue_groups=$default_queue_groups;}
 if (!$vicidial_queue_group_names) {$vicidial_queue_group_names=$default_queue_group_names;}
+
+$stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
+if ($DB) {echo "|$stmt|\n";}
+$rslt=mysql_to_mysqli($stmt, $link);
+$sl_ct = mysqli_num_rows($rslt);
+if ($sl_ct > 0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$VUselected_language =		$row[0];
+	}
+
+$auth=0;
+$reports_auth=0;
+$admin_auth=0;
+$auth_message = user_authorization($PHP_AUTH_USER,$PHP_AUTH_PW,'REPORTS',0,0);
+if ( ($auth_message == 'GOOD') or ($auth_message == '2FA') )
+	{
+	$auth=1;
+	if ($auth_message == '2FA')
+		{
+		header ("Content-type: text/html; charset=utf-8");
+		echo _QXZ("Your session is expired").". <a href=\"admin.php\">"._QXZ("Click here to log in")."</a>.\n";
+		exit;
+		}
+	}
+
+if ($auth > 0)
+	{
+	$stmt="SELECT count(*) from vicidial_users where user='$PHP_AUTH_USER' and user_level > 7 and view_reports='1';";
+	if ($DB) {echo "|$stmt|\n";}
+	$rslt=mysql_to_mysqli($stmt, $link);
+	$row=mysqli_fetch_row($rslt);
+	$admin_auth=$row[0];
+
+	$stmt="SELECT count(*) from vicidial_users where user='$PHP_AUTH_USER' and user_level > 6 and view_reports='1';";
+	if ($DB) {echo "|$stmt|\n";}
+	$rslt=mysql_to_mysqli($stmt, $link);
+	$row=mysqli_fetch_row($rslt);
+	$reports_auth=$row[0];
+
+	if ($reports_auth < 1)
+		{
+		$VDdisplayMESSAGE = _QXZ("You are not allowed to view reports");
+		Header ("Content-type: text/html; charset=utf-8");
+		echo "$VDdisplayMESSAGE: |$PHP_AUTH_USER|$auth_message|\n";
+		exit;
+		}
+	if ( ($reports_auth > 0) and ($admin_auth < 1) )
+		{
+		$ADD=999999;
+		$reports_only_user=1;
+		}
+	}
+else
+	{
+	$VDdisplayMESSAGE = _QXZ("Login incorrect, please try again");
+	if ($auth_message == 'LOCK')
+		{
+		$VDdisplayMESSAGE = _QXZ("Too many login attempts, try again in 15 minutes");
+		Header ("Content-type: text/html; charset=utf-8");
+		echo "$VDdisplayMESSAGE: |$PHP_AUTH_USER|$auth_message|\n";
+		exit;
+		}
+	if ($auth_message == 'IPBLOCK')
+		{
+		$VDdisplayMESSAGE = _QXZ("Your IP Address is not allowed") . ": $ip";
+		Header ("Content-type: text/html; charset=utf-8");
+		echo "$VDdisplayMESSAGE: |$PHP_AUTH_USER|$auth_message|\n";
+		exit;
+		}
+	Header("WWW-Authenticate: Basic realm=\"CONTACT-CENTER-ADMIN\"");
+	Header("HTTP/1.0 401 Unauthorized");
+	echo "$VDdisplayMESSAGE: |$PHP_AUTH_USER|$PHP_AUTH_PW|$auth_message|\n";
+	exit;
+	}
+
+require("VERM_global_vars.inc");  # Must be after user_authorization for sanitization/security
 
 $stmt="select *, if(queue_group in ('".implode("', '", $default_queue_groups)."'), 0, 1) as priority from vicidial_queue_groups where active='Y' $LOGallowed_queue_groupsSQL order by priority, queue_group, queue_group_name;";
 $rslt=mysql_to_mysqli($stmt, $link);
@@ -304,6 +398,11 @@ if ($vicidial_queue_groups && $submit_report)
 				$included_inbound_groups_ct=count($included_inbound_groups_array);
 				$included_inbound_groups_clause="and group_id in ('".preg_replace('/\s/', "', '", $included_inbound_groups)."')";
 				$where_included_inbound_groups_clause="where group_id in ('".preg_replace('/\s/', "', '", $included_inbound_groups)."')";
+				}
+			else
+				{
+				$included_campaigns_array=array();
+				$included_inbound_groups_array=array();	
 				}
 
 			$atomic_queue_str="";
@@ -1098,8 +1197,10 @@ $HTML_output.="//-->\n";
 
 if ($DB) {$HTML_output.="<B>$calls_stmt</B>";}
 
-$calls_rslt=mysqli_query($link, $calls_stmt);
-
+if($calls_stmt)
+	{
+	$calls_rslt=mysqli_query($link, $calls_stmt);
+	}
 
 
 if (file_exists('options.php'))

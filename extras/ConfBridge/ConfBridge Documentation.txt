@@ -1,12 +1,15 @@
-VICIdial ConfBridge Support:		STARTED: 2022-06-22	UPDATED: 2022-10-26
+VICIdial ConfBridge Support:		STARTED: 2022-06-22	UPDATED: 2024-04-25
 
 
-!!! NOTE: VICIdial ConfBridge support is currently in BETA mode and is not recommended for systems that require a stable and tested codebase !!!
+!!! NOTE: VICIdial ConfBridge has been in use by several companies in production for over a year now and is considered stable !!!
 
-!!! NOTE: VICIdial ConfBridge support requires Asterisk 16 or higher to be installed on your dialers. Code development and testing was done with VICIbox 10 and the optional Asterisk 16 package available through VICIbox 10 !!!
+!!! NOTE: VICIdial ConfBridge support requires Asterisk 16 or higher to be installed on your dialers. Code development and testing was done with VICIbox 11 and the optional Asterisk 16 package available through VICIbox 11 !!!
+
+!!! NOTE: As of svn/trunk revision 3828, the new 'AST_conf_update_screen.pl' script is installed by the VICIdial codebase and all other required code patches are already applied by default.
 
 
-BETA support for ConfBridge is included in the VICIdial svn/trunk codebase as of revision 3624.
+BETA support for ConfBridge was first included in the VICIdial svn/trunk codebase as of revision 3624.
+
 
 
 - Background 
@@ -584,7 +587,7 @@ Included in the "extras/ConfBridge/" directory of the svn/trunk codebase are sev
 vici-dev1:/srv/www/htdocs/agc/ # patch -p0 < vicidial.php.diff
 patching file vicidial.php
 
-NOTE: The "AST_conf_update_screen.pl" script is a new perl script, not a patch file, so it just needs to be copied to the proper directory and given 'r' + 'x' file permissions.
+NOTE: As of revision 3826, the new 'AST_conf_update_screen.pl' script is installed by the VICIdial codebase and all other required patches are already applied by default.
 
 
 Here is the list of files for specific default directories:

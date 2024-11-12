@@ -6,7 +6,7 @@
 # astguiclient.conf file to reflect a change in IP address. The script will 
 # automatically default to the first eth address in the ifconfig output.
 #
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 71205-2144 - Added display of extensions.conf example for call routing
@@ -17,6 +17,8 @@
 # 150312-1000 - Added ExpectedDBSchema
 # 180928-1958 - Added update of report_server, active_twin_server_ip and active_voicemail_server, issue #1109
 # 190530-1517 - Added mising commented-out keepalives in conf file
+# 240420-2247 - Added ConfBridge code
+# 240704-1737 - Added CS server variables
 #
 
 # default path to astguiclient configuration file:
@@ -42,6 +44,16 @@ foreach(@conf)
 		{$VARDB_pass = $line;   $VARDB_pass =~ s/.*=//gi;}
 	if ( ($line =~ /^VARDB_port/) && ($CLIDB_port < 1) )
 		{$VARDB_port = $line;   $VARDB_port =~ s/.*=//gi;}
+	if ( ($line =~ /^VARCS_server/) && ($CLICS_server < 1) )
+		{$VARCS_server = $line;   $VARCS_server =~ s/.*=//gi;}
+	if ( ($line =~ /^VARCS_database/) && ($CLICS_database < 1) )
+		{$VARCS_database = $line;   $VARCS_database =~ s/.*=//gi;}
+	if ( ($line =~ /^VARCS_user/) && ($CLICS_user < 1) )
+		{$VARCS_user = $line;   $VARCS_user =~ s/.*=//gi;}
+	if ( ($line =~ /^VARCS_pass/) && ($CLICS_pass < 1) )
+		{$VARCS_pass = $line;   $VARCS_pass =~ s/.*=//gi;}
+	if ( ($line =~ /^VARCS_port/) && ($CLICS_port < 1) )
+		{$VARCS_port = $line;   $VARCS_port =~ s/.*=//gi;}
 	$i++;
 	}
 
@@ -166,6 +178,16 @@ if (-e "$PATHconf")
 			{$VARDB_custom_pass = $line;   $VARDB_custom_pass =~ s/.*=//gi;}
 		if ( ($line =~ /^VARDB_port/) && ($CLIDB_port < 1) )
 			{$VARDB_port = $line;   $VARDB_port =~ s/.*=//gi;}
+		if ( ($line =~ /^VARCS_server/) && ($CLICS_server < 1) )
+			{$VARCS_server = $line;   $VARCS_server =~ s/.*=//gi;}
+		if ( ($line =~ /^VARCS_database/) && ($CLICS_database < 1) )
+			{$VARCS_database = $line;   $VARCS_database =~ s/.*=//gi;}
+		if ( ($line =~ /^VARCS_user/) && ($CLICS_user < 1) )
+			{$VARCS_user = $line;   $VARCS_user =~ s/.*=//gi;}
+		if ( ($line =~ /^VARCS_pass/) && ($CLICS_pass < 1) )
+			{$VARCS_pass = $line;   $VARCS_pass =~ s/.*=//gi;}
+		if ( ($line =~ /^VARCS_port/) && ($CLICS_port < 1) )
+			{$VARCS_port = $line;   $VARCS_port =~ s/.*=//gi;}
 		if ( ($line =~ /^VARactive_keepalives/) && ($CLIactive_keepalives < 1) )
 			{$VARactive_keepalives = $line;   $VARactive_keepalives =~ s/.*=//gi;}
 		if ( ($line =~ /^VARasterisk_version/) && ($CLIasterisk_version < 1) )
@@ -343,6 +365,11 @@ print conf "VARDB_pass => $VARDB_pass\n";
 print conf "VARDB_custom_user => $VARDB_custom_user\n";
 print conf "VARDB_custom_pass => $VARDB_custom_pass\n";
 print conf "VARDB_port => $VARDB_port\n";
+print conf "VARCS_server => $VARCS_server\n";
+print conf "VARCS_database => $VARCS_database\n";
+print conf "VARCS_user => $VARCS_user\n";
+print conf "VARCS_pass => $VARCS_pass\n";
+print conf "VARCS_port => $VARCS_port\n";
 print conf "\n";
 print conf "# Alpha-Numeric list of the astGUIclient processes to be kept running\n";
 print conf "# (value should be listing of characters with no spaces: 123456)\n";
@@ -442,6 +469,11 @@ if ($DB) {print "     |$affected_rows|$stmtA|\n";}
 
 print "  Updating vicidial_conferences table...\n";
 $stmtA = "UPDATE vicidial_conferences SET server_ip='$VARserver_ip' where server_ip='$VARold_server_ip';";
+$affected_rows = $dbhA->do($stmtA);
+if ($DB) {print "     |$affected_rows|$stmtA|\n";}
+
+print "  Updating vicidial_confbridges table...\n";
+$stmtA = "UPDATE vicidial_confbridges SET server_ip='$VARserver_ip' where server_ip='$VARold_server_ip';";
 $affected_rows = $dbhA->do($stmtA);
 if ($DB) {print "     |$affected_rows|$stmtA|\n";}
 

@@ -1,7 +1,7 @@
 <?php
 # medialog_inventory_report.php
 # 
-# Copyright (C) 2022  Joe Johnson <freewermadmin@gmail.com>, Matt Florell <mattf@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Joe Johnson <freewermadmin@gmail.com>, Matt Florell <mattf@vicidial.com>    LICENSE: AGPLv2
 #
 # This is a report designed for showing custom statistics based on client
 # requirements. This is not a standard VICIdial report.
@@ -14,6 +14,7 @@
 # 180508-2315 - Added new help display
 # 220228-1715 - Added allow_web_debug system setting
 # 220812-0932 - Added User Group report permissions checking
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
@@ -324,8 +325,8 @@ if ( (!preg_match("/$report_name/",$LOGallowed_reports)) and (!preg_match("/ALL 
 $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 $STARTtime = date("U");
-if (!isset($group)) {$group = array();}
-if (!isset($list_ids)) {$list_ids = array();}
+if (!is_array($group)) {$group = array();}
+if (!is_array($list_ids)) {$list_ids = array();}
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (!isset($end_date)) {$end_date = $NOW_DATE;}
 
@@ -846,9 +847,9 @@ if (count($list_ids) > 0 && count($group) > 0)
 
 	$CSV_text.="\"Total\",\"$total\",\"\",\"\",\"1 - 5\",\"6 - 10\",\"10 - 15\",\"> 15\"\n";
 	$CSV_text.="\"Falsche Tel.\",\"$afc_counts[0]\",\"".sprintf("%.2f", (100*($afc_counts[0]/$total)))." %\",\"\",\"$afc_counts[1]\",\"$afc_counts[2]\",\"$afc_counts[3]\",\"$afc_counts[4]\"\n";
-	$CSV_text.="\"Nixi\",\"$nixi_counts[0]\",\"".sprintf("%.2f", (100*($nixi_counts[0]/($nixi_counts[0]+$no_counts[0]+$sales_counts[0]))))." %\",\"\",\"$nixi_counts[1]\",\"$nixi_counts[2]\",\"$nixi_counts[3]\",\"$nixi_counts[4]\"\n";
+	$CSV_text.="\"Nixi\",\"$nixi_counts[0]\",\"".sprintf("%.2f", (100*(MathZDC($nixi_counts[0], ($nixi_counts[0]+$no_counts[0]+$sales_counts[0])))))." %\",\"\",\"$nixi_counts[1]\",\"$nixi_counts[2]\",\"$nixi_counts[3]\",\"$nixi_counts[4]\"\n";
 	$CSV_text.="\"No\",\"$no_counts[0]\",\"\",\"\",\"$no_counts[1]\",\"$no_counts[2]\",\"$no_counts[3]\",\"$no_counts[4]\"\n";
-	$CSV_text.="\"Sales\",\"$sales_counts[0]\",\"".sprintf("%.2f", (100*($sales_counts[0]/($nixi_counts[0]+$no_counts[0]+$sales_counts[0]))))." %\",\"\",\"$sales_counts[1]\",\"$sales_counts[2]\",\"$sales_counts[3]\",\"$sales_counts[4]\"\n";
+	$CSV_text.="\"Sales\",\"$sales_counts[0]\",\"".sprintf("%.2f", (100*(MathZDC($sales_counts[0], ($nixi_counts[0]+$no_counts[0]+$sales_counts[0])))))." %\",\"\",\"$sales_counts[1]\",\"$sales_counts[2]\",\"$sales_counts[3]\",\"$sales_counts[4]\"\n";
 
 
 	$head ="+------------------+---------+---------+---+---------+---------+---------+---------+\n";
@@ -856,10 +857,10 @@ if (count($list_ids) > 0 && count($group) > 0)
 	$MAIN.="|                  |  Count  |    %    |   |             Kontaktstatus             |\n";
 	$MAIN.=$head;
 	$MAIN.="|            Total | ".sprintf("%7s", $total)." |         |   |  1 - 5  |  6 - 10 | 10 - 15 |    > 15 |\n";
-	$MAIN.="|     Falsche Tel. | ".sprintf("%7s", $afc_counts[0])." | ".sprintf("%6s", sprintf("%.2f", (100*($afc_counts[0]/$total))))."% |   | ".sprintf("%7s", $afc_counts[1])." | ".sprintf("%7s", $afc_counts[2])." | ".sprintf("%7s", $afc_counts[3])." | ".sprintf("%7s", $afc_counts[4])." |\n";
-	$MAIN.="|             Nixi | ".sprintf("%7s", $nixi_counts[0])." | ".sprintf("%6s", sprintf("%.2f", (100*($nixi_counts[0]/($nixi_counts[0]+$no_counts[0]+$sales_counts[0])))))."% |   | ".sprintf("%7s", $nixi_counts[1])." | ".sprintf("%7s", $nixi_counts[2])." | ".sprintf("%7s", $nixi_counts[3])." | ".sprintf("%7s", $nixi_counts[4])." |\n";
+	$MAIN.="|     Falsche Tel. | ".sprintf("%7s", $afc_counts[0])." | ".sprintf("%6s", sprintf("%.2f", (100*(MathZDC($afc_counts[0],$total)))))."% |   | ".sprintf("%7s", $afc_counts[1])." | ".sprintf("%7s", $afc_counts[2])." | ".sprintf("%7s", $afc_counts[3])." | ".sprintf("%7s", $afc_counts[4])." |\n";
+	$MAIN.="|             Nixi | ".sprintf("%7s", $nixi_counts[0])." | ".sprintf("%6s", sprintf("%.2f", (100*(MathZDC($nixi_counts[0],($nixi_counts[0]+$no_counts[0]+$sales_counts[0]))))))."% |   | ".sprintf("%7s", $nixi_counts[1])." | ".sprintf("%7s", $nixi_counts[2])." | ".sprintf("%7s", $nixi_counts[3])." | ".sprintf("%7s", $nixi_counts[4])." |\n";
 	$MAIN.="|               No | ".sprintf("%7s", $no_counts[0])." | ".sprintf("%7s", " ")." |   | ".sprintf("%7s", $no_counts[1])." | ".sprintf("%7s", $no_counts[2])." | ".sprintf("%7s", $no_counts[3])." | ".sprintf("%7s", $no_counts[4])." |\n"; # Check percentage output here
-	$MAIN.="|            Sales | ".sprintf("%7s", $sales_counts[0])." | ".sprintf("%6s", sprintf("%.2f", (100*($sales_counts[0]/($nixi_counts[0]+$no_counts[0]+$sales_counts[0])))))."% |   | ".sprintf("%7s", $sales_counts[1])." | ".sprintf("%7s", $sales_counts[2])." | ".sprintf("%7s", $sales_counts[3])." | ".sprintf("%7s", $sales_counts[4])." |\n";
+	$MAIN.="|            Sales | ".sprintf("%7s", $sales_counts[0])." | ".sprintf("%6s", sprintf("%.2f", (100*(MathZDC($sales_counts[0],($nixi_counts[0]+$no_counts[0]+$sales_counts[0]))))))."% |   | ".sprintf("%7s", $sales_counts[1])." | ".sprintf("%7s", $sales_counts[2])." | ".sprintf("%7s", $sales_counts[3])." | ".sprintf("%7s", $sales_counts[4])." |\n";
 	$MAIN.=$head;
 
 

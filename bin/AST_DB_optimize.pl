@@ -1,13 +1,13 @@
 #!/usr/bin/perl
 #
-# AST_DB_optimize.pl version 2.2.0   *DBI-version*
+# AST_DB_optimize.pl version 2.4   *DBI-version*
 #
 # DESCRIPTION:
 # optimizes the tables used in the asterisk MySQL database
 #
 # It is recommended that you run this program on the local Asterisk machine
 #
-# Copyright (C) 2009  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 60717-1242 - changed to DBI by Marin Blu
@@ -20,6 +20,7 @@
 # 90401-1335 - Added quiet and test flag functions
 # 90628-2354 - Added vicidial_drop_rate_groups optimizations
 # 91028-1028 - Removed non-optimize queries, they are placed in ADMIN_keepalive now and happen at timeclock reset time
+# 240420-2248 - Added ConfBridge code
 #
 
 # default path to astguiclient configuration file:
@@ -292,6 +293,19 @@ if (!$T)
 	if (!$q) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
 	$sthA->finish();
 	}
+
+$stmtA = "optimize table vicidial_confbridges;";
+if($DB){print STDERR "\n|$stmtA|\n";}
+if (!$T)
+	{
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	@aryA = $sthA->fetchrow_array;
+	if (!$q) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+	$sthA->finish();
+	}
+
 
 $stmtA = "optimize table vicidial_hopper;";
 if($DB){print STDERR "\n|$stmtA|\n";}

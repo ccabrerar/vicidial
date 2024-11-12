@@ -1,0 +1,135 @@
+HUMAN CALL INDICATOR(HCI) DOC	Started: 2023-11-08	Updated: 2024-02-25
+
+
+This document will go over how to set up the Human Call Indicator screen on your system, with Hopper Hold Inserts for campaigns.
+
+NOTE: This requires svn/trunk revision 3779 or higher!!!
+
+NOTE: AUTONEXT mode was added in svn/trunk revision 3808.
+
+
+
+What is an Human Call Indicator screen?
+
+The purpose of this feature is to allow a user to log into the HCI screen to manually click on a button and then confirm their choice to enable the initiation of a phone call by the system. This confirmation of each phone call is logged and is visible in the User Stats page and the Admin Modify Lead page.
+
+On the admin side, to enable the HCI screen, the System Settings "Lead Hopper Hold Inserts Allowed" option must be enabled, and the Campaign "Hopper Hold Inserts" option must be enabled for each campaign that you want this feature activated for. If "Hopper Hold Inserts" is enabled for a campaign, then no non-agent-screen phone calls can be placed from that campaign without first being individually confirmed by a live human user in the HCI screen.
+
+For a user to log into the HCI screen, they must have their User's "HCI Enabled" option enabled.
+
+The user can get to the HCI screen from the link on the Welcome page(HOME). Once logged in to the HCI screen, the user must select the campaign that they want to initiate calls from, then they will see the active HCI screen with phone numbers to click on (on the left side), and a summary screen (on the right side). When an agent clicks on one of the phone numbers, they will see a confirmation pop-up panel asking them to confirm that they want this number to be called (in AUTONEXT mode, the confimation panel will pop-up automatically). If the user confirms this propt, then the call can be placed by the system and the phone number's button will disappear from the left side of the screen and the other phone numbers will shift to fill in the empty space. In AUTONEXT mode, the agent does not need to click on the next phone number, as soon as they confirm a phone number the next phone number's confirmation panel will automaticaly pop-up.
+
+The statistics on the right side of the screen show the following metrics:
+1. Calls in Progress - the number of dialed but not-yet-answered calls active at this moment, does not include calls where agents are talking to customers
+2. Calls on Hold - the number of leads in the hopper that are on HOLD waiting to be confirmed for calling by an HCI screen user
+3. Records Remaining - the number of leads in the hopper that are READY and waiting to be placed through your telco carrier by the system
+4. Agents Ready - the number of agents in READY or CLOSER status, waiting for a phone call
+5. Calls Offset - the number of calls to be placed by the campaign that will fill the waiting agents above
+6. Drop Rate - the drop rate for this campaign for today's calls, taken out of the number of Human Answer phone calls for the campaign
+
+At the top of the HCI screen, the user also has the option to Change Campaign to another HCI-enabled campaign, or they can LOGOUT of the HCI screen.
+
+
+
+How do I configure this on my system?
+
+No configuration is needed other than activating Hopper Hold Inserts for the system and campaigns, as well as activating the HCI Enabled setting for the users that you want to access the HCI screen.
+
+You can also enable the AUTONEXT mode of the HCI screen by setting the System Setting "Hopper Hold Inserts" to '2', the campaign "Hopper Hold Inserts" setting to 'AUTONEXT' and the Users' "HCI Enabled" setting to '2'.
+
+
+
+What are the limitations of the HCI screen?
+
+The HCI screen will reserve leads from the hopper that are on HOLD for each user that is logged into the HCI screen, these HOLD hopper leads are refreshed as the HCI screen user confirms phone calls, and no more than 40 calls can be initiated within 4 seconds (or 120 calls in 2 seconds in AUTONEXT mode), although in our testing we've never been able to get anywhere close to that rate.
+
+If the HCI screen user does not confirm any phone calls for 5 minutes, the system will reset their reserved hopper leads and allow their HCI screen to reserve new ones. This is done to ensure the freshness of the hopper leads being confirmed through the HCI screen.
+
+Since the HCI screen will reserve 40 hopper HOLD leads for each logged-in HCI screen user (or 120 leads in AUTONEXT mode), you may need to raise your campaign Hopper Level depending on how many HCI screen users you will want to have logged in at any one time.
+
+
+
+
+
+
+
+
+
+
+-------------------------------------------------------------------------
+
+DATABASE CHANGES FOR REFERENCE ONLY!!!!!!!!!
+
+
+ALTER TABLE system_settings ADD hopper_hold_inserts ENUM('0','1','2','3','4','5','6','7') default '0';
+
+ALTER TABLE vicidial_campaigns ADD hopper_hold_inserts ENUM('ENABLED','DISABLED','AUTONEXT') default 'DISABLED';
+
+ALTER TABLE vicidial_hopper MODIFY status ENUM('READY','QUEUE','INCALL','DONE','HOLD','DNC','RHOLD','RQUEUE') default 'READY';
+
+ALTER TABLE vicidial_users ADD hci_enabled ENUM('0','1','2','3','4','5','6') default '0';
+
+CREATE TABLE vicidial_hci_live_agents (
+user VARCHAR(20),
+campaign_id VARCHAR(8),
+user_ip VARCHAR(45) default '',
+login_time DATETIME,
+last_call_time DATETIME,
+last_update_time TIMESTAMP,
+status VARCHAR(40),
+lead_id INT(9) UNSIGNED default '0',
+phone_number VARCHAR(18),
+random_id INT(8) UNSIGNED,
+index(user),
+index(campaign_id),
+index(last_update_time)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_hci_agent_log (
+user VARCHAR(20),
+campaign_id VARCHAR(8),
+user_ip VARCHAR(45) default '',
+login_time DATETIME,
+last_call_time DATETIME,
+status VARCHAR(40),
+index(user),
+index(login_time)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_hci_reserve (
+user VARCHAR(20),
+lead_id INT(9) UNSIGNED,
+phone_number VARCHAR(18),
+reserve_date DATETIME,
+campaign_id VARCHAR(8),
+status VARCHAR(40),
+index(user),
+index(reserve_date),
+index(lead_id)
+) ENGINE=MyISAM;
+
+CREATE UNIQUE INDEX vhcir on vicidial_hci_reserve (lead_id,user,campaign_id);
+
+CREATE TABLE vicidial_hci_log (
+user VARCHAR(20),
+lead_id INT(9) UNSIGNED,
+phone_number VARCHAR(18),
+call_date DATETIME,
+campaign_id VARCHAR(8),
+status VARCHAR(40),
+user_ip VARCHAR(45) default '',
+index(user),
+index(call_date),
+index(lead_id)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_hci_log_archive LIKE vicidial_hci_log;
+CREATE UNIQUE INDEX vhlclu on vicidial_hci_log_archive (call_date,lead_id,user);
+
+CREATE TABLE hci_logs (
+date DATETIME,
+user VARCHAR(20) default '',
+lead_id INT(9) UNSIGNED NOT NULL,
+campaign_id VARCHAR(8),
+index(date)
+) ENGINE=MyISAM;

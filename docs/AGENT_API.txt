@@ -1,4 +1,4 @@
-AGENT API DOCUMENT		Started: 2008-07-03	Updated: 2023-04-13
+AGENT API DOCUMENT		Started: 2008-07-03	Updated: 2024-06-24
 
 This document describes the functions of an API(Application Programming Interface)
 for the VICIDIAL Agent screen. This functionality will be rather limited at first
@@ -41,6 +41,7 @@ force_fronter_leave_3way - will send a command to fronter agent to leave-3way ca
 force_fronter_audio_stop - will send a command to fronter agent session to stop any audio_playback playing on it
 send_notification - will send text alerts and/or confetti effects to agent interface
 vm_message - set a custom voicemail message to be played when agent clicks the VM button on the agent screen
+refresh_panel - refresh one of the panels on the agent script: script, script2, callbacks, etc...
 
 
 New scripts:
@@ -451,7 +452,7 @@ LEAD DATA (must populate at least one)
 	vendor_lead_code
 	rank
 	owner
-OPTIONAL NON-LEAD TRIGGERS - 
+OPTIONAL NON-LEAD TRIGGERS (these still require a lead to be on the agent screen) - 
 	formreload
 	scriptreload
 	script2reload
@@ -473,6 +474,38 @@ ERROR: user is not allowed to modify lead information - 6666|1234
 ERROR: agent_user does not have a lead on their screen - 6666|1234
 ERROR: no fields have been defined - 6666
 SUCCESS: update_fields lead updated - 6666|1234|87498|vendor_lead_code='1234567',address1=''
+
+
+
+
+
+--------------------------------------------------------------------------------
+refresh_panel - 
+
+DESCRIPTION:
+Refresh/Reload/Reset one or more of the panels on the agent screen: script, script 2, callbacks, etc...
+
+VALUES:
+agent_user -
+ REQUIRED alphanumeric string for agent user
+
+OPTIONAL PANEL REFRESH TRIGGERS (these do not require a lead to be on the agent screen) - 
+	formreload
+	scriptreload
+	script2reload
+	emailreload
+	chatreload
+	callbacksreload
+
+EXAMPLE URLS:
+http://server/agc/api.php?source=test&user=6666&pass=1234&function=refresh_panel&agent_user=6666&scriptreload=1&script2reload=1&callbacksreload=1
+http://server/agc/api.php?source=test&user=6666&pass=1234&function=refresh_panel&agent_user=6666&formreload=1
+
+RESPONSES:
+ERROR: agent_user not valid - 6666
+ERROR: agent_user is not logged in - 6666
+ERROR: no panels have been defined - 6666
+SUCCESS: refresh_panel request sent - 6666|1234|1|scriptreload,script2reload
 
 
 
@@ -635,6 +668,11 @@ VALUES:
    GRAB_CUSTOMER - grab customer from the park extension and send them to the agent session
    PARK_IVR_CUSTOMER - send customer to the park ivr as defined in the campaign the agent is logged into, customer will come back after finishing IVR
    GRAB_IVR_CUSTOMER - grab customer from the park ivr and send them to the agent session
+   PARK_XFER - send third party call to the park extension as defined in the campaign the agent is logged into
+   GRAB_XFER - grab third party call from the park extension and send them to the agent session
+   SWAP_PARK_CUSTOMER - send customer to the park extension and grab third party call from the park extension and send them to the agent session
+   SWAP_PARK_XFER - send third party call to the park extension and grab customer from the park extension and send them to the agent session
+   HANGUP_XFER_GRAB_CUSTOMER - hangup the third party line and grab customer from park extension
 
 EXAMPLE URLS:
 http://server/agc/api.php?source=test&user=6666&pass=1234&agent_user=1000&function=park_call&value=PARK_CUSTOMER
@@ -682,6 +720,12 @@ VALUES:
   OPTIONAL, defines what caller ID number to use when doing DIAL_WITH_CUSTOMER or PARK_CUSTOMER_DIAL
  cid_choice - 
   OPTIONAL, alternate method for caller ID number to use when doing DIAL_WITH_CUSTOMER or PARK_CUSTOMER_DIAL: 'CAMPAIGN','AGENT_PHONE','CUSTOMER','CUSTOM_CID'
+ multi_dial_phones - 
+  OPTIONAL, for use only with "Agent 3-way Press-1 Calls", contains up to 10 phone numbers separated by commas: "2125551212,4075551212,3125551212" (duplicates will be removed)
+ md_check - 
+  OPTIONAL, for use only with 'multi_dial_phones' option above, if this is set to 'YES' it will check for still-active previous 3-way press-1 calls and show an error if any are found
+ tw_check - 
+  OPTIONAL, for use only with the dialing 3-way call options above, if this is set to 'YES' it will check for still-active previous 3-way calls and show an error if any are found
 
 EXAMPLE URLS:
 http://server/agc/api.php?source=test&user=6666&pass=1234&agent_user=1000&function=transfer_conference&value=HANGUP_XFER
@@ -708,6 +752,8 @@ ERROR: agent_user does not have a live call - 6666
 ERROR: caller_id_number from group_alias is not valid - 6666|TESTING|123
 ERROR: group_alias is not valid - 6666|TESTING
 ERROR: cid_choice is not valid - 6666|TESTING
+ERROR: agent_user has previous active 3-way calls - 6666|1|0|YES
+ERROR: agent_user has current active 3-way call - 6666|1|0|YES
 SUCCESS: transfer_conference function set - LOCAL_CLOSER|SALESLINE||YES|6666|M2141842580000000044|
 
 

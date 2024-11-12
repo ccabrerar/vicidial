@@ -1,0 +1,16 @@
+VICIdial Agent Pause Codes		Started: 2024-08-25	Updated: 2024-08-25
+
+Below is a list of the default system pause codes that are used for standard VICIdial agents using the agent screen.
+
+ANDIAL - Pause time after entering Alternate-Number manual dialing mode in the agent screen
+DCMX - Dead Call Max Seconds default pause code
+DISMX - Dispo Call Max Seconds default pause code
+GRABCL - Pause time before grabbing a call in queue from the agent screen
+LAGGED - If the system has paused an agent session due to lost communication with the agent screen
+LOGIN - Agent screen login, the pause time immediately following agent screen login
+LOGOUT - Pause time before Agent screen logout
+MDSKIP - Pause time after agent has skipped a manual dial lead
+NXDIAL - Pause time after ending a call before automatically moving on to another manual dial lead
+PAUSMX - Pause Max Seconds default pause code
+PRECAL - Pre-call work default pause code
+RQUEUE - Pause time after the REQUEUE CALL button has been clicked in the agent screen

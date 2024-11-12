@@ -1,0 +1,331 @@
+#!/usr/bin/perl
+#
+# cm_sc_lunch_redirect.agi version 2.14
+# 
+# Designed to work with Call Menus to allow for the redirection of calls during 
+# a set local-server time period to another Call Menu and Option. You can define
+# multiple lunch/break time periods.
+# 
+# If any error, or no match to a lunch-break-time entry, script will end and call will not be redirected
+#
+# Flag Options:
+# 1- container_id for settings container with lunch-break-time and routing parameters
+# 2- OPTIONAL - container-parsing debug output: 0-none, 1=debug, 2=extra-debug
+#
+# example of what to set in the Call Menu:
+# Set the prompt to "cm_sc_lunch_redirect.agi,lunch_break_redirect_x01---0|regular-callmenu-prompt"
+#
+# example of what to put in settings container:
+# NOTE: a destination-call-menu-option of 's' will go to the initial prompt for the call menu
+# NOTE: If there are overlapping time ranges defined, the last match will be used
+#<break-time-range>|<destination-call-menu>|<destination-call-menu-option>
+#1200-1300|lunch_break|s
+#1700-1800|dinner_break|s
+#
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+#
+# changes:
+# 240902-1827 - First build
+#
+
+$script = 'cm_sc_lunch_redirect.agi';
+
+($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+$year = ($year + 1900);
+$mon++;
+if ($mon < 10) {$mon = "0$mon";}
+if ($mday < 10) {$mday = "0$mday";}
+if ($hour < 10) {$hour = "0$hour";}
+if ($min < 10) {$min = "0$min";}
+if ($sec < 10) {$sec = "0$sec";}
+
+$now_date_epoch = time();
+$now_date = "$year-$mon-$mday $hour:$min:$sec";
+$start_time=$now_date;
+$CIDdate = "$mon$mday$hour$min$sec";
+$tsSQLdate = "$year$mon$mday$hour$min$sec";
+$SQLdate = "$year-$mon-$mday $hour:$min:$sec";
+$hm = "$hour$min";
+$hm = ($hm + 0);
+$SQLdateBEGIN = $SQLdate;
+$state='';
+$CIDlead_id='';
+$DB=0;
+
+# default path to astguiclient configuration file:
+$PATHconf =		'/etc/astguiclient.conf';
+
+open(conf, "$PATHconf") || die "can't open $PATHconf: $!\n";
+@conf = <conf>;
+close(conf);
+$i=0;
+foreach(@conf)
+	{
+	$line = $conf[$i];
+	$line =~ s/ |>|\n|\r|\t|\#.*|;.*//gi;
+	if ( ($line =~ /^PATHhome/) && ($CLIhome < 1) )
+		{$PATHhome = $line;   $PATHhome =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHlogs/) && ($CLIlogs < 1) )
+		{$PATHlogs = $line;   $PATHlogs =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHagi/) && ($CLIagi < 1) )
+		{$PATHagi = $line;   $PATHagi =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHweb/) && ($CLIweb < 1) )
+		{$PATHweb = $line;   $PATHweb =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHsounds/) && ($CLIsounds < 1) )
+		{$PATHsounds = $line;   $PATHsounds =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHmonitor/) && ($CLImonitor < 1) )
+		{$PATHmonitor = $line;   $PATHmonitor =~ s/.*=//gi;}
+	if ( ($line =~ /^VARserver_ip/) && ($CLIserver_ip < 1) )
+		{$VARserver_ip = $line;   $VARserver_ip =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_server/) && ($CLIDB_server < 1) )
+		{$VARDB_server = $line;   $VARDB_server =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_database/) && ($CLIDB_database < 1) )
+		{$VARDB_database = $line;   $VARDB_database =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_user/) && ($CLIDB_user < 1) )
+		{$VARDB_user = $line;   $VARDB_user =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_pass/) && ($CLIDB_pass < 1) )
+		{$VARDB_pass = $line;   $VARDB_pass =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_port/) && ($CLIDB_port < 1) )
+		{$VARDB_port = $line;   $VARDB_port =~ s/.*=//gi;}
+	$i++;
+	}
+
+if (!$VARDB_port) {$VARDB_port='3306';}
+if (!$AGILOGfile) {$AGILOGfile = "$PATHlogs/agiout.$year-$mon-$mday";}
+
+use DBI;
+use Asterisk::AGI;
+$AGI = new Asterisk::AGI;
+
+$dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
+    or die "Couldn't connect to database: " . DBI->errstr;
+
+### Grab Server values from the database
+$stmtA = "SELECT agi_output FROM servers where server_ip = '$VARserver_ip';";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+$rec_count=0;
+while ($sthArows > $rec_count)
+	{
+	$AGILOG = '0';
+	@aryA = $sthA->fetchrow_array;
+	$DBagi_output =	$aryA[0];
+	if ($DBagi_output =~ /STDERR/)	{$AGILOG = '1';}
+	if ($DBagi_output =~ /FILE/)	{$AGILOG = '2';}
+	if ($DBagi_output =~ /BOTH/)	{$AGILOG = '3';}
+	$rec_count++;
+	}
+$sthA->finish();
+
+
+### begin parsing run-time options ###
+if (length($ARGV[0])>1)
+	{
+	if ($AGILOG) {$agi_string = "Perl Environment Dump:";   &agi_output;}
+	$i=0;
+	while ($#ARGV >= $i)
+		{
+		$args = "$args $ARGV[$i]";
+		if ($AGILOG) {$agi_string = "$i|$ARGV[$i]";   &agi_output;}
+		$i++;
+		}
+	
+	### list of command-line array arguments:
+	@ARGV_vars = split(/---/, $ARGV[0]);
+
+	$container_id = 	$ARGV_vars[0];
+	$DB =				$ARGV_vars[1];
+	}
+
+$no_container=0;
+if (length($container_id) < 1)
+	{$no_container=1;}
+else
+	{
+	$stmtA= "SELECT container_entry from vicidial_settings_containers where container_id='$container_id';";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+		if ($AGILOG) {$agi_string = "$sthArows|$stmtA|";   &agi_output;}
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$container_entry	= $aryA[0];
+		}
+	else
+		{$no_container=2;}
+	$sthA->finish();
+	}
+
+if ($no_container > 0) 
+	{
+	if ($AGILOG) {$agi_string = "container_id not set($container_id|$no_container), exiting the $script app";   &agi_output;}
+#	print "SET CONTEXT $context\n";
+#		$result = <STDIN>;
+#		checkresult($result);
+#	print "SET EXTENSION i\n";
+#		$result = <STDIN>;
+#		checkresult($result);
+#	print "SET PRIORITY 1\n";
+#		$result = <STDIN>;
+#		checkresult($result);
+	
+	exit;
+	}
+
+$|=1;
+while(<STDIN>) 
+	{
+	chomp;
+	last unless length($_);
+	if ($AGILOG)
+		{
+		if (/^agi_(\w+)\:\s+(.*)$/)
+			{
+			$AGI{$1} = $2;
+			}
+		}
+
+	if (/^agi_context\:\s+(.*)$/)		{$context = $1;}
+	if (/^agi_uniqueid\:\s+(.*)$/)		{$unique_id = $1; $uniqueid = $unique_id;}
+	if (/^agi_channel\:\s+(.*)$/)		{$channel = $1;}
+	if (/^agi_extension\:\s+(.*)$/)		{$extension = $1;}
+	if (/^agi_type\:\s+(.*)$/)			{$type = $1;}
+	if (/^agi_callerid\:\s+(.*)$/)		{$callerid = $1;}
+	if (/^agi_calleridname\:\s+(.*)$/)	{$calleridname = $1;}
+	}
+foreach $i (sort keys %AGI)
+	{
+	if ($AGILOG) {$agi_string = " -- $i = $AGI{$i}";   &agi_output;}
+	}
+
+$callerid =~ s/\'|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
+$calleridname =~ s/\'|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
+$extension =~ s/\'|\"|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
+
+if ($AGILOG) {$agi_string = "AGI Variables: |$unique_id|$channel|$extension|$type|$callerid|     |$hm|$container_id|";   &agi_output;}
+
+#$AGI->stream_file('sip-silence');
+#$AGI->stream_file('sip-silence');
+#$AGI->stream_file('sip-silence');
+
+### search for time range within the settings container container_entry ###
+
+$match=0;
+$match_call_menu='';
+$match_call_menu_option='s';
+if (length($container_entry) > 5) 
+	{
+	@container_lines = split(/\n/,$container_entry);
+	$i=0;
+	foreach(@container_lines)
+		{
+		$container_lines[$i] =~ s/;.*//gi;
+		if ( (length($container_lines[$i]) > 5) && ($container_lines[$i] =~ /\|/i) )
+			{
+			if($DB >= 2){print STDERR "$container_lines[$i]\n";}
+			$container_lines[$i] =~ s/\r|\t| //gi;
+			@line_details = split(/\|/,$container_lines[$i]);
+			$break_time_range =				$line_details[0];
+			$destination_call_menu =		$line_details[1];
+			$destination_call_menu_option =	$line_details[2];
+			@break_time = split(/-/,$break_time_range);
+			$temp_begin = ($break_time[0] + 0);
+			$temp_end = ($break_time[1] + 0);
+			if($DB >= 2){print STDERR "$i   $hm <> ($temp_begin - $temp_end)   |$break_time_range|$destination_call_menu|$destination_call_menu_option|\n";}
+			if ( ($hm >= $temp_begin) && ($hm < $temp_end) )
+				{
+				$match++;
+				$match_call_menu =			$destination_call_menu;
+				$match_call_menu_option =	$destination_call_menu_option;
+				if ($DB >= 1) {print STDERR " - BREAK TIME MATCH FOUND($i|$hm) $break_time_range($temp_begin $temp_end)   |$destination_call_menu|$destination_call_menu_option|\n";}
+				}
+			}
+		else
+			{if ($DB >= 2) {print STDERR "     blank line: $i|$container_lines[$i]|\n";}}
+		$i++;
+		}
+	}
+else
+	{
+	if ($Q < 1)
+		{
+		$match=0;
+		print STDERR "ERROR: SETTINGS CONTAINER EMPTY: $container_id $container_entry $g\n";
+		}
+	}
+
+
+$dbhA->disconnect();
+
+# Destination not found in settings container, send call to 'C' option in call menu
+if ($match < 1) 
+	{
+	if ($AGILOG) {$agi_string = "match not found, no redirect, exiting the $script app";   &agi_output;}
+	exit;
+	}
+else
+	{
+	if ($AGILOG) {$agi_string = "match found ($hm), exiting the $script app, transferring call to $match_call_menu_option @ $match_call_menu";   &agi_output;}
+	print "SET CONTEXT $match_call_menu\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET EXTENSION $match_call_menu_option\n";
+		$result = <STDIN>;
+		checkresult($result);
+	print "SET PRIORITY 1\n";
+		$result = <STDIN>;
+		checkresult($result);
+
+	exit;
+	}
+
+
+
+
+##### SUBROUTINES #####
+
+sub agi_output
+{
+if ($AGILOG >=2)
+	{
+	### open the log file for writing ###
+	open(Lout, ">>$AGILOGfile")
+			|| die "Can't open $AGILOGfile: $!\n";
+	print Lout "$now_date|$script|$agi_string\n";
+	close(Lout);
+	}
+	### send to STDERR writing ###
+if ( ($AGILOG == '1') || ($AGILOG == '3') )
+	{print STDERR "$now_date|$script|$agi_string\n";}
+$agi_string='';
+}
+
+
+sub checkresult 
+	{
+	my ($res) = @_;
+	my $retval;
+	$tests++;
+	chomp $res;
+	if ($res =~ /^200/) 
+		{
+		$res =~ /result=(-?\d+)/;
+		if (!length($1)) 
+			{
+		#	print STDERR "FAIL ($res)\n";
+			$fail++;
+			} 
+		else 
+			{
+		#	print STDERR "PASS ($1)\n";
+			$pass++;
+			}
+		} 
+	else 
+		{
+	#	print STDERR "FAIL (unexpected result '$res')\n";
+		$fail++;
+		}
+	}

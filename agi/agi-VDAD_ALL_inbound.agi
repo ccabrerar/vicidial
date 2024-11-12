@@ -82,7 +82,7 @@
 #exten => _99909*.,2,AGI(agi-VDAD_ALL_inbound.agi)
 #exten => _99909*.,3,Hangup
 #
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 70828-0924 - First Build
@@ -255,6 +255,15 @@
 # 230523-0824 - Added User inbound_credits feature
 # 230606-2231 - Added second_alert_trigger features
 # 230612-2044 - Added second_alert_container, second_alert_only and second_alert_trigger TIMEOUT options
+# 230810-2006 - Added third_alert_trigger features
+# 231026-0917 - Fix for rare fronter/closer logging issue
+# 240219-1527 - Added daily_limit in-group  user parameter
+# 240223-0847 - Added INBOUND_DID populate option
+# 240227-1154 - Added holiday_method option
+# 240420-2242 - Added ConfBridge code
+# 240415-1701 - Fix for ConfBridge code
+# 240723-1632 - Small fix for ConfBridge
+# 240906-1032 - Added testing for stereo_recording in-group option *NOT PRODUCTION READY*
 #
 
 $script = 'agi-VDAD_ALL_inbound.agi';
@@ -273,6 +282,8 @@ $called_count=1;
 $entry_list_id=0;
 $areacode_filter_run=0;
 $no_agent_no_queue_checked=0;
+$fronter_agent='';
+$inbound_did='';
 
 
 $now_date_epoch = time();
@@ -392,18 +403,20 @@ $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VA
     or die "Couldn't connect to database: " . DBI->errstr;
 
 ### Grab Server values from the database
-$stmtA = "SELECT agi_output,local_gmt FROM servers where server_ip = '$VARserver_ip';";
+$stmtA = "SELECT agi_output,local_gmt,conf_engine FROM servers where server_ip = '$VARserver_ip';";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
 	$dbhP=$dbhA;   $mysql_count='02001';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
 $rec_count=0;
+$conf_engine='';
 while ($sthArows > $rec_count)
 	{
 	$AGILOG = '0';
 	@aryA = $sthA->fetchrow_array;
 	$DBagi_output =		$aryA[0];
 	$local_gmt =		$aryA[1];
+	$conf_engine =		$aryA[2];
 	if ($isdst) {$local_gmt++;}
 	if ($DBagi_output =~ /STDERR/)	{$AGILOG = '1';}
 	if ($DBagi_output =~ /FILE/)	{$AGILOG = '2';}
@@ -700,6 +713,7 @@ if ($call_handle_method =~ /^CLOSER/)
 		$park_extension =		$EXT_vars[4];	# filename of the on-hold music file
 		$phone_number =			$EXT_vars[5];	# phone number of customer
 		$fronter =				$EXT_vars[6];	# user of the fronter that transferred the call
+		$fronter_agent =		$EXT_vars[6];	# user of the fronter that transferred the call
 		$fronter_call_seconds =	$EXT_vars[8];	# not currently used
 		$dial_ingroup_flag =	$EXT_vars[9];	# used by dial in-group feature
 		if ( ($channel_group =~ /AGENTDIRECT/i) || ($dial_ingroup_flag > 0) )
@@ -882,7 +896,7 @@ $affected_rows = $dbhA->do($stmtA);
 
 ### Grab inbound groups values from the database
 $cbc=0;
-$stmtA = "SELECT call_time_id,after_hours_action,after_hours_message_filename,after_hours_exten,after_hours_voicemail,welcome_message_filename,moh_context,onhold_prompt_filename,prompt_interval,agent_alert_exten,agent_alert_delay,drop_call_seconds,drop_action,drop_exten,next_agent_call,voicemail_ext,queue_priority,drop_inbound_group,afterhours_xfer_group,play_place_in_line,play_estimate_hold_time,hold_time_option,hold_time_option_seconds,hold_time_option_exten,hold_time_option_voicemail,hold_time_option_xfer_group,hold_time_option_callback_filename,hold_time_option_callback_list_id,hold_recall_xfer_group,no_delay_call_route,play_welcome_message,no_agent_no_queue,no_agent_action,no_agent_action_value,extension_appended_cidname,uniqueid_status_display,uniqueid_status_prefix,hold_time_option_minimum,hold_time_option_press_filename,hold_time_option_callmenu,onhold_prompt_no_block,onhold_prompt_seconds,hold_time_option_no_block,hold_time_option_prompt_seconds,hold_time_second_option,hold_time_third_option,wait_hold_option_priority,wait_time_option,wait_time_second_option,wait_time_third_option,wait_time_option_seconds,wait_time_option_exten,wait_time_option_voicemail,wait_time_option_xfer_group,wait_time_option_callmenu,wait_time_option_callback_filename,wait_time_option_callback_list_id,wait_time_option_press_filename,wait_time_option_no_block,wait_time_option_prompt_seconds,active,calculate_estimated_hold_seconds,add_lead_url,eht_minimum_prompt_filename,eht_minimum_prompt_no_block,eht_minimum_prompt_seconds,on_hook_ring_time,ingroup_recording_override,ingroup_rec_filename,on_hook_cid,action_xfer_cid,drop_callmenu,after_hours_callmenu,max_calls_method,max_calls_count,max_calls_action,populate_lead_ingroup,na_call_url,drop_lead_reset,after_hours_lead_reset,nanq_lead_reset,wait_time_lead_reset,hold_time_lead_reset,routing_initiated_recordings,on_hook_cid_number,populate_lead_province,areacode_filter,areacode_filter_seconds,areacode_filter_action,areacode_filter_action_value,populate_state_areacode,inbound_survey,inbound_survey_filename,inbound_survey_accept_digit,closing_time_action,closing_time_now_trigger,closing_time_filename,closing_time_end_filename,closing_time_lead_reset,closing_time_option_exten,closing_time_option_callmenu,closing_time_option_voicemail,closing_time_option_xfer_group,closing_time_option_callback_list_id,add_lead_timezone,populate_lead_source,populate_lead_vendor,enter_ingroup_url,cid_cb_confirm_number,cid_cb_invalid_filter_phone_group,cid_cb_valid_length,cid_cb_valid_filename,cid_cb_confirmed_filename,cid_cb_enter_filename,cid_cb_you_entered_filename,cid_cb_press_to_confirm_filename,cid_cb_invalid_filename,cid_cb_reenter_filename,cid_cb_error_filename,place_in_line_caller_number_filename,place_in_line_you_next_filename,answer_signal,no_agent_delay,agent_search_method,populate_lead_comments,drop_call_seconds_override,populate_lead_owner,in_queue_nanque,in_queue_nanque_exceptions,second_alert_trigger,second_alert_trigger_seconds,second_alert_filename,second_alert_delay,second_alert_container,second_alert_only FROM vicidial_inbound_groups where group_id = '$channel_group';";
+$stmtA = "SELECT call_time_id,after_hours_action,after_hours_message_filename,after_hours_exten,after_hours_voicemail,welcome_message_filename,moh_context,onhold_prompt_filename,prompt_interval,agent_alert_exten,agent_alert_delay,drop_call_seconds,drop_action,drop_exten,next_agent_call,voicemail_ext,queue_priority,drop_inbound_group,afterhours_xfer_group,play_place_in_line,play_estimate_hold_time,hold_time_option,hold_time_option_seconds,hold_time_option_exten,hold_time_option_voicemail,hold_time_option_xfer_group,hold_time_option_callback_filename,hold_time_option_callback_list_id,hold_recall_xfer_group,no_delay_call_route,play_welcome_message,no_agent_no_queue,no_agent_action,no_agent_action_value,extension_appended_cidname,uniqueid_status_display,uniqueid_status_prefix,hold_time_option_minimum,hold_time_option_press_filename,hold_time_option_callmenu,onhold_prompt_no_block,onhold_prompt_seconds,hold_time_option_no_block,hold_time_option_prompt_seconds,hold_time_second_option,hold_time_third_option,wait_hold_option_priority,wait_time_option,wait_time_second_option,wait_time_third_option,wait_time_option_seconds,wait_time_option_exten,wait_time_option_voicemail,wait_time_option_xfer_group,wait_time_option_callmenu,wait_time_option_callback_filename,wait_time_option_callback_list_id,wait_time_option_press_filename,wait_time_option_no_block,wait_time_option_prompt_seconds,active,calculate_estimated_hold_seconds,add_lead_url,eht_minimum_prompt_filename,eht_minimum_prompt_no_block,eht_minimum_prompt_seconds,on_hook_ring_time,ingroup_recording_override,ingroup_rec_filename,on_hook_cid,action_xfer_cid,drop_callmenu,after_hours_callmenu,max_calls_method,max_calls_count,max_calls_action,populate_lead_ingroup,na_call_url,drop_lead_reset,after_hours_lead_reset,nanq_lead_reset,wait_time_lead_reset,hold_time_lead_reset,routing_initiated_recordings,on_hook_cid_number,populate_lead_province,areacode_filter,areacode_filter_seconds,areacode_filter_action,areacode_filter_action_value,populate_state_areacode,inbound_survey,inbound_survey_filename,inbound_survey_accept_digit,closing_time_action,closing_time_now_trigger,closing_time_filename,closing_time_end_filename,closing_time_lead_reset,closing_time_option_exten,closing_time_option_callmenu,closing_time_option_voicemail,closing_time_option_xfer_group,closing_time_option_callback_list_id,add_lead_timezone,populate_lead_source,populate_lead_vendor,enter_ingroup_url,cid_cb_confirm_number,cid_cb_invalid_filter_phone_group,cid_cb_valid_length,cid_cb_valid_filename,cid_cb_confirmed_filename,cid_cb_enter_filename,cid_cb_you_entered_filename,cid_cb_press_to_confirm_filename,cid_cb_invalid_filename,cid_cb_reenter_filename,cid_cb_error_filename,place_in_line_caller_number_filename,place_in_line_you_next_filename,answer_signal,no_agent_delay,agent_search_method,populate_lead_comments,drop_call_seconds_override,populate_lead_owner,in_queue_nanque,in_queue_nanque_exceptions,second_alert_trigger,second_alert_trigger_seconds,second_alert_filename,second_alert_delay,second_alert_container,second_alert_only,third_alert_trigger,third_alert_trigger_seconds,third_alert_filename,third_alert_delay,third_alert_container,third_alert_only,stereo_recording FROM vicidial_inbound_groups where group_id = '$channel_group';";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -1032,6 +1046,13 @@ if ($sthArows > 0)
 	$second_alert_delay =				$aryA[132];
 	$second_alert_container = 			$aryA[133];
 	$second_alert_only =				$aryA[134];
+	$third_alert_trigger =				$aryA[135];
+	$third_alert_trigger_seconds =		$aryA[136];
+	$third_alert_filename =				$aryA[137];
+	$third_alert_delay =				$aryA[138];
+	$third_alert_container =			$aryA[139];
+	$third_alert_only =					$aryA[140];
+	$stereo_recording =					$aryA[141];
 
 	if ( (length($place_in_line_caller_number_filename) < 1) || ($place_in_line_caller_number_filename =~ /^NULL$/i) ) 
 		{$place_in_line_caller_number_filename='queue-thereare';}
@@ -1098,10 +1119,27 @@ if ($sthArows > 0)
 $sthA->finish();
 
 # If answer signal config is enabled and the in-group is set to send one, send an Answer signal
-if ( ($inbound_answer_config > 0) and ($answer_signal !~ /NONE|ROUTE/i) ) 
+if ( ($inbound_answer_config > 0) && ($answer_signal !~ /NONE|ROUTE/i) ) 
 	{
 	$AGI->answer();
 	if ($AGILOG) {$agi_string = "   Answering call: - $channel|$answer_signal";   &agi_output;}
+	}
+
+# If the INBOUND_DID option is used in one of the populate settings, look it up by the uniqueid here
+if ( ($populate_lead_source =~ /INBOUND_DID/) || ($populate_lead_vendor =~ /INBOUND_DID/) )
+	{
+	$stmtA = "SELECT extension FROM vicidial_did_log where uniqueid='$uniqueid' and call_date > \"$timeTWENTYFOURhoursAGO\" order by call_date desc limit 1;";
+	if ($DBX) {print "   |$stmtA|\n";}
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$inbound_did =	$aryA[0];
+		}
+	$sthA->finish();
+	if ($AGILOG) {$agi_string = "   Populate INBOUND_DID set: - $inbound_did|$stmtA";   &agi_output;}
 	}
 
 # When VID or VIDPROMPT, methods are not used, no Vendor Lead Code can be supplied. Fill it with inbound_number
@@ -1110,6 +1148,8 @@ if ( ($call_handle_method !~ /^VID/) && (length($igvendorid) < 1) )
 	{
 	if ($populate_lead_vendor =~ /INBOUND_NUMBER/)
 		{$vendor_id = $inbound_number;}
+	if ($populate_lead_vendor =~ /INBOUND_DID/)
+		{$vendor_id = $inbound_did;}
 	if (length($populate_lead_vendor) < 1) 
 		{$vendor_id = '';}
 	if ( (length($populate_lead_vendor) > 0) && (length($vendor_id) < 1) ) 
@@ -1220,6 +1260,7 @@ if ( ($ct_day_start > 0) || ($ct_day_stop > 0) )
 	$ct_default_stop	=	$ct_day_stop;
 	}
 
+$holiday_ADDITION_REVERSE_trigger=0;
 if (length($ct_holidays) > 2)
 	{
 	$stmtA = "SELECT count(*) from vicidial_call_time_holidays where holiday_date='$YMD' and holiday_status='ACTIVE';";
@@ -1240,7 +1281,7 @@ if (length($ct_holidays) > 2)
 			{
 			if (length($holiday_rules[$b])>1)
 				{
-				$stmtA = "SELECT holiday_id,holiday_date,holiday_name,ct_default_start,ct_default_stop,default_afterhours_filename_override from vicidial_call_time_holidays where holiday_id='$holiday_rules[$b]' and holiday_status='ACTIVE' and holiday_date='$YMD';";
+				$stmtA = "SELECT holiday_id,holiday_date,holiday_name,ct_default_start,ct_default_stop,default_afterhours_filename_override,holiday_method from vicidial_call_time_holidays where holiday_id='$holiday_rules[$b]' and holiday_status='ACTIVE' and holiday_date='$YMD' order by ct_default_start asc;";
 				if ($DBX) {print "   |$stmtA|\n";}
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -1251,12 +1292,32 @@ if (length($ct_holidays) > 2)
 					$holiday_id =								$aryA[0];
 					$holiday_date =								$aryA[1];
 					$holiday_name =								$aryA[2];
-					$ct_default_start =							$aryA[3];
-					$ct_default_stop =							$aryA[4];
-					$default_afterhours_filename_override =		$aryA[5];
-					$holiday_afterhours_filename_override =		$aryA[5];
+					$holiday_method =							$aryA[6];
 
-					if ($AGILOG) {$agi_string = "Active Holiday found!    |$holiday_id|$holiday_date|$holiday_name|$ct_default_start|$ct_default_stop|$default_afterhours_filename_override|";   &agi_output;}
+					if ($AGILOG) {$agi_string = "Active Holiday found!    |$holiday_id|$holiday_date|$holiday_name|$hm|$aryA[3]|$aryA[4]|$aryA[5]|$holiday_method|";   &agi_output;}
+
+					if ($holiday_method =~ /ADDITION_REVERSE/)
+						{
+						$temp_begin =	($aryA[3] + 0);		# ex: 1100
+						$temp_end =		($aryA[4] + 0);		# ex: 2300
+						if ($AGILOG) {$agi_string = "Holiday ADDITION_REVERSE check:    |$holiday_id|$holiday_date|$holiday_name|($temp_begin <= $hm)|$temp_end >= $hm)|$aryA[5]|$holiday_method|";   &agi_output;}
+						if ( ($temp_begin <= $hm) && ($temp_end >= $hm) )
+							{
+							$default_afterhours_filename_override =		$aryA[5];
+							$holiday_afterhours_filename_override =		$aryA[5];
+
+							$holiday_ADDITION_REVERSE_trigger++;
+
+							if ($AGILOG) {$agi_string = "Holiday ADDITION_REVERSE match!    |$holiday_id|$holiday_ADDITION_REVERSE_trigger|";   &agi_output;}
+							}
+						}
+					else
+						{
+						$ct_default_start =							$aryA[3];
+						$ct_default_stop =							$aryA[4];
+						$default_afterhours_filename_override =		$aryA[5];
+						$holiday_afterhours_filename_override =		$aryA[5];
+						}
 					}
 				$sthA->finish();
 				}
@@ -1301,6 +1362,8 @@ else
 	{
 	if ($populate_lead_source =~ /INBOUND_NUMBER/)
 		{$source_id = $inbound_number;}
+	if ($populate_lead_source =~ /INBOUND_DID/)
+		{$source_id = $inbound_did;}
 	if ( (length($populate_lead_source) < 1) || ($populate_lead_source =~ /BLANK/) )
 		{$source_id = '';}
 	if ($populate_lead_source =~ /DISABLED/) 
@@ -1665,6 +1728,10 @@ else
 			$vendor_id =		$aryA[3];
 			$called_count =		$aryA[4];
 			$list_id =			$aryA[5];
+
+			if (length($fronter_agent) > 0) 
+				{$fronter = $fronter_agent;}
+
 			$cbc++;
 			}
 		$sthA->finish();
@@ -1882,7 +1949,9 @@ if ( ($max_calls_method !~ /DISABLED/) && ($max_calls_count > 0) )
 $ct_stop_overflow=0;   # allow for overflow time, past midnight
 if ($ct_yest_stop > 2400)
 	{$ct_stop_overflow = ($ct_yest_stop - 2400);}
-if ( ( ( ( ($hm < $ct_default_start) || ($hm > $ct_default_stop) ) && ($hm >= $ct_stop_overflow) ) || ($MCafterhours_override > 0) ) && ($dial_ingroup_flag < 1) )
+if ($AGILOG) {$agi_string = "--  Checking for After Hours: |($hm < $ct_default_start)|($hm > $ct_default_stop)|$holiday_ADDITION_REVERSE_trigger|($hm >= $ct_stop_overflow) )|($MCafterhours_override > 0)|$dial_ingroup_flag|";   &agi_output;}
+
+if ( ( ( ( ($hm < $ct_default_start) || ($hm > $ct_default_stop) || ($holiday_ADDITION_REVERSE_trigger > 0) ) && ($hm >= $ct_stop_overflow) ) || ($MCafterhours_override > 0) ) && ($dial_ingroup_flag < 1) )
 	{
 	# set the log-user to the agentdirect destination user, if set
 	if ( ($channel_group =~ /AGENTDIRECT/i) && (length($agent_only) > 1) )
@@ -3028,7 +3097,7 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 					if (length($qp_groupWAIT_aco)<2)
 						{$qp_groupWAIT_aco="''";}
 					### Get list of users that should take higher priority inbound calls first
-					$stmtA = "SELECT distinct user from vicidial_live_inbound_agents where group_id IN($qp_groupWAIT_aco);";
+					$stmtA = "SELECT distinct user from vicidial_live_inbound_agents where group_id IN($qp_groupWAIT_aco) and ( (daily_limit = '-1') or (daily_limit > calls_today) );";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows=$sthA->rows;
@@ -3057,7 +3126,7 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 							@GRADEuser=@MT;
 							@GRADEgrade=@MT;
 							@userGRADEarray=@MT;
-							$stmtA = "SELECT vicidial_live_agents.user,vicidial_live_inbound_agents.group_grade,vicidial_live_agents.campaign_grade from vicidial_live_agents, vicidial_live_inbound_agents WHERE vicidial_live_agents.user=vicidial_live_inbound_agents.user and status IN('CLOSER','READY') and lead_id<1 $server_onlySQL $ADUfindSQL and vicidial_live_inbound_agents.group_id='$channel_group' and last_update_time > '$BDtsSQLdate' and vicidial_live_agents.user NOT IN($ring_no_answer_agents$vlia_users) and ring_callerid='' $qp_groupWAIT_camp_SQL $AGENTDIRECT_higherSQL limit 1000;";
+							$stmtA = "SELECT vicidial_live_agents.user,vicidial_live_inbound_agents.group_grade,vicidial_live_agents.campaign_grade from vicidial_live_agents, vicidial_live_inbound_agents WHERE vicidial_live_agents.user=vicidial_live_inbound_agents.user and status IN('CLOSER','READY') and lead_id<1 $server_onlySQL $ADUfindSQL and vicidial_live_inbound_agents.group_id='$channel_group' and last_update_time > '$BDtsSQLdate' and vicidial_live_agents.user NOT IN($ring_no_answer_agents$vlia_users) and ring_callerid='' and ( (vicidial_live_inbound_agents.daily_limit = '-1') or (vicidial_live_inbound_agents.daily_limit > vicidial_live_inbound_agents.calls_today) ) $qp_groupWAIT_camp_SQL $AGENTDIRECT_higherSQL limit 1000;";
 							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 							$sthArows=$sthA->rows;
@@ -3121,7 +3190,7 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 						### END grade random next-agent-call routing ###
 						else
 							{
-							$stmtA = "SELECT vicidial_live_agents.conf_exten,vicidial_live_agents.user,vicidial_live_agents.extension,vicidial_live_agents.server_ip,vicidial_live_inbound_agents.group_weight,ra_user,vicidial_live_agents.campaign_id,on_hook_agent,on_hook_ring_time,vicidial_live_inbound_agents.group_grade,vicidial_live_agents.campaign_grade from vicidial_live_agents, vicidial_live_inbound_agents WHERE vicidial_live_agents.user=vicidial_live_inbound_agents.user and status IN('CLOSER','READY') and lead_id<1 $server_onlySQL $ADUfindSQL and vicidial_live_inbound_agents.group_id='$channel_group' and last_update_time > '$BDtsSQLdate' and vicidial_live_agents.user NOT IN($ring_no_answer_agents$vlia_users) and ring_callerid='' $qp_groupWAIT_camp_SQL $AGENTDIRECT_higherSQL $agent_call_order limit 1;";
+							$stmtA = "SELECT vicidial_live_agents.conf_exten,vicidial_live_agents.user,vicidial_live_agents.extension,vicidial_live_agents.server_ip,vicidial_live_inbound_agents.group_weight,ra_user,vicidial_live_agents.campaign_id,on_hook_agent,on_hook_ring_time,vicidial_live_inbound_agents.group_grade,vicidial_live_agents.campaign_grade from vicidial_live_agents, vicidial_live_inbound_agents WHERE vicidial_live_agents.user=vicidial_live_inbound_agents.user and status IN('CLOSER','READY') and lead_id<1 $server_onlySQL $ADUfindSQL and vicidial_live_inbound_agents.group_id='$channel_group' and last_update_time > '$BDtsSQLdate' and vicidial_live_agents.user NOT IN($ring_no_answer_agents$vlia_users) and ring_callerid='' and ( (vicidial_live_inbound_agents.daily_limit = '-1') or (vicidial_live_inbound_agents.daily_limit > vicidial_live_inbound_agents.calls_today) ) $qp_groupWAIT_camp_SQL $AGENTDIRECT_higherSQL $agent_call_order limit 1;";
 							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 							$sthArows=$sthA->rows;
@@ -3362,6 +3431,18 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 							$stmtA = "UPDATE recording_log SET filename='$campaign_rec_filename' where recording_id='$recording_id';";
 							$affected_rows = $dbhA->do($stmtA);
 								$dbhP=$dbhA;   $mysql_count='02214';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
+							}
+
+						if ( ($stereo_recording =~ /CUSTOMER/i) && ($conf_engine eq "CONFBRIDGE") ) 
+							{
+							$retval_stop = $AGI->exec("StopMixMonitor",""); 
+							$retval = $AGI->exec("MixMonitor",",r(/var/spool/asterisk/monitorS/$campaign_rec_filename-in.wav)t(/var/spool/asterisk/monitorS/$campaign_rec_filename-out.wav)"); 
+
+							### insert record into recording_log_stereo table ###
+							$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log) values('$recording_id','$VDADserver_ip','$now_date','0','$campaign_rec_filename','$insert_lead_id','$stereo_recording $channel_group','start: $now_date|vicidial_id: $insert_close_id|user: $VDADuser|channel: $channel|');";
+							$SRaffected_rows = $dbhA->do($stmtA);
+								$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
+							if ($AGILOG) {$agi_string = "--    REMOTE STEREO RECORDING STARTED : |$retval|$retval_stop|$SRaffected_rows|$recording_id|$stmtA|";   &agi_output;}
 							}
 
 						$vmgr_callerid = substr($campaign_rec_filename, 0, 17) . '...';
@@ -3825,6 +3906,21 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 					$dbhP=$dbhA;   $mysql_count='02067';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 				if ($AGILOG) {$agi_string = "--    closer log : |$affected_rows|update of vcl table: $insert_lead_id\n|$stmtA|";   &agi_output;}
 
+				### Grab Server values from the database for the server the agent is on
+				$stmtA = "SELECT conf_engine FROM servers where server_ip = '$VDADserver_ip';";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArows=$sthA->rows;
+				$rec_count=0;
+				$conf_engine='';
+				while ($sthArows > $rec_count)
+				        {
+				        @aryA = $sthA->fetchrow_array;
+						$conf_engine =	$aryA[0];
+				        $rec_count++;
+				        }
+				$sthA->finish();
+
 				### format the remote server dialstring to get the call to the overflow agent meetme room
 				if( $VDADserver_ip =~ m/(\S+)\.(\S+)\.(\S+)\.(\S+)/ )
 					{
@@ -3836,7 +3932,14 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 					$RAredDIALstr = "$a$S$b$S$c$S$d$S";
 					}
 				$alertVDADremDIALstr = "$VDADremDIALstr";
-				$alertVDADremDIALstr .= "$dtmf_silent_prefix$VDADconf_exten";
+				if ($conf_engine eq "CONFBRIDGE")
+					{
+					$alertVDADremDIALstr .= "8$VDADconf_exten";
+					}
+				else
+					{
+					$alertVDADremDIALstr .= "$dtmf_silent_prefix$VDADconf_exten";
+					}
 				$VDADremDIALstr .= "$VDADconf_exten";
 
 
@@ -3868,6 +3971,7 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 				### if second agent alert is not disabled, then trigger the alert and wait
 				$play_second_alert=0;
 				$disable_first_alert=0;
+				$disable_third_alert=0;
 				if ( ($second_alert_trigger =~ /PHONE|LEAD_ID/i) && (length($second_alert_filename)>0) && ($no_delay_call_route !~ /Y/i) && ($VDADextension !~ /^R\//) )
 					{
 					$second_alert_containerSQL="and campaign_id='$channel_group'";
@@ -3928,8 +4032,84 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 						{
 						$play_second_alert=1;
 						if ($second_alert_only =~ /ENABLED/i)
-							{$disable_first_alert=1;}
+							{
+							$disable_first_alert=1;
+							$disable_third_alert=1;
+							}
 						if ($AGILOG) {$agi_string = "--    VDCL 2nd agent alert triggered: |$play_second_alert|disable first alert: $disable_first_alert|";   &agi_output;}
+						}
+					}
+
+
+				### if third agent alert is not disabled, then trigger the alert and wait
+				$play_third_alert=0;
+				$disable_first_alert=0;
+				$disable_second_alert=0;
+				if ( ($third_alert_trigger =~ /PHONE|LEAD_ID/i) && (length($third_alert_filename)>0) && ($no_delay_call_route !~ /Y/i) && ($VDADextension !~ /^R\//) )
+					{
+					$third_alert_containerSQL="and campaign_id='$channel_group'";
+					if ( (length($third_alert_container)>0) && ($third_alert_container !~ /^DISABLED$/i) ) 
+						{
+						$third_alert_container_entry='';
+						$stmtA = "SELECT container_entry FROM vicidial_settings_containers where container_id='$third_alert_container';";
+						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+						$sthArows=$sthA->rows;
+						$dbhP=$dbhA;   $mysql_count='02273';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
+						if ($AGILOG) {$agi_string = "--    VDCL 3rd alert container: |$sthArows|$stmtA|";   &agi_output;}
+						if ($sthArows > 0)
+							{
+							@aryA = $sthA->fetchrow_array;
+							$third_alert_container_entry = $aryA[0];
+							$third_alert_container_entry =~ s/\n/','/gi;
+							$third_alert_container_entry =~ s/\r|\t| |''|,$|^,//gi;
+							$third_alert_container_entry =~ s/,,/,/gi;
+							$third_alert_container_entry =~ s/,''//gi;
+							$third_alert_container_entry =~ s/','$//gi;
+							if (length($third_alert_container_entry) > 0) 
+								{$third_alert_containerSQL = "and campaign_id IN('$third_alert_container_entry')";}
+							}
+						$sthA->finish();
+						}
+					$VCL_count=0;
+					$third_alert_trigger_seconds =~ s/\D//gi;
+					if (length($third_alert_trigger_seconds) < 1) {$third_alert_trigger_seconds=0;}
+					$dropSQL='';
+					$drop_statuses='';
+					if ($third_alert_trigger =~ /TO|TIMEOUT/i) {$drop_statuses .= "TIMEOT|";}
+					if ($third_alert_trigger =~ /NQ/i) {$drop_statuses .= "NANQUE|IQNANQ|";}
+					if ($third_alert_trigger =~ /HT/i) {$drop_statuses .= "HOLDTO|";}
+					if ($third_alert_trigger =~ /WT/i) {$drop_statuses .= "WAITTO|";}
+					if (length($drop_statuses) > 1)
+						{
+						$drop_statuses =~ s/\|/','/gi;
+						$drop_statuses =~ s/','$//gi;
+						$dropSQL="and status IN('$drop_statuses')";
+						}
+					$searchSQL="lead_id='$insert_lead_id'";
+					if ($third_alert_trigger =~ /PHONE/i) 
+						{$searchSQL="phone_number='$phone_number'";}
+					$stmtA = "SELECT count(*) FROM vicidial_closer_log where $searchSQL $third_alert_containerSQL and call_date >= NOW()-INTERVAL $third_alert_trigger_seconds SECOND $dropSQL;";
+					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+					$sthArowsMIC=$sthA->rows;
+						$dbhP=$dbhA;   $mysql_count='02274';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
+					if ($sthArowsMIC > 0)
+						{
+						@aryA = $sthA->fetchrow_array;
+						$VCL_count = $aryA[0];
+						}
+					if ($AGILOG) {$agi_string = "--    VDCL 3rd alert check: |$VCL_count|$stmtA|";   &agi_output;}
+					
+					if ( ($VCL_count > 1) || ( (length($dropSQL) > 5) && ($VCL_count > 0) ) )
+						{
+						$play_third_alert=1;
+						if ($third_alert_only =~ /ENABLED/i)
+							{
+							$disable_first_alert=1;
+							$disable_second_alert=1;
+							}
+						if ($AGILOG) {$agi_string = "--    VDCL 3rd agent alert triggered: |$play_third_alert|disable first alert: $disable_first_alert|";   &agi_output;}
 						}
 					}
 
@@ -3953,7 +4133,7 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 
 
 				# if second alert is to be played, play it now
-				if ($play_second_alert > 0) 
+				if ( ($play_second_alert > 0) && ($disable_second_alert < 1) )
 					{
 					$VSqueryCID = "VS$CIDdate$VDADconf_exten";
 					$alertCIDstring = "\"$second_alert_filename\" <$second_alert_filename>";
@@ -3969,6 +4149,26 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 					usleep(1 * $second_alert_delay * 1000);
 					}
 
+				# If both 2nd and 3rd alerts trigger and set to ONLY, only play the 3rd alert
+				if ( ($disable_second_alert > 0) && ($disable_third_alert > 0) )
+					{$disable_third_alert=0;}
+
+				# if third alert is to be played, play it now
+				if ( ($play_third_alert > 0) && ($disable_third_alert < 1) )
+					{
+					$VSqueryCID = "VS$CIDdate$VDADconf_exten";
+					$alertCIDstring = "\"$third_alert_filename\" <$third_alert_filename>";
+
+					### insert a NEW record to the vicidial_manager table to play the alert message to the agent
+					$stmtA = "INSERT INTO vicidial_manager values('','','$SQLdate','NEW','N','$VDADserver_ip','','Originate','$VSqueryCID','Exten: 83047777777777','Context: vicidial-auto','Channel: Local/$alertVDADremDIALstr$at$ext_context','Priority: 1','Callerid: $alertCIDstring','Timeout: 10','','','','')";
+					$affected_rows = $dbhA->do($stmtA);  
+						$dbhP=$dbhA;   $mysql_count='02275';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
+					if ($AGILOG) {$agi_string = "--    VDCL 2nd agent alert: |$VCL_count|$VSqueryCID|$alertVDADremDIALstr|$agent_alert_exten|$alertCIDstring|$channel|insert to vicidial_manager";   &agi_output;}
+
+					$third_alert_delay =~ s/\D//gi;
+					if (length($third_alert_delay) < 1) {$third_alert_delay=1;}
+					usleep(1 * $third_alert_delay * 1000);
+					}
 
 
 				if ($AGILOG) {$agi_string = "exiting VDAD app, transferring call to $VDADremDIALstr";   &agi_output;}
@@ -4024,7 +4224,7 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 
 				### update calls_today for vicidial_live_inbound_agents ###
 				$calls_today_filteredSQL='';
-				$stmtA = "SELECT calls_today,calls_today_filtered from vicidial_inbound_group_agents WHERE user='$VDADuser' and group_id='$channel_group';";
+				$stmtA = "SELECT calls_today,calls_today_filtered,daily_limit from vicidial_inbound_group_agents WHERE user='$VDADuser' and group_id='$channel_group';";
 					if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -4036,6 +4236,7 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 					$calls_today =			$aryA[0];
 					$calls_today_filtered = $aryA[1];
 					$calls_today++;
+					$daily_limit =			$aryA[2];
 				#	if ($VU_max_inbound_filter_enabled > 0) 
 				#		{
 				#		$VU_max_inbound_filter_ingroupsTEST = ",$VU_max_inbound_filter_ingroups,";
@@ -4079,6 +4280,8 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 
 				### Check for inbound max calls daily limit
 				$max_inbound_triggered=0;
+				$inbound_credits_triggered=0;
+				$user_ingroup_limit_triggered=0;
 				if ( ($VU_max_inbound_calls > 0) || ($CP_max_inbound_calls > 0) )
 					{
 					$max_inbound_calls = $CP_max_inbound_calls;
@@ -4162,6 +4365,7 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 					### Check for inbound calls credits available, if feature enabled
 					if ( ($VU_inbound_credits < 1) && ($VU_inbound_credits >= 0) && ($SSinbound_credits > 0) )
 						{
+						$inbound_credits_triggered++;
 						$outbound_autodial='0';
 						$stmtA = "SELECT outbound_autodial,closer_campaigns FROM vicidial_live_agents where user='$VDADuser';";
 						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
@@ -4215,7 +4419,57 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 						if ($AGILOG) {$agi_string = "--    INBOUND CALLS CREDITS TRIGGER: |$VU_inbound_credits|$VDADuser|$callerid|$max_inbound_calls_outcome|$closer_campaigns|$ADcloser_campaignsARYct|";   &agi_output;}
 						}
 					}
-					##### END check for user max inbound calls #####
+				# check for per-user & per-in-group daily limits, if max-inbound and inbound-credits not triggered
+				if ( ($calls_today >= $daily_limit) && ($daily_limit >= 0) && ($max_inbound_triggered < 1) && ($inbound_credits_triggered < 1) )
+					{
+					$user_ingroup_limit_triggered++;
+					$outbound_autodial='0';
+					$stmtA = "SELECT outbound_autodial,closer_campaigns FROM vicidial_live_agents where user='$VDADuser';";
+					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+					$sthArowsVLA=$sthA->rows;
+						$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
+					if ($sthArowsVLA > 0)
+						{
+						@aryA = $sthA->fetchrow_array;
+						if ($aryA[0] =~ /Y/)
+							{$outbound_autodial = '1';}
+						$closer_campaigns = $aryA[1];
+						}
+
+					$closer_campaigns =~ s/^ | -$//gi;
+					@ADcloser_campaignsARY = split(/ /,$closer_campaigns);
+					$ADcloser_campaignsARYct = scalar(@ADcloser_campaignsARY);
+					$ADc=0;
+					$ADcloser_campaigns='';
+					while ($ADc < $ADcloser_campaignsARYct)
+						{
+						if ($ADcloser_campaignsARY[$ADc] !~ /^$channel_group$/i)
+							{$ADcloser_campaigns .= "$ADcloser_campaignsARY[$ADc] ";}
+						$ADc++;
+						}
+					if (length($ADcloser_campaigns) > 3)
+						{$ADcloser_campaigns = " ".$ADcloser_campaigns."-";}
+					else
+						{$ADcloser_campaigns = " -";}
+
+					$stmtA = "UPDATE vicidial_live_agents set external_ingroups='$ADcloser_campaigns',external_blended='$outbound_autodial',external_igb_set_user='VDIC',manager_ingroup_set='SET' where user='$VDADuser'";
+					$stmtB = "DELETE FROM vicidial_live_inbound_agents where user='$VDADuser' and group_id='$channel_group';";
+
+					$affected_rows = $dbhA->do($stmtA);
+						$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
+
+					$affected_rows = $dbhA->do($stmtB);
+						$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
+
+					$SQL_log = "$stmtA|$stmtB";
+					$SQL_log =~ s/'|%//gi;
+					$stmtC = "INSERT INTO vicidial_admin_log set event_date=NOW(), user='$VDADuser', ip_address='$VARserver_ip', event_section='USERS', event_type='MODIFY', record_id='$VDADuser', event_code='DAILY LIMIT MODIFY USER', event_sql='$SQL_log', event_notes='|$calls_today >= $daily_limit|$VDADuser|$channel_group|$callerid|IC|$max_inbound_calls_outcome|$closer_campaigns|$ADcloser_campaignsARYct|';";
+					$affected_rows = $dbhA->do($stmtC);
+						$dbhP=$dbhA;   $mysql_count='02204';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
+					if ($AGILOG) {$agi_string = "--    INBOUND AGENT DAILY LIMIT TRIGGER: |$calls_today >= $daily_limit|$VDADuser|$channel_group|$callerid|$max_inbound_calls_outcome|$closer_campaigns|$ADcloser_campaignsARYct|";   &agi_output;}
+					}
+				##### END check for user max inbound calls, inbound credits and user/in-group daily limits #####
 
 
 				&trigger_transfer_process;
@@ -4431,21 +4685,50 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 						$campaign_rec_filename =~ s/CALLID/$callerid/gi;
 						$campaign_rec_filename =~ s/\"|\'//gi;
 
-						%ast_ver_str = parse_asterisk_version($asterisk_version);
-						if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6))
+						if ( ($stereo_recording =~ /CUSTOMER/i) && ($conf_engine eq "CONFBRIDGE") ) 
 							{
-							$AGI->exec("Monitor wav|/var/spool/asterisk/monitor/MIX/$campaign_rec_filename");
+							$retval_stop = $AGI->exec("StopMixMonitor",""); 
+							$retval = $AGI->exec("MixMonitor",",r(/var/spool/asterisk/monitorS/$campaign_rec_filename-in.wav)t(/var/spool/asterisk/monitorS/$campaign_rec_filename-out.wav)"); 
 							}
 						else
 							{
-							$AGI->exec("Monitor","wav,/var/spool/asterisk/monitor/MIX/$campaign_rec_filename"); 
+							%ast_ver_str = parse_asterisk_version($asterisk_version);
+							if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6))
+								{
+								$retval = $AGI->exec("Monitor wav|/var/spool/asterisk/monitor/MIX/$campaign_rec_filename");
+								}
+							else
+								{
+								$retval = $AGI->exec("Monitor","wav,/var/spool/asterisk/monitor/MIX/$campaign_rec_filename"); 
+								}
 							}
 
 						### insert record into recording_log table ###
 						$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,length_in_sec,filename,lead_id,user,location,vicidial_id) values('$channel','$VARserver_ip','$phone_number','$now_date','$now_date_epoch','0','$campaign_rec_filename','$insert_lead_id','$VDADuser','$campaign_rec_filename','$insert_close_id');";
 						$RLRAaffected_rows = $dbhA->do($stmtA);
 							$dbhP=$dbhA;   $mysql_count='01173';   $MEL_aff_rows=$RLRAaffected_rows;   &mysql_error_logging;
-						if ($AGILOG) {$agi_string = "--    REMOTE RECORDING STARTED : |$RLRAaffected_rows|$campaign_rec_filename|$stmtA|";   &agi_output;}
+						if ($AGILOG) {$agi_string = "--    REMOTE RECORDING STARTED : |$retval|$RLRAaffected_rows|$campaign_rec_filename|$stmtA|";   &agi_output;}
+
+						if ( ($stereo_recording =~ /CUSTOMER/i) && ($conf_engine eq "CONFBRIDGE") ) 
+							{
+							$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
+							$sthA = $dbhA->prepare($stmtB) or die "preparing: ",$dbhA->errstr;
+							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+							$sthArows=$sthA->rows;
+								$dbhP=$dbhA;   $stmtA=$stmtB;   $mysql_count='01XXX';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
+							if ($sthArows > 0)
+								{
+								@aryA = $sthA->fetchrow_array;
+								$recording_id = $aryA[0];
+								}
+							$sthA->finish();
+
+							### insert record into recording_log_stereo table ###
+							$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log) values('$recording_id','$VDADserver_ip','$now_date','0','$campaign_rec_filename','$insert_lead_id','$stereo_recording $channel_group','start: $now_date|vicidial_id: $insert_close_id|user: $VDADuser|channel: $channel|');";
+							$SRaffected_rows = $dbhA->do($stmtA);
+								$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
+							if ($AGILOG) {$agi_string = "--    REMOTE STEREO RECORDING STARTED : |$retval|$SRaffected_rows|$recording_id|$stmtA|";   &agi_output;}
+							}
 						}
 					}
 				### END REMOTE AGENT SECTION

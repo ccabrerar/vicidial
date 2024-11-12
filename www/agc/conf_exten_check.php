@@ -180,7 +180,7 @@ if ($bcrypt == 'OFF')  {$bcrypt=0;}
 #   see the options-example.php file for more information
 if (file_exists('options.php'))
 	{
-	require_once('options.php');
+	require('options.php');
 	}
 
 header ("Content-type: text/html; charset=utf-8");
@@ -1508,11 +1508,11 @@ if ($ACTION == 'refresh')
 				{
 				// Check for alerts
 				// Activate notifications that are ready to be sent systemwide
-				$upd_stmt="update vicidial_agent_notifications set notification_status='READY' where notification_date<=now() and notification_status='QUEUED'";
+				$upd_stmt="update vicidial_agent_notifications set notification_status='READY' where notification_date<=now() and notification_status='QUEUED';";
 				$upd_rslt=mysql_to_mysqli($upd_stmt, $link);
 
 				# gather all READY notifications to be triggered, limit with $user, $VU_user_group, $campaign
-				$alert_stmt="select * from vicidial_agent_notifications where notification_status='READY' and ( (recipient_type='USER' and recipient='$user') or (recipient_type='USER_GROUP' and recipient='$VU_user_group') or (recipient_type='CAMPAIGN' and recipient='$campaign') ) order by notification_date asc limit 1";
+				$alert_stmt="select * from vicidial_agent_notifications where notification_status='READY' and ( (recipient_type='USER' and recipient='$user') or (recipient_type='USER_GROUP' and recipient='$VU_user_group') or (recipient_type='CAMPAIGN' and recipient='$campaign') ) order by notification_date asc limit 1;";
 				$alert_rslt=mysql_to_mysqli($alert_stmt, $link);
 				while ($alert_row=mysqli_fetch_array($alert_rslt))
 					{

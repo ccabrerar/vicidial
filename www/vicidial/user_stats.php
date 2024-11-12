@@ -1,7 +1,7 @@
 <?php
 # user_stats.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -68,6 +68,7 @@
 # 220221-0916 - Added allow_web_debug system setting
 # 220310-1427 - Fix for LOGOUT/LOGIN events sharing the same timedate
 # 220916-1744 - Added reporting section for webserver/URL logins
+# 231126-2235 - Added vicidial_hci_log display
 #
 
 $startMS = microtime();
@@ -128,7 +129,7 @@ if ( (!isset($end_date)) or (strlen($end_date) < 10) ) {$end_date = $TODAY;}
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,user_territories_active,webroot_writable,allow_emails,level_8_disable_add,enable_languages,language_method,log_recording_access,admin_screen_colors,mute_recordings,allow_web_debug FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,user_territories_active,webroot_writable,allow_emails,level_8_disable_add,enable_languages,language_method,log_recording_access,admin_screen_colors,mute_recordings,allow_web_debug,hopper_hold_inserts FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 #if ($DB) {$MAIN.="$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
@@ -149,6 +150,7 @@ if ($qm_conf_ct > 0)
 	$SSadmin_screen_colors =		$row[11];
 	$SSmute_recordings =			$row[12];
 	$SSallow_web_debug =			$row[13];
+	$SShopper_hold_inserts =		$row[14];
 	}
 if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
@@ -180,6 +182,7 @@ if ($search_archived_data)
 	$vicidial_agent_function_log=use_archive_table("vicidial_agent_function_log");
 	$call_log_table=use_archive_table("call_log");
 	$vicidial_log_table=use_archive_table("vicidial_log");
+	$vicidial_hci_log=use_archive_table("vicidial_hci_log");
 	}
 else
 	{
@@ -197,6 +200,7 @@ else
 	$vicidial_agent_function_log="vicidial_agent_function_log";
 	$call_log_table="call_log";
 	$vicidial_log_table="vicidial_log";
+	$vicidial_hci_log="vicidial_hci_log";
 	}
 #############
 
@@ -345,9 +349,9 @@ $LOGserver_name = getenv("SERVER_NAME");
 $LOGserver_port = getenv("SERVER_PORT");
 $LOGrequest_uri = getenv("REQUEST_URI");
 $LOGhttp_referer = getenv("HTTP_REFERER");
-$LOGbrowser=preg_replace("/\'|\"|\\\\/","",$LOGbrowser);
-$LOGrequest_uri=preg_replace("/\'|\"|\\\\/","",$LOGrequest_uri);
-$LOGhttp_referer=preg_replace("/\'|\"|\\\\/","",$LOGhttp_referer);
+$LOGbrowser=preg_replace("/<|>|\'|\"|\\\\/","",$LOGbrowser);
+$LOGrequest_uri=preg_replace("/<|>|\'|\"|\\\\/","",$LOGrequest_uri);
+$LOGhttp_referer=preg_replace("/<|>|\'|\"|\\\\/","",$LOGhttp_referer);
 if (preg_match("/443/i",$LOGserver_port)) {$HTTPprotocol = 'https://';}
   else {$HTTPprotocol = 'http://';}
 if (($LOGserver_port == '80') or ($LOGserver_port == '443') ) {$LOGserver_port='';}
@@ -1885,6 +1889,48 @@ else
 			$CSV_text13.="\"\",\"$u\",\"$row[0]\",\"$row[1]\",\"$row[2]\",\"$row[3]\",\"$row[4]\",\"$row[5]\",\"$row[6]\"\n";
 			}
 		$MAIN.="</TABLE><BR><BR>\n";
+
+
+		if ($SShopper_hold_inserts > 0)
+			{
+			##### BEGIN vicidial_hci_log entries #####
+			$MAIN.="<FONT FACE=\"ARIAL,HELVETICA\" SIZE=3><B>"._QXZ("HCI Agent Log Records for this Time Period").": </FONT><FONT FACE=\"ARIAL,HELVETICA\" SIZE=2>("._QXZ("10000 record download limit").") $NWB#user_stats-hci_log$NWE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href='$download_link&file_download=16'>["._QXZ("DOWNLOAD")."]</a></B></FONT>\n";
+			$MAIN.="<TABLE width=750 cellspacing=0 cellpadding=1>\n";
+			$MAIN.="<tr><td><font size=1># </td><td NOWRAP><font size=2>"._QXZ("DATE/TIME")." &nbsp; </td><td align=right NOWRAP><font size=2> "._QXZ("LEAD ID")." &nbsp; </td><td align=right NOWRAP><font size=2> "._QXZ("PHONE")." &nbsp; </td><td align=right NOWRAP><font size=2> "._QXZ("CALL DATE")." &nbsp; </td><td align=right NOWRAP><font size=2> "._QXZ("CAMPAIGN")." &nbsp; </td><td align=right NOWRAP><font size=2> "._QXZ("USER IP")." &nbsp; </td></tr>\n";
+			$CSV_text16.="\""._QXZ("HCI Agent Log Records for this Time Period").": ("._QXZ("10000 record limit").")\"\n";
+			$CSV_text16.="\"\",\"#\",\""._QXZ("DATE/TIME")."\",\""._QXZ("LEAD ID")."\",\""._QXZ("PHONE")."\",\""._QXZ("CALL DATE")."\",\""._QXZ("CAMPAIGN")."\",\""._QXZ("USER IP")."\"\n";
+
+			$stmt="SELECT call_date,lead_id,phone_number,user_ip,campaign_id from ".$vicidial_hci_log." where user='" . mysqli_real_escape_string($link, $user) . "' and call_date >= '" . mysqli_real_escape_string($link, $begin_date) . " 0:00:01'  and call_date <= '" . mysqli_real_escape_string($link, $end_date) . " 23:59:59' order by call_date desc limit 10000;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$logs_to_print = mysqli_num_rows($rslt);
+			if ($DB > 0) {echo "|$logs_to_print|$stmt|";}
+
+			$u=0;
+			while ($logs_to_print > $u) 
+				{
+				$row=mysqli_fetch_row($rslt);
+				$u++;
+				if ($u <= 1000)
+					{
+					if (preg_match("/1$|3$|5$|7$|9$/i", $u))
+						{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
+					else
+						{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
+
+					$MAIN.="<tr $bgcolor>";
+					$MAIN.="<td><font size=1>$u</td>";
+					$MAIN.="<td><font size=2>$row[0]</td>";
+					$MAIN.="<td align=center><font size=2> <A HREF=\"admin_modify_lead.php?lead_id=$row[1]\" onclick=\"javascript:window.open('admin_modify_lead.php?lead_id=$row[1]', '_blank');return false;\">$row[1]</A> </td>\n";
+					$MAIN.="<td><font size=2>$row[2]</td>";
+					$MAIN.="<td align=right><font size=2> $row[3] </td>\n";
+					$MAIN.="<td align=right><font size=2> $row[4] </td></tr>\n";
+					}
+				$CSV_text16.="\"\",\"$u\",\"$row[0]\",\"$row[1]\",\"$row[2]\",\"$row[3]\",\"$row[4]\"\n";
+				}
+			$MAIN.="</TABLE><BR><BR>\n";
+			}
+			##### END vicidial_hci_log entries #####
+
 
 	##### BEGIN manager pause code approval entries #####
 		$MAIN.="<FONT FACE=\"ARIAL,HELVETICA\" SIZE=3><B>"._QXZ("Manager Pause Code Approvals for this Time Period").": </FONT><FONT FACE=\"ARIAL,HELVETICA\" SIZE=2>("._QXZ("10000 record limit").") $NWB#user_stats-pause_code_approvals$NWE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href='$download_link&file_download=14'>["._QXZ("DOWNLOAD")."]</a></B></FONT>\n";

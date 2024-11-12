@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2023-03-08
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2024-10-04
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -52,6 +52,7 @@ check_phone_number - allows you to check if a phone number is valid and dialable
 logged_in_agents - list of agents that are logged in to the system
 update_campaign - updates campaign settings in the system
 add_did - adds new Inbound DID entries to the system
+copy_did - adds new Inbound DID entries to the system, copied from an existing DID entry
 update_did - updates Inbound DID information in the system
 phone_number_log - exports list of calls placed to one of more phone numbers
 call_status_stats - report on number of calls made by campaign and ingroup, with hourly and status breakdowns
@@ -59,11 +60,16 @@ call_dispo_report - call disposition breakdown report
 agent_campaigns - looks up allowed campaigns/in-groups for a specific user
 update_cid_group_entry - updates CID Group entries
 add_dnc_phone - adds a phone number to one of the DNC lists
+delete_dnc_phone - removes a phone number from one of the DNC lists
 add_fpg_phone - adds a phone number to a Filter Phone Group
+delete_fpg_phone - removes a phone number from a Filter Phone Group
 campaigns_list - displays information about all campaigns in the system
 hopper_list - displays information about leads in the hopper for a campaign
 update_alt_url - updates/adds/displays alternate dispo call url entries for a campaign
 update_presets - updates/adds/displays/deletes campaign preset entries
+lead_dearchive - moves a lead from the archive to active leads table
+update_remote_agent - updates some remote agent settings in the system
+user_details - display information about one user
 
 
 New scripts:
@@ -206,6 +212,22 @@ Changes:
 220920-0814 - Added more "XDAY" options to add_lead duplicate checks
 221108-1849 - Added include_ip option for agent_status function
 230122-1821 - Added reset_password option to update_user function
+230308-1758 - Fix for update_lead list-restrict phone number update issue
+230614-0828 - Added container_list function
+230721-1753 - Added insert for daily RT monitoring
+231109-0933 - Added archived_lead option to multiple functions
+231109-2022 - Added lead_dearchive function
+240101-0920 - Added DUPPHONEALT... options for duplicate_check within add_lead function 
+240105-1009 - Added delete_fpg_phone function
+240120-0840 - Added list_order,list_order_randomize,list_order_secondary optional fields to update_campaign function
+240217-0907 - Added more missing vicidial_users fields from copy function
+240302-0804 - Added delete_dnc_phone function
+240703-1657 - Added update_remote_agent function
+240718-0942 - Fixes for inconsistencies in documentation and permissions for some functions
+240718-1716 - Added fields to campaigns_list function output
+240730-1832 - Changes for PHP8 compatibility, Added copy_did function
+240824-1626 - Added user_details function
+241004-1518 - Added webform_one-three variables to the update_campaign function
 
 
 API Functions use the 'function' variable
@@ -362,7 +384,7 @@ ERROR: agent_ingroup_info INVALID USER ID - 1255|6666
 --------------------------------------------------------------------------------
 agent_campaigns - looks up allowed campaigns/in-groups for a specific user
 
-NOTE: api user for this function must have user_level set to 7 or higher
+NOTE: api user for this function must have user_level set to 8 or higher and "view reports" and "modify users" enabled
 
 REQUIRED FIELDS-
 agent_user -		2-20 characters
@@ -397,7 +419,7 @@ user|allowed_campaigns_list|allowed_ingroups_list
 --------------------------------------------------------------------------------
 campaigns_list - displays information about all campaigns in the system
 
-NOTE: api user for this function must have user_level set to 7 or higher
+NOTE: api user for this function must have user_level set to 8 or higher and "view reports" enabled
 
 REQUIRED FIELDS-
 source -		description of what originated the API call (maximum 20 characters)
@@ -418,8 +440,8 @@ ERROR: campaigns_list USER DOES NOT HAVE PERMISSION TO GET CAMPAIGN INFO - 6666|
 ERROR: campaigns_list THIS USER HAS NO VIEWABLE CAMPAIGNS - 6666
 
 A SUCCESS response will not show "SUCCESS", but instead will just print the results in the following format:
-campaign_id|campaign_name|active|user_group|dial_method|dial_level|lead_order|dial_statuses
-TESTCAMP|Test Campaign|Y|---ALL---|INBOUND_MAN|1|DOWN|PDROP DROP B NEW
+campaign_id|campaign_name|active|user_group|dial_method|dial_level|lead_order|dial_statuses|dial_timeout|dial_prefix|manual_dial_prefix|three_way_dial_prefix
+TESTCAMP|Test Campaign|Y|---ALL---|INBOUND_MAN|1|DOWN|PDROP DROP B NEW|65|9|9|9
 
 
 
@@ -428,7 +450,7 @@ TESTCAMP|Test Campaign|Y|---ALL---|INBOUND_MAN|1|DOWN|PDROP DROP B NEW
 --------------------------------------------------------------------------------
 hopper_list - displays information about leads in the hopper for a campaign
 
-NOTE: api user for this function must have user_level set to 7 or higher
+NOTE: api user for this function must have user_level set to 8 or higher and "view reports" enabled
 
 REQUIRED FIELDS-
 source -		description of what originated the API call (maximum 20 characters)
@@ -542,6 +564,7 @@ stage -			the format of the exported data: csv, tab, pipe(default)
 header -		include a header(YES) or not(NO). This is optional, default is not to include a header
 detail -		(ALL) calls or only (LAST) call. default is (ALL)
 type -			(IN)inbound, (OUT)outbound or (ALL) calls. defauls is (OUT) calls
+archived_lead -		Y or N, Setting this to Y will query only the vicidial_list_archive leads for the leads details, default is N.
 
 NOTES- 
 There is a hard limit of 100000 results
@@ -587,7 +610,7 @@ There is a hard limit of 10000000 records analyzed
 
 Example URL strings for API calls:
 http://server/vicidial/non_agent_api.php?source=test&function=agent_stats_export&time_format=M&stage=pipe&user=6666&pass=1234&agent_user=6666&datetime_start=2012-08-09+00:00:00&datetime_end=2012-08-10+23:59:59
-http://server/vicidial/non_agent_apiX.php?DB=0&stage=pipe&user=6666&pass=1234&source=test&function=agent_stats_export&datetime_start=2012-03-26+00:00:00&datetime_end=2012-03-26+23:59:59&header=YES
+http://server/vicidial/non_agent_api.php?DB=0&stage=pipe&user=6666&pass=1234&source=test&function=agent_stats_export&datetime_start=2012-03-26+00:00:00&datetime_end=2012-03-26+23:59:59&header=YES
 
 Example responses:
 ERROR: agent_stats_export USER DOES NOT HAVE PERMISSION TO GET AGENT INFO - 6666|0
@@ -701,6 +724,34 @@ NOTE: real_time_sub_status field can consist of: DEAD, DISPO, 3-WAY, PARK, RING,
 
 
 --------------------------------------------------------------------------------
+user_details - display information about one user
+
+NOTE: api user for this function must have user_level set to 7 or higher and "view reports" enabled
+
+REQUIRED FIELDS-
+source -		description of what originated the API call (maximum 20 characters)
+agent_user -		2-20 characters, use only for one user
+
+SETTINGS FIELDS-
+stage -			the format of the exported data: csv, tab, pipe(default)
+header -		include a header(YES) or not(NO). This is optional, default is not to include a header
+
+Example URL strings for API calls:
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=user_details&agent_user=1234&stage=csv&header=YES
+
+Example responses:
+ERROR: user_details USER DOES NOT HAVE PERMISSION TO GET USER DETAILS - 6666|0
+ERROR: user_details INVALID SEARCH PARAMETERS - 6666||
+ERROR: user_details USER NOT FOUND - 6666||
+
+A SUCCESS response will not show "SUCCESS", but instead will just print the results in the following format:
+user,full_name,user_group,user_level,active
+11111,test user,ADMIN,6,Y
+
+
+
+
+--------------------------------------------------------------------------------
 callid_info - information about a call based upon the caller_code or call ID
 
 NOTE: api user for this function must have user_level set to 7 or higher and "view reports" enabled
@@ -747,6 +798,7 @@ field_name -		name of lead field to pull
 OPTIONAL FIELDS-
 custom_fields -		Y or N, default is N. If the field you want to pull is a custom field or not
 list_id -		override for the entry_list_id of a custom field
+archived_lead -		Y or N, Setting this to Y will query only the vicidial_list_archive leads for the leads details, default is N.
 
 Example URL strings for API calls:
 http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=lead_field_info&field_name=cc_value&lead_id=1139739&custom_fields=Y&list_id=999888999777
@@ -778,6 +830,7 @@ OPTIONAL FIELDS-
 phone_number -		6-19 digits, can be used in place of a lead_id(may return multiple records, up to 1000, most recently added lead first)
 custom_fields -		Y or N, default is N. If the field you want to pull is a custom field or not
 force_entry_list_id -	3-12 digits, will override the lead's assigned entry_list_id to look for custom fields data for this lead from a different list
+archived_lead -		Y or N, Setting this to Y will query only the vicidial_list_archive leads for the leads details, default is N.
 
 SETTINGS FIELDS-
 stage -			the format of the exported data: csv, tab, newline, pipe(default)
@@ -817,6 +870,7 @@ OPTIONAL FIELDS-
 lead_id -		1-10 digits, only used if status and date are empty 
 custom_fields -		Y or N, default is N. Display custom fields values or not
 list_id -		override for the entry_list_id of a custom field
+archived_lead -		Y or N, Setting this to Y will query only the vicidial_list_archive leads for the leads search and details, default is N.
 
 Example URL strings for API calls:
 http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=lead_status_search&status=NP&date=2017-12-29&custom_fields=Y
@@ -856,6 +910,7 @@ source -		description of what originated the API call (maximum 20 characters)
 
 SETTINGS FIELDS-
 records -		number of records to display in results if more than 1 found (defaults to '1000'[most recently inserted leads displayed first])
+archived_lead -		Y or N, Setting this to Y will query only the vicidial_list_archive leads for the leads search and details, default is N.
 
 SETTINGS FIELDS-
 header -		include a header(YES) or not(NO). This is optional, default is not to include a header
@@ -954,6 +1009,30 @@ lead_id|callback_type|recipient|callback_status|lead_status|callback_date|entry_
 
 
 --------------------------------------------------------------------------------
+lead_dearchive - moves a lead from the archive to active leads table
+
+NOTE: api user for this function must have user_level set to 8 or higher and "modify leads" enabled
+
+REQUIRED FIELDS-
+source -		description of what originated the API call (maximum 20 characters)
+lead_id -		16-40 characters
+
+Example URL strings for API calls:
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=lead_dearchive&lead_id=274071
+
+Example responses:
+ERROR: lead_dearchive USER DOES NOT HAVE PERMISSION TO MODIFY LEAD INFO - 6666|0
+ERROR: lead_dearchive INVALID SEARCH PARAMETERS - 6666||
+ERROR: lead_dearchive LEAD INSERT FAILED - 6666||
+ERROR: lead_dearchive NON-ARCHIVED LEAD FOUND - 6666||
+ERROR: lead_dearchive ARCHIVED LEAD NOT FOUND - 6666||
+SUCCESS: lead_dearchive LEAD DE-ARCHIVED - 6666|274071|1|1
+
+
+
+
+
+--------------------------------------------------------------------------------
 update_log_entry - updates the status of a vicidial_log or vicidial_closer_log entry
 
 NOTE: api user for this function must have user_level set to 8 or higher and "modify leads" enabled
@@ -1007,6 +1086,9 @@ duplicate_check -	Check for duplicate records in the system, can select more tha
 				DUPLIST - check for duplicate phone_number in same list
 				DUPCAMP - check for duplicate phone_number in all lists for this list's campaign
 				DUPSYS - check for duplicate phone_number in entire system
+				DUPPHONEALTLIST - check for duplicate phone against phone_number and alt_phone in same list
+				DUPPHONEALTCAMP - check for duplicate phone against phone_number and alt_phone in all lists for this list's campaign
+				DUPPHONEALTSYS - check for duplicate phone against phone_number and alt_phone in entire system
 				DUPTITLEALTPHONELIST - check for duplicate title and alt_phone in same list
 				DUPTITLEALTPHONECAMP - check for duplicate title and alt_phone in all lists for this list's campaign
 				DUPTITLEALTPHONESYS - check for duplicate title and alt_phone in entire system
@@ -1079,7 +1161,7 @@ http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&functio
 
 http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=add_lead&phone_number=7275551111&phone_code=1&list_id=999&dnc_check=N&campaign_dnc_check=Y&campaign_id=TESTCAMP&first_name=Bob&last_name=Wilson&address1=1234+Main+St.&city=Chicago+Heights&state=IL&add_to_hopper=Y&hopper_local_call_time_check=Y&multi_alt_phones=7275551212_1_work!7275551213_1_sister+house!1234567890_1_neighbor
 
-http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=add_lead&phone_number=7275551212&phone_code=1&list_id=999&dnc_check=N&first_name=Bob&last_name=Wilson&duplicate_check=DUPLIST-DUPNAMEPHONELIST
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=add_lead&phone_number=7275551212&phone_code=1&list_id=999&dnc_check=N&first_name=Bob&last_name=Wilson&duplicate_check=DUPPHONEALTLIST-DUPNAMEPHONELIST
 
 http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=add_lead&phone_number=7275551212&phone_code=1&list_id=999&custom_fields=Y&favorite_color=blue
 
@@ -1117,6 +1199,9 @@ ERROR: NO FUNCTION SPECIFIED
 ERROR: add_lead DUPLICATE PHONE NUMBER IN LIST - 7275551111|101|8765444
 ERROR: add_lead DUPLICATE PHONE NUMBER IN CAMPAIGN LISTS - 7275551111|101|8765444|101
 ERROR: add_lead DUPLICATE PHONE NUMBER IN SYSTEM - 7275551111|101|8765444|101
+ERROR: add_lead DUPLICATE PHONE NUMBER IN LIST - 7275551111|101|8765444|PHONE
+ERROR: add_lead DUPLICATE PHONE NUMBER IN CAMPAIGN LISTS - 7275551111|101|8765444|101|ALT
+ERROR: add_lead DUPLICATE PHONE NUMBER IN SYSTEM - 7275551111|101|8765444|101|PHONE
 ERROR: add_lead DUPLICATE TITLE ALT_PHONE IN LIST - 1234|7275551111|101|8765444
 ERROR: add_lead DUPLICATE TITLE ALT_PHONE IN CAMPAIGN LISTS - 1234|7275551111|101|8765444|101
 ERROR: add_lead DUPLICATE TITLE ALT_PHONE IN SYSTEM - 1234|7275551111|101|8765444|101
@@ -1178,6 +1263,7 @@ remove_from_hopper -	Y or N, default is N
 hopper_priority -	99 to -99, the higher number the higher priority, default is 0
 hopper_local_call_time_check - Y or N, default is N. Validate the local call time and/or state call time before inserting lead in the hopper
 list_exists_check -	Y or N, default is N. If the list_id_field is not a defined list in the system, it will ERROR and not update the lead.
+archived_lead -		Y or N, Setting this to Y will query only the vicidial_list_archive leads for the leads search, updates and details, default is N.
 
 EDITABLE FIELDS- 
 user_field -		1-20 characters, this updates the 'user' field in the vicidial_list table
@@ -1301,6 +1387,7 @@ SETTINGS FIELDS-
 list_exists_check -	Y or N, default is N. If the list_id_field is not a defined list in the system, it will ERROR and not update the leads.
 reset_lead -		Y or N, Setting this to Y will reset the called-since-last-reset flag of the lead, default is N.
 records -		maximum number of records to update (defaults to '100'[most recently created leads])
+archived_lead -		Y or N, Setting this to Y will query only the vicidial_list_archive leads for the leads search, updates and details, default is N.
 
 EDITABLE FIELDS- 
 user_field -		1-20 characters, this updates the 'user' field in the vicidial_list table
@@ -1507,6 +1594,40 @@ SUCCESS: update_user USER HAS BEEN DELETED - 6666|7878
 
 
 --------------------------------------------------------------------------------
+update_remote_agent - updates remote agent entry in the system
+
+NOTE: api user for this function must have user_level set to 8 or higher and "modify remote agents" enabled
+
+REQUIRED FIELDS-
+agent_user -		2-20 characters
+
+OPTIONAL FIELDS-
+status -		'ACTIVE' or 'INACTIVE' only
+campaign_id -		1-8 characters, must be a valid Campaign ID
+number_of_lines -	1-20 digits
+
+Example URL strings for API calls:
+http://server/vicidial/non_agent_api.php?source=test&function=update_remote_agent&user=6666&pass=1234&agent_user=2424&number_of_lines=1&campaign_id=TESTCAMP
+http://server/vicidial/non_agent_api.php?source=test&function=update_remote_agent&user=6666&pass=1234&agent_user=2424&status=INACTIVE
+
+Example responses:
+ERROR: update_remote_agent USER DOES NOT HAVE PERMISSION TO UPDATE REMOTE AGENTS - 6666|0
+ERROR: update_remote_agent YOU MUST USE ALL REQUIRED FIELDS - 6666||
+ERROR: update_remote_agent REMOTE AGENT DOES NOT EXIST - 6666|78789
+ERROR: update_remote_agent USER DOES NOT HAVE PERMISSION TO UPDATE THIS REMOTE AGENT - 6666
+ERROR: update_remote_agent YOU MUST USE A VALID NUMBER OF LINES, THIS IS AN OPTIONAL FIELD - 6666|0
+ERROR: update_remote_agent YOU MUST USE A VALID CAMPAIGN ID, THIS IS AN OPTIONAL FIELD - 6666|TEST|0
+ERROR: update_remote_agent STATUS MUST BE ACTIVE OR INACTIVE, THIS IS AN OPTIONAL FIELD - 6666|Y
+ERROR: update_remote_agent NO UPDATES DEFINED - 6666|0
+NOTICE: update_remote_agent REMOTE AGENT IS ALREADY ACTIVE - 6666|7878
+NOTICE: update_remote_agent REMOTE AGENT IS ALREADY INACTIVE - 6666|7878
+SUCCESS: update_remote_agent USER HAS BEEN UPDATED - 6666|7878
+
+
+
+
+
+--------------------------------------------------------------------------------
 add_group_alias - adds group alias to the system
 
 NOTE: api user for this function must have user_level set to 8 or higher and "ast admin access" enabled
@@ -1559,6 +1680,29 @@ SUCCESS: add_dnc_phone DNC NUMBER HAS BEEN ADDED - 6666|7275551212|TESTCAMP
 
 
 --------------------------------------------------------------------------------
+delete_dnc_phone - removes phone number from a DNC list in the system
+
+NOTE: api user for this function must have user_level set to 8 or higher and "modify lists" enabled and "Delete From DNC Lists" enabled
+
+REQUIRED FIELDS-
+phone_number -	6-20 characters
+campaign_id -	2-30 characters, should be a valid campaign ID or "SYSTEM_INTERNAL" for the internal DNC list
+
+Example URL strings for API calls:
+http://server/vicidial/non_agent_api.php?source=test&function=delete_dnc_phone&user=6666&pass=1234&phone_number=7275551212&campaign_id=TESTCAMP
+http://server/vicidial/non_agent_api.php?source=test&function=delete_dnc_phone&user=6666&pass=1234&phone_number=7275551212&campaign_id=SYSTEM_INTERNAL
+
+Example responses:
+ERROR: delete_dnc_phone USER DOES NOT HAVE PERMISSION TO DELETE DNC NUMBERS - 6666|0
+ERROR: delete_dnc_phone YOU MUST USE ALL REQUIRED FIELDS - 6666|||1000
+ERROR: delete_dnc_phone DNC NUMBER DOES NOT EXIST - 6666|7275551212
+SUCCESS: delete_dnc_phone DNC NUMBER HAS BEEN DELETED - 6666|7275551212|TESTCAMP
+
+
+
+
+
+--------------------------------------------------------------------------------
 add_fpg_phone - adds phone number to a Filter Phone Group in the system
 
 NOTE: api user for this function must have user_level set to 8 or higher and "modify lists" enabled
@@ -1576,6 +1720,29 @@ ERROR: add_fpg_phone YOU MUST USE ALL REQUIRED FIELDS - 6666|||1000
 ERROR: add_fpg_phone FILTER PHONE GROUP DOES NOT EXIST - 6666|TEST_IN_FILTER2
 ERROR: add_fpg_phone FILTER PHONE GROUP NUMBER ALREADY EXISTS - 6666|7275551212|TEST_IN_FILTER
 SUCCESS: add_fpg_phone FILTER PHONE GROUP NUMBER HAS BEEN ADDED - 6666|7275551212|TEST_IN_FILTER
+
+
+
+
+--------------------------------------------------------------------------------
+delete_fpg_phone - removes phone number from a Filter Phone Group in the system
+
+NOTE: api user for this function must have user_level set to 8 or higher and "modify lists" enabled
+
+REQUIRED FIELDS-
+phone_number -	6-20 characters
+group -		2-30 characters, should be a valid Filter Phone Group ID in the system
+
+Example URL strings for API calls:
+http://server/vicidial/non_agent_api.php?source=test&function=delete_fpg_phone&user=6666&pass=1234&phone_number=7275551212&group=TEST_IN_FILTER
+
+Example responses:
+ERROR: delete_fpg_phone USER DOES NOT HAVE PERMISSION TO DELETE FILTER PHONE GROUP NUMBERS - 6666|0
+ERROR: delete_fpg_phone YOU MUST USE ALL REQUIRED FIELDS - 6666|||1000
+ERROR: delete_fpg_phone FILTER PHONE GROUP DOES NOT EXIST - 6666|TEST_IN_FILTER2
+ERROR: delete_fpg_phone FILTER PHONE GROUP NUMBER DOES NOT EXIST - 6666|7275551212|TEST_IN_FILTER
+SUCCESS: delete_fpg_phone FILTER PHONE GROUP NUMBER HAS BEEN DELETED - 6666|7275551212|TEST_IN_FILTER
+
 
 
 
@@ -1777,7 +1944,7 @@ NOTE: api user for this function must have user_level set to 8 or higher and "mo
 
 REQUIRED FIELDS-
 list_id -		2-14 digits
-list_name -		6-30 characters
+list_name -		2-30 characters
 campaign_id -		2-8 characters, must be a valid campaign_id
 
 OPTIONAL FIELDS-
@@ -1854,6 +2021,7 @@ insert_if_not_found -	Y or N, will attempt to insert as a new list if no match i
 reset_list -		Y or N, Setting this to Y will reset the Called-Since-Last-Reset flag for all of the leads in this list, default is N.
 delete_list -		Y or N, Setting this to Y will delete the list from the vicidial_lists table, default is N.
 delete_leads -		Y or N, Setting this to Y will delete all of the leads with this list_id from the vicidial_list table, default is N.
+archived_lead -		Y or N, Setting this to Y will affect only the vicidial_list_archive leads, default is N.
 
 EDITABLE FIELDS- 
 list_name -		6-30 characters
@@ -1992,7 +2160,7 @@ leads_counts -		Y or N, will include the counts of all leads and NEW status lead
 dialable_count -	Y or N, will use the list's campaign settings to provide a count of how many are dialable right now, default is 'N'
 stage -			the format of the exported data: csv, tab, pipe(default)
 header -		include a header(YES) or not(NO). This is optional, default is not to include a header
-
+archived_lead -		Y or N, Setting this to Y will query only the vicidial_list_archive leads for the leads count, default is N.
 
 Example URL strings for API calls:
 http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=list_info&list_id=1101&leads_counts=Y&header=YES
@@ -2255,6 +2423,9 @@ hopper_level -		Must be from 1 to 2000
 reset_hopper -		Must be one of these: 'Y','N', will default to 'N'
 dial_method -		Must be one of these: 'MANUAL','RATIO','INBOUND_MAN','ADAPT_AVERAGE','ADAPT_HARD_LIMIT','ADAPT_TAPERED'
 dial_timeout -		Must be from 1 to 120
+list_order -		Order in which the leads are dialed, MUST USE PROPER CASE! Some examples include 'UP','DOWN','RANDOM 2nd NEW','DOWN COUNT',etc...
+list_order_randomize -	Randomize hopper lead loading within the list order, Must be one of these: 'Y','N'
+list_order_secondary -	Can be set to one of these: MUST USE PROPER CASE! Examples include 'LEAD_ASCEND','CALLTIME_DESCEND','VENDOR_ASCEND',etc...
 outbound_cid -		1-20 digits
 dial_status_add -	1-6 characters
 dial_status_remove -	1-6 characters
@@ -2266,8 +2437,12 @@ xferconf_four -		Transfer - Conf Number 4: 1-50 characters
 xferconf_five -		Transfer - Conf Number 5: 1-50 characters
 dispo_call_url -	URL for the Dispo URL(If using a full non-local URL must include 'http://' or 'https://') Must be URL-encoded if sending request as a URL
 	EXAMPLE URL-ENCODED URL: "http://vicidial.org/query.php?var1=X&var2=y" = "http%3A%2F%2Fvicidial.org%2Fquery.php%3Fvar1%3DX%26var2%3Dy"
+webform_one -		URL for the Agent Screen Webform button(If using a full non-local URL must include 'http://' or 'https://') Must be URL-encoded if using a full URL
+webform_two -		URL for the Agent Screen Webform 2 button(If using a full non-local URL must include 'http://' or 'https://') Must be URL-encoded if using a full URL
+webform_three -		URL for the Agent Screen Webform 3 button(If using a full non-local URL must include 'http://' or 'https://') Must be URL-encoded if using a full URL
 NOTES: 
  - please use no special characters like apostrophes, quotes or amphersands
+ - for the last 9 fields above, you can set them to blank '' by using '--BLANK--' as the value(without the quotes)
 
 Example URL strings for API calls:
 http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_campaign&campaign_id=TESTOUT&campaign_name=Updated+test+API+campaign&auto_dial_level=3.0
@@ -2275,7 +2450,7 @@ http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&functio
 http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_campaign&campaign_id=TESTOUT&reset_hopper=Y
 http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_campaign&campaign_id=TESTOUT&dispo_call_url=http%3A%2F%2Fvicidial.org%2Fquery.php%3Fvar1%3DX%26var2%3Dy
 http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_campaign&campaign_id=TESTOUT&dispo_call_url=ALT
-http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_campaign&campaign_id=TESTOUT&dial_status_add=A2&dial_status_remove=A3
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=update_campaign&campaign_id=TESTOUT&dial_status_add=A2&dial_status_remove=A3&list_order=DOWN+COUNT
 
 Example responses:
 ERROR: update_campaign USER DOES NOT HAVE PERMISSION TO UPDATE CAMPAIGNS - 6666
@@ -2297,11 +2472,22 @@ ERROR: update_campaign TRANSFER CONF NUMBER THREE IS NOT VALID, THIS IS AN OPTIO
 ERROR: update_campaign TRANSFER CONF NUMBER FOUR IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|123456789012345678901234567890123456789012345678901
 ERROR: update_campaign TRANSFER CONF NUMBER FIVE IS NOT VALID, THIS IS AN OPTIONAL FIELD - 6666|123456789012345678901234567890123456789012345678901
 ERROR: update_campaign ACTIVE MUST BE Y OR N, THIS IS AN OPTIONAL FIELD - 6666|U
+ERROR: update_campaign LIST ORDER INCLUDING RANDOM ARE NOT ALLOWED, THIS IS AN OPTIONAL FIELD - |6666|RANDOM 2nd NEW|
+ERROR: update_campaign LIST ORDER IS NOT VALID, THIS IS AN OPTIONAL FIELD - |6666|Y|
+ERROR: update_campaign LIST ORDER IS NOT A VALID LENGTH, THIS IS AN OPTIONAL FIELD - |6666|Y|
+ERROR: update_campaign LIST ORDER RANDOMIZE IS NOT VALID, THIS IS AN OPTIONAL FIELD - |6666|X|
+ERROR: update_campaign LIST ORDER RANDOMIZE IS NOT A VALID LENGTH, THIS IS AN OPTIONAL FIELD - |6666|YES|
+ERROR: update_campaign LIST ORDER SECONDARY IS NOT VALID, THIS IS AN OPTIONAL FIELD - |6666|Y|
+ERROR: update_campaign LIST ORDER SECONDARY IS NOT A VALID LENGTH, THIS IS AN OPTIONAL FIELD - |6666|LEAD|
 ERROR: update_campaign DIAL STATUS ADD IS NOT VALID, THIS IS AN OPTIONAL FIELD - |6666|A1234567|
 ERROR: update_campaign DIAL STATUS ADD FAILURE, TOO MANY EXISTING DIAL STATUSES, THIS IS AN OPTIONAL FIELD - |6666|A12345|
 ERROR: update_campaign DIAL STATUS REMOVE IS NOT VALID, THIS IS AN OPTIONAL FIELD - |6666|A1234567|
 ERROR: update_campaign DIAL STATUS REMOVE FAILURE, NO EXISTING DIAL STATUSES SET, THIS IS AN OPTIONAL FIELD - |666666|A12345|
 ERROR: update_campaign DIAL STATUS REMOVE FAILURE, NOT AN EXISTING DIAL STATUS, THIS IS AN OPTIONAL FIELD - |666666|A12345|
+ERROR: update_campaign DISPO CALL URL IS NOT VALID, THIS IS AN OPTIONAL FIELD: |6666|XY
+ERROR: update_campaign WENFORM 1 URL IS NOT VALID, THIS IS AN OPTIONAL FIELD: |6666|XY
+ERROR: update_campaign WENFORM 2 URL IS NOT VALID, THIS IS AN OPTIONAL FIELD: |6666|XY
+ERROR: update_campaign WENFORM 3 URL IS NOT VALID, THIS IS AN OPTIONAL FIELD: |6666|XY
 NOTICE: update_campaign NO UPDATES DEFINED - 6666|
 NOTICE: update_campaign HOPPER HAS BEEN RESET - 6666|1101|324
 SUCCESS: update_campaign CAMPAIGN HAS BEEN UPDATED - 6666|1101
@@ -2435,7 +2621,7 @@ add_did - adds new Inbound DID entries to the system in the vicidial_inbound_did
 NOTE: api user for this function must have user_level set to 8 or higher and "Modify DIDs" enabled
 
 REQUIRED FIELDS-
-did_pattern -		2-50 characters, must be a valid DID in the system
+did_pattern -		2-50 characters
 			   NOTE: special characters in the did_pattern need to be URL encoded, for example the plus sign '+' must be sent as '%2B'
 source -		description of what originated the API call (maximum 20 characters)
 
@@ -2487,6 +2673,41 @@ ERROR: add_did ENTRY LIST ID MUST BE FROM 1 TO 14 DIGITS, THIS IS AN OPTIONAL FI
 ERROR: add_did CAMPAIGN MUST BE FROM 1 TO 8 CHARACTERS, THIS IS AN OPTIONAL FIELD - 6666|TESTCAMPS
 ERROR: add_did PHONE CODE MUST BE FROM 1 TO 10 CHARACTERS, THIS IS AN OPTIONAL FIELD - 6666|99999999999
 SUCCESS: add_did DID HAS BEEN ADDED - 6666|1101
+
+
+
+
+
+--------------------------------------------------------------------------------
+copy_did - adds new Inbound DID entries to the system, copied from an existing DID entry
+
+NOTE: api user for this function must have user_level set to 8 or higher and "Modify DIDs" enabled
+
+REQUIRED FIELDS-
+source_did_pattern -	2-50 characters, must be a valid DID in the system
+			   NOTE: special characters in the source_did_pattern need to be URL encoded, for example the plus sign '+' must be sent as '%2B'
+new_dids -		2-2000 characters, for multiple DIDs separate with a comma
+			   NOTE: special characters in the new_dids need to be URL encoded, for example the plus sign '+' must be sent as '%2B'
+source -		description of what originated the API call (maximum 20 characters)
+
+OPTIONAL FIELDS- 
+did_description -	6-50 characters, if left blank, the source DID description will be used
+
+Example URL strings for API calls:
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=copy_did&source_did_pattern=%2B1727555112&did_description=Updated+test+API+DID&new_dids=%2B1727555119
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=copy_did&source_did_pattern=7275551114&new_dids=7275553338,7275553337,7275553336
+
+Example responses:
+ERROR: copy_did USER DOES NOT HAVE PERMISSION TO ADD DIDS - 6666
+ERROR: copy_did YOU MUST USE ALL REQUIRED FIELDS - 6666|1|1
+ERROR: copy_did NOT AN ALLOWED DID - 98762
+ERROR: copy_did DID DESCRIPTION MUST BE EITHER BLANK OR FROM 6 TO 50 CHARACTERS, THIS IS AN OPTIONAL FIELD - 6666|012
+NOTICE: copy_did DID ALREADY EXISTS - 6666|1000
+NOTICE: copy_did DID HAS BEEN ADDED - 6666|1000|1001|12|1
+ERROR: copy_did NO DIDS ADDED - 6666|1000|0|1
+SUCCESS: copy_did DIDS HAVE BEEN ADDED - 6666|1000|1|0
+
+NOTE: If DIDs are attempted to be copied, there will be output for each attempted DID as well as a SUCCESS message if any were successfully copied or an ERROR if none were
 
 
 

@@ -1,22 +1,23 @@
 <?php
 # VERM_OUTCOEMS_rpt.inc - Vicidial Enhanced Reporting call outcomes report
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
 # 
 # CHANGELOG:
 # 220825-1617 - First build
 # 230106-1500 - Added page flushing
 # 230124-1218 - Updated LookupCall function, added unknown statuses option, outcome status/lagged status overrides
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 # NANQUE, not an unanswered call?
 # TIMEOT, unanswered even though it was dropped into a call that was picked up
 # Warm transfers count as two calls
 
-$PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
-$PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
-$PHP_SELF=$_SERVER['PHP_SELF'];
-$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
+# $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
+# $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
+# $PHP_SELF=$_SERVER['PHP_SELF'];
+# $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 
 # if (isset($_GET["SUBMIT"]))			{$SUBMIT=$_GET["SUBMIT"];}
 # 	elseif (isset($_POST["SUBMIT"]))	{$SUBMIT=$_POST["SUBMIT"];}
@@ -120,7 +121,6 @@ if (count($val_uniqueid_array)>0 && $atomic_queue_campaigns_str=="")  // No OUTB
 
 if ($DB) {$HTML_output.="Statuses:<B>$outcomes_stmt</B><BR>";}
 
-$outcomes_rslt=mysql_to_mysqli($outcomes_stmt, $link);
 $outcomes_array=array();
 $call_results_array=array();
 $call_types_array=array();
@@ -129,229 +129,234 @@ $nonbillable_activities_array=array();
 $agent_details_array=array();
 $outcomes_per_agent_array=array();
 $call_results_total_calls=0;
-while ($outcomes_row=mysqli_fetch_array($outcomes_rslt))
+
+if ($outcomes_stmt) 
 	{
-	$lead_id=$outcomes_row["lead_id"];
-	$campaign_id=$outcomes_row["campaign_id"];
-	$status=$outcomes_row["status"];
-	$user=$outcomes_row["user"];
-	$pause_code=$outcomes_row["pause_code"];
-	$pause_sec=$outcomes_row["pause_sec"];
-	$talk_sec=$outcomes_row["talk_sec"];
-	$wait_sec=$outcomes_row["wait_sec"];
-	$dispo_sec=$outcomes_row["dispo_sec"];
-	$uniqueid=$outcomes_row["uniqueid"];
-	$comments=$outcomes_row["comments"];
-	$call_type="Unknown";
-	$pause_name_key=$campaign_id."-".$pause_code;
-	$pause_code_name=$pause_code;
-
-	$full_name=$fullname_info["$user"];
-	if (!$agent_details_array["$full_name"])
+	$outcomes_rslt=mysql_to_mysqli($outcomes_stmt, $link);
+	while ($outcomes_row=mysqli_fetch_array($outcomes_rslt))
 		{
-		$agent_details_array["$full_name"]["available"]=0;
-		$agent_details_array["$full_name"]["billable"]=0;
-		$agent_details_array["$full_name"]["nonbillable"]=0;
-		$agent_details_array["$full_name"]["sales"]=0;
-		$agent_details_array["$full_name"]["human_answered"]=0;
-		$agent_details_array["$full_name"]["customer_contacts"]=0;
-		}
-	
+		$lead_id=$outcomes_row["lead_id"];
+		$campaign_id=$outcomes_row["campaign_id"];
+		$status=$outcomes_row["status"];
+		$user=$outcomes_row["user"];
+		$pause_code=$outcomes_row["pause_code"];
+		$pause_sec=$outcomes_row["pause_sec"];
+		$talk_sec=$outcomes_row["talk_sec"];
+		$wait_sec=$outcomes_row["wait_sec"];
+		$dispo_sec=$outcomes_row["dispo_sec"];
+		$uniqueid=$outcomes_row["uniqueid"];
+		$comments=$outcomes_row["comments"];
+		$call_type="Unknown";
+		$pause_name_key=$campaign_id."-".$pause_code;
+		$pause_code_name=$pause_code;
 
-	$outcomes_array["total_billable_time"]+=($talk_sec+$wait_sec+$dispo_sec);
-	$outcomes_array["total_agent_available_time"]+=($talk_sec+$wait_sec+$dispo_sec);
-
-	$agent_details_array["$full_name"]["available"]+=($talk_sec+$wait_sec+$dispo_sec);
-
-	# Billable/nonbillable activity
-	if (in_array($pause_code, $billable_pause_codes["$campaign_id"]) || in_array($pause_code, $billable_pause_codes["SYSTEM"]))
-		{
-		if ($pause_code_names["$pause_name_key"])
+		$full_name=$fullname_info["$user"];
+		if (!$agent_details_array["$full_name"])
 			{
-			$pause_code_name=$pause_code_names["$pause_name_key"];
-			}
-
-		$outcomes_array["total_billable_time"]+=$pause_sec;
-		$outcomes_array["total_agent_billable_activities"]+=$pause_sec;
-
-		if (!$billable_activities_array["$pause_code_name"])
-			{
-			$billable_activities_array["$pause_code_name"]["n_times"]=0;
-			$billable_activities_array["$pause_code_name"]["total_time"]=0;
-			$billable_activities_array["$pause_code_name"]["max"]=0;
-			$billable_activities_array["$pause_code_name"]["min"]=100000;
-			}	
-		$billable_activities_array["$pause_code_name"]["n_times"]++;
-		$billable_activities_array["$pause_code_name"]["total_time"]+=$pause_sec;
-		if ($billable_activities_array["$pause_code_name"]["max"]<$pause_sec) {$billable_activities_array["$pause_code_name"]["max"]=$pause_sec;}
-		if ($billable_activities_array["$pause_code_name"]["min"]>$pause_sec) {$billable_activities_array["$pause_code_name"]["min"]=$pause_sec;}
-
-		$agent_details_array["$full_name"]["billable"]+=$pause_sec;
-		}
-	else
-		{
-		if ($pause_code_names["$pause_name_key"])
-			{
-			$pause_code_name=$pause_code_names["$pause_name_key"];
-			}
-
-		$outcomes_array["total_nonbillable_time"]+=$pause_sec;
-
-		if (!$nonbillable_activities_array["$pause_code_name"])
-			{
-			$nonbillable_activities_array["$pause_code_name"]["n_times"]=0;
-			$nonbillable_activities_array["$pause_code_name"]["total_time"]=0;
-			$nonbillable_activities_array["$pause_code_name"]["max"]=0;
-			$nonbillable_activities_array["$pause_code_name"]["min"]=100000;
+			$agent_details_array["$full_name"]["available"]=0;
+			$agent_details_array["$full_name"]["billable"]=0;
+			$agent_details_array["$full_name"]["nonbillable"]=0;
+			$agent_details_array["$full_name"]["sales"]=0;
+			$agent_details_array["$full_name"]["human_answered"]=0;
+			$agent_details_array["$full_name"]["customer_contacts"]=0;
 			}
 		
-		$nonbillable_activities_array["$pause_code_name"]["n_times"]++;
-		$nonbillable_activities_array["$pause_code_name"]["total_time"]+=$pause_sec;
-		if ($nonbillable_activities_array["$pause_code_name"]["max"]<$pause_sec) {$nonbillable_activities_array["$pause_code_name"]["max"]=$pause_sec;}
-		if ($nonbillable_activities_array["$pause_code_name"]["min"]>$pause_sec) {$nonbillable_activities_array["$pause_code_name"]["min"]=$pause_sec;}
 
-		$agent_details_array["$full_name"]["nonbillable"]+=$pause_sec;
-		}
+		$outcomes_array["total_billable_time"]+=($talk_sec+$wait_sec+$dispo_sec);
+		$outcomes_array["total_agent_available_time"]+=($talk_sec+$wait_sec+$dispo_sec);
 
-	$call_outcome=$status;
+		$agent_details_array["$full_name"]["available"]+=($talk_sec+$wait_sec+$dispo_sec);
 
-	if (strlen($call_outcome)<=1)
-		{
-		$call_type="None";
-		$status=LookUpCall($uniqueid, $comments, $user);
-		# print "$status=LookUpCall($uniqueid, $comments);<BR>\n";
+		# Billable/nonbillable activity
+		if (in_array($pause_code, $billable_pause_codes["$campaign_id"]) || in_array($pause_code, $billable_pause_codes["SYSTEM"]))
+			{
+			if ($pause_code_names["$pause_name_key"])
+				{
+				$pause_code_name=$pause_code_names["$pause_name_key"];
+				}
+
+			$outcomes_array["total_billable_time"]+=$pause_sec;
+			$outcomes_array["total_agent_billable_activities"]+=$pause_sec;
+
+			if (!$billable_activities_array["$pause_code_name"])
+				{
+				$billable_activities_array["$pause_code_name"]["n_times"]=0;
+				$billable_activities_array["$pause_code_name"]["total_time"]=0;
+				$billable_activities_array["$pause_code_name"]["max"]=0;
+				$billable_activities_array["$pause_code_name"]["min"]=100000;
+				}	
+			$billable_activities_array["$pause_code_name"]["n_times"]++;
+			$billable_activities_array["$pause_code_name"]["total_time"]+=$pause_sec;
+			if ($billable_activities_array["$pause_code_name"]["max"]<$pause_sec) {$billable_activities_array["$pause_code_name"]["max"]=$pause_sec;}
+			if ($billable_activities_array["$pause_code_name"]["min"]>$pause_sec) {$billable_activities_array["$pause_code_name"]["min"]=$pause_sec;}
+
+			$agent_details_array["$full_name"]["billable"]+=$pause_sec;
+			}
+		else
+			{
+			if ($pause_code_names["$pause_name_key"])
+				{
+				$pause_code_name=$pause_code_names["$pause_name_key"];
+				}
+
+			$outcomes_array["total_nonbillable_time"]+=$pause_sec;
+
+			if (!$nonbillable_activities_array["$pause_code_name"])
+				{
+				$nonbillable_activities_array["$pause_code_name"]["n_times"]=0;
+				$nonbillable_activities_array["$pause_code_name"]["total_time"]=0;
+				$nonbillable_activities_array["$pause_code_name"]["max"]=0;
+				$nonbillable_activities_array["$pause_code_name"]["min"]=100000;
+				}
+			
+			$nonbillable_activities_array["$pause_code_name"]["n_times"]++;
+			$nonbillable_activities_array["$pause_code_name"]["total_time"]+=$pause_sec;
+			if ($nonbillable_activities_array["$pause_code_name"]["max"]<$pause_sec) {$nonbillable_activities_array["$pause_code_name"]["max"]=$pause_sec;}
+			if ($nonbillable_activities_array["$pause_code_name"]["min"]>$pause_sec) {$nonbillable_activities_array["$pause_code_name"]["min"]=$pause_sec;}
+
+			$agent_details_array["$full_name"]["nonbillable"]+=$pause_sec;
+			}
+
 		$call_outcome=$status;
-		}
-# JCJ 12/6/22 - added for overriding certain statuses 
-	if (array_key_exists($status, $outcome_status_overrides))
-		{
-		$call_outcome=$outcome_status_overrides["$status"];
-		$status=$call_outcome;
-		}
-# JCJ 12/6/22 - added for removing certain statuses that should basically be lagged in certain conditions
-# 1/27/23 - changed $outcome_lagged_status_overrides to normal array instead of associative
-	else if (in_array($status, $outcome_lagged_status_overrides) && strlen($uniqueid)<1)
-		{
-		$status="LAGGED";
-		$call_outcome="";
-		}
-/* JCJ 12/6/22 - commented out, may be useful later
-# 1/27/23 - changed $outcome_lagged_status_overrides to normal array instead of associative, below section won't work now
-	else if (array_key_exists($status, $outcome_lagged_status_overrides))
-		{
-		# print_r($outcome_lagged_status_overrides);
-		# $HTML_output.="<!-- \n*** $uniqueid, $call_outcome, $status\n";
-		$status=LookUpCall($uniqueid, $comments, $user);
-		if (in_array($status, $outcome_lagged_status_overrides["$call_outcome"]))
+
+		if (strlen($call_outcome)<=1)
+			{
+			$call_type="None";
+			$status=LookUpCall($uniqueid, $comments, $user);
+			# print "$status=LookUpCall($uniqueid, $comments);<BR>\n";
+			$call_outcome=$status;
+			}
+	# JCJ 12/6/22 - added for overriding certain statuses 
+		if (array_key_exists($status, $outcome_status_overrides))
+			{
+			$call_outcome=$outcome_status_overrides["$status"];
+			$status=$call_outcome;
+			}
+	# JCJ 12/6/22 - added for removing certain statuses that should basically be lagged in certain conditions
+	# 1/27/23 - changed $outcome_lagged_status_overrides to normal array instead of associative
+		else if (in_array($status, $outcome_lagged_status_overrides) && strlen($uniqueid)<1)
 			{
 			$status="LAGGED";
 			$call_outcome="";
 			}
-		else
+	/* JCJ 12/6/22 - commented out, may be useful later
+	# 1/27/23 - changed $outcome_lagged_status_overrides to normal array instead of associative, below section won't work now
+		else if (array_key_exists($status, $outcome_lagged_status_overrides))
 			{
-			$status=$call_outcome;
+			# print_r($outcome_lagged_status_overrides);
+			# $HTML_output.="<!-- \n*** $uniqueid, $call_outcome, $status\n";
+			$status=LookUpCall($uniqueid, $comments, $user);
+			if (in_array($status, $outcome_lagged_status_overrides["$call_outcome"]))
+				{
+				$status="LAGGED";
+				$call_outcome="";
+				}
+			else
+				{
+				$status=$call_outcome;
+				}
+			# $HTML_output.="*** $uniqueid, $call_outcome, $status //-->\n";
 			}
-		# $HTML_output.="*** $uniqueid, $call_outcome, $status //-->\n";
-		}
-*/
+	*/
 
-	if ($status_names["$status"] && !in_array($status, $unknown_network_statuses))
-		{
-		$call_outcome=$status_names["$status"];
-
-		$call_type="Known";
-		}
-	else if (in_array($status, $unknown_network_statuses) || strlen($call_outcome)<=1)
-		{
-		# $call_outcome.=" (unknown)";
-		$call_outcome="Network/LAGGED";
-		}
-	else
-		{
-		$call_outcome.=" (unknown)"; # commented out 10/13, uncommented 11/2 (known_outcome_stauses not working as they expect)
-		}
-
-	if (strlen($call_outcome)<=1)
-		{
-		$call_type="None";
-		}
-
-/* Added 10/13, removed 11/2 - known_outcome_statuses not having desired effect
-	if (in_array($status, $selectable_array["$campaign_id"]) || in_array($status, $selectable_array["SYSTEM"]) || in_array($status, $known_outcome_statuses))
-		{
-		$outcomes_array["selected"]++;
-
-		$agent_details_array["$full_name"]["selected"]++;
-
-		$call_type="Known";
-		}
-	else
-		{
-		$status="---";
-		$call_type="System/Auto";
-		$call_outcome="(unknown)";
-		}
-*/
-
-	# Human answered (contact)
-	if (in_array($status, $human_ans_array["$campaign_id"]) || in_array($status, $human_ans_array["SYSTEM"]))
-		{
-		$outcomes_array["human_answered"]++;
-
-		$agent_details_array["$full_name"]["human_answered"]++;
-
-		$call_type="Human answered";
-		}
-	
-	# Customer contact (qualified contact)
-	if (in_array($status, $contact_array["$campaign_id"]) || in_array($status, $contact_array["SYSTEM"]))
-		{
-		$outcomes_array["customer_contacts"]++;
-
-		$agent_details_array["$full_name"]["customer_contacts"]++;
-
-		$call_type="Customer contact";
-		}
-
-	# Sales
-	if (in_array($status, $sale_array["$campaign_id"]) || in_array($status, $sale_array["SYSTEM"]))
-		{
-		$outcomes_array["sales"]++;
-
-		$agent_details_array["$full_name"]["sales"]++;
-
-		$call_type="Sale";
-		}
-	
-	if (!$call_types_array["$call_outcome"]) {$call_types_array["$call_outcome"]=$call_type;}
-
-	# Only count results if this is an agent log record with a lead id, i.e. an actual call
-	if (strlen($lead_id)>0)
-		{
-		$call_results_array["$call_outcome"]["total"]++;
-		$call_results_total_calls++;
-
-		if (in_array($status, $lost_statuses_array))
+		if ($status_names["$status"] && !in_array($status, $unknown_network_statuses))
 			{
-			$call_results_array["$call_outcome"]["lost"]++;
-			$call_results_array["$call_outcome"]["taken"]+=0;
+			$call_outcome=$status_names["$status"];
+
+			$call_type="Known";
+			}
+		else if (in_array($status, $unknown_network_statuses) || strlen($call_outcome)<=1)
+			{
+			# $call_outcome.=" (unknown)";
+			$call_outcome="Network/LAGGED";
 			}
 		else
 			{
-			$call_results_array["$call_outcome"]["lost"]+=0;
-			$call_results_array["$call_outcome"]["taken"]++;
+			$call_outcome.=" (unknown)"; # commented out 10/13, uncommented 11/2 (known_outcome_stauses not working as they expect)
 			}
-		$call_results_array["$call_outcome"]["call_type"]=$call_type;
 
-		# $outcomes_per_agent_array["$full_name"]["$call_type"]["$call_outcome"]["$status"]++; # 
+		if (strlen($call_outcome)<=1)
+			{
+			$call_type="None";
+			}
 
-		$opa_key="$full_name|$call_type|$call_outcome|$status";
-		$outcomes_per_agent_array["$opa_key"]++;
+	/* Added 10/13, removed 11/2 - known_outcome_statuses not having desired effect
+		if (in_array($status, $selectable_array["$campaign_id"]) || in_array($status, $selectable_array["SYSTEM"]) || in_array($status, $known_outcome_statuses))
+			{
+			$outcomes_array["selected"]++;
 
-		# $outcomes_per_agent_array_agents["$full_name"]++; # 
-		# $outcomes_per_agent_array_types["$call_type"]++; # 
-		# $outcomes_per_agent_array_outcomes["$call_outcome"]++; # 
-		# $outcomes_per_agent_array_statuses["$full_name"]++; # 
+			$agent_details_array["$full_name"]["selected"]++;
+
+			$call_type="Known";
+			}
+		else
+			{
+			$status="---";
+			$call_type="System/Auto";
+			$call_outcome="(unknown)";
+			}
+	*/
+
+		# Human answered (contact)
+		if (in_array($status, $human_ans_array["$campaign_id"]) || in_array($status, $human_ans_array["SYSTEM"]))
+			{
+			$outcomes_array["human_answered"]++;
+
+			$agent_details_array["$full_name"]["human_answered"]++;
+
+			$call_type="Human answered";
+			}
+		
+		# Customer contact (qualified contact)
+		if (in_array($status, $contact_array["$campaign_id"]) || in_array($status, $contact_array["SYSTEM"]))
+			{
+			$outcomes_array["customer_contacts"]++;
+
+			$agent_details_array["$full_name"]["customer_contacts"]++;
+
+			$call_type="Customer contact";
+			}
+
+		# Sales
+		if (in_array($status, $sale_array["$campaign_id"]) || in_array($status, $sale_array["SYSTEM"]))
+			{
+			$outcomes_array["sales"]++;
+
+			$agent_details_array["$full_name"]["sales"]++;
+
+			$call_type="Sale";
+			}
+		
+		if (!$call_types_array["$call_outcome"]) {$call_types_array["$call_outcome"]=$call_type;}
+
+		# Only count results if this is an agent log record with a lead id, i.e. an actual call
+		if (strlen($lead_id)>0)
+			{
+			$call_results_array["$call_outcome"]["total"]++;
+			$call_results_total_calls++;
+
+			if (in_array($status, $lost_statuses_array))
+				{
+				$call_results_array["$call_outcome"]["lost"]++;
+				$call_results_array["$call_outcome"]["taken"]+=0;
+				}
+			else
+				{
+				$call_results_array["$call_outcome"]["lost"]+=0;
+				$call_results_array["$call_outcome"]["taken"]++;
+				}
+			$call_results_array["$call_outcome"]["call_type"]=$call_type;
+
+			# $outcomes_per_agent_array["$full_name"]["$call_type"]["$call_outcome"]["$status"]++; # 
+
+			$opa_key="$full_name|$call_type|$call_outcome|$status";
+			$outcomes_per_agent_array["$opa_key"]++;
+
+			# $outcomes_per_agent_array_agents["$full_name"]++; # 
+			# $outcomes_per_agent_array_types["$call_type"]++; # 
+			# $outcomes_per_agent_array_outcomes["$call_outcome"]++; # 
+			# $outcomes_per_agent_array_statuses["$full_name"]++; # 
+			}
 		}
 	}
 
@@ -415,8 +420,8 @@ $max_call_results_total_pct=0;
 $max_call_results_taken_pct=0;
 foreach ($call_results_array as $outcome => $data)
 	{
-	$call_results_array["$outcome"]["total_pct"]=sprintf("%.1f", 100*($data["total"]/$call_results_total_calls));
-	$call_results_array["$outcome"]["taken_pct"]=sprintf("%.1f", 100*($data["taken"]/$call_results_total_calls));
+	$call_results_array["$outcome"]["total_pct"]=sprintf("%.1f", 100*(MathZDC($data["total"], $call_results_total_calls)));
+	$call_results_array["$outcome"]["taken_pct"]=sprintf("%.1f", 100*(MathZDC($data["taken"], $call_results_total_calls)));
 	if ($max_call_results_total_pct<$call_results_array["$outcome"]["total_pct"]) {$max_call_results_total_pct=$call_results_array["$outcome"]["total_pct"];}
 	if ($max_call_results_taken_pct<$call_results_array["$outcome"]["taken_pct"]) {$max_call_results_taken_pct=$call_results_array["$outcome"]["taken_pct"];}
 	}
@@ -425,7 +430,7 @@ $max_billable_activities_total_time=0;
 $billable_activities_grand_total_time=0;
 foreach ($billable_activities_array as $pause_code => $data)
 	{
-	$billable_activities_array["$pause_code"]["avg"]=round($data["total_time"]/$data["n_times"]);
+	$billable_activities_array["$pause_code"]["avg"]=round(MathZDC($data["total_time"], $data["n_times"]));
 	if ($max_billable_activities_total_time<$data["total_time"]) {$max_billable_activities_total_time=$data["total_time"];}
 	$billable_activities_grand_total_time+=$data["total_time"];
 	}
@@ -434,7 +439,7 @@ $max_nonbillable_activities_total_time=0;
 $nonbillable_activities_grand_total_time=0;
 foreach ($nonbillable_activities_array as $pause_code => $data)
 	{
-	$nonbillable_activities_array["$pause_code"]["avg"]=round($data["total_time"]/$data["n_times"]);
+	$nonbillable_activities_array["$pause_code"]["avg"]=round(MathZDC($data["total_time"], $data["n_times"]));
 	if ($max_nonbillable_activities_total_time<$data["total_time"]) {$max_nonbillable_activities_total_time=$data["total_time"];}
 	$nonbillable_activities_grand_total_time+=$data["total_time"];
 	}
@@ -443,8 +448,8 @@ foreach ($nonbillable_activities_array as $pause_code => $data)
 $sph=sprintf("%.1f", MathZDC($outcomes_array["sales"], ($outcomes_array["total_billable_time"] / 3600)));
 $ccph=sprintf("%.1f", MathZDC($outcomes_array["customer_contacts"], ($outcomes_array["total_billable_time"] / 3600)));
 $haph=sprintf("%.1f", MathZDC($outcomes_array["human_answered"], ($outcomes_array["total_billable_time"] / 3600)));
-$ha_conv_index=sprintf("%.1f", 100*($outcomes_array["sales"]/$outcomes_array["customer_contacts"]));
-$cc_conv_index=sprintf("%.1f", 100*($outcomes_array["sales"]/$outcomes_array["human_answered"]));
+$ha_conv_index=sprintf("%.1f", 100*(MathZDC($outcomes_array["sales"], $outcomes_array["customer_contacts"])));
+$cc_conv_index=sprintf("%.1f", 100*(MathZDC($outcomes_array["sales"], $outcomes_array["human_answered"])));
 
 $HTML_output.="<BR><h2 class='rpt_header'>"._QXZ("Statuses").":$NWB#VERM_OUTCOMES-outcomes$NWE</h2>";
 $HTML_output.="<hr style='height:2px;border-width:0;color:#ddd;background-color:#ddd;margin-bottom: 2em;'>";
@@ -509,7 +514,7 @@ if ($sort_call_results=="outcomes desc")
 	{
 	krsort($call_results_array);
 	}
-else
+else if(!preg_match('/^outcomes/', $sort_call_results))
 	{
 	if ($sort_cr_index)
 		{
@@ -566,9 +571,9 @@ foreach ($call_results_array as $outcome => $data)
 	$HTML_output.="<td>".$data["taken"]."</td>";
 	$HTML_output.="<td>".$data["lost"]."</td>";
 	$HTML_output.="<td>".$data["total_pct"]." %</td>";
-	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".((100*$data["total_pct"])/$max_call_results_total_pct)."%'></td>";
+	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(MathZDC((100*$data["total_pct"]), $max_call_results_total_pct))."%'></td>";
 	$HTML_output.="<td>".$data["taken_pct"]." %</td>";
-	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".((100*$data["taken_pct"])/$max_call_results_taken_pct)."%'></td>";
+	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(MathZDC((100*$data["taken_pct"]), $max_call_results_taken_pct))."%'></td>";
 	$HTML_output.="<td><a onClick=\"ShowOutcomesDetails('', '$start_date $start_time', '$end_date $end_time', '', '', '".trim(preg_replace("/\(unknown\)/", "", $outcome))."')\"><svg width='20' height='20' viewBox='0 0 20 20' data-svg='search'><circle fill='none' stroke='#000' stroke-width='1.1' cx='9' cy='9' r='7'></circle><path fill='none' stroke='#000' stroke-width='1.1' d='M14,14 L18,18 L14,14 Z'></path></svg></a></td>";
 	$HTML_output.="</tr>\n";
 
@@ -605,7 +610,7 @@ if ($sort_billable_activities=="activity desc")
 	{
 	krsort($billable_activities_array);
 	}
-else
+else if (!preg_match('/^activity/', $sort_billable_activities))
 	{
 	if ($sort_ba_index)
 		{
@@ -649,7 +654,7 @@ $CSV_output["billable_activities"]="\""._QXZ("Activity")."\",\""._QXZ("N. Times"
 
 foreach ($billable_activities_array as $pause_code => $data)
 	{
-	$pct=sprintf("%.1f", ((100*$data["total_time"])/$billable_activities_grand_total_time));
+	$pct=sprintf("%.1f", (MathZDC((100*$data["total_time"]), $billable_activities_grand_total_time)));
 
 	$HTML_output.="<tr class='standard_font bold'>";
 	$HTML_output.="<td>".$pause_code."</td>";
@@ -695,7 +700,7 @@ if ($sort_nonbillable_activities=="activity desc")
 	{
 	krsort($nonbillable_activities_array);
 	}
-else
+else if (!preg_match('/^activity/', $sort_nonbillable_activities))
 	{
 	if ($sort_nba_index)
 		{
@@ -738,7 +743,7 @@ $CSV_output["nonbillable_activities"]="\""._QXZ("Activity")."\",\""._QXZ("N. Tim
 
 foreach ($nonbillable_activities_array as $pause_code => $data)
 	{
-	$pct=sprintf("%.1f", ((100*$data["total_time"])/$nonbillable_activities_grand_total_time));
+	$pct=sprintf("%.1f", (MathZDC((100*$data["total_time"]), $nonbillable_activities_grand_total_time)));
 
 	$HTML_output.="<tr class='standard_font bold'>";
 	$HTML_output.="<td>".$pause_code."</td>";
@@ -759,7 +764,7 @@ $HTML_output.="<tr class='export_row'>";
 $HTML_output.="<td class='export_row_cell' colspan='10'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('OUTCOMES', 'nonbillable_activities')\" title=\"Export as a CSV file\" value='CSV'></td>";
 $HTML_output.="</tr>";
 $HTML_output.="</table>";
-$HTML_output.="<input type='hidden' name='sort_nonbillable_activities' id='sort_nonbillable_activities' value='$sort_billable_activities'>";
+$HTML_output.="<input type='hidden' name='sort_nonbillable_activities' id='sort_nonbillable_activities' value='$sort_nonbillable_activities'>";
 
 if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 ###############################
@@ -794,16 +799,16 @@ foreach($agent_details_array as $agent_name => $data)
 	$billable_seconds=($data["available"]+$data["billable"]);
 	$billable_hours=$billable_seconds/3600;
 
-	$av_pct=sprintf("%.1f", (100*($data["available"]/$billable_seconds)));
-	$b_pct=sprintf("%.1f", (100*($data["billable"]/$billable_seconds)));
+	$av_pct=sprintf("%.1f", (100*(MathZDC($data["available"], $billable_seconds))));
+	$b_pct=sprintf("%.1f", (100*(MathZDC($data["billable"], $billable_seconds))));
 	# ??? - Not sure of the logic below, but whatever.
 	$ha_conv_pct=sprintf("%.1f", (100*MathZDC($data["sales"], $data["human_answered"], 0)));
 	$cc_conv_pct=sprintf("%.1f", (100*MathZDC($data["sales"], $data["customer_contacts"], 0)));
 
-	$nb_pct=sprintf("%.1f", (100*($data["nonbillable"]/$billable_seconds)));
-	$sph=sprintf("%.1f", ($data["sales"]/$billable_hours));
-	$ccph=sprintf("%.1f", ($data["customer_contacts"]/$billable_hours));
-	$haph=sprintf("%.1f", ($data["human_answered"]/$billable_hours));
+	$nb_pct=sprintf("%.1f", (100*(MathZDC($data["nonbillable"], $billable_seconds))));
+	$sph=sprintf("%.1f", (MathZDC($data["sales"], $billable_hours)));
+	$ccph=sprintf("%.1f", (MathZDC($data["customer_contacts"], $billable_hours)));
+	$haph=sprintf("%.1f", (MathZDC($data["human_answered"], $billable_hours)));
 
 	$HTML_output.="<tr class='standard_font bold'>";
 	$HTML_output.="<td>".$agent_name."</td>";
@@ -928,7 +933,7 @@ foreach($final_opa_array as $key => $row)
 	$HTML_output.="<td>".$row["outcome"]."</td>";
 	$HTML_output.="<td>".$row["type"]."</td>";
 	$HTML_output.="<td>".$row["total"]."</td>";
-	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".((100*$row["total"])/$max_total_value)."%'></td>";
+	$HTML_output.="<td width='200'><img src='images/shade-histo.gif' height='10' width='".(MathZDC((100*$row["total"]), $max_total_value))."%'></td>";
 	$HTML_output.="</tr>\n";
 
 	$CSV_output["agent_outcomes"].="\"$row[agent]\",\"$row[status]\",\"$row[outcome]\",\"$row[type]\",\"$row[total]\"\n";

@@ -15,7 +15,7 @@
 #  - Auto reset lists at defined times
 #  - Auto restarts Asterisk process if enabled in servers settings
 #
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 61011-1348 - First build
@@ -166,9 +166,15 @@
 # 230511-0825 - Added log_latency_gaps trigger, demographic_quotas trigger
 # 230524-2144 - Added weekday_resets
 # 230609-1137 - Added VIDPROMPTSPECIAL call menu In-Group dialplan entries
+# 230909-0846 - Added purging of vicidial_khomp_log records older than 7 days
+# 230925-1454 - Added -recmon settings
+# 231136-2158 - Added hopper_hold_inserts HCI lead reservations clearing for old reservations
+# 231129-0849 - Added reset of vicidial_phone_number_call_daily_counts table
+# 240401-1810 - Added purging of vicidial_pending_ar records older than 7 days
+# 240420-2209 - Added Conference Updater option
 #
 
-$build = '230609-1137';
+$build = '240420-2209';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -181,6 +187,7 @@ $cu3way_delay='';
 $autodial_delay='';
 $adfill_delay='';
 $fill_staggered='';
+$recmon=0;
 
 # time variable definitions
 ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
@@ -293,6 +300,8 @@ if (length($ARGV[0])>1)
 		print "  [-debugX] = Extra-verbose debug messages\n";
 		print "  [-debugXXX] = Triple-Extra-verbose debug messages, debug flag on processes and screen logging\n";
 		print "  [--teod] = log Timeclock End of Day processes to log file\n";
+		print "  [-recmon] = log when recordings are created and deleted to log file\n";
+		print "  [-recmon-sleepms=XXX] = how many ms to sleep between checking for files on recording monitoring\n";
 		print "\n";
 		exit;
 		}
@@ -384,6 +393,26 @@ if (length($ARGV[0])>1)
 				}
 			@CLIvarARY=@MT;   @CLIvarARY=@MT;
 			}
+		if ($args =~ /-recmon/i)
+			{
+			$recmon=1;
+			if ($DB > 0) {print "\n----- Recording Monitoring ENABLED -----\n\n";}
+			}
+		if ($args =~ /-recmon-sleepms=/i) # CLI defined delay
+			{
+			@CLIvarARY = split(/-recmon-sleepms=/,$args);
+			@CLIvarARX = split(/ /,$CLIvarARY[1]);
+			if (length($CLIvarARX[0])>0)
+				{
+				$CLIsleepms = $CLIvarARX[0];
+				$CLIsleepms =~ s/\/$| |\r|\n|\t//gi;
+				$CLIsleepms =~ s/\D//gi;
+				if ( ($CLIsleepms > 0) && (length($CLIsleepms)> 0) )
+					{$recmon_sleepms = "--sleepms=$CLIsleepms";}
+				if ($DB > 0) {print "Recording Monitor Sleep ms set to $CLIsleepms $recmon_sleepms\n";}
+				}
+			@CLIvarARY=@MT;   @CLIvarARY=@MT;
+			}
 		if ($args =~ /-test/i)
 			{
 			$TEST=1;
@@ -448,6 +477,7 @@ foreach(@conf)
 #	9 - Timeclock auto logout\n";
 #	E - Email parser script
 #	S - SIP Logger
+#	C - Conference Updater
 #     - Other setting are set by configuring them in the database
 
 # Customized Variables
@@ -463,7 +493,7 @@ $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VA
 
 
 ##### Get the settings from system_settings #####
-$stmtA = "SELECT sounds_central_control_active,active_voicemail_server,custom_dialplan_entry,default_codecs,generate_cross_server_exten,voicemail_timezones,default_voicemail_timezone,call_menu_qualify_enabled,allow_voicemail_greeting,reload_timestamp,meetme_enter_login_filename,meetme_enter_leave3way_filename,allow_chats,enable_auto_reports,enable_drop_lists,expired_lists_inactive,sip_event_logging,call_quota_lead_ranking,inbound_answer_config,log_latency_gaps,demographic_quotas,weekday_resets FROM system_settings;";
+$stmtA = "SELECT sounds_central_control_active,active_voicemail_server,custom_dialplan_entry,default_codecs,generate_cross_server_exten,voicemail_timezones,default_voicemail_timezone,call_menu_qualify_enabled,allow_voicemail_greeting,reload_timestamp,meetme_enter_login_filename,meetme_enter_leave3way_filename,allow_chats,enable_auto_reports,enable_drop_lists,expired_lists_inactive,sip_event_logging,call_quota_lead_ranking,inbound_answer_config,log_latency_gaps,demographic_quotas,weekday_resets,highest_lead_id,hopper_hold_inserts FROM system_settings;";
 #	print "$stmtA\n";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -493,12 +523,14 @@ if ($sthArows > 0)
 	$SSlog_latency_gaps =				$aryA[19];
 	$SSdemographic_quotas =				$aryA[20];
 	$SSweekday_resets =					$aryA[21];
+	$SShighest_lead_id =				$aryA[22];
+	$SShopper_hold_inserts =			$aryA[23];
 	}
 $sthA->finish();
 if ($DBXXX > 0) {print "SYSTEM SETTINGS:     $sounds_central_control_active|$active_voicemail_server|$SScustom_dialplan_entry|$SSdefault_codecs\n";}
 
 ##### Get the settings for this server's server_ip #####
-$stmtA = "SELECT active_asterisk_server,generate_vicidial_conf,rebuild_conf_files,asterisk_version,sounds_update,conf_secret,custom_dialplan_entry,auto_restart_asterisk,asterisk_temp_no_restart,gather_asterisk_output,conf_qualify FROM servers where server_ip='$server_ip';";
+$stmtA = "SELECT active_asterisk_server,generate_vicidial_conf,rebuild_conf_files,asterisk_version,sounds_update,conf_secret,custom_dialplan_entry,auto_restart_asterisk,asterisk_temp_no_restart,gather_asterisk_output,conf_qualify,conf_engine FROM servers where server_ip='$server_ip';";
 #	print "$stmtA\n";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -517,11 +549,16 @@ if ($sthArows > 0)
 	$asterisk_temp_no_restart =		$aryA[8];
 	$gather_asterisk_output =		$aryA[9];
 	$conf_qualify =					$aryA[10];
+	$conf_engine = 					$aryA[11];
 	}
 $sthA->finish();
 
 %ast_ver_str = parse_asterisk_version($asterisk_version);
 if ($DBX) {print "Asterisk version: $ast_ver_str{major} $ast_ver_str{minor}\n";}
+
+$vicidial_conf_table = 'vicidial_conferences';
+if ( $conf_engine eq "CONFBRIDGE" ) { $vicidial_conf_table = 'vicidial_confbridges'; }
+if ($DBX) {print "Server is using $conf_engine for conferences. Conference table is $vicidial_conf_table\n";}
 
 if ($VARactive_keepalives =~ /X/)
 	{
@@ -550,10 +587,13 @@ else
 	$runningAST_VDauto_dial_FILL=0;
 	$runningip_relay=0;
 	$runningAST_conf_3way=0;
+	$runningAST_rec_monitor=0;
 	$runningemail_inbound=0;
 	$runningASTERISK=0;
 	$runningsip_logger=0;
+	$runningconf_updater=0;
 	$AST_conf_3way=0;
+	$AST_rec_monitor=0;
 
 	if ($VARactive_keepalives =~ /1/)
 		{
@@ -610,10 +650,20 @@ else
 		$sip_logger=1;
 		if ($DB) {print "Check to see if sip logger should run\n";}
 		}
+	if ($VARactive_keepalives =~ /C/)
+		{
+		$conf_updater=1;
+		if ($DB) {print "Check to see if conference updater should run\n";}
+		}
 	if ($cu3way > 0)
 		{
 		$AST_conf_3way=1;
 		if ($DB) {print "AST_conf_3way set to keepalive\n";}
+		}
+	if ($recmon > 0)
+		{
+		$AST_rec_monitor=1;
+		if ($DB) {print "AST_rec_monitor set to keepalive\n";}
 		}
 
 
@@ -668,6 +718,11 @@ else
 			$runningsip_logger++;
 			if ($DB) {print "SIP Logger RUNNING:         |$psline[1]|\n";}
 			}
+		if ($psline[1] =~ /$REGhome\/AST_conf_update_screen\.pl/)
+			{
+			$runningconf_updater++;
+			if ($DB) {print "Conference Updater RUNNING:	|$spline[1]\n";}
+			}
 		if ($psline[1] =~ /$REGhome\/AST_VDauto_dial\.pl/)
 			{
 			$runningAST_VDauto_dial++;
@@ -707,6 +762,11 @@ else
 			{
 			$runningAST_conf_3way++;
 			if ($DB) {print "AST_conf_3way RUNNING:           |$psline[1]|\n";}
+			}
+		if ($psline[1] =~ /$REGhome\/AST_rec_monitor\.pl/)
+			{
+			$runningAST_rec_monitor++;
+			if ($DB) {print "AST_rec_monitor RUNNING:           |$psline[1]|\n";}
 			}
 
 		$i++;
@@ -780,8 +840,10 @@ else
 		( ($AST_VDauto_dial_FILL > 0) && ($runningAST_VDauto_dial_FILL < 1) ) ||
 		( ($ip_relay > 0) && ($runningip_relay < 1) ) ||
 		( ($AST_conf_3way > 0) && ($runningAST_conf_3way < 1) ) ||
+		( ($AST_rec_monitor > 0) && ($runningAST_monitor < 1) ) ||
 		( ($email_inbound > 0) && ($runningemail_inbound < 1) ) ||
-		( ($sip_logger > 0) && ($runningsip_logger < 1) )
+		( ($sip_logger > 0) && ($runningsip_logger < 1) ) ||
+		( ($conf_updater > 0) && ($runningconf_updater < 1) )
 	   )
 		{
 
@@ -829,6 +891,11 @@ else
 				$runningsip_logger++;
 				if ($DB) {print "SIP Logger RUNNING:         |$psline[1]|\n";}
 				}
+			if ($psline[1] =~ /$REGhome\/AST_conf_update_screen\.pl/)
+				{
+				$runningconf_updater++;
+				if ($DB) {print "Conference Updater RUNNING:	|$spline[1]\n";}
+				}
 			if ($psline[1] =~ /$REGhome\/AST_VDauto_dial\.pl/)
 				{
 				$runningAST_VDauto_dial++;
@@ -868,6 +935,11 @@ else
 				{
 				$runningAST_conf_3way++;
 				if ($DB) {print "AST_conf_3way RUNNING:           |$psline[1]|\n";}
+				}
+			if ($psline[1] =~ /$REGhome\/AST_rec_monitor\.pl/)
+				{
+				$runningAST_rec_monitor++;
+				if ($DB) {print "AST_rec_monitor RUNNING:           |$psline[1]|\n";}
 				}
 			$i++;
 			}
@@ -943,6 +1015,18 @@ else
 				}
 			}
 
+		if ( ($conf_updater > 0) && ($runningconf_updater < 1) )
+			{
+			if ($DB) {print "starting Conference Updater...\n";}
+			# add a '-L' to the command below to activate logging
+			`/usr/bin/screen -d -m -S ASTConfUpdater $PATHhome/AST_conf_update_screen.pl $debug_string`;
+			if ($megaDB)
+				{
+				`/usr/bin/screen -S ASTConfUpdater -X logfile $PATHlogs/ASTconf-updater-screenlog.0`;
+				`/usr/bin/screen -S ASTConfUpdater -X log`;
+				}
+			}
+
 		if ( ($AST_VDremote_agents > 0) && ($runningAST_VDremote_agents < 1) )
 			{
 			if ($DB) {print "starting AST_VDremote_agents...\n";}
@@ -1014,6 +1098,17 @@ else
 				`/usr/bin/screen -S ASTconf3way -X log`;
 				}
 			}
+		if ( ($AST_rec_monitor > 0) && ($runningAST_rec_monitor < 1) )
+			{
+			if ($DB) {print "starting AST_rec_monitor...\n";}
+			# add a '-L' to the command below to activate logging
+			`/usr/bin/screen -d -m -S ASTrecmon $PATHhome/AST_rec_monitor.pl $recmon_sleepms $debug_string`;
+			if ($megaDB)
+				{
+				`/usr/bin/screen -S ASTrecmon -X logfile $PATHlogs/ASTrecmon-screenlog.0`;
+				`/usr/bin/screen -S ASTrecmon -X log`;
+				}
+			}
 		}
 	}
 
@@ -1074,9 +1169,9 @@ if ($timeclock_end_of_day_NOW > 0)
 		}
 	$sthA->finish();
 
-	if ($DB) {print "Starting clear out non-used vicidial_conferences sessions process...\n";}
+	if ($DB) {print "Starting clear out non-used $vicidial_conf_table sessions process...\n";}
 
-	$stmtA = "SELECT conf_exten,extension from vicidial_conferences where server_ip='$server_ip' and leave_3way='0';";
+	$stmtA = "SELECT conf_exten,extension from $vicidial_conf_table where server_ip='$server_ip' and leave_3way='0';";
 	if ($DB) {print "|$stmtA|\n";}
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -1109,14 +1204,14 @@ if ($timeclock_end_of_day_NOW > 0)
 
 		if ($live_session < 1)
 			{
-			$stmtA = "UPDATE vicidial_conferences set extension='' where server_ip='$server_ip' and conf_exten='$PT_conf_extens[$k]';";
+			$stmtA = "UPDATE $vicidial_conf_table set extension='' where server_ip='$server_ip' and conf_exten='$PT_conf_extens[$k]';";
 				if($DBX){print STDERR "\n|$stmtA|\n";}
 			$affected_rows = $dbhA->do($stmtA); #  or die  "Couldn't execute query:|$stmtA|\n";
 			$conf_cleared = ($conf_cleared + $affected_rows);
 			}
 		$k++;
 		}
-	if ($teodDB) {$event_string = "Empty vicidial_conferences entries cleared: $conf_cleared";   &teod_logger;}
+	if ($teodDB) {$event_string = "Empty $vicidial_conf_table entries cleared: $conf_cleared";   &teod_logger;}
 
 
 	### Only run the following on one server in the cluster, the one set as the active voicemail server ###
@@ -1332,6 +1427,21 @@ if ($timeclock_end_of_day_NOW > 0)
 		if ($teodDB) {$event_string = "vicidial_lead_call_daily_counts records reset: $affected_rows";   &teod_logger;}
 
 		$stmtA = "optimize table vicidial_lead_call_daily_counts;";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		@aryA = $sthA->fetchrow_array;
+		if ($DB) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+		$sthA->finish();
+
+		$stmtA = "delete from vicidial_phone_number_call_daily_counts;";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$affected_rows = $dbhA->do($stmtA);
+		if($DB){print STDERR "\n|$affected_rows vicidial_phone_number_call_daily_counts records deleted|\n";}
+		if ($teodDB) {$event_string = "vicidial_phone_number_call_daily_counts records reset: $affected_rows";   &teod_logger;}
+
+		$stmtA = "optimize table vicidial_phone_number_call_daily_counts;";
 		if($DBX){print STDERR "\n|$stmtA|\n";}
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -2111,6 +2221,42 @@ if ($timeclock_end_of_day_NOW > 0)
 		##### END vicidial_tiltx_shaken_log end of day process removing records older than 7 days #####
 
 
+		##### BEGIN vicidial_khomp_log end of day process removing records older than 7 days #####
+		$stmtA = "DELETE from vicidial_khomp_log where start_date < \"$SDSQLdate\";";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$affected_rows = $dbhA->do($stmtA);
+		if($DB){print STDERR "\n|$affected_rows vicidial_khomp_log records older than 7 days purged|\n";}
+		if ($teodDB) {$event_string = "vicidial_khomp_log records older than 7 days purged: |$stmtA|$affected_rows|";   &teod_logger;}
+
+		$stmtA = "optimize table vicidial_khomp_log;";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		@aryA = $sthA->fetchrow_array;
+		if ($DB) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+		$sthA->finish();
+		##### END vicidial_khomp_log end of day process removing records older than 7 days #####
+
+
+		##### BEGIN vicidial_pending_ar end of day process removing records older than 7 days #####
+		$stmtA = "DELETE from vicidial_pending_ar where start_datetime < \"$SDSQLdate\";";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$affected_rows = $dbhA->do($stmtA);
+		if($DB){print STDERR "\n|$affected_rows vicidial_pending_ar records older than 7 days purged|\n";}
+		if ($teodDB) {$event_string = "vicidial_pending_ar records older than 7 days purged: |$stmtA|$affected_rows|";   &teod_logger;}
+
+		$stmtA = "optimize table vicidial_pending_ar;";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		@aryA = $sthA->fetchrow_array;
+		if ($DB) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+		$sthA->finish();
+		##### END vicidial_pending_ar end of day process removing records older than 7 days #####
+
+		
 		##### BEGIN vicidial_two_factor_auth end of day process removing expired and older records #####
 		$stmtA = "DELETE from vicidial_two_factor_auth where (auth_exp_date < NOW()) or ( (auth_code_exp_date < NOW()) and (auth_stage != '1') );";
 		if($DBX){print STDERR "\n|$stmtA|\n";}
@@ -2916,9 +3062,16 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		$Lext .= "; Agent session audio playback meetme entry\n";
 		$Lext .= "exten => _473782178600XXX,1,Meetme(\${EXTEN:8},q)\n";
 		$Lext .= "exten => _473782178600XXX,n,Hangup()\n";
+		$Lext .= "; Agent session audio playback ConfBridge entry\n";
+		$Lext .= "exten => _473782179600XXX,1,Answer()\n";
+		$Lext .= "exten => _473782179600XXX,n,Playback(sip-silence)\n";
+		$Lext .= "exten => _473782179600XXX,n,ConfBridge(\${EXTEN:8},vici_agent_bridge,vici_audio_user)\n";
+		$Lext .= "exten => _473782179600XXX,n,Hangup()\n";
 		$Lext .= "; Agent session audio playback loop\n";
 		$Lext .= "exten => _473782168600XXX,1,Dial(\${TRUNKplay}/47378217\${EXTEN:8},5,To)\n";
 		$Lext .= "exten => _473782168600XXX,n,Hangup()\n";
+		$Lext .= "exten => _473782169600XXX,1,Dial(\${TRUNKplay}/47378217\${EXTEN:8},5,To)\n";
+		$Lext .= "exten => _473782169600XXX,n,Hangup()\n";
 		$Lext .= "; Agent session audio playback extension\n";
 		$Lext .= "exten => 473782158521111,1,Answer\n";
 		$Lext .= "exten => 473782158521111,n,ControlPlayback(\${CALLERID(name)},99999,0,1,2,3,4)\n";
@@ -2939,6 +3092,14 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		$Lext .= "exten => _473782188600XXX,n,GotoIf(\$[ \"\${agent_zap_channel}\" = \"101\" ]?fin)\n";
 		$Lext .= "exten => _473782188600XXX,n,ChanSpy(\${agent_zap_channel},qw)\n";
 		$Lext .= "exten => _473782188600XXX,n(fin),Hangup()\n";
+		$Lext .= "; Whisper to agent ConfBridge entry\n";
+		$Lext .= "exten => _473782189600XXX,1,Answer\n";
+		$Lext .= "exten => _473782189600XXX,n,Wait(1)\n";
+		$Lext .= "exten => _473782189600XXX,n,AGI(getAGENTchannel.agi)\n";
+		$Lext .= "exten => _473782189600XXX,n,NoOp(\${agent_zap_channel})\n";
+		$Lext .= "exten => _473782189600XXX,n,GotoIf(\$[ \"\${agent_zap_channel}\" = \"101\" ]?fin)\n";
+		$Lext .= "exten => _473782189600XXX,n,ChanSpy(\${agent_zap_channel},qw)\n";
+		$Lext .= "exten => _473782189600XXX,n(fin),Hangup()\n";
 		}
 
 	$Lext .= "\n";
@@ -3984,7 +4145,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 
 	##### BEGIN Generate custom meetme entries if set #####
 	$meetme_custom_ext='';
-	if ( (length($meetme_enter_login_filename) > 0) || (length($meetme_enter_leave3way_filename) > 0) )
+	if ( ($conf_engine eq "MEETME") && ( (length($meetme_enter_login_filename) > 0) || (length($meetme_enter_leave3way_filename) > 0) ) )
 		{
 		if (length($meetme_enter_login_filename) < 1) {$meetme_enter_login_filename='sip-silence';}
 		if (length($meetme_enter_leave3way_filename) < 1) {$meetme_enter_leave3way_filename='sip-silence';}
@@ -4008,6 +4169,42 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		}
 	##### END Generate custom meetme entries if set #####
 
+	##### BEGIN Generate custom ConfBridge entries if set #####
+	$confbridge_custom_ext='';
+	if ( ($conf_engine eq "CONFBRIDGE") && ( (length($meetme_enter_login_filename) > 0) || (length($meetme_enter_leave3way_filename) > 0) ) )
+		{
+		if (length($meetme_enter_login_filename) < 1) {$meetme_enter_login_filename='sip-silence';}
+		if (length($meetme_enter_leave3way_filename) < 1) {$meetme_enter_leave3way_filename='sip-silence';}
+
+		$confbridge_custom_ext .= '[confbridge-enter-login]';
+		$confbridge_custom_ext .= "\n; confbridge entry for Vicidial agent logging in, Asterisk 16+ compatible only\n";
+		$confbridge_custom_ext .= "exten => _29600XXX,1,Answer()\n";
+		$confbridge_custom_ext .= "exten => _29600XXX,n,Playback(sip-silence)\n";
+		$confbridge_custom_ext .= "exten => _29600XXX,n,Set(CONFBRIDGE(bridge,template)=vici_agent_bridge)\n";
+		$confbridge_custom_ext .= "exten => _29600XXX,n,Set(CONFBRIDGE(bridge,sound_only_person)=$meetme_enter_login_filename)\n";
+		$confbridge_custom_ext .= "exten => _29600XXX,n,Set(CONFBRIDGE(user,template)=vici_agent_user)\n";
+		$confbridge_custom_ext .= "exten => _29600XXX,n,ConfBridge(\${EXTEN:1})\n";
+		$confbridge_custom_ext .= "exten => _29600XXX,n,Hangup()\n";
+		$confbridge_custom_ext .= "\n";
+		$confbridge_custom_ext .= $hangup_exten_line;
+		$confbridge_custom_ext .= "\n\n";
+		$confbridge_custom_ext .= '[confbridge-enter-leave3way]';
+		$confbridge_custom_ext .= "\n; confbridge entry for Vicidial agent leaving 3way call, Asterisk 16+ compatible only\n";
+		$confbridge_custom_ext .= "exten => _29600XXX,1,Answer()\n";
+		$confbridge_custom_ext .= "exten => _29600XXX,n,Playback(sip-silence)\n";
+		$confbridge_custom_ext .= "exten => _29600XXX,n,Set(CONFBRIDGE(bridge,template)=vici_agent_bridge)\n";
+		$confbridge_custom_ext .= "exten => _29600XXX,n,Set(CONFBRIDGE(bridge,sound_only_person)=$meetme_enter_leave3way_filename)\n";
+		$confbridge_custom_ext .= "exten => _29600XXX,n,Set(CONFBRIDGE(user,template)=vici_agent_user)\n";
+		$confbridge_custom_ext .= "exten => _29600XXX,n,ConfBridge(\${EXTEN:1})\n";
+		$confbridge_custom_ext .= "exten => _29600XXX,n,Hangup()\n";
+		$confbridge_custom_ext .= "\n";
+		$confbridge_custom_ext .= $hangup_exten_line;
+		$confbridge_custom_ext .= "\n\n";
+
+		if ($DBX>0) {print "Custom ConfBridge login and leave3way entries generated: |$meetme_enter_login_filename|$meetme_enter_leave3way_filename|\n";}
+		}
+	##### END Generate ConfBridge meetme entries if set #####
+
 
 	##### BEGIN Generate the Call Menu entries #####
 	$stmtA = "SELECT menu_id,menu_name,menu_prompt,menu_timeout,menu_timeout_prompt,menu_invalid_prompt,menu_repeat,menu_time_check,call_time_id,track_in_vdac,custom_dialplan_entry,tracking_group,dtmf_log,dtmf_field,qualify_sql,alt_dtmf_log,question,answer_signal FROM vicidial_call_menu order by menu_id;";
@@ -4016,6 +4213,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 	$sthArows=$sthA->rows;
 	$i=0;
+	if ($DBX>0) {print "$sthArows|$stmtA\n";}
 	while ($sthArows > $i)
 		{
 		@aryA = $sthA->fetchrow_array;
@@ -4628,6 +4826,8 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 
 
 	##### BEGIN generate meetme entries for this server
+	if ($conf_engine eq "MEETME")
+		{
 	$mm = "; ViciDial Conferences:\n";
 
 	### Find vicidial_conferences on this server
@@ -4673,6 +4873,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		{
 		$mm .= "conf => $meetme[$j]\n";
 		$j++;
+		}
 		}
 	##### END generate meetme entries for this server
 
@@ -4753,6 +4954,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	print ext "; WARNING- THIS FILE IS AUTO-GENERATED BY VICIDIAL, ANY EDITS YOU MAKE WILL BE LOST\n";
 	print ext "$ext\n";
 	print ext "$meetme_custom_ext\n";
+	print ext "$confbridge_custom_ext\n";
 	print ext "$call_menu_ext\n";
 	print ext "\n";
 	if (length($SScustom_dialplan_entry)>5)
@@ -5181,6 +5383,27 @@ if ($active_asterisk_server =~ /Y/)
 			system($launch . ' &');
 			}
 		}
+
+	$highest_lead_id=999999999;
+	$stmtA = "SELECT lead_id from vicidial_list order by lead_id desc limit 1;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$highest_lead_id = $aryA[0];
+		}
+	$sthA->finish();
+
+	if ($highest_lead_id > $SShighest_lead_id) 
+		{
+		$stmtA = "UPDATE system_settings SET highest_lead_id='$highest_lead_id';";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+
+		if ($DBX) {print "Highest Lead ID updated: $highest_lead_id > $SShighest_lead_id \n";}
+		}
 	}
 ################################################################################
 #####  END Confirm Asterisk is running, and if not restart it from the screen
@@ -5598,6 +5821,53 @@ if ( ($active_voicemail_server =~ /$server_ip/) && ((length($active_voicemail_se
 
 
 ################################################################################
+#####  START HCI lead reserve RQUEUE clearing for reservations longer than 5 minutes
+################################################################################
+# only run this on active voicemail server
+if ( ($active_voicemail_server =~ /$server_ip/) && ((length($active_voicemail_server)) eq (length($server_ip))) && ($SShopper_hold_inserts > 0) )
+	{
+	##### gather vicidial_live_agents_details #####
+	$stmtA = "SELECT lead_id,user FROM vicidial_hci_reserve where reserve_date < \"$FMSQLdate\";";
+	if ($DBX) {print "$stmtA\n";}
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	$i=0;
+	while ($sthArows > $i)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$VLADlead_id[$i] =	$aryA[0];
+		$VLADuser[$i] =		$aryA[1];
+		$i++;
+		}
+	$sthA->finish();
+
+	if ($DB) {print "   old vicidial_hci_reserve entries to clear: $i\n";}
+
+	$i=0;
+	while ($sthArows > $i)
+		{
+		$VALLmin_count_latency=0;   $VALLmin_max_latency=0;   $VALLmin_avg_latency=0;   
+		$stmtA = "UPDATE vicidial_hopper SET status='RHOLD',user='' where lead_id='$VLADlead_id[$i]' and status='RQUEUE';";
+		if ($DBX) {print "$stmtA\n";}
+		$affected_rows = $dbhA->do($stmtA) or die  "Couldn't execute query: |$stmtA|\n";
+		if ($DBX) {print "vicidial_live_agents_details update query: |$affected_rows|$stmtA|\n";}
+
+		$i++;
+		}
+
+	$stmtA = "DELETE FROM vicidial_hci_reserve where reserve_date < \"$FMSQLdate\"";
+	$affected_rows = $dbhA->do($stmtA) or die  "Couldn't execute query: |$stmtA|\n";
+	if ($DBX) {print "vicidial_hci_reserve delete query: |$affected_rows|$stmtA|\n";}
+	}
+################################################################################
+#####  END HCI lead reserve RQUEUE clearing for reservations longer than 5 minutes
+################################################################################
+
+
+
+
+################################################################################
 #####  START launch Demographic Quotas process, if enabled on any active campaigns
 ################################################################################
 # only run this on active voicemail server
@@ -5803,8 +6073,9 @@ if ($SSenable_auto_reports > 0)
 
 			$r++;
 			}
-		if ($DB) {print "Automated Reports DONE: $r\n";}
+		if ($DB) {print "Automated Reports launched: $r\n";}
 		}
+	if ($DB) {print "Automated Reports DONE\n";}
 	}
 ################################################################################
 #####  END  automated reports

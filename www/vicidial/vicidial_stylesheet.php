@@ -1,7 +1,7 @@
 <?php
 # vicidial_stylesheet.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # CSS/PHP file that uses the system-defined screen colors to display report elements
 #
@@ -10,6 +10,7 @@
 # 190129-1303 - New mobile display elements added
 # 200309-1819 - Modifications for display formatting
 # 221230-2220 - Added cust_form style for text input fields
+# 231127-1002 - Added HCI buttons styles
 #
 
 require("dbconnect_mysqli.php");
@@ -83,6 +84,22 @@ redalert {font-size: 18px; font-weight:bold; font-family: Arial, Sans-Serif; col
 .alt_row2 {background-color: <?php echo $SSalt_row2_background; ?>}
 .alt_row3 {background-color: <?php echo $SSalt_row3_background; ?>}
 .std_btn  {background-color: <?php echo $SSbutton_background; ?>;}
+
+/* Special effects */
+.blink {
+	animation: blinker 1.2s linear infinite;
+	color: #900;
+	font-family: Arial,Helvetica, sans-serif;
+	font-size: 14px;
+	font-weight: bold;
+	margin-bottom: 14px;
+	}
+
+@keyframes blinker {
+	50% {
+		opacity: 0;
+	}
+}
 
 
 .border2px {border:solid 2px #<?php echo $SSmenu_background; ?>}
@@ -809,4 +826,52 @@ padding-right:3px;
     font-size: 16px;
 	opacity: 0.6;
     cursor: not-allowed;
+	}
+
+.button_hci_ready {
+    background-color: #CCCCCC; /* Grey */
+	border: 0px;
+	border-radius: 2px;
+    color: #333333;
+    padding: 10px 22px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px;
+	}
+
+.button_hci_active {
+    background-color: #FFCC99; /* Orange */
+	border: 0px;
+	border-radius: 2px;
+    color: #333333;
+    padding: 10px 22px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px;
+	}
+
+.button_hci_verify_confirm {
+    background-color: #<?php echo $SSmenu_background; ?>;
+	border: 2px solid #999999;
+	border-radius: 0px;
+    color: #FFFFFF;
+    padding: 10px 22px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+	}
+
+.button_hci_verify_cancel {
+    background-color: #E6E6E6; /* Grey */
+	border: 2px solid #999999;
+	border-radius: 0px;
+    color: #666666;
+    padding: 10px 22px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
 	}

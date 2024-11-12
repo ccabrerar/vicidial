@@ -26,6 +26,7 @@
 #
 # 
 # 230131-2244 - First Build, based on AST_CRON_audio_1_move_mix.pl script
+# 231019-2204 - Changed sleep time between directory scans from 5 to 15 seconds
 #
 
 $MIX=0;
@@ -230,7 +231,7 @@ foreach(@FILES)
 
 if ($DB) {print "Total recording files found: $i (calls: $calls)\n";}
 
-sleep(5);
+sleep(15);
 
 
 ### Loop through files a second time to gather filesizes again 5 seconds later

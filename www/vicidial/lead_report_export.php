@@ -5,7 +5,7 @@
 # vicidial_log and/or vicidial_closer_log information by status, list_id and 
 # date range. downloads to a flat text file that is tab delimited
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -37,6 +37,7 @@
 # 210302-0839 - Added exclude_call_log_data option
 # 210911-1906 - Fix for --ALL-- selection user-group permission issue
 # 220228-1917 - Added allow_web_debug system setting
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
@@ -110,8 +111,13 @@ $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 $FILE_TIME = date("Ymd-His");
 $STARTtime = date("U");
-if (!isset($group)) {$group = array();}
-if (!isset($dids)) {$dids = array();}
+if (!is_array($group)) {$group = array();}
+if (!is_array($dids)) {$dids = array();}
+if (!is_array($campaign)) {$campaign = array();}
+if (!is_array($user_group)) {$user_group = array();}
+if (!is_array($list_id)) {$list_id = array();}
+if (!is_array($status)) {$status = array();}
+if (!is_array($vlcs)) {$vlcs = array();}
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (!isset($end_date)) {$end_date = $NOW_DATE;}
 if (strlen($shift)<2) {$shift='ALL';}
@@ -730,10 +736,10 @@ if ($run_export > 0)
 	$k=0;
 	if ($RUNcampaign > 0)
 		{
-		$stmt = "SELECT vl.call_date,vl.phone_number,vi.status,vl.user,vu.full_name,vl.campaign_id,vi.vendor_lead_code,vi.source_id,vi.list_id,vi.gmt_offset_now,vi.phone_code,vi.phone_number,vi.title,vi.first_name,vi.middle_initial,vi.last_name,vi.address1,vi.address2,vi.address3,vi.city,vi.state,vi.province,vi.postal_code,vi.country_code,vi.gender,vi.date_of_birth,vi.alt_phone,vi.email,vi.security_phrase,vi.comments,vl.length_in_sec,vl.user_group,vl.alt_dial,vi.rank,vi.owner,vi.lead_id,vl.uniqueid,vi.entry_list_id,UNIX_TIMESTAMP(vl.call_date)$export_fields_SQL from vicidial_users vu,".$vicidial_log_table." vl,".$vicidial_list_table." vi where ".$date_field." >= '$query_date 00:00:00' and ".$date_field." <= '$end_date 23:59:59' and vu.user=vl.user and vi.lead_id=vl.lead_id $list_SQL $campaign_SQL $user_group_SQL $status_SQL $vlc_SQL order by ".$date_field." desc limit 500000;";
+		$stmt = "SELECT vl.call_date,vl.phone_number,vi.status,vl.user,vu.full_name,vl.campaign_id,vi.vendor_lead_code,vi.source_id,vi.list_id,vi.gmt_offset_now,vi.phone_code,vi.phone_number,vi.title,vi.first_name,vi.middle_initial,vi.last_name,vi.address1,vi.address2,vi.address3,vi.city,vi.state,vi.province,vi.postal_code,vi.country_code,vi.gender,vi.date_of_birth,vi.alt_phone,vi.email,vi.security_phrase,vi.comments,vl.length_in_sec,vl.user_group,vl.alt_dial,vi.rank,vi.owner,vi.lead_id,vl.uniqueid,vi.entry_list_id,UNIX_TIMESTAMP(vl.call_date),vl.status$export_fields_SQL from vicidial_users vu,".$vicidial_log_table." vl,".$vicidial_list_table." vi where ".$date_field." >= '$query_date 00:00:00' and ".$date_field." <= '$end_date 23:59:59' and vu.user=vl.user and vi.lead_id=vl.lead_id $list_SQL $campaign_SQL $user_group_SQL $status_SQL $vlc_SQL order by ".$date_field." desc limit 500000;";
 		if ($exclude_call_log_data == 'YES')
 			{
-			$stmt = "SELECT '0000-00-00 00:00:00',vi.phone_number,vi.status,vi.user,'','',vi.vendor_lead_code,vi.source_id,vi.list_id,vi.gmt_offset_now,vi.phone_code,vi.phone_number,vi.title,vi.first_name,vi.middle_initial,vi.last_name,vi.address1,vi.address2,vi.address3,vi.city,vi.state,vi.province,vi.postal_code,vi.country_code,vi.gender,vi.date_of_birth,vi.alt_phone,vi.email,vi.security_phrase,vi.comments,'0','','',vi.rank,vi.owner,vi.lead_id,'',vi.entry_list_id,''$export_fields_SQL from ".$vicidial_list_table." vi where ".$date_field." >= '$query_date 00:00:00' and ".$date_field." <= '$end_date 23:59:59' $list_SQL $status_SQL $vlc_SQL order by ".$date_field." desc limit 500000;";
+			$stmt = "SELECT '0000-00-00 00:00:00',vi.phone_number,vi.status,vi.user,'','',vi.vendor_lead_code,vi.source_id,vi.list_id,vi.gmt_offset_now,vi.phone_code,vi.phone_number,vi.title,vi.first_name,vi.middle_initial,vi.last_name,vi.address1,vi.address2,vi.address3,vi.city,vi.state,vi.province,vi.postal_code,vi.country_code,vi.gender,vi.date_of_birth,vi.alt_phone,vi.email,vi.security_phrase,vi.comments,'0','','',vi.rank,vi.owner,vi.lead_id,'',vi.entry_list_id,'',vl.status$export_fields_SQL from ".$vicidial_list_table." vi where ".$date_field." >= '$query_date 00:00:00' and ".$date_field." <= '$end_date 23:59:59' $list_SQL $status_SQL $vlc_SQL order by ".$date_field." desc limit 500000;";
 			}
 		$rslt=mysql_to_mysqli($stmt, $link);
 		if ($DB) {echo "****$stmt****\n";}
@@ -759,6 +765,7 @@ if ($run_export > 0)
 				$export_vicidial_id[$k] =	$row[36];
 				$export_entry_list_id[$k] =	$row[37];
 				$export_epoch_time[$k] =	$row[38];
+				$export_last_status[$k] =	$row[39];
 				$export_duplicate_check_line[$k] = "$export_lead_id[$k]---$export_epoch_time[$k]---$k";
 
 				if ($LOGadmin_hide_phone_data != '0')
@@ -835,7 +842,7 @@ if ($run_export > 0)
 				$export_fieldsDATA='';
 				if ($export_fields == 'EXTENDED')
 					{
-					$export_fieldsDATA = "$row[39]\t$row[40]\t$row[41]\t$row[42]\t$row[43]\t";
+					$export_fieldsDATA = "$row[40]\t$row[41]\t$row[42]\t$row[43]\t$row[44]\t";
 					if ($did_filter=="YES") 
 						{
 						$export_fieldsDATA .= "N/A\t";
@@ -855,15 +862,15 @@ if ($run_export > 0)
 
 		if ($RUNdid > 0 && $RUNgroup > 0) 
 			{
-			$stmtA = "SELECT vl.call_date,vl.phone_number,vi.status,vl.user,vu.full_name,vl.campaign_id,vi.vendor_lead_code,vi.source_id,vi.list_id,vi.gmt_offset_now,vi.phone_code,vi.phone_number,vi.title,vi.first_name,vi.middle_initial,vi.last_name,vi.address1,vi.address2,vi.address3,vi.city,vi.state,vi.province,vi.postal_code,vi.country_code,vi.gender,vi.date_of_birth,vi.alt_phone,vi.email,vi.security_phrase,vi.comments,vl.length_in_sec,vl.user_group,vl.queue_seconds,vi.rank,vi.owner,vi.lead_id,vl.closecallid,vi.entry_list_id,vl.uniqueid,UNIX_TIMESTAMP(vl.call_date)$export_fields_SQL from vicidial_users vu,".$vicidial_closer_log_table." vl,".$vicidial_list_table." vi, ".$vicidial_did_log_table." vdl where ".$date_field." >= '$query_date 00:00:00' and ".$date_field." <= '$end_date 23:59:59' and vu.user=vl.user and vi.lead_id=vl.lead_id and vl.uniqueid=vdl.uniqueid $list_SQL $group_SQL $user_group_SQL $did_SQL $status_SQL $vlc_SQL order by ".$date_field." desc limit 500000;";
+			$stmtA = "SELECT vl.call_date,vl.phone_number,vi.status,vl.user,vu.full_name,vl.campaign_id,vi.vendor_lead_code,vi.source_id,vi.list_id,vi.gmt_offset_now,vi.phone_code,vi.phone_number,vi.title,vi.first_name,vi.middle_initial,vi.last_name,vi.address1,vi.address2,vi.address3,vi.city,vi.state,vi.province,vi.postal_code,vi.country_code,vi.gender,vi.date_of_birth,vi.alt_phone,vi.email,vi.security_phrase,vi.comments,vl.length_in_sec,vl.user_group,vl.queue_seconds,vi.rank,vi.owner,vi.lead_id,vl.closecallid,vi.entry_list_id,vl.uniqueid,UNIX_TIMESTAMP(vl.call_date),vl.status$export_fields_SQL from vicidial_users vu,".$vicidial_closer_log_table." vl,".$vicidial_list_table." vi, ".$vicidial_did_log_table." vdl where ".$date_field." >= '$query_date 00:00:00' and ".$date_field." <= '$end_date 23:59:59' and vu.user=vl.user and vi.lead_id=vl.lead_id and vl.uniqueid=vdl.uniqueid $list_SQL $group_SQL $user_group_SQL $did_SQL $status_SQL $vlc_SQL order by ".$date_field." desc limit 500000;";
 			}
 		else if ($RUNdid > 0)
 			{
-			$stmtA = "SELECT vl.call_date,vl.phone_number,vi.status,vl.user,vu.full_name,vl.campaign_id,vi.vendor_lead_code,vi.source_id,vi.list_id,vi.gmt_offset_now,vi.phone_code,vi.phone_number,vi.title,vi.first_name,vi.middle_initial,vi.last_name,vi.address1,vi.address2,vi.address3,vi.city,vi.state,vi.province,vi.postal_code,vi.country_code,vi.gender,vi.date_of_birth,vi.alt_phone,vi.email,vi.security_phrase,vi.comments,vl.length_in_sec,vl.user_group,vl.queue_seconds,vi.rank,vi.owner,vi.lead_id,vl.closecallid,vi.entry_list_id,vl.uniqueid,UNIX_TIMESTAMP(vl.call_date)$export_fields_SQL from vicidial_users vu,".$vicidial_closer_log_table." vl,".$vicidial_list_table." vi, ".$vicidial_did_log_table." vdl where ".$date_field." >= '$query_date 00:00:00' and ".$date_field." <= '$end_date 23:59:59' and vu.user=vl.user and vi.lead_id=vl.lead_id and vl.uniqueid=vdl.uniqueid $list_SQL $user_group_SQL $status_SQL $vlc_SQL $did_SQL order by ".$date_field." desc limit 500000;";
+			$stmtA = "SELECT vl.call_date,vl.phone_number,vi.status,vl.user,vu.full_name,vl.campaign_id,vi.vendor_lead_code,vi.source_id,vi.list_id,vi.gmt_offset_now,vi.phone_code,vi.phone_number,vi.title,vi.first_name,vi.middle_initial,vi.last_name,vi.address1,vi.address2,vi.address3,vi.city,vi.state,vi.province,vi.postal_code,vi.country_code,vi.gender,vi.date_of_birth,vi.alt_phone,vi.email,vi.security_phrase,vi.comments,vl.length_in_sec,vl.user_group,vl.queue_seconds,vi.rank,vi.owner,vi.lead_id,vl.closecallid,vi.entry_list_id,vl.uniqueid,UNIX_TIMESTAMP(vl.call_date),vl.status$export_fields_SQL from vicidial_users vu,".$vicidial_closer_log_table." vl,".$vicidial_list_table." vi, ".$vicidial_did_log_table." vdl where ".$date_field." >= '$query_date 00:00:00' and ".$date_field." <= '$end_date 23:59:59' and vu.user=vl.user and vi.lead_id=vl.lead_id and vl.uniqueid=vdl.uniqueid $list_SQL $user_group_SQL $status_SQL $vlc_SQL $did_SQL order by ".$date_field." desc limit 500000;";
 			}
 		else 
 			{
-			$stmtA = "SELECT vl.call_date,vl.phone_number,vi.status,vl.user,vu.full_name,vl.campaign_id,vi.vendor_lead_code,vi.source_id,vi.list_id,vi.gmt_offset_now,vi.phone_code,vi.phone_number,vi.title,vi.first_name,vi.middle_initial,vi.last_name,vi.address1,vi.address2,vi.address3,vi.city,vi.state,vi.province,vi.postal_code,vi.country_code,vi.gender,vi.date_of_birth,vi.alt_phone,vi.email,vi.security_phrase,vi.comments,vl.length_in_sec,vl.user_group,vl.queue_seconds,vi.rank,vi.owner,vi.lead_id,vl.closecallid,vi.entry_list_id,vl.uniqueid,UNIX_TIMESTAMP(vl.call_date)$export_fields_SQL from vicidial_users vu,".$vicidial_closer_log_table." vl,".$vicidial_list_table." vi where ".$date_field." >= '$query_date 00:00:00' and ".$date_field." <= '$end_date 23:59:59' and vu.user=vl.user and vi.lead_id=vl.lead_id $list_SQL $group_SQL $user_group_SQL $status_SQL $vlc_SQL order by ".$date_field." desc limit 500000;";
+			$stmtA = "SELECT vl.call_date,vl.phone_number,vi.status,vl.user,vu.full_name,vl.campaign_id,vi.vendor_lead_code,vi.source_id,vi.list_id,vi.gmt_offset_now,vi.phone_code,vi.phone_number,vi.title,vi.first_name,vi.middle_initial,vi.last_name,vi.address1,vi.address2,vi.address3,vi.city,vi.state,vi.province,vi.postal_code,vi.country_code,vi.gender,vi.date_of_birth,vi.alt_phone,vi.email,vi.security_phrase,vi.comments,vl.length_in_sec,vl.user_group,vl.queue_seconds,vi.rank,vi.owner,vi.lead_id,vl.closecallid,vi.entry_list_id,vl.uniqueid,UNIX_TIMESTAMP(vl.call_date),vl.status$export_fields_SQL from vicidial_users vu,".$vicidial_closer_log_table." vl,".$vicidial_list_table." vi where ".$date_field." >= '$query_date 00:00:00' and ".$date_field." <= '$end_date 23:59:59' and vu.user=vl.user and vi.lead_id=vl.lead_id $list_SQL $group_SQL $user_group_SQL $status_SQL $vlc_SQL order by ".$date_field." desc limit 500000;";
 			}
 		$rslt=mysql_to_mysqli($stmtA, $link);
 		if ($DB) {echo "$stmtA\n";}
@@ -889,6 +896,7 @@ if ($run_export > 0)
 				$export_entry_list_id[$k] =	$row[37];
 				$export_uniqueid[$k] =		$row[38];
 				$export_epoch_time[$k] =	$row[39];
+				$export_last_status[$k] =	$row[40];
 				$export_duplicate_check_line[$k] = "$export_lead_id[$k]---$export_epoch_time[$k]---$k";
 
 				if ($LOGadmin_hide_phone_data != '0')
@@ -960,7 +968,7 @@ if ($run_export > 0)
 				$export_fieldsDATA='';
 				if ($export_fields == 'EXTENDED')
 					{
-					$export_fieldsDATA = "$row[40]\t$row[41]\t$row[42]\t$row[43]\t$row[44]\t";
+					$export_fieldsDATA = "$row[41]\t$row[42]\t$row[43]\t$row[44]\t$row[45]\t";
 					if ($did_filter=="YES") 
 						{
 						if ($RUNdid>0) 

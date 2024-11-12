@@ -1,7 +1,7 @@
 <?php
 # whiteboard_reports.php
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # A PHP file that is for generating the stats that are displayed in the whiteboard report.  Returns values.
 #
@@ -10,6 +10,7 @@
 # 200427-2225 - Added use of slave database, if activated, fixes Issue #1207
 # 210823-0948 - Fix for security issue
 # 220221-1452 - Added allow_web_debug system setting
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 require("dbconnect_mysqli.php");
@@ -67,6 +68,12 @@ if (!$query_time) {$query_time="08:00:00";}
 if (!$end_date) {$end_date=date("Y-m-d");}
 if (!$end_time) {$end_time=date("H:i:00");}
 
+if (!is_array($campaigns)) {$campaigns=array();}
+if (!is_array($users)) {$users=array();}
+if (!is_array($groups)) {$groups=array();}
+if (!is_array($user_groups)) {$user_groups=array();}
+if (!is_array($status_flags)) {$status_flags=array();}
+if (!is_array($dids)) {$dids=array();}
 
 $report_name="Real-Time Whiteboard Report";
 
@@ -201,12 +208,12 @@ $exc_status_SQL=" and status not in ('".implode("','", $exclude_statuses)."') ";
 
 
 if (preg_match("/status_performance/", $rpt_type)) {
-	if (!$campaigns || in_array("--ALL--", $campaigns)) {
+	if (!is_array($campaigns) || in_array("--ALL--", $campaigns)) {
 		$campaign_id_SQL="";
 	} else {
 		$campaign_id_SQL=" and campaign_id in ('".implode("','", $campaigns)."')";
 	}
-	if (!$groups || in_array("--ALL--", $groups)) {
+	if (!is_array($groups) || in_array("--ALL--", $groups)) {
 		if ($campaign_id_SQL=="") {
 			$group_SQL="";
 		} else {
@@ -224,12 +231,12 @@ if (preg_match("/status_performance/", $rpt_type)) {
 	} else {
 		$group_SQL=" and campaign_id in ('".implode("','", $groups)."')";
 	}
-	if (!$users || in_array("--ALL--", $users)) {
+	if (!is_array($users) || in_array("--ALL--", $users)) {
 		$user_SQL="";
 	} else {
 		$user_SQL=" and user in ('".implode("','", $users)."')";
 	}
-	if (!$status_flags || in_array("--ALL--", $status_flags)) {
+	if (!is_array($status_flags) || in_array("--ALL--", $status_flags)) {
 		$status_SQL="";
 	} else {
 		$flag_SQL="";
@@ -313,12 +320,13 @@ if (preg_match("/status_performance/", $rpt_type)) {
 		$dead_ary[$key2]  = $row2['dead'];
 	}
 
-	array_multisort($status_ary, SORT_ASC, $counts_ary, SORT_ASC, $sales_ary, SORT_ASC, $dead_ary, SORT_ASC, $kstatus_counts);
-
 	if (count($status_counts)==0) {
 		$rpt_string=_QXZ("REPORT RETURNED NO RESULTS");
 	} else {
 #		while(list($key, $val)=each($status_counts)) {
+
+		array_multisort($status_ary, SORT_ASC, $counts_ary, SORT_ASC, $sales_ary, SORT_ASC, $dead_ary, SORT_ASC, $kstatus_counts);
+		
 		foreach ($kstatus_counts as $row) {
 			$key=$row['status'];
 			$val0=$row['counts'];
@@ -341,27 +349,27 @@ if (preg_match("/status_performance/", $rpt_type)) {
 
 if (preg_match("/(agent|team)_performance/", $rpt_type)) {
 
-	if (!$campaigns || in_array("--ALL--", $campaigns)) {
+	if (!is_array($campaigns) || in_array("--ALL--", $campaigns)) {
 		$campaign_id_SQL="";
 	} else {
 		$campaign_id_SQL=" and campaign_id in ('".implode("','", $campaigns)."')";
 	}
-	if (!$users || in_array("--ALL--", $users)) {
+	if (!is_array($users) || in_array("--ALL--", $users)) {
 		$user_SQL="";
 	} else {
 		$user_SQL=" and user in ('".implode("','", $users)."')";
 	}
-	if (!$groups || in_array("--ALL--", $groups)) {
+	if (!is_array($groups) || in_array("--ALL--", $groups)) {
 		$group_SQL="";
 	} else {
 		$group_SQL=" and campaign_id in ('".implode("','", $groups)."')";
 	}
-	if (!$user_groups || in_array("--ALL--", $user_groups)) {
+	if (!is_array($user_groups) || in_array("--ALL--", $user_groups)) {
 		$user_group_SQL="";
 	} else {
 		$user_group_SQL=" and user_group in ('".implode("','", $user_groups)."')";
 	}
-	if (!$status_flags || in_array("--ALL--", $status_flags)) {
+	if (!is_array($status_flags) || in_array("--ALL--", $status_flags)) {
 		$status_SQL="";
 	} else {
 		$flag_SQL="";
@@ -469,12 +477,12 @@ if (preg_match("/floor_performance/", $rpt_type)) {
 		$start_epoch+=60;
 	}
 
-	if (in_array("--ALL--", $campaigns)) {
+	if (!is_array($campaigns) || in_array("--ALL--", $campaigns)) {
 		$campaign_id_SQL="";
 	} else {
 		$campaign_id_SQL=" and vicidial_agent_log.campaign_id in ('".implode("','", $campaigns)."')";
 	}
-	if (!$status_flags || in_array("--ALL--", $status_flags)) {
+	if (!is_array($status_flags) || in_array("--ALL--", $status_flags)) {
 		$status_SQL="";
 	} else {
 		$flag_SQL="";
@@ -549,29 +557,29 @@ if (preg_match("/floor_performance/", $rpt_type)) {
 }
 
 if (preg_match("/(did|ingroup)_performance/", $rpt_type)) {
-	if (!$campaigns || in_array("--ALL--", $campaigns)) {
+	if (!is_array($campaigns) || in_array("--ALL--", $campaigns)) {
 		$campaign_id_SQL="";
 	} else {
 		$campaign_id_SQL=" and campaign_id in ('".implode("','", $campaigns)."')";
 	}
-	if (!$groups || in_array("--ALL--", $groups)) {
+	if (!is_array($groups) || in_array("--ALL--", $groups)) {
 		$group_SQL="";
 		$ingroup_SQL="";
 	} else {
 		$group_SQL=" and campaign_id in ('".implode("','", $groups)."')";
 		$ingroup_SQL=" and group_id in ('".implode("','", $groups)."')";
 	}
-	if (!$user_groups || in_array("--ALL--", $user_groups)) {
+	if (!is_array($user_groups) || in_array("--ALL--", $user_groups)) {
 		$user_group_SQL="";
 	} else {
 		$user_group_SQL=" and user_group in ('".implode("','", $user_groups)."')";
 	}
-	if (!$dids || in_array("--ALL--", $dids)) {
+	if (!is_array($dids) || in_array("--ALL--", $dids)) {
 		$did_SQL="";
 	} else {
 		$did_SQL=" and vid.did_id in ('".implode("','", $dids)."')";
 	}
-	if (!$status_flags || in_array("--ALL--", $status_flags)) {
+	if (!is_array($status_flags) || in_array("--ALL--", $status_flags)) {
 		$status_SQL="";
 	} else {
 		$flag_SQL="";
@@ -688,12 +696,12 @@ if (preg_match("/(did|ingroup)_performance/", $rpt_type)) {
 
 if ($rpt_type=="floor_performance_hourly") {
 	$rpt_string="";
-	if (in_array("--ALL--", $campaigns)) {
+	if (!is_array($campaigns) || in_array("--ALL--", $campaigns)) {
 		$campaign_id_SQL="";
 	} else {
 		$campaign_id_SQL=" and vicidial_agent_log.campaign_id in ('".implode("','", $campaigns)."')";
 	}
-	if (!$status_flags || in_array("--ALL--", $status_flags)) {
+	if (!is_array($status_flags) || in_array("--ALL--", $status_flags)) {
 		$status_SQL="";
 	} else {
 		$flag_SQL="";

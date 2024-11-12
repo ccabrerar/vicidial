@@ -1,7 +1,7 @@
 <?php
 # options.php - manually defined options for vicidial admin scripts
 # 
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # rename this file to options.php for the settings here to go into effect
 #
@@ -37,6 +37,9 @@
 # 230407-1040 - Added include_sales_in_TPD_report option
 # 230421-0220 - Added RS_AGENTlatency option
 # 230421-1645 - Added RS_UGlatencyRESTRICT option
+# 230926-0849 - Added camp_lead_order_random option
+# 231115-1642 - Added vm_view_messages_link, RS_no_DEAD_status and RS_hide_CUST_info options
+# 240802-1250 - Added options to customize PHP error reporting
 #
 
 # used by the realtime_report.php script
@@ -88,10 +91,21 @@ $RS_agentWAIT =			3;	# 3 or 4
 $RS_INcolumnsHIDE =		0;	# 0=no, 1=yes  # whether to hide the 'HOLD' & 'IN-GROUP' columns in the agent detail section
 $RS_DIDdesc =			0;	# 0=no, 1=yes  # whether to show a 'DID DESCRIPTION' column in the agent detail section
 $RS_report_default_format = '';	# 'TEXT', 'HTML' or '': If set, this will override the System Setting for this report only
+$RS_no_DEAD_status =	0;	# set to 1 to disable DEAD satus in the Real-Time Report
+$RS_hide_CUST_info =	0;	# set to 1 to hide the show CUSTPHONE and CUSTINFO options in the Real-Time Report
 $RS_AGENTlatency =		0;	# 0=no, 1=yes, 2=all, 3=day, 4=now
 $RS_UGlatencyRESTRICT =	'';	# this can restrict the "LATENCY" features to only be accessible to users in set User Groups: "ADMIN|ADMIN2"
 $RS_AGENTstatusTALLY =	'';	# <any valid status>: If set, will look at the number of calls statused by the agent in this status for today
 							# WARNING!!! Using the above option may cause system lag issues, USE WITH CAUTION!
+
+# If this option is set to 1, then the error_reporting in php.ini will be ignored and settings below will be used for this directory
+$PHP_error_reporting_OVERRIDE =	0;
+	# PHP error reporting options, set to 1 to keep the type of error from being displayed, either on-screen or to the error logs.
+$PHP_error_reporting_HIDE_ERRORS =		0;	# STRONGLY advise leaving this value alone, but you do you.
+$PHP_error_reporting_HIDE_WARNINGS =	0;
+$PHP_error_reporting_HIDE_PARSES =		0;
+$PHP_error_reporting_HIDE_NOTICES =		0;
+$PHP_error_reporting_HIDE_DEPRECATIONS=	0;
 
 # used by agent reports
 $user_case =			0;		# 1=upper-case, 2-lower-case, 0-no-case-change
@@ -146,6 +160,15 @@ $audio_store_GSM_allowed=0;
 
 # Include sale statuses in Team Performance Detail report
 $include_sales_in_TPD_report=0;
+
+# Allow for RANDOM list orders to be used in the Modify Campaign screens
+$camp_lead_order_random=1;
+
+# set to 1 to hide the timeclock link on the welcome.php page
+$hide_timeclock_link	= '0';
+
+# View Message link for Voicemail modify admin page, "voicemail_id" in URL will be replaced with current voicemail ID
+$vm_view_messages_link = '';
 
 # CORS settings: (to enable, customize the variables below, and uncomment the "require_once('adminCORS.php');" line at the bottom)
 # (NOTE: The first 3 variables must be set for these features to be active)

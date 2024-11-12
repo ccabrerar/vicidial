@@ -1,7 +1,7 @@
 <?php 
 # AST_agent_time_sheet.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -32,6 +32,7 @@
 # 220811-1440 - Modified for date ranges instead of single-day
 # 220822-1728 - Changed total login time calculation to work for multi-day ranges
 # 221005-1647 - Added JS calendar functionality for date fields
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
@@ -219,9 +220,9 @@ $LOGserver_name = getenv("SERVER_NAME");
 $LOGserver_port = getenv("SERVER_PORT");
 $LOGrequest_uri = getenv("REQUEST_URI");
 $LOGhttp_referer = getenv("HTTP_REFERER");
-$LOGbrowser=preg_replace("/\'|\"|\\\\/","",$LOGbrowser);
-$LOGrequest_uri=preg_replace("/\'|\"|\\\\/","",$LOGrequest_uri);
-$LOGhttp_referer=preg_replace("/\'|\"|\\\\/","",$LOGhttp_referer);
+$LOGbrowser=preg_replace("/<|>|\'|\"|\\\\/","",$LOGbrowser);
+$LOGrequest_uri=preg_replace("/<|>|\'|\"|\\\\/","",$LOGrequest_uri);
+$LOGhttp_referer=preg_replace("/<|>|\'|\"|\\\\/","",$LOGhttp_referer);
 if (preg_match("/443/i",$LOGserver_port)) {$HTTPprotocol = 'https://';}
   else {$HTTPprotocol = 'http://';}
 if (($LOGserver_port == '80') or ($LOGserver_port == '443') ) {$LOGserver_port='';}
@@ -418,13 +419,13 @@ $subcamp_color =	'#C6C6C6';
 
 #require("admin_header.php");
 
-$MAIN.="<TABLE WIDTH=$page_width BGCOLOR=\"#$SSframe_background\" cellpadding=2 cellspacing=0><TR BGCOLOR=\"#$SSframe_background\"><TD>\n";
+$MAIN.="<TABLE WIDTH=$page_width BGCOLOR=\"#$SSframe_background\" cellpadding=2 cellspacing=0><TR BGCOLOR=\"#$SSframe_background\"><TD><font face='arial,helvetica' size='2'>\n";
 
 $MAIN.=_QXZ("Agent Time Sheet for").": <B>$user</B>\n";
 $MAIN.="<BR>\n";
 $MAIN.="<FORM ACTION=\"$PHP_SELF\" METHOD=GET name='vicidial_report'> &nbsp; &nbsp; \n";
 $MAIN.="<table border='0' width='350' cellpadding='3' cellspacing='0'>";
-$MAIN.="<tr><td align='right'>"._QXZ("Date").":</td>";
+$MAIN.="<tr><td align='right'><font face='arial,helvetica' size='2'>"._QXZ("Date").":</font></td>";
 $MAIN.="<td align='left'><INPUT TYPE=TEXT NAME=query_date SIZE=10 MAXLENGTH=10 VALUE=\"$query_date\">";
 	$MAIN.="<script language=\"JavaScript\">\n";
 	$MAIN.="function openNewWindow(url)\n";
@@ -441,7 +442,7 @@ $MAIN.="<td align='left'><INPUT TYPE=TEXT NAME=query_date SIZE=10 MAXLENGTH=10 V
 	$MAIN.="// o_cal.a_tpl.weekstart = 1; // Monday week start\n";
 	$MAIN.="</script>\n";
 $MAIN.="</td>\n";
-$MAIN.="<td align='right'>"._QXZ("To").":</td>";
+$MAIN.="<td align='right'><font face='arial,helvetica' size='2'>"._QXZ("To").":</font></td>";
 $MAIN.="<td align='left'><INPUT TYPE=TEXT NAME=end_date SIZE=10 MAXLENGTH=10 VALUE=\"$end_date\">";
 	$MAIN.="<script language=\"JavaScript\">\n";
 	$MAIN.="function openNewWindow(url)\n";
@@ -458,7 +459,7 @@ $MAIN.="<td align='left'><INPUT TYPE=TEXT NAME=end_date SIZE=10 MAXLENGTH=10 VAL
 	$MAIN.="// o_cal.a_tpl.weekstart = 1; // Monday week start\n";
 	$MAIN.="</script>\n";
 $MAIN.="</td></tr>";
-$MAIN.="<tr><td align='right'>"._QXZ("User ID").":</td><td align='left' colspan='3'><INPUT TYPE=TEXT NAME=agent SIZE=20 MAXLENGTH=20 VALUE=\"$agent\"></td></tr>\n";
+$MAIN.="<tr><td align='right'><font face='arial,helvetica' size='2'>"._QXZ("User ID").":</font></td><td align='left' colspan='3'><INPUT TYPE=TEXT NAME=agent SIZE=20 MAXLENGTH=20 VALUE=\"$agent\"></td></tr>\n";
 
 
 
@@ -482,14 +483,16 @@ $HTML_text.="</script>\n";
 
 if ($archives_available=="Y") 
 	{
-	$MAIN.="<tr><td align='center' colspan='4'><input type='checkbox' name='search_archived_data' value='checked' $search_archived_data>"._QXZ("Search archived data")."</td></tr>\n";
+	$MAIN.="<tr><td align='center' colspan='4'><font face='arial,helvetica' size='2'><input type='checkbox' name='search_archived_data' value='checked' $search_archived_data>"._QXZ("Search archived data")."</font></td></tr>\n";
 	}
 
-$MAIN.="</table>";
-$MAIN.="<BR><BR>\n";
-
+$MAIN.="<tr><td align='center' colspan='4'><BR>";
 $MAIN.="<INPUT TYPE=SUBMIT NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>\n";
-$MAIN.="</FORM>\n\n";
+$MAIN.="</td></tr>\n";
+$MAIN.="</table>";
+$MAIN.="<BR>\n";
+
+$MAIN.="</FORM></font>\n\n";
 
 $MAIN.="<PRE><FONT SIZE=3>\n";
 
@@ -619,8 +622,10 @@ $CSV_text1.=$CSV_login;
 ##### vicidial_timeclock log records for user #####
 
 $total_login_time=0;
-$SQday_ARY =	explode('-',$query_date_BEGIN);
-$EQday_ARY =	explode('-',$end_date_END);
+$query_date_BEGIN_ary=explode(" ", $query_date_BEGIN);
+$end_date_END_ary=explode(" ", $end_date_END);
+$SQday_ARY =	explode('-',$query_date_BEGIN_ary[0]);
+$EQday_ARY =	explode('-',$end_date_END_ary[0]);
 $SQepoch = mktime(0, 0, 0, $SQday_ARY[1], $SQday_ARY[2], $SQday_ARY[0]);
 $EQepoch = mktime(23, 59, 59, $EQday_ARY[1], $EQday_ARY[2], $EQday_ARY[0]);
 

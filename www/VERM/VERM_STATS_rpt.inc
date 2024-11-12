@@ -1,17 +1,18 @@
 <?php
 # VERM_STATS_rpt.inc - Vicidial Enhanced Reporting stats report
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
 # 
 # CHANGELOG:
 # 220825-1616 - First build
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 # DROP, WAITTO, TIMEOT are unanswered statuses, not NANQUE
-$PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
-$PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
-$PHP_SELF=$_SERVER['PHP_SELF'];
-$PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
+# $PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
+# $PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
+# $PHP_SELF=$_SERVER['PHP_SELF'];
+# $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 
 if (isset($_GET["sort_agents_on_queue"]))			{$sort_agents_on_queue=$_GET["sort_agents_on_queue"];}
 	elseif (isset($_POST["sort_agents_on_queue"]))	{$sort_agents_on_queue=$_POST["sort_agents_on_queue"];}
@@ -367,7 +368,7 @@ $HTML_output.="</tr>\n";
 $CSV_output["agents_on_queue"]="\""._QXZ("Agents on queue")."\"\n";
 $CSV_output["agents_on_queue"].="\""._QXZ("Agent")."\",\""._QXZ("N. Calls")."\",\"\",\"...\",\""._QXZ("Total call time")."\",\""._QXZ("Average call time")."\"\n";
 
-$highest_agent_call_count=max($agent_call_counts);
+$highest_agent_call_count=(count($agent_call_counts)>0 ? max($agent_call_counts) : 0);
 
 $agents_on_queue_graph_labels="[";
 $agents_on_queue_graph_data="[";
@@ -524,7 +525,7 @@ $disconnection_causes_graph_data="[";
 $disconnection_causes_graph_bgcolor="["; # SAME FOR hoverBackgroundColor
 $disconnection_causes_graph_hovborder="[";
 
-$max_term_reason=max($term_reasons);
+$max_term_reason=(count($term_reasons)>0 ? max($term_reasons) : 0);
 $x=0;
 foreach ($term_reasons as $reason => $value)
 	{

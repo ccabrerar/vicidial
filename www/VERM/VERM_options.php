@@ -216,6 +216,10 @@ if (mysqli_num_rows($options_rslt)>0)
 					$ivr_survey_ingroups_voicemails["$ingroup"]=$options;
 					}
 				}
+
+			if ($setting_name=="caller_id_override" && $setting_value)
+				{$caller_id_override=$setting_value;}
+
 			# print "$container_entry[$q]\n";
 			}
 		}

@@ -1,4 +1,4 @@
-CALLER ID NAME CODES DOC	Started: 2013-07-15	Updated: 2023-06-07
+CALLER ID NAME CODES DOC	Started: 2013-07-15	Updated: 2023-11-18
 
 
 This document is meant for reference only, and it does not contain all CID name codes possible, but more will be added over time.
@@ -39,4 +39,5 @@ E - Inbound Email, tracking only (E0001797980001237995)
 ACagcW - Noone in session call agent phone (ACagcW15167259066666)
 AM - Agent mute of recording (AM273955W0001922575W)
 G - Recording Gateway inbound call (G2010021380000000023)
+T - 3-way press outside-agent call (T1180828420014842682)
 CID - SendCID test page (CID1451019998883112)

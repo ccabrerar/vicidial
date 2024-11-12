@@ -12,6 +12,8 @@ require("dbconnect_mysqli.php");
 require("functions.php");
 
 require("VERM_options.php");
+
+header('Content-Type: application/javascript');
 ?>
 function GoToReport(selected_report, realtime_override)
 	{

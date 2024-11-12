@@ -9,7 +9,7 @@
 # !!!!!!!! IMPORTANT !!!!!!!!!!!!!!!!!!
 # THIS SCRIPT SHOULD ONLY BE RUN ON ONE SERVER ON YOUR CLUSTER
 #
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 60717-1214 - changed to DBI by Marin Blu
@@ -32,6 +32,10 @@
 # 191029-1555 - Added flushing of vicidial_agent_vmm_overrides table
 # 220921-1148 - Added optimize of vicidial_users table
 # 230414-1622 - Added --reset-stuck-leads option
+# 231118-1256 - Added clearing of old vicidial_3way_press_live records
+# 231228-1901 - Added optimizing of vicidial_3way_press_multi records
+# 240219-0811 - Added optimizing of server_live_... tables
+# 240709-1300 - Added Validate XFER vicidial_auto_calls: "--check-xfers" flag
 #
 
 $session_flush=0;
@@ -39,6 +43,7 @@ $SSsip_event_logging=0;
 $reset_stuck_leads=0;
 $stuck_lists='';
 $stuck_listsSQL='';
+$check_xfers=0;
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -61,6 +66,7 @@ if (length($ARGV[0])>1)
 		print "  [--session-flush] = flush the vicidial_sessions_recent table\n";
 		print "  [--reset-stuck-leads] = reset status of ERI/INCALL leads to NEW if previewed but not called\n";
 		print "  [--stuck-lists=X] = restrict stuck leads check to these lists: X-Y-Z multiple lists separated by a single dash\n";
+		print "  [--check-xfers] = validates that XFER status vicidial_auto_calls records are live, if not, they are deleted\n";
 		print "\n";
 
 		exit;
@@ -97,6 +103,12 @@ if (length($ARGV[0])>1)
 			$reset_stuck_leads=1;
 			if ($Q < 1)
 				{print "\n----- RESET STUCK LEADS ----- $reset_stuck_leads \n\n";}
+			}
+		if ($args =~ /--check-xfers/i)
+			{
+			$check_xfers=1;
+			if ($Q < 1)
+				{print "\n----- CHECK XFERS ----- $check_xfers \n\n";}
 			}
 		if ($args =~ /--stuck-lists=/i)
 			{
@@ -205,6 +217,17 @@ if ($Smin < 10) {$Smin = "0$Smin";}
 if ($Ssec < 10) {$Ssec = "0$Ssec";}
 $SQLdate_NEG_sixhour="$Syear-$Smon-$Smday $Shour:$Smin:$Ssec";
 
+($Dsec,$Dmin,$Dhour,$Dmday,$Dmon,$Dyear,$Dwday,$Dyday,$Disdst) = localtime(time() - 43200);
+$Dyear = ($Dyear + 1900);
+$Dyy = $Dyear; $Dyy =~ s/^..//gi;
+$Dmon++;
+if ($Dmon < 10) {$Dmon = "0$Dmon";}
+if ($Dmday < 10) {$Dmday = "0$Dmday";}
+if ($Dhour < 10) {$Dhour = "0$Dhour";}
+if ($Dmin < 10) {$Dmin = "0$Dmin";}
+if ($Dsec < 10) {$Dsec = "0$Dsec";}
+$DQLdate_NEG_twelvehour="$Dyear-$Dmon-$Dmday $Dhour:$Dmin:$Dsec";
+
 ($Tsec,$Tmin,$Thour,$Tmday,$Tmon,$Tyear,$Twday,$Tyday,$Tisdst) = localtime(time() - 600);
 $Tyear = ($Tyear + 1900);
 $Tyy = $Tyear; $Tyy =~ s/^..//gi;
@@ -284,14 +307,15 @@ if ($sthArows > 0)
 $sthA->finish();
 
 ### Grab system_settings values from the database
-$stmtA = "SELECT sip_event_logging FROM system_settings limit 1;";
+$stmtA = "SELECT sip_event_logging,enable_auto_reports FROM system_settings limit 1;";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
 if ($sthArows > 0)
 	{
 	@aryA = $sthA->fetchrow_array;
-	$SSsip_event_logging =			$aryA[0];
+	$SSsip_event_logging =		$aryA[0];
+	$SSenable_auto_reports =	$aryA[1];
 	}
 $sthA->finish();
 
@@ -524,6 +548,20 @@ if (!$T)
 if (!$Q) {print " - OPTIMIZE vicidial_users          \n";}
 
 
+$stmtA = "OPTIMIZE table system_settings;";
+if($DB){print STDERR "\n|$stmtA|\n";}
+if (!$T) 
+	{
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	@aryA = $sthA->fetchrow_array;
+	if (!$Q) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+	$sthA->finish();
+	}
+if (!$Q) {print " - OPTIMIZE system_settings          \n";}
+
+
 ### Gather active servers from the database
 $stmtA = "SELECT server_ip,server_id FROM servers where active='Y' and active_asterisk_server='Y';";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
@@ -577,6 +615,114 @@ while ($sthArowsSERVERS > $aas)
 $sthA->finish();
 
 
+$stmtA = "DELETE from vicidial_3way_press_live where call_date < '$SQLdate_NEG_sixhour';";
+if($DB){print STDERR "\n|$stmtA|\n";}
+if (!$T) {      $affected_rows = $dbhA->do($stmtA);}
+if (!$Q) {print " - vicidial_3way_press_live flush: $affected_rows rows\n";}
+
+$stmtA = "OPTIMIZE table vicidial_3way_press_live;";
+if($DB){print STDERR "\n|$stmtA|\n";}
+if (!$T) 
+	{
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	@aryA = $sthA->fetchrow_array;
+	if (!$Q) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+	$sthA->finish();
+	}
+if (!$Q) {print " - OPTIMIZE vicidial_3way_press_live          \n";}
+
+
+$stmtA = "OPTIMIZE table vicidial_3way_press_multi;";
+if($DB){print STDERR "\n|$stmtA|\n";}
+if (!$T) 
+	{
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	@aryA = $sthA->fetchrow_array;
+	if (!$Q) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+	$sthA->finish();
+	}
+if (!$Q) {print " - OPTIMIZE vicidial_3way_press_multi          \n";}
+
+if ($SSenable_auto_reports > 0)
+	{
+	$stmtA = "UPDATE vicidial_pending_ar SET status='ERROR' where status='TRIGGERED' and start_datetime < '$SQLdate_NEG_tenminute';";
+	if($DB){print STDERR "\n|$stmtA|\n";}
+	if (!$T) {      $affected_rows = $dbhA->do($stmtA);}
+	if (!$Q) {print " - vicidial_pending_ar flush: $affected_rows rows\n";}
+
+	$stmtA = "OPTIMIZE table vicidial_pending_ar;";
+	if($DB){print STDERR "\n|$stmtA|\n";}
+	if (!$T) 
+		{
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		@aryA = $sthA->fetchrow_array;
+		if (!$Q) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+		$sthA->finish();
+		}
+	if (!$Q) {print " - OPTIMIZE vicidial_pending_ar          \n";}
+	}
+
+$stmtA = "DELETE from server_live_stats where update_time < '$DQLdate_NEG_twelvehour';";
+if($DB){print STDERR "\n|$stmtA|\n";}
+if (!$T) {      $affected_rows = $dbhA->do($stmtA);}
+if (!$Q) {print " - server_live_stats flush: $affected_rows rows\n";}
+
+$stmtA = "DELETE from server_live_drives where update_time < '$DQLdate_NEG_twelvehour';";
+if($DB){print STDERR "\n|$stmtA|\n";}
+if (!$T) {      $affected_rows = $dbhA->do($stmtA);}
+if (!$Q) {print " - server_live_drives flush: $affected_rows rows\n";}
+
+$stmtA = "DELETE from server_live_partitions where update_time < '$DQLdate_NEG_twelvehour';";
+if($DB){print STDERR "\n|$stmtA|\n";}
+if (!$T) {      $affected_rows = $dbhA->do($stmtA);}
+if (!$Q) {print " - server_live_partitions flush: $affected_rows rows\n";}
+
+$stmtA = "OPTIMIZE table server_live_stats;";
+if($DB){print STDERR "\n|$stmtA|\n";}
+if (!$T) 
+	{
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	@aryA = $sthA->fetchrow_array;
+	if (!$Q) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+	$sthA->finish();
+	}
+if (!$Q) {print " - OPTIMIZE server_live_stats          \n";}
+
+$stmtA = "OPTIMIZE table server_live_drives;";
+if($DB){print STDERR "\n|$stmtA|\n";}
+if (!$T) 
+	{
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	@aryA = $sthA->fetchrow_array;
+	if (!$Q) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+	$sthA->finish();
+	}
+if (!$Q) {print " - OPTIMIZE server_live_drives          \n";}
+
+$stmtA = "OPTIMIZE table server_live_partitions;";
+if($DB){print STDERR "\n|$stmtA|\n";}
+if (!$T) 
+	{
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	@aryA = $sthA->fetchrow_array;
+	if (!$Q) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+	$sthA->finish();
+	}
+if (!$Q) {print " - OPTIMIZE server_live_partitions          \n";}
+
+
 if ($session_flush > 0) 
 	{
 	$stmtA = "DELETE from vicidial_sessions_recent where call_date < '$SQLdate_NEG_1hour';";
@@ -597,7 +743,6 @@ if ($session_flush > 0)
 		}
 	if (!$Q) {print " - OPTIMIZE vicidial_sessions_recent          \n";}
 	}
-$dbhA->disconnect();
 
 
 if ($reset_stuck_leads > 0) 
@@ -741,6 +886,122 @@ if ($reset_stuck_leads > 0)
 
 	if (!$Q) {print " - STUCK leads check finished, stuck calls checked: $a  reset: $found_stuck_ct, exiting...\n";}
 	}
+
+
+if ($check_xfers > 0) 
+	{
+	$xfers_sc_ct=0;
+	$killed_xfers_ct=0;
+	# Gather all XFER vicidial_auto_calls records older than X seconds
+	$stmtA = "SELECT auto_call_id,server_ip,lead_id,callerid,channel,call_time FROM vicidial_auto_calls where status IN('XFER') and call_time <= \"$SQLdate_NEG_1hour\" order by call_time limit 10000;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArowsXFERS=$sthA->rows;
+	if ($DBX) {print "DEBUG: $sthArowsXFERS|$stmtA|\n";}
+	$a=0;
+	while ($sthArowsXFERS > $a)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$ST_auto_call_id[$a] =			$aryA[0];
+		$ST_server_ip[$a] =				$aryA[1];
+		$ST_lead_id[$a] =				$aryA[2];
+		$ST_callerid[$a] =				$aryA[3];
+		$ST_channel[$a] =				$aryA[4];
+		$ST_call_date[$a] =				$aryA[5];
+		$a++;
+		}
+	$sthA->finish();
+
+	$a=0;
+	while ($sthArowsXFERS > $a)
+		{
+		$active_count=0;
+		$channelSQL='';
+		if (length($ST_channel[$a]) > 0) {$channelSQL="or channel='$ST_channel[$a]'";}
+		$stmtA = "SELECT count(*) FROM live_channels where channel_group='$ST_callerid[$a]' $channelSQL;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArowsACTIVE=$sthA->rows;
+		if ($DBX) {print "DEBUG: $sthArowsACTIVE|$stmtA|\n";}
+		if ($sthArowsACTIVE > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$active_count =		$aryA[0];
+			}
+		$sthA->finish();
+
+		if ($active_count > 0) 
+			{if($DB){print STDERR "Call active: $active_count|$ST_lead_id[$a]|$ST_callerid[$a]|$ST_server_ip[$a]|$ST_channel[$a]|$ST_call_date[$a]|\n";}}
+		else
+			{
+			if($DB){print STDERR "Xfer fail 1st check: $active_count|$ST_lead_id[$a]|$ST_callerid[$a]|$ST_server_ip[$a]|$ST_channel[$a]|$ST_call_date[$a]|\n";}
+
+			$TK_auto_call_id[$xfers_sc_ct] =	$ST_auto_call_id[$a];
+			$TK_server_ip[$xfers_sc_ct] =		$ST_server_ip[$a];
+			$TK_lead_id[$xfers_sc_ct] =			$ST_lead_id[$a];
+			$TK_callerid[$xfers_sc_ct] =		$ST_callerid[$a];
+			$TK_channel[$xfers_sc_ct] =			$ST_channel[$a];
+			$TK_call_date[$xfers_sc_ct] =		$ST_call_date[$a];
+
+			$xfers_sc_ct++;
+			}
+
+		$a++;
+		}
+
+	if ($xfers_sc_ct > 0) 
+		{
+		if($DB){print STDERR "Xfers dead found($a), waiting 5 seconds before 2nd round check...\n";}
+		# sleep for 5 seconds, then check the dead xfers flagged in the first round of checking
+		sleep(5);
+		}
+
+	$a=0;
+	while ($xfers_sc_ct > $a)
+		{
+		$active_count=0;
+
+		$channelSQL='';
+		if (length($TK_channel[$a]) > 0) {$channelSQL="or channel='$TK_channel[$a]'";}
+		$stmtA = "SELECT count(*) FROM live_channels where channel_group='$TK_callerid[$a]' $channelSQL;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArowsACTIVE=$sthA->rows;
+		if ($DBX) {print "DEBUG: $sthArowsACTIVE|$stmtA|\n";}
+		if ($sthArowsACTIVE > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$active_count =		$aryA[0];
+			}
+		$sthA->finish();
+
+		if ($active_count > 0) 
+			{if($DB){print STDERR "Call active 2nd check: $active_count|$TK_lead_id[$a]|$TK_callerid[$a]|$TK_server_ip[$a]|$TK_channel[$a]|$TK_call_date[$a]|\n";}}
+		else
+			{
+			if (!$Q) {print " - dead xfer found: $active_count|$TK_lead_id[$a]|$TK_callerid[$a]|$TK_server_ip[$a]|$TK_channel[$a]|$TK_call_date[$a]|\n";}
+
+			# delete vicidial_auto_calls record
+			$stmtA = "DELETE FROM vicidial_auto_calls WHERE auto_call_id='$TK_auto_call_id[$a]';";
+			if($DB){print STDERR "\n|$stmtA|\n";}
+			if (!$T) {$affected_rows = $dbhA->do($stmtA);}
+			if ($DBX) {print "DEBUG: $affected_rows|$stmtA|\n";}
+			$killed_xfers_ct++;
+			if (!$Q) {print " - dead xfer call has been deleted from vac: $TK_auto_call_id[$a]|$killed_xfers_ct|\n";}
+
+			if (!$XFERLOGfile)	{$XFERLOGfile = "$PATHlogs/killed_xfers.$year-$mon-$mday";}
+			open(Xout, ">>$XFERLOGfile")
+					|| die "Can't open $XFERLOGfile: $!\n";
+			print Xout "$SQLdate_NOW|$affected_rows|$TK_auto_call_id[$a]|$TK_lead_id[$a]|$TK_callerid[$a]|$TK_server_ip[$a]|$TK_channel[$a]|$TK_call_date[$a]|\n";
+			close(Xout);
+			}
+		$a++;
+		}
+
+	if (!$Q) {print " - XFER leads check finished, stuck calls checked: $sthArowsXFERS  deleted: $killed_xfers_ct, exiting...\n";}
+	}
+
+
 $dbhA->disconnect();
 
 exit;

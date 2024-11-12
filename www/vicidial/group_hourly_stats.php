@@ -1,7 +1,7 @@
 <?php
 # group_hourly_stats.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -22,6 +22,7 @@
 # 170409-1539 - Added IP List validation code
 # 220303-1547 - Added allow_web_debug system setting
 # 220812-0958 - Added User Group report permissions checking
+# 240801-1130 - Code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
@@ -351,7 +352,7 @@ echo "<TR><TD ALIGN=LEFT COLSPAN=2>\n";
 
 echo "<br><center>\n";
 
-echo "<B>"._QXZ("TSR HOUR COUNTS").": <a href=\"./admin.php?ADD=3111&group_id=$group\">$group</a> | $status | $date_with_hour | $date_no_hour</B>\n";
+echo "<B><font FACE='ARIAL,HELVETICA' SIZE=2>"._QXZ("TSR HOUR COUNTS").": <a href=\"./admin.php?ADD=3111&group_id=$group\">$group</a> | $status | $date_with_hour | $date_no_hour</font></B>\n";
 
 echo "<center><TABLE width=600 cellspacing=0 cellpadding=1>\n";
 echo "<tr><td><font size=2>"._QXZ("TSR")." </td><td align=left><font size=2>"._QXZ("ID")." </td><td align=right><font size=2> &nbsp; $status</td><td align=right><font size=2> &nbsp; "._QXZ("TOTAL CALLS")."</td><td align=right><font size=2> &nbsp; $status "._QXZ("DAY")."</td><td align=right><font size=2> &nbsp; &nbsp; </td></tr>\n";
@@ -384,13 +385,14 @@ echo "<tr><td><font size=2>"._QXZ("TSR")." </td><td align=left><font size=2>"._Q
 
 	}
 
-echo "</TABLE></center>\n";
+echo "</TABLE>\n";
 echo "<br><br>\n";
 
 
-echo "<br>"._QXZ("Please enter the group you want to get hourly stats for").": <form action=$PHP_SELF method=GET>\n";
+echo "<br><form action=$PHP_SELF method=GET><TABLE width=600 cellspacing=0 cellpadding=1 align='center'><tr><td align='left'>";
+echo "<font FACE='ARIAL,HELVETICA' SIZE=2>"._QXZ("Please enter the group you want to get hourly stats for").":<BR><BR>\n";
 echo "<input type=hidden name=DB value=$DB>\n";
-echo _QXZ("group").": <select size=1 name=group>\n";
+echo _QXZ("Group").": <select size=1 name=group>\n";
 
 $stmt="SELECT user_group,group_name from vicidial_user_groups $whereLOGadmin_viewable_groupsSQL order by user_group";
 $rslt=mysql_to_mysqli($stmt, $link);
@@ -407,9 +409,13 @@ while ($groups_to_print > $o)
 	$o++;
 	}
 echo "$groups_list</select><br>\n";
-echo _QXZ("status").": <input type=text name=status size=10 maxlength=10 value=\"$status\"> &nbsp; ("._QXZ("example").": "._QXZ("XFER").")<br>\n";
-echo _QXZ("date with hour").": <input type=text name=date_with_hour size=14 maxlength=13 value=\"$date_with_hour\"> &nbsp; ("._QXZ("example").": 2004-06-25 14)<br>\n";
+echo _QXZ("Status").": <input type=text name=status size=10 maxlength=10 value=\"$status\"> &nbsp; ("._QXZ("example").": "._QXZ("XFER").")<br>\n";
+echo _QXZ("Date with hour").": <input type=text name=date_with_hour size=14 maxlength=13 value=\"$date_with_hour\"> &nbsp; ("._QXZ("example").": 2004-06-25 14)</font><br>\n";
+echo "</td></tr>";
+echo "<tr><td align='center'>";
 echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'>\n";
+echo "</td></tr></table></form>";
+
 echo "<BR><BR><BR>\n";
 
 
