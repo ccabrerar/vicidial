@@ -1,7 +1,7 @@
 <?php
 # lead_tools_advanced.php - Various tools for lead basic lead management, advanced version.
 #
-# Copyright (C) 2022  Matt Florell,Michael Cargile <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell,Michael Cargile <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 131016-1948 - Initial Build based upon lead_tools.php
@@ -17,10 +17,10 @@
 # 191119-1817 - Fixes for translations compatibility, issue #1142
 # 210607-0923 - Added option to reset called_count to 0
 # 220228-1012 - Added allow_web_debug system setting
-#
+# 241114-0813 - Raised max_count default to 60
 
-$version = '2.14-13';
-$build = '220228-1012';
+$version = '2.14-14';
+$build = '241114-0813';
 
 # This limit is to prevent data inconsistancies.
 # If there are too many leads in a list this
@@ -28,7 +28,7 @@ $build = '220228-1012';
 $list_lead_limit = 100000;
 
 # maximum call count the script will work with
-$max_count = 20;
+$max_count = 60;
 
 require("dbconnect_mysqli.php");
 require("functions.php");
