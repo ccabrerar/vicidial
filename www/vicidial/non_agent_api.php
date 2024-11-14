@@ -217,10 +217,11 @@
 # 240730-1832 - Changes for PHP8 compatibility, Added copy_did function
 # 240824-1626 - Added user_details function
 # 241004-1518 - Added webform_one-three variables to the update_campaign function
+# 241113-1600 - Added in_groups as input option for update_user function
 #
 
-$version = '2.14-194';
-$build = '241004-1518';
+$version = '2.14-195';
+$build = '241113-1600';
 $php_script='non_agent_api.php';
 $api_url_log = 0;
 $camp_lead_order_random=1;
@@ -4109,6 +4110,7 @@ if ($function == 'update_user')
 						$custom_fiveSQL='';
 						$activeSQL='';
 						$wrapup_seconds_overrideSQL='';
+						$closer_campaignsSQL='';
 
 						if (strlen($agent_pass) > 0)
 							{
@@ -4401,6 +4403,12 @@ if ($function == 'update_user')
 							else
 								{$wrapup_seconds_overrideSQL = " ,wrapup_seconds_override='$wrapup_seconds_override'";}
 							}
+						if (strlen($in_groups) > 0)
+							{
+							$in_groups = preg_replace("/\|/"," ",$in_groups);
+							$in_groups = " ".$in_groups." -";
+							$closer_campaignsSQL = " ,closer_campaigns=\"$in_groups\"";
+							}
 
 						if ( (strlen($campaign_rank) > 0) or (strlen($campaign_grade) > 0) )
 							{
@@ -4629,7 +4637,7 @@ if ($function == 'update_user')
 							### END reset_password section ###
 							}
 
-						$updateSQL = "$passSQL$pass_hashSQL$full_nameSQL$user_levelSQL$user_groupSQL$phone_loginSQL$phone_passSQL$hotkeys_activeSQL$voicemail_idSQL$emailSQL$custom_oneSQL$custom_twoSQL$custom_threeSQL$custom_fourSQL$custom_fiveSQL$activeSQL$wrapup_seconds_overrideSQL";
+						$updateSQL = "$passSQL$pass_hashSQL$full_nameSQL$user_levelSQL$user_groupSQL$phone_loginSQL$phone_passSQL$hotkeys_activeSQL$voicemail_idSQL$emailSQL$custom_oneSQL$custom_twoSQL$custom_threeSQL$custom_fourSQL$custom_fiveSQL$activeSQL$wrapup_seconds_overrideSQL$closer_campaignsSQL";
 
 						if (strlen($updateSQL)< 3)
 							{

@@ -1,0 +1,284 @@
+MySQL(MariaDB) Multi-Source Replication		Started: 2024-09-20	Updated: 2024-09-24
+
+
+MariaDB 10.0.1(released 2013-02-06) added the Multi-Source Replication features:
+https://mariadb.com/kb/en/multi-source-replication/
+
+
+Intro with instructions for how to set up multi-source replication, 2-master DBs feeding to 1-secondary DB server:
+https://dev.mysql.com/blog-archive/mysql-5-7-multi-source-replication-automatically-combining-data-from-multiple-databases-into-one/
+
+
+
+
+Changes to the 82 VICIdial database tables that have AUTO_INCREMENT columns(As of September 24, 2024 - svn/trunk revision 3876):
+
+
+FOR ALL 3 MASTER DB SERVERS:
+SET GLOBAL auto_increment_increment=3;
+
+
+
+FOR SERVER 1:
+
+SET GLOBAL auto_increment_offset=3;
+
+ALTER TABLE verm_custom_report_holder AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_khomp_log AUTO_INCREMENT = 3;
+ALTER TABLE contact_information AUTO_INCREMENT = 3;
+ALTER TABLE dialable_inventory_snapshots AUTO_INCREMENT = 3;
+ALTER TABLE gateway_recording_log AUTO_INCREMENT = 3;
+ALTER TABLE inbound_disabled_entries AUTO_INCREMENT = 3;
+ALTER TABLE inbound_email_attachments AUTO_INCREMENT = 3;
+ALTER TABLE quality_control_checkpoint_log AUTO_INCREMENT = 3;
+ALTER TABLE quality_control_checkpoints AUTO_INCREMENT = 3;
+ALTER TABLE quality_control_queue AUTO_INCREMENT = 3;
+ALTER TABLE recording_log AUTO_INCREMENT = 3;
+ALTER TABLE user_call_log AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_abandon_check_queue AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_admin_log AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_agent_function_log AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_agent_log AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_agent_notifications AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_agent_notifications_queue AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_agent_skip_log AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_amm_multi AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_api_log AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_auto_calls AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_call_notes AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_callbacks AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_chat_archive AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_chat_log AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_chat_log_archive AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_chat_participants AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_closer_log AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_comments AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_configuration AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_country_dnc_queue AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_cpd_log AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_custom_reports AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_demographic_quotas_goals AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_dnccom_filter_log AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_dtmf_log AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_email_list AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_email_log AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_extension_groups AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_hopper AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_inbound_callback_queue AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_inbound_dids AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_ivr AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_ivr_response AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_language_phrases AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_lead_recycle AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_lead_search_log AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_list AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_list_alt_phones AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_list_pins AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_lists_fields AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_live_agents AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_live_chats AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_long_extensions AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_manager AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_manager_chat_log AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_manager_chat_log_archive AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_manager_chats AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_manager_chats_archive AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_manual_dial_queue AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_monitor_calls AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_peer_event_log AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_pending_ar AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_qc_agent_log AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_recording_access_log AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_remote_agents AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_report_log AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_security_event_log AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_sip_event_log AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_territories AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_timeclock_log AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_timeoff_log AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_url_log AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_url_multi AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_urls AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_user_log AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_users AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_webservers AUTO_INCREMENT = 3;
+ALTER TABLE vicidial_xfer_log AUTO_INCREMENT = 3;
+ALTER TABLE vtiger_rank_parameters AUTO_INCREMENT = 3;
+ALTER TABLE www_phrases AUTO_INCREMENT = 3;
+
+
+FOR SERVER 2:
+
+SET GLOBAL auto_increment_offset=4;
+
+ALTER TABLE verm_custom_report_holder AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_khomp_log AUTO_INCREMENT = 4;
+ALTER TABLE contact_information AUTO_INCREMENT = 4;
+ALTER TABLE dialable_inventory_snapshots AUTO_INCREMENT = 4;
+ALTER TABLE gateway_recording_log AUTO_INCREMENT = 4;
+ALTER TABLE inbound_disabled_entries AUTO_INCREMENT = 4;
+ALTER TABLE inbound_email_attachments AUTO_INCREMENT = 4;
+ALTER TABLE quality_control_checkpoint_log AUTO_INCREMENT = 4;
+ALTER TABLE quality_control_checkpoints AUTO_INCREMENT = 4;
+ALTER TABLE quality_control_queue AUTO_INCREMENT = 4;
+ALTER TABLE recording_log AUTO_INCREMENT = 4;
+ALTER TABLE user_call_log AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_abandon_check_queue AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_admin_log AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_agent_function_log AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_agent_log AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_agent_notifications AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_agent_notifications_queue AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_agent_skip_log AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_amm_multi AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_api_log AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_auto_calls AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_call_notes AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_callbacks AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_chat_archive AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_chat_log AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_chat_log_archive AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_chat_participants AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_closer_log AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_comments AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_configuration AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_country_dnc_queue AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_cpd_log AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_custom_reports AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_demographic_quotas_goals AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_dnccom_filter_log AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_dtmf_log AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_email_list AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_email_log AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_extension_groups AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_hopper AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_inbound_callback_queue AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_inbound_dids AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_ivr AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_ivr_response AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_language_phrases AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_lead_recycle AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_lead_search_log AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_list AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_list_alt_phones AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_list_pins AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_lists_fields AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_live_agents AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_live_chats AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_long_extensions AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_manager AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_manager_chat_log AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_manager_chat_log_archive AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_manager_chats AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_manager_chats_archive AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_manual_dial_queue AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_monitor_calls AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_peer_event_log AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_pending_ar AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_qc_agent_log AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_recording_access_log AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_remote_agents AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_report_log AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_security_event_log AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_sip_event_log AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_territories AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_timeclock_log AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_timeoff_log AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_url_log AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_url_multi AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_urls AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_user_log AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_users AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_webservers AUTO_INCREMENT = 4;
+ALTER TABLE vicidial_xfer_log AUTO_INCREMENT = 4;
+ALTER TABLE vtiger_rank_parameters AUTO_INCREMENT = 4;
+ALTER TABLE www_phrases AUTO_INCREMENT = 4;
+
+
+FOR SERVER 3:
+
+SET GLOBAL auto_increment_offset=5;
+
+ALTER TABLE verm_custom_report_holder AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_khomp_log AUTO_INCREMENT = 5;
+ALTER TABLE contact_information AUTO_INCREMENT = 5;
+ALTER TABLE dialable_inventory_snapshots AUTO_INCREMENT = 5;
+ALTER TABLE gateway_recording_log AUTO_INCREMENT = 5;
+ALTER TABLE inbound_disabled_entries AUTO_INCREMENT = 5;
+ALTER TABLE inbound_email_attachments AUTO_INCREMENT = 5;
+ALTER TABLE quality_control_checkpoint_log AUTO_INCREMENT = 5;
+ALTER TABLE quality_control_checkpoints AUTO_INCREMENT = 5;
+ALTER TABLE quality_control_queue AUTO_INCREMENT = 5;
+ALTER TABLE recording_log AUTO_INCREMENT = 5;
+ALTER TABLE user_call_log AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_abandon_check_queue AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_admin_log AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_agent_function_log AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_agent_log AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_agent_notifications AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_agent_notifications_queue AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_agent_skip_log AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_amm_multi AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_api_log AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_auto_calls AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_call_notes AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_callbacks AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_chat_archive AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_chat_log AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_chat_log_archive AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_chat_participants AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_closer_log AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_comments AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_configuration AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_country_dnc_queue AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_cpd_log AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_custom_reports AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_demographic_quotas_goals AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_dnccom_filter_log AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_dtmf_log AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_email_list AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_email_log AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_extension_groups AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_hopper AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_inbound_callback_queue AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_inbound_dids AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_ivr AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_ivr_response AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_language_phrases AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_lead_recycle AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_lead_search_log AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_list AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_list_alt_phones AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_list_pins AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_lists_fields AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_live_agents AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_live_chats AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_long_extensions AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_manager AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_manager_chat_log AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_manager_chat_log_archive AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_manager_chats AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_manager_chats_archive AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_manual_dial_queue AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_monitor_calls AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_peer_event_log AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_pending_ar AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_qc_agent_log AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_recording_access_log AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_remote_agents AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_report_log AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_security_event_log AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_sip_event_log AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_territories AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_timeclock_log AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_timeoff_log AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_url_log AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_url_multi AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_urls AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_user_log AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_users AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_webservers AUTO_INCREMENT = 5;
+ALTER TABLE vicidial_xfer_log AUTO_INCREMENT = 5;
+ALTER TABLE vtiger_rank_parameters AUTO_INCREMENT = 5;
+ALTER TABLE www_phrases AUTO_INCREMENT = 5;
+

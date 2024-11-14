@@ -2782,3 +2782,34 @@ UPDATE system_settings SET db_schema_version='1719',db_schema_update_date=NOW() 
 ALTER TABLE vicidial_khomp_log ADD khomp_settings_container VARCHAR(40); 
 
 UPDATE system_settings SET db_schema_version='1720',db_schema_update_date=NOW() where db_schema_version < 1720;
+
+CREATE TABLE clr_log (
+clr_id INT(10) UNSIGNED PRIMARY KEY AUTO_INCREMENT NOT NULL,
+start_time DATETIME,
+begin_range DATETIME,
+range_minutes SMALLINT(5) UNSIGNED default '0',
+phase VARCHAR(40) default '',
+records_ct MEDIUMINT(7) UNSIGNED default '0',
+length_in_sec MEDIUMINT(8) UNSIGNED default '0',
+options VARCHAR(100) default '',
+server_ip VARCHAR(15) default '',
+processing_log TEXT,
+index(start_time)
+) ENGINE=MyISAM;
+
+ALTER TABLE vicidial_inbound_dids ADD modify_stamp TIMESTAMP;
+ALTER TABLE vicidial_inbound_groups ADD modify_stamp TIMESTAMP;
+ALTER TABLE vicidial_users ADD modify_stamp TIMESTAMP;
+ALTER TABLE vicidial_user_groups ADD modify_stamp TIMESTAMP;
+ALTER TABLE vicidial_lead_filters ADD modify_stamp TIMESTAMP;
+ALTER TABLE vicidial_scripts ADD modify_stamp TIMESTAMP;
+ALTER TABLE vicidial_call_times ADD modify_stamp TIMESTAMP;
+ALTER TABLE vicidial_state_call_times ADD modify_stamp TIMESTAMP;
+ALTER TABLE vicidial_shifts ADD modify_stamp TIMESTAMP;
+ALTER TABLE vicidial_statuses ADD modify_stamp TIMESTAMP;
+ALTER TABLE vicidial_status_groups ADD modify_stamp TIMESTAMP;
+ALTER TABLE vicidial_cid_groups ADD modify_stamp TIMESTAMP;
+ALTER TABLE vicidial_settings_containers ADD modify_stamp TIMESTAMP;
+ALTER TABLE vicidial_url_multi ADD modify_stamp TIMESTAMP;
+
+UPDATE system_settings SET db_schema_version='1721',db_schema_update_date=NOW() where db_schema_version < 1721;

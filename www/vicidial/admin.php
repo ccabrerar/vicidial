@@ -6217,12 +6217,13 @@ if ($SSscript_remove_js > 0)
 # 240826-0918 - Added mnaual dial minimum campaign settings
 # 241001-1532 - Added Khomp Quick Stats Report
 # 241021-2138 - Added Khomp campaign settings option
+# 241113-2002 - Added update timestamps for sub-settings groups(like campaigns)
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-930a';
-$build = '241021-2138';
+$admin_version = '2.14-931a';
+$build = '241113-2002';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -12772,8 +12773,11 @@ if ($ADD==22)
 					$stmt="INSERT INTO vicidial_campaign_statuses (status,status_name,selectable,campaign_id,human_answered,category,sale,dnc,customer_contact,not_interested,unworkable,scheduled_callback,completed,min_sec,max_sec,answering_machine) values('$status_id','$status_name','$selectable','$campaign_id','$human_answered','$category','$sale','$dnc','$customer_contact','$not_interested','$unworkable','$scheduled_callbacks','$completed','$min_sec','$max_sec','$answering_machine');";
 					$rslt=mysql_to_mysqli($stmt, $link);
 
+					$stmtB="UPDATE vicidial_campaigns set campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
+					$rslt=mysql_to_mysqli($stmtB, $link);
+
 					### LOG INSERTION Admin Log Table ###
-					$SQL_log = "$stmt|";
+					$SQL_log = "$stmt|$stmtB|";
 					$SQL_log = preg_replace('/;/', '', $SQL_log);
 					$SQL_log = addslashes($SQL_log);
 					$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGN_STATUS', event_type='ADD', record_id='$campaign_id', event_code='ADMIN ADD CAMPAIGN STATUS', event_sql=\"$SQL_log\", event_notes='Status: $status_id';";
@@ -12824,8 +12828,11 @@ if ($ADD==23)
 				$stmt="INSERT INTO vicidial_campaign_hotkeys(status,hotkey,status_name,selectable,campaign_id) values('$status','$hotkey','$status_name','$selectable','$campaign_id');";
 				$rslt=mysql_to_mysqli($stmt, $link);
 
+				$stmtB="UPDATE vicidial_campaigns set campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
+				$rslt=mysql_to_mysqli($stmtB, $link);
+
 				### LOG INSERTION Admin Log Table ###
-				$SQL_log = "$stmt|";
+				$SQL_log = "$stmt|$stmtB|";
 				$SQL_log = preg_replace('/;/', '', $SQL_log);
 				$SQL_log = addslashes($SQL_log);
 				$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGN_HOTKEY', event_type='ADD', record_id='$campaign_id', event_code='ADMIN ADD CAMPAIGN HOTKEY', event_sql=\"$SQL_log\", event_notes='Status: $status|HotKey: $hotkey';";
@@ -12873,8 +12880,11 @@ if ($ADD==25)
 				$stmt="INSERT INTO vicidial_lead_recycle(campaign_id,status,attempt_delay,attempt_maximum,active) values('$campaign_id','$status','$attempt_delay','$attempt_maximum','$active');";
 				$rslt=mysql_to_mysqli($stmt, $link);
 
+				$stmtB="UPDATE vicidial_campaigns set campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
+				$rslt=mysql_to_mysqli($stmtB, $link);
+
 				### LOG INSERTION Admin Log Table ###
-				$SQL_log = "$stmt|";
+				$SQL_log = "$stmt|$stmtB|";
 				$SQL_log = preg_replace('/;/', '', $SQL_log);
 				$SQL_log = addslashes($SQL_log);
 				$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGN_RECYCLE', event_type='ADD', record_id='$campaign_id', event_code='ADMIN ADD CAMPAIGN LEAD RECYCLE', event_sql=\"$SQL_log\", event_notes='Status: $status';";
@@ -12923,7 +12933,7 @@ if ($ADD==26)
 
 				if (strlen($row[0])<2) {$row[0] = ' -';}
 				$auto_alt_dial_statuses = " $status$row[0]";
-				$stmt="UPDATE vicidial_campaigns set auto_alt_dial_statuses='$auto_alt_dial_statuses' where campaign_id='$campaign_id';";
+				$stmt="UPDATE vicidial_campaigns set auto_alt_dial_statuses='$auto_alt_dial_statuses',campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
 				$rslt=mysql_to_mysqli($stmt, $link);
 
 				### LOG INSERTION Admin Log Table ###
@@ -12974,8 +12984,11 @@ if ($ADD==27)
 				$stmt="INSERT INTO vicidial_pause_codes(campaign_id,pause_code,pause_code_name,billable,time_limit,require_mgr_approval) values('$campaign_id','$pause_code','$pause_code_name','$billable','$time_limit','$require_mgr_approval');";
 				$rslt=mysql_to_mysqli($stmt, $link);
 
+				$stmtB="UPDATE vicidial_campaigns set campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
+				$rslt=mysql_to_mysqli($stmtB, $link);
+
 				### LOG INSERTION Admin Log Table ###
-				$SQL_log = "$stmt|";
+				$SQL_log = "$stmt|$stmtB|";
 				$SQL_log = preg_replace('/;/', '', $SQL_log);
 				$SQL_log = addslashes($SQL_log);
 				$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGN_PAUSECODE', event_type='ADD', record_id='$campaign_id', event_code='ADMIN ADD CAMPAIGN PAUSE CODE', event_sql=\"$SQL_log\", event_notes='Pause Code: $pause_code';";
@@ -13024,7 +13037,7 @@ if ($ADD==28)
 
 				if (strlen($row[0])<2) {$row[0] = ' -';}
 				$dial_statuses = " $status$row[0]";
-				$stmt="UPDATE vicidial_campaigns set dial_statuses='$dial_statuses' where campaign_id='$campaign_id';";
+				$stmt="UPDATE vicidial_campaigns set dial_statuses='$dial_statuses',campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
 				$rslt=mysql_to_mysqli($stmt, $link);
 
 				### LOG INSERTION Admin Log Table ###
@@ -13077,8 +13090,11 @@ if ($ADD==201)
 				$stmtA="INSERT INTO vicidial_xfer_stats(campaign_id,preset_name) values('$campaign_id','$preset_name');";
 				$rslt=mysql_to_mysqli($stmtA, $link);
 
+				$stmtB="UPDATE vicidial_campaigns set campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
+				$rslt=mysql_to_mysqli($stmtB, $link);
+
 				### LOG INSERTION Admin Log Table ###
-				$SQL_log = "$stmt|$stmtA|";
+				$SQL_log = "$stmt|$stmtA|$stmtB|";
 				$SQL_log = preg_replace('/;/', '', $SQL_log);
 				$SQL_log = addslashes($SQL_log);
 				$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGN_PRESET', event_type='ADD', record_id='$campaign_id', event_code='ADMIN ADD CAMPAIGN PRESET', event_sql=\"$SQL_log\", event_notes='Preset: $preset_name - $preset_number';";
@@ -13124,8 +13140,11 @@ if ($ADD==202)
 					$stmt="INSERT INTO vicidial_campaign_cid_areacodes(campaign_id,areacode,outbound_cid,cid_description) values('$campaign_id','$areacode','$outbound_cid','$cid_description');";
 					$rslt=mysql_to_mysqli($stmt, $link);
 
+					$stmtB="UPDATE vicidial_campaigns set campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
+					$rslt=mysql_to_mysqli($stmtB, $link);
+
 					### LOG INSERTION Admin Log Table ###
-					$SQL_log = "$stmt|";
+					$SQL_log = "$stmt|$stmtB|";
 					$SQL_log = preg_replace('/;/', '', $SQL_log);
 					$SQL_log = addslashes($SQL_log);
 					$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGN_AC-CID', event_type='ADD', record_id='$campaign_id', event_code='ADMIN ADD CAMPAIGN AC-CID', event_sql=\"$SQL_log\", event_notes='CID: $areacode - $outbound_cid';";
@@ -13154,8 +13173,11 @@ if ($ADD==202)
 					$stmt="DELETE FROM vicidial_campaign_cid_areacodes WHERE campaign_id='$campaign_id' and areacode='$areacode' and outbound_cid='$outbound_cid';";
 					$rslt=mysql_to_mysqli($stmt, $link);
 
+					$stmtB="UPDATE vicidial_campaigns set campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
+					$rslt=mysql_to_mysqli($stmtB, $link);
+
 					### LOG INSERTION Admin Log Table ###
-					$SQL_log = "$stmt|";
+					$SQL_log = "$stmt|$stmtB|";
 					$SQL_log = preg_replace('/;/', '', $SQL_log);
 					$SQL_log = addslashes($SQL_log);
 					$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGN_AC-CID', event_type='DELETE', record_id='$campaign_id', event_code='ADMIN DELETE CAMPAIGN AC-CID', event_sql=\"$SQL_log\", event_notes='CID: $areacode - $outbound_cid';";
@@ -13221,7 +13243,10 @@ if ($ADD==202)
 					$stmt="UPDATE vicidial_campaign_cid_areacodes SET active='$Factive_value',cid_description='$Fcid_description_value' WHERE campaign_id='$campaign_id' and areacode='$Xareacode[$o]' and outbound_cid='$Xoutbound_cid[$o]';";
 					$rslt=mysql_to_mysqli($stmt, $link);
 
-					$stmt_log .= "$stmt|";
+					$stmtB="UPDATE vicidial_campaigns set campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
+					$rslt=mysql_to_mysqli($stmtB, $link);
+
+					$stmt_log .= "$stmt|$stmtB|";
 					$accid_log .= "CID: $Xareacode[$o] - $Xoutbound_cid[$o] - $Factive_value - $Fcid_description_value|";
 					}
 				$o++;
@@ -17508,8 +17533,11 @@ if ($ADD==42)
 				$stmtA="DELETE FROM vicidial_campaign_hotkeys where campaign_id='$campaign_id' and status='$status';";
 				$rslt=mysql_to_mysqli($stmtA, $link);
 
+				$stmtB="UPDATE vicidial_campaigns set campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
+				$rslt=mysql_to_mysqli($stmtB, $link);
+
 				### LOG INSERTION Admin Log Table ###
-				$SQL_log = "$stmt|$stmtA|";
+				$SQL_log = "$stmt|$stmtA|$stmtB|";
 				$SQL_log = preg_replace('/;/', '', $SQL_log);
 				$SQL_log = addslashes($SQL_log);
 				$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGN_STATUS', event_type='DELETE', record_id='$campaign_id', event_code='ADMIN DELETE CAMPAIGN STATUS', event_sql=\"$SQL_log\", event_notes='Status: $status';";
@@ -17523,8 +17551,11 @@ if ($ADD==42)
 				$stmt="UPDATE vicidial_campaign_statuses SET status_name='$status_name',selectable='$selectable',human_answered='$human_answered',category='$category',sale='$sale',dnc='$dnc',customer_contact='$customer_contact',not_interested='$not_interested',unworkable='$unworkable',scheduled_callback='$scheduled_callbacks',completed='$completed',min_sec='$min_sec',max_sec='$max_sec',answering_machine='$answering_machine' where campaign_id='$campaign_id' and status='$status';";
 				$rslt=mysql_to_mysqli($stmt, $link);
 
+				$stmtB="UPDATE vicidial_campaigns set campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
+				$rslt=mysql_to_mysqli($stmtB, $link);
+
 				### LOG INSERTION Admin Log Table ###
-				$SQL_log = "$stmt|";
+				$SQL_log = "$stmt|$stmtB|";
 				$SQL_log = preg_replace('/;/', '', $SQL_log);
 				$SQL_log = addslashes($SQL_log);
 				$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGN_STATUS', event_type='MODIFY', record_id='$campaign_id', event_code='ADMIN MODIFY CAMPAIGN STATUS', event_sql=\"$SQL_log\", event_notes='Status: $status';";
@@ -17566,8 +17597,11 @@ if ($ADD==43)
 			$stmt="DELETE FROM vicidial_campaign_hotkeys where campaign_id='$campaign_id' and status='$status' and hotkey='$hotkey';";
 			$rslt=mysql_to_mysqli($stmt, $link);
 
+			$stmtB="UPDATE vicidial_campaigns set campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
+			$rslt=mysql_to_mysqli($stmtB, $link);
+
 			### LOG INSERTION Admin Log Table ###
-			$SQL_log = "$stmt|";
+			$SQL_log = "$stmt|$stmtB|";
 			$SQL_log = preg_replace('/;/', '', $SQL_log);
 			$SQL_log = addslashes($SQL_log);
 			$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGN_HOTKEY', event_type='DELETE', record_id='$campaign_id', event_code='ADMIN DELETE CAMPAIGN HOTKEY', event_sql=\"$SQL_log\", event_notes='Status: $status|HotKey: $hotkey';";
@@ -17761,8 +17795,11 @@ if ($ADD==45)
 			$stmt="UPDATE vicidial_lead_recycle SET attempt_delay='$attempt_delay',attempt_maximum='$attempt_maximum',active='$active' where campaign_id='$campaign_id' and status='$status';";
 			$rslt=mysql_to_mysqli($stmt, $link);
 
+			$stmtB="UPDATE vicidial_campaigns set campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
+			$rslt=mysql_to_mysqli($stmtB, $link);
+
 			### LOG INSERTION Admin Log Table ###
-			$SQL_log = "$stmt|";
+			$SQL_log = "$stmt|$stmtB|";
 			$SQL_log = preg_replace('/;/', '', $SQL_log);
 			$SQL_log = addslashes($SQL_log);
 			$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGN_RECYCLE', event_type='MODIFY', record_id='$campaign_id', event_code='ADMIN MODIFY CAMPAIGN LEAD RECYCLE', event_sql=\"$SQL_log\", event_notes='';";
@@ -17804,8 +17841,11 @@ if ($ADD==47)
 			$stmt="UPDATE vicidial_pause_codes SET pause_code_name='$pause_code_name',billable='$billable',time_limit='$time_limit',require_mgr_approval='$require_mgr_approval' where campaign_id='$campaign_id' and pause_code='$pause_code';";
 			$rslt=mysql_to_mysqli($stmt, $link);
 
+			$stmtB="UPDATE vicidial_campaigns set campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
+			$rslt=mysql_to_mysqli($stmtB, $link);
+
 			### LOG INSERTION Admin Log Table ###
-			$SQL_log = "$stmt|";
+			$SQL_log = "$stmt|$stmtB|";
 			$SQL_log = preg_replace('/;/', '', $SQL_log);
 			$SQL_log = addslashes($SQL_log);
 			$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGN_PAUSECODE', event_type='MODIFY', record_id='$campaign_id', event_code='ADMIN MODIFY CAMPAIGN PAUSE CODE', event_sql=\"$SQL_log\", event_notes='';";
@@ -17862,7 +17902,7 @@ if ($ADD==48)
 
 			echo "<br><B>"._QXZ("QC SETTINGS MODIFIED").": $campaign_id</B>\n";
 
-			$stmt="UPDATE vicidial_campaigns SET qc_enabled='$qc_enabled',qc_statuses='$QC_statuses',qc_lists='$QC_lists',qc_web_form_address='" . mysqli_real_escape_string($link, $qc_web_form_address) . "',qc_script='$qc_script',qc_get_record_launch='$qc_get_record_launch',qc_show_recording='$qc_show_recording',qc_shift_id='$qc_shift_id',qc_scorecard_id='$qc_scorecard_id',qc_statuses_id='$qc_statuses_id' where campaign_id='$campaign_id';";
+			$stmt="UPDATE vicidial_campaigns SET qc_enabled='$qc_enabled',qc_statuses='$QC_statuses',qc_lists='$QC_lists',qc_web_form_address='" . mysqli_real_escape_string($link, $qc_web_form_address) . "',qc_script='$qc_script',qc_get_record_launch='$qc_get_record_launch',qc_show_recording='$qc_show_recording',qc_shift_id='$qc_shift_id',qc_scorecard_id='$qc_scorecard_id',qc_statuses_id='$qc_statuses_id',campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
 			$rslt=mysql_to_mysqli($stmt, $link);
 
 			### LOG INSERTION Admin Log Table ###
@@ -17901,7 +17941,7 @@ if ($ADD=='40A')
 			{
 			echo "<br><B>"._QXZ("SURVEY SETTINGS MODIFIED").": $campaign_id</B>\n";
 
-			$stmt="UPDATE vicidial_campaigns SET survey_first_audio_file='$survey_first_audio_file',survey_dtmf_digits='$survey_dtmf_digits',survey_ni_digit='$survey_ni_digit',survey_opt_in_audio_file='$survey_opt_in_audio_file',survey_ni_audio_file='$survey_ni_audio_file',survey_method='$survey_method',survey_no_response_action='$survey_no_response_action',survey_ni_status='$survey_ni_status',survey_response_digit_map='$survey_response_digit_map',survey_xfer_exten='$survey_xfer_exten',survey_camp_record_dir='$survey_camp_record_dir',voicemail_ext='$voicemail_ext',survey_third_digit='$survey_third_digit',survey_fourth_digit='$survey_fourth_digit',survey_third_audio_file='$survey_third_audio_file',survey_fourth_audio_file='$survey_fourth_audio_file',survey_third_status='$survey_third_status',survey_fourth_status='$survey_fourth_status',survey_third_exten='$survey_third_exten',survey_fourth_exten='$survey_fourth_exten',survey_menu_id='$survey_menu_id',survey_recording='$survey_recording',survey_wait_sec='$survey_wait_sec' where campaign_id='$campaign_id';";
+			$stmt="UPDATE vicidial_campaigns SET survey_first_audio_file='$survey_first_audio_file',survey_dtmf_digits='$survey_dtmf_digits',survey_ni_digit='$survey_ni_digit',survey_opt_in_audio_file='$survey_opt_in_audio_file',survey_ni_audio_file='$survey_ni_audio_file',survey_method='$survey_method',survey_no_response_action='$survey_no_response_action',survey_ni_status='$survey_ni_status',survey_response_digit_map='$survey_response_digit_map',survey_xfer_exten='$survey_xfer_exten',survey_camp_record_dir='$survey_camp_record_dir',voicemail_ext='$voicemail_ext',survey_third_digit='$survey_third_digit',survey_fourth_digit='$survey_fourth_digit',survey_third_audio_file='$survey_third_audio_file',survey_fourth_audio_file='$survey_fourth_audio_file',survey_third_status='$survey_third_status',survey_fourth_status='$survey_fourth_status',survey_third_exten='$survey_third_exten',survey_fourth_exten='$survey_fourth_exten',survey_menu_id='$survey_menu_id',survey_recording='$survey_recording',survey_wait_sec='$survey_wait_sec',campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
 			$rslt=mysql_to_mysqli($stmt, $link);
 
 			### LOG INSERTION Admin Log Table ###
@@ -17965,8 +18005,11 @@ if ($ADD==49)
 				$stmt="UPDATE vicidial_campaigns_list_mix SET vcl_name='$vcl_name',mix_method='$mix_method',list_mix_container='$list_mix_container' where campaign_id='$campaign_id' and vcl_id='$vcl_id';";
 				$rslt=mysql_to_mysqli($stmt, $link);
 
+				$stmtB="UPDATE vicidial_campaigns set campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
+				$rslt=mysql_to_mysqli($stmtB, $link);
+
 				### LOG INSERTION Admin Log Table ###
-				$SQL_log = "$stmt|";
+				$SQL_log = "$stmt|$stmtB|";
 				$SQL_log = preg_replace('/;/', '', $SQL_log);
 				$SQL_log = addslashes($SQL_log);
 				$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGN_LISTMIX', event_type='MODIFY', record_id='$campaign_id', event_code='ADMIN MODIFY CAMPAIGN LIST MIX', event_sql=\"$SQL_log\", event_notes='List Mix: $vcl_id';";
@@ -17999,8 +18042,11 @@ if ($ADD==49)
 				$stmt="UPDATE vicidial_campaigns_list_mix SET list_mix_container='$NEWlist_mix_container' where campaign_id='$campaign_id' and vcl_id='$vcl_id';";
 				$rslt=mysql_to_mysqli($stmt, $link);
 
+				$stmtB="UPDATE vicidial_campaigns set campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
+				$rslt=mysql_to_mysqli($stmtB, $link);
+
 				### LOG INSERTION Admin Log Table ###
-				$SQL_log = "$stmt|";
+				$SQL_log = "$stmt|$stmtB|";
 				$SQL_log = preg_replace('/;/', '', $SQL_log);
 				$SQL_log = addslashes($SQL_log);
 				$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGN_LISTMIX', event_type='MODIFY', record_id='$campaign_id', event_code='ADMIN MODIFY CAMPAIGN LIST MIX', event_sql=\"$SQL_log\", event_notes='List Mix: $vcl_id';";
@@ -18072,8 +18118,11 @@ if ($ADD==49)
 					$stmt="UPDATE vicidial_campaigns_list_mix SET list_mix_container='$NEWlist_mix_container' where campaign_id='$campaign_id' and vcl_id='$vcl_id';";
 					$rslt=mysql_to_mysqli($stmt, $link);
 
+					$stmtB="UPDATE vicidial_campaigns set campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
+					$rslt=mysql_to_mysqli($stmtB, $link);
+
 					### LOG INSERTION Admin Log Table ###
-					$SQL_log = "$stmt|";
+					$SQL_log = "$stmt|$stmtB|";
 					$SQL_log = preg_replace('/;/', '', $SQL_log);
 					$SQL_log = addslashes($SQL_log);
 					$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGN_LISTMIX', event_type='MODIFY', record_id='$campaign_id', event_code='ADMIN MODIFY CAMPAIGN LIST MIX', event_sql=\"$SQL_log\", event_notes='List Mix: $vcl_id';";
@@ -18116,8 +18165,11 @@ if ($ADD==49)
 						$stmt="INSERT INTO vicidial_campaigns_list_mix SET list_mix_container='$list_id|1|100| $status -|',campaign_id='$campaign_id',vcl_id='$vcl_id',vcl_name='$vcl_name',mix_method='$mix_method',status='INACTIVE';";
 						$rslt=mysql_to_mysqli($stmt, $link);
 
+						$stmtB="UPDATE vicidial_campaigns set campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
+						$rslt=mysql_to_mysqli($stmtB, $link);
+
 						### LOG INSERTION Admin Log Table ###
-						$SQL_log = "$stmt|";
+						$SQL_log = "$stmt|$stmtB|";
 						$SQL_log = preg_replace('/;/', '', $SQL_log);
 						$SQL_log = addslashes($SQL_log);
 						$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGN_LISTMIX', event_type='ADD', record_id='$campaign_id', event_code='ADMIN ADD CAMPAIGN LIST MIX', event_sql=\"$SQL_log\", event_notes='List Mix: $vcl_id';";
@@ -18145,8 +18197,11 @@ if ($ADD==49)
 				$stmt="DELETE from vicidial_campaigns_list_mix where vcl_id='$vcl_id' and campaign_id='$campaign_id';";
 				$rslt=mysql_to_mysqli($stmt, $link);
 
+				$stmtB="UPDATE vicidial_campaigns set campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
+				$rslt=mysql_to_mysqli($stmtB, $link);
+
 				### LOG INSERTION Admin Log Table ###
-				$SQL_log = "$stmt|";
+				$SQL_log = "$stmt|$stmtB|";
 				$SQL_log = preg_replace('/;/', '', $SQL_log);
 				$SQL_log = addslashes($SQL_log);
 				$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGN_LISTMIX', event_type='DELETE', record_id='$campaign_id', event_code='ADMIN DELETE CAMPAIGN LIST MIX', event_sql=\"$SQL_log\", event_notes='List Mix: $vcl_id';";
@@ -18175,8 +18230,11 @@ if ($ADD==49)
 				$stmtA="UPDATE vicidial_campaigns_list_mix SET status='ACTIVE' where vcl_id='$vcl_id' and campaign_id='$campaign_id';";
 				$rslt=mysql_to_mysqli($stmtA, $link);
 
+				$stmtB="UPDATE vicidial_campaigns set campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
+				$rslt=mysql_to_mysqli($stmtB, $link);
+
 				### LOG INSERTION Admin Log Table ###
-				$SQL_log = "$stmt|$stmtA|";
+				$SQL_log = "$stmt|$stmtA|$stmtB|";
 				$SQL_log = preg_replace('/;/', '', $SQL_log);
 				$SQL_log = addslashes($SQL_log);
 				$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGN_LISTMIX', event_type='MODIFY', record_id='$campaign_id', event_code='ADMIN MODIFY CAMPAIGN LIST MIX ACTIVE', event_sql=\"$SQL_log\", event_notes='List Mix: $vcl_id';";
@@ -18219,8 +18277,11 @@ if ($ADD==401)
 			$stmt="UPDATE vicidial_xfer_presets SET preset_dtmf='$preset_dtmf',preset_number='$preset_number',preset_hide_number='$preset_hide_number' where campaign_id='$campaign_id' and preset_name='$preset_name';";
 			$rslt=mysql_to_mysqli($stmt, $link);
 
+			$stmtB="UPDATE vicidial_campaigns set campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
+			$rslt=mysql_to_mysqli($stmtB, $link);
+
 			### LOG INSERTION Admin Log Table ###
-			$SQL_log = "$stmt|";
+			$SQL_log = "$stmt|$stmtB|";
 			$SQL_log = preg_replace('/;/', '', $SQL_log);
 			$SQL_log = addslashes($SQL_log);
 			$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGN_PRESET', event_type='MODIFY', record_id='$campaign_id', event_code='ADMIN MODIFY CAMPAIGN PRESET', event_sql=\"$SQL_log\", event_notes='Preset: $preset_name - $preset_number';";
@@ -20567,8 +20628,11 @@ if ($ADD==493111111111)
 								$stmt="INSERT INTO vicidial_campaign_statuses (status,status_name,selectable,campaign_id,human_answered,category,sale,dnc,customer_contact,not_interested,unworkable,scheduled_callback,completed,min_sec,max_sec,answering_machine) values('$status_id','$status_name','$selectable','$status_group_id','$human_answered','$category','$sale','$dnc','$customer_contact','$not_interested','$unworkable','$scheduled_callbacks','$completed','$min_sec','$max_sec','$answering_machine');";
 								$rslt=mysql_to_mysqli($stmt, $link);
 
+								$stmtB="UPDATE vicidial_status_groups set modify_stamp='$SQLdate' where status_group_id='$status_group_id';";
+								$rslt=mysql_to_mysqli($stmtA, $link);
+
 								### LOG INSERTION Admin Log Table ###
-								$SQL_log = "$stmt|";
+								$SQL_log = "$stmt|$stmtB|";
 								$SQL_log = preg_replace('/;/', '', $SQL_log);
 								$SQL_log = addslashes($SQL_log);
 								$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='STATUSGROUPS', event_type='ADD', record_id='$status_group_id', event_code='ADMIN ADD STATUS GROUP STATUS', event_sql=\"$SQL_log\", event_notes='Status: $status_id';";
@@ -20586,8 +20650,11 @@ if ($ADD==493111111111)
 				$stmt="DELETE FROM vicidial_campaign_statuses where campaign_id='$status_group_id' and status='$status';";
 				$rslt=mysql_to_mysqli($stmt, $link);
 
+				$stmtB="UPDATE vicidial_status_groups set modify_stamp='$SQLdate' where status_group_id='$status_group_id';";
+				$rslt=mysql_to_mysqli($stmtA, $link);
+
 				### LOG INSERTION Admin Log Table ###
-				$SQL_log = "$stmt|";
+				$SQL_log = "$stmt|$stmtB|";
 				$SQL_log = preg_replace('/;/', '', $SQL_log);
 				$SQL_log = addslashes($SQL_log);
 				$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='STATUSGROUPS', event_type='DELETE', record_id='$status_group_id', event_code='ADMIN DELETE STATUS GROUP STATUS', event_sql=\"$SQL_log\", event_notes='Status: $status';";
@@ -20601,8 +20668,11 @@ if ($ADD==493111111111)
 				$stmt="UPDATE vicidial_campaign_statuses SET status_name='$status_name',selectable='$selectable',human_answered='$human_answered',category='$category',sale='$sale',dnc='$dnc',customer_contact='$customer_contact',not_interested='$not_interested',unworkable='$unworkable',scheduled_callback='$scheduled_callbacks',completed='$completed',min_sec='$min_sec',max_sec='$max_sec',answering_machine='$answering_machine' where campaign_id='$status_group_id' and status='$status';";
 				$rslt=mysql_to_mysqli($stmt, $link);
 
+				$stmtB="UPDATE vicidial_status_groups set modify_stamp='$SQLdate' where status_group_id='$status_group_id';";
+				$rslt=mysql_to_mysqli($stmtA, $link);
+
 				### LOG INSERTION Admin Log Table ###
-				$SQL_log = "$stmt|";
+				$SQL_log = "$stmt|$stmtB|";
 				$SQL_log = preg_replace('/;/', '', $SQL_log);
 				$SQL_log = addslashes($SQL_log);
 				$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='STATUSGROUPS', event_type='MODIFY', record_id='$status_group_id', event_code='ADMIN MODIFY STATUS GROUP STATUS', event_sql=\"$SQL_log\", event_notes='Status: $status';";
@@ -20781,8 +20851,11 @@ if ($ADD==496111111111)
 						$stmt="INSERT INTO vicidial_campaign_cid_areacodes(campaign_id,areacode,outbound_cid,cid_description) values('$cid_group_id','$areacode','$outbound_cid','$cid_description');";
 						$rslt=mysql_to_mysqli($stmt, $link);
 
+						$stmtB="UPDATE vicidial_cid_groups set modify_stamp='$SQLdate' where cid_group_id='$cid_group_id';";
+						$rslt=mysql_to_mysqli($stmtB, $link);
+
 						### LOG INSERTION Admin Log Table ###
-						$SQL_log = "$stmt|";
+						$SQL_log = "$stmt|$stmtB|";
 						$SQL_log = preg_replace('/;/', '', $SQL_log);
 						$SQL_log = addslashes($SQL_log);
 						$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CIDGROUPS', event_type='ADD', record_id='$cid_group_id', event_code='ADMIN ADD CID GROUP ENTRY', event_sql=\"$SQL_log\", event_notes='CID: $areacode - $outbound_cid';";
@@ -20821,8 +20894,11 @@ if ($ADD==496111111111)
 						$stmt="DELETE FROM vicidial_campaign_cid_areacodes WHERE campaign_id='$cid_group_id' and areacode='$areacode' and outbound_cid='$outbound_cid';";
 						$rslt=mysql_to_mysqli($stmt, $link);
 
+						$stmtB="UPDATE vicidial_cid_groups set modify_stamp='$SQLdate' where cid_group_id='$cid_group_id';";
+						$rslt=mysql_to_mysqli($stmtB, $link);
+
 						### LOG INSERTION Admin Log Table ###
-						$SQL_log = "$stmt|";
+						$SQL_log = "$stmt|$stmtB|";
 						$SQL_log = preg_replace('/;/', '', $SQL_log);
 						$SQL_log = addslashes($SQL_log);
 						$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CIDGROUPS', event_type='DELETE', record_id='$cid_group_id', event_code='ADMIN DELETE CID GROUP ENTRY', event_sql=\"$SQL_log\", event_notes='CID: $areacode - $outbound_cid';";
@@ -20901,7 +20977,10 @@ if ($ADD==496111111111)
 							$stmt="UPDATE vicidial_campaign_cid_areacodes SET active='$Factive_value',cid_description='$Fcid_description_value' WHERE campaign_id='$cid_group_id' and areacode='$Xareacode[$o]' and outbound_cid='$Xoutbound_cid[$o]';";
 							$rslt=mysql_to_mysqli($stmt, $link);
 
-							$stmt_log .= "$stmt|";
+							$stmtB="UPDATE vicidial_cid_groups set modify_stamp='$SQLdate' where cid_group_id='$cid_group_id';";
+							$rslt=mysql_to_mysqli($stmtB, $link);
+
+							$stmt_log .= "$stmt|$stmtB|";
 							$accid_log .= "CID: $Xareacode[$o] - $Xoutbound_cid[$o] - $Factive_value - $Fcid_description_value|";
 							}
 						$o++;
@@ -22952,8 +23031,11 @@ if ($ADD==65)
 				$stmt="DELETE FROM vicidial_lead_recycle where campaign_id='$campaign_id' and status='$status' $LOGallowed_campaignsSQL;";
 				$rslt=mysql_to_mysqli($stmt, $link);
 
+				$stmtB="UPDATE vicidial_campaigns set campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
+				$rslt=mysql_to_mysqli($stmtB, $link);
+
 				### LOG INSERTION Admin Log Table ###
-				$SQL_log = "$stmt|";
+				$SQL_log = "$stmt|$stmtB|";
 				$SQL_log = preg_replace('/;/', '', $SQL_log);
 				$SQL_log = addslashes($SQL_log);
 				$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGN_RECYCLE', event_type='DELETE', record_id='$campaign_id', event_code='ADMIN DELETE CAMPAIGN LEAD RECYCLE', event_sql=\"$SQL_log\", event_notes='Status: $status';";
@@ -23008,11 +23090,11 @@ if ($ADD==66)
 					$row=mysqli_fetch_row($rslt);
 
 					$auto_alt_dial_statuses = preg_replace("/\s$status\s/i", " ",$row[0]);
-					$stmt="UPDATE vicidial_campaigns set auto_alt_dial_statuses='$auto_alt_dial_statuses' where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
+					$stmt="UPDATE vicidial_campaigns set auto_alt_dial_statuses='$auto_alt_dial_statuses',campaign_changedate='$SQLdate' where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
 					$rslt=mysql_to_mysqli($stmt, $link);
 
 					### LOG INSERTION Admin Log Table ###
-					$SQL_log = "$stmt|";
+					$SQL_log = "$stmt|$stmtB|";
 					$SQL_log = preg_replace('/;/', '', $SQL_log);
 					$SQL_log = addslashes($SQL_log);
 					$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGN_ALTDIALS', event_type='DELETE', record_id='$campaign_id', event_code='ADMIN DELETE CAMPAIGN ALT DIAL', event_sql=\"$SQL_log\", event_notes='Status: $status';";
@@ -23060,8 +23142,11 @@ if ($ADD==67)
 				$stmt="DELETE FROM vicidial_pause_codes where campaign_id='$campaign_id' and pause_code='$pause_code' $LOGallowed_campaignsSQL;";
 				$rslt=mysql_to_mysqli($stmt, $link);
 
+				$stmtB="UPDATE vicidial_campaigns set campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
+				$rslt=mysql_to_mysqli($stmtB, $link);
+
 				### LOG INSERTION Admin Log Table ###
-				$SQL_log = "$stmt|";
+				$SQL_log = "$stmt|$stmtB|";
 				$SQL_log = preg_replace('/;/', '', $SQL_log);
 				$SQL_log = addslashes($SQL_log);
 				$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGN_PAUSECODES', event_type='DELETE', record_id='$campaign_id', event_code='ADMIN DELETE CAMPAIGN PAUSE CODE', event_sql=\"$SQL_log\", event_notes='Status: $pause_code';";
@@ -23116,7 +23201,7 @@ if ($ADD==68)
 					$row=mysqli_fetch_row($rslt);
 
 					$dial_statuses = preg_replace("/\s$status\s/i", " ",$row[0]);
-					$stmt="UPDATE vicidial_campaigns set dial_statuses='$dial_statuses' where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
+					$stmt="UPDATE vicidial_campaigns set dial_statuses='$dial_statuses',campaign_changedate='$SQLdate' where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
 					$rslt=mysql_to_mysqli($stmt, $link);
 
 					### LOG INSERTION Admin Log Table ###
@@ -23171,8 +23256,11 @@ if ($ADD==601)
 				$stmtA="DELETE FROM vicidial_xfer_stats where campaign_id='$campaign_id' and preset_name='$preset_name' $LOGallowed_campaignsSQL;";
 				$rslt=mysql_to_mysqli($stmt, $link);
 
+				$stmtB="UPDATE vicidial_campaigns set campaign_changedate='$SQLdate' where campaign_id='$campaign_id';";
+				$rslt=mysql_to_mysqli($stmtB, $link);
+
 				### LOG INSERTION Admin Log Table ###
-				$SQL_log = "$stmt|$stmtA|";
+				$SQL_log = "$stmt|$stmtA|$stmtB|";
 				$SQL_log = preg_replace('/;/', '', $SQL_log);
 				$SQL_log = addslashes($SQL_log);
 				$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='CAMPAIGN_PRESETS', event_type='DELETE', record_id='$campaign_id', event_code='ADMIN DELETE CAMPAIGN PRESET', event_sql=\"$SQL_log\", event_notes='Preset: $preset_name';";

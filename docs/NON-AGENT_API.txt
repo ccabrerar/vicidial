@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2024-10-04
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2024-11-13
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -228,6 +228,7 @@ Changes:
 240730-1832 - Changes for PHP8 compatibility, Added copy_did function
 240824-1626 - Added user_details function
 241004-1518 - Added webform_one-three variables to the update_campaign function
+241113-1600 - Added in_groups as input option for update_user function
 
 
 API Functions use the 'function' variable
@@ -1546,6 +1547,8 @@ ingrp_rg_only -		0 or 1, this will set only one inbound group rank/grade for thi
 group_id -		only required for use with ingrp_rg_only
 reset_password -	0 or 8+ digits, this will reset the user's password to a random password of this length and email the new password to the user
 			  NOTE: the 'email' field is required if the user's current email is not a valid email address
+in_groups -		pipe-delimited list of inbound groups to make selected for the user "SALESLINE|SUPPORT"
+			  NOTE: setting 'in-groups' will not change selected in-groups for a currently-logged-in session, only for the next agent login
 
 Example URL strings for API calls:
 http://server/vicidial/non_agent_api.php?source=test&function=update_user&user=6666&pass=1234&agent_user=2424&agent_pass=9876
