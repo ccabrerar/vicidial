@@ -13,6 +13,7 @@
 # 220224-1656 - Added allow_web_debug system setting
 # 231129-1404 - 'SQL/x' variable bug fix
 # 240801-1130 - Code updates for PHP8 compatibility
+# 241115-1501 - Fixes for purging of callbacks
 #
 
 require("dbconnect_mysqli.php");
@@ -751,9 +752,15 @@ if ($SUBMIT && $new_list_id && ($new_status || $revert_status) && (count($cb_use
 	{
 	$actual_archived_ct=0;
 	$actual_purged_ct=0;
+	$actual_callback_ct=0;
 	$arch_stmts='';
 	$del_stmts='';
+	$upd_stmts='';
+	$new_listSQL="list_id='$new_list_id',";
+	if ($new_list_id == 'X')
+		{$new_listSQL='';}
 
+	# PURGE RECORDS, IF EITHER OPTION WAS SELECTED
 	if ($purge_trigger>0)
 		{
 		$stmt = "SELECT vc.callback_id, vc.lead_id, vc.status from vicidial_callbacks vc, vicidial_list vl where $purge_clause and vc.lead_id=vl.lead_id $usersSQL $user_groupsSQL $listsSQL $groupsSQL $daySQL;";
@@ -762,6 +769,64 @@ if ($SUBMIT && $new_list_id && ($new_status || $revert_status) && (count($cb_use
 		
 		while($row=mysqli_fetch_row($rslt)) 
 			{
+			$lead_id=$row[1];
+
+			if ($revert_status) 
+				{
+				$callback_entry_time=$cb_row[3];
+				# SET UPDATE STATUS TO NEW IN CASE NO CALL HISTORY IS FOUND BEFORE LEAD WAS MARKED CALLBACK
+				$new_status='NEW';
+				$callback_time_clause=" and call_date<='$callback_entry_time'";
+				$sort_by="desc";
+
+				# FIND THE STATUS THE CALLBACK WAS BEFORE THE CALL THAT THE AGENT DISPO'ED IT AS, IF IT EXISTS
+				$revert_stmt="select event_time, status, uniqueid from vicidial_agent_log where lead_id='$lead_id' and event_time<='$callback_entry_time' and status not in ('".implode("','", $cb_dispos)."') order by event_time desc limit 1";
+				$revert_rslt=mysql_to_mysqli($revert_stmt, $link);
+				if (mysqli_num_rows($revert_rslt)>0) 
+					{
+					$revert_row=mysqli_fetch_row($revert_rslt);
+					if ($revert_row[0]!="") 
+						{
+						$callback_entry_time=$revert_row[0]; # THIS BECOMES THE MOST RECENT CALLBACK TIME TO CHECK THE CLOSER LOG FOR
+						$new_status=$revert_row[1];
+						$callback_time_clause="  and call_date>='$callback_entry_time' and call_date<'$cb_row[3]' ";
+						}
+					} 
+
+				# FIND ANY OUTBOUND CALL MADE AFTER CALL WAS DISPO'ED BY AGENT AND NOT A CALLBACK
+				$revert_stmt2="select call_date, status, uniqueid from vicidial_log where lead_id='$lead_id' $callback_time_clause and status not in ('".implode("','", $cb_dispos)."') order by call_date desc limit 1";
+				$revert_rslt2=mysql_to_mysqli($revert_stmt2, $link);
+				if (mysqli_num_rows($revert_rslt2)>0) 
+					{
+					$revert_row2=mysqli_fetch_row($revert_rslt2);
+					if ($revert_row2[0]!="") 
+						{
+						$callback_entry_time=$revert_row2[0];
+						$new_status=$revert_row2[1];
+						$callback_time_clause="  and call_date>='$callback_entry_time' and call_date<'$cb_row[3]' ";
+						}
+					}
+
+				# FIND ANY INBOUND CALL MADE AFTER CALL WAS DISPO'ED BY AGENT AND NOT A CALLBACK
+				$revert_stmt3="select call_date, status, closecallid from vicidial_closer_log where lead_id='$lead_id' $callback_time_clause and status not in ('".implode("','", $cb_dispos)."') order by call_date asc limit 1";
+				$revert_rslt3=mysql_to_mysqli($revert_stmt3, $link);
+				if (mysqli_num_rows($revert_rslt3)>0) 
+					{
+					$revert_row3=mysqli_fetch_row($revert_rslt3);
+					if ($revert_row3[0]!="") 
+						{
+						$callback_entry_time=$revert_row3[0];
+						$new_status=$revert_row3[1];
+						}
+					}
+				if ($DB) {echo "|$cb_row[0]<BR>$revert_stmt - $revert_row[2]<BR>$revert_stmt2 - $revert_row2[2]<BR>$revert_stmt3 - $revert_row3[2]|\n";}
+				} 
+
+			$upd_stmt="update vicidial_list set $new_listSQL status='$new_status' where lead_id='$lead_id';";
+			$upd_rslt=mysql_to_mysqli($upd_stmt, $link);
+			$actual_callback_ct+=mysqli_affected_rows($link);
+			$upd_stmts .= " $upd_stmt";
+
 			$archive_stmt = "INSERT INTO vicidial_callbacks_archive SELECT * from vicidial_callbacks where callback_id='$row[0]';";
 			$archive_rslt=mysql_to_mysqli($archive_stmt, $link);
 			$actual_archived_ct+=mysqli_affected_rows($link);
@@ -776,16 +841,11 @@ if ($SUBMIT && $new_list_id && ($new_status || $revert_status) && (count($cb_use
 			# $callback_stmt="SELECT vc.callback_id, vc.lead_id, vc.status from vicidial_callbacks vc, vicidial_list vl where vc.status='LIVE' and vl.status in ('".implode("','", $cb_dispos)."') and vc.lead_id=vl.lead_id $usersSQL $user_groupsSQL $listsSQL $groupsSQL $daySQL";
 		}
 
+	# There shouldn't be any eligible callbacks left at this point if the purge options were selected, but just in case.  Perhaps this should be an "else" clause?
 	$callback_stmt="SELECT vc.callback_id, vc.lead_id, vc.status, vc.entry_time from vicidial_callbacks vc where status in ($callback_statuses) $usersSQL $user_groupsSQL $listsSQL $groupsSQL $daySQL order by callback_time asc";
 	if ($DB) {echo "|$callback_stmt|\n";}
-
 	$callback_rslt=mysql_to_mysqli($callback_stmt, $link);
-	$callback_ct=mysqli_num_rows($callback_rslt);
-	$actual_callback_ct=0;
-	$new_listSQL="list_id='$new_list_id',";
-	if ($new_list_id == 'X')
-		{$new_listSQL='';}
-	$upd_stmts='';
+	$callback_ct=$purge_ct+mysqli_num_rows($callback_rslt);
 	while ($cb_row=mysqli_fetch_row($callback_rslt)) 
 		{
 		$lead_id=$cb_row[1];
@@ -859,16 +919,19 @@ if ($SUBMIT && $new_list_id && ($new_status || $revert_status) && (count($cb_use
 	$rslt=mysql_to_mysqli($stmt, $link);
 
 	echo "<table width='500' align='center'><tr><td align='left'>";
-	if ($purge_called_records) 
-		{
-		echo "<B>"._QXZ("PURGE COMPLETE")."</B>";
-		echo "<UL><LI>$purge_ct "._QXZ("RECORDS FOUND")."</LI>";
-		echo "<LI>$actual_purged_ct "._QXZ("RECORDS PURGED")."</LI></UL>";
-		echo "<BR><BR>";
-		}
-	echo "<B>"._QXZ("LEAD UPDATE COMPLETE")."</B>";
+	echo "<B>"._QXZ("BULK MOVE PROCESS COMPLETE")."</B>";
 	echo "<UL><LI>$callback_ct "._QXZ("RECORDS FOUND")."</LI>";
-	echo "<LI>$actual_callback_ct "._QXZ("RECORDS MIGRATED TO")." $new_list_id</LI></UL><BR><BR>";
+	echo "<LI>$actual_archived_ct "._QXZ("RECORDS ARCHIVED")."</LI></UL>";
+ 
+	if ($purge_trigger>0) 
+		{
+		echo "<B>"._QXZ("PURGE RESULTS")."</B>";
+		echo "<UL><LI>$purge_ct "._QXZ("CALLBACK RECORDS FOUND")."</LI>";
+		echo "<LI>$actual_purged_ct "._QXZ("CALLBACK RECORDS PURGED")."</LI></UL>";
+		}
+
+	echo "<B>"._QXZ("LEAD UPDATE COMPLETE")."</B>";
+	echo "<UL><LI>$actual_callback_ct "._QXZ("RECORDS MIGRATED TO")." $new_list_id</LI></UL><BR><BR>";
 
 	echo "<a href='$PHP_SELF?DB=$DB'>"._QXZ("BACK")."</a><BR><BR>";
 	}
