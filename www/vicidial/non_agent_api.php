@@ -218,10 +218,11 @@
 # 240824-1626 - Added user_details function
 # 241004-1518 - Added webform_one-three variables to the update_campaign function
 # 241113-1600 - Added in_groups as input option for update_user function
+# 241121-1501 - Fix for issue in user_group_status function
 #
 
-$version = '2.14-195';
-$build = '241113-1600';
+$version = '2.14-196';
+$build = '241121-1501';
 $php_script='non_agent_api.php';
 $api_url_log = 0;
 $camp_lead_order_random=1;
@@ -12408,7 +12409,7 @@ if ($function == 'user_group_status')
 									$stmtCT="SELECT chat_id from vicidial_live_chats where chat_creator='$row[0]' and lead_id='$row[6]' order by chat_start_time desc limit 1;";
 									if ($DB) {echo "$stmtCT\n";}
 									$rsltCT=mysql_to_mysqli($stmtCT,$link);
-									$chatting_to_print = mysqli_num_rows($rslt);
+									$chatting_to_print = mysqli_num_rows($rsltCL);
 									if ($chatting_to_print > 0)
 										{
 										$rowCT=mysqli_fetch_row($rsltCT);
@@ -12437,12 +12438,12 @@ if ($function == 'user_group_status')
 										if ($row[4] == 'MANUAL')
 											{
 											$stmt="SELECT uniqueid,channel from vicidial_auto_calls where callerid='$row[5]' LIMIT 1;";
-											$rslt=mysql_to_mysqli($stmt, $link);
+											$rsltMD=mysql_to_mysqli($stmt, $link);
 											if ($DB) {echo "$stmt\n";}
-											$mandial_to_check = mysqli_num_rows($rslt);
+											$mandial_to_check = mysqli_num_rows($rsltMD);
 											if ($mandial_to_check > 0)
 												{
-												$rowvac=mysqli_fetch_row($rslt);
+												$rowvac=mysqli_fetch_row($rsltMD);
 												if ( (strlen($rowvac[0])<5) and (strlen($rowvac[1])<5) )
 													{
 													$row[1] =	'DIAL';
