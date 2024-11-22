@@ -157,10 +157,11 @@
 # 240420-2233 - ConfBridge code added
 # 240430-1046 - Allow for park/grab of xfer line through API
 # 240709-2010 - Changes to input variable filtering
+# 241122-1544 - Fix for DTMF issue #1525
 #
 
-$version = '2.14-104';
-$build = '240709-2010';
+$version = '2.14-105';
+$build = '241122-1544';
 $php_script = 'manager_send.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=161;
@@ -361,7 +362,7 @@ if ($non_latin < 1)
 	$account = preg_replace('/[^-_0-9a-zA-Z]/','',$account);
 	$group_id = preg_replace('/[^-_0-9a-zA-Z]/','',$group_id);
 	$filename = preg_replace('/[^-\._0-9a-zA-Z]/','',$filename);
-	$queryCID = preg_replace('/[^-\._0-9a-zA-Z]/','',$queryCID);
+	$queryCID = preg_replace('/[^-\#\*\,\._0-9a-zA-Z]/','',$queryCID);
 	}
 else
 	{
@@ -376,7 +377,7 @@ else
 	$account = preg_replace('/[^-_0-9\p{L}]/u','',$account);
 	$group_id = preg_replace('/[^-_0-9\p{L}]/u','',$group_id);
 	$filename = preg_replace('/[^-\._0-9\p{L}]/u','',$filename);
-	$queryCID = preg_replace('/[^-\._0-9\p{L}]/u','',$queryCID);
+	$queryCID = preg_replace('/[^-\#\*\,\._0-9\p{L}]/u','',$queryCID);
 	}
 
 # default optional vars if not set
