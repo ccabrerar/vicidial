@@ -219,10 +219,11 @@
 # 241004-1518 - Added webform_one-three variables to the update_campaign function
 # 241113-1600 - Added in_groups as input option for update_user function
 # 241121-1501 - Fix for issue in user_group_status function
+# 241127-2148 - Fix for custom fields issue #1533
 #
 
-$version = '2.14-196';
-$build = '241121-1501';
+$version = '2.14-197';
+$build = '241127-2148';
 $php_script='non_agent_api.php';
 $api_url_log = 0;
 $camp_lead_order_random=1;
@@ -16174,7 +16175,7 @@ if ($function == 'add_lead')
 									$form_field_value = preg_replace("/\\\\$/","",$form_field_value);
 									$A_field_value[$o] = $form_field_value;
 
-									if ( ($A_field_type[$o]=='DISPLAY') or ($A_field_type[$o]=='SCRIPT') )
+									if ( ($A_field_type[$o]=='DISPLAY') or ($A_field_type[$o]=='SCRIPT') or ($A_field_type[$o]=='BUTTON') or ($A_field_type[$o]=='SWITCH') )
 										{
 										$A_field_value[$o]='----IGNORE----';
 										}
@@ -17006,7 +17007,7 @@ if ($function == 'update_lead')
 												$update_this_field++;
 												}
 
-											if ( ($A_field_type[$o]=='DISPLAY') or ($A_field_type[$o]=='SCRIPT') or ($update_this_field < 1) )
+											if ( ($A_field_type[$o]=='DISPLAY') or ($A_field_type[$o]=='SCRIPT') or ($A_field_type[$o]=='BUTTON') or ($A_field_type[$o]=='SWITCH') or ($update_this_field < 1) )
 												{
 												$A_field_value[$o]='----IGNORE----';
 												}
@@ -17240,7 +17241,7 @@ if ($function == 'update_lead')
 													$form_field_value = preg_replace("/\\\\$/","",$form_field_value);
 													$A_field_value[$o] = $form_field_value;
 
-													if ( ($A_field_type[$o]=='DISPLAY') or ($A_field_type[$o]=='SCRIPT') )
+													if ( ($A_field_type[$o]=='DISPLAY') or ($A_field_type[$o]=='SCRIPT') or ($A_field_type[$o]=='BUTTON') or ($A_field_type[$o]=='SWITCH') )
 														{
 														$A_field_value[$o]='----IGNORE----';
 														}
