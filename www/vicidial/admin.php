@@ -6218,12 +6218,13 @@ if ($SSscript_remove_js > 0)
 # 241001-1532 - Added Khomp Quick Stats Report
 # 241021-2138 - Added Khomp campaign settings option
 # 241113-2002 - Added update timestamps for sub-settings groups(like campaigns)
+# 241206-1527 - Do not display inactive VDAD/VDCL users in Copy User screen
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-931a';
-$build = '241113-2002';
+$admin_version = '2.14-932a';
+$build = '241206-1527';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -8594,7 +8595,7 @@ if ($ADD=="1A")
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Source User").": </td><td align=left><select size=1 name=source_user_id>\n";
 
-		$stmt="SELECT user,full_name from vicidial_users where user_level < $levelMAX $LOGadmin_viewable_groupsSQL order by full_name;";
+		$stmt="SELECT user,full_name from vicidial_users where user_level < $levelMAX and user NOT IN('VDAD','VDCL') $LOGadmin_viewable_groupsSQL order by full_name;";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$Uusers_to_print = mysqli_num_rows($rslt);
 		$Uusers_list='';
