@@ -3483,6 +3483,7 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 						$sthArowsAR=$sthA->rows;
+						if ($AGILOG) {$agi_string = "-- ring_all AGENTS SEEK: |$sthArowsAR|$stmtA|";   &agi_output;}
 							$dbhP=$dbhA;   $mysql_count='02162';   $MEL_aff_rows=$sthArows;   &mysql_error_logging;
 						$ragp=0;	
 						while ($sthArowsAR > $ragp)

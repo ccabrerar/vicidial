@@ -6219,12 +6219,13 @@ if ($SSscript_remove_js > 0)
 # 241021-2138 - Added Khomp campaign settings option
 # 241113-2002 - Added update timestamps for sub-settings groups(like campaigns)
 # 241206-1527 - Do not display inactive VDAD/VDCL users in Copy User screen
+# 241208-1747 - Changed DID filter_phone_group_id & pre_filter_phone_group_id to multi-selects
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-932a';
-$build = '241206-1527';
+$admin_version = '2.14-933a';
+$build = '241208-1747';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -13966,7 +13967,7 @@ if ($ADD==2311)
 					}
 				else
 					{
-					$stmtA="INSERT INTO vicidial_inbound_dids (did_pattern,did_description,user_group) values('$did_pattern','$did_description','$user_group');";
+					$stmtA="INSERT INTO vicidial_inbound_dids (did_pattern,did_description,user_group,filter_phone_group_id,pre_filter_phone_group_id) values('$did_pattern','$did_description','$user_group','','');";
 					$rslt=mysql_to_mysqli($stmtA, $link);
 
 					$stmt="SELECT did_id from vicidial_inbound_dids where did_pattern='$did_pattern';";
@@ -18724,6 +18725,28 @@ if ($ADD==4311)
 				$did_entry_list_idSQL=",entry_list_id='$entry_list_id',filter_entry_list_id='$filter_entry_list_id'";
 				}
 			echo "<br><B>"._QXZ("DID MODIFIED").": $did_pattern</B>\n";
+
+			$k=0;   $new_field_value='';
+			if (is_array($filter_phone_group_id)) {$multi_count = count($filter_phone_group_id);} else {$multi_count=0;}
+			$multi_array = $filter_phone_group_id;
+			while ($k < $multi_count)
+				{
+				$new_field_value .= "$multi_array[$k],";
+				$k++;
+				}
+			$new_field_value = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$new_field_value);
+			$filter_phone_group_id = preg_replace("/,$/","",$new_field_value);
+
+			$k=0;   $new_field_value='';
+			if (is_array($pre_filter_phone_group_id)) {$multi_count = count($pre_filter_phone_group_id);} else {$multi_count=0;}
+			$multi_array = $pre_filter_phone_group_id;
+			while ($k < $multi_count)
+				{
+				$new_field_value .= "$multi_array[$k],";
+				$k++;
+				}
+			$new_field_value = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$new_field_value);
+			$pre_filter_phone_group_id = preg_replace("/,$/","",$new_field_value);
 
 			$stmt="UPDATE vicidial_inbound_dids set did_pattern='$did_pattern',did_description='$did_description',did_active='$did_active',did_route='$did_route',extension='$extension',exten_context='$exten_context',voicemail_ext='$voicemail_ext',phone='$phone',server_ip='$server_ip',user='$user',user_unavailable_action='$user_unavailable_action',user_route_settings_ingroup='$user_route_settings_ingroup',group_id='$group_id',call_handle_method='$call_handle_method',agent_search_method='$agent_search_method',list_id='$list_id',campaign_id='$campaign_id',phone_code='$phone_code',menu_id='$menu_id',record_call='$record_call',filter_inbound_number='$filter_inbound_number',filter_phone_group_id='$filter_phone_group_id',filter_url='" . mysqli_real_escape_string($link, $filter_url) . "',filter_action='$filter_action',filter_extension='$filter_extension',filter_exten_context='$filter_exten_context',filter_voicemail_ext='$filter_voicemail_ext',filter_phone='$filter_phone',filter_server_ip='$filter_server_ip',filter_user='$filter_user',filter_user_unavailable_action='$filter_user_unavailable_action',filter_user_route_settings_ingroup='$filter_user_route_settings_ingroup',filter_group_id='$filter_group_id',filter_call_handle_method='$filter_call_handle_method',filter_agent_search_method='$filter_agent_search_method',filter_list_id='$filter_list_id',filter_campaign_id='$filter_campaign_id',filter_phone_code='$filter_phone_code',filter_menu_id='$filter_menu_id',filter_clean_cid_number='$filter_clean_cid_number',custom_one='$custom_one',custom_two='$custom_two',custom_three='$custom_three',custom_four='$custom_four',custom_five='$custom_five',user_group='$user_group',filter_dnc_campaign='$filter_dnc_campaign',filter_url_did_redirect='$filter_url_did_redirect',no_agent_ingroup_redirect='$no_agent_ingroup_redirect',no_agent_ingroup_id='$no_agent_ingroup_id',no_agent_ingroup_extension='$no_agent_ingroup_extension',pre_filter_phone_group_id='$pre_filter_phone_group_id',pre_filter_extension='$pre_filter_extension',max_queue_ingroup_calls='$max_queue_ingroup_calls',max_queue_ingroup_id='$max_queue_ingroup_id',max_queue_ingroup_extension='$max_queue_ingroup_extension',did_carrier_description='$did_carrier_description',inbound_route_answer='$inbound_route_answer',pre_filter_recent_call='$pre_filter_recent_call',pre_filter_recent_extension='$pre_filter_recent_extension'$did_entry_list_idSQL where did_id='$did_id';";
 			$rslt=mysql_to_mysqli($stmt, $link);
@@ -37368,7 +37391,7 @@ if ($ADD==3311)
 				}
 			else
 				{
-				$stmtA="INSERT INTO vicidial_inbound_dids (did_pattern,did_description,user_group) values('did_system_filter','DID System Filter','---ALL---');";
+				$stmtA="INSERT INTO vicidial_inbound_dids (did_pattern,did_description,user_group,filter_phone_group_id,pre_filter_phone_group_id) values('did_system_filter','DID System Filter','---ALL---','','');";
 				$rslt=mysql_to_mysqli($stmtA, $link);
 
 				$stmt="SELECT did_id from vicidial_inbound_dids where did_pattern='did_system_filter';";
@@ -37575,14 +37598,18 @@ if ($ADD==3311)
 		$stmt="SELECT filter_phone_group_id,filter_phone_group_name from vicidial_filter_phone_groups $whereLOGadmin_viewable_groupsSQL order by filter_phone_group_id;";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$Fgroups_to_print = mysqli_num_rows($rslt);
-		$Fgroups_list='';
+		$Fgroups_list=array();
+		$Fgroups_names=array();
 		$i=0;
 		while ($i < $Fgroups_to_print)
 			{
 			$row=mysqli_fetch_row($rslt);
-			$Fgroups_list .= "<option value=\"$row[0]\">$row[0] - $row[1] - $row[2]</option>";
+			$Fgroups_list[$i] =			$row[0];
+			$Fgroups_names[$i] =		$row[1];
 			$i++;
 			}
+		$Fgroups_list[$i] =			'';
+		$Fgroups_names[$i] =		'---NONE---';
 
 		$stmt="SELECT menu_id,menu_name,menu_prompt from vicidial_call_menu $whereLOGadmin_viewable_groupsSQL order by menu_id;";
 		$rslt=mysql_to_mysqli($stmt, $link);
@@ -37807,7 +37834,21 @@ if ($ADD==3311)
 
 			echo "<tr bgcolor=#CCFFFF><td align=right>"._QXZ("Max Queue In-Group Extension").": </td><td align=left><input type=text name=max_queue_ingroup_extension size=40 maxlength=50 value=\"$max_queue_ingroup_extension\">$NWB#inbound_dids-max_queue_ingroup_extension$NWE</td></tr>\n";
 
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href=\"$PHP_SELF?ADD=3711&filter_phone_group_id=$pre_filter_phone_group_id\">"._QXZ("Pre-Filter Phone Group ID").":</a> </td><td align=left><select size=1 name=pre_filter_phone_group_id>$Fgroups_list<option value='$pre_filter_phone_group_id' SELECTED>"._QXZ("$pre_filter_phone_group_id")."</option><option value=\"\">---"._QXZ("NONE")."---</option></select>$NWB#inbound_dids-pre_filter_phone_group_id$NWE</td></tr>\n";
+		#	echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href=\"$PHP_SELF?ADD=3711&filter_phone_group_id=$pre_filter_phone_group_id\">"._QXZ("Pre-Filter Phone Group ID").":</a> </td><td align=left><select size=1 name=pre_filter_phone_group_id>$Fgroups_list<option value='$pre_filter_phone_group_id' SELECTED>"._QXZ("$pre_filter_phone_group_id")."</option><option value=\"\">---"._QXZ("NONE")."---</option></select>$NWB#inbound_dids-pre_filter_phone_group_id$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Pre-Filter Phone Group ID").": </td><td align=left><select MULTIPLE size=4 name=pre_filter_phone_group_id[]>\n";
+
+			$Fgroups_ct = count($Fgroups_list);
+			$b=0;
+			while ($b < $Fgroups_ct)
+				{
+				$field_selected='';
+				if (preg_match("/^$Fgroups_list[$b]$|^$Fgroups_list[$b],|,$Fgroups_list[$b]$|,$Fgroups_list[$b],/",$pre_filter_phone_group_id))
+					{$field_selected = 'SELECTED';}
+				echo "<option value=\"$Fgroups_list[$b]\" $field_selected>$Fgroups_list[$b] - $Fgroups_names[$b]</option>\n";
+				$b++;
+				}
+			echo "</select>$NWB#inbound_dids-pre_filter_phone_group_id$NWE</td></tr>\n";
 
 			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Pre-Filter Phone Group DID").": </td><td align=left><input type=text name=pre_filter_extension size=40 maxlength=50 value=\"$pre_filter_extension\">$NWB#inbound_dids-pre_filter_extension$NWE</td></tr>\n";
 
@@ -37847,7 +37888,21 @@ if ($ADD==3311)
 
 		echo "<tr bgcolor=#CCFFFF><td align=right>"._QXZ("Filter Inbound Number").": </td><td align=left><select size=1 name=filter_inbound_number><option value=\"DISABLED\">"._QXZ("DISABLED")."</option><option value=\"GROUP\">"._QXZ("GROUP")."</option><option value=\"URL\">"._QXZ("URL")."</option><option value=\"DNC_INTERNAL\">"._QXZ("DNC_INTERNAL")."</option><option value=\"DNC_CAMPAIGN\">"._QXZ("DNC_CAMPAIGN")."</option><option value=\"GROUP_AREACODE\">"._QXZ("GROUP_AREACODE")."</option><option value=\"$filter_inbound_number\" SELECTED>"._QXZ("$filter_inbound_number")."</option></select>$NWB#inbound_dids-filter_inbound_number$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#CCFFFF><td align=right><a href=\"$PHP_SELF?ADD=3711&filter_phone_group_id=$filter_phone_group_id\">"._QXZ("Filter Phone Group ID").":</a> </td><td align=left><select size=1 name=filter_phone_group_id>$Fgroups_list<option value='$filter_phone_group_id' SELECTED>"._QXZ("$filter_phone_group_id")."</option></select>$NWB#inbound_dids-filter_phone_group_id$NWE</td></tr>\n";
+	#	echo "<tr bgcolor=#CCFFFF><td align=right><a href=\"$PHP_SELF?ADD=3711&filter_phone_group_id=$filter_phone_group_id\">"._QXZ("Filter Phone Group ID").":</a> </td><td align=left><select size=1 name=filter_phone_group_id>$Fgroups_list<option value='$filter_phone_group_id' SELECTED>"._QXZ("$filter_phone_group_id")."</option></select>$NWB#inbound_dids-filter_phone_group_id$NWE</td></tr>\n";
+
+		echo "<tr bgcolor=#CCFFFF><td align=right>"._QXZ("Filter Phone Group ID").": </td><td align=left><select MULTIPLE size=4 name=filter_phone_group_id[]>\n";
+
+		$Fgroups_ct = count($Fgroups_list);
+		$b=0;
+		while ($b < $Fgroups_ct)
+			{
+			$field_selected='';
+			if (preg_match("/^$Fgroups_list[$b]$|^$Fgroups_list[$b],|,$Fgroups_list[$b]$|,$Fgroups_list[$b],/",$filter_phone_group_id))
+				{$field_selected = 'SELECTED';}
+			echo "<option value=\"$Fgroups_list[$b]\" $field_selected>$Fgroups_list[$b] - $Fgroups_names[$b]</option>\n";
+			$b++;
+			}
+		echo "</select>$NWB#inbound_dids-filter_phone_group_id$NWE</td></tr>\n";
 
 		echo "<tr bgcolor=#CCFFFF><td align=right>"._QXZ("Filter URL").": </td><td align=left><input type=text name=filter_url size=80 maxlength=1000 value=\"$filter_url\">$NWB#inbound_dids-filter_url$NWE</td></tr>\n";
 

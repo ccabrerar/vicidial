@@ -2813,3 +2813,8 @@ ALTER TABLE vicidial_settings_containers ADD modify_stamp TIMESTAMP;
 ALTER TABLE vicidial_url_multi ADD modify_stamp TIMESTAMP;
 
 UPDATE system_settings SET db_schema_version='1721',db_schema_update_date=NOW() where db_schema_version < 1721;
+
+ALTER TABLE vicidial_inbound_dids MODIFY filter_phone_group_id TEXT;
+ALTER TABLE vicidial_inbound_dids MODIFY pre_filter_phone_group_id TEXT;
+
+UPDATE system_settings SET db_schema_version='1722',db_schema_update_date=NOW() where db_schema_version < 1722;

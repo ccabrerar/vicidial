@@ -13,7 +13,7 @@
 # ;inbound DID catch-all:
 #exten => _X.,1,AGI(agi-DID_route.agi)
 #
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 81007-0324 - First Build
@@ -50,6 +50,7 @@
 # 210315-1132 - Fix for multiple filter_clean_cid_number actions, added 'T' filter action, Issue #1247
 # 220507-0811 - Added pre_filter_recent_call function
 # 230124-1228 - Added logging of VICIrecGatewayID channel variable, and vicidial_did_gateway_log table
+# 241208-1748 - Changed DID filter_phone_group_id & pre_filter_phone_group_id to multi-selects
 #
 
 
@@ -977,12 +978,16 @@ if ( (length($pre_filter_phone_group_id)>0) && (length($pre_filter_extension)>0)
 	{
 	if ($AGILOG) {$agi_string = "pre-filtering active: |$extension|$pre_filter_phone_group_id|$pre_filter_extension|$filter_clean_cid_number|$callerid";   &agi_output;}
 
+	$pre_filter_phone_group_idSQL = "\"$pre_filter_phone_group_id\"";
+	$pre_filter_phone_group_idSQL =~ s/,/","/gi;
+
 	$temp_cid_test = $callerid;
 	if (length($callerid)<1) {$temp_cid_test = 'BLANK';}
-	$stmtA = "SELECT count(*) FROM vicidial_filter_phone_numbers where filter_phone_group_id='$pre_filter_phone_group_id' and phone_number='$temp_cid_test';";
+	$stmtA = "SELECT count(*) FROM vicidial_filter_phone_numbers where filter_phone_group_id IN($pre_filter_phone_group_idSQL) and phone_number='$temp_cid_test';";
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 	$sthArows=$sthA->rows;
+		if ($AGILOG) {$agi_string = "$sthArows|$stmtA|";   &agi_output;}
 	if ($sthArows > 0)
 		{
 		@aryA = $sthA->fetchrow_array;
@@ -1295,9 +1300,12 @@ if ( ($filter_inbound_number =~ /GROUP|URL|DNC_INTERNAL|DNC_CAMPAIGN/) && ($pre_
 	if ($AGILOG) {$agi_string = "filtering active: |$extension|$filter_inbound_number|$filter_phone_group_id|$filter_url|$filter_action|$filter_clean_cid_number|";   &agi_output;}
 	if ($filter_inbound_number =~ /GROUP/)
 		{
+		$filter_phone_group_idSQL = "\"$filter_phone_group_id\"";
+		$filter_phone_group_idSQL =~ s/,/","/gi;
+
 		$temp_cid_test = $callerid;
 		if (length($callerid)<1) {$temp_cid_test = 'BLANK';}
-		$stmtA = "SELECT count(*) FROM vicidial_filter_phone_numbers where filter_phone_group_id='$filter_phone_group_id' and phone_number='$temp_cid_test';";
+		$stmtA = "SELECT count(*) FROM vicidial_filter_phone_numbers where filter_phone_group_id IN($filter_phone_group_idSQL) and phone_number='$temp_cid_test';";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;
@@ -1312,7 +1320,7 @@ if ( ($filter_inbound_number =~ /GROUP|URL|DNC_INTERNAL|DNC_CAMPAIGN/) && ($pre_
 			{
 			$alt_areacode = substr($callerid, 0, 3);
 			$alt_areacode .= "XXXXXXX";
-			$stmtB = "SELECT count(*) FROM vicidial_filter_phone_numbers where filter_phone_group_id='$filter_phone_group_id' and phone_number='$alt_areacode';";
+			$stmtB = "SELECT count(*) FROM vicidial_filter_phone_numbers where filter_phone_group_id IN($filter_phone_group_idSQL) and phone_number='$alt_areacode';";
 			$sthA = $dbhA->prepare($stmtB) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
