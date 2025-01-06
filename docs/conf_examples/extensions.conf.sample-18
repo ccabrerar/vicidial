@@ -631,6 +631,69 @@ exten => _999XXXXXX0,n,Hangup()
 ;exten => 99999999999,n,Playback(conf)
 ;exten => 99999999999,n,Hangup()
 
+; --------------------------
+; ConfBridge Extensions
+; --------------------------
+
+; use to send a customer channel into the conference
+exten => _9600XXX,1,Answer()
+exten => _9600XXX,n,Playback(sip-silence)
+exten => _9600XXX,n,ConfBridge(${EXTEN},vici_agent_bridge,vici_customer_user)
+exten => _9600XXX,n,Hangup()
+
+; used to send an agent channel into the conference
+exten => _29600XXX,1,Answer()
+exten => _29600XXX,n,Playback(sip-silence)
+exten => _29600XXX,n,ConfBridge(${EXTEN:1},vici_agent_bridge,vici_agent_user)
+exten => _29600XXX,n,Hangup()
+
+; used by an admin to enter the confernece
+exten => _39600XXX,1,Answer()
+exten => _39600XXX,n,Playback(sip-silence)
+exten => _39600XXX,n,ConfBridge(${EXTEN:1},vici_agent_bridge,vici_admin_user)
+exten => _39600XXX,n,Hangup()
+
+; used to monitor a conference
+exten => _49600XXX,1,Answer()
+exten => _49600XXX,n,Playback(sip-silence)
+exten => _49600XXX,n,ConfBridge(${EXTEN:1},vici_agent_bridge,vici_monitor_user)
+exten => _49600XXX,n,Hangup()
+
+; used to record into a conference
+exten => _59600XXX,1,Answer()
+exten => _59600XXX,n,Playback(sip-silence)
+exten => _59600XXX,n,ConfBridge(${EXTEN:1},vici_agent_bridge,vici_recording_user)
+exten => _59600XXX,n,Hangup()
+
+; used to barge a conference
+exten => _69600XXX,1,Answer()
+exten => _69600XXX,n,Playback(sip-silence)
+exten => _69600XXX,n,ConfBridge(${EXTEN:1},vici_agent_bridge,vici_barge_user)
+exten => _69600XXX,n,Hangup()
+
+; used to trigger DTMF tones in a conference
+exten => _79600XXX,1,Answer()
+exten => _79600XXX,n,Playback(sip-silence)
+exten => _79600XXX,n,ConfBridge(${EXTEN:1},vici_agent_bridge,vici_dtmf_user)
+exten => _79600XXX,n,Hangup()
+
+; Used to play an audio file to a conference
+exten => _89600XXX,1,Answer()
+exten => _89600XXX,n,Playback(sip-silence)
+exten => _89600XXX,n,ConfBridge(${EXTEN:1},vici_agent_bridge,vici_audio_user)
+exten => _89600XXX,n,Hangup()
+
+; Used to kick all channels from a conference
+exten => _99600XXX,1,ConfKick(${EXTEN:1},all)
+exten => _99600XXX,2,Hangup()
+exten => _55559600XXX,1,ConfKick(${EXTEN:4},all)
+exten => _55559600XXX,2,Hangup()
+
+; used to send an ringall agent channel into the conference
+exten => _19600XXX,1,Answer()
+exten => _19600XXX,n,Playback(sip-silence)
+exten => _19600XXX,n,ConfBridge(${EXTEN:1},vici_agent_bridge,vici_ringall_user)
+exten => _19600XXX,n,Hangup()
 
 [monitor]
 exten => h,1,AGI(agi://127.0.0.1:4577/call_log--HVcauses--PRI-----NODEBUG-----${HANGUPCAUSE}-----${DIALSTATUS}-----${DIALEDTIME}-----${ANSWEREDTIME}-----${HANGUPCAUSE(${HANGUPCAUSE_KEYS()},tech)}))

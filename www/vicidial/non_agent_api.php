@@ -1,7 +1,7 @@
 <?php
 # non_agent_api.php
 # 
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed as an API(Application Programming Interface) to allow
 # other programs to interact with all non-agent-screen VICIDIAL functions
@@ -220,10 +220,11 @@
 # 241113-1600 - Added in_groups as input option for update_user function
 # 241121-1501 - Fix for issue in user_group_status function
 # 241127-2148 - Fix for custom fields issue #1533
+# 250105-1001 - Added enhanced_agent_monitoring option compatibility
 #
 
-$version = '2.14-197';
-$build = '241127-2148';
+$version = '2.14-198';
+$build = '250105-1001';
 $php_script='non_agent_api.php';
 $api_url_log = 0;
 $camp_lead_order_random=1;
@@ -766,7 +767,7 @@ header ("Pragma: no-cache");                          // HTTP/1.0
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,custom_fields_enabled,pass_hash_enabled,agent_whisper_enabled,active_modules,auto_dial_limit,enable_languages,language_method,admin_web_directory,sounds_web_server,allow_web_debug FROM system_settings;";
+$stmt = "SELECT use_non_latin,custom_fields_enabled,pass_hash_enabled,agent_whisper_enabled,active_modules,auto_dial_limit,enable_languages,language_method,admin_web_directory,sounds_web_server,allow_web_debug,enhanced_agent_monitoring FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
@@ -785,6 +786,7 @@ if ($qm_conf_ct > 0)
 	$SSadmin_web_directory =	$row[8];
 	$SSsounds_web_server =		$row[9];
 	$SSallow_web_debug =		$row[10];
+	$SSenhanced_agent_monitoring = $row[11];
 	}
 if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
@@ -3424,17 +3426,28 @@ if ($function == 'blind_monitor')
 					$monitor_dialstring = "$D_s_ip[0]$S$D_s_ip[1]$S$D_s_ip[2]$S$D_s_ip[3]$S";
 
 					$monitor_type='LISTEN'; $cid_prefix='BM'; $swap_chan=0;
-					if ( (preg_match('/MONITOR/',$stage)) or (strlen($stage)<1) ) {$stage = $monitor_prefix;}
+					if ( (preg_match('/MONITOR/',$stage)) or (strlen($stage)<1) ) 
+						{
+						$stage = $monitor_prefix;
+						if ($SSenhanced_agent_monitoring > 0)
+							{$stage = '47378219';}
+						}
 					if (preg_match('/BARGE/',$stage)) 
 						{
 						if (preg_match('/SWAP/',$stage)) {$swap_chan=1;}
 						$stage = $barge_prefix; $monitor_type='BARGE'; $cid_prefix='BB';
+						if ($SSenhanced_agent_monitoring > 0)
+							{$stage = '47378220';}
 						}
 					if (preg_match('/HIJACK/',$stage)) {$stage = ''; $monitor_type='HIJACK'; $cid_prefix='BB';}
 					if (preg_match('/WHISPER/',$stage)) 
 						{
 						if ($agent_whisper_enabled == '1') 
-							{$stage = '47378218'; $monitor_type='WHISPER'; $cid_prefix='BW';}
+							{
+							$stage = '47378218'; $monitor_type='WHISPER'; $cid_prefix='BW';
+							if ($SSenhanced_agent_monitoring > 0)
+								{$stage = '47378221';}
+							}
 						else
 							{
 							# WHISPER not enabled
@@ -3458,11 +3471,13 @@ if ($function == 'blind_monitor')
 						$AGENTstatus =		$row[3];
 						}
 
+					$variable = "Variable: __monitorsession=$session_id";
+
 					### insert a new lead in the system with this phone number
-					$stmt = "INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$monitor_server_ip','','Originate','$BMquery','Channel: Local/$monitor_dialstring$stage$session_id@default','Context: default','Exten: $dialplan_number','Priority: 1','Callerid: \"$BMquery\" <$outbound_cid>','','','','','');";
+					$stmt = "INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$monitor_server_ip','','Originate','$BMquery','Channel: Local/$monitor_dialstring$stage$session_id@default','Context: default','Exten: $dialplan_number','Priority: 1','Callerid: \"$BMquery\" <$outbound_cid>','$variable','','','','');";
 					if ($swap_chan > 0)
 						{
-						$stmt = "INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$monitor_server_ip','','Originate','$BMquery','Channel: Local/$dialplan_number@default','Context: default','Exten: $monitor_dialstring$stage$session_id','Priority: 1','Callerid: \"$BMquery\" <$outbound_cid>','','','','','');";
+						$stmt = "INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$monitor_server_ip','','Originate','$BMquery','Channel: Local/$dialplan_number@default','Context: default','Exten: $monitor_dialstring$stage$session_id','Priority: 1','Callerid: \"$BMquery\" <$outbound_cid>','$variable','','','','');";
 						}
 					if ($DB>0) {echo "DEBUG: blind_monitor query - $stmt\n";}
 					$rslt=mysql_to_mysqli($stmt, $link);

@@ -1,20 +1,17 @@
 #!/usr/bin/perl
 
-# getAGENTchannel.agi by Omar Rodriguez  www.ItContinental.com
+# enhancedMONITORswitch.agi
 # Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
-# This script is able to return the name of the channel that belongs to the agent, 
-# to allow administrators to whisper to the agents
-# Has been made using Vicidial code as Base
+# This script switches the manager to MONITOR/BARGE/WHISPER for the agent being
+# monitored using enhanced_agent_monitoring
 
 # CHANGELOG:
-# 150728-1315 - First build
-# 150804-0944 - Rewritten to work on multi-server systems and with different dialplan
-# 160523-2352 - Fixed issue with local channels in session
-# 250103-1608 - Added processing of monitorsession channel variable
+# 250103-1619 - First build
 #
 
-$script = 'getAGENTchannel.agi';
+$script = 'enhancedMONITORswitch.agi';
 
+$now_date_epoch = time();
 ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
 $year = ($year + 1900);
 $mon++;
@@ -23,6 +20,7 @@ if ($mday < 10) {$mday = "0$mday";}
 if ($hour < 10) {$hour = "0$hour";}
 if ($min < 10) {$min = "0$min";}
 if ($sec < 10) {$sec = "0$sec";}
+$SQLdate = "$year-$mon-$mday $hour:$min:$sec";
 
 # default path to astguiclient configuration file:
 $PATHconf =		'/etc/astguiclient.conf';
@@ -93,6 +91,26 @@ $sthA->finish();
 $agent_zap_channel =		"101";
 ########## FIND playfilename  ##########
 
+$monitor_action='MONITOR';
+### begin parsing run-time options ###
+if (length($ARGV[0])>1)
+	{
+	if ($AGILOG) {$agi_string = "Perl Environment Dump:";   &agi_output;}
+	$i=0;
+	while ($#ARGV >= $i)
+		{
+		$args = "$args $ARGV[$i]";
+		if ($AGILOG) {$agi_string = "$i|$ARGV[$i]";   &agi_output;}
+		$i++;
+		}
+	
+	### list of command-line array arguments:
+	@ARGV_vars = split(/-----/, $ARGV[0]);
+
+	$monitor_method = 		$ARGV_vars[0];
+	$monitor_action = 		$ARGV_vars[1];
+	}
+
 $|=1;
 while(<STDIN>) 
 	{
@@ -117,51 +135,57 @@ while(<STDIN>)
 # check for monitoruser variable, if not set, then set it
 
 $monitorsession = $AGI->get_variable('monitorsession');
+$agent_zap_channel = $AGI->get_variable('agent_zap_channel');
+$manager_zap_channel = $AGI->get_variable('manager_zap_channel');
 
-if ( (length($extension) < 7) && (length($monitorsession) >= 7) )
-	{
-	if ($AGILOG) {$agi_string = "Setting session with channel variable: |$monitorsession -> $extension| Channel: $channel| CID: $calleridname <$callerid>|";   &agi_output;}
-	$extension = $monitorsession;
-	}
-if (length($extension) > 7) 
-	{$extension = substr($extension, -7);}
-if ($AGILOG) {$agi_string = "Agent session: |$extension| Channel: $channel| CID: $calleridname <$callerid>|";   &agi_output;}
+if ($AGILOG) {$agi_string = "Agent session: |$monitorsession| Channel: $channel| Agent Channel: $agent_zap_channel|";   &agi_output;}
 
-if (length($monitorsession) < 7) 
-	{
-	if ($AGILOG) {$agi_string = "Setting session channel variable: |$extension| Channel: $channel| CID: $calleridname <$callerid>|";   &agi_output;}
-	$AGI->exec("EXEC Set(__monitorsession=$extension)");
-	}
 
 #$stmtA = "SELECT channel   FROM vicidial_live_agents  WHERE conf_exten = '$canal' AND ifnull(trim(channel), '') <> ''      and (channel in (select channel from live_channels) or comments='MANUAL')  LIMIT 1";
+#$stmtA = "INSERT INTO vicidial_manager values('','','$SQLdate','NEW','N','$VARserver_ip','','Originate','$BMquery','Channel: Local/$monitor_dialstring$stage$session_id@default','Context: default','Exten: $dialplan_number','Priority: 1','Callerid: \"$BEquery\" <$outbound_cid>','$variable','','','','');";
 
-$stmtA = "SELECT channel FROM live_sip_channels WHERE server_ip='$VARserver_ip' AND extension=right('$extension',7) AND ifnull(trim(channel), '') <> '' limit 10;";
 
-#$AGI->verbose($stmtA); 
+$BEquery = "BE0$now_date_epoch$monitorsession";
 
-$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-$sthArows=$sthA->rows;
-$s=0;
-while ($sthArows > $s)
+
+if ($monitor_method =~ /CMD/) 
 	{
-	@aryA = $sthA->fetchrow_array;
-	# channel priority(highest to lowest): SIP, IAX, Local
-	if ($aryA[0] =~ /^SIP/i) 
-		{$agent_zap_channel =		$aryA[0];}
-	if ( ($aryA[0] =~ /^IAX/i) && ( (length($agent_zap_channel) < 4) || ($agent_zap_channel =~ /^Local/i) ) )
-		{$agent_zap_channel =		$aryA[0];}
-	if ( ($aryA[0] =~ /^Local/i) && (length($agent_zap_channel) < 4) ) 
-		{$agent_zap_channel =		$aryA[0];}
-	$s++;
+	# CMD - for commands on manager channel, default is MONITOR, mute the manager channel in agent ConfBridge session
+	$stmtA = "INSERT INTO vicidial_manager values('','','$SQLdate','NEW','N','$VARserver_ip','','ConfbridgeMute','$BEquery','Conference: $monitorsession','Channel: $manager_zap_channel','','','','','','','','');";
+	if ($monitor_action =~ /MONITOR/) 
+		{
+		$stmtA = "INSERT INTO vicidial_manager values('','','$SQLdate','NEW','N','$VARserver_ip','','ConfbridgeMute','$BEquery','Conference: $monitorsession','Channel: $manager_zap_channel','','','','','','','','');";
+		}
+	if ($monitor_action =~ /BARGE/) 
+		{
+		$stmtA = "INSERT INTO vicidial_manager values('','','$SQLdate','NEW','N','$VARserver_ip','','ConfbridgeUnmute','$BEquery','Conference: $monitorsession','Channel: $manager_zap_channel','','','','','','','','');";
+		}
+	if ($monitor_action =~ /WHISPER/) 
+		{
+		$stmtA = "INSERT INTO vicidial_manager values('','','$SQLdate','NEW','N','$VARserver_ip','','Redirect','$BEquery','Channel: $manager_zap_channel','Context: vici_monitor_whisper','Exten: 47378221$monitorsession','Priority: 1','CallerID: $BEquery','','','','','');";
+		}
 	}
-$sthA->finish();
-if ($AGILOG) {$agi_string = "$sthArows|$agent_zap_channel|$stmtA|";   &agi_output;}
+else
+	{
+	# MGR - for direct manager channel, default is MONITOR, mute the manager channel in agent ConfBridge session
+	$stmtA = "INSERT INTO vicidial_manager values('','','$SQLdate','NEW','N','$VARserver_ip','','ConfbridgeMute','$BEquery','Conference: $monitorsession','Channel: $channel','','','','','','','','');";
+	if ($monitor_action =~ /MONITOR/) 
+		{
+		$stmtA = "INSERT INTO vicidial_manager values('','','$SQLdate','NEW','N','$VARserver_ip','','ConfbridgeMute','$BEquery','Conference: $monitorsession','Channel: $channel','','','','','','','','');";
+		}
+	if ($monitor_action =~ /BARGE/) 
+		{
+		$stmtA = "INSERT INTO vicidial_manager values('','','$SQLdate','NEW','N','$VARserver_ip','','ConfbridgeUnmute','$BEquery','Conference: $monitorsession','Channel: $channel','','','','','','','','');";
+		}
+	if ($monitor_action =~ /WHISPER/) 
+		{
+		$stmtA = "INSERT INTO vicidial_manager values('','','$SQLdate','NEW','N','$VARserver_ip','','Redirect','$BEquery','Channel: $channel','Context: vici_monitor_whisper','Exten: 47378221$monitorsession','Priority: 1','CallerID: $BEquery','','','','','');";
+		}
+	}
 
-#$AGI->verbose("agent_zap_channel: $agent_zap_channel"); 
+$affected_rows = $dbhA->do($stmtA);
+if ($AGILOG) {$agi_string = "MANAGER INSERT $channel|$affected_rows|$stmtA|";   &agi_output;}
 
-$AGI->set_variable('agent_zap_channel', $agent_zap_channel);
-$AGI->exec("EXEC Set(__manager_zap_channel=$channel)");
 
 exit;
 

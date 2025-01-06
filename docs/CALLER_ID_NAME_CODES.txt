@@ -1,4 +1,4 @@
-CALLER ID NAME CODES DOC	Started: 2013-07-15	Updated: 2023-11-18
+CALLER ID NAME CODES DOC	Started: 2013-07-15	Updated: 2025-01-03
 
 
 This document is meant for reference only, and it does not contain all CID name codes possible, but more will be added over time.
@@ -35,6 +35,7 @@ ULVC - Clearing of agent session in userLOGout agent screen function
 BM - Real-time screen blind monitor (BM149425456200006666)
 BB - Real-time screen blind barge (BB149425456200006666)
 BW - Real-time screen blind whisper (BW149425456200006666)
+BE - Real-time screen enhanced monitor (BE149425456200006666)
 E - Inbound Email, tracking only (E0001797980001237995)
 ACagcW - Noone in session call agent phone (ACagcW15167259066666)
 AM - Agent mute of recording (AM273955W0001922575W)

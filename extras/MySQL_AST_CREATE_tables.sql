@@ -2051,7 +2051,8 @@ coldstorage_dbname VARCHAR(50) default '',
 coldstorage_login VARCHAR(50) default '',
 coldstorage_pass VARCHAR(50) default '',
 coldstorage_port VARCHAR(10) default '',
-stereo_recording ENUM('0','1','2','3','4','5','6') default '0'
+stereo_recording ENUM('0','1','2','3','4','5','6') default '0',
+enhanced_agent_monitoring ENUM('0','1','2','3','4','5','6') default '0'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaigns_list_mix (
@@ -5737,4 +5738,4 @@ INSERT INTO `wallboard_reports` VALUES ('AGENTS_AND_QUEUES','Agents and Queues',
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1722',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1723',db_schema_update_date=NOW(),reload_timestamp=NOW();

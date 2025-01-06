@@ -2818,3 +2818,7 @@ ALTER TABLE vicidial_inbound_dids MODIFY filter_phone_group_id TEXT;
 ALTER TABLE vicidial_inbound_dids MODIFY pre_filter_phone_group_id TEXT;
 
 UPDATE system_settings SET db_schema_version='1722',db_schema_update_date=NOW() where db_schema_version < 1722;
+
+ALTER TABLE system_settings ADD enhanced_agent_monitoring ENUM('0','1','2','3','4','5','6') default '0';
+
+UPDATE system_settings SET db_schema_version='1723',db_schema_update_date=NOW() where db_schema_version < 1723;

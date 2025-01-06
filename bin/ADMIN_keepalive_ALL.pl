@@ -15,7 +15,7 @@
 #  - Auto reset lists at defined times
 #  - Auto restarts Asterisk process if enabled in servers settings
 #
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 61011-1348 - First build
@@ -172,9 +172,10 @@
 # 231129-0849 - Added reset of vicidial_phone_number_call_daily_counts table
 # 240401-1810 - Added purging of vicidial_pending_ar records older than 7 days
 # 240420-2209 - Added Conference Updater option
+# 250103-0932 - Added ConfBridge code and enhanced_agent_monitoring system setting code
 #
 
-$build = '240420-2209';
+$build = '250103-0932';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -485,6 +486,8 @@ $server_ip = $VARserver_ip;		# Asterisk server IP
 $THISserver_voicemail=0;
 $voicemail_server_id='';
 if (!$VARDB_port) {$VARDB_port='3306';}
+
+if ($DB) {print "ADMIN_keepalive_ALL.pl - Debug enabled: ($DB|$DBX|$DBXXX) version: $build\n";}
 
 use DBI;	  
 
@@ -3100,6 +3103,63 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		$Lext .= "exten => _473782189600XXX,n,GotoIf(\$[ \"\${agent_zap_channel}\" = \"101\" ]?fin)\n";
 		$Lext .= "exten => _473782189600XXX,n,ChanSpy(\${agent_zap_channel},qw)\n";
 		$Lext .= "exten => _473782189600XXX,n(fin),Hangup()\n";
+		$Lext .= "; Enhanced Agent Monitoring ConfBridge entry: MONITOR\n";
+		$Lext .= "exten => _473782199600XXX,1,Answer()\n";
+		$Lext .= "exten => _473782199600XXX,n,Wait(1)\n";
+		$Lext .= "exten => _473782199600XXX,n,AGI(getAGENTchannel.agi)\n";
+		$Lext .= "exten => _473782199600XXX,n,NoOp(\${monitorsession})\n";
+		$Lext .= "exten => _473782199600XXX,n,NoOp(\${agent_zap_channel})\n";
+		$Lext .= "exten => _473782199600XXX,n,NoOp(\${manager_zap_channel})\n";
+		$Lext .= "exten => _473782199600XXX,n,Playback(sip-silence)\n";
+		$Lext .= "exten => _473782199600XXX,n,ConfBridge(\${EXTEN:8},vici_agent_bridge,vici_monitor_user,vici_monitor_menu)\n";
+		$Lext .= "exten => _473782199600XXX,n,Hangup()\n";
+		$Lext .= "; Enhanced Agent Monitoring ConfBridge entry: BARGE\n";
+		$Lext .= "exten => _473782209600XXX,1,Answer()\n";
+		$Lext .= "exten => _473782209600XXX,n,Wait(1)\n";
+		$Lext .= "exten => _473782209600XXX,n,AGI(getAGENTchannel.agi)\n";
+		$Lext .= "exten => _473782209600XXX,n,NoOp(\${monitorsession})\n";
+		$Lext .= "exten => _473782209600XXX,n,NoOp(\${agent_zap_channel})\n";
+		$Lext .= "exten => _473782209600XXX,n,NoOp(\${manager_zap_channel})\n";
+		$Lext .= "exten => _473782209600XXX,n,Playback(sip-silence)\n";
+		$Lext .= "exten => _473782209600XXX,n,ConfBridge(\${EXTEN:8},vici_agent_bridge,vici_barge_user,vici_monitor_menu)\n";
+		$Lext .= "exten => _473782209600XXX,n,Hangup()\n";
+		$Lext .= "; Enhanced Agent Monitoring Whisper to agent channel GoTo\n";
+		$Lext .= "exten => _473782219600XXX,1,GoTo(vici_monitor_whisper,\${EXTEN},1)\n";
+
+		$confbridge_enhanced_monitoring = "[vici_monitor_menu_exec]\n";
+		$confbridge_enhanced_monitoring .= "; FastAGI for VICIDIAL/astGUIclient call logging\n";
+		$confbridge_enhanced_monitoring .= "$hangup_exten_line\n";
+
+		$confbridge_enhanced_monitoring .= "exten => 4,1,Verbose(\"Enhanced Agent Monitoring: Mute the manager channel\")\n";
+		$confbridge_enhanced_monitoring .= "exten => 4,n,AGI(enhancedMONITORswitch.agi,CMD-----MONITOR)\n";
+		$confbridge_enhanced_monitoring .= "exten => 5,1,Verbose(\"Enhanced Agent Monitoring: UnMute the manager channel\")\n";
+		$confbridge_enhanced_monitoring .= "exten => 5,n,AGI(enhancedMONITORswitch.agi,CMD-----BARGE)\n";
+		$confbridge_enhanced_monitoring .= "exten => 6,1,Verbose(\"Enhanced Agent Monitoring: Whisper to the agent channel\")\n";
+		$confbridge_enhanced_monitoring .= "exten => 6,n,AGI(enhancedMONITORswitch.agi,CMD-----WHISPER)\n";
+		$confbridge_enhanced_monitoring .= "\n\n";
+
+		$confbridge_enhanced_monitoring .= "[vici_monitor_whisper]\n";
+		$confbridge_enhanced_monitoring .= "; FastAGI for VICIDIAL/astGUIclient call logging\n";
+		$confbridge_enhanced_monitoring .= "$hangup_exten_line\n";
+
+		$confbridge_enhanced_monitoring .= "; Enhanced Agent Monitoring Whisper to agent channel entry\n";
+		$confbridge_enhanced_monitoring .= "exten => _473782219600XXX,1,Answer\n";
+		$confbridge_enhanced_monitoring .= "exten => _473782219600XXX,n,Wait(1)\n";
+		$confbridge_enhanced_monitoring .= "exten => _473782219600XXX,n,AGI(getAGENTchannel.agi)\n";
+		$confbridge_enhanced_monitoring .= "exten => _473782219600XXX,n,NoOp(\${monitorsession})\n";
+		$confbridge_enhanced_monitoring .= "exten => _473782219600XXX,n,NoOp(\${agent_zap_channel})\n";
+		$confbridge_enhanced_monitoring .= "exten => _473782219600XXX,n,NoOp(\${manager_zap_channel})\n";
+		$confbridge_enhanced_monitoring .= "exten => _473782219600XXX,n,GotoIf(\$[ \"\${agent_zap_channel}\" = \"101\" ]?fin)\n";
+		$confbridge_enhanced_monitoring .= "exten => _473782219600XXX,n,ChanSpy(\${agent_zap_channel},qwX)\n";
+		$confbridge_enhanced_monitoring .= "exten => _473782219600XXX,n(fin),Hangup()\n";
+
+		$confbridge_enhanced_monitoring .= "exten => 4,1,Verbose(\"Enhanced Agent Monitoring: Mute the manager channel\")\n";
+		$confbridge_enhanced_monitoring .= "exten => 4,n,GoTo(default,47378219\${monitorsession},1)\n";
+		$confbridge_enhanced_monitoring .= "exten => 5,1,Verbose(\"Enhanced Agent Monitoring: UnMute the manager channel\")\n";
+		$confbridge_enhanced_monitoring .= "exten => 5,n,GoTo(default,47378220\${monitorsession},1)\n";
+		$confbridge_enhanced_monitoring .= "exten => 6,1,Verbose(\"Enhanced Agent Monitoring: Whisper to the agent channel\")\n";
+		$confbridge_enhanced_monitoring .= "exten => 6,n,GoTo(vici_monitor_whisper,47378221\${monitorsession},1)\n";
+		$confbridge_enhanced_monitoring .= "\n\n";
 		}
 
 	$Lext .= "\n";
@@ -4877,6 +4937,164 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		}
 	##### END generate meetme entries for this server
 
+	##### BEGIN generate ConfBridge conf for this server
+	if ($conf_engine eq "CONFBRIDGE")
+		{
+		$cb = "; ViciDial ConfBridge config:\n";
+
+		$cb .= "; Bridge Profile for agent conferences\n";
+		$cb .= "[vici_agent_bridge]\n";
+		$cb .= "type=bridge\n";
+		$cb .= "max_members=10\n";
+		$cb .= "record_conference=no\n";
+		$cb .= "internal_sample_rate=8000\n";
+		$cb .= "mixing_interval=20\n";
+		$cb .= "video_mode=none\n";
+		$cb .= "sound_join=enter\n";
+		$cb .= "sound_leave=leave\n";
+		$cb .= "sound_has_joined=sip-silence\n";
+		$cb .= "sound_has_left=sip-silence\n";
+		$cb .= "sound_kicked=sip-silence\n";
+		$cb .= "sound_muted=sip-silence\n";
+		$cb .= "sound_unmuted=sip-silence\n";
+		$cb .= "sound_only_person=confbridge-only-participant\n";
+		$cb .= "sound_only_one=sip-silence\n";
+		$cb .= "sound_there_are=sip-silence\n";
+		$cb .= "sound_other_in_party=sip-silence\n";
+		$cb .= "sound_begin=sip-silence\n";
+		$cb .= "sound_wait_for_leader=sip-silence\n";
+		$cb .= "sound_leader_has_left=sip-silence\n";
+		$cb .= "sound_get_pin=sip-silence\n";
+		$cb .= "sound_invalid_pin=sip-silence\n";
+		$cb .= "sound_locked=sip-silence\n";
+		$cb .= "sound_locked_now=sip-silence\n";
+		$cb .= "sound_unlocked_now=sip-silence\n";
+		$cb .= "sound_error_menu=sip-silence\n";
+		$cb .= "sound_participants_muted=sip-silence\n\n";
+
+		$cb .= "; User Profile for agent channels\n";
+		$cb .= "[vici_agent_user]\n";
+		$cb .= "type=user\n";
+		$cb .= "admin=no\n";
+		$cb .= "quiet=no\n";
+		$cb .= "startmuted=no\n";
+		$cb .= "marked=yes\n";
+		$cb .= "dtmf_passthrough=yes\n";
+		$cb .= "hear_own_join_sound=yes\n";
+		$cb .= "dsp_drop_silence=yes\n\n";
+
+		$cb .= "; User Profile for admin channels\n";
+		$cb .= "[vici_admin_user]\n";
+		$cb .= "type=user\n";
+		$cb .= "admin=yes\n";
+		$cb .= "quiet=no\n";
+		$cb .= "startmuted=no\n";
+		$cb .= "marked=yes\n";
+		$cb .= "dtmf_passthrough=yes\n";
+		$cb .= "dsp_drop_silence=yes\n\n";
+
+		$cb .= "; User Profile for monitoring\n";
+		$cb .= "[vici_monitor_user]\n";
+		$cb .= "type=user\n";
+		$cb .= "admin=no\n";
+		$cb .= "quiet=yes\n";
+		$cb .= "startmuted=yes\n";
+		$cb .= "marked=no\n";
+		$cb .= "dtmf_passthrough=no\n";
+		$cb .= "dsp_drop_silence=yes\n\n";
+
+		$cb .= "; User Profile for barging\n";
+		$cb .= "[vici_barge_user]\n";
+		$cb .= "type=user\n";
+		$cb .= "admin=no\n";
+		$cb .= "quiet=no\n";
+		$cb .= "startmuted=no\n";
+		$cb .= "marked=no\n";
+		$cb .= "dtmf_passthrough=yes\n";
+		$cb .= "dsp_drop_silence=yes\n\n";
+
+		$cb .= "; User Profile for customers channels\n";
+		$cb .= "[vici_customer_user]\n";
+		$cb .= "type=user\n";
+		$cb .= "admin=no\n";
+		$cb .= "quiet=no\n";
+		$cb .= "startmuted=no\n";
+		$cb .= "marked=yes\n";
+		$cb .= "dtmf_passthrough=yes\n";
+		$cb .= "hear_own_join_sound=no\n";
+		$cb .= "dsp_drop_silence=yes\n\n";
+
+		$cb .= "; User Profile for call recording channels\n";
+		$cb .= "[vici_recording_user]\n";
+		$cb .= "type=user\n";
+		$cb .= "admin=no\n";
+		$cb .= "quiet=yes\n";
+		$cb .= "startmuted=yes\n";
+		$cb .= "marked=no\n";
+		$cb .= "dtmf_passthrough=no\n";
+		$cb .= "dsp_drop_silence=yes\n\n";
+
+		$cb .= "; User Profile for audio playback channels\n";
+		$cb .= "[vici_audio_user]\n";
+		$cb .= "type=user\n";
+		$cb .= "admin=no\n";
+		$cb .= "quiet=yes\n";
+		$cb .= "startmuted=no\n";
+		$cb .= "marked=no\n";
+		$cb .= "dtmf_passthrough=no\n";
+		$cb .= "dsp_drop_silence=yes\n\n";
+
+		$cb .= "; User Profile for triggering DTMF\n";
+		$cb .= "[vici_dtmf_user]\n";
+		$cb .= "type=user\n";
+		$cb .= "admin=no\n";
+		$cb .= "quiet=yes\n";
+		$cb .= "startmuted=yes\n";
+		$cb .= "marked=no\n";
+		$cb .= "dtmf_passthrough=yes\n";
+		$cb .= "dsp_drop_silence=yes\n\n";
+
+		$cb .= "; User Profile for RINGALL agent channels\n";
+		$cb .= "[vici_ringall_user]\n";
+		$cb .= "type=user\n";
+		$cb .= "admin=no\n";
+		$cb .= "quiet=no\n";
+		$cb .= "startmuted=no\n";
+		$cb .= "marked=yes\n";
+		$cb .= "dtmf_passthrough=yes\n";
+		$cb .= "announce_only_user=no\n";
+		$cb .= "hear_own_join_sound=no\n";
+		$cb .= "dsp_drop_silence=yes\n\n";
+
+		$cb .= "; Menu for changing how you are monitoring an agent\n";
+		$cb .= "[vici_monitor_menu]\n";
+		$cb .= "type=menu\n";
+		$cb .= "4=dialplan_exec(vici_monitor_menu_exec,4,1)\n";
+		$cb .= "5=dialplan_exec(vici_monitor_menu_exec,5,1)\n";
+		$cb .= "6=dialplan_exec(vici_monitor_menu_exec,6,1)\n";
+
+
+		# check if there are any ConfBridges defined for this server in the database, and if not, add 300 of them
+		$CB_ct=0;
+		$stmtA = "SELECT count(*) FROM vicidial_confbridges where server_ip='$server_ip';";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArowsCB=$sthA->rows;
+		if ($sthArowsCB > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$CB_ct =	$aryA[0];
+			}
+		$sthA->finish();
+
+		if ($CB_ct < 1) 
+			{
+			$stmtA = "INSERT IGNORE INTO vicidial_confbridges VALUES (9600000,'$server_ip','','0',NULL),(9600001,'$server_ip','','0',NULL),(9600002,'$server_ip','','0',NULL),(9600003,'$server_ip','','0',NULL),(9600004,'$server_ip','','0',NULL),(9600005,'$server_ip','','0',NULL),(9600006,'$server_ip','','0',NULL),(9600007,'$server_ip','','0',NULL),(9600008,'$server_ip','','0',NULL),(9600009,'$server_ip','','0',NULL),(9600010,'$server_ip','','0',NULL),(9600011,'$server_ip','','0',NULL),(9600012,'$server_ip','','0',NULL),(9600013,'$server_ip','','0',NULL),(9600014,'$server_ip','','0',NULL),(9600015,'$server_ip','','0',NULL),(9600016,'$server_ip','','0',NULL),(9600017,'$server_ip','','0',NULL),(9600018,'$server_ip','','0',NULL),(9600019,'$server_ip','','0',NULL),(9600020,'$server_ip','','0',NULL),(9600021,'$server_ip','','0',NULL),(9600022,'$server_ip','','0',NULL),(9600023,'$server_ip','','0',NULL),(9600024,'$server_ip','','0',NULL),(9600025,'$server_ip','','0',NULL),(9600026,'$server_ip','','0',NULL),(9600027,'$server_ip','','0',NULL),(9600028,'$server_ip','','0',NULL),(9600029,'$server_ip','','0',NULL),(9600030,'$server_ip','','0',NULL),(9600031,'$server_ip','','0',NULL),(9600032,'$server_ip','','0',NULL),(9600033,'$server_ip','','0',NULL),(9600034,'$server_ip','','0',NULL),(9600035,'$server_ip','','0',NULL),(9600036,'$server_ip','','0',NULL),(9600037,'$server_ip','','0',NULL),(9600038,'$server_ip','','0',NULL),(9600039,'$server_ip','','0',NULL),(9600040,'$server_ip','','0',NULL),(9600041,'$server_ip','','0',NULL),(9600042,'$server_ip','','0',NULL),(9600043,'$server_ip','','0',NULL),(9600044,'$server_ip','','0',NULL),(9600045,'$server_ip','','0',NULL),(9600046,'$server_ip','','0',NULL),(9600047,'$server_ip','','0',NULL),(9600048,'$server_ip','','0',NULL),(9600049,'$server_ip','','0',NULL),(9600050,'$server_ip','','0',NULL),(9600051,'$server_ip','','0',NULL),(9600052,'$server_ip','','0',NULL),(9600053,'$server_ip','','0',NULL),(9600054,'$server_ip','','0',NULL),(9600055,'$server_ip','','0',NULL),(9600056,'$server_ip','','0',NULL),(9600057,'$server_ip','','0',NULL),(9600058,'$server_ip','','0',NULL),(9600059,'$server_ip','','0',NULL),(9600060,'$server_ip','','0',NULL),(9600061,'$server_ip','','0',NULL),(9600062,'$server_ip','','0',NULL),(9600063,'$server_ip','','0',NULL),(9600064,'$server_ip','','0',NULL),(9600065,'$server_ip','','0',NULL),(9600066,'$server_ip','','0',NULL),(9600067,'$server_ip','','0',NULL),(9600068,'$server_ip','','0',NULL),(9600069,'$server_ip','','0',NULL),(9600070,'$server_ip','','0',NULL),(9600071,'$server_ip','','0',NULL),(9600072,'$server_ip','','0',NULL),(9600073,'$server_ip','','0',NULL),(9600074,'$server_ip','','0',NULL),(9600075,'$server_ip','','0',NULL),(9600076,'$server_ip','','0',NULL),(9600077,'$server_ip','','0',NULL),(9600078,'$server_ip','','0',NULL),(9600079,'$server_ip','','0',NULL),(9600080,'$server_ip','','0',NULL),(9600081,'$server_ip','','0',NULL),(9600082,'$server_ip','','0',NULL),(9600083,'$server_ip','','0',NULL),(9600084,'$server_ip','','0',NULL),(9600085,'$server_ip','','0',NULL),(9600086,'$server_ip','','0',NULL),(9600087,'$server_ip','','0',NULL),(9600088,'$server_ip','','0',NULL),(9600089,'$server_ip','','0',NULL),(9600090,'$server_ip','','0',NULL),(9600091,'$server_ip','','0',NULL),(9600092,'$server_ip','','0',NULL),(9600093,'$server_ip','','0',NULL),(9600094,'$server_ip','','0',NULL),(9600095,'$server_ip','','0',NULL),(9600096,'$server_ip','','0',NULL),(9600097,'$server_ip','','0',NULL),(9600098,'$server_ip','','0',NULL),(9600099,'$server_ip','','0',NULL),(9600100,'$server_ip','','0',NULL),(9600101,'$server_ip','','0',NULL),(9600102,'$server_ip','','0',NULL),(9600103,'$server_ip','','0',NULL),(9600104,'$server_ip','','0',NULL),(9600105,'$server_ip','','0',NULL),(9600106,'$server_ip','','0',NULL),(9600107,'$server_ip','','0',NULL),(9600108,'$server_ip','','0',NULL),(9600109,'$server_ip','','0',NULL),(9600110,'$server_ip','','0',NULL),(9600111,'$server_ip','','0',NULL),(9600112,'$server_ip','','0',NULL),(9600113,'$server_ip','','0',NULL),(9600114,'$server_ip','','0',NULL),(9600115,'$server_ip','','0',NULL),(9600116,'$server_ip','','0',NULL),(9600117,'$server_ip','','0',NULL),(9600118,'$server_ip','','0',NULL),(9600119,'$server_ip','','0',NULL),(9600120,'$server_ip','','0',NULL),(9600121,'$server_ip','','0',NULL),(9600122,'$server_ip','','0',NULL),(9600123,'$server_ip','','0',NULL),(9600124,'$server_ip','','0',NULL),(9600125,'$server_ip','','0',NULL),(9600126,'$server_ip','','0',NULL),(9600127,'$server_ip','','0',NULL),(9600128,'$server_ip','','0',NULL),(9600129,'$server_ip','','0',NULL),(9600130,'$server_ip','','0',NULL),(9600131,'$server_ip','','0',NULL),(9600132,'$server_ip','','0',NULL),(9600133,'$server_ip','','0',NULL),(9600134,'$server_ip','','0',NULL),(9600135,'$server_ip','','0',NULL),(9600136,'$server_ip','','0',NULL),(9600137,'$server_ip','','0',NULL),(9600138,'$server_ip','','0',NULL),(9600139,'$server_ip','','0',NULL),(9600140,'$server_ip','','0',NULL),(9600141,'$server_ip','','0',NULL),(9600142,'$server_ip','','0',NULL),(9600143,'$server_ip','','0',NULL),(9600144,'$server_ip','','0',NULL),(9600145,'$server_ip','','0',NULL),(9600146,'$server_ip','','0',NULL),(9600147,'$server_ip','','0',NULL),(9600148,'$server_ip','','0',NULL),(9600149,'$server_ip','','0',NULL),(9600150,'$server_ip','','0',NULL),(9600151,'$server_ip','','0',NULL),(9600152,'$server_ip','','0',NULL),(9600153,'$server_ip','','0',NULL),(9600154,'$server_ip','','0',NULL),(9600155,'$server_ip','','0',NULL),(9600156,'$server_ip','','0',NULL),(9600157,'$server_ip','','0',NULL),(9600158,'$server_ip','','0',NULL),(9600159,'$server_ip','','0',NULL),(9600160,'$server_ip','','0',NULL),(9600161,'$server_ip','','0',NULL),(9600162,'$server_ip','','0',NULL),(9600163,'$server_ip','','0',NULL),(9600164,'$server_ip','','0',NULL),(9600165,'$server_ip','','0',NULL),(9600166,'$server_ip','','0',NULL),(9600167,'$server_ip','','0',NULL),(9600168,'$server_ip','','0',NULL),(9600169,'$server_ip','','0',NULL),(9600170,'$server_ip','','0',NULL),(9600171,'$server_ip','','0',NULL),(9600172,'$server_ip','','0',NULL),(9600173,'$server_ip','','0',NULL),(9600174,'$server_ip','','0',NULL),(9600175,'$server_ip','','0',NULL),(9600176,'$server_ip','','0',NULL),(9600177,'$server_ip','','0',NULL),(9600178,'$server_ip','','0',NULL),(9600179,'$server_ip','','0',NULL),(9600180,'$server_ip','','0',NULL),(9600181,'$server_ip','','0',NULL),(9600182,'$server_ip','','0',NULL),(9600183,'$server_ip','','0',NULL),(9600184,'$server_ip','','0',NULL),(9600185,'$server_ip','','0',NULL),(9600186,'$server_ip','','0',NULL),(9600187,'$server_ip','','0',NULL),(9600188,'$server_ip','','0',NULL),(9600189,'$server_ip','','0',NULL),(9600190,'$server_ip','','0',NULL),(9600191,'$server_ip','','0',NULL),(9600192,'$server_ip','','0',NULL),(9600193,'$server_ip','','0',NULL),(9600194,'$server_ip','','0',NULL),(9600195,'$server_ip','','0',NULL),(9600196,'$server_ip','','0',NULL),(9600197,'$server_ip','','0',NULL),(9600198,'$server_ip','','0',NULL),(9600199,'$server_ip','','0',NULL),(9600200,'$server_ip','','0',NULL),(9600201,'$server_ip','','0',NULL),(9600202,'$server_ip','','0',NULL),(9600203,'$server_ip','','0',NULL),(9600204,'$server_ip','','0',NULL),(9600205,'$server_ip','','0',NULL),(9600206,'$server_ip','','0',NULL),(9600207,'$server_ip','','0',NULL),(9600208,'$server_ip','','0',NULL),(9600209,'$server_ip','','0',NULL),(9600210,'$server_ip','','0',NULL),(9600211,'$server_ip','','0',NULL),(9600212,'$server_ip','','0',NULL),(9600213,'$server_ip','','0',NULL),(9600214,'$server_ip','','0',NULL),(9600215,'$server_ip','','0',NULL),(9600216,'$server_ip','','0',NULL),(9600217,'$server_ip','','0',NULL),(9600218,'$server_ip','','0',NULL),(9600219,'$server_ip','','0',NULL),(9600220,'$server_ip','','0',NULL),(9600221,'$server_ip','','0',NULL),(9600222,'$server_ip','','0',NULL),(9600223,'$server_ip','','0',NULL),(9600224,'$server_ip','','0',NULL),(9600225,'$server_ip','','0',NULL),(9600226,'$server_ip','','0',NULL),(9600227,'$server_ip','','0',NULL),(9600228,'$server_ip','','0',NULL),(9600229,'$server_ip','','0',NULL),(9600230,'$server_ip','','0',NULL),(9600231,'$server_ip','','0',NULL),(9600232,'$server_ip','','0',NULL),(9600233,'$server_ip','','0',NULL),(9600234,'$server_ip','','0',NULL),(9600235,'$server_ip','','0',NULL),(9600236,'$server_ip','','0',NULL),(9600237,'$server_ip','','0',NULL),(9600238,'$server_ip','','0',NULL),(9600239,'$server_ip','','0',NULL),(9600240,'$server_ip','','0',NULL),(9600241,'$server_ip','','0',NULL),(9600242,'$server_ip','','0',NULL),(9600243,'$server_ip','','0',NULL),(9600244,'$server_ip','','0',NULL),(9600245,'$server_ip','','0',NULL),(9600246,'$server_ip','','0',NULL),(9600247,'$server_ip','','0',NULL),(9600248,'$server_ip','','0',NULL),(9600249,'$server_ip','','0',NULL),(9600250,'$server_ip','','0',NULL),(9600251,'$server_ip','','0',NULL),(9600252,'$server_ip','','0',NULL),(9600253,'$server_ip','','0',NULL),(9600254,'$server_ip','','0',NULL),(9600255,'$server_ip','','0',NULL),(9600256,'$server_ip','','0',NULL),(9600257,'$server_ip','','0',NULL),(9600258,'$server_ip','','0',NULL),(9600259,'$server_ip','','0',NULL),(9600260,'$server_ip','','0',NULL),(9600261,'$server_ip','','0',NULL),(9600262,'$server_ip','','0',NULL),(9600263,'$server_ip','','0',NULL),(9600264,'$server_ip','','0',NULL),(9600265,'$server_ip','','0',NULL),(9600266,'$server_ip','','0',NULL),(9600267,'$server_ip','','0',NULL),(9600268,'$server_ip','','0',NULL),(9600269,'$server_ip','','0',NULL),(9600270,'$server_ip','','0',NULL),(9600271,'$server_ip','','0',NULL),(9600272,'$server_ip','','0',NULL),(9600273,'$server_ip','','0',NULL),(9600274,'$server_ip','','0',NULL),(9600275,'$server_ip','','0',NULL),(9600276,'$server_ip','','0',NULL),(9600277,'$server_ip','','0',NULL),(9600278,'$server_ip','','0',NULL),(9600279,'$server_ip','','0',NULL),(9600280,'$server_ip','','0',NULL),(9600281,'$server_ip','','0',NULL),(9600282,'$server_ip','','0',NULL),(9600283,'$server_ip','','0',NULL),(9600284,'$server_ip','','0',NULL),(9600285,'$server_ip','','0',NULL),(9600286,'$server_ip','','0',NULL),(9600287,'$server_ip','','0',NULL),(9600288,'$server_ip','','0',NULL),(9600289,'$server_ip','','0',NULL),(9600290,'$server_ip','','0',NULL),(9600291,'$server_ip','','0',NULL),(9600292,'$server_ip','','0',NULL),(9600293,'$server_ip','','0',NULL),(9600294,'$server_ip','','0',NULL),(9600295,'$server_ip','','0',NULL),(9600296,'$server_ip','','0',NULL),(9600297,'$server_ip','','0',NULL),(9600298,'$server_ip','','0',NULL),(9600299,'$server_ip','','0',NULL);";
+			$affected_rows = $dbhA->do($stmtA) or die  "Couldn't execute query: |$stmtA|\n";
+			if ($DB) {print "ConfBridges DB populate: $CB_ct|$affected_rows|$stmtA|\n";}
+			}
+		}
+	##### END generate ConfBridge conf for this server
 
 
 	##### BEGIN generate music on hold entries for this server
@@ -4950,6 +5168,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	open(vm, ">/etc/asterisk/BUILDvoicemail-vicidial.conf") || die "can't open /etc/asterisk/BUILDvoicemail-vicidial.conf: $!\n";
 	open(moh, ">/etc/asterisk/BUILDmusiconhold-vicidial.conf") || die "can't open /etc/asterisk/BUILDmusiconhold-vicidial.conf: $!\n";
 	open(mm, ">/etc/asterisk/BUILDmeetme-vicidial.conf") || die "can't open /etc/asterisk/BUILDmeetme-vicidial.conf: $!\n";
+	open(cb, ">/etc/asterisk/BUILDconfbridge-vicidial.conf") || die "can't open /etc/asterisk/BUILDconfbridge-vicidial.conf: $!\n";
 
 	print ext "; WARNING- THIS FILE IS AUTO-GENERATED BY VICIDIAL, ANY EDITS YOU MAKE WILL BE LOST\n";
 	print ext "$ext\n";
@@ -4999,6 +5218,8 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	if (length($SScustom_dialplan_entry)>5)
 		{print ext "include => vicidial-auto-system-setting-custom\n";}
 	print ext "\n";
+	print ext "$confbridge_enhanced_monitoring";
+	print ext "\n";
 	print ext "\n; END OF FILE    Last Forced System Reload: $SSreload_timestamp\n";
 
 	print iax "; WARNING- THIS FILE IS AUTO-GENERATED BY VICIDIAL, ANY EDITS YOU MAKE WILL BE LOST\n";
@@ -5042,6 +5263,10 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	print mm "$mm\n";
 	print mm "\n; END OF FILE    Last Forced System Reload: $SSreload_timestamp\n";
 
+	print cb "; WARNING- THIS FILE IS AUTO-GENERATED BY VICIDIAL, ANY EDITS YOU MAKE WILL BE LOST\n";
+	print cb "$cb\n";
+	print cb "\n; END OF FILE    Last Forced System Reload: $SSreload_timestamp\n";
+
 	close(ext);
 	close(iax);
 	close(sip);
@@ -5050,6 +5275,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	close(vm);
 	close(moh);
 	close(mm);
+	close(cb);
 
 	### find cmp binary
 	$cmpbin = '';
@@ -5092,6 +5318,9 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	if ( !-e ('/etc/asterisk/meetme-vicidial.conf'))
 		{`echo -e \"; END OF FILE\n\" > /etc/asterisk/meetme-vicidial.conf`;}
 
+	if ( !-e ('/etc/asterisk/confbridge-vicidial.conf'))
+		{`echo -e \"; END OF FILE\n\" > /etc/asterisk/confbridge-vicidial.conf`;}
+
 	use File::Compare;
 
 	$extCMP = compare("/etc/asterisk/BUILDextensions-vicidial.conf","/etc/asterisk/extensions-vicidial.conf");
@@ -5102,6 +5331,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	$vmCMP =  compare("/etc/asterisk/BUILDvoicemail-vicidial.conf","/etc/asterisk/voicemail.conf");
 	$mohCMP = compare("/etc/asterisk/BUILDmusiconhold-vicidial.conf","/etc/asterisk/musiconhold-vicidial.conf");
 	$mmCMP =  compare("/etc/asterisk/BUILDmeetme-vicidial.conf","/etc/asterisk/meetme-vicidial.conf");
+	$cbCMP =  compare("/etc/asterisk/BUILDconfbridge-vicidial.conf","/etc/asterisk/confbridge-vicidial.conf");
 
 	sleep(1);
 
@@ -5210,6 +5440,13 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 			if ($DB) {print "module reload app_meetme.so\n";}
 			sleep(1);
 			}
+		if ($cbCMP > 0)
+			{
+			`cp -f /etc/asterisk/BUILDconfbridge-vicidial.conf /etc/asterisk/confbridge-vicidial.conf`;
+			`screen -XS asterisk eval 'stuff "reload app_confbridge.so\015"'`;
+			if ($DB) {print "reload app_confbridge.so\n";}
+			sleep(1);
+			}
 		}
 
 	`rm -f /etc/asterisk/BUILDextensions-vicidial.conf`;
@@ -5220,6 +5457,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 #	`rm -f /etc/asterisk/BUILDvoicemail-vicidial.conf`;
 	`rm -f /etc/asterisk/BUILDmusiconhold-vicidial.conf`;
 	`rm -f /etc/asterisk/BUILDmeetme-vicidial.conf`;
+	`rm -f /etc/asterisk/BUILDconfbridge-vicidial.conf`;
 	}
 ################################################################################
 #####  END Creation of auto-generated conf files

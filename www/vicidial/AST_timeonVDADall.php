@@ -1,7 +1,7 @@
 <?php 
 # AST_timeonVDADall.php
 # 
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # live real-time stats for the VICIDIAL Auto-Dialer all servers
 #
@@ -133,10 +133,11 @@
 # 230811-1530 - Added realtime monitoring display information
 # 231115-1656 - Added RS_no_DEAD_status and RS_hide_CUST_info options.php settings
 # 240801-1130 - Code updates for PHP8 compatibility
+# 250103-0929 - Added enhanced_agent_monitoring code
 #
 
-$version = '2.14-117';
-$build = '231115-1656';
+$version = '2.14-118';
+$build = '250103-0929';
 $php_script='AST_timeonVDADall.php';
 
 require("dbconnect_mysqli.php");
@@ -285,7 +286,7 @@ $db_source = 'M';
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,agent_whisper_enabled,allow_chats,cache_carrier_stats_realtime,report_default_format,ofcom_uk_drop_calc,enable_pause_code_limits,timeclock_end_of_day,allow_web_debug FROM system_settings;";
+$stmt = "SELECT use_non_latin,outbound_autodial_active,slave_db_server,reports_use_slave_db,enable_languages,language_method,agent_whisper_enabled,allow_chats,cache_carrier_stats_realtime,report_default_format,ofcom_uk_drop_calc,enable_pause_code_limits,timeclock_end_of_day,allow_web_debug,enhanced_agent_monitoring FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 #if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
@@ -306,6 +307,7 @@ if ($qm_conf_ct > 0)
 	$SSenable_pause_code_limits =	$row[11];
 	$SStimeclock_end_of_day =		$row[12];
 	$SSallow_web_debug =			$row[13];
+	$SSenhanced_agent_monitoring =	$row[14];
 	}
 if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####

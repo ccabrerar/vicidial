@@ -2,7 +2,7 @@
 
 # install.pl version 2.14
 #
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 
 # CHANGES
@@ -52,6 +52,7 @@
 # 230117-2220 - Added --khomp-enable CLI flag
 # 230508-0809 - Added Asterisk 18 compatibility
 # 240704-0830 - Added coldstorage DB entries
+# 250103-1017 - Added ConfBridge conf files updates
 #
 
 ############################################
@@ -95,7 +96,7 @@ $VARCS_port =	'3306';
 # default keepalive processes: 
 $VARactive_keepalives =		'1234568';
 # default Asterisk version: 
-$VARasterisk_version =		'13.X';
+$VARasterisk_version =		'16.X';
 # default recording FTP archive variables:
 $VARFTP_host = '10.0.0.4';
 $VARFTP_user = 'cron';
@@ -2976,15 +2977,16 @@ if ( ($PROMPTcopy_conf_files =~ /y/i) || ($CLIcopy_conf_files =~ /y/i) )
 					}
 				else
 					{
-					if ($VARasterisk_version =~ /^18|^20/)
+					if ($VARasterisk_version =~ /^18|^20|^22/)
 						{
 						`cp -f ./docs/conf_examples/extensions.conf.sample-18 /etc/asterisk/extensions.conf`;
 						`cp -f ./docs/conf_examples/iax.conf.sample-1.4 /etc/asterisk/iax.conf`;
 						`cp -f ./docs/conf_examples/sip.conf.sample-13 /etc/asterisk/sip.conf`;
-						`cp -f ./docs/conf_examples/manager.conf.sample-13 /etc/asterisk/manager.conf`;
+						`cp -f ./docs/conf_examples/manager.conf.sample-18 /etc/asterisk/manager.conf`;
 						`cp -f ./docs/conf_examples/voicemail.conf.sample-1.8 /etc/asterisk/voicemail.conf`;
 						`cp -f ./docs/conf_examples/pjsip.conf.sample-16 /etc/asterisk/pjsip.conf`;
 						`cp -f ./docs/conf_examples/pjsip_wizard.conf.sample-16 /etc/asterisk/pjsip_wizard.conf`;
+						`cp -f ./docs/conf_examples/confbridge.conf.sample-18 /etc/asterisk/confbridge.conf`;
 						}
 					else
 						{
