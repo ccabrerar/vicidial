@@ -257,7 +257,7 @@ department VARCHAR(30)
 CREATE TABLE server_updater (
 server_ip VARCHAR(15) NOT NULL,
 last_update DATETIME,
-db_time TIMESTAMP,
+db_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 unique index serverip (server_ip)
 ) ENGINE=MyISAM;
 
@@ -331,7 +331,7 @@ index serverstat(server_ip,status)
 CREATE TABLE vicidial_list (
 lead_id INT(9) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
 entry_date DATETIME,
-modify_date TIMESTAMP,
+modify_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 status VARCHAR(6),
 user VARCHAR(20),
 vendor_lead_code VARCHAR(20),
@@ -405,7 +405,7 @@ callerid VARCHAR(20),
 channel VARCHAR(100),
 random_id INT(8) UNSIGNED,
 last_call_time DATETIME,
-last_update_time TIMESTAMP,
+last_update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 last_call_finish DATETIME,
 closer_campaigns TEXT,
 call_server_ip VARCHAR(15),
@@ -470,7 +470,7 @@ phone_number VARCHAR(18),
 call_time DATETIME,
 call_type ENUM('IN','OUT','OUTBALANCE') default 'OUT',
 stage VARCHAR(20) default 'START',
-last_update_time TIMESTAMP,
+last_update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 alt_dial VARCHAR(6) default 'NONE',
 queue_priority TINYINT(2) default '0',
 agent_only VARCHAR(20) default '',
@@ -706,7 +706,7 @@ failed_last_type_today VARCHAR(20) default '',
 modify_dial_prefix ENUM('0','1','2','3','4','5','6') default '0',
 inbound_credits MEDIUMINT(7) default '-1',
 hci_enabled ENUM('0','1','2','3','4','5','6') default '0',
-modify_stamp TIMESTAMP
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=MyISAM;
 
 CREATE UNIQUE INDEX user ON vicidial_users (user);
@@ -773,7 +773,7 @@ allowed_queue_groups TEXT,
 reports_header_override ENUM('DISABLED','LOGO_ONLY_SMALL','LOGO_ONLY_LARGE','ALT_1','ALT_2','ALT_3','ALT_4') default 'DISABLED',
 admin_home_url VARCHAR(255) default '',
 script_id VARCHAR(20) default '',
-modify_stamp TIMESTAMP
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaigns (
@@ -1201,7 +1201,7 @@ completed ENUM('Y','N') default 'N',
 min_sec INT(5) UNSIGNED default '0',
 max_sec INT(5) UNSIGNED default '0',
 answering_machine ENUM('Y','N') default 'N',
-modify_stamp TIMESTAMP
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaign_statuses (
@@ -1463,7 +1463,7 @@ third_alert_only VARCHAR(40) default 'DISABLED',
 agent_search_list VARCHAR(20) default '',
 state_descriptions VARCHAR(40) default '---DISABLED---',
 stereo_recording ENUM('DISABLED','CUSTOMER','CUSTOMER_MUTE') default 'DISABLED',
-modify_stamp TIMESTAMP
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_stations (
@@ -1579,7 +1579,7 @@ script_text TEXT,
 active ENUM('Y','N'),
 user_group VARCHAR(20) default '---ALL---',
 script_color VARCHAR(20) default 'white',
-modify_stamp TIMESTAMP
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=MyISAM;
 
 CREATE TABLE phone_favorites (
@@ -1596,7 +1596,7 @@ campaign_id VARCHAR(8),
 status VARCHAR(10),
 entry_time DATETIME,
 callback_time DATETIME,
-modify_date TIMESTAMP,
+modify_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 user VARCHAR(20),
 recipient ENUM('USERONLY','ANYONE'),
 comments VARCHAR(255),
@@ -1632,7 +1632,7 @@ lead_filter_name VARCHAR(30) NOT NULL,
 lead_filter_comments VARCHAR(255),
 lead_filter_sql TEXT,
 user_group VARCHAR(20) default '---ALL---',
-modify_stamp TIMESTAMP
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_call_times (
@@ -1666,7 +1666,7 @@ friday_afterhours_filename_override VARCHAR(255) default '',
 saturday_afterhours_filename_override VARCHAR(255) default '',
 user_group VARCHAR(20) default '---ALL---',
 ct_holidays TEXT,
-modify_stamp TIMESTAMP
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_state_call_times (
@@ -1692,12 +1692,12 @@ sct_saturday_start SMALLINT(4) unsigned default '0',
 sct_saturday_stop SMALLINT(4) unsigned default '0',
 user_group VARCHAR(20) default '---ALL---',
 ct_holidays TEXT,
-modify_stamp TIMESTAMP
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaign_stats (
 campaign_id VARCHAR(20) PRIMARY KEY NOT NULL,
-update_time TIMESTAMP,
+update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 dialable_leads INT(9) UNSIGNED default '0',
 calls_today INT(9) UNSIGNED default '0',
 answers_today INT(9) UNSIGNED default '0',
@@ -1765,7 +1765,7 @@ index (campaign_id)
 CREATE TABLE vicidial_campaign_server_stats (
 campaign_id VARCHAR(20) NOT NULL,
 server_ip VARCHAR(15) NOT NULL,
-update_time TIMESTAMP,
+update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 local_trunk_shortage SMALLINT(5) UNSIGNED default '0',
 index (campaign_id),
 index (server_ip)
@@ -2228,7 +2228,7 @@ shift_weekdays VARCHAR(7) default '0123456',
 report_option ENUM('Y','N') default 'N',
 user_group VARCHAR(20) default '---ALL---',
 report_rank SMALLINT(5) default '1',
-modify_stamp TIMESTAMP,
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 index (shift_id)
 ) ENGINE=MyISAM;
 
@@ -2245,7 +2245,7 @@ shift_id VARCHAR(20),
 notes VARCHAR(255),
 manager_user VARCHAR(20),
 manager_ip VARCHAR(15),
-event_datestamp TIMESTAMP NOT NULL,
+event_datestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 tcid_link INT(9) UNSIGNED,
 index (user),
 index (event_epoch)
@@ -2255,7 +2255,7 @@ CREATE TABLE vicidial_timeclock_status (
 user VARCHAR(20) UNIQUE NOT NULL,
 user_group VARCHAR(20) NOT NULL,
 event_epoch INT(10) UNSIGNED,
-event_date TIMESTAMP,
+event_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 status VARCHAR(50),
 ip_address VARCHAR(15),
 shift_id VARCHAR(20),
@@ -2272,7 +2272,7 @@ user VARCHAR(20) NOT NULL,
 user_group VARCHAR(20) NOT NULL,
 ip_address VARCHAR(15),
 shift_id VARCHAR(20),
-event_datestamp TIMESTAMP NOT NULL,
+event_datestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 tcid_link INT(9) UNSIGNED,
 index (timeclock_id),
 index (user)
@@ -2379,7 +2379,7 @@ inbound_route_answer ENUM('Y','N') DEFAULT 'Y',
 pre_filter_recent_call VARCHAR(20) default '',
 pre_filter_recent_extension VARCHAR(50) default '',
 unique index (did_pattern),
-modify_stamp TIMESTAMP,
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 index (group_id)
 ) ENGINE=MyISAM;
 
@@ -2601,7 +2601,7 @@ index (event_date)
 
 CREATE TABLE vicidial_drop_rate_groups (
 group_id VARCHAR(20) PRIMARY KEY NOT NULL,
-update_time TIMESTAMP,
+update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 calls_today INT(9) UNSIGNED default '0',
 answers_today INT(9) UNSIGNED default '0',
 drops_today DOUBLE(12,3) default '0',
@@ -3059,7 +3059,7 @@ CREATE TABLE vicidial_campaign_stats_debug (
 campaign_id VARCHAR(20) NOT NULL,
 server_ip VARCHAR(15) NOT NULL,
 entry_time DATETIME,
-update_time TIMESTAMP,
+update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 debug_output TEXT,
 adapt_output TEXT,
 index (campaign_id),
@@ -3258,7 +3258,7 @@ stats_date DATE NOT NULL,
 stats_flag ENUM('OPEN','CLOSED','CLOSING') default 'CLOSED',
 stats_type ENUM('TOTAL','INGROUP','CAMPAIGN','') default '',
 campaign_id VARCHAR(20) default '',
-update_time TIMESTAMP,
+update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 closed_time DATETIME,
 max_channels MEDIUMINT(8) UNSIGNED default '0',
 max_calls MEDIUMINT(8) UNSIGNED default '0',
@@ -3276,7 +3276,7 @@ CREATE TABLE vicidial_daily_ra_stats (
 stats_date DATE NOT NULL,
 stats_flag ENUM('OPEN','CLOSED','CLOSING') default 'CLOSED',
 user VARCHAR(20) default '',
-update_time TIMESTAMP,
+update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 closed_time DATETIME,
 max_calls MEDIUMINT(8) UNSIGNED default '0',
 total_calls INT(9) UNSIGNED default '0',
@@ -3354,7 +3354,7 @@ CREATE TABLE vicidial_comments (
 comment_id BIGINT(20) unsigned NOT NULL AUTO_INCREMENT,
 lead_id INT(11) NOT NULL,
 user_id VARCHAR(20) NOT NULL,
-timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 list_id BIGINT(14) UNSIGNED NOT NULL,
 campaign_id VARCHAR(8) NOT NULL,
 comment VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
@@ -3633,7 +3633,7 @@ language_id VARCHAR(100) NOT NULL,
 language_code VARCHAR(20) default '',
 language_description VARCHAR(255) default '',
 user_group VARCHAR(20) default '---ALL---',
-modify_date TIMESTAMP,
+modify_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 active ENUM('Y','N') default 'N',
 unique index (language_id)
 ) ENGINE=MyISAM CHARACTER SET utf8 COLLATE utf8_unicode_ci;
@@ -3644,7 +3644,7 @@ language_id VARCHAR(100) NOT NULL,
 english_text VARCHAR(10000) default '',
 translated_text TEXT,
 source VARCHAR(20) default '',
-modify_date TIMESTAMP,
+modify_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 index (language_id),
 index (english_text)
 ) ENGINE=MyISAM CHARACTER SET utf8 COLLATE utf8_unicode_ci;
@@ -3787,7 +3787,7 @@ url_description VARCHAR(255) default '',
 url_address TEXT,
 url_lists VARCHAR(1000) default '',
 url_call_length SMALLINT(5) default '0',
-modify_stamp TIMESTAMP,
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 PRIMARY KEY (url_id),
 KEY vicidial_url_multi_campaign_id_key (campaign_id)
 ) ENGINE=MyISAM CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -3839,7 +3839,7 @@ container_notes VARCHAR(255) default '',
 container_type VARCHAR(40) default 'OTHER',
 user_group VARCHAR(20) default '---ALL---',
 container_entry MEDIUMTEXT,
-modify_stamp TIMESTAMP
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=MyISAM CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE vicidial_dnc_log (
@@ -3855,7 +3855,7 @@ CREATE TABLE vicidial_status_groups (
 status_group_id VARCHAR(20) PRIMARY KEY NOT NULL,
 status_group_notes VARCHAR(255) default '',
 user_group VARCHAR(20) default '---ALL---',
-modify_stamp TIMESTAMP
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=MyISAM CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE vicidial_custom_reports (
@@ -4227,7 +4227,7 @@ group_id VARCHAR(20) NOT NULL,
 queue_priority TINYINT(2) default '0',
 call_date DATETIME,
 gmt_offset_now DECIMAL(4,2) DEFAULT '0.00',
-modify_date TIMESTAMP,
+modify_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 index (icbq_status),
 index (group_id),
 index (icbq_date),
@@ -4254,7 +4254,7 @@ cid_auto_rotate_minimum MEDIUMINT(7) UNSIGNED default '0',
 cid_auto_rotate_calls MEDIUMINT(7) UNSIGNED default '0',
 cid_last_auto_rotate DATETIME,
 cid_auto_rotate_cid VARCHAR(20) default '',
-modify_stamp TIMESTAMP
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=MyISAM CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE vicidial_agent_function_log (
@@ -4660,7 +4660,7 @@ ingroups TEXT,
 list_ids TEXT,
 create_date DATETIME DEFAULT NULL,
 create_user VARCHAR(10) DEFAULT NULL,
-modify_date TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+modify_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 modify_user VARCHAR(10) DEFAULT NULL,
 PRIMARY KEY (checkpoint_row_id)
 ) ENGINE=MyISAM;
@@ -4685,7 +4685,7 @@ qc_scorecard_id VARCHAR(20) DEFAULT NULL,
 qc_agent VARCHAR(20) DEFAULT NULL,
 qc_user_group VARCHAR(20) DEFAULT NULL,
 qc_status VARCHAR(20) DEFAULT NULL,
-date_modified TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+date_modified TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 date_claimed DATETIME DEFAULT NULL,
 date_completed DATETIME DEFAULT NULL,
 PRIMARY KEY (qc_log_id),
@@ -4698,7 +4698,7 @@ qc_scorecard_id VARCHAR(20) NOT NULL,
 scorecard_name VARCHAR(255) DEFAULT NULL,
 active ENUM('Y','N') DEFAULT 'Y',
 passing_score SMALLINT(5) UNSIGNED DEFAULT 0,
-last_modified TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+last_modified TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 PRIMARY KEY (qc_scorecard_id)
 ) ENGINE=MyISAM;
 
@@ -4857,7 +4857,7 @@ CREATE TABLE `verm_custom_report_holder` (
 `user` VARCHAR(20) COLLATE utf8_unicode_ci DEFAULT NULL,
 `report_name` VARCHAR(100) COLLATE utf8_unicode_ci DEFAULT NULL,
 `report_parameters` TEXT COLLATE utf8_unicode_ci DEFAULT NULL,
-`modify_date` TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+`modify_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 PRIMARY KEY (`custom_report_id`),
 UNIQUE KEY `verm_custom_report_holder_pkey` (`user`,`report_name`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -4887,7 +4887,7 @@ CREATE TABLE `wallboard_reports` (
 `wallboard_name` VARCHAR(100) COLLATE utf8_unicode_ci DEFAULT NULL,
 `wallboard_views` TINYINT(3) UNSIGNED DEFAULT NULL,
 `date_created` DATETIME DEFAULT NULL,
-`last_modified` TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+`last_modified` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 `data_refresh_rate` SMALLINT(5) UNSIGNED DEFAULT 10,
 `view_refresh_rate` SMALLINT(5) UNSIGNED DEFAULT 30,
 PRIMARY KEY (`wallboard_report_id`)
@@ -5137,7 +5137,7 @@ campaign_id VARCHAR(8),
 user_ip VARCHAR(45) default '',
 login_time DATETIME,
 last_call_time DATETIME,
-last_update_time TIMESTAMP,
+last_update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 status VARCHAR(40),
 lead_id INT(9) UNSIGNED default '0',
 phone_number VARCHAR(18),
@@ -5273,7 +5273,7 @@ message VARCHAR(100),
 message_type ENUM('MEETING','CLOSED','WEATHER','CUSTOM'),
 status ENUM('ACTIVE','LIVE','COMPLETED','CANCELLED') DEFAULT 'ACTIVE',
 user VARCHAR(20),
-modify_date TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+modify_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 modified_by VARCHAR(20),
 holiday_id VARCHAR(30),
 KEY inbound_disabled_entries_key (start_datetime,end_datetime,location)
@@ -5298,7 +5298,7 @@ timeoff_month CHAR(7) DEFAULT NULL,
 timeoff_type VARCHAR(10) DEFAULT NULL,
 hours DECIMAL(5,2) unsigned DEFAULT NULL,
 entry_date DATETIME DEFAULT NULL,
-modify_date TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+modify_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 entered_by VARCHAR(20) DEFAULT NULL,
 last_modified_by VARCHAR(20) DEFAULT NULL,
 PRIMARY KEY (vtl_id),
@@ -5738,4 +5738,4 @@ INSERT INTO `wallboard_reports` VALUES ('AGENTS_AND_QUEUES','Agents and Queues',
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1723',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1724',db_schema_update_date=NOW(),reload_timestamp=NOW();
