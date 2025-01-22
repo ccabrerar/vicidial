@@ -116,10 +116,11 @@
 # 240425-1901 - Added md_check option for transfer_conference function
 # 240427-0809 - Added tw_check option for transfer_conference function
 # 240429-2220 - Added PARK_XFER|GRAB_XFER options for park_call function
+# 250122-1010 - Allow for letters in phone_number variable, for AGENTDIRECT transfers
 #
 
-$version = '2.14-81';
-$build = '240429-2220';
+$version = '2.14-82';
+$build = '250122-1010';
 $php_script = 'api.php';
 
 $startMS = microtime();
@@ -386,7 +387,7 @@ if ($non_latin < 1)
 	$ingroup_choices = preg_replace("/[^- \_0-9a-zA-Z]/","",$ingroup_choices);
 	$set_as_default = preg_replace("/[^A-Z]/","",$set_as_default);
 	$phone_code = preg_replace("/[^0-9X]/","",$phone_code);
-	$phone_number = preg_replace("/[^\*#0-9]/","",$phone_number);
+	$phone_number = preg_replace("/[^\*#0-9a-zA-Z]/","",$phone_number);
 	$lead_id = preg_replace("/[^0-9]/","",$lead_id);
 	$vendor_id = preg_replace('/;|#/','',$vendor_id);
 		$vendor_id = preg_replace('/\+/',' ',$vendor_id);
@@ -479,7 +480,7 @@ else
 	$ingroup_choices = preg_replace("/[^- \_0-9\p{L}]/u","",$ingroup_choices);
 	$set_as_default = preg_replace("/[^A-Z]/","",$set_as_default);
 	$phone_code = preg_replace("/[^0-9X]/","",$phone_code);
-	$phone_number = preg_replace("/[^\*#0-9]/","",$phone_number);
+	$phone_number = preg_replace("/[^\*#0-9\p{L}]/u","",$phone_number);
 	$lead_id = preg_replace("/[^0-9]/","",$lead_id);
 	$vendor_id = preg_replace('/;|#/','',$vendor_id);
 		$vendor_id = preg_replace('/\+/',' ',$vendor_id);
