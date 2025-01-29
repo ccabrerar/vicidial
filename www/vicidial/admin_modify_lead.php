@@ -8,7 +8,7 @@
 # just needs to enter the leadID and then they can view and modify the 
 # information in the record for that lead
 #
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -119,6 +119,7 @@
 # 231126-2218 - Added vicidial_hci_log display
 # 240704-2329 - Added coldstorage log view option
 # 241002-0936 - Fix for displaying CID info on outbound calls that were blind transferred
+# 250129-0921 - Fix for closer call notes display, Issue #1534
 #
 
 require("dbconnect_mysqli.php");
@@ -2120,9 +2121,9 @@ else
 			}
 		$closer_log .= "</tr>\n";
 
-		$stmtA="SELECT call_notes FROM vicidial_call_notes WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and vicidial_id IN('$row[0]','$row[18]');";
+		$stmtA="SELECT call_notes FROM vicidial_call_notes WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and vicidial_id IN('$row[0]') order by call_date desc limit 1;";
 		$rsltA=mysql_to_mysqli($stmtA, $link);
-		$in_notes_to_print = mysqli_num_rows($rslt);
+		$in_notes_to_print = mysqli_num_rows($rsltA);
 		if ($in_notes_to_print > 0)
 			{
 			$rowA=mysqli_fetch_row($rsltA);
@@ -2132,6 +2133,23 @@ else
 				$closer_log .= "<td></td>";
 				$closer_log .= "<TD $bgcolor COLSPAN=9><font style=\"font-size:11px;font-family:sans-serif;\"> "._QXZ("NOTES").": &nbsp; $rowA[0] </font></TD>";
 				$closer_log .= "</TR>";
+				}
+			}
+		else
+			{
+			$stmtA="SELECT call_notes FROM vicidial_call_notes WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and vicidial_id IN('$row[18]') order by call_date desc limit 1;";
+			$rsltA=mysql_to_mysqli($stmtA, $link);
+			$in_notes_to_print = mysqli_num_rows($rsltA);
+			if ($in_notes_to_print > 0)
+				{
+				$rowA=mysqli_fetch_row($rsltA);
+				if (strlen($rowA[0]) > 0)
+					{
+					$closer_log .= "<TR>";
+					$closer_log .= "<td></td>";
+					$closer_log .= "<TD $bgcolor COLSPAN=9><font style=\"font-size:11px;font-family:sans-serif;\"> "._QXZ("NOTES").": &nbsp; $rowA[0] </font></TD>";
+					$closer_log .= "</TR>";
+					}
 				}
 			}
 
@@ -2365,9 +2383,9 @@ else
 				}
 			$closer_log .= "</tr>\n";
 
-			$stmtA="SELECT call_notes FROM vicidial_call_notes WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and vicidial_id IN('$row[0]','$row[18]');";
+			$stmtA="SELECT call_notes FROM vicidial_call_notes WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and vicidial_id IN('$row[0]') order by call_date desc limit 1;";
 			$rsltA=mysql_to_mysqli($stmtA, $link);
-			$in_notes_to_print = mysqli_num_rows($rslt);
+			$in_notes_to_print = mysqli_num_rows($rsltA);
 			if ($in_notes_to_print > 0)
 				{
 				$rowA=mysqli_fetch_row($rsltA);
@@ -2377,6 +2395,23 @@ else
 					$closer_log .= "<td></td>";
 					$closer_log .= "<TD $bgcolor COLSPAN=9><font style=\"font-size:11px;font-family:sans-serif;\"> "._QXZ("NOTES").": &nbsp; $rowA[0] </font></TD>";
 					$closer_log .= "</TR>";
+					}
+				}
+			else
+				{
+				$stmtA="SELECT call_notes FROM vicidial_call_notes WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and vicidial_id IN('$row[18]') order by call_date desc limit 1;";
+				$rsltA=mysql_to_mysqli($stmtA, $link);
+				$in_notes_to_print = mysqli_num_rows($rslt);
+				if ($in_notes_to_print > 0)
+					{
+					$rowA=mysqli_fetch_row($rsltA);
+					if (strlen($rowA[0]) > 0)
+						{
+						$closer_log .= "<TR>";
+						$closer_log .= "<td></td>";
+						$closer_log .= "<TD $bgcolor COLSPAN=9><font style=\"font-size:11px;font-family:sans-serif;\"> "._QXZ("NOTES").": &nbsp; $rowA[0] </font></TD>";
+						$closer_log .= "</TR>";
+						}
 					}
 				}
 
@@ -2611,9 +2646,9 @@ else
 					}
 				$closer_log .= "</tr>\n";
 
-				$stmtA="SELECT call_notes FROM vicidial_call_notes WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and vicidial_id IN('$row[0]','$row[18]');";
+				$stmtA="SELECT call_notes FROM vicidial_call_notes WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and vicidial_id IN('$row[0]') order by call_date desc limit 1;";
 				$rsltA=mysql_to_mysqli($stmtA, $link);
-				$in_notes_to_print = mysqli_num_rows($rslt);
+				$in_notes_to_print = mysqli_num_rows($rsltA);
 				if ($in_notes_to_print > 0)
 					{
 					$rowA=mysqli_fetch_row($rsltA);
@@ -2623,6 +2658,23 @@ else
 						$closer_log .= "<td></td>";
 						$closer_log .= "<TD $bgcolor COLSPAN=9><font style=\"font-size:11px;font-family:sans-serif;\"> "._QXZ("NOTES").": &nbsp; $rowA[0] </font></TD>";
 						$closer_log .= "</TR>";
+						}
+					}
+				else
+					{
+					$stmtA="SELECT call_notes FROM vicidial_call_notes WHERE lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' and vicidial_id IN('$row[18]') order by call_date desc limit 1;";
+					$rsltA=mysql_to_mysqli($stmtA, $link);
+					$in_notes_to_print = mysqli_num_rows($rslt);
+					if ($in_notes_to_print > 0)
+						{
+						$rowA=mysqli_fetch_row($rsltA);
+						if (strlen($rowA[0]) > 0)
+							{
+							$closer_log .= "<TR>";
+							$closer_log .= "<td></td>";
+							$closer_log .= "<TD $bgcolor COLSPAN=9><font style=\"font-size:11px;font-family:sans-serif;\"> "._QXZ("NOTES").": &nbsp; $rowA[0] </font></TD>";
+							$closer_log .= "</TR>";
+							}
 						}
 					}
 
