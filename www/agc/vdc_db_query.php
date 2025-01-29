@@ -1,7 +1,7 @@
 <?php
 # vdc_db_query.php
 # 
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to exchange information between vicidial.php and the database server for various actions
 # 
@@ -554,10 +554,11 @@
 # 240801-1140 - Code updates for PHP8 compatibility
 # 240830-1618 - Added manual_minimum_ring_seconds SIP action lookup code
 # 240906-1646 - Added testing for stereo_recording campaign option for manual dial calls *NOT PRODUCTION READY*
+# 250129-0900 - Fix for PHP8 TypeError
 #
 
-$version = '2.14-447';
-$build = '240906-1646';
+$version = '2.14-448';
+$build = '250129-0900';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=913;
@@ -8540,6 +8541,8 @@ if ($stage == "end")
 	else
 		{
 		$term_reason='NONE';
+		if ( (strlen($start_epoch) < 1 ) or (preg_match("/[^0-9]/",$start_epoch)) )
+			{$start_epoch=0;}
 		if ($start_epoch < 1000)
 			{
 			if ( ($VLA_inOUT == 'INBOUND') or ($VLA_inOUT == 'CHAT') or ($VLA_inOUT == 'EMAIL') )
