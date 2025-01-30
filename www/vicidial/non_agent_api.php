@@ -221,10 +221,11 @@
 # 241121-1501 - Fix for issue in user_group_status function
 # 241127-2148 - Fix for custom fields issue #1533
 # 250105-1001 - Added enhanced_agent_monitoring option compatibility
+# 250130-1130 - Changed vicidial_daily_rt_monitor_log to vicidial_daily_rt_monitorING_log to match SQL file
 #
 
-$version = '2.14-198';
-$build = '250105-1001';
+$version = '2.14-199';
+$build = '250130-1130';
 $php_script='non_agent_api.php';
 $api_url_log = 0;
 $camp_lead_order_random=1;
@@ -3497,7 +3498,7 @@ if ($function == 'blind_monitor')
 						$stmt = "INSERT INTO vicidial_rt_monitor_log SET manager_user='$user',manager_server_ip='$monitor_server_ip',manager_phone='$phone_login',manager_ip='$ip',agent_user='$AGENTuser',agent_server_ip='$server_ip',agent_status='$AGENTstatus',agent_session='$session_id',lead_id='$AGENTlead_id',campaign_id='$AGENTcampaign',caller_code='$BMquery',monitor_start_time=NOW(),monitor_type='$monitor_type';";
 						$rslt=mysql_to_mysqli($stmt, $link);
 
-						$stmt = "INSERT INTO vicidial_daily_rt_monitor_log SET manager_user='$user',manager_server_ip='$monitor_server_ip',manager_phone='$phone_login',manager_ip='$ip',agent_user='$AGENTuser',agent_server_ip='$server_ip',agent_status='$AGENTstatus',agent_session='$session_id',lead_id='$AGENTlead_id',campaign_id='$AGENTcampaign',caller_code='$BMquery',monitor_start_time=NOW(),monitor_type='$monitor_type';";
+						$stmt = "INSERT INTO vicidial_daily_rt_monitoring_log SET manager_user='$user',manager_server_ip='$monitor_server_ip',manager_phone='$phone_login',manager_ip='$ip',agent_user='$AGENTuser',agent_server_ip='$server_ip',agent_status='$AGENTstatus',agent_session='$session_id',lead_id='$AGENTlead_id',campaign_id='$AGENTcampaign',caller_code='$BMquery',monitor_start_time=NOW(),monitor_type='$monitor_type';";
 						$rslt=mysql_to_mysqli($stmt, $link);
 
 						##### BEGIN log visit to the vicidial_report_log table #####

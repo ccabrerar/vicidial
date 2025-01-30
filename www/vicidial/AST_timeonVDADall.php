@@ -134,10 +134,11 @@
 # 231115-1656 - Added RS_no_DEAD_status and RS_hide_CUST_info options.php settings
 # 240801-1130 - Code updates for PHP8 compatibility
 # 250103-0929 - Added enhanced_agent_monitoring code
+# 250130-1130 - Changed vicidial_daily_rt_monitor_log to vicidial_daily_rt_monitorING_log to match SQL file
 #
 
-$version = '2.14-118';
-$build = '250103-0929';
+$version = '2.14-119';
+$build = '250130-1130';
 $php_script='AST_timeonVDADall.php';
 
 require("dbconnect_mysqli.php");
@@ -3465,7 +3466,7 @@ if ($MONITORdisplay)
 	$monitoring_phones=array();
 	$monitoring_manager_ips=array();
 	$monitoring_ips=array();
-	$monitor_stmt="select manager_user, agent_user, agent_session, caller_code, monitor_type, monitor_start_time, agent_server_ip, manager_server_ip, manager_phone from vicidial_daily_rt_monitor_log where monitor_start_time>=curdate() and monitor_end_time is null order by monitor_start_time desc";
+	$monitor_stmt="select manager_user, agent_user, agent_session, caller_code, monitor_type, monitor_start_time, agent_server_ip, manager_server_ip, manager_phone from vicidial_daily_rt_monitoring_log where monitor_start_time>=curdate() and monitor_end_time is null order by monitor_start_time desc";
 	if ($DB) {echo $monitor_stmt."\n";}
 	$monitor_rslt=mysql_to_mysqli($monitor_stmt, $link);
 	while($monitor_row=mysqli_fetch_array($monitor_rslt))
