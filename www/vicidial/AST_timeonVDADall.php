@@ -134,7 +134,7 @@
 # 231115-1656 - Added RS_no_DEAD_status and RS_hide_CUST_info options.php settings
 # 240801-1130 - Code updates for PHP8 compatibility
 # 250103-0929 - Added enhanced_agent_monitoring code
-# 250130-1130 - Changed vicidial_daily_rt_monitor_log to vicidial_daily_rt_monitorING_log to match SQL file
+# 250130-1130 - Changed vicidial_daily_rt_monitor_log to vicidial_daily_rt_monitorING_log to match SQL file, also added sort clause to WHISPER
 #
 
 $version = '2.14-119';
@@ -3619,7 +3619,7 @@ if ($talking_to_print > 0)
 
 							if ($monitoring_type=="WHISPER")
 								{
-								$followup_stmt="select channel, extension, channel_data from live_channels where channel_group='$channel_group' and extension!='ring' and server_ip='$monitoring_ip' UNION select channel, extension, channel_data from live_sip_channels where channel_group='$channel_group' and extension!='ring' and server_ip='$monitoring_ip'";
+								$followup_stmt="select channel, extension, channel_data from live_channels where channel_group='$channel_group' and extension!='ring' and server_ip='$monitoring_ip' UNION select channel, extension, channel_data from live_sip_channels where channel_group='$channel_group' and extension!='ring' and server_ip='$monitoring_ip' order by channel desc";
 								$followup_rslt=mysql_to_mysqli($followup_stmt, $link);
 								if (mysqli_num_rows($followup_rslt)>0)
 									{
