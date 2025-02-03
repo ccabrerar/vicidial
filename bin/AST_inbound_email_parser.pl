@@ -67,6 +67,7 @@ use MIME::QuotedPrint;
 # 170523-1319 - file attachment patch, issue #1014
 # 171026-0106 - Added optional queue_log logging
 # 240225-1442 - Changes for perl module compatibility and attachment compatibility
+# 250202-1520 - More attachment compatibility
 #
 
 # default path to astguiclient configuration file:
@@ -504,6 +505,9 @@ while (@row=$rslt->fetchrow_array) {
 													case "image/wmf" {$attachment_fulltype="WMF";}
 													case "text/html" {$attachment_fulltype="HTML";}
 													case "text/vcard-contact" {$attachment_fulltype="VCF";}
+													case "audio/mpeg" {$attachment_fulltype="MP3";}
+													case "audio/wav" {$attachment_fulltype="WAV";}
+													case "audio/x-wav" {$attachment_fulltype="WAV";}
 												}
 												if ($sub_content_disposition=~/filename\=\"?(.*?)\"?$|filename=\"[^\"]+\"/i) {$attachment_filename=$&;}
 												if (length($attachment_filename)==0) {
@@ -895,6 +899,9 @@ while (@row=$rslt->fetchrow_array) {
 									case "image/wmf" {$attachment_fulltype="WMF";}
 									case "text/html" {$attachment_fulltype="HTML";}
 									case "text/vcard-contact" {$attachment_fulltype="VCF";}
+									case "audio/mpeg" {$attachment_fulltype="MP3";}
+									case "audio/wav" {$attachment_fulltype="WAV";}
+									case "audio/x-wav" {$attachment_fulltype="WAV";}
 								}
 								if ($sub_content_disposition=~/filename\=\"?(.*?)\"?$|filename=\"[^\"]+\"/i) {$attachment_filename=$&;}
 								if (length($attachment_filename)==0) {
