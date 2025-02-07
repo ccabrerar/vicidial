@@ -1,7 +1,7 @@
 <?php
 # vicidial.php - the web-based version of the astVICIDIAL client application
 # 
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # Other scripts that this application depends on:
 # - vdc_db_query.php: Updates information in the database
@@ -744,10 +744,11 @@
 # 240627-1937 - Added leave_3way_stop_recording campaign option
 # 240630-0920 - Fix for Group Alias issue #1515
 # 240830-1112 - Added campaign manual_minimum_... settings
+# 250207-1821 - Fix for JavaScript error if chat disabled
 #
 
-$version = '2.14-710c';
-$build = '240830-1112';
+$version = '2.14-711c';
+$build = '250207-1821';
 $php_script = 'vicidial.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=103;
@@ -10135,7 +10136,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 						else 
 							{
 							Internal_chat_print="NO";
-							document.images['InternalChatImg'].src=image_internal_chat_OFF.src;
+							if (document.images['InternalChatImg']) {document.images['InternalChatImg'].src=image_internal_chat_OFF.src;}
 							}
 
 						var ChatIFrame = document.getElementById('InternalChatIFrame');
