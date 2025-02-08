@@ -1,11 +1,12 @@
 <?php 
 # AST_latency_gaps_report.php
 # 
-# Copyright (C) 2023  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 230430-1952 - First build
 # 230516-2024 - Fix for graphs
+# 250208-1357 - Fix for PHP8
 #
 
 $startMS = microtime();
@@ -323,7 +324,7 @@ if ($SUBMIT && $query_date)
 		for ($i=1; $i<=mysqli_num_rows($rpt_rslt); $i++) 
 			{
 			$row=mysqli_fetch_array($rpt_rslt);
-			$temp_user=$row[user];
+			$temp_user=$row["user"];
 			if ($i == '1')
 				{
 				$users_ary[$distinct_users_ct] = $temp_user;
