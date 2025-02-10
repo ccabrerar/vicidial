@@ -6225,12 +6225,13 @@ if ($SSscript_remove_js > 0)
 # 241206-1527 - Do not display inactive VDAD/VDCL users in Copy User screen
 # 241208-1747 - Changed DID filter_phone_group_id & pre_filter_phone_group_id to multi-selects
 # 250103-0843 - Added Enhanced Agent Monitoring system settings option, Changed copyright date
+# 250210-1701 - Fix for PHP8 issue on User Modify page
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-934a';
-$build = '250103-0843';
+$admin_version = '2.14-935a';
+$build = '250210-1701';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -7603,7 +7604,7 @@ if ( ( (strlen($ADD)>4) and ($ADD < 99998) ) or ($ADD==3) or (($ADD>20) and ($AD
 
 	##### BEGIN get inbound groups listing for checkboxes #####
 	$xfer_groupsSQL='';
-	if ( (($ADD>20) and ($ADD<70)) and ($ADD!=41) or ( ($ADD==41) and ( (preg_match('/list_activation/i', $stage)) or (preg_match('/test_call/',$stage)) ) ) )
+	if ( (($ADD>20) and ($ADD<70)) and ($ADD!="4A") and ($ADD!=41) or ( ($ADD==41) and ( (preg_match('/list_activation/i', $stage)) or (preg_match('/test_call/',$stage)) ) ) )
 		{
 		$stmt="SELECT closer_campaigns,xfer_groups from vicidial_campaigns where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);

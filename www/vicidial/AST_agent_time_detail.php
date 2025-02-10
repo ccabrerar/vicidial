@@ -798,6 +798,7 @@ else
 			$uc++;
 			}
 		$m=0;
+		$Scalls[$uc] = 0;
 		while ( ($m < $uc) and ($m < 50000) )
 			{
 			if ($user == "$Suser[$m]")
@@ -817,7 +818,7 @@ else
 			}
 		if ($user_found < 1)
 			{
-			$Scalls[$uc] =	0;
+			# $Scalls[$uc] =	0;
 			$Suser[$uc] =	$user;
 			$Swait[$uc] =	$wait;
 			$Stalk[$uc] =	$talk;
