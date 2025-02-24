@@ -62,9 +62,10 @@
 # 230309-1009 - Added abandon_check_queue feature
 # 240219-1514 - Added vicidial_live_inbound_agents.daily_limit parameter
 # 250131-1624 - Modifications to fix cached hour counts for realtime report
+# 250218-1613 - Modified master loop to use microseconds instead of a counter to execute drop/dial level/shared dialing functions
 #
 
-$build='250131-1624';
+$build='250218-1613';
 # constants
 $DB=0;  # Debug flag, set to 0 for no debug messages, On an active system this will generate lots of lines of output per minute
 $US='__';
@@ -309,7 +310,7 @@ foreach(@conf)
 
 if (!$VARDB_port) {$VARDB_port='3306';}
 
-use Time::HiRes ('gettimeofday','usleep','sleep');  # necessary to have perl sleep command of less than one second
+use Time::HiRes ('gettimeofday','usleep','sleep', 'time');  # necessary to have perl sleep command of less than one second
 use Time::Local;
 use DBI;	  
 
@@ -456,7 +457,7 @@ while ($master_loop < $CLIloops)
 		}
 	$sthA->finish();
 
-	$secX = time();
+	$secX = int(time());
 	($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($secX);
 	$LOCAL_GMT_OFF = $SERVER_GMT;
 	$LOCAL_GMT_OFF_STD = $SERVER_GMT;
@@ -473,6 +474,8 @@ while ($master_loop < $CLIloops)
 	if ($sec < 10) {$sec = "0$sec";}
 
 	if ($DBXXX) {print "TIME DEBUG: $master_loop   $LOCAL_GMT_OFF_STD|$LOCAL_GMT_OFF|$isdst|   GMT: $hour:$min\n";}
+
+	if (!$prev_iteration_ms) {$prev_iteration_ms=time();}
 
 	@campaign_id=@MT; 
 	@lead_order=@MT;
@@ -551,7 +554,7 @@ while ($master_loop < $CLIloops)
 	$sthA->finish();
 	if ($DB) {print "$now_date CAMPAIGNS TO PROCESSES ADAPT FOR:  $rec_count|$#campaign_id       IT: $master_loop\n";}
 
-	$five_min_ago = time();
+	$five_min_ago = int(time());
 	$five_min_ago = ($five_min_ago - 300);
 	$ten_min_ago = ($five_min_ago - 3600*6);
 
@@ -769,14 +772,26 @@ while ($master_loop < $CLIloops)
 			}
 		}
 
+
+
+	$current_iteration_ms=time();
+	# CLIupdaterdelay is actual time elapsed per iteration in microseconds, which is more accurate than the set '1'
+	$CLIupdaterdelay=($current_iteration_ms-$prev_iteration_ms);
+	$prev_iteration_ms=$current_iteration_ms;
+#	$updater_str="Current drop_count_updater: $drop_count_updater|Run calculate_drops? $run_calculate_drops|"; 
+
 	if ($RESETdiff_ratio_updater > 0) {$RESETdiff_ratio_updater=0;   $diff_ratio_updater=0;}
 	if ($RESETdrop_count_updater > 0) {$RESETdrop_count_updater=0;   $drop_count_updater=0;}
 	if ($RESETshared_agent_count_updater > 0) {$RESETshared_agent_count_updater=0;   $shared_agent_count_updater=0;}
-	$diff_ratio_updater = ($diff_ratio_updater + $CLIdelay);
-	$drop_count_updater = ($drop_count_updater + $CLIdelay);
-	$shared_agent_count_updater = ($shared_agent_count_updater + $CLIdelay);
+	$diff_ratio_updater = ($diff_ratio_updater + $CLIupdaterdelay);
+	$drop_count_updater = ($drop_count_updater + $CLIupdaterdelay);
+	$shared_agent_count_updater = ($shared_agent_count_updater + $CLIupdaterdelay);
 
-
+#	$updater_str.="CLIupdaterdelays: ".substr($CLIupdaterdelay, 0, 7)."|New drop_count_updater: ".substr($drop_count_updater, 0, 7);
+#	$sacu_stmt="INSERT INTO sacu_log(message) VALUES('$updater_str')";
+#	$sacu_rslt = $dbhA->prepare($sacu_stmt) or die "preparing: ",$dbhA->errstr;
+#	$sacu_rslt->execute or die "executing: $sacu_stmt ", $dbhA->errstr;
+#	$sacu_rslt->finish();
 
 	##########################################################
 	##### BEGIN check for inbound callback queue entries #####
@@ -811,7 +826,7 @@ while ($master_loop < $CLIloops)
 			}
 		$sthA->finish();
 
-		$now_epoch = time();
+		$now_epoch = int(time());
 		$BDtarget = ($now_epoch - 7);
 		($Bsec,$Bmin,$Bhour,$Bmday,$Bmon,$Byear,$Bwday,$Byday,$Bisdst) = localtime($BDtarget);
 		$Byear = ($Byear + 1900);
@@ -1341,7 +1356,7 @@ while ($master_loop < $CLIloops)
 
 				### BEGIN check of call time dialable for this record
 				$dialable=0;
-				$now_epoch = time();
+				$now_epoch = int(time());
 				$GMT_now = ($now_epoch - (($LOCAL_GMT_OFF - $ICBQgmt_offset_now[$r]) * 3600));
 				($Gsec,$Gmin,$Ghour,$Gmday,$Gmon,$Gyear,$Gwday,$Gyday,$Gisdst) = localtime($GMT_now);
 				$Gmon++;
@@ -1630,7 +1645,7 @@ while ($master_loop < $CLIloops)
 	##########################################################
 	if ( ($stat_count =~ /00$|10$|20$|30$|40$|50$|60$|70$|80$|90$/) || ($stat_count==1) )
 		{
-		$now_epoch = time();
+		$now_epoch = int(time());
 		$BDtarget = ($now_epoch - 10);
 		($Bsec,$Bmin,$Bhour,$Bmday,$Bmon,$Byear,$Bwday,$Byday,$Bisdst) = localtime($BDtarget);
 		$Byear = ($Byear + 1900);
@@ -1866,7 +1881,7 @@ while ($master_loop < $CLIloops)
 		$updated_dial_log_no_uid=0;
 		$count_dial_log_no_uid=0;
 
-		$now_epoch = time();
+		$now_epoch = int(time());
 		$NBtarget = ($now_epoch - 420);
 		($Nsec,$Nmin,$Nhour,$Nmday,$Nmon,$Nyear,$Nwday,$Nyday,$Nisdst) = localtime($NBtarget);
 		$Nyear = ($Nyear + 1900);
@@ -2107,7 +2122,7 @@ while ($master_loop < $CLIloops)
 		$acq_active_call=0;
 		$hopper_insert_sent=0;
 
-		$now_date_epoch = time();
+		$now_date_epoch = int(time());
 		$epochTWENTYFOURhoursAGO = ($now_date_epoch - 86400);
 		($Ssec,$Smin,$Shour,$Smday,$Smon,$Syear,$Swday,$Syday,$Sisdst) = localtime($epochTWENTYFOURhoursAGO);
 		$Smon++;	$Syear = ($Syear + 1900);
@@ -2368,11 +2383,11 @@ while ($master_loop < $CLIloops)
 												$url =~ s/'/\\'/gi;
 												$url =~ s/"/\\"/gi;
 
-												$secW = time();
+												$secW = int(time());
 
 												`$wgetbin --no-check-certificate --output-document=/tmp/ASUBtmpD$US$url_id$US$secX --output-file=/tmp/ASUBtmpF$US$url_id$US$secX $url `;
 
-												$secY = time();
+												$secY = int(time());
 												$response_sec = ($secY - $secW);
 
 												open(Wdoc, "/tmp/ASUBtmpD$US$url_id$US$secX") || die "can't open /tmp/ASUBtmpD$US$url_id$US$secX: $!\n";
@@ -2476,7 +2491,7 @@ $dbhA->disconnect();
 if($DB)
 	{
 	### calculate time to run script ###
-	$secY = time();
+	$secY = int(time());
 	$secZ = ($secY - $secT);
 
 	if (!$q) {print "DONE. Script execution time in seconds: $secZ\n";}
@@ -2548,8 +2563,8 @@ sub callback_logger
 
 sub get_time_now
 	{
-	$secX = time();
-	($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+	$secX = int(time());
+	($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(int(time));
 	$year = ($year + 1900);
 	$mon++;
 	if ($mon < 10) {$mon = "0$mon";}
@@ -2793,7 +2808,7 @@ sub shared_agent_process
 			{$drop_SHARED_SQL="closer_campaigns='----------'";}
 		$drop_SHARED_SQL = "and ($drop_SHARED_SQL)";
 
-		$now_epoch = time();
+		$now_epoch = int(time());
 		$BDtarget = ($now_epoch - 10);
 		($Bsec,$Bmin,$Bhour,$Bmday,$Bmon,$Byear,$Bwday,$Byday,$Bisdst) = localtime($BDtarget);
 		$Byear = ($Byear + 1900);
@@ -3115,9 +3130,9 @@ sub calculate_drops
 	## BEGIN CACHED HOURLY ANALYSIS: CALLS
 	if ($VLhour_counts > 0) 
 		{
-		$secH = time();
-		($HRsec,$HRmin,$HRhour,$HRmday,$HRmon,$HRyear,$HRwday,$HRyday,$HRisdst) = localtime(time);
-		($HRsec_prev,$HRmin_prev,$HRhour_prev,$HRmday_prev,$HRmon_prev,$HRyear_prev,$HRwday_prev,$HRyday_prev,$HRisdst_prev) = localtime(time-3600);
+		$secH = int(time());
+		($HRsec,$HRmin,$HRhour,$HRmday,$HRmon,$HRyear,$HRwday,$HRyday,$HRisdst) = localtime(int(time));
+		($HRsec_prev,$HRmin_prev,$HRhour_prev,$HRmday_prev,$HRmon_prev,$HRyear_prev,$HRwday_prev,$HRyday_prev,$HRisdst_prev) = localtime(int(time-3600));
 		$HRyear = ($HRyear + 1900);
 		$HRmon++;
 		$HRhour_test = $HRhour;
@@ -4569,7 +4584,7 @@ sub launch_carrier_stats_gather
 	$ONEminute_total=0; @ONEminute_status=@MT; @ONEminute_count=@MT;
 
 	### BEGIN calculate times needed for queries ###
-	$secC = time();
+	$secC = int(time());
 	$epochONEminuteAGO = ($secC - 60);
 	$epochFIVEminutesAGO = ($secC - 300);
 	$epochFIFTEENminutesAGO = ($secC - 900);
@@ -4660,8 +4675,8 @@ sub launch_carrier_stats_gather
 	## BEGIN CACHED HOURLY ANALYSIS: CARRIER LOG - 24 hours
 	if ($VLhour_counts > 0) 
 		{
-		$secH = time();
-		($HRsec,$HRmin,$HRhour,$HRmday,$HRmon,$HRyear,$HRwday,$HRyday,$HRisdst) = localtime(time);
+		$secH = int(time());
+		($HRsec,$HRmin,$HRhour,$HRmday,$HRmon,$HRyear,$HRwday,$HRyday,$HRisdst) = localtime(int(time));
 		$HRyear = ($HRyear + 1900);
 		$HRmon++;
 		$HRhour_test = $HRhour;
@@ -4803,7 +4818,7 @@ sub launch_carrier_stats_gather
 				}
 			}
 		### get date-time of start of next hour ###
-		$secH = time();
+		$secH = int(time());
 		$CL_next_hour = ($secH + (60 * 60));
 		($NHsec,$NHmin,$NHhour,$NHmday,$NHmon,$NHyear,$NHwday,$NHyday,$NHisdst) = localtime($CL_next_hour);
 		$NHyear = ($NHyear + 1900);
@@ -4871,7 +4886,7 @@ sub launch_carrier_stats_gather
 			if ($DBX > 1) {print "STARTING CARRIER CACHED HOURLY TOTAL CALLS:  |$CL_current_hour_date|$CL_next_hour_date|\n";}
 
 			### get date-time of start of 6 hours ago ###
-			$secH = time();
+			$secH = int(time());
 			$temp_sub_sec = (6 * 3600);
 			$temp_24_sec = ($secH - $temp_sub_sec);
 			($cSHsec,$cSHmin,$cSHhour,$cSHmday,$cSHmon,$cSHyear,$cSHwday,$cSHyday,$cSHisdst) = localtime($temp_24_sec);
@@ -5238,9 +5253,9 @@ sub calculate_drops_inbound
 	## BEGIN CACHED HOURLY ANALYSIS: INBOUND CALLS
 	if ($VCLhour_counts > 0) 
 		{
-		$secH = time();
-		($HRsec,$HRmin,$HRhour,$HRmday,$HRmon,$HRyear,$HRwday,$HRyday,$HRisdst) = localtime(time);
-		($HRsec_prev,$HRmin_prev,$HRhour_prev,$HRmday_prev,$HRmon_prev,$HRyear_prev,$HRwday_prev,$HRyday_prev,$HRisdst_prev) = localtime(time-3600);
+		$secH = int(time());
+		($HRsec,$HRmin,$HRhour,$HRmday,$HRmon,$HRyear,$HRwday,$HRyday,$HRisdst) = localtime(int(time));
+		($HRsec_prev,$HRmin_prev,$HRhour_prev,$HRmday_prev,$HRmon_prev,$HRyear_prev,$HRwday_prev,$HRyday_prev,$HRisdst_prev) = localtime(int(time-3600));
 		$HRyear = ($HRyear + 1900);
 		$HRmon++;
 		$HRhour_test = $HRhour;
@@ -7215,7 +7230,7 @@ sub call_quota_logging
 				}
 			$sthA->finish();
 
-			$secX = time();
+			$secX = int(time());
 			$CQtarget = ($secX - 14400);	# look back 4 hours
 			($CQsec,$CQmin,$CQhour,$CQmday,$CQmon,$CQyear,$CQwday,$CQyday,$CQisdst) = localtime($CQtarget);
 			$CQyear = ($CQyear + 1900);
