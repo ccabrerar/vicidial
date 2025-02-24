@@ -555,10 +555,11 @@
 # 240830-1618 - Added manual_minimum_ring_seconds SIP action lookup code
 # 240906-1646 - Added testing for stereo_recording campaign option for manual dial calls *NOT PRODUCTION READY*
 # 250129-0900 - Fix for PHP8 TypeError
+# 250224-1642 - Fix for drop_lockout_time issue with NULL last_local_call_time DROP leads
 #
 
-$version = '2.14-448';
-$build = '250129-0900';
+$version = '2.14-449';
+$build = '250224-1642';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=913;
@@ -3457,7 +3458,7 @@ if ($ACTION == 'manDiaLnextCaLL')
 								$DLseconds = ($drop_lockout_time * 3600);
 								$DLseconds = floor($DLseconds);
 								$DLseconds = intval("$DLseconds");
-								$DLTsql = "and ( ( (status IN('DROP','XDROP')) and (last_local_call_time < CONCAT(DATE_ADD(NOW(), INTERVAL -$DLseconds SECOND),' ',CURTIME()) ) ) or (status NOT IN('DROP','XDROP')) )";
+								$DLTsql = "and ( ( (status IN('DROP','XDROP')) and ( (last_local_call_time < CONCAT(DATE_ADD(NOW(), INTERVAL -$DLseconds SECOND),' ',CURTIME()) ) or (last_local_call_time IS NULL) ) ) or (status NOT IN('DROP','XDROP')) )";
 								}
 
 							$CCLsql='';
