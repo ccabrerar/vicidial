@@ -6226,12 +6226,13 @@ if ($SSscript_remove_js > 0)
 # 241208-1747 - Changed DID filter_phone_group_id & pre_filter_phone_group_id to multi-selects
 # 250103-0843 - Added Enhanced Agent Monitoring system settings option, Changed copyright date
 # 250210-1701 - Fix for PHP8 issue on User Modify page
+# 250227-1607 - Fix for test call phone code issue (PHP8-related)
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-935a';
-$build = '250210-1701';
+$admin_version = '2.14-936a';
+$build = '250227-1607';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -17228,7 +17229,7 @@ if ($ADD==41)
 					if (strlen($campaign_cid_override) > 6) {$CCID = "$campaign_cid_override";   $CCID_on++;}
 					if (preg_match("/x/",$dial_prefix)) {$Local_out_prefix = '';}
 					if (strlen($ext_context) < 1) {$ext_context='default';}
-					if ($omit_phone_code > 0) {$Ndialstring = "$Local_out_prefix$phone_number";}
+					if (preg_match('/Y/i', $omit_phone_code)) {$Ndialstring = "$Local_out_prefix$phone_number";}
 					else {$Ndialstring = "$Local_out_prefix$phone_code$phone_number";}
 
 					# generate callerID for unique identifier in xfer_log file
