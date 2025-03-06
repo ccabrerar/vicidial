@@ -5,10 +5,11 @@
 # This script uses the Asterisk Manager interface to update the live_channels
 # tables and verify the parked_channels table in the asterisk MySQL database
 #
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 220414-1210 - Initial build
+# 250305-2104 - Fix for missing vicidial_confbridges limit purge code
 #
 
 # constants
@@ -860,6 +861,44 @@ sub clear_conf_records
 		$stmtA = "UPDATE vicidial_conferences set extension='',leave_3way='0' where server_ip='$server_ip' and conf_exten='$PT_conf_extens[$k]';";
 		if($DB){print STDERR "\n|$stmtA|\n";}
 	       	event_logger($SYSLOG,"Conf Purge|$stmtA|");
+		$affected_rows = $dbhA->do($stmtA); #  or die  "Couldn't execute query:|$stmtA|\n";
+
+		$k++;
+		$TDinc++;
+		}
+	
+	@PTextensions=@MT; @PT_conf_extens=@MT; @PTmessages=@MT; @PTold_messages=@MT; @NEW_messages=@MT; @OLD_messages=@MT;
+	$stmtA = "SELECT conf_exten,extension from vicidial_confbridges where server_ip='$server_ip' and leave_3way='1' and leave_3way_datetime < \"$TDSQLdate\";";
+	if ($DB) {print "ConfBridge Purge|$stmtA|\n";}
+	event_logger($SYSLOG,"ConfBridge Purge|$stmtA|");
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	$rec_count=0;
+	while ($sthArows > $rec_count)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$PT_conf_extens[$rec_count] =    $aryA[0];
+		$PT_extensions[$rec_count] =     $aryA[1];
+				if ($DB) {print "|$PT_conf_extens[$rec_count]|$PT_extensions[$rec_count]|\n";}
+		$rec_count++;
+		}
+	$sthA->finish();
+	$k=0;
+	while ($k < $rec_count)
+		{
+		$local_DEF = 'Local/5555';
+		$local_AMP = '@';
+		$kick_local_channel = "$local_DEF$PT_conf_extens[$k]$local_AMP$ext_context";
+		$padTDinc = sprintf("%03s", $TDinc);    while (length($padTDinc) > 3) {chop($padTDinc);}
+		$queryCID = "ULGH$padTDinc$TDnum";
+
+		$stmtA="INSERT INTO vicidial_manager values('','','$now_date','NEW','N','$server_ip','','Originate','$queryCID','Channel: $kick_local_channel','Context: $ext_context','Exten: 8300','Priority: 1','Callerid: $queryCID','','','','','');";
+				$affected_rows = $dbhA->do($stmtA); #  or die  "Couldn't execute query:|$stmtA|\n";
+
+		$stmtA = "UPDATE vicidial_confbridges set extension='',leave_3way='0' where server_ip='$server_ip' and conf_exten='$PT_conf_extens[$k]';";
+		if($DB){print STDERR "\n|$stmtA|\n";}
+		event_logger($SYSLOG,"Conf Purge|$stmtA|");
 		$affected_rows = $dbhA->do($stmtA); #  or die  "Couldn't execute query:|$stmtA|\n";
 
 		$k++;
