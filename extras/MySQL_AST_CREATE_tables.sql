@@ -4381,7 +4381,7 @@ processed ENUM('N','Y','U') default 'N',
 index(caller_code), 
 index(invite_date), 
 index(processed) 
-) ENGINE=MyISAM;  
+) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_log_extended_sip (
 call_date DATETIME(6),
@@ -5303,7 +5303,7 @@ entered_by VARCHAR(20) DEFAULT NULL,
 last_modified_by VARCHAR(20) DEFAULT NULL,
 PRIMARY KEY (vtl_id),
 UNIQUE KEY vicidial_timeoff_log_agent_month_key (user,timeoff_month,timeoff_type)
-);
+) ENGINE=MyISAM;
 
 CREATE TABLE recording_log_stereo (
 recording_id INT(10) UNSIGNED PRIMARY KEY NOT NULL,
@@ -5498,7 +5498,7 @@ CREATE UNIQUE INDEX vicidial_user_logins_daily_user on vicidial_user_logins_dail
 CREATE INDEX vlali on vicidial_live_agents (lead_id);
 CREATE INDEX vlaus on vicidial_live_agents (user);
 
-CREATE TABLE call_log_archive LIKE call_log; 
+CREATE TABLE call_log_archive LIKE call_log;
 
 CREATE TABLE vicidial_log_archive LIKE vicidial_log;
 
@@ -5527,7 +5527,7 @@ CREATE UNIQUE INDEX vlea on vicidial_log_extended_archive (uniqueid,call_date,le
 CREATE TABLE vicidial_log_extended_sip_archive LIKE vicidial_log_extended_sip;
 CREATE UNIQUE INDEX vlesa on vicidial_log_extended_sip_archive (caller_code,call_date);
 
-CREATE TABLE vicidial_log_noanswer_archive LIKE vicidial_log_noanswer; 
+CREATE TABLE vicidial_log_noanswer_archive LIKE vicidial_log_noanswer;
 
 CREATE TABLE vicidial_did_agent_log_archive LIKE vicidial_did_agent_log; 
 CREATE UNIQUE INDEX vdala on vicidial_did_agent_log_archive (uniqueid,call_date,did_route);
@@ -5550,7 +5550,7 @@ CREATE TABLE vicidial_drop_log_archive LIKE vicidial_drop_log;
 DROP INDEX drop_date on vicidial_drop_log_archive;
 CREATE UNIQUE INDEX vicidial_drop_log_archive_key on vicidial_drop_log_archive(drop_date, uniqueid);
 
-CREATE TABLE vicidial_rt_monitor_log_archive LIKE vicidial_rt_monitor_log; 
+CREATE TABLE vicidial_rt_monitor_log_archive LIKE vicidial_rt_monitor_log;
 
 CREATE TABLE vicidial_campaign_hour_counts_archive LIKE vicidial_campaign_hour_counts;
 
