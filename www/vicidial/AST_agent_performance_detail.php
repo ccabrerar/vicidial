@@ -1,7 +1,7 @@
 <?php 
 # AST_agent_performance_detail.php
 # 
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -68,6 +68,7 @@
 # 200421-1411 - user_group bug fix
 # 220303-1458 - Added allow_web_debug system setting
 # 240801-1130 - Code updates for PHP8 compatibility
+# 250312-1217 - Fix for daily breakdown percentages bug
 #
 
 $startMS = microtime();
@@ -1039,12 +1040,13 @@ while ($m < $k)
 		$Sdispo_sec_pct=0;
 		$Sdead_sec_pct=0;
 
-		$date_stmt="select distinct date(event_time) as call_date from ".$agent_log_table." where event_time <= '$query_date_END' and event_time >= '$query_date_BEGIN' and user='$Suser' and pause_sec<65000 and wait_sec<65000 and talk_sec<65000 and dispo_sec<65000 $group_SQL $user_group_agent_log_SQL $user_agent_log_SQL order by call_date asc limit 500000;";
+		$date_stmt="select date(event_time) as call_date, sum(if(lead_id is null, 0, 1)) as calls from ".$agent_log_table." where event_time <= '$query_date_END' and event_time >= '$query_date_BEGIN' and user='$Suser' and pause_sec<65000 and wait_sec<65000 and talk_sec<65000 and dispo_sec<65000 $group_SQL $user_group_agent_log_SQL $user_agent_log_SQL group by call_date order by call_date asc limit 500000;";
 		if ($DB) {$ASCII_text.=$date_stmt."\n";}
 		$date_rslt=mysql_to_mysqli($date_stmt, $link);
 		while($date_row=mysqli_fetch_row($date_rslt)) 
 			{
 			$call_dateX=$date_row[0];
+			$call_dateX_calls=$date_row[1];
 
 			$cd_stmt="SELECT count(*) as calls,sum(talk_sec) as talk,'' as full_name,user,sum(pause_sec),sum(wait_sec),sum(dispo_sec),status,sum(dead_sec), '' as user_group from ".$agent_log_table." where date(event_time)='$call_dateX' and pause_sec<65000 and wait_sec<65000 and talk_sec<65000 and dispo_sec<65000 and user='$Suser' $group_SQL $user_agent_log_SQL group by user,full_name,user_group,status order by full_name,user,status desc limit 500000;";
 			$cd_rslt=mysql_to_mysqli($cd_stmt, $link); 
@@ -1111,7 +1113,7 @@ while ($m < $k)
 
 						if ($show_percentages) 
 							{
-							$SstatusTXT_pct=sprintf("%8s", sprintf("%0.2f", MathZDC(100*$calls[$i], $userTOTcalls[$Suser])));
+							$SstatusTXT_pct=sprintf("%8s", sprintf("%0.2f", MathZDC(100*$calls_sub[$i], $call_dateX_calls)));	
 							$SstatusesHTML .= " $SstatusTXT_pct % |";
 							$CSVstatuses.=",\"$SstatusTXT_pct %\"";
 							}
