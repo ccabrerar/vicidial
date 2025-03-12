@@ -556,10 +556,11 @@
 # 240906-1646 - Added testing for stereo_recording campaign option for manual dial calls *NOT PRODUCTION READY*
 # 250129-0900 - Fix for PHP8 TypeError
 # 250224-1642 - Fix for drop_lockout_time issue with NULL last_local_call_time DROP leads
+# 250311-1420 - Fix for start_call_url on inbound calls where blank and campaign set to ALT
 #
 
-$version = '2.14-449';
-$build = '250224-1642';
+$version = '2.14-450';
+$build = '250311-1420';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=913;
@@ -10661,8 +10662,12 @@ if ($ACTION == 'VDADcheckINCOMING')
 							{$VDCL_timer_action_message =	$row[7];}
 						if (strlen($VDCL_timer_action_seconds) < 1)
 							{$VDCL_timer_action_seconds =	$row[8];}
-						if (strlen($VDCL_start_call_url) < 1)
-							{$VDCL_start_call_url =	$row[9];}
+						if ( (strlen($VDCL_start_call_url) < 1) and (strlen($row[9]) > 0) )
+							{
+							$VDCL_start_call_url =	$row[9];
+							$SUcampaign =			$campaign;
+							$SUentry_type =			'campaign';
+							}
 						if (strlen($VDCL_dispo_call_url) < 1)
 							{$VDCL_dispo_call_url =	$row[10];}
 						if (strlen($VDCL_xferconf_c_number) < 1)
@@ -10808,7 +10813,12 @@ if ($ACTION == 'VDADcheckINCOMING')
 						$VDCL_timer_action = 			$row[7];
 						$VDCL_timer_action_message = 	$row[8];
 						$VDCL_timer_action_seconds = 	$row[9];
-						$VDCL_start_call_url =			$row[10];
+						if ( (strlen($VDCL_start_call_url) < 1) and (strlen($row[10]) > 0) )
+							{
+							$VDCL_start_call_url =	$row[10];
+							$SUcampaign =			$VDADchannel_group;
+							$SUentry_type =			'campaign';
+							}
 						$VDCL_dispo_call_url =			$row[11];
 						$VDCL_xferconf_c_number =		$row[12];
 						$VDCL_xferconf_d_number =		$row[13];
