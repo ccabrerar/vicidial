@@ -135,10 +135,11 @@
 # 240801-1130 - Code updates for PHP8 compatibility
 # 250103-0929 - Added enhanced_agent_monitoring code
 # 250130-1130 - Changed vicidial_daily_rt_monitor_log to vicidial_daily_rt_monitorING_log to match SQL file, also added sort clause to WHISPER
+# 250320-2307 - Added "3-WAYD" status for dead 3way call agent
 #
 
-$version = '2.14-119';
-$build = '250130-1130';
+$version = '2.14-120';
+$build = '250320-2307';
 $php_script='AST_timeonVDADall.php';
 
 require("dbconnect_mysqli.php");
@@ -3976,7 +3977,37 @@ if ($talking_to_print > 0)
 					{$CM='M';}
 				}
 			}
-		else {$CM=' ';}
+		else 
+			{
+			if (preg_match("/3-WAY/i",$Lstatus)) 
+				{
+				if (!preg_match("/$Acallerid[$i]\|/",$callerids) && !preg_match("/EMAIL/i",$comments) && !preg_match("/CHAT/i",$comments))
+					{
+					if ($RS_no_DEAD_status < 1)
+						{
+						$Acall_time[$i]=$Astate_change[$i];
+
+						$Astatus[$i] =	'3-WAYD';
+						$Lstatus =		'3-WAYD';
+						$status =		'3-WAYD';
+						}
+					}
+
+				if ( (preg_match("/AUTO/i",$comments)) or (strlen($comments)<1) )
+					{$CM='A';}
+				else
+					{
+					if (preg_match("/INBOUND/i",$comments)) 
+						{$CM='I';}
+					else if (preg_match("/EMAIL/i",$comments)) 
+						{$CM='E';}
+					else
+						{$CM='M';}
+					}
+				}
+			else
+				{$CM=' ';}
+			}
 
 		if ($UGdisplay > 0)
 			{
@@ -4042,6 +4073,10 @@ if ($talking_to_print > 0)
 		if ($Lstatus=='3-WAY')
 			{
 			if ($call_time_S >= $rt_report_times["threeway_short_time"]) {$G='<SPAN class="lime"><B>'; $EG='</B></SPAN>'; $tr_class='TRlime';}
+			}
+		if ($Lstatus=='3-WAYD')
+			{
+			if ($call_time_S >= $rt_report_times["threeway_short_time"]) {$G='<SPAN class="black"><B>'; $EG='</B></SPAN>'; $tr_class='TRblack';}
 			}
 		if ($Lstatus=='DEAD')
 			{
