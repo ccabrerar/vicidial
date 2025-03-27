@@ -82,7 +82,7 @@
 #exten => _99909*.,2,AGI(agi-VDAD_ALL_inbound.agi)
 #exten => _99909*.,3,Hangup
 #
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 70828-0924 - First Build
@@ -264,6 +264,7 @@
 # 240415-1701 - Fix for ConfBridge code
 # 240723-1632 - Small fix for ConfBridge
 # 240906-1032 - Added testing for stereo_recording in-group option *NOT PRODUCTION READY*
+# 250325-1724 - Fix for possible daily_limit issue
 #
 
 $script = 'agi-VDAD_ALL_inbound.agi';
@@ -4252,6 +4253,12 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 				#		$calls_today_filtered++;
 				#		$calls_today_filteredSQL = ",calls_today_filtered='$calls_today_filtered'";
 				#		}
+					}
+				else
+					{
+					$calls_today =	1;
+					$calls_today_filtered = 1;
+					$daily_limit = -1;
 					}
 				$sthA->finish();
 

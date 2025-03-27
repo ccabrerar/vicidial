@@ -557,10 +557,11 @@
 # 250129-0900 - Fix for PHP8 TypeError
 # 250224-1642 - Fix for drop_lockout_time issue with NULL last_local_call_time DROP leads
 # 250311-1420 - Fix for start_call_url on inbound calls where blank and campaign set to ALT
+# 250326-1937 - Fix for missing vicidial_inbound_group_agents entries
 #
 
-$version = '2.14-450';
-$build = '250311-1420';
+$version = '2.14-451';
+$build = '250326-1937';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=913;
@@ -1917,9 +1918,16 @@ if ($ACTION == 'regCLOSER')
 					}
 				else
 					{
+					$stmt="INSERT INTO vicidial_inbound_group_agents set user='$user',group_id='$in_groups[$k]';";
+						if ($format=='debug') {echo "\n<!-- $stmt -->";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+
+					# Set default values since settings didn't exist
 					$group_weight = 0;
 					$calls_today =	0;
 					$group_grade = 1;
+					$calls_today_filtered = 0;
 					$daily_limit = -1;
 					}
 				$stmt="INSERT INTO vicidial_live_inbound_agents set user='$user',group_id='$in_groups[$k]',group_weight='$group_weight',calls_today='$calls_today',last_call_time='$NOW_TIME',last_call_finish='$NOW_TIME',last_call_time_filtered='$NOW_TIME',last_call_finish_filtered='$NOW_TIME',group_grade='$group_grade',calls_today_filtered='$calls_today_filtered',daily_limit='$daily_limit';";
