@@ -2865,3 +2865,9 @@ ALTER TABLE inbound_disabled_entries MODIFY modify_date TIMESTAMP NOT NULL DEFAU
 ALTER TABLE vicidial_timeoff_log MODIFY modify_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
 
 UPDATE system_settings SET db_schema_version='1724',db_schema_update_date=NOW() where db_schema_version < 1724;
+
+INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('FAILED_DIAL_MESSAGE_OVERRIDE','Failed Dial Message Override','OTHER','---ALL---',"Unable to complete the call at this time.\nPlease try again later.");
+
+ALTER TABLE system_settings ADD agent_hide_dial_fail ENUM('0','1','2','3','4','5','6') default '0';
+
+UPDATE system_settings SET db_schema_version='1725',db_schema_update_date=NOW() where db_schema_version < 1725;

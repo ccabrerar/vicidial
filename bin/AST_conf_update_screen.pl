@@ -10,6 +10,7 @@
 # CHANGES
 # 220414-1210 - Initial build
 # 250305-2104 - Fix for missing vicidial_confbridges limit purge code
+# 250326-2102 - Fixes for ConfBridge issues
 #
 
 # constants
@@ -316,7 +317,7 @@ else
 			{
 			print "|No active conferences.\n";
 			$event_string = "|No active conferences.";
-	                event_logger($SYSLOG,$event_string);
+			event_logger($SYSLOG,$event_string);
 			}
 		else
 			{
@@ -506,11 +507,21 @@ else
 			while ($sthArows > $rec_count)
 				{
 				@aryA = $sthA->fetchrow_array;
-				$conf_hash{ "$aryA[1]" } = { "extension" => $aryA[0], "type" => "c" };
+				$conf_hash{ "$aryA[1]" } = { "extension" => $aryA[0], "type" => "c", "processed" => 0};
 				$rec_count++;
 				}
 			$sthA->finish();
-			
+		
+			# detect error conferences
+			$stmtA = "UPDATE vicidial_conferences set extension='ConfError' where server_ip='$server_ip' and leave_3way='1' and extension = '';";
+			$affected_rows = $dbhA->do($stmtA);
+			if ( $affected_rows > 0 )
+				{
+				if($DB){print STDERR "Conference Error Detected!\n$stmtA\n Detected $affected_rows conferences with extension set to '' but leave_3way set to 1\n";}
+				event_logger($SYSLOG,"Conference Error Detected!\n$stmtA\n Detected $affected_rows conferences with extension set to '' but leave_3way set to 1\n");
+				}
+
+
 			# get vicidial_conferences data
 			$stmtA = "SELECT extension,conf_exten from vicidial_conferences where server_ip='$server_ip' and leave_3way='1';";
 			if ($DB) {print "|$stmtA|\n";}
@@ -522,13 +533,22 @@ else
 			while ($sthArows > $rec_count)
 				{
 				@aryA = $sthA->fetchrow_array;
-				$conf_hash{ "$aryA[1]" } = { "extension" => $aryA[0], "type" => "vc" };
+				$conf_hash{ "$aryA[1]" } = { "extension" => $aryA[0], "type" => "vc", "processed" => 0 };
 				$rec_count++;
 				}
 			$sthA->finish(); 
 			}
 		else
 			{
+			# detect error conferences
+			$stmtA = "UPDATE vicidial_confbridges set extension='ConfError' where server_ip='$server_ip' and leave_3way='1' and extension = '';";
+			$affected_rows = $dbhA->do($stmtA);
+			if ( $affected_rows > 0 )
+				{
+				if($DB){print STDERR "Conference Error Detected!\n$stmtA\n Detected $affected_rows conferences with extension set to '' but leave_3way set to 1\n";}
+				event_logger($SYSLOG,"Conference Error Detected!\n$stmtA\n Detected $affected_rows conferences with extension set to '' but leave_3way set to 1\n");
+				}
+			
 			# get vicidial_confbridges data
 			$stmtA = "SELECT extension,conf_exten from vicidial_confbridges where server_ip='$server_ip' and leave_3way='1';";
 			if ($DB) {print "|$stmtA|\n";}
@@ -540,7 +560,7 @@ else
 			while ($sthArows > $rec_count)
 				{
 				@aryA = $sthA->fetchrow_array;
-				$conf_hash{ "$aryA[1]" } = { "extension" => $aryA[0], "type" => "vcb" };
+				$conf_hash{ "$aryA[1]" } = { "extension" => $aryA[0], "type" => "vcb", "processed" => 0 };
 				$rec_count++;
 				}
 			$sthA->finish()
@@ -550,73 +570,181 @@ else
 		foreach $room (@room_array)
 			{
 			$conf_id = $room->{'Conference'};
-			if (( $room->{'Parties'} == 0 ) && ($conf_hash{"$conf_id"}{"type"} eq "c"))
-		       		{
-				# we are just a conference so dont kicking people out
-				$new_exten = $conf_hash{"$conf_id"}{"extension"};
-				if ($conf_hash{"$conf_id"}{"extension"} =~ /Xtimeout3$/i) {$new_exten =~ s/Xtimeout3$/Xtimeout2/gi;}
-				if ($conf_hash{"$conf_id"}{"extension"} =~ /Xtimeout2$/i) {$new_exten =~ s/Xtimeout2$/Xtimeout1/gi;}
-				if ($conf_hash{"$conf_id"}{"extension"} =~ /Xtimeout1$/i) {$new_exten = '';}
-				if ( ($conf_hash{"$conf_id"}{"extension"} !~ /Xtimeout\d$/i) and (length($conf_hash{"$conf_id"}{"extension"})> 0) ) {$new_exten .= 'Xtimeout3';}
 
-				if($DB) { print $conf_hash{"$conf_id"}{"extension"} . "|$new_exten|$leave_3waySQL|\n"; }
-
-				$stmtA = "UPDATE vicidial_conferences set extension='$new_exten' where server_ip='$server_ip' and conf_exten='$conf_id';";
-				if($DB){print STDERR "\n|$stmtA|\n";} 
-				event_logger($SYSLOG,"|$stmtA|");
-				
-				$affected_rows = $dbhA->do($stmtA);
-				}	
-			elsif (( $room->{'Parties'} <= 1 ) && (($conf_hash{"$conf_id"}{"type"} eq "vc") || ($conf_hash{"$conf_id"}{"type"} eq "vcb"))) 
+			# check if the room exists in the $conf_hash
+			if ( exists $conf_hash{"$conf_id"} )
 				{
-				# we are a vicidial conference so we can single partisipants out.
-				$new_exten = $conf_hash{"$conf_id"}{"extension"};
-				$leave_3waySQL = '1';
-				if ($conf_hash{"$conf_id"}{"extension"} =~ /Xtimeout3$/i) {$new_exten =~ s/Xtimeout3$/Xtimeout2/gi;}
-				if ($conf_hash{"$conf_id"}{"extension"} =~ /Xtimeout2$/i) {$new_exten =~ s/Xtimeout2$/Xtimeout1/gi;}
-				if ($conf_hash{"$conf_id"}{"extension"} =~ /Xtimeout1$/i) {$new_exten = ''; $leave_3waySQL='0';}
-				if ( ($conf_hash{"$conf_id"}{"extension"} !~ /Xtimeout\d$/i) and (length($conf_hash{"$conf_id"}{"extension"})> 0) ) {$new_exten .= 'Xtimeout3';}
+				# if so mark it as processed
+				$conf_hash{"$conf_id"}{"processed"} = 1;
 
-				if($DB) { print $conf_hash{"$conf_id"}{"extension"} . "|$new_exten|$leave_3waySQL|\n";}
-			      	event_logger($SYSLOG, $conf_hash{"$conf_id"}{"extension"} . "|$new_exten|$leave_3waySQL|");
-
-				$kick = 0;
-				if ($new_exten =~ /Xtimeout1$/i)
+				# give debug info if the conference has a ConfError
+				if ($conf_hash{"$conf_id"}{"extension"} =~ /ConfError/i)
 					{
-					### Kick all participants if there are any left in the conference so it can be reused
-					$local_DEF = 'Local/5555';
-					$local_AMP = '@';
-					$kick_local_channel = $local_DEF . $conf_id . $local_AMP . $ext_context;
-					$padTDinc = sprintf("%03s", $TDinc);    while (length($padTDinc) > 3) {chop($padTDinc);}
-					$queryCID = "ULGC$padTDinc$TDnum";
-
-					$stmtA="INSERT INTO vicidial_manager values('','','$now_date','NEW','N','$server_ip','','Originate','$queryCID','Channel: $kick_local_channel','Context: $ext_context','Exten: 8300','Priority: 1','Callerid: $queryCID','','','','','');";
-					$affected_rows = $dbhA->do($stmtA); #  or die  "Couldn't execute query:|$stmtA|\n";
-					if($DB){print STDERR "\n|$affected_rows|$stmtA|\n";}
-					event_logger($SYSLOG,"|$affected_rows|$stmtA|");
-					$TDinc++;
-					$kick = 1;
+					if($DB){print STDERR "Conference Error Detected in " . $conf_hash{"$conf_id"}{"type"} . " conferernce $conf_id\n";}
+					event_logger($SYSLOG,"Conference Error Detected in " . $conf_hash{"$conf_id"}{"type"} . " conferernce $conf_id\n");
 					}
 
-				if ($conf_hash{"$conf_id"}{"type"} eq "vc") 
+				# if it is an astGUIclient conference and has 0 parties process it
+				if (( $room->{'Parties'} == 0 ) && ($conf_hash{"$conf_id"}{"type"} eq "c"))
+			       		{
+					# we are just a conference so dont kicking people out
+					$new_exten = $conf_hash{"$conf_id"}{"extension"};
+					if ($conf_hash{"$conf_id"}{"extension"} =~ /Xtimeout3$/i) {$new_exten =~ s/Xtimeout3$/Xtimeout2/gi;}
+					if ($conf_hash{"$conf_id"}{"extension"} =~ /Xtimeout2$/i) {$new_exten =~ s/Xtimeout2$/Xtimeout1/gi;}
+					if ($conf_hash{"$conf_id"}{"extension"} =~ /Xtimeout1$/i) {$new_exten = '';}
+					if ( ($conf_hash{"$conf_id"}{"extension"} !~ /Xtimeout\d$/i) and (length($conf_hash{"$conf_id"}{"extension"})> 0) ) {$new_exten .= 'Xtimeout3';}
+	
+					if($DB) { print $conf_hash{"$conf_id"}{"extension"} . "|$new_exten|$leave_3waySQL|\n"; }
+	
+					$stmtA = "UPDATE conferences set extension='$new_exten' where server_ip='$server_ip' and conf_exten='$conf_id';";
+					if($DB){print STDERR "\n|$stmtA|\n";} 
+					event_logger($SYSLOG,"|$stmtA|");
+				
+					$affected_rows = $dbhA->do($stmtA);
+					}	
+			
+				# if it is a vicidial conference or confbridge and there are more than one party in it clear the timeout flag
+				elsif (( $room->{'Parties'} > 1 ) && (($conf_hash{"$conf_id"}{"type"} eq "vc") || ($conf_hash{"$conf_id"}{"type"} eq "vcb")) && ($conf_hash{"$conf_id"}{"extension"} =~ /Xtimeout/i) )
 					{
-					$stmtA = "UPDATE vicidial_conferences set extension='$new_exten',leave_3way='$leave_3waySQL' where server_ip='$server_ip' and conf_exten='$conf_id';";
-					}
-				else
+					# room has 2 parties but a timeout was set. Clear the timeout
+					$new_exten = $conf_hash{"$conf_id"}{"extension"};
+					$new_exten =~ s/Xtimeout\d$//gi;
+					if ($conf_hash{"$conf_id"}{"type"} eq "vc")
+						{
+						$stmtA = "UPDATE vicidial_conferences set extension='$new_exten' where server_ip='$server_ip' and conf_exten='$conf_id';";
+						}
+					else
+						{
+						$stmtA = "UPDATE vicidial_confbridges set extension='$new_exten' where server_ip='$server_ip' and conf_exten='$conf_id';"
+						}
+
+					if($DB){print STDERR "\n|fix|$stmtA|\n";}
+					event_logger($SYSLOG,"\n|fix|$stmtA|");
+					$affected_rows = $dbhA->do($stmtA);
+					}	
+
+				# if it is a vicidial conference or confbridge and there is one or less parties in it set the timeout
+				elsif (( $room->{'Parties'} <= 1) && (($conf_hash{"$conf_id"}{"type"} eq "vc") || ($conf_hash{"$conf_id"}{"type"} eq "vcb"))) 
 					{
-					$stmtA = "UPDATE vicidial_confbridges set extension='$new_exten',leave_3way='$leave_3waySQL' where server_ip='$server_ip' and conf_exten='$conf_id';"
+					# we are a vicidial conference so we can single partisipants out.
+					$new_exten = $conf_hash{"$conf_id"}{"extension"};
+					$leave_3waySQL = '1';
+					if ($conf_hash{"$conf_id"}{"extension"} =~ /Xtimeout3$/i) {$new_exten =~ s/Xtimeout3$/Xtimeout2/gi;}
+					if ($conf_hash{"$conf_id"}{"extension"} =~ /Xtimeout2$/i) {$new_exten =~ s/Xtimeout2$/Xtimeout1/gi;}
+					if ($conf_hash{"$conf_id"}{"extension"} =~ /Xtimeout1$/i) {$new_exten = ''; $leave_3waySQL='0';}
+					if ( ($conf_hash{"$conf_id"}{"extension"} !~ /Xtimeout\d$/i) and (length($conf_hash{"$conf_id"}{"extension"})> 0) ) {$new_exten .= 'Xtimeout3';}
+
+					if($DB){print STDERR "\n$conf_id|" . $conf_hash{"$conf_id"}{"extension"} . "|$new_exten|$leave_3waySQL|\n";}
+				      	event_logger($SYSLOG, "\n$conf_id|" . $conf_hash{"$conf_id"}{"extension"} . "|$new_exten|$leave_3waySQL|\n");
+
+					$kick = 0;
+					# timeout 1 has been reached kick the conference
+					if ($new_exten =~ /Xtimeout1$/i)
+						{
+						### Kick all participants if there are any left in the conference so it can be reused
+						$local_DEF = 'Local/5555';
+						$local_AMP = '@';
+						$kick_local_channel = $local_DEF . $conf_id . $local_AMP . $ext_context;
+						$padTDinc = sprintf("%03s", $TDinc);    while (length($padTDinc) > 3) {chop($padTDinc);}
+						$queryCID = "ULGC$padTDinc$TDnum";
+
+						$stmtA="INSERT INTO vicidial_manager values('','','$now_date','NEW','N','$server_ip','','Originate','$queryCID','Channel: $kick_local_channel','Context: $ext_context','Exten: 8300','Priority: 1','Callerid: $queryCID','','','','','');";
+						$affected_rows = $dbhA->do($stmtA); #  or die  "Couldn't execute query:|$stmtA|\n";
+						if($DB){print STDERR "\n|$affected_rows|$stmtA|\n";}
+						event_logger($SYSLOG,"|$affected_rows|$stmtA|");
+						$TDinc++;
+						$kick = 1;
+						}
+
+					# update the conference records
+					if ($conf_hash{"$conf_id"}{"type"} eq "vc") 
+						{
+						$stmtA = "UPDATE vicidial_conferences set extension='$new_exten',leave_3way='$leave_3waySQL' where server_ip='$server_ip' and conf_exten='$conf_id';";
+						}
+					else
+						{
+						$stmtA = "UPDATE vicidial_confbridges set extension='$new_exten',leave_3way='$leave_3waySQL' where server_ip='$server_ip' and conf_exten='$conf_id';"
+						}
+
+					if($DB){print STDERR "|room|$stmtA|\n";}
+				       	event_logger($SYSLOG,"|room|$stmtA|\n");
+					$affected_rows = $dbhA->do($stmtA);
+
+					# only sleep if we did a kick
+					if ($kick) { usleep(1*100*1000); }
 					}
-
-				if($DB){print STDERR "\n|$stmtA|\n";}
-			       	event_logger($SYSLOG,"\n|$stmtA|");
-				$affected_rows = $dbhA->do($stmtA);
-
-				# only sleep if we did a kick
-				if ($kick) { usleep(1*100*1000); }
-
 				}
 			}
-		
+
+		# loop through the conferences
+		foreach $conf_id (keys %conf_hash)
+			{
+			# make sure the extension exists and is not blank
+			if (( exists $conf_hash{"$conf_id"}{"extension"} ) && ($conf_hash{"$conf_id"}{"extension"} ne ''))
+				{
+				# give debug details if there is a ConfError
+				if ($conf_hash{"$conf_id"}{"extension"} =~ /ConfError/i)
+					{
+					if($DB){print STDERR "Conference Error Detected in " . $conf_hash{"$conf_id"}{"type"} . " conferernce $conf_id\n";}
+					event_logger($SYSLOG,"Conference Error Detected in " . $conf_hash{"$conf_id"}{"type"} . " conferernce $conf_id\n");
+					}
+				
+				# and deal with any that did not get processed							
+				if (( exists $conf_hash{"$conf_id"}{"processed"} ) && ($conf_hash{"$conf_id"}{"processed"} == 0))
+					{
+					# we are a vicidial conference that did not appear in the AMI results
+					$new_exten = $conf_hash{"$conf_id"}{"extension"};
+					$leave_3waySQL = '1';
+					if ($conf_hash{"$conf_id"}{"extension"} =~ /Xtimeout3$/i) {$new_exten =~ s/Xtimeout3$/Xtimeout2/gi;}
+					if ($conf_hash{"$conf_id"}{"extension"} =~ /Xtimeout2$/i) {$new_exten =~ s/Xtimeout2$/Xtimeout1/gi;}
+					if ($conf_hash{"$conf_id"}{"extension"} =~ /Xtimeout1$/i) {$new_exten = ''; $leave_3waySQL='0';}
+					if ( ($conf_hash{"$conf_id"}{"extension"} !~ /Xtimeout\d$/i) and (length($conf_hash{"$conf_id"}{"extension"})> 0) ) {$new_exten .= 'Xtimeout3';}
+	
+					if($DB){print STDERR "\n$conf_id|" . $conf_hash{"$conf_id"}{"extension"} . "|$new_exten|$leave_3waySQL|\n";}
+					event_logger($SYSLOG, "\n$conf_id|" . $conf_hash{"$conf_id"}{"extension"} . "|$new_exten|$leave_3waySQL|\n");
+	
+					$kick = 0;
+					# timeout 1 has been reached kick the conference
+					if ($new_exten =~ /Xtimeout1$/i)
+						{
+						### Kick all participants if there are any left in the conference so it can be reused
+							$local_DEF = 'Local/5555';
+						$local_AMP = '@';
+						$kick_local_channel = $local_DEF . $conf_id . $local_AMP . $ext_context;
+						$padTDinc = sprintf("%03s", $TDinc);    while (length($padTDinc) > 3) {chop($padTDinc);}
+						$queryCID = "ULGC$padTDinc$TDnum";
+	
+						$stmtA="INSERT INTO vicidial_manager values('','','$now_date','NEW','N','$server_ip','','Originate','$queryCID','Channel: $kick_local_channel','Context: $ext_context','Exten: 8300','Priority: 1','Callerid: $queryCID','','','','','');";
+						$affected_rows = $dbhA->do($stmtA); #  or die  "Couldn't execute query:|$stmtA|\n";
+						if($DB){print STDERR "\n|$affected_rows|$stmtA|\n";}
+						event_logger($SYSLOG,"|$affected_rows|$stmtA|");
+						$TDinc++;
+						$kick = 1;
+						}
+
+					# update the conference records
+					if ($conf_hash{"$conf_id"}{"type"} eq "vc")
+						{
+						$stmtA = "UPDATE vicidial_conferences set extension='$new_exten',leave_3way='$leave_3waySQL' where server_ip='$server_ip' and conf_exten='$conf_id';";
+						}
+					else
+						{
+						$stmtA = "UPDATE vicidial_confbridges set extension='$new_exten',leave_3way='$leave_3waySQL' where server_ip='$server_ip' and conf_exten='$conf_id';"
+						}
+
+					if($DB){print STDERR "|conf|$stmtA|\n";}
+					event_logger($SYSLOG,"|conf|$stmtA|");
+					$affected_rows = $dbhA->do($stmtA);
+
+					$conf_hash{"$conf_id"}{"processed"} = 1;
+
+					# only sleep if we did a kick
+					if ($kick) { usleep(1*100*1000); }
+					}
+				}
+			}
+	
+
 
 		# reload the settings from the DB at a fixed interval
 		$epoch = time();
@@ -636,7 +764,7 @@ else
 			$settings_ref = get_server_settings($dbhA,$server_ip);
 
 			$loop_time_usec = $settings_ref->{'conf_update_interval'} * 1000000;
-		        $loop_time_usec = ceil($loop_time_usec); # take care of any floating point math
+			$loop_time_usec = ceil($loop_time_usec); # take care of any floating point math
 
 			$vicidial_recording_limit = $settings_ref->{'vicidial_recording_limit'};
 
@@ -812,7 +940,9 @@ sub clear_conf_records
 	######################################################################
 	##### CLEAR vicidial_conferences ENTRIES IN LEAVE-3WAY FOR MORE THAN ONE HOUR
 	######################################################################
-	
+
+	@MT = ();
+
 	##### Find date-time one hour in the past
 	$secX = time();
 	$TDtarget = ($secX - ($vicidial_recording_limit * 60));
@@ -830,7 +960,7 @@ sub clear_conf_records
 	$TDinc = 1;
 	
 	@PTextensions=@MT; @PT_conf_extens=@MT; @PTmessages=@MT; @PTold_messages=@MT; @NEW_messages=@MT; @OLD_messages=@MT;
-	$stmtA = "SELECT conf_exten,extension from vicidial_conferences where server_ip='$server_ip' and leave_3way='1' and leave_3way_datetime < \"$TDSQLdate\";";
+	$stmtA = "SELECT conf_exten,extension from vicidial_conferences where server_ip='$server_ip' and leave_3way='1' and leave_3way_datetime < \"$TDSQLdate\" and leave_3way_datetime IS NOT NULL;";
 	if ($DB) {print "Conf Purge|$stmtA|\n";} 
 	event_logger($SYSLOG,"Conf Purge|$stmtA|");
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
@@ -868,7 +998,7 @@ sub clear_conf_records
 		}
 	
 	@PTextensions=@MT; @PT_conf_extens=@MT; @PTmessages=@MT; @PTold_messages=@MT; @NEW_messages=@MT; @OLD_messages=@MT;
-	$stmtA = "SELECT conf_exten,extension from vicidial_confbridges where server_ip='$server_ip' and leave_3way='1' and leave_3way_datetime < \"$TDSQLdate\";";
+	$stmtA = "SELECT conf_exten,extension from vicidial_confbridges where server_ip='$server_ip' and leave_3way='1' and leave_3way_datetime < \"$TDSQLdate\" and leave_3way_datetime IS NOT NULL;";
 	if ($DB) {print "ConfBridge Purge|$stmtA|\n";}
 	event_logger($SYSLOG,"ConfBridge Purge|$stmtA|");
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
