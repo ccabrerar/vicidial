@@ -6231,12 +6231,13 @@ if ($SSscript_remove_js > 0)
 # 250210-1701 - Fix for PHP8 issue on User Modify page
 # 250227-1607 - Fix for test call phone code issue (PHP8-related)
 # 250326-2023 - Added agent_hide_dial_fail system_settings feature
+# 250424-0715 - Fix for modify IP Lists screen permissions issue
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-937a';
-$build = '250326-2023';
+$admin_version = '2.14-938a';
+$build = '250424-0715';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -43448,7 +43449,7 @@ if ($ADD==395111111111)
 	echo "<TABLE><TR><TD>\n";
 	echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 
-	if ($LOGmodify_ingroups==1)
+	if ($LOGmodify_ip_lists==1)
 		{
 		$stmt = "SELECT count(*) FROM vicidial_ip_lists where ip_list_id='$ip_list_id';";
 		$rslt=mysql_to_mysqli($stmt, $link);
