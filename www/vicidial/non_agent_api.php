@@ -222,10 +222,11 @@
 # 241127-2148 - Fix for custom fields issue #1533
 # 250105-1001 - Added enhanced_agent_monitoring option compatibility
 # 250130-1130 - Changed vicidial_daily_rt_monitor_log to vicidial_daily_rt_monitorING_log to match SQL file
+# 250516-1047 - Changed ksort to uksort so array sorting by key is alphabetic, case-INsensitive
 #
 
-$version = '2.14-199';
-$build = '250130-1130';
+$version = '2.14-200';
+$build = '250516-1047';
 $php_script='non_agent_api.php';
 $api_url_log = 0;
 $camp_lead_order_random=1;
@@ -18340,7 +18341,8 @@ if ($function == 'call_status_stats')
 					$outbound_array["$campaign_array[$i]"][1]=0;
 					}
 				}
-			ksort($outbound_array);
+			# ksort($outbound_array);
+			uksort($outbound_array, "strnatcasecmp");
 
 			$ha_stmt="select distinct status from vicidial_statuses where human_answered='Y' UNION select distinct status from vicidial_campaign_statuses where human_answered='Y' $campaign_SQL";
 			if ($DB>0) {echo $ha_stmt."\n";}
@@ -18387,7 +18389,8 @@ if ($function == 'call_status_stats')
 				$inbound_array["$ingroup_array[$i]"][0]=0;
 				$inbound_array["$ingroup_array[$i]"][1]=0;
 				}
-			ksort($inbound_array);
+			# ksort($inbound_array);
+			uksort($inbound_array, "strnatcasecmp");
 
 			$outb_stmt="select campaign_id, status, substr(call_date, 12, 2) as hour, count(*) from vicidial_log where call_date>='$query_date $query_time' and call_date<='$end_date $end_time' $campaign_SQL $status_SQL group by campaign_id, status, hour order by campaign_id, status, hour";
 			if ($DB>0) {echo $outb_stmt."\n";}
@@ -18441,7 +18444,8 @@ if ($function == 'call_status_stats')
 				$temp_ary_ct = count($temp_stat_array["$key"]);
 				if ($temp_ary_ct > 0)
 					{
-					ksort($temp_stat_array["$key"]);
+					# ksort($temp_stat_array["$key"]);
+					uksort($temp_stat_array["$key"], "strnatcasecmp");
 #					while(list($statkey, $statval)=each($temp_stat_array{"$key"})) 
 					foreach($temp_stat_array["$key"] as $statkey => $statval)
 						{
@@ -18469,7 +18473,8 @@ if ($function == 'call_status_stats')
 				$temp_ary_ct = count($temp_stat_array["$key"]);
 				if ($temp_ary_ct > 0)
 					{
-					ksort($temp_stat_array["$key"]);
+					# ksort($temp_stat_array["$key"]);
+					uksort($temp_stat_array["$key"], "strnatcasecmp");
 					# while(list($statkey, $statval)=each($temp_stat_array{"$key"})) 
 					foreach($temp_stat_array["$key"] as $statkey => $statval)
 						{
@@ -18753,7 +18758,8 @@ if ($function == 'call_dispo_report')
 						{
 						$outbound_ct_array[$key]["$status_ct_array[$i]"]+=0;
 						}
-					ksort($outbound_ct_array[$key]);
+					# ksort($outbound_ct_array[$key]);
+					uksort($outbound_ct_array[$key], "strnatcasecmp");
 #					while (list($key2, $val2)=each($outbound_ct_array{$key})) 
 					foreach($outbound_ct_array[$key] as $key2 => $val2)
 						{
@@ -18780,7 +18786,8 @@ if ($function == 'call_dispo_report')
 						{
 						$inbound_ct_array[$key]["$status_ct_array[$i]"]+=0;
 						}
-					ksort($inbound_ct_array[$key]);
+					# ksort($inbound_ct_array[$key]);
+					uksort($inbound_ct_array[$key], "strnatcasecmp");
 #					while (list($key2, $val2)=each($inbound_ct_array{$key})) 
 					foreach($inbound_ct_array[$key] as $key2 => $val2)
 						{
@@ -18807,7 +18814,8 @@ if ($function == 'call_dispo_report')
 						{
 						$did_ct_array[$key]["$status_ct_array[$i]"]+=0;
 						}
-					ksort($did_ct_array[$key]);
+					# ksort($did_ct_array[$key]);
+					uksort($did_ct_array[$key], "strnatcasecmp");
 #					while (list($key2, $val2)=each($did_ct_array{$key})) 
 					foreach($did_ct_array[$key] as $key2 => $val2)
 						{
@@ -18823,7 +18831,8 @@ if ($function == 'call_dispo_report')
 				$rpt_str.="\n";
 				}
 			$rpt_str.="TOTAL,$grand_total_calls";
-			ksort($grand_total_array);
+# 			ksort($grand_total_array);
+			uksort($grand_total_array, "strnatcasecmp");
 #			while (list($key, $val)=each($grand_total_array)) 
 			foreach($grand_total_array as $key => $val)
 				{
