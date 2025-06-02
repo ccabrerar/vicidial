@@ -8,7 +8,7 @@
 # This script is also used for the Add-Lead-URL feature in In-groups and for
 # QM socket-send as well as from call menus using a settings container.
 #
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 100622-0929 - First Build
@@ -33,9 +33,10 @@
 # 230531-1139 - Added option to send any URL as POST if "POST" is at the end of the $function var
 # 230605-0836 - Added SC_CALL_URL option to add post headers
 # 230516-2150 - Added ALT start_call_url code and --version flag
+# 250601-0857 - Added fronter/closer variables to start_call_url
 #
 
-$build = '230516-2150';
+$build = '250601-0857';
 
 $|++;
 use Getopt::Long;
@@ -1001,6 +1002,8 @@ if (length($lead_id) > 0)
 
 	elsif ($function =~ /SC_CALL_URL/)
 		{
+		$fronter = $user;
+		$closer='';
 		$talk_sec=0;   $dead_sec=0;   $dispo_epoch=time();   $now_epoch=time();
 		##### BEGIN Settings Container Call URL function #####
 		$stmtA = "SELECT user,status,talk_sec,dead_sec,dispo_epoch from vicidial_agent_log where lead_id='$lead_id' order by agent_log_id desc limit 1;";
@@ -1111,9 +1114,9 @@ if (length($lead_id) > 0)
 			$sthA->finish();
 			}
 
-		if ($sc_call_url =~ /--A--closecallid--B--/)
+		if ( ($sc_call_url =~ /--A--closecallid--B--/) || ($sc_call_url =~ /--A--fronter--B--|--A--closer--B--/) )
 			{
-			$stmtA = "SELECT closecallid FROM vicidial_closer_log where uniqueid='$uniqueid' order by closecallid limit 1;";
+			$stmtA = "SELECT closecallid,xfercallid FROM vicidial_closer_log where uniqueid='$uniqueid' order by closecallid limit 1;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
@@ -1121,8 +1124,24 @@ if (length($lead_id) > 0)
 				{
 				@aryA = $sthA->fetchrow_array;
 				$VAR_closecallid =		$aryA[0];
+				$VAR_xfercallid =		$aryA[1];
 				}
 			$sthA->finish();
+
+			if ( ($sc_call_url =~ /--A--fronter--B--|--A--closer--B--/) && ($VAR_xfercallid > 0) && (length($VAR_xfercallid) > 0) )
+				{
+				$stmtA = "SELECT user from vicidial_xfer_log where xfercallid='$VAR_xfercallid' limit 1;";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArows=$sthA->rows;
+				if ($sthArows > 0)
+					{
+					@aryA = $sthA->fetchrow_array;
+					$fronter =		$aryA[0];
+					$closer =		$user;
+					}
+				$sthA->finish();
+				}
 			}
 
 		if ( (length($VAR_list_id) > 1) && ( ( (length($list_name) < 1) && ($sc_call_url =~ /--A--list_name--B--/) ) || ( (length($list_description) < 1) && ($sc_call_url =~ /--A--list_description--B--/) ) ) )
@@ -1208,6 +1227,8 @@ if (length($lead_id) > 0)
 		$sc_call_url =~ s/--A--talk_time--B--/$talk_time/gi;
 		$sc_call_url =~ s/--A--talk_time_min--B--/$talk_time_min/gi;
 		$sc_call_url =~ s/--A--SQLdate--B--/$now_date/gi;
+		$sc_call_url =~ s/--A--fronter--B--/$fronter/gi;
+		$sc_call_url =~ s/--A--closer--B--/$closer/gi;
 		if ($function !~ /POST$/) {$sc_call_url =~ s/ /+/gi;}
 		$sc_call_url =~ s/&/\\&/gi;
 		$parse_url = $sc_call_url;
@@ -1218,6 +1239,8 @@ if (length($lead_id) > 0)
 	else
 		{
 		##### BEGIN Start Call URL function #####
+		$fronter = $user;
+		$closer='';
 		$stmtA = "SELECT lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner,phone_code FROM vicidial_list where lead_id='$lead_id';";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -1345,9 +1368,9 @@ if (length($lead_id) > 0)
 					$sthA->finish();
 					}
 
-				if ($scALT_url_address[$scALT] =~ /--A--closecallid--B--/)
+				if ( ($scALT_url_address[$scALT] =~ /--A--closecallid--B--/) || ($scALT_url_address[$scALT] =~ /--A--fronter--B--|--A--closer--B--/) )
 					{
-					$stmtA = "SELECT closecallid FROM vicidial_closer_log where uniqueid='$uniqueid' order by closecallid limit 1;";
+					$stmtA = "SELECT closecallid,xfercallid FROM vicidial_closer_log where uniqueid='$uniqueid' order by closecallid limit 1;";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 					$sthArows=$sthA->rows;
@@ -1355,8 +1378,24 @@ if (length($lead_id) > 0)
 						{
 						@aryA = $sthA->fetchrow_array;
 						$VAR_closecallid =		$aryA[0];
+						$VAR_xfercallid =		$aryA[1];
 						}
 					$sthA->finish();
+
+					if ( ($scALT_url_address[$scALT] =~ /--A--fronter--B--|--A--closer--B--/) && ($VAR_xfercallid > 0) && (length($VAR_xfercallid) > 0) )
+						{
+						$stmtA = "SELECT user from vicidial_xfer_log where xfercallid='$VAR_xfercallid' limit 1;";
+						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+						$sthArows=$sthA->rows;
+						if ($sthArows > 0)
+							{
+							@aryA = $sthA->fetchrow_array;
+							$fronter =		$aryA[0];
+							$closer =		$user;
+							}
+						$sthA->finish();
+						}
 					}
 
 				if ( (length($VAR_list_id) > 1) && ( ( (length($list_name) < 1) && ($scALT_url_address[$scALT] =~ /--A--list_name--B--/) ) || ( (length($list_description) < 1) && ($scALT_url_address[$scALT] =~ /--A--list_description--B--/) ) ) )
@@ -1438,6 +1477,8 @@ if (length($lead_id) > 0)
 				$scALT_url_address[$scALT] =~ s/--A--group--B--/$VAR_campaign_id/gi;
 				$scALT_url_address[$scALT] =~ s/--A--function--B--/$function/gi;
 				$scALT_url_address[$scALT] =~ s/--A--SQLdate--B--/$now_date/gi;
+				$scALT_url_address[$scALT] =~ s/--A--fronter--B--/$fronter/gi;
+				$scALT_url_address[$scALT] =~ s/--A--closer--B--/$closer/gi;
 				$scALT_url_address[$scALT] =~ s/ /+/gi;
 				$scALT_url_address[$scALT] =~ s/&/\\&/gi;
 				$parse_url = $scALT_url_address[$scALT];

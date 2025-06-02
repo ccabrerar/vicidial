@@ -558,10 +558,11 @@
 # 250224-1642 - Fix for drop_lockout_time issue with NULL last_local_call_time DROP leads
 # 250311-1420 - Fix for start_call_url on inbound calls where blank and campaign set to ALT
 # 250326-1937 - Fix for missing vicidial_inbound_group_agents entries
+# 250601-0843 - Fix for fronter/closer start/dispo URL variables
 #
 
-$version = '2.14-451';
-$build = '250326-1937';
+$version = '2.14-452';
+$build = '250601-0843';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=913;
@@ -1321,6 +1322,8 @@ else
 	$calls_waiting_vl_twoLABEL = preg_replace('/[^-, _0-9\p{L}]/u','',$calls_waiting_vl_twoLABEL);
 	}
 
+$fronter='';
+$closer='';
 
 if (strlen($SSagent_debug_logging) > 1)
 	{
@@ -2361,6 +2364,11 @@ if ($ACTION == 'manDiaLnextCaLL')
 	$CCIDtype='';
 	$channel_live=1;
 	$MDF_search_flag='MAIN';
+	$INxfercallid='';
+	$INclosecallid='';
+	# outbound call, assign fronter to user and closer blank
+	$fronter=$user;
+	$closer='';
 	$lead_id = preg_replace("/[^0-9]/","",$lead_id);
 	if ( (strlen($conf_exten)<1) || (strlen($campaign)<1)  || (strlen($ext_context)<1) )
 		{
@@ -6364,6 +6372,9 @@ if ($ACTION == 'manDiaLonly')
 	$CCIDtype='';
 	$channel_live=1;
 	$MDF_search_flag='MAIN';
+	# outbound call, assign fronter to user and closer blank
+	$fronter=$user;
+	$closer='';
 	if ( (strlen($conf_exten)<1) || (strlen($campaign)<1) || (strlen($ext_context)<1) || (strlen($phone_number)<1) || (strlen($lead_id)<1) )
 		{
 		$channel_live=0;
@@ -10001,6 +10012,9 @@ if ($ACTION == 'VDADcheckINCOMING')
 	$INclosecallid='';
 	$INxfercallid='';
 	$rct = 'Q';
+	# default to $fronter=$user, closer blank
+	$fronter = $user;
+	$closer='';
 
 	if ( (strlen($campaign)<1) || (strlen($server_ip)<1) )
 		{
@@ -10525,6 +10539,9 @@ if ($ACTION == 'VDADcheckINCOMING')
 						$alt_phone_count =	$row[4];
 						}
 					}
+				# outbound call, assign fronter to user and closer blank
+				$fronter=$user;
+				$closer='';
 				}
 			else
 				{
@@ -10536,6 +10553,7 @@ if ($ACTION == 'VDADcheckINCOMING')
 
 				if (strlen($closecallid)<1)
 					{
+					$INxfercallid='';
 					$stmt = "SELECT closecallid,xfercallid from vicidial_closer_log where lead_id='$lead_id' and user='$user' and list_id='$list_id' order by closecallid desc limit 1;";
 					if ($DB) {echo "$stmt\n";}
 					$rslt=mysql_to_mysqli($stmt, $link);
@@ -10546,6 +10564,21 @@ if ($ACTION == 'VDADcheckINCOMING')
 						$row=mysqli_fetch_row($rslt);
 						$INclosecallid =		$row[0];
 						$INxfercallid =			$row[1];
+						}
+					if ( (strlen($INxfercallid) > 0) and ($INxfercallid > 0) )
+						{
+						# check for fronter in vicidial_xfer_log
+						$stmt = "SELECT user from vicidial_xfer_log where xfercallid='$INxfercallid' limit 1;";
+						if ($DB) {echo "$stmt\n";}
+						$rslt=mysql_to_mysqli($stmt, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+						$VDCL_vxl_ct = mysqli_num_rows($rslt);
+						if ($VDCL_vxl_ct > 0)
+							{
+							$row=mysqli_fetch_row($rslt);
+							$fronter =		$row[0];
+							$closer =		$user;
+							}
 						}
 					}
 
@@ -10999,7 +11032,8 @@ if ($ACTION == 'VDADcheckINCOMING')
 				if ( (strlen($VDCL_group_web)>5) or (strlen($VDCL_group_name)>0) ) {echo "$VDCL_group_web|$VDCL_group_name|$VDCL_group_color|$VDCL_fronter_display|$VDADchannel_group|$VDCL_ingroup_script|$VDCL_get_call_launch|$VDCL_xferconf_a_dtmf|$VDCL_xferconf_a_number|$VDCL_xferconf_b_dtmf|$VDCL_xferconf_b_number|$VDCL_default_xfer_group|$VDCL_ingroup_recording_override|$VDCL_ingroup_rec_filename|$VDCL_default_group_alias|$VDCL_caller_id_number|$VDCL_group_web_vars|$VDCL_group_web_two|$VDCL_timer_action|$VDCL_timer_action_message|$VDCL_timer_action_seconds|$VDCL_xferconf_c_number|$VDCL_xferconf_d_number|$VDCL_xferconf_e_number|$VDCL_uniqueid_status_display|$custom_call_id|$VDCL_uniqueid_status_prefix|$VDCL_timer_action_destination|$DID_id|$DID_extension|$DID_pattern|$DID_description|$INclosecallid|$INxfercallid|$VDCL_group_web_three|$VDCL_ingroup_script_color|$VDCL_inbound_survey|$VDCL_survey_participate|$VDCL_ingroup_script_two|$VDCL_ingroup_script_color_two|$VDCL_browser_alert_sound|$VDCL_browser_alert_volume|\n";}
 				else {echo "X|$VDCL_group_name|$VDCL_group_color|$VDCL_fronter_display|$VDADchannel_group|$VDCL_ingroup_script|$VDCL_get_call_launch|$VDCL_xferconf_a_dtmf|$VDCL_xferconf_a_number|$VDCL_xferconf_b_dtmf|$VDCL_xferconf_b_number|$VDCL_default_xfer_group|$VDCL_ingroup_recording_override|$VDCL_ingroup_rec_filename|$VDCL_default_group_alias|$VDCL_caller_id_number|$VDCL_group_web_vars|$VDCL_group_web_two|$VDCL_timer_action|$VDCL_timer_action_message|$VDCL_timer_action_seconds|$VDCL_xferconf_c_number|$VDCL_xferconf_d_number|$VDCL_xferconf_e_number|$VDCL_uniqueid_status_display|$custom_call_id|$VDCL_uniqueid_status_prefix|$VDCL_timer_action_destination|$DID_id|$DID_extension|$DID_pattern|$DID_description|$INclosecallid|$INxfercallid|$VDCL_group_web_three|$VDCL_ingroup_script_color|$VDCL_inbound_survey|$VDCL_survey_participate|$VDCL_ingroup_script_two|$VDCL_ingroup_script_color_two|$VDCL_browser_alert_sound|$VDCL_browser_alert_volume|\n";}
 
-				$stmt = "SELECT full_name from vicidial_users where user='$tsr';";
+				if (strlen($fronter) < 2) {$fronter = $tsr;}
+				$stmt = "SELECT full_name from vicidial_users where user='$fronter';";
 				if ($DB) {echo "$stmt\n";}
 				$rslt=mysql_to_mysqli($stmt, $link);
 					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00122',$user,$server_ip,$session_name,$one_mysql_log);}
@@ -11748,6 +11782,9 @@ if ($ACTION == 'VDADcheckINCOMINGother')
 	$queue_seconds=0;
 	if (!is_array($inbound_email_groups)) {$inbound_email_groups=array();}
 	if (!is_array($inbound_chat_groups)) {$inbound_chat_groups=array();}
+	# default to $fronter=$user, closer blank
+	$fronter = $user;
+	$closer='';
 
 	$email_group_ct=count($inbound_email_groups); # This should always be greater than zero for the script to reach this point, but just in case...
 	for ($i=0; $i<$email_group_ct; $i++) 
@@ -11996,6 +12033,7 @@ if ($ACTION == 'VDADcheckINCOMINGother')
 			### if a transfer, update the transfer record with the user
 			if ($xferred_email==1) 
 				{
+				$closer=$user;
 				$stmt = "UPDATE vicidial_xfer_log set closer='$user' where xfercallid='$xfercallid';";
 				if ($DB) {echo "$stmt\n";}
 				$rslt=mysql_to_mysqli($stmt, $link);
@@ -12294,6 +12332,21 @@ if ($ACTION == 'VDADcheckINCOMINGother')
 					$row=mysqli_fetch_row($rslt);
 					$INclosecallid =		$row[0];
 					$INxfercallid =			$row[1];
+					}
+				if ( (strlen($INxfercallid) > 0) and ($INxfercallid > 0) )
+					{
+					# check for fronter in vicidial_xfer_log
+					$stmt = "SELECT user from vicidial_xfer_log where xfercallid='$INxfercallid' limit 1;";
+					if ($DB) {echo "$stmt\n";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+					$VDCL_vxl_ct = mysqli_num_rows($rslt);
+					if ($VDCL_vxl_ct > 0)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$fronter =		$row[0];
+						$closer =		$user;
+						}
 					}
 				}
 
@@ -13277,6 +13330,9 @@ if ($ACTION == 'LeaDSearcHSelecTUpdatE')
 	$alt_phone_count='';
 	$INclosecallid='';
 	$INxfercallid='';
+	# default to $fronter=$user, closer blank
+	$fronter = $user;
+	$closer='';
 
 	if ( (strlen($campaign)<1) || (strlen($server_ip)<1) || ($lead_id<0) )
 		{
@@ -13594,6 +13650,7 @@ if ($ACTION == 'LeaDSearcHSelecTUpdatE')
 			if ($DB) {echo "$stmt\n";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {$errno = mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00452',$user,$server_ip,$session_name,$one_mysql_log);}
+			$closer=$user;
 
 			$script_recording_delay=0;
 			##### find if script contains recording fields
@@ -13940,7 +13997,6 @@ if ($ACTION == 'LeaDSearcHSelecTUpdatE')
 				}
 			else {echo '|' . $tsr . "\n";}
 
-
 			##### find if script contains recording fields
 			$stmt="SELECT count(*) FROM vicidial_lists WHERE list_id='$list_id' and agent_script_override!='' and agent_script_override IS NOT NULL and agent_script_override!='NONE';";
 			$rslt=mysql_to_mysqli($stmt, $link);
@@ -14164,6 +14220,9 @@ if ($ACTION == 'updateDISPO')
 	{
 	$MT[0]='';
 	$row='';   $rowx='';
+	# default to $fronter=$user, closer blank
+	$fronter = $user;
+	$closer='';
 	$MAN_vl_insert=0;
 	if ( (strlen($dispo_choice)<1) || (strlen($lead_id)<1) )
 		{
@@ -15947,7 +16006,7 @@ if ($ACTION == 'updateDISPO')
 				}
 			}
 
-		if ((preg_match('/callid--B--/i',$dispo_call_urlARY[$j])) or (preg_match('/group--B--|--A--term_reason--B--/i',$dispo_call_urlARY[$j])))
+		if ( (preg_match('/callid--B--/i',$dispo_call_urlARY[$j])) or (preg_match('/group--B--|--A--term_reason--B--/i',$dispo_call_urlARY[$j])) or (preg_match('/fronter--B--|closer--B--/i',$dispo_call_urlARY[$j])) )
 			{
 			$INclosecallid='';
 			$INxfercallid='';
@@ -15964,6 +16023,21 @@ if ($ACTION == 'updateDISPO')
 				$INclosecallid =		$row[1];
 				$INxfercallid =			$row[2];
 				$term_reason =			$row[3];
+				}
+			if ( (strlen($INxfercallid) > 0) and ($INxfercallid > 0) and (preg_match('/fronter--B--|closer--B--/i',$dispo_call_urlARY[$j])) )
+				{
+				# check for fronter in vicidial_xfer_log
+				$stmt = "SELECT user from vicidial_xfer_log where xfercallid='$INxfercallid' limit 1;";
+				if ($DB) {echo "$stmt\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+				$VDCL_vxl_ct = mysqli_num_rows($rslt);
+				if ($VDCL_vxl_ct > 0)
+					{
+					$row=mysqli_fetch_row($rslt);
+					$fronter =		$row[0];
+					$closer =		$user;
+					}
 				}
 			}
 
@@ -16204,7 +16278,7 @@ if ($ACTION == 'updateDISPO')
 		$dispo_call_urlARY[$j] = preg_replace('/--A--original_phone_login--B--/i',"$original_phone_login",$dispo_call_urlARY[$j]);
 		$dispo_call_urlARY[$j] = preg_replace('/--A--phone_pass--B--/i',"$phone_pass",$dispo_call_urlARY[$j]);
 		$dispo_call_urlARY[$j] = preg_replace('/--A--fronter--B--/i',"$fronter",$dispo_call_urlARY[$j]);
-		$dispo_call_urlARY[$j] = preg_replace('/--A--closer--B--/i',"$user",$dispo_call_urlARY[$j]);
+		$dispo_call_urlARY[$j] = preg_replace('/--A--closer--B--/i',"$closer",$dispo_call_urlARY[$j]);
 		$dispo_call_urlARY[$j] = preg_replace('/--A--group--B--/i',"$VDADchannel_group",$dispo_call_urlARY[$j]);
 		$dispo_call_urlARY[$j] = preg_replace('/--A--channel_group--B--/i',"$VDADchannel_group",$dispo_call_urlARY[$j]);
 		$dispo_call_urlARY[$j] = preg_replace('/--A--SQLdate--B--/i',urlencode(trim($SQLdate)),$dispo_call_urlARY[$j]);
