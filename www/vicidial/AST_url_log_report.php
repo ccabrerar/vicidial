@@ -1,7 +1,7 @@
 <?php 
 # AST_url_log_report.php
 # 
-# Copyright (C) 2024  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 130620-0806 - First build
@@ -16,6 +16,7 @@
 # 220812-0931 - Added User Group report permissions checking
 # 230310-1051 - Added more missing url types
 # 240801-1130 - Code updates for PHP8 compatibility
+# 250620-1112 - Added new URL types: apinewlead
 #
 
 $startMS = microtime();
@@ -272,7 +273,7 @@ while($i < $url_type_ct)
 	$i++;
 	}
 
-$LISTurltypes=array("abandonchk","add_lead","ccc_look","custom","dead","DID_FILTER","dispo","DNCcom","enter_ig","event","na_callurl","non-agent","nva_phone","other","park_ivr_c","pause_max","qm_socket","sc_callurl","start","start_ra","TCPAlit","2FA_SMS","TILTX_SHAK","wcu_off","wcu_on","webform");
+$LISTurltypes=array("abandonchk","add_lead","apinewlead","ccc_look","custom","dead","DID_FILTER","dispo","DNCcom","enter_ig","event","na_callurl","non-agent","nva_phone","other","park_ivr_c","pause_max","qm_socket","sc_callurl","start","start_ra","TCPAlit","2FA_SMS","TILTX_SHAK","wcu_off","wcu_on","webform");
 
 $url_types_to_print=count($LISTurltypes);
 $i=0;

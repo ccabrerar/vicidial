@@ -2844,6 +2844,8 @@ if (isset($_GET["enhanced_agent_monitoring"]))			{$enhanced_agent_monitoring=$_G
 	elseif (isset($_POST["enhanced_agent_monitoring"]))	{$enhanced_agent_monitoring=$_POST["enhanced_agent_monitoring"];}
 if (isset($_GET["agent_hide_dial_fail"]))			{$agent_hide_dial_fail=$_GET["agent_hide_dial_fail"];}
 	elseif (isset($_POST["agent_hide_dial_fail"]))	{$agent_hide_dial_fail=$_POST["agent_hide_dial_fail"];}
+if (isset($_GET["apinewlead_url"]))				{$apinewlead_url=$_GET["apinewlead_url"];}
+	elseif (isset($_POST["apinewlead_url"]))	{$apinewlead_url=$_POST["apinewlead_url"];}
 
 $DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
@@ -5172,6 +5174,10 @@ $pause_max_url = preg_replace('/\\\\/', '',$pause_max_url);
 $pause_max_url = preg_replace('/;/','',$pause_max_url);
 $pause_max_url = preg_replace('/\r|\n/', '',$pause_max_url);
 $pause_max_url = preg_replace('/\'/', '',$pause_max_url);
+$apinewlead_url = preg_replace('/\\\\/', '',$apinewlead_url);
+$apinewlead_url = preg_replace('/;/','',$apinewlead_url);
+$apinewlead_url = preg_replace('/\r|\n/', '',$apinewlead_url);
+$apinewlead_url = preg_replace('/\'/', '',$apinewlead_url);
 
 ### VARIABLES TO BE mysqli_real_escape_string ###
 # $web_form_address
@@ -6232,12 +6238,13 @@ if ($SSscript_remove_js > 0)
 # 250227-1607 - Fix for test call phone code issue (PHP8-related)
 # 250326-2023 - Added agent_hide_dial_fail system_settings feature
 # 250424-0715 - Fix for modify IP Lists screen permissions issue
+# 240620-1001 - Added apinewlead options for system settings and lists
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-938a';
-$build = '250424-0715';
+$admin_version = '2.14-939a';
+$build = '240620-1001';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -18372,6 +18379,31 @@ if ($ADD==411)
 
 				echo "<br><B>"._QXZ("LIST MODIFIED").": $list_id</B>\n";
 
+				# update the apinewlead_url value for the list
+				$apinewlead_url_ct=0;   $affected_rowsD=0;   $stmtD='';
+				$stmt="SELECT count(*) from vicidial_url_multi where campaign_id='$list_id' and entry_type='list' and url_type='apinewlead';";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$urls_to_print = mysqli_num_rows($rslt);
+				if ($urls_to_print > 0) 
+					{
+					$rowx=mysqli_fetch_row($rslt);
+					$apinewlead_url_ct = $rowx[0];
+					}
+				if ( ($apinewlead_url_ct > 0) or (strlen($apinewlead_url) > 0) )
+					{
+					if ($apinewlead_url_ct > 0)
+						{
+						$stmtD="UPDATE vicidial_url_multi SET url_address='" . mysqli_real_escape_string($link, $apinewlead_url) . "' WHERE campaign_id='$list_id' and entry_type='list' and url_type='apinewlead';";
+						}
+					else
+						{
+						$stmtD="INSERT INTO vicidial_url_multi SET campaign_id='$list_id', entry_type='list', url_type='apinewlead', active='Y',url_address='" . mysqli_real_escape_string($link, $apinewlead_url) . "';";
+						}
+					$rslt=mysql_to_mysqli($stmtD, $link);
+					$affected_rowsD = mysqli_affected_rows($link);
+					}
+
+				# update the list entry
 				$stmt="UPDATE vicidial_lists set list_name='$list_name',campaign_id='$campaign_id',active='$active',list_description='$list_description',list_changedate='$SQLdate',reset_time='$reset_time',agent_script_override='$agent_script_override',inbound_list_script_override='$inbound_list_script_override',campaign_cid_override='$campaign_cid_override',am_message_exten_override='$am_message_exten_override',drop_inbound_group_override='$drop_inbound_group_override',xferconf_a_number='$xferconf_a_number',xferconf_b_number='$xferconf_b_number',xferconf_c_number='$xferconf_c_number',xferconf_d_number='$xferconf_d_number',xferconf_e_number='$xferconf_e_number',web_form_address='" . mysqli_real_escape_string($link, $web_form_address) . "',web_form_address_two='" . mysqli_real_escape_string($link, $web_form_address_two) . "',time_zone_setting='$time_zone_setting',inventory_report='$inventory_report',expiration_date='$expiration_date',na_call_url='" . mysqli_real_escape_string($link, $na_call_url) . "',local_call_time='$local_call_time',web_form_address_three='" . mysqli_real_escape_string($link, $web_form_address_three) . "',status_group_id='$status_group_id',user_new_lead_limit='$user_new_lead_limit',default_xfer_group='$default_xfer_group',qc_scorecard_id='$qc_scorecard_id' $daily_reset_limitSQL,auto_active_list_rank='$auto_active_list_rank',qc_statuses_id='$qc_statuses_id',qc_web_form_address='" . mysqli_real_escape_string($link, $qc_web_form_address) . "',inbound_drop_voicemail='$inbound_drop_voicemail',inbound_after_hours_voicemail='$inbound_after_hours_voicemail',auto_alt_threshold='$auto_alt_threshold',cid_group_id='$cid_group_id',weekday_resets_container='$weekday_resets_container' $prefixSQL where list_id='$list_id';";
 				$rslt=mysql_to_mysqli($stmt, $link);
 
@@ -18381,10 +18413,10 @@ if ($ADD==411)
                 if ($DB) {echo "|$stmt|$stmtQC|\n";}
 
 				### LOG INSERTION Admin Log Table ###
-				$SQL_log = "$stmt|$stmtQC|";
+				$SQL_log = "$stmt|$stmtQC|$stmtD|";
 				$SQL_log = preg_replace('/;/', '', $SQL_log);
 				$SQL_log = addslashes($SQL_log);
-				$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LISTS', event_type='MODIFY', record_id='$list_id', event_code='ADMIN MODIFY LIST', event_sql=\"$SQL_log\", event_notes='';";
+				$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LISTS', event_type='MODIFY', record_id='$list_id', event_code='ADMIN MODIFY LIST', event_sql=\"$SQL_log\", event_notes='$affected_rowsD';";
 				if ($DB) {echo "|$stmt|\n";}
 				$rslt=mysql_to_mysqli($stmt, $link);
 
@@ -21281,6 +21313,12 @@ if ($ADD==411111111111111)
 					}
 				}
 
+			# update the apinewlead_url value for the system
+			$stmtD="UPDATE vicidial_url_multi SET url_address='" . mysqli_real_escape_string($link, $apinewlead_url) . "' WHERE campaign_id='-SYSTEM-API-NEWLEAD-' and entry_type='system' and url_type='apinewlead';";
+			$rslt=mysql_to_mysqli($stmtD, $link);
+			$update_apinewlead_rows=mysqli_affected_rows($link);
+
+			# update the system settings
 			$stmt="UPDATE system_settings set use_non_latin='$use_non_latin',webroot_writable='$webroot_writable',enable_queuemetrics_logging='$enable_queuemetrics_logging',queuemetrics_server_ip='$queuemetrics_server_ip',queuemetrics_dbname='$queuemetrics_dbname',queuemetrics_login='$queuemetrics_login',queuemetrics_pass='$queuemetrics_pass',queuemetrics_url='" . mysqli_real_escape_string($link, $queuemetrics_url) . "',queuemetrics_log_id='$queuemetrics_log_id',queuemetrics_eq_prepend='$queuemetrics_eq_prepend',vicidial_agent_disable='$vicidial_agent_disable',allow_sipsak_messages='$allow_sipsak_messages',admin_home_url='" . mysqli_real_escape_string($link, $admin_home_url) . "',enable_agc_xfer_log='$enable_agc_xfer_log',timeclock_end_of_day='$timeclock_end_of_day',vdc_header_date_format='$vdc_header_date_format',vdc_customer_date_format='$vdc_customer_date_format',vdc_header_phone_format='$vdc_header_phone_format',vdc_agent_api_active='$vdc_agent_api_active',enable_vtiger_integration='$enable_vtiger_integration',vtiger_server_ip='$vtiger_server_ip',vtiger_dbname='$vtiger_dbname',vtiger_login='$vtiger_login',vtiger_pass='$vtiger_pass',vtiger_url='" . mysqli_real_escape_string($link, $vtiger_url) . "',qc_features_active='$qc_features_active',outbound_autodial_active='$outbound_autodial_active',outbound_calls_per_second='$outbound_calls_per_second',enable_tts_integration='$enable_tts_integration',agentonly_callback_campaign_lock='$agentonly_callback_campaign_lock',sounds_central_control_active='$sounds_central_control_active',sounds_web_server='$sounds_web_server',sounds_web_directory='$sounds_web_directory',active_voicemail_server='$active_voicemail_server',auto_dial_limit='$auto_dial_limit',user_territories_active='$user_territories_active',allow_custom_dialplan='$allow_custom_dialplan',enable_second_webform='$enable_second_webform',default_webphone='$default_webphone',default_external_server_ip='$default_external_server_ip',webphone_url='" . mysqli_real_escape_string($link, $webphone_url) . "',enable_agc_dispo_log='$enable_agc_dispo_log',queuemetrics_loginout='$queuemetrics_loginout',callcard_enabled='$callcard_enabled',queuemetrics_callstatus='$queuemetrics_callstatus',default_codecs='$default_codecs',admin_web_directory='$admin_web_directory',label_title='$label_title',label_first_name='$label_first_name',label_middle_initial='$label_middle_initial',label_last_name='$label_last_name',label_address1='$label_address1',label_address2='$label_address2',label_address3='$label_address3',label_city='$label_city',label_state='$label_state',label_province='$label_province',label_postal_code='$label_postal_code',label_vendor_lead_code='$label_vendor_lead_code',label_gender='$label_gender',label_phone_number='$label_phone_number',label_phone_code='$label_phone_code',label_alt_phone='$label_alt_phone',label_security_phrase='$label_security_phrase',label_email='$label_email',label_comments='$label_comments',label_lead_id='$label_lead_id',label_list_id='$label_list_id',label_entry_date='$label_entry_date',label_gmt_offset_now='$label_gmt_offset_now',label_source_id='$label_source_id',label_called_since_last_reset='$label_called_since_last_reset',label_status='$label_status',label_user='$label_user',label_date_of_birth='$label_date_of_birth',label_country_code='$label_country_code',label_last_local_call_time='$label_last_local_call_time',label_called_count='$label_called_count',label_rank='$label_rank',label_owner='$label_owner',label_entry_list_id='$label_entry_list_id',custom_fields_enabled='$custom_fields_enabled',slave_db_server='$slave_db_server',reports_use_slave_db='$reports_use_slave_db'$custom_reports_slave_SQL,webphone_systemkey='$webphone_systemkey',first_login_trigger='$first_login_trigger',default_phone_registration_password='$default_phone_registration_password',default_phone_login_password='$default_phone_login_password',default_server_password='$default_server_password',admin_modify_refresh='$admin_modify_refresh',nocache_admin='$nocache_admin',generate_cross_server_exten='$generate_cross_server_exten',queuemetrics_addmember_enabled='$queuemetrics_addmember_enabled',queuemetrics_dispo_pause='$queuemetrics_dispo_pause',label_hide_field_logs='$label_hide_field_logs',queuemetrics_pe_phone_append='$queuemetrics_pe_phone_append',test_campaign_calls='$test_campaign_calls',agents_calls_reset='$agents_calls_reset',default_voicemail_timezone='$default_voicemail_timezone',default_local_gmt='$default_local_gmt',noanswer_log='$noanswer_log',alt_log_server_ip='$alt_log_server_ip',alt_log_dbname='$alt_log_dbname',alt_log_login='$alt_log_login',alt_log_pass='$alt_log_pass',tables_use_alt_log_db='$tables_use_alt_log_db',did_agent_log='$did_agent_log',campaign_cid_areacodes_enabled='$campaign_cid_areacodes_enabled',pllb_grouping_limit='$pllb_grouping_limit',did_ra_extensions_enabled='$did_ra_extensions_enabled',expanded_list_stats='$expanded_list_stats',contacts_enabled='$contacts_enabled',call_menu_qualify_enabled='$call_menu_qualify_enabled',admin_list_counts='$admin_list_counts',allow_voicemail_greeting='$allow_voicemail_greeting',queuemetrics_socket='$queuemetrics_socket',queuemetrics_socket_url='$queuemetrics_socket_url',enhanced_disconnect_logging='$enhanced_disconnect_logging',allow_emails='$allow_emails',level_8_disable_add='$level_8_disable_add',queuemetrics_record_hold='$queuemetrics_record_hold',country_code_list_stats='$country_code_list_stats',queuemetrics_pause_type='$queuemetrics_pause_type',frozen_server_call_clear='$frozen_server_call_clear',callback_time_24hour='$callback_time_24hour',enable_languages='$enable_languages',language_method='$language_method',meetme_enter_login_filename='$meetme_enter_login_filename',meetme_enter_leave3way_filename='$meetme_enter_leave3way_filename',enable_did_entry_list_id='$enable_did_entry_list_id',enable_third_webform='$enable_third_webform',allow_chats='$allow_chats',chat_url='" . mysqli_real_escape_string($link, $chat_url) . "',chat_timeout='$chat_timeout',agent_debug_logging='$agent_debug_logging',default_language='$default_language',agent_whisper_enabled='$agent_whisper_enabled',user_hide_realtime_enabled='$user_hide_realtime_enabled',usacan_phone_dialcode_fix='$usacan_phone_dialcode_fix',cache_carrier_stats_realtime='$cache_carrier_stats_realtime',log_recording_access='$log_recording_access',report_default_format='$report_default_format',alt_ivr_logging='$alt_ivr_logging',default_phone_code='$default_phone_code',admin_row_click='$admin_row_click',admin_screen_colors='$admin_screen_colors',ofcom_uk_drop_calc='$ofcom_uk_drop_calc',agent_screen_colors='$agent_screen_colors',script_remove_js='$script_remove_js',manual_auto_next='$manual_auto_next',user_new_lead_limit='$user_new_lead_limit',agent_xfer_park_3way='$agent_xfer_park_3way',agent_soundboards='$agent_soundboards',web_loader_phone_length='$web_loader_phone_length',agent_script='$agent_script',agent_chat_screen_colors='$agent_chat_screen_colors',enable_auto_reports='$enable_auto_reports',enable_pause_code_limits='$enable_pause_code_limits',enable_drop_lists='$enable_drop_lists',allow_ip_lists='$allow_ip_lists',system_ip_blacklist='$system_ip_blacklist',agent_push_events='$agent_push_events',agent_push_url='$agent_push_url',hide_inactive_lists='$hide_inactive_lists',allow_manage_active_lists='$allow_manage_active_lists',expired_lists_inactive='$expired_lists_inactive',did_system_filter='$did_system_filter',anyone_callback_inactive_lists='$anyone_callback_inactive_lists',enable_gdpr_download_deletion='$enable_gdpr_download_deletion',source_id_display='$source_id_display',agent_logout_link='$agent_logout_link',manual_dial_validation='$manual_dial_validation',mute_recordings='$mute_recordings',user_admin_redirect='$user_admin_redirect',list_status_modification_confirmation='$list_status_modification_confirmation',sip_event_logging='$sip_event_logging',call_quota_lead_ranking='$call_quota_lead_ranking',enable_second_script='$enable_second_script',enable_first_webform='$enable_first_webform',recording_buttons='$recording_buttons',opensips_cid_name='$opensips_cid_name',require_password_length='$require_password_length',user_account_emails='$user_account_emails',outbound_cid_any='$outbound_cid_any',entries_per_page='$entries_per_page',browser_call_alerts='$browser_call_alerts',queuemetrics_pausereason='$queuemetrics_pausereason',inbound_answer_config='$inbound_answer_config',enable_international_dncs='$enable_international_dncs',web_loader_phone_strip='$web_loader_phone_strip',manual_dial_phone_strip='$manual_dial_phone_strip',daily_call_count_limit='$daily_call_count_limit',allow_shared_dial='$allow_shared_dial',agent_search_method='$agent_search_method',phone_defaults_container='$phone_defaults_container',qc_claim_limit='$qc_claim_limit',qc_expire_days='$qc_expire_days',two_factor_auth_hours='$two_factor_auth_hours',two_factor_container='$two_factor_container',agent_hidden_sound='$agent_hidden_sound',agent_hidden_sound_volume='$agent_hidden_sound_volume',agent_hidden_sound_seconds='$agent_hidden_sound_seconds',agent_screen_timer='$agent_screen_timer',call_limit_24hour='$call_limit_24hour',allowed_sip_stacks='$allowed_sip_stacks',agent_hide_hangup='$agent_hide_hangup',allow_web_debug='$allow_web_debug',max_logged_in_agents='$max_logged_in_agents',user_codes_admin='$user_codes_admin',login_kickall='$login_kickall',abandon_check_queue='$abandon_check_queue',agent_notifications='$agent_notifications',demographic_quotas='$demographic_quotas',log_latency_gaps='$log_latency_gaps',inbound_credits='$inbound_credits',weekday_resets='$weekday_resets',two_factor_auth_agent_hours='$two_factor_auth_agent_hours',hopper_hold_inserts='$hopper_hold_inserts',coldstorage_server_ip='$coldstorage_server_ip',coldstorage_dbname='$coldstorage_dbname',coldstorage_login='$coldstorage_login',coldstorage_pass='$coldstorage_pass',coldstorage_port='$coldstorage_port',enhanced_agent_monitoring='$enhanced_agent_monitoring',agent_hide_dial_fail='$agent_hide_dial_fail'$custom_dialplanSQL;";
 			$rslt=mysql_to_mysqli($stmt, $link);
 			$update_main_rows=mysqli_affected_rows($link);
@@ -21308,10 +21346,10 @@ if ($ADD==411111111111111)
 				}
 
 			### LOG INSERTION Admin Log Table ###
-			$SQL_log = "$stmt|$stmtB|$stmtC|";
+			$SQL_log = "$stmt|$stmtB|$stmtC|$stmtD|";
 			$SQL_log = preg_replace('/;/', '', $SQL_log);
 			$SQL_log = addslashes($SQL_log);
-			$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='SYSTEMSETTINGS', event_type='MODIFY', record_id='system_settings', event_code='ADMIN MODIFY SYSTEM SETTINGS', event_sql=\"$SQL_log\", event_notes='$event_notes';";
+			$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='SYSTEMSETTINGS', event_type='MODIFY', record_id='system_settings', event_code='ADMIN MODIFY SYSTEM SETTINGS', event_sql=\"$SQL_log\", event_notes='$event_notes|$update_apinewlead_rows';";
 			if ($DB) {echo "|$stmt|\n";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 			}
@@ -32572,6 +32610,17 @@ if ($ADD==311)
 			{
 			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("No Agent Call URL").": </td><td align=left><input type=text name=na_call_url size=70 maxlength=5000 value=\"$na_call_url\">$NWB#lists-na_call_url$NWE</td></tr>\n";
 			}
+
+		$apinewlead_url='';
+		$stmt="SELECT url_address from vicidial_url_multi where campaign_id='$list_id' and entry_type='list' and url_type='apinewlead';";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$urls_to_print = mysqli_num_rows($rslt);
+		if ($urls_to_print > 0) 
+			{
+			$rowx=mysqli_fetch_row($rslt);
+			$apinewlead_url = $rowx[0];
+			}
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("API New Lead URL").": </td><td align=left NOWRAP><input type=text size=70 maxlength=5000 name=apinewlead_url value=\"$apinewlead_url\">$NWB#lists-apinewlead_url$NWE</td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Auto Alt Threshold Override").": </td><td align=left><input type=text name=auto_alt_threshold size=3 maxlength=3 value=\"$auto_alt_threshold\"><i>"._QXZ("number only")."</i> $NWB#lists-auto_alt_threshold$NWE</td></tr>\n";
 
@@ -44660,6 +44709,22 @@ if ($ADD==311111111111111)
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Outbound Auto-Dial Active").": </td><td align=left><select size=1 name=outbound_autodial_active><option>1</option><option>0</option><option selected>$outbound_autodial_active</option></select>$NWB#settings-outbound_autodial_active$NWE</td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Lead Hopper Hold Inserts Allowed").": </td><td align=left><select size=1 name=hopper_hold_inserts><option>1</option><option>2</option><option>0</option><option selected>$hopper_hold_inserts</option></select>$NWB#settings-hopper_hold_inserts$NWE</td></tr>\n";
+
+		$apinewlead_url='';
+		$stmt="SELECT url_address from vicidial_url_multi where campaign_id='-SYSTEM-API-NEWLEAD-' and entry_type='system' and url_type='apinewlead';";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$urls_to_print = mysqli_num_rows($rslt);
+		if ($urls_to_print > 0) 
+			{
+			$rowx=mysqli_fetch_row($rslt);
+			$apinewlead_url = $rowx[0];
+			}
+		else
+			{
+			$stmt="INSERT INTO vicidial_url_multi SET campaign_id='-SYSTEM-API-NEWLEAD-', entry_type='system', url_type='apinewlead', active='Y', url_address='';";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			}
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("API New Lead URL").": </td><td align=left NOWRAP><input type=text size=75 maxlength=5000 name=apinewlead_url value=\"$apinewlead_url\">$NWB#settings-apinewlead_url$NWE</td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Shared Agent Campaign Dialing").": </td><td align=left><select size=1 name=allow_shared_dial><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option><option>0</option><option selected>$allow_shared_dial</option></select>$NWB#settings-allow_shared_dial$NWE</td></tr>\n";
 

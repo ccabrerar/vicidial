@@ -3779,9 +3779,9 @@ PRIMARY KEY (manager_chat_id)
 CREATE TABLE vicidial_url_multi (
 url_id INT(9) UNSIGNED NOT NULL AUTO_INCREMENT,
 campaign_id VARCHAR(20) NOT NULL,
-entry_type ENUM('campaign','ingroup','list','') default '',
+entry_type ENUM('campaign','ingroup','list','system','') default '',
 active ENUM('Y','N') default 'N',
-url_type ENUM('dispo','start','addlead','noagent','') default '',
+url_type ENUM('dispo','start','addlead','noagent','apinewlead','') default '',
 url_rank SMALLINT(5) default '1',
 url_statuses VARCHAR(1000) default '',
 url_description VARCHAR(255) default '',
@@ -5740,4 +5740,4 @@ INSERT INTO `wallboard_reports` VALUES ('AGENTS_AND_QUEUES','Agents and Queues',
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1725',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1726',db_schema_update_date=NOW(),reload_timestamp=NOW();

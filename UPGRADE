@@ -867,6 +867,10 @@ OTHER CHANGES:
 247. Added archived-log cold-storage options and scripts.
 	See LOG_ARCHIVING_AND_COLD_STORAGE.txt document for more infomation.
 
+248. Added "API New Lead URL" feature to System Settings, with per List override
+	setting. This can send a URL request when new leads are added to the
+	system through the "add_lead" Non-Agent API function.
+
 
 
 

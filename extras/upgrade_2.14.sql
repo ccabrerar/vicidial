@@ -2871,3 +2871,8 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 ALTER TABLE system_settings ADD agent_hide_dial_fail ENUM('0','1','2','3','4','5','6') default '0';
 
 UPDATE system_settings SET db_schema_version='1725',db_schema_update_date=NOW() where db_schema_version < 1725;
+
+ALTER TABLE vicidial_url_multi MODIFY entry_type ENUM('campaign','ingroup','list','system','') default '';
+ALTER TABLE vicidial_url_multi MODIFY url_type ENUM('dispo','start','addlead','noagent','apinewlead','') default '';
+
+UPDATE system_settings SET db_schema_version='1726',db_schema_update_date=NOW() where db_schema_version < 1726;
