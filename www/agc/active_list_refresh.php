@@ -1,7 +1,7 @@
 <?php
 # active_list_refresh.php    version 2.12
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed purely to serve updates of the live data to the display scripts
 # This script depends on the server_ip being sent and also needs to have a valid user/pass from the vicidial_users table
@@ -50,10 +50,11 @@
 # 210616-2108 - Added optional CORS support, see options.php for details
 # 210825-0908 - Fix for XSS security issue
 # 220220-0922 - Added allow_web_debug system setting
-# 
+# 250717-1030 - Fix for debug issue
+#
 
-$version = '0.0.21';
-$build = '220220-0922';
+$version = '0.0.22';
+$build = '250717-1030';
 $php_script = 'active_list_refresh.php';
 $SSagent_debug_logging=0;
 $startMS = microtime();
@@ -74,6 +75,8 @@ if (isset($_GET["format"]))					{$format=$_GET["format"];}
 	elseif (isset($_POST["format"]))		{$format=$_POST["format"];}
 if (isset($_GET["ADD"]))					{$ADD=$_GET["ADD"];}
 	elseif (isset($_POST["ADD"]))			{$ADD=$_POST["ADD"];}
+if (isset($_GET["DB"]))						{$DB=$_GET["DB"];}
+	elseif (isset($_POST["DB"]))			{$DB=$_POST["DB"];}
 if (isset($_GET["order"]))					{$order=$_GET["order"];}
 	elseif (isset($_POST["order"]))			{$order=$_POST["order"];}
 if (isset($_GET["bgcolor"]))				{$bgcolor=$_GET["bgcolor"];}
@@ -143,7 +146,7 @@ if ($qm_conf_ct > 0)
 	$SSagent_debug_logging =	$row[3];
 	$SSallow_web_debug =		$row[4];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;   $format="text";}
+if ($SSallow_web_debug < 1) {$DB=0;}
 
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$user';";
