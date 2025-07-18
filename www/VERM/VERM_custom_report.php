@@ -6,6 +6,7 @@
 # CHANGELOG:
 # 220825-1606 - First build
 # 240801-1130 - Code updates for PHP8 compatibility
+# 241118-1640 - added active agent toggle function
 #
 
 $startMS = microtime();
@@ -17,6 +18,7 @@ header ("Content-type: text/html; charset=utf-8");
 
 require("dbconnect_mysqli.php");
 require("functions.php");
+require("VERM_options.php");
 
 if (isset($_GET["start_date"]))			{$start_date=$_GET["start_date"];}
 	elseif (isset($_POST["start_date"]))	{$start_date=$_POST["start_date"];}
@@ -26,6 +28,9 @@ if (isset($_GET["DB"]))			{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))	{$DB=$_POST["DB"];}
 if (isset($_GET["custom_report_name"]))			{$custom_report_name=$_GET["custom_report_name"];}
 	elseif (isset($_POST["custom_report_name"]))	{$custom_report_name=$_POST["custom_report_name"];}
+
+$report_name = 'VERM Reports';
+$db_source = 'M';
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
@@ -974,6 +979,12 @@ Removed 5/19/22
 				}
 			echo "</datalist>\n";
 			echo "$NWB#VERM_custom_report_agent$NWE";
+
+			if ($toggle_inactive_agents)
+				{
+				# echo "<input type='button' id='ToggleActiveAgents' class='actButton' value='"._QXZ("HIDE INACTIVE AGENTS")."' onClick=\"ToggleAgents(this.value, this.id, 'agent_filter_list')\"><BR>";
+				echo "<BR>Filter active agents only: <input type='checkbox' id='ToggleActiveAgents' value='"._QXZ("HIDE INACTIVE AGENTS")."' onClick=\"ToggleAgents(this.value, this.id, 'agent_filter_list')\"><BR>";
+				}
 ?>
 			</td>
 		</tr>
@@ -1038,7 +1049,7 @@ Removed 5/19/22
 			$unique_statuses=array();
 			while ($status_row=mysqli_fetch_array($status_rslt))
 				{
-				$status_row["status_name"]=($status_names["$status_row[status]"] ? $status_names["$status_row[status]"] : $status_row["status_name"]);
+				$status_row["status_name"]=trim(($status_names["$status_row[status]"] ? $status_names["$status_row[status]"] : $status_row["status_name"]));
 				$status_string=trim("$status_row[status] - $status_row[status_name]");
 				if (!in_array($status_string, $unique_statuses))
 					{

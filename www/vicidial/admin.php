@@ -6238,13 +6238,13 @@ if ($SSscript_remove_js > 0)
 # 250227-1607 - Fix for test call phone code issue (PHP8-related)
 # 250326-2023 - Added agent_hide_dial_fail system_settings feature
 # 250424-0715 - Fix for modify IP Lists screen permissions issue
-# 240620-1001 - Added apinewlead options for system settings and lists
+# 250620-1001 - Added apinewlead options for system settings and lists
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
 $admin_version = '2.14-939a';
-$build = '240620-1001';
+$build = '250620-1001';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");

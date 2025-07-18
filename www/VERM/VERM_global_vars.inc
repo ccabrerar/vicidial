@@ -7,6 +7,7 @@
 # 220825-1622 - First build
 # 230106-1317 - Added missing QXZ, added pull of selectable statuses, human answered statues now include DISPO and SYSTEM
 # 240801-1130 - Code updates for PHP8 compatibility
+# 250623-1714 - Changed $report_name variable to work with slave database setting
 #
 
 if (isset($_GET["start_date"]))			{$start_date=$_GET["start_date"];}
@@ -30,7 +31,7 @@ if (isset($_GET["user_groups"]))			{$user_groups=$_GET["user_groups"];}
 if (isset($_GET["outcomes"]))			{$outcomes=$_GET["outcomes"];}
 	elseif (isset($_POST["outcomes"]))	{$outcomes=$_POST["outcomes"];}
 
-$report_name="VICIdial Enhanced Reporting Module";
+$report_name="VERM Reports";
 
 $start_date=preg_replace('/[^-0-9]/', '', $start_date);
 $start_time=preg_replace('/[^:0-9]/', '', $start_time);
