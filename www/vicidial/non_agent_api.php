@@ -224,10 +224,11 @@
 # 250130-1130 - Changed vicidial_daily_rt_monitor_log to vicidial_daily_rt_monitorING_log to match SQL file
 # 250516-1047 - Changed ksort to uksort so array sorting by key is alphabetic, case-INsensitive
 # 250620-1007 - Added apinewlead_url requests for add_lead when new leads are inserted
+# 250720-1841 - Added hopper_bulk_insert function
 #
 
-$version = '2.14-201';
-$build = '250620-1007';
+$version = '2.14-202';
+$build = '250720-1841';
 $php_script='non_agent_api.php';
 $api_url_log = 0;
 $camp_lead_order_random=1;
@@ -3299,6 +3300,262 @@ if ($function == 'hopper_list')
 	}
 ################################################################################
 ### END hopper_list
+################################################################################
+
+
+
+
+
+################################################################################
+### hopper_bulk_insert - displays information about leads in the hopper for a campaign
+################################################################################
+if ($function == 'hopper_bulk_insert')
+	{
+	if(strlen($source)<2)
+		{
+		$result = 'ERROR';
+		$result_reason = "Invalid Source";
+		echo "$result: $result_reason - $source\n";
+		api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+		echo "ERROR: Invalid Source: |$source|\n";
+		exit;
+		}
+	else
+		{
+		if ( (!preg_match("/ $function /",$api_allowed_functions)) and (!preg_match("/ALL_FUNCTIONS/",$api_allowed_functions)) )
+			{
+			$result = 'ERROR';
+			$result_reason = "auth USER DOES NOT HAVE PERMISSION TO USE THIS FUNCTION";
+			echo "$result: $result_reason: |$user|$function|\n";
+			$data = "$allowed_user";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1' and modify_campaigns='1' and user_level > 7 and active='Y';";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$row=mysqli_fetch_row($rslt);
+		$allowed_user=$row[0];
+		if ($allowed_user < 1)
+			{
+			$result = 'ERROR';
+			$result_reason = "hopper_bulk_insert USER DOES NOT HAVE PERMISSION TO ADD LEADS TO THE HOPPER";
+			echo "$result: $result_reason: |$user|$allowed_user|\n";
+			$data = "$allowed_user";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		else
+			{
+			$stmt="SELECT user_level,user_group from vicidial_users where user='$user' and vdc_agent_api_access='1' and user_level >= 8;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$row=mysqli_fetch_row($rslt);
+			$user_level =				$row[0];
+			$LOGuser_group =			$row[1];
+
+			$stmt="SELECT allowed_campaigns,admin_viewable_groups from vicidial_user_groups where user_group='$LOGuser_group';";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$row=mysqli_fetch_row($rslt);
+			$LOGallowed_campaigns =			$row[0];
+			$LOGadmin_viewable_groups =		$row[1];
+
+			$LOGadmin_viewable_groupsSQL='';
+			$whereLOGadmin_viewable_groupsSQL='';
+			$allowed_listsSQL='';
+			if ( (!preg_match('/\-\-ALL\-\-/i',$LOGadmin_viewable_groups)) and (strlen($LOGadmin_viewable_groups) > 3) )
+				{
+				$rawLOGadmin_viewable_groupsSQL = preg_replace("/ -/",'',$LOGadmin_viewable_groups);
+				$rawLOGadmin_viewable_groupsSQL = preg_replace("/ /","','",$rawLOGadmin_viewable_groupsSQL);
+				$LOGadmin_viewable_groupsSQL = "and user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')";
+				$whereLOGadmin_viewable_groupsSQL = "where user_group IN('---ALL---','$rawLOGadmin_viewable_groupsSQL')";
+				}
+			if ( (!preg_match('/\-ALL/i', $LOGallowed_campaigns)) )
+				{
+				$rawLOGallowed_campaignsSQL = preg_replace("/ -/",'',$LOGallowed_campaigns);
+				$rawLOGallowed_campaignsSQL = preg_replace("/ /","','",$rawLOGallowed_campaignsSQL);
+				$LOGallowed_campaignsSQL = "and campaign_id IN('$rawLOGallowed_campaignsSQL')";
+				$whereLOGallowed_campaignsSQL = "where campaign_id IN('$rawLOGallowed_campaignsSQL')";
+
+				$stmt="SELECT list_id from vicidial_lists $whereLOGallowed_campaignsSQL limit 10000;";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$list_recs = mysqli_num_rows($rslt);
+				if ($DB>0) {echo "DEBUG: Checking for allowed lists - |$list_recs|$stmt|\n";}
+				$n=0;
+				$allowed_lists='';
+				while ($list_recs > $n)
+					{
+					$row=mysqli_fetch_row($rslt);
+					if ($n > 0) {$allowed_lists .= ",";}
+					$allowed_lists .= "$row[0]";
+					$n++;
+					}
+				if ($n > 0)
+					{$allowed_listsSQL = "and list_id IN($allowed_lists)";}
+				else
+					{$allowed_listsSQL = "and list_id IN('9')";}
+				}
+
+			$lead_id_SQL = "lead_id IN($lead_ids)";
+			$find_lead_idARY=array();
+			if (preg_match("/,/",$lead_ids))
+				{$find_lead_idARY = explode(',',$lead_ids);}
+			else
+				{$find_lead_idARY[0] = $lead_ids;}
+			$find_lead_count = count($find_lead_idARY);
+
+			$search_found=0;
+			$search_key=array();
+			$search_lead_id=array();
+			$search_lead_list=array();
+			$search_gmt_offset_now=array();
+			$search_phone_number=array();
+			$search_phone_code=array();
+			$search_vendor_lead_code=array();
+			$search_state=array();
+			$NOTICES='';
+
+			# search for the lead_id
+			$stmt="SELECT lead_id,list_id,gmt_offset_now,phone_number,phone_code,vendor_lead_code,state from vicidial_list where $lead_id_SQL $allowed_listsSQL order by lead_id desc limit 1000;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$pc_recs = mysqli_num_rows($rslt);
+			if ($DB>0) {echo "DEBUG: Checking for lead_id - $lead_id|$pc_recs|$stmt|\n";}
+			$n=0;
+			while ($pc_recs > $n)
+				{
+				$row=mysqli_fetch_row($rslt);
+				$search_key[$search_found] =			$row[0];
+				$search_lead_id[$search_found] =		$row[0];
+				$search_lead_list[$search_found] =		$row[1];
+				$search_gmt_offset_now[$search_found] =	$row[2];
+				$search_phone_number[$search_found] =	$row[3];
+				$search_phone_code[$search_found] =		$row[4];
+				$search_vendor_lead_code[$search_found] =	$row[5];
+				$search_state[$search_found] =			$row[6];
+
+				$n++;
+				$search_found++;
+				}
+			
+			$lead_not_found=0;
+			$lead_hopper_err=0;
+			$lead_to_insert=0;
+			$lead_hopper_add=0;
+			$j=0;
+			while ($find_lead_count > $j)
+				{
+				if ($DB>0) {echo "DEBUG: Checking requested lead_ids in order - $j|$find_lead_idARY[$j]| \n";}
+				$n=0;
+				while ($pc_recs > $n)
+					{
+					$temp_lead = $search_lead_id[$n];
+					if (preg_match("/^$temp_lead$/",$find_lead_idARY[$j]))
+						{
+						$lead_in_hopper=1;
+						# Check if lead_id is already in the hopper
+						$stmt="SELECT count(*) from vicidial_hopper where lead_id='$search_lead_id[$n]';";
+						$rslt=mysql_to_mysqli($stmt, $link);
+						$hops_to_print = mysqli_num_rows($rslt);
+						if ($hops_to_print > 0) 
+							{
+							$rowx=mysqli_fetch_row($rslt);
+							$lead_in_hopper =			$rowx[0];
+							}
+						if ($lead_in_hopper > 0)
+							{
+							$NOTICES .= "NOTICE: hopper_bulk_insert NOT ADDED TO HOPPER, LEAD IS ALREADY IN THE HOPPER - $search_lead_id[$n]\n";
+							$lead_hopper_err++;   $n=9999;
+							}
+						else
+							{
+							$dialable=1;
+
+							$stmt="SELECT vicidial_campaigns.local_call_time,vicidial_lists.local_call_time,vicidial_campaigns.campaign_id from vicidial_campaigns,vicidial_lists where list_id='$search_lead_list[$n]' and vicidial_campaigns.campaign_id=vicidial_lists.campaign_id;";
+							$rslt=mysql_to_mysqli($stmt, $link);
+							$camps_to_print = mysqli_num_rows($rslt);
+							if ($camps_to_print < 1) 
+								{
+								$NOTICES .= "NOTICE: hopper_bulk_insert CAMPAIGN DOES NOT EXIST - $search_lead_list[$n]|$search_lead_id[$n]\n";
+								$lead_hopper_err++;
+								}
+							else
+								{
+								$row=mysqli_fetch_row($rslt);
+								$local_call_time =		$row[0];
+								$list_local_call_time = $row[1];
+								$temp_campaign_id =		$row[2];
+
+								if ($DB > 0) {echo "DEBUG call time: |$local_call_time|$list_local_call_time|$VD_campaign_id|";}
+								if ( ($list_local_call_time!='') and (!preg_match("/^campaign$/i",$list_local_call_time)) )
+									{$local_call_time = $list_local_call_time;}
+
+								if ($hopper_local_call_time_check == 'Y')
+									{
+									### call function to determine if lead is dialable
+									$dialable = dialable_gmt($DB,$link,$local_call_time,$search_gmt_offset_now[$n],$search_state[$n]);
+									}
+								if ($dialable < 1) 
+									{
+									$NOTICES .= "NOTICE: hopper_bulk_insert NOT ADDED TO HOPPER, OUTSIDE OF LOCAL TIME, - $search_lead_id[$n]|$search_gmt_offset_now[$n]|$search_state[$n]|$dialable\n";
+									$lead_hopper_err++;
+									}
+								else
+									{
+									### insert record into vicidial_hopper for alt_phone call attempt
+									$stmt = "INSERT INTO vicidial_hopper SET lead_id='$search_lead_id[$n]',campaign_id='$temp_campaign_id',status='READY',list_id='$search_lead_list[$n]',gmt_offset_now='$search_gmt_offset_now[$n]',state='$search_state[$n]',user='',priority='$hopper_priority',source='P',vendor_lead_code=\"$search_vendor_lead_code[$n]\";";
+									if ($DB>0) {echo "DEBUG: hopper_bulk_insert query - $stmt\n";}
+									$rslt=mysql_to_mysqli($stmt, $link);
+									$Haffected_rows = mysqli_affected_rows($link);
+									if ($Haffected_rows > 0)
+										{
+										$hopper_id = mysqli_insert_id($link);
+										$NOTICES .= "NOTICE: hopper_bulk_insert LEAD ADDED TO HOPPER - $search_phone_number[$n]|$search_lead_id[$n]|$hopper_id|$user\n";
+										$lead_hopper_add++;
+										}
+									else
+										{
+										$NOTICES .= "NOTICE: hopper_bulk_insert NOT ADDED TO HOPPER, LEAD HOPPER INSERT ERROR - $search_lead_id[$n]\n";
+										$lead_hopper_err++;
+										}
+									}
+								$lead_to_insert++;   $n=9999;
+								}
+							}
+						}
+					$n++;
+					}
+				if ($n < 9998)
+					{
+					$lead_not_found++;
+					if ($DB>0) {echo "DEBUG: Requested lead_id NOT FOUND - $j|$find_lead_idARY[$j]| \n";}
+					$NOTICES .= "NOTICE: hopper_bulk_insert NOT ADDED TO HOPPER, LEAD NOT FOUND - $find_lead_idARY[$j]\n";
+					}
+				$j++;
+				}
+			if (strlen($NOTICES) > 10)
+				{
+				echo $NOTICES;
+				if ($lead_hopper_add > 0)
+					{
+					$result = 'SUCCESS';
+					$result_reason = "hopper_bulk_insert LEADS HAVE BEEN INSERTED INTO THE HOPPER";
+					echo "$result: $result_reason - $lead_hopper_add|$lead_hopper_err|$hopper_id|$user\n";
+					$data = "$lead_hopper_add|$lead_hopper_err|$hopper_id|$lead_not_found|$lead_hopper_err";
+					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+					}
+				else
+					{
+					$result = 'ERROR';
+					$result_reason = "hopper_bulk_insert NO LEADS HAVE BEEN INSERTED INTO THE HOPPER";
+					echo "$result: $result_reason - $lead_hopper_err|$lead_not_found|$user\n";
+					$data = "$lead_hopper_add|$hopper_id|$lead_not_found|$lead_hopper_err";
+					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+					}
+				}
+			}
+		}
+	exit;
+	}
+################################################################################
+### END hopper_bulk_insert
 ################################################################################
 
 
@@ -20153,6 +20410,7 @@ function dialable_gmt($DB,$link,$local_call_time,$gmt_offset,$state)
 					{$dialable=1;}
 				}
 			}
+		if ($DB) {echo "DIALABLE DEBUG: |$GMT_hour|($Gct_default_start - $Gct_default_stop)|$GMT_day|\n";}
 
 		return $dialable;
 		}

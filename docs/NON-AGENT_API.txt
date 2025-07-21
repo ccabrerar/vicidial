@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2024-11-13
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2025-07-18
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -65,6 +65,7 @@ add_fpg_phone - adds a phone number to a Filter Phone Group
 delete_fpg_phone - removes a phone number from a Filter Phone Group
 campaigns_list - displays information about all campaigns in the system
 hopper_list - displays information about leads in the hopper for a campaign
+hopper_bulk_insert - adds group of lead_ids to the vicidial_hopper table
 update_alt_url - updates/adds/displays alternate dispo call url entries for a campaign
 update_presets - updates/adds/displays/deletes campaign preset entries
 lead_dearchive - moves a lead from the archive to active leads table
@@ -229,6 +230,7 @@ Changes:
 240824-1626 - Added user_details function
 241004-1518 - Added webform_one-three variables to the update_campaign function
 241113-1600 - Added in_groups as input option for update_user function
+250720-1841 - Added hopper_bulk_insert function
 
 
 API Functions use the 'function' variable
@@ -476,6 +478,45 @@ A SUCCESS response will not show "SUCCESS", but instead will just print the resu
 hopper_order,priority,lead_id,list_id,phone_number,phone_code,state,status,count,gmt_offset,rank,alt,hopper_source,vendor_lead_code,source_id,age_days,last_call_time
 0,0,796292,107,9999001095,1,NY,PDROP,7,-4.00,0,,S,1001095,A321,2681,1 YEARS 
 1,0,796295,107,9999001098,1,NY,PDROP,2,-4.00,0,,S,1001098,A322,2681,3 YEARS 
+
+
+
+
+
+--------------------------------------------------------------------------------
+hopper_bulk_insert - adds group of lead_ids to the vicidial_hopper table
+
+NOTE: api user for this function must have modify_campaigns set to 1 and user_level
+      must be set to 8 or higher
+
+REQUIRED FIELDS-
+lead_ids -		must be all numbers and commas, 1-9 digit numbers separate by a comma, limit of 1000 lead_ids
+source -		description of what originated the API call (maximum 20 characters)
+
+SETTINGS FIELDS-
+hopper_priority -	99 to -99, the higher number the higher the dial priority, default is 0
+hopper_local_call_time_check - Y or N, default is N. Validate the local call time and/or state call time before inserting lead in the hopper
+
+NOTE-
+This function will insert leads into the hopper of the campaign that is tied to the list_id that each lead belongs to.
+
+
+Example URL strings for API calls:
+
+http://server/vicidial/non_agent_api.php?source=test&user=6666&pass=1234&function=hopper_bulk_insert&lead_ids=193715,1677922&hopper_priority=97&hopper_local_call_time_check=Y
+
+Example responses:
+NOTICE: hopper_bulk_insert LEAD ADDED TO HOPPER - 7275551111|193715|1677922|6666
+NOTICE: hopper_bulk_insert NOT ADDED TO HOPPER, OUTSIDE OF LOCAL TIME - 7275551111|193715|-5|NY|0
+NOTICE: hopper_bulk_insert NOT ADDED TO HOPPER, CAMPAIGN DOES NOT EXIST - 101|193715
+NOTICE: hopper_bulk_insert NOT ADDED TO HOPPER, LEAD NOT FOUND - 193715
+NOTICE: hopper_bulk_insert NOT ADDED TO HOPPER, LEAD IS ALREADY IN THE HOPPER - 193715
+NOTICE: hopper_bulk_insert NOT ADDED TO HOPPER, LEAD HOPPER INSERT ERROR - 193715
+
+SUCCESS: hopper_bulk_insert LEADS HAVE BEEN INSERTED INTO THE HOPPER - 2|0|8432948|6666
+
+ERROR: hopper_bulk_insert NO LEADS HAVE BEEN INSERTED INTO THE HOPPER - 1|0|6666
+ERROR: hopper_bulk_insert USER DOES NOT HAVE PERMISSION TO ADD LEADS TO THE HOPPER - 6666|0 
 
 
 
