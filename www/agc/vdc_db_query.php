@@ -559,10 +559,11 @@
 # 250311-1420 - Fix for start_call_url on inbound calls where blank and campaign set to ALT
 # 250326-1937 - Fix for missing vicidial_inbound_group_agents entries
 # 250601-0843 - Fix for fronter/closer start/dispo URL variables
+# 250723-2002 - Fix for issue #1548
 #
 
-$version = '2.14-452';
-$build = '250601-0843';
+$version = '2.14-453';
+$build = '250723-2002';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=913;
@@ -8627,8 +8628,19 @@ if ($stage == "end")
 					}
 				}
 			}
-		else {$length_in_sec = ($StarTtime - $start_epoch);}
-		
+		else
+			{
+			if (is_numeric($start_epoch)) 
+				{
+				$startEpochVal = (int) $start_epoch;
+				}
+			else
+				{
+				$startEpochVal = strtotime($start_epoch);
+				}
+			$length_in_sec = ($StarTtime - $startEpochVal);
+			}
+
 		if (strlen($VDcampaign_id)<1) {$VDcampaign_id = $campaign;}
 
 		$four_hours_ago = date("Y-m-d H:i:s", mktime(date("H")-4,date("i"),date("s"),date("m"),date("d"),date("Y")));
