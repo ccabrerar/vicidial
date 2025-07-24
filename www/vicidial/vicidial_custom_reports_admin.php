@@ -5,7 +5,7 @@
 # custom reports and make them available to user groups
 # of their choosing
 #
-# Copyright (C) 2022 Joseph Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025 Joseph Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -17,6 +17,7 @@
 # 171002-2140 - Added capability to add/modify preset variables
 # 180508-2215 - Added new help display
 # 220221-1926 - Added allow_web_debug system setting
+# 250723-2129 - Fix for issue #1544
 #
 
 $startMS = microtime();
@@ -297,7 +298,7 @@ if ($add_custom_report) {
 		if (in_array($upd_report_name, $Vreports)) {
 			$error_msg="<BR><B>"._QXZ("CANNOT UPDATE REPORT, NEW CUSTOM REPORT NAME ALREADY IN USE FOR STANDARD VICIDIAL REPORT")."</B><BR>";
 		} else {
-			$old_rpt_stmt="select report_name from vicidial_custom_reports from vicidial_custom_reports where custom_report_id='$upd_custom_report_id'";
+			$old_rpt_stmt="select report_name from vicidial_custom_reports where custom_report_id='$upd_custom_report_id'";
 			$old_rpt_rslt=mysql_to_mysqli($old_rpt_stmt, $link);
 			$old_rpt_row=mysqli_fetch_row($old_rpt_rslt);
 			$old_rpt_name=$old_rpt_row[0];
@@ -331,7 +332,7 @@ if ($add_custom_report) {
 		}
 	}
 } else if ($delete_custom_report) {
-	$old_rpt_stmt="select report_name from vicidial_custom_reports from vicidial_custom_reports where custom_report_id='$upd_custom_report_id'";
+	$old_rpt_stmt="select report_name from vicidial_custom_reports where custom_report_id='$upd_custom_report_id'";
 	$old_rpt_rslt=mysql_to_mysqli($old_rpt_stmt, $link);
 	$old_rpt_row=mysqli_fetch_row($old_rpt_rslt);
 	$old_rpt_name=$old_rpt_row[0];
