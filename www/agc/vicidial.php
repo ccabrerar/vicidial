@@ -746,10 +746,11 @@
 # 240830-1112 - Added campaign manual_minimum_... settings
 # 250207-1821 - Fix for JavaScript error if chat disabled
 # 250326-2032 - Added agent_hide_dial_fail system_setting
+# 250806-0859 - Added manual_dial_lead_id 'ONLY' option and user override setting
 #
 
-$version = '2.14-712c';
-$build = '250326-2032';
+$version = '2.14-713c';
+$build = '250806-0859';
 $php_script = 'vicidial.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=103;
@@ -2562,7 +2563,7 @@ else
 				}
 
 			##### grab the full name and other settings of the agent
-			$stmt="SELECT full_name,user_level,hotkeys_active,agent_choose_ingroups,scheduled_callbacks,agentonly_callbacks,agentcall_manual,vicidial_recording,vicidial_transfers,closer_default_blended,user_group,vicidial_recording_override,alter_custphone_override,alert_enabled,agent_shift_enforcement_override,shift_override_flag,allow_alerts,closer_campaigns,agent_choose_territories,custom_one,custom_two,custom_three,custom_four,custom_five,agent_call_log_view_override,agent_choose_blended,agent_lead_search_override,preset_contact_search,max_inbound_calls,wrapup_seconds_override,email,user_choose_language,ready_max_logout,mute_recordings,max_inbound_filter_enabled,status_group_id,manual_dial_filter,inbound_credits,mobile_number from vicidial_users where user='$VD_login' and active='Y' and api_only_user != '1';";
+			$stmt="SELECT full_name,user_level,hotkeys_active,agent_choose_ingroups,scheduled_callbacks,agentonly_callbacks,agentcall_manual,vicidial_recording,vicidial_transfers,closer_default_blended,user_group,vicidial_recording_override,alter_custphone_override,alert_enabled,agent_shift_enforcement_override,shift_override_flag,allow_alerts,closer_campaigns,agent_choose_territories,custom_one,custom_two,custom_three,custom_four,custom_five,agent_call_log_view_override,agent_choose_blended,agent_lead_search_override,preset_contact_search,max_inbound_calls,wrapup_seconds_override,email,user_choose_language,ready_max_logout,mute_recordings,max_inbound_filter_enabled,status_group_id,manual_dial_filter,inbound_credits,mobile_number,manual_dial_lead_id from vicidial_users where user='$VD_login' and active='Y' and api_only_user != '1';";
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01007',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 			$row=mysqli_fetch_row($rslt);
@@ -2605,6 +2606,8 @@ else
 			$VU_manual_dial_filter =				$row[36];
 			$VU_inbound_credits =					$row[37];
 			$LOGmobile_number =						$row[38];
+			$VU_manual_dial_lead_id =				$row[39];
+
 
 			if ( ($VU_alert_enabled > 0) and ($VU_allow_alerts > 0) ) {$VU_alert_enabled = 'ON';}
 			else {$VU_alert_enabled = 'OFF';}
@@ -3352,6 +3355,12 @@ else
 				$manual_minimum_answer_seconds =$row[196];
 				$CAMPsip_event_logging =	$row[197];
 				$stereo_recording =			$row[198];
+
+				if ( (!preg_match("/DISABLED/",$VU_manual_dial_lead_id)) and (strlen($VU_manual_dial_lead_id) > 0) )
+					{
+					echo "<!-- manual_dial_lead_id user override: |$manual_dial_lead_id($VU_manual_dial_lead_id)| -->\n";
+					$manual_dial_lead_id = $VU_manual_dial_lead_id;
+					}
 
 				if ($SSstereo_recording < 1) {$stereo_recording='DISABLED';}
 
@@ -23879,7 +23888,7 @@ $zi=2;
 
 <span style="position:absolute;left:300px;top:<?php echo $MBheight ?>px;z-index:<?php $zi++; echo $zi ?>;" id="DiaLlOgButtonspan">
 <span id="ManuaLDiaLButtons"><font class="body_text"><span id="MDstatusSpan"><a href="#" onclick="NeWManuaLDiaLCalL('NO','','','','','YES','YES');return false;"><?php echo _QXZ("MANUAL DIAL"); ?></a></span>&nbsp; &nbsp; 
-<?php if ($agentcall_manual == '1') { ?>
+<?php if ( ($agentcall_manual == '1') and (!preg_match("/ONLY/",$manual_dial_lead_id)) ) { ?>
 <a href="#" onclick="NeWManuaLDiaLCalL('FAST','','','','','YES','YES');return false;"><?php echo _QXZ("FAST DIAL"); ?></a>
 <?php } ?>
 </span>&nbsp; &nbsp; </font>
@@ -24547,17 +24556,29 @@ if ($agent_display_dialable_leads > 0)
 	?>
     <?php echo _QXZ("Note: all new manual dial leads will go into list %1s",0,'',$manual_dial_list_id); ?><br /><br />
     <table><tr>
-    <td align="right"><font class="body_text"> <?php echo _QXZ("Dial Code:"); ?> </font></td>
-    <td align="left"><font class="body_text"><input type="text" size="7" maxlength="10" name="MDDiaLCodE" id="MDDiaLCodE" class="cust_form" value="<?php echo $default_phone_code ?>" />&nbsp; <?php echo _QXZ("(This is usually a 1 in the USA-Canada)"); ?></font></td>
-	</tr><tr>
-    <td align="right"><font class="body_text"> <?php echo _QXZ("Phone Number:"); ?> </font></td>
-    <td align="left"><font class="body_text">
-    <input type="text" size="14" maxlength="18" name="MDPhonENumbeR" id="MDPhonENumbeR" class="cust_form" value="" />&nbsp; <?php echo _QXZ("(digits only)"); ?></font>
+	<?php 
+	if (!preg_match("/ONLY/",$manual_dial_lead_id))
+		{
+		?>
+		<td align="right"><font class="body_text"> <?php echo _QXZ("Dial Code:"); ?> </font></td>
+		<td align="left"><font class="body_text"><input type="text" size="7" maxlength="10" name="MDDiaLCodE" id="MDDiaLCodE" class="cust_form" value="<?php echo $default_phone_code ?>" />&nbsp; <?php echo _QXZ("(This is usually a 1 in the USA-Canada)"); ?></font></td>
+		</tr><tr>
+		<td align="right"><font class="body_text"> <?php echo _QXZ("Phone Number:"); ?> </font></td>
+		<td align="left"><font class="body_text">
+		<input type="text" size="14" maxlength="18" name="MDPhonENumbeR" id="MDPhonENumbeR" class="cust_form" value="" />&nbsp; <?php echo _QXZ("(digits only)"); ?></font>
+		<?php
+		}
+	else
+		{
+		echo "<input type=\"hidden\" name=\"MDDiaLCodE\" id=\"MDDiaLCodE\" value=\"$default_phone_code\" />\n";
+		echo "<input type=\"hidden\" name=\"MDPhonENumbeR\" id=\"MDPhonENumbeR\" value=\"\" />\n";
+		}
+	?>
 	<input type="hidden" name="MDPhonENumbeRHiddeN" id="MDPhonENumbeRHiddeN" value="" />
 	<input type="hidden" name="MDLeadID" id="MDLeadID" value="" />
 	<input type="hidden" name="MDType" id="MDType" value="" />
 	<?php 
-	if ($manual_dial_lead_id=='Y')
+	if ( ($manual_dial_lead_id=='Y') or ($manual_dial_lead_id=='ONLY') )
 		{
         echo "	</td>";
         echo "	</tr><tr>\n";

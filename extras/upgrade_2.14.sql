@@ -2876,3 +2876,9 @@ ALTER TABLE vicidial_url_multi MODIFY entry_type ENUM('campaign','ingroup','list
 ALTER TABLE vicidial_url_multi MODIFY url_type ENUM('dispo','start','addlead','noagent','apinewlead','') default '';
 
 UPDATE system_settings SET db_schema_version='1726',db_schema_update_date=NOW() where db_schema_version < 1726;
+
+ALTER TABLE vicidial_campaigns MODIFY manual_dial_lead_id ENUM('Y','N','ONLY') default 'N';
+
+ALTER TABLE vicidial_users ADD manual_dial_lead_id ENUM('Y','N','ONLY','DISABLED') default 'DISABLED';
+
+UPDATE system_settings SET db_schema_version='1727',db_schema_update_date=NOW() where db_schema_version < 1727;

@@ -706,7 +706,8 @@ failed_last_type_today VARCHAR(20) default '',
 modify_dial_prefix ENUM('0','1','2','3','4','5','6') default '0',
 inbound_credits MEDIUMINT(7) default '-1',
 hci_enabled ENUM('0','1','2','3','4','5','6') default '0',
-modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+manual_dial_lead_id ENUM('Y','N','ONLY','DISABLED') default 'DISABLED'
 ) ENGINE=MyISAM;
 
 CREATE UNIQUE INDEX user ON vicidial_users (user);
@@ -993,7 +994,7 @@ allow_emails ENUM('Y','N') default 'N',
 amd_inbound_group VARCHAR(20) default '',
 amd_callmenu VARCHAR(50) default '',
 survey_wait_sec TINYINT(3) default '10',
-manual_dial_lead_id ENUM('Y','N') default 'N',
+manual_dial_lead_id ENUM('Y','N','ONLY') default 'N',
 dead_max SMALLINT(5) UNSIGNED default '0',
 dead_max_dispo VARCHAR(6) default 'DCMX',
 dispo_max SMALLINT(5) UNSIGNED default '0',
@@ -5740,4 +5741,4 @@ INSERT INTO `wallboard_reports` VALUES ('AGENTS_AND_QUEUES','Agents and Queues',
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1726',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1727',db_schema_update_date=NOW(),reload_timestamp=NOW();
