@@ -2882,3 +2882,8 @@ ALTER TABLE vicidial_campaigns MODIFY manual_dial_lead_id ENUM('Y','N','ONLY') d
 ALTER TABLE vicidial_users ADD manual_dial_lead_id ENUM('Y','N','ONLY','DISABLED') default 'DISABLED';
 
 UPDATE system_settings SET db_schema_version='1727',db_schema_update_date=NOW() where db_schema_version < 1727;
+
+ALTER TABLE system_settings ADD agent_man_dial_filter VARCHAR(20) default '';
+ALTER TABLE system_settings ADD agent_3way_dial_filter VARCHAR(20) default '';
+
+UPDATE system_settings SET db_schema_version='1728',db_schema_update_date=NOW() where db_schema_version < 1728;

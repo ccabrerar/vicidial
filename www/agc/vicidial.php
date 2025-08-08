@@ -747,10 +747,11 @@
 # 250207-1821 - Fix for JavaScript error if chat disabled
 # 250326-2032 - Added agent_hide_dial_fail system_setting
 # 250806-0859 - Added manual_dial_lead_id 'ONLY' option and user override setting
+# 250808-1322 - Added agent_man_dial_filter & agent_3way_dial_filter system settings
 #
 
-$version = '2.14-713c';
-$build = '250806-0859';
+$version = '2.14-714c';
+$build = '250808-1322';
 $php_script = 'vicidial.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=103;
@@ -860,7 +861,7 @@ $random = (rand(1000000, 9999999) + 10000000);
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
-$stmt = "SELECT use_non_latin,vdc_header_date_format,vdc_customer_date_format,vdc_header_phone_format,webroot_writable,timeclock_end_of_day,vtiger_url,enable_vtiger_integration,outbound_autodial_active,enable_second_webform,user_territories_active,static_agent_url,custom_fields_enabled,pllb_grouping_limit,qc_features_active,allow_emails,callback_time_24hour,enable_languages,language_method,meetme_enter_login_filename,meetme_enter_leave3way_filename,enable_third_webform,default_language,active_modules,allow_chats,chat_url,default_phone_code,agent_screen_colors,manual_auto_next,agent_xfer_park_3way,admin_web_directory,agent_script,agent_push_events,agent_push_url,agent_logout_link,agentonly_callback_campaign_lock,manual_dial_validation,mute_recordings,enable_second_script,enable_first_webform,recording_buttons,outbound_cid_any,browser_call_alerts,manual_dial_phone_strip,require_password_length,pass_hash_enabled,agent_hidden_sound_seconds,agent_hidden_sound,agent_hidden_sound_volume,agent_screen_timer,agent_hide_hangup,allow_web_debug,max_logged_in_agents,login_kickall,agent_notifications,inbound_credits,two_factor_auth_agent_hours,two_factor_container,sip_event_logging,stereo_recording,agent_hide_dial_fail FROM system_settings;";
+$stmt = "SELECT use_non_latin,vdc_header_date_format,vdc_customer_date_format,vdc_header_phone_format,webroot_writable,timeclock_end_of_day,vtiger_url,enable_vtiger_integration,outbound_autodial_active,enable_second_webform,user_territories_active,static_agent_url,custom_fields_enabled,pllb_grouping_limit,qc_features_active,allow_emails,callback_time_24hour,enable_languages,language_method,meetme_enter_login_filename,meetme_enter_leave3way_filename,enable_third_webform,default_language,active_modules,allow_chats,chat_url,default_phone_code,agent_screen_colors,manual_auto_next,agent_xfer_park_3way,admin_web_directory,agent_script,agent_push_events,agent_push_url,agent_logout_link,agentonly_callback_campaign_lock,manual_dial_validation,mute_recordings,enable_second_script,enable_first_webform,recording_buttons,outbound_cid_any,browser_call_alerts,manual_dial_phone_strip,require_password_length,pass_hash_enabled,agent_hidden_sound_seconds,agent_hidden_sound,agent_hidden_sound_volume,agent_screen_timer,agent_hide_hangup,allow_web_debug,max_logged_in_agents,login_kickall,agent_notifications,inbound_credits,two_factor_auth_agent_hours,two_factor_container,sip_event_logging,stereo_recording,agent_hide_dial_fail,agent_man_dial_filter,agent_3way_dial_filter FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01001',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 #if ($DB) {echo "$stmt\n";}
@@ -929,6 +930,8 @@ if ($qm_conf_ct > 0)
 	$SSsip_event_logging =				$row[58];
 	$SSstereo_recording =				$row[59];
 	$SSagent_hide_dial_fail =			$row[60];
+	$SSagent_man_dial_filter = 			$row[61];
+	$SSagent_3way_dial_filter = 		$row[62];
 	if ( ($SSagent_hidden_sound == '---NONE---') or ($SSagent_hidden_sound == '') ) {$SSagent_hidden_sound_seconds=0;}
 	}
 else
@@ -7515,6 +7518,46 @@ function holiday_display(holiday_name)
 			var dial_conf_exten = session_id;
 
 			manual_string = manual_string.replace(/\||`|&|\'|\"|\\\\|;| /ig,'');
+
+			// START agent_3way_dial_filter process MDPhonENumbeRform variable
+			<?php
+			if ( ($SSagent_3way_dial_filter!='DISABLED') and (strlen($SSagent_3way_dial_filter) > 0) )
+				{
+				echo "var temp_manual_string = manual_string;\n";
+				$temp_agent_3way_dial_filter = '-'.$SSagent_3way_dial_filter.'-';
+				if (preg_match("/-DO-/",$temp_agent_3way_dial_filter))
+					{
+					echo "			temp_manual_string = temp_manual_string.replace(/\D/g, '');\n";
+					}
+				if (preg_match("/-DPO-/",$temp_agent_3way_dial_filter))
+					{
+					echo "			temp_manual_string = temp_manual_string.replace(/[^0-9+]/gi, '');\n";
+					}
+				if (preg_match("/-DLO-/",$temp_agent_3way_dial_filter))
+					{
+					echo "			temp_manual_string = temp_manual_string.replace(/[^0-9a-z]/gi, '');\n";
+					}
+				if (preg_match("/-DLPO-/",$temp_agent_3way_dial_filter))
+					{
+					echo "			temp_manual_string = temp_manual_string.replace(/[^0-9a-z+]/gi, '');\n";
+					}
+				if (preg_match("/-L1-/",$temp_agent_3way_dial_filter))
+					{
+					echo "			temp_manual_string = temp_manual_string.replace(/^1/g, '');\n";
+					}
+				if (preg_match("/-L0-/",$temp_agent_3way_dial_filter))
+					{
+					echo "			temp_manual_string = temp_manual_string.replace(/^0/g, '');\n";
+					}
+				if (preg_match("/-R10-/",$temp_agent_3way_dial_filter))
+					{
+					echo "			temp_manual_string = temp_manual_string.substr(temp_manual_string.length - 10);\n";
+					}
+			#	echo "			alert('agent_3way_dial_filter test: |' + manual_string + '|' + temp_manual_string + '|');\n";
+				echo "			manual_string = temp_manual_string;\n";
+				echo "			document.vicidial_form.xfernumber.value = manual_string;\n";
+				}
+			?>
 			var testXFregstr = 'x' + manual_string + 'x'
 			var regXFSRvars = new RegExp(testXFregstr,"g");
 			// test for three_way_record_stop and exception
@@ -7620,6 +7663,45 @@ function holiday_display(holiday_name)
 			{
 			var manual_number = document.vicidial_form.xfernumber.value;
 			var manual_string = manual_number.toString();
+			// START agent_3way_dial_filter process MDPhonENumbeRform variable
+			<?php
+			if ( ($SSagent_3way_dial_filter!='DISABLED') and (strlen($SSagent_3way_dial_filter) > 0) )
+				{
+				echo "var temp_manual_string = manual_string;\n";
+				$temp_agent_3way_dial_filter = '-'.$SSagent_3way_dial_filter.'-';
+				if (preg_match("/-DO-/",$temp_agent_3way_dial_filter))
+					{
+					echo "			temp_manual_string = temp_manual_string.replace(/\D/g, '');\n";
+					}
+				if (preg_match("/-DPO-/",$temp_agent_3way_dial_filter))
+					{
+					echo "			temp_manual_string = temp_manual_string.replace(/[^0-9+]/gi, '');\n";
+					}
+				if (preg_match("/-DLO-/",$temp_agent_3way_dial_filter))
+					{
+					echo "			temp_manual_string = temp_manual_string.replace(/[^0-9a-z]/gi, '');\n";
+					}
+				if (preg_match("/-DLPO-/",$temp_agent_3way_dial_filter))
+					{
+					echo "			temp_manual_string = temp_manual_string.replace(/[^0-9a-z+]/gi, '');\n";
+					}
+				if (preg_match("/-L1-/",$temp_agent_3way_dial_filter))
+					{
+					echo "			temp_manual_string = temp_manual_string.replace(/^1/g, '');\n";
+					}
+				if (preg_match("/-L0-/",$temp_agent_3way_dial_filter))
+					{
+					echo "			temp_manual_string = temp_manual_string.replace(/^0/g, '');\n";
+					}
+				if (preg_match("/-R10-/",$temp_agent_3way_dial_filter))
+					{
+					echo "			temp_manual_string = temp_manual_string.substr(temp_manual_string.length - 10);\n";
+					}
+			#	echo "			alert('agent_3way_dial_filter test: |' + manual_string + '|' + temp_manual_string + '|');\n";
+				echo "			manual_string = temp_manual_string;\n";
+				echo "			document.vicidial_form.xfernumber.value = manual_string;\n";
+				}
+			?>
 			var threeway_cid='1';
 			if ( (manual_dial_cid == 'AGENT_PHONE') || (manual_dial_cid == 'AGENT_PHONE_OVERRIDE') )
 				{
@@ -11097,6 +11179,45 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 			if (MDPhonENumbeRform == 'XXXXXXXXXX')
 				{MDPhonENumbeRform = document.vicidial_form.MDPhonENumbeRHiddeN.value;}
 
+			// START agent_man_dial_filter process MDPhonENumbeRform variable
+			<?php
+			if ( ($SSagent_man_dial_filter!='DISABLED') and (strlen($SSagent_man_dial_filter) > 0) )
+				{
+				echo "var temp_MDPhonENumbeRform = MDPhonENumbeRform;\n";
+				$temp_agent_man_dial_filter = '-'.$SSagent_man_dial_filter.'-';
+				if (preg_match("/-DO-/",$temp_agent_man_dial_filter))
+					{
+					echo "			temp_MDPhonENumbeRform = temp_MDPhonENumbeRform.replace(/\D/g, '');\n";
+					}
+				if (preg_match("/-DPO-/",$temp_agent_man_dial_filter))
+					{
+					echo "			temp_MDPhonENumbeRform = temp_MDPhonENumbeRform.replace(/[^0-9+]/gi, '');\n";
+					}
+				if (preg_match("/-DLO-/",$temp_agent_man_dial_filter))
+					{
+					echo "			temp_MDPhonENumbeRform = temp_MDPhonENumbeRform.replace(/[^0-9a-z]/gi, '');\n";
+					}
+				if (preg_match("/-DLPO-/",$temp_agent_man_dial_filter))
+					{
+					echo "			temp_MDPhonENumbeRform = temp_MDPhonENumbeRform.replace(/[^0-9a-z+]/gi, '');\n";
+					}
+				if (preg_match("/-L1-/",$temp_agent_man_dial_filter))
+					{
+					echo "			temp_MDPhonENumbeRform = temp_MDPhonENumbeRform.replace(/^1/g, '');\n";
+					}
+				if (preg_match("/-L0-/",$temp_agent_man_dial_filter))
+					{
+					echo "			temp_MDPhonENumbeRform = temp_MDPhonENumbeRform.replace(/^0/g, '');\n";
+					}
+				if (preg_match("/-R10-/",$temp_agent_man_dial_filter))
+					{
+					echo "			temp_MDPhonENumbeRform = temp_MDPhonENumbeRform.substr(temp_MDPhonENumbeRform.length - 10);\n";
+					}
+			#	echo "			alert('agent_man_dial_filter test: |' + MDPhonENumbeRform + '|' + temp_MDPhonENumbeRform + '|');\n";
+				echo "			MDPhonENumbeRform = temp_MDPhonENumbeRform;\n";
+				echo "			document.vicidial_form.MDPhonENumbeR.value = MDPhonENumbeRform;\n";
+				}
+			?>
 			if (MDDiaLCodEform.length < 1)
 				{MDDiaLCodEform = document.vicidial_form.phone_code.value;}
 
@@ -11184,8 +11305,44 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 			echo "		MDPhonENumbeRform = MDPhonENumbeRform.replace(REGphone_strip, '');\n";
 			echo "		document.vicidial_form.phone_number.value = MDPhonENumbeRform;\n";
 			}
+		// START agent_man_dial_filter process MDPhonENumbeRform variable
+		if ( ($SSagent_man_dial_filter!='DISABLED') and (strlen($SSagent_man_dial_filter) > 0) )
+			{
+			echo "var temp_MDPhonENumbeRform = MDPhonENumbeRform;\n";
+			$temp_agent_man_dial_filter = '-'.$SSagent_man_dial_filter.'-';
+			if (preg_match("/-DO-/",$temp_agent_man_dial_filter))
+				{
+				echo "			temp_MDPhonENumbeRform = temp_MDPhonENumbeRform.replace(/\D/g, '');\n";
+				}
+			if (preg_match("/-DPO-/",$temp_agent_man_dial_filter))
+				{
+				echo "			temp_MDPhonENumbeRform = temp_MDPhonENumbeRform.replace(/[^0-9+]/gi, '');\n";
+				}
+			if (preg_match("/-DLO-/",$temp_agent_man_dial_filter))
+				{
+				echo "			temp_MDPhonENumbeRform = temp_MDPhonENumbeRform.replace(/[^0-9a-z]/gi, '');\n";
+				}
+			if (preg_match("/-DLPO-/",$temp_agent_man_dial_filter))
+				{
+				echo "			temp_MDPhonENumbeRform = temp_MDPhonENumbeRform.replace(/[^0-9a-z+]/gi, '');\n";
+				}
+			if (preg_match("/-L1-/",$temp_agent_man_dial_filter))
+				{
+				echo "			temp_MDPhonENumbeRform = temp_MDPhonENumbeRform.replace(/^1/g, '');\n";
+				}
+			if (preg_match("/-L0-/",$temp_agent_man_dial_filter))
+				{
+				echo "			temp_MDPhonENumbeRform = temp_MDPhonENumbeRform.replace(/^0/g, '');\n";
+				}
+			if (preg_match("/-R10-/",$temp_agent_man_dial_filter))
+				{
+				echo "			temp_MDPhonENumbeRform = temp_MDPhonENumbeRform.substr(temp_MDPhonENumbeRform.length - 10);\n";
+				}
+		#	echo "			alert('agent_man_dial_filter test: |' + MDPhonENumbeRform + '|' + temp_MDPhonENumbeRform + '|');\n";
+			echo "			MDPhonENumbeRform = temp_MDPhonENumbeRform;\n";
+			echo "			document.vicidial_form.phone_number.value = MDPhonENumbeRform;\n";
+			}
 		?>
-
 		if ( (MDDiaLCodEform.length < 1) || (MDPhonENumbeRform.length < 5) )
 			{
 			alert_box("<?php echo _QXZ("YOU MUST ENTER A PHONE NUMBER AND DIAL CODE TO USE FAST DIAL"); ?>");
