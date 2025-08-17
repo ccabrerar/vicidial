@@ -6,7 +6,7 @@
 #
 # !!! REQUIRES A SETTINGS CONTAINER CALLED "DNCDOTCOM" TO BE SET UP TO USE !!!
 #
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # 151004-1606 - Initial Build
 # 151005-1256 - Added logging
@@ -14,10 +14,12 @@
 # 151022-1900 - Code clean up
 # 151202-1435 - Added URL option for settings container
 # 190405-0617 - Small fix based on DNC.com response values
+# 250817-1329 - Added lists config option to settings container
 #
 
 # constants
 $DB=0;  # Debug flag, set to 0 for no debug messages per minute
+$CLIlists = '';
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -54,11 +56,11 @@ if (length($ARGV[0])>1)
 				$CLIlists =~ s/-/,/gi;
 				}
 			}
-		if (length($CLIlists)<2)
-			{
-			print "no lists defined, exiting.\n";
-			exit;
-			}
+	#	if (length($CLIlists)<2)
+	#		{
+	#		print "no lists defined, exiting.\n";
+	#		exit;
+	#		}
 		if ($DB) {print "|$CLIlists|\n";}
 		}
 	}
@@ -128,6 +130,31 @@ $sthArows=$sthA->rows;
 $rec_count=0;
 if ($sthArows > 0) 
 	{
+	@aryA = $sthA->fetchrow_array;
+	$container_entry = $aryA[0];
+	%dnccom_settings = get_container_settings($container_entry);
+
+	$CONlists = $dnccom_settings{'VICI_LISTS'};
+	$CONlists =~ s/ .*$//gi;
+	if ($CONlists =~ /-/)
+		{
+		$CONlists =~ s/-/,/gi;
+		}
+
+	if (( length($CONlists)>=2 ) && ( length($CLIlists)>=2 ))
+		{
+		$CLIlists = $CLIlists . "," . $CONlists;
+		}
+	elsif ((length($CONlists)>=2) && (length($CLIlists)<2))
+		{
+		$CLIlists = $CONlists;
+		}
+
+	if (length($CLIlists)<2)
+		{
+		print "no lists defined, exiting.\n";
+		exit;
+		}
 
 	# log to the vicidial_admin_log the scrub
 	foreach $list_id (split /,/ ,$CLIlists)
@@ -138,10 +165,6 @@ if ($sthArows > 0)
 		$dbhA->do($stmtA) or die "executing: $stmtA ", $dbhA->errstr;
 		}
 
-
-	@aryA = $sthA->fetchrow_array;
-	$container_entry = $aryA[0];
-	%dnccom_settings = get_container_settings($container_entry);
 
 	if ( 
 		exists($dnccom_settings{'LOGIN_ID'}) && 
