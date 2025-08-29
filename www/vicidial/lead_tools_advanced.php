@@ -1,7 +1,7 @@
 <?php
 # lead_tools_advanced.php - Various tools for lead basic lead management, advanced version.
 #
-# Copyright (C) 2024  Matt Florell,Michael Cargile <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell,Michael Cargile <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 131016-1948 - Initial Build based upon lead_tools.php
@@ -18,9 +18,11 @@
 # 210607-0923 - Added option to reset called_count to 0
 # 220228-1012 - Added allow_web_debug system setting
 # 241114-0813 - Raised max_count default to 60
+# 250321-1152 - Changed status selector from dropdown to multi-select on Move, Update, and Delete
 
-$version = '2.14-14';
-$build = '241114-0813';
+
+$version = '2.14-15';
+$build = '250321-1152';
 
 # This limit is to prevent data inconsistancies.
 # If there are too many leads in a list this
@@ -1008,7 +1010,7 @@ if ($move_submit == _QXZ("move") )
 	$move_modify_date_end = preg_replace('/[^- \:_%0-9a-zA-Z]/','',$move_modify_date_end);
 	$move_modify_date_op = preg_replace('/[^<>=_0-9a-zA-Z]/','',$move_modify_date_op);
 	$move_security_phrase = preg_replace('/[^- _\'%0-9a-zA-Z]/','',$move_security_phrase);
-	$move_status = preg_replace('/[^-_%0-9a-zA-Z]/','',$move_status);
+	$move_status = preg_replace('/[^-_%0-9a-zA-Z\|]/','',$move_status);
 	$move_from_list = preg_replace('/[^0-9\|]/','',$move_from_list);
 	$move_to_list = preg_replace('/[^0-9]/','',$move_to_list);
 	$move_count_num = preg_replace('/[^0-9]/','',$move_count_num);
@@ -1129,8 +1131,8 @@ if ($move_submit == _QXZ("move") )
 	if (($enable_move_status == "enabled") && ($move_status != ''))
 		{
 		if ($move_status == '---BLANK---') {$move_status = '';}
-		$sql_where = $sql_where . " and status like '$move_status' ";
-		$move_parm = $move_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("status is like")." $move_status<br />";
+		$sql_where = $sql_where . " and status IN('".implode("', '", $move_status)."') ";
+		$move_parm = $move_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("status is like")." ".implode(" ", $move_status)." <br />";
 		if ($move_status == '') {$move_status = '---BLANK---';}
 		}
 	elseif ($enable_move_status == "enabled")
@@ -1307,7 +1309,7 @@ if ($move_submit == _QXZ("move") )
 		echo "<input type=hidden name=move_security_phrase value=\"$move_security_phrase\">\n";
 		echo "<input type=hidden name=move_from_list value='".implode("|", $move_from_list)."'>\n";
 		echo "<input type=hidden name=move_to_list value=\"$move_to_list\">\n";
-		echo "<input type=hidden name=move_status value=\"$move_status\">\n";
+		echo "<input type=hidden name=move_status value=\"".implode("|", $move_status)."\">\n";
 		echo "<input type=hidden name=move_count_op value=\"$move_count_op\">\n";
 		echo "<input type=hidden name=move_count_num value=\"$move_count_num\">\n";
 		echo "<input type=hidden name=DB value='$DB'>\n";
@@ -1434,7 +1436,7 @@ if ($confirm_move == _QXZ("confirm"))
 	$move_modify_date_end = preg_replace('/[^- \:_%0-9a-zA-Z]/','',$move_modify_date_end);
 	$move_modify_date_op = preg_replace('/[^<>=_0-9a-zA-Z]/','',$move_modify_date_op);
 	$move_security_phrase = preg_replace('/[^- _\'%0-9a-zA-Z]/','',$move_security_phrase);
-	$move_status = preg_replace('/[^-_%0-9a-zA-Z]/','',$move_status);
+	$move_status = preg_replace('/[^-_%0-9a-zA-Z\|]/','',$move_status);
 	$move_from_list = preg_replace('/[^0-9\|]/','',$move_from_list);
 	$move_to_list = preg_replace('/[^0-9]/','',$move_to_list);
 	$move_count_num = preg_replace('/[^0-9]/','',$move_count_num);
@@ -1538,11 +1540,12 @@ if ($confirm_move == _QXZ("confirm"))
 	# build the sql query's where phrase and the move phrase
 	$sql_where = "";
 	$move_parm = "";
+	$move_status_array=explode("|", $move_status);
 	if (($enable_move_status == "enabled") && ($move_status != ''))
 		{
 		if ($move_status == '---BLANK---') {$move_status = '';}
-		$sql_where = $sql_where . " and status like '$move_status' ";
-		$move_parm = $move_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("status is like")." $move_status<br />";
+		$sql_where = $sql_where . " and status IN('".implode("', '", $move_status_array)."') ";
+		$move_parm = $move_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("status is like")." ".implode(" ", $move_status_array)." <br />";
 		if ($move_status == '') {$move_status = '---BLANK---';}
 		}
 	elseif ($enable_move_status == "enabled")
@@ -1801,7 +1804,7 @@ if ($update_submit == _QXZ("update") )
 	$update_modify_date_op = preg_replace('/[^<>=_0-9a-zA-Z]/','',$update_modify_date_op);
 	$update_security_phrase = preg_replace('/[^- _\'%0-9a-zA-Z]/','',$update_security_phrase);
 	$update_to_status = preg_replace('/[^-_%0-9a-zA-Z]/','',$update_to_status);
-	$update_from_status = preg_replace('/[^-_%0-9a-zA-Z]/','',$update_from_status);
+	$update_from_status = preg_replace('/[^-_%0-9a-zA-Z\|]/','',$update_from_status);
 	$update_list = preg_replace('/[^0-9\|]/','',$update_list);
 	$update_count_num = preg_replace('/[^0-9]/','',$update_count_num);
 	$update_count_op = preg_replace('/[^<>=]/','',$update_count_op);
@@ -1918,8 +1921,8 @@ if ($update_submit == _QXZ("update") )
 	if (($enable_update_from_status == "enabled") && ($update_from_status != ''))
 		{
 		if ($update_from_status == '---BLANK---') {$update_from_status = '';}
-		$sql_where = $sql_where . " and status like '$update_from_status' ";
-		$update_parm = $update_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("status is like")." $update_from_status<br />";
+		$sql_where = $sql_where . " and status in ('".implode("', '", $update_from_status)."') ";			
+		$update_parm = $update_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("status is like")." ".implode(" ", $update_from_status)." <br />";
 		if ($update_from_status == '') {$update_from_status = '---BLANK---';}
 		}
 	elseif ($enable_update_from_status == "enabled")
@@ -2074,7 +2077,7 @@ if ($update_submit == _QXZ("update") )
 	echo "<input type=hidden name=update_security_phrase value=\"$update_security_phrase\">\n";
 	echo "<input type=hidden name=update_list value='".implode("|", $update_list)."'>\n";
 	echo "<input type=hidden name=update_to_status value=\"$update_to_status\">\n";
-	echo "<input type=hidden name=update_from_status value=\"$update_from_status\">\n";
+	echo "<input type=hidden name=update_from_status value=\"".implode("|", $update_from_status)."\">\n";
 	echo "<input type=hidden name=update_count_op value=\"$update_count_op\">\n";
 	echo "<input type=hidden name=update_count_num value=\"$update_count_num\">\n";
 	echo "<input type=hidden name=DB value='$DB'>\n";
@@ -2202,7 +2205,7 @@ if ($confirm_update == _QXZ("confirm"))
 	$update_modify_date_op = preg_replace('/[^<>=_0-9a-zA-Z]/','',$update_modify_date_op);
 	$update_security_phrase = preg_replace('/[^- _\'%0-9a-zA-Z]/','',$update_security_phrase);
 	$update_to_status = preg_replace('/[^-_%0-9a-zA-Z]/','',$update_to_status);
-	$update_from_status = preg_replace('/[^-_%0-9a-zA-Z]/','',$update_from_status);
+	$update_from_status = preg_replace('/[^-_%0-9a-zA-Z\|]/','',$update_from_status);
 	$update_list = preg_replace('/[^0-9\|]/','',$update_list);
 	$update_count_num = preg_replace('/[^0-9]/','',$update_count_num);
 	$update_count_op = preg_replace('/[^<>=]/','',$update_count_op);
@@ -2309,11 +2312,12 @@ if ($confirm_update == _QXZ("confirm"))
 	# build the sql query's where phrase and the move phrase
 	$sql_where = "";
 	$update_parm = "";
+	$update_from_status_array=explode("|", $update_from_status);
 	if (($enable_update_from_status == "enabled") && ($update_from_status != ''))
 		{
 		if ($update_from_status == '---BLANK---') {$update_from_status = '';}
-		$sql_where = $sql_where . " and status like '$update_from_status' ";
-		$update_parm = $update_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("status is like")." $update_from_status<br />";
+		$sql_where = $sql_where . " and status in ('".implode("', '", $update_from_status_array)."') ";
+		$update_parm = $update_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("status is like")." ".implode(" ", $update_from_status_array)." <br />";
 		if ($update_from_status == '') {$update_from_status = '---BLANK---';}
 		}
 	elseif ($enable_update_from_status == "enabled")
@@ -2687,9 +2691,9 @@ if ( ( $delete_submit == _QXZ("delete") ) && ( $delete_lists > 0 ) )
 	# build the sql query's where phrase and the delete phrase
 	$sql_where = "";
 	if ($delete_status != '---ALL---')
-		{$sql_where = $sql_where . " and status like '$delete_status' ";}
+		{$sql_where = $sql_where . " and status IN('".implode("', '", $delete_status)."') ";}
 	$delete_parm = "";
-	$delete_parm = $delete_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("status is like")." $delete_status<br />";
+	$delete_parm = $delete_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("status is like")." ".implode(" ", $delete_status)." <br />";
 	if (($enable_delete_lead_id == "enabled") && ($delete_lead_id != ''))
 		{
 		if ($delete_lead_id == '---BLANK---') {$delete_lead_id = '';}
@@ -2848,7 +2852,7 @@ if ( ( $delete_submit == _QXZ("delete") ) && ( $delete_lists > 0 ) )
 	echo "<input type=hidden name=delete_modify_date_op value=\"$delete_modify_date_op\">\n";
 	echo "<input type=hidden name=delete_security_phrase value=\"$delete_security_phrase\">\n";
 	echo "<input type=hidden name=delete_list value='".implode("|", $delete_list)."'>\n";
-	echo "<input type=hidden name=delete_status value=\"$delete_status\">\n";
+	echo "<input type=hidden name=delete_status value='".implode("|", $delete_status)."'>\n";
 	echo "<input type=hidden name=delete_count_op value=\"$delete_count_op\">\n";
 	echo "<input type=hidden name=delete_count_num value=\"$delete_count_num\">\n";
 	echo "<input type=hidden name=delete_lead_id value=\"$delete_lead_id\">\n";
@@ -2975,7 +2979,7 @@ if ( ( $confirm_delete == _QXZ("confirm") ) && ( $delete_lists > 0 ) )
 	$delete_modify_date_end = preg_replace('/[^- \:_%0-9a-zA-Z]/','',$delete_modify_date_end);
 	$delete_modify_date_op = preg_replace('/[^<>=_0-9a-zA-Z]/','',$delete_modify_date_op);
 	$delete_security_phrase = preg_replace('/[^- _\'%0-9a-zA-Z]/','',$delete_security_phrase);
-	$delete_status = preg_replace('/[^-_%0-9a-zA-Z]/','',$delete_status);
+	$delete_status = preg_replace('/[^-_%0-9a-zA-Z\|]/','',$delete_status);
 	$delete_lead_id = preg_replace('/[^0-9]/','',$delete_lead_id);
 	$delete_list = preg_replace('/[^0-9\|]/','',$delete_list);
 	$delete_count_num = preg_replace('/[^0-9]/','',$delete_count_num);
@@ -3082,10 +3086,11 @@ if ( ( $confirm_delete == _QXZ("confirm") ) && ( $delete_lists > 0 ) )
 
 	# build the sql query's where phrase and the delete phrase
 	$sql_where = "";
+	$delete_status_array=explode("|", $delete_status);
 	if ($delete_status != '---ALL---')
-		{$sql_where = $sql_where . " and status like '$delete_status' ";}
+		{$sql_where = $sql_where . " and status IN('".implode("', '", $delete_status_array)."') ";}
 	$delete_parm = "";
-	$delete_parm = $delete_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("status is like")." $delete_status<br />";
+	$delete_parm = $delete_parm . "&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("status is like")." ".implode("', '", $delete_status_array)." <br />";
 	if (($enable_delete_lead_id == "enabled") && ($delete_lead_id != ''))
 		{
 		if ($delete_lead_id == '---BLANK---') {$delete_lead_id = '';}
@@ -4404,9 +4409,7 @@ if (
 	echo "</select></td></tr>\n";
 	echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Status")."</td></td><td align=left>\n";
 	echo "<input type='checkbox' name='enable_move_status' id='enable_move_status' value='enabled'>\n";
-	echo "<select size=1 name='move_status' id='move_status' disabled=true>\n";
-	echo "<option value='-'>"._QXZ("Select A Status")."</option>\n";
-	echo "<option value='%'>"._QXZ("All Statuses")."</option>\n";
+	echo "<select size=8 name=move_status[] id='move_status' multiple disabled=true>\n";
 
 	$i = 0;
 	while ( $i < $status_count )
@@ -4502,7 +4505,6 @@ if (
 	echo "</select></td></tr>\n";
 	echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("To Status")."</td><td align=left>\n";
 	echo "<select size=1 name=update_to_status>\n";
-	echo "<option value='-'>"._QXZ("Select A Status")."</option>\n";
 
 	$i = 0;
 	while ( $i < $sys_status_count )
@@ -4514,8 +4516,7 @@ if (
 	echo "</select></td></tr>\n";
 	echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("From Status")."</td><td align=left>\n";
 	echo "<input type='checkbox' name='enable_update_from_status' id='enable_update_from_status' value='enabled'>\n";
-	echo "<select size=1 name=update_from_status id='update_from_status' disabled=true>\n";
-	echo "<option value='-'>"._QXZ("Select A Status")."</option>\n";
+	echo "<select size=8 name=update_from_status[] id='update_from_status' multiple disabled=true>\n";
 
 	$i = 0;
 	while ( $i < $status_count )
@@ -4612,8 +4613,10 @@ if (
 
 		echo "</select></td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Status")."</td><td align=left>\n";
-		echo "<select size=1 name=delete_status>\n";
-		echo "<option value='-'>"._QXZ("Select A Status")."</option>\n";
+		##echo "<select size=1 name=delete_status>\n";
+		##echo "<option value='-'>"._QXZ("Select A Status")."</option>\n";
+		echo "<select size=8 name=delete_status[] id='delete_status' multiple>\n";
+		#echo "<option value='-'>"._QXZ("Select A Status")."</option>\n";
 
 		$i = 0;
 		while ( $i < $status_count )
@@ -4622,7 +4625,7 @@ if (
 			$i++;
 			}
 
-		echo "<option value='---ALL---'>"._QXZ("-- ALL STATUSES --")."</option>\n";
+		#echo "<option value='---ALL---'>"._QXZ("-- ALL STATUSES --")."</option>\n";
 		echo "</select></td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Country Code")."</td></td><td align=left>\n";
 		echo "<input type='checkbox' name='enable_delete_country_code' id='enable_delete_country_code' value='enabled'>\n";
