@@ -61,6 +61,7 @@
 # 220303-1427 - Added allow_web_debug system setting
 # 230526-1740 - Patch for user_group bug, related to Issue #1346
 # 240801-1130 - Code updates for PHP8 compatibility
+# 250912-1628 - PHP8 bug fixes
 #
 
 $startMS = microtime();
@@ -658,7 +659,7 @@ else
 
 
 	### BEGIN gather timeclock records per agent
-	$stmt="select $userSQL,sum(login_sec) from ".$timeclock_log_table." where event IN('LOGIN','START') and event_date >= '$query_date_BEGIN' and event_date <= '$query_date_END' $TCuser_group_SQL group by user limit 10000000;";
+	$stmt="select $userSQL,if(sum(login_sec) is null, 0, sum(login_sec)) from ".$timeclock_log_table." where event IN('LOGIN','START') and event_date >= '$query_date_BEGIN' and event_date <= '$query_date_END' $TCuser_group_SQL group by user limit 10000000;";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	if ($DB) {echo "$stmt\n";}
 	$punches_to_print = mysqli_num_rows($rslt);
@@ -795,6 +796,7 @@ else
 		if ($uc < 1) 
 			{
 			$Suser[$uc] = $user;
+			$Scalls[$uc] = 0;		
 			$uc++;
 			}
 		$m=0;
