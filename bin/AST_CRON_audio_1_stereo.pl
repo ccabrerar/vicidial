@@ -1,47 +1,36 @@
 #!/usr/bin/perl
 #
-# AST_CRON_audio_1_move_VDonly.pl
+# AST_CRON_audio_1_stereo.pl
 #
 # This is a STEP-1 program in the audio archival process
 #
-# IMPORTANT!!! ONLY TO BE USED WHEN ONLY VICIDIAL RECORDINGS ARE ON THE SYSTEM!
+# IMPORTANT!!! ONLY TO BE USED WHEN STEREO VICIDIAL CALL RECORDINGS ARE ON THE SYSTEM!
 #
-# runs every 3 minutes and copies the -in recordings in the monitor to the DONE
-# directory for further processing. Very important for RAM-drive usage
+# runs every 3 minutes if there are stereo call recording files to process.
+# Processes audio and moves to other directories for further processing.
 # 
-# put an entry into the cron of of your asterisk machine to run this script 
-# every 3 minutes or however often you desire
-#
-# ### recording mixing/compressing/ftping scripts
-##0,3,6,9,12,15,18,21,24,27,30,33,36,39,42,45,48,51,54,57 * * * * /usr/share/astguiclient/AST_CRON_audio_1_move_mix.pl
-# 0,3,6,9,12,15,18,21,24,27,30,33,36,39,42,45,48,51,54,57 * * * * /usr/share/astguiclient/AST_CRON_audio_1_move_VDonly.pl
-# 1,4,7,10,13,16,19,22,25,28,31,34,37,40,43,46,49,52,55,58 * * * * /usr/share/astguiclient/AST_CRON_audio_2_compress.pl --MP3
-# 2,5,8,11,14,17,20,23,26,29,32,35,38,41,44,47,50,53,56,59 * * * * /usr/share/astguiclient/AST_CRON_audio_3_ftp.pl --MP3
+# Do NOT put this script in the crontab! It is launched as needed by the 
+# "AST_CRON_audio_1_move_VDonly.pl" script, which should be run every 3 minutes
 #
 # make sure that the following directories exist:
-# /var/spool/asterisk/monitor		# default Asterisk recording directory
-# /var/spool/asterisk/monitorDONE	# where the moved -in files are put
+# /var/spool/asterisk/monitorS		# default Asterisk stereo recording directory
+# /var/spool/asterisk/monitorP		# default Asterisk stereo parallel recording directory
+# /var/spool/asterisk/monitorTRASH	# where the used parallel files are put
+# /var/spool/asterisk/monitorDONE	# where the mixed -all files are put
+# /var/spool/asterisk/monitor/ORIG	# where the original -in and -out files are put
 # 
 # This program assumes that recordings are saved by Asterisk as .wav
-# should be easy to change this code if you use .gsm instead
 # 
 # Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # 
-# 80302-1958 - First Build
-# 80731-2253 - Changed size comparisons for more efficiency
-# 130805-1450 - Added check for length and gather length of recording for database record
-# 160523-0654 - Added --HTTPS option to use https instead of http in local location
-# 160731-2103 - Added --POST options to change filename with variable lookups
-# 190311-0105 - Added code to check for agent-muted recordings
-# 231019-2202 - Changed sleep time between directory scans from 5 to 15 seconds
-# 250430-0850 - Added --POST options for skipping over recordings for leads with active calls, and using logs for statuss
-# 250909-0845 - Added trigger for stereo recording script, if enabled and raw audio files present
+# 250909-0955 - First Build
 #
 
 $HTTPS=0;
 $status_post_logs=0;
 $delay_post_live=0;
+$ignore_parallel=0;
 $now_epoch = int(time());
 
 ### begin parsing run-time options ###
@@ -62,6 +51,7 @@ if (length($ARGV[0])>1)
 		print "  [--debug] = debug\n";
 		print "  [--debugX] = super debug\n";
 		print "  [--test] = test\n";
+		print "  [--ignore-parallel] = do not process parallel stereo recordings\n";
 		print "  [--HTTPS] = use https instead of http in local location\n";
 		print "  [--POST] = post call variable filename replacement, MUST define STATUS and CAMP below\n";
 		print "  [--STATUS-POST=X] = only run post call variable filename replacement on specific status calls\n";
@@ -98,6 +88,11 @@ if (length($ARGV[0])>1)
 			{
 			$T=1;   $TEST=1;
 			if ($q < 1) {print "\n-----TESTING -----\n\n";}
+			}
+		if ($args =~ /--ignore-parallel/)
+			{
+			$ignore_parallel=1;
+			if ($q < 1) {print "\n----- IGNORING PARALLEL CALL RECORDINGS -----\n\n";}
 			}
 		if ($args =~ /--HTTPS/i)
 			{
@@ -255,6 +250,31 @@ if ($sthArows > 0)
 	}
 $sthA->finish();
 
+# calculate server recording limit time, plus 60 minutes
+($Rsec,$Rmin,$Rhour,$Rmday,$Rmon,$Ryear,$Rwday,$Ryday,$Risdst) = localtime(time() - (($vicidial_recording_limit + 60) * 60));
+$Ryear = ($Ryear + 1900);
+$Ryy = $Ryear; $Ryy =~ s/^..//gi;
+$Rmon++;
+if ($Rmon < 10) {$Rmon = "0$Rmon";}
+if ($Rmday < 10) {$Rmday = "0$Rmday";}
+if ($Rhour < 10) {$Rhour = "0$Rhour";}
+if ($Rmin < 10) {$Rmin = "0$Rmin";}
+if ($Rsec < 10) {$Rsec = "0$Rsec";}
+$SQLdate_REC_limit="$Ryear-$Rmon-$Rmday $Rhour:$Rmin:$Rsec";
+
+### find soxmix or sox to do the mixing
+$soxbin = '';
+if ( -e ('/usr/bin/sox')) {$soxbin = '/usr/bin/sox';}
+else 
+	{
+	if ( -e ('/usr/local/bin/sox')) {$soxbin = '/usr/local/bin/sox';}
+	else
+		{
+		print "Can't find sox binary! Exiting...\n";
+		exit;
+		}
+	}
+
 ### find soxi to gather the length info if needed
 $soxibin = '';
 if ( -e ('/usr/bin/soxi')) {$soxibin = '/usr/bin/soxi';}
@@ -271,25 +291,304 @@ else
 		}
 	}
 
-# time variable definitions
-($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
-$year = ($year + 1900);
-$mon++;
-$wtoday = $wday;
-if ($mon < 10) {$mon = "0$mon";}
-if ($mday < 10) {$mday = "0$mday";}
-if ($hour < 10) {$hour = "0$hour";}
-if ($min < 10) {$min = "0$min";}
-if ($sec < 10) {$sec = "0$sec";}
-$now_date = "$year-$mon-$mday $hour:$min:$sec";
-$dateint = "$year$mon$mday$hour$min$sec";
-$today_start = "$year-$mon-$mday 00:00:00";
-$today_date = "$year-$mon-$mday";
-$hm = "$hour$min";
+if ($SSstereo_recording < 1) 
+	{
+	if ($DB) {print "Stereo Call Recording is disabled on this system, exiting...   |$SSstereo_recording| \n";}
+	exit;
+	}
 
 ### directory where in/out recordings are saved to by Asterisk
-$dir1 = "$PATHmonitor";
+$dir1 =	$PATHmonitor.'S';
 $dir2 = "$PATHDONEmonitor";
+$PATHmonitorP =	$PATHmonitor.'P';
+$PATHmonitorTRASH =	$PATHmonitor.'TRASH';
+
+
+
+####################################################
+##### BEGIN parallel call recording processing #####
+####################################################
+if ( ($ignore_parallel < 1) && ($SSstereo_parallel_recording > 0) )
+	{
+	if (!-e "$PATHmonitorTRASH/one-sec-silence.wav") 
+		{
+		# generate 1 second silence file, to be used to create stereo files with only one side having audio
+		`$soxbin -n -c 1 -r 8k -b 16 "$PATHmonitorTRASH/one-sec-silence.wav" synth 1 sine 0`;
+		if($DBX){print "Created one-sec-silence.wav audio file. \n";}
+		}
+
+	opendir(pFILE, "$PATHmonitorP/");
+	@pFILES = readdir(pFILE);
+
+	### Loop through files first to gather filesizes
+	$parallel_files_ct=0;
+	$i=0;
+	foreach(@pFILES)
+		{
+		$pFILEsize1[$i] = 0;
+		if ( (length($pFILES[$i]) > 4) && (!-d "$PATHmonitorP/$pFILES[$i]") )
+			{
+			$parallel_files_ct++;
+			$pFILEsize1[$i] = (-s "$PATHmonitorP/$pFILES[$i]");
+			if ($DBX) {print "$parallel_files_ct $pFILES[$i] $pFILEsize1[$i]\n";}
+			}
+		$i++;
+		}
+
+	if ($parallel_files_ct < 1) 
+		{
+		if ($DBX) {print "No parallel files found to process: $parallel_files_ct \n";}
+		}
+	else
+		{
+		sleep(15);
+
+		### Loop through files a second time to gather filesizes again 5 seconds later
+		$i=0;
+		$active_recordings=0;
+		$delay_ct=0;
+		$processed_ct=0;
+		$stereo_rec_made=0;
+		foreach(@pFILES)
+			{
+			$lead_id=0;
+			$vicidial_id='';
+			$pFILEsize2[$i] = 0;
+
+			if ( (length($pFILES[$i]) > 4) && (!-d "$PATHmonitorP/$pFILES[$i]") )
+				{
+				$pFILEsize2[$i] = (-s "$PATHmonitorP/$pFILES[$i]");
+				if ($DBX) {print "$pFILES[$i] $pFILEsize2[$i]\n\n";}
+
+				if ( ($pFILES[$i] !~ /out\.wav|out\.gsm|lost\+found/i) && ($pFILEsize1[$i] eq $pFILEsize2[$i]) && (length($pFILES[$i]) > 4))
+					{
+					$process_recording=0;
+					$INfile = $pFILES[$i];
+					$OUTfile = $pFILES[$i];
+					$OUTfile =~ s/-in\.wav/-out.wav/gi;
+					$OUTfile =~ s/-in\.gsm/-out.gsm/gi;
+					$ALLfile = $pFILES[$i];
+					$ALLfile =~ s/-in\.wav/-all.wav/gi;
+					$ALLfile =~ s/-in\.gsm/-all.gsm/gi;
+					$SQLpFILE = $pFILES[$i];
+					$SQLpFILE =~ s/-in\.wav|-in\.gsm//gi;
+					$filenameSQL='';
+
+					$length_in_sec=0;
+					$rec_ended=0;
+					$start_epoch=0;
+					$stmtA = "SELECT parallel_recording_id,channel,length_in_sec,lead_id,vicidial_id,start_time,end_time,user,UNIX_TIMESTAMP(start_time),recording_status from recording_log_parallel where filename='$SQLpFILE' and server_ip='$server_ip' and start_time >= \"$SQLdate_REC_limit\" order by parallel_recording_id desc LIMIT 1;";
+					if($DBX){print STDERR "\n|$stmtA|\n";}
+					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+					$sthArows=$sthA->rows;
+					if ($sthArows > 0)
+						{
+						@aryA = $sthA->fetchrow_array;
+						$parallel_recording_id =	$aryA[0];
+						$channel =					$aryA[1];
+						$length_in_sec =			$aryA[2];
+						$lead_id =					$aryA[3];
+						$vicidial_id =				$aryA[4];
+						$start_time =				$aryA[5];
+						$end_time =					$aryA[6];
+						$user =						$aryA[7];
+						$start_epoch =				$aryA[8];
+						$recording_status =			$aryA[9];
+						if (length($end_time) > 15) {$rec_ended=1;}
+						$process_recording=1;
+						}
+					$sthA->finish();
+
+					# get the length of the file from soxi
+					@soxi_output = `$soxibin -D $PATHmonitorP/$pFILES[$i]`;
+					$soxi_sec = $soxi_output[0];
+					$soxi_sec =~ s/\..*|\n|\r| //gi;
+
+					### process the recording files
+					if ($process_recording > 0) 
+						{
+						$stereo_rec_ids='Stereo Rec IDs:';
+						if ($DB) {print "|$parallel_recording_id|$length_in_sec($soxi_sec)|$INfile| \n";}
+
+						# Look for stereo recordings using this parallel_recording_id
+						$stmtA = "SELECT filename,lead_id,recording_id,options,start_time,end_time,UNIX_TIMESTAMP(start_time),UNIX_TIMESTAMP(end_time) FROM recording_log_stereo where start_time >= \"$SQLdate_REC_limit\" and parallel_recording_id='$parallel_recording_id' and server_ip='$server_ip' order by recording_id limit 10;";
+						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+						$sthArowsRECS=$sthA->rows;
+						if ($DBX) {print "DEBUG: $sthArowsRECS|$stmtA|\n";}
+						$prc=0;
+						while ($sthArowsRECS > $prc)
+							{
+							@aryA = $sthA->fetchrow_array;
+							$PR_filenameIN[$prc] =		$aryA[0]."-in.wav";
+							$PR_filenameOUT[$prc] =		$aryA[0]."-out.wav";
+							$PR_lead_id[$prc] =			$aryA[1];
+							$PR_recording_id[$prc] =	$aryA[2];
+							$PR_options[$prc] =			$aryA[3];
+							$PR_start_time[$prc] =		$aryA[4];
+							$PR_end_time[$prc] =		$aryA[5];
+							$PR_start_epoch[$prc] =		$aryA[6];
+							$PR_end_epoch[$prc] =		$aryA[7];
+							if ( ($PR_end_epoch[$prc] =~ /^NULL$/i) || ($PR_end_epoch[$prc] < 1000) || (length($PR_end_epoch[$prc]) < 4) )
+								{$PR_end_epoch[$prc] = ($start_epoch + $soxi_sec);}
+							$prc++;
+							}
+						$sthA->finish();
+
+						$prc=0;
+						while ($sthArowsRECS > $prc)
+							{
+							$stereo_file_processed=0;
+							if ($PR_options[$prc] =~ /AGENT-CONTROLLED/) 
+								{
+								$temp_start_test = ($PR_start_epoch[$prc] - $start_epoch);
+								$temp_ac_length = ($PR_end_epoch[$prc] - $PR_start_epoch[$prc]);
+								$temp_length_test = ($soxi_sec - $temp_ac_length);
+
+								# if agent-controlled file is shorter than, or starts after parallel file, use sox to create shorter file matching start/stop
+								if ( ($temp_start_test > 2) || ($temp_length_test > 4) )
+									{
+									if ($PR_options[$prc] =~ /CUSTOMER_ONLY/) 
+										{
+										# stereo recording is shorter than parallel recording, copy Left(-in/silence) and trim Right channels to stereo mixing directory
+										$mix_commandA = "cp -f $PATHmonitorTRASH/one-sec-silence.wav $dir1/$PR_filenameIN[$prc]";
+										$mix_commandB = "$soxbin \"$PATHmonitorP/$OUTfile\" \"$dir1/$PR_filenameOUT[$prc]\" trim $temp_start_test $temp_ac_length";
+										$stereo_file_processed++;
+										}
+									if ($PR_options[$prc] =~ /CUSTOMER_MUTE/) 
+										{
+										# stereo recording is shorter than parallel recording, trim Left and copy Right(-out/silence) channels to stereo mixing directory
+										$mix_commandA = "$soxbin \"$PATHmonitorP/$INfile\" \"$dir1/$PR_filenameIN[$prc]\" trim $temp_start_test $temp_ac_length";
+										$mix_commandB = "cp -f $PATHmonitorTRASH/one-sec-silence.wav $dir1/$PR_filenameOUT[$prc]";
+										$stereo_file_processed++;
+										}
+									if ( ($stereo_file_processed < 1) || ($PR_options[$prc] =~ /BOTH_CHANNELS/) )
+										{
+										# stereo recording is shorter than parallel recording, merge Left and Right channels into a single Stereo WAV audio file
+										$mix_commandA = "$soxbin \"$PATHmonitorP/$INfile\" \"$dir1/$PR_filenameIN[$prc]\" trim $temp_start_test $temp_ac_length";
+										$mix_commandB = "$soxbin \"$PATHmonitorP/$OUTfile\" \"$dir1/$PR_filenameOUT[$prc]\" trim $temp_start_test $temp_ac_length";
+										$stereo_file_processed++;
+										}
+									}
+								else
+									{
+									if ($PR_options[$prc] =~ /CUSTOMER_ONLY/) 
+										{
+										# stereo recording is same length as parallel recording, copy Left(-in/silence) and Right channels to stereo mixing directory
+										$mix_commandA = "cp -f $PATHmonitorTRASH/one-sec-silence.wav $dir1/$PR_filenameIN[$prc]";
+										$mix_commandB = "cp -f $PATHmonitorP/$OUTfile $dir1/$PR_filenameOUT[$prc]";
+										$stereo_file_processed++;
+										}
+									if ($PR_options[$prc] =~ /CUSTOMER_MUTE/) 
+										{
+										# stereo recording is same length as parallel recording, copy Left and Right(-out/silence) channels to stereo mixing directory
+										$mix_commandA = "cp -f $PATHmonitorP/$INfile $dir1/$PR_filenameIN[$prc]";
+										$mix_commandB = "cp -f $PATHmonitorTRASH/one-sec-silence.wav $dir1/$PR_filenameOUT[$prc]";
+										$stereo_file_processed++;
+										}
+									if ( ($stereo_file_processed < 1) || ($PR_options[$prc] =~ /BOTH_CHANNELS/) )
+										{
+										# stereo recording is same length as parallel recording, copy Left and Right channels to stereo mixing directory
+										$mix_commandA = "cp -f $PATHmonitorP/$INfile $dir1/$PR_filenameIN[$prc]";
+										$mix_commandB = "cp -f $PATHmonitorP/$OUTfile $dir1/$PR_filenameOUT[$prc]";
+										$stereo_file_processed++;
+										}
+									}
+								}
+
+							if ( ($PR_options[$prc] =~ /CUSTOMER-ONLY/) && ($stereo_file_processed < 1) )
+								{
+								# stereo recording is same length as parallel recording, copy Left(-in/silence) and Right channels to stereo mixing directory
+								$mix_commandA = "cp -f $PATHmonitorTRASH/one-sec-silence.wav $dir1/$PR_filenameIN[$prc]";
+								$mix_commandB = "cp -f $PATHmonitorP/$OUTfile $dir1/$PR_filenameOUT[$prc]";
+								$stereo_file_processed++;
+								}
+							if ( ($PR_options[$prc] =~ /CUSTOMER-MUTED/) && ($stereo_file_processed < 1) )
+								{
+								# stereo recording is same length as parallel recording, copy Left and Right(-out/silence) channels to stereo mixing directory
+								$mix_commandA = "cp -f $PATHmonitorP/$INfile $dir1/$PR_filenameIN[$prc]";
+								$mix_commandB = "cp -f $PATHmonitorTRASH/one-sec-silence.wav $dir1/$PR_filenameOUT[$prc]";
+								$stereo_file_processed++;
+								}
+							if ( ($PR_options[$prc] =~ /FULL-RECORDING/) && ($stereo_file_processed < 1) )
+								{
+								# stereo recording is same length as parallel recording, copy Left and Right channels to stereo mixing directory
+								$mix_commandA = "cp -f $PATHmonitorP/$INfile $dir1/$PR_filenameIN[$prc]";
+								$mix_commandB = "cp -f $PATHmonitorP/$OUTfile $dir1/$PR_filenameOUT[$prc]";
+								$stereo_file_processed++;
+								}
+
+							if ($stereo_file_processed > 0) 
+								{
+								`$mix_commandA`;
+								`$mix_commandB`;
+								$stereo_rec_made++;
+								$stereo_rec_ids .= " $PR_recording_id[$prc]";
+								if($DBX){print "Copy commands run: |$stereo_rec_made|$prc|$mix_commandA|$mix_commandB|\n";}
+								}
+							else
+								{
+								if($DBX){print "ERROR, file cannot be processed: |$prc|$parallel_recording_id|$PR_recording_id[$prc]|$PR_filename[$prc]|\n";}
+								}
+
+							$prc++;
+							}
+
+						if (!$T)
+							{
+							`mv -f "$PATHmonitorP/$INfile" "$PATHmonitorTRASH/$INfile"`;
+							`mv -f "$PATHmonitorP/$OUTfile" "$PATHmonitorTRASH/$OUTfile"`;
+							}
+
+						$lengthSQL='';
+						if ( ( ($length_in_sec < 1) || ($length_in_sec =~ /^NULL$/i) || (length($length_in_sec)<1) ) && (length($soxibin) > 3) )
+							{
+							$lengthSQL = ",length_in_sec='$soxi_sec'";
+							}
+
+						$stmtA = "UPDATE recording_log_parallel set recording_status='PROCESSED', processing_log=CONCAT(processing_log,' $stereo_rec_ids') $lengthSQL where parallel_recording_id='$parallel_recording_id';";
+							if($DBX){print STDERR "\n|$stmtA|\n";}
+						$affected_rows = $dbhA->do($stmtA); #  or die  "Couldn't execute query:|$stmtA|\n";
+
+						### sleep for twenty hundredths of a second to not flood the server with disk activity
+						usleep(1*200*1000);
+
+						$processed_ct++;
+						}
+					}
+				else
+					{$active_recordings++;}
+				}
+			$i++;
+			}
+
+		if($DBX)
+			{
+			$end_epoch = int(time());
+			$run_length = ($end_epoch - $now_epoch);
+
+			print "\nPARALLEL RECORDING Debug output:\n";
+			print "Total parallel files:      $i \n";
+			print "     Active recordings:    $active_recordings \n";
+			print "     Processed files:      $processed_ct \n";
+			print "     Stereo files made:    $stereo_rec_made \n";
+			print "\n";
+			print "Run time: $run_length seconds \n";
+			}
+		}
+	}
+##################################################
+##### END parallel call recording processing #####
+##################################################
+
+
+
+
+
+##################################################
+##### BEGIN stereo call recording processing #####
+##################################################
 
 opendir(FILE, "$dir1/");
 @FILES = readdir(FILE);
@@ -365,59 +664,7 @@ foreach(@FILES)
 			$sthA->finish();
 
 			$process_recording=1;
-			### check for muted recordings, if found then delay processing
-			if ( ($SSmute_recordings > 0) && ($rec_ended < 1) )
-				{
-				### check for active muted recordings
-				$rec_on_ct=0;   $rec_off_ct=0;
-				$stmtA = "SELECT count(*),stage from vicidial_agent_function_log where lead_id='$lead_id' and event_time >= \"$start_time\" and user='$user' and function='mute_rec' group by stage;";
-				if($DBX){print STDERR "\n|$stmtA|\n";}
-				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-				$sthArows=$sthA->rows;
-				$rs=0;
-				while ($sthArows > $rs)
-					{
-					@aryA = $sthA->fetchrow_array;
-					if ($aryA[1] =~ /on/i) {$rec_on_ct = $aryA[0];}
-					if ($aryA[1] =~ /off/i) {$rec_off_ct = $aryA[0];}
-					$rs++;
-					}
-				$sthA->finish();
-
-				if ($rec_on_ct > $rec_off_ct) 
-					{
-					if ($DBX > 0) {print "DEBUG: recording muting on for this call: ($rec_on_ct > $rec_off_ct) |$SQLFILE|ended: $rec_ended|\n";}
-
-					$rs_recent_on=0;
-					if ($rec_ended < 1) 
-						{
-						### check if muting started in last 15 minutes
-						$stmtA = "SELECT count(*) from vicidial_agent_function_log where lead_id='$lead_id' and event_time >= \"$start_time\" and event_time > DATE_SUB(NOW(),INTERVAL 15 MINUTE) and user='$user' and function='mute_rec' and stage='on';";
-						if($DBX){print STDERR "\n|$stmtA|\n";}
-						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-						$sthArows=$sthA->rows;
-						if ($sthArows > 0)
-							{
-							@aryA = $sthA->fetchrow_array;
-							$rs_recent_on = $aryA[0];
-							}
-						$sthA->finish();
-						}
-
-					if ($rs_recent_on > 0) 
-						{
-						if ($DBX > 0) {print "DEBUG2: recording muting recently for this call, do not process: ($rs_recent_on) |$SQLFILE|ended: $rec_ended|\n";}
-						$process_recording=0;
-						$delay_ct++;
-						}
-					else
-						{
-						if ($DBX > 0) {print "DEBUG3: recording muting started over 15 minutes ago, OK to process: ($rs_recent_on) |$SQLFILE|ended: $rec_ended|\n";}
-						}
-					}
-				}
+			### this is where code for agent-muted recordings went, if found then delay processing(not available for stereo call recordings)
 
 			### check for POST variables, and delay setting
 			if ( ($delay_post_live > 0) && ($POST > 0) && ($ALLfile =~ /POSTVLC|POSTSP|POSTADDR3|POSTSTATUS/) )
@@ -479,14 +726,13 @@ foreach(@FILES)
 				{
 				if ($DB) {print "|$recording_id|$length_in_sec|$INfile|     |$ALLfile|\n";}
 
+				# merge Left and Right channels into a single Stereo WAV audio file
+				`$soxbin -M "$dir1/$INfile" "$dir1/$OUTfile" "$dir2/$ALLfile"`;
+
 				if (!$T)
 					{
-					`mv -f "$dir1/$INfile" "$dir2/$ALLfile"`;
-					`rm -f "$dir1/$OUTfile"`;
-					}
-				else
-					{
-					`cp -f "$dir1/$INfile" "$dir2/$ALLfile"`;
+					`mv -f "$dir1/$INfile" "$dir2/ORIG/$INfile"`;
+					`mv -f "$dir1/$OUTfile" "$dir2/ORIG/$OUTfile"`;
 					}
 
 				$lengthSQL='';
@@ -710,62 +956,10 @@ if($DBX)
 	print "Run time: $run_length seconds \n";
 	}
 
-if ($SSstereo_recording > 0) 
-	{
-	$PATHmonitorS =	$PATHmonitor.'S';
-	$PATHmonitorP =	$PATHmonitor.'P';
+################################################
+##### END stereo call recording processing #####
+################################################
 
-	if($DBX)
-		{print "Checking for Stereo Call Recordings in $PATHmonitorS \n";}
-
-	opendir(sFILE, "$PATHmonitorS/");
-	@sFILES = readdir(sFILE);
-
-	### Loop through files first to gather filesizes
-	$trigger_stereo=0;
-	$i=0;
-	foreach(@sFILES)
-		{
-		if ( (length($sFILES[$i]) > 4) && (!-d "$dir1/$sFILES[$i]") && ($sFILES[$i] =~ /\.wav$/i) )
-			{
-			$trigger_stereo++;
-			if ($DBX) {print "Stereo file found!   $sFILES[$i] \n";}
-			last;
-			}
-		$i++;
-		}
-
-	if ( ($SSstereo_parallel_recording > 0) && ($trigger_stereo < 1) ) 
-		{
-		if($DBX)
-			{print "Checking for Stereo Parallel Call Recordings in $PATHmonitorP \n";}
-
-		opendir(pFILE, "$PATHmonitorP/");
-		@pFILES = readdir(pFILE);
-
-		### Loop through files first to gather filesizes
-		$trigger_stereo=0;
-		$i=0;
-		foreach(@pFILES)
-			{
-			if ( (length($pFILES[$i]) > 4) && (!-d "$dir1/$pFILES[$i]") && ($pFILES[$i] =~ /\.wav$/i) )
-				{
-				$trigger_stereo++;
-				if ($DBX) {print "Stereo Parallel file found!   $pFILES[$i] \n";}
-				last;
-				}
-			$i++;
-			}
-		}
-	
-	if ($trigger_stereo > 0) 
-		{
-		# command to trigger stereo call file processing, preserving flags from this script:
-		$stereo_command = "$PATHhome/AST_CRON_audio_1_stereo.pl $args ";
-		if ($DBX) {print "Triggering Stereo call file processing...   |$stereo_command| \n";}
-		`/usr/bin/screen -d -m -S SP$hm $stereo_command `;
-		}
-	}
 
 if ($DB) {print "DONE... EXITING\n\n";}
 

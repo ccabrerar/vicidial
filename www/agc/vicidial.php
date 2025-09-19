@@ -748,10 +748,11 @@
 # 250326-2032 - Added agent_hide_dial_fail system_setting
 # 250806-0859 - Added manual_dial_lead_id 'ONLY' option and user override setting
 # 250808-1322 - Added agent_man_dial_filter & agent_3way_dial_filter system settings
+# 250916-2055 - Added stereo recording features
 #
 
-$version = '2.14-714c';
-$build = '250808-1322';
+$version = '2.14-715c';
+$build = '250916-2055';
 $php_script = 'vicidial.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=103;
@@ -3154,7 +3155,7 @@ else
 				$HKstatusnames = substr("$HKstatusnames", 0, -1); 
 
 				##### grab the campaign settings
-				$stmt="SELECT park_ext,park_file_name,web_form_address,allow_closers,auto_dial_level,dial_timeout,dial_prefix,campaign_cid,campaign_vdad_exten,campaign_rec_exten,campaign_recording,campaign_rec_filename,campaign_script,get_call_launch,am_message_exten,xferconf_a_dtmf,xferconf_a_number,xferconf_b_dtmf,xferconf_b_number,alt_number_dialing,scheduled_callbacks,wrapup_seconds,wrapup_message,closer_campaigns,use_internal_dnc,allcalls_delay,omit_phone_code,agent_pause_codes_active,no_hopper_leads_logins,campaign_allow_inbound,manual_dial_list_id,default_xfer_group,xfer_groups,disable_alter_custphone,display_queue_count,manual_dial_filter,agent_clipboard_copy,use_campaign_dnc,three_way_call_cid,dial_method,three_way_dial_prefix,web_form_target,vtiger_screen_login,agent_allow_group_alias,default_group_alias,quick_transfer_button,prepopulate_transfer_preset,view_calls_in_queue,view_calls_in_queue_launch,call_requeue_button,pause_after_each_call,no_hopper_dialing,agent_dial_owner_only,agent_display_dialable_leads,web_form_address_two,agent_select_territories,crm_popup_login,crm_login_address,timer_action,timer_action_message,timer_action_seconds,start_call_url,dispo_call_url,xferconf_c_number,xferconf_d_number,xferconf_e_number,use_custom_cid,scheduled_callbacks_alert,scheduled_callbacks_count,manual_dial_override,blind_monitor_warning,blind_monitor_message,blind_monitor_filename,timer_action_destination,enable_xfer_presets,hide_xfer_number_to_dial,manual_dial_prefix,customer_3way_hangup_logging,customer_3way_hangup_seconds,customer_3way_hangup_action,ivr_park_call,manual_preview_dial,api_manual_dial,manual_dial_call_time_check,my_callback_option,per_call_notes,agent_lead_search,agent_lead_search_method,queuemetrics_phone_environment,auto_pause_precall,auto_pause_precall_code,auto_resume_precall,manual_dial_cid,custom_3way_button_transfer,callback_days_limit,disable_dispo_screen,disable_dispo_status,screen_labels,status_display_fields,pllb_grouping,pllb_grouping_limit,in_group_dial,in_group_dial_select,pause_after_next_call,owner_populate,manual_dial_lead_id,dead_max,dispo_max,pause_max,dead_max_dispo,dispo_max_dispo,max_inbound_calls,manual_dial_search_checkbox,hide_call_log_info,timer_alt_seconds,wrapup_bypass,wrapup_after_hotkey,callback_active_limit,callback_active_limit_override,comments_all_tabs,comments_dispo_screen,comments_callback_screen,qc_comment_history,show_previous_callback,clear_script,manual_dial_search_filter,web_form_address_three,manual_dial_override_field,status_display_ingroup,customer_gone_seconds,agent_display_fields,manual_dial_timeout,manual_auto_next,manual_auto_show,allow_required_fields,dead_to_dispo,agent_xfer_validation,ready_max_logout,callback_display_days,three_way_record_stop,hangup_xfer_record_start,max_inbound_calls_outcome,manual_auto_next_options,agent_screen_time_display,pause_max_dispo,script_top_dispo,routing_initiated_recordings,dead_trigger_seconds,dead_trigger_action,dead_trigger_repeat,dead_trigger_filename,scheduled_callbacks_force_dial,callback_hours_block,callback_display_days,scheduled_callbacks_timezones_container,three_way_volume_buttons,manual_dial_validation,mute_recordings,leave_vm_no_dispo,leave_vm_message_group_id,campaign_script_two,browser_alert_sound,browser_alert_volume,three_way_record_stop_exception,pause_max_exceptions,transfer_button_launch,leave_3way_start_recording,leave_3way_start_recording_exception,calls_waiting_vl_one,calls_waiting_vl_two,in_man_dial_next_ready_seconds,in_man_dial_next_ready_seconds_override,transfer_no_dispo,local_call_time,pause_max_url,agent_hide_hangup,ig_xfer_list_sort,script_tab_frame_size,user_group_script,agent_hangup_route,agent_hangup_value,agent_hangup_ig_override,show_confetti,custom_one,custom_two,custom_three,custom_four,custom_five,allow_chats,dead_stop_recording,force_per_call_notes,state_descriptions,script_tab_height,leave_3way_stop_recording,manual_minimum_ring_seconds,manual_minimum_attempt_seconds,manual_minimum_answer_seconds,sip_event_logging,stereo_recording FROM vicidial_campaigns where campaign_id = '$VD_campaign';";
+				$stmt="SELECT park_ext,park_file_name,web_form_address,allow_closers,auto_dial_level,dial_timeout,dial_prefix,campaign_cid,campaign_vdad_exten,campaign_rec_exten,campaign_recording,campaign_rec_filename,campaign_script,get_call_launch,am_message_exten,xferconf_a_dtmf,xferconf_a_number,xferconf_b_dtmf,xferconf_b_number,alt_number_dialing,scheduled_callbacks,wrapup_seconds,wrapup_message,closer_campaigns,use_internal_dnc,allcalls_delay,omit_phone_code,agent_pause_codes_active,no_hopper_leads_logins,campaign_allow_inbound,manual_dial_list_id,default_xfer_group,xfer_groups,disable_alter_custphone,display_queue_count,manual_dial_filter,agent_clipboard_copy,use_campaign_dnc,three_way_call_cid,dial_method,three_way_dial_prefix,web_form_target,vtiger_screen_login,agent_allow_group_alias,default_group_alias,quick_transfer_button,prepopulate_transfer_preset,view_calls_in_queue,view_calls_in_queue_launch,call_requeue_button,pause_after_each_call,no_hopper_dialing,agent_dial_owner_only,agent_display_dialable_leads,web_form_address_two,agent_select_territories,crm_popup_login,crm_login_address,timer_action,timer_action_message,timer_action_seconds,start_call_url,dispo_call_url,xferconf_c_number,xferconf_d_number,xferconf_e_number,use_custom_cid,scheduled_callbacks_alert,scheduled_callbacks_count,manual_dial_override,blind_monitor_warning,blind_monitor_message,blind_monitor_filename,timer_action_destination,enable_xfer_presets,hide_xfer_number_to_dial,manual_dial_prefix,customer_3way_hangup_logging,customer_3way_hangup_seconds,customer_3way_hangup_action,ivr_park_call,manual_preview_dial,api_manual_dial,manual_dial_call_time_check,my_callback_option,per_call_notes,agent_lead_search,agent_lead_search_method,queuemetrics_phone_environment,auto_pause_precall,auto_pause_precall_code,auto_resume_precall,manual_dial_cid,custom_3way_button_transfer,callback_days_limit,disable_dispo_screen,disable_dispo_status,screen_labels,status_display_fields,pllb_grouping,pllb_grouping_limit,in_group_dial,in_group_dial_select,pause_after_next_call,owner_populate,manual_dial_lead_id,dead_max,dispo_max,pause_max,dead_max_dispo,dispo_max_dispo,max_inbound_calls,manual_dial_search_checkbox,hide_call_log_info,timer_alt_seconds,wrapup_bypass,wrapup_after_hotkey,callback_active_limit,callback_active_limit_override,comments_all_tabs,comments_dispo_screen,comments_callback_screen,qc_comment_history,show_previous_callback,clear_script,manual_dial_search_filter,web_form_address_three,manual_dial_override_field,status_display_ingroup,customer_gone_seconds,agent_display_fields,manual_dial_timeout,manual_auto_next,manual_auto_show,allow_required_fields,dead_to_dispo,agent_xfer_validation,ready_max_logout,callback_display_days,three_way_record_stop,hangup_xfer_record_start,max_inbound_calls_outcome,manual_auto_next_options,agent_screen_time_display,pause_max_dispo,script_top_dispo,routing_initiated_recordings,dead_trigger_seconds,dead_trigger_action,dead_trigger_repeat,dead_trigger_filename,scheduled_callbacks_force_dial,callback_hours_block,callback_display_days,scheduled_callbacks_timezones_container,three_way_volume_buttons,manual_dial_validation,mute_recordings,leave_vm_no_dispo,leave_vm_message_group_id,campaign_script_two,browser_alert_sound,browser_alert_volume,three_way_record_stop_exception,pause_max_exceptions,transfer_button_launch,leave_3way_start_recording,leave_3way_start_recording_exception,calls_waiting_vl_one,calls_waiting_vl_two,in_man_dial_next_ready_seconds,in_man_dial_next_ready_seconds_override,transfer_no_dispo,local_call_time,pause_max_url,agent_hide_hangup,ig_xfer_list_sort,script_tab_frame_size,user_group_script,agent_hangup_route,agent_hangup_value,agent_hangup_ig_override,show_confetti,custom_one,custom_two,custom_three,custom_four,custom_five,allow_chats,dead_stop_recording,force_per_call_notes,state_descriptions,script_tab_height,leave_3way_stop_recording,manual_minimum_ring_seconds,manual_minimum_attempt_seconds,manual_minimum_answer_seconds,sip_event_logging,stereo_recording,stereo_recording_agent FROM vicidial_campaigns where campaign_id = '$VD_campaign';";
 				$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01013',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 				if ($DB) {echo "$stmt\n";}
@@ -3358,6 +3359,7 @@ else
 				$manual_minimum_answer_seconds =$row[196];
 				$CAMPsip_event_logging =	$row[197];
 				$stereo_recording =			$row[198];
+				$stereo_recording_agent =	$row[199];
 
 				if ( (!preg_match("/DISABLED/",$VU_manual_dial_lead_id)) and (strlen($VU_manual_dial_lead_id) > 0) )
 					{
@@ -3365,7 +3367,7 @@ else
 					$manual_dial_lead_id = $VU_manual_dial_lead_id;
 					}
 
-				if ($SSstereo_recording < 1) {$stereo_recording='DISABLED';}
+				if ($SSstereo_recording < 1) {$stereo_recording='DISABLED';   $stereo_recording_agent='NEVER';}
 
 				if ( ($manual_minimum_ring_seconds > 0) and ($SSsip_event_logging < 1) )
 					{
@@ -5691,6 +5693,10 @@ $start_recording_GIF = 'vdc_LB_startrecording.gif';
 $start_recording_GIF_off = 'vdc_LB_startrecording_OFF.gif';
 $stop_recording_GIF = 'vdc_LB_stoprecording.gif';
 $stop_recording_GIF_off = 'vdc_LB_stoprecording_OFF.gif';
+$STstart_recording_GIF = 'vdc_LB_STstartrecording.gif';
+$STstart_recording_GIF_off = 'vdc_LB_STstartrecording_OFF.gif';
+$STstop_recording_GIF = 'vdc_LB_STstoprecording.gif';
+$STstop_recording_GIF_off = 'vdc_LB_STstoprecording_OFF.gif';
 if (preg_match("/RECORDING/",$SSrecording_buttons))
 	{
 	if (preg_match("/2xHEIGHT/",$SSrecording_buttons))
@@ -5699,6 +5705,10 @@ if (preg_match("/RECORDING/",$SSrecording_buttons))
 		$start_recording_GIF_off = 'vdc_LB_startrecording_altx2_OFF.gif';
 		$stop_recording_GIF = 'vdc_LB_stoprecording_altx2.gif';
 		$stop_recording_GIF_off = 'vdc_LB_stoprecording_altx2_OFF.gif';
+		$STstart_recording_GIF = 'vdc_LB_STstartrecording_altx2.gif';
+		$STstart_recording_GIF_off = 'vdc_LB_STstartrecording_altx2_OFF.gif';
+		$STstop_recording_GIF = 'vdc_LB_STstoprecording_altx2.gif';
+		$STstop_recording_GIF_off = 'vdc_LB_STstoprecording_altx2_OFF.gif';
 		}
 	else
 		{
@@ -5706,6 +5716,10 @@ if (preg_match("/RECORDING/",$SSrecording_buttons))
 		$start_recording_GIF_off = 'vdc_LB_startrecording_alt_OFF.gif';
 		$stop_recording_GIF = 'vdc_LB_stoprecording_alt.gif';
 		$stop_recording_GIF_off = 'vdc_LB_stoprecording_alt_OFF.gif';
+		$STstart_recording_GIF = 'vdc_LB_STstartrecording_alt.gif';
+		$STstart_recording_GIF_off = 'vdc_LB_STstartrecording_alt_OFF.gif';
+		$STstop_recording_GIF = 'vdc_LB_STstoprecording_alt.gif';
+		$STstop_recording_GIF_off = 'vdc_LB_STstoprecording_alt_OFF.gif';
 		}
 	}
 
@@ -6261,6 +6275,12 @@ if ($enable_fast_refresh < 1) {echo "\tvar refresh_interval = 1000;\n";}
 	var campaign_rec_filename = '<?php echo $campaign_rec_filename ?>';
 	var LIVE_campaign_recording = '<?php echo $campaign_recording ?>';
 	var LIVE_campaign_rec_filename = '<?php echo $campaign_rec_filename ?>';
+	var STcampaign_recording = '<?php echo $stereo_recording_agent ?>';
+	var STcampaign_rec_filename = '<?php echo $stereo_rec_filename ?>';
+	var VDICstereo_recording = '<?php echo $stereo_recording ?>';
+	var VDICstereo_recording_agent = '<?php echo $stereo_recording_agent ?>';
+	var LIVE_STcampaign_recording = '<?php echo $stereo_recording_agent ?>';
+	var LIVE_STcampaign_rec_filename = '<?php echo $stereo_rec_filename ?>';
 	var LIVE_default_group_alias = '<?php echo $default_group_alias ?>';
 	var LIVE_caller_id_number = '<?php echo $default_group_alias_cid ?>';
 	var LIVE_web_vars = '<?php echo $default_web_vars ?>';
@@ -6488,6 +6508,8 @@ if ($enable_fast_refresh < 1) {echo "\tvar refresh_interval = 1000;\n";}
 	var external_igb_set_name='';
 	var recording_filename='';
 	var recording_id='';
+	var STrecording_filename='';
+	var STrecording_id='';
 	var delayed_script_load='';
 	var script_recording_delay='';
 	var VDRP_stage='PAUSED';
@@ -6656,6 +6678,7 @@ if ($enable_fast_refresh < 1) {echo "\tvar refresh_interval = 1000;\n";}
 	var mrglock_ig_select_ct='<?php echo $mrglock_ig_select_ct ?>';
 	var agent_select_territories_skip_count=0;
 	var last_recording_filename='';
+	var STlast_recording_filename='';
 	var dead_max='<?php echo $dead_max ?>';
 	var dead_max_dispo='<?php echo $dead_max_dispo ?>';
 	var dead_to_dispo='<?php echo $dead_to_dispo ?>';
@@ -6746,6 +6769,8 @@ if ($enable_fast_refresh < 1) {echo "\tvar refresh_interval = 1000;\n";}
 	var MD_dial_timed_out=0;
 	var routing_initiated_recording='<?php echo $routing_initiated_recording ?>';
 	var stereo_recording='<?php echo $stereo_recording ?>';
+	var SSstereo_recording=<?php echo $SSstereo_recording ?>;
+	var stereo_recording_agent='<?php echo $stereo_recording_agent ?>';
 	var dead_trigger_count=0;
 	var dead_recording_triggered=0;
 	var dead_trigger_first_ran=0;
@@ -6803,6 +6828,7 @@ if ($enable_fast_refresh < 1) {echo "\tvar refresh_interval = 1000;\n";}
 	var user_pass_webform = '<?php echo $user_pass_webform ?>';
 	var phone_login_webform = '<?php echo $phone_login_webform ?>';
 	var recording_active=0;
+	var STrecording_active=0;
 	var pause_max_url_trigger = '<?php echo $pause_max_url_trigger ?>';
 	var agent_hide_hangup_ACTIVE = '<?php $agent_hide_hangup_ACTIVE ?>';
 	var agent_datetime='';
@@ -6874,6 +6900,10 @@ if ($enable_fast_refresh < 1) {echo "\tvar refresh_interval = 1000;\n";}
 		image_LB_stoprecording.src="./images/<?php echo _QXZ("$stop_recording_GIF") ?>";
 	var image_LB_startrecording = new Image();
 		image_LB_startrecording.src="./images/<?php echo _QXZ("$start_recording_GIF") ?>";
+	var image_LB_STstoprecording = new Image();
+		image_LB_STstoprecording.src="./images/<?php echo _QXZ("$STstop_recording_GIF") ?>";
+	var image_LB_STstartrecording = new Image();
+		image_LB_STstartrecording.src="./images/<?php echo _QXZ("$STstart_recording_GIF") ?>";
 	var image_LB_paused = new Image();
 		image_LB_paused.src="./images/<?php echo _QXZ("vdc_LB_paused.gif") ?>";
 	var image_LB_active = new Image();
@@ -6898,6 +6928,10 @@ if ($enable_fast_refresh < 1) {echo "\tvar refresh_interval = 1000;\n";}
 		image_LB_stoprecording_OFF.src="./images/<?php echo _QXZ("$stop_recording_GIF_off") ?>";
 	var image_LB_startrecording_OFF = new Image();
 		image_LB_startrecording_OFF.src="./images/<?php echo _QXZ("$start_recording_GIF_off") ?>";
+	var image_LB_STstoprecording_OFF = new Image();
+		image_LB_STstoprecording_OFF.src="./images/<?php echo _QXZ("$STstop_recording_GIF_off") ?>";
+	var image_LB_STstartrecording_OFF = new Image();
+		image_LB_STstartrecording_OFF.src="./images/<?php echo _QXZ("$STstart_recording_GIF_off") ?>";
 	var image_LB_senddtmf_OFF = new Image();
 		image_LB_senddtmf_OFF.src="./images/<?php echo _QXZ("vdc_LB_senddtmf_OFF.gif") ?>";
 	var image_LB_ivrgrabparkedcall = new Image();
@@ -8358,6 +8392,21 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 							{
 							conf_send_recording('StopMonitorConf', session_id, recording_filename,'1','','YES');
 							}
+						var regAPIrec = new RegExp("BEGIN","g");
+						if (api_recording.match(regAPIrec))
+							{
+							var APIrec_append = api_recording;
+							if (APIrec_append.length > 5)
+								{APIrec_append = APIrec_append.replace(regAPIrec, '');}
+							else
+								{APIrec_append='';}
+
+							conf_send_stereo_recording('MonitorStereo', session_id,'','1', APIrec_append,'YES');
+							}
+						if (api_recording=='END')
+							{
+							conf_send_stereo_recording('StopMonitorStereo', session_id, recording_filename,'1','','YES');
+							}
 						if (api_transferconf_function.length > 0)
 							{
 							if (api_transferconf_ID == api_transferconf_values_array[7])
@@ -8728,6 +8777,12 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								if (customerparked==1)
 									{
 									parked_hangup='1';
+									}
+								if ( (SSstereo_recording > 0) && ( (VDICstereo_recording == 'BOTH_CHANNELS') || (VDICstereo_recording == 'CUSTOMER_ONLY') || (VDICstereo_recording == 'CUSTOMER_MUTE') ) )
+									{
+									// call is dead set stereo recording button to disabled
+									var conf_rec_start_html = "<img src=\"./images/<?php echo _QXZ("$STstart_recording_GIF_off") ?>\" border=\"0\" alt=\"Start Stereo Recording\" />";
+									document.getElementById("StRecorDControl").innerHTML = conf_rec_start_html;
 									}
 								}
 							}
@@ -9164,6 +9219,117 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								{
 								document.getElementById("RecorDMute").innerHTML = conf_rec_mute_html;
 								}
+							}
+						}
+					}
+				}
+			delete xmlhttp;
+			}
+		}
+
+
+// ################################################################################
+// Send MonitorStereo/StopMonitorStereo command for stereo_recording of conferences
+	function conf_send_stereo_recording(taskconfrectype,taskconfrec,taskconffile,taskfromapi,taskapiappend,CSRclick) 
+		{
+		if (CSRclick=='YES')
+			{button_click_log = button_click_log + "" + SQLdate + "-----conf_send_stereo_recording---" + taskconfrectype + " " + taskconfrec + " " + taskconffile + " " + taskfromapi + " " + taskapiappend + "|";}
+		else
+			{button_click_log = button_click_log + "" + SQLdate + "-----conf_send_stereo_recordingAUTO---" + taskconfrectype + " " + taskconfrec + " " + taskconffile + " " + taskfromapi + " " + taskapiappend + " " + all_record + "|";}
+		if (inOUT == 'OUT')
+			{
+			tmp_vicidial_id = document.vicidial_form.uniqueid.value;
+			}
+		else
+			{
+			tmp_vicidial_id = 'IN';
+			}
+		var xmlhttp=false;
+		/*@cc_on @*/
+		/*@if (@_jscript_version >= 5)
+		// JScript gives us Conditional compilation, we can cope with old IE versions.
+		// and security blocked creation of the objects.
+		 try {
+		  xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
+		 } catch (e) {
+		  try {
+		   xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+		  } catch (E) {
+		   xmlhttp = false;
+		  }
+		 }
+		@end @*/
+		if (!xmlhttp && typeof XMLHttpRequest!='undefined')
+			{
+			xmlhttp = new XMLHttpRequest();
+			}
+		if (xmlhttp) 
+			{ 
+			if (taskconfrectype == 'MonitorStereo')
+				{
+				recording_active=1;
+				var REGrecCLEANvlc = new RegExp(" ","g");
+				var recVendorLeadCode = document.vicidial_form.vendor_lead_code.value;
+				recVendorLeadCode = recVendorLeadCode.replace(REGrecCLEANvlc, '');
+				var recLeadID = document.vicidial_form.lead_id.value;
+				var query_recording_exten = recording_exten;
+				var channelrec = "Local/" + conf_silent_prefix + '' + taskconfrec + "@" + ext_context;
+                var conf_rec_start_html = "<a href=\"#\" onclick=\"conf_send_stereo_recording('StopMonitorStereo','" + taskconfrec + "','" + filename + "','','','YES');return false;\"><img src=\"./images/<?php echo _QXZ("$STstop_recording_GIF") ?>\" border=\"0\" alt=\"Stop Stereo Recording\" /></a>";
+
+				if (VDICstereo_recording_agent == 'ALLFORCE')
+					{
+                    document.getElementById("StRecorDControl").innerHTML = "<img src=\"./images/<?php echo _QXZ("$STstop_recording_GIF_off") ?>\" border=\"0\" alt=\"Stop Stereo Recording\" />";
+					}
+				else
+					{
+					document.getElementById("StRecorDControl").innerHTML = conf_rec_start_html;
+					}
+				}
+			if (taskconfrectype == 'StopMonitorStereo')
+				{
+				recording_active=0;
+				filename = taskconffile;
+				var query_recording_exten = session_id;
+				var channelrec = "Local/" + conf_silent_prefix + '' + taskconfrec + "@" + ext_context;
+                var conf_rec_start_html = "<a href=\"#\" onclick=\"conf_send_stereo_recording('MonitorStereo','" + taskconfrec + "','','','','YES');return false;\"><img src=\"./images/<?php echo _QXZ("$STstart_recording_GIF") ?>\" border=\"0\" alt=\"Start Stereo Recording\" /></a>";
+				if (VDICstereo_recording_agent == 'ALLFORCE')
+					{
+                    document.getElementById("StRecorDControl").innerHTML = "<img src=\"./images/<?php echo _QXZ("$STstart_recording_GIF_off") ?>\" border=\"0\" alt=\"Start Stereo Recording\" />";
+					}
+				else
+					{
+					document.getElementById("StRecorDControl").innerHTML = conf_rec_start_html;
+					}
+				}
+			confmonitor_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&campaign=" + campaign + "&user=" + user + "&pass=" + pass + "&ACTION=" + taskconfrectype + "&format=text&channel=" + lastcustchannel + "&filename=NOfilenameNEEDED&exten=" + query_recording_exten + "&ext_context=" + ext_context + "&lead_id=" + document.vicidial_form.lead_id.value + "&CalLCID=" + LasTCID + "&phone_number=" + lead_dial_number + "&ext_priority=1&FROMvdc=YES&uniqueid=" + tmp_vicidial_id + "&FROMapi=" + taskfromapi;
+			xmlhttp.open('POST', 'manager_send.php'); 
+			xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
+			xmlhttp.send(confmonitor_query); 
+			xmlhttp.onreadystatechange = function() 
+				{ 
+				if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
+					{
+					var RClookResponse = null;
+			//	document.getElementById("busycallsdebug").innerHTML = confmonitor_query;
+			//		alert(confmonitor_query);
+			//		alert(xmlhttp.responseText);
+					RClookResponse = xmlhttp.responseText;
+					var RClookResponse_array=RClookResponse.split("\n");
+					var RClookFILE = RClookResponse_array[1];
+					var RClookID = RClookResponse_array[2];
+					var RClookFILE_array = RClookFILE.split("Filename: ");
+					var RClookID_array = RClookID.split("RecorDing_ID: ");
+
+					if (taskconfrectype == 'MonitorStereo')
+						{
+						var conf_rec_start_html = "<a href=\"#\" onclick=\"conf_send_stereo_recording('StopMonitorStereo','" + taskconfrec + "','ID:" + recording_id + "','','','YES');return false;\"><img src=\"./images/<?php echo _QXZ("$STstop_recording_GIF") ?>\" border=\"0\" alt=\"Stop Stereo Recording\" /></a>";
+						if (VDICstereo_recording_agent == 'ALLFORCE')
+							{
+							document.getElementById("StRecorDControl").innerHTML = "<img src=\"./images/<?php echo _QXZ("$STstop_recording_GIF_off") ?>\" border=\"0\" alt=\"Stop Stereo Recording\" />";
+							}
+						else
+							{
+							document.getElementById("StRecorDControl").innerHTML = conf_rec_start_html;
 							}
 						}
 					}
@@ -9821,6 +9987,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 							{
                             var conf_rec_start_html = "<a href=\"#\" onclick=\"conf_send_recording('MonitorConf','" + session_id + "','','','','YES');return false;\"><img src=\"./images/<?php echo _QXZ("$start_recording_GIF") ?>\" border=\"0\" alt=\"Start Recording\" /></a>";
 							var conf_rec_mute_html = "<img src=\"./images/<?php echo _QXZ("vdc_LB_mute_recording_DISABLED.gif") ?>\" border=\"0\" alt=\"Mute Recording Disabled\" /><br />";
+                            var STconf_rec_start_html = "<a href=\"#\" onclick=\"conf_send_stereo_recording('MonitorStereo','" + session_id + "','','','','YES');return false;\"><img src=\"./images/<?php echo _QXZ("$STstart_recording_GIF") ?>\" border=\"0\" alt=\"Start Stereo Recording\" /></a>";
 							if ( (LIVE_campaign_recording == 'NEVER') || (LIVE_campaign_recording == 'ALLFORCE') )
 								{
                                 document.getElementById("RecorDControl").innerHTML = "<img src=\"./images/<?php echo _QXZ("$start_recording_GIF_off") ?>\" border=\"0\" alt=\"Start Recording\" />";
@@ -9831,6 +9998,8 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								{
 								document.getElementById("RecorDMute").innerHTML = conf_rec_mute_html;
 								}
+
+							document.getElementById("StRecorDControl").innerHTML = "<img src=\"./images/<?php echo _QXZ("$STstart_recording_GIF_off") ?>\" border=\"0\" alt=\"Start Stereo Recording\" />";
 
 							MDlogRecorDings = MDlogResponse_array[3];
 							if (window.MDlogRecorDings)
@@ -11449,7 +11618,6 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 					debug_response = debug_response.replace(REGcommentsDBNL, "<br>");
 				//	document.getElementById("debugbottomspan").innerHTML = "<br>|" + manDiaLlook_query + "|<br>\n" + debug_response;
 
-
 					MDlookResponse = xmlhttp.responseText;
 					var MDlookResponse_array=MDlookResponse.split("\n");
 					var MDlookCID = MDlookResponse_array[0];
@@ -11508,6 +11676,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								button_click_log = button_click_log + "" + SQLdate + "-----DiaLAlerT---Call-Rejected" + XDerrorDesc + "|";
 								agent_events('agent_alert', "Call Rejected: " + XDerrorDesc + ' ' + XDerrorDescSIP, aec);   aec++;
 								}
+
 							if ( (XDchannel.match(regMDL)) && (asterisk_version != '1.0.8') && (asterisk_version != '1.0.9') && (MD_ring_secondS < 10) )
 								{
 								// bad grab of Local channel, try again
@@ -11586,8 +11755,9 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 							else
 								{
 								custchannellive=1;
-								document.vicidial_form.uniqueid.value		= MDlookResponse_array[0];
+								document.vicidial_form.uniqueid.value				= MDlookResponse_array[0];
 								document.getElementById("callchannel").innerHTML	= MDlookResponse_array[1];
+								var stereo_info										= MDlookResponse_array[2];
 								lastcustchannel = MDlookResponse_array[1];
 								if( document.images ) { document.images['livecall'].src = image_livecall_ON.src;}
 								document.vicidial_form.SecondS.value		= 0;
@@ -11607,6 +11777,32 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								if (status_display_LISTID > 0) {status_display_content = status_display_content + " <?php echo _QXZ("List:"); ?> " + document.vicidial_form.list_id.value;}
 
 								document.getElementById("MainStatuSSpan").innerHTML = " <?php echo _QXZ("Called:"); ?> " + status_display_number + " " + status_display_content + " &nbsp;"; 
+
+								var regSRC = new RegExp("^SAC|^SPAC","ig");
+								var regSRD = new RegExp("^SOD","ig");
+								var regSRAF = new RegExp("ALLFORCE","ig");
+								if (stereo_info.match(regSRC))
+									{
+									// stereo recording was started
+									var conf_rec_start_html = "<a href=\"#\" onclick=\"conf_send_stereo_recording('StopMonitorStereo','" + session_id + "','" + filename + "','','','YES');return false;\"><img src=\"./images/<?php echo _QXZ("$STstop_recording_GIF") ?>\" border=\"0\" alt=\"Stop Stereo Recording\" /></a>";
+
+									if (stereo_info.match(regSRAF))
+										{
+										// Agent-control is ALLFORCE, use disabled button
+										document.getElementById("StRecorDControl").innerHTML = "<img src=\"./images/<?php echo _QXZ("$STstop_recording_GIF_off") ?>\" border=\"0\" alt=\"Stop Stereo Recording\" />";
+										}
+									else
+										{
+										document.getElementById("StRecorDControl").innerHTML = conf_rec_start_html;
+										}
+									}
+								if (stereo_info.match(regSRD))
+									{
+									// stereo recording not started, but set to ONDEMAND
+									var conf_rec_start_html = "<a href=\"#\" onclick=\"conf_send_stereo_recording('MonitorStereo','" + session_id + "','','','','YES');return false;\"><img src=\"./images/<?php echo _QXZ("$STstart_recording_GIF") ?>\" border=\"0\" alt=\"Start Stereo Recording\" /></a>";
+									document.getElementById("StRecorDControl").innerHTML = conf_rec_start_html;
+									}
+
 
                                 document.getElementById("ParkControl").innerHTML ="<a href=\"#\" onclick=\"mainxfer_send_redirect('ParK','" + lastcustchannel + "','" + lastcustserverip + "','','','','YES');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_LB_parkcall.gif"); ?>\" border=\"0\" alt=\"Park Call\" /></a>";
 								if ( (ivr_park_call=='ENABLED') || (ivr_park_call=='ENABLED_PARK_ONLY') )
@@ -14100,6 +14296,8 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								browser_alert_sound =	VDIC_data_VDIG[40];
 								browser_alert_volume =	VDIC_data_VDIG[41];
 								}
+							VDICstereo_recording =	VDIC_data_VDIG[42];
+							VDICstereo_recording_agent = VDIC_data_VDIG[43];
 
 							var VDIC_data_VDFR=check_VDIC_array[3].split("|");
 							if ( (VDIC_data_VDFR[1].length > 1) && (VDCL_fronter_display == 'Y') )
@@ -14458,6 +14656,30 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 									{temp_status_display_ingroup='';}
 
 								document.getElementById("MainStatuSSpan").innerHTML = " <?php echo _QXZ("Incoming:"); ?> " + dial_display_number + " " + custom_call_id + " " + temp_status_display_ingroup + "&nbsp; " + VDIC_fronter + " " + status_display_content; 
+								}
+
+							if ( (SSstereo_recording > 0) && ( (VDICstereo_recording == 'BOTH_CHANNELS') || (VDICstereo_recording == 'CUSTOMER_ONLY') || (VDICstereo_recording == 'CUSTOMER_MUTE') ) )
+								{
+								if (VDICstereo_recording_agent == 'ALLCALLS')
+									{
+									// stereo recording was started, allow agent to stop it
+									document.getElementById("StRecorDControl").innerHTML = "<a href=\"#\" onclick=\"conf_send_stereo_recording('StopMonitorStereo','" + session_id + "','" + filename + "','','','YES');return false;\"><img src=\"./images/<?php echo _QXZ("$STstop_recording_GIF") ?>\" border=\"0\" alt=\"Stop Stereo Recording\" /></a>";
+									}
+								if (VDICstereo_recording_agent == 'ALLFORCE')
+									{
+									// Agent-control is ALLFORCE, use disabled button
+									document.getElementById("StRecorDControl").innerHTML = "<img src=\"./images/<?php echo _QXZ("$STstop_recording_GIF_off") ?>\" border=\"0\" alt=\"Stop Stereo Recording\" />";
+									}
+								if (VDICstereo_recording_agent == 'ONDEMAND')
+									{
+									// stereo recording not started, but agent control set to ONDEMAND
+									document.getElementById("StRecorDControl").innerHTML = "<a href=\"#\" onclick=\"conf_send_stereo_recording('MonitorStereo','" + session_id + "','','','','YES');return false;\"><img src=\"./images/<?php echo _QXZ("$STstart_recording_GIF") ?>\" border=\"0\" alt=\"Start Stereo Recording\" /></a>";
+									}
+								if (VDICstereo_recording_agent == 'NEVER')
+									{
+									// stereo recording not started, and agent control set to NEVER
+									document.getElementById("StRecorDControl").innerHTML = "<img src=\"./images/<?php echo _QXZ("$STstart_recording_GIF_off") ?>\" border=\"0\" alt=\"Start Stereo Recording\" />";
+									}
 								}
 
                             document.getElementById("ParkControl").innerHTML ="<a href=\"#\" onclick=\"mainxfer_send_redirect('ParK','" + lastcustchannel + "','" + lastcustserverip + "','','','','YES');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_LB_parkcall.gif"); ?>\" border=\"0\" alt=\"Park Call\" /></a>";
@@ -21669,6 +21891,8 @@ function phone_number_format(formatphone) {
 			hideDiv('InvalidOpenerSpan');
 			hideDiv('OtherTabCommentsSpan');
 			hideDiv('AgentTimeDisplayBox');
+			if ( (SSstereo_recording < 1) || (stereo_recording == 'DISABLED') )
+				{hideDiv('StRecorDControl');}
 			if (launch_scb_force_dial < 1)
 				{hideDiv('SCForceDialBox');}
 			else
@@ -21759,6 +21983,9 @@ function phone_number_format(formatphone) {
 				var conf_rec_mute_html = "<img src=\"./images/<?php echo _QXZ("vdc_LB_mute_recording_DISABLED.gif") ?>\" border=\"0\" alt=\"Mute Recording Disabled\" /><br />";
 				document.getElementById("RecorDMute").innerHTML = conf_rec_mute_html;
 				}
+
+			document.getElementById("StRecorDControl").innerHTML = "<img src=\"./images/<?php echo _QXZ("$STstart_recording_GIF_off"); ?>\" border=\"0\" alt=\"Start Stereo Recording\" />";
+
 			if (INgroupCOUNT > 0)
 				{
 				if (VU_closer_default_blended == 1)
@@ -23570,7 +23797,11 @@ $zi=2;
 	<!-- <a href=\"#\" onclick=\"conf_send_recording('MonitorConf','" + head_conf + "','','','');return false;\">Record</a> -->
     <span style="background-color: <?php echo $MAIN_COLOR ?>" id="RecorDControl"><a href="#" onclick="conf_send_recording('MonitorConf',session_id,'','','','YES');return false;"><img src="./images/<?php echo _QXZ("$start_recording_GIF"); ?>" border="0" alt="Start Recording" /></a></span><br />
     <span style="background-color: <?php echo $MAIN_COLOR ?>" id="RecorDMute"></span>
-   	<?php
+	<?php
+	if ($SSstereo_recording > 0)
+		{echo "<span style=\"background-color:$MAIN_COLOR\" id=\"StRecorDControl\"><img src=\"./images/"._QXZ("$STstart_recording_GIF_off")."\" border=\"0\" alt=\"Start Stereo Recording\" /></span><br />";}
+	else
+		{echo "<span style=\"background-color:$MAIN_COLOR\" id=\"StRecorDControl\"></span>";}
 	if (!preg_match("/NOGAP/",$SSrecording_buttons))
         {echo "<span id=\"SpacerSpanA\"><img src=\"./images/"._QXZ("blank.gif")."\" width=\"145px\" height=\"16px\" border=\"0\" /></span><br />\n";}
 	if ($SSenable_first_webform > 0)

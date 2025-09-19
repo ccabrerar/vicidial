@@ -1,7 +1,7 @@
 <?php
 # manager_send.php    version 2.14
 # 
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed purely to insert records into the vicidial_manager table to signal Actions to an asterisk server
 # This script depends on the server_ip being sent and also needs to have a valid user/pass from the vicidial_users table
@@ -158,10 +158,11 @@
 # 240430-1046 - Allow for park/grab of xfer line through API
 # 240709-2010 - Changes to input variable filtering
 # 241122-1544 - Fix for DTMF issue #1525
+# 250831-0839 - Added MonitorStereo/StopMonitorStereo functions
 #
 
-$version = '2.14-105';
-$build = '241122-1544';
+$version = '2.14-106';
+$build = '250831-0839';
 $php_script = 'manager_send.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=161;
@@ -285,7 +286,7 @@ $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,allow_sipsak_messages,enable_languages,language_method,meetme_enter_login_filename,meetme_enter_leave3way_filename,agent_debug_logging,allow_web_debug FROM system_settings;";
+$stmt = "SELECT use_non_latin,allow_sipsak_messages,enable_languages,language_method,meetme_enter_login_filename,meetme_enter_leave3way_filename,agent_debug_logging,allow_web_debug,stereo_recording,stereo_parallel_recording FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02001',$user,$server_ip,$session_name,$one_mysql_log);}
 #if ($DB) {echo "$stmt\n";}
@@ -301,6 +302,8 @@ if ($qm_conf_ct > 0)
 	$meetme_enter_leave3way_filename =	$row[5];
 	$SSagent_debug_logging =			$row[6];
 	$SSallow_web_debug =				$row[7];
+	$SSstereo_recording =				$row[8];
+	$SSstereo_parallel_recording =		$row[9];
 	}
 if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
@@ -2494,7 +2497,6 @@ if ($ACTION=="Redirect")
 	}
 
 
-
 ######################
 # ACTION=Monitor or Stop Monitor  - insert Monitor/StopMonitor Manager statement to start recording on a channel
 ######################
@@ -2598,7 +2600,7 @@ if ( ($ACTION=="Monitor") || ($ACTION=="StopMonitor") )
 						$stmt = "UPDATE recording_log set end_time='$NOW_TIME',end_epoch='$StarTtime',length_in_sec=$length_in_sec,length_in_min='$length_in_min' where filename='$filename' order by start_epoch desc;";
 							if ($DB) {echo "$stmt\n";}
 						$rslt=mysql_to_mysqli($stmt, $link);
-					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02071',$user,$server_ip,$session_name,$one_mysql_log);}
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02071',$user,$server_ip,$session_name,$one_mysql_log);}
 						}
 					}
 				echo _QXZ("%1s command sent for Channel %2s on %3s",0,'',$ACTION,$channel,$server_ip)."\nFilename: $filename\nRecorDing_ID: $recording_id\n";
@@ -2606,10 +2608,6 @@ if ( ($ACTION=="Monitor") || ($ACTION=="StopMonitor") )
 			}
 		}
 	}
-
-
-
-
 
 
 ######################
@@ -2633,7 +2631,7 @@ if ( ($ACTION=="MonitorConf") || ($ACTION=="StopMonitorConf") )
 
 		if ($ACTION=="MonitorConf")
 			{
-			$stmt="SELECT recording_id,filename FROM routing_initiated_recordings where user='$user' and processed='0' order by launch_time desc limit 1;";
+			$stmt="SELECT recording_id,filename FROM routing_initiated_recordings where user='$user' and processed='0' and rir_type='' order by launch_time desc limit 1;";
 			$rslt=mysql_to_mysqli($stmt, $link);
 			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02139',$user,$server_ip,$session_name,$one_mysql_log);}
 			if ($DB) {echo "$stmt\n";}
@@ -2818,6 +2816,11 @@ if ( ($ACTION=="MonitorConf") || ($ACTION=="StopMonitorConf") )
 					if ($DB) {echo "$stmt\n";}
 				$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02079',$user,$server_ip,$session_name,$one_mysql_log);}
+
+				$stmt = "UPDATE recording_live set end_time='$NOW_TIME',recording_status='FINISHED' where recording_id='$recording_id' and recording_status='STARTED';";
+					if ($DB) {echo "$stmt\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02XXX',$user,$server_ip,$session_name,$one_mysql_log);}
 				}
 
 			# find and hang up all recordings going on in this conference # and extension = '$exten' 
@@ -2850,7 +2853,373 @@ if ( ($ACTION=="MonitorConf") || ($ACTION=="StopMonitorConf") )
 	}
 
 
+######################
+# ACTION=MonitorStereo or StopMonitorStereo  - insert Monitor/StopMonitor Manager statement to start recording on a customer channel
+######################
+if ( ($ACTION=="MonitorStereo") || ($ACTION=="StopMonitorStereo") )
+	{
+	$row='';   $rowx='';
+	$channel_live=1;
+	$uniqueidSQL='';
 
+	if ( (($ACTION=="MonitorStereo") && ((strlen($exten)<3) or (strlen($channel)<4) or (strlen($filename)<8))) || (($ACTION=="StopMonitorStereo") && ((strlen($exten)<3) or (strlen($channel)<4) or (strlen($filename)<4))) )
+		{
+		$channel_live=0;
+		echo _QXZ("Channel %1s is not valid or exten %2s is not valid or filename: %3s is not valid, %4s command not inserted",0,'',$channel,$exten,$filename,$ACTION)."\n";
+		$stage .= " REC-Invalid $exten $filename $channel";
+		}
+	else
+		{
+		$VDvicidial_id='';
+
+		if ($ACTION=="MonitorStereo")
+			{
+			$stmt="SELECT recording_id,filename FROM routing_initiated_recordings where user='$user' and processed='0' and rir_type='S' order by launch_time desc limit 1;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02139',$user,$server_ip,$session_name,$one_mysql_log);}
+			if ($DB) {echo "$stmt\n";}
+			$rir_ct = mysqli_num_rows($rslt);
+			if ($rir_ct > 0)
+				{
+				$row=mysqli_fetch_row($rslt);
+				$recording_id =	$row[0];
+				$filename =		$row[1];
+
+				$stmt = "UPDATE routing_initiated_recordings SET processed='1' where recording_id='$recording_id';";
+					if ($format=='debug') {echo "\n<!-- $stmt -->";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02140',$user,$server_ip,$session_name,$one_mysql_log);}
+
+				$stage .= " RIR $recording_id";
+				}
+			else
+				{
+				if ($FROMvdc=='YES')
+					{
+					##### update vla recording record to blank
+					$stmt = "UPDATE vicidial_live_agents SET external_recording='' where user='$user';";
+						if ($format=='debug') {echo "\n<!-- $stmt -->";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+
+					##### get call type from vicidial_live_agents table
+					$VLA_inOUT='NONE';
+					$stmt="SELECT comments FROM vicidial_live_agents where user='$user' order by last_update_time desc limit 1;";
+					$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02074',$user,$server_ip,$session_name,$one_mysql_log);}
+					if ($DB) {echo "$stmt\n";}
+					$VLA_inOUT_ct = mysqli_num_rows($rslt);
+					if ($VLA_inOUT_ct > 0)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$VLA_inOUT =		$row[0];
+						}
+					if ($VLA_inOUT == 'INBOUND')
+						{
+						$four_hours_ago = date("Y-m-d H:i:s", mktime(date("H")-4,date("i"),date("s"),date("m"),date("d"),date("Y")));
+
+						##### look for the vicidial ID in the vicidial_closer_log table
+						$stmt="SELECT closecallid,campaign_id FROM vicidial_closer_log where lead_id='$lead_id' and user='$user' and call_date > \"$four_hours_ago\" order by closecallid desc limit 1;";
+						}
+					else
+						{
+						##### look for the vicidial ID in the vicidial_log table
+						$stmt="SELECT uniqueid,campaign_id FROM vicidial_log where uniqueid='$uniqueid' and lead_id='$lead_id';";
+						}
+					$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02075',$user,$server_ip,$session_name,$one_mysql_log);}
+					if ($DB) {echo "$stmt\n";}
+					$VM_mancall_ct = mysqli_num_rows($rslt);
+					if ($VM_mancall_ct > 0)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$VDvicidial_id =	$row[0];
+						$VDcampaign_id =	$row[1];
+
+						$stmt = "UPDATE recording_log SET vicidial_id='$VDvicidial_id' where recording_id='$recording_id';";
+							if ($format=='debug') {echo "\n<!-- $stmt -->";}
+						$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02076',$user,$server_ip,$session_name,$one_mysql_log);}
+						}
+
+					##### gather stereo recording settings for this specific campaign/in-group
+					if ($VLA_inOUT == 'INBOUND')
+						{
+						$stmt="SELECT stereo_recording,stereo_parallel_recording,stereo_rec_filename,stereo_recording_agent FROM vicidial_inbound_groups where group_id='$VDcampaign_id';";
+						}
+					else
+						{
+						$stmt="SELECT stereo_recording,stereo_parallel_recording,stereo_rec_filename,stereo_recording_agent FROM vicidial_campaigns where campaign_id='$VDcampaign_id';";
+						}
+					$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02075',$user,$server_ip,$session_name,$one_mysql_log);}
+					if ($DB) {echo "$stmt\n";}
+					$VM_mancall_ct = mysqli_num_rows($rslt);
+					if ($VM_mancall_ct > 0)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$stereo_recording =				$row[0];
+						$stereo_parallel_recording =	$row[1];
+						$stereo_rec_filename =			$row[2];
+						$stereo_recording_agent =		$row[3];
+						}
+					}
+
+				if (preg_match("/CUSTOMER|BOTH/",$stereo_recording) )
+					{
+					if ( ($SSstereo_parallel_recording > 0) and (!preg_match("/DISABLED/i",$stereo_parallel_recording)) )
+						{
+						$stereo_exten = 'SPAC';
+						if (preg_match("/BOTH_CHANNELS/",$stereo_recording) )
+							{$stereo_exten='SPACBC';}
+						if (preg_match("/CUSTOMER_ONLY/",$stereo_recording) )
+							{$stereo_exten='SPACCO';}
+						if (preg_match("/CUSTOMER_MUTE/",$stereo_recording) )
+							{$stereo_exten='SPACCM';}
+						$stereo_ac = $stereo_exten.'-'.$stereo_recording_agent."\n";
+						}
+					else
+						{
+						$stereo_exten = 'SAC';
+						if (preg_match("/BOTH_CHANNELS/",$stereo_recording) )
+							{$stereo_exten='SACBC';}
+						if (preg_match("/CUSTOMER_ONLY/",$stereo_recording) )
+							{$stereo_exten='SACCO';}
+						if (preg_match("/CUSTOMER_MUTE/",$stereo_recording) )
+							{$stereo_exten='SACCM';}
+						$stereo_ac = $stereo_exten.'-'.$stereo_recording_agent."\n";
+						}
+					# if VENDORLEADCODE is used in the stereo recording filenames, look it up for this lead
+					if (preg_match("/VENDORLEADCODE/",$stereo_rec_filename))
+						{
+						$stmt="SELECT vendor_lead_code FROM vicidial_list where lead_id='$lead_id';";
+						$rslt=mysql_to_mysqli($stmt, $link);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+						if ($DB) {echo "$stmt\n";}
+						$VM_mancall_ct = mysqli_num_rows($rslt);
+						if ($VM_mancall_ct > 0)
+							{
+							$row=mysqli_fetch_row($rslt);
+							$vendor_lead_code =				$row[0];
+							}
+						}
+					$recdate = date("Ymd-His");
+					$tinydate = date("ymdHis");
+
+					$stereo_rec_filename = preg_replace("/CAMPAIGN/",$campaign,$stereo_rec_filename);
+					$stereo_rec_filename = preg_replace("/INGROUP/",$VDcampaign_id,$stereo_rec_filename);
+					$stereo_rec_filename = preg_replace("/CUSTPHONE/",$phone_number,$stereo_rec_filename);
+					$stereo_rec_filename = preg_replace("/FULLDATE/",$recdate,$stereo_rec_filename);
+					$stereo_rec_filename = preg_replace("/TINYDATE/",$tinydate,$stereo_rec_filename);
+					$stereo_rec_filename = preg_replace("/EPOCH/",$StarTtime,$stereo_rec_filename);
+					$stereo_rec_filename = preg_replace("/AGENT/",$user,$stereo_rec_filename);
+					$stereo_rec_filename = preg_replace("/VENDORLEADCODE/",$vendor_lead_code,$stereo_rec_filename);
+					$stereo_rec_filename = preg_replace("/LEADID/",$lead_id,$stereo_rec_filename);
+					$stereo_rec_filename = preg_replace("/CALLID/",$CalLCID,$stereo_rec_filename);
+					$stereo_rec_filename = preg_replace("/\"|\'/",'',$stereo_rec_filename);		
+
+					if (preg_match("/RECID/",$filename) )
+						{
+						$stmt = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$server_ip','$stereo_exten','$NOW_TIME','$StarTtime','$stereo_rec_filename','$lead_id','$user','$VDvicidial_id')";
+							if ($format=='debug') {echo "\n<!-- $stmt -->";}
+						$rslt=mysql_to_mysqli($stmt, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02133',$user,$server_ip,$session_name,$one_mysql_log);}
+						$RLaffected_rows = mysqli_affected_rows($link);
+						if ($RLaffected_rows > 0)
+							{
+							$recording_id = mysqli_insert_id($link);
+							}
+
+						$stereo_rec_filename = preg_replace("/RECID/","$recording_id",$stereo_rec_filename);
+
+						$stmt = "UPDATE recording_log SET filename='$stereo_rec_filename' where recording_id='$recording_id';";
+							if ($format=='debug') {echo "\n<!-- $stmt -->";}
+						$rslt=mysql_to_mysqli($stmt, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02134',$user,$server_ip,$session_name,$one_mysql_log);}
+						}
+					else
+						{
+						$stmt = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$server_ip','$stereo_exten','$NOW_TIME','$StarTtime','$stereo_rec_filename','$lead_id','$user','$VDvicidial_id')";
+							if ($format=='debug') {echo "\n<!-- $stmt -->";}
+						$rslt=mysql_to_mysqli($stmt, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02073',$user,$server_ip,$session_name,$one_mysql_log);}
+						$RLaffected_rows = mysqli_affected_rows($link);
+						if ($RLaffected_rows > 0)
+							{
+							$recording_id = mysqli_insert_id($link);
+							}
+						}
+
+					if ( ($SSstereo_parallel_recording > 0) and (!preg_match("/DISABLED/i",$stereo_parallel_recording)) )
+						{
+						$four_hours_ago = date("Y-m-d H:i:s", mktime(date("H")-4,date("i"),date("s"),date("m"),date("d"),date("Y")));
+
+						$parallel_recording_id=0;
+						# gather parallel_recording_id from recording_log_parallel
+						$stmt="SELECT parallel_recording_id FROM recording_log_parallel where lead_id='$lead_id' and user='$user' and channel='$channel' and start_time > \"$four_hours_ago\" order by parallel_recording_id desc limit 1;";
+						$rslt=mysql_to_mysqli($stmt, $link);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+						if ($DB) {echo "$stmt\n";}
+						$PR_ct = mysqli_num_rows($rslt);
+						if ($PR_ct > 0)
+							{
+							$row=mysqli_fetch_row($rslt);
+							$parallel_recording_id =				$row[0];
+							}
+
+						# stereo_parallel_recording is enabled, only insert DB records, don't initiate recording
+						$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,recording_status,parallel_recording_id) values('$recording_id','$server_ip','$NOW_TIME','0','$stereo_rec_filename','$lead_id','$VDcampaign_id STEREO_PARALLEL AGENT-CONTROLLED $stereo_recording $stereo_recording_agent','start: $now_date|vicidial_id: $VDvicidial_id|user: $user|channel: $channel|','STEREO START','$parallel_recording_id');";
+							if ($format=='debug') {echo "\n<!-- $stmtA -->";}
+						$rslt=mysql_to_mysqli($stmtA, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmtA,'02XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+
+						$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO_PARALLEL AGENT-CONTROLLED','$server_ip','$NOW_TIME','$channel','$stereo_rec_filename','$lead_id','$user','2020-12-31 23:59:59','STARTED');";
+							if ($format=='debug') {echo "\n<!-- $stmtD -->";}
+						$rslt=mysql_to_mysqli($stmtD, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmtD,'02XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+						}
+					else
+						{
+						### start the stereo recording
+						$PATHmonitorT =	'/var/spool/asterisk/monitorS';
+						$stereo_recording_options = "r($PATHmonitorT/$stereo_rec_filename-out.wav)t($PATHmonitorT/$stereo_rec_filename-in.wav)"; 
+						$vmgr_callerid = substr($stereo_rec_filename, 0, 17) . '...';
+						$stmt="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$server_ip','','MixMonitor','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $channel','Options: $stereo_recording_options','','','','','','','');";
+							if ($format=='debug') {echo "\n<!-- $stmt -->";}
+						$rslt=mysql_to_mysqli($stmt, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02135',$user,$server_ip,$session_name,$one_mysql_log);}
+
+						$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,recording_status) values('$recording_id','$server_ip','$NOW_TIME','0','$stereo_rec_filename','$lead_id','$VDcampaign_id STEREO AGENT-CONTROLLED $stereo_recording $stereo_recording_agent','start: $now_date|vicidial_id: $VDvicidial_id|user: $user|channel: $channel|','STEREO START');";
+							if ($format=='debug') {echo "\n<!-- $stmtA -->";}
+						$rslt=mysql_to_mysqli($stmtA, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmtA,'02XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+
+						$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO AGENT-CONTROLLED','$server_ip','$NOW_TIME','$channel','$stereo_rec_filename','$lead_id','$user','2020-12-31 23:59:59','STARTED');";
+							if ($format=='debug') {echo "\n<!-- $stmtD -->";}
+						$rslt=mysql_to_mysqli($stmtD, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmtD,'02XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+								
+						if (preg_match("/CUSTOMER_ONLY/",$stereo_recording) )
+							{
+							$vmgr_callerid = substr($stereo_rec_filename, 0, 16) . 'M...';
+							$stmt="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$server_ip','','MixMonitorMute','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $channel','Direction: write','State: 1','','','','','','');";
+								if ($format=='debug') {echo "\n<!-- $stmt -->";}
+							$rslt=mysql_to_mysqli($stmt, $link);
+								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+							}
+						if (preg_match("/CUSTOMER_MUTE/",$stereo_recording) )
+							{
+							$vmgr_callerid = substr($stereo_rec_filename, 0, 16) . 'M...';
+							$stmt="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$server_ip','','MixMonitorMute','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $channel','Direction: read','State: 1','','','','','','');";
+								if ($format=='debug') {echo "\n<!-- $stmt -->";}
+							$rslt=mysql_to_mysqli($stmt, $link);
+								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+							}
+						}
+					$filename = $stereo_rec_filename;
+					}
+				$stage .= " AIR $recording_id $stereo_rec_filename";
+				}
+			}
+		##### BEGIN StopMonitorStereo steps #####
+		else
+			{
+			$recording_type='';
+			if ($FROMvdc=='YES')
+				{
+				##### update vla recording record to blank
+				$stmt = "UPDATE vicidial_live_agents SET external_recording='' where user='$user';";
+					if ($format=='debug') {echo "\n<!-- $stmt -->";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+				}
+			if ($uniqueid=='IN')
+				{
+				$four_hours_ago = date("Y-m-d H:i:s", mktime(date("H")-4,date("i"),date("s"),date("m"),date("d"),date("Y")));
+
+				### find the value to put in the vicidial_id field if this was an inbound call
+				$stmt="SELECT closecallid from vicidial_closer_log where lead_id='$lead_id' and call_date > \"$four_hours_ago\" order by closecallid desc limit 1;";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02077',$user,$server_ip,$session_name,$one_mysql_log);}
+				$VAC_qm_ct = mysqli_num_rows($rslt);
+				if ($VAC_qm_ct > 0)
+					{
+					$row=mysqli_fetch_row($rslt);
+					$uniqueidSQL	= ",vicidial_id='$row[0]'";
+					}
+				}
+			else
+				{
+				if (strlen($uniqueid) > 8)
+					{$uniqueidSQL	= ",vicidial_id='$uniqueid'";}
+				}
+
+			$rec_searchSQL = "filename='$filename'";
+			if (preg_match("/^ID:/",$filename))
+				{
+				$recording_id = $filename;
+				$recording_id = preg_replace("/^ID:/",'',$recording_id);
+				$rec_searchSQL = "recording_id='$recording_id'";
+				}
+
+			$stmt="SELECT recording_id,UNIX_TIMESTAMP(start_time),filename,recording_type FROM recording_live where channel='$channel' and user='$user' and recording_status='STARTED' and recording_type LIKE \"STEREO%\" and recording_type LIKE \"%AGENT-CONTROLLED%\" order by start_time desc;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+			if ($DB) {echo "$stmt\n";}
+			$rec_count = mysqli_num_rows($rslt);
+			if ($rec_count>0)
+				{
+				$row=mysqli_fetch_row($rslt);
+				$recording_id =		$row[0];
+				$start_time =		$row[1];
+				$filename =			$row[2];
+				$recording_type =	$row[3];
+				$vmgr_callerid = substr($filename, 0, 17) . '...';
+				$length_in_sec = ($StarTtime - $start_time);
+				$length_in_min = ($length_in_sec / 60);
+				$length_in_min = sprintf("%8.2f", $length_in_min);
+
+				$stmt = "UPDATE recording_log set end_time='$NOW_TIME',end_epoch='$StarTtime',length_in_sec=$length_in_sec,length_in_min='$length_in_min' $uniqueidSQL where recording_id='$recording_id';";
+					if ($DB) {echo "$stmt\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02079',$user,$server_ip,$session_name,$one_mysql_log);}
+
+				$stmt = "UPDATE recording_log_stereo set end_time='$NOW_TIME',recording_status='FINISHED',length_in_sec=$length_in_sec where recording_id='$recording_id';";
+					if ($DB) {echo "$stmt\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+
+				$stmt = "UPDATE recording_live set end_time='$NOW_TIME',recording_status='FINISHED' where recording_id='$recording_id' and recording_status='STARTED';";
+					if ($DB) {echo "$stmt\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+
+				$stmt = "UPDATE routing_initiated_recordings set processed='1' where user='$user' and processed='0' and rir_type='S' order by launch_time desc limit 1;";
+					if ($DB) {echo "$stmt\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+				}
+
+		#	if ($WeBRooTWritablE > 0)
+		#		{
+		#		$fp = fopen ("./vicidial_debug.txt", "a");
+		#		fwrite ($fp, "$NOW_TIME|STEREO_START|$user|$channel|$rec_count|$stmt|\n");
+		#		fclose($fp);
+		#		}
+
+			if (!preg_match("/PARALLEL/",$recording_type))
+				{
+				# stop all stereo recordings on the customer channel
+				$stmt="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$server_ip','','StopMixMonitor','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $channel','','','','','','','','');";
+					if ($format=='debug') {echo "\n<!-- $stmt -->";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+				}
+			}
+		##### END StopMonitorStereo steps #####
+		echo _QXZ("%1s command sent for Channel %2s on %3s",0,'',$ACTION,$channel,$server_ip)."\nFilename: $filename\nRecorDing_ID: $recording_id\n RECORDING WILL LAST UP TO 60 MINUTES\n";
+		}
+	}
 
 
 ######################

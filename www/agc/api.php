@@ -1,7 +1,7 @@
 <?php
 # api.php
 # 
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed as an API(Application Programming Interface) to allow
 # other programs to interact with the VICIDIAL Agent screen
@@ -117,10 +117,11 @@
 # 240427-0809 - Added tw_check option for transfer_conference function
 # 240429-2220 - Added PARK_XFER|GRAB_XFER options for park_call function
 # 250122-1010 - Allow for letters in phone_number variable, for AGENTDIRECT transfers
+# 250830-2102 - Added stereo_recording function
 #
 
-$version = '2.14-82';
-$build = '250122-1010';
+$version = '2.14-83';
+$build = '250830-2102';
 $php_script = 'api.php';
 
 $startMS = microtime();
@@ -319,7 +320,7 @@ $pass = preg_replace("/'|\"|\\\\|;| /","",$pass);
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
-$stmt = "SELECT use_non_latin,enable_languages,language_method,agent_debug_logging,outbound_cid_any,allow_web_debug,agent_notifications FROM system_settings;";
+$stmt = "SELECT use_non_latin,enable_languages,language_method,agent_debug_logging,outbound_cid_any,allow_web_debug,agent_notifications,stereo_recording FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
 #if ($DB) {echo "$stmt\n";}
@@ -334,6 +335,7 @@ if ($qm_conf_ct > 0)
 	$SSoutbound_cid_any =		$row[4];
 	$SSallow_web_debug =		$row[5];
 	$SSagent_notifications =	$row[6];
+	$SSstereo_recording =		$row[7];
 	}
 if ($SSallow_web_debug < 1) {$DB=0;}
 
@@ -1275,6 +1277,138 @@ if ($function == 'recording')
 ### END - recording
 ################################################################################
 
+
+
+
+
+
+################################################################################
+### BEGIN - stereo_recording - send a start or stop stereo agent recording signal to agent screen
+################################################################################
+if ($function == 'stereo_recording')
+	{
+	if ( ( (!preg_match("/BEGIN/",$value)) and (!preg_match("/END/",$value)) and (!preg_match("/STATUS/",$value)) ) or ($SSstereo_recording < 1) or ( (strlen($agent_user)<1) and (strlen($alt_user)<2) ) )
+		{
+		$result = _QXZ("ERROR");
+		$result_reason = _QXZ("stereo_recording not valid");
+		echo "$result: $result_reason - $value|$agent_user\n";
+		api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+		}
+	else
+		{
+		if ( (!preg_match("/ $function /",$VUapi_allowed_functions)) and (!preg_match("/ALL_FUNCTIONS/",$VUapi_allowed_functions)) )
+			{
+			$result = _QXZ("ERROR");
+			$result_reason = _QXZ("auth USER DOES NOT HAVE PERMISSION TO USE THIS FUNCTION");
+			echo "$result: $result_reason - $value|$user|$function|$VUuser_group\n";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		if (strlen($alt_user)>1)
+			{
+			$stmt = "select count(*) from vicidial_users where custom_three='$alt_user';";
+			if ($DB) {echo "$stmt\n";}
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$row=mysqli_fetch_row($rslt);
+			if ($row[0] > 0)
+				{
+				$stmt = "select user from vicidial_users where custom_three='$alt_user' order by user;";
+				if ($DB) {echo "$stmt\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$row=mysqli_fetch_row($rslt);
+				$agent_user = $row[0];
+				}
+			else
+				{
+				$result = _QXZ("ERROR");
+				$result_reason = _QXZ("no user found");
+				echo "$result: $result_reason - $alt_user\n";
+				api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+				}
+			}
+		$stmt = "select count(*) from vicidial_live_agents where user='$agent_user';";
+		if ($DB) {echo "$stmt\n";}
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$row=mysqli_fetch_row($rslt);
+		if ($row[0] > 0)
+			{
+			$stmt = "select external_recording,server_ip,conf_exten,status from vicidial_live_agents where user='$agent_user';";
+			if ($DB) {echo "$stmt\n";}
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$row=mysqli_fetch_row($rslt);
+			$AGENTserver_ip =	$row[1];
+			$AGENTconf_exten =	$row[2];
+			$AGENTstatus =		$row[3];
+
+			$RECfilename =		'';
+			$RECserver_ip =		'';
+			$RECstart_time =	'';
+			$stmt = "SELECT recording_id,filename,server_ip,start_time FROM recording_live where user='$agent_user' and recording_status='STARTED' and recording_type LIKE \"%AGENT-CONTROLLED%\" and end_time IS NULL order by start_time desc limit 1;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$rl_ct = mysqli_num_rows($rslt);
+			if ($rl_ct > 0)
+				{
+				$row=mysqli_fetch_row($rslt);
+				$recording_id =		$row[0];
+				$RECfilename =		$row[1];
+				$RECserver_ip =		$row[2];
+				$RECstart_time =	$row[3];
+				}
+
+			if ($value=='STATUS')
+				{
+				if ($rl_ct > 0)
+					{
+					$result = _QXZ("NOTICE");
+					$result_reason = _QXZ("stereo_recording active");
+					echo "$result: $result_reason - $agent_user|$recording_id|$RECfilename|$RECserver_ip|$RECstart_time|$AGENTserver_ip|$AGENTconf_exten|$AGENTstatus\n";
+					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+					}
+				else
+					{
+					$result = _QXZ("NOTICE");
+					$result_reason = _QXZ("not stereo_recording");
+					echo "$result: $result_reason - $agent_user|||||$AGENTserver_ip|$AGENTconf_exten|$AGENTstatus\n";
+					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+					}
+				}
+			else
+				{
+				if ( (preg_match("/END/",$value)) and ( ($recording_id=='END') or ($recording_id < 1) ) )
+					{
+					$result = _QXZ("ERROR");
+					$result_reason = _QXZ("stop stereo_recording error");
+					echo "$result: $result_reason - $agent_user|$recording_id||||$AGENTserver_ip|$AGENTconf_exten|$AGENTstatus\n";
+					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+
+					exit;
+					}
+				if ( (strlen($stage)>0) and (preg_match("/BEGIN/",$value)) )
+					{
+					while (strlen($stage)>14) {$stage = preg_replace("/.$/",'',$stage);}
+					$value = "$value$stage";
+					}
+				$stmt="UPDATE vicidial_live_agents set external_recording='$value' where user='$agent_user';";
+					if ($format=='debug') {echo "\n<!-- $stmt -->";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$result = _QXZ("SUCCESS");
+				$result_reason = _QXZ("stereo_recording function sent");
+				echo "$result: $result_reason - $agent_user|$value||||$AGENTserver_ip|$AGENTconf_exten|$AGENTstatus\n";
+				api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+				}
+			}
+		else
+			{
+			$result = _QXZ("ERROR");
+			$result_reason = _QXZ("agent_user is not logged in");
+			echo "$result: $result_reason - $agent_user\n";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			}
+		}
+	}
+################################################################################
+### END - stereo_recording
+################################################################################
 
 
 

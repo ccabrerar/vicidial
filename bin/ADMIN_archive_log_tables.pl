@@ -20,7 +20,7 @@
 # Based on perl scripts in ViciDial from Matt Florell and post: 
 # http://www.vicidial.org/VICIDIALforum/viewtopic.php?p=22506&sid=ca5347cffa6f6382f56ce3db9fb3d068#22506
 #
-# Copyright (C) 2024  I. Taushanov, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  I. Taushanov, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 90615-1701 - First version
@@ -73,6 +73,7 @@
 # 231126-2227 - Added vicidial_hci_log archiving
 # 240916-2159 - Added --extended-log-only
 # 240924-2041 - Added --vicidial-log-only
+# 250914-1537 - Added archiving of recording_log_stereo and recording_log_parallel tables
 #
 
 $CALC_TEST=0;
@@ -4034,6 +4035,104 @@ if (!$T)
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 
 			$stmtA = "optimize table recording_log_archive;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			}
+
+		##### recording_log_stereo
+		$stmtA = "SELECT count(*) from recording_log_stereo;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$recording_log_stereo_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		$stmtA = "SELECT count(*) from recording_log_stereo_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$recording_log_stereo_archive_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		if (!$Q) {print "\nProcessing recording_log_stereo table...  ($recording_log_stereo_count|$recording_log_stereo_archive_count)\n";}
+		$stmtA = "INSERT IGNORE INTO recording_log_stereo_archive SELECT * from recording_log_stereo;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows inserted into recording_log_stereo_archive table \n";}
+		
+		$rv = $sthA->err();
+		if (!$rv) 
+			{	
+			$stmtA = "DELETE FROM recording_log_stereo WHERE start_time < '$RECdel_time';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			if (!$Q) {print "$sthArows rows deleted from recording_log_stereo table \n";}
+
+			$stmtA = "optimize table recording_log_stereo;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+
+			$stmtA = "optimize table recording_log_stereo_archive;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			}
+
+		##### recording_log_parallel
+		$stmtA = "SELECT count(*) from recording_log_parallel;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$recording_log_parallel_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		$stmtA = "SELECT count(*) from recording_log_parallel_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$recording_log_parallel_archive_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		if (!$Q) {print "\nProcessing recording_log_parallel table...  ($recording_log_parallel_count|$recording_log_parallel_archive_count)\n";}
+		$stmtA = "INSERT IGNORE INTO recording_log_parallel_archive SELECT * from recording_log_parallel;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows inserted into recording_log_parallel_archive table \n";}
+		
+		$rv = $sthA->err();
+		if (!$rv) 
+			{	
+			$stmtA = "DELETE FROM recording_log_parallel WHERE start_time < '$RECdel_time';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			if (!$Q) {print "$sthArows rows deleted from recording_log_parallel table \n";}
+
+			$stmtA = "optimize table recording_log_parallel;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+
+			$stmtA = "optimize table recording_log_parallel_archive;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			}

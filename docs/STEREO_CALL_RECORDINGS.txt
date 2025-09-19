@@ -1,0 +1,368 @@
+VICIDIAL STEREO CALL RECORDINGS		Started: 2025-06-18  Updated: 2025-09-19
+
+
+TO USE THESE FEATURES, YOU WILL NEED TO HAVE ALL SERVERS IN YOUR CLUSTER USING SVN/TRUNK REVISION 3940(2025-09-19) CODE OR HIGHER!!!
+
+
+This project was designed to allow for additional stereo recording of phone calls at the agent and server levels directly on VICIdial Asterisk servers, with the customer always on one channel(the Right channel) and the agent and all other parties on the other channel(the Left channel). If you are looking for the VICI Gateway Recording Server documentation, please see the GATEWAY_RECORDING_SERVER.txt document.
+
+Stereo Call Recording is IN-ADDITION-TO the existing Legacy Mono Call Recording within VICIdial. Both can be active at the same time, and Stereo Call Recording is supplemental, not a replacement for Legacy Mono Call Recording.
+
+
+This project has been broken down into 4 phases of development, since it is so large:
+
+1) Additional agent-initiated stereo-recording(customer-channel on one side) On-Demand, with option to mute customer-channel only. Agent screen and Agent API functions.
+***COMPLETE***
+
+2) Campaign & in-Group settings for separate automatic whole-call stereo call recording with options for customer-only and customer-muted settings.
+***COMPLETE***
+
+3) Parallel stereo call recordings with customer on one side, agent & 3rd parties on other side, customer-only, customer-muted, agent-controlled start-stop of recording (this will be done as a post-call process).
+***COMPLETE***
+
+4) Live recording muting based on DTMF receipt and un-muting after x seconds of being muted(campaign setting), for both new customer-channel-stereo and legacy-mono agent session recordings.
+***STILL-IN-DEVELOPMENT***
+
+
+While the above development phases will be worked-on in the order they are above, there are portions of the later phases that will be implemented as early as the first phase due to shared processes needed for the later phases.
+
+
+-------------------------------------------------------------------------------------------------
+NOTES:
+
+For Stereo Call Recordings to work properly, all Asterisk servers in your VICIdial cluster need to be running Asterisk 18 or higher and they need to all be using the CONFBRIDGE agent session conferencing engine. You will also need to run the "install.pl" script on each Asterisk server so the new stereo recording directories are created.
+
+All Stereo Call Recordings will have "Customer on the Right and Agent(and 3rd-parties) on the Left". There may be some cases where more than one agent will be on a consultative 3-way conference call with the customer, and by necessity in these cases on the 2nd-agent-initiated stereo recording, the 1st agent will be with the customer on the Right channel while the 2nd agent is on the Left channel, but on the 1st agent recording(which is happening at the same time), the customer will be on the Right channel alone and the 1st and 2nd agent will both be on the Left channel together.
+
+Stereo Call Recording is not going to replace the existing default mono call recording in VICIdial, it is "in-addition-to" the existing default mono call recording. This means that you can record calls in mono and stereo at the same time in separate recordings. This also means that additional system resources will be used on Stereo recording if the default Mono call recording is still enabled at the same time. One other note related to this: the 6 existing "3way" recording campaign settings and the agent-controlled "Mute Recording" campaign features will only affect the default Mono call recording, and not the new Stereo call recording. Also, each recording method has different "Recording Filename" fields, which cannot be the same, so that recordings won't be overwritten on archive servers or during call recording exports. If you have parallel recording enabled, there are also 3 additional optional "Recording Filename" fields. If these are left blank, then the Stereo Recording Filename will be used with a prefix added to it for each of the different types of parallel recording files.
+
+If Parallel Stereo Call Recordings is enabled, then every call will be temporarily recorded in it's entirety(from when the agent receives it until it leaves the agent session), since this feature uses a post-call process to create the parallel recordings, there must be full call recordings available to create the separate parallel recordings from. After the post-call process finishes, the original full recordings will be marked for deletion. The options include: CUSTOMER-ONLY, CUSTOMER-MUTED and FULL-RECORDING. If Stereo Recording Agent Control is also enabled, that can itself also result in multiple recordings on a single call.
+
+For In-groups, the "Stereo Recording" options do NOT default to inherit settings from whatever campaign the agent is logged into when a call arrives at the agent session(which is how default mono call recording works). If you want calls handled through an In-Group to be Stereo Recorded, then that In-Group needs to have those settings enabled.
+
+For all of Stereo Recording, the agent-controlled Mute Recordings feature will not be available. This is because of all of the complexity already included in the Customer-Only, Customer-Muted and Recording DTMF Muting features that are to be built into Stereo Recording. Also, in the existing default mono call recording, if the Recording DTMF Muting feature is enabled, then the agent-controlled Mute Recordings feature will not be available.
+
+
+For Recording DTMF Muting (STILL BEING DEVELOPED), this is NOT designed to mute 100% of the DTMF audio in a recording, it is meant to trigger a fixed time period of muting of the channel sending the DTMF audio AFTER a DTMF digit is detected. As a note, on many VICIdial systems, audible DTMF is already muted and converted into out-of-band DTMF signalling in many channel types by default, so this feature may not be necessary for all organizations. This setting is a number of seconds to mute the channel, with '0' being disabled. the default is '0'.
+
+
+
+
+-------------------------------------------------------------------------------------------------
+DIFFERENCES BETWEEN LEGACY MONO CALL RECORDING AND THE NEW STEREO CALL RECORDING:
+
+1. Stereo Call Recording is based upon the customer's bridged phone call channel, not the agent session like Legacy Mono Call Recording does. As such, Stereo Call Recording cannot start until the customer call is answered for outbound calls. This means that for manual-dial calls, the recording cannot start before the ringing of the call starts, like Legacy Mono Call Recording does, it will start after the Answer signal is detected and the call has been bridged.
+
+2. The 6 existing "3way" recording campaign settings and the agent-controlled "Mute Recording" campaign features will only work with the default Mono call recording, and not the new Stereo call recording.
+
+3. There are now up to 5 different Recording Filename fields for each campaign and in-group, all of these can be generated at the same time: 
+	Mono Legacy, Agent-Controlled Stereo, Parallel Customer-Only Stereo, Parallel Customer-Muted Stereo, Parallel Full-Recording Stereo
+
+4. In the Agent Screen, the new Stereo Recording buttons will appear directly below the legacy mono call recording buttons, but the stereo buttons will have a small Stereo logo on the left side of the buttons.
+
+5. For In-groups, the "Stereo Recording" options do NOT default to inherit settings from whatever campaign the agent is logged into when a call arrives at the agent session(which is how default mono call recording works). If you want calls handled through an In-Group to be Stereo Recorded, then that In-Group needs to have those settings enabled.
+
+6. With Parallel Stereo Call Recording, the recording is initiated on the back-end, with no agent visibility into the recordings, unlike with Legacy Mono Call Recording, which displays recording information on the agent screen.
+
+7. In Stereo Recording call recordings, if an agent parks a customer, the recording will follow the customer and you will hear the park message on the stereo recording. With Mono Legacy Recordings, the recording follows the agent, so when a customer is parked, they are no longer heard on the legacy recording until the agent grabs the customer from park.
+
+8. Stereo Call Recording files are each about double the file size of a single Legacy Mono Call Recording, and if you have all Stereo Recording options enabled, including the three Parallel call recording options, then the file recordings will take up eight times the amount of space total as a single Mono recording file.
+
+9. In the Modify Lead Page, in the RECORDINGS FOR THIS LEAD section near the bottom, there is a new "STEREO" column that will indicate if a recording is in Stereo or not by the use of a code. If the STEREO field is blank, then the recording is a Mono Legacy Recording, and if the value in that column begins with "S", then that recording is in Stereo. The code used will explain what type of stereo recording it is, and it will be one of the codes listed in the "List of recording_log.extension values" section shown further down in this document.
+
+
+
+
+
+-------------------------------------------------------------------------------------------------
+EXAMPLE SETS OF REQUIREMENTS AND THE SETTINGS THAT NEED TO BE CONFIGURED ON VICIDIAL:
+
+
+--------------------------------------------------------------------------------
+EXAMPLE 1 REQUIREMENTS:
+
+- Must record both sides of each entire customer call in a stereo recording
+
+EXAMPLE 1 SETTINGS:
+
+- System Settings	-> Allow Stereo Recordings = '1'
+- Campaign Detail	-> Stereo Call Recordings = 'BOTH_CHANNELS'
+			-> Stereo Recording Agent Control = 'ALLFORCE'
+			-> Stereo Rec Filename = 'S_FULLDATE_CUSTPHONE'
+- In-Group Modify	-> Stereo Call Recordings = 'BOTH_CHANNELS'
+			-> Stereo Recording Agent Control = 'ALLFORCE'
+			-> Stereo Rec Filename = 'S_FULLDATE_CUSTPHONE'
+NOTE: (For every Campaign and In-Group you want these Stereo Recordings for, they will each need to have the above settings)
+
+
+--------------------------------------------------------------------------------
+EXAMPLE 2 REQUIREMENTS:
+
+- Must allow for Agent-Controlled stereo recording on-demand, but not started at the beginning of the phone call
+- Must also record both sides of the entire call in a separate stereo recording
+
+EXAMPLE 2 SETTINGS:
+
+- System Settings	-> Allow Stereo Recordings = '1'
+			-> Enable Stereo Parallel Recordings = '1'
+- Campaign Detail	-> Stereo Call Recordings = 'BOTH_CHANNELS'
+			-> Stereo Recording Agent Control = 'ONDEMAND'
+			-> Stereo Rec Filename = 'S_FULLDATE_CUSTPHONE'
+			-> Parallel Stereo Recordings = 'FULL-RECORDING'
+			-> Parallel Full-Recording Rec Filename = 'SFR_FULLDATE_CUSTPHONE'
+- In-Group Modify	-> Stereo Call Recordings = 'BOTH_CHANNELS'
+			-> Stereo Recording Agent Control = 'ONDEMAND'
+			-> Stereo Rec Filename = 'S_FULLDATE_CUSTPHONE'
+			-> Parallel Stereo Recordings = 'FULL-RECORDING'
+			-> Parallel Full-Recording Rec Filename = 'SFR_FULLDATE_CUSTPHONE'
+NOTE: (For every Campaign and In-Group you want these Stereo Recordings for, they will each need to have the above settings)
+
+
+--------------------------------------------------------------------------------
+EXAMPLE 3 REQUIREMENTS:
+
+- Must NOT allow for Agent-Controlled stereo recording at all
+- Must record customer-side-only of the entire call in a separate stereo recording
+- Must record agent-side-only of the entire call in a separate stereo recording
+
+EXAMPLE 3 SETTINGS:
+
+- System Settings	-> Allow Stereo Recordings = '1'
+			-> Enable Stereo Parallel Recordings = '1'
+- Campaign Detail	-> Stereo Call Recordings = 'BOTH_CHANNELS'
+			-> Stereo Recording Agent Control = 'NEVER'
+			-> Stereo Rec Filename = 'S_FULLDATE_CUSTPHONE'
+			-> Parallel Stereo Recordings = 'CUSTOMER-ONLY_CUSTOMER-MUTED'
+			-> Parallel Customer-Only Rec Filename = 'SCO_FULLDATE_CUSTPHONE'
+			-> Parallel Customer-Muted Rec Filename = 'SCM_FULLDATE_CUSTPHONE'
+- In-Group Modify	-> Stereo Call Recordings = 'BOTH_CHANNELS'
+			-> Stereo Recording Agent Control = 'NEVER'
+			-> Stereo Rec Filename = 'S_FULLDATE_CUSTPHONE'
+			-> Parallel Stereo Recordings = 'CUSTOMER-ONLY_CUSTOMER-MUTED'
+			-> Parallel Customer-Only Rec Filename = 'SCO_FULLDATE_CUSTPHONE'
+			-> Parallel Customer-Muted Rec Filename = 'SCM_FULLDATE_CUSTPHONE'
+NOTE: (For every Campaign and In-Group you want these Stereo Recordings for, they will each need to have the above settings)
+
+
+
+
+
+STEREO CALL RECORDING SCENARIOS AND DB TABLE ACTIONS:
+-------------------------------------------------------------------------------------------------
+
+Parallel stereo call recordings enabled on the system and campaign/in-group:
+	- Record inserted into recording_log_parallel table and recording started in all cases
+		If campaign/in-group parallel is set to CUSTOMER-ONLY and/or CUSTOMER-MUTED and/or FULL-RECORDING:
+			- Records inserted into recording_live, recording_log and recording_log_stereo tables for the whole-call recordings
+		if campaign/in-group stereo_recording_agent is set to ALLCALLS or ALLFORCE:
+			- Records inserted into recording_live, recording_log and recording_log_stereo tables for the whole-call recordings
+		If campaign/in-group Stereo Recording Agent Control is set to ALLCALLS or ONDEMAND and agent starts a recording:
+			- Records inserted into recording_live, recording_log and recording_log_stereo tables for the partial-call agent recordings
+		After call is complete, recordings above are processed, original is put into monitorTRASH directory for deletion in 3 days	
+	- Records in the recording_live database table are archived to the recording_live_log table within one hour of being "FINISHED"
+
+
+
+
+-------------------------------------------------------------------------------------------------
+List of recording_log.extension values with recording_log_stereo.recording_type values:
+
+	MONO_LEGACY
+	MONO_LEGACY_RIR
+	MONO_LEGACY_REMOTE
+	MONO_LEGACY_SURVEY
+	STEREO_AGENT
+	STEREO_DID
+SPACBC	STEREO_PARALLEL AGENT-CONTROLLED BOTH_CHANNELS
+SPACCO	STEREO_PARALLEL AGENT-CONTROLLED CUSTOMER_ONLY
+SPACCM	STEREO_PARALLEL AGENT-CONTROLLED CUSTOMER_MUTE
+SACBC	STEREO AGENT-CONTROLLED BOTH_CHANNELS
+SACCO	STEREO AGENT-CONTROLLED CUSTOMER_ONLY
+SACCM	STEREO AGENT-CONTROLLED CUSTOMER_MUTE
+SPCO	STEREO_PARALLEL CUSTOMER-ONLY
+SPCM	STEREO_PARALLEL CUSTOMER-MUTED
+SPFR	STEREO_PARALLEL FULL-RECORDING
+SPACI	STEREO_PARALLEL AGENT-CONTROLLED RIR
+SACI	STEREO AGENT-CONTROLLED RIR
+SPCOR	STEREO_PARALLEL CUSTOMER-ONLY REMOTE
+SPCMR	STEREO_PARALLEL CUSTOMER-MUTED REMOTE
+SPFRR	STEREO_PARALLEL FULL-RECORDING REMOTE
+SPACR	STEREO_PARALLEL AGENT-CONTROLLED REMOTE
+SACR	STEREO AGENT-CONTROLLED REMOTE
+
+
+
+
+-------------------------------------------------------------------------------------------------
+List of scripts modified/created for these new Stereo Call Recording features:
+- agc/vicidial.php
+- agc/vdc_db_query.php
+- agc/manager_send.php
+- agc/api.php
+- vicidial/admin.php
+- vicidial/admin_modify_lead.php
+- install.pl
+- AST_CRON_audio_1_move_VDonly.pl
+- AST_CRON_audio_1_stereo.pl
+- AST_CRON_audio_2_compress.pl
+- AST_flush_DBqueue.pl
+- ADMIN_keepalive_ALL.pl
+- ADMIN_archive_log_tables.pl
+- agi-VDAD_ALL_inbound.agi
+- agi-VDAD_ALL_outbound.agi
+
+
+
+
+
+-------------------------------------------------------------------------------------------------
+New Database Tables (FOR REFERENCE ONLY!!!):
+
+
+----------------- EXISTING:
+
+ALTER TABLE system_settings ADD stereo_recording ENUM('0','1','2','3','4','5','6') default '0';
+
+ALTER TABLE vicidial_campaigns ADD stereo_recording ENUM('DISABLED','CUSTOMER','CUSTOMER_MUTE') default 'DISABLED';
+
+ALTER TABLE vicidial_inbound_groups ADD stereo_recording ENUM('DISABLED','CUSTOMER','CUSTOMER_MUTE') default 'DISABLED';
+
+ALTER TABLE vicidial_manager MODIFY cmd_line_i VARCHAR(50);
+ALTER TABLE vicidial_manager MODIFY cmd_line_j VARCHAR(50);
+ALTER TABLE vicidial_manager MODIFY cmd_line_d VARCHAR(200);
+
+CREATE TABLE recording_log_stereo (
+recording_id INT(10) UNSIGNED PRIMARY KEY NOT NULL,
+server_ip VARCHAR(15),
+start_time DATETIME,
+end_time DATETIME,
+length_in_sec MEDIUMINT(8) UNSIGNED,
+filename VARCHAR(100),
+lead_id INT(9) UNSIGNED,
+options VARCHAR(100),
+processing_log TEXT,
+index(filename),
+index(lead_id),
+index(start_time)
+) ENGINE=MyISAM;
+
+----------------- NEW:
+
+
+ALTER TABLE system_settings ADD recording_dtmf_detection TINYINT(3) UNSIGNED default '0';
+ALTER TABLE system_settings ADD recording_dtmf_muting TINYINT(3) UNSIGNED default '0';
+ALTER TABLE system_settings ADD stereo_parallel_recording ENUM('0','1','2','3','4','5','6') default '0';
+
+ALTER TABLE vicidial_campaigns MODIFY stereo_recording ENUM('DISABLED','BOTH_CHANNELS','CUSTOMER_ONLY','CUSTOMER_MUTE') default 'DISABLED';
+ALTER TABLE vicidial_campaigns ADD stereo_recording_agent ENUM('NEVER','ONDEMAND','ALLCALLS','ALLFORCE') default 'ALLFORCE';
+ALTER TABLE vicidial_campaigns ADD stereo_rec_filename VARCHAR(50) default 'S_FULLDATE_CUSTPHONE';
+ALTER TABLE vicidial_campaigns ADD stereo_parallel_recording VARCHAR(50) default 'DISABLED';
+ALTER TABLE vicidial_campaigns ADD parallel_rec_co_filename VARCHAR(50) default '';
+ALTER TABLE vicidial_campaigns ADD parallel_rec_cm_filename VARCHAR(50) default '';
+ALTER TABLE vicidial_campaigns ADD parallel_rec_fr_filename VARCHAR(50) default '';
+ALTER TABLE vicidial_campaigns ADD recording_dtmf_muting SMALLINT(3) UNSIGNED default '0';
+
+ALTER TABLE vicidial_inbound_groups MODIFY stereo_recording ENUM('DISABLED','BOTH_CHANNELS','CUSTOMER_ONLY','CUSTOMER_MUTE') default 'DISABLED';
+ALTER TABLE vicidial_inbound_groups ADD stereo_recording_agent ENUM('NEVER','ONDEMAND','ALLCALLS','ALLFORCE','DISABLED') default 'ALLFORCE';
+ALTER TABLE vicidial_inbound_groups ADD stereo_rec_filename VARCHAR(50) default 'S_FULLDATE_CUSTPHONE';
+ALTER TABLE vicidial_inbound_groups ADD stereo_parallel_recording VARCHAR(50) default 'DISABLED';
+ALTER TABLE vicidial_inbound_groups ADD parallel_rec_co_filename VARCHAR(50) default '';
+ALTER TABLE vicidial_inbound_groups ADD parallel_rec_cm_filename VARCHAR(50) default '';
+ALTER TABLE vicidial_inbound_groups ADD parallel_rec_fr_filename VARCHAR(50) default '';
+ALTER TABLE vicidial_inbound_groups ADD recording_dtmf_muting SMALLINT(3) UNSIGNED default '0';
+
+ALTER TABLE recording_log_stereo ADD dtmf_detected TINYINT(3) UNSIGNED default '0';
+ALTER TABLE recording_log_stereo ADD dtmf_muting TINYINT(3) UNSIGNED default '0';
+ALTER TABLE recording_log_stereo ADD parallel_recording_id INT(10) UNSIGNED default '0';
+ALTER TABLE recording_log_stereo ADD recording_status VARCHAR(20) default '';
+
+CREATE INDEX rls_pr_id on recording_log_stereo(parallel_recording_id);
+
+ALTER TABLE routing_initiated_recordings ADD rir_type VARCHAR(1) default '';
+
+CREATE TABLE recording_log_parallel (
+parallel_recording_id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
+channel VARCHAR(100),
+server_ip VARCHAR(15),
+extension VARCHAR(100),
+start_time DATETIME,
+end_time DATETIME,
+length_in_sec MEDIUMINT(8) UNSIGNED,
+filename VARCHAR(100),
+lead_id INT(9) UNSIGNED,
+user VARCHAR(20),
+vicidial_id VARCHAR(20),
+recording_status VARCHAR(20) default '',
+processing_log TEXT,
+index(filename),
+index(lead_id),
+index(start_time),
+index(vicidial_id)
+) ENGINE=MyISAM;
+
+CREATE TABLE recording_live (
+recording_id INT(10) UNSIGNED PRIMARY KEY NOT NULL,
+recording_type VARCHAR(40) default 'MONO_LEGACY',
+server_ip VARCHAR(15),
+start_time DATETIME,
+end_time DATETIME,
+channel VARCHAR(255),
+filename VARCHAR(100),
+lead_id INT(9) UNSIGNED,
+user VARCHAR(20),
+dtmf_detected TINYINT(3) UNSIGNED default '0',
+dtmf_muting TINYINT(3) UNSIGNED default '0',
+dtmf_muting_seconds TINYINT(3) UNSIGNED default '0',
+dtmf_muting_end_time DATETIME,
+mute_state TINYINT(3) UNSIGNED default '0',
+recording_status VARCHAR(20) default '',
+index(filename),
+index(lead_id),
+index(user),
+index(recording_id),
+index(dtmf_muting_end_time)
+) ENGINE=MyISAM;
+
+CREATE TABLE recording_live_log (
+recording_id INT(10) UNSIGNED PRIMARY KEY NOT NULL,
+recording_type VARCHAR(40) default 'MONO_LEGACY',
+server_ip VARCHAR(15),
+start_time DATETIME,
+end_time DATETIME,
+channel VARCHAR(255),
+filename VARCHAR(100),
+lead_id INT(9) UNSIGNED,
+user VARCHAR(20),
+dtmf_detected TINYINT(3) UNSIGNED default '0',
+dtmf_muting TINYINT(3) UNSIGNED default '0',
+dtmf_muting_seconds TINYINT(3) UNSIGNED default '0',
+dtmf_muting_end_time DATETIME,
+mute_state TINYINT(3) UNSIGNED default '0',
+recording_status VARCHAR(20) default '',
+index(filename),
+index(lead_id),
+index(user),
+index(recording_id),
+index(dtmf_muting_end_time)
+) ENGINE=MyISAM;
+
+CREATE TABLE recording_dtmf_log (
+recording_id INT(10) UNSIGNED PRIMARY KEY NOT NULL,
+recording_type VARCHAR(40) default 'MONO_LEGACY',
+server_ip VARCHAR(15),
+channel VARCHAR(255),
+filename VARCHAR(100),
+lead_id INT(9) UNSIGNED,
+dtmf_muting TINYINT(3) UNSIGNED default '0',
+dtmf_muting_start_time DATETIME,
+dtmf_muting_end_time DATETIME,
+dtmf_muting_seconds TINYINT(3) UNSIGNED default '0',
+mute_state TINYINT(3) UNSIGNED default '0',
+index(filename),
+index(lead_id),
+index(recording_id),
+index(dtmf_muting_end_time)
+) ENGINE=MyISAM;
+
+CREATE TABLE recording_log_parallel_archive LIKE recording_log_parallel;
+CREATE TABLE recording_log_stereo_archive LIKE recording_log_stereo;

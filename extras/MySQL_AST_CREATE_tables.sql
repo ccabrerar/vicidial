@@ -1134,8 +1134,15 @@ leave_3way_stop_recording ENUM('DISABLED','ALL_CALLS') default 'DISABLED',
 manual_minimum_ring_seconds SMALLINT(5) default '0',
 manual_minimum_attempt_seconds SMALLINT(5) default '0',
 manual_minimum_answer_seconds SMALLINT(5) default '0',
-stereo_recording ENUM('DISABLED','CUSTOMER','CUSTOMER_MUTE') default 'DISABLED',
-khomp_settings_container VARCHAR(40) DEFAULT 'KHOMPSETTINGS'
+stereo_recording ENUM('DISABLED','BOTH_CHANNELS','CUSTOMER_ONLY','CUSTOMER_MUTE') default 'DISABLED',
+khomp_settings_container VARCHAR(40) DEFAULT 'KHOMPSETTINGS',
+stereo_rec_filename VARCHAR(50) default 'S_FULLDATE_CUSTPHONE',
+stereo_parallel_recording VARCHAR(50) default 'DISABLED',
+parallel_rec_co_filename VARCHAR(50) default '',
+parallel_rec_cm_filename VARCHAR(50) default '',
+parallel_rec_fr_filename VARCHAR(50) default ''
+recording_dtmf_muting SMALLINT(3) UNSIGNED default '0',
+stereo_recording_agent ENUM('NEVER','ONDEMAND','ALLCALLS','ALLFORCE') default 'ALLFORCE',
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_lists (
@@ -1463,8 +1470,15 @@ third_alert_container VARCHAR(40) default 'DISABLED',
 third_alert_only VARCHAR(40) default 'DISABLED',
 agent_search_list VARCHAR(20) default '',
 state_descriptions VARCHAR(40) default '---DISABLED---',
-stereo_recording ENUM('DISABLED','CUSTOMER','CUSTOMER_MUTE') default 'DISABLED',
-modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+stereo_recording ENUM('DISABLED','BOTH_CHANNELS','CUSTOMER_ONLY','CUSTOMER_MUTE') default 'DISABLED',
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+stereo_rec_filename VARCHAR(50) default 'S_FULLDATE_CUSTPHONE',
+stereo_parallel_recording VARCHAR(50) default 'DISABLED',
+parallel_rec_co_filename VARCHAR(50) default '',
+parallel_rec_cm_filename VARCHAR(50) default '',
+parallel_rec_fr_filename VARCHAR(50) default ''
+recording_dtmf_muting SMALLINT(3) UNSIGNED default '0',
+stereo_recording_agent ENUM('NEVER','ONDEMAND','ALLCALLS','ALLFORCE','DISABLED') default 'ALLFORCE'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_stations (
@@ -2056,7 +2070,10 @@ stereo_recording ENUM('0','1','2','3','4','5','6') default '0',
 enhanced_agent_monitoring ENUM('0','1','2','3','4','5','6') default '0',
 agent_hide_dial_fail ENUM('0','1','2','3','4','5','6') default '0',
 agent_man_dial_filter VARCHAR(20) default '',
-agent_3way_dial_filter VARCHAR(20) default ''
+agent_3way_dial_filter VARCHAR(20) default '',
+recording_dtmf_detection TINYINT(3) UNSIGNED default '0',
+recording_dtmf_muting TINYINT(3) UNSIGNED default '0',
+stereo_parallel_recording ENUM('0','1','2','3','4','5','6') default '0'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaigns_list_mix (
@@ -3939,6 +3956,7 @@ lead_id INT(9) UNSIGNED,
 vicidial_id VARCHAR(20),
 user VARCHAR(20) DEFAULT NULL,
 processed TINYINT(1) default '0',
+rir_type VARCHAR(1) default '',
 index(lead_id),
 index(user),
 index(processed)
@@ -5319,9 +5337,14 @@ filename VARCHAR(100),
 lead_id INT(9) UNSIGNED,
 options VARCHAR(100),
 processing_log TEXT,
+dtmf_detected TINYINT(3) UNSIGNED default '0',
+dtmf_muting TINYINT(3) UNSIGNED default '0',
+parallel_recording_id INT(10) UNSIGNED default '0',
+recording_status VARCHAR(20) default '',
 index(filename),
 index(lead_id),
-index(start_time)
+index(start_time),
+index(parallel_recording_id)
 ) ENGINE=MyISAM;
 
 CREATE TABLE clr_log (
@@ -5336,6 +5359,90 @@ options VARCHAR(100) default '',
 server_ip VARCHAR(15) default '',
 processing_log TEXT,
 index(start_time)
+) ENGINE=MyISAM;
+
+CREATE TABLE recording_log_parallel (
+parallel_recording_id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
+channel VARCHAR(100),
+server_ip VARCHAR(15),
+extension VARCHAR(100),
+start_time DATETIME,
+end_time DATETIME,
+length_in_sec MEDIUMINT(8) UNSIGNED,
+filename VARCHAR(100),
+lead_id INT(9) UNSIGNED,
+user VARCHAR(20),
+vicidial_id VARCHAR(20),
+recording_status VARCHAR(20) default '',
+processing_log TEXT,
+index(filename),
+index(lead_id),
+index(start_time),
+index(vicidial_id)
+) ENGINE=MyISAM;
+
+CREATE TABLE recording_live (
+recording_id INT(10) UNSIGNED PRIMARY KEY NOT NULL,
+recording_type VARCHAR(40) default 'MONO_LEGACY',
+server_ip VARCHAR(15),
+start_time DATETIME,
+end_time DATETIME,
+channel VARCHAR(255),
+filename VARCHAR(100),
+lead_id INT(9) UNSIGNED,
+user VARCHAR(20),
+dtmf_detected TINYINT(3) UNSIGNED default '0',
+dtmf_muting TINYINT(3) UNSIGNED default '0',
+dtmf_muting_seconds TINYINT(3) UNSIGNED default '0',
+dtmf_muting_end_time DATETIME,
+mute_state TINYINT(3) UNSIGNED default '0',
+recording_status VARCHAR(20) default '',
+index(filename),
+index(lead_id),
+index(user),
+index(recording_id),
+index(dtmf_muting_end_time)
+) ENGINE=MyISAM;
+
+CREATE TABLE recording_live_log (
+recording_id INT(10) UNSIGNED PRIMARY KEY NOT NULL,
+recording_type VARCHAR(40) default 'MONO_LEGACY',
+server_ip VARCHAR(15),
+start_time DATETIME,
+end_time DATETIME,
+channel VARCHAR(255),
+filename VARCHAR(100),
+lead_id INT(9) UNSIGNED,
+user VARCHAR(20),
+dtmf_detected TINYINT(3) UNSIGNED default '0',
+dtmf_muting TINYINT(3) UNSIGNED default '0',
+dtmf_muting_seconds TINYINT(3) UNSIGNED default '0',
+dtmf_muting_end_time DATETIME,
+mute_state TINYINT(3) UNSIGNED default '0',
+recording_status VARCHAR(20) default '',
+index(filename),
+index(lead_id),
+index(user),
+index(recording_id),
+index(dtmf_muting_end_time)
+) ENGINE=MyISAM;
+
+CREATE TABLE recording_dtmf_log (
+recording_id INT(10) UNSIGNED PRIMARY KEY NOT NULL,
+recording_type VARCHAR(40) default 'MONO_LEGACY',
+server_ip VARCHAR(15),
+channel VARCHAR(255),
+filename VARCHAR(100),
+lead_id INT(9) UNSIGNED,
+dtmf_muting TINYINT(3) UNSIGNED default '0',
+dtmf_muting_start_time DATETIME,
+dtmf_muting_end_time DATETIME,
+dtmf_muting_seconds TINYINT(3) UNSIGNED default '0',
+mute_state TINYINT(3) UNSIGNED default '0',
+index(filename),
+index(lead_id),
+index(recording_id),
+index(dtmf_muting_end_time)
 ) ENGINE=MyISAM;
 
 
@@ -5550,6 +5657,9 @@ CREATE TABLE recording_log_archive LIKE recording_log;
 ALTER TABLE recording_log_archive MODIFY recording_id INT(10) UNSIGNED UNIQUE NOT NULL;
 ALTER TABLE recording_log_archive DROP PRIMARY KEY;
 
+CREATE TABLE recording_log_parallel_archive LIKE recording_log_parallel;
+CREATE TABLE recording_log_stereo_archive LIKE recording_log_stereo;
+
 CREATE TABLE vicidial_drop_log_archive LIKE vicidial_drop_log; 
 DROP INDEX drop_date on vicidial_drop_log_archive;
 CREATE UNIQUE INDEX vicidial_drop_log_archive_key on vicidial_drop_log_archive(drop_date, uniqueid);
@@ -5743,4 +5853,4 @@ INSERT INTO `wallboard_reports` VALUES ('AGENTS_AND_QUEUES','Agents and Queues',
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1728',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1729',db_schema_update_date=NOW(),reload_timestamp=NOW();

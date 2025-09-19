@@ -9,7 +9,7 @@
 # !!!!!!!! IMPORTANT !!!!!!!!!!!!!!!!!!
 # THIS SCRIPT SHOULD ONLY BE RUN ON ONE SERVER ON YOUR CLUSTER
 #
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 60717-1214 - changed to DBI by Marin Blu
@@ -36,6 +36,7 @@
 # 231228-1901 - Added optimizing of vicidial_3way_press_multi records
 # 240219-0811 - Added optimizing of server_live_... tables
 # 240709-1300 - Added Validate XFER vicidial_auto_calls: "--check-xfers" flag
+# 250914-1537 - Added archiving of recording_live table
 #
 
 $session_flush=0;
@@ -44,6 +45,7 @@ $reset_stuck_leads=0;
 $stuck_lists='';
 $stuck_listsSQL='';
 $check_xfers=0;
+$vicidial_recording_limit=60;
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -293,18 +295,31 @@ $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VA
  or die "Couldn't connect to database: " . DBI->errstr;
 
 ### Grab Server values from the database
-$stmtA = "SELECT vd_server_logs FROM servers where server_ip = '$VARserver_ip';";
+$stmtA = "SELECT vd_server_logs,vicidial_recording_limit FROM servers where server_ip = '$VARserver_ip';";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
 if ($sthArows > 0)
 	{
 	@aryA = $sthA->fetchrow_array;
-	$DBvd_server_logs =			$aryA[0];
+	$DBvd_server_logs =				$aryA[0];
+	$vicidial_recording_limit =		$aryA[1];
 	if ($DBvd_server_logs =~ /Y/)	{$SYSLOG = '1';}
 	else {$SYSLOG = '0';}
 	}
 $sthA->finish();
+
+($Rsec,$Rmin,$Rhour,$Rmday,$Rmon,$Ryear,$Rwday,$Ryday,$Risdst) = localtime(time() - ($vicidial_recording_limit * 60));
+$Ryear = ($Ryear + 1900);
+$Ryy = $Ryear; $Ryy =~ s/^..//gi;
+$Rmon++;
+if ($Rmon < 10) {$Rmon = "0$Rmon";}
+if ($Rmday < 10) {$Rmday = "0$Rmday";}
+if ($Rhour < 10) {$Rhour = "0$Rhour";}
+if ($Rmin < 10) {$Rmin = "0$Rmin";}
+if ($Rsec < 10) {$Rsec = "0$Rsec";}
+$SQLdate_REC_limit="$Ryear-$Rmon-$Rmday $Rhour:$Rmin:$Rsec";
+
 
 ### Grab system_settings values from the database
 $stmtA = "SELECT sip_event_logging,enable_auto_reports FROM system_settings limit 1;";
@@ -1000,6 +1015,103 @@ if ($check_xfers > 0)
 
 	if (!$Q) {print " - XFER leads check finished, stuck calls checked: $sthArowsXFERS  deleted: $killed_xfers_ct, exiting...\n";}
 	}
+
+
+### BEGIN archive recording_live that are FINISHED ###
+$rl_count=0;
+$stmtA = "SELECT count(*) FROM recording_live;";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArowsACTIVE=$sthA->rows;
+if ($DBX) {print "DEBUG: $sthArowsACTIVE|$stmtA|\n";}
+if ($sthArowsACTIVE > 0)
+	{
+	@aryA = $sthA->fetchrow_array;
+	$rl_count =		$aryA[0];
+	}
+$sthA->finish();
+
+if ($rl_count > 0) 
+	{
+	$stmtA = "INSERT IGNORE INTO recording_live_log SELECT * FROM recording_live where end_time <= \"$SQLdate_NOW\" and end_time IS NOT NULL and recording_status LIKE \"FINISHED%\";";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows = $sthA->rows;
+	if (!$Q) {print "$sthArows rows inserted into recording_live_log table\n";}
+
+	if ($sthArows > 0) 
+		{
+		$stmtA = "DELETE FROM recording_live where end_time <= \"$SQLdate_NOW\" and end_time IS NOT NULL and recording_status LIKE \"FINISHED%\";";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows deleted from recording_live table\n";}
+		}
+
+	### Gather older STARTED recording_live records from the database to confirm they are still active
+	$stmtA = "SELECT user,lead_id,recording_id FROM recording_live where start_time <= \"$SQLdate_REC_limit\" and recording_status='STARTED';";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArowsRECS=$sthA->rows;
+	if ($DBX) {print "DEBUG: $sthArowsRECS|$stmtA|\n";}
+	$orc=0;
+	while ($sthArowsRECS > $orc)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$OR_user[$orc] =			$aryA[0];
+		$OR_lead_id[$orc] =			$aryA[1];
+		$OR_recording_id[$orc] =	$aryA[2];
+		$orc++;
+		}
+	$sthA->finish();
+
+	$orc=0;
+	while ($sthArowsRECS > $orc)
+		{
+		$al_count=0;
+		$stmtA = "SELECT count(*) FROM vicidial_live_agents where user='$OR_user[$orc]' and lead_id='$OR_lead_id[$orc]';";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArowsAGNT=$sthA->rows;
+		if ($DBX) {print "DEBUG: $sthArowsAGNT|$stmtA|\n";}
+		if ($sthArowsAGNT > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$al_count =		$aryA[0];
+			}
+		$sthA->finish();
+
+		if ($al_count < 1)
+			{
+			$stmtA = "UPDATE recording_live SET recording_status='FINISHED CHECK' where recording_id='$OR_recording_id[$orc]';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			if ($DBX) {print "$sthArows rows set to finished in recording_live table:   |$OR_recording_id[$orc]|$OR_user[$orc]|$OR_lead_id[$orc]|\n";}
+
+			$stmtA = "INSERT IGNORE INTO recording_live_log SELECT * FROM recording_live where recording_id='$OR_recording_id[$orc]';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			if (!$Q) {print "$sthArows rows inserted into recording_live_log table:   |$OR_recording_id[$orc]|$OR_user[$orc]|$OR_lead_id[$orc]|\n";}
+
+			$stmtA = "DELETE FROM recording_live where recording_id='$OR_recording_id[$orc]';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			if (!$Q) {print "$sthArows rows delete from recording_live_log table:   |$OR_recording_id[$orc]|$OR_user[$orc]|$OR_lead_id[$orc]|\n";}
+			}
+		$orc++;
+		}
+
+	# optimize recording_live table
+	$stmtA = "optimize table recording_live;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+
+	$sthA->finish();
+	}
+### END archive recording_live that are FINISHED ###
 
 
 $dbhA->disconnect();

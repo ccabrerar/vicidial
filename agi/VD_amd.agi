@@ -69,7 +69,7 @@
 # 220411-0833 - Added FHG(file-http-get) message playback option to download file from website
 # 230412-1023 - Added Code to dispo NOAUDIODATA as ADAIR (Dead Air Auto) with Settings Container option, Issue #1459
 # 230726-0932 - Added manual_vm_status_updates campaign option
-# 250906-2228 - Added AMD minimum length handling to increase short call durations
+# 240906-2228 - Added AMD minimum length handling to increase short call durations
 #
 
 $script = 'VD_amd.agi';

@@ -53,6 +53,7 @@
 # 230508-0809 - Added Asterisk 18 compatibility
 # 240704-0830 - Added coldstorage DB entries
 # 250103-1017 - Added ConfBridge conf files updates
+# 250823-1411 - Added stereo recording directories
 #
 
 ############################################
@@ -2780,6 +2781,15 @@ if ($WEBONLY < 1)
 		`mkdir -p $PATHmonitor`;
 		`chmod -R 0766 $PATHmonitor`;
 		}
+
+	# generate paths to asterisk stereo recordings directories: 
+	$PATHmonitorS =	$PATHmonitor."S";
+	$PATHmonitorP =	$PATHmonitor."P";
+	$PATHmonitorTRASH =	$PATHmonitor."TRASH";
+
+	if (!-e "$PATHmonitorS")	{`mkdir -p $PATHmonitorS`;   `chmod -R 0766 $PATHmonitorS`;}
+	if (!-e "$PATHmonitorP")	{`mkdir -p $PATHmonitorP`;   `chmod -R 0766 $PATHmonitorP`;}
+	if (!-e "$PATHmonitorTRASH")	{`mkdir -p $PATHmonitorTRASH`;   `chmod -R 0766 $PATHmonitorTRASH`;}
 	if (!-e "$PATHmonitor/MIX")	{`mkdir -p $PATHmonitor/MIX`;}
 
 	if (!-e "$PATHDONEmonitor")					
