@@ -1140,7 +1140,7 @@ stereo_rec_filename VARCHAR(50) default 'S_FULLDATE_CUSTPHONE',
 stereo_parallel_recording VARCHAR(50) default 'DISABLED',
 parallel_rec_co_filename VARCHAR(50) default '',
 parallel_rec_cm_filename VARCHAR(50) default '',
-parallel_rec_fr_filename VARCHAR(50) default ''
+parallel_rec_fr_filename VARCHAR(50) default '',
 recording_dtmf_muting SMALLINT(3) UNSIGNED default '0',
 stereo_recording_agent ENUM('NEVER','ONDEMAND','ALLCALLS','ALLFORCE') default 'ALLFORCE',
 ) ENGINE=MyISAM;
@@ -1476,7 +1476,7 @@ stereo_rec_filename VARCHAR(50) default 'S_FULLDATE_CUSTPHONE',
 stereo_parallel_recording VARCHAR(50) default 'DISABLED',
 parallel_rec_co_filename VARCHAR(50) default '',
 parallel_rec_cm_filename VARCHAR(50) default '',
-parallel_rec_fr_filename VARCHAR(50) default ''
+parallel_rec_fr_filename VARCHAR(50) default '',
 recording_dtmf_muting SMALLINT(3) UNSIGNED default '0',
 stereo_recording_agent ENUM('NEVER','ONDEMAND','ALLCALLS','ALLFORCE','DISABLED') default 'ALLFORCE'
 ) ENGINE=MyISAM;
