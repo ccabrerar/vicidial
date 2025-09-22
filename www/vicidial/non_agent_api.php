@@ -12978,7 +12978,7 @@ if ($function == 'in_group_status')
 				echo "$output";
 
 				$result = 'SUCCESS';
-				$data = "$user|$in_groups|$stage";
+				$data = "$user|$in_groups|$stage|$total_agents_waiting";
 				$result_reason = "in_group_status CALLS FOUND: $k";
 
 				api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
