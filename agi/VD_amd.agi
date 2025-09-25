@@ -25,7 +25,7 @@
 # exten => _91NXXNXXXXXX,n,Set(__AMDMINLEN=7)
 #		NOTE: the above variable setting will ensure that this script has run for a minimum of 7 seconds before ending and hanging up
 #
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 60206-1434 - first build
@@ -70,10 +70,11 @@
 # 230412-1023 - Added Code to dispo NOAUDIODATA as ADAIR (Dead Air Auto) with Settings Container option, Issue #1459
 # 230726-0932 - Added manual_vm_status_updates campaign option
 # 240906-2228 - Added AMD minimum length handling to increase short call durations
+# 250924-2152 - Added code for deprecation of "Monitor" application after Asterisk 20
 #
 
 $script = 'VD_amd.agi';
-$build = '230726-0932';
+$build = '250924-2152';
 
 $A = 1;		# set to 1 for AMD output messages mode
 $AMD_LOG = 3;	# set to 1 for logfile and 2 forDB log, 3 for both
@@ -713,7 +714,15 @@ else
 				}
 			else
 				{
-				$AGI->exec("Monitor","wav,/var/spool/asterisk/monitor/MIX/$campaign_rec_filename"); 
+				if ($ast_ver_str{major} > 20) 
+					{
+					# Deprecation of "Monitor" application after Asterisk 20
+					$AGI->exec("MixMonitor",",r($PATHmonitor/MIX/$campaign_rec_filename-in.wav)t($PATHmonitor/MIX/$campaign_rec_filename-out.wav)");
+					}
+				else
+					{
+					$AGI->exec("Monitor","wav,/var/spool/asterisk/monitor/MIX/$campaign_rec_filename");
+					}
 				}
 
 			### insert record into recording_log table ###

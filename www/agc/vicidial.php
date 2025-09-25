@@ -749,13 +749,14 @@
 # 250806-0859 - Added manual_dial_lead_id 'ONLY' option and user override setting
 # 250808-1322 - Added agent_man_dial_filter & agent_3way_dial_filter system settings
 # 250916-2055 - Added stereo recording features
+# 250924-0953 - Added Talk Seconds URLs features
 #
 
-$version = '2.14-715c';
-$build = '250916-2055';
+$version = '2.14-716c';
+$build = '250924-0953';
 $php_script = 'vicidial.php';
 $mel=1;					# Mysql Error Log enabled = 1
-$mysql_log_count=103;
+$mysql_log_count=108;
 $one_mysql_log=0;
 $DB=0;
 $conf_table = "vicidial_conferences";
@@ -1156,7 +1157,7 @@ if (preg_match("/1|2/",$SSagent_hide_dial_fail))
 	$agent_hide_dial_fail_MESSAGE='Dial Failed';
 	$stmt="SELECT container_entry FROM vicidial_settings_containers WHERE container_id='FAILED_DIAL_MESSAGE_OVERRIDE';";
 	$rslt=mysql_to_mysqli($stmt, $link);
-			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01XXX',$VD_login,$server_ip,$session_name,$one_mysql_log);}
+			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01104',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 	if ($DB) {echo "$stmt\n";}
 	$stde_ct = mysqli_num_rows($rslt);
 	if ($stde_ct > 0)
@@ -1820,7 +1821,7 @@ else
 				$stmt="SELECT count(*) from vicidial_two_factor_auth where user='$VD_login' and auth_stage='1' and auth_exp_date > NOW();";
 				if ($DB) {echo "$stmt\n";}
 				$rslt=mysql_to_mysqli($stmt, $link);
-					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01XXX',$VD_login,$server_ip,$session_name,$one_mysql_log);}
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01105',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 				$auth_check_to_print = mysqli_num_rows($rslt);
 				if ($auth_check_to_print < 1)
 					{$VALID_2FA=0;}
@@ -1844,7 +1845,7 @@ else
 
 				$stmt="SELECT full_name,email,mobile_number,user_group from vicidial_users where user='$VD_login' and active='Y' and api_only_user != '1';";
 				$rslt=mysql_to_mysqli($stmt, $link);
-					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01XXX',$VD_login,$server_ip,$session_name,$one_mysql_log);}
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01106',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 				$row=mysqli_fetch_row($rslt);
 				$LOGfullname =							$row[0];
 				$LOGemail =								$row[1];
@@ -3395,7 +3396,7 @@ else
 					{
 					$stmt="SELECT container_entry FROM vicidial_settings_containers WHERE container_id='$state_descriptions';";
 					$rslt=mysql_to_mysqli($stmt, $link);
-							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01XXX',$VD_login,$server_ip,$session_name,$one_mysql_log);}
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01107',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 					if ($DB) {echo "$stmt\n";}
 					$stde_ct = mysqli_num_rows($rslt);
 					if ($stde_ct > 0)
@@ -3881,7 +3882,7 @@ else
 				# Gather list of In-Groups for this user that have hit the daily limit, so we can exclude them
 				$stmt="SELECT group_id FROM vicidial_inbound_group_agents WHERE user='$VD_login' and ( (daily_limit > -1) and (daily_limit <= calls_today) ) limit 1000;";
 				$rslt=mysql_to_mysqli($stmt, $link);
-					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01XXX',$VD_login,$server_ip,$session_name,$one_mysql_log);}
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01108',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 				if ($DB) {echo "$stmt\n";}
 				$VD_hit_limit_ingroups_ct = mysqli_num_rows($rslt);
 				$VD_hit_limit_ingroups="'',";
@@ -6318,6 +6319,7 @@ if ($enable_fast_refresh < 1) {echo "\tvar refresh_interval = 1000;\n";}
 	var conf_channels_xtra_display = 0;
 	var display_message = '';
 	var web_form_vars = '';
+	var talk_url_vars = '';
 	var Nactiveext;
 	var Nbusytrunk;
 	var Nbusyext;
@@ -6862,6 +6864,7 @@ if ($enable_fast_refresh < 1) {echo "\tvar refresh_interval = 1000;\n";}
 	var HTheightS='<?php echo $HTheightS ?>';
 	var agent_hide_dial_fail='<?php echo $SSagent_hide_dial_fail ?>';
 	var agent_hide_dial_fail_MESSAGE="<?php echo $agent_hide_dial_fail_MESSAGE ?>";
+	var talk_sec_url_secs='';
 	var DiaLControl_auto_HTML = "<a href=\"#\" onclick=\"AutoDial_ReSume_PauSe('VDADready','','','','','','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_paused.gif") ?>\" border=\"0\" alt=\"You are paused\" /></a>";
 	var DiaLControl_auto_HTML_ready = "<a href=\"#\" onclick=\"AutoDial_ReSume_PauSe('VDADpause','','','','','','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_active.gif") ?>\" border=\"0\" alt=\"You are active\" /></a>";
 	var DiaLControl_auto_HTML_OFF = "<img src=\"./images/<?php echo _QXZ("vdc_LB_blank_OFF.gif") ?>\" border=\"0\" alt=\"pause button disabled\" />";
@@ -11612,12 +11615,10 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 					{
 					var MDlookResponse = null;
 				//	alert(xmlhttp.responseText);
-
 					var debug_response = xmlhttp.responseText;
 					var REGcommentsDBNL = new RegExp("\n","g");
 					debug_response = debug_response.replace(REGcommentsDBNL, "<br>");
 				//	document.getElementById("debugbottomspan").innerHTML = "<br>|" + manDiaLlook_query + "|<br>\n" + debug_response;
-
 					MDlookResponse = xmlhttp.responseText;
 					var MDlookResponse_array=MDlookResponse.split("\n");
 					var MDlookCID = MDlookResponse_array[0];
@@ -11758,6 +11759,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								document.vicidial_form.uniqueid.value				= MDlookResponse_array[0];
 								document.getElementById("callchannel").innerHTML	= MDlookResponse_array[1];
 								var stereo_info										= MDlookResponse_array[2];
+								var talk_sec_url_info								= MDlookResponse_array[3];
 								lastcustchannel = MDlookResponse_array[1];
 								if( document.images ) { document.images['livecall'].src = image_livecall_ON.src;}
 								document.vicidial_form.SecondS.value		= 0;
@@ -11781,6 +11783,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								var regSRC = new RegExp("^SAC|^SPAC","ig");
 								var regSRD = new RegExp("^SOD","ig");
 								var regSRAF = new RegExp("ALLFORCE","ig");
+								var regTSU = new RegExp("TALKURLS","ig");
 								if (stereo_info.match(regSRC))
 									{
 									// stereo recording was started
@@ -11802,7 +11805,11 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 									var conf_rec_start_html = "<a href=\"#\" onclick=\"conf_send_stereo_recording('MonitorStereo','" + session_id + "','','','','YES');return false;\"><img src=\"./images/<?php echo _QXZ("$STstart_recording_GIF") ?>\" border=\"0\" alt=\"Start Stereo Recording\" /></a>";
 									document.getElementById("StRecorDControl").innerHTML = conf_rec_start_html;
 									}
-
+								if (talk_sec_url_info.match(regTSU))
+									{
+									talk_sec_url_secs = talk_sec_url_info.replace(regTSU, '');
+								//	alert('talk_sec_url_secs: |' + talk_sec_url_secs + '|');
+									}
 
                                 document.getElementById("ParkControl").innerHTML ="<a href=\"#\" onclick=\"mainxfer_send_redirect('ParK','" + lastcustchannel + "','" + lastcustserverip + "','','','','YES');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_LB_parkcall.gif"); ?>\" border=\"0\" alt=\"Park Call\" /></a>";
 								if ( (ivr_park_call=='ENABLED') || (ivr_park_call=='ENABLED_PARK_ONLY') )
@@ -13439,6 +13446,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 				manual_entry_dial=0;
 				SCRIPTweb_form_vars='';
 				SCRIPT2web_form_vars='';
+				talk_url_vars='';
 				MDcheck_for_answer=0;
 				leave_3way_start_recording_trigger=0;
 				leave_3way_start_recording_triggerCALL=0;
@@ -14298,7 +14306,8 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								}
 							VDICstereo_recording =	VDIC_data_VDIG[42];
 							VDICstereo_recording_agent = VDIC_data_VDIG[43];
-
+							talk_sec_url_secs			 = VDIC_data_VDIG[44];
+						//	alert("talk_sec_url_secs: |" + talk_sec_url_secs + "|");
 							var VDIC_data_VDFR=check_VDIC_array[3].split("|");
 							if ( (VDIC_data_VDFR[1].length > 1) && (VDCL_fronter_display == 'Y') )
 								{VDIC_fronter = "  <?php echo _QXZ("Fronter:"); ?> " + VDIC_data_VDFR[0] + " - " + VDIC_data_VDFR[1];}
@@ -15190,6 +15199,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								{CalL_ScripT_id_two = VDIC_data_VDIG[36];}
 							if (VDIC_data_VDIG[37].length > 0)
 								{CalL_ScripT_color_two = VDIC_data_VDIG[37];}
+							talk_sec_url_secs			 = VDIC_data_VDIG[38];
 
 							var VDIC_data_VDFR=check_VDIC_array[3].split("|");
 							if ( (VDIC_data_VDFR[1].length > 1) && (VDCL_fronter_display == 'Y') )
@@ -17890,6 +17900,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 					leave_3way_start_recording_filename='';
 					three_way_call_cid = orig_three_way_call_cid;
 					APIskip=0;
+					talk_sec_url_secs='';
 					document.getElementById("BannerPanel").style.background = panel_bgcolor;
 					document.getElementById("BannerPanel").innerHTML = '';
 					if (manual_auto_next > 0)
@@ -18116,6 +18127,52 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 					var check_DT_array=check_dead_trigger.split("\n");
 
 					agent_events('dead_trigger_url_sent', LasTCID, aec);   aec++;
+					}
+				}
+			delete xmlhttp;
+			}
+		}
+
+
+// ################################################################################
+// Send AJAX request to trigger the Talk Seconds URLs Trigger 
+	function talk_sec_url_send(temp_talk_url_type,temp_call_seconds,temp_inOUT,temp_talk_url_vars)
+		{
+		var xmlhttp=false;
+		/*@cc_on @*/
+		/*@if (@_jscript_version >= 5)
+		// JScript gives us Conditional compilation, we can cope with old IE versions.
+		// and security blocked creation of the objects.
+		 try {
+		  xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
+		 } catch (e) {
+		  try {
+		   xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+		  } catch (E) {
+		   xmlhttp = false;
+		  }
+		 }
+		@end @*/
+		if (!xmlhttp && typeof XMLHttpRequest!='undefined')
+			{
+			xmlhttp = new XMLHttpRequest();
+			}
+		if (xmlhttp) 
+			{
+			TSUupdate_query = "server_ip=" + server_ip + "&session_name=" + session_name + "&ACTION=TALKsecURL&format=text&user=" + user + "&pass=" + pass + "&orig_pass=" + orig_pass + "&lead_id=" + document.vicidial_form.lead_id.value + "&campaign=" + campaign + "&auto_dial_level=" + auto_dial_level + "&agent_log_id=" + agent_log_id + "&list_id=" + document.vicidial_form.list_id.value + "&MDnextCID=" + LasTCID + "&stage=" + group + "&phone_number=" + document.vicidial_form.phone_number.value + "&phone_code=" + document.vicidial_form.phone_code.value + "&dial_method=" + dial_method + "&uniqueid=" + document.vicidial_form.uniqueid.value + "&agent_email=" + LOGemail + "&conf_exten=" + session_id + "&customer_server_ip=" + lastcustserverip + "&exten=" + extension + "&inOUT=" + inOUT + "&customer_sec=" + temp_call_seconds + "&group=" + group + "&original_phone_login=" + original_phone_login + "&phone_pass=" + phone_pass + "";
+			xmlhttp.open('POST', 'vdc_db_query.php');
+			xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
+			xmlhttp.send(TSUupdate_query); 
+			xmlhttp.onreadystatechange = function() 
+				{ 
+			//	document.getElementById("debugbottomspan").innerHTML = TSUupdate_query + "\n" + xmlhttp.responseText;
+				if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
+					{
+				//	alert(xmlhttp.responseText);
+					var check_talk_sec_url_received = null;
+					check_talk_sec_url_received = xmlhttp.responseText;
+					var check_DT_array=check_talk_sec_url_received.split("\n");
+					agent_events('talk_sec_url_send received', LasTCID, aec);   aec++;
 					}
 				}
 			delete xmlhttp;
@@ -19836,6 +19893,8 @@ else
 			{web_form_vars_two = web_form_varsX;}
 		if (webformnumber == '3')
 			{web_form_vars_three = web_form_varsX;}
+		if (webformnumber == '9')
+			{talk_url_vars = web_form_varsX;}
 
 		var SCvendor_lead_code = encodeURIComponent(document.vicidial_form.vendor_lead_code.value);
 		var SCsource_id = source_id;
@@ -22432,6 +22491,20 @@ function phone_number_format(formatphone) {
 									customsubmit_trigger=1;
 									}
 								}
+							}
+						}
+					// Check for Talk URLs trigger seconds talk_sec_url_secs
+					if ( (talk_sec_url_secs.length > 0) && (CheckDEADcallON < 1) )
+						{
+						var temp_tsc = '-' + VD_live_call_secondS + '-';
+						var regTSC = new RegExp(temp_tsc,"g");
+						if (talk_sec_url_secs.match(regTSC))
+							{
+						//	alert('Talk Sec URL Trigger: |' + VD_live_call_secondS + '|   |' + talk_sec_url_secs + '|');
+							// Gather lead and call variables, save them to 'talk_url_vars' variable
+						//	URLDecode('','NO','DEFAULT','9');
+							// Send Talk Sec URL trigger for VD_live_call_secondS seconds
+							talk_sec_url_send('TALK_SEC_TRIGGER',VD_live_call_secondS,inOUT,talk_url_vars);
 							}
 						}
 					}

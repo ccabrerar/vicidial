@@ -174,9 +174,10 @@
 # 240420-2209 - Added Conference Updater option
 # 250103-0932 - Added ConfBridge code and enhanced_agent_monitoring system setting code
 # 250914-1601 - Added pruning of recording_live table entries over 7 days old, deletion of parallel recording source files 3+ days
+# 250924-2212 - Added code for deprecation of "Monitor" application after Asterisk 20
 #
 
-$build = '250914-1601';
+$build = '250924-2212';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -3402,7 +3403,17 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	if ($asterisk_version =~ /^1.2/)
 		{$Vext .= "exten => 8309,2,Monitor(wav,\${CALLERIDNAME})\n";}
 	else
-		{$Vext .= "exten => 8309,2,Monitor(wav,\${CALLERID(name)})\n";}
+		{
+		if ($asterisk_version =~ /^2[1-9]|^3\d|^4\d/)
+			{
+			# Deprecation of "Monitor" application after Asterisk 20
+			$Vext .= "exten => 8309,2,MixMonitor(,r($PATHmonitor/\${CALLERID(name)}-in.wav)t($PATHmonitor/\${CALLERID(name)}-out.wav))\n";
+			}
+		else
+			{
+			$Vext .= "exten => 8309,2,Monitor(wav,\${CALLERID(name)})\n";
+			}
+		}
 	$Vext .= "exten => 8309,3,Wait($vicidial_recording_limit)\n";
 	$Vext .= "exten => 8309,4,Hangup()\n";
 	$Vext .= ";     this is the GSM verison\n";
@@ -3410,7 +3421,17 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	if ($asterisk_version =~ /^1.2/)
 		{$Vext .= "exten => 8310,2,Monitor(gsm,\${CALLERIDNAME})\n";}
 	else
-		{$Vext .= "exten => 8310,2,Monitor(gsm,\${CALLERID(name)})\n";}
+		{
+		if ($asterisk_version =~ /^2[1-9]|^3\d|^4\d/)
+			{
+			# Deprecation of "Monitor" application after Asterisk 20
+			$Vext .= "exten => 8309,2,MixMonitor(,r($PATHmonitor/\${CALLERID(name)}-in.wav)t($PATHmonitor/\${CALLERID(name)}-out.wav))\n";
+			}
+		else
+			{
+			$Vext .= "exten => 8310,2,Monitor(gsm,\${CALLERID(name)})\n";
+			}
+		}
 	$Vext .= "exten => 8310,3,Wait($vicidial_recording_limit)\n";
 	$Vext .= "exten => 8310,4,Hangup()\n";
 

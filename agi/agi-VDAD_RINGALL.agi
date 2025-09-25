@@ -12,7 +12,7 @@
 # exten => _8331*.,n,AGI(agi-VDAD_RINGALL.agi,${EXTEN})
 # exten => _8331*.,n,Hangup
 #
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 110303-2325 - First build
@@ -24,6 +24,7 @@
 # 140421-1448 - Added code to halt ringing of other channels in ring_all NAC method
 # 240420-2241 - Added ConfBridge code
 # 240415-1702 - Fix for ConfBridge code
+# 250924-2157 - Added code for deprecation of "Monitor" application after Asterisk 20
 #
 
 $script = 'agi-VDAD_RINGALL.agi';
@@ -387,7 +388,15 @@ if ($NAGcount > 0)
 									}
 								else
 									{
-									$AGI->exec("Monitor","wav,/var/spool/asterisk/monitor/MIX/$campaign_rec_filename"); 
+									if ($ast_ver_str{major} > 20) 
+										{
+										# Deprecation of "Monitor" application after Asterisk 20
+										$AGI->exec("MixMonitor",",r($PATHmonitor/MIX/$campaign_rec_filename-in.wav)t($PATHmonitor/MIX/$campaign_rec_filename-out.wav)");
+										}
+									else
+										{
+										$AGI->exec("Monitor","wav,/var/spool/asterisk/monitor/MIX/$campaign_rec_filename");
+										}
 									}
 
 								### insert record into recording_log table ###

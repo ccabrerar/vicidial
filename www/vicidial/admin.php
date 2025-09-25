@@ -6285,12 +6285,13 @@ if ($SSscript_remove_js > 0)
 # 250806-0841 - Added manual_dial_lead_id user setting, and new 'ONLY' option for campaign setting
 # 250808-1120 - Added agent_man_dial_filter & agent_3way_dial_filter system settings
 # 250822-2056 - Added system/campaign/ingroup settings for stereo_recording
-# 
+# 250922-0841 - Added Talk Seconds URL links to multi-url admin page in campaigns and in-groups
+#
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-943a';
-$build = '250822-2056';
+$admin_version = '2.14-944a';
+$build = '250922-0841';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -29317,6 +29318,16 @@ if ($ADD==31)
 			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("No Agent Call URL").": </td><td align=left><input type=text name=na_call_url size=70 maxlength=5000 value=\"$na_call_url\">$NWB#campaigns-na_call_url$NWE</td></tr>\n";
 			}
 
+		$stmt="SELECT count(*) from vicidial_url_multi where campaign_id='$campaign_id' and entry_type='campaign' and url_type='talk';";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$vum_to_print = mysqli_num_rows($rslt);
+		if ($vum_to_print > 0) 
+			{
+			$rowx=mysqli_fetch_row($rslt);
+			$vum_count = $rowx[0]; 
+			}
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href=\"admin_url_multi.php?DB=$DB&campaign_id=$campaign_id&entry_type=campaign&url_type=talk\">"._QXZ("Talk Seconds URLs")."</a>: </td><td align=left>$NWB#campaigns-talk_sec_url$NWE <a href=\"admin_url_multi.php?DB=$DB&campaign_id=$campaign_id&entry_type=campaign&url_type=talk\"> "._QXZ("Talk Seconds URLs Defined").": $vum_count</a></td></tr>\n";
+
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Extension Append CID").": </td><td align=left><select size=1 name=extension_appended_cidname><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='Y_USER'>"._QXZ("Y_USER")."</option><option value='Y_WITH_CAMPAIGN'>"._QXZ("Y_WITH_CAMPAIGN")."</option><option value='Y_USER_WITH_CAMPAIGN'>"._QXZ("Y_USER_WITH_CAMPAIGN")."</option><option value='$extension_appended_cidname' SELECTED>"._QXZ("$extension_appended_cidname")."</option></select>$NWB#campaigns-extension_appended_cidname$NWE</td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Blind Monitor Warning").": </td><td align=left><select size=1 name=blind_monitor_warning><option value='DISABLED'>"._QXZ("DISABLED")."</option><option value='ALERT'>"._QXZ("ALERT")."</option><option value='NOTICE'>"._QXZ("NOTICE")."</option><option value='AUDIO'>"._QXZ("AUDIO")."</option><option value='ALERT_NOTICE'>"._QXZ("ALERT_NOTICE")."</option><option value='ALERT_AUDIO'>"._QXZ("ALERT_AUDIO")."</option><option value='NOTICE_AUDIO'>"._QXZ("NOTICE_AUDIO")."</option><option value='ALL'>"._QXZ("ALL")."</option><option value='$blind_monitor_warning' SELECTED>"._QXZ("$blind_monitor_warning")."</option></select>$NWB#campaigns-blind_monitor_warning$NWE</td></tr>\n";
@@ -35284,6 +35295,28 @@ if ($ADD==3111)
 			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("No Agent Call URL").": </td><td align=left><input type=text name=na_call_url size=70 maxlength=5000 value=\"$na_call_url\">$NWB#inbound_groups-na_call_url$NWE</td></tr>\n";
 			}
 
+		# get count of talk seconds urls in this In-Group
+		$stmt="SELECT count(*) from vicidial_url_multi where campaign_id='$group_id' and entry_type='ingroup' and url_type='talk';";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$vum_to_print = mysqli_num_rows($rslt);
+		if ($vum_to_print > 0) 
+			{
+			$rowx=mysqli_fetch_row($rslt);
+			$vum_count = $rowx[0]; 
+			}
+		# check if this In-Group has talk seconds url set to -FORCEDISABLE-
+		$force_disableHTML='';
+		$stmt="SELECT count(*) from vicidial_url_multi where campaign_id='$group_id' and entry_type='ingroup' and url_type='talk' and active='N' and url_address LIKE \"%FORCEDISABLE%\";";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$fdtsu_to_print = mysqli_num_rows($rslt);
+		if ($fdtsu_to_print > 0) 
+			{
+			$rowx=mysqli_fetch_row($rslt);
+			if ($rowx[0] > 0)
+				{$force_disableHTML="<font color='red'><b>FORCED DISABLE</b></font>";}
+			}
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href=\"admin_url_multi.php?DB=$DB&campaign_id=$group_id&entry_type=ingroup&url_type=talk\">"._QXZ("Talk Seconds URLs")."</a>: </td><td align=left>$NWB#inbound_groups-talk_sec_url$NWE <a href=\"admin_url_multi.php?DB=$DB&campaign_id=$group_id&entry_type=ingroup&url_type=talk\"> "._QXZ("Talk Seconds URLs Defined").": $vum_count</a> &nbsp; $force_disableHTML</td></tr>\n";
+
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right nowrap>"._QXZ("Waiting Call URL On").": </td><td align=left><input type=text name=waiting_call_url_on size=70 maxlength=5000 value=\"$waiting_call_url_on\">$NWB#inbound_groups-waiting_call_url_on$NWE</td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right nowrap>"._QXZ("Waiting Call URL Off").": </td><td align=left><input type=text name=waiting_call_url_off size=70 maxlength=5000 value=\"$waiting_call_url_off\">$NWB#inbound_groups-waiting_call_url_on$NWE</td></tr>\n";
@@ -36303,6 +36336,28 @@ if ($ADD==3811)
 			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Dispo Email URL").": </td><td align=left><input type=text name=dispo_call_url size=70 maxlength=5000 value=\"$dispo_call_url\">$NWB#inbound_groups-dispo_email_url$NWE</td></tr>\n";
 			}
 
+		# get count of talk seconds urls in this In-Group
+		$stmt="SELECT count(*) from vicidial_url_multi where campaign_id='$group_id' and entry_type='ingroup' and url_type='talk';";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$vum_to_print = mysqli_num_rows($rslt);
+		if ($vum_to_print > 0) 
+			{
+			$rowx=mysqli_fetch_row($rslt);
+			$vum_count = $rowx[0]; 
+			}
+		# check if this In-Group has talk seconds url set to -FORCEDISABLE-
+		$force_disableHTML='';
+		$stmt="SELECT count(*) from vicidial_url_multi where campaign_id='$group_id' and entry_type='ingroup' and url_type='talk' and active='N' and url_address LIKE \"%FORCEDISABLE%\";";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$fdtsu_to_print = mysqli_num_rows($rslt);
+		if ($fdtsu_to_print > 0) 
+			{
+			$rowx=mysqli_fetch_row($rslt);
+			if ($rowx[0] > 0)
+				{$force_disableHTML="<font color='red'><b>FORCED DISABLE</b></font>";}
+			}
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href=\"admin_url_multi.php?DB=$DB&campaign_id=$group_id&entry_type=ingroup&url_type=talk\">"._QXZ("Talk Seconds URLs")."</a>: </td><td align=left>$NWB#inbound_groups-talk_sec_url$NWE <a href=\"admin_url_multi.php?DB=$DB&campaign_id=$group_id&entry_type=ingroup&url_type=talk\"> "._QXZ("Talk Seconds URLs Defined").": $vum_count</a> &nbsp; $force_disableHTML</td></tr>\n";
+
 		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Custom 1").": </td><td align=left><input type=text name=custom_one id=custom_one size=40 maxlength=2000 value=\"$custom_one\"> $NWB#inbound_groups-custom_fields$NWE</td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Custom 2").": </td><td align=left><input type=text name=custom_two id=custom_two size=40 maxlength=2000 value=\"$custom_two\"> $NWB#inbound_groups-custom_fields$NWE</td></tr>\n";
@@ -37181,6 +37236,29 @@ if ($ADD==3911)
 			{
 			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("No Agent Chat URL").": </td><td align=left><input type=text name=na_call_url size=70 maxlength=5000 value=\"$na_call_url\">$NWB#inbound_groups-na_chat_url$NWE</td></tr>\n";
 			}
+
+		# get count of talk seconds urls in this In-Group
+		$stmt="SELECT count(*) from vicidial_url_multi where campaign_id='$group_id' and entry_type='ingroup' and url_type='talk';";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$vum_to_print = mysqli_num_rows($rslt);
+		if ($vum_to_print > 0) 
+			{
+			$rowx=mysqli_fetch_row($rslt);
+			$vum_count = $rowx[0]; 
+			}
+		# check if this In-Group has talk seconds url set to -FORCEDISABLE-
+		$force_disableHTML='';
+		$stmt="SELECT count(*) from vicidial_url_multi where campaign_id='$group_id' and entry_type='ingroup' and url_type='talk' and active='N' and url_address LIKE \"%FORCEDISABLE%\";";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$fdtsu_to_print = mysqli_num_rows($rslt);
+		if ($fdtsu_to_print > 0) 
+			{
+			$rowx=mysqli_fetch_row($rslt);
+			if ($rowx[0] > 0)
+				{$force_disableHTML="<font color='red'><b>FORCED DISABLE</b></font>";}
+			}
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href=\"admin_url_multi.php?DB=$DB&campaign_id=$group_id&entry_type=ingroup&url_type=talk\">"._QXZ("Talk Seconds URLs")."</a>: </td><td align=left>$NWB#inbound_groups-talk_sec_url$NWE <a href=\"admin_url_multi.php?DB=$DB&campaign_id=$group_id&entry_type=ingroup&url_type=talk\"> "._QXZ("Talk Seconds URLs Defined").": $vum_count</a> &nbsp; $force_disableHTML</td></tr>\n";
+
 /*
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>Extension Append CID: </td><td align=left><select size=1 name=extension_appended_cidname><option>"._QXZ("Y")."</option><option>N</option><option SELECTED>$extension_appended_cidname</option></select>$NWB#inbound_groups-extension_appended_cidname$NWE</td></tr>\n";
 */

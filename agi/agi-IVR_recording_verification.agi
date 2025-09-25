@@ -42,7 +42,7 @@
 #exten => _83002*.,5,Hangup
 #
 #
-# Copyright (C) 2013  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 70912-1105 - First build, non-functional
@@ -53,6 +53,7 @@
 # 71120-1337 - added playing of recording ID at beginning of session
 # 120430-2214 - Converted call to Monitor app to be asterisk 1.8 compatible
 # 130108-1816 - Changes for Asterisk 1.8 compatibility
+# 250924-2158 - Added code for deprecation of "Monitor" application after Asterisk 20
 #
 
 &get_time_now;
@@ -386,7 +387,15 @@ if ($record_call =~ /Y/)
 		}
 	else
 		{
-		$AGI->exec("Monitor","wav,/var/spool/asterisk/monitor/MIX/$filename,m"); 
+		if ($ast_ver_str{major} > 20) 
+			{
+			# Deprecation of "Monitor" application after Asterisk 20
+			$AGI->exec("MixMonitor",",r($PATHmonitor/MIX/$filename-in.wav)t($PATHmonitor/MIX/$filename-out.wav)");
+			}
+		else
+			{
+			$AGI->exec("Monitor","wav,/var/spool/asterisk/monitor/MIX/$filename,m");
+			}
 		}
 
 	### insert record into recording_log table ###

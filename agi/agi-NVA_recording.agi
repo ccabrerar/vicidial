@@ -47,7 +47,7 @@
 #exten => _X.,n,Goto(default,${EXTEN},1)
 #exten => _X.,n,Hangup
 #
-# Copyright (C) 2015  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 91105-1402 - First build
@@ -60,6 +60,7 @@
 # 151211-0932 - Added phone search and phone NVA URL features
 # 151214-2148 - Added more variables to be used by nva url feature
 # 151220-1521 - Added phone NVA List ID option for not found phone numbers
+# 250924-2137 - Added code for deprecation of "Monitor" application after Asterisk 20
 #
 
 &get_time_now;
@@ -404,7 +405,15 @@ if ($record_call =~ /Y/)
 		}
 	else
 		{
-		$AGI->exec("Monitor","wav,/var/spool/asterisk/monitor/MIX/$filename"); 
+		if ($ast_ver_str{major} > 20) 
+			{
+			# Deprecation of "Monitor" application after Asterisk 20
+			$AGI->exec("MixMonitor",",r(/var/spool/asterisk/monitor/MIX/$filename-in.wav)t(/var/spool/asterisk/monitor/MIX/$filename-out.wav)");
+			}
+		else
+			{
+			$AGI->exec("Monitor","wav,/var/spool/asterisk/monitor/MIX/$filename");
+			}
 		}
 	}
 

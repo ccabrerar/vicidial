@@ -1,7 +1,7 @@
 <?php
 # admin_url_multi.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # this screen will control the *url* settings needed when the Campaign or 
 # In-Group or List URL setting is set to "ALT". This screen allows for multiple 
@@ -19,10 +19,11 @@
 # 211117-2006 - Added minimum call length field
 # 220127-1900 - Added display of the URL ID
 # 220222-1959 - Added allow_web_debug system setting
+# 250920-2202 - Added talk_sec_urls
 #
 
-$admin_version = '2.14-9';
-$build = '220222-1959';
+$admin_version = '2.14-10';
+$build = '250920-2202';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -235,6 +236,8 @@ if ($entry_type == 'campaign')
 		{$stmt="SELECT count(*) from vicidial_campaigns where campaign_id='$campaign_id' and start_call_url='ALT';";}
 	elseif ($url_type == 'noagent')
 		{$stmt="SELECT count(*) from vicidial_campaigns where campaign_id='$campaign_id' and na_call_url='ALT';";}
+	elseif ($url_type == 'talk')
+		{$stmt="SELECT count(*) from vicidial_campaigns where campaign_id='$campaign_id';";}
 	else
 		{
 		echo _QXZ("ERROR: no valid url type defined:") . $url_type;
@@ -256,6 +259,8 @@ elseif ($entry_type == 'ingroup')
 		{$stmt="SELECT count(*) from vicidial_inbound_groups where group_id='$campaign_id' and na_call_url='ALT';";}
 	elseif ($url_type == 'addlead')
 		{$stmt="SELECT count(*) from vicidial_inbound_groups where group_id='$campaign_id' and add_lead_url='ALT';";}
+	elseif ($url_type == 'talk')
+		{$stmt="SELECT count(*) from vicidial_inbound_groups where group_id='$campaign_id';";}
 	else
 		{
 		echo _QXZ("ERROR: no valid url type defined:") . $url_type;
@@ -291,6 +296,8 @@ elseif ($url_type == 'noagent')
 	{$url_type_text='No Agent Call';}
 elseif ($url_type == 'addlead')
 	{$url_type_text='Add Lead';}
+elseif ($url_type == 'talk')
+	{$url_type_text='Talk Seconds';}
 else
 	{$url_type_text='Error';}
 
@@ -457,16 +464,25 @@ if ($action == "URL_MULTI_DELETE")
 ##### BEGIN URL multi control form
 if ($action == "BLANK")
 	{
+	$min_length_text = 'MIN LENGTH';
+	$statuses_text = 'STATUSES';
+	if ( ($url_type == 'start') or ($url_type == 'noagent') or ($url_type == 'addlead') )
+		{$min_length_text = 'NOT USED';}	
+	if ( ($url_type == 'start') or ($url_type == 'noagent') or ($url_type == 'addlead') or ($url_type == 'talk') )
+		{$statuses_text = 'NOT USED';}	
 	$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';
 	echo "<TABLE><TR><TD>\n";
 	echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 	echo "<br>"._QXZ("Alternate URL Form");
 	echo "<center><TABLE width=1020 cellspacing=3>\n";
 	echo "<tr><td align=center colspan=2>\n";
-	echo "<br><b>"._QXZ("Alternate %1s URLs for %2s",0,'',$url_type_text,$entry_type).": <a href=\"./admin.php?$mod_link$campaign_id\">$campaign_id</a></b> &nbsp; $NWB#alt_multi_urls$NWE\n";
+	echo "<br><b>";
+	if (!preg_match("/talk/",$url_type)) 
+		{echo _QXZ("Alternate");}
+	echo _QXZ(" %1s URLs for %2s",0,'',$url_type_text,$entry_type).": <a href=\"./admin.php?$mod_link$campaign_id\">$campaign_id</a></b> &nbsp; $NWB#alt_multi_urls$NWE\n";
 
 	echo "<TABLE width=1000 cellspacing=3>\n";
-	echo "<tr><td><font size=2><b>#</td><td NOWRAP><font size=1>URL ID</td><td><font size=2><b>"._QXZ("ACTIVE")."</td><td><font size=2><b>"._QXZ("RANK")."</td><td><font size=2><b>"._QXZ("STATUSES")."</td><td><font size=2><b>"._QXZ("LISTS")."</td><td><font size=2><b>"._QXZ("MIN LENGTH")."</td><td><font size=2><b>"._QXZ("DESCRIPTION")."</td><td><font size=2><b>"._QXZ("SUBMIT")."</td></tr>\n";
+	echo "<tr><td><font size=2><b>#</td><td NOWRAP><font size=1>URL ID</td><td><font size=2><b>"._QXZ("ACTIVE")."</td><td><font size=2><b>"._QXZ("RANK")."</td><td><font size=2><b>"._QXZ("$statuses_text")."</td><td><font size=2><b>"._QXZ("LISTS")."</td><td><font size=2><b>"._QXZ("$min_length_text")."</td><td><font size=2><b>"._QXZ("DESCRIPTION")."</td><td><font size=2><b>"._QXZ("SUBMIT")."</td></tr>\n";
 
 	$stmt="SELECT url_id,active,url_rank,url_statuses,url_description,url_address,url_lists,url_call_length from vicidial_url_multi where campaign_id='$campaign_id' and entry_type='$entry_type' and url_type='$url_type' order by url_rank limit 1000;";
 	if ($DB) {echo "$stmt\n";}
@@ -521,6 +537,8 @@ if ($action == "BLANK")
 		echo "</form>\n";
 		echo "</tr>\n";
 		}
+	if ($types_to_print < 1)
+		{echo "<tr bgcolor='#". $SSstd_row2_background ."'><td colspan=9>&nbsp; "._QXZ("No URLs added here yet")."</td></tr>";}
 	echo "</table></center><br>\n";
 
 
@@ -537,7 +555,7 @@ if ($action == "BLANK")
 	echo "<input type=hidden name=active value=\"N\">\n";
 	echo "<input type=hidden name=action value=URL_MULTI_NEW>\n";
 	echo "<td><font size=1>"._QXZ("RANK").": <input type=text size=4 maxlength=3 name=url_rank value=\"\"></td>";
-	echo "<td><font size=1>"._QXZ("STATUSES").": <input type=text size=30 maxlength=1000 name=url_statuses value=\"\"></td>";
+	echo "<td><font size=1>"._QXZ("STATUSES").": <input type=text size=30 maxlength=1000 name=url_statuses value=\"---ALL---\"></td>";
 	echo "<td><font size=1>"._QXZ("DESCRIPTION").": <input type=text size=30 maxlength=255 name=url_description value=\"\"></td>";
 	echo "<td rowspan=2><font size=1><input type=submit name=SUBMIT value='"._QXZ("SUBMIT")."'></td>";
 	echo "</tr>";
@@ -555,7 +573,7 @@ if ($action == "BLANK")
 
 $ENDtime = date("U");
 $RUNtime = ($ENDtime - $STARTtime);
-echo "\n\n\n<br><br><br>\n<font size=1> "._QXZ("runtime").": $RUNtime "._QXZ("seconds")." &nbsp; &nbsp; &nbsp; &nbsp; "._QXZ("Version").": $admin_version &nbsp; &nbsp; "._QXZ("Build").": $build</font>";
+echo "\n\n\n<br><br><br>\n<font size=1> &nbsp; "._QXZ("runtime").": $RUNtime "._QXZ("seconds")." &nbsp; &nbsp; &nbsp; &nbsp; "._QXZ("Version").": $admin_version &nbsp; &nbsp; "._QXZ("Build").": $build</font>";
 
 ?>
 

@@ -133,6 +133,7 @@
 # 241001-2222 - Fixes for Khomp call processing
 # 241020-1928 - Added khomp campaign settings options
 # 250827-1556 - Added stereo_recording code
+# 250924-2150 - Added code for deprecation of "Monitor" application after Asterisk 20
 #
 
 $script = 'agi-VDAD_ALL_outbound.agi';
@@ -1212,7 +1213,15 @@ if ($VDACaffected_rows > 0)
 			}
 		else
 			{
-			$AGI->exec("Monitor","wav,$PATHmonitor/MIX/$campaign_rec_filename"); 
+			if ($ast_ver_str{major} > 20) 
+				{
+				# Deprecation of "Monitor" application after Asterisk 20
+				$AGI->exec("MixMonitor",",r($PATHmonitor/MIX/$campaign_rec_filename-in.wav)t($PATHmonitor/MIX/$campaign_rec_filename-out.wav)");
+				}
+			else
+				{
+				$AGI->exec("Monitor","wav,$PATHmonitor/MIX/$campaign_rec_filename");
+				}
 			}
 
 		### insert record into recording_log table ###
@@ -3228,7 +3237,15 @@ while ($drop_timer <= $DROP_TIME)
 								}
 							else
 								{
-								$retval = $AGI->exec("Monitor","wav,$PATHmonitor/MIX/$campaign_rec_filename"); 
+								if ($ast_ver_str{major} > 20) 
+									{
+									# Deprecation of "Monitor" application after Asterisk 20
+									$retval = $AGI->exec("MixMonitor",",r($PATHmonitor/MIX/$campaign_rec_filename-in.wav)t($PATHmonitor/MIX/$campaign_rec_filename-out.wav)");
+									}
+								else
+									{
+									$retval = $AGI->exec("Monitor","wav,$PATHmonitor/MIX/$campaign_rec_filename");
+									}
 								}
 							}
 
@@ -3938,7 +3955,7 @@ while ($drop_timer <= $DROP_TIME)
 								$SRaffected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 
-								$stmtB = "INSERT INTO routing_initiated_recordings (recording_id,filename,launch_time,lead_id,vicidial_id,user,processed) values('$recording_id','$temp_parallel_rec_ag_filename','$now_date','$CIDlead_id','$uniqueid','$VDADuser','0')";
+								$stmtB = "INSERT INTO routing_initiated_recordings (recording_id,filename,launch_time,lead_id,vicidial_id,user,processed,rir_type) values('$recording_id','$temp_parallel_rec_ag_filename','$now_date','$CIDlead_id','$uniqueid','$VDADuser','0','S')";
 								$affected_rowsB = $dbhA->do($stmtB);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rowsB;   &mysql_error_logging;
 
@@ -3987,7 +4004,7 @@ while ($drop_timer <= $DROP_TIME)
 								$SRaffected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 
-								$stmtB = "INSERT INTO routing_initiated_recordings (recording_id,filename,launch_time,lead_id,vicidial_id,user,processed) values('$recording_id','$stereo_rec_filename','$now_date','$CIDlead_id','$uniqueid','$VDADuser','0')";
+								$stmtB = "INSERT INTO routing_initiated_recordings (recording_id,filename,launch_time,lead_id,vicidial_id,user,processed,rir_type) values('$recording_id','$stereo_rec_filename','$now_date','$CIDlead_id','$uniqueid','$VDADuser','0','S')";
 								$affected_rowsB = $dbhA->do($stmtB);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rowsB;   &mysql_error_logging;
 
@@ -4642,7 +4659,15 @@ while ($drop_timer <= $DROP_TIME)
 								}
 							else
 								{
-								$retval = $AGI->exec("Monitor","wav,$PATHmonitor/MIX/$campaign_rec_filename"); 
+								if ($ast_ver_str{major} > 20) 
+									{
+									# Deprecation of "Monitor" application after Asterisk 20
+									$retval = $AGI->exec("MixMonitor",",r($PATHmonitor/MIX/$campaign_rec_filename-in.wav)t($PATHmonitor/MIX/$campaign_rec_filename-out.wav)");
+									}
+								else
+									{
+									$retval = $AGI->exec("Monitor","wav,$PATHmonitor/MIX/$campaign_rec_filename");
+									}
 								}
 							}
 
@@ -5349,7 +5374,7 @@ while ($drop_timer <= $DROP_TIME)
 								$SRaffected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 
-								$stmtB = "INSERT INTO routing_initiated_recordings (recording_id,filename,launch_time,lead_id,vicidial_id,user,processed) values('$recording_id','$temp_parallel_rec_ag_filename','$now_date','$CIDlead_id','$uniqueid','$VDADuser','0')";
+								$stmtB = "INSERT INTO routing_initiated_recordings (recording_id,filename,launch_time,lead_id,vicidial_id,user,processed,rir_type) values('$recording_id','$temp_parallel_rec_ag_filename','$now_date','$CIDlead_id','$uniqueid','$VDADuser','0','S')";
 								$affected_rowsB = $dbhA->do($stmtB);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rowsB;   &mysql_error_logging;
 
@@ -5398,7 +5423,7 @@ while ($drop_timer <= $DROP_TIME)
 								$SRaffected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 
-								$stmtB = "INSERT INTO routing_initiated_recordings (recording_id,filename,launch_time,lead_id,vicidial_id,user,processed) values('$recording_id','$stereo_rec_filename','$now_date','$CIDlead_id','$uniqueid','$VDADuser','0')";
+								$stmtB = "INSERT INTO routing_initiated_recordings (recording_id,filename,launch_time,lead_id,vicidial_id,user,processed,rir_type) values('$recording_id','$stereo_rec_filename','$now_date','$CIDlead_id','$uniqueid','$VDADuser','0','S')";
 								$affected_rowsB = $dbhA->do($stmtB);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rowsB;   &mysql_error_logging;
 

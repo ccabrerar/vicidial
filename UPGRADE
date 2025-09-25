@@ -871,6 +871,21 @@ OTHER CHANGES:
 	setting. This can send a URL request when new leads are added to the
 	system through the "add_lead" Non-Agent API function.
 
+249. Added agc/dispo_move_listSC.php script, allowing for multiple more complex
+	Dispo Move List functions after an agent dispositions a call.
+
+250. Added "hopper_bulk_insert" Non-Agent API function.
+
+251. Added Stereo Call Recording, allowing for additional call recordings with 
+	the customer on one side(the Right channel) and the agent on the other 
+	side(the Left channel), as well as optional parallel stereo call 
+	recordings. For more information, read the doc:
+	STEREO_CALL_RECORDINGS.txt
+
+252. Added "Talk Seconds URLs" Campaign and In-Group features. Allows for URLs 
+	to be sent out from the Agent Screen while the agent is talking to the
+	customer, based on the number of seconds they have been talking.
+
 
 
 

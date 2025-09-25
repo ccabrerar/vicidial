@@ -13,7 +13,7 @@
 # ;inbound DID catch-all:
 #exten => _X.,1,AGI(agi-DID_route.agi)
 #
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 81007-0324 - First Build
@@ -51,6 +51,7 @@
 # 220507-0811 - Added pre_filter_recent_call function
 # 230124-1228 - Added logging of VICIrecGatewayID channel variable, and vicidial_did_gateway_log table
 # 241208-1748 - Changed DID filter_phone_group_id & pre_filter_phone_group_id to multi-selects
+# 250924-2156 - Added code for deprecation of "Monitor" application after Asterisk 20
 #
 
 
@@ -879,7 +880,15 @@ if ($record_call =~ /Y/)
 		}
 	else
 		{
-		$AGI->exec("Monitor","wav,/var/spool/asterisk/monitor/MIX/$filename"); 
+		if ($ast_ver_str{major} > 20) 
+			{
+			# Deprecation of "Monitor" application after Asterisk 20
+			$AGI->exec("MixMonitor",",r($PATHmonitor/MIX/$filename-in.wav)t($PATHmonitor/MIX/$filename-out.wav)");
+			}
+		else
+			{
+			$AGI->exec("Monitor","wav,/var/spool/asterisk/monitor/MIX/$filename");
+			}
 		}
 
 	### insert record into recording_log table ###

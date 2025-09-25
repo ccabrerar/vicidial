@@ -1,7 +1,7 @@
-VICIDIAL STEREO CALL RECORDINGS		Started: 2025-06-18  Updated: 2025-09-19
+VICIDIAL STEREO CALL RECORDINGS		Started: 2025-06-18  Updated: 2025-09-25
 
 
-TO USE THESE FEATURES, YOU WILL NEED TO HAVE ALL SERVERS IN YOUR CLUSTER USING SVN/TRUNK REVISION 3943(2025-09-19) CODE OR HIGHER!!!
+TO USE THESE FEATURES, YOU WILL NEED TO HAVE ALL SERVERS IN YOUR CLUSTER USING SVN/TRUNK REVISION 3945(2025-09-25) CODE OR HIGHER!!!
 
 
 This project was designed to allow for additional stereo recording of phone calls at the agent and server levels directly on VICIdial Asterisk servers, with the customer always on one channel(the Right channel) and the agent and all other parties on the other channel(the Left channel). If you are looking for the VICI Gateway Recording Server documentation, please see the GATEWAY_RECORDING_SERVER.txt document.
