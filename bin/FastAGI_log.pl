@@ -25,7 +25,7 @@
 # exten => h,1,DeadAGI(agi://127.0.0.1:4577/call_log--HVcauses--PRI-----NODEBUG-----${HANGUPCAUSE}-----${DIALSTATUS}-----${DIALEDTIME}-----${ANSWEREDTIME})
 # 
 #
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG:
 # 61010-1007 - First test build
@@ -102,7 +102,8 @@
 # 240225-0957 - Added AUTONEXT hopper_hold_inserts campaign option
 # 241001-2224 - Fixes for Khomp call processing
 # 241020-1929 - Added khomp campaign settings options
-# 281028-0958 - Added vicidial_khomp_log logging of container used
+# 241028-0958 - Added vicidial_khomp_log logging of container used
+# 250928-1556 - Added hosted_settings dialplan variable
 #
 
 # defaults for PreFork
@@ -770,9 +771,9 @@ sub process_request
 					if ($AGILOG) {$agi_string = "|CAMPDTO: $dial_timeout|$callerid|";   &agi_output;}
 					}
 
-				### BEGIN OpenSIPs CallerIDname code ###
-				### get system_settings
-				$stmtA = "SELECT opensips_cid_name FROM system_settings";
+				### BEGIN OpenSIPs CallerIDname and Hosted Settings code ###
+				### get system_settings and hosted_settings
+				$stmtA = "SELECT opensips_cid_name,hosted_settings FROM system_settings";
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 				$sthArows=$sthA->rows;
@@ -780,9 +781,10 @@ sub process_request
 					{
 					@aryA = $sthA->fetchrow_array;
 					$opensips_cid_name =     $aryA[0];
+					$hosted_settings =       $aryA[1];
 					}
 				$sthA->finish();
-				if ($AGILOG) {$agi_string = "$stmtA|$opensips_cid_name";   &agi_output;}
+				if ($AGILOG) {$agi_string = "$stmtA|$opensips_cid_name|$hosted_settings";   &agi_output;}
 
 				### opensips_cid_name is active
 				if ( $opensips_cid_name == 1)
@@ -808,7 +810,15 @@ sub process_request
 						$AGI->exec("EXEC SIPAddHeader(\"$header\")");
 						}
 					}
-				### END OpenSIPs CallerIDname code ###
+
+				### if hosted_settings has a value, set a dialplan variable
+				if ( length($hosted_settings) > 0 )
+					{
+					$AGI->exec("EXEC Set(_HOSTEDSETTINGS=$hosted_settings)");
+					if ($AGILOG) {$agi_string = "|HOSTEDSETTINGS: $hosted_settings|$callerid|";   &agi_output;}
+					}
+
+				### END OpenSIPs CallerIDname and Hosted Settings code ###
 
 				if ($AGILOG) {$agi_string = "|KHOMP $amd_type|$HVcauses|$extension|$campaign_vdad_exten"; &agi_output;}
 
