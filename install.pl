@@ -97,7 +97,7 @@ $VARCS_port =	'3306';
 # default keepalive processes: 
 $VARactive_keepalives =		'1234568';
 # default Asterisk version: 
-$VARasterisk_version =		'16.X';
+$VARasterisk_version =		'18.X';
 # default recording FTP archive variables:
 $VARFTP_host = '10.0.0.4';
 $VARFTP_user = 'cron';
@@ -2099,6 +2099,7 @@ else
 			print " 11.X\n";
 			print " 13.X\n";
 			print " 16.X\n";
+			print " 18.X\n";
 			print "Enter asterisk version or press enter for default: [$VARasterisk_version] ";
 			$PROMPTasterisk_version = <STDIN>;
 			chomp($PROMPTasterisk_version);

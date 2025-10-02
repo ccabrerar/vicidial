@@ -134,6 +134,7 @@
 # 241020-1928 - Added khomp campaign settings options
 # 250827-1556 - Added stereo_recording code
 # 250924-2150 - Added code for deprecation of "Monitor" application after Asterisk 20
+# 251001-1837 - Fix for rare Stereo recording filename issue
 #
 
 $script = 'agi-VDAD_ALL_outbound.agi';
@@ -1178,21 +1179,7 @@ if ($VDACaffected_rows > 0)
 		$sthA->finish();
 
 		# get date/time
-		($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
-		$year = ($year + 1900);
-		$Tyear = ($year - 2000);
-		$mon++;
-		if ($mon < 10)	{$mon = "0$mon";}
-		if ($mday < 10) {$mday = "0$mday";}
-		if ($hour < 10) {$hour = "0$hour";}
-		if ($min < 10)	{$min = "0$min";}
-		if ($sec < 10)	{$sec = "0$sec";}
-
-		$now_date_epoch = time();
-		$now_date = "$year-$mon-$mday $hour:$min:$sec";
-		$recdate = "$year$mon$mday-$hour$min$sec";
-		$tinydate = "$Tyear$mon$mday$hour$min$sec";
-
+		&get_date_time;
 		$campaign_rec_filename =~ s/CAMPAIGN/$VDADcampaign/gi;
 		$campaign_rec_filename =~ s/INGROUP/$VDADcampaign/gi;
 		$campaign_rec_filename =~ s/CUSTPHONE/$VDADphone/gi;
@@ -3197,21 +3184,7 @@ while ($drop_timer <= $DROP_TIME)
 						$sthA->finish();
 
 						# get date/time
-						($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
-						$year = ($year + 1900);
-						$Tyear = ($year - 2000);
-						$mon++;
-						if ($mon < 10)	{$mon = "0$mon";}
-						if ($mday < 10) {$mday = "0$mday";}
-						if ($hour < 10) {$hour = "0$hour";}
-						if ($min < 10)	{$min = "0$min";}
-						if ($sec < 10)	{$sec = "0$sec";}
-
-						$now_date_epoch = time();
-						$now_date = "$year-$mon-$mday $hour:$min:$sec";
-						$recdate = "$year$mon$mday-$hour$min$sec";
-						$tinydate = "$Tyear$mon$mday$hour$min$sec";
-
+						&get_date_time;
 						$campaign_rec_filename =~ s/CAMPAIGN/$VDADcampaign/gi;
 						$campaign_rec_filename =~ s/CUSTPHONE/$VDADphone/gi;
 						$campaign_rec_filename =~ s/FULLDATE/$recdate/gi;
@@ -3286,6 +3259,7 @@ while ($drop_timer <= $DROP_TIME)
 					### BEGIN stereo call recording for ALLCALLS/ALLFORCE and for all parallel stereo recording campaigns for remote agents ###
 					if ( ($stereo_recording =~ /CUSTOMER|BOTH/i) && ($conf_engine eq "CONFBRIDGE") && ($SSstereo_recording > 0) ) 
 						{
+						&get_date_time;
 						$stereo_rec_filename =~ s/CAMPAIGN/$VDADcampaign/gi;
 						$stereo_rec_filename =~ s/INGROUP/$VDADcampaign/gi;
 						$stereo_rec_filename =~ s/CUSTPHONE/$VDADphone/gi;
@@ -3637,21 +3611,7 @@ while ($drop_timer <= $DROP_TIME)
 							$sthA->finish();
 
 							# get date/time
-							($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
-							$year = ($year + 1900);
-							$Tyear = ($year - 2000);
-							$mon++;
-							if ($mon < 10)	{$mon = "0$mon";}
-							if ($mday < 10) {$mday = "0$mday";}
-							if ($hour < 10) {$hour = "0$hour";}
-							if ($min < 10)	{$min = "0$min";}
-							if ($sec < 10)	{$sec = "0$sec";}
-
-							$now_date_epoch = time();
-							$now_date = "$year-$mon-$mday $hour:$min:$sec";
-							$recdate = "$year$mon$mday-$hour$min$sec";
-							$tinydate = "$Tyear$mon$mday$hour$min$sec";
-
+							&get_date_time;
 							$campaign_rec_filename =~ s/CAMPAIGN/$VDADcampaign/gi;
 							$campaign_rec_filename =~ s/CUSTPHONE/$VDADphone/gi;
 							$campaign_rec_filename =~ s/FULLDATE/$recdate/gi;
@@ -3717,6 +3677,7 @@ while ($drop_timer <= $DROP_TIME)
 					### BEGIN stereo call recording for ALLCALLS/ALLFORCE and for all parallel stereo recording campaigns ###
 					if ( ($stereo_recording =~ /CUSTOMER|BOTH/i) && ($conf_engine eq "CONFBRIDGE") && ($SSstereo_recording > 0) ) 
 						{
+						&get_date_time;
 						$stereo_rec_filename =~ s/CAMPAIGN/$VDADcampaign/gi;
 						$stereo_rec_filename =~ s/INGROUP/$VDADcampaign/gi;
 						$stereo_rec_filename =~ s/CUSTPHONE/$VDADphone/gi;
@@ -4619,21 +4580,7 @@ while ($drop_timer <= $DROP_TIME)
 						$sthA->finish();
 
 						# get date/time
-						($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
-						$year = ($year + 1900);
-						$Tyear = ($year - 2000);
-						$mon++;
-						if ($mon < 10)	{$mon = "0$mon";}
-						if ($mday < 10) {$mday = "0$mday";}
-						if ($hour < 10) {$hour = "0$hour";}
-						if ($min < 10)	{$min = "0$min";}
-						if ($sec < 10)	{$sec = "0$sec";}
-
-						$now_date_epoch = time();
-						$now_date = "$year-$mon-$mday $hour:$min:$sec";
-						$recdate = "$year$mon$mday-$hour$min$sec";
-						$tinydate = "$Tyear$mon$mday$hour$min$sec";
-
+						&get_date_time;
 						$campaign_rec_filename =~ s/CAMPAIGN/$VDADcampaign/gi;
 						$campaign_rec_filename =~ s/CUSTPHONE/$VDADphone/gi;
 						$campaign_rec_filename =~ s/FULLDATE/$recdate/gi;
@@ -4707,6 +4654,7 @@ while ($drop_timer <= $DROP_TIME)
 					### BEGIN stereo call recording for ALLCALLS/ALLFORCE and for all parallel stereo recording campaigns for remote agents ###
 					if ( ($stereo_recording =~ /CUSTOMER|BOTH/i) && ($conf_engine eq "CONFBRIDGE") && ($SSstereo_recording > 0) ) 
 						{
+						&get_date_time;
 						$stereo_rec_filename =~ s/CAMPAIGN/$VDADcampaign/gi;
 						$stereo_rec_filename =~ s/INGROUP/$VDADcampaign/gi;
 						$stereo_rec_filename =~ s/CUSTPHONE/$VDADphone/gi;
@@ -5058,21 +5006,7 @@ while ($drop_timer <= $DROP_TIME)
 							$sthA->finish();
 
 							# get date/time
-							($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
-							$year = ($year + 1900);
-							$Tyear = ($year - 2000);
-							$mon++;
-							if ($mon < 10)	{$mon = "0$mon";}
-							if ($mday < 10) {$mday = "0$mday";}
-							if ($hour < 10) {$hour = "0$hour";}
-							if ($min < 10)	{$min = "0$min";}
-							if ($sec < 10)	{$sec = "0$sec";}
-
-							$now_date_epoch = time();
-							$now_date = "$year-$mon-$mday $hour:$min:$sec";
-							$recdate = "$year$mon$mday-$hour$min$sec";
-							$tinydate = "$Tyear$mon$mday$hour$min$sec";
-
+							&get_date_time;
 							$campaign_rec_filename =~ s/CAMPAIGN/$VDADcampaign/gi;
 							$campaign_rec_filename =~ s/CUSTPHONE/$VDADphone/gi;
 							$campaign_rec_filename =~ s/FULLDATE/$recdate/gi;
@@ -5136,6 +5070,7 @@ while ($drop_timer <= $DROP_TIME)
 					### BEGIN stereo call recording for ALLCALLS/ALLFORCE and for all parallel stereo recording campaigns ###
 					if ( ($stereo_recording =~ /CUSTOMER|BOTH/i) && ($conf_engine eq "CONFBRIDGE") && ($SSstereo_recording > 0) ) 
 						{
+						&get_date_time;
 						$stereo_rec_filename =~ s/CAMPAIGN/$VDADcampaign/gi;
 						$stereo_rec_filename =~ s/INGROUP/$VDADcampaign/gi;
 						$stereo_rec_filename =~ s/CUSTPHONE/$VDADphone/gi;
@@ -6629,6 +6564,26 @@ sub tts_num_var_test
 		$var_test =~ s/9/nine /gi;
 		}
 	return $var_test;
+	}
+
+
+sub get_date_time
+	{
+	# get date/time, for recording filenames
+	($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+	$year = ($year + 1900);
+	$Tyear = ($year - 2000);
+	$mon++;
+	if ($mon < 10)	{$mon = "0$mon";}
+	if ($mday < 10) {$mday = "0$mday";}
+	if ($hour < 10) {$hour = "0$hour";}
+	if ($min < 10)	{$min = "0$min";}
+	if ($sec < 10)	{$sec = "0$sec";}
+
+	$now_date_epoch = time();
+	$now_date = "$year-$mon-$mday $hour:$min:$sec";
+	$recdate = "$year$mon$mday-$hour$min$sec";
+	$tinydate = "$Tyear$mon$mday$hour$min$sec";
 	}
 
 

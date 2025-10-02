@@ -267,6 +267,7 @@
 # 250325-1724 - Fix for possible daily_limit issue
 # 250825-1824 - Added stereo_recording code
 # 250924-2147 - Added code for deprecation of "Monitor" application after Asterisk 20
+# 251001-1836 - Fix for rare Stereo recording filename issue
 #
 
 $script = 'agi-VDAD_ALL_inbound.agi';
@@ -3404,21 +3405,7 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 						$sthA->finish();
 
 						# get date/time
-						($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
-						$year = ($year + 1900);
-						$Tyear = ($year - 2000);
-						$mon++;
-						if ($mon < 10)	{$mon = "0$mon";}
-						if ($mday < 10) {$mday = "0$mday";}
-						if ($hour < 10) {$hour = "0$hour";}
-						if ($min < 10)	{$min = "0$min";}
-						if ($sec < 10)	{$sec = "0$sec";}
-
-						$now_date_epoch = time();
-						$now_date = "$year-$mon-$mday $hour:$min:$sec";
-						$recdate = "$year$mon$mday-$hour$min$sec";
-						$tinydate = "$Tyear$mon$mday$hour$min$sec";
-
+						&get_date_time;
 						$campaign_rec_filename =~ s/CAMPAIGN/$log_campaign/gi;
 						$campaign_rec_filename =~ s/INGROUP/$channel_group/gi;
 						$campaign_rec_filename =~ s/CUSTPHONE/$phone_number/gi;
@@ -3483,6 +3470,7 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 					### BEGIN stereo call recording for ALLCALLS/ALLFORCE and for all parallel stereo recording in-groups ###
 					if ( ($stereo_recording =~ /CUSTOMER|BOTH/i) && ($conf_engine eq "CONFBRIDGE") && ($SSstereo_recording > 0) ) 
 						{
+						&get_date_time;
 						$stereo_rec_filename =~ s/CAMPAIGN/$log_campaign/gi;
 						$stereo_rec_filename =~ s/INGROUP/$channel_group/gi;
 						$stereo_rec_filename =~ s/CUSTPHONE/$phone_number/gi;
@@ -5003,21 +4991,7 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 						$sthA->finish();
 
 						# get date/time
-						($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
-						$year = ($year + 1900);
-						$Tyear = ($year - 2000);
-						$mon++;
-						if ($mon < 10)	{$mon = "0$mon";}
-						if ($mday < 10) {$mday = "0$mday";}
-						if ($hour < 10) {$hour = "0$hour";}
-						if ($min < 10)	{$min = "0$min";}
-						if ($sec < 10)	{$sec = "0$sec";}
-
-						$now_date_epoch = time();
-						$now_date = "$year-$mon-$mday $hour:$min:$sec";
-						$recdate = "$year$mon$mday-$hour$min$sec";
-						$tinydate = "$Tyear$mon$mday$hour$min$sec";
-
+						&get_date_time;
 						$campaign_rec_filename =~ s/CAMPAIGN/$log_campaign/gi;
 						$campaign_rec_filename =~ s/INGROUP/$channel_group/gi;
 						$campaign_rec_filename =~ s/CUSTPHONE/$phone_number/gi;
@@ -5089,6 +5063,7 @@ while ( ($drop_timer <= $DROP_TIME) && ($wait_in_queue > 0) && ($MCdrop_override
 					### BEGIN stereo call recording for ALLCALLS/ALLFORCE and for all parallel stereo recording in-groups ###
 					if ( ($stereo_recording =~ /CUSTOMER|BOTH/i) && ($conf_engine eq "CONFBRIDGE") && ($SSstereo_recording > 0) ) 
 						{
+						&get_date_time;
 						$stereo_rec_filename =~ s/CAMPAIGN/$log_campaign/gi;
 						$stereo_rec_filename =~ s/INGROUP/$channel_group/gi;
 						$stereo_rec_filename =~ s/CUSTPHONE/$phone_number/gi;
@@ -10402,6 +10377,26 @@ sub parse_asterisk_version
 		}
 
 	return ( %ast_ver_hash );
+	}
+
+
+sub get_date_time
+	{
+	# get date/time, for recording filenames
+	($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+	$year = ($year + 1900);
+	$Tyear = ($year - 2000);
+	$mon++;
+	if ($mon < 10)	{$mon = "0$mon";}
+	if ($mday < 10) {$mday = "0$mday";}
+	if ($hour < 10) {$hour = "0$hour";}
+	if ($min < 10)	{$min = "0$min";}
+	if ($sec < 10)	{$sec = "0$sec";}
+
+	$now_date_epoch = time();
+	$now_date = "$year-$mon-$mday $hour:$min:$sec";
+	$recdate = "$year$mon$mday-$hour$min$sec";
+	$tinydate = "$Tyear$mon$mday$hour$min$sec";
 	}
 
 
