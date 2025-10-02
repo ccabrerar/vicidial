@@ -750,10 +750,11 @@
 # 250808-1322 - Added agent_man_dial_filter & agent_3way_dial_filter system settings
 # 250916-2055 - Added stereo recording features
 # 250924-0953 - Added Talk Seconds URLs features
+# 251002-1353 - Added call_count_limit_restrict campaign option
 #
 
-$version = '2.14-716c';
-$build = '250924-0953';
+$version = '2.14-717c';
+$build = '251002-1353';
 $php_script = 'vicidial.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=108;
@@ -12564,6 +12565,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 
 						var regMNCvar = new RegExp("HOPPER EMPTY","ig");
 						var regMDFvarDNC = new RegExp("DNC","ig");
+						var regMDFvarTCCL = new RegExp("TOTAL CALL LIMIT","ig");
 						var regMDFvarDCCL = new RegExp("DAILY CALL LIMIT","ig");
 						var regMDFvarDCCLP = new RegExp("DAILY PHONE NUMBER CALL LIMIT","ig");
 						var regMNHDNCvar = new RegExp("NO-HOPPER DNC","ig");
@@ -12575,7 +12577,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 						var regMDFvarTIME = new RegExp("OUTSIDE","ig");
 						var regMDFvarTFH = new RegExp("24-HOUR CALL LIMIT","ig");
 						var regMDFvarERR = new RegExp("ERROR","ig");
-						if ( (MDnextCID.match(regMNCvar)) || (MDnextCID.match(regMDFvarDNC)) || (MDnextCID.match(regMDFvarDCCL)) || (MDnextCID.match(regMDFvarCAMP)) || (MDnextCID.match(regMDFvarSYS)) ||(MDnextCID.match(regMDFvarCB)) || (MDnextCID.match(regMDFvarTIME)) || (MDnextCID.match(regMDFvarTFH)) || (MDnextCID.match(regMDFvarERR)) || (MDnextCID.match(regMDFvarDCCLP)) || (MDnextCID.match(regMNHDCCLPvar)) )
+						if ( (MDnextCID.match(regMNCvar)) || (MDnextCID.match(regMDFvarDNC)) || (MDnextCID.match(regMDFvarTCCL)) || (MDnextCID.match(regMDFvarDCCL)) || (MDnextCID.match(regMDFvarCAMP)) || (MDnextCID.match(regMDFvarSYS)) ||(MDnextCID.match(regMDFvarCB)) || (MDnextCID.match(regMDFvarTIME)) || (MDnextCID.match(regMDFvarTFH)) || (MDnextCID.match(regMDFvarERR)) || (MDnextCID.match(regMDFvarDCCLP)) || (MDnextCID.match(regMNHDCCLPvar)) )
 							{
 							button_click_log = button_click_log + "" + SQLdate + "-----DialNextFailed---" + MDnextCID + " " + "|";
 
@@ -12597,6 +12599,12 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 							if (MDnextCID.match(regMDFvarDNC))
 								{
 								alert_box("<?php echo _QXZ("This phone number is in the DNC list:"); ?>\n" + mdnPhonENumbeR);
+								alert_displayed=1;
+								in_lead_preview_state=0;
+								}
+							if (MDnextCID.match(regMDFvarTCCL))
+								{
+								alert_box("<?php echo _QXZ("This lead has exceeded its total call count limit:"); ?>\n" + mdnPhonENumbeR);
 								alert_displayed=1;
 								in_lead_preview_state=0;
 								}

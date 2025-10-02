@@ -562,13 +562,14 @@
 # 250723-2002 - Fix for issue #1548
 # 250916-1918 - Added stereo recording features
 # 250923-1755 - Added talk_sec_url features
+# 251002-1352 - Added call_count_limit_restrict campaign option
 #
 
-$version = '2.14-455';
-$build = '250923-1755';
+$version = '2.14-456';
+$build = '251002-1352';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
-$mysql_log_count=989;
+$mysql_log_count=995;
 $one_mysql_log=0;
 $DB=0;
 $VD_login=0;
@@ -2909,7 +2910,7 @@ if ($ACTION == 'manDiaLnextCaLL')
 			if ($lead_id_defined < 1)
 				{
 				##### gather no hopper dialing settings from campaign
-				$stmt="SELECT no_hopper_dialing,agent_dial_owner_only,local_call_time,dial_statuses,drop_lockout_time,lead_filter_id,lead_order,lead_order_randomize,lead_order_secondary,call_count_limit,next_dial_my_callbacks,callback_list_calltime,callback_hours_block,daily_call_count_limit,daily_limit_manual,daily_phone_number_call_limit FROM vicidial_campaigns where campaign_id='$campaign';";
+				$stmt="SELECT no_hopper_dialing,agent_dial_owner_only,local_call_time,dial_statuses,drop_lockout_time,lead_filter_id,lead_order,lead_order_randomize,lead_order_secondary,call_count_limit,next_dial_my_callbacks,callback_list_calltime,callback_hours_block,daily_call_count_limit,daily_limit_manual,daily_phone_number_call_limit,call_count_limit_restrict FROM vicidial_campaigns where campaign_id='$campaign';";
 				$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00236',$user,$server_ip,$session_name,$one_mysql_log);}
 				if ($DB) {echo "$stmt\n";}
@@ -2933,6 +2934,7 @@ if ($ACTION == 'manDiaLnextCaLL')
 					$daily_call_count_limit =	$row[13];
 					$daily_limit_manual =		$row[14];
 					$daily_phone_number_call_limit = $row[15];
+					$call_count_limit_restrict = $row[16];
 					}
 				if (preg_match("/N/i",$no_hopper_dialing))
 					{
@@ -4327,7 +4329,7 @@ if ($ACTION == 'manDiaLnextCaLL')
 
 			##### BEGIN check for postal_code and phone time zones if alert enabled
 			$post_phone_time_diff_alert_message='';
-			$stmt="SELECT post_phone_time_diff_alert,local_call_time,owner_populate,default_xfer_group,daily_call_count_limit,daily_limit_manual,call_limit_24hour_method,call_limit_24hour_scope,call_limit_24hour,call_limit_24hour_override,daily_phone_number_call_limit FROM vicidial_campaigns where campaign_id='$campaign';";
+			$stmt="SELECT post_phone_time_diff_alert,local_call_time,owner_populate,default_xfer_group,daily_call_count_limit,daily_limit_manual,call_limit_24hour_method,call_limit_24hour_scope,call_limit_24hour,call_limit_24hour_override,daily_phone_number_call_limit,call_count_limit_restrict,call_count_limit FROM vicidial_campaigns where campaign_id='$campaign';";
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00414',$user,$server_ip,$session_name,$one_mysql_log);}
 			if ($DB) {echo "$stmt\n";}
@@ -4346,6 +4348,8 @@ if ($ACTION == 'manDiaLnextCaLL')
 				$call_limit_24hour =			$row[8];
 				$call_limit_24hour_override =	$row[9];
 				$daily_phone_number_call_limit = $row[10];
+				$call_count_limit_restrict =	$row[11];
+				$call_count_limit =				$row[12];
 				}
 			if ( ($post_phone_time_diff_alert == 'ENABLED') or (preg_match("/OUTSIDE_CALLTIME/",$post_phone_time_diff_alert)) )
 				{
@@ -4431,7 +4435,7 @@ if ($ACTION == 'manDiaLnextCaLL')
 				}
 			##### END check for postal_code and phone time zones if alert enabled
 
-			### Daily call count limit check ###
+			### Total and Daily call count limit check ###
 			manual_dccl_check($lead_id, $no_hopper_dialing_used, 0, $agent_dialed_number);
 
 			#### BEGIN check for 24-hour call count limit ####
@@ -4629,7 +4633,7 @@ if ($ACTION == 'manDiaLnextCaLL')
 			if ( (strlen($preview)<1) or ($preview == 'NO') or (strlen($dial_ingroup) > 1) )
 				{
 				$use_custom_cid='N';
-				$stmt = "SELECT use_custom_cid,manual_dial_hopper_check,start_call_url,manual_dial_filter,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc,cid_group_id,scheduled_callbacks_auto_reschedule,dial_timeout_lead_container,manual_dial_cid,daily_call_count_limit,daily_limit_manual,call_limit_24hour_method,call_limit_24hour_scope,call_limit_24hour,call_limit_24hour_override,cid_group_id_two,daily_phone_number_call_limit,state_descriptions FROM vicidial_campaigns where campaign_id='$campaign';";
+				$stmt = "SELECT use_custom_cid,manual_dial_hopper_check,start_call_url,manual_dial_filter,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc,cid_group_id,scheduled_callbacks_auto_reschedule,dial_timeout_lead_container,manual_dial_cid,daily_call_count_limit,daily_limit_manual,call_limit_24hour_method,call_limit_24hour_scope,call_limit_24hour,call_limit_24hour_override,cid_group_id_two,daily_phone_number_call_limit,state_descriptions,call_count_limit_restrict,call_count_limit FROM vicidial_campaigns where campaign_id='$campaign';";
 				$rslt=mysql_to_mysqli($stmt, $link);
 					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00313',$user,$server_ip,$session_name,$one_mysql_log);}
 				if ($DB) {echo "$stmt\n";}
@@ -4657,6 +4661,8 @@ if ($ACTION == 'manDiaLnextCaLL')
 					$cid_group_id_two =						$row[17];
 					$daily_phone_number_call_limit =		$row[18];
 					$state_descriptions =					$row[19];
+					$call_count_limit_restrict =			$row[20];
+					$call_count_limit =						$row[21];
 					}
 
 				### BEGIN check for Dial Timeout Lead Override ###
@@ -6435,7 +6441,7 @@ if ($ACTION == 'manDiaLonly')
 		### check for manual dial filter and extension append settings in campaign
 		$use_eac=0;
 		$use_custom_cid='N';
-		$stmt = "SELECT manual_dial_filter,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc,extension_appended_cidname,start_call_url,scheduled_callbacks_auto_reschedule,dial_timeout_lead_container,daily_call_count_limit,daily_limit_manual,call_limit_24hour_method,call_limit_24hour_scope,call_limit_24hour,call_limit_24hour_override,custom_one,custom_two,custom_three,custom_four,custom_five,daily_phone_number_call_limit,state_descriptions FROM vicidial_campaigns where campaign_id='$campaign';";
+		$stmt = "SELECT manual_dial_filter,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc,extension_appended_cidname,start_call_url,scheduled_callbacks_auto_reschedule,dial_timeout_lead_container,daily_call_count_limit,daily_limit_manual,call_limit_24hour_method,call_limit_24hour_scope,call_limit_24hour,call_limit_24hour_override,custom_one,custom_two,custom_three,custom_four,custom_five,daily_phone_number_call_limit,state_descriptions,call_count_limit_restrict,call_count_limit FROM vicidial_campaigns where campaign_id='$campaign';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00325',$user,$server_ip,$session_name,$one_mysql_log);}
 		if ($DB) {echo "$stmt\n";}
@@ -6464,6 +6470,8 @@ if ($ACTION == 'manDiaLonly')
 			$camp_custom_five =						$row[18];
 			$daily_phone_number_call_limit =		$row[19];
 			$state_descriptions =					$row[20];
+			$call_count_limit_restrict =			$row[21];
+			$call_count_limit =						$row[22];
 			}
 
 		# check for user overrides
@@ -9056,7 +9064,7 @@ if ($stage == "end")
 		if ($auto_dial_level > 0)
 			{
 			### check to see if campaign has alt_dial enabled
-			$stmt="SELECT auto_alt_dial,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc,daily_call_count_limit,daily_limit_manual,call_limit_24hour_method,call_limit_24hour_scope,call_limit_24hour,call_limit_24hour_override,auto_alt_threshold,daily_phone_number_call_limit FROM vicidial_campaigns where campaign_id='$campaign';";
+			$stmt="SELECT auto_alt_dial,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc,daily_call_count_limit,daily_limit_manual,call_limit_24hour_method,call_limit_24hour_scope,call_limit_24hour,call_limit_24hour_override,auto_alt_threshold,daily_phone_number_call_limit,call_count_limit_restrict,call_count_limit FROM vicidial_campaigns where campaign_id='$campaign';";
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00064',$user,$server_ip,$session_name,$one_mysql_log);}
 			if ($DB) {echo "$stmt\n";}
@@ -9076,6 +9084,8 @@ if ($stage == "end")
 				$call_limit_24hour_override =	$row[9];
 				$auto_alt_threshold =			$row[10];
 				$daily_phone_number_call_limit = $row[11];
+				$call_count_limit_restrict =	$row[12];
+				$call_count_limit =				$row[13];
 				}
 			else {$auto_alt_dial = 'NONE';}
 			$alt_lead_done=0;
@@ -11152,7 +11162,7 @@ if ($ACTION == 'VDADcheckINCOMING')
 					$force_disable=0;
 					$stmt = "SELECT count(*) from vicidial_url_multi where campaign_id='$VDADchannel_group' and entry_type='ingroup' and url_type='talk' and active='N' and url_address LIKE \"%FORCEDISABLE%\";";
 					$rslt=mysql_to_mysqli($stmt, $link);
-						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00990',$user,$server_ip,$session_name,$one_mysql_log);}
 					if ($DB) {echo "$stmt\n";}
 					$fdtu_field_ct = mysqli_num_rows($rslt);
 					if ($fdtu_field_ct > 0)
@@ -13009,7 +13019,7 @@ if ($ACTION == 'VDADcheckINCOMINGother')
 				$force_disable=0;
 				$stmt = "SELECT count(*) from vicidial_url_multi where campaign_id='$VDADchannel_group' and entry_type='ingroup' and url_type='talk' and active='N' and url_address LIKE \"%FORCEDISABLE%\";";
 				$rslt=mysql_to_mysqli($stmt, $link);
-					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00991',$user,$server_ip,$session_name,$one_mysql_log);}
 				if ($DB) {echo "$stmt\n";}
 				$fdtu_field_ct = mysqli_num_rows($rslt);
 				if ($fdtu_field_ct > 0)
@@ -15375,7 +15385,7 @@ if ($ACTION == 'updateDISPO')
 		}
 	### END Call Notes Logging ###
 
-	$stmt="SELECT auto_alt_dial_statuses,use_internal_dnc,use_campaign_dnc,api_manual_dial,use_other_campaign_dnc,call_quota_lead_ranking,daily_call_count_limit,daily_limit_manual,daily_phone_number_call_limit from vicidial_campaigns where campaign_id='$campaign';";
+	$stmt="SELECT auto_alt_dial_statuses,use_internal_dnc,use_campaign_dnc,api_manual_dial,use_other_campaign_dnc,call_quota_lead_ranking,daily_call_count_limit,daily_limit_manual,daily_phone_number_call_limit,call_count_limit_restrict,call_count_limit from vicidial_campaigns where campaign_id='$campaign';";
 	$rslt=mysql_to_mysqli($stmt, $link);
 		if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00155',$user,$server_ip,$session_name,$one_mysql_log);}
 	$row=mysqli_fetch_row($rslt);
@@ -15388,6 +15398,8 @@ if ($ACTION == 'updateDISPO')
 	$daily_call_count_limit =		$row[6];
 	$daily_limit_manual =			$row[7];
 	$daily_phone_number_call_limit = $row[8];
+	$call_count_limit_restrict =	$row[9];
+	$call_count_limit =				$row[10];
 
 
 	### BEGIN Call Quota Lead Renking logging ###
@@ -17648,7 +17660,7 @@ if ($ACTION == 'TALKsecURL')
 		# check if this In-Group has talk seconds urls set to -FORCEDISABLE-
 		$stmt = "SELECT count(*) from vicidial_url_multi where campaign_id='$VDADchannel_group' and entry_type='$DUentry_type' and url_type='talk' and active='N' and url_address LIKE \"%FORCEDISABLE%\";";
 		$rslt=mysql_to_mysqli($stmt, $link);
-			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00992',$user,$server_ip,$session_name,$one_mysql_log);}
 		if ($DB) {echo "$stmt\n";}
 		$fdtu_field_ct = mysqli_num_rows($rslt);
 		if ($fdtu_field_ct > 0)
@@ -23311,13 +23323,13 @@ function manual_dnc_check($temp_phone_number, $temp_no_hopper, $temp_dial_only)
 	}
 
 
-##### Daily call count limit check #####
+##### Total and Daily call count limit check #####
 function manual_dccl_check($temp_lead_id, $temp_no_hopper, $temp_dial_only, $temp_phone_number)
 	{
-	global $manual_dial_filter, $use_internal_dnc, $use_campaign_dnc, $campaign, $user, $link, $NOW_TIME, $mel, $server_ip, $session_name, $one_mysql_log, $SSagent_debug_logging, $startMS, $ACTION, $php_script, $stage, $lead_id, $daily_call_count_limit, $daily_limit_manual, $SSdaily_call_count_limit, $daily_phone_number_call_limit;
+	global $manual_dial_filter, $use_internal_dnc, $use_campaign_dnc, $campaign, $user, $link, $NOW_TIME, $mel, $server_ip, $session_name, $one_mysql_log, $SSagent_debug_logging, $startMS, $ACTION, $php_script, $stage, $lead_id, $daily_call_count_limit, $daily_limit_manual, $SSdaily_call_count_limit, $daily_phone_number_call_limit, $call_count_limit, $call_count_limit_restrict;
 
 #	$fp = fopen ("./DCCLdebug_log.txt", "a");
-#	fwrite ($fp, "$NOW_TIME|1     |$lead_id|$SSdaily_call_count_limit|$daily_call_count_limit|$daily_limit_manual|\n");
+#	fwrite ($fp, "$NOW_TIME|1     |$lead_id|$SSdaily_call_count_limit|$daily_call_count_limit|$daily_limit_manual|$call_count_limit|$call_count_limit_restrict|\n");
 #	fclose($fp);  
 
 	### BEGIN Daily call count limit filtering ### 
@@ -23421,6 +23433,56 @@ function manual_dccl_check($temp_lead_id, $temp_no_hopper, $temp_dial_only, $tem
 			}
 		}
 	### END Daily phone_number call count limit filtering ###
+
+	### BEGIN Total call_count_limit_restrict filtering ###
+	if ( ($call_count_limit > 0) and (preg_match("/RESTRICT_ALL/",$call_count_limit_restrict)) )
+		{
+		$temp_daily_call_count_limit = $daily_phone_number_call_limit;
+		if ($temp_dial_only > 0) {$temp_daily_call_count_limit = ($daily_phone_number_call_limit + 1);}
+		$stmt="SELECT called_count FROM vicidial_list where lead_id='$temp_lead_id';";
+		$rslt=mysql_to_mysqli($stmt, $link);
+			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00993',$user,$server_ip,$session_name,$one_mysql_log);}
+		if ($DB) {echo "$stmt\n";}
+		$vlcdc_ct = mysqli_num_rows($rslt);
+		if ($vlcdc_ct > 0)
+			{
+			$row=mysqli_fetch_row($rslt);
+			if ($row[0] >= $call_count_limit)
+				{
+				### flag the lead as called
+				$stmt = "UPDATE vicidial_list set called_since_last_reset='Y' where lead_id='$lead_id';";
+				if ($DB) {echo "$stmt\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00994',$user,$server_ip,$session_name,$one_mysql_log);}
+
+				if ($temp_no_hopper > 0)
+					{
+					### reset agent log record
+					$stmt="UPDATE vicidial_agent_log set lead_id=NULL,comments='' where agent_log_id='$agent_log_id';";
+						if ($format=='debug') {echo "\n<!-- $stmt -->";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00995',$user,$server_ip,$session_name,$one_mysql_log);}
+
+					echo " NO-HOPPER TOTAL CALL LIMIT\nTRY AGAIN\n";
+					$stage .= "|$agent_log_id|$vla_status|$agent_dialed_type|$agent_dialed_number|";
+					}
+				else
+					{
+					if ($temp_dial_only)
+						{
+						echo " CALL NOT PLACED\nTOTAL CALL LIMIT\n";
+						}
+					else
+						{
+						echo "TOTAL CALL LIMIT\n";
+						}
+					}
+				if ($SSagent_debug_logging > 0) {vicidial_ajax_log($NOW_TIME,$startMS,$link,$ACTION,$php_script,$user,$stage,$lead_id,$session_name,$stmt);}
+				exit;
+				}
+			}
+		}
+	### END Total call_count_limit_restrict filtering ###
 	}
 
 

@@ -3011,3 +3011,7 @@ UPDATE system_settings SET db_schema_version='1729',db_schema_update_date=NOW() 
 ALTER TABLE vicidial_url_multi MODIFY url_type ENUM('dispo','start','addlead','noagent','apinewlead','talk','') default '';
 
 UPDATE system_settings SET db_schema_version='1730',db_schema_update_date=NOW() where db_schema_version < 1730;
+
+ALTER TABLE vicidial_campaigns ADD call_count_limit_restrict VARCHAR(30) default 'DISABLED';
+
+UPDATE system_settings SET db_schema_version='1731',db_schema_update_date=NOW() where db_schema_version < 1731;

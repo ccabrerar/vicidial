@@ -1142,7 +1142,8 @@ parallel_rec_co_filename VARCHAR(50) default '',
 parallel_rec_cm_filename VARCHAR(50) default '',
 parallel_rec_fr_filename VARCHAR(50) default '',
 recording_dtmf_muting SMALLINT(3) UNSIGNED default '0',
-stereo_recording_agent ENUM('NEVER','ONDEMAND','ALLCALLS','ALLFORCE') default 'ALLFORCE'
+stereo_recording_agent ENUM('NEVER','ONDEMAND','ALLCALLS','ALLFORCE') default 'ALLFORCE',
+call_count_limit_restrict VARCHAR(30) default 'DISABLED'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_lists (
@@ -5853,4 +5854,4 @@ INSERT INTO `wallboard_reports` VALUES ('AGENTS_AND_QUEUES','Agents and Queues',
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1730',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1731',db_schema_update_date=NOW(),reload_timestamp=NOW();
