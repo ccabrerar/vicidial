@@ -52,6 +52,7 @@
 # 230124-1228 - Added logging of VICIrecGatewayID channel variable, and vicidial_did_gateway_log table
 # 241208-1748 - Changed DID filter_phone_group_id & pre_filter_phone_group_id to multi-selects
 # 250924-2156 - Added code for deprecation of "Monitor" application after Asterisk 20
+# 251006-0905 - If recording_dtmf_muting enabled, force use of MixMonitor for recording
 #
 
 
@@ -154,7 +155,7 @@ $sthA->finish();
 
 #############################################
 ##### START SYSTEM SETTINGS LOOKUP      #####
-$stmtA = "SELECT enable_queuemetrics_logging,queuemetrics_server_ip,queuemetrics_dbname,queuemetrics_login,queuemetrics_pass,queuemetrics_log_id,queuemetrics_eq_prepend,did_agent_log,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,did_system_filter,inbound_answer_config FROM system_settings;";
+$stmtA = "SELECT enable_queuemetrics_logging,queuemetrics_server_ip,queuemetrics_dbname,queuemetrics_login,queuemetrics_pass,queuemetrics_log_id,queuemetrics_eq_prepend,did_agent_log,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,did_system_filter,inbound_answer_config,recording_dtmf_muting,recording_dtmf_detection FROM system_settings;";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -176,6 +177,8 @@ if ($sthArows > 0)
 	$tables_use_alt_log_db =		$aryA[12];
 	$SSdid_system_filter =			$aryA[13];
 	$SSinbound_answer_config =		$aryA[14];
+	$SSrecording_dtmf_muting =		$aryA[15];
+	$SSrecording_dtmf_detection =	$aryA[16];
 	}
 $sthA->finish();
 ##### END SYSTEM SETTINGS LOOKUP      #####
@@ -880,7 +883,7 @@ if ($record_call =~ /Y/)
 		}
 	else
 		{
-		if ($ast_ver_str{major} > 20) 
+		if ( ($ast_ver_str{major} > 20) || ($SSrecording_dtmf_muting > 0) )
 			{
 			# Deprecation of "Monitor" application after Asterisk 20
 			$AGI->exec("MixMonitor",",r($PATHmonitor/MIX/$filename-in.wav)t($PATHmonitor/MIX/$filename-out.wav)");
@@ -908,7 +911,20 @@ if ($record_call =~ /Y/)
 		$sthA->finish();
 		}
 
-	if ($AGILOG) {$did_string = "--    RECORDING LOG : |$affected_rowsR|$insert_recording_id|$stmtA|";   &did_output;}
+	$recording_dtmf_muting=0;
+	if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+		{
+		if ($SSrecording_dtmf_muting > 1) 
+			{
+			$recording_dtmf_muting = $SSrecording_dtmf_muting;
+			}
+		}
+
+	### insert record into recording_live table ###
+	$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$insert_recording_id','MONO_LEGACY_DID','$VARserver_ip','$now_date','$channel','$filename','$lead_id','$user','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
+	$rLIVEaffected_rows = $dbhA->do($stmtD);
+
+	if ($AGILOG) {$did_string = "--    RECORDING LOG : |$affected_rowsR|$rLIVEaffected_rows|$insert_recording_id|$stmtA|";   &did_output;}
 	}
 
 ### Grab Server values from the database

@@ -61,6 +61,7 @@
 # 151214-2148 - Added more variables to be used by nva url feature
 # 151220-1521 - Added phone NVA List ID option for not found phone numbers
 # 250924-2137 - Added code for deprecation of "Monitor" application after Asterisk 20
+# 251006-0904 - If recording_dtmf_muting enabled, force use of MixMonitor for recording
 #
 
 &get_time_now;
@@ -82,6 +83,7 @@ $now_date = "$year-$mon-$mday $hour:$min:$sec";
 $filedate = "$year$mon$mday$hour$min$sec";
 
 $US='_';
+$VLAcampaign='';
 
 
 # default path to astguiclient configuration file:
@@ -125,6 +127,21 @@ $AGI = new Asterisk::AGI;
 
 $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
     or die "Couldn't connect to database: " . DBI->errstr;
+
+#############################################
+##### Gather system_settings #####
+$stmtA = "SELECT recording_dtmf_muting,recording_dtmf_detection FROM system_settings;";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+if ($sthArows > 0)
+	{
+	@aryA = $sthA->fetchrow_array;
+	$SSrecording_dtmf_muting =		$aryA[0];
+	$SSrecording_dtmf_detection =	$aryA[1];
+	}
+$sthA->finish();
+###########################################
 
 ### Grab Server values from the database
 $stmtA = "SELECT agi_output,ext_context,asterisk_version FROM servers where server_ip = '$VARserver_ip';";
@@ -405,7 +422,7 @@ if ($record_call =~ /Y/)
 		}
 	else
 		{
-		if ($ast_ver_str{major} > 20) 
+		if ( ($ast_ver_str{major} > 20) || ($SSrecording_dtmf_muting > 0) )
 			{
 			# Deprecation of "Monitor" application after Asterisk 20
 			$AGI->exec("MixMonitor",",r(/var/spool/asterisk/monitor/MIX/$filename-in.wav)t(/var/spool/asterisk/monitor/MIX/$filename-out.wav)");
@@ -415,6 +432,56 @@ if ($record_call =~ /Y/)
 			$AGI->exec("Monitor","wav,/var/spool/asterisk/monitor/MIX/$filename");
 			}
 		}
+
+	### get campaign settings for DTMF muting, if enabled on this system
+	$recording_dtmf_muting=0;
+	if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+		{
+		if ($SSrecording_dtmf_muting > 1) 
+			{
+			$recording_dtmf_muting = $SSrecording_dtmf_muting;
+			}
+		else
+			{
+			if (length($VLAcampaign) < 1) 
+				{
+				$stmtA = "SELECT list_id FROM vicidial_list where lead_id='$lead_id' limit 1;";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArows=$sthA->rows;
+				if ($sthArows > 0)
+					{
+					@aryA = $sthA->fetchrow_array;
+					$VLAlist_id = $aryA[0];
+
+					$stmtA = "SELECT campaign_id FROM vicidial_lists where list_id='$VLAlist_id' limit 1;";
+					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+					$sthArows=$sthA->rows;
+					if ($sthArows > 0)
+						{
+						@aryA = $sthA->fetchrow_array;
+						$VLAcampaign = $aryA[0];
+						}
+					}
+				}
+
+			$stmtA = "SELECT recording_dtmf_muting FROM vicidial_campaigns where campaign_id='$VLAcampaign' limit 1;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$recording_dtmf_muting = $aryA[0];
+				}
+			}
+		if ($AGILOG) {$agi_string = "DTMF Muting check: $recording_dtmf_muting|$SSrecording_dtmf_muting|$VLAcampaign($lead_id)";   &agi_output;}
+		}
+
+	### insert record into recording_live table ###
+	$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','MONO_LEGACY_NVA','$VARserver_ip','$now_date','$channel','$filename','$lead_id','$accountcode','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
+	$rLIVEaffected_rows = $dbhA->do($stmtD);
 	}
 
 if ( ($phone_url =~ /Y/) && (length($nva_call_url) > 8) )

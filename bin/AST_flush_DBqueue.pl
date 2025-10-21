@@ -37,6 +37,7 @@
 # 240219-0811 - Added optimizing of server_live_... tables
 # 240709-1300 - Added Validate XFER vicidial_auto_calls: "--check-xfers" flag
 # 250914-1537 - Added archiving of recording_live table
+# 251003-0837 - Added --preserve-dtmf flag (DTMF logs would then be kept for 1-2 days)
 #
 
 $session_flush=0;
@@ -44,6 +45,7 @@ $SSsip_event_logging=0;
 $reset_stuck_leads=0;
 $stuck_lists='';
 $stuck_listsSQL='';
+$preserve_dtmf=0;
 $check_xfers=0;
 $vicidial_recording_limit=60;
 
@@ -68,6 +70,7 @@ if (length($ARGV[0])>1)
 		print "  [--session-flush] = flush the vicidial_sessions_recent table\n";
 		print "  [--reset-stuck-leads] = reset status of ERI/INCALL leads to NEW if previewed but not called\n";
 		print "  [--stuck-lists=X] = restrict stuck leads check to these lists: X-Y-Z multiple lists separated by a single dash\n";
+		print "  [--preserve-dtmf] = do not purge dtmf log\n";
 		print "  [--check-xfers] = validates that XFER status vicidial_auto_calls records are live, if not, they are deleted\n";
 		print "\n";
 
@@ -105,6 +108,12 @@ if (length($ARGV[0])>1)
 			$reset_stuck_leads=1;
 			if ($Q < 1)
 				{print "\n----- RESET STUCK LEADS ----- $reset_stuck_leads \n\n";}
+			}
+		if ($args =~ /--preserve-dtmf/i)
+			{
+			$preserve_dtmf=1;
+			if ($Q < 1)
+				{print "\n----- PRESERVE DTMF LOGS ----- $preserve_dtmf \n\n";}
 			}
 		if ($args =~ /--check-xfers/i)
 			{
@@ -344,10 +353,13 @@ if($DB){print STDERR "\n|$stmtA|\n";}
 if (!$T) {	$affected_rows = $dbhA->do($stmtA);}
 if (!$Q) {print " - vicidial_manager flush: $affected_rows rows\n";}
 
-$stmtA = "DELETE from vicidial_dtmf_log where dtmf_time < '$flush_time';";
-if($DB){print STDERR "\n|$stmtA|\n";}
-if (!$T) {      $affected_rows = $dbhA->do($stmtA);}
-if (!$Q) {print " - vicidial_dtmf_log flush: $affected_rows rows\n";}
+if ($preserve_dtmf < 1) 
+	{
+	$stmtA = "DELETE from vicidial_dtmf_log where dtmf_time < '$flush_time';";
+	if($DB){print STDERR "\n|$stmtA|\n";}
+	if (!$T) {      $affected_rows = $dbhA->do($stmtA);}
+	if (!$Q) {print " - vicidial_dtmf_log flush: $affected_rows rows\n";}
+	}
 
 $stmtA = "DELETE from routing_initiated_recordings where launch_time < '$flush_time';";
 if($DB){print STDERR "\n|$stmtA|\n";}
@@ -392,19 +404,21 @@ if (!$T)
 if (!$Q) {print " - OPTIMIZE vicidial_manager          \n";}
 
 
-$stmtA = "OPTIMIZE table vicidial_dtmf_log;";
-if($DB){print STDERR "\n|$stmtA|\n";}
-if (!$T)
-        {
-        $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-        $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-        $sthArows=$sthA->rows;
-        @aryA = $sthA->fetchrow_array;
-        if (!$Q) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
-        $sthA->finish();
-        }
-if (!$Q) {print " - OPTIMIZE vicidial_dtmf_log          \n";}
-
+if ($preserve_dtmf < 1) 
+	{
+	$stmtA = "OPTIMIZE table vicidial_dtmf_log;";
+	if($DB){print STDERR "\n|$stmtA|\n";}
+	if (!$T)
+			{
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			@aryA = $sthA->fetchrow_array;
+			if (!$Q) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+			$sthA->finish();
+			}
+	if (!$Q) {print " - OPTIMIZE vicidial_dtmf_log          \n";}
+	}
 
 $stmtA = "OPTIMIZE table routing_initiated_recordings;";
 if($DB){print STDERR "\n|$stmtA|\n";}
@@ -1099,7 +1113,7 @@ if ($rl_count > 0)
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows = $sthA->rows;
-			if (!$Q) {print "$sthArows rows delete from recording_live_log table:   |$OR_recording_id[$orc]|$OR_user[$orc]|$OR_lead_id[$orc]|\n";}
+			if (!$Q) {print "$sthArows rows delete from recording_live table:   |$OR_recording_id[$orc]|$OR_user[$orc]|$OR_lead_id[$orc]|\n";}
 			}
 		$orc++;
 		}

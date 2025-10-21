@@ -553,7 +553,7 @@
 # 240612-0206 - Fix for extension_appended_cidname newer options
 # 240801-1140 - Code updates for PHP8 compatibility
 # 240830-1618 - Added manual_minimum_ring_seconds SIP action lookup code
-# 240906-1646 - Added testing for stereo_recording campaign option for manual dial calls *NOT PRODUCTION READY*
+# 240906-1646 - Added testing for stereo_recording campaign option for manual dial calls
 # 250129-0900 - Fix for PHP8 TypeError
 # 250224-1642 - Fix for drop_lockout_time issue with NULL last_local_call_time DROP leads
 # 250311-1420 - Fix for start_call_url on inbound calls where blank and campaign set to ALT
@@ -563,10 +563,11 @@
 # 250916-1918 - Added stereo recording features
 # 250923-1755 - Added talk_sec_url features
 # 251002-1352 - Added call_count_limit_restrict campaign option
+# 251005-0931 - Added code for recording_dtmf_muting
 #
 
-$version = '2.14-456';
-$build = '251002-1352';
+$version = '2.14-457';
+$build = '251005-0931';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=995;
@@ -575,6 +576,7 @@ $DB=0;
 $VD_login=0;
 $SSagent_debug_logging=0;
 $pause_to_code_jump=0;
+$recording_dtmf_muting=0;
 $startMS = microtime();
 
 require_once("dbconnect_mysqli.php");
@@ -1094,7 +1096,7 @@ $sip_hangup_cause_dictionary = array(
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,timeclock_end_of_day,agentonly_callback_campaign_lock,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,qc_features_active,allow_emails,callback_time_24hour,enable_languages,language_method,agent_debug_logging,default_language,active_modules,allow_chats,default_phone_code,user_new_lead_limit,sip_event_logging,call_quota_lead_ranking,daily_call_count_limit,call_limit_24hour,allow_web_debug,abandon_check_queue,inbound_credits,stereo_recording,stereo_parallel_recording FROM system_settings;";
+$stmt = "SELECT use_non_latin,timeclock_end_of_day,agentonly_callback_campaign_lock,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,qc_features_active,allow_emails,callback_time_24hour,enable_languages,language_method,agent_debug_logging,default_language,active_modules,allow_chats,default_phone_code,user_new_lead_limit,sip_event_logging,call_quota_lead_ranking,daily_call_count_limit,call_limit_24hour,allow_web_debug,abandon_check_queue,inbound_credits,stereo_recording,stereo_parallel_recording,recording_dtmf_detection,recording_dtmf_muting FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00001',$user,$server_ip,$session_name,$one_mysql_log);}
 #if ($DB) {echo "$stmt\n";}
@@ -1130,6 +1132,8 @@ if ($qm_conf_ct > 0)
 	$SSinbound_credits =					$row[25];
 	$SSstereo_recording =					$row[26];
 	$SSstereo_parallel_recording =			$row[27];
+	$SSrecording_dtmf_detection = 			$row[28];
+	$SSrecording_dtmf_muting = 				$row[29];
 	}
 if ($SSallow_web_debug < 1) {$DB=0;   $format='text';}
 ##### END SETTINGS LOOKUP #####
@@ -2433,7 +2437,7 @@ if ($ACTION == 'manDiaLnextCaLL')
 
 		$local_call_time='24hours';
 		##### gather local call time, user_group_script settings from campaign
-		$stmt="SELECT local_call_time,user_group_script,custom_one,custom_two,custom_three,custom_four,custom_five,state_descriptions FROM vicidial_campaigns where campaign_id='$campaign';";
+		$stmt="SELECT local_call_time,user_group_script,custom_one,custom_two,custom_three,custom_four,custom_five,state_descriptions,recording_dtmf_muting FROM vicidial_campaigns where campaign_id='$campaign';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00353',$user,$server_ip,$session_name,$one_mysql_log);}
 		if ($DB) {echo "$stmt\n";}
@@ -2449,6 +2453,9 @@ if ($ACTION == 'manDiaLnextCaLL')
 			$camp_custom_four =			$row[5];
 			$camp_custom_five =			$row[6];
 			$state_descriptions =		$row[7];
+			$recording_dtmf_muting =	$row[8];
+			if ( ($SSrecording_dtmf_detection < 1) or ($SSrecording_dtmf_muting < 1) )
+				{$recording_dtmf_muting=0;}
 			}
 
 		$stmt="SELECT user_group,territory FROM vicidial_users where user='$user';";
@@ -5394,6 +5401,14 @@ if ($ACTION == 'manDiaLnextCaLL')
 					$rslt=mysql_to_mysqli($stmt, $link);
 					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00733',$user,$server_ip,$session_name,$one_mysql_log);}
 
+					if ( ($SSrecording_dtmf_detection > 0) and ($SSrecording_dtmf_muting > 0) ) 
+						{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+					### insert record into recording_live table ###
+					$stmt = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','MONO_LEGACY_RIR','$server_ip','$NOW_TIME','$channel','$recording_filename','$lead_id','$user','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
+						if ($format=='debug') {echo "\n<!-- $stmt -->";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+
 					##### update vla record with recording_id
 					$stmt = "UPDATE vicidial_live_agents SET external_recording='$recording_id' where user='$user';";
 						if ($format=='debug') {echo "\n<!-- $stmt -->";}
@@ -6441,7 +6456,7 @@ if ($ACTION == 'manDiaLonly')
 		### check for manual dial filter and extension append settings in campaign
 		$use_eac=0;
 		$use_custom_cid='N';
-		$stmt = "SELECT manual_dial_filter,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc,extension_appended_cidname,start_call_url,scheduled_callbacks_auto_reschedule,dial_timeout_lead_container,daily_call_count_limit,daily_limit_manual,call_limit_24hour_method,call_limit_24hour_scope,call_limit_24hour,call_limit_24hour_override,custom_one,custom_two,custom_three,custom_four,custom_five,daily_phone_number_call_limit,state_descriptions,call_count_limit_restrict,call_count_limit FROM vicidial_campaigns where campaign_id='$campaign';";
+		$stmt = "SELECT manual_dial_filter,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc,extension_appended_cidname,start_call_url,scheduled_callbacks_auto_reschedule,dial_timeout_lead_container,daily_call_count_limit,daily_limit_manual,call_limit_24hour_method,call_limit_24hour_scope,call_limit_24hour,call_limit_24hour_override,custom_one,custom_two,custom_three,custom_four,custom_five,daily_phone_number_call_limit,state_descriptions,call_count_limit_restrict,call_count_limit,recording_dtmf_muting FROM vicidial_campaigns where campaign_id='$campaign';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00325',$user,$server_ip,$session_name,$one_mysql_log);}
 		if ($DB) {echo "$stmt\n";}
@@ -6472,6 +6487,9 @@ if ($ACTION == 'manDiaLonly')
 			$state_descriptions =					$row[20];
 			$call_count_limit_restrict =			$row[21];
 			$call_count_limit =						$row[22];
+			$recording_dtmf_muting =				$row[23];
+			if ( ($SSrecording_dtmf_detection < 1) or ($SSrecording_dtmf_muting < 1) )
+				{$recording_dtmf_muting=0;}
 			}
 
 		# check for user overrides
@@ -7441,6 +7459,14 @@ if ($ACTION == 'manDiaLonly')
 			$rslt=mysql_to_mysqli($stmt, $link);
 			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00740',$user,$server_ip,$session_name,$one_mysql_log);}
 
+			if ( ($SSrecording_dtmf_detection > 0) and ($SSrecording_dtmf_muting > 0) ) 
+				{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+			### insert record into recording_live table ###
+			$stmt = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','MONO_LEGACY_RIR','$server_ip','$NOW_TIME','$channel','$recording_filename','$lead_id','$user','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
+				if ($format=='debug') {echo "\n<!-- $stmt -->";}
+			$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+
 			##### update vla record with recording_id
 			$stmt = "UPDATE vicidial_live_agents SET external_recording='$recording_id' where user='$user';";
 				if ($format=='debug') {echo "\n<!-- $stmt -->";}
@@ -8184,7 +8210,7 @@ if ($ACTION == 'manDiaLlookCaLL')
 				$row=mysqli_fetch_row($rslt);
 				if ( $row[0] == 'CONFBRIDGE' ) 
 					{
-					$stmt="SELECT stereo_recording,stereo_parallel_recording,stereo_rec_filename,stereo_recording_agent,parallel_rec_co_filename,parallel_rec_cm_filename,parallel_rec_fr_filename FROM vicidial_campaigns where campaign_id='$campaign';";
+					$stmt="SELECT stereo_recording,stereo_parallel_recording,stereo_rec_filename,stereo_recording_agent,parallel_rec_co_filename,parallel_rec_cm_filename,parallel_rec_fr_filename,recording_dtmf_muting FROM vicidial_campaigns where campaign_id='$campaign';";
 					$rslt=mysql_to_mysqli($stmt, $link);
 					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00921',$user,$server_ip,$session_name,$one_mysql_log);}
 					if ($DB) {echo "$stmt\n";}
@@ -8199,6 +8225,9 @@ if ($ACTION == 'manDiaLlookCaLL')
 						$parallel_rec_co_filename =		$row[4];
 						$parallel_rec_cm_filename =		$row[5];
 						$parallel_rec_fr_filename =		$row[6];
+						$recording_dtmf_muting =		$row[7];
+						if ( ($SSrecording_dtmf_detection < 1) or ($SSrecording_dtmf_muting < 1) )
+							{$recording_dtmf_muting=0;}
 						}
 
 					if ( (preg_match("/CUSTOMER|BOTH/",$stereo_recording) ) and (strlen($stereo_rec_filename) > 5) )
@@ -8302,8 +8331,10 @@ if ($ACTION == 'manDiaLlookCaLL')
 								$rslt=mysql_to_mysqli($stmt, $link);
 									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00927',$user,$server_ip,$session_name,$one_mysql_log);}
 
+								if ( ($SSrecording_dtmf_detection > 0) and ($SSrecording_dtmf_muting > 0) ) 
+									{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
 								### insert record into recording_live table ###
-								$stmt = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO_PARALLEL CUSTOMER-ONLY','$server_ip','$NOW_TIME','$channel','$temp_parallel_rec_co_filename','$lead_id','$user','2020-12-31 23:59:59','STARTED');";
+								$stmt = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO_PARALLEL CUSTOMER-ONLY','$server_ip','$NOW_TIME','$channel','$temp_parallel_rec_co_filename','$lead_id','$user','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 									if ($format=='debug') {echo "\n<!-- $stmt -->";}
 								$rslt=mysql_to_mysqli($stmt, $link);
 									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00928',$user,$server_ip,$session_name,$one_mysql_log);}
@@ -8353,8 +8384,10 @@ if ($ACTION == 'manDiaLlookCaLL')
 								$rslt=mysql_to_mysqli($stmt, $link);
 									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00931',$user,$server_ip,$session_name,$one_mysql_log);}
 
+								if ( ($SSrecording_dtmf_detection > 0) and ($SSrecording_dtmf_muting > 0) ) 
+									{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
 								### insert record into recording_live table ###
-								$stmt = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO_PARALLEL CUSTOMER-MUTED','$server_ip','$NOW_TIME','$channel','$temp_parallel_rec_cm_filename','$lead_id','$user','2020-12-31 23:59:59','STARTED');";
+								$stmt = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO_PARALLEL CUSTOMER-MUTED','$server_ip','$NOW_TIME','$channel','$temp_parallel_rec_cm_filename','$lead_id','$user','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 									if ($format=='debug') {echo "\n<!-- $stmt -->";}
 								$rslt=mysql_to_mysqli($stmt, $link);
 									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00932',$user,$server_ip,$session_name,$one_mysql_log);}
@@ -8404,8 +8437,10 @@ if ($ACTION == 'manDiaLlookCaLL')
 								$rslt=mysql_to_mysqli($stmt, $link);
 									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00935',$user,$server_ip,$session_name,$one_mysql_log);}
 
+								if ( ($SSrecording_dtmf_detection > 0) and ($SSrecording_dtmf_muting > 0) ) 
+									{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
 								### insert record into recording_live table ###
-								$stmt = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO_PARALLEL FULL-RECORDING','$server_ip','$NOW_TIME','$channel','$temp_parallel_rec_fr_filename','$lead_id','$user','2020-12-31 23:59:59','STARTED');";
+								$stmt = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO_PARALLEL FULL-RECORDING','$server_ip','$NOW_TIME','$channel','$temp_parallel_rec_fr_filename','$lead_id','$user','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 									if ($format=='debug') {echo "\n<!-- $stmt -->";}
 								$rslt=mysql_to_mysqli($stmt, $link);
 									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00936',$user,$server_ip,$session_name,$one_mysql_log);}
@@ -8449,8 +8484,10 @@ if ($ACTION == 'manDiaLlookCaLL')
 								$rslt=mysql_to_mysqli($stmt, $link);
 									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00939',$user,$server_ip,$session_name,$one_mysql_log);}
 
+								if ( ($SSrecording_dtmf_detection > 0) and ($SSrecording_dtmf_muting > 0) ) 
+									{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
 								### insert record into recording_live table ###
-								$stmt = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO_PARALLEL AGENT-CONTROLLED','$server_ip','$NOW_TIME','$channel','$temp_parallel_rec_ag_filename','$lead_id','$user','2020-12-31 23:59:59','STARTED');";
+								$stmt = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO_PARALLEL AGENT-CONTROLLED','$server_ip','$NOW_TIME','$channel','$temp_parallel_rec_ag_filename','$lead_id','$user','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 									if ($format=='debug') {echo "\n<!-- $stmt -->";}
 								$rslt=mysql_to_mysqli($stmt, $link);
 									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00940',$user,$server_ip,$session_name,$one_mysql_log);}
@@ -8465,9 +8502,15 @@ if ($ACTION == 'manDiaLlookCaLL')
 							if ((preg_match("/ALLCALLS|ALLFORCE/",$stereo_recording_agent)))
 								{
 								$stereo_ac='SAC-'.$stereo_recording_agent."\n";
+								$rl_exten='SACBC';
+								if (preg_match("/CUSTOMER_ONLY/",$stereo_recording) )
+									{$rl_exten='SACCO';}
+								if (preg_match("/CUSTOMER_MUTE/",$stereo_recording) )
+									{$rl_exten='SACCM';}
+
 								## Start NON-parallel stereo call recording ##
 								# insert a record into the recording_log table 
-								$stmt = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$server_ip','SAC','$NOW_TIME','$StarTtime','$stereo_rec_filename','$lead_id','$user','$uniqueid')";
+								$stmt = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$server_ip','$rl_exten','$NOW_TIME','$StarTtime','$stereo_rec_filename','$lead_id','$user','$uniqueid')";
 									if ($format=='debug') {echo "\n<!-- $stmt -->";}
 								$rslt=mysql_to_mysqli($stmt, $link);
 									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00941',$user,$server_ip,$session_name,$one_mysql_log);}
@@ -8498,8 +8541,10 @@ if ($ACTION == 'manDiaLlookCaLL')
 								$rslt=mysql_to_mysqli($stmt, $link);
 									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00944',$user,$server_ip,$session_name,$one_mysql_log);}
 
+								if ( ($SSrecording_dtmf_detection > 0) and ($SSrecording_dtmf_muting > 0) ) 
+									{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
 								### insert record into recording_live table ###
-								$stmt = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO AGENT-CONTROLLED','$server_ip','$NOW_TIME','$channel','$stereo_rec_filename','$lead_id','$user','2020-12-31 23:59:59','STARTED');";
+								$stmt = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO AGENT-CONTROLLED $rl_exten','$server_ip','$NOW_TIME','$channel','$stereo_rec_filename','$lead_id','$user','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 									if ($format=='debug') {echo "\n<!-- $stmt -->";}
 								$rslt=mysql_to_mysqli($stmt, $link);
 									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00945',$user,$server_ip,$session_name,$one_mysql_log);}
@@ -9064,7 +9109,7 @@ if ($stage == "end")
 		if ($auto_dial_level > 0)
 			{
 			### check to see if campaign has alt_dial enabled
-			$stmt="SELECT auto_alt_dial,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc,daily_call_count_limit,daily_limit_manual,call_limit_24hour_method,call_limit_24hour_scope,call_limit_24hour,call_limit_24hour_override,auto_alt_threshold,daily_phone_number_call_limit,call_count_limit_restrict,call_count_limit FROM vicidial_campaigns where campaign_id='$campaign';";
+			$stmt="SELECT auto_alt_dial,use_internal_dnc,use_campaign_dnc,use_other_campaign_dnc,daily_call_count_limit,daily_limit_manual,call_limit_24hour_method,call_limit_24hour_scope,call_limit_24hour,call_limit_24hour_override,auto_alt_threshold,daily_phone_number_call_limit,call_count_limit_restrict,call_count_limit,recording_dtmf_muting FROM vicidial_campaigns where campaign_id='$campaign';";
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00064',$user,$server_ip,$session_name,$one_mysql_log);}
 			if ($DB) {echo "$stmt\n";}
@@ -9086,6 +9131,9 @@ if ($stage == "end")
 				$daily_phone_number_call_limit = $row[11];
 				$call_count_limit_restrict =	$row[12];
 				$call_count_limit =				$row[13];
+				$recording_dtmf_muting =		$row[14];
+				if ( ($SSrecording_dtmf_detection < 1) or ($SSrecording_dtmf_muting < 1) )
+					{$recording_dtmf_muting=0;}
 				}
 			else {$auto_alt_dial = 'NONE';}
 			$alt_lead_done=0;
@@ -10306,6 +10354,14 @@ if ($stage == "end")
 				$recording_id = mysqli_insert_id($link);
 				}
 			}
+
+		if ( ($SSrecording_dtmf_detection > 0) and ($SSrecording_dtmf_muting > 0) ) 
+			{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+		### insert record into recording_live table ###
+		$stmt = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','MONO_LEGACY_3WAY','$server_ip','$NOW_TIME','$channel','$leave_3way_start_recording_filename','$lead_id','$user','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
+			if ($format=='debug') {echo "\n<!-- $stmt -->";}
+		$rslt=mysql_to_mysqli($stmt, $link);
+			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
 		}
 	##### END leave_3way_start_recording if triggered #####
 
@@ -10457,6 +10513,7 @@ if ($ACTION == 'VDADcheckINCOMING')
 	# default to $fronter=$user, closer blank
 	$fronter = $user;
 	$closer='';
+	$recording_dtmf_muting=0;
 
 	if ( (strlen($campaign)<1) || (strlen($server_ip)<1) )
 		{
@@ -11092,7 +11149,7 @@ if ($ACTION == 'VDADcheckINCOMING')
 				$ig_custom_five='';
 				$ig_state_descriptions='';
 
-				$stmt = "SELECT group_name,group_color,web_form_address,fronter_display,ingroup_script,get_call_launch,xferconf_a_dtmf,xferconf_a_number,xferconf_b_dtmf,xferconf_b_number,default_xfer_group,ingroup_recording_override,ingroup_rec_filename,default_group_alias,web_form_address_two,timer_action,timer_action_message,timer_action_seconds,start_call_url,dispo_call_url,xferconf_c_number,xferconf_d_number,xferconf_e_number,uniqueid_status_display,uniqueid_status_prefix,timer_action_destination,web_form_address_three,status_group_id,inbound_survey,ingroup_script_two,browser_alert_sound,browser_alert_volume,custom_one,custom_two,custom_three,custom_four,custom_five,state_descriptions,stereo_recording,stereo_recording_agent from vicidial_inbound_groups where group_id='$VDADchannel_group';";
+				$stmt = "SELECT group_name,group_color,web_form_address,fronter_display,ingroup_script,get_call_launch,xferconf_a_dtmf,xferconf_a_number,xferconf_b_dtmf,xferconf_b_number,default_xfer_group,ingroup_recording_override,ingroup_rec_filename,default_group_alias,web_form_address_two,timer_action,timer_action_message,timer_action_seconds,start_call_url,dispo_call_url,xferconf_c_number,xferconf_d_number,xferconf_e_number,uniqueid_status_display,uniqueid_status_prefix,timer_action_destination,web_form_address_three,status_group_id,inbound_survey,ingroup_script_two,browser_alert_sound,browser_alert_volume,custom_one,custom_two,custom_three,custom_four,custom_five,state_descriptions,stereo_recording,stereo_recording_agent,recording_dtmf_muting from vicidial_inbound_groups where group_id='$VDADchannel_group';";
 				if ($DB) {echo "$stmt\n";}
 				$rslt=mysql_to_mysqli($stmt, $link);
 					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00119',$user,$server_ip,$session_name,$one_mysql_log);}
@@ -11139,6 +11196,9 @@ if ($ACTION == 'VDADcheckINCOMING')
 					$ig_state_descriptions =			$row[37];
 					$stereo_recording =					$row[38];
 					$stereo_recording_agent =			$row[39];
+					$recording_dtmf_muting =			$row[40];
+					if ( ($SSrecording_dtmf_detection < 1) or ($SSrecording_dtmf_muting < 1) )
+						{$recording_dtmf_muting=0;}
 
 					$status_group_gather_data = status_group_gather($row[27],'INGROUP');
 
@@ -11524,9 +11584,11 @@ if ($ACTION == 'VDADcheckINCOMING')
 						}
 					}
 
+				if ( ($SSrecording_dtmf_detection > 0) and ($SSrecording_dtmf_muting > 0) ) 
+					{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
 				### if web form is set then send on to vicidial.php for override of WEB_FORM address
-				if ( (strlen($VDCL_group_web)>5) or (strlen($VDCL_group_name)>0) ) {echo "$VDCL_group_web|$VDCL_group_name|$VDCL_group_color|$VDCL_fronter_display|$VDADchannel_group|$VDCL_ingroup_script|$VDCL_get_call_launch|$VDCL_xferconf_a_dtmf|$VDCL_xferconf_a_number|$VDCL_xferconf_b_dtmf|$VDCL_xferconf_b_number|$VDCL_default_xfer_group|$VDCL_ingroup_recording_override|$VDCL_ingroup_rec_filename|$VDCL_default_group_alias|$VDCL_caller_id_number|$VDCL_group_web_vars|$VDCL_group_web_two|$VDCL_timer_action|$VDCL_timer_action_message|$VDCL_timer_action_seconds|$VDCL_xferconf_c_number|$VDCL_xferconf_d_number|$VDCL_xferconf_e_number|$VDCL_uniqueid_status_display|$custom_call_id|$VDCL_uniqueid_status_prefix|$VDCL_timer_action_destination|$DID_id|$DID_extension|$DID_pattern|$DID_description|$INclosecallid|$INxfercallid|$VDCL_group_web_three|$VDCL_ingroup_script_color|$VDCL_inbound_survey|$VDCL_survey_participate|$VDCL_ingroup_script_two|$VDCL_ingroup_script_color_two|$VDCL_browser_alert_sound|$VDCL_browser_alert_volume|$stereo_recording|$stereo_recording_agent|$talk_sec_urls_secs|\n";}
-				else {echo "X|$VDCL_group_name|$VDCL_group_color|$VDCL_fronter_display|$VDADchannel_group|$VDCL_ingroup_script|$VDCL_get_call_launch|$VDCL_xferconf_a_dtmf|$VDCL_xferconf_a_number|$VDCL_xferconf_b_dtmf|$VDCL_xferconf_b_number|$VDCL_default_xfer_group|$VDCL_ingroup_recording_override|$VDCL_ingroup_rec_filename|$VDCL_default_group_alias|$VDCL_caller_id_number|$VDCL_group_web_vars|$VDCL_group_web_two|$VDCL_timer_action|$VDCL_timer_action_message|$VDCL_timer_action_seconds|$VDCL_xferconf_c_number|$VDCL_xferconf_d_number|$VDCL_xferconf_e_number|$VDCL_uniqueid_status_display|$custom_call_id|$VDCL_uniqueid_status_prefix|$VDCL_timer_action_destination|$DID_id|$DID_extension|$DID_pattern|$DID_description|$INclosecallid|$INxfercallid|$VDCL_group_web_three|$VDCL_ingroup_script_color|$VDCL_inbound_survey|$VDCL_survey_participate|$VDCL_ingroup_script_two|$VDCL_ingroup_script_color_two|$VDCL_browser_alert_sound|$VDCL_browser_alert_volume|$stereo_recording|$stereo_recording_agent|$talk_sec_urls_secs|\n";}
+				if ( (strlen($VDCL_group_web)>5) or (strlen($VDCL_group_name)>0) ) {echo "$VDCL_group_web|$VDCL_group_name|$VDCL_group_color|$VDCL_fronter_display|$VDADchannel_group|$VDCL_ingroup_script|$VDCL_get_call_launch|$VDCL_xferconf_a_dtmf|$VDCL_xferconf_a_number|$VDCL_xferconf_b_dtmf|$VDCL_xferconf_b_number|$VDCL_default_xfer_group|$VDCL_ingroup_recording_override|$VDCL_ingroup_rec_filename|$VDCL_default_group_alias|$VDCL_caller_id_number|$VDCL_group_web_vars|$VDCL_group_web_two|$VDCL_timer_action|$VDCL_timer_action_message|$VDCL_timer_action_seconds|$VDCL_xferconf_c_number|$VDCL_xferconf_d_number|$VDCL_xferconf_e_number|$VDCL_uniqueid_status_display|$custom_call_id|$VDCL_uniqueid_status_prefix|$VDCL_timer_action_destination|$DID_id|$DID_extension|$DID_pattern|$DID_description|$INclosecallid|$INxfercallid|$VDCL_group_web_three|$VDCL_ingroup_script_color|$VDCL_inbound_survey|$VDCL_survey_participate|$VDCL_ingroup_script_two|$VDCL_ingroup_script_color_two|$VDCL_browser_alert_sound|$VDCL_browser_alert_volume|$stereo_recording|$stereo_recording_agent|$talk_sec_urls_secs|$recording_dtmf_muting|\n";}
+				else {echo "X|$VDCL_group_name|$VDCL_group_color|$VDCL_fronter_display|$VDADchannel_group|$VDCL_ingroup_script|$VDCL_get_call_launch|$VDCL_xferconf_a_dtmf|$VDCL_xferconf_a_number|$VDCL_xferconf_b_dtmf|$VDCL_xferconf_b_number|$VDCL_default_xfer_group|$VDCL_ingroup_recording_override|$VDCL_ingroup_rec_filename|$VDCL_default_group_alias|$VDCL_caller_id_number|$VDCL_group_web_vars|$VDCL_group_web_two|$VDCL_timer_action|$VDCL_timer_action_message|$VDCL_timer_action_seconds|$VDCL_xferconf_c_number|$VDCL_xferconf_d_number|$VDCL_xferconf_e_number|$VDCL_uniqueid_status_display|$custom_call_id|$VDCL_uniqueid_status_prefix|$VDCL_timer_action_destination|$DID_id|$DID_extension|$DID_pattern|$DID_description|$INclosecallid|$INxfercallid|$VDCL_group_web_three|$VDCL_ingroup_script_color|$VDCL_inbound_survey|$VDCL_survey_participate|$VDCL_ingroup_script_two|$VDCL_ingroup_script_color_two|$VDCL_browser_alert_sound|$VDCL_browser_alert_volume|$stereo_recording|$stereo_recording_agent|$talk_sec_urls_secs|$recording_dtmf_muting|\n";}
 
 				if (strlen($fronter) < 2) {$fronter = $tsr;}
 				$stmt = "SELECT full_name from vicidial_users where user='$fronter';";

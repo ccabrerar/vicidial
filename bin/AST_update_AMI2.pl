@@ -5,7 +5,7 @@
 # This script uses the Asterisk Manager interface to update the live_channels
 # tables and verify the parked_channels table in the asterisk MySQL database
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 170915-2110 - Initial version for Asterisk 13, based upon AST_update.pl
@@ -19,6 +19,7 @@
 # 210315-1045 - Populate the CIDname in live_sip_channels/live_channels tables, Issue #1255
 # 210827-0930 - Added PJSIP compatibility
 # 220310-1136 - Fix for issue dealing with bad carrier 'P-Asserted-Identity' input
+# 251008-2114 - Added code for recording_dtmf_detection and recording_dtmf_muting
 #
 
 # constants
@@ -37,6 +38,9 @@ $server_stats_update_interval = 30;
 
 # how often performance logging is triggered
 $performance_logging_interval = 5;
+
+# dtmf-check last second
+$dtmf_check_last_time = 999999;
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -191,6 +195,19 @@ if ($sthArows > 0)
 	}
 
 if (!$telnet_port) {$telnet_port = '5038';}
+
+### Grab System Settings values from the database
+$stmtA = "SELECT recording_dtmf_detection,recording_dtmf_muting FROM system_settings;";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+if ($sthArows > 0)
+	{
+	@aryA = $sthA->fetchrow_array;
+	$SSrecording_dtmf_detection =	$aryA[0];
+	$SSrecording_dtmf_muting =		$aryA[1];
+	}
+$sthA->finish();
 
 
 ##### Check for a server_updater record, and if not present, insert one
@@ -642,7 +659,6 @@ else
 			}
 		else
 			{
-
 			# Process the channel list
 			$counts = process_channels($dbhA,$chan_array_ref,$phones_ref,$db_trunks_ref,$db_clients_ref,$server_ip,$old_counts);
 
@@ -661,6 +677,18 @@ else
 				{
 				server_perf_log( $dbhA, $server_ip, $counts, $server_load, $mem_free, $mem_used, $num_processes, $cpu_user_percent, $cpu_sys_percent, $cpu_idle_percent, $reads, $writes );
 				$last_perf_log = time();
+				}
+
+			# check for if dtmf-muted recordings to stop, if recording_dtmf_detection and recording_dtmf_muting are active
+			if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+				{
+				if ($dtmf_check_last_time != $current_time_sec)
+					{
+					# dtmf muting stop check hasn't run this second, so check for them
+					&dtmf_muting_stop_check;
+
+					$dtmf_check_last_time = $current_time_sec;
+					}
 				}
 
 			# figure out how long that loop took.
@@ -1462,8 +1490,102 @@ sub get_time_now	#get the current date and time and epoch for logging call lengt
 	$now_date_epoch = time();
 	$now_date = "$year-$mon-$mday $hour:$min:$sec";
 	$action_log_date = "$year-$mon-$mday";
+	$current_time_sec = "$hour$min$sec";
+	$current_time_sec = ($current_time_sec + 0);
 	}
 
+sub dtmf_muting_stop_check
+	{
+	$mute_to_stop_count=0;
+	### Get count of dtmf muted recordings that should be un-muted
+	$stmtA = "SELECT count(*) FROM recording_live WHERE mute_state='2' and dtmf_muting_end_time <= '$now_date' and recording_status='STARTED' and server_ip='$server_ip';";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$mute_to_stop_count =	$aryA[0];
+		}
+	$sthA->finish();
+
+	if ($DB) {print "DEBUG: DTMF Mute Stop Check: $mute_to_stop_count   |$sthArows|$stmtA|\n";}
+
+	if ($mute_to_stop_count > 0) 
+		{
+		# gather details on all recordings that need to be un-muted
+		$stmtA = "SELECT recording_id,channel,dtmf_detected,dtmf_muting,dtmf_muting_seconds,mute_state,recording_type,filename,lead_id FROM recording_live where mute_state='2' and dtmf_muting_end_time <= '$now_date' and dtmf_muting_end_time != '2020-12-31 23:59:59' and recording_status='STARTED' and server_ip='$server_ip' order by recording_id limit 1;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArowsRECdetail=$sthA->rows;
+		$rl_ct=0;
+		while ($sthArowsRECdetail > $rl_ct)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$temp_recording_id[$rl_ct] =	$aryA[0];
+			$rec_channel[$rl_ct] =			$aryA[1];
+			$dtmf_detected[$rl_ct] =		$aryA[2];
+			$dtmf_muting[$rl_ct] =			$aryA[3];
+			$dtmf_muting_seconds[$rl_ct] =	$aryA[4];
+			$mute_state[$rl_ct] =			$aryA[5];
+			$recording_type[$rl_ct] =		$aryA[6];
+			$recording_filename[$rl_ct] =	$aryA[7];
+			$rec_lead_id[$rl_ct] =			$aryA[8];
+
+			$rl_ct++;
+			}
+		$sthA->finish();
+
+		# go through each recording and un-mute the recording
+		$rl_ct=0;
+		while ($sthArowsRECdetail > $rl_ct)
+			{
+			# update recording_live record, trigger dtmf muting and increment dtmf_detected counter
+			$stmtA = "UPDATE recording_live SET mute_state='3' where recording_id='$temp_recording_id[$rl_ct]';";
+			my $affected_rows = $dbhA->do($stmtA);
+			if($DBX){print STDERR "$affected_rows|$stmtA|\n";}
+
+			$channel_to_mute = $rec_channel[$rl_ct];
+			$dtmf_mute_id=0;
+			### Get channel name of channel that should be un-muted
+			$stmtA = "SELECT channel_to_mute,dtmf_mute_id FROM recording_dtmf_muting_log WHERE recording_id='$temp_recording_id[$rl_ct]' and mute_state='2' order by dtmf_mute_id desc limit 1;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$channel_to_mute =	$aryA[0];
+				$dtmf_mute_id =		$aryA[1];
+				}
+			$sthA->finish();
+
+			$mute_direction = 'both';
+			if ( ($recording_type[$rl_ct] eq 'MONO_LEGACY') || ($recording_type[$rl_ct] eq 'MONO_LEGACY_RIR') )
+				{$mute_direction = 'both';}
+			if ( ($recording_type[$rl_ct] !~ /PARALLEL/) && ($recording_type[$rl_ct] =~ /CUSTOMER_ONLY|SACCO|SACICO|SACRCO/) )
+				{$mute_direction = 'read';}
+			if ( ($recording_type[$rl_ct] !~ /PARALLEL/) && ($recording_type[$rl_ct] =~ /CUSTOMER_MUTE|SACCM|SACICM|SACRCM/) )
+				{$mute_direction = 'write';}
+			$vmgr_callerid = substr($recording_filename[$rl_ct], -15) . 'DTMFU';
+			$stmtE="INSERT INTO vicidial_manager values('','','$now_date','NEW','N','$server_ip','','MixMonitorMute','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $channel_to_mute','Direction: $mute_direction','State: 0','','','','','','');";
+			my $affected_rowsVM = $dbhA->do($stmtE);
+			if($DBX){print STDERR "$affected_rowsVM|$stmtE|\n";}
+
+			$stmtC = "UPDATE recording_live SET mute_state='0', dtmf_muting_end_time='$now_date' where recording_id='$temp_recording_id[$rl_ct]';";
+			my $affected_rowsRL = $dbhA->do($stmtC);
+			if($DBX){print STDERR "$affected_rowsRL|$stmtC|\n";}
+
+			$stmtB = "UPDATE recording_dtmf_muting_log SET mute_state='4',dtmf_muting_end_time='$now_date' WHERE dtmf_mute_id='$dtmf_mute_id';";
+			my $affected_rowsML = $dbhA->do($stmtB);
+			if($DBX){print STDERR "$affected_rowsML|$stmtB|\n";}
+
+			if ($DB) {print "DEBUG: DTMF Mute Stopped: $temp_recording_id[$rl_ct]   $rl_ct\n";}
+
+			$rl_ct++;
+			}
+		}
+	}
 
 # try to load a module
 sub try_load 

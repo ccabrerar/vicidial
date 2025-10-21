@@ -6290,12 +6290,13 @@ if ($SSscript_remove_js > 0)
 # 250822-2056 - Added system/campaign/ingroup settings for stereo_recording
 # 250922-0841 - Added Talk Seconds URL links to multi-url admin page in campaigns and in-groups
 # 251002-1428 - Added call_count_limit_restrict campaign setting
+# 251019-2024 - Added Recording DTMF Muting
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-945a';
-$build = '251002-1428';
+$admin_version = '2.14-946a';
+$build = '251019-2024';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -28184,9 +28185,11 @@ if ($ADD==31)
 			{
 			echo "<tr bgcolor=#$SSstd_row3_background><td align=right></td><td align=left><input type=hidden name=stereo_parallel_recording value='$stereo_parallel_recording'><input type=hidden name=parallel_rec_co_filename value='$parallel_rec_co_filename'><input type=hidden name=parallel_rec_cm_filename value='$parallel_rec_cm_filename'><input type=hidden name=parallel_rec_fr_filename value='$parallel_rec_fr_filename'></td></tr>\n";
 			}
-		if ( ( ($SSrecording_dtmf_muting =='1') or ($SSrecording_dtmf_muting =='2') or ($SSrecording_dtmf_muting =='3') ) and ($SSrecording_dtmf_detection == '1') )
+		if ( ( ($SSrecording_dtmf_muting =='1') or ($SSrecording_dtmf_muting >= 2) ) and ($SSrecording_dtmf_detection == '1') )
 			{
-			echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Recording DTMF Muting").": </td><td align=left><input type=text name=recording_dtmf_muting size=2 maxlength=3 value=\"$recording_dtmf_muting\"> $NWB#campaigns-recording_dtmf_muting$NWE</td></tr>\n";
+			$SYSTEM_DTMF_MUTING_OVERRIDE='';
+			if ($SSrecording_dtmf_muting >= 2) {$SYSTEM_DTMF_MUTING_OVERRIDE = "<B><FONT color='RED'>"._QXZ("SYSTEM OVERRIDE ENABLED").": $SSrecording_dtmf_muting "._QXZ("SECONDS")."</FONT></B>";}
+			echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Recording DTMF Muting").": </td><td align=left><input type=text name=recording_dtmf_muting size=2 maxlength=3 value=\"$recording_dtmf_muting\"> $NWB#campaigns-recording_dtmf_muting$NWE $SYSTEM_DTMF_MUTING_OVERRIDE </td></tr>\n";
 			}
 		else
 			{
@@ -31464,22 +31467,61 @@ if ($ADD==34)
 		echo "<TABLE width=600 cellspacing=3>\n";
 		echo "<tr><td>"._QXZ("USER")."</td><td> &nbsp; &nbsp; "._QXZ("RANK")."</td><td> &nbsp; &nbsp; "._QXZ("GRADE")."</td><td> &nbsp; &nbsp; "._QXZ("CALLS TODAY")."</td></tr>\n";
 
-		$stmt="SELECT vu.user,vca.campaign_rank,vca.calls_today,full_name,vca.campaign_grade from vicidial_campaign_agents vca, vicidial_users vu where campaign_id='$campaign_id' and active='Y' and vu.user=vca.user $LOGadmin_viewable_groupsSQL order by vu.user;";
-		$rsltx=mysql_to_mysqli($stmt, $link);
-		$users_to_print = mysqli_num_rows($rsltx);
+		$stmt="SELECT user_group from vicidial_user_groups where ( (allowed_campaigns LIKE \"%-ALL-CAMPAIGNS-%\") or (allowed_campaigns LIKE \"% $campaign_id %\") )  $LOGadmin_viewable_groupsSQL;";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$USERgroups_to_print = mysqli_num_rows($rslt);
+		if ($DB) {echo "$USERgroups_to_print|$stmt\n";}
+		$USERgroupsSQL="''";
+		$i=0;
+		while ($i < $USERgroups_to_print)
+			{
+			$row=mysqli_fetch_row($rslt);
+			$USERgroupsSQL .=		",'$row[0]'";
+			$i++;
+			}
+
+		$stmt="SELECT user,full_name from vicidial_users where user_group IN($USERgroupsSQL) and active='Y' order by user;";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$users_to_print = mysqli_num_rows($rslt);
+		if ($DB) {echo "$users_to_print|$stmt\n";}
+		$U_user=array();
+		$U_full_name=array();
+		$i=0;
+		while ($i < $users_to_print)
+			{
+			$row=mysqli_fetch_row($rslt);
+			$U_user[$i] =			$row[0];
+			$U_full_name[$i] =		$row[1];
+			$i++;
+			}
 
 		$o=0;
 		while ($users_to_print > $o) 
 			{
-			$rowx=mysqli_fetch_row($rsltx);
-			$o++;
+			$temp_user = $U_user[$o];
+			$temp_name = $U_full_name[$o];
+			$campaign_rank='n/a';
+			$calls_today='n/a';
+			$campaign_grade='n/a';
 
 			if (preg_match('/1$|3$|5$|7$|9$/i', $o))
 				{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
 			else
 				{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
 
-			echo "<tr $bgcolor><td><font size=1><a href=\"$PHP_SELF?ADD=3&user=$rowx[0]\">$rowx[0]</a> - $rowx[3]</td><td><font size=1>$rowx[1]</td><td><font size=1>$rowx[4]</td><td><font size=1>$rowx[2]</td></tr>\n";
+			$stmt="SELECT campaign_rank,calls_today,campaign_grade from vicidial_campaign_agents where user='$U_user[$o]' and campaign_id='$campaign_id';";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$USERdetails_to_print = mysqli_num_rows($rslt);
+			if ($USERdetails_to_print > 0)
+				{
+				$row=mysqli_fetch_row($rslt);
+				$campaign_rank =	$row[0];
+				$calls_today =		$row[1];
+				$campaign_grade =	$row[2];
+				}
+			$o++;
+
+			echo "<tr $bgcolor><td><font size=1><a href=\"$PHP_SELF?ADD=3&user=$temp_user\">$temp_user</a> - $temp_name</td><td><font size=1>$campaign_rank</td><td><font size=1>$campaign_grade</td><td><font size=1>$calls_today</td></tr>\n";
 			}
 
 		echo "</table></center><br>\n";
@@ -35236,9 +35278,11 @@ if ($ADD==3111)
 			{
 			echo "<tr bgcolor=#$SSstd_row3_background><td align=right></td><td align=left><input type=hidden name=stereo_parallel_recording value='$stereo_parallel_recording'><input type=hidden name=parallel_rec_co_filename value='$parallel_rec_co_filename'><input type=hidden name=parallel_rec_cm_filename value='$parallel_rec_cm_filename'><input type=hidden name=parallel_rec_fr_filename value='$parallel_rec_fr_filename'></td></tr>\n";
 			}
-		if ( ( ($SSrecording_dtmf_muting =='1') or ($SSrecording_dtmf_muting =='2') or ($SSrecording_dtmf_muting =='3') ) and ($SSrecording_dtmf_detection == '1') )
+		if ( ( ($SSrecording_dtmf_muting =='1') or ($SSrecording_dtmf_muting >= 2) ) and ($SSrecording_dtmf_detection == '1') )
 			{
-			echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Recording DTMF Muting").": </td><td align=left><input type=text name=recording_dtmf_muting size=2 maxlength=3 value=\"$recording_dtmf_muting\"> $NWB#inbound_groups-recording_dtmf_muting$NWE</td></tr>\n";
+			$SYSTEM_DTMF_MUTING_OVERRIDE='';
+			if ($SSrecording_dtmf_muting >= 2) {$SYSTEM_DTMF_MUTING_OVERRIDE = "<B><FONT color='RED'>"._QXZ("SYSTEM OVERRIDE ENABLED").": $SSrecording_dtmf_muting "._QXZ("SECONDS")."</FONT></B>";}
+			echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Recording DTMF Muting").": </td><td align=left><input type=text name=recording_dtmf_muting size=2 maxlength=3 value=\"$recording_dtmf_muting\"> $NWB#inbound_groups-recording_dtmf_muting$NWE $SYSTEM_DTMF_MUTING_OVERRIDE </td></tr>\n";
 			}
 		else
 			{
@@ -45271,7 +45315,7 @@ if ($ADD==311111111111111)
 			echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Allow Stereo Recordings").": </td><td align=left><select size=1 name=stereo_recording><option>1</option><option>0</option><option selected>$stereo_recording</option></select>$NWB#settings-stereo_recording$NWE</td></tr>\n";
 			echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Enable Stereo Parallel Recordings").": </td><td align=left><select size=1 name=stereo_parallel_recording><option>1</option><option>0</option><option selected>$stereo_parallel_recording</option></select>$NWB#settings-stereo_parallel_recording$NWE</td></tr>\n";
 			echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Allow Recording DTMF Detection").": </td><td align=left><select size=1 name=recording_dtmf_detection><option>1</option><option>0</option><option selected>$recording_dtmf_detection</option></select>$NWB#settings-recording_dtmf_detection$NWE</td></tr>\n";
-			echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Allow Recording DTMF Muting").": </td><td align=left><select size=1 name=recording_dtmf_muting><option>1</option><option>0</option><option selected>$recording_dtmf_muting</option></select>$NWB#settings-recording_dtmf_muting$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Allow Recording DTMF Muting").": </td><td align=left><select size=1 name=recording_dtmf_muting><option>1</option><option>0</option><option selected>$recording_dtmf_muting</option><option value=0></option><option value=0></option><option value=0></option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option></select>$NWB#settings-recording_dtmf_muting$NWE</td></tr>\n";
 			}
 		else
 			{

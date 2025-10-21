@@ -5428,20 +5428,23 @@ index(recording_id),
 index(dtmf_muting_end_time)
 ) ENGINE=MyISAM;
 
-CREATE TABLE recording_dtmf_log (
-recording_id INT(10) UNSIGNED PRIMARY KEY NOT NULL,
+CREATE TABLE recording_dtmf_muting_log (
+dtmf_mute_id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
+recording_id INT(10) UNSIGNED NOT NULL,
 recording_type VARCHAR(40) default 'MONO_LEGACY',
 server_ip VARCHAR(15),
 channel VARCHAR(255),
+channel_to_mute VARCHAR(255),
 filename VARCHAR(100),
 lead_id INT(9) UNSIGNED,
-dtmf_muting TINYINT(3) UNSIGNED default '0',
+campaign_id VARCHAR(20) default '',
+trigger_dtmf VARCHAR(100) default '',
+dtmf_muting SMALLINT(3) UNSIGNED default '0',
 dtmf_muting_start_time DATETIME,
 dtmf_muting_end_time DATETIME,
 dtmf_muting_seconds TINYINT(3) UNSIGNED default '0',
 mute_state TINYINT(3) UNSIGNED default '0',
 index(filename),
-index(lead_id),
 index(recording_id),
 index(dtmf_muting_end_time)
 ) ENGINE=MyISAM;
@@ -5607,6 +5610,8 @@ CREATE INDEX vlecc on vicidial_log_extended (caller_code);
 CREATE UNIQUE INDEX vvmmcount on vicidial_vmm_counts (lead_id,call_date);
 CREATE UNIQUE INDEX vicidial_user_logins_daily_user on vicidial_user_logins_daily(login_day, user);
 
+CREATE INDEX vdtmflt on vicidial_dtmf_log (dtmf_time);
+
 CREATE INDEX vlali on vicidial_live_agents (lead_id);
 CREATE INDEX vlaus on vicidial_live_agents (user);
 
@@ -5754,6 +5759,14 @@ CREATE UNIQUE INDEX vdpla on vicidial_3way_press_log_archive (call_date,caller_c
 
 CREATE TABLE vicidial_daily_rt_monitoring_log LIKE vicidial_rt_monitor_log;
 
+CREATE TABLE recording_dtmf_muting_log_archive LIKE recording_dtmf_muting_log;
+ALTER TABLE recording_dtmf_muting_log_archive MODIFY dtmf_mute_id INT(10) UNSIGNED NOT NULL;
+CREATE UNIQUE INDEX rdml_key on recording_dtmf_muting_log_archive(dtmf_mute_id, recording_id);
+
+CREATE INDEX rllst on recording_live_log(start_time);
+CREATE TABLE recording_live_log_archive LIKE recording_live_log;
+
+
 GRANT RELOAD ON *.* TO cron@'%';
 GRANT RELOAD ON *.* TO cron@localhost;
 
@@ -5854,4 +5867,4 @@ INSERT INTO `wallboard_reports` VALUES ('AGENTS_AND_QUEUES','Agents and Queues',
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1731',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1732',db_schema_update_date=NOW(),reload_timestamp=NOW();

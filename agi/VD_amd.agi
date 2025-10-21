@@ -71,15 +71,17 @@
 # 230726-0932 - Added manual_vm_status_updates campaign option
 # 240906-2228 - Added AMD minimum length handling to increase short call durations
 # 250924-2152 - Added code for deprecation of "Monitor" application after Asterisk 20
+# 251006-0903 - If recording_dtmf_muting enabled, force use of MixMonitor for recording
 #
 
 $script = 'VD_amd.agi';
-$build = '250924-2152';
+$build = '251006-0903';
 
 $A = 1;		# set to 1 for AMD output messages mode
 $AMD_LOG = 3;	# set to 1 for logfile and 2 forDB log, 3 for both
 $wav='.wav';
 $US='_';
+$recording_dtmf_muting=0;
 
 ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
 $year = ($year + 1900);
@@ -148,7 +150,7 @@ $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VA
 
 #############################################
 ##### Gather system_settings #####
-$stmtA = "SELECT sip_event_logging,call_quota_lead_ranking FROM system_settings;";
+$stmtA = "SELECT sip_event_logging,call_quota_lead_ranking,recording_dtmf_muting,recording_dtmf_detection FROM system_settings;";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -157,6 +159,8 @@ if ($sthArows > 0)
 	@aryA = $sthA->fetchrow_array;
 	$SSsip_event_logging =			$aryA[0];
 	$SScall_quota_lead_ranking =	$aryA[1];
+	$SSrecording_dtmf_muting =		$aryA[2];
+	$SSrecording_dtmf_detection =	$aryA[3];
 	}
 $sthA->finish();
 ###########################################
@@ -534,7 +538,7 @@ else
 
 	$selected_campaign='';
 	### Grab vmail forward message values from the database
-	$stmtA = "SELECT am_message_exten,amd_send_to_vmx,waitforsilence_options,survey_recording,campaign_rec_filename,cpd_amd_action,amd_inbound_group,amd_callmenu,cpd_unknown_action,campaign_id,am_message_wildcards,call_quota_lead_ranking,vmm_daily_limit,manual_vm_status_updates FROM vicidial_campaigns where campaign_id = '$VD_campaign_id' limit 1;";
+	$stmtA = "SELECT am_message_exten,amd_send_to_vmx,waitforsilence_options,survey_recording,campaign_rec_filename,cpd_amd_action,amd_inbound_group,amd_callmenu,cpd_unknown_action,campaign_id,am_message_wildcards,call_quota_lead_ranking,vmm_daily_limit,manual_vm_status_updates,recording_dtmf_muting FROM vicidial_campaigns where campaign_id = '$VD_campaign_id' limit 1;";
 		if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -556,6 +560,7 @@ else
 		$VD_call_quota_lead_ranking =	$aryA[11];
 		$vmm_daily_limit =				$aryA[12];
 		$manual_vm_status_updates =		$aryA[13];
+		$recording_dtmf_muting =		$aryA[14];
 		$sthA->finish();
 		}
 	else
@@ -563,7 +568,7 @@ else
 		$sthA->finish();
 		### Grab vmail forward message values from the database
 		$SQL_group_id=$VD_campaign_id;   $SQL_group_id =~ s/_/\\_/gi;
-		$stmtA = "SELECT am_message_exten,amd_send_to_vmx,waitforsilence_options,survey_recording,campaign_rec_filename,cpd_amd_action,amd_inbound_group,amd_callmenu,cpd_unknown_action,campaign_id,am_message_wildcards,vmm_daily_limit,manual_vm_status_updates FROM vicidial_campaigns where closer_campaigns LIKE \"% $SQL_group_id %\" order by active,campaign_id limit 1;";
+		$stmtA = "SELECT am_message_exten,amd_send_to_vmx,waitforsilence_options,survey_recording,campaign_rec_filename,cpd_amd_action,amd_inbound_group,amd_callmenu,cpd_unknown_action,campaign_id,am_message_wildcards,vmm_daily_limit,manual_vm_status_updates,recording_dtmf_muting FROM vicidial_campaigns where closer_campaigns LIKE \"% $SQL_group_id %\" order by active,campaign_id limit 1;";
 			if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -585,6 +590,7 @@ else
 			$VD_call_quota_lead_ranking =	'DISABLED';
 			$vmm_daily_limit =				$aryA[12];
 			$manual_vm_status_updates =		$aryA[13];
+			$recording_dtmf_muting =		$aryA[14];
 			$sthA->finish();
 			if ($AGILOG) {$agi_string = "--    Inbound call, settings gathered from: |$selected_campaign|$DB_am_message_exten|$DB_amd_send_to_vmx|$waitforsilence_options";   &agi_output;}
 			}
@@ -710,25 +716,49 @@ else
 			%ast_ver_str = parse_asterisk_version($asterisk_version);
 			if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6))
 				{
-				$AGI->exec("Monitor wav|/var/spool/asterisk/monitor/MIX/$campaign_rec_filename");
+				$AGI->exec("Monitor wav|/var/spool/asterisk/monitor/MIX/AMD$campaign_rec_filename");
 				}
 			else
 				{
-				if ($ast_ver_str{major} > 20) 
+				if ( ($ast_ver_str{major} > 20) || ($SSrecording_dtmf_muting > 0) )
 					{
 					# Deprecation of "Monitor" application after Asterisk 20
-					$AGI->exec("MixMonitor",",r($PATHmonitor/MIX/$campaign_rec_filename-in.wav)t($PATHmonitor/MIX/$campaign_rec_filename-out.wav)");
+					$AGI->exec("MixMonitor",",r($PATHmonitor/MIX/AMD$campaign_rec_filename-in.wav)t($PATHmonitor/MIX/AMD$campaign_rec_filename-out.wav)");
 					}
 				else
 					{
-					$AGI->exec("Monitor","wav,/var/spool/asterisk/monitor/MIX/$campaign_rec_filename");
+					$AGI->exec("Monitor","wav,/var/spool/asterisk/monitor/MIX/AMD$campaign_rec_filename");
 					}
 				}
 
 			### insert record into recording_log table ###
-			$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,length_in_sec,filename,lead_id,user,location,vicidial_id) values('$channel','$VARserver_ip','$VD_phone_number','$now_date','$now_date_epoch','0','$campaign_rec_filename','$VD_lead_id','VDAD','$campaign_rec_filename','$uniqueid');";
+			$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,length_in_sec,filename,lead_id,user,location,vicidial_id) values('$channel','$VARserver_ip','$VD_phone_number','$now_date','$now_date_epoch','0','AMD$campaign_rec_filename','$VD_lead_id','VDAD','AMD$campaign_rec_filename','$uniqueid');";
 			$SRaffected_rows = $dbhA->do($stmtA);
-			if ($AGILOG) {$agi_string = "--    AMD RECORDING STARTED : |$SRaffected_rows|$campaign_rec_filename|$stmtA|";   &agi_output;}
+
+			$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
+			$sthA = $dbhA->prepare($stmtB) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$recording_id = $aryA[0];
+				}
+			$sthA->finish();
+
+			if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+				{
+				if ($SSrecording_dtmf_muting > 1) 
+					{
+					$recording_dtmf_muting = $SSrecording_dtmf_muting;
+					}
+				}
+
+			### insert record into recording_live table ###
+			$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','MONO_LEGACY_AMD','$VARserver_ip','$now_date','$channel','AMD$campaign_rec_filename','$VD_lead_id','VDAD','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
+			$rLIVEaffected_rows = $dbhA->do($stmtD);
+
+			if ($AGILOG) {$agi_string = "--    AMD RECORDING STARTED : |$SRaffected_rows|$rLIVEaffected_rows|$recording_id|AMD$campaign_rec_filename|$stmtA|";   &agi_output;}
 			}
 		}
 

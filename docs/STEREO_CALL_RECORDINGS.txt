@@ -1,7 +1,7 @@
-VICIDIAL STEREO CALL RECORDINGS		Started: 2025-06-18  Updated: 2025-10-01
+VICIDIAL STEREO CALL RECORDINGS		Started: 2025-06-18  Updated: 2025-10-20
 
 
-TO USE THESE FEATURES, YOU WILL NEED TO HAVE ALL SERVERS IN YOUR CLUSTER USING SVN/TRUNK REVISION 3947(2025-10-01) CODE OR HIGHER!!!
+TO USE THESE FEATURES, YOU WILL NEED TO HAVE ALL SERVERS IN YOUR CLUSTER USING SVN/TRUNK REVISION 3949(2025-10-20) CODE OR HIGHER!!!
 
 
 This project was designed to allow for additional stereo recording of phone calls at the agent and server levels directly on VICIdial Asterisk servers, with the customer always on one channel(the Right channel) and the agent and all other parties on the other channel(the Left channel). If you are looking for the VICI Gateway Recording Server documentation, please see the GATEWAY_RECORDING_SERVER.txt document.
@@ -21,10 +21,9 @@ This project has been broken down into 4 phases of development, since it is so l
 ***COMPLETE***
 
 4) Live recording muting based on DTMF receipt and un-muting after x seconds of being muted(campaign setting), for both new customer-channel-stereo and legacy-mono agent session recordings.
-***STILL-IN-DEVELOPMENT***
+***COMPLETE AS OF SVN/TRUNK REVISION 3949(2025-10-20)***
 
 
-While the above development phases will be worked-on in the order they are above, there are portions of the later phases that will be implemented as early as the first phase due to shared processes needed for the later phases.
 
 
 -------------------------------------------------------------------------------------------------
@@ -43,8 +42,13 @@ For In-groups, the "Stereo Recording" options do NOT default to inherit settings
 For all of Stereo Recording, the agent-controlled Mute Recordings feature will not be available. This is because of all of the complexity already included in the Customer-Only, Customer-Muted and Recording DTMF Muting features that are to be built into Stereo Recording. Also, in the existing default mono call recording, if the Recording DTMF Muting feature is enabled, then the agent-controlled Mute Recordings feature will not be available.
 
 
-For Recording DTMF Muting (STILL BEING DEVELOPED), this is NOT designed to mute 100% of the DTMF audio in a recording, it is meant to trigger a fixed time period of muting of the channel sending the DTMF audio AFTER a DTMF digit is detected. As a note, on many VICIdial systems, audible DTMF is already muted and converted into out-of-band DTMF signalling in many channel types by default, so this feature may not be necessary for all organizations. This setting is a number of seconds to mute the channel, with '0' being disabled. the default is '0'.
+For Recording DTMF Muting, this is NOT designed to mute 100% of the DTMF audio in a recording, it is meant to trigger a fixed time period of muting of the call recording AFTER a DTMF digit is detected. If Recording DTMF Muting is active for a campaign/in-group, it will affect both Mono Legacy and Stereo call recordings for those calls. As a note, on many VICIdial systems, audible DTMF is already muted and converted into out-of-band DTMF signalling in many channel types by default, so this feature may not be necessary for all organizations. This setting is a number of seconds to mute the channel, with '0' being disabled. the default is '0'. To use this feature, you will need to enable both "Allow Recording DTMF Detection" and "Allow Recording DTMF Muting" in System Settings.
 
+IMPORTANT NOTE FOR RECORDING DTMF MUTING: Once enabled in the system settings, make sure you set the "Reload Dialplan On Servers" system settingss option to '1' and submit. This will make sure all of the call recording functions in the dialplan are using MixMonitor, which is what is required for Recording DTMF Muting to work properly.
+
+Also for Recording DTMF Muting, just like with Stereo Call Recording, each campaign and in-group that you want to have Recording DTMF Muting active for will need to have it enabled, there is no inheritance of that setting from campaign to in-groups. However, if you want to enable Recording DTMF Muting for all call recordings on a system with the same number of muting seconds on all calls, you can use the System Setting "Allow Recording DTMF Muting" setting set to a number 2 or greater to do this.
+
+When there is more than one recording on the same channel, Recording DTMF Muting logging will only log for one of the recordings on that channel, even though the muting will affect all recordings on that channel.
 
 
 
@@ -171,6 +175,11 @@ List of recording_log.extension values with recording_log_stereo.recording_type 
 	MONO_LEGACY_RIR
 	MONO_LEGACY_REMOTE
 	MONO_LEGACY_SURVEY
+	MONO_LEGACY_NVA
+	MONO_LEGACY_DID
+	MONO_LEGACY_AMD
+	MONO_LEGACY_VERIF
+	MONO_LEGACY_3WAY
 	STEREO_AGENT
 	STEREO_DID
 SPACBC	STEREO_PARALLEL AGENT-CONTROLLED BOTH_CHANNELS
@@ -183,18 +192,21 @@ SPCO	STEREO_PARALLEL CUSTOMER-ONLY
 SPCM	STEREO_PARALLEL CUSTOMER-MUTED
 SPFR	STEREO_PARALLEL FULL-RECORDING
 SPACI	STEREO_PARALLEL AGENT-CONTROLLED RIR
-SACI	STEREO AGENT-CONTROLLED RIR
+SACIBC	STEREO AGENT-CONTROLLED RIR BOTH_CHANNELS
+SACICO	STEREO AGENT-CONTROLLED RIR CUSTOMER_ONLY
+SACICM	STEREO AGENT-CONTROLLED RIR CUSTOMER_MUTE
 SPCOR	STEREO_PARALLEL CUSTOMER-ONLY REMOTE
 SPCMR	STEREO_PARALLEL CUSTOMER-MUTED REMOTE
 SPFRR	STEREO_PARALLEL FULL-RECORDING REMOTE
 SPACR	STEREO_PARALLEL AGENT-CONTROLLED REMOTE
-SACR	STEREO AGENT-CONTROLLED REMOTE
-
+SACRBC	STEREO AGENT-CONTROLLED REMOTE BOTH_CHANNELS
+SACRCO	STEREO AGENT-CONTROLLED REMOTE CUSTOMER_ONLY
+SACRCM	STEREO AGENT-CONTROLLED REMOTE CUSTOMER_MUTE
 
 
 
 -------------------------------------------------------------------------------------------------
-List of scripts modified/created for these new Stereo Call Recording features:
+List of scripts modified/created for these new Stereo Call Recording and Recording DTMF Muting features:
 - agc/vicidial.php
 - agc/vdc_db_query.php
 - agc/manager_send.php
@@ -204,12 +216,21 @@ List of scripts modified/created for these new Stereo Call Recording features:
 - install.pl
 - AST_CRON_audio_1_move_VDonly.pl
 - AST_CRON_audio_1_stereo.pl
+- AST_CRON_audio_1_move_mix.pl
 - AST_CRON_audio_2_compress.pl
 - AST_flush_DBqueue.pl
 - ADMIN_keepalive_ALL.pl
 - ADMIN_archive_log_tables.pl
+- AST_update_AMI2.pl
+- AST_manager_listen_AMI2.pl
 - agi-VDAD_ALL_inbound.agi
 - agi-VDAD_ALL_outbound.agi
+- VD_amd.agi
+- agi-VDAD_RINGALL.agi
+- agi-NVA_recording.agi
+- agi-IVR_recording_verification.agi
+- agi-DID_route.agi
+
 
 
 
@@ -346,23 +367,33 @@ index(recording_id),
 index(dtmf_muting_end_time)
 ) ENGINE=MyISAM;
 
-CREATE TABLE recording_dtmf_log (
-recording_id INT(10) UNSIGNED PRIMARY KEY NOT NULL,
+CREATE TABLE recording_log_parallel_archive LIKE recording_log_parallel;
+CREATE TABLE recording_log_stereo_archive LIKE recording_log_stereo;
+
+CREATE TABLE recording_dtmf_muting_log (
+dtmf_mute_id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
+recording_id INT(10) UNSIGNED NOT NULL,
 recording_type VARCHAR(40) default 'MONO_LEGACY',
 server_ip VARCHAR(15),
 channel VARCHAR(255),
+channel_to_mute VARCHAR(255),
 filename VARCHAR(100),
 lead_id INT(9) UNSIGNED,
-dtmf_muting TINYINT(3) UNSIGNED default '0',
+campaign_id VARCHAR(20) default '',
+trigger_dtmf VARCHAR(100) default '',
+dtmf_muting SMALLINT(3) UNSIGNED default '0',
 dtmf_muting_start_time DATETIME,
 dtmf_muting_end_time DATETIME,
 dtmf_muting_seconds TINYINT(3) UNSIGNED default '0',
 mute_state TINYINT(3) UNSIGNED default '0',
 index(filename),
-index(lead_id),
 index(recording_id),
 index(dtmf_muting_end_time)
 ) ENGINE=MyISAM;
 
-CREATE TABLE recording_log_parallel_archive LIKE recording_log_parallel;
-CREATE TABLE recording_log_stereo_archive LIKE recording_log_stereo;
+CREATE TABLE recording_dtmf_muting_log_archive LIKE recording_dtmf_muting_log;
+ALTER TABLE recording_dtmf_muting_log_archive MODIFY dtmf_mute_id INT(10) UNSIGNED NOT NULL;
+CREATE UNIQUE INDEX rdml_key on recording_dtmf_muting_log_archive(dtmf_mute_id, recording_id);
+
+CREATE INDEX rllst on recording_live_log(start_time);
+CREATE TABLE recording_live_log_archive LIKE recording_live_log;

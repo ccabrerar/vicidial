@@ -121,6 +121,7 @@
 # 241002-0936 - Fix for displaying CID info on outbound calls that were blind transferred
 # 250129-0921 - Fix for closer call notes display, Issue #1534
 # 250913-0837 - Added Stereo Call Recording indicator
+# 251010-1140 - Added DTMF count and muting recording log indicator columns
 #
 
 require("dbconnect_mysqli.php");
@@ -282,7 +283,7 @@ if ($nonselectable_statuses > 0)
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,custom_fields_enabled,webroot_writable,allow_emails,enable_languages,language_method,active_modules,log_recording_access,admin_screen_colors,enable_gdpr_download_deletion,source_id_display,mute_recordings,sip_event_logging,allow_web_debug,hopper_hold_inserts,coldstorage_server_ip,coldstorage_dbname,coldstorage_login,coldstorage_pass,coldstorage_port,stereo_recording FROM system_settings;";
+$stmt = "SELECT use_non_latin,custom_fields_enabled,webroot_writable,allow_emails,enable_languages,language_method,active_modules,log_recording_access,admin_screen_colors,enable_gdpr_download_deletion,source_id_display,mute_recordings,sip_event_logging,allow_web_debug,hopper_hold_inserts,coldstorage_server_ip,coldstorage_dbname,coldstorage_login,coldstorage_pass,coldstorage_port,stereo_recording,recording_dtmf_detection,recording_dtmf_muting FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 #if ($DB) {echo "$stmt\n";}
 $qm_conf_ct = mysqli_num_rows($rslt);
@@ -310,6 +311,8 @@ if ($qm_conf_ct > 0)
 	$SScoldstorage_pass =		$row[18];
 	$SScoldstorage_port =		$row[19];
 	$SSstereo_recording =		$row[20];
+	$SSrecording_dtmf_detection = $row[21];
+	$SSrecording_dtmf_muting =	$row[22];
 	}
 if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
@@ -4012,10 +4015,21 @@ else
 			{
 			$stereo_column = "<td align=left NOWRAP><font size=1>"._QXZ("STEREO")."</td>";
 			}
+		$dtmf_detect_column='';
+		if ($SSrecording_dtmf_detection > 0)
+			{
+			$dtmf_detect_column = "<td align=left NOWRAP><font size=1>"._QXZ("DTMF GRP")." &nbsp; </td>";
+			}
+		$dtmf_mute_column='';
+		if ( ($SSrecording_dtmf_detection > 0) and ($SSrecording_dtmf_muting > 0) )
+			{
+			$dtmf_mute_column = "<td align=left NOWRAP><font size=1>"._QXZ("D-MUTE")." &nbsp; </td>";
+			}
+
 
 		echo "<B>"._QXZ("RECORDINGS FOR THIS LEAD").":</B>\n";
 		echo "<TABLE width=800 cellspacing=1 cellpadding=1>\n";
-		echo "<tr><td><font size=1># </td><td align=left><font size=2> "._QXZ("LEAD")."</td><td><font size=2>"._QXZ("DATE/TIME")." </td><td align=left><font size=2>"._QXZ("SECONDS")." </td><td align=left><font size=2> &nbsp; "._QXZ("RECID")."</td><td align=center><font size=2>"._QXZ("FILENAME")."</td><td align=left><font size=2>"._QXZ("LOCATION")."</td><td align=left><font size=2>"._QXZ("TSR")."</td>$mute_column$stereo_column<td align=left><font size=2> </td></tr>\n";
+		echo "<tr><td><font size=1># </td><td align=left><font size=2> "._QXZ("LEAD")."</td><td><font size=2>"._QXZ("DATE/TIME")." </td><td align=left><font size=2>"._QXZ("SECONDS")." </td><td align=left><font size=2> &nbsp; "._QXZ("RECID")."</td><td align=center><font size=2>"._QXZ("FILENAME")."</td><td align=left><font size=2>"._QXZ("LOCATION")."</td><td align=left><font size=2>"._QXZ("TSR")."</td>$mute_column$stereo_column$dtmf_detect_column$dtmf_mute_column<td align=left><font size=2> </td></tr>\n";
 
 		$stmt="SELECT recording_id,channel,server_ip,extension,start_time,start_epoch,end_time,end_epoch,length_in_sec,length_in_min,filename,location,lead_id,user,vicidial_id from recording_log where lead_id='" . mysqli_real_escape_string($link, $lead_id) . "' order by recording_id desc limit 500;";
 		$rslt=mysql_to_mysqli($stmt, $link);
@@ -4113,6 +4127,38 @@ else
 				if (!preg_match("/^S/",$stereo_flag)) {$stereo_flag='';}
 				echo "<td align=center><font size=1> $stereo_flag &nbsp; </td>\n";
 				}
+			if ($SSrecording_dtmf_detection > 0)
+				{
+				$dtmf_detected='';
+				$dtmf_muting='';
+				$dtmf_muting_seconds='';
+
+				$stmtDTMF="SELECT dtmf_detected,dtmf_muting,dtmf_muting_seconds from recording_live_log where recording_id='$row[0]' limit 1;";
+				$rsltDTMF=mysql_to_mysqli($stmtDTMF, $link);
+				$DTMF_to_print = mysqli_num_rows($rsltDTMF);
+				if ($DB) {echo "$DTMF_to_print|$stmtDTMF|\n";}
+				if ($DTMF_to_print > 0) 
+					{
+					$DTMFrow=mysqli_fetch_row($rsltDTMF);
+					$dtmf_detected =		$DTMFrow[0];
+					$dtmf_muting =			$DTMFrow[1];
+					$dtmf_muting_seconds =	$DTMFrow[2];
+
+					if ($dtmf_detected < 1)
+						{$dtmf_detected='';}
+					if ($SSrecording_dtmf_muting > 0)
+						{
+						if ($dtmf_muting > 0)
+							{$dtmf_muting = "$dtmf_muting - $dtmf_muting_seconds";}
+						else 
+							{$dtmf_muting='';}
+						}
+					}
+				echo "<td align=center><font size=1> $dtmf_detected &nbsp; </td>\n";
+				if ($SSrecording_dtmf_muting > 0)
+					{echo "<td align=center><font size=1> $dtmf_muting &nbsp; </td>\n";}
+				}
+
 			echo "$play_audio";
 			echo "</tr>\n";
 			$rec_ids .= ",'$row[0]'";

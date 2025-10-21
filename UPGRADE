@@ -886,6 +886,10 @@ OTHER CHANGES:
 	to be sent out from the Agent Screen while the agent is talking to the
 	customer, based on the number of seconds they have been talking.
 
+253. Added Recording DTMF Muting, allowing for the muting of call recordings
+	for X seconds if any DTMF signal is detected on the call. Configurable
+	in Campaigns, In-Groups and system-wide.
+
 
 
 

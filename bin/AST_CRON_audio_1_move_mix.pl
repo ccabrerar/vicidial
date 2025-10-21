@@ -24,7 +24,7 @@
 # This program assumes that recordings are saved by Asterisk as .wav
 # should be easy to change this code if you use .gsm instead
 # 
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # 
 # 80302-1958 - First Build
@@ -34,6 +34,7 @@
 # 160501-1001 - Added --SPHINX options to check for SPHINX audio files
 # 160523-0650 - Added --HTTPS option to use https instead of http in local location
 # 231019-2203 - Changed sleep time between directory scans from 5 to 15 seconds
+# 251006-1852 - Added update of recording_live table record
 #
 
 $MIX=0;
@@ -291,6 +292,10 @@ foreach(@FILES)
 			$HTTP='http';
 			if ($HTTPS > 0) {$HTTP='https';}
 			$stmtA = "UPDATE recording_log set location='$HTTP://$server_ip/RECORDINGS/$ALLfile' $lengthSQL where recording_id='$recording_id';";
+				if($DBX){print STDERR "\n|$stmtA|\n";}
+			$affected_rows = $dbhA->do($stmtA); #  or die  "Couldn't execute query:|$stmtA|\n";
+
+			$stmtA = "UPDATE recording_live set end_time=NOW(),recording_status='FINISHED FILE-MERGE' where recording_id='$recording_id' and recording_status='STARTED';";
 				if($DBX){print STDERR "\n|$stmtA|\n";}
 			$affected_rows = $dbhA->do($stmtA); #  or die  "Couldn't execute query:|$stmtA|\n";
 

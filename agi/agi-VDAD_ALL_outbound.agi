@@ -135,6 +135,7 @@
 # 250827-1556 - Added stereo_recording code
 # 250924-2150 - Added code for deprecation of "Monitor" application after Asterisk 20
 # 251001-1837 - Fix for rare Stereo recording filename issue
+# 251020-0835 - Added code for recording_dtmf_muting, fix for stereo call recording
 #
 
 $script = 'agi-VDAD_ALL_outbound.agi';
@@ -292,7 +293,7 @@ $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VA
 
 #############################################
 ##### Gather system_settings #####
-$stmtA = "SELECT sip_event_logging,call_quota_lead_ranking,agent_search_method,abandon_check_queue,stereo_recording,stereo_parallel_recording FROM system_settings;";
+$stmtA = "SELECT sip_event_logging,call_quota_lead_ranking,agent_search_method,abandon_check_queue,stereo_recording,stereo_parallel_recording,recording_dtmf_detection,recording_dtmf_muting FROM system_settings;";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -305,6 +306,8 @@ if ($sthArows > 0)
 	$SSabandon_check_queue =		$aryA[3];
 	$SSstereo_recording =			$aryA[4];
 	$SSstereo_parallel_recording =	$aryA[5];
+	$SSrecording_dtmf_detection =	$aryA[6];
+	$SSrecording_dtmf_muting =		$aryA[7];
 	}
 $sthA->finish();
 ###########################################
@@ -838,7 +841,7 @@ if ($VDACaffected_rows > 0)
 	##### END - Max call stats
 
 	### Grab campaign values from the database
-	$stmtA = "SELECT drop_call_seconds,drop_action,safe_harbor_exten,concurrent_transfers,next_agent_call,voicemail_ext,drop_inbound_group,use_internal_dnc,use_campaign_dnc,cpd_amd_action,am_message_exten,three_way_call_cid,campaign_cid,survey_first_audio_file,survey_opt_in_audio_file,survey_ni_audio_file,survey_third_audio_file,survey_fourth_audio_file,extension_appended_cidname,queue_priority,closer_campaigns,queuemetrics_phone_environment,campaign_recording,campaign_rec_filename,safe_harbor_audio,safe_harbor_menu_id,survey_recording,safe_harbor_audio_field,use_other_campaign_dnc,cpd_unknown_action,routing_initiated_recordings,campaign_rec_exten,call_quota_lead_ranking,sip_event_logging,amd_type,agent_search_method,dial_method,stereo_recording,khomp_settings_container,stereo_recording_agent,stereo_rec_filename,stereo_parallel_recording,parallel_rec_co_filename,parallel_rec_cm_filename,parallel_rec_fr_filename FROM vicidial_campaigns where campaign_id = '$VDADcampaign';";
+	$stmtA = "SELECT drop_call_seconds,drop_action,safe_harbor_exten,concurrent_transfers,next_agent_call,voicemail_ext,drop_inbound_group,use_internal_dnc,use_campaign_dnc,cpd_amd_action,am_message_exten,three_way_call_cid,campaign_cid,survey_first_audio_file,survey_opt_in_audio_file,survey_ni_audio_file,survey_third_audio_file,survey_fourth_audio_file,extension_appended_cidname,queue_priority,closer_campaigns,queuemetrics_phone_environment,campaign_recording,campaign_rec_filename,safe_harbor_audio,safe_harbor_menu_id,survey_recording,safe_harbor_audio_field,use_other_campaign_dnc,cpd_unknown_action,routing_initiated_recordings,campaign_rec_exten,call_quota_lead_ranking,sip_event_logging,amd_type,agent_search_method,dial_method,stereo_recording,khomp_settings_container,stereo_recording_agent,stereo_rec_filename,stereo_parallel_recording,parallel_rec_co_filename,parallel_rec_cm_filename,parallel_rec_fr_filename,recording_dtmf_muting FROM vicidial_campaigns where campaign_id = '$VDADcampaign';";
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 	$sthArows=$sthA->rows;
@@ -894,6 +897,9 @@ if ($VDACaffected_rows > 0)
 		$parallel_rec_co_filename =		$aryA[42];
 		$parallel_rec_cm_filename =		$aryA[43];
 		$parallel_rec_fr_filename =		$aryA[44];
+		$recording_dtmf_muting =		$aryA[45];
+		if ( ($SSrecording_dtmf_detection < 1) || ($SSrecording_dtmf_muting < 1) )
+			{$recording_dtmf_muting=0;}
 
 		if (length($closer_campaigns) > 2)
 			{
@@ -1200,7 +1206,7 @@ if ($VDACaffected_rows > 0)
 			}
 		else
 			{
-			if ($ast_ver_str{major} > 20) 
+			if ( ($ast_ver_str{major} > 20) || ($SSrecording_dtmf_muting > 0) )
 				{
 				# Deprecation of "Monitor" application after Asterisk 20
 				$AGI->exec("MixMonitor",",r($PATHmonitor/MIX/$campaign_rec_filename-in.wav)t($PATHmonitor/MIX/$campaign_rec_filename-out.wav)");
@@ -1236,7 +1242,9 @@ if ($VDACaffected_rows > 0)
 				$dbhP=$dbhA;   $mysql_count='02214';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 			}
 
-		$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','MONO_LEGACY_SURVEY','$VARserver_ip','$now_date','$channel','$campaign_rec_filename','$CIDlead_id','VDAD','2020-12-31 23:59:59','STARTED');";
+		if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+			{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+		$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','MONO_LEGACY_SURVEY','$VARserver_ip','$now_date','$channel','$campaign_rec_filename','$CIDlead_id','VDAD','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 		$rLIVEaffected_rows = $dbhA->do($stmtD);
 			$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$rLIVEaffected_rows;   &mysql_error_logging;
 
@@ -3210,7 +3218,7 @@ while ($drop_timer <= $DROP_TIME)
 								}
 							else
 								{
-								if ($ast_ver_str{major} > 20) 
+								if ( ($ast_ver_str{major} > 20) || ($SSrecording_dtmf_muting > 0) )
 									{
 									# Deprecation of "Monitor" application after Asterisk 20
 									$retval = $AGI->exec("MixMonitor",",r($PATHmonitor/MIX/$campaign_rec_filename-in.wav)t($PATHmonitor/MIX/$campaign_rec_filename-out.wav)");
@@ -3248,7 +3256,9 @@ while ($drop_timer <= $DROP_TIME)
 								$dbhP=$dbhA;   $mysql_count='02214';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 							}
 
-						$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','MONO_LEGACY_REMOTE','$VARserver_ip','$now_date','$channel','$campaign_rec_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED');";
+						if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+							{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+						$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','MONO_LEGACY_REMOTE','$VARserver_ip','$now_date','$channel','$campaign_rec_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 						$rLIVEaffected_rows = $dbhA->do($stmtD);
 							$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$rLIVEaffected_rows;   &mysql_error_logging;
 
@@ -3278,7 +3288,7 @@ while ($drop_timer <= $DROP_TIME)
 							$PATHmonitorT = $PATHmonitorP;
 
 							### insert record into recording_log_parallel table ###
-							$stmtA = "INSERT INTO recording_log_parallel (channel,server_ip,extension,start_time,length_in_sec,filename,lead_id,user,vicidial_id,recording_status) values('$channel','$VDADserver_ip','','$now_date','0','PL$stereo_rec_filename','$CIDlead_id','$VDADuser','$uniqueid','START');";
+							$stmtA = "INSERT INTO recording_log_parallel (channel,server_ip,extension,start_time,length_in_sec,filename,lead_id,user,vicidial_id,recording_status) values('$channel','$VARserver_ip','','$now_date','0','PL$stereo_rec_filename','$CIDlead_id','$VDADuser','$uniqueid','START');";
 							$SRaffected_rows = $dbhA->do($stmtA);
 								$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 							$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -3318,7 +3328,7 @@ while ($drop_timer <= $DROP_TIME)
 									$temp_parallel_rec_co_filename =~ s/\"|\'//gi;							
 									}
 								### insert a record into the recording_log table 
-								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VDADserver_ip','SPCOR','$now_date','$now_date_epoch','$temp_parallel_rec_co_filename','$CIDlead_id','$VDADuser','$uniqueid')";
+								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VARserver_ip','SPCOR','$now_date','$now_date_epoch','$temp_parallel_rec_co_filename','$CIDlead_id','$VDADuser','$uniqueid')";
 								$affected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 								$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -3343,11 +3353,13 @@ while ($drop_timer <= $DROP_TIME)
 									}
 
 								### insert record into recording_log_stereo table ###
-								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VDADserver_ip','$now_date','0','$temp_parallel_rec_co_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL CUSTOMER-ONLY REMOTE $stereo_recording','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
+								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VARserver_ip','$now_date','0','$temp_parallel_rec_co_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL CUSTOMER-ONLY REMOTE $stereo_recording','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
 								$SRaffected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 
-								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO_PARALLEL CUSTOMER-ONLY REMOTE','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_co_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED');";
+								if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+									{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO_PARALLEL CUSTOMER-ONLY REMOTE','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_co_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 								$rLIVEaffected_rows = $dbhA->do($stmtD);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$rLIVEaffected_rows;   &mysql_error_logging;
 
@@ -3373,7 +3385,7 @@ while ($drop_timer <= $DROP_TIME)
 									$temp_parallel_rec_cm_filename =~ s/\"|\'//gi;							
 									}
 								### insert a record into the recording_log table 
-								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VDADserver_ip','SPCMR','$now_date','$now_date_epoch','$temp_parallel_rec_cm_filename','$CIDlead_id','$VDADuser','$uniqueid')";
+								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VARserver_ip','SPCMR','$now_date','$now_date_epoch','$temp_parallel_rec_cm_filename','$CIDlead_id','$VDADuser','$uniqueid')";
 								$affected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 								$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -3398,11 +3410,13 @@ while ($drop_timer <= $DROP_TIME)
 									}
 
 								### insert record into recording_log_stereo table ###
-								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VDADserver_ip','$now_date','0','$temp_parallel_rec_cm_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL CUSTOMER-MUTED REMOTE $stereo_recording','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
+								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VARserver_ip','$now_date','0','$temp_parallel_rec_cm_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL CUSTOMER-MUTED REMOTE $stereo_recording','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
 								$SRaffected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 
-								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO_PARALLEL CUSTOMER-MUTED REMOTE','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_cm_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED');";
+								if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+									{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO_PARALLEL CUSTOMER-MUTED REMOTE','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_cm_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 								$rLIVEaffected_rows = $dbhA->do($stmtD);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$rLIVEaffected_rows;   &mysql_error_logging;
 
@@ -3428,7 +3442,7 @@ while ($drop_timer <= $DROP_TIME)
 									$temp_parallel_rec_fr_filename =~ s/\"|\'//gi;							
 									}
 								### insert a record into the recording_log table 
-								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VDADserver_ip','SPFRR','$now_date','$now_date_epoch','$temp_parallel_rec_fr_filename','$CIDlead_id','$VDADuser','$uniqueid')";
+								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VARserver_ip','SPFRR','$now_date','$now_date_epoch','$temp_parallel_rec_fr_filename','$CIDlead_id','$VDADuser','$uniqueid')";
 								$affected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 								$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -3453,11 +3467,13 @@ while ($drop_timer <= $DROP_TIME)
 									}
 
 								### insert record into recording_log_stereo table ###
-								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VDADserver_ip','$now_date','0','$temp_parallel_rec_fr_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL FULL-RECORDING REMOTE $stereo_recording','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
+								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VARserver_ip','$now_date','0','$temp_parallel_rec_fr_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL FULL-RECORDING REMOTE $stereo_recording','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
 								$SRaffected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 
-								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO_PARALLEL FULL-RECORDING REMOTE','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_fr_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED');";
+								if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+									{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO_PARALLEL FULL-RECORDING REMOTE','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_fr_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 								$rLIVEaffected_rows = $dbhA->do($stmtD);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$rLIVEaffected_rows;   &mysql_error_logging;
 
@@ -3469,7 +3485,7 @@ while ($drop_timer <= $DROP_TIME)
 								{
 								$temp_parallel_rec_ag_filename = $stereo_rec_filename;
 								### insert a record into the recording_log table 
-								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VDADserver_ip','SPACR','$now_date','$now_date_epoch','$temp_parallel_rec_ag_filename','$CIDlead_id','$VDADuser','$uniqueid')";
+								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VARserver_ip','SPACR','$now_date','$now_date_epoch','$temp_parallel_rec_ag_filename','$CIDlead_id','$VDADuser','$uniqueid')";
 								$affected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 								$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -3494,11 +3510,13 @@ while ($drop_timer <= $DROP_TIME)
 									}
 
 								### insert record into recording_log_stereo table ###
-								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VDADserver_ip','$now_date','0','$temp_parallel_rec_ag_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL AGENT-CONTROLLED REMOTE $stereo_recording $stereo_recording_agent','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
+								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VARserver_ip','$now_date','0','$temp_parallel_rec_ag_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL AGENT-CONTROLLED REMOTE $stereo_recording $stereo_recording_agent','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
 								$SRaffected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 
-								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO_PARALLEL AGENT-CONTROLLED REMOTE','$VARserver_ip','$now_date','$channel','$stereo_recording_agent','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED');";
+								if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+									{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO_PARALLEL AGENT-CONTROLLED REMOTE','$VARserver_ip','$now_date','$channel','$stereo_recording_agent','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 								$rLIVEaffected_rows = $dbhA->do($stmtD);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$rLIVEaffected_rows;   &mysql_error_logging;
 
@@ -3510,8 +3528,14 @@ while ($drop_timer <= $DROP_TIME)
 							## Start NON-parallel stereo call recording ##
 							if ($stereo_recording_agent =~ /ALLCALLS|ALLFORCE/) 
 								{
+								$rl_exten='SACRBC';
+								if ($stereo_recording =~ /CUSTOMER_ONLY/i)
+									{$rl_exten='SACRCO';}
+								if ($stereo_recording =~ /CUSTOMER_MUTE/i)
+									{$rl_exten='SACRCM';}
+
 								# insert a record into the recording_log table 
-								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VDADserver_ip','SACR','$now_date','$now_date_epoch','$stereo_rec_filename','$CIDlead_id','$VDADuser','$uniqueid')";
+								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VARserver_ip','$rl_exten','$now_date','$now_date_epoch','$stereo_rec_filename','$CIDlead_id','$VDADuser','$uniqueid')";
 								$affected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 								$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -3539,11 +3563,13 @@ while ($drop_timer <= $DROP_TIME)
 								$retval = $AGI->exec("MixMonitor",",r($PATHmonitorT/$stereo_rec_filename-out.wav)t($PATHmonitorT/$stereo_rec_filename-in.wav)"); 
 
 								### insert record into recording_log_stereo table ###
-								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,recording_status) values('$recording_id','$VDADserver_ip','$now_date','0','$stereo_rec_filename','$CIDlead_id','$VDADcampaign STEREO AGENT-CONTROLLED REMOTE $stereo_recording $stereo_recording_agent','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','STEREO START');";
+								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,recording_status) values('$recording_id','$VARserver_ip','$now_date','0','$stereo_rec_filename','$CIDlead_id','$VDADcampaign STEREO AGENT-CONTROLLED REMOTE $stereo_recording $stereo_recording_agent','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','STEREO START');";
 								$SRaffected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 
-								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO AGENT-CONTROLLED REMOTE','$VARserver_ip','$now_date','$channel','$stereo_rec_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED');";
+								if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+									{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO AGENT-CONTROLLED REMOTE $rl_exten','$VARserver_ip','$now_date','$channel','$stereo_rec_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 								$rLIVEaffected_rows = $dbhA->do($stmtD);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$rLIVEaffected_rows;   &mysql_error_logging;
 
@@ -3551,14 +3577,14 @@ while ($drop_timer <= $DROP_TIME)
 								if ($stereo_recording =~ /CUSTOMER_ONLY/i)
 									{
 									$vmgr_callerid = substr($stereo_rec_filename, 0, 16) . 'M...';
-									$stmtE="INSERT INTO vicidial_manager values('','','$now_date','NEW','N','$VDADserver_ip','','MixMonitorMute','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $channel','Direction: write','State: 1','','','','','','');";
+									$stmtE="INSERT INTO vicidial_manager values('','','$now_date','NEW','N','$VARserver_ip','','MixMonitorMute','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $channel','Direction: write','State: 1','','','','','','');";
 									$mLIVEaffected_rows = $dbhA->do($stmtE);
 										$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$mLIVEaffected_rows;   &mysql_error_logging;
 									}
 								if ($stereo_recording =~ /CUSTOMER_MUTE/i)
 									{
 									$vmgr_callerid = substr($stereo_rec_filename, 0, 16) . 'M...';
-									$stmtE="INSERT INTO vicidial_manager values('','','$now_date','NEW','N','$VDADserver_ip','','MixMonitorMute','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $channel','Direction: read','State: 1','','','','','','');";
+									$stmtE="INSERT INTO vicidial_manager values('','','$now_date','NEW','N','$VARserver_ip','','MixMonitorMute','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $channel','Direction: read','State: 1','','','','','','');";
 									$mLIVEaffected_rows = $dbhA->do($stmtE);
 										$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$mLIVEaffected_rows;   &mysql_error_logging;
 									}
@@ -3664,7 +3690,9 @@ while ($drop_timer <= $DROP_TIME)
 							$affected_rowsC = $dbhA->do($stmtC);
 								$dbhP=$dbhA;   $mysql_count='02128';   $MEL_aff_rows=$affected_rowsC;   &mysql_error_logging;
 
-							$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','MONO_LEGACY_RIR','$VARserver_ip','$now_date','$channel','$campaign_rec_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED');";
+							if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+								{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+							$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','MONO_LEGACY_RIR','$VDADserver_ip','$now_date','$channelrec','$campaign_rec_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 							$rLIVEaffected_rows = $dbhA->do($stmtD);
 								$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$rLIVEaffected_rows;   &mysql_error_logging;
 
@@ -3696,7 +3724,7 @@ while ($drop_timer <= $DROP_TIME)
 							$PATHmonitorT = $PATHmonitorP;
 
 							### insert record into recording_log_parallel table ###
-							$stmtA = "INSERT INTO recording_log_parallel (channel,server_ip,extension,start_time,length_in_sec,filename,lead_id,user,vicidial_id,recording_status) values('$channel','$VDADserver_ip','','$now_date','0','PL$stereo_rec_filename','$CIDlead_id','$VDADuser','$uniqueid','START');";
+							$stmtA = "INSERT INTO recording_log_parallel (channel,server_ip,extension,start_time,length_in_sec,filename,lead_id,user,vicidial_id,recording_status) values('$channel','$VARserver_ip','','$now_date','0','PL$stereo_rec_filename','$CIDlead_id','$VDADuser','$uniqueid','START');";
 							$SRaffected_rows = $dbhA->do($stmtA);
 								$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 							$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -3736,7 +3764,7 @@ while ($drop_timer <= $DROP_TIME)
 									$temp_parallel_rec_co_filename =~ s/\"|\'//gi;							
 									}
 								### insert a record into the recording_log table 
-								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VDADserver_ip','SPCO','$now_date','$now_date_epoch','$temp_parallel_rec_co_filename','$CIDlead_id','$VDADuser','$uniqueid')";
+								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VARserver_ip','SPCO','$now_date','$now_date_epoch','$temp_parallel_rec_co_filename','$CIDlead_id','$VDADuser','$uniqueid')";
 								$affected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 								$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -3761,11 +3789,13 @@ while ($drop_timer <= $DROP_TIME)
 									}
 
 								### insert record into recording_log_stereo table ###
-								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VDADserver_ip','$now_date','0','$temp_parallel_rec_co_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL CUSTOMER-ONLY $stereo_recording','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
+								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VARserver_ip','$now_date','0','$temp_parallel_rec_co_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL CUSTOMER-ONLY $stereo_recording','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
 								$SRaffected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 
-								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO_PARALLEL CUSTOMER-ONLY','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_co_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED');";
+								if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+									{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO_PARALLEL CUSTOMER-ONLY','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_co_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 								$rLIVEaffected_rows = $dbhA->do($stmtD);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$rLIVEaffected_rows;   &mysql_error_logging;
 
@@ -3791,7 +3821,7 @@ while ($drop_timer <= $DROP_TIME)
 									$temp_parallel_rec_cm_filename =~ s/\"|\'//gi;							
 									}
 								### insert a record into the recording_log table 
-								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VDADserver_ip','SPCM','$now_date','$now_date_epoch','$temp_parallel_rec_cm_filename','$CIDlead_id','$VDADuser','$uniqueid')";
+								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VARserver_ip','SPCM','$now_date','$now_date_epoch','$temp_parallel_rec_cm_filename','$CIDlead_id','$VDADuser','$uniqueid')";
 								$affected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 								$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -3816,11 +3846,13 @@ while ($drop_timer <= $DROP_TIME)
 									}
 
 								### insert record into recording_log_stereo table ###
-								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VDADserver_ip','$now_date','0','$temp_parallel_rec_cm_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL CUSTOMER-MUTED $stereo_recording','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
+								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VARserver_ip','$now_date','0','$temp_parallel_rec_cm_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL CUSTOMER-MUTED $stereo_recording','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
 								$SRaffected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 
-								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO_PARALLEL CUSTOMER-MUTED','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_cm_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED');";
+								if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+									{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO_PARALLEL CUSTOMER-MUTED','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_cm_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 								$rLIVEaffected_rows = $dbhA->do($stmtD);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$rLIVEaffected_rows;   &mysql_error_logging;
 
@@ -3846,7 +3878,7 @@ while ($drop_timer <= $DROP_TIME)
 									$temp_parallel_rec_fr_filename =~ s/\"|\'//gi;							
 									}
 								### insert a record into the recording_log table 
-								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VDADserver_ip','SPFR','$now_date','$now_date_epoch','$temp_parallel_rec_fr_filename','$CIDlead_id','$VDADuser','$uniqueid')";
+								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VARserver_ip','SPFR','$now_date','$now_date_epoch','$temp_parallel_rec_fr_filename','$CIDlead_id','$VDADuser','$uniqueid')";
 								$affected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 								$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -3871,11 +3903,13 @@ while ($drop_timer <= $DROP_TIME)
 									}
 
 								### insert record into recording_log_stereo table ###
-								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VDADserver_ip','$now_date','0','$temp_parallel_rec_fr_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL FULL-RECORDING $stereo_recording','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
+								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VARserver_ip','$now_date','0','$temp_parallel_rec_fr_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL FULL-RECORDING $stereo_recording','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
 								$SRaffected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 
-								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO_PARALLEL FULL-RECORDING','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_fr_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED');";
+								if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+									{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO_PARALLEL FULL-RECORDING','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_fr_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 								$rLIVEaffected_rows = $dbhA->do($stmtD);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$rLIVEaffected_rows;   &mysql_error_logging;
 
@@ -3887,7 +3921,7 @@ while ($drop_timer <= $DROP_TIME)
 								{
 								$temp_parallel_rec_ag_filename = $stereo_rec_filename;
 								### insert a record into the recording_log table 
-								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VDADserver_ip','SPACI','$now_date','$now_date_epoch','$temp_parallel_rec_ag_filename','$CIDlead_id','$VDADuser','$uniqueid')";
+								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VARserver_ip','SPACI','$now_date','$now_date_epoch','$temp_parallel_rec_ag_filename','$CIDlead_id','$VDADuser','$uniqueid')";
 								$affected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 								$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -3912,7 +3946,7 @@ while ($drop_timer <= $DROP_TIME)
 									}
 
 								### insert record into recording_log_stereo table ###
-								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VDADserver_ip','$now_date','0','$temp_parallel_rec_ag_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL AGENT-CONTROLLED RIR $stereo_recording $stereo_recording_agent','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
+								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VARserver_ip','$now_date','0','$temp_parallel_rec_ag_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL AGENT-CONTROLLED RIR $stereo_recording $stereo_recording_agent','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
 								$SRaffected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 
@@ -3920,7 +3954,9 @@ while ($drop_timer <= $DROP_TIME)
 								$affected_rowsB = $dbhA->do($stmtB);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rowsB;   &mysql_error_logging;
 
-								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO_PARALLEL AGENT-CONTROLLED RIR','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_ag_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED');";
+								if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+									{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO_PARALLEL AGENT-CONTROLLED RIR','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_ag_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 								$rLIVEaffected_rows = $dbhA->do($stmtD);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$rLIVEaffected_rows;   &mysql_error_logging;
 
@@ -3932,8 +3968,14 @@ while ($drop_timer <= $DROP_TIME)
 							## Start NON-parallel stereo call recording ##
 							if ($stereo_recording_agent =~ /ALLCALLS|ALLFORCE/) 
 								{
+								$rl_exten='SACIBC';
+								if ($stereo_recording =~ /CUSTOMER_ONLY/i)
+									{$rl_exten='SACICO';}
+								if ($stereo_recording =~ /CUSTOMER_MUTE/i)
+									{$rl_exten='SACICM';}
+
 								# insert a record into the recording_log table 
-								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VDADserver_ip','SACI','$now_date','$now_date_epoch','$stereo_rec_filename','$CIDlead_id','$VDADuser','$uniqueid')";
+								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VARserver_ip','$rl_exten','$now_date','$now_date_epoch','$stereo_rec_filename','$CIDlead_id','$VDADuser','$uniqueid')";
 								$affected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 								$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -3961,7 +4003,7 @@ while ($drop_timer <= $DROP_TIME)
 								$retval = $AGI->exec("MixMonitor",",r($PATHmonitorT/$stereo_rec_filename-out.wav)t($PATHmonitorT/$stereo_rec_filename-in.wav)"); 
 
 								### insert record into recording_log_stereo table ###
-								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,recording_status) values('$recording_id','$VDADserver_ip','$now_date','0','$stereo_rec_filename','$CIDlead_id','$VDADcampaign STEREO AGENT-CONTROLLED RIR $stereo_recording $stereo_recording_agent','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','STEREO START');";
+								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,recording_status) values('$recording_id','$VARserver_ip','$now_date','0','$stereo_rec_filename','$CIDlead_id','$VDADcampaign STEREO AGENT-CONTROLLED RIR $stereo_recording $stereo_recording_agent','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','STEREO START');";
 								$SRaffected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 
@@ -3969,7 +4011,9 @@ while ($drop_timer <= $DROP_TIME)
 								$affected_rowsB = $dbhA->do($stmtB);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rowsB;   &mysql_error_logging;
 
-								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO AGENT-CONTROLLED RIR','$VARserver_ip','$now_date','$channel','$stereo_rec_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED');";
+								if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+									{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO AGENT-CONTROLLED RIR $rl_exten','$VARserver_ip','$now_date','$channel','$stereo_rec_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 								$rLIVEaffected_rows = $dbhA->do($stmtD);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$rLIVEaffected_rows;   &mysql_error_logging;
 
@@ -3977,14 +4021,14 @@ while ($drop_timer <= $DROP_TIME)
 								if ($stereo_recording =~ /CUSTOMER_ONLY/i)
 									{
 									$vmgr_callerid = substr($stereo_rec_filename, 0, 16) . 'M...';
-									$stmtE="INSERT INTO vicidial_manager values('','','$now_date','NEW','N','$VDADserver_ip','','MixMonitorMute','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $channel','Direction: write','State: 1','','','','','','');";
+									$stmtE="INSERT INTO vicidial_manager values('','','$now_date','NEW','N','$VARserver_ip','','MixMonitorMute','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $channel','Direction: write','State: 1','','','','','','');";
 									$mLIVEaffected_rows = $dbhA->do($stmtE);
 										$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$mLIVEaffected_rows;   &mysql_error_logging;
 									}
 								if ($stereo_recording =~ /CUSTOMER_MUTE/i)
 									{
 									$vmgr_callerid = substr($stereo_rec_filename, 0, 16) . 'M...';
-									$stmtE="INSERT INTO vicidial_manager values('','','$now_date','NEW','N','$VDADserver_ip','','MixMonitorMute','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $channel','Direction: read','State: 1','','','','','','');";
+									$stmtE="INSERT INTO vicidial_manager values('','','$now_date','NEW','N','$VARserver_ip','','MixMonitorMute','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $channel','Direction: read','State: 1','','','','','','');";
 									$mLIVEaffected_rows = $dbhA->do($stmtE);
 										$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$mLIVEaffected_rows;   &mysql_error_logging;
 									}
@@ -4606,7 +4650,7 @@ while ($drop_timer <= $DROP_TIME)
 								}
 							else
 								{
-								if ($ast_ver_str{major} > 20) 
+								if ( ($ast_ver_str{major} > 20) || ($SSrecording_dtmf_muting > 0) )
 									{
 									# Deprecation of "Monitor" application after Asterisk 20
 									$retval = $AGI->exec("MixMonitor",",r($PATHmonitor/MIX/$campaign_rec_filename-in.wav)t($PATHmonitor/MIX/$campaign_rec_filename-out.wav)");
@@ -4644,7 +4688,9 @@ while ($drop_timer <= $DROP_TIME)
 								$dbhP=$dbhA;   $mysql_count='02214';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 							}
 
-						$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','MONO_LEGACY_REMOTE','$VARserver_ip','$now_date','$channel','$campaign_rec_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED');";
+						if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+							{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+						$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','MONO_LEGACY_REMOTE','$VARserver_ip','$now_date','$channel','$campaign_rec_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 						$rLIVEaffected_rows = $dbhA->do($stmtD);
 							$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$rLIVEaffected_rows;   &mysql_error_logging;
 
@@ -4673,7 +4719,7 @@ while ($drop_timer <= $DROP_TIME)
 							$PATHmonitorT = $PATHmonitorP;
 
 							### insert record into recording_log_parallel table ###
-							$stmtA = "INSERT INTO recording_log_parallel (channel,server_ip,extension,start_time,length_in_sec,filename,lead_id,user,vicidial_id,recording_status) values('$channel','$VDADserver_ip','','$now_date','0','PL$stereo_rec_filename','$CIDlead_id','$VDADuser','$uniqueid','START');";
+							$stmtA = "INSERT INTO recording_log_parallel (channel,server_ip,extension,start_time,length_in_sec,filename,lead_id,user,vicidial_id,recording_status) values('$channel','$VARserver_ip','','$now_date','0','PL$stereo_rec_filename','$CIDlead_id','$VDADuser','$uniqueid','START');";
 							$SRaffected_rows = $dbhA->do($stmtA);
 								$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 							$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -4713,7 +4759,7 @@ while ($drop_timer <= $DROP_TIME)
 									$temp_parallel_rec_co_filename =~ s/\"|\'//gi;							
 									}
 								### insert a record into the recording_log table 
-								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VDADserver_ip','SPCOR','$now_date','$now_date_epoch','$temp_parallel_rec_co_filename','$CIDlead_id','$VDADuser','$uniqueid')";
+								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VARserver_ip','SPCOR','$now_date','$now_date_epoch','$temp_parallel_rec_co_filename','$CIDlead_id','$VDADuser','$uniqueid')";
 								$affected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 								$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -4738,11 +4784,13 @@ while ($drop_timer <= $DROP_TIME)
 									}
 
 								### insert record into recording_log_stereo table ###
-								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VDADserver_ip','$now_date','0','$temp_parallel_rec_co_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL CUSTOMER-ONLY REMOTE $stereo_recording','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
+								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VARserver_ip','$now_date','0','$temp_parallel_rec_co_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL CUSTOMER-ONLY REMOTE $stereo_recording','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
 								$SRaffected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 
-								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO_PARALLEL CUSTOMER-ONLY REMOTE','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_co_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED');";
+								if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+									{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO_PARALLEL CUSTOMER-ONLY REMOTE','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_co_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 								$rLIVEaffected_rows = $dbhA->do($stmtD);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$rLIVEaffected_rows;   &mysql_error_logging;
 
@@ -4768,7 +4816,7 @@ while ($drop_timer <= $DROP_TIME)
 									$temp_parallel_rec_cm_filename =~ s/\"|\'//gi;							
 									}
 								### insert a record into the recording_log table 
-								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VDADserver_ip','SPCMR','$now_date','$now_date_epoch','$temp_parallel_rec_cm_filename','$CIDlead_id','$VDADuser','$uniqueid')";
+								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VARserver_ip','SPCMR','$now_date','$now_date_epoch','$temp_parallel_rec_cm_filename','$CIDlead_id','$VDADuser','$uniqueid')";
 								$affected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 								$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -4793,11 +4841,13 @@ while ($drop_timer <= $DROP_TIME)
 									}
 
 								### insert record into recording_log_stereo table ###
-								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VDADserver_ip','$now_date','0','$temp_parallel_rec_cm_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL CUSTOMER-MUTED REMOTE $stereo_recording','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
+								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VARserver_ip','$now_date','0','$temp_parallel_rec_cm_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL CUSTOMER-MUTED REMOTE $stereo_recording','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
 								$SRaffected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 
-								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO_PARALLEL CUSTOMER-MUTED REMOTE','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_cm_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED');";
+								if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+									{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO_PARALLEL CUSTOMER-MUTED REMOTE','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_cm_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 								$rLIVEaffected_rows = $dbhA->do($stmtD);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$rLIVEaffected_rows;   &mysql_error_logging;
 
@@ -4823,7 +4873,7 @@ while ($drop_timer <= $DROP_TIME)
 									$temp_parallel_rec_fr_filename =~ s/\"|\'//gi;							
 									}
 								### insert a record into the recording_log table 
-								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VDADserver_ip','SPRFR','$now_date','$now_date_epoch','$temp_parallel_rec_fr_filename','$CIDlead_id','$VDADuser','$uniqueid')";
+								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VARserver_ip','SPRFR','$now_date','$now_date_epoch','$temp_parallel_rec_fr_filename','$CIDlead_id','$VDADuser','$uniqueid')";
 								$affected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 								$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -4848,11 +4898,13 @@ while ($drop_timer <= $DROP_TIME)
 									}
 
 								### insert record into recording_log_stereo table ###
-								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VDADserver_ip','$now_date','0','$temp_parallel_rec_fr_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL FULL-RECORDING REMOTE $stereo_recording','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
+								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VARserver_ip','$now_date','0','$temp_parallel_rec_fr_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL FULL-RECORDING REMOTE $stereo_recording','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
 								$SRaffected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 
-								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO_PARALLEL FULL-RECORDING REMOTE','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_fr_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED');";
+								if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+									{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO_PARALLEL FULL-RECORDING REMOTE','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_fr_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 								$rLIVEaffected_rows = $dbhA->do($stmtD);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$rLIVEaffected_rows;   &mysql_error_logging;
 
@@ -4864,7 +4916,7 @@ while ($drop_timer <= $DROP_TIME)
 								{
 								$temp_parallel_rec_ag_filename = $stereo_rec_filename;
 								### insert a record into the recording_log table 
-								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VDADserver_ip','SPACR','$now_date','$now_date_epoch','$temp_parallel_rec_ag_filename','$CIDlead_id','$VDADuser','$uniqueid')";
+								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VARserver_ip','SPACR','$now_date','$now_date_epoch','$temp_parallel_rec_ag_filename','$CIDlead_id','$VDADuser','$uniqueid')";
 								$affected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 								$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -4889,11 +4941,13 @@ while ($drop_timer <= $DROP_TIME)
 									}
 
 								### insert record into recording_log_stereo table ###
-								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VDADserver_ip','$now_date','0','$temp_parallel_rec_ag_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL AGENT-CONTROLLED REMOTE $stereo_recording $stereo_recording_agent','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
+								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VARserver_ip','$now_date','0','$temp_parallel_rec_ag_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL AGENT-CONTROLLED REMOTE $stereo_recording $stereo_recording_agent','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
 								$SRaffected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 
-								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO_PARALLEL AGENT-CONTROLLED REMOTE','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_ag_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED');";
+								if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+									{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO_PARALLEL AGENT-CONTROLLED REMOTE','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_ag_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 								$rLIVEaffected_rows = $dbhA->do($stmtD);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$rLIVEaffected_rows;   &mysql_error_logging;
 
@@ -4905,8 +4959,14 @@ while ($drop_timer <= $DROP_TIME)
 							## Start NON-parallel stereo call recording ##
 							if ($stereo_recording_agent =~ /ALLCALLS|ALLFORCE/) 
 								{
+								$rl_exten='SACRBC';
+								if ($stereo_recording =~ /CUSTOMER_ONLY/i)
+									{$rl_exten='SACRCO';}
+								if ($stereo_recording =~ /CUSTOMER_MUTE/i)
+									{$rl_exten='SACRCM';}
+
 								# insert a record into the recording_log table 
-								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VDADserver_ip','SACR','$now_date','$now_date_epoch','$stereo_rec_filename','$CIDlead_id','$VDADuser','$uniqueid')";
+								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VARserver_ip','$rl_exten','$now_date','$now_date_epoch','$stereo_rec_filename','$CIDlead_id','$VDADuser','$uniqueid')";
 								$affected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 								$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -4934,11 +4994,13 @@ while ($drop_timer <= $DROP_TIME)
 								$retval = $AGI->exec("MixMonitor",",r($PATHmonitorT/$stereo_rec_filename-out.wav)t($PATHmonitorT/$stereo_rec_filename-in.wav)"); 
 
 								### insert record into recording_log_stereo table ###
-								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,recording_status) values('$recording_id','$VDADserver_ip','$now_date','0','$stereo_rec_filename','$CIDlead_id','$VDADcampaign STEREO AGENT-CONTROLLED REMOTE $stereo_recording $stereo_recording_agent','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','STEREO START');";
+								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,recording_status) values('$recording_id','$VARserver_ip','$now_date','0','$stereo_rec_filename','$CIDlead_id','$VDADcampaign STEREO AGENT-CONTROLLED REMOTE $stereo_recording $stereo_recording_agent','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','STEREO START');";
 								$SRaffected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 
-								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO AGENT-CONTROLLED REMOTE','$VARserver_ip','$now_date','$channel','$stereo_rec_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED');";
+								if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+									{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO AGENT-CONTROLLED REMOTE $rl_exten','$VARserver_ip','$now_date','$channel','$stereo_rec_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 								$rLIVEaffected_rows = $dbhA->do($stmtD);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$rLIVEaffected_rows;   &mysql_error_logging;
 
@@ -4946,14 +5008,14 @@ while ($drop_timer <= $DROP_TIME)
 								if ($stereo_recording =~ /CUSTOMER_ONLY/i)
 									{
 									$vmgr_callerid = substr($stereo_rec_filename, 0, 16) . 'M...';
-									$stmtE="INSERT INTO vicidial_manager values('','','$now_date','NEW','N','$VDADserver_ip','','MixMonitorMute','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $channel','Direction: write','State: 1','','','','','','');";
+									$stmtE="INSERT INTO vicidial_manager values('','','$now_date','NEW','N','$VARserver_ip','','MixMonitorMute','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $channel','Direction: write','State: 1','','','','','','');";
 									$mLIVEaffected_rows = $dbhA->do($stmtE);
 										$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$mLIVEaffected_rows;   &mysql_error_logging;
 									}
 								if ($stereo_recording =~ /CUSTOMER_MUTE/i)
 									{
 									$vmgr_callerid = substr($stereo_rec_filename, 0, 16) . 'M...';
-									$stmtE="INSERT INTO vicidial_manager values('','','$now_date','NEW','N','$VDADserver_ip','','MixMonitorMute','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $channel','Direction: read','State: 1','','','','','','');";
+									$stmtE="INSERT INTO vicidial_manager values('','','$now_date','NEW','N','$VARserver_ip','','MixMonitorMute','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $channel','Direction: read','State: 1','','','','','','');";
 									$mLIVEaffected_rows = $dbhA->do($stmtE);
 										$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$mLIVEaffected_rows;   &mysql_error_logging;
 									}
@@ -5058,7 +5120,9 @@ while ($drop_timer <= $DROP_TIME)
 							$affected_rowsC = $dbhA->do($stmtC);
 								$dbhP=$dbhA;   $mysql_count='02136';   $MEL_aff_rows=$affected_rowsC;   &mysql_error_logging;
 
-							$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','MONO_LEGACY_RIR','$VARserver_ip','$now_date','$channel','$campaign_rec_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED');";
+							if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+								{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+							$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','MONO_LEGACY_RIR','$VDADserver_ip','$now_date','$channelrec','$campaign_rec_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 							$rLIVEaffected_rows = $dbhA->do($stmtD);
 								$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$rLIVEaffected_rows;   &mysql_error_logging;
 
@@ -5089,7 +5153,7 @@ while ($drop_timer <= $DROP_TIME)
 							$PATHmonitorT = $PATHmonitorP;
 
 							### insert record into recording_log_parallel table ###
-							$stmtA = "INSERT INTO recording_log_parallel (channel,server_ip,extension,start_time,length_in_sec,filename,lead_id,user,vicidial_id,recording_status) values('$channel','$VDADserver_ip','','$now_date','0','PL$stereo_rec_filename','$CIDlead_id','$VDADuser','$uniqueid','START');";
+							$stmtA = "INSERT INTO recording_log_parallel (channel,server_ip,extension,start_time,length_in_sec,filename,lead_id,user,vicidial_id,recording_status) values('$channel','$VARserver_ip','','$now_date','0','PL$stereo_rec_filename','$CIDlead_id','$VDADuser','$uniqueid','START');";
 							$SRaffected_rows = $dbhA->do($stmtA);
 								$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 							$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -5129,7 +5193,7 @@ while ($drop_timer <= $DROP_TIME)
 									$temp_parallel_rec_co_filename =~ s/\"|\'//gi;							
 									}
 								### insert a record into the recording_log table 
-								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VDADserver_ip','SPCO','$now_date','$now_date_epoch','$temp_parallel_rec_co_filename','$CIDlead_id','$VDADuser','$uniqueid')";
+								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VARserver_ip','SPCO','$now_date','$now_date_epoch','$temp_parallel_rec_co_filename','$CIDlead_id','$VDADuser','$uniqueid')";
 								$affected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 								$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -5154,11 +5218,13 @@ while ($drop_timer <= $DROP_TIME)
 									}
 
 								### insert record into recording_log_stereo table ###
-								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VDADserver_ip','$now_date','0','$temp_parallel_rec_co_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL CUSTOMER-ONLY $stereo_recording','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
+								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VARserver_ip','$now_date','0','$temp_parallel_rec_co_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL CUSTOMER-ONLY $stereo_recording','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
 								$SRaffected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 
-								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO_PARALLEL CUSTOMER-ONLY','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_co_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED');";
+								if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+									{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO_PARALLEL CUSTOMER-ONLY','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_co_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 								$rLIVEaffected_rows = $dbhA->do($stmtD);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$rLIVEaffected_rows;   &mysql_error_logging;
 
@@ -5184,7 +5250,7 @@ while ($drop_timer <= $DROP_TIME)
 									$temp_parallel_rec_cm_filename =~ s/\"|\'//gi;							
 									}
 								### insert a record into the recording_log table 
-								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VDADserver_ip','SPCM','$now_date','$now_date_epoch','$temp_parallel_rec_cm_filename','$CIDlead_id','$VDADuser','$uniqueid')";
+								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VARserver_ip','SPCM','$now_date','$now_date_epoch','$temp_parallel_rec_cm_filename','$CIDlead_id','$VDADuser','$uniqueid')";
 								$affected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 								$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -5209,11 +5275,13 @@ while ($drop_timer <= $DROP_TIME)
 									}
 
 								### insert record into recording_log_stereo table ###
-								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VDADserver_ip','$now_date','0','$temp_parallel_rec_cm_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL CUSTOMER-MUTED $stereo_recording','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
+								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VARserver_ip','$now_date','0','$temp_parallel_rec_cm_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL CUSTOMER-MUTED $stereo_recording','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
 								$SRaffected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 
-								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO_PARALLEL CUSTOMER-MUTED','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_cm_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED');";
+								if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+									{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO_PARALLEL CUSTOMER-MUTED','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_cm_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 								$rLIVEaffected_rows = $dbhA->do($stmtD);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$rLIVEaffected_rows;   &mysql_error_logging;
 
@@ -5239,7 +5307,7 @@ while ($drop_timer <= $DROP_TIME)
 									$temp_parallel_rec_fr_filename =~ s/\"|\'//gi;							
 									}
 								### insert a record into the recording_log table 
-								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VDADserver_ip','SPFR','$now_date','$now_date_epoch','$temp_parallel_rec_fr_filename','$CIDlead_id','$VDADuser','$uniqueid')";
+								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VARserver_ip','SPFR','$now_date','$now_date_epoch','$temp_parallel_rec_fr_filename','$CIDlead_id','$VDADuser','$uniqueid')";
 								$affected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 								$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -5264,11 +5332,13 @@ while ($drop_timer <= $DROP_TIME)
 									}
 
 								### insert record into recording_log_stereo table ###
-								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VDADserver_ip','$now_date','0','$temp_parallel_rec_fr_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL FULL-RECORDING $stereo_recording','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
+								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VARserver_ip','$now_date','0','$temp_parallel_rec_fr_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL FULL-RECORDING $stereo_recording','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
 								$SRaffected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 
-								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO_PARALLEL FULL-RECORDING','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_fr_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED');";
+								if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+									{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO_PARALLEL FULL-RECORDING','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_fr_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 								$rLIVEaffected_rows = $dbhA->do($stmtD);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$rLIVEaffected_rows;   &mysql_error_logging;
 
@@ -5280,7 +5350,7 @@ while ($drop_timer <= $DROP_TIME)
 								{
 								$temp_parallel_rec_ag_filename = $stereo_rec_filename;
 								### insert a record into the recording_log table 
-								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VDADserver_ip','SPACI','$now_date','$now_date_epoch','$temp_parallel_rec_ag_filename','$CIDlead_id','$VDADuser','$uniqueid')";
+								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VARserver_ip','SPACI','$now_date','$now_date_epoch','$temp_parallel_rec_ag_filename','$CIDlead_id','$VDADuser','$uniqueid')";
 								$affected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 								$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -5305,7 +5375,7 @@ while ($drop_timer <= $DROP_TIME)
 									}
 
 								### insert record into recording_log_stereo table ###
-								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VDADserver_ip','$now_date','0','$temp_parallel_rec_ag_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL AGENT-CONTROLLED RIR $stereo_recording $stereo_recording_agent','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
+								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,parallel_recording_id,recording_status) values('$recording_id','$VARserver_ip','$now_date','0','$temp_parallel_rec_ag_filename','$CIDlead_id','$VDADcampaign STEREO_PARALLEL AGENT-CONTROLLED RIR $stereo_recording $stereo_recording_agent','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','$parallel_recording_id','PARALLEL START');";
 								$SRaffected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 
@@ -5313,7 +5383,9 @@ while ($drop_timer <= $DROP_TIME)
 								$affected_rowsB = $dbhA->do($stmtB);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rowsB;   &mysql_error_logging;
 
-								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO_PARALLEL AGENT-CONTROLLED RIR','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_ag_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED');";
+								if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+									{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO_PARALLEL AGENT-CONTROLLED RIR','$VARserver_ip','$now_date','$channel','$temp_parallel_rec_ag_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 								$rLIVEaffected_rows = $dbhA->do($stmtD);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$rLIVEaffected_rows;   &mysql_error_logging;
 
@@ -5325,8 +5397,14 @@ while ($drop_timer <= $DROP_TIME)
 							## Start NON-parallel stereo call recording ##
 							if ($stereo_recording_agent =~ /ALLCALLS|ALLFORCE/) 
 								{
+								$rl_exten='SACIBC';
+								if ($stereo_recording =~ /CUSTOMER_ONLY/i)
+									{$rl_exten='SACICO';}
+								if ($stereo_recording =~ /CUSTOMER_MUTE/i)
+									{$rl_exten='SACICM';}
+
 								# insert a record into the recording_log table 
-								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VDADserver_ip','SACI','$now_date','$now_date_epoch','$stereo_rec_filename','$CIDlead_id','$VDADuser','$uniqueid')";
+								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$VARserver_ip','$rl_exten','$now_date','$now_date_epoch','$stereo_rec_filename','$CIDlead_id','$VDADuser','$uniqueid')";
 								$affected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rows;   &mysql_error_logging;
 								$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
@@ -5354,7 +5432,7 @@ while ($drop_timer <= $DROP_TIME)
 								$retval = $AGI->exec("MixMonitor",",r($PATHmonitorT/$stereo_rec_filename-out.wav)t($PATHmonitorT/$stereo_rec_filename-in.wav)"); 
 
 								### insert record into recording_log_stereo table ###
-								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,recording_status) values('$recording_id','$VDADserver_ip','$now_date','0','$stereo_rec_filename','$CIDlead_id','$VDADcampaign STEREO AGENT-CONTROLLED RIR $stereo_recording $stereo_recording_agent','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','STEREO START');";
+								$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,recording_status) values('$recording_id','$VARserver_ip','$now_date','0','$stereo_rec_filename','$CIDlead_id','$VDADcampaign STEREO AGENT-CONTROLLED RIR $stereo_recording $stereo_recording_agent','start: $now_date|vicidial_id: $uniqueid|user: $VDADuser|channel: $channel|','STEREO START');";
 								$SRaffected_rows = $dbhA->do($stmtA);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$SRaffected_rows;   &mysql_error_logging;
 
@@ -5362,7 +5440,9 @@ while ($drop_timer <= $DROP_TIME)
 								$affected_rowsB = $dbhA->do($stmtB);
 									$dbhP=$dbhA;   $mysql_count='02XXX';   $MEL_aff_rows=$affected_rowsB;   &mysql_error_logging;
 
-								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status) values('$recording_id','STEREO AGENT-CONTROLLED RIR','$VARserver_ip','$now_date','$channel','$stereo_rec_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED');";
+								if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+									{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO AGENT-CONTROLLED RIR $rl_exten','$VARserver_ip','$now_date','$channel','$stereo_rec_filename','$CIDlead_id','$VDADuser','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
 								$rLIVEaffected_rows = $dbhA->do($stmtD);
 									$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$rLIVEaffected_rows;   &mysql_error_logging;
 
@@ -5370,14 +5450,14 @@ while ($drop_timer <= $DROP_TIME)
 								if ($stereo_recording =~ /CUSTOMER_ONLY/i)
 									{
 									$vmgr_callerid = substr($stereo_rec_filename, 0, 16) . 'M...';
-									$stmtE="INSERT INTO vicidial_manager values('','','$now_date','NEW','N','$VDADserver_ip','','MixMonitorMute','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $channel','Direction: write','State: 1','','','','','','');";
+									$stmtE="INSERT INTO vicidial_manager values('','','$now_date','NEW','N','$VARserver_ip','','MixMonitorMute','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $channel','Direction: write','State: 1','','','','','','');";
 									$mLIVEaffected_rows = $dbhA->do($stmtE);
 										$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$mLIVEaffected_rows;   &mysql_error_logging;
 									}
 								if ($stereo_recording =~ /CUSTOMER_MUTE/i)
 									{
 									$vmgr_callerid = substr($stereo_rec_filename, 0, 16) . 'M...';
-									$stmtE="INSERT INTO vicidial_manager values('','','$now_date','NEW','N','$VDADserver_ip','','MixMonitorMute','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $channel','Direction: read','State: 1','','','','','','');";
+									$stmtE="INSERT INTO vicidial_manager values('','','$now_date','NEW','N','$VARserver_ip','','MixMonitorMute','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $channel','Direction: read','State: 1','','','','','','');";
 									$mLIVEaffected_rows = $dbhA->do($stmtE);
 										$dbhP=$dbhA;   $mysql_count='01XXX';   $MEL_aff_rows=$mLIVEaffected_rows;   &mysql_error_logging;
 									}
