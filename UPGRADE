@@ -890,6 +890,10 @@ OTHER CHANGES:
 	for X seconds if any DTMF signal is detected on the call. Configurable
 	in Campaigns, In-Groups and system-wide.
 
+254. Added Database crashed table auto-check, with display on Admin Web screens
+	for level 9 users if crashed tables are found. Enabled by default, 
+	configurable in the System Settings.
+
 
 
 

@@ -3030,3 +3030,13 @@ CREATE INDEX rllst on recording_live_log(start_time);
 CREATE TABLE recording_live_log_archive LIKE recording_live_log;
 
 UPDATE system_settings SET db_schema_version='1732',db_schema_update_date=NOW() where db_schema_version < 1732;
+
+CREATE TABLE crashed_tables (
+table_name VARCHAR(100) PRIMARY KEY NOT NULL,
+crashed_datetime DATETIME,
+last_check_datetime DATETIME
+) ENGINE=MyISAM;
+
+ALTER TABLE system_settings ADD db_crashed_tables_check ENUM('0','1','2','3','4','5','6') default '1';
+
+UPDATE system_settings SET db_schema_version='1733',db_schema_update_date=NOW() where db_schema_version < 1733;

@@ -177,9 +177,10 @@
 # 250924-2212 - Added code for deprecation of "Monitor" application after Asterisk 20
 # 251006-0832 - Added truncating of vicidial_dtmf_log older than 24 hours & If recording_dtmf_muting enabled, force use of MixMonitor for recording
 # 251011-1000 - Added archiving of recording_dtmf_muting_log, disabled purging of recording_live_log after 7 days
+# 251024-2222 - Added crashed table detection
 #
 
-$build = '251011-1000';
+$build = '251024-2222';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -502,7 +503,7 @@ $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VA
 
 
 ##### Get the settings from system_settings #####
-$stmtA = "SELECT sounds_central_control_active,active_voicemail_server,custom_dialplan_entry,default_codecs,generate_cross_server_exten,voicemail_timezones,default_voicemail_timezone,call_menu_qualify_enabled,allow_voicemail_greeting,reload_timestamp,meetme_enter_login_filename,meetme_enter_leave3way_filename,allow_chats,enable_auto_reports,enable_drop_lists,expired_lists_inactive,sip_event_logging,call_quota_lead_ranking,inbound_answer_config,log_latency_gaps,demographic_quotas,weekday_resets,highest_lead_id,hopper_hold_inserts,stereo_recording,stereo_parallel_recording,recording_dtmf_muting FROM system_settings;";
+$stmtA = "SELECT sounds_central_control_active,active_voicemail_server,custom_dialplan_entry,default_codecs,generate_cross_server_exten,voicemail_timezones,default_voicemail_timezone,call_menu_qualify_enabled,allow_voicemail_greeting,reload_timestamp,meetme_enter_login_filename,meetme_enter_leave3way_filename,allow_chats,enable_auto_reports,enable_drop_lists,expired_lists_inactive,sip_event_logging,call_quota_lead_ranking,inbound_answer_config,log_latency_gaps,demographic_quotas,weekday_resets,highest_lead_id,hopper_hold_inserts,stereo_recording,stereo_parallel_recording,recording_dtmf_muting,db_crashed_tables_check FROM system_settings;";
 #	print "$stmtA\n";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -537,6 +538,7 @@ if ($sthArows > 0)
 	$SSstereo_recording =				$aryA[24];
 	$SSstereo_parallel_recording =		$aryA[25];
 	$SSrecording_dtmf_muting =			$aryA[26];
+	$SSdb_crashed_tables_check =		$aryA[27];
 	}
 $sthA->finish();
 if ($DBXXX > 0) {print "SYSTEM SETTINGS:     $sounds_central_control_active|$active_voicemail_server|$SScustom_dialplan_entry|$SSdefault_codecs\n";}
@@ -604,6 +606,7 @@ else
 	$runningASTERISK=0;
 	$runningsip_logger=0;
 	$runningconf_updater=0;
+	$runningcrash_test=0;
 	$AST_conf_3way=0;
 	$AST_rec_monitor=0;
 
@@ -780,6 +783,11 @@ else
 			$runningAST_rec_monitor++;
 			if ($DB) {print "AST_rec_monitor RUNNING:           |$psline[1]|\n";}
 			}
+		if ($psline[1] =~ /$REGhome\/AST_table_status\.pl/)
+			{
+			$runningcrash_test++;
+			if ($DB) {print "AST_table_status RUNNING:           |$psline[1]|\n";}
+			}
 
 		$i++;
 		}
@@ -952,6 +960,11 @@ else
 				{
 				$runningAST_rec_monitor++;
 				if ($DB) {print "AST_rec_monitor RUNNING:           |$psline[1]|\n";}
+				}
+			if ($psline[1] =~ /$REGhome\/AST_table_status\.pl/)
+				{
+				$runningcrash_test++;
+				if ($DB) {print "AST_table_status RUNNING:           |$psline[1]|\n";}
 				}
 			$i++;
 			}
@@ -1514,6 +1527,15 @@ if ($timeclock_end_of_day_NOW > 0)
 		if ($teodDB) {$event_string = "vicidial_long_extensions records reset: $affected_rows";   &teod_logger;}
 
 		$stmtA = "optimize table vicidial_long_extensions;";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		@aryA = $sthA->fetchrow_array;
+		if ($DB) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+		$sthA->finish();
+
+		$stmtA = "optimize table crashed_tables;";
 		if($DBX){print STDERR "\n|$stmtA|\n";}
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -2318,7 +2340,7 @@ if ($timeclock_end_of_day_NOW > 0)
 
 
 		##### BEGIN vicidial_dtmf_log end of day process removing records older than 24 hours #####
-		$stmtA = "DELETE from vicidial_dtmf_log where vicidial_dtmf_log < \"$RMSQLdate\";";
+		$stmtA = "DELETE from vicidial_dtmf_log where dtmf_time < \"$RMSQLdate\";";
 		if($DBX){print STDERR "\n|$stmtA|\n";}
 		$affected_rows = $dbhA->do($stmtA);
 		if($DB){print STDERR "\n|$affected_rows vicidial_dtmf_log records older than 1 day purged|\n";}
@@ -6808,6 +6830,49 @@ if ($AST_VDadapt > 0)
 #####  END  reset lists, and expired lists to inactive check
 ################################################################################
 
+
+
+
+
+################################################################################
+#####  BEGIN check for crashed tables
+################################################################################
+if ( ($THISserver_voicemail > 0) && ($SSdb_crashed_tables_check > 0) )
+	{
+	if ($DB) {print "Begin check for crashed table... |db_crashed_tables_check setting: $SSdb_crashed_tables_check| \n";}
+
+	if ($runningcrash_test > 0) 
+		{
+		if ($DB) {print "Previous crash test already running, do not start another one.\n";}
+		}
+	else
+		{
+		$start_crash_check_now=0;
+		if ($SSdb_crashed_tables_check >= 4) 
+			{$start_crash_check_now++;}
+		if ( ($SSdb_crashed_tables_check >= 3) && ($reset_test =~ /0$/) )
+			{$start_crash_check_now++;}
+		if ( ($SSdb_crashed_tables_check >= 2) && ($reset_test =~ /00$/) )
+			{$start_crash_check_now++;}
+		if ( ($SSdb_crashed_tables_check >= 1) && ($timeclock_end_of_day_NOW > 0) )
+			{$start_crash_check_now++;}
+
+		if ($start_crash_check_now > 0) 
+			{
+			if ($DB) {print "starting AST_table_status... |$start_crash_check_now| \n";}
+			# add a '-L' to the command below to activate logging
+			`/usr/bin/screen -d -m -S ASTcrash $PATHhome/AST_table_status.pl --debugX`;
+			if ($megaDB)
+				{
+				`/usr/bin/screen -S ASTcrash -X logfile $PATHlogs/ASTcrash-screenlog.0`;
+				`/usr/bin/screen -S ASTcrash -X log`;
+				}
+			}
+		}
+	}
+################################################################################
+#####  END check for crashed tables
+################################################################################
 
 
 

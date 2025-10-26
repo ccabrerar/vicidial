@@ -75,6 +75,7 @@
 # 240924-2041 - Added --vicidial-log-only
 # 250914-1537 - Added archiving of recording_log_stereo and recording_log_parallel tables
 # 251011-2048 - Added archiving of recording_live_log table
+# 251024-1518 - Added --vicidial-dial-log-only flag
 #
 
 $CALC_TEST=0;
@@ -122,6 +123,8 @@ if (length($ARGV[0])>1)
 		print "       [--api-log-days=XX] = REQUIRED FOR --api-only, number of days to archive vicidial_api_log table only past\n";
 		print "  [--vicidial-log-only] = OPTIONAL, only archive vicidial_log table then exit\n";
 		print "       [--vicidial-log-days=XX] = REQUIRED FOR --vicidial-log-only, number of days to archive vicidial_log table only past\n";
+		print "  [--vicidial-dial-log-only] = OPTIONAL, only archive vicidial_dial_log table then exit\n";
+		print "       [--vicidial-dial-log-days=XX] = REQUIRED FOR --vicidial-dial-log-only, number of days to archive vicidial_dial_log table only past\n";
 		print "  [--extended-log-only] = OPTIONAL, only archive vicidial_log_extended table then exit\n";
 		print "       [--extended-log-days=XX] = REQUIRED FOR --extended-log-only, number of days to archive vicidial_log_extended table only past\n";
 		print "  [--api-archive-only] = OPTIONAL, only purge vicidial_api_log_archive table then exit\n";
@@ -294,7 +297,6 @@ if (length($ARGV[0])>1)
 			if ($Q < 1) 
 				{print "\n----- VICIDIAL LOG ARCHIVE ONLY $vicidial_log_only -----\n\n";}
 			}
-
 		if ($args =~ /--vicidial-log-days=/i)
 			{
 			$vicidial_log_only++;
@@ -308,13 +310,31 @@ if (length($ARGV[0])>1)
 				{print "\n----- VICIDIAL LOG ARCHIVE ACTIVE, DAYS: $extendeddays -----\n\n";}
 			}
 
+		if ($args =~ /--vicidial-dial-log-only/i)
+			{
+			$vicidial_dial_log_only++;
+			if ($Q < 1) 
+				{print "\n----- VICIDIAL DIAL LOG ARCHIVE ONLY $vicidial_dial_log_only -----\n\n";}
+			}
+		if ($args =~ /--vicidial-dial-log-days=/i)
+			{
+			$vicidial_dial_log_only++;
+			@data_in = split(/--vicidial-dial-log-days=/,$args);
+			$extendeddays = $data_in[1];
+			$extendeddays =~ s/ .*$//gi;
+			$extendeddays =~ s/\D//gi;
+			if ($extendeddays > 999999)
+				{$extendeddays=1825;}
+			if ($Q < 1) 
+				{print "\n----- VICIDIAL DIAL LOG ARCHIVE ACTIVE, DAYS: $extendeddays -----\n\n";}
+			}
+
 		if ($args =~ /--extended-log-only/i)
 			{
 			$extended_log_only++;
 			if ($Q < 1) 
 				{print "\n----- EXTENDED LOG ARCHIVE ONLY $extended_log_only -----\n\n";}
 			}
-
 		if ($args =~ /--extended-log-days=/i)
 			{
 			$extended_log_only++;
@@ -334,7 +354,6 @@ if (length($ARGV[0])>1)
 			if ($Q < 1) 
 				{print "\n----- API ARCHIVE PURGE ONLY -----\n\n";}
 			}
-
 		if ($args =~ /--api-archive-days=/i)
 			{
 			$api_log_archive_purge++;
@@ -354,7 +373,6 @@ if (length($ARGV[0])>1)
 			if ($Q < 1) 
 				{print "\n----- URL LOG PURGE ONLY -----\n\n";}
 			}
-
 		if ($args =~ /--url-log-days=/i)
 			{
 			$url_log_only++;
@@ -505,7 +523,7 @@ if ($url_log_only > 0)
 	if ($URLsec < 10) {$URLsec = "0$URLsec";}
 	$URLdel_time = "$URLyear-$URLmon-$URLmday $URLhour:$URLmin:$URLsec";
 	}
-if ( ($extended_log_only > 0) || ($vicidial_log_only > 0) )
+if ( ($extended_log_only > 0) || ($vicidial_log_only > 0) || ($vicidial_dial_log_only > 0) )
 	{
 	$EXTENDEDdel_epoch = ($secX - (86400 * $extendeddays));   # X days ago
 	($EXTENDEDsec,$EXTENDEDmin,$EXTENDEDhour,$EXTENDEDmday,$EXTENDEDmon,$EXTENDEDyear,$EXTENDEDwday,$EXTENDEDyday,$EXTENDEDisdst) = localtime($EXTENDEDdel_epoch);
@@ -2081,6 +2099,66 @@ if (!$T)
 		exit;
 		}
 	########## END --vicidial-log-only flag processing ##########
+
+
+
+
+	########## BEGIN --vicidial-dial-log-only flag processing ##########
+	if ($vicidial_dial_log_only > 0)
+		{
+		##### vicidial_dial_log
+		$stmtA = "SELECT count(*) from vicidial_dial_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$vicidial_dial_log_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		$stmtA = "SELECT count(*) from vicidial_dial_log_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$vicidial_dial_log_archive_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		if (!$Q) {print "\nProcessing vicidial_dial_log table...  ($vicidial_dial_log_count|$vicidial_dial_log_archive_count)\n";}
+		$stmtA = "INSERT IGNORE INTO vicidial_dial_log_archive SELECT * from vicidial_dial_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows inserted into vicidial_dial_log_archive table \n";}
+		
+		$rv = $sthA->err();
+		if (!$rv) 
+			{
+			if ($wipe_all > 0)
+				{$stmtA = "DELETE FROM vicidial_dial_log;";}
+			else
+				{$stmtA = "DELETE FROM vicidial_dial_log WHERE call_date < '$EXTENDEDdel_time';";}
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			if (!$Q) {print "$sthArows rows deleted from vicidial_dial_log table \n";}
+
+			$stmtA = "optimize table vicidial_dial_log;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			}
+
+		if (!$Q) {print "\nProcessing vicidial_dial_log table finished:  ($sthArows rows deleted) \n";}
+		
+		exit;
+		}
+	########## END --vicidial-dial-log-only flag processing ##########
 
 
 	if ($queue_log > 0)

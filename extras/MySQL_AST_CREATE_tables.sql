@@ -2074,7 +2074,8 @@ agent_man_dial_filter VARCHAR(20) default '',
 agent_3way_dial_filter VARCHAR(20) default '',
 recording_dtmf_detection TINYINT(3) UNSIGNED default '0',
 recording_dtmf_muting TINYINT(3) UNSIGNED default '0',
-stereo_parallel_recording ENUM('0','1','2','3','4','5','6') default '0'
+stereo_parallel_recording ENUM('0','1','2','3','4','5','6') default '0',
+db_crashed_tables_check ENUM('0','1','2','3','4','5','6') default '1'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaigns_list_mix (
@@ -5449,6 +5450,12 @@ index(recording_id),
 index(dtmf_muting_end_time)
 ) ENGINE=MyISAM;
 
+CREATE TABLE crashed_tables (
+table_name VARCHAR(100) PRIMARY KEY NOT NULL,
+crashed_datetime DATETIME,
+last_check_datetime DATETIME
+) ENGINE=MyISAM;
+
 
 ALTER TABLE vicidial_email_list MODIFY message text character set utf8;
 
@@ -5867,4 +5874,4 @@ INSERT INTO `wallboard_reports` VALUES ('AGENTS_AND_QUEUES','Agents and Queues',
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1732',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1733',db_schema_update_date=NOW(),reload_timestamp=NOW();
