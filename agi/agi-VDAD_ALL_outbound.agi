@@ -1496,7 +1496,9 @@ if ($VDACaffected_rows > 0)
 					}
 				else
 					{$TTS_filename_path[$s] = $TTS_text[$s];}
-			
+
+				if ($AGILOG) {$agi_string = "--    TTS-post : |$t|$CIDlead_id|$TTS_filename_path[$s]|";   &agi_output;}
+
 				$s++;
 				}
 
