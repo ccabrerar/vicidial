@@ -53,6 +53,7 @@
 # 241208-1748 - Changed DID filter_phone_group_id & pre_filter_phone_group_id to multi-selects
 # 250924-2156 - Added code for deprecation of "Monitor" application after Asterisk 20
 # 251006-0905 - If recording_dtmf_muting enabled, force use of MixMonitor for recording
+# 251112-1517 - Added alter_cid_name option
 #
 
 
@@ -240,7 +241,7 @@ if (length($VICIrecGatewayID) > 19)
 if ($SSdid_system_filter > 0) 
 	{
 	if ($AGILOG) {$agi_string = "--    DID SYSTEM FILTER ENABLED: |$SSdid_system_filter|";   &agi_output;}
-	$stmtA = "SELECT did_id,did_pattern,did_description,did_active,did_route,extension,exten_context,voicemail_ext,phone,server_ip,user,user_unavailable_action,user_route_settings_ingroup,menu_id,record_call,filter_inbound_number,filter_phone_group_id,filter_url,filter_action,filter_extension,filter_exten_context,filter_voicemail_ext,filter_phone,filter_server_ip,filter_user,filter_user_unavailable_action,filter_user_route_settings_ingroup,filter_group_id,filter_call_handle_method,filter_agent_search_method,filter_list_id,filter_campaign_id,filter_phone_code,filter_menu_id,filter_clean_cid_number,group_id,filter_dnc_campaign,filter_url_did_redirect,no_agent_ingroup_redirect,no_agent_ingroup_id,no_agent_ingroup_extension,pre_filter_phone_group_id,pre_filter_extension,max_queue_ingroup_calls,max_queue_ingroup_id,max_queue_ingroup_extension,inbound_route_answer,pre_filter_recent_call,pre_filter_recent_extension FROM vicidial_inbound_dids where did_pattern = 'did_system_filter' and did_active='Y';";
+	$stmtA = "SELECT did_id,did_pattern,did_description,did_active,did_route,extension,exten_context,voicemail_ext,phone,server_ip,user,user_unavailable_action,user_route_settings_ingroup,menu_id,record_call,filter_inbound_number,filter_phone_group_id,filter_url,filter_action,filter_extension,filter_exten_context,filter_voicemail_ext,filter_phone,filter_server_ip,filter_user,filter_user_unavailable_action,filter_user_route_settings_ingroup,filter_group_id,filter_call_handle_method,filter_agent_search_method,filter_list_id,filter_campaign_id,filter_phone_code,filter_menu_id,filter_clean_cid_number,group_id,filter_dnc_campaign,filter_url_did_redirect,no_agent_ingroup_redirect,no_agent_ingroup_id,no_agent_ingroup_extension,pre_filter_phone_group_id,pre_filter_extension,max_queue_ingroup_calls,max_queue_ingroup_id,max_queue_ingroup_extension,inbound_route_answer,pre_filter_recent_call,pre_filter_recent_extension,alter_cid_name FROM vicidial_inbound_dids where did_pattern = 'did_system_filter' and did_active='Y';";
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 	$sthArows=$sthA->rows;
@@ -296,6 +297,7 @@ if ($SSdid_system_filter > 0)
 		$inbound_route_answer =			$aryA[46];
 		$pre_filter_recent_call =		$aryA[47];
 		$pre_filter_recent_extension =	$aryA[48];
+		$alter_cid_name =				$aryA[49];
 		}
 	else
 		{
@@ -305,10 +307,46 @@ if ($SSdid_system_filter > 0)
 
 	if ($sthArows > 0)
 		{
+		### BEGIN alter caller id name ###
+		if ( ($alter_cid_name !~ /DISABLED/i) && (length($alter_cid_name) > 2) ) 
+			{
+			$cidname_altered=0;
+			$new_calleridname='';
+			if ($alter_cid_name =~ /ALLCALLS_CIDNUM/i)
+				{
+				$new_calleridname = $callerid;
+				$cidname_altered++;
+				}
+			if ($alter_cid_name =~ /ALLCALLS_CLEAN/i)
+				{
+				$new_calleridname = 'CLEANED';
+				$cidname_altered++;
+				}
+			if ( ($alter_cid_name =~ /OTHSYS_CIDNUM/i) && ($calleridname =~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^Y\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^M\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^DC\d\d\d\d\d\dW\d\d\d\d\d\d\d\d\d\dW/) )
+				{
+				$new_calleridname = $callerid;
+				$cidname_altered++;
+				}
+			if ( ($alter_cid_name =~ /OTHSYS_CLEAN/i) && ($calleridname =~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^Y\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^M\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^DC\d\d\d\d\d\dW\d\d\d\d\d\d\d\d\d\dW/) )
+				{
+				$new_calleridname = 'CLEANED';
+				$cidname_altered++;
+				}
+
+			if ($cidname_altered > 0)
+				{
+				$newcallerid = "\"$new_calleridname <$callerid>\"";
+				$AGI->set_callerid($newcallerid);
+				if ($AGILOG) {$agi_string = "cidname altered, setting new CID: |$new_calleridname|$callerid|$alter_cid_name|   Old: |$calleridname|";   &agi_output;}
+				$calleridname = $new_calleridname;
+				}
+			}
+		### END alter caller id name ###
+
 		if ($filter_inbound_number =~ /GROUP|URL|DNC_INTERNAL|DNC_CAMPAIGN/)
 			{
 			$original_callerid = $callerid;
-			### BEGIN temp clean caller id number ###
+			### BEGIN clean caller id number ###
 			if (length($filter_clean_cid_number) > 1)
 				{
 				$original_callerid = $callerid;
@@ -701,7 +739,7 @@ if ($SSdid_system_filter > 0)
 
 ### Grab DID values from the database
 $DIDs_in_system=0;
-$stmtA = "SELECT did_id,did_pattern,did_description,did_active,did_route,extension,exten_context,voicemail_ext,phone,server_ip,user,user_unavailable_action,user_route_settings_ingroup,menu_id,record_call,filter_inbound_number,filter_phone_group_id,filter_url,filter_action,filter_extension,filter_exten_context,filter_voicemail_ext,filter_phone,filter_server_ip,filter_user,filter_user_unavailable_action,filter_user_route_settings_ingroup,filter_group_id,filter_call_handle_method,filter_agent_search_method,filter_list_id,filter_campaign_id,filter_phone_code,filter_menu_id,filter_clean_cid_number,group_id,filter_dnc_campaign,filter_url_did_redirect,no_agent_ingroup_redirect,no_agent_ingroup_id,no_agent_ingroup_extension,pre_filter_phone_group_id,pre_filter_extension,max_queue_ingroup_calls,max_queue_ingroup_id,max_queue_ingroup_extension,inbound_route_answer,pre_filter_recent_call,pre_filter_recent_extension FROM vicidial_inbound_dids where did_pattern = '$extension' and did_active='Y';";
+$stmtA = "SELECT did_id,did_pattern,did_description,did_active,did_route,extension,exten_context,voicemail_ext,phone,server_ip,user,user_unavailable_action,user_route_settings_ingroup,menu_id,record_call,filter_inbound_number,filter_phone_group_id,filter_url,filter_action,filter_extension,filter_exten_context,filter_voicemail_ext,filter_phone,filter_server_ip,filter_user,filter_user_unavailable_action,filter_user_route_settings_ingroup,filter_group_id,filter_call_handle_method,filter_agent_search_method,filter_list_id,filter_campaign_id,filter_phone_code,filter_menu_id,filter_clean_cid_number,group_id,filter_dnc_campaign,filter_url_did_redirect,no_agent_ingroup_redirect,no_agent_ingroup_id,no_agent_ingroup_extension,pre_filter_phone_group_id,pre_filter_extension,max_queue_ingroup_calls,max_queue_ingroup_id,max_queue_ingroup_extension,inbound_route_answer,pre_filter_recent_call,pre_filter_recent_extension,alter_cid_name FROM vicidial_inbound_dids where did_pattern = '$extension' and did_active='Y';";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -757,6 +795,7 @@ if ($sthArows > 0)
 	$inbound_route_answer =			$aryA[46];
 	$pre_filter_recent_call =		$aryA[47];
 	$pre_filter_recent_extension =	$aryA[48];
+	$alter_cid_name =		$aryA[49];
 
 	$DIDs_in_system++;
 	}
@@ -765,7 +804,7 @@ $sthA->finish();
 if ($sthArows < 1)
 	{
 	### Grab DID values from the database for a default DID pattern if there is one
-	$stmtA = "SELECT did_id,did_pattern,did_description,did_active,did_route,extension,exten_context,voicemail_ext,phone,server_ip,user,user_unavailable_action,user_route_settings_ingroup,menu_id,record_call,filter_inbound_number,filter_phone_group_id,filter_url,filter_action,filter_extension,filter_exten_context,filter_voicemail_ext,filter_phone,filter_server_ip,filter_user,filter_user_unavailable_action,filter_user_route_settings_ingroup,filter_group_id,filter_call_handle_method,filter_agent_search_method,filter_list_id,filter_campaign_id,filter_phone_code,filter_menu_id,filter_clean_cid_number,group_id,filter_dnc_campaign,filter_url_did_redirect,no_agent_ingroup_redirect,no_agent_ingroup_id,no_agent_ingroup_extension,pre_filter_phone_group_id,pre_filter_extension,max_queue_ingroup_calls,max_queue_ingroup_id,max_queue_ingroup_extension,inbound_route_answer,pre_filter_recent_call,pre_filter_recent_extension FROM vicidial_inbound_dids where did_pattern = 'default' and did_active='Y';";
+	$stmtA = "SELECT did_id,did_pattern,did_description,did_active,did_route,extension,exten_context,voicemail_ext,phone,server_ip,user,user_unavailable_action,user_route_settings_ingroup,menu_id,record_call,filter_inbound_number,filter_phone_group_id,filter_url,filter_action,filter_extension,filter_exten_context,filter_voicemail_ext,filter_phone,filter_server_ip,filter_user,filter_user_unavailable_action,filter_user_route_settings_ingroup,filter_group_id,filter_call_handle_method,filter_agent_search_method,filter_list_id,filter_campaign_id,filter_phone_code,filter_menu_id,filter_clean_cid_number,group_id,filter_dnc_campaign,filter_url_did_redirect,no_agent_ingroup_redirect,no_agent_ingroup_id,no_agent_ingroup_extension,pre_filter_phone_group_id,pre_filter_extension,max_queue_ingroup_calls,max_queue_ingroup_id,max_queue_ingroup_extension,inbound_route_answer,pre_filter_recent_call,pre_filter_recent_extension,alter_cid_name FROM vicidial_inbound_dids where did_pattern = 'default' and did_active='Y';";
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 	$DIDs_in_system=$sthA->rows;
@@ -821,9 +860,46 @@ if ($sthArows < 1)
 		$inbound_route_answer =			$aryA[46];
 		$pre_filter_recent_call =		$aryA[47];
 		$pre_filter_recent_extension =	$aryA[48];
+		$alter_cid_name =				$aryA[49];
 		}
 	$sthA->finish();
 	}
+
+### BEGIN alter caller id name ###
+if ( ($alter_cid_name !~ /DISABLED/i) && (length($alter_cid_name) > 2) ) 
+	{
+	$cidname_altered=0;
+	$new_calleridname='';
+	if ($alter_cid_name =~ /ALLCALLS_CIDNUM/i)
+		{
+		$new_calleridname = $callerid;
+		$cidname_altered++;
+		}
+	if ($alter_cid_name =~ /ALLCALLS_CLEAN/i)
+		{
+		$new_calleridname = 'CLEANED';
+		$cidname_altered++;
+		}
+	if ( ($alter_cid_name =~ /OTHSYS_CIDNUM/i) && ($calleridname =~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^Y\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^M\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^DC\d\d\d\d\d\dW\d\d\d\d\d\d\d\d\d\dW/) )
+		{
+		$new_calleridname = $callerid;
+		$cidname_altered++;
+		}
+	if ( ($alter_cid_name =~ /OTHSYS_CLEAN/i) && ($calleridname =~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^Y\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^M\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^DC\d\d\d\d\d\dW\d\d\d\d\d\d\d\d\d\dW/) )
+		{
+		$new_calleridname = 'CLEANED';
+		$cidname_altered++;
+		}
+
+	if ($cidname_altered > 0)
+		{
+		$newcallerid = "\"$new_calleridname <$callerid>\"";
+		$AGI->set_callerid($newcallerid);
+		if ($AGILOG) {$agi_string = "cidname altered, setting new CID: |$new_calleridname|$callerid|$alter_cid_name|   Old: |$calleridname|";   &agi_output;}
+		$calleridname = $new_calleridname;
+		}
+	}
+### END alter caller id name ###
 
 ### Log the call to vicidial_did_log
 $stmtA = "INSERT INTO vicidial_did_log SET uniqueid='$uniqueid',channel='$channel',server_ip='$VARserver_ip',caller_id_number='$callerid',caller_id_name='$calleridname',extension='$extension',call_date='$SQLdate',did_id='$did_id',did_route='$did_route';";

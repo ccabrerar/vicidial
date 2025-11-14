@@ -3040,3 +3040,7 @@ last_check_datetime DATETIME
 ALTER TABLE system_settings ADD db_crashed_tables_check ENUM('0','1','2','3','4','5','6') default '1';
 
 UPDATE system_settings SET db_schema_version='1733',db_schema_update_date=NOW() where db_schema_version < 1733;
+
+ALTER TABLE vicidial_inbound_dids ADD alter_cid_name VARCHAR(40) default 'DISABLED';
+
+UPDATE system_settings SET db_schema_version='1734',db_schema_update_date=NOW() where db_schema_version < 1734;

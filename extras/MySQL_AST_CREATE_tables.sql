@@ -2401,8 +2401,9 @@ did_carrier_description VARCHAR(255) default '',
 inbound_route_answer ENUM('Y','N') DEFAULT 'Y',
 pre_filter_recent_call VARCHAR(20) default '',
 pre_filter_recent_extension VARCHAR(50) default '',
-unique index (did_pattern),
+alter_cid_name VARCHAR(40) default 'DISABLED',
 modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+unique index (did_pattern),
 index (group_id)
 ) ENGINE=MyISAM;
 
@@ -5874,4 +5875,4 @@ INSERT INTO `wallboard_reports` VALUES ('AGENTS_AND_QUEUES','Agents and Queues',
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1733',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1734',db_schema_update_date=NOW(),reload_timestamp=NOW();
