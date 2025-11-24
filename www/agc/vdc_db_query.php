@@ -564,10 +564,11 @@
 # 250923-1755 - Added talk_sec_url features
 # 251002-1352 - Added call_count_limit_restrict campaign option
 # 251005-0931 - Added code for recording_dtmf_muting
+# 251124-0935 - Added lead status display for callbacks list output
 #
 
-$version = '2.14-457';
-$build = '251005-0931';
+$version = '2.14-458';
+$build = '251124-0935';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=995;
@@ -19888,7 +19889,7 @@ if ($ACTION == 'AGENTSview')
 ################################################################################
 if ($ACTION == 'CALLSINQUEUEview')
 	{
-	$stmt="SELECT view_calls_in_queue,grab_calls_in_queue,calls_waiting_vl_one,calls_waiting_vl_two from vicidial_campaigns where campaign_id='$campaign'";
+	$stmt="SELECT view_calls_in_queue,grab_calls_in_queue,calls_waiting_vl_one,calls_waiting_vl_two,disable_alter_custphone from vicidial_campaigns where campaign_id='$campaign'";
 	if ($non_latin > 0) {$rslt=mysql_to_mysqli("SET NAMES 'UTF8'", $link);}
 	$rslt=mysql_to_mysqli($stmt, $link);
 		if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00228',$user,$server_ip,$session_name,$one_mysql_log);}
@@ -19897,6 +19898,7 @@ if ($ACTION == 'CALLSINQUEUEview')
 	$grab_calls_in_queue =	$row[1];
 	$calls_waiting_vl_one =	$row[2];
 	$calls_waiting_vl_two =	$row[3];
+	$disable_alter_custphone = $row[4];
 
 	if (preg_match('/NONE/i',$view_calls_in_queue))
 		{
@@ -22210,7 +22212,7 @@ if ($ACTION == 'CalLBacKLisT')
 	if ($agentonly_callback_campaign_lock > 0)
 		{$campaignCBsql = "and campaign_id='$campaign'";}
 
-	$stmt = "SELECT callback_id,lead_id,campaign_id,status,entry_time,callback_time,comments,customer_timezone,customer_time,customer_timezone_diff from vicidial_callbacks where recipient='USERONLY' and user='$user' $campaignCBsql $campaignCBhoursSQL $campaignCBdisplaydaysSQL and status NOT IN('INACTIVE','DEAD') order by callback_time;";
+	$stmt = "SELECT callback_id,lead_id,campaign_id,status,entry_time,callback_time,comments,customer_timezone,customer_time,customer_timezone_diff,lead_status from vicidial_callbacks where recipient='USERONLY' and user='$user' $campaignCBsql $campaignCBhoursSQL $campaignCBdisplaydaysSQL and status NOT IN('INACTIVE','DEAD') order by callback_time;";
 	if ($DB) {echo "$stmt\n";}
 	$rslt=mysql_to_mysqli($stmt, $link);
 		if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00178',$user,$server_ip,$session_name,$one_mysql_log);}
@@ -22221,6 +22223,7 @@ if ($ACTION == 'CalLBacKLisT')
 	$lead_id = array();
 	$campaign_id = array();
 	$status = array();
+	$lead_status = array();
 	$entry_time = array();
 	$callback_time = array();
 	$comments = array();
@@ -22242,6 +22245,7 @@ if ($ACTION == 'CalLBacKLisT')
 		$customer_timezone[$loop_count] =		preg_replace("/.*,/",'',$row[7]);
 		$customer_time[$loop_count] =			$row[8];
 		$customer_timezone_diff[$loop_count] =	$row[9];
+		$lead_status[$loop_count] =				$row[10];
 		$loop_count++;
 		}
 	$loop_count=0;
@@ -22302,7 +22306,7 @@ if ($ACTION == 'CalLBacKLisT')
 			{
 			$customer_time_CB_output = "-!T-$customer_timezone[$loop_count]-!T-$customer_time[$loop_count]";
 			}
-		$CBoutput = "$row[0]-!T-$row[1]-!T-$row[2]-!T-$callback_id[$loop_count]-!T-$lead_id[$loop_count]-!T-$campaign_id[$loop_count]-!T-"._QXZ("$status[$loop_count]")."-!T-$entry_time[$loop_count]-!T-$callback_time[$loop_count]-!T-$comments[$loop_count]-!T-$PHONEdialable-!T-$alt_phone$customer_time_CB_output";
+		$CBoutput = "$row[0]-!T-$row[1]-!T-$row[2]-!T-$callback_id[$loop_count]-!T-$lead_id[$loop_count]-!T-$campaign_id[$loop_count]-!T-"._QXZ("$status[$loop_count]")."-!T-$entry_time[$loop_count]-!T-$callback_time[$loop_count]-!T-$comments[$loop_count]-!T-$PHONEdialable-!T-$alt_phone-!T-$lead_status[$loop_count]$customer_time_CB_output";
 		echo "$CBoutput\n";
 		$loop_count++;
 		}
