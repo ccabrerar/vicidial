@@ -7,10 +7,11 @@
 #
 # /usr/share/astguiclient/AST_list_export.pl --list=101-102-103 --output-format=fixed-as400 --debug --filename=101exportMMDD.txt --email-list=test@gmail.com --email-sender=test@test.com
 #
-# Copyright (C) 2015  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 151020-2043 - First version based upon AST_recording_export.pl
+# 251128-1536 - Added --basic-export option 
 #
 
 $txt = '.txt';
@@ -67,6 +68,8 @@ use Time::Local;
 $TWOAMsec = ( ($secX - ($sec + ($min * 60) + ($hour * 3600) ) ) + 7200);
 ### find epoch of 2AM yesterday
 $TWOAMsecY = ($TWOAMsec - 86400);
+$Q=0;
+$basic_export=0;
 
 ($Tsec,$Tmin,$Thour,$Tmday,$Tmon,$Tyear,$Twday,$Tyday,$Tisdst) = localtime($TWOAMsecY);
 $Tyear = ($Tyear + 1900);
@@ -143,14 +146,14 @@ if (length($ARGV[0])>1)
 	if ($args =~ /--help/i)
 		{
 		print "allowed run time options:\n";
-		print "  [--list=XXX] = Campaign that sales will be pulled from. REQUIRED\n";
+		print "  [--list=XXX] = List that sales will be pulled from. REQUIRED. For all leads, use ---ALL--- \n";
 		print "  [--temp-dir=XXX] = If running more than one instance at a time, specify a unique temp directory suffix\n";
+		print "  [--basic-export] = only include 8 fields: lead_id phone_number list_id status called_count entry_date last_local_call_time campaign_id \n";
 		print "  [--quiet] = quiet\n";
 		print "  [--test] = test\n";
 		print "  [--debug] = debugging messages\n";
 		print "  [--debugX] = Super debugging messages\n";
 		print "\n";
-
 
 		exit;
 		}
@@ -170,6 +173,11 @@ if (length($ARGV[0])>1)
 			{
 			$q=1;   $Q=1;
 			}
+		if ($args =~ /--basic-export/i)
+			{
+			$basic_export=1;
+			if ($Q < 1) {print "\n----- BASIC EXPORT ENABLED: |$basic_export| -----\n\n";}
+			}
 		if ($args =~ /--list=/i)
 			{
 			#	print "\n|$ARGS|\n\n";
@@ -182,6 +190,15 @@ if (length($ARGV[0])>1)
 				$listSQL =~ s/-/','/gi;
 				}
 			$listSQL = "'$listSQL'";
+			if ($list == '---ALL---') 
+				{
+				$listSQL = "list_id NOT IN('')";
+				}
+			else
+				{
+				$listSQL = "list_id IN($listSQL)";
+				}
+			if ($Q < 1) {print "\n----- LIST DEFINED: |$list|$listSQL| -----\n\n";}
 			}
 		else
 			{
@@ -206,7 +223,9 @@ else
 
 
 if (length($listSQL) > 1)
-	{$listSQL = "list_id IN($listSQL)";}
+	{
+	#do nothing
+	}
 else
 	{
 	print "no list defined, exiting...";
@@ -286,7 +305,14 @@ while ($sthArows > $rec_count)
 	$owner =					$aryA[33];
 	$entry_list_id =			$aryA[34];
 
-	&select_format_loop;
+	if ($basic_export > 0) 
+		{
+		&basic_format_loop;
+		}
+	else
+		{
+		&select_format_loop;
+		}
 
 	$TOTAL_LEADS++;
 	}
@@ -304,6 +330,55 @@ if (!$Q) {print "TOTAL CUSTOM: $TOTAL_CUSTOM\n";}
 if (!$Q) {print "script execution time in seconds: $secZ     minutes: $secZm\n";}
 
 
+
+
+### Subroutine for basic formatting of the output ###
+sub basic_format_loop
+	{
+	$str='';
+	$call_data = "$lead_id\t$phone_number\t$list_id\t$status\t$called_count\t$entry_date\t$last_local_call_time";
+
+	##### BEGIN check for campaign data #####
+	$custom_data = '';
+
+	$stmtB = "SELECT campaign_id from vicidial_lists where list_id=$list_id;";
+	$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
+	$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
+	$sthBrows=$sthB->rows;
+	if ($DBX) {print "$sthBrows|$stmtB|\n";}
+	if ($sthBrows > 0)
+		{
+		@aryB = $sthB->fetchrow_array;
+		$custom_data .= "\t$aryB[0]";
+		$call_data .= "$custom_data";
+		}
+	$sthB->finish();
+	##### END custom field data lookup #####
+
+	if ($DBX) {print "$TOTAL_LEADS   $rec_countB   $call_data\n";}
+
+	open(Sout, ">>$PATHhome/$file_date$US$list.txt")
+			|| die "Can't open $file_date$US$list.txt: $!\n";
+	print Sout "$call_data\n";
+	close(Sout);
+
+
+	if ($DB > 0)
+		{
+		if ($rec_count =~ /1000$/i) {print STDERR " G*THER $rec_count\r";}
+		if ($rec_count =~ /2000$/i) {print STDERR " GA*HER $rec_count\r";}
+		if ($rec_count =~ /3000$/i) {print STDERR " GAT*ER $rec_count\r";}
+		if ($rec_count =~ /4000$/i) {print STDERR " GATH*R $rec_count\r";}
+		if ($rec_count =~ /5000$/i) {print STDERR " GATHE* $rec_count\r";}
+		if ($rec_count =~ /6000$/i) {print STDERR " GATH*R $rec_count\r";}
+		if ($rec_count =~ /7000$/i) {print STDERR " GAT*ER $rec_count\r";}
+		if ($rec_count =~ /8000$/i) {print STDERR " GA*HER $rec_count\r";}
+		if ($rec_count =~ /9000$/i) {print STDERR " G*THER $rec_count\r";}
+		if ($rec_count =~ /0000$/i) {print STDERR " *ATHER $rec_count\r";}
+		if ($rec_count =~ /0000$/i) {print "        |$rec_count|$TOTAL_LEADS|         |$lead_id|\n";}
+		}
+	$rec_count++;
+	}
 
 
 ### Subroutine for formatting of the output ###
