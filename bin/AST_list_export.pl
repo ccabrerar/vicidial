@@ -12,6 +12,7 @@
 # CHANGES
 # 151020-2043 - First version based upon AST_recording_export.pl
 # 251128-1536 - Added --basic-export option 
+# 251130-0006 - Added --custom-export=XXX option
 #
 
 $txt = '.txt';
@@ -70,6 +71,7 @@ $TWOAMsec = ( ($secX - ($sec + ($min * 60) + ($hour * 3600) ) ) + 7200);
 $TWOAMsecY = ($TWOAMsec - 86400);
 $Q=0;
 $basic_export=0;
+$custom_fields='';
 
 ($Tsec,$Tmin,$Thour,$Tmday,$Tmon,$Tyear,$Twday,$Tyday,$Tisdst) = localtime($TWOAMsecY);
 $Tyear = ($Tyear + 1900);
@@ -149,6 +151,7 @@ if (length($ARGV[0])>1)
 		print "  [--list=XXX] = List that sales will be pulled from. REQUIRED. For all leads, use ---ALL--- \n";
 		print "  [--temp-dir=XXX] = If running more than one instance at a time, specify a unique temp directory suffix\n";
 		print "  [--basic-export] = only include 8 fields: lead_id phone_number list_id status called_count entry_date last_local_call_time campaign_id \n";
+		print "     [--custom-export=XXX] = export only the defined custom fields, separated by a dash: business-siccode \n";
 		print "  [--quiet] = quiet\n";
 		print "  [--test] = test\n";
 		print "  [--debug] = debugging messages\n";
@@ -177,6 +180,19 @@ if (length($ARGV[0])>1)
 			{
 			$basic_export=1;
 			if ($Q < 1) {print "\n----- BASIC EXPORT ENABLED: |$basic_export| -----\n\n";}
+			}
+		if ($args =~ /--custom-export=/i)
+			{
+			@data_in = split(/--custom-export=/,$args);
+			$custom_fields = $data_in[1];
+			$custom_fields =~ s/ .*$//gi;
+			$custom_fields =~ s/-/,/gi;
+			$count_CF = $custom_fields =~ tr/,//;
+			$count_CF++;
+			$custom_fieldsCHECK = ",$custom_fields,";
+			$custom_fieldsCHECK =~ s/,/','/gi;
+			$custom_fieldsCHECK =~ s/^\'|\'$//gi;
+			if ($Q < 1) {print "\n----- custom EXPORT ENABLED: |$custom_fields| -----\n\n";}
 			}
 		if ($args =~ /--list=/i)
 			{
@@ -339,8 +355,7 @@ sub basic_format_loop
 	$call_data = "$lead_id\t$phone_number\t$list_id\t$status\t$called_count\t$entry_date\t$last_local_call_time";
 
 	##### BEGIN check for campaign data #####
-	$custom_data = '';
-
+	$camp_data = "\t";
 	$stmtB = "SELECT campaign_id from vicidial_lists where list_id=$list_id;";
 	$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
 	$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
@@ -349,11 +364,86 @@ sub basic_format_loop
 	if ($sthBrows > 0)
 		{
 		@aryB = $sthB->fetchrow_array;
-		$custom_data .= "\t$aryB[0]";
-		$call_data .= "$custom_data";
+		$camp_data = "\t$aryB[0]";
 		}
 	$sthB->finish();
-	##### END custom field data lookup #####
+	$call_data .= "$camp_data";
+	##### END campaign data lookup #####
+
+	if (length($custom_fields) > 0) 
+		{
+		### BEGIN custom export ###
+		$custom_data = '';
+		$custom_columns = '';
+		$temp_custom_fieldsCHECK = $custom_fieldsCHECK;
+
+		if ( (length($entry_list_id) > 1 ) && ($entry_list_id >= 99) ) 
+			{
+			$cols_found=0;
+			$stmtB = "SHOW TABLES LIKE \"custom_$entry_list_id\";";
+			$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
+			$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
+			$sthBcustrows=$sthB->rows;
+			if ($DBX) {print "$sthBcustrows|$stmtB|\n";}
+			$sthB->finish();
+			if ($sthBcustrows > 0) 
+				{
+				$stmtB = "describe custom_$entry_list_id;";
+				$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
+				$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
+				$sthBcolrows=$sthB->rows;
+				if ($DBX) {print "$sthBcolrows|$stmtB|\n";}
+				$col_ct=0;
+				while ($sthBcolrows > $col_ct) 
+					{
+					@aryB = $sthB->fetchrow_array;
+					$column_label =		$aryB[0];
+					if ($DBX) {print "$col_ct|$column_label|     |$custom_fieldsCHECK|\n";}
+					if ( ($col_ct > 0) && ($temp_custom_fieldsCHECK =~ /,\'$column_label\',/) )
+						{
+						$temp_custom_fieldsCHECK =~ s/\'$column_label\'/$column_label/gi;
+						$custom_columns .= "$column_label,";
+						$cols_found++;
+						}
+					$col_ct++;
+					}
+				$sthB->finish();
+				$custom_columns =~ s/,$//gi;
+
+				if ($cols_found > 0)
+					{
+					$temp_custom_fieldsCHECK =~ s/^,|,$//gi;
+					$stmtB = "SELECT $temp_custom_fieldsCHECK from custom_$entry_list_id where lead_id=$lead_id;";
+					$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
+					$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
+					$sthBrows=$sthB->rows;
+					if ($DBX) {print "$sthBrows|$stmtB|\n";}
+					$rec_countB=0;
+					while ($sthBrows > $rec_countB)
+						{
+						@aryB = $sthB->fetchrow_array;
+						$field_ct=1;
+						while ($count_CF > $field_ct) 
+							{
+							$custom_data .= "\t$aryB[$field_ct]";
+							$field_ct++;
+							}
+						$rec_countB++;
+
+						if (length($custom_data) > 0)
+							{
+							if ($DBX) {print "Custom data for $lead_id found in $entry_list_id: |$custom_data|\n";}
+							$call_data .= "$custom_data";
+							$TOTAL_CUSTOM++;
+							}
+						}
+					$sthB->finish();
+					}
+				}
+			}
+		### END custom export ###
+		}
+
 
 	if ($DBX) {print "$TOTAL_LEADS   $rec_countB   $call_data\n";}
 
@@ -365,17 +455,17 @@ sub basic_format_loop
 
 	if ($DB > 0)
 		{
-		if ($rec_count =~ /1000$/i) {print STDERR " G*THER $rec_count\r";}
-		if ($rec_count =~ /2000$/i) {print STDERR " GA*HER $rec_count\r";}
-		if ($rec_count =~ /3000$/i) {print STDERR " GAT*ER $rec_count\r";}
-		if ($rec_count =~ /4000$/i) {print STDERR " GATH*R $rec_count\r";}
-		if ($rec_count =~ /5000$/i) {print STDERR " GATHE* $rec_count\r";}
-		if ($rec_count =~ /6000$/i) {print STDERR " GATH*R $rec_count\r";}
-		if ($rec_count =~ /7000$/i) {print STDERR " GAT*ER $rec_count\r";}
-		if ($rec_count =~ /8000$/i) {print STDERR " GA*HER $rec_count\r";}
-		if ($rec_count =~ /9000$/i) {print STDERR " G*THER $rec_count\r";}
-		if ($rec_count =~ /0000$/i) {print STDERR " *ATHER $rec_count\r";}
-		if ($rec_count =~ /0000$/i) {print "        |$rec_count|$TOTAL_LEADS|         |$lead_id|\n";}
+		if ($rec_count =~ /100$/i) {print STDERR " G*THER $rec_count\r";}
+		if ($rec_count =~ /200$/i) {print STDERR " GA*HER $rec_count\r";}
+		if ($rec_count =~ /300$/i) {print STDERR " GAT*ER $rec_count\r";}
+		if ($rec_count =~ /400$/i) {print STDERR " GATH*R $rec_count\r";}
+		if ($rec_count =~ /500$/i) {print STDERR " GATHE* $rec_count\r";}
+		if ($rec_count =~ /600$/i) {print STDERR " GATH*R $rec_count\r";}
+		if ($rec_count =~ /700$/i) {print STDERR " GAT*ER $rec_count\r";}
+		if ($rec_count =~ /800$/i) {print STDERR " GA*HER $rec_count\r";}
+		if ($rec_count =~ /900$/i) {print STDERR " G*THER $rec_count\r";}
+		if ($rec_count =~ /000$/i) {print STDERR " *ATHER $rec_count\r";}
+		if ($rec_count =~ /000$/i) {print "        |$rec_count|$TOTAL_LEADS|$TOTAL_CUSTOM|         |$lead_id|\n";}
 		}
 	$rec_count++;
 	}
