@@ -20,6 +20,7 @@
 # 210827-0930 - Added PJSIP compatibility
 # 220310-1136 - Fix for issue dealing with bad carrier 'P-Asserted-Identity' input
 # 251008-2114 - Added code for recording_dtmf_detection and recording_dtmf_muting
+# 251203-2218 - Added server_live_partitions inserts/updates
 #
 
 # constants
@@ -1758,6 +1759,7 @@ sub get_disk_space
 	@serverDISK = `$dfbin -B 1048576 -x nfs -x cifs -x sshfs -x ftpfs`;
 	$ct=0;
 	$ct_PCT=0;
+	$part_order=0;
 	$disk_usage = '';
 	foreach(@serverDISK)
 		{
@@ -1767,6 +1769,23 @@ sub get_disk_space
 			$usage = $1;
 			$usage =~ s/\%//gi;
 			$disk_usage .= "$ct_PCT $usage|";
+			$partition_path = $serverDISK[$ct];
+			$partition_path =~ s/.*\% |\r|\n|\t//gi;
+			$partition_filesystem = $serverDISK[$ct];
+			$partition_filesystem =~ s/ .*|\r|\n|\t//gi;
+			$disk_data = $serverDISK[$ct];
+			$disk_data =~ s/\s+/ /gi;
+			@disk_dataARY = split(/ /,$disk_data);
+			$mb_used =		$disk_dataARY[2];
+			$mb_available = $disk_dataARY[3];
+
+			# insert/update server_live_drives record in the DB
+			$stmtA = "INSERT INTO server_live_partitions set server_ip='$server_ip',partition_path='$partition_path',update_time=NOW(),partition_order='$part_order',partition_filesystem='$partition_filesystem',use_pct='$usage',mb_used='$mb_used',mb_available='$mb_available' ON DUPLICATE KEY UPDATE update_time=NOW(),partition_order='$part_order',partition_filesystem='$partition_filesystem',use_pct='$usage',mb_used='$mb_used',mb_available='$mb_available';";
+			if($DB){print STDERR "\n$stmtA\n";}
+			$dbhA->do($stmtA);
+			$affected_rows = $dbhA->do($stmtA);
+
+			$part_order++;
 			}
 		$ct++;
 		}

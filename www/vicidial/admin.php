@@ -6299,12 +6299,13 @@ if ($SSscript_remove_js > 0)
 # 251019-2024 - Added Recording DTMF Muting
 # 251025-1924 - Added CRASHED DATABASE TABLES display page, db_crashed_tables_check system settings option
 # 251112-2201 - Added alter_cid_name DID option
+# 251204-0757 - Added SERVER DRIVE PARTITIONS display
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-948a';
-$build = '251112-2201';
+$admin_version = '2.14-949a';
+$build = '251204-0757';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -7381,6 +7382,7 @@ if ($ADD==999987)		{$hh='reports';		echo _QXZ("PHONE CODES");}
 if ($ADD==999986)		{$hh='reports';		echo _QXZ("POSTAL CODES");}
 if ($ADD==999985)		{$hh='reports';		echo _QXZ("POSTAL CODES CITIES");}
 if ($ADD==999984)		{$hh='reports';		echo _QXZ("CRASHED DATABASE TABLES");}
+if ($ADD==999983)		{$hh='reports';		echo _QXZ("SERVER DRIVE PARTITIONS");}
 
 echo "</title>\n";
 
@@ -41826,6 +41828,23 @@ if ($ADD==311111111111)
 		$live_agents = $row[0];
 		if ($DB > 0) {echo "|$live_agents|$stmt|\n";}
 
+		# look for server_live_partitions entries for this server
+		$stmt="SELECT partition_order,use_pct from server_live_partitions where server_ip='$server_ip' and (mb_used + mb_available) >= 1000;";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		if ($DB) {echo "$stmt\n";}
+		$parts_to_print = mysqli_num_rows($rslt);
+		$pp=0;
+		$temp_disk_usage='';
+		while ($parts_to_print > $pp)
+			{
+			$row=mysqli_fetch_row($rslt);
+			$part_order = ($row[0] + 1);
+			$temp_disk_usage .= "$part_order $row[1]|";
+			$pp++;
+			}
+		if (strlen($temp_disk_usage) > 3)
+			{$disk_usage = $temp_disk_usage;}
+
 		$cpu = (100 - $cpu_idle_percent);
 		$disk_usage = preg_replace("/ /"," - ",$disk_usage);
 		$disk_usage = preg_replace("/\|/","% &nbsp; &nbsp; ",$disk_usage);
@@ -41843,7 +41862,15 @@ if ($ADD==311111111111)
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("System Load").": </td><td align=left>$sysload - $cpu% &nbsp; $NWB#servers-sysload$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Live Channels").": </td><td align=left>$channels_total &nbsp; &nbsp; "._QXZ("Agents").": $live_agents &nbsp; $NWB#servers-channels_total$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Disk Usage").": </td><td align=left><font size=0>$disk_usage</font> &nbsp; $NWB#servers-disk_usage$NWE</td></tr>\n";
+
+		if ($pp > 0)
+			{
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href=\"$PHP_SELF?ADD=999983&server_ip=$server_ip&server_id=$server_id\">"._QXZ("Disk Usage")."</a>: </td><td align=left><font size=0>$disk_usage</font> &nbsp; $NWB#servers-disk_usage$NWE</td></tr>\n";
+			}
+		else
+			{
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Disk Usage").": </td><td align=left><font size=0>$disk_usage</font> &nbsp; $NWB#servers-disk_usage$NWE</td></tr>\n";
+			}
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("System Uptime").": </td><td align=left>$system_uptime &nbsp; $NWB#servers-system_uptime$NWE</td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
@@ -50166,6 +50193,22 @@ if ($ADD==999999)
 		$row=mysqli_fetch_row($rslt);
 		$inventory_report_count =	$row[0];
 
+		# look for server_live_partitions entries for this server
+		$stmt="SELECT partition_order,use_pct from server_live_partitions where server_ip='$server_ip[$i]' and (mb_used + mb_available) >= 1000;";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		if ($DB) {echo "$stmt\n";}
+		$parts_to_print = mysqli_num_rows($rslt);
+		$pp=0;
+		$temp_disk_usage='';
+		while ($parts_to_print > $pp)
+			{
+			$row=mysqli_fetch_row($rslt);
+			$part_order = ($row[0] + 1);
+			$temp_disk_usage .= "$part_order $row[1]|";
+			$pp++;
+			}
+		if (strlen($temp_disk_usage) > 3)
+			{$disk_usage[$i] = $temp_disk_usage;}
 		?>
 
 		</head><BODY BGCOLOR=WHITE>
@@ -52308,6 +52351,23 @@ if ($ADD==999991)
 			$o=0;
 			while ($servers_to_print > $o)
 				{
+				# look for server_live_partitions entries for this server
+				$stmt="SELECT partition_order,use_pct from server_live_partitions where server_ip='$server_ip[$o]' and (mb_used + mb_available) >= 1000;";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				if ($DB) {echo "$stmt\n";}
+				$parts_to_print = mysqli_num_rows($rslt);
+				$pp=0;
+				$temp_disk_usage='';
+				while ($parts_to_print > $pp)
+					{
+					$row=mysqli_fetch_row($rslt);
+					$part_order = ($row[0] + 1);
+					$temp_disk_usage .= "$part_order $row[1]|";
+					$pp++;
+					}
+				if (strlen($temp_disk_usage) > 3)
+					{$disk_usage[$o] = $temp_disk_usage;}
+
 				$cpu = (100 - $cpu_idle_percent[$o]);
 				$disk = '';
 				$disk_ary = explode('|',$disk_usage[$o]);
@@ -52331,7 +52391,14 @@ if ($ADD==999991)
 				echo "<TD>$active[$o]</TD>\n";
 				echo "<TD>$sysload[$o] - $cpu%</TD>\n";
 				echo "<TD>$channels_total[$o]</TD>\n";
-				echo "<TD ALIGN=RIGHT>$disk</TD>\n";
+				if ($pp > 0)
+					{
+					echo "<TD ALIGN=RIGHT><a href=\"$PHP_SELF?ADD=999983&server_ip=$server_ip[$o]&server_id=$server_id[$o]\">$disk</a></TD>\n";
+					}
+				else
+					{
+					echo "<TD ALIGN=RIGHT>$disk</TD>\n";
+					}
 
 				$s_time='&nbsp;';
 				$s_ver='&nbsp;';
@@ -52827,7 +52894,7 @@ if ($ADD==999984)
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$crashes_to_print = mysqli_num_rows($rslt);
 	$o=0;   $o_ct=1;
-	$row_color=0;   $last_country='';
+	$row_color=0;
 	while ($crashes_to_print > $o) 
 		{
 		$rowx=mysqli_fetch_row($rslt);
@@ -52868,6 +52935,77 @@ if ($ADD==999984)
 	echo "</TABLE></center></form>\n";
 	}
 ##### END CRASHED DATABASE TABLES display page #####
+
+
+######################
+# ADD=999983 - SERVER DRIVE PARTITIONS display page
+######################
+if ($ADD==999983)
+	{
+	$partition_rows='';
+	# look for server_live_partitions entries for this server
+	$stmt="SELECT update_time,server_ip,partition_order,partition_path,partition_filesystem,use_pct,mb_used,mb_available FROM server_live_partitions where server_ip='$server_ip' order by update_time desc, partition_order;";
+	$rslt=mysql_to_mysqli($stmt, $link);
+	if ($DB) {echo "$stmt\n";}
+	$parts_to_print = mysqli_num_rows($rslt);
+	$o=0;   $o_ct=1;
+	$row_color=0;
+	$temp_disk_usage='';
+	while ($parts_to_print > $o)
+		{
+		$rowx=mysqli_fetch_row($rslt);
+		$tot_mb = ($rowx[6] + $rowx[7]);
+		if ($tot_mb >= 1000)
+			{
+			$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';
+			$fontcolor='color="#000000"';
+			} 
+		else
+			{
+			$bgcolor='bgcolor="#E6E6E6"';
+			$fontcolor='color="#666666"';
+			}
+		$partition_rows .= "<tr $bgcolor>\n";
+		$partition_rows .= "<td align=center><font size=1 $fontcolor>$o_ct</font></td>\n";
+		$partition_rows .= "<td align=left><font size=2 $fontcolor>$rowx[3]</font></td>\n";
+		$partition_rows .= "<td align=left><font size=2 $fontcolor>$rowx[4]</font></td>\n";
+		$partition_rows .= "<td align=right><font size=2 $fontcolor>$rowx[5]%</font></td>\n";
+		$partition_rows .= "<td align=right><font size=2 $fontcolor>$tot_mb</font></td>\n";
+		$partition_rows .= "<td align=right><font size=2 $fontcolor>$rowx[6]</font></td>\n";
+		$partition_rows .= "<td align=right><font size=2 $fontcolor>$rowx[7]</font></td>\n";
+		$partition_rows .= "<td align=center><font size=1 $fontcolor>$rowx[0]</font></td>\n";
+		$partition_rows .= "</tr>\n";
+		$o++;   $o_ct++;
+		}
+
+	if ($o > 0)
+		{
+		echo "<CENTER><BR><FONT FACE=\"ARIAL,HELVETICA\" SIZE=3><B>"._QXZ("This server's %1s partitions are",0,'',$o).":</B></FONT><BR></CENTER>\n";
+		}
+	else
+		{
+		echo "<CENTER><BR><BR><FONT FACE=\"ARIAL,HELVETICA\" SIZE=2>"._QXZ("This server has no partition details currently")."</FONT><BR><BR></CENTER>\n";
+		}
+
+	echo "<TABLE><TR><TD>\n";
+	echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
+
+	echo "<br>"._QXZ("SERVER DRIVE PARTITIONS FOR SERVER").": <a href=\"$PHP_SELF?ADD=311111111111&server_id=$server_id\">$server_id - $server_ip</a>\n";
+	echo "<center><TABLE width=$section_width cellspacing=3>\n";
+	echo "<tr bgcolor=#$SSstd_row3_background>\n";
+	echo "<td align=center><B> # </B></td>\n";
+	echo "<td align=center><B>"._QXZ("Path")."</B></td>\n";
+	echo "<td align=center><B>"._QXZ("Filesystem")."</B></td>\n";
+	echo "<td align=center><B>"._QXZ("Use %")."</B></td>\n";
+	echo "<td align=center><B>"._QXZ("Total Size(MB)")."</B></td>\n";
+	echo "<td align=center><B>"._QXZ("Used (MB)")."</B></td>\n";
+	echo "<td align=center><B>"._QXZ("Available (MB)")."</B></td>\n";
+	echo "<td align=center><B><font size=1>"._QXZ("Update Time")."</font></B></td>\n";
+	echo "</tr>\n";
+	echo "$partition_rows";
+	echo "</TABLE></center></form>\n";
+	}
+##### END SERVER DRIVE PARTITIONS display page #####
 
 
 echo "</TD></TR></TABLE></center>\n";
