@@ -25,7 +25,7 @@
 # It is good practice to keep this program running by placing the associated 
 # KEEPALIVE script running every minute to ensure this program is always running
 #
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG:
 # 50125-1201 - Changed dial timeout to 120 seconds from 180 seconds
@@ -161,9 +161,10 @@
 # 240225-0951 - Added AUTONEXT hopper_hold_inserts option
 # 240731-0814 - Fix for 2nd DB connection timing out while running
 # 240917-1719 - Change multiple after-call processing to only run for active_voicemail_server
+# 251205-1455 - Added SHARED_ADAPT_PERCENTMAX option
 #
 
-$build='240917-1719';
+$build='251205-1455';
 $script='AST_VDauto_dial';
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -582,7 +583,7 @@ while($one_day_interval > 0)
 		$agent_shared_campaigns_ct=0;
 		if ($allow_shared_dial > 0) 
 			{
-			$stmtA = "SELECT campaign_id,drop_inbound_group,shared_dial_rank,auto_dial_level FROM vicidial_campaigns where active='Y' and dial_method IN('SHARED_RATIO','SHARED_ADAPT_HARD_LIMIT','SHARED_ADAPT_TAPERED','SHARED_ADAPT_AVERAGE') order by shared_dial_rank desc;";
+			$stmtA = "SELECT campaign_id,drop_inbound_group,shared_dial_rank,auto_dial_level FROM vicidial_campaigns where active='Y' and dial_method IN('SHARED_RATIO','SHARED_ADAPT_HARD_LIMIT','SHARED_ADAPT_TAPERED','SHARED_ADAPT_AVERAGE','SHARED_ADAPT_PERCENTMAX') order by shared_dial_rank desc;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;

@@ -225,10 +225,11 @@
 # 250516-1047 - Changed ksort to uksort so array sorting by key is alphabetic, case-INsensitive
 # 250620-1007 - Added apinewlead_url requests for add_lead when new leads are inserted
 # 250720-1841 - Added hopper_bulk_insert function
+# 251205-1456 - Added ADAPT_PERCENTMAX dial_method
 #
 
 $version = '2.14-202';
-$build = '250720-1841';
+$build = '251205-1456';
 $php_script='non_agent_api.php';
 $api_url_log = 0;
 $camp_lead_order_random=1;
@@ -8918,7 +8919,7 @@ if ($function == 'update_campaign')
 						}
 					if (strlen($dial_method) > 0)
 						{
-						if (preg_match("/^MANUAL$|^RATIO$|^INBOUND_MAN$|^ADAPT_AVERAGE$|^ADAPT_HARD_LIMIT$|^ADAPT_TAPERED$/",$dial_method))
+						if (preg_match("/^MANUAL$|^RATIO$|^INBOUND_MAN$|^ADAPT_AVERAGE$|^ADAPT_HARD_LIMIT$|^ADAPT_TAPERED$|^ADAPT_PERCENTMAX$|^SHARED_RATIO$|^SHARED_ADAPT_AVERAGE$|^SHARED_ADAPT_HARD_LIMIT$|^SHARED_ADAPT_TAPERED$|^SHARED_ADAPT_PERCENTMAX$/",$dial_method))
 							{$dialmethodSQL = " ,dial_method='$dial_method'";}
 						else
 							{

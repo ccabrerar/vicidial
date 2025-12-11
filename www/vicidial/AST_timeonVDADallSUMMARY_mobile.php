@@ -1,7 +1,7 @@
 <?php 
 # AST_timeonVDADallSUMMARY_mobile.php
 # 
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>, Joe Johnson <freewermadmin@gmail.com>    LICENSE: AGPLv2
 #
 # Mobile version of summary report for all campaigns live real-time stats for the VICIDIAL Auto-Dialer all servers
 #
@@ -13,6 +13,7 @@
 # 200414-2000 - Minor display modifications, auto-selecting refresh rate onload
 # 220301-2036 - Added allow_web_debug system setting
 # 240801-1130 - Code updates for PHP8 compatibility
+# 251205-1932 - Added ADAPT_PERCENTMAX
 #
 
 require("dbconnect_mysqli.php");
@@ -211,7 +212,7 @@ $campaign_typeSQL='';
 if (count($types)<2) 
 	{
 	$types = preg_replace('/[^- \_0-9\p{L}]/u', '', $types);
-	if ($types == 'AUTO-DIAL ONLY')			{$campaign_typeSQL="and dial_method IN('RATIO','ADAPT_HARD_LIMIT','ADAPT_TAPERED','ADAPT_AVERAGE')";} 
+	if ($types == 'AUTO-DIAL ONLY')			{$campaign_typeSQL="and dial_method IN('RATIO','ADAPT_HARD_LIMIT','ADAPT_TAPERED','ADAPT_AVERAGE','ADAPT_PERCENTMAX','SHARED_RATIO','SHARED_ADAPT_HARD_LIMIT','SHARED_ADAPT_TAPERED','SHARED_ADAPT_AVERAGE','SHARED_ADAPT_PERCENTMAX')";} 
 	if ($types == 'MANUAL ONLY')			{$campaign_typeSQL="and dial_method IN('MANUAL','INBOUND_MAN')";} 
 	if ($types == 'INBOUND ONLY')			{$campaign_typeSQL="and campaign_allow_inbound='Y'";} 
 	}
@@ -221,7 +222,7 @@ else
 		{
 		$types = preg_replace('/[^- \_0-9\p{L}]/u', '', $types);
 		$campaign_typeSQL='and (';
-		if (in_array('AUTO-DIAL ONLY', $types)) {$campaign_typeSQL="dial_method IN('RATIO','ADAPT_HARD_LIMIT','ADAPT_TAPERED','ADAPT_AVERAGE') or ";} #  unset($types['AUTO-DIAL ONLY']);
+		if (in_array('AUTO-DIAL ONLY', $types)) {$campaign_typeSQL="dial_method IN('RATIO','ADAPT_HARD_LIMIT','ADAPT_TAPERED','ADAPT_AVERAGE','ADAPT_PERCENTMAX','SHARED_RATIO','SHARED_ADAPT_HARD_LIMIT','SHARED_ADAPT_TAPERED','SHARED_ADAPT_AVERAGE','SHARED_ADAPT_PERCENTMAX') or ";} #  unset($types['AUTO-DIAL ONLY']);
 		if (in_array('MANUAL ONLY', $types)) {$campaign_typeSQL="dial_method IN('MANUAL','INBOUND_MAN') or ";} #  unset($types['MANUAL ONLY']);
 		if (in_array('INBOUND ONLY', $types)) {$campaign_typeSQL="campaign_allow_inbound='Y' or ";} #  unset($types['INBOUND ONLY']);
 		$campaign_typeSQL='campaign_id in ('.implode("', '", $types).')';

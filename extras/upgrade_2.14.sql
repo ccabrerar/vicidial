@@ -1368,7 +1368,7 @@ UPDATE system_settings SET db_schema_version='1613',db_schema_update_date=NOW() 
 ALTER TABLE system_settings ADD allow_shared_dial ENUM('0','1','2','3','4','5','6') default '0';
 
 ALTER TABLE vicidial_campaigns ADD shared_dial_rank TINYINT(3) default '99';
-ALTER TABLE vicidial_campaigns MODIFY dial_method ENUM('MANUAL','RATIO','ADAPT_HARD_LIMIT','ADAPT_TAPERED','ADAPT_AVERAGE','INBOUND_MAN','SHARED_RATIO','SHARED_ADAPT_HARD_LIMIT','SHARED_ADAPT_TAPERED','SHARED_ADAPT_AVERAGE') default 'MANUAL';
+ALTER TABLE vicidial_campaigns MODIFY dial_method ENUM('MANUAL','RATIO','ADAPT_HARD_LIMIT','ADAPT_TAPERED','ADAPT_AVERAGE','ADAPT_PERCENTMAX','INBOUND_MAN','SHARED_RATIO','SHARED_ADAPT_HARD_LIMIT','SHARED_ADAPT_TAPERED','SHARED_ADAPT_AVERAGE','SHARED_ADAPT_PERCENTMAX') default 'MANUAL';
 
 ALTER TABLE vicidial_live_agents ADD dial_campaign_id VARCHAR(8) default '';
 
@@ -3044,3 +3044,9 @@ UPDATE system_settings SET db_schema_version='1733',db_schema_update_date=NOW() 
 ALTER TABLE vicidial_inbound_dids ADD alter_cid_name VARCHAR(40) default 'DISABLED';
 
 UPDATE system_settings SET db_schema_version='1734',db_schema_update_date=NOW() where db_schema_version < 1734;
+
+ALTER TABLE vicidial_campaigns MODIFY dial_method ENUM('MANUAL','RATIO','ADAPT_HARD_LIMIT','ADAPT_TAPERED','ADAPT_AVERAGE','ADAPT_PERCENTMAX','INBOUND_MAN','SHARED_RATIO','SHARED_ADAPT_HARD_LIMIT','SHARED_ADAPT_TAPERED','SHARED_ADAPT_AVERAGE','SHARED_ADAPT_PERCENTMAX') default 'MANUAL';
+
+ALTER TABLE vicidial_campaigns ADD adaptive_percentmax_percentage TINYINT(2) UNSIGNED default '50';
+
+UPDATE system_settings SET db_schema_version='1735',db_schema_update_date=NOW() where db_schema_version < 1735;

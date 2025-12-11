@@ -58,13 +58,15 @@
 # 210615-1032 - Default security fixes, CVE-2021-28854
 # 220921-1204 - Added more failed login logging in user_authorization function
 # 230518-1111 - Added in-group and campaign custom fields 1-5, for script/webform/dispo-call-url use
+# 251205-1742 - Fix for undefined variable issue
 #
-
+if (!isset($mel)) {$mel=0;}
 # $mysql_queries = 28
 
 ##### BEGIN validate user login credentials, check for failed lock out #####
 function user_authorization($user,$pass,$user_option,$user_update,$bcrypt,$return_hash,$api_call,$source)
 	{
+	global $mel;
 	require("dbconnect_mysqli.php");
 
 	#############################################
@@ -344,6 +346,7 @@ function user_authorization($user,$pass,$user_option,$user_update,$bcrypt,$retur
 ##### BEGIN custom_list_fields_values - gather values for display of custom list fields for a lead #####
 function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_id,$did_id,$did_extension,$did_pattern,$did_description,$dialed_number,$dialed_label,$only_field,$source_field,$source_field_value)
 	{
+	global $mel;
 	$STARTtime = date("U");
 	$TODAY = date("Y-m-d");
 	$NOW_TIME = date("Y-m-d H:i:s");
@@ -1582,6 +1585,7 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 
 function lookup_gmt($phone_code,$USarea,$state,$LOCAL_GMT_OFF_STD,$Shour,$Smin,$Ssec,$Smon,$Smday,$Syear,$postalgmt,$postal_code)
 	{
+	global $mel;	
 	require("dbconnect_mysqli.php");
 
 	$postalgmt_found=0;
@@ -2343,6 +2347,7 @@ function lookup_gmt($phone_code,$USarea,$state,$LOCAL_GMT_OFF_STD,$Shour,$Smin,$
 ##### DETERMINE IF LEAD IS DIALABLE #####
 function dialable_gmt($DB,$link,$local_call_time,$gmt_offset,$state)
 	{				
+	global $mel;
 	require("dbconnect_mysqli.php");
 	$dialable=0;
 
@@ -2709,6 +2714,7 @@ function dialable_gmt($DB,$link,$local_call_time,$gmt_offset,$state)
 ##### AJAX process logging #####
 function vicidial_ajax_log($NOW_TIME,$startMS,$link,$ACTION,$php_script,$user,$stage,$lead_id,$session_name,$stmt)
 	{
+	global $mel;
 	$endMS = microtime();
 	$startMSary = explode(" ",$startMS);
 	$endMSary = explode(" ",$endMS);
@@ -2741,6 +2747,7 @@ function vicidial_ajax_log($NOW_TIME,$startMS,$link,$ACTION,$php_script,$user,$s
 ##### MySQL Error Logging #####
 function mysql_error_logging($NOW_TIME,$link,$mel,$stmt,$query_id,$user,$server_ip,$session_name,$one_mysql_log)
 	{
+	global $mel;
 	$NOW_TIME = date("Y-m-d H:i:s");
 	#	mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00001',$user,$server_ip,$session_name,$one_mysql_log);
 	$errno='';   $error='';

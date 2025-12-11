@@ -824,7 +824,7 @@ closer_campaigns TEXT,
 use_internal_dnc ENUM('Y','N','AREACODE') default 'N',
 allcalls_delay SMALLINT(3) UNSIGNED default '0',
 omit_phone_code ENUM('Y','N') default 'N',
-dial_method ENUM('MANUAL','RATIO','ADAPT_HARD_LIMIT','ADAPT_TAPERED','ADAPT_AVERAGE','INBOUND_MAN','SHARED_RATIO','SHARED_ADAPT_HARD_LIMIT','SHARED_ADAPT_TAPERED','SHARED_ADAPT_AVERAGE') default 'MANUAL',
+dial_method ENUM('MANUAL','RATIO','ADAPT_HARD_LIMIT','ADAPT_TAPERED','ADAPT_AVERAGE','ADAPT_PERCENTMAX','INBOUND_MAN','SHARED_RATIO','SHARED_ADAPT_HARD_LIMIT','SHARED_ADAPT_TAPERED','SHARED_ADAPT_AVERAGE','SHARED_ADAPT_PERCENTMAX') default 'MANUAL',
 available_only_ratio_tally ENUM('Y','N') default 'N',
 adaptive_dropped_percentage VARCHAR(4) default '3',
 adaptive_maximum_level VARCHAR(6) default '3.0',
@@ -1143,7 +1143,8 @@ parallel_rec_cm_filename VARCHAR(50) default '',
 parallel_rec_fr_filename VARCHAR(50) default '',
 recording_dtmf_muting SMALLINT(3) UNSIGNED default '0',
 stereo_recording_agent ENUM('NEVER','ONDEMAND','ALLCALLS','ALLFORCE') default 'ALLFORCE',
-call_count_limit_restrict VARCHAR(30) default 'DISABLED'
+call_count_limit_restrict VARCHAR(30) default 'DISABLED',
+adaptive_percentmax_percentage TINYINT(2) UNSIGNED default '50';
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_lists (
@@ -5875,4 +5876,4 @@ INSERT INTO `wallboard_reports` VALUES ('AGENTS_AND_QUEUES','Agents and Queues',
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1734',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1735',db_schema_update_date=NOW(),reload_timestamp=NOW();

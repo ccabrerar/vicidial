@@ -894,6 +894,8 @@ OTHER CHANGES:
 	for level 9 users if crashed tables are found. Enabled by default, 
 	configurable in the System Settings.
 
+255. Added ADAPT_PERCENTMAX Dial Method campaign option.
+
 
 
 

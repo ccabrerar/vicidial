@@ -63,9 +63,10 @@
 # 240219-1514 - Added vicidial_live_inbound_agents.daily_limit parameter
 # 250131-1624 - Modifications to fix cached hour counts for realtime report
 # 250218-1613 - Modified master loop to use microseconds instead of a counter to execute drop/dial level/shared dialing functions
+# 251205-0949 - Added adaptive_percentmax_percentage option and ADAPT_PERCENTMAX dial_method, fix for dropped cached counts
 #
 
-$build='250218-1613';
+$build='251205-0949';
 # constants
 $DB=0;  # Debug flag, set to 0 for no debug messages, On an active system this will generate lots of lines of output per minute
 $US='__';
@@ -491,6 +492,7 @@ while ($master_loop < $CLIloops)
 	@adaptive_latest_server_time=@MT;
 	@adaptive_intensity=@MT;
 	@adaptive_dl_diff_target=@MT;
+	@adaptive_percentmax_percentage=@MT;
 	@campaign_changedate=@MT;
 	@campaign_stats_refresh=@MT;
 	@campaign_allow_inbound=@MT;
@@ -503,11 +505,11 @@ while ($master_loop < $CLIloops)
 
 	if ($CLIcampaign)
 		{
-		$stmtA = "SELECT campaign_id,lead_order,hopper_level,auto_dial_level,local_call_time,lead_filter_id,use_internal_dnc,dial_method,available_only_ratio_tally,adaptive_dropped_percentage,adaptive_maximum_level,adaptive_latest_server_time,adaptive_intensity,adaptive_dl_diff_target,UNIX_TIMESTAMP(campaign_changedate),campaign_stats_refresh,campaign_allow_inbound,drop_rate_group,UNIX_TIMESTAMP(campaign_calldate),realtime_agent_time_stats,available_only_tally_threshold,available_only_tally_threshold_agents,dial_level_threshold,dial_level_threshold_agents,ofcom_uk_drop_calc,drop_call_seconds,drop_action,drop_inbound_group,incall_tally_threshold_seconds from vicidial_campaigns where campaign_id='$CLIcampaign'";
+		$stmtA = "SELECT campaign_id,lead_order,hopper_level,auto_dial_level,local_call_time,lead_filter_id,use_internal_dnc,dial_method,available_only_ratio_tally,adaptive_dropped_percentage,adaptive_maximum_level,adaptive_latest_server_time,adaptive_intensity,adaptive_dl_diff_target,UNIX_TIMESTAMP(campaign_changedate),campaign_stats_refresh,campaign_allow_inbound,drop_rate_group,UNIX_TIMESTAMP(campaign_calldate),realtime_agent_time_stats,available_only_tally_threshold,available_only_tally_threshold_agents,dial_level_threshold,dial_level_threshold_agents,ofcom_uk_drop_calc,drop_call_seconds,drop_action,drop_inbound_group,incall_tally_threshold_seconds,adaptive_percentmax_percentage from vicidial_campaigns where campaign_id='$CLIcampaign'";
 		}
 	else
 		{
-		$stmtA = "SELECT campaign_id,lead_order,hopper_level,auto_dial_level,local_call_time,lead_filter_id,use_internal_dnc,dial_method,available_only_ratio_tally,adaptive_dropped_percentage,adaptive_maximum_level,adaptive_latest_server_time,adaptive_intensity,adaptive_dl_diff_target,UNIX_TIMESTAMP(campaign_changedate),campaign_stats_refresh,campaign_allow_inbound,drop_rate_group,UNIX_TIMESTAMP(campaign_calldate),realtime_agent_time_stats,available_only_tally_threshold,available_only_tally_threshold_agents,dial_level_threshold,dial_level_threshold_agents,ofcom_uk_drop_calc,drop_call_seconds,drop_action,drop_inbound_group,incall_tally_threshold_seconds from vicidial_campaigns where ( (active='Y') or (campaign_stats_refresh='Y') )";
+		$stmtA = "SELECT campaign_id,lead_order,hopper_level,auto_dial_level,local_call_time,lead_filter_id,use_internal_dnc,dial_method,available_only_ratio_tally,adaptive_dropped_percentage,adaptive_maximum_level,adaptive_latest_server_time,adaptive_intensity,adaptive_dl_diff_target,UNIX_TIMESTAMP(campaign_changedate),campaign_stats_refresh,campaign_allow_inbound,drop_rate_group,UNIX_TIMESTAMP(campaign_calldate),realtime_agent_time_stats,available_only_tally_threshold,available_only_tally_threshold_agents,dial_level_threshold,dial_level_threshold_agents,ofcom_uk_drop_calc,drop_call_seconds,drop_action,drop_inbound_group,incall_tally_threshold_seconds,adaptive_percentmax_percentage from vicidial_campaigns where ( (active='Y') or (campaign_stats_refresh='Y') )";
 		}
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -548,6 +550,7 @@ while ($master_loop < $CLIloops)
 		$drop_action[$rec_count] =					$aryA[26];
 		$drop_inbound_group[$rec_count] =			$aryA[27];
 		$incall_tally_threshold_seconds[$rec_count] =	$aryA[28];
+		$adaptive_percentmax_percentage[$rec_count] =	$aryA[29];
 
 		$rec_count++;
 		}
@@ -2777,7 +2780,7 @@ sub shared_agent_process
 		$camp_SHARED_SQL='';
 		$drop_SHARED_SQL='';
 		# Get list of active SHARED_ campaigns
-		$stmtA = "SELECT campaign_id,drop_inbound_group from vicidial_campaigns where active='Y' and dial_method IN('SHARED_RATIO','SHARED_ADAPT_HARD_LIMIT','SHARED_ADAPT_TAPERED','SHARED_ADAPT_AVERAGE');";
+		$stmtA = "SELECT campaign_id,drop_inbound_group from vicidial_campaigns where active='Y' and dial_method IN('SHARED_RATIO','SHARED_ADAPT_HARD_LIMIT','SHARED_ADAPT_TAPERED','SHARED_ADAPT_AVERAGE','SHARED_ADAPT_PERCENTMAX');";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;
@@ -3864,6 +3867,7 @@ sub calculate_drops
 								{
 								@aryA = $sthA->fetchrow_array;
 								$VL_this_hour_calls =	$aryA[0];
+								$VCSdrops_today[$i] = ($VCSdrops_today[$i] + $VL_this_hour_calls);
 								}
 							$sthA->finish();
 							if ($DBX) {print "VCHC CACHED HOUR QUERY: |$sthArows|$VL_this_hour_calls|$stmtA|\n";}
@@ -6901,7 +6905,7 @@ sub calculate_dial_level
 		$differential_onemin[$i] =		$stat_differential[$i];
 		}
 
-	if ( ($dial_method[$i] =~ /ADAPT_HARD_LIMIT|ADAPT_AVERAGE|ADAPT_TAPERED/) || ($force_test>0) )
+	if ( ($dial_method[$i] =~ /ADAPT_HARD_LIMIT|ADAPT_AVERAGE|ADAPT_TAPERED|ADAPT_PERCENTMAX/) || ($force_test>0) )
 		{
 		# Calculate the optimal dial_level differential for the past minute
 		$differential_target[$i] = ($differential_onemin[$i] + $adaptive_dl_diff_target[$i]);
@@ -6955,6 +6959,7 @@ sub calculate_dial_level
 		$adaptive_string .= "   SERVER TIME:   $current_hourmin\n";
 		$adaptive_string .= "   LATE TARGET:   $last_target_hour_final[$i]     ($tapered_hours_left[$i] left|$tapered_rate[$i])\n";
 		$adaptive_string .= "   INTENSITY:     $adaptive_intensity[$i]\n";
+		$adaptive_string .= "   PCT-MAX PCT:   $adaptive_percentmax_percentage[$i]\n";
 		$adaptive_string .= "   DLDIFF TARGET: $adaptive_dl_diff_target[$i]\n";
 		$adaptive_string .= "CURRENT STATS-\n";
 		$adaptive_string .= "   AVG AGENTS:      $agents_average_onemin[$i]\n";
@@ -7012,6 +7017,27 @@ sub calculate_dial_level
 					{
 					$intensity_dial_level[$i] = ($intensity_dial_level[$i] * $tapered_rate[$i]);
 					$adaptive_string .= "      DROP RATE OVER LIMIT FOR TODAY! TAPERING DIAL LEVEL TO: $intensity_dial_level[$i]\n";
+					}
+				}
+			if ($dial_method[$i] =~ /ADAPT_PERCENTMAX/) 
+				{
+				$temp_new_dial_level = sprintf("%.3f", ( ($adaptive_percentmax_percentage[$i] * $adaptive_maximum_level[$i]) / 100));
+				if ($temp_new_dial_level > $intensity_dial_level[$i])
+					{
+					$adaptive_string .= "      DROP RATE OVER LAST HOUR LIMIT FOR TODAY! PERCENT-MAX DIAL LEVEL GREATER THAN CURRENT DIAL LEVEL, DOING NOTHING ($temp_new_dial_level > $intensity_dial_level[$i]  |$adaptive_percentmax_percentage[$i]|$adaptive_maximum_level[$i])\n";
+					}
+				else
+					{
+					if ($temp_new_dial_level < 1) 
+						{
+						$intensity_dial_level[$i] = "1.0";
+						$adaptive_string .= "      DROP RATE OVER LAST HOUR LIMIT FOR TODAY! PERCENT-MAX LESS THAN 1, DIAL LEVEL TO: 1.0 ($temp_new_dial_level|$adaptive_percentmax_percentage[$i]|$adaptive_maximum_level[$i])\n";
+						}
+					else
+						{
+						$adaptive_string .= "      DROP RATE OVER LIMIT FOR TODAY! PERCENT-MAX DIAL LEVEL TO: $temp_new_dial_level ($adaptive_percentmax_percentage[$i]|$adaptive_maximum_level[$i]) from $intensity_dial_level[$i]\n";
+						$intensity_dial_level[$i] = $temp_new_dial_level;
+						}
 					}
 				}
 			}
