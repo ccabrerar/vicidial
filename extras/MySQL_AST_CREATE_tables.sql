@@ -1144,7 +1144,7 @@ parallel_rec_fr_filename VARCHAR(50) default '',
 recording_dtmf_muting SMALLINT(3) UNSIGNED default '0',
 stereo_recording_agent ENUM('NEVER','ONDEMAND','ALLCALLS','ALLFORCE') default 'ALLFORCE',
 call_count_limit_restrict VARCHAR(30) default 'DISABLED',
-adaptive_percentmax_percentage TINYINT(2) UNSIGNED default '50';
+adaptive_percentmax_percentage TINYINT(2) UNSIGNED default '50'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_lists (
