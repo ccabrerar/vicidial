@@ -3050,3 +3050,7 @@ ALTER TABLE vicidial_campaigns MODIFY dial_method ENUM('MANUAL','RATIO','ADAPT_H
 ALTER TABLE vicidial_campaigns ADD adaptive_percentmax_percentage TINYINT(2) UNSIGNED default '50';
 
 UPDATE system_settings SET db_schema_version='1735',db_schema_update_date=NOW() where db_schema_version < 1735;
+
+INSERT IGNORE INTO vicidial_status_categories (vsc_id,vsc_name,vsc_description) values('QC','QC-specific status','Quality control specific statuses');
+
+UPDATE system_settings SET db_schema_version='1736',db_schema_update_date=NOW() where db_schema_version < 1736;

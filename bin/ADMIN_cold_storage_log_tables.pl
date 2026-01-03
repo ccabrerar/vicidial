@@ -16,12 +16,13 @@
 # Please schedule to run this script at a time when the reports will not be 
 # used for several hours.
 #
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 240704-1815 - First version
 # 240705-0954 - Added --query-count-test flag option
 # 240711-1938 - Added --no-optimize-tables flag option
+# 251230-0853 - Added --vl-year flag option, to look in year-based vicidial_log_archive_YYYY tables
 #
 
 $DB=0;
@@ -39,6 +40,9 @@ $api_log_only=0;
 $api_archive_only=0;
 $url_log_only=0;
 $url_log_archive=0;
+$vl_year_tables=0;
+$vl_year_A='';
+$vl_year_B='';
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -58,6 +62,7 @@ if (length($ARGV[0])>1)
 		print "  [--calc-test] = date calculation test only\n";
 		print "  [--query-count-test] = run archive counts test only\n";
 		print "  [--no-optimize-tables] = do not optimize the archive tables after deletion of rows \n";
+		print "  [--vl-year] = look in year-based vicidial_log_archive_YYYY tables \n";
 		print "  [--test] = test\n";
 		print "  [--debug] = debug output for some options\n";
 		print "  [--debugX] = extra debug output for some options\n";
@@ -99,6 +104,11 @@ if (length($ARGV[0])>1)
 			{
 			$NO_OPTIMIZE_TABLES=1;
 			print "\n-----DO NOT OPTIMIZE ARCHIVE TABLES AFTER ROWS DELETION: $NO_OPTIMIZE_TABLES-----\n\n";
+			}
+		if ($args =~ /--vl-year/i)
+			{
+			$vl_year_tables=1;
+			print "\n-----Use year-based vicidial_log_archive_YYYY tables: $vl_year_tables-----\n\n";
 			}
 		if ($args =~ /--days=/i)
 			{
@@ -158,6 +168,13 @@ if (!$Q) {print "vicidial_log_archive, vicidial_log_extended_archive and\n";}
 if (!$Q) {print "other _archive tables and move them to the cold-storage log database, then\n";}
 if (!$Q) {print "delete the records in original tables older than X days\n";}
 if (!$Q) {print "$CLIdays days ( $del_time [$del_date]|$del_epoch ) from current date \n\n";}
+
+if ($vl_year_tables > 0) 
+	{
+	$vl_year_A=$RMyear;
+	$vl_year_B=($RMyear - 1);
+	if (!$Q) {print "vicidial_log_archive_YYYY year-tables enabled: |$vl_year_A|$vl_year_B|$vl_year_tables| \n\n";}
+	}
 
 # default path to astguiclient configuration file:
 $PATHconf =		'/etc/astguiclient.conf';
@@ -416,9 +433,181 @@ if (!$T)
 	##### END call_log_archive cold-storage processing #####
 
 
+	if ($vl_year_tables > 0) 
+		{
+		$vl_year_A=$RMyear;
+		$vl_year_B=($RMyear - 1);
+		if (!$Q) {print "vicidial_log_archive_YYYY year-tables enabled: |$vl_year_A|$vl_year_B|$vl_year_tables| \n\n";}
+
+		##### BEGIN vicidial_log_archive cold-storage processing #####
+		$vicidial_log_archive_count=0;
+		$vicidial_log_archive = "vicidial_log_archive_$vl_year_B";
+		$stmtA = "SELECT count(*) from $vicidial_log_archive WHERE call_date < '$del_time';";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$vicidial_log_archive_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		$call_log_CS_count=0;
+		$stmtB = "SELECT count(*) from vicidial_log_archive;";
+		$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
+		$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
+		$sthBrows=$sthB->rows;
+		if ($sthBrows > 0)
+			{
+			@aryB = $sthB->fetchrow_array;
+			$call_log_CS_count =	$aryB[0];
+			}
+		$sthB->finish();
+
+		if (!$Q) {print "\nAnalyzing $vicidial_log_archive table...  ($vicidial_log_archive_count|$call_log_CS_count)\n";}
+
+		if ( ($vicidial_log_archive_count < 1) || ($QUERY_COUNT_TEST > 0) )
+			{
+			if (!$Q) {print "$vicidial_log_archive has no records to send to cold-storage, skipping this table...\n";}
+			}
+		else
+			{
+			$sthAfields=0;
+			$stmtA = "SELECT * from $vicidial_log_archive limit 1;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			if ($sthArows > 0)
+				{
+				$sthAfields = $sthA->{'NUM_OF_FIELDS'};
+				}
+			$sthA->finish();
+
+			$sthBfields=0;
+			if ($call_log_CS_count > 0) 
+				{
+				$stmtB = "SELECT * from vicidial_log_archive limit 1;";
+				$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
+				$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
+				$sthBrows=$sthB->rows;
+				if ($sthBrows > 0)
+					{
+					$sthBfields = $sthB->{'NUM_OF_FIELDS'};
+					}
+				$sthB->finish();
+				}
+			else
+				{
+				if($DBX){print STDERR "DEBUG: empty cold-storage table, no field count check\n";}
+				$sthBfields = $sthAfields;
+				}
+
+			if ( ($sthAfields < 1) || ($sthBfields ne $sthAfields) )
+				{
+				if (!$Q) {print "$vicidial_log_archive cold-storage fields mismatch error($sthBfields|$sthAfields), skipping this table...\n";}
+				}
+			else
+				{
+				if (!$Q) {print "$vicidial_log_archive cold-storage fields count match($sthBfields|$sthAfields), starting cold-storage move...\n";}
+
+				$stmtA = "SELECT * FROM $vicidial_log_archive WHERE call_date < '$del_time';";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArows=$sthA->rows;
+				$Arow_ct=0;
+				$Irows_ct=0;
+				$Btotal_inserted=0;
+				$insert_stmt='INSERT IGNORE INTO vicidial_log_archive VALUES';
+				while ($sthArows > $Arow_ct)
+					{
+					@aryA = $sthA->fetchrow_array;
+					$Afield_ct=0;
+					while ($sthAfields > $Afield_ct)
+						{
+						if ($Afield_ct < 1) {$insert_stmt .= '(';}
+						else{$insert_stmt .= ',';}
+						$tmp_field = $aryA[$Afield_ct];
+						$tmp_field =~ s/\"//gi;
+						$insert_stmt .= "\"$tmp_field\"";
+						$Afield_ct++;
+						}
+					$insert_stmt .= '),';
+					$Irows_ct++;
+
+					if ($Irows_ct > 99) 
+						{
+						chop($insert_stmt);
+						$stmtB = "$insert_stmt;";
+						$affected_rowsB = $dbhB->do($stmtB);
+						$Btotal_inserted = ($Btotal_inserted + $affected_rowsB);
+						if($DBX){print STDERR "\n|$affected_rowsB|$stmtB|\n";}
+						$Irows_ct=0;
+						$insert_stmt='INSERT IGNORE INTO vicidial_log_archive VALUES';
+						}
+					$Arow_ct++;
+					if ($Q < 1) 
+						{
+						if ($Arow_ct =~ /10000$/i) {print STDERR "0     $Arow_ct\r";}
+						if ($Arow_ct =~ /20000$/i) {print STDERR "+     $Arow_ct\r";}
+						if ($Arow_ct =~ /30000$/i) {print STDERR "|     $Arow_ct\r";}
+						if ($Arow_ct =~ /40000$/i) {print STDERR "\\     $Arow_ct\r";}
+						if ($Arow_ct =~ /50000$/i) {print STDERR "-     $Arow_ct\r";}
+						if ($Arow_ct =~ /60000$/i) {print STDERR "/     $Arow_ct\r";}
+						if ($Arow_ct =~ /70000$/i) {print STDERR "|     $Arow_ct\r";}
+						if ($Arow_ct =~ /80000$/i) {print STDERR "+     $Arow_ct\r";}
+						if ($Arow_ct =~ /90000$/i) {print STDERR "0     $Arow_ct\r";}
+						if ($Arow_ct =~ /00000$/i) {print "$Arow_ct|$Btotal_inserted|\n";}
+						}
+					}
+				$sthA->finish();
+
+				if ($Irows_ct > 0)
+					{
+					chop($insert_stmt);
+					$stmtB = "$insert_stmt;";
+					$affected_rowsB = $dbhB->do($stmtB);
+					$Btotal_inserted = ($Btotal_inserted + $affected_rowsB);
+					if($DBX){print STDERR "\n|$affected_rowsB|LAST INSERT|$stmtB|\n";}
+					}
+				if (!$Q) {print "$vicidial_log_archive cold-storage inserts completed ($Btotal_inserted / $sthArows)\n";}
+
+				if ($Btotal_inserted ne $sthArows) 
+					{
+					print "ERROR! records inserted is les than records to be inserted ($Btotal_inserted / $sthArows)\n";
+					exit;
+					}
+				else
+					{
+					if (!$Q) {print "$vicidial_log_archive $sthArows deletions starting...\n";}
+
+					$stmtA = "DELETE FROM $vicidial_log_archive WHERE call_date < '$del_time';";
+					$affected_rowsA = $dbhA->do($stmtA);
+					if (!$Q) {print STDERR "records deleted from $vicidial_log_archive: $affected_rowsA|$stmtA|\n";}
+
+					if ($NO_OPTIMIZE_TABLES < 1) 
+						{
+						$stmtA = "OPTIMIZE TABLE $vicidial_log_archive;";
+						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+						if (!$Q) {print STDERR "$vicidial_log_archive table optimized, cold-storage process is complete for this table!\n";}
+						}
+					else
+						{
+						if (!$Q) {print STDERR "$vicidial_log_archive table skip optimize\n";}
+						}
+					}
+				}
+			}
+		##### END vicidial_log_archive cold-storage processing #####
+		}
+
 	##### BEGIN vicidial_log_archive cold-storage processing #####
 	$vicidial_log_archive_count=0;
-	$stmtA = "SELECT count(*) from vicidial_log_archive WHERE call_date < '$del_time';";
+	$vicidial_log_archive = "vicidial_log_archive";
+	if ($vl_year_tables > 0)
+		{$vicidial_log_archive = "vicidial_log_archive_$vl_year_A";}
+	$stmtA = "SELECT count(*) from $vicidial_log_archive WHERE call_date < '$del_time';";
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 	$sthArows=$sthA->rows;
@@ -441,16 +630,16 @@ if (!$T)
 		}
 	$sthB->finish();
 
-	if (!$Q) {print "\nAnalyzing vicidial_log_archive table...  ($vicidial_log_archive_count|$call_log_CS_count)\n";}
+	if (!$Q) {print "\nAnalyzing $vicidial_log_archive table...  ($vicidial_log_archive_count|$call_log_CS_count)\n";}
 
 	if ( ($vicidial_log_archive_count < 1) || ($QUERY_COUNT_TEST > 0) )
 		{
-		if (!$Q) {print "vicidial_log_archive has no records to send to cold-storage, skipping this table...\n";}
+		if (!$Q) {print "$vicidial_log_archive has no records to send to cold-storage, skipping this table...\n";}
 		}
 	else
 		{
 		$sthAfields=0;
-		$stmtA = "SELECT * from vicidial_log_archive limit 1;";
+		$stmtA = "SELECT * from $vicidial_log_archive limit 1;";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;
@@ -481,13 +670,13 @@ if (!$T)
 
 		if ( ($sthAfields < 1) || ($sthBfields ne $sthAfields) )
 			{
-			if (!$Q) {print "vicidial_log_archive cold-storage fields mismatch error($sthBfields|$sthAfields), skipping this table...\n";}
+			if (!$Q) {print "$vicidial_log_archive cold-storage fields mismatch error($sthBfields|$sthAfields), skipping this table...\n";}
 			}
 		else
 			{
-			if (!$Q) {print "vicidial_log_archive cold-storage fields count match($sthBfields|$sthAfields), starting cold-storage move...\n";}
+			if (!$Q) {print "$vicidial_log_archive cold-storage fields count match($sthBfields|$sthAfields), starting cold-storage move...\n";}
 
-			$stmtA = "SELECT * FROM vicidial_log_archive WHERE call_date < '$del_time';";
+			$stmtA = "SELECT * FROM $vicidial_log_archive WHERE call_date < '$del_time';";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
@@ -546,7 +735,7 @@ if (!$T)
 				$Btotal_inserted = ($Btotal_inserted + $affected_rowsB);
 				if($DBX){print STDERR "\n|$affected_rowsB|LAST INSERT|$stmtB|\n";}
 				}
-			if (!$Q) {print "vicidial_log_archive cold-storage inserts completed ($Btotal_inserted / $sthArows)\n";}
+			if (!$Q) {print "$vicidial_log_archive cold-storage inserts completed ($Btotal_inserted / $sthArows)\n";}
 
 			if ($Btotal_inserted ne $sthArows) 
 				{
@@ -555,22 +744,22 @@ if (!$T)
 				}
 			else
 				{
-				if (!$Q) {print "vicidial_log_archive $sthArows deletions starting...\n";}
+				if (!$Q) {print "$vicidial_log_archive $sthArows deletions starting...\n";}
 
-				$stmtA = "DELETE FROM vicidial_log_archive WHERE call_date < '$del_time';";
+				$stmtA = "DELETE FROM $vicidial_log_archive WHERE call_date < '$del_time';";
 				$affected_rowsA = $dbhA->do($stmtA);
-				if (!$Q) {print STDERR "records deleted from vicidial_log_archive: $affected_rowsA|$stmtA|\n";}
+				if (!$Q) {print STDERR "records deleted from $vicidial_log_archive: $affected_rowsA|$stmtA|\n";}
 
 				if ($NO_OPTIMIZE_TABLES < 1) 
 					{
-					$stmtA = "OPTIMIZE TABLE vicidial_log_archive;";
+					$stmtA = "OPTIMIZE TABLE $vicidial_log_archive;";
 					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-					if (!$Q) {print STDERR "vicidial_log_archive table optimized, cold-storage process is complete for this table!\n";}
+					if (!$Q) {print STDERR "$vicidial_log_archive table optimized, cold-storage process is complete for this table!\n";}
 					}
 				else
 					{
-					if (!$Q) {print STDERR "vicidial_log_archive table skip optimize\n";}
+					if (!$Q) {print STDERR "$vicidial_log_archive table skip optimize\n";}
 					}
 				}
 			}

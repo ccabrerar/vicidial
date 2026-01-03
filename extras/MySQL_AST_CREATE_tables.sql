@@ -5507,7 +5507,8 @@ INSERT INTO vicidial_lists SET list_id='998',list_name='Default Manual list',cam
 
 INSERT INTO system_settings (version,install_date,first_login_trigger) values('2.14b0.5', CURDATE(), 'Y');
 
-INSERT INTO vicidial_status_categories (vsc_id,vsc_name) values('UNDEFINED','Default Category');
+INSERT INTO vicidial_status_categories (vsc_id,vsc_name,vsc_description) values('UNDEFINED','Default Category','');
+INSERT INTO vicidial_status_categories (vsc_id,vsc_name,vsc_description) values('QC','QC-specific status','Quality control specific statuses');
 
 INSERT INTO vicidial_user_groups SET user_group='ADMIN',group_name='VICIDIAL ADMINISTRATORS',allowed_campaigns=' -ALL-CAMPAIGNS- - -',agent_status_viewable_groups=' --ALL-GROUPS-- ',admin_viewable_groups=' ---ALL--- ',admin_viewable_call_times=' ---ALL--- ',agent_allowed_chat_groups=' --ALL-GROUPS-- ';
 
@@ -5876,4 +5877,4 @@ INSERT INTO `wallboard_reports` VALUES ('AGENTS_AND_QUEUES','Agents and Queues',
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1735',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1736',db_schema_update_date=NOW(),reload_timestamp=NOW();
