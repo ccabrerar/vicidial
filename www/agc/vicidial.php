@@ -1,7 +1,7 @@
 <?php
 # vicidial.php - the web-based version of the astVICIDIAL client application
 # 
-# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # Other scripts that this application depends on:
 # - vdc_db_query.php: Updates information in the database
@@ -753,10 +753,11 @@
 # 251002-1353 - Added call_count_limit_restrict campaign option
 # 251020-0849 - Added code for recording_dtmf_muting, fix for Stereo Call Recording
 # 251124-0936 - Added lead status display for callbacks list
+# 260106-1418 - Fixes for PHP8
 #
 
-$version = '2.14-719c';
-$build = '251124-0936';
+$version = '2.14-720c';
+$build = '260106-1418';
 $php_script = 'vicidial.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=108;
@@ -861,6 +862,8 @@ $JS_date = $StarTtimE."000"; # milliseconds since epoch or "16,3,31,8,56,1,0"   
 $webphone_width = 460;
 $webphone_height = 500;
 $VUselected_language = '';
+$session_name='';
+$server_ip='';
 
 $random = (rand(1000000, 9999999) + 10000000);
 
@@ -1840,7 +1843,7 @@ else
 				{
 				$subhead_font = "style=\"font-family:HELVETICA;font-size:14;color:BLACK;font-weight:bold;\"";
 
-				echo "<img src=\"images/2FA_icon.png\" alt=\"Two-Factor-Authentication\" width=42 height=42> <FONT FACE=\"ARIAL,HELVETICA\" SIZE=4><B> "._QXZ("Two-Factor-Authentication"),"</B></FONT><BR><CENTER>\n";
+				echo "<img src=\"images/2FA_icon.png\" alt=\"Two-Factor-Authentication\" width=42 height=42> <FONT FACE=\"ARIAL,HELVETICA\" SIZE=4><B> "._QXZ("Two-Factor-Authentication")."</B></FONT><BR><CENTER>\n";
 
 				if ( ($SStwo_factor_auth_hours < 1) or ($SStwo_factor_container == '') or ($SStwo_factor_container == '---DISABLED---') )
 					{
@@ -1862,10 +1865,16 @@ else
 				# first character and last 6 characters
 				$temp_emailARY = explode('@',$OBSCUREemail);
 				$field_temp_val = $temp_emailARY[0];
-				$OBSCUREemail = substr($field_temp_val,0,2) . str_repeat(".", (strlen($field_temp_val) - 2)) . '@' . $temp_emailARY[1];
+				if (strlen($field_temp_val) > 1)
+					{$OBSCUREemail = substr($field_temp_val,0,2) . str_repeat(".", (strlen($field_temp_val) - 2)) . '@' . $temp_emailARY[1];}
+				else
+					{$OBSCUREemail = '<'._QXZ("none").'>';}
 				# first 3 digits and last 2 digits
 				$field_temp_val = $OBSCUREmobile_number;
-				$OBSCUREmobile_number = substr($field_temp_val,0,3) . str_repeat("x", (strlen($field_temp_val) - 5)) . substr($field_temp_val,-2,2);
+				if (strlen($field_temp_val) > 1)
+					{$OBSCUREmobile_number = substr($field_temp_val,0,3) . str_repeat("x", (strlen($field_temp_val) - 5)) . substr($field_temp_val,-2,2);}
+				else
+					{$OBSCUREmobile_number = '<'._QXZ("none").'>';}
 
 				### BEGIN Gather 2FA settings container details ###
 				$valid_2FA_config=0;
@@ -1898,7 +1907,7 @@ else
 					$two_factor_settings = explode("\n",$TFAcontainer_entry);
 					$two_factor_settings_ct = count($two_factor_settings);
 					$tfal=0;
-					while ($two_factor_settings_ct >= $tfal)
+					while ($two_factor_settings_ct > $tfal)
 						{
 						if (preg_match("/^auth_code_expire_minutes=>/",$two_factor_settings[$tfal]))
 							{

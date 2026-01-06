@@ -1,7 +1,7 @@
 <?php
 # admin.php - VICIDIAL administration page
 #
-# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 # 
 
 $startMS = microtime();
@@ -6304,12 +6304,13 @@ if ($SSscript_remove_js > 0)
 # 251112-2201 - Added alter_cid_name DID option
 # 251204-0757 - Added SERVER DRIVE PARTITIONS display
 # 251211-1134 - Added ADAPT_PERCENTMAX dial_method and adaptive_percentmax_percentage campaign setting
+# 260106-1438 - Fixes for PHP8, 2026 date change
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-950a';
-$build = '251211-1134';
+$admin_version = '2.14-951a';
+$build = '260106-1438';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -6384,7 +6385,7 @@ if ($force_logout)
 		echo "<head>\n";
 		echo "<!-- Logout screen $PHP_SELF -->\n";
 		echo "<META NAME=\"ROBOTS\" CONTENT=\"NONE\">\n";
-		echo "<META NAME=\"COPYRIGHT\" CONTENT=\"&copy; 2025 ViciDial Group\">\n";
+		echo "<META NAME=\"COPYRIGHT\" CONTENT=\"&copy; 2026 ViciDial Group\">\n";
 		echo "<META NAME=\"AUTHOR\" CONTENT=\"ViciDial Group\">\n";
 		?>
 		<script type="text/javascript">
@@ -6925,7 +6926,7 @@ echo "<html>\n";
 echo "<head>\n";
 echo "<!-- VERSION: $admin_version   BUILD: $build   ADD: $ADD   PHP_SELF: $PHP_SELF-->\n";
 echo "<META NAME=\"ROBOTS\" CONTENT=\"NONE\">\n";
-echo "<META NAME=\"COPYRIGHT\" CONTENT=\"&copy; 2025 ViciDial Group\">\n";
+echo "<META NAME=\"COPYRIGHT\" CONTENT=\"&copy; 2026 ViciDial Group\">\n";
 echo "<META NAME=\"AUTHOR\" CONTENT=\"ViciDial Group\">\n";
 echo "<script language=\"JavaScript\" src=\"calendar_db.js\"></script>\n";
 echo "<script language=\"JavaScript\" src=\"help.js\"></script>\n";
@@ -50909,7 +50910,7 @@ if ($ADD==99999701)
 	{
 	$subhead_font = "style=\"font-family:HELVETICA;font-size:14;color:BLACK;font-weight:bold;\"";
 
-	echo "<img src=\"images/2FA_icon.png\" alt=\"Two-Factor-Authentication\" width=42 height=42> <FONT FACE=\"ARIAL,HELVETICA\" SIZE=4><B> "._QXZ("Two-Factor-Authentication"),"</B></FONT><BR><CENTER>\n";
+	echo "<img src=\"images/2FA_icon.png\" alt=\"Two-Factor-Authentication\" width=42 height=42> <FONT FACE=\"ARIAL,HELVETICA\" SIZE=4><B> "._QXZ("Two-Factor-Authentication")."</B></FONT><BR><CENTER>\n";
 
 	if ( ($SStwo_factor_auth_hours < 1) or ($SStwo_factor_container == '') or ($SStwo_factor_container == '---DISABLED---') )
 		{
@@ -50923,10 +50924,18 @@ if ($ADD==99999701)
 	# first character and last 6 characters
 	$temp_emailARY = explode('@',$OBSCUREemail);
 	$field_temp_val = $temp_emailARY[0];
-	$OBSCUREemail = substr($field_temp_val,0,2) . str_repeat(".", (strlen($field_temp_val) - 2)) . '@' . $temp_emailARY[1];
+	if (is_null($field_temp_val)) {$field_temp_val='';}
+	if (strlen($field_temp_val) > 1)
+		{$OBSCUREemail = substr($field_temp_val,0,2) . str_repeat(".", (strlen($field_temp_val) - 2)) . '@' . $temp_emailARY[1];}
+	else
+		{$OBSCUREemail = '<'._QXZ("none").'>';}
 	# first 3 digits and last 2 digits
 	$field_temp_val = $OBSCUREmobile_number;
-	$OBSCUREmobile_number = substr($field_temp_val,0,3) . str_repeat("x", (strlen($field_temp_val) - 5)) . substr($field_temp_val,-2,2);
+	if (is_null($field_temp_val)) {$field_temp_val='';}
+	if (strlen($field_temp_val) > 1)
+		{$OBSCUREmobile_number = substr($field_temp_val,0,3) . str_repeat("x", (strlen($field_temp_val) - 5)) . substr($field_temp_val,-2,2);}
+	else
+		{$OBSCUREmobile_number = '<'._QXZ("none").'>';}
 
 	### BEGIN Gather 2FA settings container details ###
 	$valid_2FA_config=0;
@@ -50959,7 +50968,7 @@ if ($ADD==99999701)
 		$two_factor_settings = explode("\n",$TFAcontainer_entry);
 		$two_factor_settings_ct = count($two_factor_settings);
 		$tfal=0;
-		while ($two_factor_settings_ct >= $tfal)
+		while ($two_factor_settings_ct > $tfal)
 			{
 			if (preg_match("/^auth_code_expire_minutes=>/",$two_factor_settings[$tfal]))
 				{
@@ -51052,6 +51061,8 @@ if ($ADD==99999701)
 		echo "<BR><b>"._QXZ("Two-Factor-Authentication is not properly configured on your system. Please contact your system administrator")." <BR><BR>$valid_2FA_config|$SStwo_factor_auth_hours|$SStwo_factor_container</b><BR>\n";
 		exit;
 		}
+	if (is_null($LOGemail)) {$LOGemail='';}
+	if (is_null($LOGmobile_number)) {$LOGmobile_number='';}
 	if ( (strlen($LOGemail) < 4) and (strlen($LOGmobile_number) < 2) )
 		{
 		echo _QXZ("Your User account is not configured for Two-Factor-Authentication. Please contact your system administrator. (no email or mobile number)").".\n";
@@ -51063,6 +51074,7 @@ if ($ADD==99999701)
 		{
 		$auth_fail=0;
 		echo "<br><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=3>";
+		if (is_null($rank)) {$rank='';}
 		if (strlen($rank) < 2)
 			{
 			echo _QXZ("Please go back and enter a valid authorization code")." |1|" . strlen($rank) . "|";   $auth_fail++;
@@ -51186,6 +51198,8 @@ if ($ADD==99999701)
 		### Send auth code by PHONE
 		if ($stage == 'PHONE')
 			{
+			if (is_null($ext_context)) {$ext_context='';}
+			if (is_null($phone_message_override)) {$phone_message_override='';}
 			$context_2FA = '2FA_say_auth_code';
 			if (strlen($phone_message_override) > 0) {$context_2FA = $phone_message_override;}
 			if (strlen($ext_context) < 1) {$ext_context='default';}
@@ -51558,7 +51572,7 @@ if ($ADD==999995)
 	echo "<br><B> "._QXZ("Welcome to ViciDial: copyright, trademark and license page")."</B><BR><BR>\n";
 	echo "<center><TABLE width=$section_width cellspacing=5 cellpadding=2>\n";
 
-	echo "<tr bgcolor=#$SSstd_row4_background><td align=right valign=top><B><font size=3>"._QXZ("Copyright").": </B></td><td align=left> &nbsp; "._QXZ("The ViciDial Contact Center Suite is maintained by the")." <a href=\"http://www.vicidial.com/\" target=\"_blank\">ViciDial Group</a>, &copy; 2025</td></tr>\n";
+	echo "<tr bgcolor=#$SSstd_row4_background><td align=right valign=top><B><font size=3>"._QXZ("Copyright").": </B></td><td align=left> &nbsp; "._QXZ("The ViciDial Contact Center Suite is maintained by the")." <a href=\"http://www.vicidial.com/\" target=\"_blank\">ViciDial Group</a>, &copy; 2026</td></tr>\n";
 
 	echo "<tr bgcolor=#$SSstd_row4_background><td align=right valign=top><B><font size=3>"._QXZ("Trademark").": </B></td><td align=left> &nbsp; \"VICIDIAL\" "._QXZ("is a registered trademark of the")." <a href=\"http://www.vicidial.com/\" target=\"_blank\">ViciDial Group</a>. Here is our <a href=\"http://www.vicidial.com/?page_id=262\" target=\"_blank\">"._QXZ("trademark use policy")."</a></td></tr>\n";
 
@@ -53037,7 +53051,7 @@ echo "<FONT STYLE=\"font-family:HELVETICA;font-size:9;color:white;\"><br><br><!-
 echo _QXZ("VERSION").": $admin_version<BR>";
 echo _QXZ("BUILD").": $build\n";
 if (!preg_match("/_BUILD_/",$SShosted_settings))
-	{echo "<BR><a href=\"$PHP_SELF?ADD=999995\"><font color=white>&copy; 2025 ViciDial Group</font></a><BR><img src=\"images/pixel.gif\">";}
+	{echo "<BR><a href=\"$PHP_SELF?ADD=999995\"><font color=white>&copy; 2026 ViciDial Group</font></a><BR><img src=\"images/pixel.gif\">";}
 echo "</FONT>\n";
 ?>
 
