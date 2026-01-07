@@ -31147,7 +31147,7 @@ if ($ADD==34)
 				{
 				echo "<tr bgcolor=#$SSalt_row1_background><td align=center colspan=2><b>"._QXZ("Auto-dialing has been disabled on this system")."</b></td></tr>\n";
 				}
-			echo "<tr bgcolor=#$SSalt_row1_background><td align=right>"._QXZ("Dial Method").": </td><td align=left><select size=1 name=dial_method><option value='MANUAL'>"._QXZ("MANUAL")."</option><option value='RATIO'>"._QXZ("RATIO")."</option><option value='ADAPT_HARD_LIMIT'>"._QXZ("ADAPT_HARD_LIMIT")."</option><option value='ADAPT_TAPERED'>"._QXZ("ADAPT_TAPERED")."</option><option value='ADAPT_AVERAGE'>"._QXZ("ADAPT_AVERAGE")."</option><option value='INBOUND_MAN'>"._QXZ("INBOUND_MAN")."</option><option value='$dial_method' SELECTED>"._QXZ("$dial_method")."</option></select>$NWB#campaigns-dial_method$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSalt_row1_background><td align=right>"._QXZ("Dial Method").": </td><td align=left><select size=1 name=dial_method><option value='MANUAL'>"._QXZ("MANUAL")."</option><option value='RATIO'>"._QXZ("RATIO")."</option><option value='ADAPT_HARD_LIMIT'>"._QXZ("ADAPT_HARD_LIMIT")."</option><option value='ADAPT_TAPERED'>"._QXZ("ADAPT_TAPERED")."</option><option value='ADAPT_AVERAGE'>"._QXZ("ADAPT_AVERAGE")."</option><option value='ADAPT_PERCENTMAX'>"._QXZ("ADAPT_PERCENTMAX")."</option><option value='INBOUND_MAN'>"._QXZ("INBOUND_MAN")."</option><option value='$dial_method' SELECTED>"._QXZ("$dial_method")."</option></select>$NWB#campaigns-dial_method$NWE</td></tr>\n";
 
 			echo "<tr bgcolor=#$SSalt_row1_background><td align=right>"._QXZ("Auto Dial Level").": </td><td align=left><select size=1 name=auto_dial_level><option selected>$auto_dial_level</option><option>0</option>\n";
 			$adl=0;
