@@ -13,14 +13,17 @@
 # Flag Options:
 # 1- minimum number of digits allowed in postal code, default 5
 # 2- DID prefix to filter by in searching for DIDs, default 999
+# 3- vicidial_list field to update(if call is tagged to a lead)
+# 4- value of field to update(if 3 is set above)
 #
 # example of what to put in the Custom Dialplan entry for a Call Menu:
 #exten => _XXXXX,1,AGI(cm_postal.agi,5---999)
 #
-# Copyright (C) 2016  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 160517-0236 - First build
+# 260107-2119 - Added vicidial_list record update with optional field variable update, if lead populated
 #
 
 $script = 'cm_postal.agi';
@@ -41,6 +44,10 @@ $CIDdate = "$mon$mday$hour$min$sec";
 $tsSQLdate = "$year$mon$mday$hour$min$sec";
 $SQLdate = "$year-$mon-$mday $hour:$min:$sec";
 $SQLdateBEGIN = $SQLdate;
+$lead_id=0;
+$vl_field='';
+$vl_value='';
+$vicidial_list_fields = '|vendor_lead_code|source_id|phone_code|title|first_name|middle_initial|last_name|address1|address2|address3|city|state|province|postal_code|country_code|alt_phone|email|security_phrase|comments|rank|owner|status|user|q01|q02|q03|q04|q05|q06|q07|q08|q09|q10|q11|q12|q13|q14|q15|q16|q17|q18|q19|q20|q21|q22|q23|q24|q25|q26|q27|q28|q29|q30|q31|q32|q33|q34|q35|q36|q37|q38|q39|q40|q41|q42|q43|q44|q45|q46|q47|q48|q49|q50|q51|q52|q53|q54|q55|q56|q57|q58|q59|q60|q61|q62|q63|q64|q65|q66|q67|q68|q69|q70|q71|q72|q73|q74|q75|q76|q77|q78|q79|q80|q81|q82|q83|q84|q85|q86|q87|q88|q89|q90|q91|q92|q93|q94|q95|q96|q97|q98|q99|';
 
 # default path to astguiclient configuration file:
 $PATHconf =		'/etc/astguiclient.conf';
@@ -126,6 +133,8 @@ if (length($ARGV[0])>1)
 
 	$postal_length = 	$ARGV_vars[0];
 	$did_prefix = 		$ARGV_vars[1];
+	$vl_field = 		$ARGV_vars[2];
+	$vl_value = 		$ARGV_vars[3];
 	}
 
 if (length($postal_length) < 1)
@@ -156,6 +165,21 @@ while(<STDIN>)
 	$callerid =~ s/\'|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
 	$calleridname =~ s/\'|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
 	$extension =~ s/\'|\"|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
+
+	if ($calleridname =~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^Y\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^M\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^DC\d\d\d\d\d\dW\d\d\d\d\d\d\d\d\d\dW/)
+		{
+		$dialer_id = $calleridname;
+		if ($calleridname =~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^Y\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^M\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/)
+			{
+			$lead_id = substr($calleridname, 10, 10);
+			$lead_id = ($lead_id + 0);
+			}
+		if ($calleridname =~ /^DC\d\d\d\d\d\dW\d\d\d\d\d\d\d\d\d\dW/)
+			{
+			$lead_id = substr($calleridname, 9, 10);
+			$lead_id = ($lead_id + 0);
+			}
+		}
 
 	if ( ($callerid =~ /\".*\"/) && ( (!$calleridname) or ($calleridname =~ /unknown/) ) )
 		{
@@ -226,6 +250,17 @@ if ($g < 1)
 	exit;
 	}
 
+### update vicidial_list record if lead is tagged for this call
+$vl_field_updateSQL='';
+if ($lead_id > 0) 
+	{
+	if ( (length($vl_field)>2) && ($vicidial_list_fields =~ /\|$vl_field\|/) )
+		{$vl_field_updateSQL = ",$vl_field='$vl_value'";}
+	$stmtA = "UPDATE vicidial_list SET postal_code='$extension',state='$state'$vl_field_updateSQL where lead_id='$lead_id';";
+		if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+	$affected_rowsG = $dbhA->do($stmtA);
+	if ($AGILOG) {$agi_string = "--    vicidial_list UPDATE: |$affected_rowsG|$stmtA|";   &agi_output;}
+	}
 
 ### search for DID using found state and optional DID prefix ###
 $DID_prefixSQL='';
@@ -267,6 +302,8 @@ else
 	{
 	$AGI->exec("EXEC Set(_state=$state)");
 	$AGI->exec("EXEC Set(_postal_code=$extension)");
+	if ( (length($vl_field)>2) && ($vicidial_list_fields =~ /\|$vl_field\|/) )
+		{$AGI->exec("EXEC Set(_$vl_field=$vl_value)");}
 
 	if ($AGILOG) {$agi_string = "entry found($state|$extension), exiting the cm_postal.agi app, transferring call to $new_did @ trunkinbound";   &agi_output;}
 	print "SET CONTEXT trunkinbound\n";

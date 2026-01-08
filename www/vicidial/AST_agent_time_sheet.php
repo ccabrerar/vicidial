@@ -626,6 +626,12 @@ $query_date_BEGIN_ary=explode(" ", $query_date_BEGIN);
 $end_date_END_ary=explode(" ", $end_date_END);
 $SQday_ARY =	explode('-',$query_date_BEGIN_ary[0]);
 $EQday_ARY =	explode('-',$end_date_END_ary[0]);
+$SQday_ARY[0] = intval($SQday_ARY[0]);
+$SQday_ARY[1] = intval($SQday_ARY[1]);
+$SQday_ARY[2] = intval($SQday_ARY[2]);
+$EQday_ARY[0] = intval($EQday_ARY[0]);
+$EQday_ARY[1] = intval($EQday_ARY[1]);
+$EQday_ARY[2] = intval($EQday_ARY[2]);
 $SQepoch = mktime(0, 0, 0, $SQday_ARY[1], $SQday_ARY[2], $SQday_ARY[0]);
 $EQepoch = mktime(23, 59, 59, $EQday_ARY[1], $EQday_ARY[2], $EQday_ARY[0]);
 
