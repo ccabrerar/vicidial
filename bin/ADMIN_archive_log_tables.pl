@@ -76,6 +76,7 @@
 # 250914-1537 - Added archiving of recording_log_stereo and recording_log_parallel tables
 # 251011-2048 - Added archiving of recording_live_log table
 # 251024-1518 - Added --vicidial-dial-log-only flag
+# 260111-2138 - Added --agent-log-only flag
 #
 
 $CALC_TEST=0;
@@ -89,6 +90,8 @@ $api_log_only=0;
 $api_archive_only=0;
 $url_log_only=0;
 $url_log_archive=0;
+$agent_log_only=0;
+
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -127,6 +130,7 @@ if (length($ARGV[0])>1)
 		print "       [--vicidial-dial-log-days=XX] = REQUIRED FOR --vicidial-dial-log-only, number of days to archive vicidial_dial_log table only past\n";
 		print "  [--extended-log-only] = OPTIONAL, only archive vicidial_log_extended table then exit\n";
 		print "       [--extended-log-days=XX] = REQUIRED FOR --extended-log-only, number of days to archive vicidial_log_extended table only past\n";
+		print "  [--agent-log-only] = OPTIONAL, only archive vicidial_agent_log table then exit\n";
 		print "  [--api-archive-only] = OPTIONAL, only purge vicidial_api_log_archive table then exit\n";
 		print "       [--api-archive-days=XX] = REQUIRED FOR --api-archive-only, number of days to purge vicidial_api_log_archive table only past\n";
 		print "  [--url-log-only] = OPTIONAL, only purge vicidial_url_log table then exit\n";
@@ -384,6 +388,13 @@ if (length($ARGV[0])>1)
 				{$urldays=1825;}
 			if ($Q < 1) 
 				{print "\n----- URL LOG PURGE ACTIVE, DAYS: $urldays -----\n\n";}
+			}
+
+		if ($args =~ /--agent-log-only/i)
+			{
+			$agent_log_only++;
+			if ($Q < 1) 
+				{print "\n----- AGENT LOG ONLY: |$agent_log_only| -----\n\n";}
 			}
 
 		if ($args =~ /--cpd-log-purge-days=/i)
@@ -2101,8 +2112,6 @@ if (!$T)
 	########## END --vicidial-log-only flag processing ##########
 
 
-
-
 	########## BEGIN --vicidial-dial-log-only flag processing ##########
 	if ($vicidial_dial_log_only > 0)
 		{
@@ -2159,6 +2168,64 @@ if (!$T)
 		exit;
 		}
 	########## END --vicidial-dial-log-only flag processing ##########
+
+
+	########## BEGIN --agent-log-only flag processing ##########
+	if ($agent_log_only > 0)
+		{
+		##### vicidial_agent_log
+		$stmtA = "SELECT count(*) from vicidial_agent_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$vicidial_agent_log_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		$stmtA = "SELECT count(*) from vicidial_agent_log_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$vicidial_agent_log_archive_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		if (!$Q) {print "\nProcessing vicidial_agent_log table...  ($vicidial_agent_log_count|$vicidial_agent_log_archive_count)\n";}
+		$stmtA = "INSERT IGNORE INTO vicidial_agent_log_archive SELECT * from vicidial_agent_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows inserted into vicidial_agent_log_archive table \n";}
+		
+		$rv = $sthA->err();
+		if (!$rv) 
+			{
+			if ($wipe_all > 0)
+				{$stmtA = "DELETE FROM vicidial_agent_log;";}
+			else
+				{$stmtA = "DELETE FROM vicidial_agent_log WHERE event_time < '$del_time';";}
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			if (!$Q) {print "$sthArows rows deleted from vicidial_agent_log table \n";}
+
+			$stmtA = "optimize table vicidial_agent_log;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			}
+
+		if (!$Q) {print "\nProcessing vicidial_agent_log table finished:  ($sthArows rows deleted) \n";}
+		
+		exit;
+		}
+	########## END --agent-log-only flag processing ##########
 
 
 	if ($queue_log > 0)
