@@ -1173,7 +1173,8 @@ if ($OK_to_process)
 				$stmt="SELECT count(*) from vicidial_lists_fields where list_id='$list_id_override' and field_duplicate!='Y';";
 				if ($DB>0) {echo "$stmt\n";}
 				$rslt=mysql_to_mysqli($stmt, $link);
-				$fieldscount_to_print = mysqli_num_rows($rslt);
+				$row=mysqli_fetch_row($rslt);
+				$fieldscount_to_print = $row[0];
 
 				if ($fieldscount_to_print > 0) 
 					{
@@ -2564,7 +2565,8 @@ if (($leadfile) && ($LF_path))
 				$stmt="SELECT count(*) from vicidial_lists_fields where list_id='$list_id_override' and field_duplicate!='Y';";
 				if ($DB>0) {echo "$stmt\n";}
 				$rslt=mysql_to_mysqli($stmt, $link);
-				$fieldscount_to_print = mysqli_num_rows($rslt);
+				$row=mysqli_fetch_row($rslt);
+				$fieldscount_to_print = $row[0];
 				if ($fieldscount_to_print > 0) 
 					{
 					$rowx=mysqli_fetch_row($rslt);
