@@ -137,6 +137,9 @@ $browser_alert_sounds_list = 'bark_dog,beep_double,beep_five,beep_up,bell_double
 
 $HTMLcolors = 'IndianRed,CD5C5C|LightCoral,F08080|Salmon,FA8072|DarkSalmon,E9967A|LightSalmon,FFA07A|Crimson,DC143C|Red,FF0000|FireBrick,B22222|DarkRed,8B0000|Pink,FFC0CB|LightPink,FFB6C1|HotPink,FF69B4|DeepPink,FF1493|MediumVioletRed,C71585|PaleVioletRed,DB7093|LightSalmon,FFA07A|Coral,FF7F50|Tomato,FF6347|OrangeRed,FF4500|DarkOrange,FF8C00|Orange,FFA500|Gold,FFD700|Yellow,FFFF00|LightYellow,FFFFE0|LemonChiffon,FFFACD|LightGoldenrodYellow,FAFAD2|PapayaWhip,FFEFD5|Moccasin,FFE4B5|PeachPuff,FFDAB9|PaleGoldenrod,EEE8AA|Khaki,F0E68C|DarkKhaki,BDB76B|Lavender,E6E6FA|Thistle,D8BFD8|Plum,DDA0DD|Violet,EE82EE|Orchid,DA70D6|Fuchsia,FF00FF|Magenta,FF00FF|MediumOrchid,BA55D3|MediumPurple,9370DB|RebeccaPurple,663399|BlueViolet,8A2BE2|DarkViolet,9400D3|DarkOrchid,9932CC|DarkMagenta,8B008B|Purple,800080|Indigo,4B0082|SlateBlue,6A5ACD|DarkSlateBlue,483D8B|MediumSlateBlue,7B68EE|GreenYellow,ADFF2F|Chartreuse,7FFF00|LawnGreen,7CFC00|Lime,00FF00|LimeGreen,32CD32|PaleGreen,98FB98|LightGreen,90EE90|MediumSpringGreen,00FA9A|SpringGreen,00FF7F|MediumSeaGreen,3CB371|SeaGreen,2E8B57|ForestGreen,228B22|Green,008000|DarkGreen,006400|YellowGreen,9ACD32|OliveDrab,6B8E23|Olive,808000|DarkOliveGreen,556B2F|MediumAquamarine,66CDAA|DarkSeaGreen,8FBC8B|LightSeaGreen,20B2AA|DarkCyan,008B8B|Teal,008080|Aqua,00FFFF|Cyan,00FFFF|LightCyan,E0FFFF|PaleTurquoise,AFEEEE|Aquamarine,7FFFD4|Turquoise,40E0D0|MediumTurquoise,48D1CC|DarkTurquoise,00CED1|CadetBlue,5F9EA0|SteelBlue,4682B4|LightSteelBlue,B0C4DE|PowderBlue,B0E0E6|LightBlue,ADD8E6|SkyBlue,87CEEB|LightSkyBlue,87CEFA|DeepSkyBlue,00BFFF|DodgerBlue,1E90FF|CornflowerBlue,6495ED|MediumSlateBlue,7B68EE|RoyalBlue,4169E1|Blue,0000FF|MediumBlue,0000CD|DarkBlue,00008B|Navy,000080|MidnightBlue,191970|Cornsilk,FFF8DC|BlanchedAlmond,FFEBCD|Bisque,FFE4C4|NavajoWhite,FFDEAD|Wheat,F5DEB3|BurlyWood,DEB887|Tan,D2B48C|RosyBrown,BC8F8F|SandyBrown,F4A460|Goldenrod,DAA520|DarkGoldenrod,B8860B|Peru,CD853F|Chocolate,D2691E|SaddleBrown,8B4513|Sienna,A0522D|Brown,A52A2A|Maroon,800000|White,FFFFFF|Snow,FFFAFA|HoneyDew,F0FFF0|MintCream,F5FFFA|Azure,F0FFFF|AliceBlue,F0F8FF|GhostWhite,F8F8FF|WhiteSmoke,F5F5F5|SeaShell,FFF5EE|Beige,F5F5DC|OldLace,FDF5E6|FloralWhite,FFFAF0|Ivory,FFFFF0|AntiqueWhite,FAEBD7|Linen,FAF0E6|LavenderBlush,FFF0F5|MistyRose,FFE4E1|Gainsboro,DCDCDC|LightGray,D3D3D3|Silver,C0C0C0|DarkGray,A9A9A9|Gray,808080|DimGray,696969|LightSlateGray,778899|SlateGray,708090|DarkSlateGray,2F4F4F|Black,000000';
 
+$reserved_extensions = '8159,8160,8161,8162,8163,8164,8165,8166,8167,8168,8169,8300,8301,8302,8303,8304,8305,8306,8307,8308,8309,8310,8320,8352,8364,8365,8366,8367,8368,8369,8370,8371,8372,8373,8374,8375,8376,8377,8378,8379,8380,8381,8382,8383,8384,8385,8386,8387,8388,8389,8390,8391,8392,8393,8394,8395,8396,8397,8398,8399,8500,8501,138300,138301,138302,138303,138304,138305,138306,138307,138308,138309,138310,138311,138312,138313,138314,138315,138316,138317,138318,138319,138320,138321,138322,138323,138324,138325,138326,138327,138328,138329,138330,138331,138332,138333,138334,138335,138336,138337,138338,138339,138340,138341,138342,138343,138344,138345,138346,138347,138348,138349,138350,138351,138352,138353,138354,138355,138356,138357,138358,138359,138360,138361,138362,138363,138364,138365,138366,138367,138368,138369,138370,138371,138372,138373,138374,138375,138376,138377,138378,138379,138380,138381,138382,138383,138384,138385,138386,138387,138388,138389,138390,138391,138392,138393,138394,138395,138396,138397,138398,138399';
+$reserved_extensions = ",$reserved_extensions,";
+
 ### BEGIN housecleaning of old static report files, if not done before ###
 if (!file_exists('old_clear'))
 	{
@@ -6305,12 +6308,13 @@ if ($SSscript_remove_js > 0)
 # 251204-0757 - Added SERVER DRIVE PARTITIONS display
 # 251211-1134 - Added ADAPT_PERCENTMAX dial_method and adaptive_percentmax_percentage campaign setting
 # 260106-1438 - Fixes for PHP8, 2026 date change
+# 260126-1335 - Added check of reserved_extensions against dialplan numbers when creating/modifying phones
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-951a';
-$build = '260106-1438';
+$admin_version = '2.14-952a';
+$build = '260126-1335';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -41413,6 +41417,11 @@ if ($ADD==31111111111)
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$row=mysqli_fetch_row($rslt);
 
+		$tempdp = $row[1];
+		$reserved_dialplan_warning='';
+		if (preg_match("/,$tempdp,/",$reserved_extensions))
+			{$reserved_dialplan_warning="<font color=red><b> &nbsp; "._QXZ("WARNING: Reserved Dialplan Number")."!</b></font>\n";}
+
 		echo "<br>"._QXZ("MODIFY A PHONE RECORD").": $row[1]<form action=$PHP_SELF method=POST>\n";
 		echo "<input type=hidden name=ADD value=41111111111>\n";
 		echo "<input type=hidden name=old_extension value=\"$row[0]\">\n";
@@ -41422,7 +41431,7 @@ if ($ADD==31111111111)
 
 		echo "<center><TABLE width=$section_width cellspacing=3>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Phone Extension").": </td><td align=left><input type=text name=extension size=20 maxlength=100 value=\"$row[0]\">$NWB#phones-extension$NWE <i></i></td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Dial Plan Number").": </td><td align=left><input type=text name=dialplan_number size=15 maxlength=20 value=\"$row[1]\"> ("._QXZ("digits only").")$NWB#phones-dialplan_number$NWE</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Dial Plan Number").": </td><td align=left><input type=text name=dialplan_number size=15 maxlength=20 value=\"$row[1]\"> ("._QXZ("digits only").")$NWB#phones-dialplan_number$NWE$reserved_dialplan_warning</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Voicemail Box").": </td><td align=left><input type=text name=voicemail_id size=10 maxlength=10 value=\"$row[2]\"> ("._QXZ("digits only").")$NWB#phones-voicemail_id$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Outbound CallerID").": </td><td align=left><input type=text name=outbound_cid size=10 maxlength=20 value=\"$row[65]\"> ("._QXZ("digits only").")$NWB#phones-outbound_cid$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Outbound Alt CallerID").": </td><td align=left><input type=text name=outbound_alt_cid size=10 maxlength=20 value=\"$row[100]\"> <i>"._QXZ("optional")."</i> ("._QXZ("digits only").")$NWB#phones-outbound_alt_cid$NWE</td></tr>\n";
