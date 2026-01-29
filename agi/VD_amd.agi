@@ -25,7 +25,7 @@
 # exten => _91NXXNXXXXXX,n,Set(__AMDMINLEN=7)
 #		NOTE: the above variable setting will ensure that this script has run for a minimum of 7 seconds before ending and hanging up
 #
-# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 60206-1434 - first build
@@ -72,10 +72,11 @@
 # 240906-2228 - Added AMD minimum length handling to increase short call durations
 # 250924-2152 - Added code for deprecation of "Monitor" application after Asterisk 20
 # 251006-0903 - If recording_dtmf_muting enabled, force use of MixMonitor for recording
+# 260129-1443 - Added code to reinsert missing vicidial_auto_calls record
 #
 
 $script = 'VD_amd.agi';
-$build = '251006-0903';
+$build = '260129-1443';
 
 $A = 1;		# set to 1 for AMD output messages mode
 $AMD_LOG = 3;	# set to 1 for logfile and 2 forDB log, 3 for both
@@ -346,6 +347,55 @@ if ($sthArowsVAC > 0)
 	$VD_status =		$aryA[5];
 	$sthA->finish();
 	}
+else
+	{
+	if ($AGILOG) {$agi_string = "--    NO VDAC FOUND!!!!!: $callerid";   &agi_output;}
+
+	$stmtA = "SELECT cmd_line_k,entry_date,cmd_line_j FROM vicidial_manager where callerid='$callerid' and action='Originate' order by entry_date,cmd_line_k desc limit 1;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		if ($AGILOG) {$agi_string = "VDAC-data|$aryA[0]|$aryA[1]|$aryA[2]|";   &agi_output;}
+		$VDADnotes =			$aryA[0];
+		$VDADnotes =~ s/VDACnote: //gi;
+		@VDAC_ARY = split(/\|/,$VDADnotes);
+		$VD_campaign_id =		$VDAC_ARY[0];
+		$VDADlead_id =			$VDAC_ARY[1];
+		$VD_phone_code =		$VDAC_ARY[2];
+		$VD_phone_number =		$VDAC_ARY[3];
+		$VDADorigin	=			$VDAC_ARY[4];
+		$VDADcall_time =		$aryA[1];
+		$VDADalt_dial =			$VDAC_ARY[5];
+		$VDADqueue_priority =	$VDAC_ARY[6];
+		$VD_uniqueid =		$uniqueid;
+		$VD_server_ip =		$VARserver_ip;
+		$VD_status =		'LIVE';
+		$sthA->finish();
+		$sthArowsVAC=1;
+
+		if ( (length($CLIcampaign_id) > 1) && (length($VD_campaign_id) < 1) )
+			{$VD_campaign_id = $CLIcampaign_id;}
+		if ( (length($CLIphone_code) > 1) && (length($VD_phone_code) < 1) )
+			{$VD_phone_code = $CLIphone_code;}
+		if ( (length($CLIphone_number) > 1) && (length($VD_phone_number) < 1) )
+			{$VD_phone_number = $CLIphone_number;}
+		if (length($VD_phone_code) < 1) {$VD_phone_code=1;}
+		if (length($VDADorigin) < 1) {$VDADorigin='OUT';}
+		if (length($VDADqueue_priority) < 1) {$VDADqueue_priority=50;}
+
+		$stmtA = "INSERT INTO vicidial_auto_calls (server_ip,campaign_id,status,lead_id,uniqueid,callerid,channel,phone_code,phone_number,call_time,call_type,stage,queue_priority)  values('$VARserver_ip','$VD_campaign_id','LIVE','$VD_lead_id','$uniqueid','$callerid','$channel','$VD_phone_code','$VD_phone_number','$VDADcall_time','$VDADorigin','LIVE-0','$VDADqueue_priority')";
+		$affected_rows = $dbhA->do($stmtA);
+		if ($AGILOG) {$agi_string = "$affected_rows|VDAC-reinsert|$stmtA|";   &agi_output;}
+		}
+	else
+		{
+		if ($AGILOG) {$agi_string = "--    NO VDM FOUND!!!!!!!!!!: $callerid";   &agi_output;}
+		}
+	}
+
 if ( (length($CLIcampaign_id) > 1) && (length($VD_campaign_id) < 1) )
 	{$VD_campaign_id = $CLIcampaign_id;}
 if ( (length($CLIphone_code) > 1) && (length($VD_phone_code) < 1) )
