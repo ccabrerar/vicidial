@@ -3054,3 +3054,10 @@ UPDATE system_settings SET db_schema_version='1735',db_schema_update_date=NOW() 
 INSERT IGNORE INTO vicidial_status_categories (vsc_id,vsc_name,vsc_description) values('QC','QC-specific status','Quality control specific statuses');
 
 UPDATE system_settings SET db_schema_version='1736',db_schema_update_date=NOW() where db_schema_version < 1736;
+
+ALTER TABLE system_settings ADD xfer_min_container VARCHAR(40) default '';
+
+ALTER TABLE vicidial_inbound_groups ADD xfer_talk_minimum ENUM('DISABLED','ENABLED') default 'DISABLED';
+ALTER TABLE vicidial_inbound_groups ADD xfer_talk_minimum_sec SMALLINT(5) UNSIGNED default '0';
+
+UPDATE system_settings SET db_schema_version='1737',db_schema_update_date=NOW() where db_schema_version < 1737;

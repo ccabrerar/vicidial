@@ -223,7 +223,7 @@ function user_authorization($user,$pass,$user_option,$user_update,$bcrypt,$retur
 		if ( (preg_match("/MXAG/",$SShosted_settings)) and ($mvla_total < 1) )
 			{
 			$vla_set = $SShosted_settings;
-			$vla_set = preg_replace("/.*MXAG|_BUILD_|DRA|_MXCS\d+|_MXTR\d+| /",'',$vla_set);
+			$vla_set = preg_replace("/.*MXAG|_BUILD_|DRA|_MXCS\d+|_MXTR\d+|VCA\d+| /",'',$vla_set);
 			$vla_set = preg_replace('/[^0-9]/','',$vla_set);
 			if (strlen($vla_set)>0)
 				{$vla_on++;}
