@@ -1,7 +1,7 @@
 <?php
 # vicidial_redirect.php - forwards agents to another URL for vicidial.php login
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 71202-1546 - First Build 
@@ -10,6 +10,7 @@
 # 141216-2131 - Added language settings lookups and user/pass variable standardization
 # 210823-1004 - Fix for security issue
 # 220220-0924 - Added allow_web_debug system setting
+# 260302-1406 - Code updates for PHP8 compatibility
 #
 
 require_once("functions.php");
@@ -23,32 +24,29 @@ if (isset($_GET["phone_pass"]))					{$phone_pass=$_GET["phone_pass"];}
         elseif (isset($_POST["phone_pass"]))    {$phone_pass=$_POST["phone_pass"];}
 if (isset($_GET["VD_login"]))					{$VD_login=$_GET["VD_login"];}
         elseif (isset($_POST["VD_login"]))      {$VD_login=$_POST["VD_login"];}
+	else {$VD_login="";}
 if (isset($_GET["VD_pass"]))					{$VD_pass=$_GET["VD_pass"];}
         elseif (isset($_POST["VD_pass"]))       {$VD_pass=$_POST["VD_pass"];}
+	else {$VD_pass="";}
 if (isset($_GET["VD_campaign"]))                {$VD_campaign=$_GET["VD_campaign"];}
         elseif (isset($_POST["VD_campaign"]))   {$VD_campaign=$_POST["VD_campaign"];}
+	else {$VD_campaign="";}
 if (isset($_GET["relogin"]))					{$relogin=$_GET["relogin"];}
         elseif (isset($_POST["relogin"]))       {$relogin=$_POST["relogin"];}
+	else {$relogin="";}
 
 if (!isset($phone_login)) 
 	{
 	if (isset($_GET["pl"]))                {$phone_login=$_GET["pl"];}
 			elseif (isset($_POST["pl"]))   {$phone_login=$_POST["pl"];}
+			else {$phone_login="";}
 	}
 if (!isset($phone_pass))
 	{
 	if (isset($_GET["pp"]))                {$phone_pass=$_GET["pp"];}
 			elseif (isset($_POST["pp"]))   {$phone_pass=$_POST["pp"];}
+			else {$phone_pass="";}
 	}
-
-$DB = preg_replace('/[^-\._0-9\p{L}]/u',"",$DB);
-$phone_login = preg_replace('/[^-\._0-9\p{L}]/u',"",$phone_login);
-$phone_pass = preg_replace('/[^-\._0-9\p{L}]/u',"",$phone_pass);
-$VD_login = preg_replace('/[^-\._0-9\p{L}]/u',"",$VD_login);
-$VD_pass = preg_replace('/[^-\._0-9\p{L}]/u',"",$VD_pass);
-$VD_campaign = preg_replace('/[^-\._0-9\p{L}]/u',"",$VD_campaign);
-$relogin = preg_replace('/[^-\._0-9\p{L}]/u',"",$relogin);
-
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
@@ -67,7 +65,27 @@ if ($qm_conf_ct > 0)
 	$SSlanguage_method =	$row[4];
 	$SSallow_web_debug =	$row[5];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
+$DB = preg_replace('/[^0-9]/',"",$DB);
+
+if ($non_latin < 1)
+	{
+	$phone_login = preg_replace('/[^-\._0-9a-zA-Z]/',"",$phone_login);
+	$phone_pass = preg_replace('/[^-\._0-9a-zA-Z]/',"",$phone_pass);
+	$VD_login = preg_replace('/[^-\._0-9a-zA-Z]/',"",$VD_login);
+	$VD_pass = preg_replace('/[^-\._0-9a-zA-Z]/',"",$VD_pass);
+	$VD_campaign = preg_replace('/[^-\._0-9a-zA-Z]/',"",$VD_campaign);
+	$relogin = preg_replace('/[^-\._0-9a-zA-Z]/',"",$relogin);
+	}
+else
+	{
+	$phone_login = preg_replace('/[^-\._0-9\p{L}]/u',"",$phone_login);
+	$phone_pass = preg_replace('/[^-\._0-9\p{L}]/u',"",$phone_pass);
+	$VD_login = preg_replace('/[^-\._0-9\p{L}]/u',"",$VD_login);
+	$VD_pass = preg_replace('/[^-\._0-9\p{L}]/u',"",$VD_pass);
+	$VD_campaign = preg_replace('/[^-\._0-9\p{L}]/u',"",$VD_campaign);
+	$relogin = preg_replace('/[^-\._0-9\p{L}]/u',"",$relogin);
+	}
 
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$VD_login';";

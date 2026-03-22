@@ -1,7 +1,7 @@
 <?php
 # phone_only.php - the web-based web-phone-only client application
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 110511-1336 - First Build
@@ -23,10 +23,11 @@
 # 210616-2043 - Added optional CORS support, see options.php for details
 # 220220-0936 - Added allow_web_debug system setting
 # 221021-1026 - Added webphone_settings phones option
+# 260302-1200 - Code updates for PHP8 compatibility
 #
 
-$version = '2.14-19p';
-$build = '221021-1026';
+$version = '2.14-20p';
+$build = '260302-1200';
 $php_script = 'phone_only.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=74;
@@ -43,19 +44,40 @@ if (isset($_GET["phone_pass"]))					{$phone_pass=$_GET["phone_pass"];}
         elseif (isset($_POST["phone_pass"]))    {$phone_pass=$_POST["phone_pass"];}
 if (isset($_GET["VD_login"]))					{$VD_login=$_GET["VD_login"];}
         elseif (isset($_POST["VD_login"]))      {$VD_login=$_POST["VD_login"];}
+	else {$VD_login="";}
 if (isset($_GET["VD_pass"]))					{$VD_pass=$_GET["VD_pass"];}
         elseif (isset($_POST["VD_pass"]))       {$VD_pass=$_POST["VD_pass"];}
+	else {$VD_pass="";}
 if (isset($_GET["relogin"]))					{$relogin=$_GET["relogin"];}
-        elseif (isset($_POST["relogin"]))       {$relogin=$_POST["relogin"];}
+	elseif (isset($_POST["relogin"]))       {$relogin=$_POST["relogin"];}
+	else {$relogin="";}
+if (isset($_GET["JS_browser_width"]))			{$JS_browser_width=$_GET["JS_browser_width"];}
+	elseif (isset($_POST["JS_browser_width"]))		{$JS_browser_width=$_POST["JS_browser_width"];}
+	else {$JS_browser_width=0;}
+if (isset($_GET["JS_browser_height"]))			{$JS_browser_height=$_GET["JS_browser_height"];}
+	elseif (isset($_POST["JS_browser_height"]))		{$JS_browser_height=$_POST["JS_browser_height"];}
+	else {$JS_browser_height=0;}
+if (isset($_GET["force_logout"]))			{$force_logout=$_GET["force_logout"];}
+	elseif (isset($_POST["force_logout"]))		{$force_logout=$_POST["force_logout"];}
+	else {$force_logout="";}
+if (isset($_GET["session_id"]))			{$session_id=$_GET["session_id"];}
+	elseif (isset($_POST["session_id"]))		{$session_id=$_POST["session_id"];}
+	else {$session_id="";}
+if (isset($_GET["agent_status_view"]))			{$agent_status_view=$_GET["agent_status_view"];}
+	elseif (isset($_POST["agent_status_view"]))		{$agent_status_view=$_POST["agent_status_view"];}
+	else {$agent_status_view=0;}
+
 if (!isset($phone_login)) 
 	{
 	if (isset($_GET["pl"]))                {$phone_login=$_GET["pl"];}
 		elseif (isset($_POST["pl"]))   {$phone_login=$_POST["pl"];}
+		else {$phone_login="";}
 	}
 if (!isset($phone_pass))
 	{
 	if (isset($_GET["pp"]))                {$phone_pass=$_GET["pp"];}
 		elseif (isset($_POST["pp"]))   {$phone_pass=$_POST["pp"];}
+		else {$phone_pass="";}
 	}
 if (!isset($flag_channels))
 	{
@@ -64,17 +86,19 @@ if (!isset($flag_channels))
 	}
 
 ### security strip all non-alphanumeric characters out of the variables ###
-$DB=preg_replace("[^0-9a-z]","",$DB);
-$phone_login=preg_replace("/[^\,0-9a-zA-Z]/","",$phone_login);
-$phone_pass=preg_replace("/[^-_0-9a-zA-Z]/","",$phone_pass);
+# $phone_login=preg_replace("/[^\,0-9a-zA-Z]/","",$phone_login);
+# $phone_pass=preg_replace("/[^-_0-9a-zA-Z]/","",$phone_pass);
 $VD_login=preg_replace("/\'|\"|\\\\|;| /","",$VD_login);
 $VD_pass=preg_replace("/\'|\"|\\\\|;| /","",$VD_pass);
-$relogin=preg_replace("/[^-_0-9a-zA-Z]/","",$relogin);
-
+# $relogin=preg_replace("/[^-_0-9a-zA-Z]/","",$relogin);
+# $force_logout=preg_replace("/[^-_0-9a-zA-Z]/","",$force_logout);
+$JS_browser_width=preg_replace("/[^0-9]/", "", $JS_browser_width);
+$JS_browser_height=preg_replace("/[^0-9]/", "", $JS_browser_height);
+# $session_id = preg_replace('/[^-_\.0-9a-zA-Z]/','',$session_id);
 
 $forever_stop=0;
 
-if ($force_logout)
+if (strlen($force_logout)>0)
 	{
     echo _QXZ("You have now logged out. Thank you")."\n";
     exit;
@@ -123,7 +147,8 @@ if ($qm_conf_ct > 0)
 	$SSlanguage_method =			$row[14];
 	$SSallow_web_debug =			$row[15];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
+$DB=preg_replace("/[^0-9]/","",$DB);
 
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$VD_login';";
@@ -143,11 +168,21 @@ if ($non_latin < 1)
 	{
 	$VD_login=preg_replace("/[^-_0-9a-zA-Z]/","",$VD_login);
 	$VD_pass=preg_replace("/[^-_0-9a-zA-Z]/","",$VD_pass);
+	$phone_login=preg_replace("/[^\,0-9a-zA-Z]/","",$phone_login);
+	$phone_pass=preg_replace("/[^-_0-9a-zA-Z]/","",$phone_pass);
+	$relogin=preg_replace("/[^-_0-9a-zA-Z]/","",$relogin);
+	$force_logout=preg_replace("/[^-_0-9a-zA-Z]/","",$force_logout);
+	$session_id = preg_replace('/[^-_\.0-9a-zA-Z]/','',$session_id);
 	}
 else
 	{
 	$VD_login = preg_replace('/[^-_0-9\p{L}]/u','',$VD_login);
 	$VD_pass = preg_replace('/[^-_0-9\p{L}]/u','',$VD_pass);
+	$phone_login=preg_replace("/[^\,0-9\p{L}]/u","",$phone_login);
+	$phone_pass=preg_replace("/[^-_0-9\p{L}]/u","",$phone_pass);
+	$relogin=preg_replace("/[^-_0-9\p{L}]/u","",$relogin);
+	$force_logout=preg_replace("/[^-_0-9\p{L}]/u","",$force_logout);
+	$session_id = preg_replace('/[^-_\.0-9\p{L}]/u','',$session_id);
 	}
 
 
@@ -222,9 +257,15 @@ $stmt="SELECT user_group from vicidial_users where user='$VD_login';";
 if ($non_latin > 0) {$rslt=mysql_to_mysqli("SET NAMES 'UTF8'", $link);}
 $rslt=mysql_to_mysqli($stmt, $link);
 		if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'09002',$VD_login,$server_ip,$session_name,$one_mysql_log);}
-$row=mysqli_fetch_row($rslt);
-$VU_user_group=$row[0];
-
+if (mysqli_num_rows($rslt)>0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$VU_user_group=$row[0];
+	}
+else
+	{
+	$VU_user_group="";
+	}
 
 if ($relogin == 'YES')
 	{
@@ -369,6 +410,7 @@ if ( (strlen($phone_login) < 1) or (strlen($phone_pass) < 1) )
 	}
 else
 	{
+	$VDdisplayMESSAGE='';
 	if ($WeBRooTWritablE > 0)
 		{$fp = fopen ("./vicidial_auth_entries.txt", "w");}
 	$VDloginDISPLAY=0;

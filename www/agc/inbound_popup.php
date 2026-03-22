@@ -1,7 +1,7 @@
 <?php
 # inbound_popup.php    version 2.14
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to open up when a live_inbound call comes in giving the user
 #   options of what to do with the call or options to lookup the callerID on various web sites
@@ -41,10 +41,11 @@
 # 210616-2106 - Added optional CORS support, see options.php for details
 # 210825-0906 - Fix for XSS security issue
 # 220220-0914 - Added allow_web_debug system setting
+# 260302-1209 - Code updates for PHP8 compatibility
 #
 
-$version = '2.14-17';
-$build = '220220-0914';
+$version = '2.14-18';
+$build = '260302-1209';
 $php_script = 'inbound_popup.php';
 
 require_once("dbconnect_mysqli.php");
@@ -53,28 +54,39 @@ require_once("functions.php");
 ### If you have globals turned off uncomment these lines
 if (isset($_GET["user"]))					{$user=$_GET["user"];}
 	elseif (isset($_POST["user"]))			{$user=$_POST["user"];}
+	else {$user="";}
 if (isset($_GET["pass"]))					{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))			{$pass=$_POST["pass"];}
+	else {$pass="";}
 if (isset($_GET["server_ip"]))				{$server_ip=$_GET["server_ip"];}
 	elseif (isset($_POST["server_ip"]))		{$server_ip=$_POST["server_ip"];}
+	else {$server_ip="";}
 if (isset($_GET["session_name"]))			{$session_name=$_GET["session_name"];}
 	elseif (isset($_POST["session_name"]))	{$session_name=$_POST["session_name"];}
+	else {$session_name="";}
 if (isset($_GET["uniqueid"]))				{$uniqueid=$_GET["uniqueid"];}
 	elseif (isset($_POST["uniqueid"]))		{$uniqueid=$_POST["uniqueid"];}
+	else {$uniqueid="";}
 if (isset($_GET["format"]))					{$format=$_GET["format"];}
 	elseif (isset($_POST["format"]))		{$format=$_POST["format"];}
 if (isset($_GET["exten"]))					{$exten=$_GET["exten"];}
 	elseif (isset($_POST["exten"]))			{$exten=$_POST["exten"];}
+	else {$exten="";}
 if (isset($_GET["vmail_box"]))				{$vmail_box=$_GET["vmail_box"];}
 	elseif (isset($_POST["vmail_box"]))		{$vmail_box=$_POST["vmail_box"];}
+	else {$vmail_box="";}
 if (isset($_GET["ext_context"]))			{$ext_context=$_GET["ext_context"];}
 	elseif (isset($_POST["ext_context"]))	{$ext_context=$_POST["ext_context"];}
+	else {$ext_context="";}
 if (isset($_GET["ext_priority"]))			{$ext_priority=$_GET["ext_priority"];}
 	elseif (isset($_POST["ext_priority"]))	{$ext_priority=$_POST["ext_priority"];}
+	else {$ext_priority="";}
 if (isset($_GET["voicemail_dump_exten"]))			{$voicemail_dump_exten=$_GET["voicemail_dump_exten"];}
 	elseif (isset($_POST["voicemail_dump_exten"]))	{$voicemail_dump_exten=$_POST["voicemail_dump_exten"];}
+	else {$voicemail_dump_exten="";}
 if (isset($_GET["local_web_callerID_URL_enc"]))			{$local_web_callerID_URL_enc=$_GET["local_web_callerID_URL_enc"];}
 	elseif (isset($_POST["local_web_callerID_URL_enc"]))	{$local_web_callerID_URL_enc=$_POST["local_web_callerID_URL_enc"];}
+	else {$local_web_callerID_URL_enc="";}
 if (isset($_GET["local_web_callerID_URL_enc"]))			{$local_web_callerID_URL = rawurldecode($local_web_callerID_URL_enc);}
 	else {$local_web_callerID_URL = '';}
 
@@ -90,7 +102,8 @@ $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
 if (!isset($query_date)) {$query_date = $NOW_DATE;}
 $DO = '-1';
-if ( (preg_match("/^Zap/i",$channel)) and (!preg_match("/-/i",$channel)) ) {$channel = "$channel$DO";}
+# Removed 3/14/25 - never used
+# if ( (preg_match("/^Zap/i",$channel)) and (!preg_match("/-/i",$channel)) ) {$channel = "$channel$DO";}
 
 # if options file exists, use the override values for the above variables
 #   see the options-example.php file for more information
@@ -114,7 +127,8 @@ if ($qm_conf_ct > 0)
 	$SSlanguage_method =		$row[2];
 	$SSallow_web_debug =		$row[3];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
+$DB=preg_replace("/[^0-9]/","",$DB);
 
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$user';";
@@ -130,13 +144,13 @@ if ($sl_ct > 0)
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
-$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
-$uniqueid = preg_replace('/[^-_\.0-9a-zA-Z]/','',$uniqueid);
+# $session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+# $server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
+# $uniqueid = preg_replace('/[^-_\.0-9a-zA-Z]/','',$uniqueid);
 $exten = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$exten);
 $vmail_box = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$vmail_box);
-$format = preg_replace('/[^-_0-9a-zA-Z]/','',$format);
-$voicemail_dump_exten = preg_replace('/[^-_0-9a-zA-Z]/','',$voicemail_dump_exten);
+# $format = preg_replace('/[^-_0-9a-zA-Z]/','',$format);
+# $voicemail_dump_exten = preg_replace('/[^-_0-9a-zA-Z]/','',$voicemail_dump_exten);
 $local_web_callerID_URL = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$local_web_callerID_URL);
 $local_web_callerID_URL_enc = preg_replace("/\<|\>|\'|\"|\\\\|;/",'',$local_web_callerID_URL_enc);
 
@@ -146,6 +160,11 @@ if ($non_latin < 1)
 	$pass=preg_replace("/[^-\.\+\/\=_0-9a-zA-Z]/","",$pass);
 	$ext_context=preg_replace("/[^-_0-9a-zA-Z]/","",$ext_context);
 	$ext_priority=preg_replace("/[^-_0-9a-zA-Z]/","",$ext_priority);
+	$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+	$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
+	$uniqueid = preg_replace('/[^-_\.0-9a-zA-Z]/','',$uniqueid);
+	$format = preg_replace('/[^-_0-9a-zA-Z]/','',$format);
+	$voicemail_dump_exten = preg_replace('/[^-_0-9a-zA-Z]/','',$voicemail_dump_exten);
 	}
 else
 	{
@@ -153,6 +172,11 @@ else
 	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
 	$ext_context = preg_replace('/[^-_0-9\p{L}]/u','',$ext_context);
 	$ext_priority = preg_replace('/[^-_0-9\p{L}]/u','',$ext_priority);
+	$session_name = preg_replace('/[^-\.\:\_0-9\p{L}]/u','',$session_name);
+	$server_ip = preg_replace('/[^-\.\:\_0-9\p{L}]/u','',$server_ip);
+	$uniqueid = preg_replace('/[^-_\.0-9\p{L}]/u','',$uniqueid);
+	$format = preg_replace('/[^-_0-9\p{L}]/u','',$format);
+	$voicemail_dump_exten = preg_replace('/[^-_0-9\p{L}]/u','',$voicemail_dump_exten);
 	}
 
 $auth=0;
@@ -341,7 +365,7 @@ $channel_live=1;
 if (strlen($uniqueid)<9)
 	{
 	$channel_live=0;
-	echo QXZ("Uniqueid $uniqueid is not valid\n");
+	echo _QXZ("Uniqueid $uniqueid is not valid\n");
 	exit;
 	}
 else

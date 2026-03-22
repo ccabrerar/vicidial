@@ -896,6 +896,9 @@ OTHER CHANGES:
 
 255. Added ADAPT_PERCENTMAX Dial Method campaign option.
 
+256. Added In-Group "Transfer Talk Minimum" features, allowing for restruction
+	on agent screen transfers before talk time threshold.
+
 
 
 

@@ -1,7 +1,7 @@
 <?php
 # active_list_refresh.php    version 2.12
 # 
-# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed purely to serve updates of the live data to the display scripts
 # This script depends on the server_ip being sent and also needs to have a valid user/pass from the vicidial_users table
@@ -51,10 +51,11 @@
 # 210825-0908 - Fix for XSS security issue
 # 220220-0922 - Added allow_web_debug system setting
 # 250717-1030 - Fix for debug issue
+# 260303-0719 - Code updates for PHP8 compatibility
 #
 
-$version = '0.0.22';
-$build = '250717-1030';
+$version = '0.0.23';
+$build = '260303-0719';
 $php_script = 'active_list_refresh.php';
 $SSagent_debug_logging=0;
 $startMS = microtime();
@@ -65,18 +66,20 @@ require_once("functions.php");
 ### If you have globals turned off uncomment these lines
 if (isset($_GET["user"]))					{$user=$_GET["user"];}
 	elseif (isset($_POST["user"]))			{$user=$_POST["user"];}
+	else {$user="";}
 if (isset($_GET["pass"]))					{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))			{$pass=$_POST["pass"];}
+	else {$pass="";}
 if (isset($_GET["server_ip"]))				{$server_ip=$_GET["server_ip"];}
 	elseif (isset($_POST["server_ip"]))		{$server_ip=$_POST["server_ip"];}
+	else {$server_ip="";}
 if (isset($_GET["session_name"]))			{$session_name=$_GET["session_name"];}
 	elseif (isset($_POST["session_name"]))	{$session_name=$_POST["session_name"];}
+	else {$session_name="";}
 if (isset($_GET["format"]))					{$format=$_GET["format"];}
 	elseif (isset($_POST["format"]))		{$format=$_POST["format"];}
 if (isset($_GET["ADD"]))					{$ADD=$_GET["ADD"];}
 	elseif (isset($_POST["ADD"]))			{$ADD=$_POST["ADD"];}
-if (isset($_GET["DB"]))						{$DB=$_GET["DB"];}
-	elseif (isset($_POST["DB"]))			{$DB=$_POST["DB"];}
 if (isset($_GET["order"]))					{$order=$_GET["order"];}
 	elseif (isset($_POST["order"]))			{$order=$_POST["order"];}
 if (isset($_GET["bgcolor"]))				{$bgcolor=$_GET["bgcolor"];}
@@ -91,22 +94,26 @@ if (isset($_GET["selectfontsize"]))				{$selectfontsize=$_GET["selectfontsize"];
 	elseif (isset($_POST["selectfontsize"]))	{$selectfontsize=$_POST["selectfontsize"];}
 if (isset($_GET["selectedext"]))			{$selectedext=$_GET["selectedext"];}
 	elseif (isset($_POST["selectedext"]))	{$selectedext=$_POST["selectedext"];}
+	else {$selectedext="";}
 if (isset($_GET["selectedtrunk"]))			{$selectedtrunk=$_GET["selectedtrunk"];}
 	elseif (isset($_POST["selectedtrunk"]))	{$selectedtrunk=$_POST["selectedtrunk"];}
+	else {$selectedtrunk="";}
 if (isset($_GET["selectedlocal"]))			{$selectedlocal=$_GET["selectedlocal"];}
 	elseif (isset($_POST["selectedlocal"]))	{$selectedlocal=$_POST["selectedlocal"];}
+	else {$selectedlocal="";}
 if (isset($_GET["textareaheight"]))				{$textareaheight=$_GET["textareaheight"];}
 	elseif (isset($_POST["textareaheight"]))	{$textareaheight=$_POST["textareaheight"];}
 if (isset($_GET["textareawidth"]))			{$textareawidth=$_GET["textareawidth"];}
 	elseif (isset($_POST["textareawidth"]))	{$textareawidth=$_POST["textareawidth"];}
 if (isset($_GET["field_name"]))				{$field_name=$_GET["field_name"];}
 	elseif (isset($_POST["field_name"]))	{$field_name=$_POST["field_name"];}
+	else {$field_name="";}
 
 ### security strip all non-alphanumeric characters out of the variables ###
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
-
 # default optional vars if not set
+if (!isset($mel)) 		{$mel=0;}
 if (!isset($ADD))				{$ADD="1";}
 if (!isset($order))				{$order='desc';}
 if (!isset($format))			{$format="text";}
@@ -146,7 +153,8 @@ if ($qm_conf_ct > 0)
 	$SSagent_debug_logging =	$row[3];
 	$SSallow_web_debug =		$row[4];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;  $format="text";}
+if (!isset($DB)) {$DB = 0;}
 
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$user';";
@@ -319,6 +327,7 @@ if ($ADD==1)
 ######################
 if ($ADD==2)
 	{
+	if (!isset($pt)) {$pt='pt';}
 	if (!$field_name) {$field_name = 'busyext';}
 	if ($format=='table') {echo "<TABLE WIDTH=120 BGCOLOR=$bgcolor cellpadding=0 cellspacing=0>\n";}
 	if ($format=='menu') {echo "<SELECT SIZE=1 name=\"$field_name\">\n";}
@@ -376,6 +385,7 @@ if ($ADD==2)
 ######################
 if ($ADD==3)
 	{
+	if (!isset($pt)) {$pt='pt';}
 	if (!$field_name) {$field_name = 'trunk';}
 	if ($format=='table') {echo "<TABLE WIDTH=120 BGCOLOR=$bgcolor cellpadding=0 cellspacing=0>\n";}
 	if ($format=='menu') {echo "<SELECT SIZE=1 name=\"$field_name\">\n";}
@@ -433,6 +443,7 @@ if ($ADD==3)
 ######################
 if ($ADD==4)
 	{
+	if (!isset($pt)) {$pt='pt';}	
 	if (!$field_name) {$field_name = 'local';}
 	if ($format=='table') {echo "<TABLE WIDTH=120 BGCOLOR=$bgcolor cellpadding=0 cellspacing=0>\n";}
 	if ($format=='menu') {echo "<SELECT SIZE=1 name=\"$field_name\">\n";}
@@ -548,7 +559,7 @@ $RUNtime = ($ENDtime - $StarTtime);
 if ($format=='table') {echo "\n<!-- script runtime: $RUNtime seconds -->";}
 if ($format=='table') {echo "\n</body>\n</html>\n";}
 
-if ($SSagent_debug_logging > 0) {vicidial_ajax_log($NOW_TIME,$startMS,$link,$ACTION,$php_script,$user,$stage,$lead_id,$session_name,$stmt);}
+if ($SSagent_debug_logging > 0) {vicidial_ajax_log($NOW_TIME,$startMS,$link,"",$php_script,$user,"",0,$session_name,$stmt);} # ACTION, stage, and lead_id are never used in this script
 exit; 
 
 ?>

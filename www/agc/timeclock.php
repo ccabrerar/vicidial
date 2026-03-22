@@ -1,7 +1,7 @@
 <?php
 # timeclock.php - VICIDIAL system user timeclock
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 80523-0134 - First Build 
@@ -27,10 +27,11 @@
 # 210616-2101 - Added optional CORS support, see options.php for details
 # 220220-0934 - Added allow_web_debug system setting
 # 220921-1702 - Added failed login reason messages
+# 260302-1158 - Code updates for PHP8 compatibility
 #
 
-$version = '2.14-22';
-$build = '220921-1702';
+$version = '2.14-23';
+$build = '260302-1158';
 $php_script = 'timeclock.php';
 
 $StarTtimE = date("U");
@@ -53,7 +54,7 @@ if (($server_port == '80') or ($server_port == '443') ) {$server_port='';}
 else {$server_port = "$CL$server_port";}
 $agcPAGE = "$HTTPprotocol$server_name$server_port$script_name";
 $agcDIR = preg_replace('/timeclock\.php/i','',$agcPAGE);
-
+$VDdisplayMESSAGE='';
 
 if (isset($_GET["DB"]))							{$DB=$_GET["DB"];}
         elseif (isset($_POST["DB"]))			{$DB=$_POST["DB"];}
@@ -63,35 +64,44 @@ if (isset($_GET["phone_pass"]))					{$phone_pass=$_GET["phone_pass"];}
         elseif (isset($_POST["phone_pass"]))	{$phone_pass=$_POST["phone_pass"];}
 if (isset($_GET["VD_login"]))					{$VD_login=$_GET["VD_login"];}
         elseif (isset($_POST["VD_login"]))		{$VD_login=$_POST["VD_login"];}
+	else {$VD_login="";}
 if (isset($_GET["VD_pass"]))					{$VD_pass=$_GET["VD_pass"];}
         elseif (isset($_POST["VD_pass"]))		{$VD_pass=$_POST["VD_pass"];}
+	else {$VD_pass="";}
 if (isset($_GET["VD_campaign"]))				{$VD_campaign=$_GET["VD_campaign"];}
         elseif (isset($_POST["VD_campaign"]))	{$VD_campaign=$_POST["VD_campaign"];}
+	else {$VD_campaign="";}
 if (isset($_GET["stage"]))						{$stage=$_GET["stage"];}
         elseif (isset($_POST["stage"]))			{$stage=$_POST["stage"];}
+	else {$stage="";}
 if (isset($_GET["commit"]))						{$commit=$_GET["commit"];}
         elseif (isset($_POST["commit"]))		{$commit=$_POST["commit"];}
+	else {$commit="";}
 if (isset($_GET["referrer"]))					{$referrer=$_GET["referrer"];}
         elseif (isset($_POST["referrer"]))		{$referrer=$_POST["referrer"];}
+	else {$referrer="";}
 if (isset($_GET["user"]))						{$user=$_GET["user"];}
         elseif (isset($_POST["user"]))			{$user=$_POST["user"];}
+	else {$user="";}
 if (isset($_GET["pass"]))						{$pass=$_GET["pass"];}
         elseif (isset($_POST["pass"]))			{$pass=$_POST["pass"];}
+	else {$pass="";}
 if (strlen($VD_login)<1) {$VD_login = $user;}
 
 if (!isset($phone_login)) 
 	{
 	if (isset($_GET["pl"]))					{$phone_login=$_GET["pl"];}
 			elseif (isset($_POST["pl"]))	{$phone_login=$_POST["pl"];}
+			else {$phone_login="";}
 	}
 if (!isset($phone_pass))
 	{
 	if (isset($_GET["pp"]))					{$phone_pass=$_GET["pp"];}
 			elseif (isset($_POST["pp"]))	{$phone_pass=$_POST["pp"];}
+			else {$phone_pass="";}
 	}
 
 ### security strip all non-alphanumeric characters out of the variables ###
-$DB=preg_replace("/[^0-9a-z]/","",$DB);
 $VD_login=preg_replace("/\'|\"|\\\\|;| /","",$VD_login);
 $VD_pass=preg_replace("/\'|\"|\\\\|;| /","",$VD_pass);
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
@@ -127,7 +137,8 @@ if ($qm_conf_ct > 0)
 	$SSagent_script =		$row[7];
 	$SSallow_web_debug =	$row[8];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
+$DB=preg_replace("/[^0-9]/","",$DB);
 
 $VUselected_language = '';
 $stmt="SELECT user,selected_language from vicidial_users where user='$VD_login';";
@@ -151,9 +162,9 @@ $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
 $phone_login=preg_replace("/\'|\"|\\\\|;| /","",$phone_login);
 $phone_pass=preg_replace("/\'|\"|\\\\|;| /","",$phone_pass);
-$stage=preg_replace("/[^0-9a-zA-Z]/","",$stage);
-$commit=preg_replace("/[^0-9a-zA-Z]/","",$commit);
-$referrer=preg_replace("/[^0-9a-zA-Z]/","",$referrer);
+# $stage=preg_replace("/[^0-9a-zA-Z]/","",$stage);
+# $commit=preg_replace("/[^0-9a-zA-Z]/","",$commit);
+# $referrer=preg_replace("/[^0-9a-zA-Z]/","",$referrer);
 
 if ($non_latin < 1)
 	{
@@ -164,6 +175,9 @@ if ($non_latin < 1)
 	$VD_campaign=preg_replace("/[^-_0-9a-zA-Z]/","",$VD_campaign);
 	$phone_login=preg_replace("/[^\,0-9a-zA-Z]/","",$phone_login);
 	$phone_pass=preg_replace("/[^-_0-9a-zA-Z]/","",$phone_pass);
+	$stage=preg_replace("/[^0-9a-zA-Z]/","",$stage);
+	$commit=preg_replace("/[^0-9a-zA-Z]/","",$commit);
+	$referrer=preg_replace("/[^0-9a-zA-Z]/","",$referrer);
 	}
 else
 	{
@@ -174,6 +188,9 @@ else
 	$VD_campaign=preg_replace("/[^-_0-9\p{L}]/u","",$VD_campaign);
 	$phone_login=preg_replace("/[^\,0-9\p{L}]/u","",$phone_login);
 	$phone_pass=preg_replace("/[^-_0-9\p{L}]/u","",$phone_pass);
+	$stage=preg_replace("/[^0-9\p{L}]/u","",$stage);
+	$commit=preg_replace("/[^0-9\p{L}]/u","",$commit);
+	$referrer=preg_replace("/[^0-9\p{L}]/u","",$referrer);
 	}
 
 header ("Content-type: text/html; charset=utf-8");
@@ -192,6 +209,7 @@ $SSstd_row5_background='A3C3D6';
 $SSalt_row1_background='BDFFBD';
 $SSalt_row2_background='99FF99';
 $SSalt_row3_background='CCFFCC';
+$SSweb_logo='default_new';
 
 if ($agent_screen_colors != 'default')
 	{

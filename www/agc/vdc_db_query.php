@@ -1,7 +1,7 @@
 <?php
 # vdc_db_query.php
 # 
-# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to exchange information between vicidial.php and the database server for various actions
 # 
@@ -565,10 +565,11 @@
 # 251002-1352 - Added call_count_limit_restrict campaign option
 # 251005-0931 - Added code for recording_dtmf_muting
 # 251124-0935 - Added lead status display for callbacks list output
+# 260302-1057 - Code updates for PHP8 compatibility
 #
 
-$version = '2.14-458';
-$build = '251124-0935';
+$version = '2.14-459';
+$build = '260302-1057';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=995;
@@ -578,6 +579,9 @@ $VD_login=0;
 $SSagent_debug_logging=0;
 $pause_to_code_jump=0;
 $recording_dtmf_muting=0;
+$override_phone=0;
+$no_hopper_dialing_used=0;
+$dial_next_callback=0;
 $startMS = microtime();
 
 require_once("dbconnect_mysqli.php");
@@ -586,322 +590,474 @@ require_once("functions.php");
 ### If you have globals turned off uncomment these lines
 if (isset($_GET["user"]))						{$user=$_GET["user"];}
 	elseif (isset($_POST["user"]))				{$user=$_POST["user"];}
+	else {$user="";}
 if (isset($_GET["pass"]))						{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))				{$pass=$_POST["pass"];}
+	else {$pass="";}
 if (isset($_GET["server_ip"]))					{$server_ip=$_GET["server_ip"];}
 	elseif (isset($_POST["server_ip"]))			{$server_ip=$_POST["server_ip"];}
+	else {$server_ip="";}
 if (isset($_GET["session_name"]))				{$session_name=$_GET["session_name"];}
 	elseif (isset($_POST["session_name"]))		{$session_name=$_POST["session_name"];}
+	else {$session_name="";}
 if (isset($_GET["format"]))						{$format=$_GET["format"];}
 	elseif (isset($_POST["format"]))			{$format=$_POST["format"];}
 if (isset($_GET["ACTION"]))						{$ACTION=$_GET["ACTION"];}
 	elseif (isset($_POST["ACTION"]))			{$ACTION=$_POST["ACTION"];}
 if (isset($_GET["stage"]))						{$stage=$_GET["stage"];}
 	elseif (isset($_POST["stage"]))				{$stage=$_POST["stage"];}
+	else {$stage="";}
 if (isset($_GET["closer_choice"]))				{$closer_choice=$_GET["closer_choice"];}
 	elseif (isset($_POST["closer_choice"]))		{$closer_choice=$_POST["closer_choice"];}
+	else {$closer_choice="";}
 if (isset($_GET["conf_exten"]))					{$conf_exten=$_GET["conf_exten"];}
 	elseif (isset($_POST["conf_exten"]))		{$conf_exten=$_POST["conf_exten"];}
+	else {$conf_exten="";}
 if (isset($_GET["exten"]))						{$exten=$_GET["exten"];}
 	elseif (isset($_POST["exten"]))				{$exten=$_POST["exten"];}
+	else {$exten="";}
 if (isset($_GET["ext_context"]))				{$ext_context=$_GET["ext_context"];}
 	elseif (isset($_POST["ext_context"]))		{$ext_context=$_POST["ext_context"];}
+	else {$ext_context="";}
 if (isset($_GET["ext_priority"]))				{$ext_priority=$_GET["ext_priority"];}
 	elseif (isset($_POST["ext_priority"]))		{$ext_priority=$_POST["ext_priority"];}
+	{$ext_priority="";} # Oddly, this is never used
 if (isset($_GET["campaign"]))					{$campaign=$_GET["campaign"];}
 	elseif (isset($_POST["campaign"]))			{$campaign=$_POST["campaign"];}
+	else {$campaign="";}
 if (isset($_GET["dial_timeout"]))				{$dial_timeout=$_GET["dial_timeout"];}
 	elseif (isset($_POST["dial_timeout"]))		{$dial_timeout=$_POST["dial_timeout"];}
+	else {$dial_timeout=0;}
 if (isset($_GET["dial_prefix"]))				{$dial_prefix=$_GET["dial_prefix"];}
 	elseif (isset($_POST["dial_prefix"]))		{$dial_prefix=$_POST["dial_prefix"];}
+	else {$dial_prefix="";}
 if (isset($_GET["campaign_cid"]))				{$campaign_cid=$_GET["campaign_cid"];}
 	elseif (isset($_POST["campaign_cid"]))		{$campaign_cid=$_POST["campaign_cid"];}
+	else {$campaign_cid="";}
 if (isset($_GET["MDnextCID"]))					{$MDnextCID=$_GET["MDnextCID"];}
 	elseif (isset($_POST["MDnextCID"]))			{$MDnextCID=$_POST["MDnextCID"];}
+	else {$MDnextCID="";}
 if (isset($_GET["uniqueid"]))					{$uniqueid=$_GET["uniqueid"];}
 	elseif (isset($_POST["uniqueid"]))			{$uniqueid=$_POST["uniqueid"];}
+	else {$uniqueid="";}
 if (isset($_GET["lead_id"]))					{$lead_id=$_GET["lead_id"];}
 	elseif (isset($_POST["lead_id"]))			{$lead_id=$_POST["lead_id"];}
+	else {$lead_id="";} # checked via strlen, needs to be str
 if (isset($_GET["list_id"]))					{$list_id=$_GET["list_id"];}
 	elseif (isset($_POST["list_id"]))			{$list_id=$_POST["list_id"];}
+	else {$list_id="";} # checked via strlen, needs to be str
 if (isset($_GET["length_in_sec"]))				{$length_in_sec=$_GET["length_in_sec"];}
 	elseif (isset($_POST["length_in_sec"]))		{$length_in_sec=$_POST["length_in_sec"];}
+	else {$length_in_sec=0;}
 if (isset($_GET["phone_code"]))					{$phone_code=$_GET["phone_code"];}
 	elseif (isset($_POST["phone_code"]))		{$phone_code=$_POST["phone_code"];}
+	else {$phone_code="";}
 if (isset($_GET["phone_number"]))				{$phone_number=$_GET["phone_number"];}
 	elseif (isset($_POST["phone_number"]))		{$phone_number=$_POST["phone_number"];}
+	else {$phone_number="";}
 if (isset($_GET["channel"]))					{$channel=$_GET["channel"];}
 	elseif (isset($_POST["channel"]))			{$channel=$_POST["channel"];}
+	else {$channel="";}
 if (isset($_GET["start_epoch"]))				{$start_epoch=$_GET["start_epoch"];}
 	elseif (isset($_POST["start_epoch"]))		{$start_epoch=$_POST["start_epoch"];}
+	else {$start_epoch="";}
 if (isset($_GET["dispo_choice"]))				{$dispo_choice=$_GET["dispo_choice"];}
 	elseif (isset($_POST["dispo_choice"]))		{$dispo_choice=$_POST["dispo_choice"];}
+	else {$dispo_choice="";}
 if (isset($_GET["vendor_lead_code"]))			{$vendor_lead_code=$_GET["vendor_lead_code"];}
 	elseif (isset($_POST["vendor_lead_code"]))	{$vendor_lead_code=$_POST["vendor_lead_code"];}
+	else {$vendor_lead_code="";}
 if (isset($_GET["title"]))						{$title=$_GET["title"];}
 	elseif (isset($_POST["title"]))				{$title=$_POST["title"];}
+	else {$title="";}
 if (isset($_GET["first_name"]))					{$first_name=$_GET["first_name"];}
 	elseif (isset($_POST["first_name"]))		{$first_name=$_POST["first_name"];}
+	else {$first_name="";}
 if (isset($_GET["middle_initial"]))				{$middle_initial=$_GET["middle_initial"];}
 	elseif (isset($_POST["middle_initial"]))	{$middle_initial=$_POST["middle_initial"];}
+	else {$middle_initial="";}
 if (isset($_GET["last_name"]))					{$last_name=$_GET["last_name"];}
 	elseif (isset($_POST["last_name"]))			{$last_name=$_POST["last_name"];}
+	else {$last_name="";}
 if (isset($_GET["address1"]))					{$address1=$_GET["address1"];}
 	elseif (isset($_POST["address1"]))			{$address1=$_POST["address1"];}
+	else {$address1="";}
 if (isset($_GET["address2"]))					{$address2=$_GET["address2"];}
 	elseif (isset($_POST["address2"]))			{$address2=$_POST["address2"];}
+	else {$address2="";}
 if (isset($_GET["address3"]))					{$address3=$_GET["address3"];}
 	elseif (isset($_POST["address3"]))			{$address3=$_POST["address3"];}
+	else {$address3="";}
 if (isset($_GET["city"]))						{$city=$_GET["city"];}
 	elseif (isset($_POST["city"]))				{$city=$_POST["city"];}
+	else {$city="";}
 if (isset($_GET["state"]))						{$state=$_GET["state"];}
 	elseif (isset($_POST["state"]))				{$state=$_POST["state"];}
+	else {$state="";}
 if (isset($_GET["province"]))					{$province=$_GET["province"];}
 	elseif (isset($_POST["province"]))			{$province=$_POST["province"];}
+	else {$province="";}
 if (isset($_GET["postal_code"]))				{$postal_code=$_GET["postal_code"];}
 	elseif (isset($_POST["postal_code"]))		{$postal_code=$_POST["postal_code"];}
+	else {$postal_code="";}
 if (isset($_GET["country_code"]))				{$country_code=$_GET["country_code"];}
 	elseif (isset($_POST["country_code"]))		{$country_code=$_POST["country_code"];}
+	else {$country_code="";}
 if (isset($_GET["gender"]))						{$gender=$_GET["gender"];}
 	elseif (isset($_POST["gender"]))			{$gender=$_POST["gender"];}
+	else {$gender="";}
 if (isset($_GET["date_of_birth"]))				{$date_of_birth=$_GET["date_of_birth"];}
 	elseif (isset($_POST["date_of_birth"]))		{$date_of_birth=$_POST["date_of_birth"];}
+	else {$date_of_birth="";}
 if (isset($_GET["alt_phone"]))					{$alt_phone=$_GET["alt_phone"];}
 	elseif (isset($_POST["alt_phone"]))			{$alt_phone=$_POST["alt_phone"];}
+	else {$alt_phone="";}
 if (isset($_GET["email"]))						{$email=$_GET["email"];}
 	elseif (isset($_POST["email"]))				{$email=$_POST["email"];}
+	else {$email="";}
 if (isset($_GET["security_phrase"]))			{$security_phrase=$_GET["security_phrase"];}
 	elseif (isset($_POST["security_phrase"]))	{$security_phrase=$_POST["security_phrase"];}
+	else {$security_phrase="";}
 if (isset($_GET["comments"]))					{$comments=$_GET["comments"];}
 	elseif (isset($_POST["comments"]))			{$comments=$_POST["comments"];}
+	else {$comments="";}
 if (isset($_GET["auto_dial_level"]))			{$auto_dial_level=$_GET["auto_dial_level"];}
 	elseif (isset($_POST["auto_dial_level"]))	{$auto_dial_level=$_POST["auto_dial_level"];}
+	else {$auto_dial_level="";}
 if (isset($_GET["VDstop_rec_after_each_call"]))				{$VDstop_rec_after_each_call=$_GET["VDstop_rec_after_each_call"];}
 	elseif (isset($_POST["VDstop_rec_after_each_call"]))		{$VDstop_rec_after_each_call=$_POST["VDstop_rec_after_each_call"];}
+	else {$VDstop_rec_after_each_call="";}
 if (isset($_GET["conf_silent_prefix"]))				{$conf_silent_prefix=$_GET["conf_silent_prefix"];}
 	elseif (isset($_POST["conf_silent_prefix"]))	{$conf_silent_prefix=$_POST["conf_silent_prefix"];}
+	else {$conf_silent_prefix="";}
 if (isset($_GET["extension"]))					{$extension=$_GET["extension"];}
 	elseif (isset($_POST["extension"]))			{$extension=$_POST["extension"];}
+	else {$extension="";}
 if (isset($_GET["protocol"]))					{$protocol=$_GET["protocol"];}
 	elseif (isset($_POST["protocol"]))			{$protocol=$_POST["protocol"];}
+	else {$protocol="";}
 if (isset($_GET["user_abb"]))					{$user_abb=$_GET["user_abb"];}
 	elseif (isset($_POST["user_abb"]))			{$user_abb=$_POST["user_abb"];}
+	else {$user_abb="";}
 if (isset($_GET["preview"]))					{$preview=$_GET["preview"];}
 	elseif (isset($_POST["preview"]))			{$preview=$_POST["preview"];}
+	else {$preview="";}
 if (isset($_GET["called_count"]))				{$called_count=$_GET["called_count"];}
 	elseif (isset($_POST["called_count"]))		{$called_count=$_POST["called_count"];}
+	else {$called_count="";} # checked via strlen, needs to be str
 if (isset($_GET["agent_log_id"]))				{$agent_log_id=$_GET["agent_log_id"];}
 	elseif (isset($_POST["agent_log_id"]))		{$agent_log_id=$_POST["agent_log_id"];}
+	else {$agent_log_id="";}
 if (isset($_GET["agent_log"]))					{$agent_log=$_GET["agent_log"];}
 	elseif (isset($_POST["agent_log"]))			{$agent_log=$_POST["agent_log"];}
+	else {$agent_log="";}
 if (isset($_GET["favorites_list"]))				{$favorites_list=$_GET["favorites_list"];}
 	elseif (isset($_POST["favorites_list"]))	{$favorites_list=$_POST["favorites_list"];}
+	else {$favorites_list="";}
 if (isset($_GET["CallBackDatETimE"]))			{$CallBackDatETimE=$_GET["CallBackDatETimE"];}
 	elseif (isset($_POST["CallBackDatETimE"]))	{$CallBackDatETimE=$_POST["CallBackDatETimE"];}
+	else {$CallBackDatETimE="";}
 if (isset($_GET["recipient"]))					{$recipient=$_GET["recipient"];}
 	elseif (isset($_POST["recipient"]))			{$recipient=$_POST["recipient"];}
+	else {$recipient="";}
 if (isset($_GET["callback_id"]))				{$callback_id=$_GET["callback_id"];}
 	elseif (isset($_POST["callback_id"]))		{$callback_id=$_POST["callback_id"];}
+	else {$callback_id="";}
 if (isset($_GET["use_internal_dnc"]))			{$use_internal_dnc=$_GET["use_internal_dnc"];}
 	elseif (isset($_POST["use_internal_dnc"]))	{$use_internal_dnc=$_POST["use_internal_dnc"];}
+	else {$use_internal_dnc="";}
 if (isset($_GET["use_campaign_dnc"]))			{$use_campaign_dnc=$_GET["use_campaign_dnc"];}
 	elseif (isset($_POST["use_campaign_dnc"]))	{$use_campaign_dnc=$_POST["use_campaign_dnc"];}
+	else {$use_campaign_dnc="";}
 if (isset($_GET["omit_phone_code"]))			{$omit_phone_code=$_GET["omit_phone_code"];}
 	elseif (isset($_POST["omit_phone_code"]))	{$omit_phone_code=$_POST["omit_phone_code"];}
+	else {$omit_phone_code="";}
 if (isset($_GET["phone_ip"]))				{$phone_ip=$_GET["phone_ip"];}
 	elseif (isset($_POST["phone_ip"]))		{$phone_ip=$_POST["phone_ip"];}
+	else {$phone_ip="";}
 if (isset($_GET["enable_sipsak_messages"]))				{$enable_sipsak_messages=$_GET["enable_sipsak_messages"];}
 	elseif (isset($_POST["enable_sipsak_messages"]))	{$enable_sipsak_messages=$_POST["enable_sipsak_messages"];}
+	else {$enable_sipsak_messages=0;}
 if (isset($_GET["status"]))						{$status=$_GET["status"];}
 	elseif (isset($_POST["status"]))			{$status=$_POST["status"];}
+	else {$status="";}
 if (isset($_GET["LogouTKicKAlL"]))				{$LogouTKicKAlL=$_GET["LogouTKicKAlL"];}
 	elseif (isset($_POST["LogouTKicKAlL"]))		{$LogouTKicKAlL=$_POST["LogouTKicKAlL"];}
+	else {$LogouTKicKAlL=0;}
 if (isset($_GET["closer_blended"]))				{$closer_blended=$_GET["closer_blended"];}
 	elseif (isset($_POST["closer_blended"]))	{$closer_blended=$_POST["closer_blended"];}
+	else {$closer_blended="";}
 if (isset($_GET["inOUT"]))						{$inOUT=$_GET["inOUT"];}
 	elseif (isset($_POST["inOUT"]))				{$inOUT=$_POST["inOUT"];}
+	else {$inOUT="";}
 if (isset($_GET["manual_dial_filter"]))				{$manual_dial_filter=$_GET["manual_dial_filter"];}
 	elseif (isset($_POST["manual_dial_filter"]))	{$manual_dial_filter=$_POST["manual_dial_filter"];}
+	else {$manual_dial_filter="";}
 if (isset($_GET["alt_dial"]))					{$alt_dial=$_GET["alt_dial"];}
 	elseif (isset($_POST["alt_dial"]))			{$alt_dial=$_POST["alt_dial"];}
+	else {$alt_dial="";}
 if (isset($_GET["agentchannel"]))				{$agentchannel=$_GET["agentchannel"];}
 	elseif (isset($_POST["agentchannel"]))		{$agentchannel=$_POST["agentchannel"];}
+	else {$agentchannel="";}
 if (isset($_GET["conf_dialed"]))				{$conf_dialed=$_GET["conf_dialed"];}
 	elseif (isset($_POST["conf_dialed"]))		{$conf_dialed=$_POST["conf_dialed"];}
+	else {$conf_dialed="";}
 if (isset($_GET["leaving_threeway"]))			{$leaving_threeway=$_GET["leaving_threeway"];}
 	elseif (isset($_POST["leaving_threeway"]))	{$leaving_threeway=$_POST["leaving_threeway"];}
+	else {$leaving_threeway=0;}
 if (isset($_GET["hangup_all_non_reserved"]))			{$hangup_all_non_reserved=$_GET["hangup_all_non_reserved"];}
 	elseif (isset($_POST["hangup_all_non_reserved"]))	{$hangup_all_non_reserved=$_POST["hangup_all_non_reserved"];}
+	else {$hangup_all_non_reserved=0;}
 if (isset($_GET["blind_transfer"]))				{$blind_transfer=$_GET["blind_transfer"];}
 	elseif (isset($_POST["blind_transfer"]))	{$blind_transfer=$_POST["blind_transfer"];}
+	else {$blind_transfer="";}
 if (isset($_GET["usegroupalias"]))			{$usegroupalias=$_GET["usegroupalias"];}
 	elseif (isset($_POST["usegroupalias"]))	{$usegroupalias=$_POST["usegroupalias"];}
+	else {$usegroupalias=0;}
 if (isset($_GET["account"]))				{$account=$_GET["account"];}
 	elseif (isset($_POST["account"]))		{$account=$_POST["account"];}
+	else {$account="";}
 if (isset($_GET["agent_dialed_number"]))			{$agent_dialed_number=$_GET["agent_dialed_number"];}
 	elseif (isset($_POST["agent_dialed_number"]))	{$agent_dialed_number=$_POST["agent_dialed_number"];}
+	else {$agent_dialed_number="";}
 if (isset($_GET["agent_dialed_type"]))				{$agent_dialed_type=$_GET["agent_dialed_type"];}
 	elseif (isset($_POST["agent_dialed_type"]))		{$agent_dialed_type=$_POST["agent_dialed_type"];}
+	else {$agent_dialed_type="";}
 if (isset($_GET["wrapup"]))					{$wrapup=$_GET["wrapup"];}
 	elseif (isset($_POST["wrapup"]))		{$wrapup=$_POST["wrapup"];}
+	else {$wrapup="";}
 if (isset($_GET["vtiger_callback_id"]))				{$vtiger_callback_id=$_GET["vtiger_callback_id"];}
 	elseif (isset($_POST["vtiger_callback_id"]))	{$vtiger_callback_id=$_POST["vtiger_callback_id"];}
+	else {$vtiger_callback_id=0;}
 if (isset($_GET["dial_method"]))				{$dial_method=$_GET["dial_method"];}
 	elseif (isset($_POST["dial_method"]))		{$dial_method=$_POST["dial_method"];}
+	else {$dial_method="";}
 if (isset($_GET["no_delete_sessions"]))				{$no_delete_sessions=$_GET["no_delete_sessions"];}
 	elseif (isset($_POST["no_delete_sessions"]))	{$no_delete_sessions=$_POST["no_delete_sessions"];}
+	else {$no_delete_sessions=0;}
 if (isset($_GET["nodeletevdac"]))				{$nodeletevdac=$_GET["nodeletevdac"];}
 	elseif (isset($_POST["nodeletevdac"]))		{$nodeletevdac=$_POST["nodeletevdac"];}
+	else {$nodeletevdac=0;}
 if (isset($_GET["agent_territories"]))			{$agent_territories=$_GET["agent_territories"];}
 	elseif (isset($_POST["agent_territories"]))	{$agent_territories=$_POST["agent_territories"];}
+	else {$agent_territories="";}
 if (isset($_GET["alt_num_status"]))				{$alt_num_status=$_GET["alt_num_status"];}
 	elseif (isset($_POST["alt_num_status"]))	{$alt_num_status=$_POST["alt_num_status"];}
+	else {$alt_num_status="";}
 if (isset($_GET["DiaL_SecondS"]))				{$DiaL_SecondS=$_GET["DiaL_SecondS"];}
 	elseif (isset($_POST["DiaL_SecondS"]))		{$DiaL_SecondS=$_POST["DiaL_SecondS"];}
+	else {$DiaL_SecondS=0;}
 if (isset($_GET["date"]))						{$date=$_GET["date"];}
 	elseif (isset($_POST["date"]))				{$date=$_POST["date"];}
+	else {$date="";}
 if (isset($_GET["custom_field_names"]))				{$FORMcustom_field_names=$_GET["custom_field_names"];}
 	elseif (isset($_POST["custom_field_names"]))	{$FORMcustom_field_names=$_POST["custom_field_names"];}
+	else {$FORMcustom_field_names="";}
 if (isset($_GET["qm_phone"]))			{$qm_phone=$_GET["qm_phone"];}
 	elseif (isset($_POST["qm_phone"]))	{$qm_phone=$_POST["qm_phone"];}
+	else {$qm_phone="";}
 if (isset($_GET["manual_dial_call_time_check"]))			{$manual_dial_call_time_check=$_GET["manual_dial_call_time_check"];}
 	elseif (isset($_POST["manual_dial_call_time_check"]))	{$manual_dial_call_time_check=$_POST["manual_dial_call_time_check"];}
+	else {$manual_dial_call_time_check="";}
 if (isset($_GET["CallBackLeadStatus"]))				{$CallBackLeadStatus=$_GET["CallBackLeadStatus"];}
 	elseif (isset($_POST["CallBackLeadStatus"]))	{$CallBackLeadStatus=$_POST["CallBackLeadStatus"];}
+	else {$CallBackLeadStatus="";}
 if (isset($_GET["call_notes"]))				{$call_notes=$_GET["call_notes"];}
 	elseif (isset($_POST["call_notes"]))	{$call_notes=$_POST["call_notes"];}
+	else {$call_notes="";}
 if (isset($_GET["search"]))				{$search=$_GET["search"];}
 	elseif (isset($_POST["search"]))	{$search=$_POST["search"];}
+	else {$search="";}
 if (isset($_GET["sub_status"]))				{$sub_status=$_GET["sub_status"];}
 	elseif (isset($_POST["sub_status"]))	{$sub_status=$_POST["sub_status"];}
+	else {$sub_status="";}
 if (isset($_GET["qm_extension"]))			{$qm_extension=$_GET["qm_extension"];}
 	elseif (isset($_POST["qm_extension"]))	{$qm_extension=$_POST["qm_extension"];}
+	else {$qm_extension="";}
 if (isset($_GET["disable_alter_custphone"]))			{$disable_alter_custphone=$_GET["disable_alter_custphone"];}
 	elseif (isset($_POST["disable_alter_custphone"]))	{$disable_alter_custphone=$_POST["disable_alter_custphone"];}
+	else {$disable_alter_custphone="";}
 if (isset($_GET["bu_name"]))			{$bu_name=$_GET["bu_name"];}
 	elseif (isset($_POST["bu_name"]))	{$bu_name=$_POST["bu_name"];}
+	else {$bu_name="";}
 if (isset($_GET["department"]))				{$department=$_GET["department"];}
 	elseif (isset($_POST["department"]))	{$department=$_POST["department"];}
+	else {$department="";}
 if (isset($_GET["group_name"]))				{$group_name=$_GET["group_name"];}
 	elseif (isset($_POST["group_name"]))	{$group_name=$_POST["group_name"];}
+	else {$group_name="";}
 if (isset($_GET["group"]))				{$group=$_GET["group"];}
 	elseif (isset($_POST["group"]))		{$group=$_POST["group"];}
+	else {$group="";}
 if (isset($_GET["job_title"]))			{$job_title=$_GET["job_title"];}
 	elseif (isset($_POST["job_title"]))	{$job_title=$_POST["job_title"];}
+	else {$job_title="";}
 if (isset($_GET["location"]))			{$location=$_GET["location"];}
 	elseif (isset($_POST["location"]))	{$location=$_POST["location"];}
+	else {$location="";}
 if (isset($_GET["old_CID"]))			{$old_CID=$_GET["old_CID"];}
 	elseif (isset($_POST["old_CID"]))	{$old_CID=$_POST["old_CID"];}
+	else {$old_CID="";}
 if (isset($_GET["qm_dispo_code"]))			{$qm_dispo_code=$_GET["qm_dispo_code"];}
 	elseif (isset($_POST["qm_dispo_code"]))	{$qm_dispo_code=$_POST["qm_dispo_code"];}
+	else {$qm_dispo_code="";}
 if (isset($_GET["dial_ingroup"]))			{$dial_ingroup=$_GET["dial_ingroup"];}
 	elseif (isset($_POST["dial_ingroup"]))	{$dial_ingroup=$_POST["dial_ingroup"];}
+	else {$dial_ingroup="";}
 if (isset($_GET["nocall_dial_flag"]))			{$nocall_dial_flag=$_GET["nocall_dial_flag"];}
 	elseif (isset($_POST["nocall_dial_flag"]))	{$nocall_dial_flag=$_POST["nocall_dial_flag"];}
+	else {$nocall_dial_flag="";}
 if (isset($_GET["inbound_lead_search"]))			{$inbound_lead_search=$_GET["inbound_lead_search"];}
 	elseif (isset($_POST["inbound_lead_search"]))	{$inbound_lead_search=$_POST["inbound_lead_search"];}
+	else {$inbound_lead_search=0;}
 if (isset($_GET["email_enabled"]))			{$email_enabled=$_GET["email_enabled"];}
 	elseif (isset($_POST["email_enabled"]))	{$email_enabled=$_POST["email_enabled"];}
+	else {$email_enabled=0;}
 if (isset($_GET["email_row_id"]))			{$email_row_id=$_GET["email_row_id"];}
 	elseif (isset($_POST["email_row_id"]))	{$email_row_id=$_POST["email_row_id"];}
+	else {$email_row_id="";}
 if (isset($_GET["inbound_email_groups"]))			{$inbound_email_groups=$_GET["inbound_email_groups"];}
 	elseif (isset($_POST["inbound_email_groups"]))	{$inbound_email_groups=$_POST["inbound_email_groups"];}
+	else {$inbound_email_groups="";}
 if (isset($_GET["inbound_chat_groups"]))			{$inbound_chat_groups=$_GET["inbound_chat_groups"];}
 	elseif (isset($_POST["inbound_chat_groups"]))	{$inbound_chat_groups=$_POST["inbound_chat_groups"];}
 if (isset($_GET["recording_id"]))			{$recording_id=$_GET["recording_id"];}
 	elseif (isset($_POST["recording_id"]))	{$recording_id=$_POST["recording_id"];}
+	else {$recording_id="";} # Set to "" instead of 0 due to strlen check
 if (isset($_GET["recording_filename"]))				{$recording_filename=$_GET["recording_filename"];}
 	elseif (isset($_POST["recording_filename"]))	{$recording_filename=$_POST["recording_filename"];}
+	else {$recording_filename="";}
 if (isset($_GET["orig_pass"]))			{$orig_pass=$_GET["orig_pass"];}
 	elseif (isset($_POST["orig_pass"]))	{$orig_pass=$_POST["orig_pass"];}
+	else {$orig_pass="";}
 if (isset($_GET["cid_lock"]))			{$cid_lock=$_GET["cid_lock"];}
 	elseif (isset($_POST["cid_lock"]))	{$cid_lock=$_POST["cid_lock"];}
+	else {$cid_lock=0;} # Numeric, as all checks treat as such
 if (isset($_GET["dispo_comments"]))				{$dispo_comments=$_GET["dispo_comments"];}
 	elseif (isset($_POST["dispo_comments"]))	{$dispo_comments=$_POST["dispo_comments"];}
+	else {$dispo_comments="";}
 if (isset($_GET["cbcomment_comments"]))				{$cbcomment_comments=$_GET["cbcomment_comments"];}
 	elseif (isset($_POST["cbcomment_comments"]))	{$cbcomment_comments=$_POST["cbcomment_comments"];}
+	else {$cbcomment_comments="";}
 if (isset($_GET["parked_hangup"]))			{$parked_hangup=$_GET["parked_hangup"];}
 	elseif (isset($_POST["parked_hangup"]))	{$parked_hangup=$_POST["parked_hangup"];}
+	else {$parked_hangup="";}
 if (isset($_GET["pause_trigger"]))			{$pause_trigger=$_GET["pause_trigger"];}
 	elseif (isset($_POST["pause_trigger"]))	{$pause_trigger=$_POST["pause_trigger"];}
+	else {$pause_trigger="";}
 if (isset($_GET["DB"]))					{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))		{$DB=$_POST["DB"];}
 if (isset($_GET["in_script"]))			{$in_script=$_GET["in_script"];}
 	elseif (isset($_POST["in_script"]))	{$in_script=$_POST["in_script"];}
+	else {$in_script="";}
 if (isset($_GET["camp_script"]))			{$camp_script=$_GET["camp_script"];}
 	elseif (isset($_POST["camp_script"]))	{$camp_script=$_POST["camp_script"];}
+	else {$camp_script="";}
 if (isset($_GET["manual_dial_search_filter"]))			{$manual_dial_search_filter=$_GET["manual_dial_search_filter"];}
 	elseif (isset($_POST["manual_dial_search_filter"]))	{$manual_dial_search_filter=$_POST["manual_dial_search_filter"];}
+	else {$manual_dial_search_filter="";}
 if (isset($_GET["url_ids"]))			{$url_ids=$_GET["url_ids"];}
 	elseif (isset($_POST["url_ids"]))	{$url_ids=$_POST["url_ids"];}
+	else {$url_ids="";}
 if (isset($_GET["phone_login"]))			{$phone_login=$_GET["phone_login"];}
 	elseif (isset($_POST["phone_login"]))	{$phone_login=$_POST["phone_login"];}
+	else {$phone_login="";}
 if (isset($_GET["agent_email"]))	{$agent_email=$_GET["agent_email"];}
 	elseif (isset($_POST["agent_email"]))	{$agent_email=$_POST["agent_email"];}
+	else {$agent_email="";}
 if (isset($_GET["original_phone_login"]))	{$original_phone_login=$_GET["original_phone_login"];}
 	elseif (isset($_POST["original_phone_login"]))	{$original_phone_login=$_POST["original_phone_login"];}
+	else {$original_phone_login="";}
 if (isset($_GET["customer_zap_channel"]))	{$customer_zap_channel=$_GET["customer_zap_channel"];}
 	elseif (isset($_POST["customer_zap_channel"]))	{$customer_zap_channel=$_POST["customer_zap_channel"];}
+	else {$customer_zap_channel="";}
 if (isset($_GET["customer_server_ip"]))	{$customer_server_ip=$_GET["customer_server_ip"];}
 	elseif (isset($_POST["customer_server_ip"]))	{$customer_server_ip=$_POST["customer_server_ip"];}
+	else {$customer_server_ip="";}
 if (isset($_GET["phone_pass"]))	{$phone_pass=$_GET["phone_pass"];}
 	elseif (isset($_POST["phone_pass"]))	{$phone_pass=$_POST["phone_pass"];}
+	else {$phone_pass="";}
 if (isset($_GET["VDRP_stage"]))	{$VDRP_stage=$_GET["VDRP_stage"];}
 	elseif (isset($_POST["VDRP_stage"]))	{$VDRP_stage=$_POST["VDRP_stage"];}
+	else {$VDRP_stage="";}
 if (isset($_GET["previous_agent_log_id"]))	{$previous_agent_log_id=$_GET["previous_agent_log_id"];}
 	elseif (isset($_POST["previous_agent_log_id"]))	{$previous_agent_log_id=$_POST["previous_agent_log_id"];}
+	else {$previous_agent_log_id="";} # Never used
 if (isset($_GET["last_VDRP_stage"]))	{$last_VDRP_stage=$_GET["last_VDRP_stage"];}
 	elseif (isset($_POST["last_VDRP_stage"]))	{$last_VDRP_stage=$_POST["last_VDRP_stage"];}
+	else {$last_VDRP_stage="";}
 if (isset($_GET["url_link"]))			{$url_link=$_GET["url_link"];}
 	elseif (isset($_POST["url_link"]))	{$url_link=$_POST["url_link"];}
+	else {$url_link="";}
 if (isset($_GET["user_group"]))				{$user_group=$_GET["user_group"];}
 	elseif (isset($_POST["user_group"]))	{$user_group=$_POST["user_group"];}
+	else {$user_group="";}
 if (isset($_GET["MgrApr_user"]))			{$MgrApr_user=$_GET["MgrApr_user"];}
 	elseif (isset($_POST["MgrApr_user"]))	{$MgrApr_user=$_POST["MgrApr_user"];}
+	else {$MgrApr_user="";}
 if (isset($_GET["MgrApr_pass"]))			{$MgrApr_pass=$_GET["MgrApr_pass"];}
 	elseif (isset($_POST["MgrApr_pass"]))	{$MgrApr_pass=$_POST["MgrApr_pass"];}
+	else {$MgrApr_pass="";}
 if (isset($_GET["routing_initiated_recording"]))			{$routing_initiated_recording=$_GET["routing_initiated_recording"];}
 	elseif (isset($_POST["routing_initiated_recording"]))	{$routing_initiated_recording=$_POST["routing_initiated_recording"];}
+	else {$routing_initiated_recording="";}
 if (isset($_GET["dead_time"]))			{$dead_time=$_GET["dead_time"];}
 	elseif (isset($_POST["dead_time"]))	{$dead_time=$_POST["dead_time"];}
+	else {$dead_time=0;}
 if (isset($_GET["callback_gmt_offset"]))			{$callback_gmt_offset=$_GET["callback_gmt_offset"];}
 	elseif (isset($_POST["callback_gmt_offset"]))	{$callback_gmt_offset=$_POST["callback_gmt_offset"];}
+	else {$callback_gmt_offset="";}
 if (isset($_GET["callback_timezone"]))			{$callback_timezone=$_GET["callback_timezone"];}
 	elseif (isset($_POST["callback_timezone"]))	{$callback_timezone=$_POST["callback_timezone"];}
+	else {$callback_timezone="";}
 if (isset($_GET["manual_dial_validation"]))				{$manual_dial_validation=$_GET["manual_dial_validation"];}
 	elseif (isset($_POST["manual_dial_validation"]))	{$manual_dial_validation=$_POST["manual_dial_validation"];}
+	else {$manual_dial_validation="";}
 if (isset($_GET["start_date"]))			{$start_date=$_GET["start_date"];}
 	elseif (isset($_POST["start_date"])){$start_date=$_POST["start_date"];}
+	else {$start_date=0;} 
 if (isset($_GET["end_date"]))			{$end_date=$_GET["end_date"];}
 	elseif (isset($_POST["end_date"]))	{$end_date=$_POST["end_date"];}
+	else {$end_date="";}
 if (isset($_GET["customer_sec"]))			{$customer_sec=$_GET["customer_sec"];}
 	elseif (isset($_POST["customer_sec"]))	{$customer_sec=$_POST["customer_sec"];}
+	else {$customer_sec=0;}
 if (isset($_GET["leave_3way_start_recording_trigger"]))				{$leave_3way_start_recording_trigger=$_GET["leave_3way_start_recording_trigger"];}
 	elseif (isset($_POST["leave_3way_start_recording_trigger"]))	{$leave_3way_start_recording_trigger=$_POST["leave_3way_start_recording_trigger"];}
+	else {$leave_3way_start_recording_trigger=0;}
 if (isset($_GET["leave_3way_start_recording_filename"]))			{$leave_3way_start_recording_filename=$_GET["leave_3way_start_recording_filename"];}
 	elseif (isset($_POST["leave_3way_start_recording_filename"]))	{$leave_3way_start_recording_filename=$_POST["leave_3way_start_recording_filename"];}
+	else {$leave_3way_start_recording_filename="";}
 if (isset($_GET["channelrec"]))				{$channelrec=$_GET["channelrec"];}
 	elseif (isset($_POST["channelrec"]))	{$channelrec=$_POST["channelrec"];}
+	else {$channelrec="";}
 if (isset($_GET["calls_waiting_vl_oneLABEL"]))			{$calls_waiting_vl_oneLABEL=$_GET["calls_waiting_vl_oneLABEL"];}
 	elseif (isset($_POST["calls_waiting_vl_oneLABEL"]))	{$calls_waiting_vl_oneLABEL=$_POST["calls_waiting_vl_oneLABEL"];}
+	else {$calls_waiting_vl_oneLABEL="";}
 if (isset($_GET["calls_waiting_vl_twoLABEL"]))			{$calls_waiting_vl_twoLABEL=$_GET["calls_waiting_vl_twoLABEL"];}
 	elseif (isset($_POST["calls_waiting_vl_twoLABEL"]))	{$calls_waiting_vl_twoLABEL=$_POST["calls_waiting_vl_twoLABEL"];}
+	else {$calls_waiting_vl_twoLABEL="";}
 if (isset($_GET["pause_max_url_trigger"]))			{$pause_max_url_trigger=$_GET["pause_max_url_trigger"];}
 	elseif (isset($_POST["pause_max_url_trigger"]))	{$pause_max_url_trigger=$_POST["pause_max_url_trigger"];}
+	else {$pause_max_url_trigger=0;}
 if (isset($_GET["inbound_ingroup"]))			{$inbound_ingroup=$_GET["inbound_ingroup"];}
 	elseif (isset($_POST["inbound_ingroup"]))	{$inbound_ingroup=$_POST["inbound_ingroup"];}
+	else {$inbound_ingroup="";}
 if (isset($_GET["manual_minimum_ring_seconds"]))			{$manual_minimum_ring_seconds=$_GET["manual_minimum_ring_seconds"];}
 	elseif (isset($_POST["manual_minimum_ring_seconds"]))	{$manual_minimum_ring_seconds=$_POST["manual_minimum_ring_seconds"];}
+	else {$manual_minimum_ring_seconds=0;}
 if (isset($_GET["manual_minimum_ringing"]))				{$manual_minimum_ringing=$_GET["manual_minimum_ringing"];}
 	elseif (isset($_POST["manual_minimum_ringing"]))	{$manual_minimum_ringing=$_POST["manual_minimum_ringing"];}
+	else {$manual_minimum_ringing=0;}
 if (isset($_GET["stereo_recording"]))			{$stereo_recording=$_GET["stereo_recording"];}
 	elseif (isset($_POST["stereo_recording"]))	{$stereo_recording=$_POST["stereo_recording"];}
+	else {$stereo_recording="";}
 
-$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
 
 $allow_vlc_lookup		= '1';	# allow lead lookup by vendor_lead_code
+$MqueryCID='';
 
 # if options file exists, use the override values for the above variables
 #   see the options-example.php file for more information
@@ -1136,12 +1292,11 @@ if ($qm_conf_ct > 0)
 	$SSrecording_dtmf_detection = 			$row[28];
 	$SSrecording_dtmf_muting = 				$row[29];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;   $format='text';}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;  $format="text";}
+$DB=preg_replace("/[^0-9]/","",$DB);
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
-$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
 $alt_phone = preg_replace("/\s/","",$alt_phone);
 $phone_code = preg_replace("/\s/","",$phone_code);
 $phone_number = preg_replace("/\s/","",$phone_number);
@@ -1149,68 +1304,34 @@ $campaign = preg_replace("/\'|\"|\\\\|;/","",$campaign);
 $closer_choice = preg_replace("/\'|\"|\\\\|;/","",$closer_choice);
 $lead_id = preg_replace('/[^0-9]/','',$lead_id);
 $list_id = preg_replace('/[^0-9]/','',$list_id);
-$conf_exten = preg_replace('/[^-_\.0-9a-zA-Z]/','',$conf_exten);
-$uniqueid = preg_replace('/[^-_\.0-9a-zA-Z]/','',$uniqueid);
 $length_in_sec = preg_replace('/[^0-9]/','',$length_in_sec);
-$CallBackDatETimE = preg_replace('/[^- \:_0-9a-zA-Z]/','',$CallBackDatETimE);
-$CallBackLeadStatus = preg_replace('/[^-_0-9a-zA-Z]/','',$CallBackLeadStatus);
 $DB = preg_replace('/[^0-9]/','',$DB);
 $DiaL_SecondS = preg_replace('/[^0-9]/','',$DiaL_SecondS);
 $LogouTKicKAlL = preg_replace('/[^0-9]/','',$LogouTKicKAlL);
-$MDnextCID = preg_replace('/[^- _0-9a-zA-Z]/','',$MDnextCID);
-$VDRP_stage = preg_replace('/[^-_0-9a-zA-Z]/','',$VDRP_stage);
-$VDstop_rec_after_each_call = preg_replace('/[^-_0-9a-zA-Z]/','',$VDstop_rec_after_each_call);
-$account = preg_replace('/[^-_0-9a-zA-Z]/','',$account);
-$agent_dialed_number = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_dialed_number);
-$agent_dialed_type = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_dialed_type);
 $agent_email = preg_replace("/\'|\"|\\\\|;/","",$agent_email);
-$agent_log = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_log);
-$agent_log_id = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_log_id);
 $agentchannel = preg_replace("/\'|\"|\\\\/","",$agentchannel);
-$alt_dial = preg_replace('/[^-_0-9a-zA-Z]/','',$alt_dial);
-$auto_dial_level = preg_replace('/[^-\._0-9a-zA-Z]/','',$auto_dial_level);
-$blind_transfer = preg_replace('/[^-_0-9a-zA-Z]/','',$blind_transfer);
-$callback_id = preg_replace('/[^-_0-9a-zA-Z]/','',$callback_id);
 $called_count = preg_replace('/[^0-9]/','',$called_count);
 $channel = preg_replace("/\'|\"|\\\\/","",$channel);
 $cid_lock = preg_replace('/[^0-9]/','',$cid_lock);
-$closer_blended = preg_replace('/[^-_0-9a-zA-Z]/','',$closer_blended);
-$conf_dialed = preg_replace('/[^-_0-9a-zA-Z]/','',$conf_dialed);
-$conf_silent_prefix = preg_replace('/[^-_0-9a-zA-Z]/','',$conf_silent_prefix);
-$custom_field_names = preg_replace("/\'|\"|\\\\|;/","",$custom_field_names);
+# $custom_field_names = preg_replace("/\'|\"|\\\\|;/","",$custom_field_names); # Removed, this isn't defined until later
 $customer_server_ip = preg_replace("/\'|\"|\\\\|;/","",$customer_server_ip);
 $customer_zap_channel = preg_replace("/\'|\"|\\\\/","",$customer_zap_channel);
 $date = preg_replace('/[^-_0-9]/','',$date);
 $dial_timeout = preg_replace('/[^0-9]/','',$dial_timeout);
-$disable_alter_custphone = preg_replace('/[^-_0-9a-zA-Z]/','',$disable_alter_custphone);
 $email_enabled = preg_replace('/[^0-9]/','',$email_enabled);
-$email_row_id = preg_replace('/[^-_0-9a-zA-Z]/','',$email_row_id);
 $enable_sipsak_messages = preg_replace('/[^0-9]/','',$enable_sipsak_messages);
-$ext_priority = preg_replace('/[^-_0-9a-zA-Z]/','',$ext_priority);
 $exten = preg_replace("/\'|\"|\\\\|;/","",$exten);
 $extension = preg_replace("/\'|\"|\\\\|;/","",$extension);
 $favorites_list = preg_replace("/\"|\\\\|;/","",$favorites_list);
-$format = preg_replace('/[^-_0-9a-zA-Z]/','',$format);
-$gender = preg_replace('/[^-_0-9a-zA-Z]/','',$gender);
 $group_name = preg_replace("/\'|\"|\\\\|;/","",$group_name);
 $hangup_all_non_reserved = preg_replace('/[^0-9]/','',$hangup_all_non_reserved);
-$inOUT = preg_replace('/[^-_0-9a-zA-Z]/','',$inOUT);
 $inbound_lead_search = preg_replace('/[^0-9]/','',$inbound_lead_search);
-$last_VDRP_stage = preg_replace('/[^-_0-9a-zA-Z]/','',$last_VDRP_stage);
 $leaving_threeway = preg_replace('/[^0-9]/','',$leaving_threeway);
-$manual_dial_call_time_check = preg_replace('/[^-_0-9a-zA-Z]/','',$manual_dial_call_time_check);
 $no_delete_sessions = preg_replace('/[^0-9]/','',$no_delete_sessions);
-$nocall_dial_flag = preg_replace('/[^-_0-9a-zA-Z]/','',$nocall_dial_flag);
 $nodeletevdac = preg_replace('/[^0-9]/','',$nodeletevdac);
-$omit_phone_code = preg_replace('/[^-_0-9a-zA-Z]/','',$omit_phone_code);
 $original_phone_login = preg_replace("/\'|\"|\\\\|;/","",$original_phone_login);
-$parked_hangup = preg_replace('/[^-_0-9a-zA-Z]/','',$parked_hangup);
-$pause_trigger = preg_replace('/[^-_0-9a-zA-Z]/','',$pause_trigger);
 $phone_login = preg_replace("/\'|\"|\\\\|;/","",$phone_login);
 $phone_pass = preg_replace("/\'|\"|\\\\|;/","",$phone_pass);
-$preview = preg_replace('/[^-_0-9a-zA-Z]/','',$preview);
-$previous_agent_log_id = preg_replace('/[^-_0-9a-zA-Z]/','',$previous_agent_log_id);
-$protocol = preg_replace('/[^-_0-9a-zA-Z]/','',$protocol);
 $qm_extension = preg_replace("/\'|\"|\\\\|;/","",$qm_extension);
 $qm_phone = preg_replace("/\'|\"|\\\\|;/","",$qm_phone);
 $recording_filename = preg_replace("/\'|\"|\\\\|;/","",$recording_filename);
@@ -1218,29 +1339,19 @@ $recording_id = preg_replace('/[^0-9]/','',$recording_id);
 $stage = preg_replace("/\'|\"|\\\\|;/","",$stage);
 $start_epoch = preg_replace("/\'|\"|\\\\|;/","",$start_epoch);
 $url_ids = preg_replace("/\'|\"|\\\\|;/","",$url_ids);
-$use_campaign_dnc = preg_replace('/[^-_0-9a-zA-Z]/','',$use_campaign_dnc);
-$use_internal_dnc = preg_replace('/[^-_0-9a-zA-Z]/','',$use_internal_dnc);
 $usegroupalias = preg_replace('/[^0-9]/','',$usegroupalias);
 $user_abb = preg_replace("/\'|\"|\\\\|;/","",$user_abb);
 $vtiger_callback_id = preg_replace("/\'|\"|\\\\|;/","",$vtiger_callback_id);
 $wrapup = preg_replace("/\'|\"|\\\\|;/","",$wrapup);
 $url_link = preg_replace("/\'|\"|\\\\|;/","",$url_link);
-$routing_initiated_recording = preg_replace('/[^-_0-9a-zA-Z]/','',$routing_initiated_recording);
 $dead_time = preg_replace('/[^0-9]/','',$dead_time);
-$callback_gmt_offset = preg_replace('/[^- \._0-9a-zA-Z]/','',$callback_gmt_offset);
-$callback_timezone = preg_replace('/[^-, _0-9a-zA-Z]/','',$callback_timezone);
-$manual_dial_validation = preg_replace('/[^-_0-9a-zA-Z]/','',$manual_dial_validation);
 $start_date = preg_replace('/[^-_0-9]/','',$start_date);
 $end_date = preg_replace('/[^-_0-9]/','',$end_date);
-$customer_sec = preg_replace('/[^-_0-9]/','',$customer_sec);
+$customer_sec = preg_replace('/[^-0-9]/','',$customer_sec); # Removed underscore - used for comparison with an integer thus leaving the underscore won't work in PHP8
 $leave_3way_start_recording_trigger = preg_replace('/[^0-9]/','',$leave_3way_start_recording_trigger);
-$leave_3way_start_recording_filename = preg_replace('/[^-_0-9a-zA-Z]/','',$leave_3way_start_recording_filename);
 $channelrec = preg_replace("/\'|\"|\\\\|;/","",$channelrec);
-$pause_max_url_trigger = preg_replace('/[^0-9]/','',$pause_max_url_trigger);
-$ACTION = preg_replace('/[^-_0-9a-zA-Z]/','',$ACTION);
 $manual_minimum_ring_seconds = preg_replace('/[^0-9]/','',$manual_minimum_ring_seconds);
 $manual_minimum_ringing = preg_replace('/[^0-9]/','',$manual_minimum_ringing);
-$stereo_recording = preg_replace('/[^-_0-9a-zA-Z]/','',$stereo_recording);
 $vendor_lead_code = preg_replace("/\"|\\\\|;/",'-',$vendor_lead_code);
 $title = preg_replace("/\"|\\\\|;/",'-',$title);
 $first_name = preg_replace("/\"|\\\\|;/",'-',$first_name);
@@ -1282,23 +1393,70 @@ if ($non_latin < 1)
 	$status = preg_replace("/[^-_0-9a-zA-Z]/","",$status);
 	$MgrApr_user = preg_replace("/[^-_0-9a-zA-Z]/","",$MgrApr_user);
 	$MgrApr_pass = preg_replace("/[^-_0-9a-zA-Z]/","",$MgrApr_pass);
+
+	$ACTION = preg_replace('/[^-_0-9a-zA-Z]/','',$ACTION);
+	$CallBackDatETimE = preg_replace('/[^- \:_0-9a-zA-Z]/','',$CallBackDatETimE);
+	$CallBackLeadStatus = preg_replace('/[^-_0-9a-zA-Z]/','',$CallBackLeadStatus);
+	$MDnextCID = preg_replace('/[^- _0-9a-zA-Z]/','',$MDnextCID);
+	$VDRP_stage = preg_replace('/[^-_0-9a-zA-Z]/','',$VDRP_stage);
+	$VDstop_rec_after_each_call = preg_replace('/[^-_0-9a-zA-Z]/','',$VDstop_rec_after_each_call);
+	$account = preg_replace('/[^-_0-9a-zA-Z]/','',$account);
+	$agent_dialed_number = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_dialed_number);
+	$agent_dialed_type = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_dialed_type);
+	$agent_log = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_log);
+	$agent_log_id = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_log_id);
 	$agent_territories = preg_replace('/[^- _0-9a-zA-Z]/','',$agent_territories);
+	$alt_dial = preg_replace('/[^-_0-9a-zA-Z]/','',$alt_dial);
 	$alt_num_status = preg_replace('/[^-_0-9a-zA-Z]/','',$alt_num_status);
+	$auto_dial_level = preg_replace('/[^-\._0-9a-zA-Z]/','',$auto_dial_level);
+	$blind_transfer = preg_replace('/[^-_0-9a-zA-Z]/','',$blind_transfer);
+	$callback_gmt_offset = preg_replace('/[^- \._0-9a-zA-Z]/','',$callback_gmt_offset);
+	$callback_id = preg_replace('/[^-_0-9a-zA-Z]/','',$callback_id);
+	$callback_timezone = preg_replace('/[^-, _0-9a-zA-Z]/','',$callback_timezone);
 	$camp_script = preg_replace('/[^-_0-9a-zA-Z]/','',$camp_script);
 	$campaign_cid = preg_replace('/[^-_0-9a-zA-Z]/','',$campaign_cid);
+	$closer_blended = preg_replace('/[^-_0-9a-zA-Z]/','',$closer_blended);
+	$conf_dialed = preg_replace('/[^-_0-9a-zA-Z]/','',$conf_dialed);
+	$conf_exten = preg_replace('/[^-_\.0-9a-zA-Z]/','',$conf_exten);
+	$conf_silent_prefix = preg_replace('/[^-_0-9a-zA-Z]/','',$conf_silent_prefix);
 	$dial_ingroup = preg_replace('/[^-_0-9a-zA-Z]/','',$dial_ingroup);
 	$dial_method = preg_replace('/[^-_0-9a-zA-Z]/','',$dial_method);
 	$dial_prefix = preg_replace('/[^-_0-9a-zA-Z]/','',$dial_prefix);
+	$disable_alter_custphone = preg_replace('/[^-_0-9a-zA-Z]/','',$disable_alter_custphone);
 	$dispo_choice = preg_replace('/[^-_0-9a-zA-Z]/','',$dispo_choice);
+	$email_row_id = preg_replace('/[^-_0-9a-zA-Z]/','',$email_row_id);
 	$ext_context = preg_replace('/[^-_0-9a-zA-Z]/','',$ext_context);
+	$ext_priority = preg_replace('/[^-_0-9a-zA-Z]/','',$ext_priority);
+	$format = preg_replace('/[^-_0-9a-zA-Z]/','',$format);
+	$gender = preg_replace('/[^-_0-9a-zA-Z]/','',$gender);
+	$inOUT = preg_replace('/[^-_0-9a-zA-Z]/','',$inOUT);
 	$in_script = preg_replace('/[^-_0-9a-zA-Z]/','',$in_script);
+	$last_VDRP_stage = preg_replace('/[^-_0-9a-zA-Z]/','',$last_VDRP_stage);
+	$leave_3way_start_recording_filename = preg_replace('/[^-_0-9a-zA-Z]/','',$leave_3way_start_recording_filename);
+	$manual_dial_call_time_check = preg_replace('/[^-_0-9a-zA-Z]/','',$manual_dial_call_time_check);
 	$manual_dial_filter = preg_replace('/[^-_0-9a-zA-Z]/','',$manual_dial_filter);
 	$manual_dial_search_filter = preg_replace('/[^-_0-9a-zA-Z]/','',$manual_dial_search_filter);
+	$manual_dial_validation = preg_replace('/[^-_0-9a-zA-Z]/','',$manual_dial_validation);
+	$nocall_dial_flag = preg_replace('/[^-_0-9a-zA-Z]/','',$nocall_dial_flag);
 	$old_CID = preg_replace('/[^- _0-9a-zA-Z]/','',$old_CID);
+	$omit_phone_code = preg_replace('/[^-_0-9a-zA-Z]/','',$omit_phone_code);
+	$parked_hangup = preg_replace('/[^-_0-9a-zA-Z]/','',$parked_hangup);
+	$pause_max_url_trigger = preg_replace('/[^0-9]/','',$pause_max_url_trigger);
+	$pause_trigger = preg_replace('/[^-_0-9a-zA-Z]/','',$pause_trigger);
+	$preview = preg_replace('/[^-_0-9a-zA-Z]/','',$preview);
+	$previous_agent_log_id = preg_replace('/[^-_0-9a-zA-Z]/','',$previous_agent_log_id);
+	$protocol = preg_replace('/[^-_0-9a-zA-Z]/','',$protocol);
 	$qm_dispo_code = preg_replace('/[^-_0-9a-zA-Z]/','',$qm_dispo_code);
 	$recipient = preg_replace('/[^-_0-9a-zA-Z]/','',$recipient);
+	$routing_initiated_recording = preg_replace('/[^-_0-9a-zA-Z]/','',$routing_initiated_recording);
 	$search = preg_replace('/[^-_0-9a-zA-Z]/','',$search);
+	$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
+	$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+	$stereo_recording = preg_replace('/[^-_0-9a-zA-Z]/','',$stereo_recording);
 	$sub_status = preg_replace('/[^-_0-9a-zA-Z]/','',$sub_status);
+	$uniqueid = preg_replace('/[^-_\.0-9a-zA-Z]/','',$uniqueid);
+	$use_campaign_dnc = preg_replace('/[^-_0-9a-zA-Z]/','',$use_campaign_dnc);
+	$use_internal_dnc = preg_replace('/[^-_0-9a-zA-Z]/','',$use_internal_dnc);
 	$user_group = preg_replace('/[^-_0-9a-zA-Z]/','',$user_group);
 	$inbound_ingroup = preg_replace('/[^-_0-9a-zA-Z]/','',$inbound_ingroup);
 	$calls_waiting_vl_oneLABEL = preg_replace('/[^-, _0-9a-zA-Z]/','',$calls_waiting_vl_oneLABEL);
@@ -1312,23 +1470,70 @@ else
 	$status = preg_replace("/\'|\"|\\\\|;/","",$status);
 	$MgrApr_user = preg_replace("/\'|\"|\\\\|;/","",$MgrApr_user);
 	$MgrApr_pass = preg_replace("/\'|\"|\\\\|;/","",$MgrApr_pass);
+
+	$ACTION = preg_replace('/[^-_0-9\p{L}]/u','',$ACTION);
+	$CallBackDatETimE = preg_replace('/[^- \:_0-9\p{L}]/u','',$CallBackDatETimE);
+	$CallBackLeadStatus = preg_replace('/[^-_0-9\p{L}]/u','',$CallBackLeadStatus);
+	$MDnextCID = preg_replace('/[^- _0-9\p{L}]/u','',$MDnextCID);
+	$VDRP_stage = preg_replace('/[^-_0-9\p{L}]/u','',$VDRP_stage);
+	$VDstop_rec_after_each_call = preg_replace('/[^-_0-9\p{L}]/u','',$VDstop_rec_after_each_call);
+	$account = preg_replace('/[^-_0-9\p{L}]/u','',$account);
+	$agent_dialed_number = preg_replace('/[^-_0-9\p{L}]/u','',$agent_dialed_number);
+	$agent_dialed_type = preg_replace('/[^-_0-9\p{L}]/u','',$agent_dialed_type);
+	$agent_log = preg_replace('/[^-_0-9\p{L}]/u','',$agent_log);
+	$agent_log_id = preg_replace('/[^-_0-9\p{L}]/u','',$agent_log_id);
 	$agent_territories = preg_replace('/[^- _0-9\p{L}]/u','',$agent_territories);
+	$alt_dial = preg_replace('/[^-_0-9\p{L}]/u','',$alt_dial);
 	$alt_num_status = preg_replace('/[^-_0-9\p{L}]/u','',$alt_num_status);
+	$auto_dial_level = preg_replace('/[^-\._0-9\p{L}]/u','',$auto_dial_level);
+	$blind_transfer = preg_replace('/[^-_0-9\p{L}]/u','',$blind_transfer);
+	$callback_gmt_offset = preg_replace('/[^- \._0-9\p{L}]/u','',$callback_gmt_offset);
+	$callback_id = preg_replace('/[^-_0-9\p{L}]/u','',$callback_id);
+	$callback_timezone = preg_replace('/[^-, _0-9\p{L}]/u','',$callback_timezone);
 	$camp_script = preg_replace('/[^-_0-9\p{L}]/u','',$camp_script);
 	$campaign_cid = preg_replace('/[^-_0-9\p{L}]/u','',$campaign_cid);
+	$closer_blended = preg_replace('/[^-_0-9\p{L}]/u','',$closer_blended);
+	$conf_dialed = preg_replace('/[^-_0-9\p{L}]/u','',$conf_dialed);
+	$conf_exten = preg_replace('/[^-_\.0-9\p{L}]/u','',$conf_exten);
+	$conf_silent_prefix = preg_replace('/[^-_0-9\p{L}]/u','',$conf_silent_prefix);
 	$dial_ingroup = preg_replace('/[^-_0-9\p{L}]/u','',$dial_ingroup);
 	$dial_method = preg_replace('/[^-_0-9\p{L}]/u','',$dial_method);
 	$dial_prefix = preg_replace('/[^-_0-9\p{L}]/u','',$dial_prefix);
+	$disable_alter_custphone = preg_replace('/[^-_0-9\p{L}]/u','',$disable_alter_custphone);
 	$dispo_choice = preg_replace('/[^-_0-9\p{L}]/u','',$dispo_choice);
+	$email_row_id = preg_replace('/[^-_0-9\p{L}]/u','',$email_row_id);
 	$ext_context = preg_replace('/[^-_0-9\p{L}]/u','',$ext_context);
+	$ext_priority = preg_replace('/[^-_0-9\p{L}]/u','',$ext_priority);
+	$format = preg_replace('/[^-_0-9\p{L}]/u','',$format);
+	$gender = preg_replace('/[^-_0-9\p{L}]/u','',$gender);
+	$inOUT = preg_replace('/[^-_0-9\p{L}]/u','',$inOUT);
 	$in_script = preg_replace('/[^-_0-9\p{L}]/u','',$in_script);
+	$last_VDRP_stage = preg_replace('/[^-_0-9\p{L}]/u','',$last_VDRP_stage);
+	$leave_3way_start_recording_filename = preg_replace('/[^-_0-9\p{L}]/u','',$leave_3way_start_recording_filename);
+	$manual_dial_call_time_check = preg_replace('/[^-_0-9\p{L}]/u','',$manual_dial_call_time_check);
 	$manual_dial_filter = preg_replace('/[^-_0-9\p{L}]/u','',$manual_dial_filter);
 	$manual_dial_search_filter = preg_replace('/[^-_0-9\p{L}]/u','',$manual_dial_search_filter);
+	$manual_dial_validation = preg_replace('/[^-_0-9\p{L}]/u','',$manual_dial_validation);
+	$nocall_dial_flag = preg_replace('/[^-_0-9\p{L}]/u','',$nocall_dial_flag);
 	$old_CID = preg_replace('/[^- _0-9\p{L}]/u','',$old_CID);
+	$omit_phone_code = preg_replace('/[^-_0-9\p{L}]/u','',$omit_phone_code);
+	$parked_hangup = preg_replace('/[^-_0-9\p{L}]/u','',$parked_hangup);
+	$pause_max_url_trigger = preg_replace('/[^0-9]/','',$pause_max_url_trigger);
+	$pause_trigger = preg_replace('/[^-_0-9\p{L}]/u','',$pause_trigger);
+	$preview = preg_replace('/[^-_0-9\p{L}]/u','',$preview);
+	$previous_agent_log_id = preg_replace('/[^-_0-9\p{L}]/u','',$previous_agent_log_id);
+	$protocol = preg_replace('/[^-_0-9\p{L}]/u','',$protocol);
 	$qm_dispo_code = preg_replace('/[^-_0-9\p{L}]/u','',$qm_dispo_code);
 	$recipient = preg_replace('/[^-_0-9\p{L}]/u','',$recipient);
+	$routing_initiated_recording = preg_replace('/[^-_0-9\p{L}]/u','',$routing_initiated_recording);
 	$search = preg_replace('/[^-_0-9\p{L}]/u','',$search);
+	$server_ip = preg_replace('/[^-\.\:\_0-9\p{L}]/u','',$server_ip);
+	$session_name = preg_replace('/[^-\.\:\_0-9\p{L}]/u','',$session_name);
+	$stereo_recording = preg_replace('/[^-_0-9\p{L}]/u','',$stereo_recording);
 	$sub_status = preg_replace('/[^-_0-9\p{L}]/u','',$sub_status);
+	$uniqueid = preg_replace('/[^-_\.0-9\p{L}]/u','',$uniqueid);
+	$use_campaign_dnc = preg_replace('/[^-_0-9\p{L}]/u','',$use_campaign_dnc);
+	$use_internal_dnc = preg_replace('/[^-_0-9\p{L}]/u','',$use_internal_dnc);
 	$user_group = preg_replace('/[^-_0-9\p{L}]/u','',$user_group);
 	$inbound_ingroup = preg_replace('/[^-_0-9\p{L}]/u','',$inbound_ingroup);
 	$calls_waiting_vl_oneLABEL = preg_replace('/[^-, _0-9\p{L}]/u','',$calls_waiting_vl_oneLABEL);
@@ -1639,7 +1844,7 @@ if ($ACTION == 'LogiNCamPaigns')
 			{
 			$rowx=mysqli_fetch_row($rslt);
 			echo "<option value=\"$rowx[0]\"";
-			if ($VD_campaign == "$rowx[0]") {echo " SELECTED"; $campSELECTED++;}
+			if ($campaign == "$rowx[0]") {echo " SELECTED"; $campSELECTED++;}
 			echo ">$rowx[0] - $rowx[1]</option>\n";
 			$o++;
 			}
@@ -4239,7 +4444,7 @@ if ($ACTION == 'manDiaLnextCaLL')
 			}
 		if ($affected_rows > 0)
 			{
-			if (!$CBleadIDset)
+			if (!isset($CBleadIDset))
 				{
 				##### grab the lead_id of the reserved user in vicidial_hopper
 				$stmt="SELECT lead_id FROM vicidial_hopper where campaign_id='$campaign' and status='QUEUE' and user='$user' LIMIT 1;";
@@ -4301,13 +4506,14 @@ if ($ACTION == 'manDiaLnextCaLL')
 				$entry_list_id	= trim("$row[34]");
 					if ($entry_list_id < 100) {$entry_list_id = $list_id;}
 				}
+
+			$ACcount =		'';
+			$ACcomments =		'';
 			if ($qc_features_active > 0)
 				{
 				//Added by Poundteam for Audited Comments
 				##### if list has audited comments, grab the audited comments
 				require_once('audit_comments.php');
-				$ACcount =		'';
-				$ACcomments =		'';
 				$audit_comments_active=audit_comments_active($list_id,$format,$user,$mel,$NOW_TIME,$link,$server_ip,$session_name,$one_mysql_log);
 				if ($audit_comments_active)
 					{
@@ -4574,7 +4780,7 @@ if ($ACTION == 'manDiaLnextCaLL')
 			$rslt=mysql_to_mysqli($stmtPDC, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmtPDC,'00916',$user,$server_ip,$session_name,$one_mysql_log);}
 
-			if (!$CBleadIDset)
+			if (!isset($CBleadIDset))
 				{
 				### delete the lead from the hopper
 				$stmt = "DELETE FROM vicidial_hopper where lead_id='$lead_id';";
@@ -4674,10 +4880,10 @@ if ($ACTION == 'manDiaLnextCaLL')
 					}
 
 				### BEGIN check for Dial Timeout Lead Override ###
+				$MD_field='';
+				$DTL_override='';
 				if ( (strlen($dial_timeout_lead_container) > 1) and ($dial_timeout_lead_container != 'DISABLED') )
 					{
-					$MD_field='';
-					$DTL_override='';
 					$DTLOset=0;   $skip_line=0;
 					# Gather details on Dial Timeout Lead settings container
 					$stmt = "SELECT container_entry FROM vicidial_settings_containers where container_id='$dial_timeout_lead_container';";
@@ -5111,11 +5317,12 @@ if ($ACTION == 'manDiaLnextCaLL')
 					$variable = "Variable: usegroupalias=1";
 					}
 				else
-					{$account='';   $variable='';}
+					{$account='';   $variable='';   $RAWaccount='';}
 
 				$dial_channel = "$local_DEF$conf_exten$local_AMP$ext_context$Local_persist";
 
 				$preset_name='';
+				$IN_start_call_url='';
 				if (strlen($dial_ingroup) > 1)
 					{
 					### look for a dial-ingroup cid
@@ -6401,6 +6608,7 @@ if ($ACTION == 'manDiaLonly')
 	$MT[0]='';
 	$row='';   $rowx='';
 	$CCIDtype='';
+	$IN_start_call_url=''; # Never set, despite being called further down?
 	$channel_live=1;
 	$MDF_search_flag='MAIN';
 	# outbound call, assign fronter to user and closer blank
@@ -6654,11 +6862,11 @@ if ($ACTION == 'manDiaLonly')
 			}
 		### END check phone filtering for DNC or camplists if enabled ###
 
+		$MD_field='';
+		$DTL_override='';
 		### BEGIN check for Dial Timeout Lead Override ###
 		if ( (strlen($dial_timeout_lead_container) > 1) and ($dial_timeout_lead_container != 'DISABLED') )
 			{
-			$MD_field='';
-			$DTL_override='';
 			$DTLOset=0;   $skip_line=0;
 			# Gather details on Dial Timeout Lead settings container
 			$stmt = "SELECT container_entry FROM vicidial_settings_containers where container_id='$dial_timeout_lead_container';";
@@ -7196,7 +7404,7 @@ if ($ACTION == 'manDiaLonly')
 			$variable = "Variable: usegroupalias=1";
 			}
 		else
-			{$account='';   $variable='';}
+			{$account='';   $variable='';   $RAWaccount='';}
 
 		if ( ($scheduled_callbacks_auto_reschedule != 'DISABLED') and (strlen($scheduled_callbacks_auto_reschedule) > 0) )
 			{
@@ -8265,6 +8473,7 @@ if ($ACTION == 'manDiaLlookCaLL')
 						$PATHmonitorS =	'/var/spool/asterisk/monitorS';
 						$PATHmonitorP =	'/var/spool/asterisk/monitorP';
 						$PATHmonitorT = $PATHmonitorS;
+						$parallel_recording_id=0;
 
 						if ( ($SSstereo_parallel_recording > 0) && (preg_match("/CUSTOMER|FULL/",$stereo_parallel_recording)) )
 							{
@@ -8967,7 +9176,15 @@ if ($stage == "end")
 		$term_reason='NONE';
 		if ( (strlen($start_epoch) < 1 ) or (preg_match("/[^0-9]/",$start_epoch)) )
 			{$start_epoch=0;}
-		if ($start_epoch < 1000)
+		if (is_numeric($start_epoch)) 
+			{
+			$startEpochVal = (int) $start_epoch;
+			}
+		else
+			{
+			$startEpochVal = strtotime($start_epoch);
+			}
+		if ($startEpochVal < 1000)
 			{
 			if ( ($VLA_inOUT == 'INBOUND') or ($VLA_inOUT == 'CHAT') or ($VLA_inOUT == 'EMAIL') )
 				{
@@ -9032,18 +9249,10 @@ if ($stage == "end")
 			}
 		else
 			{
-			if (is_numeric($start_epoch)) 
-				{
-				$startEpochVal = (int) $start_epoch;
-				}
-			else
-				{
-				$startEpochVal = strtotime($start_epoch);
-				}
 			$length_in_sec = ($StarTtime - $startEpochVal);
 			}
 
-		if (strlen($VDcampaign_id)<1) {$VDcampaign_id = $campaign;}
+		if (!isset($VDcampaign_id) || strlen($VDcampaign_id)<1) {$VDcampaign_id = $campaign;}
 
 		$four_hours_ago = date("Y-m-d H:i:s", mktime(date("H")-4,date("i"),date("s"),date("m"),date("d"),date("Y")));
 
@@ -9792,6 +10001,7 @@ if ($stage == "end")
 		if ( ($VLA_inOUT == 'AUTO') or ($VLA_inOUT == 'MANUAL') )
 			{
 			$SQLterm = "term_reason='$term_reason',";
+			$VDstatus='';
 
 			if ( (preg_match("/NONE/",$term_reason)) or (preg_match("/NONE/",$VDterm_reason)) or (strlen($VDterm_reason) < 1) )
 				{
@@ -10219,6 +10429,7 @@ if ($stage == "end")
 		$loop_count=0;
 		while($loop_count < $total_rec)
 			{
+			$lidSQL='';
 			if (strlen($rec_channels[$loop_count])>5)
 				{
 				$stmt="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$server_ip','','Hangup','RH12345$StarTtime$loop_count','Channel: $rec_channels[$loop_count]','','','','','','','','','');";
@@ -10511,6 +10722,19 @@ if ($ACTION == 'VDADcheckINCOMING')
 	$INclosecallid='';
 	$INxfercallid='';
 	$rct = 'Q';
+	$closecallid='';
+	$LISTweb_form_address='';
+	$LISTweb_form_address_two='';
+	$LISTweb_form_address_three='';
+	$DID_id='';
+	$DID_extension='';
+	$DID_pattern='';
+	$DID_description='';
+	$DID_custom_one='';
+	$DID_custom_two='';
+	$DID_custom_three='';
+	$DID_custom_four='';
+	$DID_custom_five='';
 	# default to $fronter=$user, closer blank
 	$fronter = $user;
 	$closer='';
@@ -10632,13 +10856,14 @@ if ($ACTION == 'VDADcheckINCOMING')
 				$entry_list_id	= trim("$row[34]");
 				if ($entry_list_id < 100) {$entry_list_id = $list_id;}
 				}
+
+			$ACcount =		'';
+			$ACcomments =		'';
 			if ($qc_features_active > 0)
 				{
 				//Added by Poundteam for Audited Comments
 				##### if list has audited comments, grab the audited comments
 				require_once('audit_comments.php');
-				$ACcount =		'';
-				$ACcomments =		'';
 				$audit_comments_active=audit_comments_active($list_id,$format,$user,$mel,$NOW_TIME,$link,$server_ip,$session_name,$one_mysql_log);
 				if ($audit_comments_active)
 					{
@@ -11301,8 +11526,8 @@ if ($ACTION == 'VDADcheckINCOMING')
 							$vs_vc_ct = mysqli_num_rows($rslt);
 							if ($vs_vc_ct > 0)
 								{
-								$row=mysqli_fetch_row($rslt);
-								$script_recording_delay = $row[0];
+								$rowx=mysqli_fetch_row($rslt);
+								$script_recording_delay = $rowx[0];
 								}
 							}
 
@@ -11319,8 +11544,8 @@ if ($ACTION == 'VDADcheckINCOMING')
 							$ug_vc_ct = mysqli_num_rows($rslt);
 							if ($ug_vc_ct > 0)
 								{
-								$row=mysqli_fetch_row($rslt);
-								$script_recording_delay = $row[0];
+								$rowy=mysqli_fetch_row($rslt);
+								$script_recording_delay = $rowy[0];
 								}
 							}
 
@@ -11335,8 +11560,8 @@ if ($ACTION == 'VDADcheckINCOMING')
 							$vs_vc_ct = mysqli_num_rows($rslt);
 							if ($vs_vc_ct > 0)
 								{
-								$row=mysqli_fetch_row($rslt);
-								if ($row[0] > 0) {$script_recording_delay++;}
+								$rowz=mysqli_fetch_row($rslt);
+								if ($rowz[0] > 0) {$script_recording_delay++;}
 								}
 							}
 						}
@@ -12296,6 +12521,7 @@ if ($ACTION == 'ManagerChatsCheck')
 	// Get a count on how many chats the agent is involved in, and also any chats where there are unread messages BY THE USER to determine if the user gets a blinking light.
 	$chat_stmt="select manager_chat_id, manager_chat_subid, sum(if(message_viewed_date is null and user='$user', 1, 0)) from vicidial_manager_chat_log where (user='$user' or manager='$user') group by manager_chat_id, manager_chat_subid order by manager_chat_id, manager_chat_subid";
 	$chat_rslt=mysql_to_mysqli($chat_stmt, $link);
+	$unread_messages=0;
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$chat_stmt,'00636',$user,$server_ip,$session_name,$one_mysql_log);}
 	$active_chats=mysqli_num_rows($chat_rslt);
 	while ($chat_row=mysqli_fetch_row($chat_rslt)) 
@@ -12416,6 +12642,7 @@ if ($ACTION == 'VDADcheckINCOMINGother')
 		### If no emails have been sent to agent, check for chats, this is the code section where the agent interface will grab the next available chat
 		if ($email_ct==0) 
 			{
+			$chat_ct=0;
 			# Chats don't have a priority setting, but we use it for the AGENTDIRECT_CHAT one (which has it set to 99 and is uneditable through the admin) so that is always the highest priority.  Also ensures that agent does not transfer to self if transferring to the same ingroup (transferring_agent!=user clause)
 			$stmt="SELECT vlc.chat_id,UNIX_TIMESTAMP(vlc.chat_start_time),vlc.status,vlc.chat_creator,vlc.group_id,vlc.lead_id,vlc.user_direct_group_id,vig.queue_priority,vig.get_call_launch from vicidial_live_chats vlc, vicidial_inbound_groups vig where vlc.status='WAITING' and (vlc.group_id IN ($chat_group_str) or (vlc.group_id='AGENTDIRECT_CHAT' and user_direct='$user')) and vlc.group_id NOT IN($VD_hit_limit_ingroups) and (transferring_agent is null or transferring_agent!='$user') order by queue_priority desc, chat_id asc limit 1;";
 			if ($DB) {echo "$stmt\n";}
@@ -14940,6 +15167,16 @@ if ($ACTION == 'updateDISPO')
 	$rslt=mysql_to_mysqli($stmt, $link);
 		if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00143',$user,$server_ip,$session_name,$one_mysql_log);}
 	$row=mysqli_fetch_row($rslt);
+
+	# Neither variable is ever set via vdc_db_query.php here, although may be defined via settings container further down.
+	$fronter='';
+	$parked_by='';
+
+	$ig_custom_one='';
+	$ig_custom_two='';
+	$ig_custom_three='';
+	$ig_custom_four='';
+	$ig_custom_five='';
 	if ($row[0] > 0)
 		{
 		$call_type='IN';
@@ -15109,6 +15346,7 @@ if ($ACTION == 'updateDISPO')
 		{
 		$call_type='OUT';
 		$four_hours_ago = date("Y-m-d H:i:s", mktime(date("H")-4,date("i"),date("s"),date("m"),date("d"),date("Y")));
+		$FAKEcall_id='';
 
 		if ( ($auto_dial_level < 1) or (preg_match('/^M/',$MDnextCID)) )
 			{
@@ -16496,6 +16734,12 @@ if ($ACTION == 'updateDISPO')
 		}
 	### loop through each Dispo URL entry and process ###
 	$j=0;
+	$fullname='';
+	$user_custom_one='';
+	$user_custom_two='';
+	$user_custom_three='';
+	$user_custom_four='';
+	$user_custom_five='';
 	while ($dispo_call_url_count > $j)
 		{
 		if ( (preg_match('/--A--user_custom_/i',$dispo_call_urlARY[$j])) or (preg_match('/--A--fullname/i',$dispo_call_urlARY[$j])) or (preg_match('/--A--user_group/i',$dispo_call_urlARY[$j])) )
@@ -16518,6 +16762,7 @@ if ($ACTION == 'updateDISPO')
 				}
 			}
 
+		$status_name='';
 		if (preg_match('/--A--dispo_name--B--/i',$dispo_call_urlARY[$j]))
 			{
 			### find the full status name for this status
@@ -16548,19 +16793,18 @@ if ($ACTION == 'updateDISPO')
 			}
 		$dispo_name = urlencode(trim($status_name));
 
+		$url_call_notes =		urlencode(" ");
 		if (preg_match('/--A--call_notes/i',$dispo_call_urlARY[$j]))
 			{
 			if (strlen($call_notes) > 1)
 				{$url_call_notes =		urlencode(trim($call_notes));}
-			else
-				{$url_call_notes =		urlencode(" ");}
 			}
 
+		$dialed_number =	$phone_number;
+		$dialed_label =		'NONE';
+		$term_reason =		'NONE';
 		if (preg_match('/--A--dialed_|--A--term_reason--B--/i',$dispo_call_urlARY[$j]))
 			{
-			$dialed_number =	$phone_number;
-			$dialed_label =		'NONE';
-			$term_reason =		'NONE';
 
 			if ($call_type=='OUT')
 				{
@@ -16580,13 +16824,17 @@ if ($ACTION == 'updateDISPO')
 				}
 			}
 
+		$DID_id='';
+		$DID_extension='';
+		$DID_pattern='';
+		$DID_description='';
+		$DID_custom_one='';
+		$DID_custom_two='';
+		$DID_custom_three='';
+		$DID_custom_four='';
+		$DID_custom_five='';
 		if (preg_match('/--A--did_/i',$dispo_call_urlARY[$j]))
 			{
-			$DID_id='';
-			$DID_extension='';
-			$DID_pattern='';
-			$DID_description='';
-
 			$stmt = "SELECT did_id,extension from vicidial_did_log where uniqueid='$uniqueid' and caller_id_number='$phone_number' order by call_date desc limit 1;";
 			if ($DB) {echo "$stmt\n";}
 			$rslt=mysql_to_mysqli($stmt, $link);
@@ -16617,10 +16865,11 @@ if ($ACTION == 'updateDISPO')
 				}
 			}
 
+		$INclosecallid='';
+		$INxfercallid='';
+		$VDADchannel_group='';
 		if ( (preg_match('/callid--B--/i',$dispo_call_urlARY[$j])) or (preg_match('/group--B--|--A--term_reason--B--/i',$dispo_call_urlARY[$j])) or (preg_match('/fronter--B--|closer--B--/i',$dispo_call_urlARY[$j])) )
 			{
-			$INclosecallid='';
-			$INxfercallid='';
 			$VDADchannel_group=$campaign;
 			$stmt = "SELECT campaign_id,closecallid,xfercallid,term_reason from vicidial_closer_log where uniqueid='$uniqueid' and user='$user' order by closecallid desc limit 1;";
 			if ($DB) {echo "$stmt\n";}
@@ -16699,7 +16948,7 @@ if ($ACTION == 'updateDISPO')
 		# Revert to log dispo choice if the lead is a callback, as CBHOLD would not be what the agent selected
 		if ($dispo=="CBHOLD" && strlen($log_dispo_choice)>0 && $dispo!=$log_dispo_choice) {$dispo=$log_dispo_choice;}
 
-
+		$list_name=''; $list_description='';
 		if (preg_match('/list_name--B--|list_description--B--/i',$dispo_call_urlARY[$j]))
 			{
 			$stmt = "SELECT list_name,list_description from vicidial_lists where list_id='$list_id' limit 1;";
@@ -16964,9 +17213,9 @@ if ($ACTION == 'updateDISPO')
 			$custom_field_names_ct = count($custom_field_names_ARY);
 			$custom_field_names_SQL = $custom_field_names;
 
+			$enc_fields=0;
 			if (preg_match("/cf_encrypt/",$active_modules))
 				{
-				$enc_fields=0;
 				$stmt = "SELECT count(*) from vicidial_lists_fields where field_encrypt='Y' and list_id='$entry_list_id';";
 				$rslt=mysql_to_mysqli($stmt, $link);
 				if ($DB) {echo "$stmt\n";}
@@ -17219,7 +17468,7 @@ if ($ACTION == 'DEADtriggerURL')
 	$talk_time=0;
 	$talk_time_ms=0;
 	$talk_time_min=0;
-	if (strlen($dead_time) < 1) {$dead_time=0;}
+	if (!isset($dead_time) || strlen($dead_time) < 1) {$dead_time=0;}
 	if ( (preg_match('/--A--user_custom_/i',$dead_trigger_url)) or (preg_match('/--A--fullname/i',$dead_trigger_url)) or (preg_match('/--A--user_group/i',$dead_trigger_url)) )
 		{
 		$stmt = "SELECT custom_one,custom_two,custom_three,custom_four,custom_five,full_name,user_group from vicidial_users where user='$user';";
@@ -18416,6 +18665,7 @@ if ( ($ACTION == 'VDADpause') or ($ACTION == 'VDADready') or ($pause_trigger == 
 			$VLAaffected_rows=0;
 			$vla_lead_wipeSQL='';
 			$vla_where_SQL='';
+			$vla_ring_resetSQL='';
 			if ($ACTION == 'VDADready')
 				{
 				$vla_lead_wipeSQL = ",lead_id=0";
@@ -18701,6 +18951,7 @@ if ($ACTION == 'userLOGout')
 			$vul_insert = mysqli_affected_rows($link);
 			}
 
+		$vc_remove="";
 		if ($no_delete_sessions < 1)
 			{
 			##### Figure out which conference table to use
@@ -18730,7 +18981,8 @@ if ($ACTION == 'userLOGout')
 			if ($format=='debug') {echo "\n<!-- $stmt -->";}
 		$rslt=mysql_to_mysqli($stmt, $link);
 			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00133',$user,$server_ip,$session_name,$one_mysql_log);}
-		if ($rslt) 
+		$agent_channel="";
+		if (mysqli_num_rows($rslt)>0) 
 			{
 			$row=mysqli_fetch_row($rslt);
 			$agent_channel = "$row[0]";
@@ -18764,7 +19016,7 @@ if ($ACTION == 'userLOGout')
 			while ($row=mysqli_fetch_row($rslt)) {
 				$manager_chat_id=$row[0];
 
-				$archive_stmt="INSERT IGNORE INTO vicidial_manager_chat_log_archive SELECT manager_chat_message_id,manager_chat_id,manager_chat_subid,manager,user,message,message_date,message_viewed_date,message_posted_by,audio_alerted from vicidial_manager_chat_log where manager_chat_id='$manager_chat_id';";
+				$archive_stmt="INSERT IGNORE INTO vicidial_manager_chat_log_archive SELECT manager_chat_message_id,manager_chat_id,manager_chat_subid,manager,user,message,message_id,message_date,message_viewed_date,message_posted_by,audio_alerted from vicidial_manager_chat_log where manager_chat_id='$manager_chat_id';";
 				$archive_rslt=mysql_to_mysqli($archive_stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$archive_stmt,'00646',$user,$server_ip,$session_name,$one_mysql_log);}
 
@@ -18814,16 +19066,19 @@ if ($ACTION == 'userLOGout')
 		$rslt=mysql_to_mysqli($stmt, $link);
 			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00136',$user,$server_ip,$session_name,$one_mysql_log);}
 		$VDpr_ct = mysqli_num_rows($rslt);
-		if ( ($VDpr_ct > 0) and (strlen($row[3]<5)) and (strlen($row[4]<5)) )
+		if ($VDpr_ct > 0)
 			{
 			$row=mysqli_fetch_row($rslt);
-			$agent_log_id = $row[5];
-			$pause_sec = (($StarTtime - $row[0]) + $row[1]);
+			if ( (strlen($row[3]<5)) and (strlen($row[4]<5)) )
+				{
+				$agent_log_id = $row[5];
+				$pause_sec = (($StarTtime - $row[0]) + $row[1]);
 
-			$stmt="UPDATE vicidial_agent_log set pause_sec='$pause_sec',wait_epoch='$StarTtime' where agent_log_id='$agent_log_id';";
-				if ($format=='debug') {echo "\n<!-- $stmt -->";}
-			$rslt=mysql_to_mysqli($stmt, $link);
-				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00137',$user,$server_ip,$session_name,$one_mysql_log);}
+				$stmt="UPDATE vicidial_agent_log set pause_sec='$pause_sec',wait_epoch='$StarTtime' where agent_log_id='$agent_log_id';";
+					if ($format=='debug') {echo "\n<!-- $stmt -->";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00137',$user,$server_ip,$session_name,$one_mysql_log);}
+				}
 			}
 
 		if ($vla_delete > 0) 
@@ -19450,7 +19705,8 @@ if ($ACTION == 'PauseCodeMgrApr')
 if ($ACTION == 'VMMG_list_build')
 	{
 	$HHMM = date("Hi");
-	$start_date = ($start_date + 0);
+	# $start_date = ($start_date + 0); # No longer works in PHP8 if $start_date is a string
+
 	$VMMGaudio_filename = array();
 	$VMMGaudio_name = array();
 	$VMMGrank = array();
@@ -20130,6 +20386,10 @@ if ($ACTION == 'CALLLOGview')
 	$call_log_view_allowed=0;
 	$VU_user_group='';
 	$call_log_days=-1;
+
+	$manual_dial_filter=preg_replace('/[^0-9]/', '', $manual_dial_filter);
+	if (strlen($manual_dial_filter)==0) {$manual_dial_filter=0;}
+
 	$stmt="SELECT user_group from vicidial_users where user='$user';";
 	if ($non_latin > 0) {$rslt=mysql_to_mysqli("SET NAMES 'UTF8'", $link);}
 	$rslt=mysql_to_mysqli($stmt, $link);
@@ -20381,6 +20641,9 @@ if ($ACTION == 'SEARCHRESULTSview')
 	{
 	if (strlen($stage) < 3)
 		{$stage = '670';}
+
+	$manual_dial_filter=preg_replace('/[^0-9]/', '', $manual_dial_filter);
+	if (strlen($manual_dial_filter)==0) {$manual_dial_filter=0;}
 
 	### find the screen_label for this campaign
 	$stmt="SELECT screen_labels,hide_call_log_info from vicidial_campaigns where campaign_id='$campaign';";
@@ -21274,6 +21537,10 @@ if ($ACTION == 'SEARCHCONTACTSRESULTSview')
 if ($ACTION == 'LEADINFOview')
 	{
 	$CB_force_dial_flag=0;
+
+	$manual_dial_filter=preg_replace('/[^0-9]/', '', $manual_dial_filter);
+	if (strlen($manual_dial_filter)==0) {$manual_dial_filter=0;}
+
 	if (strlen($lead_id) < 1)
 		{
 		if ($callback_id == 'FORCED')
@@ -22382,12 +22649,12 @@ if ($ACTION == 'CalLBacKCounT')
 		if ($sc_ct > 0 && filter_var($email_to, FILTER_VALIDATE_EMAIL))
 			{
 			$row=mysqli_fetch_row($rslt);
-			$container_entry =	$row[0];
+			$container_entry =	trim($row[0]);
 			$container_ARY = explode("\n",$container_entry);
 			$email_body_gather=0;
 			$p=0;
 			$container_ct = count($container_ARY);
-			while ($p <= $container_ct)
+			while ($p < $container_ct)
 				{
 				$line = $container_ARY[$p];
 				if ($email_body_gather < 1)

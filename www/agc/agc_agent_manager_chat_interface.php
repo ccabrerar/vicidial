@@ -1,7 +1,7 @@
 <?php
 # agc_agent_manager_chat_interface.php
 # 
-# Copyright (C) 2022  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This page is for agents to chat with managers via the agent interface.
 #
@@ -20,10 +20,11 @@
 # 220220-0855 - Added allow_web_debug system setting
 # 220518-2210 - Small fix for encrypted auth
 # 220922-1027 - Added BLANK action for first agent screen page load
+# 260303-0714 - Code updates for PHP8 compatibility
 #
 
-$admin_version = '2.14-13';
-$build = '220922-1027';
+$admin_version = '2.14-14';
+$build = '260303-0714';
 $php_script = 'agc_agent_manager_chat_interface.php';
 
 $sh="managerchats"; 
@@ -35,19 +36,20 @@ if (isset($_GET["DB"]))							{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))				{$DB=$_POST["DB"];}
 if (isset($_GET["action"]))						{$action=$_GET["action"];}
 	elseif (isset($_POST["action"]))			{$action=$_POST["action"];}
+	else {$action="";}
 if (isset($_GET["SUBMIT"]))						{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))			{$SUBMIT=$_POST["SUBMIT"];}
+	else {$SUBMIT="";}
 if (isset($_GET["manager_chat_id"]))			{$manager_chat_id=$_GET["manager_chat_id"];}
 	elseif (isset($_POST["manager_chat_id"]))	{$manager_chat_id=$_POST["manager_chat_id"];}
+	else {$manager_chat_id="";}
 if (isset($_GET["user"]))						{$user=$_GET["user"];}
 	elseif (isset($_POST["user"]))				{$user=$_POST["user"];}
+	else {$user="";}
 if (isset($_GET["pass"]))						{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))				{$pass=$_POST["pass"];}
-if (!$user) {echo "Page should only be viewed through the agent interface."; die;}
-
-$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
-$user=preg_replace("/\'|\"|\\\\|;| /","",$user);
-$pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
+	else {$pass="";}
+# if (!$user) {echo "Page should only be viewed through the agent interface."; die;}
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
@@ -68,10 +70,13 @@ if ($qm_conf_ct > 0)
 	$SSallow_web_debug =	$row[5];
 	}
 $VUselected_language = $SSdefault_language;
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
+$DB=preg_replace("/[^0-9]/","",$DB);
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
+$user=preg_replace("/\'|\"|\\\\|;| /","",$user);
+$pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
 $action = preg_replace('/[^-\_0-9a-zA-Z]/','',$action);
 $SUBMIT = preg_replace('/[^-\_0-9a-zA-Z]/','',$SUBMIT);
 
@@ -87,6 +92,8 @@ else
 	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
 	$manager_chat_id = preg_replace("/[^- \_\.0-9\p{L}]/u","",$user);
 	}
+
+$manager_chat_refresh_seconds=1;
 
 # if options file exists, use the override values for the above variables
 #   see the options-example.php file for more information
@@ -153,6 +160,7 @@ $chat_start_date_array=array();
 $agents_managers_array=array(); // for override
 $priority_chat="";
 $priority_chat_subid="";
+$agent_manager_override="0";
 while ($row=mysqli_fetch_row($rslt)) {
 	if ($row[0]!="") {
 		if (!$priority_chat) {$priority_chat=$row[0];} # The priority_chat is the most recent chat that has not been viewed.
@@ -750,8 +758,8 @@ function MgrAgentAutoRefresh() {
 echo "<form name='agent_manager_chat_form' id='agent_manager_chat_form'>";
 echo "<table width='620' border='0' cellpadding='5' cellspacing='0'>";
 echo "<TR BGCOLOR='#E6E6E6'>\n";
-echo "<td align='left' width='190' valign='top'><font class='arial'>"._QXZ("Chatting with").": </font><BR><span class='arial_bold' id='ActiveChatManager'>".$chat_managers_array[$priority_chat]."</span></td>";
-echo "<td align='right' width='190' valign='top'><font class='arial'>"._QXZ("Chat started").": </font><BR><span class='arial_bold' id='ActiveChatStartDate'>".$chat_start_date_array[$priority_chat]."</span></td>";
+echo "<td align='left' width='190' valign='top'><font class='arial'>"._QXZ("Chatting with").": </font><BR><span class='arial_bold' id='ActiveChatManager'>".(isset($chat_managers_array[$priority_chat]) ? $chat_managers_array[$priority_chat] : "")."</span></td>";
+echo "<td align='right' width='190' valign='top'><font class='arial'>"._QXZ("Chat started").": </font><BR><span class='arial_bold' id='ActiveChatStartDate'>".(isset($chat_start_date_array[$priority_chat]) ? $chat_start_date_array[$priority_chat] : "")."</span></td>";
 echo "<td align='left' width='*' valign='bottom'><font class='arial'>"._QXZ("Your active chats").":</font></td>";
 echo "</TR>";
 
@@ -765,6 +773,7 @@ echo "</TD>\n";
 echo "<TD align='left' rowspan='2' valign='top' width='210'>\n";
 echo "<div class='scrolling_chat_display' id='AllActiveChats'>\n";
 	echo "<ul class='chatview'>";
+	$sid=0;
 	if (empty($chat_managers_array)) {
 		echo "\t<li class='arial_bold'>"._QXZ("NO OPEN CHATS")."</li>\n";
 	} else {

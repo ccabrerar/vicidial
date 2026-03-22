@@ -1,7 +1,7 @@
 <?php
 # abandon_check_queue.php
 # 
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to be used as a "No Agent Call URL" option for an
 # In-Group. It will take the lead_id and check to see if it is already in the 
@@ -27,6 +27,7 @@
 #
 # CHANGES
 # 230308-0844 - First Build
+# 260302-1404 - Code updates for PHP8 compatibility
 #
 
 $api_script = 'abandonchk';
@@ -40,24 +41,33 @@ $filetime = date("H:i:s");
 $IP = getenv ("REMOTE_ADDR");
 $BR = getenv ("HTTP_USER_AGENT");
 
-$PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
-$PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
+$PHP_AUTH_USER=(array_key_exists('PHP_AUTH_USER', $_SERVER) ? $_SERVER['PHP_AUTH_USER'] : "");
+$PHP_AUTH_PW=(array_key_exists('PHP_AUTH_PW', $_SERVER) ? $_SERVER['PHP_AUTH_PW'] : "");
+
 if (isset($_GET["lead_id"]))				{$lead_id=$_GET["lead_id"];}
 	elseif (isset($_POST["lead_id"]))		{$lead_id=$_POST["lead_id"];}
+	else {$lead_id="";}
 if (isset($_GET["dispo"]))					{$dispo=$_GET["dispo"];}
 	elseif (isset($_POST["dispo"]))			{$dispo=$_POST["dispo"];}
+	else {$dispo="";}
 if (isset($_GET["user"]))					{$user=$_GET["user"];}
 	elseif (isset($_POST["user"]))			{$user=$_POST["user"];}
+	else {$user="";}
 if (isset($_GET["pass"]))					{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))			{$pass=$_POST["pass"];}
+	else {$pass="";}
 if (isset($_GET["DB"]))						{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))			{$DB=$_POST["DB"];}
+	else {$DB="";}
 if (isset($_GET["log_to_file"]))			{$log_to_file=$_GET["log_to_file"];}
 	elseif (isset($_POST["log_to_file"]))	{$log_to_file=$_POST["log_to_file"];}
+	else {$log_to_file="";}
 if (isset($_GET["source"]))					{$source=$_GET["source"];}
 	elseif (isset($_POST["source"]))		{$source=$_POST["source"];}
-
-$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+	else {$source="";}
+if (isset($_GET["sale_status"]))				{$sale_status=$_GET["sale_status"];}
+	elseif (isset($_POST["sale_status"]))			{$sale_status=$_POST["sale_status"];}
+	else {$sale_status="";}
 
 #$DB = '1';	# DEBUG override
 $US = '_';
@@ -100,7 +110,8 @@ if ($qm_conf_ct > 0)
 	$SSlanguage_method =		$row[2];
 	$SSallow_web_debug =		$row[3];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
+$DB=preg_replace("/[^0-9]/","",$DB);
 
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$user';";

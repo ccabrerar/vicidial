@@ -1,7 +1,7 @@
 <?php
 # manager_send.php    version 2.14
 # 
-# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed purely to insert records into the vicidial_manager table to signal Actions to an asterisk server
 # This script depends on the server_ip being sent and also needs to have a valid user/pass from the vicidial_users table
@@ -160,10 +160,11 @@
 # 241122-1544 - Fix for DTMF issue #1525
 # 250831-0839 - Added MonitorStereo/StopMonitorStereo functions
 # 251005-0935 - Added code for recording_dtmf_muting
+# 260302-1132 - Code updates for PHP8 compatibility
 #
 
-$version = '2.14-107';
-$build = '251005-0935';
+$version = '2.14-108';
+$build = '260302-1132';
 $php_script = 'manager_send.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=177;
@@ -180,100 +181,146 @@ require_once("functions.php");
 ### These are variable assignments for PHP globals off
 if (isset($_GET["user"]))					{$user=$_GET["user"];}
 	elseif (isset($_POST["user"]))			{$user=$_POST["user"];}
+	else {$user="";}
 if (isset($_GET["pass"]))					{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))			{$pass=$_POST["pass"];}
+	else {$pass="";}
 if (isset($_GET["server_ip"]))				{$server_ip=$_GET["server_ip"];}
 	elseif (isset($_POST["server_ip"]))		{$server_ip=$_POST["server_ip"];}
+	else {$server_ip="";}
 if (isset($_GET["session_name"]))			{$session_name=$_GET["session_name"];}
 	elseif (isset($_POST["session_name"]))	{$session_name=$_POST["session_name"];}
+	else {$session_name="";}
 if (isset($_GET["ACTION"]))					{$ACTION=$_GET["ACTION"];}
 	elseif (isset($_POST["ACTION"]))		{$ACTION=$_POST["ACTION"];}
 if (isset($_GET["queryCID"]))				{$queryCID=$_GET["queryCID"];}
 	elseif (isset($_POST["queryCID"]))		{$queryCID=$_POST["queryCID"];}
+	else {$queryCID="";}
 if (isset($_GET["format"]))					{$format=$_GET["format"];}
 	elseif (isset($_POST["format"]))		{$format=$_POST["format"];}
 if (isset($_GET["channel"]))				{$channel=$_GET["channel"];}
 	elseif (isset($_POST["channel"]))		{$channel=$_POST["channel"];}
+	else {$channel="";}
 if (isset($_GET["exten"]))					{$exten=$_GET["exten"];}
 	elseif (isset($_POST["exten"]))			{$exten=$_POST["exten"];}
+	else {$exten="";}
 if (isset($_GET["ext_context"]))			{$ext_context=$_GET["ext_context"];}
 	elseif (isset($_POST["ext_context"]))	{$ext_context=$_POST["ext_context"];}
+	else {$ext_context="";}
 if (isset($_GET["ext_priority"]))			{$ext_priority=$_GET["ext_priority"];}
 	elseif (isset($_POST["ext_priority"]))	{$ext_priority=$_POST["ext_priority"];}
+	else {$ext_priority="";}
 if (isset($_GET["filename"]))				{$filename=$_GET["filename"];}
 	elseif (isset($_POST["filename"]))		{$filename=$_POST["filename"];}
+	else {$filename="";}
 if (isset($_GET["extenName"]))				{$extenName=$_GET["extenName"];}
 	elseif (isset($_POST["extenName"]))		{$extenName=$_POST["extenName"];}
+	else {$extenName="";}
 if (isset($_GET["parkedby"]))				{$parkedby=$_GET["parkedby"];}
 	elseif (isset($_POST["parkedby"]))		{$parkedby=$_POST["parkedby"];}
+	else {$parkedby="";}
 if (isset($_GET["extrachannel"]))			{$extrachannel=$_GET["extrachannel"];}
 	elseif (isset($_POST["extrachannel"]))	{$extrachannel=$_POST["extrachannel"];}
+	else {$extrachannel="";}
 if (isset($_GET["auto_dial_level"]))			{$auto_dial_level=$_GET["auto_dial_level"];}
 	elseif (isset($_POST["auto_dial_level"]))	{$auto_dial_level=$_POST["auto_dial_level"];}
+	else {$auto_dial_level="";}
 if (isset($_GET["campaign"]))				{$campaign=$_GET["campaign"];}
 	elseif (isset($_POST["campaign"]))		{$campaign=$_POST["campaign"];}
+	else {$campaign="";}
 if (isset($_GET["uniqueid"]))				{$uniqueid=$_GET["uniqueid"];}
 	elseif (isset($_POST["uniqueid"]))		{$uniqueid=$_POST["uniqueid"];}
+	else {$uniqueid="";}
 if (isset($_GET["lead_id"]))				{$lead_id=$_GET["lead_id"];}
 	elseif (isset($_POST["lead_id"]))		{$lead_id=$_POST["lead_id"];}
+	else {$lead_id=0;}
 if (isset($_GET["secondS"]))				{$secondS=$_GET["secondS"];}
 	elseif (isset($_POST["secondS"]))		{$secondS=$_POST["secondS"];}
+	else {$secondS="";}
 if (isset($_GET["outbound_cid"]))			{$outbound_cid=$_GET["outbound_cid"];}
 	elseif (isset($_POST["outbound_cid"]))	{$outbound_cid=$_POST["outbound_cid"];}
+	else {$outbound_cid="";}
 if (isset($_GET["agent_log_id"]))			{$agent_log_id=$_GET["agent_log_id"];}
 	elseif (isset($_POST["agent_log_id"]))	{$agent_log_id=$_POST["agent_log_id"];}
+	else {$agent_log_id="";}
 if (isset($_GET["call_server_ip"]))				{$call_server_ip=$_GET["call_server_ip"];}
 	elseif (isset($_POST["call_server_ip"]))	{$call_server_ip=$_POST["call_server_ip"];}
+	else {$call_server_ip="";}
 if (isset($_GET["CalLCID"]))				{$CalLCID=$_GET["CalLCID"];}
 	elseif (isset($_POST["CalLCID"]))		{$CalLCID=$_POST["CalLCID"];}
+	else {$CalLCID="";}
 if (isset($_GET["phone_code"]))				{$phone_code=$_GET["phone_code"];}
 	elseif (isset($_POST["phone_code"]))	{$phone_code=$_POST["phone_code"];}
+	else {$phone_code="";}
 if (isset($_GET["phone_number"]))			{$phone_number=$_GET["phone_number"];}
 	elseif (isset($_POST["phone_number"]))	{$phone_number=$_POST["phone_number"];}
+	else {$phone_number="";}
 if (isset($_GET["stage"]))					{$stage=$_GET["stage"];}
 	elseif (isset($_POST["stage"]))			{$stage=$_POST["stage"];}
+	else {$stage="";}
 if (isset($_GET["extension"]))				{$extension=$_GET["extension"];}
 	elseif (isset($_POST["extension"]))		{$extension=$_POST["extension"];}
+	else {$extension="";}
 if (isset($_GET["protocol"]))				{$protocol=$_GET["protocol"];}
 	elseif (isset($_POST["protocol"]))		{$protocol=$_POST["protocol"];}
+	else {$protocol="";}
 if (isset($_GET["phone_ip"]))				{$phone_ip=$_GET["phone_ip"];}
 	elseif (isset($_POST["phone_ip"]))		{$phone_ip=$_POST["phone_ip"];}
+	else {$phone_ip="";}
 if (isset($_GET["enable_sipsak_messages"]))				{$enable_sipsak_messages=$_GET["enable_sipsak_messages"];}
 	elseif (isset($_POST["enable_sipsak_messages"]))	{$enable_sipsak_messages=$_POST["enable_sipsak_messages"];}
+	else {$enable_sipsak_messages="";}
 if (isset($_GET["allow_sipsak_messages"]))				{$allow_sipsak_messages=$_GET["allow_sipsak_messages"];}
 	elseif (isset($_POST["allow_sipsak_messages"]))		{$allow_sipsak_messages=$_POST["allow_sipsak_messages"];}
+	else {$allow_sipsak_messages=0;}
 if (isset($_GET["session_id"]))				{$session_id=$_GET["session_id"];}
 	elseif (isset($_POST["session_id"]))	{$session_id=$_POST["session_id"];}
+	else {$session_id="";}
 if (isset($_GET["FROMvdc"]))				{$FROMvdc=$_GET["FROMvdc"];}
 	elseif (isset($_POST["FROMvdc"]))		{$FROMvdc=$_POST["FROMvdc"];}
+	else {$FROMvdc="";}
 if (isset($_GET["agentchannel"]))			{$agentchannel=$_GET["agentchannel"];}
 	elseif (isset($_POST["agentchannel"]))	{$agentchannel=$_POST["agentchannel"];}
+	else {$agentchannel="";}
 if (isset($_GET["usegroupalias"]))			{$usegroupalias=$_GET["usegroupalias"];}
 	elseif (isset($_POST["usegroupalias"]))	{$usegroupalias=$_POST["usegroupalias"];}
+	else {$usegroupalias="";}
 if (isset($_GET["account"]))				{$account=$_GET["account"];}
 	elseif (isset($_POST["account"]))		{$account=$_POST["account"];}
+	else {$account="";}
 if (isset($_GET["agent_dialed_number"]))			{$agent_dialed_number=$_GET["agent_dialed_number"];}
 	elseif (isset($_POST["agent_dialed_number"]))	{$agent_dialed_number=$_POST["agent_dialed_number"];}
+	else {$agent_dialed_number="";}
 if (isset($_GET["agent_dialed_type"]))				{$agent_dialed_type=$_GET["agent_dialed_type"];}
 	elseif (isset($_POST["agent_dialed_type"]))		{$agent_dialed_type=$_POST["agent_dialed_type"];}
+	else {$agent_dialed_type="";}
 if (isset($_GET["nodeletevdac"]))				{$nodeletevdac=$_GET["nodeletevdac"];}
 	elseif (isset($_POST["nodeletevdac"]))		{$nodeletevdac=$_POST["nodeletevdac"];}
+	else {$nodeletevdac="";}
 if (isset($_GET["alertCID"]))				{$alertCID=$_GET["alertCID"];}
 	elseif (isset($_POST["alertCID"]))		{$alertCID=$_POST["alertCID"];}
+	else {$alertCID="";}
 if (isset($_GET["preset_name"]))			{$preset_name=$_GET["preset_name"];}
 	elseif (isset($_POST["preset_name"]))	{$preset_name=$_POST["preset_name"];}
+	else {$preset_name="";}
 if (isset($_GET["call_variables"]))				{$call_variables=$_GET["call_variables"];}
 	elseif (isset($_POST["call_variables"]))	{$call_variables=$_POST["call_variables"];}
+	else {$call_variables="";}
 if (isset($_GET["log_campaign"]))			{$log_campaign=$_GET["log_campaign"];}
 	elseif (isset($_POST["log_campaign"]))	{$log_campaign=$_POST["log_campaign"];}
+	else {$log_campaign="";}
 if (isset($_GET["qm_extension"]))			{$qm_extension=$_GET["qm_extension"];}
 	elseif (isset($_POST["qm_extension"]))	{$qm_extension=$_POST["qm_extension"];}
+	else {$qm_extension="";}
 if (isset($_GET["customerparked"]))				{$customerparked=$_GET["customerparked"];}
 	elseif (isset($_POST["customerparked"]))	{$customerparked=$_POST["customerparked"];}
+	else {$customerparked="";}
 if (isset($_GET["user_group"]))				{$user_group=$_GET["user_group"];}
 	elseif (isset($_POST["user_group"]))	{$user_group=$_POST["user_group"];}
+	else {$user_group="";}
 if (isset($_GET["group_id"]))			{$group_id=$_GET["group_id"];}
 	elseif (isset($_POST["group_id"]))	{$group_id=$_POST["group_id"];}
+	else {$group_id="";}
 
 # if options file exists, use the override values for the above variables
 #   see the options-example.php file for more information
@@ -282,7 +329,17 @@ if (file_exists('options.php'))
 	require('options.php');
 	}
 
-$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+$StarTtime = date("U");
+$NOW_DATE = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$NOWnum = date("YmdHis");
+if (!isset($query_date)) {$query_date = $NOW_DATE;}
+
+# default optional vars if not set
+if (!isset($ACTION))   {$ACTION="Originate";}
+if (!isset($format))   {$format="alert";}
+if (!isset($ext_priority))   {$ext_priority="1";}
+
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
 
@@ -309,7 +366,8 @@ if ($qm_conf_ct > 0)
 	$SSrecording_dtmf_detection = 		$row[10];
 	$SSrecording_dtmf_muting = 			$row[11];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
+$DB=preg_replace("/[^0-9]/","",$DB);
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
@@ -318,8 +376,8 @@ header ("Cache-Control: no-cache, must-revalidate");  // HTTP/1.1
 header ("Pragma: no-cache");                          // HTTP/1.0
 
 # filter variables
-$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
-$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
+# $session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+# $server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
 $lead_id = preg_replace('/[^0-9]/','',$lead_id);
 $session_id = preg_replace('/[^0-9]/','',$session_id);
 $exten = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$exten);
@@ -327,21 +385,21 @@ $extension = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$extension);
 $protocol = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$protocol);
 $ACTION = preg_replace("/\'|\"|\\\\|;/","",$ACTION);
 $CalLCID = preg_replace("/\'|\"|\\\\|;/","",$CalLCID);
-$FROMvdc = preg_replace('/[^-_0-9a-zA-Z]/','',$FROMvdc);
-$agent_log_id = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_log_id);
+# $FROMvdc = preg_replace('/[^-_0-9a-zA-Z]/','',$FROMvdc);
+# $agent_log_id = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_log_id);
 $agentchannel = preg_replace("/\'|\"|\\\\/","",$agentchannel);
-$auto_dial_level = preg_replace('/[^-\._0-9a-zA-Z]/','',$auto_dial_level);
+# $auto_dial_level = preg_replace('/[^-\._0-9a-zA-Z]/','',$auto_dial_level);
 $call_server_ip = preg_replace("/\'|\"|\\\\|;/","",$call_server_ip);
 $call_variables = preg_replace("/\'|\"|\\\\|;/","",$call_variables);
 $channel = preg_replace("/\'|\"|\\\\/","",$channel);
 $customerparked = preg_replace('/[^0-9]/','',$customerparked);
 $enable_sipsak_messages = preg_replace('/[^0-9]/','',$enable_sipsak_messages);
-$ext_context = preg_replace('/[^-_0-9a-zA-Z]/','',$ext_context);
-$ext_priority = preg_replace('/[^-_0-9a-zA-Z]/','',$ext_priority);
+# $ext_context = preg_replace('/[^-_0-9a-zA-Z]/','',$ext_context);
+# $ext_priority = preg_replace('/[^-_0-9a-zA-Z]/','',$ext_priority);
 $exten = preg_replace("/\'|\"|\\\\|;/","",$exten);
 $extenName = preg_replace("/\'|\"|\\\\|;/","",$extenName);
 $extrachannel = preg_replace("/\'|\"|\\\\/","",$extrachannel);
-$format = preg_replace('/[^-_0-9a-zA-Z]/','',$format);
+# $format = preg_replace('/[^-_0-9a-zA-Z]/','',$format);
 $log_campaign = preg_replace("/\'|\"|\\\\|;/","",$log_campaign);
 $nodeletevdac = preg_replace('/[^0-9]/','',$nodeletevdac);
 $outbound_cid = preg_replace("/\'|\"|\\\\|;/","",$outbound_cid);
@@ -352,9 +410,9 @@ $qm_extension = preg_replace("/\'|\"|\\\\|;/","",$qm_extension);
 $secondS = preg_replace('/[^0-9]/','',$secondS);
 $stage = preg_replace("/\'|\"|\\\\|;/","",$stage);
 $usegroupalias = preg_replace('/[^0-9]/','',$usegroupalias);
-$phone_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$phone_ip);
-$allow_sipsak_messages = preg_replace('/[^-_0-9a-zA-Z]/','',$allow_sipsak_messages);
-$alertCID = preg_replace('/[^-_0-9a-zA-Z]/','',$alertCID);
+# $phone_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$phone_ip);
+$allow_sipsak_messages = preg_replace('/[^0-9]/','',$allow_sipsak_messages);
+# $alertCID = preg_replace('/[^-_0-9a-zA-Z]/','',$alertCID);
 
 if ($non_latin < 1)
 	{
@@ -370,6 +428,16 @@ if ($non_latin < 1)
 	$group_id = preg_replace('/[^-_0-9a-zA-Z]/','',$group_id);
 	$filename = preg_replace('/[^-\._0-9a-zA-Z]/','',$filename);
 	$queryCID = preg_replace('/[^-\#\*\,\._0-9a-zA-Z]/','',$queryCID);
+	$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+	$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
+	$FROMvdc = preg_replace('/[^-_0-9a-zA-Z]/','',$FROMvdc);
+	$agent_log_id = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_log_id);
+	$auto_dial_level = preg_replace('/[^-\._0-9a-zA-Z]/','',$auto_dial_level);
+	$ext_context = preg_replace('/[^-_0-9a-zA-Z]/','',$ext_context);
+	$ext_priority = preg_replace('/[^-_0-9a-zA-Z]/','',$ext_priority);
+	$format = preg_replace('/[^-_0-9a-zA-Z]/','',$format);
+	$phone_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$phone_ip);
+	$alertCID = preg_replace('/[^-_0-9a-zA-Z]/','',$alertCID);
 	}
 else
 	{
@@ -385,19 +453,17 @@ else
 	$group_id = preg_replace('/[^-_0-9\p{L}]/u','',$group_id);
 	$filename = preg_replace('/[^-\._0-9\p{L}]/u','',$filename);
 	$queryCID = preg_replace('/[^-\#\*\,\._0-9\p{L}]/u','',$queryCID);
+	$session_name = preg_replace('/[^-\.\:\_0-9\p{L}]/u','',$session_name);
+	$server_ip = preg_replace('/[^-\.\:\_0-9\p{L}]/u','',$server_ip);
+	$FROMvdc = preg_replace('/[^-_0-9\p{L}]/u','',$FROMvdc);
+	$agent_log_id = preg_replace('/[^-_0-9\p{L}]/u','',$agent_log_id);
+	$auto_dial_level = preg_replace('/[^-\._0-9\p{L}]/u','',$auto_dial_level);
+	$ext_context = preg_replace('/[^-_0-9\p{L}]/u','',$ext_context);
+	$ext_priority = preg_replace('/[^-_0-9\p{L}]/u','',$ext_priority);
+	$format = preg_replace('/[^-_0-9\p{L}]/u','',$format);
+	$phone_ip = preg_replace('/[^-\.\:\_0-9\p{L}]/u','',$phone_ip);
+	$alertCID = preg_replace('/[^-_0-9\p{L}]/u','',$alertCID);
 	}
-
-# default optional vars if not set
-if (!isset($ACTION))   {$ACTION="Originate";}
-if (!isset($format))   {$format="alert";}
-if (!isset($ext_priority))   {$ext_priority="1";}
-
-$StarTtime = date("U");
-$NOW_DATE = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-$NOWnum = date("YmdHis");
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
-
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
@@ -423,8 +489,12 @@ if (strlen($SSagent_debug_logging) > 1)
 
 $stmtA="SELECT conf_engine FROM servers WHERE server_ip='$server_ip';";
 $rslt=mysql_to_mysqli($stmtA, $link);
-$row=mysqli_fetch_row($rslt);
-$conf_engine =  $row[0]; 
+$conf_engine="";
+if (mysqli_num_rows($rslt)>0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$conf_engine =  $row[0]; 
+	}
 
 $threeway_context = $ext_context;
 if (strlen($meetme_enter_leave3way_filename) > 0)
@@ -713,6 +783,7 @@ if ($ACTION=="Originate")
 				}
 			}
 
+		$RAWaccount='';
 		if (strlen($outbound_cid)>1)
 			{$outCID = "\"$queryCID\" <$outbound_cid>";}
 		else
@@ -858,7 +929,7 @@ if ($ACTION=="HangupConfDial")
 		$rslt=mysql_to_mysqli($stmt, $link);
 			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02008',$user,$server_ip,$session_name,$one_mysql_log);}
 		$row=mysqli_fetch_row($rslt);
-		if ($row > 0)
+		if ($row[0] > 0)
 			{
 			$stmt="SELECT channel FROM live_sip_channels where server_ip = '$server_ip' and channel LIKE \"$hangup_channel_prefix%\";";
 				if ($format=='debug') {echo "\n<!-- $stmt -->";}
@@ -3298,13 +3369,21 @@ if ($ACTION=="VolumeControl")
 		if (preg_match('/MUTING/i',$stage)) {$vol_prefix='1';}
 		$local_DEF = 'Local/';
 		$local_AMP = '@';
-		$volume_local_channel = "$local_DEF$participant_number$vol_prefix$exten$local_AMP$ext_context";
 
-		$stmt="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$server_ip','','Originate','$queryCID','Channel: $volume_local_channel','Context: $ext_context','Exten: 8300','Priority: 1','Callerid: $queryCID','','','','$channel','$exten');";
+		if (isset($vol_prefix))
+			{
+			$volume_local_channel = "$local_DEF$participant_number$vol_prefix$exten$local_AMP$ext_context";
+
+			$stmt="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$server_ip','','Originate','$queryCID','Channel: $volume_local_channel','Context: $ext_context','Exten: 8300','Priority: 1','Callerid: $queryCID','','','','$channel','$exten');";
 			if ($format=='debug') {echo "\n<!-- $stmt -->";}
-		$rslt=mysql_to_mysqli($stmt, $link);
-				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02082',$user,$server_ip,$session_name,$one_mysql_log);}
-		echo _QXZ("Volume command sent for Conference %1s, Stage %2s Channel %3s on %4s",0,'',$exten,$stage,$channel,$server_ip)."\n";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02082',$user,$server_ip,$session_name,$one_mysql_log);}
+			echo _QXZ("Volume command sent for Conference %1s, Stage %2s Channel %3s on %4s",0,'',$exten,$stage,$channel,$server_ip)."\n";
+			}
+		else
+			{
+			echo _QXZ("Stage $stage/$ACTION does not generate a volume prefix")."\n";
+			}
 		}
 	}
 

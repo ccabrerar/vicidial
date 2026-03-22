@@ -1,7 +1,7 @@
 <?php
 # deactivate_lead.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to be used in the "Dispo URL" field of a campaign
 # or in-group. It should take in the campaign_id to check for the same source_id
@@ -35,6 +35,7 @@
 # 210615-1036 - Default security fixes, CVE-2021-28854
 # 210616-2050 - Added optional CORS support, see options.php for details
 # 220219-2320 - Added allow_web_debug system setting
+# 260302-1358 - Code updates for PHP8 compatibility
 #
 
 $api_script = 'deactivate';
@@ -48,30 +49,37 @@ $filetime = date("H:i:s");
 $IP = getenv ("REMOTE_ADDR");
 $BR = getenv ("HTTP_USER_AGENT");
 
-$PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
-$PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
+$PHP_AUTH_USER=(array_key_exists('PHP_AUTH_USER', $_SERVER) ? $_SERVER['PHP_AUTH_USER'] : "");
+$PHP_AUTH_PW=(array_key_exists('PHP_AUTH_PW', $_SERVER) ? $_SERVER['PHP_AUTH_PW'] : "");
 if (isset($_GET["lead_id"]))				{$lead_id=$_GET["lead_id"];}
 	elseif (isset($_POST["lead_id"]))		{$lead_id=$_POST["lead_id"];}
+	else {$lead_id=0;}
 if (isset($_GET["search_field"]))			{$search_field=$_GET["search_field"];}
 	elseif (isset($_POST["search_field"]))	{$search_field=$_POST["search_field"];}
+	else {$search_field="";}
 if (isset($_GET["campaign_check"]))				{$campaign_check=$_GET["campaign_check"];}
 	elseif (isset($_POST["campaign_check"]))	{$campaign_check=$_POST["campaign_check"];}
+	else {$campaign_check="";}
 if (isset($_GET["sale_status"]))			{$sale_status=$_GET["sale_status"];}
 	elseif (isset($_POST["sale_status"]))	{$sale_status=$_POST["sale_status"];}
+	else {$sale_status="";}
 if (isset($_GET["dispo"]))					{$dispo=$_GET["dispo"];}
 	elseif (isset($_POST["dispo"]))			{$dispo=$_POST["dispo"];}
+	else {$dispo="";}
 if (isset($_GET["new_status"]))				{$new_status=$_GET["new_status"];}
 	elseif (isset($_POST["new_status"]))	{$new_status=$_POST["new_status"];}
+	else {$new_status="";}
 if (isset($_GET["user"]))					{$user=$_GET["user"];}
 	elseif (isset($_POST["user"]))			{$user=$_POST["user"];}
+	else {$user="";}
 if (isset($_GET["pass"]))					{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))			{$pass=$_POST["pass"];}
+	else {$pass="";}
 if (isset($_GET["DB"]))						{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))			{$DB=$_POST["DB"];}
 if (isset($_GET["log_to_file"]))			{$log_to_file=$_GET["log_to_file"];}
 	elseif (isset($_POST["log_to_file"]))	{$log_to_file=$_POST["log_to_file"];}
-
-$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+	else {$log_to_file=0;}
 
 #$DB = '1';	# DEBUG override
 $US = '_';
@@ -109,7 +117,8 @@ if ($qm_conf_ct > 0)
 	$SSlanguage_method =		$row[2];
 	$SSallow_web_debug =		$row[3];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;} else {$DB=$SSallow_web_debug;}
+$DB=preg_replace("/[^0-9]/","",$DB);
 
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$user';";
@@ -127,7 +136,7 @@ if ($sl_ct > 0)
 
 $search_field = preg_replace("/\'|\"|\\\\|;| /","",$search_field);
 $lead_id = preg_replace('/[^0-9]/','',$lead_id);
-$log_to_file = preg_replace('/[^-_0-9a-zA-Z]/', '', $log_to_file);
+$log_to_file = preg_replace('/[^0-9]/', '', $log_to_file);
 
 if ($non_latin < 1)
 	{
@@ -168,7 +177,9 @@ if (preg_match("/$TD$dispo$TD/",$sale_status))
 		exit;
 		}
 
-	$stmt = "SELECT $search_field FROM vicidial_list where lead_id='$lead_id';";
+	$search_fieldSQL = $search_field;
+	if (strlen($search_field) < 1) {$search_fieldSQL = "''";}
+	$stmt = "SELECT $search_fieldSQL FROM vicidial_list where lead_id='$lead_id';";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	if ($DB) {echo "$stmt\n";}
 	$sv_ct = mysqli_num_rows($rslt);

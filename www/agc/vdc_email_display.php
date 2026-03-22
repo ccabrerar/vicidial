@@ -1,7 +1,7 @@
 <?php
 # vdc_email_display.php - VICIDIAL agent email display script
 #
-# Copyright (C) 2022  Matt Florell, Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell, Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This page displays any incoming emails in the Vicidial user interface.  It 
 # also allows the user to download and view any attachments sent in the email,
@@ -25,10 +25,11 @@
 # 171126-1406 - Added fault tolerance and extra debug
 # 210616-2038 - Added optional CORS support, see options.php for details
 # 220219-1839 - More security changes
+# 260302-1154 - Code updates for PHP8 compatibility
 #
 
-$version = '2.14-15';
-$build = '220219-1839';
+$version = '2.14-16';
+$build = '260302-1154';
 $php_script = 'vdc_email_display.php';
 
 require_once("dbconnect_mysqli.php");
@@ -38,34 +39,45 @@ if (isset($_GET["DB"]))				{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))	{$DB=$_POST["DB"];}
 if (isset($_GET["attachment_id"]))	{$attachment_id=$_GET["attachment_id"];}
 	elseif (isset($_POST["attachment_id"]))	{$attachment_id=$_POST["attachment_id"];}
+	else {$attachment_id=0;}
 if (isset($_GET["lead_id"]))	{$lead_id=$_GET["lead_id"];}
 	elseif (isset($_POST["lead_id"]))	{$lead_id=$_POST["lead_id"];}
+	else {$lead_id=0;}
 if (isset($_GET["email_row_id"]))	{$email_row_id=$_GET["email_row_id"];}
 	elseif (isset($_POST["email_row_id"]))	{$email_row_id=$_POST["email_row_id"];}
+	else {$email_row_id=0;}
 if (isset($_GET["campaign"]))	{$campaign=$_GET["campaign"];}
 	elseif (isset($_POST["campaign"]))	{$campaign=$_POST["campaign"];}
+	else {$campaign="";}
 if (isset($_GET["user"]))	{$user=$_GET["user"];}
 	elseif (isset($_POST["user"]))	{$user=$_POST["user"];}
+	else {$user="";}
 if (isset($_GET["pass"]))	{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))	{$pass=$_POST["pass"];}
+	else {$pass="";}
 if (isset($_GET["stage"]))	{$stage=$_GET["stage"];}
 	elseif (isset($_POST["stage"]))	{$stage=$_POST["stage"];}
+	else {$stage="";}
 if (isset($_GET["sender_email"]))	{$sender_email=$_GET["sender_email"];}
 	elseif (isset($_POST["sender_email"]))	{$sender_email=$_POST["sender_email"];}
+	else {$sender_email="";}
 if (isset($_GET["reply_subject"]))	{$reply_subject=$_GET["reply_subject"];}
 	elseif (isset($_POST["reply_subject"]))	{$reply_subject=$_POST["reply_subject"];}
+	else {$reply_subject="";}
 if (isset($_GET["reply_to_address"]))	{$reply_to_address=$_GET["reply_to_address"];}
 	elseif (isset($_POST["reply_to_address"]))	{$reply_to_address=$_POST["reply_to_address"];}
+	else {$reply_to_address="";}
 if (isset($_GET["reply_from_address"]))	{$reply_from_address=$_GET["reply_from_address"];}
 	elseif (isset($_POST["reply_from_address"]))	{$reply_from_address=$_POST["reply_from_address"];}
+	else {$reply_from_address="";}
 if (isset($_GET["reply_message"]))	{$reply_message=$_GET["reply_message"];}
 	elseif (isset($_POST["reply_message"]))	{$reply_message=$_POST["reply_message"];}
 if (isset($_GET["REPLY"]))	{$REPLY=$_GET["REPLY"];}
 	elseif (isset($_POST["REPLY"]))	{$REPLY=$_POST["REPLY"];}
+	else {$REPLY="";}
 if (isset($_GET["agent_email"]))	{$agent_email=$_GET["agent_email"];}
 	elseif (isset($_POST["agent_email"]))	{$agent_email=$_POST["agent_email"];}
-
-$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+	else {$agent_email="";}
 
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
@@ -77,26 +89,41 @@ if (file_exists('options.php'))
 	require('options.php');
 	}
 
-$attachment1=$_FILES["attachment1"];
-	$A1_orig = $_FILES['attachment1']['name'];
-	$A1_path = $_FILES['attachment1']['tmp_name'];
-	$A1_type = $_FILES['attachment1']['type'];
-$attachment2=$_FILES["attachment2"];
-	$A2_orig = $_FILES['attachment2']['name'];
-	$A2_path = $_FILES['attachment2']['tmp_name'];
-	$A2_type = $_FILES['attachment2']['type'];
-$attachment3=$_FILES["attachment3"];
-	$A3_orig = $_FILES['attachment3']['name'];
-	$A3_path = $_FILES['attachment3']['tmp_name'];
-	$A3_type = $_FILES['attachment3']['type'];
-$attachment4=$_FILES["attachment4"];
-	$A4_orig = $_FILES['attachment4']['name'];
-	$A4_path = $_FILES['attachment4']['tmp_name'];
-	$A4_type = $_FILES['attachment4']['type'];
-$attachment5=$_FILES["attachment5"];
-	$A5_orig = $_FILES['attachment5']['name'];
-	$A5_path = $_FILES['attachment5']['tmp_name'];
-	$A5_type = $_FILES['attachment5']['type'];
+if (array_key_exists('attachment1', $_FILES))
+	{
+	$attachment1=$_FILES["attachment1"];
+		$A1_orig = $_FILES['attachment1']['name'];
+		$A1_path = $_FILES['attachment1']['tmp_name'];
+		$A1_type = $_FILES['attachment1']['type'];
+	}
+if (array_key_exists('attachment2', $_FILES))
+	{
+	$attachment2=$_FILES["attachment2"];
+		$A2_orig = $_FILES['attachment2']['name'];
+		$A2_path = $_FILES['attachment2']['tmp_name'];
+		$A2_type = $_FILES['attachment2']['type'];
+	}
+if (array_key_exists('attachment3', $_FILES))
+	{
+	$attachment3=$_FILES["attachment3"];
+		$A3_orig = $_FILES['attachment3']['name'];
+		$A3_path = $_FILES['attachment3']['tmp_name'];
+		$A3_type = $_FILES['attachment3']['type'];
+	}
+if (array_key_exists('attachment4', $_FILES))
+	{
+	$attachment4=$_FILES["attachment4"];
+		$A4_orig = $_FILES['attachment4']['name'];
+		$A4_path = $_FILES['attachment4']['tmp_name'];
+		$A4_type = $_FILES['attachment4']['type'];
+	}
+if (array_key_exists('attachment5', $_FILES))
+	{
+	$attachment5=$_FILES["attachment5"];
+		$A5_orig = $_FILES['attachment5']['name'];
+		$A5_path = $_FILES['attachment5']['tmp_name'];
+		$A5_type = $_FILES['attachment5']['type'];
+	}
 
 header ("Content-type: text/html; charset=utf-8");
 header ("Cache-Control: no-cache, must-revalidate");  // HTTP/1.1
@@ -113,21 +140,20 @@ $CIDdate = date("mdHis");
 $ENTRYdate = date("YmdHis");
 $MT[0]='';
 $agents='@agents';
-$script_height = ($script_height - 20);
-if (strlen($bgcolor) < 6) {$bgcolor='FFFFFF';}
+# 3/28/25 - removed, never used
+# $script_height = ($script_height - 20);
+# if (strlen($bgcolor) < 6) {$bgcolor='FFFFFF';}
 
 $IFRAME=0;
 
 # default optional vars if not set
-if (!isset($format))   {$format="text";}
-	if ($format == 'debug')	{$DB=1;}
-if (!isset($ACTION))   {$ACTION="refresh";}
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
+# 3/28/25 - removed, never used
+# if (!isset($format))   {$format="text";}
+# 	if ($format == 'debug')	{$DB=1;}
+# if (!isset($ACTION))   {$ACTION="refresh";}
+# if (!isset($query_date)) {$query_date = $NOW_DATE;}
 
 $user = preg_replace("/\'|\"|\\\\|;| /","",$user);
-$pass = preg_replace("/\'|\"|\\\\|;| /","",$pass);
-
-#############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
 $stmt = "SELECT use_non_latin,timeclock_end_of_day,agentonly_callback_campaign_lock,custom_fields_enabled,allow_emails,enable_languages,language_method,allow_web_debug FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
@@ -146,7 +172,53 @@ if ($qm_conf_ct > 0)
 	$SSlanguage_method =					$row[6];
 	$SSallow_web_debug =					$row[7];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
+$DB=preg_replace("/[^0-9]/","",$DB);
+
+
+# $campaign = preg_replace('/[^-_0-9\p{L}]/u',"",$campaign);
+$attachment_id = preg_replace("/[^0-9]/","",$attachment_id);
+$lead_id = preg_replace('/[^0-9]/','',$lead_id);
+$email_row_id = preg_replace('/[^0-9]/','',$email_row_id);
+$reply_to_address = preg_replace("/\'|\"|\\\\|;/","",$reply_to_address);
+# $reply_to_address = preg_replace('/[^-\.\:\/\@\_0-9\p{L}]/u','',$reply_to_address);
+# $stage = preg_replace('/[^-_0-9\p{L}]/u','',$stage);
+# $sender_email = preg_replace('/[^-\.\:\/\@\_0-9\p{L}]/u','',$sender_email);
+$reply_subject = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$reply_subject);
+# $reply_from_address = preg_replace('/[^-\.\:\/\@\_0-9\p{L}]/u','',$reply_from_address);
+# $agent_email = preg_replace('/[^-\.\:\/\@\_0-9\p{L}]/u','',$agent_email);
+# $REPLY=preg_replace("/[^-_0-9a-zA-Z]/","",$REPLY);
+
+# filtered
+# $reply_message
+
+if ($non_latin < 1)
+	{
+	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
+	$pass=preg_replace("/[^-\.\+\/\=_0-9a-zA-Z]/","",$pass);
+	$campaign = preg_replace('/[^-_0-9a-zA-Z]/',"",$campaign);
+	$reply_to_address = preg_replace('/[^-\.\:\/\@\_0-9a-zA-Z]/','',$reply_to_address);
+	$stage = preg_replace('/[^-_0-9a-zA-Z]/','',$stage);
+	$sender_email = preg_replace('/[^-\.\:\/\@\_0-9a-zA-Z]/','',$sender_email);
+	$reply_from_address = preg_replace('/[^-\.\:\/\@\_0-9a-zA-Z]/','',$reply_from_address);
+	$agent_email = preg_replace('/[^-\.\:\/\@\_0-9a-zA-Z]/','',$agent_email);
+	$REPLY=preg_replace("/[^-_0-9a-zA-Z]/","",$REPLY);
+	}
+else
+	{
+	$user=preg_replace("/[^-_0-9\p{L}]/u","",$user);
+	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
+	$campaign = preg_replace('/[^-_0-9\p{L}]/u',"",$campaign);
+	$reply_to_address = preg_replace('/[^-\.\:\/\@\_0-9\p{L}]/u','',$reply_to_address);
+	$stage = preg_replace('/[^-_0-9\p{L}]/u','',$stage);
+	$sender_email = preg_replace('/[^-\.\:\/\@\_0-9\p{L}]/u','',$sender_email);
+	$reply_from_address = preg_replace('/[^-\.\:\/\@\_0-9\p{L}]/u','',$reply_from_address);
+	$agent_email = preg_replace('/[^-\.\:\/\@\_0-9\p{L}]/u','',$agent_email);
+	$REPLY=preg_replace("/[^-_0-9\p{L}]/u","",$REPLY);
+	}
+
+
+#############################################
 
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$user';";
@@ -167,34 +239,6 @@ if ($allow_emails<1)
 	echo _QXZ("Your system does not have the email setting enabled")."\n";
 	exit;
 	}
-
-$campaign = preg_replace('/[^-_0-9\p{L}]/u',"",$campaign);
-$attachment_id = preg_replace("/[^0-9]/","",$attachment_id);
-$lead_id = preg_replace('/[^0-9]/','',$lead_id);
-$email_row_id = preg_replace('/[^0-9]/','',$email_row_id);
-$reply_to_address = preg_replace("/\'|\"|\\\\|;/","",$reply_to_address);
-$reply_to_address = preg_replace('/[^-\.\:\/\@\_0-9\p{L}]/u','',$reply_to_address);
-$stage = preg_replace('/[^-_0-9\p{L}]/u','',$stage);
-$sender_email = preg_replace('/[^-\.\:\/\@\_0-9\p{L}]/u','',$sender_email);
-$reply_subject = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$reply_subject);
-$reply_from_address = preg_replace('/[^-\.\:\/\@\_0-9\p{L}]/u','',$reply_from_address);
-$agent_email = preg_replace('/[^-\.\:\/\@\_0-9\p{L}]/u','',$agent_email);
-$REPLY=preg_replace("/[^-_0-9a-zA-Z]/","",$REPLY);
-
-# filtered
-# $reply_message
-
-if ($non_latin < 1)
-	{
-	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
-	$pass=preg_replace("/[^-\.\+\/\=_0-9a-zA-Z]/","",$pass);
-	}
-else
-	{
-	$user=preg_replace("/[^-_0-9\p{L}]/u","",$user);
-	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
-	}
-
 
 $auth=0;
 $auth_message = user_authorization($user,$pass,'',0,1,0,0,'vdc_email_display');
@@ -293,13 +337,14 @@ if ($REPLY)
 	}
 
 
-if ( ($lead_id) or (strlen($email_row_id)>0) ) 
+if ( ($lead_id>0) or ($email_row_id>0) ) 
 	{
 	$stmt="SELECT * from vicidial_email_list where lead_id='$lead_id' and direction='INBOUND' and status IN('NEW','INCALL') order by email_date asc";
 	if ($email_row_id)
 		{$stmt="SELECT * from vicidial_email_list where lead_id='$lead_id' and email_row_id='$email_row_id' and direction='INBOUND' and status IN('NEW','INCALL') order by email_date asc";}
 	if ($DB > 0) {echo "$stmt\n";}
 	$rslt=mysql_to_mysqli($stmt, $link);
+	$EMAIL_form="";
 	if (mysqli_num_rows($rslt)>0) {
 		$row=mysqli_fetch_array($rslt);
 		$email_row_id=$row["email_row_id"];
@@ -318,7 +363,7 @@ if ( ($lead_id) or (strlen($email_row_id)>0) )
 			$row["email_to"]=preg_replace('/\>/', '\>', $row["email_to"]); 
 			$email_to = $row["email_to"];
 		}
-		$EMAIL_form="<center><TABLE cellspacing=2 cellpadding=2 bgcolor='#CCCCCC' width='500'>\n";
+		$EMAIL_form.="<center><TABLE cellspacing=2 cellpadding=2 bgcolor='#CCCCCC' width='500'>\n";
 		$EMAIL_form.="<tr bgcolor=white><td align='right' valign='top' width='150'>"._QXZ("Date received:")."</td><td align='left' valign='top' width='*'>$row[email_date]</td></tr>\n";
 		$EMAIL_form.="<tr bgcolor=white><td align='right' valign='top' width='150'>"._QXZ("From:")."</td><td align='left' valign='top' width='*'>$row[email_from]</td></tr>\n";
 		$EMAIL_form.="<tr bgcolor=white><td align='right' valign='top' width='150'>"._QXZ("Subject:")."</td><td align='left' valign='top' width='*'>$row[subject]</td></tr>\n";
@@ -397,6 +442,7 @@ if ( ($lead_id) or (strlen($email_row_id)>0) )
 	function CopyMessage()
 		{
 		<?php 
+			if (!isset($row["message"])) {$row["message"]="";}
 			$row["message"]=preg_replace('/\r|\n/', ' ', $row["message"]); 
 			echo "var message=\"".preg_replace('/\"/', '\\\"', $row["message"])."\";\n"; 
 		?>

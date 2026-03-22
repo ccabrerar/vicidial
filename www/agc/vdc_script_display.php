@@ -1,7 +1,7 @@
 <?php
 # vdc_script_display.php
 # 
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed display the contents of the SCRIPT tab in the agent interface
 #
@@ -47,10 +47,11 @@
 # 220219-0144 - Added allow_web_debug system setting
 # 220901-0849 - Added campaign user_group_script option
 # 230518-1046 - Added in-group and campaign custom fields 1-5, for script/webform/dispo-call-url use
+# 260302-1410 - Code updates for PHP8 compatibility
 #
 
-$version = '2.14-41';
-$build = '230518-1046';
+$version = '2.14-42';
+$build = '260302-1410';
 $php_script = 'vdc_script_display.php';
 
 require_once("dbconnect_mysqli.php");
@@ -58,243 +59,356 @@ require_once("functions.php");
 
 if (isset($_GET["lead_id"]))	{$lead_id=$_GET["lead_id"];}
 	elseif (isset($_POST["lead_id"]))	{$lead_id=$_POST["lead_id"];}
+	else {$lead_id=0;}
 if (isset($_GET["vendor_id"]))	{$vendor_id=$_GET["vendor_id"];}
 	elseif (isset($_POST["vendor_id"]))	{$vendor_id=$_POST["vendor_id"];}
+	else {$vendor_id="";}
 	$vendor_lead_code = $vendor_id;
 if (isset($_GET["list_id"]))	{$list_id=$_GET["list_id"];}
 	elseif (isset($_POST["list_id"]))	{$list_id=$_POST["list_id"];}
+	else {$list_id=0;}
 if (isset($_GET["gmt_offset_now"]))	{$gmt_offset_now=$_GET["gmt_offset_now"];}
 	elseif (isset($_POST["gmt_offset_now"]))	{$gmt_offset_now=$_POST["gmt_offset_now"];}
+	else {$gmt_offset_now="";}
 if (isset($_GET["phone_code"]))	{$phone_code=$_GET["phone_code"];}
 	elseif (isset($_POST["phone_code"]))	{$phone_code=$_POST["phone_code"];}
+	else {$phone_code="";}
 if (isset($_GET["phone_number"]))	{$phone_number=$_GET["phone_number"];}
 	elseif (isset($_POST["phone_number"]))	{$phone_number=$_POST["phone_number"];}
+	else {$phone_number="";}
 if (isset($_GET["title"]))	{$title=$_GET["title"];}
 	elseif (isset($_POST["title"]))	{$title=$_POST["title"];}
+	else {$title="";}
 if (isset($_GET["first_name"]))	{$first_name=$_GET["first_name"];}
 	elseif (isset($_POST["first_name"]))	{$first_name=$_POST["first_name"];}
+	else {$first_name="";}
 if (isset($_GET["middle_initial"]))	{$middle_initial=$_GET["middle_initial"];}
 	elseif (isset($_POST["middle_initial"]))	{$middle_initial=$_POST["middle_initial"];}
+	else {$middle_initial="";}
 if (isset($_GET["last_name"]))	{$last_name=$_GET["last_name"];}
 	elseif (isset($_POST["last_name"]))	{$last_name=$_POST["last_name"];}
+	else {$last_name="";}
 if (isset($_GET["address1"]))	{$address1=$_GET["address1"];}
 	elseif (isset($_POST["address1"]))	{$address1=$_POST["address1"];}
+	else {$address1="";}
 if (isset($_GET["address2"]))	{$address2=$_GET["address2"];}
 	elseif (isset($_POST["address2"]))	{$address2=$_POST["address2"];}
+	else {$address2="";}
 if (isset($_GET["address3"]))	{$address3=$_GET["address3"];}
 	elseif (isset($_POST["address3"]))	{$address3=$_POST["address3"];}
+	else {$address3="";}
 if (isset($_GET["city"]))	{$city=$_GET["city"];}
 	elseif (isset($_POST["city"]))	{$city=$_POST["city"];}
+	else {$city="";}
 if (isset($_GET["state"]))	{$state=$_GET["state"];}
 	elseif (isset($_POST["state"]))	{$state=$_POST["state"];}
+	else {$state="";}
 if (isset($_GET["province"]))	{$province=$_GET["province"];}
 	elseif (isset($_POST["province"]))	{$province=$_POST["province"];}
+	else {$province="";}
 if (isset($_GET["postal_code"]))	{$postal_code=$_GET["postal_code"];}
 	elseif (isset($_POST["postal_code"]))	{$postal_code=$_POST["postal_code"];}
+	else {$postal_code="";}
 if (isset($_GET["country_code"]))	{$country_code=$_GET["country_code"];}
 	elseif (isset($_POST["country_code"]))	{$country_code=$_POST["country_code"];}
+	else {$country_code="";}
 if (isset($_GET["gender"]))	{$gender=$_GET["gender"];}
 	elseif (isset($_POST["gender"]))	{$gender=$_POST["gender"];}
+	else {$gender="";}
 if (isset($_GET["date_of_birth"]))	{$date_of_birth=$_GET["date_of_birth"];}
 	elseif (isset($_POST["date_of_birth"]))	{$date_of_birth=$_POST["date_of_birth"];}
+	else {$date_of_birth="";}
 if (isset($_GET["alt_phone"]))	{$alt_phone=$_GET["alt_phone"];}
 	elseif (isset($_POST["alt_phone"]))	{$alt_phone=$_POST["alt_phone"];}
+	else {$alt_phone="";}
 if (isset($_GET["email"]))	{$email=$_GET["email"];}
 	elseif (isset($_POST["email"]))	{$email=$_POST["email"];}
+	else {$email="";}
 if (isset($_GET["security_phrase"]))	{$security_phrase=$_GET["security_phrase"];}
 	elseif (isset($_POST["security_phrase"]))	{$security_phrase=$_POST["security_phrase"];}
+	else {$security_phrase="";}
 if (isset($_GET["comments"]))	{$comments=$_GET["comments"];}
 	elseif (isset($_POST["comments"]))	{$comments=$_POST["comments"];}
+	else {$comments="";}
 if (isset($_GET["user"]))	{$user=$_GET["user"];}
 	elseif (isset($_POST["user"]))	{$user=$_POST["user"];}
+	else {$user="";}
 if (isset($_GET["pass"]))	{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))	{$pass=$_POST["pass"];}
+	else {$pass="";}
 if (isset($_GET["campaign"]))	{$campaign=$_GET["campaign"];}
 	elseif (isset($_POST["campaign"]))	{$campaign=$_POST["campaign"];}
+	else {$campaign="";}
 if (isset($_GET["phone_login"]))	{$phone_login=$_GET["phone_login"];}
 	elseif (isset($_POST["phone_login"]))	{$phone_login=$_POST["phone_login"];}
+	else {$phone_login="";}
 if (isset($_GET["original_phone_login"]))	{$original_phone_login=$_GET["original_phone_login"];}
 	elseif (isset($_POST["original_phone_login"]))	{$original_phone_login=$_POST["original_phone_login"];}
+	else {$original_phone_login="";}
 if (isset($_GET["phone_pass"]))	{$phone_pass=$_GET["phone_pass"];}
 	elseif (isset($_POST["phone_pass"]))	{$phone_pass=$_POST["phone_pass"];}
+	else {$phone_pass="";}
 if (isset($_GET["fronter"]))	{$fronter=$_GET["fronter"];}
 	elseif (isset($_POST["fronter"]))	{$fronter=$_POST["fronter"];}
+	else {$fronter="";}
 if (isset($_GET["closer"]))	{$closer=$_GET["closer"];}
 	elseif (isset($_POST["closer"]))	{$closer=$_POST["closer"];}
+	else {$closer="";}
 if (isset($_GET["group"]))	{$group=$_GET["group"];}
 	elseif (isset($_POST["group"]))	{$group=$_POST["group"];}
+	else {$group="";}
 if (isset($_GET["channel_group"]))	{$channel_group=$_GET["channel_group"];}
 	elseif (isset($_POST["channel_group"]))	{$channel_group=$_POST["channel_group"];}
+	else {$channel_group="";}
 if (isset($_GET["SQLdate"]))	{$SQLdate=$_GET["SQLdate"];}
 	elseif (isset($_POST["SQLdate"]))	{$SQLdate=$_POST["SQLdate"];}
+	else {$SQLdate="";}
 if (isset($_GET["epoch"]))	{$epoch=$_GET["epoch"];}
 	elseif (isset($_POST["epoch"]))	{$epoch=$_POST["epoch"];}
+	else {$epoch=0;}
 if (isset($_GET["uniqueid"]))	{$uniqueid=$_GET["uniqueid"];}
 	elseif (isset($_POST["uniqueid"]))	{$uniqueid=$_POST["uniqueid"];}
+	else {$uniqueid="";}
 if (isset($_GET["customer_zap_channel"]))	{$customer_zap_channel=$_GET["customer_zap_channel"];}
 	elseif (isset($_POST["customer_zap_channel"]))	{$customer_zap_channel=$_POST["customer_zap_channel"];}
+	else {$customer_zap_channel="";}
 if (isset($_GET["customer_server_ip"]))	{$customer_server_ip=$_GET["customer_server_ip"];}
 	elseif (isset($_POST["customer_server_ip"]))	{$customer_server_ip=$_POST["customer_server_ip"];}
+	else {$customer_server_ip="";}
 if (isset($_GET["server_ip"]))	{$server_ip=$_GET["server_ip"];}
 	elseif (isset($_POST["server_ip"]))	{$server_ip=$_POST["server_ip"];}
 if (isset($_GET["SIPexten"]))	{$SIPexten=$_GET["SIPexten"];}
 	elseif (isset($_POST["SIPexten"]))	{$SIPexten=$_POST["SIPexten"];}
+	else {$SIPexten="";}
 if (isset($_GET["session_id"]))	{$session_id=$_GET["session_id"];}
 	elseif (isset($_POST["session_id"]))	{$session_id=$_POST["session_id"];}
+	else {$session_id="";}
 if (isset($_GET["phone"]))	{$phone=$_GET["phone"];}
 	elseif (isset($_POST["phone"]))	{$phone=$_POST["phone"];}
+	else {$phone="";}
 if (isset($_GET["parked_by"]))	{$parked_by=$_GET["parked_by"];}
 	elseif (isset($_POST["parked_by"]))	{$parked_by=$_POST["parked_by"];}
+	else {$parked_by="";}
 if (isset($_GET["dispo"]))	{$dispo=$_GET["dispo"];}
 	elseif (isset($_POST["dispo"]))	{$dispo=$_POST["dispo"];}
+	else {$dispo="";}
 if (isset($_GET["dialed_number"]))	{$dialed_number=$_GET["dialed_number"];}
 	elseif (isset($_POST["dialed_number"]))	{$dialed_number=$_POST["dialed_number"];}
+	else {$dialed_number="";}
 if (isset($_GET["dialed_label"]))	{$dialed_label=$_GET["dialed_label"];}
 	elseif (isset($_POST["dialed_label"]))	{$dialed_label=$_POST["dialed_label"];}
+	else {$dialed_label="";}
 if (isset($_GET["source_id"]))	{$source_id=$_GET["source_id"];}
 	elseif (isset($_POST["source_id"]))	{$source_id=$_POST["source_id"];}
+	else {$source_id="";}
 if (isset($_GET["rank"]))	{$rank=$_GET["rank"];}
 	elseif (isset($_POST["rank"]))	{$rank=$_POST["rank"];}
+	else {$rank="";}
 if (isset($_GET["owner"]))	{$owner=$_GET["owner"];}
 	elseif (isset($_POST["owner"]))	{$owner=$_POST["owner"];}
+	else {$owner="";}
 if (isset($_GET["camp_script"]))	{$camp_script=$_GET["camp_script"];}
 	elseif (isset($_POST["camp_script"]))	{$camp_script=$_POST["camp_script"];}
+	else {$camp_script="";}
 if (isset($_GET["in_script"]))	{$in_script=$_GET["in_script"];}
 	elseif (isset($_POST["in_script"]))	{$in_script=$_POST["in_script"];}
+	else {$in_script="";}
 if (isset($_GET["SCRIPTcamp_script"]))	{$SCRIPTcamp_script=$_GET["SCRIPTcamp_script"];}
 	elseif (isset($_POST["SCRIPTcamp_script"]))	{$SCRIPTcamp_script=$_POST["SCRIPTcamp_script"];}
+	else {$SCRIPTcamp_script="";}
 if (isset($_GET["SCRIPTin_script"]))	{$SCRIPTin_script=$_GET["SCRIPTin_script"];}
 	elseif (isset($_POST["SCRIPTin_script"]))	{$SCRIPTin_script=$_POST["SCRIPTin_script"];}
+	else {$SCRIPTin_script="";}
 if (isset($_GET["script_width"]))	{$script_width=$_GET["script_width"];}
 	elseif (isset($_POST["script_width"]))	{$script_width=$_POST["script_width"];}
+	else {$script_width=0;}
 if (isset($_GET["script_height"]))	{$script_height=$_GET["script_height"];}
 	elseif (isset($_POST["script_height"]))	{$script_height=$_POST["script_height"];}
+	else {$script_height=0;}
 if (isset($_GET["fullname"]))	{$fullname=$_GET["fullname"];}
 	elseif (isset($_POST["fullname"]))	{$fullname=$_POST["fullname"];}
+	else {$fullname="";}
 if (isset($_GET["agent_email"]))	{$agent_email=$_GET["agent_email"];}
 	elseif (isset($_POST["agent_email"]))	{$agent_email=$_POST["agent_email"];}
+	else {$agent_email="";}
 if (isset($_GET["recording_filename"]))	{$recording_filename=$_GET["recording_filename"];}
 	elseif (isset($_POST["recording_filename"]))	{$recording_filename=$_POST["recording_filename"];}
+	else {$recording_filename="";}
 if (isset($_GET["recording_id"]))	{$recording_id=$_GET["recording_id"];}
 	elseif (isset($_POST["recording_id"]))	{$recording_id=$_POST["recording_id"];}
+	else {$recording_id=0;}
 if (isset($_GET["user_custom_one"]))	{$user_custom_one=$_GET["user_custom_one"];}
 	elseif (isset($_POST["user_custom_one"]))	{$user_custom_one=$_POST["user_custom_one"];}
+	else {$user_custom_one="";}
 if (isset($_GET["user_custom_two"]))	{$user_custom_two=$_GET["user_custom_two"];}
 	elseif (isset($_POST["user_custom_two"]))	{$user_custom_two=$_POST["user_custom_two"];}
+	else {$user_custom_two="";}
 if (isset($_GET["user_custom_three"]))	{$user_custom_three=$_GET["user_custom_three"];}
 	elseif (isset($_POST["user_custom_three"]))	{$user_custom_three=$_POST["user_custom_three"];}
+	else {$user_custom_three="";}
 if (isset($_GET["user_custom_four"]))	{$user_custom_four=$_GET["user_custom_four"];}
 	elseif (isset($_POST["user_custom_four"]))	{$user_custom_four=$_POST["user_custom_four"];}
+	else {$user_custom_four="";}
 if (isset($_GET["user_custom_five"]))	{$user_custom_five=$_GET["user_custom_five"];}
 	elseif (isset($_POST["user_custom_five"]))	{$user_custom_five=$_POST["user_custom_five"];}
+	else {$user_custom_five="";}
 if (isset($_GET["preset_number_a"]))	{$preset_number_a=$_GET["preset_number_a"];}
 	elseif (isset($_POST["preset_number_a"]))	{$preset_number_a=$_POST["preset_number_a"];}
+	else {$preset_number_a="";}
 if (isset($_GET["preset_number_b"]))	{$preset_number_b=$_GET["preset_number_b"];}
 	elseif (isset($_POST["preset_number_b"]))	{$preset_number_b=$_POST["preset_number_b"];}
+	else {$preset_number_b="";}
 if (isset($_GET["preset_number_c"]))	{$preset_number_c=$_GET["preset_number_c"];}
 	elseif (isset($_POST["preset_number_c"]))	{$preset_number_c=$_POST["preset_number_c"];}
+	else {$preset_number_c="";}
 if (isset($_GET["preset_number_d"]))	{$preset_number_d=$_GET["preset_number_d"];}
 	elseif (isset($_POST["preset_number_d"]))	{$preset_number_d=$_POST["preset_number_d"];}
+	else {$preset_number_d="";}
 if (isset($_GET["preset_number_e"]))	{$preset_number_e=$_GET["preset_number_e"];}
 	elseif (isset($_POST["preset_number_e"]))	{$preset_number_e=$_POST["preset_number_e"];}
+	else {$preset_number_e="";}
 if (isset($_GET["preset_number_f"]))	{$preset_number_f=$_GET["preset_number_f"];}
 	elseif (isset($_POST["preset_number_f"]))	{$preset_number_f=$_POST["preset_number_f"];}
+	else {$preset_number_f="";}
 if (isset($_GET["preset_dtmf_a"]))	{$preset_dtmf_a=$_GET["preset_dtmf_a"];}
 	elseif (isset($_POST["preset_dtmf_a"]))	{$preset_dtmf_a=$_POST["preset_dtmf_a"];}
+	else {$preset_dtmf_a="";}
 if (isset($_GET["preset_dtmf_b"]))	{$preset_dtmf_b=$_GET["preset_dtmf_b"];}
 	elseif (isset($_POST["preset_dtmf_b"]))	{$preset_dtmf_b=$_POST["preset_dtmf_b"];}
+	else {$preset_dtmf_b="";}
 if (isset($_GET["did_id"]))				{$did_id=$_GET["did_id"];}
 	elseif (isset($_POST["did_id"]))	{$did_id=$_POST["did_id"];}
+	else {$did_id="";}
 if (isset($_GET["did_extension"]))			{$did_extension=$_GET["did_extension"];}
 	elseif (isset($_POST["did_extension"]))	{$did_extension=$_POST["did_extension"];}
+	else {$did_extension="";}
 if (isset($_GET["did_pattern"]))			{$did_pattern=$_GET["did_pattern"];}
 	elseif (isset($_POST["did_pattern"]))	{$did_pattern=$_POST["did_pattern"];}
+	else {$did_pattern="";}
 if (isset($_GET["did_description"]))			{$did_description=$_GET["did_description"];}
 	elseif (isset($_POST["did_description"]))	{$did_description=$_POST["did_description"];}
+	else {$did_description="";}
 if (isset($_GET["closecallid"]))			{$closecallid=$_GET["closecallid"];}
 	elseif (isset($_POST["closecallid"]))	{$closecallid=$_POST["closecallid"];}
+	else {$closecallid=0;}
 if (isset($_GET["xfercallid"]))				{$xfercallid=$_GET["xfercallid"];}
 	elseif (isset($_POST["xfercallid"]))	{$xfercallid=$_POST["xfercallid"];}
+	else {$xfercallid="";}
 if (isset($_GET["agent_log_id"]))			{$agent_log_id=$_GET["agent_log_id"];}
 	elseif (isset($_POST["agent_log_id"]))	{$agent_log_id=$_POST["agent_log_id"];}
+	else {$agent_log_id="";}
 if (isset($_GET["ScrollDIV"]))			{$ScrollDIV=$_GET["ScrollDIV"];}
 	elseif (isset($_POST["ScrollDIV"]))	{$ScrollDIV=$_POST["ScrollDIV"];}
+	else {$ScrollDIV=0;}
 if (isset($_GET["ignore_list_script"]))				{$ignore_list_script=$_GET["ignore_list_script"];}
 	elseif (isset($_POST["ignore_list_script"]))	{$ignore_list_script=$_POST["ignore_list_script"];}
+	else {$ignore_list_script="";}
 if (isset($_GET["CF_uses_custom_fields"]))			{$CF_uses_custom_fields=$_GET["CF_uses_custom_fields"];}
 	elseif (isset($_POST["CF_uses_custom_fields"]))	{$CF_uses_custom_fields=$_POST["CF_uses_custom_fields"];}
+	else {$CF_uses_custom_fields="";}
 if (isset($_GET["entry_list_id"]))			{$entry_list_id=$_GET["entry_list_id"];}
 	elseif (isset($_POST["entry_list_id"]))	{$entry_list_id=$_POST["entry_list_id"];}
+	else {$entry_list_id=0;}
 if (isset($_GET["call_id"]))			{$call_id=$_GET["call_id"];}
 	elseif (isset($_POST["call_id"]))	{$call_id=$_POST["call_id"];}
+	else {$call_id="";}
 if (isset($_GET["user_group"]))				{$user_group=$_GET["user_group"];}
 	elseif (isset($_POST["user_group"]))	{$user_group=$_POST["user_group"];}
+	else {$user_group="";}
 if (isset($_GET["web_vars"]))			{$web_vars=$_GET["web_vars"];}
 	elseif (isset($_POST["web_vars"]))	{$web_vars=$_POST["web_vars"];}
+	else {$web_vars="";}
 if (isset($_GET["orig_pass"]))			{$orig_pass=$_GET["orig_pass"];}
 	elseif (isset($_POST["orig_pass"]))	{$orig_pass=$_POST["orig_pass"];}
+	else {$orig_pass="";}
 if (isset($_GET["called_count"]))			{$called_count=$_GET["called_count"];}
 	elseif (isset($_POST["called_count"]))	{$called_count=$_POST["called_count"];}
+	else {$called_count=0;}
 if (isset($_GET["script_override"]))			{$script_override=$_GET["script_override"];}
 	elseif (isset($_POST["script_override"]))	{$script_override=$_POST["script_override"];}
+	else {$script_override="";}
 if (isset($_GET["session_name"]))			{$session_name=$_GET["session_name"];}
 	elseif (isset($_POST["session_name"]))	{$session_name=$_POST["session_name"];}
 if (isset($_GET["entry_date"]))				{$entry_date=$_GET["entry_date"];}
 	elseif (isset($_POST["entry_date"]))	{$entry_date=$_POST["entry_date"];}
+	else {$entry_date="";}
 if (isset($_GET["did_custom_one"]))				{$did_custom_one=$_GET["did_custom_one"];}
 	elseif (isset($_POST["did_custom_one"]))	{$did_custom_one=$_POST["did_custom_one"];}
+	else {$did_custom_one="";}
 if (isset($_GET["did_custom_two"]))				{$did_custom_two=$_GET["did_custom_two"];}
 	elseif (isset($_POST["did_custom_two"]))	{$did_custom_two=$_POST["did_custom_two"];}
+	else {$did_custom_two="";}
 if (isset($_GET["did_custom_three"]))			{$did_custom_three=$_GET["did_custom_three"];}
 	elseif (isset($_POST["did_custom_three"]))	{$did_custom_three=$_POST["did_custom_three"];}
+	else {$did_custom_three="";}
 if (isset($_GET["did_custom_four"]))			{$did_custom_four=$_GET["did_custom_four"];}
 	elseif (isset($_POST["did_custom_four"]))	{$did_custom_four=$_POST["did_custom_four"];}
+	else {$did_custom_four="";}
 if (isset($_GET["did_custom_five"]))			{$did_custom_five=$_GET["did_custom_five"];}
 	elseif (isset($_POST["did_custom_five"]))	{$did_custom_five=$_POST["did_custom_five"];}
+	else {$did_custom_five="";}
 if (isset($_GET["email_row_id"]))			{$email_row_id=$_GET["email_row_id"];}
 	elseif (isset($_POST["email_row_id"]))	{$email_row_id=$_POST["email_row_id"];}
+	else {$email_row_id="";}
 if (isset($_GET["DB"]))				{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))	{$DB=$_POST["DB"];}
 if (isset($_GET["inOUT"]))			{$inOUT=$_GET["inOUT"];}
 	elseif (isset($_POST["inOUT"]))	{$inOUT=$_POST["inOUT"];}
+	else {$inOUT="";}
 if (isset($_GET["LOGINvarONE"]))			{$LOGINvarONE=$_GET["LOGINvarONE"];}
 	elseif (isset($_POST["LOGINvarONE"]))	{$LOGINvarONE=$_POST["LOGINvarONE"];}
+	else {$LOGINvarONE="";}
 if (isset($_GET["LOGINvarTWO"]))			{$LOGINvarTWO=$_GET["LOGINvarTWO"];}
 	elseif (isset($_POST["LOGINvarTWO"]))	{$LOGINvarTWO=$_POST["LOGINvarTWO"];}
+	else {$LOGINvarTWO="";}
 if (isset($_GET["LOGINvarTHREE"]))			{$LOGINvarTHREE=$_GET["LOGINvarTHREE"];}
 	elseif (isset($_POST["LOGINvarTHREE"]))	{$LOGINvarTHREE=$_POST["LOGINvarTHREE"];}
+	else {$LOGINvarTHREE="";}
 if (isset($_GET["LOGINvarFOUR"]))			{$LOGINvarFOUR=$_GET["LOGINvarFOUR"];}
 	elseif (isset($_POST["LOGINvarFOUR"]))	{$LOGINvarFOUR=$_POST["LOGINvarFOUR"];}
+	else {$LOGINvarFOUR="";}
 if (isset($_GET["LOGINvarFIVE"]))			{$LOGINvarFIVE=$_GET["LOGINvarFIVE"];}
 	elseif (isset($_POST["LOGINvarFIVE"]))	{$LOGINvarFIVE=$_POST["LOGINvarFIVE"];}
+	else {$LOGINvarFIVE="";}
 if (isset($_GET["script_span"]))			{$script_span=$_GET["script_span"];}
 	elseif (isset($_POST["script_span"]))	{$script_span=$_POST["script_span"];}
+	else {$script_span="";}
 if (isset($_GET["user_group_script"]))			{$user_group_script=$_GET["user_group_script"];}
 	elseif (isset($_POST["user_group_script"]))	{$user_group_script=$_POST["user_group_script"];}
+	else {$user_group_script="";}
 if (isset($_GET["UGscript_id"]))			{$UGscript_id=$_GET["UGscript_id"];}
 	elseif (isset($_POST["UGscript_id"]))	{$UGscript_id=$_POST["UGscript_id"];}
+	else {$UGscript_id="";}
 if (isset($_GET["camp_custom_one"]))			{$camp_custom_one=$_GET["camp_custom_one"];}
 	elseif (isset($_POST["camp_custom_one"]))	{$camp_custom_one=$_POST["camp_custom_one"];}
+	else {$camp_custom_one="";}
 if (isset($_GET["camp_custom_two"]))			{$camp_custom_two=$_GET["camp_custom_two"];}
 	elseif (isset($_POST["camp_custom_two"]))	{$camp_custom_two=$_POST["camp_custom_two"];}
+	else {$camp_custom_two="";}
 if (isset($_GET["camp_custom_three"]))			{$camp_custom_three=$_GET["camp_custom_three"];}
 	elseif (isset($_POST["camp_custom_three"]))	{$camp_custom_three=$_POST["camp_custom_three"];}
+	else {$camp_custom_three="";}
 if (isset($_GET["camp_custom_four"]))			{$camp_custom_four=$_GET["camp_custom_four"];}
 	elseif (isset($_POST["camp_custom_four"]))	{$camp_custom_four=$_POST["camp_custom_four"];}
+	else {$camp_custom_four="";}
 if (isset($_GET["camp_custom_five"]))			{$camp_custom_five=$_GET["camp_custom_five"];}
 	elseif (isset($_POST["camp_custom_five"]))	{$camp_custom_five=$_POST["camp_custom_five"];}
+	else {$camp_custom_five="";}
 if (isset($_GET["ig_custom_one"]))				{$ig_custom_one=$_GET["ig_custom_one"];}
 	elseif (isset($_POST["ig_custom_one"]))		{$ig_custom_one=$_POST["ig_custom_one"];}
+	else {$ig_custom_one="";}
 if (isset($_GET["ig_custom_two"]))				{$ig_custom_two=$_GET["ig_custom_two"];}
 	elseif (isset($_POST["ig_custom_two"]))		{$ig_custom_two=$_POST["ig_custom_two"];}
+	else {$ig_custom_two="";}
 if (isset($_GET["ig_custom_three"]))			{$ig_custom_three=$_GET["ig_custom_three"];}
 	elseif (isset($_POST["ig_custom_three"]))	{$ig_custom_three=$_POST["ig_custom_three"];}
+	else {$ig_custom_three="";}
 if (isset($_GET["ig_custom_four"]))				{$ig_custom_four=$_GET["ig_custom_four"];}
 	elseif (isset($_POST["ig_custom_four"]))	{$ig_custom_four=$_POST["ig_custom_four"];}
+	else {$ig_custom_four="";}
 if (isset($_GET["ig_custom_five"]))				{$ig_custom_five=$_GET["ig_custom_five"];}
 	elseif (isset($_POST["ig_custom_five"]))	{$ig_custom_five=$_POST["ig_custom_five"];}
-
-$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+	else {$ig_custom_five="";}
 
 # if options file exists, use the override values for the above variables
 #   see the options-example.php file for more information
@@ -315,7 +429,7 @@ $CIDdate = date("mdHis");
 $ENTRYdate = date("YmdHis");
 $MT[0]='';
 $agents='@agents';
-$script_height = ($script_height - 20);
+$script_height = ($script_height > 20 ? ($script_height - 20) : 0);
 $full_script_height = ($script_height + 200);
 
 $server_name = getenv("SERVER_NAME");
@@ -356,7 +470,8 @@ if ($qm_conf_ct > 0)
 	$SSenable_second_script =				$row[6];
 	$SSallow_web_debug =					$row[7];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;   $format='text';}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;   $format='text';}
+$DB=preg_replace("/[^0-9]/","",$DB);
 
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$user';";
@@ -379,12 +494,11 @@ $agent_email = preg_replace("/\<|\>|\"|\\\\|;/",'-',$agent_email);
 $agent_log_id = preg_replace("/\<|\>|\"|\\\\|;/",'-',$agent_log_id);
 $alt_phone = preg_replace("/\"|\\\\|;/",'-',$alt_phone);
 $call_id = preg_replace("/[^-_0-9a-zA-Z]/",'-',$call_id);
-$called_count = preg_replace("/\<|\>|\"|\\\\|;/",'-',$called_count);
+$called_count = preg_replace("/[^0-9]/",'',$called_count);
 $camp_script = preg_replace("/\<|\>|\"|\\\\|;/",'-',$camp_script);
-$CF_uses_custom_fields = preg_replace("/[^-_0-9a-zA-Z]/",'-',$CF_uses_custom_fields);
 $channel_group = preg_replace("/\<|\>|\"|\\\\|;/",'-',$channel_group);
 $city = preg_replace("/\"|\\\\|;/",'-',$city);
-$closecallid = preg_replace("/[^-_0-9a-zA-Z]/",'-',$closecallid);
+$closecallid = preg_replace("/[^0-9]/",'-',$closecallid);
 $closer = preg_replace("/\<|\>|\"|\\\\|;/",'-',$closer);
 $comments = preg_replace("/\"|\\\\|;/",'-',$comments);
 $country_code = preg_replace("/\"|\\\\|;/",'-',$country_code);
@@ -407,8 +521,8 @@ $dispo = preg_replace("/\<|\>|\"|\\\\|;/",'-',$dispo);
 $email = preg_replace("/\"|\\\\|;/",'-',$email);
 $email_row_id = preg_replace('/[^0-9]/', '', $email_row_id);
 $entry_date = preg_replace("/\<|\>|\"|\\\\|;/",'-',$entry_date);
-$entry_list_id = preg_replace("/^0-9]/",'',$entry_list_id);
-$epoch = preg_replace("/\<|\>|\"|\\\\|;/",'-',$epoch);
+$entry_list_id = preg_replace("/^[0-9]/",'',$entry_list_id);
+$epoch = preg_replace("/[^0-9]/",'',$epoch);
 $first_name = preg_replace("/\"|\\\\|;/",'-',$first_name);
 $fronter = preg_replace("/\<|\>|\"|\\\\|;/",'-',$fronter);
 $fullname = preg_replace("/\<|\>|\"|\\\\|;/",'-',$fullname);
@@ -416,7 +530,7 @@ $gender = preg_replace("/\"|\\\\|;/",'-',$gender);
 $gmt_offset_now = preg_replace("/\"|\\\\|;/",'-',$gmt_offset_now);
 $ignore_list_script = preg_replace("/\<|\>|\"|\\\\|;/",'-',$ignore_list_script);
 $in_script = preg_replace("/\<|\>|\"|\\\\|;/",'-',$in_script);
-$inOUT=preg_replace("/[^-_0-9a-zA-Z]/","",$inOUT);
+# $inOUT=preg_replace("/[^-_0-9a-zA-Z]/","",$inOUT);
 $last_name = preg_replace("/\"|\\\\|;/",'-',$last_name);
 $lead_id = preg_replace('/[^0-9]/', '', $lead_id);
 $list_id = preg_replace('/[^0-9]/', '', $list_id);
@@ -443,14 +557,14 @@ $preset_number_f = preg_replace("/\<|\>|\"|\\\\|;/",'-',$preset_number_f);
 $province = preg_replace("/\"|\\\\|;/",'-',$province);
 $rank = preg_replace("/\<|\>|\"|\\\\|;/",'-',$rank);
 $recording_filename = preg_replace("/\<|\>|\"|\\\\|;/",'-',$recording_filename);
-$recording_id = preg_replace("/\<|\>|\"|\\\\|;/",'-',$recording_id);
+$recording_id = preg_replace("/[^0-9]/",'',$recording_id);
 $script_height = preg_replace("/\<|\>|\"|\\\\|;/",'-',$script_height);
 $script_override = preg_replace("/\<|\>|\"|\\\\|;/",'-',$script_override);
-$script_span=preg_replace("/[^-_0-9a-zA-Z]/","",$script_span);
-$script_width = preg_replace("/\<|\>|\"|\\\\|;/",'-',$script_width);
+# $script_span=preg_replace("/[^-_0-9a-zA-Z]/","",$script_span);
+$script_width = preg_replace("/[^0-9]/",'',$script_width);
 $SCRIPTcamp_script = preg_replace("/\<|\>|\"|\\\\|;/",'-',$SCRIPTcamp_script);
 $SCRIPTin_script = preg_replace("/\<|\>|\"|\\\\|;/",'-',$SCRIPTin_script);
-$ScrollDIV = preg_replace("/\<|\>|\"|\\\\|;/",'-',$ScrollDIV);
+$ScrollDIV = preg_replace("/[^0-9]/",'',$ScrollDIV);
 $security_phrase = preg_replace("/\"|\\\\|;/",'-',$security_phrase);
 $server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
 $session_id = preg_replace('/[^0-9]/','',$session_id);
@@ -460,7 +574,7 @@ $source_id = preg_replace("/\<|\>|\"|\\\\|;/",'-',$source_id);
 $SQLdate = preg_replace("/\<|\>|\"|\\\\|;/",'-',$SQLdate);
 $state = preg_replace("/\"|\\\\|;/",'-',$state);
 $title = preg_replace("/\"|\\\\|;/",'-',$title);
-$uniqueid = preg_replace('/[^-_\.0-9a-zA-Z]/','',$uniqueid);
+# $uniqueid = preg_replace('/[^-_\.0-9a-zA-Z]/','',$uniqueid);
 $user_custom_five = preg_replace("/\"|\\\\|;/",'-',$user_custom_five);
 $user_custom_four = preg_replace("/\"|\\\\|;/",'-',$user_custom_four);
 $user_custom_one = preg_replace("/\"|\\\\|;/",'-',$user_custom_one);
@@ -471,7 +585,7 @@ $vendor_id = preg_replace("/\"|\\\\|;/",'-',$vendor_id);
 $vendor_lead_code = preg_replace("/\"|\\\\|;/",'-',$vendor_lead_code);
 $web_vars = preg_replace("/\<|\>|\'|\"|\\\\|;/",'-',$web_vars);
 $xfercallid = preg_replace("/\<|\>|\"|\\\\|;/",'-',$xfercallid);
-$user_group_script=preg_replace("/[^-_0-9a-zA-Z]/","",$user_group_script);
+# $user_group_script=preg_replace("/[^-_0-9a-zA-Z]/","",$user_group_script);
 
 if ($non_latin < 1)
 	{
@@ -489,6 +603,7 @@ if ($non_latin < 1)
 	$SCRIPTcamp_script = preg_replace("/[^-_0-9a-zA-Z]/",'',$SCRIPTcamp_script);
 	$SCRIPTin_script = preg_replace("/[^-_0-9a-zA-Z]/",'',$SCRIPTin_script);
 	$agent_email = preg_replace("/[^-\.\:\/\@\_0-9a-zA-Z]/",'-',$agent_email);
+	$CF_uses_custom_fields = preg_replace("/[^-_0-9a-zA-Z]/",'-',$CF_uses_custom_fields);
 	$did_id = preg_replace("/[^-_0-9a-zA-Z]/",'-',$did_id);
 	$did_extension = preg_replace("/[^-_0-9a-zA-Z]/",'-',$did_extension);
 	$did_pattern = preg_replace("/[^:\+\*\#\.\_0-9a-zA-Z]/",'-',$did_pattern);
@@ -496,7 +611,7 @@ if ($non_latin < 1)
 	$xfercallid = preg_replace("/[^-_0-9a-zA-Z]/",'-',$xfercallid);
 	$agent_log_id = preg_replace("/[^-_0-9a-zA-Z]/",'-',$agent_log_id);
 	$user_group = preg_replace("/[^-_0-9a-zA-Z]/",'-',$user_group);
-	$called_count = preg_replace("/[^-_0-9a-zA-Z]/",'-',$called_count);
+#	$called_count = preg_replace("/[^-_0-9a-zA-Z]/",'-',$called_count);
 	$script_override = preg_replace("/[^-_0-9a-zA-Z]/",'-',$script_override);
 	$entry_date = preg_replace("/[^- \.\:\,\_0-9a-zA-Z]/",'-',$entry_date);
 	$did_custom_one = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$did_custom_one);
@@ -515,6 +630,10 @@ if ($non_latin < 1)
 	$ig_custom_three = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$ig_custom_three);
 	$ig_custom_four = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$ig_custom_four);
 	$ig_custom_five  = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$ig_custom_five );
+	$inOUT=preg_replace("/[^-_0-9a-zA-Z]/","",$inOUT);
+	$script_span=preg_replace("/[^-_0-9a-zA-Z]/","",$script_span);
+	$uniqueid = preg_replace('/[^-_\.0-9a-zA-Z]/','',$uniqueid);
+	$user_group_script=preg_replace("/[^-_0-9a-zA-Z]/","",$user_group_script);
 	}
 else
 	{
@@ -532,6 +651,7 @@ else
 	$SCRIPTcamp_script = preg_replace("/[^-_0-9\p{L}]/u",'',$SCRIPTcamp_script);
 	$SCRIPTin_script = preg_replace("/[^-_0-9\p{L}]/u",'',$SCRIPTin_script);
 	$agent_email = preg_replace("/[^-\.\:\/\@\_0-9\p{L}]/u",'-',$agent_email);
+	$CF_uses_custom_fields = preg_replace("/[^-_0-9\p{L}]/u",'-',$CF_uses_custom_fields);
 	$did_id = preg_replace("/[^-_0-9\p{L}]/u",'-',$did_id);
 	$did_extension = preg_replace("/[^-_0-9\p{L}]/u",'-',$did_extension);
 	$did_pattern = preg_replace("/[^:\+\*\#\.\_0-9\p{L}]/u",'-',$did_pattern);
@@ -539,7 +659,7 @@ else
 	$xfercallid = preg_replace("/[^-_0-9\p{L}]/u",'-',$xfercallid);
 	$agent_log_id = preg_replace("/[^-_0-9\p{L}]/u",'-',$agent_log_id);
 	$user_group = preg_replace("/[^-_0-9\p{L}]/u",'-',$user_group);
-	$called_count = preg_replace("/[^-_0-9\p{L}]/u",'-',$called_count);
+#	$called_count = preg_replace("/[^-_0-9\p{L}]/u",'-',$called_count);
 	$script_override = preg_replace("/[^-_0-9\p{L}]/u",'-',$script_override);
 	$entry_date = preg_replace("/[^- \.\:\,\_0-9\p{L}]/u",'-',$entry_date);
 	$did_custom_one = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$did_custom_one);
@@ -558,6 +678,10 @@ else
 	$ig_custom_three = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$ig_custom_three);
 	$ig_custom_four = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$ig_custom_four);
 	$ig_custom_five  = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$ig_custom_five );
+	$inOUT=preg_replace("/[^-_0-9\p{L}]/u","",$inOUT);
+	$script_span=preg_replace("/[^-_0-9\p{L}]/u","",$script_span);
+	$uniqueid = preg_replace('/[^-_\.0-9\p{L}]/u','',$uniqueid);
+	$user_group_script=preg_replace("/[^-_0-9\p{L}]/u","",$user_group_script);
 	}
 
 $auth=0;
@@ -608,30 +732,47 @@ if ($DB > 0) {echo "DEBUG: |$ignore_list_script|$script_span|$user_group_script|
 if ( ($ignore_list_script < 1) and ($script_span != 'Script2Contents') and ( ($user_group_script != 'ENABLED') or (strlen($UGscript_id)<1) ) )
 	{
 #	$stmt="SELECT agent_script_override from vicidial_lists where list_id='$list_id';";
+	$agent_script_override='';	
 	$stmt="SELECT if('$inOUT'= 'IN',if(inbound_list_script_override is null or inbound_list_script_override='',agent_script_override,inbound_list_script_override),agent_script_override) from vicidial_lists where list_id='$list_id';";
 	if ($DB) {echo "$stmt\n";}
 	$rslt=mysql_to_mysqli($stmt, $link);
-	$row=mysqli_fetch_row($rslt);
-	$agent_script_override =		$row[0];
+	if (mysqli_num_rows($rslt)>0)
+		{
+		$row=mysqli_fetch_row($rslt);
+		$agent_script_override =		$row[0];
+		}
 	if (strlen($agent_script_override) > 0)
 		{$call_script = $agent_script_override;}
 	}
 
+$list_name=''; $list_description='';
 $stmt="SELECT list_name,list_description from vicidial_lists where list_id='$list_id';";
 $rslt=mysql_to_mysqli($stmt, $link);
-$row=mysqli_fetch_row($rslt);
-$list_name =			$row[0];
-$list_description =		$row[1];
+if (mysqli_num_rows($rslt)>0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$list_name =			$row[0];
+	$list_description =		$row[1];
+	}
 
 if (strlen($script_override)>1)
 	{$call_script = $script_override;}
 
 $stmt="SELECT script_name,script_text,script_color from vicidial_scripts where script_id='$call_script';";
 $rslt=mysql_to_mysqli($stmt, $link);
-$row=mysqli_fetch_row($rslt);
-$script_name =		$row[0];
-$script_text =		stripslashes($row[1]);
-$script_color =		$row[2];
+if (mysqli_num_rows($rslt)>0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$script_name =		$row[0];
+	$script_text =		stripslashes($row[1]);
+	$script_color =		$row[2];
+	}
+else
+	{
+	$script_name="";
+	$script_text="";
+	$script_color="";
+	}
 
 if (preg_match("/iframe\ssrc/i",$script_text))
 	{
@@ -1208,7 +1349,7 @@ $script_text = stripslashes($script_text);
 
 
 echo "<!-- IFRAME$IFRAME -->\n";
-echo "<!-- $script_id -->\n";
+# echo "<!-- $script_id -->\n";  # Never used
 if ( ( ($IFRAME < 1) and ($ScrollDIV > 0) ) or (preg_match("/IGNORENOSCROLL/i",$script_text)) )
 	{
 	echo "<TABLE WIDTH=$script_width border=0><TR><TD>";

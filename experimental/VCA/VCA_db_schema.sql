@@ -43,3 +43,8 @@ CREATE TABLE `vicidial_vca_log` (
 
 CREATE TABLE vicidial_vca_log_archive LIKE vicidial_vca_log;
 ALTER TABLE vicidial_vca_log_archive MODIFY vca_log_id INT(9) UNSIGNED NOT NULL;
+
+ALTER TABLE vicidial_vca_log ADD sig_id VARCHAR(36) DEFAULT '', ADD
+sig_min_dist FLOAT DEFAULT 0, ADD sig_match_ms FLOAT DEFAULT 0;
+ALTER TABLE vicidial_vca_log_archive ADD sig_id VARCHAR(36) DEFAULT '',
+ADD sig_min_dist FLOAT DEFAULT 0, ADD sig_match_ms FLOAT DEFAULT 0;

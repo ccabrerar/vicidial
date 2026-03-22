@@ -1,7 +1,7 @@
 <?php
 # dispo_move_list.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to be used in the "Dispo URL" field of a campaign
 # or in-group (although it can also be used in the "No Agent Call URL" field). 
@@ -68,6 +68,7 @@
 # 210615-1038 - Default security fixes, CVE-2021-28854
 # 210616-2046 - Added optional CORS support, see options.php for details
 # 220219-2253 - Added allow_web_debug system setting
+# 260302-1218 - Code updates for PHP8 compatibility
 #
 
 $api_script = 'movelist';
@@ -81,52 +82,70 @@ $filetime = date("H:i:s");
 $IP = getenv ("REMOTE_ADDR");
 $BR = getenv ("HTTP_USER_AGENT");
 
-$PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
-$PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
+$PHP_AUTH_USER=(array_key_exists('PHP_AUTH_USER', $_SERVER) ? $_SERVER['PHP_AUTH_USER'] : "");
+$PHP_AUTH_PW=(array_key_exists('PHP_AUTH_PW', $_SERVER) ? $_SERVER['PHP_AUTH_PW'] : "");
 if (isset($_GET["lead_id"]))				{$lead_id=$_GET["lead_id"];}
 	elseif (isset($_POST["lead_id"]))		{$lead_id=$_POST["lead_id"];}
+	else {$lead_id=0;}
 if (isset($_GET["sale_status"]))			{$sale_status=$_GET["sale_status"];}
 	elseif (isset($_POST["sale_status"]))	{$sale_status=$_POST["sale_status"];}
+	else {$sale_status="";}
 if (isset($_GET["exclude_status"]))				{$exclude_status=$_GET["exclude_status"];}
 	elseif (isset($_POST["exclude_status"]))	{$exclude_status=$_POST["exclude_status"];}
+	else {$exclude_status="";}
 if (isset($_GET["dispo"]))					{$dispo=$_GET["dispo"];}
 	elseif (isset($_POST["dispo"]))			{$dispo=$_POST["dispo"];}
+	else {$dispo="";}
 if (isset($_GET["new_list_id"]))			{$new_list_id=$_GET["new_list_id"];}
 	elseif (isset($_POST["new_list_id"]))	{$new_list_id=$_POST["new_list_id"];}
+	else {$new_list_id="";}
 if (isset($_GET["reset_dialed"]))			{$reset_dialed=$_GET["reset_dialed"];}
 	elseif (isset($_POST["reset_dialed"]))	{$reset_dialed=$_POST["reset_dialed"];}
+	else {$reset_dialed="";}
 if (isset($_GET["talk_time"]))				{$talk_time=$_GET["talk_time"];}
 	elseif (isset($_POST["talk_time"]))		{$talk_time=$_POST["talk_time"];}
+	else {$talk_time=0;}
 if (isset($_GET["talk_time_trigger"]))			{$talk_time_trigger=$_GET["talk_time_trigger"];}
 	elseif (isset($_POST["talk_time_trigger"]))	{$talk_time_trigger=$_POST["talk_time_trigger"];}
+	else {$talk_time_trigger=0;}
 if (isset($_GET["called_count"]))				{$called_count=$_GET["called_count"];}
 	elseif (isset($_POST["called_count"]))		{$called_count=$_POST["called_count"];}
+	else {$called_count=0;}
 if (isset($_GET["called_count_trigger"]))			{$called_count_trigger=$_GET["called_count_trigger"];}
 	elseif (isset($_POST["called_count_trigger"]))	{$called_count_trigger=$_POST["called_count_trigger"];}
+	else {$called_count_trigger=0;}
 if (isset($_GET["user"]))					{$user=$_GET["user"];}
 	elseif (isset($_POST["user"]))			{$user=$_POST["user"];}
+	else {$user="";}
 if (isset($_GET["pass"]))					{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))			{$pass=$_POST["pass"];}
+	else {$pass="";}
 if (isset($_GET["DB"]))						{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))			{$DB=$_POST["DB"];}
 if (isset($_GET["log_to_file"]))			{$log_to_file=$_GET["log_to_file"];}
 	elseif (isset($_POST["log_to_file"]))	{$log_to_file=$_POST["log_to_file"];}
+	else {$log_to_file=0;}
 if (isset($_GET["populate_sp_old_list"]))			{$populate_sp_old_list=$_GET["populate_sp_old_list"];}
 	elseif (isset($_POST["populate_sp_old_list"]))	{$populate_sp_old_list=$_POST["populate_sp_old_list"];}
+	else {$populate_sp_old_list="";}
 if (isset($_GET["populate_comm_old_date"]))				{$populate_comm_old_date=$_GET["populate_comm_old_date"];}
 	elseif (isset($_POST["populate_comm_old_date"]))	{$populate_comm_old_date=$_POST["populate_comm_old_date"];}
+	else {$populate_comm_old_date="";}
 if (isset($_GET["lead_age"]))				{$lead_age=$_GET["lead_age"];}
 	elseif (isset($_POST["lead_age"]))		{$lead_age=$_POST["lead_age"];}
+	else {$lead_age=0;}
 if (isset($_GET["entry_date"]))				{$entry_date=$_GET["entry_date"];}
 	elseif (isset($_POST["entry_date"]))	{$entry_date=$_POST["entry_date"];}
+	else {$entry_date="";}
 if (isset($_GET["list_id"]))			{$list_id=$_GET["list_id"];}
 	elseif (isset($_POST["list_id"]))	{$list_id=$_POST["list_id"];}
+	else {$list_id="";}
 if (isset($_GET["list_id_trigger"]))			{$list_id_trigger=$_GET["list_id_trigger"];}
 	elseif (isset($_POST["list_id_trigger"]))	{$list_id_trigger=$_POST["list_id_trigger"];}
+	else {$list_id_trigger="";}
 if (isset($_GET["multi_trigger"]))			{$multi_trigger=$_GET["multi_trigger"];}
 	elseif (isset($_POST["multi_trigger"]))	{$multi_trigger=$_POST["multi_trigger"];}
-
-$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+	else {$multi_trigger="";}
 
 #$DB = '1';	# DEBUG override
 $US = '_';
@@ -169,7 +188,8 @@ if ($qm_conf_ct > 0)
 	$SSlanguage_method =		$row[2];
 	$SSallow_web_debug =		$row[3];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
+$DB=preg_replace("/[^0-9]/","",$DB);
 
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$user';";
@@ -185,21 +205,26 @@ if ($sl_ct > 0)
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-$lead_age = preg_replace('/[^_0-9]/', '', $lead_age);
-$lead_id = preg_replace('/[^_0-9]/', '', $lead_id);
+$lead_age = preg_replace('/[^0-9]/', '', $lead_age);
+$lead_id = preg_replace('/[^0-9]/', '', $lead_id);
 $list_id = preg_replace('/[^_0-9]/', '', $list_id);
 $new_list_id = preg_replace('/[^_0-9]/', '', $new_list_id);
 $list_id_trigger = preg_replace('/[^_0-9]/', '', $list_id_trigger);
 $multi_trigger=preg_replace("/\'|\"|\\\\|;| /","",$multi_trigger);
-$log_to_file = preg_replace('/[^-_0-9a-zA-Z]/', '', $log_to_file);
-$called_count = preg_replace('/[^-_0-9a-zA-Z]/', '', $called_count);
-$called_count_trigger = preg_replace('/[^-_0-9a-zA-Z]/', '', $called_count_trigger);
-$talk_time = preg_replace('/[^-_0-9a-zA-Z]/', '', $talk_time);
-$talk_time_trigger = preg_replace('/[^-_0-9a-zA-Z]/', '', $talk_time_trigger);
-$reset_dialed = preg_replace('/[^-_0-9a-zA-Z]/', '', $reset_dialed);
-$entry_date = preg_replace('/[^- \:_0-9a-zA-Z]/', '', $entry_date);
-$populate_sp_old_list = preg_replace('/[^-_0-9a-zA-Z]/', '', $populate_sp_old_list);
-$populate_comm_old_date = preg_replace('/[^-_0-9a-zA-Z]/', '', $populate_comm_old_date);
+$log_to_file = preg_replace('/[^0-9]/', '', $log_to_file);
+$called_count = preg_replace('/[^0-9]/', '', $called_count);
+$called_count_trigger = preg_replace('/[^0-9]/', '', $called_count_trigger);
+$talk_time = preg_replace('/[^0-9]/', '', $talk_time);
+$talk_time_trigger = preg_replace('/[^0-9]/', '', $talk_time_trigger);
+# $reset_dialed = preg_replace('/[^-_0-9a-zA-Z]/', '', $reset_dialed);
+# $entry_date = preg_replace('/[^- \:_0-9a-zA-Z]/', '', $entry_date);
+# $populate_sp_old_list = preg_replace('/[^-_0-9a-zA-Z]/', '', $populate_sp_old_list);
+# $populate_comm_old_date = preg_replace('/[^-_0-9a-zA-Z]/', '', $populate_comm_old_date);
+
+if (strlen($lead_age)==0) {$lead_age=0;}
+if (strlen($called_count_trigger)==0) {$called_count_trigger=0;}
+if (strlen($talk_time)==0) {$talk_time=0;}
+if (strlen($talk_time_trigger)==0) {$talk_time_trigger=0;}
 
 if ($non_latin < 1)
 	{
@@ -208,6 +233,10 @@ if ($non_latin < 1)
 	$exclude_status = preg_replace('/[^-_0-9a-zA-Z]/', '', $exclude_status);
 	$sale_status = preg_replace('/[^-_0-9a-zA-Z]/', '', $sale_status);
 	$dispo = preg_replace('/[^-_0-9a-zA-Z]/', '', $dispo);
+	$reset_dialed = preg_replace('/[^-_0-9a-zA-Z]/', '', $reset_dialed);
+	$entry_date = preg_replace('/[^- \:_0-9a-zA-Z]/', '', $entry_date);
+	$populate_sp_old_list = preg_replace('/[^-_0-9a-zA-Z]/', '', $populate_sp_old_list);
+	$populate_comm_old_date = preg_replace('/[^-_0-9a-zA-Z]/', '', $populate_comm_old_date);
 	}
 else
 	{
@@ -216,6 +245,10 @@ else
 	$exclude_status = preg_replace('/[^-_0-9\p{L}]/u', '', $exclude_status);
 	$sale_status = preg_replace('/[^-_0-9\p{L}]/u', '', $sale_status);
 	$dispo = preg_replace('/[^-_0-9\p{L}]/u', '', $dispo);
+	$reset_dialed = preg_replace('/[^-_0-9\p{L}]/u', '', $reset_dialed);
+	$entry_date = preg_replace('/[^- \:_0-9\p{L}]/u', '', $entry_date);
+	$populate_sp_old_list = preg_replace('/[^-_0-9\p{L}]/u', '', $populate_sp_old_list);
+	$populate_comm_old_date = preg_replace('/[^-_0-9\p{L}]/u', '', $populate_comm_old_date);
 	}
 
 
@@ -317,7 +350,7 @@ else
 	$sale_status='';
 	$exclude_status='';
 	$talk_time_trigger='';
-	$called_count_trigger='';
+	$called_count_trigger=0;
 	$new_list_id='';
 	$reset_dialed='';
 	while( ($match_found < 1) and ($k < 99) )
@@ -326,7 +359,7 @@ else
 		$sale_status='';
 		$exclude_status='';
 		$talk_time_trigger='';
-		$called_count_trigger='';
+		$called_count_trigger=0;
 		$lead_age=0;
 		$statusfield = "sale_status_$k";
 		$excludefield = "exclude_status_$k";
@@ -342,17 +375,23 @@ else
 			elseif (isset($_POST["$counttriggerfield"]))	{$called_count_trigger=$_POST["$counttriggerfield"];}
 		if (isset($_GET["$agetriggerfield"]))			{$lead_age=$_GET["$agetriggerfield"];}
 			elseif (isset($_POST["$agetriggerfield"]))	{$lead_age=$_POST["$agetriggerfield"];}
+			else {$lead_age=0;}
 		if (isset($_GET["$statusfield"]))			{$sale_status=$_GET["$statusfield"];}
 			elseif (isset($_POST["$statusfield"]))	{$sale_status=$_POST["$statusfield"];}
 		if (isset($_GET["$listtriggerfield"]))			{$list_id_trigger=$_GET["$listtriggerfield"];}
 			elseif (isset($_POST["$listtriggerfield"]))	{$list_id_trigger=$_POST["$listtriggerfield"];}
+			else {$list_id_trigger="";}
 		$sale_status = "$TD$sale_status$TD";
-		$lead_age = preg_replace('/[^_0-9]/', '', $lead_age);
+		$lead_age = preg_replace('/[^0-9]/', '', $lead_age);
 		$list_id_trigger = preg_replace('/[^_0-9]/', '', $list_id_trigger);
-		$called_count_trigger = preg_replace('/[^-_0-9a-zA-Z]/', '', $called_count_trigger);
-		$talk_time_trigger = preg_replace('/[^-_0-9a-zA-Z]/', '', $talk_time_trigger);
+		$called_count_trigger = preg_replace('/[^0-9]/', '', $called_count_trigger);
+		$talk_time_trigger = preg_replace('/[^0-9]/', '', $talk_time_trigger);
 		$sale_status = preg_replace('/[^-_0-9\p{L}]/u', '', $sale_status);
 		$exclude_status = preg_replace('/[^-_0-9\p{L}]/u', '', $exclude_status);
+
+		if (strlen($lead_age)==0) {$lead_age=0;}
+		if (strlen($called_count_trigger)==0) {$called_count_trigger=0;}
+		if (strlen($talk_time_trigger)==0) {$talk_time_trigger=0;}
 
 		if ($lead_age > 0)
 			{
@@ -392,6 +431,7 @@ else
 									elseif (isset($_POST["$newlistfield"]))	{$new_list_id=$_POST["$newlistfield"];}
 								if (isset($_GET["$resetfield"]))			{$reset_dialed=$_GET["$resetfield"];}
 									elseif (isset($_POST["$resetfield"]))	{$reset_dialed=$_POST["$resetfield"];}
+									else {$reset_dialed="";}
 								$new_list_id = preg_replace('/[^_0-9]/', '', $new_list_id);
 								$reset_dialed = preg_replace('/[^-_0-9a-zA-Z]/', '', $reset_dialed);
 
@@ -460,7 +500,7 @@ if ($match_found > 0)
 		exit;
 		}
 
-	if ( (strlen($lead_id) > 0) and (strlen($new_list_id) > 2) )
+	if ( ($lead_id > 0) and (strlen($new_list_id) > 2) )
 		{
 		$search_count=0;
 		$stmt = "SELECT count(*) FROM vicidial_list where lead_id='$lead_id' and list_id!='$new_list_id';";

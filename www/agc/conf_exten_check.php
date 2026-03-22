@@ -1,7 +1,7 @@
 <?php
 # conf_exten_check.php    version 2.14
 # 
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed purely to send whether the meetme conference has live channels connected and which they are
 # This script depends on the server_ip being sent and also needs to have a valid user/pass from the vicidial_users table
@@ -96,15 +96,17 @@
 # 230412-1020 - Added code for send_notification API function
 # 230420-2020 - Added latency logging
 # 230616-1810 - Added dead_count checking and 1-second delay in DEAD call logging and dead call log reversal
+# 260302-1359 - Code updates for PHP8 compatibility
 #
 
-$version = '2.14-70';
-$build = '230616-1810';
+$version = '2.14-71';
+$build = '260302-1359';
 $php_script = 'conf_exten_check.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=51;
 $one_mysql_log=0;
 $DB=0;
+$stage="";
 $VD_login=0;
 $SSagent_debug_logging=0;
 $dead_logging_version=1;
@@ -121,12 +123,16 @@ if (isset($_GET["DB"]))						{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))			{$DB=$_POST["DB"];}
 if (isset($_GET["user"]))					{$user=$_GET["user"];}
 	elseif (isset($_POST["user"]))			{$user=$_POST["user"];}
+	else {$user="";}
 if (isset($_GET["pass"]))					{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))			{$pass=$_POST["pass"];}
+	else {$pass="";}
 if (isset($_GET["server_ip"]))				{$server_ip=$_GET["server_ip"];}
 	elseif (isset($_POST["server_ip"]))		{$server_ip=$_POST["server_ip"];}
+	else {$server_ip="";}
 if (isset($_GET["session_name"]))			{$session_name=$_GET["session_name"];}
 	elseif (isset($_POST["session_name"]))	{$session_name=$_POST["session_name"];}
+	else {$session_name="";}
 if (isset($_GET["format"]))					{$format=$_GET["format"];}
 	elseif (isset($_POST["format"]))		{$format=$_POST["format"];}
 if (isset($_GET["ACTION"]))					{$ACTION=$_GET["ACTION"];}
@@ -135,46 +141,68 @@ if (isset($_GET["client"]))					{$client=$_GET["client"];}
 	elseif (isset($_POST["client"]))		{$client=$_POST["client"];}
 if (isset($_GET["conf_exten"]))				{$conf_exten=$_GET["conf_exten"];}
 	elseif (isset($_POST["conf_exten"]))	{$conf_exten=$_POST["conf_exten"];}
+	else {$conf_exten="";}
 if (isset($_GET["exten"]))					{$exten=$_GET["exten"];}
 	elseif (isset($_POST["exten"]))			{$exten=$_POST["exten"];}
+	else {$exten="";}
 if (isset($_GET["auto_dial_level"]))			{$auto_dial_level=$_GET["auto_dial_level"];}
 	elseif (isset($_POST["auto_dial_level"]))	{$auto_dial_level=$_POST["auto_dial_level"];}
+	else {$auto_dial_level="";}
 if (isset($_GET["campagentstdisp"]))			{$campagentstdisp=$_GET["campagentstdisp"];}
 	elseif (isset($_POST["campagentstdisp"]))	{$campagentstdisp=$_POST["campagentstdisp"];}
+	else {$campagentstdisp="";}
 if (isset($_GET["bcrypt"]))					{$bcrypt=$_GET["bcrypt"];}
 	elseif (isset($_POST["bcrypt"]))		{$bcrypt=$_POST["bcrypt"];}
 if (isset($_GET["clicks"]))					{$clicks=$_GET["clicks"];}
 	elseif (isset($_POST["clicks"]))		{$clicks=$_POST["clicks"];}
+	else {$clicks="";}
 if (isset($_GET["customer_chat_id"]))			{$customer_chat_id=$_GET["customer_chat_id"];}
 	elseif (isset($_POST["customer_chat_id"]))	{$customer_chat_id=$_POST["customer_chat_id"];}
+	else {$customer_chat_id="";}
 if (isset($_GET["live_call_seconds"]))			{$live_call_seconds=$_GET["live_call_seconds"];}
 	elseif (isset($_POST["live_call_seconds"]))	{$live_call_seconds=$_POST["live_call_seconds"];}
+	else {$live_call_seconds=0;}
 if (isset($_GET["xferchannel"]))			{$xferchannel=$_GET["xferchannel"];}
 	elseif (isset($_POST["xferchannel"]))	{$xferchannel=$_POST["xferchannel"];}
+	else {$xferchannel="";}
 if (isset($_GET["check_for_answer"]))			{$check_for_answer=$_GET["check_for_answer"];}
 	elseif (isset($_POST["check_for_answer"]))	{$check_for_answer=$_POST["check_for_answer"];}
+	else {$check_for_answer="";}
 if (isset($_GET["MDnextCID"]))				{$MDnextCID=$_GET["MDnextCID"];}
 	elseif (isset($_POST["MDnextCID"]))		{$MDnextCID=$_POST["MDnextCID"];}
+	else {$MDnextCID="";}
 if (isset($_GET["campaign"]))				{$campaign=$_GET["campaign"];}
 	elseif (isset($_POST["campaign"]))		{$campaign=$_POST["campaign"];}
+	else {$campaign="";}
 if (isset($_GET["phone_number"]))			{$phone_number=$_GET["phone_number"];}
 	elseif (isset($_POST["phone_number"]))	{$phone_number=$_POST["phone_number"];}
+	else {$phone_number="";}
 if (isset($_GET["visibility"]))				{$visibility=$_GET["visibility"];}
 	elseif (isset($_POST["visibility"]))	{$visibility=$_POST["visibility"];}
+	else {$visibility="";}
 if (isset($_GET["active_ingroup_dial"]))			{$active_ingroup_dial=$_GET["active_ingroup_dial"];}
 	elseif (isset($_POST["active_ingroup_dial"]))	{$active_ingroup_dial=$_POST["active_ingroup_dial"];}
+	else {$active_ingroup_dial="";}
 if (isset($_GET["latency"]))			{$latency=$_GET["latency"];}
 	elseif (isset($_POST["latency"]))	{$latency=$_POST["latency"];}
+	else {$latency="";}
 if (isset($_GET["dead_count"]))				{$dead_count=$_GET["dead_count"];}
 	elseif (isset($_POST["dead_count"]))	{$dead_count=$_POST["dead_count"];}
-
-$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+	else {$dead_count="";}
 
 # default optional vars if not set
 if (!isset($format))   {$format="text";}
 if (!isset($ACTION))   {$ACTION="refresh";}
 if (!isset($client))   {$client="agc";}
 if ($bcrypt == 'OFF')  {$bcrypt=0;}
+if (!isset($lead_id))  {$lead_id=0;}
+
+$StarTtime = date("U");
+$NOW_DATE = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$FILE_TIME = date("Ymd_His");
+if (!isset($query_date)) {$query_date = $NOW_DATE;}
+$random = (rand(1000000, 9999999) + 10000000);
 
 # if options file exists, use the override values for the above variables
 #   see the options-example.php file for more information
@@ -208,7 +236,8 @@ if ($qm_conf_ct > 0)
 	$SSallow_web_debug =		$row[4];
 	$SSagent_notifications =	$row[5];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;   $format='text';}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;  $format="text";}
+$DB=preg_replace("/[^0-9]/","",$DB);
 
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$user';";
@@ -224,26 +253,26 @@ if ($sl_ct > 0)
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
-$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
-$conf_exten = preg_replace("/[^-_0-9a-zA-Z]/","",$conf_exten);
+# $session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+# $server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
+# $conf_exten = preg_replace("/[^-_0-9a-zA-Z]/","",$conf_exten);
 $exten = preg_replace("/\'|\"|\\\\|;/","",$exten);
 $clicks = preg_replace("/\'|\"|\\\\|;/","",$clicks);
-$customer_chat_id = preg_replace("/[^0-9a-zA-Z]/","",$customer_chat_id);
+# $customer_chat_id = preg_replace("/[^0-9a-zA-Z]/","",$customer_chat_id);
 $visibility = preg_replace("/\'|\"|\\\\|;/","",$visibility);
-$MDnextCID = preg_replace("/[^-_0-9a-zA-Z]/","",$MDnextCID);
-$live_call_seconds = preg_replace("/[^-_0-9a-zA-Z]/","",$live_call_seconds);
-$bcrypt = preg_replace("/[^-_0-9a-zA-Z]/","",$bcrypt);
-$format = preg_replace("/[^-_0-9a-zA-Z]/","",$format);
-$ACTION = preg_replace("/[^-_0-9a-zA-Z]/","",$ACTION);
-$auto_dial_level = preg_replace("/[^-\._0-9a-zA-Z]/","",$auto_dial_level);
-$check_for_answer = preg_replace("/[^-_0-9a-zA-Z]/","",$check_for_answer);
-$client = preg_replace("/[^-_0-9a-zA-Z]/","",$client);
-$campagentstdisp = preg_replace("/[^-_0-9a-zA-Z]/","",$campagentstdisp);
-$phone_number = preg_replace("/[^-_0-9a-zA-Z]/","",$phone_number);
+# $MDnextCID = preg_replace("/[^-_0-9a-zA-Z]/","",$MDnextCID);
+# $live_call_seconds = preg_replace("/[^-_0-9a-zA-Z]/","",$live_call_seconds);
+# $bcrypt = preg_replace("/[^-_0-9a-zA-Z]/","",$bcrypt);
+# $format = preg_replace("/[^-_0-9a-zA-Z]/","",$format);
+# $ACTION = preg_replace("/[^-_0-9a-zA-Z]/","",$ACTION);
+# $auto_dial_level = preg_replace("/[^-\._0-9a-zA-Z]/","",$auto_dial_level);
+# $check_for_answer = preg_replace("/[^-_0-9a-zA-Z]/","",$check_for_answer);
+# $client = preg_replace("/[^-_0-9a-zA-Z]/","",$client);
+# $campagentstdisp = preg_replace("/[^-_0-9a-zA-Z]/","",$campagentstdisp);
+# $phone_number = preg_replace("/[^-_0-9a-zA-Z]/","",$phone_number);
 $xferchannel = preg_replace("/\'|\"|\\\\|;/","",$xferchannel);
-$latency = preg_replace("/[^-_0-9a-zA-Z]/","",$latency);
-$dead_count = preg_replace("/[^-_0-9a-zA-Z]/","",$dead_count);
+# $latency = preg_replace("/[^-_0-9a-zA-Z]/","",$latency);
+# $dead_count = preg_replace("/[^-_0-9a-zA-Z]/","",$dead_count);
 
 if ($non_latin < 1)
 	{
@@ -251,6 +280,22 @@ if ($non_latin < 1)
 	$pass=preg_replace("/[^-\.\+\/\=_0-9a-zA-Z]/","",$pass);
 	$campaign = preg_replace("/[^-_0-9a-zA-Z]/","",$campaign);
 	$active_ingroup_dial = preg_replace("/[^-_0-9a-zA-Z]/","",$active_ingroup_dial);
+	$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+	$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
+	$conf_exten = preg_replace("/[^-_0-9a-zA-Z]/","",$conf_exten);
+	$customer_chat_id = preg_replace("/[^0-9a-zA-Z]/","",$customer_chat_id);
+	$MDnextCID = preg_replace("/[^-_0-9a-zA-Z]/","",$MDnextCID);
+	$live_call_seconds = preg_replace("/[^-_0-9a-zA-Z]/","",$live_call_seconds);
+	$bcrypt = preg_replace("/[^-_0-9a-zA-Z]/","",$bcrypt);
+	$format = preg_replace("/[^-_0-9a-zA-Z]/","",$format);
+	$ACTION = preg_replace("/[^-_0-9a-zA-Z]/","",$ACTION);
+	$auto_dial_level = preg_replace("/[^-\._0-9a-zA-Z]/","",$auto_dial_level);
+	$check_for_answer = preg_replace("/[^-_0-9a-zA-Z]/","",$check_for_answer);
+	$client = preg_replace("/[^-_0-9a-zA-Z]/","",$client);
+	$campagentstdisp = preg_replace("/[^-_0-9a-zA-Z]/","",$campagentstdisp);
+	$phone_number = preg_replace("/[^-_0-9a-zA-Z]/","",$phone_number);
+	$latency = preg_replace("/[^-_0-9a-zA-Z]/","",$latency);
+	$dead_count = preg_replace("/[^-_0-9a-zA-Z]/","",$dead_count);
 	}
 else
 	{
@@ -258,6 +303,22 @@ else
 	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
 	$campaign = preg_replace('/[^-_0-9\p{L}]/u', '', $campaign);
 	$active_ingroup_dial = preg_replace('/[^-_0-9\p{L}]/u',"",$active_ingroup_dial);
+	$session_name = preg_replace('/[^-\.\:\_0-9\p{L}]/u','',$session_name);
+	$server_ip = preg_replace('/[^-\.\:\_0-9\p{L}]/u','',$server_ip);
+	$conf_exten = preg_replace("/[^-_0-9\p{L}]/u","",$conf_exten);
+	$customer_chat_id = preg_replace("/[^0-9\p{L}]/u","",$customer_chat_id);
+	$MDnextCID = preg_replace("/[^-_0-9\p{L}]/u","",$MDnextCID);
+	$live_call_seconds = preg_replace("/[^-_0-9\p{L}]/u","",$live_call_seconds);
+	$bcrypt = preg_replace("/[^-_0-9\p{L}]/u","",$bcrypt);
+	$format = preg_replace("/[^-_0-9\p{L}]/u","",$format);
+	$ACTION = preg_replace("/[^-_0-9\p{L}]/u","",$ACTION);
+	$auto_dial_level = preg_replace("/[^-\._0-9\p{L}]/u","",$auto_dial_level);
+	$check_for_answer = preg_replace("/[^-_0-9\p{L}]/u","",$check_for_answer);
+	$client = preg_replace("/[^-_0-9\p{L}]/u","",$client);
+	$campagentstdisp = preg_replace("/[^-_0-9\p{L}]/u","",$campagentstdisp);
+	$phone_number = preg_replace("/[^-_0-9\p{L}]/u","",$phone_number);
+	$latency = preg_replace("/[^-_0-9\p{L}]/u","",$latency);
+	$dead_count = preg_replace("/[^-_0-9\p{L}]/u","",$dead_count);
 	}
 
 if (strlen($SSagent_debug_logging) > 1)
@@ -270,14 +331,6 @@ $Alogin='N';
 $Alogin_notes='';
 $RingCalls='N';
 $DiaLCalls='N';
-
-$StarTtime = date("U");
-$NOW_DATE = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-$FILE_TIME = date("Ymd_His");
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
-$random = (rand(1000000, 9999999) + 10000000);
-
 
 $auth=0;
 $auth_message = user_authorization($user,$pass,'',0,$bcrypt,0,0,'conf_exten_check');
@@ -349,16 +402,17 @@ if ($ACTION == 'refresh')
 		}
 	else
 		{
+		$Astatus='';
+		$Aagent_log_id='';
+		$Acallerid='';
+		$Acampaign_id='';
+
 		if ($client == 'vdc')
 			{
 			$Acount=0;
 			$Scount=0;
 			$AexternalDEAD=0;
-			$Aagent_log_id='';
-			$Acallerid='';
 			$DEADcustomer=0;
-			$Astatus='';
-			$Acampaign_id='';
 
 			### see if the agent has a record in the vicidial_live_agents table
 			$stmt="SELECT count(*) from vicidial_live_agents where user='$user' and server_ip='$server_ip';";
@@ -758,7 +812,8 @@ if ($ACTION == 'refresh')
 
 			### see if chats/emails are enabled, and if so how many of each are waiting
 			# 03041 and 03042 are the error logs for this
-			
+			$live_agents_comments='';
+
 			$chat_email_stmt="select allow_chats, allow_emails from system_settings;";
 			$chat_email_rslt=mysql_to_mysqli($chat_email_stmt, $link);
 			$chat_email_row=mysqli_fetch_row($chat_email_rslt);
@@ -1683,12 +1738,12 @@ if (strlen($visibility) > 1)
 	while($vc < $visibility_details_ct)
 		{
 		$visibility_data = explode(' ',$visibility_details[$vc]);
-		$visibility_type = $visibility_data[0];
-		$visibility_length = $visibility_data[1];
-		$visibility_start_epoch = $visibility_data[2];
-		$visibility_end_epoch = $visibility_data[3];
+		$visibility_type = (isset($visibility_data[0]) ? $visibility_data[0] : "");
+		$visibility_length = (isset($visibility_data[1]) ? $visibility_data[1] : "");
+		$visibility_start_epoch = (isset($visibility_data[2]) ? $visibility_data[2] : "");
+		$visibility_end_epoch = (isset($visibility_data[3]) ? $visibility_data[3] : "");
 		#$visibility_length = ($StarTtime - $visibility_data[2]);
-		$agent_log_id = $visibility_data[4];
+		$agent_log_id = (isset($visibility_data[4]) ? $visibility_data[4] : "");
 
 		if (strlen($visibility_type) > 1)
 			{
@@ -1715,9 +1770,17 @@ if ($SSagent_debug_logging > 0)
 			{
 			$click_data = explode('-----',$clicks_details[$cd]);
 			$click_time = $click_data[0];
-			$click_function_data = explode('---',$click_data[1]);
-			$click_function = $click_function_data[0];
-			$click_options = $click_function_data[1];
+			if (isset($click_data[1]))
+				{
+				$click_function_data = explode('---',$click_data[1]);
+				$click_function = (isset($click_function_data[0]) ? $click_function_data[0] : "");
+				$click_options = (isset($click_function_data[1]) ? $click_function_data[1] : "");
+				}
+			else
+				{
+				$click_function='';
+				$click_options='';
+				}
 
 			$stmtA="INSERT INTO vicidial_ajax_log set user='$user',start_time='$click_time',db_time=NOW(),run_time='0',php_script='vicidial.php',action='$click_function',lead_id='$lead_id',stage='$cd|$click_options',session_name='$session_name',last_sql='';";
 			$rslt=mysql_to_mysqli($stmtA, $link);

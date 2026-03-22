@@ -89,8 +89,8 @@ $TEST_all_statuses		= '0';	# TEST variable allows all statuses in dispo screen
 $stretch_dimensions		= '1';	# sets the vicidial screen to the size of the browser window
 $BROWSER_HEIGHT			= 500;	# set to the minimum browser height, default=500
 $BROWSER_WIDTH			= 770;	# set to the minimum browser width, default=770
-$webphone_width			= 460;	# set the webphone frame width
-$webphone_height		= 500;	# set the webphone frame height
+$webphone_width			= 460;	# set the webphone frame width, for 'bar' location use 1100
+$webphone_height		= 500;	# set the webphone frame height, for 'bar' location use 50
 $webphone_pad			= 0;	# set the table cellpadding for the webphone
 $webphone_location		= 'right';	# set the location on the agent screen 'right' or 'bar'
 $MAIN_COLOR				= '#CCCCCC';	# old default is E0C2D6

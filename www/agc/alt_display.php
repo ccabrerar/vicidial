@@ -1,7 +1,7 @@
 <?php
 # alt_display.php
 # 
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to display agent screen information outside of the agent screen
 # To use this script, you must set the options.php setting $alt_display_enabled	= '1';
@@ -26,10 +26,11 @@
 # 231214-0912 - Added notification_data action
 # 240320-1047 - Added input filtering for error output
 # 240805-0121 - Updates to notification_data function
+# 260303-0729 - Code updates for PHP8 compatibility
 #
 
-$version = '2.14-10';
-$build = '240805-0121';
+$version = '2.14-11';
+$build = '260303-0729';
 $php_script = 'alt_display.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=11;
@@ -47,27 +48,44 @@ require_once("functions.php");
 ### If you have globals turned off uncomment these lines
 if (isset($_GET["user"]))						{$user=$_GET["user"];}
 	elseif (isset($_POST["user"]))				{$user=$_POST["user"];}
+	else {$user="";}
+if (isset($_GET["lead_id"]))					{$lead_id=$_GET["lead_id"];}
+	elseif (isset($_POST["lead_id"]))			{$lead_id=$_POST["lead_id"];}
 if (isset($_GET["stage"]))						{$stage=$_GET["stage"];}
 	elseif (isset($_POST["stage"]))				{$stage=$_POST["stage"];}
 if (isset($_GET["ACTION"]))						{$ACTION=$_GET["ACTION"];}
 	elseif (isset($_POST["ACTION"]))			{$ACTION=$_POST["ACTION"];}
 if (isset($_GET["calls_in_queue_option"]))				{$calls_in_queue_option=$_GET["calls_in_queue_option"];}
 	elseif (isset($_POST["calls_in_queue_option"]))		{$calls_in_queue_option=$_POST["calls_in_queue_option"];}
+	else {$calls_in_queue_option="";}
 if (isset($_GET["calls_in_queue_display"]))				{$calls_in_queue_display=$_GET["calls_in_queue_display"];}
 	elseif (isset($_POST["calls_in_queue_display"]))	{$calls_in_queue_display=$_POST["calls_in_queue_display"];}
+	else {$calls_in_queue_display="";}
 if (isset($_GET["DB"]))							{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))				{$DB=$_POST["DB"];}
+if (isset($_GET["server_ip"]))			{$server_ip=$_GET["server_ip"];}
+	elseif (isset($_POST["server_ip"]))			{$server_ip=$_POST["server_ip"];}
+	else {$server_ip="";}
+if (isset($_GET["session_name"]))			{$session_name=$_GET["session_name"];}
+	elseif (isset($_POST["session_name"]))			{$session_name=$_POST["session_name"];}
+	else {$session_name="";}
+
 
 # default optional vars if not set
 if (!isset($stage))   {$stage="default";}
 if (!isset($ACTION))   {$ACTION="top_panel";}
+# for vicidial_ajax_log
+if (!isset($lead_id)) {$lead_id=0;}
 
 $user = preg_replace("/\'|\"|\\\\|;/","",$user);
-$stage = preg_replace("/[^-_0-9a-zA-Z]/","",$stage);
-$ACTION = preg_replace('/[^-_0-9a-zA-Z]/','',$ACTION);
-$calls_in_queue_option = preg_replace('/[^-_0-9a-zA-Z]/','',$calls_in_queue_option);
-$calls_in_queue_display = preg_replace('/[^-_0-9a-zA-Z]/','',$calls_in_queue_display);
-$DB = preg_replace('/[^-_0-9a-zA-Z]/','',$DB);
+# Commented out vars moved further down
+# $stage = preg_replace("/[^-_0-9a-zA-Z]/","",$stage);
+# $ACTION = preg_replace('/[^-_0-9a-zA-Z]/','',$ACTION);
+$lead_id = preg_replace('/[^0-9]/', '', $lead_id);
+# $calls_in_queue_option = preg_replace('/[^-_0-9a-zA-Z]/','',$calls_in_queue_option);
+# $calls_in_queue_display = preg_replace('/[^-_0-9a-zA-Z]/','',$calls_in_queue_display);
+$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 
@@ -83,7 +101,7 @@ if (file_exists('options.php'))
 header ("Content-type: text/html; charset=utf-8");
 header ("Cache-Control: no-cache, must-revalidate");  // HTTP/1.1
 header ("Pragma: no-cache");                          // HTTP/1.0
-
+$alt_display_enabled=1; $user="6666";
 if ($alt_display_enabled < 1)
 	{
 	$user = preg_replace('/[^-_0-9\p{L}]/u','',$user);
@@ -183,19 +201,29 @@ if ($qm_conf_ct > 0)
 	$SScall_quota_lead_ranking =			$row[20];
 	$SSallow_web_debug =					$row[21];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
 if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
-	$pass=preg_replace("/[^-\.\+\/\=_0-9a-zA-Z]/","",$pass);
+	# $pass=preg_replace("/[^-\.\+\/\=_0-9a-zA-Z]/","",$pass);
+	$DB = preg_replace('/[^-_0-9a-zA-Z]/','',$DB);
+	$stage = preg_replace("/[^-_0-9a-zA-Z]/","",$stage);
+	$ACTION = preg_replace('/[^-_0-9a-zA-Z]/','',$ACTION);
+	$calls_in_queue_option = preg_replace('/[^-_0-9a-zA-Z]/','',$calls_in_queue_option);
+	$calls_in_queue_display = preg_replace('/[^-_0-9a-zA-Z]/','',$calls_in_queue_display);
 	}
 else
 	{
 	$user = preg_replace('/[^-_0-9\p{L}]/u','',$user);
-	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
+	# $pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
+	$DB = preg_replace('/[^-_0-9\p{L}]/u','',$DB);
+	$stage = preg_replace("/[^-_0-9\p{L}]/u","",$stage);
+	$ACTION = preg_replace('/[^-_0-9\p{L}]/u','',$ACTION);
+	$calls_in_queue_option = preg_replace('/[^-_0-9\p{L}]/u','',$calls_in_queue_option);
+	$calls_in_queue_display = preg_replace('/[^-_0-9\p{L}]/u','',$calls_in_queue_display);
 	}
 
 if (strlen($SSagent_debug_logging) > 1)

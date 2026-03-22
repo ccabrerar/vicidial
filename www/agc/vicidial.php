@@ -755,10 +755,11 @@
 # 251124-0936 - Added lead status display for callbacks list
 # 260106-1418 - Fixes for PHP8
 # 260301-0850 - Added xfer_talk_minimum features for In-Group transfers
+# 260302-0935 - Code updates for PHP8 compatibility
 #
 
-$version = '2.14-721c';
-$build = '260301-0850';
+$version = '2.14-722c';
+$build = '260302-0935';
 $php_script = 'vicidial.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=109;
@@ -772,66 +773,95 @@ require_once("functions.php");
 if (isset($_GET["DB"]))						    {$DB=$_GET["DB"];}
         elseif (isset($_POST["DB"]))            {$DB=$_POST["DB"];}
 if (isset($_GET["JS_browser_width"]))				{$JS_browser_width=$_GET["JS_browser_width"];}
-        elseif (isset($_POST["JS_browser_width"]))  {$JS_browser_width=$_POST["JS_browser_width"];}
+	elseif (isset($_POST["JS_browser_width"]))  {$JS_browser_width=$_POST["JS_browser_width"];}
+	else {$JS_browser_width=0;}
 if (isset($_GET["JS_browser_height"]))				{$JS_browser_height=$_GET["JS_browser_height"];}
-        elseif (isset($_POST["JS_browser_height"])) {$JS_browser_height=$_POST["JS_browser_height"];}
-if (isset($_GET["phone_login"]))                {$phone_login=$_GET["phone_login"];}
-        elseif (isset($_POST["phone_login"]))   {$phone_login=$_POST["phone_login"];}
+	elseif (isset($_POST["JS_browser_height"])) {$JS_browser_height=$_POST["JS_browser_height"];}
+	else {$JS_browser_height=0;}
+if (isset($_GET["phone_login"]))		{$phone_login=$_GET["phone_login"];}
+	elseif (isset($_POST["phone_login"]))   {$phone_login=$_POST["phone_login"];}
 if (isset($_GET["phone_pass"]))					{$phone_pass=$_GET["phone_pass"];}
-        elseif (isset($_POST["phone_pass"]))    {$phone_pass=$_POST["phone_pass"];}
+	elseif (isset($_POST["phone_pass"]))    {$phone_pass=$_POST["phone_pass"];}
 if (isset($_GET["VD_login"]))					{$VD_login=$_GET["VD_login"];}
-        elseif (isset($_POST["VD_login"]))      {$VD_login=$_POST["VD_login"];}
+	elseif (isset($_POST["VD_login"]))      {$VD_login=$_POST["VD_login"];}
+	else {$VD_login="";}
 if (isset($_GET["VD_pass"]))					{$VD_pass=$_GET["VD_pass"];}
-        elseif (isset($_POST["VD_pass"]))       {$VD_pass=$_POST["VD_pass"];}
-if (isset($_GET["VD_campaign"]))                {$VD_campaign=$_GET["VD_campaign"];}
-        elseif (isset($_POST["VD_campaign"]))   {$VD_campaign=$_POST["VD_campaign"];}
-if (isset($_GET["VD_language"]))                {$VD_language=$_GET["VD_language"];}
-        elseif (isset($_POST["VD_language"]))   {$VD_language=$_POST["VD_language"];}
+	elseif (isset($_POST["VD_pass"]))       {$VD_pass=$_POST["VD_pass"];}
+	else {$VD_pass="";}
+if (isset($_GET["VD_campaign"]))		{$VD_campaign=$_GET["VD_campaign"];}
+	elseif (isset($_POST["VD_campaign"]))   {$VD_campaign=$_POST["VD_campaign"];}
+if (isset($_GET["VD_language"]))		{$VD_language=$_GET["VD_language"];}
+	elseif (isset($_POST["VD_language"]))   {$VD_language=$_POST["VD_language"];}
+	else {$VD_language="";}
 if (isset($_GET["relogin"]))					{$relogin=$_GET["relogin"];}
-        elseif (isset($_POST["relogin"]))       {$relogin=$_POST["relogin"];}
+	elseif (isset($_POST["relogin"]))       {$relogin=$_POST["relogin"];}
+	else {$relogin="";}
 if (isset($_GET["MGR_override"]))				{$MGR_override=$_GET["MGR_override"];}
-        elseif (isset($_POST["MGR_override"]))  {$MGR_override=$_POST["MGR_override"];}
+	elseif (isset($_POST["MGR_override"]))  {$MGR_override=$_POST["MGR_override"];}
+	else {$MGR_override=0;}
 if (isset($_GET["admin_test"]))					{$admin_test=$_GET["admin_test"];}
-        elseif (isset($_POST["admin_test"]))	{$admin_test=$_POST["admin_test"];}
+	elseif (isset($_POST["admin_test"]))	{$admin_test=$_POST["admin_test"];}
+	else {$admin_test="";}
 if (isset($_GET["LOGINvarONE"]))				{$LOGINvarONE=$_GET["LOGINvarONE"];}
-        elseif (isset($_POST["LOGINvarONE"]))	{$LOGINvarONE=$_POST["LOGINvarONE"];}
+	elseif (isset($_POST["LOGINvarONE"]))	{$LOGINvarONE=$_POST["LOGINvarONE"];}
+	else {$LOGINvarONE="";}
 if (isset($_GET["LOGINvarTWO"]))				{$LOGINvarTWO=$_GET["LOGINvarTWO"];}
-        elseif (isset($_POST["LOGINvarTWO"]))	{$LOGINvarTWO=$_POST["LOGINvarTWO"];}
+	elseif (isset($_POST["LOGINvarTWO"]))	{$LOGINvarTWO=$_POST["LOGINvarTWO"];}
+	else {$LOGINvarTWO="";}
 if (isset($_GET["LOGINvarTHREE"]))				{$LOGINvarTHREE=$_GET["LOGINvarTHREE"];}
-        elseif (isset($_POST["LOGINvarTHREE"]))	{$LOGINvarTHREE=$_POST["LOGINvarTHREE"];}
+	elseif (isset($_POST["LOGINvarTHREE"]))	{$LOGINvarTHREE=$_POST["LOGINvarTHREE"];}
+	else {$LOGINvarTHREE="";}
 if (isset($_GET["LOGINvarFOUR"]))				{$LOGINvarFOUR=$_GET["LOGINvarFOUR"];}
-        elseif (isset($_POST["LOGINvarFOUR"]))	{$LOGINvarFOUR=$_POST["LOGINvarFOUR"];}
+	elseif (isset($_POST["LOGINvarFOUR"]))	{$LOGINvarFOUR=$_POST["LOGINvarFOUR"];}
+	else {$LOGINvarFOUR="";}
 if (isset($_GET["LOGINvarFIVE"]))				{$LOGINvarFIVE=$_GET["LOGINvarFIVE"];}
-        elseif (isset($_POST["LOGINvarFIVE"]))	{$LOGINvarFIVE=$_POST["LOGINvarFIVE"];}
+	elseif (isset($_POST["LOGINvarFIVE"]))	{$LOGINvarFIVE=$_POST["LOGINvarFIVE"];}
+	else {$LOGINvarFIVE="";}
 if (isset($_GET["hide_relogin_fields"]))				{$hide_relogin_fields=$_GET["hide_relogin_fields"];}
-        elseif (isset($_POST["hide_relogin_fields"]))	{$hide_relogin_fields=$_POST["hide_relogin_fields"];}
+	elseif (isset($_POST["hide_relogin_fields"]))	{$hide_relogin_fields=$_POST["hide_relogin_fields"];}
+	else {$hide_relogin_fields="";}
 if (isset($_GET["set_pass"]))					{$set_pass=$_GET["set_pass"];}
-        elseif (isset($_POST["set_pass"]))		{$set_pass=$_POST["set_pass"];}
+	elseif (isset($_POST["set_pass"]))		{$set_pass=$_POST["set_pass"];}
+	else {$set_pass=0;}
 if (isset($_GET["new_pass1"]))					{$new_pass1=$_GET["new_pass1"];}
-        elseif (isset($_POST["new_pass1"]))		{$new_pass1=$_POST["new_pass1"];}
+	elseif (isset($_POST["new_pass1"]))		{$new_pass1=$_POST["new_pass1"];}
+	else {$new_pass1="";}
 if (isset($_GET["new_pass2"]))					{$new_pass2=$_GET["new_pass2"];}
-        elseif (isset($_POST["new_pass2"]))		{$new_pass2=$_POST["new_pass2"];}
+	elseif (isset($_POST["new_pass2"]))		{$new_pass2=$_POST["new_pass2"];}
+	else {$new_pass2="";}
 if (isset($_GET["stage"]))					{$stage=$_GET["stage"];}
-        elseif (isset($_POST["stage"]))		{$stage=$_POST["stage"];}
+	elseif (isset($_POST["stage"]))		{$stage=$_POST["stage"];}
+	else {$stage="";}
 if (isset($_GET["rank"]))					{$rank=$_GET["rank"];}
-        elseif (isset($_POST["rank"]))		{$rank=$_POST["rank"];}
+	elseif (isset($_POST["rank"]))		{$rank=$_POST["rank"];}
+	else {$rank="";}
 if (isset($_GET["auth_entry"]))					{$auth_entry=$_GET["auth_entry"];}
-        elseif (isset($_POST["auth_entry"]))	{$auth_entry=$_POST["auth_entry"];}
+	elseif (isset($_POST["auth_entry"]))	{$auth_entry=$_POST["auth_entry"];}
+	else {$auth_entry=0;}
+if (isset($_GET["force_logout"]))					{$force_logout=$_GET["force_logout"];}
+	elseif (isset($_POST["force_logout"]))	{$force_logout=$_POST["force_logout"];}
+	else {$force_logout=0;}
 
 if (!isset($phone_login)) 
 	{
 	if (isset($_GET["pl"]))            {$phone_login=$_GET["pl"];}
 		elseif (isset($_POST["pl"]))   {$phone_login=$_POST["pl"];}
+		else {$phone_login="";}
 	}
 if (!isset($phone_pass))
 	{
 	if (isset($_GET["pp"]))            {$phone_pass=$_GET["pp"];}
 		elseif (isset($_POST["pp"]))   {$phone_pass=$_POST["pp"];}
+		else {$phone_pass="";}
 	}
 if (isset($VD_campaign))
 	{
 	$VD_campaign = mb_strtoupper($VD_campaign,'utf-8');
 	$VD_campaign = preg_replace("/\s/i",'',$VD_campaign);
+	}
+else 
+	{
+	$VD_campaign="";
 	}
 if (!isset($flag_channels))
 	{
@@ -839,10 +869,10 @@ if (!isset($flag_channels))
 	$flag_string='';
 	}
 
-$DB=preg_replace("/[^0-9a-z]/","",$DB);
-$VD_login = preg_replace('/[^-_0-9\p{L}]/u','',$VD_login);
-$stage = preg_replace('/[^-_0-9\p{L}]/u','',$stage);
-$rank = preg_replace('/[^-_0-9\p{L}]/u','',$rank);
+# $DB=preg_replace("/[^0-9a-z]/","",$DB);
+# $VD_login = preg_replace('/[^-_0-9\p{L}]/u','',$VD_login);
+# $stage = preg_replace('/[^-_0-9\p{L}]/u','',$stage);
+# $rank = preg_replace('/[^-_0-9\p{L}]/u','',$rank);
 $auth_entry = preg_replace('/[^-_0-9\p{L}]/u','',$auth_entry);
 
 $forever_stop=0;
@@ -952,6 +982,8 @@ else
 	exit;
 	}
 if ($SSallow_web_debug < 1) {$DB=0;}
+$DB=preg_replace("/[^0-9]/","",$DB);
+$VD_login=preg_replace("/\<|\>|\'|\"|\\\\|;| /","",$VD_login);
 
 $stmt="SELECT user,selected_language,force_change_password from vicidial_users where user='$VD_login';";
 if ($DB) {echo "|$stmt|\n";}
@@ -968,16 +1000,15 @@ if ($sl_ct > 0)
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-$VD_login=preg_replace("/\<|\>|\'|\"|\\\\|;| /","",$VD_login);
 $VD_pass=preg_replace("/\<|\>|\'|\"|\\\\|;| /","",$VD_pass);
 $VD_language = preg_replace("/\<|\>|\'|\"|\\\\|;| /","",$VD_language);
-$set_pass=preg_replace("/\<|\>|\'|\"|\\\\|;| /","",$set_pass);
+$set_pass=preg_replace("/[^0-9]/","",$set_pass);
 $new_pass1=preg_replace("/\<|\>|\'|\"|\\\\|;| /","",$new_pass1);
 $new_pass2=preg_replace("/\<|\>|\'|\"|\\\\|;| /","",$new_pass2);
-$JS_browser_width=preg_replace("/[^0-9a-z]/","",$JS_browser_width);
-$JS_browser_height=preg_replace("/[^0-9a-z]/","",$JS_browser_height);
-$relogin=preg_replace("/[^0-9a-zA-Z]/","",$relogin);
-$MGR_override=preg_replace("/[^0-9a-zA-Z]/","",$MGR_override);
+$JS_browser_width=preg_replace("/[^0-9]/","",$JS_browser_width);
+$JS_browser_height=preg_replace("/[^0-9]/","",$JS_browser_height);
+# $relogin=preg_replace("/[^0-9a-zA-Z]/","",$relogin);
+$MGR_override=preg_replace("/[^0-9]/","",$MGR_override);
 
 if ($non_latin < 1)
 	{
@@ -995,6 +1026,9 @@ if ($non_latin < 1)
 	$LOGINvarFOUR=preg_replace("/[^-_0-9a-zA-Z]/","",$LOGINvarFOUR);
 	$LOGINvarFIVE=preg_replace("/[^-_0-9a-zA-Z]/","",$LOGINvarFIVE);
 	$hide_relogin_fields=preg_replace("/[^-_0-9a-zA-Z]/","",$hide_relogin_fields);
+	$stage = preg_replace('/[^-_0-9a-zA-Z]/','',$stage);
+	$rank = preg_replace('/[^-_0-9a-zA-Z]/','',$rank);
+	$relogin=preg_replace("/[^0-9a-zA-Z]/","",$relogin);
 	}
 else
 	{
@@ -1012,6 +1046,9 @@ else
 	$LOGINvarFOUR=preg_replace("/[^-_0-9\p{L}]/u","",$LOGINvarFOUR);
 	$LOGINvarFIVE=preg_replace("/[^-_0-9\p{L}]/u","",$LOGINvarFIVE);
 	$hide_relogin_fields=preg_replace("/[^-_0-9\p{L}]/u","",$hide_relogin_fields);
+	$stage = preg_replace('/[^-_0-9\p{L}]/u','',$stage);
+	$rank = preg_replace('/[^-_0-9\p{L}]/u','',$rank);
+	$relogin=preg_replace("/[^0-9\p{L}]/u","",$relogin);
 	}
 
 if ($force_logout)
@@ -1085,6 +1122,7 @@ $SIDEBAR_COLOR			= '#F6F6F6';
 $window_validation		= 0;	# set to 1 to disallow direct logins to vicidial.php
 $win_valid_name			= 'subwindow_launch';	# only window name to allow if validation enabled
 
+$INSERT_before_body_close = '';	# inserted right above the </body> line
 $INSERT_head_script		= '';	# inserted right above the <script language="Javascript"> line after logging in
 $INSERT_head_js			= '';	# inserted after first javascript function
 $INSERT_first_onload	= '';	# inserted at the beginning of the first section of the onload function
@@ -1109,6 +1147,7 @@ $SSstd_row5_background='FFFFFF';
 $SSalt_row1_background='BDFFBD';
 $SSalt_row2_background='99FF99';
 $SSalt_row3_background='CCFFCC';
+$SSweb_logo='default_new';
 
 $browser_alert_sounds_list = 'bark_dog,beep_double,beep_five,beep_up,bell_double,bell_school,bird,blaster1,blaster2,buzz1,buzz2,cash_register,chat_alert,click_single,click_double,click_quiet,close_encounter,confirmation,ding,droplet,droplet_double,elephant,email_alert,hold_tone,horn_bike,horn_car,horn_car_triple,horn_clown,horn_double,horn_train,meow_cat,scream_wilhelm,silence_quick,siren,slide_down,slide_up,swish,teleport1,teleport2,ticking_two,ticking_four,ticking_six,whip,whistle_up,whistle_two,whistle_three,whoosh,xylophone1,xylophone2,xylophone3,xylophone4,20Hz_tone';
 
@@ -2662,9 +2701,18 @@ else
 			$agent_status_viewable_groupsSQL = preg_replace('/\s/i',"','",$agent_status_viewable_groupsSQL);
 			$agent_status_viewable_groupsSQL = "user_group IN('$agent_status_viewable_groupsSQL')";
 			$agent_status_view = 0;
+			$agent_status_view_time=0;
+			$agent_call_log_view = 0;
+			$agent_xfer_park_3way = 0;
+			$agent_xfer_consultative = 0;
+			$agent_xfer_dial_override = 0;
+			$agent_xfer_vm_transfer = 0;
+			$agent_xfer_blind_transfer = 0;
+			$agent_xfer_dial_with_customer = 0;
+			$agent_xfer_park_customer_dial = 0;
+
 			if (strlen($agent_status_viewable_groups) > 2)
 				{$agent_status_view = 1;}
-			$agent_status_view_time=0;
 			if ($row[4] == 'Y')
 				{$agent_status_view_time=1;}
 			if ($row[5] == 'Y')
@@ -3027,6 +3075,10 @@ else
 				$cVARMAXstatuses='';
 				$cVARCBstatusesLIST='';
 				$cVARSALEstatusesLIST='';
+				$HKhotkeys='';
+				$HKstatuses='';
+				$HKstatusnames='';
+
 				##### grab the statuses that can be used for dispositioning by an agent for all calls
 				$stmt="SELECT status,status_name,scheduled_callback,selectable,min_sec,max_sec,sale FROM vicidial_statuses WHERE status != 'NEW' order by status limit 500;";
 				$rslt=mysql_to_mysqli($stmt, $link);
@@ -3049,7 +3101,7 @@ else
 					$VARstatusnames = "$VARstatusnames'$status_names[$i]',";
 					$VARSELstatuses = "$VARSELstatuses'$SELstatuses[$i]',";
 					$VARCBstatuses = "$VARCBstatuses'$CBstatuses[$i]',";
-					$VARSALEstatuses = "$VARSALEtatuses'$SALEstatuses[$i]',";
+					$VARSALEstatuses = "$VARSALEstatuses'$SALEstatuses[$i]',";
 					$VARMINstatuses = "$VARMINstatuses'$MINsec[$i]',";
 					$VARMAXstatuses = "$VARMAXstatuses'$MAXsec[$i]',";
 					if ($CBstatuses[$i] == 'Y')
@@ -3391,6 +3443,34 @@ else
 				$stereo_recording =			$row[198];
 				$stereo_recording_agent =	$row[199];
 				$recording_dtmf_muting =	$row[200];
+
+				## misc variables that may or may not be assigned below, must be declared here to prevent undefined warnings
+				$VARcaller_id_numbers='';
+				$VD_group_aliases_ct=0;
+				$VARpause_codes='';
+				$VARpause_code_names='';
+				$VARpause_code_mgrapr='';
+				$VD_pause_codes_ct=0;
+				$VARdialingroups='';
+				$dialINgrpCT=0;
+				$territoryCT=0;
+				$default_xfer_group_name='';
+				$allow_recording_mute='';
+				$QM_LOGIN = '';
+				$QM_PHONE = '';
+				$PMEcontainer_entry = '';
+				$leave_vm_message_group_exists=0;
+				$mgrapr_ct=0;
+				$queuemetrics_pe_phone_append='';
+				$VARphonegroupsURL='';
+				$VARchatgroupsURL='';
+				$VARxfergroupsnames='';
+				$VARxfergroupstalkminsec='';
+				$scheduled_callbacks=0;
+				$api_check_all_pause=0;
+				$VARgroup_alias_ids='';
+				$VARgroup_alias_names='';
+				$stereo_rec_filename='';
 
 				if ( (!preg_match("/DISABLED/",$VU_manual_dial_lead_id)) and (strlen($VU_manual_dial_lead_id) > 0) )
 					{
@@ -3827,6 +3907,7 @@ else
 				$VARpreset_numbers='';
 				$VARpreset_dtmfs='';
 				$VARpreset_hide_numbers='';
+				$VD_preset_names_ct=0;
 				if ($enable_xfer_presets == 'ENABLED')
 					{
 					##### grab the presets for this campaign
@@ -3978,6 +4059,14 @@ else
 				$VARphonegroups="''";
 				$VARemailgroups="''";
 				$VARchatgroups="''";
+				$VARdialingroups='';
+				$INgrpCT=0;
+				$EMAILgrpCT=0;
+				$CHATgrpCT=0;
+				$PHONEgrpCT=0;
+				$dialINgrpCT=0;
+				$territoryCT=0;
+
 				if ( ($campaign_allow_inbound == 'Y') and ($dial_method != 'MANUAL') )
 					{
 					### validate that the agent has not exceeded their max inbound calls for today
@@ -4039,10 +4128,7 @@ else
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01015',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 					if ($DB) {echo "$stmt\n";}
 					$closer_ct = mysqli_num_rows($rslt);
-					$INgrpCT=0;
-					$EMAILgrpCT=0;
-					$CHATgrpCT=0;
-					$PHONEgrpCT=0;
+					$VARphonegroupsURL='';
 					while ($INgrpCT < $closer_ct)
 						{
 						$row=mysqli_fetch_row($rslt);
@@ -4086,13 +4172,11 @@ else
 
 					if ($in_group_dial_select == 'CAMPAIGN_SELECTED')
 						{
-						$VARdialingroups='';
 						$stmt="select group_id from vicidial_inbound_groups where active = 'Y' and group_id IN($closer_campaigns) and group_id NOT IN($VD_hit_limit_ingroups) order by group_id limit 800;";
 						$rslt=mysql_to_mysqli($stmt, $link);
 							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01076',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 						if ($DB) {echo "$stmt\n";}
 						$dialcloser_ct = mysqli_num_rows($rslt);
-						$dialINgrpCT=0;
 						while ($dialINgrpCT < $dialcloser_ct)
 							{
 							$row=mysqli_fetch_row($rslt);
@@ -4104,13 +4188,11 @@ else
 						}
 					if ($in_group_dial_select == 'ALL_USER_GROUP')
 						{
-						$VARdialingroups='';
 						$stmt="select group_id from vicidial_inbound_groups where active = 'Y' and user_group IN('---ALL---','$VU_user_group') and group_id NOT IN($VD_hit_limit_ingroups) order by group_id limit 800;";
 						$rslt=mysql_to_mysqli($stmt, $link);
 							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01077',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 						if ($DB) {echo "$stmt\n";}
 						$dialcloser_ct = mysqli_num_rows($rslt);
-						$dialINgrpCT=0;
 						while ($dialINgrpCT < $dialcloser_ct)
 							{
 							$row=mysqli_fetch_row($rslt);
@@ -4132,7 +4214,6 @@ else
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01062',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 					if ($DB) {echo "$stmt\n";}
 					$territory_ct = mysqli_num_rows($rslt);
-					$territoryCT=0;
 					while ($territoryCT < $territory_ct)
 						{
 						$row=mysqli_fetch_row($rslt);
@@ -4277,7 +4358,7 @@ else
 		echo "<input type=\"hidden\" name=\"LOGINvarFOUR\" id=\"LOGINvarFOUR\" value=\"$LOGINvarFOUR\" />\n";
 		echo "<input type=\"hidden\" name=\"LOGINvarFIVE\" id=\"LOGINvarFIVE\" value=\"$LOGINvarFIVE\" />\n";
 		echo "<input type=\"hidden\" name=\"hide_relogin_fields\" id=\"hide_relogin_fields\" value=\"$hide_relogin_fields\" />\n";
-		echo "<center><br /><b>$VDdisplayMESSAGE</b><br /><br />";
+		echo "<center><br /><b>".(isset($VDdisplayMESSAGE) ? $VDdisplayMESSAGE : "")."</b><br /><br />";
 		echo "<table width=\"460px\" cellpadding=\"3\" cellspacing=\"0\" bgcolor=\"#$SSframe_background\"><tr bgcolor=\"white\">";
 		echo "<td align=\"left\" valign=\"bottom\" bgcolor=\"#$SSmenu_background\" width=\"170\"><img src=\"$selected_logo\" border=\"0\" height=\"45\" width=\"170\" alt=\"Agent Screen\" /></td>";
 		echo "<td align=\"center\" valign=\"middle\" bgcolor=\"#$SSmenu_background\"> <font class=\"sh_text_white\">"._QXZ("Campaign Login")."</font> </td>";
@@ -4852,12 +4933,12 @@ else
 				if ($row[0] > 0)
 					{
 					$stmt="UPDATE $conf_table set extension='$SIP_user', leave_3way='0' where server_ip='$server_ip' and ((extension='') or (extension is null)) limit 1;";
-						if ($format=='debug') {echo "\n<!-- $stmt -->";}
+						if (isset($format) && $format=='debug') {echo "\n<!-- $stmt -->";}
 					$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01034',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 
 					$stmt="SELECT conf_exten from $conf_table where server_ip='$server_ip' and ( (extension='$SIP_user') or (extension='$VD_login') );";
-						if ($format=='debug') {echo "\n<!-- $stmt -->";}
+						if (isset($format) && $format=='debug') {echo "\n<!-- $stmt -->";}
 					$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01035',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 					$row=mysqli_fetch_row($rslt);
@@ -5227,9 +5308,9 @@ else
 				echo "<!-- new vicidial_live_agents record inserted: |$affected_rows| -->\n";
 
 				$stmt="INSERT IGNORE INTO vicidial_live_agents_details set latency='0',web_ip='$ip',update_date=NOW(),user='$VD_login';";
-					if ($format=='debug') {echo "\n<!-- $stmt -->";}
+					if (isset($format) && $format=='debug') {echo "\n<!-- $stmt -->";}
 				$rslt=mysql_to_mysqli($stmt, $link);
-					if ($mel > 0) {$errno = mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03103',$user,$server_ip,$session_name,$one_mysql_log);}
+					if ($mel > 0) {$errno = mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03103',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 
 				if ($enable_queuemetrics_logging > 0)
 					{
@@ -5532,6 +5613,9 @@ else
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01051',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 		if ($DB) {echo "$stmt\n";}
 		$MM_scripts = mysqli_num_rows($rslt);
+		$MMscriptids='';
+		$MMscriptnames='';
+		$MMscriptcolors='';
 		$e=0;
 		while ($e < $MM_scripts)
 			{
@@ -9587,7 +9671,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 				if (xmlhttpXF) 
 					{ 
 					var redirectvalue = MDchannel;
-					redirectserverip = lastcustserverip;
+					var redirectserverip = lastcustserverip;
 					if (redirectvalue.length < 2)
 						{redirectvalue = lastcustchannel}
 					if ( (taskvar == 'XfeRBLIND') || (taskvar == 'XfeRVMAIL') )
@@ -10008,7 +10092,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 		if (xmlhttpXF) 
 			{ 
 			var redirectvalue = MDchannel;
-			redirectserverip = lastcustserverip;
+			var redirectserverip = lastcustserverip;
 			var queryCID='';
 			var exten='';
 			var ext_context='';

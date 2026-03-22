@@ -1,7 +1,7 @@
 <?php
 # vdc_chat_display.php
 #
-# Copyright (C) 2023  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This is the interface for agents to chat with customers and each other.  It's separate from the manager-to-agent 
 # chat interface out of necessity and calls the chat_db_query.php page to send information and display it.  It will
@@ -23,6 +23,7 @@
 # 220220-0928 - Added allow_web_debug system setting
 # 220518-2211 - Small fix for encrypted auth
 # 230518-2002 - Added customer_chat_refresh_seconds options.php setting, and message display
+# 260302-1156 - Code updates for PHP8 compatibility
 #
 
 require("dbconnect_mysqli.php");
@@ -32,46 +33,59 @@ $php_script = 'vdc_chat_display.php';
 
 $MT[0]='';
 $chat_group_ids=$MT;
+$customer_chat_refresh_seconds=1;
 
 if (isset($_GET["email"]))							{$email=$_GET["email"];}
 	elseif (isset($_POST["email"]))					{$email=$_POST["email"];}
+	else {$email="";}
 if (isset($_GET["email_invite_lead_id"]))			{$email_invite_lead_id=$_GET["email_invite_lead_id"];}
 	elseif (isset($_POST["email_invite_lead_id"]))	{$email_invite_lead_id=$_POST["email_invite_lead_id"];}
+	else {$email_invite_lead_id="";}
 if (isset($_GET["chat_id"]))						{$chat_id=$_GET["chat_id"];}
 	elseif (isset($_POST["chat_id"]))				{$chat_id=$_POST["chat_id"];}
+	else {$chat_id="";}
 if (isset($_GET["chat_group_id"]))					{$chat_group_id=$_GET["chat_group_id"];}
 	elseif (isset($_POST["chat_group_id"]))			{$chat_group_id=$_POST["chat_group_id"];}
+	else {$chat_group_id="";}
 if (isset($_GET["chat_group_ids"]))					{$chat_group_ids=$_GET["chat_group_ids"];}
 	elseif (isset($_POST["chat_group_ids"]))		{$chat_group_ids=$_POST["chat_group_ids"];}
 if (isset($_GET["server_ip"]))						{$server_ip=$_GET["server_ip"];}
 	elseif (isset($_POST["server_ip"]))				{$server_ip=$_POST["server_ip"];}
 if (isset($_GET["lead_id"]))						{$lead_id=$_GET["lead_id"];}
 	elseif (isset($_POST["lead_id"]))				{$lead_id=$_POST["lead_id"];}
+	else {$lead_id=0;}
 if (isset($_GET["user"]))							{$user=$_GET["user"];}
 	elseif (isset($_POST["user"]))					{$user=$_POST["user"];}
+	else {$user="";}
 if (isset($_GET["campaign"]))						{$campaign=$_GET["campaign"];}
 	elseif (isset($_POST["campaign"]))				{$campaign=$_POST["campaign"];}
+	else {$campaign="";}
 if (isset($_GET["dial_method"]))					{$dial_method=$_GET["dial_method"];}
 	elseif (isset($_POST["dial_method"]))			{$dial_method=$_POST["dial_method"];}
+	else {$dial_method="";}
 if (isset($_GET["pass"]))							{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))					{$pass=$_POST["pass"];}
+	else {$pass="";}
 if (isset($_GET["child_window"]))					{$child_window=$_GET["child_window"];}
 	elseif (isset($_POST["child_window"]))			{$child_window=$_POST["child_window"];}
+	else {$child_window="";}
 if (isset($_GET["outside_user_name"]))				{$outside_user_name=$_GET["outside_user_name"];}
 	elseif (isset($_POST["outside_user_name"]))		{$outside_user_name=$_POST["outside_user_name"];}
 if (isset($_GET["first_name"]))						{$first_name=$_GET["first_name"];}
 	elseif (isset($_POST["first_name"]))			{$first_name=$_POST["first_name"];}
+	else {$first_name="";}
 if (isset($_GET["last_name"]))						{$last_name=$_GET["last_name"];}
 	elseif (isset($_POST["last_name"]))				{$last_name=$_POST["last_name"];}
+	else {$last_name="";}
 if (isset($_GET["clickmute"]))						{$clickmute=$_GET["clickmute"];}
 	elseif (isset($_POST["clickmute"]))				{$clickmute=$_POST["clickmute"];}
 if (isset($_GET["stage"]))							{$stage=$_GET["stage"];}
 	elseif (isset($_POST["stage"]))					{$stage=$_POST["stage"];}
+	else {$stage="";}
 
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 
-$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
 
@@ -94,7 +108,8 @@ if ($qm_conf_ct > 0)
 	$SSallow_web_debug =	$row[5];
 	}
 $VUselected_language = $SSdefault_language;
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
+$DB=preg_replace("/[^0-9]/","",$DB);
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
@@ -109,17 +124,17 @@ header ("Content-type: text/html; charset=utf-8");
 header ("Cache-Control: no-cache, must-revalidate");  // HTTP/1.1
 header ("Pragma: no-cache");                          // HTTP/1.0
 
-if ($clickmute!="1") {$clickmute="0";} // Prevents annoying quirk of playing the audio cue every time you click the tab to view this 
+if (!isset($clickmute) || $clickmute!="1") {$clickmute="0";} // Prevents annoying quirk of playing the audio cue every time you click the tab to view this 
 
 $lead_id = preg_replace("/[^0-9]/","",$lead_id);
-$chat_id = preg_replace('/[^- \_\.0-9a-zA-Z]/','',$chat_id);
-$server_ip = preg_replace('/[^- \_\.0-9a-zA-Z]/','',$server_ip);
+# $chat_id = preg_replace('/[^- \_\.0-9a-zA-Z]/','',$chat_id);
+# $server_ip = preg_replace('/[^- \_\.0-9a-zA-Z]/','',$server_ip);
 $email = preg_replace("/\'|\"|\\\\|;/","",$email);
-$dial_method = preg_replace('/[^-\_0-9a-zA-Z]/','',$dial_method);
+# $dial_method = preg_replace('/[^-\_0-9a-zA-Z]/','',$dial_method);
 $clickmute = preg_replace("/\'|\"|\\\\|;/","",$clickmute);
-$stage = preg_replace('/[^-\_0-9a-zA-Z]/','',$stage);
+# $stage = preg_replace('/[^-\_0-9a-zA-Z]/','',$stage);
 $email_invite_lead_id = preg_replace("/\'|\"|\\\\|;/","",$email_invite_lead_id);
-$child_window = preg_replace('/[^-\_0-9a-zA-Z]/','',$child_window);
+# $child_window = preg_replace('/[^-\_0-9a-zA-Z]/','',$child_window);
 $chat_group_ids = preg_replace("/\"|\\\\|;/","",$chat_group_ids);
 $customer_chat_refresh_seconds=preg_replace("/[^0-9\.]/", "", $customer_chat_refresh_seconds);
 if (!$customer_chat_refresh_seconds) {$customer_chat_refresh_seconds=1;}
@@ -134,6 +149,11 @@ if ($non_latin < 1)
 	$last_name = preg_replace('/[^- \_\.0-9a-zA-Z]/','',$last_name);
 	$campaign = preg_replace('/[^-\_0-9a-zA-Z]/','',$campaign);
 	$chat_group_id = preg_replace('/[^- \_\.0-9a-zA-Z]/','',$chat_group_id);
+	$chat_id = preg_replace('/[^- \_\.0-9a-zA-Z]/','',$chat_id);
+	$server_ip = preg_replace('/[^- \_\.0-9a-zA-Z]/','',$server_ip);
+	$dial_method = preg_replace('/[^-\_0-9a-zA-Z]/','',$dial_method);
+	$stage = preg_replace('/[^-\_0-9a-zA-Z]/','',$stage);
+	$child_window = preg_replace('/[^-\_0-9a-zA-Z]/','',$child_window);
 	}
 else
 	{
@@ -144,6 +164,11 @@ else
 	$last_name = preg_replace('/[^- \_\.0-9\p{L}]/u','',$last_name);
 	$campaign = preg_replace('/[^-\_0-9\p{L}]/u','',$campaign);
 	$chat_group_id = preg_replace('/[^- \_\.0-9\p{L}]/u','',$chat_group_id);
+	$chat_id = preg_replace('/[^- \_\.0-9\p{L}]/u','',$chat_id);
+	$server_ip = preg_replace('/[^- \_\.0-9\p{L}]/u','',$server_ip);
+	$dial_method = preg_replace('/[^-\_0-9\p{L}]/u','',$dial_method);
+	$stage = preg_replace('/[^-\_0-9\p{L}]/u','',$stage);
+	$child_window = preg_replace('/[^-\_0-9\p{L}]/u','',$child_window);
 	}
 
 if( (strlen($stage) > 0) and ($stage == 'WELCOME') )
@@ -189,6 +214,7 @@ if (mysqli_num_rows($user_rslt)>0) {
 	#	echo "\\-->\n";
 	} else {
 	# 	echo "Waiting for chat request..."; exit;
+		$chat_stmt=""; # Defined for $DB, prevents warnings
 	}
 } else {
 	unset($pass);
@@ -864,7 +890,16 @@ if($child_window) {
 }
 ?>
 <body onLoad="<?php echo $autojoin_js_fx; ?>" onUnload="javascript:clearInterval(rInt); LeaveChat();">
-<?php echo "<!-- $user_stmt\n vdc_chat_display.php?user=$user&pass=$pass&lead_id=$lead_id&list_id=$list_id&email=$email&chat_id=$chat_id -->\n"; ?>
+<?php 
+echo "<!-- ";
+if ($DB)
+	{
+	echo "$user_stmt\n";
+	echo "$chat_stmt\n";
+	echo "$stmt\n";
+	}
+echo "vdc_chat_display.php?user=$user&pass=$pass&lead_id=$lead_id&email=$email&chat_id=$chat_id -->\n"; 
+?>
 <form name='chat_form' action='<?php echo $PHP_SELF; ?>'>
 <table width='100%' border='0'>
 <tr>
@@ -976,7 +1011,7 @@ echo ($customer_chat_refresh_seconds!=1 ? "<center><font class='chat_timestamp b
 			}
 			echo "</select>\n";
 		}
-		if ($chat_creator && $chat_creator==$user) {
+		if (isset($chat_creator) && $chat_creator==$user) {
 			if (!$email_invite_lead_id) { # Flag from sending an invite - this page reloads as a result and this below INVITE button must be prevented from being loaded
 				echo "<BR/><BR/><input class='blue_btn' type='button' style=\"width:150px\" value=\""._QXZ("INVITE")."\" onClick=\"javascript:document.getElementById('email_window').style.display='block'\">";
 			}
@@ -1005,7 +1040,7 @@ echo ($customer_chat_refresh_seconds!=1 ? "<center><font class='chat_timestamp b
 <input type='hidden' id='user' name='user' value='<?php echo $user; ?>'>
 <input type='hidden' id='chat_id' name='chat_id' value='<?php echo $chat_id; ?>'>
 <input type='hidden' id='chat_group_id' name='chat_group_id' value='<?php echo $chat_group_id; ?>'>
-<input type='hidden' id='chat_creator' name='chat_creator' value='<?php echo $chat_creator; ?>'>
+<input type='hidden' id='chat_creator' name='chat_creator' value='<?php echo (isset($chat_creator) ? $chat_creator : ""); ?>'>
 <input type='hidden' id='live_message_count_field' name='live_message_count_field' value='0'>
 <input type='hidden' id='pass' name='pass' value='<?php echo $pass; ?>'>
 <input type='hidden' id='lead_id' name='lead_id' value='<?php echo $lead_id; ?>'>

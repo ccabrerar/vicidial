@@ -1,7 +1,7 @@
 <?php
 # dispo_move_list_SC.php
 # 
-# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to be used in the "Dispo URL" field of a campaign
 # or in-group (although it can also be used in the "No Agent Call URL" field). 
@@ -48,6 +48,7 @@
 #
 # CHANGES
 # 250701-1357 - First Build
+# 260303-0716 - Code updates for PHP8 compatibility
 #
 
 $api_script = 'mvlistSC';
@@ -61,26 +62,35 @@ $filetime = date("H:i:s");
 $IP = getenv ("REMOTE_ADDR");
 $BR = getenv ("HTTP_USER_AGENT");
 
-$PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
-$PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
+$PHP_AUTH_USER=(array_key_exists('PHP_AUTH_USER', $_SERVER) ? $_SERVER['PHP_AUTH_USER'] : "");
+$PHP_AUTH_PW=(array_key_exists('PHP_AUTH_PW', $_SERVER) ? $_SERVER['PHP_AUTH_PW'] : "");
 if (isset($_GET["lead_id"]))				{$lead_id=$_GET["lead_id"];}
 	elseif (isset($_POST["lead_id"]))		{$lead_id=$_POST["lead_id"];}
+	else {$lead_id="";}
 if (isset($_GET["list_id"]))				{$list_id=$_GET["list_id"];}
 	elseif (isset($_POST["list_id"]))		{$list_id=$_POST["list_id"];}
+	else {$list_id="";}
 if (isset($_GET["dispo"]))					{$dispo=$_GET["dispo"];}
 	elseif (isset($_POST["dispo"]))			{$dispo=$_POST["dispo"];}
+	else {$dispo="";}
 if (isset($_GET["called_count"]))			{$called_count=$_GET["called_count"];}
 	elseif (isset($_POST["called_count"]))	{$called_count=$_POST["called_count"];}
+	else {$called_count="";}
 if (isset($_GET["user"]))					{$user=$_GET["user"];}
 	elseif (isset($_POST["user"]))			{$user=$_POST["user"];}
+	else {$user="";}
 if (isset($_GET["pass"]))					{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))			{$pass=$_POST["pass"];}
+	else {$pass="";}
 if (isset($_GET["container_id"]))			{$container_id=$_GET["container_id"];}
 	elseif (isset($_POST["container_id"]))	{$container_id=$_POST["container_id"];}
+	else {$container_id="";}
 if (isset($_GET["log_to_file"]))			{$log_to_file=$_GET["log_to_file"];}
 	elseif (isset($_POST["log_to_file"]))	{$log_to_file=$_POST["log_to_file"];}
+	else {$log_to_file=0;}
 if (isset($_GET["DB"]))						{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))			{$DB=$_POST["DB"];}
+/*
 if (isset($_GET["talk_time"]))				{$talk_time=$_GET["talk_time"];}
 	elseif (isset($_POST["talk_time"]))		{$talk_time=$_POST["talk_time"];}
 if (isset($_GET["entry_date"]))				{$entry_date=$_GET["entry_date"];}
@@ -89,16 +99,15 @@ if (isset($_GET["populate_sp_old_list"]))			{$populate_sp_old_list=$_GET["popula
 	elseif (isset($_POST["populate_sp_old_list"]))	{$populate_sp_old_list=$_POST["populate_sp_old_list"];}
 if (isset($_GET["populate_comm_old_date"]))				{$populate_comm_old_date=$_GET["populate_comm_old_date"];}
 	elseif (isset($_POST["populate_comm_old_date"]))	{$populate_comm_old_date=$_POST["populate_comm_old_date"];}
-
-$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+*/
 
 #$DB = '1';	# DEBUG override
 $US = '_';
 $TD = '---';
 $STARTtime = date("U");
 $NOW_TIME = date("Y-m-d H:i:s");
-$original_sale_status = $sale_status;
-$sale_status = "$TD$sale_status$TD";
+# $original_sale_status = $sale_status;
+# $sale_status = "$TD$sale_status$TD";
 $search_value='';
 $match_found=0;
 $primary_match_found=0;
@@ -133,7 +142,8 @@ if ($qm_conf_ct > 0)
 	$SSlanguage_method =		$row[2];
 	$SSallow_web_debug =		$row[3];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
+$DB=preg_replace("/[^0-9]/","",$DB);
 
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$user';";
@@ -151,12 +161,14 @@ if ($sl_ct > 0)
 
 $lead_id = preg_replace('/[^_0-9]/', '', $lead_id);
 $list_id = preg_replace('/[^_0-9]/', '', $list_id);
-$log_to_file = preg_replace('/[^-_0-9a-zA-Z]/', '', $log_to_file);
-$called_count = preg_replace('/[^-_0-9a-zA-Z]/', '', $called_count);
+$log_to_file = preg_replace('/[^0-9]/', '', $log_to_file);
+$called_count = preg_replace('/[^0-9]/', '', $called_count);
+/*
 $talk_time = preg_replace('/[^-_0-9a-zA-Z]/', '', $talk_time);
-$entry_date = preg_replace('/[^- \:_0-9a-zA-Z]/', '', $entry_date);
+$entry_date = preg_replace('/[^-_0-9a-zA-Z]/', '', $entry_date);
 $populate_sp_old_list = preg_replace('/[^-_0-9a-zA-Z]/', '', $populate_sp_old_list);
 $populate_comm_old_date = preg_replace('/[^-_0-9a-zA-Z]/', '', $populate_comm_old_date);
+*/
 
 if ($non_latin < 1)
 	{
@@ -270,7 +282,7 @@ $sea=0;
 $DMLrecords=0;
 $lead_moved=0;
 $search_count=0;
-while ($DMLsettings_ct >= $sea)
+while ($DMLsettings_ct > $sea)
 	{
 	if (strlen($DMLsettings[$sea]) > 7)
 		{
