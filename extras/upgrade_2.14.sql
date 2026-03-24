@@ -3061,3 +3061,7 @@ ALTER TABLE vicidial_inbound_groups ADD xfer_talk_minimum ENUM('DISABLED','ENABL
 ALTER TABLE vicidial_inbound_groups ADD xfer_talk_minimum_sec SMALLINT(5) UNSIGNED default '0';
 
 UPDATE system_settings SET db_schema_version='1737',db_schema_update_date=NOW() where db_schema_version < 1737;
+
+ALTER TABLE vicidial_campaigns ADD hangup_again_link ENUM('DISABLED','ENABLED') default 'ENABLED';
+
+UPDATE system_settings SET db_schema_version='1738',db_schema_update_date=NOW() where db_schema_version < 1738;
