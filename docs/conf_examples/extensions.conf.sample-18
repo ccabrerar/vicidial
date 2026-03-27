@@ -695,6 +695,13 @@ exten => _19600XXX,n,Playback(sip-silence)
 exten => _19600XXX,n,ConfBridge(${EXTEN:1},vici_agent_bridge,vici_ringall_user)
 exten => _19600XXX,n,Hangup()
 
+; PJSIP header handler for OpenSIPs Caller ID Name
+exten => oscidname,1,Set(PJSIP_HEADER(add,X-CIDNAME)=${OSCIDNAME})
+exten => oscidname,n,Return()
+; PJSIP header handler for KHOMP calls
+exten => kpheader,1,Set(PJSIP_HEADER(add,${KPHEADER})=${KPHEADERVALUE})
+exten => kpheader,n,Return()
+
 [monitor]
 exten => h,1,AGI(agi://127.0.0.1:4577/call_log--HVcauses--PRI-----NODEBUG-----${HANGUPCAUSE}-----${DIALSTATUS}-----${DIALEDTIME}-----${ANSWEREDTIME}-----${HANGUPCAUSE(${HANGUPCAUSE_KEYS()},tech)}))
 exten => s,1,Set(TIMEOUT(digit)=10)

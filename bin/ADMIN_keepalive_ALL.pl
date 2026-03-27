@@ -179,9 +179,10 @@
 # 251011-1000 - Added archiving of recording_dtmf_muting_log, disabled purging of recording_live_log after 7 days
 # 251024-2222 - Added crashed table detection
 # 260126-1334 - Added check of reserved_extensions against dialplan numbers when building conf files
+# 260327-0846 - Added check of empty phone dialplan extensions when building conf files
 #
 
-$build = '260126-1334';
+$build = '260327-0846';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -3923,13 +3924,24 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 			}
 		### check against $reserved_extensions before building dialplan entry for this phone
 		$tempdp = $dialplan[$i];
-		if ($reserved_extensions =~ /,$tempdp,/) 
+		if ( ($reserved_extensions =~ /,$tempdp,/) || (length($tempdp) < 1) )
 			{
-			# reserved_extensions match, do not build dialplan, collect data for error to populate in admin log
-			$reserved_exten_skip++;
-			$reserved_exten_message .= "RESERVED MATCH IAX SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
-			if ($DBX) {print "RESERVED MATCH IAX SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";}
-			$Pext .= "; RESERVED MATCH IAX SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
+			if (length($tempdp) < 1) 
+				{
+				# empty extension found, do not build dialplan, collect data for error to populate in admin log
+				$reserved_exten_skip++;
+				$reserved_exten_message .= "EMPTY EXTEN IAX SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
+				if ($DBX) {print "EMPTY EXTEN IAX SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";}
+				$Pext .= "; EMPTY EXTEN IAX SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
+				}
+			else
+				{
+				# reserved_extensions match, do not build dialplan, collect data for error to populate in admin log
+				$reserved_exten_skip++;
+				$reserved_exten_message .= "RESERVED MATCH IAX SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
+				if ($DBX) {print "RESERVED MATCH IAX SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";}
+				$Pext .= "; RESERVED MATCH IAX SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
+				}
 			}
 		else
 			{
@@ -4101,13 +4113,24 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 			}
 		### check against $reserved_extensions before building dialplan entry for this phone
 		$tempdp = $dialplan[$i];
-		if ($reserved_extensions =~ /,$tempdp,/) 
+		if ( ($reserved_extensions =~ /,$tempdp,/) || (length($tempdp) < 1) )
 			{
-			# $reserved_extensions match, do not build dialplan, collect data for error to populate in admin log
-			$reserved_exten_skip++;
-			$reserved_exten_message .= "RESERVED MATCH SIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
-			if ($DBX) {print "RESERVED MATCH SIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";}
-			$Pext .= "; RESERVED MATCH SIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
+			if (length($tempdp) < 1) 
+				{
+				# empty extension found, do not build dialplan, collect data for error to populate in admin log
+				$reserved_exten_skip++;
+				$reserved_exten_message .= "EMPTY EXTEN SIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
+				if ($DBX) {print "EMPTY EXTEN SIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";}
+				$Pext .= "; EMPTY EXTEN SIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
+				}
+			else
+				{
+				# $reserved_extensions match, do not build dialplan, collect data for error to populate in admin log
+				$reserved_exten_skip++;
+				$reserved_exten_message .= "RESERVED MATCH SIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
+				if ($DBX) {print "RESERVED MATCH SIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";}
+				$Pext .= "; RESERVED MATCH SIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
+				}
 			}
 		else
 			{
@@ -4306,13 +4329,24 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		### Dialplan generation :
 		### check against $reserved_extensions before building dialplan entry for this phone
 		$tempdp = $dialplan[$i];
-		if ($reserved_extensions =~ /,$tempdp,/) 
+		if ( ($reserved_extensions =~ /,$tempdp,/) || (length($tempdp) < 1) )
 			{
-			# $reserved_extensions match, do not build dialplan, collect data for error to populate in admin log
-			$reserved_exten_skip++;
-			$reserved_exten_message .= "RESERVED MATCH PJSIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
-			if ($DBX) {print "RESERVED MATCH PJSIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";}
-			$Pext .= "; RESERVED MATCH PJSIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
+			if (length($tempdp) < 1) 
+				{
+				# empty extension found, do not build dialplan, collect data for error to populate in admin log
+				$reserved_exten_skip++;
+				$reserved_exten_message .= "EMPTY EXTEN PJSIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
+				if ($DBX) {print "EMPTY EXTEN PJSIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";}
+				$Pext .= "; EMPTY EXTEN PJSIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
+				}
+			else
+				{
+				# $reserved_extensions match, do not build dialplan, collect data for error to populate in admin log
+				$reserved_exten_skip++;
+				$reserved_exten_message .= "RESERVED MATCH PJSIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
+				if ($DBX) {print "RESERVED MATCH PJSIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";}
+				$Pext .= "; RESERVED MATCH PJSIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
+				}
 			}
 		else
 			{
@@ -4395,13 +4429,24 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 				}
 			### check against $reserved_extensions before building dialplan entry for this phone
 			$tempdp = $CXdialplan[$i];
-			if ($reserved_extensions =~ /,$tempdp,/) 
+			if ( ($reserved_extensions =~ /,$tempdp,/) || (length($tempdp) < 1) )
 				{
-				# $reserved_extensions match, do not build dialplan, collect data for error to populate in admin log
-				$reserved_exten_skip++;
-				$reserved_exten_message .= "RESERVED MATCH CX SKIP!   dialplan: $CXdialplan[$i] phone: $CXextension[$i] server: $CXserver_ip[$i]\n";
-				if ($DBX) {print "RESERVED MATCH CX SKIP!   dialplan: $CXdialplan[$i] phone: $CXextension[$i] server: $CXserver_ip[$i]\n";}
-				$Pext .= "; RESERVED MATCH CX SKIP!   dialplan: $CXdialplan[$i] phone: $CXextension[$i] server: $CXserver_ip[$i]\n";
+				if (length($tempdp) < 1) 
+					{
+					# empty extension found, do not build dialplan, collect data for error to populate in admin log
+					$reserved_exten_skip++;
+					$reserved_exten_message .= "EMPTY EXTEN CX SKIP!   dialplan: $CXdialplan[$i] phone: $CXextension[$i] server: $CXserver_ip[$i]\n";
+					if ($DBX) {print "EMPTY EXTEN CX SKIP!   dialplan: $CXdialplan[$i] phone: $CXextension[$i] server: $CXserver_ip[$i]\n";}
+					$Pext .= "; EMPTY EXTEN CX SKIP!   dialplan: $CXdialplan[$i] phone: $CXextension[$i] server: $CXserver_ip[$i]\n";
+					}
+				else
+					{
+					# $reserved_extensions match, do not build dialplan, collect data for error to populate in admin log
+					$reserved_exten_skip++;
+					$reserved_exten_message .= "RESERVED MATCH CX SKIP!   dialplan: $CXdialplan[$i] phone: $CXextension[$i] server: $CXserver_ip[$i]\n";
+					if ($DBX) {print "RESERVED MATCH CX SKIP!   dialplan: $CXdialplan[$i] phone: $CXextension[$i] server: $CXserver_ip[$i]\n";}
+					$Pext .= "; RESERVED MATCH CX SKIP!   dialplan: $CXdialplan[$i] phone: $CXextension[$i] server: $CXserver_ip[$i]\n";
+					}
 				}
 			else
 				{

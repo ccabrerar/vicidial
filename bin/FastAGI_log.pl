@@ -25,7 +25,7 @@
 # exten => h,1,DeadAGI(agi://127.0.0.1:4577/call_log--HVcauses--PRI-----NODEBUG-----${HANGUPCAUSE}-----${DIALSTATUS}-----${DIALEDTIME}-----${ANSWEREDTIME})
 # 
 #
-# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG:
 # 61010-1007 - First test build
@@ -104,6 +104,7 @@
 # 241020-1929 - Added khomp campaign settings options
 # 241028-0958 - Added vicidial_khomp_log logging of container used
 # 250928-1556 - Added hosted_settings dialplan variable
+# 260327-0824 - Fixes for PJSIP compatibility
 #
 
 # defaults for PreFork
@@ -807,6 +808,7 @@ sub process_request
 						{
 						if ($AGILOG) {$agi_string = "Adding \"X-CIDNAME: $camp_opensips_cid_name\" header to INVITE";   &agi_output;}
 						$header = "X-CIDNAME: " . $camp_opensips_cid_name;
+						$AGI->exec("EXEC Set(__OSCIDNAME=\"$camp_opensips_cid_name\")");
 						$AGI->exec("EXEC SIPAddHeader(\"$header\")");
 						}
 					}
@@ -839,6 +841,10 @@ sub process_request
 
 					# add the SIP tracking header
 					$header = "X-" . $khomp_header . ": " . $khomp_id;
+					$kp_header = "X-" . $khomp_header;
+					$kp_header_value = $khomp_id;
+					$AGI->exec("EXEC Set(__KPHEADER=$kp_header)");
+					$AGI->exec("EXEC Set(__KPHEADERVALUE=$kp_header_value)");
 					$AGI->exec("EXEC SIPAddHeader(\"$header\")");
 					if ($AGILOG) {$agi_string = "|KHOMP SIP Header= $header|$khomp_id_format|";   &agi_output;}
 

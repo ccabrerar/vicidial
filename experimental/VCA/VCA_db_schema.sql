@@ -48,3 +48,18 @@ ALTER TABLE vicidial_vca_log ADD sig_id VARCHAR(36) DEFAULT '', ADD
 sig_min_dist FLOAT DEFAULT 0, ADD sig_match_ms FLOAT DEFAULT 0;
 ALTER TABLE vicidial_vca_log_archive ADD sig_id VARCHAR(36) DEFAULT '',
 ADD sig_min_dist FLOAT DEFAULT 0, ADD sig_match_ms FLOAT DEFAULT 0;
+
+ALTER TABLE vicidial_vca_log RENAME column sig_id to voice_sig_id
+ALTER TABLE vicidial_vca_log RENAME column sig_min_dist to voice_min_dist;
+ALTER TABLE vicidial_vca_log RENAME column sig_match_ms to voice_match_ms;
+ALTER TABLE vicidial_vca_log_archive RENAME column sig_id to voice_sig_id
+ALTER TABLE vicidial_vca_log_archive RENAME column sig_match_ms to voice_match_ms;
+ALTER TABLE vicidial_vca_log_archive RENAME column sig_min_dist to voice_min_dist;
+ALTER TABLE vicidial_vca_log ADD column audio_sig_id VARCHAR(36) default '';
+ALTER TABLE vicidial_vca_log ADD column audio_min_dist FLOAT default 0;
+ALTER TABLE vicidial_vca_log ADD column audio_match_ms FLOAT default 0;
+ALTER TABLE vicidial_vca_log ADD column sig_match_type VARCHAR(10) default '';
+ALTER TABLE vicidial_vca_log_archive ADD column audio_sig_id VARCHAR(36) default '';
+ALTER TABLE vicidial_vca_log_archive ADD column audio_min_dist FLOAT default 0;
+ALTER TABLE vicidial_vca_log_archive ADD column audio_match_ms FLOAT default 0;
+ALTER TABLE vicidial_vca_log_archive ADD column sig_match_type VARCHAR(10) default '';
