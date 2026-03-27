@@ -17,7 +17,7 @@
 # the ADMIN_keepalive_ALL.pl script, which makes sure it is always running in a
 # screen, provided that the astguiclient.conf keepalive setting "2" is set.
 #
-# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 170915-2106 - Initial version based off the orginal AST_manager_listen.pl script
@@ -26,6 +26,7 @@
 # 190121-1505 - Added RA_USER_PHONE On-Hook CID to solve last RINGAGENT issues
 # 210407-2009 - Added Event handlers for new manager events
 # 251007-2110 - Added code for recording_dtmf_detection and recording_dtmf_muting
+# 260327-1516 - Added support for PJSIP (requires patched Asterisk 18+)
 #
 
 # constants
@@ -570,15 +571,20 @@ sub handle_event
 		# SIPCriticalTimeout event
 		case "SIPCriticalTimeout" { return handle_sip_crit_timeout_event( %event_hash ); }
 
+		# PJSIPRetransmitTimeout event
+		case "PJSIPRetransmitTimeout" { return handle_sip_crit_timeout_event( %event_hash ); }
+
 		# PeerRegistered event
 		case "PeerRegistered" { return handle_peer_registered_event( %event_hash ); }
 
-		# SIPRTPDisconnect evett
+		# SIPRTPDisconnect event
 		case "SIPRTPDisconnect" { return handle_sip_rtp_disconnect_event( %event_hash ); }
+
+		# PJSIPRTPDisconnect event
+		case "PJSIPRTPDisconnect" { return handle_sip_rtp_disconnect_event( %event_hash ); }
 
 		# PeerStatus event
 		case "PeerStatus" { return handle_peer_status_event( %event_hash ); }
-
 
 		#case "" { return handle__event( %event_hash ); }
 
@@ -610,7 +616,7 @@ sub handle_sip_crit_timeout_event
 		}
 	else
 		{
-		print STDERR "SIPCriticalTimeout event does not have a Type, CallID, SeqNo, Host, or Timeout ?!!!\n";
+		print STDERR "SIPCriticalTimeout or PJSIPRetransmitTimeout event does not have a Type, CallID, SeqNo, Host, or Timeout ?!!!\n";
 		return 3;
 		}
 
@@ -669,7 +675,7 @@ sub handle_sip_rtp_disconnect_event
 		}
 	else
 		{
-		print STDERR "SIPRTPDisconnect event does not have a Channel or RTPLastRX ?!!!\n";
+		print STDERR "(PJ)SIPRTPDisconnect event does not have a Channel or RTPLastRX ?!!!\n";
 		return 3;
 		}
 	}

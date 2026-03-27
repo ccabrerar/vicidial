@@ -6,10 +6,11 @@
 # connects to the Asterisk Manager Interface version 2 and inserts records into 
 # the vicidial_sip_log for SIPInvite and SIPResponse events.
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 190528-1304 - Copied AST_manager_listen_AMI2.pl to make the initial version
+# 260327-1509 - Added support for PJSIP (requires patched Asterisk 18+)
 #
 
 # constants
@@ -528,15 +529,17 @@ sub handle_event
 		# Asterisk is shutting down so should we
 		case "Shutdown" { return 0; }
 
-		# DTMF event
-		case "DTMFBegin" { return handle_dtmf_begin_event( %event_hash ); }
-		case "DTMFEnd" { return handle_dtmf_end_event( %event_hash ); }		
-
 		# SIPInvite event
 		case "SIPInvite" { return handle_sip_invite ( %event_hash ); }
 
+		# PJSIPInvite event
+		case "PJSIPInvite" { return handle_sip_invite ( %event_hash ); }
+
 		# SIPResponse event
 		case "SIPResponse" { return handle_sip_response ( %event_hash ); }
+
+		# PJSIPResponse event
+		case "PJSIPResponse" { return handle_sip_response ( %event_hash ); }
 
 		else { return 2; }
 		}
