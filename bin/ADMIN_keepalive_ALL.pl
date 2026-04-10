@@ -180,9 +180,10 @@
 # 251024-2222 - Added crashed table detection
 # 260126-1334 - Added check of reserved_extensions against dialplan numbers when building conf files
 # 260327-0846 - Added check of empty phone dialplan extensions when building conf files
+# 260402-1440 - Added reset of vicidial_max_inbound_cache table entries
 #
 
-$build = '260327-0846';
+$build = '260402-1440';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -509,7 +510,7 @@ $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VA
 
 
 ##### Get the settings from system_settings #####
-$stmtA = "SELECT sounds_central_control_active,active_voicemail_server,custom_dialplan_entry,default_codecs,generate_cross_server_exten,voicemail_timezones,default_voicemail_timezone,call_menu_qualify_enabled,allow_voicemail_greeting,reload_timestamp,meetme_enter_login_filename,meetme_enter_leave3way_filename,allow_chats,enable_auto_reports,enable_drop_lists,expired_lists_inactive,sip_event_logging,call_quota_lead_ranking,inbound_answer_config,log_latency_gaps,demographic_quotas,weekday_resets,highest_lead_id,hopper_hold_inserts,stereo_recording,stereo_parallel_recording,recording_dtmf_muting,db_crashed_tables_check FROM system_settings;";
+$stmtA = "SELECT sounds_central_control_active,active_voicemail_server,custom_dialplan_entry,default_codecs,generate_cross_server_exten,voicemail_timezones,default_voicemail_timezone,call_menu_qualify_enabled,allow_voicemail_greeting,reload_timestamp,meetme_enter_login_filename,meetme_enter_leave3way_filename,allow_chats,enable_auto_reports,enable_drop_lists,expired_lists_inactive,sip_event_logging,call_quota_lead_ranking,inbound_answer_config,log_latency_gaps,demographic_quotas,weekday_resets,highest_lead_id,hopper_hold_inserts,stereo_recording,stereo_parallel_recording,recording_dtmf_muting,db_crashed_tables_check,max_inbound_auto_reenable FROM system_settings;";
 #	print "$stmtA\n";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -545,6 +546,7 @@ if ($sthArows > 0)
 	$SSstereo_parallel_recording =		$aryA[25];
 	$SSrecording_dtmf_muting =			$aryA[26];
 	$SSdb_crashed_tables_check =		$aryA[27];
+	$SSmax_inbound_auto_reenable =		$aryA[28];
 	}
 $sthA->finish();
 if ($DBXXX > 0) {print "SYSTEM SETTINGS:     $sounds_central_control_active|$active_voicemail_server|$SScustom_dialplan_entry|$SSdefault_codecs\n";}
@@ -1533,6 +1535,30 @@ if ($timeclock_end_of_day_NOW > 0)
 		if ($teodDB) {$event_string = "vicidial_long_extensions records reset: $affected_rows";   &teod_logger;}
 
 		$stmtA = "optimize table vicidial_long_extensions;";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		@aryA = $sthA->fetchrow_array;
+		if ($DB) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+		$sthA->finish();
+
+		if ($SSmax_inbound_auto_reenable >= 2) 
+			{
+			$stmtA = "UPDATE vicidial_max_inbound_cache SET status='OLD',notes=CONCAT(notes,'|TCEOD') WHERE status='NEW' and event_date >= \"$RMSQLdate\" and event_date < \"$FMSQLdate\";";
+			if($DBX){print STDERR "\n|$stmtA|\n";}
+			$affected_rows = $dbhA->do($stmtA);
+			if($DB){print STDERR "\n|$affected_rows vicidial_max_inbound_cache records archived|\n";}
+			if ($teodDB) {$event_string = "vicidial_max_inbound_cache records archived: $affected_rows";   &teod_logger;}
+			}
+
+		$stmtA = "delete from vicidial_max_inbound_cache where event_date < \"$RMSQLdate\";";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$affected_rows = $dbhA->do($stmtA);
+		if($DB){print STDERR "\n|$affected_rows vicidial_max_inbound_cache records deleted|\n";}
+		if ($teodDB) {$event_string = "vicidial_max_inbound_cache records deleted: $affected_rows";   &teod_logger;}
+
+		$stmtA = "optimize table vicidial_max_inbound_cache;";
 		if($DBX){print STDERR "\n|$stmtA|\n";}
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;

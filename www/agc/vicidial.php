@@ -757,13 +757,14 @@
 # 260301-0850 - Added xfer_talk_minimum features for In-Group transfers
 # 260302-0935 - Code updates for PHP8 compatibility
 # 260324-0857 - Added hangup_again_link campaign option
+# 260408-1850 - Added max_inbound_auto_reenable option
 #
 
-$version = '2.14-723c';
-$build = '260324-0857';
+$version = '2.14-724c';
+$build = '260408-1850';
 $php_script = 'vicidial.php';
 $mel=1;					# Mysql Error Log enabled = 1
-$mysql_log_count=109;
+$mysql_log_count=110;
 $one_mysql_log=0;
 $DB=0;
 $conf_table = "vicidial_conferences";
@@ -901,7 +902,7 @@ $random = (rand(1000000, 9999999) + 10000000);
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
-$stmt = "SELECT use_non_latin,vdc_header_date_format,vdc_customer_date_format,vdc_header_phone_format,webroot_writable,timeclock_end_of_day,vtiger_url,enable_vtiger_integration,outbound_autodial_active,enable_second_webform,user_territories_active,static_agent_url,custom_fields_enabled,pllb_grouping_limit,qc_features_active,allow_emails,callback_time_24hour,enable_languages,language_method,meetme_enter_login_filename,meetme_enter_leave3way_filename,enable_third_webform,default_language,active_modules,allow_chats,chat_url,default_phone_code,agent_screen_colors,manual_auto_next,agent_xfer_park_3way,admin_web_directory,agent_script,agent_push_events,agent_push_url,agent_logout_link,agentonly_callback_campaign_lock,manual_dial_validation,mute_recordings,enable_second_script,enable_first_webform,recording_buttons,outbound_cid_any,browser_call_alerts,manual_dial_phone_strip,require_password_length,pass_hash_enabled,agent_hidden_sound_seconds,agent_hidden_sound,agent_hidden_sound_volume,agent_screen_timer,agent_hide_hangup,allow_web_debug,max_logged_in_agents,login_kickall,agent_notifications,inbound_credits,two_factor_auth_agent_hours,two_factor_container,sip_event_logging,stereo_recording,agent_hide_dial_fail,agent_man_dial_filter,agent_3way_dial_filter,recording_dtmf_detection,recording_dtmf_muting,xfer_min_container FROM system_settings;";
+$stmt = "SELECT use_non_latin,vdc_header_date_format,vdc_customer_date_format,vdc_header_phone_format,webroot_writable,timeclock_end_of_day,vtiger_url,enable_vtiger_integration,outbound_autodial_active,enable_second_webform,user_territories_active,static_agent_url,custom_fields_enabled,pllb_grouping_limit,qc_features_active,allow_emails,callback_time_24hour,enable_languages,language_method,meetme_enter_login_filename,meetme_enter_leave3way_filename,enable_third_webform,default_language,active_modules,allow_chats,chat_url,default_phone_code,agent_screen_colors,manual_auto_next,agent_xfer_park_3way,admin_web_directory,agent_script,agent_push_events,agent_push_url,agent_logout_link,agentonly_callback_campaign_lock,manual_dial_validation,mute_recordings,enable_second_script,enable_first_webform,recording_buttons,outbound_cid_any,browser_call_alerts,manual_dial_phone_strip,require_password_length,pass_hash_enabled,agent_hidden_sound_seconds,agent_hidden_sound,agent_hidden_sound_volume,agent_screen_timer,agent_hide_hangup,allow_web_debug,max_logged_in_agents,login_kickall,agent_notifications,inbound_credits,two_factor_auth_agent_hours,two_factor_container,sip_event_logging,stereo_recording,agent_hide_dial_fail,agent_man_dial_filter,agent_3way_dial_filter,recording_dtmf_detection,recording_dtmf_muting,xfer_min_container,max_inbound_auto_reenable FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01001',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 #if ($DB) {echo "$stmt\n";}
@@ -975,6 +976,7 @@ if ($qm_conf_ct > 0)
 	$SSrecording_dtmf_detection = 		$row[63];
 	$SSrecording_dtmf_muting = 			$row[64];
 	$SSxfer_min_container =				$row[65];
+	$SSmax_inbound_auto_reenable =		$row[66];
 	if ( ($SSagent_hidden_sound == '---NONE---') or ($SSagent_hidden_sound == '') ) {$SSagent_hidden_sound_seconds=0;}
 	}
 else
@@ -4988,6 +4990,17 @@ else
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01086',$VD_login,$server_ip,$session_name,$one_mysql_log);}
 			$RIRaffected_rows = mysqli_affected_rows($link);
 			echo "<!-- routing_initiated_recordings invalidated:   |$RIRaffected_rows| -->\n";
+
+			$SSmax_inbound_auto_reenable = intval($SSmax_inbound_auto_reenable);
+			if ($SSmax_inbound_auto_reenable != 2)
+				{
+				$stmt="UPDATE vicidial_max_inbound_cache set status='OLD',notes=CONCAT(notes,'|LOGIN') where user='$VD_login' and status='NEW';";
+				if ($DB) {echo "$stmt\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01110',$VD_login,$server_ip,$session_name,$one_mysql_log);}
+				$MICaffected_rows = mysqli_affected_rows($link);
+				echo "<!-- vicidial_max_inbound_cache archived:   |$MICaffected_rows| -->\n";
+				}
 
 			$VULhostname = php_uname('n');
 			$VULservername = $_SERVER['SERVER_NAME'];

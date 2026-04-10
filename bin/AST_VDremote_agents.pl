@@ -11,7 +11,7 @@
 # agents that should appear to be logged in so that the calls can be transferred 
 # out to them properly.
 #
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG:
 # 50215-0954 - First version of script
@@ -58,9 +58,10 @@
 # 240219-1518 - Added daily_limit inbound option
 # 240420-2246 - Added ConfBridge code
 # 240516-2149 - Allow for ALT start_call_url, added --version flag
+# 260403-2253 - Added vicidial_max_inbound_cache logging
 #
 
-$build = '240516-2149';
+$build = '260403-2253';
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -471,6 +472,17 @@ while($one_day_interval > 0)
 							}
 						if ($max_inbound_count >= $max_inbound_calls)
 							{
+							$RAWcloser_campaigns='';
+							$stmtJ = "SELECT closer_campaigns FROM vicidial_remote_agents where user_start='$QHuser[$w]';";
+							$sthA = $dbhA->prepare($stmtJ) or die "preparing: ",$dbhA->errstr;
+							$sthA->execute or die "executing: $stmtJ ", $dbhA->errstr;
+							$sthArowsVRA=$sthA->rows;
+							if ($sthArowsVRA > 0)
+								{
+								@aryA = $sthA->fetchrow_array;
+								$RAWcloser_campaigns = $aryA[0];
+								}
+
 							$max_inbound_triggered++;
 							$stmtJ = "UPDATE vicidial_live_agents set closer_campaigns='' where user='$QHuser[$w]';";
 							$affected_rows = $dbhA->do($stmtJ);
@@ -479,6 +491,9 @@ while($one_day_interval > 0)
 							$affected_rows = $dbhA->do($stmtJ);
 
 							$stmtJ = "UPDATE vicidial_remote_agents set closer_campaigns='' where user_start='$QHuser[$w]';";
+							$affected_rows = $dbhA->do($stmtJ);
+
+							$stmtJ = "INSERT INTO vicidial_max_inbound_cache SET user='$QHuser[$w]', campaign_id='$QHcampaign_id[$w]', event_date=NOW(), blended='1', closer_campaigns='$RAWcloser_campaigns', max_inbound_count='$max_inbound_calls', call_count_today='$max_inbound_count', status='NEW', notes='VRA';";
 							$affected_rows = $dbhA->do($stmtJ);
 
 							$stmtJ = "INSERT INTO vicidial_admin_log set event_date=NOW(), user='$QHuser[$w]', ip_address='$VARserver_ip', event_section='USERS', event_type='MODIFY', record_id='$QHuser[$w]', event_code='MAX IN CALLS MODIFY REMOTE AGENT', event_sql='DELETE FROM vicidial_live_inbound_agents where user=$QHuser[$w]', event_notes='|$max_inbound_count|$max_inbound_calls|$QHuser[$w]|$QHcall_id[$w]|RA|';";
