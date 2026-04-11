@@ -6332,12 +6332,13 @@ if ($SSscript_remove_js > 0)
 # 260128-0823 - Added xfer_min_container and in-group minimum transfer time features, xfer_talk_minimum, xfer_talk_minimum_sec
 # 260324-0848 - Added hangup_again_link campaign option
 # 260408-0827 - Added max_inbound_auto_reenable system setting and function to re-enable agent in-group selections after max_inbound_calls has been raised
+# 260410-1953 - Fix for max_inbound_auto_reenable feature in 4B admin screen
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-955a';
-$build = '260408-0827';
+$admin_version = '2.14-956a';
+$build = '260410-1953';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -7185,8 +7186,8 @@ if ($ADD==311111111111111)	{$hh='admin';	$sh='settings';	echo _QXZ("MODIFY SYSTE
 if ($ADD==321111111111111)	{$hh='admin';	$sh='status';	echo _QXZ("MODIFY SYSTEM STATUSES");}
 if ($ADD==331111111111111)	{$hh='admin';	$sh='status';	echo _QXZ("MODIFY STATUS CATEGORY");}
 if ($ADD==341111111111111)	{$hh='qc';	$sh='modify';	echo _QXZ("MODIFY QC STATUS CODE");}
-if ($ADD=="4A")			{$hh='users';		$sh='list';	echo _QXZ("Modify User - Admin");}
-if ($ADD=="4B")			{$hh='users';		$sh='list';	echo _QXZ("Modify User - Admin");}
+if ($ADD=="4A")			{$hh='users';		$sh='list';	echo _QXZ("Modify User - Admin");}	# ADMIN - Admin Screen and Agent Screen Options
+if ($ADD=="4B")			{$hh='users';		$sh='list';	echo _QXZ("Modify User - Admin");}	# ADMIN - Agent Screen Options Only
 if ($ADD==4)			{$hh='users';		$sh='list';	echo _QXZ("Modify User");}
 if ($ADD==41)			{$hh='campaigns';	$sh='detail';	echo _QXZ("Modify Campaign");}
 if ($ADD==42)			{$hh='campaigns';	$sh='status';	echo _QXZ("Modify Campaign Status");}
@@ -16319,7 +16320,7 @@ if ($ADD==231111111111111)
 
 
 ######################
-# ADD=4A submit user modifications to the system - ADMIN
+# ADD=4A submit user modifications to the system - ADMIN - Admin Screen and Agent Screen Options
 ######################
 if ($ADD=="4A")
 	{
@@ -16732,7 +16733,7 @@ if ($ADD=="4A")
 
 
 ######################
-# ADD=4B submit user modifications to the system - ADMIN
+# ADD=4B submit user modifications to the system - ADMIN - Agent Screen Options Only
 ######################
 if ($ADD=="4B")
 	{
@@ -16810,12 +16811,117 @@ if ($ADD=="4B")
 			$stmt="UPDATE vicidial_users set pass='$pass',full_name='$full_name',user_level='$user_level',user_group='$user_group',phone_login='$phone_login',phone_pass='$phone_pass',hotkeys_active='$hotkeys_active',agent_choose_ingroups='$agent_choose_ingroups',closer_campaigns='$groups_value',scheduled_callbacks='$scheduled_callbacks',agentonly_callbacks='$agentonly_callbacks',agentcall_manual='$agentcall_manual',vicidial_recording='$vicidial_recording',vicidial_transfers='$vicidial_transfers',closer_default_blended='$closer_default_blended',vicidial_recording_override='$vicidial_recording_override',alter_custdata_override='$alter_custdata_override',qc_enabled='$qc_enabled',qc_user_level='$qc_user_level',qc_pass='$qc_pass',qc_finish='$qc_finish',qc_commit='$qc_commit',alter_custphone_override='$alter_custphone_override',active='$active',agent_shift_enforcement_override='$agent_shift_enforcement_override',email='$email',territory='$territory',allow_alerts='$allow_alerts',agent_choose_territories='$agent_choose_territories',custom_one='$custom_one',custom_two='$custom_two',custom_three='$custom_three',custom_four='$custom_four',custom_five='$custom_five',voicemail_id='$voicemail_id',agent_call_log_view_override='$agent_call_log_view_override',agent_choose_blended='$agent_choose_blended',agent_lead_search_override='$agent_lead_search',preset_contact_search='$preset_contact_search',max_inbound_calls='$max_inbound_calls',wrapup_seconds_override='$wrapup_seconds_override',lead_filter_id='$lead_filter_id',user_hide_realtime='$user_hide_realtime',user_nickname='$user_nickname',user_new_lead_limit='$user_new_lead_limit',ready_max_logout='$ready_max_logout',failed_login_count=0,max_hopper_calls='$max_hopper_calls',max_hopper_calls_hour='$max_hopper_calls_hour',hide_call_log_info='$hide_call_log_info',next_dial_my_callbacks='$next_dial_my_callbacks',max_inbound_filter_enabled='$max_inbound_filter_enabled',max_inbound_filter_statuses='$max_inbound_filter_statuses',max_inbound_filter_ingroups='$max_inbound_filter_ingroups',max_inbound_filter_min_sec='$max_inbound_filter_min_sec',status_group_id='$status_group_id',mobile_number='$mobile_number',user_location='$user_location',user_group_two='$user_group_two',hci_enabled='$hci_enabled' $user_codeSQL $pass_hashSQL where user='$user' $LOGadmin_viewable_groupsSQL;";
 			$rslt=mysql_to_mysqli($stmt, $link);
 
+			### BEGIN check for raising of max_inbound_calls setting, and execute re-enebling of agent selected in-groups if true
+			$max_inbound_calls = intval($max_inbound_calls);
+			$max_inbound_calls_old = intval($max_inbound_calls_old);
+			$SSmax_inbound_auto_reenable = intval($SSmax_inbound_auto_reenable);
+			$max_inbound_NOTES='';   $max_inbound_SQL='';
+			if ( ($max_inbound_calls > $max_inbound_calls_old) and ($SSmax_inbound_auto_reenable > 0) )
+				{
+				$stmt = "SELECT campaign_id,blended,closer_campaigns,max_inbound_count,call_count_today,notes,event_date,CHAR_LENGTH(closer_campaigns) as sorder FROM vicidial_max_inbound_cache where user='$user' and status='NEW' and closer_campaigns NOT IN('',' ',' -') and (max_inbound_count < $max_inbound_calls) order by sorder desc limit 1;";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$vmic_ct = mysqli_num_rows($rslt);
+				if ($DB) {echo "$vmic_ct|$stmt|\n";}
+				if ($vmic_ct > 0)
+					{
+					$row=mysqli_fetch_row($rslt);
+					$VMIC_campaign_id =			$row[0];
+					$VMIC_blended	=			$row[1];
+					$VMIC_closer_campaigns =	$row[2];
+					$VMIC_max_inbound_count =	$row[3];
+					$VMIC_call_count_today =	$row[4];
+					$VMIC_notes =				$row[5];
+					$VMIC_event_date =			$row[6];
+					if ($DB) {echo "VMIC FOUND: |$user|$VMIC_campaign_id|$VMIC_blended|$VMIC_closer_campaigns|$VMIC_max_inbound_count|$VMIC_call_count_today|$VMIC_notes|$VMIC_event_date|\n";}
+
+					$stmt = "SELECT closer_campaigns,status FROM vicidial_live_agents where user='$user' and campaign_id='$VMIC_campaign_id' and last_update_time > DATE_SUB(NOW(), INTERVAL 10 SECOND) order by last_update_time desc limit 1;";
+					$rslt=mysql_to_mysqli($stmt, $link);
+					$vla_ct = mysqli_num_rows($rslt);
+					if ($DB) {echo "$vla_ct|$stmt|\n";}
+					if ($vla_ct > 0)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$VLA_closer_campaigns =		$row[0];
+						$VLA_status =				$row[1];
+						if ($DB) {echo "VLA FOUND: |$user|$VLA_closer_campaigns|$VLA_status|\n";}
+						}
+
+					if ( (strlen($VMIC_closer_campaigns) > 2) and ($vla_ct > 0) and (strcmp($VMIC_closer_campaigns, $VLA_closer_campaigns) !== 0) )
+						{
+						# populate vicidial_live_inbound_agents records for this user
+						$temp_closer_campaigns = $VMIC_closer_campaigns;
+						$in_groups_pre = preg_replace('/-$/','',$temp_closer_campaigns);
+						$in_groups = explode(" ",$in_groups_pre);
+						$in_groups_ct = count($in_groups);
+						$k=1;
+						while ($k < $in_groups_ct)
+							{
+							if (strlen($in_groups[$k])>1)
+								{
+								$stmtB="SELECT group_weight,calls_today,group_grade,calls_today_filtered,daily_limit FROM vicidial_inbound_group_agents where user='$user' and group_id='$in_groups[$k]';";
+								$rslt=mysql_to_mysqli($stmtB, $link);
+								if ($DB) {echo "$stmtB\n";}
+								$viga_ct = mysqli_num_rows($rslt);
+								if ($viga_ct > 0)
+									{
+									$row=mysqli_fetch_row($rslt);
+									$group_weight = $row[0];
+									$calls_today =	$row[1];
+									$group_grade =	$row[2];
+									$calls_today_filtered =	$row[3];
+									$daily_limit =	$row[4];
+									}
+								else
+									{
+									$group_weight = 0;
+									$calls_today =	0;
+									$group_grade =	0;
+									$calls_today_filtered =	0;
+									$daily_limit =	-1;
+									}
+								$stmtB="INSERT IGNORE INTO vicidial_live_inbound_agents set user='$user',group_id='$in_groups[$k]',group_weight='$group_weight',group_grade='$group_grade',calls_today='$calls_today',calls_today_filtered='$calls_today_filtered',last_call_time=NOW(),last_call_finish=NOW(),last_call_time_filtered=NOW(),last_call_finish_filtered=NOW(),daily_limit='$daily_limit' ON DUPLICATE KEY UPDATE group_weight='$group_weight',group_grade='$group_grade',calls_today='$calls_today',calls_today_filtered='$calls_today_filtered',daily_limit='$daily_limit';";
+								$rslt=mysql_to_mysqli($stmtB, $link);
+								$affected_rows = mysqli_affected_rows($link);
+								$max_inbound_SQL .= "|$stmtB";
+								if ($DB) {echo "VLIA INSERT: |$affected_rows|$stmtB|\n";}
+								}
+							$k++;
+							}
+
+						$stmt = "UPDATE vicidial_live_agents SET closer_campaigns='$VMIC_closer_campaigns',external_ingroups='$VMIC_closer_campaigns',external_blended='$VMIC_blended',external_igb_set_user='VDIC',manager_ingroup_set='SET' where user='$user' and campaign_id='$VMIC_campaign_id' and last_update_time > DATE_SUB(NOW(), INTERVAL 10 SECOND) order by last_update_time desc limit 1;";
+						$rslt=mysql_to_mysqli($stmt, $link);
+						$affected_rows = mysqli_affected_rows($link);
+						$max_inbound_SQL .= $stmt;
+						$max_inbound_NOTES .= "$affected_rows VLA ingroups re-selected";
+						if ($DB) {echo "VLA FOUND UPDATE: |$affected_rows|$stmt|\n";}
+
+						if ($affected_rows > 0)
+							{echo "<br><B>"._QXZ("USER INBOUND GROUPS RE-SELECTED")."</B>\n";}
+
+						$stmt = "UPDATE vicidial_max_inbound_cache SET status='RESELECTED', notes=CONCAT(notes, '|RESELECTED at $SQLdate by $PHP_AUTH_USER') where user='$user' and campaign_id='$VMIC_campaign_id' and status='NEW' and closer_campaigns NOT IN('',' ',' -') and (max_inbound_count < $max_inbound_calls) and event_date='$VMIC_event_date';";
+						$rslt=mysql_to_mysqli($stmt, $link);
+						$affected_rows = mysqli_affected_rows($link);
+						$max_inbound_SQL .= "|$stmt";
+						$max_inbound_NOTES .= "|$affected_rows VMIC updated";
+						if ($DB) {echo "VMIC FOUND UPDATE: |$affected_rows|$stmt|\n";}
+
+						$stmt = "UPDATE vicidial_max_inbound_cache SET status='OLD', notes=CONCAT(notes, '|OLD at $SQLdate by $PHP_AUTH_USER') where user='$user' and campaign_id='$VMIC_campaign_id' and status='NEW';";
+						$rslt=mysql_to_mysqli($stmt, $link);
+						$affected_rows = mysqli_affected_rows($link);
+						$max_inbound_SQL .= "|$stmt";
+						$max_inbound_NOTES .= "|$affected_rows OTHER updated";
+						if ($DB) {echo "VMIC OTHER UPDATE: |$affected_rows|$stmt|\n";}
+						}
+					}
+				}
+			### END check for raising of max_inbound_calls setting, and execute re-enebling of agent selected in-groups if true
+
 
 			### LOG INSERTION Admin Log Table ###
-			$SQL_log = "$stmt|$stmt_grp_values|";
+			$SQL_log = "$stmt|$stmt_grp_values|$max_inbound_SQL|";
 			$SQL_log = preg_replace('/;/', '', $SQL_log);
 			$SQL_log = addslashes($SQL_log);
-			$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='USERS', event_type='MODIFY', record_id='$user', event_code='ADMIN MODIFY USER', event_sql=\"$SQL_log\", event_notes='';";
+			$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='USERS', event_type='MODIFY', record_id='$user', event_code='ADMIN MODIFY USER', event_sql=\"$SQL_log\", event_notes='$max_inbound_NOTES';";
 			if ($DB) {echo "|$stmt|\n";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 
