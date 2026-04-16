@@ -899,6 +899,9 @@ OTHER CHANGES:
 256. Added In-Group "Transfer Talk Minimum" features, allowing for restruction
 	on agent screen transfers before talk time threshold.
 
+257. Added Web Lead Loader feature to auto-detect custom column layouts in lead
+	files, as well as new load loading process rejection summaries
+
 
 
 

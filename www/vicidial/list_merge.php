@@ -1,7 +1,7 @@
 <?php
 # list_merge.php - merge smaller lists into a larger one. Part of Admin Utilities.
 #
-# Copyright (C) 2024  Matt Florell,Joseph Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell,Joseph Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 161004-2240 - Initial Build
@@ -12,16 +12,17 @@
 # 201117-1350 - Translation bug fixed, Issue #1236
 # 220227-2210 - Added allow_web_debug system setting
 # 240801-1133 - Code updates for PHP8 compatibility
+# 260415-1738 - More code updates for PHP8 compatibility
 #
 
-$version = '2.14-5';
-$build = '240801-1133';
+$version = '2.14-6';
+$build = '260415-1738';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
 
-$PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
-$PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
+$PHP_AUTH_USER=(array_key_exists('PHP_AUTH_USER', $_SERVER) ? $_SERVER['PHP_AUTH_USER'] : "");
+$PHP_AUTH_PW=(array_key_exists('PHP_AUTH_PW', $_SERVER) ? $_SERVER['PHP_AUTH_PW'] : "");
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 $ip = getenv("REMOTE_ADDR");
@@ -48,22 +49,28 @@ if (isset($_GET["num_leads"])) {$num_leads=$_GET["num_leads"];}
 	elseif (isset($_POST["num_leads"])) {$num_leads=$_POST["num_leads"];}
 if (isset($_GET["destination_list_id"])) {$destination_list_id=$_GET["destination_list_id"];}
 	elseif (isset($_POST["destination_list_id"])) {$destination_list_id=$_POST["destination_list_id"];}
+	else {$destination_list_id="";}
 if (isset($_GET["new_list_id"])) {$new_list_id=$_GET["new_list_id"];}
 	elseif (isset($_POST["new_list_id"])) {$new_list_id=$_POST["new_list_id"];}
+	else {$new_list_id="";}
 if (isset($_GET["new_list_name"])) {$new_list_name=$_GET["new_list_name"];}
 	elseif (isset($_POST["new_list_name"])) {$new_list_name=$_POST["new_list_name"];}
+	else {$new_list_name="";}
 if (isset($_GET["new_list_description"])) {$new_list_description=$_GET["new_list_description"];}
 	elseif (isset($_POST["new_list_description"])) {$new_list_description=$_POST["new_list_description"];}
+	else {$new_list_description="";}
 if (isset($_GET["active"])) {$active=$_GET["active"];}
 	elseif (isset($_POST["active"])) {$active=$_POST["active"];}
+	else {$active="";}
 if (isset($_GET["campaign_id"])) {$campaign_id=$_GET["campaign_id"];}
 	elseif (isset($_POST["campaign_id"])) {$campaign_id=$_POST["campaign_id"];}
+	else {$campaign_id="";}
 if (isset($_GET["retain_original_list"])) {$retain_original_list=$_GET["retain_original_list"];}
 	elseif (isset($_POST["retain_original_list"])) {$retain_original_list=$_POST["retain_original_list"];}
+	else {$retain_original_list="";}
 if (isset($_GET["create_new_list"])) {$create_new_list=$_GET["create_new_list"];}
 	elseif (isset($_POST["create_new_list"])) {$create_new_list=$_POST["create_new_list"];}
-
-$DB = preg_replace('/[^0-9]/','',$DB);
+	else {$create_new_list="";}
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
@@ -89,7 +96,8 @@ else
 	# there is something really weird if there are no system settings
 	exit;
 	}
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
@@ -615,7 +623,7 @@ if (($submit != "submit" ) && ($confirm != "CONFIRM"))
 	echo "<tr bgcolor=#$SSstd_row1_background><td align=right>"._QXZ("List Description").": </td><td align=left><input type=text name='new_list_description' size=30 maxlength=255 value='".$new_list_description."'>$NWB#lists-list_description$NWE</td></tr>\n";
 	echo "<tr bgcolor=#$SSstd_row1_background><td align=right>"._QXZ("Campaign").": </td><td align=left><select size=1 name='campaign_id'>\n";
 
-	$stmt="SELECT campaign_id,campaign_name from vicidial_campaigns $whereLOGallowed_campaignsSQL order by campaign_id;";
+	$stmt="SELECT campaign_id,campaign_name from vicidial_campaigns WHERE campaign_id IN ($allowed_campaigns_sql) order by campaign_id;"; # $whereLOGallowed_campaignsSQL - undefined
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$campaigns_to_print = mysqli_num_rows($rslt);
 	$campaigns_list='';
