@@ -1,7 +1,7 @@
 <?php
 # admin_header.php - VICIDIAL administration header
 #
-# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 # 
 
 # CHANGES
@@ -99,33 +99,112 @@
 # 230118-0835 - Added Agent Call Hangup Change function
 # 230613-1835 - Added VIDPROMPTSPECIAL options
 # 251025-1953 - Added crashed DB table display
+# 260420-1517 - Code updates for PHP8 compatibility, Changed lead loader link to fifth gen
 #
+
+#require("dbconnect_mysqli.php");
+#require("functions.php");
 
 $HTMLcolors = 'IndianRed,CD5C5C|LightCoral,F08080|Salmon,FA8072|DarkSalmon,E9967A|LightSalmon,FFA07A|Crimson,DC143C|Red,FF0000|FireBrick,B22222|DarkRed,8B0000|Pink,FFC0CB|LightPink,FFB6C1|HotPink,FF69B4|DeepPink,FF1493|MediumVioletRed,C71585|PaleVioletRed,DB7093|LightSalmon,FFA07A|Coral,FF7F50|Tomato,FF6347|OrangeRed,FF4500|DarkOrange,FF8C00|Orange,FFA500|Gold,FFD700|Yellow,FFFF00|LightYellow,FFFFE0|LemonChiffon,FFFACD|LightGoldenrodYellow,FAFAD2|PapayaWhip,FFEFD5|Moccasin,FFE4B5|PeachPuff,FFDAB9|PaleGoldenrod,EEE8AA|Khaki,F0E68C|DarkKhaki,BDB76B|Lavender,E6E6FA|Thistle,D8BFD8|Plum,DDA0DD|Violet,EE82EE|Orchid,DA70D6|Fuchsia,FF00FF|Magenta,FF00FF|MediumOrchid,BA55D3|MediumPurple,9370DB|RebeccaPurple,663399|BlueViolet,8A2BE2|DarkViolet,9400D3|DarkOrchid,9932CC|DarkMagenta,8B008B|Purple,800080|Indigo,4B0082|SlateBlue,6A5ACD|DarkSlateBlue,483D8B|MediumSlateBlue,7B68EE|GreenYellow,ADFF2F|Chartreuse,7FFF00|LawnGreen,7CFC00|Lime,00FF00|LimeGreen,32CD32|PaleGreen,98FB98|LightGreen,90EE90|MediumSpringGreen,00FA9A|SpringGreen,00FF7F|MediumSeaGreen,3CB371|SeaGreen,2E8B57|ForestGreen,228B22|Green,008000|DarkGreen,006400|YellowGreen,9ACD32|OliveDrab,6B8E23|Olive,808000|DarkOliveGreen,556B2F|MediumAquamarine,66CDAA|DarkSeaGreen,8FBC8B|LightSeaGreen,20B2AA|DarkCyan,008B8B|Teal,008080|Aqua,00FFFF|Cyan,00FFFF|LightCyan,E0FFFF|PaleTurquoise,AFEEEE|Aquamarine,7FFFD4|Turquoise,40E0D0|MediumTurquoise,48D1CC|DarkTurquoise,00CED1|CadetBlue,5F9EA0|SteelBlue,4682B4|LightSteelBlue,B0C4DE|PowderBlue,B0E0E6|LightBlue,ADD8E6|SkyBlue,87CEEB|LightSkyBlue,87CEFA|DeepSkyBlue,00BFFF|DodgerBlue,1E90FF|CornflowerBlue,6495ED|MediumSlateBlue,7B68EE|RoyalBlue,4169E1|Blue,0000FF|MediumBlue,0000CD|DarkBlue,00008B|Navy,000080|MidnightBlue,191970|Cornsilk,FFF8DC|BlanchedAlmond,FFEBCD|Bisque,FFE4C4|NavajoWhite,FFDEAD|Wheat,F5DEB3|BurlyWood,DEB887|Tan,D2B48C|RosyBrown,BC8F8F|SandyBrown,F4A460|Goldenrod,DAA520|DarkGoldenrod,B8860B|Peru,CD853F|Chocolate,D2691E|SaddleBrown,8B4513|Sienna,A0522D|Brown,A52A2A|Maroon,800000|White,FFFFFF|Snow,FFFAFA|HoneyDew,F0FFF0|MintCream,F5FFFA|Azure,F0FFFF|AliceBlue,F0F8FF|GhostWhite,F8F8FF|WhiteSmoke,F5F5F5|SeaShell,FFF5EE|Beige,F5F5DC|OldLace,FDF5E6|FloralWhite,FFFAF0|Ivory,FFFFF0|AntiqueWhite,FAEBD7|Linen,FAF0E6|LavenderBlush,FFF0F5|MistyRose,FFE4E1|Gainsboro,DCDCDC|LightGray,D3D3D3|Silver,C0C0C0|DarkGray,A9A9A9|Gray,808080|DimGray,696969|LightSlateGray,778899|SlateGray,708090|DarkSlateGray,2F4F4F|Black,000000';
 
-$stmt="SELECT admin_home_url,enable_tts_integration,callcard_enabled,custom_fields_enabled,allow_emails,level_8_disable_add,allow_chats,enable_languages,admin_row_click,admin_screen_colors,user_new_lead_limit,user_territories_active,qc_features_active,agent_soundboards,enable_drop_lists,allow_ip_lists,admin_web_directory from system_settings;";
+$stmt="SELECT admin_home_url,enable_tts_integration,callcard_enabled,custom_fields_enabled,allow_emails,level_8_disable_add,allow_chats,enable_languages,admin_row_click,admin_screen_colors,user_new_lead_limit,user_territories_active,qc_features_active,agent_soundboards,enable_drop_lists,allow_ip_lists,active_modules,admin_web_directory,outbound_autodial_active,sounds_central_control_active from system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 $row=mysqli_fetch_row($rslt);
 $admin_home_url_LU =		$row[0];
-$SSenable_tts_integration = $row[1];
+$SSenable_tts_integration = 	$row[1];
 $SScallcard_enabled =		$row[2];
 $SScustom_fields_enabled =	$row[3];
-$SSemail_enabled =			$row[4];
+$SSemail_enabled =		$row[4];
 $SSlevel_8_disable_add =	$row[5];
-$SSchat_enabled =			$row[6];
+$SSchat_enabled =		$row[6];
 $SSenable_languages =		$row[7];
 $SSadmin_row_click =		$row[8];
 $SSadmin_screen_colors =	$row[9];
 $SSuser_new_lead_limit =	$row[10];
-$SSuser_territories_active = $row[11];
+$SSuser_territories_active = 	$row[11];
 $SSqc_features_active =		$row[12];
 $SSagent_soundboards =		$row[13];
 $SSenable_drop_lists =		$row[14];
-$SSallow_ip_lists =			$row[15];
-$SSadmin_web_directory =	$row[16];
+$SSallow_ip_lists =		$row[15];
+$SSactive_modules = 		$row[16];
+$SSadmin_web_directory =	$row[17];
+if(!isset($SSoutbound_autodial_active)) {$SSoutbound_autodial_active = $row[18];}
+if(!isset($SSsounds_central_control_active)) {$SSsounds_central_control_active = $row[19];}
 
-if (strlen($SSadmin_home_url) > 5) {$admin_home_url_LU = $SSadmin_home_url;}
-if(!isset($ADMIN)){$ADMIN = "../$SSadmin_web_directory/admin.php";}
+# PHP8 variable declarations
+if (isset($SSadmin_home_url) && strlen($SSadmin_home_url) > 5) {$admin_home_url_LU = $SSadmin_home_url;}
+if (!isset($ADMIN)){$ADMIN = "../$SSadmin_web_directory/admin.php";}
+if (!isset($short_header)) {$short_header=0;}
+if (!isset($no_header)) {$no_header=0;}
+if (!isset($android_header)) {$android_header=0;}
+if (!isset($TCedit_javascript)) {$TCedit_javascript=0;}
+if (!isset($ADD)) {$ADD=0;}
+if (!isset($no_title)) {$no_title=0;}
+if (!isset($qc_only_user)) {$qc_only_user=0;}
+if (!isset($qc_auth)) {$qc_auth=0;}
+if (!isset($reports_only_user)) {$reports_only_user=0;}
+if (!isset($hh)) {$hh="";}
+if (!isset($sh)) {$sh="";}
+if (!isset($header_selected_bold)) {$header_selected_bold='<b>';}
+if (!isset($header_nonselected_bold)) {$header_nonselected_bold='';}
+if (!isset($LOGreports_header_override)) {$LOGreports_header_override="DISABLED";}
+if (!isset($add_copy_disabled)) {$add_copy_disabled=0;}
+if (!isset($page_width)) {$page_width=770;}
+if (!isset($sounds_central_control_active)) {$sounds_central_control_active=0;}
+if (!isset($SScampaign_cid_areacodes_enabled)) {$SScampaign_cid_areacodes_enabled=0;}
+if (!isset($SSenable_auto_reports)) {$SSenable_auto_reports=0;}
+if (!isset($SScontacts_enabled)) {$SScontacts_enabled=0;}
+if (!isset($LOGallowed_campaigns)) {$LOGallowed_campaigns="";}
+if (!isset($admin_font)) {$admin_font="";}
+if (!isset($users_color)) {$users_color="#E6E6E6";}
+if (!isset($users_font)) {$users_font="";}
+if (!isset($qc_font)) {$qc_font="";}
+if (!isset($qg_color)) {$qg_color="''";}
+if (!isset($PHP_AUTH_USER)) {$PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];}
+if (!isset($PHP_AUTH_PW)) {$PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];}
+$times_sh="";
+$shifts_sh="";
+$templates_sh="";
+$carriers_sh="";
+$phones_sh="";
+$server_sh="";
+$conference_sh="";
+$settings_sh="";
+$label_sh="";
+$colors_sh="";
+$status_sh="";
+$audio_sh="";
+$moh_sh="";
+$languages_sh="";
+$soundboard_sh="";
+$vm_sh="";
+$tts_sh="";
+$cc_sh="";
+$cts_sh="";
+$sc_sh="";
+$sg_sh="";
+$cg_sh="";
+$vmmg_sh="";
+$qg_sh="";
+$emails_sh="";
+$ar_sh="";
+$il_sh="";
+$new_sh="";
+$search_sh="";
+$lead_sh="";
+$load_sh="";
+$dnc_sh="";
+$custom_sh="";
+$cpcust_sh="";
+$droplist_sh="";
+$list_sh="";
+$copy_sh="";
+$stats_sh="";
+$sheet_sh="";
+$territory_sh="";
+$newlimit_sh="";
+
+
 
 $SSmenu_background='015B91';
 $SSframe_background='D9E6FE';
@@ -137,6 +216,7 @@ $SSstd_row5_background='A3C3D6';
 $SSalt_row1_background='BDFFBD';
 $SSalt_row2_background='99FF99';
 $SSalt_row3_background='CCFFCC';
+$SSweb_logo="./vicidial_admin_web_logo.gif";
 $SSbutton_color='EFEFEF';
 
 if ($SSadmin_screen_colors != 'default')
@@ -823,7 +903,7 @@ if ( ( ($ADD==34) or ($ADD==31) or ($ADD==49) ) and ($SUB==29) and ($LOGmodify_c
 	<?php
 
 #### Javascript for auto-generate of user ID Button
-if ( ($SSadmin_modify_refresh > 1) and (preg_match("/^3|^4/",$ADD)) )
+if ( (isset($SSadmin_modify_refresh) && $SSadmin_modify_refresh > 1) and (preg_match("/^3|^4/",$ADD)) )
 	{
 	?>
 	var ar_seconds=<?php echo "$SSadmin_modify_refresh;"; ?>
@@ -994,7 +1074,7 @@ else
 		chooser_field_td = fieldname + '_td';
 		chooser_type = type;
 	<?php
-	$color_chooser_output .= " &nbsp; <a href=\\\"javascript:close_chooser();\\\"><font size=1 face='Arial,Helvetica'>"._QXZ("close frame")."</font></a> &nbsp; <BR>";
+	$color_chooser_output = " &nbsp; <a href=\\\"javascript:close_chooser();\\\"><font size=1 face='Arial,Helvetica'>"._QXZ("close frame")."</font></a> &nbsp; <BR>";
 	$color_chooser_output .= "<div id='select_color_frame' style=\\\"height:400px;width:400px;overflow:scroll;background-color:white;\\\">";
 	$color_chooser_output .= '<table border=0 cellpadding=2 cellspacing=2 width=400 bgcolor=white>';
 	$HTMLcolorsARY = explode('|',$HTMLcolors);
@@ -1187,7 +1267,7 @@ if ( ($ADD==3111) or ($ADD==4111) or ($ADD==5111) or ($ADD==3811) or ($ADD==4811
 	}
 
 
-$stmt="SELECT menu_id,menu_name from vicidial_call_menu $whereLOGadmin_viewable_groupsSQL order by menu_id limit 10000;";
+$stmt="SELECT menu_id,menu_name from vicidial_call_menu ".(isset($whereLOGadmin_viewable_groupsSQL) ? $whereLOGadmin_viewable_groupsSQL : "")." order by menu_id limit 10000;";
 $rslt=mysql_to_mysqli($stmt, $link);
 $menus_to_print = mysqli_num_rows($rslt);
 $call_menu_list='';
@@ -1199,13 +1279,19 @@ while ($i < $menus_to_print)
 	$i++;
 	}
 
+# Referenced, not necessarily set, in multiple spots - must be declared outside "if"s
+$did_list='';
+$ingroup_list='';
+$IGcampaign_id_list='';
+$IGhandle_method_list='';
+$IGsearch_method_list='';
+
 ### select list contents generation for dynamic route displays in call menu and in-group screens
 if ( ($ADD==3511) or ($ADD==2511) or ($ADD==2611) or ($ADD==4511) or ($ADD==5511) or ($ADD==3111) or ($ADD==2111) or ($ADD==2011) or ($ADD==4111) or ($ADD==5111) )
 	{
 	$stmt="SELECT did_pattern,did_description,did_route from vicidial_inbound_dids where did_active='Y' $LOGadmin_viewable_groupsSQL order by did_pattern;";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$dids_to_print = mysqli_num_rows($rslt);
-	$did_list='';
 	$i=0;
 	while ($i < $dids_to_print)
 		{
@@ -1217,7 +1303,6 @@ if ( ($ADD==3511) or ($ADD==2511) or ($ADD==2611) or ($ADD==4511) or ($ADD==5511
 	$stmt="SELECT group_id,group_name from vicidial_inbound_groups where active='Y' and group_id NOT LIKE \"AGENTDIRECT%\" $LOGadmin_viewable_groupsSQL order by group_id;";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$ingroups_to_print = mysqli_num_rows($rslt);
-	$ingroup_list='';
 	$i=0;
 	while ($i < $ingroups_to_print)
 		{
@@ -1229,7 +1314,6 @@ if ( ($ADD==3511) or ($ADD==2511) or ($ADD==2611) or ($ADD==4511) or ($ADD==5511
 	$stmt="SELECT campaign_id,campaign_name from vicidial_campaigns where active='Y' $LOGallowed_campaignsSQL order by campaign_id;";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$IGcampaigns_to_print = mysqli_num_rows($rslt);
-	$IGcampaign_id_list='';
 	$i=0;
 	while ($i < $IGcampaigns_to_print)
 		{
@@ -1950,7 +2034,7 @@ background:rgb(102,255,51);
 ##### END - bar chart CSS style #####
 
 echo "</head>\n";
-if ( ($SSadmin_modify_refresh > 1) and (preg_match("/^3|^4/",$ADD)) )
+if ( (isset($SSadmin_modify_refresh) && $SSadmin_modify_refresh > 1) and (preg_match("/^3|^4/",$ADD)) )
 	{
 	echo "<BODY BGCOLOR=white marginheight=0 marginwidth=0 leftmargin=0 topmargin=0 onLoad=\"modify_refresh_display();\">\n";
 	}
@@ -1962,9 +2046,9 @@ else
 echo "<!-- INTERNATIONALIZATION-LINKS-PLACEHOLDER-VICIDIAL -->\n";
 
 
-if ($header_font_size < 4) {$header_font_size='12';}
-if ($subheader_font_size < 4) {$subheader_font_size='11';}
-if ($subcamp_font_size < 4) {$subcamp_font_size='11';}
+if (!isset($header_font_size) || $header_font_size < 4) {$header_font_size='12';}
+if (!isset($subheader_font_size) || $subheader_font_size < 4) {$subheader_font_size='11';}
+if (!isset($subcamp_font_size) || $subcamp_font_size < 4) {$subcamp_font_size='11';}
 
 
 
@@ -2006,6 +2090,8 @@ if ($subcamp_font_size < 4) {$subcamp_font_size='11';}
 		$territory_sh="CLASS=\"subhead_style\"";
 		$newlimit_sh="CLASS=\"subhead_style\"";
 
+		if (!isset($user)) {$user="";}
+
 		if ($sh=='list') {$list_sh="CLASS=\"subhead_style_selected\"";}
 		if ($sh=='new') {$new_sh="CLASS=\"subhead_style_selected\"";}
 		if ($sh=='copy') {$copy_sh="CLASS=\"subhead_style_selected\"";}
@@ -2034,7 +2120,7 @@ if ($subcamp_font_size < 4) {$subcamp_font_size='11';}
 	</TR><TR <?php echo $sheet_sh ?><?php if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='./AST_agent_time_sheet.php?agent=$user';\"";} ?>><TD ALIGN=LEFT>
 	 &nbsp; <a href="./AST_agent_time_sheet.php?agent=<?php echo $user ?>" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subheader_font_size ?>;color:BLACK"><?php echo _QXZ("Time Sheet"); ?> </a> </TD></TR>
 	 <?php
-	if ( ($SSuser_territories_active > 0) or ($user_territories_active > 0) )
+	if ( ($SSuser_territories_active > 0) or (isset($user_territories_active) && $user_territories_active > 0) )
 		{ ?>
 
 	</TR><TR <?php echo $territory_sh ?><?php if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='./user_territories.php?agent=$user';\"";} ?>><TD ALIGN=LEFT>
@@ -2137,7 +2223,7 @@ if ($subcamp_font_size < 4) {$subcamp_font_size='11';}
 			$cpcust_sh="CLASS=\"subhead_style\"";
 			$droplist_sh="CLASS=\"subhead_style\"";
 
-			if ($LOGdelete_from_dnc > 0) {$DNClink = _QXZ("Add-Delete DNC Number");}
+			if (isset($LOGdelete_from_dnc) && $LOGdelete_from_dnc > 0) {$DNClink = _QXZ("Add-Delete DNC Number");}
 			else {$DNClink = _QXZ("Add DNC Number");}
 
 			if ($sh=='list') {$list_sh="CLASS=\"subhead_style_selected\"";}
@@ -2154,7 +2240,7 @@ if ($subcamp_font_size < 4) {$subcamp_font_size='11';}
 			<TR <?php echo $list_sh ?><?php if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='$ADMIN?ADD=100';\"";} ?>><TD ALIGN=LEFT> &nbsp; 
 			<a href="<?php echo $ADMIN ?>?ADD=100" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Show Lists"); ?> </a>
 			</TR><TR <?php echo $new_sh ?><?php if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='$ADMIN?ADD=111';\"";} ?>><TD ALIGN=LEFT> &nbsp; 
-			<?php if ($add_copy_disabled < 1) { ?>
+			<?php if (!isset($add_copy_disabled) || $add_copy_disabled < 1) { ?>
 			<a href="<?php echo $ADMIN ?>?ADD=111" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Add A New List"); ?> </a>
 			</TR><TR <?php echo $search_sh ?><?php if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='admin_search_lead.php';\"";} ?>><TD ALIGN=LEFT> &nbsp; 
 			<?php } ?>
@@ -2163,8 +2249,8 @@ if ($subcamp_font_size < 4) {$subcamp_font_size='11';}
 			<a href="admin_modify_lead.php" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Add A New Lead"); ?> </a>
 			</TR><TR <?php echo $dnc_sh ?><?php if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='$ADMIN?ADD=121';\"";} ?>><TD ALIGN=LEFT> &nbsp; 
 			<a href="<?php echo $ADMIN ?>?ADD=121" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo $DNClink ?> </a>
-			</TR><TR <?php echo $load_sh ?><?php if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='admin_listloader_fourth_gen.php';\"";} ?>><TD ALIGN=LEFT> &nbsp; 
-			<a href="./admin_listloader_fourth_gen.php" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Load New Leads"); ?> </a>
+			</TR><TR <?php echo $load_sh ?><?php if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='admin_listloader_fifth_gen.php';\"";} ?>><TD ALIGN=LEFT> &nbsp; 
+			<a href="./admin_listloader_fifth_gen.php" STYLE="text-decoration:none;"><FONT STYLE="font-family:HELVETICA;font-size:<?php echo $subcamp_font_size ?>;color:BLACK;"> <?php echo _QXZ("Load New Leads"); ?> </a>
 			<?php
 			if ($SScustom_fields_enabled > 0)
 				{

@@ -1,7 +1,7 @@
 <?php
 # AST_admin_template_maker.php - version 2.14
 # 
-# Copyright (C) 2024  Matt Florell,Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell,Joe Johnson <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 120402-2132 - First Build
@@ -20,6 +20,7 @@
 # 210312-1700 - Added layout editing functionality
 # 220222-1100 - Added allow_web_debug system setting
 # 240801-1130 - Code updates for PHP8 compatibility
+# 260420-1522 - More code updates for PHP8 compatibility, Changed lead loader link to fifth gen
 #
 
 require("dbconnect_mysqli.php");
@@ -29,42 +30,54 @@ if (isset($_GET["DB"]))					{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))		{$DB=$_POST["DB"];}
 if (isset($_GET["standard_fields_layout"]))				{$standard_fields_layout=$_GET["standard_fields_layout"];}
 	elseif (isset($_POST["standard_fields_layout"]))	{$standard_fields_layout=$_POST["standard_fields_layout"];}
+	else {$standard_fields_layout="";}
 if (isset($_GET["custom_fields_layout"]))				{$custom_fields_layout=$_GET["custom_fields_layout"];}
 	elseif (isset($_POST["custom_fields_layout"]))		{$custom_fields_layout=$_POST["custom_fields_layout"];}
+	else {$custom_fields_layout="";}
 if (isset($_GET["template_id"]))				{$template_id=$_GET["template_id"];}
 	elseif (isset($_POST["template_id"]))		{$template_id=$_POST["template_id"];}
+	else {$template_id="";}
 if (isset($_GET["template_name"]))				{$template_name=$_GET["template_name"];}
 	elseif (isset($_POST["template_name"]))		{$template_name=$_POST["template_name"];}
+	else {$template_name="";}
 if (isset($_GET["template_description"]))				{$template_description=$_GET["template_description"];}
 	elseif (isset($_POST["template_description"]))		{$template_description=$_POST["template_description"];}
+	else {$template_description="";}
 if (isset($_GET["file_format"]))				{$file_format=$_GET["file_format"];}
 	elseif (isset($_POST["file_format"]))		{$file_format=$_POST["file_format"];}
+	else {$file_format="";}
 if (isset($_GET["file_delimiter"]))				{$file_delimiter=$_GET["file_delimiter"];}
 	elseif (isset($_POST["file_delimiter"]))		{$file_delimiter=$_POST["file_delimiter"];}
+	else {$file_delimiter="";}
 if (isset($_GET["template_list_id"]))				{$template_list_id=$_GET["template_list_id"];}
 	elseif (isset($_POST["template_list_id"]))		{$template_list_id=$_POST["template_list_id"];}
+	else {$template_list_id="";}
 if (isset($_GET["template_statuses"]))				{$template_statuses=$_GET["template_statuses"];}
 	elseif (isset($_POST["template_statuses"]))		{$template_statuses=$_POST["template_statuses"];}
-if (isset($_GET["standard_fields_layout"]))				{$standard_fields_layout=$_GET["standard_fields_layout"];}
-	elseif (isset($_POST["standard_fields_layout"]))	{$standard_fields_layout=$_POST["standard_fields_layout"];}
-if (isset($_GET["custom_fields_layout"]))				{$custom_fields_layout=$_GET["custom_fields_layout"];}
-	elseif (isset($_POST["custom_fields_layout"]))		{$custom_fields_layout=$_POST["custom_fields_layout"];}
+	else {$template_statuses="";}
 if (isset($_GET["submit_template"]))				{$submit_template=$_GET["submit_template"];}
 	elseif (isset($_POST["submit_template"]))		{$submit_template=$_POST["submit_template"];}
+	else {$submit_template="";}
 if (isset($_GET["submit_edited_template"]))				{$submit_edited_template=$_GET["submit_edited_template"];}
 	elseif (isset($_POST["submit_edited_template"]))		{$submit_edited_template=$_POST["submit_edited_template"];}
+	else {$submit_edited_template="";}
 if (isset($_GET["edit_standard_fields_layout"]))			{$edit_standard_fields_layout=$_GET["edit_standard_fields_layout"];}
 	elseif (isset($_POST["edit_standard_fields_layout"]))	{$edit_standard_fields_layout=$_POST["edit_standard_fields_layout"];}
+	else {$edit_standard_fields_layout="";}
 if (isset($_GET["edit_custom_fields_layout"]))				{$edit_custom_fields_layout=$_GET["edit_custom_fields_layout"];}
 	elseif (isset($_POST["edit_custom_fields_layout"]))		{$edit_custom_fields_layout=$_POST["edit_custom_fields_layout"];}
+	else {$edit_custom_fields_layout="";}
 if (isset($_GET["delete_template"]))				{$delete_template=$_GET["delete_template"];}
 	elseif (isset($_POST["delete_template"]))		{$delete_template=$_POST["delete_template"];}
+	else {$delete_template="";}
+if (isset($_GET["list_id_override"]))				{$list_id_override=$_GET["list_id_override"];}
+	elseif (isset($_POST["list_id_override"]))		{$list_id_override=$_POST["list_id_override"];}
+	else {$list_id_override="";}
 
-$PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
-$PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
+$PHP_AUTH_USER=(array_key_exists('PHP_AUTH_USER', $_SERVER) ? $_SERVER['PHP_AUTH_USER'] : "");
+$PHP_AUTH_PW=(array_key_exists('PHP_AUTH_PW', $_SERVER) ? $_SERVER['PHP_AUTH_PW'] : "");
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
-$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 
 #$vicidial_list_fields = '|lead_id|vendor_lead_code|source_id|list_id|gmt_offset_now|called_since_last_reset|phone_code|phone_number|title|first_name|middle_initial|last_name|address1|address2|address3|city|state|province|postal_code|country_code|gender|date_of_birth|alt_phone|email|security_phrase|comments|called_count|last_local_call_time|rank|owner|entry_list_id|';
 $vicidial_listloader_fields = '|vendor_lead_code|source_id|phone_code|phone_number|title|first_name|middle_initial|last_name|address1|address2|address3|city|state|province|postal_code|country_code|gender|date_of_birth|alt_phone|email|security_phrase|comments|rank|owner|';
@@ -89,7 +102,8 @@ if ($qm_conf_ct > 0)
 	$SSadmin_screen_colors =	$row[6];
 	$SSallow_web_debug =		$row[7];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
+$DB=preg_replace("/[^0-9]/","",$DB);
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
@@ -99,7 +113,7 @@ $template_id = preg_replace("/\<|\>|'|\"|\\\\|;/","",$template_id);
 $template_name = preg_replace("/\<|\>|'|\"|\\\\|;/","",$template_name);
 $template_description = preg_replace("/\<|\>|'|\"|\\\\|;/","",$template_description);
 $standard_fields_layout = preg_replace("/\<|\>|'|\"|\\\\|;/","",$standard_fields_layout);
-$custom_table = preg_replace("/\<|\>|'|\"|\\\\|;/","",$custom_table);
+# $custom_table = preg_replace("/\<|\>|'|\"|\\\\|;/","",$custom_table);
 $custom_fields_layout = preg_replace("/\<|\>|'|\"|\\\\|;/","",$custom_fields_layout);
 $edit_standard_fields_layout = preg_replace("/\<|\>|'|\"|\\\\|;/","",$edit_standard_fields_layout);
 $edit_custom_fields_layout = preg_replace("/\<|\>|'|\"|\\\\|;/","",$edit_custom_fields_layout);
@@ -537,13 +551,13 @@ require("admin_header.php");
 <tr><td align="center" bgcolor="#<?php echo $SSstd_row4_background; ?>">
 <table border=0 cellpadding=15 cellspacing=0 width="90%" align="center" bgcolor="#<?php echo $SSframe_background; ?>">
 <?php
-if ($error_msg) 
+if (isset($error_msg)) 
 	{
 	echo "<tr bgcolor='#990000'>";
 	echo "<th colspan='2'><font color='#FFFFFF'>$error_msg</font></th>";
 	echo "</tr>";
 	}
-if ($success_msg) 
+if (isset($success_msg)) 
 	{
 	echo "<tr bgcolor='#009900'>";
 	echo "<th colspan='2'><font color='#FFFFFF'>$success_msg</font></th>";
@@ -556,7 +570,7 @@ if ($success_msg)
 	<tr valign="top">
 		<td align="left" width='50%'>
 		<form id="listloader_file_primer" action="leadloader_template_display.php?form_action=prime_file" method="post" enctype="multipart/form-data" target="file_holder">
-			<font class="standard"><?php echo _QXZ("Sample file fitting template"); ?>:<BR><font size="-2">(<?php echo _QXZ("needed for field assignation"); ?>)</font></font><?php echo "$NWB#template_maker-create_template$NWE"; ?><BR><BR><input type=file name="sample_template_file" value="<?php echo $sample_template_file; ?>" onChange="loadIFrame('prime_file', this.value); this.form.submit();">
+			<font class="standard"><?php echo _QXZ("Sample file fitting template"); ?>:<BR><font size="-2">(<?php echo _QXZ("needed for field assignation"); ?>)</font></font><?php echo "$NWB#template_maker-create_template$NWE"; ?><BR><BR><input type=file name="sample_template_file" value="<?php echo (isset($sample_template_file) ? $sample_template_file : ""); ?>" onChange="loadIFrame('prime_file', this.value); this.form.submit();">
 		</form>
 		</td>
 		<td align="left" width='50%'><form action="<?php echo $PHP_SELF; ?>" method="post"><font class="standard"><?php echo _QXZ("Select template to edit/delete"); ?>:</font><?php echo "$NWB#template_maker-delete_template$NWE"; ?><BR><select name="template_id" onChange="loadIFrame('hide_new_template_form', '')">
@@ -564,7 +578,7 @@ if ($success_msg)
 $template_stmt="SELECT template_id, template_name FROM vicidial_custom_leadloader_templates WHERE list_id IN (SELECT list_id FROM vicidial_lists $whereLOGallowed_campaignsSQL) ORDER BY template_id asc;";
 $template_rslt=mysql_to_mysqli($template_stmt, $link);
 if (mysqli_num_rows($template_rslt)>0) {
-	if ($update_template) {echo "<option value='$update_template' selected>$update_template</option>\n";} else {echo "<option value='' selected>--"._QXZ("Choose an existing template")."--</option>\n";}
+	if (isset($update_template)) {echo "<option value='$update_template' selected>$update_template</option>\n";} else {echo "<option value='' selected>--"._QXZ("Choose an existing template")."--</option>\n";}
 	while ($template_row=mysqli_fetch_array($template_rslt)) {
 		echo "<option value='$template_row[template_id]'>$template_row[template_id] - $template_row[template_name]</option>\n";
 	}
@@ -576,7 +590,7 @@ if (mysqli_num_rows($template_rslt)>0) {
 		</form></td>
 	</tr>
 	<tr>
-		<td align=left colspan="2"><font size=1> &nbsp; &nbsp; &nbsp; &nbsp; <a href="admin.php?ADD=100" target="_parent"><?php echo _QXZ("BACK TO ADMIN"); ?></a> &nbsp; &nbsp; &nbsp; &nbsp; <a href="./admin_listloader_fourth_gen.php"><?php echo _QXZ("Go to Lead Loader"); ?></a> &nbsp; &nbsp; </font></td>
+		<td align=left colspan="2"><font size=1> &nbsp; &nbsp; &nbsp; &nbsp; <a href="admin.php?ADD=100" target="_parent"><?php echo _QXZ("BACK TO ADMIN"); ?></a> &nbsp; &nbsp; &nbsp; &nbsp; <a href="./admin_listloader_fifth_gen.php"><?php echo _QXZ("Go to Lead Loader"); ?></a> &nbsp; &nbsp; </font></td>
 	</tr>
 	</tr>
 </table>
