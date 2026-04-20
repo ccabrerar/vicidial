@@ -1,7 +1,7 @@
 <?php 
 # AST_timeonVDADall.php
 # 
-# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # live real-time stats for the VICIDIAL Auto-Dialer all servers
 #
@@ -137,10 +137,11 @@
 # 250130-1130 - Changed vicidial_daily_rt_monitor_log to vicidial_daily_rt_monitorING_log to match SQL file, also added sort clause to WHISPER
 # 250320-2307 - Added "3-WAYD" status for dead 3way call agent
 # 250523-1730 - Added inbound calls counting capability
+# 260420-1445 - Code updates for PHP8 compatibility
 #
 
-$version = '2.14-120';
-$build = '250320-2307';
+$version = '2.14-121';
+$build = '260420-1445';
 $php_script='AST_timeonVDADall.php';
 
 require("dbconnect_mysqli.php");
@@ -179,34 +180,42 @@ while ($crow=mysqli_fetch_row($container_rslt))
 	}
 ###### END CUSTOM REALTIMES SECTION ########
 
-$PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
-$PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
+$PHP_AUTH_USER=(array_key_exists('PHP_AUTH_USER', $_SERVER) ? $_SERVER['PHP_AUTH_USER'] : "");
+$PHP_AUTH_PW=(array_key_exists('PHP_AUTH_PW', $_SERVER) ? $_SERVER['PHP_AUTH_PW'] : "");
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["server_ip"]))			{$server_ip=$_GET["server_ip"];}
 	elseif (isset($_POST["server_ip"]))	{$server_ip=$_POST["server_ip"];}
+	else {$server_ip="";}
 if (isset($_GET["RR"]))					{$RR=$_GET["RR"];}
 	elseif (isset($_POST["RR"]))		{$RR=$_POST["RR"];}
-if (isset($_GET["inbound"]))			{$inbound=$_GET["inbound"];}
-	elseif (isset($_POST["inbound"]))	{$inbound=$_POST["inbound"];}
+# if (isset($_GET["inbound"]))			{$inbound=$_GET["inbound"];}
+# 	elseif (isset($_POST["inbound"]))	{$inbound=$_POST["inbound"];}
 if (isset($_GET["group"]))				{$group=$_GET["group"];}
 	elseif (isset($_POST["group"]))		{$group=$_POST["group"];}
 if (isset($_GET["groups"]))				{$groups=$_GET["groups"];}
 	elseif (isset($_POST["groups"]))	{$groups=$_POST["groups"];}
+	else {$groups="";}
 if (isset($_GET["usergroup"]))			{$usergroup=$_GET["usergroup"];}
 	elseif (isset($_POST["usergroup"]))	{$usergroup=$_POST["usergroup"];}
 if (isset($_GET["DB"]))					{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))		{$DB=$_POST["DB"];}
+	else {$DB="";}
 if (isset($_GET["adastats"]))			{$adastats=$_GET["adastats"];}
 	elseif (isset($_POST["adastats"]))	{$adastats=$_POST["adastats"];}
+	else {$adastats=0;}
 if (isset($_GET["submit"]))				{$submit=$_GET["submit"];}
 	elseif (isset($_POST["submit"]))	{$submit=$_POST["submit"];}
+	else {$submit="";}
 if (isset($_GET["SUBMIT"]))				{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))	{$SUBMIT=$_POST["SUBMIT"];}
+	else {$SUBMIT="";}
 if (isset($_GET["SIPmonitorLINK"]))				{$SIPmonitorLINK=$_GET["SIPmonitorLINK"];}
 	elseif (isset($_POST["SIPmonitorLINK"]))	{$SIPmonitorLINK=$_POST["SIPmonitorLINK"];}
+	else {$SIPmonitorLINK="";}
 if (isset($_GET["IAXmonitorLINK"]))				{$IAXmonitorLINK=$_GET["IAXmonitorLINK"];}
 	elseif (isset($_POST["IAXmonitorLINK"]))	{$IAXmonitorLINK=$_POST["IAXmonitorLINK"];}
+	else {$IAXmonitorLINK="";}
 if (isset($_GET["UGdisplay"]))			{$UGdisplay=$_GET["UGdisplay"];}
 	elseif (isset($_POST["UGdisplay"]))	{$UGdisplay=$_POST["UGdisplay"];}
 if (isset($_GET["UidORname"]))			{$UidORname=$_GET["UidORname"];}
@@ -227,57 +236,75 @@ if (isset($_GET["CUSTINFOdisplay"]))			{$CUSTINFOdisplay=$_GET["CUSTINFOdisplay"
 	elseif (isset($_POST["CUSTINFOdisplay"]))	{$CUSTINFOdisplay=$_POST["CUSTINFOdisplay"];}
 if (isset($_GET["NOLEADSalert"]))			{$NOLEADSalert=$_GET["NOLEADSalert"];}
 	elseif (isset($_POST["NOLEADSalert"]))	{$NOLEADSalert=$_POST["NOLEADSalert"];}
+	else {$NOLEADSalert="";}
 if (isset($_GET["DROPINGROUPstats"]))			{$DROPINGROUPstats=$_GET["DROPINGROUPstats"];}
 	elseif (isset($_POST["DROPINGROUPstats"]))	{$DROPINGROUPstats=$_POST["DROPINGROUPstats"];}
+	else {$DROPINGROUPstats=0;}
 if (isset($_GET["ALLINGROUPstats"]))			{$ALLINGROUPstats=$_GET["ALLINGROUPstats"];}
 	elseif (isset($_POST["ALLINGROUPstats"]))	{$ALLINGROUPstats=$_POST["ALLINGROUPstats"];}
+	else {$ALLINGROUPstats=0;}
 if (isset($_GET["with_inbound"]))			{$with_inbound=$_GET["with_inbound"];}
 	elseif (isset($_POST["with_inbound"]))	{$with_inbound=$_POST["with_inbound"];}
 if (isset($_GET["monitor_active"]))				{$monitor_active=$_GET["monitor_active"];}
 	elseif (isset($_POST["monitor_active"]))	{$monitor_active=$_POST["monitor_active"];}
+	else {$monitor_active="";}
 if (isset($_GET["monitor_phone"]))				{$monitor_phone=$_GET["monitor_phone"];}
 	elseif (isset($_POST["monitor_phone"]))		{$monitor_phone=$_POST["monitor_phone"];}
+	else {$monitor_phone="";}
 if (isset($_GET["ShowCustPhoneCode"]))			{$ShowCustPhoneCode=$_GET["ShowCustPhoneCode"];}
 	elseif (isset($_POST["ShowCustPhoneCode"]))	{$ShowCustPhoneCode=$_POST["ShowCustPhoneCode"];}
+	else {$ShowCustPhoneCode=0;}
 if (isset($_GET["CARRIERstats"]))			{$CARRIERstats=$_GET["CARRIERstats"];}
 	elseif (isset($_POST["CARRIERstats"]))	{$CARRIERstats=$_POST["CARRIERstats"];}
+	else {$CARRIERstats=0;}
 if (isset($_GET["PRESETstats"]))			{$PRESETstats=$_GET["PRESETstats"];}
 	elseif (isset($_POST["PRESETstats"]))	{$PRESETstats=$_POST["PRESETstats"];}
+	else {$PRESETstats=0;}
 if (isset($_GET["AGENTtimeSTATS"]))				{$AGENTtimeSTATS=$_GET["AGENTtimeSTATS"];}
 	elseif (isset($_POST["AGENTtimeSTATS"]))	{$AGENTtimeSTATS=$_POST["AGENTtimeSTATS"];}
+	else {$AGENTtimeSTATS=0;}
 if (isset($_GET["AGENTlatency"]))				{$AGENTlatency=$_GET["AGENTlatency"];}
 	elseif (isset($_POST["AGENTlatency"]))	{$AGENTlatency=$_POST["AGENTlatency"];}
+	else {$AGENTlatency=0;}
 if (isset($_GET["INGROUPcolorOVERRIDE"]))			{$INGROUPcolorOVERRIDE=$_GET["INGROUPcolorOVERRIDE"];}
 	elseif (isset($_POST["INGROUPcolorOVERRIDE"]))	{$INGROUPcolorOVERRIDE=$_POST["INGROUPcolorOVERRIDE"];}
+	else {$INGROUPcolorOVERRIDE="";}
 if (isset($_GET["RTajax"]))				{$RTajax=$_GET["RTajax"];}
 	elseif (isset($_POST["RTajax"]))	{$RTajax=$_POST["RTajax"];}
-if (isset($_GET["RTuser"]))				{$RTuser=$_GET["RTuser"];}
-	elseif (isset($_POST["RTuser"]))	{$RTuser=$_POST["RTuser"];}
-if (isset($_GET["RTpass"]))				{$RTpass=$_GET["RTpass"];}
-	elseif (isset($_POST["RTpass"]))	{$RTpass=$_POST["RTpass"];}
+	else {$RTajax=0;}
+# if (isset($_GET["RTuser"]))				{$RTuser=$_GET["RTuser"];}
+#	elseif (isset($_POST["RTuser"]))	{$RTuser=$_POST["RTuser"];}
+# if (isset($_GET["RTpass"]))				{$RTpass=$_GET["RTpass"];}
+# 	elseif (isset($_POST["RTpass"]))	{$RTpass=$_POST["RTpass"];}
 if (isset($_GET["user_group_filter"]))				{$user_group_filter=$_GET["user_group_filter"];}
 	elseif (isset($_POST["user_group_filter"]))	{$user_group_filter=$_POST["user_group_filter"];}
 if (isset($_GET["ingroup_filter"]))				{$ingroup_filter=$_GET["ingroup_filter"];}
 	elseif (isset($_POST["ingroup_filter"]))	{$ingroup_filter=$_POST["ingroup_filter"];}
+	else {$ingroup_filter="";}
 if (isset($_GET["inbound_calls_filter"]))			{$inbound_calls_filter=$_GET["inbound_calls_filter"];}
 	elseif (isset($_POST["inbound_calls_filter"]))	{$inbound_calls_filter=$_POST["inbound_calls_filter"];}
+	else {$inbound_calls_filter="";}
 if (isset($_GET["droppedOFtotal"]))				{$droppedOFtotal=$_GET["droppedOFtotal"];}
 	elseif (isset($_POST["droppedOFtotal"]))	{$droppedOFtotal=$_POST["droppedOFtotal"];}
+	else {$droppedOFtotal=0;}
 if (isset($_GET["report_display_type"]))			{$report_display_type=$_GET["report_display_type"];}
 	elseif (isset($_POST["report_display_type"]))	{$report_display_type=$_POST["report_display_type"];}
+	else {$report_display_type="";}
 if (isset($_GET["mobile_device"]))				{$mobile_device=$_GET["mobile_device"];}
 	elseif (isset($_POST["mobile_device"]))	{$mobile_device=$_POST["mobile_device"];}
+	else {$mobile_device="";}
 if (isset($_GET["parkSTATS"]))			{$parkSTATS=$_GET["parkSTATS"];}
 	elseif (isset($_POST["parkSTATS"]))	{$parkSTATS=$_POST["parkSTATS"];}
+	else {$parkSTATS=0;}
 if (isset($_GET["SLAinSTATS"]))				{$SLAinSTATS=$_GET["SLAinSTATS"];}
 	elseif (isset($_POST["SLAinSTATS"]))	{$SLAinSTATS=$_POST["SLAinSTATS"];}
-
-$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+	else {$SLAinSTATS=0;}
 
 # defaults
 $RS_BargeSwap=0;
 $RS_no_DEAD_status=0;
 $RS_hide_CUST_info=0;
+$RS_AGENTstatusTALLY='';
 
 if (file_exists('options.php'))
 	{
@@ -314,7 +341,8 @@ if ($qm_conf_ct > 0)
 	$SSallow_web_debug =			$row[13];
 	$SSenhanced_agent_monitoring =	$row[14];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
+$DB=preg_replace("/[^0-9]/","",$DB);
 ##### END SETTINGS LOOKUP #####
 ###########################################
 if ( (strlen($slave_db_server)>5) and (preg_match("/$report_name/",$reports_use_slave_db)) )
@@ -331,7 +359,7 @@ $RS_agentWAIT =			3;
 $RS_INcolumnsHIDE =		0;
 $RS_DIDdesc =			0;
 
-if (strlen($RS_report_default_format) > 3) {$SSreport_default_format = $RS_report_default_format;}
+if (isset($RS_report_default_format) && strlen($RS_report_default_format) > 3) {$SSreport_default_format = $RS_report_default_format;}
 if (strlen($report_display_type)<2) {$report_display_type = $SSreport_default_format;}
 
 if (!isset($DB))			{$DB=0;}
@@ -363,7 +391,7 @@ if (!isset($with_inbound))
 	}
 $ingroup_detail='';
 
-if ( (strlen($group)>1) and (strlen($groups[0])<1) ) {$groups[0] = $group;  $RR=40;}
+if ( (strlen($group)>1) and (!isset($groups[0]) || strlen($groups[0])<1) ) {$groups[0] = $group;  $RR=40;}
 else {$group = $groups[0];}
 
 function get_server_load($windows = false) 
@@ -443,12 +471,11 @@ else
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	}
 $RR = preg_replace('/[^0-9]/', '', $RR);
-$inbound = preg_replace('/[^-_0-9a-zA-Z]/', '', $inbound);
+# $inbound = preg_replace('/[^-_0-9a-zA-Z]/', '', $inbound);
 $group = preg_replace('/[^-_0-9a-zA-Z]/', '', $group);
 $groups[0] = preg_replace('/[^-_0-9a-zA-Z]/', '', $groups[0]);
 $usergroup = preg_replace('/[^-_0-9a-zA-Z]/', '', $usergroup);
-$DB = preg_replace('/[^0-9]/', '', $DB);
-$adastats = preg_replace('/[^-_0-9a-zA-Z]/', '', $adastats);
+$adastats = preg_replace('/[^0-9]/', '', $adastats);
 $SIPmonitorLINK = preg_replace('/[^-_0-9a-zA-Z]/', '', $SIPmonitorLINK);
 $IAXmonitorLINK = preg_replace('/[^-_0-9a-zA-Z]/', '', $IAXmonitorLINK);
 $UGdisplay = preg_replace('/[^-_0-9a-zA-Z]/', '', $UGdisplay);
@@ -462,25 +489,25 @@ $CUSTINFOdisplay = preg_replace('/[^-_0-9a-zA-Z]/', '', $CUSTINFOdisplay);
 if ($CUSTINFOdisplay==1)	{$CUSTPHONEdisplay=0;}	# only one of these should be on at one time
 if ($CUSTPHONEdisplay==1)	{$CUSTINFOdisplay=0;}	# only one of these should be on at one time
 $NOLEADSalert = preg_replace('/[^-_0-9a-zA-Z]/', '', $NOLEADSalert);
-$DROPINGROUPstats = preg_replace('/[^-_0-9a-zA-Z]/', '', $DROPINGROUPstats);
-$ALLINGROUPstats = preg_replace('/[^-_0-9a-zA-Z]/', '', $ALLINGROUPstats);
+$DROPINGROUPstats = preg_replace('/[^0-9]/', '', $DROPINGROUPstats);
+$ALLINGROUPstats = preg_replace('/[^0-9]/', '', $ALLINGROUPstats);
 $with_inbound = preg_replace('/[^-_0-9a-zA-Z]/', '', $with_inbound);
 $monitor_active = preg_replace('/[^-_0-9a-zA-Z]/', '', $monitor_active);
 $monitor_phone = preg_replace('/[^-_0-9a-zA-Z]/', '', $monitor_phone);
-$ShowCustPhoneCode = preg_replace('/[^-_0-9a-zA-Z]/', '', $ShowCustPhoneCode);
-$CARRIERstats = preg_replace('/[^-_0-9a-zA-Z]/', '', $CARRIERstats);
-$PRESETstats = preg_replace('/[^-_0-9a-zA-Z]/', '', $PRESETstats);
-$AGENTtimeSTATS = preg_replace('/[^-_0-9a-zA-Z]/', '', $AGENTtimeSTATS);
-$AGENTlatency = preg_replace('/[^-_0-9a-zA-Z]/', '', $AGENTlatency);
-$parkSTATS = preg_replace('/[^-_0-9a-zA-Z]/', '', $parkSTATS);
-$SLAinSTATS = preg_replace('/[^-_0-9a-zA-Z]/', '', $SLAinSTATS);
+$ShowCustPhoneCode = preg_replace('/[^0-9]/', '', $ShowCustPhoneCode);
+$CARRIERstats = preg_replace('/[^0-9]/', '', $CARRIERstats);
+$PRESETstats = preg_replace('/[^0-9]/', '', $PRESETstats);
+$AGENTtimeSTATS = preg_replace('/[^0-9]/', '', $AGENTtimeSTATS);
+$AGENTlatency = preg_replace('/[^0-9]/', '', $AGENTlatency);
+$parkSTATS = preg_replace('/[^0-9]/', '', $parkSTATS);
+$SLAinSTATS = preg_replace('/[^0-9]/', '', $SLAinSTATS);
 $INGROUPcolorOVERRIDE = preg_replace('/[^-_0-9a-zA-Z]/', '', $INGROUPcolorOVERRIDE);
-$droppedOFtotal = preg_replace('/[^-_0-9a-zA-Z]/', '', $droppedOFtotal);
+$droppedOFtotal = preg_replace('/[^0-9]/', '', $droppedOFtotal);
 $report_display_type = preg_replace('/[^-_0-9a-zA-Z]/', '', $report_display_type);
 $mobile_device = preg_replace('/[^-_0-9a-zA-Z]/', '', $mobile_device);
-$RTajax = preg_replace('/[^-_0-9a-zA-Z]/', '', $RTajax);
-$RTpass = preg_replace('/[^-_0-9a-zA-Z]/', '', $RTpass);
-$RTuser = preg_replace('/[^-_0-9a-zA-Z]/', '', $RTuser);
+$RTajax = preg_replace('/[^0-9]/', '', $RTajax);
+# $RTpass = preg_replace('/[^-_0-9a-zA-Z]/', '', $RTpass);
+# $RTuser = preg_replace('/[^-_0-9a-zA-Z]/', '', $RTuser);
 $server_ip = preg_replace('/[^-\._0-9a-zA-Z]/', '', $server_ip);
 $SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
 $submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
@@ -625,6 +652,8 @@ $LOGadmin_viewable_call_times =	$row[3];
 $LOGadmin_viewable_groupsSQL='';
 $valLOGadmin_viewable_groupsSQL='';
 $vmLOGadmin_viewable_groupsSQL='';
+$rawLOGadmin_viewable_groupsSQL='';
+$whereLOGadmin_viewable_groupsSQL='';
 if ( (!preg_match('/\-\-ALL\-\-/i',$LOGadmin_viewable_groups)) and (strlen($LOGadmin_viewable_groups) > 3) )
 	{
 	$rawLOGadmin_viewable_groupsSQL = preg_replace("/ -/",'',$LOGadmin_viewable_groups);
@@ -638,7 +667,7 @@ else
 	{$admin_viewable_groupsALL=1;}
 
 $RS_UGlatencyALLOWED=0;
-if (strlen($RS_UGlatencyRESTRICT) > 0)
+if (isset($RS_UGlatencyRESTRICT) && strlen($RS_UGlatencyRESTRICT) > 0)
 	{
 	$latencyUGary = preg_split('/\|/',$RS_UGlatencyRESTRICT);
 
@@ -705,6 +734,7 @@ $i=0;
 $LISTgroups=array();
 $LISTnames=array();
 $LISTgroups[$i]='ALL-ACTIVE';
+$LISTnames[$i]='All active campaigns';
 $i++;
 $groups_to_print++;
 while ($i < $groups_to_print)
@@ -719,6 +749,7 @@ $allactivecampaigns .= "''";
 
 $i=0;
 $group_string='|';
+$group_SQL=""; $groupQS="";
 $group_ct = count($groups);
 while($i < $group_ct)
 	{
@@ -736,6 +767,7 @@ $group_SQL = preg_replace('/,$/i', '',$group_SQL);
 
 $i=0;
 $user_group_string='|';
+$user_group_SQL=""; $usergroupQS="";
 $user_group_ct = count($user_group_filter);
 while($i < $user_group_ct)
 	{
@@ -752,6 +784,7 @@ $user_group_SQL = preg_replace('/,$/i', '',$user_group_SQL);
 
 $i=0;
 $ingroup_string='|';
+$ingroup_SQL=""; $ingroupQS="";
 $ingroup_ct = count($ingroup_filter);
 while($i < $ingroup_ct)
 	{
@@ -767,6 +800,7 @@ $ingroup_SQL = preg_replace('/,$/i', '',$ingroup_SQL);
 
 $i=0;
 $inbound_calls_string='|';
+$inbound_calls_SQL=""; $inbound_callsQS="";
 $inbound_calls_ct = count($inbound_calls_filter);
 while($i < $inbound_calls_ct)
 	{
@@ -907,7 +941,8 @@ $usergroups_to_print++;
 while ($i < $usergroups_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
-	$usergroups[$i] =$row[0];
+	$usergroups[$i]=$row[0];
+	$usergroupnames[$i]=$row[1];
 	$i++;
 	}
 
@@ -919,6 +954,7 @@ $i=0;
 $LISTingroups=array();
 $LISTingroup_names=array();
 $LISTingroups[$i]='ALL-INGROUPS';
+$LISTingroup_names[$i]='All in-groups';
 $i++;
 $ingroups_to_print++;
 $ingroups_string='|';
@@ -965,7 +1001,7 @@ $select_list .= "<SELECT SIZE=8 NAME=user_group_filter[] ID=user_group_filter[] 
 $o=0;
 while ($o < $usergroups_to_print)
 	{
-	if (preg_match("/\|$usergroups[$o]\|/",$user_group_filter_string)) 
+	if (preg_match("/\|$usergroups[$o]\|/",$user_group_string)) 
 		{$select_list .= "<option selected value=\"$usergroups[$o]\">$usergroups[$o] - $usergroupnames[$o]</option>";}
 	else
 		{$select_list .= "<option value=\"$usergroups[$o]\">$usergroups[$o] - $usergroupnames[$o]</option>";}
@@ -982,7 +1018,7 @@ while ($o < $ingroups_to_print)
 		{$select_list .= "<option selected value='$LISTingroups[$o]'>$LISTingroups[$o] - $LISTingroup_names[$o]</option>";}
 	else
 		{
-		if ( ($in_group_none > 0) and ($LISTingroups[$o] == 'ALL-INGROUPS') )
+		if ( ($ingroup_none > 0) and ($LISTingroups[$o] == 'ALL-INGROUPS') )
 			{$select_list .= "<option selected value='$LISTingroups[$o]'>$LISTingroups[$o] - $LISTingroup_names[$o]</option>";}
 		else
 			{$select_list .= "<option value='$LISTingroups[$o]'>$LISTingroups[$o] - $LISTingroup_names[$o]</option>";}
@@ -1609,6 +1645,7 @@ $stmt = "SELECT group_id from vicidial_inbound_groups;";
 $rslt=mysql_to_mysqli($stmt, $link);
 $ingroups_to_print = mysqli_num_rows($rslt);
 $c=0;
+$ALLcloser_campaignsSQL="";
 while ($ingroups_to_print > $c)
 	{
 	$row=mysqli_fetch_row($rslt);
@@ -1741,9 +1778,9 @@ if ( ($ALLINGROUPstats > 0) or ( (preg_match('/O/',$with_inbound)) and ($adastat
 		$PCThold_sec_stat_two = sprintf("%01.2f", $PCThold_sec_stat_two);
 		$AVGhold_sec_answer_calls = MathZDC($hold_sec_answer_calls, $answersTODAY);
 		$AVGhold_sec_answer_calls = round($AVGhold_sec_answer_calls, 0);
-		$AVG_ANSWERagent_non_pause_sec = (MathZDC($answersTODAY, $agent_non_pause_sec) * 60);
-		$AVG_ANSWERagent_non_pause_sec = round($AVG_ANSWERagent_non_pause_sec, 2);
-		$AVG_ANSWERagent_non_pause_sec = sprintf("%01.2f", $AVG_ANSWERagent_non_pause_sec);
+		# $AVG_ANSWERagent_non_pause_sec = (MathZDC($answersTODAY, $agent_non_pause_sec) * 60);
+		# $AVG_ANSWERagent_non_pause_sec = round($AVG_ANSWERagent_non_pause_sec, 2);
+		# $AVG_ANSWERagent_non_pause_sec = sprintf("%01.2f", $AVG_ANSWERagent_non_pause_sec);
 
 		$Dicbq_stmt="SELECT count(*) from vicidial_inbound_callback_queue where icbq_status='LIVE' and group_id='$ARYingroupdetail[$r]';";
 		$Dicbq_rslt=mysql_to_mysqli($Dicbq_stmt, $link);
@@ -1863,6 +1900,7 @@ if ($CARRIERstats > 0)
 		$rslt=mysql_to_mysqli($stmtB, $link);
 		$car_to_print = mysqli_num_rows($rslt);
 		$ctp=0;
+		$dialstatuses="";
 		while ($car_to_print > $ctp)
 			{
 			$row=mysqli_fetch_row($rslt);
@@ -3517,7 +3555,7 @@ if ($MONITORdisplay)
 	$monitoring_phones=array();
 	$monitoring_manager_ips=array();
 	$monitoring_ips=array();
-	$monitor_stmt="select manager_user, agent_user, agent_session, caller_code, monitor_type, monitor_start_time, agent_server_ip, manager_server_ip, manager_phone from vicidial_daily_rt_monitoring_log where monitor_start_time>=curdate() and monitor_end_time is null order by monitor_start_time desc";
+	$monitor_stmt="select manager_user, agent_user, agent_session, caller_code, monitor_type, monitor_start_time, agent_server_ip, manager_server_ip, manager_phone from vicidial_daily_rt_monitor_log where monitor_start_time>=curdate() and monitor_end_time is null order by monitor_start_time desc";
 	if ($DB) {echo $monitor_stmt."\n";}
 	$monitor_rslt=mysql_to_mysqli($monitor_stmt, $link);
 	while($monitor_row=mysqli_fetch_array($monitor_rslt))
