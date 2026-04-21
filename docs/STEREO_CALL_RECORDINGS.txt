@@ -1,4 +1,4 @@
-VICIDIAL STEREO CALL RECORDINGS		Started: 2025-06-18  Updated: 2025-10-20
+VICIDIAL STEREO CALL RECORDINGS		Started: 2025-06-18  Updated: 2026-04-21
 
 
 TO USE THESE FEATURES, YOU WILL NEED TO HAVE ALL SERVERS IN YOUR CLUSTER USING SVN/TRUNK REVISION 3949(2025-10-20) CODE OR HIGHER!!!
@@ -41,6 +41,8 @@ For In-groups, the "Stereo Recording" options do NOT default to inherit settings
 
 For all of Stereo Recording, the agent-controlled Mute Recordings feature will not be available. This is because of all of the complexity already included in the Customer-Only, Customer-Muted and Recording DTMF Muting features that are to be built into Stereo Recording. Also, in the existing default mono call recording, if the Recording DTMF Muting feature is enabled, then the agent-controlled Mute Recordings feature will not be available.
 
+If you receive a high volume of inbound calls and want to use Stereo Recording, make sure to load balance your inbound calls across your active Asterisk Servers. Stereo Call Recording happens at the customer-channel level, so the server that the call arrives on will be the server that performs the Stereo Recording.
+
 
 For Recording DTMF Muting, this is NOT designed to mute 100% of the DTMF audio in a recording, it is meant to trigger a fixed time period of muting of the call recording AFTER a DTMF digit is detected. If Recording DTMF Muting is active for a campaign/in-group, it will affect both Mono Legacy and Stereo call recordings for those calls. As a note, on many VICIdial systems, audible DTMF is already muted and converted into out-of-band DTMF signalling in many channel types by default, so this feature may not be necessary for all organizations. This setting is a number of seconds to mute the channel, with '0' being disabled. the default is '0'. To use this feature, you will need to enable both "Allow Recording DTMF Detection" and "Allow Recording DTMF Muting" in System Settings.
 
@@ -73,6 +75,8 @@ DIFFERENCES BETWEEN LEGACY MONO CALL RECORDING AND THE NEW STEREO CALL RECORDING
 8. Stereo Call Recording files are each about double the file size of a single Legacy Mono Call Recording, and if you have all Stereo Recording options enabled, including the three Parallel call recording options, then the file recordings will take up eight times the amount of space total as a single Mono recording file.
 
 9. In the Modify Lead Page, in the RECORDINGS FOR THIS LEAD section near the bottom, there is a new "STEREO" column that will indicate if a recording is in Stereo or not by the use of a code. If the STEREO field is blank, then the recording is a Mono Legacy Recording, and if the value in that column begins with "S", then that recording is in Stereo. The code used will explain what type of stereo recording it is, and it will be one of the codes listed in the "List of recording_log.extension values" section shown further down in this document.
+
+10. Stereo Call Recording happens at the customer-channel level, on the server that the call arrived-on/was-placed-on. While Legacy Mono Call Recording happens at the agent-session level, on the server that the agent logs into.
 
 
 
