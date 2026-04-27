@@ -62,6 +62,7 @@
 # 230526-1740 - Patch for user_group bug, related to Issue #1346
 # 240801-1130 - Code updates for PHP8 compatibility
 # 250912-1628 - PHP8 bug fixes
+# 260427-1324 - Code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
@@ -75,8 +76,8 @@ if (file_exists('options.php'))
 	require('options.php');
 	}
 
-$PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
-$PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
+$PHP_AUTH_USER=(array_key_exists('PHP_AUTH_USER', $_SERVER) ? $_SERVER['PHP_AUTH_USER'] : "");
+$PHP_AUTH_PW=(array_key_exists('PHP_AUTH_PW', $_SERVER) ? $_SERVER['PHP_AUTH_PW'] : "");
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["query_date"]))				{$query_date=$_GET["query_date"];}
@@ -85,30 +86,36 @@ if (isset($_GET["end_date"]))				{$end_date=$_GET["end_date"];}
 	elseif (isset($_POST["end_date"]))		{$end_date=$_POST["end_date"];}
 if (isset($_GET["group"]))					{$group=$_GET["group"];}
 	elseif (isset($_POST["group"]))			{$group=$_POST["group"];}
+	else {$group="";}
 if (isset($_GET["user_group"]))				{$user_group=$_GET["user_group"];}
 	elseif (isset($_POST["user_group"]))	{$user_group=$_POST["user_group"];}
+	else {$user_group="";}
 if (isset($_GET["shift"]))					{$shift=$_GET["shift"];}
 	elseif (isset($_POST["shift"]))			{$shift=$_POST["shift"];}
+	else {$shift="";}
 if (isset($_GET["stage"]))					{$stage=$_GET["stage"];}
 	elseif (isset($_POST["stage"]))			{$stage=$_POST["stage"];}
+	else {$stage="";}
 if (isset($_GET["file_download"]))			{$file_download=$_GET["file_download"];}
 	elseif (isset($_POST["file_download"]))	{$file_download=$_POST["file_download"];}
+	else {$file_download=0;}
 if (isset($_GET["show_parks"]))			{$show_parks=$_GET["show_parks"];}
 	elseif (isset($_POST["show_parks"]))	{$show_parks=$_POST["show_parks"];}
+	else {$show_parks="";}
 if (isset($_GET["DB"]))						{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))			{$DB=$_POST["DB"];}
-if (isset($_GET["submit"]))					{$submit=$_GET["submit"];}
-	elseif (isset($_POST["submit"]))		{$submit=$_POST["submit"];}
 if (isset($_GET["SUBMIT"]))					{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))		{$SUBMIT=$_POST["SUBMIT"];}
+	else {$SUBMIT="";}
 if (isset($_GET["report_display_type"]))			{$report_display_type=$_GET["report_display_type"];}
 	elseif (isset($_POST["report_display_type"]))	{$report_display_type=$_POST["report_display_type"];}
+	else {$report_display_type="";}
 if (isset($_GET["time_in_sec"]))			{$time_in_sec=$_GET["time_in_sec"];}
 	elseif (isset($_POST["time_in_sec"]))	{$time_in_sec=$_POST["time_in_sec"];}
+	else {$time_in_sec="";}
 if (isset($_GET["search_archived_data"]))			{$search_archived_data=$_GET["search_archived_data"];}
 	elseif (isset($_POST["search_archived_data"]))	{$search_archived_data=$_POST["search_archived_data"];}
-
-$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+	else {$search_archived_data="";}
 
 $MT[0]='';
 $NOW_DATE = date("Y-m-d");
@@ -120,6 +127,8 @@ if (!isset($query_date)) {$query_date = $NOW_DATE;}
 if (!isset($end_date)) {$end_date = $NOW_DATE;}
 if (strlen($shift)<2) {$shift='ALL';}
 if (strlen($stage)<2) {$stage='NAME';}
+$ASCII_text=""; $file_output=""; 
+$GRAPH=""; $graph_header=""; $graph_id=0;
 
 $report_name = 'Agent Time Detail';
 $db_source = 'M';
@@ -144,21 +153,15 @@ if ($qm_conf_ct > 0)
 	$SSreport_default_format =		$row[6];
 	$SSallow_web_debug =			$row[7];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
+$DB=preg_replace("/[^0-9]/","",$DB);
 if (strlen($report_display_type)<2) {$report_display_type = $SSreport_default_format;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-$query_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $query_date);
-$end_date = preg_replace('/[^- \:\_0-9a-zA-Z]/', '', $end_date);
-$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
-$submit = preg_replace('/[^-_0-9a-zA-Z]/', '', $submit);
-$file_download = preg_replace('/[^-_0-9a-zA-Z]/', '', $file_download);
-$search_archived_data = preg_replace('/[^-_0-9a-zA-Z]/', '', $search_archived_data);
-$report_display_type = preg_replace('/[^-_0-9a-zA-Z]/', '', $report_display_type);
-$stage = preg_replace('/[^-_0-9a-zA-Z]/', '', $stage);
-$show_parks = preg_replace('/[^-_0-9a-zA-Z]/', '', $show_parks);
-$time_in_sec = preg_replace('/[^-_0-9a-zA-Z]/', '', $time_in_sec);
+$query_date = preg_replace('/[^\-0-9]/', '', $query_date);
+$end_date = preg_replace('/[^\-0-9]/', '', $end_date);
+$file_download = preg_replace('/[^0-9]/', '', $file_download);
 
 # Variables filtered further down in the code
 # $group
@@ -169,12 +172,24 @@ if ($non_latin < 1)
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
 	$shift = preg_replace('/[^-_0-9a-zA-Z]/', '', $shift);
+	$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/', '', $SUBMIT);
+	$search_archived_data = preg_replace('/[^-_0-9a-zA-Z]/', '', $search_archived_data);
+	$report_display_type = preg_replace('/[^-_0-9a-zA-Z]/', '', $report_display_type);
+	$stage = preg_replace('/[^-_0-9a-zA-Z]/', '', $stage);
+	$show_parks = preg_replace('/[^-_0-9a-zA-Z]/', '', $show_parks);
+	$time_in_sec = preg_replace('/[^-_0-9a-zA-Z]/', '', $time_in_sec);
 	}
 else
 	{
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_USER);
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	$shift = preg_replace('/[^-_0-9\p{L}]/u', '', $shift);
+	$SUBMIT = preg_replace('/[^-_0-9\p{L}]/u', '', $SUBMIT);
+	$search_archived_data = preg_replace('/[^-_0-9\p{L}]/u', '', $search_archived_data);
+	$report_display_type = preg_replace('/[^-_0-9\p{L}]/u', '', $report_display_type);
+	$stage = preg_replace('/[^-_0-9\p{L}]/u', '', $stage);
+	$show_parks = preg_replace('/[^-_0-9\p{L}]/u', '', $show_parks);
+	$time_in_sec = preg_replace('/[^-_0-9\p{L}]/u', '', $time_in_sec);
 	}
 
 if ($search_archived_data=="checked") 
@@ -207,8 +222,10 @@ if (file_exists('options.php'))
 	}
 if ($user_case == '1')
 	{$userSQL = 'ucase(user)';}
-if ($user_case == '2')
+else if ($user_case == '2')
 	{$userSQL = 'lcase(user)';}
+else 
+	{$userSQL = '';}
 if (strlen($userSQL)<2)
 	{$userSQL = 'user';}
 if (strlen($TIME_agenttimedetail)<1)
@@ -388,6 +405,7 @@ $regexLOGallowed_campaigns = " $LOGallowed_campaigns ";
 
 $LOGadmin_viewable_groupsSQL='';
 $whereLOGadmin_viewable_groupsSQL='';
+$rawLOGadmin_viewable_groupsSQL='';
 if ( (!preg_match('/\-\-ALL\-\-/i',$LOGadmin_viewable_groups)) and (strlen($LOGadmin_viewable_groups) > 3) )
 	{
 	$rawLOGadmin_viewable_groupsSQL = preg_replace("/ -/",'',$LOGadmin_viewable_groups);
@@ -433,6 +451,8 @@ while ($i < $campaigns_to_print)
 
 $i=0;
 $group_string='|';
+$group_SQL='';
+$groupQS='';
 $group_ct = count($group);
 while($i < $group_ct)
 	{
@@ -468,12 +488,14 @@ while ($i < $user_groups_to_print)
 	{
 	$row=mysqli_fetch_row($rslt);
 	$user_groups[$i] =$row[0];
-	if ($all_user_groups) {$user_group[$i]=$row[0];}
+	# if ($all_user_groups) {$user_group[$i]=$row[0];} - 8/14/25, never used
 	$i++;
 	}
 
 $i=0;
 $user_group_string='|';
+$user_group_SQL='';
+$user_groupQS='';
 $user_group_ct = count($user_group);
 while($i < $user_group_ct)
 	{
@@ -562,7 +584,7 @@ if ($file_download < 1)
 	echo "<PRE><FONT SIZE=2>";
 	}
 
-if ( (strlen($group[0]) < 1) or (strlen($user_group[0]) < 1) )
+if ( !isset($group[0]) or (strlen($group[0]) < 1) or (strlen($user_group[0]) < 1) )
 	{
 #	echo "\n";
 	echo _QXZ("PLEASE SELECT A CAMPAIGN OR USER GROUP AND DATE-TIME BELOW AND CLICK SUBMIT")."\n";
@@ -571,6 +593,8 @@ if ( (strlen($group[0]) < 1) or (strlen($user_group[0]) < 1) )
 
 else
 	{
+	$time_BEGIN = "00:00:00";
+	$time_END = "23:59:59";
 	if ($shift == 'TEST') 
 		{
 		$time_BEGIN = "09:45:00";  
@@ -686,6 +710,10 @@ else
 	$PCusersARY=$MT;
 	$PCuser_namesARY=$MT;
 	$user_count=0;
+	$park_HEADER='';
+	$park_HEADER_DIV='';
+	$park_TOTALS='';
+	$park_AGENT_INFO='';
 
 	if ($show_parks) 
 		{
@@ -701,14 +729,15 @@ else
 	$park_rslt=mysql_to_mysqli($park_stmt, $link);
 	while ($park_row=mysqli_fetch_row($park_rslt)) 
 		{
-		$park_array[$park_row[0]][0]=$park_row[1];
-		$park_array[$park_row[0]][1]=$park_row[2];
+		$park_array["$park_row[0]"][0]=$park_row[1];
+		$park_array["$park_row[0]"][1]=$park_row[2];
 		}
 
 	# Grab a list of sub_statuses sorted in order so they will appear in order in the resulting report - otherwise they could appear in any order
 	$ss_stmt="select distinct sub_status from ".$agent_log_table." where event_time <= '$query_date_END' and event_time >= '$query_date_BEGIN' and pause_sec > 0 and pause_sec < 65000 $group_SQL $user_group_SQL order by sub_status asc limit 10000000;";
 	$ss_rslt=mysql_to_mysqli($ss_stmt, $link);
 	$j=0;
+	$subs_to_print=0;
 	while($ss_row=mysqli_fetch_row($ss_rslt)) 
 		{
 		$current_ss=$ss_row[0];
@@ -762,6 +791,22 @@ else
 	$j=0;
 	$k=0;
 	$uc=0;
+	$TOTcalls = 0;
+	$TOTwait = 0;
+	$TOTtalk = 0;
+	$TOTdispo =	0;
+	$TOTpause =	0;
+	$TOTdead = 0;
+	$TOTcustomer = 0;
+	$TOTconnected =	0;
+	$TOTALtime = 0;
+	$Swait=array();
+	$Stalk=array();
+	$Sdispo=array();
+	$Spause=array();
+	$Sdead=array();
+	$Scustomer=array();
+	$Sconnected=array();
 	while ($i < $rows_to_print)
 		{
 		$row=mysqli_fetch_row($rslt);
@@ -793,10 +838,11 @@ else
 		if ( ($lead > 0) and ((!preg_match("/NULL/i",$status)) and (strlen($status) > 0)) ) {$TOTcalls++;}
 		
 		$user_found=0;
+		# $Scalls[$uc]=0;
 		if ($uc < 1) 
 			{
 			$Suser[$uc] = $user;
-			$Scalls[$uc] = 0;		
+			$Scalls[$uc] = 0;
 			$uc++;
 			}
 		$m=0;
@@ -807,13 +853,13 @@ else
 				{
 				$user_found++;
 
-				$Swait[$m] =	($Swait[$m] + $wait);
-				$Stalk[$m] =	($Stalk[$m] + $talk);
-				$Sdispo[$m] =	($Sdispo[$m] + $dispo);
-				$Spause[$m] =	($Spause[$m] + $pause);
-				$Sdead[$m] =	($Sdead[$m] + $dead);
-				$Scustomer[$m] =	($Scustomer[$m] + $customer);
-				$Sconnected[$m] =	($Sconnected[$m] + $connected);
+				$Swait[$m] =	((!isset($Swait[$m]) ? 0 : $Swait[$m])  + $wait);
+				$Stalk[$m] =	((!isset($Stalk[$m]) ? 0 : $Stalk[$m]) + $talk);
+				$Sdispo[$m] =	((!isset($Sdispo[$m]) ? 0 : $Sdispo[$m]) + $dispo);
+				$Spause[$m] =	((!isset($Spause[$m]) ? 0 : $Spause[$m]) + $pause);
+				$Sdead[$m] =	((!isset($Sdead[$m]) ? 0 : $Sdead[$m]) + $dead);
+				$Scustomer[$m] =	((!isset($Scustomer[$m]) ? 0 : $Scustomer[$m]) + $customer);
+				$Sconnected[$m] =	((!isset($Sconnected[$m]) ? 0 : $Sconnected[$m]) + $connected);
 				if ( ($lead > 0) and ((!preg_match("/NULL/i",$status)) and (strlen($status) > 0)) ) {$Scalls[$m]++;}
 				}
 			$m++;
@@ -870,10 +916,27 @@ else
 	##### BEGIN loop through each user formatting data for output
 	$AUTOLOGOUTflag=0;
 	$m=0;
+	$max_user_hpc=0;
+	$max_user_holds=0;
+	$max_connected=0;
+	$max_waitpct=0;
+	$max_talkpct=0;
+	$max_dispopct=0;
+	$max_pausepct=0;
+	$max_deadpct=0;
+	$max_avg_hold_time=0;
+	$max_total_hold_time=0;
+	$TOPsortMAX=0;
+	$TOTtimeTC=0;
+	$TOTuser_holds=0;
+	$TOTtotal_hold_time=0;
 	while ( ($m < $uc) and ($m < 50000) )
 		{
 		$SstatusesHTML='';
 		$SstatusesFILE='';
+		$fileToutput='';
+		$user_hpc='';
+		$user_holds=0;
 		$Stime[$m] = ($Swait[$m] + $Stalk[$m] + $Sdispo[$m] + $Spause[$m]);
 		$Swaitpct[$m]=MathZDC(100*$Swait[$m], $Stime[$m]);
 		$Stalkpct[$m]=MathZDC(100*$Stalk[$m], $Stime[$m]);
@@ -1108,6 +1171,12 @@ else
 		$Stime[$m]=		sprintf("%10s", $Stime[$m]); 
 
 		# PARK INFO
+		if (!isset($park_array[$Suser[$m]]))
+			{
+			$park_array[$Suser[$m]][0]=0;
+			$park_array[$Suser[$m]][1]=0;
+			}
+
 		if ($show_parks) 
 			{
 			$user_holds=$park_array[$Suser[$m]][0]+0;
@@ -1658,7 +1727,7 @@ echo "</FORM>";
 
 if ($report_display_type=="HTML")
 	{
-	echo $GRAPH.$GRAPH2.$GRAPH3.$max;
+	echo $GRAPH;
 	echo $JS_text;
 	}
 else

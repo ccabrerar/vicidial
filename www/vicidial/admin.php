@@ -27362,6 +27362,7 @@ if ($ADD==31)
 	$stmt="SELECT status,status_name,selectable,human_answered,category,sale,dnc,customer_contact,not_interested,unworkable,scheduled_callback,completed,min_sec,max_sec,answering_machine from vicidial_statuses where status NOT IN('INCALL','QUEUE') order by status;";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$statuses_to_print = mysqli_num_rows($rslt);
+	if ($DB) {echo "$statuses_to_print|$stmt|\n";}
 	$statuses_list='';
 	$dial_statuses_list='';
 	$qc_statuses_list='';
