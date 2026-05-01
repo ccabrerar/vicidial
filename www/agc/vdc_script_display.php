@@ -48,10 +48,11 @@
 # 220901-0849 - Added campaign user_group_script option
 # 230518-1046 - Added in-group and campaign custom fields 1-5, for script/webform/dispo-call-url use
 # 260302-1410 - Code updates for PHP8 compatibility
+# 260501-0808 - Fix for regex bug
 #
 
-$version = '2.14-42';
-$build = '260302-1410';
+$version = '2.14-43';
+$build = '260501-0808';
 $php_script = 'vdc_script_display.php';
 
 require_once("dbconnect_mysqli.php");
@@ -521,7 +522,7 @@ $dispo = preg_replace("/\<|\>|\"|\\\\|;/",'-',$dispo);
 $email = preg_replace("/\"|\\\\|;/",'-',$email);
 $email_row_id = preg_replace('/[^0-9]/', '', $email_row_id);
 $entry_date = preg_replace("/\<|\>|\"|\\\\|;/",'-',$entry_date);
-$entry_list_id = preg_replace("/^[0-9]/",'',$entry_list_id);
+$entry_list_id = preg_replace("/[^0-9]/",'',$entry_list_id);
 $epoch = preg_replace("/[^0-9]/",'',$epoch);
 $first_name = preg_replace("/\"|\\\\|;/",'-',$first_name);
 $fronter = preg_replace("/\<|\>|\"|\\\\|;/",'-',$fronter);
