@@ -1,7 +1,7 @@
 <?php
 # non_agent_api.php
 # 
-# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed as an API(Application Programming Interface) to allow
 # other programs to interact with all non-agent-screen VICIDIAL functions
@@ -227,10 +227,11 @@
 # 250720-1841 - Added hopper_bulk_insert function
 # 251205-1456 - Added ADAPT_PERCENTMAX dial_method
 # 260123-1020 - pause_sec fix in agent_stats_export
+# 260506-1525 - small fix for campaign changes
 #
 
-$version = '2.14-202';
-$build = '251205-1456';
+$version = '2.14-203';
+$build = '260506-1525';
 $php_script='non_agent_api.php';
 $api_url_log = 0;
 $camp_lead_order_random=1;
@@ -9226,7 +9227,7 @@ if ($function == 'update_campaign')
 						}
 					if (strlen($list_order) > 0)
 						{
-						if ( ($camp_lead_order_random > 0) and (preg_match("/RANDOM/i",$list_order)) )
+						if ( ($camp_lead_order_random < 1) and (preg_match("/RANDOM/i",$list_order)) )
 							{
 							$result = 'ERROR';
 							$result_reason = "update_campaign LIST ORDER INCLUDING RANDOM ARE NOT ALLOWED, THIS IS AN OPTIONAL FIELD";
