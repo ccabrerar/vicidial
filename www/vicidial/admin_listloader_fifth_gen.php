@@ -86,10 +86,11 @@
 # 240801-1132 - Code updates for PHP8 compatibility
 # 260203-1600 - Fix for field chooser issue and more code updates for PHP8 compatibility
 # 260415-1710 - Added summarized error output, fuzzy field auto-detection for custom layout, Issue #1561 from Acidshock
+# 260514-1553 - Added default_phone_code use for Phone Code field on form
 #
 
-$version = '2.14-83';
-$build = '260415-1710';
+$version = '2.14-84';
+$build = '260514-1553';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -600,7 +601,7 @@ $vicidial_list_fields = '|lead_id|vendor_lead_code|source_id|list_id|gmt_offset_
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,admin_web_directory,custom_fields_enabled,webroot_writable,enable_languages,language_method,active_modules,admin_screen_colors,web_loader_phone_length,enable_international_dncs,web_loader_phone_strip,allow_web_debug FROM system_settings;";
+$stmt = "SELECT use_non_latin,admin_web_directory,custom_fields_enabled,webroot_writable,enable_languages,language_method,active_modules,admin_screen_colors,web_loader_phone_length,enable_international_dncs,web_loader_phone_strip,allow_web_debug,default_phone_code FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 $qm_conf_ct = mysqli_num_rows($rslt);
 #if ($qm_conf_ct > 0)
@@ -618,6 +619,7 @@ $qm_conf_ct = mysqli_num_rows($rslt);
 	$SSenable_international_dncs =	$row[9];
 	$SSweb_loader_phone_strip =		$row[10];
 	$SSallow_web_debug =			$row[11];
+	$SSdefault_phone_code = 		$row[12];
 	}
 if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
 $DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
@@ -1154,10 +1156,17 @@ if ( (!$OK_to_process) or ( ($leadfile) and ($file_layout!="standard" && $file_l
 			$num_rows = mysqli_num_rows($rslt);
 			
 			$count=0;
-	                while ( $num_rows > $count )
+			$pc_selected=0;
+	        while ( $num_rows > $count )
 				{
 				$row = mysqli_fetch_row($rslt);
-				echo "<option value=\'$row[0]\'>$row[0] - $row[1]</option>\n";
+				echo "<option value=\'$row[0]\'";
+				if ( ($SSdefault_phone_code == $row[0]) and ($pc_selected < 1) )
+					{
+					echo " selected";
+					$pc_selected++;
+					}
+				echo ">$row[0] - $row[1]</option>\n";
 				$count++;
 				}
 			?>
