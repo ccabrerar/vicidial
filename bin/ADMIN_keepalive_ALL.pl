@@ -181,9 +181,10 @@
 # 260126-1334 - Added check of reserved_extensions against dialplan numbers when building conf files
 # 260327-0846 - Added check of empty phone dialplan extensions when building conf files
 # 260402-1440 - Added reset of vicidial_max_inbound_cache table entries
+# 260515-1610 - Changed multi-listen-process kill section to only run if listen process is supposed to run on this server
 #
 
-$build = '260402-1440';
+$build = '260515-1610';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -808,43 +809,57 @@ else
 	@psline=@MT;
 	@psoutput=@MT;
 	@listen_pid=@MT;
-	if ($runningAST_listen > 1)
+	if ($AST_send_listen > 0)
 		{
-		$runningAST_listen=0;
-
-			sleep(1);
-
-		### you may have to use a different ps command if you're not using Slackware Linux
-		#	@psoutput = `ps -f -C AST_update --no-headers`;
-		#	@psoutput = `ps -f -C AST_updat* --no-headers`;
-		#	@psoutput = `/bin/ps -f --no-headers -A`;
-		#	@psoutput = `/bin/ps -o pid,args -A`; ### use this one for FreeBSD
-		@psoutput = `/bin/ps -o "%p %a" --no-headers -A`;
-
-		$i=0;
-		foreach (@psoutput)
-			{
-				chomp($psoutput[$i]);
-			if ($DBX) {print "$i|$psoutput[$i]|     \n";}
-			@psline = split(/\/usr\/bin\/perl /,$psoutput[$i]);
-			$psoutput[$i] =~ s/^ *//gi;
-			$psoutput[$i] =~ s/ .*|\n|\r|\t| //gi;
-
-			if ($psline[1] =~ /AST_manager_li/) 
-				{
-				$listen_pid[$runningAST_listen] = $psoutput[$i];
-				if ($DB) {print "AST_listen RUNNING:              |$psline[1]|$listen_pid[$runningAST_listen]|\n";}
-				$runningAST_listen++;
-				}
-
-			$i++;
-			}
-
 		if ($runningAST_listen > 1)
 			{
-			if ($DB) {print "Killing AST_manager_listen... |$listen_pid[1]|\n";}
-			`/bin/kill -s 9 $listen_pid[1]`;
+			$runningAST_listen=0;
+
+				sleep(1);
+
+			### you may have to use a different ps command if you're not using Slackware Linux
+			#	@psoutput = `ps -f -C AST_update --no-headers`;
+			#	@psoutput = `ps -f -C AST_updat* --no-headers`;
+			#	@psoutput = `/bin/ps -f --no-headers -A`;
+			#	@psoutput = `/bin/ps -o pid,args -A`; ### use this one for FreeBSD
+			@psoutput = `/bin/ps -o "%p %a" --no-headers -A`;
+
+			$i=0;
+			foreach (@psoutput)
+				{
+				chomp($psoutput[$i]);
+				if ($DBX) {print "$i|$psoutput[$i]|     \n";}
+				@psline = split(/\/usr\/bin\/perl /,$psoutput[$i]);
+				$psoutput[$i] =~ s/^ *//gi;
+				$psoutput[$i] =~ s/ .*|\n|\r|\t| //gi;
+
+				if ($psline[1] =~ /AST_manager_li/) 
+					{
+					$listen_pid[$runningAST_listen] = $psoutput[$i];
+					if ($DB) {print "AST_listen RUNNING:              |$psline[1]|$listen_pid[$runningAST_listen]|\n";}
+					$runningAST_listen++;
+					}
+
+				$i++;
+				}
+
+			if ($runningAST_listen > 1)
+				{
+				if ($DB) {print "Killing AST_manager_listen... |$listen_pid[1]|\n";}
+				`/bin/kill -s 9 $listen_pid[1]`;
+
+				if (!$killLOGfile) {$killLOGfile = "$PATHlogs/listen_kill.$year-$mon-$mday";}
+				### open the log file for writing ###
+				open(Kout, ">>$killLOGfile")
+						|| die "Can't open $killLOGfile: $!\n";
+				print Kout "$now_date|Killing AST_manager_listen... |$listen_pid[1]||\n";
+				close(Kout);
+				}
 			}
+		}
+	else
+		{
+		if ($DB) {print "DEBUG: AST_manager_listen is not set to run on this server, so don't check if it's running\n";}
 		}
 
 
