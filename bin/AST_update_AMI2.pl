@@ -5,7 +5,7 @@
 # This script uses the Asterisk Manager interface to update the live_channels
 # tables and verify the parked_channels table in the asterisk MySQL database
 #
-# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 170915-2110 - Initial version for Asterisk 13, based upon AST_update.pl
@@ -21,12 +21,14 @@
 # 220310-1136 - Fix for issue dealing with bad carrier 'P-Asserted-Identity' input
 # 251008-2114 - Added code for recording_dtmf_detection and recording_dtmf_muting
 # 251203-2218 - Added server_live_partitions inserts/updates
+# 260515-1939 - Added internal logging
 #
 
 # constants
 $DB=0;  # Debug flag, set to 0 for no debug messages, lots of output
 $DBX=0;
 $run_check=1; # concurrency check
+$script_name = 'AST_update_AMI2.pl';
 
 # loop time in seconds
 $loop_time = 0.4;
@@ -158,6 +160,8 @@ if (try_load($module))
 
 $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
 or die "Couldn't connect to database: " . DBI->errstr;
+
+$action='start';   $stage='LOGGED INTO MYSQL SERVER '.$build;   &internal_logger;
 
 ### Grab Server values from the database
 $stmtA = "SELECT telnet_host,telnet_port,ASTmgrUSERNAME,ASTmgrSECRET,ASTmgrUSERNAMEupdate,ASTmgrUSERNAMElisten,ASTmgrUSERNAMEsend,max_vicidial_trunks,answer_transfer_agent,local_gmt,ext_context,vd_server_logs,asterisk_version FROM servers where server_ip = '$server_ip';";
@@ -341,6 +345,8 @@ else
 	### BEGIN manager event handling for asterisk version >= 13
 	$endless_loop = 1;
 	$loop_count = 0;
+	$iLog_ct=0;
+	$iLog_calls=0;
 
 	# get the number of microseconds the loop is supposed to take
 	$loop_time_usec = $loop_time * 1000000;
@@ -717,6 +723,15 @@ else
 				usleep($sleep_usec);
 
 				}
+			}
+		# update internal process log
+		$iLog_ct++;
+		if ($iLog_ct =~ /000$|500$/) 
+			{
+			$stmtA = "UPDATE vicidial_internal_log SET up_time=NOW(), action='running', stage='Loops: $iLog_ct' WHERE process='$script_name' and server_ip='$server_ip' order by db_time desc limit 1;";
+			if($DB){print STDERR "|$stmtA|";}
+			my $affected_rows = $dbhA->do($stmtA);
+			if($DB){print STDERR "$affected_rows|\n";}
 			}
 		}
 	}
@@ -1869,4 +1884,12 @@ sub get_disk_rw
 	$prev_total_writes = $total_writes;
 
 	return ( $reads, $writes );
+	}
+
+sub internal_logger
+	{
+	$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), process='$script_name', server_ip='$server_ip', action='$action', stage='$stage';";
+	if($DB){print STDERR "|$stmtA|";}
+	my $affected_rows = $dbhA->do($stmtA);
+	if($DB){print STDERR "$affected_rows|\n";}
 	}

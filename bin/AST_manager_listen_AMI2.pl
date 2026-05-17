@@ -27,6 +27,7 @@
 # 210407-2009 - Added Event handlers for new manager events
 # 251007-2110 - Added code for recording_dtmf_detection and recording_dtmf_muting
 # 260327-1516 - Added support for PJSIP (requires patched Asterisk 18+)
+# 260515-1933 - Added internal logging
 #
 
 # constants
@@ -36,6 +37,7 @@ $full_listen_log=0; # set to 1 to log all output to log file
 $run_check=1; # concurrency check
 $last_keepalive_epoch = time();
 $keepalive_skips=0;
+$script_name = 'AST_manager_listen_AMI2.pl';
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -127,6 +129,8 @@ if (try_load($module))
 
 $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
 or die "Couldn't connect to database: " . DBI->errstr;
+
+$action='start';   $stage='LOGGED INTO MYSQL SERVER';   &internal_logger;
 
 ### Grab Server values from the database
 $stmtA = "SELECT telnet_host,telnet_port,ASTmgrUSERNAME,ASTmgrSECRET,ASTmgrUSERNAMEupdate,ASTmgrUSERNAMElisten,ASTmgrUSERNAMEsend,max_vicidial_trunks,answer_transfer_agent,local_gmt,ext_context,vd_server_logs,asterisk_version FROM servers where server_ip = '$server_ip';";
@@ -264,6 +268,8 @@ else
 	{
 	### BEGIN manager event handling for asterisk version >= 13
 	$endless_loop = 1;
+	$iLog_ct=0;
+	$iLog_calls=0;
 	while($endless_loop > 0)
 		{
 		$breakout = 1;
@@ -453,6 +459,7 @@ else
 			# handle the event
 			$retcode = handle_event( %event_hash );
 			$last_event_epoch = time();
+			$iLog_calls++;
 			}
 		elsif ( ( exists($event_hash{"Response"}) ) && ( exists($event_hash{"Ping"}) ) )
 			{
@@ -469,6 +476,15 @@ else
 			print "\nAsterisk server shutting down, PROCESS KILLED... EXITING\n\n";
 			$event_string="Asterisk server shutting down, PROCESS KILLED... EXITING|ONE DAY INTERVAL:$one_day_interval|";
 			&event_logger;
+			}
+		# update internal process log
+		$iLog_ct++;
+		if ($iLog_ct =~ /00$/) 
+			{
+			$stmtA = "UPDATE vicidial_internal_log SET up_time=NOW(), action='running', stage='Loops: $iLog_ct   Events: $iLog_calls' WHERE process='$script_name' and server_ip='$server_ip' order by db_time desc limit 1;";
+			if($DB){print STDERR "|$stmtA|";}
+			my $affected_rows = $dbhA->do($stmtA);
+			if($DB){print STDERR "$affected_rows|\n";}
 			}
 		}
 
@@ -1105,6 +1121,14 @@ sub dtmf_logger
 		print Dout "|$dtmf_string|\n";
 		close(Dout);
 		}
+	}
+
+sub internal_logger
+	{
+	$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), process='$script_name', server_ip='$server_ip', action='$action', stage='$stage';";
+	if($DB){print STDERR "|$stmtA|";}
+	my $affected_rows = $dbhA->do($stmtA);
+	if($DB){print STDERR "$affected_rows|\n";}
 	}
 
 # subroutine to parse the asterisk version

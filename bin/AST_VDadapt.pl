@@ -6,7 +6,7 @@
 # adjusts the auto_dial_level for vicidial adaptive-predictive campaigns. 
 # gather call stats for campaigns and in-groups
 #
-# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 60823-1302 - First build from AST_VDhopper.pl
@@ -64,9 +64,11 @@
 # 250131-1624 - Modifications to fix cached hour counts for realtime report
 # 250218-1613 - Modified master loop to use microseconds instead of a counter to execute drop/dial level/shared dialing functions
 # 251205-0949 - Added adaptive_percentmax_percentage option and ADAPT_PERCENTMAX dial_method, fix for dropped cached counts
+# 260515-1938 - Added internal logging
 #
 
-$build='251205-0949';
+$build='260515-1938';
+$script_name = 'AST_VDadapt.pl';
 # constants
 $DB=0;  # Debug flag, set to 0 for no debug messages, On an active system this will generate lots of lines of output per minute
 $US='__';
@@ -320,6 +322,8 @@ $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VA
 $dbhB = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
  or die "Couldn't connect to database: " . DBI->errstr;
 
+$action='start';   $stage='LOGGED INTO MYSQL SERVER '.$build;   &internal_logger;
+
 if ($DBX) {print "CONNECTED TO DATABASE:  $VARDB_server|$VARDB_database\n";}
 
 ##### gather relevent system settings
@@ -434,6 +438,7 @@ if ($run_check > 0)
 	}
 
 $master_loop=0;
+$iLog_ct=0;
 
 ### Start master loop ###
 while ($master_loop < $CLIloops) 
@@ -474,7 +479,7 @@ while ($master_loop < $CLIloops)
 	if ($min < 10) {$min = "0$min";}
 	if ($sec < 10) {$sec = "0$sec";}
 
-	if ($DBXXX) {print "TIME DEBUG: $master_loop   $LOCAL_GMT_OFF_STD|$LOCAL_GMT_OFF|$isdst|   GMT: $hour:$min\n";}
+	if ($DBXXX) {print "TIME DEBUG: $master_loop|$iLog_ct   $LOCAL_GMT_OFF_STD|$LOCAL_GMT_OFF|$isdst|   GMT: $hour:$min\n";}
 
 	if (!$prev_iteration_ms) {$prev_iteration_ms=time();}
 
@@ -2487,6 +2492,15 @@ while ($master_loop < $CLIloops)
 
 	$stat_count++;
 	$master_loop++;
+	# update internal process log
+	$iLog_ct++;
+	if ($iLog_ct =~ /00$/) 
+		{
+		$stmtA = "UPDATE vicidial_internal_log SET up_time=NOW(), action='running', stage='Loops: $iLog_ct' WHERE process='$script_name' and server_ip='$VARserver_ip' order by db_time desc limit 1;";
+		if($DB){print STDERR "|$stmtA|";}
+		my $affected_rows = $dbhA->do($stmtA);
+		if($DB){print STDERR "$affected_rows|\n";}
+		}
 	}
 
 $dbhA->disconnect();
@@ -7400,6 +7414,14 @@ sub call_quota_logging
 	}
 ##### END Call Quota Lead Ranking logging #####
 
+
+sub internal_logger
+	{
+	$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), process='$script_name', server_ip='$VARserver_ip', action='$action', stage='$stage';";
+	if($DB){print STDERR "|$stmtA|";}
+	my $affected_rows = $dbhA->do($stmtA);
+	if($DB){print STDERR "$affected_rows|\n";}
+	}
 
 ##### BEGIN math divisor sub #####
 sub MathZDC

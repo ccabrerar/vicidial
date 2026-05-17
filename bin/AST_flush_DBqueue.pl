@@ -9,7 +9,7 @@
 # !!!!!!!! IMPORTANT !!!!!!!!!!!!!!!!!!
 # THIS SCRIPT SHOULD ONLY BE RUN ON ONE SERVER ON YOUR CLUSTER
 #
-# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 60717-1214 - changed to DBI by Marin Blu
@@ -38,6 +38,7 @@
 # 240709-1300 - Added Validate XFER vicidial_auto_calls: "--check-xfers" flag
 # 250914-1537 - Added archiving of recording_live table
 # 251003-0837 - Added --preserve-dtmf flag (DTMF logs would then be kept for 1-2 days)
+# 260515-2212 - Added internal logging
 #
 
 $session_flush=0;
@@ -48,6 +49,8 @@ $stuck_listsSQL='';
 $preserve_dtmf=0;
 $check_xfers=0;
 $vicidial_recording_limit=60;
+$script_name = 'AST_flush_DBqueue.pl';
+$start_sec = time();
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -302,6 +305,8 @@ use DBI;
 
 $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
  or die "Couldn't connect to database: " . DBI->errstr;
+
+$action='start';   $stage='LOGGED INTO MYSQL SERVER';   &internal_logger;
 
 ### Grab Server values from the database
 $stmtA = "SELECT vd_server_logs,vicidial_recording_limit FROM servers where server_ip = '$VARserver_ip';";
@@ -1127,7 +1132,24 @@ if ($rl_count > 0)
 	}
 ### END archive recording_live that are FINISHED ###
 
+# update internal process log
+$now_sec = time();
+$run_sec = ($now_sec - $start_sec);
+$stmtA = "UPDATE vicidial_internal_log SET up_time=NOW(), action='finished', stage='Run seconds: $run_sec' WHERE process='$script_name' and server_ip='$server_ip' order by db_time desc limit 1;";
+if($DB){print STDERR "|$stmtA|";}
+my $affected_rows = $dbhA->do($stmtA);
+if($DB){print STDERR "$affected_rows|\n";}
+
 
 $dbhA->disconnect();
 
 exit;
+
+
+sub internal_logger
+	{
+	$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), process='$script_name', server_ip='$server_ip', action='$action', stage='$stage';";
+	if($DB){print STDERR "|$stmtA|";}
+	my $affected_rows = $dbhA->do($stmtA);
+	if($DB){print STDERR "$affected_rows|\n";}
+	}

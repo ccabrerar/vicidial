@@ -3092,3 +3092,15 @@ UPDATE system_settings SET db_schema_version='1740',db_schema_update_date=NOW() 
 ALTER TABLE vicidial_users ADD modify_settings_containers ENUM('0','1','2','3','4','5','6') default '0';
 
 UPDATE system_settings SET db_schema_version='1741',db_schema_update_date=NOW() where db_schema_version < 1741;
+
+CREATE TABLE vicidial_internal_log (
+db_time DATETIME NOT NULL,
+up_time DATETIME NOT NULL,
+server_ip VARCHAR(15) NOT NULL,
+process VARCHAR(100) default '',
+action VARCHAR(100) default '',
+stage VARCHAR(255) default '',
+KEY intlog_dbtime_key (up_time)
+) ENGINE=MyISAM CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+UPDATE system_settings SET db_schema_version='1742',db_schema_update_date=NOW() where db_schema_version < 1742;

@@ -182,9 +182,10 @@
 # 260327-0846 - Added check of empty phone dialplan extensions when building conf files
 # 260402-1440 - Added reset of vicidial_max_inbound_cache table entries
 # 260515-1610 - Changed multi-listen-process kill section to only run if listen process is supposed to run on this server
+# 260515-2121 - Added truncating of vicidial_internal_log entries after 7 days, updating of some records
 #
 
-$build = '260515-1610';
+$build = '260515-2121';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -801,6 +802,14 @@ else
 		$i++;
 		}
 
+	# if $runningFastAGI_log running, update internal process log
+	if ( ($runningFastAGI_log > 0) && ($reset_test =~ /0$|5$/) )
+		{
+		$stmtA = "UPDATE vicidial_internal_log SET up_time=NOW(), action='running', stage=CONCAT((UNIX_TIMESTAMP(NOW())-UNIX_TIMESTAMP(db_time)),' seconds runtime') WHERE process='FastAGI_log.pl' and server_ip='$server_ip' order by db_time desc limit 1;";
+		if($DB){print STDERR "|$stmtA|";}
+		my $affected_rows = $dbhA->do($stmtA);
+		if($DB){print STDERR "$affected_rows|\n";}
+		}
 
 
 
@@ -861,8 +870,6 @@ else
 		{
 		if ($DB) {print "DEBUG: AST_manager_listen is not set to run on this server, so don't check if it's running\n";}
 		}
-
-
 
 
 
@@ -2401,7 +2408,25 @@ if ($timeclock_end_of_day_NOW > 0)
 		@aryA = $sthA->fetchrow_array;
 		if ($DB) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
 		$sthA->finish();
-		##### END vicidial_dtmf_log end of day process removing records older than 7 days #####
+		##### END vicidial_dtmf_log end of day process removing records older than 24 hours #####
+
+
+		##### BEGIN vicidial_internal_log end of day process removing records older than 7 days #####
+		$stmtA = "DELETE from vicidial_internal_log where up_time < \"$SDSQLdate\";";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$affected_rows = $dbhA->do($stmtA);
+		if($DB){print STDERR "\n|$affected_rows vicidial_internal_log records older than 7 days purged|\n";}
+		if ($teodDB) {$event_string = "vicidial_internal_log records older than 7 days purged: |$stmtA|$affected_rows|";   &teod_logger;}
+
+		$stmtA = "optimize table vicidial_internal_log;";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		@aryA = $sthA->fetchrow_array;
+		if ($DB) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+		$sthA->finish();
+		##### END vicidial_internal_log end of day process removing records older than 7 days #####
 
 		
 		##### BEGIN vicidial_lead_messages end of day process removing records older than 1 day #####
@@ -5894,6 +5919,11 @@ if ($active_asterisk_server =~ /Y/)
 			if ($DBX) {print "Restart asterisk debug 1: |$Iaffected_rows|$stmtA|\n";}
 
 			`screen -XS asterisk eval 'stuff "/usr/sbin/asterisk -vvvvgcT\015"'`;
+
+			$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), action='start', stage='restarted', process='asterisk auto-restart', server_ip='$server_ip';";
+			if($DB){print STDERR "|$stmtA|";}
+			my $affected_rows = $dbhA->do($stmtA);
+			if($DB){print STDERR "$affected_rows|\n";}
 			}
 		elsif ($uptime_seconds>300)
  			{

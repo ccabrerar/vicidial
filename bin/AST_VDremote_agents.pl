@@ -59,9 +59,11 @@
 # 240420-2246 - Added ConfBridge code
 # 240516-2149 - Allow for ALT start_call_url, added --version flag
 # 260403-2253 - Added vicidial_max_inbound_cache logging
+# 260515-1935 - Added internal logging
 #
 
-$build = '260403-2253';
+$build = '260515-1933';
+$script_name = 'AST_VDremote_agents.pl';
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -190,6 +192,7 @@ use DBI;
 $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
  or die "Couldn't connect to database: " . DBI->errstr;
 
+$action='start';   $stage='LOGGED INTO MYSQL SERVER '.$build;   &internal_logger;
 
 #############################################
 ##### Gather system_settings #####
@@ -252,6 +255,7 @@ if ($run_check > 0)
 
 #$one_day_interval = 12;	# 1 month loops for one year 
 $one_day_interval = 1;		# 1 day
+$iLog_ct=0;
 while($one_day_interval > 0)
 	{
 	#$endless_loop=5760000;		# 30 days minutes at XXX seconds per loop
@@ -1253,7 +1257,7 @@ while($one_day_interval > 0)
 		usleep(1*$loop_delay*1000);
 
 		$endless_loop--;
-		if($DB){print STDERR "\nloop counter: |$endless_loop|$one_day_interval|     |$loop_delay|\n";}
+		if($DB){print STDERR "\nloop counter: |$endless_loop|$one_day_interval|$iLog_ct|     |$loop_delay|\n";}
 
 		### putting a blank file called "VDAD.kill" in the directory will automatically safely kill this program
 		if (-e "$PATHhome/VDAD.kill")
@@ -1265,6 +1269,16 @@ while($one_day_interval > 0)
 			}
 
 		$bad_grabber_counter=0;
+
+		# update internal process log
+		$iLog_ct++;
+		if ($iLog_ct =~ /00$/) 
+			{
+			$stmtA = "UPDATE vicidial_internal_log SET up_time=NOW(), action='running', stage='Loops: $iLog_ct' WHERE process='$script_name' and server_ip='$server_ip' order by db_time desc limit 1;";
+			if($DB){print STDERR "|$stmtA|";}
+			my $affected_rows = $dbhA->do($stmtA);
+			if($DB){print STDERR "$affected_rows|\n";}
+			}
 		}
 
 
@@ -1399,6 +1413,15 @@ sub event_logger
 		close(Lout);
 		}
 	$event_string='';
+	}
+
+
+sub internal_logger
+	{
+	$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), process='$script_name', server_ip='$server_ip', action='$action', stage='$stage';";
+	if($DB){print STDERR "|$stmtA|";}
+	my $affected_rows = $dbhA->do($stmtA);
+	if($DB){print STDERR "$affected_rows|\n";}
 	}
 
 

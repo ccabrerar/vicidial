@@ -10,7 +10,7 @@
 #
 # This program only needs to be run by one server
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 60711-0945 - Changed to DBI by Marin Blu
@@ -48,11 +48,14 @@
 # 210523-2321 - Added optional check for qa_data duplicates, -qm-qa-duplicate-check
 # 220206-0714 - Added new -roll-back-preview-skips function to roll back the last_local_call_time and called_count for leads that were previewed and not dialed
 # 250625-2329 - Added --wait-pause-code-swap option
+# 260515-2216 - Added internal logging
 #
 
 # constants
 $US='__';
 $MT[0]='';
+$script_name = 'AST_cleanup_agent_log.pl';
+$start_sec = time();
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -471,6 +474,8 @@ use DBI;
 
 $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
 or die "Couldn't connect to database: " . DBI->errstr;
+
+$action='start';   $stage='LOGGED INTO MYSQL SERVER';   &internal_logger;
 
 #############################################
 ##### START QUEUEMETRICS LOGGING LOOKUP #####
@@ -3088,10 +3093,18 @@ if ($enable_queuemetrics_logging > 0)
 
 
 
+# update internal process log
+$now_sec = time();
+$run_sec = ($now_sec - $start_sec);
+$stmtA = "UPDATE vicidial_internal_log SET up_time=NOW(), action='finished', stage='Run seconds: $run_sec' WHERE process='$script_name' and server_ip='$server_ip' order by db_time desc limit 1;";
+if($DB){print STDERR "|$stmtA|";}
+my $affected_rows = $dbhA->do($stmtA);
+if($DB){print STDERR "$affected_rows|\n";}
 
 
 
-	if ($DB) {print STDERR "\nDONE\n";}
+
+if ($DB) {print STDERR "\nDONE\n";}
 
 
 
@@ -3113,4 +3126,13 @@ sub event_logger
 	print Lout "$HDSQLdate|$event_string|\n";
 	close(Lout);
 	$event_string='';
+	}
+
+
+sub internal_logger
+	{
+	$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), process='$script_name', server_ip='$server_ip', action='$action', stage='$stage';";
+	if($DB){print STDERR "|$stmtA|";}
+	my $affected_rows = $dbhA->do($stmtA);
+	if($DB){print STDERR "$affected_rows|\n";}
 	}

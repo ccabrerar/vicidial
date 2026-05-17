@@ -20,7 +20,7 @@
 # Based on perl scripts in ViciDial from Matt Florell and post: 
 # http://www.vicidial.org/VICIDIALforum/viewtopic.php?p=22506&sid=ca5347cffa6f6382f56ce3db9fb3d068#22506
 #
-# Copyright (C) 2025  I. Taushanov, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  I. Taushanov, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 90615-1701 - First version
@@ -77,6 +77,7 @@
 # 251011-2048 - Added archiving of recording_live_log table
 # 251024-1518 - Added --vicidial-dial-log-only flag
 # 260111-2138 - Added --agent-log-only flag
+# 260516-2149 - Added internal logging
 #
 
 $CALC_TEST=0;
@@ -91,6 +92,7 @@ $api_archive_only=0;
 $url_log_only=0;
 $url_log_archive=0;
 $agent_log_only=0;
+$script_name = 'ADMIN_archive_log_tables.pl';
 
 
 ### begin parsing run-time options ###
@@ -624,6 +626,8 @@ $server_ip = $VARserver_ip;		# Asterisk server IP
 use DBI;
 $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
  or die "Couldn't connect to database: " . DBI->errstr;
+
+$action='start';   $stage='LOGGED INTO MYSQL SERVER';   &internal_logger;
 
 #############################################
 ##### Gather system_settings #####
@@ -4480,4 +4484,17 @@ $secZ = ($secY - $secX);
 $secZm = ($secZ /60);
 if (!$Q) {print "\nscript execution time in seconds: $secZ     minutes: $secZm\n";}
 
+$stmtA = "UPDATE vicidial_internal_log SET up_time=NOW(), action='finished', stage='Run seconds: $secZ' WHERE process='$script_name' and server_ip='$server_ip' order by db_time desc limit 1;";
+if($DB){print STDERR "|$stmtA|";}
+my $affected_rows = $dbhA->do($stmtA);
+if($DB){print STDERR "$affected_rows|\n";}
+
 exit;
+
+sub internal_logger
+	{
+	$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), process='$script_name', server_ip='$server_ip', action='$action', stage='$stage';";
+	if($DB){print STDERR "|$stmtA|";}
+	my $affected_rows = $dbhA->do($stmtA);
+	if($DB){print STDERR "$affected_rows|\n";}
+	}

@@ -106,6 +106,7 @@
 # 250928-1556 - Added hosted_settings dialplan variable
 # 260327-0824 - Fixes for PJSIP compatibility
 # 260424-1644 - Fix for rare Auto-Alt Dial issue
+# 260515-1936 - Added internal logging
 #
 
 # defaults for PreFork
@@ -119,6 +120,7 @@ $VARfastagi_log_checkforwait =	'60';
 $DB=0;
 $DBX=0;
 $ADB=0;
+$script_name = 'FastAGI_log.pl';
 
 # default path to astguiclient configuration file:
 $PATHconf =		'/etc/astguiclient.conf';
@@ -179,6 +181,12 @@ $log_level = '0';
 use DBI;
 $dbhB = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
 	or die "Couldn't connect to database: " . DBI->errstr;
+
+$action='start';   $stage='LOGGED INTO MYSQL SERVER';
+$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), process='$script_name', server_ip='$VARserver_ip', action='$action', stage='$stage';";
+if($DB){print STDERR "|$stmtA|";}
+my $affected_rows = $dbhB->do($stmtA);
+if($DB){print STDERR "$affected_rows|\n";}
 
 ### Grab Server values from the database
 $stmtB = "SELECT vd_server_logs,asterisk_version FROM servers where server_ip = '$VARserver_ip';";

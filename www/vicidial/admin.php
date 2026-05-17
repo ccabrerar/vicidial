@@ -3836,7 +3836,6 @@ if ($non_latin < 1)
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9a-zA-Z]/','',$PHP_AUTH_USER);
 	$protocol = preg_replace('/[^-_0-9a-zA-Z]/','',$protocol);
 	$server_id = preg_replace('/[^-_0-9a-zA-Z]/','',$server_id);
-	$stage = preg_replace('/[^-_0-9a-zA-Z]/','',$stage);
 	$state_rule = preg_replace('/[^-_0-9a-zA-Z]/','',$state_rule);
 	$holiday_rule = preg_replace('/[^-_0-9a-zA-Z]/','',$holiday_rule);
 	$trunk_restriction = preg_replace('/[^-_0-9a-zA-Z]/','',$trunk_restriction);
@@ -4201,6 +4200,7 @@ if ($non_latin < 1)
 	$agent_hangup_value = preg_replace('/[^-\/\|\._0-9a-zA-Z]/','',$agent_hangup_value);
 	$second_alert_filename = preg_replace('/[^-\/\|\._0-9a-zA-Z]/','',$second_alert_filename);
 	$third_alert_filename = preg_replace('/[^-\/\|\._0-9a-zA-Z]/','',$third_alert_filename);
+	$stage = preg_replace('/[^-\._0-9a-zA-Z]/','',$stage);
 
 	### ALPHA-NUMERIC and underscore and dash and slash and dot and comma
 	$menu_prompt = preg_replace('/[^-\/\|\,\._0-9a-zA-Z]/','',$menu_prompt);
@@ -4586,7 +4586,6 @@ else
 	$PHP_AUTH_USER = preg_replace('/[^-_0-9\p{L}]/u','',$PHP_AUTH_USER);
 	$protocol = preg_replace('/[^-_0-9\p{L}]/u','',$protocol);
 	$server_id = preg_replace('/[^-_0-9\p{L}]/u','',$server_id);
-	$stage = preg_replace('/[^-_0-9\p{L}]/u','',$stage);
 	$state_rule = preg_replace('/[^-_0-9\p{L}]/u','',$state_rule);
 	$holiday_rule = preg_replace('/[^-_0-9\p{L}]/u','',$holiday_rule);
 	$trunk_restriction = preg_replace('/[^-_0-9\p{L}]/u','',$trunk_restriction);
@@ -4948,6 +4947,7 @@ else
 	$agent_hangup_value = preg_replace('/[^-\/\|\._0-9\p{L}]/u','',$agent_hangup_value);
 	$second_alert_filename = preg_replace('/[^-\/\|\._0-9\p{L}]/u','',$second_alert_filename);
 	$third_alert_filename = preg_replace('/[^-\/\|\._0-9\p{L}]/u','',$third_alert_filename);
+	$stage = preg_replace('/[^-\._0-9\p{L}]/u','',$stage);
 
 	### ALPHA-NUMERIC and underscore and dash and slash and dot and comma
 	$menu_prompt = preg_replace('/[^-\/\|\,\._0-9\p{L}]/u','',$menu_prompt);
@@ -6337,12 +6337,13 @@ if ($SSscript_remove_js > 0)
 # 260408-0827 - Added max_inbound_auto_reenable system setting and function to re-enable agent in-group selections after max_inbound_calls has been raised
 # 260410-1953 - Fix for max_inbound_auto_reenable feature in 4B admin screen
 # 260416-0909 - Added modify_settings_containers user setting
+# 260516-2350 - Added Internal Process Logs display page
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-957a';
-$build = '260416-0909';
+$admin_version = '2.14-958a';
+$build = '260516-2350';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -7421,6 +7422,7 @@ if ($ADD==999986)		{$hh='reports';		echo _QXZ("POSTAL CODES");}
 if ($ADD==999985)		{$hh='reports';		echo _QXZ("POSTAL CODES CITIES");}
 if ($ADD==999984)		{$hh='reports';		echo _QXZ("CRASHED DATABASE TABLES");}
 if ($ADD==999983)		{$hh='reports';		echo _QXZ("SERVER DRIVE PARTITIONS");}
+if ($ADD==999982)		{$hh='reports';		echo _QXZ("INTERNAL PROCESS LOGS");}
 
 echo "</title>\n";
 
@@ -52080,7 +52082,7 @@ if ($ADD==999994)
 		echo "<UL>\n";
 	#	echo "<LI><a href=\"welcome_languages.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>"._QXZ("Welcome Languages Page")."</a></FONT>\n";
 		echo "<LI><a href=\"help.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>"._QXZ("Old Help Page")."</a></FONT>\n";
-		echo "<LI><a href=\"$PHP_SELF?ADD=999991\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>"._QXZ("Servers Versions")."</a></FONT>\n";
+		echo "<LI><a href=\"$PHP_SELF?ADD=999991\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>"._QXZ("Servers Versions")."</a></FONT> | <a href=\"$PHP_SELF?ADD=999982\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>"._QXZ("Internal Process Logs")."</a></FONT>\n";
 		if ( (preg_match("/VERM Reports/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) )
 			{echo "<LI><a href=\"../VERM/VERM_admin.php\"><FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK size=2>"._QXZ("VERM - Enhanced Reporting Module")."</a></FONT>\n";}
 		echo "<BR><BR>\n";
@@ -53463,6 +53465,274 @@ if ($ADD==999983)
 	echo "</TABLE></center></form>\n";
 	}
 ##### END SERVER DRIVE PARTITIONS display page #####
+
+
+######################
+# ADD=999982 - INTERNAL PROCESS LOG display page
+######################
+if ($ADD==999982)
+	{
+	$servers=array();
+	$process_ct=array();
+	$last_time=array();
+	$last_process=array();
+	$last_action=array();
+	$last_stage=array();
+	$last_length=array();
+	$server_id=array();
+	$system_uptime=array();
+	$serverSQL='';
+	$serverURL='';
+	$backlink='';
+	$SERVERbacklink='';
+	if (strlen($query_date) < 4) {$query_date = 'today';}
+	$one_day_ago=date("Y-m-d", time()-(1*86400));
+	$two_days_ago=date("Y-m-d", time()-(2*86400));
+	$three_days_ago=date("Y-m-d", time()-(3*86400));
+	$four_days_ago=date("Y-m-d", time()-(4*86400));
+	$five_days_ago=date("Y-m-d", time()-(5*86400));
+	$six_days_ago=date("Y-m-d", time()-(6*86400));
+	if (strlen($server_ip) > 6)
+		{
+		$serverSQL = "and server_ip='$server_ip'";
+		$serverURL = "&server_ip=$server_ip";
+		$backlink = ""._QXZ(" FOR THIS SERVER").": $server_ip - <a href=\"$PHP_SELF?ADD=999982\">back</a>";
+		$SERVERbacklink = " - <a href=\"$PHP_SELF?ADD=999982$serverURL&query_date=$query_date\">back</a>";
+		}
+
+	$query_dateSQL = "up_time >= TIMESTAMP(CURDATE())";
+	if ($query_date == 'today') {$header_day = 'TODAY';}
+	if ($query_date == 'yesterday') {$header_day = 'YESTERDAY';   $query_dateSQL = "up_time >= \"$one_day_ago 00:00:00\" and up_time <= \"$one_day_ago 23:59:59\"";}
+	if ($query_date == $two_days_ago) {$header_day = $two_days_ago;   $query_dateSQL = "up_time >= \"$two_days_ago 00:00:00\" and up_time <= \"$two_days_ago 23:59:59\"";}
+	if ($query_date == $three_days_ago) {$header_day = $three_days_ago;   $query_dateSQL = "up_time >= \"$three_days_ago 00:00:00\" and up_time <= \"$three_days_ago 23:59:59\"";}
+	if ($query_date == $four_days_ago) {$header_day = $four_days_ago;   $query_dateSQL = "up_time >= \"$four_days_ago 00:00:00\" and up_time <= \"$four_days_ago 23:59:59\"";}
+	if ($query_date == $five_days_ago) {$header_day = $five_days_ago;   $query_dateSQL = "up_time >= \"$five_days_ago 00:00:00\" and up_time <= \"$five_days_ago 23:59:59\"";}
+	if ($query_date == $six_days_ago) {$header_day = $six_days_ago;   $query_dateSQL = "up_time >= \"$six_days_ago 00:00:00\" and up_time <= \"$six_days_ago 23:59:59\"";}
+
+	$internal_rows='';
+	$stmt="SELECT count(*),server_ip from vicidial_internal_log WHERE $query_dateSQL $serverSQL group by server_ip order by server_ip;";
+	$rslt=mysql_to_mysqli($stmt, $link);
+	$intlogs_to_print = mysqli_num_rows($rslt);
+	if ($DB > 0) {echo "DEBUG: $intlogs_to_print|$stmt|\n";}
+	$o=0;
+	while ($intlogs_to_print > $o) 
+		{
+		$rowx=mysqli_fetch_row($rslt);
+		$process_ct[$o] =	$rowx[0];
+		$servers[$o] =		$rowx[1];
+		$o++;
+		}
+	$row_color=0;
+	$o=0;   $o_ct=1;
+	while ($intlogs_to_print > $o) 
+		{
+		$stmt="SELECT up_time,process,action,stage,(UNIX_TIMESTAMP(up_time)-UNIX_TIMESTAMP(db_time)) from vicidial_internal_log WHERE $query_dateSQL and server_ip='$servers[$o]' order by up_time desc limit 1;";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$details_to_print = mysqli_num_rows($rslt);
+		if ($details_to_print > 0) 
+			{
+			$rowy=mysqli_fetch_row($rslt);
+			$last_time[$o] =	$rowy[0];
+			$last_process[$o] = $rowy[1];
+			$last_action[$o] =	$rowy[2];
+			$last_stage[$o] =	$rowy[3];
+			$last_length[$o] =	$rowy[4];
+			if ($last_length[$o] > 0) {$last_length[$o] = gmdate("H:i:s", $last_length[$o]);}
+			}
+		$stmt="SELECT server_id,system_uptime from servers WHERE server_ip='$servers[$o]' limit 1;";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$details_to_print = mysqli_num_rows($rslt);
+		if ($details_to_print > 0) 
+			{
+			$rowy=mysqli_fetch_row($rslt);
+			$server_id[$o] =		$rowy[0];
+			$system_uptime[$o] =	$rowy[1];
+			}
+		if (preg_match('/1$|3$|5$|7$|9$/i', $row_color))
+			{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
+		else
+			{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
+		$intlog_rows .= "<tr $bgcolor>\n";
+		$intlog_rows .= "<td align=center><font size=1>$o_ct</font></td>\n";
+		$intlog_rows .= "<td align=left><font size=2> &nbsp; <a href=\"$PHP_SELF?ADD=999982&server_ip=$servers[$o]&query_date=$query_date\"><font color=black>$servers[$o]</font></a> - $server_id[$o]</font></td>\n";
+		$intlog_rows .= "<td align=right><font size=2> &nbsp; $system_uptime[$o]</font></td>\n";
+		$intlog_rows .= "<td align=left><font size=2> &nbsp; $process_ct[$o]</font></td>\n";
+		$intlog_rows .= "<td align=left><font size=2> &nbsp; $last_process[$o]</font></td>\n";
+		$intlog_rows .= "<td align=center><font size=2>$last_time[$o]</font></td>\n";
+		$intlog_rows .= "<td align=right><font size=2>$last_length[$o] &nbsp; </font></td>\n";
+		$intlog_rows .= "<td align=center><font size=2>$last_action[$o]</font></td>\n";
+		$intlog_rows .= "<td align=left><font size=2> &nbsp; $last_stage[$o]</font></td>\n";
+		$intlog_rows .= "</tr>\n";
+		$o++;   $o_ct++;
+		}
+
+	if ($o < 1)
+		{
+		echo "<CENTER><BR><BR><FONT FACE=\"ARIAL,HELVETICA\" COLOR=RED SIZE=2>"._QXZ("There are no internal log entries on your system for this day")."</FONT><BR><BR></CENTER>\n";
+		}
+
+	echo "<TABLE><TR><TD>\n";
+	echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
+
+	echo "<br>"._QXZ("INTERNAL PROCESS LOG ENTRIES FOR ")."$header_day $backlink\n";
+	echo "<center><TABLE width=1050 cellspacing=3>\n";
+	echo "<tr bgcolor=#$SSstd_row3_background>\n";
+	echo "<td align=center><B> # </B></td>\n";
+	echo "<td align=left><font size=2><B> &nbsp; "._QXZ("Server IP")."</B></td>\n";
+	echo "<td align=center><font size=2><B> &nbsp; "._QXZ("uptime")."</B></td>\n";
+	echo "<td align=left><font size=2><B> &nbsp; "._QXZ("L ct")."</B></td>\n";
+	echo "<td align=left><font size=2><B> &nbsp; "._QXZ("Last Process")."</B></td>\n";
+	echo "<td align=center><font size=2><B>"._QXZ("Last Date-Time")."</B></td>\n";
+	echo "<td align=right><font size=2><B>"._QXZ("Last Length")."</B> &nbsp; </td>\n";
+	echo "<td align=center><font size=2><B>"._QXZ("Last Action")."</B></td>\n";
+	echo "<td align=left><font size=2><B> &nbsp; "._QXZ("Last Notes")."</B></td>\n";
+	echo "</tr>\n";
+	echo "$intlog_rows";
+	echo "</TABLE>\n";
+
+	if (strlen($server_ip) > 6)
+		{
+		$sum_process_ct=array();
+		$sum_process=array();
+		$sum_last_time=array();
+		$sum_last_action=array();
+		$sum_last_stage=array();
+		$sum_last_length=array();
+		$proclog_rows='';
+		$stmt="SELECT count(*),process from vicidial_internal_log WHERE $query_dateSQL $serverSQL group by process order by process;";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$proclogs_to_print = mysqli_num_rows($rslt);
+		if ($DB > 0) {echo "DEBUG: $proclogs_to_print|$stmt|\n";}
+		$o=0;
+		while ($proclogs_to_print > $o) 
+			{
+			$rowx=mysqli_fetch_row($rslt);
+			$sum_process_ct[$o] =	$rowx[0];
+			$sum_process[$o] =		$rowx[1];
+			$o++;
+			}
+		$row_color=0;
+		$o=0;   $o_ct=1;
+		while ($proclogs_to_print > $o) 
+			{
+			$stmt="SELECT up_time,action,stage,(UNIX_TIMESTAMP(up_time)-UNIX_TIMESTAMP(db_time)) from vicidial_internal_log WHERE $query_dateSQL and process='$sum_process[$o]' $serverSQL order by up_time desc limit 1;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$details_to_print = mysqli_num_rows($rslt);
+			if ($details_to_print > 0) 
+				{
+				$rowy=mysqli_fetch_row($rslt);
+				$sum_last_time[$o] =	$rowy[0];
+				$sum_last_action[$o] =	$rowy[1];
+				$sum_last_stage[$o] =	$rowy[2];
+				$sum_last_length[$o] =	$rowy[3];
+				if ($sum_last_length[$o] > 0) {$sum_last_length[$o] = gmdate("H:i:s", $sum_last_length[$o]);}
+				}
+			if (preg_match('/1$|3$|5$|7$|9$/i', $row_color))
+				{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
+			else
+				{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
+			$proclog_rows .= "<tr $bgcolor>\n";
+			$proclog_rows .= "<td align=center><font size=1>$o_ct</font></td>\n";
+			$proclog_rows .= "<td align=left><font size=2> &nbsp; <a href=\"$PHP_SELF?ADD=999982$serverURL&stage=$sum_process[$o]&query_date=$query_date\"><font color=black>$sum_process[$o]</font></a></font></td>\n";
+			$proclog_rows .= "<td align=left><font size=2> &nbsp; $sum_process_ct[$o]</font></td>\n";
+			$proclog_rows .= "<td align=center><font size=2>$sum_last_time[$o]</font></td>\n";
+			$proclog_rows .= "<td align=right><font size=2>$sum_last_length[$o] &nbsp; </font></td>\n";
+			$proclog_rows .= "<td align=left><font size=2> &nbsp; $sum_last_action[$o]</font></td>\n";
+			$proclog_rows .= "<td align=left><font size=2> &nbsp; $sum_last_stage[$o]</font></td>\n";
+			$proclog_rows .= "</tr>\n";
+			$o++;   $o_ct++;
+			}
+
+		echo "<br>"._QXZ("SUMMARY PROCESS LOG ENTRIES FOR THIS SERVER").": $server_ip $SERVERbacklink\n";
+		echo "<center><TABLE width=1050 cellspacing=3>\n";
+		echo "<tr bgcolor=#$SSstd_row3_background>\n";
+		echo "<td align=center><B> # </B></td>\n";
+		echo "<td align=left><font size=2><B> &nbsp; "._QXZ("Process")."</B></td>\n";
+		echo "<td align=left><font size=2><B> &nbsp; "._QXZ("Log ct")."</B></td>\n";
+		echo "<td align=center><font size=2><B>"._QXZ("Last Date-Time")."</B></td>\n";
+		echo "<td align=right><font size=2><B>"._QXZ("Last Length")."</B> &nbsp; </td>\n";
+		echo "<td align=left><font size=2> &nbsp; <B>"._QXZ("Last Action")."</B></td>\n";
+		echo "<td align=left><font size=2> &nbsp; <B>"._QXZ("Last Notes")."</B></td>\n";
+		echo "</tr>\n";
+		echo "$proclog_rows";
+		echo "</TABLE>\n";
+
+		if (strlen($stage) > 0)
+			{
+			$dt_time=array();
+			$dt_action=array();
+			$dt_stage=array();
+			$dt_length=array();
+			$dt_begin_time=array();
+			$dtlog_rows='';
+			$stmt="SELECT up_time,action,stage,(UNIX_TIMESTAMP(up_time)-UNIX_TIMESTAMP(db_time)),db_time from vicidial_internal_log WHERE $query_dateSQL and process='$stage' $serverSQL order by up_time desc limit 10000;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$dtlogs_to_print = mysqli_num_rows($rslt);
+			if ($DB > 0) {echo "DEBUG: $dtlogs_to_print|$stmt|\n";}
+			$o=0;
+			while ($dtlogs_to_print > $o) 
+				{
+				$rowz=mysqli_fetch_row($rslt);
+				$dt_time[$o] =		$rowz[0];
+				$dt_action[$o] =	$rowz[1];
+				$dt_stage[$o] =		$rowz[2];
+				$dt_length[$o] =	$rowz[3];
+				if ($dt_length[$o] > 0) {$dt_length[$o] = gmdate("H:i:s", $dt_length[$o]);}
+				$dt_begin_time[$o] =	$rowz[4];
+				$o++;
+				}
+			$row_color=0;
+			$o=0;   $o_ct=1;
+			while ($dtlogs_to_print > $o) 
+				{
+				if (preg_match('/1$|3$|5$|7$|9$/i', $row_color))
+					{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
+				else
+					{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
+				$dtlog_rows .= "<tr $bgcolor>\n";
+				$dtlog_rows .= "<td align=center><font size=1>$o_ct</font></td>\n";
+				$dtlog_rows .= "<td align=left><font size=2> &nbsp; $dt_begin_time[$o] to $dt_time[$o]</font></td>\n";
+				$dtlog_rows .= "<td align=right><font size=2>$dt_length[$o] &nbsp; </font></td>\n";
+				$dtlog_rows .= "<td align=center><font size=2>$dt_action[$o]</font></td>\n";
+				$dtlog_rows .= "<td align=left><font size=2> &nbsp; $dt_stage[$o]</font></td>\n";
+				$dtlog_rows .= "</tr>\n";
+				$o++;   $o_ct++;
+				}
+
+			echo "<br>"._QXZ("DETAIL PROCESS LOG ENTRIES FOR THIS SERVER PROCESS").": $server_ip - $stage\n";
+			echo "<center><TABLE width=1050 cellspacing=3>\n";
+			echo "<tr bgcolor=#$SSstd_row3_background>\n";
+			echo "<td align=center><B> # </B></td>\n";
+			echo "<td align=left><font size=2><B> &nbsp; "._QXZ("Date Time")."</B></td>\n";
+			echo "<td align=right><font size=2><B>"._QXZ("Length")."</B> &nbsp; </td>\n";
+			echo "<td align=center><font size=2><B>"._QXZ("Action")."</B></td>\n";
+			echo "<td align=center><font size=2><B>"._QXZ("Notes")."</B></td>\n";
+			echo "</tr>\n";
+			echo "$dtlog_rows";
+			echo "</TABLE>\n";
+			}
+		}
+
+	# alternate-day display options
+	if ($query_date == 'today') {$today_link = 'TODAY | ';  $header_day = 'TODAY';}
+	else {$today_link = "<a href=\"$PHP_SELF?ADD=999982$serverURL&stage=$stage&query_date=today\"><font size=2 color=black>TODAY</a> | ";}
+	if ($query_date == 'yesterday') {$yesterday_link = 'YESTERDAY | ';  $header_day = 'YESTERDAY';}
+	else {$yesterday_link = "<a href=\"$PHP_SELF?ADD=999982$serverURL&stage=$stage&query_date=yesterday\"><font size=2 color=black>YESTERDAY</a> | ";}
+	if ($query_date == $two_days_ago) {$two_days_link = "$two_days_ago | ";  $header_day = $two_days_ago;}
+	else {$two_days_link = "<a href=\"$PHP_SELF?ADD=999982$serverURL&stage=$stage&query_date=$two_days_ago\"><font size=2 color=black>$two_days_ago</a> | ";}
+	if ($query_date == $three_days_ago) {$three_days_link = "$three_days_ago | ";  $header_day = $three_days_ago;}
+	else {$three_days_link = "<a href=\"$PHP_SELF?ADD=999982$serverURL&stage=$stage&query_date=$three_days_ago\"><font size=2 color=black>$three_days_ago</a> | ";}
+	if ($query_date == $four_days_ago) {$four_days_link = "$four_days_ago | ";  $header_day = $four_days_ago;}
+	else {$four_days_link = "<a href=\"$PHP_SELF?ADD=999982$serverURL&stage=$stage&query_date=$four_days_ago\"><font size=2 color=black>$four_days_ago</a> | ";}
+	if ($query_date == $five_days_ago) {$five_days_link = "$five_days_ago | ";  $header_day = $five_days_ago;}
+	else {$five_days_link = "<a href=\"$PHP_SELF?ADD=999982$serverURL&stage=$stage&query_date=$five_days_ago\"><font size=2 color=black>$five_days_ago</a> | ";}
+	if ($query_date == $six_days_ago) {$six_days_link = "$six_days_ago";  $header_day = $six_days_ago;}
+	else {$six_days_link = "<a href=\"$PHP_SELF?ADD=999982$serverURL&stage=$stage&query_date=$six_days_ago\"><font size=2 color=black>$six_days_ago</a>";}
+
+	echo "<BR>$today_link$yesterday_link$two_days_link$three_days_link$four_days_link$five_days_link$six_days_link\n";
+	echo "</center>\n";
+	}
+##### END INTERNAL PROCESS LOG display page #####
 
 
 echo "</TD></TR></TABLE></center>\n";

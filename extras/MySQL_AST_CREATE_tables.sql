@@ -5479,6 +5479,16 @@ index (event_date),
 index (status)
 ) ENGINE=MyISAM;
 
+CREATE TABLE vicidial_internal_log (
+db_time DATETIME NOT NULL,
+up_time DATETIME NOT NULL,
+server_ip VARCHAR(15) NOT NULL,
+process VARCHAR(100) default '',
+action VARCHAR(100) default '',
+stage VARCHAR(255) default '',
+KEY intlog_dbtime_key (up_time)
+) ENGINE=MyISAM CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
 
 ALTER TABLE vicidial_email_list MODIFY message text character set utf8;
 
@@ -5899,4 +5909,4 @@ INSERT INTO `wallboard_reports` VALUES ('AGENTS_AND_QUEUES','Agents and Queues',
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1741',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1742',db_schema_update_date=NOW(),reload_timestamp=NOW();

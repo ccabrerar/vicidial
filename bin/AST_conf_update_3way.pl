@@ -11,7 +11,7 @@
 #      script's crontab entry that does some of these functions:
 #      AST_conf_update.pl --no-vc-3way-check
 #
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # 100811-2119 - First build, based upon AST_conf_update.pl script
 # 100928-1506 - Changed from hard-coded 60 minute limit to servers.vicidial_recording_limit
@@ -23,6 +23,7 @@
 # 200413-1356 - Fix for \n\n at the end of PING commands causing errors in AMI
 # 231117-2255 - Added AMI version 5 compatibility
 # 231118-1110 - Added override option of up to Xtimeout9 for 3WAY_... leave-3way sessions
+# 260515-1943 - Added internal logging
 #
 
 # constants
@@ -32,6 +33,7 @@ $US='__';
 $MT[0]='';
 $loops = '100000';
 $CLIdelay = '3';
+$script_name = 'AST_conf_update_3way.pl';
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -145,6 +147,8 @@ use Net::Telnet ();
 $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
  or die "Couldn't connect to database: " . DBI->errstr;
 
+$action='start';   $stage='LOGGED INTO MYSQL SERVER';   &internal_logger;
+
 ### Grab Server values from the database
 $stmtA = "SELECT telnet_host,telnet_port,ASTmgrUSERNAME,ASTmgrSECRET,ASTmgrUSERNAMEupdate,ASTmgrUSERNAMElisten,ASTmgrUSERNAMEsend,max_vicidial_trunks,answer_transfer_agent,local_gmt,ext_context,vicidial_recording_limit,asterisk_version,vd_server_logs FROM servers where server_ip = '$server_ip';";
 if ($DB) {print "|$stmtA|\n";}
@@ -210,6 +214,7 @@ $event_string = "AST_conf_update_3way.pl script starting: $year-$mon-$mday $hour
  &event_logger;
 
 $loop_counter=0;
+$iLog_ct=0;
 
 while ($loops > $loop_counter)
 	{
@@ -490,6 +495,16 @@ while ($loops > $loop_counter)
 		sleep(10);
 		$loop_counter=9999999;
 		}
+
+	# update internal process log
+	$iLog_ct++;
+	if ($iLog_ct =~ /00$/) 
+		{
+		$stmtA = "UPDATE vicidial_internal_log SET up_time=NOW(), action='running', stage='Loops: $iLog_ct' WHERE process='$script_name' and server_ip='$server_ip' order by db_time desc limit 1;";
+		if($DB){print STDERR "|$stmtA|";}
+		my $affected_rows = $dbhA->do($stmtA);
+		if($DB){print STDERR "$affected_rows|\n";}
+		}
 	}
 
 
@@ -556,4 +571,12 @@ sub event_logger
 		close(Lout);
 		}
 	$event_string='';
+	}
+
+sub internal_logger
+	{
+	$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), process='$script_name', server_ip='$server_ip', action='$action', stage='$stage';";
+	if($DB){print STDERR "|$stmtA|";}
+	my $affected_rows = $dbhA->do($stmtA);
+	if($DB){print STDERR "$affected_rows|\n";}
 	}

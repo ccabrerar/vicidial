@@ -11,12 +11,14 @@
 # 220414-1210 - Initial build
 # 250305-2104 - Fix for missing vicidial_confbridges limit purge code
 # 250326-2102 - Fixes for ConfBridge issues
+# 260515-1939 - Added internal logging
 #
 
 # constants
 $DB=0;  # Debug flag, set to 0 for no debug messages, lots of output
 $DBX=0;
 $run_check=1; # concurrency check
+$script_name = 'AST_conf_update_screen.pl';
 
 # loop time in seconds
 $loop_time = 0.4;
@@ -123,6 +125,8 @@ if (try_load($module))
 
 $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
 or die "Couldn't connect to database: " . DBI->errstr;
+
+$action='start';   $stage='LOGGED INTO MYSQL SERVER';   &internal_logger;
 
 ### Grab Server values from the database
 $stmtA = "SELECT telnet_host,telnet_port,ASTmgrUSERNAME,ASTmgrSECRET,ASTmgrUSERNAMEupdate,ASTmgrUSERNAMElisten,ASTmgrUSERNAMEsend,max_vicidial_trunks,answer_transfer_agent,local_gmt,ext_context,vd_server_logs,asterisk_version,conf_engine,conf_update_interval,vicidial_recording_limit FROM servers where server_ip = '$server_ip';";
@@ -248,6 +252,7 @@ else
 	### BEGIN manager event handling for asterisk version >= 13
 	$endless_loop = 1;
 	$loop_count = 0;
+	$iLog_ct=0;
 
 	# get the number of microseconds the loop is supposed to take
 	$loop_time_usec = $loop_time * 1000000;
@@ -795,7 +800,16 @@ else
 			# sleep it
 			usleep($sleep_usec);
 			}
-			
+
+		# update internal process log
+		$iLog_ct++;
+		if ($iLog_ct =~ /00$/) 
+			{
+			$stmtA = "UPDATE vicidial_internal_log SET up_time=NOW(), action='running', stage='Loops: $iLog_ct' WHERE process='$script_name' and server_ip='$server_ip' order by db_time desc limit 1;";
+			if($DB){print STDERR "|$stmtA|";}
+			my $affected_rows = $dbhA->do($stmtA);
+			if($DB){print STDERR "$affected_rows|\n";}
+			}
 		}
 	}
 
@@ -855,6 +869,14 @@ sub event_logger
 	$event_string='';
 	}
 
+
+sub internal_logger
+	{
+	$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), process='$script_name', server_ip='$server_ip', action='$action', stage='$stage';";
+	if($DB){print STDERR "|$stmtA|";}
+	my $affected_rows = $dbhA->do($stmtA);
+	if($DB){print STDERR "$affected_rows|\n";}
+	}
 
 
 # subroutine to parse the asterisk version

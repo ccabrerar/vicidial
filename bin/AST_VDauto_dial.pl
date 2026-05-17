@@ -25,7 +25,7 @@
 # It is good practice to keep this program running by placing the associated 
 # KEEPALIVE script running every minute to ensure this program is always running
 #
-# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG:
 # 50125-1201 - Changed dial timeout to 120 seconds from 180 seconds
@@ -162,10 +162,12 @@
 # 240731-0814 - Fix for 2nd DB connection timing out while running
 # 240917-1719 - Change multiple after-call processing to only run for active_voicemail_server
 # 251205-1455 - Added SHARED_ADAPT_PERCENTMAX option
+# 260515-1937 - Added internal logging
 #
 
-$build='251205-1455';
+$build='260515-1937';
 $script='AST_VDauto_dial';
+$script_name = 'AST_VDauto_dial.pl';
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
 	{
@@ -298,6 +300,8 @@ or die "Couldn't connect to database: " . DBI->errstr;
 $dbhC = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
 or die "Couldn't connect to database: " . DBI->errstr;
 
+$action='start';   $stage='LOGGED INTO MYSQL SERVER '.$build;   &internal_logger;
+
 ### Grab Server values from the database
 $stmtA = "SELECT telnet_host,telnet_port,ASTmgrUSERNAME,ASTmgrSECRET,ASTmgrUSERNAMEupdate,ASTmgrUSERNAMElisten,ASTmgrUSERNAMEsend,max_vicidial_trunks,answer_transfer_agent,local_gmt,ext_context,vd_server_logs,vicidial_recording_limit,asterisk_version,routing_prefix FROM servers where server_ip = '$server_ip';";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
@@ -418,6 +422,8 @@ while($one_day_interval > 0)
 	{
 	$endless_loop=5760000;		# 30 days minutes at XXX seconds per loop
 	$stat_count=1;
+	$iLog_ct=0;
+	$iLog_calls=0;
 
 	while($endless_loop > 0)
 		{
@@ -2405,6 +2411,7 @@ while($one_day_interval > 0)
 										#	usleep(1*50*1000);
 											usleep(1*$per_call_delay*1000);
 											$calls_placed++;
+											$iLog_calls++;
 											}
 										}
 									$call_CMPIPct++;
@@ -5288,6 +5295,16 @@ while($one_day_interval > 0)
 			$stmtA = "INSERT INTO vicidial_shared_log SET log_time='$now_date',total_agents='$shared_dial_camp_override',debug_output='BUILD: $build\n$debug_shared_output$temp_dead_debug',campaign_id='-SHARE-',server_ip='$VARserver_ip';";
 			$affected_rows = $dbhA->do($stmtA);
 			}
+
+		# update internal process log
+		$iLog_ct++;
+		if ($iLog_ct =~ /00$/) 
+			{
+			$stmtA = "UPDATE vicidial_internal_log SET up_time=NOW(), action='running', stage='Loops: $iLog_ct   Events: $iLog_calls' WHERE process='$script_name' and server_ip='$server_ip' order by db_time desc limit 1;";
+			if($DB){print STDERR "|$stmtA|";}
+			my $affected_rows = $dbhA->do($stmtA);
+			if($DB){print STDERR "$affected_rows|\n";}
+			}
 		}
 
 
@@ -5886,6 +5903,14 @@ sub aad_output
 	$aad_string='';
 	}
 
+
+sub internal_logger
+	{
+	$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), process='$script_name', server_ip='$server_ip', action='$action', stage='$stage';";
+	if($DB){print STDERR "|$stmtA|";}
+	my $affected_rows = $dbhA->do($stmtA);
+	if($DB){print STDERR "$affected_rows|\n";}
+	}
 
 # subroutine to parse the asterisk version
 # and return a hash with the various part
