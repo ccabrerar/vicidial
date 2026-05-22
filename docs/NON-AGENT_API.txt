@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2025-07-18
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2026-05-19
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -231,6 +231,10 @@ Changes:
 241004-1518 - Added webform_one-three variables to the update_campaign function
 241113-1600 - Added in_groups as input option for update_user function
 250720-1841 - Added hopper_bulk_insert function
+251205-1456 - Added ADAPT_PERCENTMAX dial_method
+260123-1020 - pause_sec fix in agent_stats_export
+260506-1525 - small fix for campaign changes
+260519-1647 - Code updates for PHP8 compatibility, and json output format
 
 
 API Functions use the 'function' variable
@@ -398,7 +402,7 @@ campaign_id -		2-8 characters
 ignore_agentdirect -	Y or N, default is N. Exclude AGENTDIRECT in-groups from results or not
 
 SETTINGS FIELDS-
-stage -			the format of the exported data: csv, tab, pipe(default)
+stage -			the format of the exported data: csv, tab, json, pipe(default)
 header -		include a header(YES) or not(NO). This is optional, default is not to include a header
 
 Example URL strings for API calls:
@@ -431,7 +435,7 @@ OPTIONAL FIELDS-
 campaign_id -		2-8 characters, for all campaigns, leave blank
 
 SETTINGS FIELDS-
-stage -			the format of the exported data: csv, tab, pipe(default)
+stage -			the format of the exported data: csv, tab, json, pipe(default)
 header -		include a header(YES) or not(NO). This is optional, default is not to include a header
 
 Example URL strings for API calls:
@@ -460,7 +464,7 @@ source -		description of what originated the API call (maximum 20 characters)
 campaign_id -		2-8 characters
 
 SETTINGS FIELDS-
-stage -			the format of the exported data: csv, tab, pipe(default)
+stage -			the format of the exported data: csv, tab, json, pipe(default)
 header -		include a header(YES) or not(NO). This is optional, default is not to include a header
 
 OPTIONAL FIELDS-
@@ -535,7 +539,7 @@ uniqueid -		uniqueid of the call, works best included with another search field
 extension -		3-100 characters, the extension listed in the recording_log
 
 SETTINGS FIELDS-
-stage -			the format of the exported data: csv, tab, pipe(default)
+stage -			the format of the exported data: csv, tab, json, pipe(default)
 header -		include a header(YES) or not(NO). This is optional, default is not to include a header
 duration -		Y or N, default is N. Includes the duration of the recording in the output(in seconds), before the location
 
@@ -571,7 +575,7 @@ phone_number -		2-20 characters, the DID that you want to pull logs for
 date -			date of the calls to pull (must be in YYYY-MM-DD format)
 
 SETTINGS FIELDS-
-stage -			the format of the exported data: csv, tab, pipe(default)
+stage -			the format of the exported data: csv, tab, json, pipe(default)
 header -		include a header(YES) or not(NO). This is optional, default is not to include a header
 
 NOTES- 
@@ -602,7 +606,7 @@ REQUIRED FIELDS-
 phone_number -		the phone number(s) that you want to pull logs for. allows more than one, separated by commas
 
 SETTINGS FIELDS-
-stage -			the format of the exported data: csv, tab, pipe(default)
+stage -			the format of the exported data: csv, tab, json, pipe(default)
 header -		include a header(YES) or not(NO). This is optional, default is not to include a header
 detail -		(ALL) calls or only (LAST) call. default is (ALL)
 type -			(IN)inbound, (OUT)outbound or (ALL) calls. defauls is (OUT) calls
@@ -641,7 +645,7 @@ datetime_end -		end date/time of the agent activity to pull (must be in "YYYY-MM
 SETTINGS FIELDS-
 agent_user -		2-20 characters, use only for one agent stats <optional>
 campaign_id -		2-8 characters, use only for one campaign stats <optional>
-stage -			the format of the exported data: csv, tab, pipe(default)
+stage -			the format of the exported data: csv, tab, json, pipe(default)
 header -		include a header(YES) or not(NO). This is optional, default is not to include a header
 time_format -		time format('H','HF','M','S') in hours, minutes or seconds: H = 1:23:45, M = 83:45, S = 5023  (default 'HF')
 				* HF will force hour format even for zero seconds time "0:00:00"
@@ -680,7 +684,7 @@ source -		description of what originated the API call (maximum 20 characters)
 user_groups -		pipe-delimited list of user groups to get status information for "ADMIN|AGENTS"
 
 SETTINGS FIELDS-
-stage -			the format of the exported data: csv, tab, pipe(default)
+stage -			the format of the exported data: csv, tab, json, pipe(default)
 header -		include a header(YES) or not(NO). This is optional, default is not to include a header
 
 NOTES- 
@@ -711,7 +715,7 @@ source -		description of what originated the API call (maximum 20 characters)
 in_groups -		pipe-delimited list of inbound groups to get status information for "SALESLINE|SUPPORT"
 
 SETTINGS FIELDS-
-stage -			the format of the exported data: csv, tab, pipe(default)
+stage -			the format of the exported data: csv, tab, json, pipe(default)
 header -		include a header(YES) or not(NO). This is optional, default is not to include a header
 
 NOTES- 
@@ -741,7 +745,7 @@ source -		description of what originated the API call (maximum 20 characters)
 agent_user -		2-20 characters, use only for one agent status
 
 SETTINGS FIELDS-
-stage -			the format of the exported data: csv, tab, pipe(default)
+stage -			the format of the exported data: csv, tab, json, pipe(default)
 header -		include a header(YES) or not(NO). This is optional, default is not to include a header
 include_ip -		include computer_ip field(YES) or not(NO), the last ip address that the agent used to log in to the agent screen
 
@@ -775,7 +779,7 @@ source -		description of what originated the API call (maximum 20 characters)
 agent_user -		2-20 characters, use only for one user
 
 SETTINGS FIELDS-
-stage -			the format of the exported data: csv, tab, pipe(default)
+stage -			the format of the exported data: csv, tab, json, pipe(default)
 header -		include a header(YES) or not(NO). This is optional, default is not to include a header
 
 Example URL strings for API calls:
@@ -803,7 +807,7 @@ source -		description of what originated the API call (maximum 20 characters)
 call_id -		16-40 characters
 
 SETTINGS FIELDS-
-stage -			the format of the exported data: csv, tab, pipe(default)
+stage -			the format of the exported data: csv, tab, json, pipe(default)
 header -		include a header(YES) or not(NO). This is optional, default is not to include a header
 detail -		if set to YES, more call info will be output. Default is NO, only callid and customer talk time will be output
 
@@ -875,7 +879,7 @@ force_entry_list_id -	3-12 digits, will override the lead's assigned entry_list_
 archived_lead -		Y or N, Setting this to Y will query only the vicidial_list_archive leads for the leads details, default is N.
 
 SETTINGS FIELDS-
-stage -			the format of the exported data: csv, tab, newline, pipe(default)
+stage -			the format of the exported data: csv, tab, newline, json, pipe(default)
 header -		include a header(YES) or not(NO). This is optional, default is not to include a header
 
 Example URL strings for API calls:
@@ -992,7 +996,7 @@ source -		description of what originated the API call (maximum 20 characters)
 call_id -		16-40 characters
 
 SETTINGS FIELDS-
-stage -			the format of the exported data: csv, tab, newline, pipe(default)
+stage -			the format of the exported data: csv, tab, newline, json, pipe(default)
 header -		include a header(YES) or not(NO). This is optional, default is not to include a header
 
 Example URL strings for API calls:
@@ -1022,7 +1026,7 @@ source -		description of what originated the API call (maximum 20 characters)
 lead_id -		16-40 characters
 
 SETTINGS FIELDS-
-stage -			the format of the exported data: csv, tab, newline, pipe(default)
+stage -			the format of the exported data: csv, tab, newline, json, pipe(default)
 header -		include a header(YES) or not(NO). This is optional, default is not to include a header
 search_location -	Where to check for scheduled callback records in the system, can select only one(default is CURRENT):
 				CURRENT - check for active scheduled callbacks
@@ -2202,7 +2206,7 @@ source -		description of what originated the API call (maximum 20 characters)
 SETTINGS FIELDS- (optional)
 leads_counts -		Y or N, will include the counts of all leads and NEW status leads in the response, default is 'N'
 dialable_count -	Y or N, will use the list's campaign settings to provide a count of how many are dialable right now, default is 'N'
-stage -			the format of the exported data: csv, tab, pipe(default)
+stage -			the format of the exported data: csv, tab, json, pipe(default)
 header -		include a header(YES) or not(NO). This is optional, default is not to include a header
 archived_lead -		Y or N, Setting this to Y will query only the vicidial_list_archive leads for the leads count, default is N.
 
@@ -2239,7 +2243,7 @@ list_id -		must be all numbers, 2-14 digits, OR use "---ALL---" for all lists
 source -		description of what originated the API call (maximum 20 characters)
 
 SETTINGS FIELDS- (optional)
-stage -			the format of the exported data: csv, tab, pipe(default)
+stage -			the format of the exported data: csv, tab, json, pipe(default)
 header -		include a header(YES) or not(NO). This is optional, default is not to include a header
 custom_order -		the order to put the custom fields into: table_order, alpha_up, alpha_down (default is 'table_order')
 
@@ -2331,7 +2335,7 @@ user_groups -		pipe-delimited list of user groups to get status information for 
 show_sub_status -	show agent sub-status and pause_code, requires log lookup, (YES|NO) default is NO
 
 SETTINGS FIELDS-
-stage -			the format of the exported data: csv, tab, pipe(default)
+stage -			the format of the exported data: csv, tab, json, pipe(default)
 header -		include a header(YES) or not(NO). This is optional, default is not to include a header
 
 Example URL strings for API calls:
@@ -2552,7 +2556,7 @@ entry_type -		One of these: 'campaign'
 url_type -		One of these: 'dispo','start','addlead','noagent'
 alt_url_id -		Digits only, 'NEW' or 'LIST'. Must be a valid alt URL ID for this campaign, or set to 'NEW' to add a new ALT URL
 			   NOTE: If only one Alt URL exists for this campaign and type, then this field can be left blank
-			   NOTE: 'stage'(csv, tab, pipe[default]) and 'header'(YES, NO) options are available for an alt_url_id of 'LIST'
+			   NOTE: 'stage'(csv, tab, json, pipe[default]) and 'header'(YES, NO) options are available for an alt_url_id of 'LIST'
 
 EDITABLE FIELDS- 
 active -		One of these: 'Y','N', default is 'N'
@@ -2619,7 +2623,7 @@ source -		description of what originated the API call (maximum 20 characters)
 preset_name -		name of the preset in the system
 			   NOTE: If only one preset exists for this campaign, then this field can be left blank
 action -		'UPDATE', 'NEW', 'DELETE' or 'LIST' (default is 'UPDATE')
-			   NOTE: 'stage'(csv, tab, pipe[default]) and 'header'(YES, NO) options are available for an action of 'LIST'
+			   NOTE: 'stage'(csv, tab, json, pipe[default]) and 'header'(YES, NO) options are available for an action of 'LIST'
 
 EDITABLE FIELDS- 
 preset_hide_number -	One of these: 'Y','N', default is 'N'

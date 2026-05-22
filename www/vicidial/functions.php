@@ -4,7 +4,7 @@
 #
 # functions for administrative scripts and reports
 #
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 #
 # CHANGES:
@@ -44,9 +44,10 @@
 # 240401-1459 - Added check for vicidial_pending_ar entries in user_authorization
 # 240801-1130 - Code updates for PHP8 compatibility
 # 240805-2103 - Added PHP_error_reporting_OVERRIDE options
+# 260521-1644 - Code updates for PHP8 compatibility, added ConvertToJSON function
 #
 
-$PHP_error_reporting_OVERRIDE=0;
+$PHP_error_reporting_OVERRIDE=0; $php_err_suppression_value=0;
 if (file_exists('options.php'))
         {
         require('options.php');
@@ -65,7 +66,7 @@ if ($PHP_error_reporting_OVERRIDE > 0)
 ##### BEGIN validate user login credentials, check for failed lock out #####
 function user_authorization($user,$pass,$user_option,$user_update,$api_call)
 	{
-	global $link,$php_script;
+	global $link,$php_script,$DB;
 #	require("dbconnect_mysqli.php");
 
 	#############################################
@@ -103,6 +104,7 @@ function user_authorization($user,$pass,$user_option,$user_update,$api_call)
 	$pass = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$pass);
 
 	$passSQL = "pass='$pass'";
+	$login_problem=0;
 
 	if ($SSpass_hash_enabled > 0)
 		{
@@ -401,6 +403,7 @@ function array_group_count($array, $sort = false)
 ##### BEGIN bar chart using max stats data #####
 function horizontal_bar_chart($campaign_id,$days_graph,$title,$link,$metric,$metric_name,$more_link,$END_DATE,$download_link,$chart_title)
 	{
+	global $PHP_SELF;
 	$stats_start_time = time();
 	if ($END_DATE) 
 		{
@@ -501,7 +504,7 @@ function horizontal_bar_chart($campaign_id,$days_graph,$title,$link,$metric,$met
 
 
 ##### BEGIN download max stats data #####
-function download_max_system_stats($campaign_id,$days_graph,$title,$metric,$metric_name,$END_DATE)
+function download_max_system_stats($campaign_id,$days_graph,$title="",$metric,$metric_name,$END_DATE)
 	{
 	global $CSV_text, $link;
 	$stats_start_time = time();
@@ -516,6 +519,7 @@ function download_max_system_stats($campaign_id,$days_graph,$title,$metric,$metr
 	$Btotal_calls[0]=0;
 	$link_text='';
 	$i=0;
+	$max_count=0;
 
 	### get stats for last X days
 	$stmt="SELECT stats_date,$metric from vicidial_daily_max_stats where campaign_id='$campaign_id' and stats_flag='OPEN' and stats_date<='$Bstats_date[0]';";
@@ -576,7 +580,7 @@ function download_max_system_stats($campaign_id,$days_graph,$title,$metric,$metr
 		$i=0;
 		while($i < $days_graph)
 			{
-			$bar_width = intval($max_multi * $Btotal_calls[$i]);
+			# $bar_width = intval($max_multi * $Btotal_calls[$i]);
 			if ($Btotal_calls[$i] < 1) {$Btotal_calls[$i] = "-none-";}
 			$CSV_text.="\"$Bstats_date[$i]\",\"$Btotal_calls[$i]\"\n";
 			$i++;
@@ -592,7 +596,7 @@ function download_max_system_stats($campaign_id,$days_graph,$title,$metric,$metr
 
 function lookup_gmt($phone_code,$USarea,$state,$LOCAL_GMT_OFF_STD,$Shour,$Smin,$Ssec,$Smon,$Smday,$Syear,$postalgmt,$postal_code,$owner,$USprefix)
 	{
-	global $link;
+	global $link, $DB, $DBX, $tz_method;
 
 	$postalgmt_found=0;
 	if ( (preg_match("/POSTAL/i",$postalgmt)) && (strlen($postal_code)>4) )
@@ -1393,9 +1397,11 @@ function lookup_gmt($phone_code,$USarea,$state,$LOCAL_GMT_OFF_STD,$Shour,$Smin,$
 	}
 
 
-function mysql_to_mysqli($stmt, $link) 
+function mysql_to_mysqli($stmt, $link, $debug=0) 
 	{
+	if ($debug) {print $stmt."\n";}
 	$rslt=mysqli_query($link, $stmt);
+	if ($debug) {print " - ".mysqli_num_rows($rslt)."<BR>\n";}
 	return $rslt;
 	}
 
@@ -1632,7 +1638,7 @@ if (isset($camp_lists))
 				$g++;
 				}
 
-			$stmt="SELECT call_time_id,call_time_name,call_time_comments,ct_default_start,ct_default_stop,ct_sunday_start,ct_sunday_stop,ct_monday_start,ct_monday_stop,ct_tuesday_start,ct_tuesday_stop,ct_wednesday_start,ct_wednesday_stop,ct_thursday_start,ct_thursday_stop,ct_friday_start,ct_friday_stop,ct_saturday_start,ct_saturday_stop,ct_state_call_times FROM vicidial_call_times where call_time_id='$local_call_time';";
+			$stmt="SELECT call_time_id,call_time_name,call_time_comments,ct_default_start,ct_default_stop,ct_sunday_start,ct_sunday_stop,ct_monday_start,ct_monday_stop,ct_tuesday_start,ct_tuesday_stop,ct_wednesday_start,ct_wednesday_stop,ct_thursday_start,ct_thursday_stop,ct_friday_start,ct_friday_stop,ct_saturday_start,ct_saturday_stop,ct_state_call_times,ct_holidays FROM vicidial_call_times where call_time_id='$local_call_time';";
 			if ($DB) {$dialable_output .= "$stmt\n";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 			$rowx=mysqli_fetch_row($rslt);
@@ -1697,6 +1703,7 @@ if (isset($camp_lists))
 			$ct_state_gmt_SQL = '';
 			$ct_srs=0;
 			$b=0;
+			$state_rules=array();
 			if (strlen($Gct_state_call_times)>2)
 				{
 				$state_rules = explode('|',$Gct_state_call_times);
@@ -1704,7 +1711,7 @@ if (isset($camp_lists))
 				}
 			while($ct_srs >= $b)
 				{
-				if (strlen($state_rules[$b])>1)
+				if (isset($state_rules[$b]) && strlen($state_rules[$b])>1)
 					{
 					$stmt="SELECT state_call_time_id,state_call_time_state,state_call_time_name,state_call_time_comments,sct_default_start,sct_default_stop,sct_sunday_start,sct_sunday_stop,sct_monday_start,sct_monday_stop,sct_tuesday_start,sct_tuesday_stop,sct_wednesday_start,sct_wednesday_stop,sct_thursday_start,sct_thursday_stop,sct_friday_start,sct_friday_stop,sct_saturday_start,sct_saturday_stop from vicidial_state_call_times where state_call_time_id='$state_rules[$b]';";
 					$rslt=mysql_to_mysqli($stmt, $link);
@@ -1997,8 +2004,8 @@ if (isset($camp_lists))
 			$o=0;
 			while ($Ds_to_print > $o) 
 				{
-				$o++;
 				$Dsql .= "'$Dstatuses[$o]',";
+				$o++;
 				}
 			$Dsql = preg_replace("/,$/","",$Dsql);
 			if (strlen($Dsql) < 2) {$Dsql = "''";}
@@ -2046,6 +2053,8 @@ if (isset($camp_lists))
 			if ($DB) {$dialable_output .= "$camplists_ct|$stmt\n";}
 			$k=0;
 			$camp_lists='';
+			$list_id_sql='';
+			$LCTlist_id_sql='';
 			while ($camplists_ct > $k)
 				{
 				$rowA = mysqli_fetch_row($rslt_list);
@@ -2167,6 +2176,7 @@ if (isset($camp_lists))
 					$ct_state_gmt_SQL = '';
 					$ct_srs=0;
 					$b=0;
+					$state_rules=array();
 					if (strlen($Gct_state_call_times)>2)
 						{
 						$state_rules = explode('|',$Gct_state_call_times);
@@ -2174,7 +2184,7 @@ if (isset($camp_lists))
 						}
 					while($ct_srs >= $b)
 						{
-						if (strlen($state_rules[$b])>1)
+						if (isset($state_rules[$b]) && strlen($state_rules[$b])>1)
 							{
 							$stmt = "SELECT state_call_time_id,state_call_time_state,state_call_time_name,state_call_time_comments,sct_default_start,sct_default_stop,sct_sunday_start,sct_sunday_stop,sct_monday_start,sct_monday_stop,sct_tuesday_start,sct_tuesday_stop,sct_wednesday_start,sct_wednesday_stop,sct_thursday_start,sct_thursday_stop,sct_friday_start,sct_friday_stop,sct_saturday_start,sct_saturday_stop,ct_holidays from vicidial_state_call_times where state_call_time_id='$state_rules[$b]';";
 							$rslt=mysql_to_mysqli($stmt, $link);
@@ -2565,4 +2575,49 @@ if ($only_return < 1)
 
 ##### END calculate what gmt_offset_now values are within the allowed local_call_time setting ###
 }
+
+function ConvertToJSON($result,$result_reason,$header="",$data="",$key="")
+	{
+	$json_output="{\n\"result\": \"$result\",\n\"result_reason\": \"$result_reason\",\n";
+	$data=trim($data);
+	if (strlen($data)>0)
+		{
+		$json_output.="\n\"data\": [\n";
+		$row_array=explode("\n", $data);
+
+		if ($header=="YES")
+			{
+			$key_array=explode("|", $row_array[0]);
+			$i=1;
+			}
+		else
+			{
+			$key_array=array();
+			$i=0;
+			}
+
+		while ($i<count($row_array))
+			{
+			$json_output.="{";
+
+			$data_array=explode("|", $row_array[$i]);
+			for ($j=0; $j<count($data_array); $j++)
+				{
+				if (!isset($key_array[$j])) {$key_array[$j]="$j";}
+
+				$json_output.="\"".$key_array[$j]."\": \"".$data_array[$j]."\", ";
+				}
+			$json_output=preg_replace('/, $/', '', $json_output);
+			$json_output.="},\n";
+			$i++;
+			}
+		$json_output=preg_replace('/,\n$/', '', $json_output);
+		$json_output.="\n]\n";
+		}
+	$json_output=preg_replace('/,\n$/', '', $json_output);
+	$json_output.="}";
+
+	return $json_output."\n";
+	}
+
 ?>

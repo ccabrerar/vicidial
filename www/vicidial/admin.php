@@ -4542,6 +4542,9 @@ else
 	$survey_fourth_exten = preg_replace('/[^ \,\*\#0-9\p{L}]/u','',$survey_fourth_exten);
 	$preset_dtmf = preg_replace('/[^ \,\*\#0-9\p{L}]/u','',$preset_dtmf);
 
+	### ALPHA-NUMERIC and underscore 
+	$qc_statuses_id = preg_replace('/[^_0-9\p{L}]/u','',$qc_statuses_id);
+
 	### ALPHA-NUMERIC and underscore and dash
 	$agi_output = preg_replace('/[^-_0-9\p{L}]/u','',$agi_output);
 	$ASTmgrSECRET = preg_replace('/[^-_0-9\p{L}]/u','',$ASTmgrSECRET);
@@ -6338,12 +6341,13 @@ if ($SSscript_remove_js > 0)
 # 260410-1953 - Fix for max_inbound_auto_reenable feature in 4B admin screen
 # 260416-0909 - Added modify_settings_containers user setting
 # 260516-2350 - Added Internal Process Logs display page
+# 260521-2044 - Fixes for input variable filtering
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-958a';
-$build = '260516-2350';
+$admin_version = '2.14-959a';
+$build = '260521-2044';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -9108,6 +9112,7 @@ if ($ADD==121)
 		$p=0;   $DNCadded=0;   $DNCnotadded=0;   $DNCdeleted=0;   $DNCnotdeleted=0;
 		while ($p < $PNct)
 			{
+			$PN[$p] = preg_replace('/[^\,\:\+\*\#\.\_0-9\p{L}]/u','',$PN[$p]);
 			if ( (preg_match('/delete/',$stage)) and ($LOGdelete_from_dnc > 0) )
 				{
 				##### BEGIN DELETE FROM DNC #####
@@ -9498,6 +9503,7 @@ if ($ADD==171)
 		$p=0;
 		while ($p < $PNct)
 			{
+			$PN[$p] = preg_replace('/[^\,\:\+\*\#\.\_0-9\p{L}]/u','',$PN[$p]);
 			if ( (preg_match('/delete/',$stage)) and ($LOGdelete_from_dnc > 0) )
 				{
 				$stmt="SELECT count(*) from vicidial_filter_phone_numbers where phone_number='$PN[$p]' and filter_phone_group_id='$filter_phone_group_id';";
@@ -9617,6 +9623,7 @@ if ($ADD==3211)
 					{
 					if (strlen($PN[$p]) > 0)
 						{
+						$PN[$p] = preg_replace('/[^\,\:\+\*\#\.\_0-9\p{L}]/u','',$PN[$p]);
 						$ac_found=0;
 						$vaf=0;
 						while ($vaf_ct > $vaf)
@@ -14951,6 +14958,7 @@ if ($ADD==231111111)
 				$shift_weekdays_ct = count($shift_weekdays);
 				while ($p <= $shift_weekdays_ct)
 					{
+					$shift_weekdays[$p] = preg_replace('/[^0-9]/','',$shift_weekdays[$p]);
 					$SHIFT_weekdays .= "$shift_weekdays[$p]";
 					$p++;
 					}
@@ -18362,6 +18370,7 @@ if ($ADD==48)
 			$qc_statuses_ct = count($qc_statuses);
 			while ($p < $qc_statuses_ct)
 				{
+				$qc_statuses[$p] = preg_replace('/[^-_0-9\p{L}]/u','',$qc_statuses[$p]);
 				$QC_statuses .= " $qc_statuses[$p]";
 				$p++;
 				}
@@ -19025,6 +19034,7 @@ if ($ADD==4111 || $ADD==4811 || $ADD==4911)
 					$qc_statuses_ct = count($qc_statuses);
 					while ($p < $qc_statuses_ct)
 						{
+						$qc_statuses[$p] = preg_replace('/[^-_0-9\p{L}]/u','',$qc_statuses[$p]);
 						$QC_statuses .= " $qc_statuses[$p]";
 						$p++;
 						}
@@ -19033,6 +19043,7 @@ if ($ADD==4111 || $ADD==4811 || $ADD==4911)
 					$qc_lists_ct = count($qc_lists);
 					while ($p < $qc_lists_ct)
 						{
+						$qc_lists[$p] = preg_replace('/[^-_0-9\p{L}]/u','',$qc_lists[$p]);
 						$QC_lists .= " $qc_lists[$p]";
 						$p++;
 						}
@@ -20143,6 +20154,7 @@ if ($ADD==431111111)
 			$shift_weekdays_ct = count($shift_weekdays);
 			while ($p <= $shift_weekdays_ct)
 				{
+				$shift_weekdays[$p] = preg_replace('/[^0-9]/','',$shift_weekdays[$p]);
 				$SHIFT_weekdays .= "$shift_weekdays[$p]";
 				$p++;
 				}
@@ -21276,6 +21288,7 @@ if ($ADD==494111111111)
 			$report_weekdays_ct = count($report_weekdays);
 			while ($p <= $report_weekdays_ct)
 				{
+				$report_weekdays[$p] = preg_replace('/[^0-9]/','',$report_weekdays[$p]);
 				$REPORT_weekdays .= "$report_weekdays[$p]";
 				$p++;
 				}
@@ -34066,6 +34079,7 @@ if ($ADD==431)
 				$dl_weekdays_ct = count($dl_weekdays);
 				while ($p <= $dl_weekdays_ct)
 					{
+					$dl_weekdays[$p] = preg_replace('/[^0-9]/','',$dl_weekdays[$p]);
 					$DL_weekdays .= "$dl_weekdays[$p]";
 					$p++;
 					}
@@ -34075,6 +34089,7 @@ if ($ADD==431)
 				$p=0;
 				while ($p < $group_ct)
 					{
+					$groups[$p] = preg_replace('/[^-_0-9\p{L}]/u','',$groups[$p]);
 					$groups_value .= " $groups[$p]";
 					$p++;
 					}
@@ -44283,6 +44298,7 @@ if ($ADD==395111111111)
 				$p=0;   $ip_added=0;   $ip_removed=0;
 				while ($p < $PNct)
 					{
+					$PN[$p] = preg_replace('/[^\,\:\+\*\#\.\_0-9\p{L}]/u','',$PN[$p]);
 					if (strlen($PN[$p]) > 0)
 						{
 						$PN[$p] = preg_replace("/\r|\n|\t/",'',$PN[$p]);

@@ -803,7 +803,7 @@ else
 
 		# update internal process log
 		$iLog_ct++;
-		if ($iLog_ct =~ /00$/) 
+		if ($iLog_ct =~ /00$|50$/) 
 			{
 			$stmtA = "UPDATE vicidial_internal_log SET up_time=NOW(), action='running', stage='Loops: $iLog_ct' WHERE process='$script_name' and server_ip='$server_ip' order by db_time desc limit 1;";
 			if($DB){print STDERR "|$stmtA|";}
