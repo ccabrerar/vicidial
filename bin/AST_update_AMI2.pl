@@ -275,7 +275,7 @@ else
 	}
 print STDERR "$CCRrec|$cid_channels_recent|$stmtA\n";
 
-$event_string='TABLE CHECK cid_channels_recent_$PADserver_ip complete|$CCRrec|$affected_rowsCCR|';
+$event_string="TABLE CHECK cid_channels_recent_$PADserver_ip complete|$CCRrec|$affected_rowsCCR|";
 event_logger($SYSLOG,$event_string);
 ##### END Check for a cid_channels_recent_IPXXXXX... table, and if not present, create one
 

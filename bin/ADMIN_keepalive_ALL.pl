@@ -183,9 +183,10 @@
 # 260402-1440 - Added reset of vicidial_max_inbound_cache table entries
 # 260515-1610 - Changed multi-listen-process kill section to only run if listen process is supposed to run on this server
 # 260515-2121 - Added truncating of vicidial_internal_log entries after 7 days, updating of some records
+# 260527-0142 - Added dialplan filtering
 #
 
-$build = '260515-2121';
+$build = '260527-0142';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -522,7 +523,7 @@ if ($sthArows > 0)
 	@aryA = $sthA->fetchrow_array;
 	$sounds_central_control_active =	$aryA[0];
 	$active_voicemail_server =			$aryA[1];
-	$SScustom_dialplan_entry =			$aryA[2];
+	$SScustom_dialplan_entry =			dialplan_filter_b($aryA[2]);
 	$SSdefault_codecs =					$aryA[3];
 	$SSgenerate_cross_server_exten =	$aryA[4];
 	$SSvoicemail_timezones =			$aryA[5];
@@ -568,7 +569,7 @@ if ($sthArows > 0)
 	$asterisk_version =				$aryA[3];
 	$sounds_update =				$aryA[4];
 	$self_conf_secret =				$aryA[5];
-	$SERVERcustom_dialplan_entry =	$aryA[6];
+	$SERVERcustom_dialplan_entry =	dialplan_filter_b($aryA[6]);
 	$auto_restart_asterisk =		$aryA[7];
 	$asterisk_temp_no_restart =		$aryA[8];
 	$gather_asterisk_output =		$aryA[9];
@@ -3635,14 +3636,14 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	while ($sthArows > $i)
 		{
 		@aryA = $sthA->fetchrow_array;
-		$carrier_id[$i]	=			$aryA[0];
-		$carrier_name[$i]	=		$aryA[1];
-		$registration_string[$i] =	$aryA[2];
-		$template_id[$i] =			$aryA[3];
-		$account_entry[$i] =		$aryA[4];
-		$globals_string[$i] =		$aryA[5];
-		$dialplan_entry[$i] =		$aryA[6];
-		$carrier_description[$i] =	$aryA[7];
+		$carrier_id[$i]	=			dialplan_filter_a($aryA[0]);
+		$carrier_name[$i]	=		dialplan_filter_a($aryA[1]);
+		$registration_string[$i] =	dialplan_filter_a($aryA[2]);
+		$template_id[$i] =			dialplan_filter_a($aryA[3]);
+		$account_entry[$i] =		dialplan_filter_b($aryA[4]);
+		$globals_string[$i] =		dialplan_filter_a($aryA[5]);
+		$dialplan_entry[$i] =		dialplan_filter_b($aryA[6]);
+		$carrier_description[$i] =	dialplan_filter_a($aryA[7]);
 		$i++;
 		}
 	$sthA->finish();
@@ -3692,14 +3693,14 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	while ($sthArows > $i)
 		{
 		@aryA = $sthA->fetchrow_array;
-		$carrier_id[$i]	=			$aryA[0];
-		$carrier_name[$i]	=		$aryA[1];
-		$registration_string[$i] =	$aryA[2];
-		$template_id[$i] =			$aryA[3];
-		$account_entry[$i] =		$aryA[4];
-		$globals_string[$i] =		$aryA[5];
-		$dialplan_entry[$i] =		$aryA[6];
-		$carrier_description[$i] =	$aryA[7];
+		$carrier_id[$i]	=			dialplan_filter_a($aryA[0]);
+		$carrier_name[$i]	=		dialplan_filter_a($aryA[1]);
+		$registration_string[$i] =	dialplan_filter_a($aryA[2]);
+		$template_id[$i] =			dialplan_filter_a($aryA[3]);
+		$account_entry[$i] =		dialplan_filter_b($aryA[4]);
+		$globals_string[$i] =		dialplan_filter_a($aryA[5]);
+		$dialplan_entry[$i] =		dialplan_filter_b($aryA[6]);
+		$carrier_description[$i] =	dialplan_filter_a($aryA[7]);
 		$i++;
 		}
 	$sthA->finish();
@@ -3748,14 +3749,14 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	while ($sthArows > $i)
 		{
 		@aryA = $sthA->fetchrow_array;
-		$carrier_id[$i]	=			$aryA[0];
-		$carrier_name[$i]	=		$aryA[1];
-		$registration_string[$i] =	$aryA[2];
-		$template_id[$i] =			$aryA[3];
-		$account_entry[$i] =		$aryA[4];
-		$globals_string[$i] =		$aryA[5];
-		$dialplan_entry[$i] =		$aryA[6];
-		$carrier_description[$i] =	$aryA[7];
+		$carrier_id[$i]	=			dialplan_filter_a($aryA[0]);
+		$carrier_name[$i]	=		dialplan_filter_a($aryA[1]);
+		$registration_string[$i] =	dialplan_filter_a($aryA[2]);
+		$template_id[$i] =			dialplan_filter_a($aryA[3]);
+		$account_entry[$i] =		dialplan_filter_b($aryA[4]);
+		$globals_string[$i] =		dialplan_filter_a($aryA[5]);
+		$dialplan_entry[$i] =		dialplan_filter_b($aryA[6]);
+		$carrier_description[$i] =	dialplan_filter_a($aryA[7]);
 		$i++;
 		}
 	$sthA->finish();
@@ -3805,14 +3806,14 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	while ($sthArows > $i)
 		{
 		@aryA = $sthA->fetchrow_array;
-		$carrier_id[$i]	=			$aryA[0];
-		$carrier_name[$i]	=		$aryA[1];
-		$registration_string[$i] =	$aryA[2];
-		$template_id[$i] =			$aryA[3];
-		$account_entry[$i] =		$aryA[4];
-		$globals_string[$i] =		$aryA[5];
-		$dialplan_entry[$i] =		$aryA[6];
-		$carrier_description[$i] =	$aryA[7];
+		$carrier_id[$i]	=			dialplan_filter_a($aryA[0]);
+		$carrier_name[$i]	=		dialplan_filter_a($aryA[1]);
+		$registration_string[$i] =	dialplan_filter_a($aryA[2]);
+		$template_id[$i] =			dialplan_filter_a($aryA[3]);
+		$account_entry[$i] =		dialplan_filter_b($aryA[4]);
+		$globals_string[$i] =		dialplan_filter_a($aryA[5]);
+		$dialplan_entry[$i] =		dialplan_filter_b($aryA[6]);
+		$carrier_description[$i] =	dialplan_filter_a($aryA[7]);
 		$i++;
 		}
 	$sthA->finish();
@@ -4609,7 +4610,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		$menu_time_check[$i] =		$aryA[7];
 		$call_time_id[$i] =			$aryA[8];
 		$track_in_vdac[$i] =		$aryA[9];
-		$custom_dialplan_entry[$i]= $aryA[10];
+		$custom_dialplan_entry[$i]= dialplan_filter_b($aryA[10]);
 		$tracking_group[$i] =		$aryA[11];
 		$dtmf_log[$i] =				$aryA[12];
 		$dtmf_field[$i] =			$aryA[13];
@@ -7091,6 +7092,21 @@ sub leading_zero($)
     s/^(\d\d)$/0$1/;
     return $_;
 	} # End of the leading_zero() routine.
+
+sub dialplan_filter_a($) 
+	{
+    $temp_dp = $_[0];
+	$temp_dp =~ s/TrySystem\(|System\(|Shell\(|FILE\(|\[default\]|\[defaultlog\]|\[general\]|\[globals\]|\[loopback-no-log\]|\[monitor\]|\[monitor_exit\]|\[phones\]|\[SPEECH\]|\[trunkinbound\]|\[vici_monitor_menu_exec\]|\[vici_monitor_whisper\]|\[vicidial-auto-external\]|\[vicidial-auto-internal\]|\[vicidial-auto-phones\]|\[vicidial-auto-server-custom\]|\[vicidial-auto-system-setting-custom\]|\[vicidial-auto\]//gi;
+	$temp_dp =~ s/\r|\n|\t//gi;
+    return $temp_dp;
+	} # End of the dialplan_filter_a() routine.
+
+sub dialplan_filter_b($) 
+	{
+    $temp_dp = $_[0];
+	$temp_dp =~ s/TrySystem\(|System\(|Shell\(|FILE\(|\[default\]|\[defaultlog\]|\[general\]|\[globals\]|\[loopback-no-log\]|\[monitor\]|\[monitor_exit\]|\[phones\]|\[SPEECH\]|\[trunkinbound\]|\[vici_monitor_menu_exec\]|\[vici_monitor_whisper\]|\[vicidial-auto-external\]|\[vicidial-auto-internal\]|\[vicidial-auto-phones\]|\[vicidial-auto-server-custom\]|\[vicidial-auto-system-setting-custom\]|\[vicidial-auto\]//gi;
+    return $temp_dp;
+	} # End of the dialplan_filter_b() routine.
 
 # subroutine to parse the asterisk version
 # and return a hash with the various part
