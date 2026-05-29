@@ -1115,7 +1115,7 @@ UPDATE system_settings SET db_schema_version='1579',db_schema_update_date=NOW() 
 
 ALTER TABLE vicidial_users ADD status_group_id VARCHAR(20) default '';
 
-ALTER TABLE vicidial_campaigns ADD amd_type ENUM('AMD','CPD','KHOMP') default 'AMD';
+ALTER TABLE vicidial_campaigns ADD amd_type ENUM('AMD','CPD','KHOMP','ViciAMD') default 'AMD';
 
 UPDATE system_settings SET db_schema_version='1580',db_schema_update_date=NOW() where db_schema_version < 1580;
 
@@ -3104,3 +3104,12 @@ KEY intlog_dbtime_key (up_time)
 ) ENGINE=MyISAM CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 UPDATE system_settings SET db_schema_version='1742',db_schema_update_date=NOW() where db_schema_version < 1742;
+
+ALTER TABLE vicidial_campaigns MODIFY amd_type ENUM('AMD','CPD','KHOMP','ViciAMD') default 'AMD';
+ALTER TABLE vicidial_campaigns ADD amd_agent_display ENUM('ENABLED','DISABLED') default 'DISABLED';
+
+ALTER TABLE system_settings ADD viciamd_enabled ENUM('0','1','2','3','4','5','6') default '0';
+
+INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry,modify_stamp) VALUES('VAMD_SETTINGS_NEW_TEMPLATE','Settings for ViciAMD Template for Campaigns','OTHER','---ALL---','# When doing audio signature analysis of the received audio VAMD compares\r\n# it to a database of known audio signatures. This comparison results in a\r\n# mathematical -distance- value between 0 and 1. 0 is a perfect match. 1 \r\n# is a perfect mismatch. The audio_match_dist is the maximum value that is\r\n# considered a match. Anything above that is not a match. Setting this\r\n# higher will weed out more automated messages but at a cost of a higher\r\n# false positive rate. Default is 0.2\r\naudio_match_dist = 0.2\r\n\r\n\r\n# When doing voice signature analysis of the received audio VAMD compares\r\n# it to a database of known voice signatures. This comparison results in a\r\n# mathematical -distance- value between 0 and 1. 0 is a perfect match. 1 \r\n# is a perfect mismatch. The voice_match_dist is the maximum value that is\r\n# considered a match. Anything above that is not a match. Setting this\r\n# higher will weed out more automated message but at a cost of a higher\r\n# false positive rate. Default is 0.2\r\nvoice_match_dist = 0.2\r\n\r\n\r\n# If no other result fits, a confidence check is done on the speech \r\n# recognition results. If that check is less than this threshold VAMD\r\n# statuses the call as NOTSURE,LOWCONFIDENCE. If it is higher than this\r\n# threshold VAMD statuses the call as NOTSURE,LOWSCORE.\r\n# Value ranges from 0 to 1\r\nmin_word_confidence = 0.1\r\n\r\n\r\n# The threshold above which sound is detected initially. \r\n# Value ranges is from 1 to 32,767\r\ninit_silence_threshold = 4000\r\n\r\n\r\n# The threshold above which sound is detected after the initial silence.\r\n# Value ranges is from 1 to 32,767\r\nsilence_threshold = 2000\r\n\r\n\r\n# The maximum initial silence in milliseconds. Any longer than this and the call will be statused as NOTSURE,INITIALSILENCE\r\nmax_init_sil_ms = 3000\r\n\r\n\r\n# The maximum length of audio collection in milliseconds before audio\r\n# processing of the data is forced. This triggers if no silence was \r\n# detected after the initial silence.\r\nmax_detection_ms = 5000\r\n\r\n\r\n# The minimum time spent collecting audio in ms. Audio processing cannot be\r\n# triggered until after this cutoff.\r\nmin_detection_ms = 3000\r\n\r\n\r\n# The maximum length of silence in milliseconds after the initial silence \r\n# before the customer greeting is assumed over and audio processing will\r\n# begin.\r\nmax_silence_ms = 800\r\n\r\n\r\n# If the total amount sound detected is less than this number of \r\n# milliseconds it is assumed that whatever is on the line is not a person\r\nmin_sound_ms = 150\r\n\r\n\r\n# The maximum number of words before the call is considered an answering \r\n# machine\r\nmax_words = 4\r\n\r\n\r\nphrase_dict = b2b-phrases.ini',NOW());
+
+UPDATE system_settings SET db_schema_version='1743',db_schema_update_date=NOW() where db_schema_version < 1743;

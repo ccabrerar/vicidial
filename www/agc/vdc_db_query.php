@@ -567,10 +567,11 @@
 # 251124-0935 - Added lead status display for callbacks list output
 # 260302-1057 - Code updates for PHP8 compatibility
 # 260403-2155 - Added vicidial_max_inbound_cache logging
+# 260529-0914 - Added code to allow for AMDnotesBox
 #
 
-$version = '2.14-460';
-$build = '260403-2155';
+$version = '2.14-461';
+$build = '260529-0914';
 $php_script = 'vdc_db_query.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=10001;
@@ -1254,7 +1255,7 @@ $sip_hangup_cause_dictionary = array(
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,timeclock_end_of_day,agentonly_callback_campaign_lock,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,qc_features_active,allow_emails,callback_time_24hour,enable_languages,language_method,agent_debug_logging,default_language,active_modules,allow_chats,default_phone_code,user_new_lead_limit,sip_event_logging,call_quota_lead_ranking,daily_call_count_limit,call_limit_24hour,allow_web_debug,abandon_check_queue,inbound_credits,stereo_recording,stereo_parallel_recording,recording_dtmf_detection,recording_dtmf_muting FROM system_settings;";
+$stmt = "SELECT use_non_latin,timeclock_end_of_day,agentonly_callback_campaign_lock,alt_log_server_ip,alt_log_dbname,alt_log_login,alt_log_pass,tables_use_alt_log_db,qc_features_active,allow_emails,callback_time_24hour,enable_languages,language_method,agent_debug_logging,default_language,active_modules,allow_chats,default_phone_code,user_new_lead_limit,sip_event_logging,call_quota_lead_ranking,daily_call_count_limit,call_limit_24hour,allow_web_debug,abandon_check_queue,inbound_credits,stereo_recording,stereo_parallel_recording,recording_dtmf_detection,recording_dtmf_muting,viciamd_enabled FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00001',$user,$server_ip,$session_name,$one_mysql_log);}
 #if ($DB) {echo "$stmt\n";}
@@ -1292,6 +1293,7 @@ if ($qm_conf_ct > 0)
 	$SSstereo_parallel_recording =			$row[27];
 	$SSrecording_dtmf_detection = 			$row[28];
 	$SSrecording_dtmf_muting = 				$row[29];
+	$SSviciamd_enabled =					$row[30];
 	}
 if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;  $format="text";}
 $DB=preg_replace("/[^0-9]/","",$DB);
@@ -10755,6 +10757,7 @@ if ($ACTION == 'VDADcheckINCOMING')
 	$fronter = $user;
 	$closer='';
 	$recording_dtmf_muting=0;
+	$VCAdata='y';
 
 	if ( (strlen($campaign)<1) || (strlen($server_ip)<1) )
 		{
@@ -10937,7 +10940,7 @@ if ($ACTION == 'VDADcheckINCOMING')
 					$CBcomments =		trim("$row[3]");
 					}
 				}
-			$stmt="SELECT owner_populate,user_group_script,custom_one,custom_two,custom_three,custom_four,custom_five,state_descriptions,stereo_recording,stereo_recording_agent FROM vicidial_campaigns where campaign_id='$campaign';";
+			$stmt="SELECT owner_populate,user_group_script,custom_one,custom_two,custom_three,custom_four,custom_five,state_descriptions,stereo_recording,stereo_recording_agent,amd_agent_display,amd_type FROM vicidial_campaigns where campaign_id='$campaign';";
 			$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00444',$user,$server_ip,$session_name,$one_mysql_log);}
 			if ($DB) {echo "$stmt\n";}
@@ -10955,6 +10958,8 @@ if ($ACTION == 'VDADcheckINCOMING')
 				$state_descriptions =		$row[7];
 				$stereo_recording =			$row[8];
 				$stereo_recording_agent =	$row[9];
+				$amd_agent_display =		$row[10];
+				$amd_type =					$row[11];
 				}
 			$ownerSQL='';
 			if ( ($owner_populate=='ENABLED') and ( (strlen($owner) < 1) or ($owner=='NULL') ) )
@@ -11271,7 +11276,43 @@ if ($ACTION == 'VDADcheckINCOMING')
 						}
 					}
 
-				echo "$VDCL_group_web|$VDCL_group_name||||$VDCL_campaign_script|$VDCL_get_call_launch|$VDCL_xferconf_a_dtmf|$VDCL_xferconf_a_number|$VDCL_xferconf_b_dtmf|$VDCL_xferconf_b_number|$VDCL_default_xfer_group|X|X||||$VDCL_group_web_two|$VDCL_timer_action|$VDCL_timer_action_message|$VDCL_timer_action_seconds|$VDCL_xferconf_c_number|$VDCL_xferconf_d_number|$VDCL_xferconf_e_number||||$VDCL_timer_action_destination|||||||$VDCL_group_web_three|$VDCL_ingroup_script_color|||$VDCL_campaign_script_two|$VDCL_ingroup_script_color_two|||$stereo_recording|$stereo_recording_agent|$talk_sec_urls_secs|\n|\n";
+				$SSviciamd_enabled = intval($SSviciamd_enabled);
+				if ($SSviciamd_enabled > 0)
+					{
+					if ( ($amd_type == 'ViciAMD') and ($amd_agent_display == 'ENABLED') )
+						{
+						# search for call in the vicidial_vca_log table $callerid, show tables like 'vicidial_vca_log';
+						$stmt = "SHOW TABLES LIKE 'vicidial_vca_log';";
+						if ($DB) {echo "$stmt\n";}
+						$rslt=mysql_to_mysqli($stmt, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+						$VVCAL_ct = mysqli_num_rows($rslt);
+						if ($VVCAL_ct > 0)
+							{
+							$ten_min_ago = date("Y-m-d H:i:s", mktime(date("H"),date("i")-10,date("s"),date("m"),date("d"),date("Y")));
+							$stmt = "SELECT amd_status,amd_cause,text,total_detection_ms FROM vicidial_vca_log where call_id='$callerid' and analysis_date > \"$ten_min_ago\";";
+							if ($DB) {echo "$stmt\n";}
+							$rslt=mysql_to_mysqli($stmt, $link);
+								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+							$VVCALd_ct = mysqli_num_rows($rslt);
+							if ($VVCALd_ct > 0)
+								{
+								$row=mysqli_fetch_row($rslt);
+								$VCAamd_status =	$row[0];
+								$VCAamd_cause =		$row[1];
+								$VCAtext =			$row[2];
+								$VCAlength_ms =		$row[3];
+								$VCAlength = ($VCAlength_ms / 1000);
+								$VCAlength = sprintf("%.1f", $VCAlength);
+								$VCAdata = "$VCAamd_status---$VCAamd_cause---$VCAlength---$VCAtext";
+			#	$fp = fopen ("./vicidial_VCA_debug.txt", 'a');
+			#	fwrite ($fp, "$NOW_TIME|$VCAdata\n");
+			#	fclose($fp);
+								}
+							}
+						}
+					}
+				echo "$VDCL_group_web|$VDCL_group_name||||$VDCL_campaign_script|$VDCL_get_call_launch|$VDCL_xferconf_a_dtmf|$VDCL_xferconf_a_number|$VDCL_xferconf_b_dtmf|$VDCL_xferconf_b_number|$VDCL_default_xfer_group|X|X||||$VDCL_group_web_two|$VDCL_timer_action|$VDCL_timer_action_message|$VDCL_timer_action_seconds|$VDCL_xferconf_c_number|$VDCL_xferconf_d_number|$VDCL_xferconf_e_number||||$VDCL_timer_action_destination|||||||$VDCL_group_web_three|$VDCL_ingroup_script_color|||$VDCL_campaign_script_two|$VDCL_ingroup_script_color_two|||$stereo_recording|$stereo_recording_agent|$talk_sec_urls_secs||$VCAdata|\n|\n";
 				
 				if (preg_match('/X/',$dialed_label))
 					{
@@ -11829,8 +11870,8 @@ if ($ACTION == 'VDADcheckINCOMING')
 				if ( ($SSrecording_dtmf_detection > 0) and ($SSrecording_dtmf_muting > 0) ) 
 					{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
 				### if web form is set then send on to vicidial.php for override of WEB_FORM address
-				if ( (strlen($VDCL_group_web)>5) or (strlen($VDCL_group_name)>0) ) {echo "$VDCL_group_web|$VDCL_group_name|$VDCL_group_color|$VDCL_fronter_display|$VDADchannel_group|$VDCL_ingroup_script|$VDCL_get_call_launch|$VDCL_xferconf_a_dtmf|$VDCL_xferconf_a_number|$VDCL_xferconf_b_dtmf|$VDCL_xferconf_b_number|$VDCL_default_xfer_group|$VDCL_ingroup_recording_override|$VDCL_ingroup_rec_filename|$VDCL_default_group_alias|$VDCL_caller_id_number|$VDCL_group_web_vars|$VDCL_group_web_two|$VDCL_timer_action|$VDCL_timer_action_message|$VDCL_timer_action_seconds|$VDCL_xferconf_c_number|$VDCL_xferconf_d_number|$VDCL_xferconf_e_number|$VDCL_uniqueid_status_display|$custom_call_id|$VDCL_uniqueid_status_prefix|$VDCL_timer_action_destination|$DID_id|$DID_extension|$DID_pattern|$DID_description|$INclosecallid|$INxfercallid|$VDCL_group_web_three|$VDCL_ingroup_script_color|$VDCL_inbound_survey|$VDCL_survey_participate|$VDCL_ingroup_script_two|$VDCL_ingroup_script_color_two|$VDCL_browser_alert_sound|$VDCL_browser_alert_volume|$stereo_recording|$stereo_recording_agent|$talk_sec_urls_secs|$recording_dtmf_muting|\n";}
-				else {echo "X|$VDCL_group_name|$VDCL_group_color|$VDCL_fronter_display|$VDADchannel_group|$VDCL_ingroup_script|$VDCL_get_call_launch|$VDCL_xferconf_a_dtmf|$VDCL_xferconf_a_number|$VDCL_xferconf_b_dtmf|$VDCL_xferconf_b_number|$VDCL_default_xfer_group|$VDCL_ingroup_recording_override|$VDCL_ingroup_rec_filename|$VDCL_default_group_alias|$VDCL_caller_id_number|$VDCL_group_web_vars|$VDCL_group_web_two|$VDCL_timer_action|$VDCL_timer_action_message|$VDCL_timer_action_seconds|$VDCL_xferconf_c_number|$VDCL_xferconf_d_number|$VDCL_xferconf_e_number|$VDCL_uniqueid_status_display|$custom_call_id|$VDCL_uniqueid_status_prefix|$VDCL_timer_action_destination|$DID_id|$DID_extension|$DID_pattern|$DID_description|$INclosecallid|$INxfercallid|$VDCL_group_web_three|$VDCL_ingroup_script_color|$VDCL_inbound_survey|$VDCL_survey_participate|$VDCL_ingroup_script_two|$VDCL_ingroup_script_color_two|$VDCL_browser_alert_sound|$VDCL_browser_alert_volume|$stereo_recording|$stereo_recording_agent|$talk_sec_urls_secs|$recording_dtmf_muting|\n";}
+				if ( (strlen($VDCL_group_web)>5) or (strlen($VDCL_group_name)>0) ) {echo "$VDCL_group_web|$VDCL_group_name|$VDCL_group_color|$VDCL_fronter_display|$VDADchannel_group|$VDCL_ingroup_script|$VDCL_get_call_launch|$VDCL_xferconf_a_dtmf|$VDCL_xferconf_a_number|$VDCL_xferconf_b_dtmf|$VDCL_xferconf_b_number|$VDCL_default_xfer_group|$VDCL_ingroup_recording_override|$VDCL_ingroup_rec_filename|$VDCL_default_group_alias|$VDCL_caller_id_number|$VDCL_group_web_vars|$VDCL_group_web_two|$VDCL_timer_action|$VDCL_timer_action_message|$VDCL_timer_action_seconds|$VDCL_xferconf_c_number|$VDCL_xferconf_d_number|$VDCL_xferconf_e_number|$VDCL_uniqueid_status_display|$custom_call_id|$VDCL_uniqueid_status_prefix|$VDCL_timer_action_destination|$DID_id|$DID_extension|$DID_pattern|$DID_description|$INclosecallid|$INxfercallid|$VDCL_group_web_three|$VDCL_ingroup_script_color|$VDCL_inbound_survey|$VDCL_survey_participate|$VDCL_ingroup_script_two|$VDCL_ingroup_script_color_two|$VDCL_browser_alert_sound|$VDCL_browser_alert_volume|$stereo_recording|$stereo_recording_agent|$talk_sec_urls_secs|$recording_dtmf_muting|$VCAdata|\n";}
+				else {echo "X|$VDCL_group_name|$VDCL_group_color|$VDCL_fronter_display|$VDADchannel_group|$VDCL_ingroup_script|$VDCL_get_call_launch|$VDCL_xferconf_a_dtmf|$VDCL_xferconf_a_number|$VDCL_xferconf_b_dtmf|$VDCL_xferconf_b_number|$VDCL_default_xfer_group|$VDCL_ingroup_recording_override|$VDCL_ingroup_rec_filename|$VDCL_default_group_alias|$VDCL_caller_id_number|$VDCL_group_web_vars|$VDCL_group_web_two|$VDCL_timer_action|$VDCL_timer_action_message|$VDCL_timer_action_seconds|$VDCL_xferconf_c_number|$VDCL_xferconf_d_number|$VDCL_xferconf_e_number|$VDCL_uniqueid_status_display|$custom_call_id|$VDCL_uniqueid_status_prefix|$VDCL_timer_action_destination|$DID_id|$DID_extension|$DID_pattern|$DID_description|$INclosecallid|$INxfercallid|$VDCL_group_web_three|$VDCL_ingroup_script_color|$VDCL_inbound_survey|$VDCL_survey_participate|$VDCL_ingroup_script_two|$VDCL_ingroup_script_color_two|$VDCL_browser_alert_sound|$VDCL_browser_alert_volume|$stereo_recording|$stereo_recording_agent|$talk_sec_urls_secs|$recording_dtmf_muting|$VCAdata|\n";}
 
 				if (strlen($fronter) < 2) {$fronter = $tsr;}
 				$stmt = "SELECT full_name from vicidial_users where user='$fronter';";

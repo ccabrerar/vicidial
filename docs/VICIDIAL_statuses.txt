@@ -85,3 +85,7 @@ ADAIR - Dead Air Auto, for AMD NOAUDIODATA calls
 ACFLTR - Inbound call areacode filter check
 LTMGAD - Campaign HotKey option, will transfer customer to voicemail message and disposition the call
 XAMMAD - Campaign HotKey option, will transfer customer to voicemail message and disposition the call
+FAXHU - Fax AMD Auto Hangup
+FASHU - False Answer AMD Auto Hangup
+GVM - Generic Voicemail Message
+PVM - Personalized Voicemail Message
