@@ -20,10 +20,11 @@
 # 241114-0813 - Raised max_count default to 60
 # 250321-1152 - Changed status selector from dropdown to multi-select on Move, Update, and Delete
 # 260529-0905 - Code updates for PHP8 compatibility
+# 260601-1701 - Added permissions errors warning messages
+#
 
-
-$version = '2.14-16';
-$build = '260529-0905';
+$version = '2.14-17';
+$build = '260601-1701';
 
 # This limit is to prevent data inconsistancies.
 # If there are too many leads in a list this
@@ -4309,9 +4310,15 @@ if (
 		$allowed_campaigns_sql = "'$allowed_campaigns_sql'";
 		}
 
+	if (strlen($allowed_campaigns_sql)<3) 
+		{
+		echo "<BR>"._QXZ("ERROR: You can't use this tool as your user group is not allowed to access any campaigns"); 
+		exit;
+		}
+
 	# figure out which lists they are allowed to see
-	$activeSQL = "and active = 'N'";
-	if ($SSallow_manage_active_lists > 0) {$activeSQL = '';}
+	$activeSQL = "and active = 'N'"; $activeSQL_msg = "be inactive, and";
+	if ($SSallow_manage_active_lists > 0) {$activeSQL = ''; $activeSQL_msg = "";}
 	$lists_stmt = "SELECT list_id, list_name FROM vicidial_lists WHERE campaign_id IN ($allowed_campaigns_sql) $activeSQL ORDER BY list_id";
 	if ($DB) { echo "|$lists_stmt|\n"; }
 	$lists_rslt = mysql_to_mysqli($lists_stmt, $link);
@@ -4350,6 +4357,12 @@ if (
 		$i++;
 		}
 
+	if ($allowed_lists_count==0)
+		{
+		echo "<BR>"._QXZ("You can't use this tool as your user group does not have access to any valid lists.  A valid list must $activeSQL_msg have less than $list_lead_limit leads in it.");
+		exit;
+		}
+	
 	# figure out which statuses are in the lists they are allowed to look at
 	$status_stmt = "SELECT DISTINCT status FROM vicidial_list WHERE list_id IN ( $allowed_lists_sql ) ORDER BY status";
 	if ($DB) { echo "|$status_stmt|\n"; }
