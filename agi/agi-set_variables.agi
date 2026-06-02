@@ -5,16 +5,47 @@
 # runs after a call_log before call is placed out the trunk and sets all 
 # vicidial_list fields as variables for the call
 #
+# takes an optional argument to set SIP headers, PJSIP header, IAXVARs, and dialplan variables
+# multiple can be set with a _ inbetween but combining SIP and PJSIP is not advised
+#
 # You need to put lines similar to those below in your extensions.conf file:
 # 
 # ; VICIDIAL_auto_dialer transfer script AMD with Load Balanced:
 # exten => _91NXXNXXXXXX,1,AGI(agi://127.0.0.1:4577/call_log)
 # exten => _91NXXNXXXXXX,n,AGI(agi-set_variables.agi,)
 # exten => _91NXXNXXXXXX,n,Verbose("phone_code:${phone_code}, phone_number:${phone_number}, lead_id:${lead_id}")
-# exten => _91NXXNXXXXXX,n,Dial(${TESTSIPTRUNK}/${EXTEN:2},,tTor)
-# exten => _91NXXNXXXXXX,n,Hangup
+# exten => _91NXXNXXXXXX,n,Dial(${TESTSIPTRUNK}/${EXTEN:2},${CAMPDTO},To)
+# exten => _91NXXNXXXXXX,n,Hangup()
 # 
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# ; Send SIP Headers
+# exten => _91NXXNXXXXXX,1,AGI(agi://127.0.0.1:4577/call_log)
+# exten => _91NXXNXXXXXX,n,AGI(agi-set_variables.agi,SIP)
+# exten => _91NXXNXXXXXX,n,Dial(${TESTSIPTRUNK}/${EXTEN:2},${CAMPDTO},To)
+# exten => _91NXXNXXXXXX,n,Hangup()
+#
+# ; Send PJSIP Headers
+# ; handler
+# exten => pjsipheaders,1,AGI(agi-set_variables.agi,PJSIP)
+# exten => pjsipheaders,n,Return()
+# ; dialplan
+# exten => _91NXXNXXXXXX,1,AGI(agi://127.0.0.1:4577/call_log)
+# exten => _91NXXNXXXXXX,n,Dial(${TESTSIPTRUNK}/${EXTEN:2},${CAMPDTO},Tob(default^pjsipheaders^1))
+# exten => _91NXXNXXXXXX,n,Hangup()
+#
+# ; Send IAXVARs
+# exten => _91NXXNXXXXXX,1,AGI(agi://127.0.0.1:4577/call_log)
+# exten => _91NXXNXXXXXX,n,AGI(agi-set_variables.agi,IAX)
+# exten => _91NXXNXXXXXX,n,Dial(${TESTSIPTRUNK}/${EXTEN:2},${CAMPDTO},To)
+# exten => _91NXXNXXXXXX,n,Hangup()
+#
+# ; Send SIP Headers and set dialplan variables
+# exten => _91NXXNXXXXXX,1,AGI(agi://127.0.0.1:4577/call_log)
+# exten => _91NXXNXXXXXX,n,AGI(agi-set_variables.agi,SIP_dialplan)
+# exten => _91NXXNXXXXXX,n,Verbose("phone_code:${phone_code}, phone_number:${phone_number}, lead_id:${lead_id}")
+# exten => _91NXXNXXXXXX,n,Dial(${TESTSIPTRUNK}/${EXTEN:2},${CAMPDTO},To)
+# exten => _91NXXNXXXXXX,n,Hangup()
+#
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 101118-1409 - First build
@@ -22,7 +53,7 @@
 # 110404-1604 - Added dial_timeout and cpd_amd_action variables
 # 141211-1643 - Added cpd_unknown_action
 # 230606-0818 - Added remaining vicidial_list fields
-#
+# 260602-1356 - Added var_type option allowing SIP headers, PJSIP headers, and IAXVARs to be set
 
 $script = 'agi-set_variables.agi';
 
@@ -40,6 +71,13 @@ $now_date = "$year-$mon-$mday $hour:$min:$sec";
 
 # default path to astguiclient configuration file:
 $PATHconf =		'/etc/astguiclient.conf';
+
+
+# determine what type of variables are set IE dialplan, IAX, SIP, PJSIP
+# dialplan are normal dialplan variables
+# IAX uses the IAXVAR() function to set a variable that can be read on the other side of a IAX
+$var_types = 'dialplan';
+if (defined $ARGV[0]) { $var_types = $ARGV[0]; }
 
 open(conf, "$PATHconf") || die "can't open $PATHconf: $!\n";
 @conf = <conf>;
@@ -317,47 +355,180 @@ $gmt_offset_now =~ s/ /+/gi;
 $campaign_id =~ s/ /+/gi;
 $dialed_number =~ s/ /+/gi;
 
-$AGI->exec("EXEC Set(_lead_id=$lead_id)");
-$AGI->exec("EXEC Set(_entry_date=$entry_date)");
-$AGI->exec("EXEC Set(_modify_date=$modify_date)");
-$AGI->exec("EXEC Set(_status=$status)");
-$AGI->exec("EXEC Set(_user=$user)");
-$AGI->exec("EXEC Set(_vendor_lead_code=$vendor_lead_code)");
-$AGI->exec("EXEC Set(_source_id=$source_id)");
-$AGI->exec("EXEC Set(_list_id=$list_id)");
-$AGI->exec("EXEC Set(_phone_number=$phone_number)");
-$AGI->exec("EXEC Set(_title=$title)");
-$AGI->exec("EXEC Set(_first_name=$first_name)");
-$AGI->exec("EXEC Set(_middle_initial=$middle_initial)");
-$AGI->exec("EXEC Set(_last_name=$last_name)");
-$AGI->exec("EXEC Set(_address1=$address1)");
-$AGI->exec("EXEC Set(_address2=$address2)");
-$AGI->exec("EXEC Set(_address3=$address3)");
-$AGI->exec("EXEC Set(_city=$city)");
-$AGI->exec("EXEC Set(_state=$state)");
-$AGI->exec("EXEC Set(_province=$province)");
-$AGI->exec("EXEC Set(_postal_code=$postal_code)");
-$AGI->exec("EXEC Set(_country_code=$country_code)");
-$AGI->exec("EXEC Set(_gender=$gender)");
-$AGI->exec("EXEC Set(_date_of_birth=$date_of_birth)");
-$AGI->exec("EXEC Set(_alt_phone=$alt_phone)");
-$AGI->exec("EXEC Set(_email=$email)");
-$AGI->exec("EXEC Set(_security_phrase=$security_phrase)");
-$AGI->exec("EXEC Set(_comments=$comments)");
-$AGI->exec("EXEC Set(_called_count=$called_count)");
-$AGI->exec("EXEC Set(_last_local_call_time=$last_local_call_time)");
-$AGI->exec("EXEC Set(_rank=$rank)");
-$AGI->exec("EXEC Set(_owner=$owner)");
-$AGI->exec("EXEC Set(_phone_code=$phone_code)");
-$AGI->exec("EXEC Set(_called_since_last_reset=$called_since_last_reset)");
-$AGI->exec("EXEC Set(_entry_list_id=$entry_list_id)");
-$AGI->exec("EXEC Set(_gmt_offset_now=$gmt_offset_now)");
-$AGI->exec("EXEC Set(_campaign_id=$campaign_id)");
-$AGI->exec("EXEC Set(_dialed_number=$dialed_number)");
-$AGI->exec("EXEC Set(_auto_dial_timeout=$auto_dial_timeout)");
-$AGI->exec("EXEC Set(_cpd_amd_action=$cpd_amd_action)");
-$AGI->exec("EXEC Set(_cpd_unknown_action=$cpd_unknown_action)");
+@vtypes = split( /_/, $var_types );
 
+if ( (grep { $_ eq 'dialplan' } @vtypes) || (length($_) < 1) )
+	{
+	$AGI->exec("EXEC Set(_lead_id=$lead_id)");
+	$AGI->exec("EXEC Set(_entry_date=$entry_date)");
+	$AGI->exec("EXEC Set(_modify_date=$modify_date)");
+	$AGI->exec("EXEC Set(_status=$status)");
+	$AGI->exec("EXEC Set(_user=$user)");
+	$AGI->exec("EXEC Set(_vendor_lead_code=$vendor_lead_code)");
+	$AGI->exec("EXEC Set(_source_id=$source_id)");
+	$AGI->exec("EXEC Set(_list_id=$list_id)");
+	$AGI->exec("EXEC Set(_phone_number=$phone_number)");
+	$AGI->exec("EXEC Set(_title=$title)");
+	$AGI->exec("EXEC Set(_first_name=$first_name)");
+	$AGI->exec("EXEC Set(_middle_initial=$middle_initial)");
+	$AGI->exec("EXEC Set(_last_name=$last_name)");
+	$AGI->exec("EXEC Set(_address1=$address1)");
+	$AGI->exec("EXEC Set(_address2=$address2)");
+	$AGI->exec("EXEC Set(_address3=$address3)");
+	$AGI->exec("EXEC Set(_city=$city)");
+	$AGI->exec("EXEC Set(_state=$state)");
+	$AGI->exec("EXEC Set(_province=$province)");
+	$AGI->exec("EXEC Set(_postal_code=$postal_code)");
+	$AGI->exec("EXEC Set(_country_code=$country_code)");
+	$AGI->exec("EXEC Set(_gender=$gender)");
+	$AGI->exec("EXEC Set(_date_of_birth=$date_of_birth)");
+	$AGI->exec("EXEC Set(_alt_phone=$alt_phone)");
+	$AGI->exec("EXEC Set(_email=$email)");
+	$AGI->exec("EXEC Set(_security_phrase=$security_phrase)");
+	$AGI->exec("EXEC Set(_comments=$comments)");
+	$AGI->exec("EXEC Set(_called_count=$called_count)");
+	$AGI->exec("EXEC Set(_last_local_call_time=$last_local_call_time)");
+	$AGI->exec("EXEC Set(_rank=$rank)");
+	$AGI->exec("EXEC Set(_owner=$owner)");
+	$AGI->exec("EXEC Set(_phone_code=$phone_code)");
+	$AGI->exec("EXEC Set(_called_since_last_reset=$called_since_last_reset)");
+	$AGI->exec("EXEC Set(_entry_list_id=$entry_list_id)");
+	$AGI->exec("EXEC Set(_gmt_offset_now=$gmt_offset_now)");
+	$AGI->exec("EXEC Set(_campaign_id=$campaign_id)");
+	$AGI->exec("EXEC Set(_dialed_number=$dialed_number)");
+	$AGI->exec("EXEC Set(_auto_dial_timeout=$auto_dial_timeout)");
+	$AGI->exec("EXEC Set(_cpd_amd_action=$cpd_amd_action)");
+	$AGI->exec("EXEC Set(_cpd_unknown_action=$cpd_unknown_action)");
+	}
+if ( grep { $_ eq 'IAX' } @vtypes )
+	{
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_lead_id)=$lead_id)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_entry_date)=$entry_date)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_modify_date)=$modify_date)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_status)=$status)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_user)=$user)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_vendor_lead_code)=$vendor_lead_code)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_source_id)=$source_id)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_list_id)=$list_id)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_phone_number)=$phone_number)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_title)=$title)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_first_name)=$first_name)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_middle_initial)=$middle_initial)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_last_name)=$last_name)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_address1)=$address1)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_address2)=$address2)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_address3)=$address3)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_city)=$city)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_state)=$state)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_province)=$province)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_postal_code)=$postal_code)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_country_code)=$country_code)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_gender)=$gender)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_date_of_birth)=$date_of_birth)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_alt_phone)=$alt_phone)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_email)=$email)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_security_phrase)=$security_phrase)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_comments)=$comments)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_called_count)=$called_count)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_last_local_call_time)=$last_local_call_time)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_rank)=$rank)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_owner)=$owner)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_phone_code)=$phone_code)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_called_since_last_reset)=$called_since_last_reset)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_entry_list_id)=$entry_list_id)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_gmt_offset_now)=$gmt_offset_now)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_campaign_id)=$campaign_id)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_dialed_number)=$dialed_number)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_auto_dial_timeout)=$auto_dial_timeout)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_cpd_amd_action)=$cpd_amd_action)");
+        $AGI->exec("Set", "IAXVAR(VICIDIAL_cpd_unknown_action)=$cpd_unknown_action)");
+	}
+if ( grep { $_ eq 'SIP' } @vtypes )
+        {
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-lead_id:$lead_id");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-entry_date:$entry_date");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-modify_date:$modify_date");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-status:$status");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-user:$user");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-vendor_lead_code:$vendor_lead_code");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-source_id:$source_id");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-list_id:$list_id");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-phone_number:$phone_number");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-title:$title");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-first_name:$first_name");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-middle_initial:$middle_initial");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-last_name:$last_name");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-address1:$address1");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-address2:$address2");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-address3:$address3");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-city:$city");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-state:$state");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-province:$province");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-postal_code:$postal_code");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-country_code:$country_code");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-gender:$gender");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-date_of_birth:$date_of_birth");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-alt_phone:$alt_phone");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-email:$email");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-security_phrase:$security_phrase");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-comments:$comments");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-called_count:$called_count");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-last_local_call_time:$last_local_call_time");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-rank:$rank");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-owner:$owner");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-phone_code:$phone_code");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-called_since_last_reset:$called_since_last_reset");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-entry_list_id:$entry_list_id");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-gmt_offset_now:$gmt_offset_now");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-campaign_id:$campaign_id");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-dialed_number:$dialed_number");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-auto_dial_timeout:$auto_dial_timeout");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-cpd_amd_action:$cpd_amd_action");
+        $AGI->exec("SIPAddHeader", "X-VICIDIAL-cpd_unknown_action:$cpd_unknown_action");
+        }
+if ( grep { $_ eq 'PJSIP' } @vtypes )
+        {
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-lead_id)=$lead_id)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-entry_date)=$entry_date)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-modify_date)=$modify_date)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-status)=$status)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-user)=$user)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-vendor_lead_code)=$vendor_lead_code)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-source_id)=$source_id)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-list_id)=$list_id)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-phone_number)=$phone_number)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-title)=$title)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-first_name)=$first_name)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-middle_initial)=$middle_initial)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-last_name)=$last_name)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-address1)=$address1)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-address2)=$address2)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-address3)=$address3)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-city)=$city)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-state)=$state)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-province)=$province)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-postal_code)=$postal_code)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-country_code)=$country_code)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-gender)=$gender)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-date_of_birth)=$date_of_birth)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-alt_phone)=$alt_phone)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-email)=$email)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-security_phrase)=$security_phrase)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-comments)=$comments)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-called_count)=$called_count)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-last_local_call_time)=$last_local_call_time)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-rank)=$rank)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-owner)=$owner)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-phone_code)=$phone_code)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-called_since_last_reset)=$called_since_last_reset)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-entry_list_id)=$entry_list_id)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-gmt_offset_now)=$gmt_offset_now)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-campaign_id)=$campaign_id)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-dialed_number)=$dialed_number)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-auto_dial_timeout)=$auto_dial_timeout)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-cpd_amd_action)=$cpd_amd_action)");
+        $AGI->exec("Set", "PJSIP_HEADER(add,X-VICIDIAL-cpd_unknown_action)=$cpd_unknown_action)");
+        }
 
 $dbhA->disconnect();
 
