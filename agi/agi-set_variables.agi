@@ -357,7 +357,7 @@ $dialed_number =~ s/ /+/gi;
 
 @vtypes = split( /_/, $var_types );
 
-if ( (grep { $_ eq 'dialplan' } @vtypes) || (length($_) < 1) )
+if ( (grep { $_ eq 'dialplan' } @vtypes) || (length($var_types) < 1) )
 	{
 	$AGI->exec("EXEC Set(_lead_id=$lead_id)");
 	$AGI->exec("EXEC Set(_entry_date=$entry_date)");
