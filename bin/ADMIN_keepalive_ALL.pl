@@ -184,9 +184,10 @@
 # 260515-1610 - Changed multi-listen-process kill section to only run if listen process is supposed to run on this server
 # 260515-2121 - Added truncating of vicidial_internal_log entries after 7 days, updating of some records
 # 260527-0142 - Added dialplan filtering
+# 260605-1002 - Added end-of-day log processing log entry for the vicidial_internal_log
 #
 
-$build = '260527-0142';
+$build = '260605-1002';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -1303,6 +1304,7 @@ if ($timeclock_end_of_day_NOW > 0)
 	### Only run the following on one server in the cluster, the one set as the active voicemail server ###
 	if ( ($active_voicemail_server =~ /$server_ip/) && ((length($active_voicemail_server)) eq (length($server_ip))) )
 		{
+		$secTCEODstart = time();
 		if ($DB) {print "Starting clear out system-wide daily reset tables...\n";}
 
 		$stmtA = "UPDATE vicidial_xfer_stats SET xfer_count='0';";
@@ -2834,6 +2836,14 @@ if ($timeclock_end_of_day_NOW > 0)
 			if ($teodDB) {&teod_logger;}
 			}
 		##### END roll Call Quota Lead Ranking logs into the archive table after 7 days
+
+		$secTCEODfinish = time();
+		$TCEODruntime = ($secTCEODfinish - $secTCEODstart);
+
+		$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), action='finished', stage='Run seconds: $TCEODruntime', process='end-of-day log processing', server_ip='$server_ip';";
+		if($DB){print STDERR "|$stmtA|";}
+		my $affected_rows = $dbhA->do($stmtA);
+		if($DB){print STDERR "$affected_rows|\n";}
 		}
 	}
 
