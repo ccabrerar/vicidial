@@ -229,10 +229,11 @@
 # 260123-1020 - pause_sec fix in agent_stats_export
 # 260506-1525 - small fix for campaign changes
 # 260519-1647 - Code updates for PHP8 compatibility, and json output format
+# 260611-2256 - Fix for input variable filtering
 #
 
-$version = '2.14-204';
-$build = '260519-1647';
+$version = '2.14-205';
+$build = '260611-2256';
 $php_script='non_agent_api.php';
 $api_url_log = 0;
 $camp_lead_order_random=1;
@@ -1527,6 +1528,7 @@ if (strlen($POST_URI)>1)
 	{$POST_URI = preg_replace("/^&/",'',$POST_URI);}
 $REQUEST_URI = preg_replace("/'|\"|\\\\|;/","",$REQUEST_URI);
 $POST_URI = preg_replace("/'|\"|\\\\|;/","",$POST_URI);
+$query_string = preg_replace("/'|\"|\\\\|;/","",$query_string);
 if ( (strlen($query_string) < 1) and (strlen($POST_URI) > 2) )
 	{$query_string = $POST_URI;}
 if ( (strlen($query_string) > 0) and (strlen($POST_URI) > 2) )
