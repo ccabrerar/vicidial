@@ -759,10 +759,11 @@
 # 260324-0857 - Added hangup_again_link campaign option
 # 260408-1850 - Added max_inbound_auto_reenable option
 # 260529-0914 - Added AMDnotesBox
+# 260615-0039 - Fix for transfer issue
 #
 
-$version = '2.14-725c';
-$build = '260529-0914';
+$version = '2.14-726c';
+$build = '260615-0039';
 $php_script = 'vicidial.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=110;
@@ -8673,13 +8674,25 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								{
 								api_transferconf_ID = api_transferconf_values_array[7];
 								if (api_transferconf_function == 'HANGUP_XFER')
-									{xfercall_send_hangup();}
+									{
+									API_selected_xfergroup='';
+									xfercall_send_hangup();
+									}
 								if (api_transferconf_function == 'HANGUP_BOTH')
-									{bothcall_send_hangup();}
+									{
+									API_selected_xfergroup='';
+									bothcall_send_hangup();
+									}
 								if (api_transferconf_function == 'LEAVE_VM')
-									{mainxfer_send_redirect('XfeRVMAIL',lastcustchannel,lastcustserverip);}
+									{
+									API_selected_xfergroup='';
+									mainxfer_send_redirect('XfeRVMAIL',lastcustchannel,lastcustserverip);
+									}
 								if (api_transferconf_function == 'LEAVE_3WAY_CALL')
-									{leave_3way_call('FIRST');}
+									{
+									API_selected_xfergroup='';
+									leave_3way_call('FIRST');
+									}
 								if (api_transferconf_function == 'BLIND_TRANSFER')
 									{
 									if (api_transferconf_override=='YES')
@@ -8758,6 +8771,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 							}
 						if (api_parkcustomer == 'HANGUP_XFER_GRAB_CUSTOMER')
 							{
+							API_selected_xfergroup='';
 							xfercall_send_hangup();
 							mainxfer_send_redirect('FROMParK',lastcustchannel,lastcustserverip);
 							}
@@ -16410,6 +16424,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 // Hangup Customer Button Press
 	function hangup_customer_button_click(dispowindow,hotkeysused,altdispo,nodeletevdac,DSHclick) 
 		{
+		API_selected_xfergroup='';
 		if ( (agent_hangup_value.length > 0) && ( (agent_hangup_route=='MESSAGE') || (agent_hangup_route=='EXTENSION') || (agent_hangup_route=='IN_GROUP') || (agent_hangup_route=='CALLMENU') ) )
 			{
 			button_click_log = button_click_log + "" + SQLdate + "-----AgentHangupCallRoute---" + VD_live_customer_call + " " + agent_hangup_route + " " + agent_hangup_value + " " + document.vicidial_form.xfernumber.value + "|";
@@ -17005,6 +17020,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 		var xfer_channel = lastxferchannel;
 		var process_post_hangup=0;
 		xfer_in_call=0;
+		API_selected_xfergroup='';
 		if (HANclick=='YES')
 			{button_click_log = button_click_log + "" + SQLdate + "-----xfercall_send_hangup---" + xferchannel + "|";}
 		if ( (hangup_xfer_record_start == 'Y') && (hangup_both < 1) && (leaving_threeway < 1) && (recording_active < 1) )

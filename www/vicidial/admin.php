@@ -4204,7 +4204,6 @@ if ($non_latin < 1)
 	$agent_hangup_value = preg_replace('/[^-\/\|\._0-9a-zA-Z]/','',$agent_hangup_value);
 	$second_alert_filename = preg_replace('/[^-\/\|\._0-9a-zA-Z]/','',$second_alert_filename);
 	$third_alert_filename = preg_replace('/[^-\/\|\._0-9a-zA-Z]/','',$third_alert_filename);
-	$stage = preg_replace('/[^-\._0-9a-zA-Z]/','',$stage);
 
 	### ALPHA-NUMERIC and underscore and dash and slash and dot and comma
 	$menu_prompt = preg_replace('/[^-\/\|\,\._0-9a-zA-Z]/','',$menu_prompt);
@@ -4371,6 +4370,7 @@ if ($non_latin < 1)
 	$city_rule = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$city_rule);
 	$county_rule = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$county_rule);
 	$ac_rule = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$ac_rule);
+	$stage = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$stage);
 	$stereo_rec_filename = preg_replace('/[^-\.\_0-9a-zA-Z]/','',$stereo_rec_filename);
 	$parallel_rec_co_filename = preg_replace('/[^-\.\_0-9a-zA-Z]/','',$parallel_rec_co_filename);
 	$parallel_rec_cm_filename = preg_replace('/[^-\.\_0-9a-zA-Z]/','',$parallel_rec_cm_filename);
@@ -4954,7 +4954,6 @@ else
 	$agent_hangup_value = preg_replace('/[^-\/\|\._0-9\p{L}]/u','',$agent_hangup_value);
 	$second_alert_filename = preg_replace('/[^-\/\|\._0-9\p{L}]/u','',$second_alert_filename);
 	$third_alert_filename = preg_replace('/[^-\/\|\._0-9\p{L}]/u','',$third_alert_filename);
-	$stage = preg_replace('/[^-\._0-9\p{L}]/u','',$stage);
 
 	### ALPHA-NUMERIC and underscore and dash and slash and dot and comma
 	$menu_prompt = preg_replace('/[^-\/\|\,\._0-9\p{L}]/u','',$menu_prompt);
@@ -5121,6 +5120,7 @@ else
 	$city_rule = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$city_rule);
 	$county_rule = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$county_rule);
 	$ac_rule = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$ac_rule);
+	$stage = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$stage);
 	$stereo_rec_filename = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$stereo_rec_filename);
 	$parallel_rec_co_filename = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$parallel_rec_co_filename);
 	$parallel_rec_cm_filename = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$parallel_rec_cm_filename);
