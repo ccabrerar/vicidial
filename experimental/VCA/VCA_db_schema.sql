@@ -49,10 +49,10 @@ sig_min_dist FLOAT DEFAULT 0, ADD sig_match_ms FLOAT DEFAULT 0;
 ALTER TABLE vicidial_vca_log_archive ADD sig_id VARCHAR(36) DEFAULT '',
 ADD sig_min_dist FLOAT DEFAULT 0, ADD sig_match_ms FLOAT DEFAULT 0;
 
-ALTER TABLE vicidial_vca_log RENAME column sig_id to voice_sig_id
+ALTER TABLE vicidial_vca_log RENAME column sig_id to voice_sig_id;
 ALTER TABLE vicidial_vca_log RENAME column sig_min_dist to voice_min_dist;
 ALTER TABLE vicidial_vca_log RENAME column sig_match_ms to voice_match_ms;
-ALTER TABLE vicidial_vca_log_archive RENAME column sig_id to voice_sig_id
+ALTER TABLE vicidial_vca_log_archive RENAME column sig_id to voice_sig_id;
 ALTER TABLE vicidial_vca_log_archive RENAME column sig_match_ms to voice_match_ms;
 ALTER TABLE vicidial_vca_log_archive RENAME column sig_min_dist to voice_min_dist;
 ALTER TABLE vicidial_vca_log ADD column audio_sig_id VARCHAR(36) default '';
@@ -63,3 +63,5 @@ ALTER TABLE vicidial_vca_log_archive ADD column audio_sig_id VARCHAR(36) default
 ALTER TABLE vicidial_vca_log_archive ADD column audio_min_dist FLOAT default 0;
 ALTER TABLE vicidial_vca_log_archive ADD column audio_match_ms FLOAT default 0;
 ALTER TABLE vicidial_vca_log_archive ADD column sig_match_type VARCHAR(10) default '';
+
+INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry,modify_stamp) VALUES('Default_ViciAMD_status_map','Default ViciAMD status map','AMD_STATUS_MAP','---ALL---','CALLSCREEN,* => VAMCS\nCALLSCREEN,PATTERN => VAMCS\nCALLSCREEN,SIGNATURE => VAMCS\nFAS,* => VAMFAS\nFAS,INITIALSILENCE => VAMFIS\nFAS,RINGING => VAMRNG\nFAS,SIGNATURE => VAMFAS\nFAX,* => VAMFAX\nFAX,ANS_SIG => VAMFAX\nFAX,CNG_SIG => VAMFAX\nHUMAN,* => VAMMAN\nHUMAN,HUMAN => VAMMAN\nINTERCEPT,* => VAMSIT\nINTERCEPT,SIGNATURE => VAMSIT\nINTERCEPT,SITTONES => VAMSIT\nMACHINE,* => VAMMAC\nMACHINE,MAXWORDS => VAMMAC\nMACHINE,PATTERN => VAMMAC\nMACHINE,SIGNATURE => VAMMAC\nNOTSURE,* => VAMNS\nNOTSURE,HANGUP => VAMNS\nNOTSURE,HIGHCOMPRESS => VAMNS\nNOTSURE,LOWCONFIDENCE => VAMNS\nNOTSURE,LOWSCORE => VAMNS\nNOTSURE,NOTHUMAN => VAMNS\nNOTSURE,NOTSURE => VAMNS',NOW());

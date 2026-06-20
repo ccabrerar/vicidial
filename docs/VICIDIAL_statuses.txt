@@ -89,3 +89,11 @@ FAXHU - Fax AMD Auto Hangup
 FASHU - False Answer AMD Auto Hangup
 GVM - Generic Voicemail Message
 PVM - Personalized Voicemail Message
+VAMCS - AMD CallScreeen
+VAMFAS - AMD False Answer Signal
+VAMFIS - AMD FAS Silence
+VAMRNG - AMD FAS Ringing
+VAMFAX - AMD Fax Machine
+VAMSIT - AMD SIT Tones
+VAMMAC - AMD Answering Machine
+VAMNS - AMD Not Sure

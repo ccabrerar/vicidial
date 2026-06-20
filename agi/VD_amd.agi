@@ -74,10 +74,11 @@
 # 251006-0903 - If recording_dtmf_muting enabled, force use of MixMonitor for recording
 # 260129-1443 - Added code to reinsert missing vicidial_auto_calls record
 # 260527-0902 - Updates for ViciAMD
+# 260620-1430 - Added amd_status_map feature
 #
 
 $script = 'VD_amd.agi';
-$build = '260527-0902';
+$build = '260620-1430';
 
 $A = 1;		# set to 1 for AMD output messages mode
 $AMD_LOG = 3;	# set to 1 for logfile and 2 forDB log, 3 for both
@@ -152,7 +153,7 @@ $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VA
 
 #############################################
 ##### Gather system_settings #####
-$stmtA = "SELECT sip_event_logging,call_quota_lead_ranking,recording_dtmf_muting,recording_dtmf_detection FROM system_settings;";
+$stmtA = "SELECT sip_event_logging,call_quota_lead_ranking,recording_dtmf_muting,recording_dtmf_detection,amd_status_map FROM system_settings;";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -163,6 +164,7 @@ if ($sthArows > 0)
 	$SScall_quota_lead_ranking =	$aryA[1];
 	$SSrecording_dtmf_muting =		$aryA[2];
 	$SSrecording_dtmf_detection =	$aryA[3];
+	$SSamd_status_map =				$aryA[4];
 	}
 $sthA->finish();
 ###########################################
@@ -273,6 +275,7 @@ if ($AGILOG) {$agi_string = "AGI Variables: |$unique_id|$channel|$extension|$typ
 $VDADcampaign='';
 $VDADphone='';
 $VDADphone_code='';
+$ACTIVEamd_status_map = $SSamd_status_map;
 
 $callerid =~ s/\"//gi;
 $callerid =~ s/ .*//gi;
@@ -296,7 +299,13 @@ if ( ($channel =~ /Local/i) && ($AST_ver !~ /^1\.0\.8|^1\.0\.9/) )
 $AMDSTATUS = $AGI->get_variable(AMDSTATUS);
 $AMDCAUSE =	$AGI->get_variable(AMDCAUSE);
 $AMDSTATS =	$AGI->get_variable(AMDSTATS);
-$AMDMINLEN =	$AGI->get_variable(AMDMINLEN);
+$AMDMINLEN = $AGI->get_variable(AMDMINLEN);
+# sanitize dialplan variables
+$AMDSTATUS =~ s/\'|\"|\\\\|\\\|\\|\\;|\\\;|\;|;|\r|\n//gi;
+$AMDCAUSE =~ s/\'|\"|\\\\|\\\|\\|\\;|\\\;|\;|;|\r|\n//gi;
+$AMDSTATS =~ s/\'|\"|\\\\|\\\|\\|\\;|\\\;|\;|;|\r|\n//gi;
+$AMDMINLEN =~ s/\'|\"|\\\\|\\\|\\|\\;|\\\;|\;|;|\r|\n//gi;
+
 $AMDRESPONSE = $AMDCAUSE;
 $AMDRESPONSE =~ s/-.*//gi;
 $run_time = $AMDSTATS;
@@ -411,7 +420,14 @@ $NOAUDIODATA_hangup_enabled=0;
 $FAX_hangup_enabled=0;
 $FAS_hangup_enabled=0;
 $VL_status_updates=1;
-$stmtA = "SELECT amd_agent_route_options,manual_vm_status_updates FROM vicidial_campaigns where campaign_id='$VD_campaign_id' limit 1;";
+$amd_status_map_CONFIRMED='';
+$KEEP_AL_AM_STATUSES_enabled=0;
+$statusAA='AA';
+$statusAL='AL';
+$statusAM='AM';
+$statusAMDXFR='AMDXFR';
+
+$stmtA = "SELECT amd_agent_route_options,manual_vm_status_updates,amd_status_map FROM vicidial_campaigns where campaign_id='$VD_campaign_id' limit 1;";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -421,10 +437,71 @@ if ($sthArows > 0)
 	@aryA = $sthA->fetchrow_array;
 	$amd_agent_route_options =	$aryA[0];
 	$manual_vm_status_updates =	$aryA[1];
+	$amd_status_map =			$aryA[2];
 	$sthA->finish();
 	}
 if ( ($manual_vm_status_updates =~ /DISABLED/i) && ($calleridname =~ /^M|^Y|^DC/) ) 
 	{$VL_status_updates=0;}
+if ( ($amd_status_map !~ /^DISABLED$/i) && (length($amd_status_map) > 0) ) 
+	{$ACTIVEamd_status_map = $amd_status_map;}
+if ( ($ACTIVEamd_status_map !~ /^DISABLED$/i) && (length($ACTIVEamd_status_map) > 0) ) 
+	{
+	$stmtA = "SELECT container_entry FROM vicidial_settings_containers where container_id='$ACTIVEamd_status_map' limit 1;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArowsVSC=$sthA->rows;
+	if ($AGILOG) {$agi_string = "$sthArowsVSC|$stmtA|";   &agi_output;}
+	if ($sthArowsVSC > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$AMDcontainer_entry =	$aryA[0];
+		$sthA->finish();
+		}
+	if (length($AMDcontainer_entry) > 3) 
+		{
+		@AMDcontainer_lines = split(/\n/,$AMDcontainer_entry);
+		$c=0;
+		foreach(@AMDcontainer_lines)
+			{
+			$AMDcontainer_lines[$c] =~ s/;.*|\r|\t| //gi;
+			if ( (length($AMDcontainer_lines[$c]) > 3) && ($AMDcontainer_lines[$c] =~ /,/) && ($AMDcontainer_lines[$c] =~ /=>/) )
+				{
+				@AMDmap = split(/=>/,$AMDcontainer_lines[$c]);
+				@AMDline = split(/,/,$AMDmap[0]);
+
+				# check for wildcard for amdstatus first
+				if ( ($AMDline[0] =~ /^$AMDSTATUS$/i) && ($AMDline[1] =~ /^\*$/i) ) 
+					{
+					$amd_status_map_CONFIRMED = $AMDmap[1];
+					if ($AGILOG) {$agi_string = "AMD status map WILDCARD MATCH: $c|$amd_status_map_CONFIRMED|   $AMDline[0]($AMDSTATUS)|$AMDline[1]($AMDRESPONSE)|";   &agi_output;}
+					}
+
+				# check for both amdstatus and amdcause
+				if ( ($AMDline[0] =~ /^$AMDSTATUS$/i) && ($AMDline[1] =~ /^$AMDRESPONSE$/i) ) 
+					{
+					$amd_status_map_CONFIRMED = $AMDmap[1];
+					if ($AGILOG) {$agi_string = "AMD status map EXACT MATCH: $c|$amd_status_map_CONFIRMED|   $AMDline[0]($AMDSTATUS)|$AMDline[1]($AMDRESPONSE)|";   &agi_output;}
+					}
+				}
+
+			if ($AMDcontainer_lines[$c] =~ /KEEP-AL-AM-STATUSES/) 
+				{
+				$KEEP_AL_AM_STATUSES_enabled++;
+				}
+			$c++;
+			}
+		if (length($amd_status_map_CONFIRMED) > 0) 
+			{
+			$statusAA = $amd_status_map_CONFIRMED;
+			if ($KEEP_AL_AM_STATUSES_enabled < 1) 
+				{
+				$statusAL = $amd_status_map_CONFIRMED;
+				$statusAM = $amd_status_map_CONFIRMED;
+				$statusAMDXFR = $amd_status_map_CONFIRMED;
+				}
+			}
+		}
+	}
 
 if ($amd_agent_route_options =~ /ENABLED/i) 
 	{
@@ -520,7 +597,7 @@ else
 	if ($AMDSTATUS !~ /CPD/)
 		{
 		########## UPDATE vicidial_list ##########
-		$stmtA = "UPDATE vicidial_list set status='AA' where lead_id = '$VD_lead_id';";
+		$stmtA = "UPDATE vicidial_list set status='$statusAA' where lead_id = '$VD_lead_id';";
 			if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 		if ($VL_status_updates > 0) 
 			{
@@ -584,14 +661,14 @@ else
 		{
 		if ($AGILOG) {$agi_string = "no VDL record found: $uniqueid $calleridname $VD_lead_id $uniqueid";   &agi_output;}
 		$end_epoch = ($now_date_epoch + 3);
-		$stmtA = "INSERT INTO vicidial_log (uniqueid,lead_id,campaign_id,call_date,start_epoch,status,phone_code,phone_number,user,processed,length_in_sec,end_epoch,list_id,called_count) values('$uniqueid','$VD_lead_id','$VD_campaign_id','$now_date','$now_date_epoch','AA','$VD_phone_code','$VD_phone_number','VDAD','N','3','$end_epoch','$VD_list_id','$VD_called_count')";
+		$stmtA = "INSERT INTO vicidial_log (uniqueid,lead_id,campaign_id,call_date,start_epoch,status,phone_code,phone_number,user,processed,length_in_sec,end_epoch,list_id,called_count) values('$uniqueid','$VD_lead_id','$VD_campaign_id','$now_date','$now_date_epoch','$statusAA','$VD_phone_code','$VD_phone_number','VDAD','N','3','$end_epoch','$VD_list_id','$VD_called_count')";
 			if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 		$affected_rows = $dbhA->do($stmtA);
 		}
 	else
 		{
 		$VD_seconds = ($now_date_epoch - $VD_start_epoch);
-		$stmtA = "UPDATE vicidial_log set status='AA',end_epoch='$now_date_epoch',length_in_sec='$VD_seconds',list_id='$VD_list_id',called_count='$VD_called_count' where uniqueid='$uniqueid' and  lead_id='$VD_lead_id' order by call_date desc limit 1;";
+		$stmtA = "UPDATE vicidial_log set status='$statusAA',end_epoch='$now_date_epoch',length_in_sec='$VD_seconds',list_id='$VD_list_id',called_count='$VD_called_count' where uniqueid='$uniqueid' and  lead_id='$VD_lead_id' order by call_date desc limit 1;";
 			if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 		$affected_rows = $dbhA->do($stmtA);
 		if ($AGILOG) {$agi_string = "--    VDAD vicidial_log update: |$affected_rows|$uniqueid|$DB_called_count|$VD_called_count|";   &agi_output;}
@@ -664,7 +741,7 @@ else
 
 	if ( ($SScall_quota_lead_ranking > 0) && ($VD_call_quota_lead_ranking !~ /^DISABLED$/i) )
 		{
-		$temp_status = 'AA';
+		$temp_status = $statusAA;
 		&call_quota_logging;
 		}
 
@@ -880,6 +957,8 @@ else
 			{$hangup_status='FAXHU';}
 		if ( ($AMDRESPONSE =~ /^FAS/) && ($FAS_hangup_enabled > 0) )
 			{$hangup_status='FASHU';}
+		if (length($amd_status_map_CONFIRMED) > 0) 
+			{$hangup_status = $amd_status_map_CONFIRMED;}
 		### If No Audio or a Fax or a False Answer, let's update lead, log and hangup. 
 		$stmtA = "UPDATE vicidial_log set status='$hangup_status' where uniqueid='$uniqueid' and lead_id='$VD_lead_id' order by call_date desc limit 1;";
 		    if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
@@ -909,7 +988,7 @@ else
 
 	if ( ( ($DB_amd_send_to_vmx =~ /Y/) || ($force_playback =~ /YES/) ) && (length($DB_am_message_exten) > 0) )
 		{
-		$msg_status='AM';
+		$msg_status = $statusAM;
 		if ($AMDCAUSE =~ /^Unknown|\?\?\?/i)
 			{$msg_status='UNKAM';}
 
@@ -1708,17 +1787,17 @@ else
 				}
 			if (length($DROPexten)>0)
 				{
-				$stmtA = "UPDATE vicidial_log set status='AMDXFR' where uniqueid='$uniqueid' and lead_id='$VD_lead_id' order by call_date desc limit 1;";
+				$stmtA = "UPDATE vicidial_log set status='$statusAMDXFR' where uniqueid='$uniqueid' and lead_id='$VD_lead_id' order by call_date desc limit 1;";
 					if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 				$affected_rows = $dbhA->do($stmtA);
-				if ($AGILOG) {$agi_string = "--    VDAD vicidial_log AMDXFR update: |$affected_rows|$uniqueid|";   &agi_output;}
+				if ($AGILOG) {$agi_string = "--    VDAD vicidial_log AMDXFR update: |$affected_rows|$uniqueid|$statusAMDXFR|";   &agi_output;}
 
-				$stmtA = "UPDATE vicidial_list set status='AMDXFR' where lead_id='$VD_lead_id';";
+				$stmtA = "UPDATE vicidial_list set status='$statusAMDXFR' where lead_id='$VD_lead_id';";
 					if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 				if ($VL_status_updates > 0) 
 					{
 					$affected_rows = $dbhA->do($stmtA);
-					if ($AGILOG) {$agi_string = "--    VDAD vicidial_list AMDXFR update: |$affected_rows|$uniqueid";   &agi_output;}
+					if ($AGILOG) {$agi_string = "--    VDAD vicidial_list AMDXFR update: |$affected_rows|$uniqueid|$statusAMDXFR";   &agi_output;}
 					}
 				else
 					{
@@ -1727,10 +1806,10 @@ else
 
 				if ( ($SScall_quota_lead_ranking > 0) && ($VD_call_quota_lead_ranking !~ /^DISABLED$/i) )
 					{
-					$stmtA = "UPDATE vicidial_lead_call_quota_counts set status='AMDXFR' where lead_id='$VD_lead_id';";
+					$stmtA = "UPDATE vicidial_lead_call_quota_counts set status='$statusAMDXFR' where lead_id='$VD_lead_id';";
 						if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 					$affected_rows = $dbhA->do($stmtA);
-					if ($AGILOG) {$agi_string = "--    VDAD vicidial_lead_call_quota_counts AMDXFR update: |$affected_rows|$uniqueid|";   &agi_output;}
+					if ($AGILOG) {$agi_string = "--    VDAD vicidial_lead_call_quota_counts AMDXFR update: |$affected_rows|$uniqueid|$statusAMDXFR|";   &agi_output;}
 					}
 
 				$AGI->stream_file('sip-silence');
@@ -1771,7 +1850,7 @@ else
 		else
 			{$AGI->stream_file("$DB_am_message_exten");}
 
-		$last_status='AL';
+		$last_status = $statusAL;
 		if ($AMDCAUSE =~ /^Unknown|\?\?\?/i)
 			{$last_status='UNKAL';}
 		$stmtA = "UPDATE vicidial_log set status='$last_status' where uniqueid='$uniqueid' and lead_id='$VD_lead_id' order by call_date desc limit 1;";
