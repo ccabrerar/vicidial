@@ -760,10 +760,11 @@
 # 260408-1850 - Added max_inbound_auto_reenable option
 # 260529-0914 - Added AMDnotesBox
 # 260615-0039 - Fix for transfer issue
+# 260731-0918 - Added xfer_button_commit options.php setting
 #
 
-$version = '2.14-726c';
-$build = '260615-0039';
+$version = '2.14-727c';
+$build = '260731-0918';
 $php_script = 'vicidial.php';
 $mel=1;					# Mysql Error Log enabled = 1
 $mysql_log_count=110;
@@ -1108,6 +1109,7 @@ $user_pass_webform		= '0';	# set to 1 or 2 to return to default of including the
 $phone_login_webform	= '0';	# set to 1 or 2 to return to default of including the 'phone_login'(1) and 'phone_pass'(2) by default in webform URLs
 $login_submit_once		= '1';	# set to 0 to remove the "disable the login submit button after submitting" feature
 $default_consultative	= '0';	# set the CONSULTATIVE checkbox on the transfer panel be checked by default
+$xfer_button_commit		= '0';	# set to 1 to have the Customer Info 'commit' action run when the Transfer-Conf panel is opened
 
 $TEST_all_statuses		= '0';	# TEST variable allows all statuses in dispo screen, FOR DEBUG ONLY
 
@@ -7018,6 +7020,7 @@ if ($enable_fast_refresh < 1) {echo "\tvar refresh_interval = 1000;\n";}
 	var redirectserverip='';
 	var hangup_again_link_trigger=<?php echo $hangup_again_link_trigger ?>;
 	var VCAdata='x';
+	var xfer_button_commit='<?php echo $xfer_button_commit ?>';
 	var DiaLControl_auto_HTML = "<a href=\"#\" onclick=\"AutoDial_ReSume_PauSe('VDADready','','','','','','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_paused.gif") ?>\" border=\"0\" alt=\"You are paused\" /></a>";
 	var DiaLControl_auto_HTML_ready = "<a href=\"#\" onclick=\"AutoDial_ReSume_PauSe('VDADpause','','','','','','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_active.gif") ?>\" border=\"0\" alt=\"You are active\" /></a>";
 	var DiaLControl_auto_HTML_OFF = "<img src=\"./images/<?php echo _QXZ("vdc_LB_blank_OFF.gif") ?>\" border=\"0\" alt=\"pause button disabled\" />";
@@ -23628,6 +23631,8 @@ function phone_number_format(formatphone) {
 
 			if (showxfervar == 'ON')
 				{
+				if (xfer_button_commit == '1')
+					{CustomerData_update('YES');}
 				var xfer_height = <?php echo $HTheight ?>;
 				if (alt_phone_dialing>0) {xfer_height = (xfer_height + 20);}
 				if ( (auto_dial_level == 0) && (manual_dial_preview == 1) ) {xfer_height = (xfer_height + 20);}
