@@ -1,7 +1,7 @@
 <?php
 # options.php - manually defined options for vicidial.php
-#
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# 
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # rename this file to options.php for the settings here to go into effect
 #
@@ -31,12 +31,13 @@
 # 231109-0830 - Changed link_to_grey_version to disabled by default
 # 231115-1610 - Added allow_vlc_lookup, default_consultative
 # 240802-1250 - Added options to customize PHP error reporting
+# 260731-0917 - Added xfer_button_commit option
 #
 
 $conf_silent_prefix		= '5';	# vicidial_conferences prefix to enter silently and muted for recording
 $dtmf_silent_prefix		= '7';	# vicidial_conferences prefix to enter silently
 $HKuser_level			= '1';	# minimum vicidial user_level for HotKeys
-$campaign_login_list	= '1';	# show drop-down list of campaigns at login
+$campaign_login_list	= '1';	# show drop-down list of campaigns at login	
 $manual_dial_preview	= '1';	# allow preview lead option when manual dial
 $multi_line_comments	= '1';	# set to 1 to allow multi-line comment box
 $user_login_first		= '0';	# set to 1 to have the vicidial_user login before the phone login
@@ -83,6 +84,7 @@ $dial_override_limit	= '6';	# number of dial-override calls per minute that will
 $dead_logging_version	= '0';	# experimental dead logging enabled, can reverse false DEAD call logging
 $allow_vlc_lookup		= '1';	# allow lead lookup by vendor_lead_code
 $default_consultative	= '0';	# set the CONSULTATIVE checkbox on the transfer panel be checked by default
+$xfer_button_commit		= '0';	# set to 1 to have the Customer Info 'commit' action run when the Transfer-Conf panel is opened
 
 $TEST_all_statuses		= '0';	# TEST variable allows all statuses in dispo screen
 
