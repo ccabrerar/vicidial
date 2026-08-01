@@ -5,7 +5,7 @@
 # and/or vicidial_closer_log information by status, list_id and date range. 
 # downloads to a flat text file that is tab delimited
 #
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -66,6 +66,7 @@
 # 230622-1652 - Added filtering by time (hours), and option for single user exports.
 # 230623-1025 - Added sort_dir sort direction
 # 240801-1130 - Code updates for PHP8 compatibility
+# 260731-2058 - Small fix for campaign NONE selection
 #
 
 $startMS = microtime();
@@ -525,7 +526,7 @@ if ($run_export > 0)
 			}
 		$i++;
 		}
-	if ( (preg_match('/\s\-\-NONE\-\-\s/',$campaign_string) ) or ($campaign_ct < 1) )
+	if ( (preg_match('/\-\-\-NONE\-\-\-/',$campaign_string) ) or ($campaign_ct < 1) )
 		{
 		$campaign_SQL = "campaign_id IN('')";
 		$RUNcampaign=0;
@@ -570,7 +571,7 @@ if ($run_export > 0)
 		$group_SQL .= "'$group[$i]',";
 		$i++;
 		}
-	if ( (preg_match('/\s\-\-NONE\-\-\s/',$group_string) ) or ($group_ct < 1) )
+	if ( (preg_match('/\-\-\-NONE\-\-\-/',$group_string) ) or ($group_ct < 1) )
 		{
 		$group_SQL = "''";
 		$group_SQL = "campaign_id IN('')";
