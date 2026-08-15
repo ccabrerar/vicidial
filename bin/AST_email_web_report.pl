@@ -592,7 +592,7 @@ if (length($report_id) > 1)
 	$sthA->finish();
 
 	$file_extension = $html;
-	if ($location =~ /call_report_export|lead_report_export|call_report_export_carrier|list_download/) 
+	if ($location =~ /call_report_export|lead_report_export|call_report_export_carrier|list_download|callerID_log_report/) 
 		{$file_extension = '.txt'}
 	else
 		{

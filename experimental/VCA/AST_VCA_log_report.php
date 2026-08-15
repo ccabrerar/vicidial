@@ -1,10 +1,11 @@
 <?php 
 # AST_VCA_log_report.php
 # 
-# Copyright (C) 2025  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
-# 190329-1852 - First build, based on AST_carrier_log_report.php
+# 250329-1852 - First build, based on AST_carrier_log_report.php
+# 260815-1602 - Added last_X_mins option
 #
 
 $startMS = microtime();
@@ -35,6 +36,9 @@ if (isset($_GET["amd_status"]))				{$amd_status=$_GET["amd_status"];}
 	elseif (isset($_POST["amd_status"]))		{$amd_status=$_POST["amd_status"];}
 if (isset($_GET["amd_cause"]))			{$amd_cause=$_GET["amd_cause"];}
 	elseif (isset($_POST["amd_cause"]))	{$amd_cause=$_POST["amd_cause"];}
+if (isset($_GET["last_X_mins"]))			{$last_X_mins=$_GET["last_X_mins"];}
+	elseif (isset($_POST["last_X_mins"]))	{$last_X_mins=$_POST["last_X_mins"];}
+	else {$last_X_mins=0;}
 if (isset($_GET["file_download"]))			{$file_download=$_GET["file_download"];}
 	elseif (isset($_POST["file_download"]))	{$file_download=$_POST["file_download"];}
 	else {$file_download=0;}
@@ -56,16 +60,24 @@ if (isset($_GET["rpt_output_type"]))			{$rpt_output_type=$_GET["rpt_output_type"
 
 $START_TIME=date("U");
 $NOW_DATE = date("Y-m-d");
+
+$last_X_mins = preg_replace('/[^0-9]/', '', $last_X_mins);
+
+
 if (!is_array($server_ip)) {$server_ip = array();}
 if (!is_array($amd_status)) {$amd_status = array();}
 if (!is_array($agent_status)) {$agent_status = array();}
 if (!is_array($amd_cause)) {$amd_cause = array();}
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
+if (!isset($query_date) || $last_X_mins>0) {$query_date = $NOW_DATE;}
 if (strlen($query_date_D) < 6) {$query_date_D = "00:00:00";}
 if (strlen($query_date_T) < 6) {$query_date_T = "23:59:59";}
 if (!isset($lower_limit)) {$lower_limit=1;}
 if (!isset($upper_limit)) {$upper_limit=1000;}
-
+if ($last_X_mins>0)
+	{
+	$query_date_T=date("H:i:s");
+	$query_date_D=date("H:i:s", time()-(60*$last_X_mins));
+	}
 
 
 #############################################
@@ -270,9 +282,7 @@ if ( (strlen($slave_db_server)>5) and (preg_match("/$report_name/",$reports_use_
 	$MAIN.="<!-- Using slave server $slave_db_server $db_source -->\n";
 	}
 
-# $master_amd_status_array=array("HANGUP", "HUMAN", "MACHINE", "NOTSURE");
-# $master_amd_cause_array=array("HUMAN", "INITIALSILENCE", "LONGGREETING", "MAXWORDLENGTH", "MAXWORDS", "NOAUDIODATA", "TOOLONG");
-$master_amd_status_array=array("FAS", "FAX", "HUMAN", "INTERCEPT", "MACHINE", "NOTSURE");
+$master_amd_status_array=array("FAS", "FAX", "HUMAN", "INTERCEPT", "MACHINE", "NOTSURE","CALLSCREEN");
 $master_amd_cause_array=array("ANS_SIG", "CNG_SIG", "CNG_ANS_SIG", "CONERROR", "HUMAN", "INITIALSILENCE", "LOWCONFIDENCE", "LOWSCORE", "MAXWORDS", "NOTHUMAN", "PATTERN", "RINGING", "SITTONES", "SOUNDTOOSHORT", "SIGNATURE","NOAUDIODATA");
 
 $amd_statuses_to_print=count($master_amd_status_array);
@@ -525,6 +535,8 @@ $MAIN.="</script>\n";
 $MAIN.="<BR><BR><INPUT TYPE=TEXT NAME=query_date_D SIZE=9 MAXLENGTH=8 VALUE=\"$query_date_D\">";
 
 $MAIN.="<BR> "._QXZ("to")." <BR><INPUT TYPE=TEXT NAME=query_date_T SIZE=9 MAXLENGTH=8 VALUE=\"$query_date_T\">";
+
+$MAIN.="<BR><BR>or last <input type='text' name='last_X_mins' id='last_X_mins' size=3 maxlength=3 value='$last_X_mins'> minutes";
 
 $MAIN.="</TD><TD ROWSPAN=2 VALIGN=TOP>"._QXZ("Server IP").":<BR/>\n";
 $MAIN.="<SELECT SIZE=5 NAME=server_ip[] multiple>\n";

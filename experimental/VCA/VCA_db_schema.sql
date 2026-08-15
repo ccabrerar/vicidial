@@ -32,6 +32,13 @@ CREATE TABLE `vicidial_vca_log` (
   `vca_server_host` varchar(100) DEFAULT NULL,
   `vca_server_port` smallint(5) unsigned DEFAULT 0,
   `gpu_id` smallint(6) DEFAULT NULL,
+  `voice_sig_id` varchar(36) DEFAULT '',
+  `voice_min_dist` float DEFAULT 0,
+  `voice_match_ms` float DEFAULT 0,
+  `audio_sig_id` varchar(36) DEFAULT '',
+  `audio_min_dist` float DEFAULT 0,
+  `audio_match_ms` float DEFAULT 0,
+  `sig_match_type` varchar(10) DEFAULT '',
   PRIMARY KEY (`vca_log_id`),
   KEY `channel` (`channel`),
   KEY `analysis_date` (`analysis_date`),
@@ -39,29 +46,12 @@ CREATE TABLE `vicidial_vca_log` (
   KEY `amd_status` (`amd_status`),
   KEY `amd_cause` (`amd_cause`),
   KEY `text` (`text`)
-) ENGINE=MyISAM AUTO_INCREMENT=164460 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_vca_log_archive LIKE vicidial_vca_log;
 ALTER TABLE vicidial_vca_log_archive MODIFY vca_log_id INT(9) UNSIGNED NOT NULL;
 
-ALTER TABLE vicidial_vca_log ADD sig_id VARCHAR(36) DEFAULT '', ADD
-sig_min_dist FLOAT DEFAULT 0, ADD sig_match_ms FLOAT DEFAULT 0;
-ALTER TABLE vicidial_vca_log_archive ADD sig_id VARCHAR(36) DEFAULT '',
-ADD sig_min_dist FLOAT DEFAULT 0, ADD sig_match_ms FLOAT DEFAULT 0;
-
-ALTER TABLE vicidial_vca_log RENAME column sig_id to voice_sig_id;
-ALTER TABLE vicidial_vca_log RENAME column sig_min_dist to voice_min_dist;
-ALTER TABLE vicidial_vca_log RENAME column sig_match_ms to voice_match_ms;
-ALTER TABLE vicidial_vca_log_archive RENAME column sig_id to voice_sig_id;
-ALTER TABLE vicidial_vca_log_archive RENAME column sig_match_ms to voice_match_ms;
-ALTER TABLE vicidial_vca_log_archive RENAME column sig_min_dist to voice_min_dist;
-ALTER TABLE vicidial_vca_log ADD column audio_sig_id VARCHAR(36) default '';
-ALTER TABLE vicidial_vca_log ADD column audio_min_dist FLOAT default 0;
-ALTER TABLE vicidial_vca_log ADD column audio_match_ms FLOAT default 0;
-ALTER TABLE vicidial_vca_log ADD column sig_match_type VARCHAR(10) default '';
-ALTER TABLE vicidial_vca_log_archive ADD column audio_sig_id VARCHAR(36) default '';
-ALTER TABLE vicidial_vca_log_archive ADD column audio_min_dist FLOAT default 0;
-ALTER TABLE vicidial_vca_log_archive ADD column audio_match_ms FLOAT default 0;
-ALTER TABLE vicidial_vca_log_archive ADD column sig_match_type VARCHAR(10) default '';
+INSERT INTO `vicidial_music_on_hold` VALUES ('vca-moh','VCA AMD background silence','Y','N','N','---ALL---');
+INSERT INTO `vicidial_music_on_hold_files` VALUES ('6s-silence','vca-moh',1);
 
 INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry,modify_stamp) VALUES('Default_ViciAMD_status_map','Default ViciAMD status map','AMD_STATUS_MAP','---ALL---','CALLSCREEN,* => VAMCS\nCALLSCREEN,PATTERN => VAMCS\nCALLSCREEN,SIGNATURE => VAMCS\nFAS,* => VAMFAS\nFAS,INITIALSILENCE => VAMFIS\nFAS,RINGING => VAMRNG\nFAS,SIGNATURE => VAMFAS\nFAX,* => VAMFAX\nFAX,ANS_SIG => VAMFAX\nFAX,CNG_SIG => VAMFAX\nHUMAN,* => VAMMAN\nHUMAN,HUMAN => VAMMAN\nINTERCEPT,* => VAMSIT\nINTERCEPT,SIGNATURE => VAMSIT\nINTERCEPT,SITTONES => VAMSIT\nMACHINE,* => VAMMAC\nMACHINE,MAXWORDS => VAMMAC\nMACHINE,PATTERN => VAMMAC\nMACHINE,SIGNATURE => VAMMAC\nNOTSURE,* => VAMNS\nNOTSURE,HANGUP => VAMNS\nNOTSURE,HIGHCOMPRESS => VAMNS\nNOTSURE,LOWCONFIDENCE => VAMNS\nNOTSURE,LOWSCORE => VAMNS\nNOTSURE,NOTHUMAN => VAMNS\nNOTSURE,NOTSURE => VAMNS',NOW());
