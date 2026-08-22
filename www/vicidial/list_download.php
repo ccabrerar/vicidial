@@ -4,7 +4,7 @@
 # downloads the entire contents of a vicidial list ID to a flat text file
 # that is tab delimited
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -39,6 +39,7 @@
 # 201208-1630 - Fix for custom fields issue when downloading list with no custom fields itself
 # 210308-0939 - Fix for ALL_DNC_CAMPAIGNS dnc download
 # 220224-1041 - Added allow_web_debug system setting
+# 260822-0834 - Fix for Issue #1564
 #
 
 $startMS = microtime();
@@ -520,11 +521,11 @@ else
 	{
 	$TXTfilename = "LIST_$list_id$US$FILE_TIME.txt";
 	$list_id_header='';
-	$stmt="select lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,gmt_offset_now,called_since_last_reset,phone_code,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner,entry_list_id $extended_vl_fields_SQL from vicidial_list where list_id='$list_id';";
+	$stmt="select lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,gmt_offset_now,called_since_last_reset,phone_code,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner,entry_list_id $extended_vl_fields_SQL from vicidial_list where list_id='$list_id'";
 	if ($list_id=='ALL-LISTS')
 		{
 		$list_id_header="list_id\t";   
-		$stmt="select list_id,lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,gmt_offset_now,called_since_last_reset,phone_code,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner,entry_list_id $extended_vl_fields_SQL from vicidial_list where list_id > 0;";
+		$stmt="select list_id,lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,gmt_offset_now,called_since_last_reset,phone_code,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner,entry_list_id $extended_vl_fields_SQL from vicidial_list where list_id > 0";
 		}
 	$header_row = $list_id_header . "lead_id\tentry_date\tmodify_date\tstatus\tuser\tvendor_lead_code\tsource_id\tlist_id\tgmt_offset_now\tcalled_since_last_reset\tphone_code\tphone_number\ttitle\tfirst_name\tmiddle_initial\tlast_name\taddress1\taddress2\taddress3\tcity\tstate\tprovince\tpostal_code\tcountry_code\tgender\tdate_of_birth\talt_phone\temail\tsecurity_phrase\tcomments\tcalled_count\tlast_local_call_time\trank\towner\tentry_list_id$extended_vl_fields_HEADER";
 	$header_columns='';
@@ -541,8 +542,7 @@ header('Pragma: public');
 ob_clean();
 flush();
 
-
-
+# $stmt.=" limit 50000";
 $rslt=mysql_to_mysqli($stmt, $link);
 if ($DB) {echo "$stmt\n";}
 $leads_to_print = mysqli_num_rows($rslt);
@@ -712,8 +712,8 @@ if ( ($custom_fields_enabled > 0) and ($event_code_type=='LIST') )
 				{
 				$row=mysqli_fetch_row($rslt);
 				$column =	$row[0];
-				if ($u > 0)
-					{$header_columns .= "\t$column";}
+				if ($u > 0) # prevent lead_id column from custom_ table from showing
+					{$header_columns .= "\t$column"; $ch++;}
 				$u++;
 				}
 			if ($columns_ct > 1)
@@ -721,15 +721,18 @@ if ( ($custom_fields_enabled > 0) and ($event_code_type=='LIST') )
 				$valid_custom_table=1;
 				}
 			}
+/*
 		if ($valid_custom_table < 1)
 			{
-			$stmt="SHOW TABLES LIKE \"custom\_%\";";
+			$stmt="SHOW TABLES LIKE \"custom_%\";";
 			if ($DB>0) {echo "$stmt";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 			$tablecount_to_print = mysqli_num_rows($rslt);
 			$valid_custom_table = $tablecount_to_print;
 			}
+*/
 		}
+
 	if ($valid_custom_table > 0)
 		{
 		$i=0;
@@ -768,6 +771,7 @@ if ( ($custom_fields_enabled > 0) and ($event_code_type=='LIST') )
 					}
 				if ($columns_ct > 1)
 					{
+					if(preg_match("/lead_id,/",$column_list)) {$columns_ct--;} # Lower column count by 1 because we're removing this column
 					$column_list = preg_replace("/lead_id,/",'',$column_list);
 					$column_list = preg_replace("/,$/",'',$column_list);
 					$column_list_array = explode(',',$column_list);
@@ -861,10 +865,11 @@ if ( ($custom_fields_enabled > 0) and ($event_code_type=='LIST') )
 								$row[$t] = preg_replace("/./",'X',$field_temp_val);
 								}
 							$custom_data[$i] .= "\t$row[$t]";
-							if ($ch <= $t)
+							# if ($ch <= $t)
+							if ($ch < $t) # Changed from previous line because it seems to be adding an extra field
 								{
 								$ch++;
-								$header_columns .= "\tcustom$ch";
+								$header_columns .= "\tcustom$ch"; # Possible debug - "|$t|$columns_ct";
 								}
 							$t++;
 							}
