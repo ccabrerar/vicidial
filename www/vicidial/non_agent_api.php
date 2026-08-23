@@ -230,10 +230,11 @@
 # 260506-1525 - small fix for campaign changes
 # 260519-1647 - Code updates for PHP8 compatibility, and json output format
 # 260611-2256 - Fix for input variable filtering
+# 260822-0841 - Added agent_ingroup_availability function
 #
 
-$version = '2.14-205';
-$build = '260611-2256';
+$version = '2.14-206';
+$build = '260822-0841';
 $php_script='non_agent_api.php';
 $api_url_log = 0;
 $camp_lead_order_random=1;
@@ -615,6 +616,9 @@ if (isset($_GET["user_groups"]))				{$user_groups=$_GET["user_groups"];}
 if (isset($_GET["in_groups"]))				{$in_groups=$_GET["in_groups"];}
 	elseif (isset($_POST["in_groups"]))		{$in_groups=$_POST["in_groups"];}
 	else {$in_groups="";}
+if (isset($_GET["queue_groups"]))				{$queue_groups=$_GET["queue_groups"];}
+	elseif (isset($_POST["queue_groups"]))		{$queue_groups=$_POST["queue_groups"];}
+	else {$queue_groups="";}
 if (isset($_GET["did_ids"]))				{$did_ids=$_GET["did_ids"];}
 	elseif (isset($_POST["did_ids"]))		{$did_ids=$_POST["did_ids"];}
 	else {$did_ids="";}
@@ -1017,6 +1021,15 @@ if (isset($_GET["webform_three"]))			{$webform_three=$_GET["webform_three"];}
 if (isset($_GET["forcephonecode"]))			{$forcephonecode=$_GET["forcephonecode"];}
 	elseif (isset($_POST["forcephonecode"]))	{$forcephonecode=$_POST["forcephonecode"];}
 	else {$forcephonecode="";}
+if (isset($_GET["display_field"]))			{$display_field=$_GET["display_field"];}
+	elseif (isset($_POST["display_field"]))	{$display_field=$_POST["display_field"];}
+	else {$display_field="";}
+if (isset($_GET["summary_name"]))			{$summary_name=$_GET["summary_name"];}
+	elseif (isset($_POST["summary_name"]))	{$summary_name=$_POST["summary_name"];}
+	else {$summary_name="";}
+if (isset($_GET["ingroup_set_name"]))			{$ingroup_set_name=$_GET["ingroup_set_name"];}
+	elseif (isset($_POST["ingroup_set_name"]))	{$ingroup_set_name=$_POST["ingroup_set_name"];}
+	else {$ingroup_set_name="";}
 if (isset($_GET["DBX"]))			{$DBX=$_GET["DBX"];}
 	elseif (isset($_POST["DBX"]))	{$DBX=$_POST["DBX"];}
 
@@ -1278,6 +1291,7 @@ if ($non_latin < 1)
 	$caller_id_name = preg_replace('/[^- \+\_0-9a-zA-Z]/','',$caller_id_name);
 	$user_groups = preg_replace('/[^-\|\,\_0-9a-zA-Z]/','',$user_groups); #JCJ
 	$in_groups = preg_replace('/[^-\|\,\_0-9a-zA-Z]/','',$in_groups); #JCJ
+	$queue_groups = preg_replace('/[^-\|\,\_0-9a-zA-Z]/','',$queue_groups); #JCJ
 	$group = preg_replace('/[^-\|\_0-9a-zA-Z]/','',$group);
 	$call_id = preg_replace('/[^0-9a-zA-Z]/','',$call_id);
 	$expiration_date = preg_replace('/[^-_0-9a-zA-Z]/','',$expiration_date);
@@ -1341,6 +1355,9 @@ if ($non_latin < 1)
 	$preset_name = preg_replace('/[^- \_0-9a-zA-Z]/','',$preset_name);
 	$dial_status_add=preg_replace('/[^-_0-9a-zA-Z]/','',$dial_status_add);
 	$dial_status_remove=preg_replace('/[^-_0-9a-zA-Z]/','',$dial_status_remove);
+	$display_field = preg_replace('/[^_0-9a-zA-Z]/','',$display_field);
+	$summary_name = preg_replace('/[^- \_\.0-9a-zA-Z]/','',$summary_name);
+	$ingroup_set_name = preg_replace('/[^- \_\.0-9a-zA-Z]/','',$ingroup_set_name);
 	}
 else
 	{
@@ -1437,6 +1454,7 @@ else
 	$caller_id_name = preg_replace('/[^- \+\_0-9\p{L}]/u','',$caller_id_name);
 	$user_groups = preg_replace('/[^-\|\,\_0-9\p{L}]/u','',$user_groups); #JCJ
 	$in_groups = preg_replace('/[^-\|\,\_0-9\p{L}]/u','',$in_groups); #JCJ
+	$queue_groups = preg_replace('/[^-\|\,\_0-9\p{L}]/u','',$queue_groups); #JCJ
 	$group = preg_replace('/[^-\|\_0-9\p{L}]/u','',$group);
 	$call_id = preg_replace('/[^0-9\p{L}]/u','',$call_id);
 	$expiration_date = preg_replace('/[^-_0-9\p{L}]/u','',$expiration_date);
@@ -1500,6 +1518,9 @@ else
 	$preset_name = preg_replace('/[^- \_0-9\p{L}]/u','',$preset_name);
 	$dial_status_add=preg_replace('/[^-_0-9\p{L}]/u','',$dial_status_add);
 	$dial_status_remove=preg_replace('/[^-_0-9\p{L}]/u','',$dial_status_remove);
+	$display_field = preg_replace('/[^_0-9\p{L}]/u','',$display_field);
+	$summary_name = preg_replace('/[^- \_\.0-9\p{L}]/u','',$summary_name);
+	$ingroup_set_name = preg_replace('/[^- \_\.0-9\p{L}]/u','',$ingroup_set_name);
 	}
 
 if ($stage=="json") {$header="YES";}
@@ -11322,7 +11343,167 @@ if ($function == 'copy_did')
 ################################################################################
 
 
+################################################################################
+### agent_ingroup_availability - 
+################################################################################
+if ($function == 'agent_ingroup_availability')
+	{
+	if(strlen($source)<2)
+		{
+		$result = 'ERROR';
+		$result_reason = "Invalid Source";
+		echo "$result: $result_reason: |$source|\n";
+		api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+		exit;
+		}
+	else
+		{
+		if ( (!preg_match("/ $function /",$api_allowed_functions)) and (!preg_match("/ALL_FUNCTIONS/",$api_allowed_functions)) )
+			{
+			$result = 'ERROR';
+			$result_reason = "auth USER DOES NOT HAVE PERMISSION TO USE THIS FUNCTION";
+			echo "$result: $result_reason: |$user|$function|\n";
+			$data = "$allowed_user";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1' and view_reports='1' and user_level >= 8 and active='Y';";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$row=mysqli_fetch_row($rslt);
+		$allowed_user=$row[0];
+		if ($allowed_user < 1)
+			{
+			$result = 'ERROR';
+			$result_reason = "agent_ingroup_availability USER DOES NOT HAVE PERMISSION TO GET AGENT INFO";
+			$data = "$allowed_user";
+			echo "$result: $result_reason: |$user|$data\n";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
 
+		$all_ingroups=array();
+		if (strlen($in_groups) > 0)
+			{
+			$all_ingroups=explode(",", $in_groups);
+			}
+
+		if (strlen($queue_groups) > 0)
+			{
+			$queue_group_array=explode(",", $queue_groups);
+
+			$qg_stmt="select included_inbound_groups from vicidial_queue_groups where queue_group in ('".implode("','", $queue_group_array)."') ";
+			$qg_rslt=mysql_to_mysqli($qg_stmt, $link);
+			while ($qg_row=mysqli_fetch_row($qg_rslt))
+				{
+				$iigs=trim($qg_row[0]);
+				$iigs=preg_replace('/ -\s?$/', "", $iigs);
+				$inc_inb_groups=explode(" ", $iigs);
+
+				$all_ingroups=array_merge($all_ingroups, $inc_inb_groups);
+				}
+			}
+		# print_r($all_ingroups); die;
+
+		$ingroups_to_check=array_unique($all_ingroups);
+		if (count($ingroups_to_check)==0)
+			{
+			$result = 'ERROR';
+			$result_reason = "NO INGROUPS DEFINED";
+			echo "$result: $result_reason: |$user|$function|\n";
+			$data = "$allowed_user";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+
+		$column_name="group_id";
+		if (strlen($display_field) > 0)
+			{
+			$column_stmt="show columns from vicidial_inbound_groups like '$display_field'";
+			$column_rslt=mysql_to_mysqli($column_stmt, $link);
+			if (mysqli_num_rows($column_rslt)>0)
+				{
+				$column_name=$display_field;
+				}
+			}
+		# print_r($ingroups_to_check);
+		$ingroup_stmt="select group_id, $column_name from vicidial_inbound_groups where group_id in ('".implode("','", $ingroups_to_check)."')";
+		$ingroup_rslt=mysql_to_mysqli($ingroup_stmt, $link);
+
+		# print "$ingroup_stmt<BR>";
+
+		$availability_array=array(); $existing_ingroups=array(); $custom_display_array=array();
+		while ($ingroup_row=mysqli_fetch_array($ingroup_rslt))
+			{
+			$existing_ingroups[]=$ingroup_row[0];
+			$key=(strlen($ingroup_row[1])>0 ? $ingroup_row[1] : $ingroup_row[0]);
+			$custom_display_array["$ingroup_row[0]"]=$key;
+			$availability_array["$key"]=0;
+			}	
+
+		if (count($existing_ingroups)==0)
+			{
+			$result = 'ERROR';
+			$result_reason = "NO INGROUPS FOUND";
+			echo "$result: $result_reason: |$user|$function|\n";
+			$data = "$allowed_user";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+			
+		if (strlen($campaigns) > 0)
+			{
+			$campaign_id_array=explode(",", $campaigns);
+			$campaignSQL=" and campaign_id in ('".implode("','", $campaign_id_array)."') ";
+			}
+
+		
+		$vla_stmt="select user, status, closer_campaigns From vicidial_live_agents where status in ('READY', 'CLOSER') $campaignSQL";
+		$vla_rslt=mysql_to_mysqli($vla_stmt, $link);
+		$user_counts=array();
+		while ($vla_row=mysqli_fetch_array($vla_rslt))
+			{
+			$closer_campaigns=$vla_row["closer_campaigns"];
+			$vla_user=$vla_row["user"];
+			$closer_campaigns=preg_replace('/- $/', "", $closer_campaigns);
+			$closer_campaigns_array=explode(" ", $closer_campaigns);
+
+			$matching_arrays=array_values(array_intersect($closer_campaigns_array, $existing_ingroups));
+			for ($i=0; $i<count($matching_arrays); $i++)
+				{
+				$key=$custom_display_array["$matching_arrays[$i]"];
+				$availability_array["$key"]++;
+				$user_counts["$vla_user"]++;
+				}
+			}
+		$user_count=count($user_counts);
+		ksort($availability_array);
+
+		if (!isset($summary_name) || strlen($summary_name)==0) {$summary_name="availableCount";}
+		if (!isset($ingroup_set_name) || strlen($ingroup_set_name)==0) {$ingroup_set_name="states";}
+		if (preg_match('/^JSON$/i', $stage))
+			{
+			echo "{\"$summary_name\": $user_count,\n";
+			echo "\"$ingroup_set_name\": {\n";
+			$state_str="";
+			foreach ($availability_array as $key => $value)
+				{
+				$state_str.="\"$key\": $value,\n";
+				}
+			$state_str=preg_replace('/,\n$/', "\n", $state_str);
+			echo "$state_str}\n}";
+			}
+		else
+			{
+			echo "GROUP,AVAILABLE COUNT\n";
+			echo "AGENTS,$user_count\n";
+			foreach ($availability_array as $key => $value)
+				{
+				echo "$key,$value\n";
+				}
+			}
+		}
+	exit;
+	}
 
 
 ################################################################################

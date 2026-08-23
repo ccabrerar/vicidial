@@ -21,10 +21,11 @@
 # 220518-2210 - Small fix for encrypted auth
 # 220922-1027 - Added BLANK action for first agent screen page load
 # 260303-0714 - Code updates for PHP8 compatibility
+# 260823-1411 - input filtering fix
 #
 
-$admin_version = '2.14-14';
-$build = '260303-0714';
+$admin_version = '2.14-15';
+$build = '260823-1411';
 $php_script = 'agc_agent_manager_chat_interface.php';
 
 $sh="managerchats"; 
@@ -84,13 +85,13 @@ if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
 	$pass=preg_replace("/[^-\.\+\/\=_0-9a-zA-Z]/","",$pass);
-	$manager_chat_id = preg_replace('/[^- \_\.0-9a-zA-Z]/','',$user);
+	$manager_chat_id = preg_replace('/[^- \_\.0-9a-zA-Z]/','',$manager_chat_id);
 	}
 else
 	{
 	$user = preg_replace('/[^-_0-9\p{L}]/u','',$user);
 	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
-	$manager_chat_id = preg_replace("/[^- \_\.0-9\p{L}]/u","",$user);
+	$manager_chat_id = preg_replace("/[^- \_\.0-9\p{L}]/u","",$manager_chat_id);
 	}
 
 $manager_chat_refresh_seconds=1;

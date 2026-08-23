@@ -108,6 +108,7 @@ $query_date_T = preg_replace('/[^\:0-9]/', '', $query_date_T);
 $file_download = preg_replace('/[^0-9]/', '', $file_download);
 $lower_limit = preg_replace('/[^0-9]/', '', $lower_limit);
 $upper_limit = preg_replace('/[^0-9]/', '', $upper_limit);
+$rpt_output_type = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$rpt_output_type);
 
 # Variables filtered further down in the code
 # $server_ip
@@ -460,10 +461,12 @@ while($status_row=mysqli_fetch_row($status_rslt))
 $agent_status_SQL=preg_replace('/,\s$/', '', $agent_status_SQL);
 if (strlen($agent_status_SQL)>0) {$agent_status_SQL="and status in ($agent_status_SQL)";}
 $status_rpt_string=", statuses: ".implode(', ', $agent_status);
+$status_rpt_string = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$status_rpt_string);
 
 $agent_statusQS='';
 for ($i=0; $i<count($agent_status); $i++)
 	{
+	$agent_status[$i] = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$agent_status[$i]);
 	$agent_statusQS.="&agent_status[]=".$agent_status[$i];
 	}
 

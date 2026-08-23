@@ -118,12 +118,11 @@ $Mmain_bgcolor =	'#015B91';
 ###
 
 
-$PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
-$PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
+$PHP_AUTH_USER=(array_key_exists('PHP_AUTH_USER', $_SERVER) ? $_SERVER['PHP_AUTH_USER'] : "");
+$PHP_AUTH_PW=(array_key_exists('PHP_AUTH_PW', $_SERVER) ? $_SERVER['PHP_AUTH_PW'] : "");
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 $QUERY_STRING = getenv("QUERY_STRING");
-$groups=array();
 
 $Vreports = 'NONE, Real-Time Main Report, Real-Time Campaign Summary, Real-Time Whiteboard Report, VERM Reports, Inbound Report, Inbound Report by DID, Inbound Service Level Report, Inbound Summary Hourly Report, Inbound Daily Report, Inbound DID Report, Inbound DID Summary Report, Agent DID Report, Inbound DID Detail Report, Inbound IVR Report, Inbound Forecasting Report, Advanced Forecasting Report, Outbound Calling Report, Outbound Summary Interval Report, Outbound IVR Report, Callmenu Survey Report, Outbound Lead Source Report, Fronter - Closer Report, Fronter - Closer Detail Report, Lists Campaign Statuses Report, Lists Statuses Report, Campaign Status List Report, Export Calls Report, Export Leads Report, Agent Time Detail, Agent Status Detail, Agent Inbound Status Summary, Agent Performance Detail, Team Performance Detail, Performance Comparison Report, Single Agent Daily, Single Agent Daily Time, User Group Login Report, User Group Hourly Report, User Group Detail Hourly Report, User Timeclock Report, User Group Timeclock Status Report, User Timeclock Detail Report, Server Performance Report, Administration Change Log, List Update Stats, User Stats, User Time Sheet, Download List, Dialer Inventory Report, Maximum System Stats, Maximum Stats Detail, Search Leads Logs, Email Log Report, Carrier Log Report, Campaign Debug, Shared Debug, Asterisk Debug, Hangup Cause Report, Lists Pass Report, Called Counts List IDs Report, Agent Debug Log Report, Agent Parked Call Report, Agent-Manager Chat Log, Recording Access Log Report, API Log Report, Real-Time Monitoring Log Report, AMD Log Report, 3-Way Press Log Report, SIP Event Report, Caller ID Log Report, Quality Control Report, Settings Compare, Phone Stats, Hopper List Report, In-Group User List, Webserver-URL Report, VDAD Debug Log Report, URL Log Report, Medialog Inventory Report, Asterisk Debug, SPH Report, Shared Debug, Process Report, Group Alias Report, Hangup Cause Report, IVR Filter Report, LAGGED Agent Log Report, LAGGED Agent Log Summary Report, Agent Latency Report, Latency Gaps Report, Agent Disposition Report, Agent Performance Report, Carrier Log Report, Dial Log Report, Inbound Extension Stats, Agents Time On Calls, Callbacks Export, User Logins Report, Demographic Quotas Report, DB Schema Compare Utility, Khomp Quick Stats Report';
 
@@ -131,7 +130,7 @@ $UGreports = 'ALL REPORTS, NONE, Real-Time Main Report, Real-Time Campaign Summa
 
 $Vtables = 'NONE,log_noanswer,did_agent_log,contact_information';
 
-$APIfunctions = 'ALL_FUNCTIONS add_group_alias add_lead add_list add_phone add_phone_alias add_user agent_ingroup_info agent_stats_export agent_status audio_playback blind_monitor call_agent callid_info change_ingroups check_phone_number copy_user did_log_export external_add_lead external_dial external_hangup external_pause external_status in_group_status logout moh_list ingroup_list campaigns_list callmenu_list hopper_list hopper_bulk_insert call_dispo_report agent_campaigns park_call pause_code preview_dial_action ra_call_control recording stereo_recording recording_lookup send_dtmf server_refresh set_timer_action sounds_list st_get_agent_active_lead st_login_log transfer_conference update_fields update_lead batch_update_lead update_list list_info list_custom_fields update_log_entry update_phone update_phone_alias update_user user_group_status vm_list vm_message webphone_url webserver logged_in_agents update_campaign update_alt_url update_presets add_did copy_did update_did lead_field_info lead_all_info lead_callback_info phone_number_log switch_lead ccc_lead_info lead_status_search lead_search lead_dearchive call_status_stats calls_in_queue_count force_fronter_leave_3way force_fronter_audio_stop update_cid_group_entry add_dnc_phone delete_dnc_phone add_fpg_phone send_notification refresh_panel update_remote_agent user_details';
+$APIfunctions = 'ALL_FUNCTIONS add_group_alias add_lead add_list add_phone add_phone_alias add_user agent_ingroup_info agent_ingroup_availability agent_stats_export agent_status audio_playback blind_monitor call_agent callid_info change_ingroups check_phone_number copy_user did_log_export external_add_lead external_dial external_hangup external_pause external_status in_group_status logout moh_list ingroup_list campaigns_list callmenu_list hopper_list hopper_bulk_insert call_dispo_report agent_campaigns park_call pause_code preview_dial_action ra_call_control recording stereo_recording recording_lookup send_dtmf server_refresh set_timer_action sounds_list st_get_agent_active_lead st_login_log transfer_conference update_fields update_lead batch_update_lead update_list list_info list_custom_fields update_log_entry update_phone update_phone_alias update_user user_group_status vm_list vm_message webphone_url webserver logged_in_agents update_campaign update_alt_url update_presets add_did copy_did update_did lead_field_info lead_all_info lead_callback_info phone_number_log switch_lead ccc_lead_info lead_status_search lead_search lead_dearchive call_status_stats calls_in_queue_count force_fronter_leave_3way force_fronter_audio_stop update_cid_group_entry add_dnc_phone delete_dnc_phone add_fpg_phone send_notification refresh_panel update_remote_agent user_details';
 
 $browser_alert_sounds_list = 'bark_dog,beep_double,beep_five,beep_up,bell_double,bell_school,bird,blaster1,blaster2,buzz1,buzz2,cash_register,chat_alert,click_single,click_double,click_quiet,close_encounter,confirmation,ding,droplet,droplet_double,elephant,email_alert,hold_tone,horn_bike,horn_car,horn_car_triple,horn_clown,horn_double,horn_train,meow_cat,scream_wilhelm,silence_quick,siren,slide_down,slide_up,swish,teleport1,teleport2,ticking_two,ticking_four,ticking_six,whip,whistle_up,whistle_two,whistle_three,whoosh,xylophone1,xylophone2,xylophone3,xylophone4,20Hz_tone';
 
@@ -169,2532 +168,3812 @@ if (isset($_GET["DB"]))				{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))	{$DB=$_POST["DB"];}
 if (isset($_GET["access_recordings"]))			{$access_recordings=$_GET["access_recordings"];}
 	elseif (isset($_POST["access_recordings"]))	{$access_recordings=$_POST["access_recordings"];}
+	else {$access_recordings=0;}
 if (isset($_GET["active"]))				{$active=$_GET["active"];}
 	elseif (isset($_POST["active"]))	{$active=$_POST["active"];}
+	else {$active="";}
 if (isset($_GET["adaptive_dl_diff_target"]))			{$adaptive_dl_diff_target=$_GET["adaptive_dl_diff_target"];}
 	elseif (isset($_POST["adaptive_dl_diff_target"]))	{$adaptive_dl_diff_target=$_POST["adaptive_dl_diff_target"];}
+	else {$adaptive_dl_diff_target=0;}
 if (isset($_GET["adaptive_dropped_percentage"]))		{$adaptive_dropped_percentage=$_GET["adaptive_dropped_percentage"];}
 	elseif (isset($_POST["adaptive_dropped_percentage"])){$adaptive_dropped_percentage=$_POST["adaptive_dropped_percentage"];}
+	else {$adaptive_dropped_percentage=3;}
 if (isset($_GET["adaptive_intensity"]))	{$adaptive_intensity=$_GET["adaptive_intensity"];}
 	elseif (isset($_POST["adaptive_intensity"]))	{$adaptive_intensity=$_POST["adaptive_intensity"];}
+	else {$adaptive_intensity=0;}
 if (isset($_GET["adaptive_latest_server_time"]))	{$adaptive_latest_server_time=$_GET["adaptive_latest_server_time"];}
 	elseif (isset($_POST["adaptive_latest_server_time"])){$adaptive_latest_server_time=$_POST["adaptive_latest_server_time"];}
+	else {$adaptive_latest_server_time="2359";}
 if (isset($_GET["adaptive_maximum_level"]))	{$adaptive_maximum_level=$_GET["adaptive_maximum_level"];}
 	elseif (isset($_POST["adaptive_maximum_level"]))	{$adaptive_maximum_level=$_POST["adaptive_maximum_level"];}
+	else {$adaptive_maximum_level="3.0";}
 if (isset($_GET["SUB"]))			{$SUB=$_GET["SUB"];}
 	elseif (isset($_POST["SUB"]))	{$SUB=$_POST["SUB"];}
+	else {$SUB="";}
 if (isset($_GET["ADD"]))			{$ADD=$_GET["ADD"];}
 	elseif (isset($_POST["ADD"]))	{$ADD=$_POST["ADD"];}
+	else {$ADD="";}
 if (isset($_GET["admin_hangup_enabled"]))	{$admin_hangup_enabled=$_GET["admin_hangup_enabled"];}
 	elseif (isset($_POST["admin_hangup_enabled"]))	{$admin_hangup_enabled=$_POST["admin_hangup_enabled"];}
+	else {$admin_hangup_enabled=0;}
 if (isset($_GET["admin_hijack_enabled"]))	{$admin_hijack_enabled=$_GET["admin_hijack_enabled"];}
 	elseif (isset($_POST["admin_hijack_enabled"]))	{$admin_hijack_enabled=$_POST["admin_hijack_enabled"];}
+	else {$admin_hijack_enabled=0;}
 if (isset($_GET["admin_monitor_enabled"]))	{$admin_monitor_enabled=$_GET["admin_monitor_enabled"];}
 	elseif (isset($_POST["admin_monitor_enabled"]))	{$admin_monitor_enabled=$_POST["admin_monitor_enabled"];}
+	else {$admin_monitor_enabled=0;}
 if (isset($_GET["AFLogging_enabled"]))	{$AFLogging_enabled=$_GET["AFLogging_enabled"];}
 	elseif (isset($_POST["AFLogging_enabled"]))	{$AFLogging_enabled=$_POST["AFLogging_enabled"];}
+	else {$AFLogging_enabled=0;}
 if (isset($_GET["agent_choose_ingroups"]))	{$agent_choose_ingroups=$_GET["agent_choose_ingroups"];}
 	elseif (isset($_POST["agent_choose_ingroups"]))	{$agent_choose_ingroups=$_POST["agent_choose_ingroups"];}
+	else {$agent_choose_ingroups=0;}
 if (isset($_GET["agentcall_manual"]))	{$agentcall_manual=$_GET["agentcall_manual"];}
 	elseif (isset($_POST["agentcall_manual"]))	{$agentcall_manual=$_POST["agentcall_manual"];}
+	else {$agentcall_manual=0;}
 if (isset($_GET["agentonly_callbacks"]))	{$agentonly_callbacks=$_GET["agentonly_callbacks"];}
 	elseif (isset($_POST["agentonly_callbacks"]))	{$agentonly_callbacks=$_POST["agentonly_callbacks"];}
+	else {$agentonly_callbacks=0;}
 if (isset($_GET["AGI_call_logging_enabled"]))	{$AGI_call_logging_enabled=$_GET["AGI_call_logging_enabled"];}
 	elseif (isset($_POST["AGI_call_logging_enabled"]))	{$AGI_call_logging_enabled=$_POST["AGI_call_logging_enabled"];}
+	else {$AGI_call_logging_enabled=0;}
 if (isset($_GET["agi_output"]))	{$agi_output=$_GET["agi_output"];}
 	elseif (isset($_POST["agi_output"]))	{$agi_output=$_POST["agi_output"];}
+	else {$agi_output="FILE";}
 if (isset($_GET["allcalls_delay"]))	{$allcalls_delay=$_GET["allcalls_delay"];}
 	elseif (isset($_POST["allcalls_delay"]))	{$allcalls_delay=$_POST["allcalls_delay"];}
+	else {$allcalls_delay=0;}
 if (isset($_GET["allow_closers"]))	{$allow_closers=$_GET["allow_closers"];}
 	elseif (isset($_POST["allow_closers"]))	{$allow_closers=$_POST["allow_closers"];}
+	else {$allow_closers="";}
 if (isset($_GET["alt_number_dialing"]))	{$alt_number_dialing=$_GET["alt_number_dialing"];}
 	elseif (isset($_POST["alt_number_dialing"]))	{$alt_number_dialing=$_POST["alt_number_dialing"];}
+	else {$alt_number_dialing="N";}
 if (isset($_GET["alter_agent_interface_options"]))	{$alter_agent_interface_options=$_GET["alter_agent_interface_options"];}
 	elseif (isset($_POST["alter_agent_interface_options"]))	{$alter_agent_interface_options=$_POST["alter_agent_interface_options"];}
+	else {$alter_agent_interface_options=0;}
 if (isset($_GET["am_message_exten"]))	{$am_message_exten=$_GET["am_message_exten"];}
 	elseif (isset($_POST["am_message_exten"]))	{$am_message_exten=$_POST["am_message_exten"];}
+	else {$am_message_exten="";}
 if (isset($_GET["amd_send_to_vmx"]))	{$amd_send_to_vmx=$_GET["amd_send_to_vmx"];}
 	elseif (isset($_POST["amd_send_to_vmx"]))	{$amd_send_to_vmx=$_POST["amd_send_to_vmx"];}
+	else {$amd_send_to_vmx="N";}
 if (isset($_GET["answer_transfer_agent"]))	{$answer_transfer_agent=$_GET["answer_transfer_agent"];}
 	elseif (isset($_POST["answer_transfer_agent"]))	{$answer_transfer_agent=$_POST["answer_transfer_agent"];}
+	else {$answer_transfer_agent="";}
 if (isset($_GET["ast_admin_access"]))	{$ast_admin_access=$_GET["ast_admin_access"];}
 	elseif (isset($_POST["ast_admin_access"]))	{$ast_admin_access=$_POST["ast_admin_access"];}
+	else {$ast_admin_access=0;}
 if (isset($_GET["ast_delete_phones"]))	{$ast_delete_phones=$_GET["ast_delete_phones"];}
 	elseif (isset($_POST["ast_delete_phones"]))	{$ast_delete_phones=$_POST["ast_delete_phones"];}
+	else {$ast_delete_phones=0;}
 if (isset($_GET["asterisk_version"]))	{$asterisk_version=$_GET["asterisk_version"];}
 	elseif (isset($_POST["asterisk_version"]))	{$asterisk_version=$_POST["asterisk_version"];}
+	else {$asterisk_version="";} 
 if (isset($_GET["ASTmgrSECRET"]))	{$ASTmgrSECRET=$_GET["ASTmgrSECRET"];}
 	elseif (isset($_POST["ASTmgrSECRET"]))	{$ASTmgrSECRET=$_POST["ASTmgrSECRET"];}
+	else {$ASTmgrSECRET="";}
 if (isset($_GET["ASTmgrUSERNAME"]))	{$ASTmgrUSERNAME=$_GET["ASTmgrUSERNAME"];}
 	elseif (isset($_POST["ASTmgrUSERNAME"]))	{$ASTmgrUSERNAME=$_POST["ASTmgrUSERNAME"];}
+	else {$ASTmgrUSERNAME="";}
 if (isset($_GET["ASTmgrUSERNAMElisten"]))	{$ASTmgrUSERNAMElisten=$_GET["ASTmgrUSERNAMElisten"];}
 	elseif (isset($_POST["ASTmgrUSERNAMElisten"]))	{$ASTmgrUSERNAMElisten=$_POST["ASTmgrUSERNAMElisten"];}
+	else {$ASTmgrUSERNAMElisten="";}
 if (isset($_GET["ASTmgrUSERNAMEsend"]))	{$ASTmgrUSERNAMEsend=$_GET["ASTmgrUSERNAMEsend"];}
 	elseif (isset($_POST["ASTmgrUSERNAMEsend"]))	{$ASTmgrUSERNAMEsend=$_POST["ASTmgrUSERNAMEsend"];}
+	else {$ASTmgrUSERNAMEsend="";}
 if (isset($_GET["ASTmgrUSERNAMEupdate"]))	{$ASTmgrUSERNAMEupdate=$_GET["ASTmgrUSERNAMEupdate"];}
 	elseif (isset($_POST["ASTmgrUSERNAMEupdate"]))	{$ASTmgrUSERNAMEupdate=$_POST["ASTmgrUSERNAMEupdate"];}
+	else {$ASTmgrUSERNAMEupdate="";}
 if (isset($_GET["attempt_delay"]))	{$attempt_delay=$_GET["attempt_delay"];}
 	elseif (isset($_POST["attempt_delay"]))	{$attempt_delay=$_POST["attempt_delay"];}
+	else {$attempt_delay=1800;}
 if (isset($_GET["attempt_maximum"]))	{$attempt_maximum=$_GET["attempt_maximum"];}
 	elseif (isset($_POST["attempt_maximum"]))	{$attempt_maximum=$_POST["attempt_maximum"];}
+	else {$attempt_maximum=0;}
 if (isset($_GET["auto_dial_level"]))	{$auto_dial_level=$_GET["auto_dial_level"];}
 	elseif (isset($_POST["auto_dial_level"]))	{$auto_dial_level=$_POST["auto_dial_level"];}
+	else {$auto_dial_level=0;}
 if (isset($_GET["auto_dial_next_number"]))	{$auto_dial_next_number=$_GET["auto_dial_next_number"];}
 	elseif (isset($_POST["auto_dial_next_number"]))	{$auto_dial_next_number=$_POST["auto_dial_next_number"];}
+	else {$auto_dial_next_number=0;}
 if (isset($_GET["available_only_ratio_tally"]))	{$available_only_ratio_tally=$_GET["available_only_ratio_tally"];}
 	elseif (isset($_POST["available_only_ratio_tally"])){$available_only_ratio_tally=$_POST["available_only_ratio_tally"];}
+	else {$available_only_ratio_tally="N";}
 if (isset($_GET["call_out_number_group"]))	{$call_out_number_group=$_GET["call_out_number_group"];}
 	elseif (isset($_POST["call_out_number_group"]))	{$call_out_number_group=$_POST["call_out_number_group"];}
+	else {$call_out_number_group="Zap/g2/";}
 if (isset($_GET["call_parking_enabled"]))	{$call_parking_enabled=$_GET["call_parking_enabled"];}
 	elseif (isset($_POST["call_parking_enabled"]))	{$call_parking_enabled=$_POST["call_parking_enabled"];}
+	else {$call_parking_enabled=1;}
 if (isset($_GET["call_time_comments"]))	{$call_time_comments=$_GET["call_time_comments"];}
 	elseif (isset($_POST["call_time_comments"]))	{$call_time_comments=$_POST["call_time_comments"];}
+	else {$call_time_comments="";}
 if (isset($_GET["call_time_id"]))	{$call_time_id=$_GET["call_time_id"];}
 	elseif (isset($_POST["call_time_id"]))	{$call_time_id=$_POST["call_time_id"];}
+	else {$call_time_id="";}
 if (isset($_GET["call_time_name"]))	{$call_time_name=$_GET["call_time_name"];}
 	elseif (isset($_POST["call_time_name"]))	{$call_time_name=$_POST["call_time_name"];}
+	else {$call_time_name="";}
 if (isset($_GET["CallerID_popup_enabled"]))	{$CallerID_popup_enabled=$_GET["CallerID_popup_enabled"];}
 	elseif (isset($_POST["CallerID_popup_enabled"]))	{$CallerID_popup_enabled=$_POST["CallerID_popup_enabled"];}
+	else {$CallerID_popup_enabled=1;}
 if (isset($_GET["campaign_cid"]))	{$campaign_cid=$_GET["campaign_cid"];}
 	elseif (isset($_POST["campaign_cid"]))	{$campaign_cid=$_POST["campaign_cid"];}
+	else {$campaign_cid="";}
 if (isset($_GET["campaign_detail"]))	{$campaign_detail=$_GET["campaign_detail"];}
 	elseif (isset($_POST["campaign_detail"]))	{$campaign_detail=$_POST["campaign_detail"];}
+	else {$campaign_detail=0;}
 if (isset($_GET["campaign_id"]))	{$campaign_id=$_GET["campaign_id"];}
 	elseif (isset($_POST["campaign_id"]))	{$campaign_id=$_POST["campaign_id"];}
+	else {$campaign_id="";}
 if (isset($_GET["campaign_name"]))	{$campaign_name=$_GET["campaign_name"];}
 	elseif (isset($_POST["campaign_name"]))	{$campaign_name=$_POST["campaign_name"];}
+	else {$campaign_name="";}
 if (isset($_GET["campaign_rec_exten"]))	{$campaign_rec_exten=$_GET["campaign_rec_exten"];}
 	elseif (isset($_POST["campaign_rec_exten"]))	{$campaign_rec_exten=$_POST["campaign_rec_exten"];}
+	else {$campaign_rec_exten=8309;}
 if (isset($_GET["campaign_rec_filename"]))	{$campaign_rec_filename=$_GET["campaign_rec_filename"];}
 	elseif (isset($_POST["campaign_rec_filename"]))	{$campaign_rec_filename=$_POST["campaign_rec_filename"];}
+	else {$campaign_rec_filename="";}
 if (isset($_GET["ingroup_rec_filename"]))	{$ingroup_rec_filename=$_GET["ingroup_rec_filename"];}
 	elseif (isset($_POST["ingroup_rec_filename"]))	{$ingroup_rec_filename=$_POST["ingroup_rec_filename"];}
+	else {$ingroup_rec_filename="";}
 if (isset($_GET["campaign_recording"]))	{$campaign_recording=$_GET["campaign_recording"];}
 	elseif (isset($_POST["campaign_recording"]))	{$campaign_recording=$_POST["campaign_recording"];}
+	else {$campaign_recording="ONDEMAND";}
 if (isset($_GET["campaign_vdad_exten"]))	{$campaign_vdad_exten=$_GET["campaign_vdad_exten"];}
 	elseif (isset($_POST["campaign_vdad_exten"]))	{$campaign_vdad_exten=$_POST["campaign_vdad_exten"];}
+	else {$campaign_vdad_exten=8368;}
 if (isset($_GET["change_agent_campaign"]))	{$change_agent_campaign=$_GET["change_agent_campaign"];}
 	elseif (isset($_POST["change_agent_campaign"]))	{$change_agent_campaign=$_POST["change_agent_campaign"];}
+	else {$change_agent_campaign=0;}
 if (isset($_GET["client_browser"]))	{$client_browser=$_GET["client_browser"];}
 	elseif (isset($_POST["client_browser"]))	{$client_browser=$_POST["client_browser"];}
+	else {$client_browser="/usr/bin/mozilla";}
 if (isset($_GET["closer_default_blended"]))	{$closer_default_blended=$_GET["closer_default_blended"];}
 	elseif (isset($_POST["closer_default_blended"]))	{$closer_default_blended=$_POST["closer_default_blended"];}
+	else {$closer_default_blended=0;}
 if (isset($_GET["company"]))	{$company=$_GET["company"];}
 	elseif (isset($_POST["company"]))	{$company=$_POST["company"];}
+	else {$company="";}
 if (isset($_GET["computer_ip"]))	{$computer_ip=$_GET["computer_ip"];}
 	elseif (isset($_POST["computer_ip"]))	{$computer_ip=$_POST["computer_ip"];}
+	else {$computer_ip="";}
 if (isset($_GET["conf_exten"]))	{$conf_exten=$_GET["conf_exten"];}
 	elseif (isset($_POST["conf_exten"]))	{$conf_exten=$_POST["conf_exten"];}
+	else {$conf_exten="";}
 if (isset($_GET["conf_on_extension"]))	{$conf_on_extension=$_GET["conf_on_extension"];}
 	elseif (isset($_POST["conf_on_extension"]))	{$conf_on_extension=$_POST["conf_on_extension"];}
+	else {$conf_on_extension=8302;}
 if (isset($_GET["conferencing_enabled"]))	{$conferencing_enabled=$_GET["conferencing_enabled"];}
 	elseif (isset($_POST["conferencing_enabled"]))	{$conferencing_enabled=$_POST["conferencing_enabled"];}
+	else {$conferencing_enabled=1;}
 if (isset($_GET["CoNfIrM"]))	{$CoNfIrM=$_GET["CoNfIrM"];}
 	elseif (isset($_POST["CoNfIrM"]))	{$CoNfIrM=$_POST["CoNfIrM"];}
+	else {$CoNfIrM="";}
 if (isset($_GET["ct_default_start"]))	{$ct_default_start=$_GET["ct_default_start"];}
 	elseif (isset($_POST["ct_default_start"]))	{$ct_default_start=$_POST["ct_default_start"];}
+	else {$ct_default_start=900;}
 if (isset($_GET["ct_default_stop"]))	{$ct_default_stop=$_GET["ct_default_stop"];}
 	elseif (isset($_POST["ct_default_stop"]))	{$ct_default_stop=$_POST["ct_default_stop"];}
+	else {$ct_default_stop=2100;}
 if (isset($_GET["ct_friday_start"]))	{$ct_friday_start=$_GET["ct_friday_start"];}
 	elseif (isset($_POST["ct_friday_start"]))	{$ct_friday_start=$_POST["ct_friday_start"];}
+	else {$ct_friday_start=0;}
 if (isset($_GET["ct_friday_stop"]))	{$ct_friday_stop=$_GET["ct_friday_stop"];}
 	elseif (isset($_POST["ct_friday_stop"]))	{$ct_friday_stop=$_POST["ct_friday_stop"];}
+	else {$ct_friday_stop=0;}
 if (isset($_GET["ct_monday_start"]))	{$ct_monday_start=$_GET["ct_monday_start"];}
 	elseif (isset($_POST["ct_monday_start"]))	{$ct_monday_start=$_POST["ct_monday_start"];}
+	else {$ct_monday_start=0;}
 if (isset($_GET["ct_monday_stop"]))	{$ct_monday_stop=$_GET["ct_monday_stop"];}
 	elseif (isset($_POST["ct_monday_stop"]))	{$ct_monday_stop=$_POST["ct_monday_stop"];}
+	else {$ct_monday_stop=0;}
 if (isset($_GET["ct_saturday_start"]))	{$ct_saturday_start=$_GET["ct_saturday_start"];}
 	elseif (isset($_POST["ct_saturday_start"]))	{$ct_saturday_start=$_POST["ct_saturday_start"];}
+	else {$ct_saturday_start=0;}
 if (isset($_GET["ct_saturday_stop"]))	{$ct_saturday_stop=$_GET["ct_saturday_stop"];}
 	elseif (isset($_POST["ct_saturday_stop"]))	{$ct_saturday_stop=$_POST["ct_saturday_stop"];}
+	else {$ct_saturday_stop=0;}
 if (isset($_GET["ct_sunday_start"]))	{$ct_sunday_start=$_GET["ct_sunday_start"];}
 	elseif (isset($_POST["ct_sunday_start"]))	{$ct_sunday_start=$_POST["ct_sunday_start"];}
+	else {$ct_sunday_start=0;}
 if (isset($_GET["ct_sunday_stop"]))	{$ct_sunday_stop=$_GET["ct_sunday_stop"];}
 	elseif (isset($_POST["ct_sunday_stop"]))	{$ct_sunday_stop=$_POST["ct_sunday_stop"];}
+	else {$ct_sunday_stop=0;}
 if (isset($_GET["ct_thursday_start"]))	{$ct_thursday_start=$_GET["ct_thursday_start"];}
 	elseif (isset($_POST["ct_thursday_start"]))	{$ct_thursday_start=$_POST["ct_thursday_start"];}
+	else {$ct_thursday_start=0;}
 if (isset($_GET["ct_thursday_stop"]))	{$ct_thursday_stop=$_GET["ct_thursday_stop"];}
 	elseif (isset($_POST["ct_thursday_stop"]))	{$ct_thursday_stop=$_POST["ct_thursday_stop"];}
+	else {$ct_thursday_stop=0;}
 if (isset($_GET["ct_tuesday_start"]))	{$ct_tuesday_start=$_GET["ct_tuesday_start"];}
 	elseif (isset($_POST["ct_tuesday_start"]))	{$ct_tuesday_start=$_POST["ct_tuesday_start"];}
+	else {$ct_tuesday_start=0;}
 if (isset($_GET["ct_tuesday_stop"]))	{$ct_tuesday_stop=$_GET["ct_tuesday_stop"];}
 	elseif (isset($_POST["ct_tuesday_stop"]))	{$ct_tuesday_stop=$_POST["ct_tuesday_stop"];}
+	else {$ct_tuesday_stop=0;}
 if (isset($_GET["ct_wednesday_start"]))	{$ct_wednesday_start=$_GET["ct_wednesday_start"];}
 	elseif (isset($_POST["ct_wednesday_start"]))	{$ct_wednesday_start=$_POST["ct_wednesday_start"];}
+	else {$ct_wednesday_start=0;}
 if (isset($_GET["ct_wednesday_stop"]))	{$ct_wednesday_stop=$_GET["ct_wednesday_stop"];}
 	elseif (isset($_POST["ct_wednesday_stop"]))	{$ct_wednesday_stop=$_POST["ct_wednesday_stop"];}
+	else {$ct_wednesday_stop=0;}
 if (isset($_GET["DBX_database"]))	{$DBX_database=$_GET["DBX_database"];}
 	elseif (isset($_POST["DBX_database"]))	{$DBX_database=$_POST["DBX_database"];}
+	else {$DBX_database="";}
 if (isset($_GET["DBX_pass"]))	{$DBX_pass=$_GET["DBX_pass"];}
 	elseif (isset($_POST["DBX_pass"]))	{$DBX_pass=$_POST["DBX_pass"];}
+	else {$DBX_pass="";}
 if (isset($_GET["DBX_port"]))	{$DBX_port=$_GET["DBX_port"];}
 	elseif (isset($_POST["DBX_port"]))	{$DBX_port=$_POST["DBX_port"];}
+	else {$DBX_port=3306;}
 if (isset($_GET["DBX_server"]))	{$DBX_server=$_GET["DBX_server"];}
 	elseif (isset($_POST["DBX_server"]))	{$DBX_server=$_POST["DBX_server"];}
+	else {$DBX_server="";}
 if (isset($_GET["DBX_user"]))	{$DBX_user=$_GET["DBX_user"];}
 	elseif (isset($_POST["DBX_user"]))	{$DBX_user=$_POST["DBX_user"];}
+	else {$DBX_user="";}
 if (isset($_GET["DBY_database"]))	{$DBY_database=$_GET["DBY_database"];}
 	elseif (isset($_POST["DBY_database"]))	{$DBY_database=$_POST["DBY_database"];}
+	else {$DBY_database="";}
 if (isset($_GET["DBY_pass"]))	{$DBY_pass=$_GET["DBY_pass"];}
 	elseif (isset($_POST["DBY_pass"]))	{$DBY_pass=$_POST["DBY_pass"];}
+	else {$DBY_pass="";}
 if (isset($_GET["DBY_port"]))	{$DBY_port=$_GET["DBY_port"];}
 	elseif (isset($_POST["DBY_port"]))	{$DBY_port=$_POST["DBY_port"];}
+	else {$DBY_port=3306;}
 if (isset($_GET["DBY_server"]))	{$DBY_server=$_GET["DBY_server"];}
 	elseif (isset($_POST["DBY_server"]))	{$DBY_server=$_POST["DBY_server"];}
+	else {$DBY_server="";}
 if (isset($_GET["DBY_user"]))	{$DBY_user=$_GET["DBY_user"];}
 	elseif (isset($_POST["DBY_user"]))	{$DBY_user=$_POST["DBY_user"];}
+	else {$DBY_user="";}
 if (isset($_GET["delete_call_times"]))	{$delete_call_times=$_GET["delete_call_times"];}
 	elseif (isset($_POST["delete_call_times"]))	{$delete_call_times=$_POST["delete_call_times"];}
+	else {$delete_call_times=0;}
 if (isset($_GET["delete_campaigns"]))	{$delete_campaigns=$_GET["delete_campaigns"];}
 	elseif (isset($_POST["delete_campaigns"]))	{$delete_campaigns=$_POST["delete_campaigns"];}
+	else {$delete_campaigns=0;}
 if (isset($_GET["delete_filters"]))	{$delete_filters=$_GET["delete_filters"];}
 	elseif (isset($_POST["delete_filters"]))	{$delete_filters=$_POST["delete_filters"];}
+	else {$delete_filters=0;}
 if (isset($_GET["delete_ingroups"]))	{$delete_ingroups=$_GET["delete_ingroups"];}
 	elseif (isset($_POST["delete_ingroups"]))	{$delete_ingroups=$_POST["delete_ingroups"];}
+	else {$delete_ingroups=0;}
 if (isset($_GET["delete_lists"]))	{$delete_lists=$_GET["delete_lists"];}
 	elseif (isset($_POST["delete_lists"]))	{$delete_lists=$_POST["delete_lists"];}
+	else {$delete_lists=0;}
 if (isset($_GET["delete_remote_agents"]))	{$delete_remote_agents=$_GET["delete_remote_agents"];}
 	elseif (isset($_POST["delete_remote_agents"]))	{$delete_remote_agents=$_POST["delete_remote_agents"];}
+	else {$delete_remote_agents=0;}
 if (isset($_GET["delete_scripts"]))	{$delete_scripts=$_GET["delete_scripts"];}
 	elseif (isset($_POST["delete_scripts"]))	{$delete_scripts=$_POST["delete_scripts"];}
+	else {$delete_scripts=0;}
 if (isset($_GET["delete_user_groups"]))	{$delete_user_groups=$_GET["delete_user_groups"];}
 	elseif (isset($_POST["delete_user_groups"]))	{$delete_user_groups=$_POST["delete_user_groups"];}
+	else {$delete_user_groups=0;}
 if (isset($_GET["delete_users"]))	{$delete_users=$_GET["delete_users"];}
 	elseif (isset($_POST["delete_users"]))	{$delete_users=$_POST["delete_users"];}
+	else {$delete_users=0;}
 if (isset($_GET["dial_method"]))	{$dial_method=$_GET["dial_method"];}
 	elseif (isset($_POST["dial_method"]))	{$dial_method=$_POST["dial_method"];}
+	else {$dial_method="MANUAL";}
 if (isset($_GET["dial_prefix"]))	{$dial_prefix=$_GET["dial_prefix"];}
 	elseif (isset($_POST["dial_prefix"]))	{$dial_prefix=$_POST["dial_prefix"];}
+	else {$dial_prefix="";}
 if (isset($_GET["dial_status_a"]))	{$dial_status_a=$_GET["dial_status_a"];}
 	elseif (isset($_POST["dial_status_a"]))	{$dial_status_a=$_POST["dial_status_a"];}
+	else {$dial_status_a="";}
 if (isset($_GET["dial_status_b"]))	{$dial_status_b=$_GET["dial_status_b"];}
 	elseif (isset($_POST["dial_status_b"]))	{$dial_status_b=$_POST["dial_status_b"];}
+	else {$dial_status_b="";}
 if (isset($_GET["dial_status_c"]))	{$dial_status_c=$_GET["dial_status_c"];}
 	elseif (isset($_POST["dial_status_c"]))	{$dial_status_c=$_POST["dial_status_c"];}
+	else {$dial_status_c="";}
 if (isset($_GET["dial_status_d"]))	{$dial_status_d=$_GET["dial_status_d"];}
 	elseif (isset($_POST["dial_status_d"]))	{$dial_status_d=$_POST["dial_status_d"];}
+	else {$dial_status_d="";}
 if (isset($_GET["dial_status_e"]))	{$dial_status_e=$_GET["dial_status_e"];}
 	elseif (isset($_POST["dial_status_e"]))	{$dial_status_e=$_POST["dial_status_e"];}
+	else {$dial_status_e="";}
 if (isset($_GET["dial_timeout"]))	{$dial_timeout=$_GET["dial_timeout"];}
 	elseif (isset($_POST["dial_timeout"]))	{$dial_timeout=$_POST["dial_timeout"];}
+	else {$dial_timeout=60;}
 if (isset($_GET["dialplan_number"]))	{$dialplan_number=$_GET["dialplan_number"];}
 	elseif (isset($_POST["dialplan_number"]))	{$dialplan_number=$_POST["dialplan_number"];}
+	else {$dialplan_number="";}
 if (isset($_GET["drop_call_seconds"]))	{$drop_call_seconds=$_GET["drop_call_seconds"];}
 	elseif (isset($_POST["drop_call_seconds"]))	{$drop_call_seconds=$_POST["drop_call_seconds"];}
+	else {$drop_call_seconds="";}
 if (isset($_GET["drop_exten"]))	{$drop_exten=$_GET["drop_exten"];}
 	elseif (isset($_POST["drop_exten"]))	{$drop_exten=$_POST["drop_exten"];}
-if (isset($_GET["drop_action"]))	{$drop_action=$_GET["drop_action"];}
-	elseif (isset($_POST["drop_action"]))	{$drop_action=$_POST["drop_action"];}
+	else {$drop_exten="8307";}
+#if (isset($_GET["drop_action"]))	{$drop_action=$_GET["drop_action"];}
+#	elseif (isset($_POST["drop_action"]))	{$drop_action=$_POST["drop_action"];}
+if (isset($_GET["drop_action_campaigns"]))	{$drop_action_campaigns=$_GET["drop_action_campaigns"];}
+	elseif (isset($_POST["drop_action_campaigns"]))	{$drop_action_campaigns=$_POST["drop_action_campaigns"];}
+	else {$drop_action_campaigns="AUDIO";}
+if (isset($_GET["drop_action_ingroups"]))	{$drop_action_ingroups=$_GET["drop_action_ingroups"];}
+	elseif (isset($_POST["drop_action_ingroups"]))	{$drop_action_ingroups=$_POST["drop_action_ingroups"];}
+	else {$drop_action_ingroups="MESSAGE";}
 if (isset($_GET["dtmf_send_extension"]))	{$dtmf_send_extension=$_GET["dtmf_send_extension"];}
 	elseif (isset($_POST["dtmf_send_extension"]))	{$dtmf_send_extension=$_POST["dtmf_send_extension"];}
+	else {$dtmf_send_extension='local/8500998@default';}
 if (isset($_GET["enable_fast_refresh"]))	{$enable_fast_refresh=$_GET["enable_fast_refresh"];}
 	elseif (isset($_POST["enable_fast_refresh"]))	{$enable_fast_refresh=$_POST["enable_fast_refresh"];}
+	else {$enable_fast_refresh=0;}
 if (isset($_GET["enable_persistant_mysql"]))	{$enable_persistant_mysql=$_GET["enable_persistant_mysql"];}
 	elseif (isset($_POST["enable_persistant_mysql"]))	{$enable_persistant_mysql=$_POST["enable_persistant_mysql"];}
+	else {$enable_persistant_mysql=0;}
 if (isset($_GET["ext_context"]))	{$ext_context=$_GET["ext_context"];}
 	elseif (isset($_POST["ext_context"]))	{$ext_context=$_POST["ext_context"];}
 if (isset($_GET["extension"]))	{$extension=$_GET["extension"];}
 	elseif (isset($_POST["extension"]))	{$extension=$_POST["extension"];}
+	else {$extension="";}
+if (isset($_GET["extension_dids"]))	{$extension_dids=$_GET["extension_dids"];}
+	elseif (isset($_POST["extension_dids"]))	{$extension_dids=$_POST["extension_dids"];}
+	else {$extension_dids="9998811112";}
 if (isset($_GET["fast_refresh_rate"]))	{$fast_refresh_rate=$_GET["fast_refresh_rate"];}
 	elseif (isset($_POST["fast_refresh_rate"]))	{$fast_refresh_rate=$_POST["fast_refresh_rate"];}
+	else {$fast_refresh_rate=1000;}
 if (isset($_GET["force_logout"]))	{$force_logout=$_GET["force_logout"];}
 	elseif (isset($_POST["force_logout"]))	{$force_logout=$_POST["force_logout"];}
+	else {$force_logout=0;}
 if (isset($_GET["fronter_display"]))	{$fronter_display=$_GET["fronter_display"];}
 	elseif (isset($_POST["fronter_display"]))	{$fronter_display=$_POST["fronter_display"];}
+	else {$fronter_display="Y";}
 if (isset($_GET["full_name"]))	{$full_name=$_GET["full_name"];}
 	elseif (isset($_POST["full_name"]))	{$full_name=$_POST["full_name"];}
+	else {$full_name="";}
 if (isset($_GET["fullname"]))	{$fullname=$_GET["fullname"];}
 	elseif (isset($_POST["fullname"]))	{$fullname=$_POST["fullname"];}
+	else {$fullname="";}
 if (isset($_GET["get_call_launch"]))	{$get_call_launch=$_GET["get_call_launch"];}
 	elseif (isset($_POST["get_call_launch"]))	{$get_call_launch=$_POST["get_call_launch"];}
+	else {$get_call_launch="NONE";}
 if (isset($_GET["group_color"]))	{$group_color=$_GET["group_color"];}
 	elseif (isset($_POST["group_color"]))	{$group_color=$_POST["group_color"];}
+	else {$group_color="";}
 if (isset($_GET["group_id"]))	{$group_id=$_GET["group_id"];}
 	elseif (isset($_POST["group_id"]))	{$group_id=$_POST["group_id"];}
+	else {$group_id="";}
 if (isset($_GET["group_name"]))	{$group_name=$_GET["group_name"];}
 	elseif (isset($_POST["group_name"]))	{$group_name=$_POST["group_name"];}
+	else {$group_name="";}
 if (isset($_GET["groups"]))	{$groups=$_GET["groups"];}
 	elseif (isset($_POST["groups"]))	{$groups=$_POST["groups"];}
 if (isset($_GET["XFERgroups"]))	{$XFERgroups=$_GET["XFERgroups"];}
 	elseif (isset($_POST["XFERgroups"]))	{$XFERgroups=$_POST["XFERgroups"];}
 if (isset($_GET["HKstatus"]))	{$HKstatus=$_GET["HKstatus"];}
 	elseif (isset($_POST["HKstatus"]))	{$HKstatus=$_POST["HKstatus"];}
+	else {$HKstatus="";}
 if (isset($_GET["hopper_level"]))	{$hopper_level=$_GET["hopper_level"];}
 	elseif (isset($_POST["hopper_level"]))	{$hopper_level=$_POST["hopper_level"];}
+	else {$hopper_level=1;}
 if (isset($_GET["hotkey"]))	{$hotkey=$_GET["hotkey"];}
 	elseif (isset($_POST["hotkey"]))	{$hotkey=$_POST["hotkey"];}
+	else {$hotkey="";}
 if (isset($_GET["hotkeys_active"]))	{$hotkeys_active=$_GET["hotkeys_active"];}
 	elseif (isset($_POST["hotkeys_active"]))	{$hotkeys_active=$_POST["hotkeys_active"];}
+	else {$hotkeys_active=0;}
 if (isset($_GET["install_directory"]))	{$install_directory=$_GET["install_directory"];}
 	elseif (isset($_POST["install_directory"]))	{$install_directory=$_POST["install_directory"];}
+	else {$install_directory="/usr/local/perl_TK";}
 if (isset($_GET["lead_filter_comments"]))	{$lead_filter_comments=$_GET["lead_filter_comments"];}
 	elseif (isset($_POST["lead_filter_comments"]))	{$lead_filter_comments=$_POST["lead_filter_comments"];}
+	else {$lead_filter_comments="";}
 if (isset($_GET["lead_filter_id"]))	{$lead_filter_id=$_GET["lead_filter_id"];}
 	elseif (isset($_POST["lead_filter_id"]))	{$lead_filter_id=$_POST["lead_filter_id"];}
+	else {$lead_filter_id="";}
 if (isset($_GET["lead_filter_name"]))	{$lead_filter_name=$_GET["lead_filter_name"];}
 	elseif (isset($_POST["lead_filter_name"]))	{$lead_filter_name=$_POST["lead_filter_name"];}
+	else {$lead_filter_name="";}
 if (isset($_GET["lead_filter_sql"]))	{$lead_filter_sql=$_GET["lead_filter_sql"];}
 	elseif (isset($_POST["lead_filter_sql"]))	{$lead_filter_sql=$_POST["lead_filter_sql"];}
+	else {$lead_filter_sql="";}
 if (isset($_GET["lead_order"]))	{$lead_order=$_GET["lead_order"];}
 	elseif (isset($_POST["lead_order"]))	{$lead_order=$_POST["lead_order"];}
+	else {$lead_order="";}
 if (isset($_GET["list_id"]))	{$list_id=$_GET["list_id"];}
 	elseif (isset($_POST["list_id"]))	{$list_id=$_POST["list_id"];}
+	else {$list_id="";}
 if (isset($_GET["list_name"]))	{$list_name=$_GET["list_name"];}
 	elseif (isset($_POST["list_name"]))	{$list_name=$_POST["list_name"];}
+	else {$list_name="";}
 if (isset($_GET["load_leads"]))	{$load_leads=$_GET["load_leads"];}
 	elseif (isset($_POST["load_leads"]))	{$load_leads=$_POST["load_leads"];}
+	else {$load_leads=0;}
 if (isset($_GET["local_call_time"]))	{$local_call_time=$_GET["local_call_time"];}
 	elseif (isset($_POST["local_call_time"]))	{$local_call_time=$_POST["local_call_time"];}
+	else {$local_call_time="";}
 if (isset($_GET["local_gmt"]))	{$local_gmt=$_GET["local_gmt"];}
 	elseif (isset($_POST["local_gmt"]))	{$local_gmt=$_POST["local_gmt"];}
+	else {$local_gmt="-5";}
 if (isset($_GET["local_web_callerID_URL"]))	{$local_web_callerID_URL=$_GET["local_web_callerID_URL"];}
 	elseif (isset($_POST["local_web_callerID_URL"]))	{$local_web_callerID_URL=$_POST["local_web_callerID_URL"];}
 if (isset($_GET["login"]))	{$login=$_GET["login"];}
 	elseif (isset($_POST["login"]))	{$login=$_POST["login"];}
+	else {$login="";}
 if (isset($_GET["login_campaign"]))	{$login_campaign=$_GET["login_campaign"];}
 	elseif (isset($_POST["login_campaign"]))	{$login_campaign=$_POST["login_campaign"];}
+	else {$login_campaign="";}
 if (isset($_GET["login_pass"]))	{$login_pass=$_GET["login_pass"];}
 	elseif (isset($_POST["login_pass"]))	{$login_pass=$_POST["login_pass"];}
+	else {$login_pass="";}
 if (isset($_GET["login_user"]))	{$login_user=$_GET["login_user"];}
 	elseif (isset($_POST["login_user"]))	{$login_user=$_POST["login_user"];}
+	else {$login_user="";}
 if (isset($_GET["log_recording_access"]))	{$log_recording_access=$_GET["log_recording_access"];}
 	elseif (isset($_POST["log_recording_access"]))	{$log_recording_access=$_POST["log_recording_access"];}
+	else {$log_recording_access=0;}
 if (isset($_GET["max_vicidial_trunks"]))	{$max_vicidial_trunks=$_GET["max_vicidial_trunks"];}
 	elseif (isset($_POST["max_vicidial_trunks"]))	{$max_vicidial_trunks=$_POST["max_vicidial_trunks"];}
+	else {$max_vicidial_trunks=23;}
 if (isset($_GET["modify_call_times"]))	{$modify_call_times=$_GET["modify_call_times"];}
 	elseif (isset($_POST["modify_call_times"]))	{$modify_call_times=$_POST["modify_call_times"];}
+	else {$modify_call_times=0;}
 if (isset($_GET["modify_leads"]))	{$modify_leads=$_GET["modify_leads"];}
 	elseif (isset($_POST["modify_leads"]))	{$modify_leads=$_POST["modify_leads"];}
+	else {$modify_leads=0;}
 if (isset($_GET["export_gdpr_leads"]))	{$export_gdpr_leads=$_GET["export_gdpr_leads"];}
 	elseif (isset($_POST["export_gdpr_leads"]))	{$export_gdpr_leads=$_POST["export_gdpr_leads"];}
+	else {$export_gdpr_leads=0;}
 if (isset($_GET["monitor_prefix"]))	{$monitor_prefix=$_GET["monitor_prefix"];}
 	elseif (isset($_POST["monitor_prefix"]))	{$monitor_prefix=$_POST["monitor_prefix"];}
+	else {$monitor_prefix=8612;}
 if (isset($_GET["new_extension"]))	{$new_extension=$_GET["new_extension"];}
 	elseif (isset($_POST["new_extension"]))	{$new_extension=$_POST["new_extension"];}
+	else {$new_extension="";}
 if (isset($_GET["new_dialplan_number"]))	{$new_dialplan_number=$_GET["new_dialplan_number"];}
 	elseif (isset($_POST["new_dialplan_number"]))	{$new_dialplan_number=$_POST["new_dialplan_number"];}
+	else {$new_dialplan_number="";}
 if (isset($_GET["new_voicemail_id"]))	{$new_voicemail_id=$_GET["new_voicemail_id"];}
 	elseif (isset($_POST["new_voicemail_id"]))	{$new_voicemail_id=$_POST["new_voicemail_id"];}
+	else {$new_voicemail_id="";}
 if (isset($_GET["new_outbound_cid"]))	{$new_outbound_cid=$_GET["new_outbound_cid"];}
 	elseif (isset($_POST["new_outbound_cid"]))	{$new_outbound_cid=$_POST["new_outbound_cid"];}
+	else {$new_outbound_cid="";}
 if (isset($_GET["new_server_ip"]))	{$new_server_ip=$_GET["new_server_ip"];}
 	elseif (isset($_POST["new_server_ip"]))	{$new_server_ip=$_POST["new_server_ip"];}
+	else {$new_server_ip="";}
 if (isset($_GET["new_login"]))	{$new_login=$_GET["new_login"];}
 	elseif (isset($_POST["new_login"]))	{$new_login=$_POST["new_login"];}
+	else {$new_login="";}
 if (isset($_GET["new_pass"]))	{$new_pass=$_GET["new_pass"];}
 	elseif (isset($_POST["new_pass"]))	{$new_pass=$_POST["new_pass"];}
+	else {$new_pass="";}
 if (isset($_GET["new_conf_secret"]))	{$new_conf_secret=$_GET["new_conf_secret"];}
 	elseif (isset($_POST["new_conf_secret"]))	{$new_conf_secret=$_POST["new_conf_secret"];}
+	else {$new_conf_secret="";}
 if (isset($_GET["new_fullname"]))	{$new_fullname=$_GET["new_fullname"];}
 	elseif (isset($_POST["new_fullname"]))	{$new_fullname=$_POST["new_fullname"];}
+	else {$new_fullname="";}
 if (isset($_GET["next_agent_call"]))	{$next_agent_call=$_GET["next_agent_call"];}
 	elseif (isset($_POST["next_agent_call"]))	{$next_agent_call=$_POST["next_agent_call"];}
+	else {$next_agent_call="longest_wait_time";}
 if (isset($_GET["number_of_lines"]))	{$number_of_lines=$_GET["number_of_lines"];}
 	elseif (isset($_POST["number_of_lines"]))	{$number_of_lines=$_POST["number_of_lines"];}
+	else {$number_of_lines="";}
 if (isset($_GET["old_campaign_id"]))	{$old_campaign_id=$_GET["old_campaign_id"];}
 	elseif (isset($_POST["old_campaign_id"]))	{$old_campaign_id=$_POST["old_campaign_id"];}
+	else {$old_campaign_id="";}
 if (isset($_GET["old_conf_exten"]))	{$old_conf_exten=$_GET["old_conf_exten"];}
 	elseif (isset($_POST["old_conf_exten"]))	{$old_conf_exten=$_POST["old_conf_exten"];}
+	else {$old_conf_exten="";}
 if (isset($_GET["old_extension"]))	{$old_extension=$_GET["old_extension"];}
 	elseif (isset($_POST["old_extension"]))	{$old_extension=$_POST["old_extension"];}
+	else {$old_extension="";}
 if (isset($_GET["old_server_id"]))	{$old_server_id=$_GET["old_server_id"];}
 	elseif (isset($_POST["old_server_id"]))	{$old_server_id=$_POST["old_server_id"];}
+	else {$old_server_id="";}
 if (isset($_GET["old_server_ip"]))	{$old_server_ip=$_GET["old_server_ip"];}
 	elseif (isset($_POST["old_server_ip"]))	{$old_server_ip=$_POST["old_server_ip"];}
+	else {$old_server_ip="";}
 if (isset($_GET["OLDuser_group"]))	{$OLDuser_group=$_GET["OLDuser_group"];}
 	elseif (isset($_POST["OLDuser_group"]))	{$OLDuser_group=$_POST["OLDuser_group"];}
+	else {$OLDuser_group="";}
 if (isset($_GET["omit_phone_code"]))	{$omit_phone_code=$_GET["omit_phone_code"];}
 	elseif (isset($_POST["omit_phone_code"]))	{$omit_phone_code=$_POST["omit_phone_code"];}
+	else {$omit_phone_code="N";}
 if (isset($_GET["outbound_cid"]))	{$outbound_cid=$_GET["outbound_cid"];}
 	elseif (isset($_POST["outbound_cid"]))	{$outbound_cid=$_POST["outbound_cid"];}
+	else {$outbound_cid="";}
 if (isset($_GET["park_ext"]))	{$park_ext=$_GET["park_ext"];}
 	elseif (isset($_POST["park_ext"]))	{$park_ext=$_POST["park_ext"];}
+	else {$park_ext="";}
 if (isset($_GET["park_file_name"]))	{$park_file_name=$_GET["park_file_name"];}
 	elseif (isset($_POST["park_file_name"]))	{$park_file_name=$_POST["park_file_name"];}
+	else {$park_file_name="";}
 if (isset($_GET["park_on_extension"]))	{$park_on_extension=$_GET["park_on_extension"];}
 	elseif (isset($_POST["park_on_extension"]))	{$park_on_extension=$_POST["park_on_extension"];}
+	else {$park_on_extension=8301;}
 if (isset($_GET["pass"]))	{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))	{$pass=$_POST["pass"];}
+	else {$pass="";}
 if (isset($_GET["phone_defaults_container"]))	{$phone_defaults_container=$_GET["phone_defaults_container"];}
 	elseif (isset($_POST["phone_defaults_container"]))	{$phone_defaults_container=$_POST["phone_defaults_container"];}
+	else {$phone_defaults_container="---DISABLED---";}
 if (isset($_GET["phone_ip"]))	{$phone_ip=$_GET["phone_ip"];}
 	elseif (isset($_POST["phone_ip"]))	{$phone_ip=$_POST["phone_ip"];}
+	else {$phone_ip="";}
 if (isset($_GET["phone_login"]))	{$phone_login=$_GET["phone_login"];}
 	elseif (isset($_POST["phone_login"]))	{$phone_login=$_POST["phone_login"];}
+	else {$phone_login="";}
 if (isset($_GET["phone_number"]))	{$phone_number=$_GET["phone_number"];}
 	elseif (isset($_POST["phone_number"]))	{$phone_number=$_POST["phone_number"];}
+	else {$phone_number="";}
 if (isset($_GET["phone_pass"]))	{$phone_pass=$_GET["phone_pass"];}
 	elseif (isset($_POST["phone_pass"]))	{$phone_pass=$_POST["phone_pass"];}
+	else {$phone_pass="";}
 if (isset($_GET["phone_type"]))	{$phone_type=$_GET["phone_type"];}
 	elseif (isset($_POST["phone_type"]))	{$phone_type=$_POST["phone_type"];}
+	else {$phone_type="";}
 if (isset($_GET["picture"]))	{$picture=$_GET["picture"];}
 	elseif (isset($_POST["picture"]))	{$picture=$_POST["picture"];}
+	else {$picture="";}
 if (isset($_GET["protocol"]))	{$protocol=$_GET["protocol"];}
 	elseif (isset($_POST["protocol"]))	{$protocol=$_POST["protocol"];}
+	else {$protocol="SIP";}
 if (isset($_GET["QUEUE_ACTION_enabled"]))	{$QUEUE_ACTION_enabled=$_GET["QUEUE_ACTION_enabled"];}
 	elseif (isset($_POST["QUEUE_ACTION_enabled"]))	{$QUEUE_ACTION_enabled=$_POST["QUEUE_ACTION_enabled"];}
+	else {$QUEUE_ACTION_enabled=1;}
 if (isset($_GET["recording_exten"]))	{$recording_exten=$_GET["recording_exten"];}
 	elseif (isset($_POST["recording_exten"]))	{$recording_exten=$_POST["recording_exten"];}
 if (isset($_GET["remote_agent_id"]))	{$remote_agent_id=$_GET["remote_agent_id"];}
 	elseif (isset($_POST["remote_agent_id"]))	{$remote_agent_id=$_POST["remote_agent_id"];}
+	else {$remote_agent_id="";}
 if (isset($_GET["reset_hopper"]))	{$reset_hopper=$_GET["reset_hopper"];}
 	elseif (isset($_POST["reset_hopper"]))	{$reset_hopper=$_POST["reset_hopper"];}
+	else {$reset_hopper="";}
 if (isset($_GET["reset_list"]))	{$reset_list=$_GET["reset_list"];}
 	elseif (isset($_POST["reset_list"]))	{$reset_list=$_POST["reset_list"];}
+	else {$reset_list="";}
 if (isset($_GET["safe_harbor_exten"]))	{$safe_harbor_exten=$_GET["safe_harbor_exten"];}
 	elseif (isset($_POST["safe_harbor_exten"]))	{$safe_harbor_exten=$_POST["safe_harbor_exten"];}
+	else {$safe_harbor_exten="8307";}
 if (isset($_GET["scheduled_callbacks"]))	{$scheduled_callbacks=$_GET["scheduled_callbacks"];}
 	elseif (isset($_POST["scheduled_callbacks"]))	{$scheduled_callbacks=$_POST["scheduled_callbacks"];}
+	else {$scheduled_callbacks="";}
 if (isset($_GET["script_comments"]))	{$script_comments=$_GET["script_comments"];}
 	elseif (isset($_POST["script_comments"]))	{$script_comments=$_POST["script_comments"];}
+	else {$script_comments="";}
 if (isset($_GET["script_id"]))	{$script_id=$_GET["script_id"];}
 	elseif (isset($_POST["script_id"]))	{$script_id=$_POST["script_id"];}
+	else {$script_id="";}
 if (isset($_GET["script_name"]))	{$script_name=$_GET["script_name"];}
 	elseif (isset($_POST["script_name"]))	{$script_name=$_POST["script_name"];}
+	else {$script_name="";}
 if (isset($_GET["script_text"]))	{$script_text=$_GET["script_text"];}
 	elseif (isset($_POST["script_text"]))	{$script_text=$_POST["script_text"];}
+	else {$script_text="";}
 if (isset($_GET["selectable"]))	{$selectable=$_GET["selectable"];}
 	elseif (isset($_POST["selectable"]))	{$selectable=$_POST["selectable"];}
+	else {$selectable="";}
 if (isset($_GET["server_description"]))	{$server_description=$_GET["server_description"];}
 	elseif (isset($_POST["server_description"]))	{$server_description=$_POST["server_description"];}
+	else {$server_description="";}
 if (isset($_GET["server_id"]))	{$server_id=$_GET["server_id"];}
 	elseif (isset($_POST["server_id"]))	{$server_id=$_POST["server_id"];}
+	else {$server_id="";}
 if (isset($_GET["server_ip"]))	{$server_ip=$_GET["server_ip"];}
 	elseif (isset($_POST["server_ip"]))	{$server_ip=$_POST["server_ip"];}
+	else {$server_ip="";}
 if (isset($_GET["source_phone"]))	{$source_phone=$_GET["source_phone"];}
 	elseif (isset($_POST["source_phone"]))	{$source_phone=$_POST["source_phone"];}
+	else {$source_phone="";}
 if (isset($_GET["stage"]))	{$stage=$_GET["stage"];}
 	elseif (isset($_POST["stage"]))	{$stage=$_POST["stage"];}
+	else {$stage="";}
 if (isset($_GET["state_call_time_state"]))	{$state_call_time_state=$_GET["state_call_time_state"];}
 	elseif (isset($_POST["state_call_time_state"]))	{$state_call_time_state=$_POST["state_call_time_state"];}
+	else {$state_call_time_state="";}
 if (isset($_GET["state_rule"]))	{$state_rule=$_GET["state_rule"];}
 	elseif (isset($_POST["state_rule"]))	{$state_rule=$_POST["state_rule"];}
+	else {$state_rule="";}
 if (isset($_GET["status"]))	{$status=$_GET["status"];}
 	elseif (isset($_POST["status"]))	{$status=$_POST["status"];}
+	else {$status="";}
 if (isset($_GET["status_id"]))	{$status_id=$_GET["status_id"];}
 	elseif (isset($_POST["status_id"]))	{$status_id=$_POST["status_id"];}
+	else {$status_id="";}
 if (isset($_GET["status_name"]))	{$status_name=$_GET["status_name"];}
 	elseif (isset($_POST["status_name"]))	{$status_name=$_POST["status_name"];}
+	else {$status_name="";}
 if (isset($_GET["submit"]))	{$submit=$_GET["submit"];}
 	elseif (isset($_POST["submit"]))	{$submit=$_POST["submit"];}
+	else {$submit="";}
 if (isset($_GET["SUBMIT"]))	{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))	{$SUBMIT=$_POST["SUBMIT"];}
+	else {$SUBMIT="";}
 if (isset($_GET["sys_perf_log"]))	{$sys_perf_log=$_GET["sys_perf_log"];}
 	elseif (isset($_POST["sys_perf_log"]))	{$sys_perf_log=$_POST["sys_perf_log"];}
+	else {$sys_perf_log="N";}
 if (isset($_GET["telnet_host"]))	{$telnet_host=$_GET["telnet_host"];}
 	elseif (isset($_POST["telnet_host"]))	{$telnet_host=$_POST["telnet_host"];}
+	else {$telnet_host="localhost";}
 if (isset($_GET["telnet_port"]))	{$telnet_port=$_GET["telnet_port"];}
 	elseif (isset($_POST["telnet_port"]))	{$telnet_port=$_POST["telnet_port"];}
+	else {$telnet_port=5038;}
 if (isset($_GET["updater_check_enabled"]))	{$updater_check_enabled=$_GET["updater_check_enabled"];}
 	elseif (isset($_POST["updater_check_enabled"]))	{$updater_check_enabled=$_POST["updater_check_enabled"];}
+	else {$updater_check_enabled=1;}
 if (isset($_GET["use_internal_dnc"]))	{$use_internal_dnc=$_GET["use_internal_dnc"];}
 	elseif (isset($_POST["use_internal_dnc"]))	{$use_internal_dnc=$_POST["use_internal_dnc"];}
+	else {$use_internal_dnc="N";}
 if (isset($_GET["use_campaign_dnc"]))	{$use_campaign_dnc=$_GET["use_campaign_dnc"];}
 	elseif (isset($_POST["use_campaign_dnc"]))	{$use_campaign_dnc=$_POST["use_campaign_dnc"];}
+	else {$use_campaign_dnc="N";}
 if (isset($_GET["user"]))	{$user=$_GET["user"];}
 	elseif (isset($_POST["user"]))	{$user=$_POST["user"];}
+	else {$user="";}
 if (isset($_GET["user_group"]))	{$user_group=$_GET["user_group"];}
 	elseif (isset($_POST["user_group"]))	{$user_group=$_POST["user_group"];}
+	else {$user_group="";}
 if (isset($_GET["user_level"]))	{$user_level=$_GET["user_level"];}
 	elseif (isset($_POST["user_level"]))	{$user_level=$_POST["user_level"];}
+	else {$user_level="";}
 if (isset($_GET["user_start"]))	{$user_start=$_GET["user_start"];}
 	elseif (isset($_POST["user_start"]))	{$user_start=$_POST["user_start"];}
+	else {$user_start="";}
 if (isset($_GET["user_switching_enabled"]))	{$user_switching_enabled=$_GET["user_switching_enabled"];}
 	elseif (isset($_POST["user_switching_enabled"]))	{$user_switching_enabled=$_POST["user_switching_enabled"];}
+	else {$user_switching_enabled=1;}
 if (isset($_GET["vd_server_logs"]))	{$vd_server_logs=$_GET["vd_server_logs"];}
 	elseif (isset($_POST["vd_server_logs"]))	{$vd_server_logs=$_POST["vd_server_logs"];}
+	else {$vd_server_logs="Y";}
 if (isset($_GET["VDstop_rec_after_each_call"]))	{$VDstop_rec_after_each_call=$_GET["VDstop_rec_after_each_call"];}
 	elseif (isset($_POST["VDstop_rec_after_each_call"]))	{$VDstop_rec_after_each_call=$_POST["VDstop_rec_after_each_call"];}
+	else {$VDstop_rec_after_each_call=1;}
 if (isset($_GET["VICIDIAL_park_on_extension"]))	{$VICIDIAL_park_on_extension=$_GET["VICIDIAL_park_on_extension"];}
 	elseif (isset($_POST["VICIDIAL_park_on_extension"]))	{$VICIDIAL_park_on_extension=$_POST["VICIDIAL_park_on_extension"];}
+	else {$VICIDIAL_park_on_extension=8301;}
 if (isset($_GET["VICIDIAL_park_on_filename"]))	{$VICIDIAL_park_on_filename=$_GET["VICIDIAL_park_on_filename"];}
 	elseif (isset($_POST["VICIDIAL_park_on_filename"]))	{$VICIDIAL_park_on_filename=$_POST["VICIDIAL_park_on_filename"];}
+	else {$VICIDIAL_park_on_filename="";}
 if (isset($_GET["vicidial_recording"]))	{$vicidial_recording=$_GET["vicidial_recording"];}
 	elseif (isset($_POST["vicidial_recording"]))	{$vicidial_recording=$_POST["vicidial_recording"];}
+	else {$vicidial_recording=1;}
 if (isset($_GET["vicidial_transfers"]))	{$vicidial_transfers=$_GET["vicidial_transfers"];}
 	elseif (isset($_POST["vicidial_transfers"]))	{$vicidial_transfers=$_POST["vicidial_transfers"];}
+	else {$vicidial_transfers=1;}
 if (isset($_GET["VICIDIAL_web_URL"]))	{$VICIDIAL_web_URL=$_GET["VICIDIAL_web_URL"];}
 	elseif (isset($_POST["VICIDIAL_web_URL"]))	{$VICIDIAL_web_URL=$_POST["VICIDIAL_web_URL"];}
+	else {$VICIDIAL_web_URL='';}
 if (isset($_GET["voicemail_button_enabled"]))	{$voicemail_button_enabled=$_GET["voicemail_button_enabled"];}
 	elseif (isset($_POST["voicemail_button_enabled"]))	{$voicemail_button_enabled=$_POST["voicemail_button_enabled"];}
+	else {$voicemail_button_enabled=1;}
 if (isset($_GET["voicemail_dump_exten"]))	{$voicemail_dump_exten=$_GET["voicemail_dump_exten"];}
 	elseif (isset($_POST["voicemail_dump_exten"]))	{$voicemail_dump_exten=$_POST["voicemail_dump_exten"];}
+	else {$voicemail_dump_exten=85026666666666;}
 if (isset($_GET["voicemail_ext"]))	{$voicemail_ext=$_GET["voicemail_ext"];}
 	elseif (isset($_POST["voicemail_ext"]))	{$voicemail_ext=$_POST["voicemail_ext"];}
+	else {$voicemail_ext="";}
 if (isset($_GET["voicemail_exten"]))	{$voicemail_exten=$_GET["voicemail_exten"];}
 	elseif (isset($_POST["voicemail_exten"]))	{$voicemail_exten=$_POST["voicemail_exten"];}
+	else {$voicemail_exten=8501;}
 if (isset($_GET["voicemail_id"]))	{$voicemail_id=$_GET["voicemail_id"];}
 	elseif (isset($_POST["voicemail_id"]))	{$voicemail_id=$_POST["voicemail_id"];}
+	else {$voicemail_id="";}
 if (isset($_GET["web_form_address"]))	{$web_form_address=$_GET["web_form_address"];}
 	elseif (isset($_POST["web_form_address"]))	{$web_form_address=$_POST["web_form_address"];}
+	else {$web_form_address="";}
 if (isset($_GET["wrapup_message"]))	{$wrapup_message=$_GET["wrapup_message"];}
 	elseif (isset($_POST["wrapup_message"]))	{$wrapup_message=$_POST["wrapup_message"];}
+	else {$wrapup_message="";}
 if (isset($_GET["wrapup_seconds"]))	{$wrapup_seconds=$_GET["wrapup_seconds"];}
 	elseif (isset($_POST["wrapup_seconds"]))	{$wrapup_seconds=$_POST["wrapup_seconds"];}
+	else {$wrapup_seconds=0;}
 if (isset($_GET["xferconf_a_dtmf"]))	{$xferconf_a_dtmf=$_GET["xferconf_a_dtmf"];}
 	elseif (isset($_POST["xferconf_a_dtmf"]))	{$xferconf_a_dtmf=$_POST["xferconf_a_dtmf"];}
+	else {$xferconf_a_dtmf="";}
 if (isset($_GET["xferconf_a_number"]))	{$xferconf_a_number=$_GET["xferconf_a_number"];}
 	elseif (isset($_POST["xferconf_a_number"]))	{$xferconf_a_number=$_POST["xferconf_a_number"];}
+	else {$xferconf_a_number="";}
 if (isset($_GET["xferconf_b_dtmf"]))	{$xferconf_b_dtmf=$_GET["xferconf_b_dtmf"];}
 	elseif (isset($_POST["xferconf_b_dtmf"]))	{$xferconf_b_dtmf=$_POST["xferconf_b_dtmf"];}
+	else {$xferconf_b_dtmf="";}
 if (isset($_GET["xferconf_b_number"]))	{$xferconf_b_number=$_GET["xferconf_b_number"];}
 	elseif (isset($_POST["xferconf_b_number"]))	{$xferconf_b_number=$_POST["xferconf_b_number"];}
+	else {$xferconf_b_number="";}
 if (isset($_GET["vicidial_balance_active"]))	{$vicidial_balance_active=$_GET["vicidial_balance_active"];}
 	elseif (isset($_POST["vicidial_balance_active"]))	{$vicidial_balance_active=$_POST["vicidial_balance_active"];}
+	else {$vicidial_balance_active="N";}
 if (isset($_GET["balance_trunks_offlimits"]))	{$balance_trunks_offlimits=$_GET["balance_trunks_offlimits"];}
 	elseif (isset($_POST["balance_trunks_offlimits"]))	{$balance_trunks_offlimits=$_POST["balance_trunks_offlimits"];}
+	else {$balance_trunks_offlimits=0;}
 if (isset($_GET["dedicated_trunks"]))	{$dedicated_trunks=$_GET["dedicated_trunks"];}
 	elseif (isset($_POST["dedicated_trunks"]))	{$dedicated_trunks=$_POST["dedicated_trunks"];}
+	else {$dedicated_trunks="";}
 if (isset($_GET["trunk_restriction"]))	{$trunk_restriction=$_GET["trunk_restriction"];}
 	elseif (isset($_POST["trunk_restriction"]))	{$trunk_restriction=$_POST["trunk_restriction"];}
+	else {$trunk_restriction="";}
 if (isset($_GET["campaigns"]))						{$campaigns=$_GET["campaigns"];}
 	elseif (isset($_POST["campaigns"]))				{$campaigns=$_POST["campaigns"];}
 if (isset($_GET["dial_level_override"]))			{$dial_level_override=$_GET["dial_level_override"];}
 	elseif (isset($_POST["dial_level_override"]))	{$dial_level_override=$_POST["dial_level_override"];}
+	else {$dial_level_override=0;}
 if (isset($_GET["concurrent_transfers"]))			{$concurrent_transfers=$_GET["concurrent_transfers"];}
 	elseif (isset($_POST["concurrent_transfers"]))	{$concurrent_transfers=$_POST["concurrent_transfers"];}
+	else {$concurrent_transfers="AUTO";}
 if (isset($_GET["auto_alt_dial"]))			{$auto_alt_dial=$_GET["auto_alt_dial"];}
 	elseif (isset($_POST["auto_alt_dial"]))	{$auto_alt_dial=$_POST["auto_alt_dial"];}
+	else {$auto_alt_dial="NONE";}
 if (isset($_GET["modify_users"]))				{$modify_users=$_GET["modify_users"];}
 	elseif (isset($_POST["modify_users"]))		{$modify_users=$_POST["modify_users"];}
+	else {$modify_users=0;}
 if (isset($_GET["modify_campaigns"]))			{$modify_campaigns=$_GET["modify_campaigns"];}
 	elseif (isset($_POST["modify_campaigns"]))	{$modify_campaigns=$_POST["modify_campaigns"];}
+	else {$modify_campaigns=0;}
 if (isset($_GET["modify_lists"]))				{$modify_lists=$_GET["modify_lists"];}
 	elseif (isset($_POST["modify_lists"]))		{$modify_lists=$_POST["modify_lists"];}
+	else {$modify_lists=0;}
 if (isset($_GET["modify_scripts"]))				{$modify_scripts=$_GET["modify_scripts"];}
 	elseif (isset($_POST["modify_scripts"]))	{$modify_scripts=$_POST["modify_scripts"];}
+	else {$modify_scripts=0;}
 if (isset($_GET["modify_filters"]))				{$modify_filters=$_GET["modify_filters"];}
 	elseif (isset($_POST["modify_filters"]))	{$modify_filters=$_POST["modify_filters"];}
+	else {$modify_filters=0;}
 if (isset($_GET["modify_ingroups"]))			{$modify_ingroups=$_GET["modify_ingroups"];}
 	elseif (isset($_POST["modify_ingroups"]))	{$modify_ingroups=$_POST["modify_ingroups"];}
+	else {$modify_ingroups=0;}
 if (isset($_GET["modify_usergroups"]))			{$modify_usergroups=$_GET["modify_usergroups"];}
 	elseif (isset($_POST["modify_usergroups"]))	{$modify_usergroups=$_POST["modify_usergroups"];}
+	else {$modify_usergroups=0;}
 if (isset($_GET["modify_remoteagents"]))			{$modify_remoteagents=$_GET["modify_remoteagents"];}
 	elseif (isset($_POST["modify_remoteagents"]))	{$modify_remoteagents=$_POST["modify_remoteagents"];}
+	else {$modify_remoteagents=0;}
 if (isset($_GET["modify_servers"]))				{$modify_servers=$_GET["modify_servers"];}
 	elseif (isset($_POST["modify_servers"]))	{$modify_servers=$_POST["modify_servers"];}
+	else {$modify_servers=0;}
 if (isset($_GET["view_reports"]))				{$view_reports=$_GET["view_reports"];}
 	elseif (isset($_POST["view_reports"]))		{$view_reports=$_POST["view_reports"];}
+	else {$view_reports=0;}
 if (isset($_GET["agent_pause_codes_active"]))			{$agent_pause_codes_active=$_GET["agent_pause_codes_active"];}
 	elseif (isset($_POST["agent_pause_codes_active"]))	{$agent_pause_codes_active=$_POST["agent_pause_codes_active"];}
+	else {$agent_pause_codes_active="N";}
 if (isset($_GET["pause_code"]))					{$pause_code=$_GET["pause_code"];}
 	elseif (isset($_POST["pause_code"]))		{$pause_code=$_POST["pause_code"];}
+	else {$pause_code="";}
 if (isset($_GET["pause_code_name"]))			{$pause_code_name=$_GET["pause_code_name"];}
 	elseif (isset($_POST["pause_code_name"]))	{$pause_code_name=$_POST["pause_code_name"];}
+	else {$pause_code_name="";}
 if (isset($_GET["billable"]))					{$billable=$_GET["billable"];}
 	elseif (isset($_POST["billable"]))			{$billable=$_POST["billable"];}
+	else {$billable="NO";}
 if (isset($_GET["campaign_description"]))			{$campaign_description=$_GET["campaign_description"];}
 	elseif (isset($_POST["campaign_description"]))	{$campaign_description=$_POST["campaign_description"];}
+	else {$campaign_description="";}
 if (isset($_GET["campaign_stats_refresh"]))			{$campaign_stats_refresh=$_GET["campaign_stats_refresh"];}
 	elseif (isset($_POST["campaign_stats_refresh"])){$campaign_stats_refresh=$_POST["campaign_stats_refresh"];}
+	else {$campaign_stats_refresh="N";}
 if (isset($_GET["list_description"]))			{$list_description=$_GET["list_description"];}
 	elseif (isset($_POST["list_description"]))	{$list_description=$_POST["list_description"];}
+	else {$list_description="";}
 if (isset($_GET["vicidial_recording_override"]))		{$vicidial_recording_override=$_GET["vicidial_recording_override"];}	
 	elseif (isset($_POST["vicidial_recording_override"]))	{$vicidial_recording_override=$_POST["vicidial_recording_override"];}
+	else {$vicidial_recording_override="DISABLED";}
 if (isset($_GET["use_non_latin"]))				{$use_non_latin=$_GET["use_non_latin"];}
 	elseif (isset($_POST["use_non_latin"]))		{$use_non_latin=$_POST["use_non_latin"];}
+	else {$use_non_latin=0;}
 if (isset($_GET["webroot_writable"]))			{$webroot_writable=$_GET["webroot_writable"];}
 	elseif (isset($_POST["webroot_writable"]))	{$webroot_writable=$_POST["webroot_writable"];}
+	else {$webroot_writable=1;}
 if (isset($_GET["enable_queuemetrics_logging"]))	{$enable_queuemetrics_logging=$_GET["enable_queuemetrics_logging"];}
 	elseif (isset($_POST["enable_queuemetrics_logging"]))	{$enable_queuemetrics_logging=$_POST["enable_queuemetrics_logging"];}
+	else {$enable_queuemetrics_logging=0;}
 if (isset($_GET["queuemetrics_server_ip"]))				{$queuemetrics_server_ip=$_GET["queuemetrics_server_ip"];}
 	elseif (isset($_POST["queuemetrics_server_ip"]))	{$queuemetrics_server_ip=$_POST["queuemetrics_server_ip"];}
+	else {$queuemetrics_server_ip="";}
 if (isset($_GET["queuemetrics_dbname"]))			{$queuemetrics_dbname=$_GET["queuemetrics_dbname"];}
 	elseif (isset($_POST["queuemetrics_dbname"]))	{$queuemetrics_dbname=$_POST["queuemetrics_dbname"];}
+	else {$queuemetrics_dbname="";}
 if (isset($_GET["queuemetrics_login"]))				{$queuemetrics_login=$_GET["queuemetrics_login"];}
 	elseif (isset($_POST["queuemetrics_login"]))	{$queuemetrics_login=$_POST["queuemetrics_login"];}
+	else {$queuemetrics_login="";}
 if (isset($_GET["queuemetrics_pass"]))			{$queuemetrics_pass=$_GET["queuemetrics_pass"];}
 	elseif (isset($_POST["queuemetrics_pass"]))	{$queuemetrics_pass=$_POST["queuemetrics_pass"];}
+	else {$queuemetrics_pass="";}
 if (isset($_GET["queuemetrics_url"]))			{$queuemetrics_url=$_GET["queuemetrics_url"];}
 	elseif (isset($_POST["queuemetrics_url"]))	{$queuemetrics_url=$_POST["queuemetrics_url"];}
 if (isset($_GET["queuemetrics_log_id"]))			{$queuemetrics_log_id=$_GET["queuemetrics_log_id"];}
 	elseif (isset($_POST["queuemetrics_log_id"]))	{$queuemetrics_log_id=$_POST["queuemetrics_log_id"];}
+	else {$queuemetrics_log_id="VIC";}
 if (isset($_GET["dial_status"]))				{$dial_status=$_GET["dial_status"];}
 	elseif (isset($_POST["dial_status"]))		{$dial_status=$_POST["dial_status"];}
+	else {$dial_status="";}
 if (isset($_GET["queuemetrics_eq_prepend"]))			{$queuemetrics_eq_prepend=$_GET["queuemetrics_eq_prepend"];}
 	elseif (isset($_POST["queuemetrics_eq_prepend"]))	{$queuemetrics_eq_prepend=$_POST["queuemetrics_eq_prepend"];}
+	else {$queuemetrics_eq_prepend="";}
 if (isset($_GET["vicidial_agent_disable"]))				{$vicidial_agent_disable=$_GET["vicidial_agent_disable"];}
 	elseif (isset($_POST["vicidial_agent_disable"]))	{$vicidial_agent_disable=$_POST["vicidial_agent_disable"];}
+	else {$vicidial_agent_disable="ALL";}
 if (isset($_GET["disable_alter_custdata"]))				{$disable_alter_custdata=$_GET["disable_alter_custdata"];}
 	elseif (isset($_POST["disable_alter_custdata"]))	{$disable_alter_custdata=$_POST["disable_alter_custdata"];}
+	else {$disable_alter_custdata="N";}
 if (isset($_GET["alter_custdata_override"]))			{$alter_custdata_override=$_GET["alter_custdata_override"];}
 	elseif (isset($_POST["alter_custdata_override"]))	{$alter_custdata_override=$_POST["alter_custdata_override"];}
+	else {$alter_custdata_override="NOT_ACTIVE";}
 if (isset($_GET["no_hopper_leads_logins"]))				{$no_hopper_leads_logins=$_GET["no_hopper_leads_logins"];}
 	elseif (isset($_POST["no_hopper_leads_logins"]))	{$no_hopper_leads_logins=$_POST["no_hopper_leads_logins"];}
+	else {$no_hopper_leads_logins="N";}
 if (isset($_GET["enable_sipsak_messages"]))				{$enable_sipsak_messages=$_GET["enable_sipsak_messages"];}
 	elseif (isset($_POST["enable_sipsak_messages"]))	{$enable_sipsak_messages=$_POST["enable_sipsak_messages"];}
+	else {$enable_sipsak_messages=0;}
 if (isset($_GET["allow_sipsak_messages"]))				{$allow_sipsak_messages=$_GET["allow_sipsak_messages"];}
 	elseif (isset($_POST["allow_sipsak_messages"]))		{$allow_sipsak_messages=$_POST["allow_sipsak_messages"];}
+	else {$allow_sipsak_messages=0;}
 if (isset($_GET["admin_home_url"]))				{$admin_home_url=$_GET["admin_home_url"];}
 	elseif (isset($_POST["admin_home_url"]))	{$admin_home_url=$_POST["admin_home_url"];}
 if (isset($_GET["list_order_mix"]))				{$list_order_mix=$_GET["list_order_mix"];}
 	elseif (isset($_POST["list_order_mix"]))	{$list_order_mix=$_POST["list_order_mix"];}
+	else {$list_order_mix="";}
 if (isset($_GET["vcl_id"]))						{$vcl_id=$_GET["vcl_id"];}
 	elseif (isset($_POST["vcl_id"]))			{$vcl_id=$_POST["vcl_id"];}
+	else {$vcl_id="";}
 if (isset($_GET["vcl_name"]))					{$vcl_name=$_GET["vcl_name"];}
 	elseif (isset($_POST["vcl_name"]))			{$vcl_name=$_POST["vcl_name"];}
+	else {$vcl_name="";}
 if (isset($_GET["list_mix_container"]))				{$list_mix_container=$_GET["list_mix_container"];}
 	elseif (isset($_POST["list_mix_container"]))	{$list_mix_container=$_POST["list_mix_container"];}
+	else {$list_mix_container="";}
 if (isset($_GET["mix_method"]))					{$mix_method=$_GET["mix_method"];}
 	elseif (isset($_POST["mix_method"]))		{$mix_method=$_POST["mix_method"];}
+	else {$mix_method="IN_ORDER";}
 if (isset($_GET["human_answered"]))				{$human_answered=$_GET["human_answered"];}
 	elseif (isset($_POST["human_answered"]))	{$human_answered=$_POST["human_answered"];}
+	else {$human_answered="N";}
 if (isset($_GET["category"]))					{$category=$_GET["category"];}
 	elseif (isset($_POST["category"]))			{$category=$_POST["category"];}
+	else {$category="";}
 if (isset($_GET["vsc_id"]))						{$vsc_id=$_GET["vsc_id"];}
 	elseif (isset($_POST["vsc_id"]))			{$vsc_id=$_POST["vsc_id"];}
+	else {$vsc_id="";}
 if (isset($_GET["vsc_name"]))					{$vsc_name=$_GET["vsc_name"];}
 	elseif (isset($_POST["vsc_name"]))			{$vsc_name=$_POST["vsc_name"];}
+	else {$vsc_name="";}
 if (isset($_GET["vsc_description"]))			{$vsc_description=$_GET["vsc_description"];}
 	elseif (isset($_POST["vsc_description"]))	{$vsc_description=$_POST["vsc_description"];}
+	else {$vsc_description="";}
 if (isset($_GET["tovdad_display"]))				{$tovdad_display=$_GET["tovdad_display"];}
 	elseif (isset($_POST["tovdad_display"]))	{$tovdad_display=$_POST["tovdad_display"];}
+	else {$tovdad_display="N";}
 if (isset($_GET["mix_container_item"]))				{$mix_container_item=$_GET["mix_container_item"];}
 	elseif (isset($_POST["mix_container_item"]))	{$mix_container_item=$_POST["mix_container_item"];}
+	else {$mix_container_item="";}
 if (isset($_GET["enable_agc_xfer_log"]))			{$enable_agc_xfer_log=$_GET["enable_agc_xfer_log"];}
 	elseif (isset($_POST["enable_agc_xfer_log"]))	{$enable_agc_xfer_log=$_POST["enable_agc_xfer_log"];}
+	else {$enable_agc_xfer_log=0;}
 if (isset($_GET["after_hours_action"]))				{$after_hours_action=$_GET["after_hours_action"];}
 	elseif (isset($_POST["after_hours_action"]))	{$after_hours_action=$_POST["after_hours_action"];}
+	else {$after_hours_action="MESSAGE";}
 if (isset($_GET["after_hours_message_filename"]))			{$after_hours_message_filename=$_GET["after_hours_message_filename"];}
 	elseif (isset($_POST["after_hours_message_filename"]))	{$after_hours_message_filename=$_POST["after_hours_message_filename"];}
+	else {$after_hours_message_filename="";}
 if (isset($_GET["after_hours_exten"]))				{$after_hours_exten=$_GET["after_hours_exten"];}
 	elseif (isset($_POST["after_hours_exten"]))		{$after_hours_exten=$_POST["after_hours_exten"];}
+	else {$after_hours_exten="8300";}
 if (isset($_GET["after_hours_voicemail"]))			{$after_hours_voicemail=$_GET["after_hours_voicemail"];}
 	elseif (isset($_POST["after_hours_voicemail"]))	{$after_hours_voicemail=$_POST["after_hours_voicemail"];}
+	else {$after_hours_voicemail="";}
 if (isset($_GET["welcome_message_filename"]))			{$welcome_message_filename=$_GET["welcome_message_filename"];}
 	elseif (isset($_POST["welcome_message_filename"]))	{$welcome_message_filename=$_POST["welcome_message_filename"];}
+	else {$welcome_message_filename="";}
 if (isset($_GET["moh_context"]))					{$moh_context=$_GET["moh_context"];}
 	elseif (isset($_POST["moh_context"]))			{$moh_context=$_POST["moh_context"];}
+	else {$moh_context="default";}
 if (isset($_GET["onhold_prompt_filename"]))				{$onhold_prompt_filename=$_GET["onhold_prompt_filename"];}
 	elseif (isset($_POST["onhold_prompt_filename"]))	{$onhold_prompt_filename=$_POST["onhold_prompt_filename"];}
+	else {$onhold_prompt_filename="";}
 if (isset($_GET["prompt_interval"]))				{$prompt_interval=$_GET["prompt_interval"];}
 	elseif (isset($_POST["prompt_interval"]))		{$prompt_interval=$_POST["prompt_interval"];}
+	else {$prompt_interval=60;}
 if (isset($_GET["agent_alert_exten"]))				{$agent_alert_exten=$_GET["agent_alert_exten"];}
 	elseif (isset($_POST["agent_alert_exten"]))		{$agent_alert_exten=$_POST["agent_alert_exten"];}
+	else {$agent_alert_exten="";}
 if (isset($_GET["agent_alert_delay"]))				{$agent_alert_delay=$_GET["agent_alert_delay"];}
 	elseif (isset($_POST["agent_alert_delay"]))		{$agent_alert_delay=$_POST["agent_alert_delay"];}
+	else {$agent_alert_delay=1000;}
 if (isset($_GET["group_rank"]))					{$group_rank=$_GET["group_rank"];}
 	elseif (isset($_POST["group_rank"]))		{$group_rank=$_POST["group_rank"];}
+	else {$group_rank=0;}
 if (isset($_GET["campaign_allow_inbound"]))				{$campaign_allow_inbound=$_GET["campaign_allow_inbound"];}
 	elseif (isset($_POST["campaign_allow_inbound"]))	{$campaign_allow_inbound=$_POST["campaign_allow_inbound"];}
+	else {$campaign_allow_inbound="N";}
 if (isset($_GET["old_campaign_allow_inbound"]))				{$old_campaign_allow_inbound=$_GET["old_campaign_allow_inbound"];}
 	elseif (isset($_POST["old_campaign_allow_inbound"]))	{$old_campaign_allow_inbound=$_POST["old_campaign_allow_inbound"];}
+	else {$old_campaign_allow_inbound="N";}
 if (isset($_GET["manual_dial_list_id"]))				{$manual_dial_list_id=$_GET["manual_dial_list_id"];}
 	elseif (isset($_POST["manual_dial_list_id"]))		{$manual_dial_list_id=$_POST["manual_dial_list_id"];}
+	else {$manual_dial_list_id=998;}
 if (isset($_GET["campaign_rank"]))				{$campaign_rank=$_GET["campaign_rank"];}
 	elseif (isset($_POST["campaign_rank"]))		{$campaign_rank=$_POST["campaign_rank"];}
+	else {$campaign_rank=0;}
 if (isset($_GET["source_campaign_id"]))				{$source_campaign_id=$_GET["source_campaign_id"];}
 	elseif (isset($_POST["source_campaign_id"]))	{$source_campaign_id=$_POST["source_campaign_id"];}
+	else {$source_campaign_id="";}
 if (isset($_GET["source_user_id"]))				{$source_user_id=$_GET["source_user_id"];}
 	elseif (isset($_POST["source_user_id"]))	{$source_user_id=$_POST["source_user_id"];}
+	else {$source_user_id="";}
 if (isset($_GET["source_group_id"]))			{$source_group_id=$_GET["source_group_id"];}
 	elseif (isset($_POST["source_group_id"]))	{$source_group_id=$_POST["source_group_id"];}
+	else {$source_group_id="";}
 if (isset($_GET["default_xfer_group"]))				{$default_xfer_group=$_GET["default_xfer_group"];}
 	elseif (isset($_POST["default_xfer_group"]))	{$default_xfer_group=$_POST["default_xfer_group"];}
+	else {$default_xfer_group="";}
 if (isset($_GET["qc_enabled"]))					{$qc_enabled=$_GET["qc_enabled"];}
 	elseif (isset($_POST["qc_enabled"]))		{$qc_enabled=$_POST["qc_enabled"];}
+	else {$qc_enabled="N";}
 if (isset($_GET["qc_user_level"]))				{$qc_user_level=$_GET["qc_user_level"];}
 	elseif (isset($_POST["qc_user_level"]))		{$qc_user_level=$_POST["qc_user_level"];}
+	else {$qc_user_level=1;}
 if (isset($_GET["qc_pass"]))					{$qc_pass=$_GET["qc_pass"];}
 	elseif (isset($_POST["qc_pass"]))			{$qc_pass=$_POST["qc_pass"];}
+	else {$qc_pass=0;}
 if (isset($_GET["qc_finish"]))					{$qc_finish=$_GET["qc_finish"];}
 	elseif (isset($_POST["qc_finish"]))			{$qc_finish=$_POST["qc_finish"];}
+	else {$qc_finish=0;}
 if (isset($_GET["qc_commit"]))					{$qc_commit=$_GET["qc_commit"];}
 	elseif (isset($_POST["qc_commit"]))			{$qc_commit=$_POST["qc_commit"];}
+	else {$qc_commit=0;}
 if (isset($_GET["qc_campaigns"]))				{$qc_campaigns=$_GET["qc_campaigns"];}
 	elseif (isset($_POST["qc_campaigns"]))		{$qc_campaigns=$_POST["qc_campaigns"];}
 if (isset($_GET["qc_groups"]))					{$qc_groups=$_GET["qc_groups"];}
 	elseif (isset($_POST["qc_groups"]))			{$qc_groups=$_POST["qc_groups"];}
 if (isset($_GET["qc_display_group_type"]))					{$qc_display_group_type=$_GET["qc_display_group_type"];}
 	elseif (isset($_POST["qc_display_group_type"]))			{$qc_display_group_type=$_POST["qc_display_group_type"];}
+	else {$qc_display_group_type="";}
 if (isset($_GET["qc_claim_limit"]))					{$qc_claim_limit=$_GET["qc_claim_limit"];}
 	elseif (isset($_POST["qc_claim_limit"]))			{$qc_claim_limit=$_POST["qc_claim_limit"];}
+	else {$qc_claim_limit=3;}
 if (isset($_GET["qc_expire_days"]))					{$qc_expire_days=$_GET["qc_expire_days"];}
 	elseif (isset($_POST["qc_expire_days"]))			{$qc_expire_days=$_POST["qc_expire_days"];}
+	else {$qc_expire_days="";}
 if (isset($_GET["queue_priority"]))				{$queue_priority=$_GET["queue_priority"];}
 	elseif (isset($_POST["queue_priority"]))	{$queue_priority=$_POST["queue_priority"];}
+	else {$queue_priority=0;}
 if (isset($_GET["drop_inbound_group"]))				{$drop_inbound_group=$_GET["drop_inbound_group"];}
 	elseif (isset($_POST["drop_inbound_group"]))	{$drop_inbound_group=$_POST["drop_inbound_group"];}
+	else {$drop_inbound_group="---NONE---";}
 if (isset($_GET["qc_statuses"]))			{$qc_statuses=$_GET["qc_statuses"];}
 	elseif (isset($_POST["qc_statuses"]))	{$qc_statuses=$_POST["qc_statuses"];}
 if (isset($_GET["qc_lists"]))				{$qc_lists=$_GET["qc_lists"];}
 	elseif (isset($_POST["qc_lists"]))		{$qc_lists=$_POST["qc_lists"];}
+	else {$qc_lists="";}
 if (isset($_GET["qc_statuses"]))			{$qc_statuses=$_GET["qc_statuses"];}
 	elseif (isset($_POST["qc_statuses"]))	{$qc_statuses=$_POST["qc_statuses"];}
+	else {$qc_statuses="";}
 if (isset($_GET["qc_statuses_id"]))				{$qc_statuses_id=$_GET["qc_statuses_id"];}
 	elseif (isset($_POST["qc_statuses_id"]))		{$qc_statuses_id=$_POST["qc_statuses_id"];}
+	else {$qc_statuses_id="";}
 if (isset($_GET["qc_get_record_launch"]))			{$qc_get_record_launch=$_GET["qc_get_record_launch"];}
 	elseif (isset($_POST["qc_get_record_launch"]))	{$qc_get_record_launch=$_POST["qc_get_record_launch"];}
+	else {$qc_get_record_launch="NONE";}
 if (isset($_GET["qc_show_recording"]))				{$qc_show_recording=$_GET["qc_show_recording"];}
 	elseif (isset($_POST["qc_show_recording"]))		{$qc_show_recording=$_POST["qc_show_recording"];}
+	else {$qc_show_recording="Y";}
 if (isset($_GET["qc_shift_id"]))				{$qc_shift_id=$_GET["qc_shift_id"];}
 	elseif (isset($_POST["qc_shift_id"]))		{$qc_shift_id=$_POST["qc_shift_id"];}
+	else {$qc_shift_id="24HRMIDNIGHT";}
 if (isset($_GET["qc_web_form_address"]))				{$qc_web_form_address=$_GET["qc_web_form_address"];}
 	elseif (isset($_POST["qc_web_form_address"]))	{$qc_web_form_address=$_POST["qc_web_form_address"];}
 if (isset($_GET["qc_scorecard_id"]))						{$qc_scorecard_id=$_GET["qc_scorecard_id"];}
 	elseif (isset($_POST["qc_scorecard_id"]))				{$qc_scorecard_id=$_POST["qc_scorecard_id"];}
+	else {$qc_scorecard_id="";}
 if (isset($_GET["qc_script"]))						{$qc_script=$_GET["qc_script"];}
 	elseif (isset($_POST["qc_script"]))				{$qc_script=$_POST["qc_script"];}
+	else {$qc_script="";}
 if (isset($_GET["ingroup_recording_override"]))		{$ingroup_recording_override=$_GET["ingroup_recording_override"];}	
 	elseif (isset($_POST["ingroup_recording_override"]))	{$ingroup_recording_override=$_POST["ingroup_recording_override"];}
+	else {$ingroup_recording_override="DISABLED";}
 if (isset($_GET["code"]))				{$code=$_GET["code"];}	
 	elseif (isset($_POST["code"]))		{$code=$_POST["code"];}
+	else {$code="";}
 if (isset($_GET["code_name"]))			{$code_name=$_GET["code_name"];}	
 	elseif (isset($_POST["code_name"]))	{$code_name=$_POST["code_name"];}
+	else {$code_name="";}
 if (isset($_GET["afterhours_xfer_group"]))			{$afterhours_xfer_group=$_GET["afterhours_xfer_group"];}	
 	elseif (isset($_POST["afterhours_xfer_group"]))	{$afterhours_xfer_group=$_POST["afterhours_xfer_group"];}
+	else {$afterhours_xfer_group="";}
 if (isset($_GET["alias_id"]))				{$alias_id=$_GET["alias_id"];}	
 	elseif (isset($_POST["alias_id"]))		{$alias_id=$_POST["alias_id"];}
+	else {$alias_id="";}
 if (isset($_GET["alias_name"]))				{$alias_name=$_GET["alias_name"];}	
 	elseif (isset($_POST["alias_name"]))		{$alias_name=$_POST["alias_name"];}
+	else {$alias_name="";}
 if (isset($_GET["logins_list"]))				{$logins_list=$_GET["logins_list"];}	
 	elseif (isset($_POST["logins_list"]))		{$logins_list=$_POST["logins_list"];}
+	else {$logins_list="";}
 if (isset($_GET["shift_id"]))				{$shift_id=$_GET["shift_id"];}	
 	elseif (isset($_POST["shift_id"]))		{$shift_id=$_POST["shift_id"];}
+	else {$shift_id="";}
 if (isset($_GET["shift_name"]))				{$shift_name=$_GET["shift_name"];}	
 	elseif (isset($_POST["shift_name"]))		{$shift_name=$_POST["shift_name"];}
+	else {$shift_name="";}
 if (isset($_GET["shift_start_time"]))			{$shift_start_time=$_GET["shift_start_time"];}	
 	elseif (isset($_POST["shift_start_time"]))	{$shift_start_time=$_POST["shift_start_time"];}
+	else {$shift_start_time="";}
 if (isset($_GET["shift_length"]))				{$shift_length=$_GET["shift_length"];}	
 	elseif (isset($_POST["shift_length"]))		{$shift_length=$_POST["shift_length"];}
+	else {$shift_length="";}
 if (isset($_GET["shift_weekdays"]))				{$shift_weekdays=$_GET["shift_weekdays"];}	
 	elseif (isset($_POST["shift_weekdays"]))	{$shift_weekdays=$_POST["shift_weekdays"];}
 if (isset($_GET["group_shifts"]))			{$group_shifts=$_GET["group_shifts"];}	
 	elseif (isset($_POST["group_shifts"]))	{$group_shifts=$_POST["group_shifts"];}
+	else {$group_shifts=array();}
 if (isset($_GET["timeclock_end_of_day"]))			{$timeclock_end_of_day=$_GET["timeclock_end_of_day"];}	
 	elseif (isset($_POST["timeclock_end_of_day"]))	{$timeclock_end_of_day=$_POST["timeclock_end_of_day"];}
+	else {$timeclock_end_of_day="0000";}
 if (isset($_GET["survey_first_audio_file"]))			{$survey_first_audio_file=$_GET["survey_first_audio_file"];}	
 	elseif (isset($_POST["survey_first_audio_file"]))	{$survey_first_audio_file=$_POST["survey_first_audio_file"];}
+	else {$survey_first_audio_file="";}
 if (isset($_GET["survey_dtmf_digits"]))					{$survey_dtmf_digits=$_GET["survey_dtmf_digits"];}	
 	elseif (isset($_POST["survey_dtmf_digits"]))		{$survey_dtmf_digits=$_POST["survey_dtmf_digits"];}
+	else {$survey_dtmf_digits="1238";}
 if (isset($_GET["survey_ni_digit"]))					{$survey_ni_digit=$_GET["survey_ni_digit"];}	
 	elseif (isset($_POST["survey_ni_digit"]))			{$survey_ni_digit=$_POST["survey_ni_digit"];}
+	else {$survey_ni_digit="8";}
 if (isset($_GET["survey_opt_in_audio_file"]))			{$survey_opt_in_audio_file=$_GET["survey_opt_in_audio_file"];}	
 	elseif (isset($_POST["survey_opt_in_audio_file"]))	{$survey_opt_in_audio_file=$_POST["survey_opt_in_audio_file"];}
+	else {$survey_opt_in_audio_file="";}
 if (isset($_GET["survey_ni_audio_file"]))				{$survey_ni_audio_file=$_GET["survey_ni_audio_file"];}	
 	elseif (isset($_POST["survey_ni_audio_file"]))		{$survey_ni_audio_file=$_POST["survey_ni_audio_file"];}
+	else {$survey_ni_audio_file="";}
 if (isset($_GET["survey_method"]))						{$survey_method=$_GET["survey_method"];}	
 	elseif (isset($_POST["survey_method"]))				{$survey_method=$_POST["survey_method"];}
+	else {$survey_method="AGENT_XFER";}
 if (isset($_GET["survey_no_response_action"]))			{$survey_no_response_action=$_GET["survey_no_response_action"];}	
 	elseif (isset($_POST["survey_no_response_action"]))	{$survey_no_response_action=$_POST["survey_no_response_action"];}
+	else {$survey_no_response_action="OPTIN";}
 if (isset($_GET["survey_ni_status"]))					{$survey_ni_status=$_GET["survey_ni_status"];}	
 	elseif (isset($_POST["survey_ni_status"]))			{$survey_ni_status=$_POST["survey_ni_status"];}
+	else {$survey_ni_status="NI";}
 if (isset($_GET["survey_response_digit_map"]))			{$survey_response_digit_map=$_GET["survey_response_digit_map"];}	
 	elseif (isset($_POST["survey_response_digit_map"]))	{$survey_response_digit_map=$_POST["survey_response_digit_map"];}
+	else {$survey_response_digit_map="1-DEMOCRAT|2-REPUBLICAN|3-INDEPENDANT|8-OPTOUT|X-NO RESPONSE|";}
 if (isset($_GET["survey_xfer_exten"]))					{$survey_xfer_exten=$_GET["survey_xfer_exten"];}	
 	elseif (isset($_POST["survey_xfer_exten"]))			{$survey_xfer_exten=$_POST["survey_xfer_exten"];}
+	else {$survey_xfer_exten=8300;}
 if (isset($_GET["survey_camp_record_dir"]))				{$survey_camp_record_dir=$_GET["survey_camp_record_dir"];}	
 	elseif (isset($_POST["survey_camp_record_dir"]))	{$survey_camp_record_dir=$_POST["survey_camp_record_dir"];}
+	else {$survey_camp_record_dir="/home/survey";}
 if (isset($_GET["add_timeclock_log"]))				{$add_timeclock_log=$_GET["add_timeclock_log"];}	
 	elseif (isset($_POST["add_timeclock_log"]))		{$add_timeclock_log=$_POST["add_timeclock_log"];}
+	else {$add_timeclock_log=0;}
 if (isset($_GET["modify_timeclock_log"]))			{$modify_timeclock_log=$_GET["modify_timeclock_log"];}	
 	elseif (isset($_POST["modify_timeclock_log"]))	{$modify_timeclock_log=$_POST["modify_timeclock_log"];}
+	else {$modify_timeclock_log=0;}
 if (isset($_GET["delete_timeclock_log"]))			{$delete_timeclock_log=$_GET["delete_timeclock_log"];}	
 	elseif (isset($_POST["delete_timeclock_log"]))	{$delete_timeclock_log=$_POST["delete_timeclock_log"];}
+	else {$delete_timeclock_log=0;}
 if (isset($_GET["phone_numbers"]))					{$phone_numbers=$_GET["phone_numbers"];}	
 	elseif (isset($_POST["phone_numbers"]))			{$phone_numbers=$_POST["phone_numbers"];}
+	else {$phone_numbers="";}
 if (isset($_GET["vdc_header_date_format"]))					{$vdc_header_date_format=$_GET["vdc_header_date_format"];}	
 	elseif (isset($_POST["vdc_header_date_format"]))		{$vdc_header_date_format=$_POST["vdc_header_date_format"];}
+	else {$vdc_header_date_format='MS_DASH_24HR  2008-06-24 23:59:59';}
 if (isset($_GET["vdc_customer_date_format"]))				{$vdc_customer_date_format=$_GET["vdc_customer_date_format"];}	
 	elseif (isset($_POST["vdc_customer_date_format"]))		{$vdc_customer_date_format=$_POST["vdc_customer_date_format"];}
+	else {$vdc_customer_date_format='AL_TEXT_AMPM  OCT 24, 2008 11:59:59 PM';}
 if (isset($_GET["vdc_header_phone_format"]))				{$vdc_header_phone_format=$_GET["vdc_header_phone_format"];}	
 	elseif (isset($_POST["vdc_header_phone_format"]))		{$vdc_header_phone_format=$_POST["vdc_header_phone_format"];}
+	else {$vdc_header_phone_format='US_PARN (000)000-0000';}
 if (isset($_GET["disable_alter_custphone"]))			{$disable_alter_custphone=$_GET["disable_alter_custphone"];}	
 	elseif (isset($_POST["disable_alter_custphone"]))	{$disable_alter_custphone=$_POST["disable_alter_custphone"];}
+	else {$disable_alter_custphone="Y";}
 if (isset($_GET["alter_custphone_override"]))			{$alter_custphone_override=$_GET["alter_custphone_override"];}	
 	elseif (isset($_POST["alter_custphone_override"]))	{$alter_custphone_override=$_POST["alter_custphone_override"];}
+	else {$alter_custphone_override="NOT_ACTIVE";}
 if (isset($_GET["vdc_agent_api_access"]))				{$vdc_agent_api_access=$_GET["vdc_agent_api_access"];}	
 	elseif (isset($_POST["vdc_agent_api_access"]))		{$vdc_agent_api_access=$_POST["vdc_agent_api_access"];}
+	else {$vdc_agent_api_access=0;}
 if (isset($_GET["vdc_agent_api_active"]))				{$vdc_agent_api_active=$_GET["vdc_agent_api_active"];}	
 	elseif (isset($_POST["vdc_agent_api_active"]))		{$vdc_agent_api_active=$_POST["vdc_agent_api_active"];}
+	else {$vdc_agent_api_active=0;}
 if (isset($_GET["display_queue_count"]))				{$display_queue_count=$_GET["display_queue_count"];}	
 	elseif (isset($_POST["display_queue_count"]))		{$display_queue_count=$_POST["display_queue_count"];}
+	else {$display_queue_count="Y";}
 if (isset($_GET["sale_category"]))				{$sale_category=$_GET["sale_category"];}	
 	elseif (isset($_POST["sale_category"]))		{$sale_category=$_POST["sale_category"];}
+	else {$sale_category="N";}
 if (isset($_GET["dead_lead_category"]))				{$dead_lead_category=$_GET["dead_lead_category"];}	
 	elseif (isset($_POST["dead_lead_category"]))	{$dead_lead_category=$_POST["dead_lead_category"];}
+	else {$dead_lead_category="N";}
 if (isset($_GET["manual_dial_filter"]))				{$manual_dial_filter=$_GET["manual_dial_filter"];}	
 	elseif (isset($_POST["manual_dial_filter"]))	{$manual_dial_filter=$_POST["manual_dial_filter"];}
+	else {$manual_dial_filter="DISABLED";}
 if (isset($_GET["agent_clipboard_copy"]))			{$agent_clipboard_copy=$_GET["agent_clipboard_copy"];}	
 	elseif (isset($_POST["agent_clipboard_copy"]))	{$agent_clipboard_copy=$_POST["agent_clipboard_copy"];}
+	else {$agent_clipboard_copy="";}
 if (isset($_GET["agent_extended_alt_dial"]))			{$agent_extended_alt_dial=$_GET["agent_extended_alt_dial"];}	
 	elseif (isset($_POST["agent_extended_alt_dial"]))	{$agent_extended_alt_dial=$_POST["agent_extended_alt_dial"];}
+	else {$agent_extended_alt_dial="N";}
 if (isset($_GET["play_place_in_line"]))				{$play_place_in_line=$_GET["play_place_in_line"];}	
 	elseif (isset($_POST["play_place_in_line"]))	{$play_place_in_line=$_POST["play_place_in_line"];}
+	else {$play_place_in_line="N";}
 if (isset($_GET["play_estimate_hold_time"]))			{$play_estimate_hold_time=$_GET["play_estimate_hold_time"];}	
 	elseif (isset($_POST["play_estimate_hold_time"]))	{$play_estimate_hold_time=$_POST["play_estimate_hold_time"];}
+	else {$play_estimate_hold_time="N";}
 if (isset($_GET["hold_time_option"]))				{$hold_time_option=$_GET["hold_time_option"];}	
 	elseif (isset($_POST["hold_time_option"]))		{$hold_time_option=$_POST["hold_time_option"];}
+	else {$hold_time_option="NONE";}
 if (isset($_GET["hold_time_option_seconds"]))			{$hold_time_option_seconds=$_GET["hold_time_option_seconds"];}	
 	elseif (isset($_POST["hold_time_option_seconds"]))	{$hold_time_option_seconds=$_POST["hold_time_option_seconds"];}
+	else {$hold_time_option_seconds=360;}
 if (isset($_GET["hold_time_option_exten"]))				{$hold_time_option_exten=$_GET["hold_time_option_exten"];}	
 	elseif (isset($_POST["hold_time_option_exten"]))	{$hold_time_option_exten=$_POST["hold_time_option_exten"];}
+	else {$hold_time_option_exten=8300;}
 if (isset($_GET["hold_time_option_voicemail"]))				{$hold_time_option_voicemail=$_GET["hold_time_option_voicemail"];}	
 	elseif (isset($_POST["hold_time_option_voicemail"]))	{$hold_time_option_voicemail=$_POST["hold_time_option_voicemail"];}
+	else {$hold_time_option_voicemail="";}
 if (isset($_GET["hold_time_option_xfer_group"]))			{$hold_time_option_xfer_group=$_GET["hold_time_option_xfer_group"];}	
 	elseif (isset($_POST["hold_time_option_xfer_group"]))	{$hold_time_option_xfer_group=$_POST["hold_time_option_xfer_group"];}
+	else {$hold_time_option_xfer_group="---NONE---";}
 if (isset($_GET["hold_time_option_callback_filename"]))				{$hold_time_option_callback_filename=$_GET["hold_time_option_callback_filename"];}	
 	elseif (isset($_POST["hold_time_option_callback_filename"]))	{$hold_time_option_callback_filename=$_POST["hold_time_option_callback_filename"];}
+	else {$hold_time_option_callback_filename="";}
 if (isset($_GET["hold_time_option_callback_list_id"]))				{$hold_time_option_callback_list_id=$_GET["hold_time_option_callback_list_id"];}	
 	elseif (isset($_POST["hold_time_option_callback_list_id"]))		{$hold_time_option_callback_list_id=$_POST["hold_time_option_callback_list_id"];}
+	else {$hold_time_option_callback_list_id=999;}
 if (isset($_GET["hold_recall_xfer_group"]))				{$hold_recall_xfer_group=$_GET["hold_recall_xfer_group"];}	
 	elseif (isset($_POST["hold_recall_xfer_group"]))	{$hold_recall_xfer_group=$_POST["hold_recall_xfer_group"];}
+	else {$hold_recall_xfer_group="---NONE---";}
 if (isset($_GET["no_delay_call_route"]))			{$no_delay_call_route=$_GET["no_delay_call_route"];}	
 	elseif (isset($_POST["no_delay_call_route"]))	{$no_delay_call_route=$_POST["no_delay_call_route"];}
+	else {$no_delay_call_route="N";}
 if (isset($_GET["play_welcome_message"]))			{$play_welcome_message=$_GET["play_welcome_message"];}	
 	elseif (isset($_POST["play_welcome_message"]))	{$play_welcome_message=$_POST["play_welcome_message"];}
+	else {$play_welcome_message="ALWAYS";}
 if (isset($_GET["did_id"]))					{$did_id=$_GET["did_id"];}	
 	elseif (isset($_POST["did_id"]))		{$did_id=$_POST["did_id"];}
+	else {$did_id="";}
 if (isset($_GET["source_did"]))				{$source_did=$_GET["source_did"];}	
 	elseif (isset($_POST["source_did"]))	{$source_did=$_POST["source_did"];}
+	else {$source_did="";}
 if (isset($_GET["did_pattern"]))			{$did_pattern=$_GET["did_pattern"];}	
 	elseif (isset($_POST["did_pattern"]))	{$did_pattern=$_POST["did_pattern"];}
+	else {$did_pattern="";}
 if (isset($_GET["did_description"]))			{$did_description=$_GET["did_description"];}	
 	elseif (isset($_POST["did_description"]))	{$did_description=$_POST["did_description"];}
+	else {$did_description="";}
 if (isset($_GET["did_active"]))				{$did_active=$_GET["did_active"];}	
 	elseif (isset($_POST["did_active"]))	{$did_active=$_POST["did_active"];}
+	else {$did_active="Y";}
 if (isset($_GET["did_route"]))				{$did_route=$_GET["did_route"];}	
 	elseif (isset($_POST["did_route"]))		{$did_route=$_POST["did_route"];}
+	else {$did_route="EXTEN";}
 if (isset($_GET["did_pattern_filter"]))				{$did_pattern_filter=$_GET["did_pattern_filter"];}	
 	elseif (isset($_POST["did_pattern_filter"]))		{$did_pattern_filter=$_POST["did_pattern_filter"];}
+	else {$did_pattern_filter="";}
 if (isset($_GET["exten_context"]))			{$exten_context=$_GET["exten_context"];}	
 	elseif (isset($_POST["exten_context"]))	{$exten_context=$_POST["exten_context"];}
+	else {$exten_context="default";}
 if (isset($_GET["phone"]))					{$phone=$_GET["phone"];}	
 	elseif (isset($_POST["phone"]))			{$phone=$_POST["phone"];}
+	else {$phone="";}
 if (isset($_GET["user_unavailable_action"]))			{$user_unavailable_action=$_GET["user_unavailable_action"];}	
 	elseif (isset($_POST["user_unavailable_action"]))	{$user_unavailable_action=$_POST["user_unavailable_action"];}
+	else {$user_unavailable_action="VOICEMAIL";}
 if (isset($_GET["user_route_settings_ingroup"]))			{$user_route_settings_ingroup=$_GET["user_route_settings_ingroup"];}	
 	elseif (isset($_POST["user_route_settings_ingroup"]))	{$user_route_settings_ingroup=$_POST["user_route_settings_ingroup"];}
+	else {$user_route_settings_ingroup="AGENTDIRECT";}
 if (isset($_GET["call_handle_method"]))				{$call_handle_method=$_GET["call_handle_method"];}	
 	elseif (isset($_POST["call_handle_method"]))	{$call_handle_method=$_POST["call_handle_method"];}
+	else {$call_handle_method="CID";}
 if (isset($_GET["agent_search_method"]))			{$agent_search_method=$_GET["agent_search_method"];}	
 	elseif (isset($_POST["agent_search_method"]))	{$agent_search_method=$_POST["agent_search_method"];}
+	else {$agent_search_method="";}
+if (isset($_GET["agent_search_method_inbound"]))			{$agent_search_method_inbound=$_GET["agent_search_method_inbound"];}	
+	elseif (isset($_POST["agent_search_method_inbound"]))	{$agent_search_method_inbound=$_POST["agent_search_method_inbound"];}
+	else {$agent_search_method_inbound="LB";}
+if (isset($_GET["agent_search_method_system"]))			{$agent_search_method_system=$_GET["agent_search_method_system"];}	
+	elseif (isset($_POST["agent_search_method_system"]))	{$agent_search_method_system=$_POST["agent_search_method_system"];}
+	else {$agent_search_method_system=0;}
 if (isset($_GET["phone_code"]))				{$phone_code=$_GET["phone_code"];}	
 	elseif (isset($_POST["phone_code"]))	{$phone_code=$_POST["phone_code"];}
+	else {$phone_code="";}
 if (isset($_GET["email"]))					{$email=$_GET["email"];}	
 	elseif (isset($_POST["email"]))			{$email=$_POST["email"];}
+	else {$email="";}
 if (isset($_GET["modify_inbound_dids"]))			{$modify_inbound_dids=$_GET["modify_inbound_dids"];}	
 	elseif (isset($_POST["modify_inbound_dids"]))	{$modify_inbound_dids=$_POST["modify_inbound_dids"];}
+	else {$modify_inbound_dids=0;}
 if (isset($_GET["delete_inbound_dids"]))			{$delete_inbound_dids=$_GET["delete_inbound_dids"];}	
 	elseif (isset($_POST["delete_inbound_dids"]))	{$delete_inbound_dids=$_POST["delete_inbound_dids"];}
+	else {$delete_inbound_dids=0;}
 if (isset($_GET["three_way_call_cid"]))				{$three_way_call_cid=$_GET["three_way_call_cid"];}	
 	elseif (isset($_POST["three_way_call_cid"]))	{$three_way_call_cid=$_POST["three_way_call_cid"];}
+	else {$three_way_call_cid="CAMPAIGN";}
 if (isset($_GET["three_way_dial_prefix"]))			{$three_way_dial_prefix=$_GET["three_way_dial_prefix"];}
 	elseif (isset($_POST["three_way_dial_prefix"]))	{$three_way_dial_prefix=$_POST["three_way_dial_prefix"];}
+	else {$three_way_dial_prefix="";}
 if (isset($_GET["forced_timeclock_login"]))				{$forced_timeclock_login=$_GET["forced_timeclock_login"];}
 	elseif (isset($_POST["forced_timeclock_login"]))	{$forced_timeclock_login=$_POST["forced_timeclock_login"];}
+	else {$forced_timeclock_login="N";}
 if (isset($_GET["answer_sec_pct_rt_stat_one"]))				{$answer_sec_pct_rt_stat_one=$_GET["answer_sec_pct_rt_stat_one"];}
 	elseif (isset($_POST["answer_sec_pct_rt_stat_one"]))	{$answer_sec_pct_rt_stat_one=$_POST["answer_sec_pct_rt_stat_one"];}
+	else {$answer_sec_pct_rt_stat_one=20;}
 if (isset($_GET["answer_sec_pct_rt_stat_two"]))				{$answer_sec_pct_rt_stat_two=$_GET["answer_sec_pct_rt_stat_two"];}
 	elseif (isset($_POST["answer_sec_pct_rt_stat_two"]))	{$answer_sec_pct_rt_stat_two=$_POST["answer_sec_pct_rt_stat_two"];}
+	else {$answer_sec_pct_rt_stat_two=30;}
 if (isset($_GET["list_active_change"]))				{$list_active_change=$_GET["list_active_change"];}
 	elseif (isset($_POST["list_active_change"]))	{$list_active_change=$_POST["list_active_change"];}
 if (isset($_GET["web_form_target"]))			{$web_form_target=$_GET["web_form_target"];}
 	elseif (isset($_POST["web_form_target"]))	{$web_form_target=$_POST["web_form_target"];}
+	else {$web_form_target="vdcwebform";}
 if (isset($_GET["alt_server_ip"]))				{$alt_server_ip=$_GET["alt_server_ip"];}
 	elseif (isset($_POST["alt_server_ip"]))	{$alt_server_ip=$_POST["alt_server_ip"];}
+	else {$alt_server_ip="";}
 if (isset($_GET["recording_web_link"]))				{$recording_web_link=$_GET["recording_web_link"];}
 	elseif (isset($_POST["recording_web_link"]))	{$recording_web_link=$_POST["recording_web_link"];}
+	else {$recording_web_link="SERVER_IP";}
 if (isset($_GET["enable_vtiger_integration"]))			{$enable_vtiger_integration=$_GET["enable_vtiger_integration"];}
 	elseif (isset($_POST["enable_vtiger_integration"]))	{$enable_vtiger_integration=$_POST["enable_vtiger_integration"];}
+	else {$enable_vtiger_integration=0;}
 if (isset($_GET["vtiger_server_ip"]))			{$vtiger_server_ip=$_GET["vtiger_server_ip"];}
 	elseif (isset($_POST["vtiger_server_ip"]))	{$vtiger_server_ip=$_POST["vtiger_server_ip"];}
+	else {$vtiger_server_ip="";}
 if (isset($_GET["vtiger_dbname"]))				{$vtiger_dbname=$_GET["vtiger_dbname"];}
 	elseif (isset($_POST["vtiger_dbname"]))		{$vtiger_dbname=$_POST["vtiger_dbname"];}
+	else {$vtiger_dbname="";}
 if (isset($_GET["vtiger_login"]))			{$vtiger_login=$_GET["vtiger_login"];}
 	elseif (isset($_POST["vtiger_login"]))	{$vtiger_login=$_POST["vtiger_login"];}
+	else {$vtiger_login="";}
 if (isset($_GET["vtiger_pass"]))			{$vtiger_pass=$_GET["vtiger_pass"];}
 	elseif (isset($_POST["vtiger_pass"]))	{$vtiger_pass=$_POST["vtiger_pass"];}
+	else {$vtiger_pass="";}
 if (isset($_GET["vtiger_url"]))				{$vtiger_url=$_GET["vtiger_url"];}
 	elseif (isset($_POST["vtiger_url"]))	{$vtiger_url=$_POST["vtiger_url"];}
 if (isset($_GET["vtiger_search_category"]))				{$vtiger_search_category=$_GET["vtiger_search_category"];}
 	elseif (isset($_POST["vtiger_search_category"]))	{$vtiger_search_category=$_POST["vtiger_search_category"];}
+	else {$vtiger_search_category="LEAD";}
 if (isset($_GET["vtiger_create_call_record"]))			{$vtiger_create_call_record=$_GET["vtiger_create_call_record"];}
 	elseif (isset($_POST["vtiger_create_call_record"]))	{$vtiger_create_call_record=$_POST["vtiger_create_call_record"];}
+	else {$vtiger_create_call_record="Y";}
 if (isset($_GET["vtiger_create_lead_record"]))			{$vtiger_create_lead_record=$_GET["vtiger_create_lead_record"];}
 	elseif (isset($_POST["vtiger_create_lead_record"]))	{$vtiger_create_lead_record=$_POST["vtiger_create_lead_record"];}
+	else {$vtiger_create_lead_record="Y";}
 if (isset($_GET["vtiger_screen_login"]))			{$vtiger_screen_login=$_GET["vtiger_screen_login"];}
 	elseif (isset($_POST["vtiger_screen_login"]))	{$vtiger_screen_login=$_POST["vtiger_screen_login"];}
+	else {$vtiger_screen_login="Y";}
 if (isset($_GET["qc_features_active"]))				{$qc_features_active=$_GET["qc_features_active"];}
 	elseif (isset($_POST["qc_features_active"]))	{$qc_features_active=$_POST["qc_features_active"];}
+	else {$qc_features_active=0;}
 if (isset($_GET["outbound_autodial_active"]))			{$outbound_autodial_active=$_GET["outbound_autodial_active"];}
 	elseif (isset($_POST["outbound_autodial_active"]))	{$outbound_autodial_active=$_POST["outbound_autodial_active"];}
+	else {$outbound_autodial_active=1;}
 if (isset($_GET["cpd_amd_action"]))				{$cpd_amd_action=$_GET["cpd_amd_action"];}
 	elseif (isset($_POST["cpd_amd_action"]))	{$cpd_amd_action=$_POST["cpd_amd_action"];}
+	else {$cpd_amd_action="DISABLED";}
 if (isset($_GET["download_lists"]))				{$download_lists=$_GET["download_lists"];}
 	elseif (isset($_POST["download_lists"]))	{$download_lists=$_POST["download_lists"];}
+	else {$download_lists=0;}
 if (isset($_GET["active_asterisk_server"]))				{$active_asterisk_server=$_GET["active_asterisk_server"];}
 	elseif (isset($_POST["active_asterisk_server"]))	{$active_asterisk_server=$_POST["active_asterisk_server"];}
+	else {$active_asterisk_server="Y";}
 if (isset($_GET["generate_vicidial_conf"]))				{$generate_vicidial_conf=$_GET["generate_vicidial_conf"];}
 	elseif (isset($_POST["generate_vicidial_conf"]))	{$generate_vicidial_conf=$_POST["generate_vicidial_conf"];}
+	else {$generate_vicidial_conf="Y";}
 if (isset($_GET["rebuild_conf_files"]))				{$rebuild_conf_files=$_GET["rebuild_conf_files"];}
 	elseif (isset($_POST["rebuild_conf_files"]))	{$rebuild_conf_files=$_POST["rebuild_conf_files"];}
+	else {$rebuild_conf_files="Y";}
 if (isset($_GET["template_id"]))			{$template_id=$_GET["template_id"];}
 	elseif (isset($_POST["template_id"]))	{$template_id=$_POST["template_id"];}
+	else {$template_id="";}
 if (isset($_GET["conf_override"]))			{$conf_override=$_GET["conf_override"];}
 	elseif (isset($_POST["conf_override"]))	{$conf_override=$_POST["conf_override"];}
+	else {$conf_override="";}
 if (isset($_GET["template_name"]))			{$template_name=$_GET["template_name"];}
 	elseif (isset($_POST["template_name"]))	{$template_name=$_POST["template_name"];}
+	else {$template_name="";}
 if (isset($_GET["template_contents"]))			{$template_contents=$_GET["template_contents"];}
 	elseif (isset($_POST["template_contents"]))	{$template_contents=$_POST["template_contents"];}
+	else {$template_contents="";}
 if (isset($_GET["carrier_id"]))			{$carrier_id=$_GET["carrier_id"];}
 	elseif (isset($_POST["carrier_id"]))	{$carrier_id=$_POST["carrier_id"];}
+	else {$carrier_id="";}
 if (isset($_GET["carrier_name"]))			{$carrier_name=$_GET["carrier_name"];}
 	elseif (isset($_POST["carrier_name"]))	{$carrier_name=$_POST["carrier_name"];}
+	else {$carrier_name="";}
 if (isset($_GET["registration_string"]))			{$registration_string=$_GET["registration_string"];}
 	elseif (isset($_POST["registration_string"]))	{$registration_string=$_POST["registration_string"];}
+	else {$registration_string="";}
 if (isset($_GET["account_entry"]))			{$account_entry=$_GET["account_entry"];}
 	elseif (isset($_POST["account_entry"]))	{$account_entry=$_POST["account_entry"];}
+	else {$account_entry="";}
 if (isset($_GET["globals_string"]))				{$globals_string=$_GET["globals_string"];}
 	elseif (isset($_POST["globals_string"]))	{$globals_string=$_POST["globals_string"];}
+	else {$globals_string="";}
 if (isset($_GET["dialplan_entry"]))				{$dialplan_entry=$_GET["dialplan_entry"];}
 	elseif (isset($_POST["dialplan_entry"]))	{$dialplan_entry=$_POST["dialplan_entry"];}
+	else {$dialplan_entry="";}
 if (isset($_GET["group_alias_id"]))				{$group_alias_id=$_GET["group_alias_id"];}
 	elseif (isset($_POST["group_alias_id"]))	{$group_alias_id=$_POST["group_alias_id"];}
+	else {$group_alias_id="";}
 if (isset($_GET["group_alias_name"]))				{$group_alias_name=$_GET["group_alias_name"];}
 	elseif (isset($_POST["group_alias_name"]))	{$group_alias_name=$_POST["group_alias_name"];}
+	else {$group_alias_name="";}
 if (isset($_GET["caller_id_number"]))				{$caller_id_number=$_GET["caller_id_number"];}
 	elseif (isset($_POST["caller_id_number"]))	{$caller_id_number=$_POST["caller_id_number"];}
+	else {$caller_id_number="";}
 if (isset($_GET["caller_id_name"]))				{$caller_id_name=$_GET["caller_id_name"];}
 	elseif (isset($_POST["caller_id_name"]))	{$caller_id_name=$_POST["caller_id_name"];}
+	else {$caller_id_name="";}
 if (isset($_GET["agent_allow_group_alias"]))			{$agent_allow_group_alias=$_GET["agent_allow_group_alias"];}
 	elseif (isset($_POST["agent_allow_group_alias"]))	{$agent_allow_group_alias=$_POST["agent_allow_group_alias"];}
+	else {$agent_allow_group_alias="N";}
 if (isset($_GET["default_group_alias"]))				{$default_group_alias=$_GET["default_group_alias"];}
 	elseif (isset($_POST["default_group_alias"]))		{$default_group_alias=$_POST["default_group_alias"];}
+	else {$default_group_alias="";}
 if (isset($_GET["outbound_calls_per_second"]))				{$outbound_calls_per_second=$_GET["outbound_calls_per_second"];}
 	elseif (isset($_POST["outbound_calls_per_second"]))		{$outbound_calls_per_second=$_POST["outbound_calls_per_second"];}
+	else {$outbound_calls_per_second=5;}
 if (isset($_GET["shift_enforcement"]))				{$shift_enforcement=$_GET["shift_enforcement"];}
 	elseif (isset($_POST["shift_enforcement"]))		{$shift_enforcement=$_POST["shift_enforcement"];}
+	else {$shift_enforcement="OFF";}
 if (isset($_GET["agent_shift_enforcement_override"]))			{$agent_shift_enforcement_override=$_GET["agent_shift_enforcement_override"];}
 	elseif (isset($_POST["agent_shift_enforcement_override"]))	{$agent_shift_enforcement_override=$_POST["agent_shift_enforcement_override"];}
+	else {$agent_shift_enforcement_override="DISABLED";}
 if (isset($_GET["manager_shift_enforcement_override"]))				{$manager_shift_enforcement_override=$_GET["manager_shift_enforcement_override"];}
 	elseif (isset($_POST["manager_shift_enforcement_override"]))	{$manager_shift_enforcement_override=$_POST["manager_shift_enforcement_override"];}
+	else {$manager_shift_enforcement_override=0;}
 if (isset($_GET["export_reports"]))				{$export_reports=$_GET["export_reports"];}
 	elseif (isset($_POST["export_reports"]))	{$export_reports=$_POST["export_reports"];}
+	else {$export_reports=0;}
 if (isset($_GET["delete_from_dnc"]))			{$delete_from_dnc=$_GET["delete_from_dnc"];}
 	elseif (isset($_POST["delete_from_dnc"]))	{$delete_from_dnc=$_POST["delete_from_dnc"];}
+	else {$delete_from_dnc=0;}
 if (isset($_GET["vtiger_search_dead"]))				{$vtiger_search_dead=$_GET["vtiger_search_dead"];}
 	elseif (isset($_POST["vtiger_search_dead"]))	{$vtiger_search_dead=$_POST["vtiger_search_dead"];}
+	else {$vtiger_search_dead="ASK";}
 if (isset($_GET["vtiger_status_call"]))				{$vtiger_status_call=$_GET["vtiger_status_call"];}
 	elseif (isset($_POST["vtiger_status_call"]))	{$vtiger_status_call=$_POST["vtiger_status_call"];}
+	else {$vtiger_status_call="N";}
 if (isset($_GET["sale"]))				{$sale=$_GET["sale"];}
 	elseif (isset($_POST["sale"]))		{$sale=$_POST["sale"];}
+	else {$sale="N";}
 if (isset($_GET["dnc"]))				{$dnc=$_GET["dnc"];}
 	elseif (isset($_POST["dnc"]))		{$dnc=$_POST["dnc"];}
+	else {$dnc="N";}
 if (isset($_GET["customer_contact"]))			{$customer_contact=$_GET["customer_contact"];}
 	elseif (isset($_POST["customer_contact"]))	{$customer_contact=$_POST["customer_contact"];}
+	else {$customer_contact="N";}
 if (isset($_GET["not_interested"]))				{$not_interested=$_GET["not_interested"];}
 	elseif (isset($_POST["not_interested"]))	{$not_interested=$_POST["not_interested"];}
+	else {$not_interested="N";}
 if (isset($_GET["unworkable"]))					{$unworkable=$_GET["unworkable"];}
 	elseif (isset($_POST["unworkable"]))		{$unworkable=$_POST["unworkable"];}
+	else {$unworkable="N";}
 if (isset($_GET["user_code"]))					{$user_code=$_GET["user_code"];}
 	elseif (isset($_POST["user_code"]))			{$user_code=$_POST["user_code"];}
+	else {$user_code="";}
 if (isset($_GET["territory"]))					{$territory=$_GET["territory"];}
 	elseif (isset($_POST["territory"]))			{$territory=$_POST["territory"];}
+	else {$territory="";}
 if (isset($_GET["survey_third_digit"]))				{$survey_third_digit=$_GET["survey_third_digit"];}
 	elseif (isset($_POST["survey_third_digit"]))	{$survey_third_digit=$_POST["survey_third_digit"];}
+	else {$survey_third_digit="";}
 if (isset($_GET["survey_fourth_digit"]))			{$survey_fourth_digit=$_GET["survey_fourth_digit"];}
 	elseif (isset($_POST["survey_fourth_digit"]))	{$survey_fourth_digit=$_POST["survey_fourth_digit"];}
+	else {$survey_fourth_digit="";}
 if (isset($_GET["survey_third_audio_file"]))			{$survey_third_audio_file=$_GET["survey_third_audio_file"];}
 	elseif (isset($_POST["survey_third_audio_file"]))	{$survey_third_audio_file=$_POST["survey_third_audio_file"];}
+	else {$survey_third_audio_file="";}
 if (isset($_GET["survey_fourth_audio_file"]))			{$survey_fourth_audio_file=$_GET["survey_fourth_audio_file"];}
 	elseif (isset($_POST["survey_fourth_audio_file"]))	{$survey_fourth_audio_file=$_POST["survey_fourth_audio_file"];}
+	else {$survey_fourth_audio_file="";}
 if (isset($_GET["survey_third_status"]))				{$survey_third_status=$_GET["survey_third_status"];}
 	elseif (isset($_POST["survey_third_status"]))		{$survey_third_status=$_POST["survey_third_status"];}
+	else {$survey_third_status="NI";}
 if (isset($_GET["survey_fourth_status"]))				{$survey_fourth_status=$_GET["survey_fourth_status"];}
 	elseif (isset($_POST["survey_fourth_status"]))		{$survey_fourth_status=$_POST["survey_fourth_status"];}
+	else {$survey_fourth_status="NI";}
 if (isset($_GET["survey_third_exten"]))					{$survey_third_exten=$_GET["survey_third_exten"];}
 	elseif (isset($_POST["survey_third_exten"]))		{$survey_third_exten=$_POST["survey_third_exten"];}
+	else {$survey_third_exten="";}
 if (isset($_GET["survey_fourth_exten"]))				{$survey_fourth_exten=$_GET["survey_fourth_exten"];}
 	elseif (isset($_POST["survey_fourth_exten"]))		{$survey_fourth_exten=$_POST["survey_fourth_exten"];}
+	else {$survey_fourth_exten="";}
 if (isset($_GET["menu_id"]))				{$menu_id=$_GET["menu_id"];}
 	elseif (isset($_POST["menu_id"]))		{$menu_id=$_POST["menu_id"];}
+	else {$menu_id="";}
 if (isset($_GET["menu_name"]))				{$menu_name=$_GET["menu_name"];}
 	elseif (isset($_POST["menu_name"]))		{$menu_name=$_POST["menu_name"];}
+	else {$menu_name="";}
 if (isset($_GET["menu_prompt"]))			{$menu_prompt=$_GET["menu_prompt"];}
 	elseif (isset($_POST["menu_prompt"]))	{$menu_prompt=$_POST["menu_prompt"];}
+	else {$menu_prompt="";}
 if (isset($_GET["menu_timeout"]))			{$menu_timeout=$_GET["menu_timeout"];}
 	elseif (isset($_POST["menu_timeout"]))	{$menu_timeout=$_POST["menu_timeout"];}
+	else {$menu_timeout=10;}
 if (isset($_GET["menu_timeout_prompt"]))			{$menu_timeout_prompt=$_GET["menu_timeout_prompt"];}
 	elseif (isset($_POST["menu_timeout_prompt"]))	{$menu_timeout_prompt=$_POST["menu_timeout_prompt"];}
+	else {$menu_timeout_prompt="";}
 if (isset($_GET["menu_invalid_prompt"]))			{$menu_invalid_prompt=$_GET["menu_invalid_prompt"];}
 	elseif (isset($_POST["menu_invalid_prompt"]))	{$menu_invalid_prompt=$_POST["menu_invalid_prompt"];}
+	else {$menu_invalid_prompt="";}
 if (isset($_GET["menu_repeat"]))				{$menu_repeat=$_GET["menu_repeat"];}
 	elseif (isset($_POST["menu_repeat"]))		{$menu_repeat=$_POST["menu_repeat"];}
+	else {$menu_repeat=0;}
 if (isset($_GET["menu_time_check"]))			{$menu_time_check=$_GET["menu_time_check"];}
 	elseif (isset($_POST["menu_time_check"]))	{$menu_time_check=$_POST["menu_time_check"];}
+	else {$menu_time_check=0;}
 if (isset($_GET["track_in_vdac"]))				{$track_in_vdac=$_GET["track_in_vdac"];}
 	elseif (isset($_POST["track_in_vdac"]))		{$track_in_vdac=$_POST["track_in_vdac"];}
+	else {$track_in_vdac=1;}
 if (isset($_GET["source_menu"]))			{$source_menu=$_GET["source_menu"];}
 	elseif (isset($_POST["source_menu"]))	{$source_menu=$_POST["source_menu"];}
+	else {$source_menu="";}
 if (isset($_GET["agentonly_callback_campaign_lock"]))			{$agentonly_callback_campaign_lock=$_GET["agentonly_callback_campaign_lock"];}
 	elseif (isset($_POST["agentonly_callback_campaign_lock"]))	{$agentonly_callback_campaign_lock=$_POST["agentonly_callback_campaign_lock"];}
+	else {$agentonly_callback_campaign_lock=1;}
 if (isset($_GET["sounds_central_control_active"]))			{$sounds_central_control_active=$_GET["sounds_central_control_active"];}
 	elseif (isset($_POST["sounds_central_control_active"]))	{$sounds_central_control_active=$_POST["sounds_central_control_active"];}
+	else {$sounds_central_control_active=0;}
 if (isset($_GET["sounds_web_server"]))				{$sounds_web_server=$_GET["sounds_web_server"];}
 	elseif (isset($_POST["sounds_web_server"]))		{$sounds_web_server=$_POST["sounds_web_server"];}
+	else {$sounds_web_server="127.0.0.1";}
 if (isset($_GET["sounds_web_directory"]))			{$sounds_web_directory=$_GET["sounds_web_directory"];}
 	elseif (isset($_POST["sounds_web_directory"]))	{$sounds_web_directory=$_POST["sounds_web_directory"];}
+	else {$sounds_web_directory="";}
 if (isset($_GET["sounds_update"]))			{$sounds_update=$_GET["sounds_update"];}
 	elseif (isset($_POST["sounds_update"]))	{$sounds_update=$_POST["sounds_update"];}
+	else {$sounds_update="N";}
 if (isset($_GET["active_voicemail_server"]))			{$active_voicemail_server=$_GET["active_voicemail_server"];}
 	elseif (isset($_POST["active_voicemail_server"]))	{$active_voicemail_server=$_POST["active_voicemail_server"];}
+	else {$active_voicemail_server="";}
 if (isset($_GET["auto_dial_limit"]))			{$auto_dial_limit=$_GET["auto_dial_limit"];}
 	elseif (isset($_POST["auto_dial_limit"]))	{$auto_dial_limit=$_POST["auto_dial_limit"];}
+	else {$auto_dial_limit=4;}
 if (isset($_GET["user_territories_active"]))			{$user_territories_active=$_GET["user_territories_active"];}
 	elseif (isset($_POST["user_territories_active"]))	{$user_territories_active=$_POST["user_territories_active"];}
+	else {$user_territories_active=0;}
 if (isset($_GET["list_status_modification_confirmation"]))	{$list_status_modification_confirmation=$_GET["list_status_modification_confirmation"];}
 	elseif (isset($_POST["list_status_modification_confirmation"]))	{$list_status_modification_confirmation=$_POST["list_status_modification_confirmation"];}
+	else {$list_status_modification_confirmation=0;}
 if (isset($_GET["vicidial_recording_limit"]))			{$vicidial_recording_limit=$_GET["vicidial_recording_limit"];}
 	elseif (isset($_POST["vicidial_recording_limit"]))	{$vicidial_recording_limit=$_POST["vicidial_recording_limit"];}
+	else {$vicidial_recording_limit=60;}
 if (isset($_GET["phone_context"]))				{$phone_context=$_GET["phone_context"];}
 	elseif (isset($_POST["phone_context"]))		{$phone_context=$_POST["phone_context"];}
+	else {$phone_context="default";}
 if (isset($_GET["carrier_logging_active"]))				{$carrier_logging_active=$_GET["carrier_logging_active"];}
 	elseif (isset($_POST["carrier_logging_active"]))	{$carrier_logging_active=$_POST["carrier_logging_active"];}
+	else {$carrier_logging_active="Y";}
 if (isset($_GET["drop_lockout_time"]))				{$drop_lockout_time=$_GET["drop_lockout_time"];}
 	elseif (isset($_POST["drop_lockout_time"]))		{$drop_lockout_time=$_POST["drop_lockout_time"];}
+	else {$drop_lockout_time=0;}
 if (isset($_GET["allow_custom_dialplan"]))				{$allow_custom_dialplan=$_GET["allow_custom_dialplan"];}
 	elseif (isset($_POST["allow_custom_dialplan"]))		{$allow_custom_dialplan=$_POST["allow_custom_dialplan"];}
+	else {$allow_custom_dialplan=1;}
 if (isset($_GET["custom_dialplan_entry"]))				{$custom_dialplan_entry=$_GET["custom_dialplan_entry"];}
 	elseif (isset($_POST["custom_dialplan_entry"]))		{$custom_dialplan_entry=$_POST["custom_dialplan_entry"];}
+	else {$custom_dialplan_entry="";}
 if (isset($_GET["phone_ring_timeout"]))					{$phone_ring_timeout=$_GET["phone_ring_timeout"];}
 	elseif (isset($_POST["phone_ring_timeout"]))		{$phone_ring_timeout=$_POST["phone_ring_timeout"];}
+	else {$phone_ring_timeout=60;}
 if (isset($_GET["conf_secret"]))					{$conf_secret=$_GET["conf_secret"];}
 	elseif (isset($_POST["conf_secret"]))			{$conf_secret=$_POST["conf_secret"];}
+	else {$conf_secret="test";}
 if (isset($_GET["tracking_group"]))					{$tracking_group=$_GET["tracking_group"];}
 	elseif (isset($_POST["tracking_group"]))		{$tracking_group=$_POST["tracking_group"];}
+	else {$tracking_group="CALLMENU";}
 if (isset($_GET["no_agent_no_queue"]))				{$no_agent_no_queue=$_GET["no_agent_no_queue"];}
 	elseif (isset($_POST["no_agent_no_queue"]))		{$no_agent_no_queue=$_POST["no_agent_no_queue"];}
+	else {$no_agent_no_queue="N";}
 if (isset($_GET["no_agent_action"]))				{$no_agent_action=$_GET["no_agent_action"];}
 	elseif (isset($_POST["no_agent_action"]))		{$no_agent_action=$_POST["no_agent_action"];}
+	else {$no_agent_action="MESSAGE";}
 if (isset($_GET["no_agent_action_value"]))			{$no_agent_action_value=$_GET["no_agent_action_value"];}
 	elseif (isset($_POST["no_agent_action_value"]))	{$no_agent_action_value=$_POST["no_agent_action_value"];}
+	else {$no_agent_action_value="";}
 if (isset($_GET["quick_transfer_button"]))			{$quick_transfer_button=$_GET["quick_transfer_button"];}
 	elseif (isset($_POST["quick_transfer_button"]))	{$quick_transfer_button=$_POST["quick_transfer_button"];}
+	else {$quick_transfer_button="N";}
 if (isset($_GET["prepopulate_transfer_preset"]))			{$prepopulate_transfer_preset=$_GET["prepopulate_transfer_preset"];}
 	elseif (isset($_POST["prepopulate_transfer_preset"]))	{$prepopulate_transfer_preset=$_POST["prepopulate_transfer_preset"];}
+	else {$prepopulate_transfer_preset="N";}
 if (isset($_GET["enable_tts_integration"]))				{$enable_tts_integration=$_GET["enable_tts_integration"];}
 	elseif (isset($_POST["enable_tts_integration"]))	{$enable_tts_integration=$_POST["enable_tts_integration"];}
+	else {$enable_tts_integration=0;}
 if (isset($_GET["tts_id"]))							{$tts_id=$_GET["tts_id"];}
 	elseif (isset($_POST["tts_id"]))				{$tts_id=$_POST["tts_id"];}
+	else {$tts_id="";}
 if (isset($_GET["tts_name"]))						{$tts_name=$_GET["tts_name"];}
 	elseif (isset($_POST["tts_name"]))				{$tts_name=$_POST["tts_name"];}
+	else {$tts_name="";}
 if (isset($_GET["tts_text"]))						{$tts_text=$_GET["tts_text"];}
 	elseif (isset($_POST["tts_text"]))				{$tts_text=$_POST["tts_text"];}
+	else {$tts_text="";}
 if (isset($_GET["drop_rate_group"]))				{$drop_rate_group=$_GET["drop_rate_group"];}
 	elseif (isset($_POST["drop_rate_group"]))		{$drop_rate_group=$_POST["drop_rate_group"];}
+	else {$drop_rate_group="DISABLED";}
 if (isset($_GET["agent_status_viewable_groups"]))			{$agent_status_viewable_groups=$_GET["agent_status_viewable_groups"];}
 	elseif (isset($_POST["agent_status_viewable_groups"]))	{$agent_status_viewable_groups=$_POST["agent_status_viewable_groups"];}
+	else {$agent_status_viewable_groups="";}
 if (isset($_GET["agent_status_view_time"]))				{$agent_status_view_time=$_GET["agent_status_view_time"];}
 	elseif (isset($_POST["agent_status_view_time"]))	{$agent_status_view_time=$_POST["agent_status_view_time"];}
+	else {$agent_status_view_time="N";}
 if (isset($_GET["view_calls_in_queue"]))			{$view_calls_in_queue=$_GET["view_calls_in_queue"];}
 	elseif (isset($_POST["view_calls_in_queue"]))	{$view_calls_in_queue=$_POST["view_calls_in_queue"];}
+	else {$view_calls_in_queue="NONE";}
 if (isset($_GET["view_calls_in_queue_launch"]))				{$view_calls_in_queue_launch=$_GET["view_calls_in_queue_launch"];}
 	elseif (isset($_POST["view_calls_in_queue_launch"]))	{$view_calls_in_queue_launch=$_POST["view_calls_in_queue_launch"];}
+	else {$view_calls_in_queue_launch="MANUAL";}
 if (isset($_GET["grab_calls_in_queue"]))			{$grab_calls_in_queue=$_GET["grab_calls_in_queue"];}
 	elseif (isset($_POST["grab_calls_in_queue"]))	{$grab_calls_in_queue=$_POST["grab_calls_in_queue"];}
+	else {$grab_calls_in_queue="N";}
 if (isset($_GET["call_requeue_button"]))			{$call_requeue_button=$_GET["call_requeue_button"];}
 	elseif (isset($_POST["call_requeue_button"]))	{$call_requeue_button=$_POST["call_requeue_button"];}
+	else {$call_requeue_button="N";}
 if (isset($_GET["pause_after_each_call"]))			{$pause_after_each_call=$_GET["pause_after_each_call"];}
 	elseif (isset($_POST["pause_after_each_call"]))	{$pause_after_each_call=$_POST["pause_after_each_call"];}
+	else {$pause_after_each_call="N";}
 if (isset($_GET["no_hopper_dialing"]))				{$no_hopper_dialing=$_GET["no_hopper_dialing"];}
 	elseif (isset($_POST["no_hopper_dialing"]))		{$no_hopper_dialing=$_POST["no_hopper_dialing"];}
+	else {$no_hopper_dialing="N";}
 if (isset($_GET["agent_dial_owner_only"]))			{$agent_dial_owner_only=$_GET["agent_dial_owner_only"];}
 	elseif (isset($_POST["agent_dial_owner_only"]))	{$agent_dial_owner_only=$_POST["agent_dial_owner_only"];}
+	else {$agent_dial_owner_only="NONE";}
 if (isset($_GET["reset_time"]))						{$reset_time=$_GET["reset_time"];}
 	elseif (isset($_POST["reset_time"]))			{$reset_time=$_POST["reset_time"];}
+	else {$reset_time="";}
 if (isset($_GET["allow_alerts"]))					{$allow_alerts=$_GET["allow_alerts"];}
 	elseif (isset($_POST["allow_alerts"]))			{$allow_alerts=$_POST["allow_alerts"];}
+	else {$allow_alerts=0;}
 if (isset($_GET["agent_display_dialable_leads"]))			{$agent_display_dialable_leads=$_GET["agent_display_dialable_leads"];}
 	elseif (isset($_POST["agent_display_dialable_leads"]))	{$agent_display_dialable_leads=$_POST["agent_display_dialable_leads"];}
+	else {$agent_display_dialable_leads="N";}
 if (isset($_GET["vicidial_balance_rank"]))			{$vicidial_balance_rank=$_GET["vicidial_balance_rank"];}
 	elseif (isset($_POST["vicidial_balance_rank"]))	{$vicidial_balance_rank=$_POST["vicidial_balance_rank"];}
+	else {$vicidial_balance_rank=0;}
 if (isset($_GET["agent_script_override"]))			{$agent_script_override=$_GET["agent_script_override"];}
 	elseif (isset($_POST["agent_script_override"]))	{$agent_script_override=$_POST["agent_script_override"];}
+	else {$agent_script_override="";}
 if (isset($_GET["inbound_list_script_override"]))			{$inbound_list_script_override=$_GET["inbound_list_script_override"];}
 	elseif (isset($_POST["inbound_list_script_override"]))	{$inbound_list_script_override=$_POST["inbound_list_script_override"];}
+	else {$inbound_list_script_override="";}
 if (isset($_GET["moh_id"]))				{$moh_id=$_GET["moh_id"];}
 	elseif (isset($_POST["moh_id"]))	{$moh_id=$_POST["moh_id"];}
+	else {$moh_id="";}
 if (isset($_GET["moh_name"]))			{$moh_name=$_GET["moh_name"];}
 	elseif (isset($_POST["moh_name"]))	{$moh_name=$_POST["moh_name"];}
+	else {$moh_name="";}
 if (isset($_GET["random"]))				{$random=$_GET["random"];}
 	elseif (isset($_POST["random"]))	{$random=$_POST["random"];}
+	else {$random="N";}
 if (isset($_GET["filename"]))			{$filename=$_GET["filename"];}
 	elseif (isset($_POST["filename"]))	{$filename=$_POST["filename"];}
+	else {$filename="";}
 if (isset($_GET["rank"]))				{$rank=$_GET["rank"];}
 	elseif (isset($_POST["rank"]))		{$rank=$_POST["rank"];}
+	else {$rank="";}
 if (isset($_GET["rebuild_music_on_hold"]))				{$rebuild_music_on_hold=$_GET["rebuild_music_on_hold"];}
 	elseif (isset($_POST["rebuild_music_on_hold"]))		{$rebuild_music_on_hold=$_POST["rebuild_music_on_hold"];}
+	else {$rebuild_music_on_hold="Y";}
 if (isset($_GET["active_agent_login_server"]))			{$active_agent_login_server=$_GET["active_agent_login_server"];}
 	elseif (isset($_POST["active_agent_login_server"]))	{$active_agent_login_server=$_POST["active_agent_login_server"];}
+	else {$active_agent_login_server="Y";}
 if (isset($_GET["enable_second_webform"]))			{$enable_second_webform=$_GET["enable_second_webform"];}
 	elseif (isset($_POST["enable_second_webform"]))	{$enable_second_webform=$_POST["enable_second_webform"];}
+	else {$enable_second_webform=1;}
 if (isset($_GET["web_form_address_two"]))			{$web_form_address_two=$_GET["web_form_address_two"];}
 	elseif (isset($_POST["web_form_address_two"]))	{$web_form_address_two=$_POST["web_form_address_two"];}
+	else {$web_form_address_two="";}
 if (isset($_GET["waitforsilence_options"]))			{$waitforsilence_options=$_GET["waitforsilence_options"];}
 	elseif (isset($_POST["waitforsilence_options"]))	{$waitforsilence_options=$_POST["waitforsilence_options"];}
+	else {$waitforsilence_options="";}
 if (isset($_GET["campaign_cid_override"]))			{$campaign_cid_override=$_GET["campaign_cid_override"];}
 	elseif (isset($_POST["campaign_cid_override"]))	{$campaign_cid_override=$_POST["campaign_cid_override"];}
+	else {$campaign_cid_override="";}
 if (isset($_GET["am_message_exten_override"]))			{$am_message_exten_override=$_GET["am_message_exten_override"];}
 	elseif (isset($_POST["am_message_exten_override"]))	{$am_message_exten_override=$_POST["am_message_exten_override"];}
+	else {$am_message_exten_override="";}
 if (isset($_GET["drop_inbound_group_override"]))			{$drop_inbound_group_override=$_GET["drop_inbound_group_override"];}
 	elseif (isset($_POST["drop_inbound_group_override"]))	{$drop_inbound_group_override=$_POST["drop_inbound_group_override"];}
+	else {$drop_inbound_group_override="";}
 if (isset($_GET["agent_select_territories"]))			{$agent_select_territories=$_GET["agent_select_territories"];}
 	elseif (isset($_POST["agent_select_territories"]))	{$agent_select_territories=$_POST["agent_select_territories"];}
+	else {$agent_select_territories="N";}
 if (isset($_GET["agent_choose_territories"]))			{$agent_choose_territories=$_GET["agent_choose_territories"];}
 	elseif (isset($_POST["agent_choose_territories"]))	{$agent_choose_territories=$_POST["agent_choose_territories"];}
+	else {$agent_choose_territories="";}
 if (isset($_GET["carrier_description"]))			{$carrier_description=$_GET["carrier_description"];}
 	elseif (isset($_POST["carrier_description"]))	{$carrier_description=$_POST["carrier_description"];}
+	else {$carrier_description="";}
 if (isset($_GET["delete_vm_after_email"]))			{$delete_vm_after_email=$_GET["delete_vm_after_email"];}
 	elseif (isset($_POST["delete_vm_after_email"]))	{$delete_vm_after_email=$_POST["delete_vm_after_email"];}
+	else {$delete_vm_after_email="N";}
 if (isset($_GET["custom_one"]))					{$custom_one=$_GET["custom_one"];}
 	elseif (isset($_POST["custom_one"]))		{$custom_one=$_POST["custom_one"];}
+	else {$custom_one="";}
 if (isset($_GET["custom_two"]))					{$custom_two=$_GET["custom_two"];}
 	elseif (isset($_POST["custom_two"]))		{$custom_two=$_POST["custom_two"];}
+	else {$custom_two="";}
 if (isset($_GET["custom_three"]))				{$custom_three=$_GET["custom_three"];}
 	elseif (isset($_POST["custom_three"]))		{$custom_three=$_POST["custom_three"];}
+	else {$custom_three="";}
 if (isset($_GET["custom_four"]))				{$custom_four=$_GET["custom_four"];}
 	elseif (isset($_POST["custom_four"]))		{$custom_four=$_POST["custom_four"];}
+	else {$custom_four="";}
 if (isset($_GET["custom_five"]))				{$custom_five=$_GET["custom_five"];}
 	elseif (isset($_POST["custom_five"]))		{$custom_five=$_POST["custom_five"];}
+	else {$custom_five="";}
 if (isset($_GET["crm_popup_login"]))			{$crm_popup_login=$_GET["crm_popup_login"];}
 	elseif (isset($_POST["crm_popup_login"]))	{$crm_popup_login=$_POST["crm_popup_login"];}
+	else {$crm_popup_login="N";}
 if (isset($_GET["crm_login_address"]))			{$crm_login_address=$_GET["crm_login_address"];}
 	elseif (isset($_POST["crm_login_address"]))	{$crm_login_address=$_POST["crm_login_address"];}
 if (isset($_GET["timer_action"]))					{$timer_action=$_GET["timer_action"];}
 	elseif (isset($_POST["timer_action"]))			{$timer_action=$_POST["timer_action"];}
+	else {$timer_action="NONE";}
 if (isset($_GET["timer_action_message"]))			{$timer_action_message=$_GET["timer_action_message"];}
 	elseif (isset($_POST["timer_action_message"]))	{$timer_action_message=$_POST["timer_action_message"];}
+	else {$timer_action_message="";}
 if (isset($_GET["timer_action_seconds"]))			{$timer_action_seconds=$_GET["timer_action_seconds"];}
 	elseif (isset($_POST["timer_action_seconds"]))	{$timer_action_seconds=$_POST["timer_action_seconds"];}
+	else {$timer_action_seconds='-1';}
 if (isset($_GET["start_call_url"]))				{$start_call_url=$_GET["start_call_url"];}
 	elseif (isset($_POST["start_call_url"]))	{$start_call_url=$_POST["start_call_url"];}
 if (isset($_GET["dispo_call_url"]))				{$dispo_call_url=$_GET["dispo_call_url"];}
 	elseif (isset($_POST["dispo_call_url"]))	{$dispo_call_url=$_POST["dispo_call_url"];}
 if (isset($_GET["xferconf_c_number"]))			{$xferconf_c_number=$_GET["xferconf_c_number"];}
 	elseif (isset($_POST["xferconf_c_number"]))	{$xferconf_c_number=$_POST["xferconf_c_number"];}
+	else {$xferconf_c_number="";}
 if (isset($_GET["xferconf_d_number"]))			{$xferconf_d_number=$_GET["xferconf_d_number"];}
 	elseif (isset($_POST["xferconf_d_number"]))	{$xferconf_d_number=$_POST["xferconf_d_number"];}
+	else {$xferconf_d_number="";}
 if (isset($_GET["xferconf_e_number"]))			{$xferconf_e_number=$_GET["xferconf_e_number"];}
 	elseif (isset($_POST["xferconf_e_number"]))	{$xferconf_e_number=$_POST["xferconf_e_number"];}
+	else {$xferconf_e_number="";}
 if (isset($_GET["record_call"]))				{$record_call=$_GET["record_call"];}
 	elseif (isset($_POST["record_call"]))		{$record_call=$_POST["record_call"];}
+	else {$record_call="N";}
 if (isset($_GET["ignore_list_script_override"]))			{$ignore_list_script_override=$_GET["ignore_list_script_override"];}
 	elseif (isset($_POST["ignore_list_script_override"]))	{$ignore_list_script_override=$_POST["ignore_list_script_override"];}
+	else {$ignore_list_script_override="N";}
 if (isset($_GET["external_server_ip"]))			{$external_server_ip=$_GET["external_server_ip"];}
 	elseif (isset($_POST["external_server_ip"])){$external_server_ip=$_POST["external_server_ip"];}
+	else {$external_server_ip="";}
 if (isset($_GET["is_webphone"]))				{$is_webphone=$_GET["is_webphone"];}
 	elseif (isset($_POST["is_webphone"]))		{$is_webphone=$_POST["is_webphone"];}
+	else {$is_webphone="N";}
 if (isset($_GET["use_external_server_ip"]))			{$use_external_server_ip=$_GET["use_external_server_ip"];}
 	elseif (isset($_POST["use_external_server_ip"])){$use_external_server_ip=$_POST["use_external_server_ip"];}
+	else {$use_external_server_ip="N";}
 if (isset($_GET["default_webphone"]))			{$default_webphone=$_GET["default_webphone"];}
 	elseif (isset($_POST["default_webphone"]))	{$default_webphone=$_POST["default_webphone"];}
+	else {$default_webphone=0;}
 if (isset($_GET["default_external_server_ip"]))			{$default_external_server_ip=$_GET["default_external_server_ip"];}
 	elseif (isset($_POST["default_external_server_ip"])){$default_external_server_ip=$_POST["default_external_server_ip"];}
+	else {$default_external_server_ip=0;}
 if (isset($_GET["webphone_url"]))				{$webphone_url=$_GET["webphone_url"];}
 	elseif (isset($_POST["webphone_url"]))		{$webphone_url=$_POST["webphone_url"];}
 if (isset($_GET["enable_agc_dispo_log"]))			{$enable_agc_dispo_log=$_GET["enable_agc_dispo_log"];}
 	elseif (isset($_POST["enable_agc_dispo_log"]))	{$enable_agc_dispo_log=$_POST["enable_agc_dispo_log"];}
+	else {$enable_agc_dispo_log=0;}
 if (isset($_GET["agent_call_log_view"]))			{$agent_call_log_view=$_GET["agent_call_log_view"];}
 	elseif (isset($_POST["agent_call_log_view"]))	{$agent_call_log_view=$_POST["agent_call_log_view"];}
+	else {$agent_call_log_view="N";}
 if (isset($_GET["agent_call_log_view_override"]))			{$agent_call_log_view_override=$_GET["agent_call_log_view_override"];}
 	elseif (isset($_POST["agent_call_log_view_override"]))	{$agent_call_log_view_override=$_POST["agent_call_log_view_override"];}
+	else {$agent_call_log_view_override="DISABLED";}
 if (isset($_GET["use_custom_cid"]))				{$use_custom_cid=$_GET["use_custom_cid"];}
 	elseif (isset($_POST["use_custom_cid"]))	{$use_custom_cid=$_POST["use_custom_cid"];}
+	else {$use_custom_cid="N";}
 if (isset($_GET["scheduled_callbacks_alert"]))			{$scheduled_callbacks_alert=$_GET["scheduled_callbacks_alert"];}
 	elseif (isset($_POST["scheduled_callbacks_alert"]))	{$scheduled_callbacks_alert=$_POST["scheduled_callbacks_alert"];}
+	else {$scheduled_callbacks_alert="NONE";}
 if (isset($_GET["scheduled_callbacks_email_alert"]))			{$scheduled_callbacks_email_alert=$_GET["scheduled_callbacks_email_alert"];}
 	elseif (isset($_POST["scheduled_callbacks_email_alert"]))	{$scheduled_callbacks_email_alert=$_POST["scheduled_callbacks_email_alert"];}
+	else {$scheduled_callbacks_email_alert="N";}
 if (isset($_GET["queuemetrics_loginout"]))			{$queuemetrics_loginout=$_GET["queuemetrics_loginout"];}
 	elseif (isset($_POST["queuemetrics_loginout"]))	{$queuemetrics_loginout=$_POST["queuemetrics_loginout"];}
+	else {$queuemetrics_loginout="STANDARD";}
 if (isset($_GET["callcard_enabled"]))				{$callcard_enabled=$_GET["callcard_enabled"];}
 	elseif (isset($_POST["callcard_enabled"]))		{$callcard_enabled=$_POST["callcard_enabled"];}
+	else {$callcard_enabled=0;}
 if (isset($_GET["callcard_admin"]))					{$callcard_admin=$_GET["callcard_admin"];}
 	elseif (isset($_POST["callcard_admin"]))		{$callcard_admin=$_POST["callcard_admin"];}
+	else {$callcard_admin=0;}
 if (isset($_GET["agent_xfer_consultative"]))				{$agent_xfer_consultative=$_GET["agent_xfer_consultative"];}
 	elseif (isset($_POST["agent_xfer_consultative"]))		{$agent_xfer_consultative=$_POST["agent_xfer_consultative"];}
+	else {$agent_xfer_consultative="Y";}
 if (isset($_GET["agent_xfer_dial_override"]))				{$agent_xfer_dial_override=$_GET["agent_xfer_dial_override"];}
 	elseif (isset($_POST["agent_xfer_dial_override"]))		{$agent_xfer_dial_override=$_POST["agent_xfer_dial_override"];}
+	else {$agent_xfer_dial_override="Y";}
 if (isset($_GET["agent_xfer_vm_transfer"]))					{$agent_xfer_vm_transfer=$_GET["agent_xfer_vm_transfer"];}
 	elseif (isset($_POST["agent_xfer_vm_transfer"]))		{$agent_xfer_vm_transfer=$_POST["agent_xfer_vm_transfer"];}
+	else {$agent_xfer_vm_transfer="Y";}
 if (isset($_GET["agent_xfer_blind_transfer"]))				{$agent_xfer_blind_transfer=$_GET["agent_xfer_blind_transfer"];}
 	elseif (isset($_POST["agent_xfer_blind_transfer"]))		{$agent_xfer_blind_transfer=$_POST["agent_xfer_blind_transfer"];}
+	else {$agent_xfer_blind_transfer="Y";}
 if (isset($_GET["agent_xfer_dial_with_customer"]))			{$agent_xfer_dial_with_customer=$_GET["agent_xfer_dial_with_customer"];}
 	elseif (isset($_POST["agent_xfer_dial_with_customer"]))	{$agent_xfer_dial_with_customer=$_POST["agent_xfer_dial_with_customer"];}
+	else {$agent_xfer_dial_with_customer="Y";}
 if (isset($_GET["agent_xfer_park_customer_dial"]))			{$agent_xfer_park_customer_dial=$_GET["agent_xfer_park_customer_dial"];}
 	elseif (isset($_POST["agent_xfer_park_customer_dial"]))	{$agent_xfer_park_customer_dial=$_POST["agent_xfer_park_customer_dial"];}
+	else {$agent_xfer_park_customer_dial="Y";}
 if (isset($_GET["agent_fullscreen"]))			{$agent_fullscreen=$_GET["agent_fullscreen"];}
 	elseif (isset($_POST["agent_fullscreen"]))	{$agent_fullscreen=$_POST["agent_fullscreen"];}
+	else {$agent_fullscreen="N";}
 if (isset($_GET["extension_id"]))				{$extension_id=$_GET["extension_id"];}
 	elseif (isset($_POST["extension_id"]))		{$extension_id=$_POST["extension_id"];}
+	else {$extension_id="";}
 if (isset($_GET["extension_group_id"]))				{$extension_group_id=$_GET["extension_group_id"];}
 	elseif (isset($_POST["extension_group_id"]))	{$extension_group_id=$_POST["extension_group_id"];}
+	else {$extension_group_id="";}
 if (isset($_GET["campaign_groups"]))			{$campaign_groups=$_GET["campaign_groups"];}
 	elseif (isset($_POST["campaign_groups"]))	{$campaign_groups=$_POST["campaign_groups"];}
+	else {$campaign_groups="";}
 if (isset($_GET["extension_group"]))			{$extension_group=$_GET["extension_group"];}
 	elseif (isset($_POST["extension_group"]))	{$extension_group=$_POST["extension_group"];}
+	else {$extension_group="NONE";}
 if (isset($_GET["agent_choose_blended"]))			{$agent_choose_blended=$_GET["agent_choose_blended"];}
 	elseif (isset($_POST["agent_choose_blended"]))	{$agent_choose_blended=$_POST["agent_choose_blended"];}
+	else {$agent_choose_blended=1;}
 if (isset($_GET["queuemetrics_callstatus"]))			{$queuemetrics_callstatus=$_GET["queuemetrics_callstatus"];}
 	elseif (isset($_POST["queuemetrics_callstatus"]))	{$queuemetrics_callstatus=$_POST["queuemetrics_callstatus"];}
+	else {$queuemetrics_callstatus=1;}
 if (isset($_GET["extension_appended_cidname"]))				{$extension_appended_cidname=$_GET["extension_appended_cidname"];}
 	elseif (isset($_POST["extension_appended_cidname"]))	{$extension_appended_cidname=$_POST["extension_appended_cidname"];}
+	else {$extension_appended_cidname="N";}
 if (isset($_GET["scheduled_callbacks_count"]))			{$scheduled_callbacks_count=$_GET["scheduled_callbacks_count"];}
 	elseif (isset($_POST["scheduled_callbacks_count"]))	{$scheduled_callbacks_count=$_POST["scheduled_callbacks_count"];}
+	else {$scheduled_callbacks_count="ALL_ACTIVE";}
 if (isset($_GET["realtime_block_user_info"]))			{$realtime_block_user_info=$_GET["realtime_block_user_info"];}
 	elseif (isset($_POST["realtime_block_user_info"]))	{$realtime_block_user_info=$_POST["realtime_block_user_info"];}
+	else {$realtime_block_user_info=0;}
 if (isset($_GET["manual_dial_override"]))			{$manual_dial_override=$_GET["manual_dial_override"];}
 	elseif (isset($_POST["manual_dial_override"]))	{$manual_dial_override=$_POST["manual_dial_override"];}
+	else {$manual_dial_override="NONE";}
 if (isset($_GET["blind_monitor_warning"]))			{$blind_monitor_warning=$_GET["blind_monitor_warning"];}
 	elseif (isset($_POST["blind_monitor_warning"]))	{$blind_monitor_warning=$_POST["blind_monitor_warning"];}
+	else {$blind_monitor_warning="DISABLED";}
 if (isset($_GET["blind_monitor_message"]))			{$blind_monitor_message=$_GET["blind_monitor_message"];}
 	elseif (isset($_POST["blind_monitor_message"]))	{$blind_monitor_message=$_POST["blind_monitor_message"];}
+	else {$blind_monitor_message="";}
 if (isset($_GET["blind_monitor_filename"]))				{$blind_monitor_filename=$_GET["blind_monitor_filename"];}
 	elseif (isset($_POST["blind_monitor_filename"]))	{$blind_monitor_filename=$_POST["blind_monitor_filename"];}
+	else {$blind_monitor_filename="";}
 if (isset($_GET["uniqueid_status_display"]))			{$uniqueid_status_display=$_GET["uniqueid_status_display"];}
 	elseif (isset($_POST["uniqueid_status_display"]))	{$uniqueid_status_display=$_POST["uniqueid_status_display"];}
+	else {$uniqueid_status_display="DISABLED";}
 if (isset($_GET["uniqueid_status_prefix"]))				{$uniqueid_status_prefix=$_GET["uniqueid_status_prefix"];}
 	elseif (isset($_POST["uniqueid_status_prefix"]))	{$uniqueid_status_prefix=$_POST["uniqueid_status_prefix"];}
+	else {$uniqueid_status_prefix="";}
 if (isset($_GET["default_codecs"]))				{$default_codecs=$_GET["default_codecs"];}
 	elseif (isset($_POST["default_codecs"]))	{$default_codecs=$_POST["default_codecs"];}
+	else {$default_codecs="";}
 if (isset($_GET["codecs_list"]))			{$codecs_list=$_GET["codecs_list"];}
 	elseif (isset($_POST["codecs_list"]))	{$codecs_list=$_POST["codecs_list"];}
+	else {$codecs_list="";}
 if (isset($_GET["codecs_with_template"]))			{$codecs_with_template=$_GET["codecs_with_template"];}
 	elseif (isset($_POST["codecs_with_template"]))	{$codecs_with_template=$_POST["codecs_with_template"];}
+	else {$codecs_with_template=0;}
 if (isset($_GET["custom_fields_modify"]))			{$custom_fields_modify=$_GET["custom_fields_modify"];}
 	elseif (isset($_POST["custom_fields_modify"]))	{$custom_fields_modify=$_POST["custom_fields_modify"];}
+	else {$custom_fields_modify=0;}
 if (isset($_GET["hold_time_option_minimum"]))			{$hold_time_option_minimum=$_GET["hold_time_option_minimum"];}
 	elseif (isset($_POST["hold_time_option_minimum"]))	{$hold_time_option_minimum=$_POST["hold_time_option_minimum"];}
+	else {$hold_time_option_minimum=0;}
 if (isset($_GET["source_carrier"]))				{$source_carrier=$_GET["source_carrier"];}
 	elseif (isset($_POST["source_carrier"]))	{$source_carrier=$_POST["source_carrier"];}
+	else {$source_carrier="";}
 if (isset($_GET["hold_time_option_press_filename"]))			{$hold_time_option_press_filename=$_GET["hold_time_option_press_filename"];}
 	elseif (isset($_POST["hold_time_option_press_filename"]))	{$hold_time_option_press_filename=$_POST["hold_time_option_press_filename"];}
+	else {$hold_time_option_press_filename="";}
 if (isset($_GET["hold_time_option_callmenu"]))			{$hold_time_option_callmenu=$_GET["hold_time_option_callmenu"];}
 	elseif (isset($_POST["hold_time_option_callmenu"]))	{$hold_time_option_callmenu=$_POST["hold_time_option_callmenu"];}
+	else {$hold_time_option_callmenu="";}
 if (isset($_GET["inbound_queue_no_dial"]))			{$inbound_queue_no_dial=$_GET["inbound_queue_no_dial"];}
 	elseif (isset($_POST["inbound_queue_no_dial"]))	{$inbound_queue_no_dial=$_POST["inbound_queue_no_dial"];}
+	else {$inbound_queue_no_dial="DISABLED";}
 if (isset($_GET["default_afterhours_filename_override"]))			{$default_afterhours_filename_override=$_GET["default_afterhours_filename_override"];}
 	elseif (isset($_POST["default_afterhours_filename_override"]))	{$default_afterhours_filename_override=$_POST["default_afterhours_filename_override"];}
+	else {$default_afterhours_filename_override="";}
 if (isset($_GET["sunday_afterhours_filename_override"]))			{$sunday_afterhours_filename_override=$_GET["sunday_afterhours_filename_override"];}
 	elseif (isset($_POST["sunday_afterhours_filename_override"]))	{$sunday_afterhours_filename_override=$_POST["sunday_afterhours_filename_override"];}
+	else {$sunday_afterhours_filename_override="";}
 if (isset($_GET["monday_afterhours_filename_override"]))			{$monday_afterhours_filename_override=$_GET["monday_afterhours_filename_override"];}
 	elseif (isset($_POST["monday_afterhours_filename_override"]))	{$monday_afterhours_filename_override=$_POST["monday_afterhours_filename_override"];}
+	else {$monday_afterhours_filename_override="";}
 if (isset($_GET["tuesday_afterhours_filename_override"]))			{$tuesday_afterhours_filename_override=$_GET["tuesday_afterhours_filename_override"];}
 	elseif (isset($_POST["tuesday_afterhours_filename_override"]))	{$tuesday_afterhours_filename_override=$_POST["tuesday_afterhours_filename_override"];}
+	else {$tuesday_afterhours_filename_override="";}
 if (isset($_GET["wednesday_afterhours_filename_override"]))			{$wednesday_afterhours_filename_override=$_GET["wednesday_afterhours_filename_override"];}
 	elseif (isset($_POST["wednesday_afterhours_filename_override"]))	{$wednesday_afterhours_filename_override=$_POST["wednesday_afterhours_filename_override"];}
+	else {$wednesday_afterhours_filename_override="";}
 if (isset($_GET["thursday_afterhours_filename_override"]))			{$thursday_afterhours_filename_override=$_GET["thursday_afterhours_filename_override"];}
 	elseif (isset($_POST["thursday_afterhours_filename_override"]))	{$thursday_afterhours_filename_override=$_POST["thursday_afterhours_filename_override"];}
+	else {$thursday_afterhours_filename_override="";}
 if (isset($_GET["friday_afterhours_filename_override"]))			{$friday_afterhours_filename_override=$_GET["friday_afterhours_filename_override"];}
 	elseif (isset($_POST["friday_afterhours_filename_override"]))	{$friday_afterhours_filename_override=$_POST["friday_afterhours_filename_override"];}
+	else {$friday_afterhours_filename_override="";}
 if (isset($_GET["saturday_afterhours_filename_override"]))			{$saturday_afterhours_filename_override=$_GET["saturday_afterhours_filename_override"];}
 	elseif (isset($_POST["saturday_afterhours_filename_override"]))	{$saturday_afterhours_filename_override=$_POST["saturday_afterhours_filename_override"];}
+	else {$saturday_afterhours_filename_override="";}
 if (isset($_GET["onhold_prompt_no_block"]))				{$onhold_prompt_no_block=$_GET["onhold_prompt_no_block"];}
 	elseif (isset($_POST["onhold_prompt_no_block"]))	{$onhold_prompt_no_block=$_POST["onhold_prompt_no_block"];}
+	else {$onhold_prompt_no_block="N";}
 if (isset($_GET["onhold_prompt_seconds"]))			{$onhold_prompt_seconds=$_GET["onhold_prompt_seconds"];}
 	elseif (isset($_POST["onhold_prompt_seconds"]))	{$onhold_prompt_seconds=$_POST["onhold_prompt_seconds"];}
+	else {$onhold_prompt_seconds=9;}
 if (isset($_GET["hold_time_option_no_block"]))			{$hold_time_option_no_block=$_GET["hold_time_option_no_block"];}
 	elseif (isset($_POST["hold_time_option_no_block"]))	{$hold_time_option_no_block=$_POST["hold_time_option_no_block"];}
+	else {$hold_time_option_no_block="N";}
 if (isset($_GET["hold_time_option_prompt_seconds"]))			{$hold_time_option_prompt_seconds=$_GET["hold_time_option_prompt_seconds"];}
 	elseif (isset($_POST["hold_time_option_prompt_seconds"]))	{$hold_time_option_prompt_seconds=$_POST["hold_time_option_prompt_seconds"];}
+	else {$hold_time_option_prompt_seconds=10;}
 if (isset($_GET["admin_web_directory"]))			{$admin_web_directory=$_GET["admin_web_directory"];}
 	elseif (isset($_POST["admin_web_directory"]))	{$admin_web_directory=$_POST["admin_web_directory"];}
+	else {$admin_web_directory="";}
 if (isset($_GET["tts_voice"]))				{$tts_voice=$_GET["tts_voice"];}
 	elseif (isset($_POST["tts_voice"]))		{$tts_voice=$_POST["tts_voice"];}
+	else {$tts_voice="";}
 if (isset($_GET["label_title"]))					{$label_title=$_GET["label_title"];}
 	elseif (isset($_POST["label_title"]))			{$label_title=$_POST["label_title"];}
+	else {$label_title="";}
 if (isset($_GET["label_first_name"]))				{$label_first_name=$_GET["label_first_name"];}
 	elseif (isset($_POST["label_first_name"]))		{$label_first_name=$_POST["label_first_name"];}
+	else {$label_first_name="";}
 if (isset($_GET["label_middle_initial"]))			{$label_middle_initial=$_GET["label_middle_initial"];}
 	elseif (isset($_POST["label_middle_initial"]))	{$label_middle_initial=$_POST["label_middle_initial"];}
+	else {$label_middle_initial="";}
 if (isset($_GET["label_last_name"]))				{$label_last_name=$_GET["label_last_name"];}
 	elseif (isset($_POST["label_last_name"]))		{$label_last_name=$_POST["label_last_name"];}
+	else {$label_last_name="";}
 if (isset($_GET["label_address1"]))					{$label_address1=$_GET["label_address1"];}
 	elseif (isset($_POST["label_address1"]))		{$label_address1=$_POST["label_address1"];}
+	else {$label_address1="";}
 if (isset($_GET["label_address2"]))					{$label_address2=$_GET["label_address2"];}
 	elseif (isset($_POST["label_address2"]))		{$label_address2=$_POST["label_address2"];}
+	else {$label_address2="";}
 if (isset($_GET["label_address3"]))					{$label_address3=$_GET["label_address3"];}
 	elseif (isset($_POST["label_address3"]))		{$label_address3=$_POST["label_address3"];}
+	else {$label_address3="";}
 if (isset($_GET["label_city"]))						{$label_city=$_GET["label_city"];}
 	elseif (isset($_POST["label_city"]))			{$label_city=$_POST["label_city"];}
+	else {$label_city="";}
 if (isset($_GET["label_state"]))					{$label_state=$_GET["label_state"];}
 	elseif (isset($_POST["label_state"]))			{$label_state=$_POST["label_state"];}
+	else {$label_state="";}
 if (isset($_GET["label_province"]))					{$label_province=$_GET["label_province"];}
 	elseif (isset($_POST["label_province"]))		{$label_province=$_POST["label_province"];}
+	else {$label_province="";}
 if (isset($_GET["label_postal_code"]))				{$label_postal_code=$_GET["label_postal_code"];}
 	elseif (isset($_POST["label_postal_code"]))		{$label_postal_code=$_POST["label_postal_code"];}
+	else {$label_postal_code="";}
 if (isset($_GET["label_vendor_lead_code"]))			{$label_vendor_lead_code=$_GET["label_vendor_lead_code"];}
 	elseif (isset($_POST["label_vendor_lead_code"])){$label_vendor_lead_code=$_POST["label_vendor_lead_code"];}
+	else {$label_vendor_lead_code="";}
 if (isset($_GET["label_gender"]))					{$label_gender=$_GET["label_gender"];}
 	elseif (isset($_POST["label_gender"]))			{$label_gender=$_POST["label_gender"];}
+	else {$label_gender="";}
 if (isset($_GET["label_phone_number"]))				{$label_phone_number=$_GET["label_phone_number"];}
 	elseif (isset($_POST["label_phone_number"]))	{$label_phone_number=$_POST["label_phone_number"];}
+	else {$label_phone_number="";}
 if (isset($_GET["label_phone_code"]))				{$label_phone_code=$_GET["label_phone_code"];}
 	elseif (isset($_POST["label_phone_code"]))		{$label_phone_code=$_POST["label_phone_code"];}
+	else {$label_phone_code="";}
 if (isset($_GET["label_alt_phone"]))				{$label_alt_phone=$_GET["label_alt_phone"];}
 	elseif (isset($_POST["label_alt_phone"]))		{$label_alt_phone=$_POST["label_alt_phone"];}
+	else {$label_alt_phone="";}
 if (isset($_GET["label_security_phrase"]))			{$label_security_phrase=$_GET["label_security_phrase"];}
 	elseif (isset($_POST["label_security_phrase"]))	{$label_security_phrase=$_POST["label_security_phrase"];}
+	else {$label_security_phrase="";}
 if (isset($_GET["label_email"]))					{$label_email=$_GET["label_email"];}
 	elseif (isset($_POST["label_email"]))			{$label_email=$_POST["label_email"];}
+	else {$label_email="";}
 if (isset($_GET["label_comments"]))					{$label_comments=$_GET["label_comments"];}
 	elseif (isset($_POST["label_comments"]))		{$label_comments=$_POST["label_comments"];}
+	else {$label_comments="";}
 if (isset($_GET["custom_fields_enabled"]))			{$custom_fields_enabled=$_GET["custom_fields_enabled"];}
 	elseif (isset($_POST["custom_fields_enabled"]))	{$custom_fields_enabled=$_POST["custom_fields_enabled"];}
+	else {$custom_fields_enabled=0;}
 if (isset($_GET["slave_db_server"]))				{$slave_db_server=$_GET["slave_db_server"];}
 	elseif (isset($_POST["slave_db_server"]))		{$slave_db_server=$_POST["slave_db_server"];}
+	else {$slave_db_server="";}
 if (isset($_GET["reports_use_slave_db"]))			{$reports_use_slave_db=$_GET["reports_use_slave_db"];}
 	elseif (isset($_POST["reports_use_slave_db"]))	{$reports_use_slave_db=$_POST["reports_use_slave_db"];}
+	else {$reports_use_slave_db="";}
 if (isset($_GET["custom_reports_use_slave_db"]))			{$custom_reports_use_slave_db=$_GET["custom_reports_use_slave_db"];}
 	elseif (isset($_POST["custom_reports_use_slave_db"]))	{$custom_reports_use_slave_db=$_POST["custom_reports_use_slave_db"];}
+	else {$custom_reports_use_slave_db="";}
 if (isset($_GET["hold_time_second_option"]))			{$hold_time_second_option=$_GET["hold_time_second_option"];}
 	elseif (isset($_POST["hold_time_second_option"]))	{$hold_time_second_option=$_POST["hold_time_second_option"];}
+	else {$hold_time_second_option="NONE";}
 if (isset($_GET["hold_time_third_option"]))				{$hold_time_third_option=$_GET["hold_time_third_option"];}
 	elseif (isset($_POST["hold_time_third_option"]))	{$hold_time_third_option=$_POST["hold_time_third_option"];}
+	else {$hold_time_third_option="NONE";}
 if (isset($_GET["wait_hold_option_priority"]))			{$wait_hold_option_priority=$_GET["wait_hold_option_priority"];}
 	elseif (isset($_POST["wait_hold_option_priority"]))	{$wait_hold_option_priority=$_POST["wait_hold_option_priority"];}
+	else {$wait_hold_option_priority="WAIT";}
 if (isset($_GET["wait_time_option"]))					{$wait_time_option=$_GET["wait_time_option"];}
 	elseif (isset($_POST["wait_time_option"]))			{$wait_time_option=$_POST["wait_time_option"];}
+	else {$wait_time_option="NONE";}
 if (isset($_GET["wait_time_second_option"]))			{$wait_time_second_option=$_GET["wait_time_second_option"];}
 	elseif (isset($_POST["wait_time_second_option"]))	{$wait_time_second_option=$_POST["wait_time_second_option"];}
+	else {$wait_time_second_option="NONE";}
 if (isset($_GET["wait_time_third_option"]))				{$wait_time_third_option=$_GET["wait_time_third_option"];}
 	elseif (isset($_POST["wait_time_third_option"]))	{$wait_time_third_option=$_POST["wait_time_third_option"];}
+	else {$wait_time_third_option="NONE";}
 if (isset($_GET["wait_time_option_seconds"]))			{$wait_time_option_seconds=$_GET["wait_time_option_seconds"];}
 	elseif (isset($_POST["wait_time_option_seconds"]))	{$wait_time_option_seconds=$_POST["wait_time_option_seconds"];}
+	else {$wait_time_option_seconds=120;}
 if (isset($_GET["wait_time_option_exten"]))				{$wait_time_option_exten=$_GET["wait_time_option_exten"];}
 	elseif (isset($_POST["wait_time_option_exten"]))	{$wait_time_option_exten=$_POST["wait_time_option_exten"];}
+	else {$wait_time_option_exten=8300;}
 if (isset($_GET["wait_time_option_voicemail"]))			{$wait_time_option_voicemail=$_GET["wait_time_option_voicemail"];}
 	elseif (isset($_POST["wait_time_option_voicemail"]))	{$wait_time_option_voicemail=$_POST["wait_time_option_voicemail"];}
+	else {$wait_time_option_voicemail="";}
 if (isset($_GET["wait_time_option_xfer_group"]))			{$wait_time_option_xfer_group=$_GET["wait_time_option_xfer_group"];}
 	elseif (isset($_POST["wait_time_option_xfer_group"]))	{$wait_time_option_xfer_group=$_POST["wait_time_option_xfer_group"];}
+	else {$wait_time_option_xfer_group="---NONE---";}
 if (isset($_GET["wait_time_option_callmenu"]))				{$wait_time_option_callmenu=$_GET["wait_time_option_callmenu"];}
 	elseif (isset($_POST["wait_time_option_callmenu"]))		{$wait_time_option_callmenu=$_POST["wait_time_option_callmenu"];}
+	else {$wait_time_option_callmenu="";}
 if (isset($_GET["wait_time_option_callback_filename"]))				{$wait_time_option_callback_filename=$_GET["wait_time_option_callback_filename"];}
 	elseif (isset($_POST["wait_time_option_callback_filename"]))	{$wait_time_option_callback_filename=$_POST["wait_time_option_callback_filename"];}
+	else {$wait_time_option_callback_filename="";}
 if (isset($_GET["wait_time_option_callback_list_id"]))			{$wait_time_option_callback_list_id=$_GET["wait_time_option_callback_list_id"];}
 	elseif (isset($_POST["wait_time_option_callback_list_id"]))	{$wait_time_option_callback_list_id=$_POST["wait_time_option_callback_list_id"];}
+	else {$wait_time_option_callback_list_id=999;}
 if (isset($_GET["wait_time_option_press_filename"]))			{$wait_time_option_press_filename=$_GET["wait_time_option_press_filename"];}
 	elseif (isset($_POST["wait_time_option_press_filename"]))	{$wait_time_option_press_filename=$_POST["wait_time_option_press_filename"];}
+	else {$wait_time_option_press_filename="";}
 if (isset($_GET["wait_time_option_no_block"]))			{$wait_time_option_no_block=$_GET["wait_time_option_no_block"];}
 	elseif (isset($_POST["wait_time_option_no_block"]))	{$wait_time_option_no_block=$_POST["wait_time_option_no_block"];}
+	else {$wait_time_option_no_block="N";}
 if (isset($_GET["wait_time_option_prompt_seconds"]))			{$wait_time_option_prompt_seconds=$_GET["wait_time_option_prompt_seconds"];}
 	elseif (isset($_POST["wait_time_option_prompt_seconds"]))	{$wait_time_option_prompt_seconds=$_POST["wait_time_option_prompt_seconds"];}
+	else {$wait_time_option_prompt_seconds=10;}
 if (isset($_GET["timer_action_destination"]))			{$timer_action_destination=$_GET["timer_action_destination"];}
 	elseif (isset($_POST["timer_action_destination"]))	{$timer_action_destination=$_POST["timer_action_destination"];}
+	else {$timer_action_destination="";}
 if (isset($_GET["allowed_reports"]))			{$allowed_reports=$_GET["allowed_reports"];}
 	elseif (isset($_POST["allowed_reports"]))	{$allowed_reports=$_POST["allowed_reports"];}
 if (isset($_GET["allowed_custom_reports"]))			{$allowed_custom_reports=$_GET["allowed_custom_reports"];}
 	elseif (isset($_POST["allowed_custom_reports"]))	{$allowed_custom_reports=$_POST["allowed_custom_reports"];}
 if (isset($_GET["filter_phone_group_id"]))			{$filter_phone_group_id=$_GET["filter_phone_group_id"];}
 	elseif (isset($_POST["filter_phone_group_id"]))	{$filter_phone_group_id=$_POST["filter_phone_group_id"];}
+	else {$filter_phone_group_id="";}
 if (isset($_GET["filter_phone_group_name"]))			{$filter_phone_group_name=$_GET["filter_phone_group_name"];}
 	elseif (isset($_POST["filter_phone_group_name"]))	{$filter_phone_group_name=$_POST["filter_phone_group_name"];}
+	else {$filter_phone_group_name="";}
 if (isset($_GET["filter_phone_group_description"]))				{$filter_phone_group_description=$_GET["filter_phone_group_description"];}
 	elseif (isset($_POST["filter_phone_group_description"]))	{$filter_phone_group_description=$_POST["filter_phone_group_description"];}
+	else {$filter_phone_group_description="";}
 if (isset($_GET["filter_inbound_number"]))			{$filter_inbound_number=$_GET["filter_inbound_number"];}
 	elseif (isset($_POST["filter_inbound_number"]))	{$filter_inbound_number=$_POST["filter_inbound_number"];}
+	else {$filter_inbound_number="DISABLED";}
 if (isset($_GET["filter_url"]))				{$filter_url=$_GET["filter_url"];}
 	elseif (isset($_POST["filter_url"]))	{$filter_url=$_POST["filter_url"];}
 if (isset($_GET["filter_action"]))			{$filter_action=$_GET["filter_action"];}
 	elseif (isset($_POST["filter_action"]))	{$filter_action=$_POST["filter_action"];}
+	else {$filter_action="EXTEN";}
 if (isset($_GET["filter_extension"]))			{$filter_extension=$_GET["filter_extension"];}
 	elseif (isset($_POST["filter_extension"]))	{$filter_extension=$_POST["filter_extension"];}
+	else {$filter_extension="9998811112";}
 if (isset($_GET["filter_exten_context"]))			{$filter_exten_context=$_GET["filter_exten_context"];}
 	elseif (isset($_POST["filter_exten_context"]))	{$filter_exten_context=$_POST["filter_exten_context"];}
+	else {$filter_exten_context="";}
 if (isset($_GET["filter_voicemail_ext"]))			{$filter_voicemail_ext=$_GET["filter_voicemail_ext"];}
 	elseif (isset($_POST["filter_voicemail_ext"]))	{$filter_voicemail_ext=$_POST["filter_voicemail_ext"];}
+	else {$filter_voicemail_ext="";}
 if (isset($_GET["filter_phone"]))			{$filter_phone=$_GET["filter_phone"];}
 	elseif (isset($_POST["filter_phone"]))	{$filter_phone=$_POST["filter_phone"];}
+	else {$filter_phone="";}
 if (isset($_GET["filter_server_ip"]))			{$filter_server_ip=$_GET["filter_server_ip"];}
 	elseif (isset($_POST["filter_server_ip"]))	{$filter_server_ip=$_POST["filter_server_ip"];}
+	else {$filter_server_ip="";}
 if (isset($_GET["filter_user"]))			{$filter_user=$_GET["filter_user"];}
 	elseif (isset($_POST["filter_user"]))	{$filter_user=$_POST["filter_user"];}
+	else {$filter_user="";}
 if (isset($_GET["filter_user_unavailable_action"]))				{$filter_user_unavailable_action=$_GET["filter_user_unavailable_action"];}
 	elseif (isset($_POST["filter_user_unavailable_action"]))	{$filter_user_unavailable_action=$_POST["filter_user_unavailable_action"];}
+	else {$filter_user_unavailable_action="VOICEMAIL";}
 if (isset($_GET["filter_user_route_settings_ingroup"]))				{$filter_user_route_settings_ingroup=$_GET["filter_user_route_settings_ingroup"];}
 	elseif (isset($_POST["filter_user_route_settings_ingroup"]))	{$filter_user_route_settings_ingroup=$_POST["filter_user_route_settings_ingroup"];}
+	else {$filter_user_route_settings_ingroup="AGENTDIRECT";}
 if (isset($_GET["filter_group_id"]))			{$filter_group_id=$_GET["filter_group_id"];}
 	elseif (isset($_POST["filter_group_id"]))	{$filter_group_id=$_POST["filter_group_id"];}
+	else {$filter_group_id="";}
 if (isset($_GET["filter_call_handle_method"]))			{$filter_call_handle_method=$_GET["filter_call_handle_method"];}
 	elseif (isset($_POST["filter_call_handle_method"]))	{$filter_call_handle_method=$_POST["filter_call_handle_method"];}
+	else {$filter_call_handle_method="CID";}
 if (isset($_GET["filter_agent_search_method"]))				{$filter_agent_search_method=$_GET["filter_agent_search_method"];}
 	elseif (isset($_POST["filter_agent_search_method"]))	{$filter_agent_search_method=$_POST["filter_agent_search_method"];}
+	else {$filter_agent_search_method="LB";}
 if (isset($_GET["filter_list_id"]))				{$filter_list_id=$_GET["filter_list_id"];}
 	elseif (isset($_POST["filter_list_id"]))	{$filter_list_id=$_POST["filter_list_id"];}
+	else {$filter_list_id=999;}
 if (isset($_GET["filter_campaign_id"]))				{$filter_campaign_id=$_GET["filter_campaign_id"];}
 	elseif (isset($_POST["filter_campaign_id"]))	{$filter_campaign_id=$_POST["filter_campaign_id"];}
+	else {$filter_campaign_id="";}
 if (isset($_GET["filter_phone_code"]))			{$filter_phone_code=$_GET["filter_phone_code"];}
 	elseif (isset($_POST["filter_phone_code"]))	{$filter_phone_code=$_POST["filter_phone_code"];}
+	else {$filter_phone_code="";}
 if (isset($_GET["filter_menu_id"]))				{$filter_menu_id=$_GET["filter_menu_id"];}
 	elseif (isset($_POST["filter_menu_id"]))	{$filter_menu_id=$_POST["filter_menu_id"];}
+	else {$filter_menu_id="";}
 if (isset($_GET["filter_clean_cid_number"]))			{$filter_clean_cid_number=$_GET["filter_clean_cid_number"];}
 	elseif (isset($_POST["filter_clean_cid_number"]))	{$filter_clean_cid_number=$_POST["filter_clean_cid_number"];}
+	else {$filter_clean_cid_number="";}
 if (isset($_GET["webphone_url_override"]))			{$webphone_url_override=$_GET["webphone_url_override"];}
 	elseif (isset($_POST["webphone_url_override"]))	{$webphone_url_override=$_POST["webphone_url_override"];}
 if (isset($_GET["calculate_estimated_hold_seconds"]))			{$calculate_estimated_hold_seconds=$_GET["calculate_estimated_hold_seconds"];}
 	elseif (isset($_POST["calculate_estimated_hold_seconds"]))	{$calculate_estimated_hold_seconds=$_POST["calculate_estimated_hold_seconds"];}
+	else {$calculate_estimated_hold_seconds=0;}
 if (isset($_GET["enable_xfer_presets"]))			{$enable_xfer_presets=$_GET["enable_xfer_presets"];}
 	elseif (isset($_POST["enable_xfer_presets"]))	{$enable_xfer_presets=$_POST["enable_xfer_presets"];}
+	else {$enable_xfer_presets="DISABLED";}
 if (isset($_GET["hide_xfer_number_to_dial"]))			{$hide_xfer_number_to_dial=$_GET["hide_xfer_number_to_dial"];}
 	elseif (isset($_POST["hide_xfer_number_to_dial"]))	{$hide_xfer_number_to_dial=$_POST["hide_xfer_number_to_dial"];}
+	else {$hide_xfer_number_to_dial="DISABLED";}
 if (isset($_GET["preset_name"]))			{$preset_name=$_GET["preset_name"];}
 	elseif (isset($_POST["preset_name"]))	{$preset_name=$_POST["preset_name"];}
+	else {$preset_name="";}
 if (isset($_GET["preset_number"]))			{$preset_number=$_GET["preset_number"];}
 	elseif (isset($_POST["preset_number"]))	{$preset_number=$_POST["preset_number"];}
+	else {$preset_number="";}
 if (isset($_GET["preset_dtmf"]))			{$preset_dtmf=$_GET["preset_dtmf"];}
 	elseif (isset($_POST["preset_dtmf"]))	{$preset_dtmf=$_POST["preset_dtmf"];}
+	else {$preset_dtmf="";}
 if (isset($_GET["preset_hide_number"]))				{$preset_hide_number=$_GET["preset_hide_number"];}
 	elseif (isset($_POST["preset_hide_number"]))	{$preset_hide_number=$_POST["preset_hide_number"];}
+	else {$preset_hide_number="N";}
 if (isset($_GET["manual_dial_prefix"]))				{$manual_dial_prefix=$_GET["manual_dial_prefix"];}
 	elseif (isset($_POST["manual_dial_prefix"]))	{$manual_dial_prefix=$_POST["manual_dial_prefix"];}
+	else {$manual_dial_prefix="";}
 if (isset($_GET["webphone_systemkey"]))				{$webphone_systemkey=$_GET["webphone_systemkey"];}
 	elseif (isset($_POST["webphone_systemkey"]))	{$webphone_systemkey=$_POST["webphone_systemkey"];}
+	else {$webphone_systemkey="";}
 if (isset($_GET["webphone_dialpad"]))			{$webphone_dialpad=$_GET["webphone_dialpad"];}
 	elseif (isset($_POST["webphone_dialpad"]))	{$webphone_dialpad=$_POST["webphone_dialpad"];}
+	else {$webphone_dialpad="Y";}
 if (isset($_GET["webphone_systemkey_override"]))			{$webphone_systemkey_override=$_GET["webphone_systemkey_override"];}
 	elseif (isset($_POST["webphone_systemkey_override"]))	{$webphone_systemkey_override=$_POST["webphone_systemkey_override"];}
+	else {$webphone_systemkey_override="";}
 if (isset($_GET["webphone_dialpad_override"]))			{$webphone_dialpad_override=$_GET["webphone_dialpad_override"];}
 	elseif (isset($_POST["webphone_dialpad_override"]))	{$webphone_dialpad_override=$_POST["webphone_dialpad_override"];}
+	else {$webphone_dialpad_override="DISABLED";}
 if (isset($_GET["force_change_password"]))			{$force_change_password=$_GET["force_change_password"];}
 	elseif (isset($_POST["force_change_password"]))	{$force_change_password=$_POST["force_change_password"];}
+	else {$force_change_password="N";}
 if (isset($_GET["first_login_trigger"]))			{$first_login_trigger=$_GET["first_login_trigger"];}
 	elseif (isset($_POST["first_login_trigger"]))	{$first_login_trigger=$_POST["first_login_trigger"];}
+	else {$first_login_trigger="N";}
 if (isset($_GET["default_phone_registration_password"]))			{$default_phone_registration_password=$_GET["default_phone_registration_password"];}
 	elseif (isset($_POST["default_phone_registration_password"]))	{$default_phone_registration_password=$_POST["default_phone_registration_password"];}
+	else {$default_phone_registration_password="";}
 if (isset($_GET["default_phone_login_password"]))			{$default_phone_login_password=$_GET["default_phone_login_password"];}
 	elseif (isset($_POST["default_phone_login_password"]))	{$default_phone_login_password=$_POST["default_phone_login_password"];}
+	else {$default_phone_login_password="";}
 if (isset($_GET["default_server_password"]))			{$default_server_password=$_GET["default_server_password"];}
 	elseif (isset($_POST["default_server_password"]))	{$default_server_password=$_POST["default_server_password"];}
+	else {$default_server_password="";}
 if (isset($_GET["customer_3way_hangup_logging"]))			{$customer_3way_hangup_logging=$_GET["customer_3way_hangup_logging"];}
 	elseif (isset($_POST["customer_3way_hangup_logging"]))	{$customer_3way_hangup_logging=$_POST["customer_3way_hangup_logging"];}
+	else {$customer_3way_hangup_logging="ENABLED";}
 if (isset($_GET["customer_3way_hangup_seconds"]))			{$customer_3way_hangup_seconds=$_GET["customer_3way_hangup_seconds"];}
 	elseif (isset($_POST["customer_3way_hangup_seconds"]))	{$customer_3way_hangup_seconds=$_POST["customer_3way_hangup_seconds"];}
+	else {$customer_3way_hangup_seconds=5;}
 if (isset($_GET["customer_3way_hangup_action"]))			{$customer_3way_hangup_action=$_GET["customer_3way_hangup_action"];}
 	elseif (isset($_POST["customer_3way_hangup_action"]))	{$customer_3way_hangup_action=$_POST["customer_3way_hangup_action"];}
+	else {$customer_3way_hangup_action="NONE";}
 if (isset($_GET["add_lead_url"]))			{$add_lead_url=$_GET["add_lead_url"];}
 	elseif (isset($_POST["add_lead_url"]))	{$add_lead_url=$_POST["add_lead_url"];}
+	else {$add_lead_url="";}
 if (isset($_GET["ivr_park_call"]))			{$ivr_park_call=$_GET["ivr_park_call"];}
 	elseif (isset($_POST["ivr_park_call"]))	{$ivr_park_call=$_POST["ivr_park_call"];}
+	else {$ivr_park_call="DISABLED";}
 if (isset($_GET["ivr_park_call_agi"]))			{$ivr_park_call_agi=$_GET["ivr_park_call_agi"];}
 	elseif (isset($_POST["ivr_park_call_agi"]))	{$ivr_park_call_agi=$_POST["ivr_park_call_agi"];}
+	else {$ivr_park_call_agi="";}
 if (isset($_GET["manual_preview_dial"]))			{$manual_preview_dial=$_GET["manual_preview_dial"];}
 	elseif (isset($_POST["manual_preview_dial"]))	{$manual_preview_dial=$_POST["manual_preview_dial"];}
+	else {$manual_preview_dial="PREVIEW_AND_SKIP";}
 if (isset($_GET["eht_minimum_prompt_filename"]))			{$eht_minimum_prompt_filename=$_GET["eht_minimum_prompt_filename"];}
 	elseif (isset($_POST["eht_minimum_prompt_filename"]))	{$eht_minimum_prompt_filename=$_POST["eht_minimum_prompt_filename"];}
+	else {$eht_minimum_prompt_filename="";}
 if (isset($_GET["eht_minimum_prompt_no_block"]))			{$eht_minimum_prompt_no_block=$_GET["eht_minimum_prompt_no_block"];}
 	elseif (isset($_POST["eht_minimum_prompt_no_block"]))	{$eht_minimum_prompt_no_block=$_POST["eht_minimum_prompt_no_block"];}
+	else {$eht_minimum_prompt_no_block="N";}
 if (isset($_GET["eht_minimum_prompt_seconds"]))				{$eht_minimum_prompt_seconds=$_GET["eht_minimum_prompt_seconds"];}
 	elseif (isset($_POST["eht_minimum_prompt_seconds"]))	{$eht_minimum_prompt_seconds=$_POST["eht_minimum_prompt_seconds"];}
+	else {$eht_minimum_prompt_seconds=10;}
 if (isset($_GET["realtime_agent_time_stats"]))				{$realtime_agent_time_stats=$_GET["realtime_agent_time_stats"];}
 	elseif (isset($_POST["realtime_agent_time_stats"]))		{$realtime_agent_time_stats=$_POST["realtime_agent_time_stats"];}
+	else {$realtime_agent_time_stats="CALLS_WAIT_CUST_ACW_PAUSE";}
 if (isset($_GET["admin_modify_refresh"]))			{$admin_modify_refresh=$_GET["admin_modify_refresh"];}
 	elseif (isset($_POST["admin_modify_refresh"]))	{$admin_modify_refresh=$_POST["admin_modify_refresh"];}
+	else {$admin_modify_refresh=0;}
 if (isset($_GET["nocache_admin"]))			{$nocache_admin=$_GET["nocache_admin"];}
 	elseif (isset($_POST["nocache_admin"]))	{$nocache_admin=$_POST["nocache_admin"];}
+	else {$nocache_admin=1;}
 if (isset($_GET["generate_cross_server_exten"]))			{$generate_cross_server_exten=$_GET["generate_cross_server_exten"];}
 	elseif (isset($_POST["generate_cross_server_exten"]))	{$generate_cross_server_exten=$_POST["generate_cross_server_exten"];}
+	else {$generate_cross_server_exten=0;}
 if (isset($_GET["queuemetrics_addmember_enabled"]))				{$queuemetrics_addmember_enabled=$_GET["queuemetrics_addmember_enabled"];}
 	elseif (isset($_POST["queuemetrics_addmember_enabled"]))	{$queuemetrics_addmember_enabled=$_POST["queuemetrics_addmember_enabled"];}
-if (isset($_GET["modify_page"]))			{$modify_page=$_GET["modify_page"];}
-	elseif (isset($_POST["modify_page"]))	{$modify_page=$_POST["modify_page"];}
+	else {$queuemetrics_addmember_enabled=0;}
+# if (isset($_GET["modify_page"]))			{$modify_page=$_GET["modify_page"];}
+#	elseif (isset($_POST["modify_page"]))	{$modify_page=$_POST["modify_page"];}
 if (isset($_GET["modify_url"]))				{$modify_url=$_GET["modify_url"];}
 	elseif (isset($_POST["modify_url"]))	{$modify_url=$_POST["modify_url"];}
+	else {$modify_url="";}
 if (isset($_GET["use_auto_hopper"]))			{$use_auto_hopper=$_GET["use_auto_hopper"];}
 	elseif (isset($_POST["use_auto_hopper"]))	{$use_auto_hopper=$_POST["use_auto_hopper"];}
+	else {$use_auto_hopper="Y";}
 if (isset($_GET["auto_hopper_multi"]))			{$auto_hopper_multi=$_GET["auto_hopper_multi"];}
 	elseif (isset($_POST["auto_hopper_multi"]))	{$auto_hopper_multi=$_POST["auto_hopper_multi"];}
+	else {$auto_hopper_multi=1;}
 if (isset($_GET["auto_trim_hopper"]))			{$auto_trim_hopper=$_GET["auto_trim_hopper"];}
 	elseif (isset($_POST["auto_trim_hopper"]))	{$auto_trim_hopper=$_POST["auto_trim_hopper"];}
+	else {$auto_trim_hopper="Y";}
 if (isset($_GET["api_manual_dial"]))			{$api_manual_dial=$_GET["api_manual_dial"];}
 	elseif (isset($_POST["api_manual_dial"]))	{$api_manual_dial=$_POST["api_manual_dial"];}
+	else {$api_manual_dial="STANDARD";}
 if (isset($_GET["manual_dial_call_time_check"]))			{$manual_dial_call_time_check=$_GET["manual_dial_call_time_check"];}
 	elseif (isset($_POST["manual_dial_call_time_check"]))	{$manual_dial_call_time_check=$_POST["manual_dial_call_time_check"];}
+	else {$manual_dial_call_time_check="DISABLED";}
 if (isset($_GET["queuemetrics_dispo_pause"]))			{$queuemetrics_dispo_pause=$_GET["queuemetrics_dispo_pause"];}
 	elseif (isset($_POST["queuemetrics_dispo_pause"]))	{$queuemetrics_dispo_pause=$_POST["queuemetrics_dispo_pause"];}
+	else {$queuemetrics_dispo_pause="";}
 if (isset($_GET["lead_order_randomize"]))			{$lead_order_randomize=$_GET["lead_order_randomize"];}
 	elseif (isset($_POST["lead_order_randomize"]))	{$lead_order_randomize=$_POST["lead_order_randomize"];}
+	else {$lead_order_randomize="N";}
 if (isset($_GET["lead_order_secondary"]))			{$lead_order_secondary=$_GET["lead_order_secondary"];}
 	elseif (isset($_POST["lead_order_secondary"]))	{$lead_order_secondary=$_POST["lead_order_secondary"];}
+	else {$lead_order_secondary="LEAD_ASCEND";}
 if (isset($_GET["per_call_notes"]))				{$per_call_notes=$_GET["per_call_notes"];}
 	elseif (isset($_POST["per_call_notes"]))	{$per_call_notes=$_POST["per_call_notes"];}
+	else {$per_call_notes="DISABLED";}
 if (isset($_GET["my_callback_option"]))				{$my_callback_option=$_GET["my_callback_option"];}
 	elseif (isset($_POST["my_callback_option"]))	{$my_callback_option=$_POST["my_callback_option"];}
+	else {$my_callback_option="UNCHECKED";}
 if (isset($_GET["agent_lead_search"]))			{$agent_lead_search=$_GET["agent_lead_search"];}
 	elseif (isset($_POST["agent_lead_search"]))	{$agent_lead_search=$_POST["agent_lead_search"];}
+	else {$agent_lead_search="DISABLED";}
 if (isset($_GET["agent_lead_search_method"]))			{$agent_lead_search_method=$_GET["agent_lead_search_method"];}
 	elseif (isset($_POST["agent_lead_search_method"]))	{$agent_lead_search_method=$_POST["agent_lead_search_method"];}
+	else {$agent_lead_search_method="CAMPLISTS_ALL";}
 if (isset($_GET["queuemetrics_phone_environment"]))				{$queuemetrics_phone_environment=$_GET["queuemetrics_phone_environment"];}
 	elseif (isset($_POST["queuemetrics_phone_environment"]))	{$queuemetrics_phone_environment=$_POST["queuemetrics_phone_environment"];}
+	else {$queuemetrics_phone_environment="";}
 if (isset($_GET["active_twin_server_ip"]))			{$active_twin_server_ip=$_GET["active_twin_server_ip"];}
 	elseif (isset($_POST["active_twin_server_ip"]))	{$active_twin_server_ip=$_POST["active_twin_server_ip"];}
+	else {$active_twin_server_ip="";}
 if (isset($_GET["on_hook_agent"]))			{$on_hook_agent=$_GET["on_hook_agent"];}
 	elseif (isset($_POST["on_hook_agent"]))	{$on_hook_agent=$_POST["on_hook_agent"];}
+	else {$on_hook_agent="N";}
 if (isset($_GET["on_hook_ring_time"]))			{$on_hook_ring_time=$_GET["on_hook_ring_time"];}
 	elseif (isset($_POST["on_hook_ring_time"]))	{$on_hook_ring_time=$_POST["on_hook_ring_time"];}
+	else {$on_hook_ring_time=15;}
 if (isset($_GET["auto_pause_precall"]))			{$auto_pause_precall=$_GET["auto_pause_precall"];}
 	elseif (isset($_POST["auto_pause_precall"]))	{$auto_pause_precall=$_POST["auto_pause_precall"];}
+	else {$auto_pause_precall="N";}
 if (isset($_GET["auto_resume_precall"]))			{$auto_resume_precall=$_GET["auto_resume_precall"];}
 	elseif (isset($_POST["auto_resume_precall"]))	{$auto_resume_precall=$_POST["auto_resume_precall"];}
+	else {$auto_resume_precall="N";}
 if (isset($_GET["auto_pause_precall_code"]))			{$auto_pause_precall_code=$_GET["auto_pause_precall_code"];}
 	elseif (isset($_POST["auto_pause_precall_code"]))	{$auto_pause_precall_code=$_POST["auto_pause_precall_code"];}
+	else {$auto_pause_precall_code="PRECAL";}
 if (isset($_GET["audit_comments"]))                    {$audit_comments=$_GET["audit_comments"];}
 	elseif (isset($_POST["audit_comments"]))        {$audit_comments=$_POST["audit_comments"];}
 if (isset($_GET["reload_dialplan_on_servers"]))				{$reload_dialplan_on_servers=$_GET["reload_dialplan_on_servers"];}
 	elseif (isset($_POST["reload_dialplan_on_servers"]))	{$reload_dialplan_on_servers=$_POST["reload_dialplan_on_servers"];}
+	else {$reload_dialplan_on_servers=0;}
 if (isset($_GET["manual_dial_cid"]))			{$manual_dial_cid=$_GET["manual_dial_cid"];}
 	elseif (isset($_POST["manual_dial_cid"]))	{$manual_dial_cid=$_POST["manual_dial_cid"];}
+	else {$manual_dial_cid="CAMPAIGN";}
 if (isset($_GET["post_phone_time_diff_alert"]))				{$post_phone_time_diff_alert=$_GET["post_phone_time_diff_alert"];}
 	elseif (isset($_POST["post_phone_time_diff_alert"]))	{$post_phone_time_diff_alert=$_POST["post_phone_time_diff_alert"];}
+	else {$post_phone_time_diff_alert="DISABLED";}
 if (isset($_GET["custom_3way_button_transfer"]))			{$custom_3way_button_transfer=$_GET["custom_3way_button_transfer"];}
 	elseif (isset($_POST["custom_3way_button_transfer"]))	{$custom_3way_button_transfer=$_POST["custom_3way_button_transfer"];}
+	else {$custom_3way_button_transfer="DISABLED";}
 if (isset($_GET["available_only_tally_threshold"]))				{$available_only_tally_threshold=$_GET["available_only_tally_threshold"];}
 	elseif (isset($_POST["available_only_tally_threshold"]))	{$available_only_tally_threshold=$_POST["available_only_tally_threshold"];}
+	else {$available_only_tally_threshold="DISABLED";}
 if (isset($_GET["available_only_tally_threshold_agents"]))			{$available_only_tally_threshold_agents=$_GET["available_only_tally_threshold_agents"];}
 	elseif (isset($_POST["available_only_tally_threshold_agents"]))	{$available_only_tally_threshold_agents=$_POST["available_only_tally_threshold_agents"];}
+	else {$available_only_tally_threshold_agents=0;}
 if (isset($_GET["dial_level_threshold"]))			{$dial_level_threshold=$_GET["dial_level_threshold"];}
 	elseif (isset($_POST["dial_level_threshold"]))	{$dial_level_threshold=$_POST["dial_level_threshold"];}
+	else {$dial_level_threshold="DISABLED";}
 if (isset($_GET["dial_level_threshold_agents"]))			{$dial_level_threshold_agents=$_GET["dial_level_threshold_agents"];}
 	elseif (isset($_POST["dial_level_threshold_agents"]))	{$dial_level_threshold_agents=$_POST["dial_level_threshold_agents"];}
+	else {$dial_level_threshold_agents=0;}
 if (isset($_GET["time_zone_setting"]))			{$time_zone_setting=$_GET["time_zone_setting"];}
 	elseif (isset($_POST["time_zone_setting"]))	{$time_zone_setting=$_POST["time_zone_setting"];}
+	else {$time_zone_setting="COUNTRY_AND_AREA_CODE";}
 if (isset($_GET["safe_harbor_audio"]))			{$safe_harbor_audio=$_GET["safe_harbor_audio"];}
 	elseif (isset($_POST["safe_harbor_audio"]))	{$safe_harbor_audio=$_POST["safe_harbor_audio"];}
+	else {$safe_harbor_audio="";}
 if (isset($_GET["safe_harbor_menu_id"]))			{$safe_harbor_menu_id=$_GET["safe_harbor_menu_id"];}
 	elseif (isset($_POST["safe_harbor_menu_id"]))	{$safe_harbor_menu_id=$_POST["safe_harbor_menu_id"];}
+	else {$safe_harbor_menu_id="";}
 if (isset($_GET["dtmf_log"]))			{$dtmf_log=$_GET["dtmf_log"];}
 	elseif (isset($_POST["dtmf_log"]))	{$dtmf_log=$_POST["dtmf_log"];}
+	else {$dtmf_log=0;}
 if (isset($_GET["webphone_auto_answer"]))			{$webphone_auto_answer=$_GET["webphone_auto_answer"];}
 	elseif (isset($_POST["webphone_auto_answer"]))	{$webphone_auto_answer=$_POST["webphone_auto_answer"];}
+	else {$webphone_auto_answer="Y";}
 if (isset($_GET["survey_menu_id"]))				{$survey_menu_id=$_GET["survey_menu_id"];}
 	elseif (isset($_POST["survey_menu_id"]))	{$survey_menu_id=$_POST["survey_menu_id"];}
+	else {$survey_menu_id="";}
 if (isset($_GET["callback_days_limit"]))			{$callback_days_limit=$_GET["callback_days_limit"];}
 	elseif (isset($_POST["callback_days_limit"]))	{$callback_days_limit=$_POST["callback_days_limit"];}
+	else {$callback_days_limit=0;}
 if (isset($_GET["dl_diff_target_method"]))			{$dl_diff_target_method=$_GET["dl_diff_target_method"];}
 	elseif (isset($_POST["dl_diff_target_method"]))	{$dl_diff_target_method=$_POST["dl_diff_target_method"];}
+	else {$dl_diff_target_method="ADAPT_CALC_ONLY";}
 if (isset($_GET["disable_dispo_screen"]))			{$disable_dispo_screen=$_GET["disable_dispo_screen"];}
 	elseif (isset($_POST["disable_dispo_screen"]))	{$disable_dispo_screen=$_POST["disable_dispo_screen"];}
+	else {$disable_dispo_screen="DISPO_ENABLED";}
 if (isset($_GET["disable_dispo_status"]))			{$disable_dispo_status=$_GET["disable_dispo_status"];}
 	elseif (isset($_POST["disable_dispo_status"]))	{$disable_dispo_status=$_POST["disable_dispo_status"];}
+	else {$disable_dispo_status="";}
 if (isset($_GET["screen_labels"]))			{$screen_labels=$_GET["screen_labels"];}
 	elseif (isset($_POST["screen_labels"]))	{$screen_labels=$_POST["screen_labels"];}
+	else {$screen_labels="--SYSTEM-SETTINGS--";}
 if (isset($_GET["label_hide_field_logs"]))			{$label_hide_field_logs=$_GET["label_hide_field_logs"];}
 	elseif (isset($_POST["label_hide_field_logs"]))	{$label_hide_field_logs=$_POST["label_hide_field_logs"];}
+	else {$label_hide_field_logs="Y";}
 if (isset($_GET["label_id"]))			{$label_id=$_GET["label_id"];}
 	elseif (isset($_POST["label_id"]))	{$label_id=$_POST["label_id"];}
+	else {$label_id="";}
 if (isset($_GET["label_name"]))				{$label_name=$_GET["label_name"];}
 	elseif (isset($_POST["label_name"]))	{$label_name=$_POST["label_name"];}
+	else {$label_name="";}
 if (isset($_GET["status_display_fields"]))			{$status_display_fields=$_GET["status_display_fields"];}
 	elseif (isset($_POST["status_display_fields"]))	{$status_display_fields=$_POST["status_display_fields"];}
+	else {$status_display_fields="CALLID";}
 if (isset($_GET["queuemetrics_pe_phone_append"]))			{$queuemetrics_pe_phone_append=$_GET["queuemetrics_pe_phone_append"];}
 	elseif (isset($_POST["queuemetrics_pe_phone_append"]))	{$queuemetrics_pe_phone_append=$_POST["queuemetrics_pe_phone_append"];}
+	else {$queuemetrics_pe_phone_append=0;}
 if (isset($_GET["test_campaign_calls"]))			{$test_campaign_calls=$_GET["test_campaign_calls"];}
 	elseif (isset($_POST["test_campaign_calls"]))	{$test_campaign_calls=$_POST["test_campaign_calls"];}
+	else {$test_campaign_calls=0;}
 if (isset($_GET["agents_calls_reset"]))				{$agents_calls_reset=$_GET["agents_calls_reset"];}
 	elseif (isset($_POST["agents_calls_reset"]))	{$agents_calls_reset=$_POST["agents_calls_reset"];}
+	else {$agents_calls_reset=1;}
 if (isset($_GET["voicemail_timezone"]))				{$voicemail_timezone=$_GET["voicemail_timezone"];}
 	elseif (isset($_POST["voicemail_timezone"]))	{$voicemail_timezone=$_POST["voicemail_timezone"];}
+	else {$voicemail_timezone="eastern";}
 if (isset($_GET["voicemail_options"]))			{$voicemail_options=$_GET["voicemail_options"];}
 	elseif (isset($_POST["voicemail_options"]))	{$voicemail_options=$_POST["voicemail_options"];}
+	else {$voicemail_options="";}
 if (isset($_GET["default_voicemail_timezone"]))				{$default_voicemail_timezone=$_GET["default_voicemail_timezone"];}
 	elseif (isset($_POST["default_voicemail_timezone"]))	{$default_voicemail_timezone=$_POST["default_voicemail_timezone"];}
+	else {$default_voicemail_timezone="";}
 if (isset($_GET["default_local_gmt"]))			{$default_local_gmt=$_GET["default_local_gmt"];}
 	elseif (isset($_POST["default_local_gmt"]))	{$default_local_gmt=$_POST["default_local_gmt"];}
+	else {$default_local_gmt="-5.00";}
 if (isset($_GET["na_call_url"]))			{$na_call_url=$_GET["na_call_url"];}
 	elseif (isset($_POST["na_call_url"]))	{$na_call_url=$_POST["na_call_url"];}
 if (isset($_GET["on_hook_cid"]))			{$on_hook_cid=$_GET["on_hook_cid"];}
 	elseif (isset($_POST["on_hook_cid"]))	{$on_hook_cid=$_POST["on_hook_cid"];}
+	else {$on_hook_cid="CUSTOMER_PHONE_RINGAGENT";}
 if (isset($_GET["form_end"]))			{$form_end=$_GET["form_end"];}
 	elseif (isset($_POST["form_end"]))	{$form_end=$_POST["form_end"];}
+	else {$form_end="";}
 if (isset($_GET["noanswer_log"]))			{$noanswer_log=$_GET["noanswer_log"];}
 	elseif (isset($_POST["noanswer_log"]))	{$noanswer_log=$_POST["noanswer_log"];}
+	else {$noanswer_log="N";}
 if (isset($_GET["alt_log_server_ip"]))			{$alt_log_server_ip=$_GET["alt_log_server_ip"];}
 	elseif (isset($_POST["alt_log_server_ip"]))	{$alt_log_server_ip=$_POST["alt_log_server_ip"];}
+	else {$alt_log_server_ip="";}
 if (isset($_GET["alt_log_dbname"]))			{$alt_log_dbname=$_GET["alt_log_dbname"];}
 	elseif (isset($_POST["alt_log_dbname"]))	{$alt_log_dbname=$_POST["alt_log_dbname"];}
+	else {$alt_log_dbname="";}
 if (isset($_GET["alt_log_login"]))			{$alt_log_login=$_GET["alt_log_login"];}
 	elseif (isset($_POST["alt_log_login"]))	{$alt_log_login=$_POST["alt_log_login"];}
+	else {$alt_log_login="";}
 if (isset($_GET["alt_log_pass"]))			{$alt_log_pass=$_GET["alt_log_pass"];}
 	elseif (isset($_POST["alt_log_pass"]))	{$alt_log_pass=$_POST["alt_log_pass"];}
+	else {$alt_log_pass="";}
 if (isset($_GET["tables_use_alt_log_db"]))			{$tables_use_alt_log_db=$_GET["tables_use_alt_log_db"];}
 	elseif (isset($_POST["tables_use_alt_log_db"]))	{$tables_use_alt_log_db=$_POST["tables_use_alt_log_db"];}
+	else {$tables_use_alt_log_db="";}
 if (isset($_GET["did_agent_log"]))			{$did_agent_log=$_GET["did_agent_log"];}
 	elseif (isset($_POST["did_agent_log"]))	{$did_agent_log=$_POST["did_agent_log"];}
+	else {$did_agent_log="N";}
 if (isset($_GET["survey_recording"]))			{$survey_recording=$_GET["survey_recording"];}
 	elseif (isset($_POST["survey_recording"]))	{$survey_recording=$_POST["survey_recording"];}
+	else {$survey_recording="N";}
 if (isset($_GET["campaign_cid_areacodes_enabled"]))				{$campaign_cid_areacodes_enabled=$_GET["campaign_cid_areacodes_enabled"];}
 	elseif (isset($_POST["campaign_cid_areacodes_enabled"]))	{$campaign_cid_areacodes_enabled=$_POST["campaign_cid_areacodes_enabled"];}
+	else {$campaign_cid_areacodes_enabled=1;}
 if (isset($_GET["areacode"]))			{$areacode=$_GET["areacode"];}
 	elseif (isset($_POST["areacode"]))	{$areacode=$_POST["areacode"];}
+	else {$areacode="";}
 if (isset($_GET["cid_description"]))			{$cid_description=$_GET["cid_description"];}
 	elseif (isset($_POST["cid_description"]))	{$cid_description=$_POST["cid_description"];}
+	else {$cid_description="";}
 if (isset($_GET["pllb_grouping"]))			{$pllb_grouping=$_GET["pllb_grouping"];}
 	elseif (isset($_POST["pllb_grouping"]))	{$pllb_grouping=$_POST["pllb_grouping"];}
+	else {$pllb_grouping="DISABLED";}
 if (isset($_GET["pllb_grouping_limit"]))			{$pllb_grouping_limit=$_GET["pllb_grouping_limit"];}
 	elseif (isset($_POST["pllb_grouping_limit"]))	{$pllb_grouping_limit=$_POST["pllb_grouping_limit"];}
+	else {$pllb_grouping_limit=50;}
 if (isset($_GET["description"]))			{$description=$_GET["description"];}
 	elseif (isset($_POST["description"]))	{$description=$_POST["description"];}
+	else {$description="";}
 if (isset($_GET["did_ra_extensions_enabled"]))			{$did_ra_extensions_enabled=$_GET["did_ra_extensions_enabled"];}
 	elseif (isset($_POST["did_ra_extensions_enabled"]))	{$did_ra_extensions_enabled=$_POST["did_ra_extensions_enabled"];}
+	else {$did_ra_extensions_enabled=0;}
 if (isset($_GET["modify_shifts"]))			{$modify_shifts=$_GET["modify_shifts"];}
 	elseif (isset($_POST["modify_shifts"]))	{$modify_shifts=$_POST["modify_shifts"];}
+	else {$modify_shifts=0;}
 if (isset($_GET["modify_phones"]))			{$modify_phones=$_GET["modify_phones"];}
 	elseif (isset($_POST["modify_phones"]))	{$modify_phones=$_POST["modify_phones"];}
+	else {$modify_phones=0;}
 if (isset($_GET["modify_carriers"]))			{$modify_carriers=$_GET["modify_carriers"];}
 	elseif (isset($_POST["modify_carriers"]))	{$modify_carriers=$_POST["modify_carriers"];}
+	else {$modify_carriers=0;}
 if (isset($_GET["modify_labels"]))			{$modify_labels=$_GET["modify_labels"];}
 	elseif (isset($_POST["modify_labels"]))	{$modify_labels=$_POST["modify_labels"];}
+	else {$modify_labels=0;}
 if (isset($_GET["modify_statuses"]))			{$modify_statuses=$_GET["modify_statuses"];}
 	elseif (isset($_POST["modify_statuses"]))	{$modify_statuses=$_POST["modify_statuses"];}
+	else {$modify_statuses=0;}
 if (isset($_GET["modify_voicemail"]))			{$modify_voicemail=$_GET["modify_voicemail"];}
 	elseif (isset($_POST["modify_voicemail"]))	{$modify_voicemail=$_POST["modify_voicemail"];}
+	else {$modify_voicemail=0;}
 if (isset($_GET["modify_audiostore"]))			{$modify_audiostore=$_GET["modify_audiostore"];}
 	elseif (isset($_POST["modify_audiostore"]))	{$modify_audiostore=$_POST["modify_audiostore"];}
+	else {$modify_audiostore=0;}
 if (isset($_GET["modify_moh"]))				{$modify_moh=$_GET["modify_moh"];}
 	elseif (isset($_POST["modify_moh"]))	{$modify_moh=$_POST["modify_moh"];}
+	else {$modify_moh=0;}
 if (isset($_GET["modify_tts"]))				{$modify_tts=$_GET["modify_tts"];}
 	elseif (isset($_POST["modify_tts"]))	{$modify_tts=$_POST["modify_tts"];}
+	else {$modify_tts=0;}
 if (isset($_GET["action_xfer_cid"]))			{$action_xfer_cid=$_GET["action_xfer_cid"];}
 	elseif (isset($_POST["action_xfer_cid"]))	{$action_xfer_cid=$_POST["action_xfer_cid"];}
+	else {$action_xfer_cid="CUSTOMER";}
 if (isset($_GET["drop_callmenu"]))			{$drop_callmenu=$_GET["drop_callmenu"];}
 	elseif (isset($_POST["drop_callmenu"]))	{$drop_callmenu=$_POST["drop_callmenu"];}
+	else {$drop_callmenu="";}
 if (isset($_GET["after_hours_callmenu"]))			{$after_hours_callmenu=$_GET["after_hours_callmenu"];}
 	elseif (isset($_POST["after_hours_callmenu"]))	{$after_hours_callmenu=$_POST["after_hours_callmenu"];}
+	else {$after_hours_callmenu="";}
 if (isset($_GET["dtmf_field"]))			{$dtmf_field=$_GET["dtmf_field"];}
 	elseif (isset($_POST["dtmf_field"]))	{$dtmf_field=$_POST["dtmf_field"];}
+	else {$dtmf_field="NONE";}
 if (isset($_GET["call_count_limit"]))			{$call_count_limit=$_GET["call_count_limit"];}
 	elseif (isset($_POST["call_count_limit"]))	{$call_count_limit=$_POST["call_count_limit"];}
+	else {$call_count_limit=0;}
 if (isset($_GET["call_count_target"]))			{$call_count_target=$_GET["call_count_target"];}
 	elseif (isset($_POST["call_count_target"]))	{$call_count_target=$_POST["call_count_target"];}
+	else {$call_count_target=3;}
 if (isset($_GET["completed"]))			{$completed=$_GET["completed"];}
 	elseif (isset($_POST["completed"]))	{$completed=$_POST["completed"];}
+	else {$completed="N";}
 if (isset($_GET["expanded_list_stats"]))			{$expanded_list_stats=$_GET["expanded_list_stats"];}
 	elseif (isset($_POST["expanded_list_stats"]))	{$expanded_list_stats=$_POST["expanded_list_stats"];}
+	else {$expanded_list_stats=1;}
 if (isset($_GET["report_option"]))			{$report_option=$_GET["report_option"];}
 	elseif (isset($_POST["report_option"]))	{$report_option=$_POST["report_option"];}
+	else {$report_option="N";}
 if (isset($_GET["preset_contact_search"]))			{$preset_contact_search=$_GET["preset_contact_search"];}
 	elseif (isset($_POST["preset_contact_search"]))	{$preset_contact_search=$_POST["preset_contact_search"];}
+	else {$preset_contact_search="NOT_ACTIVE";}
 if (isset($_GET["contacts_enabled"]))			{$contacts_enabled=$_GET["contacts_enabled"];}
 	elseif (isset($_POST["contacts_enabled"]))	{$contacts_enabled=$_POST["contacts_enabled"];}
+	else {$contacts_enabled=0;}
 if (isset($_GET["contact_id"]))				{$contact_id=$_GET["contact_id"];}
 	elseif (isset($_POST["contact_id"]))	{$contact_id=$_POST["contact_id"];}
+	else {$contact_id="";}
 if (isset($_GET["first_name"]))				{$first_name=$_GET["first_name"];}
 	elseif (isset($_POST["first_name"]))	{$first_name=$_POST["first_name"];}
+	else {$first_name="";}
 if (isset($_GET["last_name"]))				{$last_name=$_GET["last_name"];}
 	elseif (isset($_POST["last_name"]))		{$last_name=$_POST["last_name"];}
+	else {$last_name="";}
 if (isset($_GET["office_num"]))				{$office_num=$_GET["office_num"];}
 	elseif (isset($_POST["office_num"]))	{$office_num=$_POST["office_num"];}
+	else {$office_num="";}
 if (isset($_GET["cell_num"]))				{$cell_num=$_GET["cell_num"];}
 	elseif (isset($_POST["cell_num"]))		{$cell_num=$_POST["cell_num"];}
+	else {$cell_num="";}
 if (isset($_GET["other_num1"]))				{$other_num1=$_GET["other_num1"];}
 	elseif (isset($_POST["other_num1"]))	{$other_num1=$_POST["other_num1"];}
+	else {$other_num1="";}
 if (isset($_GET["other_num2"]))				{$other_num2=$_GET["other_num2"];}
 	elseif (isset($_POST["other_num2"]))	{$other_num2=$_POST["other_num2"];}
+	else {$other_num2="";}
 if (isset($_GET["modify_contacts"]))			{$modify_contacts=$_GET["modify_contacts"];}
 	elseif (isset($_POST["modify_contacts"]))	{$modify_contacts=$_POST["modify_contacts"];}
+	else {$modify_contacts=0;}
 if (isset($_GET["bu_name"]))			{$bu_name=$_GET["bu_name"];}
 	elseif (isset($_POST["bu_name"]))	{$bu_name=$_POST["bu_name"];}
+	else {$bu_name="";}
 if (isset($_GET["department"]))				{$department=$_GET["department"];}
 	elseif (isset($_POST["department"]))	{$department=$_POST["department"];}
+	else {$department="";}
 if (isset($_GET["job_title"]))			{$job_title=$_GET["job_title"];}
 	elseif (isset($_POST["job_title"]))	{$job_title=$_POST["job_title"];}
+	else {$job_title="";}
 if (isset($_GET["location"]))			{$location=$_GET["location"];}
 	elseif (isset($_POST["location"]))	{$location=$_POST["location"];}
+	else {$location="";}
 if (isset($_GET["callback_hours_block"]))			{$callback_hours_block=$_GET["callback_hours_block"];}
 	elseif (isset($_POST["callback_hours_block"]))	{$callback_hours_block=$_POST["callback_hours_block"];}
+	else {$callback_hours_block=0;}
 if (isset($_GET["callback_list_calltime"]))				{$callback_list_calltime=$_GET["callback_list_calltime"];}
 	elseif (isset($_POST["callback_list_calltime"]))	{$callback_list_calltime=$_POST["callback_list_calltime"];}
+	else {$callback_list_calltime="DISABLED";}
 if (isset($_GET["modify_same_user_level"]))				{$modify_same_user_level=$_GET["modify_same_user_level"];}
 	elseif (isset($_POST["modify_same_user_level"]))	{$modify_same_user_level=$_POST["modify_same_user_level"];}
+	else {$modify_same_user_level=1;}
 if (isset($_GET["admin_hide_lead_data"]))			{$admin_hide_lead_data=$_GET["admin_hide_lead_data"];}
 	elseif (isset($_POST["admin_hide_lead_data"]))	{$admin_hide_lead_data=$_POST["admin_hide_lead_data"];}
+	else {$admin_hide_lead_data=0;}
 if (isset($_GET["admin_hide_phone_data"]))			{$admin_hide_phone_data=$_GET["admin_hide_phone_data"];}
 	elseif (isset($_POST["admin_hide_phone_data"]))	{$admin_hide_phone_data=$_POST["admin_hide_phone_data"];}
+	else {$admin_hide_phone_data=0;}
 if (isset($_GET["admin_viewable_groups"]))			{$admin_viewable_groups=$_GET["admin_viewable_groups"];}
 	elseif (isset($_POST["admin_viewable_groups"]))	{$admin_viewable_groups=$_POST["admin_viewable_groups"];}
 if (isset($_GET["admin_viewable_call_times"]))			{$admin_viewable_call_times=$_GET["admin_viewable_call_times"];}
 	elseif (isset($_POST["admin_viewable_call_times"]))	{$admin_viewable_call_times=$_POST["admin_viewable_call_times"];}
 if (isset($_GET["max_calls_method"]))			{$max_calls_method=$_GET["max_calls_method"];}
 	elseif (isset($_POST["max_calls_method"]))	{$max_calls_method=$_POST["max_calls_method"];}
+	else {$max_calls_method="DISABLED";}
 if (isset($_GET["max_calls_count"]))			{$max_calls_count=$_GET["max_calls_count"];}
 	elseif (isset($_POST["max_calls_count"]))	{$max_calls_count=$_POST["max_calls_count"];}
+	else {$max_calls_count=0;}
 if (isset($_GET["max_calls_action"]))			{$max_calls_action=$_GET["max_calls_action"];}
 	elseif (isset($_POST["max_calls_action"]))	{$max_calls_action=$_POST["max_calls_action"];}
+	else {$max_calls_action="NO_AGENT_NO_QUEUE";}
 if (isset($_GET["territory_reset"]))			{$territory_reset=$_GET["territory_reset"];}
 	elseif (isset($_POST["territory_reset"]))	{$territory_reset=$_POST["territory_reset"];}
 if (isset($_GET["hopper_vlc_dup_check"]))			{$hopper_vlc_dup_check=$_GET["hopper_vlc_dup_check"];}
 	elseif (isset($_POST["hopper_vlc_dup_check"]))	{$hopper_vlc_dup_check=$_POST["hopper_vlc_dup_check"];}
+	else {$hopper_vlc_dup_check="N";}
 if (isset($_GET["download_max_system_stats_metric"]))			{$download_max_system_stats_metric=$_GET["download_max_system_stats_metric"];}
 	elseif (isset($_POST["download_max_system_stats_metric"]))	{$download_max_system_stats_metric=$_POST["download_max_system_stats_metric"];}
+	else {$download_max_system_stats_metric="";}
 if (isset($_GET["download_max_system_stats_metric_name"]))			{$download_max_system_stats_metric_name=$_GET["download_max_system_stats_metric_name"];}
 	elseif (isset($_POST["download_max_system_stats_metric_name"]))	{$download_max_system_stats_metric_name=$_POST["download_max_system_stats_metric_name"];}
+	else {$download_max_system_stats_metric_name="";}
 if (isset($_GET["inventory_report"]))			{$inventory_report=$_GET["inventory_report"];}
 	elseif (isset($_POST["inventory_report"]))	{$inventory_report=$_POST["inventory_report"];}
+	else {$inventory_report="Y";}
 if (isset($_GET["report_rank"]))			{$report_rank=$_GET["report_rank"];}
 	elseif (isset($_POST["report_rank"]))	{$report_rank=$_POST["report_rank"];}
+	else {$report_rank=1;}
 if (isset($_GET["in_group_dial"]))			{$in_group_dial=$_GET["in_group_dial"];}
 	elseif (isset($_POST["in_group_dial"]))	{$in_group_dial=$_POST["in_group_dial"];}
+	else {$in_group_dial="DISABLED";}
 if (isset($_GET["in_group_dial_select"]))			{$in_group_dial_select=$_GET["in_group_dial_select"];}
 	elseif (isset($_POST["in_group_dial_select"]))	{$in_group_dial_select=$_POST["in_group_dial_select"];}
+	else {$in_group_dial_select="CAMPAIGN_SELECTED";}
 if (isset($_GET["dial_ingroup_cid"]))			{$dial_ingroup_cid=$_GET["dial_ingroup_cid"];}
 	elseif (isset($_POST["dial_ingroup_cid"]))	{$dial_ingroup_cid=$_POST["dial_ingroup_cid"];}
+	else {$dial_ingroup_cid="";}
 if (isset($_GET["allow_emails"]))			{$allow_emails=$_GET["allow_emails"];}
 	elseif (isset($_POST["allow_emails"]))	{$allow_emails=$_POST["allow_emails"];}
+	else {$allow_emails="";}
 if (isset($_GET["allow_chats"]))			{$allow_chats=$_GET["allow_chats"];}
 	elseif (isset($_POST["allow_chats"]))	{$allow_chats=$_POST["allow_chats"];}
+	else {$allow_chats="";}
 if (isset($_GET["chat_url"]))			{$chat_url=$_GET["chat_url"];}
 	elseif (isset($_POST["chat_url"]))	{$chat_url=$_POST["chat_url"];}
 if (isset($_GET["chat_timeout"]))			{$chat_timeout=$_GET["chat_timeout"];}
 	elseif (isset($_POST["chat_timeout"]))	{$chat_timeout=$_POST["chat_timeout"];}
+	else {$chat_timeout="";}
 if (isset($_GET["manager_chat_id"]))			{$manager_chat_id=$_GET["manager_chat_id"];}
 	elseif (isset($_POST["manager_chat_id"]))	{$manager_chat_id=$_POST["manager_chat_id"];}
+	else {$manager_chat_id="";}
 if (isset($_GET["group_handling"]))			{$group_handling=$_GET["group_handling"];}
 	elseif (isset($_POST["group_handling"]))	{$group_handling=$_POST["group_handling"];}
+	else {$group_handling="PHONE";}
 if (isset($_GET["agentcall_email"]))			{$agentcall_email=$_GET["agentcall_email"];}
 	elseif (isset($_POST["agentcall_email"]))	{$agentcall_email=$_POST["agentcall_email"];}
+	else {$agentcall_email=0;}
 if (isset($_GET["agentcall_chat"]))			{$agentcall_chat=$_GET["agentcall_chat"];}
 	elseif (isset($_POST["agentcall_chat"]))	{$agentcall_chat=$_POST["agentcall_chat"];}
+	else {$agentcall_chat=0;}
 if (isset($_GET["modify_email_accounts"]))			{$modify_email_accounts=$_GET["modify_email_accounts"];}
 	elseif (isset($_POST["modify_email_accounts"]))	{$modify_email_accounts=$_POST["modify_email_accounts"];}
+	else {$modify_email_accounts=0;}
 if (isset($_GET["safe_harbor_audio_field"]))			{$safe_harbor_audio_field=$_GET["safe_harbor_audio_field"];}
 	elseif (isset($_POST["safe_harbor_audio_field"]))	{$safe_harbor_audio_field=$_POST["safe_harbor_audio_field"];}
+	else {$safe_harbor_audio_field="DISABLED";}
 if (isset($_GET["query_date"]))			{$query_date=$_GET["query_date"];}
 	elseif (isset($_POST["query_date"]))	{$query_date=$_POST["query_date"];}
+	else {$query_date="";}
 if (isset($_GET["end_date"]))			{$end_date=$_GET["end_date"];}
 	elseif (isset($_POST["end_date"]))	{$end_date=$_POST["end_date"];}
+	else {$end_date="";}
 if (isset($_GET["call_menu_qualify_enabled"]))			{$call_menu_qualify_enabled=$_GET["call_menu_qualify_enabled"];}
 	elseif (isset($_POST["call_menu_qualify_enabled"]))	{$call_menu_qualify_enabled=$_POST["call_menu_qualify_enabled"];}
+	else {$call_menu_qualify_enabled=0;}
 if (isset($_GET["qualify_sql"]))			{$qualify_sql=$_GET["qualify_sql"];}
 	elseif (isset($_POST["qualify_sql"]))	{$qualify_sql=$_POST["qualify_sql"];}
+	else {$qualify_sql="";}
 if (isset($_GET["admin_list_counts"]))			{$admin_list_counts=$_GET["admin_list_counts"];}
 	elseif (isset($_POST["admin_list_counts"]))	{$admin_list_counts=$_POST["admin_list_counts"];}
+	else {$admin_list_counts=1;}
 if (isset($_GET["voicemail_greeting"]))				{$voicemail_greeting=$_GET["voicemail_greeting"];}
 	elseif (isset($_POST["voicemail_greeting"]))	{$voicemail_greeting=$_POST["voicemail_greeting"];}
+	else {$voicemail_greeting="";}
 if (isset($_GET["old_voicemail_greeting"]))				{$old_voicemail_greeting=$_GET["old_voicemail_greeting"];}
 	elseif (isset($_POST["old_voicemail_greeting"]))	{$old_voicemail_greeting=$_POST["old_voicemail_greeting"];}
+	else {$old_voicemail_greeting="";}
 if (isset($_GET["allow_voicemail_greeting"]))			{$allow_voicemail_greeting=$_GET["allow_voicemail_greeting"];}
 	elseif (isset($_POST["allow_voicemail_greeting"]))	{$allow_voicemail_greeting=$_POST["allow_voicemail_greeting"];}
+	else {$allow_voicemail_greeting=0;}
 if (isset($_GET["show_vm_on_summary"]))			{$show_vm_on_summary=$_GET["show_vm_on_summary"];}
 	elseif (isset($_POST["show_vm_on_summary"]))	{$show_vm_on_summary=$_POST["show_vm_on_summary"];}
+	else {$show_vm_on_summary="";}
 if (isset($_GET["pause_after_next_call"]))			{$pause_after_next_call=$_GET["pause_after_next_call"];}
 	elseif (isset($_POST["pause_after_next_call"]))	{$pause_after_next_call=$_POST["pause_after_next_call"];}
+	else {$pause_after_next_call="DISABLED";}
 if (isset($_GET["owner_populate"]))				{$owner_populate=$_GET["owner_populate"];}
 	elseif (isset($_POST["owner_populate"]))	{$owner_populate=$_POST["owner_populate"];}
+	else {$owner_populate="DISABLED";}
 if (isset($_GET["queuemetrics_socket"]))			{$queuemetrics_socket=$_GET["queuemetrics_socket"];}
 	elseif (isset($_POST["queuemetrics_socket"]))	{$queuemetrics_socket=$_POST["queuemetrics_socket"];}
+	else {$queuemetrics_socket="NONE";}
 if (isset($_GET["queuemetrics_socket_url"]))			{$queuemetrics_socket_url=$_GET["queuemetrics_socket_url"];}
 	elseif (isset($_POST["queuemetrics_socket_url"]))	{$queuemetrics_socket_url=$_POST["queuemetrics_socket_url"];}
+	else {$queuemetrics_socket_url="";}
 if (isset($_GET["holiday_id"]))					{$holiday_id=$_GET["holiday_id"];}
 	elseif (isset($_POST["holiday_id"]))		{$holiday_id=$_POST["holiday_id"];}
+	else {$holiday_id="";}
 if (isset($_GET["holiday_name"]))				{$holiday_name=$_GET["holiday_name"];}
 	elseif (isset($_POST["holiday_name"]))		{$holiday_name=$_POST["holiday_name"];}
+	else {$holiday_name="";}
 if (isset($_GET["holiday_comments"]))			{$holiday_comments=$_GET["holiday_comments"];}
 	elseif (isset($_POST["holiday_comments"]))	{$holiday_comments=$_POST["holiday_comments"];}
+	else {$holiday_comments="";}
 if (isset($_GET["holiday_date"]))				{$holiday_date=$_GET["holiday_date"];}
 	elseif (isset($_POST["holiday_date"]))		{$holiday_date=$_POST["holiday_date"];}
+	else {$holiday_date="";}
 if (isset($_GET["holiday_status"]))				{$holiday_status=$_GET["holiday_status"];}
 	elseif (isset($_POST["holiday_status"]))	{$holiday_status=$_POST["holiday_status"];}
+	else {$holiday_status="INACTIVE";}
 if (isset($_GET["holiday_rule"]))				{$holiday_rule=$_GET["holiday_rule"];}
 	elseif (isset($_POST["holiday_rule"]))		{$holiday_rule=$_POST["holiday_rule"];}
+	else {$holiday_rule="";}
 if (isset($_GET["expiration_date"]))			{$expiration_date=$_GET["expiration_date"];}
 	elseif (isset($_POST["expiration_date"]))	{$expiration_date=$_POST["expiration_date"];}
+	else {$expiration_date="2099-12-31";}
 if (isset($_GET["use_other_campaign_dnc"]))				{$use_other_campaign_dnc=$_GET["use_other_campaign_dnc"];}
 	elseif (isset($_POST["use_other_campaign_dnc"]))	{$use_other_campaign_dnc=$_POST["use_other_campaign_dnc"];}
+	else {$use_other_campaign_dnc="";}
 if (isset($_GET["enhanced_disconnect_logging"]))			{$enhanced_disconnect_logging=$_GET["enhanced_disconnect_logging"];}
 	elseif (isset($_POST["enhanced_disconnect_logging"]))	{$enhanced_disconnect_logging=$_POST["enhanced_disconnect_logging"];}
+	else {$enhanced_disconnect_logging=0;}
 if (isset($_GET["amd_inbound_group"]))			{$amd_inbound_group=$_GET["amd_inbound_group"];}
 	elseif (isset($_POST["amd_inbound_group"]))	{$amd_inbound_group=$_POST["amd_inbound_group"];}
+	else {$amd_inbound_group="";}
 if (isset($_GET["amd_callmenu"]))				{$amd_callmenu=$_GET["amd_callmenu"];}
 	elseif (isset($_POST["amd_callmenu"]))		{$amd_callmenu=$_POST["amd_callmenu"];}
+	else {$amd_callmenu="";}
 if (isset($_GET["level_8_disable_add"]))			{$level_8_disable_add=$_GET["level_8_disable_add"];}
 	elseif (isset($_POST["level_8_disable_add"]))	{$level_8_disable_add=$_POST["level_8_disable_add"];}
+	else {$level_8_disable_add=0;}
 if (isset($_GET["survey_wait_sec"]))			{$survey_wait_sec=$_GET["survey_wait_sec"];}
 	elseif (isset($_POST["survey_wait_sec"]))	{$survey_wait_sec=$_POST["survey_wait_sec"];}
+	else {$survey_wait_sec=10;}
 if (isset($_GET["queuemetrics_record_hold"]))			{$queuemetrics_record_hold=$_GET["queuemetrics_record_hold"];}
 	elseif (isset($_POST["queuemetrics_record_hold"]))	{$queuemetrics_record_hold=$_POST["queuemetrics_record_hold"];}
+	else {$queuemetrics_record_hold=0;}
 if (isset($_GET["country_code_list_stats"]))			{$country_code_list_stats=$_GET["country_code_list_stats"];}
 	elseif (isset($_POST["country_code_list_stats"]))	{$country_code_list_stats=$_POST["country_code_list_stats"];}
+	else {$country_code_list_stats=0;}
 if (isset($_GET["manual_dial_lead_id"]))			{$manual_dial_lead_id=$_GET["manual_dial_lead_id"];}
 	elseif (isset($_POST["manual_dial_lead_id"]))	{$manual_dial_lead_id=$_POST["manual_dial_lead_id"];}
+	else {$manual_dial_lead_id="N";}
 if (isset($_GET["auto_restart_asterisk"]))			{$auto_restart_asterisk=$_GET["auto_restart_asterisk"];}
 	elseif (isset($_POST["auto_restart_asterisk"]))	{$auto_restart_asterisk=$_POST["auto_restart_asterisk"];}
+	else {$auto_restart_asterisk="N";}
 if (isset($_GET["asterisk_temp_no_restart"]))			{$asterisk_temp_no_restart=$_GET["asterisk_temp_no_restart"];}
 	elseif (isset($_POST["asterisk_temp_no_restart"]))	{$asterisk_temp_no_restart=$_POST["asterisk_temp_no_restart"];}
+	else {$asterisk_temp_no_restart="N";}
 if (isset($_GET["dead_max"]))					{$dead_max=$_GET["dead_max"];}
 	elseif (isset($_POST["dead_max"]))			{$dead_max=$_POST["dead_max"];}
+	else {$dead_max=0;}
 if (isset($_GET["dispo_max"]))					{$dispo_max=$_GET["dispo_max"];}
 	elseif (isset($_POST["dispo_max"]))			{$dispo_max=$_POST["dispo_max"];}
+	else {$dispo_max=0;}
 if (isset($_GET["pause_max"]))					{$pause_max=$_GET["pause_max"];}
 	elseif (isset($_POST["pause_max"]))			{$pause_max=$_POST["pause_max"];}
+	else {$pause_max=0;}
 if (isset($_GET["dead_max_dispo"]))				{$dead_max_dispo=$_GET["dead_max_dispo"];}
 	elseif (isset($_POST["dead_max_dispo"]))	{$dead_max_dispo=$_POST["dead_max_dispo"];}
+	else {$dead_max_dispo="DCMX";}
 if (isset($_GET["dispo_max_dispo"]))			{$dispo_max_dispo=$_GET["dispo_max_dispo"];}
 	elseif (isset($_POST["dispo_max_dispo"]))	{$dispo_max_dispo=$_POST["dispo_max_dispo"];}
+	else {$dispo_max_dispo="DISMX";}
 if (isset($_GET["voicemail_dump_exten_no_inst"]))			{$voicemail_dump_exten_no_inst=$_GET["voicemail_dump_exten_no_inst"];}
 	elseif (isset($_POST["voicemail_dump_exten_no_inst"]))	{$voicemail_dump_exten_no_inst=$_POST["voicemail_dump_exten_no_inst"];}
+	else {$voicemail_dump_exten_no_inst=85026666666667;}
 if (isset($_GET["voicemail_instructions"]))				{$voicemail_instructions=$_GET["voicemail_instructions"];}
 	elseif (isset($_POST["voicemail_instructions"]))	{$voicemail_instructions=$_POST["voicemail_instructions"];}
+	else {$voicemail_instructions="Y";}
 if (isset($_GET["alter_admin_interface_options"]))			{$alter_admin_interface_options=$_GET["alter_admin_interface_options"];}
 	elseif (isset($_POST["alter_admin_interface_options"]))	{$alter_admin_interface_options=$_POST["alter_admin_interface_options"];}
+	else {$alter_admin_interface_options=1;}
 if (isset($_GET["filter_dnc_campaign"]))			{$filter_dnc_campaign=$_GET["filter_dnc_campaign"];}
 	elseif (isset($_POST["filter_dnc_campaign"]))	{$filter_dnc_campaign=$_POST["filter_dnc_campaign"];}
+	else {$filter_dnc_campaign="";}
 if (isset($_GET["filter_url_did_redirect"]))			{$filter_url_did_redirect=$_GET["filter_url_did_redirect"];}
 	elseif (isset($_POST["filter_url_did_redirect"]))	{$filter_url_did_redirect=$_POST["filter_url_did_redirect"];}
+	else {$filter_url_did_redirect="N";}
 if (isset($_GET["max_inbound_calls"]))			{$max_inbound_calls=$_GET["max_inbound_calls"];}
 	elseif (isset($_POST["max_inbound_calls"]))	{$max_inbound_calls=$_POST["max_inbound_calls"];}
+	else {$max_inbound_calls=0;}
 if (isset($_GET["max_inbound_calls_old"]))			{$max_inbound_calls_old=$_GET["max_inbound_calls_old"];}
 	elseif (isset($_POST["max_inbound_calls_old"]))	{$max_inbound_calls_old=$_POST["max_inbound_calls_old"];}
+	else {$max_inbound_calls_old=0;}
 if (isset($_GET["manual_dial_search_checkbox"]))			{$manual_dial_search_checkbox=$_GET["manual_dial_search_checkbox"];}
 	elseif (isset($_POST["manual_dial_search_checkbox"]))	{$manual_dial_search_checkbox=$_POST["manual_dial_search_checkbox"];}
+	else {$manual_dial_search_checkbox="SELECTED";}
 if (isset($_GET["hide_call_log_info"]))				{$hide_call_log_info=$_GET["hide_call_log_info"];}
 	elseif (isset($_POST["hide_call_log_info"]))	{$hide_call_log_info=$_POST["hide_call_log_info"];}
+	else {$hide_call_log_info="N";}
+if (isset($_GET["hide_call_log_info_users"]))				{$hide_call_log_info_users=$_GET["hide_call_log_info_users"];}
+	elseif (isset($_POST["hide_call_log_info_users"]))	{$hide_call_log_info_users=$_POST["hide_call_log_info_users"];}
+	else {$hide_call_log_info_users="DISABLED";}
 if (isset($_GET["modify_custom_dialplans"]))			{$modify_custom_dialplans=$_GET["modify_custom_dialplans"];}
 	elseif (isset($_POST["modify_custom_dialplans"]))	{$modify_custom_dialplans=$_POST["modify_custom_dialplans"];}
+	else {$modify_custom_dialplans=0;}
 if (isset($_GET["queuemetrics_pause_type"]))			{$queuemetrics_pause_type=$_GET["queuemetrics_pause_type"];}
 	elseif (isset($_POST["queuemetrics_pause_type"]))	{$queuemetrics_pause_type=$_POST["queuemetrics_pause_type"];}
+	else {$queuemetrics_pause_type=0;}
 if (isset($_GET["frozen_server_call_clear"]))			{$frozen_server_call_clear=$_GET["frozen_server_call_clear"];}
 	elseif (isset($_POST["frozen_server_call_clear"]))	{$frozen_server_call_clear=$_POST["frozen_server_call_clear"];}
+	else {$frozen_server_call_clear=0;}
 if (isset($_GET["timer_alt_seconds"]))			{$timer_alt_seconds=$_GET["timer_alt_seconds"];}
 	elseif (isset($_POST["timer_alt_seconds"]))	{$timer_alt_seconds=$_POST["timer_alt_seconds"];}
+	else {$timer_alt_seconds=0;}
 if (isset($_GET["wrapup_seconds_override"]))			{$wrapup_seconds_override=$_GET["wrapup_seconds_override"];}
 	elseif (isset($_POST["wrapup_seconds_override"]))	{$wrapup_seconds_override=$_POST["wrapup_seconds_override"];}
+	else {$wrapup_seconds_override="-1";}
 if (isset($_GET["no_agent_ingroup_redirect"]))			{$no_agent_ingroup_redirect=$_GET["no_agent_ingroup_redirect"];}
 	elseif (isset($_POST["no_agent_ingroup_redirect"]))	{$no_agent_ingroup_redirect=$_POST["no_agent_ingroup_redirect"];}
+	else {$no_agent_ingroup_redirect="DISABLED";}
 if (isset($_GET["no_agent_ingroup_id"]))			{$no_agent_ingroup_id=$_GET["no_agent_ingroup_id"];}
 	elseif (isset($_POST["no_agent_ingroup_id"]))	{$no_agent_ingroup_id=$_POST["no_agent_ingroup_id"];}
+	else {$no_agent_ingroup_id="";}
 if (isset($_GET["no_agent_ingroup_extension"]))			{$no_agent_ingroup_extension=$_GET["no_agent_ingroup_extension"];}
 	elseif (isset($_POST["no_agent_ingroup_extension"]))	{$no_agent_ingroup_extension=$_POST["no_agent_ingroup_extension"];}
+	else {$no_agent_ingroup_extension="9998811112";}
 if (isset($_GET["pre_filter_phone_group_id"]))			{$pre_filter_phone_group_id=$_GET["pre_filter_phone_group_id"];}
 	elseif (isset($_POST["pre_filter_phone_group_id"]))	{$pre_filter_phone_group_id=$_POST["pre_filter_phone_group_id"];}
+	else {$pre_filter_phone_group_id="";}
 if (isset($_GET["pre_filter_extension"]))			{$pre_filter_extension=$_GET["pre_filter_extension"];}
 	elseif (isset($_POST["pre_filter_extension"]))	{$pre_filter_extension=$_POST["pre_filter_extension"];}
+	else {$pre_filter_extension="";}
 if (isset($_GET["wrapup_bypass"]))			{$wrapup_bypass=$_GET["wrapup_bypass"];}
 	elseif (isset($_POST["wrapup_bypass"]))	{$wrapup_bypass=$_POST["wrapup_bypass"];}
+	else {$wrapup_bypass="ENABLED";}
 if (isset($_GET["wrapup_after_hotkey"]))			{$wrapup_after_hotkey=$_GET["wrapup_after_hotkey"];}
 	elseif (isset($_POST["wrapup_after_hotkey"]))	{$wrapup_after_hotkey=$_POST["wrapup_after_hotkey"];}
+	else {$wrapup_after_hotkey="DISABLED";}
 if (isset($_GET["callback_time_24hour"]))			{$callback_time_24hour=$_GET["callback_time_24hour"];}
 	elseif (isset($_POST["callback_time_24hour"]))	{$callback_time_24hour=$_POST["callback_time_24hour"];}
+	else {$callback_time_24hour=0;}
 if (isset($_GET["callback_active_limit"]))			{$callback_active_limit=$_GET["callback_active_limit"];}
 	elseif (isset($_POST["callback_active_limit"]))	{$callback_active_limit=$_POST["callback_active_limit"];}
+	else {$callback_active_limit=0;}
 if (isset($_GET["callback_active_limit_override"]))				{$callback_active_limit_override=$_GET["callback_active_limit_override"];}
 	elseif (isset($_POST["callback_active_limit_override"]))	{$callback_active_limit_override=$_POST["callback_active_limit_override"];}
+	else {$callback_active_limit_override="N";}
 if (isset($_GET["comments_all_tabs"]))			{$comments_all_tabs=$_GET["comments_all_tabs"];}
 	elseif (isset($_POST["comments_all_tabs"]))	{$comments_all_tabs=$_POST["comments_all_tabs"];}
+	else {$comments_all_tabs="DISABLED";}
 if (isset($_GET["comments_dispo_screen"]))			{$comments_dispo_screen=$_GET["comments_dispo_screen"];}
 	elseif (isset($_POST["comments_dispo_screen"]))	{$comments_dispo_screen=$_POST["comments_dispo_screen"];}
+	else {$comments_dispo_screen="DISABLED";}
 if (isset($_GET["comments_callback_screen"]))			{$comments_callback_screen=$_GET["comments_callback_screen"];}
 	elseif (isset($_POST["comments_callback_screen"]))	{$comments_callback_screen=$_POST["comments_callback_screen"];}
+	else {$comments_callback_screen="DISABLED";}
 if (isset($_GET["qc_comment_history"]))				{$qc_comment_history=$_GET["qc_comment_history"];}
 	elseif (isset($_POST["qc_comment_history"]))	{$qc_comment_history=$_POST["qc_comment_history"];}
+	else {$qc_comment_history="CLICK";}
 if (isset($_GET["show_previous_callback"]))				{$show_previous_callback=$_GET["show_previous_callback"];}
 	elseif (isset($_POST["show_previous_callback"]))	{$show_previous_callback=$_POST["show_previous_callback"];}
+	else {$show_previous_callback="ENABLED";}
 if (isset($_GET["clear_script"]))				{$clear_script=$_GET["clear_script"];}
 	elseif (isset($_POST["clear_script"]))	{$clear_script=$_POST["clear_script"];}
+	else {$clear_script="DISABLED";}
 if (isset($_GET["modify_languages"]))			{$modify_languages=$_GET["modify_languages"];}
 	elseif (isset($_POST["modify_languages"]))	{$modify_languages=$_POST["modify_languages"];}
+	else {$modify_languages=0;}
 if (isset($_GET["enable_languages"]))			{$enable_languages=$_GET["enable_languages"];}
 	elseif (isset($_POST["enable_languages"]))	{$enable_languages=$_POST["enable_languages"];}
+	else {$enable_languages=0;}
 if (isset($_GET["cpd_unknown_action"]))				{$cpd_unknown_action=$_GET["cpd_unknown_action"];}
 	elseif (isset($_POST["cpd_unknown_action"]))	{$cpd_unknown_action=$_POST["cpd_unknown_action"];}
+	else {$cpd_unknown_action="DISABLED";}
 if (isset($_GET["selected_language"]))			{$selected_language=$_GET["selected_language"];}
 	elseif (isset($_POST["selected_language"]))	{$selected_language=$_POST["selected_language"];}
+	else {$selected_language="default English";}
 if (isset($_GET["user_choose_language"]))			{$user_choose_language=$_GET["user_choose_language"];}
 	elseif (isset($_POST["user_choose_language"]))	{$user_choose_language=$_POST["user_choose_language"];}
+	else {$user_choose_language=0;}
 if (isset($_GET["language_method"]))			{$language_method=$_GET["language_method"];}
 	elseif (isset($_POST["language_method"]))	{$language_method=$_POST["language_method"];}
+	else {$language_method="DISABLED";}
 if (isset($_GET["ignore_group_on_search"]))				{$ignore_group_on_search=$_GET["ignore_group_on_search"];}
 	elseif (isset($_POST["ignore_group_on_search"]))	{$ignore_group_on_search=$_POST["ignore_group_on_search"];}
+	else {$ignore_group_on_search=0;}
 if (isset($_GET["manual_dial_search_filter"]))			{$manual_dial_search_filter=$_GET["manual_dial_search_filter"];}
 	elseif (isset($_POST["manual_dial_search_filter"]))	{$manual_dial_search_filter=$_POST["manual_dial_search_filter"];}
+	else {$manual_dial_search_filter="NONE";}
 if (isset($_GET["meetme_enter_login_filename"]))			{$meetme_enter_login_filename=$_GET["meetme_enter_login_filename"];}
 	elseif (isset($_POST["meetme_enter_login_filename"]))	{$meetme_enter_login_filename=$_POST["meetme_enter_login_filename"];}
+	else {$meetme_enter_login_filename="";}
 if (isset($_GET["meetme_enter_leave3way_filename"]))			{$meetme_enter_leave3way_filename=$_GET["meetme_enter_leave3way_filename"];}
 	elseif (isset($_POST["meetme_enter_leave3way_filename"]))	{$meetme_enter_leave3way_filename=$_POST["meetme_enter_leave3way_filename"];}
+	else {$meetme_enter_leave3way_filename="";}
 if (isset($_GET["enable_did_entry_list_id"]))			{$enable_did_entry_list_id=$_GET["enable_did_entry_list_id"];}
 	elseif (isset($_POST["enable_did_entry_list_id"]))	{$enable_did_entry_list_id=$_POST["enable_did_entry_list_id"];}
+	else {$enable_did_entry_list_id=0;}
 if (isset($_GET["entry_list_id"]))			{$entry_list_id=$_GET["entry_list_id"];}
 	elseif (isset($_POST["entry_list_id"]))	{$entry_list_id=$_POST["entry_list_id"];}
+	else {$entry_list_id=0;}
 if (isset($_GET["filter_entry_list_id"]))			{$filter_entry_list_id=$_GET["filter_entry_list_id"];}
 	elseif (isset($_POST["filter_entry_list_id"]))	{$filter_entry_list_id=$_POST["filter_entry_list_id"];}
+	else {$filter_entry_list_id=0;}
 if (isset($_GET["allow_chats"]))			{$allow_chats=$_GET["allow_chats"];}
 	elseif (isset($_POST["allow_chats"]))	{$allow_chats=$_POST["allow_chats"];}
 if (isset($_GET["enable_third_webform"]))			{$enable_third_webform=$_GET["enable_third_webform"];}
 	elseif (isset($_POST["enable_third_webform"]))	{$enable_third_webform=$_POST["enable_third_webform"];}
+	else {$enable_third_webform=0;}
 if (isset($_GET["web_form_address_three"]))			{$web_form_address_three=$_GET["web_form_address_three"];}
 	elseif (isset($_POST["web_form_address_three"]))	{$web_form_address_three=$_POST["web_form_address_three"];}
+	else {$web_form_address_three="";}
 if (isset($_GET["enable_international_dncs"]))			{$enable_international_dncs=$_GET["enable_international_dncs"];}
 	elseif (isset($_POST["enable_international_dncs"]))	{$enable_international_dncs=$_POST["enable_international_dncs"];}
+	else {$enable_international_dncs=0;}
 if (isset($_GET["api_list_restrict"]))			{$api_list_restrict=$_GET["api_list_restrict"];}
 	elseif (isset($_POST["api_list_restrict"]))	{$api_list_restrict=$_POST["api_list_restrict"];}
+	else {$api_list_restrict=0;}
 if (isset($_GET["api_allowed_functions"]))			{$api_allowed_functions=$_GET["api_allowed_functions"];}
 	elseif (isset($_POST["api_allowed_functions"]))	{$api_allowed_functions=$_POST["api_allowed_functions"];}
+	else {$api_allowed_functions=' ALL FUNCTIONS ';}
 if (isset($_GET["manual_dial_override_field"]))			{$manual_dial_override_field=$_GET["manual_dial_override_field"];}
 	elseif (isset($_POST["manual_dial_override_field"]))	{$manual_dial_override_field=$_POST["manual_dial_override_field"];}
+	else {$manual_dial_override_field="ENABLED";}
 if (isset($_GET["status_display_ingroup"]))			{$status_display_ingroup=$_GET["status_display_ingroup"];}
 	elseif (isset($_POST["status_display_ingroup"]))	{$status_display_ingroup=$_POST["status_display_ingroup"];}
+	else {$status_display_ingroup="ENABLED";}
 if (isset($_GET["populate_lead_ingroup"]))			{$populate_lead_ingroup=$_GET["populate_lead_ingroup"];}
 	elseif (isset($_POST["populate_lead_ingroup"]))	{$populate_lead_ingroup=$_POST["populate_lead_ingroup"];}
+	else {$populate_lead_ingroup="ENABLED";}
 if (isset($_GET["script_color"]))			{$script_color=$_GET["script_color"];}
 	elseif (isset($_POST["script_color"]))	{$script_color=$_POST["script_color"];}
+	else {$script_color="";}
 if (isset($_GET["customer_gone_seconds"]))			{$customer_gone_seconds=$_GET["customer_gone_seconds"];}
 	elseif (isset($_POST["customer_gone_seconds"]))	{$customer_gone_seconds=$_POST["customer_gone_seconds"];}
+	else {$customer_gone_seconds=30;}
 if (isset($_GET["max_queue_ingroup_calls"]))			{$max_queue_ingroup_calls=$_GET["max_queue_ingroup_calls"];}
 	elseif (isset($_POST["max_queue_ingroup_calls"]))	{$max_queue_ingroup_calls=$_POST["max_queue_ingroup_calls"];}
+	else {$max_queue_ingroup_calls=0;}
 if (isset($_GET["max_queue_ingroup_id"]))			{$max_queue_ingroup_id=$_GET["max_queue_ingroup_id"];}
 	elseif (isset($_POST["max_queue_ingroup_id"]))	{$max_queue_ingroup_id=$_POST["max_queue_ingroup_id"];}
+	else {$max_queue_ingroup_id="";}
 if (isset($_GET["max_queue_ingroup_extension"]))			{$max_queue_ingroup_extension=$_GET["max_queue_ingroup_extension"];}
 	elseif (isset($_POST["max_queue_ingroup_extension"]))	{$max_queue_ingroup_extension=$_POST["max_queue_ingroup_extension"];}
+	else {$max_queue_ingroup_extension=9998811112;}
+if (isset($_GET["max_system_stats_submit"]))			{$max_system_stats_submit=$_GET["max_system_stats_submit"];}
+	elseif (isset($_POST["max_system_stats_submit"]))	{$max_system_stats_submit=$_POST["max_system_stats_submit"];}
+	else {$max_system_stats_submit="";}
 if (isset($_GET["agent_debug_logging"]))			{$agent_debug_logging=$_GET["agent_debug_logging"];}
 	elseif (isset($_POST["agent_debug_logging"]))	{$agent_debug_logging=$_POST["agent_debug_logging"];}
+	else {$agent_debug_logging=0;}
 if (isset($_GET["agent_display_fields"]))			{$agent_display_fields=$_GET["agent_display_fields"];}
 	elseif (isset($_POST["agent_display_fields"]))	{$agent_display_fields=$_POST["agent_display_fields"];}
+	else {$agent_display_fields="";}
 if (isset($_GET["default_language"]))			{$default_language=$_GET["default_language"];}
 	elseif (isset($_POST["default_language"]))	{$default_language=$_POST["default_language"];}
+	else {$default_language="default English";}
 if (isset($_GET["agent_whisper_enabled"]))			{$agent_whisper_enabled=$_GET["agent_whisper_enabled"];}
 	elseif (isset($_POST["agent_whisper_enabled"]))	{$agent_whisper_enabled=$_POST["agent_whisper_enabled"];}
+	else {$agent_whisper_enabled=0;}
 if (isset($_GET["drop_lead_reset"]))			{$drop_lead_reset=$_GET["drop_lead_reset"];}
 	elseif (isset($_POST["drop_lead_reset"]))	{$drop_lead_reset=$_POST["drop_lead_reset"];}
+	else {$drop_lead_reset="N";}
 if (isset($_GET["after_hours_lead_reset"]))				{$after_hours_lead_reset=$_GET["after_hours_lead_reset"];}
 	elseif (isset($_POST["after_hours_lead_reset"]))	{$after_hours_lead_reset=$_POST["after_hours_lead_reset"];}
+	else {$after_hours_lead_reset="N";}
 if (isset($_GET["nanq_lead_reset"]))			{$nanq_lead_reset=$_GET["nanq_lead_reset"];}
 	elseif (isset($_POST["nanq_lead_reset"]))	{$nanq_lead_reset=$_POST["nanq_lead_reset"];}
+	else {$nanq_lead_reset="N";}
 if (isset($_GET["wait_time_lead_reset"]))			{$wait_time_lead_reset=$_GET["wait_time_lead_reset"];}
 	elseif (isset($_POST["wait_time_lead_reset"]))	{$wait_time_lead_reset=$_POST["wait_time_lead_reset"];}
+	else {$wait_time_lead_reset="N";}
 if (isset($_GET["hold_time_lead_reset"]))			{$hold_time_lead_reset=$_GET["hold_time_lead_reset"];}
 	elseif (isset($_POST["hold_time_lead_reset"]))	{$hold_time_lead_reset=$_POST["hold_time_lead_reset"];}
+	else {$hold_time_lead_reset="N";}
 if (isset($_GET["container_id"]))			{$container_id=$_GET["container_id"];}
 	elseif (isset($_POST["container_id"]))	{$container_id=$_POST["container_id"];}
+	else {$container_id="";}
 if (isset($_GET["container_notes"]))			{$container_notes=$_GET["container_notes"];}
 	elseif (isset($_POST["container_notes"]))	{$container_notes=$_POST["container_notes"];}
+	else {$container_notes="";}
 if (isset($_GET["container_type"]))				{$container_type=$_GET["container_type"];}
 	elseif (isset($_POST["container_type"]))	{$container_type=$_POST["container_type"];}
+	else {$container_type="OTHER";}
 if (isset($_GET["container_entry"]))			{$container_entry=$_GET["container_entry"];}
 	elseif (isset($_POST["container_entry"]))	{$container_entry=$_POST["container_entry"];}
 if (isset($_GET["admin_cf_show_hidden"]))			{$admin_cf_show_hidden=$_GET["admin_cf_show_hidden"];}
 	elseif (isset($_POST["admin_cf_show_hidden"]))	{$admin_cf_show_hidden=$_POST["admin_cf_show_hidden"];}
+	else {$admin_cf_show_hidden=0;}
 if (isset($_GET["user_hide_realtime_enabled"]))				{$user_hide_realtime_enabled=$_GET["user_hide_realtime_enabled"];}
 	elseif (isset($_POST["user_hide_realtime_enabled"]))	{$user_hide_realtime_enabled=$_POST["user_hide_realtime_enabled"];}
+	else {$user_hide_realtime_enabled=0;}
 if (isset($_GET["user_hide_realtime"]))				{$user_hide_realtime=$_GET["user_hide_realtime"];}
 	elseif (isset($_POST["user_hide_realtime"]))	{$user_hide_realtime=$_POST["user_hide_realtime"];}
+	else {$user_hide_realtime=0;}
 if (isset($_GET["did_carrier_description"]))			{$did_carrier_description=$_GET["did_carrier_description"];}
 	elseif (isset($_POST["did_carrier_description"]))	{$did_carrier_description=$_POST["did_carrier_description"];}
+	else {$did_carrier_description="";}
 if (isset($_GET["status_group_id"]))			{$status_group_id=$_GET["status_group_id"];}
 	elseif (isset($_POST["status_group_id"]))	{$status_group_id=$_POST["status_group_id"];}
+	else {$status_group_id="";}
 if (isset($_GET["status_group_notes"]))				{$status_group_notes=$_GET["status_group_notes"];}
 	elseif (isset($_POST["status_group_notes"]))	{$status_group_notes=$_POST["status_group_notes"];}
+	else {$status_group_notes="";}
 if (isset($_GET["min_sec"]))				{$min_sec=$_GET["min_sec"];}
 	elseif (isset($_POST["min_sec"]))		{$min_sec=$_POST["min_sec"];}
+	else {$min_sec=0;}
 if (isset($_GET["max_sec"]))				{$max_sec=$_GET["max_sec"];}
 	elseif (isset($_POST["max_sec"]))		{$max_sec=$_POST["max_sec"];}
+	else {$max_sec=0;}
 if (isset($_GET["usacan_phone_dialcode_fix"]))				{$usacan_phone_dialcode_fix=$_GET["usacan_phone_dialcode_fix"];}
 	elseif (isset($_POST["usacan_phone_dialcode_fix"]))		{$usacan_phone_dialcode_fix=$_POST["usacan_phone_dialcode_fix"];}
+	else {$usacan_phone_dialcode_fix=0;}
 if (isset($_GET["am_message_wildcards"]))				{$am_message_wildcards=$_GET["am_message_wildcards"];}
 	elseif (isset($_POST["am_message_wildcards"]))		{$am_message_wildcards=$_POST["am_message_wildcards"];}
+	else {$am_message_wildcards="N";}
 if (isset($_GET["cache_carrier_stats_realtime"]))				{$cache_carrier_stats_realtime=$_GET["cache_carrier_stats_realtime"];}
 	elseif (isset($_POST["cache_carrier_stats_realtime"]))		{$cache_carrier_stats_realtime=$_POST["cache_carrier_stats_realtime"];}
+	else {$cache_carrier_stats_realtime=0;}
 if (isset($_GET["unavail_dialplan_fwd_exten"]))					{$unavail_dialplan_fwd_exten=$_GET["unavail_dialplan_fwd_exten"];}
 	elseif (isset($_POST["unavail_dialplan_fwd_exten"]))		{$unavail_dialplan_fwd_exten=$_POST["unavail_dialplan_fwd_exten"];}
+	else {$unavail_dialplan_fwd_exten="";}
 if (isset($_GET["unavail_dialplan_fwd_context"]))				{$unavail_dialplan_fwd_context=$_GET["unavail_dialplan_fwd_context"];}
 	elseif (isset($_POST["unavail_dialplan_fwd_context"]))		{$unavail_dialplan_fwd_context=$_POST["unavail_dialplan_fwd_context"];}
+	else {$unavail_dialplan_fwd_context="";}
 if (isset($_GET["nva_call_url"]))				{$nva_call_url=$_GET["nva_call_url"];}
 	elseif (isset($_POST["nva_call_url"]))		{$nva_call_url=$_POST["nva_call_url"];}
 if (isset($_GET["nva_search_method"]))				{$nva_search_method=$_GET["nva_search_method"];}
 	elseif (isset($_POST["nva_search_method"]))		{$nva_search_method=$_POST["nva_search_method"];}
+	else {$nva_search_method="";}
 if (isset($_GET["nva_error_filename"]))				{$nva_error_filename=$_GET["nva_error_filename"];}
 	elseif (isset($_POST["nva_error_filename"]))	{$nva_error_filename=$_POST["nva_error_filename"];}
+	else {$nva_error_filename="";}
 if (isset($_GET["nva_new_list_id"]))				{$nva_new_list_id=$_GET["nva_new_list_id"];}
 	elseif (isset($_POST["nva_new_list_id"]))		{$nva_new_list_id=$_POST["nva_new_list_id"];}
+	else {$nva_new_list_id=995;}
 if (isset($_GET["nva_new_phone_code"]))				{$nva_new_phone_code=$_GET["nva_new_phone_code"];}
 	elseif (isset($_POST["nva_new_phone_code"]))	{$nva_new_phone_code=$_POST["nva_new_phone_code"];}
+	else {$nva_new_phone_code=1;}
 if (isset($_GET["nva_new_status"]))					{$nva_new_status=$_GET["nva_new_status"];}
 	elseif (isset($_POST["nva_new_status"]))		{$nva_new_status=$_POST["nva_new_status"];}
+	else {$nva_new_status="";}
 if (isset($_GET["gather_asterisk_output"]))				{$gather_asterisk_output=$_GET["gather_asterisk_output"];}
 	elseif (isset($_POST["gather_asterisk_output"]))	{$gather_asterisk_output=$_POST["gather_asterisk_output"];}
+	else {$gather_asterisk_output="N";}
 if (isset($_GET["manual_dial_timeout"]))			{$manual_dial_timeout=$_GET["manual_dial_timeout"];}
 	elseif (isset($_POST["manual_dial_timeout"]))	{$manual_dial_timeout=$_POST["manual_dial_timeout"];}
+	else {$manual_dial_timeout="";}
 if (isset($_GET["agent_allowed_chat_groups"]))			{$agent_allowed_chat_groups=$_GET["agent_allowed_chat_groups"];}
 	elseif (isset($_POST["agent_allowed_chat_groups"]))	{$agent_allowed_chat_groups=$_POST["agent_allowed_chat_groups"];}
+	else {$agent_allowed_chat_groups="";}
 if (isset($_GET["routing_initiated_recordings"]))			{$routing_initiated_recordings=$_GET["routing_initiated_recordings"];}
 	elseif (isset($_POST["routing_initiated_recordings"]))	{$routing_initiated_recordings=$_POST["routing_initiated_recordings"];}
+	else {$routing_initiated_recordings="N";}
 if (isset($_GET["on_hook_cid_number"]))				{$on_hook_cid_number=$_GET["on_hook_cid_number"];}
 	elseif (isset($_POST["on_hook_cid_number"]))	{$on_hook_cid_number=$_POST["on_hook_cid_number"];}
+	else {$on_hook_cid_number="";}
 if (isset($_GET["manual_dial_hopper_check"]))			{$manual_dial_hopper_check=$_GET["manual_dial_hopper_check"];}
 	elseif (isset($_POST["manual_dial_hopper_check"]))	{$manual_dial_hopper_check=$_POST["manual_dial_hopper_check"];}
+	else {$manual_dial_hopper_check="N";}
 if (isset($_GET["report_default_format"]))			{$report_default_format=$_GET["report_default_format"];}
 	elseif (isset($_POST["report_default_format"]))	{$report_default_format=$_POST["report_default_format"];}
+	else {$report_default_format="TEXT";}
 if (isset($_GET["alt_ivr_logging"]))				{$alt_ivr_logging=$_GET["alt_ivr_logging"];}
 	elseif (isset($_POST["alt_ivr_logging"]))		{$alt_ivr_logging=$_POST["alt_ivr_logging"];}
+	else {$alt_ivr_logging=0;}
 if (isset($_GET["question"]))						{$question=$_GET["question"];}
 	elseif (isset($_POST["question"]))				{$question=$_POST["question"];}
+	else {$question="";}
 if (isset($_GET["alt_dtmf_log"]))					{$alt_dtmf_log=$_GET["alt_dtmf_log"];}
 	elseif (isset($_POST["alt_dtmf_log"]))			{$alt_dtmf_log=$_POST["alt_dtmf_log"];}
+	else {$alt_dtmf_log=0;}
 if (isset($_GET["web_socket_url"]))					{$web_socket_url=$_GET["web_socket_url"];}
 	elseif (isset($_POST["web_socket_url"]))		{$web_socket_url=$_POST["web_socket_url"];}
 if (isset($_GET["webphone_dialbox"]))				{$webphone_dialbox=$_GET["webphone_dialbox"];}
 	elseif (isset($_POST["webphone_dialbox"]))		{$webphone_dialbox=$_POST["webphone_dialbox"];}
+	else {$webphone_dialbox="Y";}
 if (isset($_GET["webphone_mute"]))					{$webphone_mute=$_GET["webphone_mute"];}
 	elseif (isset($_POST["webphone_mute"]))			{$webphone_mute=$_POST["webphone_mute"];}
+	else {$webphone_mute="Y";}
 if (isset($_GET["webphone_volume"]))				{$webphone_volume=$_GET["webphone_volume"];}
 	elseif (isset($_POST["webphone_volume"]))		{$webphone_volume=$_POST["webphone_volume"];}
+	else {$webphone_volume="Y";}
 if (isset($_GET["webphone_debug"]))					{$webphone_debug=$_GET["webphone_debug"];}
 	elseif (isset($_POST["webphone_debug"]))		{$webphone_debug=$_POST["webphone_debug"];}
+	else {$webphone_debug="N";}
 if (isset($_GET["callback_useronly_move_minutes"]))				{$callback_useronly_move_minutes=$_GET["callback_useronly_move_minutes"];}
 	elseif (isset($_POST["callback_useronly_move_minutes"]))	{$callback_useronly_move_minutes=$_POST["callback_useronly_move_minutes"];}
+	else {$callback_useronly_move_minutes=0;}
 if (isset($_GET["default_phone_code"]))				{$default_phone_code=$_GET["default_phone_code"];}
 	elseif (isset($_POST["default_phone_code"]))	{$default_phone_code=$_POST["default_phone_code"];}
+	else {$default_phone_code=1;}
 if (isset($_GET["admin_row_click"]))			{$admin_row_click=$_GET["admin_row_click"];}
 	elseif (isset($_POST["admin_row_click"]))	{$admin_row_click=$_POST["admin_row_click"];}
+	else {$admin_row_click=1;}
 if (isset($_GET["colors_id"]))			{$colors_id=$_GET["colors_id"];}
 	elseif (isset($_POST["colors_id"]))	{$colors_id=$_POST["colors_id"];}
+	else {$colors_id="";}
 if (isset($_GET["colors_name"]))			{$colors_name=$_GET["colors_name"];}
 	elseif (isset($_POST["colors_name"]))	{$colors_name=$_POST["colors_name"];}
+	else {$colors_name="";}
 if (isset($_GET["menu_background"]))			{$menu_background=$_GET["menu_background"];}
 	elseif (isset($_POST["menu_background"]))	{$menu_background=$_POST["menu_background"];}
+	else {$menu_background="";}
 if (isset($_GET["frame_background"]))			{$frame_background=$_GET["frame_background"];}
 	elseif (isset($_POST["frame_background"]))	{$frame_background=$_POST["frame_background"];}
+	else {$frame_background="";}
 if (isset($_GET["std_row1_background"]))			{$std_row1_background=$_GET["std_row1_background"];}
 	elseif (isset($_POST["std_row1_background"]))	{$std_row1_background=$_POST["std_row1_background"];}
+	else {$std_row1_background="";}
 if (isset($_GET["std_row2_background"]))			{$std_row2_background=$_GET["std_row2_background"];}
 	elseif (isset($_POST["std_row2_background"]))	{$std_row2_background=$_POST["std_row2_background"];}
+	else {$std_row2_background="";}
 if (isset($_GET["std_row3_background"]))			{$std_row3_background=$_GET["std_row3_background"];}
 	elseif (isset($_POST["std_row3_background"]))	{$std_row3_background=$_POST["std_row3_background"];}
+	else {$std_row3_background="";}
 if (isset($_GET["std_row4_background"]))			{$std_row4_background=$_GET["std_row4_background"];}
 	elseif (isset($_POST["std_row4_background"]))	{$std_row4_background=$_POST["std_row4_background"];}
+	else {$std_row4_background="";}
 if (isset($_GET["std_row5_background"]))			{$std_row5_background=$_GET["std_row5_background"];}
 	elseif (isset($_POST["std_row5_background"]))	{$std_row5_background=$_POST["std_row5_background"];}
+	else {$std_row5_background="";}
 if (isset($_GET["alt_row1_background"]))			{$alt_row1_background=$_GET["alt_row1_background"];}
 	elseif (isset($_POST["alt_row1_background"]))	{$alt_row1_background=$_POST["alt_row1_background"];}
+	else {$alt_row1_background="";}
 if (isset($_GET["alt_row2_background"]))			{$alt_row2_background=$_GET["alt_row2_background"];}
 	elseif (isset($_POST["alt_row2_background"]))	{$alt_row2_background=$_POST["alt_row2_background"];}
+	else {$alt_row2_background="";}
 if (isset($_GET["alt_row3_background"]))			{$alt_row3_background=$_GET["alt_row3_background"];}
 	elseif (isset($_POST["alt_row3_background"]))	{$alt_row3_background=$_POST["alt_row3_background"];}
+	else {$alt_row3_background="";}
 if (isset($_GET["button_color"]))			{$button_color=$_GET["button_color"];}
 	elseif (isset($_POST["button_color"]))	{$button_color=$_POST["button_color"];}
+	else {$button_color="";}
 if (isset($_GET["modify_colors"]))			{$modify_colors=$_GET["modify_colors"];}
 	elseif (isset($_POST["modify_colors"]))	{$modify_colors=$_POST["modify_colors"];}
+	else {$modify_colors=0;}
 if (isset($_GET["admin_screen_colors"]))			{$admin_screen_colors=$_GET["admin_screen_colors"];}
 	elseif (isset($_POST["admin_screen_colors"]))	{$admin_screen_colors=$_POST["admin_screen_colors"];}
+	else {$admin_screen_colors="default";}
 if (isset($_GET["web_logo"]))			{$web_logo=$_GET["web_logo"];}
 	elseif (isset($_POST["web_logo"]))	{$web_logo=$_POST["web_logo"];}
+	else {$web_logo="default_new";}
 if (isset($_GET["ofcom_uk_drop_calc"]))				{$ofcom_uk_drop_calc=$_GET["ofcom_uk_drop_calc"];}
 	elseif (isset($_POST["ofcom_uk_drop_calc"]))	{$ofcom_uk_drop_calc=$_POST["ofcom_uk_drop_calc"];}
+	else {$ofcom_uk_drop_calc="";}
 if (isset($_GET["answering_machine"]))				{$answering_machine=$_GET["answering_machine"];}
 	elseif (isset($_POST["answering_machine"]))		{$answering_machine=$_POST["answering_machine"];}
+	else {$answering_machine="N";}
 if (isset($_GET["outbound_alt_cid"]))				{$outbound_alt_cid=$_GET["outbound_alt_cid"];}
 	elseif (isset($_POST["outbound_alt_cid"]))		{$outbound_alt_cid=$_POST["outbound_alt_cid"];}
+	else {$outbound_alt_cid="";}
 if (isset($_GET["agent_screen_colors"]))			{$agent_screen_colors=$_GET["agent_screen_colors"];}
 	elseif (isset($_POST["agent_screen_colors"]))	{$agent_screen_colors=$_POST["agent_screen_colors"];}
+	else {$agent_screen_colors="default";}
 if (isset($_GET["script_remove_js"]))			{$script_remove_js=$_GET["script_remove_js"];}
 	elseif (isset($_POST["script_remove_js"]))	{$script_remove_js=$_POST["script_remove_js"];}
+	else {$script_remove_js=1;}
 if (isset($_GET["user_nickname"]))			{$user_nickname=$_GET["user_nickname"];}
 	elseif (isset($_POST["user_nickname"]))	{$user_nickname=$_POST["user_nickname"];}
+	else {$user_nickname="";}
 if (isset($_GET["manual_auto_next"]))			{$manual_auto_next=$_GET["manual_auto_next"];}
 	elseif (isset($_POST["manual_auto_next"]))	{$manual_auto_next=$_POST["manual_auto_next"];}
+	else {$manual_auto_next=0;}
 if (isset($_GET["manual_auto_show"]))			{$manual_auto_show=$_GET["manual_auto_show"];}
 	elseif (isset($_POST["manual_auto_show"]))	{$manual_auto_show=$_POST["manual_auto_show"];}
+	else {$manual_auto_show="N";}
 if (isset($_GET["customer_chat_screen_colors"]))			{$customer_chat_screen_colors=$_GET["customer_chat_screen_colors"];}
 	elseif (isset($_POST["customer_chat_screen_colors"]))	{$customer_chat_screen_colors=$_POST["customer_chat_screen_colors"];}
+	else {$customer_chat_screen_colors="default";}
 if (isset($_GET["customer_chat_survey_link"]))			{$customer_chat_survey_link=$_GET["customer_chat_survey_link"];}
 	elseif (isset($_POST["customer_chat_survey_link"]))	{$customer_chat_survey_link=$_POST["customer_chat_survey_link"];}
+	else {$customer_chat_survey_link="";}
 if (isset($_GET["customer_chat_survey_text"]))			{$customer_chat_survey_text=$_GET["customer_chat_survey_text"];}
 	elseif (isset($_POST["customer_chat_survey_text"]))	{$customer_chat_survey_text=$_POST["customer_chat_survey_text"];}
+	else {$customer_chat_survey_text="";}
 if (isset($_GET["user_new_lead_limit"]))			{$user_new_lead_limit=$_GET["user_new_lead_limit"];}
 	elseif (isset($_POST["user_new_lead_limit"]))	{$user_new_lead_limit=$_POST["user_new_lead_limit"];}
+	else {$user_new_lead_limit="";}
 if (isset($_GET["allow_required_fields"]))			{$allow_required_fields=$_GET["allow_required_fields"];}
 	elseif (isset($_POST["allow_required_fields"]))	{$allow_required_fields=$_POST["allow_required_fields"];}
+	else {$allow_required_fields="N";}
 if (isset($_GET["agent_xfer_park_3way"]))			{$agent_xfer_park_3way=$_GET["agent_xfer_park_3way"];}
 	elseif (isset($_POST["agent_xfer_park_3way"]))	{$agent_xfer_park_3way=$_POST["agent_xfer_park_3way"];}
+	else {$agent_xfer_park_3way="";}
 if (isset($_GET["agent_soundboards"]))			{$agent_soundboards=$_GET["agent_soundboards"];}
 	elseif (isset($_POST["agent_soundboards"]))	{$agent_soundboards=$_POST["agent_soundboards"];}
+	else {$agent_soundboards=0;}
 if (isset($_GET["web_loader_phone_length"]))			{$web_loader_phone_length=$_GET["web_loader_phone_length"];}
 	elseif (isset($_POST["web_loader_phone_length"]))	{$web_loader_phone_length=$_POST["web_loader_phone_length"];}
+	else {$web_loader_phone_length="DISABLED";}
 if (isset($_GET["agent_script"]))				{$agent_script=$_GET["agent_script"];}
 	elseif (isset($_POST["agent_script"]))		{$agent_script=$_POST["agent_script"];}
+	else {$agent_script="vicidial.php";}
 if (isset($_GET["agent_chat_screen_colors"]))			{$agent_chat_screen_colors=$_GET["agent_chat_screen_colors"];}
 	elseif (isset($_POST["agent_chat_screen_colors"]))	{$agent_chat_screen_colors=$_POST["agent_chat_screen_colors"];}
+	else {$agent_chat_screen_colors="default";}
 if (isset($_GET["conf_qualify"]))			{$conf_qualify=$_GET["conf_qualify"];}
 	elseif (isset($_POST["conf_qualify"]))	{$conf_qualify=$_POST["conf_qualify"];}
+	else {$conf_qualify="Y";}
 if (isset($_GET["populate_lead_province"]))				{$populate_lead_province=$_GET["populate_lead_province"];}
 	elseif (isset($_POST["populate_lead_province"]))	{$populate_lead_province=$_POST["populate_lead_province"];}
+	else {$populate_lead_province="DISABLED";}
 if (isset($_GET["api_only_user"]))				{$api_only_user=$_GET["api_only_user"];}
 	elseif (isset($_POST["api_only_user"]))		{$api_only_user=$_POST["api_only_user"];}
+	else {$api_only_user=0;}
 if (isset($_GET["dead_to_dispo"]))				{$dead_to_dispo=$_GET["dead_to_dispo"];}
 	elseif (isset($_POST["dead_to_dispo"]))		{$dead_to_dispo=$_POST["dead_to_dispo"];}
+	else {$dead_to_dispo="DISABLED";}
 if (isset($_GET["areacode_filter"]))				{$areacode_filter=$_GET["areacode_filter"];}
 	elseif (isset($_POST["areacode_filter"]))		{$areacode_filter=$_POST["areacode_filter"];}
+	else {$areacode_filter="DISABLED";}
 if (isset($_GET["areacode_filter_seconds"]))			{$areacode_filter_seconds=$_GET["areacode_filter_seconds"];}
 	elseif (isset($_POST["areacode_filter_seconds"]))	{$areacode_filter_seconds=$_POST["areacode_filter_seconds"];}
+	else {$areacode_filter_seconds=10;}
 if (isset($_GET["areacode_filter_action"]))				{$areacode_filter_action=$_GET["areacode_filter_action"];}
 	elseif (isset($_POST["areacode_filter_action"]))	{$areacode_filter_action=$_POST["areacode_filter_action"];}
+	else {$areacode_filter_action="MESSAGE";}
 if (isset($_GET["areacode_list"]))			{$areacode_list=$_GET["areacode_list"];}
 	elseif (isset($_POST["areacode_list"]))	{$areacode_list=$_POST["areacode_list"];}
+	else {$areacode_list="";}
 if (isset($_GET["areacode_filter_action_value"]))			{$areacode_filter_action_value=$_GET["areacode_filter_action_value"];}
 	elseif (isset($_POST["areacode_filter_action_value"]))	{$areacode_filter_action_value=$_POST["areacode_filter_action_value"];}
+	else {$areacode_filter_action_value="";}
 if (isset($_GET["enable_auto_reports"]))			{$enable_auto_reports=$_GET["enable_auto_reports"];}
 	elseif (isset($_POST["enable_auto_reports"]))	{$enable_auto_reports=$_POST["enable_auto_reports"];}
+	else {$enable_auto_reports=0;}
 if (isset($_GET["modify_auto_reports"]))			{$modify_auto_reports=$_GET["modify_auto_reports"];}
 	elseif (isset($_POST["modify_auto_reports"]))	{$modify_auto_reports=$_POST["modify_auto_reports"];}
+	else {$modify_auto_reports=0;}
 if (isset($_GET["report_id"]))			{$report_id=$_GET["report_id"];}
 	elseif (isset($_POST["report_id"]))	{$report_id=$_POST["report_id"];}
+	else {$report_id="";}
 if (isset($_GET["report_name"]))			{$report_name=$_GET["report_name"];}
 	elseif (isset($_POST["report_name"]))	{$report_name=$_POST["report_name"];}
+	else {$report_name="";}
 if (isset($_GET["report_server"]))			{$report_server=$_GET["report_server"];}
 	elseif (isset($_POST["report_server"]))	{$report_server=$_POST["report_server"];}
+	else {$report_server="active_voicemail_server";}
 if (isset($_GET["report_times"]))			{$report_times=$_GET["report_times"];}
 	elseif (isset($_POST["report_times"]))	{$report_times=$_POST["report_times"];}
+	else {$report_times="";}
 if (isset($_GET["report_weekdays"]))			{$report_weekdays=$_GET["report_weekdays"];}
 	elseif (isset($_POST["report_weekdays"]))	{$report_weekdays=$_POST["report_weekdays"];}
+	else {$report_weekdays="";}
 if (isset($_GET["report_monthdays"]))			{$report_monthdays=$_GET["report_monthdays"];}
 	elseif (isset($_POST["report_monthdays"]))	{$report_monthdays=$_POST["report_monthdays"];}
+	else {$report_monthdays="";}
 if (isset($_GET["report_destination"]))			{$report_destination=$_GET["report_destination"];}
 	elseif (isset($_POST["report_destination"]))	{$report_destination=$_POST["report_destination"];}
+	else {$report_destination="EMAIL";}
 if (isset($_GET["email_from"]))			{$email_from=$_GET["email_from"];}
 	elseif (isset($_POST["email_from"]))	{$email_from=$_POST["email_from"];}
+	else {$email_from="";}
 if (isset($_GET["email_to"]))			{$email_to=$_GET["email_to"];}
 	elseif (isset($_POST["email_to"]))	{$email_to=$_POST["email_to"];}
+	else {$email_to="";}
 if (isset($_GET["email_subject"]))			{$email_subject=$_GET["email_subject"];}
 	elseif (isset($_POST["email_subject"]))	{$email_subject=$_POST["email_subject"];}
+	else {$email_subject="";}
 if (isset($_GET["ftp_server"]))				{$ftp_server=$_GET["ftp_server"];}
 	elseif (isset($_POST["ftp_server"]))	{$ftp_server=$_POST["ftp_server"];}
+	else {$ftp_server="";}
 if (isset($_GET["ftp_user"]))			{$ftp_user=$_GET["ftp_user"];}
 	elseif (isset($_POST["ftp_user"]))	{$ftp_user=$_POST["ftp_user"];}
 if (isset($_GET["ftp_pass"]))			{$ftp_pass=$_GET["ftp_pass"];}
 	elseif (isset($_POST["ftp_pass"]))	{$ftp_pass=$_POST["ftp_pass"];}
 if (isset($_GET["ftp_directory"]))			{$ftp_directory=$_GET["ftp_directory"];}
 	elseif (isset($_POST["ftp_directory"]))	{$ftp_directory=$_POST["ftp_directory"];}
+	else {$ftp_directory="";}
 if (isset($_GET["report_url"]))				{$report_url=$_GET["report_url"];}
 	elseif (isset($_POST["report_url"]))	{$report_url=$_POST["report_url"];}
+	else {$report_url="";}
 if (isset($_GET["run_now_trigger"]))			{$run_now_trigger=$_GET["run_now_trigger"];}
 	elseif (isset($_POST["run_now_trigger"]))	{$run_now_trigger=$_POST["run_now_trigger"];}
+	else {$run_now_trigger="N";}
 if (isset($_GET["agent_xfer_validation"]))			{$agent_xfer_validation=$_GET["agent_xfer_validation"];}
 	elseif (isset($_POST["agent_xfer_validation"]))	{$agent_xfer_validation=$_POST["agent_xfer_validation"];}
+	else {$agent_xfer_validation="N";}
 if (isset($_GET["populate_state_areacode"]))			{$populate_state_areacode=$_GET["populate_state_areacode"];}
 	elseif (isset($_POST["populate_state_areacode"]))	{$populate_state_areacode=$_POST["populate_state_areacode"];}
+	else {$populate_state_areacode="DISABLED";}
 if (isset($_GET["enable_pause_code_limits"]))			{$enable_pause_code_limits=$_GET["enable_pause_code_limits"];}
 	elseif (isset($_POST["enable_pause_code_limits"]))	{$enable_pause_code_limits=$_POST["enable_pause_code_limits"];}
+	else {$enable_pause_code_limits=0;}
 if (isset($_GET["time_limit"]))				{$time_limit=$_GET["time_limit"];}
 	elseif (isset($_POST["time_limit"]))	{$time_limit=$_POST["time_limit"];}
+	else {$time_limit="";}
 if (isset($_GET["enable_drop_lists"]))			{$enable_drop_lists=$_GET["enable_drop_lists"];}
 	elseif (isset($_POST["enable_drop_lists"]))	{$enable_drop_lists=$_POST["enable_drop_lists"];}
+	else {$enable_drop_lists=0;}
 if (isset($_GET["dl_id"]))			{$dl_id=$_GET["dl_id"];}
 	elseif (isset($_POST["dl_id"]))	{$dl_id=$_POST["dl_id"];}
+	else {$dl_id="";}
 if (isset($_GET["dl_name"]))			{$dl_name=$_GET["dl_name"];}
 	elseif (isset($_POST["dl_name"]))	{$dl_name=$_POST["dl_name"];}
+	else {$dl_name="";}
 if (isset($_GET["last_run"]))			{$last_run=$_GET["last_run"];}
 	elseif (isset($_POST["last_run"]))	{$last_run=$_POST["last_run"];}
+	else {$last_run="";}
 if (isset($_GET["dl_server"]))			{$dl_server=$_GET["dl_server"];}
 	elseif (isset($_POST["dl_server"]))	{$dl_server=$_POST["dl_server"];}
+	else {$dl_server="active_voicemail_server";}
 if (isset($_GET["dl_times"]))			{$dl_times=$_GET["dl_times"];}
 	elseif (isset($_POST["dl_times"]))	{$dl_times=$_POST["dl_times"];}
+	else {$dl_times="";}
 if (isset($_GET["dl_weekdays"]))			{$dl_weekdays=$_GET["dl_weekdays"];}
 	elseif (isset($_POST["dl_weekdays"]))	{$dl_weekdays=$_POST["dl_weekdays"];}
+	else {$dl_weekdays="";}
 if (isset($_GET["dl_monthdays"]))			{$dl_monthdays=$_GET["dl_monthdays"];}
 	elseif (isset($_POST["dl_monthdays"]))	{$dl_monthdays=$_POST["dl_monthdays"];}
+	else {$dl_monthdays="";}
 if (isset($_GET["drop_status"]))			{$drop_status=$_GET["drop_status"];}
 	elseif (isset($_POST["drop_status"]))	{$drop_status=$_POST["drop_status"];}
+	else {$drop_status="";}
 if (isset($_GET["duplicate_check"]))			{$duplicate_check=$_GET["duplicate_check"];}
 	elseif (isset($_POST["duplicate_check"]))	{$duplicate_check=$_POST["duplicate_check"];}
+	else {$duplicate_check="NONE";}
 if (isset($_GET["allow_ip_lists"]))				{$allow_ip_lists=$_GET["allow_ip_lists"];}
 	elseif (isset($_POST["allow_ip_lists"]))	{$allow_ip_lists=$_POST["allow_ip_lists"];}
+	else {$allow_ip_lists=0;}
 if (isset($_GET["system_ip_blacklist"]))			{$system_ip_blacklist=$_GET["system_ip_blacklist"];}
 	elseif (isset($_POST["system_ip_blacklist"]))	{$system_ip_blacklist=$_POST["system_ip_blacklist"];}
+	else {$system_ip_blacklist="";}
 if (isset($_GET["modify_ip_lists"]))			{$modify_ip_lists=$_GET["modify_ip_lists"];}
 	elseif (isset($_POST["modify_ip_lists"]))	{$modify_ip_lists=$_POST["modify_ip_lists"];}
+	else {$modify_ip_lists=0;}
 if (isset($_GET["ignore_ip_list"]))			{$ignore_ip_list=$_GET["ignore_ip_list"];}
 	elseif (isset($_POST["ignore_ip_list"]))	{$ignore_ip_list=$_POST["ignore_ip_list"];}
+	else {$ignore_ip_list=0;}
 if (isset($_GET["admin_ip_list"]))			{$admin_ip_list=$_GET["admin_ip_list"];}
 	elseif (isset($_POST["admin_ip_list"]))	{$admin_ip_list=$_POST["admin_ip_list"];}
+	else {$admin_ip_list="";}
 if (isset($_GET["agent_ip_list"]))			{$agent_ip_list=$_GET["agent_ip_list"];}
 	elseif (isset($_POST["agent_ip_list"]))	{$agent_ip_list=$_POST["agent_ip_list"];}
+	else {$agent_ip_list="";}
 if (isset($_GET["api_ip_list"]))			{$api_ip_list=$_GET["api_ip_list"];}
 	elseif (isset($_POST["api_ip_list"]))	{$api_ip_list=$_POST["api_ip_list"];}
+	else {$api_ip_list="";}
 if (isset($_GET["ip_list_id"]))			{$ip_list_id=$_GET["ip_list_id"];}
 	elseif (isset($_POST["ip_list_id"]))	{$ip_list_id=$_POST["ip_list_id"];}
+	else {$ip_list_id="";}
 if (isset($_GET["ip_list_name"]))			{$ip_list_name=$_GET["ip_list_name"];}
 	elseif (isset($_POST["ip_list_name"]))	{$ip_list_name=$_POST["ip_list_name"];}
+	else {$ip_list_name="";}
 if (isset($_GET["ip_address"]))				{$ip_address=$_GET["ip_address"];}
 	elseif (isset($_POST["ip_address"]))	{$ip_address=$_POST["ip_address"];}
+	else {$ip_address="";}
 if (isset($_GET["dl_minutes"]))				{$dl_minutes=$_GET["dl_minutes"];}
 	elseif (isset($_POST["dl_minutes"]))	{$dl_minutes=$_POST["dl_minutes"];}
+	else {$dl_minutes=0;}
 if (isset($_GET["ready_max_logout"]))			{$ready_max_logout=$_GET["ready_max_logout"];}
 	elseif (isset($_POST["ready_max_logout"]))	{$ready_max_logout=$_POST["ready_max_logout"];}
+	else {$ready_max_logout="";}
 if (isset($_GET["routing_prefix"]))				{$routing_prefix=$_GET["routing_prefix"];}
 	elseif (isset($_POST["routing_prefix"]))	{$routing_prefix=$_POST["routing_prefix"];}
+	else {$routing_prefix="";}
 if (isset($_GET["callback_display_days"]))			{$callback_display_days=$_GET["callback_display_days"];}
 	elseif (isset($_POST["callback_display_days"]))	{$callback_display_days=$_POST["callback_display_days"];}
+	else {$callback_display_days=0;}
 if (isset($_GET["three_way_record_stop"]))			{$three_way_record_stop=$_GET["three_way_record_stop"];}
 	elseif (isset($_POST["three_way_record_stop"]))	{$three_way_record_stop=$_POST["three_way_record_stop"];}
+	else {$three_way_record_stop="N";}
 if (isset($_GET["hangup_xfer_record_start"]))			{$hangup_xfer_record_start=$_GET["hangup_xfer_record_start"];}
 	elseif (isset($_POST["hangup_xfer_record_start"]))	{$hangup_xfer_record_start=$_POST["hangup_xfer_record_start"];}
+	else {$hangup_xfer_record_start="N";}
 if (isset($_GET["agent_push_events"]))			{$agent_push_events=$_GET["agent_push_events"];}
 	elseif (isset($_POST["agent_push_events"]))	{$agent_push_events=$_POST["agent_push_events"];}
+	else {$agent_push_events=0;}
 if (isset($_GET["agent_push_url"]))				{$agent_push_url=$_GET["agent_push_url"];}
 	elseif (isset($_POST["agent_push_url"]))	{$agent_push_url=$_POST["agent_push_url"];}
+	else {$agent_push_url="";}
 if (isset($_GET["hide_inactive_lists"]))			{$hide_inactive_lists=$_GET["hide_inactive_lists"];}
 	elseif (isset($_POST["hide_inactive_lists"]))	{$hide_inactive_lists=$_POST["hide_inactive_lists"];}
+	else {$hide_inactive_lists=0;}
 if (isset($_GET["inbound_survey"]))			{$inbound_survey=$_GET["inbound_survey"];}
 	elseif (isset($_POST["inbound_survey"]))	{$inbound_survey=$_POST["inbound_survey"];}
+	else {$inbound_survey="DISABLED";}
 if (isset($_GET["inbound_survey_filename"]))			{$inbound_survey_filename=$_GET["inbound_survey_filename"];}
 	elseif (isset($_POST["inbound_survey_filename"]))	{$inbound_survey_filename=$_POST["inbound_survey_filename"];}
+	else {$inbound_survey_filename="";}
 if (isset($_GET["inbound_survey_accept_digit"]))			{$inbound_survey_accept_digit=$_GET["inbound_survey_accept_digit"];}
 	elseif (isset($_POST["inbound_survey_accept_digit"]))	{$inbound_survey_accept_digit=$_POST["inbound_survey_accept_digit"];}
+	else {$inbound_survey_accept_digit="";}
 if (isset($_GET["inbound_survey_question_filename"]))			{$inbound_survey_question_filename=$_GET["inbound_survey_question_filename"];}
 	elseif (isset($_POST["inbound_survey_question_filename"]))	{$inbound_survey_question_filename=$_POST["inbound_survey_question_filename"];}
+	else {$inbound_survey_question_filename="";}
 if (isset($_GET["inbound_survey_callmenu"]))			{$inbound_survey_callmenu=$_GET["inbound_survey_callmenu"];}
 	elseif (isset($_POST["inbound_survey_callmenu"]))	{$inbound_survey_callmenu=$_POST["inbound_survey_callmenu"];}
+	else {$inbound_survey_callmenu="";}
 if (isset($_GET["allow_manage_active_lists"]))			{$allow_manage_active_lists=$_GET["allow_manage_active_lists"];}
 	elseif (isset($_POST["allow_manage_active_lists"]))	{$allow_manage_active_lists=$_POST["allow_manage_active_lists"];}
+	else {$allow_manage_active_lists=0;}
 if (isset($_GET["filename_override"]))			{$filename_override=$_GET["filename_override"];}
 	elseif (isset($_POST["filename_override"]))	{$filename_override=$_POST["filename_override"];}
+	else {$filename_override="";}
 if (isset($_GET["expired_lists_inactive"]))				{$expired_lists_inactive=$_GET["expired_lists_inactive"];}
 	elseif (isset($_POST["expired_lists_inactive"]))	{$expired_lists_inactive=$_POST["expired_lists_inactive"];}
+	else {$expired_lists_inactive=0;}
 if (isset($_GET["enable_gdpr_download_deletion"]))				{$enable_gdpr_download_deletion=$_GET["enable_gdpr_download_deletion"];}
 	elseif (isset($_POST["enable_gdpr_download_deletion"]))	{$enable_gdpr_download_deletion=$_POST["enable_gdpr_download_deletion"];}
+	else {$enable_gdpr_download_deletion=0;}
 if (isset($_GET["did_system_filter"]))			{$did_system_filter=$_GET["did_system_filter"];}
 	elseif (isset($_POST["did_system_filter"]))	{$did_system_filter=$_POST["did_system_filter"];}
+	else {$did_system_filter=0;}
 if (isset($_GET["webphone_layout"]))			{$webphone_layout=$_GET["webphone_layout"];}
 	elseif (isset($_POST["webphone_layout"]))	{$webphone_layout=$_POST["webphone_layout"];}
 if (isset($_GET["max_inbound_calls_outcome"]))			{$max_inbound_calls_outcome=$_GET["max_inbound_calls_outcome"];}
 	elseif (isset($_POST["max_inbound_calls_outcome"]))	{$max_inbound_calls_outcome=$_POST["max_inbound_calls_outcome"];}
+	else {$max_inbound_calls_outcome="DEFAULT";}
 if (isset($_GET["manual_auto_next_options"]))			{$manual_auto_next_options=$_GET["manual_auto_next_options"];}
 	elseif (isset($_POST["manual_auto_next_options"]))	{$manual_auto_next_options=$_POST["manual_auto_next_options"];}
+	else {$manual_auto_next_options="DEFAULT";}
 if (isset($_GET["agent_screen_time_display"]))			{$agent_screen_time_display=$_GET["agent_screen_time_display"];}
 	elseif (isset($_POST["agent_screen_time_display"]))	{$agent_screen_time_display=$_POST["agent_screen_time_display"];}
+	else {$agent_screen_time_display="DISABLED";}
 if (isset($_GET["next_dial_my_callbacks"]))				{$next_dial_my_callbacks=$_GET["next_dial_my_callbacks"];}
 	elseif (isset($_POST["next_dial_my_callbacks"]))	{$next_dial_my_callbacks=$_POST["next_dial_my_callbacks"];}
+	else {$next_dial_my_callbacks="DISABLED";}
 if (isset($_GET["anyone_callback_inactive_lists"]))				{$anyone_callback_inactive_lists=$_GET["anyone_callback_inactive_lists"];}
 	elseif (isset($_POST["anyone_callback_inactive_lists"]))	{$anyone_callback_inactive_lists=$_POST["anyone_callback_inactive_lists"];}
+	else {$anyone_callback_inactive_lists="default";}
 if (isset($_GET["inbound_no_agents_no_dial_container"]))			{$inbound_no_agents_no_dial_container=$_GET["inbound_no_agents_no_dial_container"];}
 	elseif (isset($_POST["inbound_no_agents_no_dial_container"]))	{$inbound_no_agents_no_dial_container=$_POST["inbound_no_agents_no_dial_container"];}
+	else {$inbound_no_agents_no_dial_container="---DISABLED---";}
 if (isset($_GET["inbound_no_agents_no_dial_threshold"]))			{$inbound_no_agents_no_dial_threshold=$_GET["inbound_no_agents_no_dial_threshold"];}
 	elseif (isset($_POST["inbound_no_agents_no_dial_threshold"]))	{$inbound_no_agents_no_dial_threshold=$_POST["inbound_no_agents_no_dial_threshold"];}
+	else {$inbound_no_agents_no_dial_threshold=0;}
 if (isset($_GET["icbq_expiration_hours"]))			{$icbq_expiration_hours=$_GET["icbq_expiration_hours"];}
 	elseif (isset($_POST["icbq_expiration_hours"]))	{$icbq_expiration_hours=$_POST["icbq_expiration_hours"];}
+	else {$icbq_expiration_hours=96;}
 if (isset($_GET["closing_time_action"]))			{$closing_time_action=$_GET["closing_time_action"];}
 	elseif (isset($_POST["closing_time_action"]))	{$closing_time_action=$_POST["closing_time_action"];}
+	else {$closing_time_action="DISABLED";}
 if (isset($_GET["closing_time_now_trigger"]))			{$closing_time_now_trigger=$_GET["closing_time_now_trigger"];}
 	elseif (isset($_POST["closing_time_now_trigger"]))	{$closing_time_now_trigger=$_POST["closing_time_now_trigger"];}
+	else {$closing_time_now_trigger="N";}
 if (isset($_GET["closing_time_filename"]))			{$closing_time_filename=$_GET["closing_time_filename"];}
 	elseif (isset($_POST["closing_time_filename"]))	{$closing_time_filename=$_POST["closing_time_filename"];}
+	else {$closing_time_filename="";}
 if (isset($_GET["closing_time_end_filename"]))			{$closing_time_end_filename=$_GET["closing_time_end_filename"];}
 	elseif (isset($_POST["closing_time_end_filename"]))	{$closing_time_end_filename=$_POST["closing_time_end_filename"];}
+	else {$closing_time_end_filename="";}
 if (isset($_GET["closing_time_lead_reset"]))			{$closing_time_lead_reset=$_GET["closing_time_lead_reset"];}
 	elseif (isset($_POST["closing_time_lead_reset"]))	{$closing_time_lead_reset=$_POST["closing_time_lead_reset"];}
+	else {$closing_time_lead_reset="N";}
 if (isset($_GET["closing_time_option_exten"]))			{$closing_time_option_exten=$_GET["closing_time_option_exten"];}
 	elseif (isset($_POST["closing_time_option_exten"]))	{$closing_time_option_exten=$_POST["closing_time_option_exten"];}
+	else {$closing_time_option_exten="8300";}
 if (isset($_GET["closing_time_option_callmenu"]))			{$closing_time_option_callmenu=$_GET["closing_time_option_callmenu"];}
 	elseif (isset($_POST["closing_time_option_callmenu"]))	{$closing_time_option_callmenu=$_POST["closing_time_option_callmenu"];}
+	else {$closing_time_option_callmenu="";}
 if (isset($_GET["closing_time_option_voicemail"]))			{$closing_time_option_voicemail=$_GET["closing_time_option_voicemail"];}
 	elseif (isset($_POST["closing_time_option_voicemail"]))	{$closing_time_option_voicemail=$_POST["closing_time_option_voicemail"];}
+	else {$closing_time_option_voicemail="";}
 if (isset($_GET["closing_time_option_xfer_group"]))				{$closing_time_option_xfer_group=$_GET["closing_time_option_xfer_group"];}
 	elseif (isset($_POST["closing_time_option_xfer_group"]))	{$closing_time_option_xfer_group=$_POST["closing_time_option_xfer_group"];}
+	else {$closing_time_option_xfer_group="---NONE---";}
 if (isset($_GET["closing_time_option_callback_list_id"]))			{$closing_time_option_callback_list_id=$_GET["closing_time_option_callback_list_id"];}
 	elseif (isset($_POST["closing_time_option_callback_list_id"]))	{$closing_time_option_callback_list_id=$_POST["closing_time_option_callback_list_id"];}
+	else {$closing_time_option_callback_list_id="";}
 if (isset($_GET["icbq_call_time_id"]))			{$icbq_call_time_id=$_GET["icbq_call_time_id"];}
 	elseif (isset($_POST["icbq_call_time_id"]))	{$icbq_call_time_id=$_POST["icbq_call_time_id"];}
+	else {$icbq_call_time_id="24hours";}
 if (isset($_GET["add_lead_timezone"]))			{$add_lead_timezone=$_GET["add_lead_timezone"];}
 	elseif (isset($_POST["add_lead_timezone"]))	{$add_lead_timezone=$_POST["add_lead_timezone"];}
+	else {$add_lead_timezone="SERVER";}
 if (isset($_GET["icbq_dial_filter"]))			{$icbq_dial_filter=$_GET["icbq_dial_filter"];}
 	elseif (isset($_POST["icbq_dial_filter"]))	{$icbq_dial_filter=$_POST["icbq_dial_filter"];}
+	else {$icbq_dial_filter="NONE";}
 if (isset($_GET["cid_group_id"]))			{$cid_group_id=$_GET["cid_group_id"];}
 	elseif (isset($_POST["cid_group_id"]))	{$cid_group_id=$_POST["cid_group_id"];}
+	else {$cid_group_id="";}
 if (isset($_GET["cid_group_notes"]))			{$cid_group_notes=$_GET["cid_group_notes"];}
 	elseif (isset($_POST["cid_group_notes"]))	{$cid_group_notes=$_POST["cid_group_notes"];}
+	else {$cid_group_notes="";}
 if (isset($_GET["cid_group_type"]))				{$cid_group_type=$_GET["cid_group_type"];}
 	elseif (isset($_POST["cid_group_type"]))	{$cid_group_type=$_POST["cid_group_type"];}
+	else {$cid_group_type="AREACODE";}
 if (isset($_GET["pause_max_dispo"]))			{$pause_max_dispo=$_GET["pause_max_dispo"];}
 	elseif (isset($_POST["pause_max_dispo"]))	{$pause_max_dispo=$_POST["pause_max_dispo"];}
+	else {$pause_max_dispo="";}
 if (isset($_GET["script_top_dispo"]))			{$script_top_dispo=$_GET["script_top_dispo"];}
 	elseif (isset($_POST["script_top_dispo"]))	{$script_top_dispo=$_POST["script_top_dispo"];}
+	else {$script_top_dispo="N";}
 if (isset($_GET["source_id_display"]))			{$source_id_display=$_GET["source_id_display"];}
 	elseif (isset($_POST["source_id_display"]))	{$source_id_display=$_POST["source_id_display"];}
+	else {$source_id_display=0;}
 if (isset($_GET["require_mgr_approval"]))			{$require_mgr_approval=$_GET["require_mgr_approval"];}
 	elseif (isset($_POST["require_mgr_approval"]))	{$require_mgr_approval=$_POST["require_mgr_approval"];}
+	else {$require_mgr_approval="NO";}
 if (isset($_GET["pause_code_approval"]))			{$pause_code_approval=$_GET["pause_code_approval"];}
 	elseif (isset($_POST["pause_code_approval"]))	{$pause_code_approval=$_POST["pause_code_approval"];}
+	else {$pause_code_approval=0;}
 if (isset($_GET["populate_lead_source"]))			{$populate_lead_source=$_GET["populate_lead_source"];}
 	elseif (isset($_POST["populate_lead_source"]))	{$populate_lead_source=$_POST["populate_lead_source"];}
+	else {$populate_lead_source="DISABLED";}
 if (isset($_GET["populate_lead_vendor"]))			{$populate_lead_vendor=$_GET["populate_lead_vendor"];}
 	elseif (isset($_POST["populate_lead_vendor"]))	{$populate_lead_vendor=$_POST["populate_lead_vendor"];}
+	else {$populate_lead_vendor="";}
 if (isset($_GET["max_hopper_calls"]))			{$max_hopper_calls=$_GET["max_hopper_calls"];}
 	elseif (isset($_POST["max_hopper_calls"]))	{$max_hopper_calls=$_POST["max_hopper_calls"];}
+	else {$max_hopper_calls=0;}
 if (isset($_GET["max_hopper_calls_hour"]))			{$max_hopper_calls_hour=$_GET["max_hopper_calls_hour"];}
 	elseif (isset($_POST["max_hopper_calls_hour"]))	{$max_hopper_calls_hour=$_POST["max_hopper_calls_hour"];}
+	else {$max_hopper_calls_hour=0;}
 if (isset($_GET["waiting_call_url_on"]))			{$waiting_call_url_on=$_GET["waiting_call_url_on"];}
 	elseif (isset($_POST["waiting_call_url_on"]))	{$waiting_call_url_on=$_POST["waiting_call_url_on"];}
+	else {$waiting_call_url_on="";}
 if (isset($_GET["waiting_call_url_off"]))			{$waiting_call_url_off=$_GET["waiting_call_url_off"];}
 	elseif (isset($_POST["waiting_call_url_off"]))	{$waiting_call_url_off=$_POST["waiting_call_url_off"];}
+	else {$waiting_call_url_off="";}
 if (isset($_GET["enter_ingroup_url"]))			{$enter_ingroup_url=$_GET["enter_ingroup_url"];}
 	elseif (isset($_POST["enter_ingroup_url"]))	{$enter_ingroup_url=$_POST["enter_ingroup_url"];}
+	else {$enter_ingroup_url="";}
 if (isset($_GET["dead_trigger_seconds"]))			{$dead_trigger_seconds=$_GET["dead_trigger_seconds"];}
 	elseif (isset($_POST["dead_trigger_seconds"]))	{$dead_trigger_seconds=$_POST["dead_trigger_seconds"];}
+	else {$dead_trigger_seconds=0;}
 if (isset($_GET["dead_trigger_action"]))			{$dead_trigger_action=$_GET["dead_trigger_action"];}
 	elseif (isset($_POST["dead_trigger_action"]))	{$dead_trigger_action=$_POST["dead_trigger_action"];}
+	else {$dead_trigger_action="DISABLED";}
 if (isset($_GET["dead_trigger_repeat"]))			{$dead_trigger_repeat=$_GET["dead_trigger_repeat"];}
 	elseif (isset($_POST["dead_trigger_repeat"]))	{$dead_trigger_repeat=$_POST["dead_trigger_repeat"];}
+	else {$dead_trigger_repeat="NO";}
 if (isset($_GET["dead_trigger_filename"]))			{$dead_trigger_filename=$_GET["dead_trigger_filename"];}
 	elseif (isset($_POST["dead_trigger_filename"]))	{$dead_trigger_filename=$_POST["dead_trigger_filename"];}
+	else {$dead_trigger_filename="";}
 if (isset($_GET["dead_trigger_url"]))			{$dead_trigger_url=$_GET["dead_trigger_url"];}
 	elseif (isset($_POST["dead_trigger_url"]))	{$dead_trigger_url=$_POST["dead_trigger_url"];}
 if (isset($_GET["cid_cb_confirm_number"]))			{$cid_cb_confirm_number=$_GET["cid_cb_confirm_number"];}
 	elseif (isset($_POST["cid_cb_confirm_number"]))	{$cid_cb_confirm_number=$_POST["cid_cb_confirm_number"];}
+	else {$cid_cb_confirm_number="NO";}
 if (isset($_GET["cid_cb_invalid_filter_phone_group"]))			{$cid_cb_invalid_filter_phone_group=$_GET["cid_cb_invalid_filter_phone_group"];}
 	elseif (isset($_POST["cid_cb_invalid_filter_phone_group"]))	{$cid_cb_invalid_filter_phone_group=$_POST["cid_cb_invalid_filter_phone_group"];}
+	else {$cid_cb_invalid_filter_phone_group="";}
 if (isset($_GET["cid_cb_valid_length"]))			{$cid_cb_valid_length=$_GET["cid_cb_valid_length"];}
 	elseif (isset($_POST["cid_cb_valid_length"]))	{$cid_cb_valid_length=$_POST["cid_cb_valid_length"];}
+	{$cid_cb_valid_length=10;}
 if (isset($_GET["cid_cb_valid_filename"]))			{$cid_cb_valid_filename=$_GET["cid_cb_valid_filename"];}
 	elseif (isset($_POST["cid_cb_valid_filename"]))	{$cid_cb_valid_filename=$_POST["cid_cb_valid_filename"];}
+	else {$cid_cb_valid_filename="";}
 if (isset($_GET["cid_cb_confirmed_filename"]))			{$cid_cb_confirmed_filename=$_GET["cid_cb_confirmed_filename"];}
 	elseif (isset($_POST["cid_cb_confirmed_filename"]))	{$cid_cb_confirmed_filename=$_POST["cid_cb_confirmed_filename"];}
+	else {$cid_cb_confirmed_filename="";}
 if (isset($_GET["cid_cb_enter_filename"]))			{$cid_cb_enter_filename=$_GET["cid_cb_enter_filename"];}
 	elseif (isset($_POST["cid_cb_enter_filename"]))	{$cid_cb_enter_filename=$_POST["cid_cb_enter_filename"];}
+	else {$cid_cb_enter_filename="";}
 if (isset($_GET["cid_cb_you_entered_filename"]))			{$cid_cb_you_entered_filename=$_GET["cid_cb_you_entered_filename"];}
 	elseif (isset($_POST["cid_cb_you_entered_filename"]))	{$cid_cb_you_entered_filename=$_POST["cid_cb_you_entered_filename"];}
+	else {$cid_cb_you_entered_filename="";}
 if (isset($_GET["cid_cb_press_to_confirm_filename"]))			{$cid_cb_press_to_confirm_filename=$_GET["cid_cb_press_to_confirm_filename"];}
 	elseif (isset($_POST["cid_cb_press_to_confirm_filename"]))	{$cid_cb_press_to_confirm_filename=$_POST["cid_cb_press_to_confirm_filename"];}
+	else {$cid_cb_press_to_confirm_filename="";}
 if (isset($_GET["cid_cb_invalid_filename"]))			{$cid_cb_invalid_filename=$_GET["cid_cb_invalid_filename"];}
 	elseif (isset($_POST["cid_cb_invalid_filename"]))	{$cid_cb_invalid_filename=$_POST["cid_cb_invalid_filename"];}
+	else {$cid_cb_invalid_filename="";}
 if (isset($_GET["cid_cb_reenter_filename"]))			{$cid_cb_reenter_filename=$_GET["cid_cb_reenter_filename"];}
 	elseif (isset($_POST["cid_cb_reenter_filename"]))	{$cid_cb_reenter_filename=$_POST["cid_cb_reenter_filename"];}
+	else {$cid_cb_reenter_filename="";}
 if (isset($_GET["cid_cb_error_filename"]))			{$cid_cb_error_filename=$_GET["cid_cb_error_filename"];}
 	elseif (isset($_POST["cid_cb_error_filename"]))	{$cid_cb_error_filename=$_POST["cid_cb_error_filename"];}
+	else {$cid_cb_error_filename="";}
 if (isset($_GET["agent_logout_link"]))			{$agent_logout_link=$_GET["agent_logout_link"];}
 	elseif (isset($_POST["agent_logout_link"]))	{$agent_logout_link=$_POST["agent_logout_link"];}
+	else {$agent_logout_link=1;}
 if (isset($_GET["scheduled_callbacks_force_dial"]))				{$scheduled_callbacks_force_dial=$_GET["scheduled_callbacks_force_dial"];}
 	elseif (isset($_POST["scheduled_callbacks_force_dial"]))	{$scheduled_callbacks_force_dial=$_POST["scheduled_callbacks_force_dial"];}
+	else {$scheduled_callbacks_force_dial="N";}
 if (isset($_GET["scheduled_callbacks_auto_reschedule"]))			{$scheduled_callbacks_auto_reschedule=$_GET["scheduled_callbacks_auto_reschedule"];}
 	elseif (isset($_POST["scheduled_callbacks_auto_reschedule"]))	{$scheduled_callbacks_auto_reschedule=$_POST["scheduled_callbacks_auto_reschedule"];}
+	else {$scheduled_callbacks_auto_reschedule="DISABLED";}
 if (isset($_GET["scheduled_callbacks_timezones_container"]))			{$scheduled_callbacks_timezones_container=$_GET["scheduled_callbacks_timezones_container"];}
 	elseif (isset($_POST["scheduled_callbacks_timezones_container"]))	{$scheduled_callbacks_timezones_container=$_POST["scheduled_callbacks_timezones_container"];}
+	else {$scheduled_callbacks_timezones_container="DISABLED";}
 if (isset($_GET["daily_reset_limit"]))			{$daily_reset_limit=$_GET["daily_reset_limit"];}
 	elseif (isset($_POST["daily_reset_limit"]))	{$daily_reset_limit=$_POST["daily_reset_limit"];}
+	else {$daily_reset_limit="-1";}
 if (isset($_GET["three_way_volume_buttons"]))			{$three_way_volume_buttons=$_GET["three_way_volume_buttons"];}
 	elseif (isset($_POST["three_way_volume_buttons"]))	{$three_way_volume_buttons=$_POST["three_way_volume_buttons"];}
+	else {$three_way_volume_buttons="ENABLED";}
 if (isset($_GET["callback_dnc"]))			{$callback_dnc=$_GET["callback_dnc"];}
 	elseif (isset($_POST["callback_dnc"]))	{$callback_dnc=$_POST["callback_dnc"];}
+	else {$callback_dnc="DISABLED";}
 if (isset($_GET["external_web_socket_url"]))			{$external_web_socket_url=$_GET["external_web_socket_url"];}
 	elseif (isset($_POST["external_web_socket_url"]))	{$external_web_socket_url=$_POST["external_web_socket_url"];}
 if (isset($_GET["manual_dial_validation"]))			{$manual_dial_validation=$_GET["manual_dial_validation"];}
 	elseif (isset($_POST["manual_dial_validation"]))	{$manual_dial_validation=$_POST["manual_dial_validation"];}
+	else {$manual_dial_validation="";}
 if (isset($_GET["place_in_line_caller_number_filename"]))			{$place_in_line_caller_number_filename=$_GET["place_in_line_caller_number_filename"];}
 	elseif (isset($_POST["place_in_line_caller_number_filename"]))	{$place_in_line_caller_number_filename=$_POST["place_in_line_caller_number_filename"];}
+	else {$place_in_line_caller_number_filename="";}
 if (isset($_GET["place_in_line_you_next_filename"]))			{$place_in_line_you_next_filename=$_GET["place_in_line_you_next_filename"];}
 	elseif (isset($_POST["place_in_line_you_next_filename"]))	{$place_in_line_you_next_filename=$_POST["place_in_line_you_next_filename"];}
-if (isset($_GET["mute_recordings"]))			{$mute_recordings=$_GET["mute_recordings"];}
-	elseif (isset($_POST["mute_recordings"]))	{$mute_recordings=$_POST["mute_recordings"];}
+	else {$place_in_line_you_next_filename="";}
+if (isset($_GET["mute_recordings_users"]))			{$mute_recordings_users=$_GET["mute_recordings_users"];}
+	elseif (isset($_POST["mute_recordings_users"]))	{$mute_recordings_users=$_POST["mute_recordings_users"];}
+	else {$mute_recordings_users='DISABLED';}
+if (isset($_GET["mute_recordings_campaigns"]))			{$mute_recordings_campaigns=$_GET["mute_recordings_campaigns"];}
+	elseif (isset($_POST["mute_recordings_campaigns"]))	{$mute_recordings_campaigns=$_POST["mute_recordings_campaigns"];}
+	else {$mute_recordings_campaigns="N";}
+if (isset($_GET["mute_recordings_system"]))			{$mute_recordings_system=$_GET["mute_recordings_system"];}
+	elseif (isset($_POST["mute_recordings_system"]))	{$mute_recordings_system=$_POST["mute_recordings_system"];}
+	else {$mute_recordings_system=0;}
 if (isset($_GET["user_admin_redirect"]))			{$user_admin_redirect=$_GET["user_admin_redirect"];}
 	elseif (isset($_POST["user_admin_redirect"]))	{$user_admin_redirect=$_POST["user_admin_redirect"];}
+	else {$user_admin_redirect=0;}
 if (isset($_GET["user_admin_redirect_url"]))			{$user_admin_redirect_url=$_GET["user_admin_redirect_url"];}
 	elseif (isset($_POST["user_admin_redirect_url"]))	{$user_admin_redirect_url=$_POST["user_admin_redirect_url"];}
-if (isset($_GET["sip_event_logging"]))			{$sip_event_logging=$_GET["sip_event_logging"];}
-	elseif (isset($_POST["sip_event_logging"]))	{$sip_event_logging=$_POST["sip_event_logging"];}
-if (isset($_GET["call_quota_lead_ranking"]))			{$call_quota_lead_ranking=$_GET["call_quota_lead_ranking"];}
-	elseif (isset($_POST["call_quota_lead_ranking"]))	{$call_quota_lead_ranking=$_POST["call_quota_lead_ranking"];}
+#if (isset($_GET["sip_event_logging"]))			{$sip_event_logging=$_GET["sip_event_logging"];}
+#	elseif (isset($_POST["sip_event_logging"]))	{$sip_event_logging=$_POST["sip_event_logging"];}
+if (isset($_GET["sip_event_logging_system"]))			{$sip_event_logging_system=$_GET["sip_event_logging_system"];}
+	elseif (isset($_POST["sip_event_logging_system"]))	{$sip_event_logging_system=$_POST["sip_event_logging_system"];}
+	else {$sip_event_logging_system=0;}
+if (isset($_GET["sip_event_logging_campaigns"]))			{$sip_event_logging_campaigns=$_GET["sip_event_logging_campaigns"];}
+	elseif (isset($_POST["sip_event_logging_campaigns"]))	{$sip_event_logging_campaigns=$_POST["sip_event_logging_campaigns"];}
+	else {$sip_event_logging_campaigns="DISABLED";}
+#if (isset($_GET["call_quota_lead_ranking"]))			{$call_quota_lead_ranking=$_GET["call_quota_lead_ranking"];}
+#	elseif (isset($_POST["call_quota_lead_ranking"]))	{$call_quota_lead_ranking=$_POST["call_quota_lead_ranking"];}
+if (isset($_GET["call_quota_lead_ranking_campaigns"]))			{$call_quota_lead_ranking_campaigns=$_GET["call_quota_lead_ranking_campaigns"];}
+	elseif (isset($_POST["call_quota_lead_ranking_campaigns"]))	{$call_quota_lead_ranking_campaigns=$_POST["call_quota_lead_ranking_campaigns"];}
+	else {$call_quota_lead_ranking_campaigns="DISABLED";}
+if (isset($_GET["call_quota_lead_ranking_system"]))			{$call_quota_lead_ranking_system=$_GET["call_quota_lead_ranking_system"];}
+	elseif (isset($_POST["call_quota_lead_ranking_system"]))	{$call_quota_lead_ranking_system=$_POST["call_quota_lead_ranking_system"];}
+	else {$call_quota_lead_ranking_system=0;}
 if (isset($_GET["auto_active_list_new"]))			{$auto_active_list_new=$_GET["auto_active_list_new"];}
 	elseif (isset($_POST["auto_active_list_new"]))	{$auto_active_list_new=$_POST["auto_active_list_new"];}
+	else {$auto_active_list_new="DISABLED";}
 if (isset($_GET["auto_active_list_rank"]))			{$auto_active_list_rank=$_GET["auto_active_list_rank"];}
 	elseif (isset($_POST["auto_active_list_rank"]))	{$auto_active_list_rank=$_POST["auto_active_list_rank"];}
+	else {$auto_active_list_rank=0;}
 if (isset($_GET["max_inbound_filter_enabled"]))				{$max_inbound_filter_enabled=$_GET["max_inbound_filter_enabled"];}
 	elseif (isset($_POST["max_inbound_filter_enabled"]))	{$max_inbound_filter_enabled=$_POST["max_inbound_filter_enabled"];}
+	else {$max_inbound_filter_enabled=0;}
 if (isset($_GET["max_inbound_filter_statuses"]))			{$max_inbound_filter_statuses=$_GET["max_inbound_filter_statuses"];}
 	elseif (isset($_POST["max_inbound_filter_statuses"]))	{$max_inbound_filter_statuses=$_POST["max_inbound_filter_statuses"];}
+	else {$max_inbound_filter_statuses=array();}
 if (isset($_GET["max_inbound_filter_ingroups"]))			{$max_inbound_filter_ingroups=$_GET["max_inbound_filter_ingroups"];}
 	elseif (isset($_POST["max_inbound_filter_ingroups"]))	{$max_inbound_filter_ingroups=$_POST["max_inbound_filter_ingroups"];}
+	else {$max_inbound_filter_ingroups=array();}
 if (isset($_GET["max_inbound_filter_min_sec"]))				{$max_inbound_filter_min_sec=$_GET["max_inbound_filter_min_sec"];}
 	elseif (isset($_POST["max_inbound_filter_min_sec"]))	{$max_inbound_filter_min_sec=$_POST["max_inbound_filter_min_sec"];}
+	else {$max_inbound_filter_min_sec="-1";}
 if (isset($_GET["enable_second_script"]))			{$enable_second_script=$_GET["enable_second_script"];}
 	elseif (isset($_POST["enable_second_script"]))	{$enable_second_script=$_POST["enable_second_script"];}
+	else {$enable_second_script=0;}
+if (isset($_GET["ingroup_script"]))				{$ingroup_script=$_GET["ingroup_script"];}
+	elseif (isset($_POST["ingroup_script"]))	{$ingroup_script=$_POST["ingroup_script"];}
+	else {$ingroup_script="";}
 if (isset($_GET["ingroup_script_two"]))				{$ingroup_script_two=$_GET["ingroup_script_two"];}
 	elseif (isset($_POST["ingroup_script_two"]))	{$ingroup_script_two=$_POST["ingroup_script_two"];}
+	else {$ingroup_script_two="";}
+if (isset($_GET["campaign_script"]))			{$campaign_script=$_GET["campaign_script"];}
+	elseif (isset($_POST["campaign_script"]))	{$campaign_script=$_POST["campaign_script"];}
+	else {$campaign_script="";}
 if (isset($_GET["campaign_script_two"]))			{$campaign_script_two=$_GET["campaign_script_two"];}
 	elseif (isset($_POST["campaign_script_two"]))	{$campaign_script_two=$_POST["campaign_script_two"];}
+	else {$campaign_script_two="";}
 if (isset($_GET["leave_vm_message_group_id"]))			{$leave_vm_message_group_id=$_GET["leave_vm_message_group_id"];}
 	elseif (isset($_POST["leave_vm_message_group_id"]))	{$leave_vm_message_group_id=$_POST["leave_vm_message_group_id"];}
 if (isset($_GET["leave_vm_message_group_notes"]))			{$leave_vm_message_group_notes=$_GET["leave_vm_message_group_notes"];}
 	elseif (isset($_POST["leave_vm_message_group_notes"]))	{$leave_vm_message_group_notes=$_POST["leave_vm_message_group_notes"];}
+	else {$leave_vm_message_group_notes="";}
 if (isset($_GET["audio_filename"]))			{$audio_filename=$_GET["audio_filename"];}
 	elseif (isset($_POST["audio_filename"]))	{$audio_filename=$_POST["audio_filename"];}
+	else {$audio_filename="";}
 if (isset($_GET["audio_name"]))			{$audio_name=$_GET["audio_name"];}
 	elseif (isset($_POST["audio_name"]))	{$audio_name=$_POST["audio_name"];}
+	else {$audio_name="";}
 if (isset($_GET["time_start"]))			{$time_start=$_GET["time_start"];}
 	elseif (isset($_POST["time_start"]))	{$time_start=$_POST["time_start"];}
+	else {$time_start="0000";}
 if (isset($_GET["time_end"]))			{$time_end=$_GET["time_end"];}
 	elseif (isset($_POST["time_end"]))	{$time_end=$_POST["time_end"];}
+	else {$time_end="2400";}
 if (isset($_GET["leave_vm_no_dispo"]))			{$leave_vm_no_dispo=$_GET["leave_vm_no_dispo"];}
 	elseif (isset($_POST["leave_vm_no_dispo"]))	{$leave_vm_no_dispo=$_POST["leave_vm_no_dispo"];}
+	else {$leave_vm_no_dispo="DISABLED";}
 if (isset($_GET["leave_vm_message_group_id"]))			{$leave_vm_message_group_id=$_GET["leave_vm_message_group_id"];}
 	elseif (isset($_POST["leave_vm_message_group_id"]))	{$leave_vm_message_group_id=$_POST["leave_vm_message_group_id"];}
+	else {$leave_vm_message_group_id="";}
 if (isset($_GET["dial_timeout_lead_container"]))			{$dial_timeout_lead_container=$_GET["dial_timeout_lead_container"];}
 	elseif (isset($_POST["dial_timeout_lead_container"]))	{$dial_timeout_lead_container=$_POST["dial_timeout_lead_container"];}
+	else {$dial_timeout_lead_container="DISABLED";}
 if (isset($_GET["amd_type"]))			{$amd_type=$_GET["amd_type"];}
 	elseif (isset($_POST["amd_type"]))	{$amd_type=$_POST["amd_type"];}
+	else {$amd_type="AMD";}
 if (isset($_GET["recording_buttons"]))			{$recording_buttons=$_GET["recording_buttons"];}
 	elseif (isset($_POST["recording_buttons"]))	{$recording_buttons=$_POST["recording_buttons"];}
+	else {$recording_buttons="START_STOP";}
 if (isset($_GET["enable_first_webform"]))			{$enable_first_webform=$_GET["enable_first_webform"];}
 	elseif (isset($_POST["enable_first_webform"]))	{$enable_first_webform=$_POST["enable_first_webform"];}
+	else {$enable_first_webform=1;}
 if (isset($_GET["vmm_daily_limit"]))			{$vmm_daily_limit=$_GET["vmm_daily_limit"];}
 	elseif (isset($_POST["vmm_daily_limit"]))	{$vmm_daily_limit=$_POST["vmm_daily_limit"];}
+	else {$vmm_daily_limit=0;}
 if (isset($_GET["cid_auto_rotate_minutes"]))			{$cid_auto_rotate_minutes=$_GET["cid_auto_rotate_minutes"];}
 	elseif (isset($_POST["cid_auto_rotate_minutes"]))	{$cid_auto_rotate_minutes=$_POST["cid_auto_rotate_minutes"];}
+	else {$cid_auto_rotate_minutes=0;}
 if (isset($_GET["cid_auto_rotate_minimum"]))			{$cid_auto_rotate_minimum=$_GET["cid_auto_rotate_minimum"];}
 	elseif (isset($_POST["cid_auto_rotate_minimum"]))	{$cid_auto_rotate_minimum=$_POST["cid_auto_rotate_minimum"];}
-if (isset($_GET["opensips_cid_name"]))			{$opensips_cid_name=$_GET["opensips_cid_name"];}
-	elseif (isset($_POST["opensips_cid_name"]))	{$opensips_cid_name=$_POST["opensips_cid_name"];}
+	else {$cid_auto_rotate_minimum=0;}
+#if (isset($_GET["opensips_cid_name"]))			{$opensips_cid_name=$_GET["opensips_cid_name"];}
+#	elseif (isset($_POST["opensips_cid_name"]))	{$opensips_cid_name=$_POST["opensips_cid_name"];}
+if (isset($_GET["opensips_cid_name_campaigns"]))			{$opensips_cid_name_campaigns=$_GET["opensips_cid_name_campaigns"];}
+	elseif (isset($_POST["opensips_cid_name_campaigns"]))	{$opensips_cid_name_campaigns=$_POST["opensips_cid_name_campaigns"];}
+	else {$opensips_cid_name_campaigns="";}
+if (isset($_GET["opensips_cid_name_system"]))			{$opensips_cid_name_system=$_GET["opensips_cid_name_system"];}
+	elseif (isset($_POST["opensips_cid_name_system"]))	{$opensips_cid_name_system=$_POST["opensips_cid_name_system"];}
+	else {$opensips_cid_name_system=0;}
 if (isset($_GET["require_password_length"]))			{$require_password_length=$_GET["require_password_length"];}
 	elseif (isset($_POST["require_password_length"]))	{$require_password_length=$_POST["require_password_length"];}
+	else {$require_password_length=0;}
 if (isset($_GET["amd_agent_route_options"]))			{$amd_agent_route_options=$_GET["amd_agent_route_options"];}
 	elseif (isset($_POST["amd_agent_route_options"]))	{$amd_agent_route_options=$_POST["amd_agent_route_options"];}
+	else {$amd_agent_route_options="DISABLED";}
 if (isset($_GET["user_account_emails"]))			{$user_account_emails=$_GET["user_account_emails"];}
 	elseif (isset($_POST["user_account_emails"]))	{$user_account_emails=$_POST["user_account_emails"];}
+	else {$user_account_emails="DISABLED";}
 if (isset($_GET["outbound_cid_any"]))			{$outbound_cid_any=$_GET["outbound_cid_any"];}
 	elseif (isset($_POST["outbound_cid_any"]))	{$outbound_cid_any=$_POST["outbound_cid_any"];}
+	else {$outbound_cid_any="DISABLED";}
 if (isset($_GET["entries_per_page"]))			{$entries_per_page=$_GET["entries_per_page"];}
 	elseif (isset($_POST["entries_per_page"]))	{$entries_per_page=$_POST["entries_per_page"];}
+	else {$entries_per_page=0;}
 if (isset($_GET["start_count"]))			{$start_count=$_GET["start_count"];}
 	elseif (isset($_POST["start_count"]))	{$start_count=$_POST["start_count"];}
+	else {$start_count="";}
 if (isset($_GET["browser_call_alerts"]))			{$browser_call_alerts=$_GET["browser_call_alerts"];}
 	elseif (isset($_POST["browser_call_alerts"]))	{$browser_call_alerts=$_POST["browser_call_alerts"];}
-if (isset($_GET["browser_alert_sound"]))			{$browser_alert_sound=$_GET["browser_alert_sound"];}
-	elseif (isset($_POST["browser_alert_sound"]))	{$browser_alert_sound=$_POST["browser_alert_sound"];}
+	else {$browser_call_alerts=0;}
+#if (isset($_GET["browser_alert_sound"]))			{$browser_alert_sound=$_GET["browser_alert_sound"];}
+#	elseif (isset($_POST["browser_alert_sound"]))	{$browser_alert_sound=$_POST["browser_alert_sound"];}
+if (isset($_GET["browser_alert_sound_campaigns"]))			{$browser_alert_sound_campaigns=$_GET["browser_alert_sound_campaigns"];}
+	elseif (isset($_POST["browser_alert_sound_campaigns"]))	{$browser_alert_sound_campaigns=$_POST["browser_alert_sound_campaigns"];}
+	else {$browser_alert_sound_campaigns="---NONE---";}
+if (isset($_GET["browser_alert_sound_ingroups"]))			{$browser_alert_sound_ingroups=$_GET["browser_alert_sound_ingroups"];}
+	elseif (isset($_POST["browser_alert_sound_ingroups"]))	{$browser_alert_sound_ingroups=$_POST["browser_alert_sound_ingroups"];}
+	else {$browser_alert_sound_ingroups="---DISABLED---";}
 if (isset($_GET["browser_alert_volume"]))			{$browser_alert_volume=$_GET["browser_alert_volume"];}
 	elseif (isset($_POST["browser_alert_volume"]))	{$browser_alert_volume=$_POST["browser_alert_volume"];}
+	else {$browser_alert_volume=50;}
 if (isset($_GET["three_way_record_stop_exception"]))			{$three_way_record_stop_exception=$_GET["three_way_record_stop_exception"];}
 	elseif (isset($_POST["three_way_record_stop_exception"]))	{$three_way_record_stop_exception=$_POST["three_way_record_stop_exception"];}
+	else {$three_way_record_stop_exception="DISABLED";}
 if (isset($_GET["queuemetrics_pausereason"]))			{$queuemetrics_pausereason=$_GET["queuemetrics_pausereason"];}
 	elseif (isset($_POST["queuemetrics_pausereason"]))	{$queuemetrics_pausereason=$_POST["queuemetrics_pausereason"];}
+	else {$queuemetrics_pausereason="STANDARD";}
 if (isset($_GET["inbound_answer_config"]))			{$inbound_answer_config=$_GET["inbound_answer_config"];}
 	elseif (isset($_POST["inbound_answer_config"]))	{$inbound_answer_config=$_POST["inbound_answer_config"];}
+	else {$inbound_answer_config=0;}
 if (isset($_GET["inbound_route_answer"]))			{$inbound_route_answer=$_GET["inbound_route_answer"];}
 	elseif (isset($_POST["inbound_route_answer"]))	{$inbound_route_answer=$_POST["inbound_route_answer"];}
-if (isset($_GET["answer_signal"]))			{$answer_signal=$_GET["answer_signal"];}
-	elseif (isset($_POST["answer_signal"]))	{$answer_signal=$_POST["answer_signal"];}
+	else {$inbound_route_answer="Y";}
+#if (isset($_GET["answer_signal"]))			{$answer_signal=$_GET["answer_signal"];}
+#	elseif (isset($_POST["answer_signal"]))	{$answer_signal=$_POST["answer_signal"];}
+if (isset($_GET["answer_signal_callmenus"]))			{$answer_signal_callmenus=$_GET["answer_signal_callmenus"];}
+	elseif (isset($_POST["answer_signal_callmenus"]))	{$answer_signal_callmenus=$_POST["answer_signal_callmenus"];}
+	else {$answer_signal_callmenus="Y";}
+if (isset($_GET["answer_signal_ingroups"]))			{$answer_signal_ingroups=$_GET["answer_signal_ingroups"];}
+	elseif (isset($_POST["answer_signal_ingroups"]))	{$answer_signal_ingroups=$_POST["answer_signal_ingroups"];}
+	else {$answer_signal_ingroups="START";}
 if (isset($_GET["inbound_drop_voicemail"]))				{$inbound_drop_voicemail=$_GET["inbound_drop_voicemail"];}
 	elseif (isset($_POST["inbound_drop_voicemail"]))	{$inbound_drop_voicemail=$_POST["inbound_drop_voicemail"];}
+	else {$inbound_drop_voicemail="";}
 if (isset($_GET["inbound_after_hours_voicemail"]))			{$inbound_after_hours_voicemail=$_GET["inbound_after_hours_voicemail"];}
 	elseif (isset($_POST["inbound_after_hours_voicemail"]))	{$inbound_after_hours_voicemail=$_POST["inbound_after_hours_voicemail"];}
+	else {$inbound_after_hours_voicemail="";}
 if (isset($_GET["web_loader_phone_strip"]))				{$web_loader_phone_strip=$_GET["web_loader_phone_strip"];}
 	elseif (isset($_POST["web_loader_phone_strip"]))	{$web_loader_phone_strip=$_POST["web_loader_phone_strip"];}
+	else {$web_loader_phone_strip="";}
 if (isset($_GET["manual_dial_phone_strip"]))			{$manual_dial_phone_strip=$_GET["manual_dial_phone_strip"];}
 	elseif (isset($_POST["manual_dial_phone_strip"]))	{$manual_dial_phone_strip=$_POST["manual_dial_phone_strip"];}
+	else {$manual_dial_phone_strip="";}
 if (isset($_GET["pause_max_exceptions"]))			{$pause_max_exceptions=$_GET["pause_max_exceptions"];}
 	elseif (isset($_POST["pause_max_exceptions"]))	{$pause_max_exceptions=$_POST["pause_max_exceptions"];}
+	else {$pause_max_exceptions="";}
 if (isset($_GET["no_agent_delay"]))				{$no_agent_delay=$_GET["no_agent_delay"];}
 	elseif (isset($_POST["no_agent_delay"]))	{$no_agent_delay=$_POST["no_agent_delay"];}
+	else {$no_agent_delay=0;}
 if (isset($_GET["hopper_drop_run_trigger"]))			{$hopper_drop_run_trigger=$_GET["hopper_drop_run_trigger"];}
 	elseif (isset($_POST["hopper_drop_run_trigger"]))	{$hopper_drop_run_trigger=$_POST["hopper_drop_run_trigger"];}
+	else {$hopper_drop_run_trigger="N";}
 if (isset($_GET["hopper_drop_run_trigger_all"]))			{$hopper_drop_run_trigger_all=$_GET["hopper_drop_run_trigger_all"];}
 	elseif (isset($_POST["hopper_drop_run_trigger_all"]))	{$hopper_drop_run_trigger_all=$_POST["hopper_drop_run_trigger_all"];}
+	else {$hopper_drop_run_trigger_all="";}
 if (isset($_GET["daily_call_count_limit"]))				{$daily_call_count_limit=$_GET["daily_call_count_limit"];}
 	elseif (isset($_POST["daily_call_count_limit"]))	{$daily_call_count_limit=$_POST["daily_call_count_limit"];}
+	else {$daily_call_count_limit=0;}
 if (isset($_GET["daily_limit_manual"]))				{$daily_limit_manual=$_GET["daily_limit_manual"];}
 	elseif (isset($_POST["daily_limit_manual"]))	{$daily_limit_manual=$_POST["daily_limit_manual"];}
+	else {$daily_limit_manual="DISABLED";}
 if (isset($_GET["transfer_button_launch"]))				{$transfer_button_launch=$_GET["transfer_button_launch"];}
 	elseif (isset($_POST["transfer_button_launch"]))	{$transfer_button_launch=$_POST["transfer_button_launch"];}
+	else {$transfer_button_launch="NONE";}
 if (isset($_GET["allow_shared_dial"]))			{$allow_shared_dial=$_GET["allow_shared_dial"];}
 	elseif (isset($_POST["allow_shared_dial"]))	{$allow_shared_dial=$_POST["allow_shared_dial"];}
+	else {$allow_shared_dial=0;}
 if (isset($_GET["shared_dial_rank"]))			{$shared_dial_rank=$_GET["shared_dial_rank"];}
 	elseif (isset($_POST["shared_dial_rank"]))	{$shared_dial_rank=$_POST["shared_dial_rank"];}
+	else {$shared_dial_rank=99;}
 if (isset($_GET["mobile_number"]))			{$mobile_number=$_GET["mobile_number"];}
 	elseif (isset($_POST["mobile_number"]))	{$mobile_number=$_POST["mobile_number"];}
+	else {$mobile_number="";}
 if (isset($_GET["two_factor_auth_hours"]))			{$two_factor_auth_hours=$_GET["two_factor_auth_hours"];}
 	elseif (isset($_POST["two_factor_auth_hours"]))	{$two_factor_auth_hours=$_POST["two_factor_auth_hours"];}
+	else {$two_factor_auth_hours=0;}
 if (isset($_GET["two_factor_auth_agent_hours"]))			{$two_factor_auth_agent_hours=$_GET["two_factor_auth_agent_hours"];}
 	elseif (isset($_POST["two_factor_auth_agent_hours"]))	{$two_factor_auth_agent_hours=$_POST["two_factor_auth_agent_hours"];}
+	else {$two_factor_auth_agent_hours=0;}
 if (isset($_GET["two_factor_container"]))			{$two_factor_container=$_GET["two_factor_container"];}
 	elseif (isset($_POST["two_factor_container"]))	{$two_factor_container=$_POST["two_factor_container"];}
+	else {$two_factor_container="---DISABLED---";}
 if (isset($_GET["two_factor_override"]))			{$two_factor_override=$_GET["two_factor_override"];}
 	elseif (isset($_POST["two_factor_override"]))	{$two_factor_override=$_POST["two_factor_override"];}
+	else {$two_factor_override="NOT_ACTIVE";}
 if (isset($_GET["auth_entry"]))				{$auth_entry=$_GET["auth_entry"];}
 	elseif (isset($_POST["auth_entry"]))	{$auth_entry=$_POST["auth_entry"];}
+	else {$auth_entry=0;}
 if (isset($_GET["clear_form"]))				{$clear_form=$_GET["clear_form"];}
 	elseif (isset($_POST["clear_form"]))	{$clear_form=$_POST["clear_form"];}
+	else {$clear_form="ACKNOWLEDGE";}
 if (isset($_GET["agent_hidden_sound"]))				{$agent_hidden_sound=$_GET["agent_hidden_sound"];}
 	elseif (isset($_POST["agent_hidden_sound"]))	{$agent_hidden_sound=$_POST["agent_hidden_sound"];}
+	else {$agent_hidden_sound="click_quiet";}
 if (isset($_GET["agent_hidden_sound_volume"]))			{$agent_hidden_sound_volume=$_GET["agent_hidden_sound_volume"];}
 	elseif (isset($_POST["agent_hidden_sound_volume"]))	{$agent_hidden_sound_volume=$_POST["agent_hidden_sound_volume"];}
+	else {$agent_hidden_sound_volume=25;}
 if (isset($_GET["agent_hidden_sound_seconds"]))				{$agent_hidden_sound_seconds=$_GET["agent_hidden_sound_seconds"];}
 	elseif (isset($_POST["agent_hidden_sound_seconds"]))	{$agent_hidden_sound_seconds=$_POST["agent_hidden_sound_seconds"];}
+	else {$agent_hidden_sound_seconds=0;}
 if (isset($_GET["leave_3way_start_recording"]))				{$leave_3way_start_recording=$_GET["leave_3way_start_recording"];}
 	elseif (isset($_POST["leave_3way_start_recording"]))	{$leave_3way_start_recording=$_POST["leave_3way_start_recording"];}
+	else {$leave_3way_start_recording="DISABLED";}
 if (isset($_GET["leave_3way_start_recording_exception"]))			{$leave_3way_start_recording_exception=$_GET["leave_3way_start_recording_exception"];}
 	elseif (isset($_POST["leave_3way_start_recording_exception"]))	{$leave_3way_start_recording_exception=$_POST["leave_3way_start_recording_exception"];}
+	else {$leave_3way_start_recording_exception="DISABLED";}
 if (isset($_GET["populate_lead_comments"]))				{$populate_lead_comments=$_GET["populate_lead_comments"];}
 	elseif (isset($_POST["populate_lead_comments"]))	{$populate_lead_comments=$_POST["populate_lead_comments"];}
+	else {$populate_lead_comments="";}
 if (isset($_GET["agent_screen_timer"]))				{$agent_screen_timer=$_GET["agent_screen_timer"];}
 	elseif (isset($_POST["agent_screen_timer"]))	{$agent_screen_timer=$_POST["agent_screen_timer"];}
+	else {$agent_screen_timer="setTimeout";}
 if (isset($_GET["calls_waiting_vl_one"]))				{$calls_waiting_vl_one=$_GET["calls_waiting_vl_one"];}
 	elseif (isset($_POST["calls_waiting_vl_one"]))	{$calls_waiting_vl_one=$_POST["calls_waiting_vl_one"];}
+	else {$calls_waiting_vl_one="DISABLED";}
 if (isset($_GET["calls_waiting_vl_two"]))				{$calls_waiting_vl_two=$_GET["calls_waiting_vl_two"];}
 	elseif (isset($_POST["calls_waiting_vl_two"]))	{$calls_waiting_vl_two=$_POST["calls_waiting_vl_two"];}
+	else {$calls_waiting_vl_two="DISABLED";}
 if (isset($_GET["label_lead_id"]))				{$label_lead_id=$_GET["label_lead_id"];}
 	elseif (isset($_POST["label_lead_id"]))		{$label_lead_id=$_POST["label_lead_id"];}
+	else {$label_lead_id="";}
 if (isset($_GET["label_list_id"]))				{$label_list_id=$_GET["label_list_id"];}
 	elseif (isset($_POST["label_list_id"]))		{$label_list_id=$_POST["label_list_id"];}
+	else {$label_list_id="";}
 if (isset($_GET["label_entry_date"]))			{$label_entry_date=$_GET["label_entry_date"];}
 	elseif (isset($_POST["label_entry_date"]))	{$label_entry_date=$_POST["label_entry_date"];}
+	else {$label_entry_date="";}
 if (isset($_GET["label_gmt_offset_now"]))			{$label_gmt_offset_now=$_GET["label_gmt_offset_now"];}
 	elseif (isset($_POST["label_gmt_offset_now"]))	{$label_gmt_offset_now=$_POST["label_gmt_offset_now"];}
+	else {$label_gmt_offset_now="";}
 if (isset($_GET["label_source_id"]))				{$label_source_id=$_GET["label_source_id"];}
 	elseif (isset($_POST["label_source_id"]))		{$label_source_id=$_POST["label_source_id"];}
+	else {$label_source_id="";}
 if (isset($_GET["label_called_since_last_reset"]))			{$label_called_since_last_reset=$_GET["label_called_since_last_reset"];}
 	elseif (isset($_POST["label_called_since_last_reset"]))	{$label_called_since_last_reset=$_POST["label_called_since_last_reset"];}
+	else {$label_called_since_last_reset="";}
 if (isset($_GET["label_status"]))			{$label_status=$_GET["label_status"];}
 	elseif (isset($_POST["label_status"]))	{$label_status=$_POST["label_status"];}
+	else {$label_status="";}
 if (isset($_GET["label_user"]))				{$label_user=$_GET["label_user"];}
 	elseif (isset($_POST["label_user"]))	{$label_user=$_POST["label_user"];}
+	else {$label_user="";}
 if (isset($_GET["label_date_of_birth"]))			{$label_date_of_birth=$_GET["label_date_of_birth"];}
 	elseif (isset($_POST["label_date_of_birth"]))	{$label_date_of_birth=$_POST["label_date_of_birth"];}
+	else {$label_date_of_birth="";}
 if (isset($_GET["label_country_code"]))				{$label_country_code=$_GET["label_country_code"];}
 	elseif (isset($_POST["label_country_code"]))	{$label_country_code=$_POST["label_country_code"];}
+	else {$label_country_code="";}
 if (isset($_GET["label_last_local_call_time"]))				{$label_last_local_call_time=$_GET["label_last_local_call_time"];}
 	elseif (isset($_POST["label_last_local_call_time"]))	{$label_last_local_call_time=$_POST["label_last_local_call_time"];}
+	else {$label_last_local_call_time="";}
 if (isset($_GET["label_called_count"]))				{$label_called_count=$_GET["label_called_count"];}
 	elseif (isset($_POST["label_called_count"]))	{$label_called_count=$_POST["label_called_count"];}
+	else {$label_called_count="";}
 if (isset($_GET["label_rank"]))				{$label_rank=$_GET["label_rank"];}
 	elseif (isset($_POST["label_rank"]))	{$label_rank=$_POST["label_rank"];}
+	else {$label_rank="";}
 if (isset($_GET["label_owner"]))			{$label_owner=$_GET["label_owner"];}
 	elseif (isset($_POST["label_owner"]))	{$label_owner=$_POST["label_owner"];}
+	else {$label_owner="";}
 if (isset($_GET["label_entry_list_id"]))			{$label_entry_list_id=$_GET["label_entry_list_id"];}
 	elseif (isset($_POST["label_entry_list_id"]))	{$label_entry_list_id=$_POST["label_entry_list_id"];}
+	else {$label_entry_list_id="";}
 if (isset($_GET["calls_inqueue_count_one"]))			{$calls_inqueue_count_one=$_GET["calls_inqueue_count_one"];}
 	elseif (isset($_POST["calls_inqueue_count_one"]))	{$calls_inqueue_count_one=$_POST["calls_inqueue_count_one"];}
+	else {$calls_inqueue_count_one="DISABLED";}
 if (isset($_GET["calls_inqueue_count_two"]))			{$calls_inqueue_count_two=$_GET["calls_inqueue_count_two"];}
 	elseif (isset($_POST["calls_inqueue_count_two"]))	{$calls_inqueue_count_two=$_POST["calls_inqueue_count_two"];}
+	else {$calls_inqueue_count_two="DISABLED";}
 if (isset($_GET["mohsuggest"]))				{$mohsuggest=$_GET["mohsuggest"];}
 	elseif (isset($_POST["mohsuggest"]))	{$mohsuggest=$_POST["mohsuggest"];}
+	else {$mohsuggest="";}
 if (isset($_GET["drop_call_seconds_override"]))				{$drop_call_seconds_override=$_GET["drop_call_seconds_override"];}
 	elseif (isset($_POST["drop_call_seconds_override"]))	{$drop_call_seconds_override=$_POST["drop_call_seconds_override"];}
+	else {$drop_call_seconds_override="DISABLED";}
 if (isset($_GET["in_man_dial_next_ready_seconds"]))				{$in_man_dial_next_ready_seconds=$_GET["in_man_dial_next_ready_seconds"];}
 	elseif (isset($_POST["in_man_dial_next_ready_seconds"]))	{$in_man_dial_next_ready_seconds=$_POST["in_man_dial_next_ready_seconds"];}
+	else {$in_man_dial_next_ready_seconds=0;}
 if (isset($_GET["in_man_dial_next_ready_seconds_override"]))			{$in_man_dial_next_ready_seconds_override=$_GET["in_man_dial_next_ready_seconds_override"];}
 	elseif (isset($_POST["in_man_dial_next_ready_seconds_override"]))	{$in_man_dial_next_ready_seconds_override=$_POST["in_man_dial_next_ready_seconds_override"];}
+	else {$in_man_dial_next_ready_seconds_override="DISABLED";}
 if (isset($_GET["transfer_no_dispo"]))			{$transfer_no_dispo=$_GET["transfer_no_dispo"];}
 	elseif (isset($_POST["transfer_no_dispo"]))	{$transfer_no_dispo=$_POST["transfer_no_dispo"];}
+	else {$transfer_no_dispo="DISABLED";}
 if (isset($_GET["call_limit_24hour_method"]))			{$call_limit_24hour_method=$_GET["call_limit_24hour_method"];}
 	elseif (isset($_POST["call_limit_24hour_method"]))	{$call_limit_24hour_method=$_POST["call_limit_24hour_method"];}
+	else {$call_limit_24hour_method="DISABLED";}
 if (isset($_GET["call_limit_24hour_scope"]))			{$call_limit_24hour_scope=$_GET["call_limit_24hour_scope"];}
 	elseif (isset($_POST["call_limit_24hour_scope"]))	{$call_limit_24hour_scope=$_POST["call_limit_24hour_scope"];}
+	else {$call_limit_24hour_scope="SYSTEM_WIDE";}
 if (isset($_GET["call_limit_24hour"]))			{$call_limit_24hour=$_GET["call_limit_24hour"];}
 	elseif (isset($_POST["call_limit_24hour"]))	{$call_limit_24hour=$_POST["call_limit_24hour"];}
+	else {$call_limit_24hour=0;}
 if (isset($_GET["call_limit_24hour_override"]))			{$call_limit_24hour_override=$_GET["call_limit_24hour_override"];}
 	elseif (isset($_POST["call_limit_24hour_override"]))	{$call_limit_24hour_override=$_POST["call_limit_24hour_override"];}
+	else {$call_limit_24hour_override="DISABLED";}
 if (isset($_GET["cid_group_id_two"]))			{$cid_group_id_two=$_GET["cid_group_id_two"];}
 	elseif (isset($_POST["cid_group_id_two"]))	{$cid_group_id_two=$_POST["cid_group_id_two"];}
+	else {$cid_group_id_two="---DISABLED---";}
 if (isset($_GET["allowed_sip_stacks"]))				{$allowed_sip_stacks=$_GET["allowed_sip_stacks"];}
 	elseif (isset($_POST["allowed_sip_stacks"]))	{$allowed_sip_stacks=$_POST["allowed_sip_stacks"];}
+	else {$allowed_sip_stacks="SIP";}
 if (isset($_GET["populate_lead_owner"]))			{$populate_lead_owner=$_GET["populate_lead_owner"];}
 	elseif (isset($_POST["populate_lead_owner"]))	{$populate_lead_owner=$_POST["populate_lead_owner"];}
+	else {$populate_lead_owner="DISABLED";}
 if (isset($_GET["incall_tally_threshold_seconds"]))				{$incall_tally_threshold_seconds=$_GET["incall_tally_threshold_seconds"];}
 	elseif (isset($_POST["incall_tally_threshold_seconds"]))	{$incall_tally_threshold_seconds=$_POST["incall_tally_threshold_seconds"];}
+	else {$incall_tally_threshold_seconds=0;}
 if (isset($_GET["in_queue_nanque"]))			{$in_queue_nanque=$_GET["in_queue_nanque"];}
 	elseif (isset($_POST["in_queue_nanque"]))	{$in_queue_nanque=$_POST["in_queue_nanque"];}
+	else {$in_queue_nanque="N";}
 if (isset($_GET["in_queue_nanque_exceptions"]))				{$in_queue_nanque_exceptions=$_GET["in_queue_nanque_exceptions"];}
 	elseif (isset($_POST["in_queue_nanque_exceptions"]))	{$in_queue_nanque_exceptions=$_POST["in_queue_nanque_exceptions"];}
+	else {$in_queue_nanque_exceptions="";}
 if (isset($_GET["user_location"]))			{$user_location=$_GET["user_location"];}
 	elseif (isset($_POST["user_location"]))	{$user_location=$_POST["user_location"];}
+	else {$user_location="";}
 if (isset($_GET["queue_group"]))			{$queue_group=$_GET["queue_group"];}
 	elseif (isset($_POST["queue_group"]))	{$queue_group=$_POST["queue_group"];}
+	else {$queue_group="";}
 if (isset($_GET["queue_group_name"]))			{$queue_group_name=$_GET["queue_group_name"];}
 	elseif (isset($_POST["queue_group_name"]))	{$queue_group_name=$_POST["queue_group_name"];}
+	else {$queue_group_name="";}
 if (isset($_GET["included_campaigns"]))				{$included_campaigns=$_GET["included_campaigns"];}
 	elseif (isset($_POST["included_campaigns"]))	{$included_campaigns=$_POST["included_campaigns"];}
 if (isset($_GET["included_inbound_groups"]))			{$included_inbound_groups=$_GET["included_inbound_groups"];}
@@ -2703,190 +3982,286 @@ if (isset($_GET["allowed_queue_groups"]))			{$allowed_queue_groups=$_GET["allowe
 	elseif (isset($_POST["allowed_queue_groups"]))	{$allowed_queue_groups=$_POST["allowed_queue_groups"];}
 if (isset($_GET["reports_header_override"]))			{$reports_header_override=$_GET["reports_header_override"];}
 	elseif (isset($_POST["reports_header_override"]))	{$reports_header_override=$_POST["reports_header_override"];}
+	else {$reports_header_override="DISABLED";}
 if (isset($_GET["queue_groups"]))			{$queue_groups=$_GET["queue_groups"];}
 	elseif (isset($_POST["queue_groups"]))	{$queue_groups=$_POST["queue_groups"];}
 if (isset($_GET["auto_alt_threshold"]))				{$auto_alt_threshold=$_GET["auto_alt_threshold"];}
 	elseif (isset($_POST["auto_alt_threshold"]))	{$auto_alt_threshold=$_POST["auto_alt_threshold"];}
+	else {$auto_alt_threshold="";}
 if (isset($_GET["download_invalid_files"]))				{$download_invalid_files=$_GET["download_invalid_files"];}
 	elseif (isset($_POST["download_invalid_files"]))	{$download_invalid_files=$_POST["download_invalid_files"];}
+	else {$download_invalid_files=0;}
 if (isset($_GET["pause_max_url"]))			{$pause_max_url=$_GET["pause_max_url"];}
 	elseif (isset($_POST["pause_max_url"]))	{$pause_max_url=$_POST["pause_max_url"];}
+	else {$pause_max_url="";}
 if (isset($_GET["agent_hide_hangup"]))			{$agent_hide_hangup=$_GET["agent_hide_hangup"];}
 	elseif (isset($_POST["agent_hide_hangup"]))	{$agent_hide_hangup=$_POST["agent_hide_hangup"];}
+	else {$agent_hide_hangup="";}
 if (isset($_GET["allow_web_debug"]))			{$allow_web_debug=$_GET["allow_web_debug"];}
 	elseif (isset($_POST["allow_web_debug"]))	{$allow_web_debug=$_POST["allow_web_debug"];}
+	else {$allow_web_debug=0;}
 if (isset($_GET["ig_xfer_list_sort"]))			{$ig_xfer_list_sort=$_GET["ig_xfer_list_sort"];}
 	elseif (isset($_POST["ig_xfer_list_sort"]))	{$ig_xfer_list_sort=$_POST["ig_xfer_list_sort"];}
+	else {$ig_xfer_list_sort="GROUP_ID_UP";}
 if (isset($_GET["pre_filter_recent_call"]))				{$pre_filter_recent_call=$_GET["pre_filter_recent_call"];}
 	elseif (isset($_POST["pre_filter_recent_call"]))	{$pre_filter_recent_call=$_POST["pre_filter_recent_call"];}
+	else {$pre_filter_recent_call="";}
 if (isset($_GET["pre_filter_recent_extension"]))			{$pre_filter_recent_extension=$_GET["pre_filter_recent_extension"];}
 	elseif (isset($_POST["pre_filter_recent_extension"]))	{$pre_filter_recent_extension=$_POST["pre_filter_recent_extension"];}
+	else {$pre_filter_recent_extension="";}
 if (isset($_GET["script_tab_frame_size"]))			{$script_tab_frame_size=$_GET["script_tab_frame_size"];}
 	elseif (isset($_POST["script_tab_frame_size"]))	{$script_tab_frame_size=$_POST["script_tab_frame_size"];}
+	else {$script_tab_frame_size="DEFAULT";}
 if (isset($_GET["user_group_two"]))				{$user_group_two=$_GET["user_group_two"];}
 	elseif (isset($_POST["user_group_two"]))	{$user_group_two=$_POST["user_group_two"];}
+	else {$user_group_two="";}
 if (isset($_GET["max_logged_in_agents"]))				{$max_logged_in_agents=$_GET["max_logged_in_agents"];}
 	elseif (isset($_POST["max_logged_in_agents"]))	{$max_logged_in_agents=$_POST["max_logged_in_agents"];}
+	else {$max_logged_in_agents=0;}
 if (isset($_GET["user_codes_admin"]))				{$user_codes_admin=$_GET["user_codes_admin"];}
 	elseif (isset($_POST["user_codes_admin"]))	{$user_codes_admin=$_POST["user_codes_admin"];}
+	else {$user_codes_admin=0;}
 if (isset($_GET["conf_engine"]))			{$conf_engine=$_GET["conf_engine"];}
 	elseif (isset($_POST["conf_engine"]))	{$conf_engine=$_POST["conf_engine"];}
+	else {$conf_engine="MEETME";}
 if (isset($_GET["conf_update_interval"]))			{$conf_update_interval=$_GET["conf_update_interval"];}
 	elseif (isset($_POST["conf_update_interval"]))	{$conf_update_interval=$_POST["conf_update_interval"];}
+	else {$conf_update_interval=60;}
 if (isset($_GET["user_group_script"]))			{$user_group_script=$_GET["user_group_script"];}
 	elseif (isset($_POST["user_group_script"]))	{$user_group_script=$_POST["user_group_script"];}
+	else {$user_group_script="DISABLED";}
 if (isset($_GET["login_kickall"]))			{$login_kickall=$_GET["login_kickall"];}
 	elseif (isset($_POST["login_kickall"]))	{$login_kickall=$_POST["login_kickall"];}
+	else {$login_kickall=0;}
 if (isset($_GET["city_rule"]))			{$city_rule=$_GET["city_rule"];}
 	elseif (isset($_POST["city_rule"]))	{$city_rule=$_POST["city_rule"];}
+	else {$city_rule="";}
 if (isset($_GET["county_rule"]))			{$county_rule=$_GET["county_rule"];}
 	elseif (isset($_POST["county_rule"]))	{$county_rule=$_POST["county_rule"];}
+	else {$county_rule="";}
 if (isset($_GET["ac_rule"]))			{$ac_rule=$_GET["ac_rule"];}
 	elseif (isset($_POST["ac_rule"]))	{$ac_rule=$_POST["ac_rule"];}
+	else {$ac_rule="";}
 if (isset($_GET["agent_hangup_route"]))				{$agent_hangup_route=$_GET["agent_hangup_route"];}
 	elseif (isset($_POST["agent_hangup_route"]))	{$agent_hangup_route=$_POST["agent_hangup_route"];}
+	else {$agent_hangup_route="HANGUP";}
 if (isset($_GET["agent_hangup_value"]))				{$agent_hangup_value=$_GET["agent_hangup_value"];}
 	elseif (isset($_POST["agent_hangup_value"]))	{$agent_hangup_value=$_POST["agent_hangup_value"];}
+	else {$agent_hangup_value="";}
 if (isset($_GET["agent_hangup_ig_override"]))			{$agent_hangup_ig_override=$_GET["agent_hangup_ig_override"];}
 	elseif (isset($_POST["agent_hangup_ig_override"]))	{$agent_hangup_ig_override=$_POST["agent_hangup_ig_override"];}
+	else {$agent_hangup_ig_override="N";}
 if (isset($_GET["abandon_check_queue"]))			{$abandon_check_queue=$_GET["abandon_check_queue"];}
 	elseif (isset($_POST["abandon_check_queue"]))	{$abandon_check_queue=$_POST["abandon_check_queue"];}
+	else {$abandon_check_queue=0;}
 if (isset($_GET["ara_url"]))			{$ara_url=$_GET["ara_url"];}
 	elseif (isset($_POST["ara_url"]))	{$ara_url=$_POST["ara_url"];}
 if (isset($_GET["show_confetti"]))			{$show_confetti=$_GET["show_confetti"];}
 	elseif (isset($_POST["show_confetti"]))	{$show_confetti=$_POST["show_confetti"];}
+	else {$show_confetti="DISABLED";}
 if (isset($_GET["webphone_settings"]))			{$webphone_settings=$_GET["webphone_settings"];}
 	elseif (isset($_POST["webphone_settings"]))	{$webphone_settings=$_POST["webphone_settings"];}
+	else {$webphone_settings="";}
 if (isset($_GET["agent_notifications"]))			{$agent_notifications=$_GET["agent_notifications"];}
 	elseif (isset($_POST["agent_notifications"]))	{$agent_notifications=$_POST["agent_notifications"];}
-if (isset($_GET["demographic_quotas"]))				{$demographic_quotas=$_GET["demographic_quotas"];}
-	elseif (isset($_POST["demographic_quotas"]))	{$demographic_quotas=$_POST["demographic_quotas"];}
+	else {$agent_notifications=0;}
+#if (isset($_GET["demographic_quotas"]))				{$demographic_quotas=$_GET["demographic_quotas"];}
+#	elseif (isset($_POST["demographic_quotas"]))	{$demographic_quotas=$_POST["demographic_quotas"];}
+if (isset($_GET["demographic_quotas_system"]))				{$demographic_quotas_system=$_GET["demographic_quotas_system"];}
+	elseif (isset($_POST["demographic_quotas_system"]))	{$demographic_quotas_system=$_POST["demographic_quotas_system"];}
+	else {$demographic_quotas_system=0;}
+if (isset($_GET["demographic_quotas_campaigns"]))				{$demographic_quotas_campaigns=$_GET["demographic_quotas_campaigns"];}
+	elseif (isset($_POST["demographic_quotas_campaigns"]))	{$demographic_quotas_campaigns=$_POST["demographic_quotas_campaigns"];}
+	else {$demographic_quotas_campaigns="DISABLED";}
 if (isset($_GET["demographic_quotas_container"]))			{$demographic_quotas_container=$_GET["demographic_quotas_container"];}
 	elseif (isset($_POST["demographic_quotas_container"]))	{$demographic_quotas_container=$_POST["demographic_quotas_container"];}
+	else {$demographic_quotas_container="DISABLED";}
 if (isset($_GET["demographic_quotas_rerank"]))			{$demographic_quotas_rerank=$_GET["demographic_quotas_rerank"];}
 	elseif (isset($_POST["demographic_quotas_rerank"]))	{$demographic_quotas_rerank=$_POST["demographic_quotas_rerank"];}
+	else {$demographic_quotas_rerank="NO";}
 if (isset($_GET["demographic_quotas_list_resets"]))			{$demographic_quotas_list_resets=$_GET["demographic_quotas_list_resets"];}
 	elseif (isset($_POST["demographic_quotas_list_resets"]))	{$demographic_quotas_list_resets=$_POST["demographic_quotas_list_resets"];}
+	else {$demographic_quotas_list_resets="MANUAL";}
 if (isset($_GET["log_latency_gaps"]))			{$log_latency_gaps=$_GET["log_latency_gaps"];}
 	elseif (isset($_POST["log_latency_gaps"]))	{$log_latency_gaps=$_POST["log_latency_gaps"];}
+	else {$log_latency_gaps=1;}
 if (isset($_GET["modify_dial_prefix"]))				{$modify_dial_prefix=$_GET["modify_dial_prefix"];}
 	elseif (isset($_POST["modify_dial_prefix"]))	{$modify_dial_prefix=$_POST["modify_dial_prefix"];}
+	else {$modify_dial_prefix=0;}
 if (isset($_GET["inbound_credits"]))			{$inbound_credits=$_GET["inbound_credits"];}
 	elseif (isset($_POST["inbound_credits"]))	{$inbound_credits=$_POST["inbound_credits"];}
+	else {$inbound_credits="";}
 if (isset($_GET["weekday_resets"]))				{$weekday_resets=$_GET["weekday_resets"];}
 	elseif (isset($_POST["weekday_resets"]))	{$weekday_resets=$_POST["weekday_resets"];}
+	else {$weekday_resets=0;}
 if (isset($_GET["weekday_resets_container"]))			{$weekday_resets_container=$_GET["weekday_resets_container"];}
 	elseif (isset($_POST["weekday_resets_container"]))	{$weekday_resets_container=$_POST["weekday_resets_container"];}
+	else {$weekday_resets_container="DISABLED";}
 if (isset($_GET["second_alert_trigger"]))			{$second_alert_trigger=$_GET["second_alert_trigger"];}
 	elseif (isset($_POST["second_alert_trigger"]))	{$second_alert_trigger=$_POST["second_alert_trigger"];}
+	else {$second_alert_trigger="DISABLED";}
 if (isset($_GET["second_alert_trigger_seconds"]))			{$second_alert_trigger_seconds=$_GET["second_alert_trigger_seconds"];}
 	elseif (isset($_POST["second_alert_trigger_seconds"]))	{$second_alert_trigger_seconds=$_POST["second_alert_trigger_seconds"];}
+	else {$second_alert_trigger_seconds=600;}
 if (isset($_GET["second_alert_filename"]))			{$second_alert_filename=$_GET["second_alert_filename"];}
 	elseif (isset($_POST["second_alert_filename"]))	{$second_alert_filename=$_POST["second_alert_filename"];}
+	else {$second_alert_filename="";}
 if (isset($_GET["second_alert_delay"]))				{$second_alert_delay=$_GET["second_alert_delay"];}
 	elseif (isset($_POST["second_alert_delay"]))	{$second_alert_delay=$_POST["second_alert_delay"];}
+	else {$second_alert_delay=1000;}
 if (isset($_GET["second_alert_container"]))				{$second_alert_container=$_GET["second_alert_container"];}
 	elseif (isset($_POST["second_alert_container"]))	{$second_alert_container=$_POST["second_alert_container"];}
+	else {$second_alert_container="DISABLED";}
 if (isset($_GET["second_alert_only"]))			{$second_alert_only=$_GET["second_alert_only"];}
 	elseif (isset($_POST["second_alert_only"]))	{$second_alert_only=$_POST["second_alert_only"];}
+	else {$second_alert_only="DISABLED";}
 if (isset($_GET["dead_stop_recording"]))			{$dead_stop_recording=$_GET["dead_stop_recording"];}
 	elseif (isset($_POST["dead_stop_recording"]))	{$dead_stop_recording=$_POST["dead_stop_recording"];}
+	else {$dead_stop_recording="DISABLED";}
 if (isset($_GET["manual_vm_status_updates"]))			{$manual_vm_status_updates=$_GET["manual_vm_status_updates"];}
 	elseif (isset($_POST["manual_vm_status_updates"]))	{$manual_vm_status_updates=$_POST["manual_vm_status_updates"];}
+	else {$manual_vm_status_updates="ENABLED";}
 if (isset($_GET["force_per_call_notes"]))			{$force_per_call_notes=$_GET["force_per_call_notes"];}
 	elseif (isset($_POST["force_per_call_notes"]))	{$force_per_call_notes=$_POST["force_per_call_notes"];}
+	else {$force_per_call_notes="DISABLED";}
 if (isset($_GET["third_alert_trigger"]))			{$third_alert_trigger=$_GET["third_alert_trigger"];}
 	elseif (isset($_POST["third_alert_trigger"]))	{$third_alert_trigger=$_POST["third_alert_trigger"];}
+	else {$third_alert_trigger="DISABLED";}
 if (isset($_GET["third_alert_trigger_seconds"]))			{$third_alert_trigger_seconds=$_GET["third_alert_trigger_seconds"];}
 	elseif (isset($_POST["third_alert_trigger_seconds"]))	{$third_alert_trigger_seconds=$_POST["third_alert_trigger_seconds"];}
+	else {$third_alert_trigger_seconds=600;}
 if (isset($_GET["third_alert_filename"]))			{$third_alert_filename=$_GET["third_alert_filename"];}
 	elseif (isset($_POST["third_alert_filename"]))	{$third_alert_filename=$_POST["third_alert_filename"];}
+	else {$third_alert_filename="";}
 if (isset($_GET["third_alert_delay"]))			{$third_alert_delay=$_GET["third_alert_delay"];}
 	elseif (isset($_POST["third_alert_delay"]))	{$third_alert_delay=$_POST["third_alert_delay"];}
+	else {$third_alert_delay=1000;}
 if (isset($_GET["third_alert_container"]))			{$third_alert_container=$_GET["third_alert_container"];}
 	elseif (isset($_POST["third_alert_container"]))	{$third_alert_container=$_POST["third_alert_container"];}
+	else {$third_alert_container="DISABLED";}
 if (isset($_GET["third_alert_only"]))			{$third_alert_only=$_GET["third_alert_only"];}
 	elseif (isset($_POST["third_alert_only"]))	{$third_alert_only=$_POST["third_alert_only"];}
+	else {$third_alert_only="DISABLED";}
 if (isset($_GET["agent_search_ingroup_list"]))			{$agent_search_ingroup_list=$_GET["agent_search_ingroup_list"];}
 	elseif (isset($_POST["agent_search_ingroup_list"]))	{$agent_search_ingroup_list=$_POST["agent_search_ingroup_list"];}
+	else {$agent_search_ingroup_list="DISABLED";}
 if (isset($_GET["agent_search_list"]))			{$agent_search_list=$_GET["agent_search_list"];}
 	elseif (isset($_POST["agent_search_list"]))	{$agent_search_list=$_POST["agent_search_list"];}
+	else {$agent_search_list="";}
 if (isset($_GET["hopper_hold_inserts"]))			{$hopper_hold_inserts=$_GET["hopper_hold_inserts"];}
 	elseif (isset($_POST["hopper_hold_inserts"]))	{$hopper_hold_inserts=$_POST["hopper_hold_inserts"];}
+	else {$hopper_hold_inserts="";}
 if (isset($_GET["hci_enabled"]))			{$hci_enabled=$_GET["hci_enabled"];}
 	elseif (isset($_POST["hci_enabled"]))	{$hci_enabled=$_POST["hci_enabled"];}
+	else {$hci_enabled=0;}
 if (isset($_GET["daily_phone_number_call_limit"]))			{$daily_phone_number_call_limit=$_GET["daily_phone_number_call_limit"];}
 	elseif (isset($_POST["daily_phone_number_call_limit"]))	{$daily_phone_number_call_limit=$_POST["daily_phone_number_call_limit"];}
+	else {$daily_phone_number_call_limit=0;}
 if (isset($_GET["state_descriptions"]))				{$state_descriptions=$_GET["state_descriptions"];}
 	elseif (isset($_POST["state_descriptions"]))	{$state_descriptions=$_POST["state_descriptions"];}
+	else {$state_descriptions="---DISABLED---";}
 if (isset($_GET["holiday_method"]))				{$holiday_method=$_GET["holiday_method"];}
 	elseif (isset($_POST["holiday_method"]))	{$holiday_method=$_POST["holiday_method"];}
+	else {$holiday_method="REPLACE";}
 if (isset($_GET["script_tab_height"]))			{$script_tab_height=$_GET["script_tab_height"];}
 	elseif (isset($_POST["script_tab_height"]))	{$script_tab_height=$_POST["script_tab_height"];}
+	else {$script_tab_height=0;}
 if (isset($_GET["call_log_days"]))			{$call_log_days=$_GET["call_log_days"];}
 	elseif (isset($_POST["call_log_days"]))	{$call_log_days=$_POST["call_log_days"];}
+	else {$call_log_days=0;}
 if (isset($_GET["leave_3way_stop_recording"]))			{$leave_3way_stop_recording=$_GET["leave_3way_stop_recording"];}
 	elseif (isset($_POST["leave_3way_stop_recording"]))	{$leave_3way_stop_recording=$_POST["leave_3way_stop_recording"];}
+	else {$leave_3way_stop_recording="DISABLED";}
 if (isset($_GET["coldstorage_server_ip"]))			{$coldstorage_server_ip=$_GET["coldstorage_server_ip"];}
 	elseif (isset($_POST["coldstorage_server_ip"]))	{$coldstorage_server_ip=$_POST["coldstorage_server_ip"];}
+	else {$coldstorage_server_ip="";}
 if (isset($_GET["coldstorage_dbname"]))				{$coldstorage_dbname=$_GET["coldstorage_dbname"];}
 	elseif (isset($_POST["coldstorage_dbname"]))	{$coldstorage_dbname=$_POST["coldstorage_dbname"];}
+	else {$coldstorage_dbname="";}
 if (isset($_GET["coldstorage_login"]))			{$coldstorage_login=$_GET["coldstorage_login"];}
 	elseif (isset($_POST["coldstorage_login"]))	{$coldstorage_login=$_POST["coldstorage_login"];}
+	else {$coldstorage_login="";}
 if (isset($_GET["coldstorage_pass"]))			{$coldstorage_pass=$_GET["coldstorage_pass"];}
 	elseif (isset($_POST["coldstorage_pass"]))	{$coldstorage_pass=$_POST["coldstorage_pass"];}
+	else {$coldstorage_pass="";}
 if (isset($_GET["coldstorage_port"]))			{$coldstorage_port=$_GET["coldstorage_port"];}
 	elseif (isset($_POST["coldstorage_port"]))	{$coldstorage_port=$_POST["coldstorage_port"];}
+	else {$coldstorage_port="";}
 if (isset($_GET["manual_minimum_ring_seconds"]))			{$manual_minimum_ring_seconds=$_GET["manual_minimum_ring_seconds"];}
 	elseif (isset($_POST["manual_minimum_ring_seconds"]))	{$manual_minimum_ring_seconds=$_POST["manual_minimum_ring_seconds"];}
+	else {$manual_minimum_ring_seconds=0;}
 if (isset($_GET["manual_minimum_attempt_seconds"]))				{$manual_minimum_attempt_seconds=$_GET["manual_minimum_attempt_seconds"];}
 	elseif (isset($_POST["manual_minimum_attempt_seconds"]))	{$manual_minimum_attempt_seconds=$_POST["manual_minimum_attempt_seconds"];}
+	else {$manual_minimum_attempt_seconds=0;}
 if (isset($_GET["manual_minimum_answer_seconds"]))			{$manual_minimum_answer_seconds=$_GET["manual_minimum_answer_seconds"];}
 	elseif (isset($_POST["manual_minimum_answer_seconds"]))	{$manual_minimum_answer_seconds=$_POST["manual_minimum_answer_seconds"];}
+	else {$manual_minimum_answer_seconds=0;}
 if (isset($_GET["khomp_settings_container"]))			{$khomp_settings_container=$_GET["khomp_settings_container"];}
 	elseif (isset($_POST["khomp_settings_container"]))	{$khomp_settings_container=$_POST["khomp_settings_container"];}
+	else {$khomp_settings_container="KHOMPSETTINGS";}
 if (isset($_GET["enhanced_agent_monitoring"]))			{$enhanced_agent_monitoring=$_GET["enhanced_agent_monitoring"];}
 	elseif (isset($_POST["enhanced_agent_monitoring"]))	{$enhanced_agent_monitoring=$_POST["enhanced_agent_monitoring"];}
+	else {$enhanced_agent_monitoring=0;}
 if (isset($_GET["agent_hide_dial_fail"]))			{$agent_hide_dial_fail=$_GET["agent_hide_dial_fail"];}
 	elseif (isset($_POST["agent_hide_dial_fail"]))	{$agent_hide_dial_fail=$_POST["agent_hide_dial_fail"];}
+	else {$agent_hide_dial_fail=0;}
 if (isset($_GET["apinewlead_url"]))				{$apinewlead_url=$_GET["apinewlead_url"];}
 	elseif (isset($_POST["apinewlead_url"]))	{$apinewlead_url=$_POST["apinewlead_url"];}
+	else {$apinewlead_url="";}
 if (isset($_GET["agent_man_dial_filter"]))			{$agent_man_dial_filter=$_GET["agent_man_dial_filter"];}
 	elseif (isset($_POST["agent_man_dial_filter"]))	{$agent_man_dial_filter=$_POST["agent_man_dial_filter"];}
+	else {$agent_man_dial_filter="";}
 if (isset($_GET["agent_3way_dial_filter"]))				{$agent_3way_dial_filter=$_GET["agent_3way_dial_filter"];}
 	elseif (isset($_POST["agent_3way_dial_filter"]))	{$agent_3way_dial_filter=$_POST["agent_3way_dial_filter"];}
+	else {$agent_3way_dial_filter="";}
 if (isset($_GET["stereo_recording"]))			{$stereo_recording=$_GET["stereo_recording"];}
 	elseif (isset($_POST["stereo_recording"]))	{$stereo_recording=$_POST["stereo_recording"];}
+	else {$stereo_recording="";}
 if (isset($_GET["recording_dtmf_detection"]))			{$recording_dtmf_detection=$_GET["recording_dtmf_detection"];}
 	elseif (isset($_POST["recording_dtmf_detection"]))	{$recording_dtmf_detection=$_POST["recording_dtmf_detection"];}
+	else {$recording_dtmf_detection=0;}
 if (isset($_GET["recording_dtmf_muting"]))			{$recording_dtmf_muting=$_GET["recording_dtmf_muting"];}
 	elseif (isset($_POST["recording_dtmf_muting"]))	{$recording_dtmf_muting=$_POST["recording_dtmf_muting"];}
+	else {$recording_dtmf_muting=0;}
 if (isset($_GET["stereo_parallel_recording"]))			{$stereo_parallel_recording=$_GET["stereo_parallel_recording"];}
 	elseif (isset($_POST["stereo_parallel_recording"]))	{$stereo_parallel_recording=$_POST["stereo_parallel_recording"];}
+	else {$stereo_parallel_recording="";}
 if (isset($_GET["stereo_rec_filename"]))			{$stereo_rec_filename=$_GET["stereo_rec_filename"];}
 	elseif (isset($_POST["stereo_rec_filename"]))	{$stereo_rec_filename=$_POST["stereo_rec_filename"];}
+	else {$stereo_rec_filename="";}
 if (isset($_GET["stereo_recording_agent"]))			{$stereo_recording_agent=$_GET["stereo_recording_agent"];}
 	elseif (isset($_POST["stereo_recording_agent"]))	{$stereo_recording_agent=$_POST["stereo_recording_agent"];}
+	else {$stereo_recording_agent="";}
 if (isset($_GET["parallel_rec_co_filename"]))			{$parallel_rec_co_filename=$_GET["parallel_rec_co_filename"];}
 	elseif (isset($_POST["parallel_rec_co_filename"]))	{$parallel_rec_co_filename=$_POST["parallel_rec_co_filename"];}
+	else {$parallel_rec_co_filename="";}
 if (isset($_GET["parallel_rec_cm_filename"]))			{$parallel_rec_cm_filename=$_GET["parallel_rec_cm_filename"];}
 	elseif (isset($_POST["parallel_rec_cm_filename"]))	{$parallel_rec_cm_filename=$_POST["parallel_rec_cm_filename"];}
+	else {$parallel_rec_cm_filename="";}
 if (isset($_GET["parallel_rec_fr_filename"]))			{$parallel_rec_fr_filename=$_GET["parallel_rec_fr_filename"];}
 	elseif (isset($_POST["parallel_rec_fr_filename"]))	{$parallel_rec_fr_filename=$_POST["parallel_rec_fr_filename"];}
+	else {$parallel_rec_fr_filename="";}
 if (isset($_GET["call_count_limit_restrict"]))			{$call_count_limit_restrict=$_GET["call_count_limit_restrict"];}
 	elseif (isset($_POST["call_count_limit_restrict"]))	{$call_count_limit_restrict=$_POST["call_count_limit_restrict"];}
+	else {$call_count_limit_restrict="";}
 if (isset($_GET["db_crashed_tables_check"]))			{$db_crashed_tables_check=$_GET["db_crashed_tables_check"];}
 	elseif (isset($_POST["db_crashed_tables_check"]))	{$db_crashed_tables_check=$_POST["db_crashed_tables_check"];}
+	else {$db_crashed_tables_check=0;}
 if (isset($_GET["alter_cid_name"]))				{$alter_cid_name=$_GET["alter_cid_name"];}
 	elseif (isset($_POST["alter_cid_name"]))	{$alter_cid_name=$_POST["alter_cid_name"];}
+	else {$alter_cid_name="";}
 if (isset($_GET["adaptive_percentmax_percentage"]))				{$adaptive_percentmax_percentage=$_GET["adaptive_percentmax_percentage"];}
 	elseif (isset($_POST["adaptive_percentmax_percentage"]))	{$adaptive_percentmax_percentage=$_POST["adaptive_percentmax_percentage"];}
+	else {$adaptive_percentmax_percentage="";}
 if (isset($_GET["xfer_min_container"]))				{$xfer_min_container=$_GET["xfer_min_container"];}
 	elseif (isset($_POST["xfer_min_container"]))	{$xfer_min_container=$_POST["xfer_min_container"];}
+	else {$xfer_min_container="";}
 if (isset($_GET["xfer_talk_minimum"]))				{$xfer_talk_minimum=$_GET["xfer_talk_minimum"];}
-	elseif (isset($_POST["xfer_talk_minimum"]))		{$xfer_talk_minimum=$_POST["xfer_talk_minimum"];}
-if (isset($_GET["xfer_talk_minimum_sec"]))			{$xfer_talk_minimum_sec=$_GET["xfer_talk_minimum_sec"];}
+	elseif (isset($_POST["xfer_talk_minimum"]))	{$xfer_talk_minimum=$_POST["xfer_talk_minimum"];}
+	else {$xfer_talk_minimum="";}
+if (isset($_GET["xfer_talk_minimum_sec"]))				{$xfer_talk_minimum_sec=$_GET["xfer_talk_minimum_sec"];}
 	elseif (isset($_POST["xfer_talk_minimum_sec"]))	{$xfer_talk_minimum_sec=$_POST["xfer_talk_minimum_sec"];}
+	else {$xfer_talk_minimum_sec=0;}
 if (isset($_GET["hangup_again_link"]))			{$hangup_again_link=$_GET["hangup_again_link"];}
 	elseif (isset($_POST["hangup_again_link"]))	{$hangup_again_link=$_POST["hangup_again_link"];}
 if (isset($_GET["max_inbound_auto_reenable"]))			{$max_inbound_auto_reenable=$_GET["max_inbound_auto_reenable"];}
@@ -2898,16 +4273,16 @@ if (isset($_GET["amd_agent_display"]))			{$amd_agent_display=$_GET["amd_agent_di
 if (isset($_GET["amd_status_map"]))				{$amd_status_map=$_GET["amd_status_map"];}
 	elseif (isset($_POST["amd_status_map"]))	{$amd_status_map=$_POST["amd_status_map"];}
 
-$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
-
 if (isset($script_id)) {$script_id= mb_strtoupper($script_id,'utf-8');}
 if (isset($lead_filter_id)) {$lead_filter_id = mb_strtoupper($lead_filter_id,'utf-8');}
+if (!isset($groups)) {$groups=array();}
 
 if (strlen($dial_status) > 0) 
 	{
 	$ADD='28';
 	$status = $dial_status;
 	}
+
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
@@ -3044,7 +4419,8 @@ if ($qm_conf_ct > 0)
 	$SSviciamd_enabled =					$row[123];
 	$SSamd_status_map =						$row[124];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
+$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
@@ -3275,7 +4651,7 @@ $admin_modify_refresh = preg_replace('/[^0-9]/','',$admin_modify_refresh);
 $nocache_admin = preg_replace('/[^0-9]/','',$nocache_admin);
 $generate_cross_server_exten = preg_replace('/[^0-9]/','',$generate_cross_server_exten);
 $queuemetrics_addmember_enabled = preg_replace('/[^0-9]/','',$queuemetrics_addmember_enabled);
-$modify_page = preg_replace('/[^0-9]/','',$modify_page);
+# $modify_page = preg_replace('/[^0-9]/','',$modify_page);
 $on_hook_ring_time = preg_replace('/[^0-9]/','',$on_hook_ring_time);
 $reload_dialplan_on_servers = preg_replace('/[^0-9]/','',$reload_dialplan_on_servers);
 $available_only_tally_threshold_agents = preg_replace('/[^0-9]/','',$available_only_tally_threshold_agents);
@@ -3451,6 +4827,7 @@ $db_crashed_tables_check = preg_replace('/[^0-9]/','',$db_crashed_tables_check);
 $xfer_talk_minimum_sec = preg_replace('/[^0-9]/','',$xfer_talk_minimum_sec);
 $modify_settings_containers = preg_replace('/[^0-9]/','',$modify_settings_containers);
 
+$timer_action_seconds = preg_replace('/[^-0-9]/','',$timer_action_seconds);
 $user_new_lead_limit = preg_replace('/[^-0-9]/','',$user_new_lead_limit);
 $drop_call_seconds = preg_replace('/[^-0-9]/','',$drop_call_seconds);
 $timer_alt_seconds = preg_replace('/[^-0-9]/','',$timer_alt_seconds);
@@ -3698,7 +5075,7 @@ if ($non_latin < 1)
 	{
 	### ALPHA-NUMERIC ONLY ###
 	$is_webphone = preg_replace('/[^-_0-9a-zA-Z]/','',$is_webphone);
-	$campaign_script = preg_replace('/[^0-9a-zA-Z]/','',$campaign_script);
+	# $campaign_script = preg_replace('/[^0-9a-zA-Z]/','',$campaign_script);
 	$submit = preg_replace('/[^0-9a-zA-Z]/','',$submit);
 	$campaign_cid = preg_replace('/[^0-9a-zA-Z]/','',$campaign_cid);
 	$campaign_recording = preg_replace('/[^0-9a-zA-Z]/','',$campaign_recording);
@@ -3782,7 +5159,10 @@ if ($non_latin < 1)
 	$pause_max_dispo = preg_replace('/[^0-9a-zA-Z]/','',$pause_max_dispo);
 	$areacode = preg_replace('/[^0-9a-zA-Z]/','',$areacode);
 	$require_mgr_approval = preg_replace('/[^0-9a-zA-Z]/','',$require_mgr_approval);
-	$mute_recordings = preg_replace('/[^0-9a-zA-Z]/','',$mute_recordings);
+	# $mute_recordings = preg_replace('/[^0-9a-zA-Z]/','',$mute_recordings);
+	$mute_recordings_users = preg_replace('/[^0-9a-zA-Z]/','',$mute_recordings_users);
+	$mute_recordings_campaigns = preg_replace('/[^0-9a-zA-Z]/','',$mute_recordings_campaigns);
+	$mute_recordings_system = preg_replace('/[^0-9a-zA-Z]/','',$mute_recordings_system);
 	$leave_vm_no_dispo = preg_replace('/[^0-9a-zA-Z]/','',$leave_vm_no_dispo);
 	$amd_agent_route_options = preg_replace('/[^0-9a-zA-Z]/','',$amd_agent_route_options);
 	$did_pattern_filter = preg_replace('/[^0-9a-zA-Z]/','',$did_pattern_filter);
@@ -3790,9 +5170,9 @@ if ($non_latin < 1)
 	### ALPHA-NUMERIC and spaces and hash and star and comma
 	$xferconf_a_dtmf = preg_replace('/[^ \,\*\#0-9a-zA-Z]/','',trim($xferconf_a_dtmf));
 	$xferconf_b_dtmf = preg_replace('/[^ \,\*\#0-9a-zA-Z]/','',trim($xferconf_b_dtmf));
-	$xferconf_c_dtmf = preg_replace('/[^ \,\*\#0-9a-zA-Z]/','',trim($xferconf_c_dtmf));
-	$xferconf_d_dtmf = preg_replace('/[^ \,\*\#0-9a-zA-Z]/','',trim($xferconf_d_dtmf));
-	$xferconf_e_dtmf = preg_replace('/[^ \,\*\#0-9a-zA-Z]/','',trim($xferconf_e_dtmf));
+	# $xferconf_c_dtmf = preg_replace('/[^ \,\*\#0-9a-zA-Z]/','',trim($xferconf_c_dtmf));
+	# $xferconf_d_dtmf = preg_replace('/[^ \,\*\#0-9a-zA-Z]/','',trim($xferconf_d_dtmf));
+	# $xferconf_e_dtmf = preg_replace('/[^ \,\*\#0-9a-zA-Z]/','',trim($xferconf_e_dtmf));
 	$survey_third_digit = preg_replace('/[^ \,\*\#0-9a-zA-Z]/','',$survey_third_digit);
 	$survey_fourth_digit = preg_replace('/[^ \,\*\#0-9a-zA-Z]/','',$survey_fourth_digit);
 	$survey_third_exten = preg_replace('/[^ \,\*\#0-9a-zA-Z]/','',$survey_third_exten);
@@ -3866,7 +5246,9 @@ if ($non_latin < 1)
 	$default_xfer_group = preg_replace('/[^-_0-9a-zA-Z]/','',$default_xfer_group);
 	$drop_exten = preg_replace('/[^-_0-9a-zA-Z]/','',$drop_exten);
 	$safe_harbor_exten = preg_replace('/[^-_0-9a-zA-Z]/','',$safe_harbor_exten);
-	$drop_action = preg_replace('/[^-_0-9a-zA-Z]/','',$drop_action);
+	# $drop_action = preg_replace('/[^-_0-9a-zA-Z]/','',$drop_action);
+	$drop_action_campaigns = preg_replace('/[^-_0-9a-zA-Z]/','',$drop_action_campaigns);
+	$drop_action_ingroups = preg_replace('/[^-_0-9a-zA-Z]/','',$drop_action_ingroups);
 	$drop_inbound_group = preg_replace('/[^-_0-9a-zA-Z]/','',$drop_inbound_group);
 	$afterhours_xfer_group = preg_replace('/[^-_0-9a-zA-Z]/','',$afterhours_xfer_group);
 	$after_hours_action = preg_replace('/[^-_0-9a-zA-Z]/','',$after_hours_action);
@@ -3887,6 +5269,8 @@ if ($non_latin < 1)
 	$user_route_settings_ingroup = preg_replace('/[^-_0-9a-zA-Z]/','',$user_route_settings_ingroup);
 	$call_handle_method = preg_replace('/[^-_0-9a-zA-Z]/','',$call_handle_method);
 	$agent_search_method = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_search_method);
+	$agent_search_method_inbound = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_search_method_inbound);
+	$agent_search_method_system = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_search_method_system);
 	$hold_time_option_voicemail = preg_replace('/[^-_0-9a-zA-Z]/','',$hold_time_option_voicemail);
 	$exten_context = preg_replace('/[^-_0-9a-zA-Z]/','',$exten_context);
 	$three_way_call_cid = preg_replace('/[^-_0-9a-zA-Z]/','',$three_way_call_cid);
@@ -3971,8 +5355,8 @@ if ($non_latin < 1)
 	$manual_dial_cid = preg_replace('/[^-_0-9a-zA-Z]/','',$manual_dial_cid);
 	$post_phone_time_diff_alert = preg_replace('/[^-_0-9a-zA-Z]/','',$post_phone_time_diff_alert);
 	$custom_3way_button_transfer = preg_replace('/[^-_0-9a-zA-Z]/','',$custom_3way_button_transfer);
-	$available_only_tally_threshold_agents = preg_replace('/[^-_0-9a-zA-Z]/','',$available_only_tally_threshold_agents);
-	$dial_level_threshold_agents = preg_replace('/[^-_0-9a-zA-Z]/','',$dial_level_threshold_agents);
+#	$available_only_tally_threshold_agents = preg_replace('/[^-_0-9a-zA-Z]/','',$available_only_tally_threshold_agents); - Numeric, already filtered further up
+#	$dial_level_threshold_agents = preg_replace('/[^-_0-9a-zA-Z]/','',$dial_level_threshold_agents); - Numeric, already filtered further up
 	$time_zone_setting = preg_replace('/[^-_0-9a-zA-Z]/','',$time_zone_setting);
 	$safe_harbor_menu_id = preg_replace('/[^-_0-9a-zA-Z]/','',$safe_harbor_menu_id);
 	$survey_menu_id = preg_replace('/[^-_0-9a-zA-Z]/','',$survey_menu_id);
@@ -4084,8 +5468,13 @@ if ($non_latin < 1)
 	$three_way_volume_buttons = preg_replace('/[^-_0-9a-zA-Z]/','',$three_way_volume_buttons);
 	$callback_dnc = preg_replace('/[^-_0-9a-zA-Z]/','',$callback_dnc);
 	$hide_call_log_info = preg_replace('/[^-_0-9a-zA-Z]/','',$hide_call_log_info);
-	$call_quota_lead_ranking = preg_replace('/[^-_0-9a-zA-Z]/','',$call_quota_lead_ranking);
-	$sip_event_logging = preg_replace('/[^-_0-9a-zA-Z]/','',$sip_event_logging);
+	$hide_call_log_info_users = preg_replace('/[^-_0-9a-zA-Z]/','',$hide_call_log_info_users);
+	# $call_quota_lead_ranking = preg_replace('/[^-_0-9a-zA-Z]/','',$call_quota_lead_ranking);
+	$call_quota_lead_ranking_campaigns = preg_replace('/[^-_0-9a-zA-Z]/','',$call_quota_lead_ranking_campaigns);
+	$call_quota_lead_ranking_system = preg_replace('/[^-_0-9a-zA-Z]/','',$call_quota_lead_ranking_system);
+	# $sip_event_logging = preg_replace('/[^-_0-9a-zA-Z]/','',$sip_event_logging);
+	$sip_event_logging_system = preg_replace('/[^-_0-9a-zA-Z]/','',$sip_event_logging_system);
+	$sip_event_logging_campaigns = preg_replace('/[^-_0-9a-zA-Z]/','',$sip_event_logging_campaigns);
 	$auto_active_list_new = preg_replace('/[^-_0-9a-zA-Z]/','',$auto_active_list_new);
 	$script_id = preg_replace('/[^-_0-9a-zA-Z]/','',$script_id);
 	$ingroup_script = preg_replace('/[^-_0-9a-zA-Z]/','',$ingroup_script);
@@ -4097,10 +5486,14 @@ if ($non_latin < 1)
 	$amd_type = preg_replace('/[^-_0-9a-zA-Z]/','',$amd_type);
 	$recording_buttons = preg_replace('/[^-_0-9a-zA-Z]/','',$recording_buttons);
 	$use_other_campaign_dnc = preg_replace('/[^-_0-9a-zA-Z]/','',$use_other_campaign_dnc);
-	$browser_alert_sound = preg_replace('/[^-_0-9a-zA-Z]/','',$browser_alert_sound);
+	# $browser_alert_sound = preg_replace('/[^-_0-9a-zA-Z]/','',$browser_alert_sound);
+	$browser_alert_sound_campaigns = preg_replace('/[^-_0-9a-zA-Z]/','',$browser_alert_sound_campaigns);
+	$browser_alert_sound_ingroups = preg_replace('/[^-_0-9a-zA-Z]/','',$browser_alert_sound_ingroups);
 	$three_way_record_stop_exception = preg_replace('/[^-_0-9a-zA-Z]/','',$three_way_record_stop_exception);
 	$queuemetrics_pausereason = preg_replace('/[^-_0-9a-zA-Z]/','',$queuemetrics_pausereason);
-	$answer_signal = preg_replace('/[^-_0-9a-zA-Z]/','',$answer_signal);
+	# $answer_signal = preg_replace('/[^-_0-9a-zA-Z]/','',$answer_signal);
+	$answer_signal_callmenus = preg_replace('/[^-_0-9a-zA-Z]/','',$answer_signal_callmenus);
+	$answer_signal_ingroups = preg_replace('/[^-_0-9a-zA-Z]/','',$answer_signal_ingroups);
 	$inbound_drop_voicemail = preg_replace('/[^-_0-9a-zA-Z]/','',$inbound_drop_voicemail);
 	$inbound_after_hours_voicemail = preg_replace('/[^-_0-9a-zA-Z]/','',$inbound_after_hours_voicemail);
 	$pause_max_exceptions = preg_replace('/[^-_0-9a-zA-Z]/','',$pause_max_exceptions);
@@ -4122,7 +5515,9 @@ if ($non_latin < 1)
 	$agent_hangup_route = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_hangup_route);
 	$show_confetti = preg_replace('/[^-_0-9a-zA-Z]/','',$show_confetti);
 	$webphone_settings = preg_replace('/[^-_0-9a-zA-Z]/','',$webphone_settings);
-	$demographic_quotas = preg_replace('/[^-_0-9a-zA-Z]/','',$demographic_quotas);
+	# $demographic_quotas = preg_replace('/[^-_0-9a-zA-Z]/','',$demographic_quotas);
+	$demographic_quotas_system = preg_replace('/[^-_0-9a-zA-Z]/','',$demographic_quotas_system);
+	$demographic_quotas_campaigns = preg_replace('/[^-_0-9a-zA-Z]/','',$demographic_quotas_campaigns);
 	$demographic_quotas_container = preg_replace('/[^-_0-9a-zA-Z]/','',$demographic_quotas_container);
 	$weekday_resets_container = preg_replace('/[^-_0-9a-zA-Z]/','',$weekday_resets_container);
 	$second_alert_container = preg_replace('/[^-_0-9a-zA-Z]/','',$second_alert_container);
@@ -4223,7 +5618,10 @@ if ($non_latin < 1)
 	$preset_name = preg_replace('/[^- \_0-9a-zA-Z]/','',$preset_name);
 	$selected_language = preg_replace('/[^- \_0-9a-zA-Z]/','',$selected_language);
 	$default_language = preg_replace('/[^- \_0-9a-zA-Z]/','',$default_language);
-	$opensips_cid_name = preg_replace('/[^- \_0-9a-zA-Z]/','',$opensips_cid_name);
+	# $opensips_cid_name = preg_replace('/[^- \_0-9a-zA-Z]/','',$opensips_cid_name);
+	$max_system_stats_submit = preg_replace('/[^- \_0-9a-zA-Z]/','',$max_system_stats_submit);
+	$opensips_cid_name_campaigns = preg_replace('/[^- \_0-9a-zA-Z]/','',$opensips_cid_name_campaigns);
+	$opensips_cid_name_system = preg_replace('/[^- \_0-9a-zA-Z]/','',$opensips_cid_name_system);
 
 	### ALPHA-NUMERIC and hash
 	$group_color = preg_replace('/[^\#0-9a-zA-Z]/','',$group_color);
@@ -4329,7 +5727,7 @@ if ($non_latin < 1)
 	$last_name = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$last_name);
 	$bu_name = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$bu_name);
 	$department = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$department);
-	$group = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$group);
+	# $group = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$group); NOT USED
 	$job_title = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$job_title);
 	$location = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$location);
 	$holiday_name = preg_replace('/[^- \.\,\_0-9a-zA-Z]/','',$holiday_name);
@@ -4413,6 +5811,7 @@ if ($non_latin < 1)
 
 	### ALPHA-NUMERIC and underscore and dash and slash and at and dot and pound and star
 	$extension = preg_replace('/[^-\*\#\.\:\/\@\_0-9a-zA-Z]/','',$extension);
+	$extension_dids = preg_replace('/[^-\*\#\.\:\/\@\_0-9a-zA-Z]/','',$extension_dids);
 	$new_extension = preg_replace('/[^-\*\#\.\:\/\@\_0-9a-zA-Z]/','',$new_extension);
 	$timer_action_destination = preg_replace('/[^-\*\#\.\:\/\@\_0-9a-zA-Z]/','',$timer_action_destination);
 	$filter_extension = preg_replace('/[^-\*\#\.\:\/\@\_0-9a-zA-Z]/','',$filter_extension);
@@ -4533,7 +5932,10 @@ else
 	$pause_max_dispo = preg_replace('/[^0-9\p{L}]/u','',$pause_max_dispo);
 	$areacode = preg_replace('/[^0-9\p{L}]/u','',$areacode);
 	$require_mgr_approval = preg_replace('/[^0-9\p{L}]/u','',$require_mgr_approval);
-	$mute_recordings = preg_replace('/[^0-9\p{L}]/u','',$mute_recordings);
+	# $mute_recordings = preg_replace('/[^0-9\p{L}]/u','',$mute_recordings);
+	$mute_recordings_users = preg_replace('/[^0-9\p{L}]/u','',$mute_recordings_users);
+	$mute_recordings_campaigns = preg_replace('/[^0-9\p{L}]/u','',$mute_recordings_campaigns);
+	$mute_recordings_system = preg_replace('/[^0-9\p{L}]/u','',$mute_recordings_system);
 	$leave_vm_no_dispo = preg_replace('/[^0-9\p{L}]/u','',$leave_vm_no_dispo);
 	$amd_agent_route_options = preg_replace('/[^0-9\p{L}]/u','',$amd_agent_route_options);
 	$did_pattern_filter = preg_replace('/[^0-9a-zA-Z]/','',$did_pattern_filter);
@@ -4541,9 +5943,9 @@ else
 	### ALPHA-NUMERIC and spaces and hash and star and comma
 	$xferconf_a_dtmf = preg_replace('/[^ \,\*\#0-9\p{L}]/u','',trim($xferconf_a_dtmf));
 	$xferconf_b_dtmf = preg_replace('/[^ \,\*\#0-9\p{L}]/u','',trim($xferconf_b_dtmf));
-	$xferconf_c_dtmf = preg_replace('/[^ \,\*\#0-9\p{L}]/u','',trim($xferconf_c_dtmf));
-	$xferconf_d_dtmf = preg_replace('/[^ \,\*\#0-9\p{L}]/u','',trim($xferconf_d_dtmf));
-	$xferconf_e_dtmf = preg_replace('/[^ \,\*\#0-9\p{L}]/u','',trim($xferconf_e_dtmf));
+	# $xferconf_c_dtmf = preg_replace('/[^ \,\*\#0-9\p{L}]/u','',trim($xferconf_c_dtmf));
+	# $xferconf_d_dtmf = preg_replace('/[^ \,\*\#0-9\p{L}]/u','',trim($xferconf_d_dtmf));
+	# $xferconf_e_dtmf = preg_replace('/[^ \,\*\#0-9\p{L}]/u','',trim($xferconf_e_dtmf));
 	$survey_third_digit = preg_replace('/[^ \,\*\#0-9\p{L}]/u','',$survey_third_digit);
 	$survey_fourth_digit = preg_replace('/[^ \,\*\#0-9\p{L}]/u','',$survey_fourth_digit);
 	$survey_third_exten = preg_replace('/[^ \,\*\#0-9\p{L}]/u','',$survey_third_exten);
@@ -4620,7 +6022,9 @@ else
 	$default_xfer_group = preg_replace('/[^-_0-9\p{L}]/u','',$default_xfer_group);
 	$drop_exten = preg_replace('/[^-_0-9\p{L}]/u','',$drop_exten);
 	$safe_harbor_exten = preg_replace('/[^-_0-9\p{L}]/u','',$safe_harbor_exten);
-	$drop_action = preg_replace('/[^-_0-9\p{L}]/u','',$drop_action);
+	# $drop_action = preg_replace('/[^-_0-9\p{L}]/u','',$drop_action);
+	$drop_action_campaigns = preg_replace('/[^-_0-9\p{L}]/u','',$drop_action_campaigns);
+	$drop_action_ingroups = preg_replace('/[^-_0-9\p{L}]/u','',$drop_action_ingroups);
 	$drop_inbound_group = preg_replace('/[^-_0-9\p{L}]/u','',$drop_inbound_group);
 	$afterhours_xfer_group = preg_replace('/[^-_0-9\p{L}]/u','',$afterhours_xfer_group);
 	$after_hours_action = preg_replace('/[^-_0-9\p{L}]/u','',$after_hours_action);
@@ -4641,6 +6045,8 @@ else
 	$user_route_settings_ingroup = preg_replace('/[^-_0-9\p{L}]/u','',$user_route_settings_ingroup);
 	$call_handle_method = preg_replace('/[^-_0-9\p{L}]/u','',$call_handle_method);
 	$agent_search_method = preg_replace('/[^-_0-9\p{L}]/u','',$agent_search_method);
+	$agent_search_method_inbound = preg_replace('/[^-_0-9\p{L}]/u','',$agent_search_method_inbound);
+	$agent_search_method_system = preg_replace('/[^-_0-9\p{L}]/u','',$agent_search_method_system);
 	$hold_time_option_voicemail = preg_replace('/[^-_0-9\p{L}]/u','',$hold_time_option_voicemail);
 	$exten_context = preg_replace('/[^-_0-9\p{L}]/u','',$exten_context);
 	$three_way_call_cid = preg_replace('/[^-_0-9\p{L}]/u','',$three_way_call_cid);
@@ -4725,8 +6131,8 @@ else
 	$manual_dial_cid = preg_replace('/[^-_0-9\p{L}]/u','',$manual_dial_cid);
 	$post_phone_time_diff_alert = preg_replace('/[^-_0-9\p{L}]/u','',$post_phone_time_diff_alert);
 	$custom_3way_button_transfer = preg_replace('/[^-_0-9\p{L}]/u','',$custom_3way_button_transfer);
-	$available_only_tally_threshold_agents = preg_replace('/[^-_0-9\p{L}]/u','',$available_only_tally_threshold_agents);
-	$dial_level_threshold_agents = preg_replace('/[^-_0-9\p{L}]/u','',$dial_level_threshold_agents);
+#	$available_only_tally_threshold_agents = preg_replace('/[^-_0-9\p{L}]/u','',$available_only_tally_threshold_agents); Numeric - already filtered further up
+# 	$dial_level_threshold_agents = preg_replace('/[^-_0-9\p{L}]/u','',$dial_level_threshold_agents); Numeric - already filtered further up
 	$time_zone_setting = preg_replace('/[^-_0-9\p{L}]/u','',$time_zone_setting);
 	$safe_harbor_menu_id = preg_replace('/[^-_0-9\p{L}]/u','',$safe_harbor_menu_id);
 	$survey_menu_id = preg_replace('/[^-_0-9\p{L}]/u','',$survey_menu_id);
@@ -4838,8 +6244,13 @@ else
 	$three_way_volume_buttons = preg_replace('/[^-_0-9\p{L}]/u','',$three_way_volume_buttons);
 	$callback_dnc = preg_replace('/[^-_0-9\p{L}]/u','',$callback_dnc);
 	$hide_call_log_info = preg_replace('/[^-_0-9\p{L}]/u','',$hide_call_log_info);
-	$call_quota_lead_ranking = preg_replace('/[^-_0-9\p{L}]/u','',$call_quota_lead_ranking);
-	$sip_event_logging = preg_replace('/[^-_0-9\p{L}]/u','',$sip_event_logging);
+	$hide_call_log_info_users = preg_replace('/[^-_0-9\p{L}]/u','',$hide_call_log_info_users);
+	# $call_quota_lead_ranking = preg_replace('/[^-_0-9\p{L}]/u','',$call_quota_lead_ranking);
+	$call_quota_lead_ranking_campaigns = preg_replace('/[^-_0-9\p{L}]/u','',$call_quota_lead_ranking_campaigns);
+	$call_quota_lead_ranking_system = preg_replace('/[^-_0-9\p{L}]/u','',$call_quota_lead_ranking_system);
+	# $sip_event_logging = preg_replace('/[^-_0-9\p{L}]/u','',$sip_event_logging);
+	$sip_event_logging_system = preg_replace('/[^-_0-9\p{L}]/u','',$sip_event_logging_system);
+	$sip_event_logging_campaign = preg_replace('/[^-_0-9\p{L}]/u','',$sip_event_logging_campaign);
 	$auto_active_list_new = preg_replace('/[^-_0-9\p{L}]/u','',$auto_active_list_new);
 	$script_id = preg_replace('/[^-_0-9\p{L}]/u','',$script_id);
 	$ingroup_script = preg_replace('/[^-_0-9\p{L}]/u','',$ingroup_script);
@@ -4851,10 +6262,14 @@ else
 	$amd_type = preg_replace('/[^-_0-9\p{L}]/u','',$amd_type);
 	$recording_buttons = preg_replace('/[^-_0-9\p{L}]/u','',$recording_buttons);
 	$use_other_campaign_dnc = preg_replace('/[^-_0-9\p{L}]/u','',$use_other_campaign_dnc);
-	$browser_alert_sound = preg_replace('/[^-_0-9\p{L}]/u','',$browser_alert_sound);
+	# $browser_alert_sound = preg_replace('/[^-_0-9\p{L}]/u','',$browser_alert_sound);
+	$browser_alert_sound_campaigns = preg_replace('/[^-_0-9\p{L}]/u','',$browser_alert_sound_campaigns);
+	$browser_alert_sound_ingroups = preg_replace('/[^-_0-9\p{L}]/u','',$browser_alert_sound_ingroups);
 	$three_way_record_stop_exception = preg_replace('/[^-_0-9\p{L}]/u','',$three_way_record_stop_exception);
 	$queuemetrics_pausereason = preg_replace('/[^-_0-9\p{L}]/u','',$queuemetrics_pausereason);
 	$answer_signal = preg_replace('/[^-_0-9\p{L}]/u','',$answer_signal);
+	$answer_signal_callmenus = preg_replace('/[^-_0-9\p{L}]/u','',$answer_signal_callmenus);
+	$answer_signal_ingroups = preg_replace('/[^-_0-9\p{L}]/u','',$answer_signal_groups);
 	$inbound_drop_voicemail = preg_replace('/[^-_0-9\p{L}]/u','',$inbound_drop_voicemail);
 	$inbound_after_hours_voicemail = preg_replace('/[^-_0-9\p{L}]/u','',$inbound_after_hours_voicemail);
 	$pause_max_exceptions = preg_replace('/[^-_0-9\p{L}]/u','',$pause_max_exceptions);
@@ -4876,7 +6291,9 @@ else
 	$agent_hangup_route = preg_replace('/[^-_0-9\p{L}]/u','',$agent_hangup_route);
 	$show_confetti = preg_replace('/[^-_0-9\p{L}]/u','',$show_confetti);
 	$webphone_settings = preg_replace('/[^-_0-9\p{L}]/u','',$webphone_settings);
-	$demographic_quotas = preg_replace('/[^-_0-9\p{L}]/u','',$demographic_quotas);
+	# $demographic_quotas = preg_replace('/[^-_0-9\p{L}]/u','',$demographic_quotas);
+	$demographic_quotas_system = preg_replace('/[^-_0-9\p{L}]/u','',$demographic_quotas_system);
+	$demographic_quotas_campaigns = preg_replace('/[^-_0-9\p{L}]/u','',$demographic_quotas_campaigns);
 	$demographic_quotas_container = preg_replace('/[^-_0-9\p{L}]/u','',$demographic_quotas_container);
 	$weekday_resets_container = preg_replace('/[^-_0-9\p{L}]/u','',$weekday_resets_container);
 	$second_alert_container = preg_replace('/[^-_0-9\p{L}]/u','',$second_alert_container);
@@ -4974,7 +6391,10 @@ else
 	$preset_name = preg_replace('/[^- \_0-9\p{L}]/u','',$preset_name);
 	$selected_language = preg_replace('/[^- \_0-9\p{L}]/u','',$selected_language);
 	$default_language = preg_replace('/[^- \_0-9\p{L}]/u','',$default_language);
-	$opensips_cid_name = preg_replace('/[^- \_0-9\p{L}]/u','',$opensips_cid_name);
+	# $opensips_cid_name = preg_replace('/[^- \_0-9\p{L}]/u','',$opensips_cid_name);
+	$max_system_stats_submit = preg_replace('/[^- \_0-9\p{L}]/u','',$max_system_stats_submit);
+	$opensips_cid_name_campaigns = preg_replace('/[^- \_0-9\p{L}]/u','',$opensips_cid_name_campaigns);
+	$opensips_cid_name_system = preg_replace('/[^- \_0-9\p{L}]/u','',$opensips_cid_name_system);
 
 	### ALPHA-NUMERIC and hash
 	$group_color = preg_replace('/[^\#0-9\p{L}]/u','',$group_color);
@@ -5080,7 +6500,7 @@ else
 	$last_name = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$last_name);
 	$bu_name = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$bu_name);
 	$department = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$department);
-	$group = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$group);
+	# $group = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$group);  NOT USED
 	$job_title = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$job_title);
 	$location = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$location);
 	$holiday_name = preg_replace('/[^- \.\,\_0-9\p{L}]/u','',$holiday_name);
@@ -5164,6 +6584,7 @@ else
 
 	### ALPHA-NUMERIC and underscore and dash and slash and at and dot and pound and star
 	$extension = preg_replace('/[^-\*\#\.\:\/\@\_0-9\p{L}]/u','',$extension);
+	$extension_dids = preg_replace('/[^-\*\#\.\:\/\@\_0-9\p{L}]/u','',$extension_dids);
 	$new_extension = preg_replace('/[^-\*\#\.\:\/\@\_0-9\p{L}]/u','',$new_extension);
 	$timer_action_destination = preg_replace('/[^-\*\#\.\:\/\@\_0-9\p{L}]/u','',$timer_action_destination);
 	$filter_extension = preg_replace('/[^-\*\#\.\:\/\@\_0-9\p{L}]/u','',$filter_extension);
@@ -6345,6 +7766,7 @@ if ($SSscript_remove_js > 0)
 # 260106-1438 - Fixes for PHP8, 2026 date change
 # 260126-1335 - Added check of reserved_extensions against dialplan numbers when creating/modifying phones
 # 260128-0823 - Added xfer_min_container and in-group minimum transfer time features, xfer_talk_minimum, xfer_talk_minimum_sec
+# 260203-1600 - Code updates for PHP8 compatibility
 # 260324-0848 - Added hangup_again_link campaign option
 # 260408-0827 - Added max_inbound_auto_reenable system setting and function to re-enable agent in-group selections after max_inbound_calls has been raised
 # 260410-1953 - Fix for max_inbound_auto_reenable feature in 4B admin screen
@@ -6353,12 +7775,13 @@ if ($SSscript_remove_js > 0)
 # 260521-2044 - Fixes for input variable filtering
 # 260529-0918 - Added new AMD features
 # 260620-1447 - Added amd_status_map system setting and campaign setting
+# 260822-0855 - Added many input variable declarations, added agent_ingroup_availability API function
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-961a';
-$build = '260620-1447';
+$admin_version = '2.14-962a';
+$build = '260822-0855';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -6614,10 +8037,14 @@ if (preg_match("/x_ra_carrier/",$SSactive_modules))
 ##############################################
 //Get QC User permissions
 $stmt="SELECT qc_enabled,qc_user_level,qc_pass,qc_finish,qc_commit from vicidial_users where user='$PHP_AUTH_USER' and user_level > 1 and active='Y' and qc_enabled='1';";
+$qc_auth=0;
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
-$row=mysqli_fetch_row($rslt);
-$qc_auth=$row[0];
+if (mysqli_num_rows($rslt)>0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$qc_auth=$row[0];
+	}
 //Not "qc_" as it will interfere with ADD=4A storage of modified user.
 if ($qc_auth=='1') 
 	{
@@ -7488,7 +8915,7 @@ if ( ($ADD==999993) or ($ADD==999992) or ($ADD==730000000000000) or ($ADD==83000
 		$webserver_id = mysqli_insert_id($link);
 		}
 
-	$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$group, $query_date, $end_date, $shift, $stage, $report_display_type|', url='$LOGfull_url', webserver='$webserver_id';";
+	$stmt="INSERT INTO vicidial_report_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$LOGip', report_name='$report_name', browser='$LOGbrowser', referer='$LOGhttp_referer', notes='$LOGserver_name:$LOGserver_port $LOGscript_name |$query_date, $end_date, $stage|', url='$LOGfull_url', webserver='$webserver_id';";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$report_log_id = mysqli_insert_id($link);
 	if ($DB) {echo "$report_log_id|$stmt|\n";}
@@ -7537,6 +8964,7 @@ if ( ($ADD>2) and ($ADD < 99998) )
 	if ($DB) {echo "$times_to_print|$stmt|\n";}
 
 	$o=0;
+	$call_times_list="";
 	while ($times_to_print > $o)
 		{
 		$rowx=mysqli_fetch_row($rslt);
@@ -7546,7 +8974,7 @@ if ( ($ADD>2) and ($ADD < 99998) )
 		}
 	}
 
-if ( ( (strlen($ADD)>4) and ($ADD < 99998) ) or ($ADD==3) or (($ADD>20) and ($ADD<70)) or ($ADD=="4A")  or ($ADD=="4B") or (strlen($ADD)==12) )
+if ( ( (strlen($ADD)>4) and ($ADD < 99998) ) or ($ADD==2) or ($ADD==3) or ($ADD==31 and $SUB==22) or (($ADD>20) and ($ADD<70)) or ($ADD==201) or ($ADD==202) or ($ADD==601) or ($ADD=="4A")  or ($ADD=="4B") or ($ADD=="4") or (strlen($ADD)==12) )
 	{
 	##### BEGIN get campaigns listing for rankings #####
 
@@ -7593,6 +9021,8 @@ if ( ( (strlen($ADD)>4) and ($ADD < 99998) ) or ($ADD==3) or (($ADD>20) and ($AD
 	$campaign_js_grade='';
 	$campaign_js_rank_ct=0;
 	$campaign_js_grade_ct=0;
+	$USER_hopper_calls_today = 0;
+	$USER_hopper_calls_hour = 0;
 
 	while ($campaigns_to_print > $o)
 		{
@@ -7613,8 +9043,8 @@ if ( ( (strlen($ADD)>4) and ($ADD < 99998) ) or ($ADD==3) or (($ADD>20) and ($AD
 			$hopper_calls_hour =		$row[5];
 			}
 		else
-			{$calls_today=0;   $SELECT_campaign_rank=0;   $SELECT_campaign_grade=1;   $group_web_vars='';}
-		if ( ($ADD=="4A") or ($ADD=="4B") )
+			{$calls_today=0;   $SELECT_campaign_rank=0;   $SELECT_campaign_grade=1;   $group_web_vars=''; $hopper_calls_today=0; $hopper_calls_hour=0;}
+		if ( ($ADD=="4A") or ($ADD=="4B") or ($ADD=="4") )
 			{
 			if (isset($_GET["RANK_$campaign_id_values[$o]"]))			{$campaign_rank=$_GET["RANK_$campaign_id_values[$o]"];}
 				elseif (isset($_POST["RANK_$campaign_id_values[$o]"]))	{$campaign_rank=$_POST["RANK_$campaign_id_values[$o]"];}
@@ -7660,13 +9090,23 @@ if ( ( (strlen($ADD)>4) and ($ADD < 99998) ) or ($ADD==3) or (($ADD>20) and ($AD
 		# disable non user-group allowable campaign ranks
 		$stmt="SELECT user_group from vicidial_users where user='$user' $LOGadmin_viewable_groupsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-		$Ruser_group =	$row[0];
+		if (mysqli_num_rows($rslt)>0)
+			{
+			$row=mysqli_fetch_row($rslt);
+			$Ruser_group =	$row[0];
+			}
+		else
+			{$Ruser_group = "";}
 
 		$stmt="SELECT allowed_campaigns from vicidial_user_groups where user_group='$Ruser_group' $LOGadmin_viewable_groupsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-		$allowed_campaigns =	$row[0];
+		if (mysqli_num_rows($rslt)>0)
+			{
+			$row=mysqli_fetch_row($rslt);
+			$allowed_campaigns =	$row[0];
+			}
+		else
+			{$allowed_campaigns="";}
 		$allowed_campaigns = preg_replace("/ -$/","",$allowed_campaigns);
 		$UGcampaigns = explode(" ", $allowed_campaigns);
 
@@ -7736,17 +9176,24 @@ if ( ( (strlen($ADD)>4) and ($ADD < 99998) ) or ($ADD==3) or (($ADD>20) and ($AD
 
 	##### BEGIN get inbound groups listing for checkboxes #####
 	$xfer_groupsSQL='';
-	if ( (($ADD>20) and ($ADD<70)) and ($ADD!="4A") and ($ADD!=41) or ( ($ADD==41) and ( (preg_match('/list_activation/i', $stage)) or (preg_match('/test_call/',$stage)) ) ) )
+	$xfer_groups='';
+	if (!isset($XFERgroups)) {$XFERgroups='';}
+	if ( (($ADD>20) and ($ADD<70)) and ($ADD!=41) and ($ADD!="4A") and ($ADD!="4B") or (($ADD==601) and isset($campaign_id) and isset($preset_name)) or ( ($ADD==41) and ( (preg_match('/list_activation/i', $stage)) or (preg_match('/test_call/',$stage)) ) ) )
 		{
 		$stmt="SELECT closer_campaigns,xfer_groups from vicidial_campaigns where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-		$closer_campaigns =	$row[0];
-			$closer_campaigns = preg_replace("/ -$/","",$closer_campaigns);
-			$groups = explode(" ", $closer_campaigns);
-		$xfer_groups =	$row[1];
-			$xfer_groups = preg_replace("/ -$/","",$xfer_groups);
-			$XFERgroups = explode(" ", $xfer_groups);
+		$closer_campaigns="";
+		$xfer_groups="";
+		if (mysqli_num_rows($rslt)>0)
+			{
+			$row=mysqli_fetch_row($rslt);
+			$closer_campaigns =	$row[0];
+			$xfer_groups =	$row[1];
+			}
+		$closer_campaigns = preg_replace("/ -$/","",$closer_campaigns);
+		$groups = explode(" ", $closer_campaigns);
+		$xfer_groups = preg_replace("/ -$/","",$xfer_groups);
+		$XFERgroups = explode(" ", $xfer_groups);
 		$xfer_groupsSQL = preg_replace("/^ | -$/","",$xfer_groups);
 		$xfer_groupsSQL = preg_replace("/ /","','",$xfer_groupsSQL);
 		$xfer_groupsSQL = "WHERE group_id IN('$xfer_groupsSQL')";
@@ -7834,6 +9281,7 @@ if ( ( (strlen($ADD)>4) and ($ADD < 99998) ) or ($ADD==3) or (($ADD>20) and ($AD
 	$ingroup_js_grade='';
 	$ingroup_js_rank_ct=0;
 	$ingroup_js_grade_ct=0;
+	$XFERgroups_value = "";
 
 	while ($groups_to_print > $o)
 		{
@@ -7905,6 +9353,7 @@ if ( ( (strlen($ADD)>4) and ($ADD < 99998) ) or ($ADD==3) or (($ADD>20) and ($AD
 
 		$groups_list .= "<input type=\"checkbox\" name=\"groups[]\" value=\"$group_id_values[$o]\"";
 		$XFERgroups_list .= "<input type=\"checkbox\" name=\"XFERgroups[]\" value=\"$group_id_values[$o]\"";
+		# $XFERgroups_value = "";
 		$RANKgroups_list .= "<tr $bgcolor><td><input type=\"checkbox\" name=\"groups[]\" value=\"$group_id_values[$o]\"";
 		$p=0;
 		if (is_array($groups)) {$group_ct = count($groups);} else {$group_ct=0;}
@@ -7919,7 +9368,7 @@ if ( ( (strlen($ADD)>4) and ($ADD < 99998) ) or ($ADD==3) or (($ADD>20) and ($AD
 			$p++;
 			}
 		$p=0;
-		if (is_array($XFERgroups)) {$XFERgroup_ct = count($XFERgroups);} else {$XFERgroup_ct=0;}
+		if (isset($XFERgroups) && is_array($XFERgroups)) {$XFERgroup_ct = count($XFERgroups);} else {$XFERgroup_ct=0;}
 		while ($p < $XFERgroup_ct)
 			{
 			if ($group_id_values[$o] === $XFERgroups[$p]) 
@@ -7993,11 +9442,18 @@ if ( ($ADD==211111) or ($ADD==311111) or ($ADD==411111) or ($ADD==511111) or ($A
 		{
 		$stmt="SELECT allowed_campaigns,qc_allowed_campaigns,qc_allowed_inbound_groups,allowed_queue_groups from vicidial_user_groups where user_group='$user_group' $LOGadmin_viewable_groupsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-		$allowed_campaigns =			$row[0];
-		$qc_allowed_campaigns =			$row[1];
-		$qc_allowed_inbound_groups =	$row[2];
-		$allowed_queue_groups =			$row[3];
+		$allowed_campaigns =			"";
+		$qc_allowed_campaigns =			"";
+		$qc_allowed_inbound_groups =	"";
+		$allowed_queue_groups =			"";
+		if (mysqli_num_rows($rslt)>0)
+			{
+			$row=mysqli_fetch_row($rslt);
+			$allowed_campaigns =			$row[0];
+			$qc_allowed_campaigns =			$row[1];
+			$qc_allowed_inbound_groups =	$row[2];
+			$allowed_queue_groups =			$row[3];
+			}
 		$allowed_campaigns = preg_replace("/ -$/","",$allowed_campaigns);
 		$campaigns = explode(" ", $allowed_campaigns);
 		$qc_allowed_campaigns = preg_replace("/ -$/","",$qc_allowed_campaigns);
@@ -8020,7 +9476,7 @@ if ( ($ADD==211111) or ($ADD==311111) or ($ADD==411111) or ($ADD==511111) or ($A
 	$p=0;
 	while ($p<2000)
 		{
-		if (preg_match('/ALL\-CAMPAIGNS/i',$campaigns[$p])) 
+		if (isset($campaigns[$p]) && preg_match('/ALL\-CAMPAIGNS/i',$campaigns[$p])) 
 			{
 			if ( (preg_match('/\-ALL/i', $LOGallowed_campaigns)) )
 				{
@@ -8028,17 +9484,17 @@ if ( ($ADD==211111) or ($ADD==311111) or ($ADD==411111) or ($ADD==511111) or ($A
 				$campaigns_value .= " -ALL-CAMPAIGNS-";
 				}
 			}
-		if (preg_match('/ALL\-CAMPAIGNS/i',$qc_campaigns[$p])) 
+		if (isset($qc_campaigns[$p]) && preg_match('/ALL\-CAMPAIGNS/i',$qc_campaigns[$p])) 
 			{
 			$qc_campaigns_list.=" CHECKED";
 			$qc_campaigns_value .= " -ALL-CAMPAIGNS-";
 			}
-		if (preg_match('/ALL\-GROUPS/i',$qc_groups[$p])) 
+		if (isset($qc_groups[$p]) && preg_match('/ALL\-GROUPS/i',$qc_groups[$p])) 
 			{
 			$qc_groups_list.=" CHECKED";
 			$qc_groups_value .= " -ALL-GROUPS-";
 			}
-		if (preg_match('/ALL\-GROUPS/i',$queue_groups[$p])) 
+		if (isset($queue_groups[$p]) && preg_match('/ALL\-GROUPS/i',$queue_groups[$p])) 
 			{
 			$queue_groups_list.=" CHECKED";
 			$queue_groups_value .= " -ALL-GROUPS-";
@@ -8066,13 +9522,13 @@ if ( ($ADD==211111) or ($ADD==311111) or ($ADD==411111) or ($ADD==511111) or ($A
 		$p=0;
 		while ($p<1000)
 			{
-			if ( ($campaign_id_value === $campaigns[$p]) and (strlen($campaign_id_value) > 1) )
+			if (isset($campaigns[$p]) && ($campaign_id_value === $campaigns[$p]) and (strlen($campaign_id_value) > 1) )
 				{
 			#	echo "<!--  X $p|$campaign_id_value|$campaigns[$p]| -->";
 				$campaigns_list .= " CHECKED";
 				$campaigns_value .= " $campaign_id_value";
 				}
-			if ($campaign_id_value === $qc_campaigns[$p]) 
+			if (isset($qc_campaigns[$p]) && $campaign_id_value === $qc_campaigns[$p]) 
 				{
 				$qc_campaigns_list .= " CHECKED";
 				$qc_campaigns_value .= " $campaign_id_value";
@@ -8099,7 +9555,7 @@ if ( ($ADD==211111) or ($ADD==311111) or ($ADD==411111) or ($ADD==511111) or ($A
 		$p=0;
 		while ($p<2000)
 			{
-			if ( ($group_id_value === $qc_groups[$p]) and (strlen($group_id_value) > 1) )
+			if (isset($qc_groups[$p]) && ($group_id_value === $qc_groups[$p]) and (strlen($group_id_value) > 1) )
 				{
 				$qc_groups_list .= " CHECKED";
 				$qc_groups_value .= " $group_id_value";
@@ -8124,7 +9580,7 @@ if ( ($ADD==211111) or ($ADD==311111) or ($ADD==411111) or ($ADD==511111) or ($A
 		$p=0;
 		while ($p<2000)
 			{
-			if ( ($group_id_value === $queue_groups[$p]) and (strlen($group_id_value) > 1) )
+			if (isset($queue_groups[$p]) && ($group_id_value === $queue_groups[$p]) and (strlen($group_id_value) > 1) )
 				{
 				$queue_groups_list .= " CHECKED";
 				$queue_groups_value .= " $group_id_value";
@@ -8147,11 +9603,16 @@ if ( ($ADD==298111111111) or ($ADD==398111111111) or ($ADD==498111111111) or ($A
 	{
 	if ( ($ADD==298111111111) or ($ADD==398111111111) or ($ADD==598111111111) or ($ADD==698111111111) )
 		{
+		$included_campaigns="";
+		$included_inbound_groups="";
 		$stmt="SELECT queue_group,queue_group_name,active,user_group,included_campaigns,included_inbound_groups from vicidial_queue_groups where queue_group='$queue_group' $LOGadmin_viewable_groupsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$row=mysqli_fetch_row($rslt);
-		$included_campaigns =		$row[4];
-		$included_inbound_groups =	$row[5];
+		if (mysqli_num_rows($rslt)>0)
+			{
+			$included_campaigns =		$row[4];
+			$included_inbound_groups =	$row[5];
+			}
 
 		$qg_allowed_campaigns = preg_replace("/ -$/","",$included_campaigns);
 		$qg_campaigns = explode(" ", $qg_allowed_campaigns);
@@ -8183,7 +9644,7 @@ if ( ($ADD==298111111111) or ($ADD==398111111111) or ($ADD==498111111111) or ($A
 		$p=0;
 		while ($p<1000)
 			{
-			if ($campaign_id_value === $qg_campaigns[$p]) 
+			if (isset($qg_campaigns[$p]) && $campaign_id_value === $qg_campaigns[$p]) 
 				{
 				$qg_campaigns_list .= " CHECKED";
 				$qg_campaigns_value .= " $campaign_id_value";
@@ -8209,7 +9670,7 @@ if ( ($ADD==298111111111) or ($ADD==398111111111) or ($ADD==498111111111) or ($A
 		$p=0;
 		while ($p<2000)
 			{
-			if ( ($group_id_value === $qg_groups[$p]) and (strlen($group_id_value) > 1) )
+			if (isset($qg_groups[$p]) && isset($group_id_value) && ($group_id_value === $qg_groups[$p]) and (strlen($group_id_value) > 1) )
 				{
 				$qg_groups_list .= " CHECKED";
 				$qg_groups_value .= " $group_id_value";
@@ -9112,7 +10573,7 @@ if ($ADD==121)
 			}
 
 		echo "</TABLE></center>\n";
-		echo "<br><br><br>\n";
+		echo "<br><br>\n";
 		}
 
 	# Add / Delete from DNC
@@ -9399,6 +10860,9 @@ if ($ADD==121)
 			}
 		}
 
+	echo "</FONT>";
+	echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
+
 	if ($LOGdelete_from_dnc > 0)
 		{echo "<br>"._QXZ("ADD OR DELETE NUMBERS FROM THE DNC LIST")."<form action=$PHP_SELF method=POST>\n";}
 	else
@@ -9500,6 +10964,7 @@ if ($ADD==171)
 	$vfpg_to_print = mysqli_num_rows($rslt);
 
 	$o=0;
+	$vfpg_list="";
 	while ($vfpg_to_print > $o) 
 		{
 		$rowx=mysqli_fetch_row($rslt);
@@ -10875,7 +12340,7 @@ if ($ADD==11111111111)
 		$SScontainer_stmt="select phone_defaults_container from system_settings limit 1";
 		$SScontainer_rslt=mysql_to_mysqli($SScontainer_stmt, $link);
 		$SScontainer_row=mysqli_fetch_row($SScontainer_rslt);
-		$dps=array(); # Default phone setting array
+		$dps=array("voicemail_id" => "", "outbound_cid" => "", "user_group" => "", "server_ip" => "", "pass" => "", "conf_secret" => "", "status" => "", "active" => "", "phone_type" => "", "protocol" => "", "local_gmt" => ""); # Default phone setting array
 		if (!preg_match('/\-\-\-DISABLED\-\-\-/', $SScontainer_row[0]))
 			{
 			$container_stmt="select container_entry from vicidial_settings_containers where container_id='$SScontainer_row[0]'";
@@ -11005,8 +12470,8 @@ if ($ADD==11111111111)
 if ($ADD==21222222222)
 	{
 	$source_phone_array=explode("|", $source_phone);
-	$source_extension=$source_phone_array[0];
-	$source_server_ip=$source_phone_array[1];
+	$source_extension=(isset($source_phone_array[0]) ? $source_phone_array[0] : "");
+	$source_server_ip=(isset($source_phone_array[1]) ? $source_phone_array[1] : "");
 	if ($add_copy_disabled > 0)
 		{
 		echo "<br>"._QXZ("You do not have permission to add records on this system")." -system_settings-\n";
@@ -12856,6 +14321,7 @@ if ($ADD==20)
 						$row=mysqli_fetch_row($rslt);
 						$AMDAOcount =	$row[0];
 
+						$stmtL=""; $affected_rowsL=0;
 						if ($AMDAOcount > 0)
 							{
 							$stmtL = "INSERT INTO vicidial_settings_containers (container_id,container_notes,container_type,user_group,container_entry) SELECT \"AMD_AGENT_OPT_$campaign_id\",\"AMD agent options for $campaign_id campaign\",container_type,user_group,container_entry from  vicidial_settings_containers where container_id='AMD_AGENT_OPT_$source_campaign_id';";
@@ -14039,15 +15505,16 @@ if ( ($ADD==29111) and ($SSallow_chats>0) )
 
 					$stmtA="INSERT INTO vicidial_campaign_stats (campaign_id) values('$group_id');";
 					$rslt=mysql_to_mysqli($stmtA, $link);
-					$affected_rowsB = mysqli_affected_rows($link);
+					$affected_rowsA = mysqli_affected_rows($link);
 
 					$stmtB="INSERT INTO vicidial_campaign_stats_debug (campaign_id) values('$group_id');";
 					$rslt=mysql_to_mysqli($stmtB, $link);
-					$affected_rowsC = mysqli_affected_rows($link);
+					$affected_rowsB = mysqli_affected_rows($link);
 
 					# copy agent ranks and grades from source in-group
 					$stmtC="INSERT INTO vicidial_inbound_group_agents (user,group_id,group_rank,group_weight,group_grade,group_web_vars,daily_limit) SELECT user,'$group_id',group_rank,group_weight,group_grade,group_web_vars,daily_limit from vicidial_inbound_group_agents where group_id=\"$source_group_id\";";
 					$rslt=mysql_to_mysqli($stmtC, $link);
+					$affected_rowsC = mysqli_affected_rows($link);
 
 					# add new in-group to user's agent-selected in-groups
 					$SQL_group_id = preg_replace("/_/",'\\_',$group_id);
@@ -14952,7 +16419,7 @@ if ($ADD==231111111)
 		$row=mysqli_fetch_row($rslt);
 		if ($row[0] > 0)
 			{echo "<br>"._QXZ("SHIFT DEFINITION NOT ADDED - there is already a shift entry with this ID")."\n";}
-		else if (!is_array($shift_weekdays))
+		else if (!isset($shift_weekdays) || !is_array($shift_weekdays))
 			{echo "<br>"._QXZ("SHIFT DEFINITION NOT ADDED - you have to select at least one weekday")."\n";}
 		else
 			{
@@ -14967,8 +16434,9 @@ if ($ADD==231111111)
 			else
 				{
 				$p=0;
+				$SHIFT_weekdays='';
 				$shift_weekdays_ct = count($shift_weekdays);
-				while ($p <= $shift_weekdays_ct)
+				while ($p < $shift_weekdays_ct)
 					{
 					$shift_weekdays[$p] = preg_replace('/[^0-9]/','',$shift_weekdays[$p]);
 					$SHIFT_weekdays .= "$shift_weekdays[$p]";
@@ -15067,6 +16535,8 @@ if ($ADD==21111111111)
 							$SScontainer_rslt=mysql_to_mysqli($SScontainer_stmt, $link);
 							$SScontainer_row=mysqli_fetch_row($SScontainer_rslt);
 							$dps=array("voicemail_timezone" => "$SSdefault_voicemail_timezone"); # Default phone setting array, need to set voicemail timezone here due to system settings
+							$SQLfields="";
+							$SQLvalues="";
 
 							# Below settings were pre-set at the initial page, so we remove them here so the settings don't overwrite anything the user may have modified.
 							$settings_to_purge=array("active", "local_gmt", "conf_secret", "outbound_cid", "pass", "phone_type", "protocol", "server_ip", "status", "voicemail_id", "user_group");
@@ -15187,7 +16657,10 @@ if ($ADD==22111111111)
 			else
 				{
 				if ( (strlen($alias_id) < 1) or (strlen($alias_name) < 2) )
-					{echo "<br>"._QXZ("PHONE ALIAS NOT ADDED - Please go back and look at the data you entered")."\n";}
+					{
+					echo "<br>"._QXZ("PHONE ALIAS NOT ADDED - Please go back and look at the data you entered")."\n";
+					echo "<BR><BR><BR><a href='admin.php?ADD=12111111111'>"._QXZ("Back to phone alias entry page")."</a>";
+					}
 				else
 					{
 					echo "<br>"._QXZ("PHONE ALIAS ADDED")."\n";
@@ -15234,7 +16707,10 @@ if ($ADD==23111111111)
 			else
 				{
 				if ( (strlen($group_alias_id) < 1) or (strlen($group_alias_name) < 2) )
-					{echo "<br>"._QXZ("GROUP ALIAS NOT ADDED - Please go back and look at the data you entered")."\n";}
+					{
+					echo "<br>"._QXZ("GROUP ALIAS NOT ADDED - Please go back and look at the data you entered")."\n";
+					echo "<BR><BR><BR><a href='admin.php?ADD=13111111111'>"._QXZ("Back to group alias entry page")."</a>";
+					}
 				else
 					{
 					echo "<br>"._QXZ("GROUP ALIAS ADDED")."\n";
@@ -15277,7 +16753,10 @@ if ($ADD==211111111111)
 		else
 			{
 			if ( (strlen($server_id) < 1) or (strlen($server_ip) < 7) )
-				{echo "<br>"._QXZ("SERVER NOT ADDED - Please go back and look at the data you entered")."\n";}
+				{
+				echo "<br>"._QXZ("SERVER NOT ADDED - Please go back and look at the data you entered")."\n";
+				echo "<br><br><br><a href='javascript:history.back()'>"._QXZ("Go back")."</a>\n";
+				}
 			else
 				{
 				echo "<br>"._QXZ("SERVER ADDED")."\n";
@@ -15386,7 +16865,10 @@ if ($ADD==231111111111)
 		else
 			{
 			if (strlen($template_id) < 2)
-				{echo "<br>"._QXZ("CONF TEMPLATE NOT ADDED - Please go back and look at the data you entered")."\n";}
+				{
+				echo "<br>"._QXZ("CONF TEMPLATE NOT ADDED - Please go back and look at the data you entered")."\n";
+				echo "<BR><BR><BR><a href='javascript:history.back()'>"._QXZ("Go back")."</a>";
+				}
 			else
 				{
 				echo "<br>"._QXZ("CONF TEMPLATE ADDED")."\n";
@@ -15428,7 +16910,10 @@ if ($ADD==241111111111)
 		else
 			{
 			if ( (strlen($carrier_id) < 2) or (strlen($server_ip) < 7) )
-				{echo "<br>"._QXZ("CARRIER NOT ADDED - Please go back and look at the data you entered")."\n";}
+				{
+				echo "<br>"._QXZ("CARRIER NOT ADDED - Please go back and look at the data you entered")."\n";
+				echo "<BR><BR><BR><a href='javascript:history.back()'>"._QXZ("Go back")."</a>";
+				}
 			else
 				{
 				echo "<br>"._QXZ("CARRIER ADDED")."\n";
@@ -15473,7 +16958,10 @@ if ($ADD==240111111111)
 		else
 			{
 			if ( (strlen($carrier_id) < 2) or (strlen($server_ip) < 7) )
-				{echo "<br>"._QXZ("CARRIER NOT ADDED - Please go back and look at the data you entered")."\n";}
+				{
+				echo "<br>"._QXZ("CARRIER NOT ADDED - Please go back and look at the data you entered")."\n";
+				echo "<BR><BR><BR><a href='javascript:history.back()'>"._QXZ("Go back")."</a>";
+				}
 			else
 				{
 				echo "<br>"._QXZ("COPIED CARRIER ADDED")."\n";
@@ -15564,7 +17052,10 @@ if ($ADD==261111111111)
 		else
 			{
 			if ( (strlen($moh_id) < 2) or (strlen($moh_name) < 3) or ($moh_id=='sounds') or ($moh_id=='agi-bin') or ($moh_id=='astdb') or ($moh_id=='keys') )
-				{echo "<br>"._QXZ("MUSIC ON HOLD ENTRY NOT ADDED - Please go back and look at the data you entered")."\n";}
+				{
+				echo "<br>"._QXZ("MUSIC ON HOLD ENTRY NOT ADDED - Please go back and look at the data you entered")."\n";
+				echo "<br><br><br><a href='javascript:history.back()'>"._QXZ("Go back")."</a>\n";
+				}
 			else
 				{
 				echo "<br>"._QXZ("MUSIC ON HOLD ENTRY ADDED")."\n";
@@ -15613,7 +17104,10 @@ if ($ADD==271111111111)
 			else
 				{
 				if ( (strlen($voicemail_id) < 2) or (strlen($pass) < 2) or (strlen($fullname) < 3) )
-					{echo "<br>"._QXZ("VOICEMAIL BOX NOT ADDED - Please go back and look at the data you entered")."\n";}
+					{
+					echo "<br>"._QXZ("VOICEMAIL BOX NOT ADDED - Please go back and look at the data you entered")."\n";
+					echo "<br><br><br><a href='javascript:history.back()'>"._QXZ("Go back")."</a>";
+					}
 				else
 					{
 					echo "<br>"._QXZ("VOICEMAIL BOX ADDED")."\n";
@@ -15664,7 +17158,10 @@ if ($ADD==281111111111)
 		else
 			{
 			if ( (strlen($label_id) < 2) or (strlen($label_name) < 2) )
-				{echo "<br>"._QXZ("SCREEN LABEL NOT ADDED - Please go back and look at the data you entered")."\n";}
+				{
+				echo "<br>"._QXZ("SCREEN LABEL NOT ADDED - Please go back and look at the data you entered")."\n";
+				echo "<br><br><br><a href='javascript:history.back()'>"._QXZ("Go back")."</a>";
+				}
 			else
 				{
 				echo "<br>"._QXZ("SCREEN LABEL ADDED")."\n";
@@ -15706,7 +17203,10 @@ if ($ADD==282111111111)
 		else
 			{
 			if ( (strlen($colors_id) < 2) or (strlen($colors_name) < 2) )
-				{echo "<br>"._QXZ("SCREEN COLORS NOT ADDED - Please go back and look at the data you entered")."\n";}
+				{
+				echo "<br>"._QXZ("SCREEN COLORS NOT ADDED - Please go back and look at the data you entered")."\n";
+				echo "<br><br><br><a href='javascript:history.back()'>"._QXZ("Go back")."</a>\n";
+				}
 			else
 				{
 				echo "<br>"._QXZ("SCREEN COLORS ADDED")."\n";
@@ -15801,7 +17301,10 @@ if ($ADD==292111111111)
 		else
 			{
 			if ( (strlen($container_id) < 2) or (strlen($container_notes) < 2) )
-				{echo "<br>"._QXZ("SETTINGS CONTAINER NOT ADDED - Please go back and look at the data you entered")."\n";}
+				{
+				echo "<br>"._QXZ("SETTINGS CONTAINER NOT ADDED - Please go back and look at the data you entered")."\n";
+				echo "<br><br><br><a href='javascript:history.back()'>"._QXZ("Go back")."</a>";
+				}
 			else
 				{
 				echo "<br>"._QXZ("SETTINGS CONTAINER ADDED")."\n";
@@ -15851,7 +17354,10 @@ if ($ADD==293111111111)
 				{
 
 				if ( (strlen($status_group_id) < 2) or (strlen($status_group_notes) < 2) )
-					{echo "<br>"._QXZ("STATUS GROUP NOT ADDED - Please go back and look at the data you entered")."\n";}
+					{
+					echo "<br>"._QXZ("STATUS GROUP NOT ADDED - Please go back and look at the data you entered")."\n";
+					echo "<br><br><br><a href='javascript:history.back()'>"._QXZ("Go back")."</a>\n";
+					}
 				else
 					{
 					echo "<br>"._QXZ("STATUS GROUP ADDED")."\n";
@@ -15986,7 +17492,10 @@ if ($ADD==296111111111)
 			else
 				{
 				if ( (strlen($cid_group_id) < 2) or (strlen($cid_group_notes) < 2) or (strlen($cid_group_type) < 2) )
-					{echo "<br>"._QXZ("CID GROUP NOT ADDED - Please go back and look at the data you entered")."\n";}
+					{
+					echo "<br>"._QXZ("CID GROUP NOT ADDED - Please go back and look at the data you entered")."\n";
+					echo "<br><br><br><a href='javascript:history.back()'>"._QXZ("Go back")."</a>\n";
+					}
 				else
 					{
 					echo "<br>"._QXZ("CID GROUP ADDED")."\n";
@@ -16029,7 +17538,10 @@ if ($ADD==297111111111)
 		else
 			{
 			if ( (strlen($leave_vm_message_group_id) < 2) or (strlen($leave_vm_message_group_notes) < 2) or (strlen($active) < 1) )
-				{echo "<br>"._QXZ("VM MESSAGE GROUP NOT ADDED - Please go back and look at the data you entered")."\n";}
+				{
+				echo "<br>"._QXZ("VM MESSAGE GROUP NOT ADDED - Please go back and look at the data you entered")."\n";
+				echo "<br><br><br><a href='javascript:history.back()'>"._QXZ("Go back")."</a>\n";
+				}
 			else
 				{
 				echo "<br>"._QXZ("VM MESSAGE GROUP ADDED")."\n";
@@ -16069,19 +17581,20 @@ if ($ADD==298111111111)
 		$row=mysqli_fetch_row($rslt);
 		if ($row[0] > 0)
 			{
-			echo "<br>"._QXZ("VM MESSAGE GROUP NOT ADDED - there is already a VM MESSAGE GROUP in the system with this ID")."\n";
+			echo "<br>"._QXZ("QUEUE GROUP NOT ADDED - there is already a QUEUE GROUP in the system with this ID")."\n";
 			$ADD=198111111111;
 			}
 		else
 			{
 			if ( (strlen($queue_group) < 2) or (strlen($queue_group_name) < 5) or (strlen($active) < 1) )
 				{
-				echo "<br>"._QXZ("VM MESSAGE GROUP NOT ADDED - Please go back and look at the data you entered")."\n";
+				echo "<br>"._QXZ("QUEUE GROUP NOT ADDED - Please go back and look at the data you entered")."\n";
+				echo "<BR><BR><BR><a href='javascript:history.back()'>"._QXZ("Go back")."</a>";
 				$ADD=198111111111;
 				}
 			else
 				{
-				echo "<br>"._QXZ("VM MESSAGE GROUP ADDED")."\n";
+				echo "<br>"._QXZ("QUEUE GROUP ADDED")."\n";
 
 				$stmt="INSERT INTO vicidial_queue_groups SET queue_group='$queue_group',queue_group_name='$queue_group_name',active='$active',user_group='$user_group';";
 				$rslt=mysql_to_mysqli($stmt, $link);
@@ -16162,7 +17675,10 @@ if ($ADD==21111111111111)
 		else
 			{
 			if ( (strlen($conf_exten) < 1) or (strlen($server_ip) < 7) )
-				{echo "<br>"._QXZ("AGENT CONFERENCE NOT ADDED - Please go back and look at the data you entered")."\n";}
+				{
+				echo "<br>"._QXZ("AGENT CONFERENCE NOT ADDED - Please go back and look at the data you entered")."\n";
+				echo "<br><br><br><a href='javascript:history.back()'>"._QXZ("Go back")."</a>\n";
+				}
 			else
 				{
 				echo "<br>"._QXZ("AGENT CONFERENCE ADDED")."\n";
@@ -16204,7 +17720,10 @@ if ($ADD==22111111111111)
 		else
 			{
 			if ( (strlen($conf_exten) < 1) or (strlen($server_ip) < 7) )
-				{echo "<br>"._QXZ("AGENT CONFBRIDGE NOT ADDED - Please go back and look at the data you entered")."\n";}
+				{
+				echo "<br>"._QXZ("AGENT CONFBRIDGE NOT ADDED - Please go back and look at the data you entered")."\n";
+				echo "<br><br><br><a href='javascript:history.back()'>"._QXZ("Go back")."</a>\n";
+				}
 			else
 				{
 				echo "<br>"._QXZ("AGENT CONFBRIDGE ADDED")."\n";
@@ -16432,7 +17951,7 @@ if ($ADD=="4A")
 
 			echo "<br><B>"._QXZ("USER MODIFIED - ADMIN").": $user</B>\n";
 
-			$stmtA="UPDATE vicidial_users set pass='$pass',full_name='$full_name',user_level='$user_level',user_group='$user_group',phone_login='$phone_login',phone_pass='$phone_pass',delete_users='$delete_users',delete_user_groups='$delete_user_groups',delete_lists='$delete_lists',delete_campaigns='$delete_campaigns',delete_ingroups='$delete_ingroups',delete_remote_agents='$delete_remote_agents',load_leads='$load_leads',campaign_detail='$campaign_detail',ast_admin_access='$ast_admin_access',ast_delete_phones='$ast_delete_phones',delete_scripts='$delete_scripts',modify_leads='$modify_leads',hotkeys_active='$hotkeys_active',change_agent_campaign='$change_agent_campaign',agent_choose_ingroups='$agent_choose_ingroups',closer_campaigns='$groups_value',scheduled_callbacks='$scheduled_callbacks',agentonly_callbacks='$agentonly_callbacks',agentcall_manual='$agentcall_manual',vicidial_recording='$vicidial_recording',vicidial_transfers='$vicidial_transfers',delete_filters='$delete_filters',alter_agent_interface_options='$alter_agent_interface_options',closer_default_blended='$closer_default_blended',delete_call_times='$delete_call_times',modify_call_times='$modify_call_times',modify_users='$modify_users',modify_campaigns='$modify_campaigns',modify_lists='$modify_lists',modify_scripts='$modify_scripts',modify_filters='$modify_filters',modify_ingroups='$modify_ingroups',modify_usergroups='$modify_usergroups',modify_remoteagents='$modify_remoteagents',modify_servers='$modify_servers',view_reports='$view_reports',vicidial_recording_override='$vicidial_recording_override',alter_custdata_override='$alter_custdata_override',qc_enabled='$qc_enabled',qc_user_level='$qc_user_level',qc_pass='$qc_pass',qc_finish='$qc_finish',qc_commit='$qc_commit',add_timeclock_log='$add_timeclock_log',modify_timeclock_log='$modify_timeclock_log',delete_timeclock_log='$delete_timeclock_log',alter_custphone_override='$alter_custphone_override',vdc_agent_api_access='$vdc_agent_api_access',modify_inbound_dids='$modify_inbound_dids',delete_inbound_dids='$delete_inbound_dids',active='$active',download_lists='$download_lists',agent_shift_enforcement_override='$agent_shift_enforcement_override',manager_shift_enforcement_override='$manager_shift_enforcement_override',export_reports='$export_reports',delete_from_dnc='$delete_from_dnc',email='$email',territory='$territory',allow_alerts='$allow_alerts',agent_choose_territories='$agent_choose_territories',custom_one='$custom_one',custom_two='$custom_two',custom_three='$custom_three',custom_four='$custom_four',custom_five='$custom_five',voicemail_id='$voicemail_id',agent_call_log_view_override='$agent_call_log_view_override',callcard_admin='$callcard_admin',agent_choose_blended='$agent_choose_blended',realtime_block_user_info='$realtime_block_user_info',custom_fields_modify='$custom_fields_modify',force_change_password='$force_change_password',agent_lead_search_override='$agent_lead_search',modify_shifts='$modify_shifts',modify_phones='$modify_phones',modify_carriers='$modify_carriers',modify_labels='$modify_labels',modify_statuses='$modify_statuses',modify_voicemail='$modify_voicemail',modify_audiostore='$modify_audiostore',modify_moh='$modify_moh',modify_tts='$modify_tts',preset_contact_search='$preset_contact_search',modify_contacts='$modify_contacts',modify_same_user_level='$modify_same_user_level',admin_hide_lead_data='$admin_hide_lead_data',admin_hide_phone_data='$admin_hide_phone_data',agentcall_email='$agentcall_email',agentcall_chat='$agentcall_chat',modify_email_accounts='$modify_email_accounts',failed_login_count=0,alter_admin_interface_options='$alter_admin_interface_options',max_inbound_calls='$max_inbound_calls',modify_custom_dialplans='$modify_custom_dialplans',wrapup_seconds_override='$wrapup_seconds_override',modify_languages='$modify_languages',selected_language='$selected_language',user_choose_language='$user_choose_language',ignore_group_on_search='$ignore_group_on_search',api_list_restrict='$api_list_restrict',api_allowed_functions='$api_allowed_functions',lead_filter_id='$lead_filter_id',admin_cf_show_hidden='$admin_cf_show_hidden',user_hide_realtime='$user_hide_realtime',access_recordings='$access_recordings',modify_colors='$modify_colors',user_nickname='$user_nickname',user_new_lead_limit='$user_new_lead_limit',api_only_user='$api_only_user',modify_auto_reports='$modify_auto_reports',modify_ip_lists='$modify_ip_lists',ignore_ip_list='$ignore_ip_list',ready_max_logout='$ready_max_logout',export_gdpr_leads='$export_gdpr_leads',pause_code_approval='$pause_code_approval',max_hopper_calls='$max_hopper_calls',max_hopper_calls_hour='$max_hopper_calls_hour',mute_recordings='$mute_recordings',hide_call_log_info='$hide_call_log_info',next_dial_my_callbacks='$next_dial_my_callbacks',user_admin_redirect_url='" . mysqli_real_escape_string($link, $user_admin_redirect_url) . "',max_inbound_filter_enabled='$max_inbound_filter_enabled',max_inbound_filter_statuses='$max_inbound_filter_statuses',max_inbound_filter_ingroups='$max_inbound_filter_ingroups',max_inbound_filter_min_sec='$max_inbound_filter_min_sec',status_group_id='$status_group_id',mobile_number='$mobile_number',two_factor_override='$two_factor_override',manual_dial_filter='$manual_dial_filter',user_location='$user_location',download_invalid_files='$download_invalid_files',user_group_two='$user_group_two',modify_dial_prefix='$modify_dial_prefix',inbound_credits='$inbound_credits',hci_enabled='$hci_enabled',manual_dial_lead_id='$manual_dial_lead_id',modify_settings_containers='$modify_settings_containers' $user_codeSQL $pass_hashSQL where user='$user' $LOGadmin_viewable_groupsSQL;";
+			$stmtA="UPDATE vicidial_users set pass='$pass',full_name='$full_name',user_level='$user_level',user_group='$user_group',phone_login='$phone_login',phone_pass='$phone_pass',delete_users='$delete_users',delete_user_groups='$delete_user_groups',delete_lists='$delete_lists',delete_campaigns='$delete_campaigns',delete_ingroups='$delete_ingroups',delete_remote_agents='$delete_remote_agents',load_leads='$load_leads',campaign_detail='$campaign_detail',ast_admin_access='$ast_admin_access',ast_delete_phones='$ast_delete_phones',delete_scripts='$delete_scripts',modify_leads='$modify_leads',hotkeys_active='$hotkeys_active',change_agent_campaign='$change_agent_campaign',agent_choose_ingroups='$agent_choose_ingroups',closer_campaigns='$groups_value',scheduled_callbacks='$scheduled_callbacks',agentonly_callbacks='$agentonly_callbacks',agentcall_manual='$agentcall_manual',vicidial_recording='$vicidial_recording',vicidial_transfers='$vicidial_transfers',delete_filters='$delete_filters',alter_agent_interface_options='$alter_agent_interface_options',closer_default_blended='$closer_default_blended',delete_call_times='$delete_call_times',modify_call_times='$modify_call_times',modify_users='$modify_users',modify_campaigns='$modify_campaigns',modify_lists='$modify_lists',modify_scripts='$modify_scripts',modify_filters='$modify_filters',modify_ingroups='$modify_ingroups',modify_usergroups='$modify_usergroups',modify_remoteagents='$modify_remoteagents',modify_servers='$modify_servers',view_reports='$view_reports',vicidial_recording_override='$vicidial_recording_override',alter_custdata_override='$alter_custdata_override',qc_enabled='$qc_enabled',qc_user_level='$qc_user_level',qc_pass='$qc_pass',qc_finish='$qc_finish',qc_commit='$qc_commit',add_timeclock_log='$add_timeclock_log',modify_timeclock_log='$modify_timeclock_log',delete_timeclock_log='$delete_timeclock_log',alter_custphone_override='$alter_custphone_override',vdc_agent_api_access='$vdc_agent_api_access',modify_inbound_dids='$modify_inbound_dids',delete_inbound_dids='$delete_inbound_dids',active='$active',download_lists='$download_lists',agent_shift_enforcement_override='$agent_shift_enforcement_override',manager_shift_enforcement_override='$manager_shift_enforcement_override',export_reports='$export_reports',delete_from_dnc='$delete_from_dnc',email='$email',territory='$territory',allow_alerts='$allow_alerts',agent_choose_territories='$agent_choose_territories',custom_one='$custom_one',custom_two='$custom_two',custom_three='$custom_three',custom_four='$custom_four',custom_five='$custom_five',voicemail_id='$voicemail_id',agent_call_log_view_override='$agent_call_log_view_override',callcard_admin='$callcard_admin',agent_choose_blended='$agent_choose_blended',realtime_block_user_info='$realtime_block_user_info',custom_fields_modify='$custom_fields_modify',force_change_password='$force_change_password',agent_lead_search_override='$agent_lead_search',modify_shifts='$modify_shifts',modify_phones='$modify_phones',modify_carriers='$modify_carriers',modify_labels='$modify_labels',modify_statuses='$modify_statuses',modify_voicemail='$modify_voicemail',modify_audiostore='$modify_audiostore',modify_moh='$modify_moh',modify_tts='$modify_tts',preset_contact_search='$preset_contact_search',modify_contacts='$modify_contacts',modify_same_user_level='$modify_same_user_level',admin_hide_lead_data='$admin_hide_lead_data',admin_hide_phone_data='$admin_hide_phone_data',agentcall_email='$agentcall_email',agentcall_chat='$agentcall_chat',modify_email_accounts='$modify_email_accounts',failed_login_count=0,alter_admin_interface_options='$alter_admin_interface_options',max_inbound_calls='$max_inbound_calls',modify_custom_dialplans='$modify_custom_dialplans',wrapup_seconds_override='$wrapup_seconds_override',modify_languages='$modify_languages',selected_language='$selected_language',user_choose_language='$user_choose_language',ignore_group_on_search='$ignore_group_on_search',api_list_restrict='$api_list_restrict',api_allowed_functions='$api_allowed_functions',lead_filter_id='$lead_filter_id',admin_cf_show_hidden='$admin_cf_show_hidden',user_hide_realtime='$user_hide_realtime',access_recordings='$access_recordings',modify_colors='$modify_colors',user_nickname='$user_nickname',user_new_lead_limit='$user_new_lead_limit',api_only_user='$api_only_user',modify_auto_reports='$modify_auto_reports',modify_ip_lists='$modify_ip_lists',ignore_ip_list='$ignore_ip_list',ready_max_logout='$ready_max_logout',export_gdpr_leads='$export_gdpr_leads',pause_code_approval='$pause_code_approval',max_hopper_calls='$max_hopper_calls',max_hopper_calls_hour='$max_hopper_calls_hour',mute_recordings='$mute_recordings_users',hide_call_log_info='$hide_call_log_info_users',next_dial_my_callbacks='$next_dial_my_callbacks',user_admin_redirect_url='" . mysqli_real_escape_string($link, $user_admin_redirect_url) . "',max_inbound_filter_enabled='$max_inbound_filter_enabled',max_inbound_filter_statuses='$max_inbound_filter_statuses',max_inbound_filter_ingroups='$max_inbound_filter_ingroups',max_inbound_filter_min_sec='$max_inbound_filter_min_sec',status_group_id='$status_group_id',mobile_number='$mobile_number',two_factor_override='$two_factor_override',manual_dial_filter='$manual_dial_filter',user_location='$user_location',download_invalid_files='$download_invalid_files',user_group_two='$user_group_two',modify_dial_prefix='$modify_dial_prefix',inbound_credits='$inbound_credits',hci_enabled='$hci_enabled',manual_dial_lead_id='$manual_dial_lead_id',modify_settings_containers='$modify_settings_containers' $user_codeSQL $pass_hashSQL where user='$user' $LOGadmin_viewable_groupsSQL;";
 			$rslt=mysql_to_mysqli($stmtA, $link);
 
 			### BEGIN check for raising of max_inbound_calls setting, and execute re-enebling of agent selected in-groups if true
@@ -16835,7 +18354,7 @@ if ($ADD=="4B")
 
 			echo "<br><B>"._QXZ("USER MODIFIED - ADMIN").": $user</B>\n";
 
-			$stmt="UPDATE vicidial_users set pass='$pass',full_name='$full_name',user_level='$user_level',user_group='$user_group',phone_login='$phone_login',phone_pass='$phone_pass',hotkeys_active='$hotkeys_active',agent_choose_ingroups='$agent_choose_ingroups',closer_campaigns='$groups_value',scheduled_callbacks='$scheduled_callbacks',agentonly_callbacks='$agentonly_callbacks',agentcall_manual='$agentcall_manual',vicidial_recording='$vicidial_recording',vicidial_transfers='$vicidial_transfers',closer_default_blended='$closer_default_blended',vicidial_recording_override='$vicidial_recording_override',alter_custdata_override='$alter_custdata_override',qc_enabled='$qc_enabled',qc_user_level='$qc_user_level',qc_pass='$qc_pass',qc_finish='$qc_finish',qc_commit='$qc_commit',alter_custphone_override='$alter_custphone_override',active='$active',agent_shift_enforcement_override='$agent_shift_enforcement_override',email='$email',territory='$territory',allow_alerts='$allow_alerts',agent_choose_territories='$agent_choose_territories',custom_one='$custom_one',custom_two='$custom_two',custom_three='$custom_three',custom_four='$custom_four',custom_five='$custom_five',voicemail_id='$voicemail_id',agent_call_log_view_override='$agent_call_log_view_override',agent_choose_blended='$agent_choose_blended',agent_lead_search_override='$agent_lead_search',preset_contact_search='$preset_contact_search',max_inbound_calls='$max_inbound_calls',wrapup_seconds_override='$wrapup_seconds_override',lead_filter_id='$lead_filter_id',user_hide_realtime='$user_hide_realtime',user_nickname='$user_nickname',user_new_lead_limit='$user_new_lead_limit',ready_max_logout='$ready_max_logout',failed_login_count=0,max_hopper_calls='$max_hopper_calls',max_hopper_calls_hour='$max_hopper_calls_hour',hide_call_log_info='$hide_call_log_info',next_dial_my_callbacks='$next_dial_my_callbacks',max_inbound_filter_enabled='$max_inbound_filter_enabled',max_inbound_filter_statuses='$max_inbound_filter_statuses',max_inbound_filter_ingroups='$max_inbound_filter_ingroups',max_inbound_filter_min_sec='$max_inbound_filter_min_sec',status_group_id='$status_group_id',mobile_number='$mobile_number',user_location='$user_location',user_group_two='$user_group_two',hci_enabled='$hci_enabled' $user_codeSQL $pass_hashSQL where user='$user' $LOGadmin_viewable_groupsSQL;";
+			$stmt="UPDATE vicidial_users set pass='$pass',full_name='$full_name',user_level='$user_level',user_group='$user_group',phone_login='$phone_login',phone_pass='$phone_pass',hotkeys_active='$hotkeys_active',agent_choose_ingroups='$agent_choose_ingroups',closer_campaigns='$groups_value',scheduled_callbacks='$scheduled_callbacks',agentonly_callbacks='$agentonly_callbacks',agentcall_manual='$agentcall_manual',vicidial_recording='$vicidial_recording',vicidial_transfers='$vicidial_transfers',closer_default_blended='$closer_default_blended',vicidial_recording_override='$vicidial_recording_override',alter_custdata_override='$alter_custdata_override',qc_enabled='$qc_enabled',qc_user_level='$qc_user_level',qc_pass='$qc_pass',qc_finish='$qc_finish',qc_commit='$qc_commit',alter_custphone_override='$alter_custphone_override',active='$active',agent_shift_enforcement_override='$agent_shift_enforcement_override',email='$email',territory='$territory',allow_alerts='$allow_alerts',agent_choose_territories='$agent_choose_territories',custom_one='$custom_one',custom_two='$custom_two',custom_three='$custom_three',custom_four='$custom_four',custom_five='$custom_five',voicemail_id='$voicemail_id',agent_call_log_view_override='$agent_call_log_view_override',agent_choose_blended='$agent_choose_blended',agent_lead_search_override='$agent_lead_search',preset_contact_search='$preset_contact_search',max_inbound_calls='$max_inbound_calls',wrapup_seconds_override='$wrapup_seconds_override',lead_filter_id='$lead_filter_id',user_hide_realtime='$user_hide_realtime',user_nickname='$user_nickname',user_new_lead_limit='$user_new_lead_limit',ready_max_logout='$ready_max_logout',failed_login_count=0,max_hopper_calls='$max_hopper_calls',max_hopper_calls_hour='$max_hopper_calls_hour',hide_call_log_info='$hide_call_log_info_users',next_dial_my_callbacks='$next_dial_my_callbacks',max_inbound_filter_enabled='$max_inbound_filter_enabled',max_inbound_filter_statuses='$max_inbound_filter_statuses',max_inbound_filter_ingroups='$max_inbound_filter_ingroups',max_inbound_filter_min_sec='$max_inbound_filter_min_sec',status_group_id='$status_group_id',mobile_number='$mobile_number',user_location='$user_location',user_group_two='$user_group_two',hci_enabled='$hci_enabled' $user_codeSQL $pass_hashSQL where user='$user' $LOGadmin_viewable_groupsSQL;";
 			$rslt=mysql_to_mysqli($stmt, $link);
 
 			### BEGIN check for raising of max_inbound_calls setting, and execute re-enebling of agent selected in-groups if true
@@ -17463,7 +18982,7 @@ if ($ADD==41)
 			$dial_method =					'RATIO';
 			$dial_status =					'';
 			$dial_timeout =					'60';
-			$drop_action =					'HANGUP';
+			$drop_action_campaigns =		'HANGUP';
 			$drop_call_seconds =			'5';
 			$drop_inbound_group =			'---NONE---';
 			$force_reset_hopper =			'N';
@@ -17576,7 +19095,7 @@ if ($ADD==41)
 					if (strlen($campaign_cid_override) > 6) {$CCID = "$campaign_cid_override";   $CCID_on++;}
 					if (preg_match("/x/",$dial_prefix)) {$Local_out_prefix = '';}
 					if (strlen($ext_context) < 1) {$ext_context='default';}
-					if (preg_match('/Y/i', $omit_phone_code)) {$Ndialstring = "$Local_out_prefix$phone_number";}
+					if ($omit_phone_code=="Y") {$Ndialstring = "$Local_out_prefix$phone_number";}
 					else {$Ndialstring = "$Local_out_prefix$phone_code$phone_number";}
 
 					# generate callerID for unique identifier in xfer_log file
@@ -17627,6 +19146,7 @@ if ($ADD==41)
 					}
 				}
 
+			$LIST_ACTIVATE='';
 			if (preg_match('/list_activation/',$stage))
 				{
 				$p=0;
@@ -17826,12 +19346,12 @@ if ($ADD==41)
 						$hdrtSQL = ",hopper_drop_run_trigger='A'";
 						$hdrtMESSAGE='Hopper All-Drops-Run Triggered';
 						}
-					if ($demographic_quotas == 'ENABLED') {$use_auto_hopper='N';}
+					if ($demographic_quotas_campaigns == 'ENABLED') {$use_auto_hopper='N';}
 					$prefixSQL='';
 					if ($LOGmodify_dial_prefix > 0)
 						{$prefixSQL = ",dial_prefix='$dial_prefix',manual_dial_prefix='$manual_dial_prefix',three_way_dial_prefix='$three_way_dial_prefix'";}
 
-					$stmtA="UPDATE vicidial_campaigns set campaign_name='$campaign_name',active='$active',dial_status_a='$dial_status_a',dial_status_b='$dial_status_b',dial_status_c='$dial_status_c',dial_status_d='$dial_status_d',dial_status_e='$dial_status_e',lead_order='$lead_order',allow_closers='$allow_closers',hopper_level='$hopper_level', auto_trim_hopper='$auto_trim_hopper', use_auto_hopper='$use_auto_hopper', auto_hopper_multi='$auto_hopper_multi', $adlSQL next_agent_call='$next_agent_call', local_call_time='$local_call_time', voicemail_ext='$voicemail_ext', dial_timeout='$dial_timeout', campaign_cid='$campaign_cid', campaign_vdad_exten='$campaign_vdad_exten', web_form_address='" . mysqli_real_escape_string($link, $web_form_address) . "', park_ext='$park_ext', park_file_name='$park_file_name', campaign_rec_exten='$campaign_rec_exten', campaign_recording='$campaign_recording', campaign_rec_filename='$campaign_rec_filename', campaign_script='$script_id', get_call_launch='$get_call_launch', am_message_exten='$am_message_exten', amd_send_to_vmx='$amd_send_to_vmx', xferconf_a_dtmf='$xferconf_a_dtmf',xferconf_a_number='$xferconf_a_number',xferconf_b_dtmf='$xferconf_b_dtmf',xferconf_b_number='$xferconf_b_number',lead_filter_id='$lead_filter_id',alt_number_dialing='$alt_number_dialing',scheduled_callbacks='$scheduled_callbacks',drop_action='$drop_action',drop_call_seconds='$drop_call_seconds',safe_harbor_exten='$safe_harbor_exten',wrapup_seconds='$wrapup_seconds',wrapup_message='$wrapup_message',closer_campaigns=$closer_campaignsSQL,use_internal_dnc='$use_internal_dnc',allcalls_delay='$allcalls_delay',omit_phone_code='$omit_phone_code',dial_method='$dial_method',available_only_ratio_tally='$available_only_ratio_tally',adaptive_dropped_percentage='$adaptive_dropped_percentage',adaptive_maximum_level='$adaptive_maximum_level',adaptive_latest_server_time='$adaptive_latest_server_time',adaptive_intensity='$adaptive_intensity',adaptive_dl_diff_target='$adaptive_dl_diff_target',concurrent_transfers='$concurrent_transfers',auto_alt_dial='$auto_alt_dial',agent_pause_codes_active='$agent_pause_codes_active',campaign_description='$campaign_description',campaign_changedate='$SQLdate',campaign_stats_refresh='$campaign_stats_refresh',disable_alter_custdata='$disable_alter_custdata',no_hopper_leads_logins='$no_hopper_leads_logins',list_order_mix='$list_order_mix',campaign_allow_inbound='$campaign_allow_inbound',manual_dial_list_id='$manual_dial_list_id',default_xfer_group='$default_xfer_group',xfer_groups='$XFERgroups_value',queue_priority='$queue_priority',drop_inbound_group='$drop_inbound_group',disable_alter_custphone='$disable_alter_custphone',display_queue_count='$display_queue_count',manual_dial_filter='$manual_dial_filter',agent_clipboard_copy='$agent_clipboard_copy',agent_extended_alt_dial='$agent_extended_alt_dial',use_campaign_dnc='$use_campaign_dnc',three_way_call_cid='$three_way_call_cid',web_form_target='$web_form_target',vtiger_search_category='$vtiger_search_category',vtiger_create_call_record='$vtiger_create_call_record',vtiger_create_lead_record='$vtiger_create_lead_record',vtiger_screen_login='$vtiger_screen_login',cpd_amd_action='$cpd_amd_action',agent_allow_group_alias='$agent_allow_group_alias',default_group_alias='$default_group_alias',vtiger_search_dead='$vtiger_search_dead',vtiger_status_call='$vtiger_status_call',drop_lockout_time='$drop_lockout_time',quick_transfer_button='$quick_transfer_button',prepopulate_transfer_preset='$prepopulate_transfer_preset',drop_rate_group='$drop_rate_group',view_calls_in_queue='$view_calls_in_queue',view_calls_in_queue_launch='$view_calls_in_queue_launch',grab_calls_in_queue='$grab_calls_in_queue',call_requeue_button='$call_requeue_button',pause_after_each_call='$pause_after_each_call',no_hopper_dialing='$no_hopper_dialing',agent_dial_owner_only='$agent_dial_owner_only',agent_display_dialable_leads='$agent_display_dialable_leads',web_form_address_two='" . mysqli_real_escape_string($link, $web_form_address_two) . "',waitforsilence_options='$waitforsilence_options',agent_select_territories='$agent_select_territories',crm_popup_login='$crm_popup_login',crm_login_address='" . mysqli_real_escape_string($link, $crm_login_address) . "',timer_action='$timer_action',timer_action_message='$timer_action_message',timer_action_seconds='$timer_action_seconds',start_call_url='" . mysqli_real_escape_string($link, $start_call_url) . "',dispo_call_url='" . mysqli_real_escape_string($link, $dispo_call_url) . "',xferconf_c_number='$xferconf_c_number',xferconf_d_number='$xferconf_d_number',xferconf_e_number='$xferconf_e_number',use_custom_cid='$use_custom_cid',scheduled_callbacks_alert='$scheduled_callbacks_alert',queuemetrics_callstatus_override='$queuemetrics_callstatus',extension_appended_cidname='$extension_appended_cidname',scheduled_callbacks_count='$scheduled_callbacks_count',manual_dial_override='$manual_dial_override',blind_monitor_warning='$blind_monitor_warning',blind_monitor_message='" . mysqli_real_escape_string($link, $blind_monitor_message) . "',blind_monitor_filename='$blind_monitor_filename',inbound_queue_no_dial='$inbound_queue_no_dial',timer_action_destination='$timer_action_destination',enable_xfer_presets='$enable_xfer_presets',hide_xfer_number_to_dial='$hide_xfer_number_to_dial',customer_3way_hangup_logging='$customer_3way_hangup_logging',customer_3way_hangup_seconds='$customer_3way_hangup_seconds',customer_3way_hangup_action='$customer_3way_hangup_action',ivr_park_call='$ivr_park_call',ivr_park_call_agi='$ivr_park_call_agi',manual_preview_dial='$manual_preview_dial',realtime_agent_time_stats='$realtime_agent_time_stats',api_manual_dial='$api_manual_dial',manual_dial_call_time_check='$manual_dial_call_time_check',lead_order_randomize='$lead_order_randomize',lead_order_secondary='$lead_order_secondary',per_call_notes='$per_call_notes',my_callback_option='$my_callback_option',agent_lead_search='$agent_lead_search',agent_lead_search_method='$agent_lead_search_method',queuemetrics_phone_environment='$queuemetrics_phone_environment',auto_pause_precall='$auto_pause_precall',auto_resume_precall='$auto_resume_precall',auto_pause_precall_code='$auto_pause_precall_code',manual_dial_cid='$manual_dial_cid',post_phone_time_diff_alert='$post_phone_time_diff_alert',custom_3way_button_transfer='$custom_3way_button_transfer',available_only_tally_threshold='$available_only_tally_threshold',available_only_tally_threshold_agents='$available_only_tally_threshold_agents',dial_level_threshold='$dial_level_threshold',dial_level_threshold_agents='$dial_level_threshold_agents',safe_harbor_audio='$safe_harbor_audio',safe_harbor_menu_id='$safe_harbor_menu_id',callback_days_limit='$callback_days_limit',dl_diff_target_method='$dl_diff_target_method',disable_dispo_screen='$disable_dispo_screen',disable_dispo_status='$disable_dispo_status',screen_labels='$screen_labels',status_display_fields='$status_display_fields',na_call_url='" . mysqli_real_escape_string($link, $na_call_url) . "',pllb_grouping='$pllb_grouping',pllb_grouping_limit='$pllb_grouping_limit',call_count_limit='$call_count_limit',call_count_target='$call_count_target',callback_hours_block='$callback_hours_block',callback_list_calltime='$callback_list_calltime',user_group='$user_group',hopper_vlc_dup_check='$hopper_vlc_dup_check',in_group_dial='$in_group_dial',in_group_dial_select='$in_group_dial_select',safe_harbor_audio_field='$safe_harbor_audio_field',pause_after_next_call='$pause_after_next_call',owner_populate='$owner_populate',use_other_campaign_dnc='$use_other_campaign_dnc',allow_emails='$allow_emails',allow_chats='$allow_chats',amd_inbound_group='$amd_inbound_group',amd_callmenu='$amd_callmenu',manual_dial_lead_id='$manual_dial_lead_id',dead_max='$dead_max',dispo_max='$dispo_max',pause_max='$pause_max',dead_max_dispo='$dead_max_dispo',dispo_max_dispo='$dispo_max_dispo',max_inbound_calls='$max_inbound_calls',manual_dial_search_checkbox='$manual_dial_search_checkbox',hide_call_log_info='$hide_call_log_info',timer_alt_seconds='$timer_alt_seconds',wrapup_bypass='$wrapup_bypass',wrapup_after_hotkey='$wrapup_after_hotkey',callback_active_limit='$callback_active_limit',callback_active_limit_override='$callback_active_limit_override',comments_all_tabs='$comments_all_tabs',comments_dispo_screen='$comments_dispo_screen',comments_callback_screen='$comments_callback_screen',qc_comment_history='$qc_comment_history',show_previous_callback='$show_previous_callback',clear_script='$clear_script',cpd_unknown_action='$cpd_unknown_action',manual_dial_search_filter='$manual_dial_search_filter',web_form_address_three='" . mysqli_real_escape_string($link, $web_form_address_three) . "',manual_dial_override_field='$manual_dial_override_field',status_display_ingroup='$status_display_ingroup',customer_gone_seconds='$customer_gone_seconds',agent_display_fields='$agent_display_fields',am_message_wildcards='$am_message_wildcards',manual_dial_timeout='$manual_dial_timeout',routing_initiated_recordings='$routing_initiated_recordings',manual_dial_hopper_check='$manual_dial_hopper_check',callback_useronly_move_minutes='$callback_useronly_move_minutes',ofcom_uk_drop_calc='$ofcom_uk_drop_calc',manual_auto_next='$manual_auto_next',manual_auto_show='$manual_auto_show',allow_required_fields='$allow_required_fields',dead_to_dispo='$dead_to_dispo',agent_xfer_validation='$agent_xfer_validation',ready_max_logout='$ready_max_logout',callback_display_days='$callback_display_days',three_way_record_stop='$three_way_record_stop',hangup_xfer_record_start='$hangup_xfer_record_start',scheduled_callbacks_email_alert='$scheduled_callbacks_email_alert',max_inbound_calls_outcome='$max_inbound_calls_outcome',manual_auto_next_options='$manual_auto_next_options',agent_screen_time_display='$agent_screen_time_display',next_dial_my_callbacks='$next_dial_my_callbacks',inbound_no_agents_no_dial_container='$inbound_no_agents_no_dial_container',inbound_no_agents_no_dial_threshold='$inbound_no_agents_no_dial_threshold',cid_group_id='$cid_group_id',pause_max_dispo='$pause_max_dispo',script_top_dispo='$script_top_dispo',dead_trigger_seconds='$dead_trigger_seconds',dead_trigger_action='$dead_trigger_action',dead_trigger_repeat='$dead_trigger_repeat',dead_trigger_filename='$dead_trigger_filename',dead_trigger_url='" . mysqli_real_escape_string($link, $dead_trigger_url) . "',scheduled_callbacks_force_dial='$scheduled_callbacks_force_dial',scheduled_callbacks_auto_reschedule='$scheduled_callbacks_auto_reschedule',scheduled_callbacks_timezones_container='$scheduled_callbacks_timezones_container',three_way_volume_buttons='$three_way_volume_buttons',callback_dnc='$callback_dnc',manual_dial_validation='$manual_dial_validation',mute_recordings='$mute_recordings',auto_active_list_new='$auto_active_list_new',call_quota_lead_ranking='$call_quota_lead_ranking',sip_event_logging='$sip_event_logging',campaign_script_two='$campaign_script_two',leave_vm_no_dispo='$leave_vm_no_dispo',leave_vm_message_group_id='$leave_vm_message_group_id',dial_timeout_lead_container='$dial_timeout_lead_container',amd_type='$amd_type',vmm_daily_limit='$vmm_daily_limit',opensips_cid_name='$opensips_cid_name',amd_agent_route_options='$amd_agent_route_options',browser_alert_sound='$browser_alert_sound',browser_alert_volume='$browser_alert_volume',three_way_record_stop_exception='$three_way_record_stop_exception',pause_max_exceptions='$pause_max_exceptions',daily_call_count_limit='$daily_call_count_limit',daily_limit_manual='$daily_limit_manual',transfer_button_launch='$transfer_button_launch',shared_dial_rank='$shared_dial_rank',agent_search_method='$agent_search_method',clear_form='$clear_form',leave_3way_start_recording='$leave_3way_start_recording',leave_3way_start_recording_exception='$leave_3way_start_recording_exception',calls_waiting_vl_one='$calls_waiting_vl_one',calls_waiting_vl_two='$calls_waiting_vl_two',calls_inqueue_count_one='$calls_inqueue_count_one',calls_inqueue_count_two='$calls_inqueue_count_two',in_man_dial_next_ready_seconds='$in_man_dial_next_ready_seconds',in_man_dial_next_ready_seconds_override='$in_man_dial_next_ready_seconds_override',transfer_no_dispo='$transfer_no_dispo',call_limit_24hour_method='$call_limit_24hour_method',call_limit_24hour_scope='$call_limit_24hour_scope',call_limit_24hour='$call_limit_24hour',call_limit_24hour_override='$call_limit_24hour_override',cid_group_id_two='$cid_group_id_two',incall_tally_threshold_seconds='$incall_tally_threshold_seconds',auto_alt_threshold='$auto_alt_threshold',pause_max_url='$pause_max_url',agent_hide_hangup='$agent_hide_hangup',ig_xfer_list_sort='$ig_xfer_list_sort',script_tab_frame_size='$script_tab_frame_size',max_logged_in_agents='$max_logged_in_agents',user_group_script='$user_group_script',agent_hangup_route='$agent_hangup_route',agent_hangup_value='$agent_hangup_value',agent_hangup_ig_override='$agent_hangup_ig_override',show_confetti='$show_confetti',demographic_quotas='$demographic_quotas',demographic_quotas_container='$demographic_quotas_container',demographic_quotas_rerank='$demographic_quotas_rerank',demographic_quotas_list_resets='$demographic_quotas_list_resets',custom_one='$custom_one',custom_two='$custom_two',custom_three='$custom_three',custom_four='$custom_four',custom_five='$custom_five',dead_stop_recording='$dead_stop_recording',manual_vm_status_updates='$manual_vm_status_updates',force_per_call_notes='$force_per_call_notes',agent_search_ingroup_list='$agent_search_ingroup_list',hopper_hold_inserts='$hopper_hold_inserts',daily_phone_number_call_limit='$daily_phone_number_call_limit',state_descriptions='$state_descriptions',script_tab_height='$script_tab_height',call_log_days='$call_log_days',leave_3way_stop_recording='$leave_3way_stop_recording',manual_minimum_ring_seconds='$manual_minimum_ring_seconds',manual_minimum_attempt_seconds='$manual_minimum_attempt_seconds',manual_minimum_answer_seconds='$manual_minimum_answer_seconds',khomp_settings_container='$khomp_settings_container',stereo_recording='$stereo_recording',stereo_rec_filename='$stereo_rec_filename',stereo_parallel_recording='$stereo_parallel_recording',recording_dtmf_muting='$recording_dtmf_muting',stereo_recording_agent='$stereo_recording_agent',parallel_rec_co_filename='$parallel_rec_co_filename',parallel_rec_cm_filename='$parallel_rec_cm_filename',parallel_rec_fr_filename='$parallel_rec_fr_filename',call_count_limit_restrict='$call_count_limit_restrict',adaptive_percentmax_percentage='$adaptive_percentmax_percentage',hangup_again_link='$hangup_again_link',amd_agent_display='$amd_agent_display',amd_status_map='$amd_status_map' $prefixSQL $hdrtSQL where campaign_id='$campaign_id';";
+					$stmtA="UPDATE vicidial_campaigns set campaign_name='$campaign_name',active='$active',dial_status_a='$dial_status_a',dial_status_b='$dial_status_b',dial_status_c='$dial_status_c',dial_status_d='$dial_status_d',dial_status_e='$dial_status_e',lead_order='$lead_order',allow_closers='$allow_closers',hopper_level='$hopper_level', auto_trim_hopper='$auto_trim_hopper', use_auto_hopper='$use_auto_hopper', auto_hopper_multi='$auto_hopper_multi', $adlSQL next_agent_call='$next_agent_call', local_call_time='$local_call_time', voicemail_ext='$voicemail_ext', dial_timeout='$dial_timeout', campaign_cid='$campaign_cid', campaign_vdad_exten='$campaign_vdad_exten', web_form_address='" . mysqli_real_escape_string($link, $web_form_address) . "', park_ext='$park_ext', park_file_name='$park_file_name', campaign_rec_exten='$campaign_rec_exten', campaign_recording='$campaign_recording', campaign_rec_filename='$campaign_rec_filename', campaign_script='$script_id', get_call_launch='$get_call_launch', am_message_exten='$am_message_exten', amd_send_to_vmx='$amd_send_to_vmx', xferconf_a_dtmf='$xferconf_a_dtmf',xferconf_a_number='$xferconf_a_number',xferconf_b_dtmf='$xferconf_b_dtmf',xferconf_b_number='$xferconf_b_number',lead_filter_id='$lead_filter_id',alt_number_dialing='$alt_number_dialing',scheduled_callbacks='$scheduled_callbacks',drop_action='$drop_action_campaigns',drop_call_seconds='$drop_call_seconds',safe_harbor_exten='$safe_harbor_exten',wrapup_seconds='$wrapup_seconds',wrapup_message='$wrapup_message',closer_campaigns=$closer_campaignsSQL,use_internal_dnc='$use_internal_dnc',allcalls_delay='$allcalls_delay',omit_phone_code='$omit_phone_code',dial_method='$dial_method',available_only_ratio_tally='$available_only_ratio_tally',adaptive_dropped_percentage='$adaptive_dropped_percentage',adaptive_maximum_level='$adaptive_maximum_level',adaptive_latest_server_time='$adaptive_latest_server_time',adaptive_intensity='$adaptive_intensity',adaptive_dl_diff_target='$adaptive_dl_diff_target',concurrent_transfers='$concurrent_transfers',auto_alt_dial='$auto_alt_dial',agent_pause_codes_active='$agent_pause_codes_active',campaign_description='$campaign_description',campaign_changedate='$SQLdate',campaign_stats_refresh='$campaign_stats_refresh',disable_alter_custdata='$disable_alter_custdata',no_hopper_leads_logins='$no_hopper_leads_logins',list_order_mix='$list_order_mix',campaign_allow_inbound='$campaign_allow_inbound',manual_dial_list_id='$manual_dial_list_id',default_xfer_group='$default_xfer_group',xfer_groups='$XFERgroups_value',queue_priority='$queue_priority',drop_inbound_group='$drop_inbound_group',disable_alter_custphone='$disable_alter_custphone',display_queue_count='$display_queue_count',manual_dial_filter='$manual_dial_filter',agent_clipboard_copy='$agent_clipboard_copy',agent_extended_alt_dial='$agent_extended_alt_dial',use_campaign_dnc='$use_campaign_dnc',three_way_call_cid='$three_way_call_cid',web_form_target='$web_form_target',vtiger_search_category='$vtiger_search_category',vtiger_create_call_record='$vtiger_create_call_record',vtiger_create_lead_record='$vtiger_create_lead_record',vtiger_screen_login='$vtiger_screen_login',cpd_amd_action='$cpd_amd_action',agent_allow_group_alias='$agent_allow_group_alias',default_group_alias='$default_group_alias',vtiger_search_dead='$vtiger_search_dead',vtiger_status_call='$vtiger_status_call',drop_lockout_time='$drop_lockout_time',quick_transfer_button='$quick_transfer_button',prepopulate_transfer_preset='$prepopulate_transfer_preset',drop_rate_group='$drop_rate_group',view_calls_in_queue='$view_calls_in_queue',view_calls_in_queue_launch='$view_calls_in_queue_launch',grab_calls_in_queue='$grab_calls_in_queue',call_requeue_button='$call_requeue_button',pause_after_each_call='$pause_after_each_call',no_hopper_dialing='$no_hopper_dialing',agent_dial_owner_only='$agent_dial_owner_only',agent_display_dialable_leads='$agent_display_dialable_leads',web_form_address_two='" . mysqli_real_escape_string($link, $web_form_address_two) . "',waitforsilence_options='$waitforsilence_options',agent_select_territories='$agent_select_territories',crm_popup_login='$crm_popup_login',crm_login_address='" . mysqli_real_escape_string($link, $crm_login_address) . "',timer_action='$timer_action',timer_action_message='$timer_action_message',timer_action_seconds='$timer_action_seconds',start_call_url='" . mysqli_real_escape_string($link, $start_call_url) . "',dispo_call_url='" . mysqli_real_escape_string($link, $dispo_call_url) . "',xferconf_c_number='$xferconf_c_number',xferconf_d_number='$xferconf_d_number',xferconf_e_number='$xferconf_e_number',use_custom_cid='$use_custom_cid',scheduled_callbacks_alert='$scheduled_callbacks_alert',queuemetrics_callstatus_override='$queuemetrics_callstatus',extension_appended_cidname='$extension_appended_cidname',scheduled_callbacks_count='$scheduled_callbacks_count',manual_dial_override='$manual_dial_override',blind_monitor_warning='$blind_monitor_warning',blind_monitor_message='" . mysqli_real_escape_string($link, $blind_monitor_message) . "',blind_monitor_filename='$blind_monitor_filename',inbound_queue_no_dial='$inbound_queue_no_dial',timer_action_destination='$timer_action_destination',enable_xfer_presets='$enable_xfer_presets',hide_xfer_number_to_dial='$hide_xfer_number_to_dial',customer_3way_hangup_logging='$customer_3way_hangup_logging',customer_3way_hangup_seconds='$customer_3way_hangup_seconds',customer_3way_hangup_action='$customer_3way_hangup_action',ivr_park_call='$ivr_park_call',ivr_park_call_agi='$ivr_park_call_agi',manual_preview_dial='$manual_preview_dial',realtime_agent_time_stats='$realtime_agent_time_stats',api_manual_dial='$api_manual_dial',manual_dial_call_time_check='$manual_dial_call_time_check',lead_order_randomize='$lead_order_randomize',lead_order_secondary='$lead_order_secondary',per_call_notes='$per_call_notes',my_callback_option='$my_callback_option',agent_lead_search='$agent_lead_search',agent_lead_search_method='$agent_lead_search_method',queuemetrics_phone_environment='$queuemetrics_phone_environment',auto_pause_precall='$auto_pause_precall',auto_resume_precall='$auto_resume_precall',auto_pause_precall_code='$auto_pause_precall_code',manual_dial_cid='$manual_dial_cid',post_phone_time_diff_alert='$post_phone_time_diff_alert',custom_3way_button_transfer='$custom_3way_button_transfer',available_only_tally_threshold='$available_only_tally_threshold',available_only_tally_threshold_agents='$available_only_tally_threshold_agents',dial_level_threshold='$dial_level_threshold',dial_level_threshold_agents='$dial_level_threshold_agents',safe_harbor_audio='$safe_harbor_audio',safe_harbor_menu_id='$safe_harbor_menu_id',callback_days_limit='$callback_days_limit',dl_diff_target_method='$dl_diff_target_method',disable_dispo_screen='$disable_dispo_screen',disable_dispo_status='$disable_dispo_status',screen_labels='$screen_labels',status_display_fields='$status_display_fields',na_call_url='" . mysqli_real_escape_string($link, $na_call_url) . "',pllb_grouping='$pllb_grouping',pllb_grouping_limit='$pllb_grouping_limit',call_count_limit='$call_count_limit',call_count_target='$call_count_target',callback_hours_block='$callback_hours_block',callback_list_calltime='$callback_list_calltime',user_group='$user_group',hopper_vlc_dup_check='$hopper_vlc_dup_check',in_group_dial='$in_group_dial',in_group_dial_select='$in_group_dial_select',safe_harbor_audio_field='$safe_harbor_audio_field',pause_after_next_call='$pause_after_next_call',owner_populate='$owner_populate',use_other_campaign_dnc='$use_other_campaign_dnc',allow_emails='$allow_emails',allow_chats='$allow_chats',amd_inbound_group='$amd_inbound_group',amd_callmenu='$amd_callmenu',manual_dial_lead_id='$manual_dial_lead_id',dead_max='$dead_max',dispo_max='$dispo_max',pause_max='$pause_max',dead_max_dispo='$dead_max_dispo',dispo_max_dispo='$dispo_max_dispo',max_inbound_calls='$max_inbound_calls',manual_dial_search_checkbox='$manual_dial_search_checkbox',hide_call_log_info='$hide_call_log_info',timer_alt_seconds='$timer_alt_seconds',wrapup_bypass='$wrapup_bypass',wrapup_after_hotkey='$wrapup_after_hotkey',callback_active_limit='$callback_active_limit',callback_active_limit_override='$callback_active_limit_override',comments_all_tabs='$comments_all_tabs',comments_dispo_screen='$comments_dispo_screen',comments_callback_screen='$comments_callback_screen',qc_comment_history='$qc_comment_history',show_previous_callback='$show_previous_callback',clear_script='$clear_script',cpd_unknown_action='$cpd_unknown_action',manual_dial_search_filter='$manual_dial_search_filter',web_form_address_three='" . mysqli_real_escape_string($link, $web_form_address_three) . "',manual_dial_override_field='$manual_dial_override_field',status_display_ingroup='$status_display_ingroup',customer_gone_seconds='$customer_gone_seconds',agent_display_fields='$agent_display_fields',am_message_wildcards='$am_message_wildcards',manual_dial_timeout='$manual_dial_timeout',routing_initiated_recordings='$routing_initiated_recordings',manual_dial_hopper_check='$manual_dial_hopper_check',callback_useronly_move_minutes='$callback_useronly_move_minutes',ofcom_uk_drop_calc='$ofcom_uk_drop_calc',manual_auto_next='$manual_auto_next',manual_auto_show='$manual_auto_show',allow_required_fields='$allow_required_fields',dead_to_dispo='$dead_to_dispo',agent_xfer_validation='$agent_xfer_validation',ready_max_logout='$ready_max_logout',callback_display_days='$callback_display_days',three_way_record_stop='$three_way_record_stop',hangup_xfer_record_start='$hangup_xfer_record_start',scheduled_callbacks_email_alert='$scheduled_callbacks_email_alert',max_inbound_calls_outcome='$max_inbound_calls_outcome',manual_auto_next_options='$manual_auto_next_options',agent_screen_time_display='$agent_screen_time_display',next_dial_my_callbacks='$next_dial_my_callbacks',inbound_no_agents_no_dial_container='$inbound_no_agents_no_dial_container',inbound_no_agents_no_dial_threshold='$inbound_no_agents_no_dial_threshold',cid_group_id='$cid_group_id',pause_max_dispo='$pause_max_dispo',script_top_dispo='$script_top_dispo',dead_trigger_seconds='$dead_trigger_seconds',dead_trigger_action='$dead_trigger_action',dead_trigger_repeat='$dead_trigger_repeat',dead_trigger_filename='$dead_trigger_filename',dead_trigger_url='" . mysqli_real_escape_string($link, $dead_trigger_url) . "',scheduled_callbacks_force_dial='$scheduled_callbacks_force_dial',scheduled_callbacks_auto_reschedule='$scheduled_callbacks_auto_reschedule',scheduled_callbacks_timezones_container='$scheduled_callbacks_timezones_container',three_way_volume_buttons='$three_way_volume_buttons',callback_dnc='$callback_dnc',manual_dial_validation='$manual_dial_validation',mute_recordings='$mute_recordings_campaigns',auto_active_list_new='$auto_active_list_new',call_quota_lead_ranking='$call_quota_lead_ranking_campaigns',sip_event_logging='$sip_event_logging_campaigns',campaign_script_two='$campaign_script_two',leave_vm_no_dispo='$leave_vm_no_dispo',leave_vm_message_group_id='$leave_vm_message_group_id',dial_timeout_lead_container='$dial_timeout_lead_container',amd_type='$amd_type',vmm_daily_limit='$vmm_daily_limit',opensips_cid_name='$opensips_cid_name_campaigns',amd_agent_route_options='$amd_agent_route_options',browser_alert_sound='$browser_alert_sound_campaigns',browser_alert_volume='$browser_alert_volume',three_way_record_stop_exception='$three_way_record_stop_exception',pause_max_exceptions='$pause_max_exceptions',daily_call_count_limit='$daily_call_count_limit',daily_limit_manual='$daily_limit_manual',transfer_button_launch='$transfer_button_launch',shared_dial_rank='$shared_dial_rank',agent_search_method='$agent_search_method',clear_form='$clear_form',leave_3way_start_recording='$leave_3way_start_recording',leave_3way_start_recording_exception='$leave_3way_start_recording_exception',calls_waiting_vl_one='$calls_waiting_vl_one',calls_waiting_vl_two='$calls_waiting_vl_two',calls_inqueue_count_one='$calls_inqueue_count_one',calls_inqueue_count_two='$calls_inqueue_count_two',in_man_dial_next_ready_seconds='$in_man_dial_next_ready_seconds',in_man_dial_next_ready_seconds_override='$in_man_dial_next_ready_seconds_override',transfer_no_dispo='$transfer_no_dispo',call_limit_24hour_method='$call_limit_24hour_method',call_limit_24hour_scope='$call_limit_24hour_scope',call_limit_24hour='$call_limit_24hour',call_limit_24hour_override='$call_limit_24hour_override',cid_group_id_two='$cid_group_id_two',incall_tally_threshold_seconds='$incall_tally_threshold_seconds',auto_alt_threshold='$auto_alt_threshold',pause_max_url='$pause_max_url',agent_hide_hangup='$agent_hide_hangup',ig_xfer_list_sort='$ig_xfer_list_sort',script_tab_frame_size='$script_tab_frame_size',max_logged_in_agents='$max_logged_in_agents',user_group_script='$user_group_script',agent_hangup_route='$agent_hangup_route',agent_hangup_value='$agent_hangup_value',agent_hangup_ig_override='$agent_hangup_ig_override',show_confetti='$show_confetti',demographic_quotas='$demographic_quotas_campaigns',demographic_quotas_container='$demographic_quotas_container',demographic_quotas_rerank='$demographic_quotas_rerank',demographic_quotas_list_resets='$demographic_quotas_list_resets',custom_one='$custom_one',custom_two='$custom_two',custom_three='$custom_three',custom_four='$custom_four',custom_five='$custom_five',dead_stop_recording='$dead_stop_recording',manual_vm_status_updates='$manual_vm_status_updates',force_per_call_notes='$force_per_call_notes',agent_search_ingroup_list='$agent_search_ingroup_list',hopper_hold_inserts='$hopper_hold_inserts',daily_phone_number_call_limit='$daily_phone_number_call_limit',state_descriptions='$state_descriptions',script_tab_height='$script_tab_height',call_log_days='$call_log_days',leave_3way_stop_recording='$leave_3way_stop_recording',manual_minimum_ring_seconds='$manual_minimum_ring_seconds',manual_minimum_attempt_seconds='$manual_minimum_attempt_seconds',manual_minimum_answer_seconds='$manual_minimum_answer_seconds',khomp_settings_container='$khomp_settings_container',stereo_recording='$stereo_recording',stereo_rec_filename='$stereo_rec_filename',stereo_parallel_recording='$stereo_parallel_recording',recording_dtmf_muting='$recording_dtmf_muting',stereo_recording_agent='$stereo_recording_agent',parallel_rec_co_filename='$parallel_rec_co_filename',parallel_rec_cm_filename='$parallel_rec_cm_filename',parallel_rec_fr_filename='$parallel_rec_fr_filename',call_count_limit_restrict='$call_count_limit_restrict',adaptive_percentmax_percentage='$adaptive_percentmax_percentage',hangup_again_link='$hangup_again_link',amd_agent_display='$amd_agent_display',amd_status_map='$amd_status_map' $prefixSQL $hdrtSQL where campaign_id='$campaign_id';";
 					if ($DB) {echo "|$stmtA|\n";}
 					$rslt=mysql_to_mysqli($stmtA, $link);
 
@@ -18149,7 +19669,7 @@ if ($ADD==44)
 			$dial_method =					'RATIO';
 			$dial_status =					'';
 			$dial_timeout =					'60';
-			$drop_action =					'HANGUP';
+			$drop_action_campaigns =		'HANGUP';
 			$drop_call_seconds =			'5';
 			$drop_inbound_group =			'---NONE---';
 			$force_reset_hopper =			'N';
@@ -18378,6 +19898,8 @@ if ($ADD==48)
 		else
 			{
 			$p=0;
+			$QC_statuses="";
+			$QC_lists="";
 			if (!is_array($qc_statuses)) $qc_statuses = array();
 			$qc_statuses_ct = count($qc_statuses);
 			while ($p < $qc_statuses_ct)
@@ -18587,6 +20109,7 @@ if ($ADD==49)
 					$MIXpercentPCT = $MIXdetailsPCT[2];
 
 					$q=0;
+					$NEWlist_mix_container='';
 					while ($Ms_to_print > $q) 
 						{
 						if ( ($mix_container_item > $q) or ($mix_container_item < $q) )
@@ -18812,8 +20335,9 @@ if ($ADD==411)
 			{
 			$p=0;
 			echo "<BR>"._QXZ("TERRITORIES RESET");
-			if (!is_array($territory_reset)) $territory_reset = array();
+			if (!isset($territory_reset) || !is_array($territory_reset)) $territory_reset = array();
 			$territory_reset_ct = count($territory_reset);
+			$TERR_RESET="";
 			while ($p < $territory_reset_ct)
 				{
 				$TERR_RESET .= "'$territory_reset[$p]',";
@@ -18976,6 +20500,7 @@ if ($ADD==4111 || $ADD==4811 || $ADD==4911)
 					$ARIUG_user[$o] =	$rowx[0];
 					$ARIUG_close[$o] =	$rowx[1];
 					$ARIUG_check[$o] =	'';
+					$stmtA=''; $stmtB='';
 					if (preg_match("/ $group_id /",$ARIUG_close[$o]))
 						{$ARIUG_check[$o] = 'CHECKED';}
 					if ( ($ARIUG_check[$o]=='') and ($stage=='add') )
@@ -18999,7 +20524,7 @@ if ($ADD==4111 || $ADD==4811 || $ADD==4911)
 					if (strlen($ARIUG_changenotes) > 10)
 						{
 						### LOG INSERTION Admin Log Table ###
-						$SQL_log = "$stmtDlog|$stmtA|$stmtB|";
+						$SQL_log = "$stmtA|$stmtB|";
 						$SQL_log = preg_replace('/;/', '', $SQL_log);
 						$SQL_log = addslashes($SQL_log);
 						$stmt="INSERT INTO vicidial_admin_log set event_date='$SQLdate', user='$PHP_AUTH_USER', ip_address='$ip', event_section='USERS', event_type='MODIFY', record_id='$ARIUG_user[$o]', event_code='$ARIUG_code', event_sql=\"$SQL_log\", event_notes='$ARIUG_changenotes';";
@@ -19041,7 +20566,8 @@ if ($ADD==4111 || $ADD==4811 || $ADD==4911)
 					}
 				else
 					{
-					$p=0;
+					$p=0; 
+					$QC_statuses=""; $QC_lists="";
 					if (!is_array($qc_statuses)) $qc_statuses = array();
 					$qc_statuses_ct = count($qc_statuses);
 					while ($p < $qc_statuses_ct)
@@ -19210,7 +20736,7 @@ if ($ADD==4111 || $ADD==4811 || $ADD==4911)
 
 					echo "<br><B>"._QXZ("GROUP MODIFIED ").": $group_id</B>\n";
 
-					$stmt="UPDATE vicidial_inbound_groups set group_name='$group_name', group_color='$group_color', active='$active', web_form_address='" . mysqli_real_escape_string($link, $web_form_address) . "', voicemail_ext='$voicemail_ext', next_agent_call='$next_agent_call', fronter_display='$fronter_display', ingroup_script='$script_id', get_call_launch='$get_call_launch', group_handling='$group_handling', xferconf_a_dtmf='$xferconf_a_dtmf',xferconf_a_number='$xferconf_a_number', xferconf_b_dtmf='$xferconf_b_dtmf',xferconf_b_number='$xferconf_b_number',drop_action='$drop_action',drop_call_seconds='$drop_call_seconds',drop_exten='$drop_exten',call_time_id='$call_time_id',after_hours_action='$after_hours_action',after_hours_message_filename='$after_hours_message_filename',after_hours_exten='$after_hours_exten',after_hours_voicemail='$after_hours_voicemail',welcome_message_filename='$welcome_message_filename',moh_context='$moh_context',onhold_prompt_filename='$onhold_prompt_filename',prompt_interval='$prompt_interval',agent_alert_exten='$agent_alert_exten',agent_alert_delay='$agent_alert_delay',default_xfer_group='$default_xfer_group',queue_priority='$queue_priority',drop_inbound_group='$drop_inbound_group',ingroup_recording_override='$ingroup_recording_override',ingroup_rec_filename='$ingroup_rec_filename',afterhours_xfer_group='$afterhours_xfer_group',qc_enabled='$qc_enabled',qc_statuses='$QC_statuses',qc_shift_id='$qc_shift_id',qc_get_record_launch='$qc_get_record_launch',qc_show_recording='$qc_show_recording',qc_web_form_address='" . mysqli_real_escape_string($link, $qc_web_form_address) . "',qc_scorecard_id='$qc_scorecard_id',qc_script='$qc_script',play_place_in_line='$play_place_in_line',play_estimate_hold_time='$play_estimate_hold_time',hold_time_option='$hold_time_option',hold_time_option_seconds='$hold_time_option_seconds',hold_time_option_exten='$hold_time_option_exten',hold_time_option_voicemail='$hold_time_option_voicemail',hold_time_option_xfer_group='$hold_time_option_xfer_group',hold_time_option_callback_filename='$hold_time_option_callback_filename',hold_time_option_callback_list_id='$hold_time_option_callback_list_id',hold_recall_xfer_group='$hold_recall_xfer_group',no_delay_call_route='$no_delay_call_route',play_welcome_message='$play_welcome_message',answer_sec_pct_rt_stat_one='$answer_sec_pct_rt_stat_one',answer_sec_pct_rt_stat_two='$answer_sec_pct_rt_stat_two',default_group_alias='$default_group_alias',no_agent_no_queue='$no_agent_no_queue',no_agent_action='$no_agent_action',no_agent_action_value='$no_agent_action_value',web_form_address_two='" . mysqli_real_escape_string($link, $web_form_address_two) . "',timer_action='$timer_action',timer_action_message='$timer_action_message',timer_action_seconds='$timer_action_seconds',start_call_url='" . mysqli_real_escape_string($link, $start_call_url) . "',dispo_call_url='" . mysqli_real_escape_string($link, $dispo_call_url) . "',xferconf_c_number='$xferconf_c_number',xferconf_d_number='$xferconf_d_number',xferconf_e_number='$xferconf_e_number',ignore_list_script_override='$ignore_list_script_override',extension_appended_cidname='$extension_appended_cidname',uniqueid_status_display='$uniqueid_status_display',uniqueid_status_prefix='$uniqueid_status_prefix',hold_time_option_minimum='$hold_time_option_minimum',hold_time_option_press_filename='$hold_time_option_press_filename',hold_time_option_callmenu='$hold_time_option_callmenu',onhold_prompt_no_block='$onhold_prompt_no_block',onhold_prompt_seconds='$onhold_prompt_seconds',hold_time_option_no_block='$hold_time_option_no_block',hold_time_option_prompt_seconds='$hold_time_option_prompt_seconds',hold_time_second_option='$hold_time_second_option',hold_time_third_option='$hold_time_third_option',wait_hold_option_priority='$wait_hold_option_priority',wait_time_option='$wait_time_option',wait_time_second_option='$wait_time_second_option',wait_time_third_option='$wait_time_third_option',wait_time_option_seconds='$wait_time_option_seconds',wait_time_option_exten='$wait_time_option_exten',wait_time_option_voicemail='$wait_time_option_voicemail',wait_time_option_xfer_group='$wait_time_option_xfer_group',wait_time_option_callmenu='$wait_time_option_callmenu',wait_time_option_callback_filename='$wait_time_option_callback_filename',wait_time_option_callback_list_id='$wait_time_option_callback_list_id',wait_time_option_press_filename='$wait_time_option_press_filename',wait_time_option_no_block='$wait_time_option_no_block',wait_time_option_prompt_seconds='$wait_time_option_prompt_seconds',timer_action_destination='$timer_action_destination',calculate_estimated_hold_seconds='$calculate_estimated_hold_seconds',add_lead_url='" . mysqli_real_escape_string($link, $add_lead_url) . "',eht_minimum_prompt_filename='$eht_minimum_prompt_filename',eht_minimum_prompt_no_block='$eht_minimum_prompt_no_block',eht_minimum_prompt_seconds='$eht_minimum_prompt_seconds',on_hook_ring_time='$on_hook_ring_time',na_call_url='" . mysqli_real_escape_string($link, $na_call_url) . "',on_hook_cid='$on_hook_cid',action_xfer_cid='$action_xfer_cid',drop_callmenu='$drop_callmenu',after_hours_callmenu='$after_hours_callmenu',user_group='$user_group',max_calls_method='$max_calls_method',max_calls_count='$max_calls_count',max_calls_action='$max_calls_action',dial_ingroup_cid='$dial_ingroup_cid',web_form_address_three='" . mysqli_real_escape_string($link, $web_form_address_three) . "',populate_lead_ingroup='$populate_lead_ingroup',drop_lead_reset='$drop_lead_reset',after_hours_lead_reset='$after_hours_lead_reset',nanq_lead_reset='$nanq_lead_reset',wait_time_lead_reset='$wait_time_lead_reset',hold_time_lead_reset='$hold_time_lead_reset',status_group_id='$status_group_id',routing_initiated_recordings='$routing_initiated_recordings',on_hook_cid_number='$on_hook_cid_number',customer_chat_screen_colors='$customer_chat_screen_colors',customer_chat_survey_link='" . mysqli_real_escape_string($link, $customer_chat_survey_link) . "',customer_chat_survey_text='$customer_chat_survey_text',populate_lead_province='$populate_lead_province',areacode_filter='$areacode_filter',areacode_filter_seconds='$areacode_filter_seconds',areacode_filter_action='$areacode_filter_action',areacode_filter_action_value='$areacode_filter_action_value',populate_state_areacode='$populate_state_areacode',inbound_survey='$inbound_survey',inbound_survey_filename='$inbound_survey_filename',inbound_survey_accept_digit='$inbound_survey_accept_digit',inbound_survey_question_filename='$inbound_survey_question_filename',inbound_survey_callmenu='$inbound_survey_callmenu',icbq_expiration_hours='$icbq_expiration_hours',closing_time_action='$closing_time_action',closing_time_now_trigger='$closing_time_now_trigger',closing_time_filename='$closing_time_filename',closing_time_end_filename='$closing_time_end_filename',closing_time_lead_reset='$closing_time_lead_reset',closing_time_option_exten='$closing_time_option_exten',closing_time_option_callmenu='$closing_time_option_callmenu',closing_time_option_voicemail='$closing_time_option_voicemail',closing_time_option_xfer_group='$closing_time_option_xfer_group',closing_time_option_callback_list_id='$closing_time_option_callback_list_id',icbq_call_time_id='$icbq_call_time_id',add_lead_timezone='$add_lead_timezone',icbq_dial_filter='$icbq_dial_filter',populate_lead_source='$populate_lead_source',populate_lead_vendor='$populate_lead_vendor',park_file_name='$park_file_name',waiting_call_url_on='" . mysqli_real_escape_string($link, $waiting_call_url_on) . "',waiting_call_url_off='" . mysqli_real_escape_string($link, $waiting_call_url_off) . "',enter_ingroup_url='" . mysqli_real_escape_string($link, $enter_ingroup_url) . "',cid_cb_confirm_number='$cid_cb_confirm_number',cid_cb_invalid_filter_phone_group='$cid_cb_invalid_filter_phone_group',cid_cb_valid_length='$cid_cb_valid_length',cid_cb_valid_filename='$cid_cb_valid_filename',cid_cb_confirmed_filename='$cid_cb_confirmed_filename',cid_cb_enter_filename='$cid_cb_enter_filename',cid_cb_you_entered_filename='$cid_cb_you_entered_filename',cid_cb_press_to_confirm_filename='$cid_cb_press_to_confirm_filename',cid_cb_invalid_filename='$cid_cb_invalid_filename',cid_cb_reenter_filename='$cid_cb_reenter_filename',cid_cb_error_filename='$cid_cb_error_filename',place_in_line_caller_number_filename='$place_in_line_caller_number_filename',place_in_line_you_next_filename='$place_in_line_you_next_filename', ingroup_script_two='$ingroup_script_two',browser_alert_sound='$browser_alert_sound',browser_alert_volume='$browser_alert_volume',answer_signal='$answer_signal',qc_statuses_id='$qc_statuses_id',no_agent_delay='$no_agent_delay',agent_search_method='$agent_search_method',populate_lead_comments='$populate_lead_comments',drop_call_seconds_override='$drop_call_seconds_override',populate_lead_owner='$populate_lead_owner',in_queue_nanque='$in_queue_nanque',in_queue_nanque_exceptions='$in_queue_nanque_exceptions',custom_one='$custom_one',custom_two='$custom_two',custom_three='$custom_three',custom_four='$custom_four',custom_five='$custom_five',second_alert_trigger='$second_alert_trigger',second_alert_trigger_seconds='$second_alert_trigger_seconds',second_alert_filename='$second_alert_filename',second_alert_delay='$second_alert_delay',second_alert_container='$second_alert_container',second_alert_only='$second_alert_only',third_alert_trigger='$third_alert_trigger',third_alert_trigger_seconds='$third_alert_trigger_seconds',third_alert_filename='$third_alert_filename',third_alert_delay='$third_alert_delay',third_alert_container='$third_alert_container',third_alert_only='$third_alert_only',agent_search_list='$agent_search_list',state_descriptions='$state_descriptions',stereo_recording='$stereo_recording',stereo_rec_filename='$stereo_rec_filename',stereo_parallel_recording='$stereo_parallel_recording',recording_dtmf_muting='$recording_dtmf_muting',stereo_recording_agent='$stereo_recording_agent',parallel_rec_co_filename='$parallel_rec_co_filename',parallel_rec_cm_filename='$parallel_rec_cm_filename',parallel_rec_fr_filename='$parallel_rec_fr_filename',xfer_talk_minimum='$xfer_talk_minimum',xfer_talk_minimum_sec='$xfer_talk_minimum_sec' where group_id='$group_id';";
+					$stmt="UPDATE vicidial_inbound_groups set group_name='$group_name', group_color='$group_color', active='$active', web_form_address='" . mysqli_real_escape_string($link, $web_form_address) . "', voicemail_ext='$voicemail_ext', next_agent_call='$next_agent_call', fronter_display='$fronter_display', ingroup_script='$script_id', get_call_launch='$get_call_launch', group_handling='$group_handling', xferconf_a_dtmf='$xferconf_a_dtmf',xferconf_a_number='$xferconf_a_number', xferconf_b_dtmf='$xferconf_b_dtmf',xferconf_b_number='$xferconf_b_number',drop_action='$drop_action_ingroups',drop_call_seconds='$drop_call_seconds',drop_exten='$drop_exten',call_time_id='$call_time_id',after_hours_action='$after_hours_action',after_hours_message_filename='$after_hours_message_filename',after_hours_exten='$after_hours_exten',after_hours_voicemail='$after_hours_voicemail',welcome_message_filename='$welcome_message_filename',moh_context='$moh_context',onhold_prompt_filename='$onhold_prompt_filename',prompt_interval='$prompt_interval',agent_alert_exten='$agent_alert_exten',agent_alert_delay='$agent_alert_delay',default_xfer_group='$default_xfer_group',queue_priority='$queue_priority',drop_inbound_group='$drop_inbound_group',ingroup_recording_override='$ingroup_recording_override',ingroup_rec_filename='$ingroup_rec_filename',afterhours_xfer_group='$afterhours_xfer_group',qc_enabled='$qc_enabled',qc_statuses='$QC_statuses',qc_shift_id='$qc_shift_id',qc_get_record_launch='$qc_get_record_launch',qc_show_recording='$qc_show_recording',qc_web_form_address='" . mysqli_real_escape_string($link, $qc_web_form_address) . "',qc_scorecard_id='$qc_scorecard_id',qc_script='$qc_script',play_place_in_line='$play_place_in_line',play_estimate_hold_time='$play_estimate_hold_time',hold_time_option='$hold_time_option',hold_time_option_seconds='$hold_time_option_seconds',hold_time_option_exten='$hold_time_option_exten',hold_time_option_voicemail='$hold_time_option_voicemail',hold_time_option_xfer_group='$hold_time_option_xfer_group',hold_time_option_callback_filename='$hold_time_option_callback_filename',hold_time_option_callback_list_id='$hold_time_option_callback_list_id',hold_recall_xfer_group='$hold_recall_xfer_group',no_delay_call_route='$no_delay_call_route',play_welcome_message='$play_welcome_message',answer_sec_pct_rt_stat_one='$answer_sec_pct_rt_stat_one',answer_sec_pct_rt_stat_two='$answer_sec_pct_rt_stat_two',default_group_alias='$default_group_alias',no_agent_no_queue='$no_agent_no_queue',no_agent_action='$no_agent_action',no_agent_action_value='$no_agent_action_value',web_form_address_two='" . mysqli_real_escape_string($link, $web_form_address_two) . "',timer_action='$timer_action',timer_action_message='$timer_action_message',timer_action_seconds='$timer_action_seconds',start_call_url='" . mysqli_real_escape_string($link, $start_call_url) . "',dispo_call_url='" . mysqli_real_escape_string($link, $dispo_call_url) . "',xferconf_c_number='$xferconf_c_number',xferconf_d_number='$xferconf_d_number',xferconf_e_number='$xferconf_e_number',ignore_list_script_override='$ignore_list_script_override',extension_appended_cidname='$extension_appended_cidname',uniqueid_status_display='$uniqueid_status_display',uniqueid_status_prefix='$uniqueid_status_prefix',hold_time_option_minimum='$hold_time_option_minimum',hold_time_option_press_filename='$hold_time_option_press_filename',hold_time_option_callmenu='$hold_time_option_callmenu',onhold_prompt_no_block='$onhold_prompt_no_block',onhold_prompt_seconds='$onhold_prompt_seconds',hold_time_option_no_block='$hold_time_option_no_block',hold_time_option_prompt_seconds='$hold_time_option_prompt_seconds',hold_time_second_option='$hold_time_second_option',hold_time_third_option='$hold_time_third_option',wait_hold_option_priority='$wait_hold_option_priority',wait_time_option='$wait_time_option',wait_time_second_option='$wait_time_second_option',wait_time_third_option='$wait_time_third_option',wait_time_option_seconds='$wait_time_option_seconds',wait_time_option_exten='$wait_time_option_exten',wait_time_option_voicemail='$wait_time_option_voicemail',wait_time_option_xfer_group='$wait_time_option_xfer_group',wait_time_option_callmenu='$wait_time_option_callmenu',wait_time_option_callback_filename='$wait_time_option_callback_filename',wait_time_option_callback_list_id='$wait_time_option_callback_list_id',wait_time_option_press_filename='$wait_time_option_press_filename',wait_time_option_no_block='$wait_time_option_no_block',wait_time_option_prompt_seconds='$wait_time_option_prompt_seconds',timer_action_destination='$timer_action_destination',calculate_estimated_hold_seconds='$calculate_estimated_hold_seconds',add_lead_url='" . mysqli_real_escape_string($link, $add_lead_url) . "',eht_minimum_prompt_filename='$eht_minimum_prompt_filename',eht_minimum_prompt_no_block='$eht_minimum_prompt_no_block',eht_minimum_prompt_seconds='$eht_minimum_prompt_seconds',on_hook_ring_time='$on_hook_ring_time',na_call_url='" . mysqli_real_escape_string($link, $na_call_url) . "',on_hook_cid='$on_hook_cid',action_xfer_cid='$action_xfer_cid',drop_callmenu='$drop_callmenu',after_hours_callmenu='$after_hours_callmenu',user_group='$user_group',max_calls_method='$max_calls_method',max_calls_count='$max_calls_count',max_calls_action='$max_calls_action',dial_ingroup_cid='$dial_ingroup_cid',web_form_address_three='" . mysqli_real_escape_string($link, $web_form_address_three) . "',populate_lead_ingroup='$populate_lead_ingroup',drop_lead_reset='$drop_lead_reset',after_hours_lead_reset='$after_hours_lead_reset',nanq_lead_reset='$nanq_lead_reset',wait_time_lead_reset='$wait_time_lead_reset',hold_time_lead_reset='$hold_time_lead_reset',status_group_id='$status_group_id',routing_initiated_recordings='$routing_initiated_recordings',on_hook_cid_number='$on_hook_cid_number',customer_chat_screen_colors='$customer_chat_screen_colors',customer_chat_survey_link='" . mysqli_real_escape_string($link, $customer_chat_survey_link) . "',customer_chat_survey_text='$customer_chat_survey_text',populate_lead_province='$populate_lead_province',areacode_filter='$areacode_filter',areacode_filter_seconds='$areacode_filter_seconds',areacode_filter_action='$areacode_filter_action',areacode_filter_action_value='$areacode_filter_action_value',populate_state_areacode='$populate_state_areacode',inbound_survey='$inbound_survey',inbound_survey_filename='$inbound_survey_filename',inbound_survey_accept_digit='$inbound_survey_accept_digit',inbound_survey_question_filename='$inbound_survey_question_filename',inbound_survey_callmenu='$inbound_survey_callmenu',icbq_expiration_hours='$icbq_expiration_hours',closing_time_action='$closing_time_action',closing_time_now_trigger='$closing_time_now_trigger',closing_time_filename='$closing_time_filename',closing_time_end_filename='$closing_time_end_filename',closing_time_lead_reset='$closing_time_lead_reset',closing_time_option_exten='$closing_time_option_exten',closing_time_option_callmenu='$closing_time_option_callmenu',closing_time_option_voicemail='$closing_time_option_voicemail',closing_time_option_xfer_group='$closing_time_option_xfer_group',closing_time_option_callback_list_id='$closing_time_option_callback_list_id',icbq_call_time_id='$icbq_call_time_id',add_lead_timezone='$add_lead_timezone',icbq_dial_filter='$icbq_dial_filter',populate_lead_source='$populate_lead_source',populate_lead_vendor='$populate_lead_vendor',park_file_name='$park_file_name',waiting_call_url_on='" . mysqli_real_escape_string($link, $waiting_call_url_on) . "',waiting_call_url_off='" . mysqli_real_escape_string($link, $waiting_call_url_off) . "',enter_ingroup_url='" . mysqli_real_escape_string($link, $enter_ingroup_url) . "',cid_cb_confirm_number='$cid_cb_confirm_number',cid_cb_invalid_filter_phone_group='$cid_cb_invalid_filter_phone_group',cid_cb_valid_length='$cid_cb_valid_length',cid_cb_valid_filename='$cid_cb_valid_filename',cid_cb_confirmed_filename='$cid_cb_confirmed_filename',cid_cb_enter_filename='$cid_cb_enter_filename',cid_cb_you_entered_filename='$cid_cb_you_entered_filename',cid_cb_press_to_confirm_filename='$cid_cb_press_to_confirm_filename',cid_cb_invalid_filename='$cid_cb_invalid_filename',cid_cb_reenter_filename='$cid_cb_reenter_filename',cid_cb_error_filename='$cid_cb_error_filename',place_in_line_caller_number_filename='$place_in_line_caller_number_filename',place_in_line_you_next_filename='$place_in_line_you_next_filename', ingroup_script_two='$ingroup_script_two',browser_alert_sound='$browser_alert_sound_ingroups',browser_alert_volume='$browser_alert_volume',answer_signal='$answer_signal_ingroups',qc_statuses_id='$qc_statuses_id',no_agent_delay='$no_agent_delay',agent_search_method='$agent_search_method',populate_lead_comments='$populate_lead_comments',drop_call_seconds_override='$drop_call_seconds_override',populate_lead_owner='$populate_lead_owner',in_queue_nanque='$in_queue_nanque',in_queue_nanque_exceptions='$in_queue_nanque_exceptions',custom_one='$custom_one',custom_two='$custom_two',custom_three='$custom_three',custom_four='$custom_four',custom_five='$custom_five',second_alert_trigger='$second_alert_trigger',second_alert_trigger_seconds='$second_alert_trigger_seconds',second_alert_filename='$second_alert_filename',second_alert_delay='$second_alert_delay',second_alert_container='$second_alert_container',second_alert_only='$second_alert_only',third_alert_trigger='$third_alert_trigger',third_alert_trigger_seconds='$third_alert_trigger_seconds',third_alert_filename='$third_alert_filename',third_alert_delay='$third_alert_delay',third_alert_container='$third_alert_container',third_alert_only='$third_alert_only',agent_search_list='$agent_search_list',state_descriptions='$state_descriptions',stereo_recording='$stereo_recording',stereo_rec_filename='$stereo_rec_filename',stereo_parallel_recording='$stereo_parallel_recording',recording_dtmf_muting='$recording_dtmf_muting',stereo_recording_agent='$stereo_recording_agent',parallel_rec_co_filename='$parallel_rec_co_filename',parallel_rec_cm_filename='$parallel_rec_cm_filename',parallel_rec_fr_filename='$parallel_rec_fr_filename',xfer_talk_minimum='$xfer_talk_minimum',xfer_talk_minimum_sec='$xfer_talk_minimum_sec' where group_id='$group_id';";
 					$rslt=mysql_to_mysqli($stmt, $link);
 
 					switch($group_handling) 
@@ -19293,7 +20819,7 @@ if ($ADD==4311)
 			$new_field_value = preg_replace("/\<|\>|\'|\"|\\\\|;/","",$new_field_value);
 			$pre_filter_phone_group_id = preg_replace("/,$/","",$new_field_value);
 
-			$stmt="UPDATE vicidial_inbound_dids set did_pattern='$did_pattern',did_description='$did_description',did_active='$did_active',did_route='$did_route',extension='$extension',exten_context='$exten_context',voicemail_ext='$voicemail_ext',phone='$phone',server_ip='$server_ip',user='$user',user_unavailable_action='$user_unavailable_action',user_route_settings_ingroup='$user_route_settings_ingroup',group_id='$group_id',call_handle_method='$call_handle_method',agent_search_method='$agent_search_method',list_id='$list_id',campaign_id='$campaign_id',phone_code='$phone_code',menu_id='$menu_id',record_call='$record_call',filter_inbound_number='$filter_inbound_number',filter_phone_group_id='$filter_phone_group_id',filter_url='" . mysqli_real_escape_string($link, $filter_url) . "',filter_action='$filter_action',filter_extension='$filter_extension',filter_exten_context='$filter_exten_context',filter_voicemail_ext='$filter_voicemail_ext',filter_phone='$filter_phone',filter_server_ip='$filter_server_ip',filter_user='$filter_user',filter_user_unavailable_action='$filter_user_unavailable_action',filter_user_route_settings_ingroup='$filter_user_route_settings_ingroup',filter_group_id='$filter_group_id',filter_call_handle_method='$filter_call_handle_method',filter_agent_search_method='$filter_agent_search_method',filter_list_id='$filter_list_id',filter_campaign_id='$filter_campaign_id',filter_phone_code='$filter_phone_code',filter_menu_id='$filter_menu_id',filter_clean_cid_number='$filter_clean_cid_number',custom_one='$custom_one',custom_two='$custom_two',custom_three='$custom_three',custom_four='$custom_four',custom_five='$custom_five',user_group='$user_group',filter_dnc_campaign='$filter_dnc_campaign',filter_url_did_redirect='$filter_url_did_redirect',no_agent_ingroup_redirect='$no_agent_ingroup_redirect',no_agent_ingroup_id='$no_agent_ingroup_id',no_agent_ingroup_extension='$no_agent_ingroup_extension',pre_filter_phone_group_id='$pre_filter_phone_group_id',pre_filter_extension='$pre_filter_extension',max_queue_ingroup_calls='$max_queue_ingroup_calls',max_queue_ingroup_id='$max_queue_ingroup_id',max_queue_ingroup_extension='$max_queue_ingroup_extension',did_carrier_description='$did_carrier_description',inbound_route_answer='$inbound_route_answer',pre_filter_recent_call='$pre_filter_recent_call',pre_filter_recent_extension='$pre_filter_recent_extension',alter_cid_name='$alter_cid_name'$did_entry_list_idSQL where did_id='$did_id';";
+			$stmt="UPDATE vicidial_inbound_dids set did_pattern='$did_pattern',did_description='$did_description',did_active='$did_active',did_route='$did_route',extension='$extension_dids',exten_context='$exten_context',voicemail_ext='$voicemail_ext',phone='$phone',server_ip='$server_ip',user='$user',user_unavailable_action='$user_unavailable_action',user_route_settings_ingroup='$user_route_settings_ingroup',group_id='$group_id',call_handle_method='$call_handle_method',agent_search_method='$agent_search_method_inbound',list_id='$list_id',campaign_id='$campaign_id',phone_code='$phone_code',menu_id='$menu_id',record_call='$record_call',filter_inbound_number='$filter_inbound_number',filter_phone_group_id='$filter_phone_group_id',filter_url='" . mysqli_real_escape_string($link, $filter_url) . "',filter_action='$filter_action',filter_extension='$filter_extension',filter_exten_context='$filter_exten_context',filter_voicemail_ext='$filter_voicemail_ext',filter_phone='$filter_phone',filter_server_ip='$filter_server_ip',filter_user='$filter_user',filter_user_unavailable_action='$filter_user_unavailable_action',filter_user_route_settings_ingroup='$filter_user_route_settings_ingroup',filter_group_id='$filter_group_id',filter_call_handle_method='$filter_call_handle_method',filter_agent_search_method='$filter_agent_search_method',filter_list_id='$filter_list_id',filter_campaign_id='$filter_campaign_id',filter_phone_code='$filter_phone_code',filter_menu_id='$filter_menu_id',filter_clean_cid_number='$filter_clean_cid_number',custom_one='$custom_one',custom_two='$custom_two',custom_three='$custom_three',custom_four='$custom_four',custom_five='$custom_five',user_group='$user_group',filter_dnc_campaign='$filter_dnc_campaign',filter_url_did_redirect='$filter_url_did_redirect',no_agent_ingroup_redirect='$no_agent_ingroup_redirect',no_agent_ingroup_id='$no_agent_ingroup_id',no_agent_ingroup_extension='$no_agent_ingroup_extension',pre_filter_phone_group_id='$pre_filter_phone_group_id',pre_filter_extension='$pre_filter_extension',max_queue_ingroup_calls='$max_queue_ingroup_calls',max_queue_ingroup_id='$max_queue_ingroup_id',max_queue_ingroup_extension='$max_queue_ingroup_extension',did_carrier_description='$did_carrier_description',inbound_route_answer='$inbound_route_answer',pre_filter_recent_call='$pre_filter_recent_call',pre_filter_recent_extension='$pre_filter_recent_extension',alter_cid_name='$alter_cid_name'$did_entry_list_idSQL where did_id='$did_id';";
 			$rslt=mysql_to_mysqli($stmt, $link);
 
 			### LOG INSERTION Admin Log Table ###
@@ -19336,11 +20862,12 @@ if ($ADD==4511)
 			$custom_dialplanSQL='';
 			if ($LOGmodify_custom_dialplans > 0)
 				{$custom_dialplanSQL = ",custom_dialplan_entry='$custom_dialplan_entry'";}
-			$stmt="UPDATE vicidial_call_menu set menu_name='$menu_name',menu_prompt='$menu_prompt',menu_timeout='$menu_timeout',menu_timeout_prompt='$menu_timeout_prompt',menu_invalid_prompt='$menu_invalid_prompt',menu_repeat='$menu_repeat',menu_time_check='$menu_time_check',call_time_id='$call_time_id',track_in_vdac='$track_in_vdac',tracking_group='$tracking_group',dtmf_log='$dtmf_log',dtmf_field='$dtmf_field',user_group='$user_group',qualify_sql='$qualify_sql',alt_dtmf_log='$alt_dtmf_log',question='$question',answer_signal='$answer_signal'$custom_dialplanSQL where menu_id='$menu_id';";
+			$stmt="UPDATE vicidial_call_menu set menu_name='$menu_name',menu_prompt='$menu_prompt',menu_timeout='$menu_timeout',menu_timeout_prompt='$menu_timeout_prompt',menu_invalid_prompt='$menu_invalid_prompt',menu_repeat='$menu_repeat',menu_time_check='$menu_time_check',call_time_id='$call_time_id',track_in_vdac='$track_in_vdac',tracking_group='$tracking_group',dtmf_log='$dtmf_log',dtmf_field='$dtmf_field',user_group='$user_group',qualify_sql='$qualify_sql',alt_dtmf_log='$alt_dtmf_log',question='$question',answer_signal='$answer_signal_callmenus'$custom_dialplanSQL where menu_id='$menu_id';";
 			$rslt=mysql_to_mysqli($stmt, $link);
 
 			$h=0;
 			$option_value_list='|';
+			$stmtAX='';
 			while ($h <= 20)
 				{
 				$option_value=''; $option_description=''; $option_route=''; $option_route_value=''; $option_route_value_context='';
@@ -19553,7 +21080,7 @@ if ($ADD==41111)
 					}
 				else
 					{
-					if ($number_of_lines < 1) {$status='INACTIVE';}
+					if ($number_of_lines < 1 || strlen($status)==0) {$status='INACTIVE';}
 					$stmt="UPDATE vicidial_remote_agents set user_start='$user_start', number_of_lines='$number_of_lines', server_ip='$server_ip', conf_exten='$conf_exten', status='$status', campaign_id='$campaign_id', closer_campaigns='$groups_value',extension_group='$extension_group',on_hook_agent='$on_hook_agent',on_hook_ring_time='$on_hook_ring_time' where remote_agent_id='$remote_agent_id';";
 					$rslt=mysql_to_mysqli($stmt, $link);
 
@@ -19644,7 +21171,7 @@ if ($ADD==411111)
 				$p=0;
 				$GROUP_shifts=' ';
 				$group_shifts_ct = (is_array($group_shifts) ? count($group_shifts) : -1);
-				while ($p <= $group_shifts_ct)
+				while ($p < $group_shifts_ct)
 					{
 					if ($non_latin < 1)
 						{
@@ -19660,7 +21187,7 @@ if ($ADD==411111)
 				$p=0;
 				$VGROUP_vgroups=' ';
 				$vgroup_vgroups_ct = (is_array($agent_status_viewable_groups) ? count($agent_status_viewable_groups) : -1);
-				while ($p <= $vgroup_vgroups_ct)
+				while ($p < $vgroup_vgroups_ct)
 					{
 					if ($non_latin < 1)
 						{
@@ -19676,7 +21203,7 @@ if ($ADD==411111)
 				$p=0;
 				$VGROUP_chatgroups=' ';
 				$vgroup_chatgroups_ct = (is_array($agent_allowed_chat_groups) ? count($agent_allowed_chat_groups) : -1);
-				while ($p <= $vgroup_chatgroups_ct)
+				while ($p < $vgroup_chatgroups_ct)
 					{
 					if ($non_latin < 1)
 						{
@@ -19691,8 +21218,8 @@ if ($ADD==411111)
 					}
 				$p=0;
 				$Vadmin_viewable_groups=' ';
-				$admin_viewable_groups_ct = (is_array($admin_viewable_groups) ? count($admin_viewable_groups) : -1);
-				while ($p <= $admin_viewable_groups_ct)
+				$admin_viewable_groups_ct = (isset($admin_viewable_groups) && is_array($admin_viewable_groups) ? count($admin_viewable_groups) : -1);
+				while ($p < $admin_viewable_groups_ct)
 					{
 					if ($non_latin < 1)
 						{
@@ -19707,8 +21234,8 @@ if ($ADD==411111)
 					}
 				$p=0;
 				$Vadmin_viewable_call_times=' ';
-				$admin_viewable_call_times_ct = (is_array($admin_viewable_call_times) ? count($admin_viewable_call_times) : -1);
-				while ($p <= $admin_viewable_call_times_ct)
+				$admin_viewable_call_times_ct = (isset($admin_viewable_call_times) && is_array($admin_viewable_call_times) ? count($admin_viewable_call_times) : -1);
+				while ($p < $admin_viewable_call_times_ct)
 					{
 					if ($non_latin < 1)
 						{
@@ -19722,6 +21249,7 @@ if ($ADD==411111)
 					$p++;
 					}
 				$k=0;
+				$new_field_value="";
 				$multi_count = (is_array($allowed_reports) ? count($allowed_reports) : -1);
 				$multi_array = $allowed_reports;
 				while ($k < $multi_count)
@@ -19772,7 +21300,8 @@ if ($ADD==411111)
 					{
 		
 					$custom_report_str="";
-					if (is_array($allowed_custom_reports) && count($allowed_custom_reports)>0) 
+					if(!isset($allowed_custom_reports) || !is_array($allowed_custom_reports)) {$allowed_custom_reports=array();}
+					if (count($allowed_custom_reports)>0) 
 						{
 						for ($q=0; $q<count($allowed_custom_reports); $q++) 
 							{
@@ -20152,7 +21681,7 @@ if ($ADD==431111111)
 		echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 
 		$shift_length_test = preg_replace('/:/i', '',$shift_length);
-		if ( (strlen($shift_id) < 2) or (strlen($shift_name) < 2) or (strlen($shift_start_time) < 4) or (strlen($shift_start_time) > 4) or (strlen($shift_length) < 5) or (strlen($shift_length) > 5) or ($shift_start_time > 2359) or ($shift_length_test > 2400) or (!is_array($shift_weekdays)) )
+		if ( (strlen($shift_id) < 2) or (strlen($shift_name) < 2) or (strlen($shift_start_time) < 4) or (strlen($shift_start_time) > 4) or (strlen($shift_length) < 5) or (strlen($shift_length) > 5) or ($shift_start_time > 2359) or ($shift_length_test > 2400) or (!isset($shift_weekdays)) or (!is_array($shift_weekdays)) )
 			{
 			echo "<br>"._QXZ("SHIFT DEFINITION NOT MODIFIED - Please go back and look at the data you entered")."\n";
 			echo "<br>"._QXZ("Shift ID and name must be at least 2 characters in length")."\n";
@@ -20163,8 +21692,9 @@ if ($ADD==431111111)
 		else
 			{
 			$p=0;
+			$SHIFT_weekdays='';
 			$shift_weekdays_ct = count($shift_weekdays);
-			while ($p <= $shift_weekdays_ct)
+			while ($p < $shift_weekdays_ct)
 				{
 				$shift_weekdays[$p] = preg_replace('/[^0-9]/','',$shift_weekdays[$p]);
 				$SHIFT_weekdays .= "$shift_weekdays[$p]";
@@ -20242,6 +21772,7 @@ if ($ADD==41111111111)
 					$stmtB="UPDATE servers SET rebuild_conf_files='Y',sounds_update='Y' where generate_vicidial_conf='Y' and active_asterisk_server='Y' and server_ip='$SSactive_voicemail_server';";
 					$rslt=mysql_to_mysqli($stmtB, $link);
 
+					$stmtC='';
 					if ($server_ip != $old_server_ip)
 						{
 						$stmtC="UPDATE servers SET rebuild_conf_files='Y' where generate_vicidial_conf='Y' and active_asterisk_server='Y' and server_ip='$old_server_ip';";
@@ -20376,6 +21907,7 @@ if ($ADD==411111111111)
 						{
 						echo "<br>"._QXZ("Conf File Secret must be at least $SSrequire_password_length characters long")."\n";
 						}
+					echo "<BR><BR><br><a href='javascript:history.back()'>"._QXZ("Go back")."</a>\n";
 					}
 				else
 					{
@@ -20782,6 +22314,7 @@ if ($ADD==497111111111)
 					}
 
 				$o=0;
+				$affected_rowsB="";
 				while ($vmmgfiles_to_print > $o)
 					{
 					$new_rank=0;
@@ -20817,6 +22350,7 @@ if ($ADD==497111111111)
 					$o++;
 					}
 
+				$affected_rowsC="";
 				if (strlen($audio_filename) > 0)
 					{
 					$stmt="INSERT INTO leave_vm_message_groups_entries set audio_filename='$audio_filename',rank='$ranks',leave_vm_message_group_id='$leave_vm_message_group_id',audio_name='$audio_name',time_start='$time_start',time_end='$time_end';";
@@ -21199,7 +22733,7 @@ if ($ADD==493111111111)
 								$rslt=mysql_to_mysqli($stmt, $link);
 
 								$stmtB="UPDATE vicidial_status_groups set modify_stamp='$SQLdate' where status_group_id='$status_group_id';";
-								$rslt=mysql_to_mysqli($stmtA, $link);
+								$rslt=mysql_to_mysqli($stmtB, $link);
 
 								### LOG INSERTION Admin Log Table ###
 								$SQL_log = "$stmt|$stmtB|";
@@ -21221,7 +22755,7 @@ if ($ADD==493111111111)
 				$rslt=mysql_to_mysqli($stmt, $link);
 
 				$stmtB="UPDATE vicidial_status_groups set modify_stamp='$SQLdate' where status_group_id='$status_group_id';";
-				$rslt=mysql_to_mysqli($stmtA, $link);
+				$rslt=mysql_to_mysqli($stmtB, $link);
 
 				### LOG INSERTION Admin Log Table ###
 				$SQL_log = "$stmt|$stmtB|";
@@ -21616,7 +23150,9 @@ if ($ADD==4111111111111)
 		else
 			{
 			if ( (strlen($conf_exten) < 1) or (strlen($server_ip) < 7) )
-				{echo "<br>"._QXZ("CONFERENCE NOT MODIFIED - Please go back and look at the data you entered")."\n";}
+				{
+				echo "<br>"._QXZ("CONFERENCE NOT MODIFIED - Please go back and look at the data you entered")."\n";
+				}
 			else
 				{
 				echo "<br>"._QXZ("CONFERENCE MODIFIED").": $conf_exten\n";
@@ -21660,7 +23196,10 @@ if ($ADD==41111111111111)
 		else
 			{
 			if ( (strlen($conf_exten) < 1) or (strlen($server_ip) < 7) )
-				{echo "<br>"._QXZ("AGENT CONFERENCE NOT MODIFIED - Please go back and look at the data you entered")."\n";}
+				{
+				echo "<br>"._QXZ("AGENT CONFERENCE NOT MODIFIED - Please go back and look at the data you entered")."\n";
+				echo "<br><br><br><a href='javascript:history.back()'>"._QXZ("Go back")."</a>\n";
+				}
 			else
 				{
 				echo "<br>"._QXZ("AGENT CONFERENCE MODIFIED").": $conf_exten\n";
@@ -21704,7 +23243,10 @@ if ($ADD==42111111111111)
 		else
 			{
 			if ( (strlen($conf_exten) < 1) or (strlen($server_ip) < 7) )
-				{echo "<br>"._QXZ("AGENT CONFBRIDGE NOT MODIFIED - Please go back and look at the data you entered")."\n";}
+				{
+				echo "<br>"._QXZ("AGENT CONFBRIDGE NOT MODIFIED - Please go back and look at the data you entered")."\n";
+				echo "<br><br><br><a href='javascript:history.back()'>"._QXZ("Go back")."</a>";
+				}
 			else
 				{
 				echo "<br>"._QXZ("AGENT CONFBRIDGE MODIFIED").": $conf_exten\n";
@@ -21750,6 +23292,7 @@ if ($ADD==411111111111111)
 			echo "<br>"._QXZ("SYSTEM SETTINGS MODIFIED")."\n";
 
 			$k=0;
+			$new_field_value='';
 			if (is_array($reports_use_slave_db)) {$multi_count = count($reports_use_slave_db);} else {$multi_count=0;}
 			$multi_array = $reports_use_slave_db;
 			while ($k < $multi_count)
@@ -21761,6 +23304,7 @@ if ($ADD==411111111111111)
 			$reports_use_slave_db = preg_replace("/,$/","",$new_field_value);
 
 			$m=0;
+			$new_altlog_value='';
 			if (is_array($tables_use_alt_log_db)) {$altlog_count = count($tables_use_alt_log_db);} else {$altlog_count=0;}
 			$altlog_array = $tables_use_alt_log_db;
 			while ($m < $altlog_count)
@@ -21822,7 +23366,7 @@ if ($ADD==411111111111111)
 			$update_apinewlead_rows=mysqli_affected_rows($link);
 
 			# update the system settings
-			$stmt="UPDATE system_settings set use_non_latin='$use_non_latin',webroot_writable='$webroot_writable',enable_queuemetrics_logging='$enable_queuemetrics_logging',queuemetrics_server_ip='$queuemetrics_server_ip',queuemetrics_dbname='$queuemetrics_dbname',queuemetrics_login='$queuemetrics_login',queuemetrics_pass='$queuemetrics_pass',queuemetrics_url='" . mysqli_real_escape_string($link, $queuemetrics_url) . "',queuemetrics_log_id='$queuemetrics_log_id',queuemetrics_eq_prepend='$queuemetrics_eq_prepend',vicidial_agent_disable='$vicidial_agent_disable',allow_sipsak_messages='$allow_sipsak_messages',admin_home_url='" . mysqli_real_escape_string($link, $admin_home_url) . "',enable_agc_xfer_log='$enable_agc_xfer_log',timeclock_end_of_day='$timeclock_end_of_day',vdc_header_date_format='$vdc_header_date_format',vdc_customer_date_format='$vdc_customer_date_format',vdc_header_phone_format='$vdc_header_phone_format',vdc_agent_api_active='$vdc_agent_api_active',enable_vtiger_integration='$enable_vtiger_integration',vtiger_server_ip='$vtiger_server_ip',vtiger_dbname='$vtiger_dbname',vtiger_login='$vtiger_login',vtiger_pass='$vtiger_pass',vtiger_url='" . mysqli_real_escape_string($link, $vtiger_url) . "',qc_features_active='$qc_features_active',outbound_autodial_active='$outbound_autodial_active',outbound_calls_per_second='$outbound_calls_per_second',enable_tts_integration='$enable_tts_integration',agentonly_callback_campaign_lock='$agentonly_callback_campaign_lock',sounds_central_control_active='$sounds_central_control_active',sounds_web_server='$sounds_web_server',sounds_web_directory='$sounds_web_directory',active_voicemail_server='$active_voicemail_server',auto_dial_limit='$auto_dial_limit',user_territories_active='$user_territories_active',allow_custom_dialplan='$allow_custom_dialplan',enable_second_webform='$enable_second_webform',default_webphone='$default_webphone',default_external_server_ip='$default_external_server_ip',webphone_url='" . mysqli_real_escape_string($link, $webphone_url) . "',enable_agc_dispo_log='$enable_agc_dispo_log',queuemetrics_loginout='$queuemetrics_loginout',callcard_enabled='$callcard_enabled',queuemetrics_callstatus='$queuemetrics_callstatus',default_codecs='$default_codecs',admin_web_directory='$admin_web_directory',label_title='$label_title',label_first_name='$label_first_name',label_middle_initial='$label_middle_initial',label_last_name='$label_last_name',label_address1='$label_address1',label_address2='$label_address2',label_address3='$label_address3',label_city='$label_city',label_state='$label_state',label_province='$label_province',label_postal_code='$label_postal_code',label_vendor_lead_code='$label_vendor_lead_code',label_gender='$label_gender',label_phone_number='$label_phone_number',label_phone_code='$label_phone_code',label_alt_phone='$label_alt_phone',label_security_phrase='$label_security_phrase',label_email='$label_email',label_comments='$label_comments',label_lead_id='$label_lead_id',label_list_id='$label_list_id',label_entry_date='$label_entry_date',label_gmt_offset_now='$label_gmt_offset_now',label_source_id='$label_source_id',label_called_since_last_reset='$label_called_since_last_reset',label_status='$label_status',label_user='$label_user',label_date_of_birth='$label_date_of_birth',label_country_code='$label_country_code',label_last_local_call_time='$label_last_local_call_time',label_called_count='$label_called_count',label_rank='$label_rank',label_owner='$label_owner',label_entry_list_id='$label_entry_list_id',custom_fields_enabled='$custom_fields_enabled',slave_db_server='$slave_db_server',reports_use_slave_db='$reports_use_slave_db'$custom_reports_slave_SQL,webphone_systemkey='$webphone_systemkey',first_login_trigger='$first_login_trigger',default_phone_registration_password='$default_phone_registration_password',default_phone_login_password='$default_phone_login_password',default_server_password='$default_server_password',admin_modify_refresh='$admin_modify_refresh',nocache_admin='$nocache_admin',generate_cross_server_exten='$generate_cross_server_exten',queuemetrics_addmember_enabled='$queuemetrics_addmember_enabled',queuemetrics_dispo_pause='$queuemetrics_dispo_pause',label_hide_field_logs='$label_hide_field_logs',queuemetrics_pe_phone_append='$queuemetrics_pe_phone_append',test_campaign_calls='$test_campaign_calls',agents_calls_reset='$agents_calls_reset',default_voicemail_timezone='$default_voicemail_timezone',default_local_gmt='$default_local_gmt',noanswer_log='$noanswer_log',alt_log_server_ip='$alt_log_server_ip',alt_log_dbname='$alt_log_dbname',alt_log_login='$alt_log_login',alt_log_pass='$alt_log_pass',tables_use_alt_log_db='$tables_use_alt_log_db',did_agent_log='$did_agent_log',campaign_cid_areacodes_enabled='$campaign_cid_areacodes_enabled',pllb_grouping_limit='$pllb_grouping_limit',did_ra_extensions_enabled='$did_ra_extensions_enabled',expanded_list_stats='$expanded_list_stats',contacts_enabled='$contacts_enabled',call_menu_qualify_enabled='$call_menu_qualify_enabled',admin_list_counts='$admin_list_counts',allow_voicemail_greeting='$allow_voicemail_greeting',queuemetrics_socket='$queuemetrics_socket',queuemetrics_socket_url='$queuemetrics_socket_url',enhanced_disconnect_logging='$enhanced_disconnect_logging',allow_emails='$allow_emails',level_8_disable_add='$level_8_disable_add',queuemetrics_record_hold='$queuemetrics_record_hold',country_code_list_stats='$country_code_list_stats',queuemetrics_pause_type='$queuemetrics_pause_type',frozen_server_call_clear='$frozen_server_call_clear',callback_time_24hour='$callback_time_24hour',enable_languages='$enable_languages',language_method='$language_method',meetme_enter_login_filename='$meetme_enter_login_filename',meetme_enter_leave3way_filename='$meetme_enter_leave3way_filename',enable_did_entry_list_id='$enable_did_entry_list_id',enable_third_webform='$enable_third_webform',allow_chats='$allow_chats',chat_url='" . mysqli_real_escape_string($link, $chat_url) . "',chat_timeout='$chat_timeout',agent_debug_logging='$agent_debug_logging',default_language='$default_language',agent_whisper_enabled='$agent_whisper_enabled',user_hide_realtime_enabled='$user_hide_realtime_enabled',usacan_phone_dialcode_fix='$usacan_phone_dialcode_fix',cache_carrier_stats_realtime='$cache_carrier_stats_realtime',log_recording_access='$log_recording_access',report_default_format='$report_default_format',alt_ivr_logging='$alt_ivr_logging',default_phone_code='$default_phone_code',admin_row_click='$admin_row_click',admin_screen_colors='$admin_screen_colors',ofcom_uk_drop_calc='$ofcom_uk_drop_calc',agent_screen_colors='$agent_screen_colors',script_remove_js='$script_remove_js',manual_auto_next='$manual_auto_next',user_new_lead_limit='$user_new_lead_limit',agent_xfer_park_3way='$agent_xfer_park_3way',agent_soundboards='$agent_soundboards',web_loader_phone_length='$web_loader_phone_length',agent_script='$agent_script',agent_chat_screen_colors='$agent_chat_screen_colors',enable_auto_reports='$enable_auto_reports',enable_pause_code_limits='$enable_pause_code_limits',enable_drop_lists='$enable_drop_lists',allow_ip_lists='$allow_ip_lists',system_ip_blacklist='$system_ip_blacklist',agent_push_events='$agent_push_events',agent_push_url='$agent_push_url',hide_inactive_lists='$hide_inactive_lists',allow_manage_active_lists='$allow_manage_active_lists',expired_lists_inactive='$expired_lists_inactive',did_system_filter='$did_system_filter',anyone_callback_inactive_lists='$anyone_callback_inactive_lists',enable_gdpr_download_deletion='$enable_gdpr_download_deletion',source_id_display='$source_id_display',agent_logout_link='$agent_logout_link',manual_dial_validation='$manual_dial_validation',mute_recordings='$mute_recordings',user_admin_redirect='$user_admin_redirect',list_status_modification_confirmation='$list_status_modification_confirmation',sip_event_logging='$sip_event_logging',call_quota_lead_ranking='$call_quota_lead_ranking',enable_second_script='$enable_second_script',enable_first_webform='$enable_first_webform',recording_buttons='$recording_buttons',opensips_cid_name='$opensips_cid_name',require_password_length='$require_password_length',user_account_emails='$user_account_emails',outbound_cid_any='$outbound_cid_any',entries_per_page='$entries_per_page',browser_call_alerts='$browser_call_alerts',queuemetrics_pausereason='$queuemetrics_pausereason',inbound_answer_config='$inbound_answer_config',enable_international_dncs='$enable_international_dncs',web_loader_phone_strip='$web_loader_phone_strip',manual_dial_phone_strip='$manual_dial_phone_strip',daily_call_count_limit='$daily_call_count_limit',allow_shared_dial='$allow_shared_dial',agent_search_method='$agent_search_method',phone_defaults_container='$phone_defaults_container',qc_claim_limit='$qc_claim_limit',qc_expire_days='$qc_expire_days',two_factor_auth_hours='$two_factor_auth_hours',two_factor_container='$two_factor_container',agent_hidden_sound='$agent_hidden_sound',agent_hidden_sound_volume='$agent_hidden_sound_volume',agent_hidden_sound_seconds='$agent_hidden_sound_seconds',agent_screen_timer='$agent_screen_timer',call_limit_24hour='$call_limit_24hour',allowed_sip_stacks='$allowed_sip_stacks',agent_hide_hangup='$agent_hide_hangup',allow_web_debug='$allow_web_debug',max_logged_in_agents='$max_logged_in_agents',user_codes_admin='$user_codes_admin',login_kickall='$login_kickall',abandon_check_queue='$abandon_check_queue',agent_notifications='$agent_notifications',demographic_quotas='$demographic_quotas',log_latency_gaps='$log_latency_gaps',inbound_credits='$inbound_credits',weekday_resets='$weekday_resets',two_factor_auth_agent_hours='$two_factor_auth_agent_hours',hopper_hold_inserts='$hopper_hold_inserts',coldstorage_server_ip='$coldstorage_server_ip',coldstorage_dbname='$coldstorage_dbname',coldstorage_login='$coldstorage_login',coldstorage_pass='$coldstorage_pass',coldstorage_port='$coldstorage_port',enhanced_agent_monitoring='$enhanced_agent_monitoring',agent_hide_dial_fail='$agent_hide_dial_fail',agent_man_dial_filter='$agent_man_dial_filter',agent_3way_dial_filter='$agent_3way_dial_filter',stereo_recording='$stereo_recording',recording_dtmf_detection='$recording_dtmf_detection',recording_dtmf_muting='$recording_dtmf_muting',stereo_parallel_recording='$stereo_parallel_recording',db_crashed_tables_check='$db_crashed_tables_check',xfer_min_container='$xfer_min_container',max_inbound_auto_reenable='$max_inbound_auto_reenable',amd_status_map='$amd_status_map'$custom_dialplanSQL;";
+			$stmt="UPDATE system_settings set use_non_latin='$use_non_latin',webroot_writable='$webroot_writable',enable_queuemetrics_logging='$enable_queuemetrics_logging',queuemetrics_server_ip='$queuemetrics_server_ip',queuemetrics_dbname='$queuemetrics_dbname',queuemetrics_login='$queuemetrics_login',queuemetrics_pass='$queuemetrics_pass',queuemetrics_url='" . mysqli_real_escape_string($link, $queuemetrics_url) . "',queuemetrics_log_id='$queuemetrics_log_id',queuemetrics_eq_prepend='$queuemetrics_eq_prepend',vicidial_agent_disable='$vicidial_agent_disable',allow_sipsak_messages='$allow_sipsak_messages',admin_home_url='" . mysqli_real_escape_string($link, $admin_home_url) . "',enable_agc_xfer_log='$enable_agc_xfer_log',timeclock_end_of_day='$timeclock_end_of_day',vdc_header_date_format='$vdc_header_date_format',vdc_customer_date_format='$vdc_customer_date_format',vdc_header_phone_format='$vdc_header_phone_format',vdc_agent_api_active='$vdc_agent_api_active',enable_vtiger_integration='$enable_vtiger_integration',vtiger_server_ip='$vtiger_server_ip',vtiger_dbname='$vtiger_dbname',vtiger_login='$vtiger_login',vtiger_pass='$vtiger_pass',vtiger_url='" . mysqli_real_escape_string($link, $vtiger_url) . "',qc_features_active='$qc_features_active',outbound_autodial_active='$outbound_autodial_active',outbound_calls_per_second='$outbound_calls_per_second',enable_tts_integration='$enable_tts_integration',agentonly_callback_campaign_lock='$agentonly_callback_campaign_lock',sounds_central_control_active='$sounds_central_control_active',sounds_web_server='$sounds_web_server',sounds_web_directory='$sounds_web_directory',active_voicemail_server='$active_voicemail_server',auto_dial_limit='$auto_dial_limit',user_territories_active='$user_territories_active',allow_custom_dialplan='$allow_custom_dialplan',enable_second_webform='$enable_second_webform',default_webphone='$default_webphone',default_external_server_ip='$default_external_server_ip',webphone_url='" . mysqli_real_escape_string($link, $webphone_url) . "',enable_agc_dispo_log='$enable_agc_dispo_log',queuemetrics_loginout='$queuemetrics_loginout',callcard_enabled='$callcard_enabled',queuemetrics_callstatus='$queuemetrics_callstatus',default_codecs='$default_codecs',admin_web_directory='$admin_web_directory',label_title='$label_title',label_first_name='$label_first_name',label_middle_initial='$label_middle_initial',label_last_name='$label_last_name',label_address1='$label_address1',label_address2='$label_address2',label_address3='$label_address3',label_city='$label_city',label_state='$label_state',label_province='$label_province',label_postal_code='$label_postal_code',label_vendor_lead_code='$label_vendor_lead_code',label_gender='$label_gender',label_phone_number='$label_phone_number',label_phone_code='$label_phone_code',label_alt_phone='$label_alt_phone',label_security_phrase='$label_security_phrase',label_email='$label_email',label_comments='$label_comments',label_lead_id='$label_lead_id',label_list_id='$label_list_id',label_entry_date='$label_entry_date',label_gmt_offset_now='$label_gmt_offset_now',label_source_id='$label_source_id',label_called_since_last_reset='$label_called_since_last_reset',label_status='$label_status',label_user='$label_user',label_date_of_birth='$label_date_of_birth',label_country_code='$label_country_code',label_last_local_call_time='$label_last_local_call_time',label_called_count='$label_called_count',label_rank='$label_rank',label_owner='$label_owner',label_entry_list_id='$label_entry_list_id',custom_fields_enabled='$custom_fields_enabled',slave_db_server='$slave_db_server',reports_use_slave_db='$reports_use_slave_db'$custom_reports_slave_SQL,webphone_systemkey='$webphone_systemkey',first_login_trigger='$first_login_trigger',default_phone_registration_password='$default_phone_registration_password',default_phone_login_password='$default_phone_login_password',default_server_password='$default_server_password',admin_modify_refresh='$admin_modify_refresh',nocache_admin='$nocache_admin',generate_cross_server_exten='$generate_cross_server_exten',queuemetrics_addmember_enabled='$queuemetrics_addmember_enabled',queuemetrics_dispo_pause='$queuemetrics_dispo_pause',label_hide_field_logs='$label_hide_field_logs',queuemetrics_pe_phone_append='$queuemetrics_pe_phone_append',test_campaign_calls='$test_campaign_calls',agents_calls_reset='$agents_calls_reset',default_voicemail_timezone='$default_voicemail_timezone',default_local_gmt='$default_local_gmt',noanswer_log='$noanswer_log',alt_log_server_ip='$alt_log_server_ip',alt_log_dbname='$alt_log_dbname',alt_log_login='$alt_log_login',alt_log_pass='$alt_log_pass',tables_use_alt_log_db='$tables_use_alt_log_db',did_agent_log='$did_agent_log',campaign_cid_areacodes_enabled='$campaign_cid_areacodes_enabled',pllb_grouping_limit='$pllb_grouping_limit',did_ra_extensions_enabled='$did_ra_extensions_enabled',expanded_list_stats='$expanded_list_stats',contacts_enabled='$contacts_enabled',call_menu_qualify_enabled='$call_menu_qualify_enabled',admin_list_counts='$admin_list_counts',allow_voicemail_greeting='$allow_voicemail_greeting',queuemetrics_socket='$queuemetrics_socket',queuemetrics_socket_url='$queuemetrics_socket_url',enhanced_disconnect_logging='$enhanced_disconnect_logging',allow_emails='$allow_emails',level_8_disable_add='$level_8_disable_add',queuemetrics_record_hold='$queuemetrics_record_hold',country_code_list_stats='$country_code_list_stats',queuemetrics_pause_type='$queuemetrics_pause_type',frozen_server_call_clear='$frozen_server_call_clear',callback_time_24hour='$callback_time_24hour',enable_languages='$enable_languages',language_method='$language_method',meetme_enter_login_filename='$meetme_enter_login_filename',meetme_enter_leave3way_filename='$meetme_enter_leave3way_filename',enable_did_entry_list_id='$enable_did_entry_list_id',enable_third_webform='$enable_third_webform',allow_chats='$allow_chats',chat_url='" . mysqli_real_escape_string($link, $chat_url) . "',chat_timeout='$chat_timeout',agent_debug_logging='$agent_debug_logging',default_language='$default_language',agent_whisper_enabled='$agent_whisper_enabled',user_hide_realtime_enabled='$user_hide_realtime_enabled',usacan_phone_dialcode_fix='$usacan_phone_dialcode_fix',cache_carrier_stats_realtime='$cache_carrier_stats_realtime',log_recording_access='$log_recording_access',report_default_format='$report_default_format',alt_ivr_logging='$alt_ivr_logging',default_phone_code='$default_phone_code',admin_row_click='$admin_row_click',admin_screen_colors='$admin_screen_colors',ofcom_uk_drop_calc='$ofcom_uk_drop_calc',agent_screen_colors='$agent_screen_colors',script_remove_js='$script_remove_js',manual_auto_next='$manual_auto_next',user_new_lead_limit='$user_new_lead_limit',agent_xfer_park_3way='$agent_xfer_park_3way',agent_soundboards='$agent_soundboards',web_loader_phone_length='$web_loader_phone_length',agent_script='$agent_script',agent_chat_screen_colors='$agent_chat_screen_colors',enable_auto_reports='$enable_auto_reports',enable_pause_code_limits='$enable_pause_code_limits',enable_drop_lists='$enable_drop_lists',allow_ip_lists='$allow_ip_lists',system_ip_blacklist='$system_ip_blacklist',agent_push_events='$agent_push_events',agent_push_url='$agent_push_url',hide_inactive_lists='$hide_inactive_lists',allow_manage_active_lists='$allow_manage_active_lists',expired_lists_inactive='$expired_lists_inactive',did_system_filter='$did_system_filter',anyone_callback_inactive_lists='$anyone_callback_inactive_lists',enable_gdpr_download_deletion='$enable_gdpr_download_deletion',source_id_display='$source_id_display',agent_logout_link='$agent_logout_link',manual_dial_validation='$manual_dial_validation',mute_recordings='$mute_recordings_system',user_admin_redirect='$user_admin_redirect',list_status_modification_confirmation='$list_status_modification_confirmation',sip_event_logging='$sip_event_logging_system',call_quota_lead_ranking='$call_quota_lead_ranking_system',enable_second_script='$enable_second_script',enable_first_webform='$enable_first_webform',recording_buttons='$recording_buttons',opensips_cid_name='$opensips_cid_name_system',require_password_length='$require_password_length',user_account_emails='$user_account_emails',outbound_cid_any='$outbound_cid_any',entries_per_page='$entries_per_page',browser_call_alerts='$browser_call_alerts',queuemetrics_pausereason='$queuemetrics_pausereason',inbound_answer_config='$inbound_answer_config',enable_international_dncs='$enable_international_dncs',web_loader_phone_strip='$web_loader_phone_strip',manual_dial_phone_strip='$manual_dial_phone_strip',daily_call_count_limit='$daily_call_count_limit',allow_shared_dial='$allow_shared_dial',agent_search_method='$agent_search_method_system',phone_defaults_container='$phone_defaults_container',qc_claim_limit='$qc_claim_limit',qc_expire_days='$qc_expire_days',two_factor_auth_hours='$two_factor_auth_hours',two_factor_container='$two_factor_container',agent_hidden_sound='$agent_hidden_sound',agent_hidden_sound_volume='$agent_hidden_sound_volume',agent_hidden_sound_seconds='$agent_hidden_sound_seconds',agent_screen_timer='$agent_screen_timer',call_limit_24hour='$call_limit_24hour',allowed_sip_stacks='$allowed_sip_stacks',agent_hide_hangup='$agent_hide_hangup',allow_web_debug='$allow_web_debug',max_logged_in_agents='$max_logged_in_agents',user_codes_admin='$user_codes_admin',login_kickall='$login_kickall',abandon_check_queue='$abandon_check_queue',agent_notifications='$agent_notifications',demographic_quotas='$demographic_quotas_system',log_latency_gaps='$log_latency_gaps',inbound_credits='$inbound_credits',weekday_resets='$weekday_resets',two_factor_auth_agent_hours='$two_factor_auth_agent_hours',hopper_hold_inserts='$hopper_hold_inserts',coldstorage_server_ip='$coldstorage_server_ip',coldstorage_dbname='$coldstorage_dbname',coldstorage_login='$coldstorage_login',coldstorage_pass='$coldstorage_pass',coldstorage_port='$coldstorage_port',enhanced_agent_monitoring='$enhanced_agent_monitoring',agent_hide_dial_fail='$agent_hide_dial_fail',agent_man_dial_filter='$agent_man_dial_filter',agent_3way_dial_filter='$agent_3way_dial_filter',stereo_recording='$stereo_recording',recording_dtmf_detection='$recording_dtmf_detection',recording_dtmf_muting='$recording_dtmf_muting',stereo_parallel_recording='$stereo_parallel_recording',db_crashed_tables_check='$db_crashed_tables_check',xfer_min_container='$xfer_min_container',max_inbound_auto_reenable='$max_inbound_auto_reenable',amd_status_map='$amd_status_map'$custom_dialplanSQL;";
 			$rslt=mysql_to_mysqli($stmt, $link);
 			$update_main_rows=mysqli_affected_rows($link);
 			if ($DB) {echo "$update_main_rows|$stmt|\n";}
@@ -21831,6 +23375,7 @@ if ($ADD==411111111111111)
 			if ( ($meetme_enter_login_filename != $SSmeetme_enter_login_filename) or ($meetme_enter_leave3way_filename != $SSmeetme_enter_leave3way_filename) )
 				{$reload_dialplan_on_servers=1;}
 
+			$stmtB=''; $stmtC='';
 			if ($reload_dialplan_on_servers > 0)
 				{
 				$stmtB="UPDATE system_settings set reload_timestamp=NOW();";
@@ -23674,8 +25219,8 @@ if ($ADD==66)
 					$row=mysqli_fetch_row($rslt);
 
 					$auto_alt_dial_statuses = preg_replace("/\s$status\s/i", " ",$row[0]);
-					$stmt="UPDATE vicidial_campaigns set auto_alt_dial_statuses='$auto_alt_dial_statuses',campaign_changedate='$SQLdate' where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
-					$rslt=mysql_to_mysqli($stmt, $link);
+					$stmtB="UPDATE vicidial_campaigns set auto_alt_dial_statuses='$auto_alt_dial_statuses',campaign_changedate='$SQLdate' where campaign_id='$campaign_id' $LOGallowed_campaignsSQL;";
+					$rslt=mysql_to_mysqli($stmtB, $link);
 
 					### LOG INSERTION Admin Log Table ###
 					$SQL_log = "$stmt|$stmtB|";
@@ -25680,159 +27225,185 @@ if ($ADD==3)
 
 		$stmt="SELECT user_id,user,pass,full_name,user_level,user_group,phone_login,phone_pass,delete_users,delete_user_groups,delete_lists,delete_campaigns,delete_ingroups,delete_remote_agents,load_leads,campaign_detail,ast_admin_access,ast_delete_phones,delete_scripts,modify_leads,hotkeys_active,change_agent_campaign,agent_choose_ingroups,closer_campaigns,scheduled_callbacks,agentonly_callbacks,agentcall_manual,vicidial_recording,vicidial_transfers,delete_filters,alter_agent_interface_options,closer_default_blended,delete_call_times,modify_call_times,modify_users,modify_campaigns,modify_lists,modify_scripts,modify_filters,modify_ingroups,modify_usergroups,modify_remoteagents,modify_servers,view_reports,vicidial_recording_override,alter_custdata_override,qc_enabled,qc_user_level,qc_pass,qc_finish,qc_commit,add_timeclock_log,modify_timeclock_log,delete_timeclock_log,alter_custphone_override,vdc_agent_api_access,modify_inbound_dids,delete_inbound_dids,active,alert_enabled,download_lists,agent_shift_enforcement_override,manager_shift_enforcement_override,shift_override_flag,export_reports,delete_from_dnc,email,user_code,territory,allow_alerts,agent_choose_territories,custom_one,custom_two,custom_three,custom_four,custom_five,voicemail_id,agent_call_log_view_override,callcard_admin,agent_choose_blended,realtime_block_user_info,custom_fields_modify,force_change_password,agent_lead_search_override,modify_shifts,modify_phones,modify_carriers,modify_labels,modify_statuses,modify_voicemail,modify_audiostore,modify_moh,modify_tts,preset_contact_search,modify_contacts,modify_same_user_level,admin_hide_lead_data,admin_hide_phone_data,agentcall_email,modify_email_accounts,failed_login_count,last_login_date,last_ip,alter_admin_interface_options,max_inbound_calls,modify_custom_dialplans,wrapup_seconds_override,modify_languages,selected_language,user_choose_language,ignore_group_on_search,api_list_restrict,api_allowed_functions,lead_filter_id,agentcall_chat,admin_cf_show_hidden,user_hide_realtime,access_recordings,modify_colors,user_nickname,user_new_lead_limit,api_only_user,modify_auto_reports,modify_ip_lists,ignore_ip_list,ready_max_logout,export_gdpr_leads,pause_code_approval,max_hopper_calls,max_hopper_calls_hour,mute_recordings,hide_call_log_info,next_dial_my_callbacks,user_admin_redirect_url,max_inbound_filter_enabled,max_inbound_filter_statuses,max_inbound_filter_ingroups,max_inbound_filter_min_sec,status_group_id,mobile_number,two_factor_override,manual_dial_filter,user_location,download_invalid_files,user_group_two,failed_login_attempts_today,failed_login_count_today,failed_last_ip_today,failed_last_type_today,modify_dial_prefix,inbound_credits,hci_enabled,manual_dial_lead_id,modify_settings_containers from vicidial_users where user='$user' $LOGadmin_viewable_groupsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-		$user_id =				$row[0];
-		$user =					$row[1];
-		$pass =					$row[2];
-		$full_name =			$row[3];
-		$user_level =			$row[4];
-		$user_group =			$row[5];
-		$phone_login =			$row[6];
-		$phone_pass =			$row[7];
-		$delete_users =			$row[8];
-		$delete_user_groups =	$row[9];
-		$delete_lists =			$row[10];
-		$delete_campaigns =		$row[11];
-		$delete_ingroups =		$row[12];
-		$delete_remote_agents =	$row[13];
-		$load_leads =			$row[14];
-		$campaign_detail =		$row[15];
-		$ast_admin_access =		$row[16];
-		$ast_delete_phones =	$row[17];
-		$delete_scripts =		$row[18];
-		$modify_leads =			$row[19];
-		$hotkeys_active =		$row[20];
-		$change_agent_campaign =$row[21];
-		$agent_choose_ingroups =$row[22];
-		$scheduled_callbacks =	$row[24];
-		$agentonly_callbacks =	$row[25];
-		$agentcall_manual =		$row[26];
-		$vicidial_recording =	$row[27];
-		$vicidial_transfers =	$row[28];
-		$delete_filters =		$row[29];
-		$alter_agent_interface_options =$row[30];
-		$closer_default_blended =		$row[31];
-		$delete_call_times =	$row[32];
-		$modify_call_times =	$row[33];
-		$modify_users =			$row[34];
-		$modify_campaigns =		$row[35];
-		$modify_lists =			$row[36];
-		$modify_scripts =		$row[37];
-		$modify_filters =		$row[38];
-		$modify_ingroups =		$row[39];
-		$modify_usergroups =	$row[40];
-		$modify_remoteagents =	$row[41];
-		$modify_servers =		$row[42];
-		$view_reports =			$row[43];
-		$vicidial_recording_override =	$row[44];
-		$alter_custdata_override = $row[45];
-		$qc_enabled =			$row[46];
-		$qc_user_level =		$row[47];
-		$qc_pass =				$row[48];
-		$qc_finish =			$row[49];
-		$qc_commit =			$row[50];
-		$add_timeclock_log =	$row[51];
-		$modify_timeclock_log = $row[52];
-		$delete_timeclock_log = $row[53];
-		$alter_custphone_override = $row[54];
-		$vdc_agent_api_access = $row[55];
-		$modify_inbound_dids =	$row[56];
-		$delete_inbound_dids =	$row[57];
-		$active =				$row[58];
-		$alert_enabled =		$row[59];
-		$download_lists =		$row[60];
-		$agent_shift_enforcement_override =	$row[61];
-		$manager_shift_enforcement_override =	$row[62];
-		$export_reports =		$row[64];
-		$delete_from_dnc =		$row[65];
-		$email =				$row[66];
-		$user_code =			$row[67];
-		$territory =			$row[68];
-		$allow_alerts =			$row[69];
-		$agent_choose_territories = $row[70];
-		$user_custom_one =		$row[71];
-		$user_custom_two =		$row[72];
-		$user_custom_three =	$row[73];
-		$user_custom_four =		$row[74];
-		$user_custom_five =		$row[75];
-		$voicemail_id =			$row[76];
-		$agent_call_log_view_override = $row[77];
-		$callcard_admin =		$row[78];
-		$agent_choose_blended = $row[79];
-		$realtime_block_user_info = $row[80];
-		$custom_fields_modify =	$row[81];
-		$force_change_password = $row[82];
-		$agent_lead_search_override = $row[83];
-		$modify_shifts =		$row[84];
-		$modify_phones =		$row[85];
-		$modify_carriers =		$row[86];
-		$modify_labels =		$row[87];
-		$modify_statuses =		$row[88];
-		$modify_voicemail =		$row[89];
-		$modify_audiostore =	$row[90];
-		$modify_moh =			$row[91];
-		$modify_tts =			$row[92];
-		$preset_contact_search =	$row[93];
-		$modify_contacts =		$row[94];
-		$modify_same_user_level =	$row[95];
-		$admin_hide_lead_data =	$row[96];
-		$admin_hide_phone_data =	$row[97];
-		$agentcall_email =	$row[98];
-		$modify_email_accounts =	$row[99];
-		$failed_login_count =	$row[100];
-		$last_login_date =		$row[101];
-		$last_ip =				$row[102];
-		$alter_admin_interface_options = $row[103];
-		$max_inbound_calls =	$row[104];
-		$modify_custom_dialplans =	$row[105];
-		$wrapup_seconds_override = $row[106];
-		$modify_languages =		$row[107];
-		$selected_language =	$row[108];
-		$user_choose_language = $row[109];
-		$ignore_group_on_search = $row[110];
-		$api_list_restrict =	$row[111];
-		$api_allowed_functions = $row[112];
-		$lead_filter_id =		$row[113];
-		$agentcall_chat =		$row[114];
-		$admin_cf_show_hidden = $row[115];
-		$user_hide_realtime =	$row[116];
-		$access_recordings =	$row[117];
-		$modify_colors =		$row[118];
-		$user_nickname =		$row[119];
-		$user_new_lead_limit =	$row[120];
-		$api_only_user =		$row[121];
-		$modify_auto_reports =	$row[122];
-		$modify_ip_lists =		$row[123];
-		$ignore_ip_list =		$row[124];
-		$ready_max_logout =		$row[125];
-		$export_gdpr_leads =	$row[126];
-		$pause_code_approval =	$row[127];
-		$max_hopper_calls =		$row[128];
-		$max_hopper_calls_hour =$row[129];
-		$mute_recordings =		$row[130];
-		$hide_call_log_info =	$row[131];
-		$next_dial_my_callbacks=$row[132];
-		$user_admin_redirect_url=$row[133];
-		$max_inbound_filter_enabled=$row[134];
-		$max_inbound_filter_statuses=$row[135];
-		$max_inbound_filter_ingroups=$row[136];
-		$max_inbound_filter_min_sec=$row[137];
-		$status_group_id =		$row[138];
-		$mobile_number =		$row[139];
-		$two_factor_override =	$row[140];
-		$manual_dial_filter =	$row[141];
-		$user_location =		$row[142];
-		$download_invalid_files=$row[143];
-		$user_group_two =		$row[144];
-		$failed_login_attempts_today=$row[145];
-		$failed_login_count_today=$row[146];
-		$failed_last_ip_today = $row[147];
-		$failed_last_type_today=$row[148];
-		$modify_dial_prefix =	$row[149];
-		$inbound_credits =		$row[150];
-		$hci_enabled =			$row[151];
-		$manual_dial_lead_id =	$row[152];
-		$modify_settings_containers = $row[153];
+		if (mysqli_num_rows($rslt)>0)
+			{
+			$row=mysqli_fetch_row($rslt);
+			$user_id =				$row[0];
+			$user =					$row[1];
+			$pass =					$row[2];
+			$full_name =			$row[3];
+			$user_level =			$row[4];
+			$user_group =			$row[5];
+			$phone_login =			$row[6];
+			$phone_pass =			$row[7];
+			$delete_users =			$row[8];
+			$delete_user_groups =	$row[9];
+			$delete_lists =			$row[10];
+			$delete_campaigns =		$row[11];
+			$delete_ingroups =		$row[12];
+			$delete_remote_agents =	$row[13];
+			$load_leads =			$row[14];
+			$campaign_detail =		$row[15];
+			$ast_admin_access =		$row[16];
+			$ast_delete_phones =	$row[17];
+			$delete_scripts =		$row[18];
+			$modify_leads =			$row[19];
+			$hotkeys_active =		$row[20];
+			$change_agent_campaign =$row[21];
+			$agent_choose_ingroups =$row[22];
+			$scheduled_callbacks =	$row[24];
+			$agentonly_callbacks =	$row[25];
+			$agentcall_manual =		$row[26];
+			$vicidial_recording =	$row[27];
+			$vicidial_transfers =	$row[28];
+			$delete_filters =		$row[29];
+			$alter_agent_interface_options =$row[30];
+			$closer_default_blended =		$row[31];
+			$delete_call_times =	$row[32];
+			$modify_call_times =	$row[33];
+			$modify_users =			$row[34];
+			$modify_campaigns =		$row[35];
+			$modify_lists =			$row[36];
+			$modify_scripts =		$row[37];
+			$modify_filters =		$row[38];
+			$modify_ingroups =		$row[39];
+			$modify_usergroups =	$row[40];
+			$modify_remoteagents =	$row[41];
+			$modify_servers =		$row[42];
+			$view_reports =			$row[43];
+			$vicidial_recording_override =	$row[44];
+			$alter_custdata_override = $row[45];
+			$qc_enabled =			$row[46];
+			$qc_user_level =		$row[47];
+			$qc_pass =				$row[48];
+			$qc_finish =			$row[49];
+			$qc_commit =			$row[50];
+			$add_timeclock_log =	$row[51];
+			$modify_timeclock_log = $row[52];
+			$delete_timeclock_log = $row[53];
+			$alter_custphone_override = $row[54];
+			$vdc_agent_api_access = $row[55];
+			$modify_inbound_dids =	$row[56];
+			$delete_inbound_dids =	$row[57];
+			$active =				$row[58];
+			$alert_enabled =		$row[59];
+			$download_lists =		$row[60];
+			$agent_shift_enforcement_override =	$row[61];
+			$manager_shift_enforcement_override =	$row[62];
+			$export_reports =		$row[64];
+			$delete_from_dnc =		$row[65];
+			$email =				$row[66];
+			$user_code =			$row[67];
+			$territory =			$row[68];
+			$allow_alerts =			$row[69];
+			$agent_choose_territories = $row[70];
+			$user_custom_one =		$row[71];
+			$user_custom_two =		$row[72];
+			$user_custom_three =	$row[73];
+			$user_custom_four =		$row[74];
+			$user_custom_five =		$row[75];
+			$voicemail_id =			$row[76];
+			$agent_call_log_view_override = $row[77];
+			$callcard_admin =		$row[78];
+			$agent_choose_blended = $row[79];
+			$realtime_block_user_info = $row[80];
+			$custom_fields_modify =	$row[81];
+			$force_change_password = $row[82];
+			$agent_lead_search_override = $row[83];
+			$modify_shifts =		$row[84];
+			$modify_phones =		$row[85];
+			$modify_carriers =		$row[86];
+			$modify_labels =		$row[87];
+			$modify_statuses =		$row[88];
+			$modify_voicemail =		$row[89];
+			$modify_audiostore =	$row[90];
+			$modify_moh =			$row[91];
+			$modify_tts =			$row[92];
+			$preset_contact_search =	$row[93];
+			$modify_contacts =		$row[94];
+			$modify_same_user_level =	$row[95];
+			$admin_hide_lead_data =	$row[96];
+			$admin_hide_phone_data =	$row[97];
+			$agentcall_email =	$row[98];
+			$modify_email_accounts =	$row[99];
+			$failed_login_count =	$row[100];
+			$last_login_date =		$row[101];
+			$last_ip =				$row[102];
+			$alter_admin_interface_options = $row[103];
+			$max_inbound_calls =	$row[104];
+			$modify_custom_dialplans =	$row[105];
+			$wrapup_seconds_override = $row[106];
+			$modify_languages =		$row[107];
+			$selected_language =	$row[108];
+			$user_choose_language = $row[109];
+			$ignore_group_on_search = $row[110];
+			$api_list_restrict =	$row[111];
+			$api_allowed_functions = $row[112];
+			$lead_filter_id =		$row[113];
+			$agentcall_chat =		$row[114];
+			$admin_cf_show_hidden = $row[115];
+			$user_hide_realtime =	$row[116];
+			$access_recordings =	$row[117];
+			$modify_colors =		$row[118];
+			$user_nickname =		$row[119];
+			$user_new_lead_limit =	$row[120];
+			$api_only_user =		$row[121];
+			$modify_auto_reports =	$row[122];
+			$modify_ip_lists =		$row[123];
+			$ignore_ip_list =		$row[124];
+			$ready_max_logout =		$row[125];
+			$export_gdpr_leads =	$row[126];
+			$pause_code_approval =	$row[127];
+			$max_hopper_calls =		$row[128];
+			$max_hopper_calls_hour =$row[129];
+			$mute_recordings_users =		$row[130];
+			$hide_call_log_info_users =	$row[131];
+			$next_dial_my_callbacks=$row[132];
+			$user_admin_redirect_url=$row[133];
+			$max_inbound_filter_enabled=$row[134];
+			$max_inbound_filter_statuses=$row[135];
+			$max_inbound_filter_ingroups=$row[136];
+			$max_inbound_filter_min_sec=$row[137];
+			$status_group_id =		$row[138];
+			$mobile_number =		$row[139];
+			$two_factor_override =	$row[140];
+			$manual_dial_filter =	$row[141];
+			$user_location =		$row[142];
+			$download_invalid_files=$row[143];
+			$user_group_two =		$row[144];
+			$failed_login_attempts_today=$row[145];
+			$failed_login_count_today=$row[146];
+			$failed_last_ip_today = $row[147];
+			$failed_last_type_today=$row[148];
+			$modify_dial_prefix =	$row[149];
+			$inbound_credits =		$row[150];
+			$hci_enabled =			$row[151];
+			$manual_dial_lead_id =	$row[152];
+			$modify_settings_containers = $row[153];
+			}
+		else
+			{
+			# Need to declare these to avoid errors
+			$alert_enabled=0;
+			$last_login_date="0000-00-00 00:00:00";
+			$failed_login_count=0;
+			$failed_login_count_today=0;
+			$last_ip="";
+			$failed_last_type_today="";
+			$failed_login_attempts_today="";
+			# $USER_inbound_calls_today=0;
+			# $USER_inbound_calls_today_filtered=0;
+			# $USER_hopper_calls_today=0;
+			# $USER_hopper_calls_hour=0;
+			$max_inbound_filter_statuses="";
+			$max_inbound_filter_ingroups="";
+			$user_custom_one="";
+			$user_custom_two="";
+			$user_custom_three="";
+			$user_custom_four="";
+			$user_custom_five="";
+			$user_admin_redirect_url="";
+			}
 
 		##### latest 2FA auth record data
 		$last_auth='';
@@ -26237,11 +27808,11 @@ if ($ADD==3)
 
 				if ($SSmute_recordings > 0)
 					{
-					echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Mute Recordings Override").": </td><td align=left><select size=1 name=mute_recordings><option value=\"DISABLED\">"._QXZ("DISABLED")."</option><option value=\"Y\">"._QXZ("Y")."</option><option value=\"N\">"._QXZ("N")."</option><option SELECTED value=\"$mute_recordings\">"._QXZ("$mute_recordings")."</option></select>$NWB#users-mute_recordings$NWE</td></tr>\n";
+					echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Mute Recordings Override").": </td><td align=left><select size=1 name=mute_recordings_users><option value=\"DISABLED\">"._QXZ("DISABLED")."</option><option value=\"Y\">"._QXZ("Y")."</option><option value=\"N\">"._QXZ("N")."</option><option SELECTED value=\"$mute_recordings_users\">"._QXZ("$mute_recordings_users")."</option></select>$NWB#users-mute_recordings$NWE</td></tr>\n";
 					}
 				else
 					{
-					echo "<tr bgcolor=#$SSstd_row4_background><td colspan=2><input type=hidden name=mute_recordings value=\"$mute_recordings\"></td></tr>\n";
+					echo "<tr bgcolor=#$SSstd_row4_background><td colspan=2><input type=hidden name=mute_recordings_users value=\"$mute_recordings_users\"></td></tr>\n";
 					}
 
 				echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Agent Alter Customer Data Override").": </td><td align=left><select size=1 name=alter_custdata_override><option value='NOT_ACTIVE'>"._QXZ("NOT_ACTIVE")."</option><option value='ALLOW_ALTER'>"._QXZ("ALLOW_ALTER")."</option><option value='$alter_custdata_override'  SELECTED>"._QXZ("$alter_custdata_override")."</option></select>$NWB#users-alter_custdata_override$NWE</td></tr>\n";
@@ -26250,14 +27821,16 @@ if ($ADD==3)
 				echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Agent Shift Enforcement Override").": </td><td align=left><select size=1 name=agent_shift_enforcement_override><option value='DISABLED'>"._QXZ("DISABLED")."</option><option value='OFF'>"._QXZ("OFF")."</option><option value='START'>"._QXZ("START")."</option><option value='ALL'>"._QXZ("ALL")."</option><option value='$agent_shift_enforcement_override' SELECTED>"._QXZ("$agent_shift_enforcement_override")."</option></select>$NWB#users-agent_shift_enforcement_override$NWE</td></tr>\n";
 				echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Agent Call Log View Override").": </td><td align=left><select size=1 name=agent_call_log_view_override><option value='DISABLED'>"._QXZ("DISABLED")."</option><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$agent_call_log_view_override' SELECTED>"._QXZ("$agent_call_log_view_override")."</option></select>$NWB#users-agent_call_log_view_override$NWE</td></tr>\n";
 
-				echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Campaign Hide Call Log Override").": </td><td align=left><select size=1 name=hide_call_log_info><option value='DISABLED'>"._QXZ("DISABLED")."</option><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='SHOW_1'>"._QXZ("SHOW")."_1</option><option value='SHOW_2'>"._QXZ("SHOW")."_2</option><option value='SHOW_3'>"._QXZ("SHOW")."_3</option><option value='SHOW_4'>"._QXZ("SHOW")."_4</option><option value='SHOW_5'>"._QXZ("SHOW")."_5</option><option value='SHOW_6'>"._QXZ("SHOW")."_6</option><option value='SHOW_7'>"._QXZ("SHOW")."_7</option><option value='SHOW_8'>"._QXZ("SHOW")."_8</option><option value='SHOW_9'>"._QXZ("SHOW")."_9</option><option value='SHOW_10'>"._QXZ("SHOW")."_10</option><option value='$hide_call_log_info' SELECTED>"._QXZ("$hide_call_log_info")."</option></select>$NWB#users-hide_call_log_info$NWE</td></tr>\n";
+				echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Campaign Hide Call Log Override").": </td><td align=left><select size=1 name=hide_call_log_info_users><option value='DISABLED'>"._QXZ("DISABLED")."</option><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='SHOW_1'>"._QXZ("SHOW")."_1</option><option value='SHOW_2'>"._QXZ("SHOW")."_2</option><option value='SHOW_3'>"._QXZ("SHOW")."_3</option><option value='SHOW_4'>"._QXZ("SHOW")."_4</option><option value='SHOW_5'>"._QXZ("SHOW")."_5</option><option value='SHOW_6'>"._QXZ("SHOW")."_6</option><option value='SHOW_7'>"._QXZ("SHOW")."_7</option><option value='SHOW_8'>"._QXZ("SHOW")."_8</option><option value='SHOW_9'>"._QXZ("SHOW")."_9</option><option value='SHOW_10'>"._QXZ("SHOW")."_10</option><option value='$hide_call_log_info_users' SELECTED>"._QXZ("$hide_call_log_info_users")."</option></select>$NWB#users-hide_call_log_info$NWE</td></tr>\n";
 				
-				echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Agent Lead Search Override").": </td><td align=left><select size=1 name=agent_lead_search><option value='DISABLED'>"._QXZ("DISABLED")."</option><option value='ENABLED'>"._QXZ("ENABLED")."</option><option value='LIVE_CALL_INBOUND'>"._QXZ("LIVE_CALL_INBOUND")."</option><option value='LIVE_CALL_INBOUND_AND_MANUAL'>"._QXZ("LIVE_CALL_INBOUND_AND_MANUAL")."</option><option value='NOT_ACTIVE'>"._QXZ("NOT_ACTIVE")."</option><option value='$agent_lead_search_override' SELECTED>"._QXZ("$agent_lead_search_override")."</option></select>$NWB#users-agent_lead_search_override$NWE</td></tr>\n";
+				echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Agent Lead Search Override").": </td><td align=left><select size=1 name=agent_lead_search><option value='DISABLED'>"._QXZ("DISABLED")."</option><option value='ENABLED'>"._QXZ("ENABLED")."</option><option value='LIVE_CALL_INBOUND'>"._QXZ("LIVE_CALL_INBOUND")."</option><option value='LIVE_CALL_INBOUND_AND_MANUAL'>"._QXZ("LIVE_CALL_INBOUND_AND_MANUAL")."</option><option value='NOT_ACTIVE'>"._QXZ("NOT_ACTIVE")."</option>";
+				if (isset($agent_lead_search_override)) {echo "<option value='$agent_lead_search_override' SELECTED>"._QXZ("$agent_lead_search_override")."</option>";}
+				echo "</select>$NWB#users-agent_lead_search_override$NWE</td></tr>\n";
 
 				echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href=\"$PHP_SELF?ADD=31111111&lead_filter_id=$lead_filter_id\">"._QXZ("Lead Filter")."</a>: </td><td align=left>";
 				echo "<select size=1 name=lead_filter_id>\n";
-				echo "$filters_list";
-				echo "<option selected value=\"$lead_filter_id\">".(preg_match('/^NONE$/', $lead_filter_id) ? _QXZ("$lead_filter_id") : $lead_filter_id)." - $filtername_list[$lead_filter_id]</option>\n";
+				if (isset($filters_list)) {echo "$filters_list";}
+				echo "<option selected value=\"$lead_filter_id\">"._QXZ("$lead_filter_id").(preg_match('/^NONE$/', $lead_filter_id) || !isset($filtername_list["$lead_filter_id"]) ? "" : " - $filtername_list[$lead_filter_id]")."</option>\n";
 				echo "</select>$NWB#users-lead_filter_id$NWE <i>"._QXZ("only enabled with no-hopper manual dialing")."</i>";
 				echo "</td></tr>\n";
 
@@ -26421,10 +27994,10 @@ if ($ADD==3)
 				### END get status group listings for dynamic pulldown menu ###
 
 
-				if (strlen($campaign_js_rank) < 2) {$campaign_js_rank="''";}
-				if (strlen($campaign_js_grade) < 2) {$campaign_js_grade="''";}
-				if (strlen($ingroup_js_rank) < 2) {$ingroup_js_rank="''";}
-				if (strlen($ingroup_js_grade) < 2) {$ingroup_js_grade="''";}
+				if (!isset($campaign_js_rank) || strlen($campaign_js_rank) < 2) {$campaign_js_rank="''"; $campaign_js_rank_ct=0;}
+				if (!isset($campaign_js_grade) || strlen($campaign_js_grade) < 2) {$campaign_js_grade="''"; $campaign_js_grade_ct=0;}
+				if (!isset($ingroup_js_rank) || strlen($ingroup_js_rank) < 2) {$ingroup_js_rank="''"; $ingroup_js_rank_ct=0;}
+				if (!isset($ingroup_js_grade) || strlen($ingroup_js_grade) < 2) {$ingroup_js_grade="''"; $ingroup_js_grade_ct=0;}
 				echo "<script language=\"JavaScript\">\n";
 				echo "ARYcampaign_js_rank = new Array($campaign_js_rank);\n";
 				echo "ARYcampaign_js_grade = new Array($campaign_js_grade);\n";
@@ -26639,6 +28212,7 @@ if ($ADD==3)
 				echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("Modify Call Times").": </td><td align=left><select size=1 name=modify_call_times><option>0</option><option>1</option><option SELECTED>$modify_call_times</option></select>$NWB#users-modify_call_times$NWE</td></tr>\n";
 				echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("Delete Call Times").": </td><td align=left><select size=1 name=delete_call_times><option>0</option><option>1</option><option SELECTED>$delete_call_times</option></select>$NWB#users-delete_call_times$NWE</td></tr>\n";
 				echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("Modify Servers").": </td><td align=left><select size=1 name=modify_servers><option>0</option><option>1</option><option SELECTED>$modify_servers</option></select>$NWB#users-modify_servers$NWE</td></tr>\n";
+
 				echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("Modify Shifts").": </td><td align=left><select size=1 name=modify_shifts><option>0</option><option>1</option><option SELECTED>$modify_shifts</option></select>$NWB#users-modify_sections$NWE</td></tr>\n";
 				echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("Modify Phones").": </td><td align=left><select size=1 name=modify_phones><option>0</option><option>1</option><option SELECTED>$modify_phones</option></select>$NWB#users-modify_phones$NWE</td></tr>\n";
 				echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("Modify Carriers").": </td><td align=left><select size=1 name=modify_carriers><option>0</option><option>1</option><option SELECTED>$modify_carriers</option></select>$NWB#users-modify_sections$NWE</td></tr>\n";
@@ -26865,7 +28439,7 @@ if ($ADD==31)
 		$lead_filter_id = $row[35];
 			if ($lead_filter_id=='') {$lead_filter_id='NONE';}
 		$drop_call_seconds = $row[36];
-		$drop_action = $row[37];
+		$drop_action_campaigns = $row[37];
 		$safe_harbor_exten = $row[38];
 		$display_dialable_count = $row[39];
 		$wrapup_seconds = $row[40];
@@ -27106,20 +28680,20 @@ if ($ADD==31)
 		$three_way_volume_buttons=$row[276];
 		$callback_dnc=$row[277];
 		$manual_dial_validation=$row[278];
-		$mute_recordings=$row[279];
+		$mute_recordings_campaigns=$row[279];
 		$auto_active_list_new=$row[280];
-		$call_quota_lead_ranking=$row[281];
+		$call_quota_lead_ranking_campaigns=$row[281];
 		$call_quota_process_running=$row[282];
-		$sip_event_logging=$row[283];
+		$sip_event_logging_campaigns=$row[283];
 		$campaign_script_two=$row[284];
 		$leave_vm_no_dispo=$row[285];
 		$leave_vm_message_group_id=$row[286];
 		$dial_timeout_lead_container=$row[287];
 		$amd_type=$row[288];
 		$vmm_daily_limit=$row[289];
-		$opensips_cid_name=$row[290];
+		$opensips_cid_name_campaigns=$row[290];
 		$amd_agent_route_options=$row[291];
-		$browser_alert_sound=$row[292];
+		$browser_alert_sound_campaigns=$row[292];
 		$browser_alert_volume=$row[293];
 		$three_way_record_stop_exception=$row[294];
 		$pause_max_exceptions=$row[295];
@@ -27158,7 +28732,7 @@ if ($ADD==31)
 		$agent_hangup_value=$row[328];
 		$agent_hangup_ig_override=$row[329];
 		$show_confetti=$row[330];
-		$demographic_quotas=$row[331];
+		$demographic_quotas_campaigns=$row[331];
 		$demographic_quotas_container=$row[332];
 		$demographic_quotas_rerank=$row[333];
 		$demographic_quotas_list_resets=$row[334];
@@ -27396,6 +28970,8 @@ if ($ADD==31)
 	$dial_statuses_list='';
 	$qc_statuses_list='';
 	$survey_ni_status_list='';
+	$LRstatuses_list='';
+	$HKstatuses_list='';
 	$o=0;
 	while ($statuses_to_print > $o) 
 		{
@@ -27464,6 +29040,8 @@ if ($ADD==31)
 	if ($DB) {echo "$Cstatuses_to_print|$stmt|\n";}
 
 	$o=0;
+	$LRstatuses_list='';
+	$HKstatuses_list='';
 	while ($Cstatuses_to_print > $o) 
 		{
 		$rowx=mysqli_fetch_row($rslt);
@@ -27659,7 +29237,7 @@ if ($ADD==31)
 				{
 				if (file_exists('options.php'))
 					{require('options.php');}
-				if ($camp_lead_order_random > 0)
+				if (isset($camp_lead_order_random) && $camp_lead_order_random > 0)
 					{
 					echo "<select size=1 name=lead_order>
 					<option value='$lead_order' SELECTED>"._QXZ("$lead_order")."</option>
@@ -27920,7 +29498,7 @@ if ($ADD==31)
 				{
 				echo "<select size=1 name=lead_filter_id>\n";
 				echo "$filters_list";
-				echo "<option selected value=\"$lead_filter_id\">"._QXZ("$lead_filter_id")." - $filtername_list[$lead_filter_id]</option>\n";
+				echo "<option selected value=\"$lead_filter_id\">"._QXZ("$lead_filter_id").($lead_filter_id!="NONE" ? " - $filtername_list[$lead_filter_id]" : "")."</option>\n";
 				echo "</select>$NWB#campaigns-lead_filter_id$NWE";
 				}
 			echo "</td></tr>\n";
@@ -27940,7 +29518,7 @@ if ($ADD==31)
 					if (mb_strlen($rowx[1],'utf-8')>40)
 						{$rowx[1] = mb_substr($rowx[1],0,40,'utf-8') . '...';}
 					$call_quota_container_menu .= "<option ";
-					if ($call_quota_lead_ranking == "$rowx[0]") 
+					if ($call_quota_lead_ranking_campaigns == "$rowx[0]") 
 						{
 						$call_quota_container_menu .= "SELECTED ";
 						$cqlr_selected++;
@@ -27953,14 +29531,14 @@ if ($ADD==31)
 
 				echo "<tr bgcolor=#$SSstd_row3_background><td align=right>";
 				if ($cqlr_selected > 0)
-					{echo "<a href=\"$PHP_SELF?ADD=392111111111&container_id=$call_quota_lead_ranking\">"._QXZ("Call Quota Lead Ranking")."</a>";}
+					{echo "<a href=\"$PHP_SELF?ADD=392111111111&container_id=$call_quota_lead_ranking_campaigns\">"._QXZ("Call Quota Lead Ranking")."</a>";}
 				else
 					{echo _QXZ("Call Quota Lead Ranking");}
-				echo ": </td><td align=left><select size=1 name=call_quota_lead_ranking><option value='DISABLED'>"._QXZ("DISABLED")."</option>$call_quota_container_menu</select>$NWB#campaigns-call_quota_lead_ranking$NWE</td></tr>\n";
+				echo ": </td><td align=left><select size=1 name=call_quota_lead_ranking_campaigns><option value='DISABLED'>"._QXZ("DISABLED")."</option>$call_quota_container_menu</select>$NWB#campaigns-call_quota_lead_ranking$NWE</td></tr>\n";
 				}
 			else
 				{
-				echo "<tr bgcolor=#$SSstd_row4_background><td colspan=2><input type=hidden name=auto_active_list_new value='$auto_active_list_new'><input type=hidden name=call_quota_lead_ranking value='$call_quota_lead_ranking'></td></tr>\n";
+				echo "<tr bgcolor=#$SSstd_row4_background><td colspan=2><input type=hidden name=auto_active_list_new value='$auto_active_list_new'><input type=hidden name=call_quota_lead_ranking_campaigns value='$call_quota_lead_ranking_campaigns'></td></tr>\n";
 				}
 
 			if ($SSdemographic_quotas > 0)
@@ -27988,14 +29566,14 @@ if ($ADD==31)
 					}
 				
 				$DQdebug = " &nbsp; <font size=1><a href=\"campaign_debug.php?group=$campaign_id\">"._QXZ("DQ Debug")."</a> | <a href=\"demographic_quotas_report.php?group=$campaign_id\">"._QXZ("DQ Report")."</a></font>";
-				if ($demographic_quotas == 'INVALID')
+				if ($demographic_quotas_campaigns == 'INVALID')
 					{$DQdebug = " &nbsp; <font color=red><b>"._QXZ("DQ configuration invalid")."<b></font>$DQdebug";}
-				if ($demographic_quotas == 'COMPLETE')
+				if ($demographic_quotas_campaigns == 'COMPLETE')
 					{$DQdebug = " &nbsp; <b>"._QXZ("DQ goals have been met")."<b>$DQdebug";}
 
-				echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Demographic Quotas").": </td><td align=left><select size=1 name=demographic_quotas><option value='ENABLED'>"._QXZ("ENABLED")."</option><option value='DISABLED'>"._QXZ("DISABLED")."</option><option value='$demographic_quotas' SELECTED>"._QXZ("$demographic_quotas")."</option></select>$NWB#campaigns-demographic_quotas$NWE $DQdebug</td></tr>\n";
+				echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Demographic Quotas").": </td><td align=left><select size=1 name=demographic_quotas_campaigns><option value='ENABLED'>"._QXZ("ENABLED")."</option><option value='DISABLED'>"._QXZ("DISABLED")."</option><option value='$demographic_quotas_campaigns' SELECTED>"._QXZ("$demographic_quotas_campaigns")."</option></select>$NWB#campaigns-demographic_quotas$NWE $DQdebug</td></tr>\n";
 
-				if ($demographic_quotas == 'COMPLETE')
+				if ($demographic_quotas_campaigns == 'COMPLETE')
 					{
 					echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><font color=red><b>"._QXZ("All Demographic Quota goals have been filled for this campaign")."</b></font></td></tr>\n";
 					}
@@ -28013,7 +29591,7 @@ if ($ADD==31)
 				}
 			else
 				{
-				echo "<tr bgcolor=#$SSstd_row3_background><td colspan=2><input type=hidden name=demographic_quotas value='$demographic_quotas'><input type=hidden name=demographic_quotas_container value='$demographic_quotas_container'><input type=hidden name=demographic_quotas_rerank value='$demographic_quotas_rerank'><input type=hidden name=demographic_quotas_list_resets value='$demographic_quotas_list_resets'></td></tr>\n";
+				echo "<tr bgcolor=#$SSstd_row3_background><td colspan=2><input type=hidden name=demographic_quotas_campaigns value='$demographic_quotas_campaigns'><input type=hidden name=demographic_quotas_container value='$demographic_quotas_container'><input type=hidden name=demographic_quotas_rerank value='$demographic_quotas_rerank'><input type=hidden name=demographic_quotas_list_resets value='$demographic_quotas_list_resets'></td></tr>\n";
 				}
 
 			echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Hopper Drop-Run Trigger").": </td><td align=left><input type=checkbox name=hopper_drop_run_trigger value=\"Y\"> &nbsp; "._QXZ("All Drops").": <input type=checkbox name=hopper_drop_run_trigger_all value=\"A\">$NWB#campaigns-hopper_drop_run_trigger$NWE</td></tr>\n";
@@ -28543,10 +30121,10 @@ if ($ADD==31)
 
 		if ($SSopensips_cid_name == '1')
 			{
-			echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Campaign CID Name").": </td><td align=left><input type=text name=opensips_cid_name size=17 maxlength=15 value=\"$opensips_cid_name\">$NWB#campaigns-opensips_cid_name$NWE\n";
+			echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Campaign CID Name").": </td><td align=left><input type=text name=opensips_cid_name_campaigns size=17 maxlength=15 value=\"$opensips_cid_name_campaigns\">$NWB#campaigns-opensips_cid_name$NWE\n";
 			}
 		else
-			{echo "<tr bgcolor=#$SSstd_row3_background><td align=right><input type=hidden name=opensips_cid_name value=\"$opensips_cid_name\"></td></tr>";}
+			{echo "<tr bgcolor=#$SSstd_row3_background><td align=right><input type=hidden name=opensips_cid_name_campaigns value=\"$opensips_cid_name_campaigns\"></td></tr>";}
 
 		if ($SSoutbound_autodial_active > 0)
 			{
@@ -28585,11 +30163,11 @@ if ($ADD==31)
 
 		if ($SSmute_recordings =='1')
 			{
-			echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Mute Recording Button").": </td><td align=left><select size=1 name=mute_recordings><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$mute_recordings' SELECTED>"._QXZ("$mute_recordings")."</option></select> $NWB#campaigns-mute_recordings$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Mute Recording Button").": </td><td align=left><select size=1 name=mute_recordings_campaigns><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$mute_recordings_campaigns' SELECTED>"._QXZ("$mute_recordings_campaigns")."</option></select> $NWB#campaigns-mute_recordings$NWE</td></tr>\n";
 			}
 		else
 			{
-			echo "<tr bgcolor=#$SSstd_row3_background><td align=right></td><td align=left><input type=hidden name=mute_recordings value='$mute_recordings'></td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row3_background><td align=right></td><td align=left><input type=hidden name=mute_recordings_campaigns value='$mute_recordings_campaigns'></td></tr>\n";
 			}
 
 		if ( ($SSstereo_recording =='1') or ($SSstereo_recording =='2') or ($SSstereo_recording =='3') or ($SSstereo_recording =='4') or ($SSstereo_recording =='5') )
@@ -28653,7 +30231,7 @@ if ($ADD==31)
 
 		echo "<tr bgcolor=#$SSstd_row3_background><td align=right><a href=\"$PHP_SELF?ADD=3111111&script_id=$script_id\">"._QXZ("Script")."</a>: </td><td align=left><select size=1 name=script_id>\n";
 		echo "$scripts_list";
-		echo "<option selected value=\"$script_id\">"._QXZ("$script_id")." - $scriptname_list[$script_id]</option>\n";
+		echo "<option selected value=\"$script_id\">"._QXZ("$script_id").(isset($scriptname_list["$script_id"]) ? "- $scriptname_list[$script_id]" : "")."</option>\n";
 		echo "</select>$NWB#campaigns-campaign_script$NWE\n";
 		$stmt="SELECT count(*) from vicidial_lists where campaign_id='$campaign_id' and agent_script_override != '' and active='Y' $LOGallowed_campaignsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
@@ -28701,7 +30279,7 @@ if ($ADD==31)
 
 		if ($SSbrowser_call_alerts > 0)
 			{
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Agent Browser Call Alert Sound").": </td><td align=left><select size=1 name='browser_alert_sound' id='browser_alert_sound'>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Agent Browser Call Alert Sound").": </td><td align=left><select size=1 name='browser_alert_sound_campaigns' id='browser_alert_sound_campaigns'>\n";
 			$browser_alert_sounds_listARY = explode(',',$browser_alert_sounds_list);
 			$browser_alert_sounds_listARY_ct = count($browser_alert_sounds_listARY);
 			$bas=0;   $bas_output='';
@@ -28712,7 +30290,7 @@ if ($ADD==31)
 				}
 			echo "$bas_output";
 			echo "<option value='---NONE---'>---"._QXZ("NONE")."---</option>";
-			echo "<option value='$browser_alert_sound' selected>"._QXZ("$browser_alert_sound")."</option>";
+			echo "<option value='$browser_alert_sound_campaigns' selected>"._QXZ("$browser_alert_sound_campaigns")."</option>";
 			echo "</select> &nbsp; \n";
 			echo " "._QXZ("volume").": <select size=1 name='browser_alert_volume' id='browser_alert_volume'>";
 			$bav=100;
@@ -28726,7 +30304,7 @@ if ($ADD==31)
 			}
 		else
 			{
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=right></td><td align=left><input type=hidden name=browser_alert_sound value=\"$browser_alert_sound\"><input type=hidden name=browser_alert_volume value=\"$browser_alert_volume\"></td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right></td><td align=left><input type=hidden name=browser_alert_sound_campaigns value=\"$browser_alert_sound_campaigns\"><input type=hidden name=browser_alert_volume value=\"$browser_alert_volume\"></td></tr>\n";
 			}
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Show Confetti").": </td><td align=left><select size=1 name='show_confetti' id='show_confetti'>\n";
@@ -29132,7 +30710,7 @@ if ($ADD==31)
 			{
 			echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Drop Call Seconds").": </td><td align=left><input type=text name=drop_call_seconds size=5 maxlength=2 value=\"$drop_call_seconds\">$NWB#campaigns-drop_call_seconds$NWE</td></tr>\n";
 
-			echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Drop Action").": </td><td align=left><select size=1 name=drop_action><option value='AUDIO'>"._QXZ("AUDIO")."</option><option value='HANGUP'>"._QXZ("HANGUP")."</option><option value='MESSAGE'>"._QXZ("MESSAGE")."</option><option value='VOICEMAIL'>"._QXZ("VOICEMAIL")."</option><option value='VMAIL_NO_INST'>"._QXZ("VMAIL_NO_INST")."</option><option value='IN_GROUP'>"._QXZ("IN_GROUP")."</option><option value='CALLMENU'>"._QXZ("CALLMENU")."</option><option value='$drop_action' SELECTED>"._QXZ("$drop_action")."</option></select>$NWB#campaigns-drop_action$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Drop Action").": </td><td align=left><select size=1 name=drop_action_campaigns><option value='AUDIO'>"._QXZ("AUDIO")."</option><option value='HANGUP'>"._QXZ("HANGUP")."</option><option value='MESSAGE'>"._QXZ("MESSAGE")."</option><option value='VOICEMAIL'>"._QXZ("VOICEMAIL")."</option><option value='VMAIL_NO_INST'>"._QXZ("VMAIL_NO_INST")."</option><option value='IN_GROUP'>"._QXZ("IN_GROUP")."</option><option value='CALLMENU'>"._QXZ("CALLMENU")."</option><option value='$drop_action_campaigns' SELECTED>"._QXZ("$drop_action_campaigns")."</option></select>$NWB#campaigns-drop_action$NWE</td></tr>\n";
 
 			echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Safe Harbor Exten").": </td><td align=left><input type=text name=safe_harbor_exten size=10 maxlength=20 value=\"$safe_harbor_exten\">$NWB#campaigns-safe_harbor_exten$NWE</td></tr>\n";
 
@@ -29343,7 +30921,7 @@ if ($ADD==31)
 				if (mb_strlen($rowx[1],'utf-8')>40)
 					{$rowx[1] = mb_substr($rowx[1],0,40,'utf-8') . '...';}
 				$sip_event_actions_container_menu .= "<option ";
-				if ($sip_event_logging == "$rowx[0]") 
+				if ($sip_event_logging_campaigns == "$rowx[0]") 
 					{
 					$sip_event_actions_container_menu .= "SELECTED ";
 					$csea_selected++;
@@ -29354,14 +30932,14 @@ if ($ADD==31)
 
 			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>";
 			if ($csea_selected > 0)
-				{echo "<a href=\"$PHP_SELF?ADD=392111111111&container_id=$sip_event_logging\">"._QXZ("SIP Event Actions")."</a>";}
+				{echo "<a href=\"$PHP_SELF?ADD=392111111111&container_id=$sip_event_logging_campaigns\">"._QXZ("SIP Event Actions")."</a>";}
 			else
 				{echo _QXZ("SIP Event Actions");}
-			echo ": </td><td align=left><select size=1 name=sip_event_logging><option value='DISABLED'>"._QXZ("DISABLED")."</option>$sip_event_actions_container_menu</select>$NWB#campaigns-sip_event_logging$NWE</td></tr>\n";
+			echo ": </td><td align=left><select size=1 name=sip_event_logging_campaigns><option value='DISABLED'>"._QXZ("DISABLED")."</option>$sip_event_actions_container_menu</select>$NWB#campaigns-sip_event_logging$NWE</td></tr>\n";
 			}
 		else
 			{
-			echo "<tr bgcolor=#$SSstd_row4_background><td colspan=2><input type=hidden name=sip_event_logging value='$sip_event_logging'></td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td colspan=2><input type=hidden name=sip_event_logging_campaigns value='$sip_event_logging_campaigns'></td></tr>\n";
 			}
 
 		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Use Internal DNC List").": </td><td align=left><select size=1 name=use_internal_dnc><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='AREACODE'>"._QXZ("AREACODE")."</option><option value='$use_internal_dnc' SELECTED>"._QXZ("$use_internal_dnc")."</option></select>$NWB#campaigns-use_internal_dnc$NWE</td></tr>\n";
@@ -29969,6 +31547,7 @@ if ($ADD==31)
 
 			$o=0;
 			$last_list_statuses="";
+			$camp_lists="";
 			while ($lists_to_print > $o)
 				{
 				$row=mysqli_fetch_row($rslt);
@@ -30018,9 +31597,13 @@ if ($ADD==31)
 			echo "<input type='hidden' name='last_list_statuses' id='last_list_statuses' value='$last_list_statuses'>";
 			echo "</center><BR></FORM>\n";
 
-			$filterSQL = $filtersql_list[$lead_filter_id];
-			$filterSQL = preg_replace("/\\\\/","",$filterSQL);
-			$filterSQL = preg_replace('/^and|and$|^or|or$/i', '',$filterSQL);
+			if ($lead_filter_id=="NONE") {$filterSQL="";}
+			else
+				{
+				$filterSQL = $filtersql_list[$lead_filter_id];
+				$filterSQL = preg_replace("/\\\\/","",$filterSQL);
+				$filterSQL = preg_replace('/^and|and$|^or|or$/i', '',$filterSQL);
+				}
 			if (strlen($filterSQL)>4)
 				{$fSQL = "and ($filterSQL)";}
 			else
@@ -30103,6 +31686,8 @@ if ($ADD==31)
 
 				$o=0;
 				$lead_list['count'] = 0;
+				$lead_list['Y'] = array();
+				$lead_list['N'] = array();
 				$lead_list['Y_count'] = 0;
 				$lead_list['N_count'] = 0;
 				while ($statuses_to_print > $o) 
@@ -30120,13 +31705,11 @@ if ($ADD==31)
 						$since_reset = 'Y';
 						$since_resetX = 'N';
 						} 
+					#If opposite side is not set, it may not in the future so give it a value of zero
+					if (!isset($lead_list[$since_reset][$rowx[0]])) {$lead_list[$since_reset][$rowx[0]]=0;}
+					if (!isset($lead_list[$since_resetX][$rowx[0]])) {$lead_list[$since_resetX][$rowx[0]]=0;}
 					$lead_list[$since_reset][$rowx[0]] = ($lead_list[$since_reset][$rowx[0]] + $rowx[2]);
 					$lead_list[$since_reset.'_count'] = ($lead_list[$since_reset.'_count'] + $rowx[2]);
-					#If opposite side is not set, it may not in the future so give it a value of zero
-					if (!isset($lead_list[$since_resetX][$rowx[0]])) 
-						{
-						$lead_list[$since_resetX][$rowx[0]]=0;
-						}
 					$o++;
 					}
 			 
@@ -30413,7 +31996,8 @@ if ($ADD==31)
 			echo "<td>\n";
 			echo "<select size=1 name=category class=\"cust_form\">\n";
 			echo "$cats_list";
-			echo "<option selected value=\"$AScategory\">$AScategory - $catsname_list[$AScategory]</option>\n";
+			if (isset($AScategory)) 
+				{echo "<option selected value=\"$AScategory\">$AScategory".(isset($catsname_list["$AScategory"]) ? " - $catsname_list[$AScategory]" : "")."</option>\n";}
 			echo "</select>\n";
 			echo "\n";
 			echo "</td><td bgcolor=\"#ccffff\"><select size=1 name=selectable class=\"cust_form\"><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='"._QXZ("$rowx[2]")."' selected>"._QXZ("$rowx[2]")."</option></select>\n";
@@ -30464,7 +32048,8 @@ if ($ADD==31)
 		echo _QXZ("Category").": \n";
 		echo "<select size=1 name=category>\n";
 		echo "$cats_list";
-		echo "<option selected value=\"$AScategory\">$AScategory - $catsname_list[$AScategory]</option>\n";
+		if (isset($AScategory)) 
+			{echo "<option selected value=\"$AScategory\">$AScategory".(isset($catsname_list["$AScategory"]) ? " - $catsname_list[$AScategory]" : "")."</option>\n";}
 		echo "</select> &nbsp; <BR>\n";
 		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
 
@@ -30825,12 +32410,12 @@ if ($ADD==31)
 
 		echo "<tr bgcolor=#$SSstd_row2_background><td align=right><a href=\"$PHP_SELF?ADD=3111111&script_id=$script_id\">"._QXZ("QC Script")."</a>: </td><td align=left><select size=1 name=qc_script>\n";
 		echo "$QCscripts_list";
-		echo "<option selected value=\"$qc_script\">$qc_script - $scriptname_list[$qc_script]</option>\n";
+		echo "<option selected value=\"$qc_script\">$qc_script".(strlen($qc_script)>0 ? " - $scriptname_list[$qc_script]" : "")."</option>\n";
 		echo "</select>$NWB#campaigns-qc_script$NWE</td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row2_background><td align=right><a href=\"$PHP_SELF?ADD=331111111&shift_id=$qc_shift_id\">"._QXZ("QC Shift")."</a>: </td><td align=left><select size=1 name=qc_shift_id>\n";
 		echo "$QCshifts_list";
-		echo "<option selected value=\"$qc_shift_id\">$qc_shift_id - $shiftname_list[$qc_shift_id]</option>\n";
+		echo "<option selected value=\"$qc_shift_id\">$qc_shift_id".(isset($shiftname_list["$qc_shift_id"]) ? " - $shiftname_list[$qc_shift_id]" : "")."</option>\n";
 		echo "</select>$NWB#campaigns-qc_shift_id$NWE</td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("QC Get Record Launch").": </td><td><select size=1 name=qc_get_record_launch><option value='NONE'>"._QXZ("NONE")."</option><option value='SCRIPT'>"._QXZ("SCRIPT")."</option><option value='WEBFORM'>"._QXZ("WEBFORM")."</option><option value='QCSCRIPT'>"._QXZ("QCSCRIPT")."</option><option value='QCWEBFORM'>"._QXZ("QCWEBFORM")."</option><option value='$qc_get_record_launch' SELECTED>"._QXZ("$qc_get_record_launch")."</option></select> $NWB#campaigns-qc_get_record_launch$NWE</td></tr>\n";
@@ -30998,6 +32583,7 @@ if ($ADD==31)
 				} 
 			else
 				{
+				$bgct=0;
 				if ($Xareacode[$o] != $bgac)
 					{
 					if (preg_match("/1$|3$|5$|7$|9$/i", $bgct))
@@ -31059,7 +32645,7 @@ if ($ADD==31)
 			{
 			echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=CAMPAIGN_AC-CID&stage=$campaign_id\">"._QXZ("Click here to see Admin changes to this campaign")." AC-CID</a></FONT>\n";
 			}
-		echo "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0><TR><TD>\n";
+		# echo "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0><TR><TD>\n";
 		}
 
 
@@ -31153,7 +32739,6 @@ if ($ADD==34)
 		$campaign_logindate = $row[60];
 		$dial_statuses = $row[61];
 		$list_order_mix = $row[64];
-		$default_xfer_group = $row[67];
 		$campaign_allow_inbound = $row[65];
 		$default_xfer_group = $row[67];
 		$drop_lockout_time = $row[116];
@@ -31207,6 +32792,8 @@ if ($ADD==34)
 	$statuses_to_print = mysqli_num_rows($rslt);
 	$statuses_list='';
 	$dial_statuses_list='';
+	$LRstatuses_list='';
+	$HKstatuses_list='';
 	$o=0;
 	while ($statuses_to_print > $o) 
 		{
@@ -31370,7 +32957,7 @@ if ($ADD==34)
 				{
 				if (file_exists('options.php'))
 					{require('options.php');}
-				if ($camp_lead_order_random > 0)
+				if (isset($camp_lead_order_random) && $camp_lead_order_random > 0)
 					{
 					echo "<select size=1 name=lead_order>
 					<option value='$lead_order' SELECTED>"._QXZ("$lead_order")."</option>
@@ -31609,7 +33196,7 @@ if ($ADD==34)
 				{
 				echo "<select size=1 name=lead_filter_id>\n";
 				echo "$filters_list";
-				echo "<option selected value=\"$lead_filter_id\">"._QXZ("$lead_filter_id")." - $filtername_list[$lead_filter_id]</option>\n";
+				echo "<option selected value=\"$lead_filter_id\">"._QXZ("$lead_filter_id").($lead_filter_id!="NONE" ? " - $filtername_list[$lead_filter_id]" : "")."</option>\n";
 				echo "</select>$NWB#campaigns-lead_filter_id$NWE";
 				}
 			echo "</td></tr>\n";
@@ -31759,6 +33346,7 @@ if ($ADD==34)
 		echo "</TR>\n";
 
 		$o=0;
+		$camp_lists="";
 		$last_list_statuses="";
 		while ($lists_to_print > $o)
 			{
@@ -31808,10 +33396,14 @@ if ($ADD==34)
 		echo "<input type='hidden' name='last_list_statuses' id='last_list_statuses' value='$last_list_statuses'>";
 		echo "</center><BR></FORM>\n";
 		echo "<center><b>\n";
-
-		$filterSQL = $filtersql_list[$lead_filter_id];
-		$filterSQL = preg_replace("/\\\\/","",$filterSQL);
-		$filterSQL = preg_replace('/^and|and$|^or|or$/i', '',$filterSQL);
+		
+		if ($lead_filter_id=="NONE") {$filterSQL="";}
+		else
+			{
+			$filterSQL = $filtersql_list[$lead_filter_id];
+			$filterSQL = preg_replace("/\\\\/","",$filterSQL);
+			$filterSQL = preg_replace('/^and|and$|^or|or$/i', '',$filterSQL);
+			}
 		if (strlen($filterSQL)>4)
 			{$fSQL = "and ($filterSQL)";}
 		else
@@ -31864,6 +33456,8 @@ if ($ADD==34)
 
 			$o=0;
 			$lead_list['count'] = 0;
+			$lead_list['Y'] = array();
+			$lead_list['N'] = array();
 			$lead_list['Y_count'] = 0;
 			$lead_list['N_count'] = 0;
 			while ($statuses_to_print > $o) 
@@ -31881,13 +33475,11 @@ if ($ADD==34)
 					$since_reset = 'Y';
 					$since_resetX = 'N';
 					} 
+				#If opposite side is not set, it may not in the future so give it a value of zero
+				if (!isset($lead_list[$since_reset][$rowx[0]])) {$lead_list[$since_reset][$rowx[0]]=0;}
+				if (!isset($lead_list[$since_resetX][$rowx[0]])) {$lead_list[$since_resetX][$rowx[0]]=0;}
 				$lead_list[$since_reset][$rowx[0]] = ($lead_list[$since_reset][$rowx[0]] + $rowx[2]);
 				$lead_list[$since_reset.'_count'] = ($lead_list[$since_reset.'_count'] + $rowx[2]);
-				#If opposite side is not set, it may not in the future so give it a value of zero
-				if (!isset($lead_list[$since_resetX][$rowx[0]])) 
-					{
-					$lead_list[$since_resetX][$rowx[0]]=0;
-					}
 				$o++;
 				}
 		 
@@ -32156,8 +33748,8 @@ if ( ($ADD==34) or ($ADD==31) )
 				$r=0;
 				while ($Ds_to_print > $r) 
 					{
-					$r++;
 					$Dsql .= "'$Dstatuses[$r]',";
+					$r++;
 					}
 				$Dsql = preg_replace("/,$/","",$Dsql);
 
@@ -32279,7 +33871,7 @@ if ( ($ADD==34) or ($ADD==31) )
 
 		}
 	}
-	echo "</TD></TR></TABLE></center>\n";
+	if (!isset($SUB) || $SUB=="") {echo "</TD></TR></TABLE></center>\n";} 
 }
 
 
@@ -32851,6 +34443,8 @@ if ($ADD==311)
 
 		$rslt=mysql_to_mysqli($stmt, $link);
                 if ($DB) {echo "$stmt\n";}
+		if(mysqli_num_rows($rslt)==0) {echo "<br>"._QXZ("List ID $list_id does not exist")."\n"; exit;} 
+
 		$row=mysqli_fetch_row($rslt);
 		$list_name =				$row[1];
 		$campaign_id =				$row[2];
@@ -33097,11 +34691,11 @@ if ($ADD==311)
 
 		echo "<tr bgcolor=#$SSstd_row3_background><td align=right><a href=\"$PHP_SELF?ADD=3111111&script_id=$agent_script_override\">"._QXZ("Agent Script Override")."</a>: </td><td align=left><select size=1 name=agent_script_override>\n";
 		echo "$Lscripts_list";
-		echo "<option selected value=\"$agent_script_override\">$agent_script_override - $scriptname_list[$agent_script_override]</option>\n";
+		echo "<option selected value=\"$agent_script_override\">$agent_script_override".(isset($scriptname_list["$agent_script_override"]) ? " - $scriptname_list[$agent_script_override]" : "")."</option>\n";
 		echo "</select>$NWB#lists-agent_script_override$NWE</td></tr>\n";
  		echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href=\"$PHP_SELF?ADD=3111111&script_id=$inbound_list_script_override\">"._QXZ("Inbound Script Override")."</a>: </td><td align=left><select size=1 name=inbound_list_script_override>\n";
  		echo "$Lscripts_list";
- 		echo "<option selected value=\"$inbound_list_script_override\">$inbound_list_script_override - $scriptname_list[$inbound_list_script_override]</option>\n";
+ 		echo "<option selected value=\"$inbound_list_script_override\">$inbound_list_script_override".(isset($scriptname_list["$inbound_list_script_override"]) ? " - $scriptname_list[$inbound_list_script_override]" : "")."</option>\n";
  		echo "</select>$NWB#lists-inbound_list_script_override$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Inbound Drop Voicemail Override").": </td><td align=left><input type=text name=inbound_drop_voicemail id=inbound_drop_voicemail size=12 maxlength=20 value=\"$inbound_drop_voicemail\"> <a href=\"javascript:launch_vm_chooser('inbound_drop_voicemail','vm');\">"._QXZ("voicemail chooser")."</a>$NWB#lists-inbound_drop_voicemail$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Inbound After Hours Voicemail Override").": </td><td align=left><input type=text name=inbound_after_hours_voicemail id=inbound_after_hours_voicemail size=12 maxlength=20 value=\"$inbound_after_hours_voicemail\"> <a href=\"javascript:launch_vm_chooser('inbound_after_hours_voicemail','vm');\">"._QXZ("voicemail chooser")."</a>$NWB#lists-inbound_after_hours_voicemail$NWE</td></tr>\n";
@@ -33431,6 +35025,8 @@ if ($ADD==311)
 
 		$o=0;
 		$lead_list['count'] = 0;
+		$lead_list['Y'] = array();
+		$lead_list['N'] = array();
 		$lead_list['Y_count'] = 0;
 		$lead_list['N_count'] = 0;
 		while ($statuses_to_print > $o) 
@@ -33448,13 +35044,11 @@ if ($ADD==311)
 				$since_reset = 'Y';
 				$since_resetX = 'N';
 				} 
+			#If opposite side is not set, it may not in the future so give it a value of zero
+			if (!isset($lead_list[$since_reset][$rowx[0]])) {$lead_list[$since_reset][$rowx[0]]=0;}
+			if (!isset($lead_list[$since_resetX][$rowx[0]])) {$lead_list[$since_resetX][$rowx[0]]=0;}
 			$lead_list[$since_reset][$rowx[0]] = ($lead_list[$since_reset][$rowx[0]] + $rowx[2]);
 			$lead_list[$since_reset.'_count'] = ($lead_list[$since_reset.'_count'] + $rowx[2]);
-			#If opposite side is not set, it may not in the future so give it a value of zero
-			if (!isset($lead_list[$since_resetX][$rowx[0]])) 
-				{
-				$lead_list[$since_resetX][$rowx[0]]=0;
-				}
 			$o++;
 			}
 	 
@@ -33543,6 +35137,8 @@ if ($ADD==311)
 		$o=0;
 		$plus='+';
 		$lead_list['count'] = 0;
+		$lead_list['Y'] = array();
+		$lead_list['N'] = array();
 		$lead_list['Y_count'] = 0;
 		$lead_list['N_count'] = 0;
 		while ($statuses_to_print > $o) 
@@ -33560,13 +35156,11 @@ if ($ADD==311)
 				$since_reset = 'Y';
 				$since_resetX = 'N';
 				} 
+			#If opposite side is not set, it may not in the future so give it a value of zero
+			if (!isset($lead_list[$since_reset][$rowx[0]])) {$lead_list[$since_reset][$rowx[0]]=0;}
+			if (!isset($lead_list[$since_resetX][$rowx[0]])) {$lead_list[$since_resetX][$rowx[0]]=0;}
 			$lead_list[$since_reset][$rowx[0]] = ($lead_list[$since_reset][$rowx[0]] + $rowx[2]);
 			$lead_list[$since_reset.'_count'] = ($lead_list[$since_reset.'_count'] + $rowx[2]);
-			#If opposite side is not set, it may not in the future so give it a value of zero
-			if (!isset($lead_list[$since_resetX][$rowx[0]])) 
-				{
-				$lead_list[$since_resetX][$rowx[0]]=0;
-				}
 			$o++;
 			}
 
@@ -33620,6 +35214,8 @@ if ($ADD==311)
 
 			$o=0;
 			$lead_list['count'] = 0;
+			$lead_list['Y'] = array();
+			$lead_list['N'] = array();
 			$lead_list['Y_count'] = 0;
 			$lead_list['N_count'] = 0;
 			while ($owners_to_print > $o) 
@@ -33637,13 +35233,11 @@ if ($ADD==311)
 					$since_reset = 'Y';
 					$since_resetX = 'N';
 					} 
+				#If opposite side is not set, it may not in the future so give it a value of zero
+				if (!isset($lead_list[$since_reset][$rowx[0]])) {$lead_list[$since_reset][$rowx[0]]=0;}
+				if (!isset($lead_list[$since_resetX][$rowx[0]])) {$lead_list[$since_resetX][$rowx[0]]=0;}
 				$lead_list[$since_reset][$rowx[0]] = ($lead_list[$since_reset][$rowx[0]] + $rowx[2]);
 				$lead_list[$since_reset.'_count'] = ($lead_list[$since_reset.'_count'] + $rowx[2]);
-				#If opposite side is not set, it may not in the future so give it a value of zero
-				if (!isset($lead_list[$since_resetX][$rowx[0]])) 
-					{
-					$lead_list[$since_resetX][$rowx[0]]=0;
-					}
 				$o++;
 				}
 		 
@@ -33687,6 +35281,8 @@ if ($ADD==311)
 
 			$o=0;
 			$lead_list['count'] = 0;
+			$lead_list['Y'] = array();
+			$lead_list['N'] = array();
 			$lead_list['Y_count'] = 0;
 			$lead_list['N_count'] = 0;
 			while ($owners_to_print > $o) 
@@ -33704,13 +35300,11 @@ if ($ADD==311)
 					$since_reset = 'Y';
 					$since_resetX = 'N';
 					} 
+				#If opposite side is not set, it may not in the future so give it a value of zero
+				if (!isset($lead_list[$since_reset][$rowx[0]])) {$lead_list[$since_reset][$rowx[0]]=0;}
+				if (!isset($lead_list[$since_resetX][$rowx[0]])) {$lead_list[$since_resetX][$rowx[0]]=0;}
 				$lead_list[$since_reset][$rowx[0]] = ($lead_list[$since_reset][$rowx[0]] + $rowx[2]);
 				$lead_list[$since_reset.'_count'] = ($lead_list[$since_reset.'_count'] + $rowx[2]);
-				#If opposite side is not set, it may not in the future so give it a value of zero
-				if (!isset($lead_list[$since_resetX][$rowx[0]])) 
-					{
-					$lead_list[$since_resetX][$rowx[0]]=0;
-					}
 				$o++;
 				}
 		 
@@ -33755,6 +35349,8 @@ if ($ADD==311)
 
 		$o=0;
 		$lead_list['count'] = 0;
+		$lead_list['Y'] = array();
+		$lead_list['N'] = array();
 		$lead_list['Y_count'] = 0;
 		$lead_list['N_count'] = 0;
 		while ($ranks_to_print > $o) 
@@ -33772,13 +35368,11 @@ if ($ADD==311)
 				$since_reset = 'Y';
 				$since_resetX = 'N';
 				} 
+			#If opposite side is not set, it may not in the future so give it a value of zero
+			if (!isset($lead_list[$since_reset][$rowx[0]])) {$lead_list[$since_reset][$rowx[0]]=0;}
+			if (!isset($lead_list[$since_resetX][$rowx[0]])) {$lead_list[$since_resetX][$rowx[0]]=0;}
 			$lead_list[$since_reset][$rowx[0]] = ($lead_list[$since_reset][$rowx[0]] + $rowx[2]);
 			$lead_list[$since_reset.'_count'] = ($lead_list[$since_reset.'_count'] + $rowx[2]);
-			#If opposite side is not set, it may not in the future so give it a value of zero
-			if (!isset($lead_list[$since_resetX][$rowx[0]])) 
-				{
-				$lead_list[$since_resetX][$rowx[0]]=0;
-				}
 			$o++;
 			}
 	 
@@ -33824,6 +35418,8 @@ if ($ADD==311)
 
 			$o=0;
 			$lead_list['count'] = 0;
+			$lead_list['Y'] = array();
+			$lead_list['N'] = array();
 			$lead_list['Y_count'] = 0;
 			$lead_list['N_count'] = 0;
 			while ($ranks_to_print > $o) 
@@ -33841,13 +35437,11 @@ if ($ADD==311)
 					$since_reset = 'Y';
 					$since_resetX = 'N';
 					} 
+				#If opposite side is not set, it may not in the future so give it a value of zero
+				if (!isset($lead_list[$since_reset][$rowx[0]])) {$lead_list[$since_reset][$rowx[0]]=0;}
+				if (!isset($lead_list[$since_resetX][$rowx[0]])) {$lead_list[$since_resetX][$rowx[0]]=0;}
 				$lead_list[$since_reset][$rowx[0]] = ($lead_list[$since_reset][$rowx[0]] + $rowx[2]);
 				$lead_list[$since_reset.'_count'] = ($lead_list[$since_reset.'_count'] + $rowx[2]);
-				#If opposite side is not set, it may not in the future so give it a value of zero
-				if (!isset($lead_list[$since_resetX][$rowx[0]])) 
-					{
-					$lead_list[$since_resetX][$rowx[0]]=0;
-					}
 				$o++;
 				}
 		 
@@ -33890,9 +35484,12 @@ if ($ADD==311)
 		$first_row=1;
 		$all_called_first=1000;
 		$all_called_last=0;
+		$all_called_count=array();
+		$leads_in_sts=array();
 		while ($status_called_to_print > $o) 
 			{
 			$rowx=mysqli_fetch_row($rslt);
+			if (!isset($all_called_count[$rowx[1]])) {$all_called_count[$rowx[1]]=0;}
 			$leads_in_list = ($leads_in_list + $rowx[2]);
 			$count_statuses[$o]			= $rowx[0];
 			$count_called[$o]			= $rowx[1];
@@ -33907,6 +35504,7 @@ if ($ADD==311)
 				$status_called_first[$sts] = "$rowx[1]";
 				if ($status_called_first[$sts] < $all_called_first) {$all_called_first = $status_called_first[$sts];}
 				}
+			if (!isset($leads_in_sts[$sts])) {$leads_in_sts[$sts]=0;}
 			$leads_in_sts[$sts] = ($leads_in_sts[$sts] + $rowx[2]);
 			$status_called_last[$sts] = "$rowx[1]";
 			if ($status_called_last[$sts] > $all_called_last) {$all_called_last = $status_called_last[$sts];}
@@ -33942,7 +35540,7 @@ if ($ADD==311)
 				{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';   $AB='bgcolor="#'. $SSstd_row2_background .'"';}
 		#	echo "$status[$sts]|$status_called_first[$sts]|$status_called_last[$sts]|$leads_in_sts[$sts]|\n";
 		#	echo "$status[$sts]|";
-			echo "<tr $bgcolor><td><font size=1>$Pstatus</td><td><font size=1>$statuses_list[$Pstatus]</td>";
+			echo "<tr $bgcolor><td><font size=1>$Pstatus</td><td><font size=1>".(isset($statuses_list[$Pstatus]) ? $statuses_list["$Pstatus"] : "")."</td>";
 
 			$first = $all_called_first;
 			while ($first <= $all_called_last)
@@ -33974,7 +35572,7 @@ if ($ADD==311)
 					{echo "<td $AB><font size=1> &nbsp;</td>";}
 				$first++;
 				}
-			echo "<td><font size=1><a href=\"admin_search_lead.php?list_id=$list_id&status=$Pstatus\">$leads_in_sts[$sts]</a></td></tr>\n\n";
+			echo "<td><font size=1><a href=\"admin_search_lead.php?list_id=$list_id&status=$Pstatus\">".(isset($leads_in_sts[$sts]) ? $leads_in_sts[$sts] : "0")."</a></td></tr>\n\n";
 
 			$sts++;
 			}
@@ -34492,220 +36090,234 @@ if ($ADD==3111)
 		$stmt="SELECT group_id,group_name,group_color,active,web_form_address,voicemail_ext,next_agent_call,fronter_display,ingroup_script,get_call_launch,xferconf_a_dtmf,xferconf_a_number,xferconf_b_dtmf,xferconf_b_number,drop_call_seconds,drop_action,drop_exten,call_time_id,after_hours_action,after_hours_message_filename,after_hours_exten,after_hours_voicemail,welcome_message_filename,moh_context,onhold_prompt_filename,prompt_interval,agent_alert_exten,agent_alert_delay,default_xfer_group,queue_priority,drop_inbound_group,ingroup_recording_override,ingroup_rec_filename,afterhours_xfer_group,qc_enabled,qc_statuses,qc_shift_id,qc_get_record_launch,qc_show_recording,qc_web_form_address,qc_script,play_place_in_line,play_estimate_hold_time,hold_time_option,hold_time_option_seconds,hold_time_option_exten,hold_time_option_voicemail,hold_time_option_xfer_group,hold_time_option_callback_filename,hold_time_option_callback_list_id,hold_recall_xfer_group,no_delay_call_route,play_welcome_message,answer_sec_pct_rt_stat_one,answer_sec_pct_rt_stat_two,default_group_alias,no_agent_no_queue,no_agent_action,no_agent_action_value,web_form_address_two,timer_action,timer_action_message,timer_action_seconds,start_call_url,dispo_call_url,xferconf_c_number,xferconf_d_number,xferconf_e_number,ignore_list_script_override,extension_appended_cidname,uniqueid_status_display,uniqueid_status_prefix,hold_time_option_minimum,hold_time_option_press_filename,hold_time_option_callmenu,onhold_prompt_no_block,onhold_prompt_seconds,hold_time_option_no_block,hold_time_option_prompt_seconds,hold_time_second_option,hold_time_third_option,wait_hold_option_priority,wait_time_option,wait_time_second_option,wait_time_third_option,wait_time_option_seconds,wait_time_option_exten,wait_time_option_voicemail,wait_time_option_xfer_group,wait_time_option_callmenu,wait_time_option_callback_filename,wait_time_option_callback_list_id,wait_time_option_press_filename,wait_time_option_no_block,wait_time_option_prompt_seconds,timer_action_destination,calculate_estimated_hold_seconds,add_lead_url,eht_minimum_prompt_filename,eht_minimum_prompt_no_block,eht_minimum_prompt_seconds,on_hook_ring_time,na_call_url,on_hook_cid,group_calldate,action_xfer_cid,drop_callmenu,after_hours_callmenu,user_group,max_calls_method,max_calls_count,max_calls_action,dial_ingroup_cid,group_handling,web_form_address_three,populate_lead_ingroup,drop_lead_reset,after_hours_lead_reset,nanq_lead_reset,wait_time_lead_reset,hold_time_lead_reset,status_group_id,routing_initiated_recordings,on_hook_cid_number,customer_chat_screen_colors,customer_chat_survey_link,customer_chat_survey_text,populate_lead_province,areacode_filter,areacode_filter_seconds,areacode_filter_action,areacode_filter_action_value,populate_state_areacode,inbound_survey,inbound_survey_filename,inbound_survey_accept_digit,inbound_survey_question_filename,inbound_survey_callmenu,icbq_expiration_hours,closing_time_action,closing_time_now_trigger,closing_time_filename,closing_time_end_filename,closing_time_lead_reset,closing_time_option_exten,closing_time_option_callmenu,closing_time_option_voicemail,closing_time_option_xfer_group,closing_time_option_callback_list_id,icbq_call_time_id,add_lead_timezone,icbq_dial_filter,populate_lead_source,populate_lead_vendor,park_file_name,waiting_call_url_on,waiting_call_url_off,enter_ingroup_url,cid_cb_confirm_number,cid_cb_invalid_filter_phone_group,cid_cb_valid_length,cid_cb_valid_filename,cid_cb_confirmed_filename,cid_cb_enter_filename,cid_cb_you_entered_filename,cid_cb_press_to_confirm_filename,cid_cb_invalid_filename,cid_cb_reenter_filename,cid_cb_error_filename,place_in_line_caller_number_filename,place_in_line_you_next_filename,ingroup_script_two,browser_alert_sound,browser_alert_volume,answer_signal,no_agent_delay,agent_search_method,qc_scorecard_id,qc_statuses_id,populate_lead_comments,drop_call_seconds_override,populate_lead_owner,in_queue_nanque,in_queue_nanque_exceptions,custom_one,custom_two,custom_three,custom_four,custom_five,second_alert_trigger,second_alert_trigger_seconds,second_alert_filename,second_alert_delay,second_alert_container,second_alert_only,third_alert_trigger,third_alert_trigger_seconds,third_alert_filename,third_alert_delay,third_alert_container,third_alert_only,agent_search_list,state_descriptions,stereo_recording,stereo_rec_filename,stereo_parallel_recording,recording_dtmf_muting,stereo_recording_agent,parallel_rec_co_filename,parallel_rec_cm_filename,parallel_rec_fr_filename,xfer_talk_minimum,xfer_talk_minimum_sec from vicidial_inbound_groups where group_id='$group_id' $LOGadmin_viewable_groupsSQL;";
 
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-		$query_group_id =			$row[0];
-		$group_name =				$row[1];
-		$group_color =				$row[2];
-		$active =					$row[3];
-		$web_form_address =			stripslashes($row[4]);
-		$voicemail_ext =			$row[5];
-		$next_agent_call =			$row[6];
-		$fronter_display =			$row[7];
-		$script_id =				$row[8];
-		$get_call_launch =			$row[9];
-		$xferconf_a_dtmf =			$row[10];
-		$xferconf_a_number =		$row[11];
-		$xferconf_b_dtmf =			$row[12];
-		$xferconf_b_number =		$row[13];
-		$drop_call_seconds =		$row[14];
-		$drop_action =				$row[15];
-		$drop_exten =				$row[16];
-		$call_time_id =				$row[17];
-		$after_hours_action =		$row[18];
-		$after_hours_message_filename =	$row[19];
-		$after_hours_exten =		$row[20];
-		$after_hours_voicemail =	$row[21];
-		$welcome_message_filename =	$row[22];
-		$moh_context =				$row[23];
-		$onhold_prompt_filename =	$row[24];
-		$prompt_interval =			$row[25];
-		$agent_alert_exten =		$row[26];
-		$agent_alert_delay =		$row[27];
-		$default_xfer_group =		$row[28];
-		$queue_priority =			$row[29];
-		$drop_inbound_group =		$row[30];
-		$ingroup_recording_override = $row[31];
-		$ingroup_rec_filename =		$row[32];
-		$afterhours_xfer_group =	$row[33];
-		$qc_enabled =				$row[34];
-		$qc_statuses =				$row[35];
-		$qc_shift_id =				$row[36];
-		$qc_get_record_launch =		$row[37];
-		$qc_show_recording =		$row[38];
-		$qc_web_form_address =		stripslashes($row[39]);
-		$qc_script =				$row[40];
-		$play_place_in_line = 		$row[41];
-		$play_estimate_hold_time = 	$row[42];
-		$hold_time_option = 		$row[43];
-		$hold_time_option_seconds = $row[44];
-		$hold_time_option_exten = 	$row[45];
-		$hold_time_option_voicemail = 	$row[46];
-		$hold_time_option_xfer_group = 	$row[47];
-		$hold_time_option_callback_filename =	$row[48];
-		$hold_time_option_callback_list_id = 	$row[49];
-		$hold_recall_xfer_group = 	$row[50];
-		$no_delay_call_route = 		$row[51];
-		$play_welcome_message = 	$row[52];
-		$answer_sec_pct_rt_stat_one =	$row[53];
-		$answer_sec_pct_rt_stat_two =	$row[54];
-		$default_group_alias =		$row[55];
-		$no_agent_no_queue =		$row[56];
-		$no_agent_action =			$row[57];
-		$no_agent_action_value =	$row[58];
-		$web_form_address_two =		stripslashes($row[59]);
-		$timer_action =				$row[60];
-		$timer_action_message =		$row[61];
-		$timer_action_seconds =		$row[62];
-		$start_call_url =			$row[63];
-		$dispo_call_url =			$row[64];
-		$xferconf_c_number =		$row[65];
-		$xferconf_d_number =		$row[66];
-		$xferconf_e_number =		$row[67];
-		$ignore_list_script_override = $row[68];
-		$extension_appended_cidname = $row[69];
-		$uniqueid_status_display =	$row[70];
-		$uniqueid_status_prefix =	$row[71];
-		$hold_time_option_minimum = $row[72];
-		$hold_time_option_press_filename = $row[73];
-		$hold_time_option_callmenu = $row[74];
-		$onhold_prompt_no_block =	$row[75];
-		$onhold_prompt_seconds =	$row[76];
-		$hold_time_option_no_block = $row[77];
-		$hold_time_option_prompt_seconds =	$row[78];
-		$hold_time_second_option =			$row[79];
-		$hold_time_third_option =			$row[80];
-		$wait_hold_option_priority =		$row[81];
-		$wait_time_option =					$row[82];
-		$wait_time_second_option =			$row[83];
-		$wait_time_third_option =			$row[84];
-		$wait_time_option_seconds =			$row[85];
-		$wait_time_option_exten =			$row[86];
-		$wait_time_option_voicemail =		$row[87];
-		$wait_time_option_xfer_group =		$row[88];
-		$wait_time_option_callmenu =		$row[89];
-		$wait_time_option_callback_filename =	$row[90];
-		$wait_time_option_callback_list_id =	$row[91];
-		$wait_time_option_press_filename =	$row[92];
-		$wait_time_option_no_block =		$row[93];
-		$wait_time_option_prompt_seconds =	$row[94];
-		$timer_action_destination =			$row[95];
-		$calculate_estimated_hold_seconds = $row[96];
-		$add_lead_url =						$row[97];
-		$eht_minimum_prompt_filename =		$row[98];
-		$eht_minimum_prompt_no_block =		$row[99];
-		$eht_minimum_prompt_seconds =		$row[100];
-		$on_hook_ring_time =				$row[101];
-		$na_call_url =						$row[102];
-		$on_hook_cid =						$row[103];
-		$group_calldate =					$row[104];
-		$action_xfer_cid =					$row[105];
-		$drop_callmenu =					$row[106];
-		$after_hours_callmenu =				$row[107];
-		$user_group =						$row[108];
-		$max_calls_method =					$row[109];
-		$max_calls_count =					$row[110];
-		$max_calls_action =					$row[111];
-		$dial_ingroup_cid =					$row[112];
-		$group_handling =					$row[113];
-		$web_form_address_three =			$row[114];
-		$populate_lead_ingroup =			$row[115];
-		$drop_lead_reset =					$row[116];
-		$after_hours_lead_reset =			$row[117];
-		$nanq_lead_reset =					$row[118];
-		$wait_time_lead_reset =				$row[119];
-		$hold_time_lead_reset =				$row[120];
-		$status_group_id =					$row[121];
-		$routing_initiated_recordings =		$row[122];
-		$on_hook_cid_number =				$row[123];
-		$customer_chat_screen_colors =		$row[124];
-		$customer_chat_survey_link =		$row[125];
-		$customer_chat_survey_text =		$row[126];
-		$populate_lead_province =			$row[127];
-		$areacode_filter =					$row[128];
-		$areacode_filter_seconds =			$row[129];
-		$areacode_filter_action =			$row[130];
-		$areacode_filter_action_value =		$row[131];
-		$populate_state_areacode =			$row[132];
-		$inbound_survey =					$row[133];
-		$inbound_survey_filename =			$row[134];
-		$inbound_survey_accept_digit =		$row[135];
-		$inbound_survey_question_filename =	$row[136];
-		$inbound_survey_callmenu =			$row[137];
-		$icbq_expiration_hours =			$row[138];
-		$closing_time_action =				$row[139];
-		$closing_time_now_trigger =			$row[140];
-		$closing_time_filename =			$row[141];
-		$closing_time_end_filename =		$row[142];
-		$closing_time_lead_reset =			$row[143];
-		$closing_time_option_exten =		$row[144];
-		$closing_time_option_callmenu =		$row[145];
-		$closing_time_option_voicemail =	$row[146];
-		$closing_time_option_xfer_group =	$row[147];
-		$closing_time_option_callback_list_id =	$row[148];
-		$icbq_call_time_id =				$row[149];
-		$add_lead_timezone =				$row[150];
-		$icbq_dial_filter =					$row[151];
-		$populate_lead_source =				$row[152];
-		$populate_lead_vendor =				$row[153];
-		$park_file_name =					$row[154];
-		$waiting_call_url_on =				$row[155];
-		$waiting_call_url_off =				$row[156];
-		$enter_ingroup_url =				$row[157];
-		$cid_cb_confirm_number =			$row[158];
-		$cid_cb_invalid_filter_phone_group = $row[159];
-		$cid_cb_valid_length =				$row[160];
-		$cid_cb_valid_filename =			$row[161];
-		$cid_cb_confirmed_filename =		$row[162];
-		$cid_cb_enter_filename =			$row[163];
-		$cid_cb_you_entered_filename =		$row[164];
-		$cid_cb_press_to_confirm_filename =	$row[165];
-		$cid_cb_invalid_filename =			$row[166];
-		$cid_cb_reenter_filename =			$row[167];
-		$cid_cb_error_filename =			$row[168];
-		$place_in_line_caller_number_filename =	$row[169];
-		$place_in_line_you_next_filename =	$row[170];
-		$ingroup_script_two =				$row[171];
-		$browser_alert_sound =				$row[172];
-		$browser_alert_volume =				$row[173];
-		$answer_signal =					$row[174];
-		$no_agent_delay =					$row[175];
-		$agent_search_method =				$row[176];
-		$qc_scorecard_id =					$row[177];
-		$qc_statuses_id =					$row[178];
-		$populate_lead_comments =			$row[179];
-		$drop_call_seconds_override =		$row[180];
-		$populate_lead_owner =				$row[181];
-		$in_queue_nanque =					$row[182];
-		$in_queue_nanque_exceptions =		$row[183];
-		$custom_one =						$row[184];
-		$custom_two =						$row[185];
-		$custom_three =						$row[186];
-		$custom_four =						$row[187];
-		$custom_five =						$row[188];
-		$second_alert_trigger =				$row[189];
-		$second_alert_trigger_seconds =		$row[190];
-		$second_alert_filename =			$row[191];
-		$second_alert_delay =				$row[192];
-		$second_alert_container =			$row[193];
-		$second_alert_only =				$row[194];
-		$third_alert_trigger =				$row[195];
-		$third_alert_trigger_seconds =		$row[196];
-		$third_alert_filename =				$row[197];
-		$third_alert_delay =				$row[198];
-		$third_alert_container =			$row[199];
-		$third_alert_only =					$row[200];
-		$agent_search_list =				$row[201];
-		$state_descriptions =				$row[202];
-		$stereo_recording =					$row[203];
-		$stereo_rec_filename =				$row[204];
-		$stereo_parallel_recording =		$row[205];
-		$recording_dtmf_muting =			$row[206];
-		$stereo_recording_agent =			$row[207];
-		$parallel_rec_co_filename =			$row[208];
-		$parallel_rec_cm_filename =			$row[209];
-		$parallel_rec_fr_filename =			$row[210];
-		$xfer_talk_minimum =				$row[211];
-		$xfer_talk_minimum_sec =			$row[212];
+		if (mysqli_num_rows($rslt)>0)
+			{
+			$row=mysqli_fetch_row($rslt);
+			$query_group_id =			$row[0];
+			$group_name =				$row[1];
+			$group_color =				$row[2];
+			$active =					$row[3];
+			$web_form_address =			stripslashes($row[4]);
+			$voicemail_ext =			$row[5];
+			$next_agent_call =			$row[6];
+			$fronter_display =			$row[7];
+			$script_id =				$row[8];
+			$get_call_launch =			$row[9];
+			$xferconf_a_dtmf =			$row[10];
+			$xferconf_a_number =		$row[11];
+			$xferconf_b_dtmf =			$row[12];
+			$xferconf_b_number =		$row[13];
+			$drop_call_seconds =		$row[14];
+			$drop_action_ingroups =		$row[15];
+			$drop_exten =				$row[16];
+			$call_time_id =				$row[17];
+			$after_hours_action =		$row[18];
+			$after_hours_message_filename =	$row[19];
+			$after_hours_exten =		$row[20];
+			$after_hours_voicemail =	$row[21];
+			$welcome_message_filename =	$row[22];
+			$moh_context =				$row[23];
+			$onhold_prompt_filename =	$row[24];
+			$prompt_interval =			$row[25];
+			$agent_alert_exten =		$row[26];
+			$agent_alert_delay =		$row[27];
+			$default_xfer_group =		$row[28];
+			$queue_priority =			$row[29];
+			$drop_inbound_group =		$row[30];
+			$ingroup_recording_override = $row[31];
+			$ingroup_rec_filename =		$row[32];
+			$afterhours_xfer_group =	$row[33];
+			$qc_enabled =				$row[34];
+			$qc_statuses =				$row[35];
+			$qc_shift_id =				$row[36];
+			$qc_get_record_launch =		$row[37];
+			$qc_show_recording =		$row[38];
+			$qc_web_form_address =		stripslashes($row[39]);
+			$qc_script =				$row[40];
+			$play_place_in_line = 		$row[41];
+			$play_estimate_hold_time = 	$row[42];
+			$hold_time_option = 		$row[43];
+			$hold_time_option_seconds = $row[44];
+			$hold_time_option_exten = 	$row[45];
+			$hold_time_option_voicemail = 	$row[46];
+			$hold_time_option_xfer_group = 	$row[47];
+			$hold_time_option_callback_filename =	$row[48];
+			$hold_time_option_callback_list_id = 	$row[49];
+			$hold_recall_xfer_group = 	$row[50];
+			$no_delay_call_route = 		$row[51];
+			$play_welcome_message = 	$row[52];
+			$answer_sec_pct_rt_stat_one =	$row[53];
+			$answer_sec_pct_rt_stat_two =	$row[54];
+			$default_group_alias =		$row[55];
+			$no_agent_no_queue =		$row[56];
+			$no_agent_action =			$row[57];
+			$no_agent_action_value =	$row[58];
+			$web_form_address_two =		stripslashes($row[59]);
+			$timer_action =				$row[60];
+			$timer_action_message =		$row[61];
+			$timer_action_seconds =		$row[62];
+			$start_call_url =			$row[63];
+			$dispo_call_url =			$row[64];
+			$xferconf_c_number =		$row[65];
+			$xferconf_d_number =		$row[66];
+			$xferconf_e_number =		$row[67];
+			$ignore_list_script_override = $row[68];
+			$extension_appended_cidname = $row[69];
+			$uniqueid_status_display =	$row[70];
+			$uniqueid_status_prefix =	$row[71];
+			$hold_time_option_minimum = $row[72];
+			$hold_time_option_press_filename = $row[73];
+			$hold_time_option_callmenu = $row[74];
+			$onhold_prompt_no_block =	$row[75];
+			$onhold_prompt_seconds =	$row[76];
+			$hold_time_option_no_block = $row[77];
+			$hold_time_option_prompt_seconds =	$row[78];
+			$hold_time_second_option =			$row[79];
+			$hold_time_third_option =			$row[80];
+			$wait_hold_option_priority =		$row[81];
+			$wait_time_option =					$row[82];
+			$wait_time_second_option =			$row[83];
+			$wait_time_third_option =			$row[84];
+			$wait_time_option_seconds =			$row[85];
+			$wait_time_option_exten =			$row[86];
+			$wait_time_option_voicemail =		$row[87];
+			$wait_time_option_xfer_group =		$row[88];
+			$wait_time_option_callmenu =		$row[89];
+			$wait_time_option_callback_filename =	$row[90];
+			$wait_time_option_callback_list_id =	$row[91];
+			$wait_time_option_press_filename =	$row[92];
+			$wait_time_option_no_block =		$row[93];
+			$wait_time_option_prompt_seconds =	$row[94];
+			$timer_action_destination =			$row[95];
+			$calculate_estimated_hold_seconds = $row[96];
+			$add_lead_url =						$row[97];
+			$eht_minimum_prompt_filename =		$row[98];
+			$eht_minimum_prompt_no_block =		$row[99];
+			$eht_minimum_prompt_seconds =		$row[100];
+			$on_hook_ring_time =				$row[101];
+			$na_call_url =						$row[102];
+			$on_hook_cid =						$row[103];
+			$group_calldate =					$row[104];
+			$action_xfer_cid =					$row[105];
+			$drop_callmenu =					$row[106];
+			$after_hours_callmenu =				$row[107];
+			$user_group =						$row[108];
+			$max_calls_method =					$row[109];
+			$max_calls_count =					$row[110];
+			$max_calls_action =					$row[111];
+			$dial_ingroup_cid =					$row[112];
+			$group_handling =					$row[113];
+			$web_form_address_three =			$row[114];
+			$populate_lead_ingroup =			$row[115];
+			$drop_lead_reset =					$row[116];
+			$after_hours_lead_reset =			$row[117];
+			$nanq_lead_reset =					$row[118];
+			$wait_time_lead_reset =				$row[119];
+			$hold_time_lead_reset =				$row[120];
+			$status_group_id =					$row[121];
+			$routing_initiated_recordings =		$row[122];
+			$on_hook_cid_number =				$row[123];
+			$customer_chat_screen_colors =		$row[124];
+			$customer_chat_survey_link =		$row[125];
+			$customer_chat_survey_text =		$row[126];
+			$populate_lead_province =			$row[127];
+			$areacode_filter =					$row[128];
+			$areacode_filter_seconds =			$row[129];
+			$areacode_filter_action =			$row[130];
+			$areacode_filter_action_value =		$row[131];
+			$populate_state_areacode =			$row[132];
+			$inbound_survey =					$row[133];
+			$inbound_survey_filename =			$row[134];
+			$inbound_survey_accept_digit =		$row[135];
+			$inbound_survey_question_filename =	$row[136];
+			$inbound_survey_callmenu =			$row[137];
+			$icbq_expiration_hours =			$row[138];
+			$closing_time_action =				$row[139];
+			$closing_time_now_trigger =			$row[140];
+			$closing_time_filename =			$row[141];
+			$closing_time_end_filename =		$row[142];
+			$closing_time_lead_reset =			$row[143];
+			$closing_time_option_exten =		$row[144];
+			$closing_time_option_callmenu =		$row[145];
+			$closing_time_option_voicemail =	$row[146];
+			$closing_time_option_xfer_group =	$row[147];
+			$closing_time_option_callback_list_id =	$row[148];
+			$icbq_call_time_id =				$row[149];
+			$add_lead_timezone =				$row[150];
+			$icbq_dial_filter =					$row[151];
+			$populate_lead_source =				$row[152];
+			$populate_lead_vendor =				$row[153];
+			$park_file_name =					$row[154];
+			$waiting_call_url_on =				$row[155];
+			$waiting_call_url_off =				$row[156];
+			$enter_ingroup_url =				$row[157];
+			$cid_cb_confirm_number =			$row[158];
+			$cid_cb_invalid_filter_phone_group = $row[159];
+			$cid_cb_valid_length =				$row[160];
+			$cid_cb_valid_filename =			$row[161];
+			$cid_cb_confirmed_filename =		$row[162];
+			$cid_cb_enter_filename =			$row[163];
+			$cid_cb_you_entered_filename =		$row[164];
+			$cid_cb_press_to_confirm_filename =	$row[165];
+			$cid_cb_invalid_filename =			$row[166];
+			$cid_cb_reenter_filename =			$row[167];
+			$cid_cb_error_filename =			$row[168];
+			$place_in_line_caller_number_filename =	$row[169];
+			$place_in_line_you_next_filename =	$row[170];
+			$ingroup_script_two =				$row[171];
+			$browser_alert_sound_ingroups =		$row[172];
+			$browser_alert_volume =				$row[173];
+			$answer_signal_ingroups =			$row[174];
+			$no_agent_delay =					$row[175];
+			$agent_search_method =				$row[176];
+			$qc_scorecard_id =					$row[177];
+			$qc_statuses_id =					$row[178];
+			$populate_lead_comments =			$row[179];
+			$drop_call_seconds_override =		$row[180];
+			$populate_lead_owner =				$row[181];
+			$in_queue_nanque =					$row[182];
+			$in_queue_nanque_exceptions =		$row[183];
+			$custom_one =						$row[184];
+			$custom_two =						$row[185];
+			$custom_three =						$row[186];
+			$custom_four =						$row[187];
+			$custom_five =						$row[188];
+			$second_alert_trigger =				$row[189];
+			$second_alert_trigger_seconds =		$row[190];
+			$second_alert_filename =			$row[191];
+			$second_alert_delay =				$row[192];
+			$second_alert_container =			$row[193];
+			$second_alert_only =				$row[194];
+			$third_alert_trigger =				$row[195];
+			$third_alert_trigger_seconds =		$row[196];
+			$third_alert_filename =				$row[197];
+			$third_alert_delay =				$row[198];
+			$third_alert_container =			$row[199];
+			$third_alert_only =					$row[200];
+			$agent_search_list =				$row[201];
+			$state_descriptions =				$row[202];
+			$stereo_recording =					$row[203];
+			$stereo_rec_filename =				$row[204];
+			$stereo_parallel_recording =		$row[205];
+			$recording_dtmf_muting =			$row[206];
+			$stereo_recording_agent =			$row[207];
+			$parallel_rec_co_filename =			$row[208];
+			$parallel_rec_cm_filename =			$row[209];
+			$parallel_rec_fr_filename =			$row[210];
+			$xfer_talk_minimum =				$row[211];
+			$xfer_talk_minimum_sec =			$row[212];
+			}
+		else
+			{
+			# Necessary due to being referenced below
+			$query_group_id="";
+			$group_calldate="";
+			$start_call_url="";
+			$dispo_call_url="";
+			$na_call_url="";
+			$add_lead_url="";
+			$qc_web_form_address="";
+			}
 
 		##### get callmenu listings for dynamic pulldown
 		$stmt="SELECT menu_id,menu_name from vicidial_call_menu $whereLOGadmin_viewable_groupsSQL order by menu_id;";
@@ -34715,6 +36327,9 @@ if ($ADD==3111)
 		$Xmenuslist='';
 		$Wmenuslist='';
 		$Cmenuslist='';
+		$Xmenus_selected=0;
+		$Wmenus_selected=0;
+		$Cmenus_selected=0;
 		while ($Xmenus_to_print > $o) 
 			{
 			$rowx=mysqli_fetch_row($rslt);
@@ -34959,7 +36574,7 @@ if ($ADD==3111)
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href=\"$PHP_SELF?ADD=3111111&script_id=$script_id\">"._QXZ("Script")."</a>: </td><td align=left><select size=1 name=script_id>\n";
 		echo "$scripts_list";
-		echo "<option selected value=\"$script_id\">$script_id - $scriptname_list[$script_id]</option>\n";
+		echo "<option selected value=\"$script_id\">$script_id".(isset($scriptname_list["$script_id"]) ? "- $scriptname_list[$script_id]" : "")."</option>\n";
 		echo "</select>$NWB#inbound_groups-ingroup_script$NWE</td></tr>\n";
 
 		if ($SSenable_second_script > 0)
@@ -35006,8 +36621,8 @@ if ($ADD==3111)
 		echo "<option value=\"\">"._QXZ("NONE")."</option>";
 		echo "$status_groups_menu";
 		echo "</select>$NWB#inbound_groups-status_group_id$NWE</td></tr>\n";
-
-		$eswHTML=''; $cfwHTML='';
+ 
+		$eswHTML=''; $cfwHTML=''; $aemHTML=''; $achHTML='';
 		if ($SSenable_second_script > 0)
 			{$eswHTML .= "<option value='SCRIPTTWO'>"._QXZ("SCRIPTTWO")."</option>";}
 		if ($SSenable_second_webform > 0)
@@ -35024,7 +36639,7 @@ if ($ADD==3111)
 
 		if ($SSbrowser_call_alerts > 0)
 			{
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Agent Browser Call Alert Sound").": </td><td align=left><select size=1 name='browser_alert_sound' id='browser_alert_sound'>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Agent Browser Call Alert Sound").": </td><td align=left><select size=1 name='browser_alert_sound_ingroups' id='browser_alert_sound_ingroups'>\n";
 			$browser_alert_sounds_listARY = explode(',',$browser_alert_sounds_list);
 			$browser_alert_sounds_listARY_ct = count($browser_alert_sounds_listARY);
 			$bas=0;   $bas_output='';
@@ -35036,7 +36651,7 @@ if ($ADD==3111)
 			echo "$bas_output";
 			echo "<option value='---NONE---'>---"._QXZ("NONE")."---</option>";
 			echo "<option value='---DISABLED---'>---"._QXZ("DISABLED")."---</option>";
-			echo "<option value='$browser_alert_sound' selected>"._QXZ("$browser_alert_sound")."</option>";
+			echo "<option value='$browser_alert_sound_ingroups' selected>"._QXZ("$browser_alert_sound_ingroups")."</option>";
 			echo "</select> &nbsp; \n";
 			echo " "._QXZ("volume").": <select size=1 name='browser_alert_volume' id='browser_alert_volume'>";
 			$bav=100;
@@ -35050,7 +36665,7 @@ if ($ADD==3111)
 			}
 		else
 			{
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=right></td><td align=left><input type=hidden name=browser_alert_sound value=\"$browser_alert_sound\"><input type=hidden name=browser_alert_volume value=\"$browser_alert_volume\"></td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right></td><td align=left><input type=hidden name=browser_alert_sound_ingroups value=\"$browser_alert_sound_ingroups\"><input type=hidden name=browser_alert_volume value=\"$browser_alert_volume\"></td></tr>\n";
 			}
 
 		if ($SSallow_emails>0 || $SSallow_chats > 0)
@@ -35065,7 +36680,7 @@ if ($ADD==3111)
 
 		if ($SSinbound_answer_config > 0)
 			{
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Answer Signal").": </td><td align=left><select size=1 name=answer_signal><option value='START'>"._QXZ("START")."</option><option value='ROUTE'>"._QXZ("ROUTE")."</option><option value='NONE'>"._QXZ("NONE")."</option><option value='$answer_signal' SELECTED>"._QXZ("$answer_signal")."</option></select>$NWB#inbound_groups-answer_signal$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Answer Signal").": </td><td align=left><select size=1 name=answer_signal_ingroups><option value='START'>"._QXZ("START")."</option><option value='ROUTE'>"._QXZ("ROUTE")."</option><option value='NONE'>"._QXZ("NONE")."</option><option value='$answer_signal_ingroups' SELECTED>"._QXZ("$answer_signal_ingroups")."</option></select>$NWB#inbound_groups-answer_signal$NWE</td></tr>\n";
 			}
 		else
 			{
@@ -35125,7 +36740,7 @@ if ($ADD==3111)
 			{echo _QXZ("Drop Seconds Override Container");}
 		echo ": </td><td align=left nowrap><select size=1 name=drop_call_seconds_override><option value='DISABLED'>"._QXZ("DISABLED")."</option>$drop_call_seconds_override_menu</select>$NWB#inbound_groups-drop_call_seconds_override$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#99FFCC><td align=right>"._QXZ("Drop Action").": </td><td align=left><select size=1 name=drop_action><option value='HANGUP'>"._QXZ("HANGUP")."</option><option value='MESSAGE'>"._QXZ("MESSAGE")."</option><option value='VOICEMAIL'>"._QXZ("VOICEMAIL")."</option><option value='VMAIL_NO_INST'>"._QXZ("VMAIL_NO_INST")."</option><option value='IN_GROUP'>"._QXZ("IN_GROUP")."</option><option value='CALLMENU'>"._QXZ("CALLMENU")."</option><option value='$drop_action' SELECTED>"._QXZ("$drop_action")."</option></select>$NWB#inbound_groups-drop_action$NWE</td></tr>\n";
+		echo "<tr bgcolor=#99FFCC><td align=right>"._QXZ("Drop Action").": </td><td align=left><select size=1 name=drop_action_ingroups><option value='HANGUP'>"._QXZ("HANGUP")."</option><option value='MESSAGE'>"._QXZ("MESSAGE")."</option><option value='VOICEMAIL'>"._QXZ("VOICEMAIL")."</option><option value='VMAIL_NO_INST'>"._QXZ("VMAIL_NO_INST")."</option><option value='IN_GROUP'>"._QXZ("IN_GROUP")."</option><option value='CALLMENU'>"._QXZ("CALLMENU")."</option><option value='$drop_action_ingroups' SELECTED>"._QXZ("$drop_action_ingroups")."</option></select>$NWB#inbound_groups-drop_action$NWE</td></tr>\n";
 
 		echo "<tr bgcolor=#99FFCC><td align=right>"._QXZ("Drop Lead Reset").": </td><td align=left><select size=1 name=drop_lead_reset><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$drop_lead_reset' SELECTED>"._QXZ("$drop_lead_reset")."</option></select>$NWB#inbound_groups-drop_lead_reset$NWE</td></tr>\n";
 
@@ -35141,7 +36756,7 @@ if ($ADD==3111)
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href=\"$PHP_SELF?ADD=311111111&call_time_id=$call_time_id\">"._QXZ("Call Time").": </a></td><td align=left><select size=1 name=call_time_id>\n";
 		echo "$call_times_list";
-		echo "<option selected value=\"$call_time_id\">$call_time_id - $call_timename_list[$call_time_id]</option>\n";
+		echo "<option selected value=\"$call_time_id\">$call_time_id".(isset($call_timename_list["$call_time_id"]) ? " - $call_timename_list[$call_time_id]" : "")."</option>\n";
 		echo "</select>$NWB#inbound_groups-call_time_id$NWE</td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2>\n";
@@ -35523,7 +37138,7 @@ if ($ADD==3111)
 		while ($i < $Fgroups_to_print)
 			{
 			$row=mysqli_fetch_row($rslt);
-			$Fgroups_list .= "<option value=\"$row[0]\">$row[0] - $row[1] - $row[2]</option>";
+			$Fgroups_list .= "<option value=\"$row[0]\">$row[0] - $row[1]</option>";
 			$i++;
 			}
 
@@ -35699,6 +37314,9 @@ if ($ADD==3111)
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Third Agent Alert Only").": </td><td align=left><select size=1 name=third_alert_only><option value='DISABLED'>"._QXZ("DISABLED")."</option><option value='ENABLED'>"._QXZ("ENABLED")."</option><option value='$third_alert_only' SELECTED>"._QXZ("$third_alert_only")."</option></select>$NWB#inbound_groups-third_alert_only$NWE</td></tr>\n";
 
+
+
+
 		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Default Transfer Group").": </td><td align=left><select size=1 name=default_xfer_group>";
 		echo "$Xgroups_menu";
 		echo "</select>$NWB#inbound_groups-default_xfer_group$NWE</td></tr>\n";
@@ -35746,13 +37364,13 @@ if ($ADD==3111)
 				$DID_edit_link_END='</a>';
 				}
 			}
-		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>$DID_edit_link_BEGIN"._QXZ("Dial In-Group CID")."$DID_edit_link_END: </td><td align=left><input type=text name=dial_ingroup_cid size=20 maxlength=20 value=\"$dial_ingroup_cid\">$NWB#inbound_groups-dial_ingroup_cid$NWE</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>$DID_edit_link_BEGIN"._QXZ("Dial In-Group CID")."$DID_edit_link_END: </td><td align=left><input type=text name=dial_ingroup_cid size=20 maxlength=20 value=\"$dial_ingroup_cid\">$NWB#inbound_groups-dial_ingroup_cid$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Hold Recall Transfer In-Group").": </td><td align=left><select size=1 name=hold_recall_xfer_group>";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Hold Recall Transfer In-Group").": </td><td align=left><select size=1 name=hold_recall_xfer_group>";
 		echo "$Hgroups_menu";
 		echo "</select>$NWB#inbound_groups-hold_recall_xfer_group$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("No Delay Call Route").": </td><td align=left><select size=1 name=no_delay_call_route><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$no_delay_call_route' SELECTED>"._QXZ("$no_delay_call_route")."</option></select>$NWB#inbound_groups-no_delay_call_route$NWE</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("No Delay Call Route").": </td><td align=left><select size=1 name=no_delay_call_route><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$no_delay_call_route' SELECTED>"._QXZ("$no_delay_call_route")."</option></select>$NWB#inbound_groups-no_delay_call_route$NWE</td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("In-Group Recording Override").": </td><td align=left><select size=1 name=ingroup_recording_override><option value='DISABLED'>"._QXZ("DISABLED")."</option><option value='NEVER'>"._QXZ("NEVER")."</option><option value='ONDEMAND'>"._QXZ("ONDEMAND")."</option><option value='ALLCALLS'>"._QXZ("ALLCALLS")."</option><option value='ALLFORCE'>"._QXZ("ALLFORCE")."</option><option value='$ingroup_recording_override' SELECTED>"._QXZ("$ingroup_recording_override")."</option></select>$NWB#inbound_groups-ingroup_recording_override$NWE</td></tr>\n";
 
@@ -36306,6 +37924,8 @@ if ($ADD==3111)
 			}
 
 		$checkbox_count=0;
+		$checkbox_list="";
+		$users_output="";
 		$o=0;
 		while ($users_to_print > $o) 
 			{
@@ -36479,7 +38099,7 @@ if ($ADD==3811)
 		$script_id =				$row[8];
 		$get_call_launch =			$row[9];
 		$drop_call_seconds =		$row[14];
-		$drop_action =				$row[15];
+		$drop_action_ingroups =		$row[15];
 		$drop_exten =				$row[16];
 		$call_time_id =				$row[17];
 		$after_hours_action =		$row[18];
@@ -36577,7 +38197,7 @@ if ($ADD==3811)
 		$status_group_id =					$row[115];
 		$routing_initiated_recordings =		$row[116];
 		$ingroup_script_two =				$row[117];
-		$browser_alert_sound =				$row[118];
+		$browser_alert_sound_ingroups =		$row[118];
 		$browser_alert_volume =				$row[119];
 		$custom_one =						$row[120];
 		$custom_two =						$row[121];
@@ -36591,7 +38211,9 @@ if ($ADD==3811)
 		$Xmenus_to_print = mysqli_num_rows($rslt);
 		$o=0;
 		$Xmenuslist='';
+		$Xmenus_selected=0;
 		$Wmenuslist='';
+		$Wmenus_selected=0;
 		while ($Xmenus_to_print > $o) 
 			{
 			$rowx=mysqli_fetch_row($rslt);
@@ -36774,7 +38396,7 @@ if ($ADD==3811)
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Fronter Display").": </td><td align=left><select size=1 name=fronter_display><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$fronter_display' SELECTED>"._QXZ("$fronter_display")."</option></select>$NWB#inbound_groups-fronter_display$NWE</td></tr>\n";
 
-		$eswHTML=''; $cfwHTML='';
+		$eswHTML=''; $cfwHTML=''; $aemHTML=''; $achHTML='';
 		if ($SSenable_second_script > 0)
 			{$eswHTML .= "<option value='SCRIPTTWO'>"._QXZ("SCRIPTTWO")."</option>";}
 		if ($SSenable_second_webform > 0)
@@ -36785,7 +38407,7 @@ if ($ADD==3811)
 			{$aemHTML .= "<option value='EMAIL'>"._QXZ("EMAIL")."</option>";}
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Get Call Launch").": </td><td align=left><select size=1 name=get_call_launch><option value='NONE' selected>"._QXZ("NONE")."</option><option value='SCRIPT'>"._QXZ("SCRIPT")."</option><option value='WEBFORM'>"._QXZ("WEBFORM")."</option>$eswHTML$cfwHTML$aemHTML$achHTML<option value='$get_call_launch' selected>"._QXZ("$get_call_launch")."</option></select>$NWB#inbound_groups-get_call_launch$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right></td><td align=left><input type=hidden name=browser_alert_sound value=\"$browser_alert_sound\"><input type=hidden name=browser_alert_volume value=\"$browser_alert_volume\"></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right></td><td align=left><input type=hidden name=browser_alert_sound_ingroups value=\"$browser_alert_sound_ingroups\"><input type=hidden name=browser_alert_volume value=\"$browser_alert_volume\"></td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Group Handling").": </td><td align=left><select size=1 name=group_handling><option  value='PHONE'>"._QXZ("PHONE")."</option>";
 		echo "<option selected value='EMAIL'>"._QXZ("EMAIL")."</option>";
@@ -36799,7 +38421,7 @@ if ($ADD==3811)
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href=\"$PHP_SELF?ADD=3111111&script_id=$script_id\">"._QXZ("Script")."</a>: </td><td align=left><select size=1 name=script_id>\n";
 		echo "$scripts_list";
-		echo "<option selected value=\"$script_id\">$script_id - $scriptname_list[$script_id]</option>\n";
+		echo "<option selected value=\"$script_id\">$script_id".(isset($scriptname_list["$script_id"]) ? " - $scriptname_list[$script_id]" : "")."</option>\n";
 		echo "</select>$NWB#inbound_groups-ingroup_script$NWE</td></tr>\n";
 
 		if ($SSenable_second_script > 0)
@@ -37047,12 +38669,12 @@ if ($ADD==3811)
 
 			echo "<tr bgcolor=#$SSstd_row2_background><td align=right><a href=\"$PHP_SELF?ADD=3111111&script_id=$script_id\">"._QXZ("QC Script")."</a>: </td><td align=left><select size=1 name=qc_script>\n";
 			echo "$QCscripts_list";
-			echo "<option selected value=\"$qc_script\">$qc_script - $scriptname_list[$qc_script]</option>\n";
+			echo "<option selected value=\"$qc_script\">$qc_script".(isset($scriptname_list["$qc_script"]) ? " - $scriptname_list[$qc_script]" : "")."</option>\n"; 
 			echo "</select>$NWB#inbound_groups-qc_script$NWE</td></tr>\n";
 
 			echo "<tr bgcolor=#$SSstd_row2_background><td align=right><a href=\"$PHP_SELF?ADD=331111111&shift_id=$qc_shift_id\">"._QXZ("QC Shift")."</a>: </td><td align=left><select size=1 name=qc_shift_id>\n";
 			echo "$QCshifts_list";
-			echo "<option selected value=\"$qc_shift_id\">$qc_shift_id - $shiftname_list[$qc_shift_id]</option>\n";
+			echo "<option selected value=\"$qc_shift_id\">$qc_shift_id".(isset($scriptname_list["$qc_shift_id"]) ? " - $scriptname_list[$qc_shift_id]" : "")."</option>\n";
 			echo "</select>$NWB#inbound_groups-qc_shift_id$NWE</td></tr>\n";
 
 			echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("QC Get Record Launch").": </td><td><select size=1 name=qc_get_record_launch><option value='NONE'>"._QXZ("NONE")."</option><option value='SCRIPT'>"._QXZ("SCRIPT")."</option><option value='WEBFORM'>"._QXZ("WEBFORM")."</option><option value='QCSCRIPT'>"._QXZ("QCSCRIPT")."</option><option value='QCWEBFORM'>"._QXZ("QCWEBFORM")."</option><option value='$qc_get_record_launch' SELECTED>"._QXZ("$qc_get_record_launch")."</option></select> $NWB#inbound_groups-qc_get_record_launch$NWE</td></tr>\n";
@@ -37246,7 +38868,9 @@ if ($ADD==3811)
 				}
 			}
 
-		$checkbox_count=0;
+		$checkbox_count=0; 
+		$checkbox_list="";
+		$users_output="";
 		$o=0;
 		while ($users_to_print > $o) 
 			{
@@ -37387,7 +39011,7 @@ if ($ADD==3911)
 		$script_id =				$row[8];
 		$get_call_launch =			$row[9];
 		$drop_call_seconds =		$row[14];
-		$drop_action =				$row[15];
+		$drop_action_ingroups =		$row[15];
 		$drop_exten =				$row[16];
 		$call_time_id =				$row[17];
 		$after_hours_action =		$row[18];
@@ -37486,7 +39110,7 @@ if ($ADD==3911)
 		$customer_chat_screen_colors =		$row[116];
 		$customer_chat_survey_link =		$row[117];
 		$customer_chat_survey_text =		$row[118];
-		$browser_alert_sound =				$row[119];
+		$browser_alert_sound_ingroups =		$row[119];
 		$browser_alert_volume =				$row[120];
 		$custom_one =						$row[121];
 		$custom_two =						$row[122];
@@ -37689,7 +39313,7 @@ if ($ADD==3911)
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Fronter Display").": </td><td align=left><select size=1 name=fronter_display><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option SELECTED value='$fronter_display'>"._QXZ("$fronter_display")."</option></select>$NWB#inbound_groups-fronter_display$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right></td><td align=left><input type=hidden name=browser_alert_sound value=\"$browser_alert_sound\"><input type=hidden name=browser_alert_volume value=\"$browser_alert_volume\"></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right></td><td align=left><input type=hidden name=browser_alert_sound_ingroups value=\"$browser_alert_sound_ingroups\"><input type=hidden name=browser_alert_volume value=\"$browser_alert_volume\"></td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Group Handling").": </td><td align=left><select size=1 name=group_handling><option  value='PHONE'>"._QXZ("PHONE")."</option>";
 		echo "<option selected value='CHAT'>"._QXZ("CHAT")."</option>";
@@ -37953,12 +39577,12 @@ if ($ADD==3911)
 
 			echo "<tr bgcolor=#$SSstd_row2_background><td align=right><a href=\"$PHP_SELF?ADD=3111111&script_id=$script_id\">"._QXZ("QC Script")."</a>: </td><td align=left><select size=1 name=qc_script>\n";
 			echo "$QCscripts_list";
-			echo "<option selected value=\"$qc_script\">$qc_script - $scriptname_list[$qc_script]</option>\n";
+			echo "<option selected value=\"$qc_script\">$qc_script".(isset($scriptname_list["$qc_script"]) ? " - $scriptname_list[$qc_script]" : "")."</option>\n";
 			echo "</select>$NWB#inbound_groups-qc_script$NWE</td></tr>\n";
 
 			echo "<tr bgcolor=#$SSstd_row2_background><td align=right><a href=\"$PHP_SELF?ADD=331111111&shift_id=$qc_shift_id\">"._QXZ("QC Shift")."</a>: </td><td align=left><select size=1 name=qc_shift_id>\n";
 			echo "$QCshifts_list";
-			echo "<option selected value=\"$qc_shift_id\">$qc_shift_id - $shiftname_list[$qc_shift_id]</option>\n";
+			echo "<option selected value=\"$qc_shift_id\">$qc_shift_id".(isset($shiftname_list["$qc_shift_id"]) ? " - $shiftname_list[$qc_shift_id]" : "")."</option>\n";
 			echo "</select>$NWB#inbound_groups-qc_shift_id$NWE</td></tr>\n";
 
 			echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("QC Get Record Launch").": </td><td><select size=1 name=qc_get_record_launch><option value='NONE'>"._QXZ("NONE")."</option><option value='SCRIPT'>"._QXZ("SCRIPT")."</option><option value='WEBFORM'>"._QXZ("WEBFORM")."</option><option value='QCSCRIPT'>"._QXZ("QCSCRIPT")."</option><option value='QCWEBFORM'>"._QXZ("QCWEBFORM")."</option><option value='$qc_get_record_launch' SELECTED>"._QXZ("$qc_get_record_launch")."</option></select> $NWB#inbound_groups-qc_get_record_launch$NWE</td></tr>\n";
@@ -38153,6 +39777,8 @@ if ($ADD==3911)
 			}
 
 		$checkbox_count=0;
+		$checkbox_list='';
+		$users_output='';
 		$o=0;
 		while ($users_to_print > $o) 
 			{
@@ -38301,7 +39927,7 @@ if ($ADD==3311)
 		$did_description = 		$row[2];
 		$did_active = 			$row[3];
 		$did_route = 			$row[4];
-		$extension = 			$row[5];
+		$extension_dids = 			$row[5];
 		$exten_context = 		$row[6];
 		$voicemail_ext = 		$row[7];
 		$phone = 				$row[8];
@@ -38311,7 +39937,7 @@ if ($ADD==3311)
 		$user_route_settings_ingroup = 	$row[12];
 		$group_id = 			$row[13];
 		$call_handle_method = 	$row[14];
-		$agent_search_method =	$row[15];
+		$agent_search_method_inbound =	$row[15];
 		$list_id = 				$row[16];
 		$campaign_id = 			$row[17];
 		$phone_code = 			$row[18];
@@ -38524,7 +40150,7 @@ if ($ADD==3311)
 			echo "<tr bgcolor=#99FFCC><td align=right></td><td align=left>";
 			echo "<input type=hidden name=did_route value='$did_route'>\n";
 			echo "<input type=hidden name=record_call value='$record_call'>\n";
-			echo "<input type=hidden name=extension value='$extension'>\n";
+			echo "<input type=hidden name=extension_dids value='$extension_dids'>\n";
 			echo "<input type=hidden name=exten_context value='$exten_context'>\n";
 			echo "<input type=hidden name=voicemail_ext value='$voicemail_ext'>\n";
 			echo "<input type=hidden name=phone value='$phone'>\n";
@@ -38535,7 +40161,7 @@ if ($ADD==3311)
 			echo "<input type=hidden name=user_route_settings_ingroup value='$user_route_settings_ingroup'>\n";
 			echo "<input type=hidden name=group_id value='$group_id'>\n";
 			echo "<input type=hidden name=call_handle_method value='$call_handle_method'>\n";
-			echo "<input type=hidden name=agent_search_method value='$agent_search_method'>\n";
+			echo "<input type=hidden name=agent_search_method_inbound value='$agent_search_method_inbound'>\n";
 			echo "<input type=hidden name=list_id value='$list_id'>\n";
 			echo "<input type=hidden name=entry_list_id value='$entry_list_id'>\n";
 			echo "<input type=hidden name=campaign_id value='$campaign_id'>\n";
@@ -38569,7 +40195,7 @@ if ($ADD==3311)
 				echo "<tr bgcolor=#99FFCC><td align=right></td><td align=left><input type=hidden name=inbound_route_answer value='Y'></td></tr>";
 				}
 
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Extension").": </td><td align=left><input type=text name=extension size=40 maxlength=50 value=\"$extension\">$NWB#inbound_dids-extension$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Extension").": </td><td align=left><input type=text name=extension_dids size=40 maxlength=50 value=\"$extension_dids\">$NWB#inbound_dids-extension$NWE</td></tr>\n";
 			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Extension Context").": </td><td align=left><input type=text name=exten_context size=40 maxlength=50 value=\"$exten_context\">$NWB#inbound_dids-exten_context$NWE</td></tr>\n";
 			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Voicemail Box").": </td><td align=left><input type=text name=voicemail_ext id=voicemail_ext size=12 maxlength=10 value=\"$voicemail_ext\"> <a href=\"javascript:launch_vm_chooser('voicemail_ext','vm');\">"._QXZ("voicemail chooser")."</a>$NWB#inbound_dids-voicemail_ext$NWE</td></tr>\n";
 			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Phone Extension").": </td><td align=left><input type=text name=phone size=20 maxlength=100 value=\"$phone\">$NWB#inbound_dids-phone$NWE</td></tr>\n";
@@ -38680,7 +40306,7 @@ if ($ADD==3311)
 			<option value='CIDLOOKUPRLALTADDR3OWNERCUSTOM5'>"._QXZ("CIDLOOKUPRLALTADDR3OWNERCUSTOM5")."</option>
 			<option value='CIDLOOKUPRCALTADDR3OWNERCUSTOM5'>"._QXZ("CIDLOOKUPRCALTADDR3OWNERCUSTOM5")."</option>
 			</select>$NWB#inbound_dids-call_handle_method$NWE</td></tr>\n";
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("In-Group Agent Search Method").": </td><td align=left><select size=1 name=agent_search_method><option value=\"LB\">LB - "._QXZ("Load Balanced")."</option><option value=\"LO\">LO - "._QXZ("Load Balanced Overflow")."</option><option value=\"SO\">SO - "._QXZ("Server Only")."</option><option SELECTED>$agent_search_method</option></select>$NWB#inbound_dids-agent_search_method$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("In-Group Agent Search Method").": </td><td align=left><select size=1 name=agent_search_method_inbound><option value=\"LB\">LB - "._QXZ("Load Balanced")."</option><option value=\"LO\">LO - "._QXZ("Load Balanced Overflow")."</option><option value=\"SO\">SO - "._QXZ("Server Only")."</option><option SELECTED>$agent_search_method_inbound</option></select>$NWB#inbound_dids-agent_search_method$NWE</td></tr>\n";
 			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("In-Group List ID").": </td><td align=left><input type=text name=list_id size=19 maxlength=19 value=\"$list_id\">$NWB#inbound_dids-list_id$NWE</td></tr>\n";
 
 			if ($SSenable_did_entry_list_id > 0)
@@ -39305,6 +40931,7 @@ if ($ADD==3321)
 				{
 				if ($Xuser_start[$o] != $bgac)
 					{
+					$bgct=0;
 					if (preg_match("/1$|3$|5$|7$|9$/i", $bgct))
 						{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';} 
 					else
@@ -39383,24 +41010,24 @@ if ($ADD==3511)
 		$stmt="SELECT menu_name,menu_prompt,menu_timeout,menu_timeout_prompt,menu_invalid_prompt,menu_repeat,menu_time_check,call_time_id,track_in_vdac,custom_dialplan_entry,tracking_group,dtmf_log,dtmf_field,user_group,qualify_sql,alt_dtmf_log,question,answer_signal from vicidial_call_menu where menu_id='$menu_id' $LOGadmin_viewable_groupsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$row=mysqli_fetch_row($rslt);
-		$menu_name =			$row[0];
-		$menu_prompt =			$row[1];
-		$menu_timeout =			$row[2];
-		$menu_timeout_prompt =	$row[3];
-		$menu_invalid_prompt =	$row[4];
-		$menu_repeat =			$row[5];
-		$menu_time_check =		$row[6];
-		$call_time_id =			$row[7];
-		$track_in_vdac =		$row[8];
-		$custom_dialplan_entry= $row[9];
-		$tracking_group =		$row[10];
-		$dtmf_log =				$row[11];
-		$dtmf_field =			$row[12];
-		$user_group =			$row[13];
-		$qualify_sql =			$row[14];
-		$alt_dtmf_log =			$row[15];
-		$question =				$row[16];
-		$answer_signal =		$row[17];
+		$menu_name =				$row[0];
+		$menu_prompt =				$row[1];
+		$menu_timeout =				$row[2];
+		$menu_timeout_prompt =		$row[3];
+		$menu_invalid_prompt =		$row[4];
+		$menu_repeat =				$row[5];
+		$menu_time_check =			$row[6];
+		$call_time_id =				$row[7];
+		$track_in_vdac =			$row[8];
+		$custom_dialplan_entry =	$row[9];
+		$tracking_group =			$row[10];
+		$dtmf_log =					$row[11];
+		$dtmf_field =				$row[12];
+		$user_group =				$row[13];
+		$qualify_sql =				$row[14];
+		$alt_dtmf_log =				$row[15];
+		$question =					$row[16];
+		$answer_signal_callmenus =	$row[17];
 
 		echo "<br>"._QXZ("MODIFY A CALL MENU RECORD").": $menu_id<form action=$PHP_SELF method=POST name=admin_form id=admin_form>\n";
 		echo "<input type=hidden name=ADD value=4511>\n";
@@ -39429,7 +41056,7 @@ if ($ADD==3511)
 		echo "	</select>$NWB#call_menu-menu_time_check$NWE</td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href=\"$PHP_SELF?ADD=311111111&call_time_id=$call_time_id\">"._QXZ("Call Time").": </a></td><td align=left><select size=1 name=call_time_id>\n";
 		echo "$call_times_list";
-		echo "<option selected value=\"$call_time_id\">$call_time_id - $call_timename_list[$call_time_id]</option>\n";
+		echo "<option selected value=\"$call_time_id\">$call_time_id".(isset($call_timename_list["$call_time_id"]) ? " - $call_timename_list[$call_time_id]" : "")."</option>\n";
 		echo "</select>$NWB#call_menu-call_time_id$NWE ";
 		$stmt="SELECT ct_holidays from vicidial_call_times where call_time_id='$call_time_id';";
 		$rslt=mysql_to_mysqli($stmt, $link);
@@ -39476,7 +41103,7 @@ if ($ADD==3511)
 		if (file_exists('options.php'))
 			{require('options.php');}
 		$extended_vl_fields_OPTIONS='';
-		if ($extended_vl_fields > 0)
+		if (isset($extended_vl_fields) && $extended_vl_fields > 0)
 			{
 			$extended_vl_fields_OPTIONS = '<option>q01</option><option>q02</option><option>q03</option><option>q04</option><option>q05</option><option>q06</option><option>q07</option><option>q08</option><option>q09</option><option>q10</option><option>q11</option><option>q12</option><option>q13</option><option>q14</option><option>q15</option><option>q16</option><option>q17</option><option>q18</option><option>q19</option><option>q20</option><option>q21</option><option>q22</option><option>q23</option><option>q24</option><option>q25</option><option>q26</option><option>q27</option><option>q28</option><option>q29</option><option>q30</option><option>q31</option><option>q32</option><option>q33</option><option>q34</option><option>q35</option><option>q36</option><option>q37</option><option>q38</option><option>q39</option><option>q40</option><option>q41</option><option>q42</option><option>q43</option><option>q44</option><option>q45</option><option>q46</option><option>q47</option><option>q48</option><option>q49</option><option>q50</option><option>q51</option><option>q52</option><option>q53</option><option>q54</option><option>q55</option><option>q56</option><option>q57</option><option>q58</option><option>q59</option><option>q60</option><option>q61</option><option>q62</option><option>q63</option><option>q64</option><option>q65</option><option>q66</option><option>q67</option><option>q68</option><option>q69</option><option>q70</option><option>q71</option><option>q72</option><option>q73</option><option>q74</option><option>q75</option><option>q76</option><option>q77</option><option>q78</option><option>q79</option><option>q80</option><option>q81</option><option>q82</option><option>q83</option><option>q84</option><option>q85</option><option>q86</option><option>q87</option><option>q88</option><option>q89</option><option>q90</option><option>q91</option><option>q92</option><option>q93</option><option>q94</option><option>q95</option><option>q96</option><option>q97</option><option>q98</option><option>q99</option>';
 			}
@@ -39503,7 +41130,7 @@ if ($ADD==3511)
 
 		if ($SSinbound_answer_config > 0)
 			{
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Beginning Answer Signal").": </td><td align=left><select size=1 name=answer_signal><option value='N'>"._QXZ("N")."</option><option value='Y'>"._QXZ("Y")."</option><option value='$answer_signal' SELECTED>"._QXZ("$answer_signal")."</option></select>$NWB#call_menu-answer_signal$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Beginning Answer Signal").": </td><td align=left><select size=1 name=answer_signal_callmenus><option value='N'>"._QXZ("N")."</option><option value='Y'>"._QXZ("Y")."</option><option value='$answer_signal_callmenus' SELECTED>"._QXZ("$answer_signal_callmenus")."</option></select>$NWB#call_menu-answer_signal$NWE</td></tr>\n";
 			}
 		else
 			{
@@ -41228,36 +42855,44 @@ if ($ADD==311111111)
 
 		$stmt="SELECT call_time_id,call_time_name,call_time_comments,ct_default_start,ct_default_stop,ct_sunday_start,ct_sunday_stop,ct_monday_start,ct_monday_stop,ct_tuesday_start,ct_tuesday_stop,ct_wednesday_start,ct_wednesday_stop,ct_thursday_start,ct_thursday_stop,ct_friday_start,ct_friday_stop,ct_saturday_start,ct_saturday_stop,ct_state_call_times,default_afterhours_filename_override,sunday_afterhours_filename_override,monday_afterhours_filename_override,tuesday_afterhours_filename_override,wednesday_afterhours_filename_override,thursday_afterhours_filename_override,friday_afterhours_filename_override,saturday_afterhours_filename_override,user_group,ct_holidays from vicidial_call_times where call_time_id='$call_time_id' $LOGadmin_viewable_groupsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-		$call_time_name =		$row[1];
-		$call_time_comments =	$row[2];
-		$ct_default_start =		$row[3];
-		$ct_default_stop =		$row[4];
-		$ct_sunday_start =		$row[5];
-		$ct_sunday_stop =		$row[6];
-		$ct_monday_start =		$row[7];
-		$ct_monday_stop =		$row[8];
-		$ct_tuesday_start =		$row[9];
-		$ct_tuesday_stop =		$row[10];
-		$ct_wednesday_start =	$row[11];
-		$ct_wednesday_stop =	$row[12];
-		$ct_thursday_start =	$row[13];
-		$ct_thursday_stop =		$row[14];
-		$ct_friday_start =		$row[15];
-		$ct_friday_stop =		$row[16];
-		$ct_saturday_start =	$row[17];
-		$ct_saturday_stop =		$row[18];
-		$ct_state_call_times =	$row[19];
-		$default_afterhours_filename_override =		$row[20];
-		$sunday_afterhours_filename_override =		$row[21];
-		$monday_afterhours_filename_override =		$row[22];
-		$tuesday_afterhours_filename_override =		$row[23];
-		$wednesday_afterhours_filename_override =	$row[24];
-		$thursday_afterhours_filename_override =	$row[25];
-		$friday_afterhours_filename_override =		$row[26];
-		$saturday_afterhours_filename_override =	$row[27];
-		$user_group =			$row[28];
-		$ct_holidays =			$row[29];
+		if (mysqli_num_rows($rslt)>0)
+			{
+			$row=mysqli_fetch_row($rslt);
+			$call_time_name =		$row[1];
+			$call_time_comments =	$row[2];
+			$ct_default_start =		$row[3];
+			$ct_default_stop =		$row[4];
+			$ct_sunday_start =		$row[5];
+			$ct_sunday_stop =		$row[6];
+			$ct_monday_start =		$row[7];
+			$ct_monday_stop =		$row[8];
+			$ct_tuesday_start =		$row[9];
+			$ct_tuesday_stop =		$row[10];
+			$ct_wednesday_start =	$row[11];
+			$ct_wednesday_stop =	$row[12];
+			$ct_thursday_start =	$row[13];
+			$ct_thursday_stop =		$row[14];
+			$ct_friday_start =		$row[15];
+			$ct_friday_stop =		$row[16];
+			$ct_saturday_start =	$row[17];
+			$ct_saturday_stop =		$row[18];
+			$ct_state_call_times =	$row[19];
+			$default_afterhours_filename_override =		$row[20];
+			$sunday_afterhours_filename_override =		$row[21];
+			$monday_afterhours_filename_override =		$row[22];
+			$tuesday_afterhours_filename_override =		$row[23];
+			$wednesday_afterhours_filename_override =	$row[24];
+			$thursday_afterhours_filename_override =	$row[25];
+			$friday_afterhours_filename_override =		$row[26];
+			$saturday_afterhours_filename_override =	$row[27];
+			$user_group =			$row[28];
+			$ct_holidays =			$row[29];
+			}
+		else
+			{
+			$ct_state_call_times="";
+			$ct_holidays="";
+			}
 
 		echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 
@@ -41286,6 +42921,7 @@ if ($ADD==311111111)
 		$ct_srs=1;
 		$b=0;
 		$srs_SQL ='';
+		$srs_state_SQL='';
 		if (strlen($ct_state_call_times)>2)
 			{
 			$state_rules = explode('|',$ct_state_call_times);
@@ -41295,7 +42931,7 @@ if ($ADD==311111111)
 		echo "<td align=center colspan=3>&nbsp;</td></tr>\n";
 		while($ct_srs >= $b)
 			{
-			if (strlen($state_rules[$b])>0)
+			if (isset($state_rules[$b]) && strlen($state_rules[$b])>0)
 				{
 				$stmt="SELECT state_call_time_state,state_call_time_name from vicidial_state_call_times where state_call_time_id='$state_rules[$b]';";
 				$rslt=mysql_to_mysqli($stmt, $link);
@@ -41339,6 +42975,7 @@ if ($ADD==311111111)
 		$ct_hrs=1;
 		$b=0;
 		$hrs_SQL ='';
+		$hrs_holiday_SQL='';
 		if (strlen($ct_holidays)>2)
 			{
 			$holiday_rules = explode('|',$ct_holidays);
@@ -41348,7 +42985,7 @@ if ($ADD==311111111)
 		echo "<td align=center colspan=3>&nbsp;</td></tr>\n";
 		while($ct_hrs >= $b)
 			{
-			if (strlen($holiday_rules[$b])>0)
+			if (isset($holiday_rules[$b]) && strlen($holiday_rules[$b])>0)
 				{
 				$stmt="SELECT holiday_date,holiday_name from vicidial_call_time_holidays where holiday_id='$holiday_rules[$b]';";
 				$rslt=mysql_to_mysqli($stmt, $link);
@@ -41488,28 +43125,35 @@ if ($ADD==3111111111)
 
 		$stmt="SELECT state_call_time_id,state_call_time_state,state_call_time_name,state_call_time_comments,sct_default_start,sct_default_stop,sct_sunday_start,sct_sunday_stop,sct_monday_start,sct_monday_stop,sct_tuesday_start,sct_tuesday_stop,sct_wednesday_start,sct_wednesday_stop,sct_thursday_start,sct_thursday_stop,sct_friday_start,sct_friday_stop,sct_saturday_start,sct_saturday_stop,user_group,ct_holidays from vicidial_state_call_times where state_call_time_id='$call_time_id' $LOGadmin_viewable_groupsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-		$state_call_time_state =$row[1];
-		$call_time_name =		$row[2];
-		$call_time_comments =	$row[3];
-		$ct_default_start =		$row[4];
-		$ct_default_stop =		$row[5];
-		$ct_sunday_start =		$row[6];
-		$ct_sunday_stop =		$row[7];
-		$ct_monday_start =		$row[8];
-		$ct_monday_stop =		$row[9];
-		$ct_tuesday_start =		$row[10];
-		$ct_tuesday_stop =		$row[11];
-		$ct_wednesday_start =	$row[12];
-		$ct_wednesday_stop =	$row[13];
-		$ct_thursday_start =	$row[14];
-		$ct_thursday_stop =		$row[15];
-		$ct_friday_start =		$row[16];
-		$ct_friday_stop =		$row[17];
-		$ct_saturday_start =	$row[18];
-		$ct_saturday_stop =		$row[19];
-		$user_group =			$row[20];
-		$ct_holidays =			$row[21];
+		if (mysqli_num_rows($rslt)>0)
+			{
+			$row=mysqli_fetch_row($rslt);
+			$state_call_time_state =$row[1];
+			$call_time_name =		$row[2];
+			$call_time_comments =	$row[3];
+			$ct_default_start =		$row[4];
+			$ct_default_stop =		$row[5];
+			$ct_sunday_start =		$row[6];
+			$ct_sunday_stop =		$row[7];
+			$ct_monday_start =		$row[8];
+			$ct_monday_stop =		$row[9];
+			$ct_tuesday_start =		$row[10];
+			$ct_tuesday_stop =		$row[11];
+			$ct_wednesday_start =	$row[12];
+			$ct_wednesday_stop =	$row[13];
+			$ct_thursday_start =	$row[14];
+			$ct_thursday_stop =		$row[15];
+			$ct_friday_start =		$row[16];
+			$ct_friday_stop =		$row[17];
+			$ct_saturday_start =	$row[18];
+			$ct_saturday_stop =		$row[19];
+			$user_group =			$row[20];
+			$ct_holidays =			$row[21];
+			}
+		else 
+			{
+			$ct_holidays='';
+			}
 
 		echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 
@@ -41542,6 +43186,7 @@ if ($ADD==3111111111)
 		$ct_hrs=1;
 		$b=0;
 		$hrs_SQL ='';
+		$hrs_holiday_SQL='';
 		if (strlen($ct_holidays)>2)
 			{
 			$holiday_rules = explode('|',$ct_holidays);
@@ -41551,7 +43196,7 @@ if ($ADD==3111111111)
 		echo "<td align=center colspan=3>&nbsp;</td></tr>\n";
 		while($ct_hrs >= $b)
 			{
-			if (strlen($holiday_rules[$b])>0)
+			if (isset($holiday_rules[$b]) && strlen($holiday_rules[$b])>0)
 				{
 				$stmt="SELECT holiday_date,holiday_name from vicidial_call_time_holidays where holiday_id='$holiday_rules[$b]';";
 				$rslt=mysql_to_mysqli($stmt, $link);
@@ -41645,17 +43290,20 @@ if ($ADD==3211111111)
 
 		$stmt="SELECT holiday_id,holiday_date,holiday_name,holiday_comments,holiday_status,ct_default_start,ct_default_stop,user_group,default_afterhours_filename_override,holiday_method from vicidial_call_time_holidays where holiday_id='$holiday_id' $LOGadmin_viewable_groupsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-		$holiday_date =							$row[1];
-		$holiday_name =							$row[2];
-		$holiday_comments =						$row[3];
-		$holiday_status =						$row[4];
-		$ct_default_start =						$row[5];
-		$ct_default_stop =						$row[6];
-		$user_group =							$row[7];
-		$default_afterhours_filename_override =	$row[8];
-		$holiday_method =						$row[9];
-
+		if (mysqli_num_rows($rslt)>0)
+			{
+			$row=mysqli_fetch_row($rslt);
+			$holiday_date =							$row[1];
+			$holiday_name =							$row[2];
+			$holiday_comments =						$row[3];
+			$holiday_status =						$row[4];
+			$ct_default_start =						$row[5];
+			$ct_default_stop =						$row[6];
+			$user_group =							$row[7];
+			$default_afterhours_filename_override =	$row[8];
+			$holiday_method =						$row[9];
+			}
+		
 		echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 
 		echo "<br>"._QXZ("MODIFY A HOLIDAY")."<form action=$PHP_SELF method=POST id=vicidial_report name=vicidial_report>\n";
@@ -41757,19 +43405,26 @@ if ($ADD==331111111)
 
 		$stmt="SELECT shift_id,shift_name,shift_start_time,shift_length,shift_weekdays,report_option,user_group,report_rank from vicidial_shifts where shift_id='$shift_id' $LOGadmin_viewable_groupsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-		$shift_name =		$row[1];
-		$shift_start_time =	$row[2];
-		$shift_length =		$row[3];
-		$shift_weekdays =	$row[4];
-		$report_option =	$row[5];
-		$user_group =		$row[6];
-		$report_rank =		$row[7];
+		if (mysqli_num_rows($rslt)>0)
+			{
+			$row=mysqli_fetch_row($rslt);
+			$shift_name =		$row[1];
+			$shift_start_time =	$row[2];
+			$shift_length =		$row[3];
+			$shift_weekdays =	$row[4];
+			$report_option =	$row[5];
+			$user_group =		$row[6];
+			$report_rank =		$row[7];
+			}
+		else
+			{
+			$shift_weekdays='';
+			}
 
-		$shift_start_hour = substr($shift_start_time,0,2);
-		$shift_start_min = substr($shift_start_time,2,2);
-		$shift_length_hour = substr($shift_length,0,2);
-		$shift_length_min = substr($shift_length,3,2);
+		$shift_start_hour = intval(substr($shift_start_time,0,2));
+		$shift_start_min = intval(substr($shift_start_time,2,2));
+		$shift_length_hour = intval(substr($shift_length,0,2));
+		$shift_length_min = intval(substr($shift_length,3,2));
 		$shift_end_hour = ($shift_start_hour + $shift_length_hour);
 		$shift_end_min = ($shift_start_min + $shift_length_min);
 		if ($shift_end_min >=60) 
@@ -41891,6 +43546,7 @@ if ($ADD==31111111111)
 
 		$stmt="SELECT extension,dialplan_number,voicemail_id,phone_ip,computer_ip,server_ip,login,pass,status,active,phone_type,fullname,company,picture,messages,old_messages,protocol,local_gmt,ASTmgrUSERNAME,ASTmgrSECRET,login_user,login_pass,login_campaign,park_on_extension,conf_on_extension,VICIDIAL_park_on_extension,VICIDIAL_park_on_filename,monitor_prefix,recording_exten,voicemail_exten,voicemail_dump_exten,ext_context,dtmf_send_extension,call_out_number_group,client_browser,install_directory,local_web_callerID_URL,VICIDIAL_web_URL,AGI_call_logging_enabled,user_switching_enabled,conferencing_enabled,admin_hangup_enabled,admin_hijack_enabled,admin_monitor_enabled,call_parking_enabled,updater_check_enabled,AFLogging_enabled,QUEUE_ACTION_enabled,CallerID_popup_enabled,voicemail_button_enabled,enable_fast_refresh,fast_refresh_rate,enable_persistant_mysql,auto_dial_next_number,VDstop_rec_after_each_call,DBX_server,DBX_database,DBX_user,DBX_pass,DBX_port,DBY_server,DBY_database,DBY_user,DBY_pass,DBY_port,outbound_cid,enable_sipsak_messages,email,template_id,conf_override,phone_context,phone_ring_timeout,conf_secret,delete_vm_after_email,is_webphone,use_external_server_ip,codecs_list,codecs_with_template,webphone_dialpad,on_hook_agent,webphone_auto_answer,voicemail_timezone,voicemail_options,user_group,voicemail_greeting,voicemail_dump_exten_no_inst,voicemail_instructions,on_login_report,unavail_dialplan_fwd_exten,unavail_dialplan_fwd_context,nva_call_url,nva_search_method,nva_error_filename,nva_new_list_id,nva_new_phone_code,nva_new_status,webphone_dialbox,webphone_mute,webphone_volume,webphone_debug,outbound_alt_cid,conf_qualify,webphone_layout,mohsuggest,webphone_settings from phones where extension='$extension' and server_ip='$server_ip' $LOGadmin_viewable_groupsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
+		if (mysqli_num_rows($rslt)==0) {echo "<br>"._QXZ("Extension $extension does not exist on server $server_ip"); exit;}
 		$row=mysqli_fetch_row($rslt);
 
 		$tempdp = $row[1];
@@ -42134,59 +43790,65 @@ if ($ADD==32111111111)
 
 		$stmt="SELECT alias_id,alias_name,logins_list,user_group from phones_alias where alias_id='$alias_id' $LOGadmin_viewable_groupsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-
-		echo "<br>"._QXZ("MODIFY A PHONE ALIAS RECORD").": $row[0]<form action=$PHP_SELF method=POST>\n";
-		echo "<input type=hidden name=ADD value=42111111111>\n";
-		echo "<input type=hidden name=alias_id value=\"$row[0]\">\n";
-		echo "<center><TABLE width=$section_width cellspacing=3>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Alias ID").": </td><td align=left><B>$row[0]</B> $NWB#phones-alias_id$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Alias Name").": </td><td align=left><input type=text name=alias_name size=30 maxlength=50 value=\"$row[1]\"> $NWB#phones-alias_name$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
-		echo "$UUgroups_list";
-		echo "<option SELECTED value=\"$row[3]\">"._QXZ("$row[3]")."</option>\n";
-		echo "</select>$NWB#phones-user_group$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Phones Logins List").": </td><td align=left><input type=text name=logins_list size=50 maxlength=255 value=\"$row[2]\"> ("._QXZ("comma separated").")$NWB#phones-logins_list$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
-		echo "</TABLE></center>\n";
-
-
-		### list of phones in this phones alias
-		$phone_alias_SQL = preg_replace('/,/', "','",$row[2]);
-	 
-		echo "<center>\n";
-		echo "<br><b>"._QXZ("PHONES WITHIN THIS PHONES ALIAS").":</b><br>\n";
-		echo "<TABLE width=600 cellspacing=3>\n";
-		echo "<tr><td>"._QXZ("LOGIN")."</td><td>"._QXZ("EXTENSION")."</td><td>"._QXZ("SERVER")."</td><td>"._QXZ("PROTOCOL")."</td><td>"._QXZ("IP")."</td></tr>\n";
-
-		$stmt="SELECT login,extension,server_ip,protocol,phone_ip from phones where login IN ('$phone_alias_SQL') $LOGadmin_viewable_groupsSQL;";
-		if ($DB) {echo "|$stmt|";}
-		$rsltx=mysql_to_mysqli($stmt, $link);
-		$lists_to_print = mysqli_num_rows($rsltx);
-
-		$o=0;
-		while ($lists_to_print > $o) 
+		if (mysqli_num_rows($rslt)>0)
 			{
-			$rowx=mysqli_fetch_row($rsltx);
-			$o++;
+			$row=mysqli_fetch_row($rslt);
 
-			if (preg_match('/1$|3$|5$|7$|9$/i', $o))
-				{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
-			else
-				{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
+			echo "<br>"._QXZ("MODIFY A PHONE ALIAS RECORD").": $row[0]<form action=$PHP_SELF method=POST>\n";
+			echo "<input type=hidden name=ADD value=42111111111>\n";
+			echo "<input type=hidden name=alias_id value=\"$row[0]\">\n";
+			echo "<center><TABLE width=$section_width cellspacing=3>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Alias ID").": </td><td align=left><B>$row[0]</B> $NWB#phones-alias_id$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Alias Name").": </td><td align=left><input type=text name=alias_name size=30 maxlength=50 value=\"$row[1]\"> $NWB#phones-alias_name$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
+			echo "$UUgroups_list";
+			echo "<option SELECTED value=\"$row[3]\">"._QXZ("$row[3]")."</option>\n";
+			echo "</select>$NWB#phones-user_group$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Phones Logins List").": </td><td align=left><input type=text name=logins_list size=50 maxlength=255 value=\"$row[2]\"> ("._QXZ("comma separated").")$NWB#phones-logins_list$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+			echo "</TABLE></center>\n";
+		
 
-			echo "<tr $bgcolor><td><font size=1><a href=\"$PHP_SELF?ADD=31111111111&extension=$rowx[1]&server_ip=$rowx[2]\">$rowx[0]</a></td><td><font size=1>$rowx[1]</td><td><font size=1>$rowx[2]</td><td><font size=1>$rowx[3]</td><td><font size=1>$rowx[4]</td></tr>\n";
+			### list of phones in this phones alias
+			$phone_alias_SQL = preg_replace('/,/', "','",$row[2]);
+		 
+			echo "<center>\n";
+			echo "<br><b>"._QXZ("PHONES WITHIN THIS PHONES ALIAS").":</b><br>\n";
+			echo "<TABLE width=600 cellspacing=3>\n";
+			echo "<tr><td>"._QXZ("LOGIN")."</td><td>"._QXZ("EXTENSION")."</td><td>"._QXZ("SERVER")."</td><td>"._QXZ("PROTOCOL")."</td><td>"._QXZ("IP")."</td></tr>\n";
+
+			$stmt="SELECT login,extension,server_ip,protocol,phone_ip from phones where login IN ('$phone_alias_SQL') $LOGadmin_viewable_groupsSQL;";
+			if ($DB) {echo "|$stmt|";}
+			$rsltx=mysql_to_mysqli($stmt, $link);
+			$lists_to_print = mysqli_num_rows($rsltx);
+
+			$o=0;
+			while ($lists_to_print > $o) 
+				{
+				$rowx=mysqli_fetch_row($rsltx);
+				$o++;
+
+				if (preg_match('/1$|3$|5$|7$|9$/i', $o))
+					{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
+				else
+					{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
+
+				echo "<tr $bgcolor><td><font size=1><a href=\"$PHP_SELF?ADD=31111111111&extension=$rowx[1]&server_ip=$rowx[2]\">$rowx[0]</a></td><td><font size=1>$rowx[1]</td><td><font size=1>$rowx[2]</td><td><font size=1>$rowx[3]</td><td><font size=1>$rowx[4]</td></tr>\n";
+				}
+
+			echo "</table></center><br>\n";
+
+			if ($LOGast_delete_phones > 0)
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=52111111111&alias_id=$row[0]\">"._QXZ("DELETE THIS PHONE ALIAS")."</a>\n";
+				}
+			if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=PHONEALIASES&stage=$alias_id\">"._QXZ("Click here to see Admin changes to this phone alias")."</FONT>\n";
+				}
 			}
-
-		echo "</table></center><br>\n";
-
-		if ($LOGast_delete_phones > 0)
+		else
 			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=52111111111&alias_id=$row[0]\">"._QXZ("DELETE THIS PHONE ALIAS")."</a>\n";
-			}
-		if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
-			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=PHONEALIASES&stage=$alias_id\">"._QXZ("Click here to see Admin changes to this phone alias")."</FONT>\n";
 			}
 		}
 	else
@@ -42214,32 +43876,35 @@ if ($ADD==33111111111)
 
 		$stmt="SELECT group_alias_id,group_alias_name,caller_id_number,caller_id_name,active,user_group from groups_alias where group_alias_id='$group_alias_id' $LOGadmin_viewable_groupsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-
-		echo "<br>"._QXZ("MODIFY A GROUP ALIAS RECORD").": $row[0]<form action=$PHP_SELF method=POST>\n";
-		echo "<input type=hidden name=ADD value=43111111111>\n";
-		echo "<input type=hidden name=group_alias_id value=\"$row[0]\">\n";
-		echo "<center><TABLE width=$section_width cellspacing=3>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Group Alias ID").": </td><td align=left><B>$row[0]</B> $NWB#phones-group_alias_id$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Group Alias Name").": </td><td align=left><input type=text name=group_alias_name size=30 maxlength=50 value=\"$row[1]\"> $NWB#phones-group_alias_name$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
-		echo "$UUgroups_list";
-		echo "<option SELECTED value=\"$row[5]\">"._QXZ("$row[5]")."</option>\n";
-		echo "</select>$NWB#phones-user_group$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("CallerID Number").": </td><td align=left><input type=text name=caller_id_number size=20 maxlength=20 value=\"$row[2]\"> $NWB#phones-caller_id_number$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("CallerID Name").": </td><td align=left><input type=text name=caller_id_name size=20 maxlength=20 value=\"$row[3]\"> $NWB#phones-caller_id_name$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active").": </td><td align=left><select size=1 name=active><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$row[4]'>"._QXZ("$row[4]")."</option></select></td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
-		echo "</TABLE></center>\n";
-
-
-		if ($LOGast_delete_phones > 0)
+		if (mysqli_num_rows($rslt)>0)
 			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=53111111111&group_alias_id=$row[0]\">"._QXZ("DELETE THIS GROUP ALIAS")."</a>\n";
-			}
-		if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
-			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=GROUPALIASES&stage=$group_alias_id\">"._QXZ("Click here to see Admin changes to this group alias")."</FONT>\n";
+			$row=mysqli_fetch_row($rslt);
+
+			echo "<br>"._QXZ("MODIFY A GROUP ALIAS RECORD").": $row[0]<form action=$PHP_SELF method=POST>\n";
+			echo "<input type=hidden name=ADD value=43111111111>\n";
+			echo "<input type=hidden name=group_alias_id value=\"$row[0]\">\n";
+			echo "<center><TABLE width=$section_width cellspacing=3>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Group Alias ID").": </td><td align=left><B>$row[0]</B> $NWB#phones-group_alias_id$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Group Alias Name").": </td><td align=left><input type=text name=group_alias_name size=30 maxlength=50 value=\"$row[1]\"> $NWB#phones-group_alias_name$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
+			echo "$UUgroups_list";
+			echo "<option SELECTED value=\"$row[5]\">"._QXZ("$row[5]")."</option>\n";
+			echo "</select>$NWB#phones-user_group$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("CallerID Number").": </td><td align=left><input type=text name=caller_id_number size=20 maxlength=20 value=\"$row[2]\"> $NWB#phones-caller_id_number$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("CallerID Name").": </td><td align=left><input type=text name=caller_id_name size=20 maxlength=20 value=\"$row[3]\"> $NWB#phones-caller_id_name$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active").": </td><td align=left><select size=1 name=active><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$row[4]'>"._QXZ("$row[4]")."</option></select></td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+			echo "</TABLE></center>\n";
+
+
+			if ($LOGast_delete_phones > 0)
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=53111111111&group_alias_id=$row[0]\">"._QXZ("DELETE THIS GROUP ALIAS")."</a>\n";
+				}
+			if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=GROUPALIASES&stage=$group_alias_id\">"._QXZ("Click here to see Admin changes to this group alias")."</FONT>\n";
+				}
 			}
 		}
 	else
@@ -42267,410 +43932,413 @@ if ($ADD==311111111111)
 
 		$stmt="SELECT server_id,server_description,server_ip,active,asterisk_version,max_vicidial_trunks,telnet_host,telnet_port,ASTmgrUSERNAME,ASTmgrSECRET,ASTmgrUSERNAMEupdate,ASTmgrUSERNAMElisten,ASTmgrUSERNAMEsend,local_gmt,voicemail_dump_exten,answer_transfer_agent,ext_context,sys_perf_log,vd_server_logs,agi_output,vicidial_balance_active,balance_trunks_offlimits,recording_web_link,alt_server_ip,active_asterisk_server,generate_vicidial_conf,rebuild_conf_files,outbound_calls_per_second,sysload,channels_total,cpu_idle_percent,disk_usage,sounds_update,vicidial_recording_limit,carrier_logging_active,vicidial_balance_rank,rebuild_music_on_hold,active_agent_login_server,conf_secret,external_server_ip,custom_dialplan_entry,active_twin_server_ip,user_group,system_uptime,auto_restart_asterisk,asterisk_temp_no_restart,voicemail_dump_exten_no_inst,gather_asterisk_output,web_socket_url,conf_qualify,routing_prefix,external_web_socket_url,conf_engine,conf_update_interval,ara_url from servers where ( (server_id='$server_id') or (server_ip='$server_ip') ) $LOGadmin_viewable_groupsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-		$server_id =					$row[0];
-		$server_description =			$row[1];
-		$server_ip =					$row[2];
-		$active =						$row[3];
-		$asterisk_version =				$row[4];
-		$max_vicidial_trunks =			$row[5];
-		$telnet_host =					$row[6];
-		$telnet_port =					$row[7];
-		$ASTmgrUSERNAME =				$row[8];
-		$ASTmgrSECRET =					$row[9];
-		$ASTmgrUSERNAMEupdate =			$row[10];
-		$ASTmgrUSERNAMElisten =			$row[11];
-		$ASTmgrUSERNAMEsend =			$row[12];
-		$local_gmt =					$row[13];
-		$voicemail_dump_exten =			$row[14];
-		$answer_transfer_agent =		$row[15];
-		$ext_context =					$row[16];
-		$sys_perf_log =					$row[17];
-		$vd_server_logs =				$row[18];
-		$agi_output =					$row[19];
-		$vicidial_balance_active =		$row[20];
-		$balance_trunks_offlimits =		$row[21];
-		$recording_web_link =			$row[22];
-		$alt_server_ip =				$row[23];
-		$active_asterisk_server =		$row[24];
-		$generate_vicidial_conf =		$row[25];
-		$rebuild_conf_files =			$row[26];
-		$outbound_calls_per_second =	$row[27];
-		$sysload =						$row[28];
-		$channels_total =				$row[29];
-		$cpu_idle_percent =				$row[30];
-		$disk_usage =					$row[31];
-		$sounds_update =				$row[32];
-		$vicidial_recording_limit =		$row[33];
-		$carrier_logging_active =		$row[34];
-		$vicidial_balance_rank =		$row[35];
-		$rebuild_music_on_hold =		$row[36];
-		$active_agent_login_server =	$row[37];
-		$conf_secret =					$row[38];
-		$external_server_ip =			$row[39];
-		$custom_dialplan_entry =		$row[40];
-		$active_twin_server_ip =		$row[41];
-		$user_group =					$row[42];
-		$system_uptime =				$row[43];
-		$auto_restart_asterisk =		$row[44];
-		$asterisk_temp_no_restart =		$row[45];
-		$voicemail_dump_exten_no_inst = $row[46];
-		$gather_asterisk_output =		$row[47];
-		$web_socket_url =				$row[48];
-		$conf_qualify =					$row[49];
-		$routing_prefix =				$row[50];
-		$external_web_socket_url =		$row[51];
-		$conf_engine = 					$row[52];
-		$conf_update_interval = 		$row[53];
-		$ara_url =						$row[54];
-
-		$stmt="SELECT count(*) from vicidial_live_agents where server_ip='$server_ip';";
-		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-		$live_agents = $row[0];
-		if ($DB > 0) {echo "|$live_agents|$stmt|\n";}
-
-		# look for server_live_partitions entries for this server
-		$stmt="SELECT partition_order,use_pct from server_live_partitions where server_ip='$server_ip' and (mb_used + mb_available) >= 1000;";
-		$rslt=mysql_to_mysqli($stmt, $link);
-		if ($DB) {echo "$stmt\n";}
-		$parts_to_print = mysqli_num_rows($rslt);
-		$pp=0;
-		$temp_disk_usage='';
-		while ($parts_to_print > $pp)
+		if (mysqli_num_rows($rslt)>0)
 			{
 			$row=mysqli_fetch_row($rslt);
-			$part_order = ($row[0] + 1);
-			$temp_disk_usage .= "$part_order $row[1]|";
-			$pp++;
-			}
-		if (strlen($temp_disk_usage) > 3)
-			{$disk_usage = $temp_disk_usage;}
+			$server_id =					$row[0];
+			$server_description =			$row[1];
+			$server_ip =					$row[2];
+			$active =						$row[3];
+			$asterisk_version =				$row[4];
+			$max_vicidial_trunks =			$row[5];
+			$telnet_host =					$row[6];
+			$telnet_port =					$row[7];
+			$ASTmgrUSERNAME =				$row[8];
+			$ASTmgrSECRET =					$row[9];
+			$ASTmgrUSERNAMEupdate =			$row[10];
+			$ASTmgrUSERNAMElisten =			$row[11];
+			$ASTmgrUSERNAMEsend =			$row[12];
+			$local_gmt =					$row[13];
+			$voicemail_dump_exten =			$row[14];
+			$answer_transfer_agent =		$row[15];
+			$ext_context =					$row[16];
+			$sys_perf_log =					$row[17];
+			$vd_server_logs =				$row[18];
+			$agi_output =					$row[19];
+			$vicidial_balance_active =		$row[20];
+			$balance_trunks_offlimits =		$row[21];
+			$recording_web_link =			$row[22];
+			$alt_server_ip =				$row[23];
+			$active_asterisk_server =		$row[24];
+			$generate_vicidial_conf =		$row[25];
+			$rebuild_conf_files =			$row[26];
+			$outbound_calls_per_second =	$row[27];
+			$sysload =						$row[28];
+			$channels_total =				$row[29];
+			$cpu_idle_percent =				$row[30];
+			$disk_usage =					$row[31];
+			$sounds_update =				$row[32];
+			$vicidial_recording_limit =		$row[33];
+			$carrier_logging_active =		$row[34];
+			$vicidial_balance_rank =		$row[35];
+			$rebuild_music_on_hold =		$row[36];
+			$active_agent_login_server =	$row[37];
+			$conf_secret =					$row[38];
+			$external_server_ip =			$row[39];
+			$custom_dialplan_entry =		$row[40];
+			$active_twin_server_ip =		$row[41];
+			$user_group =					$row[42];
+			$system_uptime =				$row[43];
+			$auto_restart_asterisk =		$row[44];
+			$asterisk_temp_no_restart =		$row[45];
+			$voicemail_dump_exten_no_inst = $row[46];
+			$gather_asterisk_output =		$row[47];
+			$web_socket_url =				$row[48];
+			$conf_qualify =					$row[49];
+			$routing_prefix =				$row[50];
+			$external_web_socket_url =		$row[51];
+			$conf_engine = 					$row[52];
+			$conf_update_interval = 		$row[53];
+			$ara_url =						$row[54];
 
-		$cpu = (100 - $cpu_idle_percent);
-		$disk_usage = preg_replace("/ /"," - ",$disk_usage);
-		$disk_usage = preg_replace("/\|/","% &nbsp; &nbsp; ",$disk_usage);
+			$stmt="SELECT count(*) from vicidial_live_agents where server_ip='$server_ip';";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$row=mysqli_fetch_row($rslt);
+			$live_agents = $row[0];
+			if ($DB > 0) {echo "|$live_agents|$stmt|\n";}
 
-		echo "<br>"._QXZ("MODIFY A SERVER RECORD").": $server_id<form action=$PHP_SELF method=POST>\n";
-		echo "<input type=hidden name=ADD value=411111111111>\n";
-		echo "<input type=hidden name=old_server_id value=\"$server_id\">\n";
-		echo "<input type=hidden name=old_server_ip value=\"$server_ip\">\n";
-		echo "<input type=hidden name=DB value=$DB>\n";
-		echo "<center><TABLE width=$section_width cellspacing=3>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Server ID").": </td><td align=left><input type=text name=server_id size=10 maxlength=10 value=\"$server_id\">$NWB#servers-server_id$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Server Description").": </td><td align=left><input type=text name=server_description size=30 maxlength=255 value=\"$server_description\">$NWB#servers-server_description$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Server IP Address").": </td><td align=left><input type=text name=server_ip size=20 maxlength=15 value=\"$server_ip\">$NWB#servers-server_ip$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active").": </td><td align=left><select size=1 name=active><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$active' SELECTED>"._QXZ("$active")."</option></select>$NWB#servers-active$NWE</td></tr>\n";
+			# look for server_live_partitions entries for this server
+			$stmt="SELECT partition_order,use_pct from server_live_partitions where server_ip='$server_ip' and (mb_used + mb_available) >= 1000;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			if ($DB) {echo "$stmt\n";}
+			$parts_to_print = mysqli_num_rows($rslt);
+			$pp=0;
+			$temp_disk_usage='';
+			while ($parts_to_print > $pp)
+				{
+				$row=mysqli_fetch_row($rslt);
+				$part_order = ($row[0] + 1);
+				$temp_disk_usage .= "$part_order $row[1]|";
+				$pp++;
+				}
+			if (strlen($temp_disk_usage) > 3)
+				{$disk_usage = $temp_disk_usage;}
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("System Load").": </td><td align=left>$sysload - $cpu% &nbsp; $NWB#servers-sysload$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Live Channels").": </td><td align=left>$channels_total &nbsp; &nbsp; "._QXZ("Agents").": $live_agents &nbsp; $NWB#servers-channels_total$NWE</td></tr>\n";
+			$cpu = (100 - $cpu_idle_percent);
+			$disk_usage = preg_replace("/ /"," - ",$disk_usage);
+			$disk_usage = preg_replace("/\|/","% &nbsp; &nbsp; ",$disk_usage);
 
-		if ($pp > 0)
-			{
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href=\"$PHP_SELF?ADD=999983&server_ip=$server_ip&server_id=$server_id\">"._QXZ("Disk Usage")."</a>: </td><td align=left><font size=0>$disk_usage</font> &nbsp; $NWB#servers-disk_usage$NWE</td></tr>\n";
-			}
-		else
-			{
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Disk Usage").": </td><td align=left><font size=0>$disk_usage</font> &nbsp; $NWB#servers-disk_usage$NWE</td></tr>\n";
-			}
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("System Uptime").": </td><td align=left>$system_uptime &nbsp; $NWB#servers-system_uptime$NWE</td></tr>\n";
+			echo "<br>"._QXZ("MODIFY A SERVER RECORD").": $server_id<form action=$PHP_SELF method=POST>\n";
+			echo "<input type=hidden name=ADD value=411111111111>\n";
+			echo "<input type=hidden name=old_server_id value=\"$server_id\">\n";
+			echo "<input type=hidden name=old_server_ip value=\"$server_ip\">\n";
+			echo "<input type=hidden name=DB value=$DB>\n";
+			echo "<center><TABLE width=$section_width cellspacing=3>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Server ID").": </td><td align=left><input type=text name=server_id size=10 maxlength=10 value=\"$server_id\">$NWB#servers-server_id$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Server Description").": </td><td align=left><input type=text name=server_description size=30 maxlength=255 value=\"$server_description\">$NWB#servers-server_description$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Server IP Address").": </td><td align=left><input type=text name=server_ip size=20 maxlength=15 value=\"$server_ip\">$NWB#servers-server_ip$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active").": </td><td align=left><select size=1 name=active><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$active' SELECTED>"._QXZ("$active")."</option></select>$NWB#servers-active$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
-		echo "$UUgroups_list";
-		echo "<option SELECTED value=\"$user_group\">".(preg_match('/\-\-\ALL\-\-/', $user_group) ? _QXZ("$user_group") : $user_group)."</option>\n";
-		echo "</select>$NWB#servers-user_group$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("System Load").": </td><td align=left>$sysload - $cpu% &nbsp; $NWB#servers-sysload$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Live Channels").": </td><td align=left>$channels_total &nbsp; &nbsp; "._QXZ("Agents").": $live_agents &nbsp; $NWB#servers-channels_total$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Asterisk Version").": </td><td align=left><input type=text name=asterisk_version size=20 maxlength=20 value=\"$asterisk_version\">$NWB#servers-asterisk_version$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Max Trunks").": </td><td align=left><input type=text name=max_vicidial_trunks size=5 maxlength=4 value=\"$max_vicidial_trunks\">$NWB#servers-max_trunks$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Max Calls per Second").": </td><td align=left><input type=text name=outbound_calls_per_second size=5 maxlength=4 value=\"$outbound_calls_per_second\">$NWB#servers-outbound_calls_per_second$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Balance Dialing").": </td><td align=left><select size=1 name=vicidial_balance_active><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$vicidial_balance_active'>"._QXZ("$vicidial_balance_active")."</option></select>$NWB#servers-balance_active$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Balance Rank").": </td><td align=left><input type=text name=vicidial_balance_rank size=4 maxlength=2 value=\"$vicidial_balance_rank\">$NWB#servers-balance_rank$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Balance Offlimits").": </td><td align=left><input type=text name=balance_trunks_offlimits size=5 maxlength=4 value=\"$balance_trunks_offlimits\">$NWB#servers-balance_trunks_offlimits$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Telnet Host").": </td><td align=left><input type=text name=telnet_host size=20 maxlength=20 value=\"$telnet_host\">$NWB#servers-telnet_host$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Telnet Port").": </td><td align=left><input type=text name=telnet_port size=6 maxlength=5 value=\"$telnet_port\">$NWB#servers-telnet_port$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Manager User").": </td><td align=left><input type=text name=ASTmgrUSERNAME size=20 maxlength=20 value=\"$ASTmgrUSERNAME\">$NWB#servers-ASTmgrUSERNAME$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Manager Secret").": </td><td align=left><input type=text name=ASTmgrSECRET size=20 maxlength=20 value=\"$ASTmgrSECRET\">$NWB#servers-ASTmgrSECRET$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Manager Update User").": </td><td align=left><input type=text name=ASTmgrUSERNAMEupdate size=20 maxlength=20 value=\"$ASTmgrUSERNAMEupdate\">$NWB#servers-ASTmgrUSERNAMEupdate$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Manager Listen User").": </td><td align=left><input type=text name=ASTmgrUSERNAMElisten size=20 maxlength=20 value=\"$ASTmgrUSERNAMElisten\">$NWB#servers-ASTmgrUSERNAMElisten$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Manager Send User").": </td><td align=left><input type=text name=ASTmgrUSERNAMEsend size=20 maxlength=20 value=\"$ASTmgrUSERNAMEsend\">$NWB#servers-ASTmgrUSERNAMEsend$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Conf File Secret").": </td><td align=left style=\"display:table-cell; vertical-align:middle;\" NOWRAP><input type=text id=reg_pass name=conf_secret size=40 maxlength=100 value=\"$conf_secret\" onkeyup=\"return pwdChanged('reg_pass','reg_pass_img','pass_length','$SSrequire_password_length');\">$NWB#servers-conf_secret$NWE &nbsp; &nbsp; <font size=1>"._QXZ("Strength").":</font> <IMG id=reg_pass_img src='images/pixel.gif' style=\"vertical-align:middle;\" onLoad=\"return pwdChanged('reg_pass','reg_pass_img','pass_length','$SSrequire_password_length');\"> &nbsp; <font size=1> "._QXZ("Length").": <span id=pass_length name=pass_length>0</span></font></td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Local GMT").": </td><td align=left><select size=1 name=local_gmt><option>12.75</option><option>12.00</option><option>11.00</option><option>10.00</option><option>9.50</option><option>9.00</option><option>8.00</option><option>7.00</option><option>6.50</option><option>6.00</option><option>5.75</option><option>5.50</option><option>5.00</option><option>4.50</option><option>4.00</option><option>3.50</option><option>3.00</option><option>2.00</option><option>1.00</option><option>0.00</option><option>-1.00</option><option>-2.00</option><option>-3.00</option><option>-3.50</option><option>-4.00</option><option>-5.00</option><option>-6.00</option><option>-7.00</option><option>-8.00</option><option>-9.00</option><option>-10.00</option><option>-11.00</option><option>-12.00</option><option selected>$local_gmt</option></select> ("._QXZ("Do NOT Adjust for DST").")$NWB#servers-local_gmt$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("VMail Dump Exten").": </td><td align=left><input type=text name=voicemail_dump_exten size=20 maxlength=20 value=\"$voicemail_dump_exten\">$NWB#servers-voicemail_dump_exten$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("VMail Dump Exten NI").": </td><td align=left><input type=text name=voicemail_dump_exten_no_inst size=20 maxlength=20 value=\"$voicemail_dump_exten_no_inst\">$NWB#servers-voicemail_dump_exten_no_inst$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("auto dial extension").": </td><td align=left><input type=text name=answer_transfer_agent size=20 maxlength=20 value=\"$answer_transfer_agent\">$NWB#servers-answer_transfer_agent$NWE";
-
-		$major_version = explode('.',$asterisk_version);
-		if ($major_version[0] >= 12)
-			{
-			echo " &nbsp; &nbsp; "._QXZ("prefix").": <input type=text name=routing_prefix size=10 maxlength=10 value=\"$routing_prefix\">$NWB#servers-routing_prefix$NWE";
-			}
-		else
-			{echo "<input type=hidden name=routing_prefix value=\"$routing_prefix\">";}
-		echo "</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Default Context").": </td><td align=left><input type=text name=ext_context size=20 maxlength=20 value=\"$ext_context\">$NWB#servers-ext_context$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("System Performance").": </td><td align=left><select size=1 name=sys_perf_log><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$sys_perf_log' selected>"._QXZ("$sys_perf_log")."</option></select>$NWB#servers-sys_perf_log$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Server Logs").": </td><td align=left><select size=1 name=vd_server_logs><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$vd_server_logs' selected>"._QXZ("$vd_server_logs")."</option></select>$NWB#servers-vd_server_logs$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("AGI Output").": </td><td align=left><select size=1 name=agi_output><option value='NONE'>"._QXZ("NONE")."</option><option value='STDERR'>"._QXZ("STDERR")."</option><option value='FILE'>"._QXZ("FILE")."</option><option value='BOTH'>"._QXZ("BOTH")."</option><option value='$agi_output' selected>"._QXZ("$agi_output")."</option></select>$NWB#servers-agi_output$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Carrier Logging Active").": </td><td align=left><select size=1 name=carrier_logging_active><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$carrier_logging_active' selected>"._QXZ("$carrier_logging_active")."</option></select>$NWB#servers-carrier_logging_active$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Gather Asterisk Output").": </td><td align=left><select size=1 name=gather_asterisk_output><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$gather_asterisk_output' selected>"._QXZ("$gather_asterisk_output")."</option></select>$NWB#servers-gather_asterisk_output$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Conf Qualify").": </td><td align=left><select size=1 name=conf_qualify><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$conf_qualify' selected>"._QXZ("$conf_qualify")."</option></select>$NWB#servers-conf_qualify$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Recording Web Link").": </td><td align=left><select size=1 name=recording_web_link><option value='SERVER_IP'>"._QXZ("SERVER_IP")."</option><option value='ALT_IP'>"._QXZ("ALT_IP")."</option><option value='EXTERNAL_IP'>"._QXZ("EXTERNAL_IP")."</option><option value='$recording_web_link' selected>"._QXZ("$recording_web_link")."</option></select>$NWB#servers-recording_web_link$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Alternate Recording Server IP").": </td><td align=left><input type=text name=alt_server_ip size=30 maxlength=100 value=\"$alt_server_ip\">$NWB#servers-alt_server_ip$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("External Server IP").": </td><td align=left><input type=text name=external_server_ip size=30 maxlength=100 value=\"$external_server_ip\">$NWB#servers-external_server_ip$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Web Socket URL").": </td><td align=left><input type=text name=web_socket_url size=30 maxlength=255 value=\"$web_socket_url\">$NWB#servers-web_socket_url$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("External Web Socket URL").": </td><td align=left><input type=text name=external_web_socket_url size=30 maxlength=255 value=\"$external_web_socket_url\">$NWB#servers-external_web_socket_url$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active Twin Server IP").": </td><td align=left><input type=text name=active_twin_server_ip size=16 maxlength=15 value=\"$active_twin_server_ip\">$NWB#servers-active_twin_server_ip$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Conferencing Engine").": </td><td align=left><select size=1 name=conf_engine><option value='MEETME'>"._QXZ("MEETME")."</option><option value='CONFBRIDGE'>"._QXZ("CONFBRIDGE")."</option><option selected value='$conf_engine'>"._QXZ("$conf_engine")."</option></select>$NWB#servers-conf_engine$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Conf Update Interval").": </td><td align=left><input type=text name=conf_update_interval size=5 maxlength=6 value=\"$conf_update_interval\">$NWB#servers-conf_update_interval$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active Asterisk Server").": </td><td align=left><select size=1 name=active_asterisk_server><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$active_asterisk_server'>"._QXZ("$active_asterisk_server")."</option></select>$NWB#servers-active_asterisk_server$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Auto-Restart Asterisk").": </td><td align=left> &nbsp; &nbsp; <select size=1 name=auto_restart_asterisk><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$auto_restart_asterisk'>"._QXZ("$auto_restart_asterisk")."</option></select>$NWB#servers-auto_restart_asterisk$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Temp No-Restart Asterisk").": </td><td align=left> &nbsp; &nbsp; <select size=1 name=asterisk_temp_no_restart><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$asterisk_temp_no_restart'>"._QXZ("$asterisk_temp_no_restart")."</option></select>$NWB#servers-asterisk_temp_no_restart$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Asterisk Restart URL").": </td><td align=left> &nbsp; &nbsp; <input type=text name=ara_url size=40 maxlength=1000 value=\"$ara_url\">$NWB#servers-ara_url$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active Agent Server").": </td><td align=left><select size=1 name=active_agent_login_server><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$active_agent_login_server'>"._QXZ("$active_agent_login_server")."</option></select>$NWB#servers-active_agent_login_server$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Generate conf files").": </td><td align=left><select size=1 name=generate_vicidial_conf><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$generate_vicidial_conf'>"._QXZ("$generate_vicidial_conf")."</option></select>$NWB#servers-generate_conf$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Rebuild conf files").": </td><td align=left><select size=1 name=rebuild_conf_files><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$rebuild_conf_files'>"._QXZ("$rebuild_conf_files")."</option></select>$NWB#servers-rebuild_conf_files$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Rebuild Music On Hold").": </td><td align=left><select size=1 name=rebuild_music_on_hold><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$rebuild_music_on_hold'>"._QXZ("$rebuild_music_on_hold")."</option></select>$NWB#servers-rebuild_music_on_hold$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Sounds Update").": </td><td align=left><select size=1 name=sounds_update><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$sounds_update' selected>"._QXZ("$sounds_update")."</option></select>$NWB#servers-sounds_update$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Recording Limit").": </td><td align=left><input type=text name=vicidial_recording_limit size=8 maxlength=6 value=\"$vicidial_recording_limit\">$NWB#servers-recording_limit$NWE</td></tr>\n";
-
-		if ( ($SSallow_custom_dialplan > 0) and ($LOGmodify_custom_dialplans > 0) )
-			{
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2>"._QXZ("Custom Dialplan Entry").": $NWB#servers-custom_dialplan_entry$NWE <TEXTAREA NAME=custom_dialplan_entry ROWS=5 COLS=80>$custom_dialplan_entry</TEXTAREA></td></tr>\n";
-			}
-		else
-			{
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Custom Dialplan Entry").": </td><td align=left>Disabled <input type=hidden name=custom_dialplan_entry value=\"\">$NWB#servers-custom_dialplan_entry$NWE</td></tr>\n";
-			}
-
-
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
-		echo "</TABLE></center></form>\n";
-
-
-		### vicidial server trunk records for this server
-		echo "<br><br><b>"._QXZ("TRUNKS FOR THIS SERVER").": &nbsp; $NWB#server_trunks$NWE</b><br>\n";
-		echo "<TABLE width=500 cellspacing=3>\n";
-		echo "<tr><td> "._QXZ("CAMPAIGN")."</td><td> "._QXZ("TRUNKS")." </td><td> "._QXZ("RESTRICTION")." </td><td> </td><td> "._QXZ("DELETE")." </td></tr>\n";
-
-		$stmt="SELECT server_ip,campaign_id,dedicated_trunks,trunk_restriction from vicidial_server_trunks where server_ip='$server_ip' $LOGallowed_campaignsSQL order by campaign_id;";
-		$rslt=mysql_to_mysqli($stmt, $link);
-		$recycle_to_print = mysqli_num_rows($rslt);
-		$o=0;
-		while ($recycle_to_print > $o) 
-			{
-			$rowx=mysqli_fetch_row($rslt);
-			$o++;
-
-			if (preg_match('/1$|3$|5$|7$|9$/i', $o))
-				{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
+			if ($pp > 0)
+				{
+				echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href=\"$PHP_SELF?ADD=999983&server_ip=$server_ip&server_id=$server_id\">"._QXZ("Disk Usage")."</a>: </td><td align=left><font size=0>$disk_usage</font> &nbsp; $NWB#servers-disk_usage$NWE</td></tr>\n";
+				}
 			else
-				{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
+				{
+				echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Disk Usage").": </td><td align=left><font size=0>$disk_usage</font> &nbsp; $NWB#servers-disk_usage$NWE</td></tr>\n";
+				}
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("System Uptime").": </td><td align=left>$system_uptime &nbsp; $NWB#servers-system_uptime$NWE</td></tr>\n";
 
-			echo "<tr $bgcolor><td><font size=1>$rowx[1]<form action=$PHP_SELF method=POST>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
+			echo "$UUgroups_list";
+			echo "<option SELECTED value=\"$user_group\">".(preg_match('/\-\-\ALL\-\-/', $user_group) ? _QXZ("$user_group") : $user_group)."</option>\n";
+			echo "</select>$NWB#servers-user_group$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Asterisk Version").": </td><td align=left><input type=text name=asterisk_version size=20 maxlength=20 value=\"$asterisk_version\">$NWB#servers-asterisk_version$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Max Trunks").": </td><td align=left><input type=text name=max_vicidial_trunks size=5 maxlength=4 value=\"$max_vicidial_trunks\">$NWB#servers-max_trunks$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Max Calls per Second").": </td><td align=left><input type=text name=outbound_calls_per_second size=5 maxlength=4 value=\"$outbound_calls_per_second\">$NWB#servers-outbound_calls_per_second$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Balance Dialing").": </td><td align=left><select size=1 name=vicidial_balance_active><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$vicidial_balance_active'>"._QXZ("$vicidial_balance_active")."</option></select>$NWB#servers-balance_active$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Balance Rank").": </td><td align=left><input type=text name=vicidial_balance_rank size=4 maxlength=2 value=\"$vicidial_balance_rank\">$NWB#servers-balance_rank$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Balance Offlimits").": </td><td align=left><input type=text name=balance_trunks_offlimits size=5 maxlength=4 value=\"$balance_trunks_offlimits\">$NWB#servers-balance_trunks_offlimits$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Telnet Host").": </td><td align=left><input type=text name=telnet_host size=20 maxlength=20 value=\"$telnet_host\">$NWB#servers-telnet_host$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Telnet Port").": </td><td align=left><input type=text name=telnet_port size=6 maxlength=5 value=\"$telnet_port\">$NWB#servers-telnet_port$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Manager User").": </td><td align=left><input type=text name=ASTmgrUSERNAME size=20 maxlength=20 value=\"$ASTmgrUSERNAME\">$NWB#servers-ASTmgrUSERNAME$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Manager Secret").": </td><td align=left><input type=text name=ASTmgrSECRET size=20 maxlength=20 value=\"$ASTmgrSECRET\">$NWB#servers-ASTmgrSECRET$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Manager Update User").": </td><td align=left><input type=text name=ASTmgrUSERNAMEupdate size=20 maxlength=20 value=\"$ASTmgrUSERNAMEupdate\">$NWB#servers-ASTmgrUSERNAMEupdate$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Manager Listen User").": </td><td align=left><input type=text name=ASTmgrUSERNAMElisten size=20 maxlength=20 value=\"$ASTmgrUSERNAMElisten\">$NWB#servers-ASTmgrUSERNAMElisten$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Manager Send User").": </td><td align=left><input type=text name=ASTmgrUSERNAMEsend size=20 maxlength=20 value=\"$ASTmgrUSERNAMEsend\">$NWB#servers-ASTmgrUSERNAMEsend$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Conf File Secret").": </td><td align=left style=\"display:table-cell; vertical-align:middle;\" NOWRAP><input type=text id=reg_pass name=conf_secret size=40 maxlength=100 value=\"$conf_secret\" onkeyup=\"return pwdChanged('reg_pass','reg_pass_img','pass_length','$SSrequire_password_length');\">$NWB#servers-conf_secret$NWE &nbsp; &nbsp; <font size=1>"._QXZ("Strength").":</font> <IMG id=reg_pass_img src='images/pixel.gif' style=\"vertical-align:middle;\" onLoad=\"return pwdChanged('reg_pass','reg_pass_img','pass_length','$SSrequire_password_length');\"> &nbsp; <font size=1> "._QXZ("Length").": <span id=pass_length name=pass_length>0</span></font></td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Local GMT").": </td><td align=left><select size=1 name=local_gmt><option>12.75</option><option>12.00</option><option>11.00</option><option>10.00</option><option>9.50</option><option>9.00</option><option>8.00</option><option>7.00</option><option>6.50</option><option>6.00</option><option>5.75</option><option>5.50</option><option>5.00</option><option>4.50</option><option>4.00</option><option>3.50</option><option>3.00</option><option>2.00</option><option>1.00</option><option>0.00</option><option>-1.00</option><option>-2.00</option><option>-3.00</option><option>-3.50</option><option>-4.00</option><option>-5.00</option><option>-6.00</option><option>-7.00</option><option>-8.00</option><option>-9.00</option><option>-10.00</option><option>-11.00</option><option>-12.00</option><option selected>$local_gmt</option></select> ("._QXZ("Do NOT Adjust for DST").")$NWB#servers-local_gmt$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("VMail Dump Exten").": </td><td align=left><input type=text name=voicemail_dump_exten size=20 maxlength=20 value=\"$voicemail_dump_exten\">$NWB#servers-voicemail_dump_exten$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("VMail Dump Exten NI").": </td><td align=left><input type=text name=voicemail_dump_exten_no_inst size=20 maxlength=20 value=\"$voicemail_dump_exten_no_inst\">$NWB#servers-voicemail_dump_exten_no_inst$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("auto dial extension").": </td><td align=left><input type=text name=answer_transfer_agent size=20 maxlength=20 value=\"$answer_transfer_agent\">$NWB#servers-answer_transfer_agent$NWE";
+
+			$major_version = explode('.',$asterisk_version);
+			if ($major_version[0] >= 12)
+				{
+				echo " &nbsp; &nbsp; "._QXZ("prefix").": <input type=text name=routing_prefix size=10 maxlength=10 value=\"$routing_prefix\">$NWB#servers-routing_prefix$NWE";
+				}
+			else
+				{echo "<input type=hidden name=routing_prefix value=\"$routing_prefix\">";}
+			echo "</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Default Context").": </td><td align=left><input type=text name=ext_context size=20 maxlength=20 value=\"$ext_context\">$NWB#servers-ext_context$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("System Performance").": </td><td align=left><select size=1 name=sys_perf_log><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$sys_perf_log' selected>"._QXZ("$sys_perf_log")."</option></select>$NWB#servers-sys_perf_log$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Server Logs").": </td><td align=left><select size=1 name=vd_server_logs><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$vd_server_logs' selected>"._QXZ("$vd_server_logs")."</option></select>$NWB#servers-vd_server_logs$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("AGI Output").": </td><td align=left><select size=1 name=agi_output><option value='NONE'>"._QXZ("NONE")."</option><option value='STDERR'>"._QXZ("STDERR")."</option><option value='FILE'>"._QXZ("FILE")."</option><option value='BOTH'>"._QXZ("BOTH")."</option><option value='$agi_output' selected>"._QXZ("$agi_output")."</option></select>$NWB#servers-agi_output$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Carrier Logging Active").": </td><td align=left><select size=1 name=carrier_logging_active><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$carrier_logging_active' selected>"._QXZ("$carrier_logging_active")."</option></select>$NWB#servers-carrier_logging_active$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Gather Asterisk Output").": </td><td align=left><select size=1 name=gather_asterisk_output><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$gather_asterisk_output' selected>"._QXZ("$gather_asterisk_output")."</option></select>$NWB#servers-gather_asterisk_output$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Conf Qualify").": </td><td align=left><select size=1 name=conf_qualify><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$conf_qualify' selected>"._QXZ("$conf_qualify")."</option></select>$NWB#servers-conf_qualify$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Recording Web Link").": </td><td align=left><select size=1 name=recording_web_link><option value='SERVER_IP'>"._QXZ("SERVER_IP")."</option><option value='ALT_IP'>"._QXZ("ALT_IP")."</option><option value='EXTERNAL_IP'>"._QXZ("EXTERNAL_IP")."</option><option value='$recording_web_link' selected>"._QXZ("$recording_web_link")."</option></select>$NWB#servers-recording_web_link$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Alternate Recording Server IP").": </td><td align=left><input type=text name=alt_server_ip size=30 maxlength=100 value=\"$alt_server_ip\">$NWB#servers-alt_server_ip$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("External Server IP").": </td><td align=left><input type=text name=external_server_ip size=30 maxlength=100 value=\"$external_server_ip\">$NWB#servers-external_server_ip$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Web Socket URL").": </td><td align=left><input type=text name=web_socket_url size=30 maxlength=255 value=\"$web_socket_url\">$NWB#servers-web_socket_url$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("External Web Socket URL").": </td><td align=left><input type=text name=external_web_socket_url size=30 maxlength=255 value=\"$external_web_socket_url\">$NWB#servers-external_web_socket_url$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active Twin Server IP").": </td><td align=left><input type=text name=active_twin_server_ip size=16 maxlength=15 value=\"$active_twin_server_ip\">$NWB#servers-active_twin_server_ip$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Conferencing Engine").": </td><td align=left><select size=1 name=conf_engine><option value='MEETME'>"._QXZ("MEETME")."</option><option value='CONFBRIDGE'>"._QXZ("CONFBRIDGE")."</option><option selected value='$conf_engine'>"._QXZ("$conf_engine")."</option></select>$NWB#servers-conf_engine$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Conf Update Interval").": </td><td align=left><input type=text name=conf_update_interval size=5 maxlength=6 value=\"$conf_update_interval\">$NWB#servers-conf_update_interval$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active Asterisk Server").": </td><td align=left><select size=1 name=active_asterisk_server><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$active_asterisk_server'>"._QXZ("$active_asterisk_server")."</option></select>$NWB#servers-active_asterisk_server$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Auto-Restart Asterisk").": </td><td align=left> &nbsp; &nbsp; <select size=1 name=auto_restart_asterisk><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$auto_restart_asterisk'>"._QXZ("$auto_restart_asterisk")."</option></select>$NWB#servers-auto_restart_asterisk$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Temp No-Restart Asterisk").": </td><td align=left> &nbsp; &nbsp; <select size=1 name=asterisk_temp_no_restart><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$asterisk_temp_no_restart'>"._QXZ("$asterisk_temp_no_restart")."</option></select>$NWB#servers-asterisk_temp_no_restart$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Asterisk Restart URL").": </td><td align=left> &nbsp; &nbsp; <input type=text name=ara_url size=40 maxlength=1000 value=\"$ara_url\">$NWB#servers-ara_url$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active Agent Server").": </td><td align=left><select size=1 name=active_agent_login_server><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$active_agent_login_server'>"._QXZ("$active_agent_login_server")."</option></select>$NWB#servers-active_agent_login_server$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Generate conf files").": </td><td align=left><select size=1 name=generate_vicidial_conf><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$generate_vicidial_conf'>"._QXZ("$generate_vicidial_conf")."</option></select>$NWB#servers-generate_conf$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Rebuild conf files").": </td><td align=left><select size=1 name=rebuild_conf_files><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$rebuild_conf_files'>"._QXZ("$rebuild_conf_files")."</option></select>$NWB#servers-rebuild_conf_files$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Rebuild Music On Hold").": </td><td align=left><select size=1 name=rebuild_music_on_hold><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$rebuild_music_on_hold'>"._QXZ("$rebuild_music_on_hold")."</option></select>$NWB#servers-rebuild_music_on_hold$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Sounds Update").": </td><td align=left><select size=1 name=sounds_update><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$sounds_update' selected>"._QXZ("$sounds_update")."</option></select>$NWB#servers-sounds_update$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Recording Limit").": </td><td align=left><input type=text name=vicidial_recording_limit size=8 maxlength=6 value=\"$vicidial_recording_limit\">$NWB#servers-recording_limit$NWE</td></tr>\n";
+
+			if ( ($SSallow_custom_dialplan > 0) and ($LOGmodify_custom_dialplans > 0) )
+				{
+				echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2>"._QXZ("Custom Dialplan Entry").": $NWB#servers-custom_dialplan_entry$NWE <TEXTAREA NAME=custom_dialplan_entry ROWS=5 COLS=80>$custom_dialplan_entry</TEXTAREA></td></tr>\n";
+				}
+			else
+				{
+				echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Custom Dialplan Entry").": </td><td align=left>Disabled <input type=hidden name=custom_dialplan_entry value=\"\">$NWB#servers-custom_dialplan_entry$NWE</td></tr>\n";
+				}
+
+
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+			echo "</TABLE></center></form>\n";
+
+
+			### vicidial server trunk records for this server
+			echo "<br><br><b>"._QXZ("TRUNKS FOR THIS SERVER").": &nbsp; $NWB#server_trunks$NWE</b><br>\n";
+			echo "<TABLE width=500 cellspacing=3>\n";
+			echo "<tr><td> "._QXZ("CAMPAIGN")."</td><td> "._QXZ("TRUNKS")." </td><td> "._QXZ("RESTRICTION")." </td><td> </td><td> "._QXZ("DELETE")." </td></tr>\n";
+
+			$stmt="SELECT server_ip,campaign_id,dedicated_trunks,trunk_restriction from vicidial_server_trunks where server_ip='$server_ip' $LOGallowed_campaignsSQL order by campaign_id;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$recycle_to_print = mysqli_num_rows($rslt);
+			$o=0;
+			while ($recycle_to_print > $o) 
+				{
+				$rowx=mysqli_fetch_row($rslt);
+				$o++;
+
+				if (preg_match('/1$|3$|5$|7$|9$/i', $o))
+					{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
+				else
+					{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
+
+				echo "<tr $bgcolor><td><font size=1>$rowx[1]<form action=$PHP_SELF method=POST>\n";
+				echo "<input type=hidden name=server_ip value=\"$server_ip\">\n";
+				echo "<input type=hidden name=campaign_id value=\"$rowx[1]\">\n";
+				echo "<input type=hidden name=ADD value=421111111111></td>\n";
+				echo "<td><font size=1><input size=6 maxlength=4 name=dedicated_trunks value=\"$rowx[2]\"></td>\n";
+				echo "<td><select size=1 name=trunk_restriction><option value='MAXIMUM_LIMIT'>"._QXZ("MAXIMUM_LIMIT")."</option><option value='OVERFLOW_ALLOWED'>"._QXZ("OVERFLOW_ALLOWED")."</option><option value='$rowx[3]' SELECTED>"._QXZ("$rowx[3]")."</option></select></td>\n";
+				echo "<td><font size=1><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("MODIFY")."'></form></td>\n";
+				echo "<td><font size=1><a href=\"$PHP_SELF?ADD=621111111111&campaign_id=$rowx[1]&server_ip=$server_ip\">"._QXZ("DELETE")."</a></td></tr>\n";
+				}
+
+			echo "</table>\n";
+
+			echo "<br><b>"._QXZ("ADD NEW SERVER TRUNK RECORD")."</b><BR><form action=$PHP_SELF method=POST>\n";
+			echo "<input type=hidden name=ADD value=221111111111>\n";
 			echo "<input type=hidden name=server_ip value=\"$server_ip\">\n";
-			echo "<input type=hidden name=campaign_id value=\"$rowx[1]\">\n";
-			echo "<input type=hidden name=ADD value=421111111111></td>\n";
-			echo "<td><font size=1><input size=6 maxlength=4 name=dedicated_trunks value=\"$rowx[2]\"></td>\n";
-			echo "<td><select size=1 name=trunk_restriction><option value='MAXIMUM_LIMIT'>"._QXZ("MAXIMUM_LIMIT")."</option><option value='OVERFLOW_ALLOWED'>"._QXZ("OVERFLOW_ALLOWED")."</option><option value='$rowx[3]' SELECTED>"._QXZ("$rowx[3]")."</option></select></td>\n";
-			echo "<td><font size=1><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("MODIFY")."'></form></td>\n";
-			echo "<td><font size=1><a href=\"$PHP_SELF?ADD=621111111111&campaign_id=$rowx[1]&server_ip=$server_ip\">"._QXZ("DELETE")."</a></td></tr>\n";
-			}
+			echo _QXZ("TRUNKS").": <input size=6 maxlength=4 name=dedicated_trunks><BR>\n";
+			echo _QXZ("CAMPAIGN").": <select size=1 name=campaign_id>\n";
+			echo "$campaigns_list\n";
+			echo "</select><BR>\n";
+			echo _QXZ("RESTRICTION").": <select size=1 name=trunk_restriction><option value='MAXIMUM_LIMIT'>"._QXZ("MAXIMUM_LIMIT")."</option><option value='OVERFLOW_ALLOWED'>"._QXZ("OVERFLOW_ALLOWED")."</option></select><BR>\n";
+			echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
 
-		echo "</table>\n";
-
-		echo "<br><b>"._QXZ("ADD NEW SERVER TRUNK RECORD")."</b><BR><form action=$PHP_SELF method=POST>\n";
-		echo "<input type=hidden name=ADD value=221111111111>\n";
-		echo "<input type=hidden name=server_ip value=\"$server_ip\">\n";
-		echo _QXZ("TRUNKS").": <input size=6 maxlength=4 name=dedicated_trunks><BR>\n";
-		echo _QXZ("CAMPAIGN").": <select size=1 name=campaign_id>\n";
-		echo "$campaigns_list\n";
-		echo "</select><BR>\n";
-		echo _QXZ("RESTRICTION").": <select size=1 name=trunk_restriction><option value='MAXIMUM_LIMIT'>"._QXZ("MAXIMUM_LIMIT")."</option><option value='OVERFLOW_ALLOWED'>"._QXZ("OVERFLOW_ALLOWED")."</option></select><BR>\n";
-		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
-
-		echo "</center></FORM><br>\n";
+			echo "</center></FORM><br>\n";
 
 
-		### list of carriers on this server
-		echo "<center>\n";
-		echo "<br><b>"._QXZ("CARRIERS WITHIN THIS SERVER").":</b><br>\n";
-		echo "<TABLE width=600 cellspacing=3>\n";
-		echo "<tr><td>"._QXZ("CARRIER ID")."</td><td>"._QXZ("NAME")."</td><td>"._QXZ("REGISTRATION")."</td><td>"._QXZ("ACTIVE")."</td></tr>\n";
+			### list of carriers on this server
+			echo "<center>\n";
+			echo "<br><b>"._QXZ("CARRIERS WITHIN THIS SERVER").":</b><br>\n";
+			echo "<TABLE width=600 cellspacing=3>\n";
+			echo "<tr><td>"._QXZ("CARRIER ID")."</td><td>"._QXZ("NAME")."</td><td>"._QXZ("REGISTRATION")."</td><td>"._QXZ("ACTIVE")."</td></tr>\n";
 
-		$active_carriers = 0;
-		$inactive_carriers = 0;
-		$stmt="SELECT carrier_id,carrier_name,registration_string,active from vicidial_server_carriers where server_ip IN('$server_ip','0.0.0.0') $LOGadmin_viewable_groupsSQL;";
-		$rsltx=mysql_to_mysqli($stmt, $link);
-		$carriers_to_print = mysqli_num_rows($rsltx);
-		if ($DB > 0) {echo "|$carriers_to_print|$stmt|\n";}
-		$camp_lists='';
+			$active_carriers = 0;
+			$inactive_carriers = 0;
+			$stmt="SELECT carrier_id,carrier_name,registration_string,active from vicidial_server_carriers where server_ip IN('$server_ip','0.0.0.0') $LOGadmin_viewable_groupsSQL;";
+			$rsltx=mysql_to_mysqli($stmt, $link);
+			$carriers_to_print = mysqli_num_rows($rsltx);
+			if ($DB > 0) {echo "|$carriers_to_print|$stmt|\n";}
+			$camp_lists='';
 
-		$o=0;
-		while ($carriers_to_print > $o) 
-			{
-			$rowx=mysqli_fetch_row($rsltx);
-			$o++;
-			if (preg_match('/Y/', $rowx[3])) {$active_carriers++;}
-			if (preg_match('/N/', $rowx[3])) {$inactive_carriers++;}
+			$o=0;
+			while ($carriers_to_print > $o) 
+				{
+				$rowx=mysqli_fetch_row($rsltx);
+				$o++;
+				if (preg_match('/Y/', $rowx[3])) {$active_carriers++;}
+				if (preg_match('/N/', $rowx[3])) {$inactive_carriers++;}
 
-			if (preg_match('/1$|3$|5$|7$|9$/i', $o))
-				{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
-			else
-				{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
+				if (preg_match('/1$|3$|5$|7$|9$/i', $o))
+					{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
+				else
+					{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
 
-			echo "<tr $bgcolor><td><font size=1><a href=\"$PHP_SELF?ADD=341111111111&carrier_id=$rowx[0]\">$rowx[0]</a></td><td><font size=1>$rowx[1]</td><td><font size=1>$rowx[2]</td><td><font size=1>"._QXZ("$rowx[3]")."</td></tr>\n";
-			}
+				echo "<tr $bgcolor><td><font size=1><a href=\"$PHP_SELF?ADD=341111111111&carrier_id=$rowx[0]\">$rowx[0]</a></td><td><font size=1>$rowx[1]</td><td><font size=1>$rowx[2]</td><td><font size=1>"._QXZ("$rowx[3]")."</td></tr>\n";
+				}
 
-		echo "</table></center><br>\n";
-
-
-		### list of phones on this server
-		echo "<center>\n";
-		echo "<br><b>"._QXZ("PHONES WITHIN THIS SERVER").":</b><br>\n";
-		echo "<TABLE width=400 cellspacing=3>\n";
-		echo "<tr><td>"._QXZ("EXTENSION")."</td><td>"._QXZ("NAME")."</td><td>"._QXZ("ACTIVE")."</td></tr>\n";
-
-		$active_phones = 0;
-		$inactive_phones = 0;
-		$stmt="SELECT extension,active,fullname from phones where server_ip='$server_ip' $LOGadmin_viewable_groupsSQL;";
-		$rsltx=mysql_to_mysqli($stmt, $link);
-		$lists_to_print = mysqli_num_rows($rsltx);
-		if ($DB > 0) {echo "|$lists_to_print|$stmt|\n";}
-		$camp_lists='';
-
-		$o=0;
-		while ($lists_to_print > $o) 
-			{
-			$rowx=mysqli_fetch_row($rsltx);
-			$o++;
-			if (preg_match('/Y/', $rowx[1])) {$active_phones++;   $camp_lists .= "'$rowx[0]',";}
-			if (preg_match('/N/', $rowx[1])) {$inactive_phones++;}
-
-			if (preg_match('/1$|3$|5$|7$|9$/i', $o))
-				{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
-			else
-				{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
-
-			echo "<tr $bgcolor><td><font size=1><a href=\"$PHP_SELF?ADD=31111111111&extension=$rowx[0]&server_ip=$server_ip\">$rowx[0]</a></td><td><font size=1>$rowx[2]</td><td><font size=1>"._QXZ("$rowx[1]")."</td></tr>\n";
-			}
-
-		echo "</table></center><br>\n";
+			echo "</table></center><br>\n";
 
 
-		### list of conferences on this server
-		echo "<center>\n";
-		echo "<br><b>"._QXZ("CONFERENCES WITHIN THIS SERVER").":</b><br>\n";
-		echo "<TABLE width=400 cellspacing=3>\n";
-		echo "<tr><td>"._QXZ("CONFERENCE")."</td><td>"._QXZ("EXTENSION")."</td></tr>\n";
+			### list of phones on this server
+			echo "<center>\n";
+			echo "<br><b>"._QXZ("PHONES WITHIN THIS SERVER").":</b><br>\n";
+			echo "<TABLE width=400 cellspacing=3>\n";
+			echo "<tr><td>"._QXZ("EXTENSION")."</td><td>"._QXZ("NAME")."</td><td>"._QXZ("ACTIVE")."</td></tr>\n";
 
-		$active_confs = 0;
-		$stmt="SELECT conf_exten,extension from conferences where server_ip='$server_ip'";
-		$rsltx=mysql_to_mysqli($stmt, $link);
-		$lists_to_print = mysqli_num_rows($rsltx);
-		if ($DB > 0) {echo "|$lists_to_print|$stmt|\n";}
-		$camp_lists='';
+			$active_phones = 0;
+			$inactive_phones = 0;
+			$stmt="SELECT extension,active,fullname from phones where server_ip='$server_ip' $LOGadmin_viewable_groupsSQL;";
+			$rsltx=mysql_to_mysqli($stmt, $link);
+			$lists_to_print = mysqli_num_rows($rsltx);
+			if ($DB > 0) {echo "|$lists_to_print|$stmt|\n";}
+			$camp_lists='';
 
-		$o=0;
-		while ($lists_to_print > $o) 
-			{
-			$rowx=mysqli_fetch_row($rsltx);
-			$o++;
-			$active_confs++;
+			$o=0;
+			while ($lists_to_print > $o) 
+				{
+				$rowx=mysqli_fetch_row($rsltx);
+				$o++;
+				if (preg_match('/Y/', $rowx[1])) {$active_phones++;   $camp_lists .= "'$rowx[0]',";}
+				if (preg_match('/N/', $rowx[1])) {$inactive_phones++;}
 
-			if (preg_match('/1$|3$|5$|7$|9$/i', $o))
-				{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
-			else
-				{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
+				if (preg_match('/1$|3$|5$|7$|9$/i', $o))
+					{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
+				else
+					{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
 
-			echo "<tr $bgcolor><td><font size=1><a href=\"$PHP_SELF?ADD=3111111111111&conf_exten=$rowx[0]&server_ip=$server_ip\">$rowx[0]</a></td><td><font size=1>$rowx[1]</td></tr>\n";
-			}
+				echo "<tr $bgcolor><td><font size=1><a href=\"$PHP_SELF?ADD=31111111111&extension=$rowx[0]&server_ip=$server_ip\">$rowx[0]</a></td><td><font size=1>$rowx[2]</td><td><font size=1>"._QXZ("$rowx[1]")."</td></tr>\n";
+				}
 
-		echo "</table></center><br>\n";
-
-
-		### list of vicidial conferences on this server
-		echo "<center>\n";
-		echo "<br><b>"._QXZ("AGENT CONFERENCES WITHIN THIS SERVER").":</b><br>\n";
-		echo "<TABLE width=400 cellspacing=3>\n";
-		echo "<tr><td>"._QXZ("VD CONFERENCE")."</td><td>"._QXZ("EXTENSION")."</td></tr>\n";
-
-		$active_vdconfs = 0;
-		$stmt="SELECT conf_exten,extension from vicidial_conferences where server_ip='$server_ip'";
-		$rsltx=mysql_to_mysqli($stmt, $link);
-		$lists_to_print = mysqli_num_rows($rsltx);
-		if ($DB > 0) {echo "|$lists_to_print|$stmt|\n";}
-		$camp_lists='';
-
-		$o=0;
-		while ($lists_to_print > $o) 
-			{
-			$rowx=mysqli_fetch_row($rsltx);
-			$o++;
-			$active_vdconfs++;
-
-			if (preg_match('/1$|3$|5$|7$|9$/i', $o))
-				{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
-			else
-				{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
-
-			echo "<tr $bgcolor><td><font size=1><a href=\"$PHP_SELF?ADD=31111111111111&conf_exten=$rowx[0]&server_ip=$server_ip\">$rowx[0]</a></td><td><font size=1>$rowx[1]</td></tr>\n";
-			}
-
-		echo "</table></center><br>\n";
+			echo "</table></center><br>\n";
 
 
-		### list of vicidial confbridges on this server
-		echo "<center>\n";
-		echo "<br><b>"._QXZ("AGENT CONFBRIDGES WITHIN THIS SERVER").":</b><br>\n";
-		echo "<TABLE width=400 cellspacing=3>\n";
-		echo "<tr><td>"._QXZ("VD CONFBRIDGE")."</td><td>"._QXZ("EXTENSION")."</td></tr>\n";
+			### list of conferences on this server
+			echo "<center>\n";
+			echo "<br><b>"._QXZ("CONFERENCES WITHIN THIS SERVER").":</b><br>\n";
+			echo "<TABLE width=400 cellspacing=3>\n";
+			echo "<tr><td>"._QXZ("CONFERENCE")."</td><td>"._QXZ("EXTENSION")."</td></tr>\n";
 
-		$active_vdconfs = 0;
-		$stmt="SELECT conf_exten,extension from vicidial_confbridges where server_ip='$server_ip'";
-		$rsltx=mysql_to_mysqli($stmt, $link);
-		$lists_to_print = mysqli_num_rows($rsltx);
-		if ($DB > 0) {echo "|$lists_to_print|$stmt|\n";}
-		$camp_lists='';
+			$active_confs = 0;
+			$stmt="SELECT conf_exten,extension from conferences where server_ip='$server_ip'";
+			$rsltx=mysql_to_mysqli($stmt, $link);
+			$lists_to_print = mysqli_num_rows($rsltx);
+			if ($DB > 0) {echo "|$lists_to_print|$stmt|\n";}
+			$camp_lists='';
 
-		$o=0;
-		while ($lists_to_print > $o) 
-			{
-			$rowx=mysqli_fetch_row($rsltx);
-			$o++;
-			$active_vdconfs++;
+			$o=0;
+			while ($lists_to_print > $o) 
+				{
+				$rowx=mysqli_fetch_row($rsltx);
+				$o++;
+				$active_confs++;
 
-			if (preg_match('/1$|3$|5$|7$|9$/i', $o))
-				{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
-			else
-				{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
+				if (preg_match('/1$|3$|5$|7$|9$/i', $o))
+					{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
+				else
+					{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
 
-			echo "<tr $bgcolor><td><font size=1><a href=\"$PHP_SELF?ADD=32111111111111&conf_exten=$rowx[0]&server_ip=$server_ip\">$rowx[0]</a></td><td><font size=1>$rowx[1]</td></tr>\n";
-			}
+				echo "<tr $bgcolor><td><font size=1><a href=\"$PHP_SELF?ADD=3111111111111&conf_exten=$rowx[0]&server_ip=$server_ip\">$rowx[0]</a></td><td><font size=1>$rowx[1]</td></tr>\n";
+				}
 
-		echo "</table></center><br>\n";
+			echo "</table></center><br>\n";
 
 
-		echo "<center><b>\n";
+			### list of vicidial conferences on this server
+			echo "<center>\n";
+			echo "<br><b>"._QXZ("AGENT CONFERENCES WITHIN THIS SERVER").":</b><br>\n";
+			echo "<TABLE width=400 cellspacing=3>\n";
+			echo "<tr><td>"._QXZ("VD CONFERENCE")."</td><td>"._QXZ("EXTENSION")."</td></tr>\n";
 
-			$camp_lists = preg_replace('/.$/i','',$camp_lists);
-		echo _QXZ("This server has %1s active carriers and %2s inactive carriers",0,'',$active_carriers,$inactive_carriers)."<br><br>\n";
-		echo _QXZ("This server has %1s active phones and %2s inactive phones",0,'',$active_phones,$inactive_phones)."<br><br>\n";
-		echo _QXZ("This server has %1s active conferences",0,'',$active_confs)."<br><br>\n";
-		echo _QXZ("This server has %1s active vicidial conferences",0,'',$active_vdconfs)."<br><br>\n";
-		echo "</b></center>\n";
-		if ($LOGast_delete_phones > 0)
-			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=521111111111&server_id=$server_id&server_ip=$server_ip\">"._QXZ("CLEAR ALL AGENT CONFERENCES")."</a>\n";
-			}
-		if ($LOGast_delete_phones > 0)
-			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=511111111111&server_id=$server_id&server_ip=$server_ip\">"._QXZ("DELETE THIS SERVER")."</a>\n";
-			}
-		if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
-			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=SERVERS&stage=$server_id\">"._QXZ("Click here to see Admin changes to this server")."</FONT>\n";
+			$active_vdconfs = 0;
+			$stmt="SELECT conf_exten,extension from vicidial_conferences where server_ip='$server_ip'";
+			$rsltx=mysql_to_mysqli($stmt, $link);
+			$lists_to_print = mysqli_num_rows($rsltx);
+			if ($DB > 0) {echo "|$lists_to_print|$stmt|\n";}
+			$camp_lists='';
+
+			$o=0;
+			while ($lists_to_print > $o) 
+				{
+				$rowx=mysqli_fetch_row($rsltx);
+				$o++;
+				$active_vdconfs++;
+
+				if (preg_match('/1$|3$|5$|7$|9$/i', $o))
+					{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
+				else
+					{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
+
+				echo "<tr $bgcolor><td><font size=1><a href=\"$PHP_SELF?ADD=31111111111111&conf_exten=$rowx[0]&server_ip=$server_ip\">$rowx[0]</a></td><td><font size=1>$rowx[1]</td></tr>\n";
+				}
+
+			echo "</table></center><br>\n";
+
+
+			### list of vicidial confbridges on this server
+			echo "<center>\n";
+			echo "<br><b>"._QXZ("AGENT CONFBRIDGES WITHIN THIS SERVER").":</b><br>\n";
+			echo "<TABLE width=400 cellspacing=3>\n";
+			echo "<tr><td>"._QXZ("VD CONFBRIDGE")."</td><td>"._QXZ("EXTENSION")."</td></tr>\n";
+
+			$active_vdconfs = 0;
+			$stmt="SELECT conf_exten,extension from vicidial_confbridges where server_ip='$server_ip'";
+			$rsltx=mysql_to_mysqli($stmt, $link);
+			$lists_to_print = mysqli_num_rows($rsltx);
+			if ($DB > 0) {echo "|$lists_to_print|$stmt|\n";}
+			$camp_lists='';
+
+			$o=0;
+			while ($lists_to_print > $o) 
+				{
+				$rowx=mysqli_fetch_row($rsltx);
+				$o++;
+				$active_vdconfs++;
+
+				if (preg_match('/1$|3$|5$|7$|9$/i', $o))
+					{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
+				else
+					{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
+
+				echo "<tr $bgcolor><td><font size=1><a href=\"$PHP_SELF?ADD=32111111111111&conf_exten=$rowx[0]&server_ip=$server_ip\">$rowx[0]</a></td><td><font size=1>$rowx[1]</td></tr>\n";
+				}
+
+			echo "</table></center><br>\n";
+
+
+			echo "<center><b>\n";
+
+				$camp_lists = preg_replace('/.$/i','',$camp_lists);
+			echo _QXZ("This server has %1s active carriers and %2s inactive carriers",0,'',$active_carriers,$inactive_carriers)."<br><br>\n";
+			echo _QXZ("This server has %1s active phones and %2s inactive phones",0,'',$active_phones,$inactive_phones)."<br><br>\n";
+			echo _QXZ("This server has %1s active conferences",0,'',$active_confs)."<br><br>\n";
+			echo _QXZ("This server has %1s active vicidial conferences",0,'',$active_vdconfs)."<br><br>\n";
+			echo "</b></center>\n";
+			if ($LOGast_delete_phones > 0)
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=521111111111&server_id=$server_id&server_ip=$server_ip\">"._QXZ("CLEAR ALL AGENT CONFERENCES")."</a>\n";
+				}
+			if ($LOGast_delete_phones > 0)
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=511111111111&server_id=$server_id&server_ip=$server_ip\">"._QXZ("DELETE THIS SERVER")."</a>\n";
+				}
+			if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=SERVERS&stage=$server_id\">"._QXZ("Click here to see Admin changes to this server")."</FONT>\n";
+				}
 			}
 		}
 	else
@@ -42698,100 +44366,103 @@ if ($ADD==331111111111)
 
 		$stmt="SELECT template_id,template_name,template_contents,user_group from vicidial_conf_templates where template_id='$template_id' $LOGadmin_viewable_groupsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-		$template_id =			$row[0];
-		$template_name =		$row[1];
-		$template_contents =	$row[2];
-		$user_group =			$row[3];
-
-		echo "<br>"._QXZ("MODIFY A CONF TEMPLATE RECORD").": $row[0]<form action=$PHP_SELF method=POST>\n";
-		echo "<input type=hidden name=ADD value=431111111111>\n";
-		echo "<input type=hidden name=template_id value=\"$template_id\">\n";
-
-		echo "<center><TABLE width=$section_width cellspacing=3>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Template ID").": </td><td align=left><B>$template_id</B></td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Template Name").": </td><td align=left><input type=text name=template_name size=40 maxlength=50 value=\"$template_name\">$NWB#conf_templates-template_name$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
-		echo "$UUgroups_list";
-		echo "<option SELECTED value=\"$user_group\">$user_group</option>\n";
-		echo "</select>$NWB#conf_templates-user_group$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Template Contents").": </td><td align=left><TEXTAREA NAME=template_contents ROWS=12 COLS=70>$template_contents</TEXTAREA> $NWB#conf_templates-template_contents$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
-		echo "</TABLE></center>\n";
-
-		echo "<center><b>\n";
-
-		### list of phones using this conf template
-		echo "<center>\n";
-		echo "<br><b>"._QXZ("PHONES USING THIS CONF TEMPLATE").":</b><br>\n";
-		echo "<TABLE width=500 cellspacing=3>\n";
-		echo "<tr><td>"._QXZ("EXTENSION")."</td><td>"._QXZ("NAME")."</td><td>"._QXZ("SERVER")."</td><td>"._QXZ("ACTIVE")."</td></tr>\n";
-
-		$active_phones = 0;
-		$inactive_phones = 0;
-		$stmt="SELECT extension,active,fullname,server_ip from phones where template_id='$template_id' $LOGadmin_viewable_groupsSQL;";
-		$rsltx=mysql_to_mysqli($stmt, $link);
-		$lists_to_print = mysqli_num_rows($rsltx);
-		$camp_lists='';
-
-		$o=0;
-		while ($lists_to_print > $o) 
+		if (mysqli_num_rows($rslt)>0)
 			{
-			$rowx=mysqli_fetch_row($rsltx);
-			$o++;
-			if (preg_match('/Y/', $rowx[1])) {$active_phones++;   $camp_lists .= "'$rowx[0]',";}
-			if (preg_match('/N/', $rowx[1])) {$inactive_phones++;}
+			$row=mysqli_fetch_row($rslt);
+			$template_id =			$row[0];
+			$template_name =		$row[1];
+			$template_contents =	$row[2];
+			$user_group =			$row[3];
 
-			if (preg_match('/1$|3$|5$|7$|9$/i', $o))
-				{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
-			else
-				{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
+			echo "<br>"._QXZ("MODIFY A CONF TEMPLATE RECORD").": $row[0]<form action=$PHP_SELF method=POST>\n";
+			echo "<input type=hidden name=ADD value=431111111111>\n";
+			echo "<input type=hidden name=template_id value=\"$template_id\">\n";
 
-			echo "<tr $bgcolor><td><font size=1><a href=\"$PHP_SELF?ADD=31111111111&extension=$rowx[0]&server_ip=$rowx[3]\">$rowx[0]</a></td><td><font size=1>$rowx[2]</td><td><font size=1>$rowx[3]</td><td><font size=1>$rowx[1]</td></tr>\n";
-			}
+			echo "<center><TABLE width=$section_width cellspacing=3>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Template ID").": </td><td align=left><B>$template_id</B></td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Template Name").": </td><td align=left><input type=text name=template_name size=40 maxlength=50 value=\"$template_name\">$NWB#conf_templates-template_name$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
+			echo "$UUgroups_list";
+			echo "<option SELECTED value=\"$user_group\">$user_group</option>\n";
+			echo "</select>$NWB#conf_templates-user_group$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Template Contents").": </td><td align=left><TEXTAREA NAME=template_contents ROWS=12 COLS=70>$template_contents</TEXTAREA> $NWB#conf_templates-template_contents$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+			echo "</TABLE></center>\n";
 
-		echo "</table></center><br>\n";
+			echo "<center><b>\n";
 
-		### list of carriers using this conf template
-		echo "<center>\n";
-		echo "<br><b>"._QXZ("CARRIERS USING THIS CONF TEMPLATE").":</b><br>\n";
-		echo "<TABLE width=500 cellspacing=3>\n";
-		echo "<tr><td>"._QXZ("CARRIER")."</td><td>"._QXZ("NAME")."</td><td>"._QXZ("SERVER")."</td><td>"._QXZ("ACTIVE")."</td></tr>\n";
+			### list of phones using this conf template
+			echo "<center>\n";
+			echo "<br><b>"._QXZ("PHONES USING THIS CONF TEMPLATE").":</b><br>\n";
+			echo "<TABLE width=500 cellspacing=3>\n";
+			echo "<tr><td>"._QXZ("EXTENSION")."</td><td>"._QXZ("NAME")."</td><td>"._QXZ("SERVER")."</td><td>"._QXZ("ACTIVE")."</td></tr>\n";
 
-		$active_phones = 0;
-		$inactive_phones = 0;
-		$stmt="SELECT carrier_id,active,carrier_name,server_ip from vicidial_server_carriers where template_id='$template_id' $LOGadmin_viewable_groupsSQL;";
-		$rsltx=mysql_to_mysqli($stmt, $link);
-		$lists_to_print = mysqli_num_rows($rsltx);
-		$camp_lists='';
+			$active_phones = 0;
+			$inactive_phones = 0;
+			$stmt="SELECT extension,active,fullname,server_ip from phones where template_id='$template_id' $LOGadmin_viewable_groupsSQL;";
+			$rsltx=mysql_to_mysqli($stmt, $link);
+			$lists_to_print = mysqli_num_rows($rsltx);
+			$camp_lists='';
 
-		$o=0;
-		while ($lists_to_print > $o) 
-			{
-			$rowx=mysqli_fetch_row($rsltx);
-			$o++;
-			if (preg_match('/Y/', $rowx[1])) {$active_phones++;   $camp_lists .= "'$rowx[0]',";}
-			if (preg_match('/N/', $rowx[1])) {$inactive_phones++;}
+			$o=0;
+			while ($lists_to_print > $o) 
+				{
+				$rowx=mysqli_fetch_row($rsltx);
+				$o++;
+				if (preg_match('/Y/', $rowx[1])) {$active_phones++;   $camp_lists .= "'$rowx[0]',";}
+				if (preg_match('/N/', $rowx[1])) {$inactive_phones++;}
 
-			if (preg_match('/1$|3$|5$|7$|9$/i', $o))
-				{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
-			else
-				{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
+				if (preg_match('/1$|3$|5$|7$|9$/i', $o))
+					{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
+				else
+					{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
 
-			echo "<tr $bgcolor><td><font size=1><a href=\"$PHP_SELF?ADD=341111111111&carrier_id=$rowx[0]\">$rowx[0]</a></td><td><font size=1>$rowx[2]</td><td><font size=1>$rowx[3]</td><td><font size=1>$rowx[1]</td></tr>\n";
-			}
+				echo "<tr $bgcolor><td><font size=1><a href=\"$PHP_SELF?ADD=31111111111&extension=$rowx[0]&server_ip=$rowx[3]\">$rowx[0]</a></td><td><font size=1>$rowx[2]</td><td><font size=1>$rowx[3]</td><td><font size=1>$rowx[1]</td></tr>\n";
+				}
 
-		echo "</table></center><br>\n";
+			echo "</table></center><br>\n";
+
+			### list of carriers using this conf template
+			echo "<center>\n";
+			echo "<br><b>"._QXZ("CARRIERS USING THIS CONF TEMPLATE").":</b><br>\n";
+			echo "<TABLE width=500 cellspacing=3>\n";
+			echo "<tr><td>"._QXZ("CARRIER")."</td><td>"._QXZ("NAME")."</td><td>"._QXZ("SERVER")."</td><td>"._QXZ("ACTIVE")."</td></tr>\n";
+
+			$active_phones = 0;
+			$inactive_phones = 0;
+			$stmt="SELECT carrier_id,active,carrier_name,server_ip from vicidial_server_carriers where template_id='$template_id' $LOGadmin_viewable_groupsSQL;";
+			$rsltx=mysql_to_mysqli($stmt, $link);
+			$lists_to_print = mysqli_num_rows($rsltx);
+			$camp_lists='';
+
+			$o=0;
+			while ($lists_to_print > $o) 
+				{
+				$rowx=mysqli_fetch_row($rsltx);
+				$o++;
+				if (preg_match('/Y/', $rowx[1])) {$active_phones++;   $camp_lists .= "'$rowx[0]',";}
+				if (preg_match('/N/', $rowx[1])) {$inactive_phones++;}
+
+				if (preg_match('/1$|3$|5$|7$|9$/i', $o))
+					{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
+				else
+					{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
+
+				echo "<tr $bgcolor><td><font size=1><a href=\"$PHP_SELF?ADD=341111111111&carrier_id=$rowx[0]\">$rowx[0]</a></td><td><font size=1>$rowx[2]</td><td><font size=1>$rowx[3]</td><td><font size=1>$rowx[1]</td></tr>\n";
+				}
+
+			echo "</table></center><br>\n";
 
 
 
-		if ($LOGast_delete_phones > 0)
-			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=531111111111&template_id=$template_id&template_name=$template_name\">"._QXZ("DELETE THIS CONF TEMPLATE")."</a>\n";
-			}
-		if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
-			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=CONFTEMPLATES&stage=$template_id\">"._QXZ("Click here to see Admin changes to this conf template")."</FONT>\n";
+			if ($LOGast_delete_phones > 0)
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=531111111111&template_id=$template_id&template_name=$template_name\">"._QXZ("DELETE THIS CONF TEMPLATE")."</a>\n";
+				}
+			if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=CONFTEMPLATES&stage=$template_id\">"._QXZ("Click here to see Admin changes to this conf template")."</FONT>\n";
+				}
 			}
 		}
 	else
@@ -42819,79 +44490,82 @@ if ($ADD==341111111111)
 
 		$stmt="SELECT carrier_id,carrier_name,registration_string,template_id,account_entry,protocol,globals_string,dialplan_entry,server_ip,active,carrier_description,user_group from vicidial_server_carriers where carrier_id='$carrier_id' $LOGadmin_viewable_groupsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-		$carrier_id =			$row[0];
-		$carrier_name =			$row[1];
-		$registration_string =	$row[2];
-		$template_id =			$row[3];
-		$account_entry =		$row[4];
-		$protocol =				$row[5];
-		$globals_string =		$row[6];
-		$dialplan_entry =		$row[7];
-		$server_ip =			$row[8];
-		$active =				$row[9];
-		$carrier_description =	$row[10];
-		$user_group =			$row[11];
-
-		echo "<br>"._QXZ("MODIFY A CARRIER RECORD").": $row[0]<form action=$PHP_SELF method=POST>\n";
-		echo "<input type=hidden name=ADD value=441111111111>\n";
-		echo "<input type=hidden name=carrier_id value=\"$carrier_id\">\n";
-
-		echo "<center><TABLE width=$section_width cellspacing=3>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Carrier ID").": </td><td align=left><B>$carrier_id</B></td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Carrier Name").": </td><td align=left><input type=text name=carrier_name size=40 maxlength=50 value=\"$carrier_name\">$NWB#server_carriers-carrier_name$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Carrier Description").": </td><td align=left><input type=text name=carrier_description size=70 maxlength=255 value=\"$carrier_description\">$NWB#server_carriers-carrier_description$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
-		echo "$UUgroups_list";
-		echo "<option SELECTED value=\"$user_group\">".(preg_match('/\-\-ALL\-\-/', $user_group) ? _QXZ("$user_group") : $user_group)."</option>\n";
-		echo "</select>$NWB#server_carriers-user_group$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Registration String").": </td><td align=left><input type=text name=registration_string size=50 maxlength=255 value=\"$registration_string\">$NWB#server_carriers-registration_string$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href=\"$PHP_SELF?ADD=331111111111&template_id=$template_id\">"._QXZ("Template ID")."</a>: </td><td align=left><select size=1 name=template_id>\n";
-		$stmt="SELECT template_id,template_name from vicidial_conf_templates $whereLOGadmin_viewable_groupsSQL order by template_id;";
-		$rslt=mysql_to_mysqli($stmt, $link);
-		$templates_to_print = mysqli_num_rows($rslt);
-		$templates_list='<option value=\'--NONE--\' SELECTED>--'._QXZ("NONE").'--</option>';
-		$o=0;
-		while ($templates_to_print > $o) 
+		if (mysqli_num_rows($rslt)>0)
 			{
-			$rowx=mysqli_fetch_row($rslt);
-			$templates_list .= "<option value=\"$rowx[0]\">$rowx[0] - $rowx[1]</option>\n";
-			$o++;
-			}
-		echo "$templates_list";
-		echo "<option SELECTED value='$template_id'>".(preg_match('/\-\-NONE\-\-/', $template_id) ? _QXZ("$template_id") : $template_id)."</option>\n";
-		echo "</select>$NWB#server_carriers-template_id$NWE</td></tr>\n";
+			$row=mysqli_fetch_row($rslt);
+			$carrier_id =			$row[0];
+			$carrier_name =			$row[1];
+			$registration_string =	$row[2];
+			$template_id =			$row[3];
+			$account_entry =		$row[4];
+			$protocol =				$row[5];
+			$globals_string =		$row[6];
+			$dialplan_entry =		$row[7];
+			$server_ip =			$row[8];
+			$active =				$row[9];
+			$carrier_description =	$row[10];
+			$user_group =			$row[11];
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Account Entry").": </td><td align=left><TEXTAREA NAME=account_entry ROWS=10 COLS=70>$account_entry</TEXTAREA> $NWB#server_carriers-account_entry$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Protocol").": </td><td align=left><select size=1 name=protocol>";
-		if ( ($SSallowed_sip_stacks == 'SIP') or ($SSallowed_sip_stacks == 'SIP_and_PJSIP') ) {echo "<option>SIP</option>";}
-		if ( ($SSallowed_sip_stacks == 'PJSIP') or ($SSallowed_sip_stacks == 'SIP_and_PJSIP') ) {echo "<option>PJSIP</option><option>PJSIP_WIZ</option>";}
-		echo "<option>Zap</option>";
-		echo "<option>IAX2</option>";
-		echo "<option value='EXTERNAL'>"._QXZ("EXTERNAL")."</option>";
-		echo "<option SELECTED value='$protocol'>".(!preg_match('/^SIP|^PJSIP|^Zap|^IAX2/i', $protocol) ? _QXZ("$protocol") : $protocol)."</option></select>$NWB#server_carriers-protocol$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Globals String").": </td><td align=left><input type=text name=globals_string size=50 maxlength=255 value=\"$globals_string\">$NWB#server_carriers-globals_string$NWE</td></tr>\n";
+			echo "<br>"._QXZ("MODIFY A CARRIER RECORD").": $row[0]<form action=$PHP_SELF method=POST>\n";
+			echo "<input type=hidden name=ADD value=441111111111>\n";
+			echo "<input type=hidden name=carrier_id value=\"$carrier_id\">\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Dialplan Entry").": </td><td align=left><TEXTAREA NAME=dialplan_entry ROWS=10 COLS=70>$dialplan_entry</TEXTAREA> $NWB#server_carriers-dialplan_entry$NWE</td></tr>\n";
+			echo "<center><TABLE width=$section_width cellspacing=3>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Carrier ID").": </td><td align=left><B>$carrier_id</B></td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Carrier Name").": </td><td align=left><input type=text name=carrier_name size=40 maxlength=50 value=\"$carrier_name\">$NWB#server_carriers-carrier_name$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Carrier Description").": </td><td align=left><input type=text name=carrier_description size=70 maxlength=255 value=\"$carrier_description\">$NWB#server_carriers-carrier_description$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
+			echo "$UUgroups_list";
+			echo "<option SELECTED value=\"$user_group\">".(preg_match('/\-\-ALL\-\-/', $user_group) ? _QXZ("$user_group") : $user_group)."</option>\n";
+			echo "</select>$NWB#server_carriers-user_group$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Registration String").": </td><td align=left><input type=text name=registration_string size=50 maxlength=255 value=\"$registration_string\">$NWB#server_carriers-registration_string$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Server IP").": </td><td align=left><select size=1 name=server_ip>\n";
-		echo "$servers_list";
-		echo "<option value=\"0.0.0.0\">0.0.0.0 - ALL SERVERS</option>\n";
-		echo "<option SELECTED>$server_ip</option>\n";
-		echo "</select> <i>(0.0.0.0 "._QXZ("is all servers").")</i>$NWB#server_carriers-server_ip$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active").": </td><td align=left><select size=1 name=active><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$active' SELECTED>"._QXZ("$active")."</option></select>$NWB#server_carriers-active$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
-		echo "</TABLE></center>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href=\"$PHP_SELF?ADD=331111111111&template_id=$template_id\">"._QXZ("Template ID")."</a>: </td><td align=left><select size=1 name=template_id>\n";
+			$stmt="SELECT template_id,template_name from vicidial_conf_templates $whereLOGadmin_viewable_groupsSQL order by template_id;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$templates_to_print = mysqli_num_rows($rslt);
+			$templates_list='<option value=\'--NONE--\' SELECTED>--'._QXZ("NONE").'--</option>';
+			$o=0;
+			while ($templates_to_print > $o) 
+				{
+				$rowx=mysqli_fetch_row($rslt);
+				$templates_list .= "<option value=\"$rowx[0]\">$rowx[0] - $rowx[1]</option>\n";
+				$o++;
+				}
+			echo "$templates_list";
+			echo "<option SELECTED value='$template_id'>".(preg_match('/\-\-NONE\-\-/', $template_id) ? _QXZ("$template_id") : $template_id)."</option>\n";
+			echo "</select>$NWB#server_carriers-template_id$NWE</td></tr>\n";
 
-		echo "<center><b>\n";
-		if ($LOGast_delete_phones > 0)
-			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=541111111111&carrier_id=$carrier_id&carrier_name=$carrier_name\">"._QXZ("DELETE THIS CARRIER")."</a>\n";
-			}
-		if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
-			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=CARRIERS&stage=$carrier_id\">"._QXZ("Click here to see Admin changes to this carrier")."</FONT>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Account Entry").": </td><td align=left><TEXTAREA NAME=account_entry ROWS=10 COLS=70>$account_entry</TEXTAREA> $NWB#server_carriers-account_entry$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Protocol").": </td><td align=left><select size=1 name=protocol>";
+			if ( ($SSallowed_sip_stacks == 'SIP') or ($SSallowed_sip_stacks == 'SIP_and_PJSIP') ) {echo "<option>SIP</option>";}
+			if ( ($SSallowed_sip_stacks == 'PJSIP') or ($SSallowed_sip_stacks == 'SIP_and_PJSIP') ) {echo "<option>PJSIP</option><option>PJSIP_WIZ</option>";}
+			echo "<option>Zap</option>";
+			echo "<option>IAX2</option>";
+			echo "<option value='EXTERNAL'>"._QXZ("EXTERNAL")."</option>";
+			echo "<option SELECTED value='$protocol'>".(!preg_match('/^SIP|^PJSIP|^Zap|^IAX2/i', $protocol) ? _QXZ("$protocol") : $protocol)."</option></select>$NWB#server_carriers-protocol$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Globals String").": </td><td align=left><input type=text name=globals_string size=50 maxlength=255 value=\"$globals_string\">$NWB#server_carriers-globals_string$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Dialplan Entry").": </td><td align=left><TEXTAREA NAME=dialplan_entry ROWS=10 COLS=70>$dialplan_entry</TEXTAREA> $NWB#server_carriers-dialplan_entry$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Server IP").": </td><td align=left><select size=1 name=server_ip>\n";
+			echo "$servers_list";
+			echo "<option value=\"0.0.0.0\">0.0.0.0 - ALL SERVERS</option>\n";
+			echo "<option SELECTED>$server_ip</option>\n";
+			echo "</select> <i>(0.0.0.0 "._QXZ("is all servers").")</i>$NWB#server_carriers-server_ip$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active").": </td><td align=left><select size=1 name=active><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$active' SELECTED>"._QXZ("$active")."</option></select>$NWB#server_carriers-active$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+			echo "</TABLE></center>\n";
+
+			echo "<center><b>\n";
+			if ($LOGast_delete_phones > 0)
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=541111111111&carrier_id=$carrier_id&carrier_name=$carrier_name\">"._QXZ("DELETE THIS CARRIER")."</a>\n";
+				}
+			if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=CARRIERS&stage=$carrier_id\">"._QXZ("Click here to see Admin changes to this carrier")."</FONT>\n";
+				}
 			}
 		}
 	else
@@ -42982,68 +44656,71 @@ if ($ADD==361111111111)
 
 		$stmt="SELECT moh_id,moh_name,active,random,user_group from vicidial_music_on_hold where moh_id='$moh_id' $LOGadmin_viewable_groupsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-		$moh_id =		$row[0];
-		$moh_name =		$row[1];
-		$active =		$row[2];
-		$random =		$row[3];
-		$user_group =	(preg_match('/\-\-ALL\-\-/', $row[4]) ? _QXZ("$row[4]") : $row[4]);
-
-		echo "<br>"._QXZ("MODIFY A MUSIC ON HOLD RECORD").": $moh_id<form action=$PHP_SELF method=POST>\n";
-		echo "<input type=hidden name=ADD value=461111111111>\n";
-		echo "<input type=hidden name=moh_id value=\"$moh_id\">\n";
-
-		echo "<center><TABLE width=$section_width cellspacing=3>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Music On Hold ID").": </td><td align=left><B>$moh_id</B></td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Music On Hold Name").": </td><td align=left><input type=text name=moh_name size=50 maxlength=100 value=\"$moh_name\">$NWB#music_on_hold-moh_name$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
-		echo "$UUgroups_list";
-		echo "<option SELECTED value=\"$user_group\">$user_group</option>\n";
-		echo "</select>$NWB#music_on_hold-user_group$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active").": </td><td align=left><select size=1 name=active><option value='N'>"._QXZ("N")."</option><option value='Y'>"._QXZ("Y")."</option><option value='$active' SELECTED>"._QXZ("$active")."</option></select>$NWB#music_on_hold-active$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Random Order").": </td><td align=left><select size=1 name=random><option value='N'>"._QXZ("N")."</option><option value='Y'>"._QXZ("Y")."</option><option value='$random' SELECTED>"._QXZ("$random")."</option></select>$NWB#music_on_hold-random$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Audio Files").": </td><td align=left>\n";
-		##### get files listing for rank/delete options
-		$stmt="SELECT filename,rank from vicidial_music_on_hold_files where moh_id='$moh_id' order by rank;";
-		$rsltx=mysql_to_mysqli($stmt, $link);
-		$mohfiles_to_print = mysqli_num_rows($rsltx);
-		$ranks = ($mohfiles_to_print + 2);
-		$o=0;
-		while ($mohfiles_to_print > $o)
+		if (mysqli_num_rows($rslt)>0)
 			{
-			$rowx=mysqli_fetch_row($rsltx);
-			echo "<font size=2>"._QXZ("Rank").": </font><select size=1 name=$rowx[0]>\n";
-			echo "<option SELECTED>$rowx[1]</option>\n";
-			$k=1;
-			while ($ranks > $k)
+			$row=mysqli_fetch_row($rslt);
+			$moh_id =		$row[0];
+			$moh_name =		$row[1];
+			$active =		$row[2];
+			$random =		$row[3];
+			$user_group =	(preg_match('/\-\-ALL\-\-/', $row[4]) ? _QXZ("$row[4]") : $row[4]);
+
+			echo "<br>"._QXZ("MODIFY A MUSIC ON HOLD RECORD").": $moh_id<form action=$PHP_SELF method=POST>\n";
+			echo "<input type=hidden name=ADD value=461111111111>\n";
+			echo "<input type=hidden name=moh_id value=\"$moh_id\">\n";
+
+			echo "<center><TABLE width=$section_width cellspacing=3>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Music On Hold ID").": </td><td align=left><B>$moh_id</B></td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Music On Hold Name").": </td><td align=left><input type=text name=moh_name size=50 maxlength=100 value=\"$moh_name\">$NWB#music_on_hold-moh_name$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
+			echo "$UUgroups_list";
+			echo "<option SELECTED value=\"$user_group\">$user_group</option>\n";
+			echo "</select>$NWB#music_on_hold-user_group$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active").": </td><td align=left><select size=1 name=active><option value='N'>"._QXZ("N")."</option><option value='Y'>"._QXZ("Y")."</option><option value='$active' SELECTED>"._QXZ("$active")."</option></select>$NWB#music_on_hold-active$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Random Order").": </td><td align=left><select size=1 name=random><option value='N'>"._QXZ("N")."</option><option value='Y'>"._QXZ("Y")."</option><option value='$random' SELECTED>"._QXZ("$random")."</option></select>$NWB#music_on_hold-random$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Audio Files").": </td><td align=left>\n";
+			##### get files listing for rank/delete options
+			$stmt="SELECT filename,rank from vicidial_music_on_hold_files where moh_id='$moh_id' order by rank;";
+			$rsltx=mysql_to_mysqli($stmt, $link);
+			$mohfiles_to_print = mysqli_num_rows($rsltx);
+			$ranks = ($mohfiles_to_print + 2);
+			$o=0;
+			while ($mohfiles_to_print > $o)
 				{
-				echo "<option>$k</option>\n";
-				$k++;
+				$rowx=mysqli_fetch_row($rsltx);
+				echo "<font size=2>"._QXZ("Rank").": </font><select size=1 name=$rowx[0]>\n";
+				echo "<option SELECTED>$rowx[1]</option>\n";
+				$k=1;
+				while ($ranks > $k)
+					{
+					echo "<option>$k</option>\n";
+					$k++;
+					}
+				echo "</select>\n";
+
+				echo " &nbsp; <B>$rowx[0]</B> - <a href=\"$PHP_SELF?ADD=461111111111&moh_id=$moh_id&stage=FILEDELETE&filename=$rowx[0]\">"._QXZ("DELETE")."</a><BR>\n";
+				$o++;
 				}
-			echo "</select>\n";
 
-			echo " &nbsp; <B>$rowx[0]</B> - <a href=\"$PHP_SELF?ADD=461111111111&moh_id=$moh_id&stage=FILEDELETE&filename=$rowx[0]\">"._QXZ("DELETE")."</a><BR>\n";
-			$o++;
-			}
+			echo "</td></tr>\n";
 
-		echo "</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("Add An Audio File").": </td><td><input type=text size=50 maxlength=50 name=filename id=filename value=\"\"> <a href=\"javascript:launch_chooser('filename','date');\">"._QXZ("audio chooser")."</a>  $NWB#music_on_hold-filename$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row2_background><td align=right>"._QXZ("Add An Audio File").": </td><td><input type=text size=50 maxlength=50 name=filename id=filename value=\"\"> <a href=\"javascript:launch_chooser('filename','date');\">"._QXZ("audio chooser")."</a>  $NWB#music_on_hold-filename$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+			echo "</TABLE></center>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
-		echo "</TABLE></center>\n";
-
-		echo "<center><b>\n";
-		if ($LOGast_delete_phones > 0)
-			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=561111111111&moh_id=$moh_id&moh_name=$moh_name\">"._QXZ("DELETE MUSIC ON HOLD ENTRY")."</a>\n";
-			}
-		if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
-			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=MOH&stage=$moh_id\">"._QXZ("Click here to see Admin changes to this Music On Hold entry")."</FONT>\n";
+			echo "<center><b>\n";
+			if ($LOGast_delete_phones > 0)
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=561111111111&moh_id=$moh_id&moh_name=$moh_name\">"._QXZ("DELETE MUSIC ON HOLD ENTRY")."</a>\n";
+				}
+			if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=MOH&stage=$moh_id\">"._QXZ("Click here to see Admin changes to this Music On Hold entry")."</FONT>\n";
+				}
 			}
 		}
 	else
@@ -43071,100 +44748,103 @@ if ($ADD==397111111111)
 
 		$stmt="SELECT leave_vm_message_group_id,leave_vm_message_group_notes,active,user_group from leave_vm_message_groups where leave_vm_message_group_id='$leave_vm_message_group_id' $LOGadmin_viewable_groupsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-		$leave_vm_message_group_id =		$row[0];
-		$leave_vm_message_group_notes =		$row[1];
-		$active =							$row[2];
-		$user_group =	(preg_match('/\-\-ALL\-\-/', $row[3]) ? _QXZ("$row[3]") : $row[3]);
-
-		echo "<br>"._QXZ("MODIFY A VM MESSAGE GROUP RECORD").": $leave_vm_message_group_id<form action=$PHP_SELF method=POST>\n";
-		echo "<input type=hidden name=ADD value=497111111111>\n";
-		echo "<input type=hidden name=DB value=$DB>\n";
-		echo "<input type=hidden name=leave_vm_message_group_id value=\"$leave_vm_message_group_id\">\n";
-
-		echo "<center><TABLE width=900 cellspacing=3>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("VM Message Group ID").": </td><td align=left><B>$leave_vm_message_group_id</B></td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("VM Message Group Notes").": </td><td align=left><input type=text name=leave_vm_message_group_notes size=50 maxlength=255 value=\"$leave_vm_message_group_notes\">$NWB#vm_message_groups$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
-		echo "$UUgroups_list";
-		echo "<option SELECTED value=\"$user_group\">$user_group</option>\n";
-		echo "</select>$NWB#vm_message_groups$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active").": </td><td align=left><select size=1 name=active><option value='N'>"._QXZ("N")."</option><option value='Y'>"._QXZ("Y")."</option><option value='$active' SELECTED>"._QXZ("$active")."</option></select>$NWB#vm_message_groups$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Audio Files").": </td><td align=left>\n";
-		echo "<table border=0>";
-		##### get files listing for rank/delete options
-		$stmt="SELECT audio_filename,audio_name,rank,time_start,time_end from leave_vm_message_groups_entries where leave_vm_message_group_id='$leave_vm_message_group_id' order by rank;";
-		$rsltx=mysql_to_mysqli($stmt, $link);
-		$vmmgfiles_to_print = mysqli_num_rows($rsltx);
-		$ranks = ($vmmgfiles_to_print + 2);
-		$o=0;
-		if ($vmmgfiles_to_print > 0)
-			{echo "<tr><td><font size=2>"._QXZ("Rank")." &nbsp; "._QXZ("Time Range")."</td><td><font size=2>"._QXZ("Display")."</td><td><font size=2> &nbsp; "._QXZ("File name")."</td><td></td><tr>\n";}
-		while ($vmmgfiles_to_print > $o)
-			{
-			$rowx=mysqli_fetch_row($rsltx);
-			echo "<tr><td nowrap>";
-			echo "<select size=1 name=$rowx[0]>\n";
-			echo "<option SELECTED>$rowx[2]</option>\n";
-			$k=1;
-			while ($ranks > $k)
-				{
-				echo "<option>$k</option>\n";
-				$k++;
-				}
-					$Ffilename_start = "TM_START_$vmmgfiles[$o]";
-					$Ffilename_end = "TM_END_$vmmgfiles[$o]";
-					$Ffilename_name = "DS_NAME_$vmmgname[$o]";
-			echo "</select> &nbsp; \n";
-			echo "<input type=text size=4 maxlength=4 value=\"$rowx[3]\" name=\"TM_START_$rowx[0]\"> - ";
-			echo "<input type=text size=4 maxlength=4 value=\"$rowx[4]\" name=\"TM_END_$rowx[0]\"> &nbsp; ";
-			echo "</td><td nowrap>";
-
-			echo "<input type=text size=20 maxlength=255 value=\"$rowx[1]\" name=\"DS_NAME_$rowx[0]\">";
-			echo "</td><td nowrap>";
-
-			echo "<font size=2> &nbsp; <B>$rowx[0]</B></td><td nowrap><font size=2> - <a href=\"$PHP_SELF?ADD=497111111111&leave_vm_message_group_id=$leave_vm_message_group_id&stage=FILEDELETE&audio_filename=$rowx[0]\">"._QXZ("DELETE")."</a>";
-			$o++;
-			echo "</td></tr>";
-			}
-		if ($o < 1) {echo "<tr><td>"._QXZ("No Audio Files Set")."</td></tr>\n";}
-
-		echo "</table></td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row2_background><td align=right valign=top>"._QXZ("Add An Audio File").": </td><td><input type=text size=50 maxlength=255 name=audio_filename id=audio_filename value=\"\"> <a href=\"javascript:launch_chooser('audio_filename','date');\">"._QXZ("audio chooser")."</a> $NWB#vm_message_groups$NWE<br>\n";
-		echo ""._QXZ("Display Name").": <input type=text size=20 maxlength=255 name=audio_name value=\"\"> &nbsp; "._QXZ("Time Range").": <input type=text size=4 maxlength=4 name=time_start value=\"0000\"> "._QXZ("to")." <input type=text size=4 maxlength=4 name=time_end value=\"2400\">\n";
-		echo "</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
-		echo "</TABLE></center>\n";
-
-		echo "<center><b>\n";
-
-		echo "<BR><BR><B>"._QXZ("CAMPAIGNS USING THIS VM MESSAGE GROUP").":</B><BR>\n";
-		echo "<TABLE>\n";
-
-		$stmt="SELECT campaign_id,campaign_name from vicidial_campaigns where leave_vm_message_group_id='$leave_vm_message_group_id' $LOGallowed_campaignsSQL;";
-		$rslt=mysql_to_mysqli($stmt, $link);
-		$camps_to_print = mysqli_num_rows($rslt);
-		$o=0;
-		while ($camps_to_print > $o) 
+		if (mysqli_num_rows($rslt)>0)
 			{
 			$row=mysqli_fetch_row($rslt);
-			echo "<TR><TD><a href=\"$PHP_SELF?ADD=31&campaign_id=$row[0]\">$row[0] </a></TD><TD> $row[1]<BR></TD></TR>\n";
-			$o++;
-			}
-		echo "</TABLE><BR>\n";
+			$leave_vm_message_group_id =		$row[0];
+			$leave_vm_message_group_notes =		$row[1];
+			$active =							$row[2];
+			$user_group =	(preg_match('/\-\-ALL\-\-/', $row[3]) ? _QXZ("$row[3]") : $row[3]);
 
-		if ($LOGast_delete_phones > 0)
-			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=597111111111&leave_vm_message_group_id=$leave_vm_message_group_id&leave_vm_message_group_notes=$leave_vm_message_group_notes\">"._QXZ("DELETE VM MESSAGE GROUP ENTRY")."</a>\n";
-			}
-		if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
-			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=VMMGROUP&stage=$leave_vm_message_group_id\">"._QXZ("Click here to see Admin changes to this VM Mesage Group entry")."</FONT>\n";
+			echo "<br>"._QXZ("MODIFY A VM MESSAGE GROUP RECORD").": $leave_vm_message_group_id<form action=$PHP_SELF method=POST>\n";
+			echo "<input type=hidden name=ADD value=497111111111>\n";
+			echo "<input type=hidden name=DB value=$DB>\n";
+			echo "<input type=hidden name=leave_vm_message_group_id value=\"$leave_vm_message_group_id\">\n";
+
+			echo "<center><TABLE width=900 cellspacing=3>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("VM Message Group ID").": </td><td align=left><B>$leave_vm_message_group_id</B></td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("VM Message Group Notes").": </td><td align=left><input type=text name=leave_vm_message_group_notes size=50 maxlength=255 value=\"$leave_vm_message_group_notes\">$NWB#vm_message_groups$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
+			echo "$UUgroups_list";
+			echo "<option SELECTED value=\"$user_group\">$user_group</option>\n";
+			echo "</select>$NWB#vm_message_groups$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active").": </td><td align=left><select size=1 name=active><option value='N'>"._QXZ("N")."</option><option value='Y'>"._QXZ("Y")."</option><option value='$active' SELECTED>"._QXZ("$active")."</option></select>$NWB#vm_message_groups$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Audio Files").": </td><td align=left>\n";
+			echo "<table border=0>";
+			##### get files listing for rank/delete options
+			$stmt="SELECT audio_filename,audio_name,rank,time_start,time_end from leave_vm_message_groups_entries where leave_vm_message_group_id='$leave_vm_message_group_id' order by rank;";
+			$rsltx=mysql_to_mysqli($stmt, $link);
+			$vmmgfiles_to_print = mysqli_num_rows($rsltx);
+			$ranks = ($vmmgfiles_to_print + 2);
+			$o=0;
+			if ($vmmgfiles_to_print > 0)
+				{echo "<tr><td><font size=2>"._QXZ("Rank")." &nbsp; "._QXZ("Time Range")."</td><td><font size=2>"._QXZ("Display")."</td><td><font size=2> &nbsp; "._QXZ("File name")."</td><td></td><tr>\n";}
+			while ($vmmgfiles_to_print > $o)
+				{
+				$rowx=mysqli_fetch_row($rsltx);
+				echo "<tr><td nowrap>";
+				echo "<select size=1 name=$rowx[0]>\n";
+				echo "<option SELECTED>$rowx[2]</option>\n";
+				$k=1;
+				while ($ranks > $k)
+					{
+					echo "<option>$k</option>\n";
+					$k++;
+					}
+				#		$Ffilename_start = "TM_START_$vmmgfiles[$o]";
+				#		$Ffilename_end = "TM_END_$vmmgfiles[$o]";
+				#		$Ffilename_name = "DS_NAME_$vmmgname[$o]";
+				echo "</select> &nbsp; \n";
+				echo "<input type=text size=4 maxlength=4 value=\"$rowx[3]\" name=\"TM_START_$rowx[0]\"> - ";
+				echo "<input type=text size=4 maxlength=4 value=\"$rowx[4]\" name=\"TM_END_$rowx[0]\"> &nbsp; ";
+				echo "</td><td nowrap>";
+
+				echo "<input type=text size=20 maxlength=255 value=\"$rowx[1]\" name=\"DS_NAME_$rowx[0]\">";
+				echo "</td><td nowrap>";
+
+				echo "<font size=2> &nbsp; <B>$rowx[0]</B></td><td nowrap><font size=2> - <a href=\"$PHP_SELF?ADD=497111111111&leave_vm_message_group_id=$leave_vm_message_group_id&stage=FILEDELETE&audio_filename=$rowx[0]\">"._QXZ("DELETE")."</a>";
+				$o++;
+				echo "</td></tr>";
+				}
+			if ($o < 1) {echo "<tr><td>"._QXZ("No Audio Files Set")."</td></tr>\n";}
+
+			echo "</table></td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row2_background><td align=right valign=top>"._QXZ("Add An Audio File").": </td><td><input type=text size=50 maxlength=255 name=audio_filename id=audio_filename value=\"\"> <a href=\"javascript:launch_chooser('audio_filename','date');\">"._QXZ("audio chooser")."</a> $NWB#vm_message_groups$NWE<br>\n";
+			echo ""._QXZ("Display Name").": <input type=text size=20 maxlength=255 name=audio_name value=\"\"> &nbsp; "._QXZ("Time Range").": <input type=text size=4 maxlength=4 name=time_start value=\"0000\"> "._QXZ("to")." <input type=text size=4 maxlength=4 name=time_end value=\"2400\">\n";
+			echo "</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+			echo "</TABLE></center>\n";
+
+			echo "<center><b>\n";
+
+			echo "<BR><BR><B>"._QXZ("CAMPAIGNS USING THIS VM MESSAGE GROUP").":</B><BR>\n";
+			echo "<TABLE>\n";
+
+			$stmt="SELECT campaign_id,campaign_name from vicidial_campaigns where leave_vm_message_group_id='$leave_vm_message_group_id' $LOGallowed_campaignsSQL;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$camps_to_print = mysqli_num_rows($rslt);
+			$o=0;
+			while ($camps_to_print > $o) 
+				{
+				$row=mysqli_fetch_row($rslt);
+				echo "<TR><TD><a href=\"$PHP_SELF?ADD=31&campaign_id=$row[0]\">$row[0] </a></TD><TD> $row[1]<BR></TD></TR>\n";
+				$o++;
+				}
+			echo "</TABLE><BR>\n";
+
+			if ($LOGast_delete_phones > 0)
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=597111111111&leave_vm_message_group_id=$leave_vm_message_group_id&leave_vm_message_group_notes=$leave_vm_message_group_notes\">"._QXZ("DELETE VM MESSAGE GROUP ENTRY")."</a>\n";
+				}
+			if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=VMMGROUP&stage=$leave_vm_message_group_id\">"._QXZ("Click here to see Admin changes to this VM Mesage Group entry")."</FONT>\n";
+				}
 			}
 		}
 	else
@@ -43192,49 +44872,52 @@ if ($ADD==398111111111)
 
 		$stmt="SELECT queue_group,queue_group_name,active,user_group,included_campaigns,included_inbound_groups from vicidial_queue_groups where queue_group='$queue_group' $LOGadmin_viewable_groupsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-		$queue_group =				$row[0];
-		$queue_group_name =			$row[1];
-		$active =					$row[2];
-		$user_group =	(preg_match('/\-\-ALL\-\-/', $row[3]) ? _QXZ("$row[3]") : $row[3]);
-		$included_campaigns =		$row[4];
-		$included_inbound_groups =	$row[5];
-
-		echo "<br>"._QXZ("MODIFY A QUEUE GROUP RECORD").": $queue_group<form action=$PHP_SELF method=POST>\n";
-		echo "<input type=hidden name=ADD value=498111111111>\n";
-		echo "<input type=hidden name=DB value=$DB>\n";
-		echo "<input type=hidden name=queue_group value=\"$queue_group\">\n";
-
-		echo "<center><TABLE width=900 cellspacing=3>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Queue Group ID").": </td><td align=left><B>$queue_group</B></td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Queue Group Name").": </td><td align=left><input type=text name=queue_group_name size=50 maxlength=255 value=\"$queue_group_name\">$NWB#queue_groups$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
-		echo "$UUgroups_list";
-		echo "<option SELECTED value=\"$user_group\">$user_group</option>\n";
-		echo "</select>$NWB#queue_groups$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active").": </td><td align=left><select size=1 name=active><option value='N'>"._QXZ("N")."</option><option value='Y'>"._QXZ("Y")."</option><option value='$active' SELECTED>"._QXZ("$active")."</option></select>$NWB#queue_groups$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right valign=top>"._QXZ("Included Campaigns").": <BR>$NWB#queue_groups$NWE</td><td align=left>\n";
-		echo "$qg_campaigns_list";
-		echo " <BR>&nbsp;</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right valign=top>"._QXZ("Included Inbound Groups").": <BR>$NWB#queue_groups$NWE</td><td align=left>\n";
-		echo "$qg_groups_list";
-		echo " <BR>&nbsp;</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
-		echo "</TABLE></center>\n";
-
-		echo "<center><b>\n";
-
-		if ($LOGast_delete_phones > 0)
+		if (mysqli_num_rows($rslt)>0)
 			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=598111111111&queue_group=$queue_group&queue_group_name=$queue_group_name\">"._QXZ("DELETE QUEUE GROUP ENTRY")."</a>\n";
-			}
-		if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
-			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=QUEUEGROUP&stage=$queue_group\">"._QXZ("Click here to see Admin changes to this Queue Group entry")."</FONT>\n";
+			$row=mysqli_fetch_row($rslt);
+			$queue_group =				$row[0];
+			$queue_group_name =			$row[1];
+			$active =					$row[2];
+			$user_group =	(preg_match('/\-\-ALL\-\-/', $row[3]) ? _QXZ("$row[3]") : $row[3]);
+			$included_campaigns =		$row[4];
+			$included_inbound_groups =	$row[5];
+
+			echo "<br>"._QXZ("MODIFY A QUEUE GROUP RECORD").": $queue_group<form action=$PHP_SELF method=POST>\n";
+			echo "<input type=hidden name=ADD value=498111111111>\n";
+			echo "<input type=hidden name=DB value=$DB>\n";
+			echo "<input type=hidden name=queue_group value=\"$queue_group\">\n";
+
+			echo "<center><TABLE width=900 cellspacing=3>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Queue Group ID").": </td><td align=left><B>$queue_group</B></td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Queue Group Name").": </td><td align=left><input type=text name=queue_group_name size=50 maxlength=255 value=\"$queue_group_name\">$NWB#queue_groups$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
+			echo "$UUgroups_list";
+			echo "<option SELECTED value=\"$user_group\">$user_group</option>\n";
+			echo "</select>$NWB#queue_groups$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active").": </td><td align=left><select size=1 name=active><option value='N'>"._QXZ("N")."</option><option value='Y'>"._QXZ("Y")."</option><option value='$active' SELECTED>"._QXZ("$active")."</option></select>$NWB#queue_groups$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right valign=top>"._QXZ("Included Campaigns").": <BR>$NWB#queue_groups$NWE</td><td align=left>\n";
+			echo "$qg_campaigns_list";
+			echo " <BR>&nbsp;</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right valign=top>"._QXZ("Included Inbound Groups").": <BR>$NWB#queue_groups$NWE</td><td align=left>\n";
+			echo "$qg_groups_list";
+			echo " <BR>&nbsp;</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+			echo "</TABLE></center>\n";
+
+			echo "<center><b>\n";
+
+			if ($LOGast_delete_phones > 0)
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=598111111111&queue_group=$queue_group&queue_group_name=$queue_group_name\">"._QXZ("DELETE QUEUE GROUP ENTRY")."</a>\n";
+				}
+			if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=QUEUEGROUP&stage=$queue_group\">"._QXZ("Click here to see Admin changes to this Queue Group entry")."</FONT>\n";
+				}
 			}
 		}
 	else
@@ -43262,89 +44945,92 @@ if ($ADD==371111111111)
 
 		$stmt="SELECT voicemail_id,pass,fullname,active,email,messages,old_messages,delete_vm_after_email,voicemail_timezone,voicemail_options,user_group,voicemail_greeting,on_login_report from vicidial_voicemail where voicemail_id='$voicemail_id' $LOGadmin_viewable_groupsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-		$voicemail_id =				$row[0];
-		$pass =						$row[1];
-		$fullname =					$row[2];
-		$active =					$row[3];
-		$email =					$row[4];
-		$messages =					$row[5];
-		$old_messages =				$row[6];
-		$delete_vm_after_email =	$row[7];
-		$voicemail_timezone =		$row[8];
-		$voicemail_options =		$row[9];
-		$user_group =				$row[10];
-		$voicemail_greeting =		$row[11];
-		$show_vm_on_summary = 		$row[12];
-
-		echo "<br>"._QXZ("MODIFY A VOICEMAIL BOX").": $voicemail_id<form action=$PHP_SELF method=POST>\n";
-		echo "<input type=hidden name=ADD value=471111111111>\n";
-		echo "<input type=hidden name=DB value=$DB>\n";
-		echo "<input type=hidden name=voicemail_id value=\"$voicemail_id\">\n";
-
-		echo "<center><TABLE width=$section_width cellspacing=3>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Voicemail ID").": </td><td align=left><B>$voicemail_id</B></td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Password").": </td><td align=left><input type=text name=pass size=12 maxlength=10 value=\"$pass\">$NWB#voicemail-pass$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Name").": </td><td align=left><input type=text name=fullname size=50 maxlength=100 value=\"$fullname\">$NWB#voicemail-fullname$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Email").": </td><td align=left><input type=text name=email size=50 maxlength=100 value=\"$email\">$NWB#voicemail-email$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active").": </td><td align=left><select size=1 name=active><option value='N'>"._QXZ("N")."</option><option value='Y'>"._QXZ("Y")."</option><option value='$active' SELECTED>"._QXZ("$active")."</option></select>$NWB#voicemail-active$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
-		echo "$UUgroups_list";
-		echo "<option SELECTED value=\"$user_group\">$user_group</option>\n";
-		echo "</select>$NWB#voicemail-user_group$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Delete Voicemail After Email").": </td><td align=left><select size=1 name=delete_vm_after_email><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$delete_vm_after_email' selected>"._QXZ("$delete_vm_after_email")."</option></select>$NWB#voicemail-delete_vm_after_email$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Show VM on Summary Screen").": </td><td align=left><select size=1 name=show_vm_on_summary><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$show_vm_on_summary' selected>"._QXZ("$show_vm_on_summary")."</option></select>$NWB#voicemail-show_vm_on_summary$NWE</td></tr>\n";
-		if ($SSallow_voicemail_greeting > 0)
+		if (mysqli_num_rows($rslt)>0)
 			{
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Voicemail Greeting").": </td><td><input type=hidden name=old_voicemail_greeting value=\"$voicemail_greeting\"><input type=text size=50 maxlength=100 name=voicemail_greeting id=voicemail_greeting value=\"$voicemail_greeting\"> <a href=\"javascript:launch_chooser('voicemail_greeting','date');\">"._QXZ("audio chooser")."</a>  $NWB#voicemail-voicemail_greeting$NWE</td></tr>\n";
-			}
-		else
-			{
-			echo "<input type=hidden name=voicemail_greeting value=\"$voicemail_greeting\">";
-			echo "<input type=hidden name=old_voicemail_greeting value=\"$voicemail_greeting\">";
-			}
+			$row=mysqli_fetch_row($rslt);
+			$voicemail_id =				$row[0];
+			$pass =						$row[1];
+			$fullname =					$row[2];
+			$active =					$row[3];
+			$email =					$row[4];
+			$messages =					$row[5];
+			$old_messages =				$row[6];
+			$delete_vm_after_email =	$row[7];
+			$voicemail_timezone =		$row[8];
+			$voicemail_options =		$row[9];
+			$user_group =				$row[10];
+			$voicemail_greeting =		$row[11];
+			$show_vm_on_summary = 		$row[12];
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Voicemail Zone").": </td><td align=left><select size=1 name=voicemail_timezone>";
-		$vm_zones = explode("\n",$SSvoicemail_timezones);
-		$z=0;
-		$vm_zones_ct = count($vm_zones);
-		while($vm_zones_ct > $z)
-			{
-			if (strlen($vm_zones[$z]) > 5)
+			echo "<br>"._QXZ("MODIFY A VOICEMAIL BOX").": $voicemail_id<form action=$PHP_SELF method=POST>\n";
+			echo "<input type=hidden name=ADD value=471111111111>\n";
+			echo "<input type=hidden name=DB value=$DB>\n";
+			echo "<input type=hidden name=voicemail_id value=\"$voicemail_id\">\n";
+
+			echo "<center><TABLE width=$section_width cellspacing=3>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Voicemail ID").": </td><td align=left><B>$voicemail_id</B></td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Password").": </td><td align=left><input type=text name=pass size=12 maxlength=10 value=\"$pass\">$NWB#voicemail-pass$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Name").": </td><td align=left><input type=text name=fullname size=50 maxlength=100 value=\"$fullname\">$NWB#voicemail-fullname$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Email").": </td><td align=left><input type=text name=email size=50 maxlength=100 value=\"$email\">$NWB#voicemail-email$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active").": </td><td align=left><select size=1 name=active><option value='N'>"._QXZ("N")."</option><option value='Y'>"._QXZ("Y")."</option><option value='$active' SELECTED>"._QXZ("$active")."</option></select>$NWB#voicemail-active$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
+			echo "$UUgroups_list";
+			echo "<option SELECTED value=\"$user_group\">$user_group</option>\n";
+			echo "</select>$NWB#voicemail-user_group$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Delete Voicemail After Email").": </td><td align=left><select size=1 name=delete_vm_after_email><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$delete_vm_after_email' selected>"._QXZ("$delete_vm_after_email")."</option></select>$NWB#voicemail-delete_vm_after_email$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Show VM on Summary Screen").": </td><td align=left><select size=1 name=show_vm_on_summary><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$show_vm_on_summary' selected>"._QXZ("$show_vm_on_summary")."</option></select>$NWB#voicemail-show_vm_on_summary$NWE</td></tr>\n";
+			if ($SSallow_voicemail_greeting > 0)
 				{
-				$vm_specs = explode("=",$vm_zones[$z]);
-				$vm_abb = $vm_specs[0];
-				$vm_details = explode('|',$vm_specs[1]);
-				$vm_location = 	$vm_details[0];
-				echo "<option value=\"$vm_abb\">$vm_abb - $vm_location</option>\n";
+				echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Voicemail Greeting").": </td><td><input type=hidden name=old_voicemail_greeting value=\"$voicemail_greeting\"><input type=text size=50 maxlength=100 name=voicemail_greeting id=voicemail_greeting value=\"$voicemail_greeting\"> <a href=\"javascript:launch_chooser('voicemail_greeting','date');\">"._QXZ("audio chooser")."</a>  $NWB#voicemail-voicemail_greeting$NWE</td></tr>\n";
 				}
-			$z++;
-			}
-		echo "<option selected>$voicemail_timezone</option></select> $NWB#voicemail-voicemail_timezone$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Voicemail Options").": </td><td align=left><input type=text name=voicemail_options size=50 maxlength=100 value=\"$voicemail_options\">$NWB#voicemail-voicemail_options$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("New Messages").": </td><td align=left><B>$messages</B></td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Old Messages").": </td><td align=left><B>$old_messages</B></td></tr>\n";
+			else
+				{
+				echo "<input type=hidden name=voicemail_greeting value=\"$voicemail_greeting\">";
+				echo "<input type=hidden name=old_voicemail_greeting value=\"$voicemail_greeting\">";
+				}
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
-		echo "</TABLE></center>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Voicemail Zone").": </td><td align=left><select size=1 name=voicemail_timezone>";
+			$vm_zones = explode("\n",$SSvoicemail_timezones);
+			$z=0;
+			$vm_zones_ct = count($vm_zones);
+			while($vm_zones_ct > $z)
+				{
+				if (strlen($vm_zones[$z]) > 5)
+					{
+					$vm_specs = explode("=",$vm_zones[$z]);
+					$vm_abb = $vm_specs[0];
+					$vm_details = explode('|',$vm_specs[1]);
+					$vm_location = 	$vm_details[0];
+					echo "<option value=\"$vm_abb\">$vm_abb - $vm_location</option>\n";
+					}
+				$z++;
+				}
+			echo "<option selected>$voicemail_timezone</option></select> $NWB#voicemail-voicemail_timezone$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Voicemail Options").": </td><td align=left><input type=text name=voicemail_options size=50 maxlength=100 value=\"$voicemail_options\">$NWB#voicemail-voicemail_options$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("New Messages").": </td><td align=left><B>$messages</B></td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Old Messages").": </td><td align=left><B>$old_messages</B></td></tr>\n";
 
-		echo "<center><b>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+			echo "</TABLE></center>\n";
 
-		if (file_exists('options.php'))
-			{require('options.php');}
-		if (strlen($vm_view_messages_link) > 5)
-			{
-			$temp_vm_view_messages_link = preg_replace("/voicemail_id/",$voicemail_id,$vm_view_messages_link);
-			echo "<br><br><a href=\"$temp_vm_view_messages_link\">"._QXZ("View Messages");
-			}
+			echo "<center><b>\n";
 
-		if ($LOGast_delete_phones > 0)
-			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=571111111111&voicemail_id=$voicemail_id&fullname=$fullname\">"._QXZ("DELETE THIS VOICEMAIL BOX")."</a>\n";
-			}
-		if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
-			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=VOICEMAIL&stage=$voicemail_id\">"._QXZ("Click here to see Admin changes to this voicemail box")."</FONT>\n";
+			if (file_exists('options.php'))
+				{require('options.php');}
+			if (isset($vm_view_messages_link) && strlen($vm_view_messages_link) > 5)
+				{
+				$temp_vm_view_messages_link = preg_replace("/voicemail_id/",$voicemail_id,$vm_view_messages_link);
+				echo "<br><br><a href=\"$temp_vm_view_messages_link\">"._QXZ("View Messages");
+				}
+
+			if ($LOGast_delete_phones > 0)
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=571111111111&voicemail_id=$voicemail_id&fullname=$fullname\">"._QXZ("DELETE THIS VOICEMAIL BOX")."</a>\n";
+				}
+			if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=VOICEMAIL&stage=$voicemail_id\">"._QXZ("Click here to see Admin changes to this voicemail box")."</FONT>\n";
+				}
 			}
 		}
 	else
@@ -43372,163 +45058,166 @@ if ($ADD==381111111111)
 
 		$stmt="SELECT label_id,label_name,active,label_hide_field_logs,label_title,label_first_name,label_middle_initial,label_last_name,label_address1,label_address2,label_address3,label_city,label_state,label_province,label_postal_code,label_vendor_lead_code,label_gender,label_phone_number,label_phone_code,label_alt_phone,label_security_phrase,label_email,label_comments,user_group,label_lead_id,label_list_id,label_entry_date,label_gmt_offset_now,label_source_id,label_called_since_last_reset,label_status,label_user,label_date_of_birth,label_country_code,label_last_local_call_time,label_called_count,label_rank,label_owner,label_entry_list_id from vicidial_screen_labels where label_id='$label_id' $LOGadmin_viewable_groupsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-		$label_id =					$row[0];
-		$label_name =				$row[1];
-		$active =					$row[2];
-		$label_hide_field_logs =	$row[3];
-		$label_title =				$row[4];
-		$label_first_name =			$row[5];
-		$label_middle_initial =		$row[6];
-		$label_last_name =			$row[7];
-		$label_address1 =			$row[8];
-		$label_address2 =			$row[9];
-		$label_address3 =			$row[10];
-		$label_city =				$row[11];
-		$label_state =				$row[12];
-		$label_province =			$row[13];
-		$label_postal_code =		$row[14];
-		$label_vendor_lead_code =	$row[15];
-		$label_gender =				$row[16];
-		$label_phone_number =		$row[17];
-		$label_phone_code =			$row[18];
-		$label_alt_phone =			$row[19];
-		$label_security_phrase =	$row[20];
-		$label_email =				$row[21];
-		$label_comments =			$row[22];
-		$user_group =				$row[23];
-		$label_lead_id =			$row[24];
-		$label_list_id =			$row[25];
-		$label_entry_date =			$row[26];
-		$label_gmt_offset_now =		$row[27];
-		$label_source_id =			$row[28];
-		$label_called_since_last_reset = $row[29];
-		$label_status =				$row[30];
-		$label_user =				$row[31];
-		$label_date_of_birth =		$row[32];
-		$label_country_code =		$row[33];
-		$label_last_local_call_time = $row[34];
-		$label_called_count =		$row[35];
-		$label_rank =				$row[36];
-		$label_owner =				$row[37];
-		$label_entry_list_id =		$row[38];
-
-		echo "<br>"._QXZ("MODIFY SCREEN LABEL").": $label_id<form action=$PHP_SELF method=POST>\n";
-		echo "<input type=hidden name=ADD value=481111111111>\n";
-		echo "<input type=hidden name=label_id value=\"$label_id\">\n";
-
-		echo "<center><TABLE width=$section_width cellspacing=3>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label ID").": </td><td align=left><B>$label_id</B></td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Name").": </td><td align=left><input type=text name=label_name size=50 maxlength=100 value=\"$label_name\">$NWB#screen_labels-label_name$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active").": </td><td align=left><select size=1 name=active><option value='N'>"._QXZ("N")."</option><option value='Y'>"._QXZ("Y")."</option><option value='$active' SELECTED>"._QXZ("$active")."</option></select>$NWB#screen_labels-active$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
-		echo "$UUgroups_list";
-		echo "<option SELECTED value=\"$user_group\">".(preg_match('/\-\-ALL\-\-/', $user_group) ? _QXZ("$user_group") : $user_group)."</option>\n";
-		echo "</select>$NWB#screen_labels-user_group$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Hide Label in Call Logs").": </td><td align=left><select size=1 name=label_hide_field_logs><option value='N'>"._QXZ("N")."</option><option value='Y'>"._QXZ("Y")."</option><option value='$label_hide_field_logs' SELECTED>"._QXZ("$label_hide_field_logs")."</option></select>$NWB#screen_labels-label_hide_field_logs$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Title").": </td><td align=left><input type=text name=label_title size=20 maxlength=60 value=\"$label_title\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label First Name").": </td><td align=left><input type=text name=label_first_name size=20 maxlength=60 value=\"$label_first_name\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Middle Initial").": </td><td align=left><input type=text name=label_middle_initial size=20 maxlength=60 value=\"$label_middle_initial\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Last Name").": </td><td align=left><input type=text name=label_last_name size=20 maxlength=60 value=\"$label_last_name\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Address1").": </td><td align=left><input type=text name=label_address1 size=20 maxlength=60 value=\"$label_address1\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Address2").": </td><td align=left><input type=text name=label_address2 size=20 maxlength=60 value=\"$label_address2\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Address3").": </td><td align=left><input type=text name=label_address3 size=20 maxlength=60 value=\"$label_address3\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label City").": </td><td align=left><input type=text name=label_city size=20 maxlength=60 value=\"$label_city\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label State").": </td><td align=left><input type=text name=label_state size=20 maxlength=60 value=\"$label_state\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Province").": </td><td align=left><input type=text name=label_province size=20 maxlength=60 value=\"$label_province\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Postal Code").": </td><td align=left><input type=text name=label_postal_code size=20 maxlength=60 value=\"$label_postal_code\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Vendor Lead Code").": </td><td align=left><input type=text name=label_vendor_lead_code size=20 maxlength=60 value=\"$label_vendor_lead_code\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Gender").": </td><td align=left><input type=text name=label_gender size=20 maxlength=60 value=\"$label_gender\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Phone Number").": </td><td align=left><input type=text name=label_phone_number size=20 maxlength=60 value=\"$label_phone_number\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Phone Code").": </td><td align=left><input type=text name=label_phone_code size=20 maxlength=60 value=\"$label_phone_code\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Alt Phone").": </td><td align=left><input type=text name=label_alt_phone size=20 maxlength=60 value=\"$label_alt_phone\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Security Phrase").": </td><td align=left><input type=text name=label_security_phrase size=20 maxlength=60 value=\"$label_security_phrase\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Email").": </td><td align=left><input type=text name=label_email size=20 maxlength=60 value=\"$label_email\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Comments").": </td><td align=left><input type=text name=label_comments size=20 maxlength=60 value=\"$label_comments\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Lead ID").": </td><td align=left><input type=text name=label_lead_id size=20 maxlength=60 value=\"$label_lead_id\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label List ID").": </td><td align=left><input type=text name=label_list_id size=20 maxlength=60 value=\"$label_list_id\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Entry Date").": </td><td align=left><input type=text name=label_entry_date size=20 maxlength=60 value=\"$label_entry_date\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Timezone").": </td><td align=left><input type=text name=label_gmt_offset_now size=20 maxlength=60 value=\"$label_gmt_offset_now\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Source ID").": </td><td align=left><input type=text name=label_source_id size=20 maxlength=60 value=\"$label_source_id\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Reset Code").": </td><td align=left><input type=text name=label_called_since_last_reset size=20 maxlength=60 value=\"$label_called_since_last_reset\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Status").": </td><td align=left><input type=text name=label_status size=20 maxlength=60 value=\"$label_status\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label User").": </td><td align=left><input type=text name=label_user size=20 maxlength=60 value=\"$label_user\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Date of Birth").": </td><td align=left><input type=text name=label_date_of_birth size=20 maxlength=60 value=\"$label_date_of_birth\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Country Code").": </td><td align=left><input type=text name=label_country_code size=20 maxlength=60 value=\"$label_country_code\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Last Call").": </td><td align=left><input type=text name=label_last_local_call_time size=20 maxlength=60 value=\"$label_last_local_call_time\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Called Count").": </td><td align=left><input type=text name=label_called_count size=20 maxlength=60 value=\"$label_called_count\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Rank").": </td><td align=left><input type=text name=label_rank size=20 maxlength=60 value=\"$label_rank\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Owner").": </td><td align=left><input type=text name=label_owner size=20 maxlength=60 value=\"$label_owner\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Entry List ID").": </td><td align=left><input type=text name=label_entry_list_id size=20 maxlength=60 value=\"$label_entry_list_id\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
-		echo "</TABLE></center>\n";
-
-		echo "<center><b>\n";
-
-
-		echo "</TABLE><BR><BR>\n";
-		echo "<B> "._QXZ("CAMPAIGNS USING THIS SCREEN LABEL").":</B><BR>\n";
-		echo "<TABLE>\n";
-
-		$stmt="SELECT campaign_id,campaign_name from vicidial_campaigns where screen_labels='$label_id' $LOGallowed_campaignsSQL;";
-		$rslt=mysql_to_mysqli($stmt, $link);
-		$camps_to_print = mysqli_num_rows($rslt);
-		$o=0;
-		while ($camps_to_print > $o) 
+		if (mysqli_num_rows($rslt)>0)
 			{
 			$row=mysqli_fetch_row($rslt);
-			echo "<TR><TD><a href=\"$PHP_SELF?ADD=31&campaign_id=$row[0]\">$row[0] </a></TD><TD> $row[1]<BR></TD></TR>\n";
-			$o++;
-			}
+			$label_id =					$row[0];
+			$label_name =				$row[1];
+			$active =					$row[2];
+			$label_hide_field_logs =	$row[3];
+			$label_title =				$row[4];
+			$label_first_name =			$row[5];
+			$label_middle_initial =		$row[6];
+			$label_last_name =			$row[7];
+			$label_address1 =			$row[8];
+			$label_address2 =			$row[9];
+			$label_address3 =			$row[10];
+			$label_city =				$row[11];
+			$label_state =				$row[12];
+			$label_province =			$row[13];
+			$label_postal_code =		$row[14];
+			$label_vendor_lead_code =	$row[15];
+			$label_gender =				$row[16];
+			$label_phone_number =		$row[17];
+			$label_phone_code =			$row[18];
+			$label_alt_phone =			$row[19];
+			$label_security_phrase =	$row[20];
+			$label_email =				$row[21];
+			$label_comments =			$row[22];
+			$user_group =				$row[23];
+			$label_lead_id =			$row[24];
+			$label_list_id =			$row[25];
+			$label_entry_date =			$row[26];
+			$label_gmt_offset_now =		$row[27];
+			$label_source_id =			$row[28];
+			$label_called_since_last_reset = $row[29];
+			$label_status =				$row[30];
+			$label_user =				$row[31];
+			$label_date_of_birth =		$row[32];
+			$label_country_code =		$row[33];
+			$label_last_local_call_time = $row[34];
+			$label_called_count =		$row[35];
+			$label_rank =				$row[36];
+			$label_owner =				$row[37];
+			$label_entry_list_id =		$row[38];
 
-		echo "</TABLE><BR><BR>\n";
+			echo "<br>"._QXZ("MODIFY SCREEN LABEL").": $label_id<form action=$PHP_SELF method=POST>\n";
+			echo "<input type=hidden name=ADD value=481111111111>\n";
+			echo "<input type=hidden name=label_id value=\"$label_id\">\n";
 
-		if ($LOGast_delete_phones > 0)
-			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=581111111111&label_id=$label_id&label_name=$label_name\">"._QXZ("DELETE THIS SCREEN LABEL")."</a>\n";
-			}
-		if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
-			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=LABEL&stage=$label_id\">"._QXZ("Click here to see Admin changes to this screen label")."</FONT>\n";
+			echo "<center><TABLE width=$section_width cellspacing=3>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label ID").": </td><td align=left><B>$label_id</B></td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Name").": </td><td align=left><input type=text name=label_name size=50 maxlength=100 value=\"$label_name\">$NWB#screen_labels-label_name$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active").": </td><td align=left><select size=1 name=active><option value='N'>"._QXZ("N")."</option><option value='Y'>"._QXZ("Y")."</option><option value='$active' SELECTED>"._QXZ("$active")."</option></select>$NWB#screen_labels-active$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
+			echo "$UUgroups_list";
+			echo "<option SELECTED value=\"$user_group\">".(preg_match('/\-\-ALL\-\-/', $user_group) ? _QXZ("$user_group") : $user_group)."</option>\n";
+			echo "</select>$NWB#screen_labels-user_group$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Hide Label in Call Logs").": </td><td align=left><select size=1 name=label_hide_field_logs><option value='N'>"._QXZ("N")."</option><option value='Y'>"._QXZ("Y")."</option><option value='$label_hide_field_logs' SELECTED>"._QXZ("$label_hide_field_logs")."</option></select>$NWB#screen_labels-label_hide_field_logs$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Title").": </td><td align=left><input type=text name=label_title size=20 maxlength=60 value=\"$label_title\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label First Name").": </td><td align=left><input type=text name=label_first_name size=20 maxlength=60 value=\"$label_first_name\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Middle Initial").": </td><td align=left><input type=text name=label_middle_initial size=20 maxlength=60 value=\"$label_middle_initial\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Last Name").": </td><td align=left><input type=text name=label_last_name size=20 maxlength=60 value=\"$label_last_name\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Address1").": </td><td align=left><input type=text name=label_address1 size=20 maxlength=60 value=\"$label_address1\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Address2").": </td><td align=left><input type=text name=label_address2 size=20 maxlength=60 value=\"$label_address2\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Address3").": </td><td align=left><input type=text name=label_address3 size=20 maxlength=60 value=\"$label_address3\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label City").": </td><td align=left><input type=text name=label_city size=20 maxlength=60 value=\"$label_city\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label State").": </td><td align=left><input type=text name=label_state size=20 maxlength=60 value=\"$label_state\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Province").": </td><td align=left><input type=text name=label_province size=20 maxlength=60 value=\"$label_province\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Postal Code").": </td><td align=left><input type=text name=label_postal_code size=20 maxlength=60 value=\"$label_postal_code\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Vendor Lead Code").": </td><td align=left><input type=text name=label_vendor_lead_code size=20 maxlength=60 value=\"$label_vendor_lead_code\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Gender").": </td><td align=left><input type=text name=label_gender size=20 maxlength=60 value=\"$label_gender\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Phone Number").": </td><td align=left><input type=text name=label_phone_number size=20 maxlength=60 value=\"$label_phone_number\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Phone Code").": </td><td align=left><input type=text name=label_phone_code size=20 maxlength=60 value=\"$label_phone_code\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Alt Phone").": </td><td align=left><input type=text name=label_alt_phone size=20 maxlength=60 value=\"$label_alt_phone\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Security Phrase").": </td><td align=left><input type=text name=label_security_phrase size=20 maxlength=60 value=\"$label_security_phrase\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Email").": </td><td align=left><input type=text name=label_email size=20 maxlength=60 value=\"$label_email\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Comments").": </td><td align=left><input type=text name=label_comments size=20 maxlength=60 value=\"$label_comments\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Lead ID").": </td><td align=left><input type=text name=label_lead_id size=20 maxlength=60 value=\"$label_lead_id\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label List ID").": </td><td align=left><input type=text name=label_list_id size=20 maxlength=60 value=\"$label_list_id\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Entry Date").": </td><td align=left><input type=text name=label_entry_date size=20 maxlength=60 value=\"$label_entry_date\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Timezone").": </td><td align=left><input type=text name=label_gmt_offset_now size=20 maxlength=60 value=\"$label_gmt_offset_now\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Source ID").": </td><td align=left><input type=text name=label_source_id size=20 maxlength=60 value=\"$label_source_id\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Reset Code").": </td><td align=left><input type=text name=label_called_since_last_reset size=20 maxlength=60 value=\"$label_called_since_last_reset\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Status").": </td><td align=left><input type=text name=label_status size=20 maxlength=60 value=\"$label_status\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label User").": </td><td align=left><input type=text name=label_user size=20 maxlength=60 value=\"$label_user\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Date of Birth").": </td><td align=left><input type=text name=label_date_of_birth size=20 maxlength=60 value=\"$label_date_of_birth\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Country Code").": </td><td align=left><input type=text name=label_country_code size=20 maxlength=60 value=\"$label_country_code\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Last Call").": </td><td align=left><input type=text name=label_last_local_call_time size=20 maxlength=60 value=\"$label_last_local_call_time\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Called Count").": </td><td align=left><input type=text name=label_called_count size=20 maxlength=60 value=\"$label_called_count\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Rank").": </td><td align=left><input type=text name=label_rank size=20 maxlength=60 value=\"$label_rank\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Owner").": </td><td align=left><input type=text name=label_owner size=20 maxlength=60 value=\"$label_owner\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Label Entry List ID").": </td><td align=left><input type=text name=label_entry_list_id size=20 maxlength=60 value=\"$label_entry_list_id\">$NWB#screen_labels-default_field_labels$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+			echo "</TABLE></center>\n";
+
+			echo "<center><b>\n";
+
+
+			echo "</TABLE><BR><BR>\n";
+			echo "<B> "._QXZ("CAMPAIGNS USING THIS SCREEN LABEL").":</B><BR>\n";
+			echo "<TABLE>\n";
+
+			$stmt="SELECT campaign_id,campaign_name from vicidial_campaigns where screen_labels='$label_id' $LOGallowed_campaignsSQL;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$camps_to_print = mysqli_num_rows($rslt);
+			$o=0;
+			while ($camps_to_print > $o) 
+				{
+				$row=mysqli_fetch_row($rslt);
+				echo "<TR><TD><a href=\"$PHP_SELF?ADD=31&campaign_id=$row[0]\">$row[0] </a></TD><TD> $row[1]<BR></TD></TR>\n";
+				$o++;
+				}
+
+			echo "</TABLE><BR><BR>\n";
+
+			if ($LOGast_delete_phones > 0)
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=581111111111&label_id=$label_id&label_name=$label_name\">"._QXZ("DELETE THIS SCREEN LABEL")."</a>\n";
+				}
+			if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=LABEL&stage=$label_id\">"._QXZ("Click here to see Admin changes to this screen label")."</FONT>\n";
+				}
 			}
 		}
 	else
@@ -43556,121 +45245,124 @@ if ($ADD==382111111111)
 
 		$stmt="SELECT colors_id,colors_name,active,menu_background,frame_background,std_row1_background,std_row2_background,std_row3_background,std_row4_background,std_row5_background,alt_row1_background,alt_row2_background,alt_row3_background,user_group,web_logo,button_color from vicidial_screen_colors where colors_id='$colors_id' $LOGadmin_viewable_groupsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-		$colors_id =				$row[0];
-		$colors_name =				$row[1];
-		$active =					$row[2];
-		$menu_background =			$row[3];
-		$frame_background =			$row[4];
-		$std_row1_background =		$row[5];
-		$std_row2_background =		$row[6];
-		$std_row3_background =		$row[7];
-		$std_row4_background =		$row[8];
-		$std_row5_background =		$row[9];
-		$alt_row1_background =		$row[10];
-		$alt_row2_background =		$row[11];
-		$alt_row3_background =		$row[12];
-		$user_group =				$row[13];
-		$web_logo =					$row[14];
-		$button_color =		$row[15];
-
-		echo "<br>"._QXZ("MODIFY SCREEN COLORS").": $colors_id<form action=$PHP_SELF method=POST>\n";
-		echo "<input type=hidden name=ADD value=482111111111>\n";
-		echo "<input type=hidden name=colors_id value=\"$colors_id\">\n";
-
-		echo "<center><TABLE width=$section_width cellspacing=3>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Colors ID").": </td><td align=left colspan=2><B>$colors_id</B></td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Colors Name").": </td><td align=left colspan=2><input type=text name=colors_name size=50 maxlength=100 value=\"$colors_name\">$NWB#screen_colors-colors_name$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active").": </td><td align=left colspan=2><select size=1 name=active><option value='N'>"._QXZ("N")."</option><option value='Y'>"._QXZ("Y")."</option><option value='$active' SELECTED>"._QXZ("$active")."</option></select>$NWB#screen_colors-active$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left colspan=2><select size=1 name=user_group>\n";
-		echo "$UUgroups_list";
-		echo "<option SELECTED value=\"$user_group\">".(preg_match('/\-\-ALL\-\-/', $user_group) ? _QXZ("$user_group") : $user_group)."</option>\n";
-		echo "</select>$NWB#screen_colors-user_group$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Menu Background")." <font size=2>(<a href=\"javascript:launch_color_chooser('menu_background','color','2');\">"._QXZ("color chooser")."</a>)</font>: </td><td align=left bgcolor=\"$menu_background\" id=\"menu_background_td\" colspan=2><input type=text name=menu_background id=menu_background size=7 maxlength=6 value=\"$menu_background\"> $NWB#screen_colors-menu_background$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Frame Background")." <font size=2>(<a href=\"javascript:launch_color_chooser('frame_background','color','2');\">"._QXZ("color chooser")."</a>)</font>: </td><td align=left bgcolor=\"$frame_background\" id=\"frame_background_td\" colspan=2><input type=text name=frame_background id=frame_background size=7 maxlength=6 value=\"$frame_background\"> $NWB#screen_colors-frame_background$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Standard Row 1 Background")." <font size=2>(<a href=\"javascript:launch_color_chooser('std_row1_background','color','2');\">"._QXZ("color chooser")."</a>)</font>: </td><td align=left bgcolor=\"$std_row1_background\" id=\"std_row1_background_td\" colspan=2><input type=text name=std_row1_background id=std_row1_background size=7 maxlength=6 value=\"$std_row1_background\"> $NWB#screen_colors-std_row_background$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Standard Row 2 Background")." <font size=2>(<a href=\"javascript:launch_color_chooser('std_row2_background','color','2');\">"._QXZ("color chooser")."</a>)</font>: </td><td align=left bgcolor=\"$std_row2_background\" id=\"std_row2_background_td\" colspan=2><input type=text name=std_row2_background id=std_row2_background size=7 maxlength=6 value=\"$std_row2_background\"> $NWB#screen_colors-std_row_background$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Standard Row 3 Background")." <font size=2>(<a href=\"javascript:launch_color_chooser('std_row3_background','color','2');\">"._QXZ("color chooser")."</a>)</font>: </td><td align=left bgcolor=\"$std_row3_background\" id=\"std_row3_background_td\" colspan=2><input type=text name=std_row3_background id=std_row3_background size=7 maxlength=6 value=\"$std_row3_background\"> $NWB#screen_colors-std_row_background$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Standard Row 4 Background")." <font size=2>(<a href=\"javascript:launch_color_chooser('std_row4_background','color','2');\">"._QXZ("color chooser")."</a>)</font>: </td><td align=left bgcolor=\"$std_row4_background\" id=\"std_row4_background_td\" colspan=2><input type=text name=std_row4_background id=std_row4_background size=7 maxlength=6 value=\"$std_row4_background\"> $NWB#screen_colors-std_row_background$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Standard Row 5 Background")." <font size=2>(<a href=\"javascript:launch_color_chooser('std_row5_background','color','2');\">"._QXZ("color chooser")."</a>)</font>: </td><td align=left bgcolor=\"$std_row5_background\" id=\"std_row5_background_td\" colspan=2><input type=text name=std_row5_background id=std_row5_background size=7 maxlength=6 value=\"$std_row5_background\"> $NWB#screen_colors-std_row_background$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Alternate Row 1 Background")." <font size=2>(<a href=\"javascript:launch_color_chooser('alt_row1_background','color','2');\">"._QXZ("color chooser")."</a>)</font>: </td><td align=left bgcolor=\"$alt_row1_background\" id=\"alt_row1_background_td\" colspan=2><input type=text name=alt_row1_background id=alt_row1_background size=7 maxlength=6 value=\"$alt_row1_background\"> $NWB#screen_colors-alt_row_background$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Alternate Row 2 Background")." <font size=2>(<a href=\"javascript:launch_color_chooser('alt_row2_background','color','2');\">"._QXZ("color chooser")."</a>)</font>: </td><td align=left bgcolor=\"$alt_row2_background\" id=\"alt_row2_background_td\" colspan=2><input type=text name=alt_row2_background id=alt_row2_background size=7 maxlength=6 value=\"$alt_row2_background\"> $NWB#screen_colors-alt_row_background$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Alternate Row 3 Background")." <font size=2>(<a href=\"javascript:launch_color_chooser('alt_row3_background','color','2');\">"._QXZ("color chooser")."</a>)</font>: </td><td align=left bgcolor=\"$alt_row3_background\" id=\"alt_row3_background_td\" colspan=2><input type=text name=alt_row3_background id=alt_row3_background size=7 maxlength=6 value=\"$alt_row3_background\"> $NWB#screen_colors-alt_row_background$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background valign=top><td align=right valign=top>"._QXZ("Web Logo").": </td><td align=left valign=top><select size=1 name=web_logo>\n";
-
-		$logo_new=0;
-		$logo_old=0;
-		$logo_small_old=0;
-		if (file_exists('./images/vicidial_admin_web_logo.png')) {$logo_new++;}
-		if (file_exists('vicidial_admin_web_logo_small.gif')) {$logo_small_old++;}
-		if (file_exists('vicidial_admin_web_logo.gif')) {$logo_old++;}
-
-		if ($logo_new) {echo "<option value=\"default_new\">default_new</option>\n";}
-		if ($logo_old) {echo "<option value=\"default_old\">default_old</option>\n";}
-
-		if ($dir_handle = opendir('./images'))
+		if (mysqli_num_rows($rslt)>0)
 			{
-			while (false !== ($entry = readdir($dir_handle))) 
+			$row=mysqli_fetch_row($rslt);
+			$colors_id =				$row[0];
+			$colors_name =				$row[1];
+			$active =					$row[2];
+			$menu_background =			$row[3];
+			$frame_background =			$row[4];
+			$std_row1_background =		$row[5];
+			$std_row2_background =		$row[6];
+			$std_row3_background =		$row[7];
+			$std_row4_background =		$row[8];
+			$std_row5_background =		$row[9];
+			$alt_row1_background =		$row[10];
+			$alt_row2_background =		$row[11];
+			$alt_row3_background =		$row[12];
+			$user_group =				$row[13];
+			$web_logo =					$row[14];
+			$button_color =		$row[15];
+
+			echo "<br>"._QXZ("MODIFY SCREEN COLORS").": $colors_id<form action=$PHP_SELF method=POST>\n";
+			echo "<input type=hidden name=ADD value=482111111111>\n";
+			echo "<input type=hidden name=colors_id value=\"$colors_id\">\n";
+
+			echo "<center><TABLE width=$section_width cellspacing=3>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Colors ID").": </td><td align=left colspan=2><B>$colors_id</B></td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Colors Name").": </td><td align=left colspan=2><input type=text name=colors_name size=50 maxlength=100 value=\"$colors_name\">$NWB#screen_colors-colors_name$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Active").": </td><td align=left colspan=2><select size=1 name=active><option value='N'>"._QXZ("N")."</option><option value='Y'>"._QXZ("Y")."</option><option value='$active' SELECTED>"._QXZ("$active")."</option></select>$NWB#screen_colors-active$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left colspan=2><select size=1 name=user_group>\n";
+			echo "$UUgroups_list";
+			echo "<option SELECTED value=\"$user_group\">".(preg_match('/\-\-ALL\-\-/', $user_group) ? _QXZ("$user_group") : $user_group)."</option>\n";
+			echo "</select>$NWB#screen_colors-user_group$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Menu Background")." <font size=2>(<a href=\"javascript:launch_color_chooser('menu_background','color','2');\">"._QXZ("color chooser")."</a>)</font>: </td><td align=left bgcolor=\"$menu_background\" id=\"menu_background_td\" colspan=2><input type=text name=menu_background id=menu_background size=7 maxlength=6 value=\"$menu_background\"> $NWB#screen_colors-menu_background$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Frame Background")." <font size=2>(<a href=\"javascript:launch_color_chooser('frame_background','color','2');\">"._QXZ("color chooser")."</a>)</font>: </td><td align=left bgcolor=\"$frame_background\" id=\"frame_background_td\" colspan=2><input type=text name=frame_background id=frame_background size=7 maxlength=6 value=\"$frame_background\"> $NWB#screen_colors-frame_background$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Standard Row 1 Background")." <font size=2>(<a href=\"javascript:launch_color_chooser('std_row1_background','color','2');\">"._QXZ("color chooser")."</a>)</font>: </td><td align=left bgcolor=\"$std_row1_background\" id=\"std_row1_background_td\" colspan=2><input type=text name=std_row1_background id=std_row1_background size=7 maxlength=6 value=\"$std_row1_background\"> $NWB#screen_colors-std_row_background$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Standard Row 2 Background")." <font size=2>(<a href=\"javascript:launch_color_chooser('std_row2_background','color','2');\">"._QXZ("color chooser")."</a>)</font>: </td><td align=left bgcolor=\"$std_row2_background\" id=\"std_row2_background_td\" colspan=2><input type=text name=std_row2_background id=std_row2_background size=7 maxlength=6 value=\"$std_row2_background\"> $NWB#screen_colors-std_row_background$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Standard Row 3 Background")." <font size=2>(<a href=\"javascript:launch_color_chooser('std_row3_background','color','2');\">"._QXZ("color chooser")."</a>)</font>: </td><td align=left bgcolor=\"$std_row3_background\" id=\"std_row3_background_td\" colspan=2><input type=text name=std_row3_background id=std_row3_background size=7 maxlength=6 value=\"$std_row3_background\"> $NWB#screen_colors-std_row_background$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Standard Row 4 Background")." <font size=2>(<a href=\"javascript:launch_color_chooser('std_row4_background','color','2');\">"._QXZ("color chooser")."</a>)</font>: </td><td align=left bgcolor=\"$std_row4_background\" id=\"std_row4_background_td\" colspan=2><input type=text name=std_row4_background id=std_row4_background size=7 maxlength=6 value=\"$std_row4_background\"> $NWB#screen_colors-std_row_background$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Standard Row 5 Background")." <font size=2>(<a href=\"javascript:launch_color_chooser('std_row5_background','color','2');\">"._QXZ("color chooser")."</a>)</font>: </td><td align=left bgcolor=\"$std_row5_background\" id=\"std_row5_background_td\" colspan=2><input type=text name=std_row5_background id=std_row5_background size=7 maxlength=6 value=\"$std_row5_background\"> $NWB#screen_colors-std_row_background$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Alternate Row 1 Background")." <font size=2>(<a href=\"javascript:launch_color_chooser('alt_row1_background','color','2');\">"._QXZ("color chooser")."</a>)</font>: </td><td align=left bgcolor=\"$alt_row1_background\" id=\"alt_row1_background_td\" colspan=2><input type=text name=alt_row1_background id=alt_row1_background size=7 maxlength=6 value=\"$alt_row1_background\"> $NWB#screen_colors-alt_row_background$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Alternate Row 2 Background")." <font size=2>(<a href=\"javascript:launch_color_chooser('alt_row2_background','color','2');\">"._QXZ("color chooser")."</a>)</font>: </td><td align=left bgcolor=\"$alt_row2_background\" id=\"alt_row2_background_td\" colspan=2><input type=text name=alt_row2_background id=alt_row2_background size=7 maxlength=6 value=\"$alt_row2_background\"> $NWB#screen_colors-alt_row_background$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Alternate Row 3 Background")." <font size=2>(<a href=\"javascript:launch_color_chooser('alt_row3_background','color','2');\">"._QXZ("color chooser")."</a>)</font>: </td><td align=left bgcolor=\"$alt_row3_background\" id=\"alt_row3_background_td\" colspan=2><input type=text name=alt_row3_background id=alt_row3_background size=7 maxlength=6 value=\"$alt_row3_background\"> $NWB#screen_colors-alt_row_background$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background valign=top><td align=right valign=top>"._QXZ("Web Logo").": </td><td align=left valign=top><select size=1 name=web_logo>\n";
+
+			$logo_new=0;
+			$logo_old=0;
+			$logo_small_old=0;
+			if (file_exists('./images/vicidial_admin_web_logo.png')) {$logo_new++;}
+			if (file_exists('vicidial_admin_web_logo_small.gif')) {$logo_small_old++;}
+			if (file_exists('vicidial_admin_web_logo.gif')) {$logo_old++;}
+
+			if ($logo_new) {echo "<option value=\"default_new\">default_new</option>\n";}
+			if ($logo_old) {echo "<option value=\"default_old\">default_old</option>\n";}
+
+			if ($dir_handle = opendir('./images'))
 				{
-				if ( (preg_match("/vicidial_admin_web_logo/",$entry)) and (!preg_match("/vicidial_admin_web_logo\.png/",$entry)) and (preg_match("/\.gif$|\.jpg$|\.png$/",$entry)) )
+				while (false !== ($entry = readdir($dir_handle))) 
 					{
-					$entry = preg_replace("/vicidial_admin_web_logo/",'',$entry);
-					echo "<option value=\"$entry\">$entry</option>\n";
+					if ( (preg_match("/vicidial_admin_web_logo/",$entry)) and (!preg_match("/vicidial_admin_web_logo\.png/",$entry)) and (preg_match("/\.gif$|\.jpg$|\.png$/",$entry)) )
+						{
+						$entry = preg_replace("/vicidial_admin_web_logo/",'',$entry);
+						echo "<option value=\"$entry\">$entry</option>\n";
+						}
+					}
+				closedir($dir_handle);
+				}
+
+			if ($web_logo=='default_new')
+				{
+				$selected_logo = "./images/vicidial_admin_web_logo.png";
+				}
+			if ( ($web_logo=='default_old') and ($logo_old > 0) )
+				{
+				$selected_logo = "./vicidial_admin_web_logo.gif";
+				}
+			if ( ($web_logo!='default_new') and ($web_logo!='default_old') )
+				{
+				if (file_exists("./images/vicidial_admin_web_logo$web_logo")) 
+					{
+					$selected_logo = "./images/vicidial_admin_web_logo$web_logo";
 					}
 				}
-			closedir($dir_handle);
-			}
 
-		if ($web_logo=='default_new')
-			{
-			$selected_logo = "./images/vicidial_admin_web_logo.png";
-			}
-		if ( ($web_logo=='default_old') and ($logo_old > 0) )
-			{
-			$selected_logo = "./vicidial_admin_web_logo.gif";
-			}
-		if ( ($web_logo!='default_new') and ($web_logo!='default_old') )
-			{
-			if (file_exists("./images/vicidial_admin_web_logo$web_logo")) 
+			echo "<option SELECTED value=\"$web_logo\">$web_logo</option>\n";
+			echo "</select>$NWB#screen_colors-web_logo$NWE &nbsp; &nbsp; </td><td align=left valign=top bgcolor=#$menu_background><img src=\"$selected_logo\"></td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Button Color")." <font size=2>(<a href=\"javascript:launch_color_chooser('button_color','color','2');\">"._QXZ("color chooser")."</a>)</font>: </td><td align=left bgcolor=\"$button_color\" id=\"button_color_td\" colspan=2><input type=text name=button_color id=button_color size=7 maxlength=6 value=\"$button_color\"> $NWB#screen_colors-alt_row_background$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=3><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+			echo "</TABLE></center>\n";
+
+			echo "<center><b>\n";
+
+
+			echo "</TABLE><BR><BR>\n";
+
+			if ($LOGast_delete_phones > 0)
 				{
-				$selected_logo = "./images/vicidial_admin_web_logo$web_logo";
+				echo "<br><br><a href=\"$PHP_SELF?ADD=582111111111&colors_id=$colors_id&colors_name=$colors_name\">"._QXZ("DELETE THIS SCREEN COLORS ENTRY")."</a>\n";
 				}
-			}
-
-		echo "<option SELECTED value=\"$web_logo\">$web_logo</option>\n";
-		echo "</select>$NWB#screen_colors-web_logo$NWE &nbsp; &nbsp; </td><td align=left valign=top bgcolor=#$menu_background><img src=\"$selected_logo\"></td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Button Color")." <font size=2>(<a href=\"javascript:launch_color_chooser('button_color','color','2');\">"._QXZ("color chooser")."</a>)</font>: </td><td align=left bgcolor=\"$button_color\" id=\"button_color_td\" colspan=2><input type=text name=button_color id=button_color size=7 maxlength=6 value=\"$button_color\"> $NWB#screen_colors-alt_row_background$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=3><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
-		echo "</TABLE></center>\n";
-
-		echo "<center><b>\n";
-
-
-		echo "</TABLE><BR><BR>\n";
-
-		if ($LOGast_delete_phones > 0)
-			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=582111111111&colors_id=$colors_id&colors_name=$colors_name\">"._QXZ("DELETE THIS SCREEN COLORS ENTRY")."</a>\n";
-			}
-		if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
-			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=COLORS&stage=$colors_id\">"._QXZ("Click here to see Admin changes to this screen colors entry")."</FONT>\n";
+			if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=COLORS&stage=$colors_id\">"._QXZ("Click here to see Admin changes to this screen colors entry")."</FONT>\n";
+				}
 			}
 		}
 	else
@@ -43776,198 +45468,201 @@ if ($ADD==392111111111)
 
 		$stmt="SELECT container_notes,container_type,user_group,container_entry from vicidial_settings_containers where container_id='$container_id' $LOGadmin_viewable_groupsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-		$container_notes =			$row[0];
-		$container_type =			$row[1];
-		$user_group =				$row[2];
-		$container_entry =			$row[3];
-
-		echo "<br>"._QXZ("MODIFY SETTINGS CONTAINER").": $container_id<form action=$PHP_SELF method=POST>\n";
-		echo "<input type=hidden name=ADD value=492111111111>\n";
-		echo "<input type=hidden name=container_id value=\"$container_id\">\n";
-		echo "<input type=hidden name=stage value=\"$container_type\">\n";
-
-		echo "<center><TABLE width=$section_width cellspacing=3>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Container ID").": </td><td align=left><B>$container_id</B></td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Container Notes").": </td><td align=left><input type=text name=container_notes size=50 maxlength=255 value=\"$container_notes\">$NWB#settings_containers-container_notes$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Container Type").": </td><td align=left><select size=1 name=container_type>
-		<option value='2FA_SETTINGS'>"._QXZ("2FA_SETTINGS")."</option>
-		<option value='AGI'>"._QXZ("AGI")."</option>
-		<option value='AMD_AGENT_OPTIONS'>"._QXZ("AMD_AGENT_OPTIONS")."</option>
-		<option value='AMD_STATUS_MAP'>"._QXZ("AMD_STATUS_MAP")."</option>
-		<option value='CALL_LIMITS_OVERRIDE'>"._QXZ("CALL_LIMITS_OVERRIDE")."</option>
-		<option value='CALL_QUOTA'>"._QXZ("CALL_QUOTA")."</option>
-		<option value='CALLS_IN_QUEUE_COUNT'>"._QXZ("CALLS_IN_QUEUE_COUNT")."</option>
-		<option value='CAMPAIGN_LIST'>"._QXZ("CAMPAIGN_LIST")."</option>
-		<option value='CM_VIDPROMPT_SPECIAL'>"._QXZ("CM_VIDPROMPT_SPECIAL")."</option>
-		<option value='DEMOGRAPHIC_QUOTAS'>"._QXZ("DEMOGRAPHIC_QUOTAS")."</option>
-		<option value='DIAL_TIMEOUTS'>"._QXZ("DIAL_TIMEOUTS")."</option>
-		<option value='DID_RECENT_CALL'>"._QXZ("DID_RECENT_CALL")."</option>
-		<option value='DISPO_FILTER'>"._QXZ("DISPO_FILTER")."</option>
-		<option value='EMAIL_TEMPLATE'>"._QXZ("EMAIL_TEMPLATE")."</option>
-		<option value='INGROUP_LIST'>"._QXZ("INGROUP_LIST")."</option>
-		<option value='KHOMP_SETTINGS'>"._QXZ("KHOMP_SETTINGS")."</option>
-		<option value='LIST_WEEKDAY_RESETS'>"._QXZ("LIST_WEEKDAY_RESETS")."</option>
-		<option value='OTHER'>"._QXZ("OTHER")."</option>
-		<option value='PAUSE_CODES_LIST'>"._QXZ("PAUSE_CODES_LIST")."</option>
-		<option value='PERL_CLI'>"._QXZ("PERL_CLI")."</option>
-		<option value='PHONE_DEFAULTS'>"._QXZ("PHONE_DEFAULTS")."</option>
-		<option value='PHONE_NUMBERS'>"._QXZ("PHONE_NUMBERS")."</option>
-		<option value='QC_TEMPLATE'>"._QXZ("QC_TEMPLATE")."</option>
-		<option value='READ_ONLY'>"._QXZ("READ_ONLY")."</option>
-		<option value='SIP_EVENT_ACTIONS'>"._QXZ("SIP_EVENT_ACTIONS")."</option>
-		<option value='STATE_DESCRIPTIONS'>"._QXZ("STATE_DESCRIPTIONS")."</option>
-		<option value='TIMEZONE_LIST'>"._QXZ("TIMEZONE_LIST")."</option>
-		<option value='WEBPHONE_SETTINGS'>"._QXZ("WEBPHONE_SETTINGS")."</option>
-		<option value='WEEKDAY_TIMERANGE_SECONDS'>"._QXZ("WEEKDAY_TIMERANGE_SECONDS")."</option>
-		<option value='XFER_TALK_MIN_MESSAGE'>"._QXZ("XFER_TALK_MIN_MESSAGE")."</option>
-		<option SELECTED value='$container_type'>"._QXZ("$container_type")."</option>
-		</select>$NWB#settings_containers-container_type$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
-		echo "$UUgroups_list";
-		echo "<option SELECTED value=\"$user_group\">".(preg_match('/\-\-ALL\-\-/', $user_group) ? _QXZ("$user_group") : $user_group)."</option>\n";
-		echo "</select>$NWB#settings_containers-user_group$NWE</td></tr>\n";
-
-		if ($container_type == 'READ_ONLY')
+		if (mysqli_num_rows($rslt)>0)
 			{
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Container Entry").": </td><td align=left><PRE>$container_entry</PRE> $NWB#settings_containers-container_entry$NWE</td></tr>\n";
-			}
-		else
-			{
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Container Entry").": </td><td align=left><TEXTAREA NAME=container_entry ROWS=25 COLS=75>$container_entry</TEXTAREA> $NWB#settings_containers-container_entry$NWE</td></tr>\n";
-			}
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
-		echo "</TABLE></center>\n";
+			$row=mysqli_fetch_row($rslt);
+			$container_notes =			$row[0];
+			$container_type =			$row[1];
+			$user_group =				$row[2];
+			$container_entry =			$row[3];
 
-		echo "<center><b>\n";
+			echo "<br>"._QXZ("MODIFY SETTINGS CONTAINER").": $container_id<form action=$PHP_SELF method=POST>\n";
+			echo "<input type=hidden name=ADD value=492111111111>\n";
+			echo "<input type=hidden name=container_id value=\"$container_id\">\n";
+			echo "<input type=hidden name=stage value=\"$container_type\">\n";
 
+			echo "<center><TABLE width=$section_width cellspacing=3>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Container ID").": </td><td align=left><B>$container_id</B></td></tr>\n";
 
-		echo "</TABLE><BR><BR>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Container Notes").": </td><td align=left><input type=text name=container_notes size=50 maxlength=255 value=\"$container_notes\">$NWB#settings_containers-container_notes$NWE</td></tr>\n";
 
-		if (preg_match("/WEEKDAY_TIMERANGE_SECONDS|CALL_QUOTA|CALL_LIMITS_OVERRIDE|SIP_EVENT_ACTIONS|CALLS_IN_QUEUE_COUNT|TIMEZONE_LIST|PHONE_NUMBERS|DIAL_TIMEOUTS|INGROUP_LIST|PAUSE_CODES_LIST|DEMOGRAPHIC_QUOTAS|STATE_DESCRIPTIONS/",$container_type))
-			{
-			echo "<B>"._QXZ("CAMPAIGNS USING THIS SETTINGS CONTAINER").":</B><BR>\n";
-			echo "<TABLE>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Container Type").": </td><td align=left><select size=1 name=container_type>
+			<option value='2FA_SETTINGS'>"._QXZ("2FA_SETTINGS")."</option>
+			<option value='AGI'>"._QXZ("AGI")."</option>
+			<option value='AMD_AGENT_OPTIONS'>"._QXZ("AMD_AGENT_OPTIONS")."</option>
+			<option value='AMD_STATUS_MAP'>"._QXZ("AMD_STATUS_MAP")."</option>
+			<option value='CALL_LIMITS_OVERRIDE'>"._QXZ("CALL_LIMITS_OVERRIDE")."</option>
+			<option value='CALL_QUOTA'>"._QXZ("CALL_QUOTA")."</option>
+			<option value='CALLS_IN_QUEUE_COUNT'>"._QXZ("CALLS_IN_QUEUE_COUNT")."</option>
+			<option value='CAMPAIGN_LIST'>"._QXZ("CAMPAIGN_LIST")."</option>
+			<option value='CM_VIDPROMPT_SPECIAL'>"._QXZ("CM_VIDPROMPT_SPECIAL")."</option>
+			<option value='DEMOGRAPHIC_QUOTAS'>"._QXZ("DEMOGRAPHIC_QUOTAS")."</option>
+			<option value='DIAL_TIMEOUTS'>"._QXZ("DIAL_TIMEOUTS")."</option>
+			<option value='DID_RECENT_CALL'>"._QXZ("DID_RECENT_CALL")."</option>
+			<option value='DISPO_FILTER'>"._QXZ("DISPO_FILTER")."</option>
+			<option value='EMAIL_TEMPLATE'>"._QXZ("EMAIL_TEMPLATE")."</option>
+			<option value='INGROUP_LIST'>"._QXZ("INGROUP_LIST")."</option>
+			<option value='KHOMP_SETTINGS'>"._QXZ("KHOMP_SETTINGS")."</option>
+			<option value='LIST_WEEKDAY_RESETS'>"._QXZ("LIST_WEEKDAY_RESETS")."</option>
+			<option value='OTHER'>"._QXZ("OTHER")."</option>
+			<option value='PAUSE_CODES_LIST'>"._QXZ("PAUSE_CODES_LIST")."</option>
+			<option value='PERL_CLI'>"._QXZ("PERL_CLI")."</option>
+			<option value='PHONE_DEFAULTS'>"._QXZ("PHONE_DEFAULTS")."</option>
+			<option value='PHONE_NUMBERS'>"._QXZ("PHONE_NUMBERS")."</option>
+			<option value='QC_TEMPLATE'>"._QXZ("QC_TEMPLATE")."</option>
+			<option value='READ_ONLY'>"._QXZ("READ_ONLY")."</option>
+			<option value='SIP_EVENT_ACTIONS'>"._QXZ("SIP_EVENT_ACTIONS")."</option>
+			<option value='STATE_DESCRIPTIONS'>"._QXZ("STATE_DESCRIPTIONS")."</option>
+			<option value='TIMEZONE_LIST'>"._QXZ("TIMEZONE_LIST")."</option>
+			<option value='WEBPHONE_SETTINGS'>"._QXZ("WEBPHONE_SETTINGS")."</option>
+			<option value='WEEKDAY_TIMERANGE_SECONDS'>"._QXZ("WEEKDAY_TIMERANGE_SECONDS")."</option>
+			<option value='XFER_TALK_MIN_MESSAGE'>"._QXZ("XFER_TALK_MIN_MESSAGE")."</option>
+			<option SELECTED value='$container_type'>"._QXZ("$container_type")."</option>
+			</select>$NWB#settings_containers-container_type$NWE</td></tr>\n";
 
-			$stmt="SELECT campaign_id,campaign_name from vicidial_campaigns where ( (in_man_dial_next_ready_seconds_override='$container_id') or (pause_max_exceptions='$container_id') or (call_quota_lead_ranking='$container_id') or (call_limit_24hour_override='$container_id') or (inbound_no_agents_no_dial_container='$container_id') or (dial_timeout_lead_container='$container_id') or (three_way_record_stop_exception='$container_id') or (leave_3way_start_recording_exception='$container_id') or (scheduled_callbacks_timezones_container='$container_id') or (in_man_dial_next_ready_seconds_override='$container_id') or (sip_event_logging='$container_id') or (calls_inqueue_count_one='$container_id') or (calls_inqueue_count_two='$container_id') or (demographic_quotas_container='$container_id') or (state_descriptions='$container_id') ) $LOGallowed_campaignsSQL;";
-			$rslt=mysql_to_mysqli($stmt, $link);
-			$ig_to_print = mysqli_num_rows($rslt);
-			if ($DB > 0) {echo "$ig_to_print|$stmt<br>\n";}
-			$o=0;
-			while ($ig_to_print > $o) 
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
+			echo "$UUgroups_list";
+			echo "<option SELECTED value=\"$user_group\">".(preg_match('/\-\-ALL\-\-/', $user_group) ? _QXZ("$user_group") : $user_group)."</option>\n";
+			echo "</select>$NWB#settings_containers-user_group$NWE</td></tr>\n";
+
+			if ($container_type == 'READ_ONLY')
 				{
-				$row=mysqli_fetch_row($rslt);
-				echo "<TR><TD><a href=\"$PHP_SELF?ADD=31&campaign_id=$row[0]\">$row[0] </a></TD><TD> $row[1]<BR></TD></TR>\n";
-				$o++;
+				echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Container Entry").": </td><td align=left><PRE>$container_entry</PRE> $NWB#settings_containers-container_entry$NWE</td></tr>\n";
+				}
+			else
+				{
+				echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Container Entry").": </td><td align=left><TEXTAREA NAME=container_entry ROWS=25 COLS=75>$container_entry</TEXTAREA> $NWB#settings_containers-container_entry$NWE</td></tr>\n";
+				}
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+			echo "</TABLE></center>\n";
+
+			echo "<center><b>\n";
+
+
+			echo "</TABLE><BR><BR>\n";
+
+			if (preg_match("/WEEKDAY_TIMERANGE_SECONDS|CALL_QUOTA|CALL_LIMITS_OVERRIDE|SIP_EVENT_ACTIONS|CALLS_IN_QUEUE_COUNT|TIMEZONE_LIST|PHONE_NUMBERS|DIAL_TIMEOUTS|INGROUP_LIST|PAUSE_CODES_LIST|DEMOGRAPHIC_QUOTAS|STATE_DESCRIPTIONS/",$container_type))
+				{
+				echo "<B>"._QXZ("CAMPAIGNS USING THIS SETTINGS CONTAINER").":</B><BR>\n";
+				echo "<TABLE>\n";
+
+				$stmt="SELECT campaign_id,campaign_name from vicidial_campaigns where ( (in_man_dial_next_ready_seconds_override='$container_id') or (pause_max_exceptions='$container_id') or (call_quota_lead_ranking='$container_id') or (call_limit_24hour_override='$container_id') or (inbound_no_agents_no_dial_container='$container_id') or (dial_timeout_lead_container='$container_id') or (three_way_record_stop_exception='$container_id') or (leave_3way_start_recording_exception='$container_id') or (scheduled_callbacks_timezones_container='$container_id') or (in_man_dial_next_ready_seconds_override='$container_id') or (sip_event_logging='$container_id') or (calls_inqueue_count_one='$container_id') or (calls_inqueue_count_two='$container_id') or (demographic_quotas_container='$container_id') or (state_descriptions='$container_id') ) $LOGallowed_campaignsSQL;";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$ig_to_print = mysqli_num_rows($rslt);
+				if ($DB > 0) {echo "$ig_to_print|$stmt<br>\n";}
+				$o=0;
+				while ($ig_to_print > $o) 
+					{
+					$row=mysqli_fetch_row($rslt);
+					echo "<TR><TD><a href=\"$PHP_SELF?ADD=31&campaign_id=$row[0]\">$row[0] </a></TD><TD> $row[1]<BR></TD></TR>\n";
+					$o++;
+					}
+
+				echo "</TABLE><BR>\n";
+
+				echo "<B>"._QXZ("IN-GROUPS USING THIS SETTINGS CONTAINER").":</B><BR>\n";
+				echo "<TABLE>\n";
+
+				$stmt="SELECT group_id,group_name from vicidial_inbound_groups where ( (drop_call_seconds_override='$container_id') or (in_queue_nanque_exceptions='$container_id') or (second_alert_container='$container_id') or (third_alert_container='$container_id') or (state_descriptions='$container_id') ) $LOGadmin_viewable_groupsSQL;";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$ig_to_print = mysqli_num_rows($rslt);
+				if ($DB > 0) {echo "$ig_to_print|$stmt<br>\n";}
+				$o=0;
+				while ($ig_to_print > $o) 
+					{
+					$row=mysqli_fetch_row($rslt);
+					echo "<TR><TD><a href=\"$PHP_SELF?ADD=3111&group_id=$row[0]\">$row[0] </a></TD><TD> $row[1]<BR></TD></TR>\n";
+					$o++;
+					}
+
+				echo "</TABLE><BR>\n";
+
+				echo "<B>"._QXZ("INBOUND DIDS USING THIS SETTINGS CONTAINER").":</B><BR>\n";
+				echo "<TABLE>\n";
+
+				$stmt="SELECT did_pattern,did_description,did_id from vicidial_inbound_dids where ( (pre_filter_recent_call='$container_id') or (pre_filter_recent_call='$container_id') ) $LOGadmin_viewable_groupsSQL;";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$did_to_print = mysqli_num_rows($rslt);
+				if ($DB > 0) {echo "$did_to_print|$stmt<br>\n";}
+				$o=0;
+				while ($did_to_print > $o) 
+					{
+					$row=mysqli_fetch_row($rslt);
+					echo "<TR><TD><a href=\"$PHP_SELF?ADD=3311&did_id=$row[2]\">$row[0] </a></TD><TD> $row[1]<BR></TD></TR>\n";
+					$o++;
+					}
+
+				echo "</TABLE><BR>\n";
 				}
 
-			echo "</TABLE><BR>\n";
-
-			echo "<B>"._QXZ("IN-GROUPS USING THIS SETTINGS CONTAINER").":</B><BR>\n";
-			echo "<TABLE>\n";
-
-			$stmt="SELECT group_id,group_name from vicidial_inbound_groups where ( (drop_call_seconds_override='$container_id') or (in_queue_nanque_exceptions='$container_id') or (second_alert_container='$container_id') or (third_alert_container='$container_id') or (state_descriptions='$container_id') ) $LOGadmin_viewable_groupsSQL;";
-			$rslt=mysql_to_mysqli($stmt, $link);
-			$ig_to_print = mysqli_num_rows($rslt);
-			if ($DB > 0) {echo "$ig_to_print|$stmt<br>\n";}
-			$o=0;
-			while ($ig_to_print > $o) 
+			if (preg_match("/WEBPHONE_SETTINGS/",$container_type))
 				{
-				$row=mysqli_fetch_row($rslt);
-				echo "<TR><TD><a href=\"$PHP_SELF?ADD=3111&group_id=$row[0]\">$row[0] </a></TD><TD> $row[1]<BR></TD></TR>\n";
-				$o++;
+				echo "<B>"._QXZ("PHONES USING THIS SETTINGS CONTAINER").":</B><BR>\n";
+				echo "<TABLE>\n";
+
+				$stmt="SELECT extension,server_ip from phones where (webphone_settings='$container_id') $LOGadmin_viewable_groupsSQL order by server_ip,extension;";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$p_to_print = mysqli_num_rows($rslt);
+				if ($DB > 0) {echo "$p_to_print|$stmt<br>\n";}
+				$o=0;
+				while ($p_to_print > $o) 
+					{
+					$row=mysqli_fetch_row($rslt);
+					echo "<TR><TD><a href=\"$PHP_SELF?ADD=31111111111&extension=$row[0]&server_ip=$row[1]\"><font size=2>$row[0] - $row[1]</a></TD><TD><font size=2> $row[1]<BR></TD></TR>\n";
+					$o++;
+					}
+
+				echo "</TABLE><BR>\n";
 				}
 
-			echo "</TABLE><BR>\n";
-
-			echo "<B>"._QXZ("INBOUND DIDS USING THIS SETTINGS CONTAINER").":</B><BR>\n";
-			echo "<TABLE>\n";
-
-			$stmt="SELECT did_pattern,did_description,did_id from vicidial_inbound_dids where ( (pre_filter_recent_call='$container_id') or (pre_filter_recent_call='$container_id') ) $LOGadmin_viewable_groupsSQL;";
-			$rslt=mysql_to_mysqli($stmt, $link);
-			$did_to_print = mysqli_num_rows($rslt);
-			if ($DB > 0) {echo "$did_to_print|$stmt<br>\n";}
-			$o=0;
-			while ($did_to_print > $o) 
+			if (preg_match("/LIST_WEEKDAY_RESETS/",$container_type))
 				{
-				$row=mysqli_fetch_row($rslt);
-				echo "<TR><TD><a href=\"$PHP_SELF?ADD=3311&did_id=$row[2]\">$row[0] </a></TD><TD> $row[1]<BR></TD></TR>\n";
-				$o++;
+				echo "<B>"._QXZ("LISTS USING THIS SETTINGS CONTAINER").":</B><BR>\n";
+				echo "<TABLE>\n";
+
+				$stmt="SELECT list_id,list_name,campaign_id from vicidial_lists where (weekday_resets_container='$container_id') $LOGallowed_campaignsSQL order by list_id;";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$p_to_print = mysqli_num_rows($rslt);
+				if ($DB > 0) {echo "$p_to_print|$stmt<br>\n";}
+				$o=0;
+				while ($p_to_print > $o) 
+					{
+					$row=mysqli_fetch_row($rslt);
+					echo "<TR><TD><a href=\"$PHP_SELF?ADD=311&list_id=$row[0]\"><font size=2>$row[0] - $row[1]</a></TD><TD><font size=2> $row[0] - $row[1] - $row[2]<BR></TD></TR>\n";
+					$o++;
+					}
+
+				echo "</TABLE><BR>\n";
 				}
 
-			echo "</TABLE><BR>\n";
-			}
-
-		if (preg_match("/WEBPHONE_SETTINGS/",$container_type))
-			{
-			echo "<B>"._QXZ("PHONES USING THIS SETTINGS CONTAINER").":</B><BR>\n";
-			echo "<TABLE>\n";
-
-			$stmt="SELECT extension,server_ip from phones where (webphone_settings='$container_id') $LOGadmin_viewable_groupsSQL order by server_ip,extension;";
-			$rslt=mysql_to_mysqli($stmt, $link);
-			$p_to_print = mysqli_num_rows($rslt);
-			if ($DB > 0) {echo "$p_to_print|$stmt<br>\n";}
-			$o=0;
-			while ($p_to_print > $o) 
+			if (preg_match("/CM_VIDPROMPT_SPECIAL/",$container_type))
 				{
-				$row=mysqli_fetch_row($rslt);
-				echo "<TR><TD><a href=\"$PHP_SELF?ADD=31111111111&extension=$row[0]&server_ip=$row[1]\"><font size=2>$row[0] - $row[1]</a></TD><TD><font size=2> $row[1]<BR></TD></TR>\n";
-				$o++;
+				echo "<B>"._QXZ("CALL MENUS USING THIS SETTINGS CONTAINER").":</B><BR>\n";
+				echo "<TABLE>\n";
+
+				$stmt="SELECT distinct op.menu_id,menu_name from vicidial_call_menu_options op,vicidial_call_menu cm where option_route_value_context LIKE \"%,$container_id\" and op.menu_id=cm.menu_id $LOGadmin_viewable_groupsSQL order by menu_id;";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$p_to_print = mysqli_num_rows($rslt);
+				if ($DB > 0) {echo "$p_to_print|$stmt<br>\n";}
+				$o=0;
+				while ($p_to_print > $o) 
+					{
+					$row=mysqli_fetch_row($rslt);
+					echo "<TR><TD><a href=\"$PHP_SELF?ADD=3511&menu_id==$row[0]\"><font size=2>$row[0] - $row[1]</a></TD><TD><font size=2> $row[0] - $row[1] - $row[2]<BR></TD></TR>\n";
+					$o++;
+					}
+
+				echo "</TABLE><BR>\n";
 				}
 
-			echo "</TABLE><BR>\n";
-			}
-
-		if (preg_match("/LIST_WEEKDAY_RESETS/",$container_type))
-			{
-			echo "<B>"._QXZ("LISTS USING THIS SETTINGS CONTAINER").":</B><BR>\n";
-			echo "<TABLE>\n";
-
-			$stmt="SELECT list_id,list_name,campaign_id from vicidial_lists where (weekday_resets_container='$container_id') $LOGallowed_campaignsSQL order by list_id;";
-			$rslt=mysql_to_mysqli($stmt, $link);
-			$p_to_print = mysqli_num_rows($rslt);
-			if ($DB > 0) {echo "$p_to_print|$stmt<br>\n";}
-			$o=0;
-			while ($p_to_print > $o) 
+			if ($LOGast_delete_phones > 0)
 				{
-				$row=mysqli_fetch_row($rslt);
-				echo "<TR><TD><a href=\"$PHP_SELF?ADD=311&list_id=$row[0]\"><font size=2>$row[0] - $row[1]</a></TD><TD><font size=2> $row[0] - $row[1] - $row[2]<BR></TD></TR>\n";
-				$o++;
+				echo "<br><br><a href=\"$PHP_SELF?ADD=592111111111&container_id=$container_id&container_notes=$container_notes\">"._QXZ("DELETE THIS SETTINGS CONTAINER")."</a>\n";
 				}
-
-			echo "</TABLE><BR>\n";
-			}
-
-		if (preg_match("/CM_VIDPROMPT_SPECIAL/",$container_type))
-			{
-			echo "<B>"._QXZ("CALL MENUS USING THIS SETTINGS CONTAINER").":</B><BR>\n";
-			echo "<TABLE>\n";
-
-			$stmt="SELECT distinct op.menu_id,menu_name from vicidial_call_menu_options op,vicidial_call_menu cm where option_route_value_context LIKE \"%,$container_id\" and op.menu_id=cm.menu_id $LOGadmin_viewable_groupsSQL order by menu_id;";
-			$rslt=mysql_to_mysqli($stmt, $link);
-			$p_to_print = mysqli_num_rows($rslt);
-			if ($DB > 0) {echo "$p_to_print|$stmt<br>\n";}
-			$o=0;
-			while ($p_to_print > $o) 
+			if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
 				{
-				$row=mysqli_fetch_row($rslt);
-				echo "<TR><TD><a href=\"$PHP_SELF?ADD=3511&menu_id==$row[0]\"><font size=2>$row[0] - $row[1]</a></TD><TD><font size=2> $row[0] - $row[1] - $row[2]<BR></TD></TR>\n";
-				$o++;
+				echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=CONTAINERS&stage=$container_id\">"._QXZ("Click here to see Admin changes to this settings container")."</FONT>\n";
 				}
-
-			echo "</TABLE><BR>\n";
-			}
-
-		if ($LOGast_delete_phones > 0)
-			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=592111111111&container_id=$container_id&container_notes=$container_notes\">"._QXZ("DELETE THIS SETTINGS CONTAINER")."</a>\n";
-			}
-		if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
-			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=CONTAINERS&stage=$container_id\">"._QXZ("Click here to see Admin changes to this settings container")."</FONT>\n";
 			}
 		}
 	else
@@ -43995,190 +45690,200 @@ if ($ADD==393111111111)
 
 		$stmt="SELECT status_group_notes,user_group from vicidial_status_groups where status_group_id='$status_group_id' $LOGadmin_viewable_groupsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-		$status_group_notes =		$row[0];
-		$user_group =				$row[1];
-
-		echo "<br>"._QXZ("MODIFY STATUS GROUP").": $status_group_id<form action=$PHP_SELF method=POST>\n";
-		echo "<input type=hidden name=ADD value=493111111111>\n";
-		echo "<input type=hidden name=status_group_id value=\"$status_group_id\">\n";
-
-		echo "<center><TABLE width=$section_width cellspacing=3>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Status Group ID").": </td><td align=left><B>$status_group_id</B></td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Status Group Notes").": </td><td align=left><input type=text name=status_group_notes size=50 maxlength=255 value=\"$status_group_notes\">$NWB#status_groups$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
-		echo "$UUgroups_list";
-		echo "<option SELECTED value=\"$user_group\">".(preg_match('/\-\-ALL\-\-/', $user_group) ? _QXZ("$user_group") : $user_group)."</option>\n";
-		echo "</select>$NWB#status_groups$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
-		echo "</TABLE></center></form>\n";
-
-		echo "<center><b>\n";
-
-
-		##### get status category listings for dynamic pulldown
-		$stmt="SELECT vsc_id,vsc_name from vicidial_status_categories order by vsc_id desc;";
-		$rslt=mysql_to_mysqli($stmt, $link);
-		$cats_to_print = mysqli_num_rows($rslt);
-		$cats_list="";
-
-		$o=0;
-		while ($cats_to_print > $o)
+		if (mysqli_num_rows($rslt)>0)
 			{
-			$rowx=mysqli_fetch_row($rslt);
-			$cats_list .= "<option value=\"$rowx[0]\">$rowx[0] - " . substr($rowx[1],0,20) . "</option>\n";
-			$catsname_list["$rowx[0]"] = substr($rowx[1],0,20);
-			$o++;
-			}
+			$row=mysqli_fetch_row($rslt);
+			$status_group_notes =		$row[0];
+			$user_group =				$row[1];
 
-		echo "<TABLE width=700 cellspacing=3>\n";
-		echo "<tr height='250'><td align=center valign=bottom><font size=2><b>"._QXZ("STATUS")."</b></font></td>\n";
-		echo "<td align=center valign=bottom><font size=2><b>"._QXZ("DESCRIPTION")."</td>\n";
-		echo "<td align=center valign=bottom><font size=2><b>"._QXZ("CATEGORY")."</td>\n";
-		echo "<td align=center valign=top bgcolor=\"#ccffff\"><font size=2 class='vertical-text'><b>"._QXZ("AGENT SELECTABLE")."</B></font></td>\n";
-		echo "<td align=center valign=top bgcolor=\"#99ffcc\"><font size=2 class='vertical-text'><b>"._QXZ("HUMAN ANSWER")."</B></font></td>\n";
-		echo "<td align=center valign=top bgcolor=\"#ccffff\"><font size=2 class='vertical-text'><b>"._QXZ("SALE")."</B></font></td>\n";
-		echo "<td align=center valign=top bgcolor=\"#99ffcc\"><font size=2 class='vertical-text'><b>"._QXZ("DNC")."</B></font></td>\n";
-		echo "<td align=center valign=top bgcolor=\"#ccffff\"><font size=2 class='vertical-text'><b>"._QXZ("CUSTOMER CONTACT")."</B></font></td>\n";
-		echo "<td align=center valign=top bgcolor=\"#99ffcc\"><font size=2 class='vertical-text'><b>"._QXZ("NOT INTERESTED")."</B></font></td>\n";
-		echo "<td align=center valign=top bgcolor=\"#ccffff\"><font size=2 class='vertical-text'><b>"._QXZ("UNWORKABLE")."</B></font></td>\n";
-		echo "<td align=center valign=top bgcolor=\"#99ffcc\"><font size=2 class='vertical-text'><b>"._QXZ("SCHEDULED CALLBACK")."</B></font></td>\n";
-		echo "<td align=center valign=top bgcolor=\"#ccffff\"><font size=2 class='vertical-text'><b>"._QXZ("COMPLETED")."</B></font></td>\n";
-		echo "<td align=center valign=top bgcolor=\"#99ffcc\"><font size=2 class='vertical-text'><b>"._QXZ("ANSWERING MACHINE")."</B></font></td>\n";
-		echo "<td align=center valign=bottom><font size=1><b>"._QXZ("MIN SEC")."</td>\n";
-		echo "<td align=center valign=bottom><font size=1><b>"._QXZ("MAX SEC")."</td>\n";
-		echo "<td align=center valign=bottom><font size=2><b>"._QXZ("MODIFY/DELETE")."</td>\n";
-		echo "</tr>\n";
-
-
-		$stmt="SELECT status,status_name,selectable,human_answered,category,sale,dnc,customer_contact,not_interested,unworkable,scheduled_callback,completed,min_sec,max_sec,answering_machine from vicidial_campaign_statuses where campaign_id='$status_group_id' $LOGallowed_campaignsSQL order by status;";
-		$rslt=mysql_to_mysqli($stmt, $link);
-		$statuses_to_print = mysqli_num_rows($rslt);
-		$o=0;
-		while ($statuses_to_print > $o) 
-			{
-			$rowx=mysqli_fetch_row($rslt);
-			$AScategory = $rowx[4];
-			$o++;
-
-			if (preg_match('/1$|3$|5$|7$|9$/i', $o))
-				{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
-			else
-				{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
-
-			echo "<tr $bgcolor><td><form action=$PHP_SELF method=POST>\n";
+			echo "<br>"._QXZ("MODIFY STATUS GROUP").": $status_group_id<form action=$PHP_SELF method=POST>\n";
 			echo "<input type=hidden name=ADD value=493111111111>\n";
-			echo "<input type=hidden name=stage value=modify>\n";
-			echo "<input type=hidden name=status value=\"$rowx[0]\">\n";
 			echo "<input type=hidden name=status_group_id value=\"$status_group_id\">\n";
-			echo "<font size=2><B>$rowx[0]</B></td>\n";
-			echo "<td><input type=text name=status_name size=20 maxlength=30 value=\"$rowx[1]\"></td>\n";
-			echo "<td>\n";
-			echo "<select size=1 name=category class=\"cust_form\">\n";
+
+			echo "<center><TABLE width=$section_width cellspacing=3>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Status Group ID").": </td><td align=left><B>$status_group_id</B></td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Status Group Notes").": </td><td align=left><input type=text name=status_group_notes size=50 maxlength=255 value=\"$status_group_notes\">$NWB#status_groups$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
+			echo "$UUgroups_list";
+			echo "<option SELECTED value=\"$user_group\">".(preg_match('/\-\-ALL\-\-/', $user_group) ? _QXZ("$user_group") : $user_group)."</option>\n";
+			echo "</select>$NWB#status_groups$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+			echo "</TABLE></center></form>\n";
+
+			echo "<center><b>\n";
+
+
+			##### get status category listings for dynamic pulldown
+			$stmt="SELECT vsc_id,vsc_name from vicidial_status_categories order by vsc_id desc;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$cats_to_print = mysqli_num_rows($rslt);
+			$cats_list="";
+
+			$o=0;
+			while ($cats_to_print > $o)
+				{
+				$rowx=mysqli_fetch_row($rslt);
+				$cats_list .= "<option value=\"$rowx[0]\">$rowx[0] - " . substr($rowx[1],0,20) . "</option>\n";
+				$catsname_list["$rowx[0]"] = substr($rowx[1],0,20);
+				$o++;
+				}
+
+			echo "<TABLE width=700 cellspacing=3>\n";
+			echo "<tr height='250'><td align=center valign=bottom><font size=2><b>"._QXZ("STATUS")."</b></font></td>\n";
+			echo "<td align=center valign=bottom><font size=2><b>"._QXZ("DESCRIPTION")."</td>\n";
+			echo "<td align=center valign=bottom><font size=2><b>"._QXZ("CATEGORY")."</td>\n";
+			echo "<td align=center valign=top bgcolor=\"#ccffff\"><font size=2 class='vertical-text'><b>"._QXZ("AGENT SELECTABLE")."</B></font></td>\n";
+			echo "<td align=center valign=top bgcolor=\"#99ffcc\"><font size=2 class='vertical-text'><b>"._QXZ("HUMAN ANSWER")."</B></font></td>\n";
+			echo "<td align=center valign=top bgcolor=\"#ccffff\"><font size=2 class='vertical-text'><b>"._QXZ("SALE")."</B></font></td>\n";
+			echo "<td align=center valign=top bgcolor=\"#99ffcc\"><font size=2 class='vertical-text'><b>"._QXZ("DNC")."</B></font></td>\n";
+			echo "<td align=center valign=top bgcolor=\"#ccffff\"><font size=2 class='vertical-text'><b>"._QXZ("CUSTOMER CONTACT")."</B></font></td>\n";
+			echo "<td align=center valign=top bgcolor=\"#99ffcc\"><font size=2 class='vertical-text'><b>"._QXZ("NOT INTERESTED")."</B></font></td>\n";
+			echo "<td align=center valign=top bgcolor=\"#ccffff\"><font size=2 class='vertical-text'><b>"._QXZ("UNWORKABLE")."</B></font></td>\n";
+			echo "<td align=center valign=top bgcolor=\"#99ffcc\"><font size=2 class='vertical-text'><b>"._QXZ("SCHEDULED CALLBACK")."</B></font></td>\n";
+			echo "<td align=center valign=top bgcolor=\"#ccffff\"><font size=2 class='vertical-text'><b>"._QXZ("COMPLETED")."</B></font></td>\n";
+			echo "<td align=center valign=top bgcolor=\"#99ffcc\"><font size=2 class='vertical-text'><b>"._QXZ("ANSWERING MACHINE")."</B></font></td>\n";
+			echo "<td align=center valign=bottom><font size=1><b>"._QXZ("MIN SEC")."</font></td>\n";
+			echo "<td align=center valign=bottom><font size=1><b>"._QXZ("MAX SEC")."</font></td>\n";
+			echo "<td align=center valign=bottom><font size=2><b>"._QXZ("MODIFY/DELETE")."</font></td>\n";
+			echo "</tr>\n";
+
+
+			$stmt="SELECT status,status_name,selectable,human_answered,category,sale,dnc,customer_contact,not_interested,unworkable,scheduled_callback,completed,min_sec,max_sec,answering_machine from vicidial_campaign_statuses where campaign_id='$status_group_id' $LOGallowed_campaignsSQL order by status;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$statuses_to_print = mysqli_num_rows($rslt);
+			$o=0;
+			while ($statuses_to_print > $o) 
+				{
+				$rowx=mysqli_fetch_row($rslt);
+				$AScategory = $rowx[4];
+				$o++;
+
+				if (preg_match('/1$|3$|5$|7$|9$/i', $o))
+					{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';} 
+				else
+					{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';}
+
+				echo "<tr $bgcolor><td><form action=$PHP_SELF method=POST>\n";
+				echo "<input type=hidden name=ADD value=493111111111>\n";
+				echo "<input type=hidden name=stage value=modify>\n";
+				echo "<input type=hidden name=status value=\"$rowx[0]\">\n";
+				echo "<input type=hidden name=status_group_id value=\"$status_group_id\">\n";
+				echo "<B>$rowx[0]</B></td>\n";
+				echo "<td><input type=text name=status_name size=20 maxlength=30 value=\"$rowx[1]\"></td>\n";
+				echo "<td>\n";
+				echo "<select size=1 name=category class=\"cust_form\">\n";
+				echo "$cats_list";
+				echo "<option selected value=\"$AScategory\">$AScategory".(isset($catsname_list[$AScategory]) ? " - $catsname_list[$AScategory]" : "")."</option>\n";
+				echo "</select>\n";
+				echo "\n";
+				echo "</td><td bgcolor=\"#ccffff\"><select size=1 name=selectable class=\"cust_form\"><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$rowx[2]'>"._QXZ("$rowx[2]")."</option></select>\n";
+				echo "</td><td bgcolor=\"#99ffcc\"><select size=1 name=human_answered class=\"cust_form\"><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$rowx[3]'>"._QXZ("$rowx[3]")."</option></select>\n";
+				echo "</td><td bgcolor=\"#ccffff\"><select size=1 name=sale class=\"cust_form\"><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$rowx[5]'>"._QXZ("$rowx[5]")."</option></select>\n";
+				echo "</td><td bgcolor=\"#99ffcc\"><select size=1 name=dnc class=\"cust_form\"><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$rowx[6]'>"._QXZ("$rowx[6]")."</option></select>\n";
+				echo "</td><td bgcolor=\"#ccffff\"><select size=1 name=customer_contact class=\"cust_form\"><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$rowx[7]'>"._QXZ("$rowx[7]")."</option></select>\n";
+				echo "</td><td bgcolor=\"#99ffcc\"><select size=1 name=not_interested class=\"cust_form\"><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$rowx[8]'>"._QXZ("$rowx[8]")."</option></select>\n";
+				echo "</td><td bgcolor=\"#ccffff\"><select size=1 name=unworkable class=\"cust_form\"><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$rowx[9]'>"._QXZ("$rowx[9]")."</option></select>\n";
+				echo "</td><td bgcolor=\"#99ffcc\"><select size=1 name=scheduled_callbacks class=\"cust_form\"><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$rowx[10]'>"._QXZ("$rowx[10]")."</option></select>\n";
+				echo "</td><td bgcolor=\"#ccffff\"><select size=1 name=completed class=\"cust_form\"><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$rowx[11]'>"._QXZ("$rowx[11]")."</option></select>\n";
+				echo "</td><td bgcolor=\"#99ffcc\"><select size=1 name=answering_machine class=\"cust_form\"><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$rowx[14]'>"._QXZ("$rowx[14]")."</option></select>\n";
+				echo "</td>\n";
+				echo "<td><input type=text name=min_sec size=3 maxlength=5 value=\"$rowx[12]\" class=\"cust_form\"></td>\n";
+				echo "<td><input type=text name=max_sec size=3 maxlength=5 value=\"$rowx[13]\" class=\"cust_form\"></td>\n";
+				echo "</td><td align=center nowrap><font size=1><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("MODIFY")."'> &nbsp; &nbsp; &nbsp; &nbsp; \n";
+				echo " &nbsp; \n";
+				
+				if (preg_match("/^B$|^NA$|^DNC$|^NA$|^DROP$|^INCALL$|^QUEUE$|^NEW$/i",$rowx[0]))
+					{
+					echo "<DEL>"._QXZ("DELETE")."</DEL>\n";
+					}
+				else
+					{
+					echo "<a href=\"$PHP_SELF?ADD=493111111111&status_group_id=$status_group_id&status=$rowx[0]&stage=delete\">"._QXZ("DELETE")."</a>\n";
+					}
+				echo "</form></font></td></tr>\n";
+				}
+
+			echo "</table>\n";
+
+
+			echo "<br>"._QXZ("ADD NEW CUSTOM CAMPAIGN STATUS")."<BR><form action=$PHP_SELF method=POST>\n";
+			echo "<input type=hidden name=ADD value=493111111111>\n";
+			echo "<input type=hidden name=stage value=add>\n";
+			echo "<input type=hidden name=status_group_id value=\"$status_group_id\">\n";
+			echo _QXZ("Status").": <input type=text name=status_id size=8 maxlength=6> &nbsp; \n";
+			echo _QXZ("Description").": <input type=text name=status_name size=20 maxlength=30> &nbsp; \n";
+			echo _QXZ("Selectable").": <select size=1 name=selectable><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option></select> &nbsp; \n";
+			echo _QXZ("Human Answer").": <select size=1 name=human_answered><option value='Y'>"._QXZ("Y")."</option><option value='N' SELECTED>"._QXZ("N")."</option></select> &nbsp; <BR>\n";
+			echo _QXZ("Sale").": <select size=1 name=sale><option value='Y'>"._QXZ("Y")."</option><option value='N' SELECTED>"._QXZ("N")."</option></select> &nbsp; \n";
+			echo _QXZ("DNC").": <select size=1 name=dnc><option value='Y'>"._QXZ("Y")."</option><option value='N' SELECTED>"._QXZ("N")."</option></select> &nbsp; \n";
+			echo _QXZ("Customer Contact").": <select size=1 name=customer_contact><option value='Y'>"._QXZ("Y")."</option><option value='N' SELECTED>"._QXZ("N")."</option></select> &nbsp; \n";
+			echo _QXZ("Not Interested").": <select size=1 name=not_interested><option value='Y'>"._QXZ("Y")."</option><option value='N' SELECTED>"._QXZ("N")."</option></select> &nbsp;  <BR>\n";
+			echo _QXZ("Unworkable").": <select size=1 name=unworkable><option value='Y'>"._QXZ("Y")."</option><option value='N' SELECTED>"._QXZ("N")."</option></select> &nbsp; \n";
+			echo _QXZ("Callback").": <select size=1 name=scheduled_callbacks><option value='Y'>"._QXZ("Y")."</option><option value='N' SELECTED>"._QXZ("N")."</option></select> &nbsp; \n";
+			echo _QXZ("Completed").": <select size=1 name=completed><option value='Y'>"._QXZ("Y")."</option><option value='N' SELECTED>"._QXZ("N")."</option></select> &nbsp; \n";
+			echo _QXZ("Answering Machine").": <select size=1 name=answering_machine><option value='Y'>"._QXZ("Y")."</option><option value='N' SELECTED>"._QXZ("N")."</option></select> &nbsp; \n";
+			echo _QXZ("Category").": \n";
+			echo "<select size=1 name=category>\n";
 			echo "$cats_list";
-			echo "<option selected value=\"$AScategory\">$AScategory - $catsname_list[$AScategory]</option>\n";
-			echo "</select>\n";
-			echo "\n";
-			echo "</td><td bgcolor=\"#ccffff\"><select size=1 name=selectable class=\"cust_form\"><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$rowx[2]'>"._QXZ("$rowx[2]")."</option></select>\n";
-			echo "</td><td bgcolor=\"#99ffcc\"><select size=1 name=human_answered class=\"cust_form\"><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$rowx[3]'>"._QXZ("$rowx[3]")."</option></select>\n";
-			echo "</td><td bgcolor=\"#ccffff\"><select size=1 name=sale class=\"cust_form\"><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$rowx[5]'>"._QXZ("$rowx[5]")."</option></select>\n";
-			echo "</td><td bgcolor=\"#99ffcc\"><select size=1 name=dnc class=\"cust_form\"><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$rowx[6]'>"._QXZ("$rowx[6]")."</option></select>\n";
-			echo "</td><td bgcolor=\"#ccffff\"><select size=1 name=customer_contact class=\"cust_form\"><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$rowx[7]'>"._QXZ("$rowx[7]")."</option></select>\n";
-			echo "</td><td bgcolor=\"#99ffcc\"><select size=1 name=not_interested class=\"cust_form\"><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$rowx[8]'>"._QXZ("$rowx[8]")."</option></select>\n";
-			echo "</td><td bgcolor=\"#ccffff\"><select size=1 name=unworkable class=\"cust_form\"><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$rowx[9]'>"._QXZ("$rowx[9]")."</option></select>\n";
-			echo "</td><td bgcolor=\"#99ffcc\"><select size=1 name=scheduled_callbacks class=\"cust_form\"><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$rowx[10]'>"._QXZ("$rowx[10]")."</option></select>\n";
-			echo "</td><td bgcolor=\"#ccffff\"><select size=1 name=completed class=\"cust_form\"><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$rowx[11]'>"._QXZ("$rowx[11]")."</option></select>\n";
-			echo "</td><td bgcolor=\"#99ffcc\"><select size=1 name=answering_machine class=\"cust_form\"><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option selected value='$rowx[14]'>"._QXZ("$rowx[14]")."</option></select>\n";
-			echo "</td>\n";
-			echo "<td><input type=text name=min_sec size=3 maxlength=5 value=\"$rowx[12]\" class=\"cust_form\"></td>\n";
-			echo "<td><input type=text name=max_sec size=3 maxlength=5 value=\"$rowx[13]\" class=\"cust_form\"></td>\n";
-			echo "</td><td align=center nowrap><font size=1><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("MODIFY")."'> &nbsp; &nbsp; &nbsp; &nbsp; \n";
-			echo " &nbsp; \n";
-			
-			if (preg_match("/^B$|^NA$|^DNC$|^NA$|^DROP$|^INCALL$|^QUEUE$|^NEW$/i",$rowx[0]))
+			if (isset($AScategory))
 				{
-				echo "<DEL>"._QXZ("DELETE")."</DEL>\n";
+				echo "<option selected value=\"$AScategory\">$AScategory".(isset($catsname_list[$AScategory]) ? " - $catsname_list[$AScategory]" : "")."</option>\n";
 				}
-			else
+			echo "</select> &nbsp; <BR>\n";
+			echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
+
+			echo "</FORM><br>\n";
+
+
+			echo "</TABLE><BR><BR>\n";
+
+			echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
+			echo "<B>"._QXZ("IN-GROUPS USING THIS STATUS GROUP").":</B><BR>\n";
+			echo "<TABLE>\n";
+
+			$stmt="SELECT group_id,group_name from vicidial_inbound_groups where status_group_id='$status_group_id' $LOGadmin_viewable_groupsSQL;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$ig_to_print = mysqli_num_rows($rslt);
+			$o=0;
+			while ($ig_to_print > $o) 
 				{
-				echo "<a href=\"$PHP_SELF?ADD=493111111111&status_group_id=$status_group_id&status=$rowx[0]&stage=delete\">"._QXZ("DELETE")."</a>\n";
+				$row=mysqli_fetch_row($rslt);
+				echo "<TR><TD><a href=\"$PHP_SELF?ADD=3111&group_id=$row[0]\">$row[0] </a></TD><TD> $row[1]<BR></TD></TR>\n";
+				$o++;
 				}
-			echo "</form></td></tr>\n";
-			}
 
-		echo "</table>\n";
+			echo "</TABLE><BR>\n";
 
+			echo "<B>"._QXZ("LISTS USING THIS STATUS GROUP").":</B><BR>\n";
+			echo "<TABLE>\n";
 
-		echo "<br>"._QXZ("ADD NEW CUSTOM CAMPAIGN STATUS")."<BR><form action=$PHP_SELF method=POST>\n";
-		echo "<input type=hidden name=ADD value=493111111111>\n";
-		echo "<input type=hidden name=stage value=add>\n";
-		echo "<input type=hidden name=status_group_id value=\"$status_group_id\">\n";
-		echo _QXZ("Status").": <input type=text name=status_id size=8 maxlength=6> &nbsp; \n";
-		echo _QXZ("Description").": <input type=text name=status_name size=20 maxlength=30> &nbsp; \n";
-		echo _QXZ("Selectable").": <select size=1 name=selectable><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option></select> &nbsp; \n";
-		echo _QXZ("Human Answer").": <select size=1 name=human_answered><option value='Y'>"._QXZ("Y")."</option><option value='N' SELECTED>"._QXZ("N")."</option></select> &nbsp; <BR>\n";
-		echo _QXZ("Sale").": <select size=1 name=sale><option value='Y'>"._QXZ("Y")."</option><option value='N' SELECTED>"._QXZ("N")."</option></select> &nbsp; \n";
-		echo _QXZ("DNC").": <select size=1 name=dnc><option value='Y'>"._QXZ("Y")."</option><option value='N' SELECTED>"._QXZ("N")."</option></select> &nbsp; \n";
-		echo _QXZ("Customer Contact").": <select size=1 name=customer_contact><option value='Y'>"._QXZ("Y")."</option><option value='N' SELECTED>"._QXZ("N")."</option></select> &nbsp; \n";
-		echo _QXZ("Not Interested").": <select size=1 name=not_interested><option value='Y'>"._QXZ("Y")."</option><option value='N' SELECTED>"._QXZ("N")."</option></select> &nbsp;  <BR>\n";
-		echo _QXZ("Unworkable").": <select size=1 name=unworkable><option value='Y'>"._QXZ("Y")."</option><option value='N' SELECTED>"._QXZ("N")."</option></select> &nbsp; \n";
-		echo _QXZ("Callback").": <select size=1 name=scheduled_callbacks><option value='Y'>"._QXZ("Y")."</option><option value='N' SELECTED>"._QXZ("N")."</option></select> &nbsp; \n";
-		echo _QXZ("Completed").": <select size=1 name=completed><option value='Y'>"._QXZ("Y")."</option><option value='N' SELECTED>"._QXZ("N")."</option></select> &nbsp; \n";
-		echo _QXZ("Answering Machine").": <select size=1 name=answering_machine><option value='Y'>"._QXZ("Y")."</option><option value='N' SELECTED>"._QXZ("N")."</option></select> &nbsp; \n";
-		echo _QXZ("Category").": \n";
-		echo "<select size=1 name=category>\n";
-		echo "$cats_list";
-		echo "<option selected value=\"$AScategory\">$AScategory - $catsname_list[$AScategory]</option>\n";
-		echo "</select> &nbsp; <BR>\n";
-		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
+			$stmt="SELECT list_id,list_name from vicidial_lists where status_group_id='$status_group_id' $LOGallowed_campaignsSQL;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$list_to_print = mysqli_num_rows($rslt);
+			$o=0;
+			while ($list_to_print > $o) 
+				{
+				$row=mysqli_fetch_row($rslt);
+				echo "<TR><TD><a href=\"$PHP_SELF?ADD=311&list_id=$row[0]\">$row[0] </a></TD><TD> $row[1]<BR></TD></TR>\n";
+				$o++;
+				}
 
-		echo "</FORM><br>\n";
+			echo "</TABLE><BR>\n";
+			echo "</FONT>\n";
 
-
-		echo "</TABLE><BR><BR>\n";
-
-		echo "<B>"._QXZ("IN-GROUPS USING THIS STATUS GROUP").":</B><BR>\n";
-		echo "<TABLE>\n";
-
-		$stmt="SELECT group_id,group_name from vicidial_inbound_groups where status_group_id='$status_group_id' $LOGadmin_viewable_groupsSQL;";
-		$rslt=mysql_to_mysqli($stmt, $link);
-		$ig_to_print = mysqli_num_rows($rslt);
-		$o=0;
-		while ($ig_to_print > $o) 
-			{
-			$row=mysqli_fetch_row($rslt);
-			echo "<TR><TD><a href=\"$PHP_SELF?ADD=3111&group_id=$row[0]\">$row[0] </a></TD><TD> $row[1]<BR></TD></TR>\n";
-			$o++;
-			}
-
-		echo "</TABLE><BR>\n";
-
-		echo "<B>"._QXZ("LISTS USING THIS STATUS GROUP").":</B><BR>\n";
-		echo "<TABLE>\n";
-
-		$stmt="SELECT list_id,list_name from vicidial_lists where status_group_id='$status_group_id' $LOGallowed_campaignsSQL;";
-		$rslt=mysql_to_mysqli($stmt, $link);
-		$list_to_print = mysqli_num_rows($rslt);
-		$o=0;
-		while ($list_to_print > $o) 
-			{
-			$row=mysqli_fetch_row($rslt);
-			echo "<TR><TD><a href=\"$PHP_SELF?ADD=311&list_id=$row[0]\">$row[0] </a></TD><TD> $row[1]<BR></TD></TR>\n";
-			$o++;
-			}
-
-		echo "</TABLE><BR>\n";
-
-		if ($LOGast_delete_phones > 0)
-			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=593111111111&status_group_id=$status_group_id&status_group_notes=$status_group_notes\">"._QXZ("DELETE THIS STATUS GROUP")."</a>\n";
-			}
-		if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
-			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=STATUSGROUPS&stage=$status_group_id\">"._QXZ("Click here to see Admin changes to this status group")."</FONT>\n";
+			echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
+			if ($LOGast_delete_phones > 0)
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=593111111111&status_group_id=$status_group_id&status_group_notes=$status_group_notes\">"._QXZ("DELETE THIS STATUS GROUP")."</a>\n";
+				}
+			if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=STATUSGROUPS&stage=$status_group_id\">"._QXZ("Click here to see Admin changes to this status group")."</FONT>\n";
+				}
+			echo "</FONT>\n";
 			}
 		}
 	else
@@ -44577,197 +46282,201 @@ if ($ADD==396111111111)
 
 		$stmt="SELECT cid_group_notes,cid_group_type,user_group,cid_auto_rotate_minutes,cid_auto_rotate_minimum,cid_auto_rotate_calls,cid_last_auto_rotate,cid_auto_rotate_cid from vicidial_cid_groups where cid_group_id='$cid_group_id' $LOGadmin_viewable_groupsSQL;";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-		$cid_group_notes =			$row[0];
-		$cid_group_type =			$row[1];
-		$user_group =				$row[2];
-		$cid_auto_rotate_minutes =	$row[3];
-		$cid_auto_rotate_minimum =	$row[4];
-		$cid_auto_rotate_calls =	$row[5];
-		$cid_last_auto_rotate =		$row[6];
-		$cid_auto_rotate_cid =		$row[7];
-
-		echo "<br>"._QXZ("MODIFY CID GROUP").": $cid_group_id<form action=$PHP_SELF method=POST>\n";
-		echo "<input type=hidden name=ADD value=496111111111>\n";
-		echo "<input type=hidden name=cid_group_id value=\"$cid_group_id\">\n";
-
-		echo "<center><TABLE width=$section_width cellspacing=3>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("CID Group ID").": </td><td align=left><B>$cid_group_id</B></td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("CID Group Notes").": </td><td align=left><input type=text name=cid_group_notes size=50 maxlength=255 value=\"$cid_group_notes\">$NWB#cid_groups$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("CID Group Type").": </td><td align=left><B>"._QXZ("$cid_group_type")."</B>$NWB#cid_groups$NWE</td></tr>\n";
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
-		echo "$UUgroups_list";
-		echo "<option SELECTED value=\"$user_group\">".(preg_match('/\-\-ALL\-\-/', $user_group) ? _QXZ("$user_group") : $user_group)."</option>\n";
-		echo "</select>$NWB#cid_groups$NWE</td></tr>\n";
-
-		if ($cid_group_type == 'NONE')
+		if (mysqli_num_rows($rslt)>0)
 			{
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("CID Auto Rotate Minutes").": </td><td align=left><input type=text name=cid_auto_rotate_minutes size=8 maxlength=7 value=\"$cid_auto_rotate_minutes\">$NWB#cid_groups-cid_auto_rotate_minutes$NWE</td></tr>\n";
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("CID Auto Rotate Minimum").": </td><td align=left><input type=text name=cid_auto_rotate_minimum size=8 maxlength=7 value=\"$cid_auto_rotate_minimum\">$NWB#cid_groups-cid_auto_rotate_minimum$NWE</td></tr>\n";
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("CID Auto Rotate Calls, CID and Time").": </td><td align=left><B>$cid_auto_rotate_calls - $cid_auto_rotate_cid - $cid_last_auto_rotate </B>$NWB#cid_groups-cid_auto_rotate_calls$NWE\n";
-			if (strlen($cid_auto_rotate_cid) > 5)
+			$row=mysqli_fetch_row($rslt);
+			$cid_group_notes =			$row[0];
+			$cid_group_type =			$row[1];
+			$user_group =				$row[2];
+			$cid_auto_rotate_minutes =	$row[3];
+			$cid_auto_rotate_minimum =	$row[4];
+			$cid_auto_rotate_calls =	$row[5];
+			$cid_last_auto_rotate =		$row[6];
+			$cid_auto_rotate_cid =		$row[7];
+
+			echo "<br>"._QXZ("MODIFY CID GROUP").": $cid_group_id<form action=$PHP_SELF method=POST>\n";
+			echo "<input type=hidden name=ADD value=496111111111>\n";
+			echo "<input type=hidden name=cid_group_id value=\"$cid_group_id\">\n";
+
+			echo "<center><TABLE width=$section_width cellspacing=3>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("CID Group ID").": </td><td align=left><B>$cid_group_id</B></td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("CID Group Notes").": </td><td align=left><input type=text name=cid_group_notes size=50 maxlength=255 value=\"$cid_group_notes\">$NWB#cid_groups$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("CID Group Type").": </td><td align=left><B>"._QXZ("$cid_group_type")."</B>$NWB#cid_groups$NWE</td></tr>\n";
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Admin User Group").": </td><td align=left><select size=1 name=user_group>\n";
+			echo "$UUgroups_list";
+			echo "<option SELECTED value=\"$user_group\">".(preg_match('/\-\-ALL\-\-/', $user_group) ? _QXZ("$user_group") : $user_group)."</option>\n";
+			echo "</select>$NWB#cid_groups$NWE</td></tr>\n";
+
+			if ($cid_group_type == 'NONE')
 				{
-				echo "<font size=1> <BR> &nbsp; <a href=\"$PHP_SELF?ADD=496111111111&stage=SKIP&cid_group_id=$cid_group_id&outbound_cid=$cid_auto_rotate_cid\">"._QXZ("Skip and NOROTATE current CID")."</a></font>\n";
+				echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("CID Auto Rotate Minutes").": </td><td align=left><input type=text name=cid_auto_rotate_minutes size=8 maxlength=7 value=\"$cid_auto_rotate_minutes\">$NWB#cid_groups-cid_auto_rotate_minutes$NWE</td></tr>\n";
+				echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("CID Auto Rotate Minimum").": </td><td align=left><input type=text name=cid_auto_rotate_minimum size=8 maxlength=7 value=\"$cid_auto_rotate_minimum\">$NWB#cid_groups-cid_auto_rotate_minimum$NWE</td></tr>\n";
+				echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("CID Auto Rotate Calls, CID and Time").": </td><td align=left><B>$cid_auto_rotate_calls - $cid_auto_rotate_cid - $cid_last_auto_rotate </B>$NWB#cid_groups-cid_auto_rotate_calls$NWE\n";
+				if (strlen($cid_auto_rotate_cid) > 5)
+					{
+					echo "<font size=1> <BR> &nbsp; <a href=\"$PHP_SELF?ADD=496111111111&stage=SKIP&cid_group_id=$cid_group_id&outbound_cid=$cid_auto_rotate_cid\">"._QXZ("Skip and NOROTATE current CID")."</a></font>\n";
+					}
+				echo "</td></tr>\n";
 				}
-			echo "</td></tr>\n";
-			}
-		else
-			{
-			echo "<tr bgcolor=#$SSstd_row4_background><td align=right><input type=hidden name=cid_auto_rotate_minutes value=\"$cid_auto_rotate_minutes\">\n";
-			echo "<input type=hidden name=cid_auto_rotate_minimum value=\"$cid_auto_rotate_minimum\"></td></tr>\n";
-			}
-
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
-		echo "</TABLE></center></form>\n";
-
-		echo "<center><b>\n";
-
-		$checkbox_list='';
-		$checkbox_count=0;
-		echo "<br><br><b>"._QXZ("CIDS FOR THIS CID GROUP").": &nbsp; $NWB#cid_groups$NWE</b><br>\n";
-		echo "<form action=$PHP_SELF method=POST>\n";
-		echo "<input type=hidden name=ADD value=496111111111>\n";
-		echo "<input type=hidden name=stage value=MODIFY>\n";
-		echo "<input type=hidden name=DB value=\"$DB\">\n";
-		echo "<input type=hidden name=cid_group_id value=\"$cid_group_id\">\n";
-		echo "<center><TABLE width=700 cellspacing=2>\n";
-
-		$stmt="SELECT areacode,outbound_cid,active,cid_description,call_count_today from vicidial_campaign_cid_areacodes where campaign_id='$cid_group_id' order by areacode,outbound_cid;";
-		$rslt=mysql_to_mysqli($stmt, $link);
-		$accids_to_print = mysqli_num_rows($rslt);
-		$o=0;
-		while ($accids_to_print > $o) 
-			{
-			$rowx=mysqli_fetch_row($rslt);
-			$Xareacode[$o] =			$rowx[0];
-			$Xoutbound_cid[$o] =		$rowx[1];
-			$Xactive[$o] =				$rowx[2];
-			$Xcid_description[$o] =		$rowx[3];
-			$Xcall_count_today[$o] =	$rowx[4];
-			$checkbox_list .= "|active_$Xareacode[$o]_$Xoutbound_cid[$o]";
-			$o++;
-			$checkbox_count++;
-			}
-
-		echo "<tr><td>#</td><td>"._QXZ("$cid_group_type")."</td><td>"._QXZ("CID NUMBER")."</td><td>"._QXZ("DESCRIPTION")."</td><td>"._QXZ("ACTIVE")."<br><span id=ACCID_link><a href=\"#\" onclick=\"FORM_selectall('$checkbox_count','$checkbox_list','on','ACCID_link');return false;\"><font size=1>"._QXZ("select all")."</font></a></span></td><td>"._QXZ("CALLS")."</td><td>"._QXZ("DELETE")."</td></tr>\n";
-
-		$o=0;
-		while ($accids_to_print > $o) 
-			{
-			$ct = ($o + 1);
-			if ($ct == '1')
-				{
-				$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';
-				$bgac = $Xareacode[$o];
-				} 
 			else
 				{
-				if ($Xareacode[$o] != $bgac)
+				echo "<tr bgcolor=#$SSstd_row4_background><td align=right><input type=hidden name=cid_auto_rotate_minutes value=\"$cid_auto_rotate_minutes\">\n";
+				echo "<input type=hidden name=cid_auto_rotate_minimum value=\"$cid_auto_rotate_minimum\"></td></tr>\n";
+				}
+
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+			echo "</TABLE></center></form>\n";
+
+			echo "<center><b>\n";
+
+			$checkbox_list='';
+			$checkbox_count=0;
+			echo "<br><br><b>"._QXZ("CIDS FOR THIS CID GROUP").": &nbsp; $NWB#cid_groups$NWE</b><br>\n";
+			echo "<form action=$PHP_SELF method=POST>\n";
+			echo "<input type=hidden name=ADD value=496111111111>\n";
+			echo "<input type=hidden name=stage value=MODIFY>\n";
+			echo "<input type=hidden name=DB value=\"$DB\">\n";
+			echo "<input type=hidden name=cid_group_id value=\"$cid_group_id\">\n";
+			echo "<center><TABLE width=700 cellspacing=2>\n";
+
+			$stmt="SELECT areacode,outbound_cid,active,cid_description,call_count_today from vicidial_campaign_cid_areacodes where campaign_id='$cid_group_id' order by areacode,outbound_cid;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$accids_to_print = mysqli_num_rows($rslt);
+			$o=0;
+			while ($accids_to_print > $o) 
+				{
+				$rowx=mysqli_fetch_row($rslt);
+				$Xareacode[$o] =			$rowx[0];
+				$Xoutbound_cid[$o] =		$rowx[1];
+				$Xactive[$o] =				$rowx[2];
+				$Xcid_description[$o] =		$rowx[3];
+				$Xcall_count_today[$o] =	$rowx[4];
+				$checkbox_list .= "|active_$Xareacode[$o]_$Xoutbound_cid[$o]";
+				$o++;
+				$checkbox_count++;
+				}
+
+			echo "<tr><td>#</td><td>"._QXZ("$cid_group_type")."</td><td>"._QXZ("CID NUMBER")."</td><td>"._QXZ("DESCRIPTION")."</td><td>"._QXZ("ACTIVE")."<br><span id=ACCID_link><a href=\"#\" onclick=\"FORM_selectall('$checkbox_count','$checkbox_list','on','ACCID_link');return false;\"><font size=1>"._QXZ("select all")."</font></a></span></td><td>"._QXZ("CALLS")."</td><td>"._QXZ("DELETE")."</td></tr>\n";
+
+			$o=0;
+			while ($accids_to_print > $o) 
+				{
+				$ct = ($o + 1);
+				if ($ct == '1')
 					{
-					if (preg_match("/1$|3$|5$|7$|9$/i", $bgct))
-						{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';} 
-					else
-						{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';}
-					$bgct++;
+					$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';
 					$bgac = $Xareacode[$o];
-					}
-				}
-
-			$DID_edit_link_BEGIN='';
-			$DID_edit_link_END='';
-			if (strlen($Xoutbound_cid[$o]) > 0)
-				{
-				$stmt="SELECT did_id from vicidial_inbound_dids where did_pattern='$Xoutbound_cid[$o]' $LOGadmin_viewable_groupsSQL limit 1;";
-				$rslt=mysql_to_mysqli($stmt, $link);
-				$dids_to_print = mysqli_num_rows($rslt);
-				if ($dids_to_print > 0) 
+					} 
+				else
 					{
-					$rowx=mysqli_fetch_row($rslt);
-					$DID_edit_link_BEGIN = "<a href=\"$PHP_SELF?ADD=3311&did_id=$rowx[0]\">";
-					$DID_edit_link_END='</a>';
+					if ($Xareacode[$o] != $bgac)
+						{
+						$bgct=0;
+						if (preg_match("/1$|3$|5$|7$|9$/i", $bgct))
+							{$bgcolor='bgcolor="#'. $SSstd_row1_background .'"';} 
+						else
+							{$bgcolor='bgcolor="#'. $SSstd_row2_background .'"';}
+						$bgct++;
+						$bgac = $Xareacode[$o];
+						}
 					}
+
+				$DID_edit_link_BEGIN='';
+				$DID_edit_link_END='';
+				if (strlen($Xoutbound_cid[$o]) > 0)
+					{
+					$stmt="SELECT did_id from vicidial_inbound_dids where did_pattern='$Xoutbound_cid[$o]' $LOGadmin_viewable_groupsSQL limit 1;";
+					$rslt=mysql_to_mysqli($stmt, $link);
+					$dids_to_print = mysqli_num_rows($rslt);
+					if ($dids_to_print > 0) 
+						{
+						$rowx=mysqli_fetch_row($rslt);
+						$DID_edit_link_BEGIN = "<a href=\"$PHP_SELF?ADD=3311&did_id=$rowx[0]\">";
+						$DID_edit_link_END='</a>';
+						}
+					}
+				echo "<tr $bgcolor><td><font size=2> &nbsp; $ct</font></td>\n";
+				echo "<td><font size=2> &nbsp; $Xareacode[$o]</font></td>\n";
+				echo "<td><font size=2> &nbsp; $DID_edit_link_BEGIN$Xoutbound_cid[$o]$DID_edit_link_END</font></td>\n";
+				echo "<td><input type=text size=30 maxlength=100 name=cid_description_$Xareacode[$o]_$Xoutbound_cid[$o] value=\"$Xcid_description[$o]\" style=\"font-family: sans-serif; font-size: 10px;\"></td>\n";
+				echo "<td>\n";
+				if ($Xactive[$o] == 'Y')
+					{
+					echo "<input type=\"checkbox\" name=\"active_$Xareacode[$o]_$Xoutbound_cid[$o]\" id=\"active_$Xareacode[$o]_$Xoutbound_cid[$o]\" value=\"Y\" CHECKED>";
+					}
+				else
+					{
+					echo "<input type=\"checkbox\" name=\"active_$Xareacode[$o]_$Xoutbound_cid[$o]\" id=\"active_$Xareacode[$o]_$Xoutbound_cid[$o]\" value=\"Y\">";
+					}
+				echo "</td>\n";
+				echo "<td><font size=2> &nbsp; $Xcall_count_today[$o]</font></td>\n";
+				echo "<td><font size=1> &nbsp; <a href=\"$PHP_SELF?ADD=496111111111&stage=DELETE&cid_group_id=$cid_group_id&areacode=$Xareacode[$o]&outbound_cid=$Xoutbound_cid[$o]\">"._QXZ("DELETE")."</a></td></tr>\n";
+				$o++;
 				}
-			echo "<tr $bgcolor><td><font size=2> &nbsp; $ct</font></td>\n";
-			echo "<td><font size=2> &nbsp; $Xareacode[$o]</font></td>\n";
-			echo "<td><font size=2> &nbsp; $DID_edit_link_BEGIN$Xoutbound_cid[$o]$DID_edit_link_END</font></td>\n";
-			echo "<td><input type=text size=30 maxlength=100 name=cid_description_$Xareacode[$o]_$Xoutbound_cid[$o] value=\"$Xcid_description[$o]\" style=\"font-family: sans-serif; font-size: 10px;\"></td>\n";
-			echo "<td>\n";
-			if ($Xactive[$o] == 'Y')
-				{
-				echo "<input type=\"checkbox\" name=\"active_$Xareacode[$o]_$Xoutbound_cid[$o]\" id=\"active_$Xareacode[$o]_$Xoutbound_cid[$o]\" value=\"Y\" CHECKED>";
-				}
+
+			echo "</table>\n";
+			echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value=\""._QXZ("SUBMIT CHANGES")."\"></form><br><br>\n";
+
+			echo "<br>"._QXZ("ADD NEW $cid_group_type CID")."<BR><form action=$PHP_SELF method=POST>\n";
+			echo "<input type=hidden name=ADD value=496111111111>\n";
+			echo "<input type=hidden name=stage value=ADD>\n";
+			echo "<input type=hidden name=DB value=\"$DB\">\n";
+			echo "<input type=hidden name=cid_group_id value=\"$cid_group_id\">\n";
+			if ($cid_group_type == 'NONE')
+				{echo "<input type=hidden name=areacode value=\"NONE\">\n";}
 			else
+				{echo _QXZ("$cid_group_type").": <input type=text size=7 maxlength=5 name=areacode>\n";}
+			echo _QXZ("Outbound CID").": <input type=text size=20 maxlength=20 name=outbound_cid><BR>\n";
+			echo _QXZ("Description").": <input type=text size=50 maxlength=100 name=cid_description>\n";
+			echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
+
+			echo "</center></FORM><br></center>\n";
+
+			echo "<B>"._QXZ("CAMPAIGNS USING THIS CID GROUP").":</B><BR>\n";
+			echo "<TABLE>\n";
+
+			$stmt="SELECT campaign_id,campaign_name from vicidial_campaigns where ( (cid_group_id='$cid_group_id') or (cid_group_id_two='$cid_group_id') ) $LOGallowed_campaignsSQL;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$camps_to_print = mysqli_num_rows($rslt);
+			$o=0;
+			while ($camps_to_print > $o) 
 				{
-				echo "<input type=\"checkbox\" name=\"active_$Xareacode[$o]_$Xoutbound_cid[$o]\" id=\"active_$Xareacode[$o]_$Xoutbound_cid[$o]\" value=\"Y\">";
+				$row=mysqli_fetch_row($rslt);
+				echo "<TR><TD><a href=\"$PHP_SELF?ADD=31&campaign_id=$row[0]\">$row[0] </a></TD><TD> $row[1]<BR></TD></TR>\n";
+				$o++;
 				}
-			echo "</td>\n";
-			echo "<td><font size=2> &nbsp; $Xcall_count_today[$o]</font></td>\n";
-			echo "<td><font size=1> &nbsp; <a href=\"$PHP_SELF?ADD=496111111111&stage=DELETE&cid_group_id=$cid_group_id&areacode=$Xareacode[$o]&outbound_cid=$Xoutbound_cid[$o]\">"._QXZ("DELETE")."</a></td></tr>\n";
-			$o++;
-			}
 
-		echo "</table>\n";
-		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value=\""._QXZ("SUBMIT CHANGES")."\"></form><br><br>\n";
+			echo "</TABLE><BR><BR>\n";
 
-		echo "<br>"._QXZ("ADD NEW $cid_group_type CID")."<BR><form action=$PHP_SELF method=POST>\n";
-		echo "<input type=hidden name=ADD value=496111111111>\n";
-		echo "<input type=hidden name=stage value=ADD>\n";
-		echo "<input type=hidden name=DB value=\"$DB\">\n";
-		echo "<input type=hidden name=cid_group_id value=\"$cid_group_id\">\n";
-		if ($cid_group_type == 'NONE')
-			{echo "<input type=hidden name=areacode value=\"NONE\">\n";}
-		else
-			{echo _QXZ("$cid_group_type").": <input type=text size=7 maxlength=5 name=areacode>\n";}
-		echo _QXZ("Outbound CID").": <input type=text size=20 maxlength=20 name=outbound_cid><BR>\n";
-		echo _QXZ("Description").": <input type=text size=50 maxlength=100 name=cid_description>\n";
-		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
+			echo "<B>"._QXZ("LISTS USING THIS CID GROUP").":</B><BR>\n";
+			echo "<TABLE>\n";
 
-		echo "</center></FORM><br></center>\n";
+			$stmt="SELECT list_id,list_name from vicidial_lists where cid_group_id='$cid_group_id' $LOGallowed_campaignsSQL;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			$lists_to_print = mysqli_num_rows($rslt);
+			$o=0;
+			while ($lists_to_print > $o) 
+				{
+				$row=mysqli_fetch_row($rslt);
+				echo "<TR><TD><a href=\"$PHP_SELF?ADD=311&list_id=$row[0]\">$row[0] </a></TD><TD> $row[1]<BR></TD></TR>\n";
+				$o++;
+				}
 
-		echo "<B>"._QXZ("CAMPAIGNS USING THIS CID GROUP").":</B><BR>\n";
-		echo "<TABLE>\n";
+			echo "</TABLE><BR><center>\n";
 
-		$stmt="SELECT campaign_id,campaign_name from vicidial_campaigns where ( (cid_group_id='$cid_group_id') or (cid_group_id_two='$cid_group_id') ) $LOGallowed_campaignsSQL;";
-		$rslt=mysql_to_mysqli($stmt, $link);
-		$camps_to_print = mysqli_num_rows($rslt);
-		$o=0;
-		while ($camps_to_print > $o) 
-			{
-			$row=mysqli_fetch_row($rslt);
-			echo "<TR><TD><a href=\"$PHP_SELF?ADD=31&campaign_id=$row[0]\">$row[0] </a></TD><TD> $row[1]<BR></TD></TR>\n";
-			$o++;
-			}
+			if (($LOGast_admin_access==1) and ($LOGmodify_statuses==1))
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=596111111111&cid_group_id=$cid_group_id\">"._QXZ("DELETE THIS CID GROUP")."</a>\n";
+				}
+			if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=CIDGROUPS&stage=$cid_group_id\">"._QXZ("Click here to see Admin changes to this CID GROUP")."\n";
 
-		echo "</TABLE><BR><BR>\n";
-
-		echo "<B>"._QXZ("LISTS USING THIS CID GROUP").":</B><BR>\n";
-		echo "<TABLE>\n";
-
-		$stmt="SELECT list_id,list_name from vicidial_lists where cid_group_id='$cid_group_id' $LOGallowed_campaignsSQL;";
-		$rslt=mysql_to_mysqli($stmt, $link);
-		$lists_to_print = mysqli_num_rows($rslt);
-		$o=0;
-		while ($lists_to_print > $o) 
-			{
-			$row=mysqli_fetch_row($rslt);
-			echo "<TR><TD><a href=\"$PHP_SELF?ADD=311&list_id=$row[0]\">$row[0] </a></TD><TD> $row[1]<BR></TD></TR>\n";
-			$o++;
-			}
-
-		echo "</TABLE><BR><center>\n";
-
-		if (($LOGast_admin_access==1) and ($LOGmodify_statuses==1))
-			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=596111111111&cid_group_id=$cid_group_id\">"._QXZ("DELETE THIS CID GROUP")."</a>\n";
-			}
-		if ( ($LOGuser_level >= 9) and ( (preg_match("/Administration Change Log/",$LOGallowed_reports)) or (preg_match("/ALL REPORTS/",$LOGallowed_reports)) ) )
-			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=720000000000000&category=CIDGROUPS&stage=$cid_group_id\">"._QXZ("Click here to see Admin changes to this CID GROUP")."\n";
-
-			echo "<br><br><a href=\"list_download.php?group_id=$cid_group_id&download_type=cidgroup\">"._QXZ("Click here to download this CID GROUP")."</FONT>\n";
+				echo "<br><br><a href=\"list_download.php?group_id=$cid_group_id&download_type=cidgroup\">"._QXZ("Click here to download this CID GROUP")."</FONT>\n";
+				}
 			}
 		}
 	else
@@ -44796,27 +46505,31 @@ if ($ADD==3111111111111)
 
 		$stmt="SELECT conf_exten,server_ip,extension from conferences where conf_exten='$conf_exten' and server_ip='$server_ip';";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-		$conf_exten = $row[0];
-		$server_ip = $row[1];
+		if (mysqli_num_rows($rslt)>0)
+			{
+			$row=mysqli_fetch_row($rslt);
+			$conf_exten = $row[0];
+			$server_ip = $row[1];
+			$extension = $row[2];
+			}
 
-		echo "<br>"._QXZ("MODIFY A CONFERENCE RECORD").": $row[0]<form action=$PHP_SELF method=POST>\n";
+		echo "<br>"._QXZ("MODIFY A CONFERENCE RECORD").": $conf_exten<form action=$PHP_SELF method=POST>\n";
 		echo "<input type=hidden name=ADD value=4111111111111>\n";
-		echo "<input type=hidden name=old_conf_exten value=\"$row[0]\">\n";
-		echo "<input type=hidden name=old_server_ip value=\"$row[1]\">\n";
+		echo "<input type=hidden name=old_conf_exten value=\"$conf_exten\">\n";
+		echo "<input type=hidden name=old_server_ip value=\"$server_ip\">\n";
 		echo "<center><TABLE width=$section_width cellspacing=3>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Conference").": </td><td align=left><input type=text name=conf_exten size=10 maxlength=7 value=\"$row[0]\">$NWB#conferences-conf_exten$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href=\"$PHP_SELF?ADD=311111111111&server_ip=$row[1]\">"._QXZ("Server IP")."</a>: </td><td align=left><select size=1 name=server_ip>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Conference").": </td><td align=left><input type=text name=conf_exten size=10 maxlength=7 value=\"$conf_exten\">$NWB#conferences-conf_exten$NWE</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href=\"$PHP_SELF?ADD=311111111111&server_ip=$server_ip\">"._QXZ("Server IP")."</a>: </td><td align=left><select size=1 name=server_ip>\n";
 
 		echo "$servers_list";
-		echo "<option SELECTED>$row[1]</option>\n";
+		echo "<option SELECTED>$server_ip</option>\n";
 		echo "</select>$NWB#conferences-server_ip$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Current Extension").": </td><td align=left><input type=text name=extension size=20 maxlength=20 value=\"$row[2]\"></td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Current Extension").": </td><td align=left><input type=text name=extension size=20 maxlength=20 value=\"$extension\"></td></tr>\n";
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
 		echo "</TABLE></center>\n";
 
 		echo "<center><b>\n";
-		if ($LOGast_delete_phones > 0)
+		if ($LOGast_delete_phones > 0 && mysqli_num_rows($rslt)>0)
 			{
 			echo "<br><br><a href=\"$PHP_SELF?ADD=5111111111111&conf_exten=$conf_exten&server_ip=$server_ip\">"._QXZ("DELETE THIS CONFERENCE")."</a>\n";
 			}
@@ -44846,29 +46559,32 @@ if ($ADD==31111111111111)
 
 		$stmt="SELECT conf_exten,server_ip,extension,leave_3way,leave_3way_datetime from vicidial_conferences where conf_exten='$conf_exten' and server_ip='$server_ip';";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-		$conf_exten = $row[0];
-		$server_ip = $row[1];
-
-		echo "<br>"._QXZ("MODIFY AN AGENT CONFERENCE RECORD").": $row[0]<form action=$PHP_SELF method=POST>\n";
-		echo "<input type=hidden name=ADD value=41111111111111>\n";
-		echo "<input type=hidden name=old_conf_exten value=\"$row[0]\">\n";
-		echo "<input type=hidden name=old_server_ip value=\"$row[1]\">\n";
-		echo "<center><TABLE width=$section_width cellspacing=3>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Conference").": </td><td align=left><input type=text name=conf_exten size=10 maxlength=7 value=\"$row[0]\">$NWB#conferences-conf_exten$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href=\"$PHP_SELF?ADD=311111111111&server_ip=$row[1]\">"._QXZ("Server IP")."</a>: </td><td align=left><select size=1 name=server_ip>\n";
-
-		echo "$servers_list";
-		echo "<option SELECTED>$row[1]</option>\n";
-		echo "</select>$NWB#conferences-server_ip$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Current Extension").": </td><td align=left><input type=text name=extension size=20 maxlength=20 value=\"$row[2]\"></td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
-		echo "</TABLE></center>\n";
-
-		echo "<center><b>\n";
-		if ($LOGast_delete_phones > 0)
+		if (mysqli_num_rows($rslt)>0)
 			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=51111111111111&conf_exten=$conf_exten&server_ip=$server_ip\">"._QXZ("DELETE THIS AGENT CONFERENCE")."</a>\n";
+			$row=mysqli_fetch_row($rslt);
+			$conf_exten = $row[0];
+			$server_ip = $row[1];
+
+			echo "<br>"._QXZ("MODIFY AN AGENT CONFERENCE RECORD").": $row[0]<form action=$PHP_SELF method=POST>\n";
+			echo "<input type=hidden name=ADD value=41111111111111>\n";
+			echo "<input type=hidden name=old_conf_exten value=\"$row[0]\">\n";
+			echo "<input type=hidden name=old_server_ip value=\"$row[1]\">\n";
+			echo "<center><TABLE width=$section_width cellspacing=3>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Conference").": </td><td align=left><input type=text name=conf_exten size=10 maxlength=7 value=\"$row[0]\">$NWB#conferences-conf_exten$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href=\"$PHP_SELF?ADD=311111111111&server_ip=$row[1]\">"._QXZ("Server IP")."</a>: </td><td align=left><select size=1 name=server_ip>\n";
+
+			echo "$servers_list";
+			echo "<option SELECTED>$row[1]</option>\n";
+			echo "</select>$NWB#conferences-server_ip$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Current Extension").": </td><td align=left><input type=text name=extension size=20 maxlength=20 value=\"$row[2]\"></td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+			echo "</TABLE></center>\n";
+
+			echo "<center><b>\n";
+			if ($LOGast_delete_phones > 0)
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=51111111111111&conf_exten=$conf_exten&server_ip=$server_ip\">"._QXZ("DELETE THIS AGENT CONFERENCE")."</a>\n";
+				}
 			}
 		}
 	else
@@ -44896,29 +46612,32 @@ if ($ADD==32111111111111)
 
 		$stmt="SELECT conf_exten,server_ip,extension,leave_3way,leave_3way_datetime from vicidial_confbridges where conf_exten='$conf_exten' and server_ip='$server_ip';";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		$row=mysqli_fetch_row($rslt);
-		$conf_exten = $row[0];
-		$server_ip = $row[1];
-
-		echo "<br>"._QXZ("MODIFY AN AGENT CONFBRIDGE RECORD").": $row[0]<form action=$PHP_SELF method=POST>\n";
-		echo "<input type=hidden name=ADD value=42111111111111>\n";
-		echo "<input type=hidden name=old_conf_exten value=\"$row[0]\">\n";
-		echo "<input type=hidden name=old_server_ip value=\"$row[1]\">\n";
-		echo "<center><TABLE width=$section_width cellspacing=3>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("ConfBridge").": </td><td align=left><input type=text name=conf_exten size=10 maxlength=7 value=\"$row[0]\">$NWB#conferences-conf_exten$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href=\"$PHP_SELF?ADD=311111111111&server_ip=$row[1]\">"._QXZ("Server IP")."</a>: </td><td align=left><select size=1 name=server_ip>\n";
-
-		echo "$servers_list";
-		echo "<option SELECTED>$row[1]</option>\n";
-		echo "</select>$NWB#conferences-server_ip$NWE</td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Current Extension").": </td><td align=left><input type=text name=extension size=20 maxlength=20 value=\"$row[2]\"></td></tr>\n";
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
-		echo "</TABLE></center>\n";
-
-		echo "<center><b>\n";
-		if ($LOGast_delete_phones > 0)
+		if (mysqli_num_rows($rslt)>0)
 			{
-			echo "<br><br><a href=\"$PHP_SELF?ADD=52111111111111&conf_exten=$conf_exten&server_ip=$server_ip\">"._QXZ("DELETE THIS AGENT CONFBRIDGE")."</a>\n";
+			$row=mysqli_fetch_row($rslt);
+			$conf_exten = $row[0];
+			$server_ip = $row[1];
+
+			echo "<br>"._QXZ("MODIFY AN AGENT CONFBRIDGE RECORD").": $row[0]<form action=$PHP_SELF method=POST>\n";
+			echo "<input type=hidden name=ADD value=42111111111111>\n";
+			echo "<input type=hidden name=old_conf_exten value=\"$row[0]\">\n";
+			echo "<input type=hidden name=old_server_ip value=\"$row[1]\">\n";
+			echo "<center><TABLE width=$section_width cellspacing=3>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("ConfBridge").": </td><td align=left><input type=text name=conf_exten size=10 maxlength=7 value=\"$row[0]\">$NWB#conferences-conf_exten$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right><a href=\"$PHP_SELF?ADD=311111111111&server_ip=$row[1]\">"._QXZ("Server IP")."</a>: </td><td align=left><select size=1 name=server_ip>\n";
+
+			echo "$servers_list";
+			echo "<option SELECTED>$row[1]</option>\n";
+			echo "</select>$NWB#conferences-server_ip$NWE</td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Current Extension").": </td><td align=left><input type=text name=extension size=20 maxlength=20 value=\"$row[2]\"></td></tr>\n";
+			echo "<tr bgcolor=#$SSstd_row4_background><td align=center colspan=2><input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("SUBMIT")."'</td></tr>\n";
+			echo "</TABLE></center>\n";
+
+			echo "<center><b>\n";
+			if ($LOGast_delete_phones > 0)
+				{
+				echo "<br><br><a href=\"$PHP_SELF?ADD=52111111111111&conf_exten=$conf_exten&server_ip=$server_ip\">"._QXZ("DELETE THIS AGENT CONFBRIDGE")."</a>\n";
+				}
 			}
 		}
 	else
@@ -45198,15 +46917,15 @@ if ($ADD==311111111111111)
 		$source_id_display =			$row[170];
 		$agent_logout_link =			$row[171];
 		$manual_dial_validation =		$row[172];
-		$mute_recordings =				$row[173];
+		$mute_recordings_system =		$row[173];
 		$user_admin_redirect =			$row[174];
 		$list_status_modification_confirmation = $row[175];
-		$sip_event_logging =			$row[176];
-		$call_quota_lead_ranking =		$row[177];
+		$sip_event_logging_system =		$row[176];
+		$call_quota_lead_ranking_system = $row[177];
 		$enable_second_script =			$row[178];
 		$enable_first_webform =			$row[179];
 		$recording_buttons =			$row[180];
-		$opensips_cid_name =			$row[181];
+		$opensips_cid_name_system =		$row[181];
 		$require_password_length =		$row[182];
 		$user_account_emails =			$row[183];
 		$outbound_cid_any =				$row[184];
@@ -45219,7 +46938,7 @@ if ($ADD==311111111111111)
 		$manual_dial_phone_strip =		$row[191];
 		$daily_call_count_limit =		$row[192];
 		$allow_shared_dial =			$row[193];
-		$agent_search_method =			$row[194];
+		$agent_search_method_system =	$row[194];
 		$phone_defaults_container =		$row[195];
 		$qc_claim_limit =				$row[196];
 		$qc_expire_days =				$row[197];
@@ -45253,7 +46972,7 @@ if ($ADD==311111111111111)
 		$login_kickall =				$row[225];
 		$abandon_check_queue =			$row[226];
 		$agent_notifications =			$row[227];
-		$demographic_quotas =			$row[228];
+		$demographic_quotas_system =	$row[228];
 		$log_latency_gaps =				$row[229];
 		$inbound_credits =				$row[230];
 		$weekday_resets =				$row[231];
@@ -45592,7 +47311,7 @@ if ($ADD==311111111111111)
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Shared Agent Campaign Dialing").": </td><td align=left><select size=1 name=allow_shared_dial><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option><option>0</option><option selected>$allow_shared_dial</option></select>$NWB#settings-allow_shared_dial$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Agent Search Method Override").": </td><td align=left><select size=1 name=agent_search_method><option>3</option><option>2</option><option>1</option><option>0</option><option selected>$agent_search_method</option></select>$NWB#settings-agent_search_method$NWE</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Agent Search Method Override").": </td><td align=left><select size=1 name=agent_search_method_system><option>3</option><option>2</option><option>1</option><option>0</option><option selected>$agent_search_method_system</option></select>$NWB#settings-agent_search_method$NWE</td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("UK OFCOM Drop Calculation").": </td><td align=left><select size=1 name=ofcom_uk_drop_calc><option>1</option><option>0</option><option selected>$ofcom_uk_drop_calc</option></select>$NWB#settings-ofcom_uk_drop_calc$NWE</td></tr>\n";
 
@@ -45630,13 +47349,13 @@ if ($ADD==311111111111111)
 				}
 			$xfer_min_message_menu .= "value=\"$rowx[0]\">$rowx[0] - $rowx[1]</option>\n";
 			$xfer_min_message_menu .= "<option ";
+			if ($xfer_min_container == '') 
+				{
+				$xfer_min_message_menu .= "SELECTED ";
+				}
+			$xfer_min_message_menu .= "value=\"\">--USING DEFAULT MESSAGE--</option>\n";
 			$o++;
 			}
-		if ($xfer_min_container == '') 
-			{
-			$xfer_min_message_menu .= "SELECTED ";
-			}
-		$xfer_min_message_menu .= "value=\"\">--USING DEFAULT MESSAGE--</option>\n";
 
 		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>";
 		if ($pws_selected > 0)
@@ -45790,9 +47509,9 @@ if ($ADD==311111111111111)
 
 		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Enable 24-Hour Called Count Limits").": </td><td align=left><select size=1 name=call_limit_24hour><option>1</option><option>0</option><option selected>$call_limit_24hour</option></select>$NWB#settings-call_limit_24hour$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Call Quota Lead Ranking").": </td><td align=left><select size=1 name=call_quota_lead_ranking><option>1</option><option>0</option><option selected>$call_quota_lead_ranking</option></select>$NWB#settings-call_quota_lead_ranking$NWE</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Call Quota Lead Ranking").": </td><td align=left><select size=1 name=call_quota_lead_ranking_system><option>1</option><option>0</option><option selected>$call_quota_lead_ranking_system</option></select>$NWB#settings-call_quota_lead_ranking$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Demographic Quotas").": </td><td align=left><select size=1 name=demographic_quotas><option>1</option><option>0</option><option selected>$demographic_quotas</option></select>$NWB#settings-demographic_quotas$NWE</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Demographic Quotas").": </td><td align=left><select size=1 name=demographic_quotas><option>1</option><option>0</option><option selected>$demographic_quotas_system</option></select>$NWB#settings-demographic_quotas$NWE</td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Enable Custom List Fields").": </td><td align=left><select size=1 name=custom_fields_enabled><option>1</option><option>0</option><option selected>$custom_fields_enabled</option></select>$NWB#settings-custom_fields_enabled$NWE</td></tr>\n";
 
@@ -45826,7 +47545,7 @@ if ($ADD==311111111111111)
 
 		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Enhanced Disconnect Logging").": </td><td align=left><select size=1 name=enhanced_disconnect_logging><option>6</option><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option><option>0</option><option selected>$enhanced_disconnect_logging</option></select>$NWB#settings-enhanced_disconnect_logging$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("SIP Event Logging").": </td><td align=left><select size=1 name=sip_event_logging><option>1</option><option>0</option><option selected>$sip_event_logging</option></select>$NWB#settings-sip_event_logging$NWE</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("SIP Event Logging").": </td><td align=left><select size=1 name=sip_event_logging_system><option>1</option><option>0</option><option selected>$sip_event_logging_system</option></select>$NWB#settings-sip_event_logging$NWE</td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Cached Realtime Carrier Stats").": </td><td align=left><select size=1 name=cache_carrier_stats_realtime><option>1</option><option>0</option><option selected>$cache_carrier_stats_realtime</option></select>$NWB#settings-cache_carrier_stats_realtime$NWE</td></tr>\n";
 
@@ -45834,7 +47553,7 @@ if ($ADD==311111111111111)
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Outbound Call Any CID").": </td><td align=left><select size=1 name=outbound_cid_any><option value=\"DISABLED\">"._QXZ("DISABLED")."</option><option value=\"API_ONLY\">"._QXZ("API_ONLY")."</option><option selected value=\"$outbound_cid_any\">"._QXZ("$outbound_cid_any")."</option></select>$NWB#settings-outbound_cid_any$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("OpenSIPs CID Name Support").": </td><td align=left><select size=1 name=opensips_cid_name><option>1</option><option>0</option><option selected>$opensips_cid_name</option></select>$NWB#settings-opensips_cid_name$NWE</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("OpenSIPs CID Name Support").": </td><td align=left><select size=1 name=opensips_cid_name_system><option>1</option><option>0</option><option selected>$opensips_cid_name_system</option></select>$NWB#settings-opensips_cid_name$NWE</td></tr>\n";
 
 		echo "<tr bgcolor=#$SSstd_row4_background><td align=right>"._QXZ("Enable Remote Agent Extension Overrides").": </td><td align=left><select size=1 name=did_ra_extensions_enabled><option>1</option><option>0</option><option selected>$did_ra_extensions_enabled</option></select>$NWB#settings-did_ra_extensions_enabled$NWE</td></tr>\n";
 
@@ -45929,7 +47648,7 @@ if ($ADD==311111111111111)
 		<option selected value='$recording_buttons'>"._QXZ("$recording_buttons")."</option>
 		</select>$NWB#settings-recording_buttons$NWE</td></tr>\n";
 
-		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Allow Mute Recordings").": </td><td align=left><select size=1 name=mute_recordings><option>1</option><option>0</option><option selected>$mute_recordings</option></select>$NWB#settings-mute_recordings$NWE</td></tr>\n";
+		echo "<tr bgcolor=#$SSstd_row3_background><td align=right>"._QXZ("Allow Mute Recordings").": </td><td align=left><select size=1 name=mute_recordings_system><option>1</option><option>0</option><option selected>$mute_recordings_system</option></select>$NWB#settings-mute_recordings$NWE</td></tr>\n";
 
 		if ($stereo_dev_mode > 0)
 			{
@@ -46355,7 +48074,7 @@ if ($ADD==321111111111111)
 			echo "<td>\n";
 			echo "<select size=1 name=category class=\"cust_form\">\n";
 			echo "$cats_list";
-			echo "<option selected value=\"$AScategory\">$AScategory - $catsname_list[$AScategory]</option>\n";
+			echo "<option selected value=\"$AScategory\">$AScategory".(isset($catsname_list[$AScategory]) ? " - $catsname_list[$AScategory]" : "")."</option>\n";
 			echo "</select>\n";
 			echo "\n";
 			echo "</td><td bgcolor=\"#ccffff\"><select size=1 name=selectable class=\"cust_form\"><option value='Y'>"._QXZ("Y")."</option><option value='N'>"._QXZ("N")."</option><option value='$rowx[2]' selected>"._QXZ("$rowx[2]")."</option></select>\n";
@@ -46404,7 +48123,7 @@ if ($ADD==321111111111111)
 		echo _QXZ("Category").": \n";
 		echo "<select size=1 name=category>\n";
 		echo "$cats_list";
-		echo "<option selected value=\"$AScategory\">$AScategory - $catsname_list[$AScategory]</option>\n";
+		echo "<option selected value=\"$AScategory\">$AScategory".(isset($catsname_list[$AScategory]) ? " - $catsname_list[$AScategory]" : "")."</option>\n";
 		echo "</select> &nbsp; <BR>\n";
 		echo "<input style='background-color:#$SSbutton_color' type=submit name=submit value='"._QXZ("ADD")."'><BR>\n";
 
@@ -46549,6 +48268,7 @@ if ($ADD==241111111111111)
 			{
 			echo "<br><b>"._QXZ("QC STATUS CODE ADDED").": $code_name - $code</B>\n";
 			if (isset($_POST["qc_category"])) {$qc_category=$_POST["qc_category"];}
+			$qc_category = preg_replace('/[^-_0-9\p{L}]/u','',$qc_category);
 
 			$stmt="INSERT INTO vicidial_qc_codes (code,code_name,qc_result_type) values('$code','$code_name','$qc_category');";
 			$rslt=mysql_to_mysqli($stmt, $link);
@@ -47008,6 +48728,7 @@ if ($ADD==10)
 	echo "<TABLE><TR><TD>\n";
 	echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2>";
 
+	$active_only_default_campaigns=0;
 	if (file_exists('options.php'))
 		{require('options.php');}
 
@@ -47709,6 +49430,7 @@ if ($ADD==1300)
 
 	$limitSQL='';
 	$next_prev_HTML='';
+	$dids_count=0;
 	if ($SSentries_per_page > 0)
 		{
 		$stmt="SELECT count(*) from vicidial_inbound_dids where did_pattern!='did_system_filter' $dpf_clause $LOGadmin_viewable_groupsSQL";
@@ -47926,7 +49648,7 @@ if ($ADD==1700)
 	echo "<TD><B><FONT FACE=\"Arial,Helvetica\" size=1 color=white>"._QXZ("MODIFY")."</TD>\n";
 	echo "</TR>\n";
 
-	$lists_printed = '';
+	$lists_printed = ''; $groups_printed = '';
 	$o=0;
 	while ($lists_to_print > $o)
 		{
@@ -49682,10 +51404,11 @@ if (($ADD==100000000000000) && ($qc_auth=='1'))
 		echo "<td align=center><font size=1 color=white><B>"._QXZ("MODIFY")."</B></font></td></tr>\n";
 
 		$count_column="campaign_id";
+		$ADD_value="31";
 		}
 	else if ($qc_display_group_type=="INGROUP") 
 		{
-		$stmt="SELECT group_id,group_name,qc_statuses_id from vicidial_inbound_groups where active = 'Y' and qc_statuses_id!='' and qc_scorecard_id!='' $LOGqc_allowed_campaignsSQL order by group_id";
+		$stmt="SELECT group_id,group_name,qc_statuses_id from vicidial_inbound_groups where active = 'Y' and qc_statuses_id!='' and qc_scorecard_id!='' $LOGqc_allowed_inbound_groupsSQL order by group_id";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$vicidialconf_to_print = mysqli_num_rows($rslt);
 
@@ -49698,6 +51421,7 @@ if (($ADD==100000000000000) && ($qc_auth=='1'))
 		echo "<td align=center><font size=1 color=white><B>"._QXZ("MODIFY")."</B></font></td></tr>\n";
 
 		$count_column="group_id";
+		$ADD_value="3111";
 		}
 	else if ($qc_display_group_type=="LIST") 
 		{
@@ -49715,6 +51439,7 @@ if (($ADD==100000000000000) && ($qc_auth=='1'))
 		echo "<td align=center><font size=1 color=white><B>"._QXZ("MODIFY")."</B></font></td></tr>\n";
 
 		$count_column="list_id";
+		$ADD_value="311";
 		}
 
 	if ($vicidialconf_to_print==0) 
@@ -49806,7 +51531,7 @@ if (($ADD==100000000000000) && ($qc_auth=='1'))
         echo "<td><font size=1> $row[1]</td>";
         echo "<td><font size=1> ".implode(", ", $qc_status_list)."</td>";
         echo "<td><font size=1> ".($total_qc_count-$total_grabbed_count+0)."</td>";
-        echo "<td align=center><font size=1><a href=\"$PHP_SELF?ADD=31&campaign_id=$row[0]\">"._QXZ("MODIFY")."</a></td></tr>\n";
+        echo "<td align=center><font size=1><a href=\"$PHP_SELF?ADD=".$ADD_value."&".$count_column."=$row[0]\">"._QXZ("MODIFY")."</a></td></tr>\n";
         $o++;
 		}
     echo "</TABLE></center>\n";
@@ -49868,9 +51593,12 @@ if (($ADD==881) && ($qc_auth=='1'))
 			$date_modified=$queue_row["date_modified"];
 			$name_stmt="select concat(first_name, ' ', last_name) from vicidial_list where lead_id='$lead_id'";
 			$name_rslt=mysql_to_mysqli($name_stmt, $link);
-			$name_row=mysqli_fetch_row($name_rslt);
-			$full_name=trim($name_row[0]);
-
+			$full_name="";
+			if (mysqli_num_rows($name_rslt)>0)
+				{
+				$name_row=mysqli_fetch_row($name_rslt);
+				$full_name=trim($name_row[0]);
+				}
 			if (preg_match("/1$|3$|5$|7$|9$/i", $q))
 				{
 				$bgcolor='class="records_list_x"';
@@ -49946,6 +51674,7 @@ if (($ADD==881) && ($qc_auth=='1'))
 
 			echo "<br><B>"._QXZ("$qc_display_group_type")." $row[0] - "._QXZ("Quality Control Queue")."<br>"._QXZ("QC statuses").": ".implode(", ", $qc_status_list)."</B><BR><BR>\n";
 
+			if (!isset($qc_sort_method)) {$qc_sort_method="CALL_DATE_DESC";}
 			switch ($qc_sort_method) 
 				{
 				case "STATUS":
@@ -49989,7 +51718,7 @@ if (($ADD==881) && ($qc_auth=='1'))
 					$lead_id=$row["lead_id"];
 					$agent_log_id=$row["agent_log_id"];
 					$uniqueid=$row["uniqueid"];
-					$comments=$row["comments"];
+					# $comments=$row["comments"];
 
 					# if ($qc_display_method=="CALL") {$display_clause="agent_log_id='$agent_log_id'";} else {$display_clause="lead_id='$lead_id'";}
 
@@ -50000,6 +51729,7 @@ if (($ADD==881) && ($qc_auth=='1'))
 						$followup_rslt=mysql_to_mysqli($followup_stmt, $link);
 						$followup_row=mysqli_fetch_row($followup_rslt);
 						$matched_qc_record=$followup_row[0];
+						if ($DB) {echo $followup_stmt."<BR>\n";}
 						}
 					else if ($qc_display_group_type=="INGROUP")
 						{
@@ -50008,6 +51738,7 @@ if (($ADD==881) && ($qc_auth=='1'))
 						$followup_rslt=mysql_to_mysqli($followup_stmt, $link);
 						$followup_row=mysqli_fetch_row($followup_rslt);
 						$matched_qc_record=$followup_row[0];
+						if ($DB) {echo $followup_stmt."<BR>\n";}
 						}
 					else
 						{
@@ -50035,8 +51766,13 @@ if (($ADD==881) && ($qc_auth=='1'))
 							{
 							$name_stmt="select concat(first_name, ' ', last_name) from vicidial_list where lead_id='$row[lead_id]'";
 							$name_rslt=mysql_to_mysqli($name_stmt, $link);
-							$name_row=mysqli_fetch_row($name_rslt);
-							$lead_name=trim($name_row[0]);
+							$lead_name=""; 
+							if (mysqli_num_rows($name_rslt)>0)
+								{
+								$name_row=mysqli_fetch_row($name_rslt);
+								$lead_name=trim($name_row[0]);
+								$lead_nameENC=urlencode($lead_name);
+								}
 
 							if (preg_match("/1$|3$|5$|7$|9$/i", $q))
 								{
@@ -50336,7 +52072,7 @@ if ($ADD==720000000000000)
 			echo "<td><font size=1> $row[6]</td>";
 			echo "<td><font size=1> $row[8]</td>";
 			echo "<td><font size=1> $row[7]</td>";
-			echo "<td><font size=1> <a href=\"$record_link\">"._QXZ("GOTO")."</a></td>";
+			echo "<td><font size=1> ".(isset($record_link) ? "<a href=\"$record_link\">"._QXZ("GOTO")."</a>" : "")."</td>";
 			echo "</tr>\n";
 			$logs_printed .= "'$row[0]',";
 			$o++;
@@ -50754,6 +52490,24 @@ if ($ADD==999999)
 			$disk_usage[$i] =					$row[7];
 			$active_agent_login_server[$i] =	$row[8];
 			$active_asterisk_server[$i] =		$row[9];
+
+			# look for server_live_partitions entries for this server
+			$pstmt="SELECT partition_order,use_pct from server_live_partitions where server_ip='$server_ip[$i]' and (mb_used + mb_available) >= 1000;";
+			$prslt=mysql_to_mysqli($pstmt, $link);
+			if ($DB) {echo "$pstmt\n";}
+			$parts_to_print = mysqli_num_rows($prslt);
+			$pp=0;
+			$temp_disk_usage='';
+			while ($parts_to_print > $pp)
+				{
+				$prow=mysqli_fetch_row($prslt);
+				$part_order = ($prow[0] + 1);
+				$temp_disk_usage .= "$part_order $prow[1]|";
+				$pp++;
+				}
+			if (strlen($temp_disk_usage) > 3)
+				{$disk_usage[$i] = $temp_disk_usage;}
+
 			$i++;
 			}
 
@@ -50773,22 +52527,6 @@ if ($ADD==999999)
 		$row=mysqli_fetch_row($rslt);
 		$inventory_report_count =	$row[0];
 
-		# look for server_live_partitions entries for this server
-		$stmt="SELECT partition_order,use_pct from server_live_partitions where server_ip='$server_ip[$i]' and (mb_used + mb_available) >= 1000;";
-		$rslt=mysql_to_mysqli($stmt, $link);
-		if ($DB) {echo "$stmt\n";}
-		$parts_to_print = mysqli_num_rows($rslt);
-		$pp=0;
-		$temp_disk_usage='';
-		while ($parts_to_print > $pp)
-			{
-			$row=mysqli_fetch_row($rslt);
-			$part_order = ($row[0] + 1);
-			$temp_disk_usage .= "$part_order $row[1]|";
-			$pp++;
-			}
-		if (strlen($temp_disk_usage) > 3)
-			{$disk_usage[$i] = $temp_disk_usage;}
 		?>
 
 		</head><BODY BGCOLOR=WHITE>
@@ -52507,6 +54245,12 @@ if ($ADD==999990)
 		$closer_campaigns = preg_replace("/ /","','",$closer_campaigns);
 		$closer_campaigns = "'$closer_campaigns'";
 
+		$users=array("Y" => 0, "N" => 0);
+		$campaigns=array("Y" => 0, "N" => 0);
+		$lists=array("Y" => 0, "N" => 0);
+		$dids=array("Y" => 0, "N" => 0);
+		$ingroups=array("Y" => 0, "N" => 0);
+
 		$stmt="SELECT status from vicidial_auto_calls where status NOT IN('XFER') and ( (call_type='IN' and campaign_id IN($closer_campaigns)) or (call_type='OUT' $LOGallowed_campaignsSQL) );";
 		if ($DB) {echo "|$stmt|\n";}
 		$rslt=mysql_to_mysqli($stmt, $link);
@@ -52567,9 +54311,9 @@ if ($ADD==999990)
 		$agent_incall=0; $agent_total=0;
 		while($row=mysqli_fetch_array($rslt)) 
 			{
-			$status=$row[3];
+			$live_agent_status=$row[3];
 			$agent_total++;
-			if ( (preg_match("/INCALL/i",$status)) or (preg_match("/QUEUE/i",$status)) ) {$agent_incall++; }
+			if ( (preg_match("/INCALL/i",$live_agent_status)) or (preg_match("/QUEUE/i",$live_agent_status)) ) {$agent_incall++; }
 			}
 		if (preg_match("/MXAG/",$SShosted_settings))
 			{
@@ -52666,6 +54410,10 @@ if ($ADD==999990)
 			}
 		// End new voicemail box code
 
+		$today=date("Y-m-d");
+		$yesterday=date("Y-m-d", mktime(0,0,0,date("m"),date("d")-1,date("Y")));
+		$thirtydays=date("Y-m-d", mktime(0,0,0,date("m"),date("d")-29,date("Y")));
+
 		if ($SSqc_features_active>0) 
 			{
 			echo "<tr>";
@@ -52753,10 +54501,6 @@ if ($ADD==999990)
 			echo "</TABLE></center>\n";
 
 			echo "<BR>\n";
-
-		$today=date("Y-m-d");
-		$yesterday=date("Y-m-d", mktime(0,0,0,date("m"),date("d")-1,date("Y")));
-		$thirtydays=date("Y-m-d", mktime(0,0,0,date("m"),date("d")-29,date("Y")));
 
 		$total_calls=0;
 		$total_inbound=0;
@@ -53925,6 +55669,7 @@ exit;
 ##### CALCULATE COMPLETE LEADS #####
 function complete_leads($DB,$link,$dial_statuses,$camp_lists,$call_count_limit,$single_status,$campaign_id)
 {
+global $LOGallowed_campaignsSQL;
 if (isset($camp_lists))
 	{
 	if (strlen($camp_lists)>1)
@@ -53938,8 +55683,8 @@ if (isset($camp_lists))
 			$o=0;
 			while ($Ds_to_print > $o) 
 				{
-				$o++;
 				$Dsql .= "'$Dstatuses[$o]',";
+				$o++;
 				}
 			$Dsql = preg_replace("/,$/","",$Dsql);
 			if (strlen($Dsql) < 2) {$Dsql = "''";}
