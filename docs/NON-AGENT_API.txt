@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2026-05-19
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2026-08-22
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -22,6 +22,7 @@ add_lead - adds a new lead to the vicidial_list table with several fields and op
 update_lead - updates lead information in vicidial_list and associated custom table
 batch_update_lead - updates multiple leads in vicidial_list with single set of field values (limited field options)
 agent_ingroup_info - shows in-group and outbound auto-dial info for logged-in agent
+agent_ingroup_availability - shows a total count of agents available to take calls in selected ingroups
 recording_lookup - looks up recordings based upon user and date or lead_id
 did_log_export - exports all calls inbound to a DID for one day
 agent_stats_export - exports agent statistics for set time period
@@ -235,6 +236,7 @@ Changes:
 260123-1020 - pause_sec fix in agent_stats_export
 260506-1525 - small fix for campaign changes
 260519-1647 - Code updates for PHP8 compatibility, and json output format
+260822-0841 - Added agent_ingroup_availability function
 
 
 API Functions use the 'function' variable
@@ -383,6 +385,58 @@ http://server/vicidial/non_agent_api.php?source=test&function=agent_ingroup_info
 Example responses:
 ERROR: agent_ingroup_info USER DOES NOT HAVE PERMISSION TO GET AGENT INFO - 6666|0
 ERROR: agent_ingroup_info INVALID USER ID - 1255|6666
+
+
+
+
+
+--------------------------------------------------------------------------------
+agent_ingroup_availability - shows a total count of agents available to take calls in selected ingroups,
+    and also a per-ingroup count of the agents currently available to take calls
+
+NOTE: api user for this function must have user_level set to 8 or higher and "View Reports" enabled
+
+REQUIRED FIELDS-
+source -		description of what originated the API call (maximum 20 characters)
+in_groups -		comma-delimited list of ingroups to return counts on
+queue_groups -		comma-delimited list of queue_groups to query for ingroups to return counts on
+			* Either in_groups or queue_groups are required.  Both can be used, but only one of the two is required
+
+OPTIONAL FIELDS-
+display_field -		By default the ingroup breakdown will use the group_id from the vicidial_inbound_groups table as the key values
+			If you set "display_field" to another column in the vicidial_inbound_groups table, the value from that column will
+			be used instead, if there is a value.  If there is no value (or the column doesn't exist) the group_id will be used by default.
+stage -			Set to "json" to return data in JSON format, otherwise the results will be comma-delimited
+summary_name -		When returning results in JSON format, you can set this value to define a key name for the value of total agents available.  Default is "availableCount"
+ingroup_set_name -	When returning results in JSON format, you can set this value to define a key name for the array containing the ingroup count breakdown.  Default is "states"
+
+Example URL strings for API calls:
+http://server/vicidial/non_agent_api.php?user=6666&pass=1234&source=test&function=agent_ingroup_availability&in_groups=INGROUP1,INGROUP2,INGROUP3
+http://server/vicidial/non_agent_api.php?user=6666&pass=1234&source=test&function=agent_ingroup_availability&queue_groups=QUEUEGRP1,QUEUEGRP2&display_field=custom_five&stage=JSON&ingroup_set_name=INGROUPS
+
+
+Example responses:
+ERROR: agent_ingroup_availability USER DOES NOT HAVE PERMISSION TO GET AGENT INFO - 6666|0
+ERROR: NO INGROUPS DEFINED
+ERROR: NO INGROUPS FOUND
+
+Successful responses:
+
+Successful CSV response:
+GROUP,AVAILABLE COUNT
+AGENTS,5
+INGROUP1,5
+INGROUP2,2
+INGROUP3,0
+
+Successful JSON response, using "INGROUPS" as the ingroup_set_name:
+{"availableCount": 5,
+"INGROUPS": {
+"INGROUP1": 5,
+"INGROUP2": 3,
+"INGROUP3": 1
+}
+}
 
 
 
