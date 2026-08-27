@@ -2,7 +2,7 @@
 
 # install.pl version 2.14
 #
-# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 
 # CHANGES
@@ -54,6 +54,7 @@
 # 240704-0830 - Added coldstorage DB entries
 # 250103-1017 - Added ConfBridge conf files updates
 # 250823-1411 - Added stereo recording directories
+# 260826-1919 - Added 'F' keepalive option, for FastAGIServer
 #
 
 ############################################
@@ -236,6 +237,7 @@ if (length($ARGV[0])>1)
 		print "     9 - Timeclock auto-logout\n";
 		print "     C - ConfBridge process, (see the ConfBridge documentation for more info)\n";
 		print "     E - Email processor, (If multi-server system, this must only be on one server)\n";
+		print "     F - FastAGIServer, for faster routing of calls to agents\n";
 		print "     S - SIP Logger (Patched Asterisk 13 or higher required)\n";
 		print "  [--asterisk_version] = set the asterisk version you want to install for\n";
 		print "  [--copy_sample_conf_files] = copies the sample conf files to /etc/asterisk/\n";
@@ -2070,6 +2072,7 @@ else
 			print " 9 - Timeclock auto logout\n";
 			print " C - ConfBridge process, (see the ConfBridge documentation for more info)\n";
 			print " E - Email processor, (If multi-server system, this must only be on one server)\n";
+			print " F - FastAGIServer, for faster routing of calls to agents\n";
 			print " S - SIP Logger (Patched Asterisk 13 or higher required)\n";
 			print "Enter active keepalives or press enter for default: [$VARactive_keepalives] ";
 			$PROMPTactive_keepalives = <STDIN>;
@@ -2711,6 +2714,7 @@ print conf "#  8 - ip_relay (used for blind agent monitoring)\n";
 print conf "#  9 - Timeclock auto logout, (If multi-server system, this must only be on one server)\n";
 print conf "#  C - ConfBridge process, (see the ConfBridge documentation for more info)\n";
 print conf "#  E - Email processor, (If multi-server system, this must only be on one server)\n";
+print conf "#  F - FastAGIServer, for faster routing of calls to agents\n";
 print conf "#  S - SIP Logger (Patched Asterisk 13 or higher required)\n";
 print conf "VARactive_keepalives => $VARactive_keepalives\n";
 print conf "\n";

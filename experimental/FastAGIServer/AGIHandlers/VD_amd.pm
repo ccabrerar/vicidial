@@ -1,0 +1,2448 @@
+#!/usr/bin/perl
+
+package AGIHandlers::VD_amd;
+#
+# VD_amd.pm version 2.14
+#
+# formally VD_amd.agi
+#
+# runs after a call goes through AMD in extensions.conf to send the call on to
+# it's proper destination, or when agent sends to VM message
+#
+# You need to put lines similar to those below in your extensions.conf file:
+#
+# ; VICIDIAL_auto_dialer transfer script AMD with Load Balanced:
+# exten => 8381,1,AGI(agi://127.0.0.1:4577/call_log)
+# exten => 8381,n,AMD(2000,2000,1000,5000,120,50,4,256)
+# exten => 8381,n,AGI(agi://127.0.0.1:4573/VD_amd)
+# exten => 8381,n,Set(AGIARGS=NORMAL,LB,${CONNECTEDLINE(name)})
+# exten => 8381,n,AGI(agi://127.0.0.1:4573/VDAD_ALL_outbound)
+# exten => 8381,n,Hangup()
+#
+# exten => 8320,1,Set(AGIARGS=${EXTEN},YES)
+# exten => 8320,n,AGI(agi://127.0.0.1:4573/VD_amd.agi)
+# exten => 8320,n,Hangup()
+# exten => _8320*,1,Set(AGIARGS=${EXTEN},YES)
+# exten => _8320*,n,AGI(agi://127.0.0.1:4573/VD_amd.agi)
+# exten => _8320*,n,Hangup()
+#
+# To use the new "AMDMINLEN" feature, put a similar line like following line in your outbound dialing dialplan IMMEDIATELY BEFORE the "Dial(" line:
+# exten => _91NXXNXXXXXX,n,Set(__AMDMINLEN=7)
+#	       NOTE: the above variable setting will ensure that this script has run for a minimum of 7 seconds before ending and hanging up
+#
+# Copyright (C) 2026  Matt Florell, Mike Cargile <vicidial@gmail.com>    LICENSE: AGPLv2
+#
+# changes:
+# 60206-1434 - first build
+# 60207-1205 - added database records entries/modifications
+# 60207-1507 - added ability to send AMs to campaign-defined message to leave
+# 60731-1407 - changed to use DBI-DBD::mysql
+#	    - changed to use /etc/astguiclient.conf for configs
+# 60815-1310 - added output options check from database
+# 71118-0252 - compatibility with Asterisk 1.4, added AA and AM statuses
+# 90916-1317 - Changed to audio file playback and TTS playback
+# 90924-1533 - Added answering machine message list_id override option
+# 100205-1025 - Fixed CPD send to message
+# 100327-0819 - Fixed issue with Manual dial treansfers
+# 100430-1606 - Added list_id update to vicidial_log updates
+# 100823-0850 - Changed vac to UPDATE for Auto-alt-dial to function properly
+# 100903-0041 - Changed lead_id max length to 10 digits
+# 101111-1552 - Fixed minor bug in TTS filtering
+# 110324-2334 - Logging changes made
+# 110812-1515 - Added static tts file parsing and replacement
+# 110926-1902 - Added extended logging and additional waitforsilence options
+# 120430-2214 - Converted call to Monitor app to be asterisk 1.8 compatible
+# 130108-1808 - Changes for Asterisk 1.8 compatibility
+# 130210-1113 - Added options for CALLMENU|INGROUP cpd_amd_actions
+# 140312-2110 - Added CALLID as recording filename variable
+# 141211-1634 - Added cpd_unknown_action campaign option
+# 150223-1443 - Added DYN filename prefix for non-TTS dynamic files to be used for am message
+# 151109-1708 - Added new campaign feature allowing for different messages based on answering machine message wildcards
+# 170426-1711 - Fixed double-logging issue
+# 180529-1707 - Fix for missing called_count value in vicidial_log insertions
+# 180919-1831 - Fix for logging issue
+# 180924-1557 - Added called_count as AMM wildcard
+# 190216-0813 - Fix for user-group, in-group and campaign allowed/permissions matching issues
+# 190320-2331 - Added more logging options
+# 190720-1007 - Added Call Quota logging
+# 191017-1051 - Added option for multiple prompts in DYN messages
+# 191029-1243 - Added code for agent-selected message override
+# 200102-0823 - Added vmm_daily_limit campaign setting
+# 200205-1839 - Fix for list override message
+# 200311-0041 - Added amd_agent_route_options feature
+# 200424-1839 - Added STC(settings-container) and LTT(lead temp table) message playback options
+# 220411-0833 - Added FHG(file-http-get) message playback option to download file from website
+# 230412-1023 - Added Code to dispo NOAUDIODATA as ADAIR (Dead Air Auto) with Settings Container option, Issue #1459
+# 230726-0932 - Added manual_vm_status_updates campaign option
+# 240906-2228 - Added AMD minimum length handling to increase short call durations
+# 250924-2152 - Added code for deprecation of "Monitor" application after Asterisk 20
+# 251006-0903 - If recording_dtmf_muting enabled, force use of MixMonitor for recording
+# 260129-1443 - Added code to reinsert missing vicidial_auto_calls record
+# 260527-0902 - Updates for ViciAMD
+# 260620-1430 - Added amd_status_map feature
+# 260806-1118 - Converted to a PM file for the FastAGIServer system
+our $script = 'VD_amd.pm';
+our $build = '260806-1118';
+our $fagi_channel = '';
+our $AGI = '';
+
+sub new {
+	 my ($class, $server, $agi, $handler_conf, $agc_conf, $input_ref) = @_;
+	 return bless {
+		 server => $server,
+		 agi => $agi,
+		 handler_conf => $handler_conf,
+		 agc_conf => $agc_conf,
+		 input => $input_ref
+	 }, $class;
+}
+
+
+sub run {
+	my $self = shift;
+	$AGI = $self->{agi};
+	my $server = $self->{server};
+	my $handler_conf = $self->{handler_conf};
+	my $agc_conf = $self->{agc_conf};
+	my $env = $self->{input};
+
+	# Converted to use the $env->() from the FastAGI Server
+	my $uniqueid	    = $env->{'uniqueid'};
+	my $unique_id	   = $uniqueid;
+	my $priority	    = $env->{'priority'};
+	my $channel	     = $env->{'channel'};
+	my $extension	   = $env->{'extension'};
+	my $type		= $env->{'type'};
+	my $callerid	    = $env->{'callerid'};
+	my $calleridname	= $env->{'calleridname'};
+
+	$fagi_channel = $channel;
+
+	# check if the AGIARGS variable is set and if so use that
+	my $agi_arg_str =  $AGI->get_variable('AGIARGS');
+	my $CLI_exten = '';
+	my $force_playback = '';
+
+	if (!defined $agi_arg_str)
+		{
+		$CLI_exten	= $env->{'arg_1'} // '';
+		$force_playback	= $env->{'arg_2'} // '';
+		}
+	else
+		{
+		my @agi_args = split(/,/, $agi_arg_str);
+		$CLI_exten 	= $agi_args[0] // '';
+		$force_playback	= $agi_args[1] // '';
+		}
+		
+	$A = 1;		# set to 1 for AMD output messages mode
+	$AMD_LOG = 3;	# set to 1 for logfile and 2 forDB log, 3 for both
+	$wav='.wav';
+	$US='_';
+	$recording_dtmf_muting=0;
+
+	($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+	$year = ($year + 1900);
+	$mon++;
+	if ($mon < 10) {$mon = "0$mon";}
+	if ($mday < 10) {$mday = "0$mday";}
+	if ($hour < 10) {$hour = "0$hour";}
+	if ($min < 10) {$min = "0$min";}
+	if ($sec < 10) {$sec = "0$sec";}
+
+	$now_date_epoch = time();
+	$now_date = "$year-$mon-$mday $hour:$min:$sec";
+	$file_day = "$year$mon$mday";
+	$SQL_day = "$year-$mon-$mday";
+
+	# Converted to use the agc_conf from the FastAGI Server
+	my $PATHhome	    = $agc_conf->{'PATHhome'};
+	my $PATHlogs	    = $agc_conf->{'PATHlogs'};
+	my $PATHagi	     = $agc_conf->{'PATHagi'};
+	my $PATHweb	     = $agc_conf->{'PATHweb'};
+	my $PATHsounds	  = $agc_conf->{'PATHsounds'};
+	my $PATHmonitor	 = $agc_conf->{'PATHmonitor'};
+	my $VARserver_ip	= $agc_conf->{'VARserver_ip'};
+	my $VARDB_server	= $agc_conf->{'VARDB_server'};
+	my $VARDB_database      = $agc_conf->{'VARDB_database'};
+	my $VARDB_user	  = $agc_conf->{'VARDB_user'};
+	my $VARDB_pass	  = $agc_conf->{'VARDB_pass'};
+	my $VARDB_port	  = $agc_conf->{'VARDB_port'};
+
+	if (!$VARDB_port)	{$VARDB_port='3306';}
+	if (!$AGILOGfile)	{$AGILOGfile = "$PATHlogs/agiout.$year-$mon-$mday";}
+	if (!$CEPLOGfile)	{$CEPLOGfile = "$PATHlogs/Cepstral.$year-$mon-$mday";}
+
+	use DBI;
+	use Time::Local;
+	use Time::HiRes ('tv_interval','gettimeofday','usleep','sleep');
+	  
+	$dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
+	    or die "Couldn't connect to database: " . DBI->errstr;
+
+	#############################################
+	##### Gather system_settings #####
+	$stmtA = "SELECT sip_event_logging,call_quota_lead_ranking,recording_dtmf_muting,recording_dtmf_detection,amd_status_map FROM system_settings;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$SSsip_event_logging =			$aryA[0];
+		$SScall_quota_lead_ranking =	$aryA[1];
+		$SSrecording_dtmf_muting =		$aryA[2];
+		$SSrecording_dtmf_detection =	$aryA[3];
+		$SSamd_status_map =				$aryA[4];
+		}
+	$sthA->finish();
+	###########################################
+
+	### Grab Server values from the database
+	$stmtA = "SELECT agi_output,asterisk_version,ext_context FROM servers where server_ip = '$VARserver_ip';";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		$AGILOG = '0';
+		@aryA = $sthA->fetchrow_array;
+		$DBagi_output =			$aryA[0];
+		$asterisk_version =		$aryA[1];
+		$DBext_context =		$aryA[2];
+		if ($DBext_context)		{$ext_context = $DBext_context;}
+		if ($DBagi_output =~ /STDERR/)	{$AGILOG = '1';}
+		if ($DBagi_output =~ /FILE/)	{$AGILOG = '2';}
+		if ($DBagi_output =~ /BOTH/)	{$AGILOG = '3';}
+		}
+	$sthA->finish();
+
+	### begin parsing run-time options ###
+	if (length($ARGV[0])>1)
+		{
+		if ($AGILOG) 
+			{$agi_string = "Perl Environment Dump: (build $build)";   &agi_output;}
+		$i=0;
+		while ($#ARGV >= $i)
+			{
+			$args = "$args $ARGV[$i]";
+			if ($AGILOG) {$agi_string = "$i|$ARGV[$i]";   &agi_output;}
+			$i++;
+			}
+		
+		### list of command-line array arguments:
+		@ARGV_vars = split(/-----/, $ARGV[0]);
+		$CLI_exten =		$ARGV_vars[0];
+		$force_playback = 	$ARGV_vars[1];
+		}
+
+
+	### begin parsing run-time options ###
+	if ($AGILOG) {
+		$agi_string = "Perl Environment Dump:";   &agi_output;
+		foreach my $key ( sort keys $env->%* ) {
+			$agi_string = "$key => $env->{$key}\n"; &agi_output;
+		}
+		$agi_string = "AGIARGS Variable = $agi_arg_str\n"; &agi_output;
+	}
+
+	# extension variables if set: 8320*TESTCAMP*1*9998888112*194239
+	if ($extension =~ /\*/)
+		{
+		@EXT_vars = split(/\*/, $extension);
+		$referring_extension =	$EXT_vars[0];
+		$CLIcampaign_id =		$EXT_vars[1];
+		$CLIphone_code = 		$EXT_vars[2];
+		$CLIphone_number =		$EXT_vars[3];
+		$CLIlead_id =			$EXT_vars[4];
+		}
+
+	if ( (length($callerid)>20) && ($callerid =~ /\"\S\S\S\S\S\S\S\S\S\S\S\S\S\S\S\S\S\S/) )
+		{
+		$callerid =~ s/^\"//gi;
+		$callerid =~ s/\".*$//gi;
+	#	### set the callerid to the ACQS value(calleridname)
+	#	print "SET CALLERID $callerid\n";
+	#	checkresult($result);
+	#	print STDERR "callerID changed: $callerid\n";
+		}
+	if ( (
+	(length($calleridname)>5) && ( (!$callerid) or ($callerid =~ /unknown|private|00000000/i) or ($callerid =~ /5551212/) )
+	) or ( (length($calleridname)>17) && ($calleridname =~ /\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/) ) )
+		{
+		$callerid = $calleridname;
+	#	### set the callerid to the ACQS value(calleridname)
+	#	print "SET CALLERID $callerid\n";
+	#	checkresult($result);
+	#	print STDERR "callerID changed: $callerid\n";
+		}
+
+
+	if ($AGILOG) {$agi_string = "AGI Environment Dump:";   &agi_output;}
+
+	foreach $i (sort keys %AGI) 
+		{
+		if ($AGILOG) {$agi_string = " -- $i = $AGI{$i}";   &agi_output;}
+		}
+
+	if ($AGILOG) {$agi_string = "AGI Variables: |$unique_id|$channel|$extension|$type|$callerid|";   &agi_output;}
+
+
+	$VDADcampaign='';
+	$VDADphone='';
+	$VDADphone_code='';
+	$ACTIVEamd_status_map = $SSamd_status_map;
+
+	$callerid =~ s/\"//gi;
+	$callerid =~ s/ .*//gi;
+	$CIDlead_id = $callerid;
+	$CIDlead_id = substr($CIDlead_id, 10, 10);
+	$CIDlead_id = ($CIDlead_id + 0);
+	if ( ($CLIlead_id > 0) && ($CIDlead_id < 1) ) {$CIDlead_id = $CLIlead_id;}
+	$VD_lead_id = $CIDlead_id;
+
+	if ($AGILOG) {$agi_string = "+++++ VD amd START : |$CIDlead_id|$now_date|$AST_ver|$priority|$calleridname|";   &agi_output;}
+
+
+	if ( ($channel =~ /Local/i) && ($AST_ver !~ /^1\.0\.8|^1\.0\.9/) )
+		{
+		if ($AGILOG) {$agi_string = "+++++ VDAD START LOCAL CHANNEL: EXITING- $priority";   &agi_output;}
+		if ($priority > 2) {sleep(1);}
+		exit;
+		}
+
+
+	$AMDSTATUS = $AGI->get_variable(AMDSTATUS);
+	$AMDCAUSE =	$AGI->get_variable(AMDCAUSE);
+	$AMDSTATS =	$AGI->get_variable(AMDSTATS);
+	$AMDMINLEN = $AGI->get_variable(AMDMINLEN);
+	# sanitize dialplan variables
+	$AMDSTATUS =~ s/\'|\"|\\\\|\\\|\\|\\;|\\\;|\;|;|\r|\n//gi;
+	$AMDCAUSE =~ s/\'|\"|\\\\|\\\|\\|\\;|\\\;|\;|;|\r|\n//gi;
+	$AMDSTATS =~ s/\'|\"|\\\\|\\\|\\|\\;|\\\;|\;|;|\r|\n//gi;
+	$AMDMINLEN =~ s/\'|\"|\\\\|\\\|\\|\\;|\\\;|\;|;|\r|\n//gi;
+
+	$AMDRESPONSE = $AMDCAUSE;
+	$AMDRESPONSE =~ s/-.*//gi;
+	$run_time = $AMDSTATS;
+	$run_time =~ s/-.*//gi;
+	if (length($run_time) < 1) {$run_time=0;}
+
+	if ($A)
+		{
+		if ($AGILOG) {$agi_string = "AAAAA AMD results: |$AMDSTATUS|$AMDCAUSE|$AMDSTATS|";   &agi_output;}
+		}
+
+	# Asterisk 1.2.X
+	# AAAAA AMD results: |AMD_PERSON|AMD_HUMAN-300-300|
+	# AAAAA AMD results: |AMD_MACHINE|AMD_LONGGREETING-1500-1500|
+	# Asterisk 1.4.X:
+	# AAAAA AMD results: |HUMAN|HUMAN-1000-1000|0000000000| 
+	# AAAAA AMD results: |MACHINE|MAXWORDS-4-4|0000000000| 
+
+	if ( ($AMD_LOG == 1) || ($AMD_LOG == 3) )
+		{
+		open(Lout, ">>$PATHlogs/AMD_log".$file_day.".txt")
+				|| die "Can't open $PATHlogs/AMD_log".$file_day.".txt: $!\n";
+		print Lout "$now_date|$VD_lead_id|      |$AMDSTATUS|$AMDCAUSE|$calleridname|$calleridnum|\n";
+		close(Lout);
+		}
+	if ( ($AMD_LOG == 2) || ($AMD_LOG == 3) )
+		{
+		if ($AGILOG) {$agi_string = "AMD logging result to DB: $uniqueid $calleridname $VD_lead_id $AMDSTATUS $AMDCAUSE";   &agi_output;}
+		$stmtA = "INSERT INTO vicidial_amd_log (uniqueid,lead_id,call_date,caller_code,channel,server_ip,AMDSTATUS,AMDRESPONSE,AMDCAUSE,run_time,AMDSTATS) values('$uniqueid','$VD_lead_id','$now_date','$calleridname','$channel','$VARserver_ip','$AMDSTATUS','$AMDRESPONSE','$AMDCAUSE','$run_time','$AMDSTATS')";
+			if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+		$affected_rows = $dbhA->do($stmtA);
+		}
+
+
+	########## FIND vicidial_auto_calls record ##########
+	$stmtA = "SELECT campaign_id,phone_code,phone_number,uniqueid,server_ip,status FROM vicidial_auto_calls where callerid='$callerid' order by auto_call_id desc limit 1;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArowsVAC=$sthA->rows;
+	if ($AGILOG) {$agi_string = "$sthArowsVAC|$stmtA|";   &agi_output;}
+	if ($sthArowsVAC > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$VD_campaign_id =	$aryA[0];
+		$VD_phone_code =	$aryA[1];
+		$VD_phone_number =	$aryA[2];
+		$VD_uniqueid =		$aryA[3];
+		$VD_server_ip =		$aryA[4];
+		$VD_status =		$aryA[5];
+		$sthA->finish();
+		}
+	else
+		{
+		if ($AGILOG) {$agi_string = "--    NO VDAC FOUND!!!!!: $callerid";   &agi_output;}
+
+		$stmtA = "SELECT cmd_line_k,entry_date,cmd_line_j FROM vicidial_manager where callerid='$callerid' and action='Originate' order by entry_date,cmd_line_k desc limit 1;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			if ($AGILOG) {$agi_string = "VDAC-data|$aryA[0]|$aryA[1]|$aryA[2]|";   &agi_output;}
+			$VDADnotes =			$aryA[0];
+			$VDADnotes =~ s/VDACnote: //gi;
+			@VDAC_ARY = split(/\|/,$VDADnotes);
+			$VD_campaign_id =		$VDAC_ARY[0];
+			$VDADlead_id =			$VDAC_ARY[1];
+			$VD_phone_code =		$VDAC_ARY[2];
+			$VD_phone_number =		$VDAC_ARY[3];
+			$VDADorigin	=			$VDAC_ARY[4];
+			$VDADcall_time =		$aryA[1];
+			$VDADalt_dial =			$VDAC_ARY[5];
+			$VDADqueue_priority =	$VDAC_ARY[6];
+			$VD_uniqueid =		$uniqueid;
+			$VD_server_ip =		$VARserver_ip;
+			$VD_status =		'LIVE';
+			$sthA->finish();
+			$sthArowsVAC=1;
+
+			if ( (length($CLIcampaign_id) > 1) && (length($VD_campaign_id) < 1) )
+				{$VD_campaign_id = $CLIcampaign_id;}
+			if ( (length($CLIphone_code) > 1) && (length($VD_phone_code) < 1) )
+				{$VD_phone_code = $CLIphone_code;}
+			if ( (length($CLIphone_number) > 1) && (length($VD_phone_number) < 1) )
+				{$VD_phone_number = $CLIphone_number;}
+			if (length($VD_phone_code) < 1) {$VD_phone_code=1;}
+			if (length($VDADorigin) < 1) {$VDADorigin='OUT';}
+			if (length($VDADqueue_priority) < 1) {$VDADqueue_priority=50;}
+
+			$stmtA = "INSERT INTO vicidial_auto_calls (server_ip,campaign_id,status,lead_id,uniqueid,callerid,channel,phone_code,phone_number,call_time,call_type,stage,queue_priority)  values('$VARserver_ip','$VD_campaign_id','LIVE','$VD_lead_id','$uniqueid','$callerid','$channel','$VD_phone_code','$VD_phone_number','$VDADcall_time','$VDADorigin','LIVE-0','$VDADqueue_priority')";
+			$affected_rows = $dbhA->do($stmtA);
+			if ($AGILOG) {$agi_string = "$affected_rows|VDAC-reinsert|$stmtA|";   &agi_output;}
+			}
+		else
+			{
+			if ($AGILOG) {$agi_string = "--    NO VDM FOUND!!!!!!!!!!: $callerid";   &agi_output;}
+			}
+		}
+
+	if ( (length($CLIcampaign_id) > 1) && (length($VD_campaign_id) < 1) )
+		{$VD_campaign_id = $CLIcampaign_id;}
+	if ( (length($CLIphone_code) > 1) && (length($VD_phone_code) < 1) )
+		{$VD_phone_code = $CLIphone_code;}
+	if ( (length($CLIphone_number) > 1) && (length($VD_phone_number) < 1) )
+		{$VD_phone_number = $CLIphone_number;}
+
+	$amd_agent_route_options='';
+	$AMDcontainer_entry='';
+	$AMD_agent_send=0;
+	$NOAUDIODATA_hangup_enabled=0;
+	$FAX_hangup_enabled=0;
+	$FAS_hangup_enabled=0;
+	$VL_status_updates=1;
+	$amd_status_map_CONFIRMED='';
+	$KEEP_AL_AM_STATUSES_enabled=0;
+	$statusAA='AA';
+	$statusAL='AL';
+	$statusAM='AM';
+	$statusAMDXFR='AMDXFR';
+
+	$stmtA = "SELECT amd_agent_route_options,manual_vm_status_updates,amd_status_map FROM vicidial_campaigns where campaign_id='$VD_campaign_id' limit 1;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($AGILOG) {$agi_string = "$sthArows|$stmtA|";   &agi_output;}
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$amd_agent_route_options =	$aryA[0];
+		$manual_vm_status_updates =	$aryA[1];
+		$amd_status_map =			$aryA[2];
+		$sthA->finish();
+		}
+	if ( ($manual_vm_status_updates =~ /DISABLED/i) && ($calleridname =~ /^M|^Y|^DC/) ) 
+		{$VL_status_updates=0;}
+	if ( ($amd_status_map !~ /^DISABLED$/i) && (length($amd_status_map) > 0) ) 
+		{$ACTIVEamd_status_map = $amd_status_map;}
+	if ( ($ACTIVEamd_status_map !~ /^DISABLED$/i) && (length($ACTIVEamd_status_map) > 0) ) 
+		{
+		$stmtA = "SELECT container_entry FROM vicidial_settings_containers where container_id='$ACTIVEamd_status_map' limit 1;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArowsVSC=$sthA->rows;
+		if ($AGILOG) {$agi_string = "$sthArowsVSC|$stmtA|";   &agi_output;}
+		if ($sthArowsVSC > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$AMDcontainer_entry =	$aryA[0];
+			$sthA->finish();
+			}
+		if (length($AMDcontainer_entry) > 3) 
+			{
+			@AMDcontainer_lines = split(/\n/,$AMDcontainer_entry);
+			$c=0;
+			foreach(@AMDcontainer_lines)
+				{
+				$AMDcontainer_lines[$c] =~ s/;.*|\r|\t| //gi;
+				if ( (length($AMDcontainer_lines[$c]) > 3) && ($AMDcontainer_lines[$c] =~ /,/) && ($AMDcontainer_lines[$c] =~ /=>/) )
+					{
+					@AMDmap = split(/=>/,$AMDcontainer_lines[$c]);
+					@AMDline = split(/,/,$AMDmap[0]);
+
+					# check for wildcard for amdstatus first
+					if ( ($AMDline[0] =~ /^$AMDSTATUS$/i) && ($AMDline[1] =~ /^\*$/i) ) 
+						{
+						$amd_status_map_CONFIRMED = $AMDmap[1];
+						if ($AGILOG) {$agi_string = "AMD status map WILDCARD MATCH: $c|$amd_status_map_CONFIRMED|   $AMDline[0]($AMDSTATUS)|$AMDline[1]($AMDRESPONSE)|";   &agi_output;}
+						}
+
+					# check for both amdstatus and amdcause
+					if ( ($AMDline[0] =~ /^$AMDSTATUS$/i) && ($AMDline[1] =~ /^$AMDRESPONSE$/i) ) 
+						{
+						$amd_status_map_CONFIRMED = $AMDmap[1];
+						if ($AGILOG) {$agi_string = "AMD status map EXACT MATCH: $c|$amd_status_map_CONFIRMED|   $AMDline[0]($AMDSTATUS)|$AMDline[1]($AMDRESPONSE)|";   &agi_output;}
+						}
+					}
+
+				if ($AMDcontainer_lines[$c] =~ /KEEP-AL-AM-STATUSES/) 
+					{
+					$KEEP_AL_AM_STATUSES_enabled++;
+					}
+				$c++;
+				}
+			if (length($amd_status_map_CONFIRMED) > 0) 
+				{
+				$statusAA = $amd_status_map_CONFIRMED;
+				if ($KEEP_AL_AM_STATUSES_enabled < 1) 
+					{
+					$statusAL = $amd_status_map_CONFIRMED;
+					$statusAM = $amd_status_map_CONFIRMED;
+					$statusAMDXFR = $amd_status_map_CONFIRMED;
+					}
+				}
+			}
+		}
+
+	if ($amd_agent_route_options =~ /ENABLED/i) 
+		{
+		$stmtA = "SELECT container_entry FROM vicidial_settings_containers where container_id='AMD_AGENT_OPT_$VD_campaign_id' limit 1;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArowsVSC=$sthA->rows;
+		if ($AGILOG) {$agi_string = "$sthArowsVSC|$stmtA|";   &agi_output;}
+		if ($sthArowsVSC > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$AMDcontainer_entry =	$aryA[0];
+			$sthA->finish();
+			}
+		if (length($AMDcontainer_entry) > 3) 
+			{
+			@AMDcontainer_lines = split(/\n/,$AMDcontainer_entry);
+			$c=0;
+			foreach(@AMDcontainer_lines)
+				{
+				$AMDcontainer_lines[$c] =~ s/;.*|\r|\t| //gi;
+				if ( (length($AMDcontainer_lines[$c]) > 3) && ($AMDcontainer_lines[$c] =~ /,/) )
+					{
+					@AMDline = split(/,/,$AMDcontainer_lines[$c]);
+					if ( ($AMDline[0] =~ /^$AMDSTATUS$/i) && ($AMDline[1] =~ /^$AMDRESPONSE$/i) ) 
+						{
+						$AMD_agent_send++;
+						if ($AGILOG) {$agi_string = "AMD Agent send MATCH: $c|$AMDline[0]($AMDSTATUS)|$AMDline[1]($AMDRESPONSE)|";   &agi_output;}
+						}
+					}
+				if ($AMDcontainer_lines[$c] =~ /NOAUDIODATA-Hangup-ENABLED/) 
+					{
+					$NOAUDIODATA_hangup_enabled++;
+					}
+				if ($AMDcontainer_lines[$c] =~ /FAX-Hangup-ENABLED/) 
+					{
+					$FAX_hangup_enabled++;
+					}
+				if ($AMDcontainer_lines[$c] =~ /FAS-Hangup-ENABLED/) 
+					{
+					$FAS_hangup_enabled++;
+					}
+				$c++;
+				}
+			}
+		}
+
+
+	##################################################################################
+	########## AMD says it's a person so exit and go on to transfer scripts ##########
+	if ( ( ($AMDSTATUS =~ /PERSON|HUMAN|NOTSURE|HANGUP|CALLSCREEN/) && ($force_playback !~ /YES/) && (length($AMDcontainer_entry) < 4) ) || ( ($AMD_agent_send > 0) && (length($AMDcontainer_entry) > 3) ) )
+		{
+		if ($A) 
+			{
+			if ($AGILOG) {$agi_string = "      AMD exiting";   &agi_output;}
+			}
+		exit;
+		}
+
+	else
+		{
+		################################################################################
+		########## AMD says it's a machine so modify statuses and hangup call ##########
+		########## or play back a message on AMs  ##########
+
+		$AGI->stream_file('sip-silence');
+		$AGI->stream_file('sip-silence');
+
+		if ($sthArowsVAC < 1)
+			{
+			########## FIND vicidial_log_extended record if no vicidial_auto_calls record found ##########
+			$stmtA = "SELECT uniqueid,server_ip FROM vicidial_log_extended where caller_code='$callerid' order by call_date desc limit 1;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			if ($AGILOG) {$agi_string = "$sthArows|$stmtA|";   &agi_output;}
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$VD_uniqueid		= $aryA[0];
+				$VD_server_ip		= $aryA[1];
+				$sthA->finish();
+				}
+			}
+		$VD_uniqueidSQL = '';
+		if (length($VD_uniqueid) > 1)
+			{
+			$EVD_uniqueid = $VD_uniqueid;
+			$EVD_uniqueid =~ s/\.\d+$//gi;
+			$VD_uniqueidSQL = " or (uniqueid LIKE \"$EVD_uniqueid%\")";
+			}
+
+		if ($AMDSTATUS !~ /CPD/)
+			{
+			########## UPDATE vicidial_list ##########
+			$stmtA = "UPDATE vicidial_list set status='$statusAA' where lead_id = '$VD_lead_id';";
+				if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+			if ($VL_status_updates > 0) 
+				{
+				$affected_rows = $dbhA->do($stmtA);
+				if ($AGILOG) {$agi_string = "--    VDAD vicidial_list update: |$affected_rows|$VD_lead_id";   &agi_output;}
+				}
+			else
+				{
+				if ($AGILOG) {$agi_string = "--    VDAD vicidial_list update DISABLED: |$calleridname|$VD_lead_id|$VL_status_updates|$manual_vm_status_updates|";   &agi_output;}
+				}
+			}
+
+		### find list_id for this lead
+		$stmtA = "SELECT list_id,called_count from vicidial_list where lead_id = '$VD_lead_id';";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArowsL=$sthA->rows;
+		if ($sthArowsL > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$VD_list_id =		$aryA[0];
+			$VD_called_count =	$aryA[1];
+			}
+		$sthA->finish();
+
+		########## UPDATE vicidial_auto_calls entry ##########
+		$stmtA = "UPDATE vicidial_auto_calls set status='XFER' where callerid='$callerid' order by auto_call_id desc limit 1;";
+			$affected_rows = $dbhA->do($stmtA);
+		if ($AGILOG) {$agi_string = "--    VDAC record updated: |$affected_rows|   |$VD_lead_id|$uniqueid|$callerid|$VD_status|$VD_server_ip";   &agi_output;}
+
+		########## FIND AND UPDATE vicidial_log ##########
+		$Euniqueid=$uniqueid;
+		$Euniqueid =~ s/\.\d+$//gi;
+		$stmtA = "SELECT start_epoch,uniqueid,called_count FROM vicidial_log where lead_id='$VD_lead_id' and ( (uniqueid LIKE \"$Euniqueid%\") $VD_uniqueidSQL ) order by call_date desc limit 10;";
+			if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		$epc_countCUSTDATA=0;
+		$first_uniqueid='';
+		while ($sthArows > $epc_countCUSTDATA)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$VD_start_epoch		= $aryA[0];
+			$uniqueid			= $aryA[1];
+			$DB_called_count	= $aryA[2];
+			if ($epc_countCUSTDATA < 1) {$first_uniqueid = $aryA[1];}
+			$epc_countCUSTDATA++;
+			}
+		$sthA->finish();
+
+		if ($epc_countCUSTDATA > 1)
+			{
+			$stmtA = "DELETE from vicidial_log where uniqueid='$first_uniqueid' and lead_id='$VD_lead_id' limit 1;";
+				if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+			$affected_rows = $dbhA->do($stmtA);
+			if ($AGILOG) {$agi_string = "--    VDAD vicidial_log duplicate delete: |$affected_rows|$uniqueid|$first_uniqueid|$VD_lead_id|$DB_called_count|";   &agi_output;}
+			}
+
+		if (!$epc_countCUSTDATA)
+			{
+			if ($AGILOG) {$agi_string = "no VDL record found: $uniqueid $calleridname $VD_lead_id $uniqueid";   &agi_output;}
+			$end_epoch = ($now_date_epoch + 3);
+			$stmtA = "INSERT INTO vicidial_log (uniqueid,lead_id,campaign_id,call_date,start_epoch,status,phone_code,phone_number,user,processed,length_in_sec,end_epoch,list_id,called_count) values('$uniqueid','$VD_lead_id','$VD_campaign_id','$now_date','$now_date_epoch','$statusAA','$VD_phone_code','$VD_phone_number','VDAD','N','3','$end_epoch','$VD_list_id','$VD_called_count')";
+				if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+			$affected_rows = $dbhA->do($stmtA);
+			}
+		else
+			{
+			$VD_seconds = ($now_date_epoch - $VD_start_epoch);
+			$stmtA = "UPDATE vicidial_log set status='$statusAA',end_epoch='$now_date_epoch',length_in_sec='$VD_seconds',list_id='$VD_list_id',called_count='$VD_called_count' where uniqueid='$uniqueid' and  lead_id='$VD_lead_id' order by call_date desc limit 1;";
+				if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+			$affected_rows = $dbhA->do($stmtA);
+			if ($AGILOG) {$agi_string = "--    VDAD vicidial_log update: |$affected_rows|$uniqueid|$DB_called_count|$VD_called_count|";   &agi_output;}
+			}
+
+		$selected_campaign='';
+		### Grab vmail forward message values from the database
+		$stmtA = "SELECT am_message_exten,amd_send_to_vmx,waitforsilence_options,survey_recording,campaign_rec_filename,cpd_amd_action,amd_inbound_group,amd_callmenu,cpd_unknown_action,campaign_id,am_message_wildcards,call_quota_lead_ranking,vmm_daily_limit,manual_vm_status_updates,recording_dtmf_muting FROM vicidial_campaigns where campaign_id = '$VD_campaign_id' limit 1;";
+			if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$DB_am_message_exten =			$aryA[0];
+			$DB_amd_send_to_vmx =			$aryA[1];
+			$waitforsilence_options =		$aryA[2];
+			$survey_recording =				$aryA[3];
+			$campaign_rec_filename =		$aryA[4];
+			$cpd_amd_action =				$aryA[5];
+			$amd_inbound_group =			$aryA[6];
+			$amd_callmenu =					$aryA[7];
+			$cpd_unknown_action =			$aryA[8];
+			$selected_campaign =			$aryA[9];
+			$am_message_wildcards =			$aryA[10];
+			$VD_call_quota_lead_ranking =	$aryA[11];
+			$vmm_daily_limit =				$aryA[12];
+			$manual_vm_status_updates =		$aryA[13];
+			$recording_dtmf_muting =		$aryA[14];
+			$sthA->finish();
+			}
+		else
+			{
+			$sthA->finish();
+			### Grab vmail forward message values from the database
+			$SQL_group_id=$VD_campaign_id;   $SQL_group_id =~ s/_/\\_/gi;
+			$stmtA = "SELECT am_message_exten,amd_send_to_vmx,waitforsilence_options,survey_recording,campaign_rec_filename,cpd_amd_action,amd_inbound_group,amd_callmenu,cpd_unknown_action,campaign_id,am_message_wildcards,vmm_daily_limit,manual_vm_status_updates,recording_dtmf_muting FROM vicidial_campaigns where closer_campaigns LIKE \"% $SQL_group_id %\" order by active,campaign_id limit 1;";
+				if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$DB_am_message_exten =			$aryA[0];
+				$DB_amd_send_to_vmx =			$aryA[1];
+				$waitforsilence_options =		$aryA[2];
+				$survey_recording =				$aryA[3];
+				$campaign_rec_filename =		$aryA[4];
+				$cpd_amd_action =				$aryA[5];
+				$amd_inbound_group =			$aryA[6];
+				$amd_callmenu =					$aryA[7];
+				$cpd_unknown_action =			$aryA[8];
+				$selected_campaign =			$aryA[9];
+				$am_message_wildcards =			$aryA[10];
+				$VD_call_quota_lead_ranking =	'DISABLED';
+				$vmm_daily_limit =				$aryA[12];
+				$manual_vm_status_updates =		$aryA[13];
+				$recording_dtmf_muting =		$aryA[14];
+				$sthA->finish();
+				if ($AGILOG) {$agi_string = "--    Inbound call, settings gathered from: |$selected_campaign|$DB_am_message_exten|$DB_amd_send_to_vmx|$waitforsilence_options";   &agi_output;}
+				}
+			else
+				{$sthA->finish();}
+			}
+
+		if ( ($manual_vm_status_updates =~ /DISABLED/i) && ($calleridname =~ /^M|^Y|^DC/) ) 
+			{$VL_status_updates=0;}
+
+		if ( ($SScall_quota_lead_ranking > 0) && ($VD_call_quota_lead_ranking !~ /^DISABLED$/i) )
+			{
+			$temp_status = $statusAA;
+			&call_quota_logging;
+			}
+
+		$vmm_daily_count=0;
+		$vmm_daily_played=0;
+		if ($vmm_daily_limit > 0)
+			{
+			$stmtA = "SELECT vmm_count,vmm_played FROM vicidial_vmm_counts where lead_id = '$VD_lead_id' and call_date='$SQL_day';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$vmm_daily_count	= $aryA[0];
+				$vmm_daily_played	= $aryA[1];
+				$sthA->finish();
+				}
+			if ($AGILOG) {$agi_string = "VVMM counts: $vmm_daily_count|$vmm_daily_played|$VD_lead_id|$SQL_day|";   &agi_output;}
+			}
+
+		### if not a CPD message, log to the extended log
+		if ($AMDSTATUS !~ /CPD/)
+			{
+			$VLEcount=0;
+			$stmtA = "SELECT count(*) FROM vicidial_log_extended where uniqueid='$uniqueid';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$VLEcount	= $aryA[0];
+				$sthA->finish();
+				}
+			if ($AGILOG) {$agi_string = "$VLEcount|$stmtA|";   &agi_output;}
+
+			if ($VLEcount < 1)
+				{
+				$stmtA = "INSERT INTO vicidial_log_extended set uniqueid='$uniqueid',server_ip='$VARserver_ip',call_date='$now_date',lead_id = '$VD_lead_id',caller_code='$callerid',custom_call_id='';";
+				$affected_rows = $dbhA->do($stmtA);
+					if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+				if ($AGILOG) {$agi_string = "--  VDAD vicidial_log_extended insert: |$affected_rows|\n|$stmtA|";   &agi_output;}
+				}
+			}
+
+		if ($survey_recording =~ /Y_WITH_AMD/)
+			{
+			$RLcount=0;
+			if ($AMDSTATUS =~ /CPD/)
+				{
+				$stmtA = "SELECT count(*) FROM recording_log where vicidial_id='$uniqueid' and lead_id='$VD_lead_id' and user='VDAD';";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArows=$sthA->rows;
+				if ($sthArows > 0)
+					{
+					@aryA = $sthA->fetchrow_array;
+					$RLcount	= $aryA[0];
+					}
+				$sthA->finish();
+				if ($AGILOG) {$agi_string = "$RLcount|$stmtA|";   &agi_output;}
+				}
+			if ($RLcount < 1)
+				{
+				# get date/time
+				($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+				$year = ($year + 1900);
+				$Tyear = ($year - 2000);
+				$mon++;
+				if ($mon < 10)	{$mon = "0$mon";}
+				if ($mday < 10) {$mday = "0$mday";}
+				if ($hour < 10) {$hour = "0$hour";}
+				if ($min < 10)	{$min = "0$min";}
+				if ($sec < 10)	{$sec = "0$sec";}
+
+				$now_date_epoch = time();
+				$now_date = "$year-$mon-$mday $hour:$min:$sec";
+				$recdate = "$year$mon$mday-$hour$min$sec";
+				$tinydate = "$Tyear$mon$mday$hour$min$sec";
+
+				if ($campaign_rec_filename =~ /VENDORLEADCODE/) 
+					{
+					$stmtA = "SELECT vendor_lead_code FROM vicidial_list where lead_id='$VD_lead_id';";
+					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+					$sthArows=$sthA->rows;
+						if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+					if ($sthArows > 0)
+						{
+						@aryA = $sthA->fetchrow_array;
+						$vendor_lead_code =	$aryA[0];
+						}
+					$sthA->finish();
+					}
+
+				$campaign_rec_filename =~ s/CAMPAIGN/$VD_campaign_id/gi;
+				$campaign_rec_filename =~ s/INGROUP/$VD_campaign_id/gi;
+				$campaign_rec_filename =~ s/CUSTPHONE/$VD_phone_number/gi;
+				$campaign_rec_filename =~ s/FULLDATE/$recdate/gi;
+				$campaign_rec_filename =~ s/TINYDATE/$tinydate/gi;
+				$campaign_rec_filename =~ s/EPOCH/$now_date_epoch/gi;
+				$campaign_rec_filename =~ s/AGENT/VDAD/gi;
+				$campaign_rec_filename =~ s/VENDORLEADCODE/$vendor_lead_code/gi;
+				$campaign_rec_filename =~ s/LEADID/$VD_lead_id/gi;
+				$campaign_rec_filename =~ s/CALLID/$callerid/gi;
+				$campaign_rec_filename =~ s/\"|\'//gi;
+				$campaign_rec_filename =~ s/ //gi;
+
+				%ast_ver_str = parse_asterisk_version($asterisk_version);
+				if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6))
+					{
+					$AGI->exec("Monitor wav|/var/spool/asterisk/monitor/MIX/AMD$campaign_rec_filename");
+					}
+				else
+					{
+					if ( ($ast_ver_str{major} > 20) || ($SSrecording_dtmf_muting > 0) )
+						{
+						# Deprecation of "Monitor" application after Asterisk 20
+						$AGI->exec("MixMonitor",",r($PATHmonitor/MIX/AMD$campaign_rec_filename-in.wav)t($PATHmonitor/MIX/AMD$campaign_rec_filename-out.wav)");
+						}
+					else
+						{
+						$AGI->exec("Monitor","wav,/var/spool/asterisk/monitor/MIX/AMD$campaign_rec_filename");
+						}
+					}
+
+				### insert record into recording_log table ###
+				$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,length_in_sec,filename,lead_id,user,location,vicidial_id) values('$channel','$VARserver_ip','$VD_phone_number','$now_date','$now_date_epoch','0','AMD$campaign_rec_filename','$VD_lead_id','VDAD','AMD$campaign_rec_filename','$uniqueid');";
+				$SRaffected_rows = $dbhA->do($stmtA);
+
+				$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
+				$sthA = $dbhA->prepare($stmtB) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArows=$sthA->rows;
+				if ($sthArows > 0)
+					{
+					@aryA = $sthA->fetchrow_array;
+					$recording_id = $aryA[0];
+					}
+				$sthA->finish();
+
+				if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+					{
+					if ($SSrecording_dtmf_muting > 1) 
+						{
+						$recording_dtmf_muting = $SSrecording_dtmf_muting;
+						}
+					}
+
+				### insert record into recording_live table ###
+				$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','MONO_LEGACY_AMD','$VARserver_ip','$now_date','$channel','AMD$campaign_rec_filename','$VD_lead_id','VDAD','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
+				$rLIVEaffected_rows = $dbhA->do($stmtD);
+
+				if ($AGILOG) {$agi_string = "--    AMD RECORDING STARTED : |$SRaffected_rows|$rLIVEaffected_rows|$recording_id|AMD$campaign_rec_filename|$stmtA|";   &agi_output;}
+				}
+			}
+
+		### check for list_id override
+		if (length($VD_list_id) > 0)
+			{
+			$am_message_exten_override='';
+			### gather list_id overrides
+			$stmtA = "SELECT am_message_exten_override FROM vicidial_lists where list_id='$VD_list_id';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArowsL=$sthA->rows;
+			if ($sthArowsL > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$am_message_exten_override =	$aryA[0];
+				if ($AGILOG) {$agi_string = "--    AMD Check for List Override: |$DB_am_message_exten|$am_message_exten_override|$VD_list_id|";   &agi_output;}
+				if (length($am_message_exten_override) > 0)
+					{$DB_am_message_exten = $am_message_exten_override;}
+				}
+			$sthA->finish();
+			}
+
+		### Check for agent-selected message override
+		$stmtA = "SELECT vm_message,user FROM vicidial_agent_vmm_overrides where caller_code='$callerid' order by call_date desc limit 1;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArowsL=$sthA->rows;
+		if ($sthArowsL > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			if ($AGILOG) {$agi_string = "--    AMD user override: |$aryA[0]|$aryA[1]|$DB_am_message_exten|$am_message_exten_override|";   &agi_output;}
+			$am_message_exten_override =	$aryA[0];
+			if (length($am_message_exten_override) > 0)
+				{$DB_am_message_exten = $am_message_exten_override;}
+			}
+		$sthA->finish();
+
+		if ($AGILOG) {$agi_string = "--    AMD campaign values: |$VD_campaign_id|$DB_am_message_exten|$DB_amd_send_to_vmx|$vmm_daily_limit|";   &agi_output;}
+
+		### if campaign daily limit is set and the number of logged times today has been reached, then hangup call
+		if ( ($vmm_daily_limit > 0) && ($vmm_daily_count >= $vmm_daily_limit) ) 
+			{
+			if ($AGILOG) {$agi_string = "--    AMD VMM Limit Reached, exiting: ($vmm_daily_count >= $vmm_daily_limit)   $callerid ($vmm_daily_played)";   &agi_output;}
+			$dbhA->disconnect();
+
+			if ( defined $AMDMINLEN) { amd_end_sleep($AMDMINLEN, $now_date_epoch);  }
+
+			$AGI->hangup($channel);
+
+			exit;
+			}
+
+		if ( ( ($AMDRESPONSE =~ /^NOAUDIODATA/) && ($NOAUDIODATA_hangup_enabled > 0) ) || ( ($AMDRESPONSE =~ /^FAX/) && ($FAX_hangup_enabled > 0) ) || ( ($AMDRESPONSE =~ /^FAS/) && ($FAS_hangup_enabled > 0) ) )
+			{
+			$hangup_status='ADAIR';
+			if ( ($AMDRESPONSE =~ /^FAX/) && ($FAX_hangup_enabled > 0) )
+				{$hangup_status='FAXHU';}
+			if ( ($AMDRESPONSE =~ /^FAS/) && ($FAS_hangup_enabled > 0) )
+				{$hangup_status='FASHU';}
+			if (length($amd_status_map_CONFIRMED) > 0) 
+				{$hangup_status = $amd_status_map_CONFIRMED;}
+			### If No Audio or a Fax or a False Answer, let's update lead, log and hangup. 
+			$stmtA = "UPDATE vicidial_log set status='$hangup_status' where uniqueid='$uniqueid' and lead_id='$VD_lead_id' order by call_date desc limit 1;";
+			    if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+			$affected_rows = $dbhA->do($stmtA);
+			if ($AGILOG) {$agi_string = "--    VDAD vicidial_log $hangup_status update: |$affected_rows|$uniqueid|";   &agi_output;}
+			
+			$stmtA = "UPDATE vicidial_list set status='$hangup_status' where lead_id='$VD_lead_id';";
+			    if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+			if ($VL_status_updates > 0) 
+				{
+				$affected_rows = $dbhA->do($stmtA);
+				if ($AGILOG) {$agi_string = "--    VDAD vicidial_list $hangup_status update: |$affected_rows|$uniqueid";   &agi_output;}
+				}
+			else
+				{
+				if ($AGILOG) {$agi_string = "--    VDAD vicidial_list $hangup_status update DISABLED: |$calleridname|$uniqueid|$VL_status_updates|$manual_vm_status_updates|";   &agi_output;}
+				}
+
+			$dbhA->disconnect();
+
+			if ( defined $AMDMINLEN) { amd_end_sleep($AMDMINLEN, $now_date_epoch);	}
+		
+			$AGI->hangup($channel);
+			
+			exit;		
+			}
+
+		if ( ( ($DB_amd_send_to_vmx =~ /Y/) || ($force_playback =~ /YES/) ) && (length($DB_am_message_exten) > 0) )
+			{
+			$msg_status = $statusAM;
+			if ($AMDCAUSE =~ /^Unknown|\?\?\?/i)
+				{$msg_status='UNKAM';}
+
+			$stmtA = "UPDATE vicidial_log set status='$msg_status' where uniqueid='$uniqueid' and lead_id='$VD_lead_id' order by call_date desc limit 1;";
+				if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+			$affected_rows = $dbhA->do($stmtA);
+			if ($AGILOG) {$agi_string = "--    VDAD vicidial_log AM update: |$affected_rows|$uniqueid|";   &agi_output;}
+
+			$stmtA = "UPDATE vicidial_list set status='$msg_status' where lead_id='$VD_lead_id';";
+				if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+			if ($VL_status_updates > 0) 
+				{
+				$affected_rows = $dbhA->do($stmtA);
+				if ($AGILOG) {$agi_string = "--    VDAD vicidial_list AM update: |$affected_rows|$uniqueid";   &agi_output;}
+				}
+			else
+				{
+				if ($AGILOG) {$agi_string = "--    VDAD vicidial_list AM update DISABLED: |$calleridname|$uniqueid|$VL_status_updates|$manual_vm_status_updates|";   &agi_output;}
+				}
+
+			$stmtA = "INSERT IGNORE INTO vicidial_vmm_counts set vmm_count='1', lead_id='$VD_lead_id', call_date='$SQL_day' ON DUPLICATE KEY UPDATE vmm_count=(vmm_count + 1);";
+				if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+			$affected_rows = $dbhA->do($stmtA);
+			if ($AGILOG) {$agi_string = "--    VVMM vicidial_vmm_counts update: |$affected_rows|$VD_lead_id|$SQL_day|";   &agi_output;}
+
+			if ( ($SScall_quota_lead_ranking > 0) && ($VD_call_quota_lead_ranking !~ /^DISABLED$/i) )
+				{
+				$stmtA = "UPDATE vicidial_lead_call_quota_counts set status='$msg_status' where lead_id='$VD_lead_id';";
+					if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+				$affected_rows = $dbhA->do($stmtA);
+				if ($AGILOG) {$agi_string = "--    VDAD vicidial_lead_call_quota_counts AM update: |$affected_rows|$uniqueid|";   &agi_output;}
+				}
+
+			##### BEGIN Check if prompt uses TTS, STC, LTT,DYN or FHG. If so, create TTS and set the filename to the generated prompt #####
+			if ($DB_am_message_exten =~ /^TTS|^STC|^LTT|^DYN|^FHG/)
+				{
+				$useTTS=0;
+				$useSTC=0;
+				$useLTT=0;
+				$useFHG=0;
+				# Cepstral Text-To-Speech, vicidial_tts_prompts
+				if ($DB_am_message_exten =~ /^TTS/) 
+					{
+					$useTTS++;
+					$TTS_filename = $DB_am_message_exten;
+					$TTS_filename =~s/^TTS//gi;
+					$TTS_filename =~s/\|.*//gi;
+					}
+				# Settings Container entry, vicidial_settings_containers
+				elsif ($DB_am_message_exten =~ /^STC/) 
+					{
+					$useSTC++;
+					$TTS_filename = $DB_am_message_exten;
+					$TTS_filename =~s/^STC//gi;
+					$TTS_filename =~s/\|.*//gi;
+					}
+				# Lead Temp Table entry, vicidial_lead_messages
+				elsif ($DB_am_message_exten =~ /^LTT/) 
+					{
+					$useLTT++;
+					$TTS_filename = $DB_am_message_exten;
+					$TTS_filename =~s/^LTT//gi;
+					$TTS_filename =~s/\|.*//gi;
+					}
+				# File-HTTP-get entry
+				elsif ($DB_am_message_exten =~ /^FHGhttp/) 
+					{
+					$useFHG++;
+					$TTS_filename = $DB_am_message_exten;
+					$TTS_filename =~ s/^FHG//gi;
+					$TTS_filename =~ s/;|\||\\//gi;
+					$TTS_filename =~ s/http\/\//http:\/\//gi;
+					$TTS_filename =~ s/https\/\//https:\/\//gi;
+					$TTS_text = $TTS_filename;
+					}
+				# dynamic filename lookup
+				else
+					{
+					$TTS_filename = $DB_am_message_exten;
+					$TTS_filename =~s/^DYN//gi;
+					$TTS_text = $TTS_filename;
+					}
+
+				if ($AGILOG) {$agi_string = "--    TTS : |$useTTS|$useSTC|$useLTT|$useFHG|$TTS_filename|";   &agi_output;}
+
+				$stmtA = "SELECT lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner FROM vicidial_list where lead_id='$VD_lead_id';";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArows=$sthA->rows;
+				if ($sthArows > 0)
+					{
+					@aryA = $sthA->fetchrow_array;
+					$TTS_lead_id =			$aryA[0];
+					$TTS_entry_date =		$aryA[1];
+					$TTS_modify_date =		$aryA[2];
+					$TTS_status =			$aryA[3];
+					$TTS_user =				$aryA[4];
+					$TTS_vendor_lead_code =	$aryA[5];
+					$TTS_source_id =		$aryA[6];
+					$TTS_list_id =			$aryA[7];
+					$TTS_phone_number =		$aryA[8];
+					$TTS_title =			$aryA[9];
+					$TTS_first_name =		$aryA[10];
+					$TTS_middle_initial =	$aryA[11];
+					$TTS_last_name =		$aryA[12];
+					$TTS_address1 =			$aryA[13];
+					$TTS_address2 =			$aryA[14];
+					$TTS_address3 =			$aryA[15];
+					$TTS_city =				$aryA[16];
+					$TTS_state =			$aryA[17];
+					$TTS_province =			$aryA[18];
+					$TTS_postal_code =		$aryA[19];
+					$TTS_country_code =		$aryA[20];
+					$TTS_gender =			$aryA[21];
+					$TTS_date_of_birth =	$aryA[22];
+					$TTS_alt_phone =		$aryA[23];
+					$TTS_email =			$aryA[24];
+					$TTS_security_phrase =	$aryA[25];
+					$TTS_comments =			$aryA[26];
+					$TTS_called_count =		$aryA[27];
+					$TTS_last_local_call_time = $aryA[28];
+					$TTS_rank =				$aryA[29];
+					$TTS_owner =			$aryA[30];
+					}
+				$sthA->finish();
+
+				if ($useTTS > 0) 
+					{
+					$TTS_voice = 'Allison-8kHz';
+					$TTS_text = $TTS_filename;
+					$stmtA = "SELECT tts_text,tts_voice FROM vicidial_tts_prompts where tts_id='$TTS_filename';";
+					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+					$sthArows=$sthA->rows;
+					if ($sthArows > 0)
+						{
+						@aryA = $sthA->fetchrow_array;
+						$TTS_voice =	$aryA[1];
+						$TTS_text =		$aryA[0];
+						}
+					$sthA->finish();
+					}
+				if ($useSTC > 0) 
+					{
+					$TTS_text = $TTS_filename;
+					$stmtA = "SELECT container_entry FROM vicidial_settings_containers where container_id='$TTS_filename';";
+					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+					$sthArows=$sthA->rows;
+					if ($sthArows > 0)
+						{
+						@aryA = $sthA->fetchrow_array;
+						$TTS_text =		$aryA[0];
+						$TTS_text =~s/^DYN//gi;
+						}
+					$sthA->finish();
+					}
+				if ($useLTT > 0) 
+					{
+					$TTS_text = $TTS_filename;
+					$stmtA = "SELECT message_entry,call_date FROM vicidial_lead_messages where lead_id='$VD_lead_id' order by call_date desc limit 1;";
+					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+					$sthArows=$sthA->rows;
+					if ($sthArows > 0)
+						{
+						@aryA = $sthA->fetchrow_array;
+						$TTS_text =			$aryA[0];
+						$TTS_call_date =	$aryA[1];
+						}
+					$sthA->finish();
+
+					if ($sthArows > 0)
+						{
+						$stmtA = "UPDATE vicidial_lead_messages SET played=(played+1) where lead_id='$VD_lead_id' and call_date='$TTS_call_date' limit 1;";
+							if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+						$affected_rows = $dbhA->do($stmtA);
+						if ($AGILOG) {$agi_string = "--    VLM vicidial_lead_messages update: |$affected_rows|$stmtA|";   &agi_output;}
+						}
+					else
+						{
+						if ($AGILOG) {$agi_string = "ERROR: VLM no vicidial_lead_messages record found: |$useLTT|$TTS_filename|$VD_lead_id|$callerid|";   &agi_output;}
+
+						$dbhA->disconnect();
+
+						if ( defined $AMDMINLEN) { amd_end_sleep($AMDMINLEN, $now_date_epoch);  }
+
+						$AGI->hangup($channel);
+
+						exit;
+						}
+					}
+
+				### BEGIN replace variables with record values ###
+				$TTS_text =~ s/--A--lead_id--B--/$TTS_lead_id/gi;
+				$TTS_text =~ s/--A--entry_date--B--/$TTS_entry_date/gi;
+				$TTS_text =~ s/--A--modify_date--B--/$TTS_modify_date/gi;
+				$TTS_text =~ s/--A--status--B--/$TTS_status/gi;
+				$TTS_text =~ s/--A--user--B--/$TTS_user/gi;
+				$TTS_text =~ s/--A--vendor_lead_code--B--/$TTS_vendor_lead_code/gi;
+				$TTS_text =~ s/--A--source_id--B--/$TTS_source_id/gi;
+				$TTS_text =~ s/--A--list_id--B--/$TTS_list_id/gi;
+				$TTS_text =~ s/--A--phone_number--B--/$TTS_phone_number/gi;
+				$TTS_text =~ s/--A--title--B--/$TTS_title/gi;
+				$TTS_text =~ s/--A--first_name--B--/$TTS_first_name/gi;
+				$TTS_text =~ s/--A--middle_initial--B--/$TTS_middle_initial/gi;
+				$TTS_text =~ s/--A--last_name--B--/$TTS_last_name/gi;
+				$TTS_text =~ s/--A--address1--B--/$TTS_address1/gi;
+				$TTS_text =~ s/--A--address2--B--/$TTS_address2/gi;
+				$TTS_text =~ s/--A--address3--B--/$TTS_address3/gi;
+				$TTS_text =~ s/--A--city--B--/$TTS_city/gi;
+				$TTS_text =~ s/--A--state--B--/$TTS_state/gi;
+				$TTS_text =~ s/--A--province--B--/$TTS_province/gi;
+				$TTS_text =~ s/--A--postal_code--B--/$TTS_postal_code/gi;
+				$TTS_text =~ s/--A--country_code--B--/$TTS_country_code/gi;
+				$TTS_text =~ s/--A--gender--B--/$TTS_gender/gi;
+				$TTS_text =~ s/--A--date_of_birth--B--/$TTS_date_of_birth/gi;
+				$TTS_text =~ s/--A--alt_phone--B--/$TTS_alt_phone/gi;
+				$TTS_text =~ s/--A--email--B--/$TTS_email/gi;
+				$TTS_text =~ s/--A--security_phrase--B--/$TTS_security_phrase/gi;
+				$TTS_text =~ s/--A--comments--B--/$TTS_comments/gi;
+				$TTS_text =~ s/--A--called_count--B--/$TTS_called_count/gi;
+				$TTS_text =~ s/--A--last_local_call_time--B--/$TTS_last_local_call_time/gi;
+				$TTS_text =~ s/--A--rank--B--/$TTS_rank/gi;
+				$TTS_text =~ s/--A--owner--B--/$TTS_owner/gi;
+				$TTS_text =~ s/--A--campaign_id--B--/$VD_campaign_id/gi;
+				$TTS_text =~ s/--A--ingroup--B--/$VD_campaign_id/gi;
+				$TTS_text =~ s/--A--group--B--/$VD_campaign_id/gi;
+				### END replace variables with record values ###
+
+				### BEGIN download FHG web file for playback ###
+				if ($useFHG > 0) 
+					{
+					# Request URL as '$TTS_text'
+					$parse_url = $TTS_text;
+
+					### insert a new url log entry
+					$SQL_log = "$parse_url";
+					$SQL_log =~ s/;|\||\\//gi;
+					$stmtA = "INSERT INTO vicidial_url_log SET uniqueid='$uniqueid',url_date=NOW(),url_type='amd_fhg',url='$SQL_log',url_response='';";
+					$affected_rows = $dbhA->do($stmtA);
+					$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
+					$sthA = $dbhA->prepare($stmtB) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+					$sthArows=$sthA->rows;
+					if ($sthArows > 0)
+						{
+						@aryA = $sthA->fetchrow_array;
+						$url_id = $aryA[0];
+						}
+					$sthA->finish();
+
+					$url = $parse_url;
+					$url =~ s/'/\\'/gi;
+					$url =~ s/"/\\"/gi;
+
+					$temp_OUTPUT_file = $PATHsounds . "/tts/FHG$US$TTS_lead_id$US$now_date_epoch";
+					$temp_OUTPUT_fileWAV = $temp_OUTPUT_file . ".wav";
+
+					my $secW = time();
+
+					# disconnect from the database to free up the DB connection
+					$dbhA->disconnect();
+
+					### find wget binary
+					$wgetbin = '';
+					if ( -e ('/bin/wget')) {$wgetbin = '/bin/wget';}
+					else
+						{
+						if ( -e ('/usr/bin/wget')) {$wgetbin = '/usr/bin/wget';}
+						else
+							{
+							if ( -e ('/usr/local/bin/wget')) {$wgetbin = '/usr/local/bin/wget';}
+							else
+								{
+								print "Can't find wget binary! Exiting...\n";
+								exit;
+								}
+							}
+						}
+
+					# request the web URL
+					`$wgetbin --no-check-certificate --output-document=$temp_OUTPUT_fileWAV --output-file=/tmp/ASUBtmpF$US$url_id$US$now_date_epoch $url `;
+
+					# reconnect to the database to log response and response time
+					$dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
+					 or die "Couldn't connect to database: " . DBI->errstr;
+
+					if ($DB) {print "$function|$wgetbin --no-check-certificate --output-document=$temp_OUTPUT_file --output-file=/tmp/ASUBtmpF$US$url_id$US$now_date_epoch $url|";}
+
+					my $secY = time();
+					my $response_sec = ($secY - $secW);
+
+					$FILEsizeFHG = (-s "$temp_OUTPUT_fileWAV");
+
+					open(Wfile, "/tmp/ASUBtmpF$US$url_id$US$now_date_epoch") || die "can't open /tmp/ASUBtmpF$US$url_id$US$now_date_epoch: $!\n";
+					@Wfile = <Wfile>;
+					close(Wfile);
+					$i=0;
+					$Wfileline_cat='';
+					foreach(@Wfile)
+						{
+						$Wfileline = $Wfile[$i];
+						$Wfileline =~ s/\n|\r/!/gi;
+						$Wfileline =~ s/  |\t|\'|\`//gi;
+						$Wfileline_cat .= "$Wfileline";
+						$i++;
+						}
+					if (length($Wfileline_cat)<1) 
+						{$Wfileline_cat='<HEADER EMPTY>';}
+
+
+					### update url log entry
+					$stmtA = "UPDATE vicidial_url_log SET url_response='$FILEsizeFHG|$temp_OUTPUT_fileWAV|$Wfileline_cat',response_sec='$response_sec' where url_log_id='$url_id';";
+					$affected_rows = $dbhA->do($stmtA);
+					if ($DB) {print "$affected_rows|$stmtA\n";}
+
+					$TTS_text = $temp_OUTPUT_file;
+
+					if ($AGILOG) {$agi_string = "FHG: File downloaded($FILEsizeFHG bytes, $response_sec seconds) |$TTS_text|";   &agi_output;}
+
+					sleep(1);
+					}
+				### END download FHG web file for playback ###
+
+				if ($useTTS > 0) 
+					{
+					### BEGIN check for --C-- and --D-- tags for static file replacement
+					if ( ($TTS_text =~ /--C--/) || ($TTS_text =~ /--D--/) )
+						{
+						$Cdash='--C--';
+						$Ddash='--D--';
+						@static_check = split(/--C--/,$TTS_text);
+						$sc=0;
+						$sr=0;
+						foreach(@static_check)
+							{
+							if ($sc > 0)
+								{
+								$static_check[$sc] =~ s/--D-.*//gi;
+								$static_check_lc = lc($static_check[$sc]);
+								print STDERR "     Checking For Static Replacement: $static_check[$sc]|$static_check_lc$wav\n";
+								$static_found=0;
+								if (-e "/var/lib/asterisk/sounds/tts_static/$static_check_lc$wav")
+									{
+									$CDstatic = "<audio src='/var/lib/asterisk/sounds/tts_static/$static_check_lc$wav' /> ";
+									$static_found++;
+									}
+								else
+									{
+									if (-e "/var/lib/asterisk/sounds/$static_check_lc$wav")
+										{
+										$CDstatic = "<audio src='/var/lib/asterisk/sounds/$static_check_lc$wav' /> ";
+										$static_found++;
+										}
+									else
+										{
+										$firsttwo = substr($static_check_lc, 0, 2);
+										if (-e "/var/lib/asterisk/sounds/tts_static/$firsttwo/$static_check_lc$wav")
+											{
+											$CDstatic = "<audio src='/var/lib/asterisk/sounds/tts_static/$firsttwo/$static_check_lc$wav' /> ";
+											$static_found++;
+											}
+										}
+									}
+								if ($static_found > 0)
+									{
+									$CDmatch = "$Cdash$static_check[$sc]$Ddash";
+									$TTS_text =~ s/$CDmatch/$CDstatic/gi;
+									print STDERR "       Static Replacement Found: $CDmatch|$CDstatic\n";
+									$sr++;
+									}
+								}
+							$sc++;
+							}
+						$TTS_text =~ s/--C--|--D--//gi;
+						print STDERR "\nStatic Replacements Found: $sc|$sr\n";
+						}
+					### END check for --C-- and --D-- tags for static file replacement
+
+					### filter input for CLI-safe characters
+					$TTS_text =~ s/[^,\.\<\>\'\/\=\_\-\: 0-9a-zA-Z]//gi;
+					$TTS_textRAW =	$TTS_text;
+					$TTS_text =~ s/ /\\ /gi;
+					$TTS_text =~ s/\./\\./gi;
+					$TTS_text =~ s/\=/\\=/gi;
+					$TTS_text =~ s/\</\\</gi;
+					$TTS_text =~ s/\>/\\>/gi;
+					$TTS_text =~ s/\//\\\//gi;
+					$TTS_text =~ s/\'/\\'/gi;
+					#	$voice = 'Allison-8kHz';	# override the voice to Allison-8k
+					print STDERR "\nGenerating: $TTS_text - $TTS_voice\n";
+
+					### send command to generate cepstral TTS audio file
+					`$PATHagi/cepstral_generate.pl --debug --voice=$TTS_voice --dialog=$TTS_text >> $CEPLOGfile `;
+
+					use Digest::MD5 qw(md5_hex);
+
+					$enc = md5_hex("$TTS_textRAW-$TTS_voice");	# the hash
+					$enc_ftl = substr($enc, 0, 2);	# first letter of hash
+					$TTS_filename_path = $PATHsounds . "/tts/" . $enc_ftl . "/tts-" . $enc;
+					}
+				else
+					{$TTS_filename_path = $TTS_text;}
+				print STDERR "\nfilename: $TTS_filename_path\n";
+
+				$DB_am_message_exten = $TTS_filename_path;
+				}
+			##### END Check if prompt uses TTS, if so, create TTS and set the filename to the generated prompt #####
+
+
+
+			### BEGIN am message wildcards ###
+			if ($am_message_wildcards =~ /Y/)
+				{
+				$stmtA = "SELECT count(*) FROM vicidial_amm_multi where campaign_id='$selected_campaign' and active='Y';";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArowsW=$sthA->rows;
+				$sthA->finish();
+				if ($sthArowsW > 0)
+					{
+					$stmtA = "SELECT lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner FROM vicidial_list where lead_id='$VD_lead_id';";
+					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+					$sthArows=$sthA->rows;
+					if ($sthArows > 0)
+						{
+						@aryA = $sthA->fetchrow_array;
+						$AMM_lead_id =			$aryA[0];
+						$AMM_entry_date =		$aryA[1];
+						$AMM_modify_date =		$aryA[2];
+						$AMM_status =			$aryA[3];
+						$AMM_user =				$aryA[4];
+						$AMM_vendor_lead_code =	$aryA[5];
+						$AMM_source_id =		$aryA[6];
+						$AMM_list_id =			$aryA[7];
+						$AMM_phone_number =		$aryA[8];
+						$AMM_title =			$aryA[9];
+						$AMM_first_name =		$aryA[10];
+						$AMM_middle_initial =	$aryA[11];
+						$AMM_last_name =		$aryA[12];
+						$AMM_address1 =			$aryA[13];
+						$AMM_address2 =			$aryA[14];
+						$AMM_address3 =			$aryA[15];
+						$AMM_city =				$aryA[16];
+						$AMM_state =			$aryA[17];
+						$AMM_province =			$aryA[18];
+						$AMM_postal_code =		$aryA[19];
+						$AMM_country_code =		$aryA[20];
+						$AMM_gender =			$aryA[21];
+						$AMM_date_of_birth =	$aryA[22];
+						$AMM_alt_phone =		$aryA[23];
+						$AMM_email =			$aryA[24];
+						$AMM_security_phrase =	$aryA[25];
+						$AMM_comments =			$aryA[26];
+						$AMM_called_count =		$aryA[27];
+						$AMM_last_local_call_time = $aryA[28];
+						$AMM_rank =				$aryA[29];
+						$AMM_owner =			$aryA[30];
+						}
+					$sthA->finish();
+
+					$stmtA = "SELECT amm_field,amm_rank,amm_wildcard,amm_filename FROM vicidial_amm_multi where campaign_id='$selected_campaign' and active='Y' order by amm_rank,amm_field;";
+					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+					$sthArowsA=$sthA->rows;
+					$w=0;
+					$amm_filename_match='';
+					while ( ($sthArowsA > $w) && (length($amm_filename_match) < 1) )
+						{
+						@aryA = $sthA->fetchrow_array;
+						$amm_field =	$aryA[0];
+						$amm_rank =		$aryA[1];
+						$amm_wildcard =	$aryA[2];
+						$amm_filename =	$aryA[3];
+
+						if ( (length($amm_wildcard)>0) && (length($amm_wildcard)>0) && (length($amm_filename)>0) ) 
+							{
+							if ($amm_field =~ /vendor_lead_code/) 
+								{
+								if ($AMM_vendor_lead_code =~ /$amm_wildcard/i) 
+									{
+									$amm_filename_match = $amm_filename;
+									if ($AGILOG) {$agi_string = "AMM vendor_lead_code Match Found: |$amm_field|$amm_rank|$amm_wildcard($AMM_vendor_lead_code)|$amm_filename|";   &agi_output;}
+									}
+								}
+							if ($amm_field =~ /source_id/) 
+								{
+								if ($AMM_source_id =~ /$amm_wildcard/i) 
+									{
+									$amm_filename_match = $amm_filename;
+									if ($AGILOG) {$agi_string = "AMM source_id Match Found: |$amm_field|$amm_rank|$amm_wildcard($AMM_source_id)|$amm_filename|";   &agi_output;}
+									}
+								}
+							if ($amm_field =~ /list_id/) 
+								{
+								if ($AMM_list_id =~ /$amm_wildcard/i) 
+									{
+									$amm_filename_match = $amm_filename;
+									if ($AGILOG) {$agi_string = "AMM list_id Match Found: |$amm_field|$amm_rank|$amm_wildcard($AMM_list_id)|$amm_filename|";   &agi_output;}
+									}
+								}
+							if ($amm_field =~ /phone_number/) 
+								{
+								if ($AMM_phone_number =~ /$amm_wildcard/i) 
+									{
+									$amm_filename_match = $amm_filename;
+									if ($AGILOG) {$agi_string = "AMM phone_number Match Found: |$amm_field|$amm_rank|$amm_wildcard($AMM_phone_number)|$amm_filename|";   &agi_output;}
+									}
+								}
+							if ($amm_field =~ /title/) 
+								{
+								if ($AMM_title =~ /$amm_wildcard/i) 
+									{
+									$amm_filename_match = $amm_filename;
+									if ($AGILOG) {$agi_string = "AMM title Match Found: |$amm_field|$amm_rank|$amm_wildcard($AMM_title)|$amm_filename|";   &agi_output;}
+									}
+								}
+							if ($amm_field =~ /first_name/) 
+								{
+								if ($AMM_first_name =~ /$amm_wildcard/i) 
+									{
+									$amm_filename_match = $amm_filename;
+									if ($AGILOG) {$agi_string = "AMM first_name Match Found: |$amm_field|$amm_rank|$amm_wildcard($AMM_first_name)|$amm_filename|";   &agi_output;}
+									}
+								}
+							if ($amm_field =~ /middle_initial/) 
+								{
+								if ($AMM_middle_initial =~ /$amm_wildcard/i) 
+									{
+									$amm_filename_match = $amm_filename;
+									if ($AGILOG) {$agi_string = "AMM middle_initial Match Found: |$amm_field|$amm_rank|$amm_wildcard($AMM_middle_initial)|$amm_filename|";   &agi_output;}
+									}
+								}
+							if ($amm_field =~ /last_name/) 
+								{
+								if ($AMM_last_name =~ /$amm_wildcard/i) 
+									{
+									$amm_filename_match = $amm_filename;
+									if ($AGILOG) {$agi_string = "AMM last_name Match Found: |$amm_field|$amm_rank|$amm_wildcard($AMM_last_name)|$amm_filename|";   &agi_output;}
+									}
+								}
+							if ($amm_field =~ /address1/) 
+								{
+								if ($AMM_address1 =~ /$amm_wildcard/i) 
+									{
+									$amm_filename_match = $amm_filename;
+									if ($AGILOG) {$agi_string = "AMM address1 Match Found: |$amm_field|$amm_rank|$amm_wildcard($AMM_address1)|$amm_filename|";   &agi_output;}
+									}
+								}
+							if ($amm_field =~ /address2/) 
+								{
+								if ($AMM_address2 =~ /$amm_wildcard/i) 
+									{
+									$amm_filename_match = $amm_filename;
+									if ($AGILOG) {$agi_string = "AMM address2 Match Found: |$amm_field|$amm_rank|$amm_wildcard($AMM_address2)|$amm_filename|";   &agi_output;}
+									}
+								}
+							if ($amm_field =~ /address3/) 
+								{
+								if ($AMM_address3 =~ /$amm_wildcard/i) 
+									{
+									$amm_filename_match = $amm_filename;
+									if ($AGILOG) {$agi_string = "AMM address3 Match Found: |$amm_field|$amm_rank|$amm_wildcard($AMM_address3)|$amm_filename|";   &agi_output;}
+									}
+								}
+							if ($amm_field =~ /city/) 
+								{
+								if ($AMM_city =~ /$amm_wildcard/i) 
+									{
+									$amm_filename_match = $amm_filename;
+									if ($AGILOG) {$agi_string = "AMM city Match Found: |$amm_field|$amm_rank|$amm_wildcard($AMM_city)|$amm_filename|";   &agi_output;}
+									}
+								}
+							if ($amm_field =~ /state/) 
+								{
+								if ($AMM_state =~ /$amm_wildcard/i) 
+									{
+									$amm_filename_match = $amm_filename;
+									if ($AGILOG) {$agi_string = "AMM state Match Found: |$amm_field|$amm_rank|$amm_wildcard($AMM_state)|$amm_filename|";   &agi_output;}
+									}
+								}
+							if ($amm_field =~ /province/) 
+								{
+								if ($AMM_province =~ /$amm_wildcard/i) 
+									{
+									$amm_filename_match = $amm_filename;
+									if ($AGILOG) {$agi_string = "AMM province Match Found: |$amm_field|$amm_rank|$amm_wildcard($AMM_province)|$amm_filename|";   &agi_output;}
+									}
+								}
+							if ($amm_field =~ /postal_code/) 
+								{
+								if ($AMM_postal_code =~ /$amm_wildcard/i) 
+									{
+									$amm_filename_match = $amm_filename;
+									if ($AGILOG) {$agi_string = "AMM postal_code Match Found: |$amm_field|$amm_rank|$amm_wildcard($AMM_postal_code)|$amm_filename|";   &agi_output;}
+									}
+								}
+							if ($amm_field =~ /country_code/) 
+								{
+								if ($AMM_country_code =~ /$amm_wildcard/i) 
+									{
+									$amm_filename_match = $amm_filename;
+									if ($AGILOG) {$agi_string = "AMM country_code Match Found: |$amm_field|$amm_rank|$amm_wildcard($AMM_country_code)|$amm_filename|";   &agi_output;}
+									}
+								}
+							if ($amm_field =~ /gender/) 
+								{
+								if ($AMM_gender =~ /$amm_wildcard/i) 
+									{
+									$amm_filename_match = $amm_filename;
+									if ($AGILOG) {$agi_string = "AMM gender Match Found: |$amm_field|$amm_rank|$amm_wildcard($AMM_gender)|$amm_filename|";   &agi_output;}
+									}
+								}
+							if ($amm_field =~ /date_of_birth/) 
+								{
+								if ($AMM_date_of_birth =~ /$amm_wildcard/i) 
+									{
+									$amm_filename_match = $amm_filename;
+									if ($AGILOG) {$agi_string = "AMM date_of_birth Match Found: |$amm_field|$amm_rank|$amm_wildcard($AMM_date_of_birth)|$amm_filename|";   &agi_output;}
+									}
+								}
+							if ($amm_field =~ /alt_phone/) 
+								{
+								if ($AMM_alt_phone =~ /$amm_wildcard/i) 
+									{
+									$amm_filename_match = $amm_filename;
+									if ($AGILOG) {$agi_string = "AMM alt_phone Match Found: |$amm_field|$amm_rank|$amm_wildcard($AMM_alt_phone)|$amm_filename|";   &agi_output;}
+									}
+								}
+							if ($amm_field =~ /email/) 
+								{
+								if ($AMM_email =~ /$amm_wildcard/i) 
+									{
+									$amm_filename_match = $amm_filename;
+									if ($AGILOG) {$agi_string = "AMM email Match Found: |$amm_field|$amm_rank|$amm_wildcard($AMM_email)|$amm_filename|";   &agi_output;}
+									}
+								}
+							if ($amm_field =~ /security_phrase/) 
+								{
+								if ($AMM_security_phrase =~ /$amm_wildcard/i) 
+									{
+									$amm_filename_match = $amm_filename;
+									if ($AGILOG) {$agi_string = "AMM security_phrase Match Found: |$amm_field|$amm_rank|$amm_wildcard($AMM_security_phrase)|$amm_filename|";   &agi_output;}
+									}
+								}
+							if ($amm_field =~ /comments/) 
+								{
+								if ($AMM_comments =~ /$amm_wildcard/i) 
+									{
+									$amm_filename_match = $amm_filename;
+									if ($AGILOG) {$agi_string = "AMM comments Match Found: |$amm_field|$amm_rank|$amm_wildcard($AMM_comments)|$amm_filename|";   &agi_output;}
+									}
+								}
+							if ($amm_field =~ /rank/) 
+								{
+								if ($AMM_rank =~ /$amm_wildcard/i) 
+									{
+									$amm_filename_match = $amm_filename;
+									if ($AGILOG) {$agi_string = "AMM rank Match Found: |$amm_field|$amm_rank|$amm_wildcard($AMM_rank)|$amm_filename|";   &agi_output;}
+									}
+								}
+							if ($amm_field =~ /owner/) 
+								{
+								if ($AMM_owner =~ /$amm_wildcard/i) 
+									{
+									$amm_filename_match = $amm_filename;
+									if ($AGILOG) {$agi_string = "AMM owner Match Found: |$amm_field|$amm_rank|$amm_wildcard($AMM_owner)|$amm_filename|";   &agi_output;}
+									}
+								}
+							if ($amm_field =~ /called_count/) 
+								{
+								if ($AMM_called_count =~ /^$amm_wildcard$/i) 
+									{
+									$amm_filename_match = $amm_filename;
+									if ($AGILOG) {$agi_string = "AMM called_count Match Found: |$amm_field|$amm_rank|$amm_wildcard($AMM_owner)|$amm_filename|";   &agi_output;}
+									}
+								}
+
+							if (length($amm_filename_match) > 0)
+								{$DB_am_message_exten = $amm_filename_match;}
+							else
+								{
+								if ($AGILOG) {$agi_string = "no AMM match: |$amm_field|$amm_rank|$amm_wildcard|$amm_filename|";   &agi_output;}
+								}
+							}
+						else
+							{
+							if ($AGILOG) {$agi_string = "AMM entry invalid: |$amm_field|$amm_rank|$amm_wildcard|$amm_filename|";   &agi_output;}
+							}
+						$w++;
+						}
+					$sthA->finish();
+					}
+				}
+			### END am message wildcards ###
+
+
+			### run waitforsilence if enabled
+			if ($AMDCAUSE !~ /^Unknown|\?\?\?/i)
+				{
+				if ( (length($waitforsilence_options) > 0) && ($waitforsilence_options !~ /NONE|X/i) )
+					{
+					if ($AGILOG) {$agi_string = "WaitForSilence launched: |$waitforsilence_options|";   &agi_output;}
+					$AGI->exec("WaitForSilence","$waitforsilence_options");
+					}
+				if ($waitforsilence_options =~ /X/i)
+					{
+					$waitforsilence_seconds = $waitforsilence_options;
+					$waitforsilence_seconds =~ s/\D//gi;
+					if (length($waitforsilence_seconds) < 1)
+						{$waitforsilence_seconds = '1';}
+					if ($waitforsilence_seconds > 20)
+						{$waitforsilence_seconds = '20';}
+					if ($AGILOG) {$agi_string = "Wait time seconds in WaitForSilence field: |$waitforsilence_seconds|$waitforsilence_options|";   &agi_output;}
+					sleep($waitforsilence_seconds);
+					}
+				}
+
+			### if call menu or in-group method
+			if ( ($AMDCAUSE =~ /^Unknown|\?\?\?/i) && ($cpd_unknown_action =~ /CALLMENU|INGROUP/) ) 
+				{
+				$DROPexten='';
+				if ($cpd_unknown_action =~ /CALLMENU/)
+					{
+					$DROPexten =	's';
+					$ext_context =	$amd_callmenu;
+					}
+				if ($cpd_unknown_action =~ /INGROUP/)
+					{ # 90009*CL_uk3survy_*8301*10000123*universal*7275551212*1234*"
+					$S='*';
+					$fronter='VDAMD';
+					$DROPexten = "90009*$amd_inbound_group$S$S$VD_lead_id$S$S$VD_phone_number$S$fronter$S";
+					}
+				if (length($DROPexten)>0)
+					{
+					$stmtA = "UPDATE vicidial_log set status='UNKXFR' where uniqueid='$uniqueid' and lead_id='$VD_lead_id' order by call_date desc limit 1;";
+						if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+					$affected_rows = $dbhA->do($stmtA);
+					if ($AGILOG) {$agi_string = "--    VDAD vicidial_log UNKXFR update: |$affected_rows|$uniqueid|";   &agi_output;}
+
+					$stmtA = "UPDATE vicidial_list set status='UNKXFR' where lead_id='$VD_lead_id';";
+						if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+					if ($VL_status_updates > 0) 
+						{
+						$affected_rows = $dbhA->do($stmtA);
+						if ($AGILOG) {$agi_string = "--    VDAD vicidial_list UNKXFR update: |$affected_rows|$uniqueid";   &agi_output;}
+						}
+					else
+						{
+						if ($AGILOG) {$agi_string = "--    VDAD vicidial_list UNKXFR update DISABLED: |$calleridname|$uniqueid|$VL_status_updates|$manual_vm_status_updates|";   &agi_output;}
+						}
+
+					if ( ($SScall_quota_lead_ranking > 0) && ($VD_call_quota_lead_ranking !~ /^DISABLED$/i) )
+						{
+						$stmtA = "UPDATE vicidial_lead_call_quota_counts set status='UNKXFR' where lead_id='$VD_lead_id';";
+							if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+						$affected_rows = $dbhA->do($stmtA);
+						if ($AGILOG) {$agi_string = "--    VDAD vicidial_lead_call_quota_counts UNKXFR update: |$affected_rows|$uniqueid|";   &agi_output;}
+						}
+
+					$AGI->stream_file('sip-silence');
+					$AGI->stream_file('sip-silence');
+					$AGI->stream_file('sip-silence');
+					$AGI->stream_file('sip-silence');
+
+					if ($AGILOG) {$agi_string = "exiting the VD_AMD app CPD Unknown, transferring call to $DROPexten:$ext_context";   &agi_output;}
+					print "SET CONTEXT $ext_context\n";
+						$result = <STDIN>;
+						checkresult($result);
+					print "SET EXTENSION $DROPexten\n";
+						$result = <STDIN>;
+						checkresult($result);
+					print "SET PRIORITY 1\n";
+						$result = <STDIN>;
+						checkresult($result);
+
+					exit;
+					}
+				}
+
+			if ( ($AMDCAUSE !~ /^Unknown|\?\?\?/i) && ($cpd_amd_action =~ /CALLMENU|INGROUP/) )
+				{
+				$DROPexten='';
+				if ($cpd_amd_action =~ /CALLMENU/)
+					{
+					$DROPexten =	's';
+					$ext_context =	$amd_callmenu;
+					}
+				if ($cpd_amd_action =~ /INGROUP/)
+					{ # 90009*CL_uk3survy_*8301*10000123*universal*7275551212*1234*"
+					$S='*';
+					$fronter='VDAMD';
+					$DROPexten = "90009*$amd_inbound_group$S$S$VD_lead_id$S$S$VD_phone_number$S$fronter$S";
+					}
+				if (length($DROPexten)>0)
+					{
+					$stmtA = "UPDATE vicidial_log set status='$statusAMDXFR' where uniqueid='$uniqueid' and lead_id='$VD_lead_id' order by call_date desc limit 1;";
+						if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+					$affected_rows = $dbhA->do($stmtA);
+					if ($AGILOG) {$agi_string = "--    VDAD vicidial_log AMDXFR update: |$affected_rows|$uniqueid|$statusAMDXFR|";   &agi_output;}
+
+					$stmtA = "UPDATE vicidial_list set status='$statusAMDXFR' where lead_id='$VD_lead_id';";
+						if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+					if ($VL_status_updates > 0) 
+						{
+						$affected_rows = $dbhA->do($stmtA);
+						if ($AGILOG) {$agi_string = "--    VDAD vicidial_list AMDXFR update: |$affected_rows|$uniqueid|$statusAMDXFR";   &agi_output;}
+						}
+					else
+						{
+						if ($AGILOG) {$agi_string = "--    VDAD vicidial_list AMDXFR update DISABLED: |$calleridname|$uniqueid|$VL_status_updates|$manual_vm_status_updates|";   &agi_output;}
+						}
+
+					if ( ($SScall_quota_lead_ranking > 0) && ($VD_call_quota_lead_ranking !~ /^DISABLED$/i) )
+						{
+						$stmtA = "UPDATE vicidial_lead_call_quota_counts set status='$statusAMDXFR' where lead_id='$VD_lead_id';";
+							if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+						$affected_rows = $dbhA->do($stmtA);
+						if ($AGILOG) {$agi_string = "--    VDAD vicidial_lead_call_quota_counts AMDXFR update: |$affected_rows|$uniqueid|$statusAMDXFR|";   &agi_output;}
+						}
+
+					$AGI->stream_file('sip-silence');
+					$AGI->stream_file('sip-silence');
+					$AGI->stream_file('sip-silence');
+					$AGI->stream_file('sip-silence');
+
+					if ($AGILOG) {$agi_string = "exiting the VD_AMD app, transferring call to $DROPexten:$ext_context";   &agi_output;}
+					print "SET CONTEXT $ext_context\n";
+						$result = <STDIN>;
+						checkresult($result);
+					print "SET EXTENSION $DROPexten\n";
+						$result = <STDIN>;
+						checkresult($result);
+					print "SET PRIORITY 1\n";
+						$result = <STDIN>;
+						checkresult($result);
+
+					exit;
+					}
+				}
+
+
+			### play messages
+			if ($DB_am_message_exten =~ /\|/)
+				{
+				@DB_am_message_exten_array = split(/\|/,$DB_am_message_exten);
+				$w=0;
+				foreach(@DB_am_message_exten_array)
+					{
+					if (length($DB_am_message_exten_array[$w])>0)
+						{
+						$AGI->stream_file("$DB_am_message_exten_array[$w]");
+						}
+					$w++;
+					}
+				}
+			else
+				{$AGI->stream_file("$DB_am_message_exten");}
+
+			$last_status = $statusAL;
+			if ($AMDCAUSE =~ /^Unknown|\?\?\?/i)
+				{$last_status='UNKAL';}
+			$stmtA = "UPDATE vicidial_log set status='$last_status' where uniqueid='$uniqueid' and lead_id='$VD_lead_id' order by call_date desc limit 1;";
+				if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+			$affected_rows = $dbhA->do($stmtA);
+			if ($AGILOG) {$agi_string = "--    VDAD vicidial_log AL update: |$affected_rows|$uniqueid|";   &agi_output;}
+
+			$stmtA = "UPDATE vicidial_list set status='$last_status' where lead_id='$VD_lead_id';";
+				if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+			if ($VL_status_updates > 0) 
+				{
+				$affected_rows = $dbhA->do($stmtA);
+				if ($AGILOG) {$agi_string = "--    VDAD vicidial_list AL update: |$affected_rows|$uniqueid";   &agi_output;}
+				}
+			else
+				{
+				if ($AGILOG) {$agi_string = "--    VDAD vicidial_list AL update DISABLED: |$calleridname|$uniqueid|$VL_status_updates|$manual_vm_status_updates|";   &agi_output;}
+				}
+
+			$stmtA = "UPDATE vicidial_vmm_counts set vmm_played=(vmm_played + 1) where lead_id='$VD_lead_id' and call_date='$SQL_day';";
+				if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+			$affected_rows = $dbhA->do($stmtA);
+			if ($AGILOG) {$agi_string = "--    VVMM vicidial_vmm_counts update: |$affected_rows|$VD_lead_id|$SQL_day|";   &agi_output;}
+
+			if ( ($SScall_quota_lead_ranking > 0) && ($VD_call_quota_lead_ranking !~ /^DISABLED$/i) )
+				{
+				$stmtA = "UPDATE vicidial_lead_call_quota_counts set status='$last_status' where lead_id='$VD_lead_id';";
+					if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+				$affected_rows = $dbhA->do($stmtA);
+				if ($AGILOG) {$agi_string = "--    VDAD vicidial_lead_call_quota_counts AL update: |$affected_rows|$uniqueid|";   &agi_output;}
+				}
+
+			if ($useLTT > 0) 
+				{
+				$stmtA = "UPDATE vicidial_lead_messages SET played=(played+1) where lead_id='$VD_lead_id' and call_date='$TTS_call_date' limit 1;";
+					if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+				$affected_rows = $dbhA->do($stmtA);
+				if ($AGILOG) {$agi_string = "--    VLM vicidial_lead_messages POST-CALL update: |$affected_rows|$stmtA|";   &agi_output;}
+				}
+
+			if ($useFHG > 0) 
+				{
+				# add 2 seconds of silence before hanging up for FHG messages
+				sleep(2);
+				}
+			}
+
+
+		$dbhA->disconnect();
+
+		if ( defined $AMDMINLEN) { amd_end_sleep($AMDMINLEN, $now_date_epoch);  }
+
+		$AGI->hangup($channel);
+
+		exit;
+		}
+
+
+
+
+
+	exit;
+}
+
+
+##### BEGIN Call Quota Lead Ranking logging #####
+sub call_quota_logging
+	{
+	# Gather settings container for Call Quota Lead Ranking
+	$CQcontainer_entry='';
+	$stmtA = "SELECT container_entry FROM vicidial_settings_containers where container_id='$VD_call_quota_lead_ranking';";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$CQcontainer_entry = $aryA[0];
+		$CQcontainer_entry =~ s/\\//gi;
+		}
+	$sthA->finish();
+
+	# Define variables for Call Quota settings
+	$session_one='';
+	$session_two='';
+	$session_three='';
+	$session_four='';
+	$session_five='';
+	$session_six='';
+	$settings_session_score=0;
+	$zero_rank_after_call=0;
+
+	if (length($CQcontainer_entry) > 5) 
+		{
+		@container_lines = split(/\n/,$CQcontainer_entry);
+		$c=0;
+		foreach(@container_lines)
+			{
+			$container_lines[$c] =~ s/;.*|\r|\t| //gi;
+			if (length($container_lines[$c]) > 5)
+				{
+				# define core settings
+				if ($container_lines[$c] =~ /^zero_rank_after_call/i)
+					{
+					$container_lines[$c] =~ s/zero_rank_after_call=>//gi;
+					if ( ($container_lines[$c] >= 0) && ($container_lines[$c] <= 1) ) 
+						{
+						$zero_rank_after_call = $container_lines[$c];
+						}
+					}
+				# define sessions
+				if ($container_lines[$c] =~ /^session_one/i)
+					{
+					$session_one_valid=0; $session_one_start=''; $session_one_end='';
+					$session_one = $container_lines[$c];
+					$session_one =~ s/session_one=>//gi;
+					if ( (length($session_one) > 0) && (length($session_one) <= 9) && ($session_one =~ /,/) ) 
+						{
+						@session_oneARY = split(/,/,$session_one);
+						$session_one_start = $session_oneARY[0];
+						$session_one_end = $session_oneARY[1];
+						if ( (length($session_one_start) >= 4) && (length($session_one_end) >= 4) && ($session_one_start < $session_one_end) && ($session_one_end <= 2400) ) 
+							{
+							$settings_session_score++;
+							$session_one_valid++;
+							}
+						}
+					}
+				if ($container_lines[$c] =~ /^session_two/i)
+					{
+					$session_two_valid=0; $session_two_start=''; $session_two_end='';
+					$session_two = $container_lines[$c];
+					$session_two =~ s/session_two=>//gi;
+					if ( (length($session_two) > 0) && (length($session_two) <= 9) && ($session_two =~ /,/) ) 
+						{
+						@session_twoARY = split(/,/,$session_two);
+						$session_two_start = $session_twoARY[0];
+						$session_two_end = $session_twoARY[1];
+						if ( (length($session_two_start) >= 4) && (length($session_two_end) >= 4) && ($session_one_valid > 0) && ($session_one_end <= $session_two_start) && ($session_two_start < $session_two_end) && ($session_two_end <= 2400) ) 
+							{
+							$settings_session_score++;
+							$session_two_valid++;
+							}
+						}
+					}
+				if ($container_lines[$c] =~ /^session_three/i)
+					{
+					$session_three_valid=0; $session_three_start=''; $session_three_end='';
+					$session_three = $container_lines[$c];
+					$session_three =~ s/session_three=>//gi;
+					if ( (length($session_three) > 0) && (length($session_three) <= 9) && ($session_three =~ /,/) ) 
+						{
+						@session_threeARY = split(/,/,$session_three);
+						$session_three_start = $session_threeARY[0];
+						$session_three_end = $session_threeARY[1];
+						if ( (length($session_three_start) >= 4) && (length($session_three_end) >= 4) && ($session_two_valid > 0) && ($session_two_end <= $session_three_start) && ($session_three_start < $session_three_end) && ($session_three_end <= 2400) ) 
+							{
+							$settings_session_score++;
+							$session_three_valid++;
+							}
+						}
+					}
+				if ($container_lines[$c] =~ /^session_four/i)
+					{
+					$session_four_valid=0; $session_four_start=''; $session_four_end='';
+					$session_four = $container_lines[$c];
+					$session_four =~ s/session_four=>//gi;
+					if ( (length($session_four) > 0) && (length($session_four) <= 9) && ($session_four =~ /,/) ) 
+						{
+						@session_fourARY = split(/,/,$session_four);
+						$session_four_start = $session_fourARY[0];
+						$session_four_end = $session_fourARY[1];
+						if ( (length($session_four_start) >= 4) && (length($session_four_end) >= 4) && ($session_three_valid > 0) && ($session_three_end <= $session_four_start) && ($session_four_start < $session_four_end) && ($session_four_end <= 2400) ) 
+							{
+							$settings_session_score++;
+							$session_four_valid++;
+							}
+						}
+					}
+				if ($container_lines[$c] =~ /^session_five/i)
+					{
+					$session_five_valid=0; $session_five_start=''; $session_five_end='';
+					$session_five = $container_lines[$c];
+					$session_five =~ s/session_five=>//gi;
+					if ( (length($session_five) > 0) && (length($session_five) <= 9) && ($session_five =~ /,/) ) 
+						{
+						@session_fiveARY = split(/,/,$session_five);
+						$session_five_start = $session_fiveARY[0];
+						$session_five_end = $session_fiveARY[1];
+						if ( (length($session_five_start) >= 4) && (length($session_five_end) >= 4) && ($session_four_valid > 0) && ($session_four_end <= $session_five_start) && ($session_five_start < $session_five_end) && ($session_five_end <= 2400) ) 
+							{
+							$settings_session_score++;
+							$session_five_valid++;
+							}
+						}
+					}
+				if ($container_lines[$c] =~ /^session_six/i)
+					{
+					$session_six_valid=0; $session_six_start=''; $session_six_end='';
+					$session_six = $container_lines[$c];
+					$session_six =~ s/session_six=>//gi;
+					if ( (length($session_six) > 0) && (length($session_six) <= 9) && ($session_six =~ /,/) ) 
+						{
+						@session_sixARY = split(/,/,$session_six);
+						$session_six_start = $session_sixARY[0];
+						$session_six_end = $session_sixARY[1];
+						if ( (length($session_six_start) >= 4) && (length($session_six_end) >= 4) && ($session_five_valid > 0) && ($session_five_end <= $session_six_start) && ($session_six_start < $session_six_end) && ($session_six_end <= 2400) ) 
+							{
+							$settings_session_score++;
+							$session_six_valid++;
+							}
+						}
+					}
+				}
+			else
+				{if ($DBX > 0) {print "     blank line: $c|$container_lines[$c]|\n";}}
+			$c++;
+			}
+		if ($settings_session_score >= 1)
+			{
+			$stmtA = "SELECT list_id,called_count,rank FROM vicidial_list where lead_id='$CIDlead_id';";
+				if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$VLlist_id =			$aryA[0];
+				$VLcalled_count =		$aryA[1];
+				$VLrank =				$aryA[2];
+				$tempVLrank = $VLrank;
+				if ( ($zero_rank_after_call > 0) && ($VLrank > 0) ) {$tempVLrank=0;}
+				}
+			$sthA->finish();
+
+			$secX = time();
+			$CQtarget = ($secX - 14400);	# look back 4 hours
+			($CQsec,$CQmin,$CQhour,$CQmday,$CQmon,$CQyear,$CQwday,$CQyday,$CQisdst) = localtime($CQtarget);
+			$CQyear = ($CQyear + 1900);
+			$CQmon++;
+			if ($CQmon < 10) {$CQmon = "0$CQmon";}
+			if ($CQmday < 10) {$CQmday = "0$CQmday";}
+			if ($CQhour < 10) {$CQhour = "0$CQhour";}
+			if ($CQmin < 10) {$CQmin = "0$CQmin";}
+			if ($CQsec < 10) {$CQsec = "0$CQsec";}
+			$CQSQLdate = "$CQyear-$CQmon-$CQmday $CQhour:$CQmin:$CQsec";
+
+			$VDL_call_datetime='';
+			$stmtA = "SELECT call_date from vicidial_dial_log where lead_id='$CIDlead_id' and call_date > \"$CQSQLdate\" and caller_code LIKE \"%$CIDlead_id\" order by call_date desc limit 1;";
+				if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$VDLcall_datetime = 	$aryA[0];
+				@VDLcall_datetimeARY = split(/ /,$VDLcall_datetime);
+				@VDLcall_timeARY = split(/:/,$VDLcall_datetimeARY[1]);
+				$VDLcall_hourmin = "$VDLcall_timeARY[0]$VDLcall_timeARY[1]";
+
+				if ( ($session_one_start <= $VDLcall_hourmin) and ($session_one_end > $VDLcall_hourmin) ) 
+					{
+					$call_in_session=1; 
+					$session_newSQL=",session_one_calls='1',session_one_today_calls='1'"; 
+					$session_updateSQL=",session_one_calls=(session_one_calls + 1),session_one_today_calls=(session_one_today_calls + 1)";
+					}
+				if ( ($session_two_start <= $VDLcall_hourmin) and ($session_two_end > $VDLcall_hourmin) ) 
+					{
+					$call_in_session=2; 
+					$session_newSQL=",session_two_calls='1',session_two_today_calls='1'"; 
+					$session_updateSQL=",session_two_calls=(session_two_calls + 1),session_two_today_calls=(session_two_today_calls + 1)";
+					}
+				if ( ($session_three_start <= $VDLcall_hourmin) and ($session_three_end > $VDLcall_hourmin) ) 
+					{
+					$call_in_session=3; 
+					$session_newSQL=",session_three_calls='1',session_three_today_calls='1'"; 
+					$session_updateSQL=",session_three_calls=(session_three_calls + 1),session_three_today_calls=(session_three_today_calls + 1)";
+					}
+				if ( ($session_four_start <= $VDLcall_hourmin) and ($session_four_end > $VDLcall_hourmin) ) 
+					{
+					$call_in_session=4; 
+					$session_newSQL=",session_four_calls='1',session_four_today_calls='1'"; 
+					$session_updateSQL=",session_four_calls=(session_four_calls + 1),session_four_today_calls=(session_four_today_calls + 1)";
+					}
+				if ( ($session_five_start <= $VDLcall_hourmin) and ($session_five_end > $VDLcall_hourmin) ) 
+					{
+					$call_in_session=5; 
+					$session_newSQL=",session_five_calls='1',session_five_today_calls='1'"; 
+					$session_updateSQL=",session_five_calls=(session_five_calls + 1),session_five_today_calls=(session_five_today_calls + 1)";
+					}
+				if ( ($session_six_start <= $VDLcall_hourmin) and ($session_six_end > $VDLcall_hourmin) ) 
+					{
+					$call_in_session=6; 
+					$session_newSQL=",session_six_calls='1',session_six_today_calls='1'"; 
+					$session_updateSQL=",session_six_calls=(session_six_calls + 1),session_six_today_calls=(session_six_today_calls + 1)";
+					}
+
+				if ($AGILOG) {$agi_string = "CQ-Debug 2: $VDLcall_datetime|$VDLcall_hourmin|$timeclock_end_of_day|$session_one_start|$session_one_end|$call_in_session|";   &agi_output;}
+
+				if ($call_in_session > 0)
+					{
+					if (length($timeclock_end_of_day) < 1) {$timeclock_end_of_day='0000';}
+					$timeclock_end_of_day_hour = (substr($timeclock_end_of_day, 0, 2) + 0);
+					$timeclock_end_of_day_min = (substr($timeclock_end_of_day, 2, 2) + 0);
+
+					$today_start_epoch = timelocal('0',$timeclock_end_of_day_min,$timeclock_end_of_day_hour,$mday,($mon-1),$year);
+					if ($timeclock_end_of_day > $VDLcall_hourmin)
+						{$today_start_epoch = ($today_start_epoch - 86400);}
+					$day_two_start_epoch = ($today_start_epoch - (86400 * 1));
+					$day_three_start_epoch = ($today_start_epoch - (86400 * 2));
+					$day_four_start_epoch = ($today_start_epoch - (86400 * 3));
+					$day_five_start_epoch = ($today_start_epoch - (86400 * 4));
+					$day_six_start_epoch = ($today_start_epoch - (86400 * 5));
+					$day_seven_start_epoch = ($today_start_epoch - (86400 * 6));
+
+					# Gather the details on existing vicidial_lead_call_quota_counts for this lead, if there is one
+					$stmtA = "SELECT first_call_date,UNIX_TIMESTAMP(first_call_date),last_call_date from vicidial_lead_call_quota_counts where lead_id='$CIDlead_id' and list_id='$VLlist_id';";
+						if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+					$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+					$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+					$VLCQCinfo_ct=$sthA->rows;
+					if ($VLCQCinfo_ct > 0)
+						{
+						@aryA = $sthA->fetchrow_array;
+						$VLCQCfirst_call_datetime =		$aryA[0];
+						$VLCQCfirst_call_epoch =		$aryA[1];
+						$VLCQClast_call_date =			$aryA[2];
+
+						if ($VDLcall_datetime ne $VLCQClast_call_date) 
+							{
+							if ($VLCQCfirst_call_epoch >= $today_start_epoch) 
+								{$day_updateSQL=',day_one_calls=(day_one_calls+1)';}
+							if ( ($VLCQCfirst_call_epoch >= $day_two_start_epoch) and ($VLCQCfirst_call_epoch < $today_start_epoch) )
+								{$day_updateSQL=',day_two_calls=(day_two_calls+1)';}
+							if ( ($VLCQCfirst_call_epoch >= $day_three_start_epoch) and ($VLCQCfirst_call_epoch < $day_two_start_epoch) )
+								{$day_updateSQL=',day_three_calls=(day_three_calls+1)';}
+							if ( ($VLCQCfirst_call_epoch >= $day_four_start_epoch) and ($VLCQCfirst_call_epoch < $day_three_start_epoch) )
+								{$day_updateSQL=',day_four_calls=(day_four_calls+1)';}
+							if ( ($VLCQCfirst_call_epoch >= $day_five_start_epoch) and ($VLCQCfirst_call_epoch < $day_four_start_epoch) )
+								{$day_updateSQL=',day_five_calls=(day_five_calls+1)';}
+							if ( ($VLCQCfirst_call_epoch >= $day_six_start_epoch) and ($VLCQCfirst_call_epoch < $day_five_start_epoch) )
+								{$day_updateSQL=',day_six_calls=(day_six_calls+1)';}
+							if ( ($VLCQCfirst_call_epoch >= $day_seven_start_epoch) and ($VLCQCfirst_call_epoch < $day_six_start_epoch) )
+								{$day_updateSQL=',day_seven_calls=(day_seven_calls+1)';}
+							# Update in the vicidial_lead_call_quota_counts table for this lead
+							$stmtA="UPDATE vicidial_lead_call_quota_counts SET last_call_date='$VDLcall_datetime',status='$temp_status',called_count='$VLcalled_count',rank='$tempVLrank',modify_date=NOW() $session_updateSQL $day_updateSQL where lead_id='$CIDlead_id' and list_id='$VLlist_id' and modify_date < NOW();";
+							}
+						else
+							{
+							# Update in the vicidial_lead_call_quota_counts table for this lead
+							$stmtA="UPDATE vicidial_lead_call_quota_counts SET status='$temp_status',called_count='$VLcalled_count',rank='$tempVLrank',modify_date=NOW() where lead_id='$CIDlead_id' and list_id='$VLlist_id';";
+							}
+						$VLCQCaffected_rows_update = $dbhA->do($stmtA);
+						if ($AGILOG) {$agi_string = "--    VLCQC record updated: |$VLCQCaffected_rows_update|   |$stmtA|";   &agi_output;}
+						}
+					else
+						{
+						# Insert new record into vicidial_lead_call_quota_counts table for this lead
+						$stmtA="INSERT INTO vicidial_lead_call_quota_counts SET lead_id='$CIDlead_id',list_id='$VLlist_id',first_call_date='$VDLcall_datetime',last_call_date='$VDLcall_datetime',status='$temp_status',called_count='$VLcalled_count',day_one_calls='1',rank='$tempVLrank',modify_date=NOW() $session_newSQL;";
+						$VLCQCaffected_rows_update = $dbhA->do($stmtA);
+						if ($AGILOG) {$agi_string = "--    VLCQC record inserted: |$VLCQCaffected_rows_update|   |$stmtA|";   &agi_output;}
+						}
+
+					if ( ($zero_rank_after_call > 0) && ($VLrank > 0) )
+						{
+						# Update this lead to rank=0
+						$stmtA="UPDATE vicidial_list SET rank='0' where lead_id='$CIDlead_id';";
+						$VLCQCaffected_rows_zero_rank = $dbhA->do($stmtA);
+						if ($AGILOG) {$agi_string = "--    VLCQC lead rank zero: |$VLCQCaffected_rows_zero_rank|   |$stmtA|";   &agi_output;}
+						}
+					}
+				}
+			$sthA->finish();
+			}
+		}
+	}
+##### END Call Quota Lead Ranking logging #####
+
+
+sub checkresult 
+	{
+	my ($res) = @_;
+	my $retval;
+	$tests++;
+	chomp $res;
+	if ($res =~ /^200/) 
+		{
+		$res =~ /result=(-?\d+)/;
+		if (!length($1)) 
+			{
+		#	print STDERR "FAIL ($res)\n";
+			$fail++;
+			} 
+		else 
+			{
+		#	print STDERR "PASS ($1)\n";
+			$pass++;
+			}
+		}
+	else
+		{
+	#	print STDERR "FAIL (unexpected result '$res')\n";
+		$fail++;
+		}
+	}
+
+# agi_output function kept for compatablity
+sub agi_output
+	{
+	if ( $AGILOG >= 2 ) {
+		open($log_fh, ">>$AGILOGfile") || die "Can't open $AGILOGfile: $!\n";
+		agi_logging( $agi_string, $AGILOG, $log_fh );
+		close($log_fh);
+	} else {
+		agi_logging( $agi_string, $AGILOG );
+	}
+	$agi_string = '';
+	}
+
+# agi_logging - new agi logging function that includes ms in the
+#       output and formats the output like Asterisk
+#
+# ARG1 = The string to log
+# ARG2 = The log level - DEFAULT 1
+# ARG3 = A file handle to log to if log level >= 2 - DEFAULT /dev/null
+# ARG4 = The name to log under - DEFAULT this scipts actual name
+# ARG5 = A date formatted string - DEFAULT gettimeofday()
+sub agi_logging
+	{
+	my ($agi_str, $log_level, $log_fh, $script_name, $now_date) = @_;
+
+	# make sure we have at least a string to log
+	if (!defined $agi_str)
+		{
+		print STDERR "ERROR: \$agi_string not set";
+		return 0;
+		}
+
+	# default $log_level to 1
+	$log_level //= 1;
+
+	# default $log_fh to /dev/null
+	my $null_log = 0;
+	if (($log_level >= 2) && (!defined $log_fh))
+		{
+		open $log_fh, '>', '/dev/null' or die "Failed to open: /dev/null";
+		$null_log = 1;
+		}
+
+	# default to this modules actual name
+	$module_name = __PACKAGE__;
+	$module_name =~ s/.*:://;
+
+	# If $now_date isnt set. Generate our own
+	if (!defined $now_date)
+		{
+		# get seconds and microseconds since epoch
+		my ($sec, $us) = gettimeofday();
+
+		# convert microseconds to milliseconds
+		my $ms = int($us / 1000 );
+
+		# convert the seconds to human the various date elements
+		my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($sec);
+		$year = ($year + 1900);
+		$mon++;
+
+		# format our numbers
+		$mon  = sprintf("%02d", $mon);
+		$mday = sprintf("%02d", $mday);
+		$hour = sprintf("%02d", $hour);
+		$min  = sprintf("%02d", $min);
+		$sec  = sprintf("%02d", $sec);
+		$ms   = sprintf("%03d", $ms);
+
+		# set the date string
+		$now_date = "$year-$mon-$mday $hour:$min:$sec.$ms";
+	}
+
+	my @agi_lines = split(/\n/, $agi_str);
+	for my $agi_line ( @agi_lines )
+		{
+		# set the output string
+		my $out_string = "[$now_date] - $module_name - $fagi_channel : $agi_line\n";
+
+		### send the output string to STDERR ###
+		if ( ($log_level == '1') || ($log_level == '3') ) { $AGI->verbose( "$fagi_channel - $agi_line" ); }
+
+		### Send the output string to $log_fh and flush it ###
+		if ($log_level >=2)
+			{
+			# make sure the file handle is valid and open
+			if ( eval { defined fileno($log_fh) } )
+				{
+				print $log_fh $out_string;
+				$log_fh->flush();
+				}
+			else
+				{
+				print STDERR "ERROR logging '$out_string': \$log_level is >= 2 but \$log_fh is closed\n";
+				return 0;
+				}
+			}
+		}
+
+	# if we opened /dev/null close it
+	if ($null_log) { close( $log_fh); }
+
+	return 1;
+	}
+
+
+
+# subroutine to parse the asterisk version
+# and return a hash with the various part
+sub parse_asterisk_version
+	{
+	# grab the arguments
+	my $ast_ver_str = $_[0];
+
+	# get everything after the - and put it in $ast_ver_postfix
+	my @hyphen_parts = split( /-/ , $ast_ver_str );
+
+	my $ast_ver_postfix = $hyphen_parts[1];
+
+	# now split everything before the - up by the .
+	my @dot_parts = split( /\./ , $hyphen_parts[0] );
+
+	my %ast_ver_hash;
+
+	if ( $dot_parts[0] <= 1 )
+		{
+			%ast_ver_hash = (
+				"major" => $dot_parts[0],
+				"minor" => $dot_parts[1],
+				"build" => $dot_parts[2],
+				"revision" => $dot_parts[3],
+				"postfix" => $ast_ver_postfix
+			);
+		}
+
+	# digium dropped the 1 from asterisk 10 but we still need it
+	if ( $dot_parts[0] > 1 )
+		{
+			%ast_ver_hash = (
+				"major" => 1,
+				"minor" => $dot_parts[0],
+				"build" => $dot_parts[1],
+				"revision" => $dot_parts[2],
+				"postfix" => $ast_ver_postfix
+			);
+		}
+
+	return ( %ast_ver_hash );
+	}
+
+# subroutine to figure out how long to sleep at the end of AMD
+sub amd_end_sleep
+	{
+	my $amd_min_len = $_[0];
+	my $start_time = $_[1];
+	my $now =  time();
+
+	my $elapsed_time = $now - $start_time;
+
+	if ($AGILOG) {$agi_string = "AMD Elapsed Time = $elapsed_time| AMD Min Len = $amd_min_len ";   &agi_output;}
+
+	if ( $elapsed_time < $amd_min_len )
+		{
+		$amd_min_sleep = $amd_min_len - $elapsed_time;
+		if ($AGILOG) {$agi_string = "AMD Ending before $amd_min_len seconds reached. Sleeping $amd_min_sleep seconds";   &agi_output;}
+		sleep ($amd_min_sleep);
+		}
+	}
+
+# Weird Perl Module thing:
+1;
