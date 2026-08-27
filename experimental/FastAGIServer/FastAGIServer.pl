@@ -14,6 +14,7 @@
 #
 # changes:
 # 260826-1814 - Initial Build
+# 260827-1559 - Changed to dated logfiles
 #
 
 use strict;
@@ -35,9 +36,20 @@ use Getopt::Long qw(GetOptions);
 
 BEGIN { $0 = abs_path($0); }
 
+my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+$year = ($year + 1900);
+$mon++;
+my $wtoday = $wday;
+if ($mon < 10) {$mon = "0$mon";}
+if ($mday < 10) {$mday = "0$mday";}
+if ($hour < 10) {$hour = "0$hour";}
+if ($min < 10) {$min = "0$min";}
+if ($sec < 10) {$sec = "0$sec";}
+my $file_date = "$year-$mon-$mday";
+
 my $nofork = 0;
 my $loglevel = 3;
-my $logfile = '/var/log/astguiclient/FastAGI-server.log';
+my $logfile = '/var/log/astguiclient/FastAGI-server.'.$file_date;
 
 # Bind options to variables
 GetOptions(
