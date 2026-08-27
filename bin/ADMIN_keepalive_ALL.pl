@@ -185,9 +185,10 @@
 # 260515-2121 - Added truncating of vicidial_internal_log entries after 7 days, updating of some records
 # 260527-0142 - Added dialplan filtering
 # 260605-1002 - Added end-of-day log processing log entry for the vicidial_internal_log
+# 260826-1814 - Added FastAGIServer code
 #
 
-$build = '260605-1002';
+$build = '260826-1814';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -598,6 +599,7 @@ else
 	$AST_VDremote_agents=0;
 	$AST_VDadapt=0;
 	$FastAGI_log=0;
+	$FastAGIServer=0;
 	$email_inbound=0;
 	$AST_VDauto_dial_FILL=0;
 	$ip_relay=0;
@@ -619,6 +621,7 @@ else
 	$runningsip_logger=0;
 	$runningconf_updater=0;
 	$runningcrash_test=0;
+	$runningFastAGIServer=0;
 	$AST_conf_3way=0;
 	$AST_rec_monitor=0;
 
@@ -681,6 +684,11 @@ else
 		{
 		$conf_updater=1;
 		if ($DB) {print "Check to see if conference updater should run\n";}
+		}
+	if ($VARactive_keepalives =~ /F/)
+		{
+		$FastAGIServer=1;
+		if ($DB) {print "FastAGIServer set to keepalive\n";}
 		}
 	if ($cu3way > 0) 
 		{
@@ -800,6 +808,11 @@ else
 			$runningcrash_test++;
 			if ($DB) {print "AST_table_status RUNNING:           |$psline[1]|\n";}
 			}
+		if ($psoutput[$i] =~ /$REGhome\/FastAGIServer\/FastAGIServer\.pl/)
+			{
+			$runningFastAGIServer++;
+			if ($DB) {print "FastAGIServer Running:           |$psoutput[$i]|\n";}
+			}
 
 		$i++;
 		}
@@ -813,7 +826,14 @@ else
 		if($DB){print STDERR "$affected_rows|\n";}
 		}
 
-
+	# if $runningFastAGIServer running, update internal process log
+	if ( ($runningFastAGIServer > 0) && ($reset_test =~ /0$|5$/) )
+		{
+		$stmtA = "UPDATE vicidial_internal_log SET up_time=NOW(), action='running', stage=CONCAT((UNIX_TIMESTAMP(NOW())-UNIX_TIMESTAMP(db_time)),' seconds runtime') WHERE process='FastAGIServer.pl' and server_ip='$server_ip' order by db_time desc limit 1;";
+		if($DB){print STDERR "|$stmtA|";}
+		my $affected_rows = $dbhA->do($stmtA);
+		if($DB){print STDERR "$affected_rows|\n";}
+		}
 
 
 	##### Second, IF MORE THAN ONE LISTEN INSTANCE IS RUNNING, KILL THE SECOND ONE #####
@@ -889,6 +909,7 @@ else
 		( ($AST_VDremote_agents > 0) && ($runningAST_VDremote_agents < 1) ) ||
 		( ($AST_VDadapt > 0) && ($runningAST_VDadapt < 1) ) ||
 		( ($FastAGI_log > 0) && ($runningFastAGI_log < 1) ) ||
+		( ($FastAGIServer > 0) && ($runningFastAGIServer < 1) ) ||
 		( ($AST_VDauto_dial_FILL > 0) && ($runningAST_VDauto_dial_FILL < 1) ) ||
 		( ($ip_relay > 0) && ($runningip_relay < 1) ) ||
 		( ($AST_conf_3way > 0) && ($runningAST_conf_3way < 1) ) || 
@@ -997,6 +1018,11 @@ else
 				{
 				$runningcrash_test++;
 				if ($DB) {print "AST_table_status RUNNING:           |$psline[1]|\n";}
+				}
+			if ($psoutput2[$i] =~ /$REGhome\/FastAGIServer\/FastAGIServer\.pl/)
+				{
+				$runningFastAGIServer++;
+				if ($DB) {print "FastAGIServer Running:           |$psoutput2[$i]|\n";}
 				}
 			$i++;
 			}
@@ -1167,6 +1193,13 @@ else
 				}
 			}
 		}
+		if ( ($FastAGIServer > 0) && ($runningFastAGIServer < 1) )
+			{
+			# FastAGIServer does not run in a Screen session
+			if ($DB) {print "starting FastAGIServer...\n";}
+			`/usr/bin/screen -d -m -S FastAGIServer $PATHhome/FastAGIServer/FastAGIServer.pl --nofork --loglevel 4`;
+		#	`/usr/bin/perl $PATHhome/FastAGIServer/FastAGIServer.pl &`;
+			}
 	}
 
 
