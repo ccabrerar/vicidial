@@ -20,10 +20,10 @@ package AGIHandlers::VD_amd;
 # exten => 8381,n,Hangup()
 #
 # exten => 8320,1,Set(AGIARGS=${EXTEN},YES)
-# exten => 8320,n,AGI(agi://127.0.0.1:4573/VD_amd.agi)
+# exten => 8320,n,AGI(agi://127.0.0.1:4573/VD_amd)
 # exten => 8320,n,Hangup()
 # exten => _8320*,1,Set(AGIARGS=${EXTEN},YES)
-# exten => _8320*,n,AGI(agi://127.0.0.1:4573/VD_amd.agi)
+# exten => _8320*,n,AGI(agi://127.0.0.1:4573/VD_amd)
 # exten => _8320*,n,Hangup()
 #
 # To use the new "AMDMINLEN" feature, put a similar line like following line in your outbound dialing dialplan IMMEDIATELY BEFORE the "Dial(" line:
