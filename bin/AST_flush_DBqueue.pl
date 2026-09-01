@@ -39,6 +39,7 @@
 # 250914-1537 - Added archiving of recording_live table
 # 251003-0837 - Added --preserve-dtmf flag (DTMF logs would then be kept for 1-2 days)
 # 260515-2212 - Added internal logging
+# 260831-2357 - Fix for multi-server clusters
 #
 
 $session_flush=0;
@@ -951,7 +952,7 @@ if ($check_xfers > 0)
 		{
 		$active_count=0;
 		$channelSQL='';
-		if (length($ST_channel[$a]) > 0) {$channelSQL="or channel='$ST_channel[$a]'";}
+		if (length($ST_channel[$a]) > 0) {$channelSQL="or ( (channel='$ST_channel[$a]') and (server_ip='$ST_server_ip[$a]') )";}
 		$stmtA = "SELECT count(*) FROM live_channels where channel_group='$ST_callerid[$a]' $channelSQL;";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -996,7 +997,7 @@ if ($check_xfers > 0)
 		$active_count=0;
 
 		$channelSQL='';
-		if (length($TK_channel[$a]) > 0) {$channelSQL="or channel='$TK_channel[$a]'";}
+		if (length($TK_channel[$a]) > 0) {$channelSQL="or ( (channel='$TK_channel[$a]') and (server_ip='$TK_server_ip[$a]') )";}
 		$stmtA = "SELECT count(*) FROM live_channels where channel_group='$TK_callerid[$a]' $channelSQL;";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
