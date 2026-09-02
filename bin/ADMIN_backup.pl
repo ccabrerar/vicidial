@@ -5,7 +5,7 @@
 # DESCRIPTION:
 # Backs-up the asterisk database, conf/agi/sounds/bin files
 #
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 #
@@ -28,6 +28,7 @@
 # 191119-1658 - Added --db-remote option to specify '--host' parameter for mysqldumpdump
 # 210817-1956 - Added --db-leads-only option to dump only the vicidial_list table
 # 230215-1456 - update of table categories
+# 260901-1012 - Added check for mariadb-dump and mariadb first
 #
 
 $secT = time();
@@ -342,6 +343,9 @@ if ( ($without_db < 1) && ($conf_only < 1) )
 		### find mysqldump binary to do the database dump
 		print "\n----- Mysql dump -----\n\n";
 		$mysqldumpbin = '';
+		if ( -e ('/usr/bin/mariadb-dump')) {$mysqldumpbin = '/usr/bin/mariadb-dump';}
+		else 
+			{
 		if ( -e ('/usr/bin/mysqldump')) {$mysqldumpbin = '/usr/bin/mysqldump';}
 		else
 			{
@@ -355,7 +359,11 @@ if ( ($without_db < 1) && ($conf_only < 1) )
 					}
 				}
 			}
+			}
 		$mysqlbin = '';
+		if ( -e ('/usr/bin/mariadb')) {$mysqlbin = '/usr/bin/mariadb';}
+		else 
+			{
 		if ( -e ('/usr/bin/mysql')) {$mysqlbin = '/usr/bin/mysql';}
 		else 
 			{
@@ -368,6 +376,7 @@ if ( ($without_db < 1) && ($conf_only < 1) )
 					print "Can't find mysql binary! MySQL lead-only backups will not work...\n";
 					}
 				}
+			}
 			}
 
 		use DBI;
@@ -452,7 +461,7 @@ if ( ($without_db < 1) && ($conf_only < 1) )
 					{
 					$archive_tables .= " $aryA[0]";
 					}
-				elsif ($aryA[0] =~ /_log|server_performance|vicidial_ivr|vicidial_hopper|vicidial_manager|web_client_sessions|imm_outcomes|_counts|_sip$|_recent|_queue$|_urls$/) 
+				elsif ($aryA[0] =~ /_log|server_performance|vicidial_ivr|vicidial_hopper|vicidial_manager|web_client_sessions|imm_outcomes|_counts|_sip$|_recent|_queue$|_urls$|_overrides|_messages|_drops|_auth|_calls|_caller_codes|_daily|_extensions|_gaps|_reserve/) 
 					{
 					$log_tables .= " $aryA[0]";
 					}

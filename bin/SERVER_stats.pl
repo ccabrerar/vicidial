@@ -4,10 +4,11 @@
 #
 # This script gathers several system metrics and stores them in the MySQL database
 #
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 240217-2226 - First build
+# 260901-1011 - Look for mariadb-admin first, replacement for mysqladmin
 #
 
 $start_epoch = time();
@@ -173,18 +174,26 @@ else
 		}
 	}
 
-### find mysqladmin binary (database admin)
+### find mysqladmin (or mariadb-admin) binary (database admin)
 $mysqladminbin = '';
-if ( -e ('/bin/mysqladmin')) {$mysqladminbin = '/bin/mysqladmin';}
+if ( -e ('/usr/bin/mariadb-admin')) {$mysqladminbin = '/usr/bin/mariadb-admin';}
 else
 	{
-	if ( -e ('/usr/bin/mysqladmin')) {$mysqladminbin = '/usr/bin/mysqladmin';}
+	if ( -e ('/bin/mariadb-admin')) {$mysqladminbin = '/bin/mariadb-admin';}
 	else
 		{
-		if ( -e ('/usr/local/bin/mysqladmin')) {$mysqladminbin = '/usr/local/bin/mysqladmin';}
+		if ( -e ('/bin/mysqladmin')) {$mysqladminbin = '/bin/mysqladmin';}
 		else
 			{
-			if ($DB > 0) {print "Can't find mysqladmin binary, not going to gather database info.\n";}
+			if ( -e ('/usr/bin/mysqladmin')) {$mysqladminbin = '/usr/bin/mysqladmin';}
+			else
+				{
+				if ( -e ('/usr/local/bin/mysqladmin')) {$mysqladminbin = '/usr/local/bin/mysqladmin';}
+				else
+					{
+					if ($DB > 0) {print "Can't find mysqladmin binary, not going to gather database info.\n";}
+					}
+				}
 			}
 		}
 	}
