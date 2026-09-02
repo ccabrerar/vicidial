@@ -107,6 +107,7 @@
 # 260327-0824 - Fixes for PJSIP compatibility
 # 260424-1644 - Fix for rare Auto-Alt Dial issue
 # 260515-1936 - Added internal logging
+# 260902-1608 - Fix for systems with overloaded Khomp servers
 #
 
 # defaults for PreFork
@@ -3846,6 +3847,13 @@ sub khomp_json_api
 		$agi_string = "--    KHOMP URL: |$khomp_api_url|";   &agi_output;
 		$agi_string = "--    KHOMP JSON : |$khomp_json|";   &agi_output;
 		$agi_string = "--    KHOMP RESPONSE JSON: |$message|";   &agi_output;
+		}
+	$test503 = $message;
+	$test503 =~ s/\n|\r|\t//gi;
+	if ($test503 =~ /503 Service Not Available/) 
+		{
+		$agi_string = "--    KHOMP API REJECTED OUR REQUEST!!!  forcing fake timeout response";   &agi_output;
+		$message = '{"id":0,"jsonrpc":"2.0","result":{"calls":[{"disconnected":false,"fields":{"analyzer_action":"Connect","analyzer_conclusion":"Khomp Reject","analyzer_pattern":"","analyzer_stamp":"9999999999","answer_stamp":"9999999999","audio_stamp":"9999999999","end_stamp":"","hangup_cause":"","hangup_cause_sent":"","hangup_origin":"","sip_header:call-id":"","start_stamp":"1788358771462"}}]}}';
 		}
 
 #UC#	$json = JSON::PP->new->ascii->pretty->allow_nonref;

@@ -136,7 +136,8 @@ package AGIHandlers::VDAD_ALL_outbound;
 # 251001-1837 - Fix for rare Stereo recording filename issue
 # 251020-0835 - Added code for recording_dtmf_muting, fix for stereo call recording
 # 260805-1057 - Converted to a PM file for the FastAGIServer system
-
+# 260902-1606 - Fix for systems with overloaded Khomp servers
+#
 
 our $fagi_channel = '';
 our $AGI = '';
@@ -7316,6 +7317,14 @@ sub khomp_json_api
 		$agi_string = "--    KHOMP URL: |$khomp_api_url|";   &agi_output;
 		$agi_string = "--    KHOMP JSON : |$khomp_json|";   &agi_output;
 		$agi_string = "--    KHOMP RESPONSE JSON: |$message|";   &agi_output;
+		}
+
+	$test503 = $message;
+	$test503 =~ s/\n|\r|\t//gi;
+	if ($test503 =~ /503 Service Not Available/) 
+		{
+		$agi_string = "--    KHOMP API REJECTED OUR REQUEST!!!  forcing fake timeout response";   &agi_output;
+		$message = '{"id":0,"jsonrpc":"2.0","result":{"calls":[{"disconnected":false,"fields":{"analyzer_action":"Connect","analyzer_conclusion":"Khomp Reject","analyzer_pattern":"","analyzer_stamp":"9999999999","answer_stamp":"9999999999","audio_stamp":"9999999999","end_stamp":"","hangup_cause":"","hangup_cause_sent":"","hangup_origin":"","sip_header:call-id":"","start_stamp":"1788358771462"}}]}}';
 		}
 
 	$json = JSON::PP->new->ascii->pretty->allow_nonref;
