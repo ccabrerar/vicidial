@@ -1,7 +1,7 @@
 <?php
 # admin_bulk_tools.php
 #
-# Copyright (C) 2024  Mike Coate, Mike Cargile, Matt Florell	<vicidial@gmail.com>	LICENSE: AGPLv2
+# Copyright (C) 2026  Mike Coate, Mike Cargile, Matt Florell	<vicidial@gmail.com>	LICENSE: AGPLv2
 #
 # This is the admin screen for various bulk copy/delete tools.
 #
@@ -35,6 +35,7 @@
 # 230522-1726 - Added missing vicidial_users fields from copy function
 # 240217-0908 - Added more missing vicidial_users fields from copy function
 # 240801-1130 - Code updates for PHP8 compatibility
+# 260902-1713 - Fix for areacode duplicates in multiple countries
 #
 
 require("dbconnect_mysqli.php");
@@ -97,7 +98,7 @@ if ($DB) {echo "$form_to_run|";}
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$sys_settings_stmt = "SELECT use_non_latin,enable_languages,language_method,campaign_cid_areacodes_enabled,sounds_central_control_active,contacts_enabled,enable_auto_reports,allow_web_debug FROM system_settings;";
+$sys_settings_stmt = "SELECT use_non_latin,enable_languages,language_method,campaign_cid_areacodes_enabled,sounds_central_control_active,contacts_enabled,enable_auto_reports,allow_web_debug,default_phone_code FROM system_settings;";
 $sys_settings_rslt=mysql_to_mysqli($sys_settings_stmt, $link);
 #if ($DB) {echo "$sys_settings_stmt|";}
 $num_rows = mysqli_num_rows($sys_settings_rslt);
@@ -112,6 +113,7 @@ if ($num_rows > 0)
 	$SScontacts_enabled =				$sys_settings_row[5];
 	$SSenable_auto_reports =			$sys_settings_row[6];
 	$SSallow_web_debug =				$sys_settings_row[7];
+	$SSdefault_phone_code =				$sys_settings_row[8];
 	}
 else
 	{
@@ -444,6 +446,8 @@ if ($form_to_run == "ACCID")
 		}
 
 	$areacode = array();
+	$cid_state = array();
+	$country = array();
 	# If using the STATE FILL method, build out the array of ACs and CIDs for each represented state.
 	if ($ACCIDmethod == "STATEFILL") 
 		{
@@ -454,12 +458,12 @@ if ($form_to_run == "ACCID")
 		while ($i < count($ACCIDto_insert_raw))
 			{
 			$STATEFILLareacode[$i] = substr($ACCIDto_insert_raw[$i], 0, 3);
-			$SQL = "SELECT state FROM vicidial_phone_codes WHERE country IN('USA','CAN') AND areacode='$STATEFILLareacode[$i]';";
+			$SQL = "SELECT state FROM vicidial_phone_codes WHERE country_code='$SSdefault_phone_code' AND areacode='$STATEFILLareacode[$i]';";
 			if ($DB) {echo "$SQL|";}
 			$SQL_rslt = mysql_to_mysqli($SQL, $link);
 			$state = mysqli_fetch_row($SQL_rslt);
 			
-			$SQL = "SELECT areacode FROM vicidial_phone_codes WHERE country IN('USA','CAN') AND state='$state[0]';";
+			$SQL = "SELECT areacode, country FROM vicidial_phone_codes WHERE country_code='$SSdefault_phone_code' AND state='$state[0]';";
 			if ($DB) {echo "$SQL|";}
 			$SQL_rslt = mysql_to_mysqli($SQL, $link);
 			$areacode_count = mysqli_num_rows($SQL_rslt);
@@ -469,6 +473,8 @@ if ($form_to_run == "ACCID")
 				{
 				$row = mysqli_fetch_row($SQL_rslt);
 				$areacode[$j] = $row[0];
+				$country[$j] = $row[1];
+				$cid_state[$j] = $state[0];
 				$STATEFILLcids[$j] = $ACCIDto_insert_raw[$i];
 				$j++;
 				$k++;		
@@ -487,6 +493,8 @@ if ($form_to_run == "ACCID")
 	$ACCIDduplicate = array();
 	$ACCIDinserted = array();
 	$ACCIDareacode = array();
+	$ACCIDstate = array();
+	$ACCIDcountry = array();
 	$ACCIDbadlen = array();
 	$i=0; #loop counter
 	$j=0; #duplicate counter
@@ -497,17 +505,22 @@ if ($form_to_run == "ACCID")
 		if ($ACCIDmethod == "CID") 
 			{
 			$areacode[$i] = substr($ACCIDto_insert_raw[$i], 0, 3);
-			if ($CGT == 'STATE')
+			# if ($CGT == 'STATE')
+			if (preg_match('/STATE|AREACODE/', $CGT))
 				{
-				$SQL = "SELECT state FROM vicidial_phone_codes WHERE country IN('USA','CAN') AND areacode='$areacode[$i]';";
+				$SQL = "SELECT state, country FROM vicidial_phone_codes WHERE country_code='$SSdefault_phone_code' AND areacode='$areacode[$i]';";
 				if ($DB) {echo "$SQL|";}
 				$SQL_rslt = mysql_to_mysqli($SQL, $link);
 				$row=mysqli_fetch_row($SQL_rslt);
 				$areacode[$i] = $row[0];
+				$cid_state[$i] = $row[0];
+				$country[$i] = $row[1];
 				}
 			if ($CGT == 'NONE')
 				{
 				$areacode[$i] = 'NONE';
+				$cid_state[$i] = 'NONE';
+				$country[$i] = 'NONE';
 				}
 			}
 		if ($ACCIDmethod == "CSV") {$areacode[$i] = $ACCIDareacode_raw[$i];}
@@ -529,6 +542,8 @@ if ($form_to_run == "ACCID")
 			{
 			$ACCIDto_insert[$k] = $ACCIDto_insert_raw[$i];
 			$ACCIDareacode[$k] = $areacode[$i];
+			$ACCIDstate[$k] = $cid_state[$i];
+			$ACCIDcountry[$k] = $country[$i];
 			$k++;
 			}			
 		$i++;
@@ -556,30 +571,46 @@ if ($form_to_run == "ACCID")
 		}
 	else
 		{
-		echo _QXZ("ATTENTION, You are about to add the following AC-CIDs to this campaign").": $ACCIDcampaign";
+		echo _QXZ("ATTENTION, You are about to add the following AC-CIDs to this campaign").": $ACCIDcampaign<BR>";
 		$i = 0;
+		echo "<ul>";
 		while ($i < count($ACCIDto_insert))
 			{
-			echo "<br> $ACCIDto_insert[$i]";
+			echo "<li> $ACCIDto_insert[$i]";
+
+			if (preg_match('/STATE|AREACODE/', $CGT))
+				{
+				echo (isset($ACCIDstate[$i]) && $ACCIDstate[$i]!="NONE" && $ACCIDstate[$i]!="" ? " - areacode found in state $ACCIDstate[$i], country $ACCIDcountry[$i]" : (isset($ACCIDcountry[$i]) ? " - areacode found in country $ACCIDcountry[$i], no state found" : " - <B>**no state/country info found for areacode ".substr($ACCIDto_insert[$i], 0, 3)."***</B>"));
+				}
+			echo "</li>";
+
 			$i++;
 			}
+		echo "</ul>";
+
 		echo "<br> "._QXZ("The following AC-CIDs are duplicates and will not be created").": ";
-		if (empty($ACCIDduplicate[0])) {echo "<br> "._QXZ("NONE");}
+		echo "<ul>";
+		if (empty($ACCIDduplicate[0])) {echo "<li> "._QXZ("NONE")."</li>";}
 		$i = 0;
 		while ($i < count($ACCIDduplicate))
 			{
-			echo "<br> $ACCIDduplicate[$i]";
+			echo "<li> $ACCIDduplicate[$i]</li>";
 			$i++;
 			}
+		echo "</ul>";
+
 		echo "<br> "._QXZ("The following AC-CIDs are of invalid length and will not be created").": ";
-		if (empty($ACCIDbadlen[0])) {echo "<br> "._QXZ("NONE");}
+		echo "<ul>";
+		if (empty($ACCIDbadlen[0])) {echo "<li> "._QXZ("NONE")."</li>";}
 		$i = 0;
 		while ($i < count($ACCIDbadlen))
 			{
-			echo "<br> $ACCIDbadlen[$i]";
+			echo "<li> $ACCIDbadlen[$i]</li>";
 			$i++;
 			}
 		}
+		echo "</ul>";
+
 	$ACCIDto_insert = serialize($ACCIDto_insert);
 	$ACCIDareacode = serialize($ACCIDareacode);
 	if ($ACCIDmethod=="CSV") {$ACCIDdescription_raw = serialize($ACCIDdescription_raw);}
@@ -631,7 +662,7 @@ elseif ($form_to_run == "ACCIDconfirmed")
 			$ACCIDareacode[$i] = preg_replace('/[^-_0-9\p{L}]/u', '', $ACCIDareacode[$i]);
 			if (!preg_match("/[A-Z]/i",$ACCIDareacode[$i]))
 				{
-				$SQL="SELECT state FROM vicidial_phone_codes WHERE areacode='$ACCIDareacode[$i]';";
+				$SQL="SELECT state FROM vicidial_phone_codes WHERE areacode='$ACCIDareacode[$i]' and country_code='$SSdefault_phone_code';";
 				$SQL_rslt = mysql_to_mysqli($SQL, $link);
 				$row = mysqli_fetch_row($SQL_rslt);
 				if ( $row[0] == null ) #Put something in if NULL because areacode.vicidial_campaign_cid_areacodes cannot be NULL		
@@ -1903,6 +1934,18 @@ else
 		echo "<option value='CSV'>"._QXZ("CSV")."</option>\n";
 		echo "<option value='STATEFILL'>"._QXZ("STATE FILL")."</option>\n";
 		echo "</select></td></tr>\n";
+
+		$country_stmt="select distinct country from vicidial_phone_codes where country_code='$SSdefault_phone_code' order by country";
+		$country_rslt=mysql_to_mysqli($country_stmt, $link);
+		$country_str="";
+		while($country_row=mysqli_fetch_row($country_rslt)) 
+			{
+			$country_str.="$country_row[0], ";
+			}
+		$country_str=preg_replace('/, $/', '', $country_str);
+
+		echo "<tr bgcolor=#". $SSstd_row1_background ."><td align=right valign='top'>"._QXZ("State Lookup/Fill Filter").": </td><td align=left valign='top' class='standard'>Country code: ".(isset($SSdefault_phone_code) ? "<B>$SSdefault_phone_code</B><BR>Countries: <B>$country_str</B>" : "<B>**NONE DEFINED**</B>") ."</td></tr>\n";	
+
 		echo "<tr bgcolor=#". $SSstd_row1_background ."><td align=right>"._QXZ("Campaign or CID Group").":</td><td align=left>\n";
 				
 		$ACCIDcampaigns_to_copy = array();

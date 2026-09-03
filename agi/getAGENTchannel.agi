@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 # getAGENTchannel.agi by Omar Rodriguez  www.ItContinental.com
-# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 # This script is able to return the name of the channel that belongs to the agent, 
 # to allow administrators to whisper to the agents
 # Has been made using Vicidial code as Base
@@ -11,6 +11,7 @@
 # 150804-0944 - Rewritten to work on multi-server systems and with different dialplan
 # 160523-2352 - Fixed issue with local channels in session
 # 250103-1608 - Added processing of monitorsession channel variable
+# 260902-1610 - Fix for PJSIP
 #
 
 $script = 'getAGENTchannel.agi';
@@ -146,8 +147,8 @@ $s=0;
 while ($sthArows > $s)
 	{
 	@aryA = $sthA->fetchrow_array;
-	# channel priority(highest to lowest): SIP, IAX, Local
-	if ($aryA[0] =~ /^SIP/i) 
+	# channel priority(highest to lowest): SIP, PJSIP, IAX, Local
+	if ( ($aryA[0] =~ /^SIP/i) || ($aryA[0] =~ /^PJSIP/i) )
 		{$agent_zap_channel =		$aryA[0];}
 	if ( ($aryA[0] =~ /^IAX/i) && ( (length($agent_zap_channel) < 4) || ($agent_zap_channel =~ /^Local/i) ) )
 		{$agent_zap_channel =		$aryA[0];}

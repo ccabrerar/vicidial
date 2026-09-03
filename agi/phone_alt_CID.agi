@@ -15,10 +15,11 @@
 # then put the above Custom Dialplan into it, then set the Phone's 
 # 'phone context' to the call menu ID that you just created.
 #
-# Copyright (C) 2016  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 160527-1415 - First build
+# 260902-1624 - Added PJSIP
 #
 
 $script = 'phone_alt_CID.agi';
@@ -176,7 +177,7 @@ $sthA->finish();
 
 
 $phone_extension = $channel;
-$phone_extension =~ s/^SIP\/|^IAX\/|^IAX2\///gi;
+$phone_extension =~ s/^SIP\/|^PJSIP\/|^IAX\/|^IAX2\///gi;
 $phone_extension =~ s/-.*//gi;
 if ($AGILOG) {$agi_string = "Phone Account: ($phone_extension)";   &agi_output;}
 
