@@ -231,10 +231,11 @@
 # 260519-1647 - Code updates for PHP8 compatibility, and json output format
 # 260611-2256 - Fix for input variable filtering
 # 260822-0841 - Added agent_ingroup_availability function
+# 260902-1709 - Fix for PJSIP
 #
 
-$version = '2.14-206';
-$build = '260822-0841';
+$version = '2.14-207';
+$build = '260902-1709';
 $php_script='non_agent_api.php';
 $api_url_log = 0;
 $camp_lead_order_random=1;
@@ -4092,13 +4093,16 @@ if ($function == 'blind_monitor')
 						$AGENTstatus =		$row[3];
 						}
 
-					$variable = "Variable: __monitorsession=$session_id";
+					# $variable = "Variable: __monitorsession=$session_id";
+					$variable = "Variable: __monitorsession=$session_id,__MONITORCG=$BMquery";
 
 					### insert a new lead in the system with this phone number
-					$stmt = "INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$monitor_server_ip','','Originate','$BMquery','Channel: Local/$monitor_dialstring$stage$session_id@default','Context: default','Exten: $dialplan_number','Priority: 1','Callerid: \"$BMquery\" <$outbound_cid>','$variable','','','','');";
+					# $stmt = "INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$monitor_server_ip','','Originate','$BMquery','Channel: Local/$monitor_dialstring$stage$session_id@default','Context: default','Exten: $dialplan_number','Priority: 1','Callerid: \"$BMquery\" <$outbound_cid>','$variable','','','','');";
+					$stmt = "INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$monitor_server_ip','','Originate','$BMquery','Channel: Local/$monitor_dialstring$stage$session_id@default/n','Context: default','Exten: $dialplan_number','Priority: 1','Callerid: \"$BMquery\" <$outbound_cid>','$variable','','','','');";
 					if ($swap_chan > 0)
 						{
-						$stmt = "INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$monitor_server_ip','','Originate','$BMquery','Channel: Local/$dialplan_number@default','Context: default','Exten: $monitor_dialstring$stage$session_id','Priority: 1','Callerid: \"$BMquery\" <$outbound_cid>','$variable','','','','');";
+						# $stmt = "INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$monitor_server_ip','','Originate','$BMquery','Channel: Local/$dialplan_number@default','Context: default','Exten: $monitor_dialstring$stage$session_id','Priority: 1','Callerid: \"$BMquery\" <$outbound_cid>','$variable','','','','');";
+						$stmt = "INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$monitor_server_ip','','Originate','$BMquery','Channel: Local/$dialplan_number@default/n','Context: default','Exten: $monitor_dialstring$stage$session_id','Priority: 1','Callerid: \"$BMquery\" <$outbound_cid>','$variable','','','','');";
 						}
 					if ($DB>0) {echo "DEBUG: blind_monitor query - $stmt\n";}
 					$rslt=mysql_to_mysqli($stmt, $link);

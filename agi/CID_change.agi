@@ -32,6 +32,7 @@
 #
 # changes:
 # 260509-1847 - First build
+# 260902-1619 - Added PJSIP
 #
 
 $script = 'CID_change.agi';
@@ -203,7 +204,7 @@ $sthA->finish();
 
 
 $phone_extension = $channel;
-$phone_extension =~ s/^SIP\/|^IAX\/|^IAX2\///gi;
+$phone_extension =~ s/^SIP\/|^PJSIP\/|^IAX\/|^IAX2\///gi;
 $phone_extension =~ s/-.*//gi;
 if ($AGILOG) {$agi_string = "Phone Account: ($phone_extension)";   &agi_output;}
 

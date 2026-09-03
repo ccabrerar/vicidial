@@ -12,7 +12,7 @@
 # exten => _8331*.,n,AGI(agi-VDAD_RINGALL.agi,${EXTEN})
 # exten => _8331*.,n,Hangup
 #
-# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 110303-2325 - First build
@@ -26,6 +26,7 @@
 # 240415-1702 - Fix for ConfBridge code
 # 250924-2157 - Added code for deprecation of "Monitor" application after Asterisk 20
 # 251006-0902 - If recording_dtmf_muting enabled, force use of MixMonitor for recording
+# 260902-1622 - Added PJSIP
 #
 
 $script = 'agi-VDAD_RINGALL.agi';
@@ -541,6 +542,21 @@ if ($NAGcount > 0)
 							{
 							$orVLA_exten[$orct] =~ s/^SIP\///gi;
 							$stmtA = "SELECT dialplan_number FROM phones where extension='$orVLA_exten[$orct]' and server_ip='$orVLA_server_ip[$orct]' and protocol='SIP';";
+							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+							$Pcount=$sthA->rows;
+							if ($Pcount > 0)
+								{
+								@aryA = $sthA->fetchrow_array;
+								$Pdialplan_number =	$aryA[0];
+								$exten_match = "STARSYM" . $Pdialplan_number . "ATSYM";
+								}
+							$sthA->finish();
+							}
+						if ($orVLA_exten[$orct] =~ /^PJSIP/i) 
+							{
+							$orVLA_exten[$orct] =~ s/^PJSIP\///gi;
+							$stmtA = "SELECT dialplan_number FROM phones where extension='$orVLA_exten[$orct]' and server_ip='$orVLA_server_ip[$orct]' and protocol='PJSIP';";
 							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 							$Pcount=$sthA->rows;

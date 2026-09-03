@@ -186,9 +186,10 @@
 # 260527-0142 - Added dialplan filtering
 # 260605-1002 - Added end-of-day log processing log entry for the vicidial_internal_log
 # 260826-1814 - Added FastAGIServer code
+# 260902-1718 - Fix for PJSIP monitoring
 #
 
-$build = '260826-1814';
+$build = '260902-1718';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -3304,6 +3305,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		$Lext .= "exten => 473782138521111,n,Hangup()\n";
 		$Lext .= "; Whisper to agent meetme entry\n";
 		$Lext .= "exten => _473782188600XXX,1,Answer\n";
+		$Lext .= "exten => _473782188600XXX,n,Set(CALLERID(name)=\${MONITORCG})\n";
 		$Lext .= "exten => _473782188600XXX,n,Wait(1)\n";
 		$Lext .= "exten => _473782188600XXX,n,AGI(getAGENTchannel.agi)\n";
 		$Lext .= "exten => _473782188600XXX,n,NoOp(\${agent_zap_channel})\n";
@@ -3340,6 +3342,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		$Lext .= "exten => 473782138521111,n,Hangup()\n";
 		$Lext .= "; Whisper to agent meetme entry\n";
 		$Lext .= "exten => _473782188600XXX,1,Answer\n";
+		$Lext .= "exten => _473782188600XXX,n,Set(CALLERID(name)=\${MONITORCG})\n";
 		$Lext .= "exten => _473782188600XXX,n,Wait(1)\n";
 		$Lext .= "exten => _473782188600XXX,n,AGI(getAGENTchannel.agi)\n";
 		$Lext .= "exten => _473782188600XXX,n,NoOp(\${agent_zap_channel})\n";
@@ -3348,6 +3351,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		$Lext .= "exten => _473782188600XXX,n(fin),Hangup()\n";
 		$Lext .= "; Whisper to agent ConfBridge entry\n";
 		$Lext .= "exten => _473782189600XXX,1,Answer\n";
+		$Lext .= "exten => _473782189600XXX,n,Set(CALLERID(name)=\${MONITORCG})\n";
 		$Lext .= "exten => _473782189600XXX,n,Wait(1)\n";
 		$Lext .= "exten => _473782189600XXX,n,AGI(getAGENTchannel.agi)\n";
 		$Lext .= "exten => _473782189600XXX,n,NoOp(\${agent_zap_channel})\n";
@@ -3356,6 +3360,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		$Lext .= "exten => _473782189600XXX,n(fin),Hangup()\n";
 		$Lext .= "; Enhanced Agent Monitoring ConfBridge entry: MONITOR\n";
 		$Lext .= "exten => _473782199600XXX,1,Answer()\n";
+		$Lext .= "exten => _473782199600XXX,n,Set(CALLERID(name)=\${MONITORCG})\n";
 		$Lext .= "exten => _473782199600XXX,n,Wait(1)\n";
 		$Lext .= "exten => _473782199600XXX,n,AGI(getAGENTchannel.agi)\n";
 		$Lext .= "exten => _473782199600XXX,n,NoOp(\${monitorsession})\n";
@@ -3366,6 +3371,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		$Lext .= "exten => _473782199600XXX,n,Hangup()\n";
 		$Lext .= "; Enhanced Agent Monitoring ConfBridge entry: BARGE\n";
 		$Lext .= "exten => _473782209600XXX,1,Answer()\n";
+		$Lext .= "exten => _473782209600XXX,n,Set(CALLERID(name)=\${MONITORCG})\n";
 		$Lext .= "exten => _473782209600XXX,n,Wait(1)\n";
 		$Lext .= "exten => _473782209600XXX,n,AGI(getAGENTchannel.agi)\n";
 		$Lext .= "exten => _473782209600XXX,n,NoOp(\${monitorsession})\n";
@@ -3395,6 +3401,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 
 		$confbridge_enhanced_monitoring .= "; Enhanced Agent Monitoring Whisper to agent channel entry\n";
 		$confbridge_enhanced_monitoring .= "exten => _473782219600XXX,1,Answer\n";
+		$confbridge_enhanced_monitoring .= "exten => _473782219600XXX,n,Set(CALLERID(name)=\${MONITORCG})\n";
 		$confbridge_enhanced_monitoring .= "exten => _473782219600XXX,n,Wait(1)\n";
 		$confbridge_enhanced_monitoring .= "exten => _473782219600XXX,n,AGI(getAGENTchannel.agi)\n";
 		$confbridge_enhanced_monitoring .= "exten => _473782219600XXX,n,NoOp(\${monitorsession})\n";

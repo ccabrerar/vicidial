@@ -6626,8 +6626,7 @@ $survey_camp_record_dir = preg_replace('/;/','',$survey_camp_record_dir);
 $conf_override = preg_replace('/;/','',$conf_override);
 $template_contents = preg_replace('/;/','',$template_contents);
 $registration_string = preg_replace('/;/','',$registration_string);
-$account_entry = preg_replace('/;/','',$account_entry);
-$account_entry = preg_replace('/\r/', '',$account_entry);
+#$account_entry = preg_replace('/\r/', '',$account_entry);
 $globals_string = preg_replace('/;/','',$globals_string);
 $dialplan_entry = preg_replace('/\\\\/', '',$dialplan_entry);
 $dialplan_entry = preg_replace('/\'/', '',$dialplan_entry);
@@ -7776,12 +7775,13 @@ if ($SSscript_remove_js > 0)
 # 260529-0918 - Added new AMD features
 # 260620-1447 - Added amd_status_map system setting and campaign setting
 # 260822-0855 - Added many input variable declarations, added agent_ingroup_availability API function
+# 260902-1656 - Fix for PJSIP
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-962a';
-$build = '260822-0855';
+$admin_version = '2.14-963a';
+$build = '260902-1656';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -16918,7 +16918,7 @@ if ($ADD==241111111111)
 				{
 				echo "<br>"._QXZ("CARRIER ADDED")."\n";
 
-				$stmt="INSERT INTO vicidial_server_carriers (carrier_id,carrier_name,registration_string,template_id,account_entry,protocol,globals_string,dialplan_entry,server_ip,active,carrier_description,user_group) values('$carrier_id','$carrier_name','$registration_string','$template_id','$account_entry','$protocol','$globals_string','$dialplan_entry','$server_ip','N','$carrier_description','$user_group');";
+				$stmt="INSERT INTO vicidial_server_carriers (carrier_id,carrier_name,registration_string,template_id,account_entry,protocol,globals_string,dialplan_entry,server_ip,active,carrier_description,user_group) values('$carrier_id','$carrier_name','$registration_string','$template_id','" . mysqli_real_escape_string($link, $account_entry) . "','$protocol','$globals_string','$dialplan_entry','$server_ip','N','$carrier_description','$user_group');";
 				$rslt=mysql_to_mysqli($stmt, $link);
 
 				$stmtA="UPDATE servers SET rebuild_conf_files='Y' where generate_vicidial_conf='Y' and active_asterisk_server='Y' and server_ip='$server_ip';";
@@ -22080,7 +22080,7 @@ if ($ADD==441111111111)
 			{echo "<br>"._QXZ("CARRIER NOT MODIFIED - Please go back and look at the data you entered")."\n";}
 		else
 			{
-			$stmt="UPDATE vicidial_server_carriers set carrier_name='$carrier_name',registration_string='$registration_string',template_id='$template_id',account_entry='$account_entry',protocol='$protocol',globals_string='$globals_string',dialplan_entry='$dialplan_entry',server_ip='$server_ip',active='$active',carrier_description='$carrier_description',user_group='$user_group' where carrier_id='$carrier_id';";
+			$stmt="UPDATE vicidial_server_carriers set carrier_name='$carrier_name',registration_string='$registration_string',template_id='$template_id',account_entry='" . mysqli_real_escape_string($link, $account_entry) . "',protocol='$protocol',globals_string='$globals_string',dialplan_entry='$dialplan_entry',server_ip='$server_ip',active='$active',carrier_description='$carrier_description',user_group='$user_group' where carrier_id='$carrier_id';";
 			$rslt=mysql_to_mysqli($stmt, $link);
 
 			$stmtA="UPDATE servers SET rebuild_conf_files='Y' where generate_vicidial_conf='Y' and active_asterisk_server='Y' and server_ip='$server_ip';";
@@ -50505,7 +50505,7 @@ if ($ADD==140000000000)
 		echo "<tr $bgcolor"; if ($SSadmin_row_click > 0) {echo " onclick=\"window.document.location='$PHP_SELF?ADD=341111111111&carrier_id=$row[0]'\"";} echo "><td><a href=\"$PHP_SELF?ADD=341111111111&carrier_id=$row[0]\"><font size=1 color=black>$row[0]</a></td>";
 		echo "<td><font size=1>$row[1]</td>";
 		echo "<td><font size=1>".(preg_match('/[A-Z]/', $row[2]) ? _QXZ("$row[2]") : $row[2])."</td>";
-		echo "<td><font size=1>".(!preg_match('/^SIP|IAX2/', $row[3]) ? _QXZ("$row[3]") : $row[3])."</td>";
+		echo "<td><font size=1>".(!preg_match('/^SIP|^PJSIP|IAX2/', $row[3]) ? _QXZ("$row[3]") : $row[3])."</td>";
 		echo "<td><font size=1>$row[4]</td>";
 		echo "<td><font size=1>"._QXZ("$row[5]")."</td>";
 		echo "<td><font size=1>"._QXZ("$row[6]")."</td>";

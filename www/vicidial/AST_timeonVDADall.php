@@ -139,10 +139,11 @@
 # 250523-1730 - Added inbound calls counting capability
 # 260420-1445 - Code updates for PHP8 compatibility
 # 260501-1447 - Small fix for monitoring issue
+# 260902-1708 - Fix for PJSIP
 #
 
-$version = '2.14-122';
-$build = '260501-1447';
+$version = '2.14-123';
+$build = '260902-1708';
 $php_script='AST_timeonVDADall.php';
 
 require("dbconnect_mysqli.php");
@@ -3854,7 +3855,7 @@ if ($talking_to_print > 0)
 			$dialplan = preg_replace('/\@.*/i', '',$dialplan);
 			$exten = "dialplan_number='$dialplan'";
 			}
-		if (preg_match('/SIP\//i',$Aextension[$i])) 
+		if (preg_match('/(SIP|PJSIP)\//i',$Aextension[$i])) 
 			{
 			$protocol = 'SIP';
 			$dialplan = preg_replace('/SIP\//i', '',$Aextension[$i]);
