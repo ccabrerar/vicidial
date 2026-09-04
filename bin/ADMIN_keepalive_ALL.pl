@@ -187,9 +187,10 @@
 # 260605-1002 - Added end-of-day log processing log entry for the vicidial_internal_log
 # 260826-1814 - Added FastAGIServer code
 # 260902-1718 - Fix for PJSIP monitoring
+# 260903-1914 - Added -ra-delay=X flag
 #
 
-$build = '260902-1718';
+$build = '260903-1914';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -202,6 +203,7 @@ $cu3way_delay='';
 $autodial_delay='';
 $adfill_delay='';
 $fill_staggered='';
+$ra_delay='';
 $recmon=0;
 $reserved_exten_skip=0;
 $reserved_exten_message='';
@@ -312,6 +314,7 @@ if (length($ARGV[0])>1)
 		print "  [-autodial-delay=X] = setting delay seconds on local auto-dial process\n";
 		print "  [-adfill-delay=X] = setting delay seconds on auto-dial FILL process\n";
 		print "  [-fill-staggered] = enable experimental staggered auto-dial FILL process\n";
+		print "  [-ra-delay=X] = setting delay seconds on Remote Agent process\n";
 		print "  [-cu3way] = keepalive for the optional 3way conference checker\n";
 		print "  [-lstn-buffer] = use special enhanced telnet buffer listen process(depricated)\n";
 		print "  [-cu3way-delay=X] = setting delay seconds on 3way conference checker\n";
@@ -431,6 +434,21 @@ if (length($ARGV[0])>1)
 				if ($DB > 0) {print "Recording Monitor Sleep ms set to $CLIsleepms $recmon_sleepms\n";}
 				}
 			@CLIvarARY=@MT;   @CLIvarARY=@MT;
+			}
+		if ($args =~ /-ra-delay=/i) # CLI defined delay for Remote Agent script
+			{
+			@CLIvarRADLY = split(/-ra-delay=/,$args);
+			@CLIvarRADLX = split(/ /,$CLIvarRADLY[1]);
+			if (length($CLIvarRADLX[0])>0)
+				{
+				$CLIradelay = $CLIvarRADLX[0];
+				$CLIradelay =~ s/\/$| |\r|\n|\t//gi;
+				$CLIradelay =~ s/\D//gi;
+				if ( ($CLIradelay > 0) && (length($CLIradelay)> 0) )	
+					{$ra_delay = "--delay=$CLIradelay";}
+				if ($DB > 0) {print "Remote Agent Delay set to $CLIradelay $ra_delay \n";}
+				}
+			@CLIvarRADLY=@MT;   @CLIvarRADLY=@MT;
 			}
 		if ($args =~ /-test/i)
 			{
@@ -1115,7 +1133,7 @@ else
 			{ 
 			if ($DB) {print "starting AST_VDremote_agents...\n";}
 			# add a '-L' to the command below to activate logging
-			`/usr/bin/screen -d -m -S ASTVDremote $PATHhome/AST_VDremote_agents.pl --debug $debug_string`;
+			`/usr/bin/screen -d -m -S ASTVDremote $PATHhome/AST_VDremote_agents.pl --debug $ra_delay $debug_string`;
 			if ($megaDB)
 				{
 				`/usr/bin/screen -S ASTVDremote -X logfile $PATHlogs/ASTVDremote-screenlog.0`;
