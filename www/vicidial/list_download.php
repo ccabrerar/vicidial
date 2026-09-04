@@ -40,6 +40,7 @@
 # 210308-0939 - Fix for ALL_DNC_CAMPAIGNS dnc download
 # 220224-1041 - Added allow_web_debug system setting
 # 260822-0834 - Fix for Issue #1564
+# 260904-1419 - Fix for Issue #1560
 #
 
 $startMS = microtime();
@@ -771,8 +772,8 @@ if ( ($custom_fields_enabled > 0) and ($event_code_type=='LIST') )
 					}
 				if ($columns_ct > 1)
 					{
-					if(preg_match("/lead_id,/",$column_list)) {$columns_ct--;} # Lower column count by 1 because we're removing this column
-					$column_list = preg_replace("/lead_id,/",'',$column_list);
+					if(preg_match("/^lead_id,/",$column_list)) {$columns_ct--;} # Lower column count by 1 because we're removing this column
+					$column_list = preg_replace("/^lead_id,/",'',$column_list);
 					$column_list = preg_replace("/,$/",'',$column_list);
 					$column_list_array = explode(',',$column_list);
 					if (preg_match("/cf_encrypt/",$active_modules))
