@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2026-08-22
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2026-09-07
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -237,6 +237,7 @@ Changes:
 260506-1525 - small fix for campaign changes
 260519-1647 - Code updates for PHP8 compatibility, and json output format
 260822-0841 - Added agent_ingroup_availability function
+260907-1702 - Added PJSIP option for add_phone & update_phone
 
 
 API Functions use the 'function' variable
@@ -1861,7 +1862,7 @@ voicemail_id -		1-10 digits
 phone_login -		1-20 characters
 phone_pass -		1-20 characters
 server_ip -		7-15 characters, must be a valid server_ip
-protocol -		Must be one of these: 'IAX2','SIP','Zap','EXTERNAL'
+protocol -		Must be one of these: 'IAX2','SIP','PJSIP','Zap','EXTERNAL'
 registration_password -	1-20 characters
 phone_full_name -	1-50 characters
 local_gmt -		timezone setting, not adjusting for DST, default: '-5.00'
@@ -1912,7 +1913,7 @@ dialplan_number -	1-20 digits
 voicemail_id -		1-10 digits
 phone_login -		1-20 characters
 phone_pass -		1-20 characters
-protocol -		Must be one of these: 'IAX2','SIP','Zap','EXTERNAL'
+protocol -		Must be one of these: 'IAX2','SIP','PJSIP','Zap','EXTERNAL'
 registration_password -	1-20 characters
 phone_full_name -	1-50 characters
 local_gmt -		timezone setting, not adjusting for DST, default: '-5.00'
