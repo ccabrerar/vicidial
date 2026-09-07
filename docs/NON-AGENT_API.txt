@@ -238,6 +238,7 @@ Changes:
 260519-1647 - Code updates for PHP8 compatibility, and json output format
 260822-0841 - Added agent_ingroup_availability function
 260907-1702 - Added PJSIP option for add_phone & update_phone
+260907-1808 - Added copy_phone function
 
 
 API Functions use the 'function' variable
@@ -1733,7 +1734,7 @@ SUCCESS: update_remote_agent USER HAS BEEN UPDATED - 6666|7878
 --------------------------------------------------------------------------------
 add_group_alias - adds group alias to the system
 
-NOTE: api user for this function must have user_level set to 8 or higher and "ast admin access" enabled
+NOTE: api user for this function must have user_level set to 8 or higher and "AGC Admin Access" enabled
 
 REQUIRED FIELDS-
 caller_id_number -	6-20 characters
@@ -1853,17 +1854,17 @@ SUCCESS: delete_fpg_phone FILTER PHONE GROUP NUMBER HAS BEEN DELETED - 6666|7275
 --------------------------------------------------------------------------------
 add_phone - adds a phone to the system
 
-NOTE: api user for this function must have user_level set to 8 or higher and "ast admin access" enabled
+NOTE: api user for this function must have user_level set to 8 or higher and "AGC Admin Access" enabled
 
 REQUIRED FIELDS-
 extension -		2-100 characters
 dialplan_number -	1-20 digits
 voicemail_id -		1-10 digits
 phone_login -		1-20 characters
-phone_pass -		1-20 characters
+phone_pass -		1-100 characters
 server_ip -		7-15 characters, must be a valid server_ip
 protocol -		Must be one of these: 'IAX2','SIP','PJSIP','Zap','EXTERNAL'
-registration_password -	1-20 characters
+registration_password -	1-100 characters
 phone_full_name -	1-50 characters
 local_gmt -		timezone setting, not adjusting for DST, default: '-5.00'
 outbound_cid -		1-20 digits
@@ -1897,9 +1898,47 @@ SUCCESS: add_phone PHONE HAS BEEN ADDED - 6666|cc100|10.0.9.8|SIP|100
 
 
 --------------------------------------------------------------------------------
+copy_phone - copies a phone in the system
+
+NOTE: api user for this function must have user_level set to 8 or higher and "AGC Admin Access" enabled
+
+REQUIRED FIELDS-
+extension -		2-100 characters
+dialplan_number -	1-20 digits
+voicemail_id -		1-10 digits
+phone_login -		1-20 characters
+server_ip -		7-15 characters, must be a valid server_ip
+phone_full_name -	1-50 characters
+outbound_cid -		1-20 digits
+source_extension -	Must be an existing phone extension-server_ip combination in the system
+source_server_ip -	Must be an existing phone extension-server_ip combination in the system
+
+OPTIONAL FIELDS-
+phone_pass -		1-100 characters (if not populated, then default system phone pass is used)
+registration_password -	1-100 characters (if not populated, then default system registration pass is used)
+
+Example URL strings for API calls:
+http://server/vicidial/non_agent_api.php?source=test&function=copy_phone&user=6666&pass=1234&extension=55000&dialplan_number=55000&voicemail_id=55000&phone_login=55000&phone_pass=test&server_ip=192.168.198.5&registration_password=test&phone_full_name=Extension+55000&outbound_cid=7275551212&source_extension=cc100&source_server_ip=10.0.9.8
+http://server/vicidial/non_agent_api.php?source=test&function=copy_phone&user=6666&pass=1234&extension=55000&dialplan_number=55000&voicemail_id=55000&phone_login=55000&server_ip=192.168.198.5&phone_full_name=Extension+55000&outbound_cid=7275551212&source_extension=cc100&source_server_ip=10.0.9.8
+
+Example responses:
+ERROR: copy_phone USER DOES NOT HAVE PERMISSION TO COPY PHONES - 6666|0
+ERROR: copy_phone YOU MUST USE ALL REQUIRED FIELDS - 6666|1000|||||||||||
+ERROR: copy_phone SOURCE SERVER DOES NOT EXIST - 6666|10.0.9.8
+ERROR: copy_phone SOURCE PHONE DOES NOT EXIST ON THIS SERVER - 6666|10.0.9.8|cc100
+ERROR: copy_phone SERVER DOES NOT EXIST - 6666|10.0.9.9
+ERROR: copy_phone PHONE ALREADY EXISTS ON THIS SERVER - 6666|10.0.9.8|cc101
+ERROR: copy_phone PHONE LOGIN ALREADY EXISTS - 6666|cc100
+SUCCESS: copy_phone PHONE HAS BEEN COPIED - 6666|cc100|10.0.9.8|SIP|100
+
+
+
+
+
+--------------------------------------------------------------------------------
 update_phone - updates or deletes a phone entry already in the system
 
-NOTE: api user for this function must have user_level set to 8 or higher and "ast admin access" enabled
+NOTE: api user for this function must have user_level set to 8 or higher and "AGC Admin Access" enabled
 
 REQUIRED FIELDS-
 extension -		2-100 characters
@@ -1912,9 +1951,9 @@ EDITABLE FIELDS-
 dialplan_number -	1-20 digits
 voicemail_id -		1-10 digits
 phone_login -		1-20 characters
-phone_pass -		1-20 characters
+phone_pass -		1-100 characters
 protocol -		Must be one of these: 'IAX2','SIP','PJSIP','Zap','EXTERNAL'
-registration_password -	1-20 characters
+registration_password -	1-100 characters
 phone_full_name -	1-50 characters
 local_gmt -		timezone setting, not adjusting for DST, default: '-5.00'
 outbound_cid -		6-18 digits
@@ -1969,7 +2008,7 @@ NOTICE: update_phone USER DOES NOT HAVE PERMISSION TO DELETE PHONES - 6666|7878
 --------------------------------------------------------------------------------
 add_phone_alias - adds a phone alias entry to the system
 
-NOTE: api user for this function must have user_level set to 8 or higher and "ast admin access" enabled
+NOTE: api user for this function must have user_level set to 8 or higher and "AGC Admin Access" enabled
 
 REQUIRED FIELDS-
 alias_id -		2-20 characters
@@ -1993,7 +2032,7 @@ SUCCESS: add_phone_alias PHONE ALIAS HAS BEEN ADDED - 6666|x100|testing_x100|cc1
 --------------------------------------------------------------------------------
 update_phone_alias - updates or deletes a phone alias entry already in the system
 
-NOTE: api user for this function must have user_level set to 8 or higher and "ast admin access" enabled
+NOTE: api user for this function must have user_level set to 8 or higher and "AGC Admin Access" enabled
 
 REQUIRED FIELDS-
 alias_id -		2-20 characters
@@ -2023,7 +2062,7 @@ SUCCESS: update_phone_alias PHONE ALIAS HAS BEEN DELETED - 6666|x100|
 --------------------------------------------------------------------------------
 server_refresh - forces a conf file refresh on all telco servers in the cluster
 
-NOTE: api user for this function must have user_level set to 8 or higher and "ast admin access" enabled
+NOTE: api user for this function must have user_level set to 8 or higher and "AGC Admin Access" enabled
 
 REQUIRED FIELDS-
 stage -		"REFRESH"

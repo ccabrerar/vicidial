@@ -233,10 +233,11 @@
 # 260822-0841 - Added agent_ingroup_availability function
 # 260902-1709 - Fix for PJSIP
 # 260907-1702 - Added PJSIP option for add_phone & update_phone
+# 260907-1808 - Added copy_phone function
 #
 
-$version = '2.14-208';
-$build = '260907-1702';
+$version = '2.14-209';
+$build = '260907-1808';
 $php_script='non_agent_api.php';
 $api_url_log = 0;
 $camp_lead_order_random=1;
@@ -1034,6 +1035,13 @@ if (isset($_GET["ingroup_set_name"]))			{$ingroup_set_name=$_GET["ingroup_set_na
 	else {$ingroup_set_name="";}
 if (isset($_GET["DBX"]))			{$DBX=$_GET["DBX"];}
 	elseif (isset($_POST["DBX"]))	{$DBX=$_POST["DBX"];}
+if (isset($_GET["source_extension"]))			{$source_extension=$_GET["source_extension"];}
+	elseif (isset($_POST["source_extension"]))	{$source_extension=$_POST["source_extension"];}
+	else {$source_extension="";}
+if (isset($_GET["source_server_ip"]))			{$source_server_ip=$_GET["source_server_ip"];}
+	elseif (isset($_POST["source_server_ip"]))	{$source_server_ip=$_POST["source_server_ip"];}
+	else {$source_server_ip="";}
+
 
 if (file_exists('options.php'))
 	{require('options.php');}
@@ -1044,7 +1052,7 @@ header ("Pragma: no-cache");                          // HTTP/1.0
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,custom_fields_enabled,pass_hash_enabled,agent_whisper_enabled,active_modules,auto_dial_limit,enable_languages,language_method,admin_web_directory,sounds_web_server,allow_web_debug,enhanced_agent_monitoring FROM system_settings;";
+$stmt = "SELECT use_non_latin,custom_fields_enabled,pass_hash_enabled,agent_whisper_enabled,active_modules,auto_dial_limit,enable_languages,language_method,admin_web_directory,sounds_web_server,allow_web_debug,enhanced_agent_monitoring,default_phone_registration_password,default_phone_login_password FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 $qm_conf_ct = mysqli_num_rows($rslt);
 if ($qm_conf_ct > 0)
@@ -1064,6 +1072,8 @@ if ($qm_conf_ct > 0)
 	$SSsounds_web_server =		$row[9];
 	$SSallow_web_debug =		$row[10];
 	$SSenhanced_agent_monitoring = $row[11];
+	$SSdefault_phone_registration_password = $row[12];
+	$SSdefault_phone_login_password = $row[13];
 	}
 if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
 if ($SSallow_web_debug < 1 || !isset($DBX)) {$DBX=0;}
@@ -1098,6 +1108,7 @@ $function = preg_replace('/[^-_0-9a-zA-Z]/', '',$function);
 $format = preg_replace('/[^0-9a-zA-Z]/','',$format);
 $session_id = preg_replace('/[^0-9]/','',$session_id);
 $server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
+$source_server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$source_server_ip);
 $stage = preg_replace('/[^-_0-9a-zA-Z]/','',$stage);
 $rank = preg_replace('/[^0-9]/','',$rank);
 $did_ids=preg_replace('/[^\,\+0-9a-zA-Z]/','',$did_ids);
@@ -1261,6 +1272,7 @@ if ($non_latin < 1)
 	$custom_four=preg_replace('/[^- \+\.\:\/\@\_0-9a-zA-Z]/','',$custom_four);
 	$custom_five=preg_replace('/[^- \+\.\:\/\@\_0-9a-zA-Z]/','',$custom_five);
 	$extension=preg_replace('/[^-_0-9a-zA-Z]/','',$extension);
+	$source_extension = preg_replace('/[^-_0-9a-zA-Z]/','',$source_extension);
 	$dialplan_number=preg_replace('/[^\*\#0-9a-zA-Z]/','',$dialplan_number);
 	$registration_password=preg_replace('/[^-_0-9a-zA-Z]/','',$registration_password);
 	$phone_full_name=preg_replace('/[^- \+\.\_0-9a-zA-Z]/','',$phone_full_name);
@@ -1424,6 +1436,7 @@ else
 	$custom_four=preg_replace('/[^- \+\.\:\/\@\_0-9\p{L}]/u','',$custom_four);
 	$custom_five=preg_replace('/[^- \+\.\:\/\@\_0-9\p{L}]/u','',$custom_five);
 	$extension=preg_replace('/[^-_0-9\p{L}]/u','',$extension);
+	$source_extension=preg_replace('/[^-_0-9\p{L}]/u','',$source_extension);
 	$dialplan_number=preg_replace('/[^\*\#0-9\p{L}]/u','',$dialplan_number);
 	$registration_password=preg_replace('/[^-_0-9\p{L}]/u','',$registration_password);
 	$phone_full_name=preg_replace('/[^- \+\.\_0-9\p{L}]/u','',$phone_full_name);
@@ -6267,6 +6280,166 @@ if ($function == 'add_phone')
 	}
 ################################################################################
 ### END add_phone
+################################################################################
+
+
+
+
+
+################################################################################
+### copy_phone - adds phone to the phones table
+################################################################################
+if ($function == 'copy_phone')
+	{
+	if(strlen($source)<2)
+		{
+		$result = 'ERROR';
+		$result_reason = "Invalid Source";
+		echo "$result: $result_reason: |$source|\n";
+		api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+		exit;
+		}
+	else
+		{
+		if ( (!preg_match("/ $function /",$api_allowed_functions)) and (!preg_match("/ALL_FUNCTIONS/",$api_allowed_functions)) )
+			{
+			$result = 'ERROR';
+			$result_reason = "auth USER DOES NOT HAVE PERMISSION TO USE THIS FUNCTION";
+			echo "$result: $result_reason: |$user|$function|\n";
+			$data = "$allowed_user";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1' and ast_admin_access='1' and user_level >= 8 and active='Y';";
+		$rslt=mysql_to_mysqli($stmt, $link);
+		$row=mysqli_fetch_row($rslt);
+		$allowed_user=$row[0];
+		if ($allowed_user < 1)
+			{
+			$result = 'ERROR';
+			$result_reason = "copy_phone USER DOES NOT HAVE PERMISSION TO COPY PHONES";
+			$data = "$allowed_user";
+			echo "$result: $result_reason: |$user|$data\n";
+			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+			exit;
+			}
+		else
+			{
+			if ( (strlen($extension)<2) or (strlen($dialplan_number)<2) or (strlen($voicemail_id)<1) or (strlen($phone_login)<1) or (strlen($server_ip)<1) or (strlen($phone_full_name)<1) or (strlen($outbound_cid)<1) or (strlen($source_extension)<1) or (strlen($source_server_ip)<1) )
+				{
+				$result = 'ERROR';
+				$result_reason = "copy_phone YOU MUST USE ALL REQUIRED FIELDS";
+				$data = "$extension|$dialplan_number|$voicemail_id|$phone_login|$server_ip|$phone_full_name|$outbound_cid";
+				echo "$result: $result_reason: |$user|$data\n";
+				api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+				exit;
+				}
+			else
+				{
+				$stmt="SELECT count(*) from servers where server_ip='$source_server_ip';";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$row=mysqli_fetch_row($rslt);
+				$source_server_exists=$row[0];
+				if ($source_server_exists < 1)
+					{
+					$result = 'ERROR';
+					$result_reason = "copy_phone SOURCE SERVER DOES NOT EXIST";
+					$data = "$source_server_ip";
+					echo "$result: $result_reason: |$user|$data\n";
+					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+					exit;
+					}
+				$stmt="SELECT count(*) from phones where extension='$source_extension' and server_ip='$source_server_ip';";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$row=mysqli_fetch_row($rslt);
+				$source_phone_exists=$row[0];
+				if ($source_phone_exists < 1)
+					{
+					$result = 'ERROR';
+					$result_reason = "copy_phone SOURCE PHONE DOES NOT EXIST ON THIS SERVER";
+					$data = "$source_server_ip|$source_extension";
+					echo "$result: $result_reason: |$user|$data\n";
+					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+					exit;
+					}
+
+				$stmt="SELECT count(*) from servers where server_ip='$server_ip';";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				$row=mysqli_fetch_row($rslt);
+				$server_exists=$row[0];
+				if ($server_exists < 1)
+					{
+					$result = 'ERROR';
+					$result_reason = "copy_phone SERVER DOES NOT EXIST";
+					$data = "$server_ip";
+					echo "$result: $result_reason: |$user|$data\n";
+					api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+					exit;
+					}
+				else
+					{
+					$stmt="SELECT count(*) from phones where extension='$extension' and server_ip='$server_ip';";
+					$rslt=mysql_to_mysqli($stmt, $link);
+					$row=mysqli_fetch_row($rslt);
+					$phone_exists=$row[0];
+					if ($phone_exists > 0)
+						{
+						$result = 'ERROR';
+						$result_reason = "copy_phone PHONE ALREADY EXISTS ON THIS SERVER";
+						$data = "$server_ip|$extension";
+						echo "$result: $result_reason: |$user|$data\n";
+						api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+						exit;
+						}
+					else
+						{
+						$stmt="SELECT count(*) from phones where login='$phone_login';";
+						$rslt=mysql_to_mysqli($stmt, $link);
+						$row=mysqli_fetch_row($rslt);
+						$phone_exists=$row[0];
+						if ($phone_exists > 0)
+							{
+							$result = 'ERROR';
+							$result_reason = "copy_phone PHONE LOGIN ALREADY EXISTS";
+							$data = "$phone_login";
+							echo "$result: $result_reason: |$user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							exit;
+							}
+						else
+							{
+							if (strlen($phone_pass)<1) {$phone_pass = $SSdefault_phone_login_password;}
+							if (strlen($registration_password)<1) {$registration_password = $SSdefault_phone_registration_password;}
+
+							$stmt="INSERT INTO phones(extension, dialplan_number, voicemail_id, phone_ip, computer_ip, server_ip, login, pass, status, active, phone_type, fullname, company, picture, messages, old_messages, protocol, local_gmt, ASTmgrUSERNAME, ASTmgrSECRET, login_user, login_pass, login_campaign, park_on_extension, conf_on_extension, VICIDIAL_park_on_extension, VICIDIAL_park_on_filename, monitor_prefix, recording_exten, voicemail_exten, voicemail_dump_exten, ext_context, dtmf_send_extension, call_out_number_group, client_browser, install_directory, local_web_callerID_URL, VICIDIAL_web_URL, AGI_call_logging_enabled, user_switching_enabled, conferencing_enabled, admin_hangup_enabled, admin_hijack_enabled, admin_monitor_enabled, call_parking_enabled, updater_check_enabled, AFLogging_enabled, QUEUE_ACTION_enabled, CallerID_popup_enabled, voicemail_button_enabled, enable_fast_refresh, fast_refresh_rate, enable_persistant_mysql, auto_dial_next_number, VDstop_rec_after_each_call, DBX_server, DBX_database, DBX_user, DBX_pass, DBX_port, DBY_server, DBY_database, DBY_user, DBY_pass, DBY_port, outbound_cid, enable_sipsak_messages, email, template_id, conf_override, phone_context, phone_ring_timeout, conf_secret, delete_vm_after_email, is_webphone, use_external_server_ip, codecs_list, codecs_with_template, webphone_dialpad, on_hook_agent, webphone_auto_answer, voicemail_timezone, voicemail_options, user_group, voicemail_greeting, voicemail_dump_exten_no_inst, voicemail_instructions, on_login_report, unavail_dialplan_fwd_exten, unavail_dialplan_fwd_context, nva_call_url, nva_search_method, nva_error_filename, nva_new_list_id, nva_new_phone_code, nva_new_status, webphone_dialbox, webphone_mute, webphone_volume, webphone_debug, outbound_alt_cid, conf_qualify, webphone_layout, mohsuggest, webphone_settings) SELECT '$extension', '$dialplan_number', '$voicemail_id', phone_ip, computer_ip, '$server_ip', '$phone_login', '$phone_pass', status, active, phone_type, '$phone_full_name', company, picture, messages, old_messages, protocol, local_gmt, ASTmgrUSERNAME, ASTmgrSECRET, login_user, login_pass, login_campaign, park_on_extension, conf_on_extension, VICIDIAL_park_on_extension, VICIDIAL_park_on_filename, monitor_prefix, recording_exten, voicemail_exten, voicemail_dump_exten, ext_context, dtmf_send_extension, call_out_number_group, client_browser, install_directory, local_web_callerID_URL, VICIDIAL_web_URL, AGI_call_logging_enabled, user_switching_enabled, conferencing_enabled, admin_hangup_enabled, admin_hijack_enabled, admin_monitor_enabled, call_parking_enabled, updater_check_enabled, AFLogging_enabled, QUEUE_ACTION_enabled, CallerID_popup_enabled, voicemail_button_enabled, enable_fast_refresh, fast_refresh_rate, enable_persistant_mysql, auto_dial_next_number, VDstop_rec_after_each_call, DBX_server, DBX_database, DBX_user, DBX_pass, DBX_port, DBY_server, DBY_database, DBY_user, DBY_pass, DBY_port, '$outbound_cid', enable_sipsak_messages, email, template_id, conf_override, phone_context, phone_ring_timeout, '$registration_password', delete_vm_after_email, is_webphone, use_external_server_ip, codecs_list, codecs_with_template, webphone_dialpad, on_hook_agent, webphone_auto_answer, voicemail_timezone, voicemail_options, user_group, voicemail_greeting, voicemail_dump_exten_no_inst, voicemail_instructions, on_login_report, unavail_dialplan_fwd_exten, unavail_dialplan_fwd_context, nva_call_url, nva_search_method, nva_error_filename, nva_new_list_id, nva_new_phone_code, nva_new_status, webphone_dialbox, webphone_mute, webphone_volume, webphone_debug, outbound_alt_cid, conf_qualify, webphone_layout, mohsuggest, webphone_settings from phones where extension='$source_extension' and server_ip='$source_server_ip'";
+							$rslt=mysql_to_mysqli($stmt, $link);
+
+							### LOG INSERTION Admin Log Table ###
+							$SQL_log = "$stmt|";
+							$SQL_log = preg_replace('/;/', '', $SQL_log);
+							$SQL_log = addslashes($SQL_log);
+							$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$user', ip_address='$ip', event_section='PHONES', event_type='COPY', record_id='$extension', event_code='ADMIN API COPY PHONE', event_sql=\"$SQL_log\", event_notes='phone: $extension|$server_ip';";
+							if ($DB) {echo "|$stmt|\n";}
+							$rslt=mysql_to_mysqli($stmt, $link);
+
+							$stmtA="UPDATE servers SET rebuild_conf_files='Y' where generate_vicidial_conf='Y' and active_asterisk_server='Y' and server_ip='$server_ip';";
+							$rslt=mysql_to_mysqli($stmtA, $link);
+
+							$result = 'SUCCESS';
+							$result_reason = "copy_phone PHONE HAS BEEN COPIED";
+							$data = "$extension|$server_ip|$protocol|$dialplan_number";
+							echo "$result: $result_reason - $user|$data\n";
+							api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+							}
+						}
+					}
+				}
+			}
+		}
+	exit;
+	}
+################################################################################
+### END copy_phone
 ################################################################################
 
 
