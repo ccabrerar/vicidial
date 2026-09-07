@@ -232,10 +232,11 @@
 # 260611-2256 - Fix for input variable filtering
 # 260822-0841 - Added agent_ingroup_availability function
 # 260902-1709 - Fix for PJSIP
+# 260907-1702 - Added PJSIP option for add_phone & update_phone
 #
 
-$version = '2.14-207';
-$build = '260902-1709';
+$version = '2.14-208';
+$build = '260907-1702';
 $php_script='non_agent_api.php';
 $api_url_log = 0;
 $camp_lead_order_random=1;
@@ -6129,7 +6130,7 @@ if ($function == 'add_phone')
 			}
 		else
 			{
-			if ( (strlen($extension)<2) or (strlen($dialplan_number)<2) or (strlen($voicemail_id)<1) or (strlen($phone_login)<1) or (strlen($phone_pass)<1) or (strlen($server_ip)<1) or (strlen($protocol)<1) or (strlen($registration_password)<1) or (strlen($phone_full_name)<1) or (strlen($local_gmt)<1) or (strlen($outbound_cid)<1) or ( ($protocol != 'IAX2') and ($protocol != 'SIP') and ($protocol != 'Zap') and ($protocol != 'EXTERNAL') ) )
+			if ( (strlen($extension)<2) or (strlen($dialplan_number)<2) or (strlen($voicemail_id)<1) or (strlen($phone_login)<1) or (strlen($phone_pass)<1) or (strlen($server_ip)<1) or (strlen($protocol)<1) or (strlen($registration_password)<1) or (strlen($phone_full_name)<1) or (strlen($local_gmt)<1) or (strlen($outbound_cid)<1) or ( ($protocol != 'IAX2') and ($protocol != 'SIP') and ($protocol != 'PJSIP') and ($protocol != 'Zap') and ($protocol != 'EXTERNAL') ) )
 				{
 				$result = 'ERROR';
 				$result_reason = "add_phone YOU MUST USE ALL REQUIRED FIELDS";
@@ -6526,7 +6527,7 @@ if ($function == 'update_phone')
 							}
 						if (strlen($protocol) > 0)
 							{
-							if ( ($protocol != 'IAX2') and ($protocol != 'SIP') and ($protocol != 'Zap') and ($protocol != 'EXTERNAL') )
+							if ( ($protocol != 'IAX2') and ($protocol != 'SIP') and ($protocol != 'PJSIP') and ($protocol != 'Zap') and ($protocol != 'EXTERNAL') )
 								{
 								$result = 'ERROR';
 								$result_reason = "update_phone YOU MUST USE A VALID PROTOCOL";
