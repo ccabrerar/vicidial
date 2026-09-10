@@ -7777,12 +7777,13 @@ if ($SSscript_remove_js > 0)
 # 260822-0855 - Added many input variable declarations, added agent_ingroup_availability API function
 # 260902-1656 - Fix for PJSIP
 # 260907-1810 - Added copy_phone API function
+# 260910-0111 - Fix for added users without user_group
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-964a';
-$build = '260907-1810';
+$admin_version = '2.14-965a';
+$build = '260910-0111';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -13492,7 +13493,7 @@ if ($ADD=="2")
 				{
 				$user = 'AUTOGENERA';
 				}
-			if ( (strlen($user) < 2) or (strlen($pass) < 2) or (strlen($full_name) < 2) or (strlen($user_group) < 2) or ( (mb_strlen($user,'utf-8') > 20) and (!preg_match('/AUTOGENERA/',$user)) ) or ( ($SSrequire_password_length > 0) and ($SSrequire_password_length > strlen($pass)) ) )
+			if ( (strlen($user) < 2) or (strlen($pass) < 2) or (strlen($full_name) < 2) or (strlen($user_group) < 2) or (preg_match('/---ALL---/',$user_group)) or ( (mb_strlen($user,'utf-8') > 20) and (!preg_match('/AUTOGENERA/',$user)) ) or ( ($SSrequire_password_length > 0) and ($SSrequire_password_length > strlen($pass)) ) )
 				{
 				echo "<br>"._QXZ("USER NOT ADDED - Please go back and look at the data you entered")."\n";
 				echo "<br>"._QXZ("user id must be between 2 and 20 characters long")."\n";
@@ -13504,6 +13505,7 @@ if ($ADD=="2")
 				else
 					{echo "<br>"._QXZ("full name and password must be at least 2 characters long")."\n";}
 				echo "<br>"._QXZ("you must select a user group")."\n";
+				exit;
 				}
 			else
 				{
@@ -13823,6 +13825,7 @@ if ($ADD=="2A")
 				else
 					{echo "<br>"._QXZ("full name and password must be at least 2 characters long")."\n";}
 				echo "<!-- |$user|$pass|$full_name| -->\n";
+				exit;
 				}
 			else
 				{
