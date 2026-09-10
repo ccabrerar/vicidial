@@ -188,9 +188,10 @@
 # 260826-1814 - Added FastAGIServer code
 # 260902-1718 - Fix for PJSIP monitoring
 # 260903-1914 - Added -ra-delay=X flag
+# 260910-0116 - Small fix for PJSIP
 #
 
-$build = '260903-1914';
+$build = '260910-0116';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -4408,10 +4409,10 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 					$Ppjsipw .= "endpoint/callerid=\"$fullname[$i]\" <$outbound_cid[$i]>\n";
 					}
 				$Ppjsipw .= "endpoint/mailboxes=$voicemail[$i]\n";
+				$Ppjsipw .= "endpoint/accountcode=$extension[$i]\n";				
 				if (($codecs_with_template[$i] > 0) || (!($template_contents[$i] =~ /allow=/i)))
 					{$Ppjsipw .= "$Pcodec";}
 				$Ppjsipw .= "$template_contents[$i]\n";
-				
 				$conf_entry_written++;
 				}
 			$sthA->finish();
@@ -4446,6 +4447,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 				$Ppjsipw .= "endpoint/callerid=\"$fullname[$i]\" <$outbound_cid[$i]>\n";
 				}
 			$Ppjsipw .= "endpoint/mailboxes=$voicemail[$i]\n";
+			$Ppjsipw .= "endpoint/accountcode=$extension[$i]\n";
 			$Ppjsipw .= "$Pcodec";
 			$Ppjsipw .= "endpoint/dtmf_mode = rfc4733\n";
 			$Ppjsipw .= "endpoint/trust_id_inbound = no\n";
