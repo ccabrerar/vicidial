@@ -87,10 +87,11 @@
 # 260203-1600 - Fix for field chooser issue and more code updates for PHP8 compatibility
 # 260415-1710 - Added summarized error output, fuzzy field auto-detection for custom layout, Issue #1561 from Acidshock
 # 260514-1553 - Added default_phone_code use for Phone Code field on form
+# 260912-0956 - Added link to 6th gen lead loader
 #
 
-$version = '2.14-84';
-$build = '260514-1553';
+$version = '2.14-85';
+$build = '260912-0956';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -1371,7 +1372,7 @@ if ($SSenable_international_dncs)
 		<tr>
 			<td align=center colspan=2><input style='background-color:#<?php echo "$SSbutton_color"; ?>' type=submit value="<?php echo _QXZ("SUBMIT"); ?>" name='submit_file'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input style='background-color:#<?php echo "$SSbutton_color"; ?>' type=button onClick="javascript:document.location='admin_listloader_fifth_gen.php'" value="<?php echo _QXZ("START OVER"); ?>" name='reload_page'></td>
 		  </tr>
-		  <tr><td align=left><font size=1> &nbsp; &nbsp; &nbsp; &nbsp; <a href="admin.php?ADD=100" target="_parent"><?php echo _QXZ("BACK TO ADMIN"); ?></a> &nbsp; &nbsp; </font></td><td align=right><font size=1><?php echo _QXZ("LIST LOADER 5th Gen"); ?> | <a href="admin_listloader_fourth_gen.php"><?php echo _QXZ("4th Gen"); ?></a> &nbsp; &nbsp; <?php echo _QXZ("VERSION"); ?>: <?php echo $version ?> &nbsp; &nbsp; <?php echo _QXZ("BUILD"); ?>: <?php echo $build ?> &nbsp; &nbsp; </td></tr>
+		  <tr><td align=left><font size=1> &nbsp; &nbsp; &nbsp; &nbsp; <a href="admin.php?ADD=100" target="_parent"><?php echo _QXZ("BACK TO ADMIN"); ?></a> &nbsp; &nbsp; </font></td><td align=right><font size=1><a href="admin_listloader_fourth_gen.php"><?php echo _QXZ("4th Gen"); ?></a> | <?php echo _QXZ("LIST LOADER 5th Gen"); ?> | <a href="admin_listloader_sixth_gen.php"><?php echo _QXZ("6th Gen"); ?></a> &nbsp; &nbsp; <?php echo _QXZ("VERSION"); ?>: <?php echo $version ?> &nbsp; &nbsp; <?php echo _QXZ("BUILD"); ?>: <?php echo $build ?> &nbsp; &nbsp; </td></tr>
 		</table>
 		<?php 
 
