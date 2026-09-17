@@ -7784,12 +7784,13 @@ $rjs_debug='';
 # 260907-1810 - Added copy_phone API function
 # 260910-0111 - Fix for added users without user_group
 # 260910-2040 - Added CID SIP 603 Report
+# 260917-1502 - Small fix for HotKeys admin
 #
 
 # make sure you have added a user to the vicidial_users MySQL table with at least user_level 9 to access this page the first time
 
-$admin_version = '2.14-966a';
-$build = '260910-2040';
+$admin_version = '2.14-967a';
+$build = '260917-1502';
 
 $STARTtime = date("U");
 $SQLdate = date("Y-m-d H:i:s");
@@ -29050,8 +29051,6 @@ if ($ADD==31)
 	if ($DB) {echo "$Cstatuses_to_print|$stmt|\n";}
 
 	$o=0;
-	$LRstatuses_list='';
-	$HKstatuses_list='';
 	while ($Cstatuses_to_print > $o)
 		{
 		$rowx=mysqli_fetch_row($rslt);
