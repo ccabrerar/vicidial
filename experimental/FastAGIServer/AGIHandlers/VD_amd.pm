@@ -81,8 +81,9 @@ package AGIHandlers::VD_amd;
 # 260527-0902 - Updates for ViciAMD
 # 260620-1430 - Added amd_status_map feature
 # 260806-1118 - Converted to a PM file for the FastAGIServer system
+# 260917-1529 - Fix for calls with improper calleridname
 our $script = 'VD_amd.pm';
-our $build = '260806-1118';
+our $build = '260917-1529';
 our $fagi_channel = '';
 our $AGI = '';
 
@@ -295,9 +296,16 @@ sub run {
 
 	$callerid =~ s/\"//gi;
 	$callerid =~ s/ .*//gi;
-	$CIDlead_id = $callerid;
-	$CIDlead_id = substr($CIDlead_id, 10, 10);
-	$CIDlead_id = ($CIDlead_id + 0);
+	if ( (length($CLIlead_id) > 0) && ($CLIlead_id =~ /^\d+$/) && ($CLIlead_id > 0) ) 
+		{
+		$CIDlead_id = $CLIlead_id + 0;
+		}
+	else 
+		{
+		$CIDlead_id = $callerid;
+		$CIDlead_id = substr($CIDlead_id, 10, 10);
+		$CIDlead_id = $CIDlead_id + 0;
+		}
 	if ( ($CLIlead_id > 0) && ($CIDlead_id < 1) ) {$CIDlead_id = $CLIlead_id;}
 	$VD_lead_id = $CIDlead_id;
 
