@@ -55,6 +55,7 @@
 # 250103-1017 - Added ConfBridge conf files updates
 # 250823-1411 - Added stereo recording directories
 # 260826-1919 - Added 'F' keepalive option, for FastAGIServer
+# 260919-2014 - Added install of FastAGIServer files
 #
 
 ############################################
@@ -2779,6 +2780,16 @@ if ($WEBONLY < 1)
 		`mkdir -p $PATHhome/UPDATE_IN/DONE`;
 		`chmod -R 0766 $PATHhome/UPDATE_IN`;
 		}
+	if (!-e "$PATHhome/FastAGIServer")	
+		{
+		`mkdir -p $PATHhome/FastAGIServer`;
+		`chmod -R 0766 $PATHhome/FastAGIServer`;
+		}
+	if (!-e "$PATHhome/FastAGIServer/AGIHandlers")	
+		{
+		`mkdir -p $PATHhome/FastAGIServer/AGIHandlers`;
+		`chmod -R 0766 $PATHhome/FastAGIServer/AGIHandlers`;
+		}
 
 	print "Creating $PATHmonitor directories...\n";
 	if (!-e "$PATHmonitor")					
@@ -2816,14 +2827,17 @@ if ($WEBONLY < 1)
 
 	print "Copying bin scripts to $PATHhome ...\n";
 	`cp -f ./bin/* $PATHhome/`;
+	`cp -f ./experimental/FastAGIServer/* $PATHhome/FastAGIServer/`;
 
 	print "Copying libs to $PATHhome ...\n";
 	`cp -f ./libs/* $PATHhome/libs`;
 	`cp -f ./extras/Asterisk.pm $PATHhome/libs/`;
 	`cp -f ./extras/Asterisk/* $PATHhome/libs/Asterisk/`;
+	`cp -f ./experimental/FastAGIServer/AGIHandlers/* $PATHhome/FastAGIServer/AGIHandlers/`;
 
 	print "setting cron scripts to executable...\n";
 	`chmod 0755 $PATHhome/*`;
+	`chmod 0755 $PATHhome/FastAGIServer/*`;
 
 	print "Copying extras files to $PATHhome ...\n";
 	`cp -f ./extras/MySQL_AST_CREATE_tables.sql $PATHhome/`;
