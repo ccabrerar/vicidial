@@ -189,9 +189,10 @@
 # 260902-1718 - Fix for PJSIP monitoring
 # 260903-1914 - Added -ra-delay=X flag
 # 260910-0116 - Small fix for PJSIP
+# 260922-1609 - Added ability for multiple contacts on PJSIP phones
 #
 
-$build = '260910-0116';
+$build = '260922-1609';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -4436,7 +4437,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 			$Ppjsipw .= "accepts_registrations=yes\n";
 			$Ppjsipw .= "inbound_auth/username=$extension[$i]\n";
 			$Ppjsipw .= "inbound_auth/password=$conf_secret[$i]\n";
-			$Ppjsipw .= "aor/max_contacts = 1\n";
+			$Ppjsipw .= "aor/max_contacts = 8\n";
 			$Ppjsipw .= "aor/maximum_expiration = 3600\n";
 			$Ppjsipw .= "aor/minimum_expiration = 60\n";
 			$Ppjsipw .= "aor/default_expiration = 120\n";
@@ -4494,7 +4495,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 				}
 			else
 				{
-				$Pext .= "exten => $dialplan[$i],1,Dial(PJSIP/$extension[$i],$phone_ring_timeout[$i],)\n";
+				$Pext .= "exten => $dialplan[$i],1,Dial(\${PJSIP_DIAL_CONTACTS($extension[$i])},$phone_ring_timeout[$i],)\n";
 				}
 			if (length($unavail_dialplan_fwd_exten[$i]) > 0) 
 				{
