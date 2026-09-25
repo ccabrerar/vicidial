@@ -1,4 +1,4 @@
-NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2026-09-07
+NON-AGENT API DOCUMENT           Started: 2008-07-24         Updated: 2026-09-25
 
 This document describes the functions of an API(Application Programming 
 Interface) for all functions NOT directly relating to the VICIDIAL Agent screen. 
@@ -239,6 +239,7 @@ Changes:
 260822-0841 - Added agent_ingroup_availability function
 260907-1702 - Added PJSIP option for add_phone & update_phone
 260907-1808 - Added copy_phone function
+260925-1400 - Added vdc_agent_api_access requirement to all functions
 
 
 API Functions use the 'function' variable
@@ -260,6 +261,12 @@ http://server/vicidial/non_agent_api.php?function=version
 Example responses:
 VERSION: 2.4-34|BUILD: 110424-0854|DATE: 2011-05-29 12:19:22|EPOCH: 1306685962|DST: 1|TZ: -5|TZNOW: -4| 
 
+
+
+
+ALL FUNCTIONS BELOW THIS LINE REQUIRE THE API USER TO HAVE THE USER OPTION "AGENT API ACCESS" ENABLED!!!
+
+Example response if the API user does not: "ERROR: sounds_list USER DOES NOT HAVE API ACCESS"
 
 
 

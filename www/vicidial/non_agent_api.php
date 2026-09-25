@@ -234,10 +234,11 @@
 # 260902-1709 - Fix for PJSIP
 # 260907-1702 - Added PJSIP option for add_phone & update_phone
 # 260907-1808 - Added copy_phone function
-#
+# 260925-1400 - Added vdc_agent_api_access requirement to all functions
 
-$version = '2.14-209';
-$build = '260907-1808';
+
+$version = '2.14-210';
+$build = '260925-1400';
 $php_script='non_agent_api.php';
 $api_url_log = 0;
 $camp_lead_order_random=1;
@@ -1763,6 +1764,21 @@ if ( ($api_list_restrict > 0) and ( ($function == 'add_lead') or ($function == '
 		exit;
 		}
 	}
+
+$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1'";
+$rslt=mysql_to_mysqli($stmt, $link);
+$row=mysqli_fetch_row($rslt);
+$allowed_user=$row[0];
+if ($allowed_user < 1)
+	{
+	$result = 'ERROR';
+	$result_reason = "USER DOES NOT HAVE API ACCESS";
+	$data = "$allowed_user";
+	echo "$result: $result_reason: |$user|$data\n";
+	api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
+	exit;
+	}
+
 ##### END user authentication for all functions below #####
 
 
@@ -1775,7 +1791,7 @@ if ($function == 'sounds_list')
 	if ($stage=="") {$stage="date";}
 	if ($format=="") {$format="tab";}
 
-	$stmt="SELECT count(*) from vicidial_users where user='$user' and user_level > 6 and active='Y';";
+	$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1' and user_level > 6 and active='Y';";
 	if ($DB>0) {echo "DEBUG: sounds_list query - $stmt\n";}
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$row=mysqli_fetch_row($rslt);
@@ -2002,7 +2018,7 @@ if ($function == 'sounds_list')
 ################################################################################
 if ($function == 'moh_list')
 	{
-	$stmt="SELECT count(*) from vicidial_users where user='$user' and user_level > 6 and active='Y';";
+	$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1' and user_level > 6 and active='Y';";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$row=mysqli_fetch_row($rslt);
 	$allowed_user=$row[0];
@@ -2176,7 +2192,7 @@ if ($function == 'moh_list')
 ################################################################################
 if ($function == 'vm_list')
 	{
-	$stmt="SELECT count(*) from vicidial_users where user='$user' and user_level > 6 and active='Y';";
+	$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1' and user_level > 6 and active='Y';";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$row=mysqli_fetch_row($rslt);
 	$allowed_user=$row[0];
@@ -2326,7 +2342,7 @@ if ($function == 'vm_list')
 ################################################################################
 if ($function == 'ingroup_list')
 	{
-	$stmt="SELECT count(*) from vicidial_users where user='$user' and user_level > 6 and active='Y';";
+	$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1' and user_level > 6 and active='Y';";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$row=mysqli_fetch_row($rslt);
 	$allowed_user=$row[0];
@@ -2450,7 +2466,7 @@ if ($function == 'ingroup_list')
 ################################################################################
 if ($function == 'callmenu_list')
 	{
-	$stmt="SELECT count(*) from vicidial_users where user='$user' and user_level > 6 and active='Y';";
+	$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1' and user_level > 6 and active='Y';";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$row=mysqli_fetch_row($rslt);
 	$allowed_user=$row[0];
@@ -2583,14 +2599,14 @@ if ($function == 'container_list')
 		api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
 		exit;
 		}
-	$stmt="SELECT count(*) from vicidial_users where user='$user' and user_level > 6 and active='Y';";
+	$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1' and user_level > 6 and active='Y';";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$row=mysqli_fetch_row($rslt);
 	$allowed_user=$row[0];
 	if ($allowed_user < 1)
 		{
 		$result = 'ERROR';
-		$result_reason = "container_list USER DOES NOT HAVE PERMISSION TO VIEW CALL MENUS LIST";
+		$result_reason = "container_list USER DOES NOT HAVE PERMISSION TO VIEW CONTAINER LIST";
 		echo "$result: $result_reason: |$user|$allowed_user|\n";
 		$data = "$allowed_user";
 		api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
@@ -5693,7 +5709,7 @@ if ($function == 'add_dnc_phone')
 			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
 			exit;
 			}
-		$stmt="SELECT count(*) from vicidial_users where user='$user' and modify_lists='1' and user_level >= 8 and active='Y';";
+		$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1' and modify_lists='1' and user_level >= 8 and active='Y';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$row=mysqli_fetch_row($rslt);
 		$allowed_user=$row[0];
@@ -5807,7 +5823,7 @@ if ($function == 'delete_dnc_phone')
 			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
 			exit;
 			}
-		$stmt="SELECT count(*) from vicidial_users where user='$user' and modify_lists='1' and delete_from_dnc='1' and user_level >= 8 and active='Y';";
+		$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1' and modify_lists='1' and delete_from_dnc='1' and user_level >= 8 and active='Y';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$row=mysqli_fetch_row($rslt);
 		$allowed_user=$row[0];
@@ -5910,7 +5926,7 @@ if ($function == 'add_fpg_phone')
 			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
 			exit;
 			}
-		$stmt="SELECT count(*) from vicidial_users where user='$user' and modify_lists='1' and user_level >= 8 and active='Y';";
+		$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1' and modify_lists='1' and user_level >= 8 and active='Y';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$row=mysqli_fetch_row($rslt);
 		$allowed_user=$row[0];
@@ -6019,7 +6035,7 @@ if ($function == 'delete_fpg_phone')
 			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
 			exit;
 			}
-		$stmt="SELECT count(*) from vicidial_users where user='$user' and modify_lists='1' and user_level >= 8 and active='Y';";
+		$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1' and modify_lists='1' and user_level >= 8 and active='Y';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$row=mysqli_fetch_row($rslt);
 		$allowed_user=$row[0];
@@ -11522,7 +11538,7 @@ if ($function == 'copy_did')
 
 
 ################################################################################
-### agent_ingroup_availability - 
+### agent_ingroup_availability - show count of available agents per ingroup
 ################################################################################
 if ($function == 'agent_ingroup_availability')
 	{
@@ -11682,6 +11698,9 @@ if ($function == 'agent_ingroup_availability')
 		}
 	exit;
 	}
+################################################################################
+### END agent_ingroup_availability
+################################################################################
 
 
 ################################################################################
@@ -11715,7 +11734,7 @@ if ($function == 'update_did')
 		if ($allowed_user < 1)
 			{
 			$result = 'ERROR';
-			$result_reason = "update_did USER DOES NOT HAVE PERMISSION TO UPDATE DIDS";
+			$result_reason = "update_did USER DOES NOT HAVE PERMISSION TO VIEW AGENT AVAILABILITY";
 			$data = "$allowed_user";
 			echo "$result: $result_reason: |$user|$data\n";
 			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
@@ -20087,7 +20106,7 @@ if ($function == 'call_status_stats')
 			api_log($link,$api_logging,$api_script,$user,$agent_user,$function,$value,$result,$result_reason,$source,$data);
 			exit;
 			}
-		$stmt="SELECT count(*) from vicidial_users where user='$user' and view_reports='1' and user_level > 8 and active='Y';";
+		$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1' and view_reports='1' and user_level > 8 and active='Y';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$row=mysqli_fetch_row($rslt);
 		$allowed_user=$row[0];
@@ -20347,7 +20366,7 @@ if ($function == 'call_dispo_report')
 			exit;
 			}
 
-		$stmt="SELECT count(*) from vicidial_users where user='$user' and view_reports='1' and user_level > 8 and active='Y';";
+		$stmt="SELECT count(*) from vicidial_users where user='$user' and vdc_agent_api_access='1' and view_reports='1' and user_level > 8 and active='Y';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$row=mysqli_fetch_row($rslt);
 		$allowed_user=$row[0];
